@@ -48,7 +48,7 @@ the recovered `liftedRecoveryCandidate` coordinate. -/
 theorem liftedFactorSubsetPartition_of_toMonicPrimeData_complete
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
-    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hval : ModPFactorization (Hex.ZPoly.toMonic core).monic primeData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_pos : 0 < core.degree?.getD 0)
     (hcore_prim : Hex.ZPoly.Primitive core)
@@ -61,7 +61,7 @@ theorem liftedFactorSubsetPartition_of_toMonicPrimeData_complete
     LiftedFactorSubsetPartition core d Finset.univ core := by
   intro d
   have hp_prime : Hex.Nat.Prime primeData.p :=
-    Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
+    hval.prime
   have hp2 : 2 ≤ primeData.p := hp_prime.two_le
   have hprec_spec :
       2 * B < primeData.p ^ Hex.precisionForCoeffBound B primeData.p :=
@@ -74,12 +74,12 @@ theorem liftedFactorSubsetPartition_of_toMonicPrimeData_complete
     have hzero : Hex.precisionForCoeffBound B primeData.p = 0 := by omega
     rw [hzero, pow_zero] at hmodulus
     omega
-  exact liftedFactorSubsetPartition_of_toMonicPrimeData core B primeData hselected
+  exact liftedFactorSubsetPartition_of_toMonicPrimeData core B primeData hval
     (henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData core B primeData
-      hselected hcore_lc_pos hcore_pos hcore_prim hprecision hbound hB_ne_zero)
+      hval hcore_lc_pos hcore_pos hcore_prim hprecision hbound hB_ne_zero)
     hcore_sqfree
     (IntReductionMod.initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData
-      core B primeData hselected hcore_lc_pos hcore_pos hcore_prim hB_ne_zero hbound)
+      core B primeData hval hcore_lc_pos hcore_pos hcore_prim hB_ne_zero hbound)
 
 /-- **#7584 core-facts producer (slow-path Hensel substrate).**
 
@@ -93,7 +93,7 @@ precision facts discharge directly from the selection witness. -/
 theorem slowPathHenselSubstrate_of_toMonicPrimeData
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
-    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hval : ModPFactorization (Hex.ZPoly.toMonic core).monic primeData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_pos : 0 < core.degree?.getD 0)
     (hcore_prim : Hex.ZPoly.Primitive core)
@@ -104,7 +104,7 @@ theorem slowPathHenselSubstrate_of_toMonicPrimeData
         primeData.p ^ Hex.precisionForCoeffBound B primeData.p) :
     SlowPathHenselSubstrate core B primeData := by
   have hp_prime : Hex.Nat.Prime primeData.p :=
-    Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
+    hval.prime
   have hp2 : 2 ≤ primeData.p := hp_prime.two_le
   have hprec_spec :
       2 * B < primeData.p ^ Hex.precisionForCoeffBound B primeData.p :=
@@ -126,17 +126,20 @@ theorem slowPathHenselSubstrate_of_toMonicPrimeData
       modulus := ?_
       precision := ?_ }
   · exact henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData
-      core B primeData hselected hcore_lc_pos hcore_pos hcore_prim
+      core B primeData hval hcore_lc_pos hcore_pos hcore_prim
       hprec_pos hbound hB_ne_zero
   · exact liftedFactorSubsetPartition_of_toMonicPrimeData_complete
-      core B primeData hselected hcore_lc_pos hcore_pos hcore_prim
+      core B primeData hval hcore_lc_pos hcore_pos hcore_prim
       hcore_sqfree hB_ne_zero hbound
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
-      core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
+      core B primeData hcore_lc_pos hcore_pos
+      hval hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
-      core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
+      core B primeData hcore_lc_pos hcore_pos
+      hval hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_injective_of_monicPrimeData
-      core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
+      core B primeData hcore_lc_pos hcore_pos
+      hval hprec_pos
   · exact hmodulus
   · exact hprec_spec
 
@@ -214,7 +217,9 @@ theorem liftedFactorSubsetPartition_outerBound_of_choosePrimeData
       (Hex.ZPoly.exhaustiveLiftBound
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f))
-      primeData hcore_pos hchoose
+      primeData (Hex.squareFreeCore_primitive_of_ne_zero f hf)
+      (Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf)
+      hcore_pos hchoose
       (IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf)
       hdescent hlifted_of_modP hinitial
 
@@ -741,7 +746,7 @@ theorem classicalCoreFactorsWithBound_factor_irreducible_of_validBound
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     {cf : Array Hex.ZPoly}
     (hclassical : Hex.classicalCoreFactorsWithBound core B primeData = some cf)
-    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hval : ModPFactorization (Hex.ZPoly.toMonic core).monic primeData)
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
@@ -760,7 +765,7 @@ theorem classicalCoreFactorsWithBound_factor_irreducible_of_validBound
   have hLB_ne : LB ≠ 0 := by
     have := Hex.ZPoly.le_exhaustiveLiftBound core B; rw [← hLB_def] at this; omega
   have hp_prime : Hex.Nat.Prime primeData.p :=
-    Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
+    hval.prime
   have hp2 : 2 ≤ primeData.p := hp_prime.two_le
   have hbound_monic :
       2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
@@ -788,17 +793,20 @@ theorem classicalCoreFactorsWithBound_factor_irreducible_of_validBound
   have hlf_monic : ∀ i, Hex.DensePoly.Monic
       (liftedFactor (Hex.ZPoly.toMonicLiftData core LB primeData) i) :=
     Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData core LB primeData
-      hcore_lc_pos hcore_pos hselected hprec_pos
+      hcore_lc_pos hcore_pos
+      hval hprec_pos
   have hlf_natdeg : ∀ i, 0 < (HexPolyZMathlib.toPolynomial
       (liftedFactor (Hex.ZPoly.toMonicLiftData core LB primeData) i)).natDegree :=
     Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData core LB primeData
-      hcore_lc_pos hcore_pos hselected hprec_pos
+      hcore_lc_pos hcore_pos
+      hval hprec_pos
   have hlf_inj : Function.Injective (liftedFactor (Hex.ZPoly.toMonicLiftData core LB primeData)) :=
     Hex.ZPoly.toMonicLiftData_liftedFactor_injective_of_monicPrimeData core LB primeData
-      hcore_lc_pos hcore_pos hselected hprec_pos
+      hcore_lc_pos hcore_pos
+      hval hprec_pos
   have hpartition : LiftedFactorSubsetPartition core
       (Hex.ZPoly.toMonicLiftData core LB primeData) Finset.univ core :=
-    liftedFactorSubsetPartition_of_toMonicPrimeData_complete core LB primeData hselected
+    liftedFactorSubsetPartition_of_toMonicPrimeData_complete core LB primeData hval
       hcore_lc_pos hcore_pos hcore_primitive hcore_sqfree hLB_ne hbound_monic
   have hmatches : LiftedFactorListMatches (Hex.ZPoly.toMonicLiftData core LB primeData)
       Finset.univ (Hex.ZPoly.toMonicLiftData core LB primeData).liftedFactors.toList :=
@@ -892,7 +900,9 @@ theorem classicalCoreFactorsWithBound_factor_irreducible_of_bound
         Hex.precisionForCoeffBound (Hex.ZPoly.exhaustiveLiftBound core B) primeData.p) :
     ∀ g ∈ cf.toList, Irreducible (HexPolyZMathlib.toPolynomial g) :=
   classicalCoreFactorsWithBound_factor_irreducible_of_validBound core B primeData
-    hclassical hselected hcore_ne hcore_primitive hcore_lc_pos hcore_sqfree hcore_pos
+    hclassical
+    (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos)
+    hcore_ne hcore_primitive hcore_lc_pos hcore_sqfree hcore_pos
     hB_ne (Hex.ZPoly.defaultFactorCoeffBound core)
     (defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne)
     (defaultFactorCoeffBound_valid core hcore_ne) hprecision
@@ -990,7 +1000,9 @@ theorem classicalCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
   have hB_ne : Hex.ZPoly.defaultFactorCoeffBound f ≠ 0 :=
     (Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hf_ne).ne'
   have hirr := classicalCoreFactorsWithBound_factor_irreducible_of_validBound core
-    (Hex.ZPoly.defaultFactorCoeffBound f) primeData hclassical hselected hcore_ne
+    (Hex.ZPoly.defaultFactorCoeffBound f) primeData hclassical
+    (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos)
+    hcore_ne
     hcore_primitive hcore_lc_pos hcore_sqfree hcore_pos hB_ne
     (Hex.ZPoly.defaultFactorCoeffBound f) hcore_lc_le hvalid hprecision
   intro g hg
@@ -1086,87 +1098,5 @@ theorem factorTrialFactorsWithBound_factor_irreducible
         · exact
             exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_at_default
               f hf
-
-/-- **Classical-branch raw-factor irreducibility.**
-
-Every raw factor of the classical tier's output `factorClassicalFactorsWithBound
-f (defaultFactorCoeffBound f)` that passes the recorded-factor filter is
-irreducible.  Case-split over the branch: deg-0 constant short-circuit, quadratic
-integer-root short-circuit, and the size-ordered recombination residual.
-
-The residual arm composes the bound-parameterized classical core irreducibility
-`classicalCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible` (#8510) with
-the reassembly-completeness discharger
-`reassemblyExpansionComplete_classicalCore_of_ne_zero` (#8511) through the lift
-`reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible`.
-The bound is handled at `defaultFactorCoeffBound f` directly (validity from
-`core ∣ f`, precision from `exhaustiveLiftBound_precision`), so no
-`defaultFactorCoeffBound core ≤ defaultFactorCoeffBound f` monotonicity is needed. -/
-theorem factorClassicalFactorsWithBound_factor_irreducible
-    (f : Hex.ZPoly) (hf : f ≠ 0)
-    {cf : Array Hex.ZPoly}
-    (hcf : Hex.factorClassicalFactorsWithBound f
-      (Hex.ZPoly.defaultFactorCoeffBound f) = some cf)
-    {raw : Hex.ZPoly}
-    (hmem : raw ∈ cf.toList)
-    (hrec : Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true) :
-    Hex.ZPoly.Irreducible raw := by
-  have hcore_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
-  have hcore_prim :=
-    IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf
-  simp only [Hex.factorClassicalFactorsWithBound] at hcf
-  by_cases hdeg : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-  · rw [if_pos hdeg] at hcf
-    obtain rfl := Option.some.inj hcf
-    have hcomplete := Hex.reassemblyExpansionComplete_constant_of_ne_zero f hf hdeg
-    rcases Hex.reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete
-        _ _ raw hcomplete hmem with hx | hcore
-    · exact Hex.xPowerFactorArray_irreducible _ raw hx
-    · exfalso
-      have hraw_one : raw = 1 := by
-        have hraw_core : raw = (Hex.normalizeForFactor f).squareFreeCore := by
-          simpa using hcore
-        rw [hraw_core, Hex.squareFreeCore_eq_one_of_constant_of_ne_zero f hf hdeg]
-      rw [hraw_one, Hex.normalizeFactorSign_one, Hex.shouldRecordPolynomialFactor_one] at hrec
-      exact absurd hrec (by decide)
-  · rw [if_neg hdeg] at hcf
-    cases hquad :
-        Hex.quadraticIntegerRootFactors? (Hex.normalizeForFactor f).squareFreeCore with
-    | some coreFactors =>
-        simp only [hquad] at hcf
-        obtain rfl := Option.some.inj hcf
-        refine Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
-          _ _ ?_ ?_ hmem
-        · exact IntReductionMod.reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
-            f hf hquad
-        · intro factor hfmem
-          exact Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive
-            hcore_pos hcore_prim hquad hfmem
-    | none =>
-        simp only [hquad] at hcf
-        cases hsel :
-            Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore with
-        | none => simp [hsel] at hcf
-        | some primeData =>
-            simp only [hsel, Option.bind_some] at hcf
-            cases hcore :
-                Hex.classicalCoreFactorsWithBound (Hex.normalizeForFactor f).squareFreeCore
-                  (Hex.ZPoly.defaultFactorCoeffBound f) primeData with
-            | none => simp [hcore] at hcf
-            | some coreFactors =>
-                simp only [hcore, Option.map_some] at hcf
-                obtain rfl := Option.some.inj hcf
-                -- Residual arm: the size-ordered classical recombination core.
-                -- Per-factor irreducibility from #8510, reassembly completeness
-                -- from #8511.
-                exact
-                  Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
-                    _ _
-                    (reassemblyExpansionComplete_classicalCore_of_ne_zero
-                      f hf primeData hsel hdeg hcore)
-                    (classicalCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
-                      f hf primeData hsel hdeg hcore)
-                    hmem
-
 
 end HexBerlekampZassenhausMathlib

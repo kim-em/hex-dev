@@ -318,6 +318,40 @@ still clears a bar worth the proof remodel. The accounting tables here are
 baseline-independent (they count lift exponents, not implementation), so
 only the wallclock section needs re-measuring.
 
+
+## Landed implementation (deliverable 2)
+
+The production form landed on the `issue-8625-d2` branch: the classical
+tier (`factorClassicalFactorsWithBound` and the traced variant) now runs
+`classicalCoreFactorsRecursive` — the same-prime sub-floor escalation
+ladder with a greedy capped peel (`reliftSubFloorCap = 2`), tracked
+per-piece seed factors undilated through the monic-transform peel
+identity, self-verifying per-piece prime data (`piecePrimeData?`), and a
+floor fallback to the full size-ordered scan at each node's own Mignotte
+floor. Certification is keyed to the semantic `ModPFactorization` bundle
+(see `HexBerlekampZassenhausMathlib/ModPFactorization.lean` and
+`Relift.lean`): the fresh per-remainder partition producer transports
+irreducibility along the unit undilation and derives coprimality from
+squarefreeness of the piece's image, and the per-factor irreducibility
+induction closes over the bundle with no reference to the prime-selection
+walk. Free certificates: degree-1 pieces and single-mod-p-factor pieces.
+
+Measured at landing (spike `prod-rec` arm, identical outputs to the
+prototype): 1.23-1.29x wallclock wins on the split and high-multiplicity
+families, 1.19-1.58x bounded losses on the small irreducible/SD inputs.
+The shared additive costs (prime selection ~13.7 ms and Mignotte bound
+computation ~2 x 6.9 ms at deg 24) dominate both arms; net of them the
+recursion's algorithmic core is ~3.7x cheaper than the floor scan, so the
+end-to-end ratio improves further when
+https://github.com/kim-em/hex-dev/issues/8677 (closed-form
+`defaultFactorCoeffBound`) lands.
+
+The classical trace no longer reports scan candidate counts
+(`subsetCandidates = 0`); the recombination-blow-up tripwire moves to the
+wallclock bench gate. The trace fixtures and `bz-trace-baseline.json`
+were regenerated; factor multisets are unchanged (order differs — peel
+order instead of scan order).
+
 ## Reproduction
 
 `lake build hex_recursive_relift_spike && .lake/build/bin/hex_recursive_relift_spike`

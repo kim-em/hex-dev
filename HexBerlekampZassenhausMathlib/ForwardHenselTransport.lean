@@ -17,6 +17,7 @@ public import Mathlib.RingTheory.Polynomial.UniqueFactorization
 public import Mathlib.RingTheory.PrincipalIdealDomain
 
 public import HexBerlekampZassenhausMathlib.SubsetCoprimality
+public import HexBerlekampZassenhausMathlib.ModPFactorization
 import all HexBerlekampZassenhausMathlib.PublicSurface
 import all HexBerlekampZassenhausMathlib.ModPFactor
 import all HexBerlekampZassenhausMathlib.LiftedFactor
@@ -25,6 +26,7 @@ import all HexBerlekampZassenhausMathlib.RecombinationSplit
 import all HexBerlekampZassenhausMathlib.RecombinationCandidate
 import all HexBerlekampZassenhausMathlib.HenselFactorProps
 import all HexBerlekampZassenhausMathlib.SubsetCoprimality
+import all HexBerlekampZassenhausMathlib.ModPFactorization
 
 public section
 set_option backward.proofsInPublic true
@@ -694,7 +696,7 @@ theorem toMonicLiftData_represents_lifted_monicCorrespondent
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_pos : 0 < core.degree?.getD 0)
-    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hval : ModPFactorization (Hex.ZPoly.toMonic core).monic primeData)
     (hB_ne_zero : B ≠ 0)
     {g : Hex.ZPoly} {S : ModPFactorSubset primeData}
     (hg_monic : Hex.DensePoly.Monic g)
@@ -710,14 +712,11 @@ theorem toMonicLiftData_represents_lifted_monicCorrespondent
   have hmonicCore_monic :
       Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
     Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
-  have hform :
-      Hex.factorsModPBerlekampForm (Hex.ZPoly.toMonic core).monic primeData :=
-    Hex.ZPoly.toMonicPrimeData?_factorsModP_berlekamp_form core primeData hselected
   have hgood :
       Hex.isGoodPrime (Hex.ZPoly.toMonic core).monic primeData.p = true :=
-    Hex.ZPoly.toMonicPrimeData?_isGoodPrime core primeData hselected
+    hval.good
   have hp_prime : Hex.Nat.Prime primeData.p :=
-    Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
+    hval.prime
   have hp : 1 < primeData.p := hp_prime.two_le
   have hp2 : 2 ≤ primeData.p := hp_prime.two_le
   -- Precision positivity: needs `B ≠ 0`, since `precisionForCoeffBound_spec`
@@ -734,22 +733,18 @@ theorem toMonicLiftData_represents_lifted_monicCorrespondent
   -- Analytic inputs from the Berlekamp-form extractors.
   have hfactors_monic :
       ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g :=
-    factorsModP_monic_of_factorsModPBerlekampForm
-      (Hex.ZPoly.toMonic core).monic primeData hform
+    hval.monic
   have hproduct_mod_p :
       Hex.ZPoly.congr
         (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
         (Hex.ZPoly.toMonic core).monic primeData.p :=
-    factorsModP_polyProduct_congr_of_factorsModPBerlekampForm
-      (Hex.ZPoly.toMonic core).monic primeData hmonicCore_monic hform hgood
+    hval.product_congr_target hmonicCore_monic
   have hcoprime :
       Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
         primeData.factorsModP.toList :=
-    factorsModP_coprime_of_factorsModPBerlekampForm
-      (Hex.ZPoly.toMonic core).monic primeData hform hgood
+    hval.coprime
   have hnonempty : primeData.factorsModP.toList ≠ [] :=
-    factorsModP_ne_nil_of_factorsModPBerlekampForm
-      (Hex.ZPoly.toMonic core).monic primeData hform
+    hval.ne_nil
   have hinv :
       Hex.ZPoly.QuadraticMultifactorLiftInvariant
         primeData.p (Hex.precisionForCoeffBound B primeData.p)
@@ -760,9 +755,7 @@ theorem toMonicLiftData_represents_lifted_monicCorrespondent
       (Hex.precisionForCoeffBound B primeData.p) primeData
       hp_prime hp hprec_pos hmonicCore_monic hfactors_monic
       hproduct_mod_p hcoprime hnonempty
-  have hfactors_nodup : primeData.factorsModP.toList.Nodup :=
-    factorsModP_nodup_of_factorsModPBerlekampForm
-      (Hex.ZPoly.toMonic core).monic primeData hform hgood
+  have hfactors_nodup : primeData.factorsModP.toList.Nodup := hval.nodup
   have hmonicCore_pos :
       0 < (Hex.ZPoly.toMonic core).monic.degree?.getD 0 := by
     rw [Hex.ZPoly.toMonic_monic_degree_eq_of_pos_degree core hcore_lc_pos hcore_pos]
@@ -771,8 +764,7 @@ theorem toMonicLiftData_represents_lifted_monicCorrespondent
       ∀ i : ModPFactorIndex primeData,
         Irreducible
           (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)) :=
-    factors_irreducible_of_factorsModPBerlekampForm
-      (Hex.ZPoly.toMonic core).monic primeData hform hgood hmonicCore_pos
+    hval.irreducible
   have hprime_root : _root_.Nat.Prime primeData.p :=
     natPrime_of_hexNatPrime hp_prime
   exact henselLiftData_represents_lifted_of_modP
@@ -1241,7 +1233,7 @@ private theorem zpoly_eq_one_of_toPolynomial_isUnit_of_pos_lc
     change 0 < Hex.DensePoly.leadingCoeff (Hex.DensePoly.C (-1 : Int)) at hpos
     simp [Hex.DensePoly.leadingCoeff, Hex.DensePoly.coeffs_C_of_ne_zero] at hpos
 
-private theorem zpoly_primitive_of_dvd_primitive_basic
+theorem zpoly_primitive_of_dvd_primitive_basic
     {factor target : Hex.ZPoly}
     (htarget_primitive : Hex.ZPoly.Primitive target)
     (hfactor_dvd_target : factor ∣ target) :

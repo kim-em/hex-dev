@@ -1,52 +1,52 @@
 {
   "adv/bad_prime_retry": {
     "declined": false,
-    "subsetCandidates": 4,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/cyclotomic_12": {
     "declined": false,
-    "subsetCandidates": 2,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/cyclotomic_15": {
     "declined": false,
-    "subsetCandidates": 2,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/cyclotomic_8": {
     "declined": false,
-    "subsetCandidates": 2,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/eisenstein_5": {
     "declined": false,
-    "subsetCandidates": 2,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/high_multiplicity": {
     "declined": false,
-    "subsetCandidates": 2,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/identical_mod_profile": {
     "declined": false,
-    "subsetCandidates": 2,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/large_height": {
     "declined": false,
-    "subsetCandidates": 3,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/large_plus_distractors": {
     "declined": false,
-    "subsetCandidates": 4,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/mignotte_swell": {
     "declined": false,
-    "subsetCandidates": 6,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/neg_content": {
@@ -55,88 +55,88 @@
     "tier": "quadratic"
   },
   "adv/non_monic": {
-    "declined": false,
-    "subsetCandidates": 2,
+    "declined": true,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/phi15": {
     "declined": false,
-    "subsetCandidates": 2,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/planted_1": {
     "declined": false,
-    "subsetCandidates": 6,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/planted_nonmonic": {
     "declined": false,
-    "subsetCandidates": 3,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/quad_sqrt2_sqrt3": {
     "declined": false,
-    "subsetCandidates": 2,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/reciprocal": {
     "declined": false,
-    "subsetCandidates": 2,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/swinnerton_dyer_2": {
     "declined": false,
-    "subsetCandidates": 2,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/swinnerton_dyer_3_shift1": {
     "declined": false,
-    "subsetCandidates": 8,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/swinnerton_dyer_sd3": {
     "declined": false,
-    "subsetCandidates": 8,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/swinnerton_dyer_sd5_pair": {
     "declined": true,
-    "subsetCandidates": 206368,
+    "subsetCandidates": 0,
     "tier": "lattice"
   },
   "adv/swinnerton_dyer_sd6": {
     "declined": true,
-    "subsetCandidates": 206368,
+    "subsetCandidates": 0,
     "tier": "lattice"
   },
   "adv/trinomial": {
     "declined": false,
-    "subsetCandidates": 2,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/x12_minus_1": {
     "declined": false,
-    "subsetCandidates": 10,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/x4_plus_1": {
     "declined": false,
-    "subsetCandidates": 2,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "adv/x6_minus_1": {
     "declined": false,
-    "subsetCandidates": 4,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "content2/cyclo5": {
     "declined": false,
-    "subsetCandidates": 1,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "content3/cyclo7": {
     "declined": false,
-    "subsetCandidates": 1,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "edge/neg_one": {
@@ -156,7 +156,7 @@
   },
   "edge/neg_two_x_minus_one_squared": {
     "declined": false,
-    "subsetCandidates": 1,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "edge/neg_x": {
@@ -166,7 +166,7 @@
   },
   "edge/neg_x_minus_one_squared": {
     "declined": false,
-    "subsetCandidates": 1,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "edge/neg_x_squared_plus_one": {
@@ -201,7 +201,7 @@
   },
   "edge/x_minus_one_squared": {
     "declined": false,
-    "subsetCandidates": 1,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "edge/x_squared": {
@@ -216,47 +216,47 @@
   },
   "irr/cyclo11": {
     "declined": false,
-    "subsetCandidates": 2,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "irr/cyclo17": {
     "declined": false,
-    "subsetCandidates": 1,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "irr/cyclo5": {
     "declined": false,
-    "subsetCandidates": 1,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "irr/cyclo7": {
     "declined": false,
-    "subsetCandidates": 1,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "red/cyclo11_cyclo22": {
     "declined": false,
-    "subsetCandidates": 4,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "red/quad2_deg4": {
     "declined": false,
-    "subsetCandidates": 3,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "regression/split_roots_1_11": {
     "declined": false,
-    "subsetCandidates": 11,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "regression/split_roots_1_24": {
     "declined": false,
-    "subsetCandidates": 24,
+    "subsetCandidates": 0,
     "tier": "classical"
   },
   "regression/split_roots_1_72": {
     "declined": false,
-    "subsetCandidates": 72,
+    "subsetCandidates": 0,
     "tier": "classical"
   }
 }

@@ -700,16 +700,17 @@ coprimality with its derivative, which is exactly `Polynomial.Separable` over th
 field `ZMod p`, hence `Squarefree`.  This is the modular squarefreeness datum the
 mod-`p` disjointness lemma `modPFactorSubset_disjoint_of_not_associated` needs but
 `modPSubsetPartitionHypotheses_of_choosePrimeData` fills with `trivial`. -/
-theorem squarefree_toMathlibPolynomial_monicModPImage_of_choosePrimeData
+theorem squarefree_toMathlibPolynomial_monicModPImage_of_goodPrime
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
-    (hselected : Hex.choosePrimeData? core = some primeData) :
+    (hprime_hex : Hex.Nat.Prime primeData.p)
+    (hgood :
+      letI := primeData.bounds
+      @Hex.isGoodPrime core primeData.p primeData.bounds = true) :
     Squarefree
       (@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
         (@monicModPImage primeData.p primeData.bounds
           (@Hex.ZPoly.modP primeData.p primeData.bounds core))) := by
   letI := primeData.bounds
-  have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
-    Hex.choosePrimeData?_isGoodPrime core primeData hselected
   have hsquareFree : Hex.squareFreeModP core primeData.p :=
     Hex.isGoodPrime_squareFreeModP core primeData.p hgood
   have hsquareFree_modP :
@@ -718,10 +719,8 @@ theorem squarefree_toMathlibPolynomial_monicModPImage_of_choosePrimeData
           (Hex.DensePoly.derivative
             (@Hex.ZPoly.modP primeData.p primeData.bounds core))) = true := by
     simpa [Hex.squareFreeModP] using hsquareFree
-  obtain ⟨hzero, _hfactors_eq⟩ :=
-    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected
-  have hprime_hex : Hex.Nat.Prime primeData.p :=
-    Hex.choosePrimeData?_prime core primeData hselected
+  have hzero : (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
+    Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
   have hprime : _root_.Nat.Prime primeData.p := by
     refine _root_.Nat.prime_def_lt.mpr ⟨hprime_hex.two_le, ?_⟩
     intro m hmlt hmdvd
@@ -764,9 +763,9 @@ both the nonzero mod-`p` core (`isGoodPrime_modP_isZero_false`) and the modular
 squarefreeness (`squarefree_toMathlibPolynomial_monicModPImage_of_choosePrimeData`)
 that the bare `ModPSubsetPartitionHypotheses … True True` package fills with
 `trivial`. -/
-theorem modPFactorSubset_disjoint_of_choosePrimeData
+theorem modPFactorSubset_disjoint_of_modPFactorization
     {core : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
-    (hselected : Hex.choosePrimeData? core = some primeData)
+    (hval : ModPFactorization core primeData)
     (hcore_pos : 0 < core.degree?.getD 0)
     {f g : Hex.ZPoly} {S T : ModPFactorSubset primeData}
     (hf_irr : Irreducible (HexPolyZMathlib.toPolynomial f)) (hf_dvd : f ∣ core)
@@ -778,18 +777,17 @@ theorem modPFactorSubset_disjoint_of_choosePrimeData
         (HexPolyZMathlib.toPolynomial g)) :
     Disjoint S T := by
   letI := primeData.bounds
-  have hprime_hex : Hex.Nat.Prime primeData.p :=
-    Hex.choosePrimeData?_prime core primeData hselected
+  have hprime_hex : Hex.Nat.Prime primeData.p := hval.prime
   have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
-    Hex.choosePrimeData?_isGoodPrime core primeData hselected
+    hval.good
   have hcore_modP_nz :
       (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
     Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
   exact modPFactorSubset_disjoint_of_not_associated hprime_hex
-    (modPSubsetPartitionHypotheses_of_choosePrimeData core primeData hcore_pos hselected)
+    (modPSubsetPartitionHypotheses_of_modPFactorization core primeData hcore_pos hval)
     hcore_modP_nz
-    (squarefree_toMathlibPolynomial_monicModPImage_of_choosePrimeData core primeData
-      hselected)
+    (squarefree_toMathlibPolynomial_monicModPImage_of_goodPrime core primeData
+      hval.prime hval.good)
     hf_irr hf_dvd hg_irr hg_dvd hS hT hnotassoc
 
 /-! ### Base discharges for the small-mod singleton branch

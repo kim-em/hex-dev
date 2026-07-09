@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhausMathlib.IntReductionMod
+public import HexBerlekampZassenhausMathlib.Relift
 public import HexBerlekampZassenhausMathlib.CLDColumnBound
 public import HexBerlekampZassenhausMathlib.Recovery
 public import HexBerlekampZassenhausMathlib.PartitionRefinement
@@ -499,13 +500,16 @@ theorem normalizedFactors_card_le_bhksEquivalenceClassIndicators_size
   -- the #8413 partition of the lifted indices by true-factor supports
   have hpartition : LiftedFactorSubsetPartition core
       (Hex.ZPoly.toMonicLiftData core B primeData) Finset.univ core :=
-    liftedFactorSubsetPartition_of_toMonicPrimeData_complete core B primeData hselected
+    liftedFactorSubsetPartition_of_toMonicPrimeData_complete core B primeData
+      (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos)
       hcore_lc_pos hcore_pos hcore_prim hcore_sqfree hB_ne hbound_monic
   -- per-factor Hensel facts
   have hmonic_i := Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
-    core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
+    core B primeData hcore_lc_pos hcore_pos
+    (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos) hprec_pos
   have hdeg_i := Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
-    core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
+    core B primeData hcore_lc_pos hcore_pos
+    (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos) hprec_pos
   -- the quadratic multifactor lift invariant and the full-product congruence
   have hform : Hex.factorsModPBerlekampForm (Hex.ZPoly.toMonic core).monic primeData :=
     Hex.ZPoly.toMonicPrimeData?_factorsModP_berlekamp_form core primeData hselected

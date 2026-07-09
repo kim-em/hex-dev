@@ -278,24 +278,23 @@ private theorem fpPoly_mul_dvd_mul
   rw [hq, hv, Hex.FpPoly.mul_assoc a q (c * v), ← Hex.FpPoly.mul_assoc q c v,
     Hex.FpPoly.mul_comm q c, Hex.FpPoly.mul_assoc c q v, ← Hex.FpPoly.mul_assoc a c (q * v)]
 
-theorem monicModPImage_dvd_monicModularImage_of_dvd_of_choosePrimeData?_some
+theorem monicModPImage_dvd_monicModularImage_of_dvd_of_goodPrime
     {core factor : Hex.ZPoly}
     (hdvd : factor ∣ core)
     (_hcore_ne : core ≠ 0)
     {primeData : Hex.PrimeChoiceData}
-    (hsome : Hex.choosePrimeData? core = some primeData) :
+    (hprime : Hex.Nat.Prime primeData.p)
+    (hgood :
+      letI := primeData.bounds
+      @Hex.isGoodPrime core primeData.p primeData.bounds = true) :
     letI := primeData.bounds
     @monicModPImage primeData.p primeData.bounds
         (@Hex.ZPoly.modP primeData.p primeData.bounds factor) ∣
       Hex.monicModularImage
         (@Hex.ZPoly.modP primeData.p primeData.bounds core) := by
   letI := primeData.bounds
-  have hprime : Hex.Nat.Prime primeData.p :=
-    Hex.choosePrimeData?_prime core primeData hsome
   letI : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
-  have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
-    Hex.choosePrimeData?_isGoodPrime core primeData hsome
   have hcore_iszero :
       (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
     Hex.isGoodPrime_modP_isZero_false core primeData.p hgood

@@ -376,6 +376,29 @@ and the CLD lattice tier does the work.
   win is the arithmetic constant. Returns `none` when no admissible
   prime exists or when its subset budget is exceeded — a decline, not an
   irreducibility claim — and `factorLattice` takes over.
+- **`factorClassical` internals: the recursive per-remainder re-lift
+  (#8625).** The classical tier certifies sub-floor: instead of one
+  Hensel lift of the whole core at the monic-core Mignotte floor, each
+  node runs an escalation ladder (`k = 1, 2, 4, ...` strictly below its
+  own floor) of cheap word-sized lifts with a greedy capped peel
+  (`reliftSubFloorCap = 2`; peels are self-certifying via a
+  re-multiplication guard). Peeled pieces recurse with tracked mod-p
+  seed factors undilated through the peel's monic-transform identity
+  `M(gh) = D_{lc h}(M g) · D_{lc g}(M h)`; the per-piece prime data
+  (`piecePrimeData?`) is self-verifying (unit, monic, degree, product,
+  and good-prime guards), so a tracking defect declines rather than
+  certifies. A node that never splits below its floor runs the full
+  size-ordered scan at its OWN Mignotte floor — below the parent's
+  whenever the piece is a proper factor, which is the sub-floor win
+  (~1.25x wallclock on fully-split families; see
+  `reports/bz-recursive-relift-findings.md`). Certification is keyed to
+  the semantic bundle `ModPFactorization` (prime, good prime, factor
+  invariants, product congruence), produced for selected primes by
+  `modPFactorization_of_toMonicPrimeData` and for tracked pieces by
+  `modPFactorization_of_piecePrimeData` (dilation transport of
+  irreducibility; squarefreeness-derived coprimality). Free
+  certificates: degree-1 pieces and single-mod-p-factor pieces certify
+  without lifting.
 - **`factorLattice`** — van Hoeij CLD lattice recombination; polynomial
   in `r`. Used when `r` is large enough that the classical subset
   search would exceed its budget (e.g. Swinnerton-Dyer inputs). May

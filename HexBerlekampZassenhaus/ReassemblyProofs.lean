@@ -822,7 +822,7 @@ private theorem shouldRecordPolynomialFactor_eq_true_of_ne
   unfold shouldRecordPolynomialFactor
   simp [hzero, hone, hneg_one]
 
-private theorem normalizeFactorSign_ne_zero_of_ne_zero
+theorem normalizeFactorSign_ne_zero_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0) :
     normalizeFactorSign f ≠ 0 := by
   unfold normalizeFactorSign
@@ -1421,7 +1421,7 @@ theorem normalizeFactorSign_idem (g : ZPoly) :
 /-- Sign normalisation preserves primitivity: the `if_neg` branch is the
 identity, and the `if_pos` branch scales by `-1`, which preserves content
 by `DensePoly.content_scale_neg_one`. -/
-private theorem normalizeFactorSign_primitive (f : ZPoly)
+theorem normalizeFactorSign_primitive (f : ZPoly)
     (h : ZPoly.Primitive f) :
     ZPoly.Primitive (normalizeFactorSign f) := by
   unfold normalizeFactorSign
