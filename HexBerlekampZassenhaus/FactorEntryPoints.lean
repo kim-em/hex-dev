@@ -226,6 +226,7 @@ piece's monic transform — so the certification bundle reads its `good`,
 tracking defect declines to the floor path instead of certifying. All the
 guards are provably satisfied for genuine peels; the checks are one small
 `FpPoly` product, one gcd, and a scan per piece. -/
+@[expose]
 def piecePrimeData? {q : Nat} [ZMod64.Bounds q]
     (piece : ZPoly) (cofactorLc : Int) (seeds : List (FpPoly q)) :
     Option PrimeChoiceData :=

@@ -1063,7 +1063,7 @@ theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
 monic modular image of `modP p core` is just `modP p core` itself: the leading
 coefficient of the modular image is `1` (since `core`'s is `1` and reduces to
 `1` mod `p`), so the renormalisation scaling factor is `1⁻¹ = 1`. -/
-private theorem monicModularImage_modP_eq_of_monic
+theorem monicModularImage_modP_eq_of_monic
     {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
     (core : Hex.ZPoly) (hcore_monic : Hex.DensePoly.Monic core)
     (hprime : Hex.Nat.Prime p) (hp : 1 < p)
