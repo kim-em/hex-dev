@@ -571,7 +571,11 @@ def classicalCoreFactorsRecursiveAux (cap : Nat) :
     Nat → ZPoly → Option Nat → PrimeChoiceData → Option (Array ZPoly)
   | 0, _, _, _ => none
   | fuel + 1, g, B?, pd =>
-      if g.degree?.getD 0 ≤ 1 then
+      if g.degree?.getD 0 = 0 then
+        -- unreachable for genuine peels (their product is the parent);
+        -- decline rather than claim a constant irreducible
+        none
+      else if g.degree?.getD 0 = 1 then
         some #[g]
       else if pd.factorsModP.size == 1 then
         some #[g]
