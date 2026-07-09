@@ -98,6 +98,73 @@ theorem toZMod_injective : Function.Injective (toZMod (ctx := ctx)) := by
         rw [Nat.cast_add, Nat.cast_sub hle]
     _ = toZMod a - toZMod b := by rw [ZMod.natCast_self]; simp [toZMod, sub_eq_add_neg]
 
+/-! ### Mathlib `CommRing` structure, transferred along `toZMod`.
+
+`WordMod` already carries `Zero/One/Add/Mul/Neg/Sub/NatCast`; the remaining data
+a `CommRing` needs (`SMul ℕ`, `SMul ℤ`, `Pow ℕ`, `IntCast`) is defined here so
+that each transports to `ZMod` immediately, then `Function.Injective.commRing`
+pulls the ring structure back through the injective `toZMod`. -/
+
+instance : SMul ℕ (Hex.WordMod ctx) := ⟨fun n a => (n : Hex.WordMod ctx) * a⟩
+
+instance : IntCast (Hex.WordMod ctx) :=
+  ⟨fun z => match z with
+    | Int.ofNat n => (n : Hex.WordMod ctx)
+    | Int.negSucc n => -((n + 1 : Nat) : Hex.WordMod ctx)⟩
+
+instance : SMul ℤ (Hex.WordMod ctx) := ⟨fun z a => (z : Hex.WordMod ctx) * a⟩
+
+instance : Pow (Hex.WordMod ctx) ℕ := ⟨fun a n => npowRec n a⟩
+
+@[simp] theorem toZMod_natCast (n : Nat) :
+    toZMod ((n : Hex.WordMod ctx)) = (n : ZMod m.toNat) := by
+  haveI : NeZero m.toNat := ⟨Nat.ne_of_gt ctx.p_pos⟩
+  show toZMod (Hex.WordMod.ofNat n) = _
+  rw [toZMod, Hex.WordMod.toNat_ofNat, ZMod.natCast_mod]
+
+@[simp] theorem toZMod_intCast (z : Int) :
+    toZMod ((z : Hex.WordMod ctx)) = (z : ZMod m.toNat) := by
+  cases z with
+  | ofNat n =>
+      show toZMod ((n : Hex.WordMod ctx)) = _
+      rw [toZMod_natCast]; simp
+  | negSucc n =>
+      show toZMod (-((n + 1 : Nat) : Hex.WordMod ctx)) = _
+      rw [toZMod_neg, toZMod_natCast]
+      exact (Int.cast_negSucc n).symm
+
+theorem toZMod_npowRec (a : Hex.WordMod ctx) (n : Nat) :
+    toZMod (npowRec n a) = toZMod a ^ n := by
+  induction n with
+  | zero => simp [npowRec, toZMod_one]
+  | succ k ih => rw [npowRec, toZMod_mul, ih, pow_succ]
+
+/-- The executable `WordMod` residue ring is a Mathlib `CommRing`, pulled back
+along the injective `toZMod`. -/
+instance : CommRing (Hex.WordMod ctx) :=
+  Function.Injective.commRing toZMod toZMod_injective
+    toZMod_zero toZMod_one toZMod_add toZMod_mul toZMod_neg toZMod_sub
+    (fun n x => by
+      show toZMod ((n : Hex.WordMod ctx) * x) = n • toZMod x
+      rw [toZMod_mul, toZMod_natCast, nsmul_eq_mul])
+    (fun z x => by
+      show toZMod ((z : Hex.WordMod ctx) * x) = z • toZMod x
+      rw [toZMod_mul, toZMod_intCast, zsmul_eq_mul])
+    (fun x n => toZMod_npowRec x n)
+    toZMod_natCast toZMod_intCast
+
+/-- `toZMod` packaged as a ring homomorphism. -/
+def toZModRingHom : Hex.WordMod ctx →+* ZMod m.toNat where
+  toFun := toZMod
+  map_one' := toZMod_one
+  map_mul' := toZMod_mul
+  map_zero' := toZMod_zero
+  map_add' := toZMod_add
+
+@[simp] theorem toZModRingHom_apply (a : Hex.WordMod ctx) :
+    toZModRingHom a = toZMod a := by
+  simp only [toZModRingHom, RingHom.coe_mk, MonoidHom.coe_mk, OneHom.coe_mk]
+
 end WordMod
 
 end HexModArithMathlib
