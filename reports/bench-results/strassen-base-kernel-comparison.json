@@ -1,13 +1,14 @@
 {
   "prime": 2147483647,
-  "cutoff": 64,
+  "default_cutoff": 96,
+  "barrett_cutoff": 128,
   "metric": "best_of_iters_wall_nanos",
   "results": [
-    {"n": 64, "default_ns": 1611730, "delayed_ns": 14404894},
-    {"n": 96, "default_ns": 4396721, "delayed_ns": 46940608},
-    {"n": 128, "default_ns": 13689643, "delayed_ns": 104293918},
-    {"n": 160, "default_ns": 23481946, "delayed_ns": 197138316},
-    {"n": 192, "default_ns": 36125548, "delayed_ns": 336515807},
-    {"n": 256, "default_ns": 107963350, "delayed_ns": 757175076}
+    {"n": 64, "default_ns": 917661, "delayed_ns": 474163, "delayed_at_default_cutoff_ns": 471048, "default_at_barrett_cutoff_ns": 934305},
+    {"n": 96, "default_ns": 4213126, "delayed_ns": 1273778, "delayed_at_default_cutoff_ns": 2726782, "default_at_barrett_cutoff_ns": 2788043},
+    {"n": 128, "default_ns": 8645708, "delayed_ns": 5443140, "delayed_at_default_cutoff_ns": 5348420, "default_at_barrett_cutoff_ns": 8475435},
+    {"n": 160, "default_ns": 14874362, "delayed_ns": 8690193, "delayed_at_default_cutoff_ns": 8662293, "default_at_barrett_cutoff_ns": 14811699},
+    {"n": 192, "default_ns": 33992045, "delayed_ns": 13577680, "delayed_at_default_cutoff_ns": 23825423, "default_at_barrett_cutoff_ns": 23662251},
+    {"n": 256, "default_ns": 69329385, "delayed_ns": 47947124, "delayed_at_default_cutoff_ns": 48149354, "default_at_barrett_cutoff_ns": 70995154}
   ]
 }
