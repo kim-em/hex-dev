@@ -165,12 +165,12 @@ Command:
 scripts/profile/run_profile.sh ./.lake/build/bin/hexpolyz_bench Hex.PolyZBench.runBinom 131072 5000000000
 ```
 
-Representative case: central binomial coefficient `ZPoly.binom (2*n) n`,
+Representative case: central binomial coefficient `Nat.binom (2*n) n`,
 parameter `131072`, no seed. The child row reported `2` inner repeats,
 `3.731 s` total, `1.865 s` per call, and result hash
 `0x19491e050eb44246`. Leaf cost was GMP big-integer arithmetic `96.9%`,
 allocation/free `2.9%`, Lean runtime `0.2%`, and Lean own code `0.0%` at leaf
-self time. Inclusive cost was led by `ZPoly.binom` (`100.0%`) and its fold
+self time. Inclusive cost was led by `Nat.binom` (`100.0%`) and its fold
 over multiplicative terms (`99.9%`). The dominant leaf frames were
 `__gmpn_divrem_1` (`67.2%`), `__gmpn_copyi` (`20.8%`), and `__gmpn_mul_1`
 (`8.5%`), which is the expected limb arithmetic for the central-binomial

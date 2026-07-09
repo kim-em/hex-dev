@@ -207,8 +207,8 @@ private theorem foldl_binom_iter_eq_choose (n m : Nat) :
 
 /-- The executable Mignotte-bound binomial coefficient agrees with Mathlib's
 `Nat.choose`. -/
-theorem binom_eq_choose (n k : Nat) : Hex.ZPoly.binom n k = Nat.choose n k := by
-  unfold Hex.ZPoly.binom
+theorem binom_eq_choose (n k : Nat) : Hex.Nat.binom n k = Nat.choose n k := by
+  unfold Hex.Nat.binom
   by_cases hnk : n < k
   · rw [if_pos hnk, Nat.choose_eq_zero_of_lt hnk]
   · rw [if_neg hnk]

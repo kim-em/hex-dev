@@ -183,7 +183,7 @@ quantity.
 The pieces are an executable binomial coefficient and an integer
 ceiling square root.
 
-{docstring Hex.ZPoly.binom}
+{docstring Hex.Nat.binom}
 
 {docstring Hex.ZPoly.ceilSqrt}
 
@@ -224,8 +224,8 @@ private def g : ZPoly := ofCoeffs #[1, 1, 1, 1, 1]
 #guard ZPoly.coeffL2NormBound g = 3
 
 -- Executable binomial coefficients.
-#guard ZPoly.binom 4 2 = 6
-#guard ZPoly.binom 5 2 = 10
+#guard Nat.binom 4 2 = 6
+#guard Nat.binom 5 2 = 10
 
 -- Mignotte bound for the j=1 coefficient of a degree-2
 -- factor: binom 2 1 * coeffL2NormBound g = 2 * 3.
