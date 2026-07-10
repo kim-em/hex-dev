@@ -44,7 +44,8 @@ def takeRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) : Matrix R k m :=
       (let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
        let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
        M[ii][jj]) := by
-  simp [principalSubmatrix, ofFn]
+  unfold principalSubmatrix
+  rw [getElem_ofFn, getElem_pair_eq_nested]
 
 /-- Row `i` of the `k × k` principal submatrix is row `i` of `M`, restricted to
 the first `k` columns. -/
@@ -95,7 +96,8 @@ def takeCols (M : Matrix R n m) (k : Nat) (hk : k ≤ m) : Matrix R n k :=
     (takeRows M k hk)[i][j] =
       (let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
        M[ii][j]) := by
-  simp [takeRows, ofFn]
+  unfold takeRows
+  rw [getElem_ofFn, getElem_pair_eq_nested]
 
 /-- Entry formula for the first-`k`-columns slice. -/
 @[grind =] theorem getElem_takeCols (M : Matrix R n m) (k : Nat) (hk : k ≤ m)
@@ -103,27 +105,24 @@ def takeCols (M : Matrix R n m) (k : Nat) (hk : k ≤ m) : Matrix R n k :=
     (takeCols M k hk)[i][j] =
       (let jj : Fin m := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
        M[i][jj]) := by
-  simp [takeCols, ofFn]
+  unfold takeCols
+  rw [getElem_ofFn, getElem_pair_eq_nested]
 
 /-- The leading principal `k × k` submatrix of the identity is the identity. -/
 @[simp, grind =] theorem principalSubmatrix_identity {R : Type u} [OfNat R 0] [OfNat R 1] {n : Nat}
     (k : Nat) (hk : k ≤ n) :
     principalSubmatrix (Matrix.identity (R := R) n) k hk = (Matrix.identity (R := R) k) := by
-  ext i hi j hj
-  show (principalSubmatrix (Matrix.identity (R := R) n) k hk)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)] =
-    (Matrix.identity (R := R) k)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)]
-  rw [getElem_principalSubmatrix, getElem_identity (i := (⟨i, Nat.lt_of_lt_of_le hi hk⟩ : Fin n)),
-    getElem_identity (i := (⟨i, hi⟩ : Fin k))]
-  by_cases hij : (⟨i, hi⟩ : Fin k) = ⟨j, hj⟩
-  · have hval : i = j := Fin.val_eq_of_eq hij
-    have hijn :
-        (⟨i, Nat.lt_of_lt_of_le hi hk⟩ : Fin n) = ⟨j, Nat.lt_of_lt_of_le hj hk⟩ := by
-      apply Fin.eq_of_val_eq; exact hval
-    simp [hij, hijn]
-  · have hval : i ≠ j := fun heq => hij (by apply Fin.eq_of_val_eq; exact heq)
-    have hijn :
-        (⟨i, Nat.lt_of_lt_of_le hi hk⟩ : Fin n) ≠ ⟨j, Nat.lt_of_lt_of_le hj hk⟩ := fun heq =>
-      hval (Fin.val_eq_of_eq heq)
+  apply ext_getElem
+  intro i j
+  rw [getElem_principalSubmatrix,
+    getElem_identity (i := (⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩ : Fin n)),
+    getElem_identity (i := i)]
+  by_cases hij : i = j
+  · simp [hij]
+  · have hijn :
+        (⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩ : Fin n) ≠ ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩ := by
+      intro heq
+      exact hij (Fin.ext (by simpa using congrArg Fin.val heq))
     simp [hij, hijn]
 
 end Matrix

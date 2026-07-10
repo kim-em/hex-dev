@@ -43,8 +43,7 @@ integer matrix is its leading input row cast into `Rat`. -/
 theorem basis_zero (b : Matrix Int n m) (hn : 0 < n) :
     (basis b).row ⟨0, hn⟩ =
       Vector.map (fun x : Int => (x : Rat)) (b.row ⟨0, hn⟩) := by
-  simpa [basis, GramSchmidt.basisMatrix, GramSchmidt.castIntMatrix, Matrix.row,
-    Hex.Matrix.getRow, Fin.getElem_fin] using
+  simpa [basis, GramSchmidt.basisMatrix, GramSchmidt.castIntMatrix, Matrix.row] using
     GramSchmidt.basisRows_head (b := GramSchmidt.castIntMatrix b) hn
 
 /-- Distinct Gram-Schmidt basis rows of an integer matrix (taken in `Rat`) are
@@ -64,7 +63,7 @@ theorem basis_decomposition (b : Matrix Int n m) (i : Nat) (hi : i < n) :
       (basis b).row ⟨i, hi⟩ +
         GramSchmidt.prefixCombination (coeffs b) (basis b) i hi := by
   simpa [basis, coeffs, GramSchmidt.castIntMatrix, GramSchmidt.Rat.basis,
-    GramSchmidt.Rat.coeffs, Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin] using
+    GramSchmidt.Rat.coeffs, Matrix.row] using
       GramSchmidt.Rat.basis_decomposition (b := GramSchmidt.castIntMatrix b) i hi
 
 /-- The coefficient matrix of an integer input has unit diagonal: each row
@@ -88,7 +87,7 @@ theorem coeffs_upper (b : Matrix Int n m)
 
 private theorem getElem_castIntMatrix (b : Matrix Int n m) (r : Fin n) (k : Fin m) :
     (GramSchmidt.castIntMatrix b)[r][k] = (b[r][k] : Rat) := by
-  simp [GramSchmidt.castIntMatrix, Hex.Matrix.getRow, Fin.getElem_fin]
+  simp [GramSchmidt.castIntMatrix]
 
 private theorem castIntMatrix_rowAdd (b : Matrix Int n m) (src dst : Fin n) (c : Int) :
     GramSchmidt.castIntMatrix (Matrix.rowAdd b src dst c) =

@@ -100,7 +100,8 @@ entries at the skipped row and column indices. -/
 @[grind =] theorem getElem_deleteRowCol {R : Type u} {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) (i j : Fin n) :
     (deleteRowCol M row col)[i][j] = M[skipIndex row i][skipIndex col j] := by
-  simp [deleteRowCol, ofFn]
+  unfold deleteRowCol
+  rw [getElem_ofFn, getElem_pair_eq_nested]
 
 /-- Deleting the final row and final column gives the leading prefix.
 This is the minor normalization used by bottom-right cofactor expansion. -/
@@ -108,25 +109,20 @@ This is the minor normalization used by bottom-right cofactor expansion. -/
     (M : Matrix R (n + 1) (n + 1)) :
     deleteRowCol M (Fin.last n) (Fin.last n) =
       principalSubmatrix M n (Nat.le_succ n) := by
-  ext i hi j hj
-  let ii : Fin n := ⟨i, hi⟩
-  let jj : Fin n := ⟨j, hj⟩
-  change (deleteRowCol M (Fin.last n) (Fin.last n))[ii][jj] =
-    (principalSubmatrix M n (Nat.le_succ n))[ii][jj]
-  rw [getElem_deleteRowCol]
-  simp [principalSubmatrix, ofFn, getRow, Fin.getElem_fin]
+  apply ext_getElem
+  intro i j
+  rw [getElem_deleteRowCol, getElem_principalSubmatrix]
+  simp only [skipIndex_last]
+  rfl
 
 /-- Deleting row `row` and column `col` after transposing is the transpose of
 the minor obtained by deleting row `col` and column `row` before transposing. -/
 theorem deleteRowCol_transpose {R : Type u} {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) :
     deleteRowCol M.transpose row col = (deleteRowCol M col row).transpose := by
-  ext i hi j hj
-  let ii : Fin n := ⟨i, hi⟩
-  let jj : Fin n := ⟨j, hj⟩
-  change (deleteRowCol M.transpose row col)[ii][jj] =
-    (deleteRowCol M col row).transpose[ii][jj]
-  simp [deleteRowCol, ofFn, Matrix.transpose, Matrix.col]
+  apply ext_getElem
+  intro i j
+  rw [getElem_deleteRowCol, getElem_transpose, getElem_transpose, getElem_deleteRowCol]
 
 /-- The alternating sign used in signed cofactors. -/
 @[expose]

@@ -58,7 +58,7 @@ theorem takeCols_takeRows_pad [OfNat R 0] (M : Matrix R n m) (n' m' : Nat)
   intro i j
   rw [getElem_takeCols, getElem_takeRows, getElem_pad,
     dif_pos (⟨i.isLt, j.isLt⟩ : i.val < n ∧ j.val < m)]
-  rfl
+  rw [getElem_pair_eq_nested]
 
 /-- An in-range row of a padded matrix is the source row followed by zeros. -/
 theorem row_pad [OfNat R 0] (M : Matrix R n m) (n' m' : Nat) (I : Fin n') (hI : I.val < n) :
@@ -106,13 +106,14 @@ theorem takeCols_takeRows_mul_pad [Lean.Grind.Ring R]
     Vector.dotProduct_extendZero m d (fun t : Fin m => A[((⟨i.val, i.isLt⟩ : Fin n), t)])
       (fun t : Fin m => B[(t, (⟨j.val, j.isLt⟩ : Fin k))])]
   have hrowA : row A i = Vector.ofFn (fun t : Fin m => A[((⟨i.val, i.isLt⟩ : Fin n), t)]) := by
-    apply Vector.ext; intro t ht; rw [Vector.getElem_ofFn]; rfl
+    apply Vector.ext; intro t ht; rw [Vector.getElem_ofFn]
+    show (row A i)[(⟨t, ht⟩ : Fin m)] = _
+    rw [getElem_row, getElem_pair_eq_nested]
   have hcolB : col B j = Vector.ofFn (fun t : Fin m => B[(t, (⟨j.val, j.isLt⟩ : Fin k))]) := by
     apply Vector.ext; intro t ht
     rw [Vector.getElem_ofFn]
     show (col B j)[(⟨t, ht⟩ : Fin m)] = _
-    rw [getElem_col]
-    rfl
+    rw [getElem_col, getElem_pair_eq_nested]
   rw [hrowA, hcolB]
 
 end Matrix

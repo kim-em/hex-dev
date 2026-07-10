@@ -90,6 +90,10 @@ theorem vecMul_mem_prefixSubmodule_of_vector (b : Hex.Matrix Int n m)
     (c : Vector Int n) (t : Nat) (hc : ∀ i : Fin n, t ≤ i.val → c[i] = 0) :
     HexMatrixMathlib.vectorEquiv (Hex.Matrix.vecMul c b) ∈ prefixSubmodule b t := by
   rw [HexMatrixMathlib.vectorEquiv_vecMul]
+  have hrow : _root_.Matrix.row (HexMatrixMathlib.matrixEquiv b) =
+      fun i : Fin n => HexMatrixMathlib.vectorEquiv (Hex.Matrix.row b i) :=
+    funext fun i => HexMatrixMathlib.matrixEquiv_row b i
+  rw [hrow]
   exact vecMul_mem_prefixSubmodule b (HexMatrixMathlib.vectorEquiv c) t
     (fun i hi => by simpa [HexMatrixMathlib.vectorEquiv] using hc i hi)
 

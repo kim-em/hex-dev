@@ -43,24 +43,25 @@ theorem borderedMinor_corner_eq_principalSubmatrix {R : Type u}
     (M : Hex.Matrix R n n) (k : Nat) (hk : k < n) :
     Hex.Matrix.borderedMinor M k hk ⟨k, hk⟩ ⟨k, hk⟩ =
       Hex.Matrix.principalSubmatrix M (k + 1) (Nat.succ_le_of_lt hk) := by
-  apply Hex.Matrix.ext
-  apply Vector.ext
-  intro r _hr
-  apply Vector.ext
-  intro c _hc
-  by_cases hrk : r < k <;> by_cases hck : c < k
-  · simp [Hex.Matrix.borderedMinor, Hex.Matrix.principalSubmatrix, Hex.Matrix.ofFn,
-      hrk, hck]
-  · have hc_eq : c = k := by omega
-    simp [Hex.Matrix.borderedMinor, Hex.Matrix.principalSubmatrix, Hex.Matrix.ofFn,
-      hrk, hc_eq]
-  · have hr_eq : r = k := by omega
-    simp [Hex.Matrix.borderedMinor, Hex.Matrix.principalSubmatrix, Hex.Matrix.ofFn,
-      hck, hr_eq]
-  · have hr_eq : r = k := by omega
-    have hc_eq : c = k := by omega
-    simp [Hex.Matrix.borderedMinor, Hex.Matrix.principalSubmatrix, Hex.Matrix.ofFn,
-      hr_eq, hc_eq]
+  apply Hex.Matrix.ext_getElem
+  intro r c
+  rw [Hex.Matrix.getElem_principalSubmatrix]
+  simp only [Hex.Matrix.borderedMinor]
+  rw [Hex.Matrix.getElem_ofFn]
+  simp only [Hex.Matrix.getElem_pair_eq_nested]
+  have hr1 := r.isLt
+  have hc1 := c.isLt
+  have hrr : (if hr : r.val < k then (⟨r.val, Nat.lt_trans hr hk⟩ : Fin n) else ⟨k, hk⟩) =
+      (⟨r.val, Nat.lt_of_lt_of_le r.isLt (Nat.succ_le_of_lt hk)⟩ : Fin n) := by
+    split
+    · rfl
+    · simp only [Fin.mk.injEq]; omega
+  have hcc : (if hc : c.val < k then (⟨c.val, Nat.lt_trans hc hk⟩ : Fin n) else ⟨k, hk⟩) =
+      (⟨c.val, Nat.lt_of_lt_of_le c.isLt (Nat.succ_le_of_lt hk)⟩ : Fin n) := by
+    split
+    · rfl
+    · simp only [Fin.mk.injEq]; omega
+  rw [hrr, hcc]
 
 /-- Hypothesis used by the no-pivot Bareiss soundness proof: every leading
 prefix determinant up to size `n` is nonzero. -/
@@ -426,23 +427,18 @@ private theorem principalSubmatrix_rowSwap_eq_of_le {R : Type u}
     (kFin pivot : Fin n) (hkF : k ≤ kFin.val) (hp : k ≤ pivot.val) :
     Hex.Matrix.principalSubmatrix (Hex.Matrix.rowSwap M kFin pivot) k hk =
       Hex.Matrix.principalSubmatrix M k hk := by
-  apply Hex.Matrix.ext
-  apply Vector.ext
-  intro r hr
-  apply Vector.ext
-  intro c hc
-  have hr_lt : r < n := Nat.lt_of_lt_of_le hr hk
-  have h_r_ne_kFin : (⟨r, hr_lt⟩ : Fin n) ≠ kFin := by
+  apply Hex.Matrix.ext_getElem
+  intro r c
+  have hr := r.isLt
+  have hr_lt : r.val < n := Nat.lt_of_lt_of_le hr hk
+  have h_r_ne_kFin : (⟨r.val, hr_lt⟩ : Fin n) ≠ kFin := by
     intro h
-    have hval : r = kFin.val := by simpa using congrArg Fin.val h
+    have hval : r.val = kFin.val := by simpa using congrArg Fin.val h
     omega
-  have h_r_ne_pivot : (⟨r, hr_lt⟩ : Fin n) ≠ pivot := by
+  have h_r_ne_pivot : (⟨r.val, hr_lt⟩ : Fin n) ≠ pivot := by
     intro h
-    have hval : r = pivot.val := by simpa using congrArg Fin.val h
+    have hval : r.val = pivot.val := by simpa using congrArg Fin.val h
     omega
-  show ((Hex.Matrix.rowSwap M kFin pivot).principalSubmatrix k hk)[(⟨r, hr⟩ : Fin k)][
-      (⟨c, hc⟩ : Fin k)] =
-    (M.principalSubmatrix k hk)[(⟨r, hr⟩ : Fin k)][(⟨c, hc⟩ : Fin k)]
   rw [Hex.Matrix.getElem_principalSubmatrix, Hex.Matrix.getElem_principalSubmatrix]
   simp only [Hex.Matrix.getElem_rowSwap, if_neg h_r_ne_pivot, if_neg h_r_ne_kFin]
 
@@ -484,41 +480,25 @@ private theorem borderedMinor_rowSwap_source_row {R : Type u}
   -- equation reduces to a row equality on M (modulo the source row swap).
   -- For r = k, rr = i on LHS and rr = swap_idx i on RHS; the row equality
   -- is exactly `getElem_rowSwap`.
-  apply Hex.Matrix.ext
-  apply Vector.ext
-  intro r _hr
-  apply Vector.ext
-  intro c _hc
-  by_cases hrk : r < k
-  · have hr_lt : r < n := Nat.lt_trans hrk hk
-    have h_r_ne_kFin : (⟨r, hr_lt⟩ : Fin n) ≠ kFin := by
+  apply Hex.Matrix.ext_getElem
+  intro r c
+  simp only [Hex.Matrix.borderedMinor]
+  rw [Hex.Matrix.getElem_ofFn, Hex.Matrix.getElem_ofFn]
+  simp only [Hex.Matrix.getElem_pair_eq_nested]
+  by_cases hrk : r.val < k
+  · simp only [dif_pos hrk]
+    have hr_lt : r.val < n := Nat.lt_trans hrk hk
+    have h_r_ne_kFin : (⟨r.val, hr_lt⟩ : Fin n) ≠ kFin := by
       intro h
-      have hval : r = kFin.val := by simpa using congrArg Fin.val h
+      have hval : r.val = kFin.val := by simpa using congrArg Fin.val h
       omega
-    have h_r_ne_pivot : (⟨r, hr_lt⟩ : Fin n) ≠ pivot := by
+    have h_r_ne_pivot : (⟨r.val, hr_lt⟩ : Fin n) ≠ pivot := by
       intro h
-      have hval : r = pivot.val := by simpa using congrArg Fin.val h
+      have hval : r.val = pivot.val := by simpa using congrArg Fin.val h
       omega
-    by_cases hck : c < k
-    · have hc_lt : c < n := Nat.lt_trans hck hk
-      simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hrk, hck]
-      show (Hex.Matrix.rowSwap M kFin pivot)[(⟨r, hr_lt⟩ : Fin n)][(⟨c, hc_lt⟩ : Fin n)] =
-          M[(⟨r, hr_lt⟩ : Fin n)][(⟨c, hc_lt⟩ : Fin n)]
-      exact getElem_rowSwap_of_ne M kFin pivot ⟨r, hr_lt⟩ _ h_r_ne_kFin h_r_ne_pivot
-    · simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hrk, hck]
-      show (Hex.Matrix.rowSwap M kFin pivot)[(⟨r, hr_lt⟩ : Fin n)][j] =
-          M[(⟨r, hr_lt⟩ : Fin n)][j]
-      exact getElem_rowSwap_of_ne M kFin pivot ⟨r, hr_lt⟩ _ h_r_ne_kFin h_r_ne_pivot
-  · by_cases hck : c < k
-    · have hc_lt : c < n := Nat.lt_trans hck hk
-      simp only [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, Hex.Matrix.rows_ofRows, Vector.getElem_ofFn,
-        hrk, hck, dif_pos, dif_neg, not_false_iff]
-      show (Hex.Matrix.rowSwap M kFin pivot)[i][(⟨c, hc_lt⟩ : Fin n)] = _
-      exact getElem_rowSwap_swap_eq M kFin pivot i _
-    · simp only [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, Hex.Matrix.rows_ofRows, Vector.getElem_ofFn,
-        hrk, hck, dif_neg, not_false_iff]
-      show (Hex.Matrix.rowSwap M kFin pivot)[i][j] = _
-      exact getElem_rowSwap_swap_eq M kFin pivot i j
+    exact getElem_rowSwap_of_ne M kFin pivot ⟨r.val, hr_lt⟩ _ h_r_ne_kFin h_r_ne_pivot
+  · simp only [dif_neg hrk]
+    exact getElem_rowSwap_swap_eq M kFin pivot i _
 
 /-- Public regular swap-only step surface for the row-pivoted Bareiss proof.
 When the current diagonal pivot is zero and `findPivot?` returns a later row,
@@ -942,12 +922,9 @@ private theorem noPivotLoop_step_succ_ge
 private theorem principalSubmatrix_self {R : Type u} [Lean.Grind.Ring R]
     (M : Hex.Matrix R n n) (h : n ≤ n) :
     Hex.Matrix.principalSubmatrix M n h = M := by
-  apply Hex.Matrix.ext
-  apply Vector.ext
-  intro i hi
-  apply Vector.ext
-  intro j hj
-  simp [Hex.Matrix.principalSubmatrix, Hex.Matrix.ofFn, Hex.Matrix.getRow, Fin.getElem_fin]
+  apply Hex.Matrix.ext_getElem
+  intro i j
+  rw [Hex.Matrix.getElem_principalSubmatrix]
 
 /-- Helper: under the bordered-minor invariant, when the recurrence step
 equals `k`, the `(k, k)` entry of the working matrix equals `Hex.Matrix.det M`.

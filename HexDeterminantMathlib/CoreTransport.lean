@@ -305,7 +305,9 @@ theorem matrixEquiv_borderedMinor
         (fun c : Fin (k + 1) =>
           if hc : c.val < k then ⟨c.val, Nat.lt_trans hc hk⟩ else j) := by
   ext r c
-  simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn]
+  simp only [Hex.Matrix.borderedMinor, matrixEquiv_apply, Matrix.submatrix_apply]
+  rw [Hex.Matrix.getElem_ofFn]
+  exact Hex.Matrix.getElem_pair_eq_nested M _ _
 
 /-- Determinant form of `matrixEquiv_principalSubmatrix`. -/
 theorem det_principalSubmatrix_eq_submatrix_det [CommRing R]
@@ -337,9 +339,8 @@ theorem matrixEquiv_deleteRowCol
     matrixEquiv (Hex.Matrix.deleteRowCol M row col) =
       (matrixEquiv M).submatrix (Hex.Matrix.skipIndex row) (Hex.Matrix.skipIndex col) := by
   ext i j
-  change (Hex.Matrix.deleteRowCol M row col)[i][j] =
-    M[Hex.Matrix.skipIndex row i][Hex.Matrix.skipIndex col j]
-  rw [Hex.Matrix.getElem_deleteRowCol]
+  rw [matrixEquiv_apply, Matrix.submatrix_apply, matrixEquiv_apply,
+    Hex.Matrix.getElem_deleteRowCol]
 
 private theorem matrixEquiv_deleteRowCol_zero_zero
     (M : Hex.Matrix R (n + 2) (n + 2)) :
@@ -461,10 +462,10 @@ private theorem matrixEquiv_setRow
   ext i j
   by_cases hi : i = row
   · subst i
-    rw [Matrix.updateRow_self]
+    rw [Matrix.updateRow_self, matrixEquiv_apply]
     exact congrArg (fun rowv => rowv[j])
       (Hex.Matrix.setRow_get_self M row v)
-  · rw [Matrix.updateRow_ne hi]
+  · rw [Matrix.updateRow_ne hi, matrixEquiv_apply, matrixEquiv_apply]
     exact congrArg (fun rowv => rowv[j])
       (Hex.Matrix.setRow_row_ne M row i v hi)
 
@@ -1103,6 +1104,7 @@ private theorem matrixEquiv_setRow_p1_eq_submatrix_nMatrix
       (matrixEquiv (Hex.Matrix.nMatrix B p_t q htq)).submatrix σ id := by
   intro h1q M r m hm_bound σ
   ext i j
+  rw [matrixEquiv_apply, Matrix.submatrix_apply, matrixEquiv_apply, id_eq]
   show (Hex.Matrix.setRow M r B[p1])[i][j] = (Hex.Matrix.nMatrix B p_t q htq)[σ i][j]
   -- Determine σ i in terms of i.val via the four cycleAhead val-lemmas.
   have hr_val : r.val = p_t.val - 1 := rfl
@@ -1308,6 +1310,7 @@ private theorem matrixEquiv_nMatrix_p1_pt_eq_submatrix_setRow_q
       (matrixEquiv (Hex.Matrix.setRow M r B[q])).submatrix σ id := by
   intro h1q M r m a hm_bound σ
   ext i j
+  rw [matrixEquiv_apply, Matrix.submatrix_apply, matrixEquiv_apply, id_eq]
   show (Hex.Matrix.nMatrix B p1 p_t h1t)[i][j] =
     (Hex.Matrix.setRow M r B[q])[σ i][j]
   have hr_val : r.val = p_t.val - 1 := rfl

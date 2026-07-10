@@ -74,7 +74,7 @@ theorem natAbs_le_maxAbs (M : Matrix Int n m) (i : Fin n) (j : Fin m) :
     M[i][j].natAbs ≤ maxAbs M := by
   have hrow : M[i] ∈ M.rows.toList := by
     have h : M.rows.toList[i.val]'(by simp) = M[i] := by
-      simp [Hex.Matrix.getRow, Fin.getElem_fin]
+      simp [Hex.Matrix.getRow]
     rw [← h]
     exact List.getElem_mem _
   have hentry : M[i][j] ∈ M[i].toList := by
@@ -323,7 +323,8 @@ theorem mulEqCert_iff {M : Matrix Int n n} {A C : Matrix Int n m} :
     have hrow := packDigits_inj ((n * maxAbs M * maxAbs A + maxAbs C).log2 + 2)
       (xs := (row (M * A) ⟨i, hi⟩).toList) (ys := (row C ⟨i, hi⟩).toList)
       (by simp) ?_ ?_ hi'
-    · exact Vector.toList_inj.mp hrow
+    · rw [Hex.Matrix.getElem_rows _ i hi, Hex.Matrix.getElem_rows _ i hi]
+      exact Vector.toList_inj.mp hrow
     · intro x hx
       obtain ⟨j, hj, hxe⟩ := List.mem_iff_getElem.mp hx
       have hjm : j < m := by simpa using hj

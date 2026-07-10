@@ -324,8 +324,7 @@ and `0` otherwise. -/
 private theorem identity_get {R : Type u} [OfNat R 0] [OfNat R 1] {n : Nat}
     (i j : Fin n) :
     (Matrix.identity (R := R) n)[i][j] = if i = j then 1 else 0 := by
-  change (Matrix.identity n)[i][j] = if i = j then 1 else 0
-  simp [Matrix.identity, Matrix.ofFn]
+  simp only [Matrix.identity, getElem_ofFn]
 
 /-- `detProduct` of the identity matrix along `perm` is `0` whenever `perm` moves
 some index, that is `perm[i] ≠ i`. -/
@@ -334,6 +333,7 @@ private theorem detProduct_identity_zero {R : Type u}
     (i : Fin n) (h : perm[i] ≠ i) :
     detProduct (Matrix.identity (R := R) n) perm = 0 := by
   unfold detProduct
+  simp only [getElem_pair_eq_nested]
   rw [Fin.foldl_eq_finRange_foldl]
   have hsymm : i ≠ perm[i] := by
     intro hi

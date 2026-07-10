@@ -51,13 +51,10 @@ theorem leadingGramMatrixInt_eq_principalSubmatrix_gram
     (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
     leadingGramMatrixInt b k hk =
       Matrix.principalSubmatrix (Matrix.gramMatrix b) k hk := by
-  apply Hex.Matrix.ext
-  apply Vector.ext
-  intro i hi
-  apply Vector.ext
-  intro j hj
-  simp [leadingGramMatrixInt, Matrix.principalSubmatrix, Matrix.gramMatrix, Vector.dotProduct, Matrix.ofFn,
-    liftFinLE]
+  apply Hex.Matrix.ext_getElem
+  intro i j
+  simp only [leadingGramMatrixInt, Matrix.getElem_ofFn,
+    Matrix.getElem_principalSubmatrix, Matrix.getElem_gramMatrix, liftFinLE]
 
 /-- Leading principal Gram matrix of the first `k` rows of a rational basis. -/
 @[expose]
@@ -197,7 +194,8 @@ def gramRows (b : Matrix Int n m) : Array (Array Int) :=
 `(gramMatrix b)[i][j]`. -/
 private theorem getArrayEntry_gramRows (b : Matrix Int n m) (i j : Fin n) :
     getArrayEntry (gramRows b) i.val j.val = (Matrix.gramMatrix b)[i][j] := by
-  simp [getArrayEntry, gramRows, Matrix.gramMatrix, Vector.dotProduct, Matrix.ofFn]
+  rw [Matrix.getElem_gramMatrix]
+  simp [getArrayEntry, gramRows, Vector.dotProduct]
 
 /-- Reconstruct an `n × n` integer matrix from a row-major nested array, reading
 entry `(i, j)` as `rows[i]![j]!` (`getArrayEntry`). This converts the executable
@@ -211,13 +209,9 @@ def rowsToMatrix (rows : Array (Array Int)) (n : Nat) : Matrix Int n n :=
 nested-array packaging. -/
 private theorem rowsToMatrix_gramRows (b : Matrix Int n m) :
     rowsToMatrix (gramRows b) n = Matrix.gramMatrix b := by
-  apply Hex.Matrix.ext
-  apply Vector.ext
-  intro i hi
-  apply Vector.ext
-  intro j hj
-  simpa [rowsToMatrix, Matrix.ofFn, Hex.Matrix.getRow, Fin.getElem_fin] using
-    getArrayEntry_gramRows b (⟨i, hi⟩ : Fin n) (⟨j, hj⟩ : Fin n)
+  apply Hex.Matrix.ext_getElem
+  intro i j
+  rw [rowsToMatrix, Matrix.getElem_ofFn, getArrayEntry_gramRows]
 
 /-- Write `value` into entry `(row, col)` of a row-major nested array. -/
 @[expose]
@@ -977,18 +971,15 @@ private theorem rowsToMatrix_stepScaledRows_eq
     (hrowsize : ∀ (a : Nat), a < n → rows[a]!.size = n) :
     rowsToMatrix (stepScaledRows rows n k pivot prevPivot) n =
       Matrix.stepMatrix (rowsToMatrix rows n) k pivot prevPivot := by
-  apply Hex.Matrix.ext
-  apply Vector.ext
-  intro i hi
-  apply Vector.ext
-  intro j hj
+  apply Hex.Matrix.ext_getElem
+  intro i j
   have hentry : ∀ a b : Fin n,
       getArrayEntry rows a.val b.val = (rowsToMatrix rows n)[a][b] := by
     intro a b
-    simp [rowsToMatrix, Matrix.ofFn]
-  simpa [rowsToMatrix, Matrix.ofFn, Hex.Matrix.getRow, Fin.getElem_fin] using
-    getArrayEntry_stepScaledRows_matches_stepMatrix rows (rowsToMatrix rows n)
-      k pivot prevPivot hentry hsize hrowsize ⟨i, hi⟩ ⟨j, hj⟩
+    rw [rowsToMatrix, Matrix.getElem_ofFn]
+  rw [rowsToMatrix, Matrix.getElem_ofFn]
+  exact getArrayEntry_stepScaledRows_matches_stepMatrix rows (rowsToMatrix rows n)
+    k pivot prevPivot hentry hsize hrowsize i j
 
 end StepScaledRowsBookkeeping
 

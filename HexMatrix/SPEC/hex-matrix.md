@@ -14,12 +14,42 @@ Dense matrices over a coefficient type `R`.
 - Submatrix / leading-submatrix slicing and the Gram matrix
 - Generic over the coefficient type `R`
 
+**Backing representation (required): flat row-major `Vector R (n * m)`.**
+The opaque one-field structure wraps a single contiguous buffer holding the
+`n * m` entries in row-major order: entry `(i, j)` lives at flat index
+`i * m + j`, and row `i` occupies the contiguous span
+`data[i*m .. i*m + m)`. The layout-order decision (row-major `n * m` versus
+column-major `m * n`) was settled by the two deciding workloads:
+
+- *Elementary row operations dominate the elimination stack.* `rowSwap`,
+  `rowScale`, `rowAdd`, `modifyRow`, and the `mapRowsIdx`-based column
+  scatters each touch the `m` entries of one row, and the elimination
+  consumers (`hex-row-reduce`, `hex-bareiss`, `hex-lll`) issue `O(n²)` such
+  calls per run; `getRow` is the most-used accessor family-wide. Row-major
+  makes every one of these a contiguous span of the single buffer, updated
+  in place when the buffer is uniquely referenced. Column-major would
+  stride them all.
+- *`mulImpl`'s transpose step survives.* Under row-major the columns of the
+  right operand are non-contiguous (stride `m`), which is exactly why
+  `mulImpl` transposes once up front; the step is retained unchanged, a
+  one-time `O(m·k)` pass amortized against the `O(n·m·k)` product.
+  Column-major would let the right operand skip that transpose, but at the
+  cost of striding the far more numerous row-op workload — the wrong trade.
+- *Strassen block strides fall out naturally.* A quadrant sub-block of the
+  row-major buffer is an offset-and-stride window (row offset `r0`, column
+  offset `c0`, row stride `m`; entry `(i, j)` of the view at
+  `backing[(r0 + i) * m + (c0 + j)]`), the view type the copy-free Strassen
+  schedule needs (see "Avoiding sub-block copies").
+
 **Entry vs row access.** `M[(i, j)]` is the O(1) entry accessor and the normal
-form for single entries. Row access `M[i]` is deliberately `noncomputable`: it
-exists only so proofs may speak of whole rows, while compiled code reads rows
-through the computable `getRow` and entries through `M[(i, j)]`. Any compiled
-definition that reaches for `M[i]` fails to compile, so a future flat backing
-representation never silently pays a per-entry row-materialization cost.
+form for single entries — one flat read at `i * m + j`. Row access `M[i]` is
+deliberately `noncomputable`: it exists only so proofs may speak of whole rows,
+while compiled code reads rows through the computable `getRow` (one contiguous
+copy of the row span) and entries through `M[(i, j)]`. Any compiled definition
+that reaches for `M[i]` fails to compile, so the flat backing never silently
+pays a per-entry row-materialization cost. `rows` materializes all rows and is
+the (O(n·m)) observation the row-level lemma layer is stated against, not a
+compiled hot-path accessor.
 
 This is the dense base of the matrix family. The row-reduction stack
 (`hex-row-reduce`), the Leibniz determinant theory (`hex-determinant`), and the
@@ -31,15 +61,16 @@ representation. Their algebraic identities (involutivity of `rowSwap`,
 multiplicative behaviour `rowSwap_mul` / `rowScale_mul` / `rowAdd_mul`, and the
 inverse-preservation lemmas) live here and are reused by row reduction and by
 the determinant row-operation laws. They update the matrix in place when it is
-uniquely referenced: each uses its argument linearly and goes through
-`Vector.swap` / `Vector.modify` / `Vector.map`, which reuse the backing store
+uniquely referenced: each uses its argument linearly and writes the affected
+row spans of the single flat buffer through `Vector.set` / `Vector.swap`
+loops (`writeRow` and the `swap` column loop), which reuse the backing store
 rather than copying it.
 
-**Indexed row/column mutation.** `modifyRow` updates one row in place;
+**Indexed row/column mutation.** `modifyRow` updates one row span in place;
 `setCol` and the per-entry `modifyCol` update one column entry per row. The
 column operations share an in-place engine, `mapRowsIdx`, which threads the
-matrix through a `Fin.foldl` of per-row `Vector.modify`s — no intermediate index
-list is allocated, and each row's single-entry update reuses the freed row slot.
+matrix through a `Fin.foldl` of per-row `modifyRow`s — no intermediate index
+list is allocated, and each row's update writes back into the owned buffer.
 This replaces the former `ofFn`-rebuild form of `setCol`, which read and
 reallocated every entry to change one column.
 
@@ -238,21 +269,18 @@ storage (one buffer per sum) and the storage schedule is a later refinement; the
 logical schedule and the correctness proof do not depend on which storage
 schedule is used.
 
-A block view is feasible on the current backing too: the row-of-rows
-`Vector (Vector R m) n` reads `backing[r0+i][c0+j]` at essentially the cost of a
-flat buffer's offset access, so quadrant *reads* need no copy. What a **flat**
-backing representation `Vector R (n*m)` buys is different: stride-and-cache
-locality across a whole block, cheap bulk materialization of a leaf block for the
-base kernel, and column-contiguous views (which the row-of-rows backing does not
-give cheaply). A block view is then offset-and-stride arithmetic into one shared
-buffer. `Hex.Matrix` is deliberately an opaque one-field structure (design
-principle 10) precisely so this switch stays invisible to consumers. Until it
-lands, an interim implementation has a choice: recurse over a view type that
-reads the row-of-rows backing in place, or recurse over materialized `Matrix`
-quadrants (reusing the existing matrix add and subtract) and pay the copies. The
-recursion and the correctness proof are identical either way. The flat-backing switch is tracked as separate
-follow-up work; it is a representation change to `hex-matrix`, not a change to
-this algorithm.
+The **flat row-major backing** (see "Backing representation" above) is what
+makes such views cheap: stride-and-cache locality across a whole block, cheap
+bulk materialization of a leaf block for the base kernel, and a block view
+that is pure offset-and-stride arithmetic into one shared buffer
+(`backing[(r0 + i) * m + (c0 + j)]`). `Hex.Matrix` is deliberately an opaque
+one-field structure (design principle 10) precisely so that representation
+switch stayed invisible to consumers when it landed. The current
+implementation recurses over materialized `Matrix` quadrants (reusing the
+existing matrix add and subtract) and pays the copies; the `BlockView` type
+(backing matrix plus row/column offsets plus the block dimensions) and the
+rewiring of the recursion over views is follow-up work on the same flat
+backing. The recursion and the correctness proof are identical either way.
 
 ### Correctness
 
@@ -324,16 +352,17 @@ that fits both exponents by ordinary least squares over the asymptotic window,
 as `hex-lll-scaling.py` does, accompanies the figure.
 
 The measured crossover is representation-dependent, so the bench records which
-backing it ran on. On the current `Vector (Vector R m) n` row-of-rows backing,
-`mulStrassen` pays for worse stride-and-cache locality across a block, and for
-whatever leaf or quadrant materialization the interim implementation chooses (see
-"Avoiding sub-block copies"). Both raise the crossover, so a poor crossover
-measured here is partly a representation artifact rather than a verdict on the
-algorithm. A flat `Vector R (n*m)` backing is expected to lower the crossover, and
-it shifts the naive baseline too, because it changes allocation and cache
-behaviour and how the transpose step is expressed. That switch is a separate `hex-matrix`
-change, tracked in its own issue and measured there as a before/after overlay on
-this same multiply bench, not folded into the Strassen crossover reported here.
+backing it ran on. The flat row-major switch itself was measured as a
+before/after overlay on this same multiply bench: **neutral on the multiply
+surface** (naive `1.00–1.02×`, default-config `mulStrassen` `0.98–1.00×`
+across `64…1024`; identical checksums) with a small Bareiss elimination cost
+(`1–4%`, shrinking with `n`). The multiply hot paths were already
+row-contiguous under row-of-rows, so parity is the expected reading; what the
+flat backing changes for Strassen is not these curves but the cost model of
+the *recursion's internals* — quadrant materialization and leaf handling —
+which is why the crossover gets re-measured when the `BlockView`-based
+recursion (see "Avoiding sub-block copies") replaces materialized quadrants,
+not before.
 
 ### A demonstration non-default config
 

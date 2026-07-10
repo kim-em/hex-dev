@@ -50,7 +50,7 @@ private theorem detProduct_setCol_add {R : Type u} [Lean.Grind.CommRing R]
     change perm.toList[pivot.val]'(by simp [Vector.length_toList, pivot.isLt]) = dst
     simp [pivot] at hget ⊢
   unfold detProduct
-  simp only [Fin.foldl_eq_finRange_foldl]
+  simp only [Fin.foldl_eq_finRange_foldl, getElem_pair_eq_nested]
   calc
     (List.finRange n).foldl
         (fun acc i => acc * (setCol M dst (fun r => v r + w r))[i][perm[i]]) 1 =
@@ -146,7 +146,7 @@ private theorem detProduct_setCol_smul {R : Type u} [Lean.Grind.CommRing R]
     change perm.toList[pivot.val]'(by simp [Vector.length_toList, pivot.isLt]) = dst
     simp [pivot] at hget ⊢
   unfold detProduct
-  simp only [Fin.foldl_eq_finRange_foldl]
+  simp only [Fin.foldl_eq_finRange_foldl, getElem_pair_eq_nested]
   calc
     (List.finRange n).foldl
         (fun acc i => acc * (setCol M dst (fun r => c * v r))[i][perm[i]]) 1 =
@@ -358,7 +358,8 @@ def columnSumMatrix {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (r j : Fin n) :
     (columnSumMatrix source coeff)[r][j] =
       (List.finRange m).foldl (fun acc k => acc + coeff[(j, k)] * source[(r, k)]) 0 := by
-  simp [columnSumMatrix, ofFn, Fin.foldl_eq_finRange_foldl]
+  unfold columnSumMatrix
+  rw [getElem_ofFn, Fin.foldl_eq_finRange_foldl]
 
 private theorem setCol_columnSumMatrix_self
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
@@ -367,18 +368,13 @@ private theorem setCol_columnSumMatrix_self
         (fun r => (List.finRange m).foldl
           (fun acc k => acc + coeff[dst][k] * source[r][k]) 0) =
       columnSumMatrix source coeff := by
-  ext r hr c hc
-  change
-    (setCol (columnSumMatrix source coeff) dst
-        (fun r => (List.finRange m).foldl
-          (fun acc k => acc + coeff[dst][k] * source[r][k]) 0))[
-          (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
-      (columnSumMatrix source coeff)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+  apply ext_getElem
+  intro r c
   rw [getElem_setCol]
-  by_cases hcol : (⟨c, hc⟩ : Fin n) = dst
+  by_cases hcol : c = dst
   · subst dst
-    rw [if_pos rfl]
-    exact (getElem_columnSumMatrix source coeff (⟨r, hr⟩ : Fin n) (⟨c, hc⟩ : Fin n)).symm
+    rw [if_pos rfl, getElem_columnSumMatrix]
+    simp only [getElem_pair_eq_nested]
   · simp [hcol]
 
 private theorem det_columnSumMatrix_expand_column
@@ -414,7 +410,11 @@ private def columnChoiceMatrix {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
       match choices c with
       | some k => source[(r, k)]
       | none => (List.finRange m).foldl (fun acc k => acc + coeff[(c, k)] * source[(r, k)]) 0 := by
-  simp [columnChoiceMatrix, ofFn, Fin.foldl_eq_finRange_foldl]
+  unfold columnChoiceMatrix
+  rw [getElem_ofFn]
+  cases choices c with
+  | some k => rfl
+  | none => rw [Fin.foldl_eq_finRange_foldl]
 
 /-- A determinant with two equal rows is zero. -/
 theorem det_eq_zero_of_row_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
@@ -422,13 +422,12 @@ theorem det_eq_zero_of_row_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (hrow : M[src] = M[dst]) :
     det M = 0 := by
   have hdup : rowAddDuplicate M src dst = M := by
-    ext r hr c hc
-    change (rowAddDuplicate M src dst)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
-      M[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+    apply ext_getElem
+    intro r c
     rw [rowAddDuplicate_get]
-    by_cases hdst : (⟨r, hr⟩ : Fin n) = dst
+    by_cases hdst : r = dst
     · subst hdst
-      simpa using congrArg (fun row => row[(⟨c, hc⟩ : Fin n)]) hrow
+      simpa using congrArg (fun row => row[c]) hrow
     · simp [hdst]
   have hsum := permutationVectors_duplicateRow_sum M src dst h
   rw [hdup] at hsum

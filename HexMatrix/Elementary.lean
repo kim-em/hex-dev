@@ -25,6 +25,20 @@ universe u
 
 namespace Matrix
 
+/-- Reading the `i`-th materialized row of `M.rows` is `getRow M i`. A stable
+bridge (independent of the backing representation) used to route the entrywise
+elementary-op proofs through the `.rows` characterization lemmas. -/
+private theorem getRow_rows (M : Matrix R n m) (i : Fin n) : M.rows[i] = getRow M i := by
+  simp [rows]
+
+/-- `getRow` commutes with `mapRows`: row `r` of `M.mapRows f` is `f` applied to
+row `r` of `M`. -/
+private theorem getRow_mapRows {m' : Nat} (M : Matrix R n m)
+    (f : Vector R m → Vector R m') (r : Fin n) :
+    getRow (M.mapRows f) r = f (getRow M r) := by
+  rw [← getRow_rows, rows_mapRows]
+  simp
+
 /-- Swap rows `i` and `j` in a dense matrix.
 
 Implemented with `Vector.swap`, which updates the dense backing store in place
@@ -40,9 +54,9 @@ other row is unchanged. -/
 theorem getElem_rowSwap (M : Matrix R n m) (i j r : Fin n) (k : Fin m) :
     (rowSwap M i j)[r][k] =
       if r = j then M[i][k] else if r = i then M[j][k] else M[r][k] := by
-  rw [rowSwap]
+  rw [rowSwap, getElem_eq_getRow, ← getRow_rows, rows_swap]
   by_cases hri : r = i <;> by_cases hrj : r = j <;>
-    simp_all [getRow, rows_swap, Fin.getElem_fin, Fin.ext_iff]
+    simp_all [getElem_eq_getRow, Fin.ext_iff]
 
 /-- Row `i` of `rowSwap M i j` is the original row `j`. -/
 @[simp, grind =] theorem row_rowSwap_left (M : Matrix R n m) (i j : Fin n) :
@@ -87,22 +101,22 @@ theorem rowSwap_diag_of_ne (M : Matrix R n n) {k pivot : Fin n}
 
 /-- Scale row `i` by `c`.
 
-`Vector.modify` frees the row slot before applying the update, so when `M` is
-uniquely referenced both the outer vector and the row itself are updated in
-place: `Vector.map` reuses the freed row's backing store. -/
+Per-entry in place via `modifyEntries`: each of the row's `m` entries is a
+single `Vector.modify` of the flat backing buffer, with no row
+materialization, when `M` is uniquely referenced. -/
 @[expose]
 def rowScale [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) : Matrix R n m :=
-  M.modifyRow i fun row => row.map fun x => c * x
+  M.modifyEntries i.val fun _ x => c * x
 
 /-- Read an entry of `rowScale M i c` by cases on the row index: row `i`
 returns `c * M[i][k]`, any other row is unchanged. -/
 theorem getElem_rowScale [Mul R] (M : Matrix R n m) (i r : Fin n) (c : R) (k : Fin m) :
     (rowScale M i c)[r][k] =
       if r = i then c * M[i][k] else M[r][k] := by
-  rw [rowScale]
-  simp only [getElem_eq_getRow, getRow, rows_modifyRow, Vector.getElem_modify,
-    Fin.getElem_fin, Fin.ext_iff]
-  grind
+  rw [rowScale, getElem_modifyEntries]
+  by_cases h : r = i
+  · rw [if_pos (congrArg Fin.val h), if_pos h, h]
+  · rw [if_neg (fun hv => h (Fin.ext hv)), if_neg h]
 
 /-- Row `i` of `rowScale M i c` is the pointwise scalar multiple of row `i`. -/
 @[simp, grind =] theorem row_rowScale_self [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) :
@@ -125,14 +139,14 @@ theorem row_rowScale_of_ne [Mul R] (M : Matrix R n m) {i r : Fin n} (c : R)
 
 /-- Replace row `dst` by `row dst + c * row src`.
 
-The source row is read once into `rsrc`, so the only remaining reference to `M`
-is the consuming `Vector.modify`, which updates the outer vector in place when
-`M` is uniquely referenced (dropping the old row `dst`). The replacement row is
-built fresh, since every entry of it changes. -/
+The source row is read once into `rsrc` (one contiguous copy), so the only
+remaining reference to `M` is the consuming `modifyEntries`, which updates the
+`dst` row's entries of the flat backing buffer in place when `M` is uniquely
+referenced, with no destination-row materialization. -/
 @[expose]
 def rowAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin n) (c : R) : Matrix R n m :=
   let rsrc := getRow M src
-  M.modifyRow dst fun rdst => Vector.ofFn fun k => rdst[k] + c * rsrc[k]
+  M.modifyEntries dst.val fun k x => x + c * rsrc[k]
 
 /-- Read an entry of `rowAdd M src dst c` by cases on the row index: row `dst`
 returns `M[dst][k] + c * M[src][k]`, any other row is unchanged. -/
@@ -140,10 +154,11 @@ theorem getElem_rowAdd [Mul R] [Add R]
     (M : Matrix R n m) (src dst r : Fin n) (c : R) (k : Fin m) :
     (rowAdd M src dst c)[r][k] =
       if r = dst then M[dst][k] + c * M[src][k] else M[r][k] := by
-  rw [rowAdd]
-  simp only [getElem_eq_getRow, getRow, rows_modifyRow, Vector.getElem_modify,
-    Fin.getElem_fin, Fin.ext_iff]
-  grind
+  rw [rowAdd, getElem_modifyEntries]
+  by_cases h : r = dst
+  · rw [if_pos (congrArg Fin.val h), if_pos h, h]
+    rw [show (getRow M src)[k] = M[src][k] from rfl]
+  · rw [if_neg (fun hv => h (Fin.ext hv)), if_neg h]
 
 /-- Source-row entries are unchanged by `rowAdd M src dst c` when `src ≠ dst`. -/
 theorem getElem_rowAdd_src_of_ne [Mul R] [Add R]
@@ -186,13 +201,14 @@ goes through `Vector.modify` for in-place update; this is the value-level
 characterization for callers that reason about the result as a `set`. -/
 theorem rowScale_eq_set [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) :
     rowScale M i c = setRow M i (Vector.ofFn fun k => c * M[i][k]) := by
-  apply ext
-  simp only [rowScale, rows_modifyRow, rows_setRow]
-  rw [Vector.modify_eq_set _ _ _ i.isLt]
-  congr 1
-  apply Vector.ext
-  intro k hk
-  simp [Fin.getElem_fin, getElem_eq_getRow, getRow]
+  apply ext_getElem
+  intro r k
+  rw [getElem_rowScale]
+  by_cases h : r = i
+  · subst h
+    rw [setRow_get_self]
+    simp [Vector.getElem_ofFn]
+  · rw [if_neg h, setRow_row_ne M i r _ h]
 
 /-- `rowAdd` as a single `set` of the combined row. The executable definition
 goes through `Vector.modify` for in-place update; this is the value-level
@@ -200,10 +216,14 @@ characterization for callers that reason about the result as a `set`. -/
 theorem rowAdd_eq_set [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin n) (c : R) :
     rowAdd M src dst c =
       setRow M dst (Vector.ofFn fun k => M[dst][k] + c * M[src][k]) := by
-  apply ext
-  simp only [rowAdd, rows_modifyRow, rows_setRow]
-  rw [Vector.modify_eq_set _ _ _ dst.isLt]
-  congr 1
+  apply ext_getElem
+  intro r k
+  rw [getElem_rowAdd]
+  by_cases h : r = dst
+  · subst h
+    rw [setRow_get_self]
+    simp [Vector.getElem_ofFn]
+  · rw [if_neg h, setRow_row_ne M dst r _ h]
 
 /-- Column `k` of `rowSwap M i j` is column `k` of `M` with entries `i` and `j`
 exchanged. -/
@@ -268,9 +288,8 @@ theorem getElem_colAdd [Mul R] [Add R]
     (M : Matrix R n m) (src dst : Fin m) (c : R) (i : Fin n) (j : Fin m) :
     (colAdd M src dst c)[i][j] =
       if j = dst then M[i][j] + c * M[i][src] else M[i][j] := by
-  rw [colAdd]
-  simp only [getElem_eq_getRow, getRow, rows_mapRows, Vector.getElem_map,
-    Vector.getElem_set, Fin.getElem_fin, Fin.ext_iff]
+  rw [colAdd, getElem_eq_getRow, getRow_mapRows]
+  simp only [Vector.getElem_set, getElem_eq_getRow, Fin.getElem_fin, Fin.ext_iff]
   grind
 
 /-- Read an entry of `colAddRight M src dst c` by cases on the column index:
@@ -280,9 +299,8 @@ theorem getElem_colAddRight [Mul R] [Add R]
     (M : Matrix R n m) (src dst : Fin m) (c : R) (i : Fin n) (j : Fin m) :
     (colAddRight M src dst c)[i][j] =
       if j = dst then M[i][j] + M[i][src] * c else M[i][j] := by
-  rw [colAddRight]
-  simp only [getElem_eq_getRow, getRow, rows_mapRows, Vector.getElem_map,
-    Vector.getElem_set, Fin.getElem_fin, Fin.ext_iff]
+  rw [colAddRight, getElem_eq_getRow, getRow_mapRows]
+  simp only [Vector.getElem_set, getElem_eq_getRow, Fin.getElem_fin, Fin.ext_iff]
   grind
 
 /-- Column `dst` of `colAdd M src dst c` is the pointwise column combination. -/
@@ -401,9 +419,8 @@ any other column is unchanged. -/
 @[grind =] theorem getElem_colSwap (M : Matrix R n m) (i j : Fin m) (r : Fin n) (c : Fin m) :
     (colSwap M i j)[r][c] =
       if c = j then M[r][i] else if c = i then M[r][j] else M[r][c] := by
-  rw [colSwap]
-  simp only [getElem_eq_getRow, getRow, rows_mapRows, Vector.getElem_map,
-    Vector.getElem_swap, Fin.getElem_fin, Fin.ext_iff]
+  rw [colSwap, getElem_eq_getRow, getRow_mapRows]
+  simp only [Vector.getElem_swap, getElem_eq_getRow, Fin.getElem_fin, Fin.ext_iff]
   grind
 
 /-- Column `i` of `colSwap M i j` is the original column `j`. -/

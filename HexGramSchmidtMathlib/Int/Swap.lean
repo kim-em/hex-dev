@@ -692,37 +692,22 @@ theorem gramDet_pos_of_upperTriangular_pos_diag
       omega
   | succ r =>
       have hrn : r < n := Nat.lt_of_succ_le hk
+      have hrow_take : ∀ p : Fin (r + 1),
+          Matrix.row (Matrix.takeRows M (r + 1) hk) p =
+            Matrix.row M ⟨p.val, Nat.lt_of_lt_of_le p.isLt hk⟩ := by
+        intro p
+        apply Vector.ext
+        intro c hc
+        show (Matrix.row (Matrix.takeRows M (r + 1) hk) p)[(⟨c, hc⟩ : Fin n)] =
+          (Matrix.row M ⟨p.val, Nat.lt_of_lt_of_le p.isLt hk⟩)[(⟨c, hc⟩ : Fin n)]
+        rw [Matrix.getElem_row, Matrix.getElem_takeRows, Matrix.getElem_row]
       have hlead :
           Matrix.gramMatrix (Matrix.takeRows M (r + 1) hk) =
             Matrix.principalSubmatrix (Matrix.gramMatrix M) (r + 1) hk := by
-        apply Hex.Matrix.ext
-        apply Vector.ext
-        intro i hi
-        apply Vector.ext
-        intro j hj
-        let iFin : Fin (r + 1) := ⟨i, hi⟩
-        let jFin : Fin (r + 1) := ⟨j, hj⟩
-        let ii : Fin n := ⟨i, Nat.lt_of_lt_of_le hi hk⟩
-        let jj : Fin n := ⟨j, Nat.lt_of_lt_of_le hj hk⟩
-        have hrow_i :
-            Matrix.row (Matrix.takeRows M (r + 1) hk) iFin =
-              Matrix.row M ii := by
-          apply Vector.ext
-          intro c hc
-          simp [Matrix.row, Matrix.takeRows, Matrix.ofFn, iFin, ii]
-        have hrow_j :
-            Matrix.row (Matrix.takeRows M (r + 1) hk) jFin =
-              Matrix.row M jj := by
-          apply Vector.ext
-          intro c hc
-          simp [Matrix.row, Matrix.takeRows, Matrix.ofFn, jFin, jj]
-        have hdot :
-            (Matrix.row (Matrix.takeRows M (r + 1) hk) iFin).dotProduct
-                (Matrix.row (Matrix.takeRows M (r + 1) hk) jFin) =
-              (Matrix.row M ii).dotProduct (Matrix.row M jj) := by
-          rw [hrow_i, hrow_j]
-        simpa [Matrix.gramMatrix, Matrix.principalSubmatrix, Matrix.ofFn, iFin, jFin, ii, jj]
-          using hdot
+        apply Hex.Matrix.ext_getElem
+        intro i j
+        simp only [Matrix.getElem_gramMatrix, Matrix.getElem_principalSubmatrix]
+        rw [hrow_take i, hrow_take j]
       have hdet_pos :
           0 < Matrix.det (GramSchmidt.leadingGramMatrixInt M (r + 1) hk) := by
         have hpos :=

@@ -88,7 +88,7 @@ theorem det_succ_eq {k : Nat} (data : BareissData (k + 1))
       data.matrix[(⟨k, Nat.lt_succ_self k⟩ : Fin (k + 1))][
         (⟨k, Nat.lt_succ_self k⟩ : Fin (k + 1))] := by
   unfold det
-  rw [h]
+  rw [h, ← Matrix.getElem_pair_eq_nested]
   rfl
 
 /-- For a non-singular Bareiss elimination of an empty matrix, the encoded
@@ -319,12 +319,11 @@ theorem findPivot?_some_ne_zero (M : Matrix Int n n) (col : Fin n)
 /-- Apply one Bareiss update step to the trailing submatrix strictly below and
 to the right of the current pivot.
 
-Built in place: rows at or above the pivot (`i ≤ k`) are left untouched, and only
-the rows below the pivot are rebuilt, via `mapRowsIdx` threading the matrix
-through per-row `Vector.modify`s. The pivot row is read once into `pivotRow`
-before the scatter (it is never mutated, since only rows `i > k` change), so the
-update reuses the outer vector and the finished prefix rows rather than
-reallocating the whole `n × n` matrix as a fresh `ofFn`. -/
+Rows at or above the pivot (`i ≤ k`) are left untouched, and only the rows below
+the pivot are rebuilt. The pivot row is read once into `pivotRow` before the
+scatter (it is never mutated, since only rows `i > k` change). This
+`mapRowsIdx` form is the reference the entry lemmas reduce through; compiled
+code runs the per-entry in-place `stepMatrixImpl` via the `@[csimp]` below. -/
 @[expose]
 def stepMatrix (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) :
     Matrix Int n n :=
@@ -345,6 +344,144 @@ def stepMatrix (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) :
         row
   else
     M
+
+/-- Fast in-place implementation of `stepMatrix`: each updated row is written
+through per-entry `Matrix.modifyEntries` updates of the flat backing buffer,
+with no per-row materialization or write-back. Swapped in for compiled code by
+the `@[csimp]` lemma below; `stepMatrix` stays the reference form for proofs. -/
+@[expose]
+def stepMatrixImpl (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) :
+    Matrix Int n n :=
+  if hk : k < n then
+    let pivotRow := Matrix.getRow M ⟨k, hk⟩
+    Fin.foldl n (fun A i =>
+      if k < i.val then
+        let mik := A[(i, (⟨k, hk⟩ : Fin n))]
+        A.modifyEntries i.val fun j x =>
+          if k < j.val then
+            exactDiv (pivot * x - mik * pivotRow[j]) prevPivot
+          else if j.val = k then
+            0
+          else
+            x
+      else
+        A) M
+  else
+    M
+
+/-- The `stepMatrixImpl` fold leaves row `r` untouched when `r` is not among the
+folded indices. -/
+private theorem stepImplFold_ne (k : Nat) (hk : k < n) (pivot prevPivot : Int)
+    (pivotRow : Vector Int n) (r c : Fin n) :
+    ∀ (xs : List (Fin n)) (A : Matrix Int n n), (∀ t ∈ xs, t ≠ r) →
+      (xs.foldl (fun A (i : Fin n) =>
+        if k < i.val then
+          A.modifyEntries i.val fun j x =>
+            if k < j.val then
+              exactDiv (pivot * x - A[(i, (⟨k, hk⟩ : Fin n))] * pivotRow[j]) prevPivot
+            else if j.val = k then 0
+            else x
+        else A) A)[r][c] = A[r][c] := by
+  intro xs
+  induction xs with
+  | nil => intro A _; rfl
+  | cons x xs ih =>
+    intro A hne
+    rw [List.foldl_cons, ih _ (fun t ht => hne t (List.mem_cons_of_mem _ ht))]
+    by_cases hx : k < x.val
+    · rw [if_pos hx, Matrix.getElem_modifyEntries,
+        if_neg (fun hv => hne x List.mem_cons_self ((Fin.ext hv).symm))]
+    · rw [if_neg hx]
+
+/-- The `stepMatrixImpl` fold updates every member row from its original
+entries. -/
+private theorem stepImplFold_mem (k : Nat) (hk : k < n) (pivot prevPivot : Int)
+    (pivotRow : Vector Int n) (c : Fin n) :
+    ∀ (xs : List (Fin n)), xs.Nodup → ∀ (A : Matrix Int n n) (r : Fin n), r ∈ xs →
+      (xs.foldl (fun A (i : Fin n) =>
+        if k < i.val then
+          A.modifyEntries i.val fun j x =>
+            if k < j.val then
+              exactDiv (pivot * x - A[(i, (⟨k, hk⟩ : Fin n))] * pivotRow[j]) prevPivot
+            else if j.val = k then 0
+            else x
+        else A) A)[r][c] =
+      if k < r.val then
+        (if k < c.val then
+          exactDiv (pivot * A[r][c] - A[(r, (⟨k, hk⟩ : Fin n))] * pivotRow[c]) prevPivot
+        else if c.val = k then 0
+        else A[r][c])
+      else A[r][c] := by
+  intro xs
+  induction xs with
+  | nil => intro _ A r hr; simp at hr
+  | cons x xs ih =>
+    intro hnd A r hr
+    rw [List.foldl_cons]
+    rcases List.mem_cons.mp hr with rfl | hr'
+    · rw [stepImplFold_ne k hk pivot prevPivot pivotRow r c xs _
+        (fun t ht heq => (List.nodup_cons.mp hnd).1 (heq ▸ ht))]
+      by_cases hx : k < r.val
+      · rw [if_pos hx, if_pos hx, Matrix.getElem_modifyEntries, if_pos rfl]
+      · rw [if_neg hx, if_neg hx]
+    · have hxr : x ≠ r := fun heq => (List.nodup_cons.mp hnd).1 (heq ▸ hr')
+      have hrowr : ∀ cc : Fin n,
+          (if k < x.val then
+            A.modifyEntries x.val fun j y =>
+              if k < j.val then
+                exactDiv (pivot * y - A[(x, (⟨k, hk⟩ : Fin n))] * pivotRow[j]) prevPivot
+              else if j.val = k then 0
+              else y
+          else A)[r][cc] = A[r][cc] := by
+        intro cc
+        by_cases hx : k < x.val
+        · rw [if_pos hx, Matrix.getElem_modifyEntries,
+            if_neg (fun hv => hxr (Fin.ext hv.symm))]
+        · rw [if_neg hx]
+      rw [ih (List.nodup_cons.mp hnd).2 _ r hr']
+      rw [show (if k < x.val then
+            A.modifyEntries x.val fun j y =>
+              if k < j.val then
+                exactDiv (pivot * y - A[(x, (⟨k, hk⟩ : Fin n))] * pivotRow[j]) prevPivot
+              else if j.val = k then 0
+              else y
+          else A)[(r, (⟨k, hk⟩ : Fin n))] = A[(r, (⟨k, hk⟩ : Fin n))] from by
+        rw [Matrix.getElem_pair_eq_nested (i := r) (j := (⟨k, hk⟩ : Fin n)),
+          Matrix.getElem_pair_eq_nested (i := r) (j := (⟨k, hk⟩ : Fin n))]
+        exact hrowr ⟨k, hk⟩]
+      rw [hrowr c]
+
+/-- `stepMatrixImpl` agrees entrywise with the same `ofFn` form as
+`stepMatrix` (`stepMatrix_eq_ofFn`); the `@[csimp]` equality chains the two. -/
+private theorem stepMatrixImpl_eq_ofFn (M : Matrix Int n n) (k : Nat)
+    (pivot prevPivot : Int) :
+    stepMatrixImpl M k pivot prevPivot =
+      Matrix.ofFn fun i j =>
+        if hkij : k < i.val ∧ k < j.val then
+          let colK : Fin n := ⟨k, Nat.lt_trans hkij.1 i.isLt⟩
+          let rowK : Fin n := ⟨k, Nat.lt_trans hkij.2 j.isLt⟩
+          exactDiv (pivot * M[(i, j)] - M[(i, colK)] * M[(rowK, j)]) prevPivot
+        else if k < i.val ∧ j.val = k then
+          0
+        else
+          M[(i, j)] := by
+  apply Matrix.ext_getElem
+  intro i j
+  rw [Matrix.getElem_ofFn]
+  unfold stepMatrixImpl
+  by_cases hk : k < n
+  · rw [dif_pos hk]
+    show (Fin.foldl n _ M)[i][j] = _
+    rw [Fin.foldl_eq_finRange_foldl,
+      stepImplFold_mem k hk pivot prevPivot (Matrix.getRow M ⟨k, hk⟩) j
+        (List.finRange n) (List.nodup_finRange n) M i (List.mem_finRange _)]
+    simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_eq_getRow]
+    rw [show (Matrix.getRow M ⟨k, hk⟩)[j] = (Matrix.getRow M ⟨k, hk⟩)[j.val] from rfl]
+    grind
+  · rw [dif_neg hk]
+    have hik : ¬ k < i.val := fun h => hk (Nat.lt_trans h i.isLt)
+    simp only [Matrix.getElem_pair_eq_nested]
+    grind
 
 /-- The in-place `stepMatrix` agrees entrywise with the `ofFn` form it replaces;
 lets the existing entry lemmas reduce through the same body. -/
@@ -378,6 +515,10 @@ theorem stepMatrix_eq_ofFn (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int
       Fin.getElem_fin]
     grind
 
+@[csimp] theorem stepMatrix_eq_stepMatrixImpl : @stepMatrix = @stepMatrixImpl := by
+  funext n M k pivot prevPivot
+  rw [stepMatrix_eq_ofFn, stepMatrixImpl_eq_ofFn]
+
 /-- Outside the trailing update region and pivot column below the pivot,
 `stepMatrix` leaves entries unchanged. -/
 @[grind =]
@@ -386,7 +527,7 @@ theorem stepMatrix_eq_of_not_update
     (htrail : ¬ (k < i.val ∧ k < j.val))
     (hcol : ¬ (k < i.val ∧ j.val = k)) :
     (stepMatrix M k pivot prevPivot)[i][j] = M[i][j] := by
-  rw [stepMatrix_eq_ofFn]; simp [Matrix.ofFn, htrail, hcol]
+  rw [stepMatrix_eq_ofFn, Matrix.getElem_ofFn]; simp [htrail, hcol]
 
 /-- `stepMatrix` preserves diagonal entries whose index is at or before the
 current pivot step. -/
@@ -407,7 +548,7 @@ theorem stepMatrix_pivot_col_below
     (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) (i colK : Fin n)
     (hi : k < i.val) (hcolK : colK.val = k) :
     (stepMatrix M k pivot prevPivot)[i][colK] = 0 := by
-  rw [stepMatrix_eq_ofFn]; simp [Matrix.ofFn, hi, hcolK]
+  rw [stepMatrix_eq_ofFn, Matrix.getElem_ofFn]; simp [hi, hcolK]
 
 /-- Entry formula for the trailing block updated by one Bareiss step. -/
 -- @[grind]-excluded: `let`-wrapped RHS (`let colK := …; let rowK := …`) is
@@ -419,7 +560,7 @@ theorem stepMatrix_update_eq
       (let colK : Fin n := ⟨k, Nat.lt_trans hi i.isLt⟩
        let rowK : Fin n := ⟨k, Nat.lt_trans hj j.isLt⟩
        exactDiv (pivot * M[i][j] - M[i][colK] * M[rowK][j]) prevPivot) := by
-  rw [stepMatrix_eq_ofFn]; simp [Matrix.ofFn, hi, hj]
+  rw [stepMatrix_eq_ofFn, Matrix.getElem_ofFn]; simp [hi, hj]
 
 /-- If the current matrix entries already match bordered minors and exact
 division evaluates to the next bordered minor, then one `stepMatrix` update
@@ -564,9 +705,11 @@ original matrix. -/
 @[grind =]
 theorem rowsToMatrix_matrixToRows (M : Matrix Int n n) :
     rowsToMatrix (matrixToRows M) n = M := by
-  ext i hi j hj
-  simpa [rowsToMatrix, Matrix.ofFn, getRow, Fin.getElem_fin] using
-    getEntry_matrixToRows M ⟨i, hi⟩ ⟨j, hj⟩
+  apply Matrix.ext_getElem
+  intro i j
+  unfold rowsToMatrix
+  rw [Matrix.getElem_ofFn]
+  exact getEntry_matrixToRows M i j
 
 /-- `set!`-ing index `i` to `v` makes `(xs.set! i v)[i]!` return `v` when `i` is
 in bounds, the base case for tracking entries through the array row swap. -/
@@ -720,9 +863,11 @@ private theorem rowsToMatrix_swapRowsArray_matrixToRows (M : Matrix Int n n)
     (rowA rowB : Fin n) :
     rowsToMatrix (swapRowsArray (matrixToRows M) rowA.val rowB.val) n =
       rowSwap M rowA rowB := by
-  ext i hi j hj
-  simpa [rowsToMatrix, Matrix.ofFn, getRow, Fin.getElem_fin] using
-    getEntry_swapRowsArray_matrixToRows M rowA rowB ⟨i, hi⟩ ⟨j, hj⟩
+  apply Matrix.ext_getElem
+  intro i j
+  unfold rowsToMatrix
+  rw [Matrix.getElem_ofFn]
+  exact getEntry_swapRowsArray_matrixToRows M rowA rowB i j
 
 /-- Bareiss elimination with row pivoting. If a column has no nonzero pivot,
 the elimination aborts and the determinant is zero. -/
@@ -1251,9 +1396,16 @@ theorem bareiss_eq_bareissData_det (M : Matrix Int n n) :
       rfl
   | succ k =>
       simp [bareiss, bareissData, bareissArrayDet, BareissData.det,
-        arrayLastDiag?, BareissData.lastDiag?, rowsToMatrix, Matrix.ofFn,
+        arrayLastDiag?, BareissData.lastDiag?, rowsToMatrix,
         arraySign, BareissData.sign]
-      rfl
+      cases (bareissArrayState M).singularStep with
+      | some s => rfl
+      | none =>
+          exact congrArg
+            (fun x => (if (bareissArrayState M).rowSwaps % 2 = 0 then (1 : Int) else -1) * x)
+            (Matrix.getElem_ofFn
+              (fun i j => getEntry (bareissArrayState M).matrix i.val j.val)
+              ⟨k, Nat.lt_succ_self k⟩ ⟨k, Nat.lt_succ_self k⟩).symm
 
 /-- If the no-pivot Bareiss pass reaches the final pivot without recording a
 singular step, then the public row-pivoted `bareiss` determinant is exactly

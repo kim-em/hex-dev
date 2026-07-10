@@ -47,7 +47,9 @@ def borderedMinor (M : Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n) :
       (let rr : Fin n := ⟨r.val, Nat.lt_trans hr hk⟩
        let cc : Fin n := ⟨c.val, Nat.lt_trans hc hk⟩
        M[(rr, cc)]) := by
-  simp [borderedMinor, ofFn, hr, hc]
+  unfold borderedMinor
+  rw [getElem_ofFn]
+  simp [hr, hc]
 
 /-- Border-column case of the bordered-minor entry formula. -/
 @[grind =] theorem borderedMinor_entry_lt_last (M : Matrix R n n) (k : Nat) (hk : k < n)
@@ -55,7 +57,9 @@ def borderedMinor (M : Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n) :
     (borderedMinor M k hk i j)[r][Fin.last k] =
       (let rr : Fin n := ⟨r.val, Nat.lt_trans hr hk⟩
        M[rr][j]) := by
-  simp [borderedMinor, ofFn, hr]
+  unfold borderedMinor
+  rw [getElem_ofFn]
+  simp [hr, Nat.lt_irrefl]
 
 /-- Border-row case of the bordered-minor entry formula. -/
 @[grind =] theorem borderedMinor_entry_last_lt (M : Matrix R n n) (k : Nat) (hk : k < n)
@@ -63,13 +67,17 @@ def borderedMinor (M : Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n) :
     (borderedMinor M k hk i j)[Fin.last k][c] =
       (let cc : Fin n := ⟨c.val, Nat.lt_trans hc hk⟩
        M[i][cc]) := by
-  simp [borderedMinor, ofFn, hc]
+  unfold borderedMinor
+  rw [getElem_ofFn]
+  simp [hc, Nat.lt_irrefl]
 
 /-- Corner case of the bordered-minor entry formula. -/
 @[grind =] theorem borderedMinor_entry_last_last (M : Matrix R n n) (k : Nat) (hk : k < n)
     (i j : Fin n) :
     (borderedMinor M k hk i j)[Fin.last k][Fin.last k] = M[i][j] := by
-  simp [borderedMinor, ofFn]
+  unfold borderedMinor
+  rw [getElem_ofFn]
+  simp [Nat.lt_irrefl]
 
 /-- The top-left `k × k` block of a bordered minor is the leading prefix of the
 source matrix. -/
@@ -77,8 +85,12 @@ theorem principalSubmatrix_borderedMinor_eq_principalSubmatrix (M : Matrix R n n
     (hk : k < n) (i j : Fin n) :
     principalSubmatrix (borderedMinor M k hk i j) k (Nat.le_succ k) =
       principalSubmatrix M k (Nat.le_of_lt hk) := by
-  ext r _hr c _hc
-  simp [principalSubmatrix, borderedMinor, ofFn]
+  apply ext_getElem
+  intro r c
+  simp only [getElem_principalSubmatrix]
+  unfold borderedMinor
+  simp only [getElem_ofFn, getElem_pair_eq_nested]
+  simp [r.isLt, c.isLt]
 
 /-- The top-left `(k + 1) × (k + 1)` block of the next bordered minor is the
 current bordered minor whose extra row/column are the `k`-th source row/column. -/
@@ -87,16 +99,20 @@ theorem principalSubmatrix_borderedMinor_succ_eq_borderedMinor (M : Matrix R n n
     principalSubmatrix (borderedMinor M (k + 1) hnext i j) (k + 1)
         (Nat.le_succ (k + 1)) =
       borderedMinor M k hk ⟨k, hk⟩ ⟨k, hk⟩ := by
-  ext r _hr c _hc
-  by_cases hrk : r < k <;> by_cases hck : c < k
-  · simp [principalSubmatrix, borderedMinor, ofFn, hrk, hck]
-  · have hc_eq : c = k := by omega
-    simp [principalSubmatrix, borderedMinor, ofFn, hrk, hc_eq]
-  · have hr_eq : r = k := by omega
-    simp [principalSubmatrix, borderedMinor, ofFn, hck, hr_eq]
-  · have hr_eq : r = k := by omega
-    have hc_eq : c = k := by omega
-    simp [principalSubmatrix, borderedMinor, ofFn, hr_eq, hc_eq]
+  apply ext_getElem
+  intro r c
+  simp only [getElem_principalSubmatrix]
+  unfold borderedMinor
+  simp only [getElem_ofFn, getElem_pair_eq_nested]
+  by_cases hrk : r.val < k <;> by_cases hck : c.val < k
+  · simp [r.isLt, c.isLt, hrk, hck]
+  · have hc_eq : c.val = k := by omega
+    simp [r.isLt, hrk, hc_eq]
+  · have hr_eq : r.val = k := by omega
+    simp [c.isLt, hck, hr_eq]
+  · have hr_eq : r.val = k := by omega
+    have hc_eq : c.val = k := by omega
+    simp [hr_eq, hc_eq]
 
 end Matrix
 

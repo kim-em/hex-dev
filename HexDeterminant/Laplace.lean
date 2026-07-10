@@ -116,8 +116,7 @@ theorem det_eq_foldl_laplace_last_row
         (fun acc col => acc + M[Fin.last n][col] * cofactor M (Fin.last n) col) 0 := by
         apply List.foldl_congr
         intro acc col _hmem
-        rw [cofactor_transpose]
-        simp [Matrix.transpose, Matrix.col, getRow, Fin.getElem_fin]
+        rw [cofactor_transpose, getElem_transpose]
 
 /-- Column permutation that preserves the relative order of every column except
 `col`, which is moved to the final position. -/
@@ -295,21 +294,18 @@ theorem det_eq_finFoldl_laplace_col
         unfold cofactor
         have hClast : C[row][Fin.last n] = M[row][col] := by
           rw [show C[row][Fin.last n] = M[row][sigma[Fin.last n]] by
-            simp [C, ofFn]]
+            simp only [C, getElem_ofFn]]
           exact congrArg (fun c => M[row][c]) (moveColumnToLastValues_last col)
         have hminor : deleteRowCol C row (Fin.last n) = deleteRowCol M row col := by
-          ext i hi j hj
-          let ii : Fin n := ⟨i, hi⟩
-          let jj : Fin n := ⟨j, hj⟩
-          change (deleteRowCol C row (Fin.last n))[ii][jj] =
-            (deleteRowCol M row col)[ii][jj]
+          apply ext_getElem
+          intro ii jj
           rw [getElem_deleteRowCol, getElem_deleteRowCol]
           rw [show C[skipIndex row ii][skipIndex (Fin.last n) jj] =
               C[skipIndex row ii][jj.castSucc] by
             exact congrArg (fun c => C[skipIndex row ii][c]) (skipIndex_last jj)]
           rw [show C[skipIndex row ii][jj.castSucc] =
               M[skipIndex row ii][sigma[jj.castSucc]] by
-            simp [C, ofFn]]
+            simp only [C, getElem_ofFn]]
           exact congrArg (fun c => M[skipIndex row ii][c])
             (moveColumnToLastValues_castSucc col jj)
         rw [hClast, hminor, cofactorSign_col_eq (R := R) row col]

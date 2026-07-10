@@ -559,7 +559,8 @@ def prefixSpan (M : Matrix Rat n m) (i : Nat) (hi : i < n) (v : Vector Rat m) : 
 
 private theorem entry_ofFn (f : Fin n → Fin m → R) (i : Fin n) (j : Fin m) :
     entry (Matrix.ofFn f) i j = f i j := by
-  simp [entry, Matrix.row, Matrix.ofFn, Vector.getElem_ofFn]
+  simp only [entry, Matrix.row]
+  exact Matrix.getElem_ofFn f i j
 
 /-- Index equation: the value at position `basisRev.length + k` of
 `basisRowsAux basisRev pending` is the reduction of `pending[k]` against the

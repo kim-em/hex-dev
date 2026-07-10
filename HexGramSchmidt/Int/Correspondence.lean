@@ -673,7 +673,7 @@ private theorem gramDetVecEntry_eq_principalSubmatrix_bareiss
       · have hdata : data.singularStep = none := by
           simpa [data, Matrix.bareissNoPivotData, Matrix.finish, GM, init, h_full] using h_none
         simp [gramDetVecEntry, data, hdata, i]
-        rfl
+        simp [bareissDiagNat]
       · rcases h_sing with ⟨k, h_sing_full, h_step_full, h_zero_full, _hk_bound⟩
         have hdata : data.singularStep = some k.val := by
           simpa [data, Matrix.bareissNoPivotData, Matrix.finish, GM, init, h_full] using h_sing_full
@@ -695,7 +695,7 @@ private theorem gramDetVecEntry_eq_principalSubmatrix_bareiss
           simpa [data, i] using (congrArg Int.toNat hzero_i).symm
         · have hlt : ¬ k.val < r + 1 := by omega
           simp [gramDetVecEntry, data, hdata, i, hlt]
-          rfl
+          simp [bareissDiagNat]
     calc
       gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
           ⟨r + 1, Nat.succ_lt_succ hr⟩ =
@@ -799,10 +799,10 @@ private theorem scaledCoeffRows_diag_toNat_eq_gramDetVecEntry
       ⟨i + 1, Nat.succ_lt_succ hi⟩
   rcases hdiag with ⟨h_sing, h_eq⟩ | ⟨s, h_sing, h_cases⟩
   · simp only [Matrix.bareissNoPivotData, gramDetVecEntry, Matrix.finish,
-      bareissDiagNat, h_sing]
+      bareissDiagNat, Matrix.getElem_pair_eq_nested, h_sing]
     exact congrArg Int.toNat h_eq
   · simp only [Matrix.bareissNoPivotData, gramDetVecEntry, Matrix.finish,
-      bareissDiagNat, h_sing]
+      bareissDiagNat, Matrix.getElem_pair_eq_nested, h_sing]
     rcases h_cases with ⟨hsi, h_zero⟩ | ⟨his, h_eq⟩
     · have hsi' : s ≤ i := by
         simpa [iFin] using hsi
