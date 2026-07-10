@@ -25,16 +25,20 @@ the correspondence proof is Phase 2, after which it is wired via `@[csimp]`.
 
 namespace Hex
 
-/-- `true` and the value `p^a` if `p^a < 2^64`, computed with early exit so a
-huge exponent never materialises a bignum. -/
+/-- Accumulating helper for `powLtWord?`: multiply `acc` by `p`, `n` times, with
+early exit if any partial product reaches `2^64`. -/
+@[expose]
+def powLtWordAux (p : Nat) : Nat → Nat → Option Nat
+  | 0, acc => some acc
+  | n + 1, acc =>
+      let next := acc * p
+      if next < UInt64.word then powLtWordAux p n next else none
+
+/-- `some (p^a)` if `p^a < 2^64`, computed with early exit so a huge exponent
+never materialises a bignum. -/
+@[expose]
 def powLtWord? (p a : Nat) : Option Nat :=
-  go a 1
-where
-  go : Nat → Nat → Option Nat
-    | 0, acc => some acc
-    | n + 1, acc =>
-        let next := acc * p
-        if next < UInt64.word then go n next else none
+  powLtWordAux p a 1
 
 /--
 Word-sized CLD quotient `(f · g') / g mod p^a` for monic `g`, computed over

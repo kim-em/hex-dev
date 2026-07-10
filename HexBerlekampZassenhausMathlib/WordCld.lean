@@ -184,4 +184,59 @@ theorem cW_derivative {m : UInt64} (ctx : _root_.MontCtx m)
     cW ctx (Hex.DensePoly.derivative a) = Polynomial.derivative (cW ctx a) := by
   simp only [cW, HexPolyMathlib.toPolynomial_derivative, Polynomial.derivative_map]
 
+/-! ### Guard correctness -/
+
+theorem powLtWord?_go_eq (p : Nat) : ∀ (n acc r : Nat),
+    Hex.powLtWordAux p n acc = some r → r = acc * p ^ n := by
+  intro n
+  induction n with
+  | zero =>
+      intro acc r h
+      simp only [Hex.powLtWordAux, Option.some.injEq] at h
+      subst h; simp
+  | succ k ih =>
+      intro acc r h
+      simp only [Hex.powLtWordAux] at h
+      by_cases hlt : acc * p < UInt64.word
+      · rw [if_pos hlt] at h
+        have := ih (acc * p) r h
+        rw [this]; ring
+      · rw [if_neg hlt] at h; exact absurd h (by simp)
+
+theorem powLtWord?_go_lt (p : Nat) : ∀ (n acc r : Nat),
+    acc < UInt64.word → Hex.powLtWordAux p n acc = some r → r < UInt64.word := by
+  intro n
+  induction n with
+  | zero =>
+      intro acc r hacc h
+      simp only [Hex.powLtWordAux, Option.some.injEq] at h
+      omega
+  | succ k ih =>
+      intro acc r _ h
+      simp only [Hex.powLtWordAux] at h
+      by_cases hlt : acc * p < UInt64.word
+      · rw [if_pos hlt] at h; exact ih (acc * p) r hlt h
+      · rw [if_neg hlt] at h; exact absurd h (by simp)
+
+theorem powLtWord?_eq {p a mval : Nat} (h : Hex.powLtWord? p a = some mval) :
+    mval = p ^ a ∧ mval < UInt64.word := by
+  have hgo : Hex.powLtWordAux p a 1 = some mval := h
+  refine ⟨?_, powLtWord?_go_lt p a 1 mval (by simp [UInt64.word]) hgo⟩
+  have := powLtWord?_go_eq p a 1 mval hgo
+  simpa using this
+
+/-! ### Degree transport -/
+
+open HexPolyMathlib in
+theorem toPoly_degree_lt {S : Type*} [CommRing S] [DecidableEq S] {r g : Hex.DensePoly S}
+    (hg0 : toPolynomial g ≠ 0)
+    (hlt : r.degree?.getD 0 < g.degree?.getD 0) :
+    (toPolynomial r).degree < (toPolynomial g).degree := by
+  by_cases hr : toPolynomial r = 0
+  · rw [hr, Polynomial.degree_zero]
+    exact bot_lt_iff_ne_bot.mpr (fun hb => hg0 (Polynomial.degree_eq_bot.mp hb))
+  · rw [Polynomial.degree_eq_natDegree hr, Polynomial.degree_eq_natDegree hg0,
+      natDegree_toPolynomial, natDegree_toPolynomial]
+    exact_mod_cast hlt
+
 end HexBerlekampZassenhausMathlib
