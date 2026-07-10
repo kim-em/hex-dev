@@ -136,31 +136,33 @@ theorem intCast_intModNat (c : Int) (M : Nat) (hM : 0 < M) :
     _ = (c : ZMod M) :=
         (ZMod.intCast_eq_intCast_iff _ _ _).mpr (Int.emod_emod_of_dvd c (dvd_refl _))
 
-/-- `cW` of the `toW`-mapped image of an integer polynomial equals `cZ` of the
-original. -/
-theorem cW_toW_eq_cZ {m : UInt64} (ctx : _root_.MontCtx m) (x : Hex.ZPoly) :
-    cW ctx (Hex.DensePoly.ofCoeffs
-        (x.toArray.map (fun c => Hex.WordMod.ofNat (ZPoly.intModNat c m.toNat))))
-      = cZ m x := by
-  apply Polynomial.ext
-  intro j
-  rw [cW_coeff, cZ_coeff]
+/-- The word-mapped executable image `toW = ofNat ∘ intModNat`. -/
+def toWMap {m : UInt64} (ctx : _root_.MontCtx m) (x : Hex.ZPoly) :
+    Hex.DensePoly (Hex.WordMod ctx) :=
+  Hex.DensePoly.ofCoeffs (x.toArray.map (fun c => Hex.WordMod.ofNat (ZPoly.intModNat c m.toNat)))
+
+theorem coeff_toWMap {m : UInt64} (ctx : _root_.MontCtx m) (x : Hex.ZPoly) (j : Nat) :
+    (toWMap ctx x).coeff j = Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat (x.coeff j) m.toNat) := by
   have htoW0 : Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat 0 m.toNat) = 0 := by
     have : ZPoly.intModNat 0 m.toNat = 0 := by simp [ZPoly.intModNat]
     rw [this]; rfl
-  have hcoeff : (Hex.DensePoly.ofCoeffs
-      (x.toArray.map (fun c => Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat c m.toNat)))).coeff j
-      = Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat (x.coeff j) m.toNat) := by
-    rw [Hex.DensePoly.coeff_ofCoeffs]
-    show (x.toArray.map (fun c => Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat c m.toNat))).getD j 0
-      = Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat (x.coeff j) m.toNat)
-    rw [show x.coeff j = x.toArray.getD j 0 from rfl]
-    simp only [Array.getD_eq_getD_getElem?, Array.getElem?_map]
-    cases x.toArray[j]? with
-    | none => simpa using htoW0.symm
-    | some v => simp
-  rw [hcoeff]
-  rw [show HexModArithMathlib.WordMod.toZMod
+  rw [toWMap, Hex.DensePoly.coeff_ofCoeffs]
+  show (x.toArray.map (fun c => Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat c m.toNat))).getD j 0
+    = Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat (x.coeff j) m.toNat)
+  rw [show x.coeff j = x.toArray.getD j 0 from rfl]
+  simp only [Array.getD_eq_getD_getElem?, Array.getElem?_map]
+  cases x.toArray[j]? with
+  | none => simpa using htoW0.symm
+  | some v => simp
+
+/-- `cW` of the `toW`-mapped image of an integer polynomial equals `cZ` of the
+original. -/
+theorem cW_toWMap_eq_cZ {m : UInt64} (ctx : _root_.MontCtx m) (x : Hex.ZPoly) :
+    cW ctx (toWMap ctx x) = cZ m x := by
+  apply Polynomial.ext
+  intro j
+  rw [cW_coeff, cZ_coeff, coeff_toWMap,
+    show HexModArithMathlib.WordMod.toZMod
         (Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat (x.coeff j) m.toNat))
       = ((ZPoly.intModNat (x.coeff j) m.toNat : Nat) : ZMod m.toNat) from
     HexModArithMathlib.WordMod.toZMod_natCast _]
