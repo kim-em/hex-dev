@@ -121,4 +121,67 @@ theorem map_divMod_monic {S : Type*} [CommRing S] [DecidableEq S] [Div S]
     hgmonic ⟨hrec3, hrdeg⟩
   exact huniq.1.symm
 
+/-! ### Coefficient bridges -/
+
+theorem intCast_intModNat (c : Int) (M : Nat) (hM : 0 < M) :
+    ((ZPoly.intModNat c M : Nat) : ZMod M) = (c : ZMod M) := by
+  have hM0 : (M : Int) ≠ 0 := by exact_mod_cast hM.ne'
+  have hnn : 0 ≤ c % (M : Int) := Int.emod_nonneg c hM0
+  have h1 : ((ZPoly.intModNat c M : Nat) : Int) = c % (M : Int) := by
+    rw [ZPoly.intModNat]
+    simp [Int.toNat_of_nonneg hnn]
+  calc ((ZPoly.intModNat c M : Nat) : ZMod M)
+      = (((ZPoly.intModNat c M : Nat) : Int) : ZMod M) := by rw [Int.cast_natCast]
+    _ = ((c % (M : Int) : Int) : ZMod M) := by rw [h1]
+    _ = (c : ZMod M) :=
+        (ZMod.intCast_eq_intCast_iff _ _ _).mpr (Int.emod_emod_of_dvd c (dvd_refl _))
+
+/-- `cW` of the `toW`-mapped image of an integer polynomial equals `cZ` of the
+original. -/
+theorem cW_toW_eq_cZ {m : UInt64} (ctx : _root_.MontCtx m) (x : Hex.ZPoly) :
+    cW ctx (Hex.DensePoly.ofCoeffs
+        (x.toArray.map (fun c => Hex.WordMod.ofNat (ZPoly.intModNat c m.toNat))))
+      = cZ m x := by
+  apply Polynomial.ext
+  intro j
+  rw [cW_coeff, cZ_coeff]
+  have htoW0 : Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat 0 m.toNat) = 0 := by
+    have : ZPoly.intModNat 0 m.toNat = 0 := by simp [ZPoly.intModNat]
+    rw [this]; rfl
+  have hcoeff : (Hex.DensePoly.ofCoeffs
+      (x.toArray.map (fun c => Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat c m.toNat)))).coeff j
+      = Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat (x.coeff j) m.toNat) := by
+    rw [Hex.DensePoly.coeff_ofCoeffs]
+    show (x.toArray.map (fun c => Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat c m.toNat))).getD j 0
+      = Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat (x.coeff j) m.toNat)
+    rw [show x.coeff j = x.toArray.getD j 0 from rfl]
+    simp only [Array.getD_eq_getD_getElem?, Array.getElem?_map]
+    cases x.toArray[j]? with
+    | none => simpa using htoW0.symm
+    | some v => simp
+  rw [hcoeff]
+  rw [show HexModArithMathlib.WordMod.toZMod
+        (Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat (x.coeff j) m.toNat))
+      = ((ZPoly.intModNat (x.coeff j) m.toNat : Nat) : ZMod m.toNat) from
+    HexModArithMathlib.WordMod.toZMod_natCast _]
+  exact intCast_intModNat (x.coeff j) m.toNat ctx.p_pos
+
+/-- Reduction mod `p^a` vanishes under the `ZMod (p^a)` cast. -/
+theorem cZ_reduceModPow {m : UInt64} {p a : Nat} (hpos : 0 < m.toNat) (hm : m.toNat = p ^ a)
+    (x : Hex.ZPoly) : cZ m (ZPoly.reduceModPow x p a) = cZ m x := by
+  apply Polynomial.ext
+  intro j
+  rw [cZ_coeff, cZ_coeff, ZPoly.coeff_reduceModPow, Int.ofNat_eq_natCast, Int.cast_natCast, ← hm]
+  exact intCast_intModNat (x.coeff j) m.toNat hpos
+
+/-- The `ZMod` cast commutes with the executable derivative. -/
+theorem cZ_derivative (m : UInt64) (x : Hex.ZPoly) :
+    cZ m (Hex.DensePoly.derivative x) = Polynomial.derivative (cZ m x) := by
+  simp only [cZ, HexPolyMathlib.toPolynomial_derivative, Polynomial.derivative_map]
+
+theorem cW_derivative {m : UInt64} (ctx : _root_.MontCtx m)
+    (a : Hex.DensePoly (Hex.WordMod ctx)) :
+    cW ctx (Hex.DensePoly.derivative a) = Polynomial.derivative (cW ctx a) := by
+  simp only [cW, HexPolyMathlib.toPolynomial_derivative, Polynomial.derivative_map]
+
 end HexBerlekampZassenhausMathlib
