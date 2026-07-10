@@ -67,10 +67,12 @@ loops (`writeRow` and the `swap` column loop), which reuse the backing store
 rather than copying it.
 
 **Indexed row/column mutation.** `modifyRow` updates one row span in place;
-`setCol` and the per-entry `modifyCol` update one column entry per row. The
-column operations share an in-place engine, `mapRowsIdx`, which threads the
-matrix through a `Fin.foldl` of per-row `modifyRow`s — no intermediate index
-list is allocated, and each row's update writes back into the owned buffer.
+`setCol` and the per-entry `modifyCol` update one column entry per row through
+flat per-entry folds over the single buffer. The column *analogues* of the
+elementary operations (`colAdd`, `colAddRight`, `colSwap`) currently go
+through `mapRows`, which materializes the rows and reflattens — a value-level
+pass, not an in-place column write; migrating them to the flat per-entry
+engine is follow-up work alongside the `BlockView` recursion.
 This replaces the former `ofFn`-rebuild form of `setCol`, which read and
 reallocated every entry to change one column.
 
@@ -345,7 +347,8 @@ Strassen exponent is only a diagnostic, not an acceptance condition: near the
 cutoff the Strassen curve is in a crossover transient, and on the row-of-rows
 backing the locality overhead and the limited benched sizes bend the fit above
 `2.81`. The exponent approaches `log₂ 7` only once the sizes are large enough or
-the flat backing lands (see the representation note below). The point the figure must make is the visibly
+the `BlockView` recursion lands on the flat backing (see the representation
+note below). The point the figure must make is the visibly
 shallower Strassen slope: Strassen lowers the asymptotic order, not merely the
 constant factor. A speedup table
 that fits both exponents by ordinary least squares over the asymptotic window,

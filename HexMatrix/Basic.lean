@@ -206,8 +206,18 @@ form. The nested form is the simp-normal form the entry lemmas are stated in. -/
     M[(i, j)] = M[i][j] := by
   rw [getElem_eq_getRow, getElem_getRow]; rfl
 
-/-- `Nat`-pair entry access, normalized to the flat read (concrete-index form). -/
+/-- `Nat`-pair entry access, normalized to the row lookup (concrete-index form).
+The statement observes rows, not the backing buffer, so it is representation-
+independent; the flat read behind it is `getElem_pair_data` below. -/
 @[simp] theorem getElem_pair_nat (M : Matrix R n m) (p : Nat × Nat)
+    (h : p.1 < n ∧ p.2 < m) : M[p]'h = (M.rows[p.1]'h.1)[p.2]'h.2 := by
+  simp only [rows, Vector.getElem_ofFn, getElem_getRow_nat]
+  rfl
+
+/-- The representation-level form of `getElem_pair_nat`: a `Nat`-pair entry
+access is one flat read at `i * m + j`. Internal proofs that genuinely need the
+buffer may use it; public statements should observe rows or entries instead. -/
+private theorem getElem_pair_data (M : Matrix R n m) (p : Nat × Nat)
     (h : p.1 < n ∧ p.2 < m) : M[p]'h = M.data[p.1 * m + p.2]'(flatIdx_lt h.1 h.2) := rfl
 
 /-- Two matrices are equal when their flat backing buffers are equal. -/
@@ -307,9 +317,10 @@ def setRow (M : Matrix R n m) (dst : Fin n) (v : Vector R m) : Matrix R n m :=
   match M with
   | ⟨d⟩ => ⟨writeRow d dst.val dst.isLt v⟩
 
-/-- In-place modification of row `i`. Linear in `M`: the matrix is consumed, so the
-backing buffer is owned; the row is read out once, `f` is applied, and the result
-is written back in place. -/
+/-- Modification of row `i`. The matrix is consumed; the row is read out once
+(a borrowed read into a fresh `m`-vector, before the buffer is written), `f` is
+applied, and the result is written back through `writeRow`, in place when the
+runtime sees the buffer uniquely referenced at the write. -/
 @[expose, inline]
 def modifyRow (M : Matrix R n m) (i : Nat) (f : Vector R m → Vector R m) : Matrix R n m :=
   if h : i < n then

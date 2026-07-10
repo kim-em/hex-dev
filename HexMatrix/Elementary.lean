@@ -139,10 +139,11 @@ theorem row_rowScale_of_ne [Mul R] (M : Matrix R n m) {i r : Fin n} (c : R)
 
 /-- Replace row `dst` by `row dst + c * row src`.
 
-The source row is read once into `rsrc` (one contiguous copy), so the only
-remaining reference to `M` is the consuming `modifyEntries`, which updates the
-`dst` row's entries of the flat backing buffer in place when `M` is uniquely
-referenced, with no destination-row materialization. -/
+The source row is read once into `rsrc` (one contiguous copy, a borrowed read
+taken before the write); the subsequent `modifyEntries` then holds the only
+live reference to the buffer and updates the `dst` row's entries in place when
+the runtime sees it uniquely referenced, with no destination-row
+materialization. -/
 @[expose]
 def rowAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin n) (c : R) : Matrix R n m :=
   let rsrc := getRow M src
@@ -263,11 +264,11 @@ replaced by `M[dst][k] + c * M[src][k]`. -/
 
 /-- Replace column `dst` by `col dst + c * col src`.
 
-Rather than rebuilding the whole matrix with `ofFn`, each row is mapped to its
-update of the single `dst` entry. `Vector.map` frees each row slot before
-applying the function, so the outer vector is reused when `M` is uniquely
-referenced, and each row's single-entry update is itself in place when that row
-vector is uniquely referenced. -/
+Each row is mapped to its update of the single `dst` entry. On the flat
+backing `mapRows` materializes the rows and reflattens, so this is a
+value-level pass over the matrix, not an in-place column write; a flat
+per-entry column engine (like `setCol`/`modifyCol`) is follow-up work
+alongside the `BlockView` recursion. -/
 @[expose]
 def colAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin m) (c : R) : Matrix R n m :=
   M.mapRows fun row => row.set dst (row[dst] + c * row[src])
