@@ -45,6 +45,7 @@ Word-sized CLD quotient `(f · g') / g mod p^a` for monic `g`, computed over
 `WordMod` when the guard `Odd (p^a) ∧ p^a < 2^64` holds (`p` odd prime ⇒ `p^a`
 odd). Returns `none` when the guard fails, so the caller keeps the bignum path.
 -/
+@[expose]
 def cldQuotientModWord? (f g : ZPoly) (p a : Nat) : Option ZPoly :=
   match powLtWord? p a with
   | none => none
