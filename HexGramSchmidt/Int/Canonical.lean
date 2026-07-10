@@ -375,7 +375,7 @@ at `fuel + 1` to its explicit Bareiss exact-division update. -/
            state.prevPivot) := by
   simp [bareissGramCanonicalCoeff, dif_pos hnext, if_pos hi]
   intro hc
-  simp only [Matrix.getElem_nat_eq_getRow, Matrix.getElem_getRow_nat] at hp
+  simp only [Matrix.getElem_nat_eq_getRow] at hp
   exact absurd hc hp
 
 /-- Recursion equation: regular-branch processed-row case. An already-processed
@@ -418,7 +418,7 @@ update, so the canonical coefficient at `fuel + 1` collapses to the one at
       bareissGramCanonicalCoeff b fuel i := by
   simp [bareissGramCanonicalCoeff, dif_pos hnext]
   intro hc
-  simp only [Matrix.getElem_nat_eq_getRow, Matrix.getElem_getRow_nat] at hp
+  simp only [Matrix.getElem_nat_eq_getRow] at hp
   exact absurd hp hc
 
 /-- Recursion equation: done branch (no further work possible). Once the loop can
