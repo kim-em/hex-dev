@@ -63,7 +63,7 @@ private def bareissGramRowInvariant_noPivotLoop_initialAux
       by_cases hDone : state.step + 1 < n
       · by_cases hp0 : state.matrix[(state.step, state.step)] = 0
         · have hp : state.matrix[state.step][state.step] = 0 := by
-            rw [Matrix.getElem_nat_eq_getRow, Matrix.getElem_getRow_nat]
+            rw [Matrix.getElem_nat_eq_getRow]
             simpa using hp0
           rw [Matrix.noPivotLoop_singular_branch fuel state hDone hp]
           refine ⟨{ coeff := hinv.coeff
@@ -78,7 +78,7 @@ private def bareissGramRowInvariant_noPivotLoop_initialAux
             exact (bareissGramCanonicalCoeff_eq_of_singular
               b elapsed fuel i hDone hp).symm
         · have hp : state.matrix[state.step][state.step] ≠ 0 := by
-            rw [Matrix.getElem_nat_eq_getRow, Matrix.getElem_getRow_nat]
+            rw [Matrix.getElem_nat_eq_getRow]
             simpa using hp0
           rw [Matrix.noPivotLoop_regular_branch fuel state hDone hp]
           have hstep :
