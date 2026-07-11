@@ -128,11 +128,14 @@ def isolationDepth (p : ZPoly) : Nat :=
 /-! Sanity checks (kept light; conformance lives in the shared
 sub-project). -/
 
--- `twoPow` produces the exact power of two.
+-- `twoPow` produces the exact power of two, for negative exponents too.
 example : twoPow 0 = Dyadic.ofInt 1 := by decide
 example : twoPow 3 = Dyadic.ofInt 8 := by decide
+example : twoPow (-2) = (Dyadic.ofInt 1) >>> (2 : Int) := by decide
 
--- `ceilLog2Nat` is the least `k` with `m ≤ 2^k` for `m ≥ 1`.
+-- `ceilLog2Nat` is the least `k` with `m ≤ 2^k` for `m ≥ 1` (and the
+-- junk value `0` at `m = 0`).
+example : ceilLog2Nat 0 = 0 := by decide
 example : ceilLog2Nat 1 = 0 := by decide
 example : ceilLog2Nat 2 = 1 := by decide
 example : ceilLog2Nat 3 = 2 := by decide
@@ -148,11 +151,19 @@ example : ceilLog2Dyadic (Dyadic.ofInt 2) = 1 := by decide
 example : ceilLog2Dyadic ((Dyadic.ofInt 3) >>> (1 : Int)) = 1 := by decide
 example : ceilLog2Dyadic ((Dyadic.ofInt 1) >>> (2 : Int)) = -2 := by decide
 example : ceilLog2Dyadic (Dyadic.ofInt 5) = 3 := by decide
+-- A small dyadic far below `1`: `1/1024 = 2^{−10}`.
+example : ceilLog2Dyadic ((Dyadic.ofInt 1) >>> (10 : Int)) = -10 := by decide
 
 -- `rootBound` of `x² − 3`: `c = 1`, `A = 3`, `⌊A/c⌋ + 2 = 5`, `2^3 = 8`.
 example : rootBound (DensePoly.ofCoeffs #[(-3 : Int), 0, 1]) = twoPow 3 := by decide
 -- `rootBound` of the monic linear `x − 1`: `A = 1`, `⌊A/c⌋ + 2 = 3`, `2^2 = 4`.
 example : rootBound (DensePoly.ofCoeffs #[(-1 : Int), 1]) = twoPow 2 := by decide
+-- `rootBound` with `c > A` (the floor is `0`): `2x + 1` gives
+-- `⌊1/2⌋ + 2 = 2`, `2^1 = 2`, still strictly above `1 + 1/2`.
+example : rootBound (DensePoly.ofCoeffs #[(1 : Int), 2]) = twoPow 1 := by decide
+-- `rootBound` with `c ∤ A`: `3x² + 7` gives `⌊7/3⌋ + 2 = 4`, `2^2 = 4`,
+-- strictly above `1 + 7/3`.
+example : rootBound (DensePoly.ofCoeffs #[(7 : Int), 0, 3]) = twoPow 2 := by decide
 
 -- `sepPrec` is `0` below degree 2 (the pairwise contract is vacuous):
 -- constants and linears alike.
