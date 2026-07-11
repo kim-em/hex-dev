@@ -502,7 +502,7 @@ libraries:
   HexRealRootsMathlib:
     deps: [HexRealRoots, HexPolyZMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 1
     status: active
   HexRCF:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
