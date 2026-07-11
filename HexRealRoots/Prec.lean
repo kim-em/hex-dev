@@ -27,14 +27,14 @@ namespace Hex
 
 /-- The exact dyadic `2^k` for an integer exponent `k`, as `1` shifted
 left by `k` (a right shift when `k < 0`). -/
-def twoPow (k : Int) : Dyadic := (1 : Dyadic) <<< k
+@[expose] def twoPow (k : Int) : Dyadic := (1 : Dyadic) <<< k
 
 /-- The least `k` with `m ≤ 2^k`, for `m ≥ 1`; `0` for `m ≤ 1`.
 
 For `m ≥ 2` we have `m ≤ 2^k ⟺ m − 1 < 2^k ⟺ ⌊log₂ (m − 1)⌋ < k`, so
 the least such `k` is `⌊log₂ (m − 1)⌋ + 1`. The `m ≤ 1` branch returns
 `0`, the least `k` with `1 ≤ 2^k`. -/
-def ceilLog2Nat (m : Nat) : Nat := if m ≤ 1 then 0 else (m - 1).log2 + 1
+@[expose] def ceilLog2Nat (m : Nat) : Nat := if m ≤ 1 then 0 else (m - 1).log2 + 1
 
 /-- The least integer `e` with `x ≤ 2^e`, for a positive dyadic `x`;
 junk value `0` for `x ≤ 0` (documented, never read).
@@ -58,13 +58,27 @@ largest non-leading coefficient in absolute value, the result is
 1 + A / c ≥ 1 + max |aᵢ| / |aₙ|`, this power of two strictly exceeds the
 Cauchy bound. For `deg p ≤ 0` there are no roots to bound and the SPEC
 junk value `1` is returned; no theorem reads it. -/
-def rootBound (p : ZPoly) : Dyadic :=
+@[expose] def rootBound (p : ZPoly) : Dyadic :=
   match p.degree? with
   | none | some 0 => Dyadic.ofInt 1
   | some d =>
     let c := p.leadingCoeff.natAbs
     let A := (List.range d).foldl (fun acc i => max acc (p.coeff i).natAbs) 0
     twoPow (ceilLog2Nat (A / c + 2) : Int)
+
+/-- `rootBound` on a polynomial with no degree is the junk value `1`. -/
+theorem rootBound_of_degree?_none {p : ZPoly} (h : p.degree? = none) :
+    rootBound p = Dyadic.ofInt 1 := by simp only [rootBound, h]
+
+/-- `rootBound` on a degree-zero polynomial is the junk value `1`. -/
+theorem rootBound_of_degree?_zero {p : ZPoly} (h : p.degree? = some 0) :
+    rootBound p = Dyadic.ofInt 1 := by simp only [rootBound, h]
+
+/-- The defining equation of `rootBound` on a polynomial of positive degree. -/
+theorem rootBound_of_degree?_pos {p : ZPoly} {d : Nat} (h : p.degree? = some (d + 1)) :
+    rootBound p = twoPow (ceilLog2Nat
+      ((List.range (d + 1)).foldl (fun acc i => max acc (p.coeff i).natAbs) 0
+        / p.leadingCoeff.natAbs + 2) : Int) := by simp only [rootBound, h]
 
 /-- Separation precision: for squarefree `p` of degree `n ≥ 2`,
 `2^{−sepPrec p} < sep(p) / 4`, where `sep(p) := min_{i ≠ j} |αᵢ − αⱼ|`
@@ -96,7 +110,7 @@ This yields `sep(p) ≥ 2^{−(E)}` with
 Finally `sepPrec p := E + 3`, where `+2` provides the `/4` margin
 (`2^{−(E+2)} = 2^{−E} / 4 ≤ sep(p) / 4`) and `+1` makes the inequality
 strict. Every rounding enlarges `sepPrec`, so the bound is conservative. -/
-def sepPrec (p : ZPoly) : Nat :=
+@[expose] def sepPrec (p : ZPoly) : Nat :=
   match p.degree? with
   | none => 0
   | some n =>
