@@ -44,14 +44,6 @@ positive-degree input is admissible.
 -/
 namespace Hex
 
-/-- Square-freeness over `ℚ` is decidable: `ZPoly.SquareFreeRat p` is by
-definition the `Nat` inequality that the executable rational gcd has size at
-most one, and `Nat.decLe` decides it. This is the instance that lets
-`isolateSturm?` branch on the SPEC's admissibility test. -/
-instance ZPoly.instDecidableSquareFreeRat (p : ZPoly) :
-    Decidable (ZPoly.SquareFreeRat p) :=
-  inferInstanceAs (Decidable (_ ≤ 1))
-
 /-- The depth-first isolation visitor for one sub-interval `(lo, hi]`.
 
 `vlo` and `vhi` are the memoised `sturmVarAt chain` counts at `lo` and `hi`;
