@@ -14,6 +14,8 @@ public import HexRealRoots.Var
 public import HexRealRoots.IsolateSturm
 public import HexRealRoots.Mobius
 public import HexRealRoots.IsolateDescartes
+public import HexRealRoots.Isolate
+public import HexRealRoots.SimpleRealRoot
 
 public section
 
