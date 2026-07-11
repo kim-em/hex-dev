@@ -20,6 +20,24 @@ hand-derived root-multiset computation proven as a theorem — and the correspon
 ence theorem certifies they agree.
 Mode: always for core.
 
+Covered operations:
+* `Hex.rootCount`, the executable real-root count, tied to the noncomputable
+  Mathlib count `(toPolyℝ p).roots.card` by `rootCount_eq_card_roots`.
+
+Covered properties:
+* `rootCount p = (toPolyℝ p).roots.card`, the root-count correspondence,
+  instantiated per fixture (executable side `#guard`ed, Mathlib side proven as a
+  theorem from an independent factorisation).
+* the full formal tie on `x - 5`: `Hex.rootCount = 1` derived through
+  `rootCount_eq_card_roots` and `squareFreeRat_iff`, not read off evaluation.
+
+Covered edge cases:
+* degree-0 nonzero constant (`const7 = 7`), below the correspondence theorem's
+  positive-degree hypothesis: no roots, executable count `0`.
+* a polynomial with no real roots (`quadNone = x^2 + 1`): count `0`.
+* a polynomial with several distinct real roots (`cubicTriple = x^3 - x`):
+  count `3`.
+
 Because Mathlib root counts are noncomputable, the checks are **theorems**, not
 `#guard`s of the root multiset. For each committed fixture:
 
