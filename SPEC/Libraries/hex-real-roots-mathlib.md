@@ -239,8 +239,8 @@ theorem sameRoot_iff (hp) (i₁ i₂) :
 ## Deferred: Descartes engine termination
 
 ```lean
-theorem isolateDescartes?_isSome (p : ZPoly) (hp : SquareFreeRat p) :
-    (Hex.isolateDescartes? p).isSome
+theorem isolateDescartes?_isSome (p : ZPoly) (hp0 : p ≠ 0)
+    (hp : SquareFreeRat p) : (Hex.isolateDescartes? p).isSome
 ```
 
 Prerequisite: the **Obreshkoff two-circle theorem**. For an interval
