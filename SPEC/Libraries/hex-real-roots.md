@@ -355,6 +355,15 @@ def SimpleRealRoot.mk (iso : RefinedRealIsolation p) : SimpleRealRoot p :=
     containing roots. -/
 def RefinedRealIsolation.sameRoot (i₁ i₂ : RefinedRealIsolation p) : Bool := …
 
+/-- Refine an isolation to separation precision and package it as a
+    `RefinedRealIsolation`: `refineTo (sepPrec p)`, then the width check.
+    `none` only on data violating the isolation semantics (unreachable
+    for squarefree `p`, per the companion's `refine1_isolates_same`).
+    The entry point of the threading pattern: call once, thread the
+    refined value forward. -/
+def RealRootIsolation.refined (iso : RealRootIsolation p) :
+    Option (RefinedRealIsolation p)
+
 end Hex
 ```
 
@@ -467,8 +476,8 @@ claim and re-testing it per fixture is noise.
 
 Write `n = deg p` and `h = log ‖p‖∞`.
 
-- `sturmChain p`: `O(n)` pseudo-divisions, `O(n²)` coefficient
-  operations plus the content gcds. Primitive-chain coefficient
+- `sturmChain p`: `O(n)` pseudo-divisions, each `O(n²)` coefficient
+  operations, plus the content gcds. Primitive-chain coefficient
   growth is `O(n·h)` bits per element. Computed once per polynomial.
 - `sturmVarAt`: one exact Horner evaluation per chain element,
   `O(n²)` dyadic operations per queried point, memoised per endpoint.
@@ -477,8 +486,14 @@ Write `n = deg p` and `h = log ‖p‖∞`.
 - `isolate?`: the bisection tree has `O(n)` unresolved intervals per
   level and depth at most `isolationDepth p = O(n·(h + log n))`, so
   `O(n² · (h + log n))` Möbius transforms in the worst case,
-  dominated by Mignotte-style clustered inputs. Well-separated roots
-  resolve in `O(n + log(rootBound/gap))` levels.
+  dominated by Mignotte-style clustered inputs. Mignotte inputs
+  dominate through the *depth* factor (the close pair's separation
+  is exponentially small in `n`, growing with `a`); the `O(n)`
+  width factor additionally requires `Θ(n)` real roots, so at fixed
+  `a` the Mignotte family realises `O(1)` width × `O(n·h)` depth =
+  `O(n·h)` transforms, i.e. `O(n³)` integer operations at fixed `a`.
+  Well-separated roots resolve in `O(n + log(rootBound/gap))`
+  levels.
 
 ## Time budgets (Phase 4 validation)
 

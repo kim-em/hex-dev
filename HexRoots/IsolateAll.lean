@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRoots.Refine
+public import HexRoots.SimpleRoot
 
 public section
 
@@ -33,8 +34,9 @@ namespace Hex
 def isolateAll? (p : ZPoly) (target : Int) (worklist : Array Component)
     (strategy : AtomStrategy := .nkThenPellet) :
     Option (Array (Certified p)) :=
-  let start := worklist.foldl (fun m c => min m c.prec) 0
-  isolateLoop p target strategy ((stopDepth p target - start).toNat + 1) worklist
+  let start := worklist.foldl (fun m c => min m c.prec)
+    ((worklist[0]?.map (·.prec)).getD 0)
+  isolateLoop p target strategy (fuelFor p target start) worklist
 
 /-- All-atoms output for polynomials with only simple roots: run
     `isolateAll?` from `Component.cauchy` with
@@ -54,5 +56,23 @@ def isolate (p : ZPoly) (h : HasOnlySimpleRoots p) (atom_prec : Int)
         | .atom iso => some iso
         | .cluster _ => none
   else if p.size = 0 then none else some #[]
+
+/-- Refine a refined isolation, staying in the refined type and returning
+    the proof that the result isolates the same root. The refinement target
+    is floored at `mahlerPrec p` so the subtype re-wrap always succeeds on a
+    `some`, and the identity proof comes from the decidable `Intersects`
+    re-check via `Quot.sound`. This is the threading-pattern operation the
+    `SimpleRoot` module docstring describes: refine once, store the returned
+    representative, and substitute it wherever the original was used. -/
+def RefinedIsolation.refineTo? {p : ZPoly} (r : RefinedIsolation p)
+    (target : Int) (strategy : AtomStrategy := .nkThenPellet) :
+    Option {r' : RefinedIsolation p // SimpleRoot.mk r' = SimpleRoot.mk r} := do
+  let iso' ← r.1.refineTo? (max target (mahlerPrec p : Int)) strategy
+  if h : (mahlerPrec p : Int) ≤ iso'.square.prec then
+    let r' : RefinedIsolation p := ⟨iso', h⟩
+    if hI : Intersects r' r then
+      some ⟨r', Quot.sound hI⟩
+    else none
+  else none
 
 end Hex

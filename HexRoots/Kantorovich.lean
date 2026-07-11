@@ -152,4 +152,11 @@ def DyadicRootCluster.atomize {p : ZPoly} (c : DyadicRootCluster p) (h : c.k = 1
     DyadicRootIsolation p :=
   ⟨encSquare c.squares, Or.inr (h ▸ c.witness)⟩
 
+/-- Certify an arbitrary candidate square as an atom, deciding both
+    `atomWitness` disjuncts fresh. This is the documented way to build a
+    `DyadicRootIsolation` outside the drivers, e.g. after transforming an
+    isolation's square (hex-number-field's `inv?` re-certification). -/
+def certifyAtom? (p : ZPoly) (s : DyadicSquare) : Option (DyadicRootIsolation p) :=
+  if h : atomWitness p s then some ⟨s, h⟩ else none
+
 end Hex

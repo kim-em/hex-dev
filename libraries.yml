@@ -453,7 +453,7 @@ libraries:
   HexRoots:
     deps: [HexPolyZ]
     mathlib: false
-    done_through: 0
+    done_through: 2
     status: active
   HexRootsMathlib:
     deps: [HexRoots, HexPolyZMathlib]
@@ -483,8 +483,22 @@ libraries:
   HexRealRoots:
     deps: [HexPolyZ]
     mathlib: false
-    done_through: 1
+    done_through: 4
     status: active
+    phase4:
+      comparators:
+        - tool: "SageMath real_roots / python-flint fmpz_poly real-root API"
+          class: informational
+          rationale: "The SPEC's oracle role list (SageMath real_roots, python-flint fmpz_poly, FLINT/Arb) targets floating-point / ball-arithmetic real-root isolation, structurally different from the certified exact-integer Sturm/Descartes engines this library implements: the comparator answers with approximate intervals refined to a requested precision, while Hex answers with a decidable Sturm-count certificate. The ratio is recorded for orientation but is not a Phase-4 gate, and is scheduled-only — the persistent-subprocess Python driver is not wired in this PR. The gating cross-implementation check is the internal Descartes-first vs certified-Sturm compare group (compare runIsolateDescartesFirst runIsolateSturm), which joins on isolation-endpoint hashes."
+      input_families:
+        - name: well-separated-products
+          description: Products of unit-separated linear factors ∏(x−k), k=1..n, the Descartes engine's easy regime; resolves in O(n + log(bound/gap)) bisection levels.
+        - name: chebyshev-clustered
+          description: Integer Chebyshev polynomials T_n from the recurrence T_{k+1}=2x·T_k−T_{k-1}, with n real roots clustering near ±1 at gaps ~1/n².
+        - name: mignotte-worst-case
+          description: Mignotte polynomials xⁿ−(a·x−1)² at a=1000, the textbook Descartes worst case exercising the close real root pair.
+        - name: dense-primitive
+          description: Deterministic reliably-squarefree bounded-coefficient dense integer polynomials for the Sturm-chain, sign-variation, Möbius-transform, root-bound, separation-precision, and refinement primitives.
   HexRealRootsMathlib:
     deps: [HexRealRoots, HexPolyZMathlib]
     mathlib: true

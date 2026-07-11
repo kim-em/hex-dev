@@ -10,6 +10,8 @@ public import HexRealRootsMathlib.SturmChainDefs
 public import HexRealRootsMathlib.SturmTheorem
 public import HexRealRootsMathlib.Hadamard
 public import HexRealRootsMathlib.Discr
+public import HexRealRootsMathlib.Separation
+public import HexRealRootsMathlib.ChainCorrespond
 
 public section
 

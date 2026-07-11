@@ -368,7 +368,13 @@ ready" precondition. The Gaussian inversion `1/c₁ = c̄₁ / |c₁|²` uses
 `Dyadic.invAtPrec` for the single real reciprocal `1/|c₁|²`, which
 both the real and imaginary components reuse. That is why the
 implementation calls `invAtPrec` rather than two separate
-`Dyadic.divAtPrec` divisions.
+`Dyadic.divAtPrec` divisions. The recentred components are rounded
+down to precision `prec' + 3` (a quarter of the reciprocal's error
+budget): certification never trusts the centre's provenance, so the
+rounding is harmless, and it pins the working bit-length to the
+complexity contract's `B`. Without it exact recentring compounds,
+multiplying the centre's bit-length by roughly `2·deg p` per
+accepted jump.
 
 **Coverage guard.** The witness re-check alone is not a sufficient
 acceptance criterion for a speculative Newton result. The separation
@@ -392,6 +398,23 @@ preserved. The guard costs one extra witness evaluation and never
 blocks the intended use (sharpening an already certified region); a
 jump whose base region fails to certify is discarded, and
 subdivision proceeds as usual.
+
+Acceptance is not the whole story: when a certified result re-enters
+the worklist (its precision is still below target), the component
+must retain a square that *covers* the certified region, not merely
+the certified square itself. Refinement preserves exactly the roots
+that lie in the retained squares (children partition the square and
+the `T₀` discard is sound), while a Pellet certificate counts roots
+in the stored square's circumscribed disc; a root in the disc but
+outside the square would be silently lost by the next subdivision.
+Repeated Newton-jump adoptions of a many-root cluster make this
+concrete: the jumped disc keeps counting all `k` roots while
+shrinking toward the cluster's Newton centroid, until far roots sit
+in the disc but outside the retained square and vanish. Re-entry
+therefore retains the doubled stored square (half-width
+`2·2^{−prec}`, which contains the disc of radius `√2·2^{−prec}`),
+costing one precision level, which the strictly-finer adoption rule
+still absorbs.
 
 **Termination.** Termination is structural, with no analytic input.
 Write `gap(c) := stopDepth p target − prec(c)` for a component `c` in
@@ -438,7 +461,12 @@ neighbouring component and captures the neighbour's root. The driver
 therefore emits a set of certified results only when the
 circumscribed discs of their stored squares are **pairwise
 disjoint** (one dyadic comparison per pair, as in the `SimpleRoot`
-intersection test); components violating the check keep subdividing.
+intersection test); components violating the check keep subdividing,
+while a component already certified at target with a disc disjoint
+from every other certified disc holds its position (continuing to
+refine while waiting would double its precision every round through
+Newton adoption, blowing the working bit-length whenever a sibling
+is slow, e.g. a tight cluster forced down to its separation depth).
 Every certified region is contained in its stored square's
 circumscribed disc (the square itself for the Newton-Kantorovich
 form, the enclosing disc for the Pellet form), so disjoint discs
@@ -592,9 +620,22 @@ def fast (r : RefinedIsolation p) : Option (RefinedIsolation p × Foo) := do
   return (r', …)                      -- caller stores r' going forward
 ```
 
-`refineTo?` preserves the root (`sameRoot r r' = true`, proved
-meaningful in the companion), so callers can substitute the refined
-representative wherever the original was used. Structures that contain
+The committed refined-level operation is
+
+```lean
+def RefinedIsolation.refineTo? (r : RefinedIsolation p) (target : Int)
+    (strategy : AtomStrategy := .nkThenPellet) :
+    Option {r' : RefinedIsolation p // SimpleRoot.mk r' = SimpleRoot.mk r}
+```
+
+which floors the target at `mahlerPrec p` (so the subtype re-wrap
+always succeeds on a `some`) and derives the identity proof from the
+decidable `Intersects` re-check via `Quot.sound`; and
+`DyadicRootIsolation.toRefined?` records that an `isolate` output
+meets the separation precision. `refineTo?` preserves the root
+(`sameRoot r r' = true`, proved meaningful in the companion), so
+callers can substitute the refined representative wherever the
+original was used. Structures that contain
 a representative (such as `AlgebraicNumber` in `hex-number-field`)
 should store the refined value on return, so downstream consumers
 inherit the precision.
@@ -640,12 +681,18 @@ inherit the precision.
   `Array (Dyadic × Dyadic)`.
 - `HexRoots/Pellet.lean`: the dyadic bounds `lo`/`hi`, the rational
   `√2` constants with their `decide`-checked defining inequalities,
-  the `witness` predicate and its `Decidable` instance, and
-  `DyadicRootCluster` (whose field mentions `witness`).
+  the `witness` predicate and its `Decidable` instance,
+  `DyadicRootCluster` (whose field mentions `witness`), and the ball
+  view: `DyadicSquare.toBall`, the sound enclosure `evalBall`, and the
+  ball tests `excludesZero`/`meets`/`meetsBall` that consumers
+  (hex-number-field's disambiguation loops) use instead of re-deriving
+  the `√2` radius bookkeeping.
 - `HexRoots/Kantorovich.lean`: `nkWitness` with its `Decidable`
-  instance, `atomWitness`, `AtomStrategy`, and the
+  instance, `atomWitness`, `AtomStrategy`, the
   `atomWitness`-dependent `DyadicRootIsolation`, `Certified`, and
-  `atomize`.
+  `atomize`, and `certifyAtom?` (certify an arbitrary candidate
+  square, deciding both disjuncts fresh; the documented constructor
+  for re-certification after a square transform).
 - `HexRoots/MahlerPrec.lean`: the closed-form `mahlerPrec` and
   `separationDepth`.
 - `HexRoots/Cauchy.lean`: `Component.cauchy`.
@@ -657,10 +704,12 @@ inherit the precision.
   worklist, `stopDepth`, the Φ termination measure discussion, and
   `DyadicRootIsolation.refineTo?` as a thin wrapper.
 - `HexRoots/IsolateAll.lean`: `isolateAll?` and `isolate` as thin
-  wrappers over the shared driver loop.
+  wrappers over the shared driver loop, and the refined threading
+  operation `RefinedIsolation.refineTo?` (below).
 - `HexRoots/SimpleRoot.lean`: `RefinedIsolation`, `Intersects`,
-  `SimpleRoot`, `sameRoot`; the threading-pattern guidance lives here
-  as a docstring.
+  `SimpleRoot`, `sameRoot`, and the constructor
+  `DyadicRootIsolation.toRefined?`; the threading-pattern guidance
+  lives here as a docstring.
 - `conformance/HexRoots/{Conformance,EmitFixtures}.lean` and
   `bench/HexRoots/Bench.lean`: the conformance and bench drivers, in
   the shared sub-projects.

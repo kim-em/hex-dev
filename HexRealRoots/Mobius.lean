@@ -206,9 +206,8 @@ example : descartesVar (mobiusTransform (DensePoly.ofCoeffs #[(-1 : Int), 2])
 -- transform `(−2+2x)²+(1+x)²`. Signs `(+,−,+)` → 2. This interval is *wide*
 -- relative to the imaginary root pair `±i`, so the Descartes count
 -- over-estimates by 2 — sound (an even over-count), but not a `V = 0` discard.
--- NOTE: the directive's expected `V = 0` here is a hand-computation slip; the
--- true count on `(−2,2]` is 2, and `V = 0` on this polynomial needs an interval
--- away from `±i` (see the next check).
+-- A genuine `V = 0` discard for this polynomial needs an interval away from
+-- `±i` (see the next check).
 example : mobiusTransform (DensePoly.ofCoeffs #[(1 : Int), 0, 1])
     (DyadicInterval.mk (Dyadic.ofInt (-2)) (Dyadic.ofInt 2) (by decide))
     = DensePoly.ofCoeffs #[(5 : Int), -6, 5] := by decide
