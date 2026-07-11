@@ -9,6 +9,7 @@ module
 public import HexRealRoots.Basic
 public import HexRealRoots.Chain
 public import HexRealRoots.Prec
+public import HexRealRoots.Var
 
 public section
 
