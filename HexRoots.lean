@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRoots.Basic
+public import HexRoots.Bisection
 public import HexRoots.Cauchy
 public import HexRoots.Kantorovich
 public import HexRoots.MahlerPrec
