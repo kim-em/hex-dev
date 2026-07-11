@@ -443,6 +443,37 @@ theorem toPolyℝ_spem (f g : Hex.ZPoly) (hg : g.leadingCoeff ≠ 0)
   rw [hspem]
   exact spemAux_relate g hg f.size f
 
+/-! ### Squarefreeness and root transfers to `ℝ` -/
+
+/-- **Squarefree-to-separable transfer.** If the rational cast `toPolyℚ p` is
+squarefree, its real cast `toPolyℝ p` is separable. Over the perfect field `ℚ`,
+squarefree means separable, and separability is preserved by the field
+extension `ℚ → ℝ`. -/
+theorem separable_toPolyℝ (p : Hex.ZPoly) (hsq : Squarefree (toPolyℚ p)) :
+    (toPolyℝ p).Separable := by
+  have hsep : (toPolyℚ p).Separable := PerfectField.separable_iff_squarefree.mpr hsq
+  have hcomp : (algebraMap ℚ ℝ).comp (Int.castRingHom ℚ) = Int.castRingHom ℝ :=
+    RingHom.ext_int _ _
+  have hmap : toPolyℝ p = (toPolyℚ p).map (algebraMap ℚ ℝ) := by
+    show (toPolynomial p).map (Int.castRingHom ℝ)
+      = ((toPolynomial p).map (Int.castRingHom ℚ)).map (algebraMap ℚ ℝ)
+    rw [Polynomial.map_map, hcomp]
+  rw [hmap]; exact hsep.map
+
+/-- The real cast of a nonzero `p` is the positive-content multiple of the cast
+of its primitive part, so the two share exactly the same real roots. -/
+theorem roots_toPolyℝ_eq_primitivePart (p : Hex.ZPoly) (hp : p ≠ 0) :
+    (toPolyℝ p).roots = (toPolyℝ (Hex.ZPoly.primitivePart p)).roots := by
+  have hc0 : ((Hex.ZPoly.content p : Int) : ℝ) ≠ 0 := by
+    exact_mod_cast HexPolyZMathlib.content_ne_zero p hp
+  have hcontent : toPolyℝ p =
+      Polynomial.C ((Hex.ZPoly.content p : Int) : ℝ) * toPolyℝ (Hex.ZPoly.primitivePart p) := by
+    show (toPolynomial p).map (Int.castRingHom ℝ) = _
+    rw [HexPolyZMathlib.toPolynomial_eq_C_content_mul_primitivePart p, Polynomial.map_mul,
+      Polynomial.map_C]
+    rfl
+  rw [hcontent, Polynomial.roots_C_mul _ hc0]
+
 end
 
 end HexRealRootsMathlib
