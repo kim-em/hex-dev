@@ -75,20 +75,26 @@ The pipeline, with `n = deg p` fixed up front and `(α, β, s)` from
 * **(b) clear the dyadic denominator.** Replace `x` by `x·2^{-s}`, i.e. form
   `2^{s·n}·p(x·2^{-s})`: coefficient `aᵢ ↦ aᵢ·2^{s·(n−i)}`. This scales every
   root by `2^s`, so the interval becomes `(α, β]` with *integer* endpoints.
-* **(c) Taylor shift to the origin.** `q ↦ q(x + α)` via `compose` with the
-  degree-one argument `x + α`; the interval's roots now lie in `(0, β−α]`.
-* **(d) rescale the interval to `(0, 1]`.** `dilate (β−α)` evaluates at
-  `(β−α)·x`, dividing every root by `β−α`, so roots in `(0, β−α)` map to
-  `(0, 1)`.
+* **(c) Taylor shift the *right* endpoint to the origin.** `q ↦ q(x + β)` via
+  `compose` with the degree-one argument `x + β`; a root `y` of the cleared
+  polynomial becomes `y − β`, so the interval's roots now lie in `[α−β, 0)`.
+* **(d) rescale to `(0, 1]`.** `dilate (α−β)` evaluates at `(α−β)·x` (a
+  *negative* dilation), sending a root `y − β` to `u = (β−y)/(β−α)`, so roots
+  in `(α, β)` map to `(0, 1)` with `y = α ↦ u = 1` and `y = β ↦ u = 0`.
 * **(e) reverse at the *original* degree `n`.** Build the coefficient array of
   length `n+1` with entry `i` equal to `coeff (n − i)` and renormalize; this is
   the `x ↦ 1/x` homogenization `(1+x)^{deg p}` of the SPEC contract, sending
   `(0, 1)` to `(1, ∞)`. Reversing at `n` rather than the *current* degree is
-  essential: when `p(a) = 0` the shifted constant term vanishes and the current
-  degree drops, and that dropped root correctly disappears (its image is `∞`).
+  essential: when `p(b) = 0` the constant term after (c) vanishes and the
+  current degree drops, and that dropped root correctly disappears (its image
+  under `x ↦ 1/x` is `∞` — the root at `b` is not in the open `(a, b)`).
 * **(f) shift back to the positive axis.** `r ↦ r(x + 1)` via `compose`, sending
-  `(1, ∞)` to `(0, ∞)`. The positive real roots of the result are exactly the
-  images of `p`'s roots in the open `(a, b)`.
+  `(1, ∞)` to `(0, ∞)`. Chasing the maps: a root `x₀` of `p` corresponds to the
+  final root `t` with `x₀ = (a + b·t)/(1 + t)` — exactly the SPEC's Möbius map,
+  with `t > 0 ⟺ x₀ ∈ (a, b)`. A root at `a` lands at `t = 0` (a vanishing
+  constant term, not a positive root), a root at `b` disappears at `∞` via the
+  degree drop in (e), so the positive real roots of the result are exactly the
+  images of `p`'s roots in the open `(a, b)`, with multiplicity.
 
 No content/`primitivePart` division is taken anywhere: sign variations are
 scale-invariant, so a content gcd would be pure cost against the `O(n²)`
@@ -104,10 +110,10 @@ def mobiusTransform (p : ZPoly) (I : DyadicInterval) : ZPoly :=
   -- (b) `x ↦ x·2^{-s}`: `aᵢ ↦ aᵢ·2^{s·(n−i)}`, i.e. `2^{s·n}·p(x·2^{-s})`.
   let cleared := DensePoly.ofCoeffs
     ((List.range p.size).map (fun i => p.coeff i * (2 : Int) ^ (s * (n - i)))).toArray
-  -- (c) Taylor shift `q(x + α)` (`compose` with the degree-one `x + α`).
-  let shifted := DensePoly.compose cleared (DensePoly.ofCoeffs #[α, (1 : Int)])
-  -- (d) rescale `(0, β−α) ↦ (0, 1)` by evaluating at `(β−α)·x`.
-  let scaled := ZPoly.dilate (β - α) shifted
+  -- (c) Taylor shift `q(x + β)` (`compose` with the degree-one `x + β`).
+  let shifted := DensePoly.compose cleared (DensePoly.ofCoeffs #[β, (1 : Int)])
+  -- (d) rescale `(α, β) ∋ y ↦ (β−y)/(β−α) ∈ (0, 1)` by evaluating at `(α−β)·x`.
+  let scaled := ZPoly.dilate (α - β) shifted
   -- (e) reverse at the ORIGINAL degree `n`: entry `i` is `coeff (n−i)`.
   let reversed := DensePoly.ofCoeffs
     ((List.range (n + 1)).map (fun i => scaled.coeff (n - i))).toArray
@@ -121,10 +127,9 @@ def descartesVar (p : ZPoly) : Nat :=
   signVar (p.toArray.toList.map Int.sign)
 
 /-! Sanity checks (kept light; conformance lives in the shared sub-project).
-Each transform below is hand-verified in the comment; sign variations are
-invariant under overall sign and under the reversal orientation, so a pipeline
-result may be a negative multiple or the coefficient-reverse of the textbook
-`(1+x)^n·p((a+bx)/(1+x))` while carrying the same variation count. -/
+Each transform below is hand-verified in the comment: the pipeline computes
+the literal SPEC numerator `(1+x)^n·p((a+bx)/(1+x))`, cleared to integers by
+a positive power of two. -/
 
 -- `descartesVar` basics.
 -- `x² − 3x + 2` has coefficients `#[2,-3,1]` → signs `(+,−,+)` → 2 variations.
@@ -135,63 +140,66 @@ example : descartesVar (DensePoly.ofCoeffs #[(1 : Int), 0, 1]) = 0 := by decide
 example : descartesVar (DensePoly.ofCoeffs #[(-1 : Int), 1]) = 1 := by decide
 
 -- `mobiusTransform (x − 1)` on `(0, 2]`. `n = 1`, `α = 0`, `β = 2`, `s = 0`.
--- (b) `x−1` → (c) `(x+0)−1 = x−1` → (d) `dilate 2`: `2x−1` → (e) reverse at 1:
--- `2 − x` → (f) `2 − (x+1) = 1 − x`, array `#[1,-1]` (`= −(x−1)`). Root `1 ∈ (0,2)`
--- of `x−1` gives the one positive root; signs `(+,−)` → 1.
+-- (b) `x−1` → (c) `(x+2)−1 = x+1` → (d) `dilate (−2)`: `1−2x` → (e) reverse at
+-- 1: `x−2` → (f) `(x+1)−2 = x−1`, array `#[-1,1]` — the SPEC numerator
+-- `(1+x)·((0+2x)/(1+x) − 1) = x−1` exactly. Root `1 ∈ (0,2)` of `x−1` gives
+-- the one positive root; signs `(−,+)` → 1.
 example : mobiusTransform (DensePoly.ofCoeffs #[(-1 : Int), 1])
     (DyadicInterval.mk (Dyadic.ofInt 0) (Dyadic.ofInt 2) (by decide))
-    = DensePoly.ofCoeffs #[(1 : Int), -1] := by decide
+    = DensePoly.ofCoeffs #[(-1 : Int), 1] := by decide
 example : descartesVar (mobiusTransform (DensePoly.ofCoeffs #[(-1 : Int), 1])
     (DyadicInterval.mk (Dyadic.ofInt 0) (Dyadic.ofInt 2) (by decide))) = 1 := by decide
 
 -- `mobiusTransform (x² − 3)` on `(1, 2]`. `n = 2`, `α = 1`, `β = 2`, `s = 0`.
--- (b) `x²−3` → (c) `(x+1)²−3 = x²+2x−2` → (d) `dilate 1`: unchanged → (e) reverse
--- at 2: `−2x²+2x+1` → (f) `−2(x+1)²+2(x+1)+1 = −2x²−2x+1`, array `#[1,-2,-2]`.
--- This is the coefficient-reverse of the textbook `x²−2x−2`; both count 1
--- variation. `√3 ∈ (1,2)` is a root of `x²−3`; signs `(+,−,−)` → 1.
+-- (b) `x²−3` → (c) `(x+2)²−3 = x²+4x+1` → (d) `dilate (−1)`: `x²−4x+1` → (e)
+-- reverse at 2: `x²−4x+1` (palindrome) → (f) `(x+1)²−4(x+1)+1 = x²−2x−2`,
+-- array `#[-2,-2,1]` — the textbook `(1+2x)²−3(1+x)²` exactly. `√3 ∈ (1,2)`
+-- is a root of `x²−3`; signs `(−,−,+)` → 1.
 example : mobiusTransform (DensePoly.ofCoeffs #[(-3 : Int), 0, 1])
     (DyadicInterval.mk (Dyadic.ofInt 1) (Dyadic.ofInt 2) (by decide))
-    = DensePoly.ofCoeffs #[(1 : Int), -2, -2] := by decide
+    = DensePoly.ofCoeffs #[(-2 : Int), -2, 1] := by decide
 example : descartesVar (mobiusTransform (DensePoly.ofCoeffs #[(-3 : Int), 0, 1])
     (DyadicInterval.mk (Dyadic.ofInt 1) (Dyadic.ofInt 2) (by decide))) = 1 := by decide
 
--- Boundary-root case (the off-by-degree trap). `mobiusTransform (x − 1)` on
--- `(1, 3]`: `p(1) = 0`, so the root sits on the *excluded* left endpoint and is
--- NOT in the open `(1,3)`. `n = 1`, `α = 1`, `β = 3`, `s = 0`. (c) `(x+1)−1 = x`
--- → (d) `dilate 2`: `2x` → (e) reverse at 1: `#[2,0]` renormalizes to the
--- constant `2` (the degree drop, handled correctly) → (f) constant `2`. Signs
--- `(+)` → 0: no root in the open interval.
+-- Boundary-root case. `mobiusTransform (x − 1)` on `(1, 3]`: `p(1) = 0`, so
+-- the root sits on the *excluded* left endpoint and is NOT in the open
+-- `(1,3)`. `n = 1`, `α = 1`, `β = 3`, `s = 0`. (c) `(x+3)−1 = x+2` → (d)
+-- `dilate (−2)`: `2−2x` → (e) reverse at 1: `−2+2x` → (f) `−2+2(x+1) = 2x`,
+-- array `#[0,2]` — the SPEC numerator `(1+3x)−(1+x) = 2x` exactly: the root
+-- at `a = 1` lands at `t = 0`, which is not positive. Signs `(0,+)` → 0.
 example : mobiusTransform (DensePoly.ofCoeffs #[(-1 : Int), 1])
     (DyadicInterval.mk (Dyadic.ofInt 1) (Dyadic.ofInt 3) (by decide))
-    = DensePoly.ofCoeffs #[(2 : Int)] := by decide
+    = DensePoly.ofCoeffs #[(0 : Int), 2] := by decide
 example : descartesVar (mobiusTransform (DensePoly.ofCoeffs #[(-1 : Int), 1])
     (DyadicInterval.mk (Dyadic.ofInt 1) (Dyadic.ofInt 3) (by decide))) = 0 := by decide
 
 -- Half-dyadic endpoint. `mobiusTransform (2x − 1)` on `(0, 1]`: root `1/2 ∈ (0,1)`.
--- `n = 1`, `α = 0`, `β = 1`, `s = 0`. (c) `2x−1` → (d) `dilate 1`: unchanged →
--- (e) reverse: `2 − x` → (f) `1 − x`, array `#[1,-1]`; signs `(+,−)` → 1.
+-- `n = 1`, `α = 0`, `β = 1`, `s = 0`. (c) `2(x+1)−1 = 2x+1` → (d) `dilate (−1)`:
+-- `1−2x` → (e) reverse: `−2+x` → (f) `(x+1)−2 = x−1`, array `#[-1,1]` — the SPEC
+-- numerator `2x−(1+x) = x−1` exactly; signs `(−,+)` → 1.
 example : mobiusTransform (DensePoly.ofCoeffs #[(-1 : Int), 2])
     (DyadicInterval.mk (Dyadic.ofInt 0) (Dyadic.ofInt 1) (by decide))
-    = DensePoly.ofCoeffs #[(1 : Int), -1] := by decide
+    = DensePoly.ofCoeffs #[(-1 : Int), 1] := by decide
 example : descartesVar (mobiusTransform (DensePoly.ofCoeffs #[(-1 : Int), 2])
     (DyadicInterval.mk (Dyadic.ofInt 0) (Dyadic.ofInt 1) (by decide))) = 1 := by decide
 
 -- Same polynomial `2x − 1` on `(1/2, 1]`: the root `1/2` is now the *excluded*
 -- left endpoint, so the open `(1/2, 1)` has no root. Here `s = 1`: the common
 -- denominator is `2`, `α = 1`, `β = 2`, and (b) rescales `2x−1 ↦ 2x−2`. (c)
--- `2(x+1)−2 = 2x` → (d) `dilate 1` → (e) `#[2,0]` renormalizes to `2` → (f) `2`.
--- Signs `(+)` → 0.
+-- `2(x+2)−2 = 2x+2` → (d) `dilate (−1)`: `2−2x` → (e) reverse: `−2+2x` → (f)
+-- `−2+2(x+1) = 2x`, array `#[0,2]`: the root at `a = 1/2` lands at `t = 0`,
+-- not positive. Signs `(0,+)` → 0.
 example : mobiusTransform (DensePoly.ofCoeffs #[(-1 : Int), 2])
     (DyadicInterval.mk ((Dyadic.ofInt 1) >>> (1 : Int)) (Dyadic.ofInt 1) (by decide))
-    = DensePoly.ofCoeffs #[(2 : Int)] := by decide
+    = DensePoly.ofCoeffs #[(0 : Int), 2] := by decide
 example : descartesVar (mobiusTransform (DensePoly.ofCoeffs #[(-1 : Int), 2])
     (DyadicInterval.mk ((Dyadic.ofInt 1) >>> (1 : Int)) (Dyadic.ofInt 1) (by decide))) = 0 := by decide
 
 -- No-root polynomial `x² + 1` on `(−2, 2]`. `x²+1` has no real roots, so the
 -- open interval contains none and `descartesVar` must be *even* and an upper
 -- bound (Descartes): the transform's positive-root count is `0`, so `V ∈
--- {0,2,4,…}`. `n = 2`, `α = −2`, `β = 2`, `s = 0`. (c) `(x−2)²+1 = x²−4x+5` →
--- (d) `dilate 4`: `16x²−16x+5` → (e) reverse at 2: `5x²−16x+16` → (f)
+-- {0,2,4,…}`. `n = 2`, `α = −2`, `β = 2`, `s = 0`. (c) `(x+2)²+1 = x²+4x+5` →
+-- (d) `dilate (−4)`: `16x²−16x+5` → (e) reverse at 2: `5x²−16x+16` → (f)
 -- `16 − 16(x+1) + 5(x+1)² = 5x²−6x+5`, array `#[5,-6,5]` — exactly the textbook
 -- transform `(−2+2x)²+(1+x)²`. Signs `(+,−,+)` → 2. This interval is *wide*
 -- relative to the imaginary root pair `±i`, so the Descartes count
