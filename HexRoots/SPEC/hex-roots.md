@@ -750,6 +750,17 @@ and the Phase-4 external performance comparator; it is not wired
 into merge-facing CI. SageMath is not used (per SPEC/testing.md's
 Sage policy).
 
+For Phase 4 both named comparators are classified `informational` (per
+[SPEC/benchmarking.md §Comparator classification](../../SPEC/benchmarking.md#comparator-classification-gating-vs-informational)):
+python-flint `fmpz_poly.complex_roots` and MPSolve are multiprecision
+ball/float engines computing approximate root inclusions, structurally
+different from this library's decidable exact-integer Pellet /
+Newton-Kantorovich certificates, so their ratios orient but do not gate, and
+the yardstick is the "Time budgets" targets above rather than a constant-factor
+goal. Neither is `gating`; MPSolve is additionally scheduled-only. The
+classifications and rationales are mirrored in
+`libraries.yml: HexRoots.phase4.comparators`.
+
 ## Complexity contract
 
 Write `n = deg p` and `B = prec + n · log ‖p‖∞` for the working

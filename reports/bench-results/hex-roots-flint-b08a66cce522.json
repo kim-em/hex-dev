@@ -1,0 +1,125 @@
+{
+  "comparator": "python-flint fmpz_poly.complex_roots",
+  "python_flint_version": "0.9.0",
+  "prec_bits": 32,
+  "overhead_s": 1.0820222087204456e-06,
+  "rows": [
+    {
+      "degree": 4,
+      "median_s": 1.1988013284280896e-05,
+      "n_roots": 4,
+      "repeats": 50,
+      "coeffs_head": [
+        -7,
+        -2,
+        -3,
+        -5,
+        3
+      ]
+    },
+    {
+      "degree": 6,
+      "median_s": 1.770147355273366e-05,
+      "n_roots": 6,
+      "repeats": 50,
+      "coeffs_head": [
+        -7,
+        -2,
+        -3,
+        -5,
+        3
+      ]
+    },
+    {
+      "degree": 8,
+      "median_s": 2.6308989617973566e-05,
+      "n_roots": 8,
+      "repeats": 50,
+      "coeffs_head": [
+        -7,
+        -2,
+        -3,
+        -5,
+        3
+      ]
+    },
+    {
+      "degree": 10,
+      "median_s": 3.578397445380688e-05,
+      "n_roots": 10,
+      "repeats": 50,
+      "coeffs_head": [
+        -7,
+        -2,
+        -3,
+        -5,
+        3
+      ]
+    },
+    {
+      "degree": 12,
+      "median_s": 7.655352237634361e-05,
+      "n_roots": 12,
+      "repeats": 50,
+      "coeffs_head": [
+        -7,
+        -2,
+        -3,
+        -5,
+        3
+      ]
+    },
+    {
+      "degree": 14,
+      "median_s": 0.00010304249008186162,
+      "n_roots": 14,
+      "repeats": 20,
+      "coeffs_head": [
+        -7,
+        -2,
+        -3,
+        -5,
+        3
+      ]
+    },
+    {
+      "degree": 16,
+      "median_s": 7.710899808444083e-05,
+      "n_roots": 16,
+      "repeats": 20,
+      "coeffs_head": [
+        -7,
+        -2,
+        -3,
+        -5,
+        3
+      ]
+    },
+    {
+      "degree": 18,
+      "median_s": 9.669348946772516e-05,
+      "n_roots": 18,
+      "repeats": 8,
+      "coeffs_head": [
+        -7,
+        -2,
+        -3,
+        -5,
+        3
+      ]
+    },
+    {
+      "degree": 20,
+      "median_s": 0.00016736300312913954,
+      "n_roots": 20,
+      "repeats": 8,
+      "coeffs_head": [
+        -7,
+        -2,
+        -3,
+        -5,
+        3
+      ]
+    }
+  ]
+}
