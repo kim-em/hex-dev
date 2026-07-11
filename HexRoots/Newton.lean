@@ -56,7 +56,8 @@ namespace Hex
   let q := prec' + 2 + max 0 (Hex.Dyadic.ceilLog2 tb)
   let inv := d.invAtPrec q                               -- ONE real reciprocal 1/|c₁|²
   -- `invAtPrec` floors at precision `q` (error `< 2^{−q}` toward zero), so each
-  -- centre component's error is `≤ |t|·2^{−q} ≤ tb·2^{−q} < 2^{−(prec'+2)}`, a
+  -- centre component's error is `< |tᵢ|·2^{−q} ≤ tb·2^{−q} ≤ 2^{−(prec'+2)}`
+  -- (strictness from the reciprocal rounding error), at most a
   -- quarter of the new half-width `2^{−prec'}`: a genuinely converged Newton
   -- step keeps the root inside the new square. `prec' = max (prec+2) (2·prec)`
   -- gives at least a quarter-size square always (also for `prec ≤ 0`) and
