@@ -483,7 +483,7 @@ libraries:
   HexRealRoots:
     deps: [HexPolyZ]
     mathlib: false
-    done_through: 2
+    done_through: 3
     status: active
   HexRealRootsMathlib:
     deps: [HexRealRoots, HexPolyZMathlib]
