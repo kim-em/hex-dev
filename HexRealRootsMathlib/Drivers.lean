@@ -371,6 +371,85 @@ private theorem initial_width_le (p : Hex.ZPoly) (hdeg : 1 ≤ (p.degree?).getD 
 
 /-! ### The `sturmVisit` worklist drains -/
 
+/-- Dyadic `≤` is reflexive (routed through `toRat`, staying in the core
+instances that `DyadicInterval` uses). -/
+private theorem dle_refl (a : Dyadic) : a ≤ a :=
+  Dyadic.toRat_le_toRat_iff.mp (le_refl _)
+
+/-- Dyadic `<` implies `≤`. -/
+private theorem dle_of_lt {a b : Dyadic} (h : a < b) : a ≤ b :=
+  Dyadic.toRat_le_toRat_iff.mp (le_of_lt (Dyadic.toRat_lt_toRat_iff.mpr h))
+
+/-- Transitivity of the core dyadic `≤`. -/
+private theorem dle_trans {a b c : Dyadic} (h1 : a ≤ b) (h2 : b ≤ c) : a ≤ c :=
+  Dyadic.toRat_le_toRat_iff.mp
+    (le_trans (Dyadic.toRat_le_toRat_iff.mpr h1) (Dyadic.toRat_le_toRat_iff.mpr h2))
+
+/-- `sturmVarAt` is antitone in the point: the count over `(a, b]` is a
+nonnegative cardinality, so the variation at `b` is at most the one at `a`. -/
+private theorem sturmVarAt_le (hdeg : 1 ≤ (p.degree?).getD 0)
+    (hp : Hex.ZPoly.SquareFreeRat p) {a b : Dyadic} (hab : a < b) :
+    Hex.sturmVarAt (Hex.ZPoly.sturmChain p) b
+      ≤ Hex.sturmVarAt (Hex.ZPoly.sturmChain p) a := by
+  have h := sturmCount_eq_card_roots p hdeg hp ⟨a, b, hab⟩
+  have hid : Hex.sturmCount p ⟨a, b, hab⟩
+      = (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) a : ℤ)
+        - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) b := rfl
+  rw [hid] at h
+  omega
+
+/-- A real root of the real cast is a complex root of the complex cast. -/
+private theorem isRoot_toPolyℂ {r : ℝ} (hr : (toPolyℝ p).IsRoot r) :
+    (toPolyℂ p).IsRoot (r : ℂ) := by
+  have hcomp : (algebraMap ℝ ℂ).comp (Int.castRingHom ℝ) = Int.castRingHom ℂ :=
+    RingHom.ext_int _ _
+  have hmap : toPolyℂ p = (toPolyℝ p).map (algebraMap ℝ ℂ) := by
+    show (HexPolyZMathlib.toPolynomial p).map (Int.castRingHom ℂ)
+        = ((HexPolyZMathlib.toPolynomial p).map (Int.castRingHom ℝ)).map (algebraMap ℝ ℂ)
+    rw [Polynomial.map_map, hcomp]
+  rw [hmap]
+  have h2 : Polynomial.IsRoot ((toPolyℝ p).map (algebraMap ℝ ℂ)) (algebraMap ℝ ℂ r) := hr.map
+  simpa using h2
+
+/-- **Separation caps the count.** An interval no wider than `2^(−sepPrec p)`
+holds at most one real root of a positive-degree squarefree `p` (two distinct
+real roots are more than `4·2^(−sepPrec p)` apart by `sepPrec_separates'`), so
+its exact Sturm count is at most `1`. -/
+private theorem sturmCount_le_one (hdeg : 1 ≤ (p.degree?).getD 0)
+    (hp : Hex.ZPoly.SquareFreeRat p) (J : Hex.DyadicInterval)
+    (hw : Dyadic.toReal J.upper - Dyadic.toReal J.lower
+      ≤ (2 : ℝ) ^ (-(Hex.sepPrec p : ℤ))) :
+    Hex.sturmCount p J ≤ 1 := by
+  have hp0 : p ≠ 0 := by
+    intro hh; rw [hh] at hdeg; simp only [Hex.DensePoly.degree?_zero_getD] at hdeg; omega
+  rw [sturmCount_eq_card_roots p hdeg hp J]
+  set M := (toPolyℝ p).roots.filter
+      (fun r => Dyadic.toReal J.lower < r ∧ r ≤ Dyadic.toReal J.upper) with hMdef
+  suffices h : M.card ≤ 1 by exact_mod_cast h
+  by_contra h2
+  have hnodup : M.Nodup := by
+    rw [hMdef]
+    exact (Polynomial.nodup_roots
+      (separable_toPolyℝ p ((squareFreeRat_iff p hp0).mp hp))).filter _
+  have hfin : 1 < M.toFinset.card := by
+    rw [Multiset.toFinset_card_of_nodup hnodup]; omega
+  obtain ⟨r₁, hr₁, r₂, hr₂, hne⟩ := Finset.one_lt_card.mp hfin
+  rw [Multiset.mem_toFinset, hMdef, Multiset.mem_filter] at hr₁ hr₂
+  obtain ⟨hr₁roots, hr₁lo, hr₁hi⟩ := hr₁
+  obtain ⟨hr₂roots, hr₂lo, hr₂hi⟩ := hr₂
+  have hroot₁ : (toPolyℝ p).IsRoot r₁ := (Polynomial.mem_roots'.mp hr₁roots).2
+  have hroot₂ : (toPolyℝ p).IsRoot r₂ := (Polynomial.mem_roots'.mp hr₂roots).2
+  have hsep := sepPrec_separates' p hp0 hp (r₁ : ℂ) (r₂ : ℂ)
+    (isRoot_toPolyℂ hroot₁) (isRoot_toPolyℂ hroot₂)
+    (fun h => hne (by exact_mod_cast h))
+  have hnorm : ‖(r₁ : ℂ) - (r₂ : ℂ)‖ = |r₁ - r₂| := by
+    rw [← Complex.ofReal_sub, Complex.norm_real, Real.norm_eq_abs]
+  have habs : |r₁ - r₂| < Dyadic.toReal J.upper - Dyadic.toReal J.lower :=
+    abs_sub_lt_iff.mpr ⟨by linarith, by linarith⟩
+  have hpos : (0 : ℝ) < (2 : ℝ) ^ (-(Hex.sepPrec p : ℤ)) := by positivity
+  rw [hnorm] at hsep
+  linarith
+
 /-- **The `sturmVisit` worklist drains, ordered and count-exact.** For truthful
 memoised endpoint counts (`vlo = sturmVarAt chain lo`, `vhi = sturmVarAt chain hi`)
 on a nonempty interval whose width is within the depth budget
@@ -378,26 +457,23 @@ on a nonempty interval whose width is within the depth budget
 where `arr` is an ordered array of `arr.size = vlo − vhi` isolations, each with its
 interval inside `(lo, hi]`.
 
-Proof plan (structural induction on `depth`; **not yet discharged**):
+Structural induction on `depth`:
 
 * **Drain / non-`none`.** The only `none` branch is `count ≥ 2` at `depth = 0`.
   At the budget `depth = 0` the width is `≤ 2^(−sepPrec p)`, below the real
-  root-gap `4·2^(−sepPrec p)` from `sepPrec_separates'` (real pairs), so the
-  interval holds `≤ 1` root and `count = vlo − vhi ≤ 1` — the `count ≥ 2` branch
-  is never entered. A bisection step halves the width, so both children satisfy
-  the budget at `depth − 1`, and their memoised midpoint count `vmid =
-  sturmVarAt chain mid` is truthful; the induction hypothesis drains both.
+  root-gap `4·2^(−sepPrec p)` from `sepPrec_separates'` (via
+  `sturmCount_le_one`), so the interval holds `≤ 1` root and
+  `count = vlo − vhi ≤ 1` — the `count ≥ 2` branch is never entered. A bisection
+  step halves the width, so both children satisfy the budget at `depth − 1`, and
+  their memoised midpoint count is truthful by construction; the induction
+  hypothesis drains both.
 * **Count exactness.** The count-`0`/count-`1` leaves emit `0`/`1` isolations,
-  matching `vlo − vhi`. A bisection telescopes: `vlo ≥ vmid ≥ vhi` (Sturm counts
-  are nonnegative) and `(vlo − vmid) + (vmid − vhi) = vlo − vhi`.
+  matching `vlo − vhi`. A bisection telescopes: `vlo ≥ vmid ≥ vhi`
+  (`sturmVarAt_le`) and `(vlo − vmid) + (vmid − vhi) = vlo − vhi`.
 * **Ordering / containment.** The count-`1` leaf emits `(lo, hi]` itself. A
   bisection emits `left ++ right` with every left interval's upper `≤ mid` and
   every right interval's lower `≥ mid`, so the concatenation stays sorted and
-  inside `(lo, hi]`.
-
-Consumes `sepPrec_separates'`, `rootBound_bounds_roots`, `sturmCount_eq_card_roots`
-(via `no_root_of_count_zero` for the leaf count bound), and `sturmVarAt`
-monotonicity across a split. -/
+  inside `(lo, hi]`. -/
 private theorem sturmVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
     (hp : Hex.ZPoly.SquareFreeRat p) :
     ∀ (depth : Nat) (lo hi : Dyadic) (vlo vhi : Nat),
@@ -410,7 +486,175 @@ private theorem sturmVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
         arr.size = vlo - vhi ∧
         (∀ i j : Fin arr.size, i < j → arr[i].interval.upper ≤ arr[j].interval.lower) ∧
         (∀ I ∈ arr, lo ≤ I.interval.lower) ∧ (∀ I ∈ arr, I.interval.upper ≤ hi) := by
-  sorry
+  intro depth
+  induction depth with
+  | zero =>
+    intro lo hi vlo vhi hvlo hvhi hlt hw
+    subst hvlo; subst hvhi
+    simp only [Nat.cast_zero, zero_sub] at hw
+    have hunf : Hex.sturmVisit p (Hex.ZPoly.sturmChain p) rfl 0 lo hi
+        (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo)
+        (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi)
+        = (if Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo
+              = Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi then some #[]
+           else if Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo
+              = Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi + 1 then
+             (if hlt' : lo < hi then
+                (if h : (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo : Int)
+                    - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi = 1 then
+                  some #[⟨⟨lo, hi, hlt'⟩, h⟩]
+                else none)
+              else none)
+           else none) := rfl
+    by_cases h0 : Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo
+        = Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi
+    · refine ⟨#[], by rw [hunf, if_pos h0], by simp [h0], ?_, ?_, ?_⟩
+      · intro i j hij; exact absurd i.isLt (by simp)
+      · intro I hI; simp at hI
+      · intro I hI; simp at hI
+    · by_cases h1 : Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo
+          = Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi + 1
+      · have hraw : (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo : Int)
+            - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi = 1 := by omega
+        refine ⟨#[⟨⟨lo, hi, hlt⟩, hraw⟩],
+          by rw [hunf, if_neg h0, if_pos h1, dif_pos hlt, dif_pos hraw],
+          by simp [h1], ?_, ?_, ?_⟩
+        · intro i j hij
+          have hi1 : (i : ℕ) < 1 := i.isLt
+          have hj1 : (j : ℕ) < 1 := j.isLt
+          have hij' : (i : ℕ) < (j : ℕ) := hij
+          omega
+        · intro I hI
+          simp only [List.mem_toArray, List.mem_singleton] at hI
+          subst hI
+          exact dle_refl lo
+        · intro I hI
+          simp only [List.mem_toArray, List.mem_singleton] at hI
+          subst hI
+          exact dle_refl hi
+      · -- `count ≥ 2` at depth `0`: refuted by the separation bound.
+        exfalso
+        have hle := sturmVarAt_le hdeg hp hlt
+        have hcle : Hex.sturmCount p ⟨lo, hi, hlt⟩ ≤ 1 := sturmCount_le_one hdeg hp _ hw
+        have hcle' : (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo : ℤ)
+            - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi ≤ 1 := hcle
+        omega
+  | succ d ih =>
+    intro lo hi vlo vhi hvlo hvhi hlt hw
+    subst hvlo; subst hvhi
+    have hunf : Hex.sturmVisit p (Hex.ZPoly.sturmChain p) rfl (d + 1) lo hi
+        (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo)
+        (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi)
+        = (if Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo
+              = Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi then some #[]
+           else if Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo
+              = Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi + 1 then
+             (if hlt' : lo < hi then
+                (if h : (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo : Int)
+                    - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi = 1 then
+                  some #[⟨⟨lo, hi, hlt'⟩, h⟩]
+                else none)
+              else none)
+           else
+             match Hex.sturmVisit p (Hex.ZPoly.sturmChain p) rfl d
+                 lo ((lo + hi) >>> (1 : Int))
+                 (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo)
+                 (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) ((lo + hi) >>> (1 : Int))) with
+             | none => none
+             | some left =>
+               match Hex.sturmVisit p (Hex.ZPoly.sturmChain p) rfl d
+                   ((lo + hi) >>> (1 : Int)) hi
+                   (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) ((lo + hi) >>> (1 : Int)))
+                   (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi) with
+               | none => none
+               | some right => some (left ++ right)) := rfl
+    by_cases h0 : Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo
+        = Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi
+    · refine ⟨#[], by rw [hunf, if_pos h0], by simp [h0], ?_, ?_, ?_⟩
+      · intro i j hij; exact absurd i.isLt (by simp)
+      · intro I hI; simp at hI
+      · intro I hI; simp at hI
+    · by_cases h1 : Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo
+          = Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi + 1
+      · have hraw : (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo : Int)
+            - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi = 1 := by omega
+        refine ⟨#[⟨⟨lo, hi, hlt⟩, hraw⟩],
+          by rw [hunf, if_neg h0, if_pos h1, dif_pos hlt, dif_pos hraw],
+          by simp [h1], ?_, ?_, ?_⟩
+        · intro i j hij
+          have hi1 : (i : ℕ) < 1 := i.isLt
+          have hj1 : (j : ℕ) < 1 := j.isLt
+          have hij' : (i : ℕ) < (j : ℕ) := hij
+          omega
+        · intro I hI
+          simp only [List.mem_toArray, List.mem_singleton] at hI
+          subst hI
+          exact dle_refl lo
+        · intro I hI
+          simp only [List.mem_toArray, List.mem_singleton] at hI
+          subst hI
+          exact dle_refl hi
+      · -- Bisection: recurse into the two halves.
+        have hlm : lo < (lo + hi) >>> (1 : Int) := lower_lt_midpoint ⟨lo, hi, hlt⟩
+        have hmh : (lo + hi) >>> (1 : Int) < hi := midpoint_lt_upper ⟨lo, hi, hlt⟩
+        have hmidR : Dyadic.toReal ((lo + hi) >>> (1 : Int))
+            = (Dyadic.toReal lo + Dyadic.toReal hi) / 2 := toReal_midpoint ⟨lo, hi, hlt⟩
+        have hzp : (2 : ℝ) ^ (((d + 1 : ℕ) : ℤ) - (Hex.sepPrec p : ℤ))
+            = 2 * (2 : ℝ) ^ ((d : ℤ) - (Hex.sepPrec p : ℤ)) := by
+          rw [show ((d + 1 : ℕ) : ℤ) - (Hex.sepPrec p : ℤ)
+              = ((d : ℤ) - (Hex.sepPrec p : ℤ)) + 1 by push_cast; ring,
+            zpow_add_one₀ (by norm_num : (2 : ℝ) ≠ 0)]
+          ring
+        rw [hzp] at hw
+        have hwl : Dyadic.toReal ((lo + hi) >>> (1 : Int)) - Dyadic.toReal lo
+            ≤ (2 : ℝ) ^ ((d : ℤ) - (Hex.sepPrec p : ℤ)) := by
+          rw [hmidR]; linarith
+        have hwr : Dyadic.toReal hi - Dyadic.toReal ((lo + hi) >>> (1 : Int))
+            ≤ (2 : ℝ) ^ ((d : ℤ) - (Hex.sepPrec p : ℤ)) := by
+          rw [hmidR]; linarith
+        obtain ⟨left, hLeq, hLsize, hLord, hLlo, hLhi⟩ :=
+          ih lo ((lo + hi) >>> (1 : Int)) _ _ rfl rfl hlm hwl
+        obtain ⟨right, hReq, hRsize, hRord, hRlo, hRhi⟩ :=
+          ih ((lo + hi) >>> (1 : Int)) hi _ _ rfl rfl hmh hwr
+        have hle1 : Hex.sturmVarAt (Hex.ZPoly.sturmChain p) ((lo + hi) >>> (1 : Int))
+            ≤ Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo := sturmVarAt_le hdeg hp hlm
+        have hle2 : Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi
+            ≤ Hex.sturmVarAt (Hex.ZPoly.sturmChain p) ((lo + hi) >>> (1 : Int)) :=
+          sturmVarAt_le hdeg hp hmh
+        refine ⟨left ++ right, ?_, ?_, ?_, ?_, ?_⟩
+        · rw [hunf, if_neg h0, if_neg h1, hLeq, hReq]
+        · rw [Array.size_append, hLsize, hRsize]
+          omega
+        · -- The concatenation stays sorted: `left`'s uppers sit below the
+          -- midpoint, `right`'s lowers above it.
+          intro i j hij
+          have hij' : (i : ℕ) < (j : ℕ) := hij
+          have hi' : (i : ℕ) < left.size + right.size := i.isLt.trans_eq Array.size_append
+          have hj' : (j : ℕ) < left.size + right.size := j.isLt.trans_eq Array.size_append
+          by_cases hjL : (j : ℕ) < left.size
+          · have hiL : (i : ℕ) < left.size := lt_trans hij' hjL
+            rw [Fin.getElem_fin, Fin.getElem_fin, Array.getElem_append_left hiL,
+              Array.getElem_append_left hjL]
+            exact hLord ⟨(i : ℕ), hiL⟩ ⟨(j : ℕ), hjL⟩ hij'
+          · have hjR : left.size ≤ (j : ℕ) := le_of_not_gt hjL
+            by_cases hiL : (i : ℕ) < left.size
+            · rw [Fin.getElem_fin, Fin.getElem_fin, Array.getElem_append_left hiL,
+                Array.getElem_append_right hjR]
+              exact dle_trans (hLhi _ (Array.getElem_mem hiL))
+                (hRlo _ (Array.getElem_mem (by omega)))
+            · have hiR : left.size ≤ (i : ℕ) := le_of_not_gt hiL
+              rw [Fin.getElem_fin, Fin.getElem_fin, Array.getElem_append_right hiR,
+                Array.getElem_append_right hjR]
+              exact hRord ⟨(i : ℕ) - left.size, by omega⟩ ⟨(j : ℕ) - left.size, by omega⟩
+                (by simp only [Fin.mk_lt_mk]; omega)
+        · intro I hI
+          rcases Array.mem_append.mp hI with h | h
+          · exact hLlo I h
+          · exact dle_trans (dle_of_lt hlm) (hRlo I h)
+        · intro I hI
+          rcases Array.mem_append.mp hI with h | h
+          · exact dle_trans (hLhi I h) (dle_of_lt hmh)
+          · exact hRhi I h
 
 /-- The final assembly step succeeds once its two invariants are witnessed. -/
 private theorem assemble?_isSome {chain : Array Hex.ZPoly}
