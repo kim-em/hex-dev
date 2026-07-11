@@ -25,7 +25,7 @@ guard), then by the Pellet witness on the enclosing square's disc.
 The geometry helpers `DyadicSquare.subdivide`, `DyadicSquare.adjacent`,
 and `glue` are exact: subdivision offsets by exact dyadics, adjacency is
 a comparison of exact dyadic centre differences, and gluing is a
-fuel-bounded breadth-first search with mark-before-push, so each index is
+fuel-bounded depth-first search with mark-before-push, so each index is
 visited once and the output components are deterministic in index order.
 The witness re-checks that certification and the coverage guard perform
 run at runtime on the compiled code; the `decide`-reducible witness
@@ -58,8 +58,8 @@ namespace Hex
   else
     false
 
-/-- Edge-connected components of a set of same-`prec` squares. Breadth-first
-    search with mark-before-push (each index is pushed at most once, so
+/-- Edge-connected components of a set of same-`prec` squares. Depth-first
+    (stack-based) search with mark-before-push (each index is pushed at most once, so
     `n+1` pop rounds of fuel suffice); the output is deterministic in index
     order. `O(m²)` adjacency scans. -/
 @[expose] def glue (sqs : Array DyadicSquare) : Array (Array DyadicSquare) := Id.run do
