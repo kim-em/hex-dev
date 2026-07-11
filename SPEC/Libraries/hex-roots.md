@@ -3,14 +3,18 @@
 Certified isolation of complex roots of integer-coefficient
 polynomials. A root isolation is a square in the complex plane with
 Gaussian-dyadic centre and power-of-two half-width, together with a
-witness, dischargeable by `decide`, that the square's circumscribed
-disc contains exactly one simple root (an *atom*) or exactly `k` roots
-counted with multiplicity (a *cluster*). Refinement combines
-speculative Newton iteration (using `Dyadic.invAtPrec` from the Lean
-standard library) with subdivision and component gluing as the
-fallback, following the hybrid algorithm of Becker, Sagraloff, Sharma,
-and Yap, *J. Symbolic Computation* 86 (2018) 51-96 (arXiv:1509.06231;
-"BSSY" below).
+witness, dischargeable by `decide`, that a certified region around
+the square contains exactly one simple root (an *atom*) or exactly
+`k` roots counted with multiplicity (a *cluster*). Atoms carry one
+of two certificate forms, tried in a configurable order: a
+Newton-Kantorovich contraction witness, whose certified region is
+the square itself, or a Pellet witness, whose certified region is
+the square's circumscribed disc. Clusters carry Pellet witnesses on
+the circumscribed disc. Refinement combines speculative Newton
+iteration (using `Dyadic.invAtPrec` from the Lean standard library)
+with subdivision and component gluing as the fallback, following the
+hybrid algorithm of Becker, Sagraloff, Sharma, and Yap, *J. Symbolic
+Computation* 86 (2018) 51-96 (arXiv:1509.06231; "BSSY" below).
 
 ## Exact witness arithmetic
 
@@ -93,6 +97,128 @@ the same witness shape). "No roots on the boundary circles" follows
 from the strict inequality and is exposed as a derived lemma in the
 Mathlib companion.
 
+## Newton-Kantorovich atom witnesses
+
+Atoms admit a second certificate form, carried alongside the Pellet
+form as a deliberate experiment: the two routes are implemented,
+conformance-checked, and benchmarked side by side, and the choice of
+a single route (if any) is deferred until the measurements and the
+Mathlib companion's soundness development are in. The two forms have
+complementary strengths. The Pellet form counts roots with
+multiplicity (it is the only cluster certificate) and its soundness
+rests on Rouché's theorem on circles, the heaviest analytic
+development in the companion. The Newton-Kantorovich form certifies
+only `k = 1`, but its certified region is the square itself in the
+sup norm (no circumscribed `√2` on the certified region), its
+first-order bounds are exact rather than `lo`/`hi`-bounded, and its
+soundness rests on the Banach fixed-point theorem
+(`ContractingWith`, already in Mathlib) with no complex analysis.
+Mehta and Macbeth have formalised exactly the required
+Newton-Kantorovich theorem over Mathlib (see References); the
+companion ports it.
+
+Identify ℂ with ℝ² carrying the sup norm, so that the closed ball of
+radius `r` about a Gaussian-dyadic centre is the closed square of
+half-width `r`. Multiplication by `ζ`, transported to ℝ², is the
+matrix `[[Re ζ, −Im ζ], [Im ζ, Re ζ]]`, whose sup-operator norm is
+the maximum absolute row sum, which is `hi(ζ)` exactly. This is the
+fact that makes the Newton-Kantorovich hypotheses exact-dyadic
+comparisons.
+
+With `(c₀, …, c_n)` the exact Taylor coefficients of `p` at the
+centre `m` of `s` and `r := 2^{−s.prec}` the half-width, the witness
+data is:
+
+- `u := Dyadic.invAtPrec (normSq c₁) q` with the pinned precision
+  `q := 8 + max 0 (ceilLog2 (normSq c₁))`, and
+  `w := conj(c₁) · u`, a Gaussian dyadic approximating `1/c₁`.
+  Soundness does not depend on the quality of `w` (the quantities
+  below are exact functions of whatever `w` is), so `w` is
+  recomputed deterministically inside the witness rather than
+  stored; only the completeness analysis uses the `invAtPrec`
+  rounding contract, through `1 − w·c₁ = (1/normSq c₁ − u)·normSq c₁
+  ∈ [0, 2⁻⁸)`.
+- `dₖ := w · cₖ` for `k = 0, …, n`, exact Gaussian dyadics.
+- `y := max |Re d₀| |Im d₀|`, exactly the sup norm of the Newton
+  residual `A(p(m))`.
+- `z₁ := hi(1 − d₁)`, exactly the sup-operator norm of
+  `1 − A∘p'(m)`.
+- `ρ := 1449 · 2^{−s.prec−10}` (that is, the dyadic upper bound
+  `(1449/1024)·r` for `√2·r`, the largest modulus in the sup ball),
+  and `z₂ := 2 · Σ_{k=2}^{n} k · hi(dₖ) · ρ^{k−2}`, a radial
+  Lipschitz bound for `A∘(p'(·) − p'(m))` on the ball: for
+  `|δ| ≤ √2·r`,
+
+  ```
+  hi(w·(p'(m+δ) − p'(m))) = hi(Σ_{k≥2} k·dₖ·δ^{k−1})
+    ≤ √2 · Σ_{k≥2} k·|dₖ|·|δ|^{k−2} · |δ|
+    ≤ 2 · (Σ_{k≥2} k·hi(dₖ)·(√2 r)^{k−2}) · ‖δ‖_sup .
+  ```
+
+  Only here does a `√2` enter, and only multiplying second-order
+  terms; the radial form (differences from the centre, not a
+  Lipschitz bound between arbitrary pairs) is what
+  Newton-Kantorovich needs, so there is no `k(k−1)` mean-value
+  factor.
+
+```lean
+/-- Newton-Kantorovich contraction witness on the closed square `s`
+    itself (sup norm), with `r = 2^{−s.prec}` the half-width and
+    `y, z₁, z₂` the exact dyadic bounds above:
+
+      `0 < normSq c₁  ∧  y + z₁·r + z₂·r²/2 < r  ∧  z₁ + z₂·r < 1`.
+
+    Implies (Mathlib companion): `p` has exactly one root in the
+    closed square, it is simple, and it lies in the open square. -/
+def nkWitness (p : ZPoly) (s : DyadicSquare) : Prop := …
+instance : Decidable (nkWitness p s) := …
+```
+
+All three comparisons are strict comparisons of exact dyadics
+(`r² = 4^{−prec}` and halving are exact). The soundness sketch: the
+inequalities force `w ≠ 0` (`w = 0` would give `z₁ = hi(1) = 1`), so
+`A` is invertible and fixed points of `T(x) = x − A(p(x))` are
+exactly roots of `p`; strictness in the middle inequality maps the
+closed ball strictly inside itself, placing the unique fixed point
+in the open square; and `z₁ + z₂·r < 1` makes `A∘p'` invertible at
+the fixed point, hence `p'` nonzero there, which is simplicity. A
+multiple root can never certify: `c₁ = 0` forces `z₁ = 1`.
+
+Because the certified region is the square with no margin, a root
+hugging the component's boundary could never certify at the
+component's own enclosing square. `certify?` therefore evaluates
+`nkWitness` on the square concentric with `encSquare` one level
+coarser (half-width doubled), which guarantees relative sup-margin
+`1/2` for any root covered by the component, and the *stored* atom
+square is that doubled square. All downstream geometry
+(`Intersects`, `mahlerPrec`, separation) reads the stored square, so
+nothing else changes; reaching a given stored precision costs one
+extra subdivision level, absorbed by `stopSlack`.
+
+The two atom forms are packaged as a disjunction, so consumers of
+isolations never care which route fired:
+
+```lean
+/-- An atom certificate: either certificate form for "exactly one
+    simple root in the certified region". -/
+def atomWitness (p : ZPoly) (s : DyadicSquare) : Prop :=
+  nkWitness p s ∨ witness p s 1
+instance : Decidable (atomWitness p s) := …
+
+/-- Which atom certificates `certify?` attempts, and in which order.
+    `nkThenPellet` is the default; the singleton strategies exist for
+    the side-by-side comparison. -/
+inductive AtomStrategy | nk | pellet | nkThenPellet
+```
+
+Note the two disjuncts certify different regions (the closed square
+for `nkWitness`, the circumscribed disc for the Pellet form). Every
+consumer below needs only the shared consequences: the root lies in
+the stored square's circumscribed disc, and it is the only root
+there that the isolation's own component covered. In particular the
+`SimpleRoot` quotient argument needs only "each root lies in its own
+disc", which both forms give.
+
 ## Contents
 
 ```lean
@@ -104,11 +230,12 @@ structure DyadicSquare where
   prec : Int
   -- half-width 2^{−prec}; circumscribed disc radius 2^{−prec}·√2
 
-/-- An atom: one square whose circumscribed disc contains exactly one
-    simple root. -/
+/-- An atom: one square whose certified region (the square itself for
+    the Newton-Kantorovich disjunct, the circumscribed disc for the
+    Pellet disjunct) contains exactly one simple root. -/
 structure DyadicRootIsolation (p : ZPoly) where
   square  : DyadicSquare
-  witness : witness p square 1
+  witness : atomWitness p square
 
 /-- A certified cluster: an edge-connected set of grid squares at a
     common `prec`, whose enclosing disc contains exactly `k` roots
@@ -134,6 +261,12 @@ structure DyadicRootCluster (p : ZPoly) where
 structure Component where
   squares    : Array DyadicSquare    -- nonempty, common prec, edge-connected
   candidateK : Nat
+
+/-- The result of certifying one component: an atom (either atom
+    certificate) or a `k ≥ 1` Pellet cluster. -/
+inductive Certified (p : ZPoly) where
+  | atom    (iso : DyadicRootIsolation p)
+  | cluster (cl : DyadicRootCluster p)
 
 /-- The smallest square with power-of-two half-width and centre at the
     component's bounding-box centre that contains every square of the
@@ -165,22 +298,28 @@ namespace Component
     kept, which is always sound), and glue the survivors into
     edge-connected components. Total: no certification is required
     during refinement. -/
-def refine1 : Component → Array Component
+def refine1 (p : ZPoly) : Component → Array Component
 
-/-- Try to certify the component as a cluster: a speculative Newton
-    recentring first, then the strong witness on the enclosing
-    square's disc, with `k = candidateK` first and then the remaining
-    `k ≤ deg p`. -/
-def certify? (p : ZPoly) : Component → Option (DyadicRootCluster p)
+/-- Try to certify the component. Per `strategy`, first the
+    Newton-Kantorovich atom witness on the doubled enclosing square
+    (with a speculative Newton recentring attempted first), then the
+    Pellet witness on the enclosing square's disc with
+    `k = candidateK` first and then the remaining `k ≤ deg p`; a
+    `k = 1` Pellet success is returned as an atom via `atomize`.
+    Speculative Newton results are accepted only under the coverage
+    guard (see "Speculative Newton" below). -/
+def certify? (p : ZPoly) (strategy : AtomStrategy := .nkThenPellet) :
+    Component → Option (Certified p)
 
 /-- The starting component: a single square centred at 0 covering the
     Cauchy root bound, with `candidateK = deg p`. -/
 def cauchy (p : ZPoly) (h : 0 < p.degree?.getD 0) : Component
 end Component
 
-/-- Repackage a certified `k = 1` cluster as an atom. Total: the
-    cluster's witness already lives on the enclosing square's disc,
-    which is the atom's square. -/
+/-- Repackage a certified `k = 1` cluster as an atom (the Pellet
+    disjunct of `atomWitness`). Total: the cluster's witness already
+    lives on the enclosing square's disc, which is the atom's
+    square. -/
 def DyadicRootCluster.atomize (c : DyadicRootCluster p) (h : c.k = 1) :
     DyadicRootIsolation p
 
@@ -189,22 +328,28 @@ def DyadicRootCluster.atomize (c : DyadicRootCluster p) (h : c.k = 1) :
     component. `none` only if certification has not reappeared by
     `stopDepth p target` (see below). -/
 def DyadicRootIsolation.refineTo? (iso : DyadicRootIsolation p)
-    (target : Int) : Option (DyadicRootIsolation p)
+    (target : Int) (strategy : AtomStrategy := .nkThenPellet) :
+    Option (DyadicRootIsolation p)
 
 /-- Refine every component until certified at prec ≥ target, with the
-    certified discs pairwise disjoint (see "Separation of the output"
-    below). `none` only if this has not happened by
-    `stopDepth p target`. -/
-def isolateAll? (p : ZPoly) (target : Int) (worklist : Array Component) :
-    Option (Array (DyadicRootCluster p))
+    certified stored squares' discs pairwise disjoint (see
+    "Separation of the output" below). `none` only if this has not
+    happened by `stopDepth p target`. -/
+def isolateAll? (p : ZPoly) (target : Int) (worklist : Array Component)
+    (strategy : AtomStrategy := .nkThenPellet) :
+    Option (Array (Certified p))
 
 /-- All-atoms output for polynomials with only simple roots: run
     `isolateAll?` from `Component.cauchy` with
-    `target := max atom_prec (separationDepth p)`, then `atomize`
-    every cluster. `none` if `isolateAll?` fails or (impossible for
-    squarefree `p`, proven in the companion) some cluster reports
-    `k ≥ 2`. -/
-def isolate (p : ZPoly) (h : Hex.HasOnlySimpleRoots p) (atom_prec : Int) :
+    `target := max atom_prec (separationDepth p)`, and require every
+    result to be an atom. `none` if `isolateAll?` fails or
+    (impossible for squarefree `p`, proven in the companion) some
+    result is a `k ≥ 2` cluster. `HasOnlySimpleRoots` does not force
+    positive degree, so the degenerate inputs are pinned here: a
+    nonzero constant returns `some #[]` (no roots to isolate), and
+    the zero polynomial returns `none`. -/
+def isolate (p : ZPoly) (h : Hex.HasOnlySimpleRoots p) (atom_prec : Int)
+    (strategy : AtomStrategy := .nkThenPellet) :
     Option (Array (DyadicRootIsolation p))
 ```
 
@@ -218,6 +363,29 @@ ready" precondition. The Gaussian inversion `1/c₁ = c̄₁ / |c₁|²` uses
 both the real and imaginary components reuse. That is why the
 implementation calls `invAtPrec` rather than two separate
 `Dyadic.divAtPrec` divisions.
+
+**Coverage guard.** The witness re-check alone is not a sufficient
+acceptance criterion for a speculative Newton result. The separation
+argument below counts on "the retained squares cover all roots", and
+an unguarded jump can break that invariant silently: a recentred
+square can certify `k` roots *elsewhere* while the roots the
+component actually covered drift out of every retained region, and
+pairwise disjointness cannot detect roots that are simply lost.
+`certify?` therefore accepts a Newton result only when (a) the
+component's own base region certifies the same count without the
+jump, using the same certificate form, and (b) the recentred
+certified region is contained in the base one. Because the recentred
+attempt reuses the base form, the containment check compares like
+regions, and each is one exact dyadic comparison: disc in disc
+(radius difference squared against squared centre distance, the
+same shape as the intersection test) for the Pellet form, square in
+square (`max |Δre| |Δim| + r_new ≤ r_base`) for the
+Newton-Kantorovich form. Same count plus containment makes the
+sub-region's roots exactly the base region's roots, and coverage is
+preserved. The guard costs one extra witness evaluation and never
+blocks the intended use (sharpening an already certified region); a
+jump whose base region fails to certify is discarded, and
+subdivision proceeds as usual.
 
 **Termination.** Termination is structural, with no analytic input.
 Write `gap(c) := stopDepth p target − prec(c)` for a component `c` in
@@ -245,29 +413,40 @@ fixed margin on top, and it can be generous at almost no cost:
 overshooting costs a few extra subdivision rounds in the rare case
 certification had not already happened, and nothing else. The completeness analysis
 certifies the pinned value (or shows a smaller one suffices). A
-`none` from the drivers has one precise meaning: *a Pellet witness
-failed to appear at separation depth*. The Mathlib
-companion's completeness development
+`none` from the drivers has one precise meaning: *no certificate the
+selected strategy attempts appeared by separation depth*. The
+Mathlib companion's completeness development
 ([hex-roots-mathlib.md](hex-roots-mathlib.md)) is expected to prove
-this impossible for squarefree inputs. Until it does, the soundness
+this impossible for squarefree inputs, for each strategy it covers
+(the Pellet converse for strategies that attempt Pellet, the
+Newton-Kantorovich converse for `.nk`). Until it does, the soundness
 theorems (which are conditional on a `some` result) are unaffected,
 and the conformance suite checks that `none` does not occur on the
-committed fixtures.
+committed fixtures under any strategy.
 
 **Separation of the output.** Certification alone does not prevent
 double-counting. A component whose squares contain no root (its
 `T_0` tests merely failed to certify at this depth) can still pass
-`certify?` with `k = 1` when its enclosing disc overlaps a
+`certify?` with `k = 1` when its certified region overlaps a
 neighbouring component and captures the neighbour's root. The driver
-therefore emits a set of certified clusters only when their witness
-discs are **pairwise disjoint** (one dyadic comparison per pair, as
-in the `SimpleRoot` intersection test); components violating the
-check keep subdividing. Disjoint discs count disjoint root sets, and
-the retained squares cover all roots, so the output `k` values add up
-to exactly the root count. This is the analogue of the separation
-condition in BSSY §4. Rootless components die on their own: once
-every square of such a component is `T_0`-certified empty, the
-component disappears from the worklist.
+therefore emits a set of certified results only when the
+circumscribed discs of their stored squares are **pairwise
+disjoint** (one dyadic comparison per pair, as in the `SimpleRoot`
+intersection test); components violating the check keep subdividing.
+Every certified region is contained in its stored square's
+circumscribed disc (the square itself for the Newton-Kantorovich
+form, the enclosing disc for the Pellet form), so disjoint discs
+count disjoint root sets. And the certified regions jointly cover
+all roots: the `T_0` discard preserves coverage of every root by
+the retained squares, a directly certified component's retained
+squares lie inside its base certified region, and a
+speculative-Newton region is accepted only when the coverage guard
+proves it contains exactly the base region's roots. So the output
+counts add up to exactly the root count. This is the
+analogue of the separation condition in BSSY §4. Rootless
+components die on their own: once every square of such a component
+is `T_0`-certified empty, the component disappears from the
+worklist.
 
 Roots that sit exactly on a dyadic grid point are not a problem for
 atomization: the Newton step recentres the square on the root itself
@@ -432,19 +611,35 @@ inherit the precision.
   distribution (BSSY §4).
 - **Speculative Newton.** No precondition is checked before a Newton
   step; the step is taken and the witness re-run on the result.
-  Certification success is the only acceptance criterion.
+  Certification success plus the coverage guard is the acceptance
+  criterion.
+- **Dual atom certificates.** BSSY certify atoms with the same
+  `T_1` test used for clusters. Here atoms additionally admit the
+  Newton-Kantorovich contraction witness, and the two routes are
+  carried side by side (strategy knob, shared conformance cases, a
+  benchmark comparison group) until measurements and the companion's
+  soundness development justify retiring one. Krawczyk-style
+  contraction certificates have precedent in complex root isolation
+  (Macaulay2 uses them); Newton-Kantorovich is the affine-invariant
+  general form.
 
 ## File organisation
 
 - `HexRoots/Basic.lean`: `DyadicSquare`, `DyadicComplexBall`,
-  `DyadicRootIsolation`, `DyadicRootCluster`, `Component`,
-  `encSquare`, `Hex.HasOnlySimpleRoots`.
+  `Component`, `encSquare`, `Hex.HasOnlySimpleRoots`, and the small
+  dyadic helpers (`abs`, `min`, `max`, ceiling log2) the rest of the
+  library uses.
 - `HexRoots/Taylor.lean`: exact Gaussian-dyadic Taylor expansion of a
   `ZPoly` at a Gaussian-dyadic centre, returning
   `Array (Dyadic × Dyadic)`.
 - `HexRoots/Pellet.lean`: the dyadic bounds `lo`/`hi`, the rational
   `√2` constants with their `decide`-checked defining inequalities,
-  the `witness` predicate and its `Decidable` instance.
+  the `witness` predicate and its `Decidable` instance, and
+  `DyadicRootCluster` (whose field mentions `witness`).
+- `HexRoots/Kantorovich.lean`: `nkWitness` with its `Decidable`
+  instance, `atomWitness`, `AtomStrategy`, and the
+  `atomWitness`-dependent `DyadicRootIsolation`, `Certified`, and
+  `atomize`.
 - `HexRoots/MahlerPrec.lean`: the closed-form `mahlerPrec` and
   `separationDepth`.
 - `HexRoots/Cauchy.lean`: `Component.cauchy`.
@@ -452,9 +647,11 @@ inherit the precision.
   k-order component forms) using `Dyadic.invAtPrec`.
 - `HexRoots/Bisection.lean`: 4-way subdivision, `T_0` discard,
   component gluing: `Component.refine1` and `Component.certify?`.
-- `HexRoots/Refine.lean`: `DyadicRootIsolation.refineTo?`, the Φ
-  termination measure, `stopDepth`.
-- `HexRoots/IsolateAll.lean`: `isolateAll?`, `atomize`, `isolate`.
+- `HexRoots/Refine.lean`: the shared fuel-based driver loop over the
+  worklist, `stopDepth`, the Φ termination measure discussion, and
+  `DyadicRootIsolation.refineTo?` as a thin wrapper.
+- `HexRoots/IsolateAll.lean`: `isolateAll?` and `isolate` as thin
+  wrappers over the shared driver loop.
 - `HexRoots/SimpleRoot.lean`: `RefinedIsolation`, `Intersects`,
   `SimpleRoot`, `sameRoot`; the threading-pattern guidance lives here
   as a docstring.
@@ -480,17 +677,23 @@ polynomials rarely have clustered roots.
     cluster around `5` does not atomize.
 - *ci* (CI, with external oracle when available):
   - 50 degree-20 polynomials with deterministic seed `0xC0FFEE` and
-    coefficients in `[−10, 10]`. Expected outputs serialised from a
-    local oracle run during fixture emission.
+    coefficients in `[−10, 10]`, cross-checked against the python-flint
+    oracle (below).
 - *local* (developer-driven):
   - Adversarial families cross-checked against MPSolve: Mignotte
     `(n, a)` for `n ∈ {10, 20}` and `a ∈ {1000, 10⁶}`, the Wilkinson
     polynomial of degree 20, and products of two Mignotte polynomials
     with different parameters (close root pairs at two scales).
 
-External oracles, in role order: MPSolve (primary), FLINT/Arb
-(secondary, for cases where MPSolve's precision is in doubt), SageMath
-(fallback).
+External oracles. The ci-tier oracle is **python-flint**
+(`fmpz_poly.complex_roots()`, which returns certified Arb balls with
+multiplicities); it is already in the CI dependency set, consistent
+with the standing oracle doctrine in
+[SPEC/testing.md](../testing.md), and FLINT 3 subsumes Arb, so this
+is also the "FLINT/Arb" role. MPSolve is the local-tier comparator
+and the Phase-4 external performance comparator; it is not wired
+into merge-facing CI. SageMath is not used (per SPEC/testing.md's
+Sage policy).
 
 ## Complexity contract
 
@@ -500,7 +703,9 @@ bit-length at precision `prec`.
 - `mahlerPrec p` runs in `O(n · log ‖p‖∞)` integer operations.
 - One witness check costs `O(n²)` exact-dyadic operations (the Taylor
   shift dominates) on `B`-bit values, so `O(n² · B²)` bit operations
-  with schoolbook arithmetic.
+  with schoolbook arithmetic. The Newton-Kantorovich check has the
+  same shape and cost, plus one `Dyadic.invAtPrec` call, and tests
+  one radius where the Pellet form tests three.
 - One Newton step costs the same order as one witness check, plus a
   single `Dyadic.invAtPrec` call.
 - `isolate` for degree `n`, well-separated roots, target precision
@@ -534,3 +739,10 @@ fixtures during Phase 4:
 - Mignotte. *Some useful bounds.* In *Computer Algebra: Symbolic and
   Algebraic Computation*, Springer, 1982. The textbook form of the
   bound used by `mahlerPrec`.
+- Kantorovich, Akilov. *Functional Analysis*, 2nd ed., Pergamon,
+  1982, §XVIII. The Newton-Kantorovich theorem behind `nkWitness`.
+- Mehta, Macbeth. Newton-Kantorovich over Mathlib, in
+  https://github.com/xgenereux/certifying-lmfdb-data
+  (`CertifyingLmfdbData/Polynomial/NewtonKantorovich.lean`,
+  Apache 2.0). The formalisation the Mathlib companion ports for
+  the `nkWitness` soundness theorem.
