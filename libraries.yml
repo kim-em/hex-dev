@@ -454,7 +454,7 @@ libraries:
     deps: [HexPolyZ]
     mathlib: false
     done_through: 0
-    status: planned
+    status: active
   HexRootsMathlib:
     deps: [HexRoots, HexPolyZMathlib]
     mathlib: true
