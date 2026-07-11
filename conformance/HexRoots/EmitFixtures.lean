@@ -108,7 +108,22 @@ private def cases : List Case := [
   -- Real multiple root: the k = 2 cluster around 1 must not atomize.
   { id := "cluster/xm1sq_xm4", coeffs := [-4, 9, -6, 1] },        -- (x−1)²(x−4)
   -- Complex multiple roots: two k = 2 clusters at ±i.
-  { id := "cluster/x2p1sq", coeffs := [1, 0, 2, 0, 1] }           -- (x²+1)²
+  { id := "cluster/x2p1sq", coeffs := [1, 0, 2, 0, 1] },          -- (x²+1)²
+  -- Seeded pseudo-random cases (LCG 6364136223846793005·s + 1442695040888963407
+  -- mod 2^64 from seed 0xC0FFEE, coefficients (s mod 21) − 10, leading
+  -- coefficient forced nonzero), materialised as literals so the driver
+  -- stays deterministic and reviewable. Degrees 6-12 keep the fresh
+  -- emission that CI performs within budget (~6 s total measured); the
+  -- SPEC's full 50-case degree-20 tier at ~15 s per case is tracked as a
+  -- follow-up.
+  { id := "random/deg6_0", coeffs := [-7, -2, -3, -5, 3, 1, -7] },
+  { id := "random/deg6_1", coeffs := [-3, -4, 0, 9, 4, -4, -8] },
+  { id := "random/deg8_0", coeffs := [6, -9, 7, 2, 0, 4, -9, 4, 7] },
+  { id := "random/deg8_1", coeffs := [9, 7, 9, -5, 7, -10, 10, 9, -1] },
+  { id := "random/deg10_0", coeffs := [-7, 8, -2, 9, 8, 3, -8, 6, 5, -9, -5] },
+  { id := "random/deg10_1", coeffs := [8, -10, -9, 5, 2, -3, -1, 6, 10, 8, -3] },
+  { id := "random/deg12_0", coeffs := [9, 8, 0, 8, 4, -7, 10, -9, -2, 0, -10, -5, -2] },
+  { id := "random/deg12_1", coeffs := [-7, 4, -4, 4, -6, 1, 6, 3, 3, -3, -10, -9, -3] }
 ]
 
 /-! ## Result serialisation. -/
