@@ -443,6 +443,213 @@ theorem toPolyℝ_spem (f g : Hex.ZPoly) (hg : g.leadingCoeff ≠ 0)
   rw [hspem]
   exact spemAux_relate g hg f.size f
 
+/-! ### Cast and executable-layer helpers for the chain axioms -/
+
+/-- The real cast of a negation. -/
+theorem toPolyℝ_neg (p : Hex.ZPoly) : toPolyℝ (-p) = -(toPolyℝ p) := by
+  show (HexPolyMathlib.toPolynomial (-p)).map (Int.castRingHom ℝ) = _
+  rw [HexPolyMathlib.toPolynomial_neg, Polynomial.map_neg]
+
+/-- The real cast of the zero polynomial. -/
+@[simp] theorem toPolyℝ_zero : toPolyℝ 0 = 0 := by
+  show (HexPolyMathlib.toPolynomial 0).map (Int.castRingHom ℝ) = _
+  rw [HexPolyMathlib.toPolynomial_zero, Polynomial.map_zero]
+
+/-- The real cast is zero exactly when the executable polynomial is. -/
+theorem toPolyℝ_eq_zero_iff {p : Hex.ZPoly} : toPolyℝ p = 0 ↔ p = 0 := by
+  constructor
+  · intro h
+    have h2 : HexPolyMathlib.toPolynomial p = 0 :=
+      (Polynomial.map_eq_zero_iff (RingHom.injective_int (Int.castRingHom ℝ))).mp h
+    have := congrArg HexPolyMathlib.ofPolynomial h2
+    simpa using this
+  · rintro rfl; exact toPolyℝ_zero
+
+/-- A polynomial whose stored size is zero is the zero polynomial. -/
+private theorem eq_zero_of_size_eq_zero {p : Hex.ZPoly} (h : p.size = 0) : p = 0 := by
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [Hex.DensePoly.coeff_zero]
+  exact Hex.DensePoly.coeff_eq_zero_of_size_le p (by omega)
+
+/-- The Boolean zero test decides equality with the zero polynomial. -/
+private theorem isZero_iff_eq_zero {p : Hex.ZPoly} : p.isZero = true ↔ p = 0 := by
+  rw [Hex.DensePoly.isZero_eq_true_iff]
+  exact ⟨fun h => eq_zero_of_size_eq_zero h, fun h => by subst h; rfl⟩
+
+/-- A nonzero executable polynomial has a `some` degree, namely `size - 1`. -/
+private theorem degree?_of_ne_zero {p : Hex.ZPoly} (hp : p ≠ 0) :
+    p.degree? = some (p.size - 1) := by
+  refine Hex.DensePoly.degree?_eq_some_of_pos_size p ?_
+  rcases Nat.eq_zero_or_pos p.size with h | h
+  · exact absurd (eq_zero_of_size_eq_zero h) hp
+  · exact h
+
+/-- The leading coefficient of a nonzero executable polynomial is nonzero. -/
+private theorem leadingCoeff_ne_zero {p : Hex.ZPoly} (hp : p ≠ 0) :
+    p.leadingCoeff ≠ 0 := by
+  refine Hex.DensePoly.leadingCoeff_ne_zero_of_pos_size p ?_
+  rcases Nat.eq_zero_or_pos p.size with h | h
+  · exact absurd (eq_zero_of_size_eq_zero h) hp
+  · exact h
+
+/-- The real value of the content of a nonzero polynomial is positive: the
+executable content is a nonnegative integer, nonzero for nonzero input. -/
+theorem content_real_pos {p : Hex.ZPoly} (hp : p ≠ 0) :
+    (0 : ℝ) < ((Hex.ZPoly.content p : Int) : ℝ) := by
+  have hne : Hex.ZPoly.content p ≠ 0 := HexPolyZMathlib.content_ne_zero p hp
+  have hnonneg : (0 : Int) ≤ Hex.ZPoly.content p := Int.natCast_nonneg _
+  exact_mod_cast lt_of_le_of_ne hnonneg (Ne.symm hne)
+
+/-- Gauss decomposition of the real cast: a polynomial is its (positive integer)
+content times its primitive part. -/
+theorem toPolyℝ_eq_C_content_mul_primitivePart (p : Hex.ZPoly) :
+    toPolyℝ p = Polynomial.C ((Hex.ZPoly.content p : Int) : ℝ)
+      * toPolyℝ (Hex.ZPoly.primitivePart p) := by
+  show (toPolynomial p).map (Int.castRingHom ℝ) = _
+  rw [HexPolyZMathlib.toPolynomial_eq_C_content_mul_primitivePart p, Polynomial.map_mul,
+    Polynomial.map_C]
+  rfl
+
+/-- The primitive part of a nonzero polynomial is nonzero. -/
+theorem primitivePart_ne_zero {p : Hex.ZPoly} (hp : p ≠ 0) :
+    Hex.ZPoly.primitivePart p ≠ 0 := by
+  intro h
+  apply hp
+  rw [← toPolyℝ_eq_zero_iff, toPolyℝ_eq_C_content_mul_primitivePart p, h, toPolyℝ_zero,
+    mul_zero]
+
+/-- The real cast commutes with the derivative. -/
+theorem toPolyℝ_derivative (p : Hex.ZPoly) :
+    toPolyℝ (Hex.DensePoly.derivative p) = Polynomial.derivative (toPolyℝ p) := by
+  show (HexPolyMathlib.toPolynomial (Hex.DensePoly.derivative p)).map (Int.castRingHom ℝ) = _
+  rw [HexPolyMathlib.toPolynomial_derivative, Polynomial.derivative_map]
+
+/-- `spem` by a nonzero constant is zero (the junk-value convention). -/
+private theorem spem_of_degree_zero (f : Hex.ZPoly) {g : Hex.ZPoly} (hg : g ≠ 0)
+    (hdeg : (g.degree?).getD 0 = 0) : Hex.ZPoly.spem f g = 0 := by
+  have hsome := degree?_of_ne_zero hg
+  have hz : g.size - 1 = 0 := by rw [hsome] at hdeg; simpa using hdeg
+  have hg0 : g.degree? = some 0 := by rw [hsome, hz]
+  unfold Hex.ZPoly.spem
+  rw [hg0]
+  rfl
+
+/-! ### Degree control: the reduction loop terminates before its fuel runs out -/
+
+/-- One `spemStep` strictly drops the degree (or reaches zero): the sign
+management makes the two leading terms cancel exactly. Proved over `ℝ` via
+`Polynomial.degree_sub_lt` and transferred back through `natDegree_toPolyℝ`. -/
+private theorem spemStep_degree_lt {g r : Hex.ZPoly} (hg : g ≠ 0) (hr : r ≠ 0)
+    (hge : (g.degree?).getD 0 ≤ (r.degree?).getD 0) :
+    Hex.ZPoly.spemStep g r = 0 ∨
+      ((Hex.ZPoly.spemStep g r).degree?).getD 0 < (r.degree?).getD 0 := by
+  by_cases hz : Hex.ZPoly.spemStep g r = 0
+  · exact Or.inl hz
+  refine Or.inr ?_
+  set a : Int := if g.leadingCoeff < 0 then -g.leadingCoeff else g.leadingCoeff with ha
+  set b : Int := if g.leadingCoeff < 0 then -r.leadingCoeff else r.leadingCoeff with hb
+  set k : ℕ := (r.degree?).getD 0 - (g.degree?).getD 0 with hk
+  have hlcg : g.leadingCoeff ≠ 0 := leadingCoeff_ne_zero hg
+  have hlcr : r.leadingCoeff ≠ 0 := leadingCoeff_ne_zero hr
+  have ha0 : (a : ℝ) ≠ 0 := by
+    have : a ≠ 0 := by rw [ha]; split_ifs with h <;> omega
+    exact_mod_cast this
+  have hb0 : (b : ℝ) ≠ 0 := by
+    have : b ≠ 0 := by rw [hb]; split_ifs with h <;> omega
+    exact_mod_cast this
+  have hPr0 : toPolyℝ r ≠ 0 := fun h => hr (toPolyℝ_eq_zero_iff.mp h)
+  have hPg0 : toPolyℝ g ≠ 0 := fun h => hg (toPolyℝ_eq_zero_iff.mp h)
+  set A := Polynomial.C (a : ℝ) * toPolyℝ r with hA
+  set B := Polynomial.C (b : ℝ) * (Polynomial.X ^ k * toPolyℝ g) with hB
+  have hstep : toPolyℝ (Hex.ZPoly.spemStep g r) = A - B := toPolyℝ_spemStep g r
+  have hdegA : A.degree = (toPolyℝ r).degree := by
+    rw [hA, Polynomial.degree_mul, Polynomial.degree_C ha0, zero_add]
+  have hdegB : B.degree = (toPolyℝ r).degree := by
+    rw [hB, Polynomial.degree_mul, Polynomial.degree_C hb0, zero_add, Polynomial.degree_mul,
+      Polynomial.degree_X_pow, Polynomial.degree_eq_natDegree hPg0,
+      Polynomial.degree_eq_natDegree hPr0, natDegree_toPolyℝ, natDegree_toPolyℝ]
+    have hkg : k + (g.degree?).getD 0 = (r.degree?).getD 0 := by omega
+    exact_mod_cast congrArg (Nat.cast : ℕ → WithBot ℕ) hkg
+  have hlcA : A.leadingCoeff = (a : ℝ) * (r.leadingCoeff : ℝ) := by
+    rw [hA, Polynomial.leadingCoeff_mul, Polynomial.leadingCoeff_C, leadingCoeff_toPolyℝ]
+  have hlcB : B.leadingCoeff = (b : ℝ) * (g.leadingCoeff : ℝ) := by
+    rw [hB, Polynomial.leadingCoeff_mul, Polynomial.leadingCoeff_C,
+      Polynomial.leadingCoeff_mul, Polynomial.leadingCoeff_X_pow, one_mul,
+      leadingCoeff_toPolyℝ]
+  have hlceq : A.leadingCoeff = B.leadingCoeff := by
+    rw [hlcA, hlcB, ha, hb]
+    split_ifs with h <;> (push_cast; ring)
+  have hA0 : A ≠ 0 := mul_ne_zero (Polynomial.C_ne_zero.mpr ha0) hPr0
+  have hlt : (toPolyℝ (Hex.ZPoly.spemStep g r)).degree < (toPolyℝ r).degree := by
+    rw [hstep, ← hdegA]
+    exact Polynomial.degree_sub_lt (hdegA.trans hdegB.symm) hA0 hlceq
+  have hstep0 : toPolyℝ (Hex.ZPoly.spemStep g r) ≠ 0 :=
+    fun h => hz (toPolyℝ_eq_zero_iff.mp h)
+  have hnat := Polynomial.natDegree_lt_natDegree hstep0 hlt
+  rwa [natDegree_toPolyℝ, natDegree_toPolyℝ] at hnat
+
+/-- `spemAux` with sufficient fuel lands strictly below the divisor's degree
+(or at zero): the fuel bound `deg r < fuel + deg g` regenerates at each step
+because the degree strictly drops. -/
+private theorem spemAux_degree {g : Hex.ZPoly} (hg : g ≠ 0)
+    (hg1 : 1 ≤ (g.degree?).getD 0) :
+    ∀ (fuel : ℕ) (r : Hex.ZPoly), (r.degree?).getD 0 < fuel + (g.degree?).getD 0 →
+      Hex.ZPoly.spemAux g fuel r = 0 ∨
+        ((Hex.ZPoly.spemAux g fuel r).degree?).getD 0 < (g.degree?).getD 0 := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro r hbound
+      right
+      rw [show Hex.ZPoly.spemAux g 0 r = r from rfl]
+      omega
+  | succ fuel ih =>
+      intro r hbound
+      have hunf : Hex.ZPoly.spemAux g (fuel + 1) r =
+          (if r.isZero then r
+           else if (r.degree?).getD 0 < (g.degree?).getD 0 then r
+           else Hex.ZPoly.spemAux g fuel (Hex.ZPoly.spemStep g r)) := rfl
+      by_cases h0 : r.isZero
+      · left; rw [hunf, if_pos h0]; exact isZero_iff_eq_zero.mp h0
+      · by_cases h1 : (r.degree?).getD 0 < (g.degree?).getD 0
+        · right; rw [hunf, if_neg h0, if_pos h1]; exact h1
+        · rw [hunf, if_neg h0, if_neg h1]
+          have hr : r ≠ 0 := fun h => h0 (isZero_iff_eq_zero.mpr h)
+          have hge : (g.degree?).getD 0 ≤ (r.degree?).getD 0 := not_lt.mp h1
+          rcases spemStep_degree_lt hg hr hge with hz | hlt
+          · apply ih
+            rw [hz]
+            simp only [Hex.DensePoly.degree?_zero_getD]
+            omega
+          · apply ih
+            omega
+
+/-- The top-level `spem` lands strictly below the divisor's degree (or at zero)
+for a nonconstant divisor: the built-in fuel `f.size` always suffices. -/
+private theorem spem_degree {f g : Hex.ZPoly} (hg : g ≠ 0)
+    (hg1 : 1 ≤ (g.degree?).getD 0) :
+    Hex.ZPoly.spem f g = 0 ∨
+      ((Hex.ZPoly.spem f g).degree?).getD 0 < (g.degree?).getD 0 := by
+  obtain ⟨m, hm⟩ : ∃ m, g.degree? = some m := ⟨g.size - 1, degree?_of_ne_zero hg⟩
+  have hm1 : m ≠ 0 := by rw [hm] at hg1; simp only [Option.getD_some] at hg1; omega
+  obtain ⟨m', rfl⟩ := Nat.exists_eq_succ_of_ne_zero hm1
+  have hspem : Hex.ZPoly.spem f g = Hex.ZPoly.spemAux g f.size f := by
+    unfold Hex.ZPoly.spem; rw [hm]; rfl
+  rw [hspem]
+  apply spemAux_degree hg hg1
+  by_cases hf : f = 0
+  · subst hf
+    simp only [Hex.DensePoly.degree?_zero_getD]
+    omega
+  · rw [degree?_of_ne_zero hf]
+    simp only [Option.getD_some]
+    have hpos : 0 < f.size := by
+      rcases Nat.eq_zero_or_pos f.size with h | h
+      · exact absurd (eq_zero_of_size_eq_zero h) hf
+      · exact h
+    omega
+
 /-! ### Squarefreeness and root transfers to `ℝ` -/
 
 /-- **Squarefree-to-separable transfer.** If the rational cast `toPolyℚ p` is
@@ -464,15 +671,8 @@ theorem separable_toPolyℝ (p : Hex.ZPoly) (hsq : Squarefree (toPolyℚ p)) :
 of its primitive part, so the two share exactly the same real roots. -/
 theorem roots_toPolyℝ_eq_primitivePart (p : Hex.ZPoly) (hp : p ≠ 0) :
     (toPolyℝ p).roots = (toPolyℝ (Hex.ZPoly.primitivePart p)).roots := by
-  have hc0 : ((Hex.ZPoly.content p : Int) : ℝ) ≠ 0 := by
-    exact_mod_cast HexPolyZMathlib.content_ne_zero p hp
-  have hcontent : toPolyℝ p =
-      Polynomial.C ((Hex.ZPoly.content p : Int) : ℝ) * toPolyℝ (Hex.ZPoly.primitivePart p) := by
-    show (toPolynomial p).map (Int.castRingHom ℝ) = _
-    rw [HexPolyZMathlib.toPolynomial_eq_C_content_mul_primitivePart p, Polynomial.map_mul,
-      Polynomial.map_C]
-    rfl
-  rw [hcontent, Polynomial.roots_C_mul _ hc0]
+  rw [toPolyℝ_eq_C_content_mul_primitivePart p,
+    Polynomial.roots_C_mul _ (ne_of_gt (content_real_pos hp))]
 
 /-! ### Structure of the executable chain: head and nonemptiness -/
 
