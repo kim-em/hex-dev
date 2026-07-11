@@ -93,6 +93,8 @@ lean_lib HexGF2 where
 
 lean_lib HexPolyZ where
 
+lean_lib HexRoots where
+
 lean_lib HexPolyFp where
 
 lean_lib HexGFqRing where

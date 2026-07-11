@@ -416,7 +416,7 @@ certifies the pinned value (or shows a smaller one suffices). A
 `none` from the drivers has one precise meaning: *no certificate the
 selected strategy attempts appeared by separation depth*. The
 Mathlib companion's completeness development
-([hex-roots-mathlib.md](hex-roots-mathlib.md)) is expected to prove
+([hex-roots-mathlib.md](../../SPEC/Libraries/hex-roots-mathlib.md)) is expected to prove
 this impossible for squarefree inputs, for each strategy it covers
 (the Pellet converse for strategies that attempt Pellet, the
 Newton-Kantorovich converse for `.nk`). Until it does, the soundness
@@ -493,7 +493,7 @@ Mahler bound concerns *distinct* roots, so `mahlerPrec` is meaningful
 even for non-squarefree `p`: if `p_sf` is the squarefree part then
 `M(p_sf) ≤ M(p)` and `|disc p_sf| ≥ 1`, so the same closed form
 applies. The Mathlib companion proves correctness; see
-[hex-roots-mathlib.md](hex-roots-mathlib.md).
+[hex-roots-mathlib.md](../../SPEC/Libraries/hex-roots-mathlib.md).
 
 ```lean
 def separationDepth (p : ZPoly) : Nat :=
@@ -661,7 +661,7 @@ inherit the precision.
 
 ## Conformance fixtures
 
-Per [SPEC/testing.md](../testing.md), fixtures are tiered into
+Per [SPEC/testing.md](../../SPEC/testing.md), fixtures are tiered into
 `core` / `ci` / `local`. Deterministic adversarial families matter
 more than random samples here, because random small-coefficient
 polynomials rarely have clustered roots.
@@ -689,7 +689,7 @@ External oracles. The ci-tier oracle is **python-flint**
 (`fmpz_poly.complex_roots()`, which returns certified Arb balls with
 multiplicities); it is already in the CI dependency set, consistent
 with the standing oracle doctrine in
-[SPEC/testing.md](../testing.md), and FLINT 3 subsumes Arb, so this
+[SPEC/testing.md](../../SPEC/testing.md), and FLINT 3 subsumes Arb, so this
 is also the "FLINT/Arb" role. MPSolve is the local-tier comparator
 and the Phase-4 external performance comparator; it is not wired
 into merge-facing CI. SageMath is not used (per SPEC/testing.md's
