@@ -58,12 +58,25 @@ end Component
   | .atom iso => iso.square
   | .cluster cl => encSquare cl.squares
 
-/-- Re-enter a certification result into the worklist as a component: the
-    atom becomes a one-square component with `candidateK = 1`, the cluster
-    keeps its squares and root count. -/
+/-- Re-enter a certification result into the worklist as a component.
+
+    The retained square must *cover* the certified region, not merely be
+    certified: refinement preserves exactly the roots that lie in the
+    retained squares themselves (children partition the square, and the
+    `T₀` discard is sound), while a Pellet certificate counts roots in
+    the stored square's circumscribed *disc*. A root in the disc but
+    outside the square would be silently lost by the next subdivision;
+    with repeated Newton-jump adoptions this loses far roots of a
+    many-root cluster (the certified disc shrinks toward the cluster's
+    Newton centroid while still counting every root). Retaining the
+    *doubled* stored square (half-width `2·2^{−prec}` ≥ the disc radius
+    `√2·2^{−prec}`) restores the cover for both certificate forms, at
+    the cost of one precision level, which the strictly-finer adoption
+    guard in `isolateLoop` still absorbs (a Newton jump gains at least
+    two levels). -/
 def Certified.toComponent {p : ZPoly} : Certified p → Component
-  | .atom iso => ⟨#[iso.square], 1⟩
-  | .cluster cl => ⟨cl.squares, cl.k⟩
+  | .atom iso => ⟨#[iso.square.doubled], 1⟩
+  | .cluster cl => ⟨#[(encSquare cl.squares).doubled], cl.k⟩
 
 /-- All stored squares' circumscribed discs are pairwise disjoint, i.e.
     `!discsMeet` holds for every pair. One exact dyadic comparison per pair,
@@ -76,18 +89,31 @@ def Certified.toComponent {p : ZPoly} : Certified p → Component
       else
         true
 
+/-- Fuel for `isolateLoop`: the laggard's climb from the worklist's
+    coarsest prec to `stopDepth`, plus a second climb from `target` to
+    `stopDepth` for a held component forced back into refinement by a
+    late-certifying overlapping sibling (see `isolateLoop`). -/
+@[expose] def fuelFor (p : ZPoly) (target : Int) (start : Int) : Nat :=
+  (stopDepth p target - start).toNat + (stopDepth p target - target).toNat + 1
+
 /-- The shared driver loop over the worklist. Each round certifies every
     component; if all certify at stored prec at least `target` with pairwise
     disjoint circumscribed discs (SPEC "Separation of the output"), the round
-    emits them. Otherwise every surviving component subdivides one level,
-    except that a component adopting a strictly finer certified result keeps
-    that result as a one-square component instead, so each non-emitting round
-    strictly increases every surviving component's prec; the loop then
-    recurses on the smaller fuel. `fuel = 0` returns `none`, the SPEC give-up
-    semantics (up to a harmless constant of overshoot); a caller sizes the
-    fuel as `(stopDepth p target − min prec).toNat + 1` so the loop reaches
-    `stopDepth` before running out. The recursion is structural on the fuel
-    `Nat`. -/
+    emits them. Otherwise: a component already certified at target whose
+    disc is disjoint from every other certified disc holds its position;
+    every other surviving component subdivides one level, except that one
+    adopting a strictly finer certified result keeps that result as a
+    one-square component instead. Each non-emitting round strictly
+    increases every non-held component's prec, and held components sit at
+    target, so the laggard's prec reaches `stopDepth` within
+    `(stopDepth − min prec)` rounds. A held component can be forced back
+    into refinement late, when a slow sibling finally certifies with an
+    overlapping disc, so `fuelFor` budgets a second climb on top: past
+    `separationDepth` every certified disc is below `sep/4` and distinct
+    roots' discs are disjoint, so `(stopDepth − target)` further rounds
+    suffice. `fuel = 0` returns `none`, the SPEC give-up semantics (up to a
+    harmless constant of overshoot). The recursion is structural on the
+    fuel `Nat`. -/
 def isolateLoop (p : ZPoly) (target : Int) (strategy : AtomStrategy) :
     Nat → Array Component → Option (Array (Certified p))
   | 0, _ => none
@@ -101,12 +127,30 @@ def isolateLoop (p : ZPoly) (target : Int) (strategy : AtomStrategy) :
     if allReady && disjoint then
       some (tried.filterMap (·.2))
     else
-      isolateLoop p target strategy fuel <| tried.flatMap fun (c, r) =>
-        match r with
-        | some res =>
-          let c' := res.toComponent
-          if c.prec < c'.prec then #[c'] else c.refine1 p
-        | none => c.refine1 p
+      -- A component whose certification already meets the target and whose
+      -- disc is disjoint from every other certified disc holds its position
+      -- (re-entering unchanged) while the laggards catch up; only
+      -- disjointness violators and unready components keep refining (SPEC
+      -- "Separation of the output"). Without the hold, a waiting component
+      -- would keep adopting Newton results, doubling its precision every
+      -- round and blowing the working bit-length while a slow sibling
+      -- (e.g. a tight cluster forced down to its separation depth)
+      -- subdivides.
+      let certSquares := tried.map fun t => t.2.map (·.square)
+      isolateLoop p target strategy fuel <|
+        (Array.range tried.size).flatMap fun i =>
+          match tried.getD i (⟨#[], 0⟩, none) with
+          | (c, some res) =>
+            let ready := target ≤ res.square.prec
+            let overlaps := (Array.range tried.size).any fun j =>
+              i ≠ j && (match certSquares.getD j none with
+                        | some sj => res.square.discsMeet sj
+                        | none => false)
+            if ready && !overlaps then #[c]
+            else
+              let c' := res.toComponent
+              if c.prec < c'.prec then #[c'] else c.refine1 p
+          | (c, none) => c.refine1 p
 
 /-- Refine to `target` precision: speculative Newton steps, falling back to
     subdivision of the atom's square as a one-square component. `none` only
@@ -115,8 +159,8 @@ def DyadicRootIsolation.refineTo? {p : ZPoly} (iso : DyadicRootIsolation p)
     (target : Int) (strategy : AtomStrategy := .nkThenPellet) :
     Option (DyadicRootIsolation p) :=
   if target ≤ iso.square.prec then some iso else
-  let fuel := (stopDepth p target - iso.square.prec).toNat + 1
-  match isolateLoop p target strategy fuel #[⟨#[iso.square], 1⟩] with
+  let fuel := fuelFor p target iso.square.prec
+  match isolateLoop p target strategy fuel #[⟨#[iso.square.doubled], 1⟩] with
   | some rs =>
     if rs.size = 1 then
       match rs[0]? with

@@ -56,16 +56,25 @@ namespace Hex
   let q := prec' + 2 + max 0 (Hex.Dyadic.ceilLog2 tb)
   let inv := d.invAtPrec q                               -- ONE real reciprocal 1/|c₁|²
   -- `invAtPrec` floors at precision `q` (error `< 2^{−q}` toward zero), so each
-  -- centre component's error is `< |tᵢ|·2^{−q} ≤ tb·2^{−q} ≤ 2^{−(prec'+2)}`
-  -- (strictness from the reciprocal rounding error), at most a
-  -- quarter of the new half-width `2^{−prec'}`: a genuinely converged Newton
-  -- step keeps the root inside the new square. `prec' = max (prec+2) (2·prec)`
+  -- centre component's reciprocal error is `< |tᵢ|·2^{−q} ≤ tb·2^{−q} ≤ 2^{−(prec'+2)}`
+  -- (strictness from the reciprocal rounding error). The final `roundDown` at
+  -- `prec' + 3` adds at most `2^{−(prec'+3)}` per component, for a total under
+  -- `3·2^{−(prec'+3)} < 2^{−(prec'+1)}`, half of the new half-width `2^{−prec'}`: a genuinely converged Newton
+  -- step keeps the root inside the new square. The rounding also pins the
+  -- centre's bit-length to about `prec' + 3` plus its magnitude, keeping every
+  -- downstream Taylor shift on `B`-bit values per the complexity contract;
+  -- without it, exact recentring compounds (each jump multiplies centre bits
+  -- by about `2·deg p`), which measured as 30k-digit centres by the fourth
+  -- jump on a degree-4 input. Certification never trusts the centre's
+  -- provenance, so rounding is harmless to soundness. `prec' = max (prec+2) (2·prec)`
   -- gives at least a quarter-size square always (also for `prec ≤ 0`) and
   -- precision doubling once `prec ≥ 2`; only success rate, never soundness,
   -- depends on this choice. `Dyadic.invAtPrec` returns `0` for a zero argument
   -- (`Init.Data.Dyadic.Inv.lean`: the `.zero` case), so `c₁ = 0` yields
   -- `inv = 0` and `x' = x` harmlessly.
-  { re := s.re - t.1 * inv, im := s.im - t.2 * inv, prec := prec' }
+  { re := (s.re - t.1 * inv).roundDown (prec' + 3),
+    im := (s.im - t.2 * inv).roundDown (prec' + 3),
+    prec := prec' }
 
 /-- The square concentric with `s`, one level coarser (half-width doubled).
     The Newton-Kantorovich certification convention tests and stores this. -/
