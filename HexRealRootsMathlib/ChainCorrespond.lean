@@ -474,6 +474,71 @@ theorem roots_toPolyℝ_eq_primitivePart (p : Hex.ZPoly) (hp : p ≠ 0) :
     rfl
   rw [hcontent, Polynomial.roots_C_mul _ hc0]
 
+/-! ### Structure of the executable chain: head and nonemptiness -/
+
+/-- The chain-extension loop only appends: the accumulator is a prefix of the
+result. This is the invariant behind reading the chain's head off `s₀`. -/
+private theorem sturmChainAux_toList_prefix (fuel : ℕ) (prev cur : Hex.ZPoly)
+    (acc : Array Hex.ZPoly) :
+    ∃ tail, (Hex.ZPoly.sturmChainAux fuel prev cur acc).toList = acc.toList ++ tail := by
+  induction fuel generalizing prev cur acc with
+  | zero =>
+      exact ⟨[], by rw [show Hex.ZPoly.sturmChainAux 0 prev cur acc = acc from rfl,
+        List.append_nil]⟩
+  | succ fuel ih =>
+      have hunf : Hex.ZPoly.sturmChainAux (fuel + 1) prev cur acc =
+          (if (Hex.ZPoly.spem prev cur).isZero then acc
+           else Hex.ZPoly.sturmChainAux fuel cur
+                  (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)))
+                  (acc.push (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur))))) := rfl
+      by_cases h : (Hex.ZPoly.spem prev cur).isZero
+      · exact ⟨[], by rw [hunf, if_pos h, List.append_nil]⟩
+      · obtain ⟨tail, ht⟩ := ih cur (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)))
+          (acc.push (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur))))
+        refine ⟨-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)) :: tail, ?_⟩
+        rw [hunf, if_neg h, ht, Array.toList_push, List.append_assoc, List.cons_append,
+          List.nil_append]
+
+/-- For a positive-degree `p`, the executable Sturm chain begins with
+`s₀ = primitivePart p` and `s₁ = primitivePart p'`, so its list is those two
+elements followed by a (possibly empty) tail. -/
+private theorem sturmChain_toList_eq (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0) :
+    ∃ tail, (Hex.ZPoly.sturmChain p).toList =
+      Hex.ZPoly.primitivePart p
+        :: Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p) :: tail := by
+  obtain ⟨m, hm⟩ : ∃ m, p.degree? = some m := by
+    cases h : p.degree? with
+    | none => rw [h] at hp; simp at hp
+    | some m => exact ⟨m, rfl⟩
+  have hm1 : m ≠ 0 := by rw [hm] at hp; simp only [Option.getD_some] at hp; omega
+  obtain ⟨m', rfl⟩ := Nat.exists_eq_succ_of_ne_zero hm1
+  have hchain : Hex.ZPoly.sturmChain p =
+      Hex.ZPoly.sturmChainAux p.size (Hex.ZPoly.primitivePart p)
+        (Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p))
+        #[Hex.ZPoly.primitivePart p,
+          Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)] := by
+    unfold Hex.ZPoly.sturmChain; rw [hm]; rfl
+  obtain ⟨tail, ht⟩ := sturmChainAux_toList_prefix p.size (Hex.ZPoly.primitivePart p)
+    (Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p))
+    #[Hex.ZPoly.primitivePart p, Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)]
+  exact ⟨tail, by rw [hchain, ht]; rfl⟩
+
+/-- **Head of the mapped chain.** For a positive-degree `p`, the real-cast Sturm
+chain has head `toPolyℝ (primitivePart p)`, matching the `IsSturmChain.head`
+field (stated at the primitive part, per the design note: the executable chain's
+first element is `primitivePart p`, not `p`, since the content is stripped). -/
+theorem sturmChain_map_head? (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0) :
+    ((Hex.ZPoly.sturmChain p).toList.map toPolyℝ).head?
+      = some (toPolyℝ (Hex.ZPoly.primitivePart p)) := by
+  obtain ⟨tail, ht⟩ := sturmChain_toList_eq p hp
+  rw [ht]; rfl
+
+/-- **Nonemptiness of the mapped chain** for a positive-degree `p`. -/
+theorem sturmChain_map_ne_nil (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0) :
+    (Hex.ZPoly.sturmChain p).toList.map toPolyℝ ≠ [] := by
+  obtain ⟨tail, ht⟩ := sturmChain_toList_eq p hp
+  rw [ht]; simp
+
 end
 
 end HexRealRootsMathlib
