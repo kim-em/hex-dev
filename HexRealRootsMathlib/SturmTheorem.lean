@@ -344,6 +344,145 @@ theorem sturmVar_root_cross (_hp : p ≠ 0) (_hsf : Squarefree p)
   · rw [hSVa, hSVb, hEqA, hEqB]; omega
   · rw [hSVr, hSVb]; exact hEqB.symm
 
+/-- The finite set of real points at which some element of `chain` vanishes.
+Every chain element is nonzero (`IsSturmChain.nonzero_mem`), so each contributes
+finitely many zeros; their union is the telescope's set of break points. -/
+noncomputable def chainZeros (cs : List (Polynomial ℝ)) : Finset ℝ :=
+  cs.toFinset.biUnion (fun q => q.roots.toFinset)
+
+/-- Membership in `chainZeros`: a point lies in it exactly when some chain
+element vanishes there (using that every chain element is nonzero). -/
+theorem mem_chainZeros {cs : List (Polynomial ℝ)} (hne : ∀ q ∈ cs, q ≠ 0) {x : ℝ} :
+    x ∈ chainZeros cs ↔ ∃ q ∈ cs, q.eval x = 0 := by
+  unfold chainZeros
+  simp only [Finset.mem_biUnion, List.mem_toFinset, Multiset.mem_toFinset]
+  constructor
+  · rintro ⟨q, hq, hx⟩
+    exact ⟨q, hq, (Polynomial.mem_roots (hne q hq)).mp hx⟩
+  · rintro ⟨q, hq, hx⟩
+    exact ⟨q, hq, (Polynomial.mem_roots (hne q hq)).mpr hx⟩
+
+/-- A gap point just below `z` and above `lo`, lying above every element of the
+finite set `S` that is below `z`. Used to manufacture the artificial left
+neighbour a crossing lemma needs at a break point. -/
+theorem exists_gap_lt (S : Finset ℝ) (z lo : ℝ) (hlo : lo < z) :
+    ∃ a₀, lo < a₀ ∧ a₀ < z ∧ ∀ x ∈ S, x < z → x < a₀ := by
+  classical
+  set U : Finset ℝ := insert lo (S.filter (fun x => x < z)) with hU
+  have hUne : U.Nonempty := ⟨lo, Finset.mem_insert_self _ _⟩
+  have hmax_lt : U.max' hUne < z := by
+    rw [Finset.max'_lt_iff]
+    intro u hu
+    rw [hU, Finset.mem_insert] at hu
+    rcases hu with h | h
+    · rw [h]; exact hlo
+    · exact (Finset.mem_filter.mp h).2
+  refine ⟨(U.max' hUne + z) / 2, ?_, ?_, ?_⟩
+  · have : lo ≤ U.max' hUne := Finset.le_max' U lo (Finset.mem_insert_self _ _)
+    linarith
+  · linarith
+  · intro x hx hxz
+    have : x ≤ U.max' hUne :=
+      Finset.le_max' U x (Finset.mem_insert.mpr (Or.inr (Finset.mem_filter.mpr ⟨hx, hxz⟩)))
+    linarith
+
+/-- A gap point just above `z` and below `hi`, lying below every element of the
+finite set `S` that is above `z`. Used to manufacture the artificial right
+neighbour a crossing lemma needs at a break point. -/
+theorem exists_gap_gt (S : Finset ℝ) (z hi : ℝ) (hhi : z < hi) :
+    ∃ b₀, z < b₀ ∧ b₀ < hi ∧ ∀ x ∈ S, z < x → b₀ < x := by
+  classical
+  set U : Finset ℝ := insert hi (S.filter (fun x => z < x)) with hU
+  have hUne : U.Nonempty := ⟨hi, Finset.mem_insert_self _ _⟩
+  have hlt_min : z < U.min' hUne := by
+    rw [Finset.lt_min'_iff]
+    intro u hu
+    rw [hU, Finset.mem_insert] at hu
+    rcases hu with h | h
+    · rw [h]; exact hhi
+    · exact (Finset.mem_filter.mp h).2
+  refine ⟨(z + U.min' hUne) / 2, ?_, ?_, ?_⟩
+  · linarith
+  · have : U.min' hUne ≤ hi := Finset.min'_le U hi (Finset.mem_insert_self _ _)
+    linarith
+  · intro x hx hxz
+    have : U.min' hUne ≤ x :=
+      Finset.min'_le U x (Finset.mem_insert.mpr (Or.inr (Finset.mem_filter.mpr ⟨hx, hxz⟩)))
+    linarith
+
+/-- The head `p` of a Sturm chain is a member of the chain. -/
+theorem head_mem (hchain : IsSturmChain p chain) : p ∈ chain := by
+  cases chain with
+  | nil => exact absurd hchain.head (by simp)
+  | cons hd tl =>
+    have hhd : hd = p := by simpa using hchain.head
+    rw [← hhd]; exact List.mem_cons_self
+
+/-- **Right registration.** If no chain element vanishes anywhere in the
+half-open interval `(z, c]` (with `z ≤ c`), then `sturmVar` agrees at `z` and
+`c`, even if `z` itself is a chain zero: the value at a break point equals the
+value immediately to its right. -/
+theorem sturmVar_eq_right (hp : p ≠ 0) (hsf : Squarefree p)
+    (hchain : IsSturmChain p chain) {z c : ℝ} (hzc : z ≤ c)
+    (hclear : ∀ x, z < x → x ≤ c → x ∉ chainZeros chain) :
+    sturmVar chain z = sturmVar chain c := by
+  rcases eq_or_lt_of_le hzc with rfl | hlt
+  · rfl
+  have hne := hchain.nonzero_mem
+  by_cases hzZ : z ∈ chainZeros chain
+  · obtain ⟨a₀, _, ha₀z, ha₀gap⟩ := exists_gap_lt (chainZeros chain) z (z - 1) (by linarith)
+    have hz_ex : ∀ q ∈ chain, ∀ x ∈ Set.Icc a₀ c, x ≠ z → q.eval x ≠ 0 := by
+      intro q hq x hx hxz hqx
+      have hxZ : x ∈ chainZeros chain := (mem_chainZeros hne).mpr ⟨q, hq, hqx⟩
+      rcases lt_trichotomy x z with hlt' | heq | hgt'
+      · exact absurd (ha₀gap x hxZ hlt') (not_lt.mpr hx.1)
+      · exact hxz heq
+      · exact hclear x hgt' hx.2 hxZ
+    by_cases hroot : p.IsRoot z
+    · have hpz : ∀ x ∈ Set.Icc a₀ c, x ≠ z → ¬ p.IsRoot x := by
+        intro x hx hxz hpr
+        have hxZ : x ∈ chainZeros chain :=
+          (mem_chainZeros hne).mpr ⟨p, head_mem hchain, hpr⟩
+        rcases lt_trichotomy x z with hlt' | heq | hgt'
+        · exact absurd (ha₀gap x hxZ hlt') (not_lt.mpr hx.1)
+        · exact hxz heq
+        · exact hclear x hgt' hx.2 hxZ
+      exact (sturmVar_root_cross hp hsf hchain z hroot a₀ c ha₀z hlt hz_ex hpz).2
+    · exact (sturmVar_interior_cross hchain z hroot a₀ c ha₀z hlt hz_ex).2
+  · have hz_all : ∀ q ∈ chain, ∀ x ∈ Set.Icc z c, q.eval x ≠ 0 := by
+      intro q hq x hx hqx
+      have hxZ : x ∈ chainZeros chain := (mem_chainZeros hne).mpr ⟨q, hq, hqx⟩
+      rcases eq_or_lt_of_le hx.1 with heq | hgt
+      · exact hzZ (by rw [heq]; exact hxZ)
+      · exact hclear x hgt hx.2 hxZ
+    exact sturmVar_const_of_no_zero hchain z c hzc hz_all
+
+/-- Splitting a half-open interval count: for `a ≤ a' ≤ b`, the number of
+multiset entries in `(a, b]` is the sum of those in `(a, a']` and `(a', b]`. -/
+theorem card_filter_Ioc_split (s : Multiset ℝ) {a a' b : ℝ} (h1 : a ≤ a') (h2 : a' ≤ b) :
+    (s.filter (fun r => a < r ∧ r ≤ b)).card
+      = (s.filter (fun r => a < r ∧ r ≤ a')).card
+        + (s.filter (fun r => a' < r ∧ r ≤ b)).card := by
+  classical
+  have hand : s.filter (fun r => (a < r ∧ r ≤ a') ∧ (a' < r ∧ r ≤ b)) = 0 := by
+    rw [Multiset.filter_eq_nil]
+    rintro x _ ⟨⟨_, hxa'⟩, ha'x, _⟩
+    exact absurd ha'x (not_lt.mpr hxa')
+  have hor : s.filter (fun r => (a < r ∧ r ≤ a') ∨ (a' < r ∧ r ≤ b))
+      = s.filter (fun r => a < r ∧ r ≤ b) := by
+    apply Multiset.filter_congr
+    intro x _
+    constructor
+    · rintro (⟨h, h'⟩ | ⟨h, h'⟩)
+      · exact ⟨h, le_trans h' h2⟩
+      · exact ⟨lt_of_le_of_lt h1 h, h'⟩
+    · rintro ⟨h, h'⟩
+      rcases lt_trichotomy x a' with hx | hx | hx
+      · exact Or.inl ⟨h, hx.le⟩
+      · exact Or.inl ⟨h, hx.le⟩
+      · exact Or.inr ⟨hx, h'⟩
+  rw [← Multiset.card_add, Multiset.filter_add_filter, hand, Multiset.add_zero, hor]
+
 /-- **Sturm's theorem, half-open form.** For `p ≠ 0` squarefree with a
 generalised Sturm chain, the drop in `sturmVar` from `a` to `b` equals the
 number of real roots of `p` in the half-open interval `(a, b]`, counted as the
@@ -355,11 +494,121 @@ the chain elements in `(a, b]`. Zeros of interior elements are variation-neutral
 root under the half-open convention (step 3); between consecutive chain zeros
 `sturmVar` is constant (step 1). The signed total is therefore the number of
 roots of `p` in `(a, b]`. -/
-theorem sturm_half_open (_hp : p ≠ 0) (_hsf : Squarefree p)
-    (_hchain : IsSturmChain p chain) {a b : ℝ} (_hab : a < b) :
+theorem sturm_half_open (hp : p ≠ 0) (hsf : Squarefree p)
+    (hchain : IsSturmChain p chain) {a b : ℝ} (hab : a < b) :
     (sturmVar chain a : ℤ) - sturmVar chain b =
       (p.roots.filter (fun r => a < r ∧ r ≤ b)).card := by
-  sorry
+  classical
+  have hne := hchain.nonzero_mem
+  have hnod : p.roots.Nodup :=
+    Polynomial.nodup_roots (PerfectField.separable_iff_squarefree.mpr hsf)
+  suffices H : ∀ n : ℕ, ∀ a b : ℝ, a ≤ b →
+      ((chainZeros chain).filter (fun x => a < x ∧ x ≤ b)).card = n →
+      (sturmVar chain a : ℤ) - sturmVar chain b =
+        (p.roots.filter (fun r => a < r ∧ r ≤ b)).card by
+    exact H _ a b hab.le rfl
+  intro n
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+    intro a b hab hcard
+    set F := (chainZeros chain).filter (fun x => a < x ∧ x ≤ b) with hF
+    by_cases hemp : F = ∅
+    · -- No break point in `(a, b]`: `sturmVar` is constant and there are no roots.
+      have hclear : ∀ x, a < x → x ≤ b → x ∉ chainZeros chain := by
+        intro x hx1 hx2 hxZ
+        have hxF : x ∈ F := by rw [hF, Finset.mem_filter]; exact ⟨hxZ, hx1, hx2⟩
+        rw [hemp] at hxF; exact absurd hxF (Finset.notMem_empty x)
+      have heqv : sturmVar chain a = sturmVar chain b :=
+        sturmVar_eq_right hp hsf hchain hab hclear
+      have hroots0 : p.roots.filter (fun r => a < r ∧ r ≤ b) = 0 := by
+        rw [Multiset.filter_eq_nil]
+        rintro x hx ⟨h1, h2⟩
+        exact hclear x h1 h2 ((mem_chainZeros hne).mpr ⟨p, head_mem hchain, (Polynomial.mem_roots hp).mp hx⟩)
+      rw [heqv, hroots0]; simp
+    · -- Peel off the largest break point `z` in `(a, b]`.
+      have hFne : F.Nonempty := Finset.nonempty_iff_ne_empty.mpr hemp
+      let z := F.max' hFne
+      have hzmem : z ∈ F := F.max'_mem hFne
+      have hzmax : ∀ x ∈ F, x ≤ z := fun x hx => F.le_max' x hx
+      obtain ⟨hzS, haz, hzb⟩ : z ∈ chainZeros chain ∧ a < z ∧ z ≤ b := by
+        have h := hzmem; rw [hF, Finset.mem_filter] at h; exact ⟨h.1, h.2.1, h.2.2⟩
+      obtain ⟨a', ha_a', ha'z, ha'gap⟩ := exists_gap_lt (chainZeros chain) z a haz
+      obtain ⟨b', hzb', _, hb'gap⟩ := exists_gap_gt (chainZeros chain) z (z + 1) (by linarith)
+      -- Only break point in `(a', b]` is `z`.
+      have honly : ∀ x, a' < x → x ≤ b → x ∈ chainZeros chain → x = z := by
+        intro x hx1 hx2 hxZ
+        rcases lt_trichotomy x z with hlt' | heq | hgt'
+        · exact absurd (ha'gap x hxZ hlt') (not_lt.mpr hx1.le)
+        · exact heq
+        · have hxF : x ∈ F := by rw [hF, Finset.mem_filter]; exact ⟨hxZ, lt_trans ha_a' hx1, hx2⟩
+          exact absurd (hzmax x hxF) (not_le.mpr hgt')
+      -- `[a', b']` has no break point except `z`.
+      have hz_ex : ∀ q ∈ chain, ∀ x ∈ Set.Icc a' b', x ≠ z → q.eval x ≠ 0 := by
+        intro q hq x hx hxz hqx
+        have hxZ : x ∈ chainZeros chain := (mem_chainZeros hne).mpr ⟨q, hq, hqx⟩
+        rcases lt_trichotomy x z with hlt' | heq | hgt'
+        · exact absurd (ha'gap x hxZ hlt') (not_lt.mpr hx.1)
+        · exact hxz heq
+        · exact absurd (hb'gap x hxZ hgt') (not_lt.mpr hx.2)
+      have hpz : ∀ x ∈ Set.Icc a' b', x ≠ z → ¬ p.IsRoot x := fun x hx hxz hpr =>
+        hz_ex p (head_mem hchain) x hx hxz hpr
+      -- Right registration: `sturmVar z = sturmVar b`.
+      have hzeqb : sturmVar chain z = sturmVar chain b := by
+        apply sturmVar_eq_right hp hsf hchain hzb
+        intro x hx1 hx2 hxZ
+        have hxF : x ∈ F := by rw [hF, Finset.mem_filter]; exact ⟨hxZ, lt_trans haz hx1, hx2⟩
+        exact absurd (hzmax x hxF) (not_le.mpr hx1)
+      -- Inductive hypothesis on `(a, a']`.
+      have hsub : (chainZeros chain).filter (fun x => a < x ∧ x ≤ a') ⊆ F := by
+        rw [hF]; intro x hx; rw [Finset.mem_filter] at hx ⊢
+        exact ⟨hx.1, hx.2.1, le_trans hx.2.2 (le_trans ha'z.le hzb)⟩
+      have hznotin : z ∉ (chainZeros chain).filter (fun x => a < x ∧ x ≤ a') := by
+        rw [Finset.mem_filter]; rintro ⟨_, _, hza'⟩; exact absurd hza' (not_le.mpr ha'z)
+      have hlt_card : ((chainZeros chain).filter (fun x => a < x ∧ x ≤ a')).card < n := by
+        rw [← hcard]
+        exact Finset.card_lt_card ((Finset.ssubset_iff_of_subset hsub).mpr ⟨z, hzmem, hznotin⟩)
+      have IHres := ih _ hlt_card a a' ha_a'.le rfl
+      have hsplitZ : ((p.roots.filter (fun r => a < r ∧ r ≤ b)).card : ℤ)
+          = ((p.roots.filter (fun r => a < r ∧ r ≤ a')).card : ℤ)
+            + ((p.roots.filter (fun r => a' < r ∧ r ≤ b)).card : ℤ) := by
+        exact_mod_cast card_filter_Ioc_split p.roots ha_a'.le (le_trans ha'z.le hzb)
+      by_cases hzroot : p.IsRoot z
+      · obtain ⟨hcrossL, hcrossR⟩ :=
+          sturmVar_root_cross hp hsf hchain z hzroot a' b' ha'z hzb' hz_ex hpz
+        have ha'bZ : (sturmVar chain a' : ℤ) = sturmVar chain b + 1 := by
+          have : sturmVar chain a' = sturmVar chain b + 1 := by
+            rw [hcrossL, ← hcrossR, hzeqb]
+          exact_mod_cast this
+        have hRZ : ((p.roots.filter (fun r => a' < r ∧ r ≤ b)).card : ℤ) = 1 := by
+          have hzrootmem : z ∈ p.roots := (Polynomial.mem_roots hp).mpr hzroot
+          have hfeq : p.roots.filter (fun r => a' < r ∧ r ≤ b)
+              = p.roots.filter (fun r => r = z) := by
+            apply Multiset.filter_congr
+            intro x hx
+            constructor
+            · rintro ⟨h1, h2⟩
+              exact honly x h1 h2
+                ((mem_chainZeros hne).mpr ⟨p, head_mem hchain, (Polynomial.mem_roots hp).mp hx⟩)
+            · rintro rfl; exact ⟨ha'z, hzb⟩
+          rw [hfeq, Multiset.filter_eq', Multiset.card_replicate,
+            Multiset.count_eq_one_of_mem hnod hzrootmem]
+          rfl
+        linarith [hsplitZ, hRZ, ha'bZ, IHres]
+      · obtain ⟨hcrossL, _⟩ :=
+          sturmVar_interior_cross hchain z hzroot a' b' ha'z hzb' hz_ex
+        have ha'bZ : (sturmVar chain a' : ℤ) = sturmVar chain b := by
+          have : sturmVar chain a' = sturmVar chain b := by rw [hcrossL, hzeqb]
+          exact_mod_cast this
+        have hRZ : ((p.roots.filter (fun r => a' < r ∧ r ≤ b)).card : ℤ) = 0 := by
+          have hfeq : p.roots.filter (fun r => a' < r ∧ r ≤ b) = 0 := by
+            rw [Multiset.filter_eq_nil]
+            rintro x hx ⟨h1, h2⟩
+            have hxz : x = z := honly x h1 h2
+              ((mem_chainZeros hne).mpr ⟨p, head_mem hchain, (Polynomial.mem_roots hp).mp hx⟩)
+            rw [hxz] at hx
+            exact hzroot ((Polynomial.mem_roots hp).mp hx)
+          rw [hfeq]; rfl
+        linarith [hsplitZ, hRZ, ha'bZ, IHres]
 
 /-- **Sturm's theorem, line form.** For `p ≠ 0` squarefree with a generalised
 Sturm chain, the total number of real roots of `p` equals the drop in `sturmVar`
