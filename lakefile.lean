@@ -247,6 +247,10 @@ lean_exe hexgramschmidt_bench where
   srcDir := "bench"
   root := `HexGramSchmidt.Bench
 
+lean_exe hexrealroots_bench where
+  srcDir := "bench"
+  root := `HexRealRoots.Bench
+
 lean_exe hexlll_bench where
   srcDir := "bench"
   supportInterpreter := true
