@@ -49,6 +49,32 @@ zero-skipping variation count of `leadingCoeff · (-1) ^ natDegree`. -/
 noncomputable def sturmVarNegInf (chain : List (Polynomial ℝ)) : ℕ :=
   signVariations (chain.map (fun q => q.leadingCoeff * (-1) ^ q.natDegree))
 
+/-- **Sign persistence.** A polynomial with no zero on `[a, b]` keeps a constant
+sign there: its evaluation signs at the two endpoints agree. If they differed,
+the two endpoint values would straddle `0` and the intermediate value theorem
+would supply an interior zero. -/
+theorem eval_sign_eq_of_no_zero {q : Polynomial ℝ} {a b : ℝ} (hab : a ≤ b)
+    (hz : ∀ x ∈ Set.Icc a b, q.eval x ≠ 0) :
+    SignType.sign (q.eval a) = SignType.sign (q.eval b) := by
+  have hna : q.eval a ≠ 0 := hz a ⟨le_refl a, hab⟩
+  have hnb : q.eval b ≠ 0 := hz b ⟨hab, le_refl b⟩
+  have hpos : 0 < q.eval a * q.eval b := by
+    rcases lt_or_gt_of_ne (mul_ne_zero hna hnb) with hlt | hgt
+    · exfalso
+      have hmem : (0 : ℝ) ∈ Set.uIcc (q.eval a) (q.eval b) := by
+        rcases mul_neg_iff.mp hlt with ⟨hx, hy⟩ | ⟨hx, hy⟩
+        · exact Set.mem_uIcc.mpr (Or.inr ⟨hy.le, hx.le⟩)
+        · exact Set.mem_uIcc.mpr (Or.inl ⟨hx.le, hy.le⟩)
+      have hsub := intermediate_value_uIcc (a := a) (b := b)
+        (f := fun x => q.eval x) q.continuousOn
+      obtain ⟨c, hc, hc0⟩ := hsub hmem
+      rw [Set.uIcc_of_le hab] at hc
+      exact hz c hc hc0
+    · exact hgt
+  rcases mul_pos_iff.mp hpos with ⟨h1, h2⟩ | ⟨h1, h2⟩
+  · rw [sign_pos h1, sign_pos h2]
+  · rw [sign_neg h1, sign_neg h2]
+
 variable {p : Polynomial ℝ} {chain : List (Polynomial ℝ)}
 
 /-- **Local constancy.** On a closed interval `[a, b]` containing no zero of
@@ -60,10 +86,15 @@ and the intermediate value theorem (`intermediate_value_Icc`): a sign change
 would force a zero. The list of evaluation signs is therefore the same at `a`
 and `b`, so `signVariations` — which depends only on those signs — agrees. -/
 theorem sturmVar_const_of_no_zero (_hchain : IsSturmChain p chain)
-    (a b : ℝ) (_hab : a ≤ b)
-    (_hz : ∀ q ∈ chain, ∀ x ∈ Set.Icc a b, q.eval x ≠ 0) :
+    (a b : ℝ) (hab : a ≤ b)
+    (hz : ∀ q ∈ chain, ∀ x ∈ Set.Icc a b, q.eval x ≠ 0) :
     sturmVar chain a = sturmVar chain b := by
-  sorry
+  show signVariations (chain.map (Polynomial.eval a))
+    = signVariations (chain.map (Polynomial.eval b))
+  apply signVariations_congr
+  rw [List.forall₂_map_left_iff, List.forall₂_map_right_iff, List.forall₂_same]
+  intro q hq
+  exact eval_sign_eq_of_no_zero hab (fun x hx => hz q hq x hx)
 
 /-- **Interior-element crossing preserves `sturmVar`.** If `r` is not a root of
 `p` and the only chain zeros in `[a, b]` occur at `r` (necessarily zeros of

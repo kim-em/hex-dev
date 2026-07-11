@@ -86,6 +86,56 @@ theorem sturmVar_cons_zero {q : Polynomial ℝ} {x : ℝ} (h : q.eval x = 0)
     sturmVar (q :: chain) x = sturmVar chain x := by
   simp [sturmVar, List.map_cons, signVariations, h]
 
+/-- Two real lists whose entries have pointwise equal signs have equal
+`countSignChanges`: the sign-change count reads only the signs of the entries. -/
+theorem countSignChanges_congr {l₁ l₂ : List ℝ}
+    (h : List.Forall₂ (fun u v => SignType.sign u = SignType.sign v) l₁ l₂) :
+    countSignChanges l₁ = countSignChanges l₂ := by
+  induction h with
+  | nil => rfl
+  | @cons a b l₁' l₂' hab htail ih =>
+    cases htail with
+    | nil => rfl
+    | @cons c d l₁'' l₂'' hcd _ =>
+      rw [countSignChanges_cons_cons, countSignChanges_cons_cons]
+      have hiff : (a * c < 0) ↔ (b * d < 0) := by
+        rw [← sign_eq_neg_one_iff, ← sign_eq_neg_one_iff, sign_mul, sign_mul, hab, hcd]
+      by_cases hc : a * c < 0
+      · rw [if_pos hc, if_pos (hiff.mp hc), ih]
+      · rw [if_neg hc, if_neg (fun h => hc (hiff.mpr h)), ih]
+
+/-- Dropping the zero entries commutes with a pointwise sign-equal
+correspondence: the filtered lists remain pointwise sign-equal. -/
+theorem filter_ne_zero_congr {l₁ l₂ : List ℝ}
+    (h : List.Forall₂ (fun u v => SignType.sign u = SignType.sign v) l₁ l₂) :
+    List.Forall₂ (fun u v => SignType.sign u = SignType.sign v)
+      (l₁.filter (fun v => decide (v ≠ 0))) (l₂.filter (fun v => decide (v ≠ 0))) := by
+  induction h with
+  | nil => exact List.Forall₂.nil
+  | @cons a b l₁' l₂' hab htail ih =>
+    have hzero : (a = 0) ↔ (b = 0) := by
+      rw [← sign_eq_zero_iff (a := a), ← sign_eq_zero_iff (a := b), hab]
+    by_cases ha : a = 0
+    · have hb : b = 0 := hzero.mp ha
+      have e1 : (a :: l₁').filter (fun v => decide (v ≠ 0))
+          = l₁'.filter (fun v => decide (v ≠ 0)) := by rw [List.filter_cons]; simp [ha]
+      have e2 : (b :: l₂').filter (fun v => decide (v ≠ 0))
+          = l₂'.filter (fun v => decide (v ≠ 0)) := by rw [List.filter_cons]; simp [hb]
+      rw [e1, e2]; exact ih
+    · have hb : b ≠ 0 := fun h => ha (hzero.mpr h)
+      have e1 : (a :: l₁').filter (fun v => decide (v ≠ 0))
+          = a :: l₁'.filter (fun v => decide (v ≠ 0)) := by rw [List.filter_cons]; simp [ha]
+      have e2 : (b :: l₂').filter (fun v => decide (v ≠ 0))
+          = b :: l₂'.filter (fun v => decide (v ≠ 0)) := by rw [List.filter_cons]; simp [hb]
+      rw [e1, e2]; exact List.Forall₂.cons hab ih
+
+/-- `signVariations` reads only the signs of the entries: two real lists whose
+entries are pointwise sign-equal have equal sign variations. -/
+theorem signVariations_congr {l₁ l₂ : List ℝ}
+    (h : List.Forall₂ (fun u v => SignType.sign u = SignType.sign v) l₁ l₂) :
+    signVariations l₁ = signVariations l₂ :=
+  countSignChanges_congr (filter_ne_zero_congr h)
+
 /-- A generalised Sturm chain for `p`: the sign axioms that the counting
 argument actually uses, packaged as explicit fields. The chain is stored as
 a plain `List (Polynomial ℝ)` and elements are addressed by index through
