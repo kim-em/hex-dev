@@ -158,7 +158,8 @@ jobs:
             hexconway_emit_fixtures \
             hexrowreduce_emit_fixtures hexdeterminant_emit_fixtures \
             hexbareiss_emit_fixtures hexgramschmidt_emit_fixtures \
-            hexlll_emit_fixtures hexrealroots_emit_fixtures
+            hexlll_emit_fixtures hexrealroots_emit_fixtures \
+            hexroots_emit_fixtures
       # Publish hex-dev's oleans on a trusted main push so later builds (and any
       # consumer) restore them. Skips silently without the upload key.
       - name: Publish hex-dev oleans to the Lake cache (main only)
