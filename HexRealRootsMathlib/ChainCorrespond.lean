@@ -674,38 +674,47 @@ theorem roots_toPolyℝ_eq_primitivePart (p : Hex.ZPoly) (hp : p ≠ 0) :
   rw [toPolyℝ_eq_C_content_mul_primitivePart p,
     Polynomial.roots_C_mul _ (ne_of_gt (content_real_pos hp))]
 
-/-! ### Structure of the executable chain: head and nonemptiness -/
+/-! ### Structure of the executable chain -/
 
-/-- The chain-extension loop only appends: the accumulator is a prefix of the
-result. This is the invariant behind reading the chain's head off `s₀`. -/
-private theorem sturmChainAux_toList_prefix (fuel : ℕ) (prev cur : Hex.ZPoly)
+/-- The tail the chain-extension loop appends past its two seeds: pure-list
+mirror of `sturmChainAux` (which threads an `Array` accumulator). -/
+private def chainList : ℕ → Hex.ZPoly → Hex.ZPoly → List Hex.ZPoly
+  | 0, _, _ => []
+  | fuel + 1, prev, cur =>
+      if (Hex.ZPoly.spem prev cur).isZero then []
+      else -(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur))
+        :: chainList fuel cur (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)))
+
+/-- The chain-extension loop only appends: its result is the accumulator
+followed by the pure-list tail `chainList`. -/
+private theorem sturmChainAux_toList (fuel : ℕ) (prev cur : Hex.ZPoly)
     (acc : Array Hex.ZPoly) :
-    ∃ tail, (Hex.ZPoly.sturmChainAux fuel prev cur acc).toList = acc.toList ++ tail := by
+    (Hex.ZPoly.sturmChainAux fuel prev cur acc).toList
+      = acc.toList ++ chainList fuel prev cur := by
   induction fuel generalizing prev cur acc with
   | zero =>
-      exact ⟨[], by rw [show Hex.ZPoly.sturmChainAux 0 prev cur acc = acc from rfl,
-        List.append_nil]⟩
+      rw [show Hex.ZPoly.sturmChainAux 0 prev cur acc = acc from rfl, chainList,
+        List.append_nil]
   | succ fuel ih =>
       have hunf : Hex.ZPoly.sturmChainAux (fuel + 1) prev cur acc =
           (if (Hex.ZPoly.spem prev cur).isZero then acc
            else Hex.ZPoly.sturmChainAux fuel cur
                   (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)))
                   (acc.push (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur))))) := rfl
+      rw [hunf, chainList]
       by_cases h : (Hex.ZPoly.spem prev cur).isZero
-      · exact ⟨[], by rw [hunf, if_pos h, List.append_nil]⟩
-      · obtain ⟨tail, ht⟩ := ih cur (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)))
-          (acc.push (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur))))
-        refine ⟨-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)) :: tail, ?_⟩
-        rw [hunf, if_neg h, ht, Array.toList_push, List.append_assoc, List.cons_append,
-          List.nil_append]
+      · rw [if_pos h, if_pos h, List.append_nil]
+      · rw [if_neg h, if_neg h, ih, Array.toList_push, List.append_assoc,
+          List.cons_append, List.nil_append]
 
-/-- For a positive-degree `p`, the executable Sturm chain begins with
-`s₀ = primitivePart p` and `s₁ = primitivePart p'`, so its list is those two
-elements followed by a (possibly empty) tail. -/
-private theorem sturmChain_toList_eq (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0) :
-    ∃ tail, (Hex.ZPoly.sturmChain p).toList =
+/-- For a positive-degree `p`, the executable Sturm chain is
+`primitivePart p :: primitivePart p' :: chainList …`. -/
+private theorem sturmChain_toList (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0) :
+    (Hex.ZPoly.sturmChain p).toList =
       Hex.ZPoly.primitivePart p
-        :: Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p) :: tail := by
+        :: Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)
+        :: chainList p.size (Hex.ZPoly.primitivePart p)
+             (Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)) := by
   obtain ⟨m, hm⟩ : ∃ m, p.degree? = some m := by
     cases h : p.degree? with
     | none => rw [h] at hp; simp at hp
@@ -718,10 +727,8 @@ private theorem sturmChain_toList_eq (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).get
         #[Hex.ZPoly.primitivePart p,
           Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)] := by
     unfold Hex.ZPoly.sturmChain; rw [hm]; rfl
-  obtain ⟨tail, ht⟩ := sturmChainAux_toList_prefix p.size (Hex.ZPoly.primitivePart p)
-    (Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p))
-    #[Hex.ZPoly.primitivePart p, Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)]
-  exact ⟨tail, by rw [hchain, ht]; rfl⟩
+  rw [hchain, sturmChainAux_toList]
+  rfl
 
 /-- **Head of the mapped chain.** For a positive-degree `p`, the real-cast Sturm
 chain has head `toPolyℝ (primitivePart p)`, matching the `IsSturmChain.head`
@@ -730,14 +737,257 @@ first element is `primitivePart p`, not `p`, since the content is stripped). -/
 theorem sturmChain_map_head? (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0) :
     ((Hex.ZPoly.sturmChain p).toList.map toPolyℝ).head?
       = some (toPolyℝ (Hex.ZPoly.primitivePart p)) := by
-  obtain ⟨tail, ht⟩ := sturmChain_toList_eq p hp
-  rw [ht]; rfl
+  rw [sturmChain_toList p hp]; rfl
 
 /-- **Nonemptiness of the mapped chain** for a positive-degree `p`. -/
 theorem sturmChain_map_ne_nil (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0) :
     (Hex.ZPoly.sturmChain p).toList.map toPolyℝ ≠ [] := by
-  obtain ⟨tail, ht⟩ := sturmChain_toList_eq p hp
-  rw [ht]; simp
+  rw [sturmChain_toList p hp]; simp
+
+/-! ### The per-step chain relation -/
+
+/-- **One chain step over `ℝ`.** When the loop pushes a new element past the
+pair `(prev, cur)` (that is, `spem prev cur ≠ 0`), the three consecutive
+elements satisfy `C c · prev = Q · cur − C k · next` with `c, k > 0`, where
+`next = −primitivePart (spem prev cur)` is exactly the pushed element. At a
+zero `x` of `cur` this collapses to `c · prev(x) = −k · next(x)`: the flanking
+neighbours of a vanishing interior element have opposite signs. -/
+private theorem chain_step {prev cur : Hex.ZPoly} (hcur : cur ≠ 0)
+    (hr : Hex.ZPoly.spem prev cur ≠ 0) :
+    ∃ (c k : ℝ) (Q : Polynomial ℝ), 0 < c ∧ 0 < k ∧
+      Polynomial.C c * toPolyℝ prev
+        = Q * toPolyℝ cur - Polynomial.C k
+            * toPolyℝ (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur))) := by
+  have hdeg1 : 1 ≤ (cur.degree?).getD 0 := by
+    by_contra h
+    exact hr (spem_of_degree_zero prev hcur (by omega))
+  obtain ⟨c, Q, hc, hrel⟩ := toPolyℝ_spem prev cur (leadingCoeff_ne_zero hcur) hdeg1
+  set r := Hex.ZPoly.spem prev cur with hrdef
+  refine ⟨c, ((Hex.ZPoly.content r : Int) : ℝ), Q, hc, content_real_pos hr, ?_⟩
+  rw [hrel, toPolyℝ_neg, toPolyℝ_eq_C_content_mul_primitivePart r]
+  ring
+
+/-- **Coprimality propagates down the chain.** The three-term relation
+`C c · a = Q · b − C k · c'` transports `IsCoprime a b` to `IsCoprime b c'`:
+any Bezout combination for `(a, b)` rewrites into one for `(b, c')`. -/
+private theorem coprime_step {a b c' : Polynomial ℝ} {c₀ k : ℝ} {Q : Polynomial ℝ}
+    (hc₀ : c₀ ≠ 0)
+    (hrel : Polynomial.C c₀ * a = Q * b - Polynomial.C k * c')
+    (h : IsCoprime a b) : IsCoprime b c' := by
+  obtain ⟨u, v, huv⟩ := h
+  have hCc : Polynomial.C c₀⁻¹ * Polynomial.C c₀ = 1 := by
+    rw [← Polynomial.C_mul, inv_mul_cancel₀ hc₀, Polynomial.C_1]
+  refine ⟨u * Polynomial.C c₀⁻¹ * Q + v, -(u * Polynomial.C c₀⁻¹ * Polynomial.C k), ?_⟩
+  calc (u * Polynomial.C c₀⁻¹ * Q + v) * b
+        + -(u * Polynomial.C c₀⁻¹ * Polynomial.C k) * c'
+      = u * Polynomial.C c₀⁻¹ * (Q * b - Polynomial.C k * c') + v * b := by ring
+    _ = u * Polynomial.C c₀⁻¹ * (Polynomial.C c₀ * a) + v * b := by rw [← hrel]
+    _ = u * ((Polynomial.C c₀⁻¹ * Polynomial.C c₀) * a) + v * b := by ring
+    _ = u * a + v * b := by rw [hCc, one_mul]
+    _ = 1 := huv
+
+/-- The negated primitive part of a nonzero polynomial is nonzero. -/
+private theorem neg_primitivePart_ne_zero {r : Hex.ZPoly} (hr : r ≠ 0) :
+    -(Hex.ZPoly.primitivePart r) ≠ 0 := by
+  intro hh
+  have h2 : toPolyℝ (-(Hex.ZPoly.primitivePart r)) = 0 := by rw [hh, toPolyℝ_zero]
+  rw [toPolyℝ_neg, neg_eq_zero, toPolyℝ_eq_zero_iff] at h2
+  exact primitivePart_ne_zero hr h2
+
+/-- A nonzero `spem prev cur` forces `cur` to be nonconstant (a constant
+divisor returns the junk value `0`). -/
+private theorem one_le_degree_of_spem_ne_zero {prev cur : Hex.ZPoly} (hcur : cur ≠ 0)
+    (hr : Hex.ZPoly.spem prev cur ≠ 0) : 1 ≤ (cur.degree?).getD 0 := by
+  by_contra hh
+  exact hr (spem_of_degree_zero prev hcur (by omega))
+
+/-! ### The chain-tail inductions: the four analytic `IsSturmChain` fields -/
+
+/-- Every element of the extended chain is nonzero: the loop pushes only
+negated primitive parts of nonzero pseudo-remainders. -/
+private theorem chainList_nonzero :
+    ∀ (fuel : ℕ) (prev cur : Hex.ZPoly), prev ≠ 0 → cur ≠ 0 →
+      ∀ q ∈ prev :: cur :: chainList fuel prev cur, q ≠ 0 := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro prev cur hprev hcur q hq
+      rw [chainList] at hq
+      simp only [List.mem_cons, List.not_mem_nil, or_false] at hq
+      rcases hq with rfl | rfl
+      · exact hprev
+      · exact hcur
+  | succ fuel ih =>
+      intro prev cur hprev hcur q hq
+      rw [chainList] at hq
+      by_cases h : (Hex.ZPoly.spem prev cur).isZero
+      · rw [if_pos h] at hq
+        simp only [List.mem_cons, List.not_mem_nil, or_false] at hq
+        rcases hq with rfl | rfl
+        · exact hprev
+        · exact hcur
+      · rw [if_neg h] at hq
+        have hr : Hex.ZPoly.spem prev cur ≠ 0 := fun hh => h (isZero_iff_eq_zero.mpr hh)
+        rcases List.mem_cons.mp hq with rfl | hq'
+        · exact hprev
+        · exact ih cur (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur))) hcur
+            (neg_primitivePart_ne_zero hr) q hq'
+
+/-- **The three-term chain relation, indexed.** Any three consecutive elements
+`a, b, c` of the extended chain satisfy `C c₀ · a = Q · b − C k · c` over `ℝ`
+with `c₀, k > 0`. -/
+private theorem chainList_triples :
+    ∀ (fuel : ℕ) (prev cur : Hex.ZPoly), cur ≠ 0 →
+      ∀ (i : ℕ) (a b c : Hex.ZPoly),
+        (prev :: cur :: chainList fuel prev cur)[i]? = some a →
+        (prev :: cur :: chainList fuel prev cur)[i + 1]? = some b →
+        (prev :: cur :: chainList fuel prev cur)[i + 2]? = some c →
+        ∃ (c₀ k : ℝ) (Q : Polynomial ℝ), 0 < c₀ ∧ 0 < k ∧
+          Polynomial.C c₀ * toPolyℝ a = Q * toPolyℝ b - Polynomial.C k * toPolyℝ c := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro prev cur _ i a b c _ _ hc
+      rw [chainList, List.getElem?_cons_succ, List.getElem?_cons_succ] at hc
+      simp at hc
+  | succ fuel ih =>
+      intro prev cur hcur i a b c ha hb hc
+      rw [chainList] at ha hb hc
+      by_cases h : (Hex.ZPoly.spem prev cur).isZero
+      · rw [if_pos h, List.getElem?_cons_succ, List.getElem?_cons_succ] at hc
+        simp at hc
+      · rw [if_neg h] at ha hb hc
+        have hr : Hex.ZPoly.spem prev cur ≠ 0 := fun hh => h (isZero_iff_eq_zero.mpr hh)
+        cases i with
+        | zero =>
+            obtain rfl : prev = a := by simpa using ha
+            obtain rfl : cur = b := by simpa using hb
+            obtain rfl : -(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)) = c := by
+              simpa using hc
+            exact chain_step hcur hr
+        | succ j =>
+            rw [List.getElem?_cons_succ] at ha hb hc
+            exact ih cur (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)))
+              (neg_primitivePart_ne_zero hr) j a b c ha hb hc
+
+/-- **Pairwise coprimality along the chain.** If the two seeds are coprime
+over `ℝ`, every pair of consecutive chain elements is: the three-term relation
+transports Bezout witnesses down the chain. -/
+private theorem chainList_pairs_coprime :
+    ∀ (fuel : ℕ) (prev cur : Hex.ZPoly), cur ≠ 0 →
+      IsCoprime (toPolyℝ prev) (toPolyℝ cur) →
+      ∀ (i : ℕ) (a b : Hex.ZPoly),
+        (prev :: cur :: chainList fuel prev cur)[i]? = some a →
+        (prev :: cur :: chainList fuel prev cur)[i + 1]? = some b →
+        IsCoprime (toPolyℝ a) (toPolyℝ b) := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro prev cur _ hco i a b ha hb
+      rw [chainList] at ha hb
+      cases i with
+      | zero =>
+          obtain rfl : prev = a := by simpa using ha
+          obtain rfl : cur = b := by simpa using hb
+          exact hco
+      | succ j =>
+          rw [List.getElem?_cons_succ, List.getElem?_cons_succ] at hb
+          simp at hb
+  | succ fuel ih =>
+      intro prev cur hcur hco i a b ha hb
+      rw [chainList] at ha hb
+      by_cases h : (Hex.ZPoly.spem prev cur).isZero
+      · rw [if_pos h] at ha hb
+        cases i with
+        | zero =>
+            obtain rfl : prev = a := by simpa using ha
+            obtain rfl : cur = b := by simpa using hb
+            exact hco
+        | succ j =>
+            rw [List.getElem?_cons_succ, List.getElem?_cons_succ] at hb
+            simp at hb
+      · rw [if_neg h] at ha hb
+        have hr : Hex.ZPoly.spem prev cur ≠ 0 := fun hh => h (isZero_iff_eq_zero.mpr hh)
+        obtain ⟨c₀, k, Q, hc₀, _, hrel⟩ := chain_step hcur hr
+        have hco' : IsCoprime (toPolyℝ cur)
+            (toPolyℝ (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)))) :=
+          coprime_step (ne_of_gt hc₀) hrel hco
+        cases i with
+        | zero =>
+            obtain rfl : prev = a := by simpa using ha
+            obtain rfl : cur = b := by simpa using hb
+            exact hco
+        | succ j =>
+            rw [List.getElem?_cons_succ] at ha hb
+            exact ih cur (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)))
+              (neg_primitivePart_ne_zero hr) hco' j a b ha hb
+
+/-- **The terminal element is a unit.** With coprime seeds and sufficient fuel
+(the degree of `cur` is below the remaining fuel, so the loop stops on a zero
+pseudo-remainder, never by truncation), the last chain element is a unit of
+`ℝ[X]`: at the stop, it divides its predecessor, and it is coprime to it. -/
+private theorem chainList_last_unit :
+    ∀ (fuel : ℕ) (prev cur : Hex.ZPoly), cur ≠ 0 →
+      (cur.degree?).getD 0 < fuel →
+      IsCoprime (toPolyℝ prev) (toPolyℝ cur) →
+      ∀ z, (prev :: cur :: chainList fuel prev cur).getLast? = some z →
+        IsUnit (toPolyℝ z) := by
+  intro fuel
+  induction fuel with
+  | zero => intro prev cur _ hfuel _ z _; omega
+  | succ fuel ih =>
+      intro prev cur hcur hfuel hco z hz
+      rw [chainList] at hz
+      by_cases h : (Hex.ZPoly.spem prev cur).isZero
+      · rw [if_pos h, List.getLast?_cons_cons] at hz
+        obtain rfl : cur = z := by simpa using hz
+        have hr0 : Hex.ZPoly.spem prev cur = 0 := isZero_iff_eq_zero.mp h
+        have hne : toPolyℝ cur ≠ 0 := fun hh => hcur (toPolyℝ_eq_zero_iff.mp hh)
+        by_cases hdeg : (cur.degree?).getD 0 = 0
+        · -- A nonzero constant is a unit of `ℝ[X]`.
+          rw [Polynomial.isUnit_iff_degree_eq_zero, Polynomial.degree_eq_natDegree hne,
+            natDegree_toPolyℝ, hdeg]
+          rfl
+        · -- Nonconstant: the terminal division relation plus coprimality.
+          have hdeg1 : 1 ≤ (cur.degree?).getD 0 := by omega
+          obtain ⟨c, Q, hc, hrel⟩ :=
+            toPolyℝ_spem prev cur (leadingCoeff_ne_zero hcur) hdeg1
+          rw [hr0, toPolyℝ_zero, add_zero] at hrel
+          have hdvd : toPolyℝ cur ∣ toPolyℝ prev := by
+            refine ⟨Polynomial.C c⁻¹ * Q, ?_⟩
+            calc toPolyℝ prev
+                = Polynomial.C c⁻¹ * (Polynomial.C c * toPolyℝ prev) := by
+                  rw [← mul_assoc, ← Polynomial.C_mul, inv_mul_cancel₀ (ne_of_gt hc),
+                    Polynomial.C_1, one_mul]
+              _ = Polynomial.C c⁻¹ * (Q * toPolyℝ cur) := by rw [hrel]
+              _ = toPolyℝ cur * (Polynomial.C c⁻¹ * Q) := by ring
+          exact hco.isUnit_of_dvd' hdvd dvd_rfl
+      · rw [if_neg h, List.getLast?_cons_cons] at hz
+        have hr : Hex.ZPoly.spem prev cur ≠ 0 := fun hh => h (isZero_iff_eq_zero.mpr hh)
+        obtain ⟨c₀, k, Q, hc₀, _, hrel⟩ := chain_step hcur hr
+        have hco' : IsCoprime (toPolyℝ cur)
+            (toPolyℝ (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)))) :=
+          coprime_step (ne_of_gt hc₀) hrel hco
+        -- Degree bookkeeping: the pushed element's degree strictly drops.
+        have hppdeg : ((Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)).degree?).getD 0
+            = ((Hex.ZPoly.spem prev cur).degree?).getD 0 := by
+          have h2 := congrArg Polynomial.natDegree
+            (toPolyℝ_eq_C_content_mul_primitivePart (Hex.ZPoly.spem prev cur))
+          rw [Polynomial.natDegree_C_mul (ne_of_gt (content_real_pos hr)),
+            natDegree_toPolyℝ, natDegree_toPolyℝ] at h2
+          omega
+        have hnextdeg :
+            (((-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur))).degree?).getD 0)
+              = ((Hex.ZPoly.spem prev cur).degree?).getD 0 := by
+          rw [← natDegree_toPolyℝ, toPolyℝ_neg, Polynomial.natDegree_neg,
+            natDegree_toPolyℝ, hppdeg]
+        have hdeg1 : 1 ≤ (cur.degree?).getD 0 := one_le_degree_of_spem_ne_zero hcur hr
+        have hdr : ((Hex.ZPoly.spem prev cur).degree?).getD 0 < (cur.degree?).getD 0 := by
+          rcases spem_degree hcur hdeg1 with h0 | hlt
+          · exact absurd h0 hr
+          · exact hlt
+        exact ih cur (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)))
+          (neg_primitivePart_ne_zero hr) (by omega) hco' z hz
 
 end
 
