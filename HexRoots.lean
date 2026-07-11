@@ -9,10 +9,12 @@ module
 public import HexRoots.Basic
 public import HexRoots.Bisection
 public import HexRoots.Cauchy
+public import HexRoots.IsolateAll
 public import HexRoots.Kantorovich
 public import HexRoots.MahlerPrec
 public import HexRoots.Newton
 public import HexRoots.Pellet
+public import HexRoots.Refine
 public import HexRoots.SimpleRoot
 public import HexRoots.Taylor
 
