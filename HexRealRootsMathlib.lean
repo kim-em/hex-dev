@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexRealRootsMathlib.Hadamard
 public import HexRealRootsMathlib.SturmChainDefs
 public import HexRealRootsMathlib.SturmTheorem
 
