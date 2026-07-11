@@ -129,15 +129,21 @@ With `(c₀, …, c_n)` the exact Taylor coefficients of `p` at the
 centre `m` of `s` and `r := 2^{−s.prec}` the half-width, the witness
 data is:
 
-- `u := Dyadic.invAtPrec (normSq c₁) q` with the pinned precision
+- `u := invFloor (normSq c₁) q`, the floor of `1/normSq c₁` on the
+  `2^{−q}` grid, with the pinned precision
   `q := 8 + max 0 (ceilLog2 (normSq c₁))`, and
   `w := conj(c₁) · u`, a Gaussian dyadic approximating `1/c₁`.
-  Soundness does not depend on the quality of `w` (the quantities
-  below are exact functions of whatever `w` is), so `w` is
-  recomputed deterministically inside the witness rather than
-  stored; only the completeness analysis uses the `invAtPrec`
-  rounding contract, through `1 − w·c₁ = (1/normSq c₁ − u)·normSq c₁
-  ∈ [0, 2⁻⁸)`.
+  For `x = n·2^{−k}` with `n` odd positive the floor is the single
+  integer division `⌊2^{q+k}/n⌋·2^{−q}`; this agrees with
+  `Dyadic.invAtPrec` on positive arguments but, unlike it,
+  kernel-reduces (`invAtPrec` routes through `Rat` normalisation,
+  whose `Nat.gcd` well-founded recursion `decide` cannot unfold), so
+  the witness stays dischargeable by `decide`. Soundness does not
+  depend on the quality of `w` (the quantities below are exact
+  functions of whatever `w` is), so `w` is recomputed
+  deterministically inside the witness rather than stored; only the
+  completeness analysis uses the floor's rounding contract, through
+  `1 − w·c₁ = (1/normSq c₁ − u)·normSq c₁ ∈ [0, 2⁻⁸)`.
 - `dₖ := w · cₖ` for `k = 0, …, n`, exact Gaussian dyadics.
 - `y := max |Re d₀| |Im d₀|`, exactly the sup norm of the Newton
   residual `A(p(m))`.
