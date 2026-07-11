@@ -299,6 +299,83 @@ theorem sturmVarAt_eq (chain : Array Hex.ZPoly) (x : Dyadic) :
   intro q _
   rw [Function.comp_apply, Function.comp_apply, sign_dyadicSign, toReal_evalDyadic]
 
+/-! ### `spem` correspondence: the sign-managed pseudo-remainder over `ℝ`
+
+The executable `spem f g` is a **positive integer multiple** of the field
+remainder `f mod g`. We prove the underlying Euclidean-division relation over
+`ℝ`: there is a positive real `c` and a quotient `Q` with
+`C c * toPolyℝ f = Q * toPolyℝ g + toPolyℝ (spem f g)`, together with the
+degree drop that makes `toPolyℝ (spem f g)` the genuine remainder. This is the
+identity the chain-axiom proofs consume: at a zero `x` of `g`, the relation
+collapses to `c * f(x) = (spem f g)(x)`, fixing the sign of the next chain
+element against the previous one. -/
+
+/-- `toPolynomial` turns the executable scalar multiply into `C`-multiplication. -/
+theorem toPolynomial_scale {R : Type*} [CommRing R] [DecidableEq R]
+    (c : R) (p : Hex.DensePoly R) :
+    HexPolyMathlib.toPolynomial (Hex.DensePoly.scale c p)
+      = Polynomial.C c * HexPolyMathlib.toPolynomial p := by
+  ext n
+  rw [HexPolyMathlib.coeff_toPolynomial, Hex.DensePoly.coeff_scale c p n (mul_zero c),
+    Polynomial.coeff_C_mul, HexPolyMathlib.coeff_toPolynomial]
+
+/-- `toPolynomial` turns the executable `x^k` shift into `X^k`-multiplication. -/
+theorem toPolynomial_shift {R : Type*} [CommRing R] [DecidableEq R]
+    (k : Nat) (p : Hex.DensePoly R) :
+    HexPolyMathlib.toPolynomial (Hex.DensePoly.shift k p)
+      = Polynomial.X ^ k * HexPolyMathlib.toPolynomial p := by
+  ext n
+  rw [HexPolyMathlib.coeff_toPolynomial, Hex.DensePoly.coeff_shift, mul_comm,
+    Polynomial.coeff_mul_X_pow']
+  by_cases h : k ≤ n
+  · rw [if_neg (by omega), if_pos h, HexPolyMathlib.coeff_toPolynomial]
+  · rw [if_pos (by omega), if_neg h]; rfl
+
+/-- The real cast of a scalar multiple. -/
+theorem toPolyℝ_scale (c : Int) (p : Hex.ZPoly) :
+    toPolyℝ (Hex.DensePoly.scale c p) = Polynomial.C (c : ℝ) * toPolyℝ p := by
+  ext n
+  rw [coeff_toPolyℝ, Hex.DensePoly.coeff_scale c p n (mul_zero c),
+    Polynomial.coeff_C_mul, coeff_toPolyℝ]
+  push_cast; ring
+
+/-- The real cast of an `x^k` shift. -/
+theorem toPolyℝ_shift (k : Nat) (p : Hex.ZPoly) :
+    toPolyℝ (Hex.DensePoly.shift k p) = Polynomial.X ^ k * toPolyℝ p := by
+  ext n
+  rw [coeff_toPolyℝ, Hex.DensePoly.coeff_shift, mul_comm, Polynomial.coeff_mul_X_pow']
+  by_cases h : k ≤ n
+  · rw [if_neg (show ¬ n < k by omega), if_pos h, coeff_toPolyℝ]
+  · rw [if_pos (show n < k by omega), if_neg h]; exact Int.cast_zero
+
+/-- The real cast of a difference. -/
+theorem toPolyℝ_sub (p q : Hex.ZPoly) :
+    toPolyℝ (p - q) = toPolyℝ p - toPolyℝ q := by
+  show (HexPolyMathlib.toPolynomial (p - q)).map (Int.castRingHom ℝ) = _
+  rw [HexPolyMathlib.toPolynomial_sub, Polynomial.map_sub]
+
+/-- The real cast preserves the leading coefficient. -/
+theorem leadingCoeff_toPolyℝ (p : Hex.ZPoly) :
+    (toPolyℝ p).leadingCoeff = (p.leadingCoeff : ℝ) := by
+  rw [toPolyℝ, Polynomial.leadingCoeff_map_of_injective
+    (RingHom.injective_int (Int.castRingHom ℝ)), HexPolyMathlib.leadingCoeff_toPolynomial]
+  simp
+
+/-- **The `spemStep` identity over `ℝ`.** One reduction step is `|lc g|` times
+the remainder minus a scaled shift of `g`, so its cast splits as a `C`-multiple
+of `toPolyℝ r` minus a `C`-multiple of `X^k · toPolyℝ g`. -/
+private theorem toPolyℝ_spemStep (g r : Hex.ZPoly) :
+    toPolyℝ (Hex.ZPoly.spemStep g r) =
+      Polynomial.C ((if g.leadingCoeff < 0 then -g.leadingCoeff else g.leadingCoeff : Int) : ℝ)
+          * toPolyℝ r
+        - Polynomial.C ((if g.leadingCoeff < 0 then -r.leadingCoeff else r.leadingCoeff : Int) : ℝ)
+          * (Polynomial.X ^ ((r.degree?).getD 0 - (g.degree?).getD 0) * toPolyℝ g) := by
+  have hstep : Hex.ZPoly.spemStep g r =
+      Hex.DensePoly.scale (if g.leadingCoeff < 0 then -g.leadingCoeff else g.leadingCoeff) r
+        - Hex.DensePoly.scale (if g.leadingCoeff < 0 then -r.leadingCoeff else r.leadingCoeff)
+            (Hex.DensePoly.shift ((r.degree?).getD 0 - (g.degree?).getD 0) g) := rfl
+  rw [hstep, toPolyℝ_sub, toPolyℝ_scale, toPolyℝ_scale, toPolyℝ_shift]
+
 end
 
 end HexRealRootsMathlib
