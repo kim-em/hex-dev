@@ -453,7 +453,7 @@ libraries:
   HexRoots:
     deps: [HexPolyZ]
     mathlib: false
-    done_through: 2
+    done_through: 3
     status: active
   HexRootsMathlib:
     deps: [HexRoots, HexPolyZMathlib]
