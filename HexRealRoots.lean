@@ -8,6 +8,7 @@ module
 
 public import HexRealRoots.Basic
 public import HexRealRoots.Chain
+public import HexRealRoots.Prec
 
 public section
 
