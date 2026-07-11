@@ -355,6 +355,15 @@ def SimpleRealRoot.mk (iso : RefinedRealIsolation p) : SimpleRealRoot p :=
     containing roots. -/
 def RefinedRealIsolation.sameRoot (i₁ i₂ : RefinedRealIsolation p) : Bool := …
 
+/-- Refine an isolation to separation precision and package it as a
+    `RefinedRealIsolation`: `refineTo (sepPrec p)`, then the width check.
+    `none` only on data violating the isolation semantics (unreachable
+    for squarefree `p`, per the companion's `refine1_isolates_same`).
+    The entry point of the threading pattern: call once, thread the
+    refined value forward. -/
+def RealRootIsolation.refined (iso : RealRootIsolation p) :
+    Option (RefinedRealIsolation p)
+
 end Hex
 ```
 
@@ -467,8 +476,8 @@ claim and re-testing it per fixture is noise.
 
 Write `n = deg p` and `h = log ‖p‖∞`.
 
-- `sturmChain p`: `O(n)` pseudo-divisions, `O(n²)` coefficient
-  operations plus the content gcds. Primitive-chain coefficient
+- `sturmChain p`: `O(n)` pseudo-divisions, each `O(n²)` coefficient
+  operations, plus the content gcds. Primitive-chain coefficient
   growth is `O(n·h)` bits per element. Computed once per polynomial.
 - `sturmVarAt`: one exact Horner evaluation per chain element,
   `O(n²)` dyadic operations per queried point, memoised per endpoint.
