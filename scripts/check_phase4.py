@@ -133,7 +133,14 @@ def changed_setup_lines(root: Path, base: str) -> list[tuple[Path, int, str]]:
             if SETUP_RE.match(text):
                 changed.append((current_file, new_line, text))
             new_line += 1
-        elif line.startswith("-") and not line.startswith("---"):
+        elif line.startswith("-"):
+            # A deleted line: never advances the new-file cursor. The guard is
+            # unconditional on `-` because a deleted `--`-comment line renders as
+            # `--- …` in the diff and must not be mistaken for the `--- a/<file>`
+            # header (that header precedes `+++ b/<file>`, so it is already
+            # skipped by the `current_file is None` check and reset at the next
+            # `@@`). Counting a deleted `--` comment as context inflated the
+            # new-file line number of the following `setup_benchmark`.
             continue
         else:
             new_line += 1
