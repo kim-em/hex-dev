@@ -264,23 +264,29 @@ replaced by `M[dst][k] + c * M[src][k]`. -/
 
 /-- Replace column `dst` by `col dst + c * col src`.
 
-Each row is mapped to its update of the single `dst` entry. On the flat
-backing `mapRows` materializes the rows and reflattens, so this is a
-value-level pass over the matrix, not an in-place column write; a flat
-per-entry column engine (like `setCol`/`modifyCol`) is follow-up work
-alongside the `BlockView` recursion. -/
+The source column is read once into `csrc` (one contiguous copy, a borrowed read
+taken before the write); the subsequent `modifyCol` then holds the only live
+reference to the buffer and updates the `dst` column entry of each row in place —
+one single-entry `Vector.modify` of the flat buffer per row (`O(n)` writes
+total) — when the runtime sees it uniquely referenced, with no row
+materialization. This replaces the former `mapRows` pass, which materialized and
+reflattened every row. -/
 @[expose]
 def colAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin m) (c : R) : Matrix R n m :=
-  M.mapRows fun row => row.set dst (row[dst] + c * row[src])
+  let csrc := M.col src
+  M.modifyCol dst fun i x => x + c * csrc[i]
 
 /-- Replace column `dst` by `col dst + col src * c`.
 
-This is the right-scalar variant of `colAdd`. It is the column-add operation
-whose right-multiplication wrapper is valid over a noncommutative ring. -/
+This is the right-scalar variant of `colAdd`, valid as a right-multiplication
+wrapper over a noncommutative ring. Same flat per-entry column engine as
+`colAdd`: read the source column once, then `modifyCol` the `dst` entries in
+place. -/
 @[expose]
 def colAddRight [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin m) (c : R) :
     Matrix R n m :=
-  M.mapRows fun row => row.set dst (row[dst] + row[src] * c)
+  let csrc := M.col src
+  M.modifyCol dst fun i x => x + csrc[i] * c
 
 /-- Read an entry of `colAdd M src dst c` by cases on the column index:
 column `dst` returns `M[i][dst] + c * M[i][src]`, any other column is
@@ -289,9 +295,10 @@ theorem getElem_colAdd [Mul R] [Add R]
     (M : Matrix R n m) (src dst : Fin m) (c : R) (i : Fin n) (j : Fin m) :
     (colAdd M src dst c)[i][j] =
       if j = dst then M[i][j] + c * M[i][src] else M[i][j] := by
-  rw [colAdd, getElem_eq_getRow, getRow_mapRows]
-  simp only [Vector.getElem_set, getElem_eq_getRow, Fin.getElem_fin, Fin.ext_iff]
-  grind
+  rw [colAdd, getElem_modifyCol]
+  by_cases hj : j = dst
+  · rw [if_pos hj, if_pos hj, hj, getElem_col]
+  · rw [if_neg hj, if_neg hj]
 
 /-- Read an entry of `colAddRight M src dst c` by cases on the column index:
 column `dst` returns `M[i][dst] + M[i][src] * c`, any other column is
@@ -300,9 +307,10 @@ theorem getElem_colAddRight [Mul R] [Add R]
     (M : Matrix R n m) (src dst : Fin m) (c : R) (i : Fin n) (j : Fin m) :
     (colAddRight M src dst c)[i][j] =
       if j = dst then M[i][j] + M[i][src] * c else M[i][j] := by
-  rw [colAddRight, getElem_eq_getRow, getRow_mapRows]
-  simp only [Vector.getElem_set, getElem_eq_getRow, Fin.getElem_fin, Fin.ext_iff]
-  grind
+  rw [colAddRight, getElem_modifyCol]
+  by_cases hj : j = dst
+  · rw [if_pos hj, if_pos hj, hj, getElem_col]
+  · rw [if_neg hj, if_neg hj]
 
 /-- Column `dst` of `colAdd M src dst c` is the pointwise column combination. -/
 @[simp, grind =] theorem col_colAdd_dst [Mul R] [Add R]
@@ -407,12 +415,16 @@ replaced by `M[i][dst] + M[i][src] * c`. -/
 
 /-- Swap columns `i` and `j` in a dense matrix.
 
-The swap is done row by row via `mapRows`: each row's `i` and `j` entries are
-exchanged with `Vector.swap`, reusing the freed row slot when `M` is uniquely
-referenced. The column mirror of `rowSwap`. -/
+Both columns are read once (two borrowed `O(n)` reads taken before the writes),
+then written back with two `setCol` passes that update one flat-buffer entry per
+row in place, reusing the backing store when `M` is uniquely referenced. This
+replaces the former `mapRows` pass, which materialized and reflattened every row.
+The column mirror of `rowSwap`. -/
 @[expose]
 def colSwap (M : Matrix R n m) (i j : Fin m) : Matrix R n m :=
-  M.mapRows fun row => row.swap i j
+  let ci := M.col i
+  let cj := M.col j
+  (M.setCol i fun r => cj[r]).setCol j fun r => ci[r]
 
 /-- Read an entry of `colSwap M i j` by cases on the column index: column `j`
 returns the original column `i`, column `i` returns the original column `j`, and
@@ -420,9 +432,13 @@ any other column is unchanged. -/
 @[grind =] theorem getElem_colSwap (M : Matrix R n m) (i j : Fin m) (r : Fin n) (c : Fin m) :
     (colSwap M i j)[r][c] =
       if c = j then M[r][i] else if c = i then M[r][j] else M[r][c] := by
-  rw [colSwap, getElem_eq_getRow, getRow_mapRows]
-  simp only [Vector.getElem_swap, getElem_eq_getRow, Fin.getElem_fin, Fin.ext_iff]
-  grind
+  rw [colSwap, getElem_setCol]
+  by_cases hcj : c = j
+  · rw [if_pos hcj, if_pos hcj, getElem_col]
+  · rw [if_neg hcj, if_neg hcj, getElem_setCol]
+    by_cases hci : c = i
+    · rw [if_pos hci, if_pos hci, getElem_col]
+    · rw [if_neg hci, if_neg hci]
 
 /-- Column `i` of `colSwap M i j` is the original column `j`. -/
 @[simp, grind =] theorem col_colSwap_left (M : Matrix R n m) (i j : Fin m) :

@@ -48,6 +48,65 @@ namespace Matrix
 
 variable {R : Type u} {n m k : Nat}
 
+/-! ### View-to-matrix abstraction
+
+The Strassen recursion runs over `Submatrix` views (`HexMatrix/Submatrix.lean`).
+These lemmas relate a view's `toMatrix` materialization to the corresponding
+`Matrix`-level `pad`/`toBlocks` operation, so the view recursion reduces to the
+existing `mulStrassen_eq_mul` decomposition. -/
+
+/-- Materializing a widened view is `Matrix.pad` of the materialized source. -/
+theorem toMatrix_pad_view [OfNat R 0] (A : Submatrix R n m) (n' m' : Nat)
+    (hn : n ≤ n') (hm : m ≤ m') :
+    (A.pad n' m' hn hm).toMatrix = pad A.toMatrix n' m' := by
+  apply ext_getElem
+  intro i j
+  rw [Submatrix.getElem_toMatrix, Submatrix.entry_pad, getElem_pad]
+  by_cases h : i.val < n ∧ j.val < m
+  · rw [dif_pos h, dif_pos h, getElem_pair_eq_nested, Submatrix.getElem_toMatrix]
+  · rw [dif_neg h, dif_neg h]
+
+/-- Materializing the top-left quadrant view is `Matrix.toBlocks₁₁` of the
+materialized parent. -/
+theorem toMatrix_toBlocks₁₁ [OfNat R 0] {h w : Nat} (A : Submatrix R (h + h) (w + w)) :
+    (Submatrix.toBlocks₁₁ A).toMatrix = toBlocks₁₁ A.toMatrix := by
+  apply ext_getElem
+  intro i j
+  rw [Submatrix.getElem_toMatrix, getElem_toBlocks₁₁, Submatrix.getElem_toMatrix,
+    Submatrix.entry, Submatrix.entry]
+  simp only [Submatrix.toBlocks₁₁, Fin.val_castAdd]
+  all_goals (have hi := i.isLt; have hj := j.isLt; split <;> split <;> (first | rfl | (exfalso; omega)))
+
+/-- Materializing the top-right quadrant view is `Matrix.toBlocks₁₂` of the parent. -/
+theorem toMatrix_toBlocks₁₂ [OfNat R 0] {h w : Nat} (A : Submatrix R (h + h) (w + w)) :
+    (Submatrix.toBlocks₁₂ A).toMatrix = toBlocks₁₂ A.toMatrix := by
+  apply ext_getElem
+  intro i j
+  rw [Submatrix.getElem_toMatrix, getElem_toBlocks₁₂, Submatrix.getElem_toMatrix,
+    Submatrix.entry, Submatrix.entry]
+  simp only [Submatrix.toBlocks₁₂, Fin.val_castAdd, Fin.val_natAdd, Nat.add_assoc]
+  all_goals (have hi := i.isLt; have hj := j.isLt; split <;> split <;> (first | rfl | (exfalso; omega)))
+
+/-- Materializing the bottom-left quadrant view is `Matrix.toBlocks₂₁` of the parent. -/
+theorem toMatrix_toBlocks₂₁ [OfNat R 0] {h w : Nat} (A : Submatrix R (h + h) (w + w)) :
+    (Submatrix.toBlocks₂₁ A).toMatrix = toBlocks₂₁ A.toMatrix := by
+  apply ext_getElem
+  intro i j
+  rw [Submatrix.getElem_toMatrix, getElem_toBlocks₂₁, Submatrix.getElem_toMatrix,
+    Submatrix.entry, Submatrix.entry]
+  simp only [Submatrix.toBlocks₂₁, Fin.val_castAdd, Fin.val_natAdd, Nat.add_assoc]
+  all_goals (have hi := i.isLt; have hj := j.isLt; split <;> split <;> (first | rfl | (exfalso; omega)))
+
+/-- Materializing the bottom-right quadrant view is `Matrix.toBlocks₂₂` of the parent. -/
+theorem toMatrix_toBlocks₂₂ [OfNat R 0] {h w : Nat} (A : Submatrix R (h + h) (w + w)) :
+    (Submatrix.toBlocks₂₂ A).toMatrix = toBlocks₂₂ A.toMatrix := by
+  apply ext_getElem
+  intro i j
+  rw [Submatrix.getElem_toMatrix, getElem_toBlocks₂₂, Submatrix.getElem_toMatrix,
+    Submatrix.entry, Submatrix.entry]
+  simp only [Submatrix.toBlocks₂₂, Fin.val_natAdd, Nat.add_assoc]
+  all_goals (have hi := i.isLt; have hj := j.isLt; split <;> split <;> (first | rfl | (exfalso; omega)))
+
 /-- Configuration for `mulStrassen`: the recursion `cutoff` below which a block is
 handed to the base kernel, and the pluggable `baseMul` base kernel itself. Data
 only — `baseMul` is a bare function and the record carries no algebraic instances,
@@ -73,19 +132,19 @@ cutoff of `96`.
 
 Measured by the Strassen bench driver (`bench/HexMatrix/Bench.lean`) on `Int`
 coefficients with GMP arithmetic, sweeping the cutoff `τ` against dimension `n`
-on host `chungus2` (AMD EPYC 9455), Lean toolchain `4.32.0-rc1`, on the current
-row-of-rows `Vector (Vector R m) n` backing. On that backing an extra Strassen
-level below a `64×64` block loses to the naive base kernel (its coefficient-
-multiplication saving is swamped by quadrant materialization and stride/cache
-overhead), while a `128×128` block splits profitably (one Strassen level:
-`≈ 90 ms` vs naive `≈ 97 ms`). Any cutoff in `(64, 128]` therefore recurses down
-to a `64×64` naive leaf; that leaf class wins from the first splitting dimension
-(`n = 128`) and stays within ~4% of the `128×128`-leaf class at `n = 512` (which
-edges ahead there), so `96` is shipped as its representative, extending Strassen
-to non-power-of-two blocks in `[96, 128)` as well. Per
-`HexMatrix/SPEC/hex-matrix.md` § "Benchmarks" this crossover is representation-
-dependent — the flat `Vector R (n*m)` backing (#8652) is expected to lower it and
-will re-measure it against this same bench. -/
+on host `chungus2` (AMD EPYC 9455), Lean toolchain `4.32.0-rc1`. An extra
+Strassen level below a `64×64` block loses to the naive base kernel, while a
+`128×128` block splits profitably. Any cutoff in `(64, 128]` therefore recurses
+down to a `64×64` naive leaf; that leaf class wins from the first splitting
+dimension (`n = 128`) and stays within ~4% of the `128×128`-leaf class at
+`n = 512` (which edges ahead there), so `96` is shipped as its representative,
+extending Strassen to non-power-of-two blocks in `[96, 128)` as well. The value
+has been re-measured twice per `HexMatrix/SPEC/hex-matrix.md` § "Benchmarks":
+on the flat row-major backing with materialized quadrants and again on the
+`Submatrix`-view recursion, both within noise of the original sweep (the
+quadrant copies the views remove are `O(n²)` per level against the `O(n^2.81)`
+multiply work, so they never dominated at benched sizes) — the crossover
+stayed put and `96` stands. -/
 @[expose]
 def strassenDefault [Mul R] [Add R] [OfNat R 0] : StrassenConfig R where
   cutoff := 96
@@ -99,54 +158,57 @@ theorem strassenDefault_valid [Mul R] [Add R] [OfNat R 0] :
   show mulImpl X Y = mul X Y
   rw [mul_eq_mulImpl]
 
-/-- **Strassen-Winograd multiplication.** Recurses on the runtime dimensions,
-following the Winograd schedule from `HexMatrix/SPEC/hex-matrix.md`.
+/-- The internal Strassen-Winograd recursion over copy-free `Submatrix` **views**.
+Recurses on the runtime dimensions following the Winograd schedule from
+`HexMatrix/SPEC/hex-matrix.md`.
 
 Base case: when any of `n`, `m`, `k` is `≤ 1` or below `cfg.cutoff`, materialize
-the current blocks and call `cfg.baseMul`. The `≤ 1` disjuncts are
-config-independent, so `cutoff = 0` cannot defeat termination.
+the current view blocks (`toMatrix`) and call `cfg.baseMul` — the only leaf
+allocation. The `≤ 1` disjuncts are config-independent, so `cutoff = 0` cannot
+defeat termination.
 
-Recursive step: pad each operand up to even dimensions (`h + h`, `w + w`,
-`d + d` with `h := (n+1)/2` etc.), split into 2×2 blocks with no dimension cast,
-run the fifteen-addition Winograd schedule with seven recursive products, assemble
-with `fromBlocks`, and crop back to `n × k`. Termination is well-founded on
-`n + m + k`: the recursion fires only when `n, m, k ≥ 2`, and each halved
-dimension is then strictly smaller. -/
+Recursive step: widen each operand view to even dimensions (`h + h`, `w + w`,
+`d + d` with `h := (n+1)/2` etc.) — a zero-fill reshape with no copy — split into
+2×2 quadrant **views** (offset arithmetic, no copy), materialize only the fifteen
+`Sᵢ`/`Tᵢ`/`Uᵢ` operand sums and the seven recursive products, assemble with
+`fromBlocks`, and crop back to `n × k`. Termination is well-founded on `n + m + k`:
+the recursion fires only when `n, m, k ≥ 2`, and each halved dimension is then
+strictly smaller. -/
 @[expose]
-def mulStrassen {R : Type u} [Mul R] [Add R] [Sub R] [OfNat R 0]
-    (cfg : StrassenConfig R) {n m k : Nat} (M : Matrix R n m) (N : Matrix R m k) :
+def mulStrassenView {R : Type u} [Mul R] [Add R] [Sub R] [OfNat R 0]
+    (cfg : StrassenConfig R) {n m k : Nat} (A : Submatrix R n m) (B : Submatrix R m k) :
     Matrix R n k :=
   if n ≤ 1 ∨ m ≤ 1 ∨ k ≤ 1 ∨ n < cfg.cutoff ∨ m < cfg.cutoff ∨ k < cfg.cutoff then
-    cfg.baseMul M N
+    cfg.baseMul A.toMatrix B.toMatrix
   else
     let h := (n + 1) / 2
     let w := (m + 1) / 2
     let d := (k + 1) / 2
-    let Mp := pad M (h + h) (w + w)
-    let Np := pad N (w + w) (d + d)
-    let A₁₁ := toBlocks₁₁ Mp
-    let A₁₂ := toBlocks₁₂ Mp
-    let A₂₁ := toBlocks₂₁ Mp
-    let A₂₂ := toBlocks₂₂ Mp
-    let B₁₁ := toBlocks₁₁ Np
-    let B₁₂ := toBlocks₁₂ Np
-    let B₂₁ := toBlocks₂₁ Np
-    let B₂₂ := toBlocks₂₂ Np
-    let S₁ := A₂₁ + A₂₂
-    let S₂ := S₁ - A₁₁
-    let S₃ := A₁₁ - A₂₁
-    let S₄ := A₁₂ - S₂
-    let T₁ := B₁₂ - B₁₁
-    let T₂ := B₂₂ - T₁
-    let T₃ := B₂₂ - B₁₂
-    let T₄ := T₂ - B₂₁
-    let P₁ := mulStrassen cfg A₁₁ B₁₁
-    let P₂ := mulStrassen cfg A₁₂ B₂₁
-    let P₃ := mulStrassen cfg S₄ B₂₂
-    let P₄ := mulStrassen cfg A₂₂ T₄
-    let P₅ := mulStrassen cfg S₁ T₁
-    let P₆ := mulStrassen cfg S₂ T₂
-    let P₇ := mulStrassen cfg S₃ T₃
+    let Ap := A.pad (h + h) (w + w) (by omega) (by omega)
+    let Bp := B.pad (w + w) (d + d) (by omega) (by omega)
+    let A₁₁ := Ap.toBlocks₁₁
+    let A₁₂ := Ap.toBlocks₁₂
+    let A₂₁ := Ap.toBlocks₂₁
+    let A₂₂ := Ap.toBlocks₂₂
+    let B₁₁ := Bp.toBlocks₁₁
+    let B₁₂ := Bp.toBlocks₁₂
+    let B₂₁ := Bp.toBlocks₂₁
+    let B₂₂ := Bp.toBlocks₂₂
+    let S₁ := A₂₁.add A₂₂
+    let S₂ := S₁.sub A₁₁
+    let S₃ := A₁₁.sub A₂₁
+    let S₄ := A₁₂.sub S₂
+    let T₁ := B₁₂.sub B₁₁
+    let T₂ := B₂₂.sub T₁
+    let T₃ := B₂₂.sub B₁₂
+    let T₄ := T₂.sub B₂₁
+    let P₁ := mulStrassenView cfg A₁₁ B₁₁
+    let P₂ := mulStrassenView cfg A₁₂ B₂₁
+    let P₃ := mulStrassenView cfg S₄ B₂₂
+    let P₄ := mulStrassenView cfg A₂₂ T₄
+    let P₅ := mulStrassenView cfg S₁ T₁
+    let P₆ := mulStrassenView cfg S₂ T₂
+    let P₇ := mulStrassenView cfg S₃ T₃
     let U₁ := P₁ + P₂
     let U₂ := P₁ + P₆
     let U₃ := U₂ + P₇
@@ -158,36 +220,76 @@ def mulStrassen {R : Type u} [Mul R] [Add R] [Sub R] [OfNat R 0]
   termination_by n + m + k
   decreasing_by all_goals (simp_wf; omega)
 
+/-- **Strassen-Winograd multiplication.** The public entry point wraps the operands
+as full-matrix `Submatrix` views and runs the copy-free view recursion
+`mulStrassenView`; the quadrant splitting inside allocates nothing (see that
+def and `HexMatrix/SPEC/hex-matrix.md` § "Avoiding sub-block copies"). -/
+@[expose]
+def mulStrassen {R : Type u} [Mul R] [Add R] [Sub R] [OfNat R 0]
+    (cfg : StrassenConfig R) {n m k : Nat} (M : Matrix R n m) (N : Matrix R m k) :
+    Matrix R n k :=
+  mulStrassenView cfg (Submatrix.ofMatrix M) (Submatrix.ofMatrix N)
+
+/-- The view recursion computes the same matrix as the reference `mul` of the
+materialized operands, for every valid configuration. Proved by functional
+induction over `mulStrassenView`, reducing each quadrant view to its `toBlocks`
+materialization (`toMatrix_toBlocks…`, `toMatrix_pad_view`) and composing the
+three wave-1 lemmas exactly as the `Matrix`-level recursion did. -/
+theorem mulStrassenView_eq_mul [Lean.Grind.Ring R]
+    (cfg : StrassenConfig R) (hcfg : cfg.Valid)
+    (A : Submatrix R n m) (B : Submatrix R m k) :
+    mulStrassenView cfg A B = mul A.toMatrix B.toMatrix := by
+  fun_induction mulStrassenView cfg A B with
+  | case1 n m k A B hbase => exact hcfg A.toMatrix B.toMatrix
+  | case2 n m k A B hbase h w d Ap Bp
+      A₁₁ A₁₂ A₂₁ A₂₂ B₁₁ B₁₂ B₂₁ B₂₂
+      S₁ S₂ S₃ S₄ T₁ T₂ T₃ T₄
+      P₁ P₂ P₃ P₄ P₅ P₆ P₇
+      U₁ U₂ U₃ U₄ U₅ U₆ U₇
+      hP₁ hP₂ hP₃ hP₄ hP₅ hP₆ hP₇ =>
+    let win : Winograd A₁₁.toMatrix A₁₂.toMatrix A₂₁.toMatrix A₂₂.toMatrix
+        B₁₁.toMatrix B₁₂.toMatrix B₂₁.toMatrix B₂₂.toMatrix :=
+      { S₁ := S₁.toMatrix, S₂ := S₂.toMatrix, S₃ := S₃.toMatrix, S₄ := S₄.toMatrix,
+        T₁ := T₁.toMatrix, T₂ := T₂.toMatrix, T₃ := T₃.toMatrix, T₄ := T₄.toMatrix,
+        P₁, P₂, P₃, P₄, P₅, P₆, P₇,
+        U₁, U₂, U₃, U₄, U₅, U₆, U₇,
+        hS₁ := Submatrix.toMatrix_add A₂₁ A₂₂, hS₂ := Submatrix.toMatrix_sub S₁ A₁₁,
+        hS₃ := Submatrix.toMatrix_sub A₁₁ A₂₁, hS₄ := Submatrix.toMatrix_sub A₁₂ S₂,
+        hT₁ := Submatrix.toMatrix_sub B₁₂ B₁₁, hT₂ := Submatrix.toMatrix_sub B₂₂ T₁,
+        hT₃ := Submatrix.toMatrix_sub B₂₂ B₁₂, hT₄ := Submatrix.toMatrix_sub T₂ B₂₁,
+        hP₁, hP₂, hP₃, hP₄, hP₅, hP₆, hP₇,
+        hU₁ := rfl, hU₂ := rfl, hU₃ := rfl, hU₄ := rfl,
+        hU₅ := rfl, hU₆ := rfl, hU₇ := rfl }
+    have e11 : U₁ = A₁₁.toMatrix * B₁₁.toMatrix + A₁₂.toMatrix * B₂₁.toMatrix := win.c11
+    have e12 : U₅ = A₁₁.toMatrix * B₁₂.toMatrix + A₁₂.toMatrix * B₂₂.toMatrix := win.c12
+    have e21 : U₆ = A₂₁.toMatrix * B₁₁.toMatrix + A₂₂.toMatrix * B₂₁.toMatrix := win.c21
+    have e22 : U₇ = A₂₁.toMatrix * B₁₂.toMatrix + A₂₂.toMatrix * B₂₂.toMatrix := win.c22
+    have hAb : fromBlocks A₁₁.toMatrix A₁₂.toMatrix A₂₁.toMatrix A₂₂.toMatrix = Ap.toMatrix := by
+      show fromBlocks (Ap.toBlocks₁₁).toMatrix (Ap.toBlocks₁₂).toMatrix
+        (Ap.toBlocks₂₁).toMatrix (Ap.toBlocks₂₂).toMatrix = Ap.toMatrix
+      rw [toMatrix_toBlocks₁₁, toMatrix_toBlocks₁₂, toMatrix_toBlocks₂₁, toMatrix_toBlocks₂₂,
+        fromBlocks_toBlocks]
+    have hBb : fromBlocks B₁₁.toMatrix B₁₂.toMatrix B₂₁.toMatrix B₂₂.toMatrix = Bp.toMatrix := by
+      show fromBlocks (Bp.toBlocks₁₁).toMatrix (Bp.toBlocks₁₂).toMatrix
+        (Bp.toBlocks₂₁).toMatrix (Bp.toBlocks₂₂).toMatrix = Bp.toMatrix
+      rw [toMatrix_toBlocks₁₁, toMatrix_toBlocks₁₂, toMatrix_toBlocks₂₁, toMatrix_toBlocks₂₂,
+        fromBlocks_toBlocks]
+    have hApM : Ap.toMatrix = pad A.toMatrix (h + h) (w + w) :=
+      toMatrix_pad_view A (h + h) (w + w) (by omega) (by omega)
+    have hBpM : Bp.toMatrix = pad B.toMatrix (w + w) (d + d) :=
+      toMatrix_pad_view B (w + w) (d + d) (by omega) (by omega)
+    rw [e11, e12, e21, e22, ← fromBlocks_mul_fromBlocks, hAb, hBb, hApM, hBpM]
+    exact takeCols_takeRows_mul_pad A.toMatrix B.toMatrix (h + h) (w + w) (d + d)
+      (by omega) (by omega) (by omega)
+
 /-- **Correctness of Strassen-Winograd multiplication.** For every valid
 configuration, `mulStrassen` computes the same matrix as the reference `mul`. -/
 theorem mulStrassen_eq_mul [Lean.Grind.Ring R]
     (cfg : StrassenConfig R) (hcfg : cfg.Valid)
     (M : Matrix R n m) (N : Matrix R m k) :
     mulStrassen cfg M N = mul M N := by
-  fun_induction mulStrassen cfg M N with
-  | case1 n m k M N hbase => exact hcfg M N
-  | case2 n m k M N hbase h w d Mp Np
-      A₁₁ A₁₂ A₂₁ A₂₂ B₁₁ B₁₂ B₂₁ B₂₂
-      S₁ S₂ S₃ S₄ T₁ T₂ T₃ T₄
-      P₁ P₂ P₃ P₄ P₅ P₆ P₇
-      U₁ U₂ U₃ U₄ U₅ U₆ U₇
-      hP₁ hP₂ hP₃ hP₄ hP₅ hP₆ hP₇ =>
-    let win : Winograd A₁₁ A₁₂ A₂₁ A₂₂ B₁₁ B₁₂ B₂₁ B₂₂ :=
-      { S₁, S₂, S₃, S₄, T₁, T₂, T₃, T₄, P₁, P₂, P₃, P₄, P₅, P₆, P₇,
-        U₁, U₂, U₃, U₄, U₅, U₆, U₇,
-        hS₁ := rfl, hS₂ := rfl, hS₃ := rfl, hS₄ := rfl,
-        hT₁ := rfl, hT₂ := rfl, hT₃ := rfl, hT₄ := rfl,
-        hP₁, hP₂, hP₃, hP₄, hP₅, hP₆, hP₇,
-        hU₁ := rfl, hU₂ := rfl, hU₃ := rfl, hU₄ := rfl,
-        hU₅ := rfl, hU₆ := rfl, hU₇ := rfl }
-    have e11 : U₁ = A₁₁ * B₁₁ + A₁₂ * B₂₁ := win.c11
-    have e12 : U₅ = A₁₁ * B₁₂ + A₁₂ * B₂₂ := win.c12
-    have e21 : U₆ = A₂₁ * B₁₁ + A₂₂ * B₂₁ := win.c21
-    have e22 : U₇ = A₂₁ * B₁₂ + A₂₂ * B₂₂ := win.c22
-    have hAb : fromBlocks A₁₁ A₁₂ A₂₁ A₂₂ = Mp := fromBlocks_toBlocks Mp
-    have hBb : fromBlocks B₁₁ B₁₂ B₂₁ B₂₂ = Np := fromBlocks_toBlocks Np
-    rw [e11, e12, e21, e22, ← fromBlocks_mul_fromBlocks, hAb, hBb]
-    exact takeCols_takeRows_mul_pad M N (h + h) (w + w) (d + d) (by omega) (by omega) (by omega)
+  show mulStrassenView cfg (Submatrix.ofMatrix M) (Submatrix.ofMatrix N) = mul M N
+  rw [mulStrassenView_eq_mul cfg hcfg, Submatrix.toMatrix_ofMatrix, Submatrix.toMatrix_ofMatrix]
 
 end Matrix
 
