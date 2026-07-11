@@ -13,6 +13,7 @@ public import HexRealRoots.Refine
 public import HexRealRoots.Var
 public import HexRealRoots.IsolateSturm
 public import HexRealRoots.Mobius
+public import HexRealRoots.IsolateDescartes
 
 public section
 
