@@ -24,7 +24,7 @@ coefficients, exact witness comparisons. `encSquare` computes the
 smallest power-of-two square containing a component of squares, and
 `HasOnlySimpleRoots` decides squarefreeness over `ℚ[x]`.
 
-Every value here is exact — dyadic comparisons and integer counts, no
+Every value here is exact: dyadic comparisons and integer counts, no
 floats and no error budget. `Dyadic` comes from Lean core
 (`Init.Data.Dyadic`); the helpers below live in namespace `Hex` (and
 `Hex.Dyadic`) so they never shadow the core `Dyadic` API, and must be
@@ -102,8 +102,8 @@ end GaussDyadic
 /-! ### Dyadic squares
 
 A `DyadicSquare` is the closed axis-aligned square centred at
-`re + im·i` with half-width `2^{−prec}`. Its circumscribed disc — the
-region the Pellet tests run on — has radius `2^{−prec}·√2`. `prec` is an
+`re + im·i` with half-width `2^{−prec}`. Its circumscribed disc (the
+region the Pellet tests run on) has radius `2^{−prec}·√2`. `prec` is an
 `Int`: the initial Cauchy-bound square has `prec` negative whenever the
 root bound exceeds 1. -/
 

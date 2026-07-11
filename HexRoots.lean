@@ -14,7 +14,7 @@ public section
 The `HexRoots` library certifies the isolation of the complex roots of
 integer-coefficient polynomials. A root isolation is a square in the
 complex plane with Gaussian-dyadic centre and power-of-two half-width,
-carrying a witness — dischargeable by `decide` — that a certified region
+carrying a witness, dischargeable by `decide`, that a certified region
 around the square contains exactly one simple root (an *atom*) or exactly
 `k` roots counted with multiplicity (a *cluster*). All witness arithmetic
 is exact: Gaussian-dyadic Taylor coefficients compared against dyadic
