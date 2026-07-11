@@ -46,16 +46,16 @@ theorem det_upperTriangular_pos_diag
         intro i j hij
         let ii : Fin (n + 1) := ⟨i.val, by omega⟩
         let jj : Fin (n + 1) := ⟨j.val, by omega⟩
-        have hentry : (principalSubmatrix M n (Nat.le_succ n))[i][j] = M[ii][jj] := by
-          simp [principalSubmatrix, ofFn, ii, jj]
+        have hentry : (principalSubmatrix M n (Nat.le_succ n))[i][j] = M[ii][jj] :=
+          getElem_principalSubmatrix M n (Nat.le_succ n) i j
         rw [hentry]
         exact hzero ii jj hij
       have hprefixDiag :
           ∀ i : Fin n, 0 < (principalSubmatrix M n (Nat.le_succ n))[i][i] := by
         intro i
         let ii : Fin (n + 1) := ⟨i.val, by omega⟩
-        have hentry : (principalSubmatrix M n (Nat.le_succ n))[i][i] = M[ii][ii] := by
-          simp [principalSubmatrix, ofFn, ii]
+        have hentry : (principalSubmatrix M n (Nat.le_succ n))[i][i] = M[ii][ii] :=
+          getElem_principalSubmatrix M n (Nat.le_succ n) i i
         rw [hentry]
         exact hdiag ii
       exact Int.mul_pos (ih (principalSubmatrix M n (Nat.le_succ n)) hprefixZero hprefixDiag)
@@ -85,8 +85,8 @@ theorem det_upperTriangular_eq_finFoldl_diag
         intro i j hij
         let ii : Fin (n + 1) := ⟨i.val, by omega⟩
         let jj : Fin (n + 1) := ⟨j.val, by omega⟩
-        have hentry : (principalSubmatrix M n (Nat.le_succ n))[i][j] = M[ii][jj] := by
-          simp [principalSubmatrix, ofFn, ii, jj]
+        have hentry : (principalSubmatrix M n (Nat.le_succ n))[i][j] = M[ii][jj] :=
+          getElem_principalSubmatrix M n (Nat.le_succ n) i j
         rw [hentry]
         exact hzero ii jj hij
       rw [ih (principalSubmatrix M n (Nat.le_succ n)) hprefixZero]
@@ -102,7 +102,7 @@ theorem det_upperTriangular_eq_finFoldl_diag
         apply List.foldl_congr
         intro acc i _hmem
         have hentry : (principalSubmatrix M n (Nat.le_succ n))[i][i] = M[i.castSucc][i.castSucc] :=
-          by simp [principalSubmatrix, ofFn, Fin.castSucc, getRow, Fin.getElem_fin]
+          getElem_principalSubmatrix M n (Nat.le_succ n) i i
         rw [hentry]
       rw [hcongr]
 
@@ -125,14 +125,13 @@ theorem det_lowerTriangular_eq_finFoldl_diag
   have htransposeZero :
       ∀ i j : Fin n, j.val < i.val → M.transpose[i][j] = 0 := by
     intro i j hij
-    have hentry : M.transpose[i][j] = M[j][i] := by
-      simp [transpose, col]
+    have hentry : M.transpose[i][j] = M[j][i] := getElem_transpose M i j
     rw [hentry]
     exact hzero j i hij
   rw [det_upperTriangular_eq_finFoldl_diag M.transpose htransposeZero]
   have hdiag : ∀ i : Fin n, M.transpose[i][i] = M[i][i] := by
     intro i
-    simp [transpose, col]
+    exact getElem_transpose M i i
   -- Rewrite the foldl over `M.transpose[i][i]` to `M[i][i]`.
   rw [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl]
   apply List.foldl_congr

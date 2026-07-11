@@ -38,10 +38,19 @@ instance instAdd [Add R] : Add (Hex.Matrix R n m) := ⟨fun A B => ⟨A.data + B
 instance instNeg [Neg R] : Neg (Hex.Matrix R n m) := ⟨fun A => ⟨-A.data⟩⟩
 instance instSub [Sub R] : Sub (Hex.Matrix R n m) := ⟨fun A B => ⟨A.data - B.data⟩⟩
 @[simp] theorem rows_add [Add R] (A B : Hex.Matrix R n m) :
-    (A + B).rows = A.rows + B.rows := rfl
-@[simp] theorem rows_neg [Neg R] (A : Hex.Matrix R n m) : (-A).rows = -A.rows := rfl
+    (A + B).rows = A.rows + B.rows := by
+  have hdata : (A + B).data = A.data + B.data := rfl
+  ext i hi j hj
+  simp [Hex.Matrix.getElem_rows, Hex.Matrix.getElem_getRow_nat, hdata, Vector.getElem_add]
+@[simp] theorem rows_neg [Neg R] (A : Hex.Matrix R n m) : (-A).rows = -A.rows := by
+  have hdata : (-A).data = -A.data := rfl
+  ext i hi j hj
+  simp [Hex.Matrix.getElem_rows, Hex.Matrix.getElem_getRow_nat, hdata, Vector.getElem_neg]
 @[simp] theorem rows_sub [Sub R] (A B : Hex.Matrix R n m) :
-    (A - B).rows = A.rows - B.rows := rfl
+    (A - B).rows = A.rows - B.rows := by
+  have hdata : (A - B).data = A.data - B.data := rfl
+  ext i hi j hj
+  simp [Hex.Matrix.getElem_rows, Hex.Matrix.getElem_getRow_nat, hdata, Vector.getElem_sub]
 /-! ### Preservation of the additive operations -/
 
 @[simp, grind =] theorem matrixEquiv_zero [Zero R] :
@@ -53,18 +62,21 @@ instance instSub [Sub R] : Sub (Hex.Matrix R n m) := ⟨fun A B => ⟨A.data - B
 
 @[simp, grind =] theorem matrixEquiv_add [Add R] (A B : Hex.Matrix R n m) :
     matrixEquiv (A + B) = matrixEquiv A + matrixEquiv B := by
+  have hdata : (A + B).data = A.data + B.data := rfl
   ext i j
-  simp [Hex.Matrix.getRow]
+  simp [Hex.Matrix.getElem_getRow_nat, hdata, Vector.getElem_add]
 
 @[simp, grind =] theorem matrixEquiv_neg [Neg R] (A : Hex.Matrix R n m) :
     matrixEquiv (-A) = -matrixEquiv A := by
+  have hdata : (-A).data = -A.data := rfl
   ext i j
-  simp [Hex.Matrix.getRow]
+  simp [Hex.Matrix.getElem_getRow_nat, hdata, Vector.getElem_neg]
 
 @[simp, grind =] theorem matrixEquiv_sub [Sub R] (A B : Hex.Matrix R n m) :
     matrixEquiv (A - B) = matrixEquiv A - matrixEquiv B := by
+  have hdata : (A - B).data = A.data - B.data := rfl
   ext i j
-  simp [Hex.Matrix.getRow]
+  simp [Hex.Matrix.getElem_getRow_nat, hdata, Vector.getElem_sub]
 
 @[simp, grind =] theorem matrixEquiv_smul {S : Type*} [SMul S R] (c : S) (A : Hex.Matrix R n m) :
     matrixEquiv (c • A) = c • matrixEquiv A := by

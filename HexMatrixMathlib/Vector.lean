@@ -98,6 +98,6 @@ theorem vectorEquiv_mulVec [Semiring R] (M : Hex.Matrix R n m) (v : Vector R m) 
   unfold _root_.Matrix.mulVec dotProduct
   apply Finset.sum_congr rfl
   intro k _
-  rfl
+  simp
 
 end HexMatrixMathlib

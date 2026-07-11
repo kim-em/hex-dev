@@ -621,6 +621,7 @@ private theorem columnTupleMatrix_reconstructInjTuple_eq
     columnTupleMatrix A (columnTupleVectorFn (reconstructInjTuple sel perm)) =
       columnTupleMatrix A (fun i => sel[perm[i]]) := by
   ext r hr c hc
+  simp only [getElem_rows]
   change
     (columnTupleMatrix A (columnTupleVectorFn (reconstructInjTuple sel perm)))[
         (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
@@ -1162,12 +1163,10 @@ theorem columnTupleMatrix_takeRows_firstColumns_eq_principalSubmatrix
     {R : Type u} {n : Nat} (M : Matrix R n n) (k : Nat) (hk : k ≤ n) :
     columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn (firstColumns k n hk)) =
       principalSubmatrix M k hk := by
-  ext i hi j hj
-  change
-    (columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn (firstColumns k n hk)))[
-        (⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)] =
-      (principalSubmatrix M k hk)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)]
-  simp [columnTupleMatrix, takeRows, principalSubmatrix, columnTupleVectorFn, firstColumns, ofFn]
+  apply ext_getElem
+  intro i j
+  rw [getElem_columnTupleMatrix, getElem_takeRows, getElem_principalSubmatrix]
+  simp only [columnTupleVectorFn_apply, getElem_firstColumns]
 
 /-- The Gram determinant of the first `k` rows of a positive-diagonal integer
 upper-triangular matrix is strictly positive. The leading-principal minor
@@ -1192,16 +1191,16 @@ theorem det_gramMatrix_takeRows_pos_of_upperTriangular_pos_diag
     intro i j hij
     let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
     let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
-    have hentry : (principalSubmatrix M k hk)[i][j] = M[ii][jj] := by
-      simp [principalSubmatrix, ofFn, ii, jj]
+    have hentry : (principalSubmatrix M k hk)[i][j] = M[ii][jj] :=
+      getElem_principalSubmatrix M k hk i j
     rw [hentry]
     exact hzero ii jj hij
   have hprefixDiag :
       ∀ i : Fin k, 0 < (principalSubmatrix M k hk)[i][i] := by
     intro i
     let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
-    have hentry : (principalSubmatrix M k hk)[i][i] = M[ii][ii] := by
-      simp [principalSubmatrix, ofFn, ii]
+    have hentry : (principalSubmatrix M k hk)[i][i] = M[ii][ii] :=
+      getElem_principalSubmatrix M k hk i i
     rw [hentry]
     exact hdiag ii
   have hminor_pos :

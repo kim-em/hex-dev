@@ -76,7 +76,7 @@ private theorem detProduct_rowScale {R : Type u} [Lean.Grind.CommRing R] {n : Na
     (M : Matrix R n n) (i : Fin n) (c : R) (perm : Vector (Fin n) n) :
     detProduct (rowScale M i c) perm = c * detProduct M perm := by
   unfold detProduct
-  simp only [Fin.foldl_eq_finRange_foldl]
+  simp only [Fin.foldl_eq_finRange_foldl, getElem_pair_eq_nested]
   calc
     (List.finRange n).foldl
         (fun acc r => acc * (rowScale M i c)[r][perm[r]]) 1 =
@@ -181,7 +181,7 @@ private theorem detProduct_colDuplicate_swapValues {R : Type u}
     (perm : Vector (Fin n) n) :
     detProduct M perm = detProduct M (swapPermutationValues perm src dst) := by
   unfold detProduct
-  simp only [Fin.foldl_eq_finRange_foldl]
+  simp only [Fin.foldl_eq_finRange_foldl, getElem_pair_eq_nested]
   apply List.foldl_mul_congr
   intro r _hmem
   by_cases hsrc : perm[r] = src
@@ -230,7 +230,7 @@ column `src`, every other column is left unchanged. -/
 private theorem colAddDuplicate_get {R : Type u} {n : Nat}
     (M : Matrix R n n) (src dst r c : Fin n) :
     (colAddDuplicate M src dst)[r][c] = if c = dst then M[r][src] else M[r][c] := by
-  simp [colAddDuplicate, Matrix.ofFn]
+  simp only [colAddDuplicate, getElem_ofFn, getElem_pair_eq_nested]
 
 /-- Entrywise value of `colAdd M src dst c`: column `dst` becomes
 `M[r][dst] + c · M[r][src]`, every other column is left unchanged. -/
@@ -259,7 +259,7 @@ private theorem detProduct_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     change perm.toList[pivot.val]'(by simp [Vector.length_toList, pivot.isLt]) = dst
     simp [pivot] at hget ⊢
   unfold detProduct
-  simp only [Fin.foldl_eq_finRange_foldl]
+  simp only [Fin.foldl_eq_finRange_foldl, getElem_pair_eq_nested]
   calc
     (List.finRange n).foldl
         (fun acc i => acc * (colAdd M src dst c)[i][perm[i]]) 1 =
@@ -440,7 +440,7 @@ private theorem detProduct_rowAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     detProduct (rowAdd M src dst c) perm =
       detProduct M perm + c * detProduct (rowAddDuplicate M src dst) perm := by
   unfold detProduct
-  simp only [Fin.foldl_eq_finRange_foldl]
+  simp only [Fin.foldl_eq_finRange_foldl, getElem_pair_eq_nested]
   calc
     (List.finRange n).foldl
         (fun acc r => acc * (rowAdd M src dst c)[r][perm[r]]) 1 =
@@ -529,18 +529,9 @@ private theorem foldl_det_sum_map {R : Type u} [Zero R] [Add R]
 private theorem rowSwap_rowAddDuplicate_eq {R : Type u} {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (_h : src ≠ dst) :
     rowSwap (rowAddDuplicate M src dst) src dst = rowAddDuplicate M src dst := by
-  ext r hr k hk
-  change
-    (rowSwap (rowAddDuplicate M src dst) src dst)[(⟨r, hr⟩ : Fin n)][(⟨k, hk⟩ : Fin n)] =
-      (rowAddDuplicate M src dst)[(⟨r, hr⟩ : Fin n)][(⟨k, hk⟩ : Fin n)]
+  apply ext_getElem
+  intro fr fk
   rw [rowSwap_get]
-  let fr : Fin n := ⟨r, hr⟩
-  let fk : Fin n := ⟨k, hk⟩
-  change
-    (if fr = dst then (rowAddDuplicate M src dst)[src][fk]
-      else if fr = src then (rowAddDuplicate M src dst)[dst][fk]
-      else (rowAddDuplicate M src dst)[fr][fk]) =
-      (rowAddDuplicate M src dst)[fr][fk]
   by_cases hrd : fr = dst
   · rw [if_pos hrd]
     rw [rowAddDuplicate_get M src dst src fk, rowAddDuplicate_get M src dst fr fk]

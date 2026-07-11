@@ -35,25 +35,28 @@ def matrixEquiv : Hex.Matrix R n m ≃ Matrix (Fin n) (Fin m) R where
   toFun M := fun i j => M[(i, j)]
   invFun M := Hex.Matrix.ofFn fun i j => M i j
   left_inv M := by
-    ext i j
-    simp [Hex.Matrix.ofFn, Hex.Matrix.getRow, Fin.getElem_fin]
+    apply Hex.Matrix.ext_getElem
+    intro i j
+    exact (Hex.Matrix.getElem_ofFn (fun i j => M[(i, j)]) i j).trans
+      (Hex.Matrix.getElem_pair_eq_nested M i j)
   right_inv M := by
     ext i j
-    simp [Hex.Matrix.ofFn, Hex.Matrix.getRow, Fin.getElem_fin]
+    exact (Hex.Matrix.getElem_pair_eq_nested _ i j).trans
+      (Hex.Matrix.getElem_ofFn (fun i j => M i j) i j)
 
 /-- `matrixEquiv M` has entry `M[i][j]` at `(i, j)`, so a caller can rewrite
 `matrixEquiv M i j` to `M[i][j]` without unfolding the equivalence. -/
 @[simp, grind =]
 theorem matrixEquiv_apply (M : Hex.Matrix R n m) (i : Fin n) (j : Fin m) :
     matrixEquiv M i j = M[i][j] :=
-  rfl
+  Hex.Matrix.getElem_pair_eq_nested M i j
 
 /-- The inverse direction of `matrixEquiv` materialises a Mathlib matrix as an
 executable one entrywise: `(matrixEquiv.symm M)[i][j]` is just `M i j`. -/
 @[simp, grind =]
 theorem matrixEquiv_symm_apply (M : Matrix (Fin n) (Fin m) R) (i : Fin n) (j : Fin m) :
     (matrixEquiv.symm M)[(i : Nat)][(j : Nat)] = M i j :=
-  by simp [matrixEquiv, Hex.Matrix.ofFn]
+  Hex.Matrix.getElem_ofFn (fun i j => M i j) i j
 
 /-- `matrixEquiv` is a left inverse of `Hex.Matrix.ofFn`: building an executable
 matrix from `f` and transporting it to Mathlib recovers `f` itself. -/
@@ -61,7 +64,8 @@ matrix from `f` and transporting it to Mathlib recovers `f` itself. -/
 theorem matrixEquiv_ofFn (f : Fin n → Fin m → R) :
     matrixEquiv (Hex.Matrix.ofFn f) = f := by
   ext i j
-  simp [Hex.Matrix.ofFn]
+  rw [matrixEquiv_apply]
+  exact Hex.Matrix.getElem_ofFn f i j
 
 section RowOps
 
@@ -73,8 +77,7 @@ lemmas can reason about `rowSwap` through Mathlib's swap algebra. -/
 theorem matrixEquiv_rowSwap (M : Hex.Matrix R n m) (i j : Fin n) :
     matrixEquiv (Hex.Matrix.rowSwap M i j) = Matrix.swap R i j * matrixEquiv M := by
   ext r k
-  change (Hex.Matrix.rowSwap M i j)[r][k] = (Matrix.swap R i j * matrixEquiv M) r k
-  rw [Hex.Matrix.getElem_rowSwap]
+  rw [matrixEquiv_apply, Hex.Matrix.getElem_rowSwap]
   by_cases hrj : r = j
   · subst r
     simp
@@ -90,9 +93,7 @@ theorem matrixEquiv_rowScale (M : Hex.Matrix R n m) (i : Fin n) (c : R) :
     matrixEquiv (Hex.Matrix.rowScale M i c) =
       Matrix.diagonal (Function.update (fun _ : Fin n => (1 : R)) i c) * matrixEquiv M := by
   ext r k
-  change (Hex.Matrix.rowScale M i c)[r][k] =
-    (Matrix.diagonal (Function.update (fun _ : Fin n => (1 : R)) i c) * matrixEquiv M) r k
-  rw [Hex.Matrix.getElem_rowScale]
+  rw [matrixEquiv_apply, Hex.Matrix.getElem_rowScale]
   by_cases hri : r = i
   · subst r
     simp
@@ -111,8 +112,7 @@ theorem matrixEquiv_rowAdd (M : Hex.Matrix R n m) (src dst : Fin n) (c : R) :
     matrixEquiv (Hex.Matrix.rowAdd M src dst c) =
       Matrix.transvection dst src c * matrixEquiv M := by
   ext r k
-  change (Hex.Matrix.rowAdd M src dst c)[r][k] =
-    (Matrix.transvection dst src c * matrixEquiv M) r k
+  rw [matrixEquiv_apply]
   by_cases hrd : r = dst
   · subst r
     have hrhs :

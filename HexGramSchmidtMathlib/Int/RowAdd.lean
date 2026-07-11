@@ -16,6 +16,16 @@ namespace GramSchmidt
 namespace Int
 /-! ### Row-add determinant helper lemmas -/
 
+/-- Entry-level expansion of the leading Gram matrix, with rows in the
+`getElem` normal form. -/
+private theorem getElem_leadingGramMatrixInt (b : Matrix Int n m) (t : Nat)
+    (ht : t ≤ n) (p q : Fin t) :
+    (GramSchmidt.leadingGramMatrixInt b t ht)[p][q] =
+      (b[GramSchmidt.liftFinLE p ht]).dotProduct (b[GramSchmidt.liftFinLE q ht]) := by
+  show (GramSchmidt.leadingGramMatrixInt b t ht)[p][q] =
+    (b.row (GramSchmidt.liftFinLE p ht)).dotProduct (b.row (GramSchmidt.liftFinLE q ht))
+  rw [GramSchmidt.leadingGramMatrixInt, Matrix.getElem_ofFn]
+
 /-- Entry-level expansion of `Matrix.rowAdd` for a rectangular matrix. -/
 private theorem rowAdd_get_rect {R : Type u} [Mul R] [Add R] {n' m' : Nat}
     (M : Matrix R n' m') (src dst r : Fin n') (c : R) (k : Fin m') :
@@ -147,8 +157,8 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
       rw [if_neg hq_ne_last]
       simp only [Matrix.row, ← Hex.Matrix.getElem_eq_getRow]
       rw [hp_row, hq_row]
-      dsimp [M, GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, Matrix.row]
-      rw [Vector.getElem_ofFn, Vector.getElem_ofFn]
+      show _ = (GramSchmidt.leadingGramMatrixInt b t ht)[p][qf]
+      rw [getElem_leadingGramMatrixInt]
   have hold :
       GramSchmidt.scaledCoeffMatrix b k j hjk =
         Matrix.setCol M last oldCol := by
@@ -167,8 +177,9 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
       simp only [GramSchmidt.scaledCoeffMatrix, Hex.Matrix.getElem_setCol,
         Hex.Matrix.getElem_ofFn, if_neg hqNat]
       rw [if_neg hq_ne_last]
-      dsimp [M, GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, Matrix.row]
-      simp [Vector.getElem_ofFn]
+      show _ = (GramSchmidt.leadingGramMatrixInt b t ht)[p][qf]
+      rw [getElem_leadingGramMatrixInt]
+      rfl
   have hgram :
       Matrix.setCol M last gramCol = M := by
     apply Hex.Matrix.ext_getElem
@@ -212,24 +223,19 @@ theorem leadingGramMatrixInt_rowAdd_outside
   -- Prove the matrices agree row-by-row using a stronger row-level identity:
   -- for all r : Fin n with r.val < t, the rows of `rowAdd b j k c` and `b`
   -- agree.
-  apply Hex.Matrix.ext
-  apply Vector.ext
-  intro p hp
-  apply Vector.ext
-  intro q hq
-  have hp_ne : (GramSchmidt.liftFinLE ⟨p, hp⟩ ht).val ≠ k.val :=
-    Nat.ne_of_lt (Nat.lt_of_lt_of_le hp hkt)
-  have hq_ne : (GramSchmidt.liftFinLE ⟨q, hq⟩ ht).val ≠ k.val :=
-    Nat.ne_of_lt (Nat.lt_of_lt_of_le hq hkt)
-  have hp_eq : (Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE ⟨p, hp⟩ ht] =
-      b[GramSchmidt.liftFinLE ⟨p, hp⟩ ht] :=
-    rowAdd_row_eq_of_ne b j k (GramSchmidt.liftFinLE ⟨p, hp⟩ ht) c hp_ne
-  have hq_eq : (Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE ⟨q, hq⟩ ht] =
-      b[GramSchmidt.liftFinLE ⟨q, hq⟩ ht] :=
-    rowAdd_row_eq_of_ne b j k (GramSchmidt.liftFinLE ⟨q, hq⟩ ht) c hq_ne
-  simp only [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, Matrix.row,
-    Hex.Matrix.rows_ofRows, Vector.getElem_ofFn]
-  congr 1
+  apply Hex.Matrix.ext_getElem
+  intro p q
+  have hp_ne : (GramSchmidt.liftFinLE p ht).val ≠ k.val :=
+    Nat.ne_of_lt (Nat.lt_of_lt_of_le p.isLt hkt)
+  have hq_ne : (GramSchmidt.liftFinLE q ht).val ≠ k.val :=
+    Nat.ne_of_lt (Nat.lt_of_lt_of_le q.isLt hkt)
+  have hp_eq : (Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE p ht] =
+      b[GramSchmidt.liftFinLE p ht] :=
+    rowAdd_row_eq_of_ne b j k (GramSchmidt.liftFinLE p ht) c hp_ne
+  have hq_eq : (Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE q ht] =
+      b[GramSchmidt.liftFinLE q ht] :=
+    rowAdd_row_eq_of_ne b j k (GramSchmidt.liftFinLE q ht) c hq_ne
+  rw [getElem_leadingGramMatrixInt, getElem_leadingGramMatrixInt, hp_eq, hq_eq]
 
 /-- Entry-level structural identity for the leading Gram matrix of
 `Matrix.rowAdd b j k c` when the modified row `k` lies inside the leading
@@ -255,15 +261,13 @@ private theorem leadingGramMatrixInt_rowAdd_entry_inside
       (GramSchmidt.leadingGramMatrixInt b t ht)[a][b'] =
         (b[GramSchmidt.liftFinLE a ht]).dotProduct (b[GramSchmidt.liftFinLE b' ht]) := by
     intro a b'
-    simp [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, Matrix.row,
-      Vector.getElem_ofFn]
+    exact getElem_leadingGramMatrixInt b t ht a b'
   -- LHS is a dot product over `Matrix.rowAdd b j k c` rows.
   have hLHS :
       (GramSchmidt.leadingGramMatrixInt (Matrix.rowAdd b j k c) t ht)[p][q] =
         ((Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE p ht]).dotProduct
           ((Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE q ht]) := by
-    simp [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, Matrix.row,
-      Vector.getElem_ofFn]
+    exact getElem_leadingGramMatrixInt (Matrix.rowAdd b j k c) t ht p q
   -- RHS: the colAdd-rowAdd entry as a conditional.
   have hRHS :
       (Matrix.colAdd
@@ -953,8 +957,7 @@ theorem gramDetVecEntry_eq_principalSubmatrix_bareiss
           (Matrix.noPivotLoop r init) h_prefix with h_none | h_sing
       · have hdata : data.singularStep = none := by
           simpa [data, Matrix.bareissNoPivotData, Matrix.finish, GM, init, h_full] using h_none
-        simp [gramDetVecEntry, data, hdata, i]
-        rfl
+        simp [gramDetVecEntry, bareissDiagNat, data, hdata, i]
       · rcases h_sing with ⟨k, h_sing_full, h_step_full, h_zero_full, _hk_bound⟩
         have hdata : data.singularStep = some k.val := by
           simpa [data, Matrix.bareissNoPivotData, Matrix.finish, GM, init, h_full] using h_sing_full
@@ -975,8 +978,7 @@ theorem gramDetVecEntry_eq_principalSubmatrix_bareiss
           simp [gramDetVecEntry, data, hdata, i, hlt]
           simpa [data, i] using (congrArg Int.toNat hzero_i).symm
         · have hlt : ¬ k.val < r + 1 := by omega
-          simp [gramDetVecEntry, data, hdata, i, hlt]
-          rfl
+          simp [gramDetVecEntry, bareissDiagNat, data, hdata, i, hlt]
     calc
       gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
           ⟨r + 1, Nat.succ_lt_succ hr⟩ =

@@ -474,6 +474,7 @@ private theorem eliminateColumn_other_column
     (hpivot : M[pivotRow][k] = 0) (r : Fin n) :
     (eliminateColumn M T pivotRow col).1[r][k] = M[r][k] := by
   unfold eliminateColumn
+  simp only [getElem_pair_eq_nested]
   exact eliminateColumn_foldl_other_column pivotRow col k (List.finRange n) (M, T) r hpivot
 
 /-- Proof-only invariant tracking the no-pivot branch of `rowReduceLoop`: every

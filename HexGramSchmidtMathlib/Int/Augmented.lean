@@ -71,7 +71,7 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
             Vector.dotProduct
               (b.row ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt hjsuc⟩)
               (b.row ⟨i, hi⟩) := by
-        simp [GramSchmidt.scaledCoeffMatrix, Matrix.ofFn,
+        simp [GramSchmidt.scaledCoeffMatrix, getRow_ofFn,
           GramSchmidt.liftFinLE, hc_val]
       rw [hsc, ← dot_castIntRow_eq_cast_dot]
     · rw [if_neg hc_eq, castIntDetMatrix_get]
@@ -81,14 +81,14 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
             Vector.dotProduct
               (b.row ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt hjsuc⟩)
               (b.row ⟨cc.val, Nat.lt_of_lt_of_le cc.isLt hjsuc⟩) := by
-        simp [GramSchmidt.scaledCoeffMatrix, Matrix.ofFn,
+        simp [GramSchmidt.scaledCoeffMatrix, getRow_ofFn,
           GramSchmidt.liftFinLE, hc_ne]
       have hG :
           (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc)[pp][cc] =
             Vector.dotProduct
               (b.row ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt hjsuc⟩)
               (b.row ⟨cc.val, Nat.lt_of_lt_of_le cc.isLt hjsuc⟩) := by
-        simp [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn,
+        simp [GramSchmidt.leadingGramMatrixInt, getRow_ofFn,
           GramSchmidt.liftFinLE]
       rw [hsc, hG]
   rw [hM_colReplace]

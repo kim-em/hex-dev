@@ -750,16 +750,17 @@ theorem bhksRowsArrayToMatrix_row {m n : Nat} (rows : Array (Vector Int m))
       rows.getD i.val (Vector.ofFn fun _ => 0) := by
   apply Vector.ext
   intro j hj
-  simp [bhksRowsArrayToMatrix, Matrix.row, Matrix.ofFn]
+  show (bhksRowsArrayToMatrix n rows)[i][(⟨j, hj⟩ : Fin m)] = _
+  rw [bhksRowsArrayToMatrix, Hex.Matrix.getElem_ofFn]
+  rfl
 
 theorem bhksRowsArrayToMatrix_toArray {m n : Nat} (B : Matrix Int n m) :
     bhksRowsArrayToMatrix n B.rows.toArray = B := by
-  apply Hex.Matrix.ext
-  apply Vector.ext
-  intro i hi
-  apply Vector.ext
-  intro j hj
-  simp [bhksRowsArrayToMatrix, Matrix.ofFn]
+  apply Hex.Matrix.ext_getElem
+  intro i j
+  rw [bhksRowsArrayToMatrix, Hex.Matrix.getElem_ofFn]
+  rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem (by simp)]
+  simp [Hex.Matrix.getElem_rows]
 
 theorem lll_delta_lower : (1 / 4 : Rat) < 3 / 4 := by
   grind

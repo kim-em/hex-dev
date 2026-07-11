@@ -51,7 +51,8 @@ def bareissGramRowInvariant_initial (b : Matrix Int n m) :
           b.row i :=
       Matrix.IsRowReduced.vecMul_single (M := b) i
     rw [hsingle]
-    simp [Matrix.noPivotInitialState, Matrix.gramMatrix, Matrix.ofFn, Vector.dotProduct]
+    simp only [Matrix.noPivotInitialState]
+    rw [Matrix.getElem_gramMatrix]
 
 /-- `foldl_sum_bareiss_row_update` pulls a Bareiss left row-update through a folded sum for later dot-product identities. -/
 private theorem foldl_sum_bareiss_row_update
@@ -374,6 +375,7 @@ at `fuel + 1` to its explicit Bareiss exact-division update. -/
            state.prevPivot) := by
   simp [bareissGramCanonicalCoeff, dif_pos hnext, if_pos hi]
   intro hc
+  simp only [Matrix.getElem_nat_eq_getRow] at hp
   exact absurd hc hp
 
 /-- Recursion equation: regular-branch processed-row case. An already-processed
@@ -416,6 +418,7 @@ update, so the canonical coefficient at `fuel + 1` collapses to the one at
       bareissGramCanonicalCoeff b fuel i := by
   simp [bareissGramCanonicalCoeff, dif_pos hnext]
   intro hc
+  simp only [Matrix.getElem_nat_eq_getRow] at hp
   exact absurd hp hc
 
 /-- Recursion equation: done branch (no further work possible). Once the loop can
@@ -556,7 +559,9 @@ private theorem bareissGramRegularStep_entry_eq_dot
       apply Vector.ext
       intro a ha
       rw [Vector.getElem_ofFn, Vector.getElem_ofFn]
-      exact (hq.coeff_num_eq_mul ⟨a, ha⟩).symm
+      have h := (hq.coeff_num_eq_mul ⟨a, ha⟩).symm
+      simp only [Matrix.getElem_pair_eq_nested] at h
+      exact h
     rw [h_q_eq_num]
     exact h_dot_num.symm
   -- Case split on `j.val` against `state.step`.

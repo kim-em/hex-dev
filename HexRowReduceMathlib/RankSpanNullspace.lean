@@ -42,7 +42,6 @@ theorem vectorEquiv_vecMul [CommRing R] (M : Hex.Matrix R n m) (c : Vector R n) 
   change (Hex.Matrix.mulVec (Hex.Matrix.transpose M) c)[j.val] =
     (Fintype.linearCombination R (_root_.Matrix.row (matrixEquiv M)) (vectorEquiv c)) j
   unfold Hex.Matrix.mulVec Hex.Matrix.row Vector.dotProduct Hex.Matrix.transpose
-    Hex.Matrix.col
   rw [Vector.getElem_ofFn j.isLt, foldl_finRange_eq_sum,
     Fintype.linearCombination_apply, Finset.sum_apply]
   apply Finset.sum_congr rfl
@@ -51,7 +50,8 @@ theorem vectorEquiv_vecMul [CommRing R] (M : Hex.Matrix R n m) (c : Vector R n) 
     smul_eq_mul]
   rw [mul_comm]
   congr 1
-  simp [Vector.getElem_ofFn]
+  rw [← Hex.Matrix.getElem_eq_getRow, Hex.Matrix.getElem_ofFn,
+    Hex.Matrix.getElem_pair_eq_nested]
 
 /-- Bridge invariant: applying the executable nullspace matrix to a coefficient
 vector `c` expands, under `vectorEquiv`, as the `c`-weighted sum of the computed

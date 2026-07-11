@@ -312,6 +312,7 @@ private theorem eliminateColumn_foldl_pivotRow
       intro s
       simp only [List.foldl_cons]
       rw [ih]
+      simp only [getElem_pair_eq_nested]
       exact eliminateColumn_step_pivotRow_unchanged s pivotRow x col k
 
 /-- Rows outside the fold's processed list are unchanged at column `col`. -/
@@ -336,6 +337,7 @@ private theorem eliminateColumn_foldl_outside
       have hrtail : r ∉ xs := fun h => hnotin (List.mem_cons.mpr (Or.inr h))
       simp only [List.foldl_cons]
       rw [ih _ r hrtail]
+      simp only [getElem_pair_eq_nested]
       exact eliminateColumn_step_other_unchanged s pivotRow x col hrx
 
 /-- The whole pivot row is unchanged by `eliminateColumn` at column `k`. -/
@@ -376,17 +378,18 @@ private theorem eliminateColumn_zero (M : Matrix R n m) (T : Matrix R n n)
         subst hrx
         have hr_notail : r ∉ xs := (List.nodup_cons.mp hnodup).1
         rw [eliminateColumn_foldl_outside pivotRow col xs _ r hr_notail]
+        simp only [getElem_pair_eq_nested]
         exact eliminateColumn_step_zero_at_x s pivotRow r col hne hs
       · -- r ≠ x: peel one step, preserve hypothesis, recurse
         have hpivot_step :
             ((if _h : x = pivotRow then s
               else
-                let coeff := -s.1[x][col]
+                let coeff := -s.1[(x, col)]
                 if coeff = 0 then s
                 else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff))).1[pivotRow][col]
               = (1 : R) := by
-          rw [eliminateColumn_step_pivotRow_unchanged s pivotRow x col col]
-          exact hs
+          simp only [getElem_pair_eq_nested]
+          exact Eq.trans (eliminateColumn_step_pivotRow_unchanged s pivotRow x col col) hs
         exact ih _ hpivot_step hrtail (List.nodup_cons.mp hnodup).2
 
 /-- Same-operation preservation of `T * M = E` through one fold step of
@@ -439,6 +442,7 @@ private theorem eliminateColumn_foldl_transform_preserve
   | cons x xs ih =>
       intro s h
       simp only [List.foldl_cons]
+      simp only [getElem_pair_eq_nested] at ih ⊢
       exact ih _ (eliminateColumn_step_transform_preserve s pivotRow col x h)
 
 /-- Same-operation preservation: when `eliminateColumn` updates both `M` (the
@@ -520,6 +524,7 @@ private theorem eliminateColumn_foldl_left_inverse_preserve
   | cons x xs ih =>
       intro s h
       simp only [List.foldl_cons]
+      simp only [getElem_pair_eq_nested] at ih ⊢
       exact ih _ (eliminateColumn_step_left_inverse_preserve s pivotRow col x h)
 
 /-- Folding `eliminateColumn` preserves existence of a right inverse for the
@@ -545,6 +550,7 @@ private theorem eliminateColumn_foldl_right_inverse_preserve
   | cons x xs ih =>
       intro s h
       simp only [List.foldl_cons]
+      simp only [getElem_pair_eq_nested] at ih ⊢
       exact ih _ (eliminateColumn_step_right_inverse_preserve s pivotRow col x h)
 
 /-- `eliminateColumn` preserves existence of a left inverse for the transform
@@ -667,7 +673,7 @@ private theorem eliminateColumn_preserve_canonical_column
       (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
         if _h : j = newPivot then state
         else
-          let coeff := -state.1[j][newCol]
+          let coeff := -state.1[(j, newCol)]
           if coeff = 0 then state
           else (rowAdd state.1 newPivot j coeff, rowAdd state.2 newPivot j coeff))
         s).1[oldPivot][oldCol] = 1 ∧
@@ -675,7 +681,7 @@ private theorem eliminateColumn_preserve_canonical_column
         (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
           if _h : j = newPivot then state
           else
-            let coeff := -state.1[j][newCol]
+            let coeff := -state.1[(j, newCol)]
             if coeff = 0 then state
             else (rowAdd state.1 newPivot j coeff, rowAdd state.2 newPivot j coeff))
           s).1[r][oldCol] = 0 from
@@ -688,6 +694,7 @@ private theorem eliminateColumn_preserve_canonical_column
   | cons x xs ih =>
       intro s hSrc hOld hzero
       simp only [List.foldl_cons]
+      simp only [getElem_pair_eq_nested] at ih ⊢
       by_cases hx : x = newPivot
       · simp only [dif_pos hx]; exact ih s hSrc hOld hzero
       · by_cases hcoeff : -s.1[x][newCol] = 0

@@ -156,7 +156,7 @@ theorem basis_rowSwap_adjacent_prev (b : Matrix Rat n m) (km1 k : Fin n)
 private theorem projectionCoeff_row_later_basis_eq_zero
     (b : Matrix Rat n m) (src col : Fin n) (hsrccol : src.val < col.val) :
     GramSchmidt.projectionCoeff (b.row src) ((basis b).row col) = 0 := by
-  have hsrc_toList : b.rows.toList[src.val]! = b.row src := by simp [Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin]
+  have hsrc_toList : b.rows.toList[src.val]! = b.row src := by simp [Matrix.row, Hex.Matrix.getRow]
   have hbasis_col :
       (basis b).row col = (GramSchmidt.basisRows b.rows.toList)[col.val]! := by
     simpa [basis] using
@@ -224,7 +224,7 @@ private theorem projectionCoeff_row_basis_self_eq_one
     (b : Matrix Rat n m) (src : Fin n)
     (hnorm : ((basis b).row src).dotProduct ((basis b).row src) ≠ 0) :
     GramSchmidt.projectionCoeff (b.row src) ((basis b).row src) = 1 := by
-  have hsrc_toList : b.rows.toList[src.val]! = b.row src := by simp [Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin]
+  have hsrc_toList : b.rows.toList[src.val]! = b.row src := by simp [Matrix.row, Hex.Matrix.getRow]
   have hbasis_src :
       (basis b).row src = (GramSchmidt.basisRows b.rows.toList)[src.val]! := by
     simpa [basis] using

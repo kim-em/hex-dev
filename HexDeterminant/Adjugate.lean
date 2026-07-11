@@ -34,11 +34,8 @@ theorem deleteRowCol_setRow_self {R : Type u} {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (dst col : Fin (n + 1))
     (v : Vector R (n + 1)) :
     deleteRowCol (setRow M dst v) dst col = deleteRowCol M dst col := by
-  ext i hi j hj
-  let ii : Fin n := ⟨i, hi⟩
-  let jj : Fin n := ⟨j, hj⟩
-  change (deleteRowCol (setRow M dst v) dst col)[ii][jj] =
-    (deleteRowCol M dst col)[ii][jj]
+  apply ext_getElem
+  intro ii jj
   rw [getElem_deleteRowCol, getElem_deleteRowCol]
   have hne : skipIndex dst ii ≠ dst := skipIndex_ne dst ii
   have hrow := setRow_row_ne M dst (skipIndex dst ii) v hne
@@ -134,7 +131,8 @@ def adjugate {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
 @[grind =] theorem adjugate_get {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (i j : Fin (n + 1)) :
     (adjugate M)[i][j] = cofactor M j i := by
-  simp [adjugate, ofFn]
+  unfold adjugate
+  rw [getElem_ofFn]
 
 /-- Entrywise version of `M * adjugate M = det M • 1`. On the diagonal
 this is Laplace expansion of `det M`; off the diagonal it is the alien
@@ -145,13 +143,8 @@ theorem mul_adjugate_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
       if i = j then det M else 0 := by
   have hmul :
       (M * adjugate M)[i][j] =
-        (row M i).dotProduct (col (adjugate M) j) := by
-    change (Matrix.mul M (adjugate M))[i][j] = _
-    unfold Matrix.mul
-    show
-      (ofFn fun i j => (row M i).dotProduct (col (adjugate M) j))[i][j] =
-        _
-    simp [ofFn]
+        (row M i).dotProduct (col (adjugate M) j) :=
+    getElem_mul M (adjugate M) i j
   have hentry :
       (M * adjugate M)[i][j] =
         (List.finRange (n + 1)).foldl
@@ -162,8 +155,8 @@ theorem mul_adjugate_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     intro acc k _hmem
     congr 1
     have hrow : (row M i)[k] = M[i][k] := rfl
-    have hcol : (col (adjugate M) j)[k] = (adjugate M)[k][j] := by
-      simp [col]
+    have hcol : (col (adjugate M) j)[k] = (adjugate M)[k][j] :=
+      getElem_col (adjugate M) j k
     rw [hrow, hcol, adjugate_get]
   by_cases hij : i = j
   · subst hij
@@ -176,15 +169,10 @@ theorem mul_adjugate_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
 theorem mul_adjugate {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) :
     M * adjugate M = det M • Matrix.identity (n + 1) := by
-  ext i hi j hj
-  have hid : ((Matrix.identity (n + 1))[(⟨i, hi⟩ : Fin (n + 1))])[(⟨j, hj⟩ : Fin (n + 1))]
-      = if (⟨i, hi⟩ : Fin (n + 1)) = ⟨j, hj⟩ then (1 : R) else 0 := by
-    simp [Matrix.identity, ofFn]
-  show (M * adjugate M)[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))] =
-    (det M • Matrix.identity (n + 1))[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))]
-  rw [mul_adjugate_apply, Matrix.smul_getElem, hid]
-  clear hid
-  by_cases h : (⟨i, hi⟩ : Fin (n + 1)) = ⟨j, hj⟩
+  apply ext_getElem
+  intro i j
+  rw [mul_adjugate_apply, Matrix.smul_getElem, getElem_identity]
+  by_cases h : i = j
   · rw [if_pos h, if_pos h]; show det M = det M * 1; grind
   · rw [if_neg h, if_neg h]; show (0 : R) = det M * 0; grind
 
@@ -224,12 +212,12 @@ theorem adjugate_mul_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
       apply List.foldl_congr
       intro acc k _hmem
       have hrow : (row M.transpose j)[k] = M[k][j] := by
-        simp [row, transpose, col]
+        rw [getElem_row, getElem_transpose]
       have hcol : (col (adjugate M.transpose) i)[k] =
           cofactor M k i := by
         have hcol' : (col (adjugate M.transpose) i)[k] =
-            (adjugate M.transpose)[k][i] := by
-          simp [col]
+            (adjugate M.transpose)[k][i] :=
+          getElem_col (adjugate M.transpose) i k
         rw [hcol', adjugate_get, cofactor_transpose]
       rw [hrow, hcol]
     rw [hleft, hright]
@@ -312,6 +300,7 @@ private theorem columnTupleMatrix_eq_ofFn_ofFn
     columnTupleMatrix M cols =
       (ofFn fun r c => M[r][(Vector.ofFn cols)[c]] : Matrix R n n) := by
   ext r hr c hc
+  simp only [getElem_rows]
   show (columnTupleMatrix M cols)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
     (ofFn (fun r c => M[r][(Vector.ofFn cols)[c]]) : Matrix R n n)[
       (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
@@ -349,6 +338,7 @@ private theorem mul_eq_columnSumMatrix_transpose
     (M N : Matrix R n n) :
     M * N = columnSumMatrix M N.transpose := by
   ext r hr c hc
+  simp only [getElem_rows]
   let rr : Fin n := ⟨r, hr⟩
   let cc : Fin n := ⟨c, hc⟩
   show (M * N)[rr][cc] = (columnSumMatrix M N.transpose)[rr][cc]

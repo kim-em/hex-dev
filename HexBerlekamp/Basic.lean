@@ -185,7 +185,7 @@ theorem berlekampMatrix_entry_eq_columnPolys_coeff
     (berlekampMatrix f hmonic)[i][j] =
       ((berlekampColumnPolys f hmonic (FpPoly.frobeniusXMod f hmonic)
         (basisSize f) 1 #[])[j.val]?.getD 0).coeff i.val := by
-  simp [berlekampMatrix, Matrix.ofFn]
+  rw [berlekampMatrix, Matrix.getElem_ofFn]
 
 /-- A Berlekamp matrix entry is the corresponding coefficient of the public
 `powModMonic` column representative. -/

@@ -130,10 +130,8 @@ private theorem dotProduct_add_smulRight_ofFn_right [Lean.Grind.Ring R]
 theorem rowSwap_mul [Lean.Grind.Ring R]
     (A : Matrix R n m) (B : Matrix R m k) (i j : Fin n) :
     rowSwap A i j * B = rowSwap (A * B) i j := by
-  ext r hr l hl
-  let rr : Fin n := ⟨r, hr⟩
-  let ll : Fin k := ⟨l, hl⟩
-  show ((rowSwap A i j) * B)[rr][ll] = (rowSwap (A * B) i j)[rr][ll]
+  apply ext_getElem
+  intro rr ll
   rw [getElem_mul (rowSwap A i j) B rr ll, getElem_rowSwap (A * B) i j rr ll]
   by_cases hrj : rr = j
   · rw [if_pos hrj]
@@ -167,10 +165,8 @@ theorem rowSwap_mul [Lean.Grind.Ring R]
 theorem rowScale_mul [Lean.Grind.Ring R]
     (A : Matrix R n m) (B : Matrix R m k) (i : Fin n) (s : R) :
     rowScale A i s * B = rowScale (A * B) i s := by
-  ext r hr l hl
-  let rr : Fin n := ⟨r, hr⟩
-  let ll : Fin k := ⟨l, hl⟩
-  show ((rowScale A i s) * B)[rr][ll] = (rowScale (A * B) i s)[rr][ll]
+  apply ext_getElem
+  intro rr ll
   rw [getElem_mul (rowScale A i s) B rr ll, getElem_rowScale (A * B) i rr s ll]
   by_cases hri : rr = i
   · rw [if_pos hri]
@@ -189,10 +185,8 @@ factor. -/
 theorem rowAdd_mul [Lean.Grind.Ring R]
     (A : Matrix R n m) (B : Matrix R m k) (src dst : Fin n) (s : R) :
     rowAdd A src dst s * B = rowAdd (A * B) src dst s := by
-  ext r hr l hl
-  let rr : Fin n := ⟨r, hr⟩
-  let ll : Fin k := ⟨l, hl⟩
-  show ((rowAdd A src dst s) * B)[rr][ll] = (rowAdd (A * B) src dst s)[rr][ll]
+  apply ext_getElem
+  intro rr ll
   rw [getElem_mul (rowAdd A src dst s) B rr ll, getElem_rowAdd (A * B) src dst rr s ll]
   by_cases hrd : rr = dst
   · rw [if_pos hrd]
@@ -292,10 +286,8 @@ theorem rowAdd_transform_mul_preserve [Lean.Grind.Ring R]
 /-- Swapping the same two rows twice restores the original matrix. -/
 theorem rowSwap_rowSwap (M : Matrix R n m) (i j : Fin n) :
     rowSwap (rowSwap M i j) i j = M := by
-  ext r hr k hk
-  let rr : Fin n := ⟨r, hr⟩
-  let kk : Fin m := ⟨k, hk⟩
-  show (rowSwap (rowSwap M i j) i j)[rr][kk] = M[rr][kk]
+  apply ext_getElem
+  intro rr kk
   rw [getElem_rowSwap]
   by_cases hrj : rr = j
   · rw [if_pos hrj]
@@ -314,10 +306,8 @@ theorem rowSwap_rowSwap (M : Matrix R n m) (i j : Fin n) :
 /-- Swapping a row with itself leaves the matrix unchanged. -/
 @[simp, grind =] theorem rowSwap_self (M : Matrix R n m) (i : Fin n) :
     rowSwap M i i = M := by
-  ext r hr k hk
-  let rr : Fin n := ⟨r, hr⟩
-  let kk : Fin m := ⟨k, hk⟩
-  show (rowSwap M i i)[rr][kk] = M[rr][kk]
+  apply ext_getElem
+  intro rr kk
   rw [getElem_rowSwap]
   by_cases hri : rr = i
   · simp [hri]
@@ -327,10 +317,8 @@ theorem rowSwap_rowSwap (M : Matrix R n m) (i j : Fin n) :
 @[simp, grind =] theorem rowScale_one [Lean.Grind.Semiring R]
     (M : Matrix R n m) (i : Fin n) :
     rowScale M i 1 = M := by
-  ext r hr k hk
-  let rr : Fin n := ⟨r, hr⟩
-  let kk : Fin m := ⟨k, hk⟩
-  show (rowScale M i 1)[rr][kk] = M[rr][kk]
+  apply ext_getElem
+  intro rr kk
   rw [getElem_rowScale]
   by_cases hri : rr = i
   · rw [if_pos hri]
@@ -341,10 +329,8 @@ theorem rowSwap_rowSwap (M : Matrix R n m) (i j : Fin n) :
 @[simp, grind =] theorem rowAdd_zero [Lean.Grind.Semiring R]
     (M : Matrix R n m) (src dst : Fin n) :
     rowAdd M src dst 0 = M := by
-  ext r hr k hk
-  let rr : Fin n := ⟨r, hr⟩
-  let kk : Fin m := ⟨k, hk⟩
-  show (rowAdd M src dst 0)[rr][kk] = M[rr][kk]
+  apply ext_getElem
+  intro rr kk
   rw [getElem_rowAdd]
   by_cases hrd : rr = dst
   · rw [if_pos hrd]
@@ -356,10 +342,8 @@ theorem rowSwap_rowSwap (M : Matrix R n m) (i j : Fin n) :
 theorem rowScale_rowScale_inv_left [Lean.Grind.Field R]
     (M : Matrix R n m) (i : Fin n) {s : R} (hs : s ≠ 0) :
     rowScale (rowScale M i s) i s⁻¹ = M := by
-  ext r hr k hk
-  let rr : Fin n := ⟨r, hr⟩
-  let kk : Fin m := ⟨k, hk⟩
-  show (rowScale (rowScale M i s) i s⁻¹)[rr][kk] = M[rr][kk]
+  apply ext_getElem
+  intro rr kk
   rw [getElem_rowScale]
   by_cases hri : rr = i
   · rw [if_pos hri]
@@ -373,10 +357,8 @@ theorem rowScale_rowScale_inv_left [Lean.Grind.Field R]
 theorem rowScale_rowScale_inv_right [Lean.Grind.Field R]
     (M : Matrix R n m) (i : Fin n) {s : R} (hs : s ≠ 0) :
     rowScale (rowScale M i s⁻¹) i s = M := by
-  ext r hr k hk
-  let rr : Fin n := ⟨r, hr⟩
-  let kk : Fin m := ⟨k, hk⟩
-  show (rowScale (rowScale M i s⁻¹) i s)[rr][kk] = M[rr][kk]
+  apply ext_getElem
+  intro rr kk
   rw [getElem_rowScale]
   by_cases hri : rr = i
   · rw [if_pos hri]
@@ -390,10 +372,8 @@ adding `-s` times that source row restores the original matrix. -/
 theorem rowAdd_rowAdd_neg [Lean.Grind.Ring R]
     (M : Matrix R n m) {src dst : Fin n} (s : R) (hsrcdst : src ≠ dst) :
     rowAdd (rowAdd M src dst s) src dst (-s) = M := by
-  ext r hr k hk
-  let rr : Fin n := ⟨r, hr⟩
-  let kk : Fin m := ⟨k, hk⟩
-  show (rowAdd (rowAdd M src dst s) src dst (-s))[rr][kk] = M[rr][kk]
+  apply ext_getElem
+  intro rr kk
   rw [getElem_rowAdd]
   by_cases hrd : rr = dst
   · rw [if_pos hrd]
@@ -409,10 +389,8 @@ adding `s` times that source row restores the original matrix. -/
 theorem rowAdd_rowAdd_neg_left [Lean.Grind.Ring R]
     (M : Matrix R n m) {src dst : Fin n} (s : R) (hsrcdst : src ≠ dst) :
     rowAdd (rowAdd M src dst (-s)) src dst s = M := by
-  ext r hr k hk
-  let rr : Fin n := ⟨r, hr⟩
-  let kk : Fin m := ⟨k, hk⟩
-  show (rowAdd (rowAdd M src dst (-s)) src dst s)[rr][kk] = M[rr][kk]
+  apply ext_getElem
+  intro rr kk
   rw [getElem_rowAdd]
   by_cases hrd : rr = dst
   · rw [if_pos hrd]
@@ -543,10 +521,8 @@ factor over commutative rings. -/
 theorem mul_colAdd [Lean.Grind.CommRing R]
     (A : Matrix R n m) (B : Matrix R m k) (src dst : Fin k) (s : R) :
     A * colAdd B src dst s = colAdd (A * B) src dst s := by
-  ext r hr l hl
-  let rr : Fin n := ⟨r, hr⟩
-  let ll : Fin k := ⟨l, hl⟩
-  show (A * colAdd B src dst s)[rr][ll] = (colAdd (A * B) src dst s)[rr][ll]
+  apply ext_getElem
+  intro rr ll
   rw [getElem_mul A (colAdd B src dst s) rr ll, getElem_colAdd (A * B) src dst s rr ll]
   by_cases hld : ll = dst
   · rw [if_pos hld]
@@ -568,11 +544,8 @@ column-add operation over a possibly noncommutative ring. -/
 theorem mul_colAddRight [Lean.Grind.Ring R]
     (A : Matrix R n m) (B : Matrix R m k) (src dst : Fin k) (s : R) :
     A * colAddRight B src dst s = colAddRight (A * B) src dst s := by
-  ext r hr l hl
-  let rr : Fin n := ⟨r, hr⟩
-  let ll : Fin k := ⟨l, hl⟩
-  show (A * colAddRight B src dst s)[rr][ll] =
-    (colAddRight (A * B) src dst s)[rr][ll]
+  apply ext_getElem
+  intro rr ll
   rw [getElem_mul A (colAddRight B src dst s) rr ll, getElem_colAddRight (A * B) src dst s rr ll]
   by_cases hld : ll = dst
   · rw [if_pos hld]
@@ -591,10 +564,8 @@ theorem mul_colAddRight [Lean.Grind.Ring R]
 @[simp, grind =] theorem colAdd_zero [Lean.Grind.Semiring R]
     (M : Matrix R n m) (src dst : Fin m) :
     colAdd M src dst 0 = M := by
-  ext i hi j hj
-  let ii : Fin n := ⟨i, hi⟩
-  let jj : Fin m := ⟨j, hj⟩
-  show (colAdd M src dst 0)[ii][jj] = M[ii][jj]
+  apply ext_getElem
+  intro ii jj
   rw [getElem_colAdd]
   by_cases hjd : jj = dst
   · rw [if_pos hjd]
@@ -605,10 +576,8 @@ theorem mul_colAddRight [Lean.Grind.Ring R]
 @[simp, grind =] theorem colAddRight_zero [Lean.Grind.Semiring R]
     (M : Matrix R n m) (src dst : Fin m) :
     colAddRight M src dst 0 = M := by
-  ext i hi j hj
-  let ii : Fin n := ⟨i, hi⟩
-  let jj : Fin m := ⟨j, hj⟩
-  show (colAddRight M src dst 0)[ii][jj] = M[ii][jj]
+  apply ext_getElem
+  intro ii jj
   rw [getElem_colAddRight]
   by_cases hjd : jj = dst
   · rw [if_pos hjd]

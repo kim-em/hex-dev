@@ -26,6 +26,13 @@ below the measured range).
 
 Run: `python3 scripts/plots/hex-matrix-mul-scaling.py`
 (optionally `--data <export.json>`, `--window-lo N`, `--window-hi N`).
+
+Before/after mode (idiom shared with `hexbz-cactus.py`): pass
+`--baseline before.json` to overlay each series' *before* curve as a dotted,
+hollow-marker line (labelled "... — before") under its solid *after* curve, and
+to append a per-rung before/after speedup table to the report. Used for the
+flat-backing representation switch (#8652), where the committed row-of-rows
+export is the baseline.
 """
 
 from __future__ import annotations
@@ -120,7 +127,8 @@ def load_series(path: Path, fn_suffix: str) -> dict[int, float]:
 
 def provenance(path: Path) -> str:
     env = json.loads(path.read_text(encoding="utf-8")).get("env", {})
-    rel = path.relative_to(ROOT)
+    resolved = path.resolve()
+    rel = resolved.relative_to(ROOT) if resolved.is_relative_to(ROOT) else resolved
     return (f"`{rel}` — host `{env.get('hostname')}`, commit "
             f"`{str(env.get('git_commit', '?'))[:8]}`, "
             f"toolchain `{env.get('lean_toolchain', '?')}`")
@@ -164,7 +172,8 @@ def crossover_n(naive_fit: tuple[float, float], str_fit: tuple[float, float]) ->
 
 
 def report(naive: dict[int, float], strassen: dict[int, float],
-           lo: int, hi: int, data_path: Path) -> str:
+           lo: int, hi: int, data_path: Path,
+           baseline_path: Path | None = None) -> str:
     n_pts = window(naive, lo, hi)
     s_pts = window(strassen, lo, hi)
     p_n, logc_n, r2_n = fit_power_law(n_pts)
@@ -200,9 +209,28 @@ def report(naive: dict[int, float], strassen: dict[int, float],
     out.append("")
     out.append(
         f"Fitted naive slope {p_n:.2f} (≈ cubic 3.0); fitted Strassen slope "
-        f"{p_s:.2f} — shallower, above the diagnostic `log₂ 7 ≈ {LOG2_7:.3f}` as "
-        "the SPEC notes for the row-of-rows backing at these sizes."
+        f"{p_s:.2f} — shallower, above the diagnostic `log₂ 7 ≈ {LOG2_7:.3f}` at "
+        "these sizes (crossover transient; see the SPEC's Benchmarks section)."
     )
+    if baseline_path is not None:
+        b_naive = load_series(baseline_path, NAIVE_FN)
+        b_strassen = load_series(baseline_path, STRASSEN_FN)
+        out.append("")
+        out.append(f"### before/after vs {provenance(baseline_path)}")
+        out.append("")
+        out += [
+            "| n | naive before | naive after | ratio | Strassen before | Strassen after | ratio |",
+            "|---:|---:|---:|---:|---:|---:|---:|",
+        ]
+        for rung in sorted(set(naive) & set(b_naive)):
+            cells = [str(rung)]
+            for before, after in ((b_naive, naive), (b_strassen, strassen)):
+                if rung in before and rung in after:
+                    cells += [seconds_formatter(before[rung]), seconds_formatter(after[rung]),
+                              f"{before[rung] / after[rung]:.2f}×"]
+                else:
+                    cells += ["—", "—", "—"]
+            out.append("| " + " | ".join(cells) + " |")
     if xover is not None:
         out.append(
             f"The fitted lines meet at n ≈ {xover:.0f} — an extrapolation below "
@@ -215,8 +243,20 @@ def report(naive: dict[int, float], strassen: dict[int, float],
 
 
 def plot(naive: dict[int, float], strassen: dict[int, float],
-         lo: int, hi: int, output: Path) -> None:
+         lo: int, hi: int, output: Path,
+         baseline: tuple[dict[int, float], dict[int, float]] | None = None) -> None:
     fig, ax = plt.subplots(figsize=(7.2, 4.8))
+
+    # before: dotted, hollow markers, drawn first so the solid after sits on top.
+    if baseline is not None:
+        for fn, series in ((NAIVE_FN, baseline[0]), (STRASSEN_FN, baseline[1])):
+            xs = sorted(series)
+            ys = [series[x] for x in xs]
+            style = SERIES_STYLE[fn]
+            ax.plot(xs, ys, linestyle=":", marker=style["marker"],
+                    markerfacecolor="none", color=style["color"],
+                    linewidth=1.4, markersize=style["markersize"], alpha=0.85,
+                    label=f"{style['label']} — before")
 
     for fn, series in ((NAIVE_FN, naive), (STRASSEN_FN, strassen)):
         xs = sorted(series)
@@ -277,6 +317,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data", type=Path, default=None,
                         help="Override the committed scaling export.")
+    parser.add_argument("--baseline", type=Path, default=None,
+                        help="Before-export to overlay (dotted) and tabulate against.")
     parser.add_argument("--window-lo", type=int, default=WINDOW_LO)
     parser.add_argument("--window-hi", type=int, default=WINDOW_HI)
     parser.add_argument("--output", type=Path,
@@ -286,9 +328,15 @@ def main() -> None:
     data_path = args.data or default_data_path()
     naive = load_series(data_path, NAIVE_FN)
     strassen = load_series(data_path, STRASSEN_FN)
+    baseline = None
+    if args.baseline is not None:
+        baseline = (load_series(args.baseline, NAIVE_FN),
+                    load_series(args.baseline, STRASSEN_FN))
 
-    print(report(naive, strassen, args.window_lo, args.window_hi, data_path))
-    plot(naive, strassen, args.window_lo, args.window_hi, args.output)
+    print(report(naive, strassen, args.window_lo, args.window_hi, data_path,
+                 baseline_path=args.baseline))
+    plot(naive, strassen, args.window_lo, args.window_hi, args.output,
+         baseline=baseline)
     print(f"\nwrote {args.output.relative_to(ROOT)}")
 
 

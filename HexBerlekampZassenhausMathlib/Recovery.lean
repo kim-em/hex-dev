@@ -122,8 +122,9 @@ theorem matrixEquiv_bhksProjectedRowsAsRatMatrix
           L.projectedRows L.projectedRows.size L.factorCount) =
       projectedRowsRatMatrix L := by
   funext i j
-  simp [HexMatrixMathlib.matrixEquiv_apply, Hex.bhksProjectedRowsAsRatMatrix,
-    projectedRowsRatMatrix, Hex.Matrix.ofFn]
+  rw [HexMatrixMathlib.matrixEquiv_apply, Hex.bhksProjectedRowsAsRatMatrix,
+    Hex.Matrix.getElem_ofFn]
+  simp [projectedRowsRatMatrix]
 
 private theorem projectedRowsRrefColumnSignature_eq_iff_forall_echelon
     (L : Hex.BhksProjectedRows) {j k : Nat}

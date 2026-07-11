@@ -206,36 +206,23 @@ theorem vecMul_single {R : Type u} [Lean.Grind.CommRing R]
       row M i := by
   ext j hj
   let jf : Fin m := ⟨j, hj⟩
-  change
-    (vecMul (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0) M)[jf] =
-      (row M i)[jf]
-  unfold vecMul
-  change (Matrix.mulVec (Matrix.transpose M)
-      (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0))[jf] =
+  show ((Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0) * M)[jf] =
     (row M i)[jf]
-  unfold Matrix.mulVec Matrix.row Vector.dotProduct Matrix.transpose
-    Matrix.col
-  change (Vector.ofFn fun j : Fin m =>
-      (List.finRange n).foldl
-        (fun acc l => acc + (Vector.ofFn fun j : Fin m => Vector.ofFn fun i : Fin n => M[i][j])[j][l] *
-          (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0)[l]) 0)[jf.1] =
-    M[i][jf]
-  rw [Vector.getElem_ofFn]
-  change
-    (List.finRange n).foldl
-        (fun acc l => acc +
-          (Vector.ofFn fun j : Fin m => Vector.ofFn fun i : Fin n => M[i][j])[jf][l] *
-          (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0)[l]) 0 =
-      M[i][jf]
+  rw [getElem_vecMul, getElem_row]
+  unfold Vector.dotProduct
   have hbody :
       (List.finRange n).foldl
           (fun acc l => acc +
-            (Vector.ofFn fun j : Fin m => Vector.ofFn fun i : Fin n => M[i][j])[jf][l] *
+            (col M jf)[l] *
             (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0)[l]) 0 =
         (List.finRange n).foldl
           (fun acc l => acc + (if i = l then (1 : R) else 0) * M[l][jf]) 0 := by
     apply List.foldl_add_congr
     intro l _hl
+    have hind : (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0)[l]
+        = if i = l then (1 : R) else 0 := by
+      simp
+    rw [getElem_col, hind]
     by_cases hil : i = l
     · simp [hil, Lean.Grind.CommSemiring.mul_comm]
     · rw [if_neg hil]
@@ -294,21 +281,18 @@ private theorem vecMul_pivotCoeff [Lean.Grind.Field R] (E : IsRowReduced M D)
     (c : Vector R n) (p : Fin D.rank) :
     (vecMul c D.echelon)[D.pivotCols.get p] =
       c[E.toIsEchelonForm.pivotRow p] := by
-  unfold vecMul
-  simp [HMul.hMul, Matrix.mulVec, Matrix.row, Vector.dotProduct,
-    Matrix.transpose, Matrix.col]
-  change (List.finRange n).foldl
-      (fun acc i => acc + D.echelon[i][D.pivotCols.get p] * c[i]) 0 =
-    c[E.toIsEchelonForm.pivotRow p]
+  show (c * D.echelon)[D.pivotCols.get p] = c[E.toIsEchelonForm.pivotRow p]
+  rw [getElem_vecMul]
+  unfold Vector.dotProduct
   calc
     (List.finRange n).foldl
-        (fun acc i => acc + D.echelon[i][D.pivotCols.get p] * c[i]) 0 =
+        (fun acc i => acc + (col D.echelon (D.pivotCols.get p))[i] * c[i]) 0 =
         (List.finRange n).foldl
           (fun acc i =>
             acc + (if E.toIsEchelonForm.pivotRow p = i then (1 : R) else 0) * c[i]) 0 := by
           apply List.foldl_add_congr
           intro i _hi
-          rw [pivot_column_entry E p i]
+          rw [getElem_col, pivot_column_entry E p i]
     _ = c[E.toIsEchelonForm.pivotRow p] := by
           have h :=
             foldl_indicator_mul_unique (List.finRange n) (E.toIsEchelonForm.pivotRow p)
@@ -328,15 +312,12 @@ private theorem vecMul_eq_of_coeffs_eq_on_rank [Lean.Grind.Field R]
     vecMul c D.echelon = vecMul d D.echelon := by
   ext j hj
   let jj : Fin m := ⟨j, hj⟩
-  unfold vecMul
-  simp [HMul.hMul, Matrix.mulVec, Matrix.row, Vector.dotProduct,
-    Matrix.transpose, Matrix.col]
-  change (List.finRange n).foldl
-      (fun acc i => acc + D.echelon[i][jj] * c[i]) 0 =
-    (List.finRange n).foldl
-      (fun acc i => acc + D.echelon[i][jj] * d[i]) 0
+  show (c * D.echelon)[jj] = (d * D.echelon)[jj]
+  rw [getElem_vecMul, getElem_vecMul]
+  unfold Vector.dotProduct
   apply List.foldl_add_congr
   intro i _hi
+  rw [getElem_col]
   by_cases hirank : i.val < D.rank
   · let r : Fin D.rank := ⟨i.val, hirank⟩
     have hirow : E.toIsEchelonForm.pivotRow r = i := by

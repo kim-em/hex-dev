@@ -61,8 +61,11 @@ private def bareissGramRowInvariant_noPivotLoop_initialAux
         Matrix.noPivotLoop elapsed
           (Matrix.noPivotInitialState (Matrix.gramMatrix b))
       by_cases hDone : state.step + 1 < n
-      · by_cases hp : state.matrix[(state.step, state.step)] = 0
-        · rw [Matrix.noPivotLoop_singular_branch fuel state hDone hp]
+      · by_cases hp0 : state.matrix[(state.step, state.step)] = 0
+        · have hp : state.matrix[state.step][state.step] = 0 := by
+            rw [Matrix.getElem_nat_eq_getRow]
+            simpa using hp0
+          rw [Matrix.noPivotLoop_singular_branch fuel state hDone hp]
           refine ⟨{ coeff := hinv.coeff
                     coeff_supp := ?_
                     entry_eq_dot := ?_ }, ?_⟩
@@ -74,7 +77,10 @@ private def bareissGramRowInvariant_noPivotLoop_initialAux
                 show elapsed + (fuel + 1) = elapsed + 1 + fuel from by omega]
             exact (bareissGramCanonicalCoeff_eq_of_singular
               b elapsed fuel i hDone hp).symm
-        · rw [Matrix.noPivotLoop_regular_branch fuel state hDone hp]
+        · have hp : state.matrix[state.step][state.step] ≠ 0 := by
+            rw [Matrix.getElem_nat_eq_getRow]
+            simpa using hp0
+          rw [Matrix.noPivotLoop_regular_branch fuel state hDone hp]
           have hstep :
               Matrix.noPivotLoop (elapsed + 1)
                   (Matrix.noPivotInitialState (Matrix.gramMatrix b)) =
@@ -201,7 +207,9 @@ private theorem noPivotLoop_initial_gram_bareiss_step_dvd
     apply Vector.ext
     intro a ha
     rw [Vector.getElem_ofFn, Vector.getElem_ofFn]
-    exact hq.coeff_num_eq_mul ⟨a, ha⟩
+    have hnum := hq.coeff_num_eq_mul ⟨a, ha⟩
+    simp only [Matrix.getElem_pair_eq_nested] at hnum
+    exact hnum
   rw [h_q_eq_num, dot_vecMul_mul_right_int b hq.q state.prevPivot (b.row j)]
   exact Int.mul_comm _ _
 
@@ -377,7 +385,7 @@ private theorem getElem_vecMul_int
   unfold Vector.dotProduct
   apply foldl_add_pointwise_eq_int
   intro k _hk
-  simp [Matrix.transpose, Matrix.col, Matrix.row]
+  simp [Matrix.col]
 
 /-- Distribute a constant `x : Int` through a foldl-style sum body. -/
 private theorem foldl_mul_distrib_int {α : Type v}
@@ -1067,7 +1075,7 @@ matches the matrix-level `[i][j]` lookup under `rowsToMatrix`. -/
 private theorem getArrayEntry_eq_rowsToMatrix
     (rows : Array (Array Int)) (i j : Fin n) :
     getArrayEntry rows i.val j.val = (rowsToMatrix rows n)[i][j] := by
-  simp [rowsToMatrix, Matrix.ofFn]
+  rw [rowsToMatrix, Matrix.getElem_ofFn]
 
 /-- If the array loop is currently at column `j`, the coefficient entry below
 the diagonal in that column records the pre-elimination matrix entry for that

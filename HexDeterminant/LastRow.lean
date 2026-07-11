@@ -139,7 +139,8 @@ theorem detProduct_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
         (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[i.castSucc] =
           (v[i]).castSucc := by
       simpa using insertAt_last_get_castSucc (Fin.last n) (v.map Fin.castSucc) i
-    simp [principalSubmatrix, ofFn, hget, getRow, Fin.getElem_fin]
+    simp only [hget, getElem_principalSubmatrix]
+    rfl
   have hlast :
       (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[Fin.last n] =
         Fin.last n := by

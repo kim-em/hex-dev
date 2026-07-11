@@ -44,29 +44,18 @@ theorem identity_independent {n : Nat} : (Matrix.identity (R := Int) n).independ
 private theorem gramMatrix_takeRows_eq_principalSubmatrix {n : Nat} (M : Matrix Int n n) (k : Nat)
     (hk : k ≤ n) :
     gramMatrix (takeRows M k hk) = principalSubmatrix (gramMatrix M) k hk := by
-  apply Hex.Matrix.ext
-  apply Vector.ext
-  intro i hi
-  apply Vector.ext
-  intro j hj
-  let iFin : Fin k := ⟨i, hi⟩
-  let jFin : Fin k := ⟨j, hj⟩
-  let ii : Fin n := ⟨i, Nat.lt_of_lt_of_le hi hk⟩
-  let jj : Fin n := ⟨j, Nat.lt_of_lt_of_le hj hk⟩
-  have hrow_i : row (takeRows M k hk) iFin = row M ii := by
+  apply Hex.Matrix.ext_getElem
+  intro i j
+  rw [getElem_gramMatrix, getElem_principalSubmatrix, getElem_gramMatrix]
+  have hrow : ∀ p : Fin k,
+      row (takeRows M k hk) p = row M ⟨p.val, Nat.lt_of_lt_of_le p.isLt hk⟩ := by
+    intro p
     apply Vector.ext
     intro c hc
-    simp [row, takeRows, ofFn, iFin, ii]
-  have hrow_j : row (takeRows M k hk) jFin = row M jj := by
-    apply Vector.ext
-    intro c hc
-    simp [row, takeRows, ofFn, jFin, jj]
-  have hdot :
-      (row (takeRows M k hk) iFin).dotProduct (row (takeRows M k hk) jFin) =
-        (row M ii).dotProduct (row M jj) := by
-    rw [hrow_i, hrow_j]
-  simpa [gramMatrix, principalSubmatrix, ofFn, iFin, jFin, ii, jj] using
-    hdot
+    show (row (takeRows M k hk) p)[(⟨c, hc⟩ : Fin n)] =
+      (row M ⟨p.val, Nat.lt_of_lt_of_le p.isLt hk⟩)[(⟨c, hc⟩ : Fin n)]
+    rw [getElem_row, getElem_row, getElem_takeRows]
+  rw [hrow i, hrow j]
 
 private theorem independent_of_upperTriangular_pos_diag {n : Nat}
     (M : Matrix Int n n)
@@ -287,10 +276,9 @@ private theorem foldl_modify_matrix_getRow
       by_cases hkx : k < x.val
       · rw [if_pos hkx, if_pos hkx, ih (acc.modifyRow x.val (upd x)), Hex.Matrix.rows_modifyRow]
       · rw [if_neg hkx, if_neg hkx, ih acc]
-  unfold Hex.Matrix.getRow
-  rw [key base]
-  simpa [Vector.get, Fin.getElem_fin] using
-    foldl_modify_rows_get k xs hnd base.rows upd l
+  have h := foldl_modify_rows_get k xs hnd base.rows upd l
+  rw [← key base] at h
+  simpa [vector_get_eq_getElem, Hex.Matrix.getElem_rows] using h
 
 /-- Field projections through `swapStep`'s `0 < k < n` branch. -/
 private theorem swapStep_b_eq (s : LLLState n m) (k : Nat) (hk : k < n) (hk0 : 0 < k) :
@@ -1078,7 +1066,7 @@ private theorem sizeReduceColumn_ν_get_k (s : LLLState n m) (j k : Fin n)
           r * Int.ofNat (s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩)) := by
   subst hr
   unfold sizeReduceColumn; rw [dif_pos hreduce]
-  exact Vector.getElem_set_self k.isLt
+  exact Hex.Matrix.setRow_get_self s.ν k _
 
 /-- Field projection: `sizeReduceColumn`'s `.ν` row at indices other than `k`
 under the reducing branch (unchanged). -/
@@ -1089,7 +1077,7 @@ private theorem sizeReduceColumn_ν_get_ne (s : LLLState n m) (j k : Fin n)
     (i : Fin n) (hi : i ≠ k) :
     (s.sizeReduceColumn j k hjk).ν.getRow i = s.ν.getRow i := by
   unfold sizeReduceColumn; rw [dif_pos hreduce]
-  exact Vector.getElem_set_ne k.isLt i.isLt (fun h => hi (Fin.eq_of_val_eq h.symm))
+  exact Hex.Matrix.setRow_row_ne s.ν k i _ hi
 
 /-- The single-column size reduction preserves `Valid`. -/
 theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)

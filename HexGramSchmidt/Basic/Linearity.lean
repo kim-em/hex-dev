@@ -596,9 +596,9 @@ private theorem basisMatrix_rowAdd
     basisMatrix (Matrix.rowAdd b src dst c) = basisMatrix b := by
   unfold basisMatrix
   have hsrc_toList : b.rows.toList[src.val]! = b[src] := by
-    simp [Hex.Matrix.getRow, Fin.getElem_fin]
+    simp [Hex.Matrix.getRow]
   have hdst_toList : b.rows.toList[dst.val]! = b[dst] := by
-    simp [Hex.Matrix.getRow, Fin.getElem_fin]
+    simp [Hex.Matrix.getRow]
   have htoList :
       (Matrix.rowAdd b src dst c).rows.toList =
         b.rows.toList.set dst.val
@@ -659,9 +659,9 @@ private theorem rowSwap_toList_get!_left
   have hleft :
       (Matrix.rowSwap b km1 k).rows.toList[km1.val]! =
         (Matrix.rowSwap b km1 k).row km1 := by
-    simp [Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin]
+    simp [Matrix.row, Hex.Matrix.getRow]
   have hright : b.rows.toList[k.val]! = b.row k := by
-    simp [Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin]
+    simp [Matrix.row, Hex.Matrix.getRow]
   rw [hleft, hright]
   have hne : km1 ≠ k := by
     intro h
@@ -681,9 +681,9 @@ private theorem rowSwap_toList_get!_right
   have hleft :
       (Matrix.rowSwap b km1 k).rows.toList[k.val]! =
         (Matrix.rowSwap b km1 k).row k := by
-    simp [Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin]
+    simp [Matrix.row, Hex.Matrix.getRow]
   have hright : b.rows.toList[km1.val]! = b.row km1 := by
-    simp [Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin]
+    simp [Matrix.row, Hex.Matrix.getRow]
   rw [hleft, hright]
   apply Vector.ext
   intro idx hidx
@@ -849,7 +849,7 @@ private theorem basisMatrix_rowSwap_adjacent_curr
     rfl
   rw [hreduce_split]
   -- Expand `subtractProjection` into row + (-proj) • swappedPrev and use linearity.
-  have hsource_row : b.rows.toList[km1.val]! = b.row km1 := by simp [Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin]
+  have hsource_row : b.rows.toList[km1.val]! = b.row km1 := by simp [Matrix.row, Hex.Matrix.getRow]
   rw [hsource_row]
   have hsubP : ∀ u : Vector Rat m, subtractProjection (b.row km1) u =
       (b.row km1) + (- projectionCoeff (b.row km1) u) • u := by
@@ -872,7 +872,7 @@ private theorem basisMatrix_rowSwap_adjacent_curr
     have hbasis_km1 :
         (basisRows b.rows.toList)[km1.val]! = (basisMatrix b).row km1 := by
       exact (basisMatrix_row_eq_basisRows_get! (b := b) km1.val km1.isLt).symm
-    have hsrc_row : b.rows.toList[km1.val]! = b.row km1 := by simp [Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin]
+    have hsrc_row : b.rows.toList[km1.val]! = b.row km1 := by simp [Matrix.row, Hex.Matrix.getRow]
     change reduceAgainstBasis _ (b.row km1) = (basisMatrix b).row km1
     rw [← hbasis_km1, hrec, hsrc_row]
   -- Show that `swappedPrev` is orthogonal to every row of `basisRows.take km1`,
@@ -989,8 +989,8 @@ private theorem vecMul_prefixRows_extendStrictPrefixCoeff
               (M.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt hi)⟩)[idxFin] *
                 (extendStrictPrefixCoeff c)[j])
           0 by
-        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Vector.dotProduct prefixRows
-        simp [Matrix.row]]
+        unfold Matrix.mulVec Vector.dotProduct prefixRows
+        simp [Matrix.col]]
   rw [show
       (Matrix.mulVec (Matrix.transpose (strictPrefixRows M i (Nat.le_of_lt hi)))
           c)[idxFin] =
@@ -1000,8 +1000,8 @@ private theorem vecMul_prefixRows_extendStrictPrefixCoeff
               (M.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.le_of_lt hi)⟩)[idxFin] *
                 c[j])
           0 by
-        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Vector.dotProduct strictPrefixRows
-        simp [Matrix.row]]
+        unfold Matrix.mulVec Vector.dotProduct strictPrefixRows
+        simp [Matrix.col]]
   rw [List.finRange_succ_last, List.foldl_append, List.foldl_map]
   simp only [List.foldl_cons, List.foldl_nil]
   have hlast_not_lt : ¬i < i := Nat.lt_irrefl i
@@ -1017,8 +1017,8 @@ private theorem vecMul_add_rat
   let idxFin : Fin m := ⟨idx, hidx⟩
   change (Matrix.mulVec (Matrix.transpose M) (c + d))[idxFin] =
     (Matrix.vecMul c M + Matrix.vecMul d M)[idxFin]
-  simp [Matrix.vecMul, HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
-    Matrix.row, Vector.dotProduct, Vector.getElem_add]
+  simp [Matrix.vecMul, HMul.hMul, Matrix.mulVec, Matrix.col,
+    Vector.dotProduct, Vector.getElem_add]
   have hfold :
       ∀ xs : List (Fin n), ∀ accC accD : Rat,
         xs.foldl
@@ -1056,8 +1056,8 @@ private theorem vecMul_smul_rat
   let idxFin : Fin m := ⟨idx, hidx⟩
   change (Matrix.mulVec (Matrix.transpose M) (a • c))[idxFin] =
     (a • Matrix.vecMul c M)[idxFin]
-  simp [Matrix.vecMul, HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
-    Matrix.row, Vector.dotProduct, Vector.getElem_smul]
+  simp [Matrix.vecMul, HMul.hMul, Matrix.mulVec, Matrix.col,
+    Vector.dotProduct, Vector.getElem_smul]
   have hfold :
       ∀ xs : List (Fin n), ∀ acc : Rat,
         xs.foldl
@@ -1228,8 +1228,8 @@ private theorem vecMul_prefixRows_unitCoeff
   change
     (Matrix.mulVec (Matrix.transpose (prefixRows M i hi)) (unitCoeff j))[idxFin] =
       ((prefixRows M i hi).row j)[idxFin]
-  simp [HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
-    Matrix.row, Vector.dotProduct, unitCoeff]
+  simp [HMul.hMul, Matrix.mulVec, Matrix.col,
+    Vector.dotProduct, unitCoeff]
   have h :=
     foldl_indicator_mul_unique_rat
       (xs := List.finRange (i + 1)) (i := j)
@@ -1259,8 +1259,8 @@ private theorem vecMul_eq_foldl_rows
         (List.finRange n).foldl
           (fun acc j => acc + M[j.val][idxFin.val] * c[j])
           0 by
-        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Vector.dotProduct
-        simp]
+        unfold Matrix.mulVec Vector.dotProduct
+        simp [Matrix.col]]
   have hfold :
       ∀ xs : List (Fin n), ∀ accL : Rat, ∀ accR : Vector Rat m,
         accL = accR[idxFin] →
@@ -1970,8 +1970,8 @@ private theorem vecMul_strictPrefixRows_projectionCoeffVector
               (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)[idxFin] *
                 projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩))
           0 by
-        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Vector.dotProduct strictPrefixRows projectionCoeffVector
-        simp [Matrix.row]]
+        unfold Matrix.mulVec Vector.dotProduct strictPrefixRows projectionCoeffVector
+        simp [Matrix.col]]
   rw [show
       (prefixSumByRow row basis k hk)[idxFin] =
         (List.finRange k).foldl
@@ -2070,7 +2070,7 @@ private theorem basisMatrix_reconstruction_invariant
   have hilen : i < b.rows.toList.length := by simpa using hi
   have htoList_get : b.rows.toList[i]! = b.row ⟨i, hi⟩ := by
     simp [Matrix.row, List.getElem!_eq_getElem?_getD,
-      List.getElem?_eq_getElem hilen, Vector.getElem_toList, Hex.Matrix.getRow, Fin.getElem_fin]
+      List.getElem?_eq_getElem hilen, Vector.getElem_toList, Hex.Matrix.getRow]
   have hreduce_forward :=
     basisRows_get!_eq_reduceAgainstBasis_forward
       (rows := b.rows.toList) (k := i) hilen

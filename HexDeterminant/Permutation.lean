@@ -926,7 +926,7 @@ private theorem detProduct_colPermute_vector {R : Type u} [Lean.Grind.CommRing R
   simp only [Fin.foldl_eq_finRange_foldl]
   apply List.foldl_mul_congr
   intro r _hr
-  simp [ofFn, composePermutationValues]
+  simp only [getElem_pair_eq_nested, getElem_ofFn, composePermutationValues_get]
 
 private theorem detProduct_transpose_inversePermutationValues {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat}
@@ -934,7 +934,7 @@ private theorem detProduct_transpose_inversePermutationValues {R : Type u}
     detProduct M.transpose perm =
       detProduct M (inversePermutationValues perm hnodup) := by
   unfold detProduct
-  simp only [Fin.foldl_eq_finRange_foldl]
+  simp only [Fin.foldl_eq_finRange_foldl, getElem_pair_eq_nested]
   calc
     (List.finRange n).foldl
         (fun acc r => acc * M.transpose[r][perm[r]]) 1 =
@@ -942,7 +942,7 @@ private theorem detProduct_transpose_inversePermutationValues {R : Type u}
         (fun acc r => acc * M[perm[r]][r]) 1 := by
         apply List.foldl_mul_congr
         intro r _hmem
-        simp [Matrix.transpose, Matrix.col]
+        rw [getElem_transpose]
     _ =
       ((List.finRange n).map fun r => perm[r]).foldl
         (fun acc c => acc * M[c][(inversePermutationValues perm hnodup)[c]]) 1 := by
@@ -1097,7 +1097,7 @@ private theorem detProduct_rowSwap_transposeValues {R : Type u}
     detProduct (rowSwap M i j) perm =
       detProduct M (transposePermutationValues perm i j) := by
   unfold detProduct
-  simp only [Fin.foldl_eq_finRange_foldl]
+  simp only [Fin.foldl_eq_finRange_foldl, getElem_pair_eq_nested]
   calc
     (List.finRange n).foldl
         (fun acc r => acc * (rowSwap M i j)[r][perm[r]]) 1 =

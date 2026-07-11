@@ -61,7 +61,8 @@ theorem mul_assoc_vec [Lean.Grind.Ring R]
     (A * B) * v = A * (B * v) := by
   ext i hi
   let ii : Fin n := ⟨i, hi⟩
-  simp [HMul.hMul, mulVec, mul, row, col, Vector.dotProduct, ofFn]
+  show ((A * B) * v)[ii] = (A * (B * v))[ii]
+  simp only [getElem_mulVec, getElem_mul, getElem_row, getElem_col, Vector.dotProduct]
   change
     (List.finRange k).foldl
         (fun acc l =>
@@ -102,16 +103,10 @@ theorem mul_assoc_vec [Lean.Grind.Ring R]
 theorem transpose_mul_of_mul_comm [Lean.Grind.CommRing R]
     (A : Matrix R n m) (B : Matrix R m k) :
     Matrix.transpose (A * B) = Matrix.transpose B * Matrix.transpose A := by
-  ext i hi j hj
-  let ii : Fin k := ⟨i, hi⟩
-  let jj : Fin n := ⟨j, hj⟩
-  change (Matrix.transpose (A * B))[ii][jj] = (Matrix.transpose B * Matrix.transpose A)[ii][jj]
-  rw [getElem_transpose]
-  change (A * B)[jj][ii] = (Matrix.transpose B * Matrix.transpose A)[ii][jj]
-  simp [HMul.hMul, mul, row, col, transpose, Vector.dotProduct, ofFn]
-  change
-    (List.finRange m).foldl (fun acc l => acc + A[jj][l] * B[l][ii]) 0 =
-      (List.finRange m).foldl (fun acc l => acc + B[l][ii] * A[jj][l]) 0
+  apply ext_getElem
+  intro ii jj
+  rw [getElem_transpose, getElem_mul, getElem_mul, row_transpose, col_transpose,
+    Vector.dotProduct, Vector.dotProduct]
   apply List.foldl_add_congr
   intro l _hl
   rw [Lean.Grind.CommSemiring.mul_comm]
@@ -141,24 +136,17 @@ theorem transpose_mul_of_mul_comm [Lean.Grind.CommRing R]
 /-- Left-multiplication by the identity matrix leaves a matrix unchanged. -/
 @[simp, grind =] theorem identity_mul [Lean.Grind.Ring R] (M : Matrix R n m) :
     (Matrix.identity (R := R) n) * M = M := by
-  ext i hi j hj
-  let ii : Fin n := ⟨i, hi⟩
-  let jj : Fin m := ⟨j, hj⟩
-  change ((Matrix.identity (R := R) n) * M)[ii][jj] = M[ii][jj]
-  simp [HMul.hMul, mul, row, col, Vector.dotProduct]
-  simp [ofFn]
-  change
-    (List.finRange n).foldl
-        (fun acc l => acc + (Matrix.identity (R := R) n)[ii][l] * M[l][jj]) 0 =
-      M[ii][jj]
+  apply ext_getElem
+  intro ii jj
+  rw [getElem_mul, Vector.dotProduct]
   calc
     (List.finRange n).foldl
-        (fun acc l => acc + (Matrix.identity (R := R) n)[ii][l] * M[l][jj]) 0 =
+        (fun acc l => acc + (row (Matrix.identity (R := R) n) ii)[l] * (col M jj)[l]) 0 =
         (List.finRange n).foldl
           (fun acc l => acc + (if ii = l then (1 : R) else 0) * M[l][jj]) 0 := by
           apply List.foldl_add_congr
           intro l _hl
-          rw [getElem_identity]
+          rw [getElem_row, getElem_col, getElem_identity]
     _ = M[ii][jj] := by
           rw [foldl_indicator_mul_unique (List.finRange n) ii (fun l => M[l][jj])
             (List.mem_finRange _) (List.nodup_finRange n) 0]
@@ -167,24 +155,17 @@ theorem transpose_mul_of_mul_comm [Lean.Grind.CommRing R]
 /-- Right-multiplication by the identity matrix leaves a matrix unchanged. -/
 @[simp, grind =] theorem mul_identity [Lean.Grind.Ring R] (M : Matrix R n m) :
     M * (Matrix.identity (R := R) m) = M := by
-  ext i hi j hj
-  let ii : Fin n := ⟨i, hi⟩
-  let jj : Fin m := ⟨j, hj⟩
-  change (M * (Matrix.identity (R := R) m))[ii][jj] = M[ii][jj]
-  simp [HMul.hMul, mul, row, col, Vector.dotProduct]
-  simp [ofFn]
-  change
-    (List.finRange m).foldl
-        (fun acc l => acc + M[ii][l] * (Matrix.identity (R := R) m)[l][jj]) 0 =
-      M[ii][jj]
+  apply ext_getElem
+  intro ii jj
+  rw [getElem_mul, Vector.dotProduct]
   calc
     (List.finRange m).foldl
-        (fun acc l => acc + M[ii][l] * (Matrix.identity (R := R) m)[l][jj]) 0 =
+        (fun acc l => acc + (row M ii)[l] * (col (Matrix.identity (R := R) m) jj)[l]) 0 =
         (List.finRange m).foldl
           (fun acc l => acc + (if jj = l then (1 : R) else 0) * M[ii][l]) 0 := by
           apply List.foldl_add_congr
           intro l _hl
-          rw [getElem_identity]
+          rw [getElem_row, getElem_col, getElem_identity]
           split <;> grind
     _ = M[ii][jj] := by
           rw [foldl_indicator_mul_unique (List.finRange m) jj (fun l => M[ii][l])
@@ -195,12 +176,11 @@ theorem transpose_mul_of_mul_comm [Lean.Grind.CommRing R]
 theorem mul_assoc [Lean.Grind.Ring R]
     (A : Matrix R n m) (B : Matrix R m k) (C : Matrix R k l) :
     (A * B) * C = A * (B * C) := by
-  ext i hi j hj
-  let ii : Fin n := ⟨i, hi⟩
-  let jj : Fin l := ⟨j, hj⟩
-  change ((A * B) * C)[ii][jj] = (A * (B * C))[ii][jj]
-  simpa [HMul.hMul, mulVec, mul, row, col, Vector.dotProduct, ofFn] using
-    congrArg (fun v => v[ii]) (mul_assoc_vec A B (col C jj))
+  apply ext_getElem
+  intro ii jj
+  have key := congrArg (fun w => w[ii]) (mul_assoc_vec A B (col C jj))
+  simp only [getElem_mulVec, getElem_mul, getElem_row, getElem_col, Vector.dotProduct] at key ⊢
+  exact key
 
 /-- Matrix-vector multiplication sends the zero vector to the zero vector. -/
 @[simp, grind =] theorem mulVec_zero [Lean.Grind.Ring R] (A : Matrix R n m) :
@@ -222,8 +202,8 @@ theorem mul_assoc [Lean.Grind.Ring R]
   change (List.finRange m).foldl (fun acc j => acc + (0 : Matrix R n m)[ii][j] * v[j]) 0 = 0
   apply List.foldl_add_eq_self
   intro j _hj
-  change (Matrix.zero n m : Matrix R n m)[ii][j] * v[j] = 0
-  simpa [Matrix.zero, ofFn] using Lean.Grind.Semiring.zero_mul v[j]
+  rw [getElem_zero]
+  grind
 
 /-- Matrix-vector multiplication distributes over matrix subtraction. -/
 @[grind =] theorem sub_mulVec [Lean.Grind.Ring R] (A B : Matrix R n m) (v : Vector R m) :
@@ -292,10 +272,8 @@ theorem sub_identity_mulVec [Lean.Grind.Ring R] (Q : Matrix R n n) (v : Vector R
 @[grind =] theorem add_mul [Lean.Grind.Ring R]
     (A B : Matrix R n m) (C : Matrix R m k) :
     (A + B) * C = A * C + B * C := by
-  ext i hi j hj
-  let ii : Fin n := ⟨i, hi⟩
-  let jj : Fin k := ⟨j, hj⟩
-  change ((A + B) * C)[ii][jj] = (A * C + B * C)[ii][jj]
+  apply ext_getElem
+  intro ii jj
   rw [getElem_add, getElem_mul, getElem_mul, getElem_mul, row_add,
     Vector.dotProduct_add_left]
 
@@ -303,10 +281,8 @@ theorem sub_identity_mulVec [Lean.Grind.Ring R] (Q : Matrix R n n) (v : Vector R
 @[grind =] theorem mul_add [Lean.Grind.Ring R]
     (A : Matrix R n m) (B C : Matrix R m k) :
     A * (B + C) = A * B + A * C := by
-  ext i hi j hj
-  let ii : Fin n := ⟨i, hi⟩
-  let jj : Fin k := ⟨j, hj⟩
-  change (A * (B + C))[ii][jj] = (A * B + A * C)[ii][jj]
+  apply ext_getElem
+  intro ii jj
   rw [getElem_add, getElem_mul, getElem_mul, getElem_mul, col_add,
     Vector.dotProduct_add_right]
 
@@ -314,10 +290,8 @@ theorem sub_identity_mulVec [Lean.Grind.Ring R] (Q : Matrix R n n) (v : Vector R
 @[grind =] theorem sub_mul [Lean.Grind.Ring R]
     (A B : Matrix R n m) (C : Matrix R m k) :
     (A - B) * C = A * C - B * C := by
-  ext i hi j hj
-  let ii : Fin n := ⟨i, hi⟩
-  let jj : Fin k := ⟨j, hj⟩
-  change ((A - B) * C)[ii][jj] = (A * C - B * C)[ii][jj]
+  apply ext_getElem
+  intro ii jj
   rw [getElem_sub, getElem_mul, getElem_mul, getElem_mul, row_sub,
     Vector.dotProduct_sub_left]
 
@@ -325,10 +299,8 @@ theorem sub_identity_mulVec [Lean.Grind.Ring R] (Q : Matrix R n n) (v : Vector R
 @[grind =] theorem mul_sub [Lean.Grind.Ring R]
     (A : Matrix R n m) (B C : Matrix R m k) :
     A * (B - C) = A * B - A * C := by
-  ext i hi j hj
-  let ii : Fin n := ⟨i, hi⟩
-  let jj : Fin k := ⟨j, hj⟩
-  change (A * (B - C))[ii][jj] = (A * B - A * C)[ii][jj]
+  apply ext_getElem
+  intro ii jj
   rw [getElem_sub, getElem_mul, getElem_mul, getElem_mul, col_sub,
     Vector.dotProduct_sub_right]
 

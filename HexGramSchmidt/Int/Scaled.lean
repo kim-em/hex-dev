@@ -422,7 +422,8 @@ theorem scaledCoeffs_entry_eq_getArrayEntry
     (b : Matrix Int n m) (i j : Fin n) :
     GramSchmidt.entry (scaledCoeffs b) i j =
       getArrayEntry (scaledCoeffRowsSchur b) i.val j.val := by
-  simp [scaledCoeffs, data, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn]
+  simp only [GramSchmidt.entry, Matrix.getElem_row, scaledCoeffs, data,
+    rowsToMatrix, Matrix.getElem_ofFn]
 
 /-- One Bareiss update step commutes with taking the leading `K × K`
 prefix: the leading prefix of the updated full matrix equals the result
@@ -433,13 +434,12 @@ private theorem principalSubmatrix_stepMatrix_eq
     (k : Nat) (pivot prevPivot : Int) :
     Matrix.principalSubmatrix (Matrix.stepMatrix M k pivot prevPivot) K hK =
       Matrix.stepMatrix (Matrix.principalSubmatrix M K hK) k pivot prevPivot := by
-  apply Hex.Matrix.ext
-  apply Vector.ext
-  intro i hi
-  apply Vector.ext
-  intro j hj
-  let iK : Fin K := ⟨i, hi⟩
-  let jK : Fin K := ⟨j, hj⟩
+  apply Hex.Matrix.ext_getElem
+  intro iK jK
+  let i := iK.val
+  let j := jK.val
+  have hi : i < K := iK.isLt
+  have hj : j < K := jK.isLt
   let iN : Fin n := ⟨i, Nat.lt_of_lt_of_le hi hK⟩
   let jN : Fin n := ⟨j, Nat.lt_of_lt_of_le hj hK⟩
   show (Matrix.principalSubmatrix (Matrix.stepMatrix M k pivot prevPivot) K hK)[iK][jK] =
@@ -559,13 +559,8 @@ private theorem borderedMinor_stepMatrix_eq
     (k_step : Nat) (hkstep : k_step < k) (pivot prevPivot : Int) :
     Matrix.borderedMinor (Matrix.stepMatrix M k_step pivot prevPivot) k hk row col =
       Matrix.stepMatrix (Matrix.borderedMinor M k hk row col) k_step pivot prevPivot := by
-  apply Hex.Matrix.ext
-  apply Vector.ext
-  intro i hi
-  apply Vector.ext
-  intro j hj
-  let i_bm : Fin (k + 1) := ⟨i, hi⟩
-  let j_bm : Fin (k + 1) := ⟨j, hj⟩
+  apply Hex.Matrix.ext_getElem
+  intro i_bm j_bm
   let iN : Fin n := liftBorderedIdx hk row i_bm
   let jN : Fin n := liftBorderedIdx hk col j_bm
   -- Equivalence of "in update zone" between bordered minor and source.
@@ -718,7 +713,7 @@ private theorem noPivotLoop_sync_borderedMinor_aux
           Matrix.borderedMinor_entry_lt_lt state_full.matrix k hk row col k_bm k_bm
             h_k_bm_lt h_k_bm_lt
         simp only at h_bm_entry
-        rw [h_bm_entry] at hcongr
+        rw [h_bm_entry, Matrix.getElem_pair_eq_nested] at hcongr
         have h_idx : k_full = (⟨k_bm.val, Nat.lt_trans h_k_bm_lt hk⟩ : Fin n) :=
           Fin.ext h_step
         calc state_full.matrix[k_full][k_full]
