@@ -2,7 +2,10 @@
 
 Mathlib companion for [hex-roots](hex-roots.md). Proves **soundness**
 of the certified root isolation: every `DyadicRootIsolation` witness
-implies a unique simple complex root in its disc; every
+implies a unique simple complex root in its certified region (the
+stored square for the Newton-Kantorovich disjunct, the circumscribed
+disc for the Pellet disjunct; the region is always contained in the
+stored square's disc); every
 `DyadicRootCluster` witness implies exactly `k` roots with
 multiplicity; refinement preserves roots; `sameRoot` decides whether
 two refined isolations isolate the same root; and `mahlerPrec` meets
@@ -52,6 +55,27 @@ remain worth contributing to Mathlib on their own.
 Both developments are organised as self-contained slices with no
 `HexRoots` dependence, so each can be contributed to Mathlib as a
 separate PR once it has been exercised here.
+
+**Newton-Kantorovich route for atoms.** hex-roots atoms carry the
+disjunction `atomWitness = nkWitness ∨ witness _ _ 1` (see
+hex-roots.md §Newton-Kantorovich atom witnesses). The `nkWitness`
+disjunct admits a soundness proof with no complex analysis at all:
+Mehta and Macbeth have formalised the Newton-Kantorovich theorem
+over Mathlib from `ContractingWith` (Banach fixed point) in a
+self-contained ~250-line file (see References in hex-roots.md; not
+in Mathlib mainline as of the revision above), and the
+specialisation to polynomials on ℝ² with the sup norm makes the
+witness's exact dyadic quantities literal bounds for the theorem's
+hypotheses. Porting that file plus the specialisation layer is a
+third candidate-contribution slice
+(`HexRootsMathlib/Kantorovich.lean`,
+`HexRootsMathlib/KantorovichPoly.lean`). If the dual-route
+experiment in hex-roots settles on Newton-Kantorovich atoms, the
+Rouché-on-circles development below is needed only for `k ≥ 2`
+cluster soundness and the Pellet atom disjunct, and drops off the
+critical path for `isolate` on squarefree inputs (whose soundness
+then rests on `T_0` coverage, a triangle inequality, plus
+Newton-Kantorovich and the Mahler separation bound).
 
 [zulip]: https://leanprover.zulipchat.com/#narrow/stream/116395-maths/topic/Multivariate%20complex%20analysis
 
@@ -238,7 +262,11 @@ developments above.
 - `HexRootsMathlib/MahlerPrec.lean`: item 4 above.
 - `HexRootsMathlib/SimpleRoot.lean`: the semantics of root identity.
   ```lean
-  /-- The unique root inside a refined isolation's disc. -/
+  /-- The unique root inside a refined isolation's certified region
+      (the stored square for the Newton-Kantorovich disjunct, the
+      circumscribed disc for the Pellet disjunct). The quotient
+      argument below needs only that each root lies in its own
+      isolation's disc, which both disjuncts give. -/
   def RefinedIsolation.root (i : RefinedIsolation p) : ℂ
 
   theorem intersects_iff_root_eq (i₁ i₂ : RefinedIsolation p) :
@@ -267,8 +295,12 @@ developments above.
 - `HexRootsMathlib/Bisection.lean`: `Component.refine1` and
   `Component.certify?` soundness. A `T_0`-discarded child's disc
   contains no root, so every root covered by the parent lies in some
-  retained child; and when `certify?` returns a cluster, its disc
-  contains exactly `k` roots with multiplicity (Pellet, item 8).
+  retained child; when `certify?` returns a cluster, its disc
+  contains exactly `k` roots with multiplicity (Pellet, item 8); when
+  it returns an atom, the certified region contains exactly one
+  simple root (Newton-Kantorovich or Pellet at `k = 1`); and the
+  coverage guard makes an accepted speculative-Newton region contain
+  exactly the roots of the base region.
 - `HexRootsMathlib/IsolateAll.lean`: driver soundness. The multiset
   equality below rests on two facts: the retained squares cover every
   root (refine1 soundness), and the output discs are pairwise
@@ -286,8 +318,13 @@ developments above.
       (atoms.toList.map (·.root)).toFinset = (toPolynomial p).roots.toFinset ∧
       ∀ a ∈ atoms, atom_prec ≤ a.square.prec
   ```
-  (`HasOnlySimpleRoots p` rules out `p = 0`, so no separate
-  nonzeroness hypothesis is needed in the second statement.)
+  (`HasOnlySimpleRoots p` does *not* rule out `p = 0` (the
+  executable gcd of `0` and `0` is `0`, of size `0 ≤ 1`), but
+  `isolate 0 _ _ = none` by definition, so the `ha` hypothesis
+  supplies nonzeroness; a nonzero constant returns `some #[]` and
+  both sides are empty. The `↔ Squarefree` correspondence in
+  `HasOnlySimpleRoots.lean` carries a `p ≠ 0` hypothesis for the
+  same reason.)
 
 ## Completeness development (separately scoped)
 
@@ -328,11 +365,16 @@ Discriminant / separation development (candidate Mathlib contribution):
   HexRootsMathlib/MahlerSeparation.lean
 
 Rouché-on-circles development (candidate Mathlib contribution;
-the harder of the two):
+the hardest slice):
   HexRootsMathlib/CircleIntegralLemmas.lean
   HexRootsMathlib/ArgumentPrinciple.lean
   HexRootsMathlib/Rouche.lean
   HexRootsMathlib/Pellet.lean
+
+Newton-Kantorovich development (candidate Mathlib contribution;
+port of Mehta-Macbeth, see the intro):
+  HexRootsMathlib/Kantorovich.lean
+  HexRootsMathlib/KantorovichPoly.lean
 
 Correspondence theorems (depend on hex-roots data structures):
   HexRootsMathlib/Basic.lean
@@ -349,7 +391,7 @@ Completeness development (deferrable; see above):
   HexRootsMathlib/Completeness/…
 ```
 
-The two candidate contributions have no `HexRoots` dependence and can
+The candidate contributions have no `HexRoots` dependence and can
 be split out or sent to Mathlib if they grow. The library is verified
 by building it. Conformance fixtures live with `hex-roots`.
 
