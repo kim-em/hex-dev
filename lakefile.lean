@@ -176,6 +176,9 @@ lean_lib HexGramSchmidtMathlib where
 @[default_target]
 lean_lib HexLLLMathlib where
 
+@[default_target]
+lean_lib HexRealRootsMathlib where
+
 lean_exe hexlll_provider_probe where
   root := `HexLLL.ProviderProbe
 
