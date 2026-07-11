@@ -85,9 +85,11 @@ The pipeline, with `n = deg p` fixed up front and `(α, β, s)` from
   length `n+1` with entry `i` equal to `coeff (n − i)` and renormalize; this is
   the `x ↦ 1/x` homogenization `(1+x)^{deg p}` of the SPEC contract, sending
   `(0, 1)` to `(1, ∞)`. Reversing at `n` rather than the *current* degree is
-  essential: when `p(b) = 0` the constant term after (c) vanishes and the
-  current degree drops, and that dropped root correctly disappears (its image
-  under `x ↦ 1/x` is `∞` — the root at `b` is not in the open `(a, b)`).
+  essential: when `p(b) = 0` with multiplicity `m`, the `m` lowest
+  coefficients after (c)/(d) vanish; the reversal turns them into trailing
+  zeros, which `ofCoeffs` trims, dropping the degree by `m`. Those roots
+  correctly disappear (their image under `x ↦ 1/x` is `∞` — a root at `b` is
+  not in the open `(a, b)`).
 * **(f) shift back to the positive axis.** `r ↦ r(x + 1)` via `compose`, sending
   `(1, ∞)` to `(0, ∞)`. Chasing the maps: a root `x₀` of `p` corresponds to the
   final root `t` with `x₀ = (a + b·t)/(1 + t)` — exactly the SPEC's Möbius map,
@@ -216,6 +218,16 @@ example : descartesVar (mobiusTransform (DensePoly.ofCoeffs #[(1 : Int), 0, 1])
 -- `0` (textbook transform `(3+4x)²+(1+x)² = 17x²+26x+10`, signs `(+,+,+)`).
 example : descartesVar (mobiusTransform (DensePoly.ofCoeffs #[(1 : Int), 0, 1])
     (DyadicInterval.mk (Dyadic.ofInt 3) (Dyadic.ofInt 4) (by decide))) = 0 := by decide
+
+-- Multiplicity at the upper endpoint: `(x−1)²` on `(0, 1]`. The double root
+-- at `b = 1` is not in the open `(0,1)`. (c) `(x+1)²−2(x+1)+1 = x²` → (d)
+-- `dilate (−1)`: `x²` → (e) reverse at 2: `#[1,0,0]` trims to the constant
+-- `1` (degree drops by the multiplicity 2) → (f) `1`. Signs `(+)` → 0.
+example : mobiusTransform (DensePoly.ofCoeffs #[(1 : Int), -2, 1])
+    (DyadicInterval.mk (Dyadic.ofInt 0) (Dyadic.ofInt 1) (by decide))
+    = DensePoly.ofCoeffs #[(1 : Int)] := by decide
+example : descartesVar (mobiusTransform (DensePoly.ofCoeffs #[(1 : Int), -2, 1])
+    (DyadicInterval.mk (Dyadic.ofInt 0) (Dyadic.ofInt 1) (by decide))) = 0 := by decide
 
 -- Cross-check on `(2x−1)(x−2) = 2x² − 5x + 2` (roots `1/2` and `2`): the
 -- Descartes counts on `(0,1]`, `(1,4]`, `(0,4]` are `1`, `1`, `2`.
