@@ -30,6 +30,27 @@ import time
 MASK64 = (1 << 64) - 1
 
 
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def verify_lcg_matches_lean() -> None:
+    """Tether this reimplementation to the Lean bench family: the LCG
+    multiplier and increment literals must appear in
+    bench/HexRoots/Bench.lean, or the comparator is no longer
+    apples-to-apples and must fail loudly rather than time a divergent
+    input family."""
+    src = (REPO_ROOT / "bench" / "HexRoots" / "Bench.lean").read_text()
+    for lit in ("6364136223846793005", "1442695040888963407"):
+        if lit not in src:
+            raise SystemExit(
+                f"hexroots_flint_compare: LCG literal {lit} not found in "
+                "bench/HexRoots/Bench.lean; the Lean seeded family has "
+                "changed and this script must be updated to match"
+            )
+
+
 def lcg_next(s: int) -> int:
     """The LCG step from conformance/HexRoots/EmitFixtures.lean, UInt64 wraparound."""
     return (6364136223846793005 * s + 1442695040888963407) & MASK64
@@ -59,6 +80,7 @@ def time_call(poly, repeats: int) -> float:
 
 
 def main() -> int:
+    verify_lcg_matches_lean()
     import flint
     from flint import ctx, fmpz_poly
 

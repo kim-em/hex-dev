@@ -542,6 +542,10 @@ subdivision, but their *degree-dependent* root geometry (some degrees have
 much closer roots than neighbours) makes the wall time non-monotonic in `n`,
 which the report's Concerns section flags as a fit-quality limitation.
 -/
+-- Polylog factors (a strict B = Θ(n log n) reading gives n^5·log²n) are
+-- suppressed in the declared model per house convention: the harness fits a
+-- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
+-- plain powers for the same reason.
 setup_benchmark runIsolateAll n => n * n * n * n * n
   with prep := seededPoly
   where {
@@ -565,6 +569,10 @@ even more firmly in the multiplication-bound regime; `O(n³·B²)` with
 because the separation-depth target keeps one full-ladder pass practical there.
 Same seeded-family non-monotonicity caveat as `isolateAll?`.
 -/
+-- Polylog factors (a strict B = Θ(n log n) reading gives n^5·log²n) are
+-- suppressed in the declared model per house convention: the harness fits a
+-- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
+-- plain powers for the same reason.
 setup_benchmark runIsolate n => n * n * n * n * n
   with prep := seededPoly
   where {
@@ -616,6 +624,10 @@ growing-precision arithmetic as a schoolbook `O(B²)` per-op factor, so
 `O(n³·B²)` gives the `n⁵` wall model; the NK-only strategy certifies each atom
 on its doubled square.
 -/
+-- Polylog factors (a strict B = Θ(n log n) reading gives n^5·log²n) are
+-- suppressed in the declared model per house convention: the harness fits a
+-- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
+-- plain powers for the same reason.
 setup_benchmark runIsolateNk n => n * n * n * n * n
   with prep := linProdPoly
   where {
@@ -635,6 +647,10 @@ growing-precision arithmetic as a schoolbook `O(B²)` per-op factor, so
 `O(n³·B²)` gives the `n⁵` wall model; the Pellet-only strategy runs the
 three-radius test per k candidate.
 -/
+-- Polylog factors (a strict B = Θ(n log n) reading gives n^5·log²n) are
+-- suppressed in the declared model per house convention: the harness fits a
+-- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
+-- plain powers for the same reason.
 setup_benchmark runIsolatePellet n => n * n * n * n * n
   with prep := linProdPoly
   where {
@@ -654,6 +670,10 @@ growing-precision arithmetic as a schoolbook `O(B²)` per-op factor, so
 `O(n³·B²)` gives the `n⁵` wall model; the default strategy tries NK first,
 Pellet as fallback.
 -/
+-- Polylog factors (a strict B = Θ(n log n) reading gives n^5·log²n) are
+-- suppressed in the declared model per house convention: the harness fits a
+-- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
+-- plain powers for the same reason.
 setup_benchmark runIsolateNkThenPellet n => n * n * n * n * n
   with prep := linProdPoly
   where {
