@@ -484,7 +484,7 @@ libraries:
     deps: [HexPolyZ]
     mathlib: false
     done_through: 0
-    status: planned
+    status: active
   HexRealRootsMathlib:
     deps: [HexRealRoots, HexPolyZMathlib]
     mathlib: true
