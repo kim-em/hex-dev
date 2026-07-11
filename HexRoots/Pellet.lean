@@ -126,6 +126,57 @@ instance {p : ZPoly} {s : DyadicSquare} {k : Nat} : Decidable (witness p s k) :=
 @[expose] def rootFree (p : ZPoly) (s : DyadicSquare) : Bool :=
   pelletAt (taylor p s.center) 0 s.radiusLo s.radiusHi
 
+/-! ### Ball geometry and ball evaluation
+
+`DyadicComplexBall` consumers (numerical evaluation in this library's
+future callers, and `hex-number-field`'s root disambiguation) need the
+disc-to-ball view of a square, a sound enclosure of `p` on a square's
+disc, and the exclusion and intersection tests on balls. The radius
+conventions here reuse the audited `radiusHi` upper bound, so callers
+never re-derive the `√2` bookkeeping. -/
+
+/-- The circumscribed disc of `s` as a ball, with the dyadic upper-bound
+    radius `radiusHi` (`≥` the true radius `2^{−prec}·√2`). -/
+@[expose] def DyadicSquare.toBall (s : DyadicSquare) : DyadicComplexBall :=
+  ⟨s.re, s.im, s.radiusHi⟩
+
+/-- A ball containing `p(z)` for every `z` in the circumscribed disc of
+    `s`: centred at the exact value `p(centre) = c₀`, with radius
+    `Σ_{i ≥ 1} hi(cᵢ)·radiusHi^i ≥ |p(z) − p(centre)|` by the triangle
+    inequality on the Taylor expansion. `rootFree` is the corollary
+    `lo(c₀) > radius` (kept separate so the audited `pelletAt` shape is
+    unchanged). -/
+@[expose] def evalBall (p : ZPoly) (s : DyadicSquare) : DyadicComplexBall :=
+  let cs := taylor p s.center
+  let c0 := cs.getD 0 (0, 0)
+  let radius :=
+    ((List.range cs.size).foldl (init := ((0 : Dyadic), (1 : Dyadic)))
+      fun acc i =>
+        if 1 ≤ i then
+          (acc.1 + GaussDyadic.hi (cs.getD i (0, 0)) * (acc.2 * s.radiusHi),
+           acc.2 * s.radiusHi)
+        else acc).1
+  ⟨c0.1, c0.2, radius⟩
+
+/-- The ball certifiably excludes `0`: `radius < lo(centre) ≤ |centre|`,
+    an exact dyadic comparison. The sound direction for "this value is
+    certainly nonzero"; failing this test means only that `0` could not
+    be excluded. -/
+@[expose] def DyadicComplexBall.excludesZero (b : DyadicComplexBall) : Bool :=
+  decide (b.radius < Hex.Dyadic.max (Hex.Dyadic.abs b.re) (Hex.Dyadic.abs b.im))
+
+/-- The closed balls intersect: squared centre distance at most the
+    squared radius sum, all exact dyadics. -/
+@[expose] def DyadicComplexBall.meets (b₁ b₂ : DyadicComplexBall) : Bool :=
+  let rs := b₁.radius + b₂.radius
+  decide (GaussDyadic.distSq (b₁.re, b₁.im) (b₂.re, b₂.im) ≤ rs * rs)
+
+/-- The ball meets the circumscribed disc of `s` (conservative: uses the
+    `radiusHi` upper bound for the disc radius, so a `false` certifies
+    disjointness from the true disc as well). -/
+@[expose] def DyadicSquare.meetsBall (s : DyadicSquare) (b : DyadicComplexBall) : Bool :=
+  DyadicComplexBall.meets s.toBall b
+
 /-- A certified cluster: an edge-connected set of grid squares at a
     common `prec`, whose enclosing disc contains exactly `k` roots
     with multiplicity. The component squares are the data that

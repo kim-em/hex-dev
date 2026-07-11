@@ -82,15 +82,23 @@ instance {p : ZPoly} {i₁ i₂ : RefinedIsolation p} : Decidable (Intersects i�
 /-- The identity of a simple root, independent of which isolation witnessed it.
     (`Quot` of a bare relation; the companion proves `Intersects` is an
     equivalence on `RefinedIsolation` whose classes are the simple roots.) -/
-def SimpleRoot (p : ZPoly) := Quot (Intersects (p := p))
+@[expose] def SimpleRoot (p : ZPoly) := Quot (Intersects (p := p))
 
 /-- The simple root witnessed by a refined isolation. -/
-def SimpleRoot.mk {p : ZPoly} (iso : RefinedIsolation p) : SimpleRoot p :=
+@[expose] def SimpleRoot.mk {p : ZPoly} (iso : RefinedIsolation p) : SimpleRoot p :=
   Quot.mk _ iso
 
 /-- Boolean form of `Intersects`, used for equality tests on data containing
     roots (see `hex-number-field`). -/
 @[expose] def RefinedIsolation.sameRoot {p : ZPoly} (i₁ i₂ : RefinedIsolation p) : Bool :=
   DyadicSquare.discsMeet i₁.1.square i₂.1.square
+
+/-- Wrap an isolation as a `RefinedIsolation` when it meets the separation
+    precision, deciding the subtype bound. `isolate`'s output always
+    qualifies (its target has a `separationDepth ≥ mahlerPrec` floor); this
+    is the constructor consumers use to record that fact. -/
+def DyadicRootIsolation.toRefined? {p : ZPoly} (iso : DyadicRootIsolation p) :
+    Option (RefinedIsolation p) :=
+  if h : (mahlerPrec p : Int) ≤ iso.square.prec then some ⟨iso, h⟩ else none
 
 end Hex

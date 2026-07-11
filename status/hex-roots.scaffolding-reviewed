@@ -1,0 +1,11 @@
+Reviewed by a three-reader skeptical fan-out (SPEC-vs-code fidelity,
+placeholder/shape audit, downstream needs) in the Phase-1 session of
+2026-07-11; findings fixed in the same PR that commits this token.
+Findings: glue docstring mislabelled DFS as BFS (relabelled);
+isolateAll? fuel fold seeded with 0 instead of the worklist's true
+minimum prec (fixed); downstream gaps closed by RefinedIsolation.
+refineTo? (subtype-preserving, root-identity proof via Quot.sound),
+DyadicRootIsolation.toRefined?, certifyAtom?, and the ball API
+(toBall, evalBall, excludesZero, meets, meetsBall). Deferred with
+issues: a taylor characterization lemma for the companion, and the
+invFloor/invAtPrec agreement lemma for the completeness slice.
