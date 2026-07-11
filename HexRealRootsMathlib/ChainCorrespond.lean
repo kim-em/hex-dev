@@ -1222,6 +1222,124 @@ theorem sturmChain_isSturmChain (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0)
   rw [sturmChain_toList p hp]
   exact isSturmChain_of_seeds _ _ _ hs₀0 hs₁0 hfuel hcop _ hγ hkey
 
+/-! ### Consequences: the executable counts equal Mathlib root counts -/
+
+/-- The real cast of the primitive part inherits squarefreeness. -/
+private theorem squarefree_toPolyℝ_primitivePart (p : Hex.ZPoly) (hp0 : p ≠ 0)
+    (hsq : Hex.ZPoly.SquareFreeRat p) :
+    Squarefree (toPolyℝ (Hex.ZPoly.primitivePart p)) := by
+  have hsep : (toPolyℝ p).Separable :=
+    separable_toPolyℝ p ((squareFreeRat_iff p hp0).mp hsq)
+  exact Squarefree.squarefree_of_dvd
+    ⟨Polynomial.C ((Hex.ZPoly.content p : Int) : ℝ),
+      by rw [toPolyℝ_eq_C_content_mul_primitivePart p]; ring⟩ hsep.squarefree
+
+/-- Dyadic order transfers to the real values. -/
+private theorem toReal_lt_toReal {a b : Dyadic} (h : a < b) :
+    Dyadic.toReal a < Dyadic.toReal b := by
+  have h2 : a.toRat < b.toRat := Dyadic.toRat_lt_toRat_iff.mpr h
+  unfold Dyadic.toReal
+  exact_mod_cast h2
+
+/-- **Sturm count correspondence.** For positive-degree, rationally squarefree
+`p`, the executable `Hex.sturmCount p I` equals the number of real roots of
+`toPolyℝ p` in the half-open interval `(I.lower, I.upper]`. -/
+theorem sturmCount_eq_card_roots (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0)
+    (hsq : Hex.ZPoly.SquareFreeRat p) (I : Hex.DyadicInterval) :
+    Hex.sturmCount p I
+      = ((toPolyℝ p).roots.filter
+          (fun r => Dyadic.toReal I.lower < r ∧ r ≤ Dyadic.toReal I.upper)).card := by
+  have hp0 : p ≠ 0 := by
+    intro hh; rw [hh] at hp
+    simp only [Hex.DensePoly.degree?_zero_getD] at hp
+    omega
+  have hchain := sturmChain_isSturmChain p hp hsq
+  have hs₀0 : toPolyℝ (Hex.ZPoly.primitivePart p) ≠ 0 :=
+    fun hh => primitivePart_ne_zero hp0 (toPolyℝ_eq_zero_iff.mp hh)
+  have hsf := squarefree_toPolyℝ_primitivePart p hp0 hsq
+  have hab : Dyadic.toReal I.lower < Dyadic.toReal I.upper := toReal_lt_toReal I.lt
+  have hkey := Sturm.sturm_half_open hs₀0 hsf hchain hab
+  show (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) I.lower : Int)
+      - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) I.upper = _
+  rw [sturmVarAt_eq, sturmVarAt_eq, roots_toPolyℝ_eq_primitivePart p hp0]
+  exact hkey
+
+/-- Casting an integer's sign to `ℝ` preserves `SignType.sign`. -/
+private theorem sign_intCast_sign (n : Int) :
+    SignType.sign ((n.sign : ℝ)) = SignType.sign ((n : ℝ)) := by
+  rcases lt_trichotomy n 0 with h | h | h
+  · rw [Int.sign_eq_neg_one_of_neg h]
+    have h2 : (n : ℝ) < 0 := by exact_mod_cast h
+    rw [show ((-1 : Int) : ℝ) = -1 by norm_num, sign_neg (by norm_num), sign_neg h2]
+  · subst h; simp
+  · rw [Int.sign_eq_one_of_pos h]
+    have h2 : (0:ℝ) < (n : ℝ) := by exact_mod_cast h
+    rw [show ((1 : Int) : ℝ) = 1 by norm_num, sign_pos (by norm_num), sign_pos h2]
+
+/-- The executable `+∞` variation count matches the abstract one: both read
+the signs of the leading coefficients. -/
+private theorem sturmVarPosInf_eq (chain : Array Hex.ZPoly) :
+    Hex.sturmVarPosInf chain = Sturm.sturmVarPosInf (chain.toList.map toPolyℝ) := by
+  rw [Hex.sturmVarPosInf, signVar_eq, Sturm.sturmVarPosInf]
+  apply Sturm.signVariations_congr
+  simp only [List.map_map]
+  rw [List.forall₂_map_left_iff, List.forall₂_map_right_iff, List.forall₂_same]
+  intro q _
+  simp only [Function.comp_apply]
+  rw [leadingCoeff_toPolyℝ]
+  exact sign_intCast_sign _
+
+/-- The executable `−∞` variation count matches the abstract one: both read
+`sign(lc) · (−1)^degree`. -/
+private theorem sturmVarNegInf_eq (chain : Array Hex.ZPoly) :
+    Hex.sturmVarNegInf chain = Sturm.sturmVarNegInf (chain.toList.map toPolyℝ) := by
+  rw [Hex.sturmVarNegInf, signVar_eq, Sturm.sturmVarNegInf]
+  apply Sturm.signVariations_congr
+  simp only [List.map_map]
+  rw [List.forall₂_map_left_iff, List.forall₂_map_right_iff, List.forall₂_same]
+  intro q _
+  simp only [Function.comp_apply]
+  rw [leadingCoeff_toPolyℝ, natDegree_toPolyℝ]
+  by_cases hpar : (Hex.DensePoly.degree? q).getD 0 % 2 = 1
+  · rw [if_pos hpar, (Nat.odd_iff.mpr hpar).neg_one_pow, mul_neg_one, mul_neg_one]
+    have h2 : ((-(Hex.DensePoly.leadingCoeff q).sign : Int) : ℝ)
+        = -(((Hex.DensePoly.leadingCoeff q).sign : Int) : ℝ) := by push_cast; ring
+    rw [h2, Left.sign_neg, Left.sign_neg, sign_intCast_sign]
+  · rw [if_neg hpar, (Nat.even_iff.mpr (by omega)).neg_one_pow, mul_one, mul_one]
+    exact sign_intCast_sign _
+
+/-- **Root count correspondence.** For positive-degree, rationally squarefree
+`p`, the executable `Hex.rootCount p` equals the total number of real roots
+of `toPolyℝ p`. -/
+theorem rootCount_eq_card_roots (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0)
+    (hsq : Hex.ZPoly.SquareFreeRat p) :
+    Hex.rootCount p = ((toPolyℝ p).roots).card := by
+  have hp0 : p ≠ 0 := by
+    intro hh; rw [hh] at hp
+    simp only [Hex.DensePoly.degree?_zero_getD] at hp
+    omega
+  have hchain := sturmChain_isSturmChain p hp hsq
+  have hs₀0 : toPolyℝ (Hex.ZPoly.primitivePart p) ≠ 0 :=
+    fun hh => primitivePart_ne_zero hp0 (toPolyℝ_eq_zero_iff.mp hh)
+  have hsf := squarefree_toPolyℝ_primitivePart p hp0 hsq
+  have hkey := Sturm.sturm_line hs₀0 hsf hchain
+  rw [← roots_toPolyℝ_eq_primitivePart p hp0] at hkey
+  show Hex.sturmVarNegInf (Hex.ZPoly.sturmChain p)
+      - Hex.sturmVarPosInf (Hex.ZPoly.sturmChain p) = _
+  rw [sturmVarNegInf_eq, sturmVarPosInf_eq]
+  omega
+
+/-- **Separation with the executable squarefreeness test.** The public,
+`SquareFreeRat`-facing form of `sepPrec_separates`: for nonzero `p` passing the
+executable rational-gcd squarefreeness test, distinct complex roots of
+`toPolyℂ p` are more than `4 · 2^{−sepPrec p}` apart. -/
+theorem sepPrec_separates' (p : Hex.ZPoly) (hp : p ≠ 0)
+    (hsq : Hex.ZPoly.SquareFreeRat p) :
+    ∀ z₁ z₂ : ℂ, (toPolyℂ p).IsRoot z₁ → (toPolyℂ p).IsRoot z₂ → z₁ ≠ z₂ →
+      (2 : ℝ) ^ (-(Hex.sepPrec p : ℤ)) < ‖z₁ - z₂‖ / 4 :=
+  sepPrec_separates p
+    (PerfectField.separable_iff_squarefree.mpr ((squareFreeRat_iff p hp).mp hsq))
+
 end
 
 end HexRealRootsMathlib
