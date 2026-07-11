@@ -368,7 +368,13 @@ ready" precondition. The Gaussian inversion `1/c₁ = c̄₁ / |c₁|²` uses
 `Dyadic.invAtPrec` for the single real reciprocal `1/|c₁|²`, which
 both the real and imaginary components reuse. That is why the
 implementation calls `invAtPrec` rather than two separate
-`Dyadic.divAtPrec` divisions.
+`Dyadic.divAtPrec` divisions. The recentred components are rounded
+down to precision `prec' + 3` (a quarter of the reciprocal's error
+budget): certification never trusts the centre's provenance, so the
+rounding is harmless, and it pins the working bit-length to the
+complexity contract's `B`. Without it exact recentring compounds,
+multiplying the centre's bit-length by roughly `2·deg p` per
+accepted jump.
 
 **Coverage guard.** The witness re-check alone is not a sufficient
 acceptance criterion for a speculative Newton result. The separation
@@ -392,6 +398,23 @@ preserved. The guard costs one extra witness evaluation and never
 blocks the intended use (sharpening an already certified region); a
 jump whose base region fails to certify is discarded, and
 subdivision proceeds as usual.
+
+Acceptance is not the whole story: when a certified result re-enters
+the worklist (its precision is still below target), the component
+must retain a square that *covers* the certified region, not merely
+the certified square itself. Refinement preserves exactly the roots
+that lie in the retained squares (children partition the square and
+the `T₀` discard is sound), while a Pellet certificate counts roots
+in the stored square's circumscribed disc; a root in the disc but
+outside the square would be silently lost by the next subdivision.
+Repeated Newton-jump adoptions of a many-root cluster make this
+concrete: the jumped disc keeps counting all `k` roots while
+shrinking toward the cluster's Newton centroid, until far roots sit
+in the disc but outside the retained square and vanish. Re-entry
+therefore retains the doubled stored square (half-width
+`2·2^{−prec}`, which contains the disc of radius `√2·2^{−prec}`),
+costing one precision level, which the strictly-finer adoption rule
+still absorbs.
 
 **Termination.** Termination is structural, with no analytic input.
 Write `gap(c) := stopDepth p target − prec(c)` for a component `c` in
@@ -438,7 +461,12 @@ neighbouring component and captures the neighbour's root. The driver
 therefore emits a set of certified results only when the
 circumscribed discs of their stored squares are **pairwise
 disjoint** (one dyadic comparison per pair, as in the `SimpleRoot`
-intersection test); components violating the check keep subdividing.
+intersection test); components violating the check keep subdividing,
+while a component already certified at target with a disc disjoint
+from every other certified disc holds its position (continuing to
+refine while waiting would double its precision every round through
+Newton adoption, blowing the working bit-length whenever a sibling
+is slow, e.g. a tight cluster forced down to its separation depth).
 Every certified region is contained in its stored square's
 circumscribed disc (the square itself for the Newton-Kantorovich
 form, the enclosing disc for the Pellet form), so disjoint discs
