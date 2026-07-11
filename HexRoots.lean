@@ -12,6 +12,7 @@ public import HexRoots.Kantorovich
 public import HexRoots.MahlerPrec
 public import HexRoots.Newton
 public import HexRoots.Pellet
+public import HexRoots.SimpleRoot
 public import HexRoots.Taylor
 
 public section
