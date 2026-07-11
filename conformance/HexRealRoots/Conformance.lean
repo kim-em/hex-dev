@@ -56,11 +56,13 @@ Covered properties:
   rational remainder), and `sturmChain` ends in a nonzero constant for a
   square-free positive-degree input.
 - `refine1` halves the interval width and preserves the root; `refineTo`
-  reaches the requested width; `refined` packages an isolation below separation
-  precision; `sameRoot` identifies two isolations of the same root and
-  separates isolations of distinct roots.
+  reaches the requested width and is the identity on an already-satisfied
+  target; `refined` packages an isolation below separation precision and
+  returns a subinterval of its input; `sameRoot` identifies two isolations of
+  the same root and separates isolations of distinct roots.
 - The non-square-free input is rejected by both engines while its
-  `squareFreeCore` isolates.
+  `squareFreeCore` isolates; `squareFreeCore` is the identity on already
+  square-free primitive inputs and strips repeated factors otherwise.
 
 Covered edge cases:
 - the zero polynomial (`isolate? = none`) and a nonzero constant
@@ -181,6 +183,13 @@ private def refinedWidthOk {p : ZPoly} (i : RealRootIsolation p) : Option Bool :
   i.refined.map fun r =>
     decide (r.1.interval.upper - r.1.interval.lower ≤ twoPow (-(sepPrec p : Int)))
 
+/-- The refined interval of an isolation is a subinterval of the original:
+bisection only ever shrinks inward, so `lower ≤ lower'` and `upper' ≤ upper`. -/
+private def refinedSubinterval {p : ZPoly} (i : RealRootIsolation p) : Option Bool :=
+  i.refined.map fun r =>
+    decide (i.interval.lower ≤ r.1.interval.lower) &&
+      decide (r.1.interval.upper ≤ i.interval.upper)
+
 /-! ### Whole-run isolation, per fixture.
 
 For each fixture: the exact interval endpoints of `isolate?` (a human-readable
@@ -240,21 +249,30 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
 #guard isolateSturm? zeroPoly = none
 #guard isolateDescartes? zeroPoly = none
 
--- A nonzero constant isolates with zero roots (empty chain, `rootCount = 0`).
-#guard (isolate? const7).isSome
-#guard isoCount (isolate? const7) = some 0
-#guard rootCount const7 = 0
-#guard (isolateDescartes? const7).isSome
-#guard (isolateSturm? const7).isSome
+-- A nonzero constant isolates with zero roots (empty chain, `rootCount = 0`),
+-- through the full per-fixture invariant bundle including the Descartes
+-- stand-in.
+#guard isolatesAs const7 #[] 0
 
 -- Non-square-free rejection: both engines and the driver decline, and the
--- square-free core (`x² − 1`, from `(x − 1)²(x + 1)`) isolates its two roots.
+-- square-free core (`x² − 1`, from `(x − 1)²(x + 1)`) isolates its two roots,
+-- again through the full bundle (Descartes stand-in included).
 #guard isolate? nonSquareFree = none
 #guard isolateSturm? nonSquareFree = none
 #guard isolateDescartes? nonSquareFree = none
 #guard (ZPoly.squareFreeCore nonSquareFree).toArray = #[(-1 : Int), 0, 1]
-#guard isoCount (isolate? (ZPoly.squareFreeCore nonSquareFree)) = some 2
-#guard allBracket (isolate? (ZPoly.squareFreeCore nonSquareFree))
+#guard isolatesAs (ZPoly.squareFreeCore nonSquareFree) #[(di (-4), di 0), (di 0, di 4)] 2
+
+-- `squareFreeCore` contract on more input classes: the identity on an already
+-- square-free primitive input (typical), the square-free part of a repeated
+-- linear factor times a distinct one, `x²(x − 3) → x(x − 3)` (adversarial:
+-- the repeated root `0` and the simple root `3` both survive), and the full
+-- collapse of a pure cube, `(x − 1)³ = x³ − 3x² + 3x − 1 → x − 1` (edge).
+#guard (ZPoly.squareFreeCore quadPair).toArray = quadPair.toArray
+#guard (ZPoly.squareFreeCore (DensePoly.ofCoeffs #[(0 : Int), 0, -3, 1])).toArray
+  = #[(0 : Int), -3, 1]
+#guard (ZPoly.squareFreeCore (DensePoly.ofCoeffs #[(-1 : Int), 3, -3, 1])).toArray
+  = #[(-1 : Int), 1]
 
 /-! ### `evalDyadic`: exact Horner evaluation. -/
 
@@ -310,9 +328,20 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
 #guard sturmVarAt (ZPoly.sturmChain quadPair) (di 0) = 1
 #guard sturmVarAt (ZPoly.sturmChain quadPair) (di 2) = 0
 -- `±∞` counts read off leading coefficients and degree parities.
+-- typical: `x² − 1` (2 real roots, so the gap is 2) and the odd-degree
+-- `x³ − x` (3 real roots).
 #guard sturmVarNegInf (ZPoly.sturmChain quadPair) = 2
 #guard sturmVarPosInf (ZPoly.sturmChain quadPair) = 0
 #guard sturmVarNegInf (ZPoly.sturmChain cubicTriple) = 3
+#guard sturmVarPosInf (ZPoly.sturmChain cubicTriple) = 0
+-- adversarial: `x² + 1` has chain `[x² + 1, x, −1]` with a NEGATIVE terminal
+-- constant, so both infinities see one variation and the gap is 0 (no real
+-- roots) even though neither count is itself 0.
+#guard sturmVarNegInf (ZPoly.sturmChain quadNone) = 1
+#guard sturmVarPosInf (ZPoly.sturmChain quadNone) = 1
+-- edge: a constant's empty chain has no variations at either infinity.
+#guard sturmVarNegInf (ZPoly.sturmChain const7) = 0
+#guard sturmVarPosInf (ZPoly.sturmChain const7) = 0
 
 /-! ### `sturmCount` and `rootCount`. -/
 
@@ -392,6 +421,8 @@ private def isoHalf : RealRootIsolation dyadicRoot := ⟨⟨di 0, di 1, by decid
 private def isoNeg1 : RealRootIsolation quadPair := ⟨⟨di (-2), di 0, by decide⟩, by decide⟩
 /-- `1 ∈ (0, 2]` for `x² − 1`. -/
 private def isoPos1 : RealRootIsolation quadPair := ⟨⟨di 0, di 2, by decide⟩, by decide⟩
+/-- `5 ∈ (4, 8]` for `x − 5`, a rational (dyadic) root of a linear polynomial. -/
+private def isoLin : RealRootIsolation linear := ⟨⟨di 4, di 8, by decide⟩, by decide⟩
 
 -- `refine1` halves the width: `(1, 2] → (1, 3/2]` for `√2`.
 #guard (refine1 isoSqrt2).interval.width = half 1
@@ -401,12 +432,28 @@ private def isoPos1 : RealRootIsolation quadPair := ⟨⟨di 0, di 2, by decide�
 -- `(0, 1] → (0, 1/2]` for `2x − 1`.
 #guard (refine1 isoHalf).interval.lower = di 0
 #guard (refine1 isoHalf).interval.upper = half 1
--- `refineTo` reaches the requested width `2^{−3} = 1/8` and still brackets `√2`.
+-- `refineTo` reaches the requested width `2^{−3} = 1/8` and still brackets `√2`
+-- (typical).
 #guard (refineTo isoSqrt2 3).interval.width ≤ twoPow (-3)
 #guard brackets quadIrr (refineTo isoSqrt2 3).interval.lower (refineTo isoSqrt2 3).interval.upper
--- `refined` packages an isolation below separation precision.
+-- `refineTo` on a linear polynomial's integer root (adversarial: the second
+-- bisection midpoint hits the root `5` exactly). Hand-traced from `(4, 8]`
+-- with target `2`: midpoints `6, 5, 9/2, 19/4` give `(4, 6] → (4, 5] →
+-- (9/2, 5] → (19/4, 5]` (the root at the midpoint `5` lands in the LEFT half,
+-- half-open), stopping at width `1/4 = 2^{−2}`.
+#guard (refineTo isoLin 2).interval.lower = quarter 19
+#guard (refineTo isoLin 2).interval.upper = di 5
+-- `refineTo` with an already-satisfied target is the identity (edge): the
+-- width `4` of `(4, 8]` already meets `2^{2} = 4`.
+#guard (refineTo isoLin (-2)).interval.lower = di 4
+#guard (refineTo isoLin (-2)).interval.upper = di 8
+-- `refined` packages an isolation below separation precision, and only ever
+-- shrinks inward (the refined interval is a subinterval of the original).
 #guard refinedWidthOk isoNeg1 = some true
 #guard refinedWidthOk isoPos1 = some true
+#guard refinedSubinterval isoSqrt2 = some true
+#guard refinedSubinterval isoNeg1 = some true
+#guard refinedSubinterval isoPos1 = some true
 -- `sameRoot` identifies the same root and separates distinct roots. `refine1`
 -- preserves the root, so a refined isolation and its refinement agree.
 #guard sameRootOf isoNeg1 isoNeg1 = some true
