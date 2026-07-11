@@ -90,4 +90,20 @@ example : (DyadicInterval.mk (Dyadic.ofInt 1) (Dyadic.ofInt 2) (by decide)).midp
 example : (DyadicInterval.mk (Dyadic.ofInt 1) (Dyadic.ofInt 2) (by decide)).width
     = Dyadic.ofInt 1 := by decide
 
+-- The zero polynomial evaluates to `0` everywhere.
+example : ZPoly.evalDyadic (DensePoly.ofCoeffs (#[] : Array Int)) (Dyadic.ofInt 5)
+    = 0 := by decide
+
+-- `x² − 1` at the negative point `−1/2` is `1/4 − 1 = −3/4`.
+example : ZPoly.evalDyadic (DensePoly.ofCoeffs #[(-1 : Int), 0, 1])
+    ((Dyadic.ofInt (-1)) >>> (1 : Int)) = (Dyadic.ofInt (-3)) >>> (2 : Int) := by decide
+
+-- A nonzero polynomial hitting an exact zero: `x − 1` at `1`.
+example : ZPoly.evalDyadic (DensePoly.ofCoeffs #[(-1 : Int), 1]) (Dyadic.ofInt 1)
+    = 0 := by decide
+
+-- The midpoint of the negative interval `(−2, −1]` is `−3/2`.
+example : (DyadicInterval.mk (Dyadic.ofInt (-2)) (Dyadic.ofInt (-1)) (by decide)).midpoint
+    = (Dyadic.ofInt (-3)) >>> (1 : Int) := by decide
+
 end Hex
