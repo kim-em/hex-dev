@@ -235,6 +235,10 @@ lean_exe hexroots_emit_fixtures where
   srcDir := "conformance"
   root := `HexRoots.EmitFixtures
 
+lean_exe hexroots_bench where
+  srcDir := "bench"
+  root := `HexRoots.Bench
+
 lean_exe hexmatrix_bench where
   srcDir := "bench"
   root := `HexMatrix.Bench
