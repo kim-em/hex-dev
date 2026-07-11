@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealRoots.Basic
+public import HexRealRoots.Chain
 
 public section
 
