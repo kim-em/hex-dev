@@ -11,6 +11,7 @@ public import HexRealRoots.Chain
 public import HexRealRoots.Prec
 public import HexRealRoots.Refine
 public import HexRealRoots.Var
+public import HexRealRoots.IsolateSturm
 
 public section
 
