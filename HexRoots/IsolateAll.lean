@@ -36,7 +36,7 @@ def isolateAll? (p : ZPoly) (target : Int) (worklist : Array Component)
     Option (Array (Certified p)) :=
   let start := worklist.foldl (fun m c => min m c.prec)
     ((worklist[0]?.map (·.prec)).getD 0)
-  isolateLoop p target strategy ((stopDepth p target - start).toNat + 1) worklist
+  isolateLoop p target strategy (fuelFor p target start) worklist
 
 /-- All-atoms output for polynomials with only simple roots: run
     `isolateAll?` from `Component.cauchy` with

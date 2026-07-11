@@ -486,8 +486,14 @@ Write `n = deg p` and `h = log ‖p‖∞`.
 - `isolate?`: the bisection tree has `O(n)` unresolved intervals per
   level and depth at most `isolationDepth p = O(n·(h + log n))`, so
   `O(n² · (h + log n))` Möbius transforms in the worst case,
-  dominated by Mignotte-style clustered inputs. Well-separated roots
-  resolve in `O(n + log(rootBound/gap))` levels.
+  dominated by Mignotte-style clustered inputs. Mignotte inputs
+  dominate through the *depth* factor (the close pair's separation
+  is exponentially small in `n`, growing with `a`); the `O(n)`
+  width factor additionally requires `Θ(n)` real roots, so at fixed
+  `a` the Mignotte family realises `O(1)` width × `O(n·h)` depth =
+  `O(n·h)` transforms, i.e. `O(n³)` integer operations at fixed `a`.
+  Well-separated roots resolve in `O(n + log(rootBound/gap))`
+  levels.
 
 ## Time budgets (Phase 4 validation)
 
