@@ -100,6 +100,9 @@ The fields, in the numbering of the SPEC:
   left neighbourhood of `r` and positive on a punctured right neighbourhood.
   Phrasing the second element existentially forbids the degenerate witness in
   which `p` has a root but the chain has no derivative-like second entry;
+* `nonzero_mem` — no chain element is the zero polynomial, so each element
+  has finitely many zeros and the counting theorem's telescope over the
+  chain's zeros is finite;
 * `consec_coprime` — consecutive elements never vanish at a common point;
 * `interior_alternates` — when an interior element (one with both neighbours
   present) vanishes at a point, both neighbours are nonzero there and have
@@ -117,6 +120,8 @@ structure IsSturmChain (p : Polynomial ℝ) (chain : List (Polynomial ℝ)) : Pr
     q.eval r ≠ 0 ∧
     (∀ᶠ x in 𝓝[<] r, (p * q).eval x < 0) ∧
     (∀ᶠ x in 𝓝[>] r, 0 < (p * q).eval x)
+  /-- No chain element is the zero polynomial. -/
+  nonzero_mem : ∀ q ∈ chain, q ≠ 0
   /-- Consecutive elements have no common real zero. -/
   consec_coprime : ∀ (i : ℕ) (x : ℝ) (a b : Polynomial ℝ),
     chain[i]? = some a → chain[i + 1]? = some b → a.eval x = 0 → b.eval x ≠ 0

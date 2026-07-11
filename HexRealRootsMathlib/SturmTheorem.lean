@@ -60,7 +60,7 @@ and the intermediate value theorem (`intermediate_value_Icc`): a sign change
 would force a zero. The list of evaluation signs is therefore the same at `a`
 and `b`, so `signVariations` — which depends only on those signs — agrees. -/
 theorem sturmVar_const_of_no_zero (_hchain : IsSturmChain p chain)
-    (a b : ℝ)
+    (a b : ℝ) (_hab : a ≤ b)
     (_hz : ∀ q ∈ chain, ∀ x ∈ Set.Icc a b, q.eval x ≠ 0) :
     sturmVar chain a = sturmVar chain b := by
   sorry
@@ -74,11 +74,14 @@ and `[r, b]`. At `r` the vanishing interior elements sit between neighbours of
 opposite sign (`IsSturmChain.interior_alternates`), so each contributes exactly
 one variation both immediately before and immediately after `r` regardless of
 the sign it passes through, and the head pair (involving `p`, nonzero near `r`)
-is unaffected. Hence the count at `a`, at `r`, and at `b` coincide. -/
+is unaffected. Hence the count at `a`, at `r`, and at `b` coincide. The value
+at `r` itself is part of the statement because the global theorem places no
+restriction on its endpoints, so a telescoping step may need the count exactly
+at an interior-element zero. -/
 theorem sturmVar_interior_cross (_hchain : IsSturmChain p chain) (r : ℝ)
     (_hpr : ¬ p.IsRoot r) (a b : ℝ) (_har : a < r) (_hrb : r < b)
     (_hz : ∀ q ∈ chain, ∀ x ∈ Set.Icc a b, x ≠ r → q.eval x ≠ 0) :
-    sturmVar chain a = sturmVar chain b := by
+    sturmVar chain a = sturmVar chain r ∧ sturmVar chain r = sturmVar chain b := by
   sorry
 
 /-- **Simple-zero crossing of `p` drops `sturmVar` by one, registering at `r`.**
