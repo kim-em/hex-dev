@@ -138,7 +138,11 @@ def _real_root_enclosures(
     is real iff its imaginary part is exact zero; the loop keeps raising
     precision until every real root's real-part enclosure is narrower
     than ``min_gap`` (so it cannot straddle two Lean endpoints) and no
-    ambiguous imaginary part remains.  Terminates for square-free input,
+    ambiguous imaginary part remains.  The precision ladder is finite, so
+    an adversarial root cluster can exhaust it; that surfaces as an
+    explicit "precision ladder exhausted" mismatch (a false failure to
+    investigate, never an unsound pass).  For square-free input it
+    terminates well within the ladder,
     whose roots are simple and separated."""
     from flint import ctx, fmpz_poly  # type: ignore[import-not-found]
     poly = fmpz_poly(coeffs)
@@ -279,6 +283,14 @@ def check(
                 raise OracleMismatch(
                     f"square-free case missing root_count/isolations "
                     f"(ops present: {sorted(ops)})"
+                )
+            # Independence: never trust the emitter's classification. A
+            # result-bearing case must genuinely be a nonzero square-free
+            # input by FLINT's own test.
+            if _is_zero_poly(coeffs) or _nonsquarefree(coeffs):
+                raise OracleMismatch(
+                    "isolation result emitted for a zero or non-square-free "
+                    "input (FLINT gcd(p, p') has positive degree)"
                 )
             root_count = ops["root_count"]
             intervals = _intervals(ops["isolations"])
