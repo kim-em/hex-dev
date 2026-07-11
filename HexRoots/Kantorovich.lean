@@ -22,7 +22,7 @@ Newton-Kantorovich hypotheses exact-dyadic comparisons rather than error
 budgets.
 
 With `A` the approximate inverse of `p'(m)` built from the exact reciprocal
-`w = conj(c₁)·invAtPrec (normSq c₁)` of `c₁`, and `dₖ = w·cₖ`, the witness data
+`w = conj(c₁)·invFloor (normSq c₁)` of `c₁`, and `dₖ = w·cₖ`, the witness data
 is `y = lo(d₀)` (the sup norm of the Newton residual), `z₁ = hi(1 − d₁)` (the
 sup-operator norm of `1 − A∘p'(m)`), and the radial Lipschitz bound
 `z₂ = 2·Σ_{k=2}^{n} k·hi(dₖ)·ρ^{k−2}` with `ρ = 1449·2^{−prec−10}` the dyadic
@@ -38,11 +38,29 @@ through.
 -/
 namespace Hex
 
+/-- Floor of `1/x` at precision `q`, for positive `x`: with `x = n·2^{−k}`
+    (`n` odd positive), `1/x = 2^k/n`, so the floor on the `2^{−q}` grid is
+    `⌊2^{q+k}/n⌋·2^{−q}`, one integer division. This agrees with
+    `Dyadic.invAtPrec` on positive arguments (both floor `1/x` to the
+    `2^{−q}` grid, so `0 ≤ 1/x − result < 2^{−q}`), but it kernel-reduces:
+    `invAtPrec` routes through `Rat` normalisation, whose `Nat.gcd`
+    well-founded recursion `decide` cannot unfold. Junk `0` on `x ≤ 0`
+    (and on `q + k < 0`, where the floor is `0` anyway since `n ≥ 1`). -/
+@[expose] def Dyadic.invFloor (x : Dyadic) (q : Int) : Dyadic :=
+  match x with
+  | .zero => 0
+  | .ofOdd n k _ =>
+    if n < 0 then 0
+    else
+      let e := q + k
+      if e < 0 then 0
+      else .ofIntWithPrec (((2 ^ e.toNat : Nat) : Int) / n) q
+
 /-- The Newton-Kantorovich contraction check on the closed square `s` itself
     (sup norm), with `r = 2^{−s.prec}` the half-width. Writing
     `cs = taylor p s.center` for the exact Taylor coefficients and requiring
     `2 ≤ cs.size` with `0 < normSq c₁`, it builds the exact reciprocal
-    `w = conj(c₁)·invAtPrec (normSq c₁) q` (pinned precision
+    `w = conj(c₁)·invFloor (normSq c₁) q` (pinned precision
     `q = 8 + max 0 (ceilLog2 (normSq c₁))`), the residuals `dₖ = w·cₖ`, and the
     exact dyadic bounds `y = lo(d₀)`, `z₁ = hi(1 − d₁)`, and the radial
     Lipschitz bound `z₂ = 2·Σ_{k=2}^{n} k·hi(dₖ)·ρ^{k−2}` with `ρ = s.radiusHi`.
@@ -55,7 +73,7 @@ namespace Hex
     let c₁ := cs.getD 1 (0, 0)
     let nsq := GaussDyadic.normSq c₁
     let q := 8 + max 0 (Hex.Dyadic.ceilLog2 nsq)
-    let u := Dyadic.invAtPrec nsq q
+    let u := Hex.Dyadic.invFloor nsq q
     let w : GaussDyadic := (c₁.1 * u, -(c₁.2) * u)
     let d0 := GaussDyadic.mul w (cs.getD 0 (0, 0))
     let d1 := GaussDyadic.mul w (cs.getD 1 (0, 0))
