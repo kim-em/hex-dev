@@ -516,6 +516,9 @@ all three agree, so `compare runIsolateNk runIsolatePellet runIsolateNkThenPelle
 reports `allAgreed`; a divergence would be a cross-strategy conformance failure.
 The op-count model is `n³` (each is an `isolate` run), matching the drivers. -/
 
+-- Cost model: one `isolate` run over `linProdPoly n`; n subdivision/adoption
+-- rounds of O(n) witness checks at O(n) ops each (fixed-height family), so
+-- n^3 exact-dyadic operations; the NK-only strategy certifies each atom on its doubled square.
 setup_benchmark runIsolateNk n => n * n * n
   with prep := linProdPoly
   where {
@@ -527,6 +530,9 @@ setup_benchmark runIsolateNk n => n * n * n
     signalFloorMultiplier := 1.0
   }
 
+-- Cost model: one `isolate` run over `linProdPoly n`; n subdivision/adoption
+-- rounds of O(n) witness checks at O(n) ops each (fixed-height family), so
+-- n^3 exact-dyadic operations; the Pellet-only strategy runs the three-radius test per k candidate.
 setup_benchmark runIsolatePellet n => n * n * n
   with prep := linProdPoly
   where {
@@ -538,6 +544,9 @@ setup_benchmark runIsolatePellet n => n * n * n
     signalFloorMultiplier := 1.0
   }
 
+-- Cost model: one `isolate` run over `linProdPoly n`; n subdivision/adoption
+-- rounds of O(n) witness checks at O(n) ops each (fixed-height family), so
+-- n^3 exact-dyadic operations; the default strategy tries NK first, Pellet as fallback.
 setup_benchmark runIsolateNkThenPellet n => n * n * n
   with prep := linProdPoly
   where {
