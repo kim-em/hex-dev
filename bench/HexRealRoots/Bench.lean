@@ -103,25 +103,29 @@ def mignottePoly (n : Nat) : ZPoly :=
       else 0
     leading + square
 
-/-- Deterministic bounded-coefficient integer polynomial of degree `n + 2`,
-used for the lower-level Sturm/Möbius/bound primitives where the SPEC
-complexity is a function of `n` at bounded coefficient bit-length `h`.
+/-- Deterministic bounded-height coefficient generator, the same shape as
+`Hex.PolyZBench.coeffValue`: values in `±[1, 2003]`, so the input coefficient
+bit-length `h ≈ 11` is held constant across the ladder. -/
+def denseCoeff (n i : Nat) : Int :=
+  let raw := ((i + 5) * 60 + (i + 1) * (i + 7) * 17 + n * 43) % 2003
+  let value := Int.ofNat (raw + 1)
+  if (i + 29) % 2 = 0 then value else -value
 
-Shape `xᵈ + (Σ_{i<d} cᵢ xⁱ) − x − 1` with small `cᵢ ∈ {−1, 0, 1}` and a forced
-`−x − 1` tail: the tail makes the polynomial reliably squarefree (so its Sturm
-chain attains full length `d`, scaling smoothly with the parameter), while the
-coefficients stay in a fixed band so `h` is held roughly constant across the
-ladder. -/
-def denseCoeff (i : Nat) : Int :=
-  Int.ofNat ((i * 2654435761) % 3) - 1
+/-- Deterministic monic dense integer polynomial of degree `n + 2` with
+bounded-height (`h ≈ 11` bits) generic coefficients, used for the lower-level
+Sturm/Möbius/bound primitives.
 
+Genericity matters: the polynomial-remainder sequence of a generic dense
+polynomial is *normal* (the degree drops by exactly one per pseudo-division),
+so `sturmChain` attains full length `deg + 1` and the fixture exercises the
+whole remainder sequence — a structured (e.g. periodic small-coefficient)
+fixture collapses to an `O(1)`-length chain and benches a best-case input.
+Probed shape on this generator: chain length `n + 3` at every measured rung,
+with primitive-chain coefficient growth ≈ 31 bits per degree (the SPEC's
+`O(n·h)`-bit growth). -/
 def densePoly (n : Nat) : ZPoly :=
   let d := n + 2
-  DensePoly.ofCoeffs <| (Array.range (d + 1)).map fun i =>
-    if i = d then 1
-    else if i = 0 then -1
-    else if i = 1 then -1
-    else denseCoeff i
+  DensePoly.ofCoeffs <| ((Array.range d).map fun i => denseCoeff d i).push 1
 
 /-- A stable integer key for a dyadic value: `ofOdd n k` maps to `n·C + k`,
 zero to `0`. The odd numerator and the power-of-two exponent are exact, so
@@ -316,48 +320,62 @@ setup_benchmark runIsolateSturm n => n ^ 5
     signalFloorMultiplier := 1.0
   }
 
-/- `sturmChain`. The SPEC bounds each of the `O(n)` pseudo-divisions by
-`O(n²)`, but the primitive polynomial-remainder sequence is Euclidean-like:
-each `spem` drops the degree by one at `O(n)` cost, so the chain telescopes to
-`O(n²)` coefficient operations total (BPR §8.3, signed remainder sequence). The
-content gcds and the `O(n·h)` primitive-chain coefficient growth are carried by
-the constant. -/
--- Declared cost-model: O(n^2) coefficient operations, telescoping primitive-remainder sequence.
-setup_benchmark runSturmChain n => n ^ 2
+/- `sturmChain`. SPEC §"Complexity contract": `O(n)` pseudo-divisions, each
+`O(n²)` coefficient operations, so `O(n³)` coefficient operations total. On the
+normal (full-length) remainder sequence the primitive-chain coefficients grow
+to `O(n·h)` bits (SPEC, ≈ 31 bits/degree probed on this fixture), so the GMP
+per-coefficient cost transitions from flat (allocation-dominated) below the
+schedule to multiplication-bound above it; the registered schedule spans the
+downstream-realistic degree band where the `O(n³)` contract is what wall clock
+sees. Below the floor the boxed-scalar regime deflates the local slope, past
+the ceiling subquadratic GMP multiplication takes over. -/
+-- Declared cost-model: O(n^3) coefficient operations, n pseudo-divisions of O(n^2) each (SPEC contract).
+setup_benchmark runSturmChain n => n ^ 3
   with prep := densePoly
   where {
-    paramFloor := 16
+    paramFloor := 32
     paramCeiling := 256
-    paramSchedule := .custom #[16, 32, 64, 128, 256]
+    paramSchedule := .custom #[32, 64, 96, 128, 192, 256]
     maxSecondsPerCall := 5.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
 
 /- `sturmVarAt`. SPEC §"Complexity contract": one exact Horner evaluation per
-chain element, `O(n²)` dyadic operations per queried point. The chain is
-hoisted through `prep`, so the timed body is exactly the per-point evaluation. -/
--- Declared cost-model: O(n^2) dyadic operations, one Horner pass per chain element.
+chain element, `O(n²)` dyadic operations per queried point (the full-length
+chain has `n + 1` elements of degrees `n, n−1, …`). The chain is hoisted
+through `prep`, so the timed body is exactly the per-point evaluation. On the
+registered schedule the chain coefficients (`O(n·h)` bits, ≤ ~60 GMP words at
+the ceiling) keep each dyadic operation in the flat allocation-dominated cost
+band, so wall clock tracks the `O(n²)` operation count; the ceiling is where
+per-operation word cost starts to add a visible factor. -/
+-- Declared cost-model: O(n^2) dyadic operations, one Horner pass per chain element (SPEC contract).
 setup_benchmark runSturmVarAt n => n ^ 2
   with prep := prepVarInput
   where {
-    paramFloor := 16
-    paramCeiling := 256
-    paramSchedule := .custom #[16, 32, 64, 128, 256]
+    paramFloor := 24
+    paramCeiling := 128
+    paramSchedule := .custom #[24, 32, 48, 64, 96, 128]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
 
 /- `mobiusTransform`. SPEC §"Complexity contract": `O(n²)` integer operations
-per node (Taylor-shift pipeline, no rational arithmetic). -/
--- Declared cost-model: O(n^2) integer operations, Taylor-shift Möbius pipeline.
+per node (Taylor-shift pipeline, no rational arithmetic). The Taylor shifts
+produce binomial-scaled coefficients of `Θ(n)` bits, but on the registered
+schedule those operands stay within ~35 GMP words, where per-operation cost is
+allocation-dominated and flat, so wall clock tracks the `O(n²)` operation
+count. Below the floor the boxed-scalar-to-mpz transition inflates the local
+slope (the reason the floor sits at 64); far past the ceiling the word count
+would add its linear factor. -/
+-- Declared cost-model: O(n^2) integer operations, Taylor-shift Möbius pipeline (SPEC contract).
 setup_benchmark runMobiusTransform n => n ^ 2
   with prep := densePoly
   where {
-    paramFloor := 16
-    paramCeiling := 256
-    paramSchedule := .custom #[16, 32, 64, 128, 256]
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 128, 192, 256, 384, 512]
     maxSecondsPerCall := 5.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -365,14 +383,16 @@ setup_benchmark runMobiusTransform n => n ^ 2
 
 /- `rootBound`. SPEC §"Complexity contract": `O(n·h)` integer operations. The
 bounded-coefficient dense fixture holds `h` roughly constant, so the model
-reduces to the linear coefficient scan `O(n)`. -/
+reduces to the linear coefficient scan `O(n)`. The floor sits at 64 because the
+sub-microsecond per-call times below it are dominated by the fixed call
+overhead, which deflates the fitted slope. -/
 -- Declared cost-model: O(n·h) integer operations; linear O(n) at bounded coefficient bit-length h.
 setup_benchmark runRootBound n => n
   with prep := densePoly
   where {
-    paramFloor := 16
-    paramCeiling := 256
-    paramSchedule := .custom #[16, 48, 96, 160, 256]
+    paramFloor := 64
+    paramCeiling := 1024
+    paramSchedule := .custom #[64, 128, 256, 512, 1024]
     maxSecondsPerCall := 3.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
