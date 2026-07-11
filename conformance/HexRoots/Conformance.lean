@@ -119,6 +119,18 @@ private def discCovers (s : DyadicSquare) (x y : Rat) : Bool :=
   let hw := s.halfWidth.toRat
   decide ((x - cre) * (x - cre) + (y - cim) * (y - cim) ≤ 2 * hw * hw)
 
+/-- How many atoms' centres lie within `tol` of the rational point `(x, y)`.
+    For reference roots known only to a few decimal digits, the certified
+    disc (radius `≪ tol`) cannot contain the reference point; proximity of
+    the centre, which approximates the root to within that radius, is the
+    right containment test. -/
+private def nearCount {p : ZPoly} (x y tol : Rat)
+    (atoms : Array (DyadicRootIsolation p)) : Nat :=
+  atoms.foldl (fun n i =>
+    let dx := i.square.re.toRat - x
+    let dy := i.square.im.toRat - y
+    if dx * dx + dy * dy ≤ tol * tol then n + 1 else n) 0
+
 /-- How many atoms' circumscribed discs contain the rational point `(x, y)`.
     Because the emitted discs are pairwise disjoint, a genuine root is covered
     exactly once. -/
@@ -410,19 +422,40 @@ non-squarefree input certifies as a `k = 2` cluster. -/
     | some (.cluster cl) => cl.k == 2
     | _ => false)
 
-/-! ### `mignotte` (squarefree): cheap-operation coverage.
+/-! ### `mignotte` (squarefree): the adversarial close-pair fixture.
 
-The runtime squarefreeness decision confirms `mignotte` has only simple roots,
-and its coefficient array is re-derived by `taylor` at `0` above. Its full
-`isolate` atom count is not asserted: on this fixture `isolate` returns two
-atoms (the close pair near `1/100`) and drops the three large-magnitude roots
-— a real root lies in `(21, 22)` since `p(21) = −321700` and `p(22) = 318031`.
-That coverage defect is tracked in
-https://github.com/kim-em/hex-dev/issues/8736; asserting the correct count here
-would (rightly) fail, and asserting the observed count would lock in wrong
-output, so neither is done. -/
+The runtime squarefreeness decision confirms `mignotte` has only simple
+roots, and its coefficient array is re-derived by `taylor` at `0` above.
+`isolate` must find all five roots: the close real pair straddling `1/100`
+(separation about `2^{−16.4}`), the real root near `21.5377`, and the
+complex pair near `−10.78 ± 18.66i`. This fixture originally exposed the
+root-coverage defect fixed in #8743 (worklist re-entry retained a square
+that did not cover the certified disc, so the three large-magnitude roots
+were silently dropped); it now pins the fixed behaviour under all three
+atom strategies. -/
 
 #guard (if HasOnlySimpleRoots mignotte then true else false)
+
+#guard (if h : HasOnlySimpleRoots mignotte then
+    match isolate mignotte h 8 with
+    | some ax =>
+        ax.size == 5 &&
+          -- the close pair: exactly two atom centres within 10⁻³ of 1/100
+          nearCount (1/100) 0 (1/1000) ax == 2 &&
+          -- the three large-magnitude roots (reference values to 5 decimal
+          -- digits, far coarser than the certified radii, so proximity of
+          -- the centre is the right test), each matched exactly once
+          nearCount (215377/10000) 0 (1/1000) ax == 1 &&
+          nearCount (-107788/10000) (186580/10000) (1/1000) ax == 1 &&
+          nearCount (-107788/10000) (-186580/10000) (1/1000) ax == 1
+    | none => false
+  else false)
+
+#guard (if h : HasOnlySimpleRoots mignotte then
+    match isolate mignotte h 8 .nk, isolate mignotte h 8 .pellet with
+    | some a, some b => a.size == 5 && b.size == 5
+    | _, _ => false
+  else false)
 
 end RootsConformance
 end Hex
