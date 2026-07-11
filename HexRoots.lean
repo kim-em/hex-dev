@@ -9,6 +9,7 @@ module
 public import HexRoots.Basic
 public import HexRoots.Cauchy
 public import HexRoots.MahlerPrec
+public import HexRoots.Pellet
 public import HexRoots.Taylor
 
 public section
