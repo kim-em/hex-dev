@@ -177,13 +177,16 @@ instance {p : ZPoly} : Hashable (DyadicRootIsolation p) where
 The three strategies isolate the same integer roots but store different squares
 (different precisions, sometimes off-by-one levels). The projection below is
 invariant across strategies on `linProdPoly`: it records the atom count and the
-multiset of atom centres rounded to the nearest `2^{−8}` grid point. Because the
-family's roots are integers and Newton recentres onto them exactly, every
-strategy's centres round to the same integer-grid buckets, so the hash agrees.
-The `compare` gate is exactly that agreement. -/
+multiset of atom centres rounded to the NEAREST INTEGER. The compare family's
+roots are integers and every strategy's certified centre lies within the
+stored square's radius of its root, far below `1/2`, so the rounding is
+robust to the strategies' differing squares and precisions (a finer grid
+would put bucket boundaries near non-integer centres and break invariance;
+this digest is only meaningful for integer-root families). The `compare`
+gate is exactly that agreement. -/
 
-/-- Round a dyadic to the nearest integer on the `2^{−8}` grid (i.e. `⌊x·256⌉`). -/
-def gridBucket (d : Dyadic) : Int := (d.toRat * 256 + (1 : Rat) / 2).floor
+/-- Round a dyadic to the nearest integer (`⌊x⌉`). -/
+def gridBucket (d : Dyadic) : Int := (d.toRat + (1 : Rat) / 2).floor
 
 /-- Lexicographic order on integer-grid buckets, for a deterministic multiset
 digest. -/
