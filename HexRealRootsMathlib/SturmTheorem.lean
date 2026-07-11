@@ -23,11 +23,12 @@ of real roots of `p` in a half-open interval `(a, b]` is the drop in
 `sturmVar` from `a` to `b`, and the total number of real roots is the drop
 from `−∞` to `+∞`.
 
-The theorem bodies are `sorry` in this scaffold PR; each carries the intended
-proof sketch from the SPEC. They are discharged by the follow-up PRs M2–M5.
-The `±∞` variation counts `Sturm.sturmVarNegInf` / `Sturm.sturmVarPosInf` are
-defined here as real definitions (no `sorry`), reading the sign of each chain
-element at infinity off its leading coefficient and degree parity.
+The half-open form telescopes the three local lemmas over the finitely many
+chain zeros in `(a, b]` (helpers `chainZeros`, `exists_gap_lt`/`exists_gap_gt`,
+`sturmVar_eq_right`, `card_filter_Ioc_split`). The line form evaluates the chain
+just beyond every root at `±M` and reads the `±∞` variation counts
+`Sturm.sturmVarNegInf` / `Sturm.sturmVarPosInf` off the leading coefficients and
+degree parities (helpers `eval_sign_pos_inf` / `eval_sign_neg_inf`).
 -/
 
 open Filter Topology
@@ -610,6 +611,41 @@ theorem sturm_half_open (hp : p ≠ 0) (hsf : Squarefree p)
           rw [hfeq]; rfl
         linarith [hsplitZ, hRZ, ha'bZ, IHres]
 
+/-- **Sign at `+∞`.** Past all its real roots, a nonzero real polynomial has the
+sign of its leading coefficient. -/
+theorem eval_sign_pos_inf {q : Polynomial ℝ} (hq : q ≠ 0) {x : ℝ}
+    (hbeyond : ∀ y, q.IsRoot y → y < x) :
+    SignType.sign (q.eval x) = SignType.sign q.leadingCoeff := by
+  have hlc : q.leadingCoeff ≠ 0 := Polynomial.leadingCoeff_ne_zero.mpr hq
+  rcases lt_or_gt_of_ne hlc with h | h
+  · rw [sign_neg (Polynomial.eval_lt_zero_of_roots_lt_of_leadingCoeff_nonpos hbeyond h.le),
+      sign_neg h]
+  · rw [sign_pos (Polynomial.zero_lt_eval_of_roots_lt_of_leadingCoeff_nonneg hbeyond h.le),
+      sign_pos h]
+
+/-- **Sign at `−∞`.** Below all its real roots, a nonzero real polynomial has the
+sign of `leadingCoeff · (-1) ^ natDegree`. -/
+theorem eval_sign_neg_inf {q : Polynomial ℝ} (hq : q ≠ 0) {x : ℝ}
+    (hbeyond : ∀ y, q.IsRoot y → x < y) :
+    SignType.sign (q.eval x) = SignType.sign (q.leadingCoeff * (-1) ^ q.natDegree) := by
+  set r := q.comp (-Polynomial.X) with hr
+  have hlcr : r.leadingCoeff = q.leadingCoeff * (-1) ^ q.natDegree := by
+    rw [hr, Polynomial.leadingCoeff_comp (by simp)]; simp
+  have hrne : r ≠ 0 := by
+    intro h; rw [h, Polynomial.leadingCoeff_zero] at hlcr
+    exact (mul_ne_zero (Polynomial.leadingCoeff_ne_zero.mpr hq)
+      (pow_ne_zero _ (by norm_num))) hlcr.symm
+  have heval : r.eval (-x) = q.eval x := by rw [hr, Polynomial.eval_comp]; simp
+  have hbeyond' : ∀ y, r.IsRoot y → y < -x := by
+    intro y hy
+    have hqy : q.IsRoot (-y) := by
+      rw [hr, Polynomial.IsRoot, Polynomial.eval_comp] at hy; simpa using hy
+    have := hbeyond (-y) hqy
+    linarith
+  have hsign := eval_sign_pos_inf hrne hbeyond'
+  rw [heval, hlcr] at hsign
+  exact hsign
+
 /-- **Sturm's theorem, line form.** For `p ≠ 0` squarefree with a generalised
 Sturm chain, the total number of real roots of `p` equals the drop in `sturmVar`
 from `−∞` to `+∞`.
@@ -620,9 +656,58 @@ Proof sketch (SPEC step 5): take `a` below and `b` above every real root
 constant sign past its largest real zero equal to its sign at the corresponding
 infinity, and `(a, b]` contains every real root. Apply `sturm_half_open`; the
 filtered multiset is all of `p.roots`. -/
-theorem sturm_line (_hp : p ≠ 0) (_hsf : Squarefree p)
-    (_hchain : IsSturmChain p chain) :
+theorem sturm_line (hp : p ≠ 0) (hsf : Squarefree p)
+    (hchain : IsSturmChain p chain) :
     (sturmVarNegInf chain : ℤ) - sturmVarPosInf chain = p.roots.card := by
-  sorry
+  classical
+  have hne := hchain.nonzero_mem
+  -- A bound `M > 0` strictly beyond every chain zero (hence every root of every element).
+  obtain ⟨M, hMpos, hM⟩ : ∃ M : ℝ, 0 < M ∧ ∀ x ∈ chainZeros chain, |x| < M := by
+    set B := insert (0 : ℝ) ((chainZeros chain).image (fun x => |x|)) with hB
+    have hBne : B.Nonempty := ⟨0, Finset.mem_insert_self _ _⟩
+    refine ⟨B.max' hBne + 1, ?_, ?_⟩
+    · have : (0 : ℝ) ≤ B.max' hBne := Finset.le_max' B 0 (Finset.mem_insert_self _ _)
+      linarith
+    · intro x hx
+      have : |x| ≤ B.max' hBne :=
+        Finset.le_max' B |x| (Finset.mem_insert.mpr (Or.inr (Finset.mem_image.mpr ⟨x, hx, rfl⟩)))
+      linarith
+  -- Sign of each element at `±M` is its sign at the corresponding infinity.
+  have hpos : ∀ q ∈ chain, SignType.sign (q.eval M) = SignType.sign q.leadingCoeff := by
+    intro q hq
+    apply eval_sign_pos_inf (hne q hq)
+    intro y hy
+    have hyz : y ∈ chainZeros chain := (mem_chainZeros hne).mpr ⟨q, hq, hy⟩
+    have hya := hM y hyz; rw [abs_lt] at hya; exact hya.2
+  have hneg : ∀ q ∈ chain,
+      SignType.sign (q.eval (-M)) = SignType.sign (q.leadingCoeff * (-1) ^ q.natDegree) := by
+    intro q hq
+    apply eval_sign_neg_inf (hne q hq)
+    intro y hy
+    have hyz : y ∈ chainZeros chain := (mem_chainZeros hne).mpr ⟨q, hq, hy⟩
+    have hya := hM y hyz; rw [abs_lt] at hya; exact hya.1
+  -- Hence `sturmVar` at `±M` equals the `±∞` counts.
+  have hMposEq : sturmVar chain M = sturmVarPosInf chain := by
+    show signVariations (chain.map (Polynomial.eval M))
+      = signVariations (chain.map Polynomial.leadingCoeff)
+    apply signVariations_congr
+    rw [List.forall₂_map_left_iff, List.forall₂_map_right_iff, List.forall₂_same]
+    exact hpos
+  have hMnegEq : sturmVar chain (-M) = sturmVarNegInf chain := by
+    show signVariations (chain.map (Polynomial.eval (-M)))
+      = signVariations (chain.map (fun q => q.leadingCoeff * (-1) ^ q.natDegree))
+    apply signVariations_congr
+    rw [List.forall₂_map_left_iff, List.forall₂_map_right_iff, List.forall₂_same]
+    exact hneg
+  -- Apply the half-open form on `(-M, M]`, which catches every root.
+  have hkey := sturm_half_open hp hsf hchain (a := -M) (b := M) (by linarith)
+  have hfilter : p.roots.filter (fun r => -M < r ∧ r ≤ M) = p.roots := by
+    rw [Multiset.filter_eq_self]
+    intro r hr
+    have hroot : p.eval r = 0 := (Polynomial.mem_roots hp).mp hr
+    have hrz : r ∈ chainZeros chain := (mem_chainZeros hne).mpr ⟨p, head_mem hchain, hroot⟩
+    have hra := hM r hrz; rw [abs_lt] at hra
+    exact ⟨hra.1, hra.2.le⟩
+  rw [← hMnegEq, ← hMposEq, hkey, hfilter]
 
 end Sturm
