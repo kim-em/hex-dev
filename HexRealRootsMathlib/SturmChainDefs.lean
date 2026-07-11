@@ -136,6 +136,103 @@ theorem signVariations_congr {l₁ l₂ : List ℝ}
     signVariations l₁ = signVariations l₂ :=
   countSignChanges_congr (filter_ne_zero_congr h)
 
+/-- The sign of the first surviving (nonzero) entry of a real list, as an
+`Option SignType`: `none` when every entry is zero. This is the piece of local
+state that governs how prepending a nonzero entry changes `signVariations`. -/
+@[expose]
+noncomputable def firstSign (l : List ℝ) : Option SignType :=
+  (l.filter (fun v => decide (v ≠ 0))).head?.map (fun a => SignType.sign a)
+
+@[simp] theorem firstSign_nil : firstSign [] = none := rfl
+
+theorem firstSign_cons_zero {a : ℝ} (l : List ℝ) (ha : a = 0) :
+    firstSign (a :: l) = firstSign l := by
+  unfold firstSign; rw [List.filter_cons_of_neg (by simp [ha])]
+
+theorem firstSign_cons_ne {a : ℝ} (l : List ℝ) (ha : a ≠ 0) :
+    firstSign (a :: l) = some (SignType.sign a) := by
+  unfold firstSign
+  rw [List.filter_cons_of_pos (by simp [ha]), List.head?_cons, Option.map_some]
+
+private theorem sign_mul_eq_neg_one {a b : ℝ} :
+    (SignType.sign a * SignType.sign b = -1) ↔ a * b < 0 := by
+  rw [← sign_mul, sign_eq_neg_one_iff]
+
+/-- Prepending a nonzero entry `a` adds one variation exactly when its sign is
+opposite the sign of the next surviving entry. -/
+theorem signVariations_cons_pos {a : ℝ} (l : List ℝ) (ha : a ≠ 0) :
+    signVariations (a :: l) =
+      (firstSign l).elim 0
+        (fun t => if SignType.sign a * t = -1 then 1 else 0) + signVariations l := by
+  induction l with
+  | nil => rw [signVariations_cons_ne a [] ha]; simp [firstSign]
+  | cons b l' ih =>
+    by_cases hb : b = 0
+    · subst hb
+      rw [firstSign_cons_zero l' rfl, signVariations_cons_zero l',
+        signVariations_cons_ne a (0 :: l') ha, List.filter_cons_of_neg (by simp),
+        ← signVariations_cons_ne a l' ha]
+      exact ih
+    · rw [firstSign_cons_ne l' hb, signVariations_cons_ne a (b :: l') ha,
+        List.filter_cons_of_pos (by simp [hb]), countSignChanges_cons_cons,
+        ← signVariations_cons_ne b l' hb]
+      simp only [Option.elim_some]
+      congr 1
+      by_cases hlt : a * b < 0
+      · rw [if_pos hlt, if_pos (sign_mul_eq_neg_one.mpr hlt)]
+      · rw [if_neg hlt, if_neg (fun h => hlt (sign_mul_eq_neg_one.mp h))]
+
+/-- A local sign-pattern relation between two real lists: they agree entry by
+entry except that a nonzero entry flanked by two opposite-sign neighbours may
+collapse to `0`. Such a collapse is variation-neutral, so `signVariations` and
+the leading sign are preserved (`SVRel.signVariations_eq`). -/
+inductive SVRel : List ℝ → List ℝ → Prop
+  | nil : SVRel [] []
+  | same {x y : ℝ} {l m : List ℝ} (hx : x ≠ 0) (hy : y ≠ 0)
+      (hs : SignType.sign x = SignType.sign y) (h : SVRel l m) :
+      SVRel (x :: l) (y :: m)
+  | collapse {x X x' : ℝ} {l m : List ℝ} {y y' : ℝ}
+      (hx : x ≠ 0) (hX : X ≠ 0) (hy' : y' ≠ 0)
+      (hsx : SignType.sign x = SignType.sign x')
+      (hsy : SignType.sign y = SignType.sign y')
+      (hopp : SignType.sign x * SignType.sign y = -1)
+      (h : SVRel (y :: l) (y' :: m)) :
+      SVRel (x :: X :: y :: l) (x' :: 0 :: y' :: m)
+
+private theorem svrel_flank_arith (u v w : SignType) (huw : u * w = -1) (hv : v ≠ 0) :
+    (if u * v = -1 then (1 : ℕ) else 0) + (if v * w = -1 then 1 else 0) = 1 := by
+  revert huw hv; revert u v w; decide
+
+/-- The core combinatorial fact: an `SVRel`-related pair of lists has equal
+sign variations and equal leading sign. -/
+theorem SVRel.signVariations_eq {L M : List ℝ} (h : SVRel L M) :
+    signVariations L = signVariations M ∧ firstSign L = firstSign M := by
+  induction h with
+  | nil => exact ⟨rfl, rfl⟩
+  | @same x y l m hx hy hs h ih =>
+    refine ⟨?_, ?_⟩
+    · rw [signVariations_cons_pos l hx, signVariations_cons_pos m hy, ih.1, ih.2, hs]
+    · rw [firstSign_cons_ne l hx, firstSign_cons_ne m hy, hs]
+  | @collapse x X x' l m y y' hx hX hy' hsx hsy hopp h ih =>
+    have hy : y ≠ 0 := by
+      intro hy0; rw [hy0, sign_zero, mul_zero] at hopp; exact absurd hopp (by decide)
+    have hx' : x' ≠ 0 := by
+      intro hx0; rw [hx0, sign_zero] at hsx; exact hx (sign_eq_zero_iff.mp hsx)
+    refine ⟨?_, ?_⟩
+    · -- signVariations L
+      rw [signVariations_cons_pos (X :: y :: l) hx,
+        firstSign_cons_ne (y :: l) hX, signVariations_cons_pos (y :: l) hX,
+        firstSign_cons_ne l hy]
+      rw [signVariations_cons_pos (0 :: y' :: m) hx',
+        firstSign_cons_zero (y' :: m) rfl, firstSign_cons_ne m hy',
+        signVariations_cons_zero]
+      simp only [Option.elim_some]
+      rw [← add_assoc, ih.1]
+      congr 1
+      rw [← hsx, ← hsy, if_pos hopp]
+      exact svrel_flank_arith _ _ _ hopp (fun h => hX (sign_eq_zero_iff.mp h))
+    · rw [firstSign_cons_ne (X :: y :: l) hx, firstSign_cons_ne (0 :: y' :: m) hx', hsx]
+
 /-- A generalised Sturm chain for `p`: the sign axioms that the counting
 argument actually uses, packaged as explicit fields. The chain is stored as
 a plain `List (Polynomial ℝ)` and elements are addressed by index through
