@@ -405,10 +405,11 @@ re-refine from a stored coarse representative. See
 ## File organisation
 
 - `HexRealRoots/Basic.lean`: `DyadicInterval`, exact dyadic Horner
-  evaluation, `RealRootIsolation`, `RealRootIsolations`.
+  evaluation, sign helper.
 - `HexRealRoots/Chain.lean`: `spem`, `sturmChain`.
 - `HexRealRoots/Var.lean`: `signVar`, `sturmVarAt`, the `±∞`
-  variants, `sturmCount`, `rootCount`.
+  variants, `sturmCount`, `rootCount`, `RealRootIsolation`,
+  `RealRootIsolations`.
 - `HexRealRoots/Prec.lean`: `sepPrec`, `isolationDepth`,
   `rootBound`.
 - `HexRealRoots/Mobius.lean`: `mobiusTransform` (Taylor shift based),

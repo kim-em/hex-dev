@@ -109,6 +109,8 @@ lean_lib HexGFq where
 
 lean_lib HexBerlekampZassenhaus where
 
+lean_lib HexRealRoots where
+
 @[default_target]
 lean_lib HexPolyMathlib where
 
