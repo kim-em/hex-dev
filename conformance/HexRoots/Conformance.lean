@@ -157,13 +157,17 @@ private def nearRealAxis (s : DyadicSquare) : Bool :=
   let r := s.radiusHi.toRat
   decide (-r ≤ cim ∧ cim ≤ r ∧ -(1 + r) ≤ cre ∧ cre ≤ 1 + r)
 
-/-- Each atom of `a` meets exactly one atom of `b`. At the emitted precision two
-    atoms meet exactly when they isolate the same root, so this is the pairwise
-    strategy-agreement test. -/
+/-- Each atom of `a` meets exactly one atom of `b` and vice versa (a
+    bijection; one direction plus size equality would not exclude two `a`
+    atoms sharing a root while another root goes missing). At the emitted
+    precision two atoms meet exactly when they isolate the same root, so
+    this is the pairwise strategy-agreement test. -/
 private def matchAcross {p : ZPoly} (a b : Array (DyadicRootIsolation p)) : Bool :=
   a.size == b.size &&
-    a.all fun ai =>
-      (b.filter fun bi => DyadicSquare.discsMeet ai.square bi.square).size == 1
+    (a.all fun ai =>
+      (b.filter fun bi => DyadicSquare.discsMeet ai.square bi.square).size == 1) &&
+    (b.all fun bi =>
+      (a.filter fun ai => DyadicSquare.discsMeet ai.square bi.square).size == 1)
 
 /-! ### Runtime entry points.
 
