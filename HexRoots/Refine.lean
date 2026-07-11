@@ -89,6 +89,13 @@ def Certified.toComponent {p : ZPoly} : Certified p → Component
       else
         true
 
+/-- Fuel for `isolateLoop`: the laggard's climb from the worklist's
+    coarsest prec to `stopDepth`, plus a second climb from `target` to
+    `stopDepth` for a held component forced back into refinement by a
+    late-certifying overlapping sibling (see `isolateLoop`). -/
+@[expose] def fuelFor (p : ZPoly) (target : Int) (start : Int) : Nat :=
+  (stopDepth p target - start).toNat + (stopDepth p target - target).toNat + 1
+
 /-- The shared driver loop over the worklist. Each round certifies every
     component; if all certify at stored prec at least `target` with pairwise
     disjoint circumscribed discs (SPEC "Separation of the output"), the round
@@ -97,13 +104,16 @@ def Certified.toComponent {p : ZPoly} : Certified p → Component
     every other surviving component subdivides one level, except that one
     adopting a strictly finer certified result keeps that result as a
     one-square component instead. Each non-emitting round strictly
-    increases every non-held component's prec, and held components are at
-    target already, so the laggard's prec still reaches `stopDepth` within
-    the fuel; the loop recurses on the smaller fuel. `fuel = 0` returns `none`, the SPEC give-up
-    semantics (up to a harmless constant of overshoot); a caller sizes the
-    fuel as `(stopDepth p target − min prec).toNat + 1` so the loop reaches
-    `stopDepth` before running out. The recursion is structural on the fuel
-    `Nat`. -/
+    increases every non-held component's prec, and held components sit at
+    target, so the laggard's prec reaches `stopDepth` within
+    `(stopDepth − min prec)` rounds. A held component can be forced back
+    into refinement late, when a slow sibling finally certifies with an
+    overlapping disc, so `fuelFor` budgets a second climb on top: past
+    `separationDepth` every certified disc is below `sep/4` and distinct
+    roots' discs are disjoint, so `(stopDepth − target)` further rounds
+    suffice. `fuel = 0` returns `none`, the SPEC give-up semantics (up to a
+    harmless constant of overshoot). The recursion is structural on the
+    fuel `Nat`. -/
 def isolateLoop (p : ZPoly) (target : Int) (strategy : AtomStrategy) :
     Nat → Array Component → Option (Array (Certified p))
   | 0, _ => none
@@ -149,7 +159,7 @@ def DyadicRootIsolation.refineTo? {p : ZPoly} (iso : DyadicRootIsolation p)
     (target : Int) (strategy : AtomStrategy := .nkThenPellet) :
     Option (DyadicRootIsolation p) :=
   if target ≤ iso.square.prec then some iso else
-  let fuel := (stopDepth p target - iso.square.prec).toNat + 1
+  let fuel := fuelFor p target iso.square.prec
   match isolateLoop p target strategy fuel #[⟨#[iso.square.doubled], 1⟩] with
   | some rs =>
     if rs.size = 1 then
