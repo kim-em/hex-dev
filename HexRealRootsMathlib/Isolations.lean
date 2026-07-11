@@ -35,11 +35,14 @@ Both consume only the decidable certificate fields (`count_one`, `ordered`,
 `rootCount_eq_card_roots` from `ChainCorrespond`.
 
 The correspondence theorems carry a `1 ≤ (p.degree?).getD 0` hypothesis
-(`SquareFreeRat` alone is insufficient — `SquareFreeRat 0` is vacuous). The
-isolation theorems do **not** need it as a separate hypothesis: a
+(`SquareFreeRat` alone is insufficient — `SquareFreeRat 0` is vacuous).
+`exists_unique_root` does **not** need any extra hypothesis: a
 `RealRootIsolation` carries `count_one`, and a Sturm count of `1` forces a
-nonempty chain, hence positive degree (`degree_pos_of_count_one`). So the
-statements match the SPEC verbatim, taking only `SquareFreeRat p`.
+nonempty chain, hence positive degree (`degree_pos_of_count_one`), so the
+statement matches the SPEC verbatim. `isolates` takes `p ≠ 0` (the SPEC's
+`SquareFreeRat`-only form fails at `p = 0`, where every real is a root but
+`complete` forces zero isolations); the nonzero-constant case is vacuous, and
+the positive-degree case is the real content.
 -/
 
 namespace HexRealRootsMathlib
@@ -73,6 +76,17 @@ theorem degree_pos_of_count_one (iso : Hex.RealRootIsolation p) :
   simp only [Hex.sturmVarAt, List.map_nil, Hex.signVar, List.filter_nil,
     Hex.signVar.go, Nat.cast_zero, sub_zero] at hc
   exact absurd hc (by norm_num)
+
+/-- A nonzero executable polynomial has a `some` degree: `degree? = none` means
+zero stored size, which pins every coefficient (hence the polynomial) to zero. -/
+theorem degree?_ne_none (hp0 : p ≠ 0) : p.degree? ≠ none := by
+  intro h
+  have hsz : p.size = 0 := (Hex.DensePoly.degree?_eq_none_iff p).mp h
+  apply hp0
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [Hex.DensePoly.coeff_zero]
+  exact Hex.DensePoly.coeff_eq_zero_of_size_le p (by omega)
 
 /-- Dyadic order transfers to the real values. -/
 private theorem toReal_le_toReal {a b : Dyadic} (h : a ≤ b) :
@@ -111,17 +125,10 @@ theorem RealRootIsolation.exists_unique_root (hp : Hex.ZPoly.SquareFreeRat p)
   rw [ha, Multiset.mem_singleton] at hyM
   exact hyM
 
-/-- **Completeness of a run.** A complete isolation run of a positive-degree,
-rationally squarefree `p` names every real root of `toPolyℝ p` exactly once:
-each root lies in exactly one of the emitted half-open intervals.
-
-The SPEC states this with only `SquareFreeRat p`, but that is unsound: for
-`p = 0` (which passes `SquareFreeRat`) every real is a root while `complete`
-forces zero isolations, so no root is captured. The positive-degree hypothesis
-`1 ≤ (p.degree?).getD 0` (equivalently `p ≠ 0` after excluding the vacuous
-nonzero-constant case) is the honest hypothesis; it matches the correspondence
-theorems `sturmCount_eq_card_roots`/`rootCount_eq_card_roots`. -/
-theorem RealRootIsolations.isolates (hdeg : 1 ≤ (p.degree?).getD 0)
+/-- The positive-degree core of `RealRootIsolations.isolates`: the injective
+root map from isolations hits `rootCount p` distinct roots, which is all of
+them. -/
+private theorem isolates_of_degree_pos (hdeg : 1 ≤ (p.degree?).getD 0)
     (hp : Hex.ZPoly.SquareFreeRat p) (out : Hex.RealRootIsolations p) :
     ∀ r : ℝ, (toPolyℝ p).IsRoot r →
       ∃! iso ∈ out.isolations.toList,
@@ -191,6 +198,37 @@ theorem RealRootIsolations.isolates (hdeg : 1 ≤ (p.degree?).getD 0)
     apply hinj; rw [← hrj, hi_eq]
   exact hjeq'.symm.trans
     (congrArg (fun k : Fin out.isolations.size => out.isolations[k]) hij)
+
+/-- **Completeness of a run.** A complete isolation run of a nonzero, rationally
+squarefree `p` names every real root of `toPolyℝ p` exactly once: each root lies
+in exactly one of the emitted half-open intervals.
+
+The SPEC states this with only `SquareFreeRat p`, but that is unsound: for
+`p = 0` (which passes `SquareFreeRat`) every real is a root while `complete`
+forces zero isolations, so no root is captured. `p ≠ 0` is the honest
+hypothesis: a nonzero constant has no roots (vacuous case), and the
+positive-degree case is `isolates_of_degree_pos`. -/
+theorem RealRootIsolations.isolates (hp0 : p ≠ 0)
+    (hp : Hex.ZPoly.SquareFreeRat p) (out : Hex.RealRootIsolations p) :
+    ∀ r : ℝ, (toPolyℝ p).IsRoot r →
+      ∃! iso ∈ out.isolations.toList,
+        Dyadic.toReal iso.interval.lower < r ∧ r ≤ Dyadic.toReal iso.interval.upper := by
+  rcases hd : p.degree? with _ | n
+  · exact absurd hd (degree?_ne_none hp0)
+  · rcases n with _ | n
+    · -- A nonzero constant: no roots, so the statement is vacuous.
+      intro r hr
+      exfalso
+      have hP0 : toPolyℝ p ≠ 0 := fun h => hp0 (toPolyℝ_eq_zero_iff.mp h)
+      have hnd : (toPolyℝ p).natDegree = 0 := by
+        rw [natDegree_toPolyℝ, hd]; rfl
+      have hC := Polynomial.eq_C_of_natDegree_eq_zero hnd
+      have hc0 : (toPolyℝ p).coeff 0 = 0 := by
+        have := hr
+        rw [Polynomial.IsRoot, hC, Polynomial.eval_C] at this
+        exact this
+      exact hP0 (by rw [hC, hc0, Polynomial.C_0])
+    · exact isolates_of_degree_pos (by simp [hd]) hp out
 
 end
 

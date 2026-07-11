@@ -32,7 +32,8 @@ public section
   and halves the interval width (the fallback branch is unreachable for
   squarefree `p`).
 * `isolateSturm?_isSome`, `isolate?_isSome`: the Sturm engine (and hence the
-  top-level driver) succeeds on positive-degree squarefree input.
+  top-level driver) succeeds on nonzero squarefree input (positive degree is
+  the real content; a nonzero constant certifies through the empty chain).
 
 ## The `±rootBound` counts match `rootCount` with no chain-element gap
 
@@ -684,14 +685,11 @@ private theorem isolateSturm?_eq {d : Nat} (hd : p.degree? = some (d + 1))
 
 /-! ### Driver completeness -/
 
-/-- **The Sturm engine succeeds on positive-degree squarefree input.** The
-worklist drains (`sturmVisit_spec`) and the emitted total matches
-`rootCount p = sturmVarNegInf − sturmVarPosInf` (the `±rootBound` gap counts every
-root, `sturmVar_neg_pos_sub`), so `assemble?` certifies.
-
-The SPEC states this with only `SquareFreeRat p`; the positive-degree hypothesis
-`1 ≤ (p.degree?).getD 0` is added because `SquareFreeRat 0` is vacuous. -/
-theorem isolateSturm?_isSome (p : Hex.ZPoly) (hdeg : 1 ≤ (p.degree?).getD 0)
+/-- The positive-degree core of `isolateSturm?_isSome`: the worklist drains
+(`sturmVisit_spec`) and the emitted total matches
+`rootCount p = sturmVarNegInf − sturmVarPosInf` (the `±rootBound` gap counts
+every root, `sturmVar_neg_pos_sub`), so `assemble?` certifies. -/
+private theorem isolateSturm?_isSome_of_degree_pos (hdeg : 1 ≤ (p.degree?).getD 0)
     (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.isolateSturm? p).isSome := by
   obtain ⟨d, hd⟩ : ∃ d, p.degree? = some (d + 1) := by
     rcases hh : p.degree? with _ | n
@@ -714,12 +712,45 @@ theorem isolateSturm?_isSome (p : Hex.ZPoly) (hdeg : 1 ≤ (p.degree?).getD 0)
   rw [isolateSturm?_eq hd hp, hvisit]
   exact assemble?_isSome rfl arr hord hsize'
 
-/-- **The top-level driver succeeds on positive-degree squarefree input.** A
-one-liner over `isolateSturm?_isSome`: `isolate?` keeps whichever engine's
-certified output arrives first, and the Sturm engine always has one. -/
-theorem isolate?_isSome (p : Hex.ZPoly) (hdeg : 1 ≤ (p.degree?).getD 0)
+/-- The Sturm engine on a nonzero constant: the driver's `some 0` branch hands
+`assemble?` the empty emission array, and the empty chain certifies
+`rootCount p = 0` (`sturmVarNegInf #[] − sturmVarPosInf #[] = 0`). -/
+private theorem isolateSturm?_isSome_of_degree_zero (hd : p.degree? = some 0) :
+    (Hex.isolateSturm? p).isSome := by
+  have heq : Hex.isolateSturm? p = Hex.assemble? p (Hex.ZPoly.sturmChain p) rfl #[] := by
+    unfold Hex.isolateSturm?
+    rw [hd]
+  have hchain0 : Hex.ZPoly.sturmChain p = #[] := by
+    unfold Hex.ZPoly.sturmChain
+    rw [hd]
+    rfl
+  rw [heq]
+  refine assemble?_isSome rfl #[] ?_ ?_
+  · intro i j hij
+    exact absurd i.isLt (by simp)
+  · rw [hchain0]
+    rfl
+
+/-- **The Sturm engine succeeds on nonzero squarefree input.** Positive degree
+is the real content (`isolateSturm?_isSome_of_degree_pos`); a nonzero constant
+certifies through the empty chain.
+
+The SPEC states this with only `SquareFreeRat p`; the `p ≠ 0` hypothesis is
+added because `SquareFreeRat 0` is vacuous while `isolateSturm? 0 = none`. -/
+theorem isolateSturm?_isSome (p : Hex.ZPoly) (hp0 : p ≠ 0)
+    (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.isolateSturm? p).isSome := by
+  rcases hd : p.degree? with _ | n
+  · exact absurd hd (degree?_ne_none hp0)
+  · rcases n with _ | n
+    · exact isolateSturm?_isSome_of_degree_zero hd
+    · exact isolateSturm?_isSome_of_degree_pos (by simp [hd]) hp
+
+/-- **The top-level driver succeeds on nonzero squarefree input.** A one-liner
+over `isolateSturm?_isSome`: `isolate?` keeps whichever engine's certified
+output arrives first, and the Sturm engine always has one. -/
+theorem isolate?_isSome (p : Hex.ZPoly) (hp0 : p ≠ 0)
     (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.isolate? p).isSome := by
-  have hs := isolateSturm?_isSome p hdeg hp
+  have hs := isolateSturm?_isSome p hp0 hp
   unfold Hex.isolate?
   cases hD : Hex.isolateDescartes? p with
   | some a => rfl
