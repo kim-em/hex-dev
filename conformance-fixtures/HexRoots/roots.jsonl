@@ -1,0 +1,12 @@
+{"kind":"poly","lib":"HexRoots","case":"rational/deg3","coeffs":[6,-7,0,1],"modulus":null}
+{"kind":"result","lib":"HexRoots","case":"rational/deg3","op":"isolateAll32","value":[{"kind":"atom","k":1,"re_num":2,"re_den":1,"im_num":0,"im_den":1,"prec":99},{"kind":"atom","k":1,"re_num":1,"re_den":1,"im_num":0,"im_den":1,"prec":35},{"kind":"atom","k":1,"re_num":-3,"re_den":1,"im_num":0,"im_den":1,"prec":67}]}
+{"kind":"poly","lib":"HexRoots","case":"rational/x3_minus_x","coeffs":[0,-1,0,1],"modulus":null}
+{"kind":"result","lib":"HexRoots","case":"rational/x3_minus_x","op":"isolateAll32","value":[{"kind":"atom","k":1,"re_num":0,"re_den":1,"im_num":0,"im_den":1,"prec":35},{"kind":"atom","k":1,"re_num":-1,"re_den":1,"im_num":0,"im_den":1,"prec":35},{"kind":"atom","k":1,"re_num":1,"re_den":1,"im_num":0,"im_den":1,"prec":35}]}
+{"kind":"poly","lib":"HexRoots","case":"gaussian/x2p4_xm1_xp3","coeffs":[-12,8,1,2,1],"modulus":null}
+{"kind":"result","lib":"HexRoots","case":"gaussian/x2p4_xm1_xp3","op":"isolateAll32","value":[{"kind":"atom","k":1,"re_num":0,"re_den":1,"im_num":-2,"im_den":1,"prec":35},{"kind":"atom","k":1,"re_num":0,"re_den":1,"im_num":2,"im_den":1,"prec":35},{"kind":"atom","k":1,"re_num":-3,"re_den":1,"im_num":0,"im_den":1,"prec":35},{"kind":"atom","k":1,"re_num":1,"re_den":1,"im_num":0,"im_den":1,"prec":35}]}
+{"kind":"poly","lib":"HexRoots","case":"cluster/x2p1_x5sq","coeffs":[25,-10,26,-10,1],"modulus":null}
+{"kind":"result","lib":"HexRoots","case":"cluster/x2p1_x5sq","op":"isolateAll32","value":[{"kind":"atom","k":1,"re_num":0,"re_den":1,"im_num":-1,"im_den":1,"prec":51},{"kind":"atom","k":1,"re_num":0,"re_den":1,"im_num":1,"im_den":1,"prec":51},{"kind":"cluster","k":2,"re_num":5,"re_den":1,"im_num":0,"im_den":1,"prec":48}]}
+{"kind":"poly","lib":"HexRoots","case":"cluster/xm1sq_xm4","coeffs":[-4,9,-6,1],"modulus":null}
+{"kind":"result","lib":"HexRoots","case":"cluster/xm1sq_xm4","op":"isolateAll32","value":[{"kind":"cluster","k":2,"re_num":1,"re_den":1,"im_num":0,"im_den":1,"prec":64},{"kind":"atom","k":1,"re_num":4,"re_den":1,"im_num":0,"im_den":1,"prec":35}]}
+{"kind":"poly","lib":"HexRoots","case":"cluster/x2p1sq","coeffs":[1,0,2,0,1],"modulus":null}
+{"kind":"result","lib":"HexRoots","case":"cluster/x2p1sq","op":"isolateAll32","value":[{"kind":"cluster","k":2,"re_num":0,"re_den":1,"im_num":1,"im_den":1,"prec":48},{"kind":"cluster","k":2,"re_num":0,"re_den":1,"im_num":-1,"im_den":1,"prec":48}]}
