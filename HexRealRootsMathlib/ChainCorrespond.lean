@@ -376,6 +376,73 @@ private theorem toPolyℝ_spemStep (g r : Hex.ZPoly) :
             (Hex.DensePoly.shift ((r.degree?).getD 0 - (g.degree?).getD 0) g) := rfl
   rw [hstep, toPolyℝ_sub, toPolyℝ_scale, toPolyℝ_scale, toPolyℝ_shift]
 
+/-- **The `spemAux` division relation over `ℝ`.** For a divisor `g` with nonzero
+leading coefficient, the reduction loop produces a positive `C`-multiple of the
+input `r` differing from a polynomial multiple of `g`: there is `c > 0` and a
+quotient `Q` with `C c · toPolyℝ r = Q · toPolyℝ g + toPolyℝ (spemAux g fuel r)`.
+Induction on the structural fuel; each `spemStep` peels one `|lc g|` factor. -/
+private theorem spemAux_relate (g : Hex.ZPoly) (hg : g.leadingCoeff ≠ 0) :
+    ∀ (fuel : ℕ) (r : Hex.ZPoly),
+      ∃ (c : ℝ) (Q : Polynomial ℝ), 0 < c ∧
+        Polynomial.C c * toPolyℝ r
+          = Q * toPolyℝ g + toPolyℝ (Hex.ZPoly.spemAux g fuel r) := by
+  have habs : (0:ℝ) <
+      ((if g.leadingCoeff < 0 then -g.leadingCoeff else g.leadingCoeff : Int) : ℝ) := by
+    have : (0:Int) < (if g.leadingCoeff < 0 then -g.leadingCoeff else g.leadingCoeff) := by
+      split_ifs with h <;> omega
+    exact_mod_cast this
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro r
+      exact ⟨1, 0, one_pos, by
+        rw [show Hex.ZPoly.spemAux g 0 r = r from rfl]; simp⟩
+  | succ fuel ih =>
+      intro r
+      have hunf : Hex.ZPoly.spemAux g (fuel + 1) r =
+          (if r.isZero then r
+           else if (r.degree?).getD 0 < (g.degree?).getD 0 then r
+           else Hex.ZPoly.spemAux g fuel (Hex.ZPoly.spemStep g r)) := rfl
+      by_cases h0 : r.isZero
+      · exact ⟨1, 0, one_pos, by rw [hunf, if_pos h0]; simp⟩
+      · by_cases h1 : (r.degree?).getD 0 < (g.degree?).getD 0
+        · exact ⟨1, 0, one_pos, by rw [hunf, if_neg h0, if_pos h1]; simp⟩
+        · obtain ⟨c', Q', hc', hrel'⟩ := ih (Hex.ZPoly.spemStep g r)
+          refine ⟨c' * ((if g.leadingCoeff < 0 then -g.leadingCoeff
+                    else g.leadingCoeff : Int) : ℝ),
+              Polynomial.C c' * Polynomial.C ((if g.leadingCoeff < 0 then -r.leadingCoeff
+                    else r.leadingCoeff : Int) : ℝ)
+                * Polynomial.X ^ ((r.degree?).getD 0 - (g.degree?).getD 0) + Q',
+              mul_pos hc' habs, ?_⟩
+          rw [hunf, if_neg h0, if_neg h1, Polynomial.C_mul]
+          have key : toPolyℝ (Hex.ZPoly.spemAux g fuel (Hex.ZPoly.spemStep g r))
+              = Polynomial.C c' * toPolyℝ (Hex.ZPoly.spemStep g r) - Q' * toPolyℝ g := by
+            rw [hrel']; ring
+          rw [key, toPolyℝ_spemStep]
+          ring
+
+/-- **The `spem` correspondence.** For a nonconstant divisor `g` (positive
+degree, hence nonzero leading coefficient), the executable sign-managed
+pseudo-remainder `spem f g` is a positive real multiple of the field remainder
+of `f` by `g`: there is `c > 0` and a quotient `Q` with
+`C c · toPolyℝ f = Q · toPolyℝ g + toPolyℝ (spem f g)`. Evaluating at a zero `x`
+of `g` collapses this to `c · f(x) = (spem f g)(x)`, the sign-transfer identity
+the chain axioms consume. -/
+theorem toPolyℝ_spem (f g : Hex.ZPoly) (hg : g.leadingCoeff ≠ 0)
+    (hdeg : 1 ≤ (g.degree?).getD 0) :
+    ∃ (c : ℝ) (Q : Polynomial ℝ), 0 < c ∧
+      Polynomial.C c * toPolyℝ f = Q * toPolyℝ g + toPolyℝ (Hex.ZPoly.spem f g) := by
+  obtain ⟨m, hm⟩ : ∃ m, g.degree? = some m := by
+    cases h : g.degree? with
+    | none => rw [h] at hdeg; simp at hdeg
+    | some m => exact ⟨m, rfl⟩
+  have hm1 : m ≠ 0 := by rw [hm] at hdeg; simp only [Option.getD_some] at hdeg; omega
+  obtain ⟨m', rfl⟩ := Nat.exists_eq_succ_of_ne_zero hm1
+  have hspem : Hex.ZPoly.spem f g = Hex.ZPoly.spemAux g f.size f := by
+    unfold Hex.ZPoly.spem; rw [hm]; rfl
+  rw [hspem]
+  exact spemAux_relate g hg f.size f
+
 end
 
 end HexRealRootsMathlib
