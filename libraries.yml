@@ -489,7 +489,7 @@ libraries:
     deps: [HexRealRoots, HexPolyZMathlib]
     mathlib: true
     done_through: 0
-    status: planned
+    status: active
   HexRCF:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
     mathlib: true
