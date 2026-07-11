@@ -8,6 +8,7 @@ module
 
 public import HexRoots.Basic
 public import HexRoots.MahlerPrec
+public import HexRoots.Taylor
 
 public section
 
