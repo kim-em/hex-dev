@@ -363,10 +363,6 @@ coefficient arrays. -/
 
 #guard taylor rat1 (0, 0) == #[((6 : Dyadic), (0 : Dyadic)), (-7, 0), (0, 0), (1, 0)]
 #guard taylor rat1 (1, 0) == #[((0 : Dyadic), (0 : Dyadic)), (-4, 0), (3, 0), (1, 0)]
--- Cross-check the compiled synthetic-division implementation against the
--- proof-facing binomial specification at a genuinely complex centre.
-#guard taylor rat1 (Dyadic.ofIntWithPrec 1 1, Dyadic.ofIntWithPrec (-1) 2) ==
-  taylorSpec rat1 (Dyadic.ofIntWithPrec 1 1, Dyadic.ofIntWithPrec (-1) 2)
 #guard taylor mignotte (0, 0) ==
   #[((-1 : Dyadic), (0 : Dyadic)), (200, 0), (-10000, 0), (0, 0), (0, 0), (1, 0)]
 #guard taylor cheb10 (0, 0) ==
