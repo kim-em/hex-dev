@@ -56,6 +56,145 @@ namespace Hex
       if e < 0 then 0
       else .ofIntWithPrec (((2 ^ e.toNat : Nat) : Int) / n) q
 
+/-- On positive inputs, the kernel-reducible reciprocal used by
+    `nkWitnessCheck` agrees with the standard dyadic reciprocal. -/
+theorem Dyadic.invFloor_eq_invAtPrec_of_pos {x : Dyadic} (hx : 0 < x) (q : Int) :
+    Hex.Dyadic.invFloor x q = x.invAtPrec q := by
+  rcases x with _ | ⟨n, k, hn⟩
+  · contradiction
+  simp only [Dyadic.invFloor]
+  have hnpos : 0 < n := by
+    rw [← Dyadic.toRat_lt_toRat_iff] at hx
+    simpa only [Dyadic.toRat_zero,
+      Dyadic.toRat_ofOdd_eq_mul_two_pow,
+      Rat.mul_pos_iff_of_pos_right (Rat.zpow_pos (by decide : (0 : Rat) < 2)),
+      Rat.intCast_pos] using hx
+  simp only [show ¬ n < 0 by omega, ↓reduceIte]
+  apply Dyadic.eq_invAtPrec hx
+  · split
+    · change (0 : Dyadic).precision ≤ some q
+      rw [show (0 : Dyadic) = .zero from rfl]
+      exact Option.none_le
+    · rename_i h
+      by_cases hz : ((2 ^ (q + k).toNat : Nat) : Int) / n = 0
+      · rw [hz]
+        change (0 : Dyadic).precision ≤ some q
+        rw [show (0 : Dyadic) = .zero from rfl]
+        exact Option.none_le
+      · exact Dyadic.precision_ofIntWithPrec_le hz q
+  · rw [← Dyadic.toRat_le_toRat_iff]
+    simp only [Dyadic.toRat_mul]
+    split
+    · simp only [Dyadic.toRat_zero]
+      rw [Rat.zero_mul]
+      change (0 : Rat) ≤ Dyadic.toRat (1 : Dyadic)
+      rw [← Dyadic.toRat_zero, Dyadic.toRat_le_toRat_iff]
+      decide
+    · simp only [Dyadic.toRat_ofIntWithPrec_eq_mul_two_pow,
+        Dyadic.toRat_ofOdd_eq_mul_two_pow]
+      rename_i he
+      have hdiv := Int.ediv_mul_le (((2 ^ (q + k).toNat : Nat) : Int))
+        (Int.ne_of_gt hnpos)
+      have hdiv' : ((((2 ^ (q + k).toNat : Nat) : Int) / n * n : Int) : Rat) ≤
+          (((2 ^ (q + k).toNat : Nat) : Int) : Rat) :=
+        Rat.intCast_le_intCast.mpr hdiv
+      simp only [Rat.intCast_mul] at hdiv'
+      have hpows : (2 : Rat) ^ (-q) * 2 ^ (-k) = 2 ^ (-(q + k)) := by
+        rw [← Rat.zpow_add (by decide)]
+        congr 1 <;> omega
+      have hpow : ((((2 ^ (q + k).toNat : Nat) : Int) : Rat)) *
+          (2 : Rat) ^ (-(q + k)) = 1 := by
+        have hqk : q + k = ((q + k).toNat : Int) := by omega
+        have hcastpow : ((((2 ^ (q + k).toNat : Nat) : Int) : Rat)) =
+            (2 : Rat) ^ (q + k) := by
+          rw [hqk, Rat.zpow_natCast, Rat.intCast_natCast]
+          simp only [Int.toNat_natCast]
+          exact Rat.natCast_pow 2 _
+        rw [hcastpow, Rat.zpow_neg]
+        exact Rat.mul_inv_cancel _ (Rat.ne_of_gt (Rat.zpow_pos (by decide)))
+      have hone : Dyadic.toRat (1 : Dyadic) = (1 : Rat) := by rfl
+      rw [hone]
+      calc
+        _ = (((((2 ^ (q + k).toNat : Nat) : Int) / n : Int) : Rat)) * (n : Rat) *
+            (2 ^ (-q) * 2 ^ (-k)) := by grind
+        _ = (((((2 ^ (q + k).toNat : Nat) : Int) / n : Int) : Rat)) * (n : Rat) *
+            2 ^ (-(q + k)) := by rw [hpows]
+        _ ≤ ((((2 ^ (q + k).toNat : Nat) : Int) : Rat)) *
+            2 ^ (-(q + k)) :=
+          Rat.mul_le_mul_of_nonneg_right hdiv' (Rat.zpow_nonneg (by decide))
+        _ = 1 := hpow
+  · rw [← Dyadic.toRat_lt_toRat_iff]
+    simp only [Dyadic.toRat_mul, Dyadic.toRat_add,
+      Dyadic.toRat_ofIntWithPrec_eq_mul_two_pow,
+      Dyadic.toRat_ofOdd_eq_mul_two_pow]
+    split
+    · simp only [Dyadic.toRat_zero]
+      rename_i he
+      have hone : Dyadic.toRat (1 : Dyadic) = (1 : Rat) := by rfl
+      rw [hone]
+      simp only [Rat.intCast_one, Rat.one_mul, Rat.zero_add]
+      have hpows : (2 : Rat) ^ (-q) * 2 ^ (-k) = 2 ^ (-(q + k)) := by
+        rw [← Rat.zpow_add (by decide)]
+        congr 1 <;> omega
+      have hpow_gt : (1 : Rat) < 2 ^ (-(q + k)) := by
+        have hmpos : 0 < -(q + k) := by omega
+        obtain ⟨m, hm⟩ : ∃ m : Nat, -(q + k) = (m + 1 : Nat) := by
+          exact ⟨(-(q + k)).toNat - 1, by omega⟩
+        rw [hm, Rat.zpow_natCast]
+        clear hm he
+        induction m with
+        | zero => decide
+        | succ m ih =>
+          rw [Rat.pow_succ]
+          have hstep : (2 : Rat) ^ (m + 1) < (2 : Rat) ^ (m + 1) * 2 := by
+            simpa using Rat.mul_lt_mul_of_pos_left (by decide : (1 : Rat) < 2)
+              (Rat.pow_pos (by decide : (0 : Rat) < 2) : 0 < (2 : Rat) ^ (m + 1))
+          apply Rat.not_le.mp
+          intro h
+          exact Rat.not_le.mpr ih (Rat.le_trans (Rat.le_of_lt hstep) h)
+      have hnrat : (1 : Rat) ≤ (n : Rat) :=
+        Rat.intCast_le_intCast.mpr (show (1 : Int) ≤ n by omega)
+      have hmul : 2 ^ (-(q + k)) ≤ (n : Rat) * 2 ^ (-(q + k)) := by
+        simpa using Rat.mul_le_mul_of_nonneg_right hnrat
+          (Rat.zpow_nonneg (by decide : (0 : Rat) ≤ 2))
+      have hfinal : (1 : Rat) < (n : Rat) * 2 ^ (-(q + k)) := by
+        apply Rat.not_le.mp
+        intro h
+        exact Rat.not_le.mpr hpow_gt (Rat.le_trans hmul h)
+      rw [← hpows] at hfinal
+      grind
+    · rename_i he
+      simp only [Dyadic.toRat_ofIntWithPrec_eq_mul_two_pow]
+      have hone : Dyadic.toRat (1 : Dyadic) = (1 : Rat) := by rfl
+      rw [hone]
+      let a : Int := (2 ^ (q + k).toNat : Nat)
+      have hlt := Int.lt_ediv_add_one_mul_self a hnpos
+      have hlt' : (a : Rat) < (((a / n + 1 : Int) : Rat)) * (n : Rat) := by
+        rw [← Rat.intCast_mul, Rat.intCast_lt_intCast]
+        exact hlt
+      simp only [Rat.intCast_add, Rat.intCast_one] at hlt'
+      have hpows : (2 : Rat) ^ (-q) * 2 ^ (-k) = 2 ^ (-(q + k)) := by
+        rw [← Rat.zpow_add (by decide)]
+        congr 1 <;> omega
+      have hpow0 : ((((2 ^ (q + k).toNat : Nat) : Int) : Rat)) *
+          (2 : Rat) ^ (-(q + k)) = 1 := by
+        have hqk : q + k = ((q + k).toNat : Int) := by omega
+        have hcastpow : ((((2 ^ (q + k).toNat : Nat) : Int) : Rat)) =
+            (2 : Rat) ^ (q + k) := by
+          rw [hqk, Rat.zpow_natCast, Rat.intCast_natCast]
+          simp only [Int.toNat_natCast]
+          exact Rat.natCast_pow 2 _
+        rw [hcastpow, Rat.zpow_neg]
+        exact Rat.mul_inv_cancel _ (Rat.ne_of_gt (Rat.zpow_pos (by decide)))
+      have hpow : (a : Rat) * (2 : Rat) ^ (-(q + k)) = 1 := by
+        simpa [a] using hpow0
+      have hltmul := Rat.mul_lt_mul_of_pos_right hlt'
+        (Rat.zpow_pos (by decide : (0 : Rat) < 2) : 0 < (2 : Rat) ^ (-(q + k)))
+      rw [hpow] at hltmul
+      dsimp [a] at hltmul ⊢
+      rw [← hpows] at hltmul
+      grind
+
 /-- The Newton-Kantorovich contraction check on the closed square `s` itself
     (sup norm), with `r = 2^{−s.prec}` the half-width. Writing
     `cs = taylor p s.center` for the exact Taylor coefficients and requiring
