@@ -115,25 +115,25 @@ The two parametric verdicts are consistent:
 
 | registration | model | verdict | evidence | final hash |
 |---|---|---|---|---|
-| `runMahlerPrec` | `n` | consistent | `β=-0.142` over `16..256` | `0xc83` |
-| `runIsolate` | `n⁵` | consistent | range `cMin=4349.549`, `cMax=5325.551` over `4..10` | `0xda631bdf13415a4f` |
+| `runMahlerPrec` | `n` | consistent | `β=-0.144` over `16..256` | `0xc83` |
+| `runIsolate` | `n⁵` | consistent | range `cMin=4878.883`, `cMax=6775.690` over `4..10` | `0xda631bdf13415a4f` |
 
 Fixed medians (all five repeats agree on the shown hash):
 
 | registration | canonical input | median | hash |
 |---|---|---:|---|
-| `runTaylor` | seeded degree 128, centre 1 | 2.196 ms | `0x9917b7b230496af4` |
-| `runWitnessCheck` | bounded-height degree 128 | 2.314 ms | `0xb` |
-| `runNkWitnessCheck` | bounded-height degree 128 | 2.226 ms | `0xb` |
-| `runNewtonSquare` | bounded-height degree 128 | 2.123 ms | `0x450307c7dcbe905c` |
-| `runRefine1` | fixed-separation degree 8 | 745.770 µs | `0x0e207bbfd1454f77` |
-| `runCertify` | pinned-NK degree 128 | 6.459 ms | `0x1698ec123da6112f` |
-| `runIsolateAll` | fixed-separation degree 12 | 1.704 s | `0xecd908d19d73e5c4` |
-| `runRefineTo` | achieved precision 131077 | 314.073 ms | `0x05eb22e5c1f4a7a5` |
-| `runIsolateNk` | `linProdPoly 10` | 2.639 s | `0xda631bdf13415a4f` |
-| `runIsolatePellet` | `linProdPoly 10` | 484.934 ms | `0xda631bdf13415a4f` |
-| `runIsolateNkThenPellet` | `linProdPoly 10` | 496.635 ms | `0xda631bdf13415a4f` |
-| `runSameRoot` | fixed refined atom | 130 ns | `0xb` |
+| `runTaylor` | seeded degree 128, centre 1 | 2.423 ms | `0x9917b7b230496af4` |
+| `runWitnessCheck` | bounded-height degree 128 | 2.559 ms | `0xb` |
+| `runNkWitnessCheck` | bounded-height degree 128 | 2.480 ms | `0xb` |
+| `runNewtonSquare` | bounded-height degree 128 | 2.364 ms | `0x450307c7dcbe905c` |
+| `runRefine1` | fixed-separation degree 8 | 2.492 ms | `0xc5cb1ba3f05326fd` |
+| `runCertify` | pinned-NK degree 128 | 7.198 ms | `0x1698ec123da6112f` |
+| `runIsolateAll` | fixed-separation degree 12 | 1.902 s | `0xecd908d19d73e5c4` |
+| `runRefineTo` | achieved precision 131077 | 315.989 ms | `0x05eb22e5c1f4a7a5` |
+| `runIsolateNk` | `linProdPoly 10` | 2.952 s | `0xda631bdf13415a4f` |
+| `runIsolatePellet` | `linProdPoly 10` | 542.985 ms | `0xda631bdf13415a4f` |
+| `runIsolateNkThenPellet` | `linProdPoly 10` | 559.906 ms | `0xda631bdf13415a4f` |
+| `runSameRoot` | fixed refined atom | 133 ns | `0xb` |
 
 ### Superseded round-one verdict record
 
@@ -191,8 +191,16 @@ Declared informational comparators: `python-flint fmpz_poly.complex_roots`
 and `MPSolve`.
 
 The final fixed strategy trio shares `linProdPoly 10`; all hashes are
-`0xda631bdf13415a4f`, preserving the bench-side agreement regression. Its
-medians are NK `2.639 s`, Pellet `484.934 ms`, and NK-then-Pellet `496.635 ms`.
+`0xda631bdf13415a4f`, preserving the bench-side agreement regression. The
+agreement was also checked directly with:
+
+```text
+lake exe hexroots_bench compare Hex.RootsBench.runIsolateNk Hex.RootsBench.runIsolatePellet Hex.RootsBench.runIsolateNkThenPellet
+agreement: all functions agree on output
+```
+
+The canonical artifact medians are NK `2.952 s`, Pellet `542.985 ms`, and
+NK-then-Pellet `559.906 ms`.
 The independent round-four scaling experiment over degrees `2..10` is retained
 as informational dual-route data: normalized against `n⁵`, NK-only grew with
 residual `β=+0.991`, while Pellet-only and NK-then-Pellet were below that model
@@ -293,8 +301,12 @@ visible on this family at these degrees.
 
 `perf record -g -F 999` on the in-process `_child` batch runner
 (`hexroots_bench _child --bench <NAME> --param <N> --target-nanos 3000000000`),
-one representative case per `phase4.input_families` entry, same commit and host
-as the scientific run. Leaf self-time is categorised across
+one representative case per `phase4.input_families` entry. The seeded,
+Wilkinson, and refine-fixed profiles are retained from the original
+`b08a66cce522` family audit at the parameters named in their headings; those
+families and inclusive kernel paths are unchanged even though their final
+registrations use different canonical parameters. The new fixed-separation
+profile is from the final `973c2cda4707` run. Leaf self-time is categorised across
 {own code, GMP, allocation, Lean runtime}; own code = `l_Hex_*`, `lp_Hex_*`,
 `l_Dyadic_*`, `l_GaussDyadic_*`, and the dyadic-mantissa integer leaves
 (`l_Int_*`). `perf.data` artefacts are developer-local under `/tmp` and are not
@@ -358,8 +370,9 @@ closure-call unwinding fragments some inclusive attribution into an unresolved
 
 ## Resolved Historical Concerns
 
-Phase 4 is blocked; `done_through` stays `3`. Each Concern is a
-benchmark-family / schedule / budget finding, with the diagnosis that closes it.
+The preceding Phase-3 audit blocked Phase 4 and kept `done_through` at `3`.
+Each Concern below is retained as historical evidence, together with the
+diagnosis and resolution that now permit `done_through: 4`.
 None is a wrong-asymptotic implementation bug that rolling back a `def` would
 fix; the resolutions are Phase-4 benchmark re-scaffolding (new schedules, a
 smooth driver family, an integer Taylor centre) plus a SPEC time-budget

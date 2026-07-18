@@ -68,15 +68,15 @@ canonical or parametric case):
   arithmetic (no bit-growth).
 * `runNewtonSquare` — speculative Newton step, `O(n²)` (integer-centre Taylor
   shift dominates, flat band).
-* `runRefine1`, `runCertify` — one subdivision round and one certification
-  attempt on a mid-refinement component, `O(n²)` (low-precision centres,
-  sub-word operands, flat band).
+* `runRefine1` — one subdivision round on a fixed-separation mid-refinement
+  component; `runCertify` — one pinned-NK certification attempt on the
+  bounded-root fixture. Both are fixed `O(n²)` operation shapes.
 * `runIsolateAll` — `isolateAll?` at target `32`, `O(n³·B²) = O(n⁵)` with the
   working bit-length `B = Θ(n)`.
 * `runIsolate` — `isolate` to the `separationDepth` floor, `O(n³·B²) = O(n⁵)`.
 * `runRefineTo` — fixed at achieved precision 131077.
 * `runSameRoot` — `RefinedIsolation.sameRoot`, a single dyadic comparison
-  (fixed benchmark, microseconds).
+  (fixed nanosecond-scale benchmark).
 * `runIsolateNk`, `runIsolatePellet`, `runIsolateNkThenPellet` — fixed on the
   shared `linProdPoly 10`; all three must agree on the invariant hash.
 
@@ -154,15 +154,15 @@ def separatedPoly (degree : Nat) : ZPoly :=
 def boundedRootPoly (degree : Nat) : ZPoly :=
   if degree = 0 then 1 else linearFactor 1 * seededPoly (degree - 1)
 
-/-- The fixed Gaussian-dyadic centre `1/4 + (1/8)·i` used by the `taylor`
-benchmark: a nonzero dyadic point so the shift exercises every synthetic-
-division pass. -/
+/-- The fixed integer Gaussian-dyadic centre `1` used by the `taylor`
+benchmark.  It exercises every synthetic-division pass while avoiding the
+fractional-centre transition band identified by the Phase-4 audit. -/
 def taylorCentre : GaussDyadic := (Dyadic.ofInt 1, Dyadic.ofInt 0)
 
 /-- A square of half-width `2^{−12}` centred on the integer root `1` of
-`linProdPoly`, used by the witness-check and Newton-step benchmarks. At this
-radius the isolation ratio to the nearest sibling root (distance `1`) is far
-inside the witness's firing threshold for every scheduled degree. -/
+`boundedRootPoly 128`, used by the witness-check and Newton-step benchmarks.
+At this radius the square remains well inside the witness's firing threshold
+for the canonical input. -/
 def rootSquare : DyadicSquare := ⟨Dyadic.ofInt 1, 0, 12⟩
 
 /-! ### Result checksums (stable observables) -/
@@ -258,6 +258,17 @@ component (a subdivided region localised near a root). Falls back to the Cauchy
 square when the degree is degenerate or every child was `T₀`-discarded. -/
 def midComponent (degree : Nat) : ZPoly × Component :=
   let p := seededPoly degree
+  if h : 0 < p.degree?.getD 0 then
+    let start := Component.cauchy p h
+    let round1 := start.refine1 p
+    let round2 := round1.flatMap (·.refine1 p)
+    (p, (round2[0]?.orElse fun _ => round1[0]?).getD start)
+  else
+    (p, ⟨#[⟨0, 0, 0⟩], 0⟩)
+
+/-- A mid-refinement component on the smooth fixed-separation family. -/
+def separatedMidComponent (degree : Nat) : ZPoly × Component :=
+  let p := separatedPoly degree
   if h : 0 < p.degree?.getD 0 then
     let start := Component.cauchy p h
     let round1 := start.refine1 p
@@ -370,7 +381,8 @@ def prepRefineTo (target : Nat) : Option (DyadicRootIsolation refinePoly) × Int
 
 initialize taylorRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (seededPoly 128))
 initialize witnessRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (boundedRootPoly 128))
-initialize refine1Ref : IO.Ref (Option (ZPoly × Component)) ← IO.mkRef (some (midComponent 8))
+initialize refine1Ref : IO.Ref (Option (ZPoly × Component)) ←
+  IO.mkRef (some (separatedMidComponent 8))
 initialize refineToRef : IO.Ref (Option (DyadicRootIsolation refinePoly) × Int) ←
   IO.mkRef (prepRefineTo 131077)
 initialize isolateAllRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (separatedPoly 12))
@@ -401,22 +413,13 @@ def runIsolateNkThenPellet : Unit → IO UInt64 := fun _ => do return (← compa
 Cost model. `taylor` produces `p(X + z) = Σ cₖ Xᵏ` by repeated synthetic
 division: the `k`-indexed outer pass runs an inner Horner sweep of length
 `n − 1 − k`, so the total is `Σ_k (n − 1 − k) = O(n²)` exact Gaussian-dyadic
-multiply/adds (degree `n` is the parameter). Bit-growth: the fixed centre
-`z = 1/4 + i/8 = 2^{−3}(2 + i)` is a *non-integer* dyadic, so `z^{j−k}` carries
-denominator `2^{3(j−k)}` and the coefficient `cₖ` reaches working bit-length
-`B = Θ(n)` (the `2^{3n}` denominator dominates the `binomial ~ 2^n` numerator).
-Each inner op multiplies a `B`-bit operand by the fixed `3`-bit centre, a
-schoolbook `O(B)` cost, so the wall bit-cost is `O(n²·B) = O(n³)` in the
-multiplication-bound limit. On the registered `16..256` schedule the operands
-are `≤ 12` GMP words, still in the allocation-dominated transition where wall
-tracks the `O(n²)` operation count with a sub-linear residual (measured
-`~n^{2.25}`, short of the `n³` asymptote); the op-count `n²` is the declared
-wall model per the SPEC contract, with the transition residual reported as a
-Concern. This is the same Taylor-shift shape as hex-real-roots'
-`runMobiusTransform` but with a non-integer centre, whose denominator growth
-is what keeps it out of the flat band that made that one consistent at `n²`.
+multiply/adds. The canonical degree-128 case uses the integer centre `z = 1`:
+there is no denominator growth, but binomial output magnitudes still grow
+linearly in bits. The reachable GMP transition does not admit a stable scalar
+wall model, so this is fixed for regression tracking with an expected hash.
 -/
-setup_fixed_benchmark runTaylor where { repeats := 5, maxSecondsPerCall := 4.0 }
+setup_fixed_benchmark runTaylor where {
+  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x9917b7b230496af4 }
 
 /-
 Cost model. `mahlerPrec` evaluates the closed-form Mahler/Landau separation
@@ -445,67 +448,62 @@ setup_benchmark runMahlerPrec n => n
 Cost model. `witnessCheck` computes the exact Taylor coefficients at the
 square's centre (the `O(n²)` shift, which dominates) and then, for each of the
 three test radii, a single `O(n)` fold over the coefficients, so the op count
-is `n²`. Bit-growth: the square is centred on the *integer* root `1` of
-`linProdPoly`, so the centre `z = (1, 0)` has precision `0` and `z^{j−k}`
-introduces no denominator; the Taylor coefficients are the (integer)
-elementary-symmetric coefficients of `p(X+1)`, of bit-length `~log(n!) =
-O(n log n)`, which stays under one GMP word (`≤ 44` bits at `n = 16`) across
-the `2..16` schedule. Operands are sub-word, per-op cost flat, so the wall
-model is the op count `n²`.
+is `n²`. The canonical input is `boundedRootPoly 128`, centred on its exact
+integer root `1`; its bounded-height coefficients avoid Wilkinson expansion,
+while the Taylor output still crosses GMP limbs. It is fixed with an expected
+hash because that reachable transition has no stable scalar wall model.
 -/
-setup_fixed_benchmark runWitnessCheck where { repeats := 5, maxSecondsPerCall := 4.0 }
+setup_fixed_benchmark runWitnessCheck where {
+  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0xb }
 
 /-
 Cost model. `nkWitnessCheck` has the same `O(n²)` Taylor-shift-dominated shape
 as `witnessCheck`, plus one `invFloor` reciprocal and a single `O(n)`
-radial-Lipschitz fold, so the op count is `n²`. Bit-growth: identical to
-`witnessCheck` — integer centre `(1, 0)`, no denominator, integer Taylor
-coefficients of `O(n log n)` bits staying sub-word (`≤ 44` bits) across
-`2..16`, so operands are flat and the wall model is the op count `n²`.
+radial-Lipschitz fold, so the op count is `n²`. It uses the same canonical
+bounded-height degree-128 input and fixed-regression rationale as
+`runWitnessCheck`.
 -/
-setup_fixed_benchmark runNkWitnessCheck where { repeats := 5, maxSecondsPerCall := 4.0 }
+setup_fixed_benchmark runNkWitnessCheck where {
+  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0xb }
 
 /-
 Cost model. `newtonSquare` computes the Taylor coefficients at the centre (the
 `O(n²)` shift), reads `c₀, c₁`, and does one `Dyadic.invAtPrec` reciprocal plus
 a constant amount of Gaussian-dyadic arithmetic. The Taylor shift dominates, so
-the op count is `n²`. Bit-growth: integer centre `(1, 0)` on `linProdPoly`, no
-denominator, integer Taylor coefficients of `O(n log n)` bits staying sub-word
-across `2..16`; the reciprocal is at precision `~2·prec = 24` bits, also
-sub-word. Operands flat, so the wall model is the op count `n²`.
+the op count is `n²`. It uses the same bounded-height degree-128 input; the
+fixed-precision reciprocal is lower order. The fixed registration tracks the
+GMP-transition case without asserting a scalar asymptotic fit.
 -/
-setup_fixed_benchmark runNewtonSquare where { repeats := 5, maxSecondsPerCall := 4.0 }
+setup_fixed_benchmark runNewtonSquare where {
+  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x450307c7dcbe905c }
 
-/-! ### refinement primitives : mid-refinement component of the seeded family -/
+/-! ### refinement primitives : canonical fixed fixtures -/
 
 /-
 Cost model. `refine1` subdivides each square of the component four ways and
 runs the `T₀` `rootFree` exclusion — one Taylor shift, `O(n²)` — on each child,
 then glues the survivors. For a component of a bounded number of squares this
 is a bounded number of `O(n²)` shifts, so the op count is `n²` in the degree
-`n`. Bit-growth: the mid-refinement component sits two levels below `cauchy`,
-so its square centres have low precision (`~cauchy.prec + 2`, a few bits) and
-the seeded coefficients are `≤ 10`; the Taylor coefficients reach only `O(n)`
-bits (dominated by `|z|^n` with `|z|` near the root bound `~11`), which stays
-sub-word (`≤ 42` bits at `n = 12`) across the `4..12` schedule. Operands flat,
-so the wall model is the op count `n²`.
+`n`. The canonical fixture is the degree-8 fixed-separation product, refined
+two rounds below its Cauchy component. It is fixed because its parametric
+smooth-family calibration drifted in the reachable transition band.
 -/
-setup_fixed_benchmark runRefine1 where { repeats := 5, maxSecondsPerCall := 4.0 }
+setup_fixed_benchmark runRefine1 where {
+  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0xc5cb1ba3f05326fd }
 
 /-
 Cost model. `certify?` under the default `nkThenPellet` strategy first tries
 the Newton-Kantorovich witness on the doubled enclosing square: one
 `nkWitnessCheck` (`O(n²)`) and one speculative `newtonSquare` (`O(n²)`). On a
-mid-refinement component localised near a root this NK path fires, so the op
-count is `n²`. (The Pellet fallback, taken only when NK does not fire, loops
-over `k ≤ deg p` and is `O(n³)`; it is not the path this fixture measures.)
-Bit-growth: same low-precision seeded mid-refinement component as `refine1` —
-`O(n)`-bit Taylor coefficients staying sub-word across `4..12` — so operands
-are flat and the wall model is the op count `n²`.
+canonical bounded-height degree-128 component is pinned by checking
+`nkWitnessCheck p rootSquare.doubled = true` during initialization, so this NK
+path always fires and the op count is `n²`. The fixed expected hash makes a
+fixture-path or semantic regression visible.
 -/
-setup_fixed_benchmark runCertify where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runCertify where {
+  repeats := 5, maxSecondsPerCall := 6.0, expectedHash := some 0x1698ec123da6112f }
 
-/-! ### whole-polynomial drivers : dense seeded family -/
+/-! ### whole-polynomial drivers -/
 
 /-
 Cost model. `isolateAll?` refines the Cauchy component to disjoint certified
@@ -513,20 +511,20 @@ atoms at target precision `32`. The op count is `n³`: up to `O(n)` components,
 each driven through `O(n)` subdivision levels of `O(n²)`-per-witness work
 amortised by the speculative Newton jumps. Bit-growth is asymptotically
 significant here: the working bit-length reaches `B = prec + n·log‖p‖∞ = Θ(n)`
-(precision `~32` at the certifying level, plus the seeded `n·log 10` term, and
+(precision `~32` at the certifying level, plus coefficient growth, and
 the Taylor coefficients' `Θ(prec·n)` denominator growth), and the
 growing-precision dyadic arithmetic (notably the `invAtPrec` reciprocal) is
 schoolbook `O(B²)`. The SPEC heuristic `O(n³·B²)` with `B = Θ(n)` gives the
-wall model `n⁵`. The seeded family's distinct irrational roots force genuine
-subdivision, but their *degree-dependent* root geometry (some degrees have
-much closer roots than neighbours) makes the wall time non-monotonic in `n`,
-which the report's Concerns section flags as a fit-quality limitation.
+wall model `n⁵`. The canonical fixed case is the degree-12 uniformly
+separated half-integer product; it tracks the full driver without asserting a
+slope after its quiet-machine sweep remained transitional.
 -/
 -- Polylog factors (a strict B = Θ(n log n) reading gives n^5·log²n) are
 -- suppressed in the declared model per house convention: the harness fits a
 -- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
 -- plain powers for the same reason.
-setup_fixed_benchmark runIsolateAll where { repeats := 5, maxSecondsPerCall := 20.0 }
+setup_fixed_benchmark runIsolateAll where {
+  repeats := 5, maxSecondsPerCall := 20.0, expectedHash := some 0xecd908d19d73e5c4 }
 
 /-
 Cost model. `isolate` runs `isolateAll?` from the Cauchy component to
@@ -536,9 +534,8 @@ with the degree, so this is the deeper of the two whole-polynomial drivers.
 Same `n³` op count as `isolateAll?`. Bit-growth: the target precision is now
 `separationDepth p = mahlerPrec p + O(log n) = O(n·log‖p‖∞)`, so `B = Θ(n)` is
 even more firmly in the multiplication-bound regime; `O(n³·B²)` with
-`B = Θ(n)` gives the wall model `n⁵`. The schedule caps lower (degree `16`)
-because the separation-depth target keeps one full-ladder pass practical there.
-Same seeded-family non-monotonicity caveat as `isolateAll?`.
+`B = Θ(n)` gives the wall model `n⁵`. The smooth fixed-separation ladder
+`4..10` is the final parametric driver-risk gate.
 -/
 -- Polylog factors (a strict B = Θ(n log n) reading gives n^5·log²n) are
 -- suppressed in the declared model per house convention: the harness fits a
@@ -557,17 +554,16 @@ setup_benchmark runIsolate n => n * n * n * n * n
 
 /-
 Cost model. `refineTo?` sharpens a fixed degree-3 atom from precision `≈32` to
-the parametric target `t`. Speculative Newton doubles the precision per
-accepted jump, so the final witness at precision `t` dominates: a fixed number
+the canonical achieved precision `131077`. Speculative Newton doubles precision
+per accepted jump, so the final witness dominates: a fixed number
 (`O(deg²) = O(1)` at degree `3`) of Taylor multiplies on `B ≈ t`-bit dyadics,
 each a schoolbook `t × t` product costing `O(t²)`, so the wall model is `t²`
-in the target precision. Caveat: Newton doubling reaches a *discrete* precision
-ladder, so the per-call work is a step function of `t` rather than smooth in it
-(targets in the same doubling interval do equal work); the report's Concerns
-section flags this quantisation as the reason the verdict is inconclusive on
-the `64..256` schedule.
+in the achieved precision. The discrete Newton ladder and GMP crossover make
+the reachable sweep unsuitable for one scalar model, so the expected-hash
+fixed case tracks the high-precision regression directly.
 -/
-setup_fixed_benchmark runRefineTo where { repeats := 5, maxSecondsPerCall := 4.0 }
+setup_fixed_benchmark runRefineTo where {
+  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x5eb22e5c1f4a7a5 }
 
 /-! ### `compare` group : dual-route atom-certificate experiment
 
@@ -590,7 +586,8 @@ on its doubled square.
 -- suppressed in the declared model per house convention: the harness fits a
 -- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
 -- plain powers for the same reason.
-setup_fixed_benchmark runIsolateNk where { repeats := 5, maxSecondsPerCall := 8.0 }
+setup_fixed_benchmark runIsolateNk where {
+  repeats := 5, maxSecondsPerCall := 8.0, expectedHash := some 0xda631bdf13415a4f }
 
 /-
 Cost model: one `isolate` run over `linProdPoly n`; `n³` op count (n
@@ -604,7 +601,8 @@ three-radius test per k candidate.
 -- suppressed in the declared model per house convention: the harness fits a
 -- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
 -- plain powers for the same reason.
-setup_fixed_benchmark runIsolatePellet where { repeats := 5, maxSecondsPerCall := 8.0 }
+setup_fixed_benchmark runIsolatePellet where {
+  repeats := 5, maxSecondsPerCall := 8.0, expectedHash := some 0xda631bdf13415a4f }
 
 /-
 Cost model: one `isolate` run over `linProdPoly n`; `n³` op count (n
@@ -618,7 +616,8 @@ Pellet as fallback.
 -- suppressed in the declared model per house convention: the harness fits a
 -- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
 -- plain powers for the same reason.
-setup_fixed_benchmark runIsolateNkThenPellet where { repeats := 5, maxSecondsPerCall := 8.0 }
+setup_fixed_benchmark runIsolateNkThenPellet where {
+  repeats := 5, maxSecondsPerCall := 8.0, expectedHash := some 0xda631bdf13415a4f }
 
 /-! ### `sameRoot` : fixed microsecond benchmark -/
 
