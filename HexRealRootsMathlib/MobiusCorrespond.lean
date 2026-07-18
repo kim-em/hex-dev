@@ -64,6 +64,19 @@ theorem mobiusPoly_eq_reflect_comp {R : Type*} [CommRing R] (n : ℕ) (a b : R)
       = (Polynomial.reflect n (mobiusInner a b P)).comp (Polynomial.X + Polynomial.C 1) :=
   rfl
 
+/-- **Ring-hom commutation.** The Möbius transform commutes with mapping along a
+ring homomorphism `φ`: every stage (`X + C` shift, `C (a-b) * X` dilation,
+`reflect`, the final `X + C 1` shift) is built from `comp`, `reflect`, `C`, `X`,
+`+`, `*`, `-`, which all commute with `Polynomial.map φ`. This is the bridge from
+the real transform to its complex-root picture (`φ = algebraMap ℝ ℂ`). -/
+theorem mobiusPoly_map {R S : Type*} [CommRing R] [CommRing S] (φ : R →+* S)
+    (n : ℕ) (a b : R) (P : Polynomial R) :
+    (mobiusPoly n a b P).map φ = mobiusPoly n (φ a) (φ b) (P.map φ) := by
+  simp only [mobiusPoly_eq_reflect_comp, mobiusInner, Polynomial.map_comp,
+    Polynomial.map_add, Polynomial.map_sub, Polynomial.map_mul, Polynomial.map_X,
+    Polynomial.map_C, map_sub, Polynomial.C_1, Polynomial.map_one,
+    ← Polynomial.reflect_map]
+
 /-- The inner Möbius polynomial has degree at most that of `P`: composing with
 the degree-one shift `X + C b` preserves degree, and composing with the (at
 most) degree-one dilation `C (a-b) * X` cannot raise it. Proved without

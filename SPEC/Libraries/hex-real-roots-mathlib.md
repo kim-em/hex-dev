@@ -236,41 +236,64 @@ theorem sameRoot_iff (hp) (i₁ i₂) :
 `theRoot` is the unique root delivered by
 `RealRootIsolation.exists_unique_root`.
 
-## Deferred: Descartes engine termination
+## Descartes engine termination (the two-circle theorem)
 
 ```lean
 theorem isolateDescartes?_isSome (p : ZPoly) (hp0 : p ≠ 0)
     (hp : SquareFreeRat p) : (Hex.isolateDescartes? p).isSome
 ```
 
-Prerequisite: the **Obreshkoff two-circle theorem**. For an interval
-`(a, b)`, the variation count of the Möbius-transformed polynomial is
-at least the number of roots in the one-circle region (the open disc
-with diameter `(a, b)`) and at most the number of roots in the
-two-circle region (the union of the two discs through `a` and `b`
-whose centres lie at `(a+b)/2 ± i·(b−a)/(2√3)`), counted with
-multiplicity. Consequences: a short interval far from all roots has
-count 0, and a short interval whose two-circle region contains one
-simple real root has count 1, so at `isolationDepth p` the Descartes
-worklist drains and every candidate certifies.
+Proven in `TwoCircle.lean`; with it the companion is fully
+`sorry`-free. The Descartes engine alone returns `some` on every
+nonzero square-free input, so the runtime never falls back to the
+Sturm engine.
+
+Prerequisite: the **Obreshkoff two-circle theorem**, in its correct
+*λ-graded* form (Obreschkoff 1963; Krandick-Mehlhorn 2006,
+Eigenwillig 2008): if all but `λ` complex roots of a real polynomial
+lie in the closed sector of half-angle `π/(λ+2)` about the negative real
+axis (equivalently, at most `λ` roots lie outside), then the
+coefficient sequence has at most `λ` sign variations. The naive count
+bound "variation count ≤ number of roots in the two-circle region" is
+**false** — `(X²+X+1)·(X²−(3/2)X+1)` has four sign variations while
+only two of its roots lie outside the sector (the counterexample is
+recorded in `TwoCircleSector.lean`). We use only the two lowest graded
+cases, `λ ∈ {0, 1}`: `Polynomial.signVariations_le_one_of_sector`
+(`TwoCircleSector.lean`, the `λ = 1` bound via Hoggar log-concavity)
+and its `λ = 0` corollary.
+
+Route (`TwoCircle.lean`): at each node the Descartes count `V` equals
+`signVariations` of the Möbius transform; the Descartes parity exports
+(`DescartesParity.lean`) pin the open-interval root count exactly when
+`V ∈ {0, 1}`, and the exact endpoint test settles `p(b) = 0`, so the
+half-open Sturm count is computed exactly and every candidate certifies
+(count `1`) and every discard emits `#[]` (count `0`). At the depth
+budget the bisecting rows are refuted: `V = 1 ∧ p(b) = 0` forces a
+Sturm count of `2` against `sturmCount_le_one`, and `V ≥ 2` triggers
+the sector bound (`≥ 2` transform-roots outside the sector correspond
+via `roots_mobiusPoly`/`not_inTwoCircle_iff_mem_sector` to two distinct
+`p`-roots in the two-circle region, closer than the Mahler separation
+`sepPrec_separates'` allows). The worklist therefore drains at
+`isolationDepth p`.
 
 Status and boundaries:
 
-- The two-circle theorem has no formalisation in any proof assistant
-  that we know of. The classical proof (Obreschkoff 1963; modern
-  treatment in Krandick-Mehlhorn 2006 and Eigenwillig 2008) is an
-  induction on multiplying in linear and conjugate-quadratic factors,
-  with sector inequalities on coefficient sequences. Elementary but
-  long, and the effort is genuinely uncertain.
-- **Nothing else waits for it.** `isolate?_isSome`, all soundness
-  theorems, and hex-rcf's decision procedure are complete without it.
-  Its value is to retire the Sturm fallback path from the trusted
-  runtime story and to delete the conformance assertions described in
-  [hex-real-roots.md](hex-real-roots.md) §"Conformance fixtures"
-  (the PR that proves this theorem must delete those assertions).
-- Like the Sturm slice, it should be developed against
-  `Polynomial ℝ` (and `ℂ` for the regions) with no `HexRealRoots`
-  dependence, as a Mathlib contribution in its own right.
+- The two-circle theorem is now formalised here (the sector core
+  `signVariations_le_one_of_sector`, the region geometry
+  `TwoCircleRegion.lean`, and the Descartes parity). The classical
+  proof (Obreschkoff 1963; Krandick-Mehlhorn 2006, Eigenwillig 2008)
+  runs by induction on multiplying in linear and conjugate-quadratic
+  factors, with sector inequalities on coefficient sequences.
+- **Nothing else waited for it.** `isolate?_isSome`, all soundness
+  theorems, and hex-rcf's decision procedure were complete without it;
+  its value is to retire the Sturm fallback path from the trusted
+  runtime story. The executable conformance stand-ins for this
+  theorem (`isolateDescartes?` succeeds and agrees with `isolate?` per
+  fixture) are retired in the same change now that the theorem carries
+  the claim.
+- Like the Sturm slice, the sector/region/parity development is stated
+  against `Polynomial ℝ`/`ℂ` with no `HexRealRoots` dependence, ready
+  as a Mathlib contribution in its own right.
 
 ## File organisation
 

@@ -27,16 +27,15 @@ Operations covered:
   dyadic endpoint is encoded as `[num, exp]` with value `num · 2^(−exp)`
   (`Dyadic.zero` as `[0, 0]`, `Dyadic.ofOdd n k _` as `[n, k]`).
 * `isolate_none` — value `true` for the rejection cases (the zero
-  polynomial and non-square-free inputs), where both engines decline.
+  polynomial and non-square-free inputs), where the driver declines.
 
-**Descartes-engine cross-check (the deferred-theorem stand-in).**  Per
-`SPEC/Libraries/hex-real-roots.md` §"Conformance fixtures", until the
-companion proves `isolateDescartes?_isSome`, every fixture asserts that
-the fast Descartes engine does not fall back and agrees with the Sturm
-engine.  This driver computes *both* engines on every case and
-`throw`s (exiting non-zero) on any disagreement: for a square-free case
-both engines must return `some` with identical isolating intervals; for
-a rejection case both must return `none`.
+Records are emitted from the single top-level driver `Hex.isolate? p`.
+The Descartes/Sturm cross-engine agreement check this driver once
+carried (the executable stand-in for the termination theorem) is
+retired now that `HexRealRootsMathlib.isolateDescartes?_isSome` is
+proven; `isolate?` is Descartes-first, so on a square-free input its
+output is exactly the Descartes engine's, and the emitted stream is
+unchanged.
 
 **ci tier.**  Thirty degree-15 polynomials with coefficients in
 `[−9, 9]` drawn from the POSIX `rand` LCG
@@ -69,55 +68,27 @@ private def isoRows {p : ZPoly} (res : RealRootIsolations p) : List (List Int) :
   res.isolations.toList.map fun iso =>
     dyadicPair iso.interval.lower ++ dyadicPair iso.interval.upper
 
-private def dmax (a b : Dyadic) : Dyadic := if a < b then b else a
-private def dmin (a b : Dyadic) : Dyadic := if a < b then a else b
-
-/-- Two half-open dyadic intervals `(a₁, b₁]` and `(a₂, b₂]` overlap
-iff `max a₁ a₂ < min b₁ b₂`.  Two isolations of the same real root
-always overlap (both half-open intervals contain that root), so this is
-the cross-engine agreement test: the Descartes and Sturm runs isolate
-the same roots in the same order exactly when their `i`-th intervals
-overlap. -/
-private def overlaps (i₁ i₂ : DyadicInterval) : Bool :=
-  decide (dmax i₁.lower i₂.lower < dmin i₁.upper i₂.upper)
-
-/-- The Descartes and Sturm runs agree: same number of isolations (the
-`complete` invariant guarantees both equal `rootCount p`), and the
-`i`-th intervals overlap, so both pin the same root at each position. -/
-private def enginesAgree {p : ZPoly} (dr sr : RealRootIsolations p) : Bool :=
-  let di := dr.isolations.toList.map (·.interval)
-  let si := sr.isolations.toList.map (·.interval)
-  di.length == si.length && (di.zip si).all fun (a, b) => overlaps a b
-
-/-- Emit one case.  When `squarefree`, both engines must return `some`
-with identical intervals; the run is emitted from the Descartes engine's
-output (which, for a square-free input, equals `isolate? p`).  Otherwise
-both engines must return `none` and the case is a rejection.  Any
-deviation `throw`s, exiting non-zero — the Descartes-engine stand-in for
-the deferred termination theorem. -/
+/-- Emit one case from the top-level driver `isolate? p`.  When
+`squarefree`, `isolate?` must return `some` (guaranteed by
+`isolate?_isSome`); the run is emitted from its output.  Otherwise it
+must return `none` and the case is a rejection.  Any deviation `throw`s,
+exiting non-zero. -/
 private def emitCase (id : String) (coeffs : List Int) (squarefree : Bool) : IO Unit := do
   emitPolyFixture lib id coeffs
   let p : ZPoly := DensePoly.ofCoeffs coeffs.toArray
-  let d := isolateDescartes? p
-  let s := isolateSturm? p
   if squarefree then
-    match d, s with
-    | some dr, some sr =>
-      unless enginesAgree dr sr do
-        throw <| IO.userError
-          s!"{lib}/{id}: Descartes and Sturm engines isolate different roots"
+    match isolate? p with
+    | some r =>
       emitResult lib id "root_count" (toString (rootCount p))
-      emitResult lib id "isolations" (intMatrixValue (isoRows dr))
-    | _, _ =>
-      throw <| IO.userError
-        s!"{lib}/{id}: engine fallback (descartes.isSome={d.isSome}, sturm.isSome={s.isSome})"
+      emitResult lib id "isolations" (intMatrixValue (isoRows r))
+    | none =>
+      throw <| IO.userError s!"{lib}/{id}: isolate? fell back to none on a square-free input"
   else
-    match d, s with
-    | none, none =>
+    match isolate? p with
+    | none =>
       emitResult lib id "isolate_none" "true"
-    | _, _ =>
-      throw <| IO.userError
-        s!"{lib}/{id}: expected both engines to reject (descartes.isSome={d.isSome}, sturm.isSome={s.isSome})"
+    | some _ =>
+      throw <| IO.userError s!"{lib}/{id}: expected isolate? to reject a non-square-free input"
 
 /-! ## SPEC core fixtures. -/
 

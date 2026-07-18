@@ -44,9 +44,6 @@ Covered properties:
   root exactly at the included upper endpoint), so a real root sits in each
   half-open interval.
 - Emitted isolations are ordered and pairwise disjoint (`upperᵢ ≤ lowerᵢ₊₁`).
-- The Descartes engine returns `some` and agrees with `isolate?` on the exact
-  interval endpoints (the SPEC-mandated stand-in for `isolateDescartes?_isSome`,
-  see the deletion note below).
 - The Sturm engine returns `some` and agrees with `isolate?` on the isolation
   *count* (the intervals themselves need not coincide, and do not for
   `x³ − x − 1`).
@@ -196,14 +193,15 @@ For each fixture: the exact interval endpoints of `isolate?` (a human-readable
 regression pin, cross-checked against `python-flint` in the oracle PR); the
 independent teeth that make the pin more than a determinism check — the emitted
 count equals the mathematically known real-root count `rootCount`, every
-interval brackets a real root, and the intervals are ordered and disjoint; the
-mandated Descartes stand-in assertions; and the Sturm engine's count agreement.
+interval brackets a real root, and the intervals are ordered and disjoint; and
+the Sturm engine's count agreement.
 
-**Descartes stand-in deletion note.** The `isolateDescartes?_isSome` /
-`endpoints (isolateDescartes? p) = endpoints (isolate? p)` assertions below
-stand in for the deferred companion theorem `isolateDescartes?_isSome`. The PR
-that proves that theorem in `HexRealRootsMathlib` MUST delete these Descartes
-assertions in the same change; from then the theorem carries the claim. -/
+The Descartes engine's per-fixture `some`/agreement stand-ins are retired: the
+companion theorem `HexRealRootsMathlib.isolateDescartes?_isSome` now carries the
+claim that `isolateDescartes?` never falls back on nonzero square-free input, so
+re-testing it here is noise. The zero / non-square-free `isolateDescartes? =
+none` rejections below stay: they test the engine's input-contract
+classification, not the termination theorem. -/
 
 /-- Assert the shared per-fixture invariants, given the expected `isolate?`
 endpoints and the known real-root count `n`. Bundled so each fixture is one
@@ -215,8 +213,6 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
   (isoCount (isolate? p) == some n) && (rootCount p == n) &&
   -- Each interval brackets a real root; the whole run is ordered and disjoint.
   allBracket (isolate? p) && ((endpoints (isolate? p)).elim false sortedDisjoint) &&
-  -- Descartes stand-in: returns `some` and agrees with `isolate?` exactly.
-  (isolateDescartes? p).isSome && (endpoints (isolateDescartes? p) == endpoints (isolate? p)) &&
   -- Sturm engine: returns `some` and agrees on the isolation count.
   (isolateSturm? p).isSome && (isoCount (isolateSturm? p) == some n)
 
@@ -235,28 +231,28 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
   #[(di 0, di 1), (di 1, di 2), (di 2, di 3), (di 3, di 4),
     (di 4, di 5), (di 5, di 6), (di 6, di 7), (di 7, di 8)] 8
 
--- The Sturm engine's intervals need NOT coincide with the Descartes engine's:
--- for `x³ − x − 1` the Sturm search emits the whole initial interval `(−4, 4]`
--- (the count is already `1`, so it never bisects) while the Descartes search
+-- The Sturm engine's intervals need NOT coincide with the driver's: for
+-- `x³ − x − 1` the Sturm search emits the whole initial interval `(−4, 4]` (the
+-- count is already `1`, so it never bisects) while `isolate?` (Descartes-first)
 -- narrows to `(0, 4]`. Only the count is invariant across engines.
 #guard endpoints (isolateSturm? cubicSingle) = some #[(di (-4), di 4)]
-#guard endpoints (isolateDescartes? cubicSingle) = some #[(di 0, di 4)]
+#guard endpoints (isolate? cubicSingle) = some #[(di 0, di 4)]
 
 /-! ### Edge cases: zero, constant, non-square-free. -/
 
--- The zero polynomial is rejected by every engine.
+-- The zero polynomial is rejected by every engine (input-contract classification,
+-- independent of the termination theorem).
 #guard isolate? zeroPoly = none
 #guard isolateSturm? zeroPoly = none
 #guard isolateDescartes? zeroPoly = none
 
 -- A nonzero constant isolates with zero roots (empty chain, `rootCount = 0`),
--- through the full per-fixture invariant bundle including the Descartes
--- stand-in.
+-- through the full per-fixture invariant bundle.
 #guard isolatesAs const7 #[] 0
 
--- Non-square-free rejection: both engines and the driver decline, and the
--- square-free core (`x² − 1`, from `(x − 1)²(x + 1)`) isolates its two roots,
--- again through the full bundle (Descartes stand-in included).
+-- Non-square-free rejection: both engines and the driver decline (input-contract
+-- classification), and the square-free core (`x² − 1`, from `(x − 1)²(x + 1)`)
+-- isolates its two roots through the full bundle.
 #guard isolate? nonSquareFree = none
 #guard isolateSturm? nonSquareFree = none
 #guard isolateDescartes? nonSquareFree = none

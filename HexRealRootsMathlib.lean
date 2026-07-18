@@ -39,6 +39,9 @@ to the abstract development; `Separation`/`Discr`/`Hadamard` supply the Mahler
 separation bound; `Isolations` and `Drivers` prove isolation soundness, run
 completeness, driver completeness, and refinement; `SimpleRealRoot` proves the
 root-identity theorems (overlap classes are the real roots); and `TwoCircle`
-states the single deferred theorem — Descartes-engine termination — behind its
-Obreshkoff two-circle prerequisite, the one intentional `sorry` in the library.
+proves Descartes-engine termination (`isolateDescartes?_isSome`) behind its
+Obreshkoff two-circle prerequisite (the λ-graded sector bound in
+`TwoCircleSector`, the region geometry in `TwoCircleRegion`, and the Descartes
+parity in `DescartesParity`). Every theorem in the library is now proven; there
+are no `sorry`s.
 -/
