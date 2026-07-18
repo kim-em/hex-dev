@@ -445,7 +445,7 @@ certifies the pinned value (or shows a smaller one suffices). A
 `none` from the drivers has one precise meaning: *no certificate the
 selected strategy attempts appeared by separation depth*. The
 Mathlib companion's completeness development
-([hex-roots-mathlib.md](../../SPEC/Libraries/hex-roots-mathlib.md)) is expected to prove
+([hex-roots-mathlib.md](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md)) is expected to prove
 this impossible for squarefree inputs, for each strategy it covers
 (the Pellet converse for strategies that attempt Pellet, the
 Newton-Kantorovich converse for `.nk`). Until it does, the soundness
@@ -527,7 +527,7 @@ Mahler bound concerns *distinct* roots, so `mahlerPrec` is meaningful
 even for non-squarefree `p`: if `p_sf` is the squarefree part then
 `M(p_sf) ≤ M(p)` and `|disc p_sf| ≥ 1`, so the same closed form
 applies. The Mathlib companion proves correctness; see
-[hex-roots-mathlib.md](../../SPEC/Libraries/hex-roots-mathlib.md).
+[hex-roots-mathlib.md](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md).
 
 ```lean
 def separationDepth (p : ZPoly) : Nat :=

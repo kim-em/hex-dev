@@ -1,6 +1,6 @@
 # hex-roots-mathlib (depends on hex-roots + hex-poly-z-mathlib + Mathlib)
 
-Mathlib companion for [hex-roots](hex-roots.md). Proves **soundness**
+Mathlib companion for [hex-roots](../../HexRoots/SPEC/hex-roots.md). Proves **soundness**
 of the certified root isolation: every `DyadicRootIsolation` witness
 implies a unique simple complex root in its certified region (the
 stored square for the Newton-Kantorovich disjunct, the circumscribed
@@ -233,7 +233,7 @@ Pellet witnesses.
 
 The computational library never states this inequality directly: its
 witness compares dyadic bounds (`lo`, `hi`, and the rational `√2`
-bounds; see [hex-roots.md](hex-roots.md)). The one-directional lemma
+bounds; see [hex-roots.md](../../HexRoots/SPEC/hex-roots.md)). The one-directional lemma
 "the dyadic-bound witness implies the exact Pellet inequality" lives
 in `HexRootsMathlib/Geometry.lean`, so the analytic development above
 stays in the standard form (the form worth contributing to Mathlib)
@@ -397,7 +397,7 @@ by building it. Conformance fixtures live with `hex-roots`.
 
 ## References
 
-See [hex-roots.md](hex-roots.md) for the BSSY, Pellet, Mahler, and
+See [hex-roots.md](../../HexRoots/SPEC/hex-roots.md) for the BSSY, Pellet, Mahler, and
 Mignotte references. In addition:
 
 - Becker, Sagraloff, Sharma, Yap, JSC 2018, §2: the exact form of the
