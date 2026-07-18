@@ -118,10 +118,21 @@ theorem sturmVarAt_eq (p : ZPoly) (x : Dyadic) : …
     executable gcd correspondence), and squarefreeness transfers to
     `ℝ`. -/
 theorem squareFreeRat_iff : …
+
+/-- Converse of `sturmChain_isSturmChain`: a terminal-constant chain
+    forces `SquareFreeRat`, by walking the terminal unit back to coprime
+    seeds. Lets a concrete `SquareFreeRat p` be discharged by `by decide`
+    on the chain. -/
+theorem squareFreeRat_of_hasSquarefreeSturmChain
+    (h : Hex.ZPoly.hasSquarefreeSturmChain p) : SquareFreeRat p
 ```
 
 `toPolyℝ` abbreviates the `hex-poly-z-mathlib` cast composed with
-`Polynomial.map (Int.castRingHom ℝ)`.
+`Polynomial.map (Int.castRingHom ℝ)`. Its coefficient/Horner bridges
+(`coeff_toPolyℝ` / `coeff_toPolyℚ`, `eval_toPolyℝ` / `eval_toPolyℚ`)
+rewrite a root goal on a literal `ofCoeffs` to an explicit polynomial
+equation, and `toReal_ofInt_shiftRight` normalizes `k / 2ᵏ` dyadic
+endpoints.
 
 ### Consequences for the executable counts
 
@@ -159,7 +170,9 @@ theorem RealRootIsolations.isolates
 
 The second follows from the first plus `ordered` (disjointness) and
 `complete` (counting): the isolations hold `rootCount p` distinct
-roots among them, and that is all the roots there are.
+roots among them, and that is all the roots there are. Both are also
+exported in the `Hex` namespace, so dot notation resolves on the
+executable structures (`iso.exists_unique_root`).
 
 ## Bounds and depths
 

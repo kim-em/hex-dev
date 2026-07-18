@@ -70,6 +70,13 @@ pseudo-remainder scheme allows.
 The last chain element is a nonzero constant exactly when `p` is
 squarefree (of positive degree).
 
+`hasSquarefreeSturmChain p` reads off exactly this: `true` when `p` has
+positive degree and the last chain element is a nonzero constant. It is
+`Decidable`, so a caller discharges the drivers' `SquareFreeRat p`
+obligation by `by decide` on the chain rather than the rational gcd
+(soundness bridge `squareFreeRat_of_hasSquarefreeSturmChain` in the
+companion). One-way: `false` on the zero polynomial and nonzero constants.
+
 **Input contract.** The drivers do not take hypotheses; they classify
 every input explicitly:
 
