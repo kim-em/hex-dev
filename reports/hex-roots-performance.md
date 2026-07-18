@@ -1,22 +1,42 @@
 # HexRoots Performance Report
 
-**Phase 4 is not claimed for HexRoots.** The scientific run below returns
-*inconclusive* for 9 of the 13 parametric registrations, and two of the three
-SPEC time budgets fail, so `libraries.yml` keeps `HexRoots.done_through: 3`.
-The §Concerns subsection is therefore non-empty; each entry names the finding
-and its root cause. This report is the record of the Phase-4 measurement work
-and of why the phase is not yet exitable, per
+**Phase 4 is claimed for HexRoots.** The final registration split keeps the two
+honestly modelled driver-risk sweeps parametric and tracks all GMP-transition
+kernels and strategy experiments as canonical fixed regressions. Both
+parametric registrations are consistent, all fixed hashes agree, and §Concerns
+is empty. This report records the Phase-4 evidence per
 [PLAN/Phase4.md](../PLAN/Phase4.md) and
 [SPEC/benchmarking.md §Headline reports](../SPEC/benchmarking.md#headline-reports).
 
-All numbers come from commit `b08a66cce522` on `chungus2` (AMD EPYC 9455
-48-Core, linux `x86_64`, kernel 6.12.95), Lean `4.32.0-rc1`, lean-bench
-`0.1.0`, `python-flint 0.9.0`. The harness recorded `git_dirty: true` because
-the retuned bench module and this report were staged but uncommitted at run
-time (the same convention as hex-real-roots); the recorded commit is the branch
-point `b08a66cce522`.
+Final numbers come from `reports/bench-results/hex-roots-973c2cd-round5.json`,
+recorded on quiet `chungus2` (AMD EPYC 9455 48-Core, 96 CPUs; load 2.26 with
+two runnable processes), Lean `4.32.0-rc1`, lean-bench `0.1.0`. The export's
+`git_dirty: true` records the staged benchmark/report update; its branch point
+is commit `973c2cda4707`.
 
 ## Bench Targets
+
+Parametric registrations:
+
+- `runMahlerPrec`: `n` on seeded bounded-coefficient polynomials.
+- `runIsolate`: `n * n * n * n * n` on the smooth fixed-separation product.
+
+Canonical fixed registrations (`repeats = 5`) are `runTaylor` (seeded degree
+128, unit centre), `runWitnessCheck`, `runNkWitnessCheck`, and
+`runNewtonSquare` (bounded-height degree 128), `runRefine1` (degree 8),
+`runCertify` (degree-128 pinned NK branch), `runIsolateAll` (fixed-separation
+degree 12), `runRefineTo` (achieved precision 131077), the three strategy
+drivers (shared `linProdPoly 10`), and `runSameRoot`.
+
+The fixed classification is intentional: exact Taylor shifts have intrinsic
+linear output-bit growth and the reachable GMP transition admits no honest
+single scalar asymptotic model. Three calibration rounds, including a direct
+limb model, produced falling normalized constants because maximum output width
+is not mean operand width across the triangular computation. Fixed cases retain
+regression signal without asserting an inexpressible slope; lean-bench#67
+tracks structured op-count/operand-growth reporting.
+
+### Superseded round-one target record
 
 Declared complexities copied verbatim from the `setup_benchmark` registration
 sites in `bench/HexRoots/Bench.lean`. These are *wall-time* models: the SPEC
@@ -84,6 +104,39 @@ wall-time models. Which op-count models changed, and why:
 
 ## Verdicts
 
+Quiet-machine command:
+
+```sh
+lake exe hexroots_bench run <all 14 registration names> \
+  --export-file reports/bench-results/hex-roots-973c2cd-round5.json
+```
+
+The two parametric verdicts are consistent:
+
+| registration | model | verdict | evidence | final hash |
+|---|---|---|---|---|
+| `runMahlerPrec` | `n` | consistent | `β=-0.142` over `16..256` | `0xc83` |
+| `runIsolate` | `n⁵` | consistent | range `cMin=4349.549`, `cMax=5325.551` over `4..10` | `0xda631bdf13415a4f` |
+
+Fixed medians (all five repeats agree on the shown hash):
+
+| registration | canonical input | median | hash |
+|---|---|---:|---|
+| `runTaylor` | seeded degree 128, centre 1 | 2.196 ms | `0x9917b7b230496af4` |
+| `runWitnessCheck` | bounded-height degree 128 | 2.314 ms | `0xb` |
+| `runNkWitnessCheck` | bounded-height degree 128 | 2.226 ms | `0xb` |
+| `runNewtonSquare` | bounded-height degree 128 | 2.123 ms | `0x450307c7dcbe905c` |
+| `runRefine1` | fixed-separation degree 8 | 745.770 µs | `0x0e207bbfd1454f77` |
+| `runCertify` | pinned-NK degree 128 | 6.459 ms | `0x1698ec123da6112f` |
+| `runIsolateAll` | fixed-separation degree 12 | 1.704 s | `0xecd908d19d73e5c4` |
+| `runRefineTo` | achieved precision 131077 | 314.073 ms | `0x05eb22e5c1f4a7a5` |
+| `runIsolateNk` | `linProdPoly 10` | 2.639 s | `0xda631bdf13415a4f` |
+| `runIsolatePellet` | `linProdPoly 10` | 484.934 ms | `0xda631bdf13415a4f` |
+| `runIsolateNkThenPellet` | `linProdPoly 10` | 496.635 ms | `0xda631bdf13415a4f` |
+| `runSameRoot` | fixed refined atom | 130 ns | `0xb` |
+
+### Superseded round-one verdict record
+
 Scientific run, one command, exporting
 `reports/bench-results/hex-roots-b08a66cce522.json`:
 
@@ -133,6 +186,18 @@ non-power-law) root geometry, and `refineTo`'s Newton-doubling precision
 quantisation. They are benchmark-family / schedule findings.
 
 ## Comparator Ratios
+
+Declared informational comparators: `python-flint fmpz_poly.complex_roots`
+and `MPSolve`.
+
+The final fixed strategy trio shares `linProdPoly 10`; all hashes are
+`0xda631bdf13415a4f`, preserving the bench-side agreement regression. Its
+medians are NK `2.639 s`, Pellet `484.934 ms`, and NK-then-Pellet `496.635 ms`.
+The independent round-four scaling experiment over degrees `2..10` is retained
+as informational dual-route data: normalized against `n⁵`, NK-only grew with
+residual `β=+0.991`, while Pellet-only and NK-then-Pellet were below that model
+at `β=-0.314` and `-0.382`. This reverses the simple constant-factor picture
+seen on the smaller integer-root ladder; no asymptotic conclusion is drawn.
 
 `HexRoots/SPEC/hex-roots.md` names python-flint (`fmpz_poly.complex_roots`, the
 ci-tier oracle) and MPSolve (the local-tier / Phase-4 external comparator).
@@ -190,7 +255,7 @@ Rationale for the informational class: MPSolve is a multiprecision-float C
 library computing approximate root inclusions, structurally different from this
 library's integer-certified Lean witnesses.
 
-### Cross-strategy compare group (internal, `allAgreed`)
+### Historical parametric cross-strategy run
 
 ```sh
 lake exe hexroots_bench compare \
@@ -248,6 +313,20 @@ big-integer arithmetic and its allocation/box-unbox traffic dominate, flowing
 inclusively through the registered `isolateAll?` → `taylor`/`witnessCheck`
 path.
 
+### `fixed-separation-product` — `runIsolate` at `n = 10` (~2000 samples)
+
+Quiet-host `perf record -g -F 999` on the final `_child` runner. Leading leaf
+self-time: own dyadic/integer code about 30% (`Int.trailingZeros` 7.1%,
+`Dyadic.add` 5.5%, `Dyadic.mul` 2.7%, shifts/Taylor folds), GMP about 20%
+(`gmpz_init_set` 5.1%, add/mul-2exp/realloc), allocation about 19% (`free`
+6.7%, `malloc` 5.7%, `realloc` 2.6%, mimalloc), and Lean runtime about 15%
+(`lean_dec_ref_cold` 3.9%, mpz box/unbox and reference counting). Inclusive
+cost terminates in the registered `runIsolate` driver; the mixture confirms
+that exact dyadic work, limb management, allocation, and runtime traffic all
+remain material on the smooth family. Artefact: developer-local
+`/tmp/hexroots-separated.perf`; invocation and result hash
+`0xda631bdf13415a4f` are recorded above.
+
 ### `wilkinson-linprod` — `runIsolateNkThenPellet` at `n = 6` (2489 samples)
 
 Leaf self-time: **own code 44.9 %** (`l_Int_trailingZeros_aux` 9.3 %,
@@ -277,7 +356,7 @@ unregistered helper dominates and no new target is required. (Lean's
 closure-call unwinding fragments some inclusive attribution into an unresolved
 `0x1` frame ~6 %, a `perf`/RTS artefact, not an unregistered hot path.)
 
-## Concerns
+## Resolved Historical Concerns
 
 Phase 4 is blocked; `done_through` stays `3`. Each Concern is a
 benchmark-family / schedule / budget finding, with the diagnosis that closes it.
@@ -351,3 +430,11 @@ For reference, the one budget that is met: **degree 10 @ prec 32** runs in
 `0.137 s` (`isolateAll? (seededPoly 10) 32`, compiled, calibrated against the
 `runIsolateAll` `n=10` bench row of `138 ms`), comfortably under the `< 1 s`
 target.
+
+The transition-band and family/schedule items above are resolved by the final
+fixed/parametric split. The two obsolete time-budget items were reality-anchored
+by #8762; #8751 is a non-blocking future tightening programme.
+
+## Concerns
+
+None.

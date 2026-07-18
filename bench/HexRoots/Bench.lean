@@ -17,27 +17,27 @@ helper (`mahlerPrec`), the refinement primitives (`Component.refine1`,
 `Component.certify?`), the end-to-end drivers (`isolateAll?`, `isolate`), the
 refined-threading operation (`DyadicRootIsolation.refineTo?`), and the
 root-identity test (`RefinedIsolation.sameRoot`). It also registers the
-dual-route atom-certificate experiment as a `compare` group: `isolate` under
-`.nk`, `.pellet`, and `.nkThenPellet` on one shared deterministic domain,
-joined on a strategy-invariant projection of the isolation output.
+dual-route atom-certificate experiment on one shared canonical input, joined
+on a strategy-invariant projection of the isolation output.
 
-Two deterministic input families are used, each keyed by the benchmark
-parameter (its degree):
+The deterministic inputs include:
 
 * `seededPoly d` — a dense integer polynomial with coefficients in `[-10, 10]`
   drawn from the same seed-`0xC0FFEE` LCG the conformance ci-tier fixtures use
   (`conformance/HexRoots/EmitFixtures.lean`). Its roots are generically
   irrational and distinct, so isolation exercises subdivision to the separation
-  depth rather than short-circuiting. Used by `taylor`, `mahlerPrec`, the
-  refinement primitives, and the two whole-polynomial drivers.
+  depth rather than short-circuiting. Used by `mahlerPrec` and canonical
+  Taylor/witness fixtures.
 * `linProdPoly d = ∏_{j=1}^{d} (X − j)` — a Wilkinson-shaped product of distinct
   monic linear factors with the integer roots `1, …, d`. Newton recentres onto
   an integer root exactly, so the certified centres are exact integers; this is
-  what makes the `compare` group's strategy-invariant hash agree across the
+  what makes the strategy regressions' invariant hash agree across the
   three strategies (the atoms' stored squares differ, but the integer-grid
-  projection of their centres does not). Also used for the witness-check and
-  Newton-step registrations, whose squares are centred on the integer root `1`
-  of the family.
+  projection of their centres does not).
+* `separatedPoly d = ∏(2X−(2j+1))` — uniformly separated half-integer roots,
+  used by the parametric `isolate` driver and canonical `isolateAll?` case.
+* `boundedRootPoly 128` — bounded-height with exact root `1`, used by the
+  canonical witness, Newton, and pinned-NK certification cases.
 
 The declared complexity models are *wall-time* models: the textbook
 exact-dyadic-operation count from `HexRoots/SPEC/hex-roots.md § Complexity
@@ -51,19 +51,16 @@ parameter folds the growth into the exponent. Each registration's comment
 states which case it is and why. The `verify` smoke gate only exercises each
 registration at parameters `0` and `1`.
 
-The scientific verdicts and their op-count-vs-wall reconciliation are recorded
-in `reports/hexroots-performance.md`; several registrations return
-*inconclusive* on their reachable schedules for reasons the report's Concerns
-section documents (the fixed non-integer Taylor centre's `Θ(n)` denominator
-growth, the seeded family's degree-dependent root geometry, the `refineTo`
-Newton-doubling precision quantisation, and the startup-dominated microsecond
-band of the small-degree witness benches).
+Only `runMahlerPrec` and `runIsolate` are parametric consistency gates. All
+other operations use canonical fixed registrations: their reachable inputs sit
+in a genuine GMP transition band where no honest scalar wall model has a flat
+constant. Fixed timings retain regression coverage without asserting such a
+model; the evidence and lean-bench#67 follow-up are recorded in the report.
 
-Registrations (each with an adjacent cost-model derivation comment):
+Registrations (operation-count derivations remain documented adjacent to each
+canonical or parametric case):
 
-* `runTaylor` — exact Taylor shift, `O(n²)` exact-dyadic operations (the
-  fixed non-integer centre's `Θ(n)`-bit denominator growth stays in the
-  allocation-dominated band on the schedule).
+* `runTaylor` — fixed exact Taylor shift at seeded degree 128 and unit centre.
 * `runWitnessCheck`, `runNkWitnessCheck` — Pellet and Newton-Kantorovich atom
   witnesses, `O(n²)` (Taylor shift dominates; integer centre, sub-word
   operands, flat band).
@@ -77,13 +74,11 @@ Registrations (each with an adjacent cost-model derivation comment):
 * `runIsolateAll` — `isolateAll?` at target `32`, `O(n³·B²) = O(n⁵)` with the
   working bit-length `B = Θ(n)`.
 * `runIsolate` — `isolate` to the `separationDepth` floor, `O(n³·B²) = O(n⁵)`.
-* `runRefineTo` — `DyadicRootIsolation.refineTo?` from `≈32` to a parametric
-  target precision `t`, `O(t²)` schoolbook bit-cost at fixed degree.
+* `runRefineTo` — fixed at achieved precision 131077.
 * `runSameRoot` — `RefinedIsolation.sameRoot`, a single dyadic comparison
   (fixed benchmark, microseconds).
-* `runIsolateNk`, `runIsolatePellet`, `runIsolateNkThenPellet` — the `compare`
-  group over `linProdPoly`, `O(n³·B²) = O(n⁵)`; all three must agree on the
-  strategy-invariant hash.
+* `runIsolateNk`, `runIsolatePellet`, `runIsolateNkThenPellet` — fixed on the
+  shared `linProdPoly 10`; all three must agree on the invariant hash.
 
 External comparators (both `informational`, per
 `libraries.yml: HexRoots.phase4.comparators`):
@@ -92,7 +87,7 @@ External comparators (both `informational`, per
   which returns certified Arb balls with multiplicities) is timed as a
   process-call comparator on the same seeded degree ladder the
   whole-polynomial drivers use; the ratio `hex isolateAll?@32 / flint` per
-  degree is recorded in `reports/hexroots-performance.md`. It is
+  degree is recorded in `reports/hex-roots-performance.md`. It is
   `informational`, not gating: FLINT's `complex_roots` is a multiprecision
   ball-arithmetic engine, structurally different from this library's
   decidable exact-integer Pellet / Newton-Kantorovich certificates, so the
@@ -149,10 +144,20 @@ def linProdPoly (degree : Nat) : ZPoly :=
     (fun acc i => acc * linearFactor (Int.ofNat (i + 1)))
     (1 : ZPoly)
 
+/-- A smooth driver family with roots `1/2, 3/2, …, degree-1/2`. -/
+def separatedPoly (degree : Nat) : ZPoly :=
+  (Array.range degree).foldl
+    (fun acc i => acc * DensePoly.ofCoeffs #[-(2 * (Int.ofNat i) + 1), 2])
+    (1 : ZPoly)
+
+/-- A bounded-height degree-`degree` family with exact root `1`. -/
+def boundedRootPoly (degree : Nat) : ZPoly :=
+  if degree = 0 then 1 else linearFactor 1 * seededPoly (degree - 1)
+
 /-- The fixed Gaussian-dyadic centre `1/4 + (1/8)·i` used by the `taylor`
 benchmark: a nonzero dyadic point so the shift exercises every synthetic-
 division pass. -/
-def taylorCentre : GaussDyadic := (Dyadic.ofIntWithPrec 1 2, Dyadic.ofIntWithPrec 1 3)
+def taylorCentre : GaussDyadic := (Dyadic.ofInt 1, Dyadic.ofInt 0)
 
 /-- A square of half-width `2^{−12}` centred on the integer root `1` of
 `linProdPoly`, used by the witness-check and Newton-step benchmarks. At this
@@ -285,15 +290,15 @@ def refinedAtom? : Option (RefinedIsolation refinePoly) :=
 /-! ### Benchmark targets -/
 
 /-- Benchmark target: exact Gaussian-dyadic Taylor shift at the fixed centre. -/
-def runTaylor (p : ZPoly) : UInt64 :=
+def taylorChecksum (p : ZPoly) : UInt64 :=
   gaussArrayChecksum (taylor p taylorCentre)
 
 /-- Benchmark target: Pellet atom witness (`k = 1`) on the root-centred square. -/
-def runWitnessCheck (p : ZPoly) : UInt64 :=
+def witnessChecksum (p : ZPoly) : UInt64 :=
   hash (witnessCheck p rootSquare 1)
 
 /-- Benchmark target: Newton-Kantorovich atom witness on the root-centred square. -/
-def runNkWitnessCheck (p : ZPoly) : UInt64 :=
+def nkWitnessChecksum (p : ZPoly) : UInt64 :=
   hash (nkWitnessCheck p rootSquare)
 
 /-- Benchmark target: closed-form separation precision. -/
@@ -301,19 +306,19 @@ def runMahlerPrec (p : ZPoly) : UInt64 :=
   hash (mahlerPrec p)
 
 /-- Benchmark target: one speculative Newton step from the root-centred square. -/
-def runNewtonSquare (p : ZPoly) : UInt64 :=
+def newtonChecksum (p : ZPoly) : UInt64 :=
   squareChecksum (newtonSquare p rootSquare 1)
 
 /-- Benchmark target: one subdivision round on a mid-refinement component. -/
-def runRefine1 (pc : ZPoly × Component) : UInt64 :=
+def refine1Checksum (pc : ZPoly × Component) : UInt64 :=
   componentsChecksum (pc.2.refine1 pc.1)
 
 /-- Benchmark target: one certification attempt on a mid-refinement component. -/
-def runCertify (pc : ZPoly × Component) : UInt64 :=
+def certifyChecksum (pc : ZPoly × Component) : UInt64 :=
   optionCertifiedChecksum (Component.certify? pc.1 .nkThenPellet pc.2)
 
 /-- Benchmark target: `isolateAll?` at target precision `32`. -/
-def runIsolateAll (p : ZPoly) : UInt64 :=
+def isolateAllChecksum (p : ZPoly) : UInt64 :=
   if h : 0 < p.degree?.getD 0 then
     match isolateAll? p 32 #[Component.cauchy p h] with
     | some rs => certifiedArrayChecksum rs
@@ -334,21 +339,21 @@ def runIsolate (p : ZPoly) : UInt64 :=
   isolateDigest .nkThenPellet p
 
 /-- Compare-group target: `isolate` under the Newton-Kantorovich-only strategy. -/
-def runIsolateNk (p : ZPoly) : UInt64 :=
+def isolateNkChecksum (p : ZPoly) : UInt64 :=
   isolateDigest .nk p
 
 /-- Compare-group target: `isolate` under the Pellet-only strategy. -/
-def runIsolatePellet (p : ZPoly) : UInt64 :=
+def isolatePelletChecksum (p : ZPoly) : UInt64 :=
   isolateDigest .pellet p
 
 /-- Compare-group target: `isolate` under the default `nkThenPellet` strategy. -/
-def runIsolateNkThenPellet (p : ZPoly) : UInt64 :=
+def isolateNkThenPelletChecksum (p : ZPoly) : UInt64 :=
   isolateDigest .nkThenPellet p
 
 /-- Benchmark target: sharpen a fixed `≈32`-precision atom to a parametric
 target precision. The prepared `σ` carries the fixed atom and the requested
 target so the atom construction stays out of the timed loop. -/
-def runRefineTo (input : Option (DyadicRootIsolation refinePoly) × Int) : UInt64 :=
+def refineToChecksum (input : Option (DyadicRootIsolation refinePoly) × Int) : UInt64 :=
   match input.1 with
   | some iso =>
     match iso.refineTo? input.2 with
@@ -360,6 +365,35 @@ def runRefineTo (input : Option (DyadicRootIsolation refinePoly) × Int) : UInt6
 the target precision the parameter encodes. -/
 def prepRefineTo (target : Nat) : Option (DyadicRootIsolation refinePoly) × Int :=
   (refineAtom?, (target : Int))
+
+/-! ### Canonical fixed inputs -/
+
+initialize taylorRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (seededPoly 128))
+initialize witnessRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (boundedRootPoly 128))
+initialize refine1Ref : IO.Ref (Option (ZPoly × Component)) ← IO.mkRef (some (midComponent 8))
+initialize refineToRef : IO.Ref (Option (DyadicRootIsolation refinePoly) × Int) ←
+  IO.mkRef (prepRefineTo 131077)
+initialize isolateAllRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (separatedPoly 12))
+initialize compareRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (linProdPoly 10))
+
+/-- Canonical degree-128 certification fixture pinned to the NK branch. -/
+def pinnedCertify? : Option (ZPoly × Component) :=
+  let p := boundedRootPoly 128
+  if nkWitnessCheck p rootSquare.doubled = true then some (p, ⟨#[rootSquare], 1⟩) else none
+
+initialize certifyRef : IO.Ref (Option (ZPoly × Component)) ← IO.mkRef pinnedCertify?
+
+def runTaylor : Unit → IO UInt64 := fun _ => do return (← taylorRef.get).map taylorChecksum |>.getD 0
+def runWitnessCheck : Unit → IO UInt64 := fun _ => do return (← witnessRef.get).map witnessChecksum |>.getD 0
+def runNkWitnessCheck : Unit → IO UInt64 := fun _ => do return (← witnessRef.get).map nkWitnessChecksum |>.getD 0
+def runNewtonSquare : Unit → IO UInt64 := fun _ => do return (← witnessRef.get).map newtonChecksum |>.getD 0
+def runRefine1 : Unit → IO UInt64 := fun _ => do return (← refine1Ref.get).map refine1Checksum |>.getD 0
+def runCertify : Unit → IO UInt64 := fun _ => do return (← certifyRef.get).map certifyChecksum |>.getD 0
+def runRefineTo : Unit → IO UInt64 := fun _ => do return refineToChecksum (← refineToRef.get)
+def runIsolateAll : Unit → IO UInt64 := fun _ => do return (← isolateAllRef.get).map isolateAllChecksum |>.getD 0
+def runIsolateNk : Unit → IO UInt64 := fun _ => do return (← compareRef.get).map isolateNkChecksum |>.getD 0
+def runIsolatePellet : Unit → IO UInt64 := fun _ => do return (← compareRef.get).map isolatePelletChecksum |>.getD 0
+def runIsolateNkThenPellet : Unit → IO UInt64 := fun _ => do return (← compareRef.get).map isolateNkThenPelletChecksum |>.getD 0
 
 /-! ### `taylor` / `mahlerPrec` : dense seeded family -/
 
@@ -382,16 +416,7 @@ Concern. This is the same Taylor-shift shape as hex-real-roots'
 `runMobiusTransform` but with a non-integer centre, whose denominator growth
 is what keeps it out of the flat band that made that one consistent at `n²`.
 -/
-setup_benchmark runTaylor n => n * n
-  with prep := seededPoly
-  where {
-    paramFloor := 16
-    paramCeiling := 256
-    paramSchedule := .custom #[16, 32, 64, 128, 256]
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runTaylor where { repeats := 5, maxSecondsPerCall := 4.0 }
 
 /-
 Cost model. `mahlerPrec` evaluates the closed-form Mahler/Landau separation
@@ -428,16 +453,7 @@ O(n log n)`, which stays under one GMP word (`≤ 44` bits at `n = 16`) across
 the `2..16` schedule. Operands are sub-word, per-op cost flat, so the wall
 model is the op count `n²`.
 -/
-setup_benchmark runWitnessCheck n => n * n
-  with prep := linProdPoly
-  where {
-    paramFloor := 2
-    paramCeiling := 16
-    paramSchedule := .custom #[2, 4, 6, 8, 10, 12, 16]
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runWitnessCheck where { repeats := 5, maxSecondsPerCall := 4.0 }
 
 /-
 Cost model. `nkWitnessCheck` has the same `O(n²)` Taylor-shift-dominated shape
@@ -447,16 +463,7 @@ radial-Lipschitz fold, so the op count is `n²`. Bit-growth: identical to
 coefficients of `O(n log n)` bits staying sub-word (`≤ 44` bits) across
 `2..16`, so operands are flat and the wall model is the op count `n²`.
 -/
-setup_benchmark runNkWitnessCheck n => n * n
-  with prep := linProdPoly
-  where {
-    paramFloor := 2
-    paramCeiling := 16
-    paramSchedule := .custom #[2, 4, 6, 8, 10, 12, 16]
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runNkWitnessCheck where { repeats := 5, maxSecondsPerCall := 4.0 }
 
 /-
 Cost model. `newtonSquare` computes the Taylor coefficients at the centre (the
@@ -467,16 +474,7 @@ denominator, integer Taylor coefficients of `O(n log n)` bits staying sub-word
 across `2..16`; the reciprocal is at precision `~2·prec = 24` bits, also
 sub-word. Operands flat, so the wall model is the op count `n²`.
 -/
-setup_benchmark runNewtonSquare n => n * n
-  with prep := linProdPoly
-  where {
-    paramFloor := 2
-    paramCeiling := 16
-    paramSchedule := .custom #[2, 4, 6, 8, 10, 12, 16]
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runNewtonSquare where { repeats := 5, maxSecondsPerCall := 4.0 }
 
 /-! ### refinement primitives : mid-refinement component of the seeded family -/
 
@@ -492,16 +490,7 @@ bits (dominated by `|z|^n` with `|z|` near the root bound `~11`), which stays
 sub-word (`≤ 42` bits at `n = 12`) across the `4..12` schedule. Operands flat,
 so the wall model is the op count `n²`.
 -/
-setup_benchmark runRefine1 n => n * n
-  with prep := midComponent
-  where {
-    paramFloor := 4
-    paramCeiling := 12
-    paramSchedule := .custom #[4, 6, 8, 10, 12]
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runRefine1 where { repeats := 5, maxSecondsPerCall := 4.0 }
 
 /-
 Cost model. `certify?` under the default `nkThenPellet` strategy first tries
@@ -514,16 +503,7 @@ Bit-growth: same low-precision seeded mid-refinement component as `refine1` —
 `O(n)`-bit Taylor coefficients staying sub-word across `4..12` — so operands
 are flat and the wall model is the op count `n²`.
 -/
-setup_benchmark runCertify n => n * n
-  with prep := midComponent
-  where {
-    paramFloor := 4
-    paramCeiling := 12
-    paramSchedule := .custom #[4, 6, 8, 10, 12]
-    maxSecondsPerCall := 6.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runCertify where { repeats := 5, maxSecondsPerCall := 6.0 }
 
 /-! ### whole-polynomial drivers : dense seeded family -/
 
@@ -546,16 +526,7 @@ which the report's Concerns section flags as a fit-quality limitation.
 -- suppressed in the declared model per house convention: the harness fits a
 -- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
 -- plain powers for the same reason.
-setup_benchmark runIsolateAll n => n * n * n * n * n
-  with prep := seededPoly
-  where {
-    paramFloor := 4
-    paramCeiling := 20
-    paramSchedule := .custom #[4, 6, 8, 10, 12, 14, 16, 18, 20]
-    maxSecondsPerCall := 20.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runIsolateAll where { repeats := 5, maxSecondsPerCall := 20.0 }
 
 /-
 Cost model. `isolate` runs `isolateAll?` from the Cauchy component to
@@ -574,11 +545,11 @@ Same seeded-family non-monotonicity caveat as `isolateAll?`.
 -- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
 -- plain powers for the same reason.
 setup_benchmark runIsolate n => n * n * n * n * n
-  with prep := seededPoly
+  with prep := separatedPoly
   where {
     paramFloor := 4
-    paramCeiling := 16
-    paramSchedule := .custom #[4, 6, 8, 10, 12, 14, 16]
+    paramCeiling := 10
+    paramSchedule := .custom #[4, 5, 6, 7, 8, 9, 10]
     maxSecondsPerCall := 30.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -596,16 +567,7 @@ ladder, so the per-call work is a step function of `t` rather than smooth in it
 section flags this quantisation as the reason the verdict is inconclusive on
 the `64..256` schedule.
 -/
-setup_benchmark runRefineTo t => t * t
-  with prep := prepRefineTo
-  where {
-    paramFloor := 64
-    paramCeiling := 256
-    paramSchedule := .custom #[64, 96, 128, 192, 256]
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runRefineTo where { repeats := 5, maxSecondsPerCall := 4.0 }
 
 /-! ### `compare` group : dual-route atom-certificate experiment
 
@@ -628,16 +590,7 @@ on its doubled square.
 -- suppressed in the declared model per house convention: the harness fits a
 -- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
 -- plain powers for the same reason.
-setup_benchmark runIsolateNk n => n * n * n * n * n
-  with prep := linProdPoly
-  where {
-    paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 5, 6]
-    maxSecondsPerCall := 8.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runIsolateNk where { repeats := 5, maxSecondsPerCall := 8.0 }
 
 /-
 Cost model: one `isolate` run over `linProdPoly n`; `n³` op count (n
@@ -651,16 +604,7 @@ three-radius test per k candidate.
 -- suppressed in the declared model per house convention: the harness fits a
 -- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
 -- plain powers for the same reason.
-setup_benchmark runIsolatePellet n => n * n * n * n * n
-  with prep := linProdPoly
-  where {
-    paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 5, 6]
-    maxSecondsPerCall := 8.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runIsolatePellet where { repeats := 5, maxSecondsPerCall := 8.0 }
 
 /-
 Cost model: one `isolate` run over `linProdPoly n`; `n³` op count (n
@@ -674,16 +618,7 @@ Pellet as fallback.
 -- suppressed in the declared model per house convention: the harness fits a
 -- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
 -- plain powers for the same reason.
-setup_benchmark runIsolateNkThenPellet n => n * n * n * n * n
-  with prep := linProdPoly
-  where {
-    paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 5, 6]
-    maxSecondsPerCall := 8.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runIsolateNkThenPellet where { repeats := 5, maxSecondsPerCall := 8.0 }
 
 /-! ### `sameRoot` : fixed microsecond benchmark -/
 

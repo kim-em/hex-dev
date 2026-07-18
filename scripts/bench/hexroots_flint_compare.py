@@ -4,7 +4,7 @@
 Times `flint.fmpz_poly.complex_roots()` on the same seed-`0xC0FFEE` dense
 integer polynomial ladder that `bench/HexRoots/Bench.lean`'s whole-polynomial
 drivers use (`seededPoly`), so the ratio `hex isolateAll?@32 / flint` per degree
-in `reports/hexroots-performance.md` is apples-to-apples on the input.
+in `reports/hex-roots-performance.md` is apples-to-apples on the input.
 
 This is an `informational` process-call comparator (SPEC/benchmarking.md
 §External comparators): FLINT's `complex_roots` is a multiprecision Arb

@@ -5,7 +5,7 @@ Draws the Lean `isolateAll?@32` wall-time curve (from the lean-bench export)
 alongside the python-flint `fmpz_poly.complex_roots` curve (from the flint
 comparator export) for one `phase4.input_families` entry, log-y wall time per
 call across the shared seeded degree ladder. Reads the same JSONL/JSON the
-Comparator-ratios numbers in reports/hexroots-performance.md cite.
+Comparator-ratios numbers in reports/hex-roots-performance.md cite.
 
 Only the `seeded-dense` family has python-flint data (the process-call
 comparator was run on the whole-polynomial driver ladder); MPSolve is
