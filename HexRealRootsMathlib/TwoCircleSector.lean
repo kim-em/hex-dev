@@ -261,13 +261,13 @@ theorem PosLogConcave.mul_quadratic (hA : PosLogConcave A) {b c : ℝ} (hb : 0 <
 
 open Complex in
 /-- The closed Obreshkoff sector `{z | z.re ≤ -‖z‖ / 2}`: the closed sector of
-half-angle `π/3` opening along the negative real axis. Note `0 ∈ Sector`. -/
-def Sector : Set ℂ := {z | z.re ≤ -‖z‖ / 2}
+half-angle `π/3` opening along the negative real axis. Note `0 ∈ sector`. -/
+def sector : Set ℂ := {z | z.re ≤ -‖z‖ / 2}
 
-theorem mem_sector {z : ℂ} : z ∈ Sector ↔ z.re ≤ -‖z‖ / 2 := Iff.rfl
+theorem mem_sector {z : ℂ} : z ∈ sector ↔ z.re ≤ -‖z‖ / 2 := Iff.rfl
 
 /-- A real number lies in the sector (as a complex number) iff it is `≤ 0`. -/
-theorem ofReal_mem_sector {t : ℝ} : ((t : ℝ) : ℂ) ∈ Sector ↔ t ≤ 0 := by
+theorem ofReal_mem_sector {t : ℝ} : ((t : ℝ) : ℂ) ∈ sector ↔ t ≤ 0 := by
   rw [mem_sector, Complex.ofReal_re, Complex.norm_real, Real.norm_eq_abs]
   rcases le_or_gt t 0 with h | h
   · simp only [h, iff_true, abs_of_nonpos h]; linarith
@@ -275,23 +275,23 @@ theorem ofReal_mem_sector {t : ℝ} : ((t : ℝ) : ℂ) ∈ Sector ↔ t ≤ 0 :
     constructor <;> intro h' <;> linarith
 
 /-- The sector is closed under complex conjugation. -/
-theorem conj_mem_sector {z : ℂ} (hz : z ∈ Sector) : (starRingEnd ℂ) z ∈ Sector := by
+theorem conj_mem_sector {z : ℂ} (hz : z ∈ sector) : (starRingEnd ℂ) z ∈ sector := by
   rw [mem_sector, Complex.conj_re, Complex.norm_conj]; exact hz
 
 /-! ### From roots in the sector to `PosLogConcave` -/
 
-/-- A monic real linear factor whose complex root lies in `Sector ∖ {0}` has the
+/-- A monic real linear factor whose complex root lies in `sector ∖ {0}` has the
 form `X + C r` with `0 < r`, hence multiplying preserves `PosLogConcave`. -/
 private theorem posLogConcave_mul_of_monicDegOne {f A : ℝ[X]} (hA : PosLogConcave A)
     (hf : IsMonicOfDegree f 1) (h0 : f.coeff 0 ≠ 0)
-    (hroots : ∀ z : ℂ, aeval z f = 0 → z ∈ Sector) :
+    (hroots : ∀ z : ℂ, aeval z f = 0 → z ∈ sector) :
     PosLogConcave (f * A) := by
   set c₀ := f.coeff 0 with hc₀
   have hfeq : f = X + C c₀ := by
     have hdeg : f.degree = 1 := by
       rw [degree_eq_natDegree hf.monic.ne_zero, hf.natDegree_eq]; rfl
     rw [eq_X_add_C_of_degree_eq_one hdeg, hf.leadingCoeff_eq, map_one, one_mul]
-  have hrootmem : ((-c₀ : ℝ) : ℂ) ∈ Sector := by
+  have hrootmem : ((-c₀ : ℝ) : ℂ) ∈ sector := by
     apply hroots
     rw [hfeq]; simp
   rw [ofReal_mem_sector] at hrootmem
@@ -302,12 +302,12 @@ private theorem posLogConcave_mul_of_monicDegOne {f A : ℝ[X]} (hA : PosLogConc
   rw [hfeq]
   exact hA.mul_X_add_C hc₀pos
 
-/-- A monic real quadratic factor whose complex roots lie in `Sector ∖ {0}` has
+/-- A monic real quadratic factor whose complex roots lie in `sector ∖ {0}` has
 the form `X² + C b * X + C c` with `0 < b`, `0 < c`, and `c ≤ b²`, hence
 multiplying preserves `PosLogConcave`. -/
 private theorem posLogConcave_mul_of_monicDegTwo {f A : ℝ[X]} (hA : PosLogConcave A)
     (hf : IsMonicOfDegree f 2) (h0 : f.coeff 0 ≠ 0)
-    (hroots : ∀ z : ℂ, aeval z f = 0 → z ∈ Sector) :
+    (hroots : ∀ z : ℂ, aeval z f = 0 → z ∈ sector) :
     PosLogConcave (f * A) := by
   -- It suffices to write `f = X² + C b * X + C c` with the required sign conditions.
   suffices h : ∃ b c : ℝ, f = X ^ 2 + C b * X + C c ∧ 0 < b ∧ 0 < c ∧ c ≤ b ^ 2 by
@@ -330,11 +330,11 @@ private theorem posLogConcave_mul_of_monicDegTwo {f A : ℝ[X]} (hA : PosLogConc
         rw [degree_eq_natDegree hqmd.monic.ne_zero, hqmd.natDegree_eq]; rfl
       rw [eq_X_add_C_of_degree_eq_one hdeg, hqmd.leadingCoeff_eq, map_one, one_mul]
     -- both real roots lie in the sector
-    have hρmem : ((ρ : ℝ) : ℂ) ∈ Sector := hroots _ (by
+    have hρmem : ((ρ : ℝ) : ℂ) ∈ sector := hroots _ (by
       have : aeval ((ρ : ℝ) : ℂ) f = algebraMap ℝ ℂ (aeval ρ f) :=
         (aeval_algebraMap_apply_eq_algebraMap_eval ρ f)
       rw [this, hρ, map_zero])
-    have hdmem : ((-d : ℝ) : ℂ) ∈ Sector := hroots _ (by
+    have hdmem : ((-d : ℝ) : ℂ) ∈ sector := hroots _ (by
       have hroot : aeval (-d) f = 0 := by
         rw [hq, hqeq, map_mul]; simp [aeval_def]
       have : aeval (((-d : ℝ)) : ℂ) f = algebraMap ℝ ℂ (aeval (-d) f) :=
@@ -388,10 +388,10 @@ private theorem posLogConcave_mul_of_monicDegTwo {f A : ℝ[X]} (hA : PosLogConc
     have : ‖z‖ ≤ -(2 * z.re) := by linarith
     nlinarith [this, hznorm]
 
-/-- **Sector core.** If `Q` is monic with `Q.coeff 0 ≠ 0` and every complex root
+/-- **sector core.** If `Q` is monic with `Q.coeff 0 ≠ 0` and every complex root
 of `Q` lies in the sector, then `Q` is positively log-concave. -/
 theorem posLogConcave_of_aeval_mem_sector {Q : ℝ[X]} (hQ : Q.Monic) (h0 : Q.coeff 0 ≠ 0)
-    (hroots : ∀ z : ℂ, aeval z Q = 0 → z ∈ Sector) : PosLogConcave Q := by
+    (hroots : ∀ z : ℂ, aeval z Q = 0 → z ∈ sector) : PosLogConcave Q := by
   generalize hn : Q.natDegree = N
   induction N using Nat.strong_induction_on generalizing Q with
   | _ N ih =>
@@ -410,9 +410,9 @@ theorem posLogConcave_of_aeval_mem_sector {Q : ℝ[X]} (hQ : Q.Monic) (h0 : Q.co
       have hf2ne : f₂ ≠ 0 := right_ne_zero_of_mul (hQeq ▸ hmd.monic.ne_zero)
       have hf20 : f₂.coeff 0 ≠ 0 := fun h => h0 (by rw [hQeq, mul_coeff_zero, h, mul_zero])
       have hf10 : f₁.coeff 0 ≠ 0 := fun h => h0 (by rw [hQeq, mul_coeff_zero, h, zero_mul])
-      have hroots₂ : ∀ z : ℂ, aeval z f₂ = 0 → z ∈ Sector :=
+      have hroots₂ : ∀ z : ℂ, aeval z f₂ = 0 → z ∈ sector :=
         fun z hz => hroots z (by rw [hQeq, map_mul, hz, mul_zero])
-      have hroots₁ : ∀ z : ℂ, aeval z f₁ = 0 → z ∈ Sector :=
+      have hroots₁ : ∀ z : ℂ, aeval z f₁ = 0 → z ∈ sector :=
         fun z hz => hroots z (by rw [hQeq, map_mul, hz, zero_mul])
       rcases hf₁ with hf₁ | hf₁
       · -- degree 1 factor
@@ -433,5 +433,118 @@ theorem posLogConcave_of_aeval_mem_sector {Q : ℝ[X]} (hQ : Q.Monic) (h0 : Q.co
           ih (m - 1) (by omega) hf2md.monic hf20 hroots₂ hf2md.natDegree_eq
         rw [hQeq]
         exact posLogConcave_mul_of_monicDegTwo hf2plc hf₁ hf10 hroots₁
+
+/-! ### Sign-variation bounds from coefficient signs
+
+Both bounds are proved by `eraseLead` induction on the coefficient predicates,
+so no `coeffList` surgery is needed. -/
+
+/-- A nonnegative-coefficient polynomial has no sign variations. -/
+theorem signVariations_eq_zero_of_coeff_nonneg {P : ℝ[X]} (h : ∀ i, 0 ≤ P.coeff i) :
+    P.signVariations = 0 := by
+  generalize hn : P.natDegree = N
+  induction N using Nat.strong_induction_on generalizing P with
+  | _ N ih =>
+    by_cases hP : P = 0
+    · simp [hP]
+    rcases Nat.eq_zero_or_pos N with hN0 | hNpos
+    · subst hN0
+      rw [eq_C_of_natDegree_eq_zero hn, ← monomial_zero_left]
+      exact signVariations_monomial 0 _
+    · have hlead : 0 < P.leadingCoeff :=
+        lt_of_le_of_ne (h _) (Ne.symm (leadingCoeff_ne_zero.mpr hP))
+      have heLcoeff : ∀ i, 0 ≤ P.eraseLead.coeff i := by
+        intro i
+        rw [eraseLead_coeff]
+        split
+        · exact le_refl 0
+        · exact h i
+      have hite : ¬(SignType.sign P.leadingCoeff = -SignType.sign P.eraseLead.leadingCoeff) := by
+        rw [sign_pos hlead]
+        intro hcon
+        have : SignType.sign P.eraseLead.leadingCoeff = -1 := by
+          rw [← neg_neg (SignType.sign P.eraseLead.leadingCoeff), ← hcon]
+        exact absurd (sign_eq_neg_one_iff.mp this) (not_lt.mpr (heLcoeff _))
+      rw [signVariations_eq_eraseLead_add_ite hP, if_neg hite, add_zero]
+      exact ih _ (lt_of_le_of_lt (eraseLead_natDegree_le P) (by omega)) heLcoeff rfl
+
+/-- **The threshold bound.** If the coefficients of `P` are nonpositive below an
+index `θ` and nonnegative from `θ` on, then `P` has at most one sign variation. -/
+theorem signVariations_le_one_of_coeff_threshold {P : ℝ[X]} {θ : ℕ}
+    (h1 : ∀ i < θ, P.coeff i ≤ 0) (h2 : ∀ i, θ ≤ i → 0 ≤ P.coeff i) :
+    P.signVariations ≤ 1 := by
+  generalize hn : P.natDegree = N
+  induction N using Nat.strong_induction_on generalizing P θ with
+  | _ N ih =>
+    by_cases hP : P = 0
+    · simp [hP]
+    rcases Nat.eq_zero_or_pos N with hN0 | hNpos
+    · subst hN0
+      rw [eq_C_of_natDegree_eq_zero hn, ← monomial_zero_left, signVariations_monomial]
+      exact zero_le_one
+    rcases lt_or_ge P.leadingCoeff 0 with hneg | hpos'
+    · -- the leading coefficient is negative, so all coefficients are `≤ 0`
+      have hndθ : P.natDegree < θ := by
+        by_contra hcon
+        push_neg at hcon
+        exact absurd (h2 _ hcon) (not_le.mpr hneg)
+      have hnn : ∀ i, 0 ≤ (-P).coeff i := by
+        intro i
+        rw [coeff_neg, neg_nonneg]
+        rcases le_or_gt i P.natDegree with hi | hi
+        · exact h1 i (lt_of_le_of_lt hi hndθ)
+        · rw [coeff_eq_zero_of_natDegree_lt hi]
+      calc P.signVariations = (-P).signVariations := (signVariations_neg P).symm
+        _ = 0 := signVariations_eq_zero_of_coeff_nonneg hnn
+        _ ≤ 1 := zero_le_one
+    have hlead : 0 < P.leadingCoeff :=
+      lt_of_le_of_ne hpos' (Ne.symm (leadingCoeff_ne_zero.mpr hP))
+    have heLnd : P.eraseLead.natDegree < N :=
+      lt_of_le_of_lt (eraseLead_natDegree_le P) (by omega)
+    rcases lt_or_ge P.eraseLead.leadingCoeff 0 with heL | heL
+    · -- one variation may occur at the top; below it everything is nonpositive
+      have heLndθ : P.eraseLead.natDegree < θ := by
+        by_contra hcon
+        push_neg at hcon
+        have hne : P.eraseLead.natDegree ≠ P.natDegree := by omega
+        have hcoeff : P.eraseLead.leadingCoeff = P.coeff P.eraseLead.natDegree := by
+          rw [leadingCoeff, eraseLead_coeff, if_neg hne]
+        rw [hcoeff] at heL
+        exact absurd (h2 _ hcon) (not_le.mpr heL)
+      have hnn : ∀ i, 0 ≤ (-P.eraseLead).coeff i := by
+        intro i
+        rw [coeff_neg, neg_nonneg]
+        rcases le_or_gt i P.eraseLead.natDegree with hi | hi
+        · rw [eraseLead_coeff]
+          split
+          · exact le_refl 0
+          · exact h1 i (lt_of_le_of_lt hi heLndθ)
+        · rw [coeff_eq_zero_of_natDegree_lt hi]
+      have h0 : P.eraseLead.signVariations = 0 := by
+        rw [← signVariations_neg]
+        exact signVariations_eq_zero_of_coeff_nonneg hnn
+      rw [signVariations_eq_eraseLead_add_ite hP, h0, zero_add]
+      split <;> norm_num
+    · -- no variation at the top; recurse into `eraseLead`
+      have hite : ¬(SignType.sign P.leadingCoeff = -SignType.sign P.eraseLead.leadingCoeff) := by
+        rw [sign_pos hlead]
+        intro hcon
+        have : SignType.sign P.eraseLead.leadingCoeff = -1 := by
+          rw [← neg_neg (SignType.sign P.eraseLead.leadingCoeff), ← hcon]
+        exact absurd (sign_eq_neg_one_iff.mp this) (not_lt.mpr heL)
+      rw [signVariations_eq_eraseLead_add_ite hP, if_neg hite, add_zero]
+      have h1' : ∀ i < θ, P.eraseLead.coeff i ≤ 0 := by
+        intro i hi
+        rw [eraseLead_coeff]
+        split
+        · exact le_refl 0
+        · exact h1 i hi
+      have h2' : ∀ i, θ ≤ i → 0 ≤ P.eraseLead.coeff i := by
+        intro i hi
+        rw [eraseLead_coeff]
+        split
+        · exact le_refl 0
+        · exact h2 i hi
+      exact ih _ heLnd h1' h2' rfl
 
 end Polynomial
