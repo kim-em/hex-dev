@@ -219,7 +219,7 @@ concrete polynomial, so the "one certified interval, `simp`" path stays green:
 
 * the Sturm squarefree certificate `squareFreeRat_of_hasSquarefreeSturmChain`,
   discharged by `by decide` on the executable chain (no rational gcd);
-* the Horner `eval_toPolyℝ` bridge, turning `IsRoot` into `x⁴ − 2 = 0`;
+* the coefficient-sum `eval_toPolyℝ` bridge, turning `IsRoot` into `x⁴ − 2 = 0`;
 * the `toReal_ofInt_shiftRight` simp lemma for the `k / 2²⁰` dyadic endpoints;
 * the `Hex`-namespace dot-notation alias `RealRootIsolation.exists_unique_root`.
 
