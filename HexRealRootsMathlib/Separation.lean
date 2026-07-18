@@ -551,7 +551,7 @@ theorem sepPrec_separates (p : Hex.ZPoly)
   have hf0 : f ≠ 0 := by
     rw [hfmap, ne_eq, Polynomial.map_eq_zero_iff (RingHom.injective_int _)]; exact hp'0
   -- Splitting and separability over `ℂ`.
-  have hsplit : f.Splits := by rw [hfmap]; exact IsAlgClosed.splits_codomain p'
+  have hsplit : f.Splits := IsAlgClosed.splits f
   have hcomp : (algebraMap ℚ ℂ).comp (Int.castRingHom ℚ) = Int.castRingHom ℂ :=
     RingHom.ext_int _ _
   have hsepℂ : f.Separable := by
