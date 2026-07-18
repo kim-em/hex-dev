@@ -10,8 +10,8 @@ import HexRealRootsMathlib.Isolations
 /-!
 Companion conformance checks for `HexRealRootsMathlib`.
 
-Oracle: core uses the **proven correspondence theorems** as the algebraic
-oracle. `rootCount_eq_card_roots` (and `squareFreeRat_iff` feeding its
+Oracle: none; checked against Mathlib root counts via the proven
+correspondence theorems. `rootCount_eq_card_roots` (and `squareFreeRat_iff` feeding its
 square-free hypothesis) is the bridge that ties the executable, computable
 `Hex.rootCount` to the noncomputable Mathlib `(toPolyℝ p).roots.card`. There is
 no external oracle profile: the two sides are pinned independently — the
