@@ -17,6 +17,7 @@ public import HexRealRootsMathlib.Drivers
 public import HexRealRootsMathlib.SimpleRealRoot
 public import HexRealRootsMathlib.TwoCircle
 public import HexRealRootsMathlib.DescartesParity
+public import HexRealRootsMathlib.TwoCircleRegion
 
 public section
 
