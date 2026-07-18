@@ -267,6 +267,17 @@ theorem coeff_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) (n
       have hne : i ≠ n := by omega
       simp [Polynomial.coeff_monomial, hne]
 
+/-- Coefficient-sum evaluation bridge: evaluating `toPolynomial p` through a ring
+hom `f` at `x` is the degree-indexed sum `∑ f (p.coeff i) * x ^ i`. For a literal
+`ofCoeffs` array this unfolds via `Finset.sum_range_succ` into an explicit
+polynomial in `x`, which `ring`/`norm_num` can then discharge. -/
+theorem eval₂_toPolynomial {S : Type*} [Semiring R] [DecidableEq R] [Semiring S]
+    (f : R →+* S) (p : Hex.DensePoly R) (x : S) :
+    (toPolynomial p).eval₂ f x = ∑ i ∈ Finset.range p.size, f (p.coeff i) * x ^ i := by
+  unfold toPolynomial
+  rw [Polynomial.eval₂_finsetSum]
+  exact Finset.sum_congr rfl fun i _ => Polynomial.eval₂_monomial f x
+
 /-- `ofPolynomial` sends Mathlib's zero polynomial to the executable zero. -/
 @[simp, grind =]
 theorem ofPolynomial_zero [Semiring R] [DecidableEq R] :

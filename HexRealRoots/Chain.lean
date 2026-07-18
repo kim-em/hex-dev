@@ -127,6 +127,21 @@ def sturmChain (p : ZPoly) : Array ZPoly :=
       let s₁ := primitivePart (DensePoly.derivative p)
       sturmChainAux p.size s₀ s₁ #[s₀, s₁]
 
+/-- A `decide`-checkable squarefreeness certificate: `p` has positive degree and
+the last entry of its Sturm chain is a nonzero constant (`size == 1`). When this
+is `true`, `p` is squarefree over `ℚ` — proved as
+`squareFreeRat_of_hasSquarefreeSturmChain` in the Mathlib companion, whence a
+concrete `SquareFreeRat p` is dischargeable by `by decide` on this test.
+
+This is a one-way certificate, not a decision procedure: it returns `false` on
+the zero polynomial and on nonzero constants (empty chain), even though
+`SquareFreeRat` is vacuously/trivially true there. -/
+@[expose]
+def hasSquarefreeSturmChain (p : ZPoly) : Bool :=
+  match (sturmChain p).toList.getLast? with
+  | some z => z.size == 1
+  | none   => false
+
 end ZPoly
 
 /-! Sanity checks (kept light; conformance lives in the shared
@@ -159,5 +174,12 @@ example : ZPoly.sturmChain (DensePoly.ofCoeffs #[(0 : Int), -1, 0, 1])
         DensePoly.ofCoeffs #[(-1 : Int), 0, 3],
         DensePoly.ofCoeffs #[(0 : Int), 1],
         DensePoly.ofCoeffs #[(1 : Int)]] := by decide
+
+-- The squarefree certificate: `x⁴ − 2` and `x³ − x` pass; a nonzero constant,
+-- the zero polynomial, and the non-squarefree `(x − 1)²` all fail.
+example : ZPoly.hasSquarefreeSturmChain (DensePoly.ofCoeffs #[(-2 : Int), 0, 0, 0, 1]) := by decide
+example : ZPoly.hasSquarefreeSturmChain (DensePoly.ofCoeffs #[(0 : Int), -1, 0, 1]) := by decide
+example : ZPoly.hasSquarefreeSturmChain (DensePoly.ofCoeffs #[(7 : Int)]) = false := by decide
+example : ZPoly.hasSquarefreeSturmChain (DensePoly.ofCoeffs #[(1 : Int), -2, 1]) = false := by decide
 
 end Hex
