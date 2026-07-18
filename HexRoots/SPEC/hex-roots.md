@@ -740,25 +740,32 @@ polynomials rarely have clustered roots.
     polynomial of degree 20, and products of two Mignotte polynomials
     with different parameters (close root pairs at two scales).
 
-External oracles. The ci-tier oracle is **python-flint**
+External oracles. The ci-tier oracle is
+**[python-flint](https://github.com/flintlib/python-flint)**
 (`fmpz_poly.complex_roots()`, which returns certified Arb balls with
 multiplicities); it is already in the CI dependency set, consistent
 with the standing oracle doctrine in
 [SPEC/testing.md](../../SPEC/testing.md), and FLINT 3 subsumes Arb, so this
-is also the "FLINT/Arb" role. MPSolve is the local-tier comparator
-and the Phase-4 external performance comparator; it is not wired
-into merge-facing CI. SageMath is not used (per SPEC/testing.md's
-Sage policy).
+is also the "FLINT/Arb" role.
+[MPSolve](https://github.com/robol/MPSolve) remains the local-tier correctness
+oracle for the adversarial corpus; it is not a Phase-4 performance comparator
+and is not wired into merge-facing CI. SageMath is not used (per
+SPEC/testing.md's Sage policy).
 
-For Phase 4 both named comparators are classified `informational` (per
+For Phase 4 python-flint is classified `informational` (per
 [SPEC/benchmarking.md §Comparator classification](../../SPEC/benchmarking.md#comparator-classification-gating-vs-informational)):
-python-flint `fmpz_poly.complex_roots` and MPSolve are multiprecision
-ball/float engines computing approximate root inclusions, structurally
-different from this library's decidable exact-integer Pellet /
-Newton-Kantorovich certificates, so their ratios orient but do not gate, and
-the yardstick is the "Time budgets" targets above rather than a constant-factor
-goal. Neither is `gating`; MPSolve is additionally scheduled-only. The
-classifications and rationales are mirrored in
+python-flint `fmpz_poly.complex_roots` is a multiprecision ball engine
+computing approximate root inclusions, structurally different from this
+library's decidable exact-integer Pellet / Newton-Kantorovich certificates,
+so its ratios orient but do not gate, and the yardstick is the "Time budgets"
+targets above rather than a constant-factor goal. It is scoped to the
+whole-polynomial `runIsolate` and `runIsolateAll` surfaces. Separation-bound
+calculation (`runMahlerPrec`), Taylor shift, witness checks, Newton steps,
+component refinement/certification, refined-atom operations, and the individual
+strategy routes are declared
+**no-comparable-surface-in-named-comparator**: FLINT uses analogous kernels
+internally but does not expose them as callable performance surfaces. The
+classification and rationale are mirrored in
 `libraries.yml: HexRoots.phase4.comparators`.
 
 ## Complexity contract

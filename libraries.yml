@@ -459,15 +459,12 @@ libraries:
       comparators:
         - tool: "python-flint fmpz_poly.complex_roots"
           class: informational
-          rationale: "The SPEC's ci-tier oracle (python-flint fmpz_poly.complex_roots, returning certified Arb balls with multiplicities) is a multiprecision ball-arithmetic engine, structurally different from this library's decidable exact-integer Pellet / Newton-Kantorovich certificates. Timed on the same seed-0xC0FFEE dense integer ladder the whole-polynomial drivers use (scripts/bench/hexroots_flint_compare.py); the ratio hex isolateAll?@32 / flint per degree is recorded in reports/hex-roots-performance.md. Informational, not gating: the SPEC's time budgets — not a constant-factor 1x goal — are the yardstick for an integer-certified isolator against a float engine."
-        - tool: "MPSolve"
-          class: informational
-          rationale: "MPSolve (Bini-Fiorentino, the SPEC's local-tier and Phase-4 external performance comparator) is a multiprecision-float C library computing approximate root inclusions, structurally different from this library's integer-certified Lean witnesses, so its ratio orients but does not gate. Scheduled-only: not wired in this PR. Required environment stated in bench/HexRoots/Bench.lean's module docstring (the mpsolve CLI built with GMP, driven on the seeded ladder via -au -Gi isolate mode)."
+          rationale: "The SPEC's ci-tier oracle (python-flint fmpz_poly.complex_roots, returning certified Arb balls with multiplicities) is a multiprecision ball-arithmetic engine, structurally different from this library's decidable exact-integer Pellet / Newton-Kantorovich certificates. Scoped to the shared whole-polynomial runIsolate and runIsolateAll surfaces and timed on their current fixed-separation inputs (scripts/bench/hexroots_flint_compare.py); the ratio per degree is recorded in reports/hex-roots-performance.md. Informational, not gating: the SPEC's time budgets — not a constant-factor 1x goal — are the yardstick for an integer-certified isolator against a float engine. Separation-bound and internal kernel surfaces are declared no-comparable-surface-in-named-comparator in the library SPEC."
       input_families:
         - name: seeded-dense
           description: Seed-0xC0FFEE bounded-coefficient dense polynomials and their bounded-height (X−1) product; drives parametric mahlerPrec and canonical Taylor, witness, Newton, and pinned-NK regressions.
         - name: fixed-separation-product
-          description: Products ∏(2X−(2j+1)) with uniformly separated half-integer roots; drives the parametric isolate registration and canonical isolateAll/refine1 regressions.
+          description: Products ∏(2X−(2j+1)) with uniformly separated half-integer roots; drives canonical fixed isolate/isolateAll/refine1 regressions and the historical unregistered isolation diagnostic ladder.
         - name: wilkinson-linprod
           description: The canonical degree-10 product ∏(X−j), with roots 1..10; shared by the three fixed dual-route strategy regressions.
         - name: refine-fixed

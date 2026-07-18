@@ -35,7 +35,8 @@ The deterministic inputs include:
   three strategies (the atoms' stored squares differ, but the integer-grid
   projection of their centres does not).
 * `separatedPoly d = ∏(2X−(2j+1))` — uniformly separated half-integer roots,
-  used by the parametric `isolate` driver and canonical `isolateAll?` case.
+  used by canonical fixed `isolate`/`isolateAll?`/`refine1` cases and the
+  historical unregistered isolation diagnostic ladder.
 * `boundedRootPoly 128` — bounded-height with exact root `1`, used by the
   canonical witness, Newton, and pinned-NK certification cases.
 
@@ -51,8 +52,8 @@ parameter folds the growth into the exponent. Each registration's comment
 states which case it is and why. The `verify` smoke gate only exercises each
 registration at parameters `0` and `1`.
 
-Only `runMahlerPrec` and `runIsolate` are parametric consistency gates. All
-other operations use canonical fixed registrations: their reachable inputs sit
+Only `runMahlerPrec` is a parametric consistency gate. All other operations
+use canonical fixed registrations: their reachable inputs sit
 in a genuine GMP transition band where no honest scalar wall model has a flat
 constant. Fixed timings retain regression coverage without asserting such a
 model; the evidence and lean-bench#67 follow-up are recorded in the report.
@@ -71,38 +72,32 @@ canonical or parametric case):
 * `runRefine1` — one subdivision round on a fixed-separation mid-refinement
   component; `runCertify` — one pinned-NK certification attempt on the
   bounded-root fixture. Both are fixed `O(n²)` operation shapes.
-* `runIsolateAll` — `isolateAll?` at target `32`, `O(n³·B²) = O(n⁵)` with the
-  working bit-length `B = Θ(n)`.
-* `runIsolate` — `isolate` to the `separationDepth` floor, `O(n³·B²) = O(n⁵)`.
+* `runIsolateAll` — fixed `isolateAll?` at target `32` on separated degree 12.
+* `runIsolate` — fixed `isolate` to the `separationDepth` floor on separated
+  degree 8.
 * `runRefineTo` — fixed at achieved precision 131077.
 * `runSameRoot` — `RefinedIsolation.sameRoot`, a single dyadic comparison
   (fixed nanosecond-scale benchmark).
 * `runIsolateNk`, `runIsolatePellet`, `runIsolateNkThenPellet` — fixed on the
   shared `linProdPoly 10`; all three must agree on the invariant hash.
 
-External comparators (both `informational`, per
+External comparator (`informational`, per
 `libraries.yml: HexRoots.phase4.comparators`):
 
 * **python-flint** `fmpz_poly.complex_roots()` (the SPEC's ci-tier oracle,
   which returns certified Arb balls with multiplicities) is timed as a
-  process-call comparator on the same seeded degree ladder the
-  whole-polynomial drivers use; the ratio `hex isolateAll?@32 / flint` per
-  degree is recorded in `reports/hex-roots-performance.md`. It is
+  process-call comparator on the historical unregistered fixed-separation
+  diagnostic ladder at degrees `4..10`, which includes canonical `runIsolate`
+  degree 8, plus canonical `runIsolateAll` degree 12; the ratios are recorded in
+  `reports/hex-roots-performance.md`. It is
   `informational`, not gating: FLINT's `complex_roots` is a multiprecision
   ball-arithmetic engine, structurally different from this library's
   decidable exact-integer Pellet / Newton-Kantorovich certificates, so the
   SPEC's time budgets — not a constant-factor `1×` goal — are the yardstick.
   Reproduce with `scripts/bench/hexroots_flint_compare.py` under a
   `python-flint ≥ 0.9.0` virtualenv (subprocess, wall clock, per-call
-  overhead measured on a trivial input).
-* **MPSolve** (Bini–Fiorentino `mpsolve`, the SPEC's local-tier and Phase-4
-  external performance comparator) is classified `informational` and
-  **scheduled-only**: it is not wired in this PR. Required environment: the
-  `mpsolve` CLI (`unisa-cs/mpsolve`, built with GMP) on `PATH`, driven on the
-  same seeded ladder via its `-au -Gi` isolate-mode output. Rationale for the
-  informational class: MPSolve is a multiprecision-float C library computing
-  approximate root inclusions, structurally different from this library's
-  integer-certified Lean witnesses, so its ratio orients but does not gate.
+  overhead measured on a trivial input). MPSolve remains a local correctness
+  oracle, not a Phase-4 performance comparator.
 -/
 
 namespace Hex.RootsBench
