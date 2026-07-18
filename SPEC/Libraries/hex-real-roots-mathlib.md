@@ -118,10 +118,21 @@ theorem sturmVarAt_eq (p : ZPoly) (x : Dyadic) : …
     executable gcd correspondence), and squarefreeness transfers to
     `ℝ`. -/
 theorem squareFreeRat_iff : …
+
+/-- A terminal-constant Sturm chain forces `SquareFreeRat` — the reverse
+    of the terminal-unit step in `sturmChain_isSturmChain`, walked back to
+    coprime seeds. Lets a concrete `SquareFreeRat p` be discharged by
+    `by decide` on the chain. -/
+theorem squareFreeRat_of_hasSquarefreeSturmChain
+    (p : ZPoly) (h : hasSquarefreeSturmChain p = true) : SquareFreeRat p
 ```
 
 `toPolyℝ` abbreviates the `hex-poly-z-mathlib` cast composed with
-`Polynomial.map (Int.castRingHom ℝ)`.
+`Polynomial.map (Int.castRingHom ℝ)`. Its coefficient/coefficient-sum
+bridges (`coeff_toPolyℝ` / `coeff_toPolyℚ`, `eval_toPolyℝ` /
+`eval_toPolyℚ`) rewrite a root goal on a literal `ofCoeffs` to an explicit
+polynomial equation, and `toReal_ofInt_shiftRight` normalizes `n / 2ⁱ`
+dyadic endpoints.
 
 ### Consequences for the executable counts
 
@@ -138,8 +149,9 @@ theorem rootCount_eq_card_roots (p : ZPoly) (hp : SquareFreeRat p) :
 ## Isolation semantics
 
 Everything below consumes only the decidable fields of the output
-structures plus the `SquareFreeRat p` hypothesis, so it holds for any
-`RealRootIsolations p` value, no matter which engine produced it.
+structures plus `SquareFreeRat p` (and, for `isolates`, `p ≠ 0`, since
+`SquareFreeRat 0` is vacuous), so it holds for any `RealRootIsolations p`
+value, no matter which engine produced it.
 
 ```lean
 /-- The witness means what it says: exactly one real root in the
@@ -151,7 +163,7 @@ theorem RealRootIsolation.exists_unique_root
 
 /-- A complete run captures every real root exactly once. -/
 theorem RealRootIsolations.isolates
-    (hp : SquareFreeRat p) (out : RealRootIsolations p) :
+    (hp0 : p ≠ 0) (hp : SquareFreeRat p) (out : RealRootIsolations p) :
     ∀ r : ℝ, (toPolyℝ p).IsRoot r →
       ∃! iso ∈ out.isolations.toList,
         (iso.interval.lower : ℝ) < r ∧ r ≤ (iso.interval.upper : ℝ)
@@ -159,7 +171,9 @@ theorem RealRootIsolations.isolates
 
 The second follows from the first plus `ordered` (disjointness) and
 `complete` (counting): the isolations hold `rootCount p` distinct
-roots among them, and that is all the roots there are.
+roots among them, and that is all the roots there are. Both are also
+exported in the `Hex` namespace, so dot notation resolves on the
+executable structures (`iso.exists_unique_root`).
 
 ## Bounds and depths
 
