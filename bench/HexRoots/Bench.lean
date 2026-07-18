@@ -346,7 +346,7 @@ def isolateDigest (strategy : AtomStrategy) (p : ZPoly) : UInt64 :=
   else 0
 
 /-- Benchmark target: `isolate` to the `separationDepth` floor (`atom_prec = 0`). -/
-def runIsolate (p : ZPoly) : UInt64 :=
+def runIsolateParam (p : ZPoly) : UInt64 :=
   isolateDigest .nkThenPellet p
 
 /-- Compare-group target: `isolate` under the Newton-Kantorovich-only strategy. -/
@@ -402,6 +402,11 @@ def runNewtonSquare : Unit → IO UInt64 := fun _ => do return (← witnessRef.g
 def runRefine1 : Unit → IO UInt64 := fun _ => do return (← refine1Ref.get).map refine1Checksum |>.getD 0
 def runCertify : Unit → IO UInt64 := fun _ => do return (← certifyRef.get).map certifyChecksum |>.getD 0
 def runRefineTo : Unit → IO UInt64 := fun _ => do return refineToChecksum (← refineToRef.get)
+initialize isolateFixedRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (separatedPoly 8))
+
+def runIsolate : Unit → IO UInt64 := fun _ => do
+  return ((← isolateFixedRef.get).map runIsolateParam).getD 0
+
 def runIsolateAll : Unit → IO UInt64 := fun _ => do return (← isolateAllRef.get).map isolateAllChecksum |>.getD 0
 def runIsolateNk : Unit → IO UInt64 := fun _ => do return (← compareRef.get).map isolateNkChecksum |>.getD 0
 def runIsolatePellet : Unit → IO UInt64 := fun _ => do return (← compareRef.get).map isolatePelletChecksum |>.getD 0
@@ -497,7 +502,11 @@ the Newton-Kantorovich witness on the doubled enclosing square: one
 `nkWitnessCheck` (`O(n²)`) and one speculative `newtonSquare` (`O(n²)`). On a
 canonical bounded-height degree-128 component is pinned by checking
 `nkWitnessCheck p rootSquare.doubled = true` during initialization, so this NK
-path always fires and the op count is `n²`. The fixed expected hash makes a
+path always fires and the op count is `n²`. Fixed rather than parametric
+because the certification path is Taylor-shift dominated and the shift's
+`Θ(n)`-bit output growth places every reachable schedule in the `n²..n³`
+GMP transition band (issue #8750, rounds one to three: pure powers and the
+limb model all showed drifting constants). The fixed expected hash makes a
 fixture-path or semantic regression visible.
 -/
 setup_fixed_benchmark runCertify where {
@@ -519,10 +528,10 @@ wall model `n⁵`. The canonical fixed case is the degree-12 uniformly
 separated half-integer product; it tracks the full driver without asserting a
 slope after its quiet-machine sweep remained transitional.
 -/
--- Polylog factors (a strict B = Θ(n log n) reading gives n^5·log²n) are
--- suppressed in the declared model per house convention: the harness fits a
--- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
--- plain powers for the same reason.
+-- Fixed rather than parametric: the quiet-machine sweep stayed in the GMP
+-- transition band at every reachable schedule (issue #8750, round four), so
+-- no scalar wall model has a flat constant; the shared canonical input keeps
+-- the cross-strategy `compare` agreement gate as a regression check.
 setup_fixed_benchmark runIsolateAll where {
   repeats := 5, maxSecondsPerCall := 20.0, expectedHash := some 0xecd908d19d73e5c4 }
 
@@ -531,26 +540,20 @@ Cost model. `isolate` runs `isolateAll?` from the Cauchy component to
 `max atom_prec (separationDepth p)` and requires every result to be an atom.
 With `atom_prec = 0` the target is the `separationDepth` floor, which grows
 with the degree, so this is the deeper of the two whole-polynomial drivers.
-Same `n³` op count as `isolateAll?`. Bit-growth: the target precision is now
-`separationDepth p = mahlerPrec p + O(log n) = O(n·log‖p‖∞)`, so `B = Θ(n)` is
-even more firmly in the multiplication-bound regime; `O(n³·B²)` with
-`B = Θ(n)` gives the wall model `n⁵`. The smooth fixed-separation ladder
-`4..10` is the final parametric driver-risk gate.
+Same `n³` op count as `isolateAll?`, but on this family the floor is steep:
+`separatedPoly n` has `log ‖p‖∞ = Θ(n·log n)` (the `2^n` leading factor and
+the double-factorial constant term), so
+`separationDepth = O(n·log‖p‖∞) = Θ(n²·log n)`, the emission-level working
+bit-length is `B = Θ(n²·log n)`, and the honestly derived wall from the SPEC
+`O(n³·B²)` contract is `~n⁷` (polylogs suppressed per house convention). That
+asymptote is far beyond the 30 s/call band (an earlier `n⁵` registration fit
+the 4..10 rungs, but only as a transition-band artifact; the adjacent
+derivation could not support it, so per the no-fitting rule it was withdrawn:
+issue #8750). Canonical fixed case at the mid-schedule degree 8; regression
+tracking without an asymptotic claim.
 -/
--- Polylog factors (a strict B = Θ(n log n) reading gives n^5·log²n) are
--- suppressed in the declared model per house convention: the harness fits a
--- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
--- plain powers for the same reason.
-setup_benchmark runIsolate n => n * n * n * n * n
-  with prep := separatedPoly
-  where {
-    paramFloor := 4
-    paramCeiling := 10
-    paramSchedule := .custom #[4, 5, 6, 7, 8, 9, 10]
-    maxSecondsPerCall := 30.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runIsolate where {
+    repeats := 5, maxSecondsPerCall := 30.0, expectedHash := some 0x16c307fd2a36d31e }
 
 /-
 Cost model. `refineTo?` sharpens a fixed degree-3 atom from precision `≈32` to
@@ -582,10 +585,10 @@ growing-precision arithmetic as a schoolbook `O(B²)` per-op factor, so
 `O(n³·B²)` gives the `n⁵` wall model; the NK-only strategy certifies each atom
 on its doubled square.
 -/
--- Polylog factors (a strict B = Θ(n log n) reading gives n^5·log²n) are
--- suppressed in the declared model per house convention: the harness fits a
--- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
--- plain powers for the same reason.
+-- Fixed rather than parametric: the quiet-machine sweep stayed in the GMP
+-- transition band at every reachable schedule (issue #8750, round four), so
+-- no scalar wall model has a flat constant; the shared canonical input keeps
+-- the cross-strategy `compare` agreement gate as a regression check.
 setup_fixed_benchmark runIsolateNk where {
   repeats := 5, maxSecondsPerCall := 8.0, expectedHash := some 0xda631bdf13415a4f }
 
@@ -597,10 +600,10 @@ growing-precision arithmetic as a schoolbook `O(B²)` per-op factor, so
 `O(n³·B²)` gives the `n⁵` wall model; the Pellet-only strategy runs the
 three-radius test per k candidate.
 -/
--- Polylog factors (a strict B = Θ(n log n) reading gives n^5·log²n) are
--- suppressed in the declared model per house convention: the harness fits a
--- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
--- plain powers for the same reason.
+-- Fixed rather than parametric: the quiet-machine sweep stayed in the GMP
+-- transition band at every reachable schedule (issue #8750, round four), so
+-- no scalar wall model has a flat constant; the shared canonical input keeps
+-- the cross-strategy `compare` agreement gate as a regression check.
 setup_fixed_benchmark runIsolatePellet where {
   repeats := 5, maxSecondsPerCall := 8.0, expectedHash := some 0xda631bdf13415a4f }
 
@@ -612,10 +615,10 @@ growing-precision arithmetic as a schoolbook `O(B²)` per-op factor, so
 `O(n³·B²)` gives the `n⁵` wall model; the default strategy tries NK first,
 Pellet as fallback.
 -/
--- Polylog factors (a strict B = Θ(n log n) reading gives n^5·log²n) are
--- suppressed in the declared model per house convention: the harness fits a
--- log-log slope, and the sibling Phase-4 reports (hex-real-roots) declare
--- plain powers for the same reason.
+-- Fixed rather than parametric: the quiet-machine sweep stayed in the GMP
+-- transition band at every reachable schedule (issue #8750, round four), so
+-- no scalar wall model has a flat constant; the shared canonical input keeps
+-- the cross-strategy `compare` agreement gate as a regression check.
 setup_fixed_benchmark runIsolateNkThenPellet where {
   repeats := 5, maxSecondsPerCall := 8.0, expectedHash := some 0xda631bdf13415a4f }
 

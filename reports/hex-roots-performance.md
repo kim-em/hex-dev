@@ -111,17 +111,26 @@ lake exe hexroots_bench run <all 14 registration names> \
   --export-file reports/bench-results/hex-roots-973c2cd-round5.json
 ```
 
-The two parametric verdicts are consistent:
+The single parametric verdict is consistent:
 
 | registration | model | verdict | evidence | final hash |
 |---|---|---|---|---|
 | `runMahlerPrec` | `n` | consistent | `β=-0.144` over `16..256` | `0xc83` |
-| `runIsolate` | `n⁵` | consistent | range `cMin=4878.883`, `cMax=6775.690` over `4..10` | `0xda631bdf13415a4f` |
+
+(`runIsolate` was parametric at `n⁵` in the previous revision of this
+report and its `4..10` range check passed, but post-merge review showed
+the adjacent derivation could not support `n⁵` on this family:
+`separatedPoly n` has `log ‖p‖∞ = Θ(n·log n)`, so the `separationDepth`
+floor makes the emission-level bit-length `B = Θ(n²·log n)` and the
+honestly derived wall from `O(n³·B²)` is `~n⁷`, unreachable in the
+30 s/call band. Per the no-fitting rule the registration was demoted to
+a fixed case rather than kept on a fitted model; see issue #8750.)
 
 Fixed medians (all five repeats agree on the shown hash):
 
 | registration | canonical input | median | hash |
 |---|---|---:|---|
+| `runIsolate` | fixed-separation degree 8 | 144.319 ms | `0x16c307fd2a36d31e` |
 | `runTaylor` | seeded degree 128, centre 1 | 2.423 ms | `0x9917b7b230496af4` |
 | `runWitnessCheck` | bounded-height degree 128 | 2.559 ms | `0xb` |
 | `runNkWitnessCheck` | bounded-height degree 128 | 2.480 ms | `0xb` |
