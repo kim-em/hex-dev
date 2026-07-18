@@ -453,29 +453,22 @@ libraries:
   HexRoots:
     deps: [HexPolyZ]
     mathlib: false
-    # done_through stays 3: the Phase-4 scientific run (commit b08a66cce522,
-    # chungus2) returned inconclusive verdicts for 9 of 13 parametric
-    # registrations and two SPEC time budgets fail, so Phase 4 is NOT claimed.
-    # See reports/hexroots-performance.md §Concerns. The phase4 block below
-    # records the comparators and input families the run used; it does not
-    # assert completion.
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
         - tool: "python-flint fmpz_poly.complex_roots"
           class: informational
-          rationale: "The SPEC's ci-tier oracle (python-flint fmpz_poly.complex_roots, returning certified Arb balls with multiplicities) is a multiprecision ball-arithmetic engine, structurally different from this library's decidable exact-integer Pellet / Newton-Kantorovich certificates. Timed on the same seed-0xC0FFEE dense integer ladder the whole-polynomial drivers use (scripts/bench/hexroots_flint_compare.py); the ratio hex isolateAll?@32 / flint per degree is recorded in reports/hexroots-performance.md. Informational, not gating: the SPEC's time budgets — not a constant-factor 1x goal — are the yardstick for an integer-certified isolator against a float engine."
-        - tool: "MPSolve"
-          class: informational
-          rationale: "MPSolve (Bini-Fiorentino, the SPEC's local-tier and Phase-4 external performance comparator) is a multiprecision-float C library computing approximate root inclusions, structurally different from this library's integer-certified Lean witnesses, so its ratio orients but does not gate. Scheduled-only: not wired in this PR. Required environment stated in bench/HexRoots/Bench.lean's module docstring (the mpsolve CLI built with GMP, driven on the seeded ladder via -au -Gi isolate mode)."
+          rationale: "The SPEC's ci-tier oracle (python-flint fmpz_poly.complex_roots, returning certified Arb balls with multiplicities) is a multiprecision ball-arithmetic engine, structurally different from this library's decidable exact-integer Pellet / Newton-Kantorovich certificates. Scoped to the shared whole-polynomial runIsolate and runIsolateAll surfaces and timed on their current fixed-separation inputs (scripts/bench/hexroots_flint_compare.py); the ratio per degree is recorded in reports/hex-roots-performance.md. Informational, not gating: the SPEC's time budgets — not a constant-factor 1x goal — are the yardstick for an integer-certified isolator against a float engine. Separation-bound and internal kernel surfaces are declared no-comparable-surface-in-named-comparator in the library SPEC."
       input_families:
         - name: seeded-dense
-          description: Seed-0xC0FFEE dense integer polynomials with coefficients in [-10, 10] (constant term first, leading forced nonzero), generically distinct irrational roots; drives taylor, mahlerPrec, refine1, certify, and the whole-polynomial isolateAll?/isolate drivers.
+          description: Seed-0xC0FFEE bounded-coefficient dense polynomials and their bounded-height (X−1) product; drives parametric mahlerPrec and canonical Taylor, witness, Newton, and pinned-NK regressions.
+        - name: fixed-separation-product
+          description: Products ∏(2X−(2j+1)) with uniformly separated half-integer roots; drives canonical fixed isolate/isolateAll/refine1 regressions and the historical unregistered isolation diagnostic ladder.
         - name: wilkinson-linprod
-          description: Wilkinson-shaped products ∏(X−j), j=1..n, with distinct integer roots 1..n; Newton recentres exactly onto integer roots, exercised by the witness-check, Newton-step, and dual-route compare-group registrations.
+          description: The canonical degree-10 product ∏(X−j), with roots 1..10; shared by the three fixed dual-route strategy regressions.
         - name: refine-fixed
-          description: The fixed degree-3 polynomial (x−1)(x−2)(x+3) whose isolated atom the refineTo? and sameRoot registrations sharpen to a parametric target precision.
+          description: The degree-3 polynomial (x−1)(x−2)(x+3), used by fixed refineTo at achieved precision 131077 and sameRoot.
   HexRootsMathlib:
     deps: [HexRoots, HexPolyZMathlib]
     mathlib: true

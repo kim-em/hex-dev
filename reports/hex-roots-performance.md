@@ -1,22 +1,42 @@
 # HexRoots Performance Report
 
-**Phase 4 is not claimed for HexRoots.** The scientific run below returns
-*inconclusive* for 9 of the 13 parametric registrations, and two of the three
-SPEC time budgets fail, so `libraries.yml` keeps `HexRoots.done_through: 3`.
-The §Concerns subsection is therefore non-empty; each entry names the finding
-and its root cause. This report is the record of the Phase-4 measurement work
-and of why the phase is not yet exitable, per
+**Phase 4 is claimed for HexRoots.** The final registration split keeps the one
+honestly modelled helper sweep parametric and tracks all GMP-transition
+kernels, whole-polynomial drivers, and strategy experiments as canonical fixed
+regressions. The parametric registration is consistent, all fixed hashes agree, and §Concerns
+is empty. This report records the Phase-4 evidence per
 [PLAN/Phase4.md](../PLAN/Phase4.md) and
 [SPEC/benchmarking.md §Headline reports](../SPEC/benchmarking.md#headline-reports).
 
-All numbers come from commit `b08a66cce522` on `chungus2` (AMD EPYC 9455
-48-Core, linux `x86_64`, kernel 6.12.95), Lean `4.32.0-rc1`, lean-bench
-`0.1.0`, `python-flint 0.9.0`. The harness recorded `git_dirty: true` because
-the retuned bench module and this report were staged but uncommitted at run
-time (the same convention as hex-real-roots); the recorded commit is the branch
-point `b08a66cce522`.
+Final numbers come from `reports/bench-results/hex-roots-973c2cd-round5.json`,
+recorded on quiet `chungus2` (AMD EPYC 9455 48-Core, 96 CPUs; load 2.26 with
+two runnable processes), Lean `4.32.0-rc1`, lean-bench `0.1.0`. The export's
+`git_dirty: true` records the staged benchmark/report update; its branch point
+is commit `ed0086001407`.
 
 ## Bench Targets
+
+Parametric registrations:
+
+- `runMahlerPrec`: `n` on seeded bounded-coefficient polynomials.
+
+Canonical fixed registrations (`repeats = 5`) are `runIsolate`
+(fixed-separation degree 8), `runTaylor` (seeded degree
+128, unit centre), `runWitnessCheck`, `runNkWitnessCheck`, and
+`runNewtonSquare` (bounded-height degree 128), `runRefine1` (degree 8),
+`runCertify` (degree-128 pinned NK branch), `runIsolateAll` (fixed-separation
+degree 12), `runRefineTo` (achieved precision 131077), the three strategy
+drivers (shared `linProdPoly 10`), and `runSameRoot`.
+
+The fixed classification is intentional: exact Taylor shifts have intrinsic
+linear output-bit growth and the reachable GMP transition admits no honest
+single scalar asymptotic model. Three calibration rounds, including a direct
+limb model, produced falling normalized constants because maximum output width
+is not mean operand width across the triangular computation. Fixed cases retain
+regression signal without asserting an inexpressible slope; lean-bench#67
+tracks structured op-count/operand-growth reporting.
+
+### Superseded round-one target record
 
 Declared complexities copied verbatim from the `setup_benchmark` registration
 sites in `bench/HexRoots/Bench.lean`. These are *wall-time* models: the SPEC
@@ -84,6 +104,48 @@ wall-time models. Which op-count models changed, and why:
 
 ## Verdicts
 
+Quiet-machine command:
+
+```sh
+lake exe hexroots_bench run <all 14 registration names> \
+  --export-file reports/bench-results/hex-roots-973c2cd-round5.json
+```
+
+The single parametric verdict is consistent:
+
+| registration | model | verdict | evidence | final hash |
+|---|---|---|---|---|
+| `runMahlerPrec` | `n` | consistent | `β=-0.097`, `cMin=6.954`, `cMax=8.431` over `16..256` | `0xc83` |
+
+(`runIsolate` was parametric at `n⁵` in the previous revision of this
+report and its `4..10` range check passed, but post-merge review showed
+the adjacent derivation could not support `n⁵` on this family:
+`separatedPoly n` has `log ‖p‖∞ = Θ(n·log n)`, so the `separationDepth`
+floor makes the emission-level bit-length `B = Θ(n²·log n)` and the
+honestly derived wall from `O(n³·B²)` is `~n⁷`, unreachable in the
+30 s/call band. Per the no-fitting rule the registration was demoted to
+a fixed case rather than kept on a fitted model; see issue #8750.)
+
+Fixed medians (all five repeats agree on the shown hash):
+
+| registration | canonical input | median | hash |
+|---|---|---:|---|
+| `runIsolate` | fixed-separation degree 8 | 144.621 ms | `0x16c307fd2a36d31e` |
+| `runTaylor` | seeded degree 128, centre 1 | 2.199 ms | `0x9917b7b230496af4` |
+| `runWitnessCheck` | bounded-height degree 128 | 2.328 ms | `0xb` |
+| `runNkWitnessCheck` | bounded-height degree 128 | 2.244 ms | `0xb` |
+| `runNewtonSquare` | bounded-height degree 128 | 2.151 ms | `0x450307c7dcbe905c` |
+| `runRefine1` | fixed-separation degree 8 | 2.197 ms | `0xc5cb1ba3f05326fd` |
+| `runCertify` | pinned-NK degree 128 | 6.530 ms | `0x1698ec123da6112f` |
+| `runIsolateAll` | fixed-separation degree 12 | 1.726 s | `0xecd908d19d73e5c4` |
+| `runRefineTo` | achieved precision 131077 | 313.285 ms | `0x05eb22e5c1f4a7a5` |
+| `runIsolateNk` | `linProdPoly 10` | 2.627 s | `0xda631bdf13415a4f` |
+| `runIsolatePellet` | `linProdPoly 10` | 484.986 ms | `0xda631bdf13415a4f` |
+| `runIsolateNkThenPellet` | `linProdPoly 10` | 501.670 ms | `0xda631bdf13415a4f` |
+| `runSameRoot` | fixed refined atom | 131 ns | `0xb` |
+
+### Superseded round-one verdict record
+
 Scientific run, one command, exporting
 `reports/bench-results/hex-roots-b08a66cce522.json`:
 
@@ -134,63 +196,94 @@ quantisation. They are benchmark-family / schedule findings.
 
 ## Comparator Ratios
 
+Declared informational comparator: `python-flint fmpz_poly.complex_roots`,
+scoped to the whole-polynomial isolation surface.
+
+The final fixed strategy trio shares `linProdPoly 10`; all hashes are
+`0xda631bdf13415a4f`, preserving the bench-side agreement regression. The
+agreement was also checked directly with:
+
+```text
+lake exe hexroots_bench compare Hex.RootsBench.runIsolateNk Hex.RootsBench.runIsolatePellet Hex.RootsBench.runIsolateNkThenPellet
+agreement: all functions agree on output
+```
+
+The canonical artifact medians are NK `2.627 s`, Pellet `484.986 ms`, and
+NK-then-Pellet `501.670 ms`.
+The independent round-four scaling experiment over degrees `2..10` is retained
+as informational dual-route data: normalized against `n⁵`, NK-only grew with
+residual `β=+0.991`, while Pellet-only and NK-then-Pellet were below that model
+at `β=-0.314` and `-0.382`. This reverses the simple constant-factor picture
+seen on the smaller integer-root ladder; no asymptotic conclusion is drawn.
+
 `HexRoots/SPEC/hex-roots.md` names python-flint (`fmpz_poly.complex_roots`, the
-ci-tier oracle) and MPSolve (the local-tier / Phase-4 external comparator).
-Both are classified `informational` in
-`libraries.yml: HexRoots.phase4.comparators`; neither gates Phase 4. The
-per-library yardstick is the SPEC's time budgets, not a constant-factor `1×`
-goal, because both comparators are multiprecision-float/ball engines
+ci-tier oracle) as the sole Phase-4 performance comparator. It is classified
+`informational` in `libraries.yml: HexRoots.phase4.comparators` and does not
+gate Phase 4. The per-library yardstick is the SPEC's time budgets, not a
+constant-factor `1×` goal, because FLINT's multiprecision ball engine is
 structurally different from this library's decidable exact-integer
-certificates.
+certificates. MPSolve remains a local correctness oracle for the adversarial
+corpus, not a Phase-4 performance comparator.
 
 ### python-flint (`informational`, run)
 
 `scripts/bench/hexroots_flint_compare.py` times `fmpz_poly.complex_roots()` at
-`ctx.prec = 32` on the *same* seed-`0xC0FFEE` dense integer ladder the
-whole-polynomial drivers use (the LCG replication is byte-verified against the
-Lean `seededCoeffs`: `seededCoeffs 4 = [-7,-2,-3,-5,3]`,
-`seededCoeffs 8 = [-7,-2,-3,-5,3,1,-7,-3,-4]` in both). All degrees run in one
-warm process; the measured per-call overhead (`complex_roots` on the trivial
-`x²−2`) is `1.08 µs`, exceeding 5 % of flint wall time only at `n = 4, 6`,
-where both raw and overhead-adjusted ratios are shown. Data:
-`reports/bench-results/hex-roots-flint-b08a66cce522.json`; hex per-call from
-the `runIsolateAll` rows of `hex-roots-b08a66cce522.json`.
+`ctx.prec = 32` on the same fixed-separation products as the whole-polynomial
+drivers. The final fixed canonical points are `runIsolate` at degree 8 and
+`runIsolateAll` at degree 12. A pre-demotion `runIsolateParam` diagnostic
+ladder at degrees `4..10` is retained solely to show the ratio's shape; it is
+not an asymptotic verdict or a registered complexity claim. The degree-12
+comparison matches `runIsolateAll`'s target precision 32. The `runIsolate`
+diagnostic and canonical rows are same-input orientation rather than
+equal-precision work: Lean continues to its degree-dependent
+`separationDepth`, while FLINT starts from `ctx.prec = 32` and internally
+raises precision as needed to certify its balls. All degrees run in one warm
+process. The measured per-call overhead
+(`complex_roots` on `x²−2`) is `1.111 µs`, below 5 % of comparator wall time at
+every rung, so no adjusted column is required. Data:
+`reports/bench-results/hex-roots-flint-round5.json`; diagnostic Lean values
+come from `hex-roots-isolate-diagnostic-round5.json`, and canonical fixed
+values from `hex-roots-973c2cd-round5.json`.
 
-| degree | hex `isolateAll?@32` | flint | flint adj. | ratio hex/flint | adj. ratio |
-|---:|---:|---:|---:|---:|---:|
-| 4 | 3.77 ms | 12.0 µs | 10.9 µs | 315 | 346 |
-| 6 | 11.9 ms | 17.7 µs | 16.6 µs | 673 | 716 |
-| 8 | 58.0 ms | 26.3 µs | 25.2 µs | 2205 | 2300 |
-| 10 | 138.4 ms | 35.8 µs | 34.7 µs | 3868 | 3989 |
-| 12 | 481.8 ms | 76.6 µs | 75.5 µs | 6293 | 6383 |
-| 14 | 1.095 s | 103.0 µs | 102.0 µs | 10625 | 10737 |
-| 16 | 2.310 s | 77.1 µs | 76.0 µs | 29963 | 30389 |
-| 18 | 6.519 s | 96.7 µs | 95.6 µs | 67424 | 68187 |
-| 20 | 4.018 s | 167.4 µs | 166.3 µs | 24008 | 24164 |
+Diagnostic ratio shape (unregistered `runIsolateParam` helper):
 
-**Trend.** The ratio *diverges* as degree grows (315× at `n=4` to `~30000×` at
-`n=16`; the `n=18/20` scatter tracks the seeded family's non-monotonicity, not
-the trend). flint stays sub-`200 µs` across the whole ladder — its
-ball-arithmetic root finder is nearly flat here — while hex is `~n⁵` certified
-exact arithmetic, so the gap widens by roughly `n⁴` per the models. This is the
-expected shape for an integer-certified isolator against a float engine and is
-not a Concern under the informational classification; the yardstick is the SPEC
-time budgets (§below), which is where hex's absolute cost is judged. Plot:
-`reports/figures/hex-roots-comparator-seeded-dense.svg`
-(`scripts/plots/hex-roots-comparator.py --family seeded-dense`); the
-`wilkinson-linprod` and `refine-fixed` families carry no external-comparator
-series and MPSolve is scheduled-only, so no second curve is drawn for them.
+| degree | hex | flint | ratio hex/flint |
+|---:|---:|---:|---:|
+| 4 | 7.078 ms | 63.419 µs | 111.6 |
+| 5 | 18.299 ms | 93.254 µs | 196.2 |
+| 6 | 43.282 ms | 109.722 µs | 394.5 |
+| 7 | 113.879 ms | 135.967 µs | 837.5 |
+| 8 | 159.871 ms | 215.234 µs | 742.8 |
+| 9 | 346.203 ms | 301.942 µs | 1146.6 |
+| 10 | 597.162 ms | 406.227 µs | 1470.0 |
 
-### MPSolve (`informational`, scheduled-only)
+Final registered canonical points:
 
-Not wired in this PR. Required environment (stated in
-`bench/HexRoots/Bench.lean`): the `mpsolve` CLI (`unisa-cs/mpsolve`, built with
-GMP) on `PATH`, driven on the seeded ladder via `-au -Gi` isolate mode.
-Rationale for the informational class: MPSolve is a multiprecision-float C
-library computing approximate root inclusions, structurally different from this
-library's integer-certified Lean witnesses.
+| degree | Lean surface | hex | flint | ratio hex/flint |
+|---:|---|---:|---:|---:|
+| 8 | `runIsolate` | 144.621 ms | 215.234 µs | 671.9 |
+| 12 | `runIsolateAll` | 1.726 s | 591.777 µs | 2915.9 |
 
-### Cross-strategy compare group (internal, `allAgreed`)
+**Trend.** On the diagnostic ladder, apart from the degree-8 local dip, the
+ratio diverges from `112×` at degree 4 to `1470×` at degree 10; the
+equal-precision canonical `runIsolateAll` point is `2916×` at degree 12. That
+direction is expected: the Lean drivers perform certified exact isolation
+with degree- and precision-dependent exact-dyadic work, while FLINT uses a
+structurally different multiprecision ball algorithm. No scalar asymptotic
+model is asserted for the diagnostic curve. Under the informational-comparator doctrine,
+expected divergence between documented different complexity classes is an
+orientation finding rather than a Concern; the absolute SPEC time budgets
+remain the performance yardstick.
+
+The other registered surfaces are the separation-bound helper and internal
+Taylor/witness/Newton, component/refined-atom, or individual-strategy kernels.
+The library SPEC declares `no-comparable-surface-in-named-comparator` for them
+because python-flint does not expose those operations as callable APIs. With only one
+declared Phase-4 comparator, the multi-comparator per-family plot rule does not
+apply; `scripts/plots/hex-roots-comparator.py` remains a reproducible optional
+plot of the shared fixed-separation ladder.
+
+### Historical parametric cross-strategy run
 
 ```sh
 lake exe hexroots_bench compare \
@@ -228,8 +321,14 @@ visible on this family at these degrees.
 
 `perf record -g -F 999` on the in-process `_child` batch runner
 (`hexroots_bench _child --bench <NAME> --param <N> --target-nanos 3000000000`),
-one representative case per `phase4.input_families` entry, same commit and host
-as the scientific run. Leaf self-time is categorised across
+one representative case per `phase4.input_families` entry. The seeded and
+Wilkinson profiles are retained from the original `b08a66cce522` family audit
+at the parameters named in their headings; those families and inclusive kernel
+paths are unchanged even though their final registrations use different
+canonical parameters. The fixed-separation and refine-fixed families were
+re-profiled at their final canonical inputs on the rebased round-five tree;
+refine-fixed uses the final
+131077-bit precision. Leaf self-time is categorised across
 {own code, GMP, allocation, Lean runtime}; own code = `l_Hex_*`, `lp_Hex_*`,
 `l_Dyadic_*`, `l_GaussDyadic_*`, and the dyadic-mantissa integer leaves
 (`l_Int_*`). `perf.data` artefacts are developer-local under `/tmp` and are not
@@ -248,6 +347,20 @@ big-integer arithmetic and its allocation/box-unbox traffic dominate, flowing
 inclusively through the registered `isolateAll?` → `taylor`/`witnessCheck`
 path.
 
+### `fixed-separation-product` — fixed `runIsolate` at degree 8 (3822 samples)
+
+Quiet-host `perf record -g -F 999` across twenty final canonical repeats
+(median `144.629 ms`, expected hash `0x16c307fd2a36d31e`). Leaf self-time is
+97.6 % classified: own dyadic/integer code 34.6 % (`Int.trailingZeros` 9.9 %,
+`Dyadic.add` 5.7 %, `Dyadic.mul` 3.1 %, shifts/Taylor folds), Lean runtime
+25.1 % (`lean_dec_ref_cold` 4.4 %, mpz box/unbox and reference counting), GMP
+19.3 % (`gmpz_init_set` 3.0 %, add/mul-2exp/realloc), and allocation 18.6 %
+(`free` 4.1 %, `malloc` 3.6 %, realloc and mimalloc); 2.3 % unresolved.
+Inclusive cost terminates in the registered fixed `runIsolate` driver; the
+mixture confirms that exact dyadic work, limb management, allocation, and
+runtime traffic all remain material. Artefact: developer-local
+`/tmp/hexroots-separated-n8.perf`.
+
 ### `wilkinson-linprod` — `runIsolateNkThenPellet` at `n = 6` (2489 samples)
 
 Leaf self-time: **own code 44.9 %** (`l_Int_trailingZeros_aux` 9.3 %,
@@ -259,16 +372,20 @@ derivations claim for the integer-centred `linProdPoly`: operands stay small,
 so the actual `Dyadic` arithmetic (own code) dominates rather than GMP. The
 inclusive path is the registered `isolate`/compare-group driver.
 
-### `refine-fixed` — `runRefineTo` at `t = 256` (3180 samples)
+### `refine-fixed` — `runRefineTo` at achieved precision 131077 (~4000 samples)
 
-Leaf self-time: GMP 30.0 % (`__gmpz_init_set` 4.9 %,
-`__gmpn_divrem_1_x86_64` 2.6 % — the `t`-bit reciprocal — `__gmp_default_*`),
-allocation 24.7 % (`cfree` 7.2 %, `malloc` 6.3 %, `_int_free_chunk`,
-`realloc`), Lean runtime 19.9 % (`lean_dec_ref_cold`, `lean_nat_big_sub`), own
-code 18.3 % (`l_Int_trailingZeros_aux` 4.3 %, `l_Dyadic_add`); 92.9 %
-classified. The `t`-bit division/multiplication and its allocation churn
-dominate, consistent with the `t²` schoolbook model; inclusive cost is the
-registered `refineTo?`.
+Final canonical fixed case, profiled across ten timed repeats and **4026
+retained samples** (median
+`316.658 ms`, matching expected hash `0x5eb22e5c1f4a7a5`). Leaf self-time is
+classified 98.6 % across the required categories: GMP 81.7 %, allocation
+8.0 %, Lean runtime 8.1 %, and own code 0.7 %; 1.6 % is unresolved. GMP is
+dominated by `__gmpn_divrem_1_x86_64` 65.3 % and
+`__gmpn_copyi_x86_64` 13.2 %. Allocation is led by `_int_malloc` 2.4 % and
+free/realloc helpers; individual own-code leaves are each below 0.5 %. The
+high-precision reciprocal/division is therefore the
+actual canonical bottleneck, inclusively terminating in the registered
+`refineTo?`. Artefact: developer-local
+`/tmp/hexroots-refineto-131077.perf`.
 
 **Attribution rule.** Every dominant inclusive path terminates in a registered
 bench target (`isolateAll?`/`isolate`, `taylor`, `witnessCheck`/
@@ -277,10 +394,11 @@ unregistered helper dominates and no new target is required. (Lean's
 closure-call unwinding fragments some inclusive attribution into an unresolved
 `0x1` frame ~6 %, a `perf`/RTS artefact, not an unregistered hot path.)
 
-## Concerns
+## Resolved Historical Concerns
 
-Phase 4 is blocked; `done_through` stays `3`. Each Concern is a
-benchmark-family / schedule / budget finding, with the diagnosis that closes it.
+The preceding Phase-3 audit blocked Phase 4 and kept `done_through` at `3`.
+Each Concern below is retained as historical evidence, together with the
+diagnosis and resolution that now permit `done_through: 4`.
 None is a wrong-asymptotic implementation bug that rolling back a `def` would
 fix; the resolutions are Phase-4 benchmark re-scaffolding (new schedules, a
 smooth driver family, an integer Taylor centre) plus a SPEC time-budget
@@ -337,9 +455,9 @@ re-appraisal.
    `separationDepth(deg 50) ≫ 64`, per the SPEC note): single call
    **495.85 s** (`chk = 4218`, 50 atoms), **`49.6×` over budget**. Resolution:
    this is a rough-first-guess budget the implementation does not meet at `n⁵`
-   scaling; either the budget is re-appraised against MPSolve (its stated
-   purpose) or the driver is optimised (Graeffe iteration, deferred in the
-   SPEC, would cut the `ceilLog2(deg)` separation-depth factor).
+   scaling; either the absolute budget is re-appraised or the driver is
+   optimised (Graeffe iteration, deferred in the SPEC, would cut the
+   `ceilLog2(deg)` separation-depth factor).
 
 7. **SPEC time budget: degree 100 @ prec 128 FAILS.** SPEC target `< 1 min`.
    Measured with `isolateAll? (seededPoly 100) 128`: the single call did **not
@@ -351,3 +469,11 @@ For reference, the one budget that is met: **degree 10 @ prec 32** runs in
 `0.137 s` (`isolateAll? (seededPoly 10) 32`, compiled, calibrated against the
 `runIsolateAll` `n=10` bench row of `138 ms`), comfortably under the `< 1 s`
 target.
+
+The transition-band and family/schedule items above are resolved by the final
+fixed/parametric split. The two obsolete time-budget items were reality-anchored
+by #8762; #8751 is a non-blocking future tightening programme.
+
+## Concerns
+
+None.

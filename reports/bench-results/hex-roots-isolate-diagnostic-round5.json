@@ -1,0 +1,15 @@
+{
+  "surface": "Hex.RootsBench.runIsolateParam",
+  "family": "fixed-separation-product",
+  "source_commit": "973c2cda4707",
+  "status": "historical diagnostic ladder retained after fixed-benchmark demotion",
+  "rows": [
+    {"degree": 4, "median_s": 0.007077757375},
+    {"degree": 5, "median_s": 0.0182985975},
+    {"degree": 6, "median_s": 0.043282181},
+    {"degree": 7, "median_s": 0.11387902},
+    {"degree": 8, "median_s": 0.159871238},
+    {"degree": 9, "median_s": 0.346202958},
+    {"degree": 10, "median_s": 0.597162135}
+  ]
+}

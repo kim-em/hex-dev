@@ -1,0 +1,26 @@
+{
+  "comparator": "python-flint fmpz_poly.complex_roots",
+  "family": "fixed-separation-product",
+  "python_flint_version": "0.9.0",
+  "prec_bits": 32,
+  "overhead_s": 1.1110678315162659e-06,
+  "rows": [
+    {"degree": 4, "median_s": 6.341899279505014e-05, "n_roots": 4, "repeats": 50,
+     "coeffs_head": [105, -352, 344, -128, 16]},
+    {"degree": 5, "median_s": 9.32535040192306e-05, "n_roots": 5, "repeats": 50,
+     "coeffs_head": [-945, 3378, -3800, 1840, -400]},
+    {"degree": 6, "median_s": 0.0001097220228984952, "n_roots": 6, "repeats": 50,
+     "coeffs_head": [10395, -39048, 48556, -27840, 8080]},
+    {"degree": 7, "median_s": 0.00013596698408946395, "n_roots": 7, "repeats": 50,
+     "coeffs_head": [-135135, 528414, -709324, 459032, -160720]},
+    {"degree": 8, "median_s": 0.00021523406030610204, "n_roots": 8, "repeats": 50,
+     "coeffs_head": [2027025, -8196480, 11696688, -8304128, 3328864]},
+    {"degree": 9, "median_s": 0.0003019420546479523, "n_roots": 9, "repeats": 50,
+     "coeffs_head": [-34459425, 143394210, -215236656, 164563552, -73198944]},
+    {"degree": 10, "median_s": 0.00040622707456350327, "n_roots": 10, "repeats": 50,
+     "coeffs_head": [654729075, -2793408840, 4376284884, -3557180800, 1719907040]},
+    {"degree": 12, "median_s": 0.0005917770322412252, "n_roots": 12, "repeats": 50,
+     "coeffs_head": [316234143225, -1406832628320, 2362184493192, -2114405031552,
+                     1161252150256]}
+  ]
+}

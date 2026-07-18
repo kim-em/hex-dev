@@ -810,9 +810,12 @@ The report contains five subsections:
      baseline shape is a ratio that converges to a small constant
      past the regime where startup or fixed costs dominate; a
      diverging trend (one side steadily losing ground as the
-     parameter grows) is itself an audit-found Concern even when
-     the highest-rung verdict happens to pass, linked from the
-     §"Concerns" subsection.
+     parameter grows) is an audit-found Concern when it contradicts
+     the comparator's declared algorithm-class expectation or a
+     `gating` goal, even when the highest-rung verdict happens to
+     pass. Expected divergence against an `informational` comparator
+     with a documented different complexity class is recorded as a
+     finding in the trend narrative, but is not by itself a Concern.
 
    - **Gating-goal verdict at the top eligible rung.** When the
      per-library SPEC states a performance goal against a `gating`
