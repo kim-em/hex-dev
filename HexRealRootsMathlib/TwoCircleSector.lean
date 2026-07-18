@@ -27,8 +27,9 @@ The route is the positivity/log-concavity argument (a special case of Hoggar's
 1974 theorem on logarithmic concavity, *Chromatic polynomials and logarithmic
 concavity*), **not** a per-factor sign-variation bound: the naive claim
 `signVariations ((X² + bX + c) * P) ≤ signVariations P` for sector quadratics is
-false (see `sharpness` at the end of the file, where `(X²+X+1)·(X²−(3/2)X+1)`
-has four sign variations while only two roots lie outside `S`).
+false (see the sharpness section at the end of the file, where
+`(X²+X+1)·(X²−(3/2)X+1)` has four sign variations while only two roots lie
+outside `S`).
 
 ## Main definitions and results
 
@@ -36,7 +37,20 @@ has four sign variations while only two roots lie outside `S`).
   coefficient sequence.
 * `Polynomial.PosLogConcave.mul_X_add_C` and `Polynomial.PosLogConcave.mul_quadratic`
   — the closure of `PosLogConcave` under multiplication by a positive linear
-  factor `X + C r` and by a sector quadratic `X² + C b * X + C c`.
+  factor `X + C r` and by a sector quadratic `X² + C b * X + C c` (`0 < b`,
+  `0 < c`, `c ≤ b²`).
+* `Polynomial.sector` — the closed sector, with `posLogConcave_of_aeval_mem_sector`
+  turning "monic, nonzero constant term, all complex roots in the sector" into
+  `PosLogConcave`.
+* `Polynomial.signVariations_le_one_of_sector` — **the sector variation bound**:
+  `P ≠ 0` with at most one complex root (with multiplicity) outside the sector
+  has `signVariations P ≤ 1`.
+* `Polynomial.signVariations_eq_zero_of_sector` — the `λ = 0` case: no roots
+  outside the sector forces `signVariations P = 0`.
+
+This development is Hex-free: it is a slice over `Polynomial ℝ`/`ℂ` intended to
+be upstreamable to Mathlib. No formalisation of the two-circle theorem (or of
+this sector core) is known in any proof assistant.
 -/
 
 namespace Polynomial
@@ -131,7 +145,7 @@ private theorem coeff_quad_mul_one (b c : ℝ) (A : ℝ[X]) :
 
 private theorem coeff_quad_mul_zero (b c : ℝ) (A : ℝ[X]) :
     ((X ^ 2 + C b * X + C c) * A).coeff 0 = c * A.coeff 0 := by
-  simp [add_mul, coeff_add, mul_assoc, coeff_C_mul, coeff_X_mul_zero]
+  simp [add_mul, coeff_add, mul_assoc]
 
 private theorem coeff_quad_mul_two (b c : ℝ) (A : ℝ[X]) :
     ((X ^ 2 + C b * X + C c) * A).coeff 2
@@ -352,7 +366,7 @@ private theorem posLogConcave_mul_of_monicDegTwo {f A : ℝ[X]} (hA : PosLogConc
     have hdpos : 0 < d := lt_of_le_of_ne hdnn (fun h => hne (by rw [← h]; ring))
     refine ⟨d - ρ, -(ρ * d), hfeq, by linarith, by nlinarith, by nlinarith⟩
   · -- no real root: `f` is irreducible over `ℝ`, take a non-real root
-    push_neg at hreal
+    push Not at hreal
     obtain ⟨z, hz⟩ : ∃ z : ℂ, aeval z f = 0 :=
       IsAlgClosed.exists_aeval_eq_zero ℂ f (by
         rw [degree_eq_natDegree hf.monic.ne_zero, hf.natDegree_eq]; decide)
@@ -486,7 +500,7 @@ theorem signVariations_le_one_of_coeff_threshold {P : ℝ[X]} {θ : ℕ}
     · -- the leading coefficient is negative, so all coefficients are `≤ 0`
       have hndθ : P.natDegree < θ := by
         by_contra hcon
-        push_neg at hcon
+        push Not at hcon
         exact absurd (h2 _ hcon) (not_le.mpr hneg)
       have hnn : ∀ i, 0 ≤ (-P).coeff i := by
         intro i
@@ -505,7 +519,7 @@ theorem signVariations_le_one_of_coeff_threshold {P : ℝ[X]} {θ : ℕ}
     · -- one variation may occur at the top; below it everything is nonpositive
       have heLndθ : P.eraseLead.natDegree < θ := by
         by_contra hcon
-        push_neg at hcon
+        push Not at hcon
         have hne : P.eraseLead.natDegree ≠ P.natDegree := by omega
         have hcoeff : P.eraseLead.leadingCoeff = P.coeff P.eraseLead.natDegree := by
           rw [leadingCoeff, eraseLead_coeff, if_neg hne]
@@ -546,5 +560,248 @@ theorem signVariations_le_one_of_coeff_threshold {P : ℝ[X]} {θ : ℕ}
         · exact le_refl 0
         · exact h2 i hi
       exact ih _ heLnd h1' h2' rfl
+
+/-! ### The threshold instantiation -/
+
+/-- A `PosLogConcave` polynomial times any power of `X` has no sign variations. -/
+theorem PosLogConcave.signVariations_X_pow_mul (hQ : PosLogConcave A) (k : ℕ) :
+    ((X : ℝ[X]) ^ k * A).signVariations = 0 := by
+  apply signVariations_eq_zero_of_coeff_nonneg
+  intro i
+  rw [coeff_X_pow_mul']
+  split
+  · exact hQ.coeff_nonneg _
+  · exact le_refl 0
+
+/-- **The peeled threshold bound.** Multiplying a `PosLogConcave` polynomial by
+one real linear factor `X - C r` (any `r : ℝ`) and any power of `X` yields at
+most one sign variation. For `r ≤ 0` all coefficients stay nonnegative; for
+`0 < r` the monotone-ratio consequence of log-concavity produces a single
+nonpositive-to-nonnegative threshold in the coefficients. -/
+theorem PosLogConcave.signVariations_X_pow_mul_X_sub_C_mul (hA : PosLogConcave A)
+    (r : ℝ) (k : ℕ) :
+    ((X : ℝ[X]) ^ k * ((X - C r) * A)).signVariations ≤ 1 := by
+  have hWeq : (X - C r) * A = (X + C (-r)) * A := by rw [C_neg]; ring
+  rcases le_or_gt r 0 with hr | hr
+  · -- `r ≤ 0`: all coefficients of the product are nonnegative
+    have hnn : ∀ j, 0 ≤ ((X - C r) * A).coeff j := by
+      intro j
+      rw [hWeq]
+      match j with
+      | 0 =>
+        rw [coeff_X_add_C_mul_zero]
+        exact mul_nonneg (by linarith) (hA.coeff_nonneg 0)
+      | m + 1 =>
+        rw [coeff_X_add_C_mul_succ]
+        have h1 := hA.coeff_nonneg m
+        have h2 := mul_nonneg (by linarith : (0:ℝ) ≤ -r) (hA.coeff_nonneg (m + 1))
+        linarith
+    have hzero : ((X : ℝ[X]) ^ k * ((X - C r) * A)).signVariations = 0 := by
+      apply signVariations_eq_zero_of_coeff_nonneg
+      intro i
+      rw [coeff_X_pow_mul']
+      split
+      · exact hnn _
+      · exact le_refl 0
+    rw [hzero]
+    exact zero_le_one
+  · -- `0 < r`: single sign threshold via monotone ratios
+    have hex : ∃ i, 1 ≤ i ∧ 0 ≤ ((X - C r) * A).coeff i := by
+      refine ⟨A.natDegree + 1, by omega, ?_⟩
+      rw [hWeq, coeff_X_add_C_mul_succ, coeff_eq_zero_of_natDegree_lt (lt_add_one _), mul_zero,
+        add_zero]
+      exact (hA.pos A.natDegree le_rfl).le
+    let θ := Nat.find hex
+    have hθ1 : 1 ≤ θ := (Nat.find_spec hex).1
+    have hθnn : 0 ≤ ((X - C r) * A).coeff θ := (Nat.find_spec hex).2
+    -- propagation: nonnegativity persists above the threshold
+    have hprop : ∀ i, 1 ≤ i → 0 ≤ ((X - C r) * A).coeff i →
+        0 ≤ ((X - C r) * A).coeff (i + 1) := by
+      intro i hi hnn
+      obtain ⟨m, rfl⟩ : ∃ m, i = m + 1 := ⟨i - 1, by omega⟩
+      rw [hWeq, coeff_X_add_C_mul_succ] at hnn
+      rw [hWeq, show m + 1 + 1 = (m + 1) + 1 from rfl, coeff_X_add_C_mul_succ]
+      by_cases hz : A.coeff (m + 1) = 0
+      · rw [hz, hA.coeff_succ_eq_zero hz, mul_zero, add_zero]
+      · have hpos : 0 < A.coeff (m + 1) := lt_of_le_of_ne (hA.coeff_nonneg _) (Ne.symm hz)
+        have hlcm := hA.lc m
+        have h2 := hA.coeff_nonneg (m + 2)
+        nlinarith [mul_le_mul_of_nonneg_right (by linarith : r * A.coeff (m + 1) ≤ A.coeff m) h2]
+    have h2 : ∀ i, θ ≤ i → 0 ≤ ((X - C r) * A).coeff i := by
+      intro i hi
+      induction i, hi using Nat.le_induction with
+      | base => exact hθnn
+      | succ i hi ih => exact hprop i (le_trans hθ1 hi) ih
+    have h1 : ∀ i < θ, ((X - C r) * A).coeff i ≤ 0 := by
+      intro i hi
+      have hni := Nat.find_min hex hi
+      rcases Nat.eq_zero_or_pos i with rfl | hipos
+      · rw [hWeq, coeff_X_add_C_mul_zero]
+        have := hA.coeff_nonneg 0
+        nlinarith
+      · push Not at hni
+        exact (hni hipos).le
+    apply signVariations_le_one_of_coeff_threshold (θ := θ + k)
+    · intro i hi
+      rw [coeff_X_pow_mul']
+      split
+      · exact h1 _ (by omega)
+      · exact le_refl 0
+    · intro i hi
+      rw [coeff_X_pow_mul', if_pos (by omega)]
+      exact h2 _ (by omega)
+
+/-! ### Assembly -/
+
+/-- Every nonzero real polynomial is a nonzero scalar times `X ^ k` times a
+monic polynomial with nonzero constant coefficient. -/
+private theorem exists_C_mul_X_pow_mul {P : ℝ[X]} (hP : P ≠ 0) :
+    ∃ (c : ℝ) (k : ℕ) (Q : ℝ[X]), c ≠ 0 ∧ Q.Monic ∧ Q.coeff 0 ≠ 0 ∧
+      P = C c * (X ^ k * Q) := by
+  have hc : P.leadingCoeff ≠ 0 := leadingCoeff_ne_zero.mpr hP
+  have hM₀m : (P * C P.leadingCoeff⁻¹).Monic := monic_mul_leadingCoeff_inv hP
+  obtain ⟨Q, hQe, hQnd⟩ :=
+    (P * C P.leadingCoeff⁻¹).exists_eq_pow_rootMultiplicity_mul_and_not_dvd hM₀m.ne_zero 0
+  rw [C_0, sub_zero] at hQe hQnd
+  refine ⟨P.leadingCoeff, rootMultiplicity 0 (P * C P.leadingCoeff⁻¹), Q, hc, ?_, ?_, ?_⟩
+  · rw [Monic, ← leadingCoeff_monic_mul (monic_X_pow _), ← hQe]
+    exact hM₀m
+  · exact fun h => hQnd (X_dvd_iff.mpr h)
+  · rw [← hQe, mul_comm (C P.leadingCoeff), mul_assoc, ← C_mul, inv_mul_cancel₀ hc, C_1, mul_one]
+
+noncomputable instance : DecidablePred (· ∈ sector) :=
+  fun _ => decidable_of_iff _ mem_sector.symm
+
+/-- **The sector variation bound** (the core of the Obreshkoff two-circle
+theorem). If at most one complex root of the nonzero real polynomial `P`,
+counted with multiplicity, lies outside the sector `{z | z.re ≤ -‖z‖ / 2}`,
+then the coefficients of `P` have at most one sign variation. -/
+theorem signVariations_le_one_of_sector {P : ℝ[X]} (hP : P ≠ 0)
+    (h : (P.map (algebraMap ℝ ℂ)).roots.countP (· ∉ sector) ≤ 1) :
+    P.signVariations ≤ 1 := by
+  obtain ⟨c, k, Q, hc, hQm, hQ0, hPeq⟩ := exists_C_mul_X_pow_mul hP
+  have hsv : P.signVariations = ((X : ℝ[X]) ^ k * Q).signVariations := by
+    rw [hPeq, signVariations_C_mul _ hc]
+  have hQne : Q ≠ 0 := hQm.ne_zero
+  -- transfer the root count from `P` to `Q`
+  have hdvd : Q.map (algebraMap ℝ ℂ) ∣ P.map (algebraMap ℝ ℂ) :=
+    ⟨(C c * X ^ k).map (algebraMap ℝ ℂ), by
+      rw [← Polynomial.map_mul, hPeq]; ring_nf⟩
+  have hcount : (Q.map (algebraMap ℝ ℂ)).roots.countP (· ∉ sector) ≤ 1 :=
+    le_trans (Multiset.countP_le_of_le _ (roots.le_of_dvd (map_ne_zero hP) hdvd)) h
+  by_cases hex : ∃ w ∈ (Q.map (algebraMap ℝ ℂ)).roots, w ∉ sector
+  · -- one root `w` outside the sector; it must be real and positive
+    obtain ⟨w, hwmem, hwout⟩ := hex
+    have hwim : w.im = 0 := by
+      by_contra him
+      have hwroot : aeval w Q = 0 := by
+        rw [mem_roots_map hQne] at hwmem
+        rw [aeval_def]
+        exact hwmem
+      have hconjmem : (starRingEnd ℂ) w ∈ (Q.map (algebraMap ℝ ℂ)).roots := by
+        rw [mem_roots_map hQne, ← aeval_def, aeval_conj, hwroot, map_zero]
+      have hconjout : (starRingEnd ℂ) w ∉ sector := fun hmem => hwout (by
+        have h2 := conj_mem_sector hmem
+        rwa [Complex.conj_conj] at h2)
+      have hne : w ≠ (starRingEnd ℂ) w :=
+        fun heq => him (Complex.conj_eq_iff_im.mp heq.symm)
+      -- two distinct roots outside the sector contradict the count bound
+      have hwf : w ∈ (Q.map (algebraMap ℝ ℂ)).roots.filter (· ∉ sector) :=
+        Multiset.mem_filter.mpr ⟨hwmem, hwout⟩
+      have hcf : (starRingEnd ℂ) w ∈
+          ((Q.map (algebraMap ℝ ℂ)).roots.filter (· ∉ sector)).erase w := by
+        rw [Multiset.mem_erase_of_ne (Ne.symm hne)]
+        exact Multiset.mem_filter.mpr ⟨hconjmem, hconjout⟩
+      have h2 : 2 ≤ (Q.map (algebraMap ℝ ℂ)).roots.countP (· ∉ sector) := by
+        rw [Multiset.countP_eq_card_filter, ← Multiset.cons_erase hwf, Multiset.card_cons]
+        have := Multiset.card_pos_iff_exists_mem.mpr ⟨_, hcf⟩
+        omega
+      omega
+    -- `w` is the positive real `r`; peel the factor `X - C r` from `Q`
+    have hwr : w = ((w.re : ℝ) : ℂ) := by
+      apply Complex.ext <;> simp [hwim]
+    have haevalr : aeval w.re Q = 0 := by
+      have h1 : aeval w Q = 0 := by
+        rw [mem_roots_map hQne] at hwmem
+        rw [aeval_def]
+        exact hwmem
+      rw [hwr, ← Complex.coe_algebraMap, aeval_algebraMap_apply_eq_algebraMap_eval,
+        Complex.coe_algebraMap, Complex.ofReal_eq_zero] at h1
+      exact h1
+    obtain ⟨M, hM⟩ : (X - C w.re) ∣ Q :=
+      dvd_iff_isRoot.mpr (by rwa [IsRoot, ← coe_aeval_eq_eval])
+    have hMm : M.Monic := by
+      rw [Monic, ← leadingCoeff_monic_mul (monic_X_sub_C w.re), ← hM]
+      exact hQm
+    have hM0 : M.coeff 0 ≠ 0 := fun h0 => hQ0 (by rw [hM, mul_coeff_zero, h0, mul_zero])
+    -- the remaining roots all lie in the sector
+    have hmapQeq : Q.map (algebraMap ℝ ℂ) = (X - C (w.re : ℂ)) * M.map (algebraMap ℝ ℂ) := by
+      rw [hM, Polynomial.map_mul, Polynomial.map_sub, map_X, map_C, Complex.coe_algebraMap]
+    have hrootsQ : (Q.map (algebraMap ℝ ℂ)).roots =
+        ((w.re : ℝ) : ℂ) ::ₘ (M.map (algebraMap ℝ ℂ)).roots := by
+      rw [hmapQeq, roots_mul (hmapQeq ▸ map_ne_zero hQne), roots_X_sub_C,
+        Multiset.singleton_add]
+    have hMcount : (M.map (algebraMap ℝ ℂ)).roots.countP (· ∉ sector) = 0 := by
+      rw [hrootsQ, Multiset.countP_cons, if_pos (hwr ▸ hwout)] at hcount
+      omega
+    have hMplc : PosLogConcave M := by
+      apply posLogConcave_of_aeval_mem_sector hMm hM0
+      intro z hz
+      by_contra hzout
+      exact Multiset.countP_eq_zero.mp hMcount z
+        ((mem_roots_map hMm.ne_zero).mpr (by rwa [← aeval_def])) hzout
+    rw [hsv, hM]
+    exact hMplc.signVariations_X_pow_mul_X_sub_C_mul w.re k
+  · -- all roots inside the sector: `Q` is `PosLogConcave`, so no variations
+    push Not at hex
+    have hQplc : PosLogConcave Q := by
+      apply posLogConcave_of_aeval_mem_sector hQm hQ0
+      intro z hz
+      exact hex z ((mem_roots_map hQne).mpr (by rwa [← aeval_def]))
+    rw [hsv, hQplc.signVariations_X_pow_mul]
+    exact zero_le_one
+
+/-- **The λ = 0 case of the sector variation bound.** If every complex root of
+the nonzero real polynomial `P` lies in the sector, its coefficients have no
+sign variation at all. -/
+theorem signVariations_eq_zero_of_sector {P : ℝ[X]} (hP : P ≠ 0)
+    (h : (P.map (algebraMap ℝ ℂ)).roots.countP (· ∉ sector) = 0) :
+    P.signVariations = 0 := by
+  obtain ⟨c, k, Q, hc, hQm, hQ0, hPeq⟩ := exists_C_mul_X_pow_mul hP
+  have hQne : Q ≠ 0 := hQm.ne_zero
+  have hdvd : Q.map (algebraMap ℝ ℂ) ∣ P.map (algebraMap ℝ ℂ) :=
+    ⟨(C c * X ^ k).map (algebraMap ℝ ℂ), by
+      rw [← Polynomial.map_mul, hPeq]; ring_nf⟩
+  have hcount : (Q.map (algebraMap ℝ ℂ)).roots.countP (· ∉ sector) = 0 :=
+    Nat.le_zero.mp (h ▸ Multiset.countP_le_of_le _ (roots.le_of_dvd (map_ne_zero hP) hdvd))
+  have hQplc : PosLogConcave Q := by
+    apply posLogConcave_of_aeval_mem_sector hQm hQ0
+    intro z hz
+    by_contra hzout
+    exact Multiset.countP_eq_zero.mp hcount z
+      ((mem_roots_map hQne).mpr (by rwa [← aeval_def])) hzout
+  rw [hPeq, signVariations_C_mul _ hc, hQplc.signVariations_X_pow_mul]
+
+/-! ### Sharpness
+
+The naive per-factor bound `signVariations ((X² + bX + c) * P) ≤ signVariations P`
+for sector quadratics is false, and so is the general count bound
+"`signVariations ≤` number of roots outside the sector":
+
+`(X² + X + 1) * (X² - (3/2)X + 1) = X⁴ - (1/2)X³ + (1/2)X² - (1/2)X + 1`
+
+has four sign variations `(+,-,+,-,+)`, while only the two roots of
+`X² - (3/2)X + 1` (which lie at `re = 3/4 > 0`) are outside the sector; the
+roots of `X² + X + 1` are `exp (± 2πi/3)`, on the sector boundary. Hence the
+correct statement is the threshold form proved above (`λ ≤ 1` roots outside
+give at most one variation), not a variation count bounded by the number of
+outside roots. -/
+
+/-- The product underlying the sharpness example, cleared of denominators
+(twice the monic quartic): the coefficient signs `(+,-,+,-,+)` give four sign
+variations. -/
+example : ((X ^ 2 + X + 1) * (2 * X ^ 2 - 3 * X + 2) : ℝ[X])
+    = 2 * X ^ 4 - X ^ 3 + X ^ 2 - X + 2 := by
+  ring
 
 end Polynomial
