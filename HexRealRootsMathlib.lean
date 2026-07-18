@@ -19,6 +19,7 @@ public import HexRealRootsMathlib.TwoCircle
 public import HexRealRootsMathlib.DescartesParity
 public import HexRealRootsMathlib.TwoCircleRegion
 public import HexRealRootsMathlib.TwoCircleSector
+public import HexRealRootsMathlib.MobiusCorrespond
 
 public section
 

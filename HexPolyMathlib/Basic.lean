@@ -12,6 +12,7 @@ public import Mathlib.Algebra.Polynomial.Degree.Defs
 public import Mathlib.Algebra.Polynomial.Degree.Lemmas
 public import Mathlib.Algebra.Polynomial.Degree.Operations
 public import Mathlib.Algebra.Polynomial.Derivative
+public import Mathlib.Algebra.Polynomial.Eval.Defs
 public import Mathlib.Algebra.Polynomial.Monomial
 public import HexPoly
 
@@ -556,6 +557,68 @@ theorem toPolynomial_dvd_iff [CommRing R] [DecidableEq R]
   · intro hdvd
     simpa using ofPolynomial_dvd (R := R) hdvd
   · exact toPolynomial_dvd
+
+/-! ### Composition -/
+
+/-- The Horner polynomial built from a coefficient list, lowest degree first:
+`hornerList (c :: cs) = C c + X * hornerList cs`. -/
+private def hornerList [Semiring R] (l : List R) : Polynomial R :=
+  l.foldr (fun c acc => Polynomial.C c + Polynomial.X * acc) 0
+
+private theorem coeff_hornerList [Semiring R] : ∀ (l : List R) (n : ℕ),
+    (hornerList l).coeff n = l.getD n 0
+  | [], n => by simp [hornerList]
+  | c :: cs, n => by
+      show (Polynomial.C c + Polynomial.X * hornerList cs).coeff n = _
+      cases n with
+      | zero => simp
+      | succ m =>
+          rw [Polynomial.coeff_add, Polynomial.coeff_C, if_neg (Nat.succ_ne_zero m),
+            Polynomial.coeff_X_mul, coeff_hornerList cs m, zero_add, List.getD_cons_succ]
+
+/-- Composition pushes through the Horner fold: substituting `M` for `X` turns
+`hornerList l` into the same Horner fold with `M` in place of `X`. -/
+private theorem hornerList_comp [CommSemiring R] (M : Polynomial R) : ∀ l : List R,
+    (hornerList l).comp M = l.foldr (fun c acc => Polynomial.C c + M * acc) 0
+  | [] => by simp [hornerList]
+  | c :: cs => by
+      show (Polynomial.C c + Polynomial.X * hornerList cs).comp M = _
+      rw [Polynomial.add_comp, Polynomial.C_comp, Polynomial.mul_comp, Polynomial.X_comp,
+        hornerList_comp M cs]
+      rfl
+
+private theorem toList_getD [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) (n : ℕ) :
+    p.toList.getD n 0 = p.coeff n := by
+  rw [Hex.DensePoly.toList, List.getD_eq_getElem?_getD, Array.getElem?_toList]
+  have h := Hex.DensePoly.toArray_getD p n
+  rw [Array.getD_eq_getD_getElem?] at h
+  exact h
+
+/-- Every executable dense polynomial is its own Horner list over the stored
+coefficients. -/
+private theorem toPolynomial_eq_hornerList [Semiring R] [DecidableEq R]
+    (p : Hex.DensePoly R) :
+    toPolynomial p = hornerList p.toList := by
+  ext n
+  rw [coeff_toPolynomial, coeff_hornerList, toList_getD]
+
+/-- `toPolynomial` intertwines the executable Horner composition with Mathlib's
+polynomial composition. -/
+@[simp, grind =]
+theorem toPolynomial_compose [CommSemiring R] [DecidableEq R] (p q : Hex.DensePoly R) :
+    toPolynomial (Hex.DensePoly.compose p q)
+      = (toPolynomial p).comp (toPolynomial q) := by
+  have hcl : ∀ l : List R, toPolynomial (Hex.DensePoly.composeCoeffList l q)
+      = l.foldr (fun c acc => Polynomial.C c + toPolynomial q * acc) 0 := by
+    intro l
+    induction l with
+    | nil => simp [Hex.DensePoly.composeCoeffList]
+    | cons c cs ih =>
+        show toPolynomial (Hex.DensePoly.composeCoeffList cs q * q + Hex.DensePoly.C c) = _
+        rw [toPolynomial_add, toPolynomial_mul, toPolynomial_C, ih, List.foldr_cons,
+          mul_comm, add_comm]
+  show toPolynomial (Hex.DensePoly.composeCoeffList p.toList q) = _
+  rw [hcl, toPolynomial_eq_hornerList p, hornerList_comp]
 
 end
 
