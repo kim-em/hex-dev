@@ -39,8 +39,8 @@ with it the companion is fully `sorry`-free.
 
 The classical statement is **not** a general count bound. It is *λ-graded*
 (Obreschkoff 1963; modern treatments Krandick–Mehlhorn 2006, Eigenwillig 2008):
-if all but `λ` complex roots of a real polynomial lie in the open sector of
-half-angle `π/(λ+2)` about the positive real axis (equivalently, at most `λ`
+if all but `λ` complex roots of a real polynomial lie in the closed sector of
+half-angle `π/(λ+2)` about the negative real axis (equivalently, at most `λ`
 roots lie outside), then the coefficient sequence has at most `λ` sign
 variations. The naive reading "variation count ≤ number of roots in the
 two-circle region" is **false**: `(X²+X+1)·(X²−(3/2)X+1)` has four sign

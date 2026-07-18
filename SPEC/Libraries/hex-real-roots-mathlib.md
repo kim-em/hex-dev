@@ -251,7 +251,7 @@ Sturm engine.
 Prerequisite: the **Obreshkoff two-circle theorem**, in its correct
 *λ-graded* form (Obreschkoff 1963; Krandick-Mehlhorn 2006,
 Eigenwillig 2008): if all but `λ` complex roots of a real polynomial
-lie in the open sector of half-angle `π/(λ+2)` about the positive real
+lie in the closed sector of half-angle `π/(λ+2)` about the negative real
 axis (equivalently, at most `λ` roots lie outside), then the
 coefficient sequence has at most `λ` sign variations. The naive count
 bound "variation count ≤ number of roots in the two-circle region" is
