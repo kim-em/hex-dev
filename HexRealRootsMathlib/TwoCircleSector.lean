@@ -257,4 +257,181 @@ theorem PosLogConcave.mul_quadratic (hA : PosLogConcave A) {b c : ℝ} (hb : 0 <
         mul_nonneg hc.le (sub_nonneg.mpr (hA.genLC m (m + 3) (by lia))),
         mul_nonneg (sub_nonneg.mpr hbc) (sub_nonneg.mpr (hA.lc (m + 1)))]
 
+/-! ### The Obreshkoff sector -/
+
+open Complex in
+/-- The closed Obreshkoff sector `{z | z.re ≤ -‖z‖ / 2}`: the closed sector of
+half-angle `π/3` opening along the negative real axis. Note `0 ∈ Sector`. -/
+def Sector : Set ℂ := {z | z.re ≤ -‖z‖ / 2}
+
+theorem mem_sector {z : ℂ} : z ∈ Sector ↔ z.re ≤ -‖z‖ / 2 := Iff.rfl
+
+/-- A real number lies in the sector (as a complex number) iff it is `≤ 0`. -/
+theorem ofReal_mem_sector {t : ℝ} : ((t : ℝ) : ℂ) ∈ Sector ↔ t ≤ 0 := by
+  rw [mem_sector, Complex.ofReal_re, Complex.norm_real, Real.norm_eq_abs]
+  rcases le_or_gt t 0 with h | h
+  · simp only [h, iff_true, abs_of_nonpos h]; linarith
+  · simp only [abs_of_pos h]
+    constructor <;> intro h' <;> linarith
+
+/-- The sector is closed under complex conjugation. -/
+theorem conj_mem_sector {z : ℂ} (hz : z ∈ Sector) : (starRingEnd ℂ) z ∈ Sector := by
+  rw [mem_sector, Complex.conj_re, Complex.norm_conj]; exact hz
+
+/-! ### From roots in the sector to `PosLogConcave` -/
+
+/-- A monic real linear factor whose complex root lies in `Sector ∖ {0}` has the
+form `X + C r` with `0 < r`, hence multiplying preserves `PosLogConcave`. -/
+private theorem posLogConcave_mul_of_monicDegOne {f A : ℝ[X]} (hA : PosLogConcave A)
+    (hf : IsMonicOfDegree f 1) (h0 : f.coeff 0 ≠ 0)
+    (hroots : ∀ z : ℂ, aeval z f = 0 → z ∈ Sector) :
+    PosLogConcave (f * A) := by
+  set c₀ := f.coeff 0 with hc₀
+  have hfeq : f = X + C c₀ := by
+    have hdeg : f.degree = 1 := by
+      rw [degree_eq_natDegree hf.monic.ne_zero, hf.natDegree_eq]; rfl
+    rw [eq_X_add_C_of_degree_eq_one hdeg, hf.leadingCoeff_eq, map_one, one_mul]
+  have hrootmem : ((-c₀ : ℝ) : ℂ) ∈ Sector := by
+    apply hroots
+    rw [hfeq]; simp
+  rw [ofReal_mem_sector] at hrootmem
+  have hc₀pos : 0 < c₀ := by
+    rcases lt_or_eq_of_le (by linarith : c₀ ≥ 0) with h | h
+    · exact h
+    · exact absurd h.symm h0
+  rw [hfeq]
+  exact hA.mul_X_add_C hc₀pos
+
+/-- A monic real quadratic factor whose complex roots lie in `Sector ∖ {0}` has
+the form `X² + C b * X + C c` with `0 < b`, `0 < c`, and `c ≤ b²`, hence
+multiplying preserves `PosLogConcave`. -/
+private theorem posLogConcave_mul_of_monicDegTwo {f A : ℝ[X]} (hA : PosLogConcave A)
+    (hf : IsMonicOfDegree f 2) (h0 : f.coeff 0 ≠ 0)
+    (hroots : ∀ z : ℂ, aeval z f = 0 → z ∈ Sector) :
+    PosLogConcave (f * A) := by
+  -- It suffices to write `f = X² + C b * X + C c` with the required sign conditions.
+  suffices h : ∃ b c : ℝ, f = X ^ 2 + C b * X + C c ∧ 0 < b ∧ 0 < c ∧ c ≤ b ^ 2 by
+    obtain ⟨b, c, hfeq, hb, hc, hbc⟩ := h
+    rw [hfeq]
+    exact hA.mul_quadratic hb hc hbc
+  by_cases hreal : ∃ ρ : ℝ, aeval (ρ : ℝ) f = 0
+  · -- real root case: `f = (X - C ρ)(X + C d)` with `ρ < 0 < d`
+    obtain ⟨ρ, hρ⟩ := hreal
+    have hdvd : (X - C ρ) ∣ f := dvd_iff_isRoot.mpr (by simpa [IsRoot, ← aeval_def] using hρ)
+    obtain ⟨q, hq⟩ := hdvd
+    have hXsub : IsMonicOfDegree (X - C ρ : ℝ[X]) 1 :=
+      ⟨natDegree_X_sub_C ρ, monic_X_sub_C ρ⟩
+    have hqmd : IsMonicOfDegree q 1 := by
+      apply hXsub.of_mul_left
+      rw [← hq]; exact (show (1 : ℕ) + 1 = 2 by rfl) ▸ hf
+    set d := q.coeff 0 with hd
+    have hqeq : q = X + C d := by
+      have hdeg : q.degree = 1 := by
+        rw [degree_eq_natDegree hqmd.monic.ne_zero, hqmd.natDegree_eq]; rfl
+      rw [eq_X_add_C_of_degree_eq_one hdeg, hqmd.leadingCoeff_eq, map_one, one_mul]
+    -- both real roots lie in the sector
+    have hρmem : ((ρ : ℝ) : ℂ) ∈ Sector := hroots _ (by
+      have : aeval ((ρ : ℝ) : ℂ) f = algebraMap ℝ ℂ (aeval ρ f) :=
+        (aeval_algebraMap_apply_eq_algebraMap_eval ρ f)
+      rw [this, hρ, map_zero])
+    have hdmem : ((-d : ℝ) : ℂ) ∈ Sector := hroots _ (by
+      have hroot : aeval (-d) f = 0 := by
+        rw [hq, hqeq, map_mul]; simp [aeval_def]
+      have : aeval (((-d : ℝ)) : ℂ) f = algebraMap ℝ ℂ (aeval (-d) f) :=
+        (aeval_algebraMap_apply_eq_algebraMap_eval (-d) f)
+      rw [this, hroot, map_zero])
+    rw [ofReal_mem_sector] at hρmem
+    rw [ofReal_mem_sector] at hdmem
+    have hdnn : 0 ≤ d := by linarith
+    -- `c = f.coeff 0 = -(ρ * d)`, nonzero, so both `ρ, d` nonzero
+    have hfeq : f = X ^ 2 + C (d - ρ) * X + C (-(ρ * d)) := by
+      rw [hq, hqeq, C_sub, C_neg, C_mul]; ring
+    have hc0 : f.coeff 0 = -(ρ * d) := by rw [hfeq]; simp
+    have hne : ρ * d ≠ 0 := by rw [hc0] at h0; simpa using h0
+    have hρneg : ρ < 0 := lt_of_le_of_ne hρmem (fun h => hne (by simp [h]))
+    have hdpos : 0 < d := lt_of_le_of_ne hdnn (fun h => hne (by rw [← h]; ring))
+    refine ⟨d - ρ, -(ρ * d), hfeq, by linarith, by nlinarith, by nlinarith⟩
+  · -- no real root: `f` is irreducible over `ℝ`, take a non-real root
+    push_neg at hreal
+    obtain ⟨z, hz⟩ : ∃ z : ℂ, aeval z f = 0 :=
+      IsAlgClosed.exists_aeval_eq_zero ℂ f (by
+        rw [degree_eq_natDegree hf.monic.ne_zero, hf.natDegree_eq]; decide)
+    have hzim : z.im ≠ 0 := by
+      intro him
+      apply hreal z.re
+      have : ((z.re : ℝ) : ℂ) = z := by
+        apply Complex.ext <;> simp [him]
+      have h2 : aeval (((z.re : ℝ)) : ℂ) f = algebraMap ℝ ℂ (aeval z.re f) :=
+        aeval_algebraMap_apply_eq_algebraMap_eval z.re f
+      rw [this] at h2
+      have : algebraMap ℝ ℂ (aeval z.re f) = 0 := by rw [← h2, hz]
+      simpa using this
+    -- `f = X² - C (2 z.re) X + C ‖z‖²`
+    have hdvd : X ^ 2 - C (2 * z.re) * X + C (‖z‖ ^ 2) ∣ f :=
+      quadratic_dvd_of_aeval_eq_zero_im_ne_zero f hz hzim
+    have hpmd : IsMonicOfDegree (X ^ 2 - C (2 * z.re) * X + C (‖z‖ ^ 2) : ℝ[X]) 2 := by
+      have heq : (X ^ 2 - C (2 * z.re) * X + C (‖z‖ ^ 2) : ℝ[X])
+          = X ^ 2 + C (-(2 * z.re)) * X + C (‖z‖ ^ 2) := by rw [C_neg]; ring
+      rw [heq]
+      exact ⟨natDegree_quad _ _, monic_quad _ _⟩
+    obtain ⟨s, hs⟩ := hdvd
+    have hs1 : IsMonicOfDegree s 0 := by
+      apply hpmd.of_mul_left
+      rw [← hs]; exact (show (2 : ℕ) + 0 = 2 by rfl) ▸ hf
+    rw [isMonicOfDegree_zero_iff] at hs1
+    have hfeq : f = X ^ 2 + C (-(2 * z.re)) * X + C (‖z‖ ^ 2) := by
+      rw [hs, hs1, mul_one, C_neg]; ring
+    have hznorm : 0 < ‖z‖ := by
+      rw [norm_pos_iff]; intro h; rw [h] at hzim; simp at hzim
+    have hzsec : z.re ≤ -‖z‖ / 2 := hroots z hz
+    refine ⟨-(2 * z.re), ‖z‖ ^ 2, hfeq, by linarith, by positivity, ?_⟩
+    have : ‖z‖ ≤ -(2 * z.re) := by linarith
+    nlinarith [this, hznorm]
+
+/-- **Sector core.** If `Q` is monic with `Q.coeff 0 ≠ 0` and every complex root
+of `Q` lies in the sector, then `Q` is positively log-concave. -/
+theorem posLogConcave_of_aeval_mem_sector {Q : ℝ[X]} (hQ : Q.Monic) (h0 : Q.coeff 0 ≠ 0)
+    (hroots : ∀ z : ℂ, aeval z Q = 0 → z ∈ Sector) : PosLogConcave Q := by
+  generalize hn : Q.natDegree = N
+  induction N using Nat.strong_induction_on generalizing Q with
+  | _ N ih =>
+    rcases Nat.eq_zero_or_pos N with hN0 | hNpos
+    · -- base case: `Q` is a monic constant, hence `1`
+      subst hN0
+      have hQ1 : Q = 1 := by rw [← isMonicOfDegree_zero_iff]; exact ⟨hn, hQ⟩
+      rw [hQ1]
+      refine ⟨fun i hi => ?_, fun i => by simp [coeff_one]⟩
+      simp only [natDegree_one, Nat.le_zero] at hi
+      subst hi; simp [coeff_one]
+    · -- inductive step
+      obtain ⟨m, rfl⟩ : ∃ m, N = m + 1 := ⟨N - 1, by omega⟩
+      have hmd : IsMonicOfDegree Q (m + 1) := ⟨hn, hQ⟩
+      obtain ⟨f₁, f₂, hf₁, hQeq⟩ := hmd.eq_isMonicOfDegree_one_or_two_mul
+      have hf2ne : f₂ ≠ 0 := right_ne_zero_of_mul (hQeq ▸ hmd.monic.ne_zero)
+      have hf20 : f₂.coeff 0 ≠ 0 := fun h => h0 (by rw [hQeq, mul_coeff_zero, h, mul_zero])
+      have hf10 : f₁.coeff 0 ≠ 0 := fun h => h0 (by rw [hQeq, mul_coeff_zero, h, zero_mul])
+      have hroots₂ : ∀ z : ℂ, aeval z f₂ = 0 → z ∈ Sector :=
+        fun z hz => hroots z (by rw [hQeq, map_mul, hz, mul_zero])
+      have hroots₁ : ∀ z : ℂ, aeval z f₁ = 0 → z ∈ Sector :=
+        fun z hz => hroots z (by rw [hQeq, map_mul, hz, zero_mul])
+      rcases hf₁ with hf₁ | hf₁
+      · -- degree 1 factor
+        have hf2md : IsMonicOfDegree f₂ m :=
+          hf₁.of_mul_left (by rw [add_comm, ← hQeq]; exact hmd)
+        have hf2plc : PosLogConcave f₂ :=
+          ih m (by omega) hf2md.monic hf20 hroots₂ hf2md.natDegree_eq
+        rw [hQeq]
+        exact posLogConcave_mul_of_monicDegOne hf2plc hf₁ hf10 hroots₁
+      · -- degree 2 factor
+        have hmpos : 1 ≤ m := by
+          have : Q.natDegree = 2 + f₂.natDegree := by
+            rw [hQeq, natDegree_mul hf₁.monic.ne_zero hf2ne, hf₁.natDegree_eq]
+          omega
+        have hf2md : IsMonicOfDegree f₂ (m - 1) :=
+          hf₁.of_mul_left (by rw [show 2 + (m - 1) = m + 1 by omega, ← hQeq]; exact hmd)
+        have hf2plc : PosLogConcave f₂ :=
+          ih (m - 1) (by omega) hf2md.monic hf20 hroots₂ hf2md.natDegree_eq
+        rw [hQeq]
+        exact posLogConcave_mul_of_monicDegTwo hf2plc hf₁ hf10 hroots₁
+
 end Polynomial
