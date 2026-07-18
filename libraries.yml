@@ -473,7 +473,7 @@ libraries:
     deps: [HexRoots, HexPolyZMathlib]
     mathlib: true
     done_through: 0
-    status: planned
+    status: active
   HexResultant:
     deps: [HexPoly]
     mathlib: false
