@@ -780,12 +780,32 @@ bit-length at precision `prec`.
 
 ## Time budgets (Phase 4 validation)
 
-Rough first guesses, to be measured against MPSolve on the same
-fixtures during Phase 4:
+Regression ceilings anchored to measured reality (chungus2, AMD EPYC
+9455, Lean 4.32.0-rc1, single compiled call; the degree-50 and
+degree-100 rows are measured with `isolateAll?` at the stated
+precision, since `isolate`'s target carries a `separationDepth` floor
+that exceeds these precisions from degree 50 up):
 
-- Degree 10, prec 32: under 1 second.
-- Degree 50, prec 64: under 10 seconds.
-- Degree 100, prec 128: under 1 minute.
+- Degree 10, prec 32: under 1 second (measured 0.14 s).
+- Degree 20, prec 32: under 30 seconds (measured about 15 s). This is
+  the scale `hex-number-field` consumes.
+- Degree 50, prec 64: under 15 minutes (measured 8.3 minutes).
+- Degree 100, prec 128: no budget pinned. The measured run did not
+  complete within 19 minutes and the extrapolated cost is hours; a
+  budget is set once the optimisation work below makes the scale
+  practical.
+
+These are ceilings for regression detection, not aspirations. The
+original rough first guesses (1 s / 10 s / 1 min) proved optimistic by
+one to two orders of magnitude for the exact-dyadic, no-Graeffe
+design;
+https://github.com/kim-em/hex-dev/issues/8751
+tracks tightening the ceilings (Graeffe iteration, soft-Pellet
+filtering, Taylor-shift reuse), and any landed improvement re-measures
+the table and ratchets the ceilings down rather than leaving slack.
+MPSolve remains the informational performance comparator; the measured
+python-flint ratios are recorded in
+`reports/hexroots-performance.md`.
 
 ## References
 
