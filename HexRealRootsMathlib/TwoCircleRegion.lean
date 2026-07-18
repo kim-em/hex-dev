@@ -66,6 +66,11 @@ of the Möbius image. Classically written with `Complex.abs`; here the modulus i
 the norm `‖·‖`. -/
 def sector : Set ℂ := {z : ℂ | z.re ≤ -‖z‖ / 2}
 
+/-- Membership in the closed sector unfolds to the scalar inequality. Exported so
+consumers can bridge this sector to `Polynomial.sector` (the identical set in the
+sign-variation development) without unfolding the opaque `def` across modules. -/
+theorem mem_sector {z : ℂ} : z ∈ sector ↔ z.re ≤ -‖z‖ / 2 := Iff.rfl
+
 /-- Real part of the Möbius seed `s = (w − a)·conj(b − w)`. -/
 theorem seed_re (a b : ℝ) (w : ℂ) :
     ((w - a) * (starRingEnd ℂ) (b - w)).re = (w.re - a) * (b - w.re) - w.im ^ 2 := by

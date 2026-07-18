@@ -65,7 +65,7 @@ variable {p : Hex.ZPoly}
 /-! ### Dyadic midpoint arithmetic -/
 
 /-- Dyadic order coincides with the order of the real values. -/
-private theorem toReal_lt_toReal_iff {a b : Dyadic} :
+theorem toReal_lt_toReal_iff {a b : Dyadic} :
     Dyadic.toReal a < Dyadic.toReal b ↔ a < b := by
   unfold Dyadic.toReal
   rw [Rat.cast_lt, Dyadic.toRat_lt_toRat_iff]
@@ -97,19 +97,19 @@ private theorem toReal_sub (a b : Dyadic) :
   unfold Dyadic.toReal; rw [Dyadic.toRat_sub]; push_cast; ring
 
 /-- The real value of an interval's dyadic midpoint. -/
-private theorem toReal_midpoint (I : Hex.DyadicInterval) :
+theorem toReal_midpoint (I : Hex.DyadicInterval) :
     Dyadic.toReal I.midpoint = (Dyadic.toReal I.lower + Dyadic.toReal I.upper) / 2 := by
   unfold Hex.DyadicInterval.midpoint
   rw [toReal_shiftRight_one, toReal_add]
 
 /-- The midpoint is strictly above the lower endpoint. -/
-private theorem lower_lt_midpoint (I : Hex.DyadicInterval) : I.lower < I.midpoint := by
+theorem lower_lt_midpoint (I : Hex.DyadicInterval) : I.lower < I.midpoint := by
   rw [← toReal_lt_toReal_iff, toReal_midpoint]
   have := toReal_lt_toReal_iff.mpr I.lt
   linarith
 
 /-- The midpoint is strictly below the upper endpoint. -/
-private theorem midpoint_lt_upper (I : Hex.DyadicInterval) : I.midpoint < I.upper := by
+theorem midpoint_lt_upper (I : Hex.DyadicInterval) : I.midpoint < I.upper := by
   rw [← toReal_lt_toReal_iff, toReal_midpoint]
   have := toReal_lt_toReal_iff.mpr I.lt
   linarith
@@ -278,7 +278,7 @@ private theorem rootBound_pos (p : Hex.ZPoly) : 0 < Dyadic.toReal (Hex.rootBound
     · rw [Hex.rootBound_of_degree?_pos hd, toReal_twoPow]; positivity
 
 /-- `-rootBound p < rootBound p`, so the initial interval is nonempty. -/
-private theorem neg_rootBound_lt_rootBound (p : Hex.ZPoly) :
+theorem neg_rootBound_lt_rootBound (p : Hex.ZPoly) :
     -(Hex.rootBound p) < Hex.rootBound p := by
   rw [← toReal_lt_toReal_iff, toReal_neg]
   have := rootBound_pos p; linarith
@@ -288,7 +288,7 @@ difference between `-rootBound p` and `rootBound p` counts the real roots of `p`
 in `(-R, R]`, which is *every* real root (Cauchy bound), i.e. `rootCount p`. This
 is a statement about `p`'s roots only — the chain elements' own (possibly larger)
 zeros never enter, so there is no `±R`-versus-`±∞` gap. -/
-private theorem sturmVar_neg_pos_sub (hdeg : 1 ≤ (p.degree?).getD 0)
+theorem sturmVar_neg_pos_sub (hdeg : 1 ≤ (p.degree?).getD 0)
     (hp : Hex.ZPoly.SquareFreeRat p) :
     (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) (-(Hex.rootBound p)) : ℤ)
       - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) (Hex.rootBound p)
@@ -344,7 +344,7 @@ private theorem toReal_le_two_pow_ceilLog2Dyadic (x : Dyadic) (hx : 0 < Dyadic.t
 /-- **The initial interval's width fits the depth budget.** For positive-degree
 `p`, `2 · rootBound p ≤ 2 ^ (isolationDepth p − sepPrec p)`, which is the
 depth-sufficiency hypothesis the `sturmVisit` induction consumes at the top. -/
-private theorem initial_width_le (p : Hex.ZPoly) (hdeg : 1 ≤ (p.degree?).getD 0) :
+theorem initial_width_le (p : Hex.ZPoly) (hdeg : 1 ≤ (p.degree?).getD 0) :
     Dyadic.toReal (Hex.rootBound p) - Dyadic.toReal (-(Hex.rootBound p))
       ≤ (2 : ℝ) ^ ((Hex.isolationDepth p : ℤ) - (Hex.sepPrec p : ℤ)) := by
   obtain ⟨d, hd⟩ : ∃ d, p.degree? = some (d + 1) := by
@@ -374,21 +374,21 @@ private theorem initial_width_le (p : Hex.ZPoly) (hdeg : 1 ≤ (p.degree?).getD 
 
 /-- Dyadic `≤` is reflexive (routed through `toRat`, staying in the core
 instances that `DyadicInterval` uses). -/
-private theorem dle_refl (a : Dyadic) : a ≤ a :=
+theorem dle_refl (a : Dyadic) : a ≤ a :=
   Dyadic.toRat_le_toRat_iff.mp (le_refl _)
 
 /-- Dyadic `<` implies `≤`. -/
-private theorem dle_of_lt {a b : Dyadic} (h : a < b) : a ≤ b :=
+theorem dle_of_lt {a b : Dyadic} (h : a < b) : a ≤ b :=
   Dyadic.toRat_le_toRat_iff.mp (le_of_lt (Dyadic.toRat_lt_toRat_iff.mpr h))
 
 /-- Transitivity of the core dyadic `≤`. -/
-private theorem dle_trans {a b c : Dyadic} (h1 : a ≤ b) (h2 : b ≤ c) : a ≤ c :=
+theorem dle_trans {a b c : Dyadic} (h1 : a ≤ b) (h2 : b ≤ c) : a ≤ c :=
   Dyadic.toRat_le_toRat_iff.mp
     (le_trans (Dyadic.toRat_le_toRat_iff.mpr h1) (Dyadic.toRat_le_toRat_iff.mpr h2))
 
 /-- `sturmVarAt` is antitone in the point: the count over `(a, b]` is a
 nonnegative cardinality, so the variation at `b` is at most the one at `a`. -/
-private theorem sturmVarAt_le (hdeg : 1 ≤ (p.degree?).getD 0)
+theorem sturmVarAt_le (hdeg : 1 ≤ (p.degree?).getD 0)
     (hp : Hex.ZPoly.SquareFreeRat p) {a b : Dyadic} (hab : a < b) :
     Hex.sturmVarAt (Hex.ZPoly.sturmChain p) b
       ≤ Hex.sturmVarAt (Hex.ZPoly.sturmChain p) a := by
@@ -400,7 +400,7 @@ private theorem sturmVarAt_le (hdeg : 1 ≤ (p.degree?).getD 0)
   omega
 
 /-- A real root of the real cast is a complex root of the complex cast. -/
-private theorem isRoot_toPolyℂ {r : ℝ} (hr : (toPolyℝ p).IsRoot r) :
+theorem isRoot_toPolyℂ {r : ℝ} (hr : (toPolyℝ p).IsRoot r) :
     (toPolyℂ p).IsRoot (r : ℂ) := by
   have hcomp : (algebraMap ℝ ℂ).comp (Int.castRingHom ℝ) = Int.castRingHom ℂ :=
     RingHom.ext_int _ _
@@ -416,7 +416,7 @@ private theorem isRoot_toPolyℂ {r : ℝ} (hr : (toPolyℝ p).IsRoot r) :
 holds at most one real root of a positive-degree squarefree `p` (two distinct
 real roots are more than `4·2^(−sepPrec p)` apart by `sepPrec_separates'`), so
 its exact Sturm count is at most `1`. -/
-private theorem sturmCount_le_one (hdeg : 1 ≤ (p.degree?).getD 0)
+theorem sturmCount_le_one (hdeg : 1 ≤ (p.degree?).getD 0)
     (hp : Hex.ZPoly.SquareFreeRat p) (J : Hex.DyadicInterval)
     (hw : Dyadic.toReal J.upper - Dyadic.toReal J.lower
       ≤ (2 : ℝ) ^ (-(Hex.sepPrec p : ℤ))) :
@@ -658,7 +658,7 @@ private theorem sturmVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
           · exact hRhi I h
 
 /-- The final assembly step succeeds once its two invariants are witnessed. -/
-private theorem assemble?_isSome {chain : Array Hex.ZPoly}
+theorem assemble?_isSome {chain : Array Hex.ZPoly}
     (hchain : chain = Hex.ZPoly.sturmChain p) (arr : Array (Hex.RealRootIsolation p))
     (hord : ∀ i j : Fin arr.size, i < j → arr[i].interval.upper ≤ arr[j].interval.lower)
     (hsize : arr.size = Hex.sturmVarNegInf chain - Hex.sturmVarPosInf chain) :

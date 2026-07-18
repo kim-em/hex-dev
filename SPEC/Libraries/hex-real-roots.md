@@ -282,15 +282,19 @@ is required. What the depth budget *suffices for* differs:
   Obreshkoff two-circle theorem; Krandick-Mehlhorn 2006) shows that
   once an interval's width is below a constant multiple of `sep(p)`
   (the minimum distance between distinct complex roots), its
-  variation count is `0` or `1`: the two-circle region around a
-  short interval is too small to hold two roots, and it cannot hold a
-  single non-real root because it is symmetric about the real axis
-  and non-real roots arrive in conjugate pairs. So
-  `isolateDescartes? p ≠ none` for squarefree `p` at this depth. The
-  two-circle theorem is formalised nowhere yet, and this statement is
-  the one deferred theorem of the companion
-  (`isolateDescartes?_isSome`): no other theorem depends on it, and
-  the driver's completeness does not wait for it.
+  variation count is `0` or `1`, so `isolateDescartes? p ≠ none` for
+  squarefree `p` at this depth. The mechanism is the *λ-graded* sector
+  bound (not a general count bound — the reading "variation count ≤
+  number of roots in the two-circle region" is false): at most `λ`
+  roots outside the half-angle-`π/(λ+2)` sector force at most `λ` sign
+  variations. A short interval's two-circle region is too small to hold
+  two roots, and a lone non-real root there is excluded because the
+  region is symmetric about the real axis (conjugate pairs), so the
+  outside-sector count stays `≤ 1` and hence the variation count `≤ 1`.
+  This is now a theorem of the companion
+  (`isolateDescartes?_isSome`): it retires the Sturm fallback from the
+  runtime story, though no other theorem depends on it and the driver's
+  completeness never waited for it.
 
 Note the separation quantity is over **complex** roots in both cases.
 A real-gap bound is not enough for the Descartes engine: a conjugate
@@ -462,15 +466,19 @@ Per [SPEC/testing.md](../testing.md), fixtures are tiered into
 External oracles, in role order: SageMath (`real_roots`),
 python-flint (`fmpz_poly` real root API), FLINT/Arb.
 
-**Descartes-engine checks, until the deferred theorem lands.** The
-conformance suite must additionally assert, on every fixture in every
-profile it runs, that `isolateDescartes?` returns `some` and agrees
-with `isolate?`. These assertions stand in for the deferred theorem
-`isolateDescartes?_isSome`: they are how the repository notices if
-the fast engine ever falls back in practice. The change that proves
-`isolateDescartes?_isSome` in the companion **must delete these
-assertions** in the same PR; from that point the theorem carries the
-claim and re-testing it per fixture is noise.
+**Descartes-engine checks (retired).** While
+`isolateDescartes?_isSome` was open, the conformance suite asserted on
+every fixture that `isolateDescartes?` returns `some` and agrees with
+`isolate?`, standing in for the theorem. Now that
+`isolateDescartes?_isSome` is proven in the companion, those stand-ins
+are retired: the theorem carries the claim, and re-testing it per
+fixture is noise. The suite keeps only the ordinary input-contract
+checks — the `isolateDescartes? = none` rejection of the zero and
+non-squarefree inputs (which test the engine's classification of
+inadmissible input, not the termination theorem) — and the executable
+`mobiusTransform`/`descartesVar` transform tests. `EmitFixtures` emits
+from `isolate?` alone; the cross-engine agreement check it once carried
+is removed with the same change.
 
 ## Complexity contract
 
