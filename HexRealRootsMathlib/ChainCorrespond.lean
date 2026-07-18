@@ -74,6 +74,19 @@ theorem toPolynomial_toRatPoly (f : Hex.ZPoly) :
     Polynomial.coeff_map, coeff_toPolynomial]
   simp
 
+/-- Coefficients of the rational cast are the rational casts of the integer
+coefficients (the ℚ analogue of `coeff_toPolyℝ`). -/
+@[simp] theorem coeff_toPolyℚ (p : Hex.ZPoly) (n : Nat) :
+    (toPolyℚ p).coeff n = (p.coeff n : ℚ) := by
+  simp [toPolyℚ]
+
+/-- Evaluating the rational cast at `x` is the degree-indexed sum of the integer
+coefficients cast to `ℚ` (the ℚ analogue of `eval_toPolyℝ`). -/
+theorem eval_toPolyℚ (p : Hex.ZPoly) (x : ℚ) :
+    (toPolyℚ p).eval x = ∑ i ∈ Finset.range p.size, (p.coeff i : ℚ) * x ^ i := by
+  rw [toPolyℚ, Polynomial.eval_map, HexPolyMathlib.eval₂_toPolynomial]
+  simp
+
 /-- The rational cast of a nonzero executable polynomial is nonzero. -/
 theorem toPolyℚ_ne_zero {f : Hex.ZPoly} (hf : f ≠ 0) : toPolyℚ f ≠ 0 := by
   rw [toPolyℚ, Ne, Polynomial.map_eq_zero_iff (RingHom.injective_int (Int.castRingHom ℚ))]
@@ -989,6 +1002,86 @@ private theorem chainList_last_unit :
         exact ih cur (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)))
           (neg_primitivePart_ne_zero hr) (by omega) hco' z hz
 
+/-! ### Converse: a terminal-constant chain forces coprime seeds -/
+
+/-- **Reverse of `coprime_step`.** The three-term relation
+`C c₀ · a = Q · b − C k · c'` (with `k ≠ 0`) transports `IsCoprime b c'` *back* to
+`IsCoprime a b`: solving the relation for `c'` and substituting into a Bezout
+combination for `(b, c')` yields one for `(a, b)`. -/
+private theorem coprime_step_rev {a b c' : Polynomial ℝ} {c₀ k : ℝ} {Q : Polynomial ℝ}
+    (hk : k ≠ 0)
+    (hrel : Polynomial.C c₀ * a = Q * b - Polynomial.C k * c')
+    (h : IsCoprime b c') : IsCoprime a b := by
+  obtain ⟨u, v, huv⟩ := h
+  have hCk : Polynomial.C k⁻¹ * Polynomial.C k = 1 := by
+    rw [← Polynomial.C_mul, inv_mul_cancel₀ hk, Polynomial.C_1]
+  have hc' : c' = Polynomial.C k⁻¹ * (Q * b - Polynomial.C c₀ * a) := by
+    have hkc' : Polynomial.C k * c' = Q * b - Polynomial.C c₀ * a := by rw [hrel]; ring
+    calc c' = Polynomial.C k⁻¹ * (Polynomial.C k * c') := by rw [← mul_assoc, hCk, one_mul]
+      _ = Polynomial.C k⁻¹ * (Q * b - Polynomial.C c₀ * a) := by rw [hkc']
+  refine ⟨-(v * Polynomial.C k⁻¹ * Polynomial.C c₀), u + v * Polynomial.C k⁻¹ * Q, ?_⟩
+  calc -(v * Polynomial.C k⁻¹ * Polynomial.C c₀) * a
+        + (u + v * Polynomial.C k⁻¹ * Q) * b
+      = u * b + v * (Polynomial.C k⁻¹ * (Q * b - Polynomial.C c₀ * a)) := by ring
+    _ = u * b + v * c' := by rw [← hc']
+    _ = 1 := huv
+
+/-- **A terminal-constant chain has coprime seeds.** If the last element of
+`prev :: cur :: chainList fuel prev cur` is a unit of `ℝ[X]` (its real cast), then
+the seed pair `(prev, cur)` is coprime: a unit is coprime to its predecessor, and
+`coprime_step_rev` walks that coprimality back to the front. The converse of
+`chainList_last_unit`. -/
+private theorem chainList_seeds_coprime :
+    ∀ (fuel : ℕ) (prev cur : Hex.ZPoly), cur ≠ 0 →
+      (cur.degree?).getD 0 < fuel →
+      (∀ z, (prev :: cur :: chainList fuel prev cur).getLast? = some z →
+        IsUnit (toPolyℝ z)) →
+      IsCoprime (toPolyℝ prev) (toPolyℝ cur) := by
+  intro fuel
+  induction fuel with
+  | zero => intro prev cur _ hfuel _; omega
+  | succ fuel ih =>
+      intro prev cur hcur hfuel hunit
+      by_cases h : (Hex.ZPoly.spem prev cur).isZero
+      · -- The loop stops: the chain is `[prev, cur]`, so `cur` is the terminal unit.
+        have hz : (prev :: cur :: chainList (fuel + 1) prev cur).getLast? = some cur := by
+          rw [chainList, if_pos h]; rfl
+        obtain ⟨w, hw⟩ := hunit cur hz
+        exact ⟨0, ↑w⁻¹, by rw [← hw]; simp⟩
+      · have hr : Hex.ZPoly.spem prev cur ≠ 0 := fun hh => h (isZero_iff_eq_zero.mpr hh)
+        obtain ⟨c₀, k, Q, hc₀, hk, hrel⟩ := chain_step hcur hr
+        have hnext_ne : -(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)) ≠ 0 :=
+          neg_primitivePart_ne_zero hr
+        have hdeg1 : 1 ≤ (cur.degree?).getD 0 := one_le_degree_of_spem_ne_zero hcur hr
+        have hppdeg : ((Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)).degree?).getD 0
+            = ((Hex.ZPoly.spem prev cur).degree?).getD 0 := by
+          have h2 := congrArg Polynomial.natDegree
+            (toPolyℝ_eq_C_content_mul_primitivePart (Hex.ZPoly.spem prev cur))
+          rw [Polynomial.natDegree_C_mul (ne_of_gt (content_real_pos hr)),
+            natDegree_toPolyℝ, natDegree_toPolyℝ] at h2
+          omega
+        have hnextdeg :
+            (((-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur))).degree?).getD 0)
+              = ((Hex.ZPoly.spem prev cur).degree?).getD 0 := by
+          rw [← natDegree_toPolyℝ, toPolyℝ_neg, Polynomial.natDegree_neg,
+            natDegree_toPolyℝ, hppdeg]
+        have hdr : ((Hex.ZPoly.spem prev cur).degree?).getD 0 < (cur.degree?).getD 0 := by
+          rcases spem_degree hcur hdeg1 with h0 | hlt
+          · exact absurd h0 hr
+          · exact hlt
+        have hunit' : ∀ z, (cur :: -(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur))
+              :: chainList fuel cur (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)))).getLast?
+              = some z → IsUnit (toPolyℝ z) := by
+          intro z hz
+          apply hunit z
+          rw [chainList, if_neg h, List.getLast?_cons_cons]
+          exact hz
+        have hco_tail : IsCoprime (toPolyℝ cur)
+            (toPolyℝ (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)))) :=
+          ih cur (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)))
+            hnext_ne (by omega) hunit'
+        exact coprime_step_rev (ne_of_gt hk) hrel hco_tail
+
 /-! ### Sign flanks at a simple zero -/
 
 /-- A real polynomial vanishing at `r` with positive derivative there is
@@ -1221,6 +1314,97 @@ theorem sturmChain_isSturmChain (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0)
     omega
   rw [sturmChain_toList p hp]
   exact isSturmChain_of_seeds _ _ _ hs₀0 hs₁0 hfuel hcop _ hγ hkey
+
+/-- **The Sturm squarefree certificate is sound.** If the executable
+`Hex.ZPoly.hasSquarefreeSturmChain p` is `true` — `p` has positive degree and the
+terminal element of its Sturm chain is a nonzero constant — then `p` is squarefree
+over `ℚ`. This is the converse packaging of `sturmChain_isSturmChain`: it lets a
+concrete `SquareFreeRat p` be discharged by `by decide` on the executable chain,
+sidestepping the non-kernel-reducible rational gcd inside `SquareFreeRat` itself. -/
+theorem squareFreeRat_of_hasSquarefreeSturmChain (p : Hex.ZPoly)
+    (h : Hex.ZPoly.hasSquarefreeSturmChain p = true) : Hex.ZPoly.SquareFreeRat p := by
+  unfold Hex.ZPoly.hasSquarefreeSturmChain at h
+  cases hlast : (Hex.ZPoly.sturmChain p).toList.getLast? with
+  | none => rw [hlast] at h; simp at h
+  | some z =>
+    rw [hlast] at h
+    have hzsize : z.size = 1 := by simpa using h
+    -- The chain is nonempty, so `p` has positive degree.
+    have hne : Hex.ZPoly.sturmChain p ≠ #[] := by
+      intro he; rw [he] at hlast; simp at hlast
+    have hp : 1 ≤ (p.degree?).getD 0 := by
+      rcases hd : p.degree? with _ | m
+      · exact absurd (by simp only [Hex.ZPoly.sturmChain, hd]) hne
+      · rcases m with _ | m'
+        · exact absurd (by simp only [Hex.ZPoly.sturmChain, hd]) hne
+        · simp
+    have hp0 : p ≠ 0 := by
+      intro hh; rw [hh] at hp; simp only [Hex.DensePoly.degree?_zero_getD] at hp; omega
+    have hnd : (toPolyℝ p).natDegree = (p.degree?).getD 0 := natDegree_toPolyℝ p
+    have hd0 : Hex.DensePoly.derivative p ≠ 0 := by
+      intro hh
+      have h2 : Polynomial.derivative (toPolyℝ p) = 0 := by
+        rw [← toPolyℝ_derivative, hh, toPolyℝ_zero]
+      have h3 := Polynomial.derivative_eq_zero.mp h2
+      omega
+    have hs₁0 : Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p) ≠ 0 :=
+      primitivePart_ne_zero hd0
+    -- The terminal element is a nonzero constant, hence a unit of `ℝ[X]`.
+    have hzne : z ≠ 0 := by rintro rfl; simp at hzsize
+    have hzdeg : (z.degree?).getD 0 = 0 := by
+      rw [degree?_of_ne_zero hzne]; simp [hzsize]
+    have hzunit : IsUnit (toPolyℝ z) := by
+      have hne' : toPolyℝ z ≠ 0 := fun hh => hzne (toPolyℝ_eq_zero_iff.mp hh)
+      rw [Polynomial.isUnit_iff_degree_eq_zero, Polynomial.degree_eq_natDegree hne',
+        natDegree_toPolyℝ, hzdeg]; rfl
+    -- Seed coprimality by walking the terminal unit back to the front.
+    rw [sturmChain_toList p hp] at hlast
+    have hfuel : ((Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)).degree?).getD 0
+        < p.size := by
+      have hc₁ : (0:ℝ) < ((Hex.ZPoly.content (Hex.DensePoly.derivative p) : Int) : ℝ) :=
+        content_real_pos hd0
+      have hdecomp₁ := toPolyℝ_eq_C_content_mul_primitivePart (Hex.DensePoly.derivative p)
+      have hdp : ((Hex.DensePoly.derivative p).degree?).getD 0 < (p.degree?).getD 0 := by
+        rw [← natDegree_toPolyℝ, ← natDegree_toPolyℝ, toPolyℝ_derivative]
+        exact Polynomial.natDegree_derivative_lt (by omega)
+      have hpp : ((Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)).degree?).getD 0
+          = ((Hex.DensePoly.derivative p).degree?).getD 0 := by
+        have h3 := congrArg Polynomial.natDegree hdecomp₁
+        rw [Polynomial.natDegree_C_mul (ne_of_gt hc₁), natDegree_toPolyℝ,
+          natDegree_toPolyℝ] at h3
+        omega
+      have h4 : p.degree? = some (p.size - 1) := degree?_of_ne_zero hp0
+      rw [h4] at hdp
+      simp only [Option.getD_some] at hdp
+      omega
+    have hcop_seeds : IsCoprime (toPolyℝ (Hex.ZPoly.primitivePart p))
+        (toPolyℝ (Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p))) :=
+      chainList_seeds_coprime p.size _ _ hs₁0 hfuel (by
+        intro z' hz'
+        rw [hlast] at hz'
+        obtain rfl := Option.some.inj hz'
+        exact hzunit)
+    -- Lift seed coprimality to `p` and its derivative by unit (content) scaling.
+    have hcop_p : IsCoprime (toPolyℝ p) (Polynomial.derivative (toPolyℝ p)) := by
+      have hd₀ := toPolyℝ_eq_C_content_mul_primitivePart p
+      have hd₁ : Polynomial.derivative (toPolyℝ p)
+          = Polynomial.C ((Hex.ZPoly.content (Hex.DensePoly.derivative p) : Int) : ℝ)
+              * toPolyℝ (Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)) := by
+        rw [← toPolyℝ_derivative]
+        exact toPolyℝ_eq_C_content_mul_primitivePart (Hex.DensePoly.derivative p)
+      have hu0 : IsUnit (Polynomial.C ((Hex.ZPoly.content p : Int) : ℝ)) :=
+        isUnit_C.mpr (isUnit_iff_ne_zero.mpr (ne_of_gt (content_real_pos hp0)))
+      have hu1 : IsUnit (Polynomial.C ((Hex.ZPoly.content (Hex.DensePoly.derivative p) : Int) : ℝ)) :=
+        isUnit_C.mpr (isUnit_iff_ne_zero.mpr (ne_of_gt (content_real_pos hd0)))
+      rw [hd₁, hd₀]
+      exact (isCoprime_mul_unit_left_left hu0 _ _).mpr
+        ((isCoprime_mul_unit_left_right hu1 _ _).mpr hcop_seeds)
+    -- Separability over `ℝ`, reflected to `ℚ`, gives squarefreeness.
+    have hsep_ℝ : (toPolyℝ p).Separable := (Polynomial.separable_def (toPolyℝ p)).mpr hcop_p
+    have hmap : toPolyℝ p = (toPolyℚ p).map (algebraMap ℚ ℝ) := by
+      rw [toPolyℝ, toPolyℚ, Polynomial.map_map]; congr 1
+    have hsep_ℚ : (toPolyℚ p).Separable := (separable_map (algebraMap ℚ ℝ)).mp (hmap ▸ hsep_ℝ)
+    exact (squareFreeRat_iff p hp0).mpr hsep_ℚ.squarefree
 
 /-! ### Consequences: the executable counts equal Mathlib root counts -/
 

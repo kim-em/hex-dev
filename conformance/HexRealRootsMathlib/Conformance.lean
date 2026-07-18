@@ -212,5 +212,43 @@ private theorem squareFreeRat_linear : Hex.ZPoly.SquareFreeRat linear := by
 private theorem rootCount_x_sub_5 : Hex.rootCount linear = 1 := by
   rw [rootCount_eq_card_roots linear (by decide) squareFreeRat_linear, card_linear]
 
+/-! ### End-to-end ergonomics regression on `x⁴ − 2`.
+
+This exercises the caller-facing API added for isolating the real roots of a
+concrete polynomial, so the "one certified interval, `simp`" path stays green:
+
+* the Sturm squarefree certificate `squareFreeRat_of_hasSquarefreeSturmChain`,
+  discharged by `by decide` on the executable chain (no rational gcd);
+* the Horner `eval_toPolyℝ` bridge, turning `IsRoot` into `x⁴ − 2 = 0`;
+* the `toReal_ofInt_shiftRight` simp lemma for the `k / 2²⁰` dyadic endpoints;
+* the `Hex`-namespace dot-notation alias `RealRootIsolation.exists_unique_root`.
+
+The tight interval `(1246974/2²⁰, 1246975/2²⁰]` isolates `+2^{1/4}`. -/
+
+/-- `x⁴ − 2`; two real roots `±2^{1/4}`. -/
+private def quartic : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[(-2 : Int), 0, 0, 0, 1]
+
+private theorem quartic_squarefree : Hex.ZPoly.SquareFreeRat quartic :=
+  squareFreeRat_of_hasSquarefreeSturmChain _ (by decide)
+
+/-- The refined, width-`2⁻²⁰` isolating interval for the positive root. -/
+private def quarticIsoTight : Hex.RealRootIsolation quartic :=
+  ⟨⟨Dyadic.ofInt 1246974 >>> (20 : Int), Dyadic.ofInt 1246975 >>> (20 : Int), by decide⟩,
+    by decide⟩
+
+private theorem quartic_isRoot_iff (x : ℝ) : (toPolyℝ quartic).IsRoot x ↔ x ^ 4 - 2 = 0 := by
+  rw [Polynomial.IsRoot, eval_toPolyℝ, show quartic.size = 5 from by decide]
+  simp only [Finset.sum_range_succ, Finset.sum_range_zero, quartic,
+    Hex.DensePoly.coeff_ofCoeffs]
+  norm_num
+  constructor <;> intro h <;> linarith
+
+private theorem quartic_root_pos_tight :
+    ∃! x : ℝ, x ^ 4 - 2 = 0 ∧ (1246974 : ℝ) / 2 ^ 20 < x ∧ x ≤ 1246975 / 2 ^ 20 := by
+  have h := quarticIsoTight.exists_unique_root quartic_squarefree
+  simp only [quarticIsoTight, toReal_ofInt_shiftRight, quartic_isRoot_iff] at h
+  convert h using 3
+  all_goals norm_num
+
 end Conformance
 end HexRealRootsMathlib

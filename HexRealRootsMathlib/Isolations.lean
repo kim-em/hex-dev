@@ -230,6 +230,25 @@ theorem RealRootIsolations.isolates (hp0 : p ≠ 0)
       exact hP0 (by rw [hC, hc0, Polynomial.C_0])
     · exact isolates_of_degree_pos (by simp [hd]) hp out
 
+/-- Dot-notation alias in the `Hex` namespace for
+`HexRealRootsMathlib.RealRootIsolation.exists_unique_root`, so
+`iso.exists_unique_root` resolves directly on a `Hex.RealRootIsolation`. -/
+theorem _root_.Hex.RealRootIsolation.exists_unique_root
+    (hp : Hex.ZPoly.SquareFreeRat p) (iso : Hex.RealRootIsolation p) :
+    ∃! r : ℝ, (toPolyℝ p).IsRoot r ∧
+      Dyadic.toReal iso.interval.lower < r ∧ r ≤ Dyadic.toReal iso.interval.upper :=
+  HexRealRootsMathlib.RealRootIsolation.exists_unique_root hp iso
+
+/-- Dot-notation alias in the `Hex` namespace for
+`HexRealRootsMathlib.RealRootIsolations.isolates`, so `out.isolates` resolves
+directly on a `Hex.RealRootIsolations`. -/
+theorem _root_.Hex.RealRootIsolations.isolates (hp0 : p ≠ 0)
+    (hp : Hex.ZPoly.SquareFreeRat p) (out : Hex.RealRootIsolations p) :
+    ∀ r : ℝ, (toPolyℝ p).IsRoot r →
+      ∃! iso ∈ out.isolations.toList,
+        Dyadic.toReal iso.interval.lower < r ∧ r ≤ Dyadic.toReal iso.interval.upper :=
+  HexRealRootsMathlib.RealRootIsolations.isolates hp0 hp out
+
 end
 
 end HexRealRootsMathlib
