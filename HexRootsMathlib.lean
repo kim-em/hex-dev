@@ -20,9 +20,12 @@ public import HexRootsMathlib.Completeness.NewtonContraction
 public import HexRootsMathlib.Completeness.PelletConverse
 public import HexRootsMathlib.Completeness.PelletDyadic
 public import HexRootsMathlib.Completeness.PelletTail
+public import HexRootsMathlib.Completeness.RootFreeConverse
+public import HexRootsMathlib.Completeness.SurvivorComponent
 public import HexRootsMathlib.Component
 public import HexRootsMathlib.Driver
 public import HexRootsMathlib.Geometry
+public import HexRootsMathlib.Glue
 public import HexRootsMathlib.HasOnlySimpleRoots
 public import HexRootsMathlib.Isolate
 public import HexRootsMathlib.Kantorovich

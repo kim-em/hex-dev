@@ -329,10 +329,11 @@ developments above.
 - `HexRootsMathlib/Bisection.lean`: elementary subdivision coverage. The four
   closed children cover the parent, and every child containing a root survives
   the `rootFree` filter. They are not pairwise disjoint, since adjacent
-  children share boundary segments. Completing `Component.refine1`
-  preservation additionally requires
-  a characterization that `glue` preserves membership (equivalently, that
-  flattening its output permutes its input). Once that bridge is available, a
+  children share boundary segments. `HexRootsMathlib/Glue.lean` proves that
+  the executable union-by-insertion `glue` returns nonempty maximal
+  edge-connected components, that distinct components are edge-separated,
+  and that flattening its output permutes its input. In particular the
+  defensive singleton fallback in `glueCovered` is unreachable. Hence a
   `T_0`-discarded child's disc
   contains no root, so every root covered by the parent lies in some
   retained child; when `certify?` returns a cluster, its disc
@@ -419,18 +420,22 @@ and it is the analytically hardest part:
     `(1 + 4R/d)^m - 1 ≤ 1/32`, the exact executable witness succeeds.
     `Completeness/NKDepth.lean` proves that the implemented
     `separationDepth` makes this tail small for a separable polynomial, and
-    connects the resulting witness to the actual `.nk` component certifier.
-    Its component theorem places the depth hypothesis on the doubled
-    enclosing square; transferring leaf precision to that square is exactly
-    the gluing-width invariant required by item 11. No current lemma derives
-    that hypothesis from leaf precision, so this result is not yet the
-    end-to-end driver completeness theorem.
-11. **Certification by separation depth**: for squarefree `p`, at
-    depth `≥ separationDepth p` every rootless component has vanished
-    (all its squares `T_0`-certify), every surviving component passes
-    `certify?` with `k = 1` (items 9 and 10 supply the two
-    certification paths), and the certified discs are pairwise
-    disjoint (radius below `sep/4`). Hence
+    connects the resulting witness to the actual `.nk` and `.nkThenPellet`
+    component certifiers. `Completeness/RootFreeConverse.lean` associates
+    every retained square at separation depth with a unique nearby root;
+    glue connectivity propagates that association through a component.
+    `Completeness/SurvivorComponent.lean` consequently bounds the enclosing
+    square's precision loss by two levels. A root-bearing component at leaf
+    precision `separationDepth p + 3` therefore certifies: two levels pay for
+    `encSquare`, and one pays for the doubled NK base.
+11. **Certification by separation depth**: for squarefree `p`, prove that
+    every worklist component either contains a root and uses the certification
+    theorem above, or is a rootless survivor halo that disappears or joins its
+    root component within the fixed fuel budget. Root-wise coverage alone does
+    not imply that every component contains its associated nearby root. Once
+    this alternative is closed, every component passes `certify?` with
+    `k = 1`, and the certified discs are pairwise disjoint (radius below
+    `sep/4`). Hence
     `isolate p h atom_prec ≠ none`. This is the theorem that retires
     the drivers' `none` branch; it never mentions the recursion
     structure, only depths and witnesses.

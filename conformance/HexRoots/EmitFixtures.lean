@@ -61,7 +61,9 @@ performance fix, a bound on the recentred centre bit-length, and a
 per-case cost cap first; see the PR discussion.
 
 Each `result.value` serialises the isolation outcome. On success it is
-a JSON array with one object per certification result, each carrying
+a JSON array with one object per certification result, canonically sorted by
+its object encoding so semantically irrelevant component traversal order does
+not churn the committed fixture. Each object carries
 `kind` (`"atom"` | `"cluster"`), `k` (root count, `1` for atoms), the
 disc centre as an exact rational (`re_num` / `re_den` / `im_num` /
 `im_den`, from `DyadicSquare.re`/`im` via `Dyadic.toRat`), and `prec`
@@ -142,7 +144,8 @@ private def certObject {p : ZPoly} (c : Certified p) : String :=
 
 /-- Serialise the certification results as a JSON array. -/
 private def certValue {p : ZPoly} (rs : Array (Certified p)) : String :=
-  "[" ++ String.intercalate "," (rs.toList.map certObject) ++ "]"
+  let objects := (rs.toList.map certObject).mergeSort (· ≤ ·)
+  "[" ++ String.intercalate "," objects ++ "]"
 
 /-- The `result.value` for a driver give-up. -/
 private def noneValue : String := "\"none\""

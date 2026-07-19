@@ -489,7 +489,7 @@ two rounds below its Cauchy component. It is fixed because its parametric
 smooth-family calibration drifted in the reachable transition band.
 -/
 setup_fixed_benchmark runRefine1 where {
-  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0xc5cb1ba3f05326fd }
+  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x6dd99fc71c5233ae }
 
 /-
 Cost model. `certify?` under the default `nkThenPellet` strategy first tries
@@ -528,7 +528,7 @@ slope after its quiet-machine sweep remained transitional.
 -- no scalar wall model has a flat constant; the shared canonical input keeps
 -- the cross-strategy `compare` agreement gate as a regression check.
 setup_fixed_benchmark runIsolateAll where {
-  repeats := 5, maxSecondsPerCall := 20.0, expectedHash := some 0xecd908d19d73e5c4 }
+  repeats := 5, maxSecondsPerCall := 20.0, expectedHash := some 0x9fa00d70361d4394 }
 
 /-
 Cost model. `isolate` runs `isolateAll?` from the Cauchy component to
@@ -561,7 +561,7 @@ the reachable sweep unsuitable for one scalar model, so the expected-hash
 fixed case tracks the high-precision regression directly.
 -/
 setup_fixed_benchmark runRefineTo where {
-  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x5eb22e5c1f4a7a5 }
+  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x8dd3e4ee56489bf8 }
 
 /-! ### `compare` group : dual-route atom-certificate experiment
 

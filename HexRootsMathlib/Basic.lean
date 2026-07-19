@@ -55,6 +55,20 @@ theorem le_two_pow_ceilLog2 (m : Nat) : m ≤ 2 ^ Hex.ceilLog2 m := by
     have hlog := (Nat.log2_lt hne).1 (Nat.lt_succ_self (m - 1).log2)
     omega
 
+/-- A positive natural lies above half the power of two selected by the
+executable ceiling logarithm. -/
+theorem two_pow_ceilLog2_lt_two_mul (m : Nat) (hm : 0 < m) :
+    2 ^ Hex.ceilLog2 m < 2 * m := by
+  rw [Hex.ceilLog2]
+  split <;> rename_i h
+  · have hm1 : m = 1 := by omega
+    subst m
+    norm_num
+  · have hmone : 0 < m - 1 := by omega
+    have hlog := Nat.log2_self_le (Nat.ne_of_gt hmone)
+    rw [Nat.pow_succ]
+    omega
+
 namespace Dyadic
 
 /-- The real value of an exact dyadic number, through its rational value. -/
@@ -249,6 +263,44 @@ theorem toReal_le_two_pow_ceilLog2 (x : _root_.Dyadic) (hx : 0 < toReal x) :
           (Hex.ceilLog2 n.toNat : Int) + (-k) by ring,
         zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0), zpow_natCast]
       exact mul_le_mul_of_nonneg_right hnle h2k.le
+
+/-- The power selected by the executable dyadic ceiling logarithm is less
+than twice the positive input. -/
+theorem two_pow_ceilLog2_lt_two_mul_toReal (x : _root_.Dyadic)
+    (hx : 0 < toReal x) :
+    (2 : ℝ) ^ Hex.Dyadic.ceilLog2 x < 2 * toReal x := by
+  cases x with
+  | zero => simp at hx
+  | ofOdd n k hn =>
+      have hn0 : 0 < n := by
+        unfold toReal at hx
+        rw [_root_.Dyadic.toRat_ofOdd_eq_mul_two_pow] at hx
+        push_cast at hx
+        have hpow : (0 : ℝ) < 2 ^ (-k : Int) := zpow_pos (by norm_num) _
+        rcases (mul_pos_iff.mp hx) with h | h
+        · exact_mod_cast h.1
+        · exact (not_lt_of_ge hpow.le h.2).elim
+      have hnat : 2 ^ Hex.ceilLog2 n.toNat < 2 * n.toNat :=
+        two_pow_ceilLog2_lt_two_mul n.toNat (by omega)
+      have hceil : Hex.Dyadic.ceilLog2 (_root_.Dyadic.ofOdd n k hn) =
+          (Hex.ceilLog2 n.toNat : Int) - k := by
+        show (if n < 0 then (0 : Int) else (Hex.ceilLog2 n.toNat : Int) - k) = _
+        rw [if_neg (by omega)]
+      rw [hceil, show (Hex.ceilLog2 n.toNat : Int) - k =
+          (Hex.ceilLog2 n.toNat : Int) + (-k) by ring,
+        zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0), zpow_natCast]
+      unfold toReal
+      rw [_root_.Dyadic.toRat_ofOdd_eq_mul_two_pow]
+      push_cast
+      have hcast : (2 : ℝ) ^ Hex.ceilLog2 n.toNat < 2 * n := by
+        have hcast' : (2 : ℝ) ^ Hex.ceilLog2 n.toNat < 2 * n.toNat := by
+          exact_mod_cast hnat
+        have hncast : (n.toNat : ℝ) = (n : ℝ) := by
+          norm_cast
+          exact Int.toNat_of_nonneg hn0.le
+        simpa only [hncast] using hcast'
+      have hpow : (0 : ℝ) < 2 ^ (-k : Int) := zpow_pos (by norm_num) _
+      nlinarith
 
 /-- The real value of `n * 2 ^ (-prec)` represented as a dyadic. -/
 @[simp] theorem toReal_ofIntWithPrec (n prec : Int) :
