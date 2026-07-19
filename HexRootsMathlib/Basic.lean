@@ -94,6 +94,36 @@ theorem toReal_injective : Function.Injective toReal := by
   unfold toReal at h
   exact_mod_cast h
 
+/-- The real-value map preserves the executable dyadic absolute value. -/
+@[simp] theorem toReal_abs (x : _root_.Dyadic) :
+    toReal (Hex.Dyadic.abs x) = |toReal x| := by
+  unfold Hex.Dyadic.abs
+  split <;> rename_i h
+  · rw [toReal_neg, abs_of_neg]
+    exact (toReal_lt_toReal_iff.mpr h).trans_eq toReal_zero
+  · have hx : 0 ≤ toReal x := by
+      apply le_of_not_gt
+      intro h'
+      apply h
+      exact toReal_lt_toReal_iff.mp (by simpa using h')
+    rw [abs_of_nonneg hx]
+
+/-- The real-value map preserves the executable dyadic maximum. -/
+@[simp] theorem toReal_max (x y : _root_.Dyadic) :
+    toReal (Hex.Dyadic.max x y) = max (toReal x) (toReal y) := by
+  unfold Hex.Dyadic.max
+  split <;> rename_i h
+  · rw [max_eq_right (toReal_le_toReal_iff.mpr h)]
+  · rw [max_eq_left (le_of_not_ge fun h' => h (toReal_le_toReal_iff.mp h'))]
+
+/-- The real value of `n * 2 ^ (-prec)` represented as a dyadic. -/
+@[simp] theorem toReal_ofIntWithPrec (n prec : Int) :
+    toReal (.ofIntWithPrec n prec) = (n : ℝ) * (2 : ℝ) ^ (-prec) := by
+  unfold toReal
+  rw [_root_.Dyadic.toRat_ofIntWithPrec_eq_mul_two_pow]
+  push_cast
+  rfl
+
 end Dyadic
 
 namespace GaussDyadic

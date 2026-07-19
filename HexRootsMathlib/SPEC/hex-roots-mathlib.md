@@ -247,14 +247,14 @@ below.
 These files connect the `HexRoots` data structures to the two
 developments above.
 
-- `HexRootsMathlib/Basic.lean`: a `DyadicSquare` determines a centre
-  `c : ℂ` and a radius `r : ℝ`, and a circumscribed disc
-  `Metric.ball c (r·√2)`; all witness counts are counts in the open
-  disc, which equal counts in the closed disc because the strict
-  witness inequality excludes roots from the boundary circle. Simp
-  lemmas `DyadicSquare.center_eq`, `DyadicSquare.disc_eq`.
+- `HexRootsMathlib/Basic.lean`: exact `Dyadic → ℝ` and
+  `GaussDyadic → ℂ` casts and their algebra/order correspondence.
 - `HexRootsMathlib/Geometry.lean`: `lo(c) ≤ |c| ≤ hi(c)`, the
-  `181/128 < √2 < 1449/1024` bounds, and "witness implies Pellet".
+  `181/128 < √2 < 1449/1024` bounds, and the Mathlib geometry of a
+  `DyadicSquare`: its complex centre, real half-width, closed sup-norm
+  square, and open/closed circumscribed discs. Simp lemmas
+  `DyadicSquare.center_eq`, `DyadicSquare.disc_eq`. The later Pellet
+  correspondence in this module proves "witness implies Pellet".
 - `HexRootsMathlib/HasOnlySimpleRoots.lean`:
   `Hex.HasOnlySimpleRoots p ↔ Squarefree (toPolynomial p)`. Connects
   the executable test (the `ℚ[x]` gcd of `p` and `p'` is constant)
