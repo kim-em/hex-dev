@@ -186,6 +186,20 @@ integer. -/
     toComplex (Hex.GaussDyadic.mul z w) = toComplex z * toComplex w := by
   apply Complex.ext <;> simp [toComplex, Hex.GaussDyadic.mul]
 
+/-- Casting a natural multiple of a Gaussian dyadic gives scalar
+multiplication in `ℂ`. -/
+@[simp] theorem toComplex_nsmul (n : Nat) (z : Hex.GaussDyadic) :
+    toComplex (Hex.GaussDyadic.nsmul n z) = (n : ℂ) * toComplex z := by
+  simp [Hex.GaussDyadic.nsmul]
+
+/-- Casting an exact Gaussian-dyadic power gives the corresponding complex
+power. -/
+@[simp] theorem toComplex_pow (z : Hex.GaussDyadic) (n : Nat) :
+    toComplex (Hex.GaussDyadic.pow z n) = toComplex z ^ n := by
+  induction n with
+  | zero => simp [Hex.GaussDyadic.pow]
+  | succ n ih => simp [Hex.GaussDyadic.pow, ih, pow_succ]
+
 /-- The real value of the exact squared modulus is the complex squared
 modulus. -/
 @[simp] theorem toReal_normSq (z : Hex.GaussDyadic) :
