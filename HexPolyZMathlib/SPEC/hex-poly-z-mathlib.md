@@ -121,6 +121,9 @@ root-separation development live here once for both roots companions:
   compatibility, and the integer lower bound `1 ≤ |discr f|`.
 - `HexPolyZMathlib/Hadamard.lean` proves the sharp column-norm determinant
   inequality `Matrix.norm_det_le_prod_norm_column` over an `RCLike` field.
+- `HexPolyZMathlib/MahlerSeparation.lean` proves the generic complex
+  Vandermonde column bounds and identifies the discriminant root product with
+  the squared Vandermonde norm.
 
 Both modules are stated at ordinary Mathlib generality and import no executable
 root-isolation library. Companion-specific precision arithmetic remains in the

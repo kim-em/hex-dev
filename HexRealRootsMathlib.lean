@@ -36,8 +36,9 @@ free of any `HexRealRoots` dependence, so it can be contributed to Mathlib
 The executable-correspondence and consequence files build on it:
 `ChainCorrespond` connects `Hex.sturmChain`, `Hex.sturmCount`, and `Hex.rootCount`
 to the abstract development; `Separation` supplies the Mahler separation bound,
-using the shared analysis re-exported by the `Discr`/`Hadamard` compatibility
-modules; `Isolations` and `Drivers` prove isolation soundness, run
+using `HexPolyZMathlib.MahlerSeparation` and the analysis re-exported by the
+`Discr`/`Hadamard` compatibility modules; `Isolations` and `Drivers` prove
+isolation soundness, run
 completeness, driver completeness, and refinement; `SimpleRealRoot` proves the
 root-identity theorems (overlap classes are the real roots); and `TwoCircle`
 proves Descartes-engine termination (`isolateDescartes?_isSome`) behind its

@@ -141,18 +141,18 @@ The smaller of the two new developments, and the one needed first:
 
 ### Theorem chain
 
-1. **`Polynomial.discr ≠ 0 ↔ Squarefree`** for `ℤ[x]` (and
-   characteristic zero generally). Assembled from the existing chain
-   `separable_iff_squarefree` ↔ `IsCoprime f f'` ↔ `resultant ≠ 0` ↔
-   `discr ≠ 0`. Lives in
-   `HexRootsMathlib/DiscriminantSquarefree.lean`.
+1. **Discriminant nonvanishing.** A positive-degree separable polynomial
+   has nonzero discriminant, and an integer polynomial whose rational cast is
+   separable satisfies `1 ≤ |discr f|`. The rational-cast condition is the
+   roots-facing squarefreeness notion; squarefreeness in `ℤ[x]` would also
+   constrain the content. Lives in `HexPolyZMathlib/Discriminant.lean`.
 
 2. **Discriminant root-product formula:**
    `discr f = lc(f)^{2n−2} · ∏_{i<j}(αᵢ − αⱼ)²` over the splitting
    field. Mathlib has the resultant version
    (`resultant_eq_prod_roots_sub`); we derive the discriminant version
    through `resultant_deriv`. Lives in
-   `HexRootsMathlib/DiscriminantRootProduct.lean`.
+   `HexPolyZMathlib/Discriminant.lean`.
 
 3. **Mahler separation bound:**
    ```
@@ -166,8 +166,10 @@ The smaller of the two new developments, and the one needed first:
    Mignotte and Ştefănescu, ch. 4, give a self-contained version
    suitable for direct formalisation. (A naive bound on the individual
    factors `|αᵢ − αⱼ| ≤ 2·M(p)` does *not* reach the stated constant;
-   Hadamard is essential.) Lives in
-   `HexRootsMathlib/MahlerSeparation.lean`.
+   Hadamard is essential.) The Hex-independent column estimates and
+   discriminant/Vandermonde identity live in
+   `HexPolyZMathlib/MahlerSeparation.lean`; companion-specific executable
+   exponent arithmetic stays with the relevant roots library.
 
 4. **`mahlerPrec` correctness:** the computational
    `Hex.mahlerPrec p : Nat` (defined in `HexRoots/MahlerPrec.lean`)
@@ -359,10 +361,13 @@ scope is honest; nothing else in the plan silently depends on them.
 ## File organisation
 
 ```
-Discriminant / separation development (candidate Mathlib contribution):
-  HexRootsMathlib/DiscriminantSquarefree.lean
-  HexRootsMathlib/DiscriminantRootProduct.lean
-  HexRootsMathlib/MahlerSeparation.lean
+Shared discriminant / separation development (candidate Mathlib contribution):
+  HexPolyZMathlib/Discriminant.lean
+  HexPolyZMathlib/Hadamard.lean
+  HexPolyZMathlib/MahlerSeparation.lean
+
+Executable complex-root specialization:
+  HexRootsMathlib/MahlerPrec.lean
 
 Rouché-on-circles development (candidate Mathlib contribution;
 the hardest slice):
