@@ -54,7 +54,7 @@ square. -/
 
 /-- A root in an outer unique-root square belongs to a nested inner square
 that also has a unique root. -/
-private theorem root_mem_nested {p : Hex.ZPoly} {inner outer : Hex.DyadicSquare}
+theorem nkRoot_mem_nested {p : Hex.ZPoly} {inner outer : Hex.DyadicSquare}
     (hinner : Hex.nkWitness p inner) (houter : Hex.nkWitness p outer)
     (hsubset : DyadicSquare.closedSquare inner ⊆
       DyadicSquare.closedSquare outer) {z : ℂ}
@@ -105,7 +105,7 @@ theorem certifier_preserves_nk (p : Hex.ZPoly) : Certifier.Preserves p .nk := by
   rcases certify_nk_cases hcert with h | h
   · obtain ⟨hbase, hinside, hcand, rfl⟩ := h
     rw [nkAtom_region hcand]
-    apply root_mem_nested hcand hbase
+    apply nkRoot_mem_nested hcand hbase
       (DyadicSquare.closedSquare_subset_of_squareInside hinside) hzroot
     exact Component.region_subset_doubledEnc c hz
   · obtain ⟨hbase, rfl⟩ := h

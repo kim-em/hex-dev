@@ -287,7 +287,7 @@ inductive Certified (p : ZPoly) where
 /-- Repackage a certified `k = 1` cluster as an atom, taking the Pellet
     disjunct of `atomWitness` on the enclosing square. Total: the cluster's
     Pellet witness already certifies exactly one root in the enclosing disc. -/
-def DyadicRootCluster.atomize {p : ZPoly} (c : DyadicRootCluster p) (h : c.k = 1) :
+@[expose] def DyadicRootCluster.atomize {p : ZPoly} (c : DyadicRootCluster p) (h : c.k = 1) :
     DyadicRootIsolation p :=
   ⟨encSquare c.squares, Or.inr (h ▸ c.witness)⟩
 

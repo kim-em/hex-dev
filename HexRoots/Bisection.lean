@@ -110,6 +110,42 @@ namespace Component
     (fun s => !rootFree p s)
   (glueCovered survivors).map fun ss => { squares := ss, candidateK := c.candidateK }
 
+/-- Attempt Pellet certification for one positive candidate count, including
+the same-count speculative Newton jump and its disc-containment guard. -/
+@[expose] def certifyPelletAt? (p : ZPoly) (c : Component)
+    (k : Nat) : Option (Certified p) :=
+  let enc := encSquare c.squares
+  if hk : 0 < k then
+    if hw : witnessCheck p enc k = true then
+      let cluster : DyadicRootCluster p := ⟨c.squares, k, hk, hw⟩
+      let base : Certified p :=
+        if hk1 : k = 1 then .atom (cluster.atomize hk1) else .cluster cluster
+      let s' := newtonSquare p enc k
+      if _hins : (encSquare #[s']).discInside enc = true then
+        if hw' : witnessCheck p (encSquare #[s']) k = true then
+          let cluster' : DyadicRootCluster p := ⟨#[s'], k, hk, hw'⟩
+          if hk1 : k = 1 then some (.atom (cluster'.atomize hk1))
+          else some (.cluster cluster')
+        else some base
+      else some base
+    else none
+  else none
+
+/-- First successful Pellet certificate in a candidate-count list. -/
+@[expose] def certifyPelletList? (p : ZPoly) (c : Component)
+    : List Nat → Option (Certified p)
+  | [] => none
+  | k :: ks => (certifyPelletAt? p c k).orElse
+      fun _ => certifyPelletList? p c ks
+
+/-- The Pellet half of component certification, factored from `certify?` so
+its base and speculative same-count branches have a narrow correspondence
+theorem in the Mathlib companion. -/
+@[expose] def certifyPellet? (p : ZPoly) (c : Component) : Option (Certified p) :=
+  let deg := p.degree?.getD 0
+  let ks := #[c.candidateK] ++ ((Array.range (deg + 1)).filter (· != c.candidateK))
+  certifyPelletList? p c ks.toList
+
 /-- Try to certify the component. Per `strategy`, first the
     Newton-Kantorovich atom witness on the doubled enclosing square (with a
     speculative Newton recentring attempted first), then the Pellet witness
@@ -139,25 +175,7 @@ namespace Component
   -- Pellet attempt, on the enclosing square's disc.
   match strategy with
   | .pellet | .nkThenPellet =>
-    let deg := p.degree?.getD 0
-    let ks := #[c.candidateK] ++ ((Array.range (deg + 1)).filter (· != c.candidateK))
-    for k in ks do
-      if hk : 0 < k then
-        if hw : witnessCheck p enc k = true then
-          -- Speculative `k`-order Newton jump, coverage-guarded (disc in disc).
-          let s' := newtonSquare p enc k
-          if s'.discInside enc = true then
-            if hw' : witnessCheck p (encSquare #[s']) k = true then
-              let cluster' : DyadicRootCluster p := ⟨#[s'], k, hk, hw'⟩
-              if hk1 : k = 1 then
-                return some (.atom (cluster'.atomize hk1))
-              else
-                return some (.cluster cluster')
-          let cluster : DyadicRootCluster p := ⟨c.squares, k, hk, hw⟩
-          if hk1 : k = 1 then
-            return some (.atom (cluster.atomize hk1))
-          else
-            return some (.cluster cluster)
+    return certifyPellet? p c
   | .nk => pure ()
   return none
 
