@@ -358,6 +358,7 @@ meta def elabIsolate (mode : Bool) (widthStx : Option (TSyntax `term)) (pStx : T
       pure (some (widthBits q))
   -- polynomial: dispatch on type
   let pE ← elabTerm pStx none
+  Term.synthesizeSyntheticMVarsNoPostponing
   let pE ← instantiateMVars pE
   if pE.hasFVar || pE.hasExprMVar then
     throwError "isolate_roots: the polynomial must be closed{indentExpr pE}"
@@ -377,13 +378,32 @@ meta def elabIsolate (mode : Bool) (widthStx : Option (TSyntax `term)) (pStx : T
   -- If the user gave a Polynomial input, transport onto their polynomial.
   let term ← match ty.getAppFnArgs with
     | (``Polynomial, _) =>
-        `(HexRealRootsMathlib.IsolatedRealRoots.congrRoots (by isolate_roots_bridge) $core)
+        -- Splice the reflected polynomial and its (post-trim) size into the
+        -- bridge so the coefficient sum expands; the residual iff is between two
+        -- copies of the same real polynomial equation.
+        let fStx ← zpolyStx d.poly
+        let szStx := natStx d.poly.size
+        `(Hex.IsolatedRealRoots.congrRoots
+            (by intro x
+                rw [HexRealRootsMathlib.aeval_toPolynomial, HexRealRootsMathlib.eval_toPolyℝ,
+                    show ($fStx).size = $szStx from rfl]
+                simp only [Hex.DensePoly.coeff_ofCoeffs, Finset.sum_range_succ,
+                  Finset.sum_range_zero, Polynomial.aeval_X, Polynomial.aeval_C, map_sub, map_add,
+                  map_mul, map_pow, map_neg, map_ofNat, map_one]
+                norm_num
+                constructor <;> intro h <;> linarith)
+            $core)
     | _ => pure core
   Term.elabTermEnsuringType term expectedType?
 
-/-- Syntax for the width-annotated / bare term elaborators. -/
-syntax (name := isolateRootsStx) "isolate_roots" ("(" "width" ":=" term ")")? term : term
-syntax (name := isolateRootsReplayStx) "isolate_roots_replay" ("(" "width" ":=" term ")")? term : term
+/-- Syntax for the width-annotated / bare term elaborators. The `atomic`
+lookahead lets the optional `(width := …)` group backtrack, so a bare term
+argument that itself begins with `(` (e.g. `(X^4 - 2 : Polynomial ℝ)`) is not
+misparsed as the width group. -/
+syntax (name := isolateRootsStx) "isolate_roots"
+  (atomic("(" "width" ":=") term ")")? term : term
+syntax (name := isolateRootsReplayStx) "isolate_roots_replay"
+  (atomic("(" "width" ":=") term ")")? term : term
 
 @[term_elab isolateRootsStx]
 meta def elabIsolateRoots : TermElab := fun stx expectedType? => do
