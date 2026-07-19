@@ -22,6 +22,7 @@ public import HexRootsMathlib.NKCertify
 public import HexRootsMathlib.NKDriver
 public import HexRootsMathlib.NKWitness
 public import HexRootsMathlib.RootFree
+public import HexRootsMathlib.RoucheHomotopy
 public import HexRootsMathlib.Taylor
 
 public section
