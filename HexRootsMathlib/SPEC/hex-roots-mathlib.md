@@ -394,6 +394,7 @@ scope is honest; nothing else in the plan silently depends on them.
 
 ```
 Shared discriminant / separation development (candidate Mathlib contribution):
+  HexPolyZMathlib/Squarefree.lean
   HexPolyZMathlib/Discriminant.lean
   HexPolyZMathlib/Hadamard.lean
   HexPolyZMathlib/MahlerSeparation.lean
