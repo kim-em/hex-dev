@@ -414,6 +414,17 @@ and it is the analytically hardest part:
     square radius tends to zero. Consequently every simple root has a natural
     precision threshold beyond which every doubled square with centre distance
     at most half its half-width satisfies the actual executable `nkWitness`.
+    `Completeness/NKConverse.lean` gives the complementary explicit
+    root-product estimate: if all other roots are at distance `d` and
+    `(1 + 4R/d)^m - 1 ≤ 1/32`, the exact executable witness succeeds.
+    `Completeness/NKDepth.lean` proves that the implemented
+    `separationDepth` makes this tail small for a separable polynomial, and
+    connects the resulting witness to the actual `.nk` component certifier.
+    Its component theorem places the depth hypothesis on the doubled
+    enclosing square; transferring leaf precision to that square is exactly
+    the gluing-width invariant required by item 11. No current lemma derives
+    that hypothesis from leaf precision, so this result is not yet the
+    end-to-end driver completeness theorem.
 11. **Certification by separation depth**: for squarefree `p`, at
     depth `≥ separationDepth p` every rootless component has vanished
     (all its squares `T_0`-certify), every surviving component passes

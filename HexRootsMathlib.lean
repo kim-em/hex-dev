@@ -13,6 +13,8 @@ public import HexRootsMathlib.Bisection
 public import HexRootsMathlib.Cauchy
 public import HexRootsMathlib.Certificate
 public import HexRootsMathlib.CircleIntegralLemmas
+public import HexRootsMathlib.Completeness.NKConverse
+public import HexRootsMathlib.Completeness.NKDepth
 public import HexRootsMathlib.Completeness.NKRecertification
 public import HexRootsMathlib.Completeness.NewtonContraction
 public import HexRootsMathlib.Completeness.PelletConverse
