@@ -194,7 +194,8 @@ expression over `X`, `C`, numerals, `+`, `-`, `*`, `^` whose
 coefficients are integers (non-integer coefficients are rejected with
 a clear message). The width `x` is any closed positive rational
 literal expression (`1/1000`, `2^(-20)`, `10^(-2)`); it converts to
-the bit target `k = ⌈log₂ x⁻¹⌉` in exact integer arithmetic and is an
+the bit target `k = max 0 ⌈log₂ x⁻¹⌉` in exact integer arithmetic
+(widths above `1` never coarsen the natural intervals) and is an
 operational promise about the emitted intervals, not a field of the
 result. The syntax uses an `atomic` lookahead on `"(" "width" ":="`
 so a parenthesised polynomial argument parses as the polynomial.
@@ -209,10 +210,15 @@ structure Hex.IsolatedRealRoots {R : Type*} [CommRing R] [Algebra R ℝ]
       Polynomial.aeval x P = 0 ∧ (intervals[i].1 : ℝ) < x ∧ x ≤ intervals[i].2
   covers      : ∀ x : ℝ, Polynomial.aeval x P = 0 →
       ∃ i : Fin n, (intervals[i].1 : ℝ) < x ∧ x ≤ intervals[i].2
+  ordered     : ∀ i j : Fin n, i < j → intervals[i].2 ≤ intervals[j].1
 ```
 
-Intervals are half-open `(lo, hi]` with exact rational endpoints (the
-isolator's dyadics). A `ZPoly` input is stated over `toPolynomial p :
+`ordered` makes the enumeration honest: without it, duplicate
+intervals could satisfy the other two fields and `n` would not
+determine the root count; with it the intervals are pairwise
+disjoint and sorted, so `n` is exactly the number of distinct real
+roots (a derived lemma, not a field). Intervals are half-open
+`(lo, hi]` with exact rational endpoints (the isolator's dyadics). A `ZPoly` input is stated over `toPolynomial p :
 Polynomial ℤ`. The elaborator is fat-API/thin-meta: all proof content
 lives in library constructors, and the emitted term only instantiates
 them with literals and `decide`-style certificates.
@@ -258,24 +264,34 @@ rebuilding the Sturm chain) grows superlinearly — heartbeats
 33k/103k/326k at Wilkinson degrees 6/8/10 — while the replay shape
 (reify the Sturm chain once as an `Array ZPoly` literal, then check
 per-endpoint sign variations against it) amortises to 29k/66k/138k,
-2.4× cheaper at degree 10 and scaling. The elaborator therefore
-emits the replay shape. Two constraints shape its soundness lemma:
+2.4× cheaper at degree 10 and scaling. The prototype's replay
+numbers are surrogate measurements: its chain-identification lemmas
+were assumed, so the cost of the `SturmChainCert` validity check
+itself is not yet measured and is re-measured when the production
+constructor lands. The elaborator emits the replay shape. Two constraints shape its soundness lemma:
 
-- chain validity is verified by a structural `IsSturmChain`
-  predicate over coefficient-level checks, NOT by deciding
-  `chain = sturmChain p` (a nonempty `Array ZPoly` equality, which
-  does not kernel-reduce under the module system: the core
-  `Array.instDecidableEqImpl` issue);
+- chain validity is verified by a decidable executable certificate
+  predicate `SturmChainCert p chain` over coefficient-level checks
+  (distinct from the companion's existing semantic `IsSturmChain`
+  over `Polynomial ℝ`, which is stated through `primitivePart p` and
+  is not decidable), NOT by deciding `chain = sturmChain p` (a
+  nonempty `Array ZPoly` equality, which does not kernel-reduce
+  under the module system: the core `Array.instDecidableEqImpl`
+  issue). Its soundness bridge to the certified counts goes through
+  the executable chain's `primitivePart` head, exactly as the
+  existing chain correspondence does;
 - nonzeroness is stated as a size check (`p.size ≠ 0` via a Bool
-  test plus `of_size_ne_zero`), avoiding structural `DensePoly`
-  equality for the same reason.
+  test plus `ne_zero_of_size_ne_zero`), avoiding structural
+  `DensePoly` equality for the same reason.
 
-The executable closure the kernel replays (`sturmChain`, `spem*`,
-`signVar`, `sturmVarAt/±Inf`, `sturmCount`, `rootCount`,
-`evalDyadic`, `dyadicSign`) is `@[expose]`d in hex-real-roots for
-this purpose, with the `spem` helpers de-privatized (an exposed
-public definition may not reference a `private` one); see the
-hex-real-roots SPEC. `Dyadic.toReal`'s unfolding is provided by a
+The executable closure the kernel replays — thirteen definitions:
+`sturmChain`, `sturmChainAux`, `spem`, `spemAux`, `spemStep`,
+`signVar`, `sturmVarAt`, `sturmVarNegInf`, `sturmVarPosInf`,
+`sturmCount`, `rootCount`, `ZPoly.evalDyadic`, `dyadicSign` — is
+`@[expose]`d in hex-real-roots for this purpose, with the three
+private helpers (`spemStep`, `spemAux`, `sturmChainAux`)
+de-privatized (an exposed public definition may not reference a
+`private` one); see the hex-real-roots SPEC. `Dyadic.toReal`'s unfolding is provided by a
 cast lemma rather than cross-module defeq.
 
 **Errors** are user-grade and distinguish: the zero polynomial
@@ -286,8 +302,10 @@ non-closed width, backend failure, and internal certificate mismatch
 (a bug, reported as such).
 
 **Practical limits** (Stage-1 measurements, single-threaded
-elaboration): degree ≤ 10 with widths to `2^(-20)` costs seconds;
-per-field certificates remain acceptable only below degree ~6. The
+elaboration): degree ≤ 10 at natural widths, and degree ≤ 6 refined
+to `2^(-20)`, cost seconds (deeper refined-width combinations are
+unmeasured); per-field certificates remain acceptable only below
+degree ~6. The
 elaborator caps refinement with a diagnostic for pathological widths.
 
 A Mathlib-free variant (same meta core, emitting a
