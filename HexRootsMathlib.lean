@@ -16,6 +16,7 @@ public import HexRootsMathlib.KantorovichPoly
 public import HexRootsMathlib.Loop
 public import HexRootsMathlib.MahlerPrec
 public import HexRootsMathlib.NKCertify
+public import HexRootsMathlib.NKDriver
 public import HexRootsMathlib.NKWitness
 public import HexRootsMathlib.RootFree
 public import HexRootsMathlib.Taylor
