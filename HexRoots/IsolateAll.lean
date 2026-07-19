@@ -26,12 +26,18 @@ zero polynomial to `none`).
 -/
 namespace Hex
 
+/-- Extract an atom from a certified result, failing on clusters. -/
+@[expose] def Certified.asAtom? {p : ZPoly} : Certified p →
+    Option (DyadicRootIsolation p)
+  | .atom iso => some iso
+  | .cluster _ => none
+
 /-- Refine every component until certified at prec at least `target`, with
     the certified stored squares' circumscribed discs pairwise disjoint (SPEC
     "Separation of the output"). The fuel is sized from the worklist's
     coarsest prec so the loop reaches `stopDepth p target`. `none` only if
     certification with disjoint discs has not happened by that depth. -/
-def isolateAll? (p : ZPoly) (target : Int) (worklist : Array Component)
+@[expose] def isolateAll? (p : ZPoly) (target : Int) (worklist : Array Component)
     (strategy : AtomStrategy := .nkThenPellet) :
     Option (Array (Certified p)) :=
   let start := worklist.foldl (fun m c => min m c.prec)
@@ -46,15 +52,13 @@ def isolateAll? (p : ZPoly) (target : Int) (worklist : Array Component)
     `HasOnlySimpleRoots` does not force positive degree, so the degenerate
     inputs are pinned here: a nonzero constant returns `some #[]` (no roots to
     isolate), and the zero polynomial returns `none`. -/
-def isolate (p : ZPoly) (h : HasOnlySimpleRoots p) (atom_prec : Int)
+@[expose] def isolate (p : ZPoly) (_h : HasOnlySimpleRoots p) (atom_prec : Int)
     (strategy : AtomStrategy := .nkThenPellet) :
     Option (Array (DyadicRootIsolation p)) :=
   if hd : 0 < p.degree?.getD 0 then
     let target := max atom_prec (separationDepth p : Int)
     (isolateAll? p target #[Component.cauchy p hd] strategy).bind fun rs =>
-      rs.mapM fun r => match r with
-        | .atom iso => some iso
-        | .cluster _ => none
+      rs.mapM Certified.asAtom?
   else if p.size = 0 then none else some #[]
 
 /-- Refine a refined isolation, staying in the refined type and returning
