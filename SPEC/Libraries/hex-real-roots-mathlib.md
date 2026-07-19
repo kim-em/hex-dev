@@ -320,7 +320,7 @@ HexRealRootsMathlib/
   Discr.lean            -- compatibility import of the shared discriminant API
   Hadamard.lean         -- compatibility import of the shared determinant bound
   Separation.lean      -- sepPrec_separates, rootBound_bounds_roots;
-                          consumes shared analysis from hex-poly-z-mathlib
+                          specializes shared Mahler/Vandermonde analysis
   Isolations.lean      -- exists_unique_root, isolates
   Drivers.lean         -- isolateSturm?_isSome, isolate?_isSome,
                           refine1_isolates_same
