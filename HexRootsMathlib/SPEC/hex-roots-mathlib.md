@@ -433,6 +433,13 @@ The candidate contributions have no `HexRoots` dependence and can
 be split out or sent to Mathlib if they grow. The library is verified
 by building it. Conformance fixtures live with `hex-roots`.
 
+`Kantorovich.lean` is the attributed Mathlib-only Mehta--Macbeth core: it
+derives a quantitative contraction theorem from `ContractingWith`, proves the
+general Newton--Kantorovich result, and obtains the finite-dimensional form by
+showing the approximate inverse is surjective and hence injective in equal
+dimensions. Polynomial and executable-witness specialization belongs in
+`KantorovichPoly.lean`, not in the generic module.
+
 ## References
 
 See [hex-roots.md](../../HexRoots/SPEC/hex-roots.md) for the BSSY, Pellet, Mahler, and
