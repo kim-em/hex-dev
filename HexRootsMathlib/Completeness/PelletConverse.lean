@@ -167,12 +167,12 @@ theorem C_coeff_zero_mul_remotePoly (p : ℂ[X]) (hp : p ≠ 0)
     _ = p := hsplit.eq_prod_roots.symm
 
 /-- The weighted coefficient mass through degree `< n`. -/
-private noncomputable def coeffMass (p : ℂ[X]) (n : ℕ) (ρ : ℝ) : ℝ :=
+@[expose] noncomputable def coeffMass (p : ℂ[X]) (n : ℕ) (ρ : ℝ) : ℝ :=
   ∑ k ∈ Finset.range n, ‖p.coeff k‖ * ρ ^ k
 
 /-- Multiplication by one linear factor increases weighted coefficient mass
 by at most the weighted mass of that factor. -/
-private theorem coeffMass_X_sub_C_mul_le {g : ℂ[X]} {a : ℂ} {n : ℕ}
+theorem coeffMass_X_sub_C_mul_le {g : ℂ[X]} {a : ℂ} {n : ℕ}
     {ρ : ℝ} (hρ : 0 ≤ ρ) (hdeg : g.natDegree < n) :
     coeffMass ((X - C a) * g) (n + 1) ρ ≤
       (ρ + ‖a‖) * coeffMass g n ρ := by
@@ -254,7 +254,7 @@ private theorem coeffMass_X_sub_C_mul_le {g : ℂ[X]} {a : ℂ} {n : ℕ}
 
 /-- Item 25 bounds the entire weighted mass of the normalized remote
 polynomial after restoring its constant coefficient. -/
-private theorem coeffMass_remotePoly_le {s : Multiset ℂ} {d ρ : ℝ}
+theorem coeffMass_remotePoly_le {s : Multiset ℂ} {d ρ : ℝ}
     (hd : 0 < d) (hρ : 0 ≤ ρ) (hs : ∀ z ∈ s, d ≤ ‖z‖) :
     coeffMass (remotePoly (s.map Inv.inv)) (s.card + 1) ρ ≤
       (1 + ρ / d) ^ s.card := by
@@ -268,7 +268,7 @@ private theorem coeffMass_remotePoly_le {s : Multiset ℂ} {d ρ : ℝ}
 /-- The first remote coefficient is bounded by the same positive-degree
 tail. This also covers the degree-one case, where the remote multiset is
 empty and the coefficient vanishes. -/
-private theorem coeff_one_remotePoly_le {s : Multiset ℂ} {d ρ : ℝ}
+theorem coeff_one_remotePoly_le {s : Multiset ℂ} {d ρ : ℝ}
     (hd : 0 < d) (hρ : 0 ≤ ρ) (hs : ∀ z ∈ s, d ≤ ‖z‖) :
     ‖(remotePoly (s.map Inv.inv)).coeff 1‖ * ρ ≤
       (1 + ρ / d) ^ s.card - 1 := by

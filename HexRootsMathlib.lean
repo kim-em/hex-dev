@@ -14,6 +14,7 @@ public import HexRootsMathlib.Cauchy
 public import HexRootsMathlib.Certificate
 public import HexRootsMathlib.CircleIntegralLemmas
 public import HexRootsMathlib.Completeness.PelletConverse
+public import HexRootsMathlib.Completeness.PelletDyadic
 public import HexRootsMathlib.Completeness.PelletTail
 public import HexRootsMathlib.Component
 public import HexRootsMathlib.Driver

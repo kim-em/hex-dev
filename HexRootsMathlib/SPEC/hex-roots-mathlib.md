@@ -392,7 +392,12 @@ and it is the analytically hardest part:
    leading coefficient intact. In particular, with near-root offset `a`,
    `m` remote roots, and `E = (1 + ρ/d)^m - 1`, the concrete margin
    `|a| + (ρ + 3|a|) E < ρ` implies the exact strict `k = 1` coefficient
-   dominance consumed by Pellet's theorem.
+   dominance consumed by Pellet's theorem. `Completeness/PelletDyadic.lean`
+   then absorbs the factor-two `lo`/`hi` coefficient loss and the distinct
+   executable radius bounds. At each of the base, doubled, and quadrupled
+   radii, writing `R = radiusHi`, `r = radiusLo`, it uses the explicit margin
+   `2|a| + (2R + 5|a|)((1 + R/d)^m - 1) < r`; the three margins imply the
+   actual executable `witness p s 1` proposition.
 10. **Newton success**: on a sufficiently refined atom the speculative
     Newton step recertifies (via `ContractingWith` on the Newton map).
 11. **Certification by separation depth**: for squarefree `p`, at
