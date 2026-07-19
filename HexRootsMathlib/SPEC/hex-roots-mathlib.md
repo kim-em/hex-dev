@@ -387,7 +387,12 @@ and it is the analytically hardest part:
    `Completeness/PelletTail.lean` supplies the Mathlib-only combinatorial
    core: if every remote root has norm at least `d`, the positive-degree
    elementary-symmetric tail of the normalized product is bounded by
-   `(1 + ρ/d)^n - 1`.
+   `(1 + ρ/d)^n - 1`. `Completeness/PelletConverse.lean` connects this
+   estimate to the translated polynomial with root multiplicities and its
+   leading coefficient intact. In particular, with near-root offset `a`,
+   `m` remote roots, and `E = (1 + ρ/d)^m - 1`, the concrete margin
+   `|a| + (ρ + 3|a|) E < ρ` implies the exact strict `k = 1` coefficient
+   dominance consumed by Pellet's theorem.
 10. **Newton success**: on a sufficiently refined atom the speculative
     Newton step recertifies (via `ContractingWith` on the Newton map).
 11. **Certification by separation depth**: for squarefree `p`, at
