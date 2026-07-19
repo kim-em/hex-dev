@@ -316,7 +316,8 @@ HexRealRootsMathlib/
   SturmChainDefs.lean  -- IsSturmChain, sturmVar over Polynomial ℝ
   SturmTheorem.lean    -- the counting theorem and the line form
   ChainCorrespond.lean -- sturmChain_isSturmChain, sturmVarAt_eq,
-                          squareFreeRat_iff, sturmCount_eq_card_roots
+                          sturmCount_eq_card_roots; compatibility aliases for
+                          HexPolyZMathlib.Squarefree
   Discr.lean            -- compatibility import of the shared discriminant API
   Hadamard.lean         -- compatibility import of the shared determinant bound
   Separation.lean      -- sepPrec_separates, rootBound_bounds_roots;

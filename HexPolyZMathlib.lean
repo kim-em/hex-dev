@@ -12,6 +12,7 @@ public import HexPolyZMathlib.Hadamard
 public import HexPolyZMathlib.MahlerSeparation
 public import HexPolyZMathlib.Mignotte
 public import HexPolyZMathlib.RobinsonForm
+public import HexPolyZMathlib.Squarefree
 
 public section
 

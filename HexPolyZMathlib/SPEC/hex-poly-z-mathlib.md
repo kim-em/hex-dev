@@ -116,6 +116,8 @@ discharged here.
 **Shared root-separation foundations.** The generic parts of the Mahler
 root-separation development live here once for both roots companions:
 
+- `HexPolyZMathlib/Squarefree.lean` identifies the executable rational-gcd
+  test with squarefreeness of the rational cast, for nonzero inputs.
 - `HexPolyZMathlib/Discriminant.lean` proves the root-product form of
   `Polynomial.discr`, its nonvanishing for separable polynomials, base-change
   compatibility, and the integer lower bound `1 ≤ |discr f|`.
