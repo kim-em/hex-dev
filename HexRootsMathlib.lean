@@ -17,6 +17,7 @@ public import HexRootsMathlib.Component
 public import HexRootsMathlib.Driver
 public import HexRootsMathlib.Geometry
 public import HexRootsMathlib.HasOnlySimpleRoots
+public import HexRootsMathlib.Isolate
 public import HexRootsMathlib.Kantorovich
 public import HexRootsMathlib.KantorovichPoly
 public import HexRootsMathlib.Loop
@@ -25,6 +26,7 @@ public import HexRootsMathlib.NKCertify
 public import HexRootsMathlib.NKDriver
 public import HexRootsMathlib.NKWitness
 public import HexRootsMathlib.Pellet
+public import HexRootsMathlib.Refinement
 public import HexRootsMathlib.RootFree
 public import HexRootsMathlib.Rouche
 public import HexRootsMathlib.RoucheHomotopy

@@ -68,7 +68,7 @@ namespace Hex
     re-check via `Quot.sound`. This is the threading-pattern operation the
     `SimpleRoot` module docstring describes: refine once, store the returned
     representative, and substitute it wherever the original was used. -/
-def RefinedIsolation.refineTo? {p : ZPoly} (r : RefinedIsolation p)
+@[expose] def RefinedIsolation.refineTo? {p : ZPoly} (r : RefinedIsolation p)
     (target : Int) (strategy : AtomStrategy := .nkThenPellet) :
     Option {r' : RefinedIsolation p // SimpleRoot.mk r' = SimpleRoot.mk r} := do
   let iso' ← r.1.refineTo? (max target (mahlerPrec p : Int)) strategy
