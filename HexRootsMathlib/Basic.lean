@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRoots
+public import HexPolyZMathlib.Basic
 public import Mathlib.Analysis.Complex.Basic
 
 public section
@@ -24,6 +25,23 @@ the geometry, Taylor, and Newton--Kantorovich soundness developments.
 namespace HexRootsMathlib
 
 noncomputable section
+
+/-- The complex cast of an executable integer polynomial. -/
+abbrev toPolyℂ (p : Hex.ZPoly) : Polynomial ℂ :=
+  (HexPolyZMathlib.toPolynomial p).map (Int.castRingHom ℂ)
+
+/-- Coefficients of the complex cast are the complex casts of the executable
+coefficients. -/
+@[simp] theorem coeff_toPolyℂ (p : Hex.ZPoly) (n : Nat) :
+    (toPolyℂ p).coeff n = (p.coeff n : ℂ) := by
+  simp [toPolyℂ]
+
+/-- The complex cast preserves the executable natural degree. -/
+theorem natDegree_toPolyℂ (p : Hex.ZPoly) :
+    (toPolyℂ p).natDegree = p.degree?.getD 0 := by
+  rw [toPolyℂ, Polynomial.natDegree_map_eq_of_injective
+    (RingHom.injective_int (Int.castRingHom ℂ)),
+    HexPolyMathlib.natDegree_toPolynomial]
 
 namespace Dyadic
 
