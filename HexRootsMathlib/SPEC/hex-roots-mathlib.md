@@ -400,6 +400,14 @@ and it is the analytically hardest part:
    actual executable `witness p s 1` proposition.
 10. **Newton success**: on a sufficiently refined atom the speculative
     Newton step recertifies (via `ContractingWith` on the Newton map).
+    `Completeness/NewtonContraction.lean` supplies the analytic foundation:
+    the frozen exact-inverse Newton map at every simple root has a positive
+    sup-norm ball for every positive defect target `K`, on which its residual
+    is at most `(1 + K)` times the centre displacement. At `K = 1/2` it also
+    preserves the ball, contracts, and has the original root as its unique
+    fixed point. The following executable-recertification slice chooses a
+    smaller `K` and transfers the resulting strict margins to the dyadic
+    inverse and Taylor bounds.
 11. **Certification by separation depth**: for squarefree `p`, at
     depth `≥ separationDepth p` every rootless component has vanished
     (all its squares `T_0`-certify), every surviving component passes
