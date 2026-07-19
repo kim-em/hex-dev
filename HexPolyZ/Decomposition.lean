@@ -674,6 +674,79 @@ theorem primitiveSquareFreeDecomposition_reassembly_signed
     rw [← hdprimitive]
     exact htarget.symm
 
+/-- The square-free core of a nonzero polynomial is nonzero: in the signed
+reassembly it is a factor of the (nonzero) primitive part. -/
+theorem squareFreeCore_ne_zero (f : ZPoly) (hf : f ≠ 0) :
+    squareFreeCore f ≠ 0 := by
+  intro hcore
+  rcases primitiveSquareFreeDecomposition_reassembly_signed f hf with ⟨ε, _, hre⟩
+  have hpne : primitivePart f ≠ 0 :=
+    ne_zero_of_primitive (primitivePart f)
+      (primitivePart_primitive f (content_ne_zero_of_ne_zero f hf))
+  apply hpne
+  rw [← hre,
+    show (primitiveSquareFreeDecomposition f).squareFreeCore = 0 from hcore,
+    DensePoly.zero_mul, DensePoly.scale_zero_right]
+
+/-- The square-free core of a nonzero polynomial is square-free over `Rat[x]`:
+combine the executable core square-freeness with core nonzeroness. -/
+theorem squareFreeRat_squareFreeCore (f : ZPoly) (hf : f ≠ 0) :
+    SquareFreeRat (squareFreeCore f) :=
+  primitiveSquareFreeDecomposition_squareFreeCore f (squareFreeCore_ne_zero f hf)
+
+/-- The rational cast of the primitive part's square-free `gcd` associate
+divides its derivative: `gcd(r, r')` divides `r'`, and its primitive integer
+representative is a rational associate of the `gcd`. -/
+private theorem ratPolyPrimitivePart_gcd_dvd_derivative (rp : DensePoly Rat) :
+    toRatPoly (ratPolyPrimitivePart (DensePoly.gcd rp (DensePoly.derivative rp))) ∣
+      DensePoly.derivative rp := by
+  have h1 : DensePoly.gcd rp (DensePoly.derivative rp) ∣ DensePoly.derivative rp :=
+    DensePoly.gcd_dvd_right rp (DensePoly.derivative rp)
+  rcases ratPolyPrimitivePart_rational_associate
+    (DensePoly.gcd rp (DensePoly.derivative rp)) with ⟨u, hu⟩
+  rcases h1 with ⟨b, hb⟩
+  generalize hX :
+      toRatPoly (ratPolyPrimitivePart (DensePoly.gcd rp (DensePoly.derivative rp))) = X
+      at hu ⊢
+  refine ⟨DensePoly.scale u b, ?_⟩
+  have e1 : DensePoly.scale u X * b = DensePoly.scale u (X * b) := by
+    have h := rat_scale_mul_scale u 1 X b
+    rw [rat_scale_one, Rat.mul_one] at h
+    exact h
+  have e2 : X * DensePoly.scale u b = DensePoly.scale u (X * b) := by
+    have h := rat_scale_mul_scale 1 u X b
+    rw [rat_scale_one, Rat.one_mul] at h
+    exact h
+  calc DensePoly.derivative rp
+      = DensePoly.gcd rp (DensePoly.derivative rp) * b := hb
+    _ = DensePoly.scale u X * b := by rw [hu]
+    _ = DensePoly.scale u (X * b) := e1
+    _ = X * DensePoly.scale u b := e2.symm
+
+/-- The rational cast of the repeated part divides the derivative of the
+rational cast of the primitive part. The repeated part is a rational associate
+of `gcd(primitive, primitive')`, which divides `primitive'`; this is the
+divisibility the square-free-core root transfer consumes. -/
+theorem toRatPoly_repeatedPart_dvd_derivative (f : ZPoly) :
+    toRatPoly (primitiveSquareFreeDecomposition f).repeatedPart ∣
+      DensePoly.derivative (toRatPoly (primitivePart f)) := by
+  unfold primitiveSquareFreeDecomposition
+  by_cases hzero : (primitivePart f).isZero
+  · have hpz : primitivePart f = 0 :=
+      densePoly_eq_zero_of_isZero_true (primitivePart f) hzero
+    simp only [hzero, if_true]
+    rw [hpz]
+    simp only [toRatPoly_zero, DensePoly.derivative_zero]
+    exact ⟨0, (DensePoly.zero_mul 0).symm⟩
+  · simp only [hzero, Bool.false_eq_true, if_false]
+    by_cases hderiv : (DensePoly.derivative (toRatPoly (primitivePart f))).isZero
+    · simp only [hderiv, if_true]
+      rw [toRatPoly_one]
+      exact ⟨DensePoly.derivative (toRatPoly (primitivePart f)),
+        by rw [DensePoly.mul_comm_poly, DensePoly.mul_one_right_poly]⟩
+    · simp only [hderiv, Bool.false_eq_true, if_false]
+      exact ratPolyPrimitivePart_gcd_dvd_derivative (toRatPoly (primitivePart f))
+
 /-- A Bezout congruence witness proves that two integer polynomials are coprime
 modulo `p`. -/
 theorem coprimeModP_of_bezout
