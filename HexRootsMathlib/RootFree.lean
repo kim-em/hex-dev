@@ -27,8 +27,9 @@ noncomputable section
 
 /-- Closed form of the accumulator used by `pelletAt`: its first component is
 the sum with coefficient `k` omitted, and its second component is the next
-power of the radius. -/
-private theorem pelletFold (cs : Array Hex.GaussDyadic) (k : Nat)
+power of the radius. Shared by the elementary `rootFree` proof here and the
+general Pellet correspondence in `Pellet.lean`. -/
+theorem pelletFold (cs : Array Hex.GaussDyadic) (k : Nat)
     (r : _root_.Dyadic) (n : Nat) :
     let result := (List.range n).foldl
         (fun acc i =>
@@ -100,8 +101,8 @@ theorem rootFree_size_pos {p : Hex.ZPoly} {s : Hex.DyadicSquare}
   contradiction
 
 /-- A nonempty polynomial's shift has degree strictly below its executable
-coefficient count. -/
-private theorem shift_natDegree_lt_size (p : Hex.ZPoly) (hp : 0 < p.size) (c : ℂ) :
+coefficient count. Shared by the elementary and general Pellet proofs. -/
+theorem shift_natDegree_lt_size (p : Hex.ZPoly) (hp : 0 < p.size) (c : ℂ) :
     ((toPolyℂ p).comp (X + C c)).natDegree < p.size := by
   have hpoly : (toPolyℂ p).natDegree < p.size := by
     rw [natDegree_toPolyℂ]

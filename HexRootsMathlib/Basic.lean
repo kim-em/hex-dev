@@ -135,6 +135,26 @@ theorem toRat_shiftRight (x : _root_.Dyadic) (i : Int) :
         show -(k + i) = -k + -i by ring, zpow_add₀ (by norm_num)]
       ring
 
+/-- `toRat` turns a left shift into multiplication by a power of two. -/
+theorem toRat_shiftLeft (x : _root_.Dyadic) (i : Int) :
+    (x <<< i).toRat = x.toRat * (2 : ℚ) ^ i := by
+  cases x with
+  | zero => simp [HShiftLeft.hShiftLeft, _root_.Dyadic.shiftLeft]
+  | ofOdd n k hn =>
+      show (_root_.Dyadic.ofOdd n (k - i) hn).toRat = _
+      rw [_root_.Dyadic.toRat_ofOdd_eq_mul_two_pow,
+        _root_.Dyadic.toRat_ofOdd_eq_mul_two_pow,
+        show -(k - i) = -k + i by ring, zpow_add₀ (by norm_num)]
+      ring
+
+/-- The real value of a left shift is multiplication by a power of two. -/
+theorem toReal_shiftLeft (x : _root_.Dyadic) (i : Int) :
+    toReal (x <<< i) = toReal x * (2 : ℝ) ^ i := by
+  unfold toReal
+  rw [toRat_shiftLeft]
+  push_cast
+  ring
+
 /-- The real value of a right shift is multiplication by a negative power of
 two. -/
 theorem toReal_shiftRight (x : _root_.Dyadic) (i : Int) :

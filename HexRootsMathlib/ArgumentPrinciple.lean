@@ -25,7 +25,7 @@ namespace HexRootsMathlib
 noncomputable section
 
 /-- Number of roots of `p` in the open disc, counted with multiplicity. -/
-noncomputable def rootsInDisc (p : ℂ[X]) (c : ℂ) (R : ℝ) : ℕ := by
+@[expose] noncomputable def rootsInDisc (p : ℂ[X]) (c : ℂ) (R : ℝ) : ℕ := by
   classical
   exact p.roots.countP fun a => a ∈ ball c R
 
