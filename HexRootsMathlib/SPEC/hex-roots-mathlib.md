@@ -173,11 +173,19 @@ The smaller of the two new developments, and the one needed first:
 
 4. **`mahlerPrec` correctness:** the computational
    `Hex.mahlerPrec p : Nat` (defined in `HexRoots/MahlerPrec.lean`)
-   satisfies
+   satisfies the companion theorem
    ```
-   2^{−mahlerPrec p} · 1449/1024 < sep(p) / 4
+   mahlerPrec_separates
+       (hsep : ((toPolynomial p).map (Int.castRingHom ℚ)).Separable)
+       (hr₁ : (toPolyℂ p).IsRoot z₁)
+       (hr₂ : (toPolyℂ p).IsRoot z₂)
+       (hne : z₁ ≠ z₂) :
+     2^{−mahlerPrec p} · 1449/1024 < ‖z₁ - z₂‖ / 4
    ```
-   for squarefree `p`, where the left side bounds the
+   Thus it gives the advertised `sep(p) / 4` bound uniformly over distinct
+   roots. The rational separability hypothesis is the squarefreeness notion
+   used here; integral-polynomial `Squarefree` would incorrectly reject
+   nonprimitive polynomials with simple rational roots. The left side bounds the
    circumscribed-disc radius at that precision from above. Combines
    item 3 with Landau's
    `mahlerMeasure_le_sqrt_natDegree_add_one_mul_supNorm` to remove
@@ -258,9 +266,11 @@ developments above.
   `DyadicSquare.center_eq`, `DyadicSquare.disc_eq`. The later Pellet
   correspondence in this module proves "witness implies Pellet".
 - `HexRootsMathlib/HasOnlySimpleRoots.lean`:
-  `Hex.HasOnlySimpleRoots p ↔ Squarefree (toPolynomial p)`. Connects
+  for `p ≠ 0`, `Hex.HasOnlySimpleRoots p` is equivalent to separability of
+  `(toPolynomial p).map (Int.castRingHom ℚ)`. Connects
   the executable test (the `ℚ[x]` gcd of `p` and `p'` is constant)
-  with `separable_iff_squarefree`.
+  with Mathlib's rational-polynomial separability API. This is deliberately
+  not integral-polynomial `Squarefree`, which is sensitive to nonunit content.
 - `HexRootsMathlib/MahlerPrec.lean`: item 4 above.
 - `HexRootsMathlib/SimpleRoot.lean`: the semantics of root identity.
   ```lean
@@ -324,9 +334,8 @@ developments above.
   executable gcd of `0` and `0` is `0`, of size `0 ≤ 1`), but
   `isolate 0 _ _ = none` by definition, so the `ha` hypothesis
   supplies nonzeroness; a nonzero constant returns `some #[]` and
-  both sides are empty. The `↔ Squarefree` correspondence in
-  `HasOnlySimpleRoots.lean` carries a `p ≠ 0` hypothesis for the
-  same reason.)
+  both sides are empty. The rational-separability correspondence in
+  `HasOnlySimpleRoots.lean` carries a `p ≠ 0` hypothesis for the same reason.)
 
 ## Completeness development (separately scoped)
 

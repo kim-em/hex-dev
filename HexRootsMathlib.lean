@@ -8,6 +8,7 @@ module
 
 public import HexRootsMathlib.Basic
 public import HexRootsMathlib.Geometry
+public import HexRootsMathlib.MahlerPrec
 
 public section
 
@@ -18,5 +19,6 @@ complex-root isolation library `HexRoots`.
 It connects exact dyadic witnesses to Mathlib's real and complex geometry and
 will prove soundness of the atom-path isolation driver. The initial modules
 supply the exact casts and geometric bounds used by every later correspondence
-proof.
+proof. The separation layer certifies the exact executable `mahlerPrec`
+formula against distinct complex roots.
 -/
