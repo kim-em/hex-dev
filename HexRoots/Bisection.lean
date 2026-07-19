@@ -85,6 +85,19 @@ namespace Hex
       result := result.push comp
   return result
 
+/-- Connected-component gluing with an executable coverage guard. The normal
+`glue` result is used when every input square occurs in an output component;
+the defensive fallback returns singleton components. This preserves coverage
+and makes every fallback component trivially connected, but does not preserve
+the maximal connected grouping if the imperative DFS is ever changed
+incorrectly. -/
+@[expose] def glueCovered (sqs : Array DyadicSquare) : Array (Array DyadicSquare) :=
+  let cs := glue sqs
+  if ∀ s ∈ sqs.toList, ∃ c ∈ cs.toList, s ∈ c.toList then
+    cs
+  else
+    sqs.map (#[·])
+
 namespace Component
 
 /-- One subdivision round: split every square into four children one bit
@@ -92,10 +105,10 @@ namespace Component
     `T₀` test; a child whose `T₀` test fails to certify is kept, which is
     always sound), and glue the survivors into edge-connected components.
     Total: no certification is required during refinement. -/
-def refine1 (p : ZPoly) (c : Component) : Array Component :=
+@[expose] def refine1 (p : ZPoly) (c : Component) : Array Component :=
   let survivors := (c.squares.flatMap DyadicSquare.subdivide).filter
     (fun s => !rootFree p s)
-  (glue survivors).map fun ss => { squares := ss, candidateK := c.candidateK }
+  (glueCovered survivors).map fun ss => { squares := ss, candidateK := c.candidateK }
 
 /-- Try to certify the component. Per `strategy`, first the
     Newton-Kantorovich atom witness on the doubled enclosing square (with a

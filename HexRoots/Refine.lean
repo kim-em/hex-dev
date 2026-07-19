@@ -96,6 +96,63 @@ end Component
 @[expose] def fuelFor (p : ZPoly) (target : Int) (start : Int) : Nat :=
   (stopDepth p target - start).toNat + (stopDepth p target - target).toNat + 1
 
+namespace IsolationLoop
+
+/-- Attempt certification on every component in a worklist. -/
+@[expose] def attempts (p : ZPoly) (strategy : AtomStrategy)
+    (work : Array Component) : Array (Component × Option (Certified p)) :=
+  work.map fun c => (c, Component.certify? p strategy c)
+
+/-- Every attempted component certified at the requested stored precision. -/
+@[expose] def allReady {p : ZPoly} (target : Int)
+    (tried : Array (Component × Option (Certified p))) : Bool :=
+  tried.all fun t => match t.2 with
+    | some r => target ≤ r.square.prec
+    | none => false
+
+/-- The successful certificates in an attempts array. -/
+@[expose] def outputs {p : ZPoly}
+    (tried : Array (Component × Option (Certified p))) : Array (Certified p) :=
+  tried.filterMap (·.2)
+
+/-- The stored squares of successful attempts are pairwise disjoint. -/
+@[expose] def disjoint {p : ZPoly}
+    (tried : Array (Component × Option (Certified p))) : Bool :=
+  pairwiseDisjoint (outputs tried |>.map (·.square))
+
+/-- Whether a successful result overlaps another successful result in the
+attempts array. -/
+@[expose] def overlaps {p : ZPoly}
+    (tried : Array (Component × Option (Certified p))) (i : Nat)
+    (res : Certified p) : Bool :=
+  let certSquares := tried.map fun t => t.2.map (·.square)
+  (Array.range tried.size).any fun j =>
+    i ≠ j && (match certSquares.getD j none with
+              | some sj => res.square.discsMeet sj
+              | none => false)
+
+/-- The contribution of one attempted component to a non-emitting round. -/
+@[expose] def step (p : ZPoly) (target : Int)
+    (tried : Array (Component × Option (Certified p))) (i : Nat) :
+    Array Component :=
+  match tried.getD i (⟨#[], 0⟩, none) with
+  | (c, some res) =>
+    let ready := target ≤ res.square.prec
+    if ready && !overlaps tried i res then #[c]
+    else
+      let c' := res.toComponent
+      if c.prec < c'.prec then #[c'] else c.refine1 p
+  | (c, none) => c.refine1 p
+
+/-- Worklist for a non-emitting round. Ready certificates disjoint from all
+other successful certificates hold their input component; other successes
+adopt a strictly finer doubled result or refine, and failures refine. -/
+@[expose] def next (p : ZPoly) (target : Int)
+    (tried : Array (Component × Option (Certified p))) : Array Component :=
+  (Array.range tried.size).flatMap (step p target tried)
+
+end IsolationLoop
+
 /-- The shared driver loop over the worklist. Each round certifies every
     component; if all certify at stored prec at least `target` with pairwise
     disjoint circumscribed discs (SPEC "Separation of the output"), the round
@@ -114,18 +171,14 @@ end Component
     suffice. `fuel = 0` returns `none`, the SPEC give-up semantics (up to a
     harmless constant of overshoot). The recursion is structural on the
     fuel `Nat`. -/
-def isolateLoop (p : ZPoly) (target : Int) (strategy : AtomStrategy) :
+@[expose] def isolateLoop (p : ZPoly) (target : Int) (strategy : AtomStrategy) :
     Nat → Array Component → Option (Array (Certified p))
   | 0, _ => none
   | fuel + 1, work =>
     if work.isEmpty then some #[] else
-    let tried := work.map fun c => (c, Component.certify? p strategy c)
-    let allReady := tried.all fun t => match t.2 with
-      | some r => target ≤ r.square.prec
-      | none => false
-    let disjoint := pairwiseDisjoint (tried.filterMap fun t => t.2.map (·.square))
-    if allReady && disjoint then
-      some (tried.filterMap (·.2))
+    let tried := IsolationLoop.attempts p strategy work
+    if IsolationLoop.allReady target tried && IsolationLoop.disjoint tried then
+      some (IsolationLoop.outputs tried)
     else
       -- A component whose certification already meets the target and whose
       -- disc is disjoint from every other certified disc holds its position
@@ -136,21 +189,8 @@ def isolateLoop (p : ZPoly) (target : Int) (strategy : AtomStrategy) :
       -- round and blowing the working bit-length while a slow sibling
       -- (e.g. a tight cluster forced down to its separation depth)
       -- subdivides.
-      let certSquares := tried.map fun t => t.2.map (·.square)
       isolateLoop p target strategy fuel <|
-        (Array.range tried.size).flatMap fun i =>
-          match tried.getD i (⟨#[], 0⟩, none) with
-          | (c, some res) =>
-            let ready := target ≤ res.square.prec
-            let overlaps := (Array.range tried.size).any fun j =>
-              i ≠ j && (match certSquares.getD j none with
-                        | some sj => res.square.discsMeet sj
-                        | none => false)
-            if ready && !overlaps then #[c]
-            else
-              let c' := res.toComponent
-              if c.prec < c'.prec then #[c'] else c.refine1 p
-          | (c, none) => c.refine1 p
+        IsolationLoop.next p target tried
 
 /-- Refine to `target` precision: speculative Newton steps, falling back to
     subdivision of the atom's square as a one-square component. `none` only

@@ -13,6 +13,7 @@ public import HexRootsMathlib.Component
 public import HexRootsMathlib.Geometry
 public import HexRootsMathlib.Kantorovich
 public import HexRootsMathlib.KantorovichPoly
+public import HexRootsMathlib.Loop
 public import HexRootsMathlib.MahlerPrec
 public import HexRootsMathlib.NKWitness
 public import HexRootsMathlib.RootFree
