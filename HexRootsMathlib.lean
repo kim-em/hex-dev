@@ -9,6 +9,7 @@ module
 public import HexRootsMathlib.Basic
 public import HexRootsMathlib.Geometry
 public import HexRootsMathlib.MahlerPrec
+public import HexRootsMathlib.Taylor
 
 public section
 

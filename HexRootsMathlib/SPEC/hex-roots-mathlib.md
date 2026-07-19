@@ -265,6 +265,14 @@ developments above.
   square, and open/closed circumscribed discs. Simp lemmas
   `DyadicSquare.center_eq`, `DyadicSquare.disc_eq`. The later Pellet
   correspondence in this module proves "witness implies Pellet".
+- `HexRootsMathlib/Taylor.lean`: the shared exact-coefficient bridge
+  ```lean
+  theorem taylor_coeff (p : ZPoly) (z : GaussDyadic) (k : Nat) :
+      toComplex ((taylor p z).getD k (0, 0)) =
+        ((toPolyℂ p).comp (X + C (toComplex z))).coeff k
+  ```
+  including the out-of-bounds case. Its proof consumes the executable
+  `taylor_getD` characterization rather than unfolding the in-place folds.
 - `HexRootsMathlib/HasOnlySimpleRoots.lean`:
   for `p ≠ 0`, `Hex.HasOnlySimpleRoots p` is equivalent to separability of
   `(toPolynomial p).map (Int.castRingHom ℚ)`. Connects
@@ -393,6 +401,7 @@ port of Mehta-Macbeth, see the intro):
 Correspondence theorems (depend on hex-roots data structures):
   HexRootsMathlib/Basic.lean
   HexRootsMathlib/Geometry.lean
+  HexRootsMathlib/Taylor.lean
   HexRootsMathlib/HasOnlySimpleRoots.lean
   HexRootsMathlib/MahlerPrec.lean
   HexRootsMathlib/SimpleRoot.lean
