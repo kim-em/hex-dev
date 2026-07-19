@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRootsMathlib.Basic
+public import HexRootsMathlib.Geometry
 
 public section
 
@@ -15,6 +16,7 @@ The `HexRootsMathlib` library is the Mathlib companion for the executable
 complex-root isolation library `HexRoots`.
 
 It connects exact dyadic witnesses to Mathlib's real and complex geometry and
-will prove soundness of the atom-path isolation driver. The first module
-supplies the exact casts used by every later correspondence proof.
+will prove soundness of the atom-path isolation driver. The initial modules
+supply the exact casts and geometric bounds used by every later correspondence
+proof.
 -/
