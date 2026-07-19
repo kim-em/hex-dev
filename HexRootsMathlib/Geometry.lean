@@ -198,6 +198,84 @@ theorem radius_lt_radiusHi (s : Hex.DyadicSquare) :
   rw [halfWidth_eq]
   exact zpow_pos (by norm_num) _
 
+/-- The exact executable squared centre distance casts to the square of the
+Euclidean distance. -/
+@[simp] theorem toReal_distSq (z w : Hex.GaussDyadic) :
+    Dyadic.toReal (Hex.GaussDyadic.distSq z w) =
+      dist (GaussDyadic.toComplex z) (GaussDyadic.toComplex w) ^ 2 := by
+  simp [Hex.GaussDyadic.distSq, Complex.dist_eq, Complex.sq_norm]
+
+/-- A negative executable disc-intersection test certifies disjoint closed
+circumscribed discs. -/
+theorem closedDisc_disjoint_of_discsMeet_eq_false (s t : Hex.DyadicSquare)
+    (h : s.discsMeet t = false) : Disjoint (closedDisc s) (closedDisc t) := by
+  have hnot : ¬ Hex.GaussDyadic.distSq s.center t.center ≤
+      (2 : _root_.Dyadic) * .ofIntWithPrec 1 (2 * s.prec) +
+        2 * .ofIntWithPrec 1 (2 * t.prec) +
+        4 * .ofIntWithPrec 1 (s.prec + t.prec) := by
+    simpa [Hex.DyadicSquare.discsMeet] using h
+  have hrealnot : ¬ Dyadic.toReal (Hex.GaussDyadic.distSq s.center t.center) ≤
+      Dyadic.toReal ((2 : _root_.Dyadic) * .ofIntWithPrec 1 (2 * s.prec) +
+        2 * .ofIntWithPrec 1 (2 * t.prec) +
+        4 * .ofIntWithPrec 1 (s.prec + t.prec)) := by
+    simpa only [Dyadic.toReal_le_toReal_iff] using hnot
+  have hlt := lt_of_not_ge hrealnot
+  have hs : (2 : ℝ) ^ (-(2 * s.prec)) = ((2 : ℝ) ^ (-s.prec)) ^ 2 := by
+    rw [show -(2 * s.prec) = (-s.prec) * 2 by ring, zpow_mul]
+    rfl
+  have ht : (2 : ℝ) ^ (-(2 * t.prec)) = ((2 : ℝ) ^ (-t.prec)) ^ 2 := by
+    rw [show -(2 * t.prec) = (-t.prec) * 2 by ring, zpow_mul]
+    rfl
+  have hst : (2 : ℝ) ^ (-(s.prec + t.prec)) =
+      (2 : ℝ) ^ (-s.prec) * (2 : ℝ) ^ (-t.prec) := by
+    rw [show -(s.prec + t.prec) = -s.prec + -t.prec by ring,
+      zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+  have htwo : Dyadic.toReal (2 : _root_.Dyadic) = (2 : ℝ) :=
+    Dyadic.toReal_two
+  have hfour : Dyadic.toReal (4 : _root_.Dyadic) = (4 : ℝ) := by
+    change Dyadic.toReal (.ofInt 4) = (4 : ℝ)
+    simp
+  have hradii : (radius s + radius t) ^ 2 <
+      dist (center s) (center t) ^ 2 := by
+    rw [radius_eq, radius_eq]
+    calc
+      ((2 : ℝ) ^ (-s.prec) * √2 + (2 : ℝ) ^ (-t.prec) * √2) ^ 2 =
+          2 * ((2 : ℝ) ^ (-s.prec)) ^ 2 +
+          2 * ((2 : ℝ) ^ (-t.prec)) ^ 2 +
+          4 * ((2 : ℝ) ^ (-s.prec) * (2 : ℝ) ^ (-t.prec)) := by
+        nlinarith [Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)]
+      _ < _ := by
+        simpa only [Dyadic.toReal_add, Dyadic.toReal_mul,
+          Dyadic.toReal_ofIntWithPrec, Dyadic.toReal_ofInt, Int.cast_one,
+          one_mul, Int.cast_ofNat, toReal_distSq, Hex.DyadicSquare.center,
+          center_eq, hs, ht, hst, htwo, hfour] using hlt
+  apply Metric.closedBall_disjoint_closedBall
+  have hrs : 0 ≤ radius s + radius t := by
+    simp only [radius_eq]
+    exact add_nonneg
+      (mul_nonneg (zpow_pos (by norm_num : (0 : ℝ) < 2) _).le
+        (Real.sqrt_nonneg _))
+      (mul_nonneg (zpow_pos (by norm_num : (0 : ℝ) < 2) _).le
+        (Real.sqrt_nonneg _))
+  exact (sq_lt_sq₀ hrs dist_nonneg).mp hradii
+
+/-- The executable array test gives semantic disjointness for every ordered
+pair of stored squares. -/
+theorem closedDisc_disjoint_of_pairwiseDisjoint {ss : Array Hex.DyadicSquare}
+    (h : Hex.pairwiseDisjoint ss = true) {i j : Nat}
+    (hi : i < ss.size) (hj : j < ss.size) (hij : i < j) :
+    Disjoint (closedDisc ss[i]) (closedDisc ss[j]) := by
+  have hiAll := (List.all_eq_true.mp h) i (List.mem_range.mpr hi)
+  have hijAll := (List.all_eq_true.mp hiAll) j (List.mem_range.mpr hj)
+  simp only [hij, ↓reduceIte] at hijAll
+  have hgeti : ss.getD i ⟨0, 0, 0⟩ = ss[i] := by
+    exact (Array.getElem_eq_getD (Hex.DyadicSquare.mk 0 0 0)).symm
+  have hgetj : ss.getD j ⟨0, 0, 0⟩ = ss[j] := by
+    exact (Array.getElem_eq_getD (Hex.DyadicSquare.mk 0 0 0)).symm
+  rw [hgeti, hgetj] at hijAll
+  exact closedDisc_disjoint_of_discsMeet_eq_false _ _
+    (Bool.eq_false_of_not_eq_true' hijAll)
+
 /-- The square is contained in its closed circumscribed Euclidean disc. -/
 theorem closedSquare_subset_closedDisc (s : Hex.DyadicSquare) :
     closedSquare s ⊆ closedDisc s := by
