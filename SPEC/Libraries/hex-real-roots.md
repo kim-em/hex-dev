@@ -339,6 +339,24 @@ violates the isolation semantics the fallback branch returns the
 input unchanged and `refineTo` stops when its fuel runs out; neither
 function can loop.
 
+`refine1` recomputes the Sturm chain on every bisection. For callers
+that refine many levels in one go (the `isolate_roots` term
+elaborator refining every root to a requested width), a cached-chain
+variant threads one precomputed chain through the bisection loop;
+same semantics, one chain construction total.
+
+## Kernel-replay exposure
+
+The `isolate_roots` term elaborator (companion SPEC) replays Sturm
+certificates in the kernel. The replayed closure — `sturmChain`, the
+`spem` helpers, `signVar`, `sturmVarAt`, `sturmVarNegInf`,
+`sturmVarPosInf`, `sturmCount`, `rootCount`, `ZPoly.evalDyadic`,
+`dyadicSign` — carries `@[expose]` so downstream `module` consumers
+can `decide` against it without `import all`, and the `spem` helpers
+are public (an exposed definition may not reference a `private`
+one). The whole closure is structural-fuel recursion; nothing in it
+is well-founded, so exposure suffices for kernel reduction.
+
 ## `SimpleRealRoot`: identity of a root, up to isolation
 
 ```lean
