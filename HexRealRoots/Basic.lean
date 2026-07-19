@@ -50,6 +50,7 @@ def DyadicInterval.width (I : DyadicInterval) : Dyadic :=
 A nonzero dyadic is `ofOdd n k` with `n` odd, and its sign is the sign
 of the odd numerator `n` (the power-of-two scale `2^{-k}` is positive),
 so no evaluation is needed. -/
+@[expose]
 def dyadicSign : Dyadic → Int
   | .zero => 0
   | .ofOdd n _ _ => if n < 0 then -1 else 1
@@ -63,6 +64,7 @@ This is exact witness arithmetic: a plain fold over the coefficient
 array with no rounding, so the sign of `p(x)` at a dyadic `x` is exact.
 Coefficients are stored in ascending degree order, so folding from the
 right accumulates `c₀ + x·(c₁ + x·(⋯ + x·cₙ))`. -/
+@[expose]
 def evalDyadic (p : ZPoly) (x : Dyadic) : Dyadic :=
   p.toArray.foldr (fun c acc => Dyadic.ofInt c + x * acc) 0
 
