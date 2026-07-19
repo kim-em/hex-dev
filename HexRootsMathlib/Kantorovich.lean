@@ -113,6 +113,76 @@ theorem contractingWith_of_nnnorm_fderiv_le
     exact hDT hx
 
 open Metric in
+/-- Quantitative bound for the image of a point in a closed ball. This is
+the estimate that supplies the factor `1 / 2` in Newton--Kantorovich. -/
+theorem image_bound
+    {T : X → X} {DT : X → X →L[ℝ] X} (hT : ∀ x, HasFDerivAt T (DT x) x)
+    (hDT : Continuous DT) {R : ℝ≥0} {x₀ : X} {y z₁ z₂ : ℝ≥0}
+    (hy : ‖T x₀ - x₀‖₊ ≤ y)
+    (hz₁ : ‖DT x₀‖₊ ≤ z₁)
+    (hz₂ : ∀ x ∈ closedBall x₀ R,
+      ‖DT x - DT x₀‖₊ ≤ z₂ * ‖x - x₀‖₊)
+    {r : ℝ≥0} (hrR : r ≤ R) {x : X} (hx : x ∈ closedBall x₀ r) :
+    ‖T x - x₀‖₊ ≤ y + z₁ * r + z₂ * r ^ 2 / 2 := by
+  have hformula :
+      T x - x₀ = T x₀ - x₀ + DT x₀ (x - x₀) +
+        ∫ t in 0..1, (DT (x₀ + t • (x - x₀)) - DT x₀) (x - x₀) := by
+    calc
+      T x - x₀ = T x₀ - x₀ +
+          ∫ t in 0..1, DT (x₀ + t • (x - x₀)) (x - x₀) := by
+        have key (t) (ht : t ∈ Set.uIcc (0 : ℝ) 1) :
+            HasDerivAt (fun s ↦ T (x₀ + s • (x - x₀)))
+              ((DT (x₀ + t • (x - x₀))) (x - x₀)) t := by
+          simpa using!
+            (hT _).comp_hasDerivAt _
+              (((hasDerivAt_id t).smul_const (f := x - x₀)).const_add x₀)
+        have H := intervalIntegral.integral_eq_sub_of_hasDerivAt key (by
+          apply Continuous.intervalIntegrable
+          fun_prop)
+        simp only [one_smul, add_sub_cancel, zero_smul, add_zero] at H
+        linear_combination (norm := abel) -H
+      _ = _ := by
+        conv_rhs => simp only [sub_apply]
+        rw [intervalIntegral.integral_sub, intervalIntegral.integral_const]
+        · simp
+        · apply Continuous.intervalIntegrable
+          fun_prop
+        · apply Continuous.intervalIntegrable
+          fun_prop
+  rw [hformula]
+  rw [mem_closedBall_iff_nnnorm] at hx
+  grw [nnnorm_add_le, nnnorm_add_le, hy,
+    ContinuousLinearMap.le_opNNNorm, hz₁, hx]
+  gcongr
+  refine (intervalIntegral.norm_integral_le_integral_norm (by simp)).trans ?_
+  dsimp
+  calc
+    _ ≤ ∫ t in 0..1, (z₂ * r ^ 2) * t := ?_
+    _ = _ := by
+      rw [intervalIntegral.integral_const_mul, integral_id]
+      ring
+  apply intervalIntegral.integral_mono_on (by simp)
+  · apply Continuous.intervalIntegrable
+    fun_prop
+  · apply Continuous.intervalIntegrable
+    fun_prop
+  intro t ht
+  lift t to ℝ≥0 using ht.1
+  change (‖(_ : X)‖₊ : ℝ) ≤ _
+  norm_cast
+  have H :=
+    calc
+      ‖x₀ + (t : ℝ) • (x - x₀) - x₀‖₊ = ‖(t : ℝ) • (x - x₀)‖₊ := by abel_nf
+      _ = t * ‖x - x₀‖₊ := by simp [nnnorm_smul]
+  grw [ContinuousLinearMap.le_opNNNorm, hz₂]
+  · rw [H]
+    ring_nf
+    grw [hx]
+  replace ht : t ≤ 1 := by simpa using ht
+  grw [mem_closedBall_iff_nnnorm, H, hx, hrR, ht]
+  simp
+
+open Metric in
 /-- Quantitative contraction mapping theorem on a closed ball. -/
 theorem contraction_mapping
     {T : X → X} {DT : X → X →L[ℝ] X} (hT : ∀ x, HasFDerivAt T (DT x) x)
@@ -124,64 +194,9 @@ theorem contraction_mapping
     (hyr : y + z₁ * r + z₂ * r ^ 2 / 2 ≤ r)
     (hzr : z₁ + z₂ * r < 1) :
     ∃! x, T x = x ∧ ‖x - x₀‖₊ ≤ r := by
-  have H1 {x : X} (hx : x ∈ closedBall x₀ r) :=
-  calc
-    T x - x₀ = T x₀ - x₀ +
-        ∫ t in 0..1, DT (x₀ + t • (x - x₀)) (x - x₀) := by
-      have key (t) (ht : t ∈ Set.uIcc (0 : ℝ) 1) :
-          HasDerivAt (fun s ↦ T (x₀ + s • (x - x₀)))
-            ((DT (x₀ + t • (x - x₀))) (x - x₀)) t := by
-        simpa using!
-          (hT _).comp_hasDerivAt _
-            (((hasDerivAt_id t).smul_const (f := x - x₀)).const_add x₀)
-      have H := intervalIntegral.integral_eq_sub_of_hasDerivAt key ?_
-      · simp only [one_smul, add_sub_cancel, zero_smul, add_zero] at H
-        linear_combination (norm := abel) -H
-      apply Continuous.intervalIntegrable
-      fun_prop
-    _ = T x₀ - x₀ + DT x₀ (x - x₀) +
-        ∫ t in 0..1, (DT (x₀ + t • (x - x₀)) - DT x₀) (x - x₀) := by
-      conv_rhs => simp only [sub_apply]
-      rw [intervalIntegral.integral_sub, intervalIntegral.integral_const]
-      · simp
-      · apply Continuous.intervalIntegrable
-        fun_prop
-      · apply Continuous.intervalIntegrable
-        fun_prop
   have H2 {x : X} (hx : x ∈ closedBall x₀ r) :
-      ‖T x - x₀‖₊ ≤ y + z₁ * r + z₂ * r ^ 2 / 2 := by
-    rw [H1 hx]
-    rw [mem_closedBall_iff_nnnorm] at hx
-    grw [nnnorm_add_le, nnnorm_add_le, hy,
-      ContinuousLinearMap.le_opNNNorm, hz₁, hx]
-    gcongr
-    refine (intervalIntegral.norm_integral_le_integral_norm (by simp)).trans ?_
-    dsimp
-    calc
-      _ ≤ ∫ t in 0..1, (z₂ * r ^ 2) * t := ?_
-      _ = _ := by
-        rw [intervalIntegral.integral_const_mul, integral_id]
-        ring
-    apply intervalIntegral.integral_mono_on (by simp)
-    · apply Continuous.intervalIntegrable
-      fun_prop
-    · apply Continuous.intervalIntegrable
-      fun_prop
-    intro t ht
-    lift t to ℝ≥0 using ht.1
-    change (‖(_ : X)‖₊ : ℝ) ≤ _
-    norm_cast
-    have H :=
-      calc
-        ‖x₀ + (t : ℝ) • (x - x₀) - x₀‖₊ = ‖(t : ℝ) • (x - x₀)‖₊ := by abel_nf
-        _ = t * ‖x - x₀‖₊ := by simp [nnnorm_smul]
-    grw [ContinuousLinearMap.le_opNNNorm, hz₂]
-    · rw [H]
-      ring_nf
-      grw [hx]
-    replace ht : t ≤ 1 := by simpa using ht
-    grw [mem_closedBall_iff_nnnorm, H, hx, hrR, ht]
-    simp
+      ‖T x - x₀‖₊ ≤ y + z₁ * r + z₂ * r ^ 2 / 2 :=
+    image_bound hT hDT hy hz₁ hz₂ hrR hx
   have H3 : IsClosed (closedBall x₀ r) := isClosed_closedBall
   have H4 : (closedBall x₀ r).Nonempty := nonempty_closedBall.mpr NNReal.zero_le_coe
   have H5 : (closedBall x₀ r).MapsTo T (closedBall x₀ r) := by

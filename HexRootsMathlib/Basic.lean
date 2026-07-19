@@ -61,6 +61,16 @@ namespace Dyadic
     _root_.Dyadic.toRat_intCast]
   norm_num
 
+/-- The real value of one is one. -/
+@[simp] theorem toReal_one : toReal 1 = 1 := by
+  change toReal (.ofInt 1) = 1
+  simp
+
+/-- The real value of two is two. -/
+@[simp] theorem toReal_two : toReal 2 = 2 := by
+  change toReal (.ofInt 2) = 2
+  simp
+
 /-- The real-value map preserves addition. -/
 @[simp] theorem toReal_add (x y : _root_.Dyadic) :
     toReal (x + y) = toReal x + toReal y := by
@@ -92,6 +102,13 @@ namespace Dyadic
   rw [_root_.Dyadic.toRat_mul]
   push_cast
   rfl
+
+/-- The real-value map preserves natural powers. -/
+@[simp] theorem toReal_pow (x : _root_.Dyadic) (n : Nat) :
+    toReal (x ^ n) = toReal x ^ n := by
+  unfold toReal
+  rw [_root_.Dyadic.toRat_pow]
+  norm_cast
 
 /-- Real-value comparison reflects and preserves dyadic non-strict order. -/
 @[simp] theorem toReal_le_toReal_iff {x y : _root_.Dyadic} :
