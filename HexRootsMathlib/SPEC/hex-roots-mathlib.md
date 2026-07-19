@@ -384,6 +384,10 @@ and it is the analytically hardest part:
    `(1 + ρ/d)^{n−1} − 1`), times a fixed factor absorbing the
    factor-2 witness slack. This is what `separationDepth`'s
    `ceilLog2 (deg p)` term supplies.
+   `Completeness/PelletTail.lean` supplies the Mathlib-only combinatorial
+   core: if every remote root has norm at least `d`, the positive-degree
+   elementary-symmetric tail of the normalized product is bounded by
+   `(1 + ρ/d)^n - 1`.
 10. **Newton success**: on a sufficiently refined atom the speculative
     Newton step recertifies (via `ContractingWith` on the Newton map).
 11. **Certification by separation depth**: for squarefree `p`, at
