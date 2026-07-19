@@ -10,8 +10,8 @@ public import Mathlib
 public import HexRealRoots.Prec
 public import HexPolyZMathlib.Basic
 public import HexPolyZMathlib.Mignotte
-public import HexRealRootsMathlib.Hadamard
-public import HexRealRootsMathlib.Discr
+public import HexPolyZMathlib.Hadamard
+public import HexPolyZMathlib.Discriminant
 
 public section
 
@@ -32,8 +32,8 @@ real-root isolation in `HexRealRoots.Prec`, against the Mathlib casts
 The Mahler separation bound `sepPrec_separates` — distinct complex roots of a
 squarefree `p` are more than `4 · 2^{-sepPrec p}` apart — is the project's
 hardest remaining assembly (Mahler 1964: `|disc p| ≥ 1`, the discriminant
-root-product formula in `HexRealRootsMathlib.Discr`, Hadamard's inequality on
-the Vandermonde matrix in `HexRealRootsMathlib.Hadamard`, and Landau's
+root-product formula in `HexPolyZMathlib.Discriminant`, Hadamard's inequality on
+the Vandermonde matrix in `HexPolyZMathlib.Hadamard`, and Landau's
 inequality `HexPolyZMathlib.mahlerMeasure_le_l2norm`). It is not yet
 formalised here; the numeric groundwork (`le_two_pow_ceilLog2Nat`,
 `toReal_twoPow`, the `toPolyℂ` cast) lives in this file for the follow-up.

@@ -317,8 +317,10 @@ HexRealRootsMathlib/
   SturmTheorem.lean    -- the counting theorem and the line form
   ChainCorrespond.lean -- sturmChain_isSturmChain, sturmVarAt_eq,
                           squareFreeRat_iff, sturmCount_eq_card_roots
-  Separation.lean      -- sepPrec_separates (until hosted in
-                          hex-poly-z-mathlib), rootBound_bounds_roots
+  Discr.lean            -- compatibility import of the shared discriminant API
+  Hadamard.lean         -- compatibility import of the shared determinant bound
+  Separation.lean      -- sepPrec_separates, rootBound_bounds_roots;
+                          consumes shared analysis from hex-poly-z-mathlib
   Isolations.lean      -- exists_unique_root, isolates
   Drivers.lean         -- isolateSturm?_isSome, isolate?_isSome,
                           refine1_isolates_same

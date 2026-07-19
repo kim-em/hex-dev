@@ -112,3 +112,16 @@ Downstream libraries may depend on these theorems as Mathlib-side analytic
 inputs. Mathlib-free libraries must not import this surface directly; they
 should consume executable bounds or conditional hypotheses whose proofs are
 discharged here.
+
+**Shared root-separation foundations.** The generic parts of the Mahler
+root-separation development live here once for both roots companions:
+
+- `HexPolyZMathlib/Discriminant.lean` proves the root-product form of
+  `Polynomial.discr`, its nonvanishing for separable polynomials, base-change
+  compatibility, and the integer lower bound `1 ≤ |discr f|`.
+- `HexPolyZMathlib/Hadamard.lean` proves the sharp column-norm determinant
+  inequality `Matrix.norm_det_le_prod_norm_column` over an `RCLike` field.
+
+Both modules are stated at ordinary Mathlib generality and import no executable
+root-isolation library. Companion-specific precision arithmetic remains in the
+corresponding roots companion.

@@ -7,6 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexPolyZMathlib.Basic
+public import HexPolyZMathlib.Discriminant
+public import HexPolyZMathlib.Hadamard
 public import HexPolyZMathlib.Mignotte
 public import HexPolyZMathlib.RobinsonForm
 
@@ -20,4 +22,6 @@ This library specializes the generic dense-polynomial equivalence to
 `Hex.ZPoly`, exposing the concrete conversion functions, the ring equivalence
 used by downstream integer-polynomial proof libraries, and the
 Mahler-measure/Mignotte-bound theorem surface over `Polynomial ℤ`.
+It also hosts the generic discriminant root-product and sharp column-Hadamard
+inequalities shared by the real- and complex-root companions.
 -/
