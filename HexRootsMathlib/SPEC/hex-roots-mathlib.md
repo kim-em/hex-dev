@@ -341,21 +341,22 @@ developments above.
   simple root (Newton-Kantorovich or Pellet at `k = 1`); and the
   coverage guard makes an accepted speculative-Newton region contain
   exactly the roots of the base region.
-- `HexRootsMathlib/IsolateAll.lean`: driver soundness. The multiset
-  equality below rests on two facts: the retained squares cover every
-  root (refine1 soundness), and the output discs are pairwise
-  disjoint (the driver's separation check), so the per-cluster counts
-  neither miss nor double-count a root.
+- `HexRootsMathlib/Driver.lean` and `HexRootsMathlib/Isolate.lean`: driver
+  soundness. Retained squares cover every root, output discs are pairwise
+  disjoint, and each certificate has its asserted multiplicity count. Thus
+  the general driver's certificate counts sum to the polynomial degree; when
+  `isolate` successfully extracts only atoms, their distinct semantic roots
+  enumerate the root finset exactly.
   ```lean
-  theorem isolateAll?_sound (p : ZPoly) (target : Int)
-      (h : 0 < p.degree?.getD 0) {result}
-      (hr : isolateAll? p target #[Component.cauchy p h] = some result) :
-      (result.toList.bind (·.roots) : Multiset ℂ) = (toPolynomial p).roots
+  theorem isolateAll_count (p : ZPoly)
+      (h : 0 < p.degree?.getD 0) {target strategy result}
+      (hr : isolateAll? p target #[Component.cauchy p h] strategy = some result) :
+      ∑ i : Fin result.size, Certified.count result[i] = (toPolyℂ p).natDegree
 
   theorem isolate_sound (p : ZPoly) (h : Hex.HasOnlySimpleRoots p)
-      (atom_prec : Int) {atoms}
-      (ha : isolate p h atom_prec = some atoms) :
-      (atoms.toList.map (·.root)).toFinset = (toPolynomial p).roots.toFinset ∧
+      (atom_prec : Int) (strategy : AtomStrategy) {atoms}
+      (ha : isolate p h atom_prec strategy = some atoms) :
+      (atoms.toList.map (·.root)).toFinset = (toPolyℂ p).roots.toFinset ∧
       ∀ a ∈ atoms, atom_prec ≤ a.square.prec
   ```
   (`HasOnlySimpleRoots p` does *not* rule out `p = 0` (the
@@ -364,6 +365,11 @@ developments above.
   supplies nonzeroness; a nonzero constant returns `some #[]` and
   both sides are empty. The rational-separability correspondence in
   `HasOnlySimpleRoots.lean` carries a `p ≠ 0` hypothesis for the same reason.)
+- `HexRootsMathlib/Refinement.lean`: a successful
+  `DyadicRootIsolation.refineTo?` call preserves the raw atom's semantic root.
+  The refined-level wrapper preserves `RefinedIsolation.root` unconditionally
+  by exposing the successful underlying raw refinement call; the packaged
+  quotient equality remains available to Mathlib-free callers.
 
 ## Completeness development (separately scoped)
 

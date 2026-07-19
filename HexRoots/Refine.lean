@@ -195,7 +195,7 @@ end IsolationLoop
 /-- Refine to `target` precision: speculative Newton steps, falling back to
     subdivision of the atom's square as a one-square component. `none` only
     if certification has not reappeared by `stopDepth p target`. -/
-def DyadicRootIsolation.refineTo? {p : ZPoly} (iso : DyadicRootIsolation p)
+@[expose] def DyadicRootIsolation.refineTo? {p : ZPoly} (iso : DyadicRootIsolation p)
     (target : Int) (strategy : AtomStrategy := .nkThenPellet) :
     Option (DyadicRootIsolation p) :=
   if target ≤ iso.square.prec then some iso else
