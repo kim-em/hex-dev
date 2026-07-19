@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexRootsMathlib.Bisection
+public import HexRootsMathlib.Glue
 public import HexRootsMathlib.Component
 
 public section

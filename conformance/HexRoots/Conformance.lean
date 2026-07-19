@@ -410,6 +410,42 @@ private def cauchyRat1 : Component :=
     c.candidateK == cauchyRat1.candidateK &&
       c.squares.all fun s => s.prec == -(cauchyExp rat1 : Int) + 2
 
+/-- A rational-complex conjugate pair chosen so that one root is within
+`0.0005` leaf units of a grid corner at `separationDepth = 40`. The four
+retained corner squares must glue before Pellet succeeds: each singleton
+fails its witness, while their enclosing component passes. -/
+private def cornerPair : ZPoly :=
+  DensePoly.ofCoeffs #[1458, -265410, 24157225]
+
+private def cornerSquare (i j : Int) : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec (6040043530 + i) 40,
+    Dyadic.ofIntWithPrec (6040043530 + j) 40, 40⟩
+
+private def cornerSurvivors : Array DyadicSquare :=
+  #[cornerSquare (-1) (-1), cornerSquare (-1) 1,
+    cornerSquare 1 (-1), cornerSquare 1 1]
+
+#guard separationDepth cornerPair == 40
+#guard cornerSurvivors.all fun s =>
+  !rootFree cornerPair s && !witnessCheck cornerPair s 1
+#guard
+  (match glueCovered cornerSurvivors with
+    | #[squares] =>
+        witnessCheck cornerPair (encSquare squares) 1 &&
+          (Component.certify? cornerPair .nk ⟨squares, 1⟩).isSome &&
+          (Component.certify? cornerPair .nkThenPellet ⟨squares, 1⟩).isSome
+    | _ => false)
+
+/-- Two translated four-cycles remain distinct maximal components. -/
+private def twoCornerComponents : Array DyadicSquare :=
+  cornerSurvivors ++
+    #[cornerSquare 99 99, cornerSquare 99 101,
+      cornerSquare 101 99, cornerSquare 101 101]
+
+#guard
+  let components := glueCovered twoCornerComponents
+  components.size == 2 && components.all fun squares => squares.size == 4
+
 /-! ### `Component.certify?`: per-component certification.
 
 A tight component at a simple root certifies as an atom; a component far from

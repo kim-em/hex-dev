@@ -9,7 +9,7 @@ module
 public import HexRootsMathlib.Completeness.NKConverse
 public import HexRootsMathlib.HasOnlySimpleRoots
 public import HexRootsMathlib.MahlerPrec
-public import HexRootsMathlib.NKCertify
+public import HexRootsMathlib.Certificate
 
 public section
 
@@ -217,6 +217,23 @@ theorem certify_nk_exists_of_witness {p : Hex.ZPoly} {c : Hex.Component}
   · rename_i hnot
     exact (hnot hbase).elim
 
+/-- The mixed certifier has the same successful NK prefix as the NK-only
+certifier.  Pellet is not reached when the doubled enclosing square already
+has an NK witness. -/
+theorem certify_mixed_exists_of_witness {p : Hex.ZPoly}
+    {c : Hex.Component}
+    (hbase : Hex.nkWitness p (Hex.encSquare c.squares).doubled) :
+    ∃ r, Hex.Component.certify? p .nkThenPellet c = some r := by
+  simp only [Hex.Component.certify?, Hex.nkWitness] at hbase ⊢
+  split
+  · split
+    · split
+      · simp
+      · simp
+    · simp
+  · rename_i hnot
+    exact (hnot hbase).elim
+
 /-- A component root in the central half of its doubled enclosing square
 forces the actual `.nk` certification path at `separationDepth`.  The depth
 hypothesis is deliberately on that enclosing square: deriving it from the
@@ -256,6 +273,37 @@ theorem component_certify_nk_covers {p : Hex.ZPoly} {c : Hex.Component} {z : ℂ
     ∃ r, Hex.Component.certify? p .nk c = some r ∧ z ∈ Certified.region r := by
   obtain ⟨r, hr⟩ := component_certify_nk hsize hsep hz hzc hprec
   exact ⟨r, hr, certifier_preserves_nk p c r hr z hz hzc⟩
+
+/-- The mixed NK-then-Pellet certifier succeeds at the same fixed depth and
+continues to cover the designated component root. -/
+theorem component_certify_mixed_covers {p : Hex.ZPoly}
+    {c : Hex.Component} {z : ℂ}
+    (hsize : 1 < p.size) (hsep : (HexPolyZMathlib.toPolyℚ p).Separable)
+    (hz : (toPolyℂ p).IsRoot z) (hzc : z ∈ Component.region c)
+    (hprec : (Hex.separationDepth p : Int) ≤
+      (Hex.encSquare c.squares).doubled.prec) :
+    ∃ r, Hex.Component.certify? p .nkThenPellet c = some r ∧
+      z ∈ Certified.region r := by
+  let enc := Hex.encSquare c.squares
+  let base := enc.doubled
+  have hzenc : z ∈ DyadicSquare.closedSquare enc :=
+    Component.region_subset_encSquare c hzc
+  have hzsup : HexRootsMathlib.supDist z (DyadicSquare.center enc) ≤
+      DyadicSquare.halfWidth enc := by
+    simpa [DyadicSquare.closedSquare, supClosedBall] using hzenc
+  have hcenter : HexRootsMathlib.supNorm (z - DyadicSquare.center base) ≤
+      DyadicSquare.halfWidth base / 2 := by
+    change HexRootsMathlib.supDist z (DyadicSquare.center base) ≤
+      DyadicSquare.halfWidth base / 2
+    rw [show DyadicSquare.center base = DyadicSquare.center enc by rfl,
+      show DyadicSquare.halfWidth base = 2 * DyadicSquare.halfWidth enc by
+        exact DyadicSquare.doubled_halfWidth enc]
+    nlinarith
+  have hbase : Hex.nkWitness p base :=
+    witness_at_separationDepth hsize hsep hz (by simpa [base] using hprec) hcenter
+  obtain ⟨r, hr⟩ := certify_mixed_exists_of_witness
+    (by simpa [base, enc] using hbase)
+  exact ⟨r, hr, certifier_preserves_nkThenPellet p c r hr z hz hzc⟩
 
 end
 

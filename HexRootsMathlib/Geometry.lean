@@ -96,7 +96,7 @@ theorem sqrt_two_lt_sqrt2Hi : √2 < Dyadic.toReal Hex.sqrt2Hi := by
 namespace SquareBounds
 
 /-- A computed bounding box contains the full coordinate extent of a square. -/
-def Contains (b : Hex.SquareBounds) (s : Hex.DyadicSquare) : Prop :=
+@[expose] def Contains (b : Hex.SquareBounds) (s : Hex.DyadicSquare) : Prop :=
   Dyadic.toReal b.xmin ≤ Dyadic.toReal (s.re - s.halfWidth) ∧
   Dyadic.toReal (s.re + s.halfWidth) ≤ Dyadic.toReal b.xmax ∧
   Dyadic.toReal b.ymin ≤ Dyadic.toReal (s.im - s.halfWidth) ∧

@@ -24,9 +24,9 @@ guard), then by the Pellet witness on the enclosing square's disc.
 
 The geometry helpers `DyadicSquare.subdivide`, `DyadicSquare.adjacent`,
 and `glue` are exact: subdivision offsets by exact dyadics, adjacency is
-a comparison of exact dyadic centre differences, and gluing is a
-fuel-bounded depth-first search with mark-before-push, so each index is
-visited once and the output components are deterministic in index order.
+a comparison of exact dyadic centre differences, and gluing folds squares
+into a component partition, merging every component touched by the new
+square.
 The witness re-checks that certification and the coverage guard perform
 run at runtime on the compiled code; the `decide`-reducible witness
 predicates themselves live in `Pellet.lean` and `Kantorovich.lean`.
@@ -58,39 +58,34 @@ namespace Hex
   else
     false
 
-/-- Edge-connected components of a set of same-`prec` squares. Depth-first
-    (stack-based) search with mark-before-push (each index is pushed at most once, so
-    `n+1` pop rounds of fuel suffice); the output is deterministic in index
-    order. `O(m²)` adjacency scans. -/
-@[expose] def glue (sqs : Array DyadicSquare) : Array (Array DyadicSquare) := Id.run do
-  let n := sqs.size
-  let mut seen : Array Bool := Array.replicate n false
-  let mut result : Array (Array DyadicSquare) := #[]
-  for i in [0:n] do
-    if !(seen.getD i false) then
-      let mut comp : Array DyadicSquare := #[]
-      let mut stack : Array Nat := #[i]
-      seen := seen.setIfInBounds i true
-      for _ in [0:n+1] do
-        match stack.back? with
-        | none => break
-        | some cur =>
-          stack := stack.pop
-          let curSq := sqs.getD cur ⟨0, 0, 0⟩
-          comp := comp.push curSq
-          for j in [0:n] do
-            if !(seen.getD j false) && curSq.adjacent (sqs.getD j ⟨0, 0, 0⟩) then
-              seen := seen.setIfInBounds j true
-              stack := stack.push j
-      result := result.push comp
-  return result
+/-- Whether a square touches some member of a partial glued component. -/
+@[expose] def DyadicSquare.touches (s : DyadicSquare)
+    (component : List DyadicSquare) : Bool :=
+  component.any fun t => s.adjacent t || t.adjacent s
+
+/-- Insert one square into a component partition. Every component touched by
+the new square is merged with it; untouched components retain their order. -/
+@[expose] def glueInsert (s : DyadicSquare)
+    (components : List (List DyadicSquare)) : List (List DyadicSquare) :=
+  let (touching, separate) := components.partition s.touches
+  (s :: touching.flatten) :: separate
+
+/-- Edge-connected components of a list of squares. This union-by-insertion
+form makes coverage, connectedness, and maximality structural induction
+invariants while retaining the `O(m²)` adjacency complexity. -/
+@[expose] def glueList : List DyadicSquare → List (List DyadicSquare)
+  | [] => []
+  | s :: sqs => glueInsert s (glueList sqs)
+
+/-- Edge-connected components of an array of squares. -/
+@[expose] def glue (sqs : Array DyadicSquare) : Array (Array DyadicSquare) :=
+  (glueList sqs.toList).map List.toArray |>.toArray
 
 /-- Connected-component gluing with an executable coverage guard. The normal
 `glue` result is used when every input square occurs in an output component;
-the defensive fallback returns singleton components. This preserves coverage
-and makes every fallback component trivially connected, but does not preserve
-the maximal connected grouping if the imperative DFS is ever changed
-incorrectly. -/
+the defensive fallback returns singleton components. The Mathlib companion
+proves the structural `glueList` implementation always passes this guard, so
+the fallback is unreachable in the current implementation. -/
 @[expose] def glueCovered (sqs : Array DyadicSquare) : Array (Array DyadicSquare) :=
   let cs := glue sqs
   if ∀ s ∈ sqs.toList, ∃ c ∈ cs.toList, s ∈ c.toList then
