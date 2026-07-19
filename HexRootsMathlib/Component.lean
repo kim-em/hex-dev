@@ -100,6 +100,20 @@ theorem isRoot_mem_cauchy (p : Hex.ZPoly) (h : 0 < p.degree?.getD 0)
     z ∈ region (Hex.Component.cauchy p h) :=
   exists_mem_component_cauchy p h hz
 
+/-- The executable enclosing square contains the union of all input squares,
+without a common-precision or connectivity hypothesis. -/
+theorem region_subset_encSquare (c : Hex.Component) :
+    region c ⊆ DyadicSquare.closedSquare (Hex.encSquare c.squares) := by
+  rintro z ⟨s, hs, hz⟩
+  exact DyadicSquare.closedSquare_subset_encSquare hs hz
+
+/-- The doubled enclosing square used by NK certification contains the whole
+input component region. -/
+theorem region_subset_doubledEnc (c : Hex.Component) :
+    region c ⊆ DyadicSquare.closedSquare (Hex.encSquare c.squares).doubled :=
+  (region_subset_encSquare c).trans
+    (DyadicSquare.closedSquare_subset_doubled (Hex.encSquare c.squares))
+
 end Component
 
 namespace DyadicRootIsolation
