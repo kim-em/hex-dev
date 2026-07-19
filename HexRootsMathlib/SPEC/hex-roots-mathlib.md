@@ -300,8 +300,11 @@ developments above.
   sep/4` radius bound from item 4 is what makes
   `intersects_iff_root_eq` true.
 - `HexRootsMathlib/Cauchy.lean`: `Component.cauchy`
-  correctness. The starting disc contains all of `Polynomial.roots p`
-  by `Polynomial.IsRoot.norm_lt_cauchyBound`, and the degree-`n`
+  correctness. The starting closed square contains all of `Polynomial.roots p`
+  by `Polynomial.IsRoot.norm_lt_cauchyBound`: the executable maximum bounds
+  every non-leading coefficient, its ceiling division bounds Mathlib's
+  Cauchy bound, and `ceilLog2` rounds that integer bound up to the square's
+  power-of-two half-width. The degree-`n`
   witness holds at the base, doubled, and quadrupled radii because the
   leading-term inequality `|aₙ|·Rⁿ > Σ_{i<n}|aᵢ|·Rⁱ` only improves as
   `R` grows past the Cauchy bound.
@@ -312,8 +315,20 @@ developments above.
   hex-roots.md relies on). Uses `Polynomial.newtonMap`,
   `aeval_pow_two_pow_dvd_aeval_iterate_newtonMap`, and the
   `Dyadic.invAtPrec` error bounds.
-- `HexRootsMathlib/Bisection.lean`: `Component.refine1` and
-  `Component.certify?` soundness. A `T_0`-discarded child's disc
+- `HexRootsMathlib/RootFree.lean`: elementary `T₀` soundness. The exact
+  accumulator inequality and the Taylor coefficient bridge imply, by the
+  finite triangle inequality, that a successful `rootFree` test excludes
+  roots from the open disc of radius `radiusHi`. This contains both the
+  represented closed square and its true closed circumscribed disc because
+  `√2 < 1449/1024`.
+- `HexRootsMathlib/Bisection.lean`: elementary subdivision coverage. The four
+  closed children cover the parent, and every child containing a root survives
+  the `rootFree` filter. They are not pairwise disjoint, since adjacent
+  children share boundary segments. Completing `Component.refine1`
+  preservation additionally requires
+  a characterization that `glue` preserves membership (equivalently, that
+  flattening its output permutes its input). Once that bridge is available, a
+  `T_0`-discarded child's disc
   contains no root, so every root covered by the parent lies in some
   retained child; when `certify?` returns a cluster, its disc
   contains exactly `k` roots with multiplicity (Pellet, item 8); when
