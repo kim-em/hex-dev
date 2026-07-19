@@ -32,6 +32,56 @@ namespace Glue
 
 theorem linked_symm {s t : Hex.DyadicSquare} : Linked s t → Linked t s := Or.symm
 
+theorem edge_refl (s : Hex.DyadicSquare) : Edge s s := by
+  rw [Edge, Hex.DyadicSquare.adjacent, if_pos rfl]
+  have hpos : (0 : _root_.Dyadic) < .ofIntWithPrec 1 (s.prec - 2) := by
+    apply Dyadic.toReal_lt_toReal_iff.mp
+    rw [Dyadic.toReal_zero, Dyadic.toReal_ofIntWithPrec]
+    norm_num
+    exact zpow_pos (by norm_num) _
+  have hre : s.re - s.re = 0 := by
+    apply Dyadic.toReal_injective
+    simp
+  have him : s.im - s.im = 0 := by
+    apply Dyadic.toReal_injective
+    simp
+  rw [hre, him]
+  simpa [Hex.Dyadic.abs] using And.intro hpos hpos
+
+private theorem touches_self_of_mem {s : Hex.DyadicSquare}
+    {component : List Hex.DyadicSquare} (hs : s ∈ component) :
+    s.touches component = true := by
+  rw [Hex.DyadicSquare.touches, List.any_eq_true]
+  exact ⟨s, hs, Bool.or_eq_true_iff.mpr (Or.inl (edge_refl s))⟩
+
+/-- Union-by-insertion never duplicates an outer component, even when the
+input square list itself contains duplicates. -/
+private theorem nodup_glueInsert (s : Hex.DyadicSquare)
+    {components : List (List Hex.DyadicSquare)} (h : components.Nodup) :
+    (Hex.glueInsert s components).Nodup := by
+  rw [Hex.glueInsert, List.partition_eq_filter_filter]
+  apply List.nodup_cons.mpr
+  constructor
+  · intro hmem
+    have hsep := (List.mem_filter.mp hmem).2
+    have htouch : s.touches
+        (s :: (components.filter s.touches).flatten) = false := by
+      simpa using hsep
+    have hself := touches_self_of_mem
+      (s := s) (component := s :: (components.filter s.touches).flatten) (by simp)
+    rw [htouch] at hself
+    contradiction
+  · exact h.filter _
+
+/-- The outer connected-component list produced by the gluer has no
+duplicate component values. -/
+theorem nodup_glueList (squares : List Hex.DyadicSquare) :
+    (Hex.glueList squares).Nodup := by
+  induction squares with
+  | nil => simp [Hex.glueList]
+  | cons s squares ih =>
+      simpa only [Hex.glueList] using nodup_glueInsert s ih
+
 /-- Every predicate invariant across internal adjacency edges is constant on
 the component. This induced-graph formulation records that paths stay inside
 the component, which is exactly what downstream semantic propagation needs. -/
@@ -218,6 +268,16 @@ theorem glueCovered_eq_glue (squares : Array Hex.DyadicSquare) :
     apply h
     intro s hs
     exact mem_glue hs
+
+/-- The guarded array gluer has no duplicate outer components. -/
+theorem glueCovered_nodup (squares : Array Hex.DyadicSquare) :
+    (Hex.glueCovered squares).toList.Nodup := by
+  rw [glueCovered_eq_glue, Hex.glue]
+  change ((Hex.glueList squares.toList).map List.toArray).Nodup
+  apply (Glue.nodup_glueList squares.toList).map
+  intro a b h
+  have := congrArg Array.toList h
+  simpa using this
 
 /-- The guarded gluer preserves the input multiset exactly. -/
 theorem flatten_glueCovered_perm (squares : Array Hex.DyadicSquare) :

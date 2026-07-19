@@ -331,7 +331,8 @@ developments above.
   the `rootFree` filter. They are not pairwise disjoint, since adjacent
   children share boundary segments. `HexRootsMathlib/Glue.lean` proves that
   the executable union-by-insertion `glue` returns nonempty maximal
-  edge-connected components, that distinct components are edge-separated,
+  edge-or-corner-connected components, that distinct components have no
+  executable adjacency edge,
   and that flattening its output permutes its input. In particular the
   defensive singleton fallback in `glueCovered` is unreachable. Hence a
   `T_0`-discarded child's disc
@@ -428,22 +429,28 @@ and it is the analytically hardest part:
     square's precision loss by two levels. A root-bearing component at leaf
     precision `separationDepth p + 3` therefore certifies: two levels pay for
     `encSquare`, and one pays for the doubled NK base.
-11. **Certification by separation depth**: for squarefree `p`, prove that
-    every worklist component either contains a root and uses the certification
-    theorem above, or is a rootless survivor halo that disappears or joins its
-    root component within the fixed fuel budget. Root-wise coverage alone does
-    not imply that every component contains its associated nearby root. Once
-    this alternative is closed, every component passes `certify?` with
-    `k = 1`, and the certified discs are pairwise disjoint (radius below
-    `sep/4`). Hence
-    `isolate p h atom_prec ≠ none`. This is the theorem that retires
-    the drivers' `none` branch; it never mentions the recursion
-    structure, only depths and witnesses.
+11. **Driver completeness**: `Completeness/DriverCompleteness.lean` closes
+    the rootless-survivor-halo alternative by matching the executable driver
+    to a prefix of uniform global subdivision and regluing. At
+    `completenessDepth p target = max target (separationDepth p) + 5`, every
+    maximal component contains its associated nearby root: any halo square is
+    adjacent to the component containing that root and hence glued into it.
+    The preceding NK and Pellet converses then make every component pass
+    `certify?` with `k = 1` under `.nk`, `.pellet`, and `.nkThenPellet`.
+    Mahler separation makes their stored discs pairwise disjoint. The proof
+    carries coverage and precision through the actual `refineAll`, closes the
+    structural fuel induction for `isolateLoop`/`isolateAll?`, and proves:
 
-Items 9-11 can be deferred: every theorem in this library is usable
-without them, and the conformance suite checks empirically that `none`
-does not occur on the committed fixtures. They are listed here so the
-scope is honest; nothing else in the plan silently depends on them.
+    ```lean
+    theorem isolate_isSome (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+        (hp : p ≠ 0) (atomPrec : Int) (strategy : Hex.AtomStrategy) :
+        (Hex.isolate p h atomPrec strategy).isSome = true
+    ```
+
+    Nonzero constants take the executable empty-output branch. Positive-degree
+    inputs use the Cauchy component and the full normalized driver. Thus the
+    `none` branch is impossible for every nonzero squarefree input and every
+    atom strategy.
 
 ## File organisation
 
@@ -481,8 +488,17 @@ Correspondence theorems (depend on hex-roots data structures):
   HexRootsMathlib/Bisection.lean
   HexRootsMathlib/IsolateAll.lean
 
-Completeness development (deferrable; see above):
-  HexRootsMathlib/Completeness/…
+Completeness development:
+  HexRootsMathlib/Completeness/PelletTail.lean
+  HexRootsMathlib/Completeness/PelletConverse.lean
+  HexRootsMathlib/Completeness/PelletDyadic.lean
+  HexRootsMathlib/Completeness/NewtonContraction.lean
+  HexRootsMathlib/Completeness/NKRecertification.lean
+  HexRootsMathlib/Completeness/NKConverse.lean
+  HexRootsMathlib/Completeness/NKDepth.lean
+  HexRootsMathlib/Completeness/RootFreeConverse.lean
+  HexRootsMathlib/Completeness/SurvivorComponent.lean
+  HexRootsMathlib/Completeness/DriverCompleteness.lean
 ```
 
 The candidate contributions have no `HexRoots` dependence and can

@@ -22,6 +22,7 @@ public import HexRootsMathlib.Completeness.PelletDyadic
 public import HexRootsMathlib.Completeness.PelletTail
 public import HexRootsMathlib.Completeness.RootFreeConverse
 public import HexRootsMathlib.Completeness.SurvivorComponent
+public import HexRootsMathlib.Completeness.DriverCompleteness
 public import HexRootsMathlib.Component
 public import HexRootsMathlib.Driver
 public import HexRootsMathlib.Geometry

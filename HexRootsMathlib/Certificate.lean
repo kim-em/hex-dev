@@ -360,6 +360,17 @@ theorem certifyPelletList_preserves {p : Hex.ZPoly} {c : Hex.Component}
           subst r'
           exact certifyPelletAt_preserves hat hzroot hz
 
+/-- The input component lies in the central quarter of the widened Pellet
+component used by `certify?`. -/
+private theorem mem_widePellet {c : Hex.Component} {z : ℂ}
+    (hz : z ∈ Component.region c) :
+    z ∈ Component.region
+      (⟨#[(Hex.encSquare c.squares).doubled.doubled], c.candidateK⟩ :
+        Hex.Component) := by
+  refine ⟨(Hex.encSquare c.squares).doubled.doubled, by simp, ?_⟩
+  exact DyadicSquare.closedSquare_subset_doubled _
+    (Component.region_subset_doubledEnc c hz)
+
 /-- Pellet-only component certification preserves every input-component
 root, including through the speculative same-count recentring branch. -/
 theorem certifier_preserves_pellet (p : Hex.ZPoly) :
@@ -367,7 +378,7 @@ theorem certifier_preserves_pellet (p : Hex.ZPoly) :
   intro c r hcert z hzroot hz
   simp only [Hex.Component.certify?] at hcert
   unfold Hex.Component.certifyPellet? at hcert
-  exact certifyPelletList_preserves _ hcert hzroot hz
+  exact certifyPelletList_preserves _ hcert hzroot (mem_widePellet hz)
 
 /-- A combined-strategy result is an NK result from the common leading
 branch, or the result of falling through to the Pellet search. -/
@@ -381,7 +392,8 @@ theorem certify_nkThenPellet_cases {p : Hex.ZPoly} {c : Hex.Component}
         r = .atom ⟨cand, Or.inl hcand⟩) ∨
       (∃ hbase : Hex.nkWitness p base,
         r = .atom ⟨base, Or.inl hbase⟩) ∨
-      Hex.Component.certifyPellet? p c = some r := by
+      Hex.Component.certifyPellet? p
+        ⟨#[(Hex.encSquare c.squares).doubled.doubled], c.candidateK⟩ = some r := by
   simp only [Hex.Component.certify?, Hex.nkWitness] at hcert ⊢
   split at hcert <;> rename_i hbase
   · split at hcert <;> rename_i hinside
@@ -410,7 +422,7 @@ theorem certifier_preserves_nkThenPellet (p : Hex.ZPoly) :
     rw [nkAtom_region hbase]
     exact Component.region_subset_doubledEnc c hz
   · unfold Hex.Component.certifyPellet? at h
-    exact certifyPelletList_preserves _ h hzroot hz
+    exact certifyPelletList_preserves _ h hzroot (mem_widePellet hz)
 
 /-- Every component certification strategy preserves each covered root. -/
 theorem certifier_preserves (p : Hex.ZPoly) (strategy : Hex.AtomStrategy) :

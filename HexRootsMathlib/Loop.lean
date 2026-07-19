@@ -60,6 +60,30 @@ namespace Worklist
 
 end Worklist
 
+/-- A globally normalized subdivision round preserves every polynomial root
+covered by its input worklist. -/
+theorem isRoot_mem_refineAll {p : Hex.ZPoly} {work : Array Hex.Component}
+    {z : ℂ} (hzroot : (toPolyℂ p).IsRoot z)
+    (hz : z ∈ Worklist.region work) :
+    z ∈ Worklist.region (Hex.Component.refineAll p work) := by
+  obtain ⟨c, hc, s, hs, hzs⟩ := hz
+  let squares := work.flatMap (·.squares)
+  have hsquares : s ∈ squares.toList := by
+    simp only [squares, Array.toList_flatMap, List.mem_flatMap]
+    exact ⟨c, hc, hs⟩
+  obtain ⟨t, ht, hzt⟩ := isRoot_mem_survivors hzroot hsquares hzs
+  let survivors := (squares.flatMap Hex.DyadicSquare.subdivide).filter
+    (fun u => !Hex.rootFree p u)
+  change t ∈ survivors.toList at ht
+  obtain ⟨ss, hss, htss⟩ := mem_glueCovered ht
+  let d : Hex.Component := { squares := ss, candidateK := 1 }
+  refine ⟨d, ?_, ⟨t, htss, hzt⟩⟩
+  rw [Hex.Component.refineAll]
+  change d ∈ ((Hex.glueCovered survivors).map fun ss =>
+    { squares := ss, candidateK := 1 }).toList
+  simp only [Array.toList_map, List.mem_map]
+  exact ⟨ss, hss, rfl⟩
+
 namespace Results
 
 /-- Union of the semantic regions of an array of certificates. -/
@@ -101,6 +125,60 @@ theorem isRoot_mem_next {p : Hex.ZPoly} {target : Int}
   change ∃ d ∈ (Hex.IsolationLoop.next p target tried).toList,
     z ∈ Component.region d
   rw [Hex.IsolationLoop.next]
+  split
+  · let step := Hex.IsolationLoop.step p target tried
+    change ∃ d ∈ ((Array.range tried.size).flatMap step).toList,
+      z ∈ Component.region d
+    have hgetD : tried.getD i (⟨#[], 0⟩, none) =
+        (c, Hex.Component.certify? p strategy c) := by
+      calc
+        _ = tried[i] :=
+          (Array.getElem_eq_getD (⟨#[], 0⟩, none)).symm
+        _ = _ := hget
+    have hlocal : ∃ d, d ∈ step i ∧ z ∈ Component.region d := by
+      dsimp only [step]
+      rw [Hex.IsolationLoop.step, hgetD]
+      cases htry : Hex.Component.certify? p strategy c with
+      | none =>
+          obtain ⟨d, hd, hzd⟩ := isRoot_mem_refine1 hzroot hzc
+          exact ⟨d, Array.mem_toList_iff.mp hd, hzd⟩
+      | some res =>
+          dsimp only
+          split
+          · exact ⟨c, by simp, hzc⟩
+          · split
+            · have hzres := hcert c res htry z hzroot hzc
+              exact ⟨res.toComponent, by simp,
+                Certified.region_subset_toComponent res hzres⟩
+            · obtain ⟨d, hd, hzd⟩ := isRoot_mem_refine1 hzroot hzc
+              exact ⟨d, Array.mem_toList_iff.mp hd, hzd⟩
+    obtain ⟨d, hd, hzd⟩ := hlocal
+    exact ⟨d, Array.mem_toList_iff.mpr
+      (Array.mem_flatMap_of_mem hiRange hd), hzd⟩
+  · apply isRoot_mem_refineAll hzroot
+    exact ⟨c, by
+      apply Array.mem_toList_iff.mpr
+      exact Array.mem_map_of_mem ht, hzc⟩
+
+/-- The lineage-local transition used by single-atom refinement preserves
+every covered polynomial root. -/
+theorem isRoot_mem_nextLocal {p : Hex.ZPoly} {target : Int}
+    {strategy : Hex.AtomStrategy} (hcert : Certifier.Preserves p strategy)
+    {work : Array Hex.Component} {z : ℂ} (hzroot : (toPolyℂ p).IsRoot z)
+    (hz : z ∈ Worklist.region work) :
+    z ∈ Worklist.region (Hex.IsolationLoop.nextLocal p target
+      (Hex.IsolationLoop.attempts p strategy work)) := by
+  obtain ⟨c, hc, hzc⟩ := hz
+  let tried := Hex.IsolationLoop.attempts p strategy work
+  have ht : (c, Hex.Component.certify? p strategy c) ∈ tried := by
+    apply Array.mem_map_of_mem
+    exact Array.mem_toList_iff.mp hc
+  obtain ⟨i, hi, hget⟩ := Array.getElem_of_mem ht
+  have hiRange : i ∈ Array.range tried.size := by simp [hi]
+  rw [Worklist.region]
+  change ∃ d ∈ (Hex.IsolationLoop.nextLocal p target tried).toList,
+    z ∈ Component.region d
+  rw [Hex.IsolationLoop.nextLocal]
   let step := Hex.IsolationLoop.step p target tried
   change ∃ d ∈ ((Array.range tried.size).flatMap step).toList,
     z ∈ Component.region d
@@ -137,10 +215,12 @@ theorem mem_next_of_hold {p : Hex.ZPoly} {target : Int}
     {tried : Array (Hex.Component × Option (Hex.Certified p))}
     {i : Nat} (hi : i < tried.size) {c : Hex.Component} {r : Hex.Certified p}
     (hget : tried[i] = (c, some r))
+    (hdepth : Hex.IsolationLoop.normalized p target tried = true)
     (hready : target ≤ r.square.prec)
     (hdisjoint : Hex.IsolationLoop.overlaps tried i r = false) :
     c ∈ Hex.IsolationLoop.next p target tried := by
   rw [Hex.IsolationLoop.next]
+  simp only [hdepth, if_true]
   apply Array.mem_flatMap_of_mem (by simp [hi] : i ∈ Array.range tried.size)
   rw [Hex.IsolationLoop.step]
   have hgetD : tried.getD i (⟨#[], 0⟩, none) = (c, some r) := by
@@ -156,11 +236,13 @@ theorem mem_next_of_adopt {p : Hex.ZPoly} {target : Int}
     {tried : Array (Hex.Component × Option (Hex.Certified p))}
     {i : Nat} (hi : i < tried.size) {c : Hex.Component} {r : Hex.Certified p}
     (hget : tried[i] = (c, some r))
+    (hdepth : Hex.IsolationLoop.normalized p target tried = true)
     (hcontinue : (decide (target ≤ r.square.prec) &&
       !Hex.IsolationLoop.overlaps tried i r) = false)
     (hfiner : c.prec < r.toComponent.prec) :
     r.toComponent ∈ Hex.IsolationLoop.next p target tried := by
   rw [Hex.IsolationLoop.next]
+  simp only [hdepth, if_true]
   apply Array.mem_flatMap_of_mem (by simp [hi] : i ∈ Array.range tried.size)
   rw [Hex.IsolationLoop.step]
   have hgetD : tried.getD i (⟨#[], 0⟩, none) = (c, some r) := by
@@ -236,8 +318,9 @@ theorem isolateLoop_covers {p : Hex.ZPoly} {target : Int}
         simp [Worklist.region] at hz
       · rename_i hnonempty
         let tried := Hex.IsolationLoop.attempts p strategy work
-        change (if Hex.IsolationLoop.allReady target tried &&
-            Hex.IsolationLoop.disjoint tried then
+        change (if Hex.IsolationLoop.normalized p target tried &&
+            (Hex.IsolationLoop.allReady target tried &&
+              Hex.IsolationLoop.disjoint tried) then
           some (Hex.IsolationLoop.outputs tried)
         else Hex.isolateLoop p target strategy fuel
           (Hex.IsolationLoop.next p target tried)) = some rs at hloop
@@ -248,9 +331,44 @@ theorem isolateLoop_covers {p : Hex.ZPoly} {target : Int}
           subst rs
           have hready : Hex.IsolationLoop.allReady target tried := by
             simp only [Bool.and_eq_true] at hemit
-            exact hemit.1
+            exact hemit.2.1
           exact isRoot_mem_outputs hcert hzroot hz hready
         · exact ih hloop (isRoot_mem_next hcert hzroot hz)
+
+/-- Parametric coverage theorem for the local single-atom refinement loop. -/
+theorem refineLoop_covers {p : Hex.ZPoly} {target : Int}
+    {strategy : Hex.AtomStrategy} (hcert : Certifier.Preserves p strategy)
+    {fuel : Nat} {work : Array Hex.Component} {rs : Array (Hex.Certified p)}
+    (hloop : Hex.refineLoop p target strategy fuel work = some rs)
+    {z : ℂ} (hzroot : (toPolyℂ p).IsRoot z)
+    (hz : z ∈ Worklist.region work) : z ∈ Results.region rs := by
+  induction fuel generalizing work rs with
+  | zero => simp [Hex.refineLoop] at hloop
+  | succ fuel ih =>
+      rw [Hex.refineLoop] at hloop
+      split at hloop
+      · rename_i hempty
+        have hwork : work = #[] := Array.eq_empty_of_size_eq_zero
+          (Array.isEmpty_iff_size_eq_zero.mp hempty)
+        subst work
+        simp [Worklist.region] at hz
+      · rename_i hnonempty
+        let tried := Hex.IsolationLoop.attempts p strategy work
+        change (if Hex.IsolationLoop.allReady target tried &&
+            Hex.IsolationLoop.disjoint tried then
+          some (Hex.IsolationLoop.outputs tried)
+        else Hex.refineLoop p target strategy fuel
+          (Hex.IsolationLoop.nextLocal p target tried)) = some rs at hloop
+        split at hloop
+        · rename_i hemit
+          have hrs : rs = Hex.IsolationLoop.outputs tried := by
+            exact Option.some.inj hloop.symm
+          subst rs
+          have hready : Hex.IsolationLoop.allReady target tried := by
+            simp only [Bool.and_eq_true] at hemit
+            exact hemit.1
+          exact isRoot_mem_outputs hcert hzroot hz hready
+        · exact ih hloop (isRoot_mem_nextLocal hcert hzroot hz)
 
 /-- Every successful loop result meets the requested precision and passes the
 executable pairwise-disjoint-disc test. -/
@@ -269,8 +387,9 @@ theorem isolateLoop_ready_disjoint {p : Hex.ZPoly} {target : Int}
         subst rs
         simp [Hex.pairwiseDisjoint]
       · let tried := Hex.IsolationLoop.attempts p strategy work
-        change (if Hex.IsolationLoop.allReady target tried &&
-            Hex.IsolationLoop.disjoint tried then
+        change (if Hex.IsolationLoop.normalized p target tried &&
+            (Hex.IsolationLoop.allReady target tried &&
+              Hex.IsolationLoop.disjoint tried) then
           some (Hex.IsolationLoop.outputs tried)
         else Hex.isolateLoop p target strategy fuel
           (Hex.IsolationLoop.next p target tried)) = some rs at hloop
@@ -280,8 +399,8 @@ theorem isolateLoop_ready_disjoint {p : Hex.ZPoly} {target : Int}
           have hrs : rs = Hex.IsolationLoop.outputs tried :=
             Option.some.inj hloop.symm
           subst rs
-          exact ⟨outputs_ready hemit.1, by
-            simpa [Hex.IsolationLoop.disjoint] using hemit.2⟩
+          exact ⟨outputs_ready hemit.2.1, by
+            simpa [Hex.IsolationLoop.disjoint] using hemit.2.2⟩
         · exact ih hloop
 
 /-- Distinct loop outputs have disjoint closed circumscribed discs. -/
