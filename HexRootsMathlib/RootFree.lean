@@ -25,17 +25,6 @@ namespace HexRootsMathlib
 
 noncomputable section
 
-namespace Dyadic
-
-/-- The real-value map preserves natural powers. -/
-@[simp] theorem toReal_pow (x : _root_.Dyadic) (n : Nat) :
-    toReal (x ^ n) = toReal x ^ n := by
-  unfold toReal
-  rw [_root_.Dyadic.toRat_pow]
-  norm_cast
-
-end Dyadic
-
 /-- Closed form of the accumulator used by `pelletAt`: its first component is
 the sum with coefficient `k` omitted, and its second component is the next
 power of the radius. -/

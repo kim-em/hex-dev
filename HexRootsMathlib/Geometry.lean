@@ -103,6 +103,10 @@ theorem sqrt_two_lt_sqrt2Hi : √2 < Dyadic.toReal Hex.sqrt2Hi := by
 @[expose] def supClosedBall (c : ℂ) (r : ℝ) : Set ℂ :=
   {z | supDist z c ≤ r}
 
+/-- An open sup-norm ball in `ℂ`. -/
+@[expose] def supOpenBall (c : ℂ) (r : ℝ) : Set ℂ :=
+  {z | supDist z c < r}
+
 namespace DyadicSquare
 
 /-
@@ -126,6 +130,10 @@ the Mathlib interpretations use the explicit `DyadicSquare.*` prefix.
 /-- The closed axis-aligned square represented by `s`. -/
 @[expose] def closedSquare (s : Hex.DyadicSquare) : Set ℂ :=
   supClosedBall (center s) (halfWidth s)
+
+/-- The interior of the axis-aligned square represented by `s`. -/
+@[expose] def openSquare (s : Hex.DyadicSquare) : Set ℂ :=
+  supOpenBall (center s) (halfWidth s)
 
 /-- The open circumscribed disc of `s`. -/
 @[expose] def disc (s : Hex.DyadicSquare) : Set ℂ :=

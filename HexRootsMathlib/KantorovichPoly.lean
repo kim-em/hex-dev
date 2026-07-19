@@ -47,6 +47,12 @@ two-coordinate sup-norm model. -/
 @[simp] theorem equiv_symm_im (x : ComplexSup) : (equiv.symm x).im = x 1 := by
   rfl
 
+/-- The transported norm is the maximum absolute coordinate. -/
+theorem norm_equiv (z : ℂ) : ‖equiv z‖ = max |z.re| |z.im| := by
+  rw [Pi.norm_def]
+  rw [show (Finset.univ : Finset (Fin 2)) = {0, 1} by decide]
+  simp
+
 /-- The real matrix of multiplication by a complex scalar. -/
 @[expose] def mulMatrix (z : ℂ) : Matrix (Fin 2) (Fin 2) ℝ :=
   !![z.re, -z.im; z.im, z.re]
@@ -127,6 +133,25 @@ theorem mul_sub (z w : ℂ) : mul (z - w) = mul z - mul w := by
   apply equiv.symm.injective
   simp [equiv_symm_mul, sub_mul]
 
+theorem mul_add (z w : ℂ) : mul (z + w) = mul z + mul w := by
+  apply ContinuousLinearMap.ext
+  intro x
+  apply equiv.symm.injective
+  simp [equiv_symm_mul, add_mul]
+
+@[simp] theorem mul_zero : mul 0 = 0 := by
+  apply ContinuousLinearMap.ext
+  intro x
+  apply equiv.symm.injective
+  simp [equiv_symm_mul]
+
+theorem mul_sum {ι : Type*} (S : Finset ι) (f : ι → ℂ) :
+    mul (∑ i ∈ S, f i) = ∑ i ∈ S, mul (f i) := by
+  classical
+  induction S using Finset.induction_on with
+  | empty => simp
+  | insert i S hi ih => simp [hi, mul_add, ih]
+
 theorem mul_comp (z w : ℂ) : (mul z).comp (mul w) = mul (z * w) := by
   apply ContinuousLinearMap.ext
   intro x
@@ -138,6 +163,15 @@ theorem norm_one_sub_mul (z : ℂ) :
     ‖1 - mul z‖ = |1 - z.re| + |z.im| := by
   rw [← mul_one, ← mul_sub, norm_mul]
   simp
+
+/-- Comparison of the sup operator norm with the Euclidean complex norm. -/
+theorem norm_mul_le_sqrt_two (z : ℂ) : ‖mul z‖ ≤ √2 * ‖z‖ := by
+  rw [norm_mul]
+  refine (sq_le_sq₀ (by positivity) (by positivity)).mp ?_
+  rw [mul_pow, Real.sq_sqrt (by norm_num), Complex.sq_norm, Complex.normSq_apply]
+  have hre : |z.re| ^ 2 = z.re ^ 2 := sq_abs _
+  have him : |z.im| ^ 2 = z.im ^ 2 := sq_abs _
+  nlinarith [sq_nonneg (|z.re| - |z.im|)]
 
 /-- Evaluation of a complex polynomial, transported to the sup-norm model. -/
 @[expose] noncomputable def eval (p : ℂ[X]) (x : ComplexSup) : ComplexSup :=
