@@ -289,16 +289,21 @@ developments above.
       isolation's disc, which both disjuncts give. -/
   def RefinedIsolation.root (i : RefinedIsolation p) : ℂ
 
-  theorem intersects_iff_root_eq (i₁ i₂ : RefinedIsolation p) :
+  theorem intersects_iff_root_eq
+      (hsep : (HexPolyZMathlib.toPolyℚ p).Separable)
+      (i₁ i₂ : RefinedIsolation p) :
       Intersects i₁ i₂ ↔ i₁.root = i₂.root
   ```
-  Consequences: `Intersects` restricted to `RefinedIsolation p` is an
-  equivalence relation; `Hex.rootOf : SimpleRoot p → ℂ` is
-  well-defined by `Quot.lift`; `sameRoot i₁ i₂ = true ↔
-  SimpleRoot.mk i₁ = SimpleRoot.mk i₂`, so the Boolean test used by
-  the Mathlib-free layer decides equality in the quotient. The `<
-  sep/4` radius bound from item 4 is what makes
-  `intersects_iff_root_eq` true.
+  A local atom witness makes its selected root simple but does not imply
+  global separability, so the separation premise is necessary. Successful
+  nonzero `isolate` input obtains it from `HasOnlySimpleRoots`; the companion
+  also exposes `intersects_iff_root_eq_of_simple` with those hypotheses.
+  Under the same premise, `Intersects` restricted to `RefinedIsolation p` is
+  an equivalence relation; `Hex.rootOf` is well-defined by `Quot.lift`; and
+  `sameRoot i₁ i₂ = true ↔ SimpleRoot.mk i₁ = SimpleRoot.mk i₂`, so the
+  Boolean test used by the Mathlib-free layer decides equality in the
+  quotient. The `< sep/4` radius bound from item 4 makes the conditional
+  `intersects_iff_root_eq` theorem true.
 - `HexRootsMathlib/Cauchy.lean`: `Component.cauchy`
   correctness. The starting closed square contains all of `Polynomial.roots p`
   by `Polynomial.IsRoot.norm_lt_cauchyBound`: the executable maximum bounds

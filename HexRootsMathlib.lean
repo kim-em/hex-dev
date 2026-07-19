@@ -28,6 +28,7 @@ public import HexRootsMathlib.Pellet
 public import HexRootsMathlib.RootFree
 public import HexRootsMathlib.Rouche
 public import HexRootsMathlib.RoucheHomotopy
+public import HexRootsMathlib.SimpleRoot
 public import HexRootsMathlib.Taylor
 
 public section

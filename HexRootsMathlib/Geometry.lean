@@ -339,6 +339,57 @@ theorem closedDisc_disjoint_of_discsMeet_eq_false (s t : Hex.DyadicSquare)
         (Real.sqrt_nonneg _))
   exact (sq_lt_sq₀ hrs dist_nonneg).mp hradii
 
+/-- A positive executable disc-intersection test is the corresponding centre
+distance bound. -/
+theorem dist_center_le_of_discsMeet {s t : Hex.DyadicSquare}
+    (h : s.discsMeet t = true) :
+    dist (center s) (center t) ≤ radius s + radius t := by
+  have hdy : Hex.GaussDyadic.distSq s.center t.center ≤
+      (2 : _root_.Dyadic) * .ofIntWithPrec 1 (2 * s.prec) +
+        2 * .ofIntWithPrec 1 (2 * t.prec) +
+        4 * .ofIntWithPrec 1 (s.prec + t.prec) := by
+    simpa [Hex.DyadicSquare.discsMeet] using of_decide_eq_true h
+  have hreal := Dyadic.toReal_le_toReal_iff.mpr hdy
+  have hs : (2 : ℝ) ^ (-(2 * s.prec)) = ((2 : ℝ) ^ (-s.prec)) ^ 2 := by
+    rw [show -(2 * s.prec) = (-s.prec) * 2 by ring, zpow_mul]
+    rfl
+  have ht : (2 : ℝ) ^ (-(2 * t.prec)) = ((2 : ℝ) ^ (-t.prec)) ^ 2 := by
+    rw [show -(2 * t.prec) = (-t.prec) * 2 by ring, zpow_mul]
+    rfl
+  have hst : (2 : ℝ) ^ (-(s.prec + t.prec)) =
+      (2 : ℝ) ^ (-s.prec) * (2 : ℝ) ^ (-t.prec) := by
+    rw [show -(s.prec + t.prec) = -s.prec + -t.prec by ring,
+      zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+  have htwo : Dyadic.toReal (2 : _root_.Dyadic) = (2 : ℝ) :=
+    Dyadic.toReal_two
+  have hfour : Dyadic.toReal (4 : _root_.Dyadic) = (4 : ℝ) := by
+    change Dyadic.toReal (.ofInt 4) = (4 : ℝ)
+    simp
+  have hsquare : dist (center s) (center t) ^ 2 ≤
+      (radius s + radius t) ^ 2 := by
+    rw [radius_eq, radius_eq]
+    calc
+      dist (center s) (center t) ^ 2 ≤
+          2 * ((2 : ℝ) ^ (-s.prec)) ^ 2 +
+          2 * ((2 : ℝ) ^ (-t.prec)) ^ 2 +
+          4 * ((2 : ℝ) ^ (-s.prec) * (2 : ℝ) ^ (-t.prec)) := by
+        simpa only [Dyadic.toReal_add, Dyadic.toReal_mul,
+          Dyadic.toReal_ofIntWithPrec, Dyadic.toReal_ofInt, Int.cast_one,
+          one_mul, Int.cast_ofNat, toReal_distSq, Hex.DyadicSquare.center,
+          center_eq, hs, ht, hst, htwo, hfour] using hreal
+      _ = ((2 : ℝ) ^ (-s.prec) * √2 +
+          (2 : ℝ) ^ (-t.prec) * √2) ^ 2 := by
+        nlinarith [Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)]
+  have hrs : 0 ≤ radius s + radius t := by
+    simp only [radius_eq]
+    exact add_nonneg
+      (mul_nonneg (zpow_pos (by norm_num : (0 : ℝ) < 2) _).le
+        (Real.sqrt_nonneg _))
+      (mul_nonneg (zpow_pos (by norm_num : (0 : ℝ) < 2) _).le
+        (Real.sqrt_nonneg _))
+  apply (sq_le_sq₀ dist_nonneg hrs).mp
+  exact hsquare
+
 /-- The executable array test gives semantic disjointness for every ordered
 pair of stored squares. -/
 theorem closedDisc_disjoint_of_pairwiseDisjoint {ss : Array Hex.DyadicSquare}
