@@ -14,6 +14,7 @@ public import HexRootsMathlib.Cauchy
 public import HexRootsMathlib.Certificate
 public import HexRootsMathlib.CircleIntegralLemmas
 public import HexRootsMathlib.Component
+public import HexRootsMathlib.Driver
 public import HexRootsMathlib.Geometry
 public import HexRootsMathlib.Kantorovich
 public import HexRootsMathlib.KantorovichPoly
