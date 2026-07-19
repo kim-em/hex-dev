@@ -9,6 +9,7 @@ module
 public import HexRootsMathlib.Basic
 public import HexRootsMathlib.Bisection
 public import HexRootsMathlib.Cauchy
+public import HexRootsMathlib.Component
 public import HexRootsMathlib.Geometry
 public import HexRootsMathlib.Kantorovich
 public import HexRootsMathlib.KantorovichPoly

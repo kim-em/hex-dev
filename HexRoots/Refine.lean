@@ -74,7 +74,7 @@ end Component
     the cost of one precision level, which the strictly-finer adoption
     guard in `isolateLoop` still absorbs (a Newton jump gains at least
     two levels). -/
-def Certified.toComponent {p : ZPoly} : Certified p → Component
+@[expose] def Certified.toComponent {p : ZPoly} : Certified p → Component
   | .atom iso => ⟨#[iso.square.doubled], 1⟩
   | .cluster cl => ⟨#[(encSquare cl.squares).doubled], cl.k⟩
 
