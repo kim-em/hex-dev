@@ -356,6 +356,67 @@ theorem closedDisc_disjoint_of_pairwiseDisjoint {ss : Array Hex.DyadicSquare}
   exact closedDisc_disjoint_of_discsMeet_eq_false _ _
     (Bool.eq_false_of_not_eq_true' hijAll)
 
+/-- The exact executable disc-containment check implies containment of the
+represented closed circumscribed discs. -/
+theorem closedDisc_subset_of_discInside {inner outer : Hex.DyadicSquare}
+    (h : inner.discInside outer = true) :
+    closedDisc inner ⊆ closedDisc outer := by
+  have hdata : outer.prec ≤ inner.prec ∧
+      Hex.GaussDyadic.distSq inner.center outer.center ≤
+        (2 : _root_.Dyadic) * .ofIntWithPrec 1 (2 * outer.prec) +
+          2 * .ofIntWithPrec 1 (2 * inner.prec) -
+          4 * .ofIntWithPrec 1 (outer.prec + inner.prec) := by
+    simpa [Hex.DyadicSquare.discInside] using of_decide_eq_true h
+  have hradius : radius inner ≤ radius outer := by
+    rw [radius_eq, radius_eq]
+    apply mul_le_mul_of_nonneg_right
+    · exact zpow_le_zpow_right₀ (by norm_num : (1 : ℝ) ≤ 2) (by omega)
+    · exact Real.sqrt_nonneg _
+  have hreal := Dyadic.toReal_le_toReal_iff.mpr hdata.2
+  have ho : (2 : ℝ) ^ (-(2 * outer.prec)) =
+      ((2 : ℝ) ^ (-outer.prec)) ^ 2 := by
+    rw [show -(2 * outer.prec) = (-outer.prec) * 2 by ring, zpow_mul]
+    rfl
+  have hi : (2 : ℝ) ^ (-(2 * inner.prec)) =
+      ((2 : ℝ) ^ (-inner.prec)) ^ 2 := by
+    rw [show -(2 * inner.prec) = (-inner.prec) * 2 by ring, zpow_mul]
+    rfl
+  have hoi : (2 : ℝ) ^ (-(outer.prec + inner.prec)) =
+      (2 : ℝ) ^ (-outer.prec) * (2 : ℝ) ^ (-inner.prec) := by
+    rw [show -(outer.prec + inner.prec) = -outer.prec + -inner.prec by ring,
+      zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+  have htwo : Dyadic.toReal (2 : _root_.Dyadic) = (2 : ℝ) :=
+    Dyadic.toReal_two
+  have hfour : Dyadic.toReal (4 : _root_.Dyadic) = (4 : ℝ) := by
+    change Dyadic.toReal (.ofInt 4) = (4 : ℝ)
+    simp
+  have hdistSq : dist (center inner) (center outer) ^ 2 ≤
+      (radius outer - radius inner) ^ 2 := by
+    rw [radius_eq, radius_eq]
+    calc
+      dist (center inner) (center outer) ^ 2 ≤
+          2 * ((2 : ℝ) ^ (-outer.prec)) ^ 2 +
+            2 * ((2 : ℝ) ^ (-inner.prec)) ^ 2 -
+            4 * ((2 : ℝ) ^ (-outer.prec) * (2 : ℝ) ^ (-inner.prec)) := by
+        simpa only [Dyadic.toReal_add, Dyadic.toReal_sub, Dyadic.toReal_mul,
+          Dyadic.toReal_ofIntWithPrec, Dyadic.toReal_ofInt, Int.cast_one,
+          one_mul, Int.cast_ofNat, toReal_distSq, Hex.DyadicSquare.center,
+          center_eq, ho, hi, hoi, htwo, hfour] using hreal
+      _ = ((2 : ℝ) ^ (-outer.prec) * √2 -
+          (2 : ℝ) ^ (-inner.prec) * √2) ^ 2 := by
+        nlinarith [Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)]
+  have hdist : dist (center inner) (center outer) ≤
+      radius outer - radius inner := by
+    apply (sq_le_sq₀ dist_nonneg (sub_nonneg.mpr hradius)).mp
+    exact hdistSq
+  intro z hz
+  rw [closedDisc, Metric.mem_closedBall] at hz ⊢
+  calc
+    dist z (center outer) ≤ dist z (center inner) +
+        dist (center inner) (center outer) := dist_triangle _ _ _
+    _ ≤ radius inner + (radius outer - radius inner) := add_le_add hz hdist
+    _ = radius outer := by ring
+
 /-- The exact executable square-containment check implies containment of the
 represented closed sup-norm squares. -/
 theorem closedSquare_subset_of_squareInside {inner outer : Hex.DyadicSquare}
