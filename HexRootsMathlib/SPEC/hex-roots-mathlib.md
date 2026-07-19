@@ -407,7 +407,13 @@ and it is the analytically hardest part:
     preserves the ball, contracts, and has the original root as its unique
     fixed point. The following executable-recertification slice chooses a
     smaller `K` and transfers the resulting strict margins to the dyadic
-    inverse and Taylor bounds.
+    inverse and Taylor bounds. `Completeness/NKRecertification.lean` performs
+    that transfer: the pinned reciprocal has relative defect `< 2⁻⁸`; the
+    floored inverse is a scalar in `[0,1]` times the exact centre inverse; and
+    a continuous exact-centre majorant bounds the finite `z₂` sum while the
+    square radius tends to zero. Consequently every simple root has a natural
+    precision threshold beyond which every doubled square with centre distance
+    at most half its half-width satisfies the actual executable `nkWitness`.
 11. **Certification by separation depth**: for squarefree `p`, at
     depth `≥ separationDepth p` every rootless component has vanished
     (all its squares `T_0`-certify), every surviving component passes
