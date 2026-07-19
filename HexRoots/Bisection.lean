@@ -119,7 +119,7 @@ namespace Component
     coverage guard: the base region must certify the same count in the same
     certificate form, and the recentred certified region must be contained
     in the base one. -/
-def certify? (p : ZPoly) (strategy : AtomStrategy := .nkThenPellet)
+@[expose] def certify? (p : ZPoly) (strategy : AtomStrategy := .nkThenPellet)
     (c : Component) : Option (Certified p) := Id.run do
   let enc := encSquare c.squares
   -- Newton-Kantorovich attempt, on the doubled enclosing square.

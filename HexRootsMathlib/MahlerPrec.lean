@@ -64,18 +64,6 @@ theorem supNorm_toPolyℂ_le (p : Hex.ZPoly) :
     (show ((p.coeff i).natAbs : ℝ) ≤ (p.coeffAbsMax : ℝ) by
       exact_mod_cast coeff_natAbs_le_coeffAbsMax p i)
 
-/-- `ceilLog2Nat m` is an upper base-two logarithm. -/
-theorem le_two_pow_ceilLog2 (m : Nat) : m ≤ 2 ^ Hex.ceilLog2 m := by
-  unfold Hex.ceilLog2
-  by_cases hm : m ≤ 1
-  · rw [if_pos hm]
-    simpa using hm
-  · rw [if_neg hm]
-    have hm2 : 2 ≤ m := by omega
-    have hne : m - 1 ≠ 0 := by omega
-    have := (Nat.log2_lt hne).1 (Nat.lt_succ_self (m - 1).log2)
-    omega
-
 /-- The exact exponent used by `mahlerPrec` dominates the analytic coefficient
 factor in the Mahler separation estimate. -/
 theorem mahlerFactor_le_twoPow (n A : Nat) :

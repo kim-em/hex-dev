@@ -177,6 +177,39 @@ structure Component where
       an untrusted hint for step ordering. -/
   candidateK : Nat
 
+/-- Exact axis-aligned bounds used to enclose an array of dyadic squares. -/
+structure SquareBounds where
+  /-- Lower real-coordinate bound. -/
+  xmin : Dyadic
+  /-- Upper real-coordinate bound. -/
+  xmax : Dyadic
+  /-- Lower imaginary-coordinate bound. -/
+  ymin : Dyadic
+  /-- Upper imaginary-coordinate bound. -/
+  ymax : Dyadic
+
+/-- The exact coordinate bounds contributed by one dyadic square. -/
+@[expose] def DyadicSquare.bounds (s : DyadicSquare) : SquareBounds :=
+  let hw := s.halfWidth
+  ⟨s.re - hw, s.re + hw, s.im - hw, s.im + hw⟩
+
+/-- Extend exact coordinate bounds by one dyadic square. -/
+@[expose] def SquareBounds.merge (b : SquareBounds) (s : DyadicSquare) : SquareBounds :=
+  let sb := s.bounds
+  ⟨Hex.Dyadic.min b.xmin sb.xmin, Hex.Dyadic.max b.xmax sb.xmax,
+    Hex.Dyadic.min b.ymin sb.ymin, Hex.Dyadic.max b.ymax sb.ymax⟩
+
+/-- Add one square to an optional bounding box. -/
+@[expose] def SquareBounds.extend (b : Option SquareBounds)
+    (s : DyadicSquare) : Option SquareBounds :=
+  match b with
+  | none => some s.bounds
+  | some b => some (b.merge s)
+
+/-- Exact bounding box of an array of dyadic squares. -/
+@[expose] def boundingBox (squares : Array DyadicSquare) : Option SquareBounds :=
+  squares.foldl (init := none) SquareBounds.extend
+
 /-- The smallest square with power-of-two half-width, centred at the
     bounding-box centre, containing every square. Junk `⟨0,0,0⟩` on the
     empty array (callers keep components nonempty).
@@ -188,22 +221,13 @@ structure Component where
     the box half-width. On a single square input this returns that
     square exactly. -/
 @[expose] def encSquare (squares : Array DyadicSquare) : DyadicSquare :=
-  let box : Option (Dyadic × Dyadic × Dyadic × Dyadic) :=
-    squares.foldl (init := none) fun acc s =>
-      let hw := s.halfWidth
-      let xlo := s.re - hw; let xhi := s.re + hw
-      let ylo := s.im - hw; let yhi := s.im + hw
-      match acc with
-      | none => some (xlo, xhi, ylo, yhi)
-      | some (xmin, xmax, ymin, ymax) =>
-          some (Hex.Dyadic.min xmin xlo, Hex.Dyadic.max xmax xhi,
-                Hex.Dyadic.min ymin ylo, Hex.Dyadic.max ymax yhi)
-  match box with
+  match boundingBox squares with
   | none => ⟨0, 0, 0⟩
-  | some (xmin, xmax, ymin, ymax) =>
-      let cx := (xmin + xmax) >>> (1 : Int)
-      let cy := (ymin + ymax) >>> (1 : Int)
-      let w := Hex.Dyadic.max ((xmax - xmin) >>> (1 : Int)) ((ymax - ymin) >>> (1 : Int))
+  | some b =>
+      let cx := (b.xmin + b.xmax) >>> (1 : Int)
+      let cy := (b.ymin + b.ymax) >>> (1 : Int)
+      let w := Hex.Dyadic.max ((b.xmax - b.xmin) >>> (1 : Int))
+        ((b.ymax - b.ymin) >>> (1 : Int))
       let q := -(Hex.Dyadic.ceilLog2 w)
       ⟨cx, cy, q⟩
 

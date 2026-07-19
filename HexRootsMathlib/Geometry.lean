@@ -93,8 +93,88 @@ theorem sqrt_two_lt_sqrt2Hi : √2 < Dyadic.toReal Hex.sqrt2Hi := by
 
 /-! ### Sup-norm squares and circumscribed discs -/
 
+namespace SquareBounds
+
+/-- A computed bounding box contains the full coordinate extent of a square. -/
+def Contains (b : Hex.SquareBounds) (s : Hex.DyadicSquare) : Prop :=
+  Dyadic.toReal b.xmin ≤ Dyadic.toReal (s.re - s.halfWidth) ∧
+  Dyadic.toReal (s.re + s.halfWidth) ≤ Dyadic.toReal b.xmax ∧
+  Dyadic.toReal b.ymin ≤ Dyadic.toReal (s.im - s.halfWidth) ∧
+  Dyadic.toReal (s.im + s.halfWidth) ≤ Dyadic.toReal b.ymax
+
+theorem bounds_contains (s : Hex.DyadicSquare) : Contains s.bounds s := by
+  simp [Contains, Hex.DyadicSquare.bounds]
+
+theorem contains_merge_left {b : Hex.SquareBounds} {s t : Hex.DyadicSquare}
+    (h : Contains b s) : Contains (b.merge t) s := by
+  rcases h with ⟨hxlo, hxhi, hylo, hyhi⟩
+  simp only [Contains, Hex.SquareBounds.merge, Hex.DyadicSquare.bounds,
+    Dyadic.toReal_min, Dyadic.toReal_max]
+  exact ⟨min_le_left _ _ |>.trans hxlo, hxhi.trans (le_max_left _ _),
+    min_le_left _ _ |>.trans hylo, hyhi.trans (le_max_left _ _)⟩
+
+theorem contains_merge_right (b : Hex.SquareBounds) (s : Hex.DyadicSquare) :
+    Contains (b.merge s) s := by
+  simp only [Contains, Hex.SquareBounds.merge, Hex.DyadicSquare.bounds,
+    Dyadic.toReal_min, Dyadic.toReal_max]
+  exact ⟨min_le_right _ _, le_max_right _ _, min_le_right _ _, le_max_right _ _⟩
+
+theorem contains_extend_old {b : Option Hex.SquareBounds} {s t : Hex.DyadicSquare}
+    (h : ∃ box, b = some box ∧ Contains box s) :
+    ∃ box, Hex.SquareBounds.extend b t = some box ∧ Contains box s := by
+  obtain ⟨box, rfl, hs⟩ := h
+  exact ⟨box.merge t, rfl, contains_merge_left hs⟩
+
+theorem contains_extend_new (b : Option Hex.SquareBounds) (s : Hex.DyadicSquare) :
+    ∃ box, Hex.SquareBounds.extend b s = some box ∧ Contains box s := by
+  cases b with
+  | none => exact ⟨s.bounds, rfl, bounds_contains s⟩
+  | some box => exact ⟨box.merge s, rfl, contains_merge_right box s⟩
+
+private theorem contains_foldl (l : List Hex.DyadicSquare)
+    (b : Option Hex.SquareBounds) {s : Hex.DyadicSquare}
+    (h : (∃ box, b = some box ∧ Contains box s) ∨ s ∈ l) :
+    ∃ box, l.foldl Hex.SquareBounds.extend b = some box ∧ Contains box s := by
+  induction l generalizing b with
+  | nil =>
+      rcases h with h | h
+      · simpa using h
+      · simp at h
+  | cons t l ih =>
+      simp only [List.foldl_cons]
+      apply ih
+      rcases h with h | h
+      · exact Or.inl (contains_extend_old h)
+      · rw [List.mem_cons] at h
+        rcases h with rfl | h
+        · exact Or.inl (contains_extend_new b _)
+        · exact Or.inr h
+
+/-- Every input square is contained in the exact bounding box returned by the
+executable fold. -/
+theorem mem_boundingBox {squares : Array Hex.DyadicSquare}
+    {s : Hex.DyadicSquare} (hs : s ∈ squares.toList) :
+    ∃ box, Hex.boundingBox squares = some box ∧ Contains box s := by
+  rw [Hex.boundingBox, ← Array.foldl_toList]
+  exact contains_foldl squares.toList none (Or.inr hs)
+
+end SquareBounds
+
 /-- The sup norm on `ℂ`, used to view an axis-aligned square as a ball. -/
 @[expose] def supNorm (z : ℂ) : ℝ := max |z.re| |z.im|
+
+/-- The complex sup norm satisfies the triangle inequality. -/
+theorem supNorm_add_le (z w : ℂ) :
+    supNorm (z + w) ≤ supNorm z + supNorm w := by
+  apply max_le
+  · calc
+      |(z + w).re| ≤ |z.re| + |w.re| := abs_add_le _ _
+      _ ≤ max |z.re| |z.im| + max |w.re| |w.im| :=
+        add_le_add (le_max_left _ _) (le_max_left _ _)
+  · calc
+      |(z + w).im| ≤ |z.im| + |w.im| := abs_add_le _ _
+      _ ≤ max |z.re| |z.im| + max |w.re| |w.im| :=
+        add_le_add (le_max_right _ _) (le_max_right _ _)
 
 /-- The distance associated to `supNorm`. -/
 @[expose] def supDist (z w : ℂ) : ℝ := supNorm (z - w)
@@ -275,6 +355,154 @@ theorem closedDisc_disjoint_of_pairwiseDisjoint {ss : Array Hex.DyadicSquare}
   rw [hgeti, hgetj] at hijAll
   exact closedDisc_disjoint_of_discsMeet_eq_false _ _
     (Bool.eq_false_of_not_eq_true' hijAll)
+
+/-- The exact executable square-containment check implies containment of the
+represented closed sup-norm squares. -/
+theorem closedSquare_subset_of_squareInside {inner outer : Hex.DyadicSquare}
+    (h : inner.squareInside outer = true) :
+    closedSquare inner ⊆ closedSquare outer := by
+  have hdy : Hex.Dyadic.max
+        (Hex.Dyadic.abs (inner.re - outer.re))
+        (Hex.Dyadic.abs (inner.im - outer.im)) + inner.halfWidth ≤
+      outer.halfWidth := by
+    simpa [Hex.DyadicSquare.squareInside] using h
+  have hreal := Dyadic.toReal_le_toReal_iff.mpr hdy
+  have hwidth (s : Hex.DyadicSquare) :
+      Dyadic.toReal s.halfWidth = halfWidth s := by
+    simp [Hex.DyadicSquare.halfWidth, halfWidth_eq]
+  intro z hz
+  change supNorm (z - center inner) ≤ halfWidth inner at hz
+  change supNorm (z - center outer) ≤ halfWidth outer
+  calc
+    supNorm (z - center outer) =
+        supNorm ((z - center inner) + (center inner - center outer)) := by
+      congr 1
+      ring
+    _ ≤ supNorm (z - center inner) + supNorm (center inner - center outer) :=
+      supNorm_add_le _ _
+    _ ≤ halfWidth inner + supNorm (center inner - center outer) :=
+      add_le_add hz le_rfl
+    _ = supNorm (center inner - center outer) + halfWidth inner := add_comm _ _
+    _ ≤ halfWidth outer := by
+      simpa only [Dyadic.toReal_add, Dyadic.toReal_max, Dyadic.toReal_abs,
+        Dyadic.toReal_sub, hwidth, center, GaussDyadic.toComplex_re,
+        GaussDyadic.toComplex_im, Hex.DyadicSquare.center, Complex.sub_re,
+        Complex.sub_im, supNorm] using hreal
+
+/-- Every input square is contained in the power-of-two square constructed
+from its array's exact bounding box. -/
+theorem closedSquare_subset_encSquare {squares : Array Hex.DyadicSquare}
+    {s : Hex.DyadicSquare} (hs : s ∈ squares.toList) :
+    closedSquare s ⊆ closedSquare (Hex.encSquare squares) := by
+  obtain ⟨b, hbox, hb⟩ := SquareBounds.mem_boundingBox hs
+  rcases hb with ⟨hxlo, hxhi, hylo, hyhi⟩
+  let xhalf := (b.xmax - b.xmin) >>> (1 : Int)
+  let yhalf := (b.ymax - b.ymin) >>> (1 : Int)
+  let w := Hex.Dyadic.max xhalf yhalf
+  have hwidth (u : Hex.DyadicSquare) :
+      Dyadic.toReal u.halfWidth = halfWidth u := by
+    simp [Hex.DyadicSquare.halfWidth, halfWidth_eq]
+  have hswidth : 0 < halfWidth s := by
+    rw [halfWidth_eq]
+    exact zpow_pos (by norm_num) _
+  have hxspan : 2 * halfWidth s ≤
+      Dyadic.toReal b.xmax - Dyadic.toReal b.xmin := by
+    simp only [Dyadic.toReal_sub, Dyadic.toReal_add, hwidth] at hxlo hxhi
+    linarith
+  have hyspan : 2 * halfWidth s ≤
+      Dyadic.toReal b.ymax - Dyadic.toReal b.ymin := by
+    simp only [Dyadic.toReal_sub, Dyadic.toReal_add, hwidth] at hylo hyhi
+    linarith
+  have hxhalf : Dyadic.toReal xhalf =
+      (Dyadic.toReal b.xmax - Dyadic.toReal b.xmin) / 2 := by
+    simp [xhalf, Dyadic.toReal_shiftRight]
+    ring
+  have hyhalf : Dyadic.toReal yhalf =
+      (Dyadic.toReal b.ymax - Dyadic.toReal b.ymin) / 2 := by
+    simp [yhalf, Dyadic.toReal_shiftRight]
+    ring
+  have hwpos : 0 < Dyadic.toReal w := by
+    have hxpos : 0 < Dyadic.toReal xhalf := by
+      rw [hxhalf]
+      linarith
+    dsimp only [w]
+    rw [Dyadic.toReal_max]
+    exact hxpos.trans_le (le_max_left _ _)
+  have hwceil : Dyadic.toReal w ≤
+      (2 : ℝ) ^ Hex.Dyadic.ceilLog2 w :=
+    Dyadic.toReal_le_two_pow_ceilLog2 w hwpos
+  have hencWidth : halfWidth (Hex.encSquare squares) =
+      (2 : ℝ) ^ Hex.Dyadic.ceilLog2 w := by
+    rw [halfWidth_eq, Hex.encSquare, hbox]
+    change (2 : ℝ) ^ (- -Hex.Dyadic.ceilLog2
+      (Hex.Dyadic.max ((b.xmax - b.xmin) >>> (1 : Int))
+        ((b.ymax - b.ymin) >>> (1 : Int)))) = _
+    simp only [neg_neg]
+    rfl
+  have hencRe : (center (Hex.encSquare squares)).re =
+      (Dyadic.toReal b.xmin + Dyadic.toReal b.xmax) / 2 := by
+    simp only [center, Hex.encSquare, hbox, Hex.DyadicSquare.center,
+      GaussDyadic.toComplex_re]
+    rw [Dyadic.toReal_shiftRight, Dyadic.toReal_add]
+    norm_num
+    ring
+  have hencIm : (center (Hex.encSquare squares)).im =
+      (Dyadic.toReal b.ymin + Dyadic.toReal b.ymax) / 2 := by
+    simp only [center, Hex.encSquare, hbox, Hex.DyadicSquare.center,
+      GaussDyadic.toComplex_im]
+    rw [Dyadic.toReal_shiftRight, Dyadic.toReal_add]
+    norm_num
+    ring
+  intro z hz
+  change supNorm (z - center s) ≤ halfWidth s at hz
+  change supNorm (z - center (Hex.encSquare squares)) ≤
+    halfWidth (Hex.encSquare squares)
+  have hzre : |z.re - Dyadic.toReal s.re| ≤ halfWidth s := by
+    exact (le_max_left _ _).trans hz
+  have hzim : |z.im - Dyadic.toReal s.im| ≤ halfWidth s := by
+    exact (le_max_right _ _).trans hz
+  have hxlo' : Dyadic.toReal b.xmin ≤ Dyadic.toReal s.re - halfWidth s := by
+    simpa only [Dyadic.toReal_sub, hwidth] using hxlo
+  have hxhi' : Dyadic.toReal s.re + halfWidth s ≤ Dyadic.toReal b.xmax := by
+    simpa only [Dyadic.toReal_add, hwidth] using hxhi
+  have hylo' : Dyadic.toReal b.ymin ≤ Dyadic.toReal s.im - halfWidth s := by
+    simpa only [Dyadic.toReal_sub, hwidth] using hylo
+  have hyhi' : Dyadic.toReal s.im + halfWidth s ≤ Dyadic.toReal b.ymax := by
+    simpa only [Dyadic.toReal_add, hwidth] using hyhi
+  have hzboxRe : Dyadic.toReal b.xmin ≤ z.re ∧ z.re ≤ Dyadic.toReal b.xmax := by
+    rw [abs_le] at hzre
+    constructor <;> linarith [hxlo', hxhi']
+  have hzboxIm : Dyadic.toReal b.ymin ≤ z.im ∧ z.im ≤ Dyadic.toReal b.ymax := by
+    rw [abs_le] at hzim
+    constructor <;> linarith [hylo', hyhi']
+  rw [supNorm, Complex.sub_re, Complex.sub_im, hencRe, hencIm, max_le_iff]
+  constructor
+  · rw [hencWidth]
+    have hmid : |z.re - (Dyadic.toReal b.xmin + Dyadic.toReal b.xmax) / 2| ≤
+        (Dyadic.toReal b.xmax - Dyadic.toReal b.xmin) / 2 := by
+      rw [abs_le]
+      constructor <;> linarith [hzboxRe.1, hzboxRe.2]
+    apply hmid.trans
+    calc
+      _ = Dyadic.toReal xhalf := hxhalf.symm
+      _ ≤ Dyadic.toReal w := by
+        dsimp only [w]
+        rw [Dyadic.toReal_max]
+        exact le_max_left _ _
+      _ ≤ _ := hwceil
+  · rw [hencWidth]
+    have hmid : |z.im - (Dyadic.toReal b.ymin + Dyadic.toReal b.ymax) / 2| ≤
+        (Dyadic.toReal b.ymax - Dyadic.toReal b.ymin) / 2 := by
+      rw [abs_le]
+      constructor <;> linarith [hzboxIm.1, hzboxIm.2]
+    apply hmid.trans
+    calc
+      _ = Dyadic.toReal yhalf := hyhalf.symm
+      _ ≤ Dyadic.toReal w := by
+        dsimp only [w]
+        rw [Dyadic.toReal_max]
+        exact le_max_right _ _
+      _ ≤ _ := hwceil
 
 /-- The square is contained in its closed circumscribed Euclidean disc. -/
 theorem closedSquare_subset_closedDisc (s : Hex.DyadicSquare) :

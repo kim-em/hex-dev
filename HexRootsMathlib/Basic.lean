@@ -43,6 +43,18 @@ theorem natDegree_toPolyℂ (p : Hex.ZPoly) :
     (RingHom.injective_int (Int.castRingHom ℂ)),
     HexPolyMathlib.natDegree_toPolynomial]
 
+/-- The executable natural ceiling logarithm is an upper base-two logarithm. -/
+theorem le_two_pow_ceilLog2 (m : Nat) : m ≤ 2 ^ Hex.ceilLog2 m := by
+  unfold Hex.ceilLog2
+  by_cases hm : m ≤ 1
+  · rw [if_pos hm]
+    simpa using hm
+  · rw [if_neg hm]
+    have hm2 : 2 ≤ m := by omega
+    have hne : m - 1 ≠ 0 := by omega
+    have hlog := (Nat.log2_lt hne).1 (Nat.lt_succ_self (m - 1).log2)
+    omega
+
 namespace Dyadic
 
 /-- The real value of an exact dyadic number, through its rational value. -/
@@ -110,6 +122,28 @@ namespace Dyadic
   rw [_root_.Dyadic.toRat_pow]
   norm_cast
 
+/-- `toRat` turns a right shift into multiplication by a negative power of
+two. -/
+theorem toRat_shiftRight (x : _root_.Dyadic) (i : Int) :
+    (x >>> i).toRat = x.toRat * (2 : ℚ) ^ (-i) := by
+  cases x with
+  | zero => simp [HShiftRight.hShiftRight, _root_.Dyadic.shiftRight]
+  | ofOdd n k hn =>
+      show (_root_.Dyadic.ofOdd n (k + i) hn).toRat = _
+      rw [_root_.Dyadic.toRat_ofOdd_eq_mul_two_pow,
+        _root_.Dyadic.toRat_ofOdd_eq_mul_two_pow,
+        show -(k + i) = -k + -i by ring, zpow_add₀ (by norm_num)]
+      ring
+
+/-- The real value of a right shift is multiplication by a negative power of
+two. -/
+theorem toReal_shiftRight (x : _root_.Dyadic) (i : Int) :
+    toReal (x >>> i) = toReal x * (2 : ℝ) ^ (-i) := by
+  unfold toReal
+  rw [toRat_shiftRight]
+  push_cast
+  ring
+
 /-- Real-value comparison reflects and preserves dyadic non-strict order. -/
 @[simp] theorem toReal_le_toReal_iff {x y : _root_.Dyadic} :
     toReal x ≤ toReal y ↔ x ≤ y := by
@@ -150,6 +184,51 @@ theorem toReal_injective : Function.Injective toReal := by
   split <;> rename_i h
   · rw [max_eq_right (toReal_le_toReal_iff.mpr h)]
   · rw [max_eq_left (le_of_not_ge fun h' => h (toReal_le_toReal_iff.mp h'))]
+
+/-- The real-value map preserves the executable dyadic minimum. -/
+@[simp] theorem toReal_min (x y : _root_.Dyadic) :
+    toReal (Hex.Dyadic.min x y) = min (toReal x) (toReal y) := by
+  unfold Hex.Dyadic.min
+  split <;> rename_i h
+  · rw [min_eq_left (toReal_le_toReal_iff.mpr h)]
+  · rw [min_eq_right (le_of_not_ge fun h' => h (toReal_le_toReal_iff.mp h'))]
+
+/-- The executable dyadic ceiling logarithm bounds every positive dyadic by
+the corresponding power of two. -/
+theorem toReal_le_two_pow_ceilLog2 (x : _root_.Dyadic) (hx : 0 < toReal x) :
+    toReal x ≤ (2 : ℝ) ^ Hex.Dyadic.ceilLog2 x := by
+  cases x with
+  | zero => simp at hx
+  | ofOdd n k hn =>
+      have htr : toReal (_root_.Dyadic.ofOdd n k hn) =
+          (n : ℝ) * 2 ^ (-k : Int) := by
+        unfold toReal
+        rw [_root_.Dyadic.toRat_ofOdd_eq_mul_two_pow]
+        push_cast
+        ring
+      have h2k : (0 : ℝ) < 2 ^ (-k : Int) :=
+        zpow_pos (by norm_num) _
+      have hn0 : 0 < n := by
+        by_contra h
+        rw [htr] at hx
+        have hnle : (n : ℝ) ≤ 0 := by exact_mod_cast (not_lt.mp h)
+        nlinarith
+      have hcl : Hex.Dyadic.ceilLog2 (_root_.Dyadic.ofOdd n k hn) =
+          (Hex.ceilLog2 n.toNat : Int) - k := by
+        show (if n < 0 then (0 : Int) else (Hex.ceilLog2 n.toNat : Int) - k) = _
+        rw [if_neg (by omega)]
+      have hnle : (n : ℝ) ≤ (2 : ℝ) ^ Hex.ceilLog2 n.toNat := by
+        have hnat := le_two_pow_ceilLog2 n.toNat
+        have hcast : (n.toNat : ℝ) ≤ (2 : ℝ) ^ Hex.ceilLog2 n.toNat := by
+          exact_mod_cast hnat
+        calc
+          (n : ℝ) = (n.toNat : ℝ) := by
+            exact_mod_cast (Int.toNat_of_nonneg (le_of_lt hn0)).symm
+          _ ≤ _ := hcast
+      rw [htr, hcl, show (Hex.ceilLog2 n.toNat : Int) - k =
+          (Hex.ceilLog2 n.toNat : Int) + (-k) by ring,
+        zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0), zpow_natCast]
+      exact mul_le_mul_of_nonneg_right hnle h2k.le
 
 /-- The real value of `n * 2 ^ (-prec)` represented as a dyadic. -/
 @[simp] theorem toReal_ofIntWithPrec (n prec : Int) :
