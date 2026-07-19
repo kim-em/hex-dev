@@ -13,6 +13,7 @@ public import HexRootsMathlib.Bisection
 public import HexRootsMathlib.Cauchy
 public import HexRootsMathlib.Certificate
 public import HexRootsMathlib.CircleIntegralLemmas
+public import HexRootsMathlib.Completeness.PelletTail
 public import HexRootsMathlib.Component
 public import HexRootsMathlib.Driver
 public import HexRootsMathlib.Geometry
