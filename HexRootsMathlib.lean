@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexRootsMathlib.ArgumentTopology
 public import HexRootsMathlib.Basic
 public import HexRootsMathlib.Bisection
 public import HexRootsMathlib.Cauchy
