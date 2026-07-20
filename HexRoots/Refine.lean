@@ -16,13 +16,14 @@ public section
 The shared fuel-based driver loop of the complex root isolator, and the
 thin `DyadicRootIsolation.refineTo?` wrapper over it.
 
-`isolateLoop` refines a worklist of components round by round. Up to the
-fixed `completenessDepth`, every round globally subdivides and reglues all
+`isolateLoop` refines a worklist of components round by round. A round emits
+when all components certify at stored precision at least `target`, their
+circumscribed discs are pairwise disjoint, and either every certificate is
+already an atom or the worklist has reached the fixed `completenessDepth`.
+Before that depth, a non-emitting round globally subdivides and reglues all
 survivors; this eliminates rootless halo components and is the invariant used
-by the completeness proof. Once that depth has been reached, a round emits
-when all components certify at stored precision at least `target` with
-pairwise disjoint circumscribed discs. Otherwise the hold/adopt optimization
-takes over while the loop recurses on the smaller fuel. The fuel counts down
+by the completeness proof. Afterwards the hold/adopt optimization takes over
+while the loop recurses on the smaller fuel. The fuel counts down
 structurally on a `Nat`, so the recursion needs no termination proof;
 `stopDepth p target` fixes the depth at which the drivers give up, following
 the SPEC "Termination" and "Separation of the output" sections. Every
@@ -129,6 +130,14 @@ namespace IsolationLoop
     (tried : Array (Component × Option (Certified p))) : Array (Certified p) :=
   tried.filterMap (·.2)
 
+/-- Every successful certificate is already an atom. Failures do not matter:
+    the separate `allReady` guard rejects them before emission. -/
+@[expose] def allAtoms {p : ZPoly}
+    (tried : Array (Component × Option (Certified p))) : Bool :=
+  (outputs tried).all fun
+    | .atom _ => true
+    | .cluster _ => false
+
 /-- The stored squares of successful attempts are pairwise disjoint. -/
 @[expose] def disjoint {p : ZPoly}
     (tried : Array (Component × Option (Certified p))) : Bool :=
@@ -176,12 +185,13 @@ all squares refine and reglue globally; afterwards this is `nextLocal`. -/
 
 end IsolationLoop
 
-/-- The shared driver loop over the worklist. Before every component reaches
-    `completenessDepth`, the round globally refines and reglues the retained
-    squares, irrespective of attempted certificates. At and beyond that depth,
-    if all components certify at stored prec at least `target` with pairwise
-    disjoint circumscribed discs (SPEC "Separation of the output"), the round
-    emits them. Otherwise: a component already certified at target whose disc
+/-- The shared driver loop over the worklist. It may emit before
+    `completenessDepth` when every result is already an atom and target-ready,
+    with pairwise-disjoint discs (SPEC "Separation of the output"). Before
+    that depth, every non-emitting round globally refines and reglues the
+    retained squares, irrespective of attempted certificates. At and beyond
+    that depth, ready and disjoint cluster results may emit too. Otherwise: a
+    component already certified at target whose disc
     is disjoint from every other certified disc holds its position; every
     other surviving component subdivides one level, except that one adopting
     a strictly finer certified result keeps that result as a one-square
@@ -202,7 +212,7 @@ end IsolationLoop
   | fuel + 1, work =>
     if work.isEmpty then some #[] else
     let tried := IsolationLoop.attempts p strategy work
-    if IsolationLoop.normalized p target tried &&
+    if (IsolationLoop.normalized p target tried || IsolationLoop.allAtoms tried) &&
         (IsolationLoop.allReady target tried && IsolationLoop.disjoint tried) then
       some (IsolationLoop.outputs tried)
     else

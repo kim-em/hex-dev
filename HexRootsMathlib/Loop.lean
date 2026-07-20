@@ -318,7 +318,8 @@ theorem isolateLoop_covers {p : Hex.ZPoly} {target : Int}
         simp [Worklist.region] at hz
       · rename_i hnonempty
         let tried := Hex.IsolationLoop.attempts p strategy work
-        change (if Hex.IsolationLoop.normalized p target tried &&
+        change (if (Hex.IsolationLoop.normalized p target tried ||
+              Hex.IsolationLoop.allAtoms tried) &&
             (Hex.IsolationLoop.allReady target tried &&
               Hex.IsolationLoop.disjoint tried) then
           some (Hex.IsolationLoop.outputs tried)
@@ -387,7 +388,8 @@ theorem isolateLoop_ready_disjoint {p : Hex.ZPoly} {target : Int}
         subst rs
         simp [Hex.pairwiseDisjoint]
       · let tried := Hex.IsolationLoop.attempts p strategy work
-        change (if Hex.IsolationLoop.normalized p target tried &&
+        change (if (Hex.IsolationLoop.normalized p target tried ||
+              Hex.IsolationLoop.allAtoms tried) &&
             (Hex.IsolationLoop.allReady target tried &&
               Hex.IsolationLoop.disjoint tried) then
           some (Hex.IsolationLoop.outputs tried)

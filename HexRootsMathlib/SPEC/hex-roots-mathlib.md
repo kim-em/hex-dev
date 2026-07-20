@@ -437,9 +437,12 @@ and it is the analytically hardest part:
     adjacent to the component containing that root and hence glued into it.
     The preceding NK and Pellet converses then make every component pass
     `certify?` with `k = 1` under `.nk`, `.pellet`, and `.nkThenPellet`.
-    Mahler separation makes their stored discs pairwise disjoint. The proof
-    carries coverage and precision through the actual `refineAll`, closes the
-    structural fuel induction for `isolateLoop`/`isolateAll?`, and proves:
+    Mahler separation makes their stored discs pairwise disjoint. An
+    already-ready, pairwise-disjoint all-atom worklist may emit before that
+    depth; the fuel induction discharges this fast path directly from the
+    executable `allAtoms` guard. Otherwise the proof carries coverage and
+    precision through the actual `refineAll`, closes the structural fuel
+    induction for `isolateLoop`/`isolateAll?`, and proves:
 
     ```lean
     theorem isolate_isSome (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)

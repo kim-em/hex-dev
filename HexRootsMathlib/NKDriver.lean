@@ -91,7 +91,8 @@ theorem isolateLoop_nk_atoms {p : Hex.ZPoly} {target : Int} {fuel : Nat}
         subst rs
         simp
       · let tried := Hex.IsolationLoop.attempts p .nk work
-        change (if Hex.IsolationLoop.normalized p target tried &&
+        change (if (Hex.IsolationLoop.normalized p target tried ||
+              Hex.IsolationLoop.allAtoms tried) &&
             (Hex.IsolationLoop.allReady target tried &&
               Hex.IsolationLoop.disjoint tried) then
           some (Hex.IsolationLoop.outputs tried)

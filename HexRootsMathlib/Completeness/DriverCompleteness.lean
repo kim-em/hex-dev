@@ -936,6 +936,21 @@ theorem refineAll_outputs_atoms {p : Hex.ZPoly}
   rw [hocert, hcert] at htr
   exact ⟨iso, Option.some.inj htr |>.symm⟩
 
+/-- The executable early-emission guard exposes precisely the fact needed by
+the all-atoms driver: every successful result is an atom. -/
+private theorem allAtoms_outputs {p : Hex.ZPoly}
+    {tried : Array (Hex.Component × Option (Hex.Certified p))}
+    (h : Hex.IsolationLoop.allAtoms tried = true) :
+    ∀ r ∈ (Hex.IsolationLoop.outputs tried).toList,
+      ∃ iso : Hex.DyadicRootIsolation p, r = .atom iso := by
+  rw [Hex.IsolationLoop.allAtoms,
+    Array.all_eq_true_iff_forall_mem] at h
+  intro r hr
+  specialize h r (Array.mem_toList_iff.mp hr)
+  cases r with
+  | atom iso => exact ⟨iso, rfl⟩
+  | cluster c => simp at h
+
 /-- Once the last global round has been formed, one positive fuel step emits
 its target-ready, pairwise-disjoint atom certificates. -/
 theorem isolateLoop_refineAll_success {p : Hex.ZPoly}
@@ -1008,32 +1023,41 @@ theorem isolateLoop_complete_of_fuel {p : Hex.ZPoly}
         exact refineAll_mem_prec hprec hd hs
       have hcover' : Worklist.Covers p (Hex.Component.refineAll p work) :=
         refineAll_covers hcover
-      by_cases hlast : Hex.completenessDepth p target ≤ prec + 1
-      · have heq : Hex.completenessDepth p target = prec + 1 := by omega
-        have hdepth : (Hex.separationDepth p : Int) + 5 ≤ prec + 1 := by
-          rw [← heq]
-          simp [Hex.completenessDepth]
-        have htarget : target + 5 ≤ prec + 1 := by
-          rw [← heq]
-          simp [Hex.completenessDepth]
-        cases fuel with
-        | zero =>
-            rw [heq] at hfuel
-            norm_num at hfuel
-        | succ fuel' =>
-            obtain ⟨rs, hrec, hatoms⟩ := isolateLoop_refineAll_success
-              hp hsize hsep hdepth htarget hsepTarget (by omega) hprec hcover
-              strategy fuel'
-            refine ⟨rs, ?_, hatoms⟩
-            rw [Hex.isolateLoop]
-            simp [hempty, tried, hnormFalse, hnext, hrec]
-      · have hlt' : prec + 1 < Hex.completenessDepth p target := by omega
-        have hfuel' : (Hex.completenessDepth p target - (prec + 1)).toNat < fuel := by
-          omega
-        obtain ⟨rs, hrec, hatoms⟩ := ih hprec' hcover' hlt' hfuel'
-        refine ⟨rs, ?_, hatoms⟩
+      by_cases hearly : (Hex.IsolationLoop.allAtoms tried &&
+          (Hex.IsolationLoop.allReady target tried &&
+            Hex.IsolationLoop.disjoint tried)) = true
+      · have hearly' := hearly
+        simp only [Bool.and_eq_true] at hearly'
+        refine ⟨Hex.IsolationLoop.outputs tried, ?_,
+          allAtoms_outputs hearly'.1⟩
         rw [Hex.isolateLoop]
-        simp [hempty, tried, hnormFalse, hnext, hrec]
+        simp [hempty, tried, hnormFalse, hearly]
+      · by_cases hlast : Hex.completenessDepth p target ≤ prec + 1
+        · have heq : Hex.completenessDepth p target = prec + 1 := by omega
+          have hdepth : (Hex.separationDepth p : Int) + 5 ≤ prec + 1 := by
+            rw [← heq]
+            simp [Hex.completenessDepth]
+          have htarget : target + 5 ≤ prec + 1 := by
+            rw [← heq]
+            simp [Hex.completenessDepth]
+          cases fuel with
+          | zero =>
+              rw [heq] at hfuel
+              norm_num at hfuel
+          | succ fuel' =>
+              obtain ⟨rs, hrec, hatoms⟩ := isolateLoop_refineAll_success
+                hp hsize hsep hdepth htarget hsepTarget (by omega) hprec hcover
+                strategy fuel'
+              refine ⟨rs, ?_, hatoms⟩
+              rw [Hex.isolateLoop]
+              simp [hempty, tried, hnormFalse, hearly, hnext, hrec]
+        · have hlt' : prec + 1 < Hex.completenessDepth p target := by omega
+          have hfuel' : (Hex.completenessDepth p target - (prec + 1)).toNat < fuel := by
+            omega
+          obtain ⟨rs, hrec, hatoms⟩ := ih hprec' hcover' hlt' hfuel'
+          refine ⟨rs, ?_, hatoms⟩
+          rw [Hex.isolateLoop]
+          simp [hempty, tried, hnormFalse, hearly, hnext, hrec]
 
 /-- The executable `fuelFor` budget is sufficient for a Cauchy-started run,
 for every atom strategy. -/

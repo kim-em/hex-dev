@@ -444,8 +444,9 @@ depth lives inside `separationDepth` (below). Before
 completenessDepth p target := max target (separationDepth p) + 5
 ```
 
-the driver ignores attempted certificates and globally subdivides and
-reglues the complete survivor set. At this depth, every component is
+each non-emitting driver round globally subdivides and reglues the complete
+survivor set. The driver may emit earlier only when every ready,
+pairwise-disjoint result is already an atom. At this depth, every component is
 root-bearing; the Mathlib companion proves that all three strategies
 certify it as an atom and that the atom discs are pairwise disjoint.
 Thus `isolate` returns `some` for every nonzero squarefree input.
@@ -469,7 +470,8 @@ double-counting. A component whose squares contain no root (its
 neighbouring component and captures the neighbour's root. The driver
 therefore emits a set of certified results only when the
 circumscribed discs of their stored squares are **pairwise
-disjoint** (one dyadic comparison per pair, as in the `SimpleRoot`
+disjoint** and, before `completenessDepth`, every result is already an atom
+(one dyadic comparison per pair, as in the `SimpleRoot`
 intersection test); components violating the check keep subdividing,
 while a component already certified at target with a disc disjoint
 from every other certified disc holds its position (continuing to
@@ -491,7 +493,8 @@ global-refinement prefix, all retained squares are reglued together each
 round. Consequently every component at `completenessDepth` contains its
 associated root: a rootless survivor halo is adjacent to the component
 containing that root and is glued into it. Only after this invariant has
-been established may a ready and disjoint component hold its position.
+been established may a non-emitting ready and disjoint component hold its
+position; an all-atom worklist can instead emit early.
 
 Roots that sit exactly on a dyadic grid point are not a problem for
 atomization: the Newton step recentres the square on the root itself
