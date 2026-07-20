@@ -311,6 +311,23 @@ de-privatized (an exposed public definition may not reference a
 `private` one); see the hex-real-roots SPEC. `Dyadic.toReal`'s unfolding is provided by a
 cast lemma rather than cross-module defeq.
 
+**Interval literals.** The emitted term re-bases `intervals` on
+pretty rational literals (`m`, or `m / 2^k` in lowest terms) via
+`IsolatedRealRoots.ofCertPretty`, which wraps the replay constructor
+in `withIntervals`: any interval vector whose endpoints agree with
+the isolator's **as reals** carries the same three theorems. The
+endpoint identities are stated against the literal `iso` argument
+itself (`Dyadic.toReal` of each reified dyadic — a shape user
+modules check without reducing any of this library's definitions)
+and discharged through the `toReal` cast lemmas, so no `Rat`
+normalization (and hence no `Nat.gcd`) comes near the kernel. With
+`intervals` definitionally a `#v[…]` literal, user-side endpoint
+extraction is a definitional step:
+`rw [show H.intervals = #v[…] from rfl]`. The wrappers this step
+unfolds (`withIntervals`, `ofCertPretty`, `congrRoots`) are
+`@[expose]`d so the reduction works from module-system files; it
+never reaches `ofCert` itself.
+
 **Errors** are user-grade and distinguish: the zero polynomial
 ("every real number is a root"), non-integer coefficients,
 unsupported polynomial syntax, non-closed input (free variables or

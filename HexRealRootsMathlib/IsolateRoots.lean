@@ -67,7 +67,7 @@ structure IsolatedRealRoots {R : Type*} [CommRing R] [Algebra R ℝ]
 twice by the elaborator: the squarefree-core step and the user-polynomial
 step. Heterogeneous in the coefficient ring, since the structure only sees `P`
 through `aeval x P = 0`. -/
-noncomputable def IsolatedRealRoots.congrRoots {R S : Type*} [CommRing R] [Algebra R ℝ]
+@[expose] noncomputable def IsolatedRealRoots.congrRoots {R S : Type*} [CommRing R] [Algebra R ℝ]
     [CommRing S] [Algebra S ℝ] {P : Polynomial R} {Q : Polynomial S} {n : ℕ}
     (h : ∀ x : ℝ, aeval x P = 0 ↔ aeval x Q = 0) :
     IsolatedRealRoots P n → IsolatedRealRoots Q n := fun H =>
@@ -216,6 +216,73 @@ noncomputable def IsolatedRealRoots.ofCert {p : Hex.ZPoly} {chain : Array Hex.ZP
         ordered := Hex.ordered_of_adjacent hordered
         complete := iso.size_toArray.trans
           (hcomplete.symm.trans (Hex.ZPoly.rootCount_eq_of_cert hcert).symm) }
+
+/-! ## Pretty interval literals -/
+
+/-- Re-express an isolation over different interval literals: any vector whose
+endpoints agree with the originals **as reals** carries the same three
+theorems. Stating the agreement over `ℝ` matters: it never normalizes a
+rational (no `Rat` gcd anywhere near the kernel), so the elaborator can
+discharge it by `norm_num` through the dyadic cast lemmas and present the
+intervals as pretty `m / 2^k` literals. With a literal `intervals` field,
+user-side extraction is a definitional step:
+`show H.intervals = #v[…] from rfl`. -/
+@[expose] noncomputable def IsolatedRealRoots.withIntervals {R : Type*} [CommRing R] [Algebra R ℝ]
+    {P : Polynomial R} {n : ℕ} (H : IsolatedRealRoots P n) (w : Vector (ℚ × ℚ) n)
+    (hw : ∀ i : Fin n,
+      ((w[i].1 : ℚ) : ℝ) = ((H.intervals[i].1 : ℚ) : ℝ) ∧
+      ((w[i].2 : ℚ) : ℝ) = ((H.intervals[i].2 : ℚ) : ℝ)) :
+    IsolatedRealRoots P n where
+  intervals := w
+  unique_root i := by
+    rw [(hw i).1, (hw i).2]
+    exact H.unique_root i
+  covers x hx := by
+    obtain ⟨i, h1, h2⟩ := H.covers x hx
+    exact ⟨i, by rw [(hw i).1]; exact h1, by rw [(hw i).2]; exact h2⟩
+  ordered i j hij := by
+    have h := H.ordered i j hij
+    have hr : ((w[i].2 : ℚ) : ℝ) ≤ ((w[j].1 : ℚ) : ℝ) := by
+      rw [(hw i).2, (hw j).1]
+      exact_mod_cast h
+    exact_mod_cast hr
+
+/-- The `intervals` of `ofCert` are the `toRat` images of the supplied
+isolations' dyadic endpoints. -/
+theorem IsolatedRealRoots.ofCert_intervals {p : Hex.ZPoly} {chain : Array Hex.ZPoly} {n : ℕ}
+    (iso : Vector (Hex.RealRootIsolation p) n) (hsize : p.size ≠ 0)
+    (hsf : Hex.ZPoly.hasSquarefreeSturmChain p = true) (hcert : Hex.SturmChainCert p chain)
+    (hordered : Hex.orderedAdjacent iso.toArray = true)
+    (hcomplete : Hex.sturmVarNegInf chain - Hex.sturmVarPosInf chain = n) (i : Fin n) :
+    (IsolatedRealRoots.ofCert iso hsize hsf hcert hordered hcomplete).intervals[i] =
+      ((iso[i]).interval.lower.toRat, (iso[i]).interval.upper.toRat) := by
+  obtain ⟨arr, rfl⟩ := iso
+  simp [IsolatedRealRoots.ofCert, IsolatedRealRoots.of]
+
+/-- `ofCert`, re-based on pretty rational interval literals. `w`'s endpoints
+are tied to the isolations' dyadics by ℝ-level identities against the literal
+`iso` argument — a shape user modules can check without reducing any of this
+library's definitions, and with no `Rat` normalization near the kernel. This
+is the constructor the `isolate_roots` elaborator emits: with `intervals`
+definitionally the literal `w`, user-side extraction is
+`show H.intervals = #v[…] from rfl`. -/
+@[expose] noncomputable def IsolatedRealRoots.ofCertPretty {p : Hex.ZPoly} {chain : Array Hex.ZPoly}
+    {n : ℕ} (iso : Vector (Hex.RealRootIsolation p) n) (w : Vector (ℚ × ℚ) n)
+    (hsize : p.size ≠ 0)
+    (hsf : Hex.ZPoly.hasSquarefreeSturmChain p = true) (hcert : Hex.SturmChainCert p chain)
+    (hordered : Hex.orderedAdjacent iso.toArray = true)
+    (hcomplete : Hex.sturmVarNegInf chain - Hex.sturmVarPosInf chain = n)
+    (hw : ∀ i : Fin n,
+      ((w[i].1 : ℚ) : ℝ) = Dyadic.toReal (iso[i]).interval.lower ∧
+      ((w[i].2 : ℚ) : ℝ) = Dyadic.toReal (iso[i]).interval.upper) :
+    Hex.IsolatedRealRoots (HexPolyZMathlib.toPolynomial p) n :=
+  IsolatedRealRoots.withIntervals
+    (IsolatedRealRoots.ofCert iso hsize hsf hcert hordered hcomplete) w (by
+    intro i
+    have he := IsolatedRealRoots.ofCert_intervals iso hsize hsf hcert hordered hcomplete i
+    constructor
+    · rw [(hw i).1, he, toReal_eq_cast_toRat]
+    · rw [(hw i).2, he, toReal_eq_cast_toRat])
 
 /-! ## The bridge tactic -/
 

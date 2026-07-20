@@ -175,3 +175,20 @@ private def openZ : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[-2, 0, 0, 0, 1]
 noncomputable example :
     Hex.IsolatedRealRoots (HexPolyZMathlib.toPolynomial openZ) 2 :=
   isolate_roots openZ
+
+/-- The `intervals` field is definitionally a literal vector of pretty
+rationals: extraction is `rfl`, even for refined (fractional) endpoints.
+No `Rat` normalization stands between the user and the endpoints. -/
+noncomputable example : Hex.IsolatedRealRoots (X ^ 4 - 2 : Polynomial ℝ) 2 :=
+  isolate_roots (X ^ 4 - 2 : Polynomial ℝ)
+
+example :
+    (isolate_roots (X ^ 4 - 2 : Polynomial ℝ) :
+      Hex.IsolatedRealRoots (X ^ 4 - 2 : Polynomial ℝ) 2).intervals =
+    #v[((-4 : ℚ), (0 : ℚ)), ((0 : ℚ), (4 : ℚ))] := rfl
+
+example :
+    (isolate_roots (width := 2 ^ (-20 : ℤ)) (X ^ 4 - 2 : Polynomial ℝ) :
+      Hex.IsolatedRealRoots (X ^ 4 - 2 : Polynomial ℝ) 2).intervals =
+    #v[((-1246975 / 2 ^ 20 : ℚ), (-623487 / 2 ^ 19 : ℚ)),
+       ((623487 / 2 ^ 19 : ℚ), (1246975 / 2 ^ 20 : ℚ))] := rfl
