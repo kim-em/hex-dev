@@ -372,7 +372,6 @@ theorem pow_le_two_pow_sepExp (n L : ℕ) :
         apply mul_le_mul hnpow hLpow (by positivity) (by positivity)
     _ = 2 ^ (((n + 2) * cn + 1) / 2 + (n - 1) * cL) := by rw [← pow_add]
 
-open Finset Matrix in
 /-- **Mahler's separation bound.** For a `p` whose rational image is separable
 (equivalently squarefree over `ℚ`; `squareFreeRat_iff` discharges this from
 `Hex.SquareFreeRat`), any two distinct complex roots of `toPolyℂ p` are more than
@@ -383,15 +382,6 @@ theorem sepPrec_separates (p : Hex.ZPoly)
     ∀ z₁ z₂ : ℂ, (toPolyℂ p).IsRoot z₁ → (toPolyℂ p).IsRoot z₂ → z₁ ≠ z₂ →
       (2 : ℝ) ^ (-(Hex.sepPrec p : ℤ)) < ‖z₁ - z₂‖ / 4 := by
   intro z₁ z₂ hr1 hr2 hne
-  -- Symmetric in `z₁, z₂`; reduce to the case `‖z₁‖ ≤ ‖z₂‖`.
-  suffices key : ∀ w₁ w₂ : ℂ, (toPolyℂ p).IsRoot w₁ → (toPolyℂ p).IsRoot w₂ →
-      w₁ ≠ w₂ → ‖w₁‖ ≤ ‖w₂‖ → (2 : ℝ) ^ (-(Hex.sepPrec p : ℤ)) < ‖w₁ - w₂‖ / 4 by
-    rcases le_total ‖z₁‖ ‖z₂‖ with h | h
-    · exact key z₁ z₂ hr1 hr2 hne h
-    · have hh := key z₂ z₁ hr2 hr1 (Ne.symm hne) h
-      rwa [norm_sub_rev] at hh
-  clear hr1 hr2 hne z₁ z₂
-  intro z₁ z₂ hr1 hr2 hne hnorm
   classical
   set p' := toPolynomial p with hp'
   set f := toPolyℂ p with hf
@@ -400,36 +390,15 @@ theorem sepPrec_separates (p : Hex.ZPoly)
   have hp'0 : p' ≠ 0 := fun h => hsep.ne_zero (by rw [h, Polynomial.map_zero])
   have hf0 : f ≠ 0 := by
     rw [hfmap, ne_eq, Polynomial.map_eq_zero_iff (RingHom.injective_int _)]; exact hp'0
-  -- Splitting and separability over `ℂ`.
   have hsplit : f.Splits := IsAlgClosed.splits f
-  have hcomp : (algebraMap ℚ ℂ).comp (Int.castRingHom ℚ) = Int.castRingHom ℂ :=
-    RingHom.ext_int _ _
-  have hsepℂ : f.Separable := by
-    have hff : f = (p'.map (Int.castRingHom ℚ)).map (algebraMap ℚ ℂ) := by
-      rw [hfmap, Polynomial.map_map, hcomp]
-    rw [hff]; exact hsep.map
-  have hnd : f.roots.Nodup := nodup_roots hsepℂ
-  -- Enumerate the roots as `α : Fin ℓ.length → ℂ`.
   set ℓ := f.roots.toList with hℓ
-  have hℓnd : ℓ.Nodup := Multiset.coe_nodup.mp (by rw [hℓ, Multiset.coe_toList]; exact hnd)
-  set α : Fin ℓ.length → ℂ := ℓ.get with hαdef
-  have hαinj : Function.Injective α := List.nodup_iff_injective_get.mp hℓnd
-  have hroots : Multiset.map α univ.val = f.roots := by
-    rw [Fin.univ_val_map, hαdef, List.ofFn_get, hℓ, Multiset.coe_toList]
-  have hBnn : (0 : ℝ) ≤ ∏ j, max 1 ‖α j‖ :=
-    Finset.prod_nonneg (fun j _ => le_trans zero_le_one (le_max_left _ _))
-  have hlcBnn : (0 : ℝ) ≤ ‖f.leadingCoeff‖ * ∏ j, max 1 ‖α j‖ := mul_nonneg (norm_nonneg _) hBnn
-  -- Indices of `z₁, z₂`.
   have hz1L : z₁ ∈ ℓ := by
     rw [hℓ, ← Multiset.mem_coe, Multiset.coe_toList]; exact (mem_roots hf0).mpr hr1
   have hz2L : z₂ ∈ ℓ := by
     rw [hℓ, ← Multiset.mem_coe, Multiset.coe_toList]; exact (mem_roots hf0).mpr hr2
   obtain ⟨i₀, hi₀⟩ := List.mem_iff_get.mp hz1L
   obtain ⟨i₁, hi₁⟩ := List.mem_iff_get.mp hz2L
-  have hαi0 : α i₀ = z₁ := hi₀
-  have hαi1 : α i₁ = z₂ := hi₁
-  have hii : i₀ ≠ i₁ := fun h => hne (by rw [← hαi0, ← hαi1, h])
-  -- Degree facts. `m := ℓ.length = f.natDegree ≥ 2`.
+  have hii : i₀ ≠ i₁ := fun h => hne (by rw [← hi₀, ← hi₁, h])
   have hcard : Multiset.card f.roots = f.natDegree := splits_iff_card_roots.mp hsplit
   have hlen : ℓ.length = f.natDegree := by rw [hℓ, Multiset.length_toList, hcard]
   have hnatf : f.natDegree = ℓ.length := hlen.symm
@@ -437,47 +406,8 @@ theorem sepPrec_separates (p : Hex.ZPoly)
     have h0 := i₀.isLt; have h1 := i₁.isLt
     have : i₀.val ≠ i₁.val := fun h => hii (Fin.ext h)
     omega
-  have hdegf : 0 < f.degree :=
-    natDegree_pos_iff_degree_pos.mp (by omega)
-  -- Lower bound on the discriminant.
   have hnatp' : p'.natDegree = f.natDegree := by
     rw [hfmap]; exact (Polynomial.natDegree_map_eq_of_injective (RingHom.injective_int _) p').symm
-  have hdeg' : 0 < p'.degree := natDegree_pos_iff_degree_pos.mp (by rw [hnatp']; omega)
-  have hdiscZ : 1 ≤ |p'.discr| := Polynomial.one_le_abs_discr hdeg' hsep
-  have hdiscnorm : (1 : ℝ) ≤ ‖f.discr‖ := by
-    have hmap : f.discr = ((p'.discr : ℤ) : ℂ) := by
-      rw [hfmap, Polynomial.discr_map_of_injective (Int.castRingHom ℂ)
-        (RingHom.injective_int _) hdeg']; simp
-    rw [hmap, Complex.norm_intCast]; exact_mod_cast hdiscZ
-  have hdisceq := HexPolyZMathlib.norm_discr_eq α hαinj hdegf hsplit hroots.symm
-  rw [hnatf] at hdisceq
-  -- `A := ‖lc‖^{m-1}·‖det V‖ ≥ 1`.
-  set V := (Matrix.vandermonde α).det with hV
-  have hAsq : (‖f.leadingCoeff‖ ^ (ℓ.length - 1) * ‖V‖) ^ 2
-      = ‖f.leadingCoeff‖ ^ (2 * ℓ.length - 2) * ‖V‖ ^ 2 := by
-    rw [mul_pow, ← pow_mul]; congr 2; omega
-  have hAnn : (0 : ℝ) ≤ ‖f.leadingCoeff‖ ^ (ℓ.length - 1) * ‖V‖ := by positivity
-  have hA1 : (1 : ℝ) ≤ ‖f.leadingCoeff‖ ^ (ℓ.length - 1) * ‖V‖ := by
-    have hsq1 : (1 : ℝ) ≤ (‖f.leadingCoeff‖ ^ (ℓ.length - 1) * ‖V‖) ^ 2 := by
-      rw [hAsq, ← hdisceq]; exact hdiscnorm
-    nlinarith [hsq1, hAnn]
-  -- The Mahler/Hadamard bound.
-  have hnormα : ‖α i₀‖ ≤ ‖α i₁‖ := by rw [hαi0, hαi1]; exact hnorm
-  have hcrux := HexPolyZMathlib.norm_det_vandermonde_le hN2 f.leadingCoeff α hii hnormα
-  -- `√m^{m-1}·√(∑ i²) ≤ √m^{m+2}`.
-  have hsqrtstep :
-      Real.sqrt ℓ.length ^ (ℓ.length - 1) * Real.sqrt (∑ i : Fin ℓ.length, ((i : ℕ) : ℝ) ^ 2)
-        ≤ Real.sqrt ℓ.length ^ (ℓ.length + 2) := by
-    calc Real.sqrt ℓ.length ^ (ℓ.length - 1)
-          * Real.sqrt (∑ i : Fin ℓ.length, ((i : ℕ) : ℝ) ^ 2)
-        ≤ Real.sqrt ℓ.length ^ (ℓ.length - 1) * Real.sqrt ℓ.length ^ 3 :=
-          mul_le_mul_of_nonneg_left (HexPolyZMathlib.sqrt_sum_sq_le ℓ.length) (by positivity)
-      _ = Real.sqrt ℓ.length ^ (ℓ.length + 2) := by rw [← pow_add]; congr 1; omega
-  -- The Mahler measure identity `M = ‖lc‖ · ∏ max(1,‖α j‖)` and Landau bound `M ≤ L`.
-  have hMprod : (f.roots.map (fun a => max 1 ‖a‖)).prod = ∏ j, max 1 ‖α j‖ := by
-    rw [← hroots, Multiset.map_map]; rfl
-  have hM : ‖f.leadingCoeff‖ * ∏ j, max 1 ‖α j‖ = f.mahlerMeasure := by
-    rw [Polynomial.mahlerMeasure_eq_leadingCoeff_mul_prod_roots, hMprod]
   have hML : f.mahlerMeasure ≤ (Hex.ZPoly.coeffL2NormBound p : ℝ) := by
     have h1 : f.mahlerMeasure ≤ HexPolyZMathlib.l2norm p' := by
       rw [hfmap]; exact HexPolyZMathlib.mahlerMeasure_le_l2norm p'
@@ -493,33 +423,22 @@ theorem sepPrec_separates (p : Hex.ZPoly)
     have hl2nn : (0 : ℝ) ≤ HexPolyZMathlib.l2norm p' := Real.sqrt_nonneg _
     have hLnn : (0 : ℝ) ≤ (Hex.ZPoly.coeffL2NormBound p : ℝ) := Nat.cast_nonneg _
     nlinarith [h1, hl2sq, hl2nn, hLnn]
-  have hMLpow : (‖f.leadingCoeff‖ * ∏ j, max 1 ‖α j‖) ^ (ℓ.length - 1)
+  have hMLpow : f.mahlerMeasure ^ (ℓ.length - 1)
       ≤ (Hex.ZPoly.coeffL2NormBound p : ℝ) ^ (ℓ.length - 1) :=
-    pow_le_pow_left₀ hlcBnn (by rw [hM]; exact hML) (ℓ.length - 1)
-  have hdiffx : ‖α i₁ - α i₀‖ = ‖z₁ - z₂‖ := by rw [hαi0, hαi1, norm_sub_rev]
+    pow_le_pow_left₀ (Polynomial.mahlerMeasure_nonneg _) hML (ℓ.length - 1)
   -- Assemble: `1 ≤ √m^{m+2} · L^{m-1} · ‖z₁ − z₂‖`.
   have hbig : (1 : ℝ) ≤ Real.sqrt ℓ.length ^ (ℓ.length + 2)
       * (Hex.ZPoly.coeffL2NormBound p : ℝ) ^ (ℓ.length - 1) * ‖z₁ - z₂‖ := by
-    calc (1 : ℝ) ≤ ‖f.leadingCoeff‖ ^ (ℓ.length - 1) * ‖V‖ := hA1
-      _ ≤ Real.sqrt ℓ.length ^ (ℓ.length - 1)
-            * Real.sqrt (∑ i : Fin ℓ.length, ((i : ℕ) : ℝ) ^ 2)
-            * (‖f.leadingCoeff‖ * ∏ j, max 1 ‖α j‖) ^ (ℓ.length - 1) * ‖α i₁ - α i₀‖ := hcrux
-      _ = (Real.sqrt ℓ.length ^ (ℓ.length - 1)
-            * Real.sqrt (∑ i : Fin ℓ.length, ((i : ℕ) : ℝ) ^ 2))
-            * ((‖f.leadingCoeff‖ * ∏ j, max 1 ‖α j‖) ^ (ℓ.length - 1) * ‖α i₁ - α i₀‖) := by
-          ring
+    have hshared := HexPolyZMathlib.one_le_mahlerDist
+      p' hsep (by simpa only [hfmap] using hr1)
+        (by simpa only [hfmap] using hr2) hne
+    rw [hnatp', hnatf] at hshared
+    calc (1 : ℝ) ≤ Real.sqrt ℓ.length ^ (ℓ.length + 2) *
+            f.mahlerMeasure ^ (ℓ.length - 1) * ‖z₁ - z₂‖ := hshared
       _ ≤ Real.sqrt ℓ.length ^ (ℓ.length + 2)
-            * ((‖f.leadingCoeff‖ * ∏ j, max 1 ‖α j‖) ^ (ℓ.length - 1) * ‖α i₁ - α i₀‖) :=
-          mul_le_mul_of_nonneg_right hsqrtstep
-            (mul_nonneg (pow_nonneg hlcBnn _) (norm_nonneg _))
-      _ = Real.sqrt ℓ.length ^ (ℓ.length + 2)
-            * (‖f.leadingCoeff‖ * ∏ j, max 1 ‖α j‖) ^ (ℓ.length - 1) * ‖α i₁ - α i₀‖ := by ring
-      _ ≤ Real.sqrt ℓ.length ^ (ℓ.length + 2)
-            * (Hex.ZPoly.coeffL2NormBound p : ℝ) ^ (ℓ.length - 1) * ‖α i₁ - α i₀‖ := by
+            * (Hex.ZPoly.coeffL2NormBound p : ℝ) ^ (ℓ.length - 1) * ‖z₁ - z₂‖ := by
           apply mul_le_mul_of_nonneg_right _ (norm_nonneg _)
           exact mul_le_mul_of_nonneg_left hMLpow (by positivity)
-      _ = Real.sqrt ℓ.length ^ (ℓ.length + 2)
-            * (Hex.ZPoly.coeffL2NormBound p : ℝ) ^ (ℓ.length - 1) * ‖z₁ - z₂‖ := by rw [hdiffx]
   -- Convert to `1 ≤ 2^E · ‖z₁ − z₂‖` and identify `sepPrec p = E + 3`.
   have hx0 : (0 : ℝ) < ‖z₁ - z₂‖ := norm_pos_iff.mpr (sub_ne_zero.mpr hne)
   have hdeg? : p.degree? = some ℓ.length := by

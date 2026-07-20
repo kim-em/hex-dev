@@ -260,6 +260,168 @@ theorem norm_discr_eq {N : ℕ} (α : Fin N → ℂ) (hα : Function.Injective �
   simp only [norm_mul, norm_pow, norm_neg, norm_one, one_pow, one_mul]
   rw [hroots, norm_prod_roots_eq_sq α hα]
 
+/-- The exponent-independent assembly of Mahler's root-separation argument.
+For two distinct roots of a separable integral polynomial, the product of
+their distance with the Hadamard degree factor and the appropriate power of
+the Mahler measure is at least one. Executable precision specializations need
+only bound the final two factors. -/
+theorem one_le_mahlerDist (p : ℤ[X])
+    (hsep : (p.map (Int.castRingHom ℚ)).Separable) {z₁ z₂ : ℂ}
+    (hr₁ : (p.map (Int.castRingHom ℂ)).IsRoot z₁)
+    (hr₂ : (p.map (Int.castRingHom ℂ)).IsRoot z₂) (hne : z₁ ≠ z₂) :
+    (1 : ℝ) ≤ Real.sqrt p.natDegree ^ (p.natDegree + 2) *
+      (p.map (Int.castRingHom ℂ)).mahlerMeasure ^ (p.natDegree - 1) *
+        ‖z₁ - z₂‖ := by
+  classical
+  let f := p.map (Int.castRingHom ℂ)
+  suffices key : ∀ w₁ w₂ : ℂ, f.IsRoot w₁ → f.IsRoot w₂ → w₁ ≠ w₂ →
+      ‖w₁‖ ≤ ‖w₂‖ →
+      (1 : ℝ) ≤ Real.sqrt p.natDegree ^ (p.natDegree + 2) *
+        f.mahlerMeasure ^ (p.natDegree - 1) * ‖w₁ - w₂‖ by
+    rcases le_total ‖z₁‖ ‖z₂‖ with h | h
+    · exact key z₁ z₂ hr₁ hr₂ hne h
+    · simpa only [f, norm_sub_rev] using
+        key z₂ z₁ hr₂ hr₁ hne.symm h
+  intro w₁ w₂ hw₁ hw₂ hwne hnorm
+  have hp0 : p ≠ 0 := fun h => hsep.ne_zero (by rw [h, Polynomial.map_zero])
+  have hf0 : f ≠ 0 := by
+    dsimp only [f]
+    rw [ne_eq, Polynomial.map_eq_zero_iff (RingHom.injective_int _)]
+    exact hp0
+  have hsplit : f.Splits := IsAlgClosed.splits f
+  have hcomp : (algebraMap ℚ ℂ).comp (Int.castRingHom ℚ) =
+      Int.castRingHom ℂ := RingHom.ext_int _ _
+  have hsepℂ : f.Separable := by
+    have hff : f = (p.map (Int.castRingHom ℚ)).map (algebraMap ℚ ℂ) := by
+      dsimp only [f]
+      rw [Polynomial.map_map, hcomp]
+    rw [hff]
+    exact hsep.map
+  have hnd : f.roots.Nodup := nodup_roots hsepℂ
+  let roots := f.roots.toList
+  have hrootsNodup : roots.Nodup := Multiset.coe_nodup.mp (by
+    dsimp only [roots]
+    rw [Multiset.coe_toList]
+    exact hnd)
+  let α : Fin roots.length → ℂ := roots.get
+  have hαinj : Function.Injective α :=
+    List.nodup_iff_injective_get.mp hrootsNodup
+  have hroots : Multiset.map α univ.val = f.roots := by
+    rw [Fin.univ_val_map]
+    dsimp only [α]
+    rw [List.ofFn_get]
+    dsimp only [roots]
+    rw [Multiset.coe_toList]
+  have hw₁List : w₁ ∈ roots := by
+    dsimp only [roots]
+    rw [← Multiset.mem_coe, Multiset.coe_toList]
+    exact (mem_roots hf0).mpr hw₁
+  have hw₂List : w₂ ∈ roots := by
+    dsimp only [roots]
+    rw [← Multiset.mem_coe, Multiset.coe_toList]
+    exact (mem_roots hf0).mpr hw₂
+  obtain ⟨i₀, hi₀⟩ := List.mem_iff_get.mp hw₁List
+  obtain ⟨i₁, hi₁⟩ := List.mem_iff_get.mp hw₂List
+  have hαi₀ : α i₀ = w₁ := hi₀
+  have hαi₁ : α i₁ = w₂ := hi₁
+  have hii : i₀ ≠ i₁ := fun h => hwne (by rw [← hαi₀, ← hαi₁, h])
+  have hcard : Multiset.card f.roots = f.natDegree :=
+    splits_iff_card_roots.mp hsplit
+  have hlen : roots.length = f.natDegree := by
+    dsimp only [roots]
+    rw [Multiset.length_toList, hcard]
+  have hnatf : f.natDegree = roots.length := hlen.symm
+  have hnatp : p.natDegree = f.natDegree := by
+    dsimp only [f]
+    exact (Polynomial.natDegree_map_eq_of_injective
+      (RingHom.injective_int _) p).symm
+  have hN2 : 2 ≤ roots.length := by
+    have h₀ := i₀.isLt
+    have h₁ := i₁.isLt
+    have : i₀.val ≠ i₁.val := fun h => hii (Fin.ext h)
+    omega
+  have hdegf : 0 < f.degree :=
+    natDegree_pos_iff_degree_pos.mp (by omega)
+  have hdegp : 0 < p.degree :=
+    natDegree_pos_iff_degree_pos.mp (by rw [hnatp, hnatf]; omega)
+  have hdiscZ : 1 ≤ |p.discr| := Polynomial.one_le_abs_discr hdegp hsep
+  have hdiscnorm : (1 : ℝ) ≤ ‖f.discr‖ := by
+    have hmap : f.discr = ((p.discr : ℤ) : ℂ) := by
+      dsimp only [f]
+      rw [Polynomial.discr_map_of_injective (Int.castRingHom ℂ)
+        (RingHom.injective_int _) hdegp]
+      simp
+    rw [hmap, Complex.norm_intCast]
+    exact_mod_cast hdiscZ
+  have hdisceq := norm_discr_eq α hαinj hdegf hsplit hroots.symm
+  rw [hnatf] at hdisceq
+  let V := (Matrix.vandermonde α).det
+  have hAsq : (‖f.leadingCoeff‖ ^ (roots.length - 1) * ‖V‖) ^ 2 =
+      ‖f.leadingCoeff‖ ^ (2 * roots.length - 2) * ‖V‖ ^ 2 := by
+    rw [mul_pow, ← pow_mul]
+    congr 2
+    omega
+  have hAnn : (0 : ℝ) ≤
+      ‖f.leadingCoeff‖ ^ (roots.length - 1) * ‖V‖ := by positivity
+  have hA1 : (1 : ℝ) ≤
+      ‖f.leadingCoeff‖ ^ (roots.length - 1) * ‖V‖ := by
+    have hsq1 : (1 : ℝ) ≤
+        (‖f.leadingCoeff‖ ^ (roots.length - 1) * ‖V‖) ^ 2 := by
+      rw [hAsq, ← hdisceq]
+      exact hdiscnorm
+    nlinarith [hsq1, hAnn]
+  have hnormα : ‖α i₀‖ ≤ ‖α i₁‖ := by
+    rw [hαi₀, hαi₁]
+    exact hnorm
+  have hcrux := norm_det_vandermonde_le
+    hN2 f.leadingCoeff α hii hnormα
+  have hsqrtstep :
+      Real.sqrt roots.length ^ (roots.length - 1) *
+          Real.sqrt (∑ i : Fin roots.length, ((i : ℕ) : ℝ) ^ 2) ≤
+        Real.sqrt roots.length ^ (roots.length + 2) := by
+    calc
+      Real.sqrt roots.length ^ (roots.length - 1) *
+          Real.sqrt (∑ i : Fin roots.length, ((i : ℕ) : ℝ) ^ 2)
+          ≤ Real.sqrt roots.length ^ (roots.length - 1) *
+              Real.sqrt roots.length ^ 3 :=
+            mul_le_mul_of_nonneg_left (sqrt_sum_sq_le roots.length)
+              (by positivity)
+      _ = Real.sqrt roots.length ^ (roots.length + 2) := by
+            rw [← pow_add]
+            congr 1
+            omega
+  have hMprod : (f.roots.map (fun a => max 1 ‖a‖)).prod =
+      ∏ j, max 1 ‖α j‖ := by
+    rw [← hroots, Multiset.map_map]
+    rfl
+  have hM : ‖f.leadingCoeff‖ * ∏ j, max 1 ‖α j‖ =
+      f.mahlerMeasure := by
+    rw [Polynomial.mahlerMeasure_eq_leadingCoeff_mul_prod_roots, hMprod]
+  have hdiff : ‖α i₁ - α i₀‖ = ‖w₁ - w₂‖ := by
+    rw [hαi₀, hαi₁, norm_sub_rev]
+  rw [hnatp, hnatf]
+  calc
+    (1 : ℝ) ≤ ‖f.leadingCoeff‖ ^ (roots.length - 1) * ‖V‖ := hA1
+    _ ≤ Real.sqrt roots.length ^ (roots.length - 1) *
+          Real.sqrt (∑ i : Fin roots.length, ((i : ℕ) : ℝ) ^ 2) *
+          (‖f.leadingCoeff‖ * ∏ j, max 1 ‖α j‖) ^
+            (roots.length - 1) * ‖α i₁ - α i₀‖ := hcrux
+    _ = (Real.sqrt roots.length ^ (roots.length - 1) *
+          Real.sqrt (∑ i : Fin roots.length, ((i : ℕ) : ℝ) ^ 2)) *
+          ((‖f.leadingCoeff‖ * ∏ j, max 1 ‖α j‖) ^
+            (roots.length - 1) * ‖α i₁ - α i₀‖) := by ring
+    _ ≤ Real.sqrt roots.length ^ (roots.length + 2) *
+          ((‖f.leadingCoeff‖ * ∏ j, max 1 ‖α j‖) ^
+            (roots.length - 1) * ‖α i₁ - α i₀‖) :=
+        mul_le_mul_of_nonneg_right hsqrtstep
+          (mul_nonneg (pow_nonneg (mul_nonneg (norm_nonneg _)
+            (Finset.prod_nonneg (fun j _ => le_trans zero_le_one
+              (le_max_left _ _)))) _) (norm_nonneg _))
+    _ = Real.sqrt roots.length ^ (roots.length + 2) *
+          f.mahlerMeasure ^ (roots.length - 1) * ‖w₁ - w₂‖ := by
+        rw [hM, hdiff]
+        ring
+
 end
 
 end HexPolyZMathlib
