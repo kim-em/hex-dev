@@ -229,22 +229,18 @@ meta partial def parsePoly (isRat : Bool) (fuel : Nat) (e : Expr) : MetaM Hex.ZP
     -- `Polynomial.C c` elaborates to `⇑Polynomial.C c = DFunLike.coe … Polynomial.C c`.
     if args.size == 6 && args[4]!.getAppFn.isConstOf ``Polynomial.C then
       return Hex.DensePoly.C (← evalCoeff isRat args[5]!)
-    else if fuel == 0 then
-      throwError "isolate_roots: unsupported polynomial syntax{indentExpr e}"
     else
-      let e' ← whnf e
-      if e' == e then throwError "isolate_roots: unsupported polynomial syntax{indentExpr e}"
-      else parsePoly isRat (fuel - 1) e'
+      throwError "isolate_roots: unsupported polynomial syntax{indentExpr e}"
   | _ =>
-    -- Unfold a named local/def by one whnf step under the fuel guard, else fail.
+    -- Unfold a named def by one delta step under the fuel guard, else fail. Uses
+    -- `unfoldDefinition?` rather than `whnf`, which would normalise past the
+    -- structural `+/−/*` heads into the `Finsupp` form and defeat the match.
     if fuel == 0 then
       throwError "isolate_roots: unsupported polynomial syntax{indentExpr e}"
     else
-      let e' ← whnf e
-      if e' == e then
-        throwError "isolate_roots: unsupported polynomial syntax{indentExpr e}"
-      else
-        parsePoly isRat (fuel - 1) e'
+      match ← unfoldDefinition? e with
+      | some e' => parsePoly isRat (fuel - 1) e'
+      | none => throwError "isolate_roots: unsupported polynomial syntax{indentExpr e}"
 
 /-! ## Exact integer-polynomial arithmetic (for the radical certificate) -/
 

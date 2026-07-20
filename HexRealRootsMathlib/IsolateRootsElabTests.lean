@@ -38,6 +38,9 @@ noncomputable def iso_w1000 := isolate_roots (width := 1 / 1000) (X ^ 4 - 2 : Po
 /-- `x⁴ − 2`, width `10^(-2)`. -/
 noncomputable def iso_w100 := isolate_roots (width := 10 ^ (-2 : ℤ)) (X ^ 4 - 2 : Polynomial ℝ)
 
+/-- `x⁴ − 2` as a `ZPoly`, refined to width `2^(-20)`. -/
+noncomputable def iso_zpoly_w20 := isolate_roots (width := 2 ^ (-20 : ℤ)) x4m2
+
 /-! ## Coefficient rings -/
 
 /-- Wilkinson-6 `∏_{i=1}^{6}(x − i)` over `Polynomial ℤ`. -/
@@ -104,7 +107,7 @@ info: isolate_roots: non-integer coefficient
 
 /--
 info: isolate_roots: unsupported polynomial syntax
-  { toFinsupp := AddMonoidAlgebra.single 2 3 }
+  (monomial 2) 3
 -/
 #guard_msgs in
 #check_failure (isolate_roots (Polynomial.monomial 2 3 : Polynomial ℤ))
