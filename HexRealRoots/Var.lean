@@ -48,6 +48,7 @@ product is negative). The variation count of `(+, 0, −)` is `1`: the zero is
 skipped, leaving one sign change. This is the plain-`List Int` primitive
 shared by the Sturm counts below and the Descartes count in the Mobius
 layer. -/
+@[expose]
 def signVar (l : List Int) : Nat :=
   go (l.filter (· != 0))
 where
@@ -63,6 +64,7 @@ Every chain element is evaluated at `x` by exact Horner arithmetic
 (`evalDyadic`), reduced to its exact sign in `{−1, 0, 1}` (`dyadicSign`), and
 the resulting sign list is fed to `signVar`. No rounding and no error budget:
 the sign of `q(x)` at a dyadic `x` is exact. -/
+@[expose]
 def sturmVarAt (chain : Array ZPoly) (x : Dyadic) : Nat :=
   signVar (chain.toList.map (fun q => dyadicSign (q.evalDyadic x)))
 
@@ -72,6 +74,7 @@ At `+∞` the sign of each element is the sign of its leading coefficient, so
 no evaluation is needed. The zero polynomial has leading coefficient `0`,
 which the zero-skipping convention drops (it never occurs in a genuine chain
 element, but the total function tolerates it). -/
+@[expose]
 def sturmVarPosInf (chain : Array ZPoly) : Nat :=
   signVar (chain.toList.map (fun q => (DensePoly.leadingCoeff q).sign))
 
@@ -81,6 +84,7 @@ At `−∞` the sign of each element is the sign of its leading coefficient time
 `(−1)^{deg}`: the leading term dominates, and its sign flips with the parity
 of the degree. No evaluation is needed. The zero polynomial has leading
 coefficient `0`, dropped by the zero-skipping convention. -/
+@[expose]
 def sturmVarNegInf (chain : Array ZPoly) : Nat :=
   signVar (chain.toList.map (fun q =>
     (DensePoly.leadingCoeff q).sign *
@@ -91,12 +95,14 @@ def sturmVarNegInf (chain : Array ZPoly) : Nat :=
 difference between the two endpoints. An `Int` by definition. The companion
 proves it equals the root count in the interval (in particular, that it is
 nonnegative) for squarefree `p`. -/
+@[expose]
 def sturmCount (p : ZPoly) (I : DyadicInterval) : Int :=
   (sturmVarAt (ZPoly.sturmChain p) I.lower : Int) -
     sturmVarAt (ZPoly.sturmChain p) I.upper
 
 /-- The total number of real roots of `p`: the sign-variation difference of
 its Sturm chain between `−∞` and `+∞`. -/
+@[expose]
 def rootCount (p : ZPoly) : Nat :=
   sturmVarNegInf (ZPoly.sturmChain p) - sturmVarPosInf (ZPoly.sturmChain p)
 

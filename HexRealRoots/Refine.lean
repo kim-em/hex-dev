@@ -69,21 +69,48 @@ so no endpoint comparison against `m` is ever needed.
 
 If neither half certifies — impossible for squarefree `p`, proven unreachable
 by the companion `refine1_isolates_same` — the input is returned unchanged, so
-the function is total. `refine1` takes no cached chain (its SPEC signature is
-fixed), so the chain is rebuilt per call; a cached-chain variant can follow if
-profiling demands it. -/
-def refine1 (iso : RealRootIsolation p) : RealRootIsolation p :=
-  let chain := ZPoly.sturmChain p
+the function is total.
+
+The bisection logic is factored into `refine1With`, which takes an already-built
+`chain`; `refine1` supplies `ZPoly.sturmChain p` (rebuilt per call, matching its
+fixed SPEC signature), while callers refining many levels thread one chain
+through `refineToWithChain`. -/
+def refine1With (chain : Array ZPoly) (hchain : chain = ZPoly.sturmChain p)
+    (iso : RealRootIsolation p) : RealRootIsolation p :=
   let m := iso.interval.midpoint
   if hlt : iso.interval.lower < m then
     if h : (sturmVarAt chain iso.interval.lower : Int) - sturmVarAt chain m = 1 then
-      ofHalf chain rfl iso.interval.lower m hlt h
+      ofHalf chain hchain iso.interval.lower m hlt h
     else if hltu : m < iso.interval.upper then
       if h' : (sturmVarAt chain m : Int) - sturmVarAt chain iso.interval.upper = 1 then
-        ofHalf chain rfl m iso.interval.upper hltu h'
+        ofHalf chain hchain m iso.interval.upper hltu h'
       else iso
     else iso
   else iso
+
+/-- Bisect an isolation at its dyadic midpoint and keep the half whose Sturm
+count is `1`. See `refine1With` for the mechanism; this rebuilds the Sturm chain
+each call. -/
+def refine1 (iso : RealRootIsolation p) : RealRootIsolation p :=
+  refine1With (ZPoly.sturmChain p) rfl iso
+
+/-- Cached-chain refinement: iterate `refine1With` against one precomputed
+`chain` until the interval width is at most `2^{−target}`.
+
+Identical semantics to `refineTo`, but the Sturm chain is built once for the
+whole descent rather than rebuilt at every bisection level — the memoisation the
+`isolate_roots` elaborator needs when refining every root to a requested width.
+The fuel is `(ceilLog2Dyadic width + target).toNat + 1`, exactly as `refineTo`. -/
+def refineToWithChain (chain : Array ZPoly) (hchain : chain = ZPoly.sturmChain p)
+    (iso : RealRootIsolation p) (target : Int) : RealRootIsolation p :=
+  go ((ceilLog2Dyadic iso.interval.width + target).toNat + 1) iso
+where
+  /-- Structural fuel drives the loop, threading the cached `chain`. -/
+  go : Nat → RealRootIsolation p → RealRootIsolation p
+    | 0, iso => iso
+    | k + 1, iso =>
+      if iso.interval.width ≤ twoPow (-target) then iso
+      else go k (refine1With chain hchain iso)
 
 /-- Iterate `refine1` until the interval width is at most `2^{−target}`.
 
@@ -94,17 +121,12 @@ width, `ceilLog2Dyadic width + target` halvings bring the width to at most
 nonpositive gap) to `0`, and the `+ 1` covers the loop's own width test. On
 adversarial data that violates the isolation semantics `refine1` returns its
 input, and the loop then drains its fuel without shrinking — total either
-way, it cannot loop. -/
+way, it cannot loop.
+
+Delegates to `refineToWithChain` with `chain = ZPoly.sturmChain p`, so the whole
+descent shares one chain construction. -/
 def refineTo (iso : RealRootIsolation p) (target : Int) : RealRootIsolation p :=
-  go ((ceilLog2Dyadic iso.interval.width + target).toNat + 1) iso
-where
-  /-- Structural fuel drives the loop: stop at fuel `0` or once the width
-  condition holds, else refine once and recurse. -/
-  go : Nat → RealRootIsolation p → RealRootIsolation p
-    | 0, iso => iso
-    | k + 1, iso =>
-      if iso.interval.width ≤ twoPow (-target) then iso
-      else go k (refine1 iso)
+  refineToWithChain (ZPoly.sturmChain p) rfl iso target
 
 /-! Sanity checks (kept light; conformance lives in the shared sub-project).
 Polynomials are kept tiny so kernel reduction of `refine1`/`refineTo` is
@@ -168,5 +190,25 @@ example : dyadicSign (ZPoly.evalDyadic (DensePoly.ofCoeffs #[(-2 : Int), 0, 1])
 example : (refineTo (p := DensePoly.ofCoeffs #[(-2 : Int), 0, 1])
     ⟨⟨Dyadic.ofInt 1, Dyadic.ofInt 2, by decide⟩, by decide⟩ (-2)).interval.width
     ≤ twoPow 2 := by decide
+
+-- Cached-chain refinement agrees with `refineTo`: threading one precomputed
+-- Sturm chain through the loop yields the identical interval on `x² − 2`
+-- (`refineTo` delegates to `refineToWithChain`, so this locks their agreement).
+-- A `#guard`-style regression, written as a `decide` to stay in the kernel
+-- (a `#guard` would force meta evaluation of the polynomial constructors).
+example :
+    (refineToWithChain (p := DensePoly.ofCoeffs #[(-2 : Int), 0, 1])
+      (ZPoly.sturmChain (DensePoly.ofCoeffs #[(-2 : Int), 0, 1])) rfl
+      ⟨⟨Dyadic.ofInt 1, Dyadic.ofInt 2, by decide⟩, by decide⟩ 3).interval.upper
+    = (refineTo (p := DensePoly.ofCoeffs #[(-2 : Int), 0, 1])
+      ⟨⟨Dyadic.ofInt 1, Dyadic.ofInt 2, by decide⟩, by decide⟩ 3).interval.upper := by
+  decide
+example :
+    (refineToWithChain (p := DensePoly.ofCoeffs #[(-2 : Int), 0, 1])
+      (ZPoly.sturmChain (DensePoly.ofCoeffs #[(-2 : Int), 0, 1])) rfl
+      ⟨⟨Dyadic.ofInt 1, Dyadic.ofInt 2, by decide⟩, by decide⟩ 3).interval.lower
+    = (refineTo (p := DensePoly.ofCoeffs #[(-2 : Int), 0, 1])
+      ⟨⟨Dyadic.ofInt 1, Dyadic.ofInt 2, by decide⟩, by decide⟩ 3).interval.lower := by
+  decide
 
 end Hex.RealRootIsolation
