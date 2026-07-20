@@ -90,14 +90,6 @@ theorem aevalIff_radical {orig core a b : Hex.ZPoly} {t : ℤ} {k : ℕ} (ht : t
         · exact h
       exact pow_eq_zero_iff (Nat.succ_ne_zero k) |>.mp hck
 
-/-- The empty isolation for a polynomial with no real roots. -/
-def IsolatedRealRoots.ofNoRoots {R : Type*} [CommRing R] [Algebra R ℝ] {P : Polynomial R}
-    (h : ∀ x : ℝ, aeval x P ≠ 0) : Hex.IsolatedRealRoots P 0 where
-  intervals := ⟨#[], rfl⟩
-  unique_root := fun i => i.elim0
-  covers := fun x hx => absurd hx (h x)
-  ordered := fun i _ _ => i.elim0
-
 /-- Reconcile two closed reified polynomial evaluations `aeval x (…) = aeval x (…)`
 by expanding every `aeval`-of-`ofCoeffs` into its explicit coefficient sum and
 pushing `aeval` through the user polynomial's `X / C / + / − / * / ^ / neg`
@@ -427,12 +419,13 @@ meta def emitCore (f : Hex.ZPoly) (widthK : Option Int) : MetaM (TSyntax `term) 
     throwError "isolate_roots: the zero polynomial (every real number is a root, \
       so there is no finite isolation)"
   else if f.size == 1 then
-    -- nonzero constant: no real roots
-    `(HexRealRootsMathlib.IsolatedRealRoots.ofNoRoots
-        (P := HexPolyZMathlib.toPolynomial $fStx)
-        (by intro x hx
-            rw [HexRealRootsMathlib.aeval_toPolynomial_ofCoeffs] at hx
-            simp [Finset.sum_range_succ, Finset.sum_range_zero, Hex.DensePoly.coeff_ofCoeffs] at hx))
+    -- nonzero constant: no real roots, via the landed `IsolatedRealRoots.constant`
+    -- transported onto `toPolynomial fLit`.
+    let cStx ← intStx (f.coeff 0)
+    `(Hex.IsolatedRealRoots.congrRoots (Q := HexPolyZMathlib.toPolynomial $fStx)
+        (by aeval_iff_bridge)
+        (Hex.IsolatedRealRoots.constant (c := ($cStx : Int))
+          (by simp only [eq_intCast, ne_eq, Int.cast_eq_zero]; decide)))
   else if Hex.ZPoly.hasSquarefreeSturmChain f then
     let d ← runBackend f widthK
     emitOfCert d
