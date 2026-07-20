@@ -207,7 +207,11 @@ meta def evalCoeff (isRat : Bool) (e : Expr) : MetaM Int := do
 unfolded by `whnf` under a depth guard, to a `Hex.ZPoly` value. `isRat` selects
 the `ℚ`-style non-integer rejection. -/
 meta partial def parsePoly (isRat : Bool) (fuel : Nat) (e : Expr) : MetaM Hex.ZPoly := do
-  match (← whnfR e).getAppFnArgs with
+  -- Match structural heads on the *raw* term first: `whnf` would unfold
+  -- `Polynomial.C`/`X`/numerals into their `Finsupp` normal form and defeat the
+  -- match. Only if no structural head applies do we `whnf` once (to unfold a
+  -- named local def) under the fuel guard.
+  match e.getAppFnArgs with
   | (``HAdd.hAdd, #[_, _, _, _, a, b]) => return (← parsePoly isRat fuel a) + (← parsePoly isRat fuel b)
   | (``HSub.hSub, #[_, _, _, _, a, b]) => return (← parsePoly isRat fuel a) - (← parsePoly isRat fuel b)
   | (``HMul.hMul, #[_, _, _, _, a, b]) => return (← parsePoly isRat fuel a) * (← parsePoly isRat fuel b)
@@ -221,6 +225,16 @@ meta partial def parsePoly (isRat : Bool) (fuel : Nat) (e : Expr) : MetaM Hex.ZP
   | (``Polynomial.X, _) => return Hex.DensePoly.ofCoeffs #[(0 : Int), 1]
   | (``Polynomial.C, #[_, _, c]) => return Hex.DensePoly.C (← evalCoeff isRat c)
   | (``OfNat.ofNat, #[_, n, _]) => return Hex.DensePoly.C (Int.ofNat (← getNat n))
+  | (``DFunLike.coe, args) =>
+    -- `Polynomial.C c` elaborates to `⇑Polynomial.C c = DFunLike.coe … Polynomial.C c`.
+    if args.size == 6 && args[4]!.getAppFn.isConstOf ``Polynomial.C then
+      return Hex.DensePoly.C (← evalCoeff isRat args[5]!)
+    else if fuel == 0 then
+      throwError "isolate_roots: unsupported polynomial syntax{indentExpr e}"
+    else
+      let e' ← whnf e
+      if e' == e then throwError "isolate_roots: unsupported polynomial syntax{indentExpr e}"
+      else parsePoly isRat (fuel - 1) e'
   | _ =>
     -- Unfold a named local/def by one whnf step under the fuel guard, else fail.
     if fuel == 0 then

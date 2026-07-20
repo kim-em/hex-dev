@@ -58,4 +58,79 @@ noncomputable def iso_nonsqfree :=
 /-- A nonzero constant has no real roots: the empty isolation. -/
 noncomputable def iso_const := isolate_roots (7 : Polynomial ℝ)
 
+/-! ## Consumption demos -/
+
+/-- `obtain` the four fields directly out of the elaborator's result. -/
+example : True := by
+  obtain ⟨v, hu, hc, ho⟩ := isolate_roots (X ^ 4 - 2 : Polynomial ℝ)
+  trivial
+
+/-- A `have` binding of the result, then use of a field. -/
+example : True := by
+  have H := isolate_roots x4m2
+  have := H.covers
+  trivial
+
+/-- Feed the isolation's fields to `grind`. `grind` digests the `ordered` field
+into the pairwise-disjointness statement (the `covers`/`unique_root` existentials
+are consumed with `exact`, as `grind` does not synthesise their witnesses). -/
+example : True := by
+  have H := isolate_roots (X ^ 4 - 2 : Polynomial ℝ)
+  have hord := H.ordered
+  have _key : ∀ i j : Fin H.intervals.toArray.size, i < j →
+      (H.intervals[i].2 : ℚ) ≤ (H.intervals[j].1 : ℚ) := by grind
+  trivial
+
+/-! ## Error taxonomy (deliverable 6)
+
+Each distinct diagnostic is pinned with `#guard_msgs`. The internal
+certificate-mismatch path (`radicalCert` reassembly failure) is a defensive code
+assertion that cannot fire on valid input without a contrived hook, so it is
+documented rather than tested. -/
+
+section Errors
+variable (p : Hex.ZPoly) (w : ℚ)
+
+/-- info: isolate_roots: the zero polynomial (every real number is a root, so there is no finite isolation) -/
+#guard_msgs in
+#check_failure (isolate_roots (0 : Polynomial ℤ))
+
+/--
+info: isolate_roots: non-integer coefficient
+  1 / 2
+-/
+#guard_msgs in
+#check_failure (isolate_roots (X + Polynomial.C (1 / 2 : ℚ) : Polynomial ℚ))
+
+/--
+info: isolate_roots: unsupported polynomial syntax
+  { toFinsupp := AddMonoidAlgebra.single 2 3 }
+-/
+#guard_msgs in
+#check_failure (isolate_roots (Polynomial.monomial 2 3 : Polynomial ℤ))
+
+/--
+info: isolate_roots: the polynomial must be a closed term (no free variables or metavariables)
+  p
+-/
+#guard_msgs in
+#check_failure (isolate_roots p)
+
+/--
+info: isolate_roots: the width must be a closed rational (no free variables or metavariables)
+  w
+-/
+#guard_msgs in
+#check_failure (isolate_roots (width := w) (X ^ 2 - 2 : Polynomial ℤ))
+
+/-- info: isolate_roots: the width must be strictly positive -/
+#guard_msgs in
+#check_failure (isolate_roots (width := 0) (X ^ 2 - 2 : Polynomial ℤ))
+
+/-- info: isolate_roots: pathological width (finer than 2^-4096); the isolation would be astronomically large. Refine the result manually if you truly need this. -/
+#guard_msgs in
+#check_failure (isolate_roots (width := 2 ^ (-5000 : ℤ)) (X ^ 2 - 2 : Polynomial ℤ))
+
+end Errors
+
 end HexRealRootsMathlib.ElabTests
