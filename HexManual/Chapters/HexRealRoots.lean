@@ -212,13 +212,14 @@ tag := "hex-real-roots-certificate"
 The elaborator does the search at elaboration time with the compiled
 isolator, then emits a term the kernel re-checks. It does not ask the
 kernel to redo the search. The emitted term reifies the Sturm chain once
-as an array of integer-coefficient polynomials, and each field reduces to
-a sign-variation count against that fixed chain: one count per interval
-for `unique_root`, an endpoint-at-infinity count for the root total, and
-an adjacent-pair comparison for `ordered`. These are `decide`-checked
-polynomial evaluations over the integers, so the cost the kernel pays
-grows with the degree and the endpoint sizes, not with the number of
-bisections the search performed.
+as an array of integer-coefficient polynomials. The root-count fields
+reduce to sign-variation counts against that fixed chain: one count per
+interval for `unique_root`, and an endpoint-at-infinity count for the root
+total. These are `decide`-checked polynomial evaluations over the
+integers, so their kernel cost grows with the degree and the endpoint
+sizes, not with the number of bisections the search performed. The
+`ordered` field is cheaper still — an adjacent-pair comparison of the
+dyadic endpoints, no polynomial evaluation at all.
 
 The interval endpoints are presented as reduced rational literals, and
 the identification of the emitted literals with the isolator's dyadic

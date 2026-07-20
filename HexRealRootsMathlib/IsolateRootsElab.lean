@@ -523,7 +523,7 @@ meta def elabIsolate (widthStx : Option (TSyntax `term)) (pStx : TSyntax `term)
       if e.hasExprMVar then throwError "isolate_roots: ambiguous argument"
       pure e
     catch _ =>
-      s.restore
+      s.restore (restoreInfo := true)
       match expectedPolyTy? with
       | some pt => elabTermEnsuringType pStx (some pt)
       | none => elabTerm pStx none
