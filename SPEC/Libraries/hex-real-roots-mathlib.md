@@ -279,7 +279,13 @@ constructor lands. The elaborator emits the replay shape. Two constraints shape 
   under the module system: the core `Array.instDecidableEqImpl`
   issue). Its soundness bridge to the certified counts goes through
   the executable chain's `primitivePart` head, exactly as the
-  existing chain correspondence does;
+  existing chain correspondence does. `SturmChainCert p chain` also
+  carries a `chain.size ≤ p.size` fuel-bound conjunct — every genuine
+  Sturm chain satisfies it, since chain degrees strictly decrease —
+  which the soundness proof (`cert_imp_eq`) needs to bound the
+  `sturmChainAux` fuel when reconstructing `sturmChain p` from the
+  certified tail; the constructor discharges it by the same
+  per-certificate `decide`;
 - nonzeroness is stated as a size check (`p.size ≠ 0` via a Bool
   test plus `ne_zero_of_size_ne_zero`), avoiding structural
   `DensePoly` equality for the same reason.

@@ -15,6 +15,7 @@ public import HexRealRootsMathlib.ChainCorrespond
 public import HexRealRootsMathlib.SquareFreeCore
 public import HexRealRootsMathlib.Isolations
 public import HexRealRootsMathlib.IsolateRoots
+public import HexRealRootsMathlib.IsolateRootsTests
 public import HexRealRootsMathlib.Drivers
 public import HexRealRootsMathlib.SimpleRealRoot
 public import HexRealRootsMathlib.TwoCircle

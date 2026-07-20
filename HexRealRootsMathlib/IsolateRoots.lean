@@ -234,12 +234,8 @@ macro "isolate_roots_bridge" : tactic =>
   `(tactic|
     (intro x
      rw [HexRealRootsMathlib.aeval_toPolynomial_ofCoeffs]
-     simp only [Finset.sum_range_succ, Finset.sum_range_zero, Hex.DensePoly.coeff_ofCoeffs,
-       Array.getD_eq_getElem?_getD, Array.getElem?_eq_getElem, Array.getElem_toArray,
-       List.getElem_toArray, Polynomial.aeval_X, Polynomial.aeval_C, Polynomial.aeval_one,
-       Polynomial.aeval_ofNat, map_ofNat, map_add, map_sub, map_mul, map_pow, map_neg,
-       map_one, map_zero]
-     push_cast
+     simp [Finset.sum_range_succ, Finset.sum_range_zero, Hex.DensePoly.coeff_ofCoeffs,
+       map_ofNat]
      ring_nf))
 
 end HexRealRootsMathlib
