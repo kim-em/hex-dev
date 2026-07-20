@@ -242,6 +242,10 @@ lean_exe hexroots_bench where
   srcDir := "bench"
   root := `HexRoots.Bench
 
+lean_exe hexroots_demo where
+  srcDir := "examples"
+  root := `HexRootsDemo
+
 lean_exe hexmatrix_bench where
   srcDir := "bench"
   root := `HexMatrix.Bench
