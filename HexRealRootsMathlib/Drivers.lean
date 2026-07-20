@@ -226,7 +226,7 @@ theorem refine1_isolates_same (hp : Hex.ZPoly.SquareFreeRat p)
         - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) iso.interval.midpoint) = 1 := hCL
     have href : iso.refine1.interval = (⟨lo, m, hlm⟩ : Hex.DyadicInterval) := by
       show (Hex.RealRootIsolation.refine1 iso).interval = _
-      unfold Hex.RealRootIsolation.refine1
+      unfold Hex.RealRootIsolation.refine1 Hex.RealRootIsolation.refine1With
       rw [dif_pos hlm, dif_pos hCLraw]
       rfl
     have hCR : Hex.sturmCount p ⟨m, hi, hmh⟩ = 0 := by omega
@@ -249,7 +249,7 @@ theorem refine1_isolates_same (hp : Hex.ZPoly.SquareFreeRat p)
         - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) iso.interval.upper) = 1 := hCR
     have href : iso.refine1.interval = (⟨m, hi, hmh⟩ : Hex.DyadicInterval) := by
       show (Hex.RealRootIsolation.refine1 iso).interval = _
-      unfold Hex.RealRootIsolation.refine1
+      unfold Hex.RealRootIsolation.refine1 Hex.RealRootIsolation.refine1With
       rw [dif_pos hlm, dif_neg hCLraw_neg, dif_pos hmh, dif_pos hCRraw]
       rfl
     refine ⟨fun r hr => ?_, ?_⟩

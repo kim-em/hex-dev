@@ -43,8 +43,13 @@ Writing `cg = lc g`, `lr = lc r`, `|cg| = if cg < 0 then -cg else cg`, and
 The two leading terms are both at degree `deg r`, with coefficients
 `|cg|·lr` and `sign(cg)·lr·cg = |cg|·lr`, so they cancel exactly and the
 degree strictly drops. The multiplier introduced is `|cg| > 0`, so
-iterating multiplies the true rational remainder by a positive integer. -/
-private def spemStep (g r : ZPoly) : ZPoly :=
+iterating multiplies the true rational remainder by a positive integer.
+
+Engine internal, not user API: it is public (rather than `private`) only so
+the exposed `spem`/`sturmChain` closure the kernel-replay elaborator reduces
+can reference it. Callers want `spem`. -/
+@[expose]
+def spemStep (g r : ZPoly) : ZPoly :=
   let cg := DensePoly.leadingCoeff g
   let lr := DensePoly.leadingCoeff r
   let absCg := if cg < 0 then -cg else cg
@@ -59,8 +64,13 @@ otherwise it applies `spemStep` and recurses on one less fuel. Because every
 `spemStep` drops the degree by at least one, `fuel = f.size = deg f + 1` at
 the top level is always sufficient and the fuel never truncates: the loop
 reaches a genuine stopping state (zero, or degree below `deg g`) before it
-runs out. -/
-private def spemAux (g : ZPoly) : Nat → ZPoly → ZPoly
+runs out.
+
+Engine internal, not user API: public only so the exposed `spem`/`sturmChain`
+closure the kernel-replay elaborator reduces can reference it. Callers want
+`spem`. -/
+@[expose]
+def spemAux (g : ZPoly) : Nat → ZPoly → ZPoly
   | 0, r => r
   | fuel + 1, r =>
       if r.isZero then r
@@ -85,6 +95,7 @@ Junk values, per the SPEC's input-contract convention:
   everything, so the remainder is `0`).
 - `spem f g = f` when `deg f < deg g` (the loop returns `f` on its first
   test). -/
+@[expose]
 def spem (f g : ZPoly) : ZPoly :=
   match DensePoly.degree? g with
   | none => f
@@ -98,8 +109,13 @@ it computes `r := spem prev cur`; if `r = 0` the chain is complete, otherwise
 it pushes `next := −primitivePart r` and recurses. `primitivePart` divides by
 the nonnegative content without sign-normalizing, so the explicit negation
 carries exactly the SPEC's sign. The degree of `cur` strictly decreases along
-the recursion, so `fuel = p.size` at the top level never truncates. -/
-private def sturmChainAux : Nat → ZPoly → ZPoly → Array ZPoly → Array ZPoly
+the recursion, so `fuel = p.size` at the top level never truncates.
+
+Engine internal, not user API: public only so the exposed `sturmChain` closure
+the kernel-replay elaborator reduces can reference it. Callers want
+`sturmChain`. -/
+@[expose]
+def sturmChainAux : Nat → ZPoly → ZPoly → Array ZPoly → Array ZPoly
   | 0, _, _, acc => acc
   | fuel + 1, prev, cur, acc =>
       let r := spem prev cur
@@ -118,6 +134,7 @@ chain of `(p, p')` over `ℚ`, the invariant the counting theorem needs. The
 last element is a nonzero constant exactly when `p` is squarefree of positive
 degree. The structural fuel `p.size` never truncates: the degree strictly
 decreases along the chain, so it terminates before the fuel is exhausted. -/
+@[expose]
 def sturmChain (p : ZPoly) : Array ZPoly :=
   match DensePoly.degree? p with
   | none => #[]
