@@ -632,6 +632,7 @@ def primitiveSquareFreeDecomposition (f : ZPoly) : PrimitiveSquareFreeDecomposit
         repeatedPart := ratPolyPrimitivePart repeatedRat }
 
 /-- The square-free core projection of `primitiveSquareFreeDecomposition`. -/
+@[expose]
 def squareFreeCore (f : ZPoly) : ZPoly :=
   (primitiveSquareFreeDecomposition f).squareFreeCore
 

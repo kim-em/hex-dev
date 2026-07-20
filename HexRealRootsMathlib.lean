@@ -12,6 +12,7 @@ public import HexRealRootsMathlib.Hadamard
 public import HexRealRootsMathlib.Discr
 public import HexRealRootsMathlib.Separation
 public import HexRealRootsMathlib.ChainCorrespond
+public import HexRealRootsMathlib.SquareFreeCore
 public import HexRealRootsMathlib.Isolations
 public import HexRealRootsMathlib.Drivers
 public import HexRealRootsMathlib.SimpleRealRoot
