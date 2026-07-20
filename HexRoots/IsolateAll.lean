@@ -15,9 +15,10 @@ public section
 The end-to-end drivers `isolateAll?` and `isolate`, thin wrappers over the
 shared `isolateLoop`.
 
-`isolateAll?` refines an arbitrary worklist until every component certifies
-at prec at least `target` with pairwise disjoint circumscribed discs, sizing
-the fuel from the worklist's coarsest prec so the loop reaches
+`isolateAll?` globally refines and reglues an arbitrary worklist through
+`completenessDepth`, then continues until every component certifies at prec
+at least `target` with pairwise disjoint circumscribed discs. It sizes the
+fuel from the worklist's coarsest prec so the loop reaches
 `stopDepth p target` before giving up. `isolate` is the all-atoms driver for
 polynomials with only simple roots: it starts from `Component.cauchy`, uses
 `target := max atom_prec (separationDepth p)`, and requires every result to
@@ -34,9 +35,11 @@ namespace Hex
 
 /-- Refine every component until certified at prec at least `target`, with
     the certified stored squares' circumscribed discs pairwise disjoint (SPEC
-    "Separation of the output"). The fuel is sized from the worklist's
-    coarsest prec so the loop reaches `stopDepth p target`. `none` only if
-    certification with disjoint discs has not happened by that depth. -/
+    "Separation of the output"). Before `completenessDepth`, refinement is
+    global so rootless survivor halos rejoin the root-bearing component. The
+    fuel is sized from the worklist's coarsest prec so the loop reaches
+    `stopDepth p target`. `none` only if the full emission condition has not
+    happened within that fuel bound. -/
 @[expose] def isolateAll? (p : ZPoly) (target : Int) (worklist : Array Component)
     (strategy : AtomStrategy := .nkThenPellet) :
     Option (Array (Certified p)) :=

@@ -16,19 +16,21 @@ Four-way subdivision, the `T₀` discard, and component gluing: the
 worklist operations of the complex root isolator. `Component.refine1`
 splits every square of a component into four children one bit finer,
 discards children whose disc certifiably contains no root, and glues the
-survivors back into edge-connected components; it is total, requiring no
+survivors back into edge-or-corner-connected components; it is total, requiring no
 certification. `Component.certify?` tries to certify a component, first
 by the Newton-Kantorovich atom witness on the doubled enclosing square
 (with a speculative Newton recentring attempted first under the coverage
-guard), then by the Pellet witness on the enclosing square's disc.
+guard), then by the Pellet witness on a quadrupled enclosing square.
 
 The geometry helpers `DyadicSquare.subdivide`, `DyadicSquare.adjacent`,
 and `glue` are exact: subdivision offsets by exact dyadics, adjacency is
 a comparison of exact dyadic centre differences, and gluing folds squares
 into a component partition, merging every component touched by the new
-square.
-The witness re-checks that certification and the coverage guard perform
-run at runtime on the compiled code; the `decide`-reducible witness
+square. Corner adjacency is included: at the completeness depth every
+retained square is at most one king move from the square containing its
+associated root.
+The witness re-checks for certification and the coverage guard run at runtime
+on the compiled code; the `decide`-reducible witness
 predicates themselves live in `Pellet.lean` and `Kantorovich.lean`.
 -/
 namespace Hex
@@ -43,18 +45,17 @@ namespace Hex
   #[⟨s.re - h, s.im - h, q⟩, ⟨s.re + h, s.im - h, q⟩,
     ⟨s.re - h, s.im + h, q⟩, ⟨s.re + h, s.im + h, q⟩]
 
-/-- Edge adjacency of two same-`prec` grid squares, by exact dyadic centre
-    differences: the centres differ by exactly `2·2^{−prec}` on one axis
-    and `0` on the other. Works for translated grids (Newton lineages)
-    because gluing only ever compares children of one component's squares,
-    which share a grid. -/
+/-- Edge-or-corner adjacency of two same-`prec` grid squares, by exact
+dyadic centre differences. Centres must be less than four half-widths apart
+on both axes. On a common subdivision grid the centre
+spacing is two half-widths, so this is exactly one king move; the geometric
+form also handles translated grids without a lattice-origin side condition. -/
 @[expose] def DyadicSquare.adjacent (s t : DyadicSquare) : Bool :=
   if s.prec = t.prec then
-    let twoH : Dyadic := .ofIntWithPrec 1 (s.prec - 1)   -- 2·2^{−prec}
+    let fourH : Dyadic := .ofIntWithPrec 1 (s.prec - 2) -- 4·2^{−prec}
     let dre := Hex.Dyadic.abs (s.re - t.re)
     let dim := Hex.Dyadic.abs (s.im - t.im)
-    (decide (dre = twoH) && decide (dim = 0))
-      || (decide (dre = 0) && decide (dim = twoH))
+    decide (dre < fourH) && decide (dim < fourH)
   else
     false
 
@@ -70,14 +71,14 @@ the new square is merged with it; untouched components retain their order. -/
   let (touching, separate) := components.partition s.touches
   (s :: touching.flatten) :: separate
 
-/-- Edge-connected components of a list of squares. This union-by-insertion
+/-- Edge-or-corner-connected components of a list of squares. This union-by-insertion
 form makes coverage, connectedness, and maximality structural induction
 invariants while retaining the `O(m²)` adjacency complexity. -/
 @[expose] def glueList : List DyadicSquare → List (List DyadicSquare)
   | [] => []
   | s :: sqs => glueInsert s (glueList sqs)
 
-/-- Edge-connected components of an array of squares. -/
+/-- Edge-or-corner-connected components of an array of squares. -/
 @[expose] def glue (sqs : Array DyadicSquare) : Array (Array DyadicSquare) :=
   (glueList sqs.toList).map List.toArray |>.toArray
 
@@ -98,12 +99,27 @@ namespace Component
 /-- One subdivision round: split every square into four children one bit
     finer, discard children whose disc certifiably contains no root (the
     `T₀` test; a child whose `T₀` test fails to certify is kept, which is
-    always sound), and glue the survivors into edge-connected components.
+    always sound), and glue the survivors into edge-or-corner-connected
+    components.
     Total: no certification is required during refinement. -/
 @[expose] def refine1 (p : ZPoly) (c : Component) : Array Component :=
   let survivors := (c.squares.flatMap DyadicSquare.subdivide).filter
     (fun s => !rootFree p s)
   (glueCovered survivors).map fun ss => { squares := ss, candidateK := c.candidateK }
+
+/-- One globally normalized subdivision round. All component squares are
+subdivided, filtered, and glued together. The root-count hint is reset to
+one; it affects attempt order only, and every candidate is rechecked.
+
+The isolation driver uses this operation until its completeness depth. Thus
+all Cauchy-started survivors remain on one common grid, and components that
+approach the same root can rejoin even if an earlier round separated their
+lineages. -/
+@[expose] def refineAll (p : ZPoly) (work : Array Component) : Array Component :=
+  let squares := work.flatMap (·.squares)
+  let survivors := (squares.flatMap DyadicSquare.subdivide).filter
+      (fun s => !rootFree p s)
+  (glueCovered survivors).map fun ss => { squares := ss, candidateK := 1 }
 
 /-- Attempt Pellet certification for one positive candidate count, including
 the same-count speculative Newton jump and its disc-containment guard. -/
@@ -144,7 +160,7 @@ theorem in the Mathlib companion. -/
 /-- Try to certify the component. Per `strategy`, first the
     Newton-Kantorovich atom witness on the doubled enclosing square (with a
     speculative Newton recentring attempted first), then the Pellet witness
-    on the enclosing square's disc with `k = candidateK` first and then the
+    on a quadrupled enclosing square with `k = candidateK` first and then the
     remaining `k ≤ deg p`; a `k = 1` Pellet success is returned as an atom
     via `atomize`. Speculative Newton results are accepted only under the
     coverage guard: the base region must certify the same count in the same
@@ -167,10 +183,14 @@ theorem in the Mathlib companion. -/
           return some (.atom ⟨cand, Or.inl h'⟩)
       return some (.atom ⟨base, Or.inl h⟩)
   | .pellet => pure ()
-  -- Pellet attempt, on the enclosing square's disc.
+  -- Pellet attempt, on a quadrupled enclosing square. The original component
+  -- lies in its central quarter, giving the converse theorem a uniform
+  -- recentering margin independent of the root's leaf-grid position.
   match strategy with
   | .pellet | .nkThenPellet =>
-    return certifyPellet? p c
+    let wide : Component :=
+      { squares := #[enc.doubled.doubled], candidateK := c.candidateK }
+    return certifyPellet? p wide
   | .nk => pure ()
   return none
 

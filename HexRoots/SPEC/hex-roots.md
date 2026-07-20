@@ -243,7 +243,7 @@ structure DyadicRootIsolation (p : ZPoly) where
   square  : DyadicSquare
   witness : atomWitness p square
 
-/-- A certified cluster: an edge-connected set of grid squares at a
+/-- A certified cluster: an edge-or-corner-connected set of grid squares at a
     common `prec`, whose enclosing disc contains exactly `k` roots
     with multiplicity. The component squares are the data that
     *refinement* operates on; subdividing the enclosing square
@@ -254,18 +254,18 @@ structure DyadicRootIsolation (p : ZPoly) where
     type; the refinement worklist holds uncertified `Component`
     values. -/
 structure DyadicRootCluster (p : ZPoly) where
-  squares   : Array DyadicSquare     -- nonempty, common prec, edge-connected
+  squares   : Array DyadicSquare     -- nonempty, common prec, grid-connected
   k         : Nat
   k_pos     : 0 < k
   witness   : witness p (encSquare squares) k
 
 /-- An uncertified component in the refinement worklist: an
-    edge-connected set of grid squares at a common `prec`, plus the
+    edge-or-corner-connected set of grid squares at a common `prec`, plus the
     root count of its most recently certified ancestor. `candidateK`
     only selects the order of the speculative Newton step; it is never
     trusted, since every output is re-certified. -/
 structure Component where
-  squares    : Array DyadicSquare    -- nonempty, common prec, edge-connected
+  squares    : Array DyadicSquare    -- nonempty, common prec, grid-connected
   candidateK : Nat
 
 /-- The result of certifying one component: an atom (either atom
@@ -302,7 +302,7 @@ namespace Component
     finer, discard children whose disc certifiably contains no root
     (the `T_0` test; a child whose `T_0` test fails to certify is
     kept, which is always sound), and glue the survivors into
-    edge-connected components. Total: no certification is required
+    edge-or-corner-connected components. Total: no certification is required
     during refinement. -/
 def refine1 (p : ZPoly) : Component → Array Component
 
@@ -331,8 +331,9 @@ def DyadicRootCluster.atomize (c : DyadicRootCluster p) (h : c.k = 1) :
 
 /-- Refine to `target` precision: speculative Newton steps, falling
     back to subdivision of the atom's square as a one-square
-    component. `none` only if certification has not reappeared by
-    `stopDepth p target` (see below). -/
+    component. This local loop does not pay the full driver's global
+    halo-normalization prefix. `none` only if certification has not
+    reappeared by `stopDepth p target` (see below). -/
 def DyadicRootIsolation.refineTo? (iso : DyadicRootIsolation p)
     (target : Int) (strategy : AtomStrategy := .nkThenPellet) :
     Option (DyadicRootIsolation p)
@@ -437,21 +438,30 @@ stopDepth p target := max target (separationDepth p) + stopSlack
 ```
 
 with `stopSlack := 8`. The degree-dependent part of the required
-depth lives inside `separationDepth` (below); `stopSlack` is only a
-fixed margin on top, and it can be generous at almost no cost:
-overshooting costs a few extra subdivision rounds in the rare case
-certification had not already happened, and nothing else. The completeness analysis
-certifies the pinned value (or shows a smaller one suffices). A
-`none` from the drivers has one precise meaning: *no certificate the
-selected strategy attempts appeared by separation depth*. The
-Mathlib companion's completeness development
-([hex-roots-mathlib.md](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md)) is expected to prove
-this impossible for squarefree inputs, for each strategy it covers
-(the Pellet converse for strategies that attempt Pellet, the
-Newton-Kantorovich converse for `.nk`). Until it does, the soundness
-theorems (which are conditional on a `some` result) are unaffected,
-and the conformance suite checks that `none` does not occur on the
-committed fixtures under any strategy.
+depth lives inside `separationDepth` (below). Before
+
+```
+completenessDepth p target := max target (separationDepth p) + 5
+```
+
+each non-emitting driver round globally subdivides and reglues the complete
+survivor set. The driver may emit earlier only when every ready,
+pairwise-disjoint result is already an atom. At this depth, every component is
+root-bearing; the Mathlib companion proves that all three strategies
+certify it as an atom and that the atom discs are pairwise disjoint.
+Thus `isolate` returns `some` for every nonzero squarefree input.
+`stopSlack` leaves three further rounds for the general driver and
+non-squarefree inputs. A `none` from a driver means only that its full
+emission condition was not reached within the fixed fuel bound; it does
+not mean that no individual certificate appeared. Soundness remains
+conditional on a `some` result for arbitrary inputs.
+
+The one-atom `DyadicRootIsolation.refineTo?` wrapper uses the same local
+hold/adopt/subdivide transition and fuel bound, but deliberately skips this
+global prefix. Its input already denotes one isolated root, so there are no
+sibling survivor lineages or rootless halo components to normalize and reglue.
+This keeps refinement proportional to the requested precision instead of
+forcing every call through the whole-polynomial separation depth.
 
 **Separation of the output.** Certification alone does not prevent
 double-counting. A component whose squares contain no root (its
@@ -460,7 +470,8 @@ double-counting. A component whose squares contain no root (its
 neighbouring component and captures the neighbour's root. The driver
 therefore emits a set of certified results only when the
 circumscribed discs of their stored squares are **pairwise
-disjoint** (one dyadic comparison per pair, as in the `SimpleRoot`
+disjoint** and, before `completenessDepth`, every result is already an atom
+(one dyadic comparison per pair, as in the `SimpleRoot`
 intersection test); components violating the check keep subdividing,
 while a component already certified at target with a disc disjoint
 from every other certified disc holds its position (continuing to
@@ -477,10 +488,13 @@ squares lie inside its base certified region, and a
 speculative-Newton region is accepted only when the coverage guard
 proves it contains exactly the base region's roots. So the output
 counts add up to exactly the root count. This is the
-analogue of the separation condition in BSSY §4. Rootless
-components die on their own: once every square of such a component
-is `T_0`-certified empty, the component disappears from the
-worklist.
+analogue of the separation condition in BSSY §4. During the uniform
+global-refinement prefix, all retained squares are reglued together each
+round. Consequently every component at `completenessDepth` contains its
+associated root: a rootless survivor halo is adjacent to the component
+containing that root and is glued into it. Only after this invariant has
+been established may a non-emitting ready and disjoint component hold its
+position; an all-atom worklist can instead emit early.
 
 Roots that sit exactly on a dyadic grid point are not a problem for
 atomization: the Newton step recentres the square on the root itself

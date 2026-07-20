@@ -504,49 +504,66 @@ theorem exists_root_lt_three_radius_of_not_rootFree {p : Hex.ZPoly}
 
 namespace DyadicSquare
 
-/-- Executable edge adjacency is exactly one grid step in the sup metric. -/
-theorem supDist_center_eq_of_adjacent {s t : Hex.DyadicSquare}
+/-- Executable edge-or-corner adjacency is strictly less than four
+half-widths in the sup metric. -/
+theorem supDist_center_lt_of_adjacent {s t : Hex.DyadicSquare}
     (hadj : Hex.DyadicSquare.adjacent s t = true) :
     s.prec = t.prec ∧
-      supDist (center s) (center t) = 2 * halfWidth s := by
+      supDist (center s) (center t) < 4 * halfWidth s := by
   rw [Hex.DyadicSquare.adjacent] at hadj
   split at hadj <;> rename_i hprec
-  · let twoH : _root_.Dyadic := .ofIntWithPrec 1 (s.prec - 1)
-    change ((decide (Hex.Dyadic.abs (s.re - t.re) = twoH) &&
-        decide (Hex.Dyadic.abs (s.im - t.im) = 0)) ||
-      (decide (Hex.Dyadic.abs (s.re - t.re) = 0) &&
-        decide (Hex.Dyadic.abs (s.im - t.im) = twoH))) = true at hadj
-    simp only [Bool.or_eq_true, Bool.and_eq_true, decide_eq_true_eq] at hadj
-    have htwo : Dyadic.toReal twoH = 2 * halfWidth s := by
-      dsimp [twoH]
+  · let fourH : _root_.Dyadic := .ofIntWithPrec 1 (s.prec - 2)
+    change (decide (Hex.Dyadic.abs (s.re - t.re) < fourH) &&
+      decide (Hex.Dyadic.abs (s.im - t.im) < fourH)) = true at hadj
+    simp only [Bool.and_eq_true, decide_eq_true_eq] at hadj
+    have hfour : Dyadic.toReal fourH = 4 * halfWidth s := by
+      dsimp [fourH]
       rw [Dyadic.toReal_ofIntWithPrec, Int.cast_one, one_mul, halfWidth_eq,
-        show -(s.prec - 1) = 1 + -s.prec by ring,
+        show -(s.prec - 2) = 2 + -s.prec by ring,
         zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
       norm_num
     constructor
     · exact hprec
-    · rcases hadj with ⟨hre, him⟩ | ⟨hre, him⟩
-      · have hreR := congrArg Dyadic.toReal hre
-        have himR := congrArg Dyadic.toReal him
-        simp only [Dyadic.toReal_abs, htwo, Dyadic.toReal_zero] at hreR himR
-        rw [supDist, supNorm]
-        simp only [center, Hex.DyadicSquare.center, GaussDyadic.toComplex,
-          Complex.sub_re, Complex.sub_im]
-        rw [← Dyadic.toReal_sub, ← Dyadic.toReal_sub, hreR, himR]
-        rw [max_eq_left]
-        rw [halfWidth_eq]
-        positivity
-      · have hreR := congrArg Dyadic.toReal hre
-        have himR := congrArg Dyadic.toReal him
-        simp only [Dyadic.toReal_abs, htwo, Dyadic.toReal_zero] at hreR himR
-        rw [supDist, supNorm]
-        simp only [center, Hex.DyadicSquare.center, GaussDyadic.toComplex,
-          Complex.sub_re, Complex.sub_im]
-        rw [← Dyadic.toReal_sub, ← Dyadic.toReal_sub, hreR, himR]
-        rw [max_eq_right]
-        rw [halfWidth_eq]
-        positivity
+    · have hre := hadj.1
+      have him := hadj.2
+      have hreR := Dyadic.toReal_lt_toReal_iff.mpr hre
+      have himR := Dyadic.toReal_lt_toReal_iff.mpr him
+      simp only [Dyadic.toReal_abs, hfour] at hreR himR
+      rw [supDist, supNorm]
+      simp only [center, Hex.DyadicSquare.center, GaussDyadic.toComplex,
+        Complex.sub_re, Complex.sub_im]
+      rw [← Dyadic.toReal_sub, ← Dyadic.toReal_sub]
+      exact max_lt hreR himR
   · simp at hadj
+
+/-- The geometric same-precision bound is also sufficient for executable
+adjacency. -/
+theorem adjacent_of_supDist_lt {s t : Hex.DyadicSquare}
+    (hprec : s.prec = t.prec)
+    (hdist : supDist (center s) (center t) < 4 * halfWidth s) :
+    Hex.DyadicSquare.adjacent s t = true := by
+  rw [Hex.DyadicSquare.adjacent, if_pos hprec]
+  let fourH : _root_.Dyadic := .ofIntWithPrec 1 (s.prec - 2)
+  have hfour : Dyadic.toReal fourH = 4 * halfWidth s := by
+    dsimp [fourH]
+    rw [Dyadic.toReal_ofIntWithPrec, Int.cast_one, one_mul, halfWidth_eq,
+      show -(s.prec - 2) = 2 + -s.prec by ring,
+      zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+    norm_num
+  have hmax : max |Dyadic.toReal (s.re - t.re)|
+      |Dyadic.toReal (s.im - t.im)| < Dyadic.toReal fourH := by
+    rw [hfour]
+    simpa only [supDist, supNorm, center, Hex.DyadicSquare.center,
+      GaussDyadic.toComplex, Complex.sub_re, Complex.sub_im,
+      ← Dyadic.toReal_sub] using hdist
+  simp only [Bool.and_eq_true, decide_eq_true_eq]
+  constructor
+  · apply Dyadic.toReal_lt_toReal_iff.mp
+    rw [Dyadic.toReal_abs]
+    exact (le_max_left _ _).trans_lt hmax
+  · apply Dyadic.toReal_lt_toReal_iff.mp
+    rw [Dyadic.toReal_abs]
+    exact (le_max_right _ _).trans_lt hmax
 
 end DyadicSquare
 
@@ -564,7 +581,7 @@ theorem exists_common_nearRoot_of_adjacent {p : Hex.ZPoly}
         ‖z - DyadicSquare.center t‖ ≤
           (65 / 32 : ℝ) * Dyadic.toReal t.radiusHi := by
   let M := (2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) * (1449 / 1024 : ℝ)
-  have hadjData := DyadicSquare.supDist_center_eq_of_adjacent hadj
+  have hadjData := DyadicSquare.supDist_center_lt_of_adjacent hadj
   have htprec : (Hex.separationDepth p : Int) ≤ t.prec := by
     rw [← hadjData.1]
     exact hprec
@@ -575,27 +592,26 @@ theorem exists_common_nearRoot_of_adjacent {p : Hex.ZPoly}
   have hradiusEq : Dyadic.toReal t.radiusHi = Dyadic.toReal s.radiusHi := by
     rw [DyadicSquare.radiusHi_eq, DyadicSquare.radiusHi_eq,
       DyadicSquare.halfWidth_eq, DyadicSquare.halfWidth_eq, ← hadjData.1]
-  have hcenterSup : supNorm (DyadicSquare.center s - DyadicSquare.center t) =
-      2 * DyadicSquare.halfWidth s := by
+  have hcenterSup : supNorm (DyadicSquare.center s - DyadicSquare.center t) <
+      4 * DyadicSquare.halfWidth s := by
     simpa [supDist] using hadjData.2
   have hcenterNorm : ‖DyadicSquare.center s - DyadicSquare.center t‖ <
-      2 * Dyadic.toReal s.radiusHi := by
+      4 * Dyadic.toReal s.radiusHi := by
     have hnorm := Complex.norm_le_sqrt_two_mul_max
       (DyadicSquare.center s - DyadicSquare.center t)
     change ‖DyadicSquare.center s - DyadicSquare.center t‖ ≤
       √2 * supNorm (DyadicSquare.center s - DyadicSquare.center t) at hnorm
-    rw [hcenterSup] at hnorm
     have hradius : √2 * DyadicSquare.halfWidth s <
         Dyadic.toReal s.radiusHi := by
       simpa only [DyadicSquare.radius, mul_comm] using
         DyadicSquare.radius_lt_radiusHi s
-    nlinarith [Real.sqrt_nonneg 2]
+    nlinarith [Real.sqrt_nonneg 2, hcenterSup]
   have hRpos : 0 < Dyadic.toReal s.radiusHi := by
     rw [DyadicSquare.radiusHi_eq]
     have : 0 < Dyadic.toReal Hex.sqrt2Hi := by
       norm_num [Hex.sqrt2Hi, Dyadic.toReal_ofIntWithPrec]
     exact mul_pos (by rw [DyadicSquare.halfWidth_eq]; positivity) this
-  have hzwUpper : ‖z - w‖ < 8 * Dyadic.toReal s.radiusHi := by
+  have hzwUpper : ‖z - w‖ < 9 * Dyadic.toReal s.radiusHi := by
     have htri : ‖z - w‖ ≤ ‖z - DyadicSquare.center s‖ +
         ‖DyadicSquare.center s - DyadicSquare.center t‖ +
           ‖w - DyadicSquare.center t‖ := by
@@ -611,7 +627,7 @@ theorem exists_common_nearRoot_of_adjacent {p : Hex.ZPoly}
           exact norm_add_le _ _
     rw [hradiusEq] at hwt
     nlinarith
-  have hRsmall : 8 * Dyadic.toReal s.radiusHi ≤ M / 64 := by
+  have hRsmall : 9 * Dyadic.toReal s.radiusHi ≤ M / 32 := by
     have hradius := NKData.radiusHi_mul_degree_le hprec
     have htwo : (2 : ℝ) ≤ Nat.max 2 (p.degree?.getD 0) := by
       exact_mod_cast Nat.le_max_left 2 (p.degree?.getD 0)

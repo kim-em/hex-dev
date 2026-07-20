@@ -23,6 +23,12 @@ namespace HexRootsMathlib
 
 noncomputable section
 
+/-- Every complex root lies in one of the retained squares. -/
+@[expose] def CoversRoots (p : Hex.ZPoly)
+    (squares : Array Hex.DyadicSquare) : Prop :=
+  ∀ z, (toPolyℂ p).IsRoot z → ∃ s ∈ squares.toList,
+    z ∈ DyadicSquare.closedSquare s
+
 namespace SquareBounds
 
 /-- Every side of a bounding box lies strictly inside the coordinate box of
@@ -208,6 +214,78 @@ theorem encSquare_prec_of_glueCovered {p : Hex.ZPoly}
   · intro u hu
     exact hprec u (mem_of_mem_glueCovered hc hu)
   · exact hnear
+
+/-- At separation depth, global coverage and maximal geometric gluing turn
+root association into actual root containment: every output component
+contains the root associated with its retained squares. -/
+theorem exists_root_mem_glueCovered {p : Hex.ZPoly}
+    {squares component : Array Hex.DyadicSquare} {prec : Int}
+    (hp : toPolyℂ p ≠ 0) (hsize : 1 < p.size)
+    (hsep : (HexPolyZMathlib.toPolyℚ p).Separable)
+    (hdepth : (Hex.separationDepth p : Int) ≤ prec)
+    (hprec : ∀ u ∈ squares.toList, u.prec = prec)
+    (hkeep : ∀ u ∈ squares.toList, Hex.rootFree p u ≠ true)
+    (hcover : CoversRoots p squares)
+    (hc : component ∈ (Hex.glueCovered squares).toList) :
+    ∃ z, (toPolyℂ p).IsRoot z ∧
+      z ∈ Component.region ⟨component, 1⟩ := by
+  have hconnected := glueCovered_connected squares component hc
+  obtain ⟨s, hs⟩ := List.exists_mem_of_ne_nil component.toList hconnected.1
+  obtain ⟨z, hzmem, hnear⟩ := exists_nearRoot_of_glueCovered hp hsize hsep
+    (fun u hu => by rw [hprec u hu]; exact hdepth) hkeep hc
+  have hzroot : (toPolyℂ p).IsRoot z := (Polynomial.mem_roots hp).1 hzmem
+  obtain ⟨t, ht, hzt⟩ := hcover z hzroot
+  obtain ⟨other, hother, htother⟩ := mem_glueCovered ht
+  have hsPrec : s.prec = prec := hprec s (mem_of_mem_glueCovered hc hs)
+  have htPrec : t.prec = prec := hprec t ht
+  have hwidth : DyadicSquare.halfWidth t = DyadicSquare.halfWidth s := by
+    rw [DyadicSquare.halfWidth_eq, DyadicSquare.halfWidth_eq, hsPrec, htPrec]
+  have hnearS := hnear s hs
+  have hnearSup : supDist (DyadicSquare.center s) z ≤
+      ‖z - DyadicSquare.center s‖ := by
+    have hsnorm : supNorm (DyadicSquare.center s - z) ≤
+        ‖DyadicSquare.center s - z‖ :=
+      max_le (Complex.abs_re_le_norm _) (Complex.abs_im_le_norm _)
+    calc
+      supDist (DyadicSquare.center s) z =
+          supNorm (DyadicSquare.center s - z) := rfl
+      _ ≤ ‖DyadicSquare.center s - z‖ := hsnorm
+      _ = ‖z - DyadicSquare.center s‖ := by
+        rw [← norm_neg]
+        congr 1
+        ring
+  have hztSup : supDist z (DyadicSquare.center t) ≤
+      DyadicSquare.halfWidth t := hzt
+  have htri : supDist (DyadicSquare.center s) (DyadicSquare.center t) ≤
+      supDist (DyadicSquare.center s) z +
+        supDist z (DyadicSquare.center t) := by
+    unfold supDist
+    calc
+      supNorm (DyadicSquare.center s - DyadicSquare.center t) =
+          supNorm ((DyadicSquare.center s - z) +
+            (z - DyadicSquare.center t)) := by ring_nf
+      _ ≤ _ := supNorm_add_le _ _
+  have hR : Dyadic.toReal s.radiusHi =
+      DyadicSquare.halfWidth s * (1449 / 1024 : ℝ) := by
+    rw [DyadicSquare.radiusHi_eq]
+    norm_num [Hex.sqrt2Hi, Dyadic.toReal_ofIntWithPrec]
+  have hh : 0 < DyadicSquare.halfWidth s := by
+    rw [DyadicSquare.halfWidth_eq]
+    positivity
+  have hdist : supDist (DyadicSquare.center s) (DyadicSquare.center t) <
+      4 * DyadicSquare.halfWidth s := by
+    rw [hR] at hnearS
+    rw [hwidth] at hztSup
+    nlinarith
+  have hedge : Glue.Edge s t :=
+    DyadicSquare.adjacent_of_supDist_lt (hsPrec.trans htPrec.symm) hdist
+  have heq : other = component := by
+    by_contra hne
+    have hno := glueCovered_separated squares component hc other hother
+      (fun h => hne h.symm) s hs t htother
+    exact hno.1 hedge
+  subst other
+  exact ⟨z, hzroot, ⟨t, htother, hzt⟩⟩
 
 /-- A root-bearing component produced by the actual survivor/glue pipeline
 passes the executable NK certifier three levels after `separationDepth`.

@@ -46,7 +46,8 @@ Covered properties:
 - a non-squarefree input keeps its multiple root as a `k = 2` cluster rather
   than atomizing it;
 - `refineTo?` reaches the requested precision and preserves the root (the old
-  and new discs still meet);
+  and new discs still meet), without paying the full driver's global
+  completeness-prefix depth;
 - `sameRoot` is `true` within a root's isolation class and `false` across
   distinct roots;
 - both witnesses fire at a simple root and fail off-root or at the wrong count;
@@ -63,12 +64,10 @@ Covered edge cases:
 - components far from every root (`refine1` empties them, `certify?` returns
   `none`, `rootFree` is `true`).
 
-Two SPEC core-tier fixtures are exercised only on their cheap operations, for
-reasons recorded at their use sites: the small Mignotte polynomial
-`x⁵ − (100x − 1)²`, whose full `isolate` currently drops roots (its atom count
-is therefore not asserted here — the coverage defect is tracked in
-https://github.com/kim-em/hex-dev/issues/8736), and the degree-10 Chebyshev
-`T₁₀`, whose full `isolate` runs far past this module's elaboration-time budget.
+The degree-10 Chebyshev fixture `T₁₀` is exercised only on its cheap
+operations because full `isolate` runs far past this module's
+elaboration-time budget. The small Mignotte polynomial
+`x⁵ − (100x − 1)²` now pins full five-root isolation under every strategy.
 -/
 
 namespace Hex
@@ -311,6 +310,10 @@ private def atom2_20 : DyadicRootIsolation rat1 := rootAtom 2 20 (Or.inl (by dec
   (match atom1_20.refineTo? 64 .pellet with
     | some r => 64 ≤ r.square.prec && DyadicSquare.discsMeet atom1_20.square r.square
     | none => false)
+-- Local atom refinement takes its first successful Newton jump. In particular,
+-- it does not first subdivide to the full driver's `completenessDepth rat1 24 =
+-- 31`, which would make the same jump overshoot to precision 61.
+#guard (atom1_20.refineTo? 24 .nk).map (·.square.prec) == some 35
 #guard (atom1_20.refineTo? 20 .nkThenPellet).map (·.square.prec) == some 20
 
 private def refined1_20 : RefinedIsolation rat1 := ⟨atom1_20, by decide⟩

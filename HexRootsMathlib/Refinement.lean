@@ -39,7 +39,7 @@ theorem refineTo_root {p : Hex.ZPoly} (iso : Hex.DyadicRootIsolation p)
   · rw [Hex.DyadicRootIsolation.refineTo?, if_neg hready] at hrun
     let fuel := Hex.fuelFor p target iso.square.prec
     let work : Array Hex.Component := #[⟨#[iso.square.doubled], 1⟩]
-    cases hloop : Hex.isolateLoop p target strategy fuel work with
+    cases hloop : Hex.refineLoop p target strategy fuel work with
     | none => simp [fuel, work, hloop] at hrun
     | some rs =>
         have hrun' := hrun
@@ -62,7 +62,7 @@ theorem refineTo_root {p : Hex.ZPoly} (iso : Hex.DyadicRootIsolation p)
                     · simpa [Component.region, Hex.Certified.square] using
                         (Certified.region_subset_toComponent (.atom iso) hzregion)
                   have hzresults : root iso ∈ Results.region rs :=
-                    isolateLoop_covers (certifier_preserves p strategy) hloop
+                    refineLoop_covers (certifier_preserves p strategy) hloop
                       (isRoot iso) hzwork
                   obtain ⟨r', hr'mem, hzr'⟩ := hzresults
                   have hzero : 0 < rs.size := by omega

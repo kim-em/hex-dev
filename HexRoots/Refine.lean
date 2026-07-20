@@ -16,15 +16,18 @@ public section
 The shared fuel-based driver loop of the complex root isolator, and the
 thin `DyadicRootIsolation.refineTo?` wrapper over it.
 
-`isolateLoop` refines a worklist of components round by round: each round
-tries to certify every component, and if all certify at stored precision at
-least `target` with pairwise disjoint circumscribed discs, it emits them;
-otherwise every component that did not adopt a strictly finer certified
-result subdivides one level and the loop recurses on the smaller fuel. The
-fuel counts down structurally on a `Nat`, so the recursion needs no
-termination proof; `stopDepth p target` fixes the depth at which the drivers
-give up, following the SPEC "Termination" and "Separation of the output"
-sections. Every quantity here is exact: the emission test is a pairwise
+`isolateLoop` refines a worklist of components round by round. A round emits
+when all components certify at stored precision at least `target`, their
+circumscribed discs are pairwise disjoint, and either every certificate is
+already an atom or the worklist has reached the fixed `completenessDepth`.
+Before that depth, a non-emitting round globally subdivides and reglues all
+survivors; this eliminates rootless halo components and is the invariant used
+by the completeness proof. Afterwards the hold/adopt optimization takes over
+while the loop recurses on the smaller fuel. The fuel counts down
+structurally on a `Nat`, so the recursion needs no termination proof;
+`stopDepth p target` fixes the depth at which the drivers give up, following
+the SPEC "Termination" and "Separation of the output" sections. Every
+quantity here is exact: the emission test is a pairwise
 `DyadicSquare.discsMeet` comparison of stored squares, and the precision
 comparisons are on the exact `Int` precs.
 -/
@@ -32,15 +35,22 @@ namespace Hex
 
 /-- The fixed give-up margin above `separationDepth` used by `stopDepth`.
     Overshooting costs only a few extra subdivision rounds in the rare case
-    certification had not already happened, and nothing else. -/
+    certification had not already happened, and nothing else. The globally
+    normalized prefix ends three levels before this bound. -/
 @[expose] def stopSlack : Nat := 8
 
 /-- SPEC Termination: the depth at which the drivers give up,
-    `max target (separationDepth p) + stopSlack`. A `none` from the drivers
-    means precisely that no certificate the selected strategy attempts had
-    appeared by this depth. -/
+    `max target (separationDepth p) + stopSlack`. A `none` from a driver means
+    that its full emission condition was not reached within this fuel bound. -/
 @[expose] def stopDepth (p : ZPoly) (target : Int) : Int :=
   max target (separationDepth p : Int) + (stopSlack : Int)
+
+/-- The depth through which the Cauchy-started driver uses globally glued,
+uniform subdivision rounds. Two levels pay for `encSquare`; the other three
+cover the quadrupled Pellet base (or doubled NK base) with one strict margin
+level. -/
+@[expose] def completenessDepth (p : ZPoly) (target : Int) : Int :=
+  max target (separationDepth p : Int) + 5
 
 namespace Component
 
@@ -98,6 +108,11 @@ end Component
 
 namespace IsolationLoop
 
+/-- Every component has reached the globally normalized completeness depth. -/
+@[expose] def normalized (p : ZPoly) (target : Int)
+    (tried : Array (Component × Option (Certified p))) : Bool :=
+  tried.all fun t => completenessDepth p target ≤ t.1.prec
+
 /-- Attempt certification on every component in a worklist. -/
 @[expose] def attempts (p : ZPoly) (strategy : AtomStrategy)
     (work : Array Component) : Array (Component × Option (Certified p)) :=
@@ -114,6 +129,14 @@ namespace IsolationLoop
 @[expose] def outputs {p : ZPoly}
     (tried : Array (Component × Option (Certified p))) : Array (Certified p) :=
   tried.filterMap (·.2)
+
+/-- Every successful certificate is already an atom. Failures do not matter:
+    the separate `allReady` guard rejects them before emission. -/
+@[expose] def allAtoms {p : ZPoly}
+    (tried : Array (Component × Option (Certified p))) : Bool :=
+  (outputs tried).all fun
+    | .atom _ => true
+    | .cluster _ => false
 
 /-- The stored squares of successful attempts are pairwise disjoint. -/
 @[expose] def disjoint {p : ZPoly}
@@ -147,20 +170,32 @@ attempts array. -/
 /-- Worklist for a non-emitting round. Ready certificates disjoint from all
 other successful certificates hold their input component; other successes
 adopt a strictly finer doubled result or refine, and failures refine. -/
-@[expose] def next (p : ZPoly) (target : Int)
+@[expose] def nextLocal (p : ZPoly) (target : Int)
     (tried : Array (Component × Option (Certified p))) : Array Component :=
   (Array.range tried.size).flatMap (step p target tried)
 
+/-- Worklist for a non-emitting full-isolation round. Before normalization,
+all squares refine and reglue globally; afterwards this is `nextLocal`. -/
+@[expose] def next (p : ZPoly) (target : Int)
+    (tried : Array (Component × Option (Certified p))) : Array Component :=
+  if normalized p target tried then
+    nextLocal p target tried
+  else
+    Component.refineAll p (tried.map (·.1))
+
 end IsolationLoop
 
-/-- The shared driver loop over the worklist. Each round certifies every
-    component; if all certify at stored prec at least `target` with pairwise
-    disjoint circumscribed discs (SPEC "Separation of the output"), the round
-    emits them. Otherwise: a component already certified at target whose
-    disc is disjoint from every other certified disc holds its position;
-    every other surviving component subdivides one level, except that one
-    adopting a strictly finer certified result keeps that result as a
-    one-square component instead. Each non-emitting round strictly
+/-- The shared driver loop over the worklist. It may emit before
+    `completenessDepth` when every result is already an atom and target-ready,
+    with pairwise-disjoint discs (SPEC "Separation of the output"). Before
+    that depth, every non-emitting round globally refines and reglues the
+    retained squares, irrespective of attempted certificates. At and beyond
+    that depth, ready and disjoint cluster results may emit too. Otherwise: a
+    component already certified at target whose disc
+    is disjoint from every other certified disc holds its position; every
+    other surviving component subdivides one level, except that one adopting
+    a strictly finer certified result keeps that result as a one-square
+    component instead. Each post-normalization non-emitting round strictly
     increases every non-held component's prec, and held components sit at
     target, so the laggard's prec reaches `stopDepth` within
     `(stopDepth − min prec)` rounds. A held component can be forced back
@@ -177,7 +212,8 @@ end IsolationLoop
   | fuel + 1, work =>
     if work.isEmpty then some #[] else
     let tried := IsolationLoop.attempts p strategy work
-    if IsolationLoop.allReady target tried && IsolationLoop.disjoint tried then
+    if (IsolationLoop.normalized p target tried || IsolationLoop.allAtoms tried) &&
+        (IsolationLoop.allReady target tried && IsolationLoop.disjoint tried) then
       some (IsolationLoop.outputs tried)
     else
       -- A component whose certification already meets the target and whose
@@ -192,15 +228,31 @@ end IsolationLoop
       isolateLoop p target strategy fuel <|
         IsolationLoop.next p target tried
 
+/-- Local refinement loop for one already-isolated atom. Unlike the
+Cauchy-started full driver, it does not pay the global halo-normalization
+prefix: there are no sibling lineages to reglue. -/
+@[expose] def refineLoop (p : ZPoly) (target : Int) (strategy : AtomStrategy) :
+    Nat → Array Component → Option (Array (Certified p))
+  | 0, _ => none
+  | fuel + 1, work =>
+    if work.isEmpty then some #[] else
+    let tried := IsolationLoop.attempts p strategy work
+    if IsolationLoop.allReady target tried && IsolationLoop.disjoint tried then
+      some (IsolationLoop.outputs tried)
+    else
+      refineLoop p target strategy fuel <|
+        IsolationLoop.nextLocal p target tried
+
 /-- Refine to `target` precision: speculative Newton steps, falling back to
-    subdivision of the atom's square as a one-square component. `none` only
-    if certification has not reappeared by `stopDepth p target`. -/
+    local subdivision of the atom's square as a one-square component. This
+    path does not use the global completeness prefix. `none` only if the full
+    ready/disjoint emission condition has not appeared within its fuel bound. -/
 @[expose] def DyadicRootIsolation.refineTo? {p : ZPoly} (iso : DyadicRootIsolation p)
     (target : Int) (strategy : AtomStrategy := .nkThenPellet) :
     Option (DyadicRootIsolation p) :=
   if target ≤ iso.square.prec then some iso else
   let fuel := fuelFor p target iso.square.prec
-  match isolateLoop p target strategy fuel #[⟨#[iso.square.doubled], 1⟩] with
+  match refineLoop p target strategy fuel #[⟨#[iso.square.doubled], 1⟩] with
   | some rs =>
     if rs.size = 1 then
       match rs[0]? with

@@ -528,7 +528,7 @@ slope after its quiet-machine sweep remained transitional.
 -- no scalar wall model has a flat constant; the shared canonical input keeps
 -- the cross-strategy `compare` agreement gate as a regression check.
 setup_fixed_benchmark runIsolateAll where {
-  repeats := 5, maxSecondsPerCall := 20.0, expectedHash := some 0x9fa00d70361d4394 }
+  repeats := 5, maxSecondsPerCall := 20.0, expectedHash := some 0x1d4ce3e46eb351de }
 
 /-
 Cost model. `isolate` runs `isolateAll?` from the Cauchy component to
@@ -561,7 +561,7 @@ the reachable sweep unsuitable for one scalar model, so the expected-hash
 fixed case tracks the high-precision regression directly.
 -/
 setup_fixed_benchmark runRefineTo where {
-  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x8dd3e4ee56489bf8 }
+  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0xd9e59c44612d0e21 }
 
 /-! ### `compare` group : dual-route atom-certificate experiment
 
