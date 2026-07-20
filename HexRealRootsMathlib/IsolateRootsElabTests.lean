@@ -207,3 +207,27 @@ example :
     (isolate_roots ((X - 1) ^ 2 * (X - 3) : Polynomial ℝ) :
       Hex.IsolatedRealRoots ((X - 1) ^ 2 * (X - 3) : Polynomial ℝ) 2).intervals =
     #v[((0 : ℚ), (2 : ℚ)), ((2 : ℚ), (4 : ℚ))] := rfl
+
+/-- **Expected-type inference.** When the expected type pins the coefficient
+ring, the polynomial argument needs no type ascription: `X ^ 4 - 2` alone
+elaborates as a `Polynomial ℝ`. -/
+noncomputable def x4_inferred : Hex.IsolatedRealRoots (X ^ 4 - 2 : Polynomial ℝ) 2 :=
+  isolate_roots (X ^ 4 - 2)
+
+/-- A `ZPoly` argument still elaborates under an expected type (the ring hint
+does not force it to `Polynomial ℤ`). -/
+private def infZ : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[-2, 0, 0, 0, 1]
+
+noncomputable example :
+    Hex.IsolatedRealRoots (HexPolyZMathlib.toPolynomial infZ) 2 :=
+  isolate_roots infZ
+
+/-- **`simp` extraction.** With the `intervals` projection simp lemmas, `simp`
+computes an isolation's endpoints to their literals, so `unique_root` closes a
+concrete theorem with one `simpa`. -/
+example : ∃! x : ℝ, x ^ 4 - 2 = 0 ∧ (0 : ℝ) < x ∧ x ≤ 4 := by
+  simpa [x4_inferred] using x4_inferred.unique_root 1
+
+/-- The `ordered` field, consumed with bare `Nat` indices. -/
+example : (x4_inferred.intervals[0]).2 ≤ (x4_inferred.intervals[1]).1 := by
+  simpa using x4_inferred.ordered 0 1 (by decide)

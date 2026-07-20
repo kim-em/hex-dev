@@ -200,6 +200,16 @@ operational promise about the emitted intervals, not a field of the
 result. The syntax uses an `atomic` lookahead on `"(" "width" ":="`
 so a parenthesised polynomial argument parses as the polynomial.
 
+When an expected type `Hex.IsolatedRealRoots (P : Polynomial R) n` is
+available at the call site, the coefficient ring `R` is used as the
+elaboration hint for the argument, so `isolate_roots (X ^ 4 - 2)` (no
+type ascription on the argument) elaborates as a `Polynomial ℝ` under
+`… : IsolatedRealRoots (X ^ 4 - 2 : Polynomial ℝ) 2`. The hint is a
+fallback: the argument is first elaborated with no expected type (a
+`ZPoly` argument, or an already-ascribed polynomial, resolves this way
+and is unaffected), and the ring hint is applied only when that leaves
+the argument's type ambiguous.
+
 The result type, uniform over the input rings through `aeval`:
 
 ```lean
@@ -326,7 +336,16 @@ extraction is a definitional step:
 `rw [show H.intervals = #v[…] from rfl]`. The wrappers this step
 unfolds (`withIntervals`, `ofCertPretty`, `congrRoots`) are
 `@[expose]`d so the reduction works from module-system files; it
-never reaches `ofCert` itself.
+never reaches `ofCert` itself. Their `intervals` projections also
+carry `@[simp]` lemmas (`ofCertPretty_intervals`,
+`withIntervals_intervals`, `congrRoots_intervals`), so `simp`,
+`simpa`, and `grind` compute an isolation's endpoints to their
+literals without naming the constructors: a `unique_root i`
+projection closes a concrete-endpoint theorem with a single
+`simpa [H]`. The whole `IsolatedRealRoots` API (`of`, `ofCert`,
+`withIntervals`, `ofCertPretty`, `congrRoots`, `constant`) lives in
+the `Hex.IsolatedRealRoots` namespace alongside the structure, so
+dot notation reaches every constructor and lemma.
 
 **Errors** are user-grade and distinguish: the zero polynomial
 ("every real number is a root"), non-integer coefficients,
