@@ -13,6 +13,7 @@ public import HexRootsMathlib.Bisection
 public import HexRootsMathlib.Cauchy
 public import HexRootsMathlib.Certificate
 public import HexRootsMathlib.CircleIntegralLemmas
+public import HexRootsMathlib.Completeness.DriverCompleteness
 public import HexRootsMathlib.Completeness.NKConverse
 public import HexRootsMathlib.Completeness.NKDepth
 public import HexRootsMathlib.Completeness.NKRecertification
@@ -22,7 +23,6 @@ public import HexRootsMathlib.Completeness.PelletDyadic
 public import HexRootsMathlib.Completeness.PelletTail
 public import HexRootsMathlib.Completeness.RootFreeConverse
 public import HexRootsMathlib.Completeness.SurvivorComponent
-public import HexRootsMathlib.Completeness.DriverCompleteness
 public import HexRootsMathlib.Component
 public import HexRootsMathlib.Driver
 public import HexRootsMathlib.Geometry
@@ -51,8 +51,8 @@ The `HexRootsMathlib` library is the Mathlib companion for the executable
 complex-root isolation library `HexRoots`.
 
 It connects exact dyadic witnesses to Mathlib's real and complex geometry and
-will prove soundness of the atom-path isolation driver. The initial modules
-supply the exact casts and geometric bounds used by every later correspondence
-proof. The separation layer certifies the exact executable `mahlerPrec`
-formula against distinct complex roots.
+proves soundness and completeness of the atom-path isolation driver. Its
+correspondence modules connect the exact executable witnesses to unique roots,
+root counts, coverage, separation, and refinement semantics. The completeness
+layer proves that every atom strategy succeeds on nonzero squarefree input.
 -/

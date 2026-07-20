@@ -9,11 +9,12 @@ stored square's disc); every
 `DyadicRootCluster` witness implies exactly `k` roots with
 multiplicity; refinement preserves roots; `sameRoot` decides whether
 two refined isolations isolate the same root; and `mahlerPrec` meets
-its separation contract. **Completeness** (every Pellet witness
-certifies by `separationDepth`, so `isolate` never returns `none` on
-squarefree input) is a separately scoped development, described at
-the end. The soundness theorems are stated conditionally on a `some`
-result and do not depend on it.
+its separation contract. **Completeness** proves that the actual driver either
+emits an already-ready, pairwise-disjoint all-atom worklist early or reaches a
+normalized depth where every retained component certifies as one atom, so
+`isolate` never returns `none` on nonzero squarefree input under any atom
+strategy. The soundness theorems remain independently useful: they are stated
+conditionally on a `some` result and do not depend on completeness.
 
 **Scope warning.** This companion is the heaviest of the `-mathlib`
 libraries. The two theorems everything rests on, **Pellet's
@@ -313,13 +314,6 @@ developments above.
   witness holds at the base, doubled, and quadrupled radii because the
   leading-term inequality `|aₙ|·Rⁿ > Σ_{i<n}|aᵢ|·Rⁱ` only improves as
   `R` grows past the Cauchy bound.
-- `HexRootsMathlib/Newton.lean`: `newton1?` and `refineTo?`
-  soundness. When they return `some iso'`, `iso'` isolates the same
-  root and `iso'.square.prec > iso.square.prec`
-  (`sameRoot`-preservation is the statement the threading pattern in
-  hex-roots.md relies on). Uses `Polynomial.newtonMap`,
-  `aeval_pow_two_pow_dvd_aeval_iterate_newtonMap`, and the
-  `Dyadic.invAtPrec` error bounds.
 - `HexRootsMathlib/RootFree.lean`: elementary `T₀` soundness. The exact
   accumulator inequality and the Taylor coefficient bridge imply, by the
   finite triangle inequality, that a successful `rootFree` test excludes
@@ -373,7 +367,7 @@ developments above.
   by exposing the successful underlying raw refinement call; the packaged
   quotient equality remains available to Mathlib-free callers.
 
-## Completeness development (separately scoped)
+## Completeness development
 
 Soundness above never claims the drivers succeed. Completeness does,
 and it is the analytically hardest part:
@@ -464,15 +458,13 @@ Shared discriminant / separation development (candidate Mathlib contribution):
   HexPolyZMathlib/Hadamard.lean
   HexPolyZMathlib/MahlerSeparation.lean
 
-Executable complex-root specialization:
-  HexRootsMathlib/MahlerPrec.lean
-
 Rouché-on-circles development (candidate Mathlib contribution;
-the hardest slice):
+HexRoots-independent core):
   HexRootsMathlib/CircleIntegralLemmas.lean
+  HexRootsMathlib/ArgumentTopology.lean
   HexRootsMathlib/ArgumentPrinciple.lean
+  HexRootsMathlib/RoucheHomotopy.lean
   HexRootsMathlib/Rouche.lean
-  HexRootsMathlib/Pellet.lean
 
 Newton-Kantorovich development (candidate Mathlib contribution;
 port of Mehta-Macbeth, see the intro):
@@ -485,11 +477,21 @@ Correspondence theorems (depend on hex-roots data structures):
   HexRootsMathlib/Taylor.lean
   HexRootsMathlib/HasOnlySimpleRoots.lean
   HexRootsMathlib/MahlerPrec.lean
-  HexRootsMathlib/SimpleRoot.lean
+  HexRootsMathlib/RootFree.lean
+  HexRootsMathlib/NKWitness.lean
+  HexRootsMathlib/Pellet.lean
   HexRootsMathlib/Cauchy.lean
-  HexRootsMathlib/Newton.lean
   HexRootsMathlib/Bisection.lean
-  HexRootsMathlib/IsolateAll.lean
+  HexRootsMathlib/Component.lean
+  HexRootsMathlib/Glue.lean
+  HexRootsMathlib/Certificate.lean
+  HexRootsMathlib/Loop.lean
+  HexRootsMathlib/NKCertify.lean
+  HexRootsMathlib/NKDriver.lean
+  HexRootsMathlib/Driver.lean
+  HexRootsMathlib/Isolate.lean
+  HexRootsMathlib/SimpleRoot.lean
+  HexRootsMathlib/Refinement.lean
 
 Completeness development:
   HexRootsMathlib/Completeness/PelletTail.lean
@@ -504,9 +506,11 @@ Completeness development:
   HexRootsMathlib/Completeness/DriverCompleteness.lean
 ```
 
-The candidate contributions have no `HexRoots` dependence and can
-be split out or sent to Mathlib if they grow. The library is verified
-by building it. Conformance fixtures live with `hex-roots`.
+The shared separation, Rouché core, and Newton--Kantorovich candidate
+contributions have no `HexRoots` dependence and can be split out or sent to
+Mathlib. The executable correspondence and completeness layers depend on
+`HexRoots`. The library is verified by building it; conformance fixtures live
+with `hex-roots`.
 
 `Kantorovich.lean` is the attributed Mathlib-only Mehta--Macbeth core: it
 derives a quantitative contraction theorem from `ContractingWith`, proves the
