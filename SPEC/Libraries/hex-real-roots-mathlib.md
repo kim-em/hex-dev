@@ -256,6 +256,17 @@ as sets; proven through the `primitiveSquareFreeDecomposition`
 bridge and a root-multiplicity argument, and shared with the `rcf`
 tactic's step 3).
 
+The elaborator's own transport does not identify the reified core
+with `squareFreeCore p` in the kernel — that identification would
+need to reduce `squareFreeCore`'s rational-arithmetic helpers, which
+are deliberately outside the replay closure. It instead emits a
+radical certificate: reified cofactors `a`, `b`, a scalar `t`, and an
+exponent `k` with the two literal `ring` identities
+`orig = core * a` and `t · core^(k+1) = a * b`, from which
+`aevalIff_radical` derives the shared real root set. Squarefreeness
+stays invisible either way; `aevalIff_squareFreeCore` remains the
+library-level statement (and the `rcf` dependency).
+
 **Kernel replay.** Following the `irreducible_cert` pattern (and
 hex-rcf §Kernel replay), the elaborator never asks the kernel to
 re-run the search. Measured on the Stage-1 prototype, the naive
