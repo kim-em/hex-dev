@@ -347,10 +347,42 @@ meta def emitOfCert (d : IsoData) : MetaM (TSyntax `term) := do
     `(term| (⟨⟨$loStx, $hiStx, by decide⟩,
         HexRealRootsMathlib.RealRootIsolation.count_one_of_cert (chain := $chainStx)
           (by decide) _ (by decide)⟩ : Hex.RealRootIsolation $fStx))
-  `(HexRealRootsMathlib.IsolatedRealRoots.ofCert (chain := $chainStx)
+  -- Present the intervals as pretty rational literals (`m` or `m / 2^k`), so
+  -- the `intervals` field is definitionally a `#v[…]` literal and user-side
+  -- extraction is `show … from rfl`. Each endpoint identity is stated over ℝ
+  -- against the literal `iso` argument itself (`Dyadic.toReal` of the reified
+  -- dyadic — pure structure/literal reductions in the user module), and
+  -- discharged through the dyadic `toReal` cast lemmas: no `Rat`
+  -- normalization anywhere near the kernel.
+  let ratStx (d : Dyadic) : MetaM (TSyntax `term) := do
+    let q := d.toRat
+    let mStx ← intStx q.num
+    if q.den == 1 then `(($mStx : ℚ)) else
+      let sStx := natStx q.den.log2
+      `((($mStx : ℚ) / 2 ^ ($sStx : ℕ) : ℚ))
+  let endpointPf (d : Dyadic) : MetaM (TSyntax `term) := do
+    let dStx ← dyadicStx d
+    let qStx ← ratStx d
+    `((by
+        simp only [HexRealRootsMathlib.toReal_ofInt,
+          HexRealRootsMathlib.toReal_ofInt_shiftRight]
+        push_cast
+        norm_num :
+      (($qStx : ℝ) = HexRealRootsMathlib.Dyadic.toReal $dStx)))
+  let pairStxs ← d.endpoints.mapM fun (lo, hi) => do
+    let loQ ← ratStx lo
+    let hiQ ← ratStx hi
+    `(term| ($loQ, $hiQ))
+  let pairPfs ← d.endpoints.mapM fun (lo, hi) => do
+    let loPf ← endpointPf lo
+    let hiPf ← endpointPf hi
+    `(term| ⟨$loPf, $hiPf⟩)
+  `(HexRealRootsMathlib.IsolatedRealRoots.ofCertPretty (chain := $chainStx)
       (iso := (⟨#[$isoStxs,*], rfl⟩ : Vector (Hex.RealRootIsolation $fStx) $nLit))
+      (w := (⟨#[$pairStxs,*], rfl⟩ : Vector (ℚ × ℚ) $nLit))
       (hsize := by decide) (hsf := by decide) (hcert := by decide)
-      (hordered := by decide) (hcomplete := by decide))
+      (hordered := by decide) (hcomplete := by decide)
+      (hw := by intro i; fin_cases i <;> first $[| exact $pairPfs]*))
 
 /-! ## Width target -/
 

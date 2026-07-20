@@ -175,3 +175,35 @@ private def openZ : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[-2, 0, 0, 0, 1]
 noncomputable example :
     Hex.IsolatedRealRoots (HexPolyZMathlib.toPolynomial openZ) 2 :=
   isolate_roots openZ
+
+/-- The `intervals` field is definitionally a literal vector of pretty
+rationals: extraction is `rfl`, even for refined (fractional) endpoints.
+No `Rat` normalization stands between the user and the endpoints. -/
+noncomputable example : Hex.IsolatedRealRoots (X ^ 4 - 2 : Polynomial ℝ) 2 :=
+  isolate_roots (X ^ 4 - 2 : Polynomial ℝ)
+
+example :
+    (isolate_roots (X ^ 4 - 2 : Polynomial ℝ) :
+      Hex.IsolatedRealRoots (X ^ 4 - 2 : Polynomial ℝ) 2).intervals =
+    #v[((-4 : ℚ), (0 : ℚ)), ((0 : ℚ), (4 : ℚ))] := rfl
+
+example :
+    (isolate_roots (width := 2 ^ (-20 : ℤ)) (X ^ 4 - 2 : Polynomial ℝ) :
+      Hex.IsolatedRealRoots (X ^ 4 - 2 : Polynomial ℝ) 2).intervals =
+    #v[((-1246975 / 2 ^ 20 : ℚ), (-623487 / 2 ^ 19 : ℚ)),
+       ((623487 / 2 ^ 19 : ℚ), (1246975 / 2 ^ 20 : ℚ))] := rfl
+
+/-- A nonconstant polynomial with no real roots: `n = 0`, and the empty
+interval vector still extracts by `rfl`. -/
+example :
+    (isolate_roots ((X : Polynomial ℝ) ^ 2 + 1) :
+      Hex.IsolatedRealRoots ((X : Polynomial ℝ) ^ 2 + 1) 0).intervals =
+    #v[] := rfl
+
+/-- `rfl` extraction through BOTH `congrRoots` layers: a non-squarefree
+input takes the radical-certificate transport and the Polynomial input
+takes the evaluation transport, and the intervals stay literal. -/
+example :
+    (isolate_roots ((X - 1) ^ 2 * (X - 3) : Polynomial ℝ) :
+      Hex.IsolatedRealRoots ((X - 1) ^ 2 * (X - 3) : Polynomial ℝ) 2).intervals =
+    #v[((0 : ℚ), (2 : ℚ)), ((2 : ℚ), (4 : ℚ))] := rfl
