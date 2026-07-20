@@ -82,6 +82,13 @@ meta-commentary about the history of our research process to any
 file. The git history tracks that. SPEC files and `PLAN/` contain
 the current state of the design, not a journal of how we got there.
 
+## Mathematical terminology
+
+Use only standard terminology an expert in Berlekamp–Zassenhaus and LLL
+recognizes immediately — no coined jargon or private coordinate names —
+and let proofs track the operations the executable performs rather than a
+parallel reformulation of them.
+
 ## Per-turn progress files
 
 Start of turn: read the most recent file in `progress/` (ISO-8601
