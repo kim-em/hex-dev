@@ -137,3 +137,41 @@ info: isolate_roots: the width must be a closed rational (no free variables or m
 end Errors
 
 end HexRealRootsMathlib.ElabTests
+
+/-! ### Review-hardening tests: dispatch, certification link, and taxonomy
+completeness (from the Codex review of #8843). -/
+
+/-- error: isolate_roots: expected a closed `Hex.ZPoly` or `Polynomial ℤ/ℚ/ℝ` term, but the argument has type
+  ℕ -/
+#guard_msgs in
+noncomputable example := isolate_roots (37 : Nat)
+
+/-- error: isolate_roots: unsupported coefficient ring
+  ℕ
+expected `Polynomial ℤ`, `Polynomial ℚ`, or `Polynomial ℝ` (with integer coefficients) -/
+#guard_msgs in
+noncomputable example := isolate_roots ((Polynomial.X : Polynomial ℕ) + 1)
+
+@[irreducible] private def secretExp : Nat := 2
+
+/-- error: isolate_roots: not a Nat literal
+  secretExp -/
+#guard_msgs in
+noncomputable example := isolate_roots ((Polynomial.X : Polynomial ℤ) ^ secretExp - 2)
+
+@[irreducible] private def hiddenZ : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[-2, 0, 0, 0, 1]
+
+/-- error: isolate_roots: cannot certify that the evaluated polynomial is definitionally the supplied term (is the definition irreducible?)
+⊢ ∀ (x : ℝ),
+    (aeval x) (HexPolyZMathlib.toPolynomial (DensePoly.ofCoeffs #[-2, 0, 0, 0, 1])) = 0 ↔
+      (aeval x) (HexPolyZMathlib.toPolynomial hiddenZ) = 0 -/
+#guard_msgs in
+noncomputable example := isolate_roots hiddenZ
+
+/-- A plain (delta-reducible) named `ZPoly` def: the result is stated over
+the USER'S name, with the evaluation certified by the kernel's defeq check. -/
+private def openZ : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[-2, 0, 0, 0, 1]
+
+noncomputable example :
+    Hex.IsolatedRealRoots (HexPolyZMathlib.toPolynomial openZ) 2 :=
+  isolate_roots openZ

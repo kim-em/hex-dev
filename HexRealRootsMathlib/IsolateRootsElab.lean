@@ -479,6 +479,10 @@ meta def elabIsolate (widthStx : Option (TSyntax `term)) (pStx : TSyntax `term)
       pure (← evalZPoly pE, false)
     else if isPoly then do
       let R := tyArgs[0]!
+      unless R.isConstOf ``Int || R.isConstOf ``Rat || R.isConstOf ``Real do
+        throwError "isolate_roots: unsupported coefficient ring{indentExpr R}\n\
+          expected `Polynomial ℤ`, `Polynomial ℚ`, or `Polynomial ℝ` \
+          (with integer coefficients)"
       let isRatRing := R.isConstOf ``Rat
       pure (← parsePoly isRatRing 8 pE, true)
     else
@@ -489,7 +493,19 @@ meta def elabIsolate (widthStx : Option (TSyntax `term)) (pStx : TSyntax `term)
     if isPolyInput then
       `(Hex.IsolatedRealRoots.congrRoots (Q := $pStx) (by aeval_iff_bridge) $coreTerm)
     else
-      pure coreTerm
+      -- Certify the DTO: restate over the USER'S term. The transport
+      -- hypothesis closes by `rfl` exactly when the supplied term is
+      -- definitionally the evaluated polynomial, so a faulty evaluation
+      -- fails elaboration rather than silently changing the theorem's
+      -- subject. Irreducible inputs fail with a clear message.
+      `(Hex.IsolatedRealRoots.congrRoots
+          (Q := HexPolyZMathlib.toPolynomial $pStx)
+          (by first
+            | exact fun x => Iff.rfl
+            | fail "isolate_roots: cannot certify that the evaluated \
+                polynomial is definitionally the supplied term (is the \
+                definition irreducible?)")
+          $coreTerm)
   Term.elabTermEnsuringType term expectedType?
 
 /-! ## Syntax -/
