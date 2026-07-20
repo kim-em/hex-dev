@@ -45,6 +45,13 @@ noncomputable section
 /-- Real value of a dyadic number, through `Dyadic.toRat`. -/
 def Dyadic.toReal (x : Dyadic) : ℝ := (x.toRat : ℝ)
 
+/-- `Dyadic.toReal` is the rational cast of `toRat`. A plain-import restatement
+of the definition, so downstream modules that do not `import all` this file can
+still bridge `Dyadic.toReal` to the `ℚ`-valued endpoints of an isolation. -/
+@[simp] theorem toReal_eq_cast_toRat (x : Dyadic) : Dyadic.toReal x = (x.toRat : ℝ) := by
+  unfold Dyadic.toReal
+  rfl
+
 /-- The real cast of an executable integer polynomial. -/
 abbrev toPolyℝ (p : Hex.ZPoly) : Polynomial ℝ :=
   (toPolynomial p).map (Int.castRingHom ℝ)
