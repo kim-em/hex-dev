@@ -164,3 +164,16 @@ def iso_const : IsolatedRealRoots (Polynomial.C (3 : ℝ)) 0 :=
   IsolatedRealRoots.constant (by simp)
 
 end HexRealRootsMathlib.Tests
+
+/-! Bridge robustness: literals where `simp` alone closes the goal (the
+trailing `ring_nf` must not fire on zero goals). -/
+
+example : ∀ x : ℝ,
+    Polynomial.aeval x (HexPolyZMathlib.toPolynomial (Hex.DensePoly.ofCoeffs #[3, 0, 0])) = 0 ↔
+    Polynomial.aeval x ((Polynomial.C 3 : Polynomial ℤ).map (Int.castRingHom ℤ)) = 0 := by
+  isolate_roots_bridge
+
+example : ∀ x : ℝ,
+    Polynomial.aeval x (HexPolyZMathlib.toPolynomial (Hex.DensePoly.ofCoeffs #[0, 0, 0])) = 0 ↔
+    Polynomial.aeval x ((0 : Polynomial ℤ)) = 0 := by
+  isolate_roots_bridge
