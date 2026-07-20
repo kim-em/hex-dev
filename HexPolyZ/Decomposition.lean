@@ -674,6 +674,11 @@ theorem primitiveSquareFreeDecomposition_reassembly_signed
     rw [← hdprimitive]
     exact htarget.symm
 
+/-- The `squareFreeCore` projection is the decomposition's square-free core.
+A definitional bridge for consumers that cannot unfold the unexposed `def`. -/
+theorem squareFreeCore_eq (f : ZPoly) :
+    squareFreeCore f = (primitiveSquareFreeDecomposition f).squareFreeCore := rfl
+
 /-- The square-free core of a nonzero polynomial is nonzero: in the signed
 reassembly it is a factor of the (nonzero) primitive part. -/
 theorem squareFreeCore_ne_zero (f : ZPoly) (hf : f ≠ 0) :
