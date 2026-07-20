@@ -377,7 +377,7 @@ meta def emitOfCert (d : IsoData) : MetaM (TSyntax `term) := do
     let loPf ← endpointPf lo
     let hiPf ← endpointPf hi
     `(term| ⟨$loPf, $hiPf⟩)
-  `(HexRealRootsMathlib.IsolatedRealRoots.ofCertPretty (chain := $chainStx)
+  `(Hex.IsolatedRealRoots.ofCertPretty (chain := $chainStx)
       (iso := (⟨#[$isoStxs,*], rfl⟩ : Vector (Hex.RealRootIsolation $fStx) $nLit))
       (w := (⟨#[$pairStxs,*], rfl⟩ : Vector (ℚ × ℚ) $nLit))
       (hsize := by decide) (hsf := by decide) (hcert := by decide)
@@ -494,8 +494,39 @@ meta def elabIsolate (widthStx : Option (TSyntax `term)) (pStx : TSyntax `term)
       let q ← evalRat wE
       if q ≤ 0 then throwError "isolate_roots: the width must be strictly positive"
       pure (some (← widthTarget q))
-  -- polynomial: elaborate and dispatch on its type
-  let pE ← elabTerm pStx none
+  -- When the expected type is `IsolatedRealRoots (P : Polynomial R) n`, the
+  -- coefficient ring `R` pins the argument's type, so `isolate_roots (X^4 - 2)`
+  -- elaborates without a type ascription. A `ZPoly` argument cannot take a
+  -- `Polynomial R` expected type, so this is a hint with a fallback, not a
+  -- requirement.
+  let expectedPolyTy? : Option Expr ← do
+    match expectedType? with
+    | none => pure none
+    | some et =>
+      let et ← whnfR (← instantiateMVars et)
+      let args := et.getAppArgs
+      if et.getAppFn.isConstOf ``Hex.IsolatedRealRoots && args.size ≥ 5 then
+        -- the type of the expected `P` argument is `Polynomial R`, the hint we want
+        pure (some (← inferType args[3]!))
+      else pure none
+  -- polynomial: elaborate and dispatch on its type. A `ZPoly` argument and a
+  -- type-ascribed polynomial both elaborate with no expected type; only a bare
+  -- `X^4 - 2` needs the expected `Polynomial R` to pin its ring, so that hint is
+  -- a fallback used exactly when the unhinted elaboration fails or stays
+  -- ambiguous.
+  let s ← saveState
+  let pE ←
+    try
+      let e ← elabTerm pStx none
+      Term.synthesizeSyntheticMVarsNoPostponing
+      let e ← instantiateMVars e
+      if e.hasExprMVar then throwError "isolate_roots: ambiguous argument"
+      pure e
+    catch _ =>
+      s.restore
+      match expectedPolyTy? with
+      | some pt => elabTermEnsuringType pStx (some pt)
+      | none => elabTerm pStx none
   Term.synthesizeSyntheticMVarsNoPostponing
   let pE ← instantiateMVars pE
   if pE.hasFVar || pE.hasExprMVar then

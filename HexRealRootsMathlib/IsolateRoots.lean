@@ -79,6 +79,13 @@ through `aeval x P = 0`. -/
     covers := fun x hx => H.covers x ((h x).mpr hx)
     ordered := H.ordered }
 
+/-- `congrRoots` leaves the intervals untouched, so `simp` reduces a transported
+isolation's intervals to the underlying ones. -/
+@[simp] theorem IsolatedRealRoots.congrRoots_intervals {R S : Type*} [CommRing R]
+    [Algebra R ℝ] [CommRing S] [Algebra S ℝ] {P : Polynomial R} {Q : Polynomial S} {n : ℕ}
+    (h : ∀ x : ℝ, aeval x P = 0 ↔ aeval x Q = 0) (H : IsolatedRealRoots P n) :
+    (IsolatedRealRoots.congrRoots h H).intervals = H.intervals := rfl
+
 /-- The `n = 0` result for a constant whose real image is nonzero: it has no
 real roots, so the empty isolation is complete. Nonzero constants never enter
 the isolator (the squarefree Sturm certificate is `false` on constants by
@@ -141,7 +148,7 @@ theorem ne_zero_of_size_ne_zero {p : Hex.ZPoly} (h : p.size ≠ 0) : p ≠ 0 :=
 /-- **`IsolatedRealRoots.of`.** Assemble the user structure from a complete
 Sturm-certified run, via `exists_unique_root` + `isolates` + the `aeval` bridge,
 including the `ordered` field from the backend's `ordered`. -/
-noncomputable def IsolatedRealRoots.of (p : Hex.ZPoly) (hp0 : p ≠ 0)
+noncomputable def _root_.Hex.IsolatedRealRoots.of (p : Hex.ZPoly) (hp0 : p ≠ 0)
     (hsf : Hex.ZPoly.SquareFreeRat p) (out : Hex.RealRootIsolations p) :
     Hex.IsolatedRealRoots (HexPolyZMathlib.toPolynomial p) out.isolations.size where
   intervals := Vector.ofFn fun i =>
@@ -203,7 +210,7 @@ obligation a single `decide` on literals:
 
 The kernel replays only the exposed count-check closure against the literal
 chain; it never rebuilds `sturmChain p` inside a field. -/
-noncomputable def IsolatedRealRoots.ofCert {p : Hex.ZPoly} {chain : Array Hex.ZPoly} {n : ℕ}
+noncomputable def _root_.Hex.IsolatedRealRoots.ofCert {p : Hex.ZPoly} {chain : Array Hex.ZPoly} {n : ℕ}
     (iso : Vector (Hex.RealRootIsolation p) n) (hsize : p.size ≠ 0)
     (hsf : Hex.ZPoly.hasSquarefreeSturmChain p = true) (hcert : Hex.SturmChainCert p chain)
     (hordered : Hex.orderedAdjacent iso.toArray = true)
@@ -227,7 +234,7 @@ discharge it by `norm_num` through the dyadic cast lemmas and present the
 intervals as pretty `m / 2^k` literals. With a literal `intervals` field,
 user-side extraction is a definitional step:
 `show H.intervals = #v[…] from rfl`. -/
-@[expose] noncomputable def IsolatedRealRoots.withIntervals {R : Type*} [CommRing R] [Algebra R ℝ]
+@[expose] noncomputable def _root_.Hex.IsolatedRealRoots.withIntervals {R : Type*} [CommRing R] [Algebra R ℝ]
     {P : Polynomial R} {n : ℕ} (H : IsolatedRealRoots P n) (w : Vector (ℚ × ℚ) n)
     (hw : ∀ i : Fin n,
       ((w[i].1 : ℚ) : ℝ) = ((H.intervals[i].1 : ℚ) : ℝ) ∧
@@ -247,9 +254,19 @@ user-side extraction is a definitional step:
       exact_mod_cast h
     exact_mod_cast hr
 
+/-- `withIntervals` sets the intervals to the supplied literal vector, so `simp`
+reduces a re-based isolation's intervals to that literal. -/
+@[simp] theorem _root_.Hex.IsolatedRealRoots.withIntervals_intervals {R : Type*} [CommRing R]
+    [Algebra R ℝ] {P : Polynomial R} {n : ℕ} (H : IsolatedRealRoots P n)
+    (w : Vector (ℚ × ℚ) n)
+    (hw : ∀ i : Fin n,
+      ((w[i].1 : ℚ) : ℝ) = ((H.intervals[i].1 : ℚ) : ℝ) ∧
+      ((w[i].2 : ℚ) : ℝ) = ((H.intervals[i].2 : ℚ) : ℝ)) :
+    (IsolatedRealRoots.withIntervals H w hw).intervals = w := rfl
+
 /-- The `intervals` of `ofCert` are the `toRat` images of the supplied
 isolations' dyadic endpoints. -/
-theorem IsolatedRealRoots.ofCert_intervals {p : Hex.ZPoly} {chain : Array Hex.ZPoly} {n : ℕ}
+theorem _root_.Hex.IsolatedRealRoots.ofCert_intervals {p : Hex.ZPoly} {chain : Array Hex.ZPoly} {n : ℕ}
     (iso : Vector (Hex.RealRootIsolation p) n) (hsize : p.size ≠ 0)
     (hsf : Hex.ZPoly.hasSquarefreeSturmChain p = true) (hcert : Hex.SturmChainCert p chain)
     (hordered : Hex.orderedAdjacent iso.toArray = true)
@@ -266,7 +283,7 @@ library's definitions, and with no `Rat` normalization near the kernel. This
 is the constructor the `isolate_roots` elaborator emits: with `intervals`
 definitionally the literal `w`, user-side extraction is
 `show H.intervals = #v[…] from rfl`. -/
-@[expose] noncomputable def IsolatedRealRoots.ofCertPretty {p : Hex.ZPoly} {chain : Array Hex.ZPoly}
+@[expose] noncomputable def _root_.Hex.IsolatedRealRoots.ofCertPretty {p : Hex.ZPoly} {chain : Array Hex.ZPoly}
     {n : ℕ} (iso : Vector (Hex.RealRootIsolation p) n) (w : Vector (ℚ × ℚ) n)
     (hsize : p.size ≠ 0)
     (hsf : Hex.ZPoly.hasSquarefreeSturmChain p = true) (hcert : Hex.SturmChainCert p chain)
@@ -283,6 +300,22 @@ definitionally the literal `w`, user-side extraction is
     constructor
     · rw [(hw i).1, he, toReal_eq_cast_toRat]
     · rw [(hw i).2, he, toReal_eq_cast_toRat])
+
+/-- `ofCertPretty`'s intervals are the supplied literal vector `w`. The
+elaborator emits `ofCertPretty` directly, so this `simp` lemma lets a user
+`simp`/`simpa`/`grind` compute an isolation's intervals to their literal
+endpoints without unfolding the constructor by hand. -/
+@[simp] theorem _root_.Hex.IsolatedRealRoots.ofCertPretty_intervals {p : Hex.ZPoly}
+    {chain : Array Hex.ZPoly} {n : ℕ} (iso : Vector (Hex.RealRootIsolation p) n)
+    (w : Vector (ℚ × ℚ) n) (hsize : p.size ≠ 0)
+    (hsf : Hex.ZPoly.hasSquarefreeSturmChain p = true) (hcert : Hex.SturmChainCert p chain)
+    (hordered : Hex.orderedAdjacent iso.toArray = true)
+    (hcomplete : Hex.sturmVarNegInf chain - Hex.sturmVarPosInf chain = n)
+    (hw : ∀ i : Fin n,
+      ((w[i].1 : ℚ) : ℝ) = Dyadic.toReal (iso[i]).interval.lower ∧
+      ((w[i].2 : ℚ) : ℝ) = Dyadic.toReal (iso[i]).interval.upper) :
+    (IsolatedRealRoots.ofCertPretty iso w hsize hsf hcert hordered hcomplete hw).intervals = w :=
+  rfl
 
 /-! ## The bridge tactic -/
 
