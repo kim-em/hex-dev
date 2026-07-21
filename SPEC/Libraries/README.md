@@ -15,7 +15,8 @@
 - **hex-real-roots**: certified real root isolation for `Z[x]`: Sturm-count witnesses, a Descartes bisection search with a proven-complete Sturm fallback
 - **hex-rcf**: the `rcf` tactic, a complete decision procedure for univariate real-closed-field sentences (Boolean combinations of polynomial inequalities under one `∀`/`∃` over `ℝ`); `mathlib: true`, soundness theorem in the same library
 - **hex-resultant**: polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
-- **hex-number-field**: `QAdjoin p x` (an element of `ℚ(α)`, indexed by a complex root of `p`) and the canonical `AlgebraicNumber` (an arbitrary algebraic number in `ℂ`)
+- **hex-number-field**: fixed fields `QAdjoin p x`, factorization-lazy `AlgebraicRoot`, canonical `AlgebraicNumber`, and roots of polynomials with algebraic coefficients
+- **hex-number-field-tower**: successive number-field extensions, Trager factorization, adjoining roots, splitting fields, and primitive-element flattening
 - **hex-berlekamp**: Berlekamp factoring and Rabin irreducibility test over `F_p`
 - **hex-hensel**: Hensel lifting from `mod p` to `mod p^k`
 - **hex-lll**: LLL lattice basis reduction
@@ -39,8 +40,9 @@ with Mathlib's):
 - **hex-poly-z-mathlib**: `DensePoly Int ≃+* Polynomial ℤ`, Mignotte bound (via Mathlib's Mahler measure)
 - **hex-roots-mathlib**: Pellet's test on circles (built from `circleIntegral`), the Mahler separation bound, soundness of refinement and `isolate`
 - **hex-real-roots-mathlib**: Sturm's theorem (counting form over `Polynomial ℝ`), chain correspondence, soundness and completeness of `isolate?`
-- **hex-resultant-mathlib**: "resultant zero iff common root" (scope-limited; equality with `Polynomial.resultant` deferred)
-- **hex-number-field-mathlib**: `QAdjoin p x ≃+* AdjoinRoot pℚ`, canonicity of `AlgebraicNumber`, arithmetic correctness
+- **hex-resultant-mathlib**: executable resultant agreement with `Polynomial.resultant`, specialization, root-product, and discriminant theorems
+- **hex-number-field-mathlib**: fixed-field correspondence, exactification, lazy arithmetic, and algebraic-coefficient root completeness
+- **hex-number-field-tower-mathlib**: tower embeddings, Trager correctness, splitting fields, and primitive-element equivalence
 - **hex-berlekamp-mathlib**: `Decidable (Irreducible f)` for `Polynomial (ZMod p)`
 - **hex-hensel-mathlib**: Hensel correctness, uniqueness, `coprime_mod_p_lifts`
 - **hex-lll-mathlib**: lattice = `Submodule ℤ`, short vector bound
@@ -68,6 +70,7 @@ Each library with its immediate dependencies:
 - **hex-rcf**: hex-real-roots, hex-real-roots-mathlib, hex-poly-z, hex-poly-z-mathlib (mathlib: true)
 - **hex-resultant**: hex-poly
 - **hex-number-field**: hex-poly-z, hex-roots, hex-resultant, hex-berlekamp-zassenhaus, hex-matrix, hex-row-reduce
+- **hex-number-field-tower**: hex-number-field, hex-resultant, hex-berlekamp-zassenhaus, hex-row-reduce
 - **hex-berlekamp**: hex-poly-fp, hex-matrix, hex-gfq-ring
 - **hex-hensel**: hex-poly-fp, hex-poly-z
 - **hex-conway**: hex-berlekamp
@@ -86,6 +89,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-real-roots-mathlib**: hex-real-roots, hex-poly-z-mathlib
 - **hex-resultant-mathlib**: hex-resultant, hex-poly-mathlib
 - **hex-number-field-mathlib**: hex-number-field, hex-resultant-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-roots-mathlib, hex-poly-z-mathlib
+- **hex-number-field-tower-mathlib**: hex-number-field-tower, hex-number-field-mathlib, hex-resultant-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-row-reduce-mathlib
 - **hex-matrix-mathlib**: hex-matrix
 - **hex-row-reduce-mathlib**: hex-row-reduce, hex-matrix-mathlib
 - **hex-determinant-mathlib**: hex-determinant, hex-bareiss, hex-matrix-mathlib
@@ -144,14 +148,24 @@ hex-gfq-field   hex-conway   hex-gf2
             hex-gfq
 ```
 
+Number-field extensions:
+
+```text
+hex-resultant ───────────────┐
+hex-number-field ────────────┼── hex-number-field-tower
+hex-berlekamp-zassenhaus ────┤
+hex-row-reduce ──────────────┘
+```
+
 ## Index
 
 Libraries marked **(released)** are published as standalone
 repositories; see
 [PLAN/Releases.md §Published libraries](../../PLAN/Releases.md#published-libraries).
 SPEC files for libraries already under development live with the
-library source (`HexFoo/SPEC/hex-foo.md`); the nine SPECs kept in
-this directory belong to planned libraries not yet started.
+library source (`HexFoo/SPEC/hex-foo.md`) when they have moved there. This
+directory also contains centralized specifications for planned libraries and
+for developments whose source-local move has not happened yet.
 
 - [hex-arith](../../HexArith/SPEC/hex-arith.md): extended GCD, Barrett/Montgomery reduction, binomial coefficients, Fermat's little theorem
 - [hex-matrix](https://github.com/leanprover/hex-matrix/blob/main/SPEC/hex-matrix.md) (released): dense matrices, arithmetic, elementary row/column operations, submatrix slicing, the Gram matrix
@@ -177,9 +191,11 @@ this directory belong to planned libraries not yet started.
 - [hex-real-roots-mathlib.md](hex-real-roots-mathlib.md): Sturm's theorem, chain correspondence, soundness and completeness of `isolate?`
 - [hex-rcf.md](hex-rcf.md): the `rcf` tactic for univariate real-closed-field sentences
 - [hex-resultant.md](hex-resultant.md): polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
-- [hex-resultant-mathlib.md](hex-resultant-mathlib.md): "resultant zero iff common root"; discriminant non-vanishing under squarefreeness
-- [hex-number-field.md](hex-number-field.md): `QAdjoin p x` and the canonical `AlgebraicNumber`
-- [hex-number-field-mathlib.md](hex-number-field-mathlib.md): `QAdjoin ≃+* AdjoinRoot`, canonicity of `AlgebraicNumber`, arithmetic correctness
+- [hex-resultant-mathlib.md](hex-resultant-mathlib.md): executable resultant agreement, specialization, root-product, and discriminant theorems
+- [hex-number-field.md](hex-number-field.md): `QAdjoin`, factorization-lazy `AlgebraicRoot`, canonical `AlgebraicNumber`, and algebraic-coefficient roots
+- [hex-number-field-mathlib.md](hex-number-field-mathlib.md): fixed-field correspondence, exactification, lazy arithmetic, and root completeness
+- [hex-number-field-tower.md](hex-number-field-tower.md): successive extensions, Trager factorization, splitting fields, and flattening
+- [hex-number-field-tower-mathlib.md](hex-number-field-tower-mathlib.md): semantic towers, factorization correctness, splitting, and primitive-element equivalence
 - [hex-berlekamp](../../HexBerlekamp/SPEC/hex-berlekamp.md): Berlekamp factoring and Rabin irreducibility test
 - [hex-berlekamp-mathlib](../../HexBerlekampMathlib/SPEC/hex-berlekamp-mathlib.md): Berlekamp/Rabin correctness proofs via Euclidean domain theory
 - [hex-hensel](../../HexHensel/SPEC/hex-hensel.md): Hensel lifting algorithms
