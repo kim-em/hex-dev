@@ -213,6 +213,13 @@ def AlgebraicNumber.add (a b : AlgebraicNumber) : AlgebraicNumber :=
   the original leading coefficient, so it cannot acquire an `X` factor.
 - `div?` composes multiplication and inversion.
 
+The addition and multiplication eliminants are nonzero. Over an algebraic
+closure their resultants are products of `t - (α + β)` or `t - αβ` over the
+finite root multisets of the two nonzero input polynomials, so each has the
+expected positive degree and nonzero leading coefficient. Stage 1 formalizes
+the corresponding common-root statements; Stage 2 identifies the full product
+when its value is needed.
+
 For a binary eliminant `e`, the desired result may coincide with values from
 other pairs of conjugates, but every candidate is a root of the same squarefree
 polynomial. Define

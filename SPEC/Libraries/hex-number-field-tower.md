@@ -114,6 +114,7 @@ namespace Hex.NumberTower
 
 /-- Build a one-level tower for the irreducible presentation `ℚ(x)`. -/
 def ofQAdjoin [ZPoly.CheckedIrreducible p]
+    (hsf : HasOnlySimpleRoots p)
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
     Extension rat
 
@@ -131,6 +132,12 @@ def flatten? (T : NumberTower) : Option (Flattening T)
 
 end Hex.NumberTower
 ```
+
+`ofQAdjoin` takes squarefreeness explicitly because its returned extension
+stores an `AlgebraicRoot`. Although irreducibility implies squarefreeness in
+characteristic zero, that implication belongs to the Mathlib companion, while
+`HasOnlySimpleRoots p` is already decidable and can be supplied by a
+Mathlib-free caller.
 
 These operations retain `Option` because their successful results contain new
 dependent carrier indices and certificates; there is no honest junk
@@ -250,9 +257,9 @@ measure. The returned extension is generated only by roots of the input.
 `flatten?` combines the fixed generators one level at a time. For generators
 `θ` and `α`, enumerate the same deterministic integer shifts and try
 `γ = θ + c * α`. Compute its integer eliminant by iterated resultants and accept
-the first candidate whose irreducible factor has degree equal to the current
-tower dimension. This degree test is the executable primitive-element
-certificate.
+the first candidate whose irreducible factor has degree equal to the combined
+dimension at that generator-adjoining step. This degree test is the executable
+primitive-element certificate.
 
 For a tower of dimension `D`, at most `choose(D, 2)` shifts collide two complex
 embeddings. `flattenShiftCount(D) = choose(D, 2) + 1`; test exactly the first
@@ -278,9 +285,9 @@ rational linear algebra even though tower arithmetic itself does not.
 - Every public operation has typical, edge, and adversarial cases. Adversarial
   cases include a bad first Trager shift, conjugate factor impostors, and a
   reducible absolute polynomial whose selected relative factor is irreducible.
-  Factor `X² - 3` in `ℚ(√2, √3)` to ensure a polynomial defined over an
-  intermediate field is handled by recursive one-level Trager rather than an
-  absolute-norm squarefreeness test.
+  Factor `X² - 3` in `ℚ(√2, √3)` to ensure a polynomial whose linear factors
+  live over the intermediate field `ℚ(√3)` is handled by recursive one-level
+  Trager rather than an absolute-norm squarefreeness test.
 - *ci*: deterministic fixtures checked independently with cypari2 `nfinit`,
   `nffactor`, and splitting-field operations.
 - *local*: taller towers and optional Nemo/Hecke comparisons.

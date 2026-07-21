@@ -52,7 +52,7 @@ while certified root isolation remains eager.
 - Add a runtime-constructible `ZPoly.CheckedIrreducible` wrapper around the
   shipped Boolean checker; its semantic interpretation remains in the
   factorization companion. Add checked `QAdjoin.roots?` under that wrapper and
-  `AlgebraicPoly.roots?`, with primary total `roots` wrappers. Return an
+  `AlgebraicPoly.roots?`, with primary total `roots` wrappers. Return a
   `RootSet` distinguishing the zero polynomial’s universal root set
   from a finite array of roots with positive multiplicities.
 - Run Yun decomposition first and count candidates independently for each
