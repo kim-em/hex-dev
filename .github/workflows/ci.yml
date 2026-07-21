@@ -131,7 +131,7 @@ jobs:
       - name: Define the hex-dev cache + build target sets
         run: |
           echo "HEX_LIB_TARGETS=HexBasic HexArith HexPoly HexModArith HexGF2 HexPolyZ HexRoots HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexBerlekampZassenhaus HexRealRoots HexMatrix HexRowReduce HexDeterminant HexBareiss HexGramSchmidt HexLLL HexMatrixMathlib HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib HexRealRootsMathlib HexRootsMathlib" >> "$GITHUB_ENV"
-          echo "HEX_EXE_TARGETS=hexarith_bench hexpoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexberlekamp_bench hexbz_bench hexconway_bench hexmatrix_bench hexdeterminant_bench hexbareiss_bench hexgramschmidt_bench hexrealroots_bench hexroots_bench hexlll_bench hexlll_provider_probe" >> "$GITHUB_ENV"
+          echo "HEX_EXE_TARGETS=hexarith_bench hexpoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexberlekamp_bench hexbz_bench hexconway_bench hexmatrix_bench hexdeterminant_bench hexbareiss_bench hexgramschmidt_bench hexrealroots_bench hexroots_bench hexroots_demo hexlll_bench hexlll_provider_probe" >> "$GITHUB_ENV"
       # Shared build. The libraries, bench exes, conformance #guard drivers, and
       # emit-fixture exes are all elaborated here so the two verification tails
       # below only *run* things, never rebuild them -- which is what lets the

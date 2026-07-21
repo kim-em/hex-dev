@@ -25,6 +25,7 @@ public import HexRootsMathlib.Completeness.RootFreeConverse
 public import HexRootsMathlib.Completeness.SurvivorComponent
 public import HexRootsMathlib.Component
 public import HexRootsMathlib.Driver
+public import HexRootsMathlib.Examples
 public import HexRootsMathlib.Geometry
 public import HexRootsMathlib.Glue
 public import HexRootsMathlib.HasOnlySimpleRoots

@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRootsMathlib.Completeness.SurvivorComponent
+public import HexRootsMathlib.Isolate
 public import HexRootsMathlib.Loop
 
 public section
@@ -1165,6 +1166,24 @@ theorem isolate_exists (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
   · refine ⟨#[], ?_⟩
     rw [Hex.isolate, dif_neg hd]
     simp [hpSize]
+
+/-- A nonzero squarefree polynomial has a successful isolation whose atoms
+enumerate its complex roots exactly, without duplicates, at the requested
+precision.  This bundles driver completeness with the principal soundness
+contracts for proof-facing clients. -/
+theorem isolate_spec (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+    (hp : p ≠ 0) (atomPrec : Int)
+    (strategy : Hex.AtomStrategy := .nkThenPellet) :
+    ∃ atoms : Array (Hex.DyadicRootIsolation p),
+      Hex.isolate p h atomPrec strategy = some atoms ∧
+      atoms.size = (toPolyℂ p).natDegree ∧
+      (atoms.toList.map HexRootsMathlib.DyadicRootIsolation.root).toFinset =
+        (toPolyℂ p).roots.toFinset ∧
+      ∀ iso ∈ atoms.toList, atomPrec ≤ iso.square.prec := by
+  obtain ⟨atoms, hrun⟩ := isolate_exists p h hp atomPrec strategy
+  obtain ⟨hroots, hprec⟩ := isolate_sound p h atomPrec strategy hrun
+  exact ⟨atoms, hrun, isolate_count p h atomPrec strategy hrun,
+    hroots, hprec⟩
 
 /-- Boolean `isSome` form of full driver completeness. -/
 theorem isolate_isSome (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)

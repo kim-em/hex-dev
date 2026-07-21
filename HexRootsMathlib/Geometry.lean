@@ -248,6 +248,16 @@ theorem center_mem_closedSquare (s : Hex.DyadicSquare) : center s ∈ closedSqua
   rw [halfWidth_eq]
   exact (zpow_pos (by norm_num) _).le
 
+/-- Membership in a closed dyadic square is exactly the pair of coordinate
+bounds around its centre. -/
+theorem mem_closedSquare_iff_re_im (s : Hex.DyadicSquare) (z : ℂ) :
+    z ∈ closedSquare s ↔
+      |z.re - Dyadic.toReal s.re| ≤ halfWidth s ∧
+      |z.im - Dyadic.toReal s.im| ≤ halfWidth s := by
+  rw [closedSquare, supClosedBall, Set.mem_setOf_eq, supDist, supNorm,
+    max_le_iff]
+  simp [center, Hex.DyadicSquare.center]
+
 theorem radiusLo_eq (s : Hex.DyadicSquare) :
     Dyadic.toReal s.radiusLo = halfWidth s * Dyadic.toReal Hex.sqrt2Lo := by
   simp only [Hex.DyadicSquare.radiusLo, Hex.sqrt2Lo, Dyadic.toReal_ofIntWithPrec,
