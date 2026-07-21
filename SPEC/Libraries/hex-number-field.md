@@ -17,12 +17,21 @@ representations:
 
 ## Executable irreducibility
 
-`Hex.ZPoly.IsIrreducible p` remains the Mathlib-free certificate used by
-`QAdjoin` field operations and canonical `AlgebraicNumber` values. Its decision
-procedure uses the existing ladder: canonical degree-one recognition, rational
-root checks in degrees two and three, small-prime Rabin certificates, then
-Berlekamp-Zassenhaus factorization. The companion proves equivalence with
-Mathlib irreducibility over `ℤ` and, after Gauss's lemma, over `ℚ`.
+The shipped Mathlib-free API separates the semantic class
+`Hex.ZPoly.Irreducible p` from the factorization-backed Boolean
+`Hex.ZPoly.isIrreducible p`. This library adds the runtime-constructible wrapper
+
+```lean
+class ZPoly.CheckedIrreducible (p : ZPoly) : Prop where
+  is_true : ZPoly.isIrreducible p = true
+```
+
+Checked constructors branch on the Boolean and can therefore return this
+evidence without importing factorization correctness. The Mathlib companion
+uses `ZPoly.isIrreducible_iff` to turn `CheckedIrreducible` into the shipped
+semantic `ZPoly.Irreducible` class and then into irreducibility over `ℚ`.
+The computational library exposes the operations needed by its algorithms; it
+does not claim a law-bearing field instance from the Boolean alone.
 
 ## Core types
 
@@ -43,15 +52,19 @@ structure AlgebraicRoot where
   rep        : RefinedIsolation p
   rep_mk     : SimpleRoot.mk rep = x
 
-/-- A canonical algebraic number. -/
-structure AlgebraicNumber where
-  p      : ZPoly
-  prim   : ZPoly.Primitive p
-  pos_lc : 0 < p.leadingCoeff
-  irred  : ZPoly.IsIrreducible p
-  x      : SimpleRoot p
-  rep    : RefinedIsolation p
-  rep_mk : SimpleRoot.mk rep = x
+/-- A canonical algebraic number. Its constructor is private. -/
+opaque AlgebraicNumber
+def AlgebraicNumber.p (a : AlgebraicNumber) : ZPoly
+def AlgebraicNumber.prim (a : AlgebraicNumber) : ZPoly.Primitive a.p
+def AlgebraicNumber.pos_lc (a : AlgebraicNumber) : 0 < a.p.leadingCoeff
+def AlgebraicNumber.checked (a : AlgebraicNumber) :
+    ZPoly.CheckedIrreducible a.p
+def AlgebraicNumber.squarefree (a : AlgebraicNumber) :
+    HasOnlySimpleRoots a.p
+def AlgebraicNumber.x (a : AlgebraicNumber) : SimpleRoot a.p
+def AlgebraicNumber.rep (a : AlgebraicNumber) : RefinedIsolation a.p
+def AlgebraicNumber.rep_mk (a : AlgebraicNumber) :
+    SimpleRoot.mk a.rep = a.x
 
 structure RootCount where
   root : AlgebraicRoot
@@ -73,6 +86,18 @@ def AlgebraicPoly.isZero (f : AlgebraicPoly) : Bool
 
 end Hex
 ```
+
+Here and in the tower SPEC, `opaque` marks a public abstraction boundary, not a
+requirement that the implementation literally use an `opaque` Lean declaration.
+Implementations use representation-private structures where constructors or
+recursors are needed internally.
+
+Every `AlgebraicNumber` smart constructor normalizes the primitive polynomial,
+then re-isolates with the fixed default strategy at `separationDepth` and stores
+the unique matching disc. Thus equal complex values have identical hidden data,
+not merely a semantic `BEq`; this representation can support field laws stated
+with Lean equality. User-supplied alternative refined discs cannot enter the
+private constructor.
 
 Do not instantiate `DensePoly AlgebraicNumber`. `DensePoly` requires
 `DecidableEq` on coefficients so that trailing-zero normalization is semantic,
@@ -100,15 +125,21 @@ def AlgebraicNumber.isZero (a : AlgebraicNumber) : Bool := a.p == X
 /-- True exactly when the selected root is zero. Squarefreeness makes the
     constant-coefficient and isolation test decisive. -/
 def AlgebraicRoot.isZero (a : AlgebraicRoot) : Bool :=
-  a.p.coeff 0 == 0 && a.rep.containsZero
+  a.p.coeff 0 == 0 && RefinedIsolation.containsZero a.rep
 ```
+
+`RefinedIsolation.containsZero` is introduced here. It tests membership of zero
+in the isolation's closed circumscribed disc, including boundary contact.
 
 ## Fixed-field operations
 
 `QAdjoin p x` retains canonical reduced rational coordinates. Addition,
 subtraction, negation, multiplication modulo `p`, and rational scalar actions do
-not require irreducibility. Inversion and the `Field` instance require
-`[ZPoly.IsIrreducible p]` and use polynomial extended gcd over `ℚ`.
+not require irreducibility. Inversion requires
+`[ZPoly.CheckedIrreducible p]` and uses polynomial extended gcd over `ℚ`.
+The computational API supplies `Inv` and `Div`, with `0⁻¹ = 0`; the companion
+proves their field laws after converting the checked certificate to semantic
+irreducibility.
 
 ```lean
 def QAdjoin.approx (a : QAdjoin p x) (rep : RefinedIsolation p)
@@ -126,10 +157,10 @@ companion's refinement-completeness theorem.
 def AlgebraicNumber.toQAdjoin (a : AlgebraicNumber) : QAdjoin a.p a.x
 def AlgebraicNumber.toRoot (a : AlgebraicNumber) : AlgebraicRoot
 
-def QAdjoin.toAlgebraicNumber? [ZPoly.IsIrreducible p]
+def QAdjoin.toAlgebraicNumber? [ZPoly.CheckedIrreducible p]
     (a : QAdjoin p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) : Option AlgebraicNumber
-def QAdjoin.toAlgebraicNumber [ZPoly.IsIrreducible p]
+def QAdjoin.toAlgebraicNumber [ZPoly.CheckedIrreducible p]
     (a : QAdjoin p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) : AlgebraicNumber
 
@@ -146,6 +177,9 @@ primitive part, and identifies the matching isolated root.
 
 `AlgebraicRoot.exact?` factors `a.p`, selects the unique irreducible factor whose
 isolated root agrees with `a.rep`, and returns that factor in canonical form.
+It reruns `ZPoly.isIrreducible` and the decidable `HasOnlySimpleRoots` check on
+the normalized factor; successful branches carry the resulting equality and
+squarefreeness proofs into the private `AlgebraicNumber` constructor.
 `exact` is the primary interface. It uses `panicWith` only on the checked
 implementation's `none` branch; `exact?_isSome` proves that branch unreachable.
 
@@ -172,32 +206,43 @@ def AlgebraicNumber.add (a b : AlgebraicNumber) : AlgebraicNumber :=
 - `mul?` handles zero first, then uses
   `resultant_y(a.p(y), y^deg(b.p) * b.p(t/y))`. It removes any
   introduced `X` factor before squarefree normalization.
-- `inv? 0 = some 0`. Otherwise it reverses the coefficients of `a.p`, removes
-  any `X` factor, maps the isolation through inversion, and re-certifies it.
+- `inv? 0 = some 0`. Otherwise it reverses the coefficients of `a.p`, trims the
+  degree drop caused by an original zero constant coefficient, takes the
+  primitive positive-leading part, maps the isolation through inversion, and
+  re-certifies it. The reversal has nonzero constant coefficient because it is
+  the original leading coefficient, so it cannot acquire an `X` factor.
 - `div?` composes multiplication and inversion.
 
-For a binary eliminant, the desired result may coincide with values from other
-pairs of conjugates. Refine the operation ball and candidate isolations to
-`rootDisambiguationPrec`, computed from one further eliminant and a
-resultant/root-product lower bound. At that precision exactly one candidate
-isolation meets the operation ball. Do not use unbounded refinement.
+For a binary eliminant `e`, the desired result may coincide with values from
+other pairs of conjugates, but every candidate is a root of the same squarefree
+polynomial. Define
+
+```text
+resultIsolationPrec(e) = separationDepth(e).
+```
+
+Refine the operation ball and candidate isolations to this precision. The
+HexRoots separation theorem makes distinct candidates disjoint, so exactly one
+candidate isolation meets the operation ball. This path does not need a second
+eliminant or the Stage 2 resultant value theorem.
 
 Canonical `AlgebraicNumber` arithmetic converts inputs with `toRoot`, performs
 the lazy operation, then calls `exact`. A many-input common-field routine is used
 internally only for polynomials with canonical algebraic coefficients.
-Canonical `AlgebraicNumber` exposes the corresponding `Field` instance, with
-`inv 0 = 0`. `AlgebraicRoot` exposes named operations but no `Field` instance:
-two semantically equal lazy results can have different enclosing polynomials, so
-the field laws do not hold for structural equality on that record.
+Canonical `AlgebraicNumber` exposes the ordinary arithmetic operations, with
+`inv 0 = 0`; the Mathlib companion installs and proves the law-bearing field
+structure. `AlgebraicRoot` exposes named operations but no field structure:
+two semantically equal lazy results can have different enclosing polynomials,
+so the field laws do not hold for structural equality on that record.
 
 ## Polynomial roots
 
 ```lean
-def QAdjoin.roots? [ZPoly.IsIrreducible p]
+def QAdjoin.roots? [ZPoly.CheckedIrreducible p]
     (f : DensePoly (QAdjoin p x))
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
     Option RootSet
-def QAdjoin.roots [ZPoly.IsIrreducible p] (...) : RootSet
+def QAdjoin.roots [ZPoly.CheckedIrreducible p] (...) : RootSet
 
 def AlgebraicPoly.roots? (f : AlgebraicPoly) : Option RootSet
 def AlgebraicPoly.roots  (f : AlgebraicPoly) : RootSet
@@ -218,13 +263,29 @@ For `QAdjoin.roots?`:
 3. Normalize and isolate the eliminant's roots.
 4. Reject candidates belonging only to other embeddings of `QAdjoin p x` by
    evaluating the original component at the candidate and the selected `x`.
-   Refute wrong candidates at `rootDisambiguationPrec`.
+   Refute wrong candidates at `evalDisambiguationPrec`.
 5. Return the surviving `AlgebraicRoot` values with the Yun multiplicity.
 
 `AlgebraicPoly.roots?` first embeds all nonzero coefficients into one computed
 primitive `QAdjoin`, then invokes the fixed-field algorithm. This internal
 common-field construction is deterministic and bounded but is not used for
 binary arithmetic.
+
+For a candidate evaluation, construct its integer eliminant `q`, remove its
+maximal `X` power, and take the primitive part. If the evaluation is nonzero,
+`q(0) ≠ 0` and the reciprocal Cauchy bound gives
+`|value| ≥ 1 / (1 + height(q))`. Let `C` be the explicit Horner error majorant
+computed from the input coefficient heights, degrees, and Cauchy root bounds.
+Define `evalDisambiguationPrec` as the least precision in the finite range
+
+```text
+0 .. ceilLog2(ceil(2 * (1 + height(q)) * C)) + 2
+```
+
+whose Horner enclosure radius is below `1 / (2 * (1 + height(q)))`.
+The displayed endpoint proves that the bounded search succeeds. The same
+construction, with the eliminant for each generator/factor evaluation, is used
+by tower adjoining. No API performs unbounded refinement.
 
 ## Totalization
 

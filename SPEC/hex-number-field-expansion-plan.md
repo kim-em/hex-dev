@@ -10,7 +10,8 @@ The implementation is divided into two computational libraries and their Mathlib
 companions. The following constraints apply throughout:
 
 - Index tower elements as `NumberTower.Elem T`, allowing each tower to supply the
-  field structure required by polynomial gcds and resultants.
+  arithmetic operations required by polynomial gcds and resultants. The
+  law-bearing field package is proved in the Mathlib companion.
 - Make tower constructors private and enforce the complex-embedding invariant
   through `ofQAdjoin`, `adjoin?`, and `split?`; prove preservation in the Mathlib
   companion.
@@ -35,8 +36,10 @@ while certified root isolation remains eager.
 - Provide factorization-lazy `add`, `sub`, `mul`, `neg`, `inv`, and division.
   Resultants produce the enclosing polynomial; squarefree normalization and
   bounded ball disambiguation select the represented root.
-- Handle zero explicitly in multiplication and inversion, including stripping
-  spurious `X` factors introduced by product and reversal eliminants.
+- Handle zero explicitly in multiplication and inversion. Strip spurious `X`
+  factors introduced by the product eliminant; coefficient reversal instead
+  trims any degree drop from an original zero constant coefficient and cannot
+  itself acquire an `X` factor.
 - Add checked `exact? : AlgebraicRoot → Option AlgebraicNumber`, primary total
   `exact : AlgebraicRoot → AlgebraicNumber`, and `AlgebraicNumber.toRoot`.
 - Implement semantic `BEq` with a same-polynomial fast path and exactification
@@ -46,14 +49,18 @@ while certified root isolation remains eager.
   normalized with semantic `isZero`. Do not use `DensePoly AlgebraicNumber`,
   because its required `DecidableEq` would incorrectly equate structural and
   semantic equality.
-- Add checked `QAdjoin.roots?` under `[ZPoly.IsIrreducible p]` and
+- Add a runtime-constructible `ZPoly.CheckedIrreducible` wrapper around the
+  shipped Boolean checker; its semantic interpretation remains in the
+  factorization companion. Add checked `QAdjoin.roots?` under that wrapper and
   `AlgebraicPoly.roots?`, with primary total `roots` wrappers. Return an
-  `AlgebraicRootSet` distinguishing the zero polynomial’s universal root set
+  `RootSet` distinguishing the zero polynomial’s universal root set
   from a finite array of roots with positive multiplicities.
 - Run Yun decomposition first and count candidates independently for each
   squarefree component. Filter conjugate-embedding impostors using a named,
-  input-computable `rootDisambiguationPrec` bound derived from an elimination
-  polynomial and a certified evaluation lower bound.
+  input-computable `evalDisambiguationPrec` bound derived from an evaluation
+  eliminant and a certified nonzero lower bound. Lazy binary arithmetic instead
+  uses `resultIsolationPrec`, directly from HexRoots separation for its one
+  squarefree eliminant.
 - Restructure the Mathlib companion around lazy-operation soundness,
   exactification, root completeness, multiplicity, and `_isSome` theorems. Retain
   common-field construction only as an internal mechanism for canonical algebraic
@@ -64,25 +71,30 @@ while certified root isolation remains eager.
 - Add an opaque runtime `NumberTower` with validated levels stored using flattened
   mixed-radix rational coordinates.
 - Define `NumberTower.Elem (T : NumberTower)` with canonical coordinates, semantic
-  structural equality, and field operations specialized to `T`. Define tower
-  polynomials as `DensePoly (NumberTower.Elem T)`.
+  structural equality, and operational arithmetic specialized to `T`. Define
+  tower polynomials as `DensePoly (NumberTower.Elem T)`; install the law-bearing
+  field package only in the Mathlib companion after proving checker soundness.
 - Add dependent result structures:
   - `Extension T`, containing the new tower, inclusion map, generator, and its
     `AlgebraicRoot`.
   - `Factorization T f`, containing normalized irreducible factors and
     multiplicities.
-  - `Splitting T f`, containing the extension, embedded polynomial, and complete
-    roots.
+  - `Splitting T f`, containing the extension and complete roots of the embedded
+    polynomial.
   - `Flattening T`, containing a canonical primitive `AlgebraicNumber` and mutually
     inverse coordinate maps to its `QAdjoin`.
 - Expose only `rat`, `ofQAdjoin`, `adjoin?`, `factor?`, `split?`, and `flatten?`;
   keep raw constructors private.
-- Require every level to carry computational irreducibility evidence. The companion
-  proves that the chosen complex generator zeros the defining polynomial after all
-  lower generators are embedded.
+- Require every level to carry a successful computational factorization check.
+  The companion proves both its semantic irreducibility and that the chosen
+  complex generator zeros the defining polynomial after all lower generators
+  are embedded.
 - Implement characteristic-zero Trager factorization recursively: Yun
-  decomposition, deterministic bounded shift search, iterated tower norm by
-  resultants, rational factorization, and gcd recovery over `Elem T`.
+  decomposition; at each `K(α)/K` level, a deterministic bounded shift search
+  for a squarefree one-level relative norm; recursive factorization of that norm
+  over `K`; and relative gcd recovery over `Elem T`. Rational factorization is
+  only the base case. Include the intermediate-field adversary `X² - 3` in
+  `ℚ(√2, √3)`.
 - `adjoin?` factors the candidate polynomial over the current tower and selects the
   unique factor containing the requested embedded root. A linear selected factor
   returns an identity extension.

@@ -27,7 +27,14 @@ opaque Elem (T : NumberTower)
 abbrev Poly (T : NumberTower) := DensePoly (Elem T)
 
 instance : DecidableEq (Elem T)
-instance : Field (Elem T)
+instance : Zero (Elem T)
+instance : One (Elem T)
+instance : Add (Elem T)
+instance : Sub (Elem T)
+instance : Neg (Elem T)
+instance : Mul (Elem T)
+instance : Inv (Elem T)
+instance : Div (Elem T)
 
 def dim (T : NumberTower) : Nat
 def coeffs (a : Elem T) : Array Rat
@@ -47,13 +54,16 @@ in the mixed-radix basis
 ```
 
 This flattened representation avoids a runtime-dependent Lean carrier while the
-index `Elem T` still supplies the per-tower `Field` instance required by
-`DensePoly` gcd and resultant algorithms. Coordinate equality is semantic within
-a fixed validated tower.
+index `Elem T` still supplies the per-tower arithmetic operations required by
+`DensePoly` gcd and resultant algorithms. Coordinate equality is exact within a
+fixed checked tower. Inversion is totalized by `0⁻¹ = 0`.
 
 Raw constructors are private. Only the smart constructors below may create a
-`NumberTower`. Consequently every public tower has irreducible levels and a
-consistent chosen complex embedding by construction.
+`NumberTower`. Each level stores a successful executable factorization check and
+a consistent chosen complex embedding by construction. The computational
+library does not turn those Boolean checks into semantic irreducibility or claim
+a `Lean.Grind.Field` instance; factorization-check soundness and the law-bearing
+field structure live in the Mathlib companion.
 
 ## Dependent result types
 
@@ -62,14 +72,17 @@ namespace Hex.NumberTower
 
 structure Extension (T : NumberTower) where
   tower   : NumberTower
-  include : Elem T → Elem tower
+  embed   : Elem T → Elem tower
   gen     : Elem tower
   root    : AlgebraicRoot
+
+def checkFactorization (f : Poly T) (scalar : Elem T)
+    (factors : Array (Poly T × Nat)) : Bool
 
 structure Factorization (T : NumberTower) (f : Poly T) where
   scalar  : Elem T
   factors : Array (Poly T × Nat)
-  normalized : Bool
+  checked : checkFactorization f scalar factors = true
 
 inductive Roots (T : NumberTower) where
   | all
@@ -87,7 +100,7 @@ structure Flattening (T : NumberTower) where
 end Hex.NumberTower
 ```
 
-`Factorization.normalized` is an executable certificate that the scalar and
+`Factorization.checked` is an executable certificate that the scalar and
 monic positive-multiplicity factor array reconstruct the input and that every
 listed factor passes the tower irreducibility checker. The companion gives its
 semantic interpretation. Factors are sorted lexicographically by canonical
@@ -100,7 +113,7 @@ coordinate arrays. The zero polynomial has scalar zero and an empty factor array
 namespace Hex.NumberTower
 
 /-- Build a one-level tower for the irreducible presentation `ℚ(x)`. -/
-def ofQAdjoin [ZPoly.IsIrreducible p]
+def ofQAdjoin [ZPoly.CheckedIrreducible p]
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
     Extension rat
 
@@ -156,9 +169,10 @@ monic defining polynomial. Inversion uses extended gcd in the top polynomial
 quotient and recurses into the lower coefficient field. `rat` has dimension one
 and identifies `Elem rat` with `Rat`.
 
-The field laws are proved in the Mathlib-free layer from the stored
-irreducibility certificates, following the same quotient-field pattern as
-`QAdjoin` and `hex-gfq-field`.
+The computational layer implements the quotient operations, including
+`inv 0 = 0`. The companion turns the checked factorization evidence into
+semantic irreducibility and proves the field laws, following the quotient-field
+pattern of `QAdjoin` and `hex-gfq-field`.
 
 ## Trager factorization
 
@@ -169,33 +183,47 @@ recovering multiplicity afterward is not accepted.
 
 For one squarefree component `g`:
 
-1. Enumerate shifts deterministically as `0, 1, -1, 2, -2, ...` up to the named
-   `tragerShiftBound T g`.
-2. Substitute `X - c * αₙ` at the top level.
-3. Compute its norm to the lower tower as a resultant with the top defining
-   polynomial. Repeat recursively until obtaining a rational polynomial.
-4. Accept the first shift whose normalized norm is squarefree. Characteristic
-   zero and the collision bound prove one exists within `tragerShiftBound`.
-5. Clear denominators and factor the rational norm with
+1. If `T = rat`, clear denominators and factor `g` directly with
    Berlekamp-Zassenhaus over `ℤ`.
-6. Lift every rational factor into `Poly T`, take its gcd with the shifted
-   component, undo the shift, normalize monically, and discard constants.
-7. Verify that the recovered factors reconstruct the component and pass the
-   recursive tower irreducibility checker.
+2. Otherwise write `T = K(αₙ)`, let `d` be the top defining-polynomial degree,
+   and let `m = degree g`. For `N = d * m`, define
 
-The norm is an iterated executable resultant, not a determinant materialized as
-a dense matrix. `hex-resultant-mathlib` full agreement is required to prove that
-the norm factorization and gcd recovery are complete.
+   ```text
+   tragerShiftCount(d, m) = choose(N, 2) + 1.
+   ```
+
+   Enumerate exactly that many distinct shifts in the deterministic order
+   `0, 1, -1, 2, -2, ...`.
+3. For each `c`, substitute `X - c * αₙ` and compute only the one-level norm
+   `Res_Y(mₙ(Y), g(X - cY))`, a polynomial over `K`.
+4. Accept the first shift whose one-level norm is squarefree over `K`. Among the
+   `N` conjugate shifted roots, each unordered pair excludes at most one integer
+   shift, so `tragerShiftCount` proves that the bounded search succeeds.
+5. Recursively call the same factorization algorithm on that norm over `K`.
+6. Embed each returned lower-tower factor into `Poly T`, take its gcd with the
+   shifted component, undo the shift, normalize monically, and discard
+   constants.
+7. Verify that the recovered factors reconstruct the component and pass the
+   tower factorization checker.
+
+Each recursive step uses a one-level executable resultant, not a determinant
+materialized as a dense matrix. It is intentionally not replaced by one absolute
+norm: a factor defined over an intermediate field can make the absolute norm a
+repeated power for every top-generator shift. `hex-resultant-mathlib` full
+agreement is required to prove that the norm factorization and gcd recovery are
+complete.
 
 ## Adjoining roots
 
 `adjoin? T a` lifts `a.p` to `Poly T`, factors it, and evaluates each factor under
-the fixed embedding of `T` together with `a.toComplex`. A named
-`adjoinDisambiguationPrec` bound refutes every wrong factor. The selected factor
-is irreducible over `Elem T` and becomes the new defining polynomial.
+the fixed embedding of `T` together with `a.toComplex`. The
+`evalDisambiguationPrec` construction from `hex-number-field`, applied to each
+factor evaluation eliminant, refutes every wrong factor. The selected factor
+passes the recursive irreducibility checker and becomes the new defining
+polynomial; its semantic irreducibility is a companion theorem.
 
 If the selected factor is linear, `a` already belongs to the embedded tower. The
-result is an identity extension with `tower = T`, `include = id`, and `gen` equal
+result is an identity extension with `tower = T`, `embed = id`, and `gen` equal
 to the recovered tower element. Otherwise append one validated level.
 
 ## Splitting fields
@@ -226,6 +254,12 @@ the first candidate whose irreducible factor has degree equal to the current
 tower dimension. This degree test is the executable primitive-element
 certificate.
 
+For a tower of dimension `D`, at most `choose(D, 2)` shifts collide two complex
+embeddings. `flattenShiftCount(D) = choose(D, 2) + 1`; test exactly the first
+that many values in the signed enumeration. Candidate factor selection uses
+`evalDisambiguationPrec`, so both the shift search and the root selection have
+input-computable finite bounds.
+
 Recover every old generator as a polynomial in `γ` by gcd and rational row
 reduction. These coordinate expressions define `fromPrimitive`; evaluation of
 mixed-radix basis elements defines `toPrimitive`. Verify both coordinate
@@ -244,6 +278,9 @@ rational linear algebra even though tower arithmetic itself does not.
 - Every public operation has typical, edge, and adversarial cases. Adversarial
   cases include a bad first Trager shift, conjugate factor impostors, and a
   reducible absolute polynomial whose selected relative factor is irreducible.
+  Factor `X² - 3` in `ℚ(√2, √3)` to ensure a polynomial defined over an
+  intermediate field is handled by recursive one-level Trager rather than an
+  absolute-norm squarefreeness test.
 - *ci*: deterministic fixtures checked independently with cypari2 `nfinit`,
   `nffactor`, and splitting-field operations.
 - *local*: taller towers and optional Nemo/Hecke comparisons.
@@ -257,15 +294,18 @@ Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
 
 - Coordinate addition costs `O(D)` rational operations. Schoolbook
   multiplication and reduction cost `O(D²)` before later fast-arithmetic work.
-- Each Trager shift computes one sequence of resultants whose degrees multiply
-  to at most `D * n`, followed by rational factorization at that degree.
+- A Trager step at `K(α)/K` tries at most
+  `choose(deg(mα) * n, 2) + 1` one-level resultants, then recursively factors one
+  accepted norm of degree at most `deg(mα) * n` over `K`. The base case performs
+  one rational factorization. This recurrence, rather than one absolute-norm
+  factorization cost, is the implementation budget.
 - `split?` repeats factorization after genuine degree-reducing extensions.
 - `flatten?` computes primitive-element eliminants of degree at most `D` and
   solves rational systems of dimension `D`.
 
 No standalone wall-clock ceiling is pinned before the first complete compiled
-implementation. Phase 4 records component timings, then sets each ceiling to the
-measured reference-host time plus the repository's standard regression margin.
+implementation. Phase 4 records component timings, then sets each ceiling from
+the measured reference-host ceiling under the repository benchmarking policy.
 Merge-facing conformance is restricted to tower dimension at most 8 and input
 degree at most 4 until those measurements exist.
 

@@ -163,8 +163,9 @@ Libraries marked **(released)** are published as standalone
 repositories; see
 [PLAN/Releases.md §Published libraries](../../PLAN/Releases.md#published-libraries).
 SPEC files for libraries already under development live with the
-library source (`HexFoo/SPEC/hex-foo.md`); SPECs kept in this directory
-belong to planned libraries not yet started.
+library source (`HexFoo/SPEC/hex-foo.md`) when they have moved there. This
+directory also contains centralized specifications for planned libraries and
+for developments whose source-local move has not happened yet.
 
 - [hex-arith](../../HexArith/SPEC/hex-arith.md): extended GCD, Barrett/Montgomery reduction, binomial coefficients, Fermat's little theorem
 - [hex-matrix](https://github.com/leanprover/hex-matrix/blob/main/SPEC/hex-matrix.md) (released): dense matrices, arithmetic, elementary row/column operations, submatrix slicing, the Gram matrix

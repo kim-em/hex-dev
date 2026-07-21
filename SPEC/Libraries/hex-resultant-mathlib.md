@@ -35,6 +35,8 @@ theorem resultant_eq_zero_iff_common_root
 theorem eval_resultant (f g : DensePoly (DensePoly R)) (a : R) :
     eval a (resultant f g) =
       Polynomial.resultant (specialize a f) (specialize a g)
+        (m := (toPolynomial f).natDegree)
+        (n := (toPolynomial g).natDegree)
 
 /-- If two bivariate polynomials vanish at `(a, b)`, their resultant in the
     second variable vanishes at `a`. -/
@@ -54,6 +56,13 @@ theorem toPolynomial_disc (f : DensePoly R) :
 
 end Hex.DensePoly
 ```
+
+The formal degrees on `eval_resultant` are essential: specialization can erase
+a leading coefficient. For example, specializing `t` to zero in `t*y + 1` and
+`t*y - 1` drops both degrees; the default-degree resultant of the specialized
+constants is not the specialization of the original resultant. Also provide a
+default-degree corollary under hypotheses that both leading coefficients remain
+nonzero. The Stage 1 one-way vanishing theorem remains unconditional.
 
 The displayed root-product formula fixes intent rather than Mathlib's final
 multiset notation. The implementation uses the pinned revision's existing
@@ -101,8 +110,10 @@ Sylvester-minor proof rather than retaining that obsolete total.
   specialization-vanishing.
 - Exactification and root completeness use Stage 1 plus the factorization and
   isolation companions.
-- `rootDisambiguationPrec` uses the Stage 2 root-product formula to certify a
-  nonzero lower bound for wrong candidates.
+- `resultIsolationPrec` for lazy binary arithmetic uses only HexRoots separation
+  between roots of one squarefree eliminant.
+- `evalDisambiguationPrec` uses the Stage 2 root-product formula to certify a
+  nonzero lower bound for wrong root/factor evaluations.
 - Tower norms and Trager factor recovery use Stage 2 full agreement and
   specialization.
 - Discriminant and squarefree corollaries use Stage 2 discriminant agreement.

@@ -42,7 +42,10 @@ theorem AlgebraicNumber.p_eq_minpoly (a : AlgebraicNumber) :
 ```
 
 `QAdjoin.toComplex` evaluates reduced coordinates at the selected root. Under
-`[ZPoly.IsIrreducible p]` it is an embedding of fields.
+`[ZPoly.CheckedIrreducible p]`, `ZPoly.isIrreducible_iff` supplies semantic
+irreducibility, so it is an embedding of fields. This file installs the
+law-bearing field structures for `QAdjoin` and canonical `AlgebraicNumber` and
+proves that their operations are the computational ones.
 
 ## Equality, zero, and approximation
 
@@ -69,6 +72,12 @@ either algebraic-number record.
 
 ## Canonicalization
 
+First derive `ZPoly.Irreducible p` from every stored
+`ZPoly.CheckedIrreducible p` using the factorization companion's Boolean
+equivalence. Together with the stored squarefreeness proof, this justifies both
+the canonical minimal-polynomial theorem and `AlgebraicNumber.toRoot` without a
+cross-layer proof gap.
+
 ```lean
 theorem AlgebraicNumber.toRoot_toComplex (a : AlgebraicNumber) :
     a.toRoot.toComplex = a.toComplex
@@ -84,7 +93,7 @@ theorem AlgebraicRoot.exact_toComplex (a : AlgebraicRoot) :
     a.exact.toComplex = a.toComplex
 
 theorem QAdjoin.toAlgebraicNumber?_sound
-    [ZPoly.IsIrreducible p] (...) {b} (h : ... = some b) :
+    [ZPoly.CheckedIrreducible p] (...) {b} (h : ... = some b) :
     b.toComplex = QAdjoin.toComplex x a
 ```
 
@@ -115,10 +124,11 @@ division, plus unconditional negation. Inversion follows Mathlib's convention
 `0⁻¹ = 0`, so its headline needs no nonzero hypothesis.
 
 Operation soundness uses the Stage 1 specialization-vanishing theorem from
-`hex-resultant-mathlib`. `_isSome` uses squarefree normalization, root-isolation
-completeness, and the Stage 2 root-product lower bound behind
-`rootDisambiguationPrec`. Canonical `AlgebraicNumber` arithmetic follows by
-`toRoot`, the lazy headline, and `exact_toComplex`.
+`hex-resultant-mathlib`. `_isSome` uses squarefree normalization,
+root-isolation completeness, and HexRoots separation at
+`resultIsolationPrec`; it does not require the Stage 2 resultant value theorem.
+Canonical `AlgebraicNumber` arithmetic follows by `toRoot`, the lazy headline,
+and `exact_toComplex`.
 
 ## Algebraic coefficient polynomials
 
@@ -138,7 +148,7 @@ computational library does not use `DensePoly AlgebraicNumber`.
 ## Root API correctness
 
 ```lean
-theorem QAdjoin.roots?_isSome [ZPoly.IsIrreducible p] (...) :
+theorem QAdjoin.roots?_isSome [ZPoly.CheckedIrreducible p] (...) :
     (QAdjoin.roots? f rep h).isSome
 
 theorem AlgebraicPoly.roots?_isSome (f : AlgebraicPoly) :
@@ -179,7 +189,8 @@ The proof follows the executable stages:
 3. Minimal polynomial of the multiplication operator for
    `toAlgebraicNumber?`.
 4. Exactification factor selection and completeness.
-5. Lazy eliminant soundness and the candidate-refutation bound.
+5. Lazy eliminant soundness, same-eliminant separation, and the independent
+   evaluation-refutation bound used by root filtering.
 6. Many-coefficient primitive-field construction for `AlgebraicPoly`.
 7. Yun multiplicity transfer, norm candidate completeness, and embedding
    filtering for both root APIs.
