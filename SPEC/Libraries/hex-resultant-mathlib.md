@@ -1,163 +1,134 @@
 # hex-resultant-mathlib (depends on hex-resultant + hex-poly-mathlib + Mathlib)
 
-Mathlib companion for `hex-resultant`. **Scope-limited**: proves only
-the "resultant zero iff common root" property, not the equality of
-`Hex.DensePoly.resultant` with `Polynomial.resultant`.
+Mathlib companion for `hex-resultant`. It proves both the chain-level facts used
+for early number-field soundness and the full agreement of the executable
+subresultant algorithm with `Polynomial.resultant`.
 
-## Why scope-limited
+The full agreement is required. Resultant vanishing proves that a proposed
+algebraic value is a root of an eliminant, but tower norms, root-product bounds,
+specialization, and Trager factorization also depend on the value of the
+resultant, including its units, powers, and signs.
 
-The full `Hex.DensePoly.resultant f g = Polynomial.resultant
-(toPolynomial f) (toPolynomial g)` would require formalising the
-classical correspondence between the subresultant chain and the
-Sylvester-matrix determinant, roughly 1500-2000 lines of substantive
-computer algebra in Mathlib: pseudo-remainder steps as row operations
-on the Sylvester matrix with specific scale factors, subresultants as
-leading coefficients of reduced Sylvester submatrices, and the
-resultant as a product over the chain with sign corrections.
+## Public theorems
 
-We don't need it. The downstream consumer
-(`hex-number-field-mathlib`'s correctness theorems for
-`AlgebraicNumber` arithmetic) only needs the property "the resultant
-of two polynomials is zero iff they share a common root in the
-algebraic closure". That property suffices for proofs like "`α + c·β`
-is a root of `resultant_y(β.p(y), α.p(t − c·y))`", the key ingredient
-of `commonField` correctness.
-
-The narrower theorem can be proved by analysing the pseudo-remainder
-chain directly, without the Sylvester-determinant connection, in
-roughly 600 lines.
-
-## What we cite from Mathlib (no work)
-
-- `Polynomial`, `Polynomial.eval`, polynomial arithmetic.
-- `Polynomial.modByMonic` and friends. Mathlib has the monic case of
-  polynomial division. We define the non-monic pseudo-remainder on
-  top.
-- `IsAlgClosed` and polynomial roots over ℂ
-  (`Mathlib.FieldTheory.IsAlgClosed.Basic`,
-  `Mathlib.Analysis.Complex.Polynomial.Basic`).
-- gcd theory over polynomial rings, for the connection "gcd is
-  constant iff no common roots" (for example
-  `EuclideanDomain.gcd_eq_zero_iff` and the `EuclideanDomain.gcd`
-  API for `ℚ[X]`).
-
-## What we explicitly do NOT prove
-
-- `Hex.DensePoly.resultant f g = Polynomial.resultant (toPolynomial f)
-  (toPolynomial g)`: full resultant equality. Reserved for a future
-  Mathlib contribution formalising the subresultant-Sylvester
-  correspondence.
-- The root-product formula `Hex.resultant f g = lc(f)^(deg g) · ∏
-  g.eval αᵢ`. Requires splitting-field machinery; not needed for our
-  use cases.
-- Discriminant equality `Hex.disc f = Polynomial.discr (toPolynomial
-  f)`. Provable from the full equality but not from the narrow
-  property.
-
-## Theorem chain (~600 lines total)
-
-Stated for `f, g : ZPoly` with roots taken in ℂ, which is all the
-downstream consumers need. (The chain analysis itself works over any
-UFD with roots in the algebraic closure of its fraction field, but we
-do not state that generality.)
-
-1. **Pseudo-division correctness on `Polynomial`** (~100 lines).
-   Define `Polynomial.pseudoRem (f g : Polynomial R) : Polynomial R`
-   for any commutative ring `R`, satisfying
-   `lc(g)^(deg f − deg g + 1) · f = q · g + pseudoRem f g`
-   for some `q : Polynomial R`, with `deg (pseudoRem f g) < deg g`.
-   Mathlib has the monic case, and the non-monic case is a
-   straightforward induction.
-
-2. **Subresultant chain construction over `Polynomial`** (~150 lines).
-   `F₀ := f`, `F₁ := g`, `F_{k+1} := pseudoRem F_{k-1} F_k` while
-   `F_k ≠ 0`. The chain terminates with some `F_N = 0`.
-
-3. **Pseudo-division preserves common roots forward** (~30 lines).
-   If `α` is a common root of `F_{k-1}` and `F_k`, then `α` is a
-   root of `F_{k+1}`. Evaluate the pseudo-division identity at `α`:
-   the left side vanishes, so `F_{k+1}(α) = -q(α) · F_k(α) = 0`.
-
-4. **Pseudo-division preserves common roots backward** (~50 lines).
-   If `α` is a root of `F_k` and `F_{k+1}`, then `α` is a root of
-   `F_{k-1}`. From the pseudo-division identity,
-   `lc(F_k)^d · F_{k-1}(α) = 0`. The leading coefficient `lc(F_k)`
-   is a nonzero integer, hence nonzero in ℂ, so `F_{k-1}(α) = 0`.
-
-5. **The chain computes a gcd** (~150 lines).
-   The chain ends with `F_N = 0`; the last nonzero element `F_{N-1}`
-   is `gcd(f, g)` up to a nonzero rational factor. By induction using
-   items 3 and 4, the common complex roots of `f` and `g` are
-   precisely the roots of `F_{N-1}`.
-
-6. **The `Hex.resultant` value and the chain** (~50 lines).
-   `Hex.DensePoly.resultant f g = 0` iff the chain's last nonzero
-   element has positive degree (a non-trivial gcd).
-
-7. **Hex-Mathlib transfer** (~50 lines).
-   The chain built from `Hex.DensePoly` values and the chain built
-   from `Polynomial` values correspond under the `HexPolyMathlib`
-   ring equivalence: the two constructions are structurally identical
-   on isomorphic representations, so the transfer is step-by-step.
-
-8. **Final theorem** (~50 lines):
-
-   ```lean
-   theorem Hex.DensePoly.resultant_eq_zero_iff_common_root
-       (f g : ZPoly) (hf : f ≠ 0) (hg : g ≠ 0) :
-       Hex.DensePoly.resultant f g = 0
-         ↔ ∃ α : ℂ, (toPolynomial f).aeval α = 0
-                  ∧ (toPolynomial g).aeval α = 0
-   ```
-
-   Combine items 5, 6, 7. The nonzeroness hypotheses rule out the
-   degenerate `resultant 0 g = 0` cases, which have no common-root
-   meaning.
-
-## Discriminant non-vanishing corollary
+The exact typeclass assumptions follow the executable algorithm: `R` is a
+commutative integral domain with decidable equality and the exact-division laws
+used by the subresultant recurrence.
 
 ```lean
-theorem Hex.DensePoly.disc_ne_zero_of_squarefree (f : ZPoly)
-    (hf : Squarefree (toPolynomial f)) :
-    Hex.DensePoly.disc f ≠ 0
+namespace Hex.DensePoly
+
+/-- The executable and Mathlib resultants agree under the dense-polynomial
+    correspondence. -/
+theorem toPolynomial_resultant (f g : DensePoly R) :
+    resultant f g = Polynomial.resultant (toPolynomial f) (toPolynomial g)
+
+/-- Vanishing criterion over an algebraically closed extension. -/
+theorem resultant_eq_zero_iff_common_root
+    (f g : ZPoly) (hf : f ≠ 0) (hg : g ≠ 0) :
+    resultant f g = 0 ↔
+      ∃ z : ℂ, (toPolynomial f).aeval z = 0 ∧
+        (toPolynomial g).aeval z = 0
+
+/-- Specialize the coefficient variable after eliminating the polynomial
+    variable. -/
+theorem eval_resultant (f g : DensePoly (DensePoly R)) (a : R) :
+    eval a (resultant f g) =
+      Polynomial.resultant (specialize a f) (specialize a g)
+
+/-- If two bivariate polynomials vanish at `(a, b)`, their resultant in the
+    second variable vanishes at `a`. -/
+theorem eval_resultant_eq_zero_of_common_root
+    (f g : DensePoly (DensePoly R))
+    (hfb : eval₂ a b f = 0) (hgb : eval₂ a b g = 0) :
+    eval a (resultant f g) = 0
+
+/-- Root-product form, with multiplicity. -/
+theorem resultant_eq_leadingCoeff_mul_prod_roots
+    (f g : Polynomial K) :
+    Polynomial.resultant f g =
+      f.leadingCoeff ^ g.natDegree * ∏ z ∈ f.roots E, Polynomial.eval z g
+
+theorem toPolynomial_disc (f : DensePoly R) :
+    disc f = Polynomial.discr (toPolynomial f)
+
+end Hex.DensePoly
 ```
 
-Follows from item 8: `disc f = 0 ↔ resultant f f' = 0 ↔ f, f' share
-a common root ↔ f has a multiple root ↔ ¬ Squarefree f`.
+The displayed root-product formula fixes intent rather than Mathlib's final
+multiset notation. The implementation uses the pinned revision's existing
+`roots` and splitting-field APIs and states the theorem with their actual
+multiplicity representation.
 
-Recorded because it is immediate from item 8 and gives consumers of
-`Hex.disc` the standard squarefreeness criterion. Note that
-`hex-roots-mathlib` does **not** need it: its `mahlerPrec` correctness
-argument uses Mathlib's `Polynomial.discr` throughout and never
-mentions `Hex.disc`.
+## Proof staging
+
+### Stage 1: chain and vanishing
+
+Stage 1 is sufficient for `AlgebraicRoot` operation soundness and can land before
+the determinant correspondence.
+
+1. Define Mathlib polynomial pseudo-division and prove its quotient/remainder
+   identity and degree bound.
+2. Transfer the executable pseudo-remainder sequence through `toPolynomial`.
+3. Prove forward and backward preservation of common roots along the chain.
+4. Relate a positive-degree final gcd to executable resultant zero.
+5. Prove `resultant_eq_zero_iff_common_root` and the one-way bivariate
+   specialization-vanishing theorem.
+
+This stage justifies claims such as: if `p(α) = 0` and `q(β) = 0`, then the
+addition or product eliminant vanishes at the proposed result.
+
+### Stage 2: full value correspondence
+
+Stage 2 is required before `hex-number-field-tower-mathlib` can prove
+factorization, splitting, or flattening.
+
+1. Relate every subresultant recurrence term to the corresponding Sylvester
+   minor, including the exact scale factors and degree-drop signs.
+2. Identify the corrected final constant with the Sylvester determinant.
+3. Compose with Mathlib's determinant definition of `Polynomial.resultant` to
+   prove `toPolynomial_resultant` generically.
+4. Derive `eval_resultant`, the root-product formula, norm identities, and
+   discriminant agreement.
+
+The prior scope estimate of about 600 lines covered only Stage 1. Stage 2 is a
+substantial computer-algebra development and must be estimated from the actual
+Sylvester-minor proof rather than retaining that obsolete total.
+
+## Downstream contracts
+
+- `hex-number-field-mathlib` lazy arithmetic `_sound` theorems use Stage 1
+  specialization-vanishing.
+- Exactification and root completeness use Stage 1 plus the factorization and
+  isolation companions.
+- `rootDisambiguationPrec` uses the Stage 2 root-product formula to certify a
+  nonzero lower bound for wrong candidates.
+- Tower norms and Trager factor recovery use Stage 2 full agreement and
+  specialization.
+- Discriminant and squarefree corollaries use Stage 2 discriminant agreement.
 
 ## File organisation
 
-```
+```text
 HexResultantMathlib/
-  Basic.lean         : public statements (resultant_eq_zero_iff_common_root,
-                       disc_ne_zero_of_squarefree)
-  Subresultant.lean  : items 1-7 (the chain analysis)
-  Discriminant.lean  : the discriminant corollary
+  Basic.lean           : public theorem statements
+  Chain.lean           : pseudo-division transfer and Stage 1
+  Sylvester.lean       : subresultant minors and full agreement
+  Specialize.lean      : bivariate specialization and norm corollaries
+  Roots.lean           : root-product formula
+  Discriminant.lean    : discriminant agreement and squarefree corollaries
 ```
 
-`Subresultant.lean` is the substantive file. Items 1-5 mention no
-`Hex` type, so that part can be prepared as a Mathlib contribution
-(subresultant chain definition plus the common-root property)
-independently of the rest of `hex`. The library is verified by
-building it. The conformance fixtures live with `hex-resultant`.
-
-## Practical staging
-
-`hex-resultant` (computational) lands first. `hex-resultant-mathlib`
-lands later: substantial but bounded at ~600 lines, far more tractable
-than the full Sylvester correspondence would be.
+The library is verified by building it. Executable conformance remains in
+`hex-resultant`.
 
 ## References
 
-- See [hex-resultant.md](hex-resultant.md) for the subresultant
-  references (Collins, Brown, Geddes-Czapor-Labahn, von zur Gathen
-  and Gerhard).
-- For the common-root property specifically: von zur Gathen and
-  Gerhard, *Modern Computer Algebra* (3rd ed. 2013), §6 is the
-  closest presentation to the one used here.
+- Collins, G. E. *Subresultants and reduced polynomial remainder sequences.*
+  J. ACM 14 (1967), 128-142.
+- Brown, W. S. *The subresultant PRS algorithm.* ACM TOMS 4 (1978),
+  237-249.
+- Geddes, K. O.; Czapor, S. R.; Labahn, G. *Algorithms for Computer
+  Algebra.* Kluwer, 1992, chapter 7.
+- von zur Gathen, J.; Gerhard, J. *Modern Computer Algebra.* CUP, 3rd
+  ed. 2013, chapter 6.
