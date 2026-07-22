@@ -69,12 +69,15 @@ rather than copying it.
 **Indexed row/column mutation.** `modifyRow` updates one row span in place;
 `setCol` and the per-entry `modifyCol` update one column entry per row through
 flat per-entry folds over the single buffer. The column *analogues* of the
-elementary operations (`colAdd`, `colAddRight`, `colSwap`) currently go
-through `mapRows`, which materializes the rows and reflattens — a value-level
-pass, not an in-place column write; migrating them to the flat per-entry
-engine is follow-up work alongside the `BlockView` recursion.
-This replaces the former `ofFn`-rebuild form of `setCol`, which read and
-reallocated every entry to change one column.
+elementary operations (`colAdd`, `colAddRight`, `colSwap`) run the same flat
+per-entry column engine: each reads the source column(s) once into a borrowed
+`O(n)` vector, then writes the destination column entries in place through
+`modifyCol` (`colAdd`/`colAddRight`) or two `setCol` passes (`colSwap`) — one
+single-entry flat-buffer write per row, reusing the backing store when the
+matrix is uniquely referenced, with no row materialization. This replaced the
+former `mapRows` form, which materialized every row and reflattened, and the
+former `ofFn`-rebuild form of `setCol`, which read and reallocated every entry
+to change one column.
 
 **Key properties:**
 - identity matrices act as left and right multiplicative identities
@@ -250,14 +253,22 @@ condition is config-independent.
 
 ### Avoiding sub-block copies
 
-The four quadrants of `A`, `B`, and `C` are **views**, not freshly materialized
-matrices: a view is a backing matrix together with a row offset, a column
-offset, and the two block dimensions. Reading a quadrant entry adds the offset
-and indexes the backing store. The recursive splitting therefore allocates
-nothing for the quadrants themselves. The internal recursion is stated over this
-view type, not over `Matrix`. Only when a block drops below the cutoff does the
-recursion **materialize** that small view into a `Matrix` and hand it to
-`cfg.baseMul`, which is why the public `baseMul` keeps the clean
+The four quadrants of `A` and `B` are **views** (`Submatrix`, named in the
+`Subarray`/`Substring` style), not freshly materialized matrices: a `Submatrix`
+is a backing matrix together with a row offset, a column offset, the two block
+dimensions (type indices), and the real-data extent (`rhi`/`chi`, one past the
+last real row/column in backing coordinates). Reading a quadrant entry adds the
+offset and indexes the shared backing store when the position holds real data
+(`r0 + i < rhi ∧ c0 + j < chi`) and returns `0` in the zero-pad fringe otherwise.
+The recursive splitting therefore never materializes or copies a quadrant buffer (only O(1) view records)
+— `Submatrix.toBlocks₁₁ … toBlocks₂₂` are pure offset/extent arithmetic. Because
+the backing dims never change through the recursion, `r0 + i < rhi` is the exact
+real-vs-pad test at every nesting depth, so widening a view to even dimensions
+(`Submatrix.pad`) before a split is likewise a copy-free reshape. The internal
+recursion `mulStrassenView` is stated over this view type, not over `Matrix`.
+Only when a block drops below the cutoff does the recursion **materialize** that
+small view into a `Matrix` (`Submatrix.toMatrix`) and hand it to `cfg.baseMul`,
+which is why the public `baseMul` keeps the clean
 `Matrix R n m → Matrix R m k → Matrix R n k` type: views inside the recursion,
 a materialized `Matrix` at each leaf.
 
@@ -277,12 +288,18 @@ bulk materialization of a leaf block for the base kernel, and a block view
 that is pure offset-and-stride arithmetic into one shared buffer
 (`backing[(r0 + i) * m + (c0 + j)]`). `Hex.Matrix` is deliberately an opaque
 one-field structure (design principle 10) precisely so that representation
-switch stayed invisible to consumers when it landed. The current
-implementation recurses over materialized `Matrix` quadrants (reusing the
-existing matrix add and subtract) and pays the copies; the `BlockView` type
-(backing matrix plus row/column offsets plus the block dimensions) and the
-rewiring of the recursion over views is follow-up work on the same flat
-backing. The recursion and the correctness proof are identical either way.
+switch stayed invisible to consumers when it landed. The recursion runs over
+the `Submatrix` view type (backing matrix plus row/column offsets plus block
+dimensions plus real-data extent), so the only allocations are the fifteen
+`Sᵢ`/`Tᵢ`/`Uᵢ` operand sums, the seven recursive products, the top-level
+full-matrix view of each operand, and the leaf materialization for `cfg.baseMul`
+— the per-level quadrant and pad copies are gone. Correctness reduces to the
+same three lemmas: a view-to-matrix abstraction lemma (`toMatrix` of a quadrant
+view equals `toBlocks` of the materialized parent, and `toMatrix` of a widened
+view equals `Matrix.pad` of the materialized source) carries the view recursion
+`mulStrassenView` down to the `mul`-level Winograd/block/padding decomposition,
+so the recursion and the correctness proof are identical to the `Matrix`-level
+form the migration first shipped.
 
 ### Correctness
 
@@ -347,7 +364,7 @@ Strassen exponent is only a diagnostic, not an acceptance condition: near the
 cutoff the Strassen curve is in a crossover transient, and on the row-of-rows
 backing the locality overhead and the limited benched sizes bend the fit above
 `2.81`. The exponent approaches `log₂ 7` only once the sizes are large enough or
-the `BlockView` recursion lands on the flat backing (see the representation
+the `Submatrix` view recursion lands on the flat backing (see the representation
 note below). The point the figure must make is the visibly
 shallower Strassen slope: Strassen lowers the asymptotic order, not merely the
 constant factor. A speedup table
@@ -363,9 +380,10 @@ across `64…1024`; identical checksums) with a small Bareiss elimination cost
 row-contiguous under row-of-rows, so parity is the expected reading; what the
 flat backing changes for Strassen is not these curves but the cost model of
 the *recursion's internals* — quadrant materialization and leaf handling —
-which is why the crossover gets re-measured when the `BlockView`-based
+which is why the crossover gets re-measured when the `Submatrix`-view
 recursion (see "Avoiding sub-block copies") replaces materialized quadrants,
-not before.
+not before. That re-measurement is recorded with the shipped
+`strassenDefault.cutoff` in `HexMatrix/Strassen.lean`.
 
 ### A demonstration non-default config
 
