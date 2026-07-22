@@ -953,3 +953,26 @@ decision `ℤ` lacks: `rabinTest`, with
   (`checkIrreducibilityCertificate`) instead. These are the `factorCerts` of
   a `ZPolyIrreducibilityCertificate`'s `PrimeFactorData` — the per-factor
   case of the `ℤ` certificate.
+
+## The `factor_poly` / `irreducibility` provider
+
+`FactorProvider.lean` registers this library's `Hex.ZPoly` arms with the
+tactic drivers declared in hex-berlekamp (`Hex.FactorTactic.providerNames`,
+probed from the environment by name — no import in this direction). With this
+library imported, `factor_poly f` for `f : Hex.ZPoly` elaborates to a
+`ZPoly.Factored f` (scalar = signed content; primitive positive-lc factors
+with repetition), and `irreducibility` handles `ZPoly` inputs and
+`ZPoly.Irreducible` goals.
+
+Per-factor irreducibility is certified by `ZPoly.IrredWitness` (prime
+constant / primitive linear / single-prime modular Rabin certificate,
+`IrreducibleDecide.lean`), bulk-checked by the kernel via
+`ZPoly.checkIrredCover` on reified literals — one witness check per distinct
+factor. The compiled `ZPoly.factorize` runs only at elaboration time.
+
+**Partiality**: a factor that is irreducible over ℤ but reducible mod every
+candidate prime (balanced modular factorizations: Swinnerton-Dyer
+polynomials, `X⁴+1`) has no single-prime witness; the provider then declines
+with a diagnostic, deferring to the Mathlib bridge's multi-prime
+degree-obstruction certificates. This partiality is by design; the emitted
+statements never weaken.
