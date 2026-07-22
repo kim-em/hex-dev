@@ -48,6 +48,152 @@ theorem eq_iff_toNat {a b : WordMod ctx} : a = b ↔ a.toNat = b.toNat :=
   apply toNat_injective
   rw [toNat_ofNat, Nat.mod_eq_of_lt (toNat_lt a)]
 
+/-! ### `Lean.Grind.CommRing (WordMod ctx)`
+
+The Montgomery residue ring is a commutative ring; the axioms transport through
+`toNat` (which is `+`/`*`/`-`-compatible modulo `m`). This is what lets the
+word-sized poly arithmetic reuse the generic `DensePoly` ring/division lemmas. -/
+
+/-- Iterated product, the `npow` datum. -/
+def pow (a : WordMod ctx) : Nat → WordMod ctx
+  | 0 => 1
+  | n + 1 => pow a n * a
+
+instance : HPow (WordMod ctx) Nat (WordMod ctx) := ⟨pow⟩
+instance (n : Nat) : OfNat (WordMod ctx) n := ⟨ofNat n⟩
+instance : SMul Nat (WordMod ctx) := ⟨fun n a => ofNat n * a⟩
+instance : IntCast (WordMod ctx) :=
+  ⟨fun i => match i with
+    | .ofNat n => ofNat n
+    | .negSucc n => -(ofNat (n + 1))⟩
+instance : SMul Int (WordMod ctx) :=
+  ⟨fun i a => match i with
+    | .ofNat n => (n : Nat) • a
+    | .negSucc n => -((n + 1 : Nat) • a)⟩
+
+@[simp] theorem toNat_pow (a : WordMod ctx) (n : Nat) :
+    (a ^ n).toNat = (a.toNat ^ n) % m.toNat := by
+  change (pow a n).toNat = _
+  induction n with
+  | zero => simp [pow, toNat_one, Nat.pow_zero]
+  | succ k ih =>
+      rw [pow, toNat_mul, ih, Nat.pow_succ, Nat.mod_mul_mod]
+
+@[simp] theorem toNat_nsmul (n : Nat) (a : WordMod ctx) :
+    (n • a).toNat = (n % m.toNat * a.toNat) % m.toNat := by
+  change (ofNat n * a).toNat = _
+  rw [toNat_mul, toNat_ofNat]
+
+instance : Lean.Grind.Semiring (WordMod ctx) := by
+  refine Lean.Grind.Semiring.mk ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+  · intro a
+    apply toNat_injective
+    rw [toNat_add, toNat_zero, Nat.add_zero, Nat.mod_eq_of_lt (toNat_lt a)]
+  · intro a b
+    apply toNat_injective
+    rw [toNat_add, toNat_add, Nat.add_comm]
+  · intro a b c
+    apply toNat_injective
+    rw [toNat_add, toNat_add, toNat_add, toNat_add, Nat.mod_add_mod, Nat.add_mod_mod,
+      Nat.add_assoc]
+  · intro a b c
+    apply toNat_injective
+    rw [toNat_mul, toNat_mul, toNat_mul, toNat_mul, Nat.mod_mul_mod, Nat.mul_mod_mod,
+      Nat.mul_assoc]
+  · intro a
+    apply toNat_injective
+    rw [toNat_mul, toNat_one, Nat.mul_mod_mod, Nat.mul_one, Nat.mod_eq_of_lt (toNat_lt a)]
+  · intro a
+    apply toNat_injective
+    rw [toNat_mul, toNat_one, Nat.mod_mul_mod, Nat.one_mul, Nat.mod_eq_of_lt (toNat_lt a)]
+  · intro a b c
+    apply toNat_injective
+    rw [toNat_mul, toNat_add, toNat_add, toNat_mul, toNat_mul, Nat.mul_mod_mod,
+      Nat.mul_add, Nat.add_mod]
+  · intro a b c
+    apply toNat_injective
+    rw [toNat_mul, toNat_add, toNat_add, toNat_mul, toNat_mul, Nat.mod_mul_mod,
+      Nat.add_mul, Nat.add_mod]
+  · intro a
+    apply toNat_injective
+    rw [toNat_mul, toNat_zero, Nat.zero_mul, Nat.zero_mod]
+  · intro a
+    apply toNat_injective
+    rw [toNat_mul, toNat_zero, Nat.mul_zero, Nat.zero_mod]
+  · intro a
+    apply toNat_injective
+    rw [toNat_pow, toNat_one, Nat.pow_zero]
+  · intro a n
+    apply toNat_injective
+    rw [toNat_pow, toNat_mul, toNat_pow, Nat.pow_succ, Nat.mod_mul_mod]
+  · intro n
+    apply toNat_injective
+    rw [show (OfNat.ofNat (n + 1) : WordMod ctx) = ofNat (n + 1) from rfl,
+      toNat_ofNat, toNat_add, toNat_one,
+      show (OfNat.ofNat n : WordMod ctx) = ofNat n from rfl, toNat_ofNat, ← Nat.add_mod]
+  · intro n; rfl
+  · intro n a
+    apply toNat_injective
+    rw [toNat_nsmul, toNat_mul, show ((n : WordMod ctx)).toNat = (ofNat n : WordMod ctx).toNat from rfl,
+      toNat_ofNat]
+
+theorem neg_neg' (a : WordMod ctx) : (- -a : WordMod ctx) = a := by
+  apply toNat_injective
+  rw [toNat_neg, toNat_neg]
+  have ha : a.toNat < m.toNat := toNat_lt a
+  rcases Nat.eq_zero_or_pos a.toNat with h0 | h0
+  · rw [h0]; simp
+  · rw [Nat.mod_eq_of_lt (show m.toNat - a.toNat < m.toNat by omega),
+      Nat.sub_sub_self (Nat.le_of_lt ha), Nat.mod_eq_of_lt ha]
+
+instance : Lean.Grind.Ring (WordMod ctx) where
+  neg_add_cancel := by
+    intro a
+    apply toNat_injective
+    rw [toNat_add, toNat_neg, toNat_zero]
+    have ha : a.toNat < m.toNat := toNat_lt a
+    rcases Nat.eq_zero_or_pos a.toNat with h0 | h0
+    · rw [h0]; simp
+    · rw [Nat.mod_eq_of_lt (show m.toNat - a.toNat < m.toNat by omega),
+        Nat.sub_add_cancel (Nat.le_of_lt ha), Nat.mod_self]
+  sub_eq_add_neg := by
+    intro a b
+    apply toNat_injective
+    rw [toNat_sub, toNat_add, toNat_neg, Nat.add_mod_mod]
+  neg_zsmul := by
+    intro i a
+    cases i with
+    | ofNat n =>
+        cases n with
+        | zero =>
+            show ((0 : Int) • a) = -((0 : Int) • a)
+            apply toNat_injective
+            change (ofNat 0 * a).toNat = (-(ofNat 0 * a)).toNat
+            rw [toNat_neg, toNat_mul, toNat_ofNat]
+            simp
+        | succ n => rfl
+    | negSucc n =>
+        exact (neg_neg' ((n + 1 : Nat) • a)).symm
+  intCast_neg := by
+    intro i
+    cases i with
+    | ofNat n =>
+        cases n with
+        | zero =>
+            show ((0 : Int) : WordMod ctx) = -((0 : Int) : WordMod ctx)
+            apply toNat_injective
+            change (ofNat 0 : WordMod ctx).toNat = (-(ofNat 0 : WordMod ctx)).toNat
+            rw [toNat_neg]; simp
+        | succ n => rfl
+    | negSucc n =>
+        exact (neg_neg' (ofNat (n + 1))).symm
+
+instance : Lean.Grind.CommRing (WordMod ctx) := by
+  refine Lean.Grind.CommRing.mk ?_
+  intro a b
+  apply toNat_injective
+  rw [toNat_mul, toNat_mul, Nat.mul_comm]
+
 end WordMod
 
 namespace ZPoly
