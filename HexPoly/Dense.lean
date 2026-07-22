@@ -37,20 +37,28 @@ namespace DensePoly
 
 variable {R : Type u} [Zero R] [DecidableEq R]
 
-instance : DecidableEq (DensePoly R) := by
-  intro a b
-  match decEq a.coeffs b.coeffs with
+/- The comparison routes through the coefficient `List`, not the `Array`:
+`Array.instDecidableEq` delegates its nonempty case to the non-`@[expose]`
+`Array.instDecidableEqImpl`, whose body is unavailable downstream under the
+module system, so `decide`/`rfl` on `DensePoly` equalities would get stuck
+(see `progress/lean4-array-decidableeq-module-repro.md`). `List` equality is
+fully exposed and kernel-reduces. -/
+instance : DecidableEq (DensePoly R) := fun a b =>
+  match decEq a.coeffs.toList b.coeffs.toList with
   | isTrue h =>
-      exact isTrue (by
-        cases a
-        cases b
+      isTrue (by
+        cases a with | mk ca na =>
+        cases b with | mk cb nb =>
+        cases ca with | mk la =>
+        cases cb with | mk lb =>
+        change la = lb at h
         cases h
-        simp)
+        rfl)
   | isFalse h =>
-      exact isFalse (by
+      isFalse (by
         intro hab
         apply h
-        exact congrArg DensePoly.coeffs hab)
+        rw [hab])
 
 /-- Remove trailing zeros from a coefficient list without disturbing the remaining order. -/
 @[expose]
