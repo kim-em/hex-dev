@@ -13,6 +13,7 @@ public import HexPoly.Euclid.Content
 import all HexPoly.Euclid.DivGcd
 import all HexPoly.Euclid.MulRing
 import all HexPoly.Euclid.Reconstruction
+public import HexPoly.Euclid.MonicUnique
 import all HexPoly.Euclid.Content
 
 public section
