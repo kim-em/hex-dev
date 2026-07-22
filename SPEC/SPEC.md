@@ -28,10 +28,15 @@ drivers live in hex-berlekamp, handling `FpPoly p` natively; other input
 types dispatch to providers registered by well-known name from
 hex-berlekamp-zassenhaus (`Hex.ZPoly`) and the two Mathlib bridge layers
 (`Polynomial (ZMod p)`, `Polynomial ℤ`). The trust model is uniform across
-providers: the compiled factorizer runs as untrusted search at elaboration
-time, emitted terms carry only kernel checks on reified literal data, and
-the factorizer never runs in the kernel. Coverage is complete for
-`FpPoly p`. For integer polynomials, the computational layer certifies
+providers: compiled factorization and certificate generation run as
+untrusted search at elaboration time, certification slots are Boolean
+checks on reified literal data (the Mathlib providers additionally emit
+kernel-checked bridge equations such as `toMathlibPolynomial fLit = P`),
+and the factorizer never runs in the kernel (except in the opt-in bang
+forms). Coverage for `FpPoly p` is complete within the supported-input
+contract: closed, kernel-transparent inputs at literal prime moduli inside
+the `ZMod64` bounds and the certificate replay budget. For integer
+polynomials, the computational layer certifies
 irreducibility by prime-constant, primitive-linear, single-prime modular,
 and Eisenstein-after-shift witnesses; the Mathlib layer adds multi-prime
 degree-obstruction certificates; Swinnerton-Dyer-class inputs remain
@@ -83,7 +88,8 @@ SPEC names the checker soundness theorem and the provider contract.
 
 ## Applications
 
-**Cryptographic field construction:** To build `GF(2^128)` for AES, you
+**Cryptographic field construction:** To build `GF(2^128)` for AES-GCM's
+GHASH authentication, you
 need an irreducible polynomial of degree 128 over `F_2`. With
 hex-berlekamp's `irreducibility` tactic, produce a Lean proof that it's
 irreducible.
