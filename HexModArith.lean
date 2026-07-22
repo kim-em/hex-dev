@@ -10,6 +10,7 @@ public import HexModArith.Basic
 public import HexModArith.HotLoop
 public import HexModArith.Prime
 public import HexModArith.Ring
+public import HexModArith.WordMod
 
 public section
 

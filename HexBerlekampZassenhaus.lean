@@ -23,6 +23,7 @@ public import HexBerlekampZassenhaus.QuadraticRootProofs
 public import HexBerlekampZassenhaus.PrimitivityProofs
 public import HexBerlekampZassenhaus.ProductProofs
 public import HexBerlekampZassenhaus.SmallModSingleton
+public import HexBerlekampZassenhaus.WordCld
 
 public section
 

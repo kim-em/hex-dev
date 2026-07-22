@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexModArithMathlib.Basic
+public import HexModArithMathlib.WordMod
 
 public section
 

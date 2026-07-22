@@ -36,6 +36,7 @@ public import HexBerlekampZassenhausMathlib.UFDPartition
 public import HexBerlekampZassenhausMathlib.IntReductionMod
 public import HexBerlekampZassenhausMathlib.FactorSoundness
 public import HexBerlekampZassenhausMathlib.LatticeTier
+public import HexBerlekampZassenhausMathlib.WordCld
 
 public section
 
