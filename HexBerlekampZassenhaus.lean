@@ -17,6 +17,7 @@ public import HexBerlekampZassenhaus.BhksRecover
 public import HexBerlekampZassenhaus.Recombination
 public import HexBerlekampZassenhaus.FactorEntryPoints
 public import HexBerlekampZassenhaus.IrreducibleCore
+public import HexBerlekampZassenhaus.IrreducibleDecide
 public import HexBerlekampZassenhaus.RecombineProofs
 public import HexBerlekampZassenhaus.TrialProofs
 public import HexBerlekampZassenhaus.QuadraticRootProofs

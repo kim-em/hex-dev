@@ -951,6 +951,20 @@ theorem Irreducible_of_modP_irreducible_of_primitive_of_admissible
       · left; rw [hb_eq]; exact hone
       · right; rw [hb_eq]; exact hneg
 
+/-- Kernel-decidable irreducibility for a linear (dense size two) primitive
+integer polynomial: both hypotheses are Boolean checks on literal data, so a
+reified application discharges them with `Eq.refl true`. Public decide-slot
+form of `irreducible_of_size_two_primitive` for the
+`irreducibility`/`factor_poly` elaborators. -/
+theorem irreducible_of_linear
+    (f : ZPoly)
+    (hsize : decide (f.size = 2) = true)
+    (hcontent : decide (ZPoly.content f = 1) = true) :
+    ZPoly.Irreducible f := by
+  have hprim : ZPoly.Primitive f :=
+    of_decide_eq_true (p := ZPoly.content f = 1) hcontent
+  exact irreducible_of_size_two_primitive f (of_decide_eq_true hsize) hprim
+
 end ZPoly
 
 /-- `Hex.normalizeFactorSign` preserves `Hex.ZPoly.Irreducible`: the

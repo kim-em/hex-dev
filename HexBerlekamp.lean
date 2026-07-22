@@ -11,6 +11,7 @@ public import HexBerlekamp.DelayedKernel
 public import HexBerlekamp.DistinctDegree
 public import HexBerlekamp.Factor
 public import HexBerlekamp.Irreducibility
+public import HexBerlekamp.IrreducibleDecide
 public import HexBerlekamp.RabinSoundness
 
 public section
