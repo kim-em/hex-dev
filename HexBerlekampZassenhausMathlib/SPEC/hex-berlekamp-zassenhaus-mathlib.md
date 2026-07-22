@@ -135,11 +135,30 @@ old `irreducible_cert` tactic, which is deleted.
 Inputs whose modular factorizations are balanced at every candidate prime
 *and* whose proper factor degrees are not jointly obstructed by the
 per-prime degree-sum language (e.g. Swinnerton-Dyer polynomials, `X⁴+1`)
-have no kernel-checkable certificate in the tree; the provider declines
-with a diagnostic naming the gap. A kernel `decide` fallback through
-`Hex.ZPoly.instDecidableIrreducible` is not viable: kernel reduction of
-`ZPoly.factorize` sticks on non-exposed bodies (core-private `Array` loop
-workers such as `Array.ofFn.go`, plus private helpers across the executable
-closure that `import all` at module granularity does not reach), so
-re-running the factorizer in the kernel fails structurally, not merely on
-wall-clock cost.
+have no certificate in either language; the provider declines with a
+diagnostic pointing at the kernel-decide fallbacks.
+
+## The kernel-decide fallbacks `irreducibility!` / `factor_poly!`
+
+`BangElab.lean` declares bang variants of both tactics (term, tactic, and
+goal forms). Each first runs the normal certificate pipeline; on failure it
+falls back to a kernel `decide` through
+`Hex.ZPoly.instDecidableIrreducible` — the emitted proof is
+`Hex.ZPoly.irreducible_of_decide f (Eq.refl true)` (or its `Polynomial ℤ` /
+`Factored` transports `irreducible_ofZ_decide` /
+`Hex.FactoredPoly.ofZDecide`), so the kernel re-runs the full
+Berlekamp-Zassenhaus factorizer to verify it. This is the only route for
+balanced inputs outside both certificate languages.
+
+Two costs land on the *calling* module (see the `BangElab` module
+docstring): it must `import all` the executable closure (the factorizer's
+bodies are not `@[expose]`d, and non-exposed bodies are invisible to a
+downstream module's kernel — this includes core modules such as
+`Init.Data.Fin.Fold`; `FactorPolyTests.lean` carries a working block), and
+the kernel replay costs real time (quartics sub-second, degree 8 seconds,
+degree 12 tens of seconds; a dense-size budget of 13 rejects larger inputs
+at elaboration time). The elaborator prechecks kernel reducibility with
+`Lean.Kernel.whnf`, so a missing closure fails with a clear message rather
+than a kernel type mismatch. Inputs routed to the lattice tier cannot be
+certified this way (the FFI `lllNative` has no kernel-reducible body).
+The plain (non-bang) forms never run the factorizer in the kernel.

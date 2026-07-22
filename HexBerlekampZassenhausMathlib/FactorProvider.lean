@@ -45,8 +45,10 @@ reified literal data with every certification slot discharged by
 
 Balanced factors whose modular factorizations also fall outside the
 per-prime degree-sum obstruction language (e.g. Swinnerton-Dyer polynomials
-or `X⁴+1`) have no kernel-checkable certificate in the tree; the provider
-declines with a diagnostic naming the gap.
+or `X⁴+1`) have no certificate in either language; the provider declines
+with a diagnostic pointing at the kernel-decide fallbacks `irreducibility!`
+/ `factor_poly!` (`BangElab.lean`), which certify small such inputs by
+re-running the factorizer in the kernel.
 -/
 
 namespace HexBerlekampZassenhausMathlib.FactorTactic
@@ -232,8 +234,10 @@ meta def coverDecline (tactic : String) (q : Hex.ZPoly) : MetaM MessageData := d
   return m!"{tactic}: the irreducible factor{indentExpr qE}\
       \nhas no single-prime modular witness, and its balanced modular \
       factorizations also fall outside the multi-prime per-prime degree-sum \
-      obstruction language (e.g. Swinnerton-Dyer polynomials or X⁴+1), so no \
-      kernel-checkable certificate is available"
+      obstruction language (e.g. Swinnerton-Dyer polynomials or X⁴+1); no \
+      certificate-backed proof is available, but the kernel-decide fallbacks \
+      `irreducibility!` / `factor_poly!` can still certify small inputs by \
+      re-running the factorizer in the kernel"
 
 /-- Search a mixed certificate cover for a factor list: a free-layer
 `IrredWitness` per distinct factor where one exists, a multi-prime

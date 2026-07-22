@@ -9,31 +9,154 @@ module
 public meta import HexBerlekamp.IrreducibilityElab
 public meta import HexBerlekampZassenhaus.FactorProvider
 public meta import HexBerlekampZassenhausMathlib.FactorProvider
+public meta import HexBerlekampZassenhausMathlib.BangElab
 public import HexBerlekamp.IrreducibilityElab
 public import HexBerlekampZassenhaus.FactorProvider
 public import HexBerlekampZassenhausMathlib.FactorProvider
+public import HexBerlekampZassenhausMathlib.BangElab
 -- The multi-prime proofs attach `Eq.refl true` for each certificate check, so
 -- the kernel must reduce `checkIrreducibleCertLinear` (and its Berlekamp
--- pow-chain replay) plus the `Array`/`DensePoly` `==` comparisons. Expose
--- those executable checker bodies and the efficient `Array` DecidableEq.
-import all HexBerlekampZassenhaus.PrimeSelection
-import all HexBerlekampZassenhaus.Records
-import all HexBerlekampZassenhaus.Certificate
-import all HexBerlekampZassenhaus.ChoosePrimeData
-import all HexBerlekampZassenhaus.ReassemblyProofs
-import all HexBerlekampZassenhaus.Lattice
+-- pow-chain replay) plus the `Array`/`DensePoly` `==` comparisons; the bang
+-- forms additionally make the kernel re-run the whole factorizer, whose
+-- bodies are not `@[expose]`d. `import all` the executable closure so both
+-- kinds of emitted checks reduce (this is the calling-module cost of the
+-- bang forms documented in `BangElab.lean`).
+import all HexArith.ExtGcd
+import all HexArith.Barrett.Accumulator
+import all HexArith.Barrett.Context
+import all HexArith.Barrett.Reduce
+import all HexArith.Barrett.ReduceNat
+import all HexArith.Montgomery.Context
+import all HexArith.Montgomery.InvNat
+import all HexArith.Montgomery.Redc
+import all HexArith.Montgomery.RedcNat
+import all HexArith.Nat.ModArith
+import all HexArith.Nat.Pow
+import all HexArith.Nat.Prime
+import all HexArith.UInt64.Wide
+import all HexModArith.Basic
+import all HexModArith.HotLoop
+import all HexModArith.Prime
+import all HexModArith.Ring
+import all HexModArith.WordMod
+import all HexPoly.Dense
+import all HexPoly.Euclid
+import all HexPoly.Operations
+import all HexPoly.Euclid.Content
+import all HexPoly.Euclid.DivGcd
+import all HexPoly.Euclid.MulRing
+import all HexPoly.Euclid.Reconstruction
+import all HexPolyZ.Core
+import all HexPolyZ.Decomposition
+import all HexPolyZ.Mignotte
+import all HexPolyZ.Rational
+import all HexPolyFp.Compose
+import all HexPolyFp.Degree
+import all HexPolyFp.Enumeration
+import all HexPolyFp.Field
+import all HexPolyFp.Frobenius
+import all HexPolyFp.ModCompose
+import all HexPolyFp.Packed
+import all HexPolyFp.PackedMul
+import all HexPolyFp.PrimeField
+import all HexPolyFp.Quotient
+import all HexPolyFp.QuotientFrobenius
+import all HexPolyFp.Ring
+import all HexPolyFp.SquareFree
+import all HexPolyFp.Quotient.Ring
+import all HexPolyFp.SquareFree.Algebra
+import all HexPolyFp.SquareFree.YunContribution
+import all HexPolyFp.SquareFree.YunCorrect
+import all HexPolyFp.SquareFree.YunMeasure
+import all HexPolyFp.SquareFree.YunReduce
+import all HexBerlekamp.Basic
+import all HexBerlekamp.CertReify
+import all HexBerlekamp.DelayedKernel
+import all HexBerlekamp.DistinctDegree
+import all HexBerlekamp.Factor
+import all HexBerlekamp.FactorPolyElab
+import all HexBerlekamp.FactorTacticTests
+import all HexBerlekamp.Factored
+import all HexBerlekamp.Irreducibility
+import all HexBerlekamp.IrreducibilityElab
+import all HexBerlekamp.IrreducibleDecide
+import all HexBerlekamp.RabinSoundness
+import all HexBerlekamp.TacticCore
+import all HexBerlekamp.RabinSoundness.KernelWitness
+import all HexBerlekamp.RabinSoundness.RabinCore
+import all HexBerlekamp.RabinSoundness.RabinShape
 import all HexBerlekampZassenhaus.BhksCandidates
 import all HexBerlekampZassenhaus.BhksRecover
-import all HexBerlekampZassenhaus.Recombination
+import all HexBerlekampZassenhaus.CertReify
+import all HexBerlekampZassenhaus.Certificate
+import all HexBerlekampZassenhaus.ChoosePrimeData
 import all HexBerlekampZassenhaus.FactorEntryPoints
+import all HexBerlekampZassenhaus.FactorProvider
+import all HexBerlekampZassenhaus.FactorTacticTests
+import all HexBerlekampZassenhaus.Factored
 import all HexBerlekampZassenhaus.IrreducibleCore
-import all HexBerlekampZassenhaus.RecombineProofs
-import all HexBerlekampZassenhaus.TrialProofs
-import all HexBerlekampZassenhaus.QuadraticRootProofs
+import all HexBerlekampZassenhaus.IrreducibleDecide
+import all HexBerlekampZassenhaus.Lattice
+import all HexBerlekampZassenhaus.PrimeSelection
 import all HexBerlekampZassenhaus.PrimitivityProofs
 import all HexBerlekampZassenhaus.ProductProofs
-import all HexBerlekamp.Irreducibility
+import all HexBerlekampZassenhaus.QuadraticRootProofs
+import all HexBerlekampZassenhaus.ReassemblyProofs
+import all HexBerlekampZassenhaus.Recombination
+import all HexBerlekampZassenhaus.RecombineProofs
+import all HexBerlekampZassenhaus.Records
+import all HexBerlekampZassenhaus.SmallModSingleton
+import all HexBerlekampZassenhaus.SquareFreeModularCert
+import all HexBerlekampZassenhaus.TrialProofs
+import all HexBerlekampZassenhaus.WordCld
+import all HexHensel.Basic
+import all HexHensel.Linear
+import all HexHensel.Multifactor
+import all HexHensel.Quadratic
+import all HexHensel.QuadraticMultifactor
+import all HexMatrix.Basic
+import all HexMatrix.Block
+import all HexMatrix.DotProduct
+import all HexMatrix.Elementary
+import all HexMatrix.Gram
+import all HexMatrix.MatrixAlgebra
+import all HexMatrix.Notation
+import all HexMatrix.Pad
+import all HexMatrix.Strassen
+import all HexMatrix.Submatrix
+import all HexMatrix.Winograd
+import all HexMatrix.Vector.Insert
+import all HexRowReduce.Api
+import all HexRowReduce.Loop
+import all HexRowReduce.Nullspace
+import all HexRowReduce.Pivot
+import all HexRowReduce.RowEchelon
+import all HexRowReduce.Span
+import all HexRowReduce.RowEchelon.Contracts
+import all HexRowReduce.RowEchelon.Elementary
+import all HexRoots.Basic
+import all HexRoots.Bisection
+import all HexRoots.Cauchy
+import all HexRoots.IsolateAll
+import all HexRoots.Kantorovich
+import all HexRoots.MahlerPrec
+import all HexRoots.Newton
+import all HexRoots.Pellet
+import all HexRoots.Refine
+import all HexRoots.SimpleRoot
+import all HexRoots.Taylor
+import all HexBasic.Fold
+import all HexBasic.ListShim
+import all HexBasic.Vector.Modify
+import all Init.Data.Array.Basic
 import all Init.Data.Array.DecidableEq
+import all Init.Data.Fin.Fold
+import all Init.Data.Fin.Basic
+import all Init.Data.Fin.Iterate
+import all Init.Data.List.Basic
+import all Init.Data.List.Range
+import all Init.Data.Nat.Fold
+import all Init.Data.Range.Basic
 
 public section
 
@@ -306,9 +429,103 @@ has no single-prime modular witness among the candidate primes (its modular fact
 
 irreducibility: the irreducible factor
   Hex.DensePoly.ofCoeffs #[1, 0, 0, 0, 1]
-has no single-prime modular witness, and its balanced modular factorizations also fall outside the multi-prime per-prime degree-sum obstruction language (e.g. Swinnerton-Dyer polynomials or X⁴+1), so no kernel-checkable certificate is available
+has no single-prime modular witness, and its balanced modular factorizations also fall outside the multi-prime per-prime degree-sum obstruction language (e.g. Swinnerton-Dyer polynomials or X⁴+1); no certificate-backed proof is available, but the kernel-decide fallbacks `irreducibility!` / `factor_poly!` can still certify small inputs by re-running the factorizer in the kernel
 -/
 #guard_msgs in
 example := irreducibility (Hex.DensePoly.ofCoeffs #[1, 0, 0, 0, 1] : Hex.ZPoly)
+
+/-! ### The kernel-decide fallbacks `irreducibility!` / `factor_poly!`
+
+`x⁴ + 1` and the Swinnerton-Dyer quartic `x⁴ - 10x² + 1` are exactly the
+decline cases above, so the bang forms exercise the genuine fallback path:
+the emitted proofs make the kernel re-run the factorizer (which is why this
+file carries the `import all` closure block). On inputs the certificate
+pipeline handles, the bang forms are pass-throughs. -/
+
+/-- `x⁴ + 1`, irreducible but balanced beyond both certificate languages. -/
+def cyc8 : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[1, 0, 0, 0, 1]
+
+/-- The Swinnerton-Dyer quartic `x⁴ - 10x² + 1`. -/
+def swinDyer : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[1, 0, -10, 0, 1]
+
+theorem cyc8_irred : Hex.ZPoly.Irreducible cyc8 := irreducibility! cyc8
+
+/--
+info: 'HexBerlekampZassenhausMathlib.FactorPolyTests.cyc8_irred' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms cyc8_irred
+
+-- Goal modes: free-layer, transported, and parsed `Polynomial ℤ`.
+theorem swinDyer_irred : Hex.ZPoly.Irreducible swinDyer := by irreducibility!
+
+example : Irreducible (HexPolyZMathlib.toPolynomial cyc8) := by irreducibility!
+
+theorem sd_poly_irred : Irreducible (X ^ 4 - 10 * X ^ 2 + 1 : Polynomial ℤ) :=
+  irreducibility! (X ^ 4 - 10 * X ^ 2 + 1 : Polynomial ℤ)
+
+/--
+info: 'HexBerlekampZassenhausMathlib.FactorPolyTests.sd_poly_irred' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms sd_poly_irred
+
+/--
+info: 'HexBerlekampZassenhausMathlib.FactorPolyTests.swinDyer_irred' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms swinDyer_irred
+
+-- Pass-through: inputs the certificate pipeline serves take the plain path.
+example : Hex.ZPoly.Irreducible quarticA4 := irreducibility! quarticA4
+example : Irreducible ((X : Polynomial ℤ) ^ 2 - 2) := by irreducibility!
+
+-- `this` and `h :` tactic forms.
+example : True := by
+  irreducibility! cyc8
+  irreducibility! h : swinDyer
+  exact True.intro
+
+-- `factor_poly!` on a product with a balanced factor: the plain pipeline
+-- declines on the `x⁴+1` factor, so the fallback replays the factorizer in
+-- the kernel once per factor.
+def cyc8Split : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[-1, 1] * cyc8
+
+noncomputable def cyc8Split_factored : Hex.ZPoly.Factored cyc8Split :=
+  factor_poly! cyc8Split
+
+/--
+info: 'HexBerlekampZassenhausMathlib.FactorPolyTests.cyc8Split_factored' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms cyc8Split_factored
+
+example : cyc8Split_factored.factors.length = 2 := rfl
+
+-- `factor_poly!` term + tactic on `Polynomial ℤ`.
+noncomputable def facBangP :=
+  factor_poly! ((X - 1) * (X ^ 4 + 1) : Polynomial ℤ)
+
+/--
+info: 'HexBerlekampZassenhausMathlib.FactorPolyTests.facBangP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms facBangP
+
+example : True := by
+  factor_poly! ((X - 1) * (X ^ 4 + 1) : Polynomial ℤ)
+  exact True.intro
+
+-- Over-budget inputs fail cleanly at elaboration time.
+/--
+error: irreducibility!: the kernel factorizer replay is capped at dense size 13 (degree 12), but the input has dense size 17; degree 12 already takes tens of seconds of kernel time
+-/
+#guard_msgs in
+example := irreducibility!
+  (Hex.DensePoly.ofCoeffs #[-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1] : Hex.ZPoly)
 
 end HexBerlekampZassenhausMathlib.FactorPolyTests

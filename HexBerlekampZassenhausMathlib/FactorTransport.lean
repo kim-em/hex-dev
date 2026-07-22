@@ -131,6 +131,30 @@ theorem irreducible_of_checkMultiPrimeCover
     have hw := zpolyIrreducible_of_checkMultiPrimeCert e.1 e.2 (hmulti e he)
     rwa [Hex.DensePoly.eq_of_beqCoeffs hbeq] at hw
 
+/-- Decide-slot endpoint for the `irreducibility!` kernel fallback on
+`Hex.ZPoly`: the kernel replays the full factorizer through
+`Hex.ZPoly.instDecidableIrreducible`. Emitted only by the bang forms; see
+their docstrings for the cost and `import all` closure caveats. -/
+theorem _root_.Hex.ZPoly.irreducible_of_decide (f : Hex.ZPoly)
+    (h : decide (Hex.ZPoly.Irreducible f) = true) : Hex.ZPoly.Irreducible f :=
+  of_decide_eq_true h
+
+/-- Bulk decide-slot endpoint for the `factor_poly!` kernel fallback on
+`Hex.ZPoly`: one kernel factorizer replay per listed factor. -/
+theorem _root_.Hex.ZPoly.forall_irreducible_of_decide (l : List Hex.ZPoly)
+    (h : decide (∀ q ∈ l, Hex.ZPoly.Irreducible q) = true) :
+    ∀ q ∈ l, Hex.ZPoly.Irreducible q :=
+  of_decide_eq_true h
+
+/-- Decide-slot endpoint for the `irreducibility!` kernel fallback on
+`Polynomial ℤ`: the free-layer kernel replay transported through the
+unconditional iff and the parser-built bridge equation. -/
+theorem irreducible_ofZ_decide (P : Polynomial ℤ) (f : Hex.ZPoly)
+    (h : decide (Hex.ZPoly.Irreducible f) = true)
+    (hP : HexPolyZMathlib.toPolynomial f = P) : Irreducible P := by
+  rw [← hP]
+  exact (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).mp (of_decide_eq_true h)
+
 /-- Single-polynomial endpoint for the `irreducibility` provider on
 `Polynomial ℤ`: the cover check on the singleton factor list accepts either
 witness kind, and `hP` is the parser-built bridge equation. -/
@@ -179,5 +203,32 @@ noncomputable def FactoredPoly.ofZ (P : Polynomial ℤ) (f : Hex.ZPoly) (s : Int
     obtain ⟨g, hg, rfl⟩ := hq
     exact (Hex.ZPoly.Irreducible_iff_polynomialIrreducible g).mp
       (irreducible_of_checkMultiPrimeCover factors certified multiPrime hcover g hg)
+
+/-- Decide-slot assembler for the `factor_poly!` kernel fallback on
+`Polynomial ℤ`: the `factors_irred` slot replays the full factorizer in the
+kernel once per factor. Emitted only by the bang forms. -/
+@[expose]
+noncomputable def FactoredPoly.ofZDecide (P : Polynomial ℤ) (f : Hex.ZPoly)
+    (s : Int) (factors : List Hex.ZPoly)
+    (hmul : Hex.DensePoly.beqCoeffs (Hex.DensePoly.C s * factors.prod) f = true)
+    (hirr : decide (∀ q ∈ factors, Hex.ZPoly.Irreducible q) = true)
+    (hP : HexPolyZMathlib.toPolynomial f = P) : Hex.FactoredPoly P where
+  scalar := s
+  factors := factors.map HexPolyZMathlib.toPolynomial
+  factors_mul := by
+    calc Polynomial.C s * (factors.map HexPolyZMathlib.toPolynomial).prod
+        = HexPolyZMathlib.toPolynomial (Hex.DensePoly.C s) *
+            HexPolyZMathlib.toPolynomial factors.prod := by
+          rw [HexPolyZMathlib.toPolynomial_C, toPolynomial_listProd]
+      _ = HexPolyZMathlib.toPolynomial (Hex.DensePoly.C s * factors.prod) :=
+          (HexPolyZMathlib.toPolynomial_mul _ _).symm
+      _ = HexPolyZMathlib.toPolynomial f := by rw [Hex.DensePoly.eq_of_beqCoeffs hmul]
+      _ = P := hP
+  factors_irred := by
+    intro q hq
+    rw [List.mem_map] at hq
+    obtain ⟨g, hg, rfl⟩ := hq
+    exact (Hex.ZPoly.Irreducible_iff_polynomialIrreducible g).mp
+      (of_decide_eq_true hirr g hg)
 
 end Hex

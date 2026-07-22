@@ -26,6 +26,7 @@ public import HexBerlekampZassenhausMathlib.MonicCorrespondent
 public import HexBerlekampZassenhausMathlib.ToMonicUniqueness
 public import HexBerlekampZassenhausMathlib.FactorTransport
 public import HexBerlekampZassenhausMathlib.FactorProvider
+public import HexBerlekampZassenhausMathlib.BangElab
 public import HexBerlekampZassenhausMathlib.FactorPolyTests
 public import HexBerlekampZassenhausMathlib.SignatureClasses
 public import HexBerlekampZassenhausMathlib.Lattice
