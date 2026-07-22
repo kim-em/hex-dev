@@ -144,18 +144,22 @@ sub-block copies". -/
 /-- A copy-free view of a `rows × cols` block, possibly zero-padded past its
 real-data extent, into a shared backing `Matrix R N M`. Reading `(i, j)` returns
 `base[(r0 + i, c0 + j)]` when `r0 + i < rhi ∧ c0 + j < chi` (real data) and `0`
-otherwise (pad). The invariants pin `[r0, rhi) × [c0, chi)` inside the backing and
-inside the logical block, so the real data is a prefix of each axis. -/
+otherwise (pad). The invariants pin the window endpoints inside the backing and
+inside the logical block, so the real data is a prefix of each axis. There is
+deliberately no `r0 ≤ rhi` invariant: a reversed window (`rhi ≤ r0`) is the
+canonical empty-window encoding — every real-data test is false and the view
+denotes an all-zero block, which is exactly what a quadrant lying wholly in the
+pad fringe needs. -/
 structure Submatrix (R : Type u) (rows cols : Nat) where
-  /-- Backing row count. -/ N : Nat
-  /-- Backing column count. -/ M : Nat
-  /-- Shared backing buffer; sub-views alias it, never copy it. -/ base : Hex.Matrix R N M
+  /-- Backing row count. -/ baseRows : Nat
+  /-- Backing column count. -/ baseCols : Nat
+  /-- Shared backing buffer; sub-views alias it, never copy it. -/ base : Hex.Matrix R baseRows baseCols
   /-- Row offset into the backing. -/ r0 : Nat
   /-- Column offset into the backing. -/ c0 : Nat
   /-- One past the last real-data row (backing coordinate). -/ rhi : Nat
   /-- One past the last real-data column (backing coordinate). -/ chi : Nat
-  /-- Real rows stay inside the backing. -/ hrN : rhi ≤ N
-  /-- Real columns stay inside the backing. -/ hcM : chi ≤ M
+  /-- Real rows stay inside the backing. -/ hrN : rhi ≤ baseRows
+  /-- Real columns stay inside the backing. -/ hcM : chi ≤ baseCols
   /-- Real rows are a prefix of the logical rows. -/ hrR : rhi ≤ r0 + rows
   /-- Real columns are a prefix of the logical columns. -/ hcC : chi ≤ c0 + cols
 
@@ -187,7 +191,7 @@ def toMatrix [OfNat R 0] (A : Submatrix R rows cols) : Matrix R rows cols :=
 /-- The full-matrix view of a `Matrix`: offset `0`, real extent the whole matrix. -/
 @[expose]
 def ofMatrix (Mx : Matrix R n m) : Submatrix R n m where
-  N := n; M := m; base := Mx; r0 := 0; c0 := 0; rhi := n; chi := m
+  baseRows := n; baseCols := m; base := Mx; r0 := 0; c0 := 0; rhi := n; chi := m
   hrN := Nat.le_refl _
   hcM := Nat.le_refl _
   hrR := by omega
@@ -212,7 +216,7 @@ the real-data window is unchanged, so the new fringe reads `0`. This is the
 zero-padding the Strassen recursion applies before splitting. -/
 @[expose]
 def pad (A : Submatrix R n m) (n' m' : Nat) (hn : n ≤ n') (hm : m ≤ m') : Submatrix R n' m' where
-  N := A.N; M := A.M; base := A.base; r0 := A.r0; c0 := A.c0; rhi := A.rhi; chi := A.chi
+  baseRows := A.baseRows; baseCols := A.baseCols; base := A.base; r0 := A.r0; c0 := A.c0; rhi := A.rhi; chi := A.chi
   hrN := A.hrN; hcM := A.hcM
   hrR := by have := A.hrR; omega
   hcC := by have := A.hcC; omega
@@ -236,7 +240,7 @@ def pad (A : Submatrix R n m) (n' m' : Nat) (hn : n ≤ n') (hm : m ≤ m') : Su
 capped at the block boundary. No copy. -/
 @[expose]
 def toBlocks₁₁ (A : Submatrix R (h + h) (w + w)) : Submatrix R h w where
-  N := A.N; M := A.M; base := A.base; r0 := A.r0; c0 := A.c0
+  baseRows := A.baseRows; baseCols := A.baseCols; base := A.base; r0 := A.r0; c0 := A.c0
   rhi := min A.rhi (A.r0 + h); chi := min A.chi (A.c0 + w)
   hrN := by have := A.hrN; omega
   hcM := by have := A.hcM; omega
@@ -246,7 +250,7 @@ def toBlocks₁₁ (A : Submatrix R (h + h) (w + w)) : Submatrix R h w where
 /-- Top-right `h × w` quadrant of an `(h+h) × (w+w)` view. No copy. -/
 @[expose]
 def toBlocks₁₂ (A : Submatrix R (h + h) (w + w)) : Submatrix R h w where
-  N := A.N; M := A.M; base := A.base; r0 := A.r0; c0 := A.c0 + w
+  baseRows := A.baseRows; baseCols := A.baseCols; base := A.base; r0 := A.r0; c0 := A.c0 + w
   rhi := min A.rhi (A.r0 + h); chi := A.chi
   hrN := by have := A.hrN; omega
   hcM := A.hcM
@@ -256,7 +260,7 @@ def toBlocks₁₂ (A : Submatrix R (h + h) (w + w)) : Submatrix R h w where
 /-- Bottom-left `h × w` quadrant of an `(h+h) × (w+w)` view. No copy. -/
 @[expose]
 def toBlocks₂₁ (A : Submatrix R (h + h) (w + w)) : Submatrix R h w where
-  N := A.N; M := A.M; base := A.base; r0 := A.r0 + h; c0 := A.c0
+  baseRows := A.baseRows; baseCols := A.baseCols; base := A.base; r0 := A.r0 + h; c0 := A.c0
   rhi := A.rhi; chi := min A.chi (A.c0 + w)
   hrN := A.hrN
   hcM := by have := A.hcM; omega
@@ -266,7 +270,7 @@ def toBlocks₂₁ (A : Submatrix R (h + h) (w + w)) : Submatrix R h w where
 /-- Bottom-right `h × w` quadrant of an `(h+h) × (w+w)` view. No copy. -/
 @[expose]
 def toBlocks₂₂ (A : Submatrix R (h + h) (w + w)) : Submatrix R h w where
-  N := A.N; M := A.M; base := A.base; r0 := A.r0 + h; c0 := A.c0 + w
+  baseRows := A.baseRows; baseCols := A.baseCols; base := A.base; r0 := A.r0 + h; c0 := A.c0 + w
   rhi := A.rhi; chi := A.chi
   hrN := A.hrN
   hcM := A.hcM

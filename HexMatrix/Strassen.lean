@@ -169,7 +169,8 @@ defeat termination.
 
 Recursive step: widen each operand view to even dimensions (`h + h`, `w + w`,
 `d + d` with `h := (n+1)/2` etc.) — a zero-fill reshape with no copy — split into
-2×2 quadrant **views** (offset arithmetic, no copy), materialize only the fifteen
+2×2 quadrant **views** (offset arithmetic — small view records, no buffer copies),
+materialize only the fifteen
 `Sᵢ`/`Tᵢ`/`Uᵢ` operand sums and the seven recursive products, assemble with
 `fromBlocks`, and crop back to `n × k`. Termination is well-founded on `n + m + k`:
 the recursion fires only when `n, m, k ≥ 2`, and each halved dimension is then
@@ -221,9 +222,10 @@ def mulStrassenView {R : Type u} [Mul R] [Add R] [Sub R] [OfNat R 0]
   decreasing_by all_goals (simp_wf; omega)
 
 /-- **Strassen-Winograd multiplication.** The public entry point wraps the operands
-as full-matrix `Submatrix` views and runs the copy-free view recursion
-`mulStrassenView`; the quadrant splitting inside allocates nothing (see that
-def and `HexMatrix/SPEC/hex-matrix.md` § "Avoiding sub-block copies"). -/
+as full-matrix `Submatrix` views and runs the view recursion `mulStrassenView`;
+the quadrant splitting inside never materializes or copies a quadrant buffer —
+only O(1) view records (see that def and `HexMatrix/SPEC/hex-matrix.md`
+§ "Avoiding sub-block copies"). -/
 @[expose]
 def mulStrassen {R : Type u} [Mul R] [Add R] [Sub R] [OfNat R 0]
     (cfg : StrassenConfig R) {n m k : Nat} (M : Matrix R n m) (N : Matrix R m k) :

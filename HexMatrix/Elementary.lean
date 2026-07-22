@@ -269,8 +269,9 @@ taken before the write); the subsequent `modifyCol` then holds the only live
 reference to the buffer and updates the `dst` column entry of each row in place —
 one single-entry `Vector.modify` of the flat buffer per row (`O(n)` writes
 total) — when the runtime sees it uniquely referenced, with no row
-materialization. This replaces the former `mapRows` pass, which materialized and
-reflattened every row. -/
+materialization; the source column is first snapshotted into one owned `O(n)`
+vector via borrowed reads. This replaces the former `mapRows` pass, which
+materialized and reflattened every row. -/
 @[expose]
 def colAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin m) (c : R) : Matrix R n m :=
   let csrc := M.col src

@@ -260,7 +260,7 @@ dimensions (type indices), and the real-data extent (`rhi`/`chi`, one past the
 last real row/column in backing coordinates). Reading a quadrant entry adds the
 offset and indexes the shared backing store when the position holds real data
 (`r0 + i < rhi ∧ c0 + j < chi`) and returns `0` in the zero-pad fringe otherwise.
-The recursive splitting therefore allocates nothing for the quadrants themselves
+The recursive splitting therefore never materializes or copies a quadrant buffer (only O(1) view records)
 — `Submatrix.toBlocks₁₁ … toBlocks₂₂` are pure offset/extent arithmetic. Because
 the backing dims never change through the recursion, `r0 + i < rhi` is the exact
 real-vs-pad test at every nesting depth, so widening a view to even dimensions
