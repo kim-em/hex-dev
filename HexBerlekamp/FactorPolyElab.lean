@@ -222,24 +222,35 @@ syntax (name := factorPolyTac) "factor_poly" term:max : tactic
     | `(tactic| factor_poly $t) => do
         let e ← Tactic.withMainContext do
           elabFactorPolyCore stx t none
-        -- Destructure the emitted `Factored.mk` application.
+        -- Destructure the emitted `Factored.mk` application (the FpPoly
+        -- shape carries the modulus and instance; providers may emit other
+        -- `*.Factored.mk` shapes with the same final four fields, e.g.
+        -- `Hex.ZPoly.Factored.mk`).
         let args := e.getAppArgs
-        unless e.getAppFn.isConstOf ``Hex.FpPoly.Factored.mk &&
-            args.size == 7 do
-          -- Provider-produced results: fall back to a plain `have`.
+        let fields? :
+            Option (Name × Expr × Expr × Expr × Expr × Expr × Expr) :=
+          if e.getAppFn.isConstOf ``Hex.FpPoly.Factored.mk && args.size == 7 then
+            some (``Hex.FpPoly.Irreducible,
+              Hex.CertReify.zmodType args[0]! args[1]!,
+              Hex.CertReify.fpPolyType args[0]! args[1]!,
+              args[3]!, args[4]!, args[5]!, args[6]!)
+          else if e.getAppFn.isConstOf `Hex.ZPoly.Factored.mk &&
+              args.size == 5 then
+            some (`Hex.ZPoly.Irreducible, mkConst ``Int, mkConst `Hex.ZPoly,
+              args[1]!, args[2]!, args[3]!, args[4]!)
+          else
+            none
+        let some (predName, scalarTy, polyTy, scalarE, factorsE, hmulE, hirredE) :=
+            fields? |
+          -- Unrecognized provider result: fall back to a plain `have`.
           Tactic.liftMetaTactic fun g => do
             let ty ← inferType e
             let (_, g) ← (← g.assert `factored ty e).intro1P
             return [g]
-          return
-        let (pE, boundsE, fE) := (args[0]!, args[1]!, args[2]!)
-        let (scalarE, factorsE) := (args[3]!, args[4]!)
-        let (hmulE, hirredE) := (args[5]!, args[6]!)
+        let fE := args[if args.size == 7 then 2 else 0]!
         Tactic.liftMetaTactic fun g => do
-          let zmodTy := Hex.CertReify.zmodType pE boundsE
-          let polyTy := Hex.CertReify.fpPolyType pE boundsE
           let listTy := mkApp (mkConst ``List [Level.zero]) polyTy
-          let (fvS, g) ← (← g.define `scalar zmodTy scalarE).intro1P
+          let (fvS, g) ← (← g.define `scalar scalarTy scalarE).intro1P
           let (fvF, g) ← (← g.define `factors listTy factorsE).intro1P
           g.withContext do
             let sE := mkFVar fvS
@@ -252,7 +263,7 @@ syntax (name := factorPolyTac) "factor_poly" term:max : tactic
               let hirredTy ←
                 withLocalDeclD `q polyTy fun q => do
                   let mem ← mkAppM ``Membership.mem #[fsE, q]
-                  let irred ← mkAppM ``Hex.FpPoly.Irreducible #[q]
+                  let irred ← mkAppM predName #[q]
                   mkForallFVars #[q] (← mkArrow mem irred)
               let (_, g) ← (← g.assert `factors_irred hirredTy hirredE).intro1P
               return [g]

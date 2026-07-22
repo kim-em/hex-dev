@@ -186,6 +186,7 @@ by the greedy expansion helper. -/
 def Associated (a b : ZPoly) : Prop :=
   ∃ u : ZPoly, ZPoly.IsUnit u ∧ b = a * u
 
+@[expose]
 def isNatPrime (n : Nat) : Bool :=
   2 ≤ n && !((List.range n).any fun d => 2 ≤ d && d * d ≤ n && n % d == 0)
 

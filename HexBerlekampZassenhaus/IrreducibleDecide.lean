@@ -60,5 +60,110 @@ theorem irreducible_of_modPCert
   exact ZPoly.Irreducible_of_modP_irreducible_of_primitive_of_admissible f p
     hprime hprim hadm' (of_decide_eq_true hsize) hirr
 
+/-- A dense-size-one polynomial is the constant on its zeroth coefficient. -/
+theorem eq_C_coeff_zero_of_size_one {f : ZPoly} (h : f.size = 1) :
+    f = DensePoly.C (f.coeff 0) := by
+  apply DensePoly.ext_coeff
+  intro i
+  rw [DensePoly.coeff_C]
+  match i with
+  | 0 => rw [if_pos rfl]
+  | i + 1 =>
+      rw [if_neg (by omega)]
+      exact DensePoly.coeff_eq_zero_of_size_le f (by omega)
+
+/-- A single-prime modular irreducibility witness for a `ZPoly` factor,
+packing its own modulus and bounds instance (the `PrimeFactorData` idiom) so
+witnesses at different primes share one type. -/
+structure ModPWitness where
+  /-- The witnessing prime. -/
+  p : Nat
+  /-- Bounds instance for the modulus. -/
+  bounds : ZMod64.Bounds p
+  /-- The monic image of the reduction mod `p`. -/
+  m : @FpPoly p bounds
+  /-- The leading unit of the reduction mod `p`. -/
+  c : @ZMod64 p bounds
+  /-- Rabin certificate for `m`. -/
+  cert : Berlekamp.IrreducibilityCertificate
+
+/-- One irreducibility witness for a `ZPoly`: a prime constant, a primitive
+linear, or a single-prime modular reduction certificate. -/
+inductive IrredWitness where
+  /-- The polynomial is a constant with prime absolute value. -/
+  | primeConst
+  /-- The polynomial is linear (dense size two) and primitive. -/
+  | linear
+  /-- Single-prime route: the reduction mod `w.p` is irreducible. -/
+  | modP (w : ModPWitness)
+
+/-- Kernel-decidable check that `w` witnesses irreducibility of `f`. -/
+@[expose]
+def checkIrredWitness (f : ZPoly) : IrredWitness → Bool
+  | .primeConst => decide (f.size = 1) && isNatPrime (f.coeff 0).natAbs
+  | .linear => decide (f.size = 2) && decide (ZPoly.content f = 1)
+  | .modP w =>
+      letI := w.bounds
+      Hex.Nat.isPrimeTrial w.p && decide (ZPoly.content f = 1) &&
+        decide (ZPoly.leadingCoeffModP f w.p ≠ 0) && decide (1 < f.size) &&
+        !(decide (w.c = 0)) &&
+        DensePoly.beqCoeffs (DensePoly.scale w.c w.m) (ZPoly.modP w.p f) &&
+        Berlekamp.checkMonicCert w.m w.cert
+
+/-- A passing `checkIrredWitness` forces irreducibility. -/
+theorem irreducible_of_checkIrredWitness
+    (f : ZPoly) (w : IrredWitness)
+    (hcheck : checkIrredWitness f w = true) :
+    ZPoly.Irreducible f := by
+  match w with
+  | .primeConst =>
+      unfold checkIrredWitness at hcheck
+      rw [Bool.and_eq_true] at hcheck
+      obtain ⟨hsize, hprime⟩ := hcheck
+      rw [eq_C_coeff_zero_of_size_one (of_decide_eq_true hsize)]
+      exact irreducible_C_of_isNatPrime hprime
+  | .linear =>
+      unfold checkIrredWitness at hcheck
+      rw [Bool.and_eq_true] at hcheck
+      exact irreducible_of_linear f hcheck.1 hcheck.2
+  | .modP wit =>
+      unfold checkIrredWitness at hcheck
+      letI := wit.bounds
+      simp only [Bool.and_eq_true] at hcheck
+      obtain ⟨⟨⟨⟨⟨⟨hp, hcontent⟩, hadm⟩, hsize⟩, hc⟩, hfm⟩, hcert⟩ := hcheck
+      rw [Bool.not_eq_true'] at hc
+      exact irreducible_of_modPCert f wit.p wit.m wit.c wit.cert
+        hp (decide_eq_true (of_decide_eq_true hcontent))
+        (decide_eq_true (of_decide_eq_true hadm))
+        (decide_eq_true (of_decide_eq_true hsize)) hc hfm hcert
+
+/-- Bulk kernel-decidable irreducibility for a `ZPoly` factor list with
+repetition: `certified` carries one `(factor, witness)` entry per *distinct*
+factor, matched by `beqCoeffs`, so each witness is checked once regardless of
+multiplicity. -/
+@[expose]
+def checkIrredCover (factors : List ZPoly)
+    (certified : List (ZPoly × IrredWitness)) : Bool :=
+  (certified.all fun e => checkIrredWitness e.1 e.2) &&
+    (factors.all fun q => certified.any fun e => DensePoly.beqCoeffs e.1 q)
+
+/-- A passing `checkIrredCover` forces irreducibility of every listed factor.
+The single Boolean hypothesis is the `factors_irred` slot of a reified
+`ZPoly.Factored` value. -/
+theorem irreducible_of_checkIrredCover
+    (factors : List ZPoly) (certified : List (ZPoly × IrredWitness))
+    (hcheck : checkIrredCover factors certified = true) :
+    ∀ q ∈ factors, ZPoly.Irreducible q := by
+  unfold checkIrredCover at hcheck
+  rw [Bool.and_eq_true] at hcheck
+  obtain ⟨hvalid, hcover⟩ := hcheck
+  rw [List.all_eq_true] at hvalid hcover
+  intro q hq
+  have hq' := hcover q hq
+  rw [List.any_eq_true] at hq'
+  obtain ⟨e, he, hbeq⟩ := hq'
+  have hw := irreducible_of_checkIrredWitness e.1 e.2 (hvalid e he)
+  rwa [DensePoly.eq_of_beqCoeffs hbeq] at hw
+
 end ZPoly
 end Hex
