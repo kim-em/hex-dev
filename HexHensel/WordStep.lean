@@ -60,36 +60,6 @@ The Montgomery residue ring is a commutative ring; the axioms transport through
 `toNat` (which is `+`/`*`/`-`-compatible modulo `m`). This is what lets the
 word-sized poly arithmetic reuse the generic `DensePoly` ring/division lemmas. -/
 
-/-- Iterated product, the `npow` datum. -/
-def pow (a : WordMod ctx) : Nat → WordMod ctx
-  | 0 => 1
-  | n + 1 => pow a n * a
-
-instance : HPow (WordMod ctx) Nat (WordMod ctx) := ⟨pow⟩
-instance (n : Nat) : OfNat (WordMod ctx) n := ⟨ofNat n⟩
-instance : SMul Nat (WordMod ctx) := ⟨fun n a => ofNat n * a⟩
-instance : IntCast (WordMod ctx) :=
-  ⟨fun i => match i with
-    | .ofNat n => ofNat n
-    | .negSucc n => -(ofNat (n + 1))⟩
-instance : SMul Int (WordMod ctx) :=
-  ⟨fun i a => match i with
-    | .ofNat n => (n : Nat) • a
-    | .negSucc n => -((n + 1 : Nat) • a)⟩
-
-@[simp] theorem toNat_pow (a : WordMod ctx) (n : Nat) :
-    (a ^ n).toNat = (a.toNat ^ n) % m.toNat := by
-  change (pow a n).toNat = _
-  induction n with
-  | zero => simp [pow, toNat_one, Nat.pow_zero]
-  | succ k ih =>
-      rw [pow, toNat_mul, ih, Nat.pow_succ, Nat.mod_mul_mod]
-
-@[simp] theorem toNat_nsmul (n : Nat) (a : WordMod ctx) :
-    (n • a).toNat = (n % m.toNat * a.toNat) % m.toNat := by
-  change (ofNat n * a).toNat = _
-  rw [toNat_mul, toNat_ofNat]
-
 instance : Lean.Grind.Semiring (WordMod ctx) := by
   refine Lean.Grind.Semiring.mk ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
   · intro a
@@ -177,9 +147,22 @@ instance : Lean.Grind.Ring (WordMod ctx) where
             change (ofNat 0 * a).toNat = (-(ofNat 0 * a)).toNat
             rw [toNat_neg, toNat_mul, toNat_ofNat]
             simp
-        | succ n => rfl
+        | succ n =>
+            apply toNat_injective
+            change ((-ofNat (n + 1)) * a).toNat = (-(ofNat (n + 1) * a)).toNat
+            rw [toNat_neg_mul, toNat_neg, toNat_mul]
     | negSucc n =>
-        exact (neg_neg' ((n + 1 : Nat) • a)).symm
+        change ofNat (n + 1) * a = -((-ofNat (n + 1)) * a)
+        apply toNat_injective
+        rw [toNat_neg, toNat_neg_mul, toNat_mul]
+        generalize hx : (ofNat (ctx := ctx) (n + 1)).toNat * a.toNat % m.toNat = x
+        have hlt : x < m.toNat := by
+          rw [← hx]
+          exact Nat.mod_lt _ ctx.p_pos
+        rcases Nat.eq_zero_or_pos x with h0 | h0
+        · rw [h0]; simp
+        · rw [Nat.mod_eq_of_lt (show m.toNat - x < m.toNat by omega),
+              Nat.sub_sub_self (Nat.le_of_lt hlt), Nat.mod_eq_of_lt hlt]
   intCast_neg := by
     intro i
     cases i with
