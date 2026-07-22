@@ -89,6 +89,14 @@ is a unit (±1), not irreducible -/
 #guard_msgs in
 #check_failure (irreducibility (DensePoly.C (1 : Int)))
 
+/--
+info: irreducibility: deciding primality of the constant
+  DensePoly.C 67108879
+needs a kernel replay of roughly 67108879 steps, over the supported budget (67108864)
+-/
+#guard_msgs in
+#check_failure (irreducibility (DensePoly.C (67108879 : Int)))
+
 /-! ## Axiom hygiene -/
 
 /-- info: 'HexBerlekampZassenhaus.FactorTacticTests.facZ' depends on axioms: [propext, Classical.choice, Quot.sound] -/

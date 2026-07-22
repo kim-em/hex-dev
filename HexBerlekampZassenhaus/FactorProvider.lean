@@ -91,7 +91,10 @@ meta def searchModPWitness (q : Hex.ZPoly) : Option Hex.ZPoly.ModPWitness := Id.
 /-- Search for an irreducibility witness for `q`. -/
 meta def searchWitness (q : Hex.ZPoly) : Option Hex.ZPoly.IrredWitness := Id.run do
   if q.size = 1 then
-    if Hex.ZPoly.isNatPrime (q.coeff 0).natAbs then
+    -- The kernel replay of `isNatPrime c` costs roughly `c` steps
+    -- (`List.range c`), so budget-check before even computing it.
+    let c := (q.coeff 0).natAbs
+    if c ≤ Hex.FactorTactic.replayBudget && Hex.ZPoly.isNatPrime c then
       return some .primeConst
     else
       return none
@@ -214,6 +217,11 @@ meta def irredProof (fE : Expr) (f : Hex.ZPoly) :
       return .ok (mkApp3 (mkConst ``Hex.ZPoly.irreducible_of_checkIrredWitness)
         fE (reifyWitness w) Hex.CertReify.reflTrue)
   | none =>
+      if f.size = 1 && (f.coeff 0).natAbs > Hex.FactorTactic.replayBudget then
+        throwError "irreducibility: deciding primality of the constant\
+            {indentExpr fE}\
+            \nneeds a kernel replay of roughly {(f.coeff 0).natAbs} steps, \
+            over the supported budget ({Hex.FactorTactic.replayBudget})"
       if Hex.ZPoly.isIrreducible f then
         return .error (← balancedDecline "irreducibility" f)
       else
