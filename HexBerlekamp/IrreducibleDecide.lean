@@ -74,5 +74,45 @@ theorem irreducible_of_checkMonicCert_scale
   have hscaled := FpPoly.irreducible_scale_of_ne_zero hcne hm
   rwa [DensePoly.eq_of_beqCoeffs hfm] at hscaled
 
+/-- Bulk kernel-decidable irreducibility for a factor list with repetition:
+`certified` carries one `(monic, scalar, certificate)` entry per *distinct*
+factor, and every listed factor must match some entry's `scale scalar monic`
+by `beqCoeffs`. Each certificate is replayed once regardless of multiplicity;
+repeated factors cost only a coefficient comparison. -/
+@[expose]
+def checkIrredCover (factors : List (FpPoly p))
+    (certified : List (FpPoly p × ZMod64 p × IrreducibilityCertificate)) : Bool :=
+  (certified.all fun e => !(decide (e.2.1 = 0)) && checkMonicCert e.1 e.2.2) &&
+    (factors.all fun q =>
+      certified.any fun e => DensePoly.beqCoeffs (DensePoly.scale e.2.1 e.1) q)
+
+/-- A passing `checkIrredCover` forces irreducibility of every listed factor.
+The single Boolean hypothesis is the `factors_irred` slot of a reified
+`FpPoly.Factored` value. -/
+theorem irreducible_of_checkIrredCover
+    (hp : Hex.Nat.isPrimeTrial p = true)
+    (factors : List (FpPoly p))
+    (certified : List (FpPoly p × ZMod64 p × IrreducibilityCertificate))
+    (hcheck : checkIrredCover factors certified = true) :
+    ∀ q ∈ factors, FpPoly.Irreducible q := by
+  haveI : ZMod64.PrimeModulus p :=
+    ZMod64.primeModulusOfPrime (Hex.Nat.isPrimeTrial_isPrime hp)
+  unfold checkIrredCover at hcheck
+  rw [Bool.and_eq_true] at hcheck
+  obtain ⟨hvalid, hcover⟩ := hcheck
+  rw [List.all_eq_true] at hvalid hcover
+  intro q hq
+  have hq' := hcover q hq
+  rw [List.any_eq_true] at hq'
+  obtain ⟨e, he, hbeq⟩ := hq'
+  have hv := hvalid e he
+  rw [Bool.and_eq_true] at hv
+  obtain ⟨hcne, hcert⟩ := hv
+  rw [Bool.not_eq_true'] at hcne
+  have hne : e.2.1 ≠ 0 := of_decide_eq_false hcne
+  have hm : FpPoly.Irreducible e.1 := irreducible_of_checkMonicCert e.1 e.2.2 hcert
+  have hscaled := FpPoly.irreducible_scale_of_ne_zero hne hm
+  rwa [DensePoly.eq_of_beqCoeffs hbeq] at hscaled
+
 end Berlekamp
 end Hex

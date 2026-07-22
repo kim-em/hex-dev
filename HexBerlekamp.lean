@@ -8,6 +8,11 @@ module
 
 public import HexBerlekamp.Basic
 public import HexBerlekamp.CertReify
+public import HexBerlekamp.Factored
+public import HexBerlekamp.TacticCore
+public import HexBerlekamp.FactorPolyElab
+public import HexBerlekamp.IrreducibilityElab
+public import HexBerlekamp.FactorTacticTests
 public import HexBerlekamp.DelayedKernel
 public import HexBerlekamp.DistinctDegree
 public import HexBerlekamp.Factor

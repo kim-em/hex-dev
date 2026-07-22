@@ -146,6 +146,7 @@ Match a certificate's stored prime against the ambient `p`. Returns the
 same-prime view on success, or `none` if the certificate is for a different
 prime.
 -/
+@[expose]
 def IrreducibilityCertificate.toAmbient?
     (cert : IrreducibilityCertificate) (p : Nat) [ZMod64.Bounds p] :
     Option (SamePrimeIrreducibilityCertificate p) := by
@@ -159,6 +160,7 @@ def IrreducibilityCertificate.toAmbient?
         exact none
 
 /-- The Rabin difference polynomial represented by a certificate pow-chain entry. -/
+@[expose]
 def certifiedFrobeniusDiffMod (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (powWitness : FpPoly p) : FpPoly p :=
   powWitness - FpPoly.modByMonic f FpPoly.X hmonic
@@ -182,6 +184,7 @@ def checkPowChainLinear (f : FpPoly p) (hmonic : DensePoly.Monic f)
       cert.powChain[k]? == some (FpPoly.frobeniusXPowModLinear f hmonic k)
 
 /-- Check one Bezout witness for a Rabin maximal-proper-divisor leg. -/
+@[expose]
 def checkRabinBezoutWitness (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate p) (i d : Nat) : Bool :=
   match cert.powChain[d]?, cert.bezout[i]? with
@@ -191,6 +194,7 @@ def checkRabinBezoutWitness (f : FpPoly p) (hmonic : DensePoly.Monic f)
   | _, _ => false
 
 /-- Check all Bezout witnesses against `maximalProperDivisors cert.n`. -/
+@[expose]
 def checkRabinBezoutWitnesses (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate p) : Bool :=
   let divisors := maximalProperDivisors cert.n
@@ -638,6 +642,7 @@ multiplications, dropping the total work from `Σ p^k` to `n · p`. -/
 The single-step recurrence: `powChain[k+1]` must equal
 `(powChain[k])^p mod f`.
 -/
+@[expose]
 def checkPowChainLinearIncrementalStep
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate p) (k : Nat) : Bool :=
@@ -650,6 +655,7 @@ Kernel-reducible incremental pow-chain check.  Validates that
 `powChain[0] = X mod f` and that each successor is the previous entry's
 `p`-th power modulo `f`.  Total work is `O(n · p)` instead of `O(Σ p^k)`.
 -/
+@[expose]
 def checkPowChainLinearIncremental (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate p) : Bool :=
   cert.powChain.size == cert.n + 1 &&
@@ -1197,6 +1203,7 @@ Incremental Rabin certificate checker, suitable for `(p, n)` regimes where
 `p^n` is too large for `checkIrreducibilityCertificateLinear` but `n · p`
 remains in budget (e.g. `(5, 6)` or `(7, 6)`).
 -/
+@[expose]
 def checkIrreducibilityCertificateLinearIncremental
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : IrreducibilityCertificate) : Bool :=

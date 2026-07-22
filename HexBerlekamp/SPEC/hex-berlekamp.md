@@ -88,3 +88,35 @@ Python driver per `SPEC/benchmarking.md §"External comparators"
 multiple FLINT comparator families.
 
 Structured metadata in `libraries.yml: HexBerlekamp.phase4.comparators`.
+
+## The `factor_poly` and `irreducibility` tactics
+
+User-facing certificate-backed elaborators (`FactorPolyElab.lean`,
+`IrreducibilityElab.lean`), handling `FpPoly p` natively for literal prime
+moduli within the ZMod64 bounds:
+
+- `factor_poly f` (term) elaborates to an `FpPoly.Factored f`: a `scalar`,
+  a `factors` list (monic irreducible factors with repetition, nondecreasing
+  size, by generator convention), `factors_mul : C scalar * factors.prod = f`,
+  and `factors_irred : ∀ q ∈ factors, FpPoly.Irreducible q`. The tactic form
+  introduces `scalar`/`factors` as transparent `let`s plus the two hypotheses.
+- `irreducibility f` (term) elaborates to `FpPoly.Irreducible f`;
+  `irreducibility f` / `irreducibility h : f` (tactic) add it as a
+  hypothesis, and bare `irreducibility` closes an `FpPoly.Irreducible e`
+  goal.
+
+Trust model: the compiled Yun square-free decomposition, Berlekamp
+factorizer, and Rabin certificate generator run at elaboration time as
+untrusted search; the emitted terms carry only kernel checks on reified
+literal data (`DensePoly.beqCoeffs` product check, `Berlekamp.checkMonicCert`
+/ `checkIrredCover` certificate replays — one replay per distinct factor,
+budget-guarded at `deg · p ≤ 2²⁶`). The factorizer never runs in the kernel,
+and inputs must be kernel-transparent closed terms (checked, with a clear
+error, at elaboration time).
+
+Other input types dispatch through the `Hex.FactorTactic.Provider` hook
+(`TacticCore.lean`): downstream libraries declare a provider under a
+well-known name (`providerNames`), probed from the environment at
+elaboration time — no imports in this direction. `HexBerlekampZassenhaus`
+registers the `ZPoly` arms; the Mathlib bridges register the
+`Polynomial (ZMod q)` / `Polynomial ℤ` arms.
