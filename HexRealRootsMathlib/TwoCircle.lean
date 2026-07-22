@@ -32,8 +32,7 @@ public section
 
 This module proves `isolateDescartes?_isSome`: the *Descartes* isolation engine
 alone returns `some` on every nonzero square-free input, so the runtime never
-needs the Sturm fallback. It is the last theorem of `HexRealRootsMathlib`, and
-with it the companion is fully `sorry`-free.
+needs the Sturm fallback.
 
 ## What the two-circle theorem actually says
 
