@@ -6,9 +6,9 @@ Authors: Kim Morrison
 
 module
 
-public meta import HexBerlekampZassenhausMathlib.CertReify
+public meta import HexBerlekampZassenhaus.CertReify
 public import HexBerlekampZassenhausMathlib.ToMonicUniqueness
-public import HexBerlekampZassenhausMathlib.CertReify
+public import HexBerlekampZassenhaus.CertReify
 
 public section
 set_option backward.proofsInPublic true
@@ -24,7 +24,7 @@ For a goal `Irreducible (HexPolyZMathlib.toPolynomial f)` with `f` a closed
    evaluation; Berlekamp factoring and Rabin certificate generation never
    reach the kernel);
 2. reifies the resulting certificate as a literal `Expr`
-   (`HexBerlekampZassenhausMathlib.CertReify`);
+   (`Hex.CertReify`);
 3. closes the goal with `irreducible_of_checkIrreducibleCertLinear` applied to
    the reified certificate, filling all four Boolean hypothesis slots with
    `Eq.refl true`.
@@ -132,13 +132,13 @@ elab "irreducible_cert" : tactic => do
     unless Hex.checkIrreducibleCertLinear f cert do
       throwError "irreducible_cert: internal error: the generated \
           certificate fails checkIrreducibleCertLinear; please report this"
-    let certE := CertReify.reifyCertificate cert
+    let certE := Hex.CertReify.reifyCertificate cert
     -- Each hypothesis slot receives `Eq.refl true`; the kernel verifies it by
     -- reducing the corresponding Boolean check on the literal certificate.
     let proof := mkApp6
       (mkConst ``HexBerlekampZassenhausMathlib.irreducible_of_checkIrreducibleCertLinear)
-      fE certE CertReify.reflTrue CertReify.reflTrue CertReify.reflTrue
-      CertReify.reflTrue
+      fE certE Hex.CertReify.reflTrue Hex.CertReify.reflTrue Hex.CertReify.reflTrue
+      Hex.CertReify.reflTrue
     unless ← isDefEq (← inferType proof) tgt do
       throwError "irreducible_cert: the certified statement\
           {indentExpr (← inferType proof)}\

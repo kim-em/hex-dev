@@ -9,6 +9,7 @@ module
 public import HexBerlekampZassenhaus.PrimeSelection
 public import HexBerlekampZassenhaus.Records
 public import HexBerlekampZassenhaus.Certificate
+public import HexBerlekampZassenhaus.CertReify
 public import HexBerlekampZassenhaus.ChoosePrimeData
 public import HexBerlekampZassenhaus.ReassemblyProofs
 public import HexBerlekampZassenhaus.Lattice

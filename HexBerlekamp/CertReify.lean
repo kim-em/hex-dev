@@ -6,40 +6,39 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhaus
+public import HexBerlekamp.Irreducibility
 public import Lean
 
 public section
 
 /-!
-Elaboration-time reification of `Hex.ZPolyIrreducibilityCertificate` values as
-literal `Expr`s, for the `irreducible_cert` tactic.
+Elaboration-time reification of `FpPoly`-level values and Rabin
+irreducibility certificates as literal `Expr`s, for the certificate-backed
+tactics (`irreducibility`, `factor_poly`).
 
-The reifier rebuilds every layer of the certificate tower from *public
-constructor functions* rather than raw structure-field literals, so all proof
-and instance obligations are supplied by the constructors themselves:
+The reifiers rebuild every layer from *public constructor functions* rather
+than raw structure-field literals, so all proof and instance obligations are
+supplied by the constructors themselves:
 
 - `Hex.ZMod64 p` residues via `Hex.ZMod64.ofNat p n` (reduction proof from the
   smart constructor);
 - `Hex.FpPoly p` values via `Hex.FpPoly.ofCoeffs #[…]` (normalization proof
   from the smart constructor);
-- `Hex.ZPoly` values via `Hex.DensePoly.ofCoeffs #[…]`;
 - `Hex.ZMod64.Bounds p` instance fields via `boundsOfDecide`, whose single
   Boolean hypothesis the kernel discharges by reducing an `Eq.refl true`;
-- the structure layers (`RabinBezoutWitness`, `IrreducibilityCertificate`,
-  `PrimeFactorData`, `DegreeObstruction`, `ZPolyIrreducibilityCertificate`)
+- the structure layers (`RabinBezoutWitness`, `IrreducibilityCertificate`)
   as constructor applications over the reified pieces.
 
 Every emitted proof obligation is a `_ = true` slot filled with `Eq.refl true`,
 so the kernel verifies the reified data by reduction alone; nothing in the
 output depends on elaborator-side evaluation.
 
-The round-trip tests live in `HexBerlekampZassenhausMathlib.IrreducibleCertTest`
-next to the tactic examples: each reified certificate is typechecked,
-evaluated back to a value, and compared field-by-field with the original.
+The `ZPoly`-level certificate tower (`PrimeFactorData`, `DegreeObstruction`,
+`ZPolyIrreducibilityCertificate`) is reified in
+`HexBerlekampZassenhaus.CertReify`, which builds on this module.
 -/
 
-namespace HexBerlekampZassenhausMathlib.CertReify
+namespace Hex.CertReify
 
 open Lean
 
@@ -58,6 +57,11 @@ theorem boundsOfDecide (p : Nat)
 left-hand side the kernel can reduce to `true`. -/
 def reflTrue : Expr :=
   mkApp2 (mkConst ``Eq.refl [Level.one]) (mkConst ``Bool) (mkConst ``Bool.true)
+
+/-- The literal proof `Eq.refl false`, accepted in any `b = false` slot whose
+left-hand side the kernel can reduce to `false`. -/
+def reflFalse : Expr :=
+  mkApp2 (mkConst ``Eq.refl [Level.one]) (mkConst ``Bool) (mkConst ``Bool.false)
 
 /-- Literal `Array` expression `(List.toArray [x₁, …, xₙ] : Array ty)`. -/
 def arrayLit (ty : Expr) (xs : List Expr) : Expr :=
@@ -116,48 +120,12 @@ def reifyRabinCert (cert : Hex.Berlekamp.IrreducibilityCertificate) : Expr :=
       mkApp5 (mkConst ``Hex.Berlekamp.IrreducibilityCertificate.mk)
         pE boundsE (mkNatLit n) powChainE bezoutE
 
-/-- Reify a `PrimeFactorData` block as a constructor application over its
-reified prime, degree array, factor array, and nested Rabin certificates. -/
-def reifyPrimeFactorData (d : Hex.PrimeFactorData) : Expr :=
-  match d with
-  | { p := p, bounds := bounds, factorDegrees := degrees, factorPolys := polys,
-      factorCerts := certs } =>
-      let pE := mkNatLit p
-      let boundsE := reifyBounds pE
-      let degreesE := arrayLit (mkConst ``Nat) (degrees.toList.map mkNatLit)
-      let polysE := arrayLit (fpPolyType pE boundsE)
-        (polys.toList.map fun g =>
-          reifyFpPolyOfNats pE boundsE (@fpCoeffNats p bounds g))
-      let certsE := arrayLit (mkConst ``Hex.Berlekamp.IrreducibilityCertificate)
-        (certs.toList.map reifyRabinCert)
-      mkApp5 (mkConst ``Hex.PrimeFactorData.mk) pE boundsE degreesE polysE certsE
-
-/-- Reify a `DegreeObstruction` as a constructor application. -/
-def reifyDegreeObstruction (o : Hex.DegreeObstruction) : Expr :=
-  mkApp2 (mkConst ``Hex.DegreeObstruction.mk)
-    (mkNatLit o.targetDegree) (mkNatLit o.primeIndex)
-
-/-- Reify a full `ZPolyIrreducibilityCertificate` as a literal `Expr`. -/
-def reifyCertificate (cert : Hex.ZPolyIrreducibilityCertificate) : Expr :=
-  mkApp2 (mkConst ``Hex.ZPolyIrreducibilityCertificate.mk)
-    (arrayLit (mkConst ``Hex.PrimeFactorData)
-      (cert.perPrime.toList.map reifyPrimeFactorData))
-    (arrayLit (mkConst ``Hex.DegreeObstruction)
-      (cert.degreeObstructions.toList.map reifyDegreeObstruction))
-
-/-- Reify a `ZPoly` as `Hex.DensePoly.ofCoeffs #[…]` with literal `Int`
-coefficients. -/
-def reifyZPoly (f : Hex.ZPoly) : Lean.Meta.MetaM Expr := do
-  Lean.Meta.mkAppM ``Hex.DensePoly.ofCoeffs
-    #[arrayLit (mkConst ``Int) (f.toArray.toList.map toExpr)]
-
 /-! ### Serialized views for round-trip testing
 
-The round-trip tests (in `HexBerlekampZassenhausMathlib.IrreducibleCertTest`)
-evaluate a reified certificate back to a value and compare it with the
-original. The certificate tower has no derivable `BEq` (its `FpPoly` fields
-live at per-block primes), so the comparison goes through these canonical
-serializations to plain `Nat` data.
+The round-trip tests evaluate a reified certificate back to a value and
+compare it with the original. The certificate tower has no derivable `BEq`
+(its `FpPoly` fields live at per-block primes), so the comparison goes
+through these canonical serializations to plain `Nat` data.
 -/
 
 /-- Serialized view of a nested Rabin certificate. -/
@@ -169,22 +137,4 @@ def rabinCertData (cert : Hex.Berlekamp.IrreducibilityCertificate) :
         bezout.toList.map fun w =>
           (@fpCoeffNats p bounds w.left, @fpCoeffNats p bounds w.right))
 
-/-- Serialized view of a per-prime certificate block. -/
-def primeFactorDataData (d : Hex.PrimeFactorData) :
-    Nat × List Nat × List (List Nat) ×
-      List (Nat × Nat × List (List Nat) × List (List Nat × List Nat)) :=
-  match d with
-  | { p := p, bounds := bounds, factorDegrees := degrees, factorPolys := polys,
-      factorCerts := certs } =>
-      (p, degrees.toList, polys.toList.map fun g => @fpCoeffNats p bounds g,
-        certs.toList.map rabinCertData)
-
-/-- Serialized view of a full integer irreducibility certificate. -/
-def certificateData (cert : Hex.ZPolyIrreducibilityCertificate) :
-    List (Nat × List Nat × List (List Nat) ×
-        List (Nat × Nat × List (List Nat) × List (List Nat × List Nat))) ×
-      List (Nat × Nat) :=
-  (cert.perPrime.toList.map primeFactorDataData,
-    cert.degreeObstructions.toList.map fun o => (o.targetDegree, o.primeIndex))
-
-end HexBerlekampZassenhausMathlib.CertReify
+end Hex.CertReify
