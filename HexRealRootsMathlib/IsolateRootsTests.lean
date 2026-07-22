@@ -18,8 +18,8 @@ public section
 # Unit tests for the `IsolatedRealRoots` API
 
 Exercises every constructor on literal data and the `isolate_roots_bridge`
-tactic on all four coefficient-ring shapes, with a plain import (no `import
-all`) and no `sorry`.
+tactic on all four coefficient-ring shapes, through the public API only (a plain
+import, no `import all`).
 -/
 
 open Hex Polynomial HexRealRootsMathlib

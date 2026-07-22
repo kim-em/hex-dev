@@ -49,6 +49,5 @@ root-identity theorems (overlap classes are the real roots); and `TwoCircle`
 proves Descartes-engine termination (`isolateDescartes?_isSome`) behind its
 Obreshkoff two-circle prerequisite (the λ-graded sector bound in
 `TwoCircleSector`, the region geometry in `TwoCircleRegion`, and the Descartes
-parity in `DescartesParity`). Every theorem in the library is now proven; there
-are no `sorry`s.
+parity in `DescartesParity`).
 -/
