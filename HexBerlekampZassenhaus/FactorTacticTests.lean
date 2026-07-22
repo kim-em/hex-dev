@@ -55,19 +55,31 @@ example : True := by
   irreducibility h : linZ
   exact True.intro
 
-/-! ## Balanced inputs: no free-layer certificate, clean decline -/
+/-! ## Eisenstein-after-shift certificates -/
 
-/-- `X⁴+1`: irreducible over ℤ but reducible mod every prime — no
-single-prime witness exists, so the free layer declines (the Mathlib bridge
-provider handles it via Eisenstein-after-shift / multi-prime certificates
-when imported). -/
+/-- `X⁴+1`: irreducible over ℤ but reducible mod every prime, so there is no
+single-prime witness; the Eisenstein-after-shift search certifies it at
+shift `1`, prime `2` (`(X+1)⁴+1 = X⁴+4X³+6X²+4X+2`). -/
 def x4p1 : ZPoly := DensePoly.ofCoeffs #[1, 0, 0, 0, 1]
 
-#check_failure (irreducibility x4p1)
+theorem x4p1_irred : ZPoly.Irreducible x4p1 := irreducibility x4p1
+
+/-- `X²-2`: plain Eisenstein at prime `2`, shift `0`. The tactic itself
+certifies this via the mod-3 route, so the shift-`0` Eisenstein witness is
+exercised directly through the checker and its soundness theorem. -/
+def x2m2 : ZPoly := DensePoly.ofCoeffs #[-2, 0, 1]
+
+example : ZPoly.checkIrredWitness x2m2 (.eisenstein 2 0) = true := rfl
+
+theorem x2m2_irred : ZPoly.Irreducible x2m2 :=
+  ZPoly.irreducible_of_checkIrredWitness x2m2 (.eisenstein 2 0) rfl
+
+/-! ## Balanced inputs: no free-layer certificate, clean decline -/
 
 /-- A product with a Swinnerton-Dyer factor: `(x+1)·(x⁴−10x²+1)`. The
-factorization search succeeds but the SD factor has no free-layer witness,
-so `factor_poly` declines. -/
+factorization search succeeds but the SD factor has no free-layer witness
+(it is reducible mod every prime and not Eisenstein at any small shift), so
+`factor_poly` declines. -/
 def sdProd : ZPoly :=
   DensePoly.ofCoeffs #[1, 1] * DensePoly.ofCoeffs #[1, 0, -10, 0, 1]
 
@@ -106,5 +118,13 @@ needs a kernel replay of roughly 67108879 steps, over the supported budget (6710
 /-- info: 'HexBerlekampZassenhaus.FactorTacticTests.quad_irred' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms quad_irred
+
+/-- info: 'HexBerlekampZassenhaus.FactorTacticTests.x4p1_irred' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms x4p1_irred
+
+/-- info: 'HexBerlekampZassenhaus.FactorTacticTests.x2m2_irred' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms x2m2_irred
 
 end HexBerlekampZassenhaus.FactorTacticTests
