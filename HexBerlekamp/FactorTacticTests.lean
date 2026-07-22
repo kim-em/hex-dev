@@ -53,6 +53,16 @@ def inseparable : FpPoly 2 := FpPoly.ofCoeffs #[w 1, w 0, w 0, w 0, w 1]
 noncomputable def facInsep := factor_poly inseparable
 example : facInsep.factors.length = 4 := rfl
 
+-- Raw Berlekamp leaves are only defined up to a unit scalar: over F_3,
+-- x⁴ + x³ + x produces non-monic gcd leaves, which `fpFactorSearch` must
+-- normalize into monic associates (folding the scalars into the unit).
+instance : ZMod64.Bounds 3 := ⟨by decide, by decide⟩
+def y (n : Nat) : ZMod64 3 := ZMod64.ofNat 3 n
+def rawLeaves : FpPoly 3 := FpPoly.ofCoeffs #[y 0, y 1, y 0, y 1, y 1]
+noncomputable def facRawLeaves := factor_poly rawLeaves
+example : facRawLeaves.factors.length = 3 := rfl
+example : facRawLeaves.scalar = y 1 := rfl
+
 /-! ## `factor_poly`, tactic form -/
 
 example : True := by

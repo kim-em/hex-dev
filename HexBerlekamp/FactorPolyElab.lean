@@ -77,13 +77,18 @@ meta def fpFactorSearch (p : Nat) [Hex.ZMod64.Bounds p]
     (f.coeff 0, [])
   else
     let dec := Hex.FpPoly.squareFreeDecomposition hp f
-    let factors := dec.factors.flatMap fun sf =>
+    let raw := dec.factors.flatMap fun sf =>
       let parts :=
         if hmonic : Hex.DensePoly.leadingCoeff sf.factor = 1 then
           (Hex.Berlekamp.berlekampFactor sf.factor (by exact hmonic)).factors
         else [sf.factor]
       parts.flatMap fun part => List.replicate sf.multiplicity part
-    (dec.unit, factors.mergeSort fun a b => a.size ≤ b.size)
+    -- Berlekamp leaves are raw `gcd` outputs, hence monic only up to a unit
+    -- scalar: normalize each to its monic associate and fold the removed
+    -- scalars into the leading unit.
+    let normalized := raw.map Hex.FpPoly.normalizeMonic
+    (normalized.foldl (fun u cm => u * cm.1) dec.unit,
+      (normalized.map (·.2)).mergeSort fun a b => a.size ≤ b.size)
 
 /-- Deduplicate a factor list by coefficient equality (order-preserving). -/
 meta def dedupFactors {p : Nat} [Hex.ZMod64.Bounds p]
