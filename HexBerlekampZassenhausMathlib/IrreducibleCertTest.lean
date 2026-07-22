@@ -70,13 +70,13 @@ private meta def roundTrips (f : Hex.ZPoly) : MetaM Bool := do
   match Hex.certifyIrreducible? f with
   | none => return false
   | some cert => do
-      let certE := CertReify.reifyCertificate cert
+      let certE := Hex.CertReify.reifyCertificate cert
       Meta.check certE
       let cert' ← IrreducibleCert.evalCertificate certE
-      let fE ← CertReify.reifyZPoly f
+      let fE ← Hex.CertReify.reifyZPoly f
       Meta.check fE
       let f' ← IrreducibleCert.evalZPoly fE
-      return CertReify.certificateData cert == CertReify.certificateData cert'
+      return Hex.CertReify.certificateData cert == Hex.CertReify.certificateData cert'
         && f.toArray == f'.toArray
         && Hex.checkIrreducibleCertLinear f' cert'
 
