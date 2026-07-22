@@ -43,12 +43,13 @@ kernel-decidable assemblers `Hex.FactoredPoly.ofZ` / `irreducible_ofZ` to
 reified literal data with every certification slot discharged by
 `Eq.refl true`. The factorizer never appears in emitted terms.
 
-Balanced factors whose modular factorizations also fall outside the
-per-prime degree-sum obstruction language (e.g. Swinnerton-Dyer polynomials
-or `X⁴+1`) have no certificate in either language; the provider declines
-with a diagnostic pointing at the kernel-decide fallbacks `irreducibility!`
-/ `factor_poly!` (`BangElab.lean`), which certify small such inputs by
-re-running the factorizer in the kernel.
+Balanced factors that are not Eisenstein at any small shift (the free
+layer certifies e.g. `X⁴+1` that way) and whose modular factorizations also
+fall outside the per-prime degree-sum obstruction language (e.g.
+Swinnerton-Dyer polynomials) have no certificate in either language; the
+provider declines with a diagnostic pointing at the kernel-decide fallbacks
+`irreducibility!` / `factor_poly!` (`BangElab.lean`), which certify small
+such inputs by re-running the factorizer in the kernel.
 -/
 
 namespace HexBerlekampZassenhausMathlib.FactorTactic
@@ -232,12 +233,13 @@ meta def parseInput (tactic : String) (e : Expr) :
 meta def coverDecline (tactic : String) (q : Hex.ZPoly) : MetaM MessageData := do
   let qE ← Hex.CertReify.reifyZPoly q
   return m!"{tactic}: the irreducible factor{indentExpr qE}\
-      \nhas no single-prime modular witness, and its balanced modular \
-      factorizations also fall outside the multi-prime per-prime degree-sum \
-      obstruction language (e.g. Swinnerton-Dyer polynomials or X⁴+1); no \
-      certificate-backed proof is available, but the kernel-decide fallbacks \
-      `irreducibility!` / `factor_poly!` can still certify small inputs by \
-      re-running the factorizer in the kernel"
+      \nhas no single-prime modular witness, is not Eisenstein at any small \
+      shift, and its balanced modular factorizations fall outside the \
+      multi-prime per-prime degree-sum obstruction language (e.g. \
+      Swinnerton-Dyer polynomials); no certificate-backed proof is \
+      available, but the kernel-decide fallbacks `irreducibility!` / \
+      `factor_poly!` can still certify small inputs by re-running the \
+      factorizer in the kernel"
 
 /-- Search a mixed certificate cover for a factor list: a free-layer
 `IrredWitness` per distinct factor where one exists, a multi-prime
