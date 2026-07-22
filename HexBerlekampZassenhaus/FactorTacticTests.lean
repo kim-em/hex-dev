@@ -74,6 +74,14 @@ example : ZPoly.checkIrredWitness x2m2 (.eisenstein 2 0) = true := rfl
 theorem x2m2_irred : ZPoly.Irreducible x2m2 :=
   ZPoly.irreducible_of_checkIrredWitness x2m2 (.eisenstein 2 0) rfl
 
+/-- The largest admissible Eisenstein prime (`eisensteinPrimeCap = 128`, so
+prime `127`) still kernel-replays within the default `maxRecDepth`: the
+`isPrimeTrial` reduction is depth-linear in the prime, and stalls a little
+above 150, which is why the search caps its candidates. -/
+def x2m127 : ZPoly := DensePoly.ofCoeffs #[-127, 0, 1]
+
+example : ZPoly.checkIrredWitness x2m127 (.eisenstein 127 0) = true := rfl
+
 /-! ## Balanced inputs: no free-layer certificate, clean decline -/
 
 /-- A product with a Swinnerton-Dyer factor: `(x+1)·(x⁴−10x²+1)`. The
