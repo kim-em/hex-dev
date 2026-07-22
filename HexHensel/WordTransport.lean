@@ -312,5 +312,66 @@ theorem toWP_mul (x y : ZPoly) : toWP ctx (x * y) = toWP ctx x * toWP ctx y := b
     DensePoly.coeff_mul, DensePoly.coeff_mul]
   exact (toNat_eq_intModNat_of_Res ctx (Res_mulCoeffSum ctx x y j)).symm
 
+/-! ### Readback round-trip and monic/degree preservation -/
+
+private theorem one_ne_zero_wordMod (h1 : 1 < m.toNat) : (1 : WordMod ctx) ≠ 0 := by
+  intro h
+  have hh := congrArg WordMod.toNat h
+  rw [WordMod.toNat_one, WordMod.toNat_zero, Nat.mod_eq_of_lt h1] at hh
+  omega
+
+private theorem toWP_ofNat_one (h1 : 1 < m.toNat) :
+    WordMod.ofNat (ctx := ctx) (ZPoly.intModNat 1 m.toNat) = 1 := by
+  rw [intModNat_one ctx.p_pos, Nat.mod_eq_of_lt h1]; rfl
+
+/-- On a polynomial whose coefficients are already canonical in `[0, M)`,
+`ofWP ∘ toWP` is the identity. -/
+theorem ofWP_toWP_of_canonical (z : ZPoly)
+    (hz : ∀ i, 0 ≤ z.coeff i ∧ z.coeff i < (m.toNat : Int)) : ofWP ctx (toWP ctx z) = z := by
+  apply DensePoly.ext_coeff
+  intro j
+  rw [coeff_ofWP, coeff_toWP, WordMod.toNat_ofNat,
+    Nat.mod_eq_of_lt (ZPoly.intModNat_lt' _ ctx.p_pos)]
+  simp only [ZPoly.intModNat, Int.ofNat_eq_natCast]
+  rw [Int.emod_eq_of_lt (hz j).1 (hz j).2, Int.toNat_of_nonneg (hz j).1]
+
+theorem toWP_size_eq_of_monic {z : ZPoly} (hz : DensePoly.Monic z) (hzpos : 0 < z.size)
+    (h1 : 1 < m.toNat) : (toWP ctx z).size = z.size := by
+  refine Nat.le_antisymm (size_toWP_le ctx z) ?_
+  rcases Nat.lt_or_ge (toWP ctx z).size z.size with hlt | hge
+  · exfalso
+    have hcz : (toWP ctx z).coeff (z.size - 1) = 0 :=
+      DensePoly.coeff_eq_zero_of_size_le _ (by omega)
+    rw [coeff_toWP,
+      show z.coeff (z.size - 1) = 1 from by
+        rw [← DensePoly.leadingCoeff_eq_coeff_last z hzpos]; exact hz,
+      toWP_ofNat_one ctx h1] at hcz
+    exact one_ne_zero_wordMod ctx h1 hcz
+  · exact hge
+
+theorem toWP_monic {z : ZPoly} (hz : DensePoly.Monic z) (hzpos : 0 < z.size) (h1 : 1 < m.toNat) :
+    DensePoly.Monic (toWP ctx z) := by
+  show (toWP ctx z).leadingCoeff = 1
+  rw [DensePoly.leadingCoeff_eq_coeff_last _ (by rw [toWP_size_eq_of_monic ctx hz hzpos h1]; exact hzpos),
+    toWP_size_eq_of_monic ctx hz hzpos h1, coeff_toWP,
+    show z.coeff (z.size - 1) = 1 from by
+      rw [← DensePoly.leadingCoeff_eq_coeff_last z hzpos]; exact hz,
+    toWP_ofNat_one ctx h1]
+
+theorem toWP_degree_eq_of_monic {z : ZPoly} (hz : DensePoly.Monic z) (hzpos : 0 < z.size)
+    (h1 : 1 < m.toNat) : (toWP ctx z).degree?.getD 0 = z.degree?.getD 0 := by
+  have hs := toWP_size_eq_of_monic ctx hz hzpos h1
+  rw [DensePoly.degree?_eq_some_of_pos_size _ (by rw [hs]; exact hzpos),
+    DensePoly.degree?_eq_some_of_pos_size z hzpos, Option.getD_some, Option.getD_some, hs]
+
+theorem toWP_degree_le (z : ZPoly) : (toWP ctx z).degree?.getD 0 ≤ z.degree?.getD 0 := by
+  have hs := size_toWP_le ctx z
+  rcases Nat.eq_zero_or_pos (toWP ctx z).size with h0 | h0
+  · rw [DensePoly.degree?, dif_pos h0]; simp
+  · rw [DensePoly.degree?_eq_some_of_pos_size _ h0, Option.getD_some]
+    rcases Nat.eq_zero_or_pos z.size with hz0 | hz0
+    · omega
+    · rw [DensePoly.degree?_eq_some_of_pos_size z hz0, Option.getD_some]; omega
+
 end ZPoly
 end Hex
