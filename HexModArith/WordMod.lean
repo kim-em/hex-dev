@@ -285,6 +285,21 @@ instance : Sub (WordMod ctx) := ⟨sub⟩
 
 instance : Neg (WordMod ctx) := ⟨neg⟩
 
+/-- Iterated product, the natural-power operation. -/
+@[expose]
+def pow (a : WordMod ctx) : Nat → WordMod ctx
+  | 0 => 1
+  | n + 1 => pow a n * a
+
+instance : Pow (WordMod ctx) Nat := ⟨pow⟩
+instance (n : Nat) : OfNat (WordMod ctx) n := ⟨ofNat n⟩
+instance : SMul Nat (WordMod ctx) := ⟨fun n a => (n : WordMod ctx) * a⟩
+instance : IntCast (WordMod ctx) :=
+  ⟨fun i => match i with
+    | .ofNat n => (n : WordMod ctx)
+    | .negSucc n => -((n + 1 : Nat) : WordMod ctx)⟩
+instance : SMul Int (WordMod ctx) := ⟨fun i a => (i : WordMod ctx) * a⟩
+
 @[simp] theorem toNat_add (a b : WordMod ctx) :
     (a + b).toNat = (a.toNat + b.toNat) % m.toNat := by
   have hs_lt : addModWord m a.val b.val < m := by
@@ -325,6 +340,24 @@ instance : Neg (WordMod ctx) := ⟨neg⟩
     (-a).toNat = (m.toNat - a.toNat) % m.toNat := by
   show (0 - a).toNat = (m.toNat - a.toNat) % m.toNat
   rw [toNat_sub, toNat_zero, Nat.zero_add]
+
+@[simp] theorem toNat_pow (a : WordMod ctx) (n : Nat) :
+    (a ^ n).toNat = (a.toNat ^ n) % m.toNat := by
+  change (pow a n).toNat = _
+  induction n with
+  | zero => simp [pow, toNat_one, Nat.pow_zero]
+  | succ k ih =>
+      rw [pow, toNat_mul, ih, Nat.pow_succ, Nat.mod_mul_mod]
+
+@[simp] theorem toNat_nsmul (n : Nat) (a : WordMod ctx) :
+    (n • a).toNat = (n % m.toNat * a.toNat) % m.toNat := by
+  change ((ofNat n : WordMod ctx) * a).toNat = _
+  rw [toNat_mul, toNat_ofNat]
+
+@[simp] theorem toNat_neg_mul (a b : WordMod ctx) :
+    ((-a) * b).toNat = (m.toNat - (a.toNat * b.toNat % m.toNat)) % m.toNat := by
+  rw [toNat_mul, toNat_neg, Nat.mod_mul_mod]
+  exact sub_mul_word_mod m.toNat b.toNat a.toNat ctx.p_pos (Nat.le_of_lt (toNat_lt a))
 
 end WordMod
 

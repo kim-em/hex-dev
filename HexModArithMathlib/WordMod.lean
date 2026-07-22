@@ -100,21 +100,9 @@ theorem toZMod_injective : Function.Injective (toZMod (ctx := ctx)) := by
 
 /-! ### Mathlib `CommRing` structure, transferred along `toZMod`.
 
-`WordMod` already carries `Zero/One/Add/Mul/Neg/Sub/NatCast`; the remaining data
-a `CommRing` needs (`SMul ℕ`, `SMul ℤ`, `Pow ℕ`, `IntCast`) is defined here so
-that each transports to `ZMod` immediately, then `Function.Injective.commRing`
-pulls the ring structure back through the injective `toZMod`. -/
-
-instance : SMul ℕ (Hex.WordMod ctx) := ⟨fun n a => (n : Hex.WordMod ctx) * a⟩
-
-instance : IntCast (Hex.WordMod ctx) :=
-  ⟨fun z => match z with
-    | Int.ofNat n => (n : Hex.WordMod ctx)
-    | Int.negSucc n => -((n + 1 : Nat) : Hex.WordMod ctx)⟩
-
-instance : SMul ℤ (Hex.WordMod ctx) := ⟨fun z a => (z : Hex.WordMod ctx) * a⟩
-
-instance : Pow (Hex.WordMod ctx) ℕ := ⟨fun a n => npowRec n a⟩
+`WordMod` already carries all ring operations in the Mathlib-free base. Each
+operation transports to `ZMod`, then `Function.Injective.commRing` pulls the
+ring structure back through the injective `toZMod`. -/
 
 @[simp] theorem toZMod_natCast (n : Nat) :
     toZMod ((n : Hex.WordMod ctx)) = (n : ZMod m.toNat) := by
@@ -133,11 +121,15 @@ instance : Pow (Hex.WordMod ctx) ℕ := ⟨fun a n => npowRec n a⟩
       rw [toZMod_neg, toZMod_natCast]
       exact (Int.cast_negSucc n).symm
 
-theorem toZMod_npowRec (a : Hex.WordMod ctx) (n : Nat) :
-    toZMod (npowRec n a) = toZMod a ^ n := by
-  induction n with
-  | zero => simp [npowRec, toZMod_one]
-  | succ k ih => rw [npowRec, toZMod_mul, ih, pow_succ]
+theorem toZMod_pow (a : Hex.WordMod ctx) (n : Nat) :
+    toZMod (a ^ n) = toZMod a ^ n := by
+  change (((a ^ n).toNat : Nat) : ZMod m.toNat) =
+    (((a.toNat : Nat) : ZMod m.toNat)) ^ n
+  rw [Hex.WordMod.toNat_pow]
+  calc
+    (((a.toNat ^ n % m.toNat : Nat) : ZMod m.toNat)) =
+        ((a.toNat ^ n : Nat) : ZMod m.toNat) := by rw [ZMod.natCast_mod]
+    _ = (((a.toNat : Nat) : ZMod m.toNat)) ^ n := by rw [Nat.cast_pow]
 
 /-- The executable `WordMod` residue ring is a Mathlib `CommRing`, pulled back
 along the injective `toZMod`. -/
@@ -150,7 +142,7 @@ instance : CommRing (Hex.WordMod ctx) :=
     (fun z x => by
       show toZMod ((z : Hex.WordMod ctx) * x) = z • toZMod x
       rw [toZMod_mul, toZMod_intCast, zsmul_eq_mul])
-    (fun x n => toZMod_npowRec x n)
+    (fun x n => toZMod_pow x n)
     toZMod_natCast toZMod_intCast
 
 /-- `toZMod` packaged as a ring homomorphism. -/

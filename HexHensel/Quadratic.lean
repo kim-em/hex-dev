@@ -7,6 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexHensel.Basic
+public import HexHensel.WordTransport
+public import HexPoly.Euclid.MonicUnique
 
 public section
 
@@ -1850,6 +1852,35 @@ private theorem quadraticHenselStep_factor_error_add_exact
   · rfl
   · rfl
 
+/-- Word-sized quadratic Hensel doubling step over `WordMod` at working modulus
+`m*m`, taken when `m*m` fits an odd machine word, `1 < m*m`, and the divisor `g`
+is monic of positive degree. Byte-identical to `quadraticHenselStepBignum` under
+that guard; declines (`none`) otherwise. -/
+@[expose]
+def quadraticHenselStepWord? (m : Nat) (f g h s t : ZPoly) : Option QuadraticLiftResult :=
+  if _h2 : m * m < UInt64.word then
+    if hodd : (UInt64.ofNat (m * m)) % 2 = 1 then
+      if _h1 : 1 < m * m then
+        if _hm : DensePoly.leadingCoeff g = 1 then
+          if _hd : 0 < g.degree?.getD 0 then
+            let ctx := _root_.MontCtx.mk (UInt64.ofNat (m * m)) hodd
+            let eW := ZPoly.toWP ctx f - ZPoly.toWP ctx g * ZPoly.toWP ctx h
+            let factorQR := DensePoly.divMod (ZPoly.toWP ctx t * eW) (ZPoly.toWP ctx g)
+            let gW' := ZPoly.toWP ctx g + factorQR.2
+            let hW' := ZPoly.toWP ctx h +
+              (ZPoly.toWP ctx s * eW + factorQR.1 * ZPoly.toWP ctx h)
+            let bW := (ZPoly.toWP ctx s * gW' + ZPoly.toWP ctx t * hW') - 1
+            let bezoutQR := DensePoly.divMod (ZPoly.toWP ctx t * bW) gW'
+            let tW' := ZPoly.toWP ctx t - bezoutQR.2
+            let sW' := (ZPoly.toWP ctx s - ZPoly.toWP ctx s * bW) - bezoutQR.1 * hW'
+            some { g := ZPoly.ofWP ctx gW', h := ZPoly.ofWP ctx hW',
+                   s := ZPoly.ofWP ctx sW', t := ZPoly.ofWP ctx tW' }
+          else none
+        else none
+      else none
+    else none
+  else none
+
 /-- One quadratic Hensel correction step from modulus `m` to modulus `m^2`.
 
 Inputs: the target polynomial `f`, the current monic factor `g`, the
@@ -1857,7 +1888,7 @@ complementary factor `h`, and the Bezout witnesses `s`, `t` for the current
 factorisation. Preconditions consumed by the spec theorems below are `g`
 monic, `g * h ≡ f (mod m)`, and `s * g + t * h ≡ 1 (mod m)`; the returned
 `QuadraticLiftResult` then satisfies the same conjuncts modulo `m^2`. -/
-def quadraticHenselStep
+def quadraticHenselStepBignum
     (m : Nat) (f g h s t : ZPoly) : QuadraticLiftResult :=
   let e := QuadraticLiftResult.factorError f g h
   let te := mulModSquare t e m
@@ -1875,6 +1906,11 @@ def quadraticHenselStep
   let t' := subModSquare t rBezout m
   let s' := subModSquare (subModSquare s (mulModSquare s b m) m) (mulModSquare qBezout h' m) m
   { g := g', h := h', s := s', t := t' }
+
+/-- Guarded dispatch: the word-sized step when its guard holds, else the bignum step. -/
+def quadraticHenselStep
+    (m : Nat) (f g h s t : ZPoly) : QuadraticLiftResult :=
+  (quadraticHenselStepWord? m f g h s t).getD (quadraticHenselStepBignum m f g h s t)
 
 set_option maxHeartbeats 2000000 in
 private theorem quadraticHenselStep_raw_factor_congr
@@ -2227,6 +2263,305 @@ private theorem quadraticHenselStep_g_update_monic
     addModSquare_divModMonicModSquare_remainder_monic m te g hm hmonic
   simpa [factorQR, rFactor] using hmono
 
+/-! ### Word transport of the mod-`m²` primitives and the byte-identity proof -/
+
+private theorem QuadraticLiftResult.ext' {r1 r2 : QuadraticLiftResult}
+    (hg : r1.g = r2.g) (hh : r1.h = r2.h) (hs : r1.s = r2.s) (ht : r1.t = r2.t) :
+    r1 = r2 := by
+  cases r1
+  cases r2
+  simp_all
+
+private theorem toWP_reduceModSquare (m : Nat) (ctx : _root_.MontCtx (UInt64.ofNat (m * m)))
+    (hM : (UInt64.ofNat (m * m)).toNat = m * m) (hm0 : 0 < m * m) (x : ZPoly) :
+    ZPoly.toWP ctx (QuadraticLiftResult.reduceModSquare x m) = ZPoly.toWP ctx x := by
+  unfold QuadraticLiftResult.reduceModSquare
+  exact ZPoly.toWP_reduceModPow ctx (by rw [hM, Nat.pow_two])
+    (by rw [Nat.pow_two]; exact hm0) x
+
+private theorem toWP_addModSquare (m : Nat) (ctx : _root_.MontCtx (UInt64.ofNat (m * m)))
+    (hM : (UInt64.ofNat (m * m)).toNat = m * m) (hm0 : 0 < m * m) (a b : ZPoly) :
+    ZPoly.toWP ctx (addModSquare a b m) = ZPoly.toWP ctx a + ZPoly.toWP ctx b := by
+  unfold addModSquare
+  rw [toWP_reduceModSquare m ctx hM hm0, ZPoly.toWP_add]
+
+private theorem toWP_subModSquare (m : Nat) (ctx : _root_.MontCtx (UInt64.ofNat (m * m)))
+    (hM : (UInt64.ofNat (m * m)).toNat = m * m) (hm0 : 0 < m * m) (a b : ZPoly) :
+    ZPoly.toWP ctx (subModSquare a b m) = ZPoly.toWP ctx a - ZPoly.toWP ctx b := by
+  unfold subModSquare
+  rw [toWP_reduceModSquare m ctx hM hm0, ZPoly.toWP_sub]
+
+private theorem toWP_mulModSquare (m : Nat) (ctx : _root_.MontCtx (UInt64.ofNat (m * m)))
+    (hM : (UInt64.ofNat (m * m)).toNat = m * m) (hm0 : 0 < m * m) (a b : ZPoly) :
+    ZPoly.toWP ctx (mulModSquare a b m) = ZPoly.toWP ctx a * ZPoly.toWP ctx b := by
+  unfold mulModSquare
+  rw [toWP_reduceModSquare m ctx hM hm0, ZPoly.toWP_mul]
+
+private theorem reduceModSquare_coeff_lt (m : Nat) (hm0 : 0 < m * m) (x : ZPoly) (i : Nat) :
+    0 ≤ (QuadraticLiftResult.reduceModSquare x m).coeff i ∧
+      (QuadraticLiftResult.reduceModSquare x m).coeff i < (m * m : Int) := by
+  unfold QuadraticLiftResult.reduceModSquare
+  rw [ZPoly.coeff_reduceModPow, Int.ofNat_eq_natCast]
+  refine ⟨Int.natCast_nonneg _, ?_⟩
+  have hlt := ZPoly.intModNat_lt' (x.coeff i) (M := m ^ 2)
+    (by rw [Nat.pow_two]; exact hm0)
+  rw [show (m * m : Int) = ((m ^ 2 : Nat) : Int) from by
+    rw [Nat.pow_two]
+    exact_mod_cast rfl]
+  exact_mod_cast hlt
+
+private theorem ofWP_toWP_reduceModSquare (m : Nat)
+    (ctx : _root_.MontCtx (UInt64.ofNat (m * m)))
+    (hM : (UInt64.ofNat (m * m)).toNat = m * m) (hm0 : 0 < m * m) (x : ZPoly) :
+    ZPoly.ofWP ctx (ZPoly.toWP ctx (QuadraticLiftResult.reduceModSquare x m)) =
+      QuadraticLiftResult.reduceModSquare x m := by
+  apply ZPoly.ofWP_toWP_of_canonical
+  intro i
+  refine ⟨(reduceModSquare_coeff_lt m hm0 x i).1, ?_⟩
+  rw [show ((UInt64.ofNat (m * m)).toNat : Int) = (m * m : Int) from by
+    rw [hM]
+    exact_mod_cast rfl]
+  exact (reduceModSquare_coeff_lt m hm0 x i).2
+
+private theorem ofWP_toWP_addModSquare (m : Nat)
+    (ctx : _root_.MontCtx (UInt64.ofNat (m * m)))
+    (hM : (UInt64.ofNat (m * m)).toNat = m * m) (hm0 : 0 < m * m) (a b : ZPoly) :
+    ZPoly.ofWP ctx (ZPoly.toWP ctx (addModSquare a b m)) = addModSquare a b m := by
+  unfold addModSquare
+  exact ofWP_toWP_reduceModSquare m ctx hM hm0 (a + b)
+
+private theorem ofWP_toWP_subModSquare (m : Nat)
+    (ctx : _root_.MontCtx (UInt64.ofNat (m * m)))
+    (hM : (UInt64.ofNat (m * m)).toNat = m * m) (hm0 : 0 < m * m) (a b : ZPoly) :
+    ZPoly.ofWP ctx (ZPoly.toWP ctx (subModSquare a b m)) = subModSquare a b m := by
+  unfold subModSquare
+  exact ofWP_toWP_reduceModSquare m ctx hM hm0 (a - b)
+
+private theorem one_lt_of_mul (m : Nat) (h1 : 1 < m * m) : 1 < m := by
+  rcases m with _ | _ | k
+  · simp at h1
+  · simp at h1
+  · omega
+
+/-- Transport of the custom monic modular division through `toWP`. -/
+private theorem toWP_divModMonicModSquare (m : Nat)
+    (ctx : _root_.MontCtx (UInt64.ofNat (m * m)))
+    (hM : (UInt64.ofNat (m * m)).toNat = m * m) (hm1 : 1 < m * m)
+    (p q : ZPoly) (hqm : DensePoly.Monic q) (hqd : 0 < q.degree?.getD 0) :
+    DensePoly.divMod (ZPoly.toWP ctx p) (ZPoly.toWP ctx q) =
+      (ZPoly.toWP ctx (divModMonicModSquare p q m).1,
+       ZPoly.toWP ctx (divModMonicModSquare p q m).2) := by
+  have hqpos : 0 < q.size := by
+    rcases Nat.eq_zero_or_pos q.size with h0 | h0
+    · exfalso
+      rw [DensePoly.degree?, dif_pos h0] at hqd
+      simp at hqd
+    · exact h0
+  have hm1' : 1 < (UInt64.ofNat (m * m)).toNat := by
+    rw [hM]
+    exact hm1
+  have hmbase : 1 < m := one_lt_of_mul m hm1
+  have hlc : (ZPoly.toWP ctx q).leadingCoeff = 1 :=
+    ZPoly.toWP_monic ctx hqm hqpos hm1'
+  refine DensePoly.divMod_eq_of_reconstruction (ZPoly.toWP ctx p) (ZPoly.toWP ctx q)
+    (ZPoly.toWP ctx (divModMonicModSquare p q m).1)
+    (ZPoly.toWP ctx (divModMonicModSquare p q m).2) ?_ ?_ ?_ ?_ ?_ ?_
+  · rw [ZPoly.toWP_degree_eq_of_monic ctx hqm hqpos hm1']
+    exact hqd
+  · intro a
+    rw [hlc, WordMod.div_one, Lean.Grind.Semiring.mul_one]
+    exact WordMod.sub_self a
+  · intro a
+    rw [hlc, WordMod.div_one, Lean.Grind.Semiring.mul_one]
+  · intro a ha
+    simpa [hlc, Lean.Grind.Semiring.mul_one] using ha
+  · rw [← ZPoly.toWP_mul, ← ZPoly.toWP_add]
+    exact ZPoly.toWP_congr ctx (by
+      rw [hM]
+      exact divModMonicModSquare_reconstruct_congr m p q _ _ (by omega) rfl)
+  · rw [ZPoly.toWP_degree_eq_of_monic ctx hqm hqpos hm1']
+    have hq2 : 2 ≤ q.size := by
+      have hh := hqd
+      rw [DensePoly.degree?_eq_some_of_pos_size q hqpos, Option.getD_some] at hh
+      omega
+    refine Nat.lt_of_le_of_lt (ZPoly.toWP_degree_le ctx (divModMonicModSquare p q m).2) ?_
+    have hz := divModMonicModSquare_remainder_coeff_eq_zero_of_monic m p q hmbase hqm
+    have hrsize : (divModMonicModSquare p q m).2.size ≤ q.size - 1 := by
+      rcases Nat.lt_or_ge (q.size - 1) (divModMonicModSquare p q m).2.size with hlt | hge
+      · exact absurd (hz _ (by omega))
+          (DensePoly.coeff_last_ne_zero_of_pos_size _ (by omega))
+      · exact hge
+    rcases Nat.eq_zero_or_pos (divModMonicModSquare p q m).2.size with h0 | h0
+    · rw [DensePoly.degree?, dif_pos h0, Option.getD_none,
+        DensePoly.degree?_eq_some_of_pos_size q hqpos, Option.getD_some]
+      omega
+    · rw [DensePoly.degree?_eq_some_of_pos_size _ h0,
+        DensePoly.degree?_eq_some_of_pos_size q hqpos, Option.getD_some, Option.getD_some]
+      omega
+
+set_option maxHeartbeats 1000000 in
+theorem quadraticHenselStepWord?_eq (m : Nat) (f g h s t : ZPoly)
+    (h2 : m * m < UInt64.word) (hodd : (UInt64.ofNat (m * m)) % 2 = 1) (h1 : 1 < m * m)
+    (hmlc : DensePoly.leadingCoeff g = 1) (hd : 0 < g.degree?.getD 0) :
+    quadraticHenselStepWord? m f g h s t = some (quadraticHenselStepBignum m f g h s t) := by
+  have hM : (UInt64.ofNat (m * m)).toNat = m * m := by
+    rw [UInt64.toNat_ofNat_mod_word]
+    exact Nat.mod_eq_of_lt h2
+  have hm0 : 0 < m * m := by omega
+  have hgm : DensePoly.Monic g := hmlc
+  have hgpos : 0 < g.size := by
+    rcases Nat.eq_zero_or_pos g.size with h0 | h0
+    · exfalso
+      rw [DensePoly.degree?, dif_pos h0] at hd
+      simp at hd
+    · exact h0
+  have hg2 : 2 ≤ g.size := by
+    have hh := hd
+    rw [DensePoly.degree?_eq_some_of_pos_size g hgpos, Option.getD_some] at hh
+    omega
+  have hmbase : 1 < m := one_lt_of_mul m h1
+  unfold quadraticHenselStepWord?
+  simp only [dif_pos h2, dif_pos hodd, dif_pos h1, dif_pos hmlc, dif_pos hd]
+  generalize hctx : _root_.MontCtx.mk (UInt64.ofNat (m * m)) hodd = ctx
+  refine congrArg some ?_
+  generalize heW : ZPoly.toWP ctx f - ZPoly.toWP ctx g * ZPoly.toWP ctx h = eW
+  generalize hfqW : DensePoly.divMod (ZPoly.toWP ctx t * eW) (ZPoly.toWP ctx g) = fqW
+  generalize hgWv : ZPoly.toWP ctx g + fqW.2 = gWv
+  generalize hhWv : ZPoly.toWP ctx h +
+    (ZPoly.toWP ctx s * eW + fqW.1 * ZPoly.toWP ctx h) = hWv
+  generalize hbWv : (ZPoly.toWP ctx s * gWv + ZPoly.toWP ctx t * hWv) - 1 = bWv
+  generalize hbqW : DensePoly.divMod (ZPoly.toWP ctx t * bWv) gWv = bqW
+  generalize htWv : ZPoly.toWP ctx t - bqW.2 = tWv
+  generalize hsWv :
+    (ZPoly.toWP ctx s - ZPoly.toWP ctx s * bWv) - bqW.1 * hWv = sWv
+  obtain ⟨e, he⟩ : ∃ e, e = QuadraticLiftResult.factorError f g h := ⟨_, rfl⟩
+  obtain ⟨fq, hfq⟩ : ∃ fq, fq = divModMonicModSquare (mulModSquare t e m) g m := ⟨_, rfl⟩
+  obtain ⟨g', hg'⟩ : ∃ g', g' = addModSquare g fq.2 m := ⟨_, rfl⟩
+  obtain ⟨hCorr, hhc⟩ : ∃ hCorr,
+      hCorr = addModSquare (mulModSquare s e m) (mulModSquare fq.1 h m) m := ⟨_, rfl⟩
+  obtain ⟨h', hh'⟩ : ∃ h', h' = addModSquare h hCorr m := ⟨_, rfl⟩
+  obtain ⟨b, hb⟩ : ∃ b,
+      b = subModSquare (addModSquare (mulModSquare s g' m) (mulModSquare t h' m) m) 1 m :=
+    ⟨_, rfl⟩
+  obtain ⟨bq, hbq⟩ : ∃ bq, bq = divModMonicModSquare (mulModSquare t b m) g' m := ⟨_, rfl⟩
+  have hEwe : eW = ZPoly.toWP ctx e := by
+    rw [← heW, he]
+    unfold QuadraticLiftResult.factorError
+    rw [ZPoly.toWP_sub, ZPoly.toWP_mul]
+  have hFqe : fqW = (ZPoly.toWP ctx fq.1, ZPoly.toWP ctx fq.2) := by
+    rw [← hfqW, hEwe, ← toWP_mulModSquare m ctx hM hm0, hfq]
+    exact toWP_divModMonicModSquare m ctx hM h1 _ g hgm hd
+  have hg'monic0 : DensePoly.Monic (addModSquare g fq.2 m) := by
+    rw [hfq]
+    exact addModSquare_divModMonicModSquare_remainder_monic m _ g hmbase hgm
+  have hg'monic : DensePoly.Monic g' :=
+    (congrArg DensePoly.Monic hg').mpr hg'monic0
+  have hg'coeff : g'.coeff (g.size - 1) = 1 := by
+    rw [hg']
+    unfold addModSquare QuadraticLiftResult.reduceModSquare
+    rw [ZPoly.coeff_reduceModPow, DensePoly.coeff_add _ _ _ (by rfl),
+      show g.coeff (g.size - 1) = 1 from by
+        rw [← DensePoly.leadingCoeff_eq_coeff_last g hgpos]
+        exact hgm,
+      show fq.2.coeff (g.size - 1) = 0 from
+        by
+          rw [hfq]
+          exact divModMonicModSquare_remainder_coeff_eq_zero_of_monic m _ g hmbase hgm
+            (g.size - 1) (Nat.le_refl _),
+      show (1 : Int) + 0 = 1 from by omega,
+      ZPoly.intModNat_one (show 0 < m ^ 2 from by rw [Nat.pow_two]; exact hm0),
+      Nat.mod_eq_of_lt (show 1 < m ^ 2 from by rw [Nat.pow_two]; exact h1)]
+    rfl
+  have hg'deg : 0 < g'.degree?.getD 0 := by
+    have hg'size : g.size ≤ g'.size := by
+      rcases Nat.lt_or_ge g'.size g.size with hlt | hge
+      · exact absurd hg'coeff (by
+          rw [DensePoly.coeff_eq_zero_of_size_le _ (by omega)]
+          exact Int.zero_ne_one)
+      · exact hge
+    rw [DensePoly.degree?_eq_some_of_pos_size _ (by omega), Option.getD_some]
+    omega
+  have hGwe : gWv = ZPoly.toWP ctx g' := by
+    rw [← hgWv, hFqe, hg', toWP_addModSquare m ctx hM hm0]
+  have hHwe : hWv = ZPoly.toWP ctx h' := by
+    rw [← hhWv, hEwe, hFqe, hh', toWP_addModSquare m ctx hM hm0, hhc,
+      toWP_addModSquare m ctx hM hm0, toWP_mulModSquare m ctx hM hm0,
+      toWP_mulModSquare m ctx hM hm0]
+  have hBwe : bWv = ZPoly.toWP ctx b := by
+    rw [← hbWv, hGwe, hHwe, hb, toWP_subModSquare m ctx hM hm0,
+      toWP_addModSquare m ctx hM hm0, toWP_mulModSquare m ctx hM hm0,
+      toWP_mulModSquare m ctx hM hm0, ZPoly.toWP_one]
+  have hBqe : bqW = (ZPoly.toWP ctx bq.1, ZPoly.toWP ctx bq.2) := by
+    rw [← hbqW, hBwe, hGwe, ← toWP_mulModSquare m ctx hM hm0, hbq]
+    exact toWP_divModMonicModSquare m ctx hM h1 _ g' hg'monic hg'deg
+  have hTwe : tWv = ZPoly.toWP ctx (subModSquare t bq.2 m) := by
+    rw [← htWv, hBqe, toWP_subModSquare m ctx hM hm0]
+  have hSwe : sWv = ZPoly.toWP ctx
+      (subModSquare (subModSquare s (mulModSquare s b m) m)
+        (mulModSquare bq.1 h' m) m) := by
+    rw [← hsWv, hBwe, hBqe, hHwe, toWP_subModSquare m ctx hM hm0,
+      toWP_subModSquare m ctx hM hm0, toWP_mulModSquare m ctx hM hm0,
+      toWP_mulModSquare m ctx hM hm0]
+  rw [hGwe, hHwe, hTwe, hSwe]
+  refine QuadraticLiftResult.ext' ?_ ?_ ?_ ?_
+  · calc
+      ZPoly.ofWP ctx (ZPoly.toWP ctx g') = g' := by
+        rw [hg']
+        exact ofWP_toWP_addModSquare m ctx hM hm0 g fq.2
+      _ = (quadraticHenselStepBignum m f g h s t).g := by
+        unfold quadraticHenselStepBignum
+        rw [hg', hfq, he]
+  · calc
+      ZPoly.ofWP ctx (ZPoly.toWP ctx h') = h' := by
+        rw [hh']
+        exact ofWP_toWP_addModSquare m ctx hM hm0 h hCorr
+      _ = (quadraticHenselStepBignum m f g h s t).h := by
+        unfold quadraticHenselStepBignum
+        rw [hh', hhc, hfq, he]
+  · calc
+      ZPoly.ofWP ctx (ZPoly.toWP ctx
+          (subModSquare (subModSquare s (mulModSquare s b m) m)
+            (mulModSquare bq.1 h' m) m)) =
+          subModSquare (subModSquare s (mulModSquare s b m) m)
+            (mulModSquare bq.1 h' m) m :=
+        ofWP_toWP_subModSquare m ctx hM hm0 _ _
+      _ = (quadraticHenselStepBignum m f g h s t).s := by
+        unfold quadraticHenselStepBignum
+        rw [hbq, hb, hh', hhc, hg', hfq, he]
+  · calc
+      ZPoly.ofWP ctx (ZPoly.toWP ctx (subModSquare t bq.2 m)) =
+          subModSquare t bq.2 m := ofWP_toWP_subModSquare m ctx hM hm0 t bq.2
+      _ = (quadraticHenselStepBignum m f g h s t).t := by
+        unfold quadraticHenselStepBignum
+        rw [hbq, hb, hh', hhc, hg', hfq, he]
+
+theorem quadraticHenselStep_eq_bignum
+    (m : Nat) (f g h s t : ZPoly) :
+    quadraticHenselStep m f g h s t = quadraticHenselStepBignum m f g h s t := by
+  unfold quadraticHenselStep
+  by_cases hguard : (m * m < UInt64.word) ∧ ((UInt64.ofNat (m * m)) % 2 = 1) ∧
+      (1 < m * m) ∧ (DensePoly.leadingCoeff g = 1) ∧ (0 < g.degree?.getD 0)
+  · obtain ⟨h2, hodd, h1, hmlc, hd⟩ := hguard
+    rw [quadraticHenselStepWord?_eq m f g h s t h2 hodd h1 hmlc hd, Option.getD_some]
+  · have hnone : quadraticHenselStepWord? m f g h s t = none := by
+      unfold quadraticHenselStepWord?
+      by_cases a : m * m < UInt64.word
+      · rw [dif_pos a]
+        by_cases b : (UInt64.ofNat (m * m)) % 2 = 1
+        · rw [dif_pos b]
+          by_cases c : 1 < m * m
+          · rw [dif_pos c]
+            by_cases d : DensePoly.leadingCoeff g = 1
+            · rw [dif_pos d]
+              by_cases e : 0 < g.degree?.getD 0
+              · exact absurd ⟨a, b, c, d, e⟩ hguard
+              · rw [dif_neg e]
+            · rw [dif_neg d]
+          · rw [dif_neg c]
+        · rw [dif_neg b]
+      · rw [dif_neg a]
+    rw [hnone, Option.getD_none]
+
 /-- The updated factors multiply to `f` modulo `m^2`. -/
 @[grind =>]
 theorem quadraticHenselStep_factor_spec
@@ -2238,7 +2573,8 @@ theorem quadraticHenselStep_factor_spec
     (hmonic : DensePoly.Monic g) :
     let r := quadraticHenselStep m f g h s t
     ZPoly.congr (r.g * r.h) f (m * m) := by
-  unfold quadraticHenselStep
+  rw [quadraticHenselStep_eq_bignum]
+  unfold quadraticHenselStepBignum
   exact quadraticHenselStep_raw_factor_congr m f g h s t hm hprod hbez hmonic
 
 /-- The updated Bezout witnesses certify coprimality modulo `m^2`. -/
@@ -2252,7 +2588,8 @@ theorem quadraticHenselStep_bezout_spec
     (hmonic : DensePoly.Monic g) :
     let r := quadraticHenselStep m f g h s t
     ZPoly.congr (r.s * r.g + r.t * r.h) 1 (m * m) := by
-  unfold quadraticHenselStep
+  rw [quadraticHenselStep_eq_bignum]
+  unfold quadraticHenselStepBignum
   exact quadraticHenselStep_raw_bezout_congr m f g h s t hm hprod hbez hmonic
 
 /-- The quadratic step lifts both factor and Bezout congruences to modulus `m^2`. -/
@@ -2280,7 +2617,8 @@ theorem quadraticHenselStep_monic
     (hm : 1 < m)
     (hmonic : DensePoly.Monic g) :
     DensePoly.Monic (quadraticHenselStep m f g h s t).g := by
-  unfold quadraticHenselStep
+  rw [quadraticHenselStep_eq_bignum]
+  unfold quadraticHenselStepBignum
   exact quadraticHenselStep_g_update_monic m f g h s t hm hmonic
 
 /--
@@ -2297,7 +2635,8 @@ theorem quadraticHenselStep_factor_congr_mod_base
     (hprod : ZPoly.congr (g * h) f m) :
     ZPoly.congr (quadraticHenselStep m f g h s t).g g m ∧
       ZPoly.congr (quadraticHenselStep m f g h s t).h h m := by
-  unfold quadraticHenselStep
+  rw [quadraticHenselStep_eq_bignum]
+  unfold quadraticHenselStepBignum
   have hm0 : 0 < m := Nat.lt_trans Nat.zero_lt_one hm
   let e := QuadraticLiftResult.factorError f g h
   let te := mulModSquare t e m
