@@ -21,6 +21,7 @@ public import HexBerlekamp.Irreducibility
 public import HexHensel.Multifactor
 public import HexHensel.QuadraticMultifactor
 public import HexLLL.Basic
+public import HexBerlekampZassenhaus.WordCld
 -- Needed so `decide`/`rfl` over `DensePoly`/`Array` equality reduces in the
 -- kernel: the core `Array.instDecidableEq` delegates its nonempty case to the
 -- non-`@[expose]` `Array.instDecidableEqImpl`, which is otherwise opaque under
@@ -340,6 +341,15 @@ def psiCut (p a b : Nat) (x : Int) : Int :=
     let xCentered := centeredResiduePow p a x
     (xCentered - centeredResiduePow p b xCentered) / Int.ofNat modulus
 
+/-- Bignum reference for `cldQuotientMod`: reduce `f * g' / g` modulo `p^a`
+using `Int` polynomial arithmetic. This is the specification the word-sized
+fast path is proven byte-identical to (`cldQuotientMod_eq_spec`). -/
+@[expose]
+def cldQuotientModBignum (f g : ZPoly) (p a : Nat) : ZPoly :=
+  let numerator := ZPoly.reduceModPow (f * DensePoly.derivative g) p a
+  let quotient := (DensePoly.divMod numerator g).1
+  ZPoly.reduceModPow quotient p a
+
 /--
 Mod-`p^a` representative of `f * g.derivative / g`, the polynomial whose
 `x^j` coefficient is the integer CLD coefficient `[x^j] Phi(g)` reduced
@@ -351,9 +361,18 @@ coefficient.
 -/
 @[expose]
 def cldQuotientMod (f g : ZPoly) (p a : Nat) : ZPoly :=
-  let numerator := ZPoly.reduceModPow (f * DensePoly.derivative g) p a
-  let quotient := (DensePoly.divMod numerator g).1
-  ZPoly.reduceModPow quotient p a
+  -- Word-sized fast path: when `p^a` fits an odd machine word and `g` is a monic
+  -- divisor of positive degree, `cldQuotientModWord?` computes the identical
+  -- quotient over `WordMod` (single-reduction Montgomery). The byte-identical
+  -- correspondence is `cldQuotientModWord?_eq`; `cldQuotientMod_eq_spec` proves
+  -- this dispatch equals `cldQuotientModBignum` for every input.
+  match powLtWord? p a with
+  | some m =>
+      if (UInt64.ofNat m) % 2 = 1 ∧ 1 < m ∧
+          g.leadingCoeff = 1 ∧ 0 < g.degree?.getD 0 then
+        (cldQuotientModWord? f g p a).getD (cldQuotientModBignum f g p a)
+      else cldQuotientModBignum f g p a
+  | none => cldQuotientModBignum f g p a
 
 /--
 Centred high-bit CLD coefficients for one lifted local factor.

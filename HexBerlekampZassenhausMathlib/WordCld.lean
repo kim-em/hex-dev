@@ -16,7 +16,7 @@ public section
 
 /-!
 Byte-identical correspondence for the word-sized CLD kernel (issue #8691,
-Phase 2): `cldQuotientModWord? f g p a = some (cldQuotientMod f g p a)` for a
+Phase 2): `cldQuotientModWord? f g p a = some (cldQuotientModBignum f g p a)` for a
 monic `g` whenever the guard `Odd (p^a) ∧ p^a < 2^64` holds.
 
 The proof transports both quotients' Euclidean reconstructions
@@ -255,7 +255,7 @@ theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)
     (hg : Hex.DensePoly.Monic g) (hgdeg : 0 < g.degree?.getD 0)
     {mval : Nat} (hpow : Hex.powLtWord? p a = some mval)
     (hodd : (UInt64.ofNat mval) % 2 = 1) (hm1 : 1 < mval) :
-    Hex.cldQuotientModWord? f g p a = some (cldQuotientMod f g p a) := by
+    Hex.cldQuotientModWord? f g p a = some (cldQuotientModBignum f g p a) := by
   obtain ⟨hmeq, hmlt⟩ := powLtWord?_eq hpow
   have hmtoNat : (UInt64.ofNat mval).toNat = mval := by
     rw [UInt64.toNat_ofNat_mod_word]; exact Nat.mod_eq_of_lt hmlt
@@ -289,9 +289,9 @@ theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)
     have hlt : (qW.coeff i).toNat < mval := by
       have := (qW.coeff i).toNat_lt; rwa [hmtoNat] at this
     exact ⟨Int.natCast_nonneg _, by exact_mod_cast hlt⟩
-  · -- cldQuotientMod: coeffs in [0, mval)
+  · -- cldQuotientModBignum: coeffs in [0, mval)
     intro i
-    unfold cldQuotientMod
+    unfold cldQuotientModBignum
     rw [ZPoly.coeff_reduceModPow, hmtoNat, hmeq, Int.ofNat_eq_natCast]
     exact ⟨Int.natCast_nonneg _, by exact_mod_cast intModNat_lt _ (p ^ a) (by omega)⟩
   · -- the cast equality: both quotients are `numerator /ₘ divisor` in `ZMod (p^a)[X]`
@@ -349,10 +349,10 @@ theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)
         c - c / (toWMap ctx g).leadingCoeff * (toWMap ctx g).leadingCoeff = 0 := by
       intro c; rw [Hex.DensePoly.leadingCoeff_eq_one_of_monic hgWm]; simp
     -- Int-side monic division in the image
-    have hCM : cZ (UInt64.ofNat mval) (cldQuotientMod f g p a)
+    have hCM : cZ (UInt64.ofNat mval) (cldQuotientModBignum f g p a)
         = cZ (UInt64.ofNat mval) (ZPoly.reduceModPow (f * Hex.DensePoly.derivative g) p a)
             /ₘ cZ (UInt64.ofNat mval) g := by
-      unfold cldQuotientMod
+      unfold cldQuotientModBignum
       rw [cZ_reduceModPow hpapos hmpa]
       exact map_divMod_monic (Int.castRingHom (ZMod (UInt64.ofNat mval).toNat)) _ g hcancelZ
         (by rw [cZ] at hcZgm; exact hcZgm)
@@ -403,5 +403,20 @@ theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)
       rw [hc, Int.ofNat_eq_natCast, Int.cast_natCast]
       rfl
     rw [hWO, hqWeq, hnum, hgdiv, hCM]
+
+/-- The word-sized dispatch in `cldQuotientMod` agrees with the bignum reference
+`cldQuotientModBignum` for every input: the guard exactly matches the hypotheses
+of `cldQuotientModWord?_eq`, so on the fast path the word quotient is byte-identical
+and `Option.getD` returns it; off the fast path the bignum branch is taken. -/
+theorem cldQuotientMod_eq_spec (f g : Hex.ZPoly) (p a : Nat) :
+    Hex.cldQuotientMod f g p a = Hex.cldQuotientModBignum f g p a := by
+  unfold Hex.cldQuotientMod
+  split
+  · rename_i m hpow
+    split_ifs with h
+    · obtain ⟨hodd, hm1, hlead, hdeg⟩ := h
+      rw [cldQuotientModWord?_eq f g p a hlead hdeg hpow hodd hm1, Option.getD_some]
+    · rfl
+  · rfl
 
 end HexBerlekampZassenhausMathlib

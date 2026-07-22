@@ -8,6 +8,7 @@ module
 
 public import HexBerlekampZassenhaus
 public import HexBerlekampZassenhausMathlib.Lattice
+public import HexBerlekampZassenhausMathlib.WordCld
 public import HexHenselMathlib.Correctness
 public import HexPolyZMathlib.Mignotte
 public import HexPolyZMathlib.RobinsonForm
@@ -419,7 +420,8 @@ theorem cldQuotientMod_congr_mul_derivative
     Hex.ZPoly.reduceModPow (input * Hex.DensePoly.derivative g) p k with hnum
   set q : Hex.ZPoly := (Hex.DensePoly.divMod num g).1 with hq
   set r : Hex.ZPoly := (Hex.DensePoly.divMod num g).2 with hr
-  have hcld : Hex.cldQuotientMod input g p k = Hex.ZPoly.reduceModPow q p k := rfl
+  have hcld : Hex.cldQuotientMod input g p k = Hex.ZPoly.reduceModPow q p k :=
+    (HexBerlekampZassenhausMathlib.cldQuotientMod_eq_spec input g p k).trans rfl
   have hrecon : q * g + r = num :=
     Hex.ZPoly.divMod_reconstruction_of_monic num g hg_monic
   have hcancel :
