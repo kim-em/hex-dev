@@ -22,6 +22,22 @@ definitions (e.g. `DensePoly R ≃+* Polynomial R`, `ZMod64 p ≃+* ZMod p`,
 Mathlib's abstract algebra without imposing Mathlib as a dependency on the
 computational code.
 
+The user surface of the factoring pipeline is the `factor_poly` /
+`irreducibility` elaborator family (term, tactic, and goal forms). The base
+drivers live in hex-berlekamp, handling `FpPoly p` natively; other input
+types dispatch to providers registered by well-known name from
+hex-berlekamp-zassenhaus (`Hex.ZPoly`) and the two Mathlib bridge layers
+(`Polynomial (ZMod p)`, `Polynomial ℤ`). The trust model is uniform across
+providers: the compiled factorizer runs as untrusted search at elaboration
+time, emitted terms carry only kernel checks on reified literal data, and
+the factorizer never runs in the kernel. Coverage is complete for
+`FpPoly p`. For integer polynomials, the computational layer certifies
+irreducibility by prime-constant, primitive-linear, single-prime modular,
+and Eisenstein-after-shift witnesses; the Mathlib layer adds multi-prime
+degree-obstruction certificates; Swinnerton-Dyer-class inputs remain
+uncovered, and the tactics decline them with a diagnostic rather than
+weakening the emitted statement.
+
 The library DAG has three independent roots — polynomial arithmetic, integer
 arithmetic, and matrix operations — meeting at the top in
 Berlekamp-Zassenhaus. This structure allows parallel development: LLL has no
@@ -69,7 +85,8 @@ SPEC names the checker soundness theorem and the provider contract.
 
 **Cryptographic field construction:** To build `GF(2^128)` for AES, you
 need an irreducible polynomial of degree 128 over `F_2`. With
-hex-berlekamp, produce a Lean proof that it's irreducible.
+hex-berlekamp's `irreducibility` tactic, produce a Lean proof that it's
+irreducible.
 
 **Coding theory:** Reed-Solomon and BCH codes need irreducible polynomials
 over finite fields. Verified factoring provides certified generator
