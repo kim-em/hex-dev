@@ -186,3 +186,32 @@ assembled from (1)+(4)):
 - Computational bridge: `rabinTest f = true` unfolds to the exact
   divisibility check `f | X^(p^n) - X` plus coprimality of
   `f` with `X^(p^(n/q)) - X` for each prime `q | n`
+
+## The `Polynomial (ZMod q)` provider for `factor_poly` / `irreducibility`
+
+`HexBerlekampMathlib/FactorProvider.lean` declares
+`HexBerlekampMathlib.FactorTactic.provider` (probed by name from
+`Hex.FactorTactic.providerNames`; renaming it severs the hook), extending
+the `factor_poly`/`irreducibility` elaborators to `Polynomial (ZMod q)`
+inputs with a literal prime modulus `q < 2^31`. Composite or oversized
+moduli are declined with a diagnostic; other types are not applicable.
+
+The provider's core is a parser-with-proof: a meta recursion over the
+input expression (`X`, `Polynomial.C`, numerals, `+`, `-`, `*`, negation,
+`^` with `Nat` literal exponents, named defs unfolded under a fuel guard)
+that evaluates each node to an executable `Hex.FpPoly q` and combines
+per-node proofs through the named `toMathlibPolynomial_*` transport
+lemmas, producing `toMathlibPolynomial fLit = P` for the reified literal
+`fLit`. Scalar coefficient equalities are certified by `decide` on
+`ZMod64.toZMod` values (checked to reduce at elaboration time before
+emission).
+
+The factor search reuses the `FpPoly` pipeline
+(`Hex.FactorTactic.fpFactorSearch` / `fpCoverEntries`) as untrusted
+search. Emitted terms apply the kernel-decidable assemblers in
+`HexBerlekampMathlib/FactorPoly.lean` — `Hex.FactoredPoly.ofFp` (result
+type `Hex.FactoredPoly P`, the `Polynomial`-level counterpart of
+`FpPoly.Factored`) and `HexBerlekampMathlib.irreducible_ofFp` — whose
+certification slots are all Boolean checks on reified literals discharged
+by `Eq.refl true`/`Eq.refl false`; the factorizer and certificate
+generator never appear in emitted terms.
