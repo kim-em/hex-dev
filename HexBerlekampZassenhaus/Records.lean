@@ -300,9 +300,11 @@ def normalizeForFactor (f : ZPoly) : FactorNormalizationData :=
     repeatedPart := sqData.repeatedPart }
 
 set_option maxRecDepth 4000 in
-/-- Certified prime for the modular square-free fast path.  `499` exceeds every
-practical input degree, so a distinct-root input reduces square-free at this
-prime in a single probe. -/
+/-- Certified probe prime for the modular square-free fast path.  `499` is a
+cheap fixed choice: it is large enough that a distinct-root input rarely reduces
+non-square-free at it, but it carries no guarantee (a rationally square-free
+input whose discriminant is divisible by `499` reduces non-square-free and simply
+takes the exact fallback -- never a wrong answer). -/
 theorem prime_499 : Hex.Nat.Prime 499 :=
   Hex.Nat.isPrimeTrial_isPrime (by decide)
 
