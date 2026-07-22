@@ -448,6 +448,46 @@ is forced (via `size_eq_of_coeff_eq`). -/
   intro i _hi
   exact hcoeff i
 
+/-- Coefficient-level Boolean equality of two dense polynomials: equal stored
+sizes and equal coefficients at every stored index. Because `DensePoly` is
+normalized (no trailing zeros), this decides genuine equality, and unlike the
+structural `DecidableEq (DensePoly R)` — which delegates to the core
+`Array.instDecidableEqImpl` and does not kernel-reduce under the module system
+(see `progress/lean4-array-decidableeq-module-repro.md`) — it is a plain
+`Bool` fold that reduces on literal data under plain `public import`. -/
+@[expose]
+def beqCoeffs (a b : DensePoly R) : Bool :=
+  a.size == b.size && (List.range a.size).all fun i => decide (a.coeff i = b.coeff i)
+
+/-- `beqCoeffs` is sound: a `true` result forces genuine polynomial equality. -/
+theorem eq_of_beqCoeffs {a b : DensePoly R} (h : beqCoeffs a b = true) : a = b := by
+  unfold beqCoeffs at h
+  rw [Bool.and_eq_true] at h
+  obtain ⟨hsize, hall⟩ := h
+  have hsz : a.size = b.size := eq_of_beq hsize
+  apply ext_coeff
+  intro i
+  by_cases hi : i < a.size
+  · exact of_decide_eq_true ((List.all_eq_true.mp hall) i (List.mem_range.mpr hi))
+  · have ha : a.coeff i = 0 := coeff_eq_zero_of_size_le a (Nat.le_of_not_lt hi)
+    have hb : b.coeff i = 0 := coeff_eq_zero_of_size_le b (by omega)
+    rw [ha, hb]
+
+/-- `beqCoeffs` decides equality: the checker returns `true` exactly on equal
+polynomials. -/
+theorem beqCoeffs_iff_eq {a b : DensePoly R} : beqCoeffs a b = true ↔ a = b := by
+  constructor
+  · exact eq_of_beqCoeffs
+  · intro h
+    subst h
+    unfold beqCoeffs
+    rw [Bool.and_eq_true]
+    constructor
+    · exact beq_self_eq_true a.size
+    · rw [List.all_eq_true]
+      intro i _
+      exact decide_eq_true rfl
+
 /-- The largest exponent with a stored coefficient, or `none` for the zero polynomial. -/
 @[expose]
 def degree? (p : DensePoly R) : Option Nat :=

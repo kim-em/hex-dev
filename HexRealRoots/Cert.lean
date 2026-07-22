@@ -39,30 +39,17 @@ namespace Hex
 
 namespace ZPoly
 
-/-- Coefficient-level Boolean equality of two integer polynomials: equal stored
-sizes and equal coefficients at every stored index. Because `ZPoly` is
-normalized (no trailing zeros), this decides genuine equality, and unlike the
-structural `DecidableEq (DensePoly Int)` — which delegates to the core
-`Array.instDecidableEqImpl` and does not kernel-reduce under the module system —
-it is a plain `Bool` fold that reduces. -/
+/-- Coefficient-level Boolean equality for `ZPoly`: the generic
+`DensePoly.beqCoeffs` at `R = Int`. Kept as an `abbrev` so the Sturm-chain
+checkers below read at the `ZPoly` level; see `DensePoly.beqCoeffs` for why
+this is used instead of the structural `DecidableEq`. -/
 @[expose]
-def beqCoeffs (a b : ZPoly) : Bool :=
-  a.size == b.size && (List.range a.size).all (fun i => a.coeff i == b.coeff i)
+abbrev beqCoeffs (a b : ZPoly) : Bool :=
+  DensePoly.beqCoeffs a b
 
 /-- `beqCoeffs` is sound: a `true` result forces genuine polynomial equality. -/
-theorem eq_of_beqCoeffs {a b : ZPoly} (h : beqCoeffs a b = true) : a = b := by
-  unfold beqCoeffs at h
-  rw [Bool.and_eq_true] at h
-  obtain ⟨hsize, hall⟩ := h
-  have hsz : a.size = b.size := eq_of_beq hsize
-  apply DensePoly.ext_coeff
-  intro i
-  by_cases hi : i < a.size
-  · have hi' := (List.all_eq_true.mp hall) i (List.mem_range.mpr hi)
-    exact eq_of_beq hi'
-  · have ha : a.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le a (Nat.le_of_not_lt hi)
-    have hb : b.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le b (by omega)
-    rw [ha, hb]
+theorem eq_of_beqCoeffs {a b : ZPoly} (h : beqCoeffs a b = true) : a = b :=
+  DensePoly.eq_of_beqCoeffs h
 
 /-- The tail validator for `SturmChainCert`: given the two most recent chain
 elements `prev`, `cur`, check that `rest` continues the Sturm chain exactly as
