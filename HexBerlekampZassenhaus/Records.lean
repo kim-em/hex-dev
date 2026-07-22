@@ -28,6 +28,7 @@ public import HexLLL.Basic
 import all Init.Data.Array.DecidableEq
 
 public import HexBerlekampZassenhaus.PrimeSelection
+public import HexBerlekampZassenhaus.SquareFreeModularCert
 public meta import HexBerlekampZassenhaus.PrimeSelection
 import all HexBerlekampZassenhaus.PrimeSelection
 
@@ -297,6 +298,77 @@ def normalizeForFactor (f : ZPoly) : FactorNormalizationData :=
     xFreePrimitive := xData.core
     squareFreeCore := sqData.squareFreeCore
     repeatedPart := sqData.repeatedPart }
+
+set_option maxRecDepth 4000 in
+/-- Certified probe prime for the modular square-free fast path.  `499` is a
+cheap fixed choice: it is large enough that a distinct-root input rarely reduces
+non-square-free at it, but it carries no guarantee (a rationally square-free
+input whose discriminant is divisible by `499` reduces non-square-free and simply
+takes the exact fallback -- never a wrong answer). -/
+theorem prime_499 : Hex.Nat.Prime 499 :=
+  Hex.Nat.isPrimeTrial_isPrime (by decide)
+
+instance bounds_499 : ZMod64.Bounds 499 := ⟨by decide, by decide⟩
+
+/-- Boolean guard for the modular square-free fast path: the primitive `x`-free
+core is nonzero, admissible at the probe prime, and separable over `𝔽_p`. -/
+@[expose]
+def modularSquareFreeFires (f : ZPoly) : Bool :=
+  let q := ZPoly.primitivePart (ZPoly.extractXPower (ZPoly.primitivePart f)).core
+  !q.isZero && (ZPoly.leadingCoeffModP q 499 != 0) && ZPoly.separableModP q 499
+
+/-- Fast implementation of `normalizeForFactor`: a machine-word `𝔽_p`
+square-freeness probe on the primitive `x`-free core.  When it fires (the input
+is square-free over `ℚ`) the decomposition is trivial; otherwise it falls back to
+the exact rational computation, inlined rather than a self-call so the `@[csimp]`
+rewrite below does not make the fallback recurse.  Proven equal to
+`normalizeForFactor`. -/
+@[expose]
+def normalizeForFactorFast (f : ZPoly) : FactorNormalizationData :=
+  let primitive := ZPoly.primitivePart f
+  let xData := ZPoly.extractXPower primitive
+  if modularSquareFreeFires f then
+    { content := ZPoly.content f
+      primitive
+      xPower := xData.power
+      xFreePrimitive := xData.core
+      squareFreeCore := ZPoly.normalizePrimitiveSign (ZPoly.primitivePart xData.core)
+      repeatedPart := 1 }
+  else
+    let sqData := ZPoly.primitiveSquareFreeDecomposition xData.core
+    { content := ZPoly.content f
+      primitive
+      xPower := xData.power
+      xFreePrimitive := xData.core
+      squareFreeCore := sqData.squareFreeCore
+      repeatedPart := sqData.repeatedPart }
+
+@[csimp]
+theorem normalizeForFactor_eq_normalizeForFactorFast :
+    normalizeForFactor = normalizeForFactorFast := by
+  funext f
+  simp only [normalizeForFactor, normalizeForFactorFast]
+  by_cases hcond : modularSquareFreeFires f = true
+  · rw [if_pos hcond]
+    simp only [modularSquareFreeFires, Bool.and_eq_true, Bool.not_eq_true', bne_iff_ne] at hcond
+    obtain ⟨⟨hq_isZero, hadm⟩, hsep⟩ := hcond
+    have hq_ne : ZPoly.primitivePart (ZPoly.extractXPower (ZPoly.primitivePart f)).core ≠ 0 := by
+      intro h
+      have hpos := (DensePoly.isZero_eq_false_iff _).1 hq_isZero
+      rw [h, DensePoly.size_zero] at hpos
+      omega
+    have hcore_ne : (ZPoly.extractXPower (ZPoly.primitivePart f)).core ≠ 0 := by
+      intro h
+      apply hq_ne
+      change ZPoly.primitivePart (ZPoly.extractXPower (ZPoly.primitivePart f)).core = 0
+      rw [h]
+      exact DensePoly.primitivePart_eq_zero_of_content_eq_zero 0 DensePoly.content_zero
+    have hsq : ZPoly.SquareFreeRat
+        (ZPoly.primitivePart (ZPoly.extractXPower (ZPoly.primitivePart f)).core) :=
+      ZPoly.squareFreeRat_of_separableModP _ 499 prime_499 hadm hsep
+    rw [ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_eq_of_squareFreeRat _ hcore_ne hsq,
+        ZPoly.primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeRat _ hcore_ne hsq]
+  · rw [if_neg hcond]
 
 private def contentFactorArray (content : Int) : Array ZPoly :=
   if content = 1 then

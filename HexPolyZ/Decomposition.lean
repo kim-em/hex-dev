@@ -760,6 +760,227 @@ theorem coprimeModP_of_bezout
     coprimeModP f g p := by
   exact ⟨s, t, hbez⟩
 
+/-- Divisibility of integer polynomials is transitive. -/
+private theorem dvd_trans_zpoly {a b c : ZPoly} (hab : a ∣ b) (hbc : b ∣ c) :
+    a ∣ c := by
+  rcases hab with ⟨x, hx⟩
+  rcases hbc with ⟨y, hy⟩
+  exact ⟨x * y, by rw [hy, hx, DensePoly.mul_assoc_poly]⟩
+
+/-- Scale composition over `ℤ`: `scale a (scale b p) = scale (a * b) p`. -/
+private theorem int_scale_scale (a b : Int) (p : ZPoly) :
+    DensePoly.scale a (DensePoly.scale b p) = DensePoly.scale (a * b) p := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_scale (R := Int) a _ n (Int.mul_zero _),
+      DensePoly.coeff_scale (R := Int) b p n (Int.mul_zero _),
+      DensePoly.coeff_scale (R := Int) (a * b) p n (Int.mul_zero _), Int.mul_assoc]
+
+/-- Scaling by `1` over `ℤ` is the identity. -/
+private theorem int_scale_one (p : ZPoly) : DensePoly.scale (1 : Int) p = p := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_scale (R := Int) 1 p n (Int.mul_zero _), Int.one_mul]
+
+/-- Scaling commutes into the right factor of a product over `ℤ`. -/
+private theorem int_scale_mul_right (c : Int) (a b : ZPoly) :
+    DensePoly.scale c (a * b) = a * DensePoly.scale c b := by
+  rw [← C_mul_eq_scale, ← C_mul_eq_scale, ← DensePoly.mul_assoc_poly,
+      DensePoly.mul_comm_poly (DensePoly.C c) a, DensePoly.mul_assoc_poly]
+
+/-- The primitive part of an integer polynomial divides it over `ℤ`. -/
+private theorem primitivePart_dvd (f : ZPoly) : primitivePart f ∣ f := by
+  refine ⟨DensePoly.C (content f), ?_⟩
+  rw [DensePoly.mul_comm_poly, C_mul_eq_scale]
+  exact (content_mul_primitivePart f).symm
+
+/-- Gauss descent: if a primitive integer polynomial `r` divides `f` over the
+rationals (`ℚ[x]`), then it divides `f` over the integers (`ℤ[x]`).  The rational
+cofactor is cleared to a primitive integer polynomial via
+`ratPolyPrimitivePart`, and `rational_associate_primitive_unit` forces the
+leftover rational scalar to be `±1`, so the integer product recovers `f`'s
+primitive part exactly. -/
+theorem dvd_of_toRatPoly_dvd_of_primitive
+    {r f : ZPoly} (hr : Primitive r)
+    (hdvd : toRatPoly r ∣ toRatPoly f) : r ∣ f := by
+  by_cases hf : f = 0
+  · refine ⟨0, ?_⟩
+    rw [hf]
+    exact ((DensePoly.mul_comm_poly r 0).trans (DensePoly.zero_mul r)).symm
+  · have hcontent_ne : content f ≠ 0 := content_ne_zero_of_ne_zero f hf
+    have hg_prim : Primitive (primitivePart f) := primitivePart_primitive f hcontent_ne
+    have hg_ne : primitivePart f ≠ 0 := by
+      intro h0
+      apply hf
+      have h := content_mul_primitivePart f
+      rw [h0, DensePoly.scale_zero_right] at h
+      exact h.symm
+    -- Extract the rational cofactor and clear its denominators to a fresh
+    -- primitive integer polynomial `s`.
+    rcases hdvd with ⟨K, hK⟩
+    have hK_ne : K ≠ 0 := by
+      intro h0
+      apply hf
+      apply toRatPoly_injective
+      rw [toRatPoly_zero, hK, h0]
+      exact (DensePoly.mul_comm_poly (toRatPoly r) 0).trans (DensePoly.zero_mul (toRatPoly r))
+    obtain ⟨u, s, hs_prim, hs_ne, hu⟩ :
+        ∃ u s, Primitive s ∧ s ≠ 0 ∧ K = DensePoly.scale u (toRatPoly s) := by
+      rcases ratPolyPrimitivePart_rational_associate K with ⟨u, hu⟩
+      have hs_ne : ratPolyPrimitivePart K ≠ 0 :=
+        ratPolyPrimitivePart_ne_zero_of_ne_zero K hK_ne
+      exact ⟨u, ratPolyPrimitivePart K,
+        ratPolyPrimitivePart_primitive K (content_ne_zero_of_ne_zero _ hs_ne), hs_ne, hu⟩
+    -- `toRatPoly f = scale u (toRatPoly (r * s))`.
+    have hf_rs : toRatPoly f = DensePoly.scale u (toRatPoly (r * s)) := by
+      rw [toRatPoly_mul, hK, hu]
+      have hsm := rat_scale_mul_scale 1 u (toRatPoly r) (toRatPoly s)
+      rw [rat_scale_one, Rat.one_mul] at hsm
+      exact hsm
+    -- `toRatPoly f = scale (content f) (toRatPoly (primitivePart f))`.
+    have hf_g :
+        toRatPoly f =
+          DensePoly.scale ((content f : Int) : Rat) (toRatPoly (primitivePart f)) := by
+      rw [← toRatPoly_scale_int, content_mul_primitivePart]
+    -- `f ≠ 0 ⟹ u ≠ 0` and `r * s ≠ 0`.
+    have hu_ne : u ≠ 0 := by
+      intro hu0
+      apply hf
+      apply toRatPoly_injective
+      rw [toRatPoly_zero, hf_rs, hu0]
+      exact rat_scale_zero _
+    have hrs_prim : Primitive (r * s) := primitive_mul r _ hr hs_prim
+    have hrs_ne : r * s ≠ 0 := by
+      intro h0
+      apply hf
+      apply toRatPoly_injective
+      rw [toRatPoly_zero, hf_rs, h0, toRatPoly_zero]
+      exact rat_scale_zero_right _
+    -- Equate the two scaled forms and cancel to a single rational unit.
+    have hscale_eq :
+        DensePoly.scale ((content f : Int) : Rat) (toRatPoly (primitivePart f)) =
+          DensePoly.scale u (toRatPoly (r * s)) := by
+      rw [← hf_g, hf_rs]
+    have hassoc :
+        toRatPoly (r * s) =
+          DensePoly.scale (((content f : Int) : Rat) / u)
+            (toRatPoly (primitivePart f)) :=
+      rat_scale_div_of_scale_eq hu_ne hscale_eq
+    -- Enough to show `r ∣ primitivePart f`, since `primitivePart f ∣ f`.
+    suffices hr_dvd_g : r ∣ primitivePart f from dvd_trans_zpoly hr_dvd_g (primitivePart_dvd f)
+    rcases rational_associate_primitive_unit hrs_prim hrs_ne hg_prim hg_ne hassoc with
+      hpos | hneg
+    · -- unit = 1 : `r * s = primitivePart f`.
+      rw [hpos, rat_scale_one] at hassoc
+      exact ⟨s, (toRatPoly_injective hassoc).symm⟩
+    · -- unit = -1 : `r * s = scale (-1) (primitivePart f)`.
+      rw [hneg] at hassoc
+      have heq : r * s = DensePoly.scale (-1 : Int) (primitivePart f) := by
+        apply toRatPoly_injective
+        rw [hassoc, toRatPoly_scale_int]
+        rfl
+      -- `primitivePart f = r * scale (-1) s`.
+      have hinvol : DensePoly.scale (-1 : Int) (r * s) = primitivePart f := by
+        rw [heq, int_scale_scale]
+        show DensePoly.scale (1 : Int) (primitivePart f) = primitivePart f
+        exact int_scale_one _
+      refine ⟨DensePoly.scale (-1 : Int) s, ?_⟩
+      rw [← hinvol, int_scale_mul_right]
+
+/-- `ratPolyPrimitivePart` of a nonzero rational polynomial of size at most one
+(a nonzero rational constant) is `1`. -/
+private theorem ratPolyPrimitivePart_eq_one_of_size_le_one
+    (p : DensePoly Rat) (hne : p ≠ 0) (hsize : p.size ≤ 1) :
+    ratPolyPrimitivePart p = 1 := by
+  rcases ratPolyPrimitivePart_rational_associate p with ⟨u, hu⟩
+  have hu_ne : u ≠ 0 := by
+    intro h0
+    apply hne
+    rw [hu, h0, rat_scale_zero]
+  have hq_ne : ratPolyPrimitivePart p ≠ 0 := ratPolyPrimitivePart_ne_zero_of_ne_zero p hne
+  have hq_prim : Primitive (ratPolyPrimitivePart p) :=
+    ratPolyPrimitivePart_primitive p (content_ne_zero_of_ne_zero _ hq_ne)
+  have hsize_q : (ratPolyPrimitivePart p).size ≤ 1 := by
+    have hscale := rat_scale_size_of_ne_zero hu_ne (toRatPoly (ratPolyPrimitivePart p))
+    rw [← hu] at hscale
+    rw [← size_toRatPoly]
+    omega
+  have hself : normalizePrimitiveSign (ratPolyPrimitivePart p) = ratPolyPrimitivePart p :=
+    normalizePrimitiveSign_eq_self_of_leadingCoeff_nonneg _
+      (leadingCoeff_ratPolyPrimitivePart_nonneg p)
+  rw [← hself]
+  exact normalizePrimitiveSign_eq_one_of_primitive_size_le_one _ hq_prim hsize_q
+
+/-- On a nonzero input whose primitive part is square-free over `ℚ`, the
+repeated part of the primitive square-free decomposition is `1`. -/
+theorem primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeRat
+    (core : ZPoly) (hne : core ≠ 0)
+    (hsq : SquareFreeRat (primitivePart core)) :
+    (primitiveSquareFreeDecomposition core).repeatedPart = 1 := by
+  have hprimitive_ne : primitivePart core ≠ 0 :=
+    ne_zero_of_primitive _ (primitivePart_primitive core (content_ne_zero_of_ne_zero core hne))
+  have hnot_isZero : (primitivePart core).isZero = false := by
+    cases hz : (primitivePart core).isZero
+    · rfl
+    · exact absurd (densePoly_eq_zero_of_isZero_true _ hz) hprimitive_ne
+  unfold primitiveSquareFreeDecomposition
+  rw [if_neg (by simpa using hnot_isZero)]
+  by_cases hderiv : (DensePoly.derivative (toRatPoly (primitivePart core))).isZero = true
+  · rw [if_pos hderiv]
+  · rw [if_neg hderiv]
+    have hratPrim_ne : toRatPoly (primitivePart core) ≠ 0 :=
+      toRatPoly_ne_zero_of_ne_zero _ hprimitive_ne
+    apply ratPolyPrimitivePart_eq_one_of_size_le_one
+    · intro h0
+      exact rat_gcd_size_ne_zero_of_left_ne_zero (toRatPoly (primitivePart core))
+        (DensePoly.derivative (toRatPoly (primitivePart core))) hratPrim_ne
+        (by rw [h0]; exact DensePoly.size_zero)
+    · exact hsq
+
+/-- On a nonzero input whose primitive part is square-free over `ℚ`, the
+square-free core of the primitive square-free decomposition is exactly the
+sign-normalized primitive part.  Together with
+`primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeRat`, this is
+the trivial decomposition that the modular square-free fast path returns. -/
+theorem primitiveSquareFreeDecomposition_squareFreeCore_eq_of_squareFreeRat
+    (core : ZPoly) (hne : core ≠ 0)
+    (hsq : SquareFreeRat (primitivePart core)) :
+    (primitiveSquareFreeDecomposition core).squareFreeCore =
+      normalizePrimitiveSign (primitivePart core) := by
+  have hprimitive_ne : primitivePart core ≠ 0 :=
+    ne_zero_of_primitive _ (primitivePart_primitive core (content_ne_zero_of_ne_zero core hne))
+  have hrep : (primitiveSquareFreeDecomposition core).repeatedPart = 1 :=
+    primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeRat core hne hsq
+  rcases primitiveSquareFreeDecomposition_reassembly_signed core hne with ⟨ε, hε, hre⟩
+  rw [hrep, DensePoly.mul_one_right_poly] at hre
+  have hlead_nonneg :
+      0 ≤ DensePoly.leadingCoeff (primitiveSquareFreeDecomposition core).squareFreeCore :=
+    leadingCoeff_squareFreeCore_nonneg core
+  rcases hε with h1 | hm1
+  · -- ε = 1 : squareFreeCore = primitivePart core, already sign-normalized.
+    rw [h1, int_scale_one] at hre
+    rw [← hre]
+    exact (normalizePrimitiveSign_eq_self_of_leadingCoeff_nonneg _ hlead_nonneg).symm
+  · -- ε = -1 : primitivePart core = scale (-1) squareFreeCore, so it has negative leading.
+    rw [hm1] at hre
+    have hsq_ne : (primitiveSquareFreeDecomposition core).squareFreeCore ≠ 0 := by
+      intro h0
+      apply hprimitive_ne
+      rw [← hre, h0, DensePoly.scale_zero_right]
+    have hsize_pos : 0 < (primitiveSquareFreeDecomposition core).squareFreeCore.size :=
+      size_pos_of_ne_zero _ hsq_ne
+    have hlead_ne :
+        DensePoly.leadingCoeff (primitiveSquareFreeDecomposition core).squareFreeCore ≠ 0 := by
+      rw [DensePoly.leadingCoeff_eq_coeff_last _ hsize_pos]
+      exact DensePoly.coeff_last_ne_zero_of_pos_size _ hsize_pos
+    have hlead_prim_neg : DensePoly.leadingCoeff (primitivePart core) < 0 := by
+      rw [← hre, leadingCoeff_scale_of_nonzero (-1 : Int) _ (by decide)]
+      omega
+    unfold normalizePrimitiveSign
+    rw [if_pos hlead_prim_neg, ← hre, int_scale_scale]
+    show (primitiveSquareFreeDecomposition core).squareFreeCore =
+      DensePoly.scale (1 : Int) (primitiveSquareFreeDecomposition core).squareFreeCore
+    exact (int_scale_one _).symm
 
 end ZPoly
 end Hex
