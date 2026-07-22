@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhaus.WordCld
+public import HexBerlekampZassenhaus.Lattice
 public import HexModArithMathlib.WordMod
 public import HexPolyMathlib.Basic
 public import Mathlib.Algebra.Polynomial.Div
@@ -240,5 +241,167 @@ theorem toPoly_degree_lt {S : Type*} [CommRing S] [DecidableEq S] {r g : Hex.Den
   · rw [Polynomial.degree_eq_natDegree hr, Polynomial.degree_eq_natDegree hg0,
       natDegree_toPolynomial, natDegree_toPolynomial]
     exact_mod_cast hlt
+
+theorem intModNat_lt (y : Int) (M : Nat) (hM : 0 < M) : ZPoly.intModNat y M < M := by
+  have hM0 : (M : Int) ≠ 0 := by exact_mod_cast hM.ne'
+  have h1 : y % (M : Int) < M := Int.emod_lt_of_pos y (by exact_mod_cast hM)
+  have h2 : 0 ≤ y % (M : Int) := Int.emod_nonneg y hM0
+  rw [ZPoly.intModNat, Int.ofNat_eq_natCast]; omega
+
+/-! ### Main equality -/
+
+open HexPolyMathlib in
+theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)
+    (hg : Hex.DensePoly.Monic g) (hgdeg : 0 < g.degree?.getD 0)
+    {mval : Nat} (hpow : Hex.powLtWord? p a = some mval)
+    (hodd : (UInt64.ofNat mval) % 2 = 1) (hm1 : 1 < mval) :
+    Hex.cldQuotientModWord? f g p a = some (cldQuotientMod f g p a) := by
+  obtain ⟨hmeq, hmlt⟩ := powLtWord?_eq hpow
+  have hmtoNat : (UInt64.ofNat mval).toNat = mval := by
+    rw [UInt64.toNat_ofNat_mod_word]; exact Nat.mod_eq_of_lt hmlt
+  rw [Hex.cldQuotientModWord?, hpow]
+  simp only [dif_pos hodd]
+  set ctx := _root_.MontCtx.mk (UInt64.ofNat mval) hodd with hctx
+  -- the kernel's fW, gW are `toWMap ctx f`, `toWMap ctx g`
+  have hgW : Hex.DensePoly.ofCoeffs
+      (g.toArray.map (fun c => Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat c mval)))
+      = toWMap ctx g := by rw [toWMap]; simp only [hmtoNat]
+  have hfW : Hex.DensePoly.ofCoeffs
+      (f.toArray.map (fun c => Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat c mval)))
+      = toWMap ctx f := by rw [toWMap]; simp only [hmtoNat]
+  rw [hfW, hgW]
+  set qW := (Hex.DensePoly.divMod (toWMap ctx f * Hex.DensePoly.derivative (toWMap ctx g))
+    (toWMap ctx g)).1 with hqW
+  refine congrArg some ?_
+  refine eq_of_cZ_eq (m := UInt64.ofNat mval) _ _ ?_ ?_ ?_
+  · -- word output: coeffs in [0, mval)
+    intro i
+    have hc : (Hex.DensePoly.ofCoeffs (qW.toArray.map (fun w => Int.ofNat w.toNat))).coeff i
+        = Int.ofNat (qW.coeff i).toNat := by
+      rw [Hex.DensePoly.coeff_ofCoeffs]
+      show (qW.toArray.map (fun w => Int.ofNat w.toNat)).getD i 0 = Int.ofNat (qW.coeff i).toNat
+      rw [show qW.coeff i = qW.toArray.getD i 0 from rfl]
+      simp only [Array.getD_eq_getD_getElem?, Array.getElem?_map]
+      cases qW.toArray[i]? with
+      | none => simp [Hex.WordMod.toNat_zero]
+      | some w => simp
+    rw [hc, hmtoNat, Int.ofNat_eq_natCast]
+    have hlt : (qW.coeff i).toNat < mval := by
+      have := (qW.coeff i).toNat_lt; rwa [hmtoNat] at this
+    exact ⟨Int.natCast_nonneg _, by exact_mod_cast hlt⟩
+  · -- cldQuotientMod: coeffs in [0, mval)
+    intro i
+    unfold cldQuotientMod
+    rw [ZPoly.coeff_reduceModPow, hmtoNat, hmeq, Int.ofNat_eq_natCast]
+    exact ⟨Int.natCast_nonneg _, by exact_mod_cast intModNat_lt _ (p ^ a) (by omega)⟩
+  · -- the cast equality: both quotients are `numerator /ₘ divisor` in `ZMod (p^a)[X]`
+    haveI : Fact (1 < (UInt64.ofNat mval).toNat) := ⟨by rw [hmtoNat]; exact hm1⟩
+    have hmpa : (UInt64.ofNat mval).toNat = p ^ a := by rw [hmtoNat]; exact hmeq
+    have hpapos : 0 < (UInt64.ofNat mval).toNat := by rw [hmtoNat]; omega
+    -- `g` is monic in the various images
+    have htgm : (toPolynomial g).Monic := by
+      have : (toPolynomial g).leadingCoeff = 1 := by
+        rw [leadingCoeff_toPolynomial]; exact hg
+      exact this
+    have hcZgm : (cZ (UInt64.ofNat mval) g).Monic := by rw [cZ]; exact htgm.map _
+    have htgne : (toPolynomial g) ≠ 0 := htgm.ne_zero
+    -- gW monic / positive degree (the toW-mapped divisor)
+    have hgsize2 : 1 < g.size := by
+      unfold Hex.DensePoly.degree? at hgdeg
+      by_cases hs : g.size = 0
+      · rw [dif_pos hs] at hgdeg; simp at hgdeg
+      · rw [dif_neg hs] at hgdeg; simp only [Option.getD_some] at hgdeg; omega
+    have hgpos : 0 < g.size := by omega
+    have hgleading : g.coeff (g.size - 1) = 1 := by
+      rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last g hgpos]; exact hg
+    have hi1 : ZPoly.intModNat 1 (UInt64.ofNat mval).toNat = 1 := by
+      rw [hmtoNat, ZPoly.intModNat, Int.ofNat_eq_natCast,
+        Int.emod_eq_of_lt (by norm_num) (by exact_mod_cast hm1)]; rfl
+    have htoW1 : Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat 1 (UInt64.ofNat mval).toNat) = 1 := by
+      rw [hi1]; rfl
+    have h10 : (1 : Hex.WordMod ctx) ≠ 0 := by
+      intro h
+      have := congrArg HexModArithMathlib.WordMod.toZMod h
+      rw [HexModArithMathlib.WordMod.toZMod_one, HexModArithMathlib.WordMod.toZMod_zero] at this
+      exact one_ne_zero this
+    have hsz : (toWMap ctx g).size = g.size := by
+      refine le_antisymm ?_ ?_
+      · rw [toWMap]
+        calc (Hex.DensePoly.ofCoeffs _).size ≤ (g.toArray.map _).size := Hex.DensePoly.size_ofCoeffs_le _
+          _ = g.size := by rw [Array.size_map, Hex.DensePoly.toArray_size]
+      · by_contra h
+        have hcz : (toWMap ctx g).coeff (g.size - 1) = 0 :=
+          Hex.DensePoly.coeff_eq_zero_of_size_le _ (by omega)
+        rw [coeff_toWMap, hgleading, htoW1] at hcz
+        exact h10 hcz
+    have hgWm : Hex.DensePoly.Monic (toWMap ctx g) := by
+      show (toWMap ctx g).leadingCoeff = 1
+      rw [Hex.DensePoly.leadingCoeff_eq_coeff_last _ (by rw [hsz]; exact hgpos), hsz,
+        coeff_toWMap, hgleading, htoW1]
+    have hgWd : 0 < (toWMap ctx g).degree?.getD 0 := by
+      unfold Hex.DensePoly.degree?
+      rw [dif_neg (by rw [hsz]; omega)]
+      simp only [Option.getD_some]; rw [hsz]; omega
+    -- shared cancellation shape
+    have hcancelZ : ∀ c : Int, c - c / g.leadingCoeff * g.leadingCoeff = 0 := by
+      intro c; rw [Hex.DensePoly.leadingCoeff_eq_one_of_monic hg]; simp
+    have hcancelW : ∀ c : Hex.WordMod ctx,
+        c - c / (toWMap ctx g).leadingCoeff * (toWMap ctx g).leadingCoeff = 0 := by
+      intro c; rw [Hex.DensePoly.leadingCoeff_eq_one_of_monic hgWm]; simp
+    -- Int-side monic division in the image
+    have hCM : cZ (UInt64.ofNat mval) (cldQuotientMod f g p a)
+        = cZ (UInt64.ofNat mval) (ZPoly.reduceModPow (f * Hex.DensePoly.derivative g) p a)
+            /ₘ cZ (UInt64.ofNat mval) g := by
+      unfold cldQuotientMod
+      rw [cZ_reduceModPow hpapos hmpa]
+      exact map_divMod_monic (Int.castRingHom (ZMod (UInt64.ofNat mval).toNat)) _ g hcancelZ
+        (by rw [cZ] at hcZgm; exact hcZgm)
+        (by rw [Polynomial.degree_map_eq_of_leadingCoeff_ne_zero]
+            rw [leadingCoeff_toPolynomial, Hex.DensePoly.leadingCoeff_eq_one_of_monic hg]; simp)
+        (toPoly_degree_lt htgne
+          (Hex.DensePoly.divMod_remainder_degree_lt_of_pos_degree_core _ g hgdeg hcancelZ))
+    -- word-side monic division in the image
+    have htgWm : (toPolynomial (toWMap ctx g)).Monic := by
+      have : (toPolynomial (toWMap ctx g)).leadingCoeff = 1 := by
+        rw [leadingCoeff_toPolynomial]; exact hgWm
+      exact this
+    have htgWne : toPolynomial (toWMap ctx g) ≠ 0 := by
+      intro h
+      have hnd := natDegree_toPolynomial (toWMap ctx g)
+      rw [h, Polynomial.natDegree_zero] at hnd
+      omega
+    have hqWeq : cW ctx qW
+        = cW ctx (toWMap ctx f * Hex.DensePoly.derivative (toWMap ctx g))
+            /ₘ cW ctx (toWMap ctx g) := by
+      rw [hqW]
+      exact map_divMod_monic (HexModArithMathlib.WordMod.toZModRingHom (ctx := ctx)) _ (toWMap ctx g)
+        hcancelW
+        (htgWm.map _)
+        (Polynomial.degree_map_eq_of_leadingCoeff_ne_zero _
+          (by rw [leadingCoeff_toPolynomial, Hex.DensePoly.leadingCoeff_eq_one_of_monic hgWm]; simp))
+        (toPoly_degree_lt htgWne
+          (Hex.DensePoly.divMod_remainder_degree_lt_of_pos_degree_core _ (toWMap ctx g) hgWd hcancelW))
+    -- numerator / divisor agreement, then chain
+    have hgdiv : cW ctx (toWMap ctx g) = cZ (UInt64.ofNat mval) g := cW_toWMap_eq_cZ ctx g
+    have hnum : cW ctx (toWMap ctx f * Hex.DensePoly.derivative (toWMap ctx g))
+        = cZ (UInt64.ofNat mval) (ZPoly.reduceModPow (f * Hex.DensePoly.derivative g) p a) := by
+      rw [cZ_reduceModPow hpapos hmpa, cW_mul, cW_derivative, cW_toWMap_eq_cZ, cW_toWMap_eq_cZ,
+        cZ_mul, cZ_derivative]
+    have hWO : cZ (UInt64.ofNat mval)
+        (Hex.DensePoly.ofCoeffs (qW.toArray.map (fun w => Int.ofNat w.toNat))) = cW ctx qW := by
+      apply Polynomial.ext; intro i
+      rw [cZ_coeff, cW_coeff]
+      have hc : (Hex.DensePoly.ofCoeffs (qW.toArray.map (fun w => Int.ofNat w.toNat))).coeff i
+          = Int.ofNat (qW.coeff i).toNat := by
+        rw [Hex.DensePoly.coeff_ofCoeffs]
+        show (qW.toArray.map (fun w => Int.ofNat w.toNat)).getD i 0 = Int.ofNat (qW.coeff i).toNat
+        rw [show qW.coeff i = qW.toArray.getD i 0 from rfl]
+        simp only [Array.getD_eq_getD_getElem?, Array.getElem?_map]
+        cases qW.toArray[i]? with
+        | none => simp [Hex.WordMod.toNat_zero]
+        | some w => simp
+      rw [hc, Int.ofNat_eq_natCast, Int.cast_natCast]
+      rfl
+    rw [hWO, hqWeq, hnum, hgdiv, hCM]
 
 end HexBerlekampZassenhausMathlib
