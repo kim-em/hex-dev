@@ -48,6 +48,12 @@ theorem eq_iff_toNat {a b : WordMod ctx} : a = b ↔ a.toNat = b.toNat :=
   apply toNat_injective
   rw [toNat_ofNat, Nat.mod_eq_of_lt (toNat_lt a)]
 
+@[simp] theorem sub_self (a : WordMod ctx) : a - a = 0 := by
+  apply toNat_injective
+  rw [toNat_sub, toNat_zero]
+  have ha : a.toNat < m.toNat := toNat_lt a
+  rw [Nat.add_sub_cancel' (Nat.le_of_lt ha), Nat.mod_self]
+
 /-! ### `Lean.Grind.CommRing (WordMod ctx)`
 
 The Montgomery residue ring is a commutative ring; the axioms transport through
