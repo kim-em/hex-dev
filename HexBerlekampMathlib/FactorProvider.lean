@@ -328,19 +328,27 @@ meta def withZModInput (tactic : String) (ty : Expr)
       Expr → Term.TermElabM Expr) :
     Term.TermElabM ProviderResult := do
   let some (q, qE) ← zmodInput? ty | return .notApplicable
-  if hpt : Hex.Nat.isPrimeTrial q = true then
-    if h1 : 0 < q then
-      if h2 : q < 2 ^ 31 then
-        return .success (← k q ⟨h1, h2⟩ hpt qE)
+  -- `isPrimeTrial` is Θ(q) at elaboration time, and its emitted slot
+  -- kernel-replays at the same cost, so check the `ZMod64` bound and the
+  -- replay budget before running it.
+  if h1 : 0 < q then
+    if h2 : q < 2 ^ 31 then
+      if q ≤ Hex.FactorTactic.replayBudget then
+        if hpt : Hex.Nat.isPrimeTrial q = true then
+          return .success (← k q ⟨h1, h2⟩ hpt qE)
+        else
+          return .declined m!"{tactic}: Polynomial (ZMod q) inputs need a \
+              prime modulus, but {q} is not prime"
       else
-        return .declined m!"{tactic}: the modulus {q} is prime but over the \
-            ZMod64 bound (2^31), so the Polynomial (ZMod q) provider cannot \
-            certify it"
+        return .declined m!"{tactic}: the modulus {q} needs a kernel \
+            primality replay of roughly {q} steps, over the supported \
+            budget ({Hex.FactorTactic.replayBudget})"
     else
-      return .notApplicable
+      return .declined m!"{tactic}: the modulus {q} is over the ZMod64 \
+          bound (2^31), so the Polynomial (ZMod q) provider cannot \
+          certify it"
   else
-    return .declined m!"{tactic}: Polynomial (ZMod q) inputs need a prime \
-        modulus, but {q} is not prime"
+    return .notApplicable
 
 /-- Goal mode: close `Irreducible P` for `P : Polynomial (ZMod q)`. -/
 meta def goalIrredZMod (goal : MVarId) : Tactic.TacticM ProviderResult := do
