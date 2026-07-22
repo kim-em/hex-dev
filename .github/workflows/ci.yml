@@ -130,8 +130,8 @@ jobs:
       # fresh against the restored libs, which is cheap.
       - name: Define the hex-dev cache + build target sets
         run: |
-          echo "HEX_LIB_TARGETS=HexBasic HexArith HexPoly HexModArith HexGF2 HexPolyZ HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexBerlekampZassenhaus HexMatrix HexRowReduce HexDeterminant HexBareiss HexGramSchmidt HexLLL HexMatrixMathlib HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib" >> "$GITHUB_ENV"
-          echo "HEX_EXE_TARGETS=hexarith_bench hexpoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexberlekamp_bench hexbz_bench hexconway_bench hexmatrix_bench hexdeterminant_bench hexbareiss_bench hexgramschmidt_bench hexlll_bench hexlll_provider_probe" >> "$GITHUB_ENV"
+          echo "HEX_LIB_TARGETS=HexBasic HexArith HexPoly HexModArith HexGF2 HexPolyZ HexRoots HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexBerlekampZassenhaus HexRealRoots HexMatrix HexRowReduce HexDeterminant HexBareiss HexGramSchmidt HexLLL HexMatrixMathlib HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib HexRealRootsMathlib HexRootsMathlib" >> "$GITHUB_ENV"
+          echo "HEX_EXE_TARGETS=hexarith_bench hexpoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexberlekamp_bench hexbz_bench hexconway_bench hexmatrix_bench hexdeterminant_bench hexbareiss_bench hexgramschmidt_bench hexrealroots_bench hexroots_bench hexroots_demo hexlll_bench hexlll_provider_probe" >> "$GITHUB_ENV"
       # Shared build. The libraries, bench exes, conformance #guard drivers, and
       # emit-fixture exes are all elaborated here so the two verification tails
       # below only *run* things, never rebuild them -- which is what lets the
@@ -158,7 +158,8 @@ jobs:
             hexconway_emit_fixtures \
             hexrowreduce_emit_fixtures hexdeterminant_emit_fixtures \
             hexbareiss_emit_fixtures hexgramschmidt_emit_fixtures \
-            hexlll_emit_fixtures
+            hexlll_emit_fixtures hexrealroots_emit_fixtures \
+            hexroots_emit_fixtures
       # Publish hex-dev's oleans on a trusted main push so later builds (and any
       # consumer) restore them. Skips silently without the upload key.
       - name: Publish hex-dev oleans to the Lake cache (main only)
@@ -205,7 +206,8 @@ jobs:
             hexpolyfp_bench hexmodarith_bench \
             hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench \
             hexhensel_bench hexberlekamp_bench hexbz_bench \
-            hexconway_bench hexdeterminant_bench hexmatrix_bench
+            hexconway_bench hexdeterminant_bench hexmatrix_bench \
+            hexrealroots_bench hexroots_bench
           touch "$RUNNER_TEMP/bench.ok"
       - name: Conformance oracles + BZ gates
         id: conformance

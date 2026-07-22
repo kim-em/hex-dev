@@ -1,490 +1,363 @@
-# hex-number-field (algebraic numbers + number-field elements, depends on hex-poly-z + hex-roots + hex-resultant + hex-berlekamp-zassenhaus + hex-matrix + hex-row-reduce)
+# hex-number-field (depends on hex-poly-z + hex-roots + hex-resultant + hex-berlekamp-zassenhaus + hex-matrix + hex-row-reduce)
 
-Two related types representing algebraic numbers in ℂ:
+Executable algebraic numbers in `ℂ`, fixed number fields, and roots of
+polynomials with algebraic coefficients. The library provides three related
+representations:
 
-- `QAdjoin p x`: an element of `ℚ(α)`, where `α` is the simple complex
-  root of `p ∈ ℤ[x]` identified by `x : SimpleRoot p`. Carries a
-  rational-coefficient polynomial `coeffs` of degree `< deg p`,
-  representing the value `coeffs.eval α`.
-- `AlgebraicNumber`: a canonical representation of an arbitrary
-  algebraic `α ∈ ℂ`, by its minimal polynomial (primitive, positive
-  leading coefficient, irreducible) and the `SimpleRoot` identifying
-  which complex root is meant. No coefficient data: the identified
-  root *is* the algebraic number.
+- `QAdjoin p x` is the canonical coordinate representation in the fixed field
+  `ℚ(x)`, with `x : SimpleRoot p` and rational coefficients reduced modulo `p`.
+- `AlgebraicRoot` identifies a root of a primitive, positive-leading,
+  squarefree integer polynomial. The polynomial need not be irreducible or
+  minimal. This is the factorization-lazy representation used by arithmetic.
+- `AlgebraicNumber` identifies a root of its canonical irreducible minimal
+  polynomial. This is the exact canonical representation.
 
-`QAdjoin p x` is the working representation, used during arithmetic
-and directly useful when many operations happen in one fixed field.
-`AlgebraicNumber` is the canonical representation, the input and
-output of operations like `α + β`.
-
-The matrix dependencies (`hex-matrix`, `hex-row-reduce`) supply the
-dense ℚ-linear algebra used by `toAlgebraicNumber` (the
-minimal-polynomial computation).
+“Lazy” refers only to factorization. Every stored root has a
+`RefinedIsolation`, so identity and approximation remain certified eagerly.
 
 ## Executable irreducibility
 
-The `AlgebraicNumber` invariants include irreducibility of the stored
-polynomial, and this library constructs such values, so it needs an
-irreducibility test **in the Mathlib-free layer**. `hex-berlekamp-
-zassenhaus` gains one small addition:
+The shipped Mathlib-free API separates the semantic class
+`Hex.ZPoly.Irreducible p` from the factorization-backed Boolean
+`Hex.ZPoly.isIrreducible p`. This library adds the runtime-constructible wrapper
 
 ```lean
-/-- `f` is irreducible over ℤ, in canonical form (primitive, positive
-    leading coefficient, positive degree). Tested by a ladder of
-    checks, cheapest first; the early rungs certify only `true`, and
-    the final rung decides both ways:
-
-    1. degree 1: canonical-form check alone;
-    2. degree 2 or 3: canonical form and no rational root
-       (a loop over the divisors of the constant and leading
-       coefficients);
-    3. any degree: canonical form, and Rabin's irreducibility test
-       (from hex-berlekamp) accepts `f mod p` at unchanged degree for
-       one of a fixed handful of small primes p (sound: an
-       irreducible mod-p image of a primitive polynomial forces
-       irreducibility over ℤ; incomplete: some irreducibles, such as
-       `x⁴ + 1`, are reducible mod every prime);
-    4. fallback: `HexBerlekampZassenhaus.factor f` reports the single
-       factor `f` itself with multiplicity 1. -/
-def Hex.ZPoly.isIrreducible (f : ZPoly) : Bool := …
-
-/-- Prop form, decidable by `decide`. -/
-class Hex.ZPoly.IsIrreducible (f : ZPoly) : Prop where
-  holds : isIrreducible f = true
+class ZPoly.CheckedIrreducible (p : ZPoly) : Prop where
+  is_true : ZPoly.isIrreducible p = true
 ```
 
-Constructing an `AlgebraicNumber` from a candidate polynomial `g`
-tests `isIrreducible g` at runtime, and the proof field comes from the
-`if h : _` branch. At runtime the ladder is a fast path in front of
-`factor`, nothing more.
+Checked constructors branch on the Boolean and can therefore return this
+evidence without importing factorization correctness. The Mathlib companion
+uses `ZPoly.isIrreducible_iff` to turn `CheckedIrreducible` into the shipped
+semantic `ZPoly.Irreducible` class and then into irreducibility over `ℚ`.
+The computational library exposes the operations needed by its algorithms; it
+does not claim a law-bearing field instance from the Boolean alone.
 
-The ladder is what makes proof-level `decide` viable, since
-`native_decide` is banned and the kernel would otherwise have to
-evaluate the whole factoring pipeline. Measured on this toolchain
-with a list-based model of the mod-p arithmetic: the Rabin rung on a
-degree-10 polynomial over `F_5` kernel-reduces in well under a second
-inside the default elaborator limits, and a deliberately oversized
-degree-20-over-`F_13` workload takes tens of seconds with raised
-`maxRecDepth`/`maxHeartbeats`. So `decide` is practical exactly for
-the small-degree literals that fixtures and worked examples use
-(`X² − 2`, `Φ₅`, `X² − 8`), and the rung-4 fallback should be treated
-as runtime-only. The constant `0 : AlgebraicNumber` carries an
-`isIrreducible X` proof through rung 1, which is kernel-trivial.
-
-The Mathlib companion of hex-berlekamp-zassenhaus proves
-`IsIrreducible f ↔ Irreducible (toPolynomial f)`. Its existing
-factor-correctness machinery
-(`Hex.ZPoly.Irreducible_iff_polynomialIrreducible` and
-`FactorSoundness`) covers rung 4; rungs 1-3 add the rational-root
-criterion and the mod-p lifting lemma (irreducible image at unchanged
-degree lifts, via Gauss's lemma), with the mod-p decidability already
-present in hex-berlekamp-mathlib.
-
-## Types
+## Core types
 
 ```lean
 namespace Hex
 
-/-- A number-field element indexed by a complex simple root.
-    `p` need not be irreducible for the ring operations; the field
-    operations (notably `Inv`) take a `[Hex.ZPoly.IsIrreducible p]`
-    instance argument. The represented value is `coeffs.eval α` where
-    `α` is the root identified by `x`. `degree?` compares in the
-    `Option Nat` order, where the zero polynomial (`none`) is below
-    everything. -/
 structure QAdjoin (p : ZPoly) (x : SimpleRoot p) where
-  coeffs    : Hex.DensePoly Rat
+  coeffs    : DensePoly Rat
   degree_lt : coeffs.degree? < p.degree?
 
-/-- Canonical representation of an algebraic number `α ∈ ℂ`.
-    `p` is the minimal polynomial of `α` in canonical form (primitive,
-    positive leading coefficient, irreducible), `x` identifies which
-    complex root of `p` is `α`, and `rep` is a working isolation of
-    that root, kept at separation precision so that equality tests
-    need no further refinement. -/
-structure AlgebraicNumber where
-  p      : ZPoly
-  prim   : Hex.ZPoly.Primitive p
-  pos_lc : 0 < p.leadingCoeff
-  irred  : Hex.ZPoly.IsIrreducible p
-  x      : SimpleRoot p
-  rep    : RefinedIsolation p
-  rep_mk : SimpleRoot.mk rep = x
+/-- A factorization-lazy algebraic number. -/
+structure AlgebraicRoot where
+  p          : ZPoly
+  prim       : ZPoly.Primitive p
+  pos_lc     : 0 < p.leadingCoeff
+  squarefree : HasOnlySimpleRoots p
+  x          : SimpleRoot p
+  rep        : RefinedIsolation p
+  rep_mk     : SimpleRoot.mk rep = x
+
+/-- A canonical algebraic number. Its constructor is private. -/
+opaque AlgebraicNumber
+def AlgebraicNumber.p (a : AlgebraicNumber) : ZPoly
+def AlgebraicNumber.prim (a : AlgebraicNumber) : ZPoly.Primitive a.p
+def AlgebraicNumber.pos_lc (a : AlgebraicNumber) : 0 < a.p.leadingCoeff
+def AlgebraicNumber.checked (a : AlgebraicNumber) :
+    ZPoly.CheckedIrreducible a.p
+def AlgebraicNumber.squarefree (a : AlgebraicNumber) :
+    HasOnlySimpleRoots a.p
+def AlgebraicNumber.x (a : AlgebraicNumber) : SimpleRoot a.p
+def AlgebraicNumber.rep (a : AlgebraicNumber) : RefinedIsolation a.p
+def AlgebraicNumber.rep_mk (a : AlgebraicNumber) :
+    SimpleRoot.mk a.rep = a.x
+
+structure RootCount where
+  root : AlgebraicRoot
+  multiplicity : Nat
+  multiplicity_pos : 0 < multiplicity
+
+/-- `.all` is the root set of the zero polynomial. -/
+inductive RootSet where
+  | all
+  | finite (roots : Array RootCount)
+
+/-- A polynomial with canonical algebraic coefficients. The constructor trims
+    trailing coefficients using semantic `AlgebraicNumber.isZero`. -/
+opaque AlgebraicPoly
+def AlgebraicPoly.ofArray (coeffs : Array AlgebraicNumber) : AlgebraicPoly
+def AlgebraicPoly.coeffs (f : AlgebraicPoly) : Array AlgebraicNumber
+def AlgebraicPoly.degree? (f : AlgebraicPoly) : Option Nat
+def AlgebraicPoly.isZero (f : AlgebraicPoly) : Bool
 
 end Hex
 ```
 
-### Equality
+Here and in the tower SPEC, `opaque` marks a public abstraction boundary, not a
+requirement that the implementation literally use an `opaque` Lean declaration.
+Implementations use representation-private structures where constructors or
+recursors are needed internally.
 
-The library's equality on `AlgebraicNumber` is `BEq`:
+Every `AlgebraicNumber` smart constructor normalizes the primitive polynomial,
+then re-isolates with the fixed default strategy at `separationDepth` and stores
+the unique matching disc. Thus equal complex values have identical hidden data,
+not merely a semantic `BEq`; this representation can support field laws stated
+with Lean equality. User-supplied alternative refined discs cannot enter the
+private constructor.
+
+Do not instantiate `DensePoly AlgebraicNumber`. `DensePoly` requires
+`DecidableEq` on coefficients so that trailing-zero normalization is semantic,
+but structural equality on `AlgebraicNumber` is finer than equality of the
+represented complex values. `AlgebraicPoly` owns the required semantic trimming
+without exporting an incorrect `DecidableEq`.
+
+## Equality and zero
+
+`AlgebraicNumber` keeps its canonical `BEq`: compare minimal polynomials, then
+compare refined isolations with `sameRoot`.
+
+`AlgebraicRoot` uses two paths:
+
+1. If the stored polynomials agree, compare the refined isolations directly.
+2. Otherwise exactify both roots and use canonical `AlgebraicNumber` equality.
+
+The second path can factor twice and is not a fast arithmetic primitive. A future
+optimization may compare `gcd a.p b.p` and the two isolations without computing
+minimal polynomials, but it does not change the v1 semantics.
 
 ```lean
-instance : BEq AlgebraicNumber where
-  beq a b := a.p == b.p && (h ▸ a.rep).sameRoot b.rep
-  -- when the polynomials are equal, compare the isolations with
-  -- `sameRoot` (transporting along the polynomial equality)
+def AlgebraicNumber.isZero (a : AlgebraicNumber) : Bool := a.p == X
+
+/-- True exactly when the selected root is zero. Squarefreeness makes the
+    constant-coefficient and isolation test decisive. -/
+def AlgebraicRoot.isZero (a : AlgebraicRoot) : Bool :=
+  a.p.coeff 0 == 0 && RefinedIsolation.containsZero a.rep
 ```
 
-This is a total Boolean test: minimal polynomials in canonical form
-are structurally comparable, and `sameRoot` on `RefinedIsolation`
-values is a single dyadic comparison (both representatives are at
-separation precision by the type). The Mathlib companion proves
-`a == b ↔ a.toComplex = b.toComplex`. Structural `=` on the record is
-finer (it also fixes the representative) and is not the intended
-notion of equality.
+`RefinedIsolation.containsZero` is introduced here. It tests membership of zero
+in the isolation's closed circumscribed disc, including boundary contact.
+
+## Fixed-field operations
+
+`QAdjoin p x` retains canonical reduced rational coordinates. Addition,
+subtraction, negation, multiplication modulo `p`, and rational scalar actions do
+not require irreducibility. Inversion requires
+`[ZPoly.CheckedIrreducible p]` and uses polynomial extended gcd over `ℚ`.
+The computational API supplies `Inv` and `Div`, with `0⁻¹ = 0`; the companion
+proves their field laws after converting the checked certificate to semantic
+irreducibility.
 
 ```lean
-def AlgebraicNumber.isZero (a : AlgebraicNumber) : Bool :=
-  a.p == X   -- X is the canonical minimal polynomial of 0
-```
-
-## Conversions between the two types
-
-```lean
-/-- Embed an `AlgebraicNumber` into its own field. For `deg p ≥ 2` the
-    element α is represented by the polynomial `t` (degree 1, which is
-    then `< deg p`). For `deg p = 1` the value is the rational
-    `−p₀/p₁`, represented by a constant. The two cases are why this is
-    not simply `coeffs := t`. -/
-def AlgebraicNumber.toQAdjoin (a : AlgebraicNumber) : QAdjoin a.p a.x := …
-
-/-- Project a `QAdjoin` element to canonical form, computing its
-    minimal polynomial and the matching `SimpleRoot`. Requires `p`
-    irreducible: on a reducible `p`, the multiplication operator on
-    `ℚ[t]/(p)` sees every factor of `p`, and its minimal polynomial is
-    not the minimal polynomial of the value at α. `none` only when a
-    root-isolation certificate fails to appear by its depth bound
-    (see hex-roots.md), which the companion proves impossible. -/
-def QAdjoin.toAlgebraicNumber? [Hex.ZPoly.IsIrreducible p]
-    (a : QAdjoin p x) (rep : RefinedIsolation p)
-    (h : SimpleRoot.mk rep = x) : Option AlgebraicNumber
-
-/-- Total form; see "Totalisation" below. -/
-def QAdjoin.toAlgebraicNumber [Hex.ZPoly.IsIrreducible p]
-    (a : QAdjoin p x) (rep : RefinedIsolation p)
-    (h : SimpleRoot.mk rep = x) : AlgebraicNumber :=
-  (a.toAlgebraicNumber? rep h).getD
-    (panicWith 0 "toAlgebraicNumber: certification failed")
-```
-
-`toAlgebraicNumber?` is the substantive operation:
-
-1. Form the multiplication-by-`a` operator on the ℚ-vector space
-   `ℚ[t]/(p)`, a `(deg p) × (deg p)` matrix over ℚ (`hex-matrix`).
-2. Compute its minimal polynomial: the first ℚ-linear dependence
-   among `{1, a, a², …, a^(deg p)}`, found by row reduction
-   (`hex-row-reduce`). Because `p` is irreducible, `ℚ[t]/(p)` is a
-   field, so this is the minimal polynomial of the *value* of `a` at
-   α, of degree dividing `deg p`.
-3. Clear denominators; take the primitive part; make the leading
-   coefficient positive. Call the result `m`.
-4. Certify `isIrreducible m` (true by construction, but the runtime
-   check is what produces the proof field).
-5. Identify the matching root of `m`: approximate `a`'s value from
-   `rep` (evaluate `coeffs` at the isolation's disc), isolate the
-   roots of `m` with `HexRoots.isolate`, refine until exactly one
-   isolation's disc meets the approximation ball, and take that one
-   as `rep`/`x` of the result.
-
-## `QAdjoin p x` operations
-
-The ring operations need no irreducibility:
-
-```lean
-instance : Zero (QAdjoin p x) := ⟨{coeffs := 0, degree_lt := …}⟩
-instance : One (QAdjoin p x) := …   -- constant 1; needs deg p ≥ 1,
-                                    -- which follows from x
-instance : Add (QAdjoin p x) := ⟨fun a b => ⟨a.coeffs + b.coeffs, …⟩⟩
-instance : Mul (QAdjoin p x) :=
-  ⟨fun a b => ⟨(a.coeffs * b.coeffs) % (p.map Rat.cast), …⟩⟩
--- and Neg, Sub, scalar multiplication by Int / Rat
-```
-
-(`p` is cast to `DensePoly Rat` before the `%`. The reduction is
-Euclidean division over ℚ from `HexPoly`.)
-
-The field operations take the irreducibility instance:
-
-```lean
-instance [Hex.ZPoly.IsIrreducible p] : Inv (QAdjoin p x) where
-  inv a := …   -- extended GCD of a.coeffs and p over ℚ (HexPoly.xgcd)
-
-instance [Hex.ZPoly.IsIrreducible p] : Field (QAdjoin p x) := …
-```
-
-The `Field` instance carries real proof obligations in this
-Mathlib-free library: the ring axioms for arithmetic mod `p`, and
-`mul_inv_cancel`, which needs "gcd of `a.coeffs` and `p` is a unit
-when `p` is irreducible over ℚ and `a ≠ 0`". The precedent is
-`hex-gfq-field`, which proves the same shape of facts for
-`F_p[x]/(f)` without Mathlib. Budget comparable effort here.
-
-Numerical evaluation threads the isolation explicitly (the threading
-pattern of hex-roots.md):
-
-```lean
-/-- Evaluate `a` to a complex ball. Refines the given isolation as
-    needed and returns it, so the caller can pass the refined value to
-    the next call. Evaluation is exact at the isolation's centre
-    (rational arithmetic), with a derivative bound for the radius,
-    rounded outward to dyadics. Total, and *always sound*: if
-    refinement stalls (hex-roots.md), the fallback result is the
-    input isolation with the ball derived from its current disc,
-    which still contains the true value, just wider than `2^{−prec}`.
-    The radius meets `2^{−prec}` whenever refinement succeeded, which
-    the companion proves is always. -/
 def QAdjoin.approx (a : QAdjoin p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (prec : Int) :
     RefinedIsolation p × DyadicComplexBall
 ```
 
-## `AlgebraicNumber` operations
+Approximation refines once, returns the refined representative for threading,
+and always returns a sound ball. The requested radius is guaranteed by the
+companion's refinement-completeness theorem.
 
-### Totalisation
-
-The user-facing arithmetic (`add`, `mul`, `sub`, `neg`, `inv`,
-`toAlgebraicNumber`) is **total**. Internally, each operation has an
-`Option`-valued form (`add?`, and so on) whose `none` branch means
-"a certificate failed to appear by an explicit, input-computable
-bound". The public form pins that branch to the junk value `0`:
+## Canonicalization and exactification
 
 ```lean
-/-- Print `msg` and return `v` (compiled code); definitionally `v`
-    (for reasoning). Lives in HexNumberField/Basic.lean; can move to
-    HexBasic if other libraries want it. -/
-@[never_extract] def Hex.panicWith (v : α) (msg : String) : α := …
+def AlgebraicNumber.toQAdjoin (a : AlgebraicNumber) : QAdjoin a.p a.x
+def AlgebraicNumber.toRoot (a : AlgebraicNumber) : AlgebraicRoot
 
-instance : Inhabited AlgebraicNumber := ⟨0⟩
--- `0 : AlgebraicNumber` is the value with `p = X`; its invariant
--- proofs reduce cheaply (the degree-1 fast path in isIrreducible).
+def QAdjoin.toAlgebraicNumber? [ZPoly.CheckedIrreducible p]
+    (a : QAdjoin p x) (rep : RefinedIsolation p)
+    (h : SimpleRoot.mk rep = x) : Option AlgebraicNumber
+def QAdjoin.toAlgebraicNumber [ZPoly.CheckedIrreducible p]
+    (a : QAdjoin p x) (rep : RefinedIsolation p)
+    (h : SimpleRoot.mk rep = x) : AlgebraicNumber
 
-def AlgebraicNumber.add (α β : AlgebraicNumber) : AlgebraicNumber :=
-  (α.add? β).getD (panicWith 0 "AlgebraicNumber.add: certification failed")
+/-- Checked implementation layer. -/
+def AlgebraicRoot.exact? (a : AlgebraicRoot) : Option AlgebraicNumber
+/-- Primary total API. -/
+def AlgebraicRoot.exact (a : AlgebraicRoot) : AlgebraicNumber :=
+  a.exact?.getD (panicWith 0 "AlgebraicRoot.exact: certification failed")
 ```
 
-The junk branch is loud, not silent: `panicWith` prints at runtime
-(this matters because `0` is also a legitimate output, of
-`α + (−α)` for example). Logically it is just the constant `0`, so
-the companion reasons about it directly: it proves soundness of the
-`?`-forms first, then that each `?`-form never returns `none`
-(certificates appear within the stated bounds), and the composition
-gives unconditional correctness of the total forms. Every internal
-loop has a computable bound: root refinement is bounded by
-`separationDepth` (hex-roots.md), and the two bounds specific to this
-library are named below.
+`QAdjoin.toAlgebraicNumber?` computes the minimal polynomial of the
+multiplication operator by row reduction, clears denominators, normalizes the
+primitive part, and identifies the matching isolated root.
 
-`neg`, `isZero`, and `==` are total with no junk branch.
+`AlgebraicRoot.exact?` factors `a.p`, selects the unique irreducible factor whose
+isolated root agrees with `a.rep`, and returns that factor in canonical form.
+It reruns `ZPoly.isIrreducible` and the decidable `HasOnlySimpleRoots` check on
+the normalized factor; successful branches carry the resulting equality and
+squarefreeness proofs into the private `AlgebraicNumber` constructor.
+`exact` is the primary interface. It uses `panicWith` only on the checked
+implementation's `none` branch; `exact?_isSome` proves that branch unreachable.
 
-### `commonField?`
+## Factorization-lazy arithmetic
+
+Each operation has a checked `Option` form and a primary total wrapper. The
+checked form returns `none` only if a certificate fails to appear within its
+input-computable bound. Companion `_isSome` theorems retire every such branch.
 
 ```lean
-structure CommonField (α β : AlgebraicNumber) where
-  r     : ZPoly
-  irred : Hex.ZPoly.IsIrreducible r
-  γ     : SimpleRoot r
-  γrep  : RefinedIsolation r
-  γ_mk  : SimpleRoot.mk γrep = γ
-  αIn   : QAdjoin r γ
-  βIn   : QAdjoin r γ
+def AlgebraicRoot.add? (a b : AlgebraicRoot) : Option AlgebraicRoot
+def AlgebraicRoot.add  (a b : AlgebraicRoot) : AlgebraicRoot
+-- likewise sub, mul, div, and inv; neg is certificate-free
 
-/-- Find one field containing both α and β: a defining polynomial `r`
-    with a distinguished root γ = α + c·β, and α, β expressed in the
-    basis `{1, γ, …, γ^(deg r − 1)}`. Algorithm-layer function, so it
-    keeps the informative `Option` signature; the arithmetic wrappers
-    absorb it. -/
-def AlgebraicNumber.commonField? (α β : AlgebraicNumber) :
-    Option (CommonField α β)
+def AlgebraicNumber.add (a b : AlgebraicNumber) : AlgebraicNumber :=
+  (a.toRoot.add b.toRoot).exact
+-- likewise sub, mul, neg, inv, and div
 ```
 
-Implementation:
+- `neg` substitutes `-X` and reflects the isolation.
+- `add?` takes the primitive positive-leading squarefree part of
+  `resultant_y(a.p(y), b.p(t-y))`.
+- `sub?` composes addition and negation.
+- `mul?` handles zero first, then uses
+  `resultant_y(a.p(y), y^deg(b.p) * b.p(t/y))`. It removes any
+  introduced `X` factor before squarefree normalization.
+- `inv? 0 = some 0`. Otherwise it reverses the coefficients of `a.p`, trims the
+  degree drop caused by an original zero constant coefficient, takes the
+  primitive positive-leading part, maps the isolation through inversion, and
+  re-certifies it. The reversal has nonzero constant coefficient because it is
+  the original leading coefficient, so it cannot acquire an `X` factor.
+- `div?` composes multiplication and inversion.
 
-1. **Resultant.** Compute `r₀(t) := resultant_y(β.p(y), α.p(t − c·y))`
-   for a small integer shift `c` (default `c = 1`). The roots of `r₀`
-   are exactly the values `αᵢ + c·βⱼ` over the conjugates, so
-   `γ = α + c·β` is among them.
-2. **Factor.** `(HexBerlekampZassenhaus.factor r₀).factors` is an
-   `Array (ZPoly × Nat)` of (irreducible primitive polynomial,
-   multiplicity) pairs. The minimal polynomial of `γ` is one of the
-   polynomials. (The `Factorization.scalar` field is ignored: the
-   resultant's content and sign do not affect which factor vanishes
-   at `γ`.)
-3. **Numerical disambiguation.** Approximate `γ` from `α.rep` and
-   `β.rep` (refining as needed), evaluate each factor on the
-   approximation ball, and shrink the ball until exactly one factor's
-   value straddles zero. The precision needed is bounded a priori.
-   Suppose `m` is the (unknown) minimal polynomial of `γ` among the
-   factors and `g` any other factor. Distinct irreducible factors are
-   coprime, so `Res(m, g)` is a nonzero integer, `|Res(m, g)| ≥ 1`,
-   and the root-product formula
-   `Res(m, g) = lc(m)^{deg g} · ∏_{m(γᵢ)=0} g(γᵢ)` gives
+The addition and multiplication eliminants are nonzero. Over an algebraic
+closure their resultants are products of `t - (α + β)` or `t - αβ` over the
+finite root multisets of the two nonzero input polynomials, so each has the
+expected positive degree and nonzero leading coefficient. Stage 1 formalizes
+the corresponding common-root statements; Stage 2 identifies the full product
+when its value is needed.
 
-   ```
-   |g(γ)| ≥ ( ‖g‖₁^{deg m − 1} · M̄(m)^{deg g} )⁻¹,
-   M̄(m) := √(deg m + 1) · ‖m‖∞
-   ```
+For a binary eliminant `e`, the desired result may coincide with values from
+other pairs of conjugates, but every candidate is a root of the same squarefree
+polynomial. Define
 
-   after bounding each other conjugate's contribution by
-   `|g(γᵢ)| ≤ ‖g‖₁ · max(1, |γᵢ|)^{deg g}` and
-   `∏ max(1, |γᵢ|) = M(m)/|lc m| ≤ M̄(m)/|lc m|` (Landau). All
-   quantities are read off the factor list, so
+```text
+resultIsolationPrec(e) = separationDepth(e).
+```
 
-   ```
-   disambiguationPrec := guard +
-     max over ordered pairs (m, g) of distinct factors of
-       ⌈log₂( ‖g‖₁^{deg m − 1} · M̄(m)^{deg g} )⌉
-   ```
+Refine the operation ball and candidate isolations to this precision. The
+HexRoots separation theorem makes distinct candidates disjoint, so exactly one
+candidate isolation meets the operation ball. This path does not need a second
+eliminant or the Stage 2 resultant value theorem.
 
-   with a small pinned `guard` for the ball-evaluation rounding. The
-   loop refines to that depth and no further: at that precision
-   exactly one factor's ball straddles zero.
-   If the chosen factor has multiplicity `> 1` in `r₀`, the shift is
-   degenerate (two conjugate pairs collide at the value `γ`): restart
-   with `c = 2`, then `c = 3`, and so on. At most
-   `maxShift α β := (deg α.p · deg β.p)²` shifts can be degenerate
-   (one per collision of conjugate pairs), so trying `maxShift + 1`
-   shifts is a bounded loop.
-4. **Identify the root.** Run `HexRoots.isolate` on the chosen factor
-   and locate the isolation whose disc meets the approximation ball.
-5. **Recover β, then α, as elements of ℚ(γ).** Work in the field
-   `QAdjoin r γ` (its `Field` instance is available, since `r`
-   passed the irreducibility check in step 4). Using HexPoly's
-   Euclidean algorithm over that field, compute
+Canonical `AlgebraicNumber` arithmetic converts inputs with `toRoot`, performs
+the lazy operation, then calls `exact`. A many-input common-field routine is used
+internally only for polynomials with canonical algebraic coefficients.
+Canonical `AlgebraicNumber` exposes the ordinary arithmetic operations, with
+`inv 0 = 0`; the Mathlib companion installs and proves the law-bearing field
+structure. `AlgebraicRoot` exposes named operations but no field structure:
+two semantically equal lazy results can have different enclosing polynomials,
+so the field laws do not hold for structural equality on that record.
 
-   ```
-   g(y) := gcd( β.p(y), α.p(γ − c·y) )   in (QAdjoin r γ)[y]
-   ```
-
-   For a non-degenerate shift the two operands have exactly one
-   common root, `y = β`, so `g` is linear: `g(y) = y − B` with
-   `B : QAdjoin r γ`. Set `βIn := B` and `αIn := γ − c·βIn`. A gcd
-   of degree ≥ 2 is one more detector of a degenerate shift: restart
-   with the next `c`, in the same loop as step 3. (`DensePoly` over
-   `QAdjoin r γ` is the instantiation at work here; the coefficient
-   field supplies the `Div` that HexPoly's gcd needs.)
-
-The multiplicity test in step 3 is exactly the classical
-primitive-element condition: `γ = α + c·β` fails to generate
-`ℚ(α, β)` only when some other conjugate pair gives the same value,
-which forces the chosen factor to appear squared in `r₀`.
-
-### Arithmetic
+## Polynomial roots
 
 ```lean
-def AlgebraicNumber.add? (α β : AlgebraicNumber) : Option AlgebraicNumber := do
-  let cf ← α.commonField? β
-  haveI := cf.irred
-  (cf.αIn + cf.βIn).toAlgebraicNumber? cf.γrep cf.γ_mk
+def QAdjoin.roots? [ZPoly.CheckedIrreducible p]
+    (f : DensePoly (QAdjoin p x))
+    (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
+    Option RootSet
+def QAdjoin.roots [ZPoly.CheckedIrreducible p] (...) : RootSet
 
-def AlgebraicNumber.add (α β : AlgebraicNumber) : AlgebraicNumber :=
-  (α.add? β).getD (panicWith 0 "AlgebraicNumber.add: certification failed")
+def AlgebraicPoly.roots? (f : AlgebraicPoly) : Option RootSet
+def AlgebraicPoly.roots  (f : AlgebraicPoly) : RootSet
 ```
 
-The conversion back through `toAlgebraicNumber?` performs the field
-minimisation: the result may generate a smaller field than `ℚ(γ)`.
-For example `α + (−α) = 0` lands in ℚ even though both inputs live in
-`ℚ(α)`.
+The zero polynomial returns `some .all`; `none` is reserved for certification
+failure. Finite output is normalized, duplicate-free, sorted by polynomial then
+isolation coordinates, and carries positive multiplicities.
 
-`mul?`/`mul` and `sub?`/`sub` follow the same pattern. `neg` is total
-outright: the minimal polynomial of `−α` is `p(−t)` re-canonicalised,
-and the isolation is reflected exactly. `inv?` avoids the resultant:
-the minimal polynomial of `1/α` is `p` with its coefficient order
-reversed, re-canonicalised. The matching isolation is obtained by
-transforming `rep`'s disc under `z ↦ 1/z` with `Dyadic.invAtPrec` and
-re-certifying the witness; the re-certification is the one step of
-`inv?` that can decline, and `inv` pins it with `panicWith` like the
-others. On zero input, `inv 0 = 0` by definition (Mathlib's
-convention for division), so `inv` takes no hypothesis; the
-correctness theorem carries `¬ α.isZero`.
+For `QAdjoin.roots?`:
+
+1. Run Yun decomposition over the coefficient field. Process each squarefree
+   component separately; a root from the component indexed by `e` receives
+   multiplicity `e`.
+2. Clear coefficient denominators and form the norm eliminant over `ℚ` by a
+   resultant with `p`. It is nonzero because coefficients are reduced modulo the
+   irreducible `p`.
+3. Normalize and isolate the eliminant's roots.
+4. Reject candidates belonging only to other embeddings of `QAdjoin p x` by
+   evaluating the original component at the candidate and the selected `x`.
+   Refute wrong candidates at `evalDisambiguationPrec`.
+5. Return the surviving `AlgebraicRoot` values with the Yun multiplicity.
+
+`AlgebraicPoly.roots?` first embeds all nonzero coefficients into one computed
+primitive `QAdjoin`, then invokes the fixed-field algorithm. This internal
+common-field construction is deterministic and bounded but is not used for
+binary arithmetic.
+
+For a candidate evaluation, construct its integer eliminant `q`, remove its
+maximal `X` power, and take the primitive part. If the evaluation is nonzero,
+`q(0) ≠ 0` and the reciprocal Cauchy bound gives
+`|value| ≥ 1 / (1 + height(q))`. Let `C` be the explicit Horner error majorant
+computed from the input coefficient heights, degrees, and Cauchy root bounds.
+Define `evalDisambiguationPrec` as the least precision in the finite range
+
+```text
+0 .. ceilLog2(ceil(2 * (1 + height(q)) * C)) + 2
+```
+
+whose Horner enclosure radius is below `1 / (2 * (1 + height(q)))`.
+The displayed endpoint proves that the bounded search succeeds. The same
+construction, with the eliminant for each generator/factor evaluation, is used
+by tower adjoining. No API performs unbounded refinement.
+
+## Totalization
+
+`panicWith fallback message` prints in compiled code and is definitionally the
+fallback for proofs. Total algebraic operations use it only around checked forms
+whose `_isSome` theorem is part of the companion contract. `exact`, arithmetic,
+and both `roots` functions are the primary user APIs; the `?` forms remain public
+for diagnostics and staged proofs.
+
+`AlgebraicNumber` has canonical zero `p = X`, so it supplies the `Inhabited`
+fallback used by exactification. `RootSet.all` is the loud fallback for the two
+total root wrappers; their `_isSome` theorems make it unreachable.
 
 ## File organisation
 
-- `HexNumberField/Basic.lean`: `QAdjoin`, `AlgebraicNumber`,
-  constructors, accessors, `BEq`, `isZero`, `panicWith`, the
-  `Inhabited` instance.
-- `HexNumberField/Operations.lean`: `QAdjoin` arithmetic and the
-  `Field` instance.
-- `HexNumberField/Approx.lean`: `QAdjoin.approx`.
-- `HexNumberField/Convert.lean`: `toQAdjoin`,
-  `toAlgebraicNumber?`, `toAlgebraicNumber`.
-- `HexNumberField/CommonField.lean`: `commonField?`,
-  `disambiguationPrec`, `maxShift`.
-- `HexNumberField/AlgOps.lean`: `AlgebraicNumber` arithmetic
-  (`?`-forms and their total wrappers).
-- `conformance/HexNumberField/{Conformance,EmitFixtures}.lean` and
-  `bench/HexNumberField/Bench.lean`: conformance and bench drivers in
-  the shared sub-projects.
+```text
+HexNumberField/
+  Basic.lean          : core types, equality, zero, panicWith
+  QAdjoin.lean        : fixed-field operations and approximation
+  Convert.lean        : canonicalization and exactification
+  Lazy.lean           : eliminants and lazy arithmetic
+  Disambiguate.lean   : candidate bounds and certified selection
+  AlgebraicPoly.lean  : semantic coefficient-polynomial representation
+  Roots.lean          : fixed-field and algebraic-coefficient root APIs
+```
 
-The `isIrreducible` addition lands in `hex-berlekamp-zassenhaus`
-(one Bool-valued definition next to `factor`), not here.
+Conformance and benchmark drivers live in the shared `conformance/` and
+`bench/` sub-projects.
 
-## Conformance fixtures
+## Conformance
 
-Per [SPEC/testing.md](../testing.md):
+- *core*: at least three cases per public operation, including `√2 + √2`,
+  `√2 * √2`, `√2 + (-√2)`, inversion of zero, equal values represented by
+  different nonminimal polynomials, an enclosing polynomial with irrelevant
+  factors, repeated input roots, and a conjugate-embedding impostor.
+- *ci*: deterministic small-degree fixtures checked by cypari2. Use
+  python-flint independently for integer resultants, factorization, and certified
+  complex-root balls.
+- *local*: degree-product stress cases and optional Nemo/Hecke comparisons.
 
-- *core* (Lean-only):
-  - `√2 + √2 = 2·√2`: build `α : AlgebraicNumber` for the positive
-    root of `X² − 2`, compute `α + α`, check the result's minimal
-    polynomial is `X² − 8` and `sameRoot` matches the positive root.
-  - `√2 · √2 = 2`: the result `==` the `AlgebraicNumber` of `X − 2`.
-  - `√2 + (−√2) = 0`: checks field minimisation (the result lies in
-    ℚ, not `ℚ(√2)`).
-  - `(1 + √2) · (1 − √2) = −1`.
-  - Cyclotomic check: `ζ₅ + ζ₅⁻¹ = (−1 + √5)/2`.
-  - `QAdjoin` ring identities on committed elements of `ℚ(√2)` and
-    `ℚ(ζ₅)`.
-- *ci*: 30 random small-degree `(α, β, op)` triples with a
-  deterministic seed; oracle from SageMath.
-- *local*: higher-degree arithmetic, timed against the complexity
-  contract.
+Sage is not an oracle. Root comparisons use multiplicity buckets and compare the
+oracle's independently computed decomposition with Lean's finite output.
 
-External oracles: SageMath
-(`R.<x> = ZZ[]; K.<a> = NumberField(...)`), python-flint.
+## Complexity and Phase 4 budgets
 
-## Complexity contract
+- Fixed-field arithmetic has the existing dense-polynomial costs; a compiled
+  degree-10 field operation remains capped at 100 ms on the reference host.
+- A lazy binary operation has eliminant degree at most
+  `deg(a.p) * deg(b.p)`. Its ceiling is the measured resultant cost plus the
+  existing HexRoots ceiling at that eliminant degree. Do not promise a faster
+  end-to-end time than root isolation itself.
+- Degree-product at most 20 is the largest merge-facing lazy arithmetic class.
+  Larger cases are local until new measurements justify promotion.
+- Exactification adds one Berlekamp-Zassenhaus factorization and factor-root
+  selection. Root APIs add Yun decomposition and one norm eliminant per
+  squarefree component.
 
-Per-operation costs, with `n = max(deg α.p, deg β.p)` and
-`H = max(‖α.p‖∞, ‖β.p‖∞)`:
-
-- `α + β`, `α · β`: dominated by resultant + factoring.
-  - Resultant over `R = ZPoly`: `O(n)` pseudo-division steps and
-    `O(n²)` coefficient operations, where each coefficient is itself
-    a polynomial in `t` (see the hex-resultant complexity contract;
-    `deg r₀ ≤ n²`).
-  - Factoring (`hex-berlekamp-zassenhaus` on a polynomial of degree
-    `≤ n²`): per the existing BZ complexity contract.
-  - Numerical disambiguation: bounded by `mahlerPrec` of the chosen
-    factor.
-  - Recovering β: one Euclidean gcd in `(QAdjoin r γ)[y]` on
-    operands of degree ≤ `n`, where each coefficient operation is
-    polynomial arithmetic mod `r`.
-- `1/α`: `O(deg α.p)` for the coefficient reversal, plus one disc
-  transformation and witness re-check (one `O(n²)`-operation
-  certification; see hex-roots.md).
-- `α + q` for rational `q`: `O(deg α.p)`; no field change.
-- `isZero`, `==`: one polynomial comparison plus one dyadic
-  comparison.
-
-Each operation refines root isolations once and stores the refined
-representatives in its result, so repeated operations on the same
-numbers do not repeat refinement work.
-
-## Time budgets (Phase 4 validation)
-
-Rough estimates, to be measured against SageMath:
-
-- `α + β` for `α, β` of degree ≤ 5: under 1 second.
-- Arithmetic in a fixed degree-10 field: under 100 ms per operation.
-- `α + β` for `α, β` of degree ≤ 20: under 30 seconds.
+Phase 4 records separate timings for eliminant construction, isolation,
+disambiguation, and exactification so regressions are attributable.
 
 ## References
 
-- Cohen, H. *A Course in Computational Algebraic Number Theory.*
-  Springer, 1993. The standard reference: especially §4.1-4.2
-  (algebraic numbers, resultant-based arithmetic) and §4.5 (number
-  field elements).
-- Belabas, K. *Topics in computational algebraic number theory.*
-  J. Théorie des Nombres de Bordeaux 16 (2004), 19-63. A survey of
-  the algorithms used here.
-- Bostan, A.; Flajolet, P.; Salvy, B.; Schost, É. *Fast computation
-  of special resultants.* JSC 41 (2006), 1-29. Faster alternatives
-  for the `commonField` resultant, if it becomes the bottleneck.
+- Cohen, H. *A Course in Computational Algebraic Number Theory.* Springer,
+  1993, sections 4.1, 4.2, and 4.5.
+- Belabas, K. *Topics in computational algebraic number theory.* J. Théorie
+  des Nombres de Bordeaux 16 (2004), 19-63.
+- Bostan, A.; Flajolet, P.; Salvy, B.; Schost, É. *Fast computation of
+  special resultants.* JSC 41 (2006), 1-29.

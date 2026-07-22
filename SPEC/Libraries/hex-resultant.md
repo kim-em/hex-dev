@@ -4,10 +4,10 @@ Polynomial resultant and discriminant for `Hex.DensePoly R` over a UFD
 `R`. Computed via the **subresultant pseudo-remainder sequence**
 (Collins 1967; Brown 1978), the standard fraction-free algorithm.
 
-Two instantiations are used in this project: `R = Int` (that is,
-`ZPoly`), and `R = ZPoly` itself. The second gives bivariate
-resultants: `hex-number-field`'s `commonField` eliminates a variable
-`y` from polynomials whose coefficients are polynomials in `t`.
+The main instantiations are `R = Int` (that is, `ZPoly`), `R = ZPoly`
+for bivariate elimination, and `R = NumberTower.Elem T` for norms over
+successive number-field extensions. The last consumer lives in
+`hex-number-field-tower`; this library remains independent of it.
 
 ## Why subresultants, not Sylvester+Bareiss
 
@@ -135,12 +135,12 @@ Per [SPEC/testing.md](../testing.md), fixtures are tiered into
     `resultant_y (y² − t) (y − t) = t² − t`.
 - *ci* (CI, with external oracle when available):
   - 30 random degree-10 pairs with a deterministic seed; oracle from
-    SageMath or python-flint.
+    python-flint, with cypari2 as a secondary implementation.
 - *local* (developer-driven):
   - High-degree resultants, timed against the complexity contract.
 
-External oracles: SageMath (`R.<x> = ZZ[]; f.resultant(g)`),
-python-flint (`fmpz_poly.resultant`).
+External oracles: python-flint (`fmpz_poly.resultant`) and cypari2
+(`polresultant`). Sage is not used as an oracle.
 
 ## Complexity contract
 

@@ -1,1 +1,10 @@
-HexLLLMathlib Phase 3 conformance module is present and imported by the library umbrella.
+HexLLLMathlib Phase 3 conformance was reviewed and its module landed in
+#2581 (HexLLLMathlib/Conformance.lean, imported from the umbrella). That
+module was later deliberately deleted in #3707 per the ceremonial-bridge
+Conformance ban added to SPEC/testing.md in #3700: bridge libraries
+expose proof-only equivalences with no runtime kernel to conform to, and
+every #guard in the deleted file was audited as either exercising a
+bridge function or duplicating coverage in the computational sibling
+HexLLL conformance module. This token records that history; the Phase 3
+review itself stands, and the absence of a HexLLLMathlib conformance
+module in-tree is intentional, not an omission.

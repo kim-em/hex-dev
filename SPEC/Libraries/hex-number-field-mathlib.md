@@ -1,256 +1,222 @@
 # hex-number-field-mathlib (depends on hex-number-field + hex-resultant-mathlib + hex-berlekamp-zassenhaus-mathlib + hex-roots-mathlib + hex-poly-z-mathlib)
 
-Mathlib companion for `hex-number-field`. Proves that the
-algebraic-number arithmetic computes what it claims, against Mathlib's
-`AdjoinRoot`, `minpoly`, and field-extension API.
+Mathlib companion for `hex-number-field`. It interprets the executable types in
+`ℂ` and proves fixed-field correspondence, canonicalization, factorization-lazy
+arithmetic, semantic equality, and completeness of the polynomial root APIs.
 
-Throughout, write `pℚ := (toPolynomial p).map (algebraMap ℤ ℚ)` for
-the ℚ-coefficient form of `p : ZPoly`. The passage between `p`
-(primitive, positive leading coefficient, irreducible over ℤ) and the
-monic `minpoly ℚ α` goes through `pℚ` and Gauss's lemma. Getting this
-boundary right is most of the definitional work.
+Write `pℚ` for `(toPolynomial p).map (algebraMap ℤ ℚ)`.
 
-## What we cite from Mathlib (no work)
+## Imported foundations
 
-All names checked against the Mathlib revision this repository pins.
-Module names are given without line numbers, which rot.
+- `AdjoinRoot`, its lift API, and its field instance under irreducibility.
+- Gauss's lemma between primitive irreducibility over `ℤ` and `ℚ`.
+- `minpoly`, `IntermediateField`, algebraic closure, and primitive elements.
+- Polynomial roots with multiplicity and finite-dimensional norm.
+- Dense polynomial correspondence from `hex-poly-z-mathlib`.
+- Full resultant correspondence and specialization from
+  `hex-resultant-mathlib`.
+- Root interpretation, refinement completeness, and `sameRoot` semantics from
+  `hex-roots-mathlib`.
+- Integer factorization soundness from
+  `hex-berlekamp-zassenhaus-mathlib`.
 
-- `AdjoinRoot`, `AdjoinRoot.lift`, and the `Field (AdjoinRoot f)`
-  instance under `[Fact (Irreducible f)]`
-  (`Mathlib.RingTheory.AdjoinRoot`).
-- Gauss's lemma in the form
-  `Polynomial.IsPrimitive.Int.irreducible_iff_irreducible_map_cast`
-  (`Mathlib.RingTheory.Polynomial.GaussLemma`): `p` irreducible over ℤ
-  iff `pℚ` irreducible over ℚ, for primitive `p`.
-- `Field.exists_primitive_element` for finite separable extensions
-  (`Mathlib.FieldTheory.PrimitiveElement`); applies to `ℚ ⊆ ℚ(α, β)`
-  since ℚ has characteristic zero.
-- `IntermediateField` with the `F⟮α⟯` notation and its lattice API
-  (`Mathlib.FieldTheory.IntermediateField.Basic`,
-  `….Adjoin.Defs`).
-- `IsAlgebraic` (`Mathlib.RingTheory.Algebraic.Defs`).
-- `IntermediateField.algebraicClosure F E`
-  (`Mathlib.FieldTheory.AlgebraicClosure`): the relative algebraic
-  closure; `IntermediateField.algebraicClosure ℚ ℂ` is the subfield of
-  algebraic complex numbers, with the membership lemma
-  `x ∈ … ↔ IsAlgebraic ℚ x`.
-- `minpoly` and its API (`Mathlib.FieldTheory.Minpoly.Basic`); monic
-  by Mathlib convention, in `ℚ[X]` for our case.
-- `minpoly.equivAdjoin : AdjoinRoot (minpoly R x) ≃ₐ[R] adjoin R {x}`
-  for `x` integral
-  (`Mathlib.FieldTheory.Minpoly.IsIntegrallyClosed`): the equivalence
-  between the abstract quotient and the concrete subfield.
-- `Polynomial.IsPrimitive`, `Polynomial.content`,
-  `Polynomial.primPart` (`Mathlib.RingTheory.Polynomial.Content`).
-- From the other companions: the `DensePoly Int ≃+* Polynomial ℤ`
-  ring equivalence (`hex-poly-z-mathlib`),
-  `resultant_eq_zero_iff_common_root` (`hex-resultant-mathlib`),
-  `RefinedIsolation.root` / `rootOf` and the `sameRoot` semantics
-  (`hex-roots-mathlib`), and
-  `Hex.ZPoly.IsIrreducible f ↔ Irreducible (toPolynomial f)`
-  (`hex-berlekamp-zassenhaus-mathlib`).
-
-## Correspondence theorems
-
-### `QAdjoin p x` semantics
+## Semantic maps
 
 ```lean
-/-- `QAdjoin p x` is the quotient `ℚ[X]/(pℚ)`. A ring equivalence for
-    any `p` of positive degree; when `p` is irreducible it is an
-    equivalence of fields (both sides then carry field structures). -/
 def QAdjoin.equivAdjoinRoot {p : ZPoly} (x : SimpleRoot p) :
     QAdjoin p x ≃+* AdjoinRoot pℚ
 
-/-- Evaluation at the root: the embedding of `QAdjoin p x` into ℂ. -/
 def QAdjoin.toComplex {p : ZPoly} (x : SimpleRoot p) :
     QAdjoin p x →+* ℂ
-  -- AdjoinRoot.lift at `rootOf x`, composed with equivAdjoinRoot
 
-theorem QAdjoin.toComplex_eq_eval {p : ZPoly} (x : SimpleRoot p)
-    (a : QAdjoin p x) :
-    QAdjoin.toComplex x a = (toPolynomial a.coeffs).aeval (rootOf x)
-```
+def AlgebraicRoot.toComplex (a : AlgebraicRoot) : ℂ := rootOf a.x
+def AlgebraicNumber.toComplex (a : AlgebraicNumber) : ℂ := rootOf a.x
 
-Note `AdjoinRoot (toPolynomial p)` (over ℤ) would be the wrong target:
-that is `ℤ[X]/(p)`, an order, not the field `ℚ(α)`. The map to ℚ
-coefficients is what makes `equivAdjoinRoot` and the field structure
-correct, and Gauss's lemma is what transfers `p`'s irreducibility over
-ℤ to `pℚ`'s over ℚ.
-
-### `QAdjoin.approx` correctness
-
-```lean
-theorem QAdjoin.approx_sound (a : QAdjoin p x) (rep h prec) :
-    QAdjoin.toComplex x a ∈ (a.approx rep h prec).2.set ∧
-    SimpleRoot.mk (a.approx rep h prec).1 = x
-
-theorem QAdjoin.approx_radius (a : QAdjoin p x) (rep h prec) :
-    (a.approx rep h prec).2.radius ≤ 2^(−prec)
-```
-
-`approx` is total with a sound fallback, so `approx_sound` is
-unconditional: the ball always contains the true value, and the
-returned isolation always identifies the same root. Only the
-precision claim `approx_radius` depends on refinement succeeding,
-which is part of the bound-sufficiency work below.
-
-### `AlgebraicNumber` semantics
-
-```lean
-def AlgebraicNumber.toComplex (a : AlgebraicNumber) : ℂ :=
-  rootOf a.x
-
-theorem AlgebraicNumber.toComplex_isRoot (a : AlgebraicNumber) :
+theorem AlgebraicRoot.toComplex_isRoot (a : AlgebraicRoot) :
     (toPolynomial a.p).aeval a.toComplex = 0
 
-/-- The stored polynomial is the minimal polynomial: its ℚ-coefficient
-    form is the monic minimal polynomial scaled by the leading
-    coefficient. -/
 theorem AlgebraicNumber.p_eq_minpoly (a : AlgebraicNumber) :
-    (a.p.leadingCoeff : ℚ)⁻¹ • (toPolynomial a.p).map (algebraMap ℤ ℚ)
-      = minpoly ℚ a.toComplex
+    (a.p.leadingCoeff : ℚ)⁻¹ •
+      (toPolynomial a.p).map (algebraMap ℤ ℚ) =
+        minpoly ℚ a.toComplex
+```
 
-/-- Canonicity: `toComplex` is injective (per `BEq`, below), and its
-    range is exactly the algebraic numbers. -/
-theorem AlgebraicNumber.range_toComplex :
-    Set.range AlgebraicNumber.toComplex = {z : ℂ | IsAlgebraic ℚ z}
+`QAdjoin.toComplex` evaluates reduced coordinates at the selected root. Under
+`[ZPoly.CheckedIrreducible p]`, `ZPoly.isIrreducible_iff` supplies semantic
+irreducibility, so it is an embedding of fields. This file installs the
+law-bearing field structures for `QAdjoin` and canonical `AlgebraicNumber` and
+proves that their operations are the computational ones.
 
-/-- `==` decides equality of values. -/
+## Equality, zero, and approximation
+
+```lean
 theorem AlgebraicNumber.beq_iff (a b : AlgebraicNumber) :
     a == b ↔ a.toComplex = b.toComplex
+
+theorem AlgebraicRoot.beq_iff (a b : AlgebraicRoot) :
+    a == b ↔ a.toComplex = b.toComplex
+
+theorem AlgebraicRoot.isZero_iff (a : AlgebraicRoot) :
+    a.isZero ↔ a.toComplex = 0
+
+theorem QAdjoin.approx_sound (...) :
+    QAdjoin.toComplex x a ∈ (a.approx rep h prec).2.set
+
+theorem QAdjoin.approx_radius (...) :
+    (a.approx rep h prec).2.radius ≤ 2 ^ (-prec)
 ```
 
-(`toComplex` is not injective as a function on the raw structure,
-since two values may differ only in `rep`. `beq_iff` is the right
-statement, and injectivity holds on the `BEq`-quotient.)
+The `AlgebraicRoot.beq_iff` proof uses `sameRoot` on the fast path and
+exactification on the general path. No structural `DecidableEq` is exposed for
+either algebraic-number record.
 
-### `commonField` correctness
+## Canonicalization
 
-```lean
-theorem AlgebraicNumber.commonField?_sound (α β : AlgebraicNumber)
-    {cf} (h : α.commonField? β = some cf) :
-    QAdjoin.toComplex cf.γ cf.αIn = α.toComplex ∧
-    QAdjoin.toComplex cf.γ cf.βIn = β.toComplex
-
-theorem AlgebraicNumber.commonField?_isSome (α β : AlgebraicNumber) :
-    (α.commonField? β).isSome
-```
-
-The proof certifies the algorithm's own checks rather than citing
-abstract existence: `resultant_eq_zero_iff_common_root`
-(hex-resultant-mathlib) shows `α + c·β` is a root of the resultant;
-the numerical disambiguation (hex-roots-mathlib `sameRoot` semantics
-plus ball arithmetic bounds) shows the chosen factor is the one
-vanishing at `α + c·β`; the multiplicity-1 check plus the classical
-primitive-element argument shows `γ` generates, so the step-5 gcd is
-linear and its unique root is `β`.
-`Field.exists_primitive_element` is used only as a guide. The
-correctness proof is about the computed `γ`, not an abstract one.
-
-### Arithmetic correctness
-
-The proofs are staged to match the `?`-form / total-form split in
-hex-number-field.md:
+First derive `ZPoly.Irreducible p` from every stored
+`ZPoly.CheckedIrreducible p` using the factorization companion's Boolean
+equivalence. Together with the stored squarefreeness proof, this justifies both
+the canonical minimal-polynomial theorem and `AlgebraicNumber.toRoot` without a
+cross-layer proof gap.
 
 ```lean
--- Stage 1 (soundness): a computed certificate is correct.
-theorem AlgebraicNumber.add?_sound (α β : AlgebraicNumber)
-    {γ} (h : α.add? β = some γ) :
-    γ.toComplex = α.toComplex + β.toComplex
+theorem AlgebraicNumber.toRoot_toComplex (a : AlgebraicNumber) :
+    a.toRoot.toComplex = a.toComplex
 
--- Stage 2 (bound sufficiency): the certificate always appears.
-theorem AlgebraicNumber.add?_isSome (α β : AlgebraicNumber) :
-    (α.add? β).isSome
+theorem AlgebraicRoot.exact?_sound (a : AlgebraicRoot) {b}
+    (h : a.exact? = some b) :
+    b.toComplex = a.toComplex
 
--- Headline: unconditional, by composing the two; the `panicWith`
--- branch of the total wrapper is dead by stage 2.
-theorem AlgebraicNumber.add_toComplex (α β : AlgebraicNumber) :
-    (α.add β).toComplex = α.toComplex + β.toComplex
+theorem AlgebraicRoot.exact?_isSome (a : AlgebraicRoot) :
+    a.exact?.isSome
 
--- likewise for mul, sub, inv (with hypothesis ¬ α.isZero), the
--- always-total neg, and isZero_iff
-```
+theorem AlgebraicRoot.exact_toComplex (a : AlgebraicRoot) :
+    a.exact.toComplex = a.toComplex
 
-Stage 1 follows from `commonField?_sound`, the `QAdjoin` ring laws,
-and `toAlgebraicNumber?_sound` below; it is provable without any
-completeness input, because the algorithm checks its own
-certificates. Stage 2 is where the analysis lives (item 6 below).
-
-### Conversion correctness
-
-```lean
-theorem AlgebraicNumber.toQAdjoin_toComplex (a : AlgebraicNumber) :
-    QAdjoin.toComplex a.x a.toQAdjoin = a.toComplex
-
-theorem QAdjoin.toAlgebraicNumber?_sound [Hex.ZPoly.IsIrreducible p]
-    (a : QAdjoin p x) (rep h) {b}
-    (hsome : a.toAlgebraicNumber? rep h = some b) :
+theorem QAdjoin.toAlgebraicNumber?_sound
+    [ZPoly.CheckedIrreducible p] (...) {b} (h : ... = some b) :
     b.toComplex = QAdjoin.toComplex x a
 ```
 
-`toAlgebraicNumber?_sound` is the substantive theorem: the
-minimal-polynomial computation (that the first linear dependence among
-the powers of the multiplication operator gives `minpoly ℚ` of the
-value, using that `ℚ[t]/(pℚ)` is a field) and the root identification
-(that the isolation selected by the ball test is the root equal to the
-value) both need real proofs.
+Exactification completeness follows because the squarefree enclosing polynomial
+factors into distinct irreducibles and exactly one factor contains the selected
+root. Factor soundness supplies the product identity; resultant common-root facts
+and disjoint refined isolations supply uniqueness.
 
-## New theorems this library must build
+## Lazy arithmetic
 
-1. **Monic-ℚ to primitive-positive-ℤ** (~50 lines):
-   ```lean
-   theorem exists_unique_primitive_int_minpoly (α : ℂ) (hα : IsAlgebraic ℚ α) :
-       ∃! p : ℤ[X], p.IsPrimitive ∧ 0 < p.leadingCoeff ∧
-         (p.leadingCoeff : ℚ)⁻¹ • p.map (algebraMap ℤ ℚ) = minpoly ℚ α
-   ```
-   Denominator clearing plus the primitive part, over the monic
-   ℚ-minimal polynomial.
-2. **Canonicity of `AlgebraicNumber`** (~100 lines): wrap item 1 into
-   the structure and prove `range_toComplex` and `beq_iff` (the
-   latter also uses the `sameRoot` semantics from hex-roots-mathlib).
-3. **`QAdjoin.equivAdjoinRoot`** (~100 lines): compose the
-   `hex-poly-z-mathlib` ring equivalence with the quotient
-   presentation of `AdjoinRoot pℚ`; transfer the field structure
-   through Gauss's lemma and `[Fact (Irreducible pℚ)]`.
-4. **`toAlgebraicNumber?_sound`**: the minimal-polynomial-of-the-
-   multiplication-operator argument and the root identification.
-5. **`commonField?_sound`**: certification of the resultant, factor
-   choice, non-degeneracy, and change of basis, as described above.
-6. **Bound sufficiency** (the `_isSome` theorems, retiring every
-   `panicWith` branch): the `disambiguationPrec` estimate (a
-   classical lower bound on `|g(γ)|` for the wrong factors `g`, via
-   heights and resultants), the `maxShift` collision count, and the
-   root-refinement pieces imported from hex-roots-mathlib's
-   completeness development.
+For every checked operation, prove certificate soundness first, bound sufficiency
+second, and the total headline last:
 
-Items 1-3 are bounded and small. Items 4 and 5 are the substantive
-soundness obligations, comparable in size to items 1-3 combined
-several times over, and there is no shortcut through abstract
-existence theorems. Item 6 can be deferred along with
-hex-roots-mathlib's completeness development: the stage-1 soundness
-theorems stand on their own, and the unconditional headline theorems
-land when item 6 does.
+```lean
+theorem AlgebraicRoot.add?_sound (a b : AlgebraicRoot) {c}
+    (h : a.add? b = some c) :
+    c.toComplex = a.toComplex + b.toComplex
+
+theorem AlgebraicRoot.add?_isSome (a b : AlgebraicRoot) :
+    (a.add? b).isSome
+
+theorem AlgebraicRoot.add_toComplex (a b : AlgebraicRoot) :
+    (a.add b).toComplex = a.toComplex + b.toComplex
+```
+
+Provide the same theorem family for subtraction, multiplication, inversion, and
+division, plus unconditional negation. Inversion follows Mathlib's convention
+`0⁻¹ = 0`, so its headline needs no nonzero hypothesis.
+
+Operation soundness uses the Stage 1 specialization-vanishing theorem from
+`hex-resultant-mathlib`. `_isSome` uses squarefree normalization,
+root-isolation completeness, and HexRoots separation at
+`resultIsolationPrec`; it does not require the Stage 2 resultant value theorem.
+Canonical `AlgebraicNumber` arithmetic follows by `toRoot`, the lazy headline,
+and `exact_toComplex`.
+
+## Algebraic coefficient polynomials
+
+Interpret `AlgebraicPoly` as a Mathlib `Polynomial ℂ` using
+`AlgebraicNumber.toComplex` coefficientwise.
+
+```lean
+def AlgebraicPoly.toPolynomial (f : AlgebraicPoly) : Polynomial ℂ
+
+theorem AlgebraicPoly.isZero_iff (f : AlgebraicPoly) :
+    f.isZero ↔ f.toPolynomial = 0
+```
+
+This theorem justifies semantic trailing-zero trimming and is the reason the
+computational library does not use `DensePoly AlgebraicNumber`.
+
+## Root API correctness
+
+```lean
+theorem QAdjoin.roots?_isSome [ZPoly.CheckedIrreducible p] (...) :
+    (QAdjoin.roots? f rep h).isSome
+
+theorem AlgebraicPoly.roots?_isSome (f : AlgebraicPoly) :
+    f.roots?.isSome
+
+theorem AlgebraicPoly.roots_all_iff (f : AlgebraicPoly) :
+    f.roots = .all ↔ f.toPolynomial = 0
+
+theorem AlgebraicPoly.mem_roots_iff (f : AlgebraicPoly) (a : AlgebraicRoot) :
+    a ∈ f.roots ↔ Polynomial.eval a.toComplex f.toPolynomial = 0
+
+theorem AlgebraicPoly.multiplicity_eq (f : AlgebraicPoly)
+    (a : AlgebraicRoot) :
+    multiplicityOf a f.roots =
+      Polynomial.rootMultiplicity a.toComplex f.toPolynomial
+```
+
+State corresponding fixed-field theorems through `QAdjoin.toComplex`. For finite
+outputs also prove no duplicates, positive multiplicities, deterministic order,
+and that the sum of multiplicities is the polynomial degree.
+
+The proof follows the executable stages:
+
+1. Yun decomposition gives the multiplicity index for each squarefree component.
+2. Full resultant agreement identifies the norm eliminant and proves candidate
+   completeness.
+3. The selected field embedding makes evaluation of the original polynomial the
+   acceptance criterion; the disambiguation lower bound refutes candidates from
+   other embeddings.
+4. The internal common-field construction preserves every canonical coefficient,
+   reducing `AlgebraicPoly.roots` to the fixed-field theorem.
+
+## Required new developments
+
+1. Canonical primitive-positive integer representatives of rational minimal
+   polynomials and canonicity of `AlgebraicNumber`.
+2. `QAdjoin.equivAdjoinRoot`, field-law transfer, and approximation semantics.
+3. Minimal polynomial of the multiplication operator for
+   `toAlgebraicNumber?`.
+4. Exactification factor selection and completeness.
+5. Lazy eliminant soundness, same-eliminant separation, and the independent
+   evaluation-refutation bound used by root filtering.
+6. Many-coefficient primitive-field construction for `AlgebraicPoly`.
+7. Yun multiplicity transfer, norm candidate completeness, and embedding
+   filtering for both root APIs.
+
+Items 1 through 4 do not depend on tower support. Items 5 and 7 require the
+staged resultant theorems specified by `hex-resultant-mathlib`.
 
 ## File organisation
 
-```
+```text
 HexNumberFieldMathlib/
-  Basic.lean            : pℚ notation, toComplex definitions
-  AdjoinRoot.lean       : equivAdjoinRoot and the field transfer (item 3)
-  Minpoly.lean          : items 1 and 2
-  Approx.lean           : approx_sound, approx_radius
-  Convert.lean          : toQAdjoin_toComplex, toAlgebraicNumber?_sound (item 4)
-  CommonField.lean      : commonField?_sound (item 5)
-  AlgOps.lean           : arithmetic correctness, staged (?_sound,
-                          ?_isSome, unconditional headlines)
+  Basic.lean          : semantic maps and canonical forms
+  AdjoinRoot.lean     : fixed-field correspondence
+  Approx.lean         : ball semantics
+  Exact.lean          : canonicalization and exactification
+  Lazy.lean           : arithmetic soundness and completeness
+  AlgebraicPoly.lean  : semantic coefficient polynomials
+  Roots.lean          : root completeness and multiplicity
 ```
 
-The library is verified by building it. Conformance fixtures live
-with `hex-number-field`.
+The library is verified by building it. Executable conformance belongs to
+`hex-number-field`.
 
 ## References
 
-- Cohen, *A Course in Computational Algebraic Number Theory* (1993):
-  the algorithms whose correctness is being proved.
-- Lang, *Algebra* (Springer, 3rd ed.): the field-extension facts
-  (primitive element, `K[X]/(p)` is a field for irreducible `p`).
+- Cohen, H. *A Course in Computational Algebraic Number Theory.* Springer,
+  1993.
+- Lang, S. *Algebra.* Springer, 3rd ed., for finite separable extensions,
+  primitive elements, and quotient-field semantics.

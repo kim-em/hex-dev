@@ -1,0 +1,390 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexRoots
+public import HexPolyZMathlib.Basic
+public import Mathlib.Analysis.Complex.Basic
+
+public section
+
+/-!
+# Exact casts for complex root isolation
+
+This module embeds the executable dyadic and Gaussian-dyadic arithmetic from
+`HexRoots` into `ℝ` and `ℂ`. The named maps, rather than global coercion
+instances, keep the executable representation explicit at correspondence
+boundaries. The algebra and order lemmas below are the shared cast layer for
+the geometry, Taylor, and Newton--Kantorovich soundness developments.
+-/
+
+namespace HexRootsMathlib
+
+noncomputable section
+
+/-- The complex cast of an executable integer polynomial. -/
+abbrev toPolyℂ (p : Hex.ZPoly) : Polynomial ℂ :=
+  (HexPolyZMathlib.toPolynomial p).map (Int.castRingHom ℂ)
+
+/-- Coefficients of the complex cast are the complex casts of the executable
+coefficients. -/
+@[simp] theorem coeff_toPolyℂ (p : Hex.ZPoly) (n : Nat) :
+    (toPolyℂ p).coeff n = (p.coeff n : ℂ) := by
+  simp [toPolyℂ]
+
+/-- The complex cast preserves the executable natural degree. -/
+theorem natDegree_toPolyℂ (p : Hex.ZPoly) :
+    (toPolyℂ p).natDegree = p.degree?.getD 0 := by
+  rw [toPolyℂ, Polynomial.natDegree_map_eq_of_injective
+    (RingHom.injective_int (Int.castRingHom ℂ)),
+    HexPolyMathlib.natDegree_toPolynomial]
+
+/-- The executable natural ceiling logarithm is an upper base-two logarithm. -/
+theorem le_two_pow_ceilLog2 (m : Nat) : m ≤ 2 ^ Hex.ceilLog2 m := by
+  unfold Hex.ceilLog2
+  by_cases hm : m ≤ 1
+  · rw [if_pos hm]
+    simpa using hm
+  · rw [if_neg hm]
+    have hm2 : 2 ≤ m := by omega
+    have hne : m - 1 ≠ 0 := by omega
+    have hlog := (Nat.log2_lt hne).1 (Nat.lt_succ_self (m - 1).log2)
+    omega
+
+/-- A positive natural lies above half the power of two selected by the
+executable ceiling logarithm. -/
+theorem two_pow_ceilLog2_lt_two_mul (m : Nat) (hm : 0 < m) :
+    2 ^ Hex.ceilLog2 m < 2 * m := by
+  rw [Hex.ceilLog2]
+  split <;> rename_i h
+  · have hm1 : m = 1 := by omega
+    subst m
+    norm_num
+  · have hmone : 0 < m - 1 := by omega
+    have hlog := Nat.log2_self_le (Nat.ne_of_gt hmone)
+    rw [Nat.pow_succ]
+    omega
+
+namespace Dyadic
+
+/-- The real value of an exact dyadic number, through its rational value. -/
+@[expose] def toReal (x : _root_.Dyadic) : ℝ := (x.toRat : ℝ)
+
+/-- The real value of zero is zero. -/
+@[simp] theorem toReal_zero : toReal 0 = 0 := by
+  unfold toReal
+  rw [_root_.Dyadic.toRat_zero]
+  norm_num
+
+/-- The real value of an integer dyadic is the corresponding integer. -/
+@[simp] theorem toReal_ofInt (n : Int) : toReal (.ofInt n) = (n : ℝ) := by
+  unfold toReal
+  rw [show _root_.Dyadic.ofInt n = ((n : Int) : _root_.Dyadic) from rfl,
+    _root_.Dyadic.toRat_intCast]
+  norm_num
+
+/-- The real value of one is one. -/
+@[simp] theorem toReal_one : toReal 1 = 1 := by
+  change toReal (.ofInt 1) = 1
+  simp
+
+/-- The real value of two is two. -/
+@[simp] theorem toReal_two : toReal 2 = 2 := by
+  change toReal (.ofInt 2) = 2
+  simp
+
+/-- The real-value map preserves addition. -/
+@[simp] theorem toReal_add (x y : _root_.Dyadic) :
+    toReal (x + y) = toReal x + toReal y := by
+  unfold toReal
+  rw [_root_.Dyadic.toRat_add]
+  push_cast
+  rfl
+
+/-- The real-value map preserves negation. -/
+@[simp] theorem toReal_neg (x : _root_.Dyadic) :
+    toReal (-x) = -toReal x := by
+  unfold toReal
+  rw [_root_.Dyadic.toRat_neg]
+  push_cast
+  rfl
+
+/-- The real-value map preserves subtraction. -/
+@[simp] theorem toReal_sub (x y : _root_.Dyadic) :
+    toReal (x - y) = toReal x - toReal y := by
+  unfold toReal
+  rw [_root_.Dyadic.toRat_sub]
+  push_cast
+  rfl
+
+/-- The real-value map preserves multiplication. -/
+@[simp] theorem toReal_mul (x y : _root_.Dyadic) :
+    toReal (x * y) = toReal x * toReal y := by
+  unfold toReal
+  rw [_root_.Dyadic.toRat_mul]
+  push_cast
+  rfl
+
+/-- The real-value map preserves natural powers. -/
+@[simp] theorem toReal_pow (x : _root_.Dyadic) (n : Nat) :
+    toReal (x ^ n) = toReal x ^ n := by
+  unfold toReal
+  rw [_root_.Dyadic.toRat_pow]
+  norm_cast
+
+/-- `toRat` turns a right shift into multiplication by a negative power of
+two. -/
+theorem toRat_shiftRight (x : _root_.Dyadic) (i : Int) :
+    (x >>> i).toRat = x.toRat * (2 : ℚ) ^ (-i) := by
+  cases x with
+  | zero => simp [HShiftRight.hShiftRight, _root_.Dyadic.shiftRight]
+  | ofOdd n k hn =>
+      show (_root_.Dyadic.ofOdd n (k + i) hn).toRat = _
+      rw [_root_.Dyadic.toRat_ofOdd_eq_mul_two_pow,
+        _root_.Dyadic.toRat_ofOdd_eq_mul_two_pow,
+        show -(k + i) = -k + -i by ring, zpow_add₀ (by norm_num)]
+      ring
+
+/-- `toRat` turns a left shift into multiplication by a power of two. -/
+theorem toRat_shiftLeft (x : _root_.Dyadic) (i : Int) :
+    (x <<< i).toRat = x.toRat * (2 : ℚ) ^ i := by
+  cases x with
+  | zero => simp [HShiftLeft.hShiftLeft, _root_.Dyadic.shiftLeft]
+  | ofOdd n k hn =>
+      show (_root_.Dyadic.ofOdd n (k - i) hn).toRat = _
+      rw [_root_.Dyadic.toRat_ofOdd_eq_mul_two_pow,
+        _root_.Dyadic.toRat_ofOdd_eq_mul_two_pow,
+        show -(k - i) = -k + i by ring, zpow_add₀ (by norm_num)]
+      ring
+
+/-- The real value of a left shift is multiplication by a power of two. -/
+theorem toReal_shiftLeft (x : _root_.Dyadic) (i : Int) :
+    toReal (x <<< i) = toReal x * (2 : ℝ) ^ i := by
+  unfold toReal
+  rw [toRat_shiftLeft]
+  push_cast
+  ring
+
+/-- The real value of a right shift is multiplication by a negative power of
+two. -/
+theorem toReal_shiftRight (x : _root_.Dyadic) (i : Int) :
+    toReal (x >>> i) = toReal x * (2 : ℝ) ^ (-i) := by
+  unfold toReal
+  rw [toRat_shiftRight]
+  push_cast
+  ring
+
+/-- Real-value comparison reflects and preserves dyadic non-strict order. -/
+@[simp] theorem toReal_le_toReal_iff {x y : _root_.Dyadic} :
+    toReal x ≤ toReal y ↔ x ≤ y := by
+  unfold toReal
+  rw [Rat.cast_le, _root_.Dyadic.toRat_le_toRat_iff]
+
+/-- Real-value comparison reflects and preserves dyadic strict order. -/
+@[simp] theorem toReal_lt_toReal_iff {x y : _root_.Dyadic} :
+    toReal x < toReal y ↔ x < y := by
+  unfold toReal
+  rw [Rat.cast_lt, _root_.Dyadic.toRat_lt_toRat_iff]
+
+/-- The real-value map is injective. -/
+theorem toReal_injective : Function.Injective toReal := by
+  intro x y h
+  apply _root_.Dyadic.toRat_inj.mp
+  unfold toReal at h
+  exact_mod_cast h
+
+/-- The real-value map preserves the executable dyadic absolute value. -/
+@[simp] theorem toReal_abs (x : _root_.Dyadic) :
+    toReal (Hex.Dyadic.abs x) = |toReal x| := by
+  unfold Hex.Dyadic.abs
+  split <;> rename_i h
+  · rw [toReal_neg, abs_of_neg]
+    exact (toReal_lt_toReal_iff.mpr h).trans_eq toReal_zero
+  · have hx : 0 ≤ toReal x := by
+      apply le_of_not_gt
+      intro h'
+      apply h
+      exact toReal_lt_toReal_iff.mp (by simpa using h')
+    rw [abs_of_nonneg hx]
+
+/-- The real-value map preserves the executable dyadic maximum. -/
+@[simp] theorem toReal_max (x y : _root_.Dyadic) :
+    toReal (Hex.Dyadic.max x y) = max (toReal x) (toReal y) := by
+  unfold Hex.Dyadic.max
+  split <;> rename_i h
+  · rw [max_eq_right (toReal_le_toReal_iff.mpr h)]
+  · rw [max_eq_left (le_of_not_ge fun h' => h (toReal_le_toReal_iff.mp h'))]
+
+/-- The real-value map preserves the executable dyadic minimum. -/
+@[simp] theorem toReal_min (x y : _root_.Dyadic) :
+    toReal (Hex.Dyadic.min x y) = min (toReal x) (toReal y) := by
+  unfold Hex.Dyadic.min
+  split <;> rename_i h
+  · rw [min_eq_left (toReal_le_toReal_iff.mpr h)]
+  · rw [min_eq_right (le_of_not_ge fun h' => h (toReal_le_toReal_iff.mp h'))]
+
+/-- The executable dyadic ceiling logarithm bounds every positive dyadic by
+the corresponding power of two. -/
+theorem toReal_le_two_pow_ceilLog2 (x : _root_.Dyadic) (hx : 0 < toReal x) :
+    toReal x ≤ (2 : ℝ) ^ Hex.Dyadic.ceilLog2 x := by
+  cases x with
+  | zero => simp at hx
+  | ofOdd n k hn =>
+      have htr : toReal (_root_.Dyadic.ofOdd n k hn) =
+          (n : ℝ) * 2 ^ (-k : Int) := by
+        unfold toReal
+        rw [_root_.Dyadic.toRat_ofOdd_eq_mul_two_pow]
+        push_cast
+        ring
+      have h2k : (0 : ℝ) < 2 ^ (-k : Int) :=
+        zpow_pos (by norm_num) _
+      have hn0 : 0 < n := by
+        by_contra h
+        rw [htr] at hx
+        have hnle : (n : ℝ) ≤ 0 := by exact_mod_cast (not_lt.mp h)
+        nlinarith
+      have hcl : Hex.Dyadic.ceilLog2 (_root_.Dyadic.ofOdd n k hn) =
+          (Hex.ceilLog2 n.toNat : Int) - k := by
+        show (if n < 0 then (0 : Int) else (Hex.ceilLog2 n.toNat : Int) - k) = _
+        rw [if_neg (by omega)]
+      have hnle : (n : ℝ) ≤ (2 : ℝ) ^ Hex.ceilLog2 n.toNat := by
+        have hnat := le_two_pow_ceilLog2 n.toNat
+        have hcast : (n.toNat : ℝ) ≤ (2 : ℝ) ^ Hex.ceilLog2 n.toNat := by
+          exact_mod_cast hnat
+        calc
+          (n : ℝ) = (n.toNat : ℝ) := by
+            exact_mod_cast (Int.toNat_of_nonneg (le_of_lt hn0)).symm
+          _ ≤ _ := hcast
+      rw [htr, hcl, show (Hex.ceilLog2 n.toNat : Int) - k =
+          (Hex.ceilLog2 n.toNat : Int) + (-k) by ring,
+        zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0), zpow_natCast]
+      exact mul_le_mul_of_nonneg_right hnle h2k.le
+
+/-- The power selected by the executable dyadic ceiling logarithm is less
+than twice the positive input. -/
+theorem two_pow_ceilLog2_lt_two_mul_toReal (x : _root_.Dyadic)
+    (hx : 0 < toReal x) :
+    (2 : ℝ) ^ Hex.Dyadic.ceilLog2 x < 2 * toReal x := by
+  cases x with
+  | zero => simp at hx
+  | ofOdd n k hn =>
+      have hn0 : 0 < n := by
+        unfold toReal at hx
+        rw [_root_.Dyadic.toRat_ofOdd_eq_mul_two_pow] at hx
+        push_cast at hx
+        have hpow : (0 : ℝ) < 2 ^ (-k : Int) := zpow_pos (by norm_num) _
+        rcases (mul_pos_iff.mp hx) with h | h
+        · exact_mod_cast h.1
+        · exact (not_lt_of_ge hpow.le h.2).elim
+      have hnat : 2 ^ Hex.ceilLog2 n.toNat < 2 * n.toNat :=
+        two_pow_ceilLog2_lt_two_mul n.toNat (by omega)
+      have hceil : Hex.Dyadic.ceilLog2 (_root_.Dyadic.ofOdd n k hn) =
+          (Hex.ceilLog2 n.toNat : Int) - k := by
+        show (if n < 0 then (0 : Int) else (Hex.ceilLog2 n.toNat : Int) - k) = _
+        rw [if_neg (by omega)]
+      rw [hceil, show (Hex.ceilLog2 n.toNat : Int) - k =
+          (Hex.ceilLog2 n.toNat : Int) + (-k) by ring,
+        zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0), zpow_natCast]
+      unfold toReal
+      rw [_root_.Dyadic.toRat_ofOdd_eq_mul_two_pow]
+      push_cast
+      have hcast : (2 : ℝ) ^ Hex.ceilLog2 n.toNat < 2 * n := by
+        have hcast' : (2 : ℝ) ^ Hex.ceilLog2 n.toNat < 2 * n.toNat := by
+          exact_mod_cast hnat
+        have hncast : (n.toNat : ℝ) = (n : ℝ) := by
+          norm_cast
+          exact Int.toNat_of_nonneg hn0.le
+        simpa only [hncast] using hcast'
+      have hpow : (0 : ℝ) < 2 ^ (-k : Int) := zpow_pos (by norm_num) _
+      nlinarith
+
+/-- The real value of `n * 2 ^ (-prec)` represented as a dyadic. -/
+@[simp] theorem toReal_ofIntWithPrec (n prec : Int) :
+    toReal (.ofIntWithPrec n prec) = (n : ℝ) * (2 : ℝ) ^ (-prec) := by
+  unfold toReal
+  rw [_root_.Dyadic.toRat_ofIntWithPrec_eq_mul_two_pow]
+  push_cast
+  rfl
+
+end Dyadic
+
+namespace GaussDyadic
+
+/-- The complex value of an exact Gaussian dyadic. -/
+@[expose] def toComplex (z : Hex.GaussDyadic) : ℂ :=
+  ⟨Dyadic.toReal z.1, Dyadic.toReal z.2⟩
+
+/-- The real part of the complex value is the real value of the first
+coordinate. -/
+@[simp] theorem toComplex_re (z : Hex.GaussDyadic) :
+    (toComplex z).re = Dyadic.toReal z.1 := rfl
+
+/-- The imaginary part of the complex value is the real value of the second
+coordinate. -/
+@[simp] theorem toComplex_im (z : Hex.GaussDyadic) :
+    (toComplex z).im = Dyadic.toReal z.2 := rfl
+
+/-- Casting an integer Gaussian dyadic gives the corresponding complex
+integer. -/
+@[simp] theorem toComplex_ofInt (n : Int) :
+    toComplex (Hex.GaussDyadic.ofInt n) = (n : ℂ) := by
+  apply Complex.ext <;> simp [toComplex, Hex.GaussDyadic.ofInt]
+
+/-- The complex-value map preserves Gaussian-dyadic addition. -/
+@[simp] theorem toComplex_add (z w : Hex.GaussDyadic) :
+    toComplex (Hex.GaussDyadic.add z w) = toComplex z + toComplex w := by
+  apply Complex.ext <;> simp [toComplex, Hex.GaussDyadic.add]
+
+/-- The complex-value map preserves Gaussian-dyadic subtraction. -/
+@[simp] theorem toComplex_sub (z w : Hex.GaussDyadic) :
+    toComplex (Hex.GaussDyadic.sub z w) = toComplex z - toComplex w := by
+  apply Complex.ext <;> simp [toComplex, Hex.GaussDyadic.sub]
+
+/-- The complex-value map preserves Gaussian-dyadic conjugation. -/
+@[simp] theorem toComplex_conj (z : Hex.GaussDyadic) :
+    toComplex (Hex.GaussDyadic.conj z) = star (toComplex z) := by
+  apply Complex.ext <;> simp [toComplex, Hex.GaussDyadic.conj]
+
+/-- The complex-value map preserves Gaussian-dyadic multiplication. -/
+@[simp] theorem toComplex_mul (z w : Hex.GaussDyadic) :
+    toComplex (Hex.GaussDyadic.mul z w) = toComplex z * toComplex w := by
+  apply Complex.ext <;> simp [toComplex, Hex.GaussDyadic.mul]
+
+/-- Casting a natural multiple of a Gaussian dyadic gives scalar
+multiplication in `ℂ`. -/
+@[simp] theorem toComplex_nsmul (n : Nat) (z : Hex.GaussDyadic) :
+    toComplex (Hex.GaussDyadic.nsmul n z) = (n : ℂ) * toComplex z := by
+  simp [Hex.GaussDyadic.nsmul]
+
+/-- Casting an exact Gaussian-dyadic power gives the corresponding complex
+power. -/
+@[simp] theorem toComplex_pow (z : Hex.GaussDyadic) (n : Nat) :
+    toComplex (Hex.GaussDyadic.pow z n) = toComplex z ^ n := by
+  induction n with
+  | zero => simp [Hex.GaussDyadic.pow]
+  | succ n ih => simp [Hex.GaussDyadic.pow, ih, pow_succ]
+
+/-- The real value of the exact squared modulus is the complex squared
+modulus. -/
+@[simp] theorem toReal_normSq (z : Hex.GaussDyadic) :
+    Dyadic.toReal (Hex.GaussDyadic.normSq z) = Complex.normSq (toComplex z) := by
+  simp [Hex.GaussDyadic.normSq, Complex.normSq_apply]
+
+/-- The complex-value map is injective. -/
+theorem toComplex_injective : Function.Injective toComplex := by
+  intro z w h
+  apply Prod.ext
+  · apply Dyadic.toReal_injective
+    exact congrArg Complex.re h
+  · apply Dyadic.toReal_injective
+    exact congrArg Complex.im h
+
+end GaussDyadic
+
+end
+
+end HexRootsMathlib

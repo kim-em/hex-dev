@@ -93,6 +93,8 @@ lean_lib HexGF2 where
 
 lean_lib HexPolyZ where
 
+lean_lib HexRoots where
+
 lean_lib HexPolyFp where
 
 lean_lib HexGFqRing where
@@ -109,6 +111,8 @@ lean_lib HexGFq where
 
 lean_lib HexBerlekampZassenhaus where
 
+lean_lib HexRealRoots where
+
 @[default_target]
 lean_lib HexPolyMathlib where
 
@@ -117,6 +121,9 @@ lean_lib HexModArithMathlib where
 
 @[default_target]
 lean_lib HexPolyZMathlib where
+
+@[default_target]
+lean_lib HexRootsMathlib where
 
 @[default_target]
 lean_lib HexBerlekampMathlib where
@@ -174,6 +181,9 @@ lean_lib HexGramSchmidtMathlib where
 @[default_target]
 lean_lib HexLLLMathlib where
 
+@[default_target]
+lean_lib HexRealRootsMathlib where
+
 lean_exe hexlll_provider_probe where
   root := `HexLLL.ProviderProbe
 
@@ -198,7 +208,7 @@ lean_lib HexGF2BenchSupport where
 -- `*_emit_fixtures` exes below, carrying `srcDir := "conformance"`.
 lean_lib HexConformance where
   srcDir := "conformance"
-  globs := #[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance]
+  globs := #[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexRoots.Conformance]
 
 lean_exe hexrowreduce_emit_fixtures where
   srcDir := "conformance"
@@ -220,6 +230,22 @@ lean_exe hexlll_emit_fixtures where
   srcDir := "conformance"
   root := `HexLLL.EmitFixtures
 
+lean_exe hexrealroots_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexRealRoots.EmitFixtures
+
+lean_exe hexroots_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexRoots.EmitFixtures
+
+lean_exe hexroots_bench where
+  srcDir := "bench"
+  root := `HexRoots.Bench
+
+lean_exe hexroots_demo where
+  srcDir := "examples"
+  root := `HexRootsDemo
+
 lean_exe hexmatrix_bench where
   srcDir := "bench"
   root := `HexMatrix.Bench
@@ -235,6 +261,10 @@ lean_exe hexbareiss_bench where
 lean_exe hexgramschmidt_bench where
   srcDir := "bench"
   root := `HexGramSchmidt.Bench
+
+lean_exe hexrealroots_bench where
+  srcDir := "bench"
+  root := `HexRealRoots.Bench
 
 lean_exe hexlll_bench where
   srcDir := "bench"

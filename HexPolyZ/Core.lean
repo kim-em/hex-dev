@@ -605,6 +605,12 @@ structure PrimitiveSquareFreeDecomposition where
 def SquareFreeRat (f : ZPoly) : Prop :=
   (DensePoly.gcd (toRatPoly f) (DensePoly.derivative (toRatPoly f))).size ≤ 1
 
+/-- `SquareFreeRat` is by definition a `Nat` size inequality on the executable
+rational gcd, so `Nat.decLe` decides it. Drivers branch on this instance for
+the SPEC's admissibility test. -/
+instance (f : ZPoly) : Decidable (SquareFreeRat f) :=
+  inferInstanceAs (Decidable (_ ≤ 1))
+
 /--
 Compute the primitive square-free normalization data needed by the integer
 factorization pipeline.
@@ -626,6 +632,7 @@ def primitiveSquareFreeDecomposition (f : ZPoly) : PrimitiveSquareFreeDecomposit
         repeatedPart := ratPolyPrimitivePart repeatedRat }
 
 /-- The square-free core projection of `primitiveSquareFreeDecomposition`. -/
+@[expose]
 def squareFreeCore (f : ZPoly) : ZPoly :=
   (primitiveSquareFreeDecomposition f).squareFreeCore
 

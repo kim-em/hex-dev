@@ -1,0 +1,21 @@
+Reviewed by two independent reviewer agents against
+SPEC/Libraries/hex-real-roots.md (placeholder/algorithm-fidelity lens and
+API-completeness lens), 2026-07-11. Every def, structure field, and
+instance was checked against its SPEC algorithm: spem's positive-multiple
+contract, the primitive-chain signs, the zero-skipping variation
+convention, the strict Cauchy excess of rootBound, sepPrec's conservative
+roundings, the literal Mobius numerator with reversal at the original
+degree, both engines' dispatch tables and chain-once memoisation
+discipline, the half-open refinement semantics, and the Overlaps/sameRoot
+quotient surface. Adversarial probes (Mignotte x^10 - (100x-1)^2, 10^20
+coefficients, dyadic-midpoint roots, Chebyshev T5, non-squarefree
+rejection) all matched hand analysis with engine agreement. No data-level
+placeholders, trivial returns, wrong-shape scaffolds, extern trampolines,
+or native-type detours were found. Downstream check: the companion
+reaches all executable defs (including private visitors) via import all,
+matching the HexBerlekampZassenhaus pattern, and hex-rcf's full call
+surface exists, with its cross-polynomial root test served by sturmCount's
+general (p, I) signature. Findings applied in the same commit: the SPEC's
+SimpleRealRoot block gains the RealRootIsolation.refined producer, the
+sturmChain complexity line is tightened to per-division cost, and one
+process-history comment in Mobius.lean was rewritten.

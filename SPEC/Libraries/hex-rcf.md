@@ -135,7 +135,9 @@ a proof that `Sentence.toProp` of it is definitionally the goal.
    roots are exactly the union of the atoms' real roots. Run
    `Hex.isolate? P` and eliminate the `Option` with
    `isolate?_isSome` (squarefreeness of `squareFreeCore` is a lemma
-   here, through hex-poly-z-mathlib's gcd correspondence). If there
+   here, through hex-poly-z-mathlib's gcd correspondence; the
+   root-set equality is `aevalIff_squareFreeCore` from the
+   hex-real-roots companion's `isolate_roots` development). If there
    are no nonconstant atoms, the decomposition is the single cell
    `ℝ` and steps 4-6 degenerate to one test-point evaluation.
 

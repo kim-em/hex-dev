@@ -118,10 +118,21 @@ theorem sturmVarAt_eq (p : ZPoly) (x : Dyadic) : …
     executable gcd correspondence), and squarefreeness transfers to
     `ℝ`. -/
 theorem squareFreeRat_iff : …
+
+/-- A terminal-constant Sturm chain forces `SquareFreeRat` — the reverse
+    of the terminal-unit step in `sturmChain_isSturmChain`, walked back to
+    coprime seeds. Lets a concrete `SquareFreeRat p` be discharged by
+    `by decide` on the chain. -/
+theorem squareFreeRat_of_hasSquarefreeSturmChain
+    (p : ZPoly) (h : hasSquarefreeSturmChain p = true) : SquareFreeRat p
 ```
 
 `toPolyℝ` abbreviates the `hex-poly-z-mathlib` cast composed with
-`Polynomial.map (Int.castRingHom ℝ)`.
+`Polynomial.map (Int.castRingHom ℝ)`. Its coefficient/coefficient-sum
+bridges (`coeff_toPolyℝ` / `coeff_toPolyℚ`, `eval_toPolyℝ` /
+`eval_toPolyℚ`) rewrite a root goal on a literal `ofCoeffs` to an explicit
+polynomial equation, and `toReal_ofInt_shiftRight` normalizes `n / 2ⁱ`
+dyadic endpoints.
 
 ### Consequences for the executable counts
 
@@ -138,8 +149,9 @@ theorem rootCount_eq_card_roots (p : ZPoly) (hp : SquareFreeRat p) :
 ## Isolation semantics
 
 Everything below consumes only the decidable fields of the output
-structures plus the `SquareFreeRat p` hypothesis, so it holds for any
-`RealRootIsolations p` value, no matter which engine produced it.
+structures plus `SquareFreeRat p` (and, for `isolates`, `p ≠ 0`, since
+`SquareFreeRat 0` is vacuous), so it holds for any `RealRootIsolations p`
+value, no matter which engine produced it.
 
 ```lean
 /-- The witness means what it says: exactly one real root in the
@@ -151,7 +163,7 @@ theorem RealRootIsolation.exists_unique_root
 
 /-- A complete run captures every real root exactly once. -/
 theorem RealRootIsolations.isolates
-    (hp : SquareFreeRat p) (out : RealRootIsolations p) :
+    (hp0 : p ≠ 0) (hp : SquareFreeRat p) (out : RealRootIsolations p) :
     ∀ r : ℝ, (toPolyℝ p).IsRoot r →
       ∃! iso ∈ out.isolations.toList,
         (iso.interval.lower : ℝ) < r ∧ r ≤ (iso.interval.upper : ℝ)
@@ -159,7 +171,200 @@ theorem RealRootIsolations.isolates
 
 The second follows from the first plus `ordered` (disjointness) and
 `complete` (counting): the isolations hold `rootCount p` distinct
-roots among them, and that is all the roots there are.
+roots among them, and that is all the roots there are. Both are also
+exported in the `Hex` namespace, so dot notation resolves on the
+executable structures (`iso.exists_unique_root`).
+
+## The `isolate_roots` term elaborator
+
+A user-facing front-end that automates the pattern of the worked
+`x⁴ − 2` example: run the executable isolator at elaboration time and
+package the certified result as one term the caller can `obtain`,
+`have`, or pass to `grind`.
+
+```lean
+-- natural intervals (whatever the isolator's separation produced)
+isolate_roots p
+-- every interval refined to width at most x
+isolate_roots (width := x) p
+```
+
+`p` is either a closed `Hex.ZPoly` term or a closed `Polynomial ℤ/ℚ/ℝ`
+expression over `X`, `C`, numerals, `+`, `-`, `*`, `^` whose
+coefficients are integers (non-integer coefficients are rejected with
+a clear message). The width `x` is any closed positive rational
+literal expression (`1/1000`, `2^(-20)`, `10^(-2)`); it converts to
+the bit target `k = max 0 ⌈log₂ x⁻¹⌉` in exact integer arithmetic
+(widths above `1` never coarsen the natural intervals) and is an
+operational promise about the emitted intervals, not a field of the
+result. The syntax uses an `atomic` lookahead on `"(" "width" ":="`
+so a parenthesised polynomial argument parses as the polynomial.
+
+When an expected type `Hex.IsolatedRealRoots (P : Polynomial R) n` is
+available at the call site, the coefficient ring `R` is used as the
+elaboration hint for the argument, so `isolate_roots (X ^ 4 - 2)` (no
+type ascription on the argument) elaborates as a `Polynomial ℝ` under
+`… : IsolatedRealRoots (X ^ 4 - 2 : Polynomial ℝ) 2`. The hint is a
+fallback: the argument is first elaborated with no expected type (a
+`ZPoly` argument, or an already-ascribed polynomial, resolves this way
+and is unaffected), and the ring hint is applied only when that leaves
+the argument's type ambiguous.
+
+The result type, uniform over the input rings through `aeval`:
+
+```lean
+structure Hex.IsolatedRealRoots {R : Type*} [CommRing R] [Algebra R ℝ]
+    (P : Polynomial R) (n : ℕ) where
+  intervals   : Vector (ℚ × ℚ) n
+  unique_root : ∀ i : Fin n, ∃! x : ℝ,
+      Polynomial.aeval x P = 0 ∧ (intervals[i].1 : ℝ) < x ∧ x ≤ intervals[i].2
+  covers      : ∀ x : ℝ, Polynomial.aeval x P = 0 →
+      ∃ i : Fin n, (intervals[i].1 : ℝ) < x ∧ x ≤ intervals[i].2
+  ordered     : ∀ i j : Fin n, i < j → intervals[i].2 ≤ intervals[j].1
+```
+
+`ordered` makes the enumeration honest: without it, duplicate
+intervals could satisfy the other two fields and `n` would not
+determine the root count; with it the intervals are pairwise
+disjoint and sorted, so `n` is exactly the number of distinct real
+roots (a derived lemma, not a field). Intervals are half-open
+`(lo, hi]` with exact rational endpoints (the isolator's dyadics). A `ZPoly` input is stated over `toPolynomial p :
+Polynomial ℤ`. The elaborator is fat-API/thin-meta: all proof content
+lives in library constructors, and the emitted term only instantiates
+them with literals and `decide`-style certificates.
+
+- `IsolatedRealRoots.of` : from `p ≠ 0` (stated as a size check, see
+  below), `SquareFreeRat p`, and a `RealRootIsolations p` value, via
+  `exists_unique_root` + `isolates` and the cast lemmas.
+- `IsolatedRealRoots.congrRoots` : transport along
+  `∀ x : ℝ, aeval x P = 0 ↔ aeval x Q = 0`, heterogeneous in the
+  coefficient rings (`P : Polynomial R`, `Q : Polynomial S`) since it
+  is used twice with different rings: once for the squarefree-core
+  step and once to restate over the user's polynomial (the latter
+  hypothesis closed by a bridge tactic over
+  `aeval`-of-`toPolynomial` unfolding, coefficient lookups, and
+  `norm_num` — a pointwise evaluation bridge, not a `Polynomial`
+  identity).
+- `IsolatedRealRoots.constant` : the `n = 0` result for nonzero
+  constants, which never enter the isolator (the squarefree Sturm
+  certificate is `false` on constants by design).
+- The **replay constructor**: the production certificate shape (see
+  below).
+
+**Squarefreeness is invisible to the user.** If
+`hasSquarefreeSturmChain p` fails, the elaborator runs on
+`squareFreeCore p` and transports along
+
+```lean
+theorem aevalIff_squareFreeCore (hp0 : p ≠ 0) (x : ℝ) :
+    Polynomial.aeval x (toPolynomial (ZPoly.squareFreeCore p)) = 0 ↔
+    Polynomial.aeval x (toPolynomial p) = 0
+```
+
+(the roots of a nonzero polynomial and of its squarefree core agree
+as sets; proven through the `primitiveSquareFreeDecomposition`
+bridge and a root-multiplicity argument, and shared with the `rcf`
+tactic's step 3).
+
+The elaborator's own transport does not identify the reified core
+with `squareFreeCore p` in the kernel — that identification would
+need to reduce `squareFreeCore`'s rational-arithmetic helpers, which
+are deliberately outside the replay closure. It instead emits a
+radical certificate: reified cofactors `a`, `b`, a scalar `t`, and an
+exponent `k` with the two literal `ring` identities
+`orig = core * a` and `t · core^(k+1) = a * b`, from which
+`aevalIff_radical` derives the shared real root set. Squarefreeness
+stays invisible either way; `aevalIff_squareFreeCore` remains the
+library-level statement (and the `rcf` dependency).
+
+**Kernel replay.** Following the `irreducible_cert` pattern (and
+hex-rcf §Kernel replay), the elaborator never asks the kernel to
+re-run the search. Measured on the Stage-1 prototype, the naive
+per-field `decide` shape (each `count_one`/`complete` certificate
+rebuilding the Sturm chain) grows superlinearly — heartbeats
+33k/103k/326k at Wilkinson degrees 6/8/10 — while the replay shape
+(reify the Sturm chain once as an `Array ZPoly` literal, then check
+per-endpoint sign variations against it) amortises to 29k/66k/138k,
+2.4× cheaper at degree 10 and scaling. The prototype's replay
+numbers are surrogate measurements: its chain-identification lemmas
+were assumed, so the cost of the `SturmChainCert` validity check
+itself is not yet measured and is re-measured when the production
+constructor lands. The elaborator emits the replay shape. Two constraints shape its soundness lemma:
+
+- chain validity is verified by a decidable executable certificate
+  predicate `SturmChainCert p chain` over coefficient-level checks
+  (distinct from the companion's existing semantic `IsSturmChain`
+  over `Polynomial ℝ`, which is stated through `primitivePart p` and
+  is not decidable), NOT by deciding `chain = sturmChain p` (a
+  nonempty `Array ZPoly` equality, which does not kernel-reduce
+  under the module system: the core `Array.instDecidableEqImpl`
+  issue). Its soundness bridge to the certified counts goes through
+  the executable chain's `primitivePart` head, exactly as the
+  existing chain correspondence does. `SturmChainCert p chain` also
+  carries a `chain.size ≤ p.size` fuel-bound conjunct — every genuine
+  Sturm chain satisfies it, since chain degrees strictly decrease —
+  which the soundness proof (`cert_imp_eq`) needs to bound the
+  `sturmChainAux` fuel when reconstructing `sturmChain p` from the
+  certified tail; the constructor discharges it by the same
+  per-certificate `decide`;
+- nonzeroness is stated as a size check (`p.size ≠ 0` via a Bool
+  test plus `ne_zero_of_size_ne_zero`), avoiding structural
+  `DensePoly` equality for the same reason.
+
+The executable closure the kernel replays — thirteen definitions:
+`sturmChain`, `sturmChainAux`, `spem`, `spemAux`, `spemStep`,
+`signVar`, `sturmVarAt`, `sturmVarNegInf`, `sturmVarPosInf`,
+`sturmCount`, `rootCount`, `ZPoly.evalDyadic`, `dyadicSign` — is
+`@[expose]`d in hex-real-roots for this purpose, with the three
+private helpers (`spemStep`, `spemAux`, `sturmChainAux`)
+de-privatized (an exposed public definition may not reference a
+`private` one); see the hex-real-roots SPEC. `Dyadic.toReal`'s unfolding is provided by a
+cast lemma rather than cross-module defeq.
+
+**Interval literals.** The emitted term re-bases `intervals` on
+pretty rational literals (`m`, or `m / 2^k` in lowest terms) via
+`IsolatedRealRoots.ofCertPretty`, which wraps the replay constructor
+in `withIntervals`: any interval vector whose endpoints agree with
+the isolator's **as reals** carries the same three theorems. The
+endpoint identities are stated against the literal `iso` argument
+itself (`Dyadic.toReal` of each reified dyadic — a shape user
+modules check without reducing any of this library's definitions)
+and discharged through the `toReal` cast lemmas, so no `Rat`
+normalization (and hence no `Nat.gcd`) comes near the kernel. With
+`intervals` definitionally a `#v[…]` literal, user-side endpoint
+extraction is a definitional step:
+`rw [show H.intervals = #v[…] from rfl]`. The wrappers this step
+unfolds (`withIntervals`, `ofCertPretty`, `congrRoots`) are
+`@[expose]`d so the reduction works from module-system files; it
+never reaches `ofCert` itself. Their `intervals` projections also
+carry `@[simp]` lemmas (`ofCertPretty_intervals`,
+`withIntervals_intervals`, `congrRoots_intervals`), so `simp`,
+`simpa`, and `grind` compute an isolation's endpoints to their
+literals without naming the constructors: a `unique_root i`
+projection closes a concrete-endpoint theorem with a single
+`simpa [H]`. The whole `IsolatedRealRoots` API (`of`, `ofCert`,
+`withIntervals`, `ofCertPretty`, `congrRoots`, `constant`) lives in
+the `Hex.IsolatedRealRoots` namespace alongside the structure, so
+dot notation reaches every constructor and lemma.
+
+**Errors** are user-grade and distinguish: the zero polynomial
+("every real number is a root"), non-integer coefficients,
+unsupported polynomial syntax, non-closed input (free variables or
+metavariables, in the polynomial or the width), non-positive or
+non-closed width, backend failure, and internal certificate mismatch
+(a bug, reported as such).
+
+**Practical limits** (Stage-1 measurements, single-threaded
+elaboration): degree ≤ 10 at natural widths, and degree ≤ 6 refined
+to `2^(-20)`, cost seconds (deeper refined-width combinations are
+unmeasured); per-field certificates remain acceptable only below
+degree ~6. The
+elaborator caps refinement with a diagnostic for pathological widths.
+
+A Mathlib-free variant (same meta core, emitting a
+`RealRootIsolations` value whose conclusions are the executable
+Sturm certificates) is a possible follow-up for consumers who cannot
+import Mathlib; the ℝ-valued statements above necessarily live here.
 
 ## Bounds and depths
 
@@ -236,41 +441,64 @@ theorem sameRoot_iff (hp) (i₁ i₂) :
 `theRoot` is the unique root delivered by
 `RealRootIsolation.exists_unique_root`.
 
-## Deferred: Descartes engine termination
+## Descartes engine termination (the two-circle theorem)
 
 ```lean
-theorem isolateDescartes?_isSome (p : ZPoly) (hp : SquareFreeRat p) :
-    (Hex.isolateDescartes? p).isSome
+theorem isolateDescartes?_isSome (p : ZPoly) (hp0 : p ≠ 0)
+    (hp : SquareFreeRat p) : (Hex.isolateDescartes? p).isSome
 ```
 
-Prerequisite: the **Obreshkoff two-circle theorem**. For an interval
-`(a, b)`, the variation count of the Möbius-transformed polynomial is
-at least the number of roots in the one-circle region (the open disc
-with diameter `(a, b)`) and at most the number of roots in the
-two-circle region (the union of the two discs through `a` and `b`
-whose centres lie at `(a+b)/2 ± i·(b−a)/(2√3)`), counted with
-multiplicity. Consequences: a short interval far from all roots has
-count 0, and a short interval whose two-circle region contains one
-simple real root has count 1, so at `isolationDepth p` the Descartes
-worklist drains and every candidate certifies.
+Proven in `TwoCircle.lean`; with it the companion is fully
+`sorry`-free. The Descartes engine alone returns `some` on every
+nonzero square-free input, so the runtime never falls back to the
+Sturm engine.
+
+Prerequisite: the **Obreshkoff two-circle theorem**, in its correct
+*λ-graded* form (Obreschkoff 1963; Krandick-Mehlhorn 2006,
+Eigenwillig 2008): if all but `λ` complex roots of a real polynomial
+lie in the closed sector of half-angle `π/(λ+2)` about the negative real
+axis (equivalently, at most `λ` roots lie outside), then the
+coefficient sequence has at most `λ` sign variations. The naive count
+bound "variation count ≤ number of roots in the two-circle region" is
+**false** — `(X²+X+1)·(X²−(3/2)X+1)` has four sign variations while
+only two of its roots lie outside the sector (the counterexample is
+recorded in `TwoCircleSector.lean`). We use only the two lowest graded
+cases, `λ ∈ {0, 1}`: `Polynomial.signVariations_le_one_of_sector`
+(`TwoCircleSector.lean`, the `λ = 1` bound via Hoggar log-concavity)
+and its `λ = 0` corollary.
+
+Route (`TwoCircle.lean`): at each node the Descartes count `V` equals
+`signVariations` of the Möbius transform; the Descartes parity exports
+(`DescartesParity.lean`) pin the open-interval root count exactly when
+`V ∈ {0, 1}`, and the exact endpoint test settles `p(b) = 0`, so the
+half-open Sturm count is computed exactly and every candidate certifies
+(count `1`) and every discard emits `#[]` (count `0`). At the depth
+budget the bisecting rows are refuted: `V = 1 ∧ p(b) = 0` forces a
+Sturm count of `2` against `sturmCount_le_one`, and `V ≥ 2` triggers
+the sector bound (`≥ 2` transform-roots outside the sector correspond
+via `roots_mobiusPoly`/`not_inTwoCircle_iff_mem_sector` to two distinct
+`p`-roots in the two-circle region, closer than the Mahler separation
+`sepPrec_separates'` allows). The worklist therefore drains at
+`isolationDepth p`.
 
 Status and boundaries:
 
-- The two-circle theorem has no formalisation in any proof assistant
-  that we know of. The classical proof (Obreschkoff 1963; modern
-  treatment in Krandick-Mehlhorn 2006 and Eigenwillig 2008) is an
-  induction on multiplying in linear and conjugate-quadratic factors,
-  with sector inequalities on coefficient sequences. Elementary but
-  long, and the effort is genuinely uncertain.
-- **Nothing else waits for it.** `isolate?_isSome`, all soundness
-  theorems, and hex-rcf's decision procedure are complete without it.
-  Its value is to retire the Sturm fallback path from the trusted
-  runtime story and to delete the conformance assertions described in
-  [hex-real-roots.md](hex-real-roots.md) §"Conformance fixtures"
-  (the PR that proves this theorem must delete those assertions).
-- Like the Sturm slice, it should be developed against
-  `Polynomial ℝ` (and `ℂ` for the regions) with no `HexRealRoots`
-  dependence, as a Mathlib contribution in its own right.
+- The two-circle theorem is now formalised here (the sector core
+  `signVariations_le_one_of_sector`, the region geometry
+  `TwoCircleRegion.lean`, and the Descartes parity). The classical
+  proof (Obreschkoff 1963; Krandick-Mehlhorn 2006, Eigenwillig 2008)
+  runs by induction on multiplying in linear and conjugate-quadratic
+  factors, with sector inequalities on coefficient sequences.
+- **Nothing else waited for it.** `isolate?_isSome`, all soundness
+  theorems, and hex-rcf's decision procedure were complete without it;
+  its value is to retire the Sturm fallback path from the trusted
+  runtime story. The executable conformance stand-ins for this
+  theorem (`isolateDescartes?` succeeds and agrees with `isolate?` per
+  fixture) are retired in the same change now that the theorem carries
+  the claim.
+- Like the Sturm slice, the sector/region/parity development is stated
+  against `Polynomial ℝ`/`ℂ` with no `HexRealRoots` dependence, ready
+  as a Mathlib contribution in its own right.
 
 ## File organisation
 
@@ -279,10 +507,16 @@ HexRealRootsMathlib/
   SturmChainDefs.lean  -- IsSturmChain, sturmVar over Polynomial ℝ
   SturmTheorem.lean    -- the counting theorem and the line form
   ChainCorrespond.lean -- sturmChain_isSturmChain, sturmVarAt_eq,
-                          squareFreeRat_iff, sturmCount_eq_card_roots
-  Separation.lean      -- sepPrec_separates (until hosted in
-                          hex-poly-z-mathlib), rootBound_bounds_roots
+                          sturmCount_eq_card_roots; compatibility aliases for
+                          HexPolyZMathlib.Squarefree
+  Discr.lean            -- compatibility import of the shared discriminant API
+  Hadamard.lean         -- compatibility import of the shared determinant bound
+  Separation.lean      -- sepPrec_separates, rootBound_bounds_roots;
+                          specializes shared Mahler/Vandermonde analysis
   Isolations.lean      -- exists_unique_root, isolates
+  IsolateRoots.lean    -- IsolatedRealRoots, its constructors, the
+                          bridge tactic, and the isolate_roots
+                          term elaborator
   Drivers.lean         -- isolateSturm?_isSome, isolate?_isSome,
                           refine1_isolates_same
   SimpleRealRoot.lean  -- overlaps_iff_same_root, toReal, sameRoot_iff

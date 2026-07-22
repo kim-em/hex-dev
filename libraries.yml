@@ -453,13 +453,27 @@ libraries:
   HexRoots:
     deps: [HexPolyZ]
     mathlib: false
-    done_through: 0
-    status: planned
+    done_through: 4
+    status: active
+    phase4:
+      comparators:
+        - tool: "python-flint fmpz_poly.complex_roots"
+          class: informational
+          rationale: "The SPEC's ci-tier oracle (python-flint fmpz_poly.complex_roots, returning certified Arb balls with multiplicities) is a multiprecision ball-arithmetic engine, structurally different from this library's decidable exact-integer Pellet / Newton-Kantorovich certificates. Scoped to the shared whole-polynomial runIsolate and runIsolateAll surfaces and timed on their current fixed-separation inputs (scripts/bench/hexroots_flint_compare.py); the ratio per degree is recorded in reports/hex-roots-performance.md. Informational, not gating: the SPEC's time budgets — not a constant-factor 1x goal — are the yardstick for an integer-certified isolator against a float engine. Separation-bound and internal kernel surfaces are declared no-comparable-surface-in-named-comparator in the library SPEC."
+      input_families:
+        - name: seeded-dense
+          description: Seed-0xC0FFEE bounded-coefficient dense polynomials and their bounded-height (X−1) product; drives parametric mahlerPrec and canonical Taylor, witness, Newton, and pinned-NK regressions.
+        - name: fixed-separation-product
+          description: Products ∏(2X−(2j+1)) with uniformly separated half-integer roots; drives canonical fixed isolate/isolateAll/refine1 regressions and the historical unregistered isolation diagnostic ladder.
+        - name: wilkinson-linprod
+          description: The canonical degree-10 product ∏(X−j), with roots 1..10; shared by the three fixed dual-route strategy regressions.
+        - name: refine-fixed
+          description: The degree-3 polynomial (x−1)(x−2)(x+3), used by fixed refineTo at achieved precision 131077 and sameRoot.
   HexRootsMathlib:
     deps: [HexRoots, HexPolyZMathlib]
     mathlib: true
     done_through: 0
-    status: planned
+    status: active
   HexResultant:
     deps: [HexPoly]
     mathlib: false
@@ -483,13 +497,27 @@ libraries:
   HexRealRoots:
     deps: [HexPolyZ]
     mathlib: false
-    done_through: 0
-    status: planned
+    done_through: 4
+    status: active
+    phase4:
+      comparators:
+        - tool: "SageMath real_roots / python-flint fmpz_poly real-root API"
+          class: informational
+          rationale: "The SPEC's oracle role list (SageMath real_roots, python-flint fmpz_poly, FLINT/Arb) targets floating-point / ball-arithmetic real-root isolation, structurally different from the certified exact-integer Sturm/Descartes engines this library implements: the comparator answers with approximate intervals refined to a requested precision, while Hex answers with a decidable Sturm-count certificate. The ratio is recorded for orientation but is not a Phase-4 gate, and is scheduled-only — the persistent-subprocess Python driver is not wired in this PR. The gating cross-implementation check is the internal Descartes-first vs certified-Sturm compare group (compare runIsolateDescartesFirst runIsolateSturm), which joins on isolation-endpoint hashes."
+      input_families:
+        - name: well-separated-products
+          description: Products of unit-separated linear factors ∏(x−k), k=1..n, the Descartes engine's easy regime; resolves in O(n + log(bound/gap)) bisection levels.
+        - name: chebyshev-clustered
+          description: Integer Chebyshev polynomials T_n from the recurrence T_{k+1}=2x·T_k−T_{k-1}, with n real roots clustering near ±1 at gaps ~1/n².
+        - name: mignotte-worst-case
+          description: Mignotte polynomials xⁿ−(a·x−1)² at a=1000, the textbook Descartes worst case exercising the close real root pair.
+        - name: dense-primitive
+          description: Deterministic reliably-squarefree bounded-coefficient dense integer polynomials for the Sturm-chain, sign-variation, Möbius-transform, root-bound, separation-precision, and refinement primitives.
   HexRealRootsMathlib:
     deps: [HexRealRoots, HexPolyZMathlib]
     mathlib: true
-    done_through: 0
-    status: planned
+    done_through: 3
+    status: active
   HexRCF:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
     mathlib: true

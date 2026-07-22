@@ -70,6 +70,14 @@ pseudo-remainder scheme allows.
 The last chain element is a nonzero constant exactly when `p` is
 squarefree (of positive degree).
 
+`hasSquarefreeSturmChain p` reads off exactly this: `true` when `p` has
+positive degree and the last chain element is a nonzero constant. It is a
+reducible executable `Bool`, so a caller discharges the drivers'
+`SquareFreeRat p` obligation by `by decide` on the chain rather than the
+rational gcd (soundness bridge `squareFreeRat_of_hasSquarefreeSturmChain`
+in the companion). One-way: `false` on the zero polynomial and nonzero
+constants.
+
 **Input contract.** The drivers do not take hypotheses; they classify
 every input explicitly:
 
@@ -282,15 +290,19 @@ is required. What the depth budget *suffices for* differs:
   Obreshkoff two-circle theorem; Krandick-Mehlhorn 2006) shows that
   once an interval's width is below a constant multiple of `sep(p)`
   (the minimum distance between distinct complex roots), its
-  variation count is `0` or `1`: the two-circle region around a
-  short interval is too small to hold two roots, and it cannot hold a
-  single non-real root because it is symmetric about the real axis
-  and non-real roots arrive in conjugate pairs. So
-  `isolateDescartes? p ≠ none` for squarefree `p` at this depth. The
-  two-circle theorem is formalised nowhere yet, and this statement is
-  the one deferred theorem of the companion
-  (`isolateDescartes?_isSome`): no other theorem depends on it, and
-  the driver's completeness does not wait for it.
+  variation count is `0` or `1`, so `isolateDescartes? p ≠ none` for
+  squarefree `p` at this depth. The mechanism is the *λ-graded* sector
+  bound (not a general count bound — the reading "variation count ≤
+  number of roots in the two-circle region" is false): at most `λ`
+  roots outside the half-angle-`π/(λ+2)` sector force at most `λ` sign
+  variations. A short interval's two-circle region is too small to hold
+  two roots, and a lone non-real root there is excluded because the
+  region is symmetric about the real axis (conjugate pairs), so the
+  outside-sector count stays `≤ 1` and hence the variation count `≤ 1`.
+  This is now a theorem of the companion
+  (`isolateDescartes?_isSome`): it retires the Sturm fallback from the
+  runtime story, though no other theorem depends on it and the driver's
+  completeness never waited for it.
 
 Note the separation quantity is over **complex** roots in both cases.
 A real-gap bound is not enough for the Descartes engine: a conjugate
@@ -327,6 +339,25 @@ violates the isolation semantics the fallback branch returns the
 input unchanged and `refineTo` stops when its fuel runs out; neither
 function can loop.
 
+`refine1` recomputes the Sturm chain on every bisection. For callers
+that refine many levels in one go (the `isolate_roots` term
+elaborator refining every root to a requested width), a cached-chain
+variant threads one precomputed chain through the bisection loop;
+same semantics, one chain construction total.
+
+## Kernel-replay exposure
+
+The `isolate_roots` term elaborator (companion SPEC) replays Sturm
+certificates in the kernel. The replayed closure — thirteen
+definitions: `sturmChain`, `sturmChainAux`, `spem`, `spemAux`,
+`spemStep`, `signVar`, `sturmVarAt`, `sturmVarNegInf`,
+`sturmVarPosInf`, `sturmCount`, `rootCount`, `ZPoly.evalDyadic`,
+`dyadicSign` — carries `@[expose]` so downstream `module` consumers
+can `decide` against it without `import all`, and the three private
+helpers (`spemStep`, `spemAux`, `sturmChainAux`) become public (an
+exposed definition may not reference a `private` one). The whole closure is structural-fuel recursion; nothing in it
+is well-founded, so exposure suffices for kernel reduction.
+
 ## `SimpleRealRoot`: identity of a root, up to isolation
 
 ```lean
@@ -354,6 +385,15 @@ def SimpleRealRoot.mk (iso : RefinedRealIsolation p) : SimpleRealRoot p :=
 /-- Boolean form of `Overlaps`, used for equality tests on data
     containing roots. -/
 def RefinedRealIsolation.sameRoot (i₁ i₂ : RefinedRealIsolation p) : Bool := …
+
+/-- Refine an isolation to separation precision and package it as a
+    `RefinedRealIsolation`: `refineTo (sepPrec p)`, then the width check.
+    `none` only on data violating the isolation semantics (unreachable
+    for squarefree `p`, per the companion's `refine1_isolates_same`).
+    The entry point of the threading pattern: call once, thread the
+    refined value forward. -/
+def RealRootIsolation.refined (iso : RealRootIsolation p) :
+    Option (RefinedRealIsolation p)
 
 end Hex
 ```
@@ -405,10 +445,11 @@ re-refine from a stored coarse representative. See
 ## File organisation
 
 - `HexRealRoots/Basic.lean`: `DyadicInterval`, exact dyadic Horner
-  evaluation, `RealRootIsolation`, `RealRootIsolations`.
+  evaluation, sign helper.
 - `HexRealRoots/Chain.lean`: `spem`, `sturmChain`.
 - `HexRealRoots/Var.lean`: `signVar`, `sturmVarAt`, the `±∞`
-  variants, `sturmCount`, `rootCount`.
+  variants, `sturmCount`, `rootCount`, `RealRootIsolation`,
+  `RealRootIsolations`.
 - `HexRealRoots/Prec.lean`: `sepPrec`, `isolationDepth`,
   `rootBound`.
 - `HexRealRoots/Mobius.lean`: `mobiusTransform` (Taylor shift based),
@@ -452,22 +493,26 @@ Per [SPEC/testing.md](../testing.md), fixtures are tiered into
 External oracles, in role order: SageMath (`real_roots`),
 python-flint (`fmpz_poly` real root API), FLINT/Arb.
 
-**Descartes-engine checks, until the deferred theorem lands.** The
-conformance suite must additionally assert, on every fixture in every
-profile it runs, that `isolateDescartes?` returns `some` and agrees
-with `isolate?`. These assertions stand in for the deferred theorem
-`isolateDescartes?_isSome`: they are how the repository notices if
-the fast engine ever falls back in practice. The change that proves
-`isolateDescartes?_isSome` in the companion **must delete these
-assertions** in the same PR; from that point the theorem carries the
-claim and re-testing it per fixture is noise.
+**Descartes-engine checks (retired).** While
+`isolateDescartes?_isSome` was open, the conformance suite asserted on
+every fixture that `isolateDescartes?` returns `some` and agrees with
+`isolate?`, standing in for the theorem. Now that
+`isolateDescartes?_isSome` is proven in the companion, those stand-ins
+are retired: the theorem carries the claim, and re-testing it per
+fixture is noise. The suite keeps only the ordinary input-contract
+checks — the `isolateDescartes? = none` rejection of the zero and
+non-squarefree inputs (which test the engine's classification of
+inadmissible input, not the termination theorem) — and the executable
+`mobiusTransform`/`descartesVar` transform tests. `EmitFixtures` emits
+from `isolate?` alone; the cross-engine agreement check it once carried
+is removed with the same change.
 
 ## Complexity contract
 
 Write `n = deg p` and `h = log ‖p‖∞`.
 
-- `sturmChain p`: `O(n)` pseudo-divisions, `O(n²)` coefficient
-  operations plus the content gcds. Primitive-chain coefficient
+- `sturmChain p`: `O(n)` pseudo-divisions, each `O(n²)` coefficient
+  operations, plus the content gcds. Primitive-chain coefficient
   growth is `O(n·h)` bits per element. Computed once per polynomial.
 - `sturmVarAt`: one exact Horner evaluation per chain element,
   `O(n²)` dyadic operations per queried point, memoised per endpoint.
@@ -476,8 +521,14 @@ Write `n = deg p` and `h = log ‖p‖∞`.
 - `isolate?`: the bisection tree has `O(n)` unresolved intervals per
   level and depth at most `isolationDepth p = O(n·(h + log n))`, so
   `O(n² · (h + log n))` Möbius transforms in the worst case,
-  dominated by Mignotte-style clustered inputs. Well-separated roots
-  resolve in `O(n + log(rootBound/gap))` levels.
+  dominated by Mignotte-style clustered inputs. Mignotte inputs
+  dominate through the *depth* factor (the close pair's separation
+  is exponentially small in `n`, growing with `a`); the `O(n)`
+  width factor additionally requires `Θ(n)` real roots, so at fixed
+  `a` the Mignotte family realises `O(1)` width × `O(n·h)` depth =
+  `O(n·h)` transforms, i.e. `O(n³)` integer operations at fixed `a`.
+  Well-separated roots resolve in `O(n + log(rootBound/gap))`
+  levels.
 
 ## Time budgets (Phase 4 validation)
 
