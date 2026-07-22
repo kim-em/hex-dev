@@ -27,38 +27,43 @@ tag := "hex-roots-intro"
 coefficients. Each root is enclosed in a square in the complex plane with
 Gaussian-dyadic centre and power-of-two half-width, carrying a witness,
 checked by `decide`, that a certified region around the square holds exactly
-one root. As with real-root isolation the arithmetic is exact: the Taylor
+one root. As with real-root isolation the certificates are exact: the Taylor
 coefficients at the centre are exact Gaussian dyadics, and every witness is a
-strict comparison between two dyadic rationals. There are no floats and no
-error budget anywhere in the computation.
+strict comparison between two dyadic rationals, with no floats and no error
+budget. The search may use approximate dyadic reciprocals to place candidate
+squares, but those are only hints; nothing counts until an exact witness
+rechecks it.
 
 The computational core is Mathlib-free. It expands a polynomial about a
 Gaussian-dyadic centre, tests candidate squares, subdivides, and glues the
 survivors into connected components until each root sits alone in a certified
-square. The correspondence library `HexRootsMathlib` is the Mathlib companion:
-it proves that a certified square really does contain a root of the polynomial
+region. The correspondence library `HexRootsMathlib` is the Mathlib companion:
+it proves that a certificate really does pin down a root of the polynomial
 viewed as an element of `Polynomial ℂ`, and that a successful whole-polynomial
 run enumerates every distinct root exactly once.
 
 A single root is an {deftech}_atom_. Atoms admit two interchangeable
 certificate forms: a Newton-Kantorovich contraction witness, whose certified
 region is the square itself, and a Pellet root-count witness, whose certified
-region is the square's circumscribed disc. A repeated root, or a pair too close
-to separate, is reported instead as a {deftech}_cluster_ carrying a Pellet
-witness that counts `k ≥ 2` roots with multiplicity. Squarefree inputs isolate
-entirely into atoms; that is the case the user-facing {name}`Hex.isolate`
-entry point below handles.
+region is the square's circumscribed disc. A component that a Pellet witness
+certifies to hold `k ≥ 2` roots with multiplicity, most naturally a repeated
+root, is reported instead as a {deftech}_cluster_. A nonzero polynomial with
+only simple roots isolates entirely into atoms; that is the case the
+user-facing {name}`Hex.isolate` entry point below handles.
 
 # The `isolate` entry point
 %%%
 tag := "hex-roots-isolate"
 %%%
 
-For a polynomial with only simple roots, {name}`Hex.isolate` runs the whole
-isolator and returns one atom per distinct complex root. It takes the
-polynomial as a {name}`Hex.ZPoly` (the Mathlib-free dense integer polynomial),
-a proof that the roots are simple, a target precision in bits, and a choice of
-which atom certificate to attempt:
+For a nonzero polynomial with only simple roots, {name}`Hex.isolate` runs the
+whole isolator and returns `some` array of atoms, one per distinct complex
+root. It is `Option`-valued for the degenerate inputs the precondition still
+admits: the zero polynomial, which has every point as a root, gives `none`,
+and a nonzero constant gives `some #[]`. It takes the polynomial as a
+{name}`Hex.ZPoly` (the Mathlib-free dense integer polynomial), a proof that the
+roots are simple, a target precision in bits, and a choice of which atom
+certificate to attempt:
 
 {docstring Hex.isolate}
 
@@ -72,13 +77,14 @@ gcd is constant:
 The strategy argument, a {name}`Hex.AtomStrategy`, selects which certificate
 form the driver attempts, and in which order: `.nk` for the
 Newton-Kantorovich witness alone, `.pellet` for the Pellet witness alone, and
-`.nkThenPellet` (the default) for the former with the latter as fallback. The
-two forms are carried side by side while their soundness developments and
-benchmarks are compared; a caller who does not care picks the default.
+`.nkThenPellet` (the general default) for the former with the latter as
+fallback. The explicit single-form strategies let either certificate be
+selected or benchmarked on its own; callers with no such need pick the default.
 
 Each returned atom is one square with its certificate. The certified region
-depends on which disjunct fired, but every consumer needs only the shared
-consequence: the atom's stored square encloses exactly one root.
+depends on which disjunct fired, so consumers rely only on the shared
+consequence: exactly one root lies in the certified region, and that region
+sits inside the stored square's circumscribed disc.
 
 {docstring Hex.DyadicRootIsolation}
 
@@ -88,16 +94,18 @@ tag := "hex-roots-pisot"
 %%%
 
 Take `p(x) = x³ − x − 1`. It has one real root, the plastic constant
-`β ≈ 1.3247`, and a complex-conjugate pair. The real root is the smallest
-Pisot number: an algebraic integer greater than one all of whose conjugates
-lie strictly inside the unit disc. `HexRoots` isolates all three roots, and the
-companion turns those certificates into a proof of exactly that Pisot property.
+`β ≈ 1.3247`, and a complex-conjugate pair. Classically `β` is the smallest
+Pisot number: a real algebraic integer greater than one all of whose *other*
+conjugates lie strictly inside the unit disc. The companion does not formalize
+that global minimality, or `β`'s algebraic integrality; it certifies, for this
+one polynomial, that the real root is pinned to eight decimal places and that
+both other roots have norm below one, which is the Pisot condition for `β`.
 
 {docstring HexRootsMathlib.Examples.pisot}
 
 The polynomial has only simple roots, so it meets `isolate`'s precondition. The
-companion proves this from a Bézout identity for `p` and `p'`, but any input
-also decides it directly:
+companion proves this once, from a Bézout identity for `p` and `p'`, and
+reusing that lemma discharges the precondition:
 
 ```lean
 open Hex HexRootsMathlib.Examples
@@ -105,8 +113,9 @@ open Hex HexRootsMathlib.Examples
 example : HasOnlySimpleRoots pisot := pisot_simple
 ```
 
-Running the default driver to 32 bits returns three atoms, and the companion
-identifies their semantic roots with the three complex roots of `x³ − x − 1`:
+Running the driver, here with the Newton-Kantorovich strategy, to 32 bits
+returns three atoms, and the companion identifies their semantic roots with the
+three complex roots of `x³ − x − 1`:
 
 {docstring HexRootsMathlib.Examples.isolate_pisot}
 
@@ -164,10 +173,11 @@ tighter enclosure. This is the operation the demo uses to drive the real root
 of `x³ − x − 1` down to 80 bits.
 
 For consumers that need to compare roots for identity rather than approximate
-them, an atom refined to at least separation precision becomes a
-{name}`Hex.RefinedIsolation`, and {name}`Hex.RefinedIsolation.sameRoot` decides
-whether two such isolations name the same root by a single dyadic
-disc-intersection test. `hex-number-field` builds on that comparison.
+them, an atom refined to at least separation precision can be wrapped as a
+{name}`Hex.RefinedIsolation` through {name}`Hex.DyadicRootIsolation.toRefined?`,
+and {name}`Hex.RefinedIsolation.sameRoot` then decides whether two such
+isolations name the same root by a single dyadic disc-intersection test.
+`hex-number-field` builds on that comparison.
 
 # How the certificate is checked
 %%%
@@ -198,13 +208,13 @@ tag := "hex-roots-cross-references"
 isolator, and is consumed through its Mathlib companion:
 
 * {ref "hex-poly-z"}[HexPolyZ] provides the dense integer polynomial
-  {name}`Hex.ZPoly` the isolator operates on, together with the
-  squarefree-decomposition machinery the simple-root test relies on.
+  {name}`Hex.ZPoly` the isolator operates on, together with the rational
+  polynomial gcd the simple-root test casts to and reduces.
 * {ref "hex-real-roots"}[HexRealRoots] is the real-line analogue. It isolates
   the real roots with a Sturm sign-variation certificate and returns rational
   intervals; `HexRoots` isolates every complex root with dyadic squares.
-  A polynomial's real roots appear in both, as intervals there and as the
-  real-centred atoms here.
+  A polynomial's real roots appear in both, as intervals there and, here, among
+  the complex atoms, each lying in its atom's certified region.
 * `HexRootsMathlib` is the correspondence library. It ports the
   Newton-Kantorovich theorem and develops the argument principle, Rouché's
   theorem, and the Mahler separation bound for polynomials on circles, then
