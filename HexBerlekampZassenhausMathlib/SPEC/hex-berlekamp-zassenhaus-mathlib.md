@@ -132,11 +132,12 @@ Goal-mode `irreducibility` closes `Hex.ZPoly.Irreducible f`,
 parseable `P : Polynomial ℤ`. The `toPolynomial` goal shape subsumes the
 old `irreducible_cert` tactic, which is deleted.
 
-Inputs whose modular factorizations are balanced at every candidate prime
-*and* whose proper factor degrees are not jointly obstructed by the
-per-prime degree-sum language (e.g. Swinnerton-Dyer polynomials, `X⁴+1`)
-have no certificate in either language; the provider declines with a
-diagnostic pointing at the kernel-decide fallbacks.
+Inputs whose modular factorizations are balanced at every candidate prime,
+that are not Eisenstein at any small shift (the free layer certifies e.g.
+`X⁴+1` that way), *and* whose proper factor degrees are not jointly
+obstructed by the per-prime degree-sum language (e.g. Swinnerton-Dyer
+polynomials) have no certificate in either language; the provider declines
+with a diagnostic pointing at the kernel-decide fallbacks.
 
 ## The kernel-decide fallbacks `irreducibility!` / `factor_poly!`
 

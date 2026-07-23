@@ -158,8 +158,8 @@ End-to-end tests for the `Polynomial ℤ` / strong `Hex.ZPoly` provider of
 deleted `irreducible_cert` tactic (its generator guard polynomials from
 #8552 Part 1 migrate here), the certificate reification round-trips, the
 decline→multi-prime handover on an A4 quartic the free provider cannot
-certify, and the decline diagnostics for balanced inputs outside both
-certificate languages.
+certify, the free-layer Eisenstein handover on `x⁴ + 1`, and the decline
+diagnostic for balanced inputs outside every certificate language.
 -/
 
 namespace HexBerlekampZassenhausMathlib.FactorPolyTests
@@ -325,12 +325,13 @@ example : True := by
 /-! ### The decline→multi-prime handover on `Hex.ZPoly`
 
 `x⁴ + 8x + 12` has Galois group `A₄`: no 4-cycle, so it is reducible mod
-every prime and `searchWitness` finds no single-prime witness — the free
-provider declines. Its mod-p degree splittings `{1,3}` and `{2,2}` jointly
-obstruct every proper factor degree, so `certifyIrreducible?` produces a
-multi-prime certificate and this provider certifies it. -/
+every prime and `searchWitness` finds no single-prime witness; it is not
+Eisenstein at any small shift either, so the free provider declines. Its
+mod-p degree splittings `{1,3}` and `{2,2}` jointly obstruct every proper
+factor degree, so `certifyIrreducible?` produces a multi-prime certificate
+and this provider certifies it. -/
 
-/-- `x⁴ + 8x + 12`, irreducible with Galois group `A₄`: no single-prime
+/-- `x⁴ + 8x + 12`, irreducible with Galois group `A₄`: no free-layer
 witness exists, only the multi-prime degree obstruction. -/
 def quarticA4 : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[12, 8, 0, 0, 1]
 
@@ -404,11 +405,33 @@ is a unit (±1), not irreducible
 #guard_msgs in
 example := irreducibility (1 : Polynomial ℤ)
 
-/-! ### Balanced beyond both certificate languages: the decline diagnostic
+/-! ### The Eisenstein handover: `x⁴ + 1` never reaches this provider
 
 `x⁴ + 1` is reducible mod every prime *and* a degree-2 factor sum is
 available in every mod-p splitting (`{1,1,1,1}` or `{2,2}`), so neither the
-single-prime witness nor the multi-prime degree obstruction applies. -/
+single-prime witness nor the multi-prime degree obstruction applies. The
+free layer's Eisenstein-after-shift search certifies it (shift `1`,
+prime `2`) before either bridge certificate language is consulted. -/
+
+def x4p1 : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[1, 0, 0, 0, 1]
+
+theorem x4p1_irred : Hex.ZPoly.Irreducible x4p1 := irreducibility x4p1
+
+/--
+info: 'HexBerlekampZassenhausMathlib.FactorPolyTests.x4p1_irred' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms x4p1_irred
+
+-- The transported `Polynomial ℤ` statement.
+example : Irreducible (X ^ 4 + 1 : Polynomial ℤ) := by irreducibility
+
+/-! ### Balanced beyond every certificate language: the decline diagnostic
+
+`x⁴ - 10x² + 1` (Swinnerton-Dyer for `√2 + √3`) is reducible mod every
+prime, not Eisenstein at any small shift, and every mod-p splitting leaves
+a degree-2 factor sum available, so the multi-prime degree obstruction
+fails as well: no kernel-checkable certificate exists in the tree. -/
 
 /--
 error: irreducibility: unsupported polynomial type
@@ -416,25 +439,27 @@ error: irreducibility: unsupported polynomial type
 Supported without further imports: Hex.FpPoly p (prime p). Importing HexBerlekampZassenhaus adds Hex.ZPoly; the Mathlib bridge libraries add Polynomial (ZMod q) and Polynomial ℤ.
 
 irreducibility: the irreducible factor
-  Hex.DensePoly.ofCoeffs #[1, 0, 0, 0, 1]
-has no single-prime modular witness among the candidate primes (its modular factorizations are balanced, e.g. Swinnerton-Dyer polynomials or X⁴+1); the Mathlib bridge's multi-prime degree-obstruction certificates may certify it — import HexBerlekampZassenhausMathlib.
+  Hex.DensePoly.ofCoeffs #[1, 0, -10, 0, 1]
+has no single-prime modular witness among the candidate primes (its modular factorizations are balanced, e.g. Swinnerton-Dyer polynomials) and is not Eisenstein at any small shift; the Mathlib bridge's multi-prime degree-obstruction certificates may certify it — import HexBerlekampZassenhausMathlib.
 
 irreducibility: the irreducible factor
-  Hex.DensePoly.ofCoeffs #[1, 0, 0, 0, 1]
-has no single-prime modular witness, and its balanced modular factorizations also fall outside the multi-prime per-prime degree-sum obstruction language (e.g. Swinnerton-Dyer polynomials or X⁴+1); no certificate-backed proof is available, but the kernel-decide fallbacks `irreducibility!` / `factor_poly!` can still certify small inputs by re-running the factorizer in the kernel
+  Hex.DensePoly.ofCoeffs #[1, 0, -10, 0, 1]
+has no single-prime modular witness, is not Eisenstein at any small shift, and its balanced modular factorizations fall outside the multi-prime per-prime degree-sum obstruction language (e.g. Swinnerton-Dyer polynomials); no certificate-backed proof is available, but the kernel-decide fallbacks `irreducibility!` / `factor_poly!` can still certify small inputs by re-running the factorizer in the kernel
 -/
 #guard_msgs in
-example := irreducibility (Hex.DensePoly.ofCoeffs #[1, 0, 0, 0, 1] : Hex.ZPoly)
+example := irreducibility (Hex.DensePoly.ofCoeffs #[1, 0, -10, 0, 1] : Hex.ZPoly)
 
 /-! ### The kernel-decide fallbacks `irreducibility!` / `factor_poly!`
 
-`x⁴ + 1` and the Swinnerton-Dyer quartic `x⁴ - 10x² + 1` are exactly the
-decline cases above, so the bang forms exercise the genuine fallback path:
-the emitted proofs make the kernel re-run the factorizer (which is why this
-file carries the `import all` closure block). On inputs the certificate
-pipeline handles, the bang forms are pass-throughs. -/
+The Swinnerton-Dyer quartic `x⁴ - 10x² + 1` is exactly the decline case
+above, so the bang forms exercise the genuine fallback path: the emitted
+proofs make the kernel re-run the factorizer (which is why this file
+carries the `import all` closure block). On inputs the certificate
+pipeline handles — including `x⁴ + 1`, now Eisenstein-certified at shift
+`1` — the bang forms are pass-throughs. -/
 
-/-- `x⁴ + 1`, irreducible but balanced beyond both certificate languages. -/
+/-- `x⁴ + 1`, certified by the Eisenstein-after-shift witness, so a bang
+pass-through. -/
 def cyc8 : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[1, 0, 0, 0, 1]
 
 /-- The Swinnerton-Dyer quartic `x⁴ - 10x² + 1`. -/

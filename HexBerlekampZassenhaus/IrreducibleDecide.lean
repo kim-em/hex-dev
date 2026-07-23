@@ -7,14 +7,16 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekamp.IrreducibleDecide
+public import HexBerlekampZassenhaus.EisensteinCore
 public import HexBerlekampZassenhaus.IrreducibleCore
 public import HexBerlekampZassenhaus.PrimeSelection
 
 public section
 
 /-!
-Kernel-decidable irreducibility entry point for `Hex.ZPoly` via a single-prime
-modular witness, consumed by the `irreducibility`/`factor_poly` elaborators.
+Kernel-decidable irreducibility entry points for `Hex.ZPoly` — a single-prime
+modular witness or an Eisenstein-after-shift certificate — consumed by the
+`irreducibility`/`factor_poly` elaborators.
 
 For a primitive, non-constant `f` whose leading coefficient survives reduction
 mod a prime `p`, irreducibility of `ZPoly.modP p f` transfers to `f` by the
@@ -88,7 +90,8 @@ structure ModPWitness where
   cert : Berlekamp.IrreducibilityCertificate
 
 /-- One irreducibility witness for a `ZPoly`: a prime constant, a primitive
-linear, or a single-prime modular reduction certificate. -/
+linear, a single-prime modular reduction certificate, or an
+Eisenstein-after-shift certificate. -/
 inductive IrredWitness where
   /-- The polynomial is a constant with prime absolute value. -/
   | primeConst
@@ -96,6 +99,9 @@ inductive IrredWitness where
   | linear
   /-- Single-prime route: the reduction mod `w.p` is irreducible. -/
   | modP (w : ModPWitness)
+  /-- Eisenstein route: `ZPoly.translate shift f` satisfies Eisenstein's
+  criterion at the prime `q`. -/
+  | eisenstein (q : Nat) (shift : Int)
 
 /-- Kernel-decidable check that `w` witnesses irreducibility of `f`. -/
 @[expose]
@@ -109,6 +115,14 @@ def checkIrredWitness (f : ZPoly) : IrredWitness → Bool
         !(decide (w.c = 0)) &&
         DensePoly.beqCoeffs (DensePoly.scale w.c w.m) (ZPoly.modP w.p f) &&
         Berlekamp.checkMonicCert w.m w.cert
+  | .eisenstein q shift =>
+      let g := ZPoly.translate shift f
+      Hex.Nat.isPrimeTrial q && decide (ZPoly.content g = 1) &&
+        decide (1 < g.size) &&
+        !(decide (g.coeff (g.size - 1) % (q : Int) = 0)) &&
+        ((List.range (g.size - 1)).all fun i =>
+          decide (g.coeff i % (q : Int) = 0)) &&
+        !(decide (g.coeff 0 % ((q : Int) * (q : Int)) = 0))
 
 /-- A passing `checkIrredWitness` forces irreducibility. -/
 theorem irreducible_of_checkIrredWitness
@@ -136,6 +150,13 @@ theorem irreducible_of_checkIrredWitness
         hp (decide_eq_true (of_decide_eq_true hcontent))
         (decide_eq_true (of_decide_eq_true hadm))
         (decide_eq_true (of_decide_eq_true hsize)) hc hfm hcert
+  | .eisenstein q shift =>
+      unfold checkIrredWitness at hcheck
+      simp only [Bool.and_eq_true] at hcheck
+      obtain ⟨⟨⟨⟨⟨hp, hcontent⟩, hsize⟩, hlead⟩, hlow⟩, hsq⟩ := hcheck
+      rw [Bool.not_eq_true'] at hlead hsq
+      exact irreducible_of_eisensteinCert f q shift hp hcontent hsize
+        hlead hlow hsq
 
 /-- Bulk kernel-decidable irreducibility for a `ZPoly` factor list with
 repetition: `certified` carries one `(factor, witness)` entry per *distinct*

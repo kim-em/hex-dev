@@ -965,14 +965,19 @@ with repetition), and `irreducibility` handles `ZPoly` inputs and
 `ZPoly.Irreducible` goals.
 
 Per-factor irreducibility is certified by `ZPoly.IrredWitness` (prime
-constant / primitive linear / single-prime modular Rabin certificate,
-`IrreducibleDecide.lean`), bulk-checked by the kernel via
+constant / primitive linear / single-prime modular Rabin certificate /
+Eisenstein-after-shift, `IrreducibleDecide.lean`; the Eisenstein core theorem
+and the `ZPoly.translate` Taylor-shift algebra live in
+`EisensteinCore.lean`), bulk-checked by the kernel via
 `ZPoly.checkIrredCover` on reified literals — one witness check per distinct
 factor. The compiled `ZPoly.factorize` runs only at elaboration time.
 
 **Partiality**: a factor that is irreducible over ℤ but reducible mod every
-candidate prime (balanced modular factorizations: Swinnerton-Dyer
-polynomials, `X⁴+1`) has no single-prime witness; the provider then declines
-with a diagnostic, deferring to the Mathlib bridge's multi-prime
-degree-obstruction certificates. This partiality is by design; the emitted
-statements never weaken.
+candidate prime (a balanced modular factorization) has no single-prime
+witness. The Eisenstein-after-shift search (shifts `0, ±1, ±2, ±3`, prime
+candidates from the shifted constant term) covers some such inputs — e.g.
+`X⁴+1` at shift `1`, prime `2` — but not all: Swinnerton-Dyer polynomials
+are neither single-prime witnessable nor shift-Eisenstein, so the provider
+still declines on them with a diagnostic, deferring to the Mathlib bridge's
+multi-prime degree-obstruction certificates. This partiality is by design;
+the emitted statements never weaken.

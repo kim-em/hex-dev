@@ -28,13 +28,15 @@ integer polynomials.
 The compiled Berlekamp–Zassenhaus factorizer runs at elaboration time as
 untrusted search; per-factor irreducibility is certified through
 `Hex.ZPoly.IrredWitness` (prime constant / primitive linear / single-prime
-modular certificate), and the emitted terms carry only kernel checks on
-reified literal data. Factors that are irreducible over `ℤ` but reducible
-mod every candidate prime (balanced factors, e.g. Swinnerton-Dyer
-polynomials or `X⁴+1`) have no single-prime witness: this provider then
-*declines* with a diagnostic, so the Mathlib bridge provider (multi-prime
-degree-obstruction certificates) can take over when imported, and the final
-error explains the gap otherwise.
+modular certificate / Eisenstein-after-shift), and the emitted terms carry
+only kernel checks on reified literal data. Factors that are irreducible
+over `ℤ` but reducible mod every candidate prime (balanced factors) fall to
+the Eisenstein-after-shift search (which covers e.g. `X⁴+1` at shift `1`,
+prime `2`); when that also fails (e.g. Swinnerton-Dyer polynomials, which
+are not shift-Eisenstein), this provider *declines* with a diagnostic, so
+the Mathlib bridge provider (multi-prime degree-obstruction certificates)
+can take over when imported, and the final error explains the gap
+otherwise.
 -/
 
 namespace HexBerlekampZassenhaus.FactorTactic
@@ -88,6 +90,50 @@ meta def searchModPWitness (q : Hex.ZPoly) : Option Hex.ZPoly.ModPWitness := Id.
               | none => pure ()
   return none
 
+/-- The shifts tried by the Eisenstein-after-shift search, in order. -/
+meta def eisensteinShifts : List Int :=
+  [0, 1, -1, 2, -2, 3, -3]
+
+/-- Ceiling on Eisenstein witness primes. The emitted certificate
+kernel-replays `Hex.Nat.isPrimeTrial q`, whose `List.range q` reduction is
+recursion-depth linear in `q` and hits the default `maxRecDepth` a little
+above 150, so a larger witness prime would elaborate to a proof the kernel
+cannot check. `128` leaves margin below that boundary (the boundary replay
+`checkIrredWitness (X² − 127) (.eisenstein 127 0)` is locked by a test). -/
+meta def eisensteinPrimeCap : Nat := 128
+
+/-- Prime divisors of `n` up to `eisensteinPrimeCap`, by trial division. Any
+cofactor above the cap is dropped: its `isPrimeTrial` replay would blow the
+kernel recursion depth. -/
+meta def smallPrimeDivisors (n : Nat) : List Nat := Id.run do
+  let mut n := n
+  let mut acc : List Nat := []
+  for d in [2:eisensteinPrimeCap + 1] do
+    if d * d > n then
+      break
+    if n % d == 0 then
+      acc := acc ++ [d]
+      while n % d == 0 do
+        n := n / d
+  if 1 < n && n ≤ eisensteinPrimeCap then
+    acc := acc ++ [n]
+  return acc
+
+/-- Search for an Eisenstein-after-shift witness for `f`: for each candidate
+shift `s`, the candidate primes are the small prime divisors of the constant
+term of `translate s f`, and each candidate is validated by running the full
+`checkIrredWitness` Boolean check. First hit wins. -/
+meta def searchEisenstein (f : Hex.ZPoly) : Option Hex.ZPoly.IrredWitness := Id.run do
+  for shift in eisensteinShifts do
+    let g := Hex.ZPoly.translate shift f
+    let c0 := (g.coeff 0).natAbs
+    if c0 != 0 then
+      for q in smallPrimeDivisors c0 do
+        let w := Hex.ZPoly.IrredWitness.eisenstein q shift
+        if Hex.ZPoly.checkIrredWitness f w then
+          return some w
+  return none
+
 /-- Search for an irreducibility witness for `q`. -/
 meta def searchWitness (q : Hex.ZPoly) : Option Hex.ZPoly.IrredWitness := Id.run do
   if q.size = 1 then
@@ -102,7 +148,7 @@ meta def searchWitness (q : Hex.ZPoly) : Option Hex.ZPoly.IrredWitness := Id.run
     return some .linear
   match searchModPWitness q with
   | some w => return some (.modP w)
-  | none => return none
+  | none => return searchEisenstein q
 
 /-- Reify a `ModPWitness` as a constructor application over reified pieces. -/
 meta def reifyModPWitness (w : Hex.ZPoly.ModPWitness) : Expr :=
@@ -119,6 +165,9 @@ meta def reifyWitness : Hex.ZPoly.IrredWitness → Expr
   | .primeConst => mkConst ``Hex.ZPoly.IrredWitness.primeConst
   | .linear => mkConst ``Hex.ZPoly.IrredWitness.linear
   | .modP w => mkApp (mkConst ``Hex.ZPoly.IrredWitness.modP) (reifyModPWitness w)
+  | .eisenstein q shift =>
+      mkApp2 (mkConst ``Hex.ZPoly.IrredWitness.eisenstein) (mkNatLit q)
+        (toExpr shift)
 
 /-- Literal `List` expression (shared shape with the `FpPoly` elaborator). -/
 meta def listLit (ty : Expr) (xs : List Expr) : Expr :=
@@ -136,9 +185,9 @@ meta def balancedDecline (tactic : String) (q : Hex.ZPoly) : MetaM MessageData :
   return m!"{tactic}: the irreducible factor{indentExpr qE}\
       \nhas no single-prime modular witness among the candidate primes \
       (its modular factorizations are balanced, e.g. Swinnerton-Dyer \
-      polynomials or X⁴+1); the Mathlib bridge's multi-prime \
-      degree-obstruction certificates may certify it — import \
-      HexBerlekampZassenhausMathlib."
+      polynomials) and is not Eisenstein at any small shift; the Mathlib \
+      bridge's multi-prime degree-obstruction certificates may certify it \
+      — import HexBerlekampZassenhausMathlib."
 
 /-- The opaque-input contract check: the user's term must be definitionally
 transparent down to its evaluated literal. -/
