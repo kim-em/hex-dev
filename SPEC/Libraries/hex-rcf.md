@@ -214,7 +214,8 @@ the function the soundness theorem speaks about, but the tactic does
 not ask the kernel to evaluate it: re-running the search (bisection,
 gcds, refinement) inside the kernel would be far slower than the
 compiled search. Following the compiled-prep / kernel-verify pattern
-of `irreducible_cert` (hex-berlekamp-zassenhaus), the tactic:
+of the `factor_poly` / `irreducibility` tactics (hex-berlekamp), the
+tactic:
 
 - runs the search compiled, collecting a `Certificate`: the Sturm
   chain of `P` with the quotient of each pseudo-division step, the

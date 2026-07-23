@@ -277,7 +277,7 @@ exponent `k` with the two literal `ring` identities
 stays invisible either way; `aevalIff_squareFreeCore` remains the
 library-level statement (and the `rcf` dependency).
 
-**Kernel replay.** Following the `irreducible_cert` pattern (and
+**Kernel replay.** Following the `factor_poly` / `irreducibility` pattern (and
 hex-rcf §Kernel replay), the elaborator never asks the kernel to
 re-run the search. Measured on the Stage-1 prototype, the naive
 per-field `decide` shape (each `count_one`/`complete` certificate
