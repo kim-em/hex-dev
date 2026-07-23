@@ -44,6 +44,7 @@ import all HexPoly.Euclid
 import all HexPoly.Operations
 import all HexPoly.Euclid.Content
 import all HexPoly.Euclid.DivGcd
+import all HexPoly.Euclid.MonicUnique
 import all HexPoly.Euclid.MulRing
 import all HexPoly.Euclid.Reconstruction
 import all HexPolyZ.Core
@@ -114,6 +115,8 @@ import all HexHensel.Linear
 import all HexHensel.Multifactor
 import all HexHensel.Quadratic
 import all HexHensel.QuadraticMultifactor
+import all HexHensel.WordStep
+import all HexHensel.WordTransport
 import all HexMatrix.Basic
 import all HexMatrix.Block
 import all HexMatrix.DotProduct
@@ -134,17 +137,6 @@ import all HexRowReduce.RowEchelon
 import all HexRowReduce.Span
 import all HexRowReduce.RowEchelon.Contracts
 import all HexRowReduce.RowEchelon.Elementary
-import all HexRoots.Basic
-import all HexRoots.Bisection
-import all HexRoots.Cauchy
-import all HexRoots.IsolateAll
-import all HexRoots.Kantorovich
-import all HexRoots.MahlerPrec
-import all HexRoots.Newton
-import all HexRoots.Pellet
-import all HexRoots.Refine
-import all HexRoots.SimpleRoot
-import all HexRoots.Taylor
 import all HexBasic.Fold
 import all HexBasic.ListShim
 import all HexBasic.Vector.Modify
