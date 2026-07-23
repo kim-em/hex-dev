@@ -1224,9 +1224,11 @@ theorem checkIrreducibleCertLinear_sound
 `checkIrreducibleCertLinear_sound` with every side condition stated as a
 kernel-decidable Boolean check: primality of the recorded primes, content one,
 and positive executable degree. This is the exact consumption shape of the
-`irreducible_cert` tactic: it applies this theorem to a reified literal
-certificate with an `Eq.refl true` proof in each hypothesis slot, so the whole
-obligation is discharged by kernel reduction on literal data.
+multi-prime arm of the `factor_poly`/`irreducibility` provider: it applies
+this theorem (through `zpolyIrreducible_of_checkIrreducibleCertLinear` and
+`checkMultiPrimeCert`) to a reified literal certificate with an
+`Eq.refl true` proof in each hypothesis slot, so the whole obligation is
+discharged by kernel reduction on literal data.
 -/
 theorem irreducible_of_checkIrreducibleCertLinear
     (f : Hex.ZPoly) (cert : Hex.ZPolyIrreducibilityCertificate)

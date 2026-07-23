@@ -8,10 +8,12 @@ module
 
 public import HexRealRootsMathlib.IsolateRoots
 public import HexRealRootsMathlib.SquareFreeCore
+public import HexPolyZMathlib.PolyParse
 public meta import HexRealRoots.Isolate
 public meta import HexRealRoots.Refine
 public meta import HexRealRoots.Cert
 public meta import HexPolyZ.Core
+public meta import HexPolyZMathlib.PolyParse
 public import Lean
 
 public section
@@ -132,107 +134,22 @@ meta def evalZPoly (e : Expr) : MetaM Hex.ZPoly := do
   | .ok f => return f
   | .error msg => throwError "isolate_roots: failed to evaluate the ZPoly{indentExpr e}\n{msg}"
 
-private meta unsafe def evalRatUnsafe (e : Expr) : MetaM (Except String Rat) :=
-  try return .ok (← evalExpr Rat (mkConst ``Rat) e)
-  catch ex => return .error (← ex.toMessageData.toString)
-
-@[implemented_by evalRatUnsafe]
-private meta opaque evalRatCore (e : Expr) : MetaM (Except String Rat)
-
 /-- Evaluate a closed `Rat`-typed (or `ℚ`) expression to a `Rat` at elaboration
-time. `Rat` is computable, so `2 ^ (-20)`, `1 / 1000`, `10 ^ (-2)` all reduce. -/
-meta def evalRat (e : Expr) : MetaM Rat := do
-  match ← evalRatCore e with
-  | .ok q => return q
-  | .error msg => throwError "isolate_roots: failed to evaluate the rational{indentExpr e}\n{msg}"
+time (hoisted to `HexPolyZMathlib.PolyParse`). -/
+meta def evalRat (e : Expr) : MetaM Rat :=
+  HexPolyZMathlib.PolyParse.evalRat "isolate_roots" e
 
-/-! ## The integer-polynomial interpreter -/
+/-! ## The integer-polynomial interpreter
 
-/-- Extract a `Nat` literal from an `Expr` (numerals and raw literals). -/
-meta def getNat (e : Expr) : MetaM Nat := do
-  match ← getNatValue? e with
-  | some n => return n
-  | none =>
-    match (← whnfR e).getAppFnArgs with
-    | (``OfNat.ofNat, #[_, n, _]) =>
-      match ← getNatValue? n with
-      | some k => return k
-      | none => throwError "isolate_roots: not a Nat literal{indentExpr e}"
-    | _ => throwError "isolate_roots: not a Nat literal{indentExpr e}"
+The interpreter itself (`getNat`/`evalIntLit`/`evalCoeff`/`parsePoly`) is
+hoisted to `HexPolyZMathlib.PolyParse`, shared with the
+`factor_poly`/`irreducibility` `Polynomial ℤ` provider. -/
 
-/-- Interpret an integer scalar-coefficient leaf (`OfNat`, `Neg`, `+`, `-`, `*`,
-`Int.ofNat`, `Nat.cast`, `Int.cast`, raw literals). Throws the dedicated
-non-integer-coefficient error on anything else (e.g. a genuine `ℚ`/`ℝ`
-non-integer). -/
-meta partial def evalIntLit (e : Expr) : MetaM Int := do
-  match (← whnfR e).getAppFnArgs with
-  | (``OfNat.ofNat, #[_, n, _]) => return Int.ofNat (← getNat n)
-  | (``Neg.neg, #[_, _, a]) => return - (← evalIntLit a)
-  | (``HMul.hMul, #[_, _, _, _, a, b]) => return (← evalIntLit a) * (← evalIntLit b)
-  | (``HAdd.hAdd, #[_, _, _, _, a, b]) => return (← evalIntLit a) + (← evalIntLit b)
-  | (``HSub.hSub, #[_, _, _, _, a, b]) => return (← evalIntLit a) - (← evalIntLit b)
-  | (``Int.ofNat, #[n]) => return Int.ofNat (← getNat n)
-  | (``Nat.cast, #[_, _, n]) => return Int.ofNat (← getNat n)
-  | (``Int.cast, #[_, _, z]) => evalIntLit z
-  | _ =>
-    match ← getIntValue? e with
-    | some z => return z
-    | none => throwError "isolate_roots: non-integer coefficient{indentExpr e}"
-
-/-- Interpret a coefficient leaf of ring `R`. For `ℚ` (and `ℤ`), a leaf that is
-not structurally an integer is evaluated to a `Rat` and accepted only when its
-denominator is `1`; otherwise the dedicated non-integer-coefficient error fires.
-For `ℝ` (not evaluable to `Rat`), only structurally integer leaves are accepted. -/
-meta def evalCoeff (isRat : Bool) (e : Expr) : MetaM Int := do
-  try
-    evalIntLit e
-  catch _ =>
-    if isRat then
-      let q ← evalRat e
-      if q.den == 1 then return q.num
-      else throwError "isolate_roots: non-integer coefficient{indentExpr e}"
-    else
-      throwError "isolate_roots: non-integer coefficient{indentExpr e}"
-
-/-- Recursive interpreter from a `Polynomial R` expression over
-`X / C / numerals (OfNat) / + / - / * / ^ (Nat) / neg`, with named local defs
-unfolded by `whnf` under a depth guard, to a `Hex.ZPoly` value. `isRat` selects
-the `ℚ`-style non-integer rejection. -/
-meta partial def parsePoly (isRat : Bool) (fuel : Nat) (e : Expr) : MetaM Hex.ZPoly := do
-  -- Match structural heads on the *raw* term first: `whnf` would unfold
-  -- `Polynomial.C`/`X`/numerals into their `Finsupp` normal form and defeat the
-  -- match. Only if no structural head applies do we `whnf` once (to unfold a
-  -- named local def) under the fuel guard.
-  match e.getAppFnArgs with
-  | (``HAdd.hAdd, #[_, _, _, _, a, b]) => return (← parsePoly isRat fuel a) + (← parsePoly isRat fuel b)
-  | (``HSub.hSub, #[_, _, _, _, a, b]) => return (← parsePoly isRat fuel a) - (← parsePoly isRat fuel b)
-  | (``HMul.hMul, #[_, _, _, _, a, b]) => return (← parsePoly isRat fuel a) * (← parsePoly isRat fuel b)
-  | (``Neg.neg, #[_, _, a]) => return - (← parsePoly isRat fuel a)
-  | (``HPow.hPow, #[_, _, _, _, a, n]) => do
-      let base ← parsePoly isRat fuel a
-      let k ← getNat n
-      let mut acc : Hex.ZPoly := Hex.DensePoly.C 1
-      for _ in [0:k] do acc := acc * base
-      return acc
-  | (``Polynomial.X, _) => return Hex.DensePoly.ofCoeffs #[(0 : Int), 1]
-  | (``Polynomial.C, #[_, _, c]) => return Hex.DensePoly.C (← evalCoeff isRat c)
-  | (``OfNat.ofNat, #[_, n, _]) => return Hex.DensePoly.C (Int.ofNat (← getNat n))
-  | (``DFunLike.coe, args) =>
-    -- `Polynomial.C c` elaborates to `⇑Polynomial.C c = DFunLike.coe … Polynomial.C c`.
-    if args.size == 6 && args[4]!.getAppFn.isConstOf ``Polynomial.C then
-      return Hex.DensePoly.C (← evalCoeff isRat args[5]!)
-    else
-      throwError "isolate_roots: unsupported polynomial syntax{indentExpr e}"
-  | _ =>
-    -- Unfold a named def by one delta step under the fuel guard, else fail. Uses
-    -- `unfoldDefinition?` rather than `whnf`, which would normalise past the
-    -- structural `+/−/*` heads into the `Finsupp` form and defeat the match.
-    if fuel == 0 then
-      throwError "isolate_roots: unsupported polynomial syntax{indentExpr e}"
-    else
-      match ← unfoldDefinition? e with
-      | some e' => parsePoly isRat (fuel - 1) e'
-      | none => throwError "isolate_roots: unsupported polynomial syntax{indentExpr e}"
+/-- Recursive interpreter from a `Polynomial R` expression to a `Hex.ZPoly`
+value (hoisted to `HexPolyZMathlib.PolyParse`). `isRat` selects the `ℚ`-style
+non-integer rejection. -/
+meta def parsePoly (isRat : Bool) (fuel : Nat) (e : Expr) : MetaM Hex.ZPoly :=
+  HexPolyZMathlib.PolyParse.parsePoly "isolate_roots" isRat fuel e
 
 /-! ## Exact integer-polynomial arithmetic (for the radical certificate) -/
 
