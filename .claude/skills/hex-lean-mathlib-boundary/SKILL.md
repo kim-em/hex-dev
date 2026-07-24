@@ -1496,3 +1496,37 @@ Definitions that cross-check `decide`s must kernel-reduce (design principle
   `decide +kernel` (`@[semireducible]` is warned ineffective for WF
   definitions). For a spec with many downstream `decide` sites, structural
   recursion avoids all per-site annotations.
+
+### Diagnosing "decide sticks": elaborator whnf vs kernel reduction
+
+A stuck plain `decide` on a deep executable pipeline (e.g.
+`decide (Hex.ZPoly.isIrreducible f)`, which runs the whole factorizer) does
+**not** show that the kernel cannot reduce it — plain `decide` evaluates the
+`Decidable` instance in the *elaborator*, whose whnf respects
+`@[irreducible]` and never sees `unseal`-gated WF fixpoint bodies, so it
+sticks on definitions the kernel unfolds without complaint. Before
+concluding a kernel-decide route is infeasible (the wrong call was made once
+on the `irreducibility!`/`factor_poly!` fallbacks, #8863), probe with
+`decide +kernel`, and remember two refinements verified there:
+
+- Under the module system the *kernel's* remaining obstacle is the exposure
+  closure, and `import all` is **per-file, not recursive**: an umbrella
+  `import all HexBerlekampZassenhaus` does not pull in dependency bodies.
+  The stuck constant may be several libraries down (that case needed
+  `HexHensel`, the matrix libs, and core's non-exposed `Fin.foldl` from
+  `Init.Data.Fin.Fold`). Find it by descending with `Lean.Kernel.whnf`
+  probes, not by guessing.
+- With the closure complete, `WellFounded.Nat.fix` measures (fuel loops,
+  divide-and-conquer recursions) all kernel-reduce at tolerable cost — the
+  BZ factorizer replays a Swinnerton-Dyer quartic in seconds and degree 12
+  in tens of seconds. The genuine hard boundary is an `@[extern]`-backed
+  `opaque` in the path (e.g. `lllNative` in the lattice tier), which no
+  amount of exposure fixes — scope kernel-decide features to inputs whose
+  replay stays in the kernel-reducible tiers.
+- For raw-`Expr` emission the `decide +kernel` equivalent is: build
+  `of_decide_eq_true (Eq.refl true)` with the instance given explicitly and
+  assign it *without* an elaborator `isDefEq` on the refl slot — the kernel
+  verifies at declaration check. Runtime-precheck the Bool with the compiled
+  evaluator first so failures surface as elaboration errors, and precheck
+  kernel reducibility with `Lean.Kernel.whnf` so a missing `import all`
+  closure produces a named error instead of a kernel type mismatch.
