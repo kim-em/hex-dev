@@ -26,6 +26,7 @@ import HexManual.Chapters.HexGFqField
 import HexManual.Chapters.HexConway
 import HexManual.Chapters.HexGFq
 import HexManual.Chapters.HexRealRoots
+import HexManual.Chapters.FactorTactics
 import HexManual.Chapters.HexRoots
 -- Tutorials (application-first capstone pages, see SPEC/tutorials.md).
 import HexManual.Tutorials.Coppersmith
@@ -111,6 +112,8 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexGFq}
 
 {include 2 HexManual.Chapters.HexRealRoots}
+
+{include 2 HexManual.Chapters.FactorTactics}
 
 {include 2 HexManual.Chapters.HexRoots}
 
