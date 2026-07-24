@@ -31,7 +31,8 @@ namespace Hex
 counterpart of `FpPoly.Factored`/`ZPoly.Factored`. Produced by the
 `factor_poly` elaborator via the Mathlib bridge providers. -/
 structure FactoredPoly {R : Type*} [CommRing R] (P : Polynomial R) where
-  /-- The unit scalar (the leading coefficient for nonzero `P`). -/
+  /-- The scalar factored out of `P`: over a finite field the leading unit of
+  nonzero `P`; over `ℤ` the signed content. -/
   scalar : R
   /-- The irreducible factors, with repetition. -/
   factors : List (Polynomial R)

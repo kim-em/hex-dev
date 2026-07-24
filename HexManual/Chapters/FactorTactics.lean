@@ -71,10 +71,11 @@ theorem sqrt2_irred :
 
 Behind the call, the input expression is parsed to an executable
 integer polynomial together with a proof that the parse is faithful,
-the compiled factorizer confirms there is exactly one irreducible
-factor, and a per-factor certificate (for `x² − 2`, a single-prime
-modular witness) is reified into the proof term for the kernel to
-check.
+and a compiled witness search finds a certificate: for `x² − 2` the
+reduction mod `3` is irreducible, a single-prime modular witness,
+which is reified into the proof term for the kernel to check. The
+factorizer itself only runs when no witness exists, to report whether
+the input is actually reducible or merely uncertifiable.
 
 # Factoring: `factor_poly`
 %%%
@@ -179,10 +180,14 @@ equivalent to Mathlib's `Irreducible` under `toPolynomial`. Goal-mode
 `Irreducible (HexPolyZMathlib.toPolynomial f)`, and `Irreducible P` for
 a parseable `P : Polynomial ℤ`.
 
-Finally, `Polynomial (ZMod q)` inputs (literal prime `q < 2³¹`) reuse
-the prime-field pipeline through the parser-with-proof of
-`HexBerlekampMathlib`, producing the same
-{name}`Hex.FactoredPoly` shape as the integer case:
+Finally, `Polynomial (ZMod q)` inputs reuse the prime-field pipeline
+through the parser-with-proof of `HexBerlekampMathlib`, producing the
+same {name}`Hex.FactoredPoly` shape as the integer case. The modulus
+must be a literal prime with `q ≤ 2²⁶`: the emitted term kernel-replays
+a trial-division primality check costing roughly `q` steps, so larger
+moduli are declined even inside the `ZMod64` bound, and the per-factor
+`(degree + 1) · q` replay budget of the
+{ref "factor-tactics-coverage"}[coverage section] applies as well:
 
 ```lean
 open Polynomial
@@ -273,12 +278,22 @@ ordinary proof term, the axiom cone stays clean:
 tag := "factor-tactics-coverage"
 %%%
 
-Inputs must be closed, kernel-transparent terms: the compiled
-evaluator has to see the actual coefficients at elaboration time, so a
-polynomial mentioning a local hypothesis or metavariable is rejected
-with `must be a closed term (no local hypotheses or metavariables)`,
-and a definition whose body the evaluator cannot access produces an
-evaluation error suggesting a `public meta import` of its module.
+All inputs must be closed terms: a polynomial mentioning a local
+hypothesis or metavariable is rejected with `must be a closed term
+(no local hypotheses or metavariables)`. Beyond that the contract
+splits by input type. The executable types (`FpPoly p`, `ZPoly`) must
+be evaluable and definitionally transparent: the compiled evaluator
+has to see the actual coefficients at elaboration time (a definition
+whose body it cannot access produces an evaluation error suggesting a
+`public meta import` of its module), and the kernel must be able to
+unfold the input to its literal coefficients. The `Polynomial` types
+instead go through a syntax-directed parser covering `X`,
+`Polynomial.C`, numerals, `+`, `-`, `*`, negation, `^` with literal
+`Nat` exponents, and named definitions unfolded under a fuel guard;
+an expression outside that grammar, say a raw `Polynomial.monomial`
+application, is rejected as unsupported even when it is closed and
+transparent.
+
 Degenerate inputs get targeted messages rather than proofs: the zero
 polynomial and units are reported as not irreducible, and a reducible
 input to `irreducibility` reports the factor count that `factor_poly`
@@ -286,24 +301,33 @@ found.
 
 For `FpPoly p` coverage is complete within that contract: any closed
 input at a literal prime modulus inside the `ZMod64` bounds factors,
-subject to the certificate replay budget `deg · p ≤ 2²⁶` (each Rabin
-replay costs roughly `deg · p` modular polynomial operations in the
-kernel; over-budget inputs fail at elaboration time with a clear
-message instead of emitting a proof the kernel cannot afford). A
-composite modulus is declined: `Polynomial (ZMod 6)` inputs report
-that the modulus is not prime, and `FpPoly 6` likewise.
+subject to the certificate replay budget: each Rabin-certified factor
+must satisfy `(degree + 1) · p ≤ 2²⁶`, checked once per distinct
+factor for `factor_poly` and against the input itself for
+`irreducibility` (a replay costs roughly that many modular polynomial
+operations in the kernel; over-budget inputs fail at elaboration time
+with a clear message instead of emitting a proof the kernel cannot
+afford). A composite modulus is declined: `Polynomial (ZMod 6)`
+inputs report that the modulus is not prime, and `FpPoly 6` likewise.
 
 Over the integers, the factor *search* always succeeds, but the
 emitted proof needs a kernel-checkable irreducibility witness for each
 factor, and the witness languages do not cover all of `ℤ[X]`. The free
-layer
-certifies four classes: prime constants, primitive linear polynomials,
-factors irreducible modulo a single good prime (a reified Rabin
-certificate), and Eisenstein-after-shift. The last deserves a story:
-`x⁴ + 1` is irreducible over `ℤ` yet reducible modulo *every* prime,
-so no single-prime witness exists, but shifting by `1` gives
+layer supports four witness kinds: prime constants, primitive linear
+polynomials, single-prime modular reduction (a reified Rabin
+certificate for a prime where the factor stays irreducible), and
+Eisenstein-after-shift. Each is found by a bounded search, so an
+input can lie inside a certificate language yet outside the
+implemented search: the single-prime search tries primes below `512`
+(those within the replay budget), the Eisenstein search tries shifts
+`0, ±1, ±2, ±3` with witness primes capped at `128` (a larger prime's
+trial-division replay would exceed the kernel's recursion depth), and
+a prime-constant witness must itself fit the replay budget. The
+Eisenstein kind deserves a story: `x⁴ + 1` is irreducible over `ℤ`
+yet reducible modulo *every* prime, so no single-prime witness
+exists, but shifting by `1` gives
 `(x+1)⁴ + 1 = x⁴ + 4x³ + 6x² + 4x + 2`, Eisenstein at `2`, and the
-shift search (shifts `0, ±1, ±2, ±3`) finds exactly that certificate:
+shift search finds exactly that certificate:
 
 ```lean
 open Hex Polynomial
@@ -318,8 +342,9 @@ example : Irreducible (X ^ 4 + 1 : Polynomial ℤ) := by
 ```
 
 When no free-layer witness exists, `HexBerlekampZassenhausMathlib`
-adds multi-prime degree-obstruction certificates: several primes whose
-modular factor-degree splittings jointly rule out every proper factor
+adds multi-prime degree-obstruction certificates: several primes
+(drawn from a fixed pool, `3` through `71`) whose modular
+factor-degree splittings jointly rule out every proper factor
 degree. The quartic `x⁴ + 8x + 12` has Galois group `A₄`, so it is
 reducible mod every prime and not Eisenstein at any small shift, but
 its mod-`p` splittings `{1,3}` and `{2,2}` together obstruct all
@@ -342,9 +367,10 @@ example :
   irreducibility
 ```
 
-One class remains out of reach of every certificate language:
-polynomials whose modular splittings are balanced at every candidate
-prime, which are not Eisenstein at any small shift, *and* whose proper
+One class remains out of reach of every implemented search *and*
+every certificate language: polynomials whose modular splittings are
+balanced at every candidate prime, which are not Eisenstein at any
+small shift, and whose proper
 factor degrees survive the multi-prime obstruction. Swinnerton-Dyer
 polynomials such as `x⁴ − 10x² + 1` (the minimal polynomial of
 `√2 + √3`) are the canonical case. The plain tactics decline these
@@ -357,12 +383,15 @@ to make a proof go through.
 tag := "factor-tactics-bang"
 %%%
 
-`irreducibility!` and `factor_poly!` (all the same term, tactic, and
-goal forms) first run the normal certificate pipeline and fall back,
-only when it declines, to a proof by `decide`: the kernel re-runs the
-full factorization to verify the claim. This is the one exception to
-"the factorizer never runs in the kernel", and it covers exactly the
-inputs the certificate languages cannot, including the Swinnerton-Dyer
+`irreducibility!` and `factor_poly!` first run the normal certificate
+pipeline; whenever the plain form fails, they fall back to a proof by
+`decide`, making the kernel re-run the full factorization to verify
+the claim. `irreducibility!` has all the plain forms: term, bare goal
+mode, and the `irreducibility! f` / `irreducibility! h : f` tactics.
+`factor_poly!` has the term form and the argument-taking tactic form.
+This is the one exception to "the factorizer never runs in the
+kernel": a kernel-decide fallback for small inputs whose replay stays
+in the kernel-reducible classical tier, including the Swinnerton-Dyer
 quartic:
 
 ```lean
@@ -384,7 +413,10 @@ pass-throughs and cost nothing extra. On genuine fallbacks the kernel
 replay costs real time (quartics are sub-second, degree 8 takes
 seconds, degree 12 tens of seconds), so a dense-size budget of 13
 rejects larger inputs at elaboration time with a message quoting the
-budget. Two further costs land on the calling file when it uses the
+budget. Inputs whose factorization is routed to the native-LLL
+lattice tier cannot be certified this way at any size: the FFI
+`lllNative` has no kernel-reducible body for the kernel to re-run.
+Two further costs land on the calling file when it uses the
 module system: the kernel can only re-run definitions whose bodies it
 can see, so a `module`-based caller must `import all` the executable
 closure (the `HexBerlekampZassenhausMathlib.BangElab` module docstring
