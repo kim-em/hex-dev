@@ -134,6 +134,44 @@ bridges (`coeff_toPolyℝ` / `coeff_toPolyℚ`, `eval_toPolyℝ` /
 polynomial equation, and `toReal_ofInt_shiftRight` normalizes `n / 2ⁱ`
 dyadic endpoints.
 
+### Literal-chain replay API
+
+Consumers such as [hex-rcf](hex-rcf.md) certify a supplied chain by
+multiplication identities without identifying it with the executable
+`sturmChain`. The companion therefore exposes a second bridge from
+literal integer-polynomial chains to the same abstract theorem.
+
+The reusable proof is an induction over an abstract nonempty list
+`[f, s₁, ..., sₙ]` with these hypotheses:
+
+- every entry is nonzero, degrees strictly descend, and `sₙ` is a
+  nonzero constant;
+- `derivative f = scale δ s₁` for a positive integer `δ`;
+- every consecutive triple satisfies
+  `scale α sᵢ = q * sᵢ₊₁ - scale β sᵢ₊₂` for positive integers
+  `α`, `β` and a supplied `q`.
+
+It concludes that the cast list is an `IsSturmChain (toPolyℝ f)` and
+that `toPolyℝ f` is squarefree. The induction is independent of
+`chainList`; the existing executable correspondence instantiates it,
+as does RCF's Boolean literal-chain checker. The generic supporting
+lemmas for reverse coprimality, derivative flanks, and exclusion of a
+common zero are public short APIs, not duplicated consumer proofs.
+
+The finite-point bridge `sturmVarAt_eq` and the infinity bridges
+`sturmVarNegInf_eq` / `sturmVarPosInf_eq` are public for an arbitrary
+literal `Array ZPoly`. Together with `Sturm.sturm_half_open` and
+`Sturm.sturm_line`, they turn literal executable variation reads into
+root counts without calling `sturmCount` or `rootCount`.
+
+The same layer supplies generalized isolation semantics parameterized
+by those literal counts: count-one gives a unique root in `(lower,
+upper]`, while an ordered complete array captures every root exactly
+once. These statements consume `Squarefree (toPolyℝ f)` and `f ≠ 0`,
+not the executable `SquareFreeRat f` predicate, and do not reuse the
+current `RealRootIsolation` fields that are definitionally tied to
+`sturmCount`.
+
 ### Consequences for the executable counts
 
 ```lean
@@ -506,14 +544,16 @@ Status and boundaries:
 HexRealRootsMathlib/
   SturmChainDefs.lean  -- IsSturmChain, sturmVar over Polynomial ℝ
   SturmTheorem.lean    -- the counting theorem and the line form
-  ChainCorrespond.lean -- sturmChain_isSturmChain, sturmVarAt_eq,
-                          sturmCount_eq_card_roots; compatibility aliases for
-                          HexPolyZMathlib.Squarefree
+  ChainCorrespond.lean -- executable-chain correspondence plus the abstract
+                          literal-recurrence bridge and finite/infinity
+                          variation casts; sturmCount_eq_card_roots;
+                          compatibility aliases for HexPolyZMathlib.Squarefree
   Discr.lean            -- compatibility import of the shared discriminant API
   Hadamard.lean         -- compatibility import of the shared determinant bound
   Separation.lean      -- sepPrec_separates, rootBound_bounds_roots;
                           specializes shared Mahler/Vandermonde analysis
-  Isolations.lean      -- exists_unique_root, isolates
+  Isolations.lean      -- executable and literal-count forms of
+                          exists_unique_root and isolates
   IsolateRoots.lean    -- IsolatedRealRoots, its constructors, the
                           bridge tactic, and the isolate_roots
                           term elaborator
