@@ -19,8 +19,10 @@ import argparse
 import functools
 import hashlib
 import json
+import os
 import platform
 import re
+import signal
 import shutil
 import socket
 import statistics
@@ -205,15 +207,28 @@ def run_timed(
         timer, "-f", RSS_MARKER + "%M", *command
     ]
     start = time.perf_counter_ns()
-    proc = subprocess.run(
+    child = subprocess.Popen(
         wrapped,
         cwd=ROOT,
-        capture_output=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         text=True,
-        timeout=timeout,
-        check=False,
+        start_new_session=True,
     )
+    try:
+        stdout, stderr = child.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        os.killpg(child.pid, signal.SIGTERM)
+        try:
+            child.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            os.killpg(child.pid, signal.SIGKILL)
+            child.communicate()
+        raise
     elapsed = time.perf_counter_ns() - start
+    proc = subprocess.CompletedProcess(
+        wrapped, child.returncode, stdout=stdout, stderr=stderr
+    )
     rss = None
     if timer is not None:
         match = re.search(rf"{re.escape(RSS_MARKER)}(\d+)", proc.stderr)
