@@ -13,6 +13,7 @@ public import HexNumberField.Convert
 public import HexNumberField.Lazy
 public import HexNumberField.Disambiguate
 public import HexNumberField.AlgebraicPoly
+public import HexNumberField.Roots
 
 public section
 
