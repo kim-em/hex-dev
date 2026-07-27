@@ -1749,6 +1749,110 @@ theorem map_smul (T : NumberTower) (q : Rat) (a : Elem T) :
     LevelSemantics.toComplex_eq_denote T a, coeffs_smul,
     LevelSemantics.denote_smul]
 
+/-- Natural powers assembled from the executable tower multiplication. -/
+@[expose]
+def natPow {T : NumberTower} (a : Elem T) : Nat → Elem T
+  | 0 => 1
+  | n + 1 => natPow a n * a
+
+/-- Natural powers preserve the selected complex interpretation. -/
+theorem map_natPow (T : NumberTower) (a : Elem T) (n : Nat) :
+    T.toComplex (natPow a n) = T.toComplex a ^ n := by
+  induction n with
+  | zero => simp [natPow, map_one]
+  | succ n ih => rw [natPow, map_mul, ih, pow_succ]
+
+/-- Integer powers assembled from natural powers and executable inversion. -/
+@[expose]
+def intPow {T : NumberTower} (a : Elem T) : Int → Elem T
+  | .ofNat n => natPow a n
+  | .negSucc n => (natPow a (n + 1))⁻¹
+
+/-- Integer powers preserve the selected complex interpretation. -/
+theorem map_intPow (T : NumberTower) (a : Elem T) (n : Int) :
+    T.toComplex (intPow a n) = T.toComplex a ^ n := by
+  cases n with
+  | ofNat n => exact map_natPow T a n
+  | negSucc n =>
+      rw [intPow, map_inv, map_natPow]
+      rfl
+
+/-- The law-bearing field whose operations are the existing executable tower
+coordinate operations. Auxiliary casts, scalar actions, and powers use the
+canonical rational embedding and the executable multiplication and inverse. -/
+@[expose, reducible]
+noncomputable def elemField (T : NumberTower) : Field (Elem T) := by
+  letI : SMul Nat (Elem T) := ⟨fun n a => (n : Rat) • a⟩
+  letI : SMul Int (Elem T) := ⟨fun n a => (n : Rat) • a⟩
+  letI : SMul ℚ≥0 (Elem T) := ⟨fun q a => (q : Rat) • a⟩
+  letI : Pow (Elem T) Nat := ⟨fun a n => natPow a n⟩
+  letI : Pow (Elem T) Int := ⟨fun a n => intPow a n⟩
+  letI : NatCast (Elem T) := ⟨fun n => T.ofRat (n : Rat)⟩
+  letI : IntCast (Elem T) := ⟨fun n => T.ofRat (n : Rat)⟩
+  letI : NNRatCast (Elem T) := ⟨fun q => T.ofRat (q : Rat)⟩
+  letI : RatCast (Elem T) := ⟨fun q => T.ofRat q⟩
+  apply Function.Injective.field T.toComplex (toComplex_injective T)
+  · exact map_zero T
+  · exact map_one T
+  · exact map_add T
+  · exact map_mul T
+  · exact map_neg T
+  · exact map_sub T
+  · exact map_inv T
+  · exact map_div T
+  · intro n a
+    change T.toComplex ((n : Rat) • a) = n • T.toComplex a
+    rw [map_smul, nsmul_eq_mul]
+    rfl
+  · intro n a
+    change T.toComplex ((n : Rat) • a) = n • T.toComplex a
+    rw [map_smul, zsmul_eq_mul]
+    rfl
+  · intro q a
+    change T.toComplex ((q : Rat) • a) = q • T.toComplex a
+    rw [map_smul, NNRat.smul_def]
+    rfl
+  · intro q a
+    change T.toComplex (q • a) = q • T.toComplex a
+    rw [map_smul, Rat.smul_def]
+  · exact map_natPow T
+  · exact map_intPow T
+  · intro n
+    exact toComplex_ofRat T (n : Rat)
+  · intro n
+    exact toComplex_ofRat T (n : Rat)
+  · intro q
+    exact toComplex_ofRat T (q : Rat)
+  · exact toComplex_ofRat T
+
+namespace TowerField
+
+/-- Opt-in field instance for tower elements. It is scoped so importing the
+Mathlib correspondence layer does not make executable downstream definitions
+depend on a noncomputable semantic proof dictionary. -/
+noncomputable scoped instance (T : NumberTower) : Field (Elem T) := elemField T
+
+end TowerField
+
+open scoped TowerField
+
+/-- The selected complex interpretation as an injective ring homomorphism. -/
+@[expose]
+noncomputable def embedding (T : NumberTower) : Elem T →+* ℂ where
+  toFun := T.toComplex
+  map_zero' := map_zero T
+  map_one' := map_one T
+  map_add' := map_add T
+  map_mul' := map_mul T
+
+@[simp]
+theorem embedding_apply (T : NumberTower) (a : Elem T) :
+    T.embedding a = T.toComplex a := rfl
+
+/-- The selected complex ring homomorphism is an embedding. -/
+theorem embedding_injective (T : NumberTower) :
+    Function.Injective T.embedding := toComplex_injective T
+
 /-- The Boolean zero test recognizes exactly semantic zero. -/
 theorem isZero_iff (T : NumberTower) (a : Elem T) :
     NumberTower.isZero a ↔ T.toComplex a = 0 := by
