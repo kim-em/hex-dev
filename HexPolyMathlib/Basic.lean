@@ -373,6 +373,17 @@ theorem toPolynomial_one [Semiring R] [DecidableEq R] :
   show toPolynomial (Hex.DensePoly.C 1) = 1
   rw [toPolynomial_C, Polynomial.C_1]
 
+/-- `toPolynomial` sends executable coefficient scaling to multiplication by
+the corresponding constant polynomial. -/
+@[simp, grind =]
+theorem toPolynomial_scale [Semiring R] [DecidableEq R]
+    (c : R) (p : Hex.DensePoly R) :
+    toPolynomial (Hex.DensePoly.scale c p) =
+      Polynomial.C c * toPolynomial p := by
+  ext n
+  rw [coeff_toPolynomial, Hex.DensePoly.coeff_scale_semiring,
+    Polynomial.coeff_C_mul, coeff_toPolynomial]
+
 /-- `toPolynomial` sends the executable monomial to Mathlib's monomial. -/
 @[simp, grind =]
 theorem toPolynomial_monomial [Semiring R] [DecidableEq R]

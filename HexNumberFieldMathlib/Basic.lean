@@ -77,17 +77,67 @@ noncomputable def toComplex (a : QAdjoin p x)
   (HexPolyMathlib.toPolynomial a.coeffs).eval₂ (algebraMap Rat ℂ)
     rep.root
 
+/-- Reduction modulo the defining polynomial preserves evaluation at the
+selected root. -/
+theorem eval_reduceCoeffs (f : DensePoly Rat)
+    (rep : RefinedIsolation p) :
+    (HexPolyMathlib.toPolynomial (reduceCoeffs p f)).eval₂
+        (algebraMap Rat ℂ) rep.root =
+      (HexPolyMathlib.toPolynomial f).eval₂
+        (algebraMap Rat ℂ) rep.root := by
+  have hp :
+      (HexPolyMathlib.toPolynomial (ZPoly.toRatPoly p)).eval₂
+          (algebraMap Rat ℂ) rep.root = 0 := by
+    rw [HexPolyZMathlib.toPolynomial_toRatPoly,
+      Polynomial.eval₂_eq_eval_map]
+    have hcomp :
+        (algebraMap Rat ℂ).comp (Int.castRingHom Rat) =
+          Int.castRingHom ℂ :=
+      RingHom.ext_int _ _
+    rw [show
+        (HexPolyZMathlib.toPolyℚ p).map (algebraMap Rat ℂ) =
+          HexRootsMathlib.toPolyℂ p by
+      dsimp [HexPolyZMathlib.toPolyℚ, HexRootsMathlib.toPolyℂ]
+      rw [Polynomial.map_map, hcomp]]
+    exact HexRootsMathlib.RefinedIsolation.isRoot rep
+  have hdiv := congrArg
+    (fun g : DensePoly Rat =>
+      (HexPolyMathlib.toPolynomial g).eval₂
+        (algebraMap Rat ℂ) rep.root)
+    (DensePoly.div_mul_add_mod f (ZPoly.toRatPoly p))
+  simpa only [reduceCoeffs, HexPolyMathlib.toPolynomial_add,
+    HexPolyMathlib.toPolynomial_mul, Polynomial.eval₂_add,
+    Polynomial.eval₂_mul, hp, mul_zero, zero_add] using hdiv
+
 /-- Fixed-presentation addition agrees with complex addition. -/
 theorem map_add (a b : QAdjoin p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
     toComplex (a + b) rep h = toComplex a rep h + toComplex b rep h := by
-  sorry
+  change
+    (HexPolyMathlib.toPolynomial
+      (reduceCoeffs p (a.coeffs + b.coeffs))).eval₂
+        (algebraMap Rat ℂ) rep.root =
+      (HexPolyMathlib.toPolynomial a.coeffs).eval₂
+          (algebraMap Rat ℂ) rep.root +
+        (HexPolyMathlib.toPolynomial b.coeffs).eval₂
+          (algebraMap Rat ℂ) rep.root
+  rw [eval_reduceCoeffs, HexPolyMathlib.toPolynomial_add,
+    Polynomial.eval₂_add]
 
 /-- Fixed-presentation multiplication agrees with complex multiplication. -/
 theorem map_mul (a b : QAdjoin p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
     toComplex (a * b) rep h = toComplex a rep h * toComplex b rep h := by
-  sorry
+  change
+    (HexPolyMathlib.toPolynomial
+      (reduceCoeffs p (a.coeffs * b.coeffs))).eval₂
+        (algebraMap Rat ℂ) rep.root =
+      (HexPolyMathlib.toPolynomial a.coeffs).eval₂
+          (algebraMap Rat ℂ) rep.root *
+        (HexPolyMathlib.toPolynomial b.coeffs).eval₂
+          (algebraMap Rat ℂ) rep.root
+  rw [eval_reduceCoeffs, HexPolyMathlib.toPolynomial_mul,
+    Polynomial.eval₂_mul]
 
 /-- Fixed-presentation inversion agrees with complex inversion, including the
 computational convention `0⁻¹ = 0`. -/
