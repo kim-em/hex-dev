@@ -54,6 +54,13 @@ stage order, and the preferred enclosure method for each function. A first
 implementation is a hypothesis about these choices, not a reason to close the
 design space.
 
+Implementation order follows the dependency structure. The first search
+milestone is the function-agnostic program, rule protocol, fact state,
+worklist, and bounded extension mechanism, exercised with opaque operation
+keys. Dyadic, rational, elementary-function, and Mathlib theorem backends plug
+into that framework; backend-specific replay experiments do not block or
+define the scheduler architecture.
+
 “Compiled search” means ordinary elaboration-time Lean execution of the
 untrusted planner. It does not authorize `precompileModules := true`; the Lake
 target continues to follow [the repository policy](../../SPEC/design-principles.md#lakefile),
@@ -510,6 +517,16 @@ meaning changes when the policy selects a different method. This distinction
 also prevents a dynamically registered user rule from being mistaken for an
 instruction understood by the fixed natural-evaluation checker.
 
+Registrations are a validated factory layer, not the hot scheduler data.
+Binding a registration to a matching node resolves its relative result and
+argument slots into a concrete rule application containing an anchor, an
+ordered read list, and an ordered write list. The dependency index maps each
+read node to the concrete applications that must wake when its fact changes.
+The scheduler sees only these concrete identifiers; it does not inspect an
+operation key to infer that, for example, addition reads two arguments or a
+contractor writes one of them. Later shape rules may propose validated
+cross-node applications without changing the scheduler protocol.
+
 The caller supplies nullary nodes for free variables and named constants.
 Unknown free variables begin with the whole interval. Hypotheses add source
 facts. A known constant may instead have one or more nullary propagators, so a
@@ -546,13 +563,14 @@ An instantiation proposal contains a versioned rule key, a canonical
 substitution, new SSA instructions, equality or derived-fact recipes, and an
 untrusted claimed generation. Acceptance validates operation arities and
 domains, topological order, scope visibility, and every referenced input;
-recomputes each node's generation from the trigger provenance and generated
-dependencies, rejecting a mismatch or over-budget descendant; deduplicates
-expressions by the same canonical CSE key as the base program; updates consumer
-and rule indexes; and freezes the proof recipe for replay. Base nodes have
-generation zero, and a generated node is one plus the maximum relevant
-generation in the instance that caused it. The new expression is not trusted
-merely because a trigger matched or labeled itself generation zero.
+recomputes generation from trigger provenance and generated dependencies,
+rejecting a mismatch or over-budget descendant; deduplicates expressions by
+the same canonical CSE key as the base program; updates consumer and rule
+indexes; and freezes the proof recipe for replay. Base nodes have generation
+zero. The production representation may record generation per theorem
+instance or per generated product; that choice remains open below. In either
+case, a new expression is not trusted merely because a trigger matched or
+labeled itself generation zero.
 
 The current centered-product D2 vertical is deliberately narrower than this
 general recurrence. Its `Center.inferredGeneration` only recognizes one
@@ -562,6 +580,37 @@ validation, not the production algorithm for recomputing generations across
 several accepted instantiation rounds. The scaling experiment must add
 per-node provenance and exercise the recurrence above before that interface is
 frozen.
+
+The general propagation experiment uses the same admission boundary with
+opaque operations. A selected proposal is resolved against an immutable
+operation table, checked for typed SSA order, CSE'd against old and newly
+proposed nodes, assigned an engine-recomputed generation, and committed
+atomically with rebuilt rule and watcher indexes. Its two-step canary adds
+`g (f x)` and then `h (g (f x))`; newly registered rules run through the
+ordinary request/reply path, producing generations one and two. Exact node,
+generation, application, queue, instance, equality, and proposal-list limits
+are independent, and failure retains the preceding snapshot. The current hot
+storage uses linear reference CSE and rebuilds indexes after an extension;
+that validates the state transition but does not select the production CSE or
+incremental-index representation.
+
+One atomic theorem instantiation initially assigns a single instantiation
+generation to all helper nodes it introduces: one plus the maximum generation
+of every old node referenced by the trigger, substitution, draft, or CSE
+result. This measures theorem-instantiation depth rather than expression-tree
+depth. Per-product generation remains a possible refinement, but a draft's
+ordering must never let a deeper theorem instance pass a shallower limit.
+
+The first experiment retains proposed equality edges structurally but does not
+yet use them to transport interval facts. Activating such an edge must itself
+be an indexed, replayable propagation mechanism: improving either endpoint
+wakes transport in the other direction, and admission of a new edge considers
+both current endpoint facts atomically. Likewise, the first FIFO worklist runs
+all compiled applications at their registered effort. A separate policy
+experiment must make escalation, retry, instantiation selection, and
+subdivision explicit state transitions over the same generic application
+protocol. Neither limitation is a reason to specialize the scheduler to
+rational operations or to bake function semantics into it.
 
 The first structural scaling experiment deliberately keeps that same fixed
 one-generation witness while varying dead nodes, relevant and irrelevant
@@ -684,18 +733,35 @@ every structural goal; a hybrid may use the structural loop as one action.
 
 Rule-private caches can have arbitrary Lean types. For that reason the
 Mathlib-free library does not store them in a heterogeneous array. It exposes
-a request-and-reply state machine:
+a request-and-reply state machine. Binding first expands relative ports into
+concrete applications, and a registry request exposes exactly the declared
+read facts and write targets. It does not provide an unrestricted fact getter:
+a hidden read would be absent from the dependency index and could miss a
+required wakeup.
 
-1. The solver produces an `Action` naming a rule, node, input fact versions,
-   effort, and action kind.
+1. The solver produces an `Action` naming a program snapshot, concrete rule
+   application, anchor, declared input fact versions, effort, and action kind.
 2. The companion registry executes the rule and owns its cache.
 3. The registry returns an `Outcome` containing candidate facts, alternatives,
    suggestions, cost observations, and an opaque proof recipe identifier.
-4. When a fact is accepted, the registry freezes every value needed for replay
+4. A reply echoes the request serial, snapshot, and application. A delayed or
+   transplanted reply is rejected without clearing the current request.
+5. The solver validates every candidate target against the application's
+   declared writes and computes all intersections against the pre-outcome
+   state. It then commits the whole improving batch and wakes the deduplicated
+   union of affected applications once. A malformed later candidate or a
+   one-step-short fact or queue budget commits none of the batch.
+6. When a fact is accepted, the registry freezes every value needed for replay
    into an immutable per-run payload arena. The `PayloadId` in the trace points
    into this arena, never into a mutable or evictable rule cache.
-5. The solver intersects accepted facts into the state and records their
-   provenance.
+7. The solver records the snapshot, concrete application, anchor, action kind,
+   effort, input versions, target, and frozen payload in provenance.
+
+Whether freezing is an explicit second request after the solver identifies
+the improving subset, or eager allocation before the `Outcome`, remains an
+experiment. Eager freezing has a simpler protocol but may retain payloads for
+weaker candidates; two-phase freezing adds a failure transition which must
+remain atomic.
 
 An invalid rule outcome may mislead search, but it cannot produce a theorem.
 The companion reconstructs every retained fact from the rule's soundness
@@ -794,6 +860,16 @@ A stronger fact enqueues only consumers and reverse rules that depend on the
 changed side. The default implementation does not run repeated whole-program
 passes. A pass remains a useful diagnostic grouping, but the algorithm is an
 incremental worklist.
+
+The reference propagation queue coalesces a concrete application while it is
+already dirty. Several changed inputs therefore produce one registry call on
+the newest declared-input snapshot, while telemetry counts suppressed wakeups.
+A versioned priority policy may instead retain stale candidates and discard
+them lazily at pop time. Both implement the same request/reply contract; the
+benchmark compares rule calls, dependency visits, insertions, pops, stale or
+suppressed work, and peak live queue before selecting a default. Multi-output
+outcomes install every accepted fact before waking this union, so they do not
+manufacture stale work against their own half-installed state.
 
 The initial saturation runs all cheap forward rules once in program order and
 then drains the dependency worklist. It also runs zero-cost contradiction
@@ -1219,8 +1295,13 @@ typical, boundary, and adversarial inputs. In particular it includes:
 - regularization idempotence, outward containment, moved closed cuts, and
   exact-grid open cuts;
 - a dependency worklist in which one fact wakes only the affected consumers;
+- opaque unary chains, fan-out with a ternary join, and forward/backward rule
+  cycles in which the expression DAG remains acyclic;
 - multiple rules for one node, including a later effort result that does not
   improve the interval;
+- an atomic multi-output outcome, repeated-operand watcher deduplication,
+  projected-input enforcement, and rejection of an undeclared write or a
+  mismatched delayed reply without state mutation;
 - deterministic action choice for a fixed `balancedV1` configuration;
 - derivation slicing that removes failed probes and unused facts;
 - branch validation that rejects sibling fact references and mutable or
@@ -1230,6 +1311,9 @@ typical, boundary, and adversarial inputs. In particular it includes:
   instantiation beyond each generation budget;
 - deterministic deduplication of two triggers proposing the same expression
   and equality edge in different orders;
+- two successive opaque instantiations which add absent expressions, activate
+  their registered propagators, recompute generations one and two, and leave
+  the previous snapshot intact at each one-step-short limit;
 - budget exhaustion returning `unknown` with a nonempty diagnostic record.
 
 The `ci` profile cross-checks finite arithmetic against an independent Python
@@ -1269,6 +1353,15 @@ The Mathlib-free benchmark target measures:
   replay; an external build-only probe measures ordinary-kernel replay of the
   same certificate, with dyadic-valued sources, `1 / 3`-valued sources, and a
   denominator-height ladder.
+
+The opaque-forest logical-count canary starts from a saturated set of
+disconnected unary chains and tightens one root. With four depth-eight chains,
+the dependency worklist makes 8 rule calls while whole-network fixed-point
+rescanning makes 64; both accept 8 improvements and produce the same
+position-sensitive fact checksum. For `t > 0` chains of depth `d`, the current
+fixture records `d` incremental calls versus `2*t*d` structural calls. These
+counts motivate the incremental baseline without freezing queue coalescing,
+priority policy, or state storage.
 
 The declared models follow the complexity section above. Scientific runs also
 record accepted actions, endpoint heights, live leaves, retained derivations,
