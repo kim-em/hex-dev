@@ -132,6 +132,9 @@ lean_lib HexPolyZMathlib where
 lean_lib HexRootsMathlib where
 
 @[default_target]
+lean_lib HexResultantMathlib where
+
+@[default_target]
 lean_lib HexBerlekampMathlib where
 
 @[default_target]
