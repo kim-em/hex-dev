@@ -378,10 +378,15 @@ telemetry contract, not a claim about GMP or kernel wall time.
 Whole-table canonicality has its own `maxGcdInputBits` and `maxGcdWork` caps.
 Input-size and work preflight occur before calling `Nat.gcd` for every entry,
 including an unused tail. The first conservative gcd work unit may be the
-product of numerator and denominator bit lengths; alternative Euclidean-step
-models are benchmark candidates. Retained table bits, per-edge peak temporary
-bits, aggregate arithmetic work, and representation-level lookup work are
-distinct limits.
+product `max(1, numeratorBits) * max(1, denominatorBits)`, so canonical zero
+and every other gcd invocation consume nonzero work. The reference checker
+requires each input width to fit `maxGcdInputBits`, then requires this cost to
+fit the remaining caller-owned aggregate budget before invoking `Nat.gcd`.
+After a ready entry it subtracts the cost and proceeds in table order;
+`maxGcdWork` exhaustion therefore reports the first entry whose gcd cannot be
+run. Alternative Euclidean-step models are benchmark candidates. Retained
+table bits, per-edge peak temporary bits, aggregate arithmetic work, and
+representation-level lookup work are distinct limits.
 
 Every *endpoint-table* traversal is accounted for. The transparent `List`
 reference checker charges exact forward distance for literal and finite-cut
@@ -431,14 +436,15 @@ later entry. The target pipeline uses these phases:
    edge.
 
 The current `RationalTable.Table.check` experiment implements the collection
-cap and the per-entry numerator/denominator/canonicality portion of phases 2
-and 3. It intentionally does not yet expose an independent encoded-byte or gcd
-work cap. `RationalCertificate.Certificate.check` adds canonical-table,
-endpoint-reference, caller-boundary, structural, and exact endpoint-lookup
-validation from phases 2 and 4. Arithmetic edges and projection implement the
-remaining preflight/replay pieces in separate experimental modules before
-they are composed. Thus declared limits below describe the composed target;
-they are not a claim that the first table module already exposes every field.
+cap and the per-entry numerator/denominator/gcd/canonicality portions of phases
+2 and 3, including caller-owned gcd input and aggregate work caps. It does not
+yet expose an independent encoded-byte cap. `RationalCertificate.Certificate.check`
+adds canonical-table, endpoint-reference, caller-boundary, structural, and
+exact endpoint-lookup validation from phases 2 and 4. Arithmetic edges and
+projection implement the remaining preflight/replay pieces in separate
+experimental modules before they are composed. Thus declared limits below
+describe the composed target; they are not a claim that the first table module
+already exposes every field.
 
 Failures distinguish resource limits from malformed certificates. Resource
 reasons include collection entries, encoded bytes, numerator/denominator bits,

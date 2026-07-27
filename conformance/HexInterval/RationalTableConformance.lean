@@ -128,10 +128,42 @@ example : checksErasure = true := by
 #guard Table.check { fixtureTableLimit with maxDenominatorBits := 8 }
   (fixtureTable ++ [⟨1, 256⟩]) == .resourceLimit (some 4) .denominatorBits
 
+-- The GCD input cap is separate from retained endpoint caps and is exact.
+#guard Table.check { fixtureTableLimit with maxGcdInputBits := 8 } [⟨1, 255⟩] ==
+  .ready
+#guard Table.check { fixtureTableLimit with maxGcdInputBits := 7 } [⟨1, 255⟩] ==
+  .resourceLimit (some 0) .gcdInputBits
+
+-- Every GCD consumes nonzero work, including canonical zero.  The aggregate
+-- budget is consumed in table order and reports the first entry it cannot run.
+#guard Table.check { fixtureTableLimit with maxGcdWork := 1 } [⟨0, 1⟩] == .ready
+#guard Table.check { fixtureTableLimit with maxGcdWork := 0 } [⟨0, 1⟩] ==
+  .resourceLimit (some 0) .gcdWork
+#guard Table.check { fixtureTableLimit with maxGcdWork := 5 }
+  [⟨0, 1⟩, ⟨1, 2⟩, ⟨1, 3⟩] == .ready
+#guard Table.check { fixtureTableLimit with maxGcdWork := 4 }
+  [⟨0, 1⟩, ⟨1, 2⟩, ⟨1, 3⟩] ==
+    .resourceLimit (some 2) .gcdWork
+
+-- Complete traversal charges an otherwise unused tail.  Its exact input fits,
+-- but one-short aggregate work fails at that tail's index.
+#guard Table.check { fixtureTableLimit with maxGcdWork := 9 }
+  [⟨1, 1⟩, ⟨1, 255⟩] == .ready
+#guard Table.check { fixtureTableLimit with maxGcdWork := 8 }
+  [⟨1, 1⟩, ⟨1, 255⟩] == .resourceLimit (some 1) .gcdWork
+
+-- GCD resource preflight precedes logical validation within one entry, while
+-- a bounded logical failure at an earlier entry still wins over later work.
+#guard Table.check { fixtureTableLimit with maxGcdWork := 0 } [⟨0, 0⟩] ==
+  .resourceLimit (some 0) .gcdWork
+#guard Table.check { fixtureTableLimit with maxGcdWork := 6 }
+  [⟨2, 6⟩, ⟨1, 255⟩] == .malformed 0 .notReduced
+
 -- Successful validation reconstructs exactly the checked Core numerator and
 -- denominator; it does not silently replace the raw encoding.
 example : (RawRat.value ⟨-1, 3⟩).num = -1 ∧ (RawRat.value ⟨-1, 3⟩).den = 3 := by
-  exact RawRat.value_fields (limit := fixtureTableLimit) (by decide +kernel)
+  exact RawRat.value_fields (limit := fixtureTableLimit)
+    (remainingGcdWork := fixtureTableLimit.maxGcdWork) (by decide +kernel)
 
 example : checksTable = true := by
   decide +kernel
