@@ -58,7 +58,15 @@ def exactFactor? (a : AlgebraicRoot) (q : ZPoly) : Option AlgebraicNumber :=
           if hsquarefree : HasOnlySimpleRoots q then do
             let isolations ← isolate q hsquarefree (separationDepth q : Int)
             let refined ← isolations.mapM DyadicRootIsolation.toRefined?
-            let matching ← refined.toList.find? fun r =>
+            -- `a.rep` has the separation precision for `a.p`.  A factor can
+            -- have a weaker intrinsic separation bound, so refine its roots
+            -- to the enclosing polynomial's precision before comparing
+            -- discs.  Then two meeting discs cannot represent distinct roots
+            -- of `a.p`.
+            let comparable ← refined.mapM fun r => do
+              let r' ← r.refineTo? (mahlerPrec a.p : Int)
+              some r'.1
+            let matching ← comparable.toList.find? fun r =>
               r.1.square.discsMeet a.rep.1.square
             AlgebraicNumber.ofNormalized? q hprim hpos hdegree
               ⟨hirred, hdegree⟩ hsquarefree matching
