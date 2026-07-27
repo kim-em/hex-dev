@@ -209,7 +209,8 @@ lean_lib HexGF2BenchSupport where
 lean_lib HexIntervalExperiment where
   globs := #[`HexInterval.Experiment.Representation,
     `HexInterval.Experiment.Rational, `HexInterval.Experiment.Center,
-    `HexInterval.Experiment.Scale, `HexInterval.Experiment.RationalTable]
+    `HexInterval.Experiment.Scale, `HexInterval.Experiment.RationalTable,
+    `HexInterval.Experiment.RationalCertificate]
 
 lean_lib HexIntervalMathlibExperiment where
   globs := #[`HexIntervalMathlib.Experiment.Center]
@@ -244,7 +245,8 @@ lean_lib HexIntervalMathlibReplayProbe where
 lean_lib HexConformance where
   srcDir := "conformance"
   globs := (#[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexInterval.Conformance, `HexInterval.CenterConformance, `HexInterval.ScaleConformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexRoots.Conformance] : Array Glob)
-    ++ (#[`HexInterval.RationalTableConformance] : Array Glob)
+    ++ (#[`HexInterval.RationalTableConformance,
+      `HexInterval.RationalCertificateConformance] : Array Glob)
 
 -- Public umbrellas intentionally contain only the supported API. Executable
 -- examples and regression tests are compiled through this separate target so
