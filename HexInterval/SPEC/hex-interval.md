@@ -527,6 +527,39 @@ operation key to infer that, for example, addition reads two arguments or a
 contractor writes one of them. Later shape rules may propose validated
 cross-node applications without changing the scheduler protocol.
 
+The current arbitrary-propagator experiment gives each request a bounded,
+immutable `ProgramView` containing the exact program version, operation table,
+SSA node table, and per-node instantiation generations. It contains no facts.
+The engine constructs it only from a validated state already covered by the
+operation, node, arity, and generation limits. Thus an external shape rule can
+follow a product argument to a nested difference, compare opaque operation
+keys, recover the repeated `NodeId`, and compute the claimed generation for a
+proposal. It still receives facts only for its registration's declared watch
+slots. Structural inspection does not become a hidden fact dependency and
+does not affect wakeups.
+
+`ProgramView.programVersion` equals the engine-owned version in the action for
+that invocation. An append-only extension creates subsequent requests with
+the new arrays and version, but does not by itself invalidate an earlier
+instantiation proposal: if its concrete application and all declared fact
+versions remain fresh, admission resolves its references, CSE hits, types,
+equalities, and generation again against the current validated program. A
+meaning-changing application replacement or watched-fact change still makes
+the action stale. Policy selections made against a current snapshot retain
+their separate exact program-version guard. The external registry assigns
+meaning to keys such as product, difference, or a distinguished constant. The
+engine supplies only exact lookups and never embeds those meanings.
+
+This full bounded view is the smallest flexible candidate currently exercised,
+not a frozen production interface. A compiled shape-pattern registration could
+instead return validated bindings and a bounded match certificate, reducing
+registry traversal and making structural-read cost engine-checkable. An
+intermediate design could cache registry-owned bindings by canonical program
+snapshot and anchor. Experiments should compare these against the view on
+large shared DAGs and after repeated extensions. Any replacement must retain
+the same separation: unrestricted validated structure is acceptable, but
+facts and their versions remain available only through explicit watch slots.
+
 The caller supplies nullary nodes for free variables and named constants.
 Unknown free variables begin with the whole interval. Hypotheses add source
 facts. A known constant may instead have one or more nullary propagators, so a
@@ -1832,6 +1865,12 @@ typical, boundary, and adversarial inputs. In particular it includes:
 - an atomic multi-output outcome, repeated-operand watcher deduplication,
   projected-input enforcement, and rejection of an undeclared write or a
   mismatched delayed reply without state mutation;
+- an opaque shape rule which distinguishes `x * (one - x)` from products with
+  a reversed difference or a different repeated input, proposes the exact
+  existing node identifiers while receiving no fact inputs, repeats the match
+  on a newly appended DAG suffix, and admits both the still-fresh pre-extension
+  proposal and the new proposal after revalidation with their exact assigned
+  node identifiers and generations;
 - undirected equality transport, including incomparable endpoint facts that
   improve both sides atomically, equality chains, reactivation after a later
   function improvement, and an original expression transferring its bound to
