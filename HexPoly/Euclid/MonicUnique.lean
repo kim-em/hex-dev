@@ -122,8 +122,12 @@ theorem divMod_eq_of_reconstruction {S : Type _}
   -- One division, two incompatible values unless both differences vanish.
   have hdegd : (r' - r).degree?.getD 0 < g.degree?.getD 0 :=
     degree_getD_sub_lt r' r g hg hr'deg hrdeg
+  have hg_ne : g ≠ 0 := by
+    intro hzero
+    rw [hzero] at hg
+    simp at hg
   have hA : divMod (r' - r) g = (q - q', 0) :=
-    divMod_eq_of_polynomial_mul (r' - r) g (q - q') hg hexact h_top_ne hmul
+    divMod_eq_of_polynomial_mul (r' - r) g (q - q') hg_ne hexact h_top_ne hmul
   have hB : divMod (r' - r) g = (0, r' - r) :=
     divMod_eq_zero_self_of_degree_lt (r' - r) g hdegd
   rw [hA] at hB

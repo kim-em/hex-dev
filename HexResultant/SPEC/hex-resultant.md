@@ -48,10 +48,12 @@ variable {R : Type u}
 def exactDiv [Zero R] [DecidableEq R] [Div R] (a b : R) : R :=
   if b = 0 then 0 else a / b
 
-/-- Natural powers using only the executable `One` and `Mul` operations. -/
-def powNat [One R] [Mul R] (x : R) : Nat → R
-  | 0 => 1
-  | n + 1 => powNat x n * x
+/-- Natural powers by binary exponentiation, using only the executable `One`
+    and `Mul` operations. -/
+def powNat [One R] [Mul R] (x : R) (n : Nat) : R :=
+  if n = 0 then 1 else
+    let y := powNat (x * x) (n / 2)
+    if n % 2 = 0 then y else y * x
 
 /-- Brown's scalar update `x^n / y^(n-1)`, through `exactDiv`. -/
 def divExp [Zero R] [DecidableEq R] [One R] [Mul R] [Div R]
