@@ -35,6 +35,11 @@ def yun? (T : NumberTower) (f : Poly T) : Option (Array (Poly T × Nat)) :=
   else
     none
 
+#guard
+    match yun? rat (0 : Poly rat) with
+    | some components => components.isEmpty
+    | none => false
+
 end Factor
 
 /-- Reconstruct and recursively certify a proposed public factorization. -/

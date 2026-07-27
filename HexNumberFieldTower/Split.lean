@@ -23,88 +23,38 @@ namespace Hex.NumberTower
 
 namespace Evaluation
 
-open Arithmetic
-
-/-- Evaluate raw mixed-radix coordinates at the absolute roots stored by a
-top-first level list. The result remains factorization-lazy. -/
-@[expose]
-def evalCoords? : (levels : List Level) → Array Rat → Option AlgebraicRoot
-  | [], data => do
-      let value ← AlgebraicPoly.Common.rational? (data.getD 0 0)
-      some value.toRoot
-  | level :: lower, data => do
-      let lowerDim := levelsDim lower
-      let coefficients ← (List.range level.degree).mapM fun i =>
-        evalCoords? lower (block data i lowerDim)
-      coefficients.reverse.foldlM
-        (fun acc coefficient => do
-          let product ← acc.mul? level.root
-          product.add? coefficient)
-        AlgebraicNumber.zero.toRoot
-
 /-- Evaluate a fixed tower element in its chosen absolute embedding. -/
 @[expose]
 def evalElem? (T : NumberTower) (a : Elem T) : Option AlgebraicRoot :=
-  evalCoords? T.levels.toList (coeffs a)
+  RawEvaluation.evalCoords? T.levels.toList (coeffs a)
 
 /-- Exact lazy Horner evaluation of a tower polynomial at an absolute
 candidate root. -/
 @[expose]
 def evalPoly? (T : NumberTower) (f : Poly T) (candidate : AlgebraicRoot) :
-    Option AlgebraicRoot := do
-  f.toArray.reverse.toList.foldlM
-    (fun acc coefficient => do
-      let product ← acc.mul? candidate
-      let value ← evalElem? T coefficient
-      product.add? value)
-    AlgebraicNumber.zero.toRoot
-
-/-- Integer magnitude majorant for raw coordinates under every embedding of
-the stored level polynomials. -/
-@[expose]
-def coordsMajorant : (levels : List Level) → Array Rat → Nat
-  | [], data => QAdjoin.ratAbsCeil (data.getD 0 0)
-  | level :: lower, data =>
-      let lowerDim := levelsDim lower
-      let rootBound := 2 ^ cauchyExp level.root.p + 1
-      (List.range level.degree).foldr
-        (fun i acc =>
-          acc * rootBound + coordsMajorant lower (block data i lowerDim))
-        0
+    Option AlgebraicRoot :=
+  RawEvaluation.evalPoly? T.levels.toList (f.toArray.map coeffs) candidate
 
 /-- Integer magnitude majorant for a fixed tower element. -/
 @[expose]
 def elemMajorant (T : NumberTower) (a : Elem T) : Nat :=
-  coordsMajorant T.levels.toList (coeffs a)
+  RawEvaluation.coordsMajorant T.levels.toList (coeffs a)
 
 /-- Certified ball Horner evaluation at the tower's fixed embedding and one
 absolute candidate root. Each exact coefficient is refined far enough to
 supply the common `2^-prec` input-error unit consumed by `evalMajorant`. -/
 @[expose]
 def evalBall? (T : NumberTower) (f : Poly T) (candidate : AlgebraicRoot)
-    (prec : Nat) : Option DyadicComplexBall := do
-  let candidate' ← candidate.rep.refineTo? ((prec : Int) + 1)
-  let z := candidate'.1.1.square.toBall
-  let coefficientBalls ← f.toArray.mapM fun coefficient => do
-    let value ← evalElem? T coefficient
-    let refined ← value.rep.refineTo? ((prec : Int) + 1)
-    some refined.1.1.square.toBall
-  match coefficientBalls.back? with
-  | none => some DyadicComplexBall.zero
-  | some top =>
-      some <| coefficientBalls.foldr
-        (fun coefficient acc => coefficient.add (z.mul acc))
-        top (start := coefficientBalls.size - 1)
+    (prec : Nat) : Option DyadicComplexBall :=
+  RawEvaluation.evalBall? T.levels.toList (f.toArray.map coeffs)
+    candidate prec
 
 /-- Decide, with the prescribed finite precision endpoint, whether a tower
 polynomial vanishes at an absolute candidate root. -/
 @[expose]
 def vanishesAt? (T : NumberTower) (f : Poly T)
-    (candidate : AlgebraicRoot) : Option Bool := do
-  let evaluation ← evalPoly? T f candidate
-  retainZero? evaluation.p
-    (Disambiguation.evalMajorant f (elemMajorant T) candidate.p)
-    (evalBall? T f candidate)
+    (candidate : AlgebraicRoot) : Option Bool :=
+  RawEvaluation.vanishesAt? T.levels.toList (f.toArray.map coeffs) candidate
 
 end Evaluation
 
@@ -129,9 +79,17 @@ def selectFactor? (T : NumberTower) (candidate : AlgebraicRoot)
   | [factor] => some factor
   | _ => none
 
+/-- Encode a selected monic relative factor as one raw extension level. -/
+@[expose]
+def levelOfFactor (candidate : AlgebraicRoot) (selected : Poly T) : Level :=
+  let d := selected.degree?.getD 0
+  let defining := ((List.range d).map fun i =>
+    coeffs (selected.coeff i)).toArray
+  ⟨d, defining, candidate⟩
+
 /-- Adjoin the specified absolute algebraic root. A selected linear factor
 produces the identity extension; a nonlinear factor is admitted only through
-`extend?`, which reruns structural, relative-irreducibility, and fixed-
+`Internal.extend?`, which reruns structural, relative-irreducibility, and fixed-
 embedding checks before constructing the new carrier index. -/
 def adjoin? (T : NumberTower) (candidate : AlgebraicRoot) :
     Option (Extension T) := do
@@ -148,10 +106,8 @@ def adjoin? (T : NumberTower) (candidate : AlgebraicRoot) :
         gen := -(selected.coeff 0) / selected.leadingCoeff
         root := candidate }
   else
-    let defining := ((List.range d).map fun i =>
-      coeffs (selected.coeff i)).toArray
-    let level : Level := ⟨d, defining, candidate⟩
-    let tower ← extend? T level
+    let level := levelOfFactor candidate selected
+    let tower ← Internal.extend? T level
     some
       { tower
         embed := fun a => ofCoeffs tower (coeffs a)
@@ -229,6 +185,16 @@ private def selectSqrtThreeSquare : DyadicSquare :=
 private def selectSqrtThreeRep : RefinedIsolation selectSqrtThreePoly :=
   ⟨⟨selectSqrtThreeSquare, by decide⟩, by decide⟩
 
+private def selectFourthRootTwoPoly : ZPoly :=
+  DensePoly.ofList [-2, 0, 0, 0, 1]
+
+private def selectFourthRootTwoSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 77936 16, 0, 17⟩
+
+private def selectFourthRootTwoRep :
+    RefinedIsolation selectFourthRootTwoPoly :=
+  ⟨⟨selectFourthRootTwoSquare, by decide⟩, by decide⟩
+
 -- A genuinely new root is admitted through the checked relative-level
 -- constructor. The old generator occupies the first lower block and the new
 -- generator satisfies the selected relation.
@@ -262,6 +228,45 @@ private def selectSqrtThreeRep : RefinedIsolation selectSqrtThreePoly :=
     else
       false
 
+-- The fourth-root polynomial splits over `Q(sqrt(2))` into two nonlinear
+-- conjugate factors. Fixed-embedding selection must retain the factor with
+-- the negative non-rational constant and use it as the new relation.
+#guard
+    if hirred : ZPoly.isIrreducible selectSqrtTwoPoly = true then
+      letI : ZPoly.CheckedIrreducible selectSqrtTwoPoly :=
+        ⟨hirred, by decide⟩
+      if hsimple : HasOnlySimpleRoots selectSqrtTwoPoly then
+        let base := ofQAdjoin (x := selectSqrtTwoRoot)
+          hsimple selectSqrtTwoRep rfl
+        if hfourth : HasOnlySimpleRoots selectFourthRootTwoPoly then
+          let fourth : AlgebraicRoot :=
+            { p := selectFourthRootTwoPoly
+              prim := by rfl
+              pos_lc := by decide
+              pos_degree := by decide
+              squarefree := hfourth
+              x := SimpleRoot.mk selectFourthRootTwoRep
+              rep := selectFourthRootTwoRep
+              rep_mk := rfl }
+          let minus : Poly base.tower := DensePoly.ofCoeffs
+            #[-base.gen, 0, 1]
+          let plus : Poly base.tower := DensePoly.ofCoeffs
+            #[base.gen, 0, 1]
+          match selectFactor? base.tower fourth
+              #[(minus, 1), (plus, 1)] with
+          | some selected =>
+              let level := levelOfFactor fourth selected
+              selected.degree?.getD 0 = 2 &&
+                coeffs (selected.coeff 0) = #[0, -1] &&
+                level.defining = #[#[0, -1], #[0, 0]]
+          | none => false
+        else
+          false
+      else
+        false
+    else
+      false
+
 -- An otherwise irreducible relative relation is rejected when it does not
 -- vanish at the absolute root recorded for the new level.
 #guard
@@ -278,7 +283,7 @@ private def selectSqrtThreeRep : RefinedIsolation selectSqrtThreePoly :=
           if RawEvaluation.vanishesAt? base.tower.levels.toList
               (mismatched.polynomial base.tower.levels.toList)
               mismatched.root = some false then
-            match extend? base.tower mismatched with
+            match Internal.extend? base.tower mismatched with
             | none => true
             | some _ => false
           else

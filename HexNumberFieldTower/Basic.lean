@@ -48,6 +48,7 @@ recursive Trager irreducibility checker and the fixed-embedding zero check. -/
 inductive Level.Certificate (level : Level) (lower : List Level) : Prop
   | rational (relation : level.RationalRelation lower)
   | relative
+      (degree_gt_one : 1 < level.degree)
       (irreducible : Factor.isIrreducible lower
         (level.polynomial lower) = true)
       (embedding : RawEvaluation.vanishesAt? lower
@@ -84,19 +85,23 @@ def rat : NumberTower :=
 def dim (T : NumberTower) : Nat :=
   levelsDim T.levels.toList
 
-/-- Extend a certified tower by one raw level only after rerunning structural,
-recursive irreducibility, and fixed-embedding checks. -/
-def extend? (T : NumberTower) (level : Level) : Option NumberTower :=
-  if hstruct : level.structuralCheck T.dim = true then
-    if hirred : Factor.isIrreducible T.levels.toList
-        (level.polynomial T.levels.toList) = true then
-      if hembed : RawEvaluation.vanishesAt? T.levels.toList
-          (level.polynomial T.levels.toList) level.root = some true then
-        let levels := #[level] ++ T.levels
-        some <| .mk levels (by
-          rw [show levels.toList = level :: T.levels.toList by simp [levels]]
-          exact ⟨Level.structural_of_check hstruct,
-            .relative hirred hembed, T.valid⟩)
+/-- Internal checked boundary for adjoining one proper extension level. Raw
+level arrays are accepted only after structural, recursive irreducibility, and
+fixed-embedding checks all succeed. -/
+def Internal.extend? (T : NumberTower) (level : Level) : Option NumberTower :=
+  if hdegree : 1 < level.degree then
+    if hstruct : level.structuralCheck T.dim = true then
+      if hirred : Factor.isIrreducible T.levels.toList
+          (level.polynomial T.levels.toList) = true then
+        if hembed : RawEvaluation.vanishesAt? T.levels.toList
+            (level.polynomial T.levels.toList) level.root = some true then
+          let levels := #[level] ++ T.levels
+          some <| .mk levels (by
+            rw [show levels.toList = level :: T.levels.toList by simp [levels]]
+            exact ⟨Level.structural_of_check hstruct,
+              .relative hdegree hirred hembed, T.valid⟩)
+        else
+          none
       else
         none
     else

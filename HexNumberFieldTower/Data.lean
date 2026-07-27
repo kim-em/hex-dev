@@ -54,6 +54,14 @@ the certified wrapper. -/
 theorem Level.structural_of_check {level : Level} {lowerDim : Nat}
     (h : level.structuralCheck lowerDim = true) :
     level.Structural lowerDim := by
-  sorry
+  simp only [Level.structuralCheck, Bool.and_eq_true,
+    decide_eq_true_eq] at h
+  have hdegree := h.1.1
+  have hsize := h.1.2
+  have hall := h.2
+  refine ⟨hdegree, hsize, ?_⟩
+  intro i hi
+  rw [Array.all_eq_true] at hall
+  simpa using hall i hi
 
 end Hex.NumberTower
