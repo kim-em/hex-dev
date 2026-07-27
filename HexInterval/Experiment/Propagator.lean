@@ -290,6 +290,20 @@ def compileApplicationsWithin (limit : Nat) (program : Program)
             effort := rule.initialEffort }
   pure applications
 
+/-- Exact application identity used to validate append-only recompilation. -/
+def Application.same (left right : Application) : Bool :=
+  left.rule == right.rule && left.node == right.node && left.kind == right.kind &&
+    left.watches == right.watches && left.writes == right.writes && left.effort == right.effort
+
+/-- Every old application must remain an exact prefix after program extension. -/
+def applicationsPrefix (old new : Array Application) : Bool := Id.run do
+  if new.size < old.size then return false
+  for index in [0:old.size] do
+    match old[index]?, new[index]? with
+    | some left, some right => if !left.same right then return false
+    | _, _ => return false
+  return true
+
 /-! ## Request/reply protocol -/
 
 /-- Monotone version observed for one watched fact. -/
@@ -440,6 +454,10 @@ structure CostObservation where
   estimatedProofNodes : Nat := 0
   deriving DecidableEq, Repr
 
+def CostObservation.bounded (limit : Nat) (cost : CostObservation) : Bool :=
+  cost.arithmeticWork <= limit && cost.visitedEntries <= limit &&
+    cost.estimatedProofNodes <= limit
+
 /-- A rule reply.  Only `success` may contain facts or structural suggestions;
 the other cases are precise negative observations for policy and diagnostics. -/
 inductive Outcome (Fact : Type) where
@@ -449,6 +467,11 @@ inductive Outcome (Fact : Type) where
   | inapplicable
   | resourceLimit (budget : Nat)
   | failed (code : Nat)
+
+def Outcome.observationBounded (limit : Nat) : Outcome Fact -> Bool
+  | .success _ _ cost | .noChange cost => cost.bounded limit
+  | .inapplicable => true
+  | .resourceLimit budget | .failed budget => budget <= limit
 
 /-- Registry response bound to the exact outstanding invocation. -/
 structure Reply (Fact : Type) where
@@ -518,6 +541,8 @@ structure Limits where
   maxActions : Nat
   maxAcceptedFacts : Nat
   maxRetainedSuggestions : Nat
+  maxEffort : Nat
+  maxObservationValue : Nat
   maxOutcomeCandidates : Nat
   maxOutcomeSuggestions : Nat
   maxProposalItems : Nat
@@ -566,13 +591,20 @@ structure FactEvent (Fact : Type) where
   version : Nat
   cause : FactCause
 
+/-- Canonical unordered endpoint pair for one generated equality. -/
+structure EqualityPair where
+  first : NodeId
+  second : NodeId
+  deriving DecidableEq, Repr
+
 /-- Canonical key for one shape-rule application in this scope-free first
-experiment. -/
+experiment.  Equality products participate in duplicate detection. -/
 structure InstanceKey where
   rule : RuleKey
   family : Nat
   substitution : List NodeId
   products : List NodeId
+  equalities : List EqualityPair
   deriving DecidableEq, Repr
 
 /-- Structurally retained equality edge.  Its opaque payload is replay data;
@@ -583,6 +615,20 @@ structure EqualityEdge where
   generation : Nat
   origin : Action
   payload : PayloadId
+
+def equalityPair (left right : NodeId) : EqualityPair :=
+  if left.index <= right.index then { first := left, second := right }
+  else { first := right, second := left }
+
+def EqualityPair.before (left right : EqualityPair) : Bool :=
+  left.first.index < right.first.index ||
+    (left.first.index == right.first.index && left.second.index <= right.second.index)
+
+def insertEqualityPair (pair : EqualityPair) : List EqualityPair -> List EqualityPair
+  | [] => [pair]
+  | next :: rest =>
+      if pair.before next then pair :: next :: rest
+      else next :: insertEqualityPair pair rest
 
 /-- Replay-facing provenance for one committed program extension. -/
 structure InstanceEvent where
@@ -864,6 +910,7 @@ inductive ReplyError where
   | tooManyCandidates
   | tooManySuggestions
   | oversizedProposal
+  | oversizedObservation
   | duplicateWrite
   | undeclaredWrite (node : NodeId)
   | missingFact (node : NodeId)
@@ -904,19 +951,19 @@ def existingRefBounded (nodeCount : Nat) : NodeRef -> Bool
 def proposalBounded (nodeCount limit : Nat) (request : InstantiationRequest) : Bool :=
   listWithin limit request.triggers && listWithin limit request.nodes &&
     listWithin limit request.equalities &&
+    request.triggers.all (fun node => node.index < nodeCount) &&
     request.nodes.all (fun node => listWithin limit node.args &&
       node.args.all (existingRefBounded nodeCount)) &&
     request.equalities.all (fun edge =>
       existingRefBounded nodeCount edge.left && existingRefBounded nodeCount edge.right)
 
 def suggestionBounded (limits : Limits) (nodeCount : Nat) : Suggestion -> Bool
-  | .retry _ => true
+  | .retry effort => effort <= limits.maxEffort
   | .split request =>
       request.node.index < nodeCount &&
         (EndpointCost.ofDyadic request.point).allowed limits.splitEndpointLimit
   | .instantiate request =>
-      proposalBounded nodeCount limits.maxProposalItems request &&
-        request.triggers.all fun node => node.index < nodeCount
+      proposalBounded nodeCount limits.maxProposalItems request
 
 def suggestionsBounded (limits : Limits) (nodeCount : Nat)
     (suggestions : List Suggestion) : Bool :=
@@ -1021,6 +1068,8 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
       if reply.serial != action.serial || reply.programVersion != action.programVersion ||
           reply.application != action.application then
         .invalid .mismatchedAction state
+      else if !reply.outcome.observationBounded state.limits.maxObservationValue then
+        .invalid .oversizedObservation state.finishReply
       else
       match reply.outcome with
       | .noChange _ | .inapplicable | .resourceLimit _ | .failed _ =>
@@ -1111,7 +1160,9 @@ def installTransport (equality : EqualityId) (update : TransportUpdate Fact)
 commit all improvements together, then wake their dependency union. -/
 def contractEquality (state : Engine Fact) (equalityId : EqualityId) :
     EqualityResult Fact :=
-  match state.equalities[equalityId.index]? with
+  if state.pending.isSome then
+    .invalid 3 state
+  else match state.equalities[equalityId.index]? with
   | none => .invalid 0 state
   | some equality =>
       match state.program.node? equality.left, state.program.node? equality.right,
@@ -1246,6 +1297,22 @@ def resolveRefs? (baseSize : Nat) (resolved : List NodeId)
     (refs : List NodeRef) : Option (List NodeId) :=
   refs.mapM (resolveRef? baseSize resolved)
 
+/-- Canonical endpoint set requested by an instantiation, before existing-edge
+deduplication.  This makes repeat selection detect the same instance even
+after its equality has entered the live edge table. -/
+def resolveRequestedPairs (baseSize : Nat) (resolved : List NodeId) (program : Program) :
+    List ProposedEquality -> Option (List EqualityPair)
+  | [] => some []
+  | proposal :: proposals => do
+      let left <- resolveRef? baseSize resolved proposal.left
+      let right <- resolveRef? baseSize resolved proposal.right
+      let leftNode <- program.node? left
+      let rightNode <- program.node? right
+      if left == right || leftNode.domain != rightNode.domain then none else pure ()
+      let rest <- resolveRequestedPairs baseSize resolved program proposals
+      let pair := equalityPair left right
+      some (if rest.contains pair then rest else insertEqualityPair pair rest)
+
 /-- Resolve draft nodes in order, validate each typed SSA instruction, and CSE
 against both old nodes and earlier new nodes. -/
 def resolveDrafts (baseSize : Nat) :
@@ -1333,7 +1400,7 @@ namespace Engine
 
 /-- Validate and commit one shape-triggered program extension.  Every derived
 table is built on a temporary state; any failure returns the original engine. -/
-def admitRetained (state : Engine Fact)
+private def admitRetained (state : Engine Fact)
     (retained : RetainedSuggestion) : AdmissionResult Fact :=
   if state.pending.isSome then
     .invalid .pendingReply state
@@ -1348,11 +1415,17 @@ def admitRetained (state : Engine Fact)
           match resolveDrafts baseSize state.program [] request.nodes with
           | none => .invalid .badReferenceOrShape state
           | some (program, resolved) =>
+              let equalityPairs? :=
+                resolveRequestedPairs baseSize resolved program request.equalities
+              if equalityPairs?.isNone then
+                .invalid .invalidEquality state
+              else
               let instanceKey : InstanceKey :=
                 { rule := retained.action.key
                   family := request.key
                   substitution := request.triggers
-                  products := resolved }
+                  products := resolved
+                  equalities := equalityPairs?.getD [] }
               if state.instances.contains instanceKey then
                 .duplicate
                   { state with
@@ -1387,7 +1460,7 @@ def admitRetained (state : Engine Fact)
                             | .error false => .invalid .invalidCompiledProgram state
                             | .error true => .resourceLimit .applications state
                             | .ok applications =>
-                                if applications.size < state.applications.size then
+                                if !applicationsPrefix state.applications applications then
                                   .invalid .invalidCompiledProgram state
                                 else
                                   let addedApplications :=
@@ -1453,7 +1526,7 @@ def admitRetained (state : Engine Fact)
 
 /-- Select only an engine-retained proposal; callers cannot fabricate rule
 provenance or transplant a proposal from another state. -/
-def admitInstantiation (state : Engine Fact)
+opaque admitInstantiation (state : Engine Fact)
     (suggestion : SuggestionId) : AdmissionResult Fact :=
   match state.suggestions[suggestion.index]? with
   | none => .invalid .missingSuggestion state

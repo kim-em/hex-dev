@@ -59,6 +59,8 @@ def generous : Limits :=
     maxActions := 128
     maxAcceptedFacts := 128
     maxRetainedSuggestions := 16
+    maxEffort := 16
+    maxObservationValue := 1024
     maxOutcomeCandidates := 8
     maxOutcomeSuggestions := 8
     maxProposalItems := 16
@@ -603,10 +605,11 @@ def pairEqualityInvoke (calls : Nat) (request : RuleRequest PairRank) :
       payload := { index := 59 } }
   (.success [] [.instantiate proposal] {}, calls + 1)
 
+def pairProgram : Program :=
+  { operations, nodes := #[sourceNode, sourceNode, unaryNode 0] }
+
 def pairInitial? (limits : Limits := generous) : Option (RunResult PairRank Nat) := do
-  let program : Program :=
-    { operations, nodes := #[sourceNode, sourceNode, unaryNode 0] }
-  let state <- match Engine.start pairDomain program #[pairEqualityRule]
+  let state <- match Engine.start pairDomain pairProgram #[pairEqualityRule]
       #[pair 4 0, pair 0 5, pair 0 0] limits with
     | .ok state => some state
     | .error _ => none
@@ -621,6 +624,45 @@ def pairAdmitted? (limits : Limits := generous) : Option (Engine PairRank) := do
 def pairFinal? (limits : Limits := generous) : Option (RunResult PairRank Nat) := do
   let state <- pairAdmitted? limits
   pure (drive pairEqualityInvoke 8 state 1)
+
+-- Equality endpoints are unordered, the pair set is sorted, and reversed
+-- repetitions do not create a distinct instance identity.
+#guard
+  resolveRequestedPairs 3 [] pairProgram
+      [{ left := .existing (node 1), right := .existing (node 2), payload := { index := 0 } },
+       { left := .existing (node 1), right := .existing (node 0), payload := { index := 1 } },
+       { left := .existing (node 2), right := .existing (node 1), payload := { index := 2 } }] ==
+    some
+      [{ first := node 0, second := node 1 },
+       { first := node 1, second := node 2 }]
+
+-- A repeated pure-equality selection is a duplicate rather than an empty new
+-- instance after the edge has entered the live equality table.
+#guard
+  match pairAdmitted? with
+  | some state =>
+      match state.admitInstantiation (suggestion 0) with
+      | .duplicate next =>
+          next.equalities.size == 1 && next.instances.length == 1 &&
+            next.metrics.duplicateInstances == 1
+      | _ => false
+  | none => false
+
+-- Direct equality contraction cannot interleave with an outstanding external
+-- rule request.
+#guard
+  match pairAdmitted? with
+  | some state =>
+      match state.equalities[0]? with
+      | some edge =>
+          let pending := { state with pending := some edge.origin }
+          match pending.contractEquality { index := 0 } with
+          | .invalid 3 next =>
+              next.pending.isSome && next.facts == pending.facts &&
+                next.versions == pending.versions && next.history.isEmpty
+          | _ => false
+      | none => false
+  | none => false
 
 #guard
   match pairFinal? with
@@ -766,6 +808,69 @@ def alternateEqualityFinal? : Option (RunResult Rank (List String)) := do
       | .resourceLimit .queueEntries state =>
           state.program.nodes.size == 2 && state.applications.size == 1 &&
             state.equalities.isEmpty && state.instances.isEmpty && state.programVersion == 0
+      | _ => false
+  | none => false
+
+/-! ## Bounded observations, effort, and structural requests -/
+
+def firstChainRequest? : Option (RuleRequest Rank × Engine Rank) := do
+  let initial <- start? chainProgram #[copyRule] #[4, 0, 0, 0, 0]
+  match initial.poll with
+  | .request request awaiting => some (request, awaiting)
+  | _ => none
+
+-- Append-only recompilation must preserve every existing concrete
+-- application exactly, not merely preserve the old array length.
+#guard
+  match firstChainRequest? with
+  | some (_, state) =>
+      match state.applications[0]? with
+      | some first =>
+          applicationsPrefix state.applications (state.applications.push first) &&
+            !applicationsPrefix state.applications
+              (state.applications.set! 0 { first with effort := first.effort + 1 })
+      | none => false
+  | none => false
+
+-- Reply-provided policy telemetry is checked before it can enter retained
+-- observations or affect any fact.
+#guard
+  match firstChainRequest? with
+  | some (request, awaiting) =>
+      match awaiting.submit (request.action.reply
+          (.noChange { arithmeticWork := generous.maxObservationValue + 1 })) with
+      | .invalid .oversizedObservation state =>
+          state.pending.isNone && state.history.isEmpty && state.suggestions.isEmpty
+      | _ => false
+  | none => false
+
+-- Effort is rule-specific, but its representation is still engine-bounded.
+#guard
+  match firstChainRequest? with
+  | some (request, awaiting) =>
+      match awaiting.submit (request.action.reply
+          (.success [] [.retry (generous.maxEffort + 1)] {})) with
+      | .invalid .oversizedProposal state =>
+          state.pending.isNone && state.history.isEmpty && state.suggestions.isEmpty
+      | _ => false
+  | none => false
+
+-- Trigger cardinality and every trigger reference are part of the proposal's
+-- own boundedness predicate, including callers which invoke it directly.
+#guard
+  match firstChainRequest? with
+  | some (request, awaiting) =>
+      let proposal : InstantiationRequest :=
+        { key := 73
+          triggers := List.replicate (generous.maxProposalItems + 1) (node 0)
+          claimedGeneration := 1
+          nodes := []
+          equalities := []
+          payload := { index := 79 } }
+      match awaiting.submit (request.action.reply
+          (.success [] [.instantiate proposal] {})) with
+      | .invalid .oversizedProposal state =>
+          state.pending.isNone && state.history.isEmpty && state.suggestions.isEmpty
       | _ => false
   | none => false
 
