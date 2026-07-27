@@ -441,11 +441,11 @@ preserves the running residue for arbitrary inner dimension. The committed
 measurement compares `mulImpl` directly with the periodic leaf and compares
 full `mulStrassen` both as shipped and at matched cutoffs, at `p = 5`, `65537`,
 and `2^31 - 1`. Across the square and rectangular cases the leaf is
-`3.02`–`17.50×` faster and full Strassen is `13.49`–`15.87×` faster; the
-matched-cutoff controls are `5.79`–`16.72×`. Leaf contractions of length
+`2.92`–`16.26×` faster and full Strassen is `12.01`–`13.25×` faster; the
+matched-cutoff controls are `5.42`–`13.84×`. Leaf contractions of length
 `12289` and `20481` cross three and five windows. A sweep against 256-term and
 effectively single-flush alternatives measures the selected window's periodic
-cost at `4.4`–`8.9%` against the single-flush loop. The result clears the 5%
+cost at `3.6`–`5.8%` against the single-flush loop. The result clears the 5%
 demonstration gate without changing `strassenDefault`.
 
 ### Conformance

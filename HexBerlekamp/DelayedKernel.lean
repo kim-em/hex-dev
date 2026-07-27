@@ -35,11 +35,11 @@ reference `mul`.
 
 **Measured outcome (honesty constraint (b)).** `strassenBarrett` is the shipped
 performance demonstration: benchmarked against `strassenDefault` at `p = 5`,
-`65537`, and `2^31 - 1`, its leaf kernel is `3.02`–`17.50×` faster and full
-Strassen is `13.49`–`15.87×` faster across the committed square and rectangular
-cases; matched-cutoff controls are `5.79`–`16.72×`. The long leaf contractions
+`65537`, and `2^31 - 1`, its leaf kernel is `2.92`–`16.26×` faster and full
+Strassen is `12.01`–`13.25×` faster across the committed square and rectangular
+cases; matched-cutoff controls are `5.42`–`13.84×`. The long leaf contractions
 `12289` and `20481` cross the 4096-term reduction window three and five times.
-A window sweep measures the periodic-loop cost at `4.4`–`8.9%` against an
+A window sweep measures the periodic-loop cost at `3.6`–`5.8%` against an
 effectively single-flush loop. The executable path is engineered for this: the
 scalar tail-recursive loops `delayedDotLoop`/`delayedDotRun` keep the two-word
 accumulator in machine words
