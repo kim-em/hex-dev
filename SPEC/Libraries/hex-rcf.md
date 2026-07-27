@@ -345,6 +345,13 @@ proved equivalences.
       false for every cell when `a ≥ b`; `Cell.meetsIocOn_iff_of_check` is
       the corresponding all-endpoint-order theorem.
 
+    The executable quantifier folds are strict in their option-valued cell
+    results: Boolean `false`/`true` never short-circuits a later malformed
+    active cell. Bounded folds filter by the checked `meetsIocOn` predicate
+    first, so failures in irrelevant cells do not poison the result, while a
+    failure in any relevant cell returns `none`. Empty universal and
+    existential folds have the usual identities `true` and `false`.
+
 11. **Reflect.** A successful kernel replay gives
     `Sentence.toProp s`; the reifier's equivalence transports that
     proof to the original goal. A false result produces the diagnostic
@@ -358,7 +365,7 @@ the kernel would be far slower. Following the compiled-prep /
 kernel-verify pattern of the `factor_poly` / `irreducibility` tactics
 (hex-berlekamp), the tactic runs the search compiled, embeds a
 `Certificate`, and emits a proof of
-`Sentence.check s cert = true` by kernel reduction.
+`Certificate.check s cert = true` by kernel reduction.
 
 ### Generalized Sturm replay
 
@@ -440,6 +447,21 @@ variation reads to `Sturm.sturmVar` at finite endpoints and infinity.
 
 ### Certificate contents
 
+`Certificate` has four constructors matching the disjoint replay cases:
+`emptyIoc`, `constants`, `noRoots`, and `cells`. The no-root branch carries a
+checked carrier and an empty strict isolation set. The positive-root branch
+additionally carries the sign-matrix packages and an optional size-indexed
+`IocCmps`: real sentences require `none`, while bounded sentences require a
+checked `some`. Thus endpoint evidence cannot be silently ignored or omitted.
+
+Internally, `Certificate.replay?` returns `Option Bool`: `none` means malformed
+or shape-mismatched evidence, while `some false` is a valid diagnostic verdict.
+`Certificate.check` accepts exactly `some true`. Empty or reversed bounded
+domains are handled before all certificate data, so their universal and
+existential results are respectively `some true` and `some false` even when no
+decomposition exists. Every nonempty branch rejects data meant for a different
+shape.
+
 The certificate contains:
 
 - when needed, the carrier `P`, its generalized replay, and the
@@ -476,21 +498,21 @@ soundness.
 
 ```lean
 theorem check_sound (s : Sentence) (cert : Certificate) :
-    check s cert = true → s.toProp
+    Certificate.check s cert = true → s.toProp
 ```
 
 `decide : Sentence → Option Bool` is a convenience wrapper used by
 conformance and the external oracle. Internally, the builder returns
 either a diagnostic false result or a candidate true certificate.
 `decide` returns `some false` for the former; for the latter it runs
-`check s cert` and returns `some true` only when that check succeeds,
+`Certificate.check s cert` and returns `some true` only when that check succeeds,
 otherwise `none`. An internal builder or certificate failure therefore
 cannot pass a fixture expecting either verdict. The required one-way
 connections are
 
 ```lean
 theorem decide_eq_some_true_imp_exists_cert :
-    decide s = some true → ∃ cert, check s cert = true
+    decide s = some true → ∃ cert, Certificate.check s cert = true
 
 theorem decide_sound (s : Sentence) :
     decide s = some true → s.toProp
@@ -566,7 +588,13 @@ free to change.
 - `HexRCF/Isolations.lean`: the raw generalized isolation checker and its
   bridge to literal isolation semantics; `HexRCF/IsolationsTests.lean`:
   count, order, completeness, and no-real-root regressions.
-- `HexRCF/Certificate.lean`: `Certificate`, `check`, `decide`.
+- `HexRCF/Certificate.lean`: strict option folds, the four `Certificate`
+  branches, three-valued replay, and `check`; `HexRCF/CertificateTests.lean`:
+  all quantifiers, empty/reversed domains, constants, zero/single/multiple-root
+  decompositions, endpoint equality, and malformed nested evidence.
+- `HexRCF/Builder.lean`: checker-retained compiled carrier, isolation,
+  common-root, endpoint, and certificate construction, plus the public
+  `decide` wrapper and its one-way soundness theorems.
 - `HexRCF/Separation.lean`: replay-based strict-separation refinement,
   strict-gap checking, and endpoint classification for bounded sentences;
   `HexRCF/SeparationTests.lean`: midpoint ownership, close-root, scan,
@@ -587,7 +615,8 @@ free to change.
   `HexRCF/SignMatrixTests.lean`: exhaustive comparisons/connectives,
   zero/singleton/multiple-root cells, shared roots, constants, deduplication,
   and malformed-alignment regressions.
-- `HexRCF/Soundness.lean`: `check_sound` and its four factors.
+- `HexRCF/Soundness.lean`: strict-fold reflection, quantified cell lifting,
+  the four replay factors, and `check_sound`.
 - `HexRCF/Reify.lean`: `Qq`/`MetaM` reification, normalisation,
   fall-through messages.
 - `HexRCF/Tactic.lean`: the `rcf` front end.
