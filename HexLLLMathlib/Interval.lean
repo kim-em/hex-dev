@@ -843,27 +843,6 @@ private theorem pass_spec (b : Hex.Matrix Int n m) {S : Int} (hS : 0 < S)
       · rw [if_neg hpos] at hres'
         cases hres'
 
-/-! ### Glue: the Gram array fed to the pass -/
-
-private theorem g_entries (b : Hex.Matrix Int n m) (i : Nat) (hi : i < n)
-    (j : Nat) (hj : j < n) :
-    ((((Matrix.gramMatrix b).rows.toArray.map Vector.toArray))[i]!)[j]! =
-      (b.row ⟨i, hi⟩).dotProduct (b.row ⟨j, hj⟩) := by
-  have hi1 : i < ((Matrix.gramMatrix b).rows.toArray.map Vector.toArray).size := by
-    rw [Array.size_map, Vector.size_toArray]
-    exact hi
-  have hi2 : i < (Matrix.gramMatrix b).rows.toArray.size := by
-    rw [Vector.size_toArray]
-    exact hi
-  rw [getElem!_pos ((Matrix.gramMatrix b).rows.toArray.map Vector.toArray) i hi1,
-    Array.getElem_map]
-  have hj1 : j < ((Matrix.gramMatrix b).rows.toArray[i]'hi2).toArray.size := by
-    rw [Vector.size_toArray]
-    exact hj
-  rw [getElem!_pos (((Matrix.gramMatrix b).rows.toArray[i]'hi2).toArray) j hj1]
-  simp only [Vector.getElem_toArray]
-  simpa [Hex.Matrix.getRow, Fin.getElem_fin] using Hex.Matrix.getElem_gramMatrix b ⟨i, hi⟩ ⟨j, hj⟩
-
 /-! ### Positivity of the Gram-determinant product -/
 
 private theorem normProduct_pos (b : Hex.Matrix Int n m)

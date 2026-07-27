@@ -59,7 +59,8 @@ lake exe hexgramschmidt_bench list
 lake exe hexgramschmidt_bench verify
 ```
 
-`verify` passed all 10 registered benchmarks at the same commit.
+`verify` passed all 10 benchmarks registered at that historical commit. The
+current executable registers 14; its expanded CI smoke verification passes.
 
 ### Symmetry-aware integer Gram rows
 
@@ -79,12 +80,14 @@ lake exe hexgramschmidt_bench run \
 
 Baseline construction represented 45.13% of the square Schur consumer at
 `n = 32`, and 81.29% (`n = 16`) to 87.53% (`n = 24`) of the wide consumer.
-Each clears the 10% Amdahl-adjusted gate for a possible 5% end-to-end win.
+The existing timed-region profile below independently assigns 24.4% of the
+integer Gram surface to Gram-row construction. Each result clears the 10%
+Amdahl-adjusted gate for a possible 5% end-to-end win.
 
 | Target | Representative `n` | Before | After | Improvement |
 | --- | ---: | ---: | ---: | ---: |
 | Gram rows, square | 96 | 31.269 ms | 24.198 ms | 22.61% |
-| Schur consumer, square | 32 | 2.212 ms | 1.965 ms | 11.17% |
+| Schur consumer, square | 28 | 1.366 ms | 1.203 ms | 11.95% |
 | Gram rows, wide | 48 | 16.192 ms | 9.286 ms | 42.65% |
 | Schur consumer, wide | 28 | 4.111 ms | 2.775 ms | 32.50% |
 
@@ -95,6 +98,17 @@ verdicts are consistent with their declared complexity models. Artefacts:
   SHA-256 `c26c9a0403d7e8d3592282b63bb5929e25421bbfc499c5a90173c4880d53a8f5`.
 - `reports/bench-results/hex-gram-schmidt-gram-rows-after-9ea8290e-chungus2.json`,
   SHA-256 `70bde03f0a449686a59b38d0152f805d126ee905dd8c40c09d1591cf77ea6f7a`.
+
+These measurements use bounded machine-word integers, so they measure the
+allocation and mirror-fill overhead conservatively rather than the larger GMP
+savings expected for real large-coefficient LLL states. Each rung has one
+outer trial. The Gram–Schmidt baseline's 35–65 ms spawn floor was higher than
+the after run's 22–24 ms, so the exact percentages are point estimates; the
+independent LLL pair below had matched spawn floors and reproduced the same
+construction improvement. Finally, `entryValue` repeats rows modulo 31. Pure
+Gram construction is data-independent, but the square Schur fixture becomes
+singular at `n = 32`; the table therefore reports the full-rank `n = 28` rung,
+while the independent profile and wide fixtures carry the gate conclusion.
 
 ## Comparator Ratios
 

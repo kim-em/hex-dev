@@ -49,7 +49,10 @@ setup_benchmark runIntervalGramRowsWideChecksum n =>
   }
 
 /- The fixed-precision checker first constructs square Gram rows and then runs
-its cubic interval Gram–Schmidt recurrence. This registration is the consumer
+its cubic interval Gram–Schmidt recurrence. The deterministic fixture exercises
+the reject path after the complete interval pass; its Boolean result is a
+constant checksum, so behavior discrimination comes from the paired Gram-row
+target and the proved `gramRows_eq_impl`. This registration is the consumer
 paired with `runIntervalGramRowsSquareChecksum` for Amdahl attribution. -/
 setup_benchmark runReducedIntervalSquareChecksum n =>
     reducedIntervalSquareComplexity n
@@ -64,7 +67,8 @@ setup_benchmark runReducedIntervalSquareChecksum n =>
   }
 
 /- The wide fixed-precision checker pairs the `rows^2 * (8 * rows + 1)` Gram
-construction with the same cubic interval recurrence. -/
+construction with the same cubic interval recurrence and reject-path Boolean
+checksum described for the square target. -/
 setup_benchmark runReducedIntervalWideChecksum n =>
     reducedIntervalWideComplexity n
   with prep := prepIntervalWideInput

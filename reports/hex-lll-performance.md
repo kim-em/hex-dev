@@ -12,10 +12,10 @@
 - `Hex.LLLBench.runOfBasisHarshCubicChecksum`: `ofBasisHarshCubicComplexity n`
 - `Hex.LLLBench.runFirstShortVectorRandomBoundedChecksum`: `firstShortVectorRandomBoundedComplexity n`
 - `Hex.LLLBench.runSizeReduceColumnChecksum`: `sizeReduceColumnComplexity n`
-- `Hex.LLLBench.runIntervalGramRowsSquareChecksum`: `intervalGramRowsSquareComplexity n`
-- `Hex.LLLBench.runIntervalGramRowsWideChecksum`: `intervalGramRowsWideComplexity n`
-- `Hex.LLLBench.runReducedIntervalSquareChecksum`: `reducedIntervalSquareComplexity n`
-- `Hex.LLLBench.runReducedIntervalWideChecksum`: `reducedIntervalWideComplexity n`
+- `Hex.LLLBench.runIntervalGramRowsSquareChecksum` (`hexlll_gram_bench`): `intervalGramRowsSquareComplexity n`
+- `Hex.LLLBench.runIntervalGramRowsWideChecksum` (`hexlll_gram_bench`): `intervalGramRowsWideComplexity n`
+- `Hex.LLLBench.runReducedIntervalSquareChecksum` (`hexlll_gram_bench`): `reducedIntervalSquareComplexity n`
+- `Hex.LLLBench.runReducedIntervalWideChecksum` (`hexlll_gram_bench`): `reducedIntervalWideComplexity n`
 - `Hex.LLLBench.runFpylllFirstShortVectorBZRecombinationChecksum`: fixed, repeats `5`
 - `Hex.LLLBench.runIsabelleHarshCubicNormSq15`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorBZRecombinationNormSq`: fixed, repeats `3`
@@ -182,13 +182,26 @@ Baseline Gram construction represented 28.08% (`n = 32`) to 47.68%
 | Gram rows, wide | 48 | 19.102 ms | 10.905 ms | 42.91% |
 | Interval checker, wide | 48 | 26.978 ms | 18.884 ms | 30.00% |
 
-All four before/after result-hash ladders match, and all eight benchmark
-verdicts are consistent with their declared complexity models. Artefacts:
+The two Gram-row result-hash ladders match and discriminate every matrix. The
+two checker ladders also match, but both are the constant Boolean rejection
+result `0`, so they are timing observables rather than strong regression
+checks; behavior preservation is supplied by `gramRows_eq_impl` and the
+checker soundness build. All eight benchmark verdicts are consistent with
+their declared complexity models. Artefacts:
 
 - `reports/bench-results/hex-lll-interval-gram-baseline-3d41529f-chungus2.json`,
   SHA-256 `12267b61a8934f6c59198b43fc6fc4a178f785fba67cdba9404bb9cb31ef6f81`.
 - `reports/bench-results/hex-lll-interval-gram-after-02e35882-chungus2.json`,
   SHA-256 `53f87841ae3524980a6227a578917cab3464500ff0c45aab91a75c41348472f4`.
+
+The deterministic consumer fixtures exercise the checker reject path after a
+complete interval Gram–Schmidt pass; the final size/Lovasz predicates may
+short-circuit. Their Amdahl shares are therefore conservative upper bounds for
+an accepted certificate's extra tail, which is quadratic beside the measured
+cubic pass. Each rung has one outer trial, but unlike the Gram–Schmidt pair the
+before/after spawn floors were matched at 23–25 ms. Inputs use bounded
+machine-word integers, so the reported construction wins should not be read as
+a ceiling for large-coefficient production lattices.
 
 Current scientific rerun for the five formerly inconclusive parametric
 registrations at commit `924910079376c876da2e2fe9d94915505dd477e4` on

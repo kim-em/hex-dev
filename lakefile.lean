@@ -313,7 +313,7 @@ lean_exe hexlll_bench where
 
 lean_exe hexlll_gram_bench where
   srcDir := "bench"
-  root := `HexLLLGram.Bench
+  root := `HexLLLBench.GramBench
 
 lean_exe hex_arith_floor where
   srcDir := "bench"
