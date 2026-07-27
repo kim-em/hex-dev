@@ -137,7 +137,7 @@ structure Extension (T : NumberTower) where
 complex root fixed and only normalizes a possible global sign. -/
 @[expose]
 def positiveAssociate (p : ZPoly) : ZPoly :=
-  if p.leadingCoeff < 0 then DensePoly.scale (-1 : Int) p else p
+  ZPoly.normalizePrimitiveSign p
 
 /-- Checked integer irreducibility forces primitive content. -/
 theorem positiveAssociate_primitive (p : ZPoly)
@@ -199,26 +199,28 @@ def ofQAdjoin {p : ZPoly} {x : SimpleRoot p}
       x := SimpleRoot.mk qrep
       rep := qrep
       rep_mk := rfl }
-  let d := p.degree?.getD 0
-  let leading : Rat := p.leadingCoeff
+  let d := q.degree?.getD 0
+  let leading : Rat := q.leadingCoeff
   let defining := ((List.range d).map fun i =>
-    #[(p.coeff i : Rat) / leading]).toArray
-  let level : Level := ⟨d, defining, root⟩
-  let tower : NumberTower := .mk #[level] (by
-    change level.Valid 1 ∧ True
-    constructor
-    · refine ⟨checked.pos_degree, by simp [level, defining], ?_⟩
-      intro i hi
-      simp [level, defining]
-    · trivial)
-  let generatorCoeffs := if d = 1 then
-    #[-((p.coeff 0 : Rat) / leading)]
+    #[(q.coeff i : Rat) / leading]).toArray
+  if hd : d = 1 then
+    { tower := rat
+      embed := id
+      gen := ofRat rat (-((q.coeff 0 : Rat) / leading))
+      root }
   else
-    #[0, 1]
-  { tower
-    embed := fun a => ofRat tower ((coeffs a).getD 0 0)
-    gen := ofCoeffs tower generatorCoeffs
-    root }
+    let level : Level := ⟨d, defining, root⟩
+    let tower : NumberTower := .mk #[level] (by
+      change level.Valid 1 ∧ True
+      constructor
+      · refine ⟨root.pos_degree, by simp [level, defining], ?_⟩
+        intro i hi
+        simp [level, defining]
+      · trivial)
+    { tower
+      embed := fun a => ofRat tower ((coeffs a).getD 0 0)
+      gen := ofCoeffs tower #[0, 1]
+      root }
 
 /-! Compiled representation checks. -/
 
