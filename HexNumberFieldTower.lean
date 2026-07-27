@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexNumberFieldTower.Basic
+public import HexNumberFieldTower.Arithmetic
 
 public section
 
