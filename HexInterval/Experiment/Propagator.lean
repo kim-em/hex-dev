@@ -187,6 +187,8 @@ structure Application where
   kind : ActionKind
   watches : List NodeId
   writes : List NodeId
+  /-- Immutable registration baseline.  A retry prepares a new `Action` with
+  an override; it never mutates this compiled application field. -/
   effort : Nat
   deriving Repr
 
@@ -295,7 +297,9 @@ def Application.same (left right : Application) : Bool :=
   left.rule == right.rule && left.node == right.node && left.kind == right.kind &&
     left.watches == right.watches && left.writes == right.writes && left.effort == right.effort
 
-/-- Every old application must remain an exact prefix after program extension. -/
+/-- Every old application, including its immutable baseline effort, must
+remain an exact prefix after program extension.  Retry escalation lives only
+in a selected `Action`, so it cannot invalidate this structural prefix. -/
 def applicationsPrefix (old new : Array Application) : Bool := Id.run do
   if new.size < old.size then return false
   for index in [0:old.size] do
@@ -392,8 +396,9 @@ structure ProposedNode where
   deriving Repr
 
 /-- An equality proposed alongside new expressions.  This experiment retains
-the opaque payload and endpoints as untrusted replay data; the edge is not
-scheduler-active until a companion-backed activation transition is added. -/
+the opaque payload and endpoints as untrusted replay data.  Once admitted, the
+edge is search-active: the engine may use it to transport facts, but replay
+must reconstruct this payload before any transported fact can prove a goal. -/
 structure ProposedEquality where
   left : NodeRef
   right : NodeRef
@@ -471,7 +476,8 @@ inductive Outcome (Fact : Type) where
 def Outcome.observationBounded (limit : Nat) : Outcome Fact -> Bool
   | .success _ _ cost | .noChange cost => cost.bounded limit
   | .inapplicable => true
-  | .resourceLimit budget | .failed budget => budget <= limit
+  | .resourceLimit budget => budget <= limit
+  | .failed _ => true
 
 /-- Registry response bound to the exact outstanding invocation. -/
 structure Reply (Fact : Type) where
@@ -569,6 +575,7 @@ structure Metrics where
   ruleFailures : Nat := 0
   admittedInstances : Nat := 0
   duplicateInstances : Nat := 0
+  droppedSuggestions : Nat := 0
   generatedNodes : Nat := 0
   generatedEqualities : Nat := 0
   equalityRuns : Nat := 0
@@ -597,11 +604,12 @@ structure EqualityPair where
   second : NodeId
   deriving DecidableEq, Repr
 
-/-- Canonical key for one shape-rule application in this scope-free first
-experiment.  Equality products participate in duplicate detection. -/
+/-- Engine-derived structural identity for one shape-rule application in this
+scope-free first experiment.  A rule's untrusted family label is deliberately
+absent: the originating rule, authoritative action substitution, resolved
+products, and equality products determine whether the network changes. -/
 structure InstanceKey where
   rule : RuleKey
-  family : Nat
   substitution : List NodeId
   products : List NodeId
   equalities : List EqualityPair
@@ -640,7 +648,9 @@ structure InstanceEvent where
   products : List NodeId
   newNodes : List NodeId
   generation : Nat
-  equalities : List EqualityEdge
+  /-- Equality outputs in proposal order, including links reused from an older
+  instance and repeated references to the same canonical link. -/
+  equalities : List EqualityId
   payload : PayloadId
 
 /-- Live state of the function-agnostic scheduler. -/
@@ -1091,28 +1101,30 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
                 match candidatesAuthorized application.writes candidates with
                 | some error => .invalid error base
                 | none =>
-                    if state.limits.maxRetainedSuggestions <
-                        state.suggestions.size + suggestions.length then
-                      .resourceLimit .retainedSuggestions base
-                    else
-                      let working : Engine Fact :=
-                        { base with
-                          suggestions := suggestions.foldl
-                            (fun retained suggestion => retained.push
-                              { action, suggestion })
-                            base.suggestions
-                          metrics :=
-                            { base.metrics with
-                              candidates := base.metrics.candidates + candidates.length } }
-                      match installCandidates action working candidates with
-                      | .error (_, some budget, _) =>
-                          .factResourceLimit budget base
-                      | .error (_, _, some resource) => .resourceLimit resource base
-                      | .error (error, _, _) => .invalid error base
-                      | .ok (working, changed) =>
-                          match working.wakeNodes changed with
-                          | .error resource => .resourceLimit resource base
-                          | .ok next => .accepted next
+                    let suggestionRoom :=
+                      state.limits.maxRetainedSuggestions - state.suggestions.size
+                    let retainedSuggestions := suggestions.take suggestionRoom
+                    let droppedSuggestions := suggestions.length - retainedSuggestions.length
+                    let working : Engine Fact :=
+                      { base with
+                        suggestions := retainedSuggestions.foldl
+                          (fun retained suggestion => retained.push
+                            { action, suggestion })
+                          base.suggestions
+                        metrics :=
+                          { base.metrics with
+                            candidates := base.metrics.candidates + candidates.length
+                            droppedSuggestions :=
+                              base.metrics.droppedSuggestions + droppedSuggestions } }
+                    match installCandidates action working candidates with
+                    | .error (_, some budget, _) =>
+                        .factResourceLimit budget base
+                    | .error (_, _, some resource) => .resourceLimit resource base
+                    | .error (error, _, _) => .invalid error base
+                    | .ok (working, changed) =>
+                        match working.wakeNodes changed with
+                        | .error resource => .resourceLimit resource base
+                        | .ok next => .accepted next
 
 def transportUpdate (target source : NodeId) (targetVersion sourceVersion : Nat) :
     NarrowResult Fact -> Except EqualityFactError (Option (TransportUpdate Fact))
@@ -1337,14 +1349,22 @@ def existingRefs (refs : List NodeRef) : List NodeId :=
     | .proposed _ => nodes) []
 
 def requestExistingRefs (request : InstantiationRequest) : List NodeId :=
-  request.triggers ++ request.nodes.flatMap (fun node => existingRefs node.args) ++
+  request.nodes.flatMap (fun node => existingRefs node.args) ++
     request.equalities.flatMap (fun edge => existingRefs [edge.left, edge.right])
 
-/-- Recompute instantiation depth from every old node used directly or reached
-through a CSE hit. -/
+/-- Canonical engine-owned substitution of an invocation: its anchor followed
+by every declared fact dependency, with the first occurrence retained.  The
+registry's `InstantiationRequest.triggers` field is replay data and cannot
+weaken either generation accounting or structural duplicate detection. -/
+def actionSubstitution (action : Action) : List NodeId :=
+  dedupList (action.node :: action.inputs.map (fun input => input.node))
+
+/-- Recompute instantiation depth from the authoritative invocation, every old
+node named by the proposal, and every old node reached through a CSE hit. -/
 def inferredGeneration? (generations : Array Nat) (baseSize : Nat)
-    (request : InstantiationRequest) (resolved : List NodeId) : Option Nat := do
-  let references := requestExistingRefs request ++ resolved.filter (fun node => node.index < baseSize)
+    (action : Action) (request : InstantiationRequest) (resolved : List NodeId) : Option Nat := do
+  let references := actionSubstitution action ++ requestExistingRefs request ++
+    resolved.filter (fun node => node.index < baseSize)
   let mut greatest := 0
   for node in references do
     let generation <- generations[node.index]?
@@ -1356,11 +1376,22 @@ def EqualityEdge.sameEndpoints (edge : EqualityEdge) (left right : NodeId) : Boo
   (edge.left == left && edge.right == right) ||
     (edge.left == right && edge.right == left)
 
-def resolveEqualities (baseSize generation : Nat) (origin : Action) (program : Program)
-    (resolved : List NodeId) (existing : Array EqualityEdge) :
-    List ProposedEquality -> Option (List EqualityEdge)
-  | [] => some []
-  | proposal :: proposals => do
+/-- Locate an already resolved equality in stable array/list order. -/
+def findEqualityIdFrom (left right : NodeId) : Nat -> List EqualityEdge -> Option EqualityId
+  | _, [] => none
+  | index, edge :: edges =>
+      if edge.sameEndpoints left right then some { index }
+      else findEqualityIdFrom left right (index + 1) edges
+
+/-- Resolve equality outputs in proposal order.  The identifier list includes
+both reused and newly allocated links; `fresh` contains only edges that must be
+appended to the live table. -/
+def resolveEqualitiesFrom (baseSize generation : Nat) (origin : Action)
+    (program : Program) (resolved : List NodeId) (existing : Array EqualityEdge) :
+    List EqualityId -> List EqualityEdge -> List ProposedEquality ->
+      Option (List EqualityId × List EqualityEdge)
+  | identifiers, fresh, [] => some (identifiers, fresh)
+  | identifiers, fresh, proposal :: proposals => do
       let left <- resolveRef? baseSize resolved proposal.left
       let right <- resolveRef? baseSize resolved proposal.right
       let leftNode <- program.node? left
@@ -1368,13 +1399,22 @@ def resolveEqualities (baseSize generation : Nat) (origin : Action) (program : P
       if left == right || leftNode.domain != rightNode.domain then
         none
       else
-        let rest <- resolveEqualities baseSize generation origin program resolved existing proposals
-        let duplicateExisting := existing.any fun edge => edge.sameEndpoints left right
-        let duplicateNew := rest.any fun edge => edge.sameEndpoints left right
-        if duplicateExisting || duplicateNew then
-          some rest
-        else
-          some ({ left, right, generation, origin, payload := proposal.payload } :: rest)
+        let all := existing.toList ++ fresh
+        match findEqualityIdFrom left right 0 all with
+        | some identifier =>
+            resolveEqualitiesFrom baseSize generation origin program resolved existing
+              (identifiers ++ [identifier]) fresh proposals
+        | none =>
+            let identifier : EqualityId := { index := existing.size + fresh.length }
+            let edge : EqualityEdge :=
+              { left, right, generation, origin, payload := proposal.payload }
+            resolveEqualitiesFrom baseSize generation origin program resolved existing
+              (identifiers ++ [identifier]) (fresh ++ [edge]) proposals
+
+def resolveEqualities (baseSize generation : Nat) (origin : Action) (program : Program)
+    (resolved : List NodeId) (existing : Array EqualityEdge)
+    (proposals : List ProposedEquality) : Option (List EqualityId × List EqualityEdge) :=
+  resolveEqualitiesFrom baseSize generation origin program resolved existing [] [] proposals
 
 def newNodeIds (baseSize totalSize : Nat) : List NodeId :=
   (List.range (totalSize - baseSize)).map fun offset => { index := baseSize + offset }
@@ -1398,9 +1438,20 @@ def enqueueNewEqualities (oldCount newCount : Nat) (state : Engine Fact) :
 
 namespace Engine
 
-/-- Validate and commit one shape-triggered program extension.  Every derived
-table is built on a temporary state; any failure returns the original engine. -/
-private def admitRetained (state : Engine Fact)
+/-- Record a structurally redundant proposal without creating a program
+snapshot or consuming an instance slot. -/
+def duplicateInstance (state : Engine Fact) : AdmissionResult Fact :=
+  .duplicate
+    { state with
+      metrics :=
+        { state.metrics with
+          duplicateInstances := state.metrics.duplicateInstances + 1 } }
+
+/-- Implementation transition for one retained shape proposal.  It remains
+visible only because this experiment deliberately exposes the whole `Engine`
+record for state-mutation benchmarks; production authority comes from an
+abstract engine type, not from pretending this helper is an access boundary. -/
+def admitRetained (state : Engine Fact)
     (retained : RetainedSuggestion) : AdmissionResult Fact :=
   if state.pending.isSome then
     .invalid .pendingReply state
@@ -1420,38 +1471,37 @@ private def admitRetained (state : Engine Fact)
               if equalityPairs?.isNone then
                 .invalid .invalidEquality state
               else
+              let substitution := actionSubstitution retained.action
               let instanceKey : InstanceKey :=
                 { rule := retained.action.key
-                  family := request.key
-                  substitution := request.triggers
+                  substitution
                   products := resolved
                   equalities := equalityPairs?.getD [] }
               if state.instances.contains instanceKey then
-                .duplicate
-                  { state with
-                    metrics :=
-                      { state.metrics with
-                        duplicateInstances := state.metrics.duplicateInstances + 1 } }
+                duplicateInstance state
               else if retained.action.programVersion != state.programVersion then
                 .invalid (.staleSuggestion retained.action.programVersion state.programVersion) state
-              else if state.limits.maxInstances <= state.instances.length then
-                .resourceLimit .instances state
               else
-                match inferredGeneration? state.generations baseSize request resolved with
+                match inferredGeneration? state.generations baseSize retained.action request resolved with
                 | none => .invalid .badReferenceOrShape state
                 | some generation =>
                     if request.claimedGeneration != generation then
                       .invalid (.generationMismatch request.claimedGeneration generation) state
-                    else if state.limits.maxGeneration < generation then
-                      .resourceLimit .generation state
-                    else if state.limits.maxNodes < program.nodes.size then
-                      .resourceLimit .nodes state
                     else
                       match resolveEqualities baseSize generation retained.action program resolved
                           state.equalities request.equalities with
                       | none => .invalid .invalidEquality state
-                      | some equalities =>
-                          if state.limits.maxEqualities <
+                      | some (equalityIds, equalities) =>
+                          let addedNodes := program.nodes.size - baseSize
+                          if addedNodes == 0 && equalities.isEmpty then
+                            duplicateInstance state
+                          else if state.limits.maxInstances <= state.instances.length then
+                            .resourceLimit .instances state
+                          else if state.limits.maxGeneration < generation then
+                            .resourceLimit .generation state
+                          else if state.limits.maxNodes < program.nodes.size then
+                            .resourceLimit .nodes state
+                          else if state.limits.maxEqualities <
                               state.equalities.size + equalities.length then
                             .resourceLimit .equalities state
                           else
@@ -1474,7 +1524,6 @@ private def admitRetained (state : Engine Fact)
                                         allEqualities with
                                     | none => .invalid .invalidCompiledProgram state
                                     | some watchers =>
-                                        let addedNodes := program.nodes.size - baseSize
                                         let generated := newNodeIds baseSize program.nodes.size
                                         let queued := state.queued ++
                                           Array.replicate addedApplications false
@@ -1499,11 +1548,11 @@ private def admitRetained (state : Engine Fact)
                                               { programVersion := state.programVersion + 1
                                                 origin := retained.action
                                                 family := request.key
-                                                substitution := request.triggers
+                                                substitution
                                                 products := resolved
                                                 newNodes := generated
                                                 generation
-                                                equalities
+                                                equalities := equalityIds
                                                 payload := request.payload }
                                             equalities := allEqualities
                                             metrics :=
@@ -1524,9 +1573,11 @@ private def admitRetained (state : Engine Fact)
                                             | .error resource => .resourceLimit resource state
                                             | .ok next => .admitted generated next
 
-/-- Select only an engine-retained proposal; callers cannot fabricate rule
-provenance or transplant a proposal from another state. -/
-opaque admitInstantiation (state : Engine Fact)
+/-- Select one proposal retained in this concrete engine snapshot.  This
+experiment keeps `Engine` inspectable for benchmarks, so callers can still
+forge a whole engine value by updating public fields; the production API must
+hide that constructor rather than relying on opacity of this transition. -/
+def admitInstantiation (state : Engine Fact)
     (suggestion : SuggestionId) : AdmissionResult Fact :=
   match state.suggestions[suggestion.index]? with
   | none => .invalid .missingSuggestion state

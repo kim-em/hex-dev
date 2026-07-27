@@ -559,11 +559,14 @@ ordinary interval facts. Typical uses include:
 - instantiating a monotonicity theorem by adding product or difference nodes
   that were absent from the original goal.
 
-An instantiation proposal contains a versioned rule key, a canonical
-substitution, new SSA instructions, equality or derived-fact recipes, and an
-untrusted claimed generation. Acceptance validates operation arities and
-domains, topological order, scope visibility, and every referenced input;
-recomputes generation from trigger provenance and generated dependencies,
+An instantiation proposal contains a versioned rule key, replay-facing trigger
+data, new SSA instructions, equality or derived-fact recipes, and an untrusted
+claimed generation. The engine derives the canonical substitution from the
+selected action's anchor and declared input facts; a registry-provided trigger
+list cannot weaken generation accounting or change structural identity.
+Acceptance validates operation arities and domains, topological order, scope
+visibility, and every referenced input; recomputes generation from the
+engine-owned action provenance and generated dependencies,
 rejecting a mismatch or over-budget descendant; deduplicates expressions by
 the same canonical CSE key as the base program; updates consumer and rule
 indexes; and freezes the proof recipe for replay. Base nodes have generation
@@ -594,23 +597,32 @@ storage uses linear reference CSE and rebuilds indexes after an extension;
 that validates the state transition but does not select the production CSE or
 incremental-index representation.
 
+For inspection and mutation-cost experiments this provisional `Engine` is an
+exposed record. Consequently, its raw module does not enforce an authority
+boundary against a caller who fabricates an entire record value. The
+production engine must hide its constructor and expose checked observations
+and transitions; making one transition opaque would not provide that
+encapsulation and would obstruct ordinary-kernel theorems about admission.
+
 One atomic theorem instantiation initially assigns a single instantiation
 generation to all helper nodes it introduces: one plus the maximum generation
-of every old node referenced by the trigger, substitution, draft, or CSE
-result. This measures theorem-instantiation depth rather than expression-tree
-depth. Per-product generation remains a possible refinement, but a draft's
-ordering must never let a deeper theorem instance pass a shallower limit.
+of every old node referenced by the authoritative action substitution, draft,
+equality output, or CSE result. This measures theorem-instantiation depth
+rather than expression-tree depth. Per-product generation remains a possible
+refinement, but neither a false trigger list nor a draft's ordering may let a
+deeper theorem instance pass a shallower limit.
 
-The first experiment retains proposed equality edges structurally but does not
-yet use them to transport interval facts. Activating such an edge must itself
-be an indexed, replayable propagation mechanism: improving either endpoint
-wakes transport in the other direction, and admission of a new edge considers
-both current endpoint facts atomically. Likewise, the first FIFO worklist runs
-all compiled applications at their registered effort. A separate policy
-experiment must make escalation, retry, instantiation selection, and
-subdivision explicit state transitions over the same generic application
-protocol. Neither limitation is a reason to specialize the scheduler to
-rational operations or to bake function semantics into it.
+The general experiment activates proposed equality edges as indexed,
+replayable search contractors: improving either endpoint wakes transport in
+the other direction, and admission of a new edge considers both current
+endpoint facts atomically. The edge payload remains untrusted, so an equality-
+derived contradiction is only a search signal until companion replay validates
+that payload. The first FIFO worklist still runs all compiled applications at
+their registered effort. A separate policy experiment makes escalation,
+retry, instantiation selection, and subdivision explicit state transitions
+over the same generic application protocol. Neither limitation is a reason to
+specialize the scheduler to rational operations or to bake function semantics
+into it.
 
 ### Equality activation
 
@@ -693,11 +705,15 @@ the same endpoint pair with different scopes or proof costs. A production
 table may separate one canonical transport link from several evidence records;
 the first experiment may retain the first deterministic evidence.
 
-Instance identity includes canonical unordered equality endpoint pairs as
-well as the rule family, substitution, and products. Equality resolution
+Structural instance identity includes canonical unordered equality endpoint
+pairs as well as the originating rule, engine-derived substitution, and
+resolved products. An untrusted family label remains replay metadata but does
+not manufacture a new network extension. Equality resolution
 returns the identifiers of reused links as well as newly appended links, so a
 pure-equality instance is replayable and cannot collide with an empty
-extension. Scope becomes part of this identity when branches are introduced.
+extension. If every proposed node CSE-hits and every equality already exists,
+admission reports a duplicate without advancing the program snapshot or
+consuming an instance slot. Scope becomes part of this identity when branches are introduced.
 Structurally admitted equality evidence is search-active but not trusted:
 failure to reconstruct it rejects the eventual proof, just as a malformed
 function-rule payload does.
@@ -902,10 +918,13 @@ observed contraction, and proof cost.
 
 An `Outcome` may be `noChange`, `inapplicable`, `resourceLimit`, or `failed`
 without affecting soundness. `resourceLimit` names the exhausted budget and is
-not cached as mathematical inapplicability. Rules do not promise that greater
-effort always gives a tighter answer. The solver intersects every result with
-existing facts, measures the actual improvement, and learns from that
-observation.
+not cached as mathematical inapplicability; a `failed` code is an opaque
+diagnostic identifier rather than a cost magnitude. Rules do not promise that
+greater effort always gives a tighter answer. The solver intersects every
+result with existing facts, measures the actual improvement, and learns from
+that observation. Retained suggestions are advisory: when their cumulative
+storage cap is full, the engine retains the bounded prefix, records how many
+were dropped, and still commits independently valid candidate facts.
 
 The base `Program` is static after validation. Generic cheap alternates may be
 present before search, and `rewrite` only changes which form in the current
@@ -1126,7 +1145,7 @@ structure Policy (Fact : Type) where
 ```
 
 The policy state, like rule-private caches, may have an arbitrary Lean type and
-is owned by the external driver. `Engine.select` rechecks the decision serial,
+is owned by the external driver. `Policy.State.select` rechecks the decision serial,
 scope, program version, offer identifier, complete canonical key, eligibility,
 and budgets. It alone freezes current input versions and creates a registry
 `Action`, runs an engine equality contractor, admits a selected instance, or
@@ -1144,6 +1163,9 @@ not require an ever-growing live frontier. Program extension invalidates
 exact-snapshot instantiation offers, refreshes dirty invocation offers, rechecks
 retry and split offers under their variant-specific guards, and inserts offers
 for new applications and equality jobs atomically with the extension.
+A selected retry prepares a fresh action carrying the bounded effort override;
+it does not mutate the compiled application's registration baseline, so later
+append-only program validation still compares an immutable application prefix.
 
 Each completed selection produces an engine-owned observation: outcome class,
 changed target versions, contradiction status, emitted offer identifiers,
@@ -1186,7 +1208,7 @@ The shown first interface supplies the authoritative bounded scan frontier in
 each `PolicyView`; transition events let the policy update historical state
 without reconstructing it. An event-only priority implementation may later
 remove that repeated batch behind a different adapter while preserving
-`Selection` and `Engine.select`. We must also compare coalesced live offers
+`Selection` and `Policy.State.select`. We must also compare coalesced live offers
 with append-only stale entries and decide how much of a generic fact, as
 opposed to exact bounded policy features, a reusable policy should see. These
 choices change cost and convenience, not the admission or replay boundary.

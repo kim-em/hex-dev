@@ -365,7 +365,10 @@ def dynamicFinal? : Option (RunResult Rank (List String) × SuggestionId) := do
   | some (state, _, _) =>
       state.program.nodes.size == 3 && state.programVersion == 1 &&
         state.generations.toList == [0, 0, 1] && state.applications.size == 3 &&
-        state.metrics.admittedInstances == 1 && state.metrics.generatedNodes == 1
+        state.metrics.admittedInstances == 1 && state.metrics.generatedNodes == 1 &&
+        match state.instanceHistory[0]? with
+        | some event => event.substitution == [node 1, node 0]
+        | none => false
   | none => false
 
 #guard
@@ -376,7 +379,7 @@ def dynamicFinal? : Option (RunResult Rank (List String) × SuggestionId) := do
         result.state.history.size == 2
   | none => false
 
--- Selecting the same family/substitution twice allocates nothing.
+-- Selecting the same structural extension twice allocates nothing.
 #guard
   match dynamicFinal? with
   | some (result, selected) =>
@@ -497,6 +500,30 @@ def ladderFinal? : Option (RunResult Rank (List String)) := do
           state.program.nodes.size == 3 && state.instances.length == 1 &&
             state.generations.toList == [0, 0, 1]
       | _ => false
+  | none => false
+
+-- A registry cannot launder a generation-one invocation back to generation
+-- one by omitting its anchor from the untrusted trigger list and mentioning
+-- only a shallow node in the draft.
+#guard
+  match ladderAfterFirst? with
+  | some first =>
+      match first.state.suggestions[1]? with
+      | some retained =>
+          let proposal : InstantiationRequest :=
+            { key := 97
+              triggers := []
+              claimedGeneration := 1
+              nodes := [proposedNext (node 0)]
+              equalities := []
+              payload := { index := 101 } }
+          match first.state.admitRetained
+              { action := retained.action, suggestion := .instantiate proposal } with
+          | .invalid (.generationMismatch 1 2) state =>
+              state.programVersion == 1 && state.program.nodes.size == 3 &&
+                state.generations.toList == [0, 0, 1]
+          | _ => false
+      | none => false
   | none => false
 
 /-! ## One atomic batch: CSE, several products, and an equality draft -/
@@ -625,6 +652,27 @@ def pairFinal? (limits : Limits := generous) : Option (RunResult PairRank Nat) :
   let state <- pairAdmitted? limits
   pure (drive pairEqualityInvoke 8 state 1)
 
+/-- A second instance adds one node while explicitly reusing the equality
+created by the first instance. -/
+def pairReuseAdmitted? : Option (Engine PairRank) := do
+  let state <- pairAdmitted?
+  let retained <- state.suggestions[0]?
+  let proposal : InstantiationRequest :=
+    { key := 103
+      triggers := []
+      claimedGeneration := 1
+      nodes := [proposedUnary (node 1)]
+      equalities :=
+        [{ left := .existing (node 1)
+           right := .existing (node 0)
+           payload := { index := 107 } }]
+      payload := { index := 109 } }
+  let action := { retained.action with programVersion := state.programVersion }
+  match state.admitRetained
+      { action, suggestion := .instantiate proposal } with
+  | .admitted [newNode] next => if newNode == node 3 then some next else none
+  | _ => none
+
 -- Equality endpoints are unordered, the pair set is sorted, and reversed
 -- repetitions do not create a distinct instance identity.
 #guard
@@ -646,6 +694,49 @@ def pairFinal? (limits : Limits := generous) : Option (RunResult PairRank Nat) :
           next.equalities.size == 1 && next.instances.length == 1 &&
             next.metrics.duplicateInstances == 1
       | _ => false
+  | none => false
+
+-- Replay provenance names a reused link just as precisely as a fresh link.
+#guard
+  match pairReuseAdmitted? with
+  | some state =>
+      state.equalities.size == 1 && state.program.nodes.size == 4 &&
+        state.programVersion == 2 && state.instanceHistory.size == 2 &&
+        match state.instanceHistory[0]?, state.instanceHistory[1]? with
+        | some first, some second =>
+            first.equalities == [{ index := 0 }] &&
+              second.equalities == [{ index := 0 }] && second.newNodes == [node 3]
+        | _, _ => false
+  | none => false
+
+-- A differently labelled request whose complete structural effect already
+-- exists is a no-op: it consumes neither a snapshot nor an instance slot.
+#guard
+  match pairAdmitted? with
+  | some state =>
+      match state.suggestions[0]? with
+      | some retained =>
+          let proposal : InstantiationRequest :=
+            { key := 113
+              triggers := []
+              claimedGeneration := 1
+              nodes := []
+              equalities :=
+                [{ left := .existing (node 0)
+                   right := .existing (node 1)
+                   payload := { index := 127 } }]
+              payload := { index := 131 } }
+          let otherAction :=
+            { retained.action with
+              programVersion := state.programVersion
+              key := { name := "shape.other-no-op" } }
+          match state.admitRetained
+              { action := otherAction, suggestion := .instantiate proposal } with
+          | .duplicate next =>
+              next.programVersion == 1 && next.instances.length == 1 &&
+                next.instanceHistory.size == 1 && next.equalities.size == 1
+          | _ => false
+      | none => false
   | none => false
 
 -- Direct equality contraction cannot interleave with an outstanding external
@@ -841,6 +932,53 @@ def firstChainRequest? : Option (RuleRequest Rank × Engine Rank) := do
           (.noChange { arithmeticWork := generous.maxObservationValue + 1 })) with
       | .invalid .oversizedObservation state =>
           state.pending.isNone && state.history.isEmpty && state.suggestions.isEmpty
+      | _ => false
+  | none => false
+
+-- Advisory-suggestion capacity cannot discard a valid fact improvement.  The
+-- bounded prefix is retained and overflow is an observation, not a failed
+-- reply transaction.
+#guard
+  match start? chainProgram #[copyRule] #[4, 0, 0, 0, 0]
+      { generous with maxRetainedSuggestions := 0 } with
+  | some initial =>
+      match initial.poll with
+      | .request request awaiting =>
+          match awaiting.submit (request.action.reply
+              (.success [candidate request 4] [.retry 1] {})) with
+          | .accepted state =>
+              state.facts.toList == [4, 4, 0, 0, 0] && state.history.size == 1 &&
+                state.suggestions.isEmpty && state.metrics.droppedSuggestions == 1 &&
+                state.metrics.candidates == 1
+          | _ => false
+      | _ => false
+  | none => false
+
+-- A failure code is an opaque diagnostic identifier, not a logical cost
+-- magnitude governed by the observation-value budget.
+#guard
+  match firstChainRequest? with
+  | some (request, awaiting) =>
+      match awaiting.submit (request.action.reply
+          (.failed (generous.maxObservationValue + 1))) with
+      | .accepted state =>
+          state.pending.isNone && state.metrics.ruleFailures == 1 && state.history.isEmpty
+      | _ => false
+  | none => false
+
+-- The direct submit API rejects a delayed/transplanted serial without
+-- clearing the current request latch.
+#guard
+  match firstChainRequest? with
+  | some (request, awaiting) =>
+      let reply : Reply Rank :=
+        { serial := request.action.serial + 1
+          programVersion := request.action.programVersion
+          application := request.action.application
+          outcome := .inapplicable }
+      match awaiting.submit reply with
+      | .invalid .mismatchedAction state =>
+          state.pending.isSome && state.metrics.replies == 0 && state.history.isEmpty
       | _ => false
   | none => false
 
