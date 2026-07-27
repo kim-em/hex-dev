@@ -42,8 +42,9 @@ with coefficients regarded as constant polynomials in `X`. -/
 @[expose]
 def definingOuter (level : Level) (lower : List Level) :
     DensePoly (DensePoly (RawElem lower)) :=
-  DensePoly.ofCoeffs <| (level.defining.map fun a =>
-    DensePoly.C (raw lower a)).push (DensePoly.C 1)
+  DensePoly.ofCoeffs <| (((List.range level.degree).map fun i =>
+    DensePoly.C (raw lower (level.defining.getD i #[]))).toArray).push
+      (DensePoly.C 1)
 
 /-- Substitute `X - cY` into a polynomial over the current tower, presenting
 the result as a polynomial in `Y` over `lower[X]`. -/
@@ -127,6 +128,11 @@ private def normSqrtThreeLevel : Level where
   defining := #[#[-3, 0], #[0, 0]]
   root := AlgebraicNumber.zero.toRoot
 
+private def normCubeRootTwoLevel : Level where
+  degree := 3
+  defining := #[#[-2], #[0], #[0]]
+  root := AlgebraicNumber.zero.toRoot
+
 #guard
     let xSubSqrtTwo : Array (Array Rat) := #[#[0, -1], #[1, 0]]
     oneLevel normSqrtTwoLevel [] xSubSqrtTwo 0 =
@@ -155,11 +161,30 @@ private def normSqrtThreeLevel : Level where
       #[#[2, 0], #[0, -2], #[1, 0]]
 
 #guard
+    let repeatedOverLower : Array (Array Rat) :=
+      #[#[2, 0], #[0, -2], #[1, 0]]
+    !isSquarefree [normSqrtTwoLevel] repeatedOverLower
+
+-- This cubic elimination reaches Brown's nonunit polynomial exact-division
+-- branch and exercises cascading reduction in a degree-three level.
+#guard
+    let g : Array (Array Rat) := #[#[1, 0, 0], #[0, 0, 1]]
+    oneLevel normCubeRootTwoLevel [] g 1 =
+      #[#[-1], #[0], #[0], #[4]]
+
+#guard
     let xSubSqrtTwo : Array (Array Rat) := #[#[0, -1], #[1, 0]]
     let found := findSquarefreeShift normSqrtTwoLevel [] xSubSqrtTwo
     tragerShiftCount 2 3 = 16 &&
       (List.range 5).map signedShift = [0, 1, -1, 2, -2] &&
       found = some (0, #[#[-2], #[0], #[1]])
+
+-- The first norm is repeated, so the search must advance to shift one.
+#guard
+    let rationalQuadratic : Array (Array Rat) :=
+      #[#[-3, 0], #[0, 0], #[1, 0]]
+    findSquarefreeShift normSqrtTwoLevel [] rationalQuadratic =
+      some (1, #[#[1], #[0], #[-10], #[0], #[1]])
 
 end Norm
 
