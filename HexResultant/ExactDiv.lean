@@ -82,11 +82,19 @@ theorem exactDiv_mul_right [Lean.Grind.CommRing R] [DecidableEq R] [Div R]
   rw [exactDiv_eq_div_of_ne _ hb]
   exact ExactDivLaws.mul_div_cancel_right a b hb
 
-/-- Natural powers using only the executable `One` and `Mul` operations. -/
+/-- Natural powers by binary exponentiation, using only the executable `One`
+and `Mul` operations. The association order is part of this law-free
+computational definition; correctness consumers assume associative ring
+multiplication. -/
 @[expose]
-def powNat [One R] [Mul R] (x : R) : Nat → R
-  | 0 => 1
-  | n + 1 => powNat x n * x
+def powNat [One R] [Mul R] (x : R) (n : Nat) : R :=
+  if n = 0 then
+    1
+  else
+    let y := powNat (x * x) (n / 2)
+    if n % 2 = 0 then y else y * x
+termination_by n
+decreasing_by omega
 
 /-- Brown's scalar update `x^n / y^(n-1)`, with the same total zero behavior
 as `exactDiv`. -/
@@ -203,5 +211,12 @@ instance instExactDivLawsDensePoly [Lean.Grind.CommRing R] [DecidableEq R]
         rfl
     change (DensePoly.divMod (a * b) b).1 = a
     exact congrArg Prod.fst hpair
+
+/-! Instance-contract checks for the two coefficient towers exercised by the
+Brown regressions. -/
+
+example : ExactDivLaws Int := inferInstance
+
+example : ExactDivLaws (DensePoly Int) := inferInstance
 
 end Hex

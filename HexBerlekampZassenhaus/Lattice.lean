@@ -48,7 +48,7 @@ namespace Hex
 leading coefficient.  Drops the `Monic` hypothesis from
 `exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree` in favour of
 `0 < leadingCoeff candidate`, routing the executable division through
-`divMod_eq_of_pos_lc_pos_degree_mul_eq` and packaging the result with
+`ZPoly.divMod_eq_mul` and packaging the result with
 `exactQuotient?_eq_some_of_divMod_eq_of_shouldRecord`.  Positive degree alone
 discharges `shouldRecordPolynomialFactor`, since `0`, `C 1`, and `C (-1)` all
 have `degree?.getD 0 = 0`. -/
@@ -80,8 +80,7 @@ theorem exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq
     unfold shouldRecordPolynomialFactor
     simp [hne_zero, hne_one, hne_neg_one]
   have hdivMod_eq : DensePoly.divMod target candidate = (quotient, 0) :=
-    ZPoly.divMod_eq_of_pos_lc_pos_degree_mul_eq target candidate quotient
-      hpos_lc hdegree hmul
+    ZPoly.divMod_eq_mul target candidate quotient hpos_lc hmul
   exact exactQuotient?_eq_some_of_divMod_eq_of_shouldRecord hrecord hdivMod_eq hmul
 
 private def positiveDivisors (n : Nat) : List Nat :=

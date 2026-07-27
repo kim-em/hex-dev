@@ -29,7 +29,11 @@ namespace Hex
 
 universe u
 
-/-- Executable result of an ordered Brown PRS run. -/
+/-- Executable result of a degree-ordered Brown PRS run.
+
+`scale` belongs to the ordered chain. In particular, `subresultantRun` does
+not record whether it swapped its arguments, so this structure alone is not a
+caller-order-sensitive resultant; use `resultant` for that value. -/
 structure PRSResult (R : Type u) [Zero R] [DecidableEq R] where
   /-- Brown's nonzero `G₁, …, Gₖ`, excluding the generated terminal zero. -/
   chain : Array (DensePoly R)
@@ -44,6 +48,29 @@ variable {R : Type u} [Zero R] [DecidableEq R]
 @[expose]
 def negOnePow [One R] [Sub R] (n : Nat) : R :=
   if n % 2 = 0 then 1 else 0 - 1
+
+/-- The exactness and nonzero obligations for every reachable Brown worker
+state. A valid state must terminate naturally before its fuel reaches zero;
+at each nonterminal step both scalar divisions reconstruct their numerators,
+the Brown divisor and quotient are nonzero, and the successor is valid. -/
+@[expose]
+def BrownLaw [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (prev curr : DensePoly R) (hPrev : R) : Nat → Prop
+  | 0 => False
+  | fuel + 1 =>
+      let delta := prev.size - curr.size
+      let hCurr := divExp curr.leadingCoeff hPrev delta
+      let p := (pseudoDivMod prev curr).2
+      hPrev ≠ 0 ∧
+        powNat curr.leadingCoeff delta = powNat hPrev (delta - 1) * hCurr ∧
+        if p.isZero then
+          True
+        else
+          let divisor :=
+            negOnePow (delta + 1) * prev.leadingCoeff * powNat hPrev delta
+          let next := divScalarImpl p divisor
+          divisor ≠ 0 ∧ p = scaleImpl divisor next ∧ next ≠ 0 ∧
+            BrownLaw curr next hCurr fuel
 
 /-- Fuel-bounded Brown recurrence after the initial pseudo-division.
 
@@ -71,10 +98,10 @@ def subresultantAux [One R] [Add R] [Sub R] [Mul R] [Div R]
           subresultantAux curr next hCurr (chain.push next) fuel
 
 /-- Brown's recurrence for two nonzero inputs already ordered by decreasing
-dense degree. -/
+dense degree, with an explicit proof-audit fuel parameter. -/
 @[expose]
-def subresultantOrdered [One R] [Add R] [Sub R] [Mul R] [Div R]
-    (f g : DensePoly R) : PRSResult R :=
+def subresultantOrderedFuel [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (f g : DensePoly R) (fuel : Nat) : PRSResult R :=
   let delta := f.size - g.size
   let h₂ := powNat g.leadingCoeff delta
   let p := (pseudoDivMod f g).2
@@ -85,7 +112,15 @@ def subresultantOrdered [One R] [Add R] [Sub R] [Mul R] [Div R]
     if g₃.isZero then
       ⟨#[f, g], h₂⟩
     else
-      subresultantAux g g₃ h₂ #[f, g, g₃] (g.size + 1)
+      subresultantAux g g₃ h₂ #[f, g, g₃] fuel
+
+/-- Brown's recurrence for two nonzero inputs already ordered by decreasing
+dense degree. One fuel unit per possible degree, plus the terminal step, is
+sufficient on a lawful exact-division domain. -/
+@[expose]
+def subresultantOrdered [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (f g : DensePoly R) : PRSResult R :=
+  subresultantOrderedFuel f g (g.size + 1)
 
 /-- Total Brown run. Zero inputs are omitted; two nonzero inputs are ordered by
 decreasing dense degree before entering `subresultantOrdered`. -/
@@ -106,6 +141,32 @@ def subresultantRun [One R] [Add R] [Sub R] [Mul R] [Div R]
 def subresultantChain [One R] [Add R] [Sub R] [Mul R] [Div R]
     (f g : DensePoly R) : Array (DensePoly R) :=
   (subresultantRun f g).chain
+
+/-- Ordered nonzero inputs establish every nonzero-denominator and exactness
+obligation recorded by `BrownLaw`, including the unreachability of the junk
+zero-quotient branch. -/
+theorem subresultantOrdered_valid_core {S : Type u}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
+    (f g : DensePoly S) (hf : f ≠ 0) (hg : g ≠ 0) (hgf : g.size ≤ f.size) :
+    let delta := f.size - g.size
+    let h₂ := powNat g.leadingCoeff delta
+    let p := (pseudoDivMod f g).2
+    if p.isZero then
+      h₂ ≠ 0
+    else
+      let g₃ := scaleImpl (negOnePow (delta + 1)) p
+      g₃ ≠ 0 ∧ BrownLaw g g₃ h₂ (g.size + 1) := by
+  sorry
+
+/-- The public ordered-run fuel is sufficient: adding any extra fuel leaves
+the result unchanged over a lawful exact-division domain. -/
+theorem subresultantOrdered_fuel_core {S : Type u}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
+    (f g : DensePoly S) (hf : f ≠ 0) (hg : g ≠ 0) (hgf : g.size ≤ f.size)
+    (extra : Nat) :
+    subresultantOrderedFuel f g (g.size + 1 + extra) =
+      subresultantOrdered f g := by
+  sorry
 
 /-- Both zero inputs produce the empty nonzero chain. -/
 @[simp, grind =]
