@@ -214,8 +214,8 @@ def resolveSlots? (output : NodeId) (node : Node)
     (slots : List Slot) : Option (List NodeId) :=
   slots.mapM (resolveSlot? output node)
 
-/-- Reject duplicate keys, unknown heads, duplicate watch/write slots, empty
-write sets, and out-of-range slots. -/
+/-- Reject duplicate keys, unknown heads, duplicate watch/write slots, and
+out-of-range slots.  Empty writes are valid for discovery and split rules. -/
 def registrationsCheck (program : Program) (rules : Array Registration) : Bool :=
   uniqueRuleKeys rules.toList && rules.all fun rule =>
     match program.operationWithKey? rule.head with
@@ -412,9 +412,7 @@ inductive Suggestion where
 
 /-- A policy candidate paired with engine-owned invocation provenance. -/
 structure RetainedSuggestion where
-  rule : RuleKey
-  anchor : NodeId
-  programVersion : Nat
+  action : Action
   suggestion : Suggestion
 
 /-- Engine-owned index of one retained policy suggestion. -/
@@ -572,9 +570,9 @@ structure EqualityEdge where
 
 /-- Replay-facing provenance for one committed program extension. -/
 structure InstanceEvent where
+  /-- Program snapshot after this extension commits. -/
   programVersion : Nat
-  rule : RuleKey
-  anchor : NodeId
+  origin : Action
   family : Nat
   substitution : List NodeId
   products : List NodeId
@@ -992,10 +990,7 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
                         { base with
                           suggestions := suggestions.foldl
                             (fun retained suggestion => retained.push
-                              { rule := action.key
-                                anchor := action.node
-                                programVersion := action.programVersion
-                                suggestion })
+                              { action, suggestion })
                             base.suggestions
                           metrics :=
                             { base.metrics with
@@ -1202,7 +1197,7 @@ def admitRetained (state : Engine Fact)
           | none => .invalid .badReferenceOrShape state
           | some (program, resolved) =>
               let instanceKey : InstanceKey :=
-                { rule := retained.rule
+                { rule := retained.action.key
                   family := request.key
                   substitution := request.triggers
                   products := resolved }
@@ -1212,8 +1207,8 @@ def admitRetained (state : Engine Fact)
                     metrics :=
                       { state.metrics with
                         duplicateInstances := state.metrics.duplicateInstances + 1 } }
-              else if retained.programVersion != state.programVersion then
-                .invalid (.staleSuggestion retained.programVersion state.programVersion) state
+              else if retained.action.programVersion != state.programVersion then
+                .invalid (.staleSuggestion retained.action.programVersion state.programVersion) state
               else if state.limits.maxInstances <= state.instances.length then
                 .resourceLimit .instances state
               else
@@ -1271,9 +1266,8 @@ def admitRetained (state : Engine Fact)
                                             queued
                                             instances := instanceKey :: state.instances
                                             instanceHistory := state.instanceHistory.push
-                                              { programVersion := state.programVersion
-                                                rule := retained.rule
-                                                anchor := retained.anchor
+                                              { programVersion := state.programVersion + 1
+                                                origin := retained.action
                                                 family := request.key
                                                 substitution := request.triggers
                                                 products := resolved

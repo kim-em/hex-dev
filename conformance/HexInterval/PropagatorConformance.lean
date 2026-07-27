@@ -117,6 +117,8 @@ def chainResult? : Option (RunResult Rank (List Nat)) := do
         result.state.metrics.requests == 4 && result.state.metrics.improvements == 4 &&
         result.state.metrics.queuePops == 4 &&
         result.state.metrics.suppressedInsertions == 3 &&
+        result.state.history.all (fun event =>
+          event.previous.node == event.node && event.previous.version + 1 == event.version) &&
         result.cache == [4, 3, 2, 1]
   | none => false
 
@@ -552,7 +554,11 @@ def batchAdmitted? : Option (Engine Rank) := do
         state.instanceHistory.size == 1 &&
         match state.instanceHistory[0]? with
         | some event =>
-            event.products == [node 2, node 2, node 3] &&
+            event.programVersion == 1 && event.origin.programVersion == 0 &&
+              event.origin.key == batchKey && event.origin.node == node 1 &&
+              event.origin.kind == .instantiate &&
+              event.origin.inputs == [{ node := node 0, version := 0 }] &&
+              event.products == [node 2, node 2, node 3] &&
               event.newNodes == [node 2, node 3] && event.generation == 1 &&
               event.equalities.length == 1 && event.payload == { index := 43 }
         | none => false

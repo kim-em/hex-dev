@@ -612,6 +612,96 @@ subdivision explicit state transitions over the same generic application
 protocol. Neither limitation is a reason to specialize the scheduler to
 rational operations or to bake function semantics into it.
 
+### Equality activation
+
+The initial production candidate treats each search-active equality as one
+engine-owned, undirected contractor. It neither merges equal nodes nor presents
+transport as a fake function rule to the external registry. The scheduler's
+dependency item is therefore a sum:
+
+```lean
+structure EqualityId where
+  index : Nat
+
+inductive WorkItem
+  | rule     (application : ApplicationId)
+  | equality (edge : EqualityId)
+```
+
+Both endpoints watch the equality item. When selected, the item reads the two
+facts and versions from one pre-step snapshot, rechecks that both nodes exist
+in the same domain, and asks the domain intersection operation to narrow left
+by right and right by left. It preflights the complete fact-history and wakeup
+cost, installs zero, one, or two improvements atomically, and then wakes the
+deduplicated union of rule and equality consumers. A single equality item,
+rather than two independently queued directions, is important when two
+incomparable partial facts can improve both endpoints to their meet.
+
+Adding an equality is also atomic. Instantiation constructs prospective new
+nodes, equality identifiers, evidence origins, rule applications, both kinds
+of watcher, queued bits, and initial work items before committing any of them.
+Every new equality receives one initial queue item, so propagation need not be
+hidden inside structural admission. Whether new equality items precede new
+function applications is policy data; equality-first is a useful first
+experiment because an alternate expression receives the known bound before
+its function rules run.
+
+Equality work is visible resource usage: each run charges one work-item pop,
+two domain intersections, dependency visits, zero to two accepted facts, and
+all resulting queue insertions. The global step budget counts equality items
+as well as registry invocations. Equality closure is never an unbounded
+recursive side effect of waking a node.
+
+Fact provenance distinguishes an external rule from transport:
+
+```lean
+structure FactRef where
+  node    : NodeId
+  version : Nat
+
+inductive FactCause
+  | rule (action : Action) (previous : FactRef) (payload : PayloadId)
+  | transport (equality : EqualityId) (source previous : FactRef)
+```
+
+The preceding target fact is required in both cases because the recorded
+result may be the intersection of that fact with a newly justified candidate.
+For transport, replay resolves the source fact, checks equality direction and
+scope, reconstructs the equality proof, transports the exact source fact, and
+then validates its intersection with the preceding target fact.
+
+An equality's evidence cannot be only an untyped payload index. The preferred
+shape makes it an output of a particular theorem instance, so one frozen
+instance payload can justify several products and equalities:
+
+```lean
+structure InstanceId where
+  index : Nat
+
+inductive EqualityOrigin
+  | source   (source : SourceId)
+  | instance (instance : InstanceId) (output : Nat)
+```
+
+The retained instantiation origin includes the complete triggering action,
+including its input fact versions, not only its rule and anchor. We leave two
+evidence questions open for experiment. First, shape equalities might be
+restricted to facts unconditional in their scope, or they might depend on the
+interval facts observed by the trigger; the latter is more expressive but
+adds those facts to replay dependencies. Second, several recipes may prove
+the same endpoint pair with different scopes or proof costs. A production
+table may separate one canonical transport link from several evidence records;
+the first experiment may retain the first deterministic evidence.
+
+Instance identity includes canonical unordered equality endpoint pairs as
+well as the rule family, substitution, and products. Equality resolution
+returns the identifiers of reused links as well as newly appended links, so a
+pure-equality instance is replayable and cannot collide with an empty
+extension. Scope becomes part of this identity when branches are introduced.
+Structurally admitted equality evidence is search-active but not trusted:
+failure to reconstruct it rejects the eventual proof, just as a malformed
+function-rule payload does.
+
 The first structural scaling experiment deliberately keeps that same fixed
 one-generation witness while varying dead nodes, relevant and irrelevant
 facts, and adjacent versus far derivation references. Its evidence is recorded
@@ -894,23 +984,182 @@ conditional fact into the parent scope.
 
 ## Search policy
 
-The policy affects success and performance, never validity. The library
-exposes a pure interface with private state and incremental candidate events:
+The policy affects success and performance, never validity. In particular it
+does not construct an `Action`: action serials, program snapshots, concrete
+applications, and input versions are engine-owned authority. The engine owns a
+bounded frontier of offers and the policy returns only the stable identity and
+canonical key of one offer it observed. In the sketch below,
+`InstantiationSemanticKey` is the payload-erased canonical family, trigger,
+proposed-operation/reference graph, and unordered equality-pair key;
+`PolicyFeature` is a bounded exact integer key/value; and frontier events are
+engine-issued additions, refreshes, tombstones, and observations:
 
 ```lean
+structure OfferId where
+  index : Nat
+
+structure InvocationKey where
+  programVersion : Nat
+  application    : ApplicationId
+  rule           : RuleKey
+  anchor         : NodeId
+  kind           : ActionKind
+  effort         : Nat
+  inputs         : Array SeenVersion
+
+inductive OfferClass
+  | invoke
+  | retry
+  | instantiate
+  | split
+
+inductive OfferKey
+  | invoke (invocation : InvocationKey)
+  | retry (source : InvocationKey) (effort : Nat)
+  | instantiate (source : InvocationKey) (request : InstantiationSemanticKey)
+  | split (source : InvocationKey) (node : NodeId) (point : Dyadic)
+      (reason : SplitReason)
+
+structure OfferView where
+  id          : OfferId
+  key         : OfferKey
+  class       : OfferClass
+  age         : Nat
+  observation : Option ObservationSummary
+  features    : Array PolicyFeature
+
+structure DecisionRequest where
+  serial         : Nat
+  programVersion : Nat
+  offers         : Array OfferView
+
+structure Selection where
+  serial         : Nat
+  programVersion : Nat
+  id             : OfferId
+  expected       : OfferKey
+
+structure DecisionNote where
+  stage  : Nat
+  reason : Nat
+  score  : Nat
+
 structure Policy where
-  State      : Type
-  init       : Snapshot → State
-  insert     : State → Action → State
-  invalidate : State → ActionKey → State
-  choose     : State → Snapshot → Option (Action × State)
-  observe    : State → Action → Observation → State
+  State   : Type
+  init    : DecisionRequest → State
+  update  : State → FrontierEvent → State
+  choose  : State → DecisionRequest →
+    Option (Selection × DecisionNote × State)
+  observe : State → Selection → Observation → State
 ```
 
-The first `balancedV1` prototype uses a versioned priority queue. Changed facts insert or
-invalidate only affected candidates; stale entries are discarded lazily when
-popped. Policies intended for diagnostics may use a simpler complete scan,
-but their complexity is reported honestly.
+The policy state, like rule-private caches, may have an arbitrary Lean type and
+is owned by the external driver. `Engine.select` rechecks the decision serial,
+program version, offer identifier, complete canonical key, eligibility, and
+budgets. It alone freezes current input versions and creates a registry
+`Action`, admits a selected instance, or creates a checked complementary split.
+A stale, fabricated, or transplanted selection changes no engine state.
+
+Dirty concrete applications create or refresh invocation offers. A successful
+rule outcome may create engine-indexed retry, instantiation, and split offers;
+the policy cannot supply their structural payloads. Removing an offer emits a
+tombstone event, so stable identifiers do not require an ever-growing live
+frontier. Program extension invalidates old-snapshot offers and inserts offers
+for new applications and equality jobs atomically with the extension.
+
+Each completed selection produces an engine-owned observation: outcome class,
+changed target versions, contradiction status, emitted offer identifiers,
+declared logical work, visited entries, estimated proof nodes, and exact
+resource result. The engine retains these observations even if the selected
+policy ignores them. Width reduction and other domain-specific benefits are
+not inferred by the generic scheduler; bounded exact feature extractors may be
+provided by the fact domain or registry and influence search only.
+
+The concrete observation records actual admitted deltas rather than a rule's
+claimed gain:
+
+```lean
+structure FactDelta (Fact : Type) where
+  node          : NodeId
+  before after  : Fact
+  beforeVersion : Nat
+  afterVersion  : Nat
+
+inductive OutcomeTag
+  | success
+  | noChange
+  | inapplicable
+  | resourceLimit (budget : Nat)
+  | failed (code : Nat)
+
+structure RuleObservation (Fact : Type) where
+  invocation    : InvocationKey
+  outcome       : OutcomeTag
+  changes       : Array (FactDelta Fact)
+  contradiction : Bool
+  cost          : CostObservation
+```
+
+It may be cleaner to normalize the registry result as one bounded `RuleReport`
+containing an outcome tag, candidate list, suggestion list, and cost. That
+allows `noChange` to recommend a stronger effort or landmark split without
+encoding itself as `success` with no candidates. This is an open protocol
+experiment; negative mathematical information is never inferred from a
+resource limit or failed rule.
+
+The first `balancedV1` prototype uses a versioned priority queue over these
+offers. Changed facts insert or invalidate only affected offers; stale entries
+are discarded lazily when popped. Policies intended for diagnostics may use a
+simpler complete scan, but their complexity is reported honestly. An empty
+frontier means saturation. Returning no selection for a nonempty frontier is a
+policy stop reported as `unknown`, not saturation.
+
+The exact frontier interface remains experimental in three respects. We must
+compare push events with bounded snapshot batches; compare coalesced live
+offers with append-only stale entries; and decide how much of a generic fact,
+as opposed to exact bounded policy features, a reusable policy should see.
+These choices change cost and convenience, not the admission or replay
+boundary.
+
+Freshness is offer-specific. An invocation or retry compares the concrete
+application and relevant current input versions. Instantiation initially uses
+the conservative exact program snapshot and then repeats all structural
+admission checks. A split compares its scope, target fact version, and endpoint
+interiority; an unrelated append-only program extension need not stale it.
+Proactive invalidation is an optimization, so selection always rechecks these
+conditions.
+
+Policy decisions, retained decision notes, effort, and live frontier size have
+independent deterministic limits. Even a rejected stale selection consumes a
+decision step, preventing a faulty policy from looping for free. A rule defines
+the meaning of its own bounded effort ladder: pieces, Taylor degree, reduction
+precision, or another function-specific choice. Different incomparable
+methods remain separate registrations rather than pretending their effort
+numbers share a scale.
+
+Every attempted choice has a bounded audit entry containing the decision
+serial, versioned policy key, expected semantic offer key, bounded note, and
+disposition (`selected`, `dismissed`, `stale`, `invalid`, or `resourceLimit`).
+Offer identifiers are never deterministic tie-breakers because allocation
+history can change them. The `replay` policy selects recorded semantic keys and
+reports divergence without state mutation when the expected offer is absent.
+Proof replay ignores this policy log and checks only fact, equality, instance,
+and split derivations.
+
+The policy experiment proceeds in replaceable increments:
+
+1. retain the complete source invocation for every suggestion;
+2. split FIFO `poll` into an engine operation which prepares one selected
+   concrete application;
+3. expose a bounded scan frontier and reproduce FIFO as a reference policy;
+4. return exact fact deltas, logical costs, and frontier changes from reply
+   admission;
+5. add the external policy driver and compare scan, staged, replay, and
+   versioned-priority implementations on identical semantic offers.
+
+Only after those transition traces agree do we choose the production frontier
+representation. This keeps scheduling experiments independent of any rational
+or elementary-function implementation.
 
 The initial prototype policies are:
 
@@ -1304,7 +1553,18 @@ typical, boundary, and adversarial inputs. In particular it includes:
 - an atomic multi-output outcome, repeated-operand watcher deduplication,
   projected-input enforcement, and rejection of an undeclared write or a
   mismatched delayed reply without state mutation;
+- undirected equality transport, including incomparable endpoint facts that
+  improve both sides atomically, equality chains, reactivation after a later
+  function improvement, and an original expression transferring its bound to
+  an instantiated alternate before the alternate's arbitrary propagator runs;
+- exact equality provenance and reversed-edge deduplication, plus one-step-short
+  equality, queue, action, and accepted-fact limits with no partial update;
 - deterministic action choice for a fixed `balancedV1` configuration;
+- two policies over the same opaque `f` and dynamically introduced `g`: one
+  retries `f` before instantiation and one instantiates first. They must reach
+  the same final facts and checked split plan while recording different exact
+  rule-call counts; replay of either semantic offer log is exact, and a stale
+  effort or exhausted decision budget stops without state mutation;
 - derivation slicing that removes failed probes and unused facts;
 - branch validation that rejects sibling fact references and mutable or
   dangling payloads;
