@@ -115,7 +115,9 @@ def environment() -> dict[str, object]:
     toolchain = (ROOT / "lean-toolchain").read_text().strip()
     return {
         "git_commit": git("rev-parse", "HEAD") or None,
-        "git_dirty": bool(git("status", "--porcelain")),
+        # Source hashes below cover every measurement input. Ignore unrelated
+        # untracked files in a shared worktree when reporting tracked dirtiness.
+        "git_dirty": bool(git("status", "--porcelain", "--untracked-files=no")),
         "toolchain": toolchain,
         "hostname": socket.gethostname(),
         "platform": platform.platform(),
