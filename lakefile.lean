@@ -99,6 +99,8 @@ lean_lib HexResultant where
 
 lean_lib HexNumberField where
 
+lean_lib HexNumberFieldTower where
+
 lean_lib HexPolyFp where
 
 lean_lib HexGFqRing where

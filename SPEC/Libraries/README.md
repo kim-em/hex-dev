@@ -194,7 +194,7 @@ for developments whose source-local move has not happened yet.
 - [hex-resultant-mathlib.md](hex-resultant-mathlib.md): executable resultant agreement, specialization, root-product, and discriminant theorems
 - [hex-number-field](../../HexNumberField/SPEC/hex-number-field.md): `QAdjoin`, factorization-lazy `AlgebraicRoot`, canonical `AlgebraicNumber`, and algebraic-coefficient roots
 - [hex-number-field-mathlib.md](hex-number-field-mathlib.md): fixed-field correspondence, exactification, lazy arithmetic, and root completeness
-- [hex-number-field-tower.md](hex-number-field-tower.md): successive extensions, Trager factorization, splitting fields, and flattening
+- [hex-number-field-tower](../../HexNumberFieldTower/SPEC/hex-number-field-tower.md): successive extensions, Trager factorization, splitting fields, and flattening
 - [hex-number-field-tower-mathlib.md](hex-number-field-tower-mathlib.md): semantic towers, factorization correctness, splitting, and primitive-element equivalence
 - [hex-berlekamp](../../HexBerlekamp/SPEC/hex-berlekamp.md): Berlekamp factoring, Rabin irreducibility test, and the `factor_poly` / `irreducibility` tactic drivers
 - [hex-berlekamp-mathlib](../../HexBerlekampMathlib/SPEC/hex-berlekamp-mathlib.md): Berlekamp/Rabin correctness proofs via Euclidean domain theory, and the `Polynomial (ZMod p)` tactic provider
