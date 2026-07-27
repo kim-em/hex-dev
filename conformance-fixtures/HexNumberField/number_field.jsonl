@@ -13,8 +13,15 @@
 {"kind":"poly","lib":"HexNumberField","case":"lazy/mul-sqrt2-sqrt3/left","coeffs":[-2,0,1],"modulus":null}
 {"kind":"poly","lib":"HexNumberField","case":"lazy/mul-sqrt2-sqrt3/right","coeffs":[-3,0,1],"modulus":null}
 {"kind":"result","lib":"HexNumberField","case":"lazy/mul-sqrt2-sqrt3","op":"mul","value":[-6,0,1]}
+{"kind":"poly","lib":"HexNumberField","case":"lazy/mul-sqrt2-two-with-zero-conjugate/left","coeffs":[-2,0,1],"modulus":null}
+{"kind":"poly","lib":"HexNumberField","case":"lazy/mul-sqrt2-two-with-zero-conjugate/right","coeffs":[0,-2,1],"modulus":null}
+{"kind":"result","lib":"HexNumberField","case":"lazy/mul-sqrt2-two-with-zero-conjugate","op":"mul","value":[-8,0,1]}
 {"kind":"poly","lib":"HexNumberField","case":"lazy/inv-sqrt2/input","coeffs":[-2,0,1],"modulus":null}
 {"kind":"result","lib":"HexNumberField","case":"lazy/inv-sqrt2","op":"inv","value":[-1,0,2]}
 {"kind":"poly","lib":"HexNumberField","case":"exact/enclosing-sqrt2/input","coeffs":[6,-2,-3,1],"modulus":null}
 {"kind":"matrix","lib":"HexNumberField","case":"exact/enclosing-sqrt2/box","rows":[[759250125,536870912],[0,1],[32]]}
 {"kind":"result","lib":"HexNumberField","case":"exact/enclosing-sqrt2","op":"exact","value":[-2,0,1]}
+{"kind":"poly","lib":"HexNumberField","case":"roots/fixed-rational-quadratic/input","coeffs":[-2,0,1],"modulus":null}
+{"kind":"result","lib":"HexNumberField","case":"roots/fixed-rational-quadratic","op":"roots","value":[{"kind":"atom","k":1,"re_num":-2965821,"re_den":2097152,"im_num":0,"im_den":1,"prec":17},{"kind":"atom","k":1,"re_num":741455,"re_den":524288,"im_num":0,"im_den":1,"prec":17}]}
+{"kind":"poly","lib":"HexNumberField","case":"roots/algebraic-rational-repeated/input","coeffs":[4,-4,1],"modulus":null}
+{"kind":"result","lib":"HexNumberField","case":"roots/algebraic-rational-repeated","op":"roots","value":[{"kind":"cluster","k":2,"re_num":2,"re_den":1,"im_num":0,"im_den":1,"prec":13}]}

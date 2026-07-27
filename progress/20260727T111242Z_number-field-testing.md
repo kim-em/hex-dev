@@ -17,13 +17,14 @@
   diffed fixtures; verified all eight benchmarks; and passed repository DAG,
   line-count, copyright, fixture-target, Mathlib-free benchmark, shell syntax,
   Python syntax, and diff-hygiene checks. Benchmark verification took two
-  seconds against the 600-second hard cap.
+  seconds; CI applies the repository-wide 360-second hard cap (the budget
+  script's standalone local default is 600 seconds).
 
 ## Current frontier
 
 The NumberField testing profile is complete locally. The fixture stream has
-seven cases (twenty JSONL records), including repeated-resultant-factor and
-nonminimal-enclosing-polynomial cases.
+ten cases (twenty-seven JSONL records), including repeated-resultant-factor,
+nonminimal-enclosing-polynomial, zero-conjugate, and root-set cases.
 
 ## Next step
 

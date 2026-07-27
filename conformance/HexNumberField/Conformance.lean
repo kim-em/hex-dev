@@ -15,11 +15,12 @@ external JSONL profile. Mode: if_available.
 
 Covered operations:
 - fixed-presentation `QAdjoin.reduce`, arithmetic, inversion, division, and
-  threaded approximation;
+  threaded approximation, plus checked and total canonical conversion;
 - lazy `AlgebraicRoot` negation, addition, subtraction, multiplication,
-  inversion, division, and exactification;
+  inversion, division, and exactification in both checked and total forms;
+- canonical `AlgebraicNumber` arithmetic through its public instances;
 - semantic equality of lazy values represented by different polynomials;
-- fixed-field and algebraic-coefficient root APIs.
+- checked and total fixed-field and algebraic-coefficient root APIs.
 
 Covered properties and edge cases:
 - `sqrt(2)^2 = 2`, `sqrt(2) * sqrt(2)^-1 = 1`, and `0^-1 = 0`;
@@ -105,6 +106,50 @@ private def sqrtThree? : Option AlgebraicRoot :=
   else
     none
 
+private def tinyPoly : ZPoly := DensePoly.ofList [-1, 1024]
+
+private def tinySquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 1 10, 0, 16⟩
+
+private def tinyRep : RefinedIsolation tinyPoly :=
+  ⟨⟨tinySquare, by decide⟩, by decide⟩
+
+private def tiny? : Option AlgebraicRoot :=
+  if hsimple : HasOnlySimpleRoots tinyPoly then
+    some
+      { p := tinyPoly
+        prim := by rfl
+        pos_lc := by decide
+        pos_degree := by decide
+        squarefree := hsimple
+        x := SimpleRoot.mk tinyRep
+        rep := tinyRep
+        rep_mk := rfl }
+  else
+    none
+
+private def twoWithZeroPoly : ZPoly := DensePoly.ofList [0, -2, 1]
+
+private def twoWithZeroSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 2 0, 0, 8⟩
+
+private def twoWithZeroRep : RefinedIsolation twoWithZeroPoly :=
+  ⟨⟨twoWithZeroSquare, by decide⟩, by decide⟩
+
+private def twoWithZero? : Option AlgebraicRoot :=
+  if hsimple : HasOnlySimpleRoots twoWithZeroPoly then
+    some
+      { p := twoWithZeroPoly
+        prim := by rfl
+        pos_lc := by decide
+        pos_degree := by decide
+        squarefree := hsimple
+        x := SimpleRoot.mk twoWithZeroRep
+        rep := twoWithZeroRep
+        rep_mk := rfl }
+  else
+    none
+
 private def enclosingPoly : ZPoly :=
   sqrtTwoPoly * DensePoly.ofList [-3, 1]
 
@@ -128,6 +173,12 @@ private def enclosingRoot? : Option AlgebraicRoot :=
   else
     none
 
+private def sqrtTwoExact? : Option AlgebraicNumber :=
+  sqrtTwo? >>= AlgebraicRoot.exact?
+
+private def sqrtThreeExact? : Option AlgebraicNumber :=
+  sqrtThree? >>= AlgebraicRoot.exact?
+
 /-! ## Fixed-presentation arithmetic and approximation -/
 
 #guard
@@ -139,7 +190,9 @@ private def enclosingRoot? : Option AlgebraicRoot :=
       QAdjoin.reduce sqrtTwoPoly sqrtTwoRoot xPoly
     let two : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
       QAdjoin.reduce sqrtTwoPoly sqrtTwoRoot (DensePoly.C 2)
-    x * x = two && x * x⁻¹ = 1 && x / x = 1 &&
+    x + x = (2 : Rat) • x && x - x = 0 && -x + x = 0 &&
+      (3 / 2 : Rat) • x = x + (1 / 2 : Rat) • x &&
+      x * x = two && x * x⁻¹ = 1 && x / x = 1 &&
       (0 : QAdjoin sqrtTwoPoly sqrtTwoRoot)⁻¹ = 0
   else
     false
@@ -193,6 +246,38 @@ private def enclosingRoot? : Option AlgebraicRoot :=
       | _, _, _ => false
   | _, _ => false
 
+-- The primary total wrappers execute the same certified paths and negation
+-- reflects both the polynomial and selected isolation.
+#guard
+  match sqrtTwo?, sqrtThree? with
+  | some a, some b =>
+      let negated := a.neg
+      let sum := a.add b
+      let difference := a.sub b
+      let product := a.mul b
+      let inverse := a.inv
+      let quotient := a.div a
+      negated.p = sqrtTwoPoly && negated.rep.1.square = negSqrtTwoSquare &&
+        sum.p = DensePoly.ofList [1, 0, -10, 0, 1] &&
+        difference.p = DensePoly.ofList [1, 0, -10, 0, 1] &&
+        product.p = DensePoly.ofList [-6, 0, 1] &&
+        inverse.p = DensePoly.ofList [-1, 0, 2] &&
+        quotient.p = DensePoly.ofList [-1, 0, 1]
+  | _, _ => false
+
+-- Reciprocal amplification for a small nonzero rational root and removal of
+-- the irrelevant `X` factor introduced by an unselected zero conjugate.
+#guard
+  match tiny?, sqrtTwo?, twoWithZero? with
+  | some tiny, some sqrtTwo, some two =>
+      tiny.inv.p = DensePoly.ofList [-1024, 1] &&
+        (tiny.inv?).map (fun inverse => inverse.p) =
+          some (DensePoly.ofList [-1024, 1]) &&
+        (sqrtTwo.mul two).p = DensePoly.ofList [-8, 0, 1] &&
+        (sqrtTwo.mul? two).map (fun product => product.p) =
+          some (DensePoly.ofList [-8, 0, 1])
+  | _, _, _ => false
+
 -- Cancellation, zero multiplication, and zero inversion are distinct edges.
 #guard
   match sqrtTwo?, negSqrtTwo? with
@@ -210,9 +295,23 @@ private def enclosingRoot? : Option AlgebraicRoot :=
   match enclosingRoot? with
   | some a =>
       match a.exact? with
-      | some exact => exact.p = sqrtTwoPoly
+      | some exact => exact.p = sqrtTwoPoly && a.exact.p = sqrtTwoPoly
       | none => false
   | none => false
+
+-- Canonical arithmetic is the user-facing field-like API, not merely a
+-- consequence inferred from checked lazy operations.
+#guard
+  match sqrtTwoExact?, sqrtThreeExact? with
+  | some a, some b =>
+      (a + b).p = DensePoly.ofList [1, 0, -10, 0, 1] &&
+        (a - b).p = DensePoly.ofList [1, 0, -10, 0, 1] &&
+        (a * b).p = DensePoly.ofList [-6, 0, 1] &&
+        (-a).p = sqrtTwoPoly && a⁻¹.p = DensePoly.ofList [-1, 0, 2] &&
+        (a / a).p = DensePoly.ofList [-1, 1] &&
+        (a - a).isZero && (a * 0).isZero &&
+        ((0 : AlgebraicNumber)⁻¹).isZero
+  | _, _ => false
 
 -- Same selected value through different enclosing polynomials; opposite
 -- conjugates of the same polynomial must not be confused.
@@ -233,6 +332,22 @@ private def fixedSqrtTwo : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
 private def fixedLinear : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot) :=
   DensePoly.ofList [-fixedSqrtTwo, 1]
 
+-- Both checked and total fixed-presentation conversions retain the selected
+-- root and round-trip the canonical generator coordinate.
+#guard
+  if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
+    letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
+      ⟨hirred, by decide⟩
+    let total := fixedSqrtTwo.toAlgebraicNumber sqrtTwoRep rfl
+    match fixedSqrtTwo.toAlgebraicNumber? sqrtTwoRep rfl with
+    | some checked =>
+        checked.p = sqrtTwoPoly && total.p = sqrtTwoPoly &&
+          checked.toQAdjoin.coeffs = fixedSqrtTwo.coeffs &&
+          checked.toRoot.p = sqrtTwoPoly
+    | none => false
+  else
+    false
+
 #guard
   if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
@@ -244,6 +359,19 @@ private def fixedLinear : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot) :=
           (roots[0]?).any fun root =>
             decide (0 < root.root.rep.1.square.re)
     | _ => false
+  else
+    false
+
+-- The primary total fixed-field root wrapper preserves the repeated bucket.
+#guard
+  if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
+    letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
+      ⟨hirred, by decide⟩
+    match QAdjoin.roots (fixedLinear * fixedLinear) sqrtTwoRep rfl with
+    | .finite roots =>
+        roots.size = 1 &&
+          (roots[0]?).map (fun root => root.multiplicity) = some 2
+    | .all => false
   else
     false
 
@@ -260,5 +388,63 @@ private def fixedLinear : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot) :=
     | _, _ => false
   else
     false
+
+/-! ## Algebraic-coefficient polynomials -/
+
+private def algebraicOne? : Option AlgebraicNumber :=
+  AlgebraicPoly.Common.rational? 1
+
+private def algebraicLinear? : Option AlgebraicPoly := do
+  let sqrtTwo ← sqrtTwoExact?
+  let one ← algebraicOne?
+  some (AlgebraicPoly.ofArray #[-sqrtTwo, one])
+
+private def algebraicRepeated? : Option AlgebraicPoly := do
+  let sqrtTwo ← sqrtTwoExact?
+  let one ← algebraicOne?
+  let two ← AlgebraicPoly.Common.rational? 2
+  some (AlgebraicPoly.ofArray #[two, -(sqrtTwo + sqrtTwo), one])
+
+-- Typical linear input exercises semantic coefficient storage and both the
+-- checked and total algebraic-coefficient root entry points.
+#guard
+  match algebraicLinear? with
+  | some polynomial =>
+      polynomial.coeffs.size = 2 && polynomial.degree? = some 1 &&
+        !polynomial.isZero &&
+        match polynomial.roots?, polynomial.roots with
+        | some (.finite checked), .finite total =>
+            checked.size = 1 && total.size = 1 &&
+              (checked[0]?).any fun root =>
+                root.multiplicity = 1 && root.root.p = sqrtTwoPoly
+        | _, _ => false
+  | none => false
+
+-- Zero and nonzero constants take their explicit `.all` and empty branches;
+-- trailing semantic zeros are removed by `AlgebraicPoly.ofArray`.
+#guard
+  match algebraicOne? with
+  | some one =>
+      let zero := AlgebraicPoly.ofArray #[0, 0, 0]
+      let constant := AlgebraicPoly.ofArray #[one, 0]
+      zero.isZero && zero.coeffs.isEmpty && constant.degree? = some 0 &&
+        match zero.roots?, zero.roots, constant.roots?, constant.roots with
+        | some .all, .all, some (.finite checked), .finite total =>
+            checked.isEmpty && total.isEmpty
+        | _, _, _, _ => false
+  | none => false
+
+-- A repeated algebraic linear factor retains its one root with multiplicity
+-- two after primitive-presentation construction and Yun decomposition.
+#guard
+  match algebraicRepeated? with
+  | some polynomial =>
+      match polynomial.roots?, polynomial.roots with
+      | some (.finite checked), .finite total =>
+          checked.size = 1 && total.size = 1 &&
+            (checked[0]?).map (fun root => root.multiplicity) = some 2 &&
+            (total[0]?).map (fun root => root.multiplicity) = some 2
+      | _, _ => false
+  | none => false
 
 end Hex.NumberFieldConformance

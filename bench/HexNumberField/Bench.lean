@@ -27,6 +27,10 @@ namespace Hex.NumberFieldBench
 
 open Hex
 
+private def requireSome (case : String) : Option α → IO α
+  | some value => pure value
+  | none => throw <| IO.userError (case ++ ": benchmark fixture failed")
+
 private def polyChecksum (p : ZPoly) : UInt64 :=
   hash p.toArray
 
@@ -72,31 +76,34 @@ initialize fixedFieldRef : IO.Ref
   IO.mkRef (some degreeTenInput)
 
 def runFixedMul : Unit → IO UInt64 := fun _ => do
-  return ((← fixedFieldRef.get).map fun a =>
-    fixedChecksum (a * a)).getD 0
+  let a ← requireSome "fixed/mul" (← fixedFieldRef.get)
+  return fixedChecksum (a * a)
 
-def runFixedInv : Unit → IO UInt64 := fun _ => do
+def runFixedInv : Unit → IO UInt64 :=
   if hirred : ZPoly.isIrreducible degreeTenPoly = true then
     letI : ZPoly.CheckedIrreducible degreeTenPoly :=
       ⟨hirred, by decide⟩
-    return ((← fixedFieldRef.get).map fun a =>
-      fixedChecksum a⁻¹).getD 0
+    fun _ => do
+      let a ← requireSome "fixed/inv" (← fixedFieldRef.get)
+      return fixedChecksum a⁻¹
   else
-    return 0
+    fun _ => throw <| IO.userError "fixed/inv: irreducibility check failed"
 
 /- Degree-`n` dense multiplication followed by reduction modulo a degree-`n`
 relation performs `O(n²)` rational coefficient operations. This canonical
 `n = 10` case is fixed because the SPEC supplies an absolute 100 ms budget,
 not an asymptotic fit requirement. -/
 setup_fixed_benchmark runFixedMul where {
-  repeats := 5, maxSecondsPerCall := 1.0
+  repeats := 5, maxSecondsPerCall := 1.0,
+  expectedHash := some 0xc319ee2337214e59
 }
 
 /- Extended gcd on two degree-`n` dense rational polynomials performs a
 quadratic number of coefficient operations with coefficient-size growth. The
 required degree-10 budget is tested as a fixed regression. -/
 setup_fixed_benchmark runFixedInv where {
-  repeats := 5, maxSecondsPerCall := 1.0
+  repeats := 5, maxSecondsPerCall := 1.0,
+  expectedHash := some 0x1525969728101d06
 }
 
 /-! ## Lazy arithmetic fixtures -/
@@ -145,10 +152,12 @@ private def addRaw : ZPoly :=
 private def addCore : ZPoly :=
   ZPoly.squareFreeCore addRaw
 
-initialize addRawRef : IO.Ref (Option ZPoly) ← IO.mkRef (some addRaw)
+initialize addInputRef : IO.Ref (Option (ZPoly × ZPoly)) ←
+  IO.mkRef (some (sqrtTwoPoly, sqrtThreePoly))
 
 def runAddEliminant : Unit → IO UInt64 := fun _ => do
-  return ((← addRawRef.get).map polyChecksum).getD 0
+  let input ← requireSome "lazy/add-eliminant" (← addInputRef.get)
+  return polyChecksum (ZPoly.addEliminant input.1 input.2)
 
 def runIsolateAdd : Unit → IO UInt64 := fun _ => do
   if hsimple : HasOnlySimpleRoots addCore then
@@ -158,9 +167,9 @@ def runIsolateAdd : Unit → IO UInt64 := fun _ => do
           (fun checksum isolation =>
             mixHash checksum (hash isolation.square.prec))
           (hash isolations.size)
-    | none => return 0
+    | none => throw <| IO.userError "lazy/isolate-add: isolation failed"
   else
-    return 0
+    throw <| IO.userError "lazy/isolate-add: simple-root check failed"
 
 private def selectAdd (a b : AlgebraicRoot) : Option AlgebraicRoot :=
   AlgebraicRoot.ofEliminant? addRaw fun prec => do
@@ -170,27 +179,27 @@ private def selectAdd (a b : AlgebraicRoot) : Option AlgebraicRoot :=
     some (ar.1.1.square.toBall.add br.1.1.square.toBall)
 
 def runSelectAdd : Unit → IO UInt64 := fun _ => do
-  match ← lazyPairRef.get with
-  | some (a, b) => return (selectAdd a b).map rootChecksum |>.getD 0
-  | none => return 0
+  let (a, b) ← requireSome "lazy/select-add" (← lazyPairRef.get)
+  return rootChecksum (← requireSome "lazy/select-add" (selectAdd a b))
 
 def runLazyAdd : Unit → IO UInt64 := fun _ => do
-  match ← lazyPairRef.get with
-  | some (a, b) => return (a.add? b).map rootChecksum |>.getD 0
-  | none => return 0
+  let (a, b) ← requireSome "lazy/add" (← lazyPairRef.get)
+  return rootChecksum (← requireSome "lazy/add" (a.add? b))
 
 /- Brown elimination on the fixed pair of quadratic inputs constructs the
 degree-four sum eliminant. This isolates construction cost from all root work;
 it is fixed because one degree-product point does not support a scalar model. -/
 setup_fixed_benchmark runAddEliminant where {
-  repeats := 5, maxSecondsPerCall := 2.0
+  repeats := 5, maxSecondsPerCall := 2.0,
+  expectedHash := some 0xeb2eecad44116a79
 }
 
 /- This registration runs only the fixed root isolator on the precomputed
 degree-four square-free eliminant. It is the isolation baseline against which
 the following operation-ball selection registration is read. -/
 setup_fixed_benchmark runIsolateAdd where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  repeats := 3, maxSecondsPerCall := 5.0,
+  expectedHash := some 0x267ab60faaa118bc
 }
 
 /- The precomputed degree-four eliminant is square-free normalized, isolated
@@ -198,14 +207,16 @@ to its separation depth, and filtered by one certified operation ball. This
 fixed case records the selection boundary; comparing it with `runIsolateAdd`
 attributes the additional operation-ball disambiguation work. -/
 setup_fixed_benchmark runSelectAdd where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  repeats := 3, maxSecondsPerCall := 5.0,
+  expectedHash := some 0x78ea397c700d9ae6
 }
 
 /- The complete lazy-add path is the preceding eliminant construction followed
 by isolation and disambiguation. Its degree product is `2 * 2 = 4`, well below
 the merge-facing ceiling `20`; the fixed timing tracks end-to-end cost. -/
 setup_fixed_benchmark runLazyAdd where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  repeats := 3, maxSecondsPerCall := 5.0,
+  expectedHash := some 0x78ea397c700d9ae6
 }
 
 /-! ## Exactification and roots -/
@@ -230,14 +241,16 @@ private def enclosingRoot? : Option AlgebraicRoot :=
 initialize exactRef : IO.Ref (Option AlgebraicRoot) ← IO.mkRef enclosingRoot?
 
 def runExact : Unit → IO UInt64 := fun _ => do
-  return ((← exactRef.get) >>= AlgebraicRoot.exact?).map
-    (polyChecksum ∘ AlgebraicNumber.p) |>.getD 0
+  let input ← requireSome "exact" (← exactRef.get)
+  let result ← requireSome "exact" input.exact?
+  return polyChecksum result.p
 
 /- Exactification factors the degree-three enclosing polynomial, refines the
 candidate factors, selects the quadratic root, and canonicalizes it. The input
 shape is fixed so this registration attributes that whole extra stage. -/
 setup_fixed_benchmark runExact where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  repeats := 3, maxSecondsPerCall := 5.0,
+  expectedHash := some 0xafd3fbfd3a66fc82
 }
 
 private def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
@@ -263,23 +276,24 @@ private def rootSetChecksum : RootSet → UInt64
           (mixHash (polyChecksum root.root.p) (hash root.multiplicity)))
       (hash roots.size)
 
-def runRoots : Unit → IO UInt64 := fun _ => do
+def runRoots : Unit → IO UInt64 :=
   if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
       ⟨hirred, by decide⟩
-    match ← rootsRef.get with
-    | some polynomial =>
-        return (QAdjoin.roots? polynomial sqrtTwoRep rfl).map
-          rootSetChecksum |>.getD 0
-    | none => return 0
+    fun _ => do
+      let polynomial ← requireSome "roots" (← rootsRef.get)
+      let result ← requireSome "roots"
+        (QAdjoin.roots? polynomial sqrtTwoRep rfl)
+      return rootSetChecksum result
   else
-    return 0
+    fun _ => throw <| IO.userError "roots: irreducibility check failed"
 
 /- The repeated linear factor over `ℚ(√2)` exercises Yun multiplicity
 separation, one norm eliminant, candidate isolation, zero retention, and final
 deduplication. This fixed end-to-end root case has one root of multiplicity 2. -/
 setup_fixed_benchmark runRoots where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  repeats := 3, maxSecondsPerCall := 5.0,
+  expectedHash := some 0xe4ebcfb3c7820a15
 }
 
 end Hex.NumberFieldBench

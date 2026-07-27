@@ -7,7 +7,8 @@ polynomials and FLINT independently primitive-normalizes, factors, and removes
 multiplicity. For exactification, FLINT factors the original enclosing
 polynomial and PARI root approximations select the unique factor meeting the
 original dyadic isolation box. No Lean-produced result is used as an oracle
-input.
+input. Root-set fixtures are checked independently against FLINT's certified
+Arb root balls, including multiplicities.
 """
 from __future__ import annotations
 
@@ -70,6 +71,17 @@ def _flint_core(fmpz_poly, coefficients: list[int]) -> list[int]:
     return result
 
 
+def _remove_x(coefficients: list[int]) -> list[int]:
+    """Remove the largest power of x, matching product-eliminant semantics."""
+    first_nonzero = 0
+    while (
+        first_nonzero < len(coefficients)
+        and coefficients[first_nonzero] == 0
+    ):
+        first_nonzero += 1
+    return coefficients[first_nonzero:]
+
+
 def _lazy_raw(pari, left: list[int], right: list[int], operation: str):
     x = pari("x")
     y = pari("y")
@@ -91,7 +103,10 @@ def _lazy_raw(pari, left: list[int], right: list[int], operation: str):
 
 
 def _inverse_raw(pari, coefficients: list[int]):
-    return pari.Polrev(list(reversed(coefficients)), "x")
+    x = pari("x")
+    y = pari("y")
+    polynomial = pari.Polrev(coefficients, "y")
+    return pari.polresultant(polynomial, y * x - 1, y)
 
 
 def _box(record: dict[str, Any]) -> tuple[complex, float]:
@@ -100,9 +115,13 @@ def _box(record: dict[str, Any]) -> tuple[complex, float]:
     rows = record["rows"]
     if len(rows) != 3 or len(rows[0]) != 2 or len(rows[1]) != 2:
         raise OracleMismatch("malformed dyadic box fixture")
-    real = int(rows[0][0]) / int(rows[0][1])
-    imaginary = int(rows[1][0]) / int(rows[1][1])
-    half_width = 2.0 ** (-int(rows[2][0]))
+    numerators = [int(rows[0][0]), int(rows[1][0])]
+    precision = int(rows[2][0])
+    if any(abs(numerator) > 2**53 for numerator in numerators) or precision > 48:
+        raise OracleMismatch("dyadic box exceeds the exact-double oracle profile")
+    real = numerators[0] / int(rows[0][1])
+    imaginary = numerators[1] / int(rows[1][1])
+    half_width = 2.0 ** (-precision)
     return complex(real, imaginary), math.sqrt(2.0) * half_width
 
 
@@ -144,6 +163,7 @@ def check(
     import cypari2  # type: ignore[import-not-found]
     import flint  # type: ignore[import-not-found]
     from flint import fmpz_poly  # type: ignore[import-not-found]
+    from scripts.oracle.roots_flint import _check_case as check_roots_case
 
     pari = cypari2.Pari()
     cases, results = split_fixtures_results(read_fixtures(source))
@@ -154,15 +174,33 @@ def check(
         lib = result["lib"]
         case_id = result["case"]
         operation = result["op"]
-        lean_value = [int(c) for c in result["value"]]
         try:
+            if operation == "roots":
+                input_record = cases[(lib, f"{case_id}/input")]
+                coefficients = _coeffs(input_record)
+                check_roots_case(
+                    lib=lib,
+                    case_id=case_id,
+                    coeffs=coefficients,
+                    lean_value=result["value"],
+                    failure_dir=failure_dir,
+                    profile=profile,
+                    seed=seed,
+                    oracle_version=oracle_version,
+                )
+                checked += 1
+                continue
+            lean_value = [int(c) for c in result["value"]]
             if operation in {"add", "sub", "mul"}:
                 left_record = cases[(lib, f"{case_id}/left")]
                 right_record = cases[(lib, f"{case_id}/right")]
                 left = _coeffs(left_record)
                 right = _coeffs(right_record)
                 raw = _lazy_raw(pari, left, right, operation)
-                expected = _flint_core(fmpz_poly, _pari_coeffs(pari, raw))
+                raw_coefficients = _pari_coeffs(pari, raw)
+                if operation == "mul":
+                    raw_coefficients = _remove_x(raw_coefficients)
+                expected = _flint_core(fmpz_poly, raw_coefficients)
                 input_record = {"left": left_record, "right": right_record}
             elif operation == "inv":
                 input_record = cases[(lib, f"{case_id}/input")]
