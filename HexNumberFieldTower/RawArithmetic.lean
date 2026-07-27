@@ -399,9 +399,26 @@ instance (levels : List Level) : Mul (Coeff levels) :=
   ⟨fun a b =>
     ⟨mulCoords levels a.data b.data, mulCoords_size levels a.data b.data⟩⟩
 
+/-- View one top-level coordinate array as a polynomial over canonical lower
+tower coefficients. -/
+@[expose]
+def Coeff.value (level : Level) (lower : List Level) (a : Array Rat) :
+    DensePoly (Coeff lower) :=
+  DensePoly.ofCoeffs <| ((List.range level.degree).map fun i =>
+    Coeff.ofData lower (block a i (levelsDim lower))).toArray
+
+/-- The monic defining relation as a polynomial over canonical lower-tower
+coefficients. -/
+@[expose]
+def Coeff.relation (level : Level) (lower : List Level) :
+    DensePoly (Coeff lower) :=
+  DensePoly.ofCoeffs <| ((List.range level.degree).map fun i =>
+    Coeff.ofData lower (level.defining.getD i #[])).toArray.push 1
+
 /-- Recursive inverse coordinates. The zero convention is inherited at every
 level; defensive nonconstant/zero gcd branches are unreachable for certified
 level lists. -/
+@[expose]
 def invCoords : (levels : List Level) → Array Rat → Array Rat
   | [], a => #[if a.getD 0 0 = 0 then 0 else (a.getD 0 0)⁻¹]
   | level :: lower, a =>
@@ -413,12 +430,8 @@ def invCoords : (levels : List Level) → Array Rat → Array Rat
         letI : Inv (Coeff lower) :=
           ⟨fun x => Coeff.ofData lower (invCoords lower x.data)⟩
         letI : Div (Coeff lower) := ⟨fun x y => x * y⁻¹⟩
-        let value : DensePoly (Coeff lower) :=
-          DensePoly.ofCoeffs <| ((List.range d).map fun i =>
-            Coeff.ofData lower (block a i lowerDim)).toArray
-        let defining : DensePoly (Coeff lower) :=
-          DensePoly.ofCoeffs <| ((List.range d).map fun i =>
-            Coeff.ofData lower (level.defining.getD i #[])).toArray.push 1
+        let value := Coeff.value level lower a
+        let defining := Coeff.relation level lower
         let result := DensePoly.xgcdLeft value defining
         if result.gcd.size = 1 then
           let c := result.gcd.leadingCoeff
@@ -426,7 +439,7 @@ def invCoords : (levels : List Level) → Array Rat → Array Rat
             Hex.panicWith (Array.replicate (d * lowerDim) 0)
               "NumberTower.inv: zero constant gcd"
           else
-            let normalized := DensePoly.scale c⁻¹ result.left
+            let normalized := DensePoly.scale c⁻¹ result.left % defining
             flattenBlocks d lowerDim <| ((List.range d).map fun i =>
               (normalized.coeff i).data).toArray
         else

@@ -193,6 +193,16 @@ def inv {T : NumberTower} (a : Elem T) : Elem T :=
 
 instance {T : NumberTower} : Inv (Elem T) := ⟨inv⟩
 
+/-- Recursive inversion exposes its fixed-width extended-gcd coordinates. -/
+@[simp]
+theorem coeffs_inv {T : NumberTower} (a : Elem T) :
+    coeffs a⁻¹ = Arithmetic.invCoords T.levels.toList (coeffs a) := by
+  change coeffs (inv a) = _
+  unfold inv
+  rw [coeffs_ofCoeffs]
+  apply normalizeCoeffs_eq_self
+  simp [dim]
+
 /-- Tower division. -/
 @[expose]
 def div {T : NumberTower} (a b : Elem T) : Elem T :=
