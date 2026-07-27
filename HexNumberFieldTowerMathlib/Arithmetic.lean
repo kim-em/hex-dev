@@ -318,6 +318,22 @@ theorem denote_zero (levels : List Level) :
   rw [denote_fixed]
   exact denote_empty levels
 
+/-- Fixed-width coordinate negation denotes complex negation. -/
+theorem denote_neg (levels : List Level) (data : Array Rat) :
+    denote levels (Arithmetic.negCoords (levelsDim levels) data) =
+      -denote levels data := by
+  have hcoords :
+      Arithmetic.negCoords (levelsDim levels) data =
+        Arithmetic.subCoords (levelsDim levels)
+          (Arithmetic.fixedCoeffs (levelsDim levels) #[]) data := by
+    apply Array.ext
+    · simp [Arithmetic.negCoords, Arithmetic.subCoords,
+        Arithmetic.fixedCoeffs]
+    · intro i hi₁ hi₂
+      simp [Arithmetic.negCoords, Arithmetic.subCoords,
+        Arithmetic.fixedCoeffs, Array.getD]
+  rw [hcoords, denote_sub, denote_zero, zero_sub]
+
 private theorem denote_replicate_zero (levels : List Level) :
     denote levels (Array.replicate (levelsDim levels) 0) = 0 := by
   rw [← denote_zero levels]
@@ -686,7 +702,277 @@ theorem denote_mul (levels : List Level) (hvalid : LevelsValid levels)
         (Arithmetic.mulCoords lower) hdegree hmul]
       rw [denote_cons, denote_cons]
 
+/-! ### Canonical coefficient denotation -/
+
+/-- Complex denotation restricted to the canonical fixed-width coefficient
+carrier used by recursive inversion. -/
+@[expose]
+noncomputable def coeffDenote (levels : List Level)
+    (a : Arithmetic.Coeff levels) : ℂ :=
+  denote levels a.data
+
+@[simp]
+theorem coeffDenote_zero (levels : List Level) :
+    coeffDenote levels (0 : Arithmetic.Coeff levels) = 0 := by
+  change denote levels
+      (Arithmetic.fixedCoeffs (levelsDim levels) #[]) = 0
+  exact denote_zero levels
+
+@[simp]
+theorem coeffDenote_one (levels : List Level) (hvalid : LevelsValid levels) :
+    coeffDenote levels (1 : Arithmetic.Coeff levels) = 1 := by
+  change denote levels
+      (Arithmetic.fixedCoeffs (levelsDim levels) #[1]) = 1
+  exact denote_one levels hvalid
+
+theorem coeffDenote_add (levels : List Level)
+    (a b : Arithmetic.Coeff levels) :
+    coeffDenote levels (a + b) = coeffDenote levels a + coeffDenote levels b := by
+  change denote levels (Arithmetic.addCoords (levelsDim levels) a.data b.data) =
+    denote levels a.data + denote levels b.data
+  exact denote_add levels a.data b.data
+
+theorem coeffDenote_sub (levels : List Level)
+    (a b : Arithmetic.Coeff levels) :
+    coeffDenote levels (a - b) = coeffDenote levels a - coeffDenote levels b := by
+  change denote levels (Arithmetic.subCoords (levelsDim levels) a.data b.data) =
+    denote levels a.data - denote levels b.data
+  exact denote_sub levels a.data b.data
+
+theorem coeffDenote_neg (levels : List Level) (a : Arithmetic.Coeff levels) :
+    coeffDenote levels (-a) = -coeffDenote levels a := by
+  change denote levels (Arithmetic.negCoords (levelsDim levels) a.data) =
+    -denote levels a.data
+  exact denote_neg levels a.data
+
+theorem coeffDenote_mul (levels : List Level) (hvalid : LevelsValid levels)
+    (a b : Arithmetic.Coeff levels) :
+    coeffDenote levels (a * b) = coeffDenote levels a * coeffDenote levels b := by
+  change denote levels (Arithmetic.mulCoords levels a.data b.data) =
+    denote levels a.data * denote levels b.data
+  exact denote_mul levels hvalid a.data b.data
+
+/-- Rational coordinate scaling on canonical coefficients. -/
+@[expose]
+def coeffSmul (levels : List Level) (q : Rat)
+    (a : Arithmetic.Coeff levels) : Arithmetic.Coeff levels :=
+  Arithmetic.Coeff.ofData levels (a.data.map fun c => q * c)
+
+theorem coeffDenote_smul (levels : List Level) (q : Rat)
+    (a : Arithmetic.Coeff levels) :
+    coeffDenote levels (coeffSmul levels q a) =
+      (q : ℂ) * coeffDenote levels a := by
+  rw [coeffDenote, coeffSmul, Arithmetic.Coeff.ofData, denote_fixed,
+    denote_smul]
+  rfl
+
+/-- Natural powers using the executable coefficient multiplication. -/
+@[expose]
+def coeffPow {levels : List Level} (a : Arithmetic.Coeff levels) :
+    Nat → Arithmetic.Coeff levels
+  | 0 => 1
+  | n + 1 => coeffPow a n * a
+
+theorem coeffDenote_pow (levels : List Level) (hvalid : LevelsValid levels)
+    (a : Arithmetic.Coeff levels) (n : Nat) :
+    coeffDenote levels (coeffPow a n) = coeffDenote levels a ^ n := by
+  induction n with
+  | zero => simp [coeffPow, coeffDenote_one levels hvalid]
+  | succ n ih =>
+      rw [coeffPow, coeffDenote_mul levels hvalid, ih, pow_succ]
+
+/-- Integer powers using the executable coefficient inverse for negative
+exponents. -/
+@[expose]
+def coeffZPow {levels : List Level} (a : Arithmetic.Coeff levels) :
+    Int → Arithmetic.Coeff levels
+  | .ofNat n => coeffPow a n
+  | .negSucc n => (coeffPow a (n + 1))⁻¹
+
+/-- Canonical coefficients at one level list have unique complex denotation. -/
+def DenoteInjective (levels : List Level) : Prop :=
+  Function.Injective (coeffDenote levels)
+
+/-- Transfer a lawful field structure to canonical executable coefficients
+once recursive inversion is known to preserve complex denotation. Auxiliary
+casts, scalar actions, and powers are chosen through rational coordinate
+scaling and the existing executable operations. -/
+@[implicit_reducible]
+noncomputable def coeffField (levels : List Level) (hvalid : LevelsValid levels)
+    (hinjective : DenoteInjective levels)
+    (hinv : ∀ a : Arithmetic.Coeff levels,
+      coeffDenote levels a⁻¹ = (coeffDenote levels a)⁻¹) :
+    Field (Arithmetic.Coeff levels) := by
+  letI : SMul Nat (Arithmetic.Coeff levels) :=
+    ⟨fun n a => coeffSmul levels (n : Rat) a⟩
+  letI : SMul Int (Arithmetic.Coeff levels) :=
+    ⟨fun n a => coeffSmul levels (n : Rat) a⟩
+  letI : SMul ℚ≥0 (Arithmetic.Coeff levels) :=
+    ⟨fun q a => coeffSmul levels (q : Rat) a⟩
+  letI : SMul ℚ (Arithmetic.Coeff levels) :=
+    ⟨fun q a => coeffSmul levels q a⟩
+  letI : Pow (Arithmetic.Coeff levels) Nat :=
+    ⟨fun a n => coeffPow a n⟩
+  letI : Pow (Arithmetic.Coeff levels) Int :=
+    ⟨fun a n => coeffZPow a n⟩
+  letI : NatCast (Arithmetic.Coeff levels) :=
+    ⟨fun n => coeffSmul levels (n : Rat) 1⟩
+  letI : IntCast (Arithmetic.Coeff levels) :=
+    ⟨fun n => coeffSmul levels (n : Rat) 1⟩
+  letI : NNRatCast (Arithmetic.Coeff levels) :=
+    ⟨fun q => coeffSmul levels (q : Rat) 1⟩
+  letI : RatCast (Arithmetic.Coeff levels) :=
+    ⟨fun q => coeffSmul levels q 1⟩
+  apply hinjective.field (coeffDenote levels)
+  · exact coeffDenote_zero levels
+  · exact coeffDenote_one levels hvalid
+  · exact coeffDenote_add levels
+  · exact coeffDenote_mul levels hvalid
+  · exact coeffDenote_neg levels
+  · exact coeffDenote_sub levels
+  · exact hinv
+  · intro a b
+    change coeffDenote levels (a * b⁻¹) =
+      coeffDenote levels a / coeffDenote levels b
+    rw [coeffDenote_mul levels hvalid, hinv]
+    rfl
+  · intro n a
+    change coeffDenote levels (coeffSmul levels (n : Rat) a) =
+      n • coeffDenote levels a
+    rw [coeffDenote_smul, nsmul_eq_mul]
+    rfl
+  · intro n a
+    change coeffDenote levels (coeffSmul levels (n : Rat) a) =
+      n • coeffDenote levels a
+    rw [coeffDenote_smul, zsmul_eq_mul]
+    rfl
+  · intro q a
+    change coeffDenote levels (coeffSmul levels (q : Rat) a) =
+      q • coeffDenote levels a
+    rw [coeffDenote_smul, NNRat.smul_def]
+    rfl
+  · intro q a
+    change coeffDenote levels (coeffSmul levels q a) =
+      q • coeffDenote levels a
+    rw [coeffDenote_smul, Rat.smul_def]
+  · exact coeffDenote_pow levels hvalid
+  · intro a n
+    cases n with
+    | ofNat n => exact coeffDenote_pow levels hvalid a n
+    | negSucc n =>
+        change coeffDenote levels (coeffPow a (n + 1))⁻¹ =
+          coeffDenote levels a ^ Int.negSucc n
+        rw [hinv, coeffDenote_pow levels hvalid a (n + 1)]
+        rfl
+  · intro n
+    change coeffDenote levels (coeffSmul levels (n : Rat) 1) = (n : ℂ)
+    rw [coeffDenote_smul, coeffDenote_one levels hvalid]
+    simp
+  · intro n
+    change coeffDenote levels (coeffSmul levels (n : Rat) 1) = (n : ℂ)
+    rw [coeffDenote_smul, coeffDenote_one levels hvalid]
+    simp
+  · intro q
+    change coeffDenote levels (coeffSmul levels (q : Rat) 1) = (q : ℂ)
+    rw [coeffDenote_smul, coeffDenote_one levels hvalid]
+    simp
+  · intro q
+    change coeffDenote levels (coeffSmul levels q 1) = (q : ℂ)
+    rw [coeffDenote_smul, coeffDenote_one levels hvalid]
+    simp
+
+private theorem fixedCoeffs_eq_self (levels : List Level)
+    (a : Arithmetic.Coeff levels) :
+    Arithmetic.fixedCoeffs (levelsDim levels) a.data = a.data := by
+  apply Array.ext
+  · simp [Arithmetic.fixedCoeffs, a.size_eq]
+  · intro i hi₁ hi₂
+    simp [Arithmetic.fixedCoeffs, Array.getD, hi₂]
+
+/-- A lower-tower coefficient embedded as the constant coefficient of one
+extension level. -/
+@[expose]
+def liftCoeff (level : Level) (lower : List Level)
+    (a : Arithmetic.Coeff lower) : Arithmetic.Coeff (level :: lower) :=
+  ⟨Arithmetic.flattenBlocks level.degree (levelsDim lower) #[a.data], by
+    simp [levelsDim]⟩
+
+/-- Constant-block embedding preserves coefficient denotation. -/
+theorem coeffDenote_lift (level : Level) (lower : List Level)
+    (hdegree : 0 < level.degree) (a : Arithmetic.Coeff lower) :
+    coeffDenote (level :: lower) (liftCoeff level lower a) =
+      coeffDenote lower a := by
+  rw [coeffDenote, liftCoeff, denote_flatten]
+  change (∑ i ∈ Finset.range level.degree,
+      denote lower ((#[a.data] : Array (Array Rat)).getD i #[]) *
+        level.root.toComplex ^ i) = denote lower a.data
+  calc
+    _ = denote lower ((#[a.data] : Array (Array Rat)).getD 0 #[]) *
+        level.root.toComplex ^ 0 := by
+      apply Finset.sum_eq_single 0
+      · intro i hi hi0
+        have hget : (#[a.data] : Array (Array Rat)).getD i #[] = #[] := by
+          simp [Array.getD, hi0]
+        rw [hget, ← denote_fixed lower #[], denote_zero]
+        simp
+      · intro hnot
+        exact (hnot (Finset.mem_range.mpr hdegree)).elim
+    _ = denote lower a.data := by simp [Array.getD]
+
+/-- Injectivity at an extension level implies injectivity for its lower
+coefficient tower. -/
+theorem DenoteInjective.tail (level : Level) (lower : List Level)
+    (hdegree : 0 < level.degree) (hinjective : DenoteInjective (level :: lower)) :
+    DenoteInjective lower := by
+  intro a b hab
+  have hlift : liftCoeff level lower a = liftCoeff level lower b := by
+    apply hinjective
+    rw [coeffDenote_lift level lower hdegree,
+      coeffDenote_lift level lower hdegree]
+    exact hab
+  have hblock := congrArg
+    (fun c : Arithmetic.Coeff (level :: lower) =>
+      Arithmetic.block c.data 0 (levelsDim lower)) hlift
+  simp only [liftCoeff] at hblock
+  rw [Arithmetic.block_flatten level.degree (levelsDim lower) 0 #[a.data]
+      hdegree,
+    Arithmetic.block_flatten level.degree (levelsDim lower) 0 #[b.data]
+      hdegree] at hblock
+  simp [Array.getD] at hblock
+  rw [fixedCoeffs_eq_self lower a, fixedCoeffs_eq_self lower b] at hblock
+  cases a with
+  | mk ad ha =>
+      cases b with
+      | mk bd hb =>
+          simp only at hblock
+          cases hblock
+          rfl
+
 end LevelSemantics
+
+/-- The canonical coefficient denotation of a certified tower is injective. -/
+theorem coeffDenote_injective (T : NumberTower) :
+    LevelSemantics.DenoteInjective T.levels.toList := by
+  intro a b hab
+  have ha : normalizeCoeffs T a.data = a.data :=
+    normalizeCoeffs_eq_self T a.data (by simpa [dim] using a.size_eq)
+  have hb : normalizeCoeffs T b.data = b.data :=
+    normalizeCoeffs_eq_self T b.data (by simpa [dim] using b.size_eq)
+  have helem : ofCoeffs T a.data = ofCoeffs T b.data := by
+    apply toComplex_injective T
+    rw [LevelSemantics.toComplex_eq_denote T (ofCoeffs T a.data),
+      LevelSemantics.toComplex_eq_denote T (ofCoeffs T b.data),
+      coeffs_ofCoeffs, coeffs_ofCoeffs, ha, hb]
+    exact hab
+  have hdata : a.data = b.data := by
+    simpa [ha, hb] using congrArg coeffs helem
+  cases a with
+  | mk ad hasize =>
+      cases b with
+      | mk bd hbsize =>
+          simp only at hdata
+          cases hdata
+          rfl
 
 /-- Executable zero denotes complex zero. -/
 theorem map_zero (T : NumberTower) :
