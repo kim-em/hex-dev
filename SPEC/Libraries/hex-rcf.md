@@ -348,6 +348,25 @@ is the corresponding `−∞/+∞` difference. The proof factors through
 separately because the interval-count theorem requires positive
 degree.
 
+The compiled builder obtains the witnesses by instrumenting the existing
+sign-managed pseudo-remainder loop. During division of `prev` by `cur` it
+maintains
+
+```text
+scale A prev = Q * cur + r.
+```
+
+One `spemStep` with positive multiplier `a`, cancelled leading monomial
+`monomial k b`, and new remainder `r'` updates
+`A := a*A`, `Q := scale a Q + monomial k b`, and `r := r'`. At a nonzero
+stopping remainder it emits `next := -primitivePart r` and
+`rightScale := content r`, turning the invariant into exactly the checked
+subtractive recurrence. The builder starts the chain at the literal input
+`f`; only its derivative is primitive-normalized, with `derivScale` equal to
+the derivative content. Fuel exhaustion and a zero remainder before a
+constant terminal entry are rejected, and the public builder retains a raw
+candidate only after `SturmReplay.check` accepts it.
+
 Three existing private lemmas in
 `HexRealRootsMathlib/ChainCorrespond.lean` transfer directly and should
 be exported: `coprime_step_rev`, `flank_of_key`, and
@@ -479,6 +498,10 @@ free to change.
   `HexRCF/LanguageTests.lean`: executable language-semantics tests.
 - `HexRCF/SturmReplay.lean`: generalized multiplication-only chain
   replay and literal root counts.
+- `HexRCF/SturmBuilder.lean`: compiled pseudo-remainder instrumentation that
+  emits replay witnesses and retains only checker-approved candidates;
+  `HexRCF/SturmBuilderTests.lean`: valid, malformed, nonprimitive, and
+  nonsquarefree regressions.
 - `HexRCF/Certificate.lean`: `Certificate`, `check`, `decide`.
 - `HexRCF/Cells.lean`: separation refinement, cell construction,
   endpoint classification for bounded sentences.

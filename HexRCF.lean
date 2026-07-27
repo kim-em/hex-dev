@@ -8,6 +8,9 @@ module
 
 public import HexRCF.Language
 public import HexRCF.LanguageTests
+public import HexRCF.SturmReplay
+public import HexRCF.SturmBuilder
+public import HexRCF.SturmBuilderTests
 
 public section
 
@@ -18,5 +21,7 @@ sentences.
 
 The reflected language supports Boolean combinations of integer-polynomial
 comparisons under one universal or existential quantifier, either over the real
-line or over a half-open dyadic interval.
+line or over a half-open dyadic interval. Multiplication-only generalized Sturm
+replays provide the certified literal root counts used by the decision
+pipeline.
 -/
