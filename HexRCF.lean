@@ -19,6 +19,8 @@ public import HexRCF.Separation
 public import HexRCF.SeparationTests
 public import HexRCF.Cells
 public import HexRCF.CellsTests
+public import HexRCF.CommonRoot
+public import HexRCF.CommonRootTests
 
 public section
 
@@ -37,4 +39,6 @@ strictly separated intervals, and exact replay counts classify their roots
 against bounded-domain endpoints. The checked roots induce an alternating,
 size-indexed partition into root and open cells with exact dyadic samples and
 exact guarded intersection tests for half-open bounded domains.
+Checked common-root packages cache one multiplication-only gcd witness and
+generalized replay per distinct nonconstant atom, with exact root-cell queries.
 -/

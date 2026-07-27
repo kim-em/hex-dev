@@ -135,6 +135,11 @@ theorem check_sound {s : Sentence} {cert : CarrierCert}
   · exact DensePoly.eq_of_beqCoeffs hfactor
   · exact DensePoly.eq_of_beqCoeffs hderiv
 
+/-- The carrier replay component recovered from the combined checker. -/
+theorem replay_of_check {s : Sentence} {cert : CarrierCert}
+    (h : cert.check s = true) : cert.replay.check cert.carrier = true :=
+  (check_sound h).2.2.2.2.2.2.2
+
 /-- An accepted carrier certificate has a nonzero carrier polynomial. -/
 theorem carrier_ne_zero {s : Sentence} {cert : CarrierCert}
     (h : cert.check s = true) : cert.carrier ≠ 0 := by

@@ -255,20 +255,37 @@ proved equivalences.
 
 7. **Prepare common-root packages.** Do the expensive work once per
    distinct nonconstant atom, not once per root cell. For each `pⱼ`,
-   the builder computes a rational gcd representative `gⱼ` and emits
-   `aⱼ`, `bⱼ`, `uⱼ`, `vⱼ` and a nonzero integer `cⱼ` satisfying
+   the builder computes a rational gcd representative `gⱼ` and emits a
+   `CommonRootCert` containing `gcd`, `atomFactor`, `carrierFactor`,
+   `atomCoeff`, `carrierCoeff`, a nonzero integer `scale`, and an optional
+   generalized replay. Its checker receives `pⱼ` and `P` externally and
+   verifies
 
    ```text
-   pⱼ = gⱼ * aⱼ
-   P  = gⱼ * bⱼ
-   uⱼ * pⱼ + vⱼ * P = scale cⱼ gⱼ.
+   pⱼ = gcd * atomFactor
+   P  = gcd * carrierFactor
+   atomCoeff * pⱼ + carrierCoeff * P = scale scale gcd.
    ```
 
-   These multiplication-checkable identities prove that the real
-   roots of `gⱼ` are exactly the common real roots of `pⱼ` and `P`.
-   No executable `gcdZ` API is assumed. A nonzero constant `gⱼ` has
-   count zero; each distinct nonconstant `gⱼ` carries one cached
-   generalized Sturm replay used for all carrier roots.
+   These multiplication-checkable identities prove `CommonRootCert.isRoot_iff`:
+   the real roots of `gⱼ` are exactly the common real roots of `pⱼ` and
+   `P`. No executable `gcdZ` API is assumed. The `none` replay branch is
+   accepted exactly when `gⱼ` has dense size one, so it is a nonzero
+   constant and has no roots. The `some replay` branch requires positive
+   degree and checks the replay against `gⱼ`.
+
+   `CommonRootCert.hasRoot` returns `false` for the constant branch and tests
+   whether the cached replay count is one otherwise. Under the independently
+   checked carrier, strict isolations, and common-root package,
+   `CommonRootCert.hasRoot_iff` proves that this Boolean is true exactly when
+   `pⱼ` vanishes at any supplied carrier root in the checked isolation;
+   `hasRoot_model_iff` specializes it to the canonical `RootModel` root. The
+   underlying `count_eq_one_iff` uses divisibility to bound the `gⱼ` roots in
+   a carrier isolation by its single `P` root. Thus one replay is shared by all
+   carrier root cells for that distinct atom polynomial. Deduplication and alignment
+   of these packages with the recomputed distinct atom-polynomial order are
+   responsibilities of the step-8 sign-matrix checker, not trusted fields of
+   an individual package.
 
 8. **Sign matrix.** For each cell and each atom polynomial `pⱼ`:
    - Open cells: exact Horner evaluation at the cell's dyadic test
@@ -541,6 +558,10 @@ free to change.
   `Ioc` intersection; `HexRCF/CellsTests.lean`: enumeration,
   zero/singleton/multiple-root samples, endpoint equality/order guards,
   relevance tables, and malformed lower/upper claim regressions.
+- `HexRCF/CommonRoot.lean`: multiplication-checkable common-root packages,
+  constant/nonconstant replay branches, exact common-root semantics, and
+  cached root-cell queries; `HexRCF/CommonRootTests.lean`: shared-factor,
+  coprime, equal-polynomial, and tampered-evidence regressions.
 - `HexRCF/SignMatrix.lean`: test-point evaluation, the `gⱼ` root-cell
   computation, Boolean folding.
 - `HexRCF/Soundness.lean`: `check_sound` and its four factors.
