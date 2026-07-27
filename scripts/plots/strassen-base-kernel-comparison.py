@@ -1,25 +1,12 @@
 #!/usr/bin/env python3
-"""Comparison plot: default-base vs delayed-reduction-base ``mulStrassen``.
+"""Plot the periodic Barrett Strassen base-kernel comparison.
 
-Reads the committed local measurement
-``reports/bench-results/strassen-base-kernel-comparison.json`` (emitted by the
-``hexstrassen_compare`` driver, ``bench/HexStrassen/Compare.lean``) and writes
-``reports/figures/strassen-base-kernel-comparison.svg``.
-
-The two solid series compare the **shipped configs** on the prime field
-``ZMod64 p``: ``strassenDefault`` (naive ``mulImpl`` base, one Barrett reduction
-per multiply-add, measured cutoff 96) versus ``strassenBarrett`` (the
-delayed-reduction two-word accumulator base, reducing once per window, measured
-cutoff 128). The cutoff is part of each tuned config, so this is a
-config-vs-config comparison; the dashed **matched-cutoff controls** (each base
-kernel at the other config's cutoff, recorded in the same JSON) isolate the
-base-kernel effect from the cutoff tuning. A base kernel fires only below the
-cutoff, so it moves the constant factor and the crossover, **never the
-asymptotic slope** -- hence per-dimension constants (log-y runtime and the
-speedup ratio), not a scaling slope. The committed measurement shows the
-delayed kernel beating the default both as shipped and at matched cutoffs, so
-it ships as the performance demonstration config (SPEC honesty constraint (b)
-satisfied in the affirmative).
+Reads ``reports/bench-results/strassen-base-kernel-comparison.json`` (emitted by
+``lake exe hexstrassen_compare``) and writes
+``reports/figures/strassen-base-kernel-comparison.svg``. The left panel reports
+the direct leaf-kernel comparison, including the cases that cross several
+reduction windows. The right panel reports full ``mulStrassen`` with each
+configuration at its shipped cutoff.
 
 Run: ``python3 scripts/plots/strassen-base-kernel-comparison.py``
 """
@@ -41,65 +28,87 @@ FIGURES = ROOT / "reports" / "figures"
 OUTPUT = FIGURES / "strassen-base-kernel-comparison.svg"
 
 
+def shape_label(row: dict[str, object], *, reductions: bool) -> str:
+    label = f"{row['n']}×{row['m']}×{row['k']}"
+    if reductions:
+        label += f"\nflushes={row['midstream_reductions']}"
+    return label
+
+
 def main() -> None:
     record = json.loads(DATA.read_text(encoding="utf-8"))
-    results = sorted(record["results"], key=lambda r: r["n"])
-    dims = [r["n"] for r in results]
-    default_ms = [r["default_ns"] / 1e6 for r in results]
-    delayed_ms = [r["delayed_ns"] / 1e6 for r in results]
-    ratios = [r["default_ns"] / r["delayed_ns"] for r in results]
-    ctrl_delayed = [r.get("delayed_at_default_cutoff_ns") for r in results]
-    ctrl_default = [r.get("default_at_barrett_cutoff_ns") for r in results]
-    have_controls = all(v is not None for v in ctrl_delayed + ctrl_default)
+    if record.get("schema_version") != 2:
+        raise ValueError("expected comparison schema_version 2")
 
-    fig, (ax, axr) = plt.subplots(
-        1, 2, figsize=(9.5, 4.0), gridspec_kw={"width_ratios": [3, 2]}
+    results = record["results"]
+    moduli = list(dict.fromkeys(row["modulus"] for row in results))
+    colors = {"tiny": "#1f77b4", "small": "#2ca02c", "upper": "#d62728"}
+
+    fig, (leaf_ax, full_ax) = plt.subplots(1, 2, figsize=(11.5, 4.5))
+
+    leaf_ratios: list[float] = []
+    full_ratios: list[float] = []
+    matched_ratios: list[float] = []
+
+    for modulus in moduli:
+        leaf = [r for r in results if r["kind"] == "leaf" and r["modulus"] == modulus]
+        full = [r for r in results if r["kind"] == "full" and r["modulus"] == modulus]
+        prime = leaf[0]["prime"]
+        label = f"p={prime}"
+        color = colors.get(modulus)
+
+        lr = [r["default_ns"] / r["periodic_ns"] for r in leaf]
+        fr = [r["default_ns"] / r["periodic_ns"] for r in full]
+        leaf_ratios.extend(lr)
+        full_ratios.extend(fr)
+        matched_ratios.extend(
+            r["default_ns"] / r["periodic_at_default_cutoff_ns"] for r in full
+        )
+        matched_ratios.extend(
+            r["default_at_periodic_cutoff_ns"] / r["periodic_ns"] for r in full
+        )
+
+        leaf_ax.plot(range(len(leaf)), lr, marker="o", color=color, label=label)
+        full_ax.plot(range(len(full)), fr, marker="s", color=color, label=label)
+
+    first_leaf = [r for r in results if r["kind"] == "leaf" and r["modulus"] == moduli[0]]
+    first_full = [r for r in results if r["kind"] == "full" and r["modulus"] == moduli[0]]
+    leaf_ax.set_xticks(
+        range(len(first_leaf)),
+        [shape_label(r, reductions=True) for r in first_leaf],
+        fontsize=8,
+    )
+    full_ax.set_xticks(
+        range(len(first_full)),
+        [shape_label(r, reductions=False) for r in first_full],
+        fontsize=8,
     )
 
-    ax.plot(dims, default_ms, color="#1f77b4", marker="o",
-            label="default base (naive mulImpl)")
-    ax.plot(dims, delayed_ms, color="#d62728", marker="s",
-            label="delayed-reduction base (strassenBarrett)")
-    if have_controls:
-        ax.plot(dims, [v / 1e6 for v in ctrl_delayed], color="#d62728",
-                linestyle="--", linewidth=1.0, alpha=0.6,
-                label="delayed base @ default cutoff (control)")
-        ax.plot(dims, [v / 1e6 for v in ctrl_default], color="#1f77b4",
-                linestyle="--", linewidth=1.0, alpha=0.6,
-                label="default base @ barrett cutoff (control)")
-    ax.set_yscale("log")
-    ax.set_xlabel("matrix dimension n (n x n over ZMod64 p)")
-    ax.set_ylabel("best wall time (ms, log)")
-    ax.set_title("mulStrassen base-kernel comparison", fontsize=11)
-    ax.grid(True, which="both", linewidth=0.3, alpha=0.5)
-    ax.legend(fontsize=8, loc="upper left")
+    for ax in (leaf_ax, full_ax):
+        ax.axhline(1.0, color="#555555", linewidth=0.8, linestyle="--")
+        ax.axhline(1.05, color="#888888", linewidth=0.7, linestyle=":")
+        ax.set_ylabel("default / periodic  (>1 = periodic faster)")
+        ax.set_xlabel("matrix shape n×m×k")
+        ax.grid(True, linewidth=0.3, alpha=0.5)
+        ax.legend(fontsize=8)
 
-    axr.plot(dims, ratios, color="#d62728", marker="s")
-    axr.axhline(1.0, color="#555555", linewidth=0.8, linestyle="--")
-    axr.set_xlabel("matrix dimension n")
-    axr.set_ylabel("default / delayed  (>1 = delayed faster)")
-    axr.set_title("speedup factor", fontsize=11)
-    axr.grid(True, which="both", linewidth=0.3, alpha=0.5)
-    axr.set_ylim(bottom=0)
+    leaf_ax.set_title("Direct baseMul leaf kernel", fontsize=11)
+    full_ax.set_title("Full mulStrassen (shipped cutoffs)", fontsize=11)
 
-    hi = max(ratios)
-    lo = min(ratios)
-    if lo >= 1.0:
-        verdict = f"delayed kernel is {lo:.1f}-{hi:.1f}x FASTER"
-    elif hi <= 1.0:
-        verdict = f"delayed kernel is {1 / hi:.1f}-{1 / lo:.1f}x SLOWER"
-    else:
-        verdict = f"delayed/default speedup ranges {lo:.1f}-{hi:.1f}x"
+    hi = max(leaf_ratios + full_ratios) * 1.08
+    leaf_ax.set_ylim(0.95, hi)
+    full_ax.set_ylim(0.95, hi)
+
     subtitle = (
-        f"prime p = {record['prime']}, cutoffs: default = "
-        f"{record.get('default_cutoff', '?')}, barrett = "
-        f"{record.get('barrett_cutoff', '?')}; "
-        f"{verdict}. "
-        "A base kernel moves constants/crossover, never the asymptotic slope."
+        f"window={record['window_terms']} terms; leaf {min(leaf_ratios):.2f}–"
+        f"{max(leaf_ratios):.2f}×, full {min(full_ratios):.2f}–"
+        f"{max(full_ratios):.2f}×; matched-cutoff controls "
+        f"{min(matched_ratios):.2f}–{max(matched_ratios):.2f}×. "
+        "Dotted line is the 5% gate."
     )
-    fig.text(0.5, 0.005, subtitle, ha="center", fontsize=7, color="#555555")
+    fig.text(0.5, 0.005, subtitle, ha="center", fontsize=8, color="#555555")
+    fig.tight_layout(rect=(0, 0.06, 1, 1))
 
-    fig.tight_layout(rect=(0, 0.03, 1, 1))
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(OUTPUT, format="svg", metadata={"Date": None})
     plt.close(fig)
