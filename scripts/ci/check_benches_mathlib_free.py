@@ -27,8 +27,11 @@ Stdlib only; runs from the repository root regardless of cwd.
 """
 from __future__ import annotations
 
+import functools
 import re
 import sys
+import tomllib
+from dataclasses import dataclass
 from pathlib import Path
 
 
@@ -37,70 +40,148 @@ def _module_to_path(module: str) -> Path:
     return Path(*module.split(".")).with_suffix(".lean")
 
 
-# Bench-exe root lines look like:
+# Bench-exe declarations look like:
 #   lean_exe hexarith_bench where
+#     srcDir := "bench"
 #     root := `HexArith.Bench
 #
-# The `root := \`Module.Name` may live on the same line or the line
-# below; we treat the file as a stream and pair them up.
-_LEAN_EXE_RE = re.compile(r"^lean_exe\s+(\S+)\s+where\b")
+# Fields may live on the declaration line or indented lines below it.
+_ATTR_PREFIX = r"(?:(?:@\[[^]]+\])\s*)*"
+_LEAN_EXE_RE = re.compile(
+    rf"^\s*{_ATTR_PREFIX}lean_exe\s+(\S+)\s+where\b"
+)
+_LEAN_EXE_START_RE = re.compile(rf"^\s*{_ATTR_PREFIX}lean_exe\b")
+_LEAN_LIB_RE = re.compile(
+    rf"^\s*{_ATTR_PREFIX}lean_lib\s+(\S+)\s+where\b"
+)
 _ROOT_RE = re.compile(r"root\s*:=\s*`([A-Za-z][A-Za-z0-9_.]*)")
+_SRC_DIR_RE = re.compile(r'srcDir\s*:=\s*"([^"]+)"')
+_SRC_DIR_FIELD_RE = re.compile(r"\bsrcDir\s*:=")
 
 
-def _parse_exe_roots(lakefile: Path) -> dict[str, str]:
-    """Return {exe_name: root_module} for every executable in lakefile.lean."""
-    out: dict[str, str] = {}
-    text = lakefile.read_text()
+@dataclass(frozen=True)
+class _ExeTarget:
+    name: str
+    root: str
+    src_dir: Path
+
+    def root_path(self, repo_root: Path) -> Path:
+        return repo_root / self.src_dir / _module_to_path(self.root)
+
+
+def _normalize_identifier(identifier: str) -> str:
+    """Normalize a Lake/Lean escaped identifier for policy classification."""
+    if identifier.startswith("«") and identifier.endswith("»"):
+        return identifier[1:-1]
+    return identifier
+
+
+def _parse_exe_targets(lakefile: Path) -> dict[str, _ExeTarget]:
+    """Return executable root modules and effective source directories."""
+    out: dict[str, _ExeTarget] = {}
+    text = _without_comments(lakefile.read_text())
     lines = text.splitlines()
     i = 0
     while i < len(lines):
         m_exe = _LEAN_EXE_RE.match(lines[i])
         if m_exe:
-            exe = m_exe.group(1)
-            # Look on the same line and up to the next 5 lines for `root := \`...`.
-            for j in range(i, min(i + 6, len(lines))):
-                m_root = _ROOT_RE.search(lines[j])
-                if m_root:
-                    out[exe] = m_root.group(1)
+            exe = _normalize_identifier(m_exe.group(1))
+            base_indent = len(lines[i]) - len(lines[i].lstrip())
+            block = [lines[i]]
+            j = i + 1
+            while j < len(lines):
+                line = lines[j]
+                indent = len(line) - len(line.lstrip())
+                if line.strip() and indent <= base_indent:
                     break
-            else:
-                print(f"lakefile.lean: lean_exe {exe} has no root := ...",
-                      file=sys.stderr)
-                sys.exit(2)
+                block.append(line)
+                j += 1
+            block_text = "\n".join(block)
+            m_root = _ROOT_RE.search(block_text)
+            if m_root is None:
+                raise ValueError(
+                    f"lakefile.lean: lean_exe {exe} has no literal root := `..."
+                )
+            m_src = _SRC_DIR_RE.search(block_text)
+            if _SRC_DIR_FIELD_RE.search(block_text) and m_src is None:
+                raise ValueError(
+                    f"lakefile.lean: lean_exe {exe} has an unsupported "
+                    "nonliteral srcDir; the lint cannot resolve its root safely"
+                )
+            src_dir = Path(m_src.group(1)) if m_src else Path()
+            out[exe] = _ExeTarget(exe, m_root.group(1), src_dir)
+            i = j
+            continue
+        if _LEAN_EXE_START_RE.match(lines[i]):
+            raise ValueError(
+                f"lakefile.lean: unsupported lean_exe declaration: {lines[i].strip()}"
+            )
         i += 1
     return out
 
 
-# Lean syntax: `import` lines appear at file start, before any other
-# top-level decl.  We scan until the first non-blank, non-comment,
-# non-import line.
-_IMPORT_RE = re.compile(r"^import\s+([A-Za-z][A-Za-z0-9_.]*)")
-_LINE_COMMENT_RE = re.compile(r"^\s*--")
-_BLOCK_COMMENT_START = re.compile(r"^\s*/-")
-_BLOCK_COMMENT_END = re.compile(r"-/\s*$")
+# Current module-system syntax permits a `module` header before the leading
+# import block and visibility/meta modifiers on each import.
+_IMPORT_RE = re.compile(
+    r"^\s*(?:(?:public|private|meta)\s+)*import\s+(.+?)\s*$"
+)
+_MODULE_RE = re.compile(r"^\s*module(?:\s+[A-Za-z][A-Za-z0-9_.]*)?\s*$")
+_PRELUDE_RE = re.compile(r"^\s*prelude\s*$")
+_MODULE_NAME_RE = re.compile(r"[A-Za-z][A-Za-z0-9_.]*")
 
 
+def _without_comments(text: str) -> str:
+    """Remove nested block and line comments while preserving newlines."""
+    out: list[str] = []
+    depth = 0
+    i = 0
+    while i < len(text):
+        if depth == 0 and text.startswith("--", i):
+            newline = text.find("\n", i)
+            if newline < 0:
+                break
+            out.append("\n")
+            i = newline + 1
+        elif text.startswith("/-", i):
+            depth += 1
+            i += 2
+        elif depth > 0 and text.startswith("-/", i):
+            depth -= 1
+            i += 2
+        elif depth > 0:
+            if text[i] == "\n":
+                out.append("\n")
+            i += 1
+        else:
+            out.append(text[i])
+            i += 1
+    return "".join(out)
+
+
+@functools.cache
 def _parse_imports(path: Path) -> list[str]:
     """Return the list of module names this Lean file imports."""
     imports: list[str] = []
-    in_block_comment = False
     try:
-        for raw in path.read_text().splitlines():
-            line = raw.rstrip()
-            if in_block_comment:
-                if _BLOCK_COMMENT_END.search(line):
-                    in_block_comment = False
+        lines = _without_comments(path.read_text()).splitlines()
+        saw_module = False
+        saw_prelude = False
+        for line in lines:
+            if not line.strip():
                 continue
-            if _BLOCK_COMMENT_START.match(line):
-                # A `/- … -/` block at the top is allowed (module docstring).
-                if not _BLOCK_COMMENT_END.search(line):
-                    in_block_comment = True
+            if not saw_module and not saw_prelude and _MODULE_RE.match(line):
+                saw_module = True
                 continue
-            if _LINE_COMMENT_RE.match(line) or not line.strip():
+            if not saw_prelude and _PRELUDE_RE.match(line):
+                saw_prelude = True
                 continue
             m = _IMPORT_RE.match(line)
             if m:
-                imports.append(m.group(1))
+                names = [
+                    name for name in _MODULE_NAME_RE.findall(m.group(1))
+                    if name != "all"
+                ]
+                imports.extend(names)
                 continue
             # First non-import non-comment line → done.
             break
@@ -120,14 +201,86 @@ def _is_mathlib(module: str) -> bool:
     return module == "Mathlib" or module.startswith("Mathlib.")
 
 
-def _walk_for_mathlib(root_module: str, repo_root: Path
+def _lean_lib_source_dirs(lakefile: Path) -> list[Path]:
+    """Read literal `srcDir` fields from Lean-syntax library declarations."""
+    lines = _without_comments(lakefile.read_text()).splitlines()
+    roots: list[Path] = []
+    i = 0
+    while i < len(lines):
+        match = _LEAN_LIB_RE.match(lines[i])
+        if match is None:
+            i += 1
+            continue
+        lib = _normalize_identifier(match.group(1))
+        base_indent = len(lines[i]) - len(lines[i].lstrip())
+        block = [lines[i]]
+        j = i + 1
+        while j < len(lines):
+            line = lines[j]
+            indent = len(line) - len(line.lstrip())
+            if line.strip() and indent <= base_indent:
+                break
+            block.append(line)
+            j += 1
+        block_text = "\n".join(block)
+        src_match = _SRC_DIR_RE.search(block_text)
+        if _SRC_DIR_FIELD_RE.search(block_text) and src_match is None:
+            raise ValueError(
+                f"{lakefile}: lean_lib {lib} has an unsupported nonliteral srcDir"
+            )
+        roots.append(Path(src_match.group(1)) if src_match else Path())
+        i = j
+    return roots
+
+
+@functools.cache
+def _configured_source_roots(repo_root: Path) -> tuple[Path, ...]:
+    """Repository and dependency library roots used by Lake module lookup."""
+    roots: list[Path] = [repo_root]
+    packages = repo_root / ".lake" / "packages"
+    if packages.is_dir():
+        for package in sorted(path for path in packages.iterdir() if path.is_dir()):
+            roots.append(package)
+            leanfile = package / "lakefile.lean"
+            tomlfile = package / "lakefile.toml"
+            if leanfile.is_file():
+                roots.extend(package / src for src in _lean_lib_source_dirs(leanfile))
+            elif tomlfile.is_file():
+                data = tomllib.loads(tomlfile.read_text())
+                for lib in data.get("lean_lib", []):
+                    src = lib.get("srcDir", ".")
+                    if not isinstance(src, str):
+                        raise ValueError(
+                            f"{tomlfile}: lean_lib has a non-string srcDir"
+                        )
+                    roots.append(package / src)
+    return tuple(dict.fromkeys(roots))
+
+
+def _resolve_module(module: str, target: _ExeTarget,
+                    repo_root: Path) -> Path | None:
+    """Resolve a module through the target source root, repo, then packages."""
+    rel = _module_to_path(module)
+    roots = [repo_root / target.src_dir, *_configured_source_roots(repo_root)]
+    seen: set[Path] = set()
+    for root in roots:
+        if root in seen:
+            continue
+        seen.add(root)
+        candidate = root / rel
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _walk_for_mathlib(target: _ExeTarget, repo_root: Path
                       ) -> list[str] | None:
-    """BFS over the import graph rooted at `root_module`.  Return the
+    """BFS over the import graph rooted at `target`.  Return the
     import chain (list of module names) to the first `Mathlib.*` hit,
     or None if no Mathlib in the closure."""
     visited: set[str] = set()
     # Each frontier entry is the chain that led to this module.
-    frontier: list[list[str]] = [[root_module]]
+    frontier: list[list[str]] = [[target.root]]
     while frontier:
         chain = frontier.pop(0)
         module = chain[-1]
@@ -136,7 +289,9 @@ def _walk_for_mathlib(root_module: str, repo_root: Path
         visited.add(module)
         if _is_mathlib(module):
             return chain
-        path = repo_root / _module_to_path(module)
+        path = _resolve_module(module, target, repo_root)
+        if path is None:
+            continue
         for imp in _parse_imports(path):
             if imp not in visited:
                 frontier.append(chain + [imp])
@@ -194,7 +349,11 @@ def _find_mathlib_probe_files(repo_root: Path) -> list[Path]:
 _PROBE_FORBIDDEN = (
     (
         "imports LeanBench",
-        re.compile(r"^\s*(?:public\s+)?import\s+LeanBench(?:\.|\s|$)", re.MULTILINE),
+        re.compile(
+            r"^\s*(?:(?:public|private|meta)\s+)*import\s+"
+            r"(?:all\s+)?LeanBench(?:\.|\s|$)",
+            re.MULTILINE,
+        ),
     ),
     (
         "registers a LeanBench benchmark",
@@ -224,12 +383,28 @@ def _probe_violations(path: Path) -> list[str]:
             if pattern.search(text)]
 
 
-def _probe_root_path(module: str, repo_root: Path) -> Path | None:
+def _probe_root_path(target: _ExeTarget, repo_root: Path) -> Path | None:
     """Resolve a module when its source is an admitted Mathlib probe file."""
-    candidate = repo_root / "bench" / _module_to_path(module)
+    candidate = target.root_path(repo_root)
     if candidate.is_file() and _is_mathlib_probe_path(candidate, repo_root):
         return candidate
     return None
+
+
+def _missing_exe_root_failures(
+    targets: dict[str, _ExeTarget], repo_root: Path
+) -> list[str]:
+    """Report declared executable roots that do not exist under `srcDir`."""
+    failures: list[str] = []
+    for target in targets.values():
+        path = target.root_path(repo_root)
+        if not path.is_file():
+            failures.append(
+                f"  INVALID: executable `{target.name}` root `{target.root}` "
+                f"does not exist at `{path.relative_to(repo_root)}` "
+                f"(srcDir `{target.src_dir or Path('.')}`)."
+            )
+    return failures
 
 
 def main() -> int:
@@ -252,11 +427,18 @@ def main() -> int:
         )
 
     # Invariant 1b: no `lean_exe *mathlib*_bench` in lakefile.
-    exe_roots = _parse_exe_roots(lakefile)
-    bench_roots = {
-        exe: root for exe, root in exe_roots.items() if exe.endswith("_bench")
+    try:
+        exe_targets = _parse_exe_targets(lakefile)
+        _configured_source_roots(repo_root)
+    except (OSError, ValueError, tomllib.TOMLDecodeError) as exc:
+        print(f"FATAL: cannot resolve Lake module roots: {exc}", file=sys.stderr)
+        return 2
+    failures.extend(_missing_exe_root_failures(exe_targets, repo_root))
+    bench_targets = {
+        exe: target for exe, target in exe_targets.items()
+        if exe.endswith("_bench")
     }
-    for exe in sorted(bench_roots):
+    for exe in sorted(bench_targets):
         if "mathlib" in exe.lower():
             failures.append(
                 f"  FORBIDDEN: lakefile.lean declares `lean_exe {exe}` — "
@@ -274,8 +456,8 @@ def main() -> int:
                 f"  Mathlib proof probes must be build-only and externally "
                 f"timed; see SPEC/benchmarking.md §Mathlib-free benches."
             )
-    for exe, root in sorted(exe_roots.items()):
-        probe = _probe_root_path(root, repo_root)
+    for exe, target in sorted(exe_targets.items()):
+        probe = _probe_root_path(target, repo_root)
         if probe is not None:
             failures.append(
                 f"  FORBIDDEN: executable `{exe}` is rooted at Mathlib proof "
@@ -285,12 +467,14 @@ def main() -> int:
             )
 
     # Invariant 2: no bench-exe root reaches `Mathlib.*` via imports.
-    for exe, root in sorted(bench_roots.items()):
-        chain = _walk_for_mathlib(root, repo_root)
+    for exe, target in sorted(bench_targets.items()):
+        if not target.root_path(repo_root).is_file():
+            continue
+        chain = _walk_for_mathlib(target, repo_root)
         if chain is not None:
             chain_str = "\n    → ".join(chain)
             failures.append(
-                f"  FORBIDDEN: bench exe `{exe}` (root `{root}`) reaches "
+                f"  FORBIDDEN: bench exe `{exe}` (root `{target.root}`) reaches "
                 f"Mathlib via:\n    {chain_str}\n"
                 f"  See SPEC/benchmarking.md §Mathlib-free benches."
             )
@@ -309,7 +493,7 @@ def main() -> int:
         return 1
 
     print(f"check_benches_mathlib_free: OK "
-          f"({len(bench_roots)} bench exe(s) checked, "
+          f"({len(bench_targets)} bench exe(s) checked, "
           f"{len(probe_files)} build-only Mathlib proof probe(s) checked).")
     return 0
 

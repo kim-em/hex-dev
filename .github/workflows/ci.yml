@@ -44,7 +44,9 @@ jobs:
       - run: python3 scripts/release/check_trust_surface.py
       - run: python3 scripts/check_phase4.py
       - name: Lint benches are Mathlib-free (SPEC/benchmarking.md §Mathlib-free benches)
-        run: python3 scripts/ci/check_benches_mathlib_free.py
+        run: |
+          python3 -m unittest scripts/ci/test_check_benches_mathlib_free.py
+          python3 scripts/ci/check_benches_mathlib_free.py
       - name: Verify conformance matrix invariant
         run: python3 scripts/conformance_targets.py --check
       # --- System + Python deps (union of the bench comparator and the oracles) ---
@@ -161,6 +163,7 @@ jobs:
             hexrowreduce_emit_fixtures hexdeterminant_emit_fixtures \
             hexbareiss_emit_fixtures hexgramschmidt_emit_fixtures \
             hexlll_emit_fixtures hexrealroots_emit_fixtures \
+            hexrcf_emit_fixtures \
             hexroots_emit_fixtures
       # Publish hex-dev's oleans on a trusted main push so later builds (and any
       # consumer) restore them. Skips silently without the upload key.

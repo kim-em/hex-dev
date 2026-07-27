@@ -406,6 +406,12 @@ subsection. Default oracle assignments:
   from FLINT matters.
 - `hex-berlekamp`, `hex-berlekamp-zassenhaus` — `python-flint`
   factorisation primary; `cypari2` secondary.
+- `hex-rcf` — `python-flint` (`fmpz_poly` factorisation and certified Arb
+  root balls), mode `if_available`. The oracle independently rebuilds the
+  square-free carrier from the sentence AST, uses exact rational open-cell
+  samples and gcd/factor matching at roots, and folds the four quantifiers
+  with exact dyadic endpoint ownership. It never consumes Lean certificates,
+  cells, isolations, or signs.
 - `hex-hensel` — `cypari2` (PARI `factorpadic`) primary for the
   mod-`p^k` lift surface; `python-flint` does not expose mod-`p^k`
   polynomial factorisation.
@@ -524,7 +530,8 @@ pattern.
   sentinels. Schemas live in `scripts/oracle/common.py`.
 - **Lean-side emission.** `Hex/Conformance/Emit.lean` provides
   `emitPolyFixture`, `emitMatrixFixture`, `emitLatticeFixture`,
-  `emitPrimeFixture`, `emitIntervalFixture`, and `emitResult`. The interval
+  `emitPrimeFixture`, `emitIntervalFixture`, `emitRcfFixture`, and
+  `emitResult`. The interval
   helper accepts a versioned exact-cut record including empty, finite strict or
   closed, and unbounded forms; it does not encode infinity as a large number.
   Per-library drivers live

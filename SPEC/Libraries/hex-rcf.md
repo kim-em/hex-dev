@@ -641,8 +641,9 @@ free to change.
 No bench target: bench targets must not import Mathlib
 ([SPEC/benchmarking.md](../benchmarking.md)), and this library
 cannot avoid it. The time budgets below are validated through the
-`local` conformance profile, which times elaboration of the fixture
-file.
+Phase-4 timing harness. The Phase-3 `local` emitter exercises the same
+compiled decision workloads but is not an elaboration benchmark and does not
+run on each PR.
 
 ## Conformance fixtures
 
@@ -678,9 +679,11 @@ Per [SPEC/testing.md](../testing.md):
   escalation separates real-part enclosures, proves nonreal imaginary
   balls away from zero, and resolves ordering/cell membership; it does
   not attempt to infer realness merely from a narrowing ball. Open
-  samples are evaluated exactly over `Fraction`; FLINT gcd/root
-  matching and sign-definite Arb evaluation handle root cells; dyadic
-  endpoints are exact. The oracle consumes only the sentence AST,
+  samples are evaluated exactly over `Fraction`; exact FLINT factor
+  divisibility identifies which atoms vanish at a root, while every nonzero
+  atom keeps the sign of the immediately adjacent open cell because the
+  carrier contains every atom root. Dyadic endpoints are exact. The oracle
+  consumes only the sentence AST,
   never Lean's carrier, certificate, cells, or signs. Missing
   python-flint is `SKIP`; unresolved enclosure ambiguity after the
   finite precision ladder is a hard failure. Fixtures require
@@ -689,12 +692,16 @@ Per [SPEC/testing.md](../testing.md):
   quantifiers, constants, no-root cases, shared and endpoint roots,
   close roots, and equal/reversed intervals. CI cases stay around
   degrees 8–12; the degree-50 stress case remains local. Phase-3
-  wiring adds the `hex-rcf` assignment to `SPEC/testing.md`, the
-  conformance/oracle block to `libraries.yml`, and one tuple to
-  `scripts/ci/run_oracles.sh`; it adds no job, matrix, workflow, or
-  dependency beyond the existing python-flint install.
-- *local*: Mignotte-cluster atoms and degree-50 sentences, timing
-  the pipeline where the isolation layer is under stress.
+  wiring adds the `hex-rcf` assignment to `SPEC/testing.md` and one
+  tuple to `scripts/ci/run_oracles.sh`, the repository's oracle registry;
+  it advances `HexRCF.done_through` in `libraries.yml` but adds no unsupported
+  manifest block, job, matrix, workflow, or dependency beyond the existing
+  python-flint install.
+- *local*: Mignotte-cluster atoms and degree-50 sentences exercise the
+  pipeline where the isolation layer is under stress. Run
+  `lake exe hexrcf_emit_fixtures local > /tmp/hexrcf-local.jsonl` and feed
+  that stream to `scripts/oracle/rcf_flint.py --profile local`. This is an
+  explicit developer profile and is not part of per-PR conformance.
 
 ## Complexity contract
 
