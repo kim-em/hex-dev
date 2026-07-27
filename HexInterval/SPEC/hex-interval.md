@@ -289,6 +289,177 @@ measure compiled certificate production, interning, serialization, bounded
 decoding, table validation, and replay; they do not compare verifier-only work
 with end-to-end normalization as though the workloads were equal.
 
+The edge format is strategy-neutral. It stores an operation tag and table
+indices, not a normalization algorithm or cancellation witness. The first
+reference checker supports `add`, `sub`, `mul`, `inv`, `eq`, `le`, and `lt`;
+dyadic lower and upper projection are separate tags because their rounding
+claims differ. Let three validated canonical entries be
+`a = na / da`, `b = nb / db`, and `c = nc / dc`, with natural denominators
+coerced to integers. The transparent reference identities are:
+
+```text
+add: (na*db + nb*da)*dc = nc*(da*db)
+sub: (na*db - nb*da)*dc = nc*(da*db)
+mul: (na*nb)*dc         = nc*(da*db)
+inv: na = 0  -> nc = 0
+     na != 0 -> da*dc = nc*na
+eq:  na*db = nb*da
+le:  na*db <= nb*da
+lt:  na*db <  nb*da
+```
+
+Canonical whole-table validation is a precondition to every edge theorem. In
+particular, `nc = 0` in the inverse-zero arm uniquely denotes `0 / 1`; the edge
+does not need a second normalization convention. Soundness uses
+`Rat.mkRat_add_mkRat`, `Rat.add_def'`, `Rat.sub_def'`,
+`Rat.mkRat_mul_mkRat`, `Rat.mul_def'`, `Rat.inv_def`,
+`Rat.mkRat_eq_iff`, `Rat.eq_iff_mul_eq_mul`, `Rat.le_iff`, and `Rat.lt_iff` as
+appropriate. Core rational arithmetic is intentionally irreducible: closed
+`decide +kernel` probes reduce, but symbolic proofs rewrite through these
+equation lemmas rather than unfolding `Rat.add`, `Rat.sub`, `Rat.mul`, or
+`Rat.inv`. `Nat.gcd` is likewise treated through its theorem API and
+`Nat.gcd_def`, not by relying on an imported implementation body.
+
+This is already a complete Mathlib-free arithmetic substrate. Compiled Core
+`Rat` planning provides canonical arithmetic, gcd normalization,
+cross-cancellation, comparison, and dyadic projection. The engine does not
+import or depend on Grind for rational numeral closure; the existence of a
+Core Grind procedure is not part of the checker trust or performance model.
+
+#### Rational temporary-cost model
+
+The checker declares conservative bit bounds before it forms any integer
+cross-product. For a nonnegative bit count, define:
+
+```text
+M(x,y) = 0                 if x = 0 or y = 0
+         x+y               otherwise
+A(x,y) = y                 if x = 0
+         x                 if y = 0
+         max(x,y)+1        otherwise
+```
+
+`M` bounds multiplication and `A` bounds addition or subtraction; these are
+exact definitions of the declared resource model, not assertions that every
+result occupies the full bound. Write `N(n)` for the bit length of `|n|`,
+`D(d)` for the bit length of `d`, and abbreviate the input sizes by
+`NA`, `NB`, `NC`, `DA`, `DB`, and `DC`. The naive reference arm preflights the
+following complete temporary lists:
+
+```text
+add/sub:
+  x=M(NA,DB); y=M(NB,DA); n=A(x,y)
+  lhs=M(n,DC); d=M(DA,DB); rhs=M(NC,d)
+  [x,y,n,lhs,d,rhs]
+
+mul:
+  n=M(NA,NB); lhs=M(n,DC); d=M(DA,DB); rhs=M(NC,d)
+  [n,lhs,d,rhs]
+
+nonzero inv:
+  lhs=M(DA,DC); rhs=M(NC,NA)
+  [lhs,rhs]
+
+eq/le/lt:
+  lhs=M(NA,DB); rhs=M(NB,DA)
+  [lhs,rhs]
+```
+
+Every member must fit `maxTemporaryBits` before replay evaluates the
+corresponding expression. A separate deterministic work counter charges each
+multiplication, addition/subtraction, comparison, gcd, shift, and division.
+The initial policy may use conservative units such as
+`mulWork(x,y) = x*y`, `addWork(x,y) = max(x,y)+1`, and
+`compareWork(x,y) = max(x,y)`. It consumes one operation at a time by checking
+`cost <= remaining` and then subtracting; it never constructs an unchecked
+aggregate supplied by the certificate. These units are a stable policy and
+telemetry contract, not a claim about GMP or kernel wall time.
+
+Whole-table canonicality has its own `maxGcdInputBits` and `maxGcdWork` caps.
+Input-size and work preflight occur before calling `Nat.gcd` for every entry,
+including an unused tail. The first conservative gcd work unit may be the
+product of numerator and denominator bit lengths; alternative Euclidean-step
+models are benchmark candidates. Retained table bits, per-edge peak temporary
+bits, aggregate arithmetic work, and representation-level lookup work are
+distinct limits.
+
+Every *endpoint-table* traversal is accounted for. The transparent `List`
+reference checker charges exact forward distance for literal and finite-cut
+indices in the program, sources, target, and every fact, as well as
+arithmetic-edge operands and outputs. Program-node lookups are a separate
+structural cost: the centered reference checker bounds them by the checked
+node/edge counts, and the scale experiment measures the exact recipe bound
+`9 * (maxEdges + 1) * maxNodes`. A production endpoint table may instead
+provide validated random access with a correspondence theorem. Merely bounding
+the product of table entries and endpoint occurrences is acceptable only as an
+explicitly labelled reference experiment; it is not silent or the final
+production cost model.
+
+The checker may later add a cancellation-aware execution arm without changing
+the edge encoding. For addition, subtraction, and order it may divide by
+`gcd da db` before forming the two numerator products. For multiplication it
+may cancel `gcd |na| db` and `gcd |nb| da`, matching Core's cross-cancellation.
+More explicitly, if `da = g*da'` and `db = g*db'`, the reduced addition and
+subtraction identity is
+`(na*db' +/- nb*da')*dc = nc*(g*da'*db')`, while order compares
+`na*db'` with `nb*da'`. If `na = g1*na'`, `db = g1*db'`,
+`nb = g2*nb'`, and `da = g2*da'` after sign-insensitive cross-gcds, reduced
+multiplication checks `(na'*nb')*dc = nc*(da'*db')`. Each is the naive
+identity divided by a positive common factor, so both execution arms decide
+the same semantic edge. They are benchmarked on cancellation-friendly and
+hostile inputs. No strategy selector or gcd witness is frozen into the
+certificate unless evidence later shows that recomputing the choice is the
+wrong tradeoff.
+
+#### Rational validation order and failures
+
+Allocation-causing work is preflighted before it is performed. Within a
+collection, validation is deterministic and sequential: a logical failure at
+an earlier size-bounded entry may therefore precede a resource failure at a
+later entry. The target pipeline uses these phases:
+
+1. bound encoded collection lengths and integer byte lengths before bigint
+   decoding;
+2. bound table, edge, and skeleton counts;
+3. for each table entry in order, preflight numerator/denominator bits and gcd
+   input/work, then reject a zero denominator or noncoprime representation;
+4. validate the endpoint-erased skeleton, every table/program/source/fact/edge
+   index, and the representation lookup budget;
+5. preflight every edge's temporary bits, arithmetic work, projection shift,
+   and projected dyadic height without forming a cross-product or shift; and
+6. replay arithmetic and projection edges in order, reporting the first wrong
+   edge.
+
+The current `RationalTable.Table.check` experiment implements the collection
+cap and the per-entry numerator/denominator/canonicality portion of phases 2
+and 3. It intentionally does not yet expose an independent encoded-byte or gcd
+work cap. `RationalCertificate.Certificate.check` adds canonical-table,
+endpoint-reference, caller-boundary, structural, and exact endpoint-lookup
+validation from phases 2 and 4. Arithmetic edges and projection implement the
+remaining preflight/replay pieces in separate experimental modules before
+they are composed. Thus declared limits below describe the composed target;
+they are not a claim that the first table module already exposes every field.
+
+Failures distinguish resource limits from malformed certificates. Resource
+reasons include collection entries, encoded bytes, numerator/denominator bits,
+gcd input/work, lookup steps, temporary bits, arithmetic work, projection
+shift, and dyadic height. Malformed reasons include skeleton mismatch, zero
+denominator, nonreduced entry, bad index, each wrong arithmetic/order edge, and
+wrong projection. Exact precedence is an implementation choice, but it is
+deterministic and tested; in particular, the reference table checker pins the
+earlier-entry logical / later-entry resource case.
+
+For projection precision `p`, define `up = p.toNat` and
+`down = (-p).toNat`; at most one is nonzero. Before shifting, the checker
+bounds the shifted numerator by `N(na)+up` (or zero for a zero numerator), the
+shifted denominator by `D(da)+down`, the division work, and the output dyadic
+height. To avoid allocating even an oversized bound expression, additions use
+the guarded form `increment <= limit - base` after checking `base <= limit`.
+The lower projector follows Core `Rat.toDyadic`; the upper projector is the
+negation of the lower projection of `-a`. Soundness uses Core's one-sided
+`Rat.toRat_toDyadic_le` and `Rat.lt_toRat_toDyadic_add` theorems, with exact
+dyadic preservation checked separately.
+
 The immediate rational vertical first projects the centered certificate to the
 endpoint-erased structural skeleton below and requires exact skeleton equality
 for every Dyadic/rational comparison. Its phase boundary is:
@@ -574,13 +745,22 @@ resource proxy, and original-order `List` lookup remains a transparent
 reference checker rather than a production storage decision.
 
 The next general trace representation exposes an endpoint-erased structural
-skeleton. It records operation tags and operand references, literal slots,
+skeleton. It records operation tags and operand references, first-occurrence
+literal-sharing slots,
 trigger provenance and recomputed generations, proposal/deduplication keys,
 equality edges, derivation references, caller-bound source/target slots, and
 structural budgets, but not endpoint values. Endpoint backends may be compared
 only when their accepted certificates erase to the identical skeleton. This
 prevents Core rational normalization or dyadic projection cost from being
 misreported as scheduler or storage cost.
+
+The table-indexed rational boundary separately pins every caller source and
+target reference to an exact caller-owned raw value. The table remains
+untrusted certificate data, but changing it cannot reinterpret the goal or
+hypotheses: all finite boundary cuts must resolve to those exact values after
+whole-table canonicality succeeds. Endpoint erasure drops the values only for
+cross-backend structural comparison; the rational projection retains them
+alongside its backend-specific limits.
 
 Production experiments compare exact-index array, arena, and chunked layouts
 against the list reference in both compiled and ordinary-kernel replay. Every
@@ -1216,6 +1396,18 @@ typical, boundary, and adversarial inputs. In particular it includes:
   `0 / 1`, and rejection of zero denominators, noncoprime equivalent
   encodings, unused oversized entries, excessive projection shifts, and
   one-step-over-budget cross-products before allocation;
+- rational arithmetic edges for `1/3 + 1/6 = 1/2`,
+  `2/3 - 1/6 = 1/2`, `2/3 * 9/4 = 3/2`,
+  `(-2/3)⁻¹ = -3/2`, `0⁻¹ = 0`, signed equality and order, a wrong
+  output for every tag, and every missing operand/output index position;
+- exact-limit acceptance and one-step-over rejection for rational entry,
+  numerator-bit, denominator-bit, gcd-input, gcd-work, lookup, temporary-bit,
+  arithmetic-work, projection-shift, and dyadic-height limits; instrumented
+  canaries confirm that rejected preflight never reaches the prohibited
+  product, gcd, division, or shift;
+- dyadic projection of `1/3` and `-1/3` at precision four, exact preservation
+  of `1/2`, negative/coarse precisions, and the strictness distinction between
+  an exact and an outward-moved open or closed cut;
 - regularization idempotence, outward containment, moved closed cuts, and
   exact-grid open cuts;
 - a dependency worklist in which one fact wakes only the affected consumers;
@@ -1268,7 +1460,13 @@ The Mathlib-free benchmark target measures:
   interning, serialization, bounded decoding, table validation, and compiled
   replay; an external build-only probe measures ordinary-kernel replay of the
   same certificate, with dyadic-valued sources, `1 / 3`-valued sources, and a
-  denominator-height ladder.
+  denominator-height ladder;
+- naive and cancellation-aware rational replay on shared edge traces,
+  including coprime denominators, large shared denominator gcds,
+  multiplication with two large cross-gcds, zero numerators, deliberately
+  wrong late outputs, and one-step-short resource failures. The benchmark
+  records peak declared temporary bits, aggregate work units, gcd calls, and
+  compiled and ordinary-kernel time separately.
 
 The declared models follow the complexity section above. Scientific runs also
 record accepted actions, endpoint heights, live leaves, retained derivations,
