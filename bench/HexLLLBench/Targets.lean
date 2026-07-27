@@ -300,6 +300,63 @@ setup_benchmark runOfBasisHarshCubicChecksum n =>
     signalFloorMultiplier := 1.0
   }
 
+/- The square fixture performs `rows^2` integer dot products of length `rows`.
+This isolates the exact Gram-row construction from the interval recurrence. -/
+setup_benchmark runIntervalGramRowsSquareChecksum n =>
+    intervalGramRowsSquareComplexity n
+  with prep := prepIntervalSquareInput
+  where {
+    paramFloor := 32
+    paramCeiling := 96
+    paramSchedule := .custom #[32, 48, 64, 80, 96]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- The wide fixture performs `rows^2` integer dot products of length
+`8 * rows + 1`, recording the `rows ≪ cols` construction separately. -/
+setup_benchmark runIntervalGramRowsWideChecksum n =>
+    intervalGramRowsWideComplexity n
+  with prep := prepIntervalWideInput
+  where {
+    paramFloor := 16
+    paramCeiling := 48
+    paramSchedule := .custom #[16, 24, 32, 40, 48]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- The fixed-precision checker first constructs square Gram rows and then runs
+its cubic interval Gram–Schmidt recurrence. This registration is the consumer
+paired with `runIntervalGramRowsSquareChecksum` for Amdahl attribution. -/
+setup_benchmark runReducedIntervalSquareChecksum n =>
+    reducedIntervalSquareComplexity n
+  with prep := prepIntervalSquareInput
+  where {
+    paramFloor := 32
+    paramCeiling := 96
+    paramSchedule := .custom #[32, 48, 64, 80, 96]
+    maxSecondsPerCall := 8.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- The wide fixed-precision checker pairs the `rows^2 * (8 * rows + 1)` Gram
+construction with the same cubic interval recurrence. -/
+setup_benchmark runReducedIntervalWideChecksum n =>
+    reducedIntervalWideComplexity n
+  with prep := prepIntervalWideInput
+  where {
+    paramFloor := 16
+    paramCeiling := 48
+    paramSchedule := .custom #[16, 24, 32, 40, 48]
+    maxSecondsPerCall := 8.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
 /- Complexity derivation: `prepStateInput n` gives `rows = n + 3` and
 `cols = 2 * (n + 3) + 1`. A single targeted reduction updates one basis row
 over `cols` entries and one coefficient prefix bounded by `rows`. -/

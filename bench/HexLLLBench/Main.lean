@@ -28,6 +28,11 @@ Scientific registrations:
   bounded-coefficient square basis.
 * `runOfBasisHarshCubicChecksum`: build the initial integer state for a
   square basis whose entry bit-length grows linearly in the dimension.
+* `runIntervalGramRowsSquareChecksum` / `runIntervalGramRowsWideChecksum`:
+  isolate exact Gram-row construction for the fixed-precision checker at
+  `rows ≈ cols` and `rows ≪ cols`.
+* `runReducedIntervalSquareChecksum` / `runReducedIntervalWideChecksum`: the
+  corresponding complete `lllReducedInterval` consumer paths.
 * `runSizeReduceColumnChecksum`: one targeted column reduction against the
   previous row of a prepared `(n + 3) x (n + 3)` state.
 * `runSizeReduceChecksum`: full reduction of the final prepared row.
