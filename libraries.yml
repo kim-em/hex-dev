@@ -478,7 +478,7 @@ libraries:
     deps: [HexPoly]
     mathlib: false
     done_through: 0
-    status: planned
+    status: active
   HexResultantMathlib:
     deps: [HexResultant, HexPolyMathlib]
     mathlib: true

@@ -111,7 +111,7 @@ ground.
 - `bench/HexResultant/Bench.lean`: bench driver, in the shared
   `bench/` sub-project. Benches time `resultant` and `disc` on
   committed fixture families of increasing degree. They are
-  Mathlib-free, per [SPEC/benchmarking.md](../benchmarking.md); there
+  Mathlib-free, per [SPEC/benchmarking.md](../../SPEC/benchmarking.md); there
   is nothing to compare against in-process, since Mathlib's
   `Polynomial.resultant` is noncomputable. Cross-checking values
   against external systems happens in the conformance oracle, not in
@@ -119,7 +119,7 @@ ground.
 
 ## Conformance fixtures
 
-Per [SPEC/testing.md](../testing.md), fixtures are tiered into
+Per [SPEC/testing.md](../../SPEC/testing.md), fixtures are tiered into
 `core` / `ci` / `local`:
 
 - *core* (Lean-only):
