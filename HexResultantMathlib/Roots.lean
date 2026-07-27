@@ -24,6 +24,7 @@ theorem resultant_eq_leadingCoeff_mul_prod_roots
     {K : Type u} [Field K] [IsAlgClosed K] (f g : Polynomial K) :
     Polynomial.resultant f g =
       f.leadingCoeff ^ g.natDegree * (f.roots.map g.eval).prod := by
-  sorry
+  simpa using Polynomial.resultant_eq_prod_eval f g g.natDegree le_rfl
+    (IsAlgClosed.splits f)
 
 end Hex.DensePoly

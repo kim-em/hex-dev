@@ -96,6 +96,15 @@ The finite sum in `specialize` avoids requiring a Mathlib `CommRing` instance
 on `DensePoly R`; the correspondence library intentionally exposes a ring
 equivalence without installing that global instance.
 
+Consequently the bivariate specialization theorems are **not** obtained by
+instantiating `toPolynomial_resultant` with coefficient type `DensePoly R`.
+Their proofs transfer the Brown recurrence directly through coefficient
+evaluation: prove that `specialize` preserves each executable coefficientwise
+operation and exact quotient used by the chain, then identify the specialized
+recurrence with the Mathlib resultant at the original formal degrees. This
+direct map argument keeps the deliberate no-global-`CommRing (DensePoly R)`
+boundary intact.
+
 The formal degrees on `eval_resultant` are essential: specialization can erase
 a leading coefficient. For example, specializing `t` to zero in `t*y + 1` and
 `t*y - 1` drops both degrees; the default-degree resultant of the specialized
@@ -136,8 +145,11 @@ factorization, splitting, or flattening.
 2. Identify the corrected final constant with the Sylvester determinant.
 3. Compose with Mathlib's determinant definition of `Polynomial.resultant` to
    prove `toPolynomial_resultant` generically.
-4. Derive `eval_resultant`, the root-product formula, norm identities, and
-   discriminant agreement.
+4. Prove `eval_resultant` by the direct coefficient-evaluation transfer above;
+   do not instantiate the generic theorem at `DensePoly R`.
+5. Specialize Mathlib's existing `Polynomial.resultant_eq_prod_eval` for the
+   root-product formula, then derive norm identities and discriminant
+   agreement.
 
 The prior scope estimate of about 600 lines covered only Stage 1. Stage 2 is a
 substantial computer-algebra development and must be estimated from the actual
