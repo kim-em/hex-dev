@@ -170,6 +170,19 @@ Approximation refines once, returns the refined representative for threading,
 and always returns a sound ball. The requested radius is guaranteed by the
 companion's refinement-completeness theorem.
 
+For `n := a.coeffs.size`, evaluation uses target precision
+
+```text
+prec + 8 + ceilLog2(n + 1) + coeffBits(a.coeffs)
+  + n * (rootBits(rep.square) + 3).
+```
+
+`coeffBits` bounds rational coefficient magnitudes by numerator bit length;
+`rootBits` bounds the selected root using the current square's centre and
+circumscribed-disc radius. The per-Horner-step `+3` covers both movement within
+the certified refinement region and the dyadic `hi`/circumscribed-disc
+overestimates. It is part of the soundness budget, not optional slack.
+
 ## Canonicalization and exactification
 
 ```lean

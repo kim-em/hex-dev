@@ -297,6 +297,11 @@ structure DyadicComplexBall where
   im     : Dyadic
   radius : Dyadic
 
+def DyadicComplexBall.zero : DyadicComplexBall
+def DyadicComplexBall.add (a b : DyadicComplexBall) : DyadicComplexBall
+def DyadicComplexBall.mul (a b : DyadicComplexBall) : DyadicComplexBall
+def DyadicComplexBall.ofRat (q : Rat) (prec : Int) : DyadicComplexBall
+
 /-- `p` has only simple complex roots. Decided by casting `p` and `p'`
     to `DensePoly Rat` and testing whether HexPoly's Euclidean gcd is
     constant. The Mathlib companion proves equivalence with
@@ -306,6 +311,13 @@ instance : Decidable (HasOnlySimpleRoots p) := …
 ```
 
 ## Operations
+
+The generic ball algebra is owned here for reuse by numerical consumers.
+`add` is the Minkowski sum. For centres `aₜ`, `bₜ` and radii `rₐ`, `rᵇ`,
+`mul` uses the exact centre product and radius
+`hi(aₜ) * rᵇ + hi(bₜ) * rₐ + rₐ * rᵇ`. `ofRat q prec` rounds downward
+to `q.toDyadic prec`, with radius zero when that dyadic is exact and otherwise
+one ulp `2^(-prec)`.
 
 ```lean
 namespace Component
@@ -713,8 +725,9 @@ inherit the precision.
   `√2` constants with their `decide`-checked defining inequalities,
   the `witness` predicate and its `Decidable` instance,
   `DyadicRootCluster` (whose field mentions `witness`), and the ball
-  view: `DyadicSquare.toBall`, the sound enclosure `evalBall`, and the
-  ball tests `excludesZero`/`meets`/`meetsBall` that consumers
+  view: `DyadicSquare.toBall`, the generic exact ball algebra, rational
+  enclosure, the sound polynomial enclosure `evalBall`, and the ball tests
+  `excludesZero`/`meets`/`meetsBall` that consumers
   (hex-number-field's disambiguation loops) use instead of re-deriving
   the `√2` radius bookkeeping.
 - `HexRoots/Kantorovich.lean`: `nkWitness` with its `Decidable`

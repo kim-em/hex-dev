@@ -33,9 +33,9 @@ def evalRatBall (f : DensePoly Rat) (s : DyadicSquare)
   match cs.back? with
   | none => DyadicComplexBall.zero
   | some top =>
-      cs.pop.foldr
+      cs.foldr
         (fun c acc => (DyadicComplexBall.ofRat c coeffPrec).add (z.mul acc))
-        (DyadicComplexBall.ofRat top coeffPrec)
+        (DyadicComplexBall.ofRat top coeffPrec) (start := cs.size - 1)
 
 /-- Bit-length upper bound for the magnitudes of rational coefficients. Since
 every rational denominator is positive, the numerator magnitude alone is a

@@ -211,6 +211,16 @@ example : LawfulBEq (QAdjoin sqrtTwoPoly sqrtTwoRoot) := inferInstance
     let out := x.approx sqrtTwoRep rfl 64
     out.2.radius ≤ Dyadic.ofIntWithPrec 1 64
 
+-- A genuinely inexact coordinate evaluation, threaded into a second request.
+#guard
+    let coeffs := DensePoly.ofList ([1 / 3, 2 / 5] : List Rat)
+    let a : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
+      reduce sqrtTwoPoly sqrtTwoRoot coeffs
+    let first := a.approx sqrtTwoRep rfl 32
+    let second := a.approx first.1 (approx_root a sqrtTwoRep rfl 32) 64
+    first.2.radius ≤ Dyadic.ofIntWithPrec 1 32 &&
+      second.2.radius ≤ Dyadic.ofIntWithPrec 1 64
+
 private def nonmonicQuadratic : ZPoly := DensePoly.ofList [-1, 0, 2]
 
 #guard
