@@ -37,8 +37,8 @@ open Center Scale
 
 namespace Shape
 
-/-- Endpoint-free operation at one SSA position.  A literal retains its node
-index as a stable slot but not its numeric value. -/
+/-- Endpoint-free operation at one SSA position.  A literal retains only its
+first-occurrence sharing slot, not its numeric value. -/
 inductive Op where
   | var (source : Nat)
   | lit (slot : Nat)
@@ -95,23 +95,31 @@ structure Skeleton where
 
 end Shape
 
-/-- Erase one program node while retaining the node index as its literal slot. -/
-def eraseOp (index : Nat) : Center.Prim .real → Shape.Op
-  | .var source => .var source
-  | .lit _ => .lit index
-  | .sub left right => .sub left right
-  | .mul left right => .mul left right
-  | .sq input => .sq input
+/-- First zero-based occurrence of a value in a list.  Keeping this helper
+transparent lets both endpoint backends use the same literal-sharing rule. -/
+def firstIndex? {α : Type} [DecidableEq α] (value : α) :
+    Nat → List α → Option Nat
+  | _, [] => none
+  | index, head :: tail =>
+      if value = head then some index else firstIndex? value (index + 1) tail
 
-/-- Erase a complete SSA program, assigning every literal its program index. -/
-def eraseProgramFrom : Nat → Center.Program → List Shape.Op
-  | _, [] => []
-  | index, instruction :: tail =>
-      eraseOp index instruction :: eraseProgramFrom (index + 1) tail
+/-- Erase a complete dyadic program while retaining the equality pattern of
+its literals.  The first distinct literal receives slot zero, the next unseen
+literal slot one, and later equal literals reuse the earlier slot. -/
+def eraseProgramFrom (seen : List Dyadic) : Center.Program → List Shape.Op
+  | [] => []
+  | .var source :: tail => .var source :: eraseProgramFrom seen tail
+  | .lit value :: tail =>
+      match firstIndex? value 0 seen with
+      | some slot => .lit slot :: eraseProgramFrom seen tail
+      | none => .lit seen.length :: eraseProgramFrom (seen ++ [value]) tail
+  | .sub left right :: tail => .sub left right :: eraseProgramFrom seen tail
+  | .mul left right :: tail => .mul left right :: eraseProgramFrom seen tail
+  | .sq input :: tail => .sq input :: eraseProgramFrom seen tail
 
 /-- Endpoint-erased program projection. -/
 def eraseProgram (program : Center.Program) : List Shape.Op :=
-  eraseProgramFrom 0 program
+  eraseProgramFrom [] program
 
 /-- Erase a lower cut's numeric endpoint. -/
 def eraseLower : Hex.Interval.Lower → Shape.Lower
@@ -166,13 +174,13 @@ def fixtureSkeleton : Shape.Skeleton :=
 /-- Explicit expected operation sequence for the nine-node centered program. -/
 def fixtureOps : List Shape.Op :=
   [ .var 0
-  , .lit 1
+  , .lit 0
   , .sub (Center.node 1) (Center.node 0)
   , .mul (Center.node 0) (Center.node 2)
-  , .lit 4
+  , .lit 1
   , .sub (Center.node 0) (Center.node 4)
   , .sq (Center.node 5)
-  , .lit 7
+  , .lit 2
   , .sub (Center.node 7) (Center.node 6) ]
 
 /-- Closed finite range shape shared by every fixed fixture row. -/
@@ -225,6 +233,16 @@ def endpointChangedSources : List Center.Row :=
 def endpointChangedTarget : Center.Row :=
   ⟨Center.node 3, Center.closed (-5) 13⟩
 
+/-- Reusing one literal in every literal position changes the sharing pattern
+even though it leaves the operation constructors in the same positions. -/
+def literalSharingChanged : Center.Certificate :=
+  { Center.fixtureCert with
+    program :=
+      [ .var 0, .lit 1, .sub (Center.node 1) (Center.node 0),
+        .mul (Center.node 0) (Center.node 2), .lit 1,
+        .sub (Center.node 0) (Center.node 4), .sq (Center.node 5), .lit 1,
+        .sub (Center.node 7) (Center.node 6) ] }
+
 /-- The projection agrees with an independent literal/fact skeleton, every
 base scaling family has that exact skeleton, and changing only endpoints does
 not change it. -/
@@ -236,6 +254,9 @@ def checksErasure : Bool :=
     eraseWorkload (Scale.sourcePad 0) == expectedSkeleton &&
     eraseCertificate endpointChanged Center.baseProgram.length
       endpointChangedSources endpointChangedTarget Center.fixtureStructureLimit ==
+        expectedSkeleton &&
+    eraseCertificate literalSharingChanged Center.baseProgram.length
+      Center.fixtureSources Center.fixtureTarget Center.fixtureStructureLimit !=
         expectedSkeleton &&
     eraseCertificate { Center.fixtureCert with result := 8 }
       Center.baseProgram.length Center.fixtureSources Center.fixtureTarget
@@ -431,6 +452,8 @@ def checksTable : Bool :=
       .resourceLimit none .entries &&
     Table.check { fixtureTableLimit with maxNumeratorBits := 1 } [⟨4, 1⟩] ==
       .resourceLimit (some 0) .numeratorBits &&
+    Table.check { fixtureTableLimit with maxNumeratorBits := 8 }
+      [⟨2, 6⟩, ⟨256, 1⟩] == .malformed 0 .notReduced &&
     Table.check { fixtureTableLimit with maxDenominatorBits := 8 }
       (fixtureTable ++ [⟨1, 256⟩]) ==
         .resourceLimit (some 4) .denominatorBits

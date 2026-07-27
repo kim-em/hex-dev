@@ -383,48 +383,71 @@ models are benchmark candidates. Retained table bits, per-edge peak temporary
 bits, aggregate arithmetic work, and representation-level lookup work are
 distinct limits.
 
-Every table-index traversal is accounted for. The transparent `List` reference
-checker charges exact forward distance for literal and finite-cut indices in
-the program, sources, target, and every fact, as well as arithmetic-edge
-operands and outputs. A production table may instead provide validated random
-access with a correspondence theorem. Merely bounding the product of table
-entries and endpoint occurrences is acceptable only as an explicitly labelled
-reference experiment; it is not silent or the final production cost model.
+Every *endpoint-table* traversal is accounted for. The transparent `List`
+reference checker charges exact forward distance for literal and finite-cut
+indices in the program, sources, target, and every fact, as well as
+arithmetic-edge operands and outputs. Program-node lookups are a separate
+structural cost: the centered reference checker bounds them by the checked
+node/edge counts, and the scale experiment measures the exact recipe bound
+`9 * (maxEdges + 1) * maxNodes`. A production endpoint table may instead
+provide validated random access with a correspondence theorem. Merely bounding
+the product of table entries and endpoint occurrences is acceptable only as an
+explicitly labelled reference experiment; it is not silent or the final
+production cost model.
 
 The checker may later add a cancellation-aware execution arm without changing
 the edge encoding. For addition, subtraction, and order it may divide by
 `gcd da db` before forming the two numerator products. For multiplication it
 may cancel `gcd |na| db` and `gcd |nb| da`, matching Core's cross-cancellation.
-The naive and cancellation-aware arms share the same semantic edge and are
-benchmarked on cancellation-friendly and hostile inputs. No strategy selector
-or gcd witness is frozen into the certificate unless evidence later shows that
-recomputing the choice is the wrong tradeoff.
+More explicitly, if `da = g*da'` and `db = g*db'`, the reduced addition and
+subtraction identity is
+`(na*db' +/- nb*da')*dc = nc*(g*da'*db')`, while order compares
+`na*db'` with `nb*da'`. If `na = g1*na'`, `db = g1*db'`,
+`nb = g2*nb'`, and `da = g2*da'` after sign-insensitive cross-gcds, reduced
+multiplication checks `(na'*nb')*dc = nc*(da'*db')`. Each is the naive
+identity divided by a positive common factor, so both execution arms decide
+the same semantic edge. They are benchmarked on cancellation-friendly and
+hostile inputs. No strategy selector or gcd witness is frozen into the
+certificate unless evidence later shows that recomputing the choice is the
+wrong tradeoff.
 
 #### Rational validation order and failures
 
-Resource safety precedes logical arithmetic checking. The deterministic first
-implementation uses these phases:
+Allocation-causing work is preflighted before it is performed. Within a
+collection, validation is deterministic and sequential: a logical failure at
+an earlier size-bounded entry may therefore precede a resource failure at a
+later entry. The target pipeline uses these phases:
 
 1. bound encoded collection lengths and integer byte lengths before bigint
    decoding;
 2. bound table, edge, and skeleton counts;
-3. scan numerator and denominator bit lengths for the complete table;
-4. preflight complete-table gcd input and work budgets, then reject zero
-   denominators and noncoprime entries;
-5. validate the endpoint-erased skeleton, every table/program/source/fact/edge
+3. for each table entry in order, preflight numerator/denominator bits and gcd
+   input/work, then reject a zero denominator or noncoprime representation;
+4. validate the endpoint-erased skeleton, every table/program/source/fact/edge
    index, and the representation lookup budget;
-6. preflight every edge's temporary bits, arithmetic work, projection shift,
+5. preflight every edge's temporary bits, arithmetic work, projection shift,
    and projected dyadic height without forming a cross-product or shift; and
-7. replay arithmetic and projection edges in order, reporting the first wrong
+6. replay arithmetic and projection edges in order, reporting the first wrong
    edge.
+
+The current `RationalTable.Table.check` experiment implements the collection
+cap and the per-entry numerator/denominator/canonicality portion of phases 2
+and 3. It intentionally does not yet expose an independent encoded-byte or gcd
+work cap. `RationalCertificate.Certificate.check` adds canonical-table,
+endpoint-reference, caller-boundary, structural, and exact endpoint-lookup
+validation from phases 2 and 4. Arithmetic edges and projection implement the
+remaining preflight/replay pieces in separate experimental modules before
+they are composed. Thus declared limits below describe the composed target;
+they are not a claim that the first table module already exposes every field.
 
 Failures distinguish resource limits from malformed certificates. Resource
 reasons include collection entries, encoded bytes, numerator/denominator bits,
 gcd input/work, lookup steps, temporary bits, arithmetic work, projection
 shift, and dyadic height. Malformed reasons include skeleton mismatch, zero
 denominator, nonreduced entry, bad index, each wrong arithmetic/order edge, and
-wrong projection. The exact precedence among logical failures after resource
-safety remains an implementation choice, but it is deterministic and tested.
+wrong projection. Exact precedence is an implementation choice, but it is
+deterministic and tested; in particular, the reference table checker pins the
+earlier-entry logical / later-entry resource case.
 
 For projection precision `p`, define `up = p.toNat` and
 `down = (-p).toNat`; at most one is nonzero. Before shifting, the checker
@@ -722,13 +745,22 @@ resource proxy, and original-order `List` lookup remains a transparent
 reference checker rather than a production storage decision.
 
 The next general trace representation exposes an endpoint-erased structural
-skeleton. It records operation tags and operand references, literal slots,
+skeleton. It records operation tags and operand references, first-occurrence
+literal-sharing slots,
 trigger provenance and recomputed generations, proposal/deduplication keys,
 equality edges, derivation references, caller-bound source/target slots, and
 structural budgets, but not endpoint values. Endpoint backends may be compared
 only when their accepted certificates erase to the identical skeleton. This
 prevents Core rational normalization or dyadic projection cost from being
 misreported as scheduler or storage cost.
+
+The table-indexed rational boundary separately pins every caller source and
+target reference to an exact caller-owned raw value. The table remains
+untrusted certificate data, but changing it cannot reinterpret the goal or
+hypotheses: all finite boundary cuts must resolve to those exact values after
+whole-table canonicality succeeds. Endpoint erasure drops the values only for
+cross-backend structural comparison; the rational projection retains them
+alongside its backend-specific limits.
 
 Production experiments compare exact-index array, arena, and chunked layouts
 against the list reference in both compiled and ordinary-kernel replay. Every

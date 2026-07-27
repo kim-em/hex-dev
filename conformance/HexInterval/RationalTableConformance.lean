@@ -22,6 +22,8 @@ open Experiment.Center Experiment.Scale Experiment.RationalTable
 #guard fixtureSkeleton == expectedSkeleton
 #guard eraseCertificate endpointChanged baseProgram.length endpointChangedSources
   endpointChangedTarget fixtureStructureLimit == expectedSkeleton
+#guard eraseCertificate literalSharingChanged baseProgram.length fixtureSources
+  fixtureTarget fixtureStructureLimit != expectedSkeleton
 #guard eraseCertificate { fixtureCert with result := 8 } baseProgram.length fixtureSources
   fixtureTarget fixtureStructureLimit != expectedSkeleton
 
@@ -95,6 +97,11 @@ example : checksErasure = true := by
   .malformed 0 .notReduced
 #guard Table.check fixtureTableLimit [⟨100, 200⟩] ==
   .malformed 0 .notReduced
+
+-- Validation is deterministic and interleaved per entry: a logical failure
+-- at an earlier bounded entry precedes a resource failure at a later entry.
+#guard Table.check { fixtureTableLimit with maxNumeratorBits := 8 }
+  [⟨2, 6⟩, ⟨256, 1⟩] == .malformed 0 .notReduced
 
 -- Complete-table validation observes a malformed entry after valid retained
 -- values, even though no arithmetic fact refers to that final entry.

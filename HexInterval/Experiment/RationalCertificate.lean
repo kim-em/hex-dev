@@ -18,6 +18,8 @@ Finite program literals and interval cuts refer to a complete, canonical
 `RawRat` table by typed indices.  The transparent boundary checker validates
 the whole table, every endpoint index, SSA and derivation indices, equality
 references, caller-owned sources and target, and structural budgets.
+Caller rows contain both indexed syntax and exact raw values, so the
+certificate-owned table cannot reinterpret the invocation boundary.
 
 No interval arithmetic or equality arithmetic is replayed here.  The module
 also does not choose a wire format or a production storage representation;
@@ -202,6 +204,76 @@ def lit (node : NodeId .real) (endpoint : EndpointId) : Row :=
 
 end Row
 
+/-! ## Caller-owned value boundary -/
+
+/-- Lower cut carrying a caller-owned raw rational value rather than an
+untrusted table reference. -/
+inductive ValueLower where
+  | unbounded
+  | finite (value : RationalTable.RawRat) (strict : Bool)
+  deriving DecidableEq, Repr
+
+/-- Upper cut carrying a caller-owned raw rational value rather than an
+untrusted table reference. -/
+inductive ValueUpper where
+  | finite (value : RationalTable.RawRat) (strict : Bool)
+  | unbounded
+  deriving DecidableEq, Repr
+
+/-- Caller-owned empty, bounded, open, closed, or unbounded interval value. -/
+inductive ValueRange where
+  | empty
+  | bounds (lower : ValueLower) (upper : ValueUpper)
+  deriving DecidableEq, Repr
+
+namespace ValueRange
+
+/-- Closed finite caller-owned interval value. -/
+def closed (lower upper : RationalTable.RawRat) : ValueRange :=
+  .bounds (.finite lower false) (.finite upper false)
+
+end ValueRange
+
+namespace Range
+
+/-- Resolve every finite table reference and require exact agreement with a
+caller-owned raw value, including empty/bounded and strictness shape. -/
+def agrees (table : List RationalTable.RawRat) : Range → ValueRange → Bool
+  | .empty, .empty => true
+  | .bounds lower upper, .bounds valueLower valueUpper =>
+      (match lower, valueLower with
+        | .unbounded, .unbounded => true
+        | .finite endpoint strict, .finite value valueStrict =>
+            strict == valueStrict && table[endpoint.index]? == some value
+        | _, _ => false) &&
+      (match upper, valueUpper with
+        | .finite endpoint strict, .finite value valueStrict =>
+            strict == valueStrict && table[endpoint.index]? == some value
+        | .unbounded, .unbounded => true
+        | _, _ => false)
+  | _, _ => false
+
+end Range
+
+/-- A caller-owned invocation row pins both the indexed syntax used by replay
+and the exact raw values those references must denote. -/
+structure ExpectedRow where
+  indexed : Row
+  value : ValueRange
+  deriving DecidableEq, Repr
+
+namespace ExpectedRow
+
+/-- Validate and resolve an expected row against the certificate table. -/
+def agrees (table : List RationalTable.RawRat) (row : ExpectedRow) : Bool :=
+  row.indexed.range.agrees table row.value
+
+/-- Exact table lookup work requested by the indexed half of an expected row. -/
+def lookupCost? (tableCount : Nat) (row : ExpectedRow) : Option Nat :=
+  row.indexed.lookupCost? tableCount
+
+end ExpectedRow
+
 /-! ## Structural recipes and references -/
 
 namespace CenterShape
@@ -222,7 +294,7 @@ def check (program : Program) (center : Center.Center) : Bool :=
 
 end CenterShape
 
-namespace EqEdge
+namespace EdgeShape
 
 /-- Check one equality edge's selected structural recipe and endpoints. -/
 def check (program : Program) (expectedBaseSize maxGeneration : Nat)
@@ -233,7 +305,7 @@ def check (program : Program) (expectedBaseSize maxGeneration : Nat)
         CenterShape.check program center && edge.left == center.prod &&
         edge.right == center.form
 
-end EqEdge
+end EdgeShape
 
 /-- A table-indexed row paired with the existing derivation reference language. -/
 structure Fact where
@@ -325,8 +397,8 @@ def checkFacts (table : List RationalTable.RawRat) (program : Program)
 
 /-! ## Complete certificate boundary -/
 
-/-- Exact endpoint-table lookup work for a row collection. -/
-def rowsLookupCost? (tableCount : Nat) : List Row → Option Nat
+/-- Exact endpoint-table lookup work for a caller-owned row collection. -/
+def rowsLookupCost? (tableCount : Nat) : List ExpectedRow → Option Nat
   | [] => some 0
   | row :: tail => do
       let headCost ← row.lookupCost? tableCount
@@ -349,8 +421,8 @@ structure ReferenceLimit where
   deriving DecidableEq, Repr
 
 /-- Complete rational endpoint certificate.  The table and all indexed syntax
-are untrusted; invocation sources, target, base size, and limits remain caller
-owned arguments to the checker. -/
+are untrusted; invocation source/target references and their exact values,
+base size, and limits remain caller-owned checker arguments. -/
 structure Certificate where
   table : List RationalTable.RawRat
   program : Program
@@ -364,7 +436,7 @@ namespace Certificate
 
 /-- Bounded structural preflight before table or indexed traversal. -/
 def structureOk (certificate : Certificate) (limit : Center.StructureLimit)
-    (expectedBaseSize : Nat) (expectedSources : List Row) : Bool :=
+    (expectedBaseSize : Nat) (expectedSources : List ExpectedRow) : Bool :=
   certificate.center.generation ≤ limit.maxGeneration &&
     expectedBaseSize ≤ limit.maxNodes && certificate.result < limit.maxFacts &&
     Center.lengthWithin limit.maxNodes certificate.program &&
@@ -372,11 +444,12 @@ def structureOk (certificate : Certificate) (limit : Center.StructureLimit)
     Center.lengthWithin limit.maxEdges certificate.edges &&
     Center.lengthWithin limit.maxFacts certificate.facts
 
-/-- Exact forward-list work for every endpoint-table lookup the boundary will
-perform.  Returning `none` rejects an out-of-range reference before any table
-lookup is attempted. -/
-def endpointLookupCost? (certificate : Certificate) (expectedSources : List Row)
-    (expectedTarget : Row) : Option Nat := do
+/-- Exact forward-list work for every indexed endpoint lookup the boundary
+will perform.  Returning `none` rejects an out-of-range reference before any
+indexed endpoint lookup is attempted. -/
+def endpointLookupCost? (certificate : Certificate)
+    (expectedSources : List ExpectedRow)
+    (expectedTarget : ExpectedRow) : Option Nat := do
   let tableCount := certificate.table.length
   let programCost ← certificate.program.lookupCost? tableCount
   let sourceCost ← rowsLookupCost? tableCount expectedSources
@@ -385,12 +458,13 @@ def endpointLookupCost? (certificate : Certificate) (expectedSources : List Row)
   pure (programCost + sourceCost + targetCost + factCost)
 
 /-- Check the complete table-indexed certificate boundary.  A successful
-result establishes table canonicality and all structural references, but no
+result establishes table canonicality, exact agreement with caller-owned
+source/target values, and all structural references, but no internal
 arithmetic equality or interval propagation claim. -/
 def check (certificate : Certificate) (tableLimit : RationalTable.RawRat.Limit)
     (referenceLimit : ReferenceLimit) (structureLimit : Center.StructureLimit)
-    (expectedBaseSize : Nat) (expectedSources : List Row)
-    (expectedTarget : Row) : Bool :=
+    (expectedBaseSize : Nat) (expectedSources : List ExpectedRow)
+    (expectedTarget : ExpectedRow) : Bool :=
   certificate.structureOk structureLimit expectedBaseSize expectedSources &&
     match RationalTable.Table.check tableLimit certificate.table with
     | .ready =>
@@ -402,27 +476,28 @@ def check (certificate : Certificate) (tableLimit : RationalTable.RawRat.Limit)
                 certificate.program.check &&
                 certificate.center.baseSize == expectedBaseSize &&
                 CenterShape.check certificate.program certificate.center &&
-                (expectedSources.all fun source =>
-                  source.refsOk certificate.table &&
-                    (certificate.program.node? source.node).isSome) &&
-                expectedTarget.refsOk certificate.table &&
-                (certificate.program.node? expectedTarget.node).isSome &&
+                expectedSources.all (fun source => source.agrees certificate.table) &&
+                expectedSources.all (fun source =>
+                  (certificate.program.node? source.indexed.node).isSome) &&
+                expectedTarget.agrees certificate.table &&
+                (certificate.program.node? expectedTarget.indexed.node).isSome &&
                 Center.EqEdge.containsCenter certificate.edges certificate.center &&
                 certificate.edges.all
-                  (EqEdge.check certificate.program expectedBaseSize
+                  (EdgeShape.check certificate.program expectedBaseSize
                     structureLimit.maxGeneration) &&
                 match Center.Fact.forwardDistance? certificate.facts.length
                     certificate.result with
                 | none => false
                 | some resultCost =>
                     if resultCost ≤ structureLimit.maxLookupSteps then
-                      checkFacts certificate.table certificate.program expectedSources
+                      checkFacts certificate.table certificate.program
+                          (expectedSources.map fun source => source.indexed)
                           certificate.edges certificate.program.length
                           expectedSources.length certificate.edges.length 0
                           (structureLimit.maxLookupSteps - resultCost)
-                          certificate.facts [] &&
+                        certificate.facts [] &&
                         certificate.facts[certificate.result]?.map
-                            (fun fact => fact.row) == some expectedTarget
+                            (fun fact => fact.row) == some expectedTarget.indexed
                     else
                       false
             else
@@ -433,7 +508,8 @@ def check (certificate : Certificate) (tableLimit : RationalTable.RawRat.Limit)
 theorem table_ready_of_check {certificate : Certificate}
     {tableLimit : RationalTable.RawRat.Limit}
     {referenceLimit : ReferenceLimit} {structureLimit : Center.StructureLimit}
-    {expectedBaseSize : Nat} {expectedSources : List Row} {expectedTarget : Row}
+    {expectedBaseSize : Nat} {expectedSources : List ExpectedRow}
+    {expectedTarget : ExpectedRow}
     (h : certificate.check tableLimit referenceLimit structureLimit
       expectedBaseSize expectedSources expectedTarget = true) :
     RationalTable.Table.check tableLimit certificate.table = .ready := by
@@ -443,11 +519,46 @@ theorem table_ready_of_check {certificate : Certificate}
   | malformed index reason => simp [htable] at h
   | resourceLimit index reason => simp [htable] at h
 
+/-- Success pins every indexed invocation row to its exact caller-owned value;
+the certificate table cannot reinterpret sources or target. -/
+theorem boundary_agrees_of_check {certificate : Certificate}
+    {tableLimit : RationalTable.RawRat.Limit}
+    {referenceLimit : ReferenceLimit} {structureLimit : Center.StructureLimit}
+    {expectedBaseSize : Nat} {expectedSources : List ExpectedRow}
+    {expectedTarget : ExpectedRow}
+    (h : certificate.check tableLimit referenceLimit structureLimit
+      expectedBaseSize expectedSources expectedTarget = true) :
+    expectedSources.all (fun source => source.agrees certificate.table) = true ∧
+      expectedTarget.agrees certificate.table = true := by
+  unfold check at h
+  have hbody := (Bool.and_eq_true_iff.mp h).2
+  cases htable : RationalTable.Table.check tableLimit certificate.table with
+  | malformed index reason => simp [htable] at hbody
+  | resourceLimit index reason => simp [htable] at hbody
+  | ready =>
+      simp only [htable] at hbody
+      cases hcost : certificate.endpointLookupCost? expectedSources expectedTarget with
+      | none => simp [hcost] at hbody
+      | some cost =>
+          simp only [hcost] at hbody
+          split at hbody
+          next =>
+            rcases Bool.and_eq_true_iff.mp hbody with ⟨hbody, _⟩
+            rcases Bool.and_eq_true_iff.mp hbody with ⟨hbody, _⟩
+            rcases Bool.and_eq_true_iff.mp hbody with ⟨hbody, _⟩
+            rcases Bool.and_eq_true_iff.mp hbody with ⟨hbody, _⟩
+            rcases Bool.and_eq_true_iff.mp hbody with ⟨hbody, htarget⟩
+            rcases Bool.and_eq_true_iff.mp hbody with ⟨hbody, _⟩
+            rcases Bool.and_eq_true_iff.mp hbody with ⟨_, hsources⟩
+            exact ⟨hsources, htarget⟩
+          next => contradiction
+
 /-- Every entry of an accepted certificate table is canonical. -/
 theorem table_canonical {certificate : Certificate}
     {tableLimit : RationalTable.RawRat.Limit}
     {referenceLimit : ReferenceLimit} {structureLimit : Center.StructureLimit}
-    {expectedBaseSize : Nat} {expectedSources : List Row} {expectedTarget : Row}
+    {expectedBaseSize : Nat} {expectedSources : List ExpectedRow}
+    {expectedTarget : ExpectedRow}
     (h : certificate.check tableLimit referenceLimit structureLimit
       expectedBaseSize expectedSources expectedTarget = true) :
     ∀ q ∈ certificate.table, q.Canonical :=
@@ -457,24 +568,22 @@ end Certificate
 
 /-! ## Endpoint-erased projection -/
 
-/-- Erase one rational program instruction.  A literal retains its program
-position as the backend-independent literal slot. -/
-def eraseOp (index : Nat) : Prim → RationalTable.Shape.Op
-  | .var source => .var source
-  | .lit _ => .lit index
-  | .sub left right => .sub left right
-  | .mul left right => .mul left right
-  | .sq input => .sq input
-
-/-- Erase a complete rational program from an explicit position. -/
-def eraseProgramFrom : Nat → Program → List RationalTable.Shape.Op
-  | _, [] => []
-  | index, instruction :: tail =>
-      eraseOp index instruction :: eraseProgramFrom (index + 1) tail
+/-- Erase a complete rational program while retaining literal-reference
+sharing.  Slots use the same first-occurrence rule as dyadic erasure. -/
+def eraseProgramFrom (seen : List EndpointId) : Program → List RationalTable.Shape.Op
+  | [] => []
+  | .var source :: tail => .var source :: eraseProgramFrom seen tail
+  | .lit endpoint :: tail =>
+      match RationalTable.firstIndex? endpoint 0 seen with
+      | some slot => .lit slot :: eraseProgramFrom seen tail
+      | none => .lit seen.length :: eraseProgramFrom (seen ++ [endpoint]) tail
+  | .sub left right :: tail => .sub left right :: eraseProgramFrom seen tail
+  | .mul left right :: tail => .mul left right :: eraseProgramFrom seen tail
+  | .sq input :: tail => .sq input :: eraseProgramFrom seen tail
 
 /-- Endpoint-erased rational program. -/
 def eraseProgram (program : Program) : List RationalTable.Shape.Op :=
-  eraseProgramFrom 0 program
+  eraseProgramFrom [] program
 
 /-- Erase a lower cut's table reference while retaining strictness. -/
 def eraseLower : Lower → RationalTable.Shape.Lower
@@ -501,7 +610,8 @@ def eraseFact (fact : Fact) : RationalTable.Shape.Fact :=
 
 /-- Backend-independent certificate skeleton. -/
 def eraseCertificate (certificate : Certificate) (baseSize : Nat)
-    (sources : List Row) (target : Row) (limit : Center.StructureLimit) :
+    (sources : List ExpectedRow) (target : ExpectedRow)
+    (limit : Center.StructureLimit) :
     RationalTable.Shape.Skeleton :=
   { program := eraseProgram certificate.program
     center := certificate.center
@@ -509,14 +619,16 @@ def eraseCertificate (certificate : Certificate) (baseSize : Nat)
     facts := certificate.facts.map eraseFact
     result := certificate.result
     baseSize
-    sources := sources.map eraseRow
-    target := eraseRow target
+    sources := sources.map fun source => eraseRow source.indexed
+    target := eraseRow target.indexed
     limit }
 
-/-- Rational projection retains its caller-owned table and endpoint-reference
-limits alongside the backend-independent skeleton. -/
+/-- Rational projection retains caller-owned boundary values and
+backend-specific limits alongside the endpoint-erased structural skeleton. -/
 structure Projection where
   skeleton : RationalTable.Shape.Skeleton
+  sourceValues : List ValueRange
+  targetValue : ValueRange
   tableLimit : RationalTable.RawRat.Limit
   referenceLimit : ReferenceLimit
   deriving DecidableEq
@@ -524,9 +636,11 @@ structure Projection where
 /-- Project a rational certificate and its complete caller-owned boundary. -/
 def projectCertificate (certificate : Certificate)
     (tableLimit : RationalTable.RawRat.Limit) (referenceLimit : ReferenceLimit)
-    (baseSize : Nat) (sources : List Row) (target : Row)
+    (baseSize : Nat) (sources : List ExpectedRow) (target : ExpectedRow)
     (structureLimit : Center.StructureLimit) : Projection :=
   { skeleton := eraseCertificate certificate baseSize sources target structureLimit
+    sourceValues := sources.map fun source => source.value
+    targetValue := target.value
     tableLimit
     referenceLimit }
 
@@ -559,6 +673,10 @@ def unitRange : Range := Range.closed zero one
 def centeredRange : Range := Range.closed negHalf half
 def quarterRange : Range := Range.closed zero quarter
 
+/-- Caller-owned values denoted by the fixture's indexed ranges. -/
+def unitValueRange : ValueRange := ValueRange.closed ⟨0, 1⟩ ⟨1, 1⟩
+def quarterValueRange : ValueRange := ValueRange.closed ⟨0, 1⟩ ⟨1, 4⟩
+
 /-- Rational-table rendering of all ten centered fixture facts. -/
 def fixtureFacts : List Fact :=
   [ ⟨⟨Center.node 0, unitRange⟩, .source 0⟩
@@ -581,13 +699,14 @@ def fixtureCert : Certificate :=
     facts := fixtureFacts
     result := 9 }
 
-/-- Caller-owned rational source rows. -/
-def fixtureSources : List Row :=
-  [⟨Center.node 0, unitRange⟩]
+/-- Caller-owned rational source rows, including exact values independent of
+the certificate's untrusted table. -/
+def fixtureSources : List ExpectedRow :=
+  [⟨⟨Center.node 0, unitRange⟩, unitValueRange⟩]
 
-/-- Caller-owned rational target row. -/
-def fixtureTarget : Row :=
-  ⟨Center.node 3, quarterRange⟩
+/-- Caller-owned rational target row and exact value. -/
+def fixtureTarget : ExpectedRow :=
+  ⟨⟨Center.node 3, quarterRange⟩, quarterValueRange⟩
 
 /-- Caller-owned table limit for the fixed rational certificate. -/
 def fixtureTableLimit : RationalTable.RawRat.Limit :=
@@ -620,6 +739,8 @@ backend-independent structure. -/
 def checksProjection : Bool :=
   fixtureProjection.skeleton == RationalTable.fixtureSkeleton &&
     fixtureProjection.skeleton == RationalTable.expectedSkeleton &&
+    fixtureProjection.sourceValues == [unitValueRange] &&
+    fixtureProjection.targetValue == quarterValueRange &&
     fixtureProjection.tableLimit == fixtureTableLimit &&
     fixtureProjection.referenceLimit == fixtureReferenceLimit
 
@@ -627,7 +748,9 @@ theorem checksProjection_eq_true : checksProjection = true := by
   decide +kernel
 
 /-- The fixture's endpoint-reference budget is exact and one step short is
-rejected before any endpoint-table traversal. -/
+rejected before any indexed endpoint lookup.  The later `refsOk`/`agrees`
+pass deliberately stands in for the real reads that arithmetic replay will
+perform, so this budget must not be optimized away as a redundant range check. -/
 def checksReferenceBudget : Bool :=
   fixtureCert.endpointLookupCost? fixtureSources fixtureTarget == some 73 &&
     checkFixture &&

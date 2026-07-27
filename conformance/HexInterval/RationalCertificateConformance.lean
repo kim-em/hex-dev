@@ -37,6 +37,8 @@ open Experiment.RationalCertificate
 #guard fixtureProjection.skeleton.target ==
   Experiment.RationalTable.expectedSkeleton.target
 #guard fixtureProjection.skeleton.limit == fixtureStructureLimit
+#guard fixtureProjection.sourceValues == [unitValueRange]
+#guard fixtureProjection.targetValue == quarterValueRange
 
 -- Erasure preserves every interval shape while discarding only table indices.
 #guard eraseRange .empty == Experiment.RationalTable.Shape.Range.empty
@@ -102,11 +104,11 @@ private def missingLiteralProgram : Program :=
 private def missingFact : Fact :=
   ⟨⟨Experiment.Center.node 0, Range.closed zero missing⟩, .source 0⟩
 
-private def missingSource : Row :=
-  ⟨Experiment.Center.node 0, Range.closed missing one⟩
+private def missingSource : ExpectedRow :=
+  ⟨⟨Experiment.Center.node 0, Range.closed missing one⟩, unitValueRange⟩
 
-private def missingTarget : Row :=
-  ⟨Experiment.Center.node 3, Range.closed zero missing⟩
+private def missingTarget : ExpectedRow :=
+  ⟨⟨Experiment.Center.node 3, Range.closed zero missing⟩, quarterValueRange⟩
 
 #guard !(endpoint 5).valid fixtureTable
 #guard !({ fixtureCert with program := missingLiteralProgram }).check fixtureTableLimit
@@ -132,18 +134,65 @@ private def badSourceFact : Fact :=
   fixtureReferenceLimit fixtureStructureLimit baseProgram.length fixtureSources
   fixtureTarget
 
--- Changing canonical table values alone preserves and passes this structural
--- layer.  Arithmetic recipe and propagation checks are intentionally later.
+private def wrongLiteralShape : Program :=
+  [Prim.var 0, Prim.var 0] ++ fixtureCert.program.drop 2
+
+private def wrongEdge : Experiment.Center.EqEdge :=
+  { Experiment.Center.centerEdge with left := Experiment.Center.node 8 }
+
+-- Every locally reimplemented structural rejection path has a rational-side
+-- canary, including the exact 74-step structural budget.
+#guard !({ fixtureCert with program := wrongLiteralShape }).check fixtureTableLimit
+  fixtureReferenceLimit fixtureStructureLimit baseProgram.length fixtureSources fixtureTarget
+#guard !({ fixtureCert with edges := [wrongEdge] }).check fixtureTableLimit
+  fixtureReferenceLimit fixtureStructureLimit baseProgram.length fixtureSources fixtureTarget
+#guard !({ fixtureCert with center :=
+    { Experiment.Center.centerWitness with generation := 0 } }).check
+  fixtureTableLimit fixtureReferenceLimit fixtureStructureLimit baseProgram.length
+  fixtureSources fixtureTarget
+#guard !({ fixtureCert with center :=
+    { Experiment.Center.centerWitness with generation := 2 } }).check
+  fixtureTableLimit fixtureReferenceLimit fixtureStructureLimit baseProgram.length
+  fixtureSources fixtureTarget
+#guard fixtureCert.check fixtureTableLimit fixtureReferenceLimit
+  { fixtureStructureLimit with maxLookupSteps := 74 } baseProgram.length
+  fixtureSources fixtureTarget
+#guard !fixtureCert.check fixtureTableLimit fixtureReferenceLimit
+  { fixtureStructureLimit with maxLookupSteps := 73 } baseProgram.length
+  fixtureSources fixtureTarget
+
+-- Changing canonical table values preserves the internal structural layer,
+-- but cannot change the caller-owned meaning of the invocation boundary.
 private def shapeOnlyTable : List Experiment.RationalTable.RawRat :=
   [⟨2, 1⟩, ⟨3, 1⟩, ⟨4, 1⟩, ⟨-5, 1⟩, ⟨6, 1⟩]
 
 private def shapeOnlyCert : Certificate :=
   { fixtureCert with table := shapeOnlyTable }
 
-#guard shapeOnlyCert.check fixtureTableLimit fixtureReferenceLimit
+private def shapeOnlySources : List ExpectedRow :=
+  [⟨⟨Experiment.Center.node 0, unitRange⟩, ValueRange.closed ⟨2, 1⟩ ⟨3, 1⟩⟩]
+
+private def shapeOnlyTarget : ExpectedRow :=
+  ⟨⟨Experiment.Center.node 3, quarterRange⟩, ValueRange.closed ⟨2, 1⟩ ⟨6, 1⟩⟩
+
+-- A certificate-chosen table cannot reinterpret the original caller boundary.
+#guard !shapeOnlyCert.check fixtureTableLimit fixtureReferenceLimit
   fixtureStructureLimit baseProgram.length fixtureSources fixtureTarget
-#guard (eraseCertificate shapeOnlyCert baseProgram.length fixtureSources fixtureTarget
+#guard shapeOnlyCert.check fixtureTableLimit fixtureReferenceLimit
+  fixtureStructureLimit baseProgram.length shapeOnlySources shapeOnlyTarget
+#guard (eraseCertificate shapeOnlyCert baseProgram.length shapeOnlySources shapeOnlyTarget
   fixtureStructureLimit) == fixtureProjection.skeleton
+
+-- Literal sharing is retained by endpoint erasure, not merely literal
+-- positions.  Reusing `one` for all three slots changes the skeleton.
+private def repeatedLiteralProgram : Program :=
+  [ .var 0, .lit one, .sub (Experiment.Center.node 1) (Experiment.Center.node 0),
+    .mul (Experiment.Center.node 0) (Experiment.Center.node 2), .lit one,
+    .sub (Experiment.Center.node 0) (Experiment.Center.node 4),
+    .sq (Experiment.Center.node 5), .lit one,
+    .sub (Experiment.Center.node 7) (Experiment.Center.node 6) ]
+
+#guard eraseProgram repeatedLiteralProgram != fixtureProjection.skeleton.program
 
 /-! ## Downstream kernel transparency -/
 
@@ -156,6 +205,10 @@ example : Experiment.RationalTable.Table.check fixtureTableLimit fixtureCert.tab
 
 example : ∀ q ∈ fixtureCert.table, q.Canonical := by
   exact Certificate.table_canonical checkFixture_eq_true
+
+example : fixtureSources.all (fun source => source.agrees fixtureCert.table) = true ∧
+    fixtureTarget.agrees fixtureCert.table = true := by
+  exact Certificate.boundary_agrees_of_check checkFixture_eq_true
 
 example : checksProjection = true := by
   decide +kernel
