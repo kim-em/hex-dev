@@ -6,7 +6,7 @@ shared expression program, schedules propagation and refinement actions, and
 records the successful search as a compact derivation trace. It does not
 interpret a program as a real-valued function and it does not construct Lean
 proof terms. Those tasks belong to
-[hex-interval-mathlib](hex-interval-mathlib.md).
+[hex-interval-mathlib](../../SPEC/Libraries/hex-interval-mathlib.md).
 
 The library is intended to support a standalone `interval` tactic. Integration
 with `grind` is not part of this development. The scheduler and rule protocol
@@ -56,7 +56,7 @@ design space.
 
 “Compiled search” means ordinary elaboration-time Lean execution of the
 untrusted planner. It does not authorize `precompileModules := true`; the Lake
-target continues to follow [the repository policy](../design-principles.md#lakefile),
+target continues to follow [the repository policy](../../SPEC/design-principles.md#lakefile),
 which reserves precompiled modules for libraries exporting approved externs
 and forbids them for Mathlib-importing libraries.
 
@@ -88,7 +88,7 @@ split points. Such output is an untrusted candidate. The Mathlib companion must
 check it with the same theorems as a native candidate, and the native Lean rule
 must remain the default and fallback. Any such hook follows the
 untrusted-dispatch contract in
-[SPEC.md's project-wide proof policy](../SPEC.md#project-wide-proof-policy):
+[SPEC.md's project-wide proof policy](../../SPEC/SPEC.md#project-wide-proof-policy):
 availability is never mentioned by a theorem, rejection falls back to native
 Lean, and only independently checked candidate data crosses the boundary.
 This SPEC presently approves no `@[extern]` planner hook. Adding one requires a
@@ -175,6 +175,14 @@ either internal candidate. Infinite ends do not carry meaningless closure
 flags. This invariant deliberately does not claim that, for example, `(0,1)`
 contains an integer.
 
+Exact `normalize` is only for trusted or already-preflighted inputs: comparing
+two finite dyadics may align their exponents by shifting a mantissa. The
+planner-facing `normalizeWithin` first computes endpoint height and alignment
+shift from constructor fields and returns a distinct `resourceLimit` result
+when either bound is exceeded. It never interprets a refused comparison as an
+empty interval or as consistent cuts. Every public reifier, certificate
+decoder, and planner input path uses this resource-safe entry point.
+
 The representation differs from IEEE 1788 set-based intervals in one
 important respect. IEEE intervals are closed as sets of finite real numbers,
 with infinities used as endpoint markers. A proof assistant must also retain
@@ -234,6 +242,18 @@ Increasing effort may request a finer projection from the original rational.
 It never rounds an already rounded endpoint again. This prevents accumulated
 rounding drift and keeps arbitrary rational arithmetic out of the hot
 propagation path.
+
+The Mathlib-free library does not depend on `norm_num` to certify these source
+facts. Lean core's ordinary `Rat` operation instances are deliberately opaque,
+but core also supplies the reducible `Rat.normalize` computation and
+characterization lemmas such as `Rat.add_def`, `Rat.sub_def`, `Rat.mul_def`,
+and `Rat.inv_def`. A proof-facing rational backend may therefore use small
+exposed wrappers around those computations, or validate canonical
+numerator/denominator data by cross multiplication. D2 measures both styles
+under ordinary kernel reduction before choosing a rational trace encoding.
+The Mathlib companion may use `norm_num` when it is the cheapest way to close
+a frontend rational leaf; that convenience is not part of the shared
+library's trust or dependency story.
 
 Projection keeps the strongest strictness justified by order. For a lower
 source cut at `r`, a projected dyadic `q <= r` inherits the source strictness

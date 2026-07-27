@@ -479,6 +479,16 @@ libraries:
     mathlib: false
     done_through: 0
     status: active
+  HexInterval:
+    deps: []
+    mathlib: false
+    done_through: 0
+    status: active
+  HexIntervalMathlib:
+    deps: [HexInterval]
+    mathlib: true
+    done_through: 0
+    status: planned
   HexResultantMathlib:
     deps: [HexResultant, HexPolyMathlib]
     mathlib: true
