@@ -135,6 +135,13 @@ deriving DecidableEq
   let rhs : Dyadic := (2 : Dyadic) * a + (2 : Dyadic) * b + (4 : Dyadic) * c
   decide (GaussDyadic.distSq s.center t.center ≤ rhs)
 
+/-- The circumscribed disc of `s` contains the Gaussian-dyadic point `z`,
+including boundary contact. Squaring the radius removes the irrational `√2`,
+so the test is one exact dyadic comparison. -/
+@[expose] def DyadicSquare.discContains (s : DyadicSquare) (z : GaussDyadic) : Bool :=
+  let radiusSq : Dyadic := (2 : Dyadic) * .ofIntWithPrec 1 (2 * s.prec)
+  decide (GaussDyadic.distSq s.center z ≤ radiusSq)
+
 /-- `inner`'s circumscribed disc is contained in `outer`'s:
     `r_i ≤ r_o` (i.e. `outer.prec ≤ inner.prec`) and
     `distSq centres ≤ (r_o − r_i)² = 2·4^{−p_o} + 2·4^{−p_i} − 4·2^{−p_o−p_i}`. -/

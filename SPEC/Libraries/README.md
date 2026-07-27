@@ -192,7 +192,7 @@ for developments whose source-local move has not happened yet.
 - [hex-rcf.md](hex-rcf.md): the `rcf` tactic for univariate real-closed-field sentences
 - [hex-resultant](../../HexResultant/SPEC/hex-resultant.md): polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
 - [hex-resultant-mathlib.md](hex-resultant-mathlib.md): executable resultant agreement, specialization, root-product, and discriminant theorems
-- [hex-number-field.md](hex-number-field.md): `QAdjoin`, factorization-lazy `AlgebraicRoot`, canonical `AlgebraicNumber`, and algebraic-coefficient roots
+- [hex-number-field](../../HexNumberField/SPEC/hex-number-field.md): `QAdjoin`, factorization-lazy `AlgebraicRoot`, canonical `AlgebraicNumber`, and algebraic-coefficient roots
 - [hex-number-field-mathlib.md](hex-number-field-mathlib.md): fixed-field correspondence, exactification, lazy arithmetic, and root completeness
 - [hex-number-field-tower.md](hex-number-field-tower.md): successive extensions, Trager factorization, splitting fields, and flattening
 - [hex-number-field-tower-mathlib.md](hex-number-field-tower-mathlib.md): semantic towers, factorization correctness, splitting, and primitive-element equivalence

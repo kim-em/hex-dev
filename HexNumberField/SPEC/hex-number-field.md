@@ -24,12 +24,15 @@ The shipped Mathlib-free API separates the semantic class
 ```lean
 class ZPoly.CheckedIrreducible (p : ZPoly) : Prop where
   is_true : ZPoly.isIrreducible p = true
+  pos_degree : 0 < p.degree?.getD 0
 ```
 
 Checked constructors branch on the Boolean and can therefore return this
-evidence without importing factorization correctness. The Mathlib companion
-uses `ZPoly.isIrreducible_iff` to turn `CheckedIrreducible` into the shipped
-semantic `ZPoly.Irreducible` class and then into irreducibility over `ℚ`.
+evidence without importing factorization correctness. The positive-degree
+field is essential because the integer irreducibility checker also accepts
+prime constants, whose rational quotients are not number fields. The Mathlib
+companion uses `ZPoly.isIrreducible_iff` to turn `CheckedIrreducible` into the
+shipped semantic `ZPoly.Irreducible` class and then into irreducibility over `ℚ`.
 The computational library exposes the operations needed by its algorithms; it
 does not claim a law-bearing field instance from the Boolean alone.
 
@@ -47,6 +50,7 @@ structure AlgebraicRoot where
   p          : ZPoly
   prim       : ZPoly.Primitive p
   pos_lc     : 0 < p.leadingCoeff
+  pos_degree : 0 < p.degree?.getD 0
   squarefree : HasOnlySimpleRoots p
   x          : SimpleRoot p
   rep        : RefinedIsolation p
@@ -57,6 +61,8 @@ opaque AlgebraicNumber
 def AlgebraicNumber.p (a : AlgebraicNumber) : ZPoly
 def AlgebraicNumber.prim (a : AlgebraicNumber) : ZPoly.Primitive a.p
 def AlgebraicNumber.pos_lc (a : AlgebraicNumber) : 0 < a.p.leadingCoeff
+def AlgebraicNumber.pos_degree (a : AlgebraicNumber) :
+    0 < a.p.degree?.getD 0
 def AlgebraicNumber.checked (a : AlgebraicNumber) :
     ZPoly.CheckedIrreducible a.p
 def AlgebraicNumber.squarefree (a : AlgebraicNumber) :
@@ -65,6 +71,9 @@ def AlgebraicNumber.x (a : AlgebraicNumber) : SimpleRoot a.p
 def AlgebraicNumber.rep (a : AlgebraicNumber) : RefinedIsolation a.p
 def AlgebraicNumber.rep_mk (a : AlgebraicNumber) :
     SimpleRoot.mk a.rep = a.x
+def AlgebraicNumber.zero : AlgebraicNumber
+instance : Zero AlgebraicNumber
+instance : Inhabited AlgebraicNumber
 
 structure RootCount where
   root : AlgebraicRoot
@@ -99,11 +108,13 @@ not merely a semantic `BEq`; this representation can support field laws stated
 with Lean equality. User-supplied alternative refined discs cannot enter the
 private constructor.
 
-Do not instantiate `DensePoly AlgebraicNumber`. `DensePoly` requires
-`DecidableEq` on coefficients so that trailing-zero normalization is semantic,
-but structural equality on `AlgebraicNumber` is finer than equality of the
-represented complex values. `AlgebraicPoly` owns the required semantic trimming
-without exporting an incorrect `DecidableEq`.
+Do not instantiate `DensePoly AlgebraicNumber` in the Mathlib-free layer.
+`DensePoly` requires a kernel `DecidableEq` on coefficients so trailing-zero
+normalization is semantic, while canonical algebraic-number equality is exposed
+here as a Boolean operation whose correctness is proved only in the companion.
+Structural equality on factorization-lazy `AlgebraicRoot` is finer than equality
+of represented complex values. `AlgebraicPoly` owns the required semantic
+trimming without exporting an unjustified `DecidableEq`.
 
 ## Equality and zero
 
@@ -122,14 +133,15 @@ minimal polynomials, but it does not change the v1 semantics.
 ```lean
 def AlgebraicNumber.isZero (a : AlgebraicNumber) : Bool := a.p == X
 
-/-- True exactly when the selected root is zero. Squarefreeness makes the
-    constant-coefficient and isolation test decisive. -/
+/-- True exactly when the selected root is zero. The refined separation bound
+    makes the constant-coefficient and closed-disc test decisive. -/
 def AlgebraicRoot.isZero (a : AlgebraicRoot) : Bool :=
   a.p.coeff 0 == 0 && RefinedIsolation.containsZero a.rep
 ```
 
 `RefinedIsolation.containsZero` is introduced here. It tests membership of zero
-in the isolation's closed circumscribed disc, including boundary contact.
+in the isolation's closed circumscribed disc, including boundary contact, by
+delegating to the generic exact `DyadicSquare.discContains` geometry primitive.
 
 ## Fixed-field operations
 

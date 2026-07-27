@@ -75,6 +75,17 @@ is a single dyadic comparison: with radii `rᵢ = √2·2^{−pᵢ}`,
 is exact, and so is the squared distance between the two
 Gaussian-dyadic centres.
 
+Membership of a Gaussian-dyadic point in one closed circumscribed disc is
+likewise exact:
+
+```lean
+def DyadicSquare.discContains (s : DyadicSquare) (z : GaussDyadic) : Bool
+```
+
+It compares the squared centre distance with `2·4⁻ᵖ`, including boundary
+contact. Downstream exact-number libraries use this primitive rather than
+reimplementing the geometry.
+
 ## Pellet witnesses
 
 ```lean
