@@ -51,8 +51,10 @@ def negOnePow [One R] [Sub R] (n : Nat) : R :=
 
 /-- The exactness and nonzero obligations for every reachable Brown worker
 state. A valid state must terminate naturally before its fuel reaches zero;
-at each nonterminal step both scalar divisions reconstruct their numerators,
-the Brown divisor and quotient are nonzero, and the successor is valid. -/
+the adjacent polynomials have strictly decreasing size, the current and
+successor scales are nonzero, both scalar divisions reconstruct their
+numerators, the Brown divisor and quotient are nonzero, and the successor is
+valid. -/
 @[expose]
 def BrownLaw [One R] [Add R] [Sub R] [Mul R] [Div R]
     (prev curr : DensePoly R) (hPrev : R) : Nat → Prop
@@ -61,15 +63,16 @@ def BrownLaw [One R] [Add R] [Sub R] [Mul R] [Div R]
       let delta := prev.size - curr.size
       let hCurr := divExp curr.leadingCoeff hPrev delta
       let p := (pseudoDivMod prev curr).2
-      hPrev ≠ 0 ∧
+      prev ≠ 0 ∧ curr ≠ 0 ∧ curr.size < prev.size ∧
+        hPrev ≠ 0 ∧ hCurr ≠ 0 ∧
         powNat curr.leadingCoeff delta = powNat hPrev (delta - 1) * hCurr ∧
         if p.isZero then
           True
         else
           let divisor :=
             negOnePow (delta + 1) * prev.leadingCoeff * powNat hPrev delta
-          let next := divScalarImpl p divisor
-          divisor ≠ 0 ∧ p = scaleImpl divisor next ∧ next ≠ 0 ∧
+          let next := divScalar p divisor
+          divisor ≠ 0 ∧ p = scale divisor next ∧ next ≠ 0 ∧
             BrownLaw curr next hCurr fuel
 
 /-- Fuel-bounded Brown recurrence after the initial pseudo-division.
@@ -191,6 +194,23 @@ theorem subresultantChain_zero_right [One R] [Add R] [Sub R] [Mul R] [Div R]
   have hzz : (0 : DensePoly R).isZero = true := rfl
   simp [hfz, hzz]
 
+/-- A nonzero right input paired with zero is the singleton chain. -/
+theorem subresultantChain_zero_left [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (g : DensePoly R) (hg : g ≠ 0) : subresultantChain 0 g = #[g] := by
+  unfold subresultantChain subresultantRun
+  have hgz : g.isZero = false := by
+    rw [isZero_eq_false_iff]
+    by_cases hpos : 0 < g.size
+    · exact hpos
+    · exfalso
+      apply hg
+      apply ext_coeff
+      intro i
+      rw [coeff_zero]
+      exact coeff_eq_zero_of_size_le g (by omega)
+  have hzz : (0 : DensePoly R).isZero = true := rfl
+  simp [hgz, hzz]
+
 /-- Every stored term is nonzero over a lawful exact-division domain. -/
 theorem subresultantChain_ne_zero_core {S : Type u}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
@@ -256,6 +276,17 @@ theorem subresultantChain_size_le_core {S : Type u}
     let run := subresultantRun f g
     run.chain.size = 3 && run.chain.getD 2 0 = C (t * t) &&
       run.scale = powNat t 4
+
+-- Lifting the integer defective chain executes coefficientwise division by a
+-- nonunit polynomial scalar and the odd-sign branch in the recursive ring.
+#guard
+    let zero : DensePoly Int := 0
+    let mone : DensePoly Int := C (-1)
+    let two : DensePoly Int := C 2
+    let f : DensePoly (DensePoly Int) := ofList [zero, zero, zero, zero, mone]
+    let g : DensePoly (DensePoly Int) := ofList [mone, zero, zero, two]
+    let run := subresultantRun f g
+    run.chain.size = 4 && run.chain.getD 3 0 = C mone && run.scale = mone
 
 -- Reversed inputs are degree-ordered; zero inputs are omitted.
 #guard
