@@ -33,7 +33,7 @@ Hensel seeds match the lift target; #8519) it has three arms:
    `latticeCoreWithBound_some_spec` this is either a genuine CLD split (a
    `bhksRecoveryCoreWithBound` success; irreducibility of the emitted factors is
    the BHKS count-equality obligation, already isolated by
-   `bhksRecoveryCoreWithBound_some_factor_zpolyIrreducible_of_count` and threaded
+   `bhksFactors_zpolyIrreducible_of_count` and threaded
    here as the `harm2_count` hypothesis), or the certificate-backed early stop
    (#8395): `some #[core]` with a witness precision `k'` at/above the
    column-adequacy floor whose partition is the single all-ones class,
@@ -72,7 +72,7 @@ The arms of `latticeCoreFactorsWithBound` are discharged as follows:
   `latticeCoreWithBound_some_spec` into the CLD-split case (a genuine
   `bhksRecoveryCoreWithBound` success, discharged from the count-equality
   hypothesis `harm2_count` via
-  `bhksRecoveryCoreWithBound_some_factor_zpolyIrreducible_of_count`) and the
+  `bhksFactors_zpolyIrreducible_of_count`) and the
   certificate-backed early stop (#8395: output `#[core]` with a witness
   precision `k'` clearing the column-adequacy floor, discharged from the
   adequacy hypothesis `harm3_adequacy` at `k'`);
@@ -136,7 +136,7 @@ theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible_of_bh
       obtain rfl := Option.some.inj hlattice
       rcases Hex.latticeCoreWithBound_some_spec hloop with
         hfast | ⟨rfl, k', hk'_floor, hk'_bhks⟩
-      · exact bhksRecoveryCoreWithBound_some_factor_zpolyIrreducible_of_count
+      · exact bhksFactors_zpolyIrreducible_of_count
           hcore_ne hfast (harm2_count coreFactors hfast)
       · have hk'_ne : k' ≠ 0 := by
           have hpos := Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hcore_ne
@@ -884,13 +884,12 @@ theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
       latticeArm3_bhksSingleAllOnes_irreducible f hf_ne B' primeData hselected hdeg_ne
         hB'_floor hB'_ne hbhks)
 /-!
-## Filling the capstone's lattice branch (#8417)
+## Lattice-branch assembly
 
-`factorLatticeFactorsWithBound_factor_irreducible` was a forward `sorry` in
-`IntReductionMod` (it cannot import the LLL machinery); it is filled here and,
-with its assembly `factorFactors_factor_irreducible`, moved into this file
-where the `LatticeTier` core lemma is available.  `factorize_irreducible_of_nonUnit`
-(FactorSoundness) consumes `factorFactors_factor_irreducible`.
+The raw lattice-factor irreducibility theorem lives here because it consumes
+the LLL-backed `LatticeTier` core lemma. Its hybrid assembly is in the same
+module, and `FactorSoundness` consumes that assembly for the public
+factorization theorem.
 -/
 
 /-- **Lattice-core reassembly completeness (#8520).**  When the lattice tier
@@ -906,10 +905,10 @@ and the sign-normalized expansion-complete surface
 Consumed by the lattice residual arm of
 `factorLatticeFactorsWithBound_factor_irreducible`.
 
-The only analytic dependency is the core irreducibility input, which inherits
-the two open BHKS obligations (`latticeArm2_fastCore_count`,
-`latticeArm3_bhksSingleAllOnes_irreducible`); the reassembly side itself is
-fully proved — no new assumption is introduced here. -/
+The core irreducibility input is supplied by
+`latticeArm2_fastCore_count` and
+`latticeArm3_bhksSingleAllOnes_irreducible`; the reassembly side introduces no
+additional assumption. -/
 theorem reassemblyExpansionComplete_latticeCore_of_ne_zero
     (f : Hex.ZPoly) (hf : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore

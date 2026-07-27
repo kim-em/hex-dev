@@ -19,7 +19,8 @@ relevant cell was checked and found false. Operational totality of the
 compiled builder follows from the squarefree carrier and
 `isolate?_isSome`, together with the structurally fuel-bounded
 separation pass, from
-[hex-real-roots-mathlib](hex-real-roots-mathlib.md). It is not exposed
+[hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md).
+It is not exposed
 as a kernel-side completeness theorem for false verdicts.
 
 This is the user-facing payoff of the real-root machinery: neither
@@ -155,11 +156,12 @@ proved equivalences.
    the original goal described above.
 
 2. **Collect** the atom polynomials. Constant atoms (degree ≤ 0,
-   including the zero polynomial) are evaluated to `tt`/`ff` by the
-   decision pipeline and never reach the decomposition. The reifier
-   may perform the same fold as an optimisation, but `decide` and
-   `check` must also handle arbitrary directly constructed
-   `Sentence`s containing constant atoms.
+   including the zero polynomial) never contribute carrier boundaries or
+   common-root packages. Mixed formulas cache their constant signs alongside
+   nonconstant signs in each cell row; a constant-only formula is folded once
+   without constructing a carrier. The reifier may perform the same fold as
+   an optimisation, but `decide` and `check` must also handle arbitrary
+   directly constructed `Sentence`s containing constant atoms.
 
 3. **Handle empty bounded domains.** Before any cell reasoning, compare
    the dyadic endpoints. If `a < b` is false, `(a,b]` is empty:
@@ -196,9 +198,12 @@ proved equivalences.
    and the sign matrix is the already-folded constant formula.
 
 5. **Separate.** Scan consecutive isolations in order. Already-strict
-   pairs are left unchanged. For a touching pair, repeatedly apply
-   cached-chain `refine1With` once to **both** intervals until
-   `upperᵢ < lowerᵢ₊₁`. The helper is structurally fuel-bounded by the
+   pairs are left unchanged. For a touching pair, repeatedly apply the
+   replay-based `Separation.refine1?` once to **both** intervals until
+   `upperᵢ < lowerᵢ₊₁`. This helper reads variation differences from the
+   cached generalized replay chain; it cannot use `RealRootIsolation.refine1With`,
+   whose types are tied to the executable `ZPoly.sturmChain`. The pair walk is
+   structurally fuel-bounded by the
    maximum of the two `refineTo` bounds
 
    ```text
@@ -224,42 +229,85 @@ proved equivalences.
    `Sturm.sturm_half_open` has no endpoint-nonroot premise, so this is
    valid even when the dyadic lower endpoint `l` is itself a root.
 
-6. **Build cells.** With isolations `I₁ < … < I_k` (roots
-   `r₁ < … < r_k`):
+6. **Build cells.** With `k` isolations `I₀ < … < Iₖ₋₁` (roots
+   `r₀ < … < rₖ₋₁`), use the size-indexed representation
 
-   ```
-   Cell = tailLeft            -- semantic (−∞, r₁),   point lower₁ − 1
-        | root i              -- semantic {rᵢ},       data Iᵢ
-        | gap i               -- semantic (rᵢ, rᵢ₊₁), test point in
-                              --   (upperᵢ, lowerᵢ₊₁), which step 5
-                              --   made nonempty
-        | tailRight           -- semantic (rₖ, +∞),   point upperₖ + 1
+   ```lean
+   inductive Cell (k : Nat)
+     | open (cut : Fin (k + 1))
+     | root (i : Fin k)
    ```
 
-   Use the dyadic midpoint of `upperᵢ` and `lowerᵢ₊₁` for a gap.
-   With no roots, use the sole open cell `ℝ` and test point `0`.
-   The semantic cells partition `ℝ`. Every `pⱼ` is sign-constant on
+   Open cut `0` is the left tail, cut `k` is the right tail, and an
+   interior cut `j` is `(rⱼ₋₁,rⱼ)`. `Cell.all` enumerates these cells
+   left-to-right with rank `2*j` for open cuts and `2*i+1` for roots.
+   `RootModel` packages the unique root of each checked isolation, their
+   strict monotonicity, and completeness. `Cell.Sem` interprets the indexed
+   representation, and `Cell.existsUnique_mem` states the partition theorem.
+
+   `IsolationCert.openPoint` uses the dyadic midpoint of `upperᵢ` and
+   `lowerᵢ₊₁` for an interior cut, `lower₀ - 1` and `upperₖ₋₁ + 1` for
+   the tails, and `0` for the sole no-root cell. `Cell.openPoint_mem`
+   certifies sample membership, `Cell.open_not_root` excludes carrier roots
+   from every open cell, and `Cell.isPreconnected_open` supplies the interval
+   topology needed by sign constancy. Every `pⱼ` is sign-constant on
    each open cell: a sign change would put a root of `pⱼ`, hence of
    `P`, strictly between consecutive roots of `P`.
 
+   For root-cell transfer, `RootModel.leftSpan` is the interval from the open
+   cell immediately left of root `i` through that root. Its preconnectedness,
+   open-sample and root membership lemmas, together with
+   `RootModel.root_eq_of_mem_leftSpan`, show that the only carrier root in the
+   span is root `i` itself.
+
 7. **Prepare common-root packages.** Do the expensive work once per
    distinct nonconstant atom, not once per root cell. For each `pⱼ`,
-   the builder computes a rational gcd representative `gⱼ` and emits
-   `aⱼ`, `bⱼ`, `uⱼ`, `vⱼ` and a nonzero integer `cⱼ` satisfying
+   the builder computes a rational gcd representative `gⱼ` and emits a
+   `CommonRootCert` containing `gcd`, `atomFactor`, `carrierFactor`,
+   `atomCoeff`, `carrierCoeff`, a nonzero integer `scale`, and an optional
+   generalized replay. Its checker receives `pⱼ` and `P` externally and
+   verifies
 
    ```text
-   pⱼ = gⱼ * aⱼ
-   P  = gⱼ * bⱼ
-   uⱼ * pⱼ + vⱼ * P = scale cⱼ gⱼ.
+   pⱼ = gcd * atomFactor
+   P  = gcd * carrierFactor
+   atomCoeff * pⱼ + carrierCoeff * P = scale scale gcd.
    ```
 
-   These multiplication-checkable identities prove that the real
-   roots of `gⱼ` are exactly the common real roots of `pⱼ` and `P`.
-   No executable `gcdZ` API is assumed. A nonzero constant `gⱼ` has
-   count zero; each distinct nonconstant `gⱼ` carries one cached
-   generalized Sturm replay used for all carrier roots.
+   These multiplication-checkable identities prove `CommonRootCert.isRoot_iff`:
+   the real roots of `gⱼ` are exactly the common real roots of `pⱼ` and
+   `P`. No executable `gcdZ` API is assumed. The `none` replay branch is
+   accepted exactly when `gⱼ` has dense size one, so it is a nonzero
+   constant and has no roots. The `some replay` branch requires positive
+   degree and checks the replay against `gⱼ`.
+
+   `CommonRootCert.hasRoot` returns `false` for the constant branch and tests
+   whether the cached replay count is one otherwise. Under the independently
+   checked carrier, strict isolations, and common-root package,
+   `CommonRootCert.hasRoot_iff` proves that this Boolean is true exactly when
+   `pⱼ` vanishes at any supplied carrier root in the checked isolation;
+   `hasRoot_model_iff` specializes it to the canonical `RootModel` root. The
+   underlying `count_eq_one_iff` uses divisibility to bound the `gⱼ` roots in
+   a carrier isolation by its single `P` root. Thus one replay is shared by all
+   carrier root cells for that distinct atom polynomial. Deduplication and alignment
+   of these packages with the recomputed distinct atom-polynomial order are
+   responsibilities of the step-8 sign-matrix checker, not trusted fields of
+   an individual package.
+
+   Compiled preparation computes the gcd and Bézout coefficients over
+   `ℚ[x]`, converts the exact factor quotients back to `ℤ[x]`, and clears one
+   positive common denominator across both Bézout coefficients and the
+   rational unit relating the executable gcd to its primitive integer
+   representative. `buildCommonRoots?` traverses exactly the
+   first-occurrence-preserving `dedupPolys s.polys` order and retains every
+   candidate only after `CommonRootCert.check` accepts it.
 
 8. **Sign matrix.** For each cell and each atom polynomial `pⱼ`:
+   The checker first coefficient-deduplicates the recomputed nonconstant atom
+   order and checks exactly one positional common-root package per result;
+   missing, extra, swapped, or malformed packages fail. It also deduplicates
+   all formula polynomials and materializes one option-valued sign row per
+   cell, so repeated atom occurrences reuse the same arithmetic result.
    - Open cells: exact Horner evaluation at the cell's dyadic test
      point. The value is nonzero (the test point is in no isolation,
      and roots of `pⱼ` are roots of `P`). A zero value would refute
@@ -270,12 +318,18 @@ proved equivalences.
      Since `gⱼ ∣ P`, the interval contains at most one such root; the
      common-root identities make that root exist exactly when
      `pⱼ(rᵢ) = 0`. When `pⱼ(rᵢ) ≠ 0`, its sign at `rᵢ` equals its sign
-     on either adjacent open cell. The two adjacent signs agree,
-     because otherwise `pⱼ` would have another root before the next
-     carrier root.
+     on either adjacent open cell. The executable checker canonically uses
+     the open cell immediately to the left, which exists for every root.
+     Where both adjacent cells exist, their signs agree because otherwise
+     `pⱼ` would have another root before the next carrier root.
 
-9. **Evaluate.** Substitute each cell's signs into the atoms, fold
-   the Boolean structure: one truth value per cell.
+9. **Evaluate.** Look up each atom in the cached sign row and fold the Boolean
+   structure to one truth value per cell. All children are evaluated before a
+   connective is combined, so a missing sign returns `none` even when ordinary
+   Boolean short-circuiting could already determine the truth value. Under the
+   checked alignment and carrier hypotheses, the sign and formula evaluators
+   are total and their returned Boolean is equivalent to `Formula.toProp` at
+   every point of the semantic cell.
 
 10. **Quantify.**
 
@@ -284,9 +338,27 @@ proved equivalences.
       true; `existsIoc`: some such cell true. Under the step-3
       hypothesis `a < b`, meeting the domain is decided exactly:
       a root cell meets iff `a < rᵢ ∧ rᵢ ≤ b`; a gap meets iff
-      `rᵢ < b ∧ a < rᵢ₊₁`; `tailLeft` iff `a < r₁`; and `tailRight`
-      iff `rₖ < b`. The endpoint comparisons from step 5 decide every
-      conjunct. With no roots, the single cell `ℝ` meets `(a,b]`.
+      `rᵢ < b ∧ a < rᵢ₊₁`; open cut `0` iff `a < r₀`; and open
+      cut `k` iff `rₖ₋₁ < b`. The endpoint comparisons from step 5
+      decide every conjunct. With no roots, the single cell `ℝ` meets
+      `(a,b]`.
+
+      Executably, `IocCmps k` stores size-indexed lower and upper
+      `RootCmp` vectors. `IocCmps.check` replays every claim, and
+      `Cell.meetsIoc` implements the table above. Under `a < b`,
+      `Cell.meetsIoc_iff_of_check` proves that the Boolean is true exactly
+      when some semantic point of the cell lies in `Set.Ioc a b`. Thus a
+      lower-endpoint equality excludes a root cell while an upper-endpoint
+      equality includes it. `Cell.meetsIocOn` adds the step-3 guard and is
+      false for every cell when `a ≥ b`; `Cell.meetsIocOn_iff_of_check` is
+      the corresponding all-endpoint-order theorem.
+
+    The executable quantifier folds are strict in their option-valued cell
+    results: Boolean `false`/`true` never short-circuits a later malformed
+    active cell. Bounded folds filter by the checked `meetsIocOn` predicate
+    first, so failures in irrelevant cells do not poison the result, while a
+    failure in any relevant cell returns `none`. Empty universal and
+    existential folds have the usual identities `true` and `false`.
 
 11. **Reflect.** A successful kernel replay gives
     `Sentence.toProp s`; the reifier's equivalence transports that
@@ -301,7 +373,7 @@ the kernel would be far slower. Following the compiled-prep /
 kernel-verify pattern of the `factor_poly` / `irreducibility` tactics
 (hex-berlekamp), the tactic runs the search compiled, embeds a
 `Certificate`, and emits a proof of
-`Sentence.check s cert = true` by kernel reduction.
+`Certificate.check s cert = true` by kernel reduction.
 
 ### Generalized Sturm replay
 
@@ -348,6 +420,25 @@ is the corresponding `−∞/+∞` difference. The proof factors through
 separately because the interval-count theorem requires positive
 degree.
 
+The compiled builder obtains the witnesses by instrumenting the existing
+sign-managed pseudo-remainder loop. During division of `prev` by `cur` it
+maintains
+
+```text
+scale A prev = Q * cur + r.
+```
+
+One `spemStep` with positive multiplier `a`, cancelled leading monomial
+`monomial k b`, and new remainder `r'` updates
+`A := a*A`, `Q := scale a Q + monomial k b`, and `r := r'`. At a nonzero
+stopping remainder it emits `next := -primitivePart r` and
+`rightScale := content r`, turning the invariant into exactly the checked
+subtractive recurrence. The builder starts the chain at the literal input
+`f`; only its derivative is primitive-normalized, with `derivScale` equal to
+the derivative content. Fuel exhaustion and a zero remainder before a
+constant terminal entry are rejected, and the public builder retains a raw
+candidate only after `SturmReplay.check` accepts it.
+
 Three existing private lemmas in
 `HexRealRootsMathlib/ChainCorrespond.lean` transfer directly and should
 be exported: `coprime_step_rev`, `flank_of_key`, and
@@ -364,6 +455,21 @@ variation reads to `Sturm.sturmVar` at finite endpoints and infinity.
 
 ### Certificate contents
 
+`Certificate` has four constructors matching the disjoint replay cases:
+`emptyIoc`, `constants`, `noRoots`, and `cells`. The no-root branch carries a
+checked carrier and an empty strict isolation set. The positive-root branch
+additionally carries the sign-matrix packages and an optional size-indexed
+`IocCmps`: real sentences require `none`, while bounded sentences require a
+checked `some`. Thus endpoint evidence cannot be silently ignored or omitted.
+
+Internally, `Certificate.replay?` returns `Option Bool`: `none` means malformed
+or shape-mismatched evidence, while `some false` is a valid diagnostic verdict.
+`Certificate.check` accepts exactly `some true`. Empty or reversed bounded
+domains are handled before all certificate data, so their universal and
+existential results are respectively `some true` and `some false` even when no
+decomposition exists. Every nonempty branch rejects data meant for a different
+shape.
+
 The certificate contains:
 
 - when needed, the carrier `P`, its generalized replay, and the
@@ -372,11 +478,11 @@ The certificate contains:
 - isolating intervals whose `count_one`, ordering, and completeness
   fields are expressed using the literal carrier replay, plus the
   strict-gap checks;
-- all endpoint classifications, open-cell test points and their exact
-  polynomial evaluations, per-cell formula values, and the quantified
-  result; `check` re-evaluates these fields and derives every root-cell
-  sign from a `gⱼ` count (zero) or an adjacent open-cell sign
-  (nonzero), rather than trusting a supplied sign;
+- all endpoint classifications and the quantified result; open-cell test
+  points are deterministic, and exact polynomial signs and per-cell formula
+  values are recomputed rather than stored as redundant claims. `check`
+  derives every root-cell sign from a `gⱼ` count (zero) or the canonical
+  left-adjacent open-cell sign (nonzero), rather than trusting a supplied sign;
 - one common-root package per distinct nonconstant atom, with its
   three identities and at most one generalized replay for its `gⱼ`.
 
@@ -400,21 +506,21 @@ soundness.
 
 ```lean
 theorem check_sound (s : Sentence) (cert : Certificate) :
-    check s cert = true → s.toProp
+    Certificate.check s cert = true → s.toProp
 ```
 
 `decide : Sentence → Option Bool` is a convenience wrapper used by
 conformance and the external oracle. Internally, the builder returns
 either a diagnostic false result or a candidate true certificate.
 `decide` returns `some false` for the former; for the latter it runs
-`check s cert` and returns `some true` only when that check succeeds,
+`Certificate.check s cert` and returns `some true` only when that check succeeds,
 otherwise `none`. An internal builder or certificate failure therefore
 cannot pass a fixture expecting either verdict. The required one-way
 connections are
 
 ```lean
 theorem decide_eq_some_true_imp_exists_cert :
-    decide s = some true → ∃ cert, check s cert = true
+    decide s = some true → ∃ cert, Certificate.check s cert = true
 
 theorem decide_sound (s : Sentence) :
     decide s = some true → s.toProp
@@ -479,12 +585,49 @@ free to change.
   `HexRCF/LanguageTests.lean`: executable language-semantics tests.
 - `HexRCF/SturmReplay.lean`: generalized multiplication-only chain
   replay and literal root counts.
-- `HexRCF/Certificate.lean`: `Certificate`, `check`, `decide`.
-- `HexRCF/Cells.lean`: separation refinement, cell construction,
-  endpoint classification for bounded sentences.
-- `HexRCF/SignMatrix.lean`: test-point evaluation, the `gⱼ` root-cell
-  computation, Boolean folding.
-- `HexRCF/Soundness.lean`: `check_sound` and its four factors.
+- `HexRCF/SturmBuilder.lean`: compiled pseudo-remainder instrumentation that
+  emits replay witnesses and retains only checker-approved candidates;
+  `HexRCF/SturmBuilderTests.lean`: valid, malformed, nonprimitive, and
+  nonsquarefree regressions.
+- `HexRCF/Carrier.lean`: deterministic nonconstant-atom collection, the
+  multiplication-checkable carrier certificate, and root-set soundness;
+  `HexRCF/CarrierTests.lean`: constant filtering, genuine repeated-factor,
+  dropped-root, and other tampered-carrier regressions.
+- `HexRCF/Isolations.lean`: the raw generalized isolation checker and its
+  bridge to literal isolation semantics; `HexRCF/IsolationsTests.lean`:
+  count, order, completeness, and no-real-root regressions.
+- `HexRCF/Certificate.lean`: strict option folds, the four `Certificate`
+  branches, three-valued replay, and `check`; `HexRCF/CertificateTests.lean`:
+  all quantifiers, empty/reversed domains, constants, zero/single/multiple-root
+  decompositions, endpoint equality, and malformed nested evidence.
+- `HexRCF/Builder.lean`: exact rational conversion and checker-retained
+  compiled carrier and deduplicated, aligned common-root construction;
+  `HexRCF/BuilderTests.lean`: signed-content, repeated-factor, rational-scale,
+  common-root alignment, and failure regressions. This module also owns the
+  later isolation, endpoint, certificate construction, and public `decide`
+  wrapper described below.
+- `HexRCF/Separation.lean`: replay-based strict-separation refinement,
+  strict-gap checking, and endpoint classification for bounded sentences;
+  `HexRCF/SeparationTests.lean`: midpoint ownership, close-root, scan,
+  malformed-input, and endpoint regressions.
+- `HexRCF/Cells.lean`: size-indexed executable cells, checked root models,
+  semantic partition, exact samples, canonical left-root spans,
+  endpoint-comparison vectors, and exact `Ioc` intersection;
+  `HexRCF/CellsTests.lean`: enumeration,
+  zero/singleton/multiple-root samples, endpoint equality/order guards,
+  relevance tables, and malformed lower/upper claim regressions.
+- `HexRCF/CommonRoot.lean`: multiplication-checkable common-root packages,
+  constant/nonconstant replay branches, exact common-root semantics, and
+  cached root-cell queries; `HexRCF/CommonRootTests.lean`: shared-factor,
+  coprime, equal-polynomial, and tampered-evidence regressions.
+- `HexRCF/SignMatrix.lean`: three-way exact signs, coefficient-equality
+  atom deduplication and common-package alignment, guarded open-cell
+  evaluation, the `gⱼ` root-cell computation, and full Boolean reflection;
+  `HexRCF/SignMatrixTests.lean`: exhaustive comparisons/connectives,
+  zero/singleton/multiple-root cells, shared roots, constants, deduplication,
+  and malformed-alignment regressions.
+- `HexRCF/Soundness.lean`: strict-fold reflection, quantified cell lifting,
+  the four replay factors, and `check_sound`.
 - `HexRCF/Reify.lean`: `Qq`/`MetaM` reification, normalisation,
   fall-through messages.
 - `HexRCF/Tactic.lean`: the `rcf` front end.
@@ -551,7 +694,8 @@ Per [SPEC/testing.md](../testing.md):
 
 ## Complexity contract
 
-For a sentence with `m` atoms of degrees summing to `n`:
+For a sentence with `u` atom occurrences of degrees summing to `n`, of which
+`m` are distinct nonconstant polynomials and `c` are distinct constants:
 
 - Reification: linear in the goal.
 - `P`: one product and one `squareFreeCore`, `deg P ≤ n`.
@@ -561,8 +705,14 @@ For a sentence with `m` atoms of degrees summing to `n`:
   strict pairs pay no bisection cost and `k ≤ n` roots.
 - Common-root preparation: one gcd and one generalized chain per
   distinct nonconstant `gⱼ`, reused across all `k` root cells.
-- Sign matrix: `k·m` literal variation-count reads plus
-  `(k + 1)·m` open-cell evaluations; no per-root gcd computation.
+- Sign matrix: one cached sign per distinct polynomial and cell, so repeated
+  atom occurrences do not repeat arithmetic. There are `k·m` literal
+  variation-count reads, `(k + 1)·m` open-cell evaluations, and at most `k·m`
+  additional evaluations of the canonical left sample for nonzero root-cell
+  signs, plus `(2k + 1)·c` constant evaluations. The current cell-wise API
+  recomputes both distinct orders and performs coefficient-equality row lookups
+  in every row, contributing `O((2k + 1)·u² + k·m²)` coefficient-array
+  comparisons. There is no per-root gcd computation.
 - Certificate replay in the kernel: one pass over the certificate,
   using polynomial multiplication/subtraction, evaluation, and
   comparison only.

@@ -25,6 +25,10 @@ on SD3 and SD4. A future split-family optimization should therefore target the
 witness/GCD phase. The boundary-free row-reduction work of #8669 is no longer
 the common dominant lever on this corpus.
 
+The follow-up witness profile and linear-leaf optimization are recorded in
+[`berlekamp-witness-split-profile.md`](berlekamp-witness-split-profile.md).
+The timings in this report were measured before that #8888 optimization.
+
 These ratios apply to `berlekampFactor` on an already-selected monic modular
 image. They are not speedups for the whole prime walk, Hensel lifting,
 recombination, or public integer factorization.

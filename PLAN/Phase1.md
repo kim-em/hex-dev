@@ -9,7 +9,7 @@ its dependencies are scaffolded).
 
 ## What to scaffold
 
-Read `SPEC/Libraries/hex-foo.md`. The SPEC contains explicit Lean
+Read `HexFoo/SPEC/hex-foo.md`. The SPEC contains explicit Lean
 code blocks with `structure`, `def`, `theorem`, and `class`
 declarations, and some newer library specs also give explicit API
 contracts in prose with named suggested declarations. These stable

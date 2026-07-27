@@ -67,12 +67,6 @@ variable {p : Hex.ZPoly}
 
 /-! ### Dyadic-order helpers (real values) -/
 
-/-- Dyadic `≤` transfers to the real values. -/
-private theorem toReal_le_toReal {a b : Dyadic} (h : a ≤ b) :
-    Dyadic.toReal a ≤ Dyadic.toReal b := by
-  have h2 : a.toRat ≤ b.toRat := Dyadic.toRat_le_toRat_iff.mpr h
-  unfold Dyadic.toReal; exact_mod_cast h2
-
 /-- Failing dyadic `≤` gives the reverse inequality on the real values (the
 core `Dyadic` order need not be a `LinearOrder`, so this routes through the
 total order on `ℚ` via `toRat`). -/
@@ -81,12 +75,6 @@ private theorem toReal_le_of_not_le {a b : Dyadic} (h : ¬ a ≤ b) :
   have h1 : ¬ (a.toRat ≤ b.toRat) := fun hh => h (Dyadic.toRat_le_toRat_iff.mp hh)
   have h2 : b.toRat ≤ a.toRat := (not_le.mp h1).le
   unfold Dyadic.toReal; exact_mod_cast h2
-
-/-- Dyadic `<` coincides with the order of the real values. -/
-private theorem toReal_lt_toReal_iff {a b : Dyadic} :
-    Dyadic.toReal a < Dyadic.toReal b ↔ a < b := by
-  unfold Dyadic.toReal
-  rw [Rat.cast_lt, Dyadic.toRat_lt_toRat_iff]
 
 /-- `Dyadic.toReal` is subtractive. -/
 private theorem toReal_sub (a b : Dyadic) :

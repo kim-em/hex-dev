@@ -15,8 +15,8 @@ public import Mathlib.Algebra.Polynomial.Div
 public section
 
 /-!
-Byte-identical correspondence for the word-sized CLD kernel (issue #8691,
-Phase 2): `cldQuotientModWord? f g p a = some (cldQuotientModBignum f g p a)` for a
+Byte-identical correspondence for the word-sized CLD kernel:
+`cldQuotientModWord? f g p a = some (cldQuotientModBignum f g p a)` for a
 monic `g` whenever the guard `Odd (p^a) ∧ p^a < 2^64` holds.
 
 The proof transports both quotients' Euclidean reconstructions

@@ -197,6 +197,8 @@ private def cfgDeep : StrassenConfig Int := { cutoff := 0, baseMul := naiveKerne
 -- Even, odd, and prime square dimensions under both custom configs.
 #guard let A := genInt 0 8 8; let B := genInt 1 8 8; mulStrassen cfgNaive A B = A * B
 #guard let A := genInt 0 8 8; let B := genInt 1 8 8; mulStrassen cfgDeep A B = A * B
+#guard let A := genInt 0 6 6; let B := genInt 1 6 6; mulStrassen cfgDeep A B = A * B
+#guard let A := genInt 0 12 12; let B := genInt 1 12 12; mulStrassen cfgDeep A B = A * B
 #guard let A := genInt 0 9 9; let B := genInt 1 9 9; mulStrassen cfgNaive A B = A * B
 #guard let A := genInt 0 9 9; let B := genInt 1 9 9; mulStrassen cfgDeep A B = A * B
 #guard let A := genInt 0 5 5; let B := genInt 1 5 5; mulStrassen cfgNaive A B = A * B

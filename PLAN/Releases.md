@@ -1,6 +1,6 @@
 # Releases
 
-The project ships four progressive releases, each unlocking a new user
+The project ships five progressive releases, each unlocking a new user
 story. A release is a named set of libraries plus an integration
 example that exercises the advertised user story end-to-end.
 
@@ -34,38 +34,55 @@ example that exercises the advertised user story end-to-end.
   `hex-berlekamp`); prime splitting via Kummer-Dedekind (anchored to
   `hex-gfq`).
 
-### Release 3: Integer factoring support
+### Release 3: Certified integer factorization
 
 - **Libraries:** Release 2 + `HexPolyZ`, `HexHensel`,
-  `HexBerlekampZassenhaus`
-- **User story:** Berlekamp-Zassenhaus supports irreducibility and
-  factoring workflows that start from integer polynomials, replacing
-  external CAS dependencies in downstream number-theory projects.
+  `HexBerlekampZassenhaus`, and `HexBerlekampZassenhausMathlib`, together
+  with their transitive dependencies.
+- **User story:** Every integer polynomial has a sound, total factorization
+  through the production cascade. The result may use the exponential exact
+  backstop; this release makes no polynomial-time claim.
 - **Integration example:** `Examples/Release3.lean` — factor a handful
   of integer polynomials end-to-end, including at least one case that
   benefits from Hensel lifting beyond the baseline `mod p` step.
 
-### Release 4: Polynomial-time capstone
+### Release 4: Conditional lattice factorization
 
-- **Libraries:** Release 3 + `HexLLL` (integrated into the
-  Berlekamp-Zassenhaus pipeline)
-- **User story:** The full polynomial-time Berlekamp-Zassenhaus
-  pipeline is available, and finite-field/irreducibility workflows no
-  longer depend on the exponential recombination fallback.
+- **Libraries:** The Release 3 set. `HexLLL` is already a transitive
+  dependency of `HexBerlekampZassenhaus`.
+- **User story:** The LLL-assisted pipeline has a proved success theorem under
+  its explicit admissibility and precision hypotheses. For inputs satisfying
+  that contract, a dedicated no-fallback entry point returns a factorization
+  without exponential recombination. This is a conditional guarantee, not an
+  unconditional polynomial-time claim for every integer polynomial.
 - **Integration example:** `Examples/Release4.lean` — factor
-  polynomials where LLL-assisted recombination is the only tractable
-  path, demonstrating the exponential fallback would time out.
+  a high modular-factor-count polynomial and assert that the production trace
+  selects the LLL-assisted lattice tier without invoking the trial backstop.
 - **Tutorials:** LLL in cryptanalysis / Coppersmith toy (anchored to
   `hex-lll`).
+
+### Release 5: Certified root isolation
+
+- **Libraries:** `HexRoots`, `HexRootsMathlib`, `HexRealRoots`, and
+  `HexRealRootsMathlib`, together with their transitive dependencies.
+- **User story:** Users can isolate every complex root of a nonzero squarefree
+  integer polynomial and every distinct real root of an arbitrary nonzero
+  integer polynomial. Results carry checked coverage, uniqueness,
+  disjointness, count, and precision guarantees.
+- **Integration example:** `Examples/Release5.lean` — use the none-free
+  `HexRootsMathlib.isolate!` wrapper for complex roots and the
+  `isolate_roots` elaborator for repeated real roots.
 
 ## Release readiness predicate
 
 A release `R` is ready when, computed from `libraries.yml`:
 
-> **every library `L` in `R.libraries` has `done_through ≥ 7`**
+> **every named library and transitive dependency `L` in `R.libraries` has
+> `done_through ≥ 7`**
 > **and `R.integration-example` builds and its test passes in CI**.
 
-`scripts/status.py release <N>` evaluates this predicate.
+`scripts/status.py release <N>` computes the dependency closure from
+`libraries.yml` and evaluates this predicate.
 
 This is the only release-level gate. Per-library requirements that
 were previously stated as project-wide release criteria (the
@@ -117,8 +134,8 @@ Actions* once (Settings -> Pages -> Build and deployment -> Source).
 
 ## Published libraries
 
-"Release" above means a milestone. Separately, several libraries are
-*published* as standalone repositories under `kim-em/`, so they can be
+"Release" above means a milestone. Separately, libraries are
+*published* as standalone repositories under `leanprover/`, so they can be
 used without the whole monorepo. `hex-dev` is the single source of
 truth: all development happens here, and a workflow regenerates each
 published repo from this tree. A published repo is a mirror — never
@@ -126,12 +143,19 @@ hand-edit one; change it here and let the sync publish.
 
 ### The published set
 
-In dependency order (`scripts/release/released.yml`):
+The authoritative dependency order is `scripts/release/released.yml`. Its
+current 33-library set contains:
 
-`hex-test-kit`, `hex-matrix`, `hex-row-reduce`, `hex-determinant`,
-`hex-bareiss`, `hex-matrix-mathlib`, `hex-row-reduce-mathlib`,
-`hex-determinant-mathlib`, `hex-bareiss-mathlib`, `hex-gram-schmidt`,
-`hex-gram-schmidt-mathlib`, `hex-lll`, `hex-lll-mathlib`.
+- the shared `hex-basic` and `hex-test-kit` foundations;
+- the arithmetic/polynomial stack from `hex-arith` through `hex-gfq-ring`,
+  `hex-hensel`, and their Mathlib bridges;
+- `hex-roots`, `hex-real-roots`, and their Mathlib bridges;
+- the matrix, determinant, Gram--Schmidt, and LLL repositories already
+  published by the earlier release work; and
+- `hex-berlekamp`, `hex-berlekamp-zassenhaus`, and their Mathlib bridges.
+
+`python3 scripts/release/check_released_manifest.py` checks the set, managed
+paths, pin closure, and publication order without network access.
 
 This is the current set, not a permanent one; more sublibraries may be
 published later. The computational repos are Mathlib-free; the
@@ -148,9 +172,10 @@ copy:
 - `conformance/HexX/{Conformance,EmitFixtures}.lean` — conformance drivers.
 - `conformance-fixtures/HexX/*.jsonl`, `scripts/oracle/<lib>_*.py`.
 
-The bench and conformance drivers stay in the root Lake package (via
-`srcDir`), not in sub-packages: a sub-package would re-resolve and
-duplicate the whole Mathlib checkout.
+In this monorepo, all bench and conformance drivers build in the shared root
+Lake graph. Published mirrors use the corresponding root and sidecar skeletons
+documented in `scripts/release/BOOTSTRAP.md`; the sync manages source and
+rewrites every lockfile but deliberately leaves those Lake skeletons intact.
 
 ### The publish mechanism
 

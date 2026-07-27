@@ -69,9 +69,9 @@ factorization surface.
 This packages the clauses that are already exposed by the Mathlib-free and
 Mathlib bridge layers: product preservation, Mathlib irreducibility of each
 recorded polynomial factor, positive multiplicities, syntactic absence of
-duplicate polynomial keys, and the signed-content scalar convention. The
-remaining HO-1 headline strengthening is to replace the syntactic distinct-key
-clause with non-association and to add the primitive-factor clause.
+duplicate polynomial keys, and the signed-content scalar convention. Stronger
+siblings below add primitivity, positive leading coefficients, and
+non-association without making this smaller bundle harder to reuse.
 -/
 theorem factorize_headline_contract_core (f : Hex.ZPoly) :
     Hex.Factorization.product (Hex.ZPoly.factorize f) = f ∧
@@ -325,8 +325,7 @@ default factorization is a correct irreducible factorization.  The degree-0
 (`irreducible_C_of_isNatPrime` / `isNatPrime_natAbs_of_irreducible_C`); the
 positive-degree arm composes `factorize_irreducible_of_nonUnit` (forward) with
 `factorize_unique_of_product_default` (backward, which pins the factor count to the
-`normalizedFactors` cardinality).  It therefore inherits the lattice-tier `sorry`
-of `factorize_irreducible_of_nonUnit` (#8417) and nothing else.
+`normalizedFactors` cardinality).
 -/
 theorem Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
     Hex.ZPoly.isIrreducible f = true ↔ Hex.ZPoly.Irreducible f := by
