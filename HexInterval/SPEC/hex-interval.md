@@ -1094,6 +1094,20 @@ structure RuleObservation (Fact : Type) where
   contradiction : Bool
   cost          : CostObservation
 
+inductive EqualityOutcome
+  | noChange
+  | improved
+  | contradiction
+  | engineResource (resource : Resource)
+  | factResource (budget : Nat)
+  | invalid (code : Nat)
+
+structure EqualityObservation (Fact : Type) where
+  key         : EqualityWorkKey
+  outcome     : EqualityOutcome
+  changes     : Array (FactDelta Fact)
+  narrowCalls : Nat
+
 structure OfferView where
   id       : OfferId
   key      : OfferKey
@@ -1121,6 +1135,7 @@ structure Selection where
 inductive PolicyEvent (Fact : Type)
   | frontier (added : Array OfferView) (removed : Array OfferId)
   | rule (observation : RuleObservation Fact)
+  | equality (observation : EqualityObservation Fact)
   | instanceAdmitted (programVersion : Nat) (added : Array OfferView)
   | splitPrepared (scope : ScopeId) (node : NodeId) (point : Dyadic)
   | choiceRejected (choice : Selection) (reason : Nat)
@@ -1179,8 +1194,12 @@ fact domain or registry and influence search only.
 
 The concrete `RuleObservation` shown above records actual admitted deltas
 rather than a rule's claimed gain. Other `PolicyEvent` constructors distinguish
-structural admission, split preparation, rejected choices, and engine resource
-exhaustion from a rule-declared outcome.
+structural admission, equality contraction, split preparation, rejected
+choices, and engine resource exhaustion from a rule-declared outcome. Equality
+has its own typed observation because it is selectable engine work, not a fake
+registry invocation. A fixed-point equality run with no delta is still an
+observation; the generic fact interface supplies no idempotence law that would
+justify silently omitting it.
 
 `PolicyEvent` is the single ordered transition stream. It wraps rule
 observations, instance admission, split preparation, offer additions and
@@ -1206,12 +1225,64 @@ reported as `unknown`, not saturation.
 
 The shown first interface supplies the authoritative bounded scan frontier in
 each `PolicyView`; transition events let the policy update historical state
-without reconstructing it. An event-only priority implementation may later
-remove that repeated batch behind a different adapter while preserving
+without reconstructing it. Its traversal budget is cumulative across views,
+not merely a per-view size check, and counts inactive backing slots honestly.
+The decision budget does not suppress a read-only view: after the last allowed
+decision the driver may still use its separately charged traversal budget to
+distinguish a genuinely empty frontier from live work that must be reported as
+`unknown`.
+`maxLiveOffers` is initially a policy-view/output budget: making it an atomic
+frontier-mutation budget would require preflighting replies and instantiations
+before their already-atomic commits. An event-only priority implementation may
+later remove the repeated scan behind a different adapter while preserving
 `Selection` and `Policy.State.select`. We must also compare coalesced live offers
 with append-only stale entries and decide how much of a generic fact, as
 opposed to exact bounded policy features, a reusable policy should see. These
 choices change cost and convenience, not the admission or replay boundary.
+
+The corrected logical frontier experiment does **not** yet select a production
+representation. Its indexed arm maintains a binary maximum-priority heap from
+one seed view and newly appended work and suggestion events; it is not a FIFO
+queue cursor. Both arms execute the same maximum policy through
+`Policy.State.select`, start from a fixed point reached through the public
+request/reply API, and must agree on the complete choice trace, facts,
+decisions, calls, improvements, queue coalescing, dismissals, and checksum.
+
+The experiment reports a vector rather than the earlier incomplete
+`288`-versus-`8` scalar. It counts complete-view backing slots and emitted
+offers, clock slots rebuilt by each wrapper state advance, suggestion-pruning visits,
+dependency watcher visits including suppressed insertions, appended events,
+semantic rechecks, variable-length semantic-key items, priority comparisons,
+and heap moves. These logical units are shown separately: their machine costs
+are not assumed equal. On the small merge-gated fixtures:
+
+- one root fanning out to six sinks gives scan/index aggregate touch counts
+  `267/242`, while both arms already share `112` clock synchronizations and
+  `14` suggestion-pruning visits;
+- four roots densely waking five sinks records all `20` watcher visits—five
+  insertions and fifteen suppressed duplicates—and gives `277/250`;
+- five sinks each emitting three disposable split suggestions gives
+  `1267/754`; the scan inspects `424` historical backing slots, while the
+  index consumes five work plus fifteen suggestion events from a single
+  seven-slot seed view.
+
+The aggregate is only a convenient checksum over the reported columns, not a
+wall-time prediction. In particular, the current wrapper still rebuilds every
+application, equality, and retained-suggestion clock array on each
+request/reply transition. That shared work is often dominant and must itself
+be made incremental before an event-indexed production frontier can realize
+its intended asymptotics. The bounded complete scan remains the executable
+reference and differential oracle. Coalesced mutable entries, a versioned
+stale heap, and other incremental layouts remain open candidates until they
+are implemented at the clock-synchronization boundary and compared with
+scientific timing and larger traces.
+
+The first policy wrapper treats age as continuous eligibility age. A dirty
+application or equality keeps its birth time while its versioned semantic key
+refreshes, becomes inactive when selected, and receives a new birth time if a
+later dependency change wakes it again. Retained suggestions never refresh
+into different proposals: selection, dismissal, or failure of their
+variant-specific freshness guard tombstones them permanently.
 
 Freshness is offer-specific. An invocation or retry compares the concrete
 application and relevant current input versions. Instantiation initially uses
@@ -1227,7 +1298,10 @@ decision step, preventing a faulty policy from looping for free. A rule defines
 the meaning of its own bounded effort ladder: pieces, Taylor degree, reduction
 precision, or another function-specific choice. Different incomparable
 methods remain separate registrations rather than pretending their effort
-numbers share a scale.
+numbers share a scale. The engine also bounds every reply-provided effort,
+outcome code, resource report, and `CostObservation` component before it can
+enter policy state. These bounds limit representation size; they do not assign
+cross-rule semantic meaning to an effort or cost number.
 
 The engine bounds every choice attempt and every value it supplies, but it
 cannot force an arbitrary external callback to terminate. Shipped policies are
@@ -1243,13 +1317,16 @@ reports divergence without state mutation when the expected offer is absent.
 Proof replay ignores this policy log and checks only fact, equality, instance,
 and split derivations.
 
-Canonical instantiation keys remain an experiment. They preserve proposed SSA
-dependency order while sorting/deduplicating equality sets and never deduplicate
-the ordered input-slot list. Payload erasure can leave two semantic duplicates
-with different proof recipes. The engine must either retain the first by
-bounded response ordinal, include that ordinal in the offer key, or require a
-stable registry-defined recipe key; freshly allocated payload identifiers are
-never canonical tie-breakers.
+Canonical instantiation keys remain an experiment. Version `v0` preserves
+proposed SSA dependency order, preserves the proposal equality order, and
+never deduplicates the ordered input-slot list; this makes the initial
+implementation exact and easy to test but not yet canonical under reordered
+equality reports. A later candidate sorts/deduplicates unordered equality
+pairs. Payload erasure can leave two semantic duplicates with different proof
+recipes. The engine must either retain the first by bounded response ordinal,
+include that ordinal in the offer key, or require a stable registry-defined
+recipe key; freshly allocated payload identifiers are never canonical
+tie-breakers.
 
 The policy experiment proceeds in replaceable increments:
 
@@ -1261,6 +1338,13 @@ The policy experiment proceeds in replaceable increments:
    admission;
 5. add the external policy driver and compare scan, staged, replay, and
    versioned-priority implementations on identical semantic offers.
+
+Once policy control begins, the wrapper is the sole scheduling authority for
+that state: callers use its `view`, `select`, `submit`, equality, and admission
+transitions. Mixing those calls with the reference FIFO `poll` would leave
+tombstoned append-log entries and conflicting action serial authority. The FIFO
+path remains a separate reference run for trace comparison, not an interleaved
+API.
 
 Only after those transition traces agree do we choose the production frontier
 representation. This keeps scheduling experiments independent of any rational
@@ -1819,6 +1903,16 @@ position-sensitive fact checksum. For `t > 0` chains of depth `d`, the current
 fixture records `d` incremental calls versus `2*t*d` structural calls. These
 counts motivate the incremental baseline without freezing queue coalescing,
 priority policy, or state storage.
+
+The separate policy-frontier canary compares complete scans with a genuinely
+maintained maximum-priority heap on fan-out, dense multi-output wake, and
+retained-suggestion churn workloads. Its executable prints the full logical
+work vector described in the policy section, and small instances are
+merge-gated twice: ordinary `#guard` equivalence checks build with
+`HexConformance`, while the compiled spike's `canary` mode builds and runs in
+the existing single CI job. This is deterministic representation evidence,
+not scientific timing; it neither uses a custom timing loop nor freezes the
+current touch-count aggregates as performance contracts.
 
 The declared models follow the complexity section above. Scientific runs also
 record accepted actions, endpoint heights, live leaves, retained derivations,

@@ -518,7 +518,9 @@ def ladderFinal? : Option (RunResult Rank (List String)) := do
               equalities := []
               payload := { index := 101 } }
           match first.state.admitRetained
-              { action := retained.action, suggestion := .instantiate proposal } with
+              { action := retained.action
+                suggestion := .instantiate proposal
+                splitVersion := none } with
           | .invalid (.generationMismatch 1 2) state =>
               state.programVersion == 1 && state.program.nodes.size == 3 &&
                 state.generations.toList == [0, 0, 1]
@@ -669,7 +671,7 @@ def pairReuseAdmitted? : Option (Engine PairRank) := do
       payload := { index := 109 } }
   let action := { retained.action with programVersion := state.programVersion }
   match state.admitRetained
-      { action, suggestion := .instantiate proposal } with
+      { action, suggestion := .instantiate proposal, splitVersion := none } with
   | .admitted [newNode] next => if newNode == node 3 then some next else none
   | _ => none
 
@@ -709,8 +711,9 @@ def pairReuseAdmitted? : Option (Engine PairRank) := do
         | _, _ => false
   | none => false
 
--- A differently labelled request whose complete structural effect already
--- exists is a no-op: it consumes neither a snapshot nor an instance slot.
+-- A differently labelled request from the same engine-owned invocation whose
+-- complete structural effect already exists is a no-op: an untrusted request
+-- label cannot manufacture a new family, snapshot, or instance slot.
 #guard
   match pairAdmitted? with
   | some state =>
@@ -726,12 +729,12 @@ def pairReuseAdmitted? : Option (Engine PairRank) := do
                    right := .existing (node 1)
                    payload := { index := 127 } }]
               payload := { index := 131 } }
-          let otherAction :=
-            { retained.action with
-              programVersion := state.programVersion
-              key := { name := "shape.other-no-op" } }
+          let currentAction :=
+            { retained.action with programVersion := state.programVersion }
           match state.admitRetained
-              { action := otherAction, suggestion := .instantiate proposal } with
+              { action := currentAction
+                suggestion := .instantiate proposal
+                splitVersion := none } with
           | .duplicate next =>
               next.programVersion == 1 && next.instances.length == 1 &&
                 next.instanceHistory.size == 1 && next.equalities.size == 1
@@ -748,7 +751,7 @@ def pairReuseAdmitted? : Option (Engine PairRank) := do
       | some edge =>
           let pending := { state with pending := some edge.origin }
           match pending.contractEquality { index := 0 } with
-          | .invalid 3 next =>
+          | .invalid .pendingReply 0 next =>
               next.pending.isSome && next.facts == pending.facts &&
                 next.versions == pending.versions && next.history.isEmpty
           | _ => false
@@ -988,7 +991,7 @@ def firstChainRequest? : Option (RuleRequest Rank × Engine Rank) := do
   | some (request, awaiting) =>
       match awaiting.submit (request.action.reply
           (.success [] [.retry (generous.maxEffort + 1)] {})) with
-      | .invalid .oversizedProposal state =>
+      | .invalid .oversizedEffort state =>
           state.pending.isNone && state.history.isEmpty && state.suggestions.isEmpty
       | _ => false
   | none => false
