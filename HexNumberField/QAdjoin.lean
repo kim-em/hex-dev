@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexNumberField.Basic
-public meta import HexNumberField.Basic
+public import HexNumberField.Approx
+public meta import HexNumberField.Approx
 
 public section
 
@@ -132,6 +132,18 @@ def div [ZPoly.CheckedIrreducible p] (a b : QAdjoin p x) : QAdjoin p x :=
   a * b⁻¹
 
 instance [ZPoly.CheckedIrreducible p] : Div (QAdjoin p x) := ⟨div⟩
+
+/-- Refine a fixed-field generator representative once and evaluate canonical
+coordinates on its disc. The checked driver's `none` fallback retains the
+original representative and therefore still returns a sound ball; the
+companion proves that branch unreachable and proves the requested radius. -/
+@[expose]
+def approx (a : QAdjoin p x) (rep : RefinedIsolation p)
+    (_h : SimpleRoot.mk rep = x) (prec : Int) :
+    RefinedIsolation p × DyadicComplexBall :=
+  let target := prec + (approxGuardBits p a.coeffs : Int)
+  let threaded := (rep.refineTo? target).getD ⟨rep, rfl⟩
+  (threaded.1, evalRatBall a.coeffs threaded.1.1.square target)
 
 /-! Compiled arithmetic regressions in `ℚ[X]/(X²-2)`. -/
 
