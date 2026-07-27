@@ -171,6 +171,33 @@ theorem subresultantOrdered_fuel_core {S : Type u}
       subresultantOrdered f g := by
   sorry
 
+/-- Extract the resultant value from an ordered nonzero Brown run. The
+corrected terminal scale is returned exactly when the last stored term is a
+nonzero constant. -/
+@[expose]
+def resultantOrdered [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (f g : DensePoly R) : R :=
+  let run := subresultantOrdered f g
+  let last := run.chain.getD (run.chain.size - 1) 0
+  if last.size = 1 then run.scale else 0
+
+/-- Executable polynomial resultant with default formal-degree conventions.
+
+Zero polynomials are treated as degree zero, so two constants (including two
+zeros) have resultant one. Reversed nonzero inputs are ordered for the Brown
+run and receive the standard degree-product sign. -/
+@[expose]
+def resultant [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (f g : DensePoly R) : R :=
+  if f.isZero then
+    if g.size ≤ 1 then 1 else 0
+  else if g.isZero then
+    if f.size ≤ 1 then 1 else 0
+  else if f.size < g.size then
+    negOnePow ((f.size - 1) * (g.size - 1)) * resultantOrdered g f
+  else
+    resultantOrdered f g
+
 /-- Both zero inputs produce the empty nonzero chain. -/
 @[simp, grind =]
 theorem subresultantChain_zero_zero [One R] [Add R] [Sub R] [Mul R] [Div R] :

@@ -9,6 +9,7 @@ module
 public import HexResultant.Basic
 public import HexResultant.ExactDiv
 public import HexResultant.Subresultant
+public import HexResultant.Discriminant
 
 public section
 
@@ -20,6 +21,8 @@ polynomial pseudo-division over `Hex.DensePoly`, with the computational
 dependency surface kept at `HexPoly` alone. Brown's nonzero PRS chain tracks
 its corrected terminal principal-subresultant scalar separately, so defective
 degree drops retain the exact resultant scale without matrix construction.
+The standard discriminant is computed from the signed resultant with the
+formal derivative and an exact leading-coefficient quotient.
 
 Correctness and correspondence with Mathlib's `Polynomial.resultant` and
 `Polynomial.discr` live in the companion `HexResultantMathlib` library.
