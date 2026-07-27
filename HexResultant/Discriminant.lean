@@ -27,92 +27,70 @@ universe u
 
 variable {R : Type u} [Zero R] [DecidableEq R]
 
-/-- Standard polynomial discriminant, with value one for zero and constants. -/
+/-- Standard polynomial discriminant, with value one for zero and constants.
+
+The leading-coefficient gap power promotes the derivative's default-degree
+resultant to formal derivative degree `n - 1`. This matters in positive
+characteristic, where the derivative's actual degree can drop. -/
 @[expose]
-noncomputable def disc [One R] [Add R] [Sub R] [Mul R] [Div R] [NatCast R]
+def disc [One R] [Add R] [Sub R] [Mul R] [Div R] [NatCast R]
     (f : DensePoly R) : R :=
   if f.size ≤ 1 then
     1
   else
     let n := f.size - 1
+    let d := f.derivative
+    let gap := n - 1 - d.degree?.getD 0
     negOnePow (n * (n - 1) / 2) *
-      exactDiv (resultant f f.derivative) f.leadingCoeff
+      exactDiv (powNat f.leadingCoeff gap * resultant f d) f.leadingCoeff
 
-/-- Runtime implementation of `disc`, using the compiled derivative loop. -/
-@[expose]
-def discImpl [One R] [Add R] [Sub R] [Mul R] [Div R] [NatCast R]
-    (f : DensePoly R) : R :=
-  if f.size ≤ 1 then
-    1
-  else
-    let n := f.size - 1
-    negOnePow (n * (n - 1) / 2) *
-      exactDiv (resultant f (derivativeImpl f)) f.leadingCoeff
-
-/-- The kernel specification and executable discriminant agree. -/
-theorem disc_eq_discImpl [One R] [Add R] [Sub R] [Mul R] [Div R] [NatCast R]
-    (f : DensePoly R) : disc f = discImpl f := by
-  simp only [disc, discImpl, derivative_eq_derivativeImpl]
-
-/-- Register the executable discriminant for compiled evaluation. -/
-@[csimp]
-theorem disc_eq_impl : @disc = @discImpl := by
-  funext R _ _ _ _ _ _ _ _ f
-  exact disc_eq_discImpl f
-
-/-! Compiled regression checks for resultants and discriminants. -/
-
--- Linear and quadratic resultants, including a reversed odd-degree sign.
-#guard
-    let xSub2 := ofList ([-2, 1] : List Int)
-    let xSub5 := ofList ([-5, 1] : List Int)
-    let xSqAdd1 := ofList ([1, 0, 1] : List Int)
-    let xSub1 := ofList ([-1, 1] : List Int)
-    resultant xSub2 xSub5 = -3 &&
-      resultant xSqAdd1 xSub1 = 2 &&
-      resultant xSub1 xSqAdd1 = 2
-
--- Default formal degrees make zero/constant resultants total.
-#guard
-    let c2 := C (2 : Int)
-    let c3 := C (3 : Int)
-    let quadratic := ofList ([1, 0, 1] : List Int)
-    resultant 0 0 = (1 : Int) &&
-      resultant c2 0 = 1 &&
-      resultant quadratic 0 = 0 &&
-      resultant quadratic c3 = 9 &&
-      resultant c2 c3 = 1
-
--- Common roots and both defective Brown drops produce their pinned values.
-#guard
-    let commonLeft := ofList ([-1, 0, 1] : List Int)
-    let commonRight := ofList ([-1, 1] : List Int)
-    let defective1 := ofList ([2, 1, 0, 2, 2] : List Int)
-    let defective2 := ofList ([1, 0, 0, 2] : List Int)
-    let nonunit1 := ofList ([0, 0, 0, 0, -1] : List Int)
-    let nonunit2 := ofList ([-1, 0, 0, 2] : List Int)
-    resultant commonLeft commonRight = 0 &&
-      resultant defective1 defective2 = 16 &&
-      resultant nonunit1 nonunit2 = -1
-
--- Bivariate elimination executes the recursive exact-division instance.
-#guard
-    let t : DensePoly Int := ofList [0, 1]
-    let one : DensePoly Int := 1
-    let ySqSubT : DensePoly (DensePoly Int) := ofList [0 - t, 0, one]
-    let ySubT : DensePoly (DensePoly Int) := ofList [0 - t, one]
-    resultant ySqSubT ySubT = t * t - t
+/-! Compiled regression checks for discriminants. -/
 
 -- Quadratic, repeated-root, and total discriminant conventions.
 #guard
     let quadratic := ofList ([2, 3, 1] : List Int)
     let xSqAdd1 := ofList ([1, 0, 1] : List Int)
     let repeated := ofList ([1, -2, 1] : List Int)
+    let nonmonic := ofList ([1, 2, 3] : List Int)
+    let cubic := ofList ([-1, 0, 0, 1] : List Int)
     disc 0 = (1 : Int) &&
       disc (C (2 : Int)) = 1 &&
       disc (ofList ([-7, 3] : List Int)) = 1 &&
       disc quadratic = 1 &&
       disc xSqAdd1 = -4 &&
-      disc repeated = 0
+      disc repeated = 0 &&
+      disc nonmonic = -8 &&
+      disc cubic = -27
+
+/- A tiny executable characteristic-five field regression. This specifically
+guards the formal-degree correction: for `2X¹⁰ + 3X`, the derivative is the
+constant `3`, nine degrees below its formal derivative degree. -/
+private structure F5 where
+  val : Fin 5
+deriving DecidableEq
+
+private instance : Zero F5 := ⟨⟨0⟩⟩
+private instance : One F5 := ⟨⟨1⟩⟩
+private instance (n : Nat) : OfNat F5 n :=
+  ⟨{ val := ⟨n % 5, Nat.mod_lt n (by decide)⟩ }⟩
+private instance : NatCast F5 :=
+  ⟨fun n => { val := ⟨n % 5, Nat.mod_lt n (by decide)⟩ }⟩
+private instance : Add F5 := ⟨fun a b => ⟨a.val + b.val⟩⟩
+private instance : Sub F5 := ⟨fun a b => ⟨a.val - b.val⟩⟩
+private instance : Mul F5 := ⟨fun a b => ⟨a.val * b.val⟩⟩
+private instance : Div F5 where
+  div a b :=
+    let inv : Fin 5 :=
+      match b.val.val with
+      | 1 => 1
+      | 2 => 3
+      | 3 => 2
+      | 4 => 4
+      | _ => 0
+    ⟨a.val * inv⟩
+
+#guard
+    let f : DensePoly F5 := ofList [0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+    disc f = 1
 
 end Hex.DensePoly
