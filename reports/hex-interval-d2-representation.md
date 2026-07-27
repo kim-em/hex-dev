@@ -39,7 +39,7 @@ The committed record is
 It contains five independent processes per compiled or replay case, the exact
 environment, raw samples, peak RSS where available, artifact sizes, and axiom
 sets. Candidate order rotates between samples to reduce machine-load drift,
-and the record hashes all 22 source, build, and toolchain inputs. Run it again
+and the record hashes all 24 source, build, and toolchain inputs. Run it again
 with:
 
 ```sh
@@ -58,8 +58,8 @@ Median compiled time per complete arena construction and checksum was:
 
 | Values | Bundled | Checked | Bundled boundary | Checked boundary |
 | ---: | ---: | ---: | ---: | ---: |
-| 433 | 39.3 µs | 39.4 µs | 39.7 µs | 45.0 µs |
-| 4096 | 387.5 µs | 389.2 µs | 387.9 µs | 437.6 µs |
+| 433 | 39.0 µs | 38.5 µs | 38.7 µs | 43.5 µs |
+| 4096 | 384.3 µs | 382.4 µs | 383.3 µs | 429.2 µs |
 
 Construction differs by about one percent or less in this run.  Inspecting the
 generated C explains why: the proof field is erased, the one-live-field
@@ -67,7 +67,7 @@ generated C explains why: the proof field is erased, the one-live-field
 `Checked.ofTrustedRaw` compile to the same call to `Raw.normalizeUnchecked`.
 `Bundled.view` is the identity.
 
-The externally checked boundary costs about 12–14% at these sizes because it
+The externally checked boundary costs about 12–13% at these sizes because it
 performs an additional full consistency scan.  This is a
 real cost, but it is paid at handoff rather than on each propagation update.
 Every value in this timing was first canonicalized, so the scan is deliberately
@@ -87,33 +87,35 @@ allocation-byte claim.
 
 ### Ordinary kernel replay
 
-The import-only Lake baseline had median wall time 1.052 s. The candidate
+The import-only Lake baseline had median wall time 1.165 s. The candidate
 module medians and baseline-subtracted margins were:
 
 | Candidate | Total wall | Baseline-subtracted | Peak RSS |
 | --- | ---: | ---: | ---: |
-| Bundled | 1.655 s | 0.604 s | 801 MiB |
-| Checked | 1.680 s | 0.628 s | 804 MiB |
+| Bundled | 2.131 s | 0.966 s | 791 MiB |
+| Checked | 1.968 s | 0.803 s | 792 MiB |
 
 Lake startup and module loading dominate these small proofs, and individual
-candidate samples ranged from 1.461 s to 1.948 s. Whole fresh-module timings
+candidate samples ranged from 1.564 s to 2.647 s. Whole fresh-module timings
 remain load-sensitive. Both generated-constructor canaries are feasible at 433
 values, and this projected-value workload does not justify closing the
 trace-layout design space.
 
 The independent `Lean.Kernel.whnf` canaries also reduce to `true` under the
 default limits. Directly timing the forced `Lean.Kernel.whnf` calls gave
-medians of 615 ms for bundled and 596 ms for checked. Their whole fresh-module
-times were 2.125 s and 2.117 s respectively. The direct timer isolates the
-reduction call; the whole-module number includes process startup, imports, and
-elaboration.
+medians of 729.3 ms for bundled and 804.7 ms for checked. Their whole
+fresh-module times were 2.523 s and 2.507 s respectively, against an
+import-matched 1.734 s
+baseline; the corresponding signed margins were 0.789 s and 0.774 s. The
+direct timer isolates the reduction call; the whole-module number includes
+process startup, imports, and elaboration.
 
 The candidate compiled artifacts were identical in size; their small source
 files differ in length:
 
 | Artifact | Bundled | Checked |
 | --- | ---: | ---: |
-| source | 624 B | 635 B |
+| source | 701 B | 712 B |
 | `.olean` | 4448 B | 4448 B |
 | `.ilean` | 758 B | 758 B |
 | generated C | 2790 B | 2790 B |
@@ -147,15 +149,15 @@ verification and excludes certificate production. Both replay with ordinary
 
 | Encoding | Total wall | Baseline-subtracted | `.olean` | Axioms |
 | --- | ---: | ---: | ---: | --- |
-| Exposed normalization | 1.057 s | 0.000 s | 4920 B | `propext`, `Classical.choice`, `Quot.sound` |
-| Cross-product checks | 1.151 s | 0.082 s | 4376 B | none |
+| Exposed normalization | 1.431 s | 0.079 s | 4920 B | `propext`, `Classical.choice`, `Quot.sound` |
+| Cross-product checks | 1.564 s | 0.212 s | 4376 B | none |
 
-The rational import baseline was 1.069 s; the direct total fell slightly below
-that noisy baseline, which is retained as a signed margin rather than clamped.
-Separate forced WHNF calls reached `true` in median 68.6 ms and 127.6 ms
-respectively; their whole fresh-module medians were 1.485 s and 1.563 s. The
-forced-call timing is the useful comparison; fresh-module margins use a
-separate import-matched `Lean` plus rational baseline. This small
+The rational import baseline was 1.352 s; margins remain signed rather than
+being clamped at zero. Separate forced WHNF calls reached `true` in median
+92.7 ms and 157.0 ms respectively. Their whole fresh-module medians were
+1.971 s and 2.058 s, against an import-matched 1.868 s baseline; the signed
+margins were 0.104 s and 0.190 s. The forced-call timing is the useful
+comparison. This small
 repeated-addition case favors exposed normalization for reduction time, while
 cross-products produce a smaller and axiom-free proof module. It does not
 select the rational representation: end-to-end certificate production,
