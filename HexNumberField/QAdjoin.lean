@@ -115,9 +115,12 @@ def inv [ZPoly.CheckedIrreducible p] (a : QAdjoin p x) : QAdjoin p x :=
     let r := DensePoly.xgcdLeft a.coeffs (ZPoly.toRatPoly p)
     if r.gcd.size = 1 then
       let c := r.gcd.leadingCoeff
-      if c = 0 then 0 else reduce p x (DensePoly.scale c⁻¹ r.left)
+      if c = 0 then
+        Hex.panicWith 0 "QAdjoin.inv: zero constant gcd"
+      else
+        reduce p x (DensePoly.scale c⁻¹ r.left)
     else
-      0
+      Hex.panicWith 0 "QAdjoin.inv: nonconstant gcd"
 
 instance [ZPoly.CheckedIrreducible p] : Inv (QAdjoin p x) := ⟨inv⟩
 
@@ -156,6 +159,21 @@ private def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
       reduce sqrtTwoPoly sqrtTwoRoot (DensePoly.C 2)
     (x * x).coeffs = two.coeffs && x != 0 &&
       (x + x).coeffs = ((2 : Rat) • x).coeffs
+
+-- Construct the checked instance through the executable decision so this
+-- regression reaches the shipped inverse and division implementations without
+-- adding a proof axiom or a test-only `sorry`.
+#guard
+    if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
+      letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
+        ⟨hirred, by decide⟩
+      let xPoly := DensePoly.ofList ([0, 1] : List Rat)
+      let x : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
+        reduce sqrtTwoPoly sqrtTwoRoot xPoly
+      x * x⁻¹ = 1 && x / x = 1 &&
+        (0 : QAdjoin sqrtTwoPoly sqrtTwoRoot)⁻¹ = 0
+    else
+      false
 
 private def nonmonicQuadratic : ZPoly := DensePoly.ofList [-1, 0, 2]
 
