@@ -685,13 +685,18 @@ def fixedSpaceKernelVectors (f : FpPoly p) (hmonic : DensePoly.Monic f)
       (basisSize f - Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic)) :=
   Matrix.nullspace (fixedSpaceMatrix f hmonic)
 
-/-- The fixed-space kernel basis converted back to polynomial representatives. -/
+/-- The fixed-space kernel basis converted back to polynomial representatives.
+
+Compute the vector basis once and map the conversion over it. Keep the basis
+outside any per-index body so matrix construction and row reduction remain
+shared; mapping also carries its dependent length without recomputing rank. -/
 @[expose]
 def fixedSpaceKernel (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [inst : Lean.Grind.Field (ZMod64 p)] :
     Vector (FpPoly p)
       (basisSize f - Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic)) :=
-  Vector.ofFn fun i => vectorToPoly ((fixedSpaceKernelVectors f hmonic).get i)
+  let vectors := fixedSpaceKernelVectors f hmonic
+  vectors.map vectorToPoly
 
 /-- Vector-level executable Berlekamp kernel condition for the fixed-space
 matrix `Q_f - I`. -/
@@ -753,7 +758,7 @@ theorem fixedSpaceKernel_sound (f : FpPoly p) (hmonic : DensePoly.Monic f)
   have hk : (fixedSpaceKernel f hmonic).get k =
       vectorToPoly ((fixedSpaceKernelVectors f hmonic).get k) := by
     unfold fixedSpaceKernel
-    exact Vector.getElem_ofFn _
+    exact Vector.getElem_map vectorToPoly k.isLt
   unfold IsFixedSpaceKernelPolynomial
   rw [hk, coeffVector_vectorToPoly]
   exact fixedSpaceKernelVectors_sound f hmonic k

@@ -74,7 +74,7 @@ private theorem nullspaceBasisMatrix_entry_eq_basis_coeff
   have hker_get : (fixedSpaceKernel f hmonic).get k =
       vectorToPoly ((fixedSpaceKernelVectors f hmonic).get k) := by
     unfold fixedSpaceKernel
-    exact Vector.getElem_ofFn _
+    exact Vector.getElem_map vectorToPoly k.isLt
   have hker_eq :
       coeffVector f ((fixedSpaceKernel f hmonic).get k) =
         (fixedSpaceKernelVectors f hmonic).get k := by
@@ -219,7 +219,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
         (fixedSpaceKernel f hmonic).get k =
           vectorToPoly ((fixedSpaceKernelVectors f hmonic).get k) := by
       unfold fixedSpaceKernel
-      exact Vector.getElem_ofFn _
+      exact Vector.getElem_map vectorToPoly k.isLt
     rw [hker_eq]
     unfold vectorToPoly
     have hle :
@@ -597,7 +597,7 @@ private theorem fixedSpaceKernel_get_size_le
       (fixedSpaceKernel f hmonic).get k =
         vectorToPoly ((fixedSpaceKernelVectors f hmonic).get k) := by
     unfold fixedSpaceKernel
-    exact Vector.getElem_ofFn _
+    exact Vector.getElem_map vectorToPoly k.isLt
   rw [hker_eq]
   unfold vectorToPoly
   have hle :

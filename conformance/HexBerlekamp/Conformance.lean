@@ -15,7 +15,7 @@ property checks.
 Mode: if_available
 Covered operations:
 - `basisSize`, `coeffVector`, `berlekampColumn`, `berlekampMatrix`, and
-  `fixedSpaceMatrix`
+  `fixedSpaceMatrix`, and `fixedSpaceKernel`
 - `properDivisors`, `maximalProperDivisors`, `frobeniusDiffMod`,
   `rabinDividesTest`, `rabinCoprimeTest`, `rabinWitnesses`, and `rabinTest`
 - `checkPowChain`, `checkRabinBezoutWitness`,
@@ -187,6 +187,10 @@ set_option maxRecDepth 2048 in
   [[1, 0], [0, 4]]
 #guard matrixNats (Berlekamp.fixedSpaceMatrix irreducibleQuad irreducibleQuad_monic) =
   [[0, 0], [0, 3]]
+#guard (Berlekamp.fixedSpaceKernel reducibleQuad reducibleQuad_monic).toList.map coeffNats =
+  [[1], [0, 1]]
+#guard (Berlekamp.fixedSpaceKernel irreducibleQuad irreducibleQuad_monic).toList.map coeffNats =
+  [[1]]
 #guard
   let Q := Berlekamp.berlekampMatrix reducibleQuad reducibleQuad_monic
   let F := Berlekamp.fixedSpaceMatrix reducibleQuad reducibleQuad_monic

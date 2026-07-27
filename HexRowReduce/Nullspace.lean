@@ -157,11 +157,16 @@ the matching pivot row and free column. -/
   simp [E.toIsEchelonForm.pivotCols_disjoint_freeCols i k,
     pivotIndex?_pivot E.toIsEchelonForm i]
 
-/-- The individual nullspace basis vectors. -/
+/-- The individual nullspace basis vectors.
+
+Build the basis matrix once, then extract all of its columns. Keep
+`nullspaceMatrix` outside the per-column body so its free-column and pivot
+work remains shared. -/
 @[expose]
 def nullspace [Lean.Grind.Ring R] (E : IsRowReduced M D) :
     Vector (Vector R m) (m - D.rank) :=
-  Vector.ofFn fun k => Matrix.col (E.nullspaceMatrix) k
+  let N := E.nullspaceMatrix
+  Vector.ofFn fun k => Matrix.col N k
 
 private theorem nullspace_get [Lean.Grind.Ring R] (E : IsRowReduced M D)
     (k : Fin (m - D.rank)) :
