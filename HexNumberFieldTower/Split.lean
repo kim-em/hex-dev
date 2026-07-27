@@ -129,6 +129,35 @@ def selectFactor? (T : NumberTower) (candidate : AlgebraicRoot)
   | [factor] => some factor
   | _ => none
 
+/-- Adjoin the specified absolute algebraic root. A selected linear factor
+produces the identity extension; a nonlinear factor is admitted only through
+`extend?`, which reruns structural, relative-irreducibility, and fixed-
+embedding checks before constructing the new carrier index. -/
+def adjoin? (T : NumberTower) (candidate : AlgebraicRoot) :
+    Option (Extension T) := do
+  let input := liftZPoly T candidate.p
+  let factorization ← factor? T input
+  let selected ← selectFactor? T candidate factorization.factors
+  let d := selected.degree?.getD 0
+  if d = 0 then
+    none
+  else if d = 1 then
+    some
+      { tower := T
+        embed := id
+        gen := -(selected.coeff 0) / selected.leadingCoeff
+        root := candidate }
+  else
+    let defining := ((List.range d).map fun i =>
+      coeffs (selected.coeff i)).toArray
+    let level : Level := ⟨d, defining, candidate⟩
+    let tower ← extend? T level
+    some
+      { tower
+        embed := fun a => ofCoeffs tower (coeffs a)
+        gen := ofCoeffs tower ((Array.replicate T.dim 0).push 1)
+        root := candidate }
+
 /-! Compiled fixed-embedding selection regression. -/
 
 private def selectSqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
@@ -166,6 +195,96 @@ private def selectSqrtTwoRoot : SimpleRoot selectSqrtTwoPoly :=
                     extension.root = some true
             | _, _ => false
         | _, _ => false
+      else
+        false
+    else
+      false
+
+-- Adjoining a root already present in the fixed embedding returns the
+-- identity tower and recovers the existing element from its linear factor.
+#guard
+    if hirred : ZPoly.isIrreducible selectSqrtTwoPoly = true then
+      letI : ZPoly.CheckedIrreducible selectSqrtTwoPoly :=
+        ⟨hirred, by decide⟩
+      if hsimple : HasOnlySimpleRoots selectSqrtTwoPoly then
+        let base := ofQAdjoin (x := selectSqrtTwoRoot)
+          hsimple selectSqrtTwoRep rfl
+        match adjoin? base.tower base.root with
+        | some identity =>
+            identity.tower.height = base.tower.height &&
+              identity.tower.dim = base.tower.dim &&
+              coeffs identity.gen = coeffs base.gen &&
+              coeffs (identity.embed base.gen) = coeffs base.gen
+        | none => false
+      else
+        false
+    else
+      false
+
+private def selectSqrtThreePoly : ZPoly := DensePoly.ofList [-3, 0, 1]
+
+private def selectSqrtThreeSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 222 7, 0, 8⟩
+
+private def selectSqrtThreeRep : RefinedIsolation selectSqrtThreePoly :=
+  ⟨⟨selectSqrtThreeSquare, by decide⟩, by decide⟩
+
+-- A genuinely new root is admitted through the checked relative-level
+-- constructor. The old generator occupies the first lower block and the new
+-- generator satisfies the selected relation.
+#guard
+    if hirred : ZPoly.isIrreducible selectSqrtTwoPoly = true then
+      letI : ZPoly.CheckedIrreducible selectSqrtTwoPoly :=
+        ⟨hirred, by decide⟩
+      if hsimple : HasOnlySimpleRoots selectSqrtTwoPoly then
+        let base := ofQAdjoin (x := selectSqrtTwoRoot)
+          hsimple selectSqrtTwoRep rfl
+        if hthree : HasOnlySimpleRoots selectSqrtThreePoly then
+          let candidate : AlgebraicRoot :=
+            { p := selectSqrtThreePoly
+              prim := by rfl
+              pos_lc := by decide
+              pos_degree := by decide
+              squarefree := hthree
+              x := SimpleRoot.mk selectSqrtThreeRep
+              rep := selectSqrtThreeRep
+              rep_mk := rfl }
+          match adjoin? base.tower candidate with
+          | some extension =>
+              extension.tower.height = 2 && extension.tower.dim = 4 &&
+                coeffs (extension.embed base.gen) = #[0, 1, 0, 0] &&
+                coeffs (extension.gen * extension.gen) = #[3, 0, 0, 0]
+          | none => false
+        else
+          false
+      else
+        false
+    else
+      false
+
+-- An otherwise irreducible relative relation is rejected when it does not
+-- vanish at the absolute root recorded for the new level.
+#guard
+    if hirred : ZPoly.isIrreducible selectSqrtTwoPoly = true then
+      letI : ZPoly.CheckedIrreducible selectSqrtTwoPoly :=
+        ⟨hirred, by decide⟩
+      if hsimple : HasOnlySimpleRoots selectSqrtTwoPoly then
+        let base := ofQAdjoin (x := selectSqrtTwoRoot)
+          hsimple selectSqrtTwoRep rfl
+        let mismatched : Level :=
+          ⟨2, #[#[-3, 0], #[0, 0]], base.root⟩
+        if Factor.isIrreducible base.tower.levels.toList
+            (mismatched.polynomial base.tower.levels.toList) then
+          if RawEvaluation.vanishesAt? base.tower.levels.toList
+              (mismatched.polynomial base.tower.levels.toList)
+              mismatched.root = some false then
+            match extend? base.tower mismatched with
+            | none => true
+            | some _ => false
+          else
+            false
+        else
+          false
       else
         false
     else

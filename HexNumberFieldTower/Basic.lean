@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexNumberField
-public meta import HexNumberField
+public import HexNumberFieldTower.RawEvaluation
+public meta import HexNumberFieldTower.RawEvaluation
 
 public section
 
@@ -24,37 +24,44 @@ namespace Hex
 
 namespace NumberTower
 
-/-- Runtime data for one monic algebraic extension. `defining[j]` is the
-flattened lower-tower coefficient of `X^j`; the omitted coefficient of
-`X^degree` is one. -/
-structure Level where
-  degree : Nat
-  defining : Array (Array Rat)
-  root : AlgebraicRoot
-
-/-- Dimension represented by a top-first list of extension levels. -/
+/-- The monic polynomial represented by a raw level, including its implicit
+leading coefficient. -/
 @[expose]
-def levelsDim : List Level → Nat
-  | [] => 1
-  | level :: lower => level.degree * levelsDim lower
+def Level.polynomial (level : Level) (lower : List Level) :
+    Array (Array Rat) :=
+  level.defining.push (Arithmetic.fixedCoeffs (levelsDim lower) #[1])
 
-/-- Structural validity of one level above a lower field of dimension
-`lowerDim`. The semantic irreducibility and fixed-embedding checks are owned by
-the smart constructors in `Embed`. -/
+/-- A rational-presentation level relation agrees with the monic rational
+associate of the stored absolute root's checked integer polynomial. -/
 @[expose]
-def Level.Valid (level : Level) (lowerDim : Nat) : Prop :=
-  0 < level.degree ∧
-    level.defining.size = level.degree ∧
-    ∀ i, ∀ h : i < level.defining.size,
-      (level.defining[i]'h).size = lowerDim
+def Level.RationalRelation (level : Level) (lower : List Level) : Prop :=
+  lower = [] ∧
+    ∃ _checked : ZPoly.CheckedIrreducible level.root.p,
+      Factor.toRatPoly (level.polynomial lower) =
+        DensePoly.scale ((level.root.p.leadingCoeff : Rat)⁻¹)
+          (ZPoly.toRatPoly level.root.p)
+
+/-- Meaningful construction evidence for one level. The base constructor ties
+the relation directly to a checked irreducible integer presentation and its
+selected root. A relative constructor records successful execution of the
+recursive Trager irreducibility checker and the fixed-embedding zero check. -/
+inductive Level.Certificate (level : Level) (lower : List Level) : Prop
+  | rational (relation : level.RationalRelation lower)
+  | relative
+      (irreducible : Factor.isIrreducible lower
+        (level.polynomial lower) = true)
+      (embedding : RawEvaluation.vanishesAt? lower
+        (level.polynomial lower) level.root = some true)
 
 /-- Every top-first level has canonical coefficient widths relative to the
-tail beneath it. -/
+tail beneath it and carries constructor-produced irreducibility and fixed-
+embedding evidence. -/
 @[expose]
 def LevelsValid : List Level → Prop
   | [] => True
   | level :: lower =>
-      level.Valid (levelsDim lower) ∧ LevelsValid lower
+      level.Structural (levelsDim lower) ∧
+        level.Certificate lower ∧ LevelsValid lower
 
 end NumberTower
 
@@ -76,6 +83,26 @@ def rat : NumberTower :=
 @[expose]
 def dim (T : NumberTower) : Nat :=
   levelsDim T.levels.toList
+
+/-- Extend a certified tower by one raw level only after rerunning structural,
+recursive irreducibility, and fixed-embedding checks. -/
+def extend? (T : NumberTower) (level : Level) : Option NumberTower :=
+  if hstruct : level.structuralCheck T.dim = true then
+    if hirred : Factor.isIrreducible T.levels.toList
+        (level.polynomial T.levels.toList) = true then
+      if hembed : RawEvaluation.vanishesAt? T.levels.toList
+          (level.polynomial T.levels.toList) level.root = some true then
+        let levels := #[level] ++ T.levels
+        some <| .mk levels (by
+          rw [show levels.toList = level :: T.levels.toList by simp [levels]]
+          exact ⟨Level.structural_of_check hstruct,
+            .relative hirred hembed, T.valid⟩)
+      else
+        none
+    else
+      none
+  else
+    none
 
 /-- Number of proper algebraic extension levels. -/
 @[expose]
@@ -158,6 +185,13 @@ theorem positiveAssociate_degree_pos (p : ZPoly)
     0 < (positiveAssociate p).degree?.getD 0 := by
   sorry
 
+/-- Global sign normalization preserves the executable integer
+irreducibility check. -/
+theorem positiveAssociate_irreducible (p : ZPoly)
+    (checked : ZPoly.CheckedIrreducible p) :
+    ZPoly.isIrreducible (positiveAssociate p) = true := by
+  sorry
+
 /-- Sign association preserves the executable simple-root certificate. -/
 theorem positiveAssociate_simple (p : ZPoly) (hsf : HasOnlySimpleRoots p) :
     HasOnlySimpleRoots (positiveAssociate p) := by
@@ -211,12 +245,18 @@ def ofQAdjoin {p : ZPoly} {x : SimpleRoot p}
   else
     let level : Level := ⟨d, defining, root⟩
     let tower : NumberTower := .mk #[level] (by
-      change level.Valid 1 ∧ True
-      constructor
+      change level.Structural 1 ∧ level.Certificate [] ∧ True
+      refine ⟨?_, ?_, trivial⟩
       · refine ⟨root.pos_degree, by simp [level, defining], ?_⟩
         intro i hi
         simp [level, defining]
-      · trivial)
+      · apply Level.Certificate.rational
+        refine ⟨rfl, ?_⟩
+        let qchecked : ZPoly.CheckedIrreducible q :=
+          ⟨positiveAssociate_irreducible p checked,
+            positiveAssociate_degree_pos p checked⟩
+        refine ⟨qchecked, ?_⟩
+        sorry)
     { tower
       embed := fun a => ofRat tower ((coeffs a).getD 0 0)
       gen := ofCoeffs tower #[0, 1]

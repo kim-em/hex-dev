@@ -6,9 +6,9 @@ Authors: Kim Morrison
 
 module
 
-public import HexNumberFieldTower.Embed
+public import HexNumberFieldTower.RawArithmetic
 public import HexResultant
-public meta import HexNumberFieldTower.Embed
+public meta import HexNumberFieldTower.RawArithmetic
 public meta import HexResultant
 
 public section
