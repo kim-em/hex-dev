@@ -12,50 +12,89 @@ resultant, including its units, powers, and signs.
 ## Public theorems
 
 The exact typeclass assumptions follow the executable algorithm: `R` is a
-commutative integral domain with decidable equality and the exact-division laws
-used by the subresultant recurrence.
+commutative integral domain with decidable equality, a quotient operation, and
+`Hex.ExactDivLaws R`.
 
 ```lean
 namespace Hex.DensePoly
 
+universe u
+
+variable {R : Type u}
+
+/-- Specialize the coefficient variable of a dense bivariate polynomial while
+    retaining the outer polynomial variable. -/
+noncomputable def specialize [CommRing R] [DecidableEq R]
+    (f : DensePoly (DensePoly R)) (a : R) : Polynomial R :=
+  Finset.sum (Finset.range f.size) fun i =>
+    Polynomial.monomial i (eval (f.coeff i) a)
+
+/-- Evaluate a dense bivariate polynomial at `(a, b)`. -/
+noncomputable def evalBivariate [CommRing R] [DecidableEq R]
+    (f : DensePoly (DensePoly R)) (a b : R) : R :=
+  (specialize f a).eval b
+
 /-- The executable and Mathlib resultants agree under the dense-polynomial
     correspondence. -/
-theorem toPolynomial_resultant (f g : DensePoly R) :
-    resultant f g = Polynomial.resultant (toPolynomial f) (toPolynomial g)
+theorem toPolynomial_resultant [CommRing R] [IsDomain R] [DecidableEq R]
+    [Div R] [Hex.ExactDivLaws R] (f g : DensePoly R) :
+    resultant f g =
+      Polynomial.resultant (HexPolyMathlib.toPolynomial f)
+        (HexPolyMathlib.toPolynomial g)
+        (m := f.degree?.getD 0) (n := g.degree?.getD 0)
 
 /-- Vanishing criterion over an algebraically closed extension. -/
 theorem resultant_eq_zero_iff_common_root
-    (f g : ZPoly) (hf : f ≠ 0) (hg : g ≠ 0) :
+    (f g : DensePoly Int) (hf : f ≠ 0) (hg : g ≠ 0) :
     resultant f g = 0 ↔
-      ∃ z : ℂ, (toPolynomial f).aeval z = 0 ∧
-        (toPolynomial g).aeval z = 0
+      ∃ z : ℂ,
+        Polynomial.aeval z (HexPolyMathlib.toPolynomial f) = 0 ∧
+        Polynomial.aeval z (HexPolyMathlib.toPolynomial g) = 0
 
 /-- Specialize the coefficient variable after eliminating the polynomial
     variable. -/
-theorem eval_resultant (f g : DensePoly (DensePoly R)) (a : R) :
-    eval a (resultant f g) =
-      Polynomial.resultant (specialize a f) (specialize a g)
-        (m := (toPolynomial f).natDegree)
-        (n := (toPolynomial g).natDegree)
+theorem eval_resultant [CommRing R] [IsDomain R] [DecidableEq R]
+    [Div R] [Hex.ExactDivLaws R]
+    (f g : DensePoly (DensePoly R)) (a : R) :
+    eval (resultant f g) a =
+      Polynomial.resultant (specialize f a) (specialize g a)
+        (m := f.degree?.getD 0) (n := g.degree?.getD 0)
+
+/-- Default-formal-degree specialization when neither leading coefficient
+    vanishes at the specialization point. -/
+theorem eval_resultant_default
+    [CommRing R] [IsDomain R] [DecidableEq R]
+    [Div R] [Hex.ExactDivLaws R]
+    (f g : DensePoly (DensePoly R)) (a : R)
+    (hf : eval f.leadingCoeff a ≠ 0) (hg : eval g.leadingCoeff a ≠ 0) :
+    eval (resultant f g) a =
+      Polynomial.resultant (specialize f a) (specialize g a)
 
 /-- If two bivariate polynomials vanish at `(a, b)`, their resultant in the
     second variable vanishes at `a`. -/
 theorem eval_resultant_eq_zero_of_common_root
-    (f g : DensePoly (DensePoly R))
-    (hfb : eval₂ a b f = 0) (hgb : eval₂ a b g = 0) :
-    eval a (resultant f g) = 0
+    [CommRing R] [IsDomain R] [DecidableEq R]
+    [Div R] [Hex.ExactDivLaws R]
+    (f g : DensePoly (DensePoly R)) (a b : R)
+    (hfb : evalBivariate f a b = 0) (hgb : evalBivariate g a b = 0) :
+    eval (resultant f g) a = 0
 
 /-- Root-product form, with multiplicity. -/
 theorem resultant_eq_leadingCoeff_mul_prod_roots
-    (f g : Polynomial K) :
+    [Field K] [IsAlgClosed K] (f g : Polynomial K) :
     Polynomial.resultant f g =
-      f.leadingCoeff ^ g.natDegree * ∏ z ∈ f.roots E, Polynomial.eval z g
+      f.leadingCoeff ^ g.natDegree * (f.roots.map g.eval).prod
 
-theorem toPolynomial_disc (f : DensePoly R) :
-    disc f = Polynomial.discr (toPolynomial f)
+theorem toPolynomial_disc [CommRing R] [IsDomain R] [DecidableEq R]
+    [Div R] [Hex.ExactDivLaws R] (f : DensePoly R) :
+    disc f = Polynomial.discr (HexPolyMathlib.toPolynomial f)
 
 end Hex.DensePoly
 ```
+
+The finite sum in `specialize` avoids requiring a Mathlib `CommRing` instance
+on `DensePoly R`; the correspondence library intentionally exposes a ring
+equivalence without installing that global instance.
 
 The formal degrees on `eval_resultant` are essential: specialization can erase
 a leading coefficient. For example, specializing `t` to zero in `t*y + 1` and
