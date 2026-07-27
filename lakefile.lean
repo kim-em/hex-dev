@@ -184,6 +184,9 @@ lean_lib HexLLLMathlib where
 @[default_target]
 lean_lib HexRealRootsMathlib where
 
+@[default_target]
+lean_lib HexRCF where
+
 lean_exe hexlll_provider_probe where
   root := `HexLLL.ProviderProbe
 
