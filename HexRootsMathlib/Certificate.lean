@@ -276,20 +276,18 @@ private theorem basePellet_mem {p : Hex.ZPoly} {c : Hex.Component} {k : Nat}
   · exact DyadicSquare.closedSquare_subset_closedDisc _ hzsquare
 
 private theorem candidatePellet_mem {p : Hex.ZPoly} {c : Hex.Component} {k : Nat}
+    {cand : Hex.DyadicSquare}
     (hk : 0 < k) (hw : Hex.witness p (Hex.encSquare c.squares) k)
-    (hins : (Hex.encSquare #[Hex.newtonSquare p (Hex.encSquare c.squares) k]).discInside
-      (Hex.encSquare c.squares) = true)
-    (hw' : Hex.witness p
-      (Hex.encSquare #[Hex.newtonSquare p (Hex.encSquare c.squares) k]) k)
+    (hins : (Hex.encSquare #[cand]).discInside (Hex.encSquare c.squares) = true)
+    (hw' : Hex.witness p (Hex.encSquare #[cand]) k)
     {z : ℂ} (hzroot : (toPolyℂ p).eval z = 0)
     (hzbase : z ∈ DyadicSquare.closedDisc (Hex.encSquare c.squares)) :
     let cl : Hex.DyadicRootCluster p :=
-      ⟨#[Hex.newtonSquare p (Hex.encSquare c.squares) k], k, hk, hw'⟩
+      ⟨#[cand], k, hk, hw'⟩
     z ∈ Certified.region
       (if hk1 : k = 1 then .atom (cl.atomize hk1) else .cluster cl) := by
   dsimp only
-  have hzcand : z ∈ DyadicSquare.closedDisc
-      (Hex.encSquare #[Hex.newtonSquare p (Hex.encSquare c.squares) k]) :=
+  have hzcand : z ∈ DyadicSquare.closedDisc (Hex.encSquare #[cand]) :=
     root_mem_nestedPellet hk hw' hw
       (DyadicSquare.closedDisc_subset_of_discInside hins) hzroot hzbase
   split <;> rename_i hk1
@@ -297,10 +295,12 @@ private theorem candidatePellet_mem {p : Hex.ZPoly} {c : Hex.Component} {k : Nat
     exact pelletAtom_mem_region hw' hzroot hzcand
   · exact hzcand
 
-/-- Each individual executable Pellet attempt preserves every polynomial
-root covered by the input component. -/
-theorem certifyPelletAt_preserves {p : Hex.ZPoly} {c : Hex.Component} {k : Nat}
-    {r : Hex.Certified p} (hcert : Hex.Component.certifyPelletAt? p c k = some r)
+/-- Each cached-shift Pellet attempt preserves every polynomial root covered
+    by the input component. -/
+theorem certifyPelletAtShift_preserves {p : Hex.ZPoly} {c : Hex.Component}
+    {shift : Hex.TaylorShift p (Hex.encSquare c.squares).center} {k : Nat}
+    {r : Hex.Certified p}
+    (hcert : Hex.Component.certifyPelletAtShift? p c shift k = some r)
     {z : ℂ} (hzroot : (toPolyℂ p).eval z = 0)
     (hz : z ∈ Component.region c) : z ∈ Certified.region r := by
   let enc := Hex.encSquare c.squares
@@ -308,49 +308,62 @@ theorem certifyPelletAt_preserves {p : Hex.ZPoly} {c : Hex.Component} {k : Nat}
     Component.region_subset_encSquare c hz
   have hzbase : z ∈ DyadicSquare.closedDisc enc :=
     DyadicSquare.closedSquare_subset_closedDisc enc hzsquare
-  unfold Hex.Component.certifyPelletAt? at hcert
+  unfold Hex.Component.certifyPelletAtShift? at hcert
   dsimp only at hcert
   split at hcert <;> rename_i hk
   · split at hcert <;> rename_i hw
-    · let cl : Hex.DyadicRootCluster p := ⟨c.squares, k, hk, hw⟩
+    · have hw₀ : Hex.witness p enc k := by
+        simpa [Hex.witness] using hw
+      let cl : Hex.DyadicRootCluster p := ⟨c.squares, k, hk, hw₀⟩
       let base : Hex.Certified p :=
         if hk1 : k = 1 then .atom (cl.atomize hk1) else .cluster cl
-      let cand := Hex.newtonSquare p enc k
+      let cand := Hex.TaylorShift.newtonSquare enc shift k
       split at hcert <;> rename_i hins
       · split at hcert <;> rename_i hw'
-        · let cl' : Hex.DyadicRootCluster p := ⟨#[cand], k, hk, hw'⟩
+        · have hw₀' : Hex.witness p (Hex.encSquare #[cand]) k := by
+            simpa [Hex.witness, cand] using hw'
+          let cl' : Hex.DyadicRootCluster p := ⟨#[cand], k, hk, hw₀'⟩
           split at hcert <;> rename_i hk1
           · have hr : r = .atom (cl'.atomize hk1) :=
               (Option.some.inj hcert).symm
             subst r
             simpa only [dif_pos hk1] using
-              candidatePellet_mem hk hw hins hw' hzroot hzbase
+              candidatePellet_mem hk hw₀ hins hw₀' hzroot hzbase
           · have hr : r = .cluster cl' := (Option.some.inj hcert).symm
             subst r
             simpa only [dif_neg hk1] using
-              candidatePellet_mem hk hw hins hw' hzroot hzbase
+              candidatePellet_mem hk hw₀ hins hw₀' hzroot hzbase
         · have hr : r = base := (Option.some.inj hcert).symm
           subst r
-          exact basePellet_mem hk hw hzroot hzsquare
+          exact basePellet_mem hk hw₀ hzroot hzsquare
       · have hr : r = base := (Option.some.inj hcert).symm
         subst r
-        exact basePellet_mem hk hw hzroot hzsquare
+        exact basePellet_mem hk hw₀ hzroot hzsquare
     · simp at hcert
   · simp at hcert
 
-/-- Searching a list of candidate Pellet counts preserves every polynomial
-root covered by the input component, regardless of which candidate succeeds
-first. -/
-theorem certifyPelletList_preserves {p : Hex.ZPoly} {c : Hex.Component}
+/-- The public one-count wrapper has the cached attempt's preservation
+    property. -/
+theorem certifyPelletAt_preserves {p : Hex.ZPoly} {c : Hex.Component} {k : Nat}
+    {r : Hex.Certified p} (hcert : Hex.Component.certifyPelletAt? p c k = some r)
+    {z : ℂ} (hzroot : (toPolyℂ p).eval z = 0)
+    (hz : z ∈ Component.region c) : z ∈ Certified.region r := by
+  unfold Hex.Component.certifyPelletAt? at hcert
+  exact certifyPelletAtShift_preserves hcert hzroot hz
+
+/-- Searching a list with one cached shift preserves every polynomial root
+    covered by the input component, regardless of which candidate succeeds. -/
+theorem certifyPelletListShift_preserves {p : Hex.ZPoly} {c : Hex.Component}
+    {shift : Hex.TaylorShift p (Hex.encSquare c.squares).center}
     (ks : List Nat) {r : Hex.Certified p}
-    (hcert : Hex.Component.certifyPelletList? p c ks = some r)
+    (hcert : Hex.Component.certifyPelletListShift? p c shift ks = some r)
     {z : ℂ} (hzroot : (toPolyℂ p).eval z = 0)
     (hz : z ∈ Component.region c) : z ∈ Certified.region r := by
   induction ks with
-  | nil => simp [Hex.Component.certifyPelletList?] at hcert
+  | nil => simp [Hex.Component.certifyPelletListShift?] at hcert
   | cons k ks ih =>
-      rw [Hex.Component.certifyPelletList?] at hcert
-      cases hat : Hex.Component.certifyPelletAt? p c k with
+      rw [Hex.Component.certifyPelletListShift?] at hcert
+      cases hat : Hex.Component.certifyPelletAtShift? p c shift k with
       | none =>
           simp only [hat, Option.orElse_none] at hcert
           exact ih hcert
@@ -358,7 +371,38 @@ theorem certifyPelletList_preserves {p : Hex.ZPoly} {c : Hex.Component}
           simp only [hat, Option.orElse_some] at hcert
           have hr : r' = r := Option.some.inj hcert
           subst r'
-          exact certifyPelletAt_preserves hat hzroot hz
+          exact certifyPelletAtShift_preserves hat hzroot hz
+
+/-- The public candidate-count search inherits the cached implementation's
+    preservation property. -/
+theorem certifyPelletList_preserves {p : Hex.ZPoly} {c : Hex.Component}
+    (ks : List Nat) {r : Hex.Certified p}
+    (hcert : Hex.Component.certifyPelletList? p c ks = some r)
+    {z : ℂ} (hzroot : (toPolyℂ p).eval z = 0)
+    (hz : z ∈ Component.region c) : z ∈ Certified.region r := by
+  unfold Hex.Component.certifyPelletList? at hcert
+  exact certifyPelletListShift_preserves ks hcert hzroot hz
+
+/-- Pellet candidate search with a caller-supplied shift preserves every root
+    covered by the input component. -/
+theorem certifyPelletShift_preserves {p : Hex.ZPoly} {c : Hex.Component}
+    {shift : Hex.TaylorShift p (Hex.encSquare c.squares).center}
+    {r : Hex.Certified p}
+    (hcert : Hex.Component.certifyPelletShift? p c shift = some r)
+    {z : ℂ} (hzroot : (toPolyℂ p).eval z = 0)
+    (hz : z ∈ Component.region c) : z ∈ Certified.region r := by
+  unfold Hex.Component.certifyPelletShift? at hcert
+  exact certifyPelletListShift_preserves _ hcert hzroot hz
+
+/-- The public Pellet search inherits the caller-supplied shift
+    implementation's preservation property. -/
+theorem certifyPellet_preserves {p : Hex.ZPoly} {c : Hex.Component}
+    {r : Hex.Certified p}
+    (hcert : Hex.Component.certifyPellet? p c = some r)
+    {z : ℂ} (hzroot : (toPolyℂ p).eval z = 0)
+    (hz : z ∈ Component.region c) : z ∈ Certified.region r := by
+  unfold Hex.Component.certifyPellet? at hcert
+  exact certifyPelletShift_preserves hcert hzroot hz
 
 /-- The input component lies in the central quarter of the widened Pellet
 component used by `certify?`. -/
@@ -377,8 +421,7 @@ theorem certifier_preserves_pellet (p : Hex.ZPoly) :
     Certifier.Preserves p .pellet := by
   intro c r hcert z hzroot hz
   simp only [Hex.Component.certify?] at hcert
-  unfold Hex.Component.certifyPellet? at hcert
-  exact certifyPelletList_preserves _ hcert hzroot (mem_widePellet hz)
+  exact certifyPelletShift_preserves hcert hzroot (mem_widePellet hz)
 
 /-- A combined-strategy result is an NK result from the common leading
 branch, or the result of falling through to the Pellet search. -/
@@ -392,9 +435,11 @@ theorem certify_nkThenPellet_cases {p : Hex.ZPoly} {c : Hex.Component}
         r = .atom ⟨cand, Or.inl hcand⟩) ∨
       (∃ hbase : Hex.nkWitness p base,
         r = .atom ⟨base, Or.inl hbase⟩) ∨
-      Hex.Component.certifyPellet? p
-        ⟨#[(Hex.encSquare c.squares).doubled.doubled], c.candidateK⟩ = some r := by
-  simp only [Hex.Component.certify?, Hex.nkWitness] at hcert ⊢
+      ∃ shift,
+        Hex.Component.certifyPelletShift? p
+          ⟨#[(Hex.encSquare c.squares).doubled.doubled], c.candidateK⟩ shift = some r := by
+  simp only [Hex.Component.certify?, Hex.nkWitness,
+    Hex.TaylorShift.nkWitnessCheck_eq, Hex.TaylorShift.newtonSquare_eq] at hcert ⊢
   split at hcert <;> rename_i hbase
   · split at hcert <;> rename_i hinside
     · split at hcert <;> rename_i hcand
@@ -405,7 +450,7 @@ theorem certify_nkThenPellet_cases {p : Hex.ZPoly} {c : Hex.Component}
     · right; left
       exact ⟨hbase, Option.some.inj hcert.symm⟩
   · right; right
-    exact hcert
+    exact ⟨_, hcert⟩
 
 /-- The default combined strategy preserves every input-component root in
 both its NK prefix and its Pellet fallback. -/
@@ -421,8 +466,8 @@ theorem certifier_preserves_nkThenPellet (p : Hex.ZPoly) :
   · obtain ⟨hbase, rfl⟩ := h
     rw [nkAtom_region hbase]
     exact Component.region_subset_doubledEnc c hz
-  · unfold Hex.Component.certifyPellet? at h
-    exact certifyPelletList_preserves _ h hzroot (mem_widePellet hz)
+  · obtain ⟨shift, h⟩ := h
+    exact certifyPelletShift_preserves h hzroot (mem_widePellet hz)
 
 /-- Every component certification strategy preserves each covered root. -/
 theorem certifier_preserves (p : Hex.ZPoly) (strategy : Hex.AtomStrategy) :
