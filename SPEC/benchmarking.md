@@ -584,9 +584,10 @@ medium and large primes (e.g. `(97, 127)`, `(521, 13)`,
 Benchmarks measure the computational kernel. The project's
 architectural premise is the Mathlib-free split: `Hex*` libraries are
 computational and Mathlib-free; `Hex*Mathlib` libraries are
-proof-only bridges. Two invariants follow, both hard:
+proof-only bridges. Computational benchmark executables therefore obey two
+hard invariants:
 
-1. **`Hex*Mathlib` libraries do not have benchmarks.** No
+1. **`Hex*Mathlib` libraries do not have computational benchmarks.** No
    `Hex*Mathlib/Bench.lean`, no `Hex*Mathlib/Bench/`, no
    `lean_exe *mathlib*_bench` in `lakefile.lean`. The Mathlib bridge
    modules are proof-only; there is nothing computational to
@@ -603,6 +604,17 @@ proof-only bridges. Two invariants follow, both hard:
    `Hex*Mathlib.*` modules are not what this rule forbids — but per
    invariant (1) above, no bench imports them either.
 
+There is one narrow, non-computational exception. A build-only library may
+place Mathlib proof-elaboration or kernel-replay probes under
+`bench/HexFooMathlib/`. Such a probe measures a fresh module build from an
+external harness; it is not a `lean-bench` registration. It must not import
+`LeanBench`, use `setup_benchmark` or `setup_fixed_benchmark`, define `main`,
+perform an in-process timing loop, or serve as the root of any `lean_exe`.
+This exception exists to compare proof encodings and elaboration/replay costs;
+it does not permit computational timing through Mathlib. All executable
+computational benches and everything in their import closures remain
+Mathlib-free.
+
 Both invariants are enforced by
 `scripts/ci/check_benches_mathlib_free.sh`, invoked from the `build`
 job in `ci.yml`. The script:
@@ -618,13 +630,17 @@ job in `ci.yml`. The script:
   `HexPolyMathlib.Bench → HexPolyMathlib.Euclid → Mathlib.Algebra.Polynomial.FieldDivision`).
 - Globs `Hex*Mathlib/Bench.lean` and `Hex*Mathlib/Bench/` and fails
   if any such path exists.
+- Checks `bench/Hex*Mathlib/` proof-probe trees for `LeanBench` imports,
+  benchmark registrations, `main`, in-process clocks, or an executable rooted
+  at a probe module.
 
-A bench that needs Mathlib is a category error, not an oversight to
-work around: either it's measuring through Mathlib (slow and missing
-the computational kernel) or it accidentally dragged Mathlib into a
-native link chain. Either way, the fix is structural — file the
-finding, roll back if necessary, and either remove the bench or
-move what it measures into a Mathlib-free location.
+A computational bench that needs Mathlib is a category error, not an oversight
+to work around: either it is measuring through Mathlib (slow and missing the
+computational kernel) or it accidentally dragged Mathlib into a native link
+chain. Either way, the fix is structural — file the finding, roll back if
+necessary, and either remove the bench or move what it measures into a
+Mathlib-free location. A genuine proof-elaboration question instead uses the
+build-only probe exception above.
 
 ## CI integration
 
