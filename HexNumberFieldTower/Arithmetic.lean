@@ -47,6 +47,37 @@ theorem zero_eq_ofRat (T : NumberTower) :
   · simp
   · simp
 
+/-- Zero exposes the all-zero fixed-width coordinate array. -/
+@[simp]
+theorem coeffs_zero (T : NumberTower) :
+    coeffs (0 : Elem T) = Array.replicate T.dim 0 := by
+  rw [zero_eq_ofRat, ofRat_eq_ofCoeffs, coeffs_ofCoeffs]
+  apply Array.ext
+  · simp [normalizeCoeffs]
+  · intro i hi₁ hi₂
+    rcases i with _ | i
+    · simp [normalizeCoeffs]
+    · simp [normalizeCoeffs, Array.getD]
+
+/-- The Boolean coordinate test recognizes exactly the tower zero. -/
+theorem isZero_iff_eq_zero {T : NumberTower} (a : Elem T) :
+    NumberTower.isZero a ↔ a = 0 := by
+  constructor
+  · intro h
+    apply Elem.ext
+    rw [coeffs_zero]
+    apply Array.ext
+    · simp
+    · intro i hi₁ hi₂
+      change (coeffs a).all (fun q => q = 0) = true at h
+      rw [Array.all_eq_true] at h
+      simpa using h i hi₁
+  · rintro rfl
+    change (coeffs (0 : Elem T)).all (fun q => q = 0) = true
+    rw [coeffs_zero, Array.all_eq_true]
+    intro i hi
+    simp
+
 /-- Multiplicative identity. -/
 @[expose]
 def one (T : NumberTower) : Elem T :=
@@ -123,6 +154,19 @@ theorem sub_eq_add_neg {T : NumberTower} (a b : Elem T) :
   simpa only [Array.getD_eq_getD_getElem?, Array.getElem?_ofFn,
     dif_pos i.isLt, Option.getD_some] using Rat.sub_eq_add_neg
       ((coeffs a).getD i 0) ((coeffs b).getD i 0)
+
+/-- Coordinatewise negation is an additive inverse. -/
+theorem add_neg_self {T : NumberTower} (a : Elem T) :
+    a + (-a) = 0 := by
+  apply Elem.ext
+  rw [coeffs_add, coeffs_neg, coeffs_zero]
+  apply Array.ext
+  · simp [Arithmetic.addCoords]
+  · intro i hi₁ hi₂
+    have hi : i < (coeffs a).size := by
+      simpa using hi₂
+    simpa [Arithmetic.addCoords, Arithmetic.negCoords] using
+      Rat.add_neg_cancel ((coeffs a)[i]'hi)
 
 /-- Recursive convolution and monic reduction. -/
 @[expose]

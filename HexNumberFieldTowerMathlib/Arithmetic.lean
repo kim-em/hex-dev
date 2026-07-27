@@ -41,7 +41,9 @@ theorem map_add (T : NumberTower) (a b : Elem T) :
 /-- Coordinate negation computes complex negation. -/
 theorem map_neg (T : NumberTower) (a : Elem T) :
     T.toComplex (-a) = -T.toComplex a := by
-  sorry
+  have h := map_add T a (-a)
+  rw [NumberTower.add_neg_self, map_zero] at h
+  exact eq_neg_of_add_eq_zero_right h.symm
 
 /-- Coordinate subtraction computes complex subtraction. -/
 theorem map_sub (T : NumberTower) (a b : Elem T) :
@@ -75,7 +77,13 @@ theorem map_smul (T : NumberTower) (q : Rat) (a : Elem T) :
 /-- The Boolean zero test recognizes exactly semantic zero. -/
 theorem isZero_iff (T : NumberTower) (a : Elem T) :
     NumberTower.isZero a ↔ T.toComplex a = 0 := by
-  sorry
+  rw [NumberTower.isZero_iff_eq_zero]
+  constructor
+  · rintro rfl
+    exact map_zero T
+  · intro h
+    apply toComplex_injective T
+    rw [h, map_zero]
 
 /-- Mixed-radix coordinate equality is exactly semantic equality. -/
 theorem eq_iff_toComplex (T : NumberTower) (a b : Elem T) :

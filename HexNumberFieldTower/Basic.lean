@@ -145,6 +145,12 @@ def ofCoeffs (T : NumberTower) (coefficients : Array Rat) : Elem T :=
 def coeffs {T : NumberTower} (a : Elem T) : Array Rat :=
   a.data
 
+/-- Every element exposes exactly the tower's mixed-radix width. -/
+@[simp]
+theorem coeffs_size {T : NumberTower} (a : Elem T) :
+    (coeffs a).size = T.dim := by
+  exact a.size_eq
+
 /-- Reading a freshly normalized element returns its normalized coordinates. -/
 @[simp]
 theorem coeffs_ofCoeffs (T : NumberTower) (coefficients : Array Rat) :
