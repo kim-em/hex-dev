@@ -482,8 +482,8 @@ libraries:
   HexResultantMathlib:
     deps: [HexResultant, HexPolyMathlib]
     mathlib: true
-    done_through: 0
-    status: planned
+    done_through: 1
+    status: active
   HexNumberField:
     deps: [HexPolyZ, HexRoots, HexResultant, HexBerlekampZassenhaus, HexMatrix, HexRowReduce]
     mathlib: false
