@@ -593,8 +593,9 @@ free to change.
   emits replay witnesses and retains only checker-approved candidates;
   `HexRCF/SturmBuilderTests.lean`: valid, malformed, nonprimitive, and
   nonsquarefree regressions.
-- `HexRCF/Carrier.lean`: deterministic nonconstant-atom collection, the
-  multiplication-checkable carrier certificate, and root-set soundness;
+- `HexRCF/CarrierCheck.lean`: Mathlib-free multiplication-checkable carrier
+  certificates and Boolean validation; `HexRCF/Carrier.lean`: squarefreeness
+  and root-set soundness;
   `HexRCF/CarrierTests.lean`: constant filtering, genuine repeated-factor,
   dropped-root, and other tampered-carrier regressions.
 - `HexRCF/Isolations.lean`: the raw generalized isolation checker and its

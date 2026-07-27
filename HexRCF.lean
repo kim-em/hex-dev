@@ -13,6 +13,7 @@ public import HexRCF.SturmCheck
 public import HexRCF.SturmReplay
 public import HexRCF.SturmBuilder
 public import HexRCF.SturmBuilderTests
+public import HexRCF.CarrierCheck
 public import HexRCF.Carrier
 public import HexRCF.CarrierTests
 public import HexRCF.Isolations
