@@ -78,4 +78,12 @@ private def far : Dyadic := .ofOdd 1 1000000000 (by decide)
   | .ready _ _ => false
   | .resourceLimit cost => cost.alignmentShift == 1000000000
 
+-- Finite endpoint height is charged even when the other side is unbounded and
+-- no comparison shift is needed.
+#guard
+  match Raw.normalizeWithin smallLimit
+      (.bounds .unbounded (.finite far false)) with
+  | .ready _ _ => false
+  | .resourceLimit cost => cost.upper.exponentMagnitude == 1000000000
+
 end Hex.Interval.Conformance

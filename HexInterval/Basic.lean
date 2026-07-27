@@ -119,6 +119,21 @@ end CompareCost
 
 namespace Raw
 
+/-- Compute the endpoint and alignment cost of normalizing raw cuts without
+performing any dyadic comparison. One-sided intervals still charge their
+finite endpoint height even though their alignment shift is zero. -/
+def normalizeCost : Raw → CompareCost
+  | .empty => ⟨EndpointCost.ofDyadic 0, EndpointCost.ofDyadic 0, 0⟩
+  | .bounds lower upper =>
+      match lower, upper with
+      | .finite lower _, .finite upper _ => CompareCost.ofDyadic lower upper
+      | .finite lower _, .unbounded =>
+          ⟨EndpointCost.ofDyadic lower, EndpointCost.ofDyadic 0, 0⟩
+      | .unbounded, .finite upper _ =>
+          ⟨EndpointCost.ofDyadic 0, EndpointCost.ofDyadic upper, 0⟩
+      | .unbounded, .unbounded =>
+          ⟨EndpointCost.ofDyadic 0, EndpointCost.ofDyadic 0, 0⟩
+
 /-- Decide whether raw cuts describe a canonical nonempty interval.
 
 Unbounded pairs are always consistent.  Finite endpoints are consistent when
@@ -197,14 +212,11 @@ inductive NormalizeResult where
 endpoints are compared only after their exact cost passes `limit`; all other
 shapes require no alignment and are immediately canonical. -/
 def normalizeWithin (limit : EndpointLimit) (raw : Raw) : NormalizeResult :=
-  match raw with
-  | .bounds (.finite lower _) (.finite upper _) =>
-      let cost := CompareCost.ofDyadic lower upper
-      if cost.allowed limit then
-        .ready raw.normalize (consistent_normalize raw)
-      else
-        .resourceLimit cost
-  | _ => .ready raw.normalize (consistent_normalize raw)
+  let cost := raw.normalizeCost
+  if cost.allowed limit then
+    .ready raw.normalize (consistent_normalize raw)
+  else
+    .resourceLimit cost
 
 end Raw
 
