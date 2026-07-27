@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.Language
+import HexRealRootsMathlib.IsolateRoots
 
 public section
 
@@ -22,16 +23,20 @@ namespace Hex.RCF.Tests
 open Hex.RCF
 
 /-- The atom `0 = 0`. -/
-def zeroEq : Atom := ⟨0, .eq⟩
+private def zeroEq : Atom := ⟨0, .eq⟩
 
 /-- The atom `0 ≠ 0`. -/
-def zeroNe : Atom := ⟨0, .ne⟩
+private def zeroNe : Atom := ⟨0, .ne⟩
 
 /-- The real evaluation of the executable zero polynomial is zero. -/
-theorem eval_zero (x : ℝ) :
+private theorem eval_zero (x : ℝ) :
     Polynomial.aeval x (HexPolyZMathlib.toPolynomial (0 : ZPoly)) = 0 := by
   rw [HexPolyZMathlib.toPolynomial_zero]
   simp
+
+/-- The asymmetric polynomial `x³ - 1`, whose coefficient order is observable. -/
+private def cubeMinusOnePos : Atom :=
+  ⟨DensePoly.ofCoeffs #[(-1 : Int), 0, 0, 1], .gt⟩
 
 example : Cmp.lt.toProp (1 : ℝ) 2 := by norm_num [Cmp.toProp]
 example : Cmp.le.toProp (1 : ℝ) 1 := by norm_num [Cmp.toProp]
@@ -48,6 +53,16 @@ example (p : ZPoly) (x : ℝ) :
 example : zeroEq.toProp 2 := by
   change Polynomial.aeval 2 (HexPolyZMathlib.toPolynomial (0 : ZPoly)) = 0
   exact eval_zero 2
+
+example : cubeMinusOnePos.toProp 2 := by
+  simp only [cubeMinusOnePos, Atom.toProp, Cmp.toProp,
+    HexRealRootsMathlib.aeval_toPolynomial_ofCoeffs]
+  norm_num [Finset.sum_range_succ]
+
+example : ¬cubeMinusOnePos.toProp 0 := by
+  simp only [cubeMinusOnePos, Atom.toProp, Cmp.toProp,
+    HexRealRootsMathlib.aeval_toPolynomial_ofCoeffs]
+  norm_num [Finset.sum_range_succ]
 
 example : (Formula.atom zeroEq |>.and (.not (.atom zeroNe)) |>.toProp) (1 / 2) := by
   simp only [Formula.toProp, zeroEq, zeroNe, Atom.toProp, Cmp.toProp]
@@ -80,6 +95,15 @@ example : (Sentence.existsIoc (Dyadic.ofInt 0) (Dyadic.ofInt 1) (.atom zeroEq)).
     norm_num [Set.mem_Ioc]
   · change Polynomial.aeval 1 (HexPolyZMathlib.toPolynomial (0 : ZPoly)) = 0
     exact eval_zero 1
+
+/-- A genuinely fractional dyadic endpoint uses the shift exponent convention. -/
+example : (Sentence.existsIoc (Dyadic.ofInt 0)
+    ((Dyadic.ofInt 1) >>> (1 : Int)) .tt).toProp := by
+  simp only [Sentence.toProp, Formula.toProp]
+  refine ⟨1 / 2, ?_⟩
+  rw [HexRealRootsMathlib.toReal_ofInt,
+    HexRealRootsMathlib.toReal_ofInt_shiftRight]
+  norm_num [Set.mem_Ioc]
 
 /-- Reversed endpoints make the half-open interval empty. -/
 example : (Sentence.forallIoc (Dyadic.ofInt 1) (Dyadic.ofInt 0) .ff).toProp := by
