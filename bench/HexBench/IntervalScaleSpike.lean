@@ -39,15 +39,20 @@ def runCheck (workload : Workload) (limit : StructureLimit) : Bool :=
   workload.certificate.check fixtureLimit limit baseProgram.length
     fixtureSources fixtureTarget
 
-/-- Exact acceptance, with one harmless extra lookup step on alternate calls. -/
-def acceptWork (workload : Workload) (iteration : Nat) : Bool :=
-  runCheck workload (workload.limitAt (workload.lookupSteps + iteration % 2))
+/-- Exact acceptance on even calls, with one harmless extra lookup step on odd
+calls. The caller precomputes every collection limit outside the timed loop. -/
+def acceptWork (workload : Workload) (limit : StructureLimit)
+    (iteration : Nat) : Bool :=
+  runCheck workload
+    { limit with maxLookupSteps := limit.maxLookupSteps + iteration % 2 }
 
 /-- Exact one-step-short rejection. A harmless passing fact cap stays live. -/
-def belowWork (workload : Workload) (iteration : Nat) : Bool :=
+def belowWork (workload : Workload) (limit : StructureLimit)
+    (iteration : Nat) : Bool :=
   runCheck workload
-    { workload.limitAt (workload.lookupSteps - 1) with
-      maxFacts := workload.certificate.facts.length + iteration % 2 }
+    { limit with
+      maxLookupSteps := limit.maxLookupSteps - 1
+      maxFacts := limit.maxFacts + iteration % 2 }
 
 /-- Preserve a fact's lookup shape while changing its valid claimed range. -/
 def corruptFact (fact : Fact) : Fact :=
@@ -75,8 +80,10 @@ def badTail? (workload : Workload) : Option Workload :=
       | some lookupSteps => some { certificate, lookupSteps }
 
 /-- A semantically bad final fact reaches the end of fact validation. -/
-def badTailWork (workload : Workload) (iteration : Nat) : Bool :=
-  runCheck workload (workload.limitAt (workload.lookupSteps + iteration % 2))
+def badTailWork (workload : Workload) (limit : StructureLimit)
+    (iteration : Nat) : Bool :=
+  runCheck workload
+    { limit with maxLookupSteps := limit.maxLookupSteps + iteration % 2 }
 
 /-- Append one valid, result-irrelevant fact. This makes the fact table exactly
 one constructor longer without invalidating the caller-selected result. -/
@@ -87,15 +94,11 @@ def overFactCap (workload : Workload) : Workload :=
           [{ row := ⟨node 0, unitRange⟩, derivation := .source 0 }] }
     lookupSteps := workload.lookupSteps + 1 }
 
-/-- Reject one constructor beyond the relevant scalable collection cap. -/
-def earlyWork (kind : String) (workload : Workload) (iteration : Nat) : Bool :=
-  let passing := workload.limitAt (workload.lookupSteps + iteration % 2)
-  if kind == "dead-nodes" then
-    runCheck workload
-      { passing with maxNodes := workload.certificate.program.length - 1 }
-  else
-    runCheck workload
-      { passing with maxFacts := workload.certificate.facts.length - 1 }
+/-- Reject one constructor beyond a collection cap precomputed by the caller. -/
+def earlyWork (workload : Workload) (limit : StructureLimit)
+    (iteration : Nat) : Bool :=
+  runCheck workload
+    { limit with maxLookupSteps := limit.maxLookupSteps + iteration % 2 }
 
 /-- Mix one observed value into a deterministic machine-word sink. -/
 def mix (acc value : UInt64) : UInt64 :=
@@ -141,7 +144,7 @@ def workloadSeed (workload : Workload) (counts : LookupCount) : UInt64 :=
 /-- Warm and time one preconstructed checker workload. -/
 def timeCheck (kind : String) (size : Nat) (mode : String) (repeats : Nat)
     (workload : Workload) (expected : Bool) (work : Nat → Bool) : IO Bool := do
-  if work 0 != expected then
+  if work 0 != expected || work 1 != expected then
     IO.eprintln s!"{kind} {size} {mode}: unexpected checker result"
     return false
   let certificate := workload.certificate
@@ -202,19 +205,28 @@ def main (args : List String) : IO UInt32 := do
       let success ←
         match mode with
         | "accept" =>
-            timeCheck kind size mode repeats workload true (acceptWork workload)
+            let limit := workload.limitAt workload.lookupSteps
+            timeCheck kind size mode repeats workload true (acceptWork workload limit)
         | "below" =>
-            timeCheck kind size mode repeats workload false (belowWork workload)
+            let limit := workload.limitAt workload.lookupSteps
+            timeCheck kind size mode repeats workload false (belowWork workload limit)
         | "bad-tail" =>
             match badTail? workload with
             | some bad =>
-                timeCheck kind size mode repeats bad false (badTailWork bad)
+                let limit := bad.limitAt bad.lookupSteps
+                timeCheck kind size mode repeats bad false (badTailWork bad limit)
             | none =>
                 IO.eprintln s!"cannot corrupt empty workload: {kind} {size}"
                 pure false
         | "early" =>
             let early := if kind == "dead-nodes" then workload else overFactCap workload
-            timeCheck kind size mode repeats early false (earlyWork kind early)
+            let passing := early.limitAt early.lookupSteps
+            let limit :=
+              if kind == "dead-nodes" then
+                { passing with maxNodes := passing.maxNodes - 1 }
+              else
+                { passing with maxFacts := passing.maxFacts - 1 }
+            timeCheck kind size mode repeats early false (earlyWork early limit)
         | "build" => timeBuild kind size repeats workload
         | _ =>
             IO.eprintln usage

@@ -76,6 +76,7 @@ PROVENANCE_SOURCES = [
     ROOT / "HexInterval" / "Experiment" / "Center.lean",
     ROOT / "HexInterval" / "Experiment" / "Scale.lean",
     ROOT / "bench" / "HexBench" / "IntervalScaleSpike.lean",
+    ROOT / "conformance" / "HexInterval" / "ScaleConformance.lean",
     ROOT / "lakefile.lean",
     ROOT / "lake-manifest.json",
     ROOT / "lean-toolchain",
@@ -664,11 +665,6 @@ def calibrate(
             status = "repeat-limit"
             break
         repeats = next_repeats
-        if repeats == max_repeats:
-            # Measure the capped repeat count once before accepting it.
-            if trials[-1]["repeats"] == max_repeats:
-                status = "repeat-limit"
-                break
     return measured_repeats, trials, status
 
 
@@ -897,6 +893,8 @@ def main() -> int:
             "modes": MODES,
             "independent_repeats_per_mode": True,
             "one_point_per_process": True,
+            "checker_limits_precomputed": True,
+            "both_parity_outcomes_asserted": True,
             "sample_order": "balanced deterministic coprime stride",
             "early_fact_control":
                 "append one valid irrelevant fact, then cap at the base length",

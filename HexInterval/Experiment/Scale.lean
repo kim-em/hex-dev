@@ -19,9 +19,13 @@ and lookup shape of untrusted certificate data.  The builders are transparent
 and Mathlib-free so later compiled and ordinary-kernel probes can consume the
 same deterministic workloads.
 
-The formulas below count exactly the indexed lookups charged by
-`StructureLimit.maxLookupSteps`.  They do not count the separately bounded
-whole-program and whole-table scans.
+The formulas below count exactly the fact/result indexed lookups charged by
+`StructureLimit.maxLookupSteps`. They do not count separately bounded
+whole-program and whole-table scans. They also do not yet charge the fixed
+center-recipe program lookups repeated for every equality edge: the reference
+checker bounds those by `maxEdges * maxNodes`, while a production checker must
+charge them explicitly or use validated random access. Edge-table growth is a
+separate required experiment.
 -/
 
 namespace Hex.Interval.Experiment.Scale
