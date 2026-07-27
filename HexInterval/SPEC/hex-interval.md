@@ -289,6 +289,44 @@ measure compiled certificate production, interning, serialization, bounded
 decoding, table validation, and replay; they do not compare verifier-only work
 with end-to-end normalization as though the workloads were equal.
 
+The immediate rational vertical first projects the centered certificate to the
+endpoint-erased structural skeleton below and requires exact skeleton equality
+for every Dyadic/rational comparison. Its phase boundary is:
+
+```text
+load structural skeleton
+→ plan with compiled Core Rat
+→ intern canonical endpoints
+→ serialize
+→ bounded decode
+→ validate the complete raw table
+→ compiled replay
+→ ordinary-kernel replay
+```
+
+The first accepted cases are the dyadic-valued `x ∈ [0,1]` control, the
+non-dyadic `x ∈ [1/3,2/3]` centered trace, and an odd-denominator ladder with
+`d = 2^h - 1` for `h ∈ {8, 32, 128, 512, 2048}`. The latter uses sources
+centered at `1/2` with radius `1/d`, so the expected square is bounded by
+`1/d^2` and the centered product lower endpoint is
+`(d^2 - 4) / (4*d^2)`. Scientific runs retain the full ladder; CI may retain a
+bounded prefix.
+
+Every rational entry, including an unused one, crosses encoded-byte and
+integer-bit preflight before arbitrary-precision work, then positive-
+denominator and coprimality validation. Operation preflight separately charges
+retained endpoint size, maximum temporary integer size, and aggregate gcd,
+shift, division, and cross-product work. One-step-over tests must demonstrate
+rejection before the prohibited allocation. Skeleton mismatch, zero or
+noncanonical denominators, inflated equivalent fractions, wrong arithmetic or
+projection results, and unused oversized entries are required malformed cases.
+
+This vertical is Mathlib-free and does not use `norm_num`. The Mathlib companion
+may use `norm_num` only at an optional surface numeral/cast leaf connecting goal
+syntax to a caller-bound rational source; it is not used for planning,
+projection, interning, decoding, validation, arithmetic replay, or soundness.
+No layer uses `native_decide`.
+
 Projection keeps the strongest strictness justified by order. For a lower
 source cut at `r`, a projected dyadic `q <= r` inherits the source strictness
 when `q = r`; when `q < r`, the projected cut is strict even if the source was
@@ -524,6 +562,33 @@ validation, not the production algorithm for recomputing generations across
 several accepted instantiation rounds. The scaling experiment must add
 per-node provenance and exercise the recurrence above before that interface is
 frozen.
+
+The first structural scaling experiment deliberately keeps that same fixed
+one-generation witness while varying dead nodes, relevant and irrelevant
+facts, and adjacent versus far derivation references. Its evidence is recorded
+in [the structural scaling report](../../reports/hex-interval-scale.md). At 500
+facts, adjacent and far traces have identical dimensions but require 1,544 and
+121,839 charged original-order list lookups and take median 51.4 and 164.2
+microseconds in compiled replay. Fact cardinality is therefore not a sufficient
+resource proxy, and original-order `List` lookup remains a transparent
+reference checker rather than a production storage decision.
+
+The next general trace representation exposes an endpoint-erased structural
+skeleton. It records operation tags and operand references, literal slots,
+trigger provenance and recomputed generations, proposal/deduplication keys,
+equality edges, derivation references, caller-bound source/target slots, and
+structural budgets, but not endpoint values. Endpoint backends may be compared
+only when their accepted certificates erase to the identical skeleton. This
+prevents Core rational normalization or dyadic projection cost from being
+misreported as scheduler or storage cost.
+
+Production experiments compare exact-index array, arena, and chunked layouts
+against the list reference in both compiled and ordinary-kernel replay. Every
+layout retains separate node, fact, edge, source, byte, and lookup/work caps;
+the checker recomputes representation-level cost from validated references.
+Whether scheduler fuel should count abstract logical references or concrete
+storage steps remains empirical, but a certificate-supplied cost is never
+trusted.
 
 Generation is explicitly budgeted by new nodes, new equality edges, rule
 applications, depth, and retained payload bytes. A canonical key consisting
