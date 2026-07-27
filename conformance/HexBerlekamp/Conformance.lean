@@ -296,6 +296,16 @@ example : Berlekamp.rabinTest irreducibleQuad irreducibleQuad_monic = true :=
   some (1, [4, 1], [1, 1])
 #guard splitSummary (Berlekamp.kernelWitnessSplit? linearPoly FpPoly.X) = none
 #guard splitSummary (Berlekamp.kernelWitnessSplit? irreducibleQuad FpPoly.X) = none
+#guard (Berlekamp.berlekampFactor linearPoly linearPoly_monic).factors.map coeffNats =
+  [[1, 1]]
+#guard (Berlekamp.berlekampFactor reducibleQuad reducibleQuad_monic).factors.map coeffNats =
+  [[4, 1], [1, 1]]
+#guard
+  let result := Berlekamp.berlekampFactor bigPoly bigPoly_monic
+  result.factors.map (fun factor => factor.degree?.getD 0) = [1, 5, 2]
+#guard
+  let result := Berlekamp.berlekampFactor bigPoly bigPoly_monic
+  result.product == bigPoly
 #guard
   match Berlekamp.kernelWitnessSplit? reducibleQuad FpPoly.X with
   | some split => split.factor * split.cofactor == reducibleQuad

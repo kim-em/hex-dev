@@ -550,6 +550,38 @@ def timeArms (reps : Nat) (inputs : Array ZPoly) (coreOf : ZPoly → ZPoly)
 
 /-! ### Direct Berlekamp sub-phase profile -/
 
+/-- Dynamic work and exclusive operation timings from one instrumented witness-splitting
+run. The outer `totalNs` clock covers the complete recursive traversal; the four inner
+clocks isolate the arithmetic operations, leaving traversal, child recursion, and list
+construction as the residual. -/
+structure WitnessProfileSample where
+  totalNs : Nat := 0
+  reductionNs : Nat := 0
+  sweepNs : Nat := 0
+  gcdNs : Nat := 0
+  cofactorNs : Nat := 0
+  factorsVisited : Nat := 0
+  witnessesTried : Nat := 0
+  constantsTried : Nat := 0
+  gcdCalls : Nat := 0
+  successfulSplits : Nat := 0
+  degreePairs : List (Nat × Nat) := []
+  checksum : UInt64 := 0
+
+def WitnessProfileSample.add (a b : WitnessProfileSample) : WitnessProfileSample :=
+  { totalNs := a.totalNs + b.totalNs
+    reductionNs := a.reductionNs + b.reductionNs
+    sweepNs := a.sweepNs + b.sweepNs
+    gcdNs := a.gcdNs + b.gcdNs
+    cofactorNs := a.cofactorNs + b.cofactorNs
+    factorsVisited := a.factorsVisited + b.factorsVisited
+    witnessesTried := a.witnessesTried + b.witnessesTried
+    constantsTried := a.constantsTried + b.constantsTried
+    gcdCalls := a.gcdCalls + b.gcdCalls
+    successfulSplits := a.successfulSplits + b.successfulSplits
+    degreePairs := a.degreePairs ++ b.degreePairs
+    checksum := a.checksum + b.checksum }
+
 /-- A dependent-prime Berlekamp input erased behind phase callbacks. Preparing
 the record runs prime selection once, outside every timed region; each callback
 starts from the selected monic modular image. -/
@@ -562,7 +594,14 @@ structure BerlekampProfileInput where
   repeatedKernel : Nat → UInt64
   repeatedFactor : Nat → UInt64
   kernel : Nat → UInt64
+  factorBaseline : Nat → UInt64
   factor : Nat → UInt64
+  splitBaseline : Nat → UInt64
+  splitReduced : Nat → UInt64
+  splitLinear : Nat → UInt64
+  witnessBaseline : IO WitnessProfileSample
+  witnessReduced : IO WitnessProfileSample
+  witnessLinear : IO WitnessProfileSample
 
 def fpChecksum [ZMod64.Bounds p] (seed : UInt64) (f : FpPoly p) : UInt64 :=
   f.toArray.foldl (fun acc c => acc * 1000003 + UInt64.ofNat c.toNat)
@@ -577,6 +616,167 @@ def fpMatrixChecksum [ZMod64.Bounds p]
     (fun acc row => row.toArray.foldl
       (fun a c => a * 1000003 + UInt64.ofNat c.toNat) acc)
     seed
+
+private def profileIsNontrivialSplitFactor [ZMod64.Bounds p]
+    (f g : FpPoly p) : Bool :=
+  !g.isZero && g.degree? ≠ some 0 && g.size < f.size
+
+private def profileKernelWitnessSplitAux [ZMod64.Bounds p]
+    (f witness : FpPoly p) : Nat → Nat → Option (Berlekamp.SplitResult p)
+  | 0, _ => none
+  | fuel + 1, c =>
+      let splitConstant := ZMod64.ofNat p c
+      let factor := Berlekamp.splitFactorAt f witness splitConstant
+      if profileIsNontrivialSplitFactor f factor then
+        some { splitConstant, factor, cofactor := f / factor }
+      else
+        profileKernelWitnessSplitAux f witness fuel (c + 1)
+
+/-- Matched current/remainder-reuse split primitive. `reuseReduced = false`
+reproduces `kernelWitnessSplit?`; `true` passes the guard's remainder to every
+candidate gcd. -/
+private def profileKernelWitnessSplit? [ZMod64.Bounds p]
+    (reuseReduced : Bool) (f witness : FpPoly p) : Option (Berlekamp.SplitResult p) :=
+  let reduced := witness % f
+  if reduced.size ≤ 1 then none
+  else profileKernelWitnessSplitAux f (if reuseReduced then reduced else witness) p 0
+
+private def profileSplitWithWitnessesRaw? [ZMod64.Bounds p]
+    (reuseReduced : Bool) (f : FpPoly p) :
+    List (FpPoly p) → Option (Berlekamp.SplitResult p)
+  | [] => none
+  | witness :: witnesses =>
+      match profileKernelWitnessSplit? reuseReduced f witness with
+      | some split => some split
+      | none => profileSplitWithWitnessesRaw? reuseReduced f witnesses
+
+private def profileFullySplitRaw [ZMod64.Bounds p]
+    (reuseReduced : Bool) (witnesses : List (FpPoly p)) :
+    Nat → FpPoly p → List (FpPoly p)
+  | 0, f => [f]
+  | fuel + 1, f =>
+      match profileSplitWithWitnessesRaw? reuseReduced f witnesses with
+      | none => [f]
+      | some split =>
+          profileFullySplitRaw reuseReduced witnesses fuel split.factor ++
+            profileFullySplitRaw reuseReduced witnesses fuel split.cofactor
+
+private def profileFullySplitLinear [ZMod64.Bounds p]
+    (witnesses : List (FpPoly p)) : Nat → FpPoly p → List (FpPoly p)
+  | 0, f => [f]
+  | fuel + 1, f =>
+      -- Mirrors the `f.size ≤ 2` fast path in `Berlekamp.fullySplit`.
+      if f.size ≤ 2 then [f]
+      else
+        match profileSplitWithWitnessesRaw? false f witnesses with
+        | none => [f]
+        | some split =>
+            profileFullySplitLinear witnesses fuel split.factor ++
+              profileFullySplitLinear witnesses fuel split.cofactor
+
+@[noinline]
+def berlekampSplitProfile [ZMod64.Bounds p]
+    (reuseReduced : Bool) (witnesses : List (FpPoly p)) (f : FpPoly p)
+    (salt : Nat) : UInt64 :=
+  fpListChecksum (UInt64.ofNat salt)
+    (profileFullySplitRaw reuseReduced witnesses (f.size + 1) f)
+
+@[noinline]
+def berlekampSplitLinearProfile [ZMod64.Bounds p]
+    (witnesses : List (FpPoly p)) (f : FpPoly p) (salt : Nat) : UInt64 :=
+  fpListChecksum (UInt64.ofNat salt)
+    (profileFullySplitLinear witnesses (f.size + 1) f)
+
+@[noinline]
+def profileForcePoly [ZMod64.Bounds p] (f : FpPoly p) : IO (FpPoly p) := pure f
+
+private def profileKernelWitnessSplitAuxIO [ZMod64.Bounds p]
+    (f witness : FpPoly p) :
+    Nat → Nat → IO (Option (Berlekamp.SplitResult p) × WitnessProfileSample)
+  | 0, _ => pure (none, {})
+  | fuel + 1, c => do
+      let sweepStart ← IO.monoNanosNow
+      let splitConstant := ZMod64.ofNat p c
+      let shifted ← profileForcePoly (witness - FpPoly.C splitConstant)
+      let sweepEnd ← IO.monoNanosNow
+      let gcdStart ← IO.monoNanosNow
+      let factor ← profileForcePoly (DensePoly.gcd f shifted)
+      let gcdEnd ← IO.monoNanosNow
+      let here : WitnessProfileSample :=
+        { sweepNs := sweepEnd - sweepStart
+          gcdNs := gcdEnd - gcdStart
+          constantsTried := 1
+          gcdCalls := 1 }
+      if profileIsNontrivialSplitFactor f factor then
+        let cofactorStart ← IO.monoNanosNow
+        let cofactor ← profileForcePoly (f / factor)
+        let cofactorEnd ← IO.monoNanosNow
+        let split : Berlekamp.SplitResult p := { splitConstant, factor, cofactor }
+        let splitStats : WitnessProfileSample :=
+          { cofactorNs := cofactorEnd - cofactorStart
+            successfulSplits := 1
+            degreePairs := [(factor.degree?.getD 0, cofactor.degree?.getD 0)] }
+        pure (some split, here.add splitStats)
+      else
+        let (result, rest) ← profileKernelWitnessSplitAuxIO f witness fuel (c + 1)
+        pure (result, here.add rest)
+
+private def profileKernelWitnessSplitIO [ZMod64.Bounds p]
+    (reuseReduced : Bool) (f witness : FpPoly p) :
+    IO (Option (Berlekamp.SplitResult p) × WitnessProfileSample) := do
+  let reductionStart ← IO.monoNanosNow
+  let reduced ← profileForcePoly (witness % f)
+  let reductionEnd ← IO.monoNanosNow
+  let guardStats : WitnessProfileSample :=
+    { reductionNs := reductionEnd - reductionStart, witnessesTried := 1 }
+  if reduced.size ≤ 1 then
+    pure (none, guardStats)
+  else
+    let (result, sweepStats) ←
+      profileKernelWitnessSplitAuxIO f (if reuseReduced then reduced else witness) p 0
+    pure (result, guardStats.add sweepStats)
+
+private def profileSplitWithWitnessesIO [ZMod64.Bounds p]
+    (reuseReduced : Bool) (f : FpPoly p) :
+    List (FpPoly p) → IO (Option (Berlekamp.SplitResult p) × WitnessProfileSample)
+  | [] => pure (none, {})
+  | witness :: witnesses => do
+      let (result, here) ← profileKernelWitnessSplitIO reuseReduced f witness
+      match result with
+      | some split => pure (some split, here)
+      | none =>
+          let (result, rest) ← profileSplitWithWitnessesIO reuseReduced f witnesses
+          pure (result, here.add rest)
+
+private def profileFullySplitIO [ZMod64.Bounds p]
+    (reuseReduced stopLinear : Bool) (witnesses : List (FpPoly p)) :
+    Nat → FpPoly p → IO (List (FpPoly p) × WitnessProfileSample)
+  | 0, f => pure ([f], { factorsVisited := 1 })
+  | fuel + 1, f => do
+      let visitStats : WitnessProfileSample := { factorsVisited := 1 }
+      if stopLinear && f.size ≤ 2 then
+        pure ([f], visitStats)
+      else
+        let (result, scanStats) ← profileSplitWithWitnessesIO reuseReduced f witnesses
+        match result with
+        | none => pure ([f], visitStats.add scanStats)
+        | some split =>
+            let (left, leftStats) ←
+              profileFullySplitIO reuseReduced stopLinear witnesses fuel split.factor
+            let (right, rightStats) ←
+              profileFullySplitIO reuseReduced stopLinear witnesses fuel split.cofactor
+            pure (left ++ right, visitStats.add (scanStats.add (leftStats.add rightStats)))
+
+def profileWitnessSample [ZMod64.Bounds p]
+    (reuseReduced stopLinear : Bool) (witnesses : List (FpPoly p)) (f : FpPoly p) :
+    IO WitnessProfileSample := do
+  let totalStart ← IO.monoNanosNow
+  let (factors, stats) ←
+    profileFullySplitIO reuseReduced stopLinear witnesses (f.size + 1) f
+  let totalEnd ← IO.monoNanosNow
+  pure { stats with
+    totalNs := totalEnd - totalStart
+    checksum := fpListChecksum 0 factors }
 
 @[noinline]
 def berlekampMatrixProfile [ZMod64.Bounds p]
@@ -650,6 +850,14 @@ def berlekampFactorProfile [ZMod64.Bounds p]
     [Lean.Grind.Field (ZMod64 p)] (salt : Nat) : UInt64 :=
   fpListChecksum (UInt64.ofNat salt) (Berlekamp.berlekampFactor f hmonic).factors
 
+@[noinline]
+def berlekampFactorBaselineProfile [ZMod64.Bounds p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    [Lean.Grind.Field (ZMod64 p)] (salt : Nat) : UInt64 :=
+  let witnesses := (Berlekamp.fixedSpaceKernel f hmonic).toList
+  fpListChecksum (UInt64.ofNat salt)
+    (profileFullySplitRaw false witnesses (f.size + 1) f)
+
 /-- IO-sequenced identity pinning a pure phase callback between timestamps. -/
 @[noinline]
 def profileForce (x : UInt64) : IO UInt64 := pure x
@@ -665,6 +873,7 @@ def prepareBerlekampProfile (label : String) (f : ZPoly) : Option BerlekampProfi
         if hzero : data.fModP.isZero = false then
           let g := monicModularImage data.fModP
           let hmonic := monicModularImage_monic hprime data.fModP hzero
+          let witnesses := (Berlekamp.fixedSpaceKernel g hmonic).toList
           some
             { label
               degree := f.degree?.getD 0
@@ -674,7 +883,14 @@ def prepareBerlekampProfile (label : String) (f : ZPoly) : Option BerlekampProfi
               repeatedKernel := berlekampRepeatedKernelProfile g hmonic
               repeatedFactor := berlekampRepeatedFactorProfile g hmonic
               kernel := berlekampKernelProfile g hmonic
-              factor := berlekampFactorProfile g hmonic }
+              factorBaseline := berlekampFactorBaselineProfile g hmonic
+              factor := berlekampFactorProfile g hmonic
+              splitBaseline := berlekampSplitProfile false witnesses g
+              splitReduced := berlekampSplitProfile true witnesses g
+              splitLinear := berlekampSplitLinearProfile witnesses g
+              witnessBaseline := profileWitnessSample false false witnesses g
+              witnessReduced := profileWitnessSample true false witnesses g
+              witnessLinear := profileWitnessSample false true witnesses g }
         else none
       else none
 
@@ -699,6 +915,58 @@ def profileMedianNs (iters : Nat) (act : Nat → UInt64) : IO (Nat × UInt64) :=
     sink := sink + r
   return (medianNat samples, sink)
 
+private def sameWitnessWork (a b : WitnessProfileSample) : Bool :=
+  a.factorsVisited == b.factorsVisited &&
+    a.witnessesTried == b.witnessesTried &&
+    a.constantsTried == b.constantsTried &&
+    a.gcdCalls == b.gcdCalls &&
+    a.successfulSplits == b.successfulSplits &&
+    a.degreePairs == b.degreePairs &&
+    a.checksum == b.checksum
+
+private def sameWitnessOutput (a b : WitnessProfileSample) : Bool :=
+  a.factorsVisited == b.factorsVisited &&
+    a.successfulSplits == b.successfulSplits &&
+    a.degreePairs == b.degreePairs &&
+    a.checksum == b.checksum
+
+def profileWitnessMedian (iters : Nat) (act : IO WitnessProfileSample) :
+    IO WitnessProfileSample := do
+  let reference ← act
+  let mut totals : Array Nat := #[]
+  let mut reductions : Array Nat := #[]
+  let mut sweeps : Array Nat := #[]
+  let mut gcds : Array Nat := #[]
+  let mut cofactors : Array Nat := #[]
+  for _ in [0:iters] do
+    let sample ← act
+    if !sameWitnessWork reference sample then
+      throw <| IO.userError "non-deterministic witness profile work"
+    totals := totals.push sample.totalNs
+    reductions := reductions.push sample.reductionNs
+    sweeps := sweeps.push sample.sweepNs
+    gcds := gcds.push sample.gcdNs
+    cofactors := cofactors.push sample.cofactorNs
+  pure { reference with
+    totalNs := medianNat totals
+    reductionNs := medianNat reductions
+    sweepNs := medianNat sweeps
+    gcdNs := medianNat gcds
+    cofactorNs := medianNat cofactors }
+
+def witnessAccountedNs (sample : WitnessProfileSample) : Nat :=
+  sample.reductionNs + sample.sweepNs + sample.gcdNs + sample.cofactorNs
+
+def witnessResidualNs (label : String) (sample : WitnessProfileSample) : IO Nat := do
+  let accountedNs := witnessAccountedNs sample
+  if sample.totalNs < accountedNs then
+    throw <| IO.userError
+      s!"{label}: independently medianed witness phases exceed total time"
+  pure (sample.totalNs - accountedNs)
+
+def degreePairsString (pairs : List (Nat × Nat)) : String :=
+  String.intercalate ";" (pairs.map fun pair => s!"{pair.1}x{pair.2}")
+
 def percent (part total : Nat) : Float :=
   if total = 0 then 0 else 100.0 * part.toFloat / total.toFloat
 
@@ -708,14 +976,34 @@ def profileBerlekampInput (iters : Nat) (input : BerlekampProfileInput) : IO Uni
   if repeatedCheck != sharedCheck then
     throw <| IO.userError s!"{input.label}: repeated/shared kernel checksum mismatch"
   let repeatedFactorCheck ← profileForce (input.repeatedFactor 7)
+  let factorBaselineCheck ← profileForce (input.factorBaseline 7)
   let sharedFactorCheck ← profileForce (input.factor 7)
   if repeatedFactorCheck != sharedFactorCheck then
     throw <| IO.userError s!"{input.label}: repeated/shared factor checksum mismatch"
+  if factorBaselineCheck != sharedFactorCheck then
+    throw <| IO.userError s!"{input.label}: baseline/fixed factor checksum mismatch"
+  let splitBaselineCheck ← profileForce (input.splitBaseline 7)
+  let splitReducedCheck ← profileForce (input.splitReduced 7)
+  let splitLinearCheck ← profileForce (input.splitLinear 7)
+  if splitBaselineCheck != sharedFactorCheck || splitReducedCheck != sharedFactorCheck ||
+      splitLinearCheck != sharedFactorCheck then
+    throw <| IO.userError s!"{input.label}: witness split checksum mismatch"
   let (matrixNs, matrixSink) ← profileMedianNs iters input.matrix
   let (repeatedKernelNs, repeatedSink) ← profileMedianNs iters input.repeatedKernel
   let (repeatedFactorNs, repeatedFactorSink) ← profileMedianNs iters input.repeatedFactor
   let (kernelNs, kernelSink) ← profileMedianNs iters input.kernel
+  let (factorBaselineNs, factorBaselineSink) ← profileMedianNs iters input.factorBaseline
   let (factorNs, factorSink) ← profileMedianNs iters input.factor
+  let (splitBaselineNs, splitBaselineSink) ← profileMedianNs iters input.splitBaseline
+  let (splitReducedNs, splitReducedSink) ← profileMedianNs iters input.splitReduced
+  let (splitLinearNs, splitLinearSink) ← profileMedianNs iters input.splitLinear
+  let witnessBaseline ← profileWitnessMedian iters input.witnessBaseline
+  let witnessReduced ← profileWitnessMedian iters input.witnessReduced
+  let witnessLinear ← profileWitnessMedian iters input.witnessLinear
+  if !sameWitnessWork witnessBaseline witnessReduced then
+    throw <| IO.userError s!"{input.label}: reduced witness work/output mismatch"
+  if !sameWitnessOutput witnessBaseline witnessLinear then
+    throw <| IO.userError s!"{input.label}: linear-stop witness output mismatch"
   if repeatedFactorNs < repeatedKernelNs then
     throw <| IO.userError s!"{input.label}: repeated-factor median below repeated-kernel median"
   if factorNs < kernelNs then
@@ -730,8 +1018,22 @@ def profileBerlekampInput (iters : Nat) (input : BerlekampProfileInput) : IO Uni
   let rebuildNs := repeatedKernelNs - matrixNs
   let fixedNullspaceNs := kernelNs - matrixNs
   let speedup := if factorNs = 0 then 0 else baselineNs.toFloat / factorNs.toFloat
+  let factorSpeedup := if factorNs = 0 then 0
+    else factorBaselineNs.toFloat / factorNs.toFloat
   let kernelRatio := if kernelNs = 0 then 0 else repeatedKernelNs.toFloat / kernelNs.toFloat
-  IO.println s!"{input.label},deg={input.degree},p={input.p},r={input.factorCount},baseline_us={baselineNs.toFloat / 1000.0},matrix_us={matrixNs.toFloat / 1000.0},matrix_pct={percent matrixNs baselineNs},rebuild_us={rebuildNs.toFloat / 1000.0},rebuild_pct={percent rebuildNs baselineNs},split_us={repeatedSplittingNs.toFloat / 1000.0},split_pct={percent repeatedSplittingNs baselineNs},fixed_us={factorNs.toFloat / 1000.0},fixed_matrix_pct={percent matrixNs factorNs},fixed_nullspace_pct={percent fixedNullspaceNs factorNs},fixed_split_pct={percent splittingNs factorNs},kernel_ratio={kernelRatio},speedup={speedup},sink={matrixSink + repeatedSink + repeatedFactorSink + kernelSink + factorSink}"
+  IO.println s!"{input.label},deg={input.degree},p={input.p},r={input.factorCount},baseline_us={baselineNs.toFloat / 1000.0},matrix_us={matrixNs.toFloat / 1000.0},matrix_pct={percent matrixNs baselineNs},rebuild_us={rebuildNs.toFloat / 1000.0},rebuild_pct={percent rebuildNs baselineNs},split_us={repeatedSplittingNs.toFloat / 1000.0},split_pct={percent repeatedSplittingNs baselineNs},shared_baseline_us={factorBaselineNs.toFloat / 1000.0},fixed_us={factorNs.toFloat / 1000.0},factor_speedup={factorSpeedup},fixed_matrix_pct={percent matrixNs factorNs},fixed_nullspace_pct={percent fixedNullspaceNs factorNs},fixed_split_pct={percent splittingNs factorNs},kernel_ratio={kernelRatio},speedup={speedup},sink={matrixSink + repeatedSink + repeatedFactorSink + kernelSink + factorBaselineSink + factorSink + splitBaselineSink + splitReducedSink + splitLinearSink}"
+  let splitSpeedup := if splitReducedNs = 0 then 0
+    else splitBaselineNs.toFloat / splitReducedNs.toFloat
+  let witnessBaselineResidualNs ←
+    witnessResidualNs s!"{input.label}: baseline" witnessBaseline
+  let witnessReducedResidualNs ←
+    witnessResidualNs s!"{input.label}: reduced" witnessReduced
+  let witnessLinearResidualNs ←
+    witnessResidualNs s!"{input.label}: linear-stop" witnessLinear
+  let witnessBaselineResidualUs := witnessBaselineResidualNs.toFloat / 1000.0
+  let witnessReducedResidualUs := witnessReducedResidualNs.toFloat / 1000.0
+  let witnessLinearResidualUs := witnessLinearResidualNs.toFloat / 1000.0
+  IO.println s!"witness,{input.label},deg={input.degree},p={input.p},r={input.factorCount},baseline_us={splitBaselineNs.toFloat / 1000.0},reduced_us={splitReducedNs.toFloat / 1000.0},reduced_speedup={splitSpeedup},linear_stop_us={splitLinearNs.toFloat / 1000.0},linear_stop_speedup={splitBaselineNs.toFloat / splitLinearNs.toFloat},factors={witnessBaseline.factorsVisited},witnesses={witnessBaseline.witnessesTried},constants={witnessBaseline.constantsTried},gcd_calls={witnessBaseline.gcdCalls},splits={witnessBaseline.successfulSplits},degree_pairs={degreePairsString witnessBaseline.degreePairs},profile_baseline_us={witnessBaseline.totalNs.toFloat / 1000.0},reduction_us={witnessBaseline.reductionNs.toFloat / 1000.0},sweep_us={witnessBaseline.sweepNs.toFloat / 1000.0},gcd_us={witnessBaseline.gcdNs.toFloat / 1000.0},cofactor_us={witnessBaseline.cofactorNs.toFloat / 1000.0},residual_us={witnessBaselineResidualUs},profile_reduced_us={witnessReduced.totalNs.toFloat / 1000.0},reduced_reduction_us={witnessReduced.reductionNs.toFloat / 1000.0},reduced_sweep_us={witnessReduced.sweepNs.toFloat / 1000.0},reduced_gcd_us={witnessReduced.gcdNs.toFloat / 1000.0},reduced_cofactor_us={witnessReduced.cofactorNs.toFloat / 1000.0},reduced_residual_us={witnessReducedResidualUs},linear_factors={witnessLinear.factorsVisited},linear_witnesses={witnessLinear.witnessesTried},linear_constants={witnessLinear.constantsTried},linear_gcd_calls={witnessLinear.gcdCalls},linear_splits={witnessLinear.successfulSplits},linear_profile_us={witnessLinear.totalNs.toFloat / 1000.0},linear_reduction_us={witnessLinear.reductionNs.toFloat / 1000.0},linear_sweep_us={witnessLinear.sweepNs.toFloat / 1000.0},linear_gcd_us={witnessLinear.gcdNs.toFloat / 1000.0},linear_cofactor_us={witnessLinear.cofactorNs.toFloat / 1000.0},linear_residual_us={witnessLinearResidualUs}"
 
 def profileBerlekampPhases : IO Unit := do
   for n in [6, 8, 10, 12, 14, 16, 18, 20, 22, 24] do
