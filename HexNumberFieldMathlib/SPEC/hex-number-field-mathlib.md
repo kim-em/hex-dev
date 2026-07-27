@@ -58,9 +58,6 @@ identical and avoids a second, diamond-forming rational action.
 theorem AlgebraicNumber.beq_iff (a b : AlgebraicNumber) :
     a == b ↔ a.toComplex = b.toComplex
 
-theorem AlgebraicRoot.beq_iff (a b : AlgebraicRoot) :
-    a == b ↔ a.toComplex = b.toComplex
-
 theorem AlgebraicRoot.isZero_iff (a : AlgebraicRoot) :
     a.isZero ↔ a.toComplex = 0
 
@@ -71,9 +68,9 @@ theorem QAdjoin.approx_radius (...) :
     (a.approx rep h prec).2.radius ≤ 2 ^ (-prec)
 ```
 
-The `AlgebraicRoot.beq_iff` proof uses `sameRoot` on the fast path and
-exactification on the general path. No structural `DecidableEq` is exposed for
-either algebraic-number record.
+`AlgebraicRoot` deliberately exposes no Boolean or structural equality:
+comparison first exactifies to canonical `AlgebraicNumber`. No structural
+`DecidableEq` is exposed for either algebraic-number record.
 
 ## Canonicalization
 
