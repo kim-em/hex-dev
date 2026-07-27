@@ -30,9 +30,10 @@ points where the recurrence proves divisibility. This matters for the tower
 algorithms later in the manual: their coefficient rings are executable
 number-field presentations, not Mathlib fields.
 
-The computational library is Mathlib-free. `HexResultantMathlib` proves that
-the final executable value agrees with {name}`Polynomial.resultant`, including
-specialization, root-product, and discriminant conventions.
+The computational library is Mathlib-free. `HexResultantMathlib` states the
+correspondence between the final executable value and
+{name}`Polynomial.resultant`, including specialization and discriminant
+conventions.
 
 # The executable API
 %%%
@@ -79,24 +80,26 @@ private def g : DensePoly Int := DensePoly.ofList [-3, 1]
 end HexResultantChapter
 ```
 
-# What the companion proves
+# Companion contracts
 %%%
 tag := "hex-resultant-correspondence"
 %%%
 
-The central correspondence theorem identifies the executable scalar with
-Mathlib's determinant-defined resultant:
+These Phase-1 declarations fix the intended correspondence API; their proof
+bodies are not yet complete. The central contract identifies the executable
+scalar with Mathlib's determinant-defined resultant:
 
 {docstring Hex.DensePoly.toPolynomial_resultant}
 
-Two downstream forms are especially important. Specialization retains the
-original formal degrees, so degree drops after substituting a parameter do not
-silently change the resultant convention:
+The specialization contract retains the original formal degrees, so degree
+drops after substituting a parameter do not silently change the resultant
+convention:
 
 {docstring Hex.DensePoly.eval_resultant}
 
-The root-product form is the bridge from one-level tower elimination to field
-norms and to the finite collision bounds used by Trager factorization:
+Independently, Mathlib's resultant has the following proved root-product
+formula. It is the algebraic identity the later executable correspondence will
+carry into one-level field norms and Trager collision bounds:
 
 {docstring Hex.DensePoly.resultant_eq_leadingCoeff_mul_prod_roots}
 

@@ -18,6 +18,15 @@ set_option pp.rawOnError true
 tag := "hex-number-field"
 %%%
 
+# Introduction
+%%%
+tag := "hex-number-field-intro"
+%%%
+
+`HexNumberField` provides executable exact arithmetic for selected complex
+algebraic roots, both in a fixed rational presentation and in a canonical
+minimal-polynomial form.
+
 # Three representations
 %%%
 tag := "hex-number-field-representations"
@@ -48,12 +57,49 @@ convention `0⁻¹ = 0`.
 
 {docstring Hex.QAdjoin.inv}
 
-Approximation refines the stored root representative and evaluates the reduced
-coordinate polynomial with dyadic complex-ball Horner arithmetic. The returned
-representative can be threaded into the next request so earlier work is not
-repeated.
+Approximation takes a root representative, refines it, and evaluates the
+reduced coordinate polynomial with dyadic complex-ball Horner arithmetic. The
+returned representative can be threaded into the next request so earlier work
+is not repeated.
 
 {docstring Hex.QAdjoin.approx}
+
+Here is fixed-field multiplication and inversion in `ℚ(√2)`:
+
+```lean
+open Hex
+
+namespace HexNumberFieldChapter
+
+private def sqrtTwoPoly : ZPoly :=
+  DensePoly.ofList [-2, 0, 1]
+
+private def sqrtTwoSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
+
+private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
+  ⟨⟨sqrtTwoSquare, by decide⟩, by decide⟩
+
+private def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
+  SimpleRoot.mk sqrtTwoRep
+
+#guard
+  if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
+    letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
+      ⟨hirred, by decide⟩
+    let xPoly :=
+      DensePoly.ofList ([0, 1] : List Rat)
+    let x : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
+      QAdjoin.reduce sqrtTwoPoly sqrtTwoRoot xPoly
+    let two : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
+      QAdjoin.reduce sqrtTwoPoly sqrtTwoRoot
+        (DensePoly.C 2)
+    x * x = two && x * x⁻¹ = 1
+  else
+    false
+
+end HexNumberFieldChapter
+```
 
 # Lazy arithmetic and exactification
 %%%
@@ -61,8 +107,8 @@ tag := "hex-number-field-lazy"
 %%%
 
 Every certificate-producing operation has an `Option` form. The total form is
-the primary algebraic API; its loud fallback is proved unreachable in
-`HexNumberFieldMathlib`.
+the primary algebraic API; its loud fallback is paired with a companion
+completeness contract.
 
 {docstring Hex.AlgebraicRoot.add?}
 
@@ -107,15 +153,16 @@ finite root array carrying positive multiplicities.
 
 {docstring Hex.AlgebraicPoly.roots?}
 
-# What the companion proves
+# Companion contracts
 %%%
 tag := "hex-number-field-correspondence"
 %%%
 
-`HexNumberFieldMathlib` interprets every selected root in `ℂ`, proves the fixed
-coordinate laws and approximation enclosure, proves exactification and lazy
-arithmetic complete, and identifies the root arrays with Mathlib polynomial
-roots and multiplicities.
+`HexNumberFieldMathlib` currently exposes Phase-1 contract declarations; their
+proof bodies are not yet complete. Once discharged, they interpret selected
+roots in `ℂ`, establish the fixed-coordinate laws and approximation
+enclosure, make exactification and lazy arithmetic complete, and identify the
+returned arrays with Mathlib polynomial roots and multiplicities.
 
 {docstring Hex.AlgebraicRoot.toComplex}
 
@@ -130,9 +177,12 @@ roots and multiplicities.
 tag := "hex-number-field-cross-references"
 %%%
 
+* {ref "hex-poly-z"}[HexPolyZ] supplies the integer-polynomial presentation.
 * {ref "hex-roots"}[HexRoots] supplies certified complex-root isolation and
-  the root-identity quotient.
+  {name}`Hex.SimpleRoot`.
 * {ref "hex-resultant"}[HexResultant] supplies the eliminants used by lazy
   arithmetic and fixed-field norm candidates.
+* {ref "hex-matrix"}[HexMatrix] and {ref "hex-row-reduce"}[HexRowReduce]
+  supply exact span coordinates for fixed-field minimal polynomials.
 * {ref "hex-number-field-tower"}[HexNumberFieldTower] builds successive
   extensions when one primitive presentation is not convenient.

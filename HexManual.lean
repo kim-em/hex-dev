@@ -52,10 +52,10 @@ authors := ["The hex project"]
 shortTitle := "hex"
 %%%
 
-`hex` is executable, verified computer algebra for Lean 4: finite and number
-fields, polynomial factorization, root isolation, and lattice reduction. The
-computational core is Mathlib-free; each chapter documents one library
-and, where there is one, its correspondence with Mathlib.
+`hex` is executable computer algebra for Lean 4: finite and number fields,
+polynomial factorization, root isolation, and lattice reduction. The
+computational core is Mathlib-free; Mathlib companions state correspondence
+contracts and, for mature libraries, supply their proofs.
 
 {include 0 HexManual.Chapters.HexMatrix}
 

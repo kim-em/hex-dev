@@ -18,6 +18,14 @@ set_option pp.rawOnError true
 tag := "hex-number-field-tower"
 %%%
 
+# Introduction
+%%%
+tag := "hex-number-field-tower-intro"
+%%%
+
+`HexNumberFieldTower` performs exact arithmetic, factorization, adjoining, and
+splitting in a sequence of relative algebraic extensions.
+
 # Validated towers and coordinates
 %%%
 tag := "hex-number-field-tower-data"
@@ -52,7 +60,8 @@ applies Trager's algorithm one level at a time. At `K(α)/K`, it searches a
 deterministic finite list of integer shifts for a squarefree relative norm,
 factors that norm over `K`, and recovers the factors over `K(α)` by gcd. It does
 not replace this step with an absolute norm, which would duplicate factors
-defined over an intermediate subfield.
+defined over an intermediate subfield. The rational base case delegates to
+the `HexBerlekampZassenhaus` integer factorizer.
 
 {docstring Hex.NumberTower.Norm.oneLevel}
 
@@ -60,6 +69,50 @@ defined over an intermediate subfield.
 
 The returned payload keeps the scalar separate and records each distinct
 factor once with a positive multiplicity.
+
+The following example constructs `ℚ(√2)` and factors `X² - 2` there; the
+two linear factors correspond to the already-present roots `±√2`.
+
+```lean
+open Hex Hex.NumberTower
+
+namespace HexNumberFieldTowerChapter
+
+private def sqrtTwoPoly : ZPoly :=
+  DensePoly.ofList [-2, 0, 1]
+
+private def sqrtTwoSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
+
+private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
+  ⟨⟨sqrtTwoSquare, by decide⟩, by decide⟩
+
+private def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
+  SimpleRoot.mk sqrtTwoRep
+
+#guard
+  if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
+    letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
+      ⟨hirred, by decide⟩
+    if hsimple : HasOnlySimpleRoots sqrtTwoPoly then
+      let extension := ofQAdjoin (x := sqrtTwoRoot)
+        hsimple sqrtTwoRep rfl
+      let f : Poly extension.tower :=
+        DensePoly.ofCoeffs
+          #[ofRat extension.tower (-2), 0, 1]
+      match factor? extension.tower f with
+      | some result =>
+          result.factors.size = 2 &&
+            result.factors.all fun entry =>
+              entry.1.degree? = some 1 && entry.2 = 1
+      | none => false
+    else
+      false
+  else
+    false
+
+end HexNumberFieldTowerChapter
+```
 
 # Adjoining and splitting
 %%%
@@ -86,20 +139,22 @@ tag := "hex-number-field-tower-flatten"
 {name}`Hex.NumberTower.flatten?` replaces a tower by one canonical
 `QAdjoin` presentation. It combines the fixed generators in deterministic
 signed-shift order, retries both degree and coordinate-recovery collisions,
-recovers old generators by exact gcd and row reduction, and checks a tower
-basis round trip plus the primitive polynomial relation before returning maps.
+recovers old generators by exact gcd, and checks direct-evaluation coordinate
+maps, a tower-basis round trip, and the primitive polynomial relation before
+returning maps.
 
 {docstring Hex.NumberTower.flatten?}
 
-# What the companion proves
+# Companion contracts
 %%%
 tag := "hex-number-field-tower-correspondence"
 %%%
 
-`HexNumberFieldTowerMathlib` interprets mixed-radix coordinates in the stored
-complex embedding. It proves arithmetic correspondence, relative-resultant
-agreement, factorization and adjoining completeness, splitting reconstruction
-and generation, and both flattening round trips.
+`HexNumberFieldTowerMathlib` currently exposes Phase-1 contract declarations;
+their proof bodies are not yet complete. Once discharged, they interpret
+mixed-radix coordinates in the stored complex embedding, establish arithmetic
+and relative-resultant correspondence, and make factorization, adjoining,
+splitting, and flattening complete.
 
 {docstring Hex.NumberTower.toComplex}
 
@@ -119,5 +174,5 @@ tag := "hex-number-field-tower-cross-references"
 * {ref "hex-number-field"}[HexNumberField] supplies selected algebraic roots,
   canonical exactification, and the one-generator target of flattening.
 * {ref "hex-resultant"}[HexResultant] supplies one-level relative elimination.
-* {ref "hex-row-reduce"}[HexRowReduce] supplies exact coordinate recovery for
-  primitive elements.
+* {ref "factor-tactics"}[Factor tactics] describes the
+  `HexBerlekampZassenhaus` integer factorizer used at the rational base case.
