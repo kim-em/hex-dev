@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexNumberFieldMathlib.Basic
+public import Mathlib.RingTheory.AdjoinRoot
 
 public section
 
@@ -23,44 +24,69 @@ namespace Hex.QAdjoin
 
 variable {p : ZPoly} {x : SimpleRoot p}
 
+/-- The monic rational associate used for the quotient-field comparison. -/
+@[expose]
+noncomputable def definingPolynomial (p : ZPoly) : Polynomial Rat :=
+  (p.leadingCoeff : Rat)⁻¹ • HexPolyZMathlib.toPolyℚ p
+
+/-- Send reduced executable coordinates to the corresponding `AdjoinRoot`
+class. This function is defined before a ring structure is installed on
+`QAdjoin`. -/
+@[expose]
+noncomputable def toAdjoinRoot (a : QAdjoin p x) :
+    AdjoinRoot (definingPolynomial p) :=
+  AdjoinRoot.mk (definingPolynomial p)
+    (HexPolyMathlib.toPolynomial a.coeffs)
+
+/-- Reduced coordinates give a bijection with the quotient by the monic
+rational defining relation. -/
+theorem toAdjoinRoot_bijective [ZPoly.CheckedIrreducible p] :
+    Function.Bijective (@toAdjoinRoot p x) := by
+  sorry
+
 /-- Fixed-presentation zero evaluates to complex zero. -/
-theorem map_zero [ZPoly.CheckedIrreducible p] :
-    toComplex (0 : QAdjoin p x) = 0 := by
+theorem map_zero (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
+    toComplex (0 : QAdjoin p x) rep h = 0 := by
   sorry
 
 /-- Fixed-presentation one evaluates to complex one. -/
-theorem map_one [ZPoly.CheckedIrreducible p] :
-    toComplex (1 : QAdjoin p x) = 1 := by
+theorem map_one (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
+    toComplex (1 : QAdjoin p x) rep h = 1 := by
   sorry
 
 /-- Fixed-presentation negation agrees with complex negation. -/
-theorem map_neg [ZPoly.CheckedIrreducible p] (a : QAdjoin p x) :
-    toComplex (-a) = -toComplex a := by
+theorem map_neg (a : QAdjoin p x) (rep : RefinedIsolation p)
+    (h : SimpleRoot.mk rep = x) :
+    toComplex (-a) rep h = -toComplex a rep h := by
   sorry
 
 /-- Fixed-presentation subtraction agrees with complex subtraction. -/
-theorem map_sub [ZPoly.CheckedIrreducible p] (a b : QAdjoin p x) :
-    toComplex (a - b) = toComplex a - toComplex b := by
+theorem map_sub (a b : QAdjoin p x) (rep : RefinedIsolation p)
+    (h : SimpleRoot.mk rep = x) :
+    toComplex (a - b) rep h = toComplex a rep h - toComplex b rep h := by
   sorry
 
 /-- The executable rational scalar action is semantic scalar multiplication. -/
-theorem map_smul [ZPoly.CheckedIrreducible p] (q : Rat) (a : QAdjoin p x) :
-    toComplex (q • a) = (q : ℂ) * toComplex a := by
+theorem map_smul (q : Rat) (a : QAdjoin p x) (rep : RefinedIsolation p)
+    (h : SimpleRoot.mk rep = x) :
+    toComplex (q • a) rep h = (q : ℂ) * toComplex a rep h := by
   sorry
 
 /-- Fixed-presentation division agrees with complex division. -/
-theorem map_div [ZPoly.CheckedIrreducible p] (a b : QAdjoin p x) :
-    toComplex (a / b) = toComplex a / toComplex b := by
+theorem map_div [ZPoly.CheckedIrreducible p] (a b : QAdjoin p x)
+    (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
+    toComplex (a / b) rep h = toComplex a rep h / toComplex b rep h := by
   sorry
 
 /-- Equality in a checked presentation is exactly equality of interpreted
 complex values. -/
 theorem eq_iff_toComplex [ZPoly.CheckedIrreducible p]
-    (a b : QAdjoin p x) :
-    a = b ↔ toComplex a = toComplex b := by
+    (a b : QAdjoin p x) (rep : RefinedIsolation p)
+    (hrep : SimpleRoot.mk rep = x) :
+    a = b ↔ toComplex a rep hrep = toComplex b rep hrep := by
   constructor
-  · exact fun h => congrArg toComplex h
+  · exact fun h => congrArg (fun value => toComplex value rep hrep) h
   · intro h
-    exact @toComplex_injective p x _ a b h
+    exact @toComplex_injective p x _ rep hrep a b h
 
 end Hex.QAdjoin

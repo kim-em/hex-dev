@@ -15,16 +15,17 @@ Write `pℚ` for `(toPolynomial p).map (algebraMap ℤ ℚ)`.
 - Dense polynomial correspondence from `hex-poly-z-mathlib`.
 - Full resultant correspondence and specialization from
   `hex-resultant-mathlib`.
-- Root interpretation, refinement completeness, and `sameRoot` semantics from
-  `hex-roots-mathlib`.
+- Root interpretation, refinement preservation, and `sameRoot` semantics from
+  `hex-roots-mathlib`; this companion additionally proves local refinement
+  completeness for the fixed finite budget used by `refineTo?`.
 - Integer factorization soundness from
   `hex-berlekamp-zassenhaus-mathlib`.
 
 ## Semantic maps
 
 ```lean
-noncomputable def QAdjoin.toComplex [ZPoly.CheckedIrreducible p]
-    (a : QAdjoin p x) : ℂ
+noncomputable def QAdjoin.toComplex (a : QAdjoin p x)
+    (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) : ℂ
 
 def AlgebraicRoot.toComplex (a : AlgebraicRoot) : ℂ := rootOf a.x
 def AlgebraicNumber.toComplex (a : AlgebraicNumber) : ℂ := rootOf a.x
@@ -38,15 +39,15 @@ theorem AlgebraicNumber.p_eq_minpoly (a : AlgebraicNumber) :
         minpoly ℚ a.toComplex
 ```
 
-`QAdjoin.toComplex` evaluates reduced coordinates at the selected root. Under
-`[ZPoly.CheckedIrreducible p]`, `ZPoly.isIrreducible_iff` supplies semantic
-irreducibility, so it is injective and preserves every executable operation.
-It is initially exposed as a plain function so the correspondence theorems do
-not presuppose the law-bearing structures they are meant to justify. After
-those laws are proved, this file installs the field structures for `QAdjoin`
-and canonical `AlgebraicNumber`, packages `QAdjoin.toComplex` as a ring
-embedding, and constructs the `AdjoinRoot` equivalence without changing any
-computational operation.
+`QAdjoin.toComplex` evaluates reduced coordinates at an explicit refined
+representative of the selected root. Addition, multiplication, and scalar laws
+therefore do not depend on irreducibility or on the quotient-level `rootOf`
+construction. Under `[ZPoly.CheckedIrreducible p]`, semantic irreducibility
+makes this map injective and validates inversion. `QAdjoin.toAdjoinRoot` is an
+actual map to the quotient by the monic rational associate and is proved
+bijective before law-bearing structures are installed. After the operation laws
+are proved, package that bijection as a ring equivalence and `toComplex` as a
+ring embedding without changing any computational operation.
 
 When constructing the `Field (QAdjoin p x)` instance, set its rational scalar
 action explicitly to the computational `SMul Rat` instance shipped by
@@ -62,11 +63,17 @@ theorem AlgebraicNumber.beq_iff (a b : AlgebraicNumber) :
 theorem AlgebraicRoot.isZero_iff (a : AlgebraicRoot) :
     a.isZero ↔ a.toComplex = 0
 
+theorem AlgebraicNumber.isZero_iff (a : AlgebraicNumber) :
+    a.isZero ↔ a.toComplex = 0
+
+theorem RefinedIsolation.refineTo?_isSome (rep) (target) :
+    (rep.refineTo? target).isSome
+
 theorem QAdjoin.approx_sound (...) :
-    QAdjoin.toComplex x a ∈ (a.approx rep h prec).2.set
+    QAdjoin.toComplex a rep h ∈ (a.approx rep h prec).2.set
 
 theorem QAdjoin.approx_radius (...) :
-    (a.approx rep h prec).2.radius ≤ 2 ^ (-prec)
+    (a.approx rep h prec).2.realRadius ≤ 2 ^ (-prec)
 ```
 
 `AlgebraicRoot` deliberately exposes no Boolean or structural equality:
@@ -97,7 +104,7 @@ theorem AlgebraicRoot.exact_toComplex (a : AlgebraicRoot) :
 
 theorem QAdjoin.toAlgebraicNumber?_sound
     [ZPoly.CheckedIrreducible p] (...) {b} (h : ... = some b) :
-    b.toComplex = QAdjoin.toComplex x a
+    b.toComplex = QAdjoin.toComplex a rep hrep
 ```
 
 Exactification completeness follows because the squarefree enclosing polynomial
@@ -170,6 +177,9 @@ theorem AlgebraicPoly.multiplicity_roots (f : AlgebraicPoly) (z : ℂ) :
 
 The semantic `RootSet.Contains` interface is deliberate: lazy roots have no
 structural or Boolean equality, while callers may ask about any complex root.
+The internal `QAdjoin.Roots.sameValue?` operation has separate soundness and
+completeness contracts because root merging depends on it even though no public
+`BEq AlgebraicRoot` instance exists.
 
 State corresponding fixed-field theorems through `QAdjoin.toComplex`. For finite
 outputs also prove no duplicates, positive multiplicities, deterministic order,
@@ -190,7 +200,8 @@ The proof follows the executable stages:
 
 1. Canonical primitive-positive integer representatives of rational minimal
    polynomials and canonicity of `AlgebraicNumber`.
-2. `QAdjoin.equivAdjoinRoot`, field-law transfer, and approximation semantics.
+2. `QAdjoin.toAdjoinRoot_bijective`, field-law transfer, and approximation
+   semantics.
 3. Minimal polynomial of the multiplication operator for
    `toAlgebraicNumber?`.
 4. Exactification factor selection and completeness.

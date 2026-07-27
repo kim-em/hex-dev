@@ -24,8 +24,6 @@ completeness results are split into later modules so downstream proof work can
 depend on the semantic boundary without importing one monolithic development.
 -/
 
-open scoped BigOperators
-
 namespace Hex
 
 /-- A computationally checked irreducible integer polynomial is separable over
@@ -46,7 +44,7 @@ noncomputable def toComplex (a : AlgebraicRoot) : ℂ :=
 /-- The selected value zeros the enclosing integer polynomial. -/
 theorem toComplex_isRoot (a : AlgebraicRoot) :
     (HexRootsMathlib.toPolyℂ a.p).eval a.toComplex = 0 := by
-  sorry
+  exact HexRootsMathlib.RefinedIsolation.isRoot a.rep
 
 end AlgebraicRoot
 
@@ -71,34 +69,38 @@ namespace QAdjoin
 variable {p : ZPoly} {x : SimpleRoot p}
 
 /-- Evaluate canonical fixed-field coordinates at their selected complex root.
-The checked irreducibility instance supplies the separability needed to
-interpret the quotient `SimpleRoot`. -/
+The representative and quotient equality are explicit inputs so this semantic
+map does not depend on an irreducibility proof. -/
 @[expose]
-noncomputable def toComplex [ZPoly.CheckedIrreducible p]
-    (a : QAdjoin p x) : ℂ :=
+noncomputable def toComplex (a : QAdjoin p x)
+    (rep : RefinedIsolation p) (_h : SimpleRoot.mk rep = x) : ℂ :=
   (HexPolyMathlib.toPolynomial a.coeffs).eval₂ (algebraMap Rat ℂ)
-    (Hex.rootOf (ZPoly.CheckedIrreducible.separable p) x)
+    rep.root
 
 /-- Fixed-presentation addition agrees with complex addition. -/
-theorem map_add [ZPoly.CheckedIrreducible p] (a b : QAdjoin p x) :
-    toComplex (a + b) = toComplex a + toComplex b := by
+theorem map_add (a b : QAdjoin p x) (rep : RefinedIsolation p)
+    (h : SimpleRoot.mk rep = x) :
+    toComplex (a + b) rep h = toComplex a rep h + toComplex b rep h := by
   sorry
 
 /-- Fixed-presentation multiplication agrees with complex multiplication. -/
-theorem map_mul [ZPoly.CheckedIrreducible p] (a b : QAdjoin p x) :
-    toComplex (a * b) = toComplex a * toComplex b := by
+theorem map_mul (a b : QAdjoin p x) (rep : RefinedIsolation p)
+    (h : SimpleRoot.mk rep = x) :
+    toComplex (a * b) rep h = toComplex a rep h * toComplex b rep h := by
   sorry
 
 /-- Fixed-presentation inversion agrees with complex inversion, including the
 computational convention `0⁻¹ = 0`. -/
-theorem map_inv [ZPoly.CheckedIrreducible p] (a : QAdjoin p x) :
-    toComplex a⁻¹ = (toComplex a)⁻¹ := by
+theorem map_inv [ZPoly.CheckedIrreducible p] (a : QAdjoin p x)
+    (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
+    toComplex a⁻¹ rep h = (toComplex a rep h)⁻¹ := by
   sorry
 
 /-- Evaluation at the selected root is injective for a checked irreducible
 presentation. -/
-theorem toComplex_injective [ZPoly.CheckedIrreducible p] :
-    Function.Injective (@toComplex p x _) := by
+theorem toComplex_injective [ZPoly.CheckedIrreducible p]
+    (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
+    Function.Injective (fun a : QAdjoin p x => toComplex a rep h) := by
   sorry
 
 end QAdjoin
@@ -110,6 +112,11 @@ theorem AlgebraicNumber.beq_iff (a b : AlgebraicNumber) :
 
 /-- The executable zero predicate recognizes exactly the complex value zero. -/
 theorem AlgebraicRoot.isZero_iff (a : AlgebraicRoot) :
+    a.isZero ↔ a.toComplex = 0 := by
+  sorry
+
+/-- The canonical algebraic-number zero test recognizes exactly complex zero. -/
+theorem AlgebraicNumber.isZero_iff (a : AlgebraicNumber) :
     a.isZero ↔ a.toComplex = 0 := by
   sorry
 

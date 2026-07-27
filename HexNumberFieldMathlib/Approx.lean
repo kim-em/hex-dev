@@ -22,6 +22,26 @@ open Metric Set
 
 namespace Hex
 
+namespace RefinedIsolation
+
+/-- The local refinement budget is sufficient to reach every requested
+precision for an already certified simple-root atom. -/
+theorem refineTo?_isSome {p : ZPoly} (rep : RefinedIsolation p)
+    (target : Int) (strategy : AtomStrategy := .nkThenPellet) :
+    (rep.refineTo? target strategy).isSome := by
+  sorry
+
+/-- Every successful refined result reaches the requested precision. -/
+theorem refineTo?_precision {p : ZPoly} (rep : RefinedIsolation p)
+    (target : Int) (strategy : AtomStrategy := .nkThenPellet)
+    {out : {rep' : RefinedIsolation p //
+      SimpleRoot.mk rep' = SimpleRoot.mk rep}}
+    (h : rep.refineTo? target strategy = some out) :
+    target ≤ out.1.1.square.prec := by
+  sorry
+
+end RefinedIsolation
+
 namespace DyadicComplexBall
 
 /-- The complex centre represented by a dyadic complex ball. -/
@@ -65,15 +85,13 @@ namespace QAdjoin
 variable {p : ZPoly} {x : SimpleRoot p}
 
 /-- Fixed-field approximation always encloses the represented complex value. -/
-theorem approx_sound [ZPoly.CheckedIrreducible p]
-    (a : QAdjoin p x) (rep : RefinedIsolation p)
+theorem approx_sound (a : QAdjoin p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (prec : Int) :
-    toComplex a ∈ (a.approx rep h prec).2.set := by
+    toComplex a rep h ∈ (a.approx rep h prec).2.set := by
   sorry
 
 /-- The guarded approximation achieves the requested dyadic radius. -/
-theorem approx_radius [ZPoly.CheckedIrreducible p]
-    (a : QAdjoin p x) (rep : RefinedIsolation p)
+theorem approx_radius (a : QAdjoin p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (prec : Int) :
     (a.approx rep h prec).2.realRadius ≤ (2 : ℝ) ^ (-prec) := by
   sorry

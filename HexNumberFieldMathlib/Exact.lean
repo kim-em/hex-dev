@@ -59,7 +59,7 @@ theorem toAlgebraicNumber?_sound [ZPoly.CheckedIrreducible p]
     (a : QAdjoin p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) {b : AlgebraicNumber}
     (hb : a.toAlgebraicNumber? rep h = some b) :
-    b.toComplex = toComplex a := by
+    b.toComplex = toComplex a rep h := by
   sorry
 
 /-- The minimal-polynomial and isolation search for fixed coordinates always
@@ -75,7 +75,7 @@ value. -/
 theorem toAlgebraicNumber_toComplex [ZPoly.CheckedIrreducible p]
     (a : QAdjoin p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
-    (a.toAlgebraicNumber rep h).toComplex = toComplex a := by
+    (a.toAlgebraicNumber rep h).toComplex = toComplex a rep h := by
   sorry
 
 end QAdjoin

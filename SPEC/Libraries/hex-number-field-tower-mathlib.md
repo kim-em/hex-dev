@@ -149,7 +149,8 @@ theorem NumberTower.flatten?_isSome (T) :
 
 theorem NumberTower.flatten_toComplex (T) {F}
     (h : T.flatten? = some F) (a : T.Elem) :
-    QAdjoin.toComplex F.root.x (F.toPrimitive a) = T.toComplex a
+    QAdjoin.toComplex (F.toPrimitive a) F.root.rep F.root.rep_mk =
+      T.toComplex a
 ```
 
 The accepted full-degree eliminant proves the computed `γ` is primitive. Exact
