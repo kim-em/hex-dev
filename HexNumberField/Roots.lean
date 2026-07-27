@@ -260,7 +260,7 @@ def rootLe (a b : RootCount) : Bool :=
   else if a.root.rep.1.square.im != b.root.rep.1.square.im then
     decide (a.root.rep.1.square.im < b.root.rep.1.square.im)
   else
-    decide (a.root.rep.1.square.prec ≤ b.root.rep.1.square.prec)
+    decide (a.root.rep.1.square.prec < b.root.rep.1.square.prec)
 
 end Hex.QAdjoin.Roots
 
