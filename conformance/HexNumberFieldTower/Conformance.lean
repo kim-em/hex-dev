@@ -195,6 +195,62 @@ private def fourthRootTwo? : Option AlgebraicRoot :=
   else
     none
 
+/-! A cyclotomic retry fixture. With `zeta = exp(2*pi*i/7)`, take
+`theta = zeta + zeta^6` and `alpha = zeta^4 - zeta^5 - zeta^6`. The shift
+`theta + alpha` has full degree six, but an incompatible conjugate pair makes
+the recovery gcd nonlinear; the next signed shift `-1` is recoverable. -/
+
+private def retryThetaPoly : ZPoly :=
+  DensePoly.ofList [-1, -2, 1, 1]
+
+private def retryThetaSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 1371068573887 40, 0, 16⟩
+
+private def retryThetaRep : RefinedIsolation retryThetaPoly :=
+  ⟨⟨retryThetaSquare, by decide⟩, by decide⟩
+
+private def retryTheta? : Option AlgebraicNumber :=
+  if hsimple : HasOnlySimpleRoots retryThetaPoly then
+    let root : AlgebraicRoot :=
+      { p := retryThetaPoly
+        prim := by rfl
+        pos_lc := by decide
+        pos_degree := by decide
+        squarefree := hsimple
+        x := SimpleRoot.mk retryThetaRep
+        rep := retryThetaRep
+        rep_mk := rfl }
+    root.exact?
+  else
+    none
+
+private def retryAlphaPoly : ZPoly :=
+  DensePoly.ofList [29, -1, 15, -1, 1, -1, 1]
+
+private def retryAlphaSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec (-1501032013268545746) 60,
+    Dyadic.ofIntWithPrec 1525171791184062904 60, 52⟩
+
+set_option maxRecDepth 100000 in
+set_option exponentiation.threshold 1000 in
+private def retryAlphaRep : RefinedIsolation retryAlphaPoly :=
+  ⟨⟨retryAlphaSquare, by decide⟩, by decide⟩
+
+private def retryAlpha? : Option AlgebraicNumber :=
+  if hsimple : HasOnlySimpleRoots retryAlphaPoly then
+    let root : AlgebraicRoot :=
+      { p := retryAlphaPoly
+        prim := by rfl
+        pos_lc := by decide
+        pos_degree := by decide
+        squarefree := hsimple
+        x := SimpleRoot.mk retryAlphaRep
+        rep := retryAlphaRep
+        rep_mk := rfl }
+    root.exact?
+  else
+    none
+
 private structure TwoLevel where
   base : Extension rat
   extension : Extension base.tower
@@ -505,6 +561,21 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
 
 /-! ## `flatten?` -/
 
+-- Recovery retry: shift `+1` has full degree but a nonlinear gcd, and the
+-- same bounded search continues to the recoverable shift `-1`.
+#guard
+    match retryTheta?, retryAlpha? with
+    | some theta, some alpha =>
+        match Flatten.candidateAt? theta alpha 6 1 with
+        | some (shift, gamma) =>
+            shift = 1 &&
+              (Flatten.recoverPair? theta alpha gamma shift).isNone &&
+              match Flatten.searchRecoveredAux theta alpha 6 1 2 with
+              | some recovered => recovered.shift = -1
+              | none => false
+        | none => false
+    | _, _ => false
+
 -- Edge: the rational tower uses the canonical algebraic zero presentation.
 #guard
     match flatten? rat with
@@ -541,7 +612,7 @@ private def sqrtSumPoly : ZPoly := DensePoly.ofList [1, 0, -10, 0, 1]
             let sqrtThree := tower.extension.gen
             let twoCoordinate := flattened.toPrimitive sqrtTwo
             let threeCoordinate := flattened.toPrimitive sqrtThree
-            flattenShiftCount 4 = 13 &&
+            flattenShiftCount 4 = 7 &&
               flattened.root.p = sqrtSumPoly &&
               twoCoordinate.coeffs =
                 DensePoly.ofList [0, -9 / 2, 0, 1 / 2] &&

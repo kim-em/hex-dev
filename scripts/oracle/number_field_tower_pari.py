@@ -215,14 +215,14 @@ def _primitive_minpoly(
     ):
         alpha_center, alpha_error = box_data(box)
         target = current_degree * relative_degree
-        count = 2 * math.comb(target, 2) + 1
+        count = math.comb(target, 2) + 1
         theta = _pari_poly(pari, current_coeffs, "z")
         alpha = _pari_poly(pari, alpha_coeffs, "y")
         x = pari("x")
         y = pari("y")
         z = pari("z")
         accepted = None
-        for index in range(count):
+        for index in range(1, count + 1):
             shift = _signed_shift(index)
             relation = pari.subst(theta, z, x - shift * y)
             eliminant = pari.polresultant(relation, alpha, y)
