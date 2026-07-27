@@ -21,19 +21,43 @@ equality is intentionally exposed here only through checked Boolean equality.
 -/
 namespace Hex
 
+/-- A coefficient array has no trailing semantic zero. This erased invariant
+is carried by `AlgebraicPoly` so downstream correctness theorems may quantify
+over every value, rather than only values visibly built by `ofArray`. -/
+@[expose]
+def AlgebraicPolyNormalized (coeffs : Array AlgebraicNumber) : Prop :=
+  match coeffs.toList.reverse.head? with
+  | some a => a.isZero = false
+  | none => True
+
 /-- A semantically normalized polynomial with canonical algebraic
 coefficients. Construction is sealed so every stored array has had its
 trailing semantic zeros removed. -/
 structure AlgebraicPoly where
   private mk ::
   data : Array AlgebraicNumber
+  normalized : AlgebraicPolyNormalized data
 
 namespace AlgebraicPoly
+
+private theorem normalized_popWhile (coeffs : Array AlgebraicNumber) :
+    AlgebraicPolyNormalized (coeffs.popWhile fun a => a.isZero) := by
+  change
+    match
+        (coeffs.popWhile fun a => a.isZero).toList.reverse.head? with
+    | some a => a.isZero = false
+    | none => True
+  rw [← Array.toArray_toList (xs := coeffs)]
+  simp only [List.popWhile_toArray, List.toList_toArray,
+    List.reverse_reverse]
+  have h := List.head?_dropWhile_not
+    (fun a : AlgebraicNumber => a.isZero) coeffs.toList.reverse
+  split at * <;> simp_all
 
 /-- Construct a polynomial and remove all trailing coefficients whose
 canonical minimal polynomial is `X`. -/
 def ofArray (coeffs : Array AlgebraicNumber) : AlgebraicPoly :=
-  .mk (coeffs.popWhile fun a => a.isZero)
+  .mk (coeffs.popWhile fun a => a.isZero) (normalized_popWhile coeffs)
 
 /-- The normalized coefficient array, in increasing degree order. -/
 @[expose]
