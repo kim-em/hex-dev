@@ -19,6 +19,7 @@ public import HexRCF.CarrierTests
 public import HexRCF.IsolationCheck
 public import HexRCF.Isolations
 public import HexRCF.IsolationsTests
+public import HexRCF.SeparationCheck
 public import HexRCF.Separation
 public import HexRCF.SeparationTests
 public import HexRCF.Cells
