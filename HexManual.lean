@@ -18,6 +18,7 @@ import HexManual.Chapters.HexArith
 import HexManual.Chapters.HexModArith
 import HexManual.Chapters.HexPoly
 import HexManual.Chapters.HexPolyZ
+import HexManual.Chapters.HexResultant
 import HexManual.Chapters.HexPolyFp
 import HexManual.Chapters.HexGF2
 import HexManual.Chapters.HexHensel
@@ -28,6 +29,8 @@ import HexManual.Chapters.HexGFq
 import HexManual.Chapters.HexRealRoots
 import HexManual.Chapters.FactorTactics
 import HexManual.Chapters.HexRoots
+import HexManual.Chapters.HexNumberField
+import HexManual.Chapters.HexNumberFieldTower
 -- Tutorials (application-first capstone pages, see SPEC/tutorials.md).
 import HexManual.Tutorials.Coppersmith
 
@@ -49,8 +52,8 @@ authors := ["The hex project"]
 shortTitle := "hex"
 %%%
 
-`hex` is executable, verified computer algebra for Lean 4: finite
-fields, polynomial factorization, and lattice reduction. The
+`hex` is executable, verified computer algebra for Lean 4: finite and number
+fields, polynomial factorization, root isolation, and lattice reduction. The
 computational core is Mathlib-free; each chapter documents one library
 and, where there is one, its correspondence with Mathlib.
 
@@ -97,6 +100,8 @@ here to keep the reference chapters above focused on the released libraries.
 
 {include 2 HexManual.Chapters.HexPolyZ}
 
+{include 2 HexManual.Chapters.HexResultant}
+
 {include 2 HexManual.Chapters.HexPolyFp}
 
 {include 2 HexManual.Chapters.HexGF2}
@@ -117,3 +122,6 @@ here to keep the reference chapters above focused on the released libraries.
 
 {include 2 HexManual.Chapters.HexRoots}
 
+{include 2 HexManual.Chapters.HexNumberField}
+
+{include 2 HexManual.Chapters.HexNumberFieldTower}
