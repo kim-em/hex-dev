@@ -1324,9 +1324,10 @@ record on each adversarial polynomial.
 - Phase 4 is not complete: every scientific verdict recorded in this
   report remains inconclusive, including the precision/local-factor
   setup surface added by the issue #3527 targeted run.
-- The Phase 4 dependency gate is still closed:
-  `python3 scripts/status.py HexBerlekampZassenhaus` reports blockers
-  `HexBerlekamp.done_through >= 4` and `HexLLL.done_through >= 4`.
+- The upstream Phase 4 dependency gate is open, but this library has not yet
+  completed its Phase 1--3 API, independent-review, and conformance audits; its
+  phase counter therefore remains at zero while the performance evidence is
+  refreshed against the current public cascade.
 - The public and fast split-family schedules now expose verdict-eligible
   rows beyond the previous `n = 1..4` smoke ladder, but they still do
   not yield a consistent BHKS scaling verdict. An exploratory run with

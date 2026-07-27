@@ -20,7 +20,17 @@ from libgraph import (
 
 IMPORT_RE = re.compile(r"^\s*(?:public\s+|private\s+)?import\s+(.+?)\s*$")
 LEAN_EXE_ROOT_RE = re.compile(r"^\s*root\s*:=\s*`([A-Za-z0-9_.]+)\s*$")
+LEAN_GLOB_MODULE_RE = re.compile(r"`([A-Z][A-Za-z0-9_.]+)")
+LEAN_LIB_RE = re.compile(r"^lean_lib\s+([A-Za-z0-9_]+)\b")
 QUALIFIED_IMPORT_RE = re.compile(r"^\s*(?:public\s+|private\s+)?import\s+([A-Za-z0-9_.]+)\s*$")
+
+UMBRELLA_BUILD_TARGETS = {
+    "HexLLLBenchSupport",
+    "HexGF2BenchSupport",
+    "HexConformance",
+    "HexReleaseTests",
+    "HexReleaseExamples",
+}
 
 
 def parse_imports(path: Path) -> list[str]:
@@ -40,6 +50,35 @@ def lean_exe_roots(lakefile: Path) -> set[str]:
         if match:
             roots.add(match.group(1))
     return roots
+
+
+def lean_glob_modules(lakefile: Path, targets: set[str]) -> set[str]:
+    r"""Explicit module names in selected build-only Lake targets.
+
+    A production library glob is not an alternative to reachability from its
+    public umbrella. Only the named verification/bench support targets may own
+    modules that are intentionally absent from a shipped umbrella.
+    """
+    modules: set[str] = set()
+    current_target: str | None = None
+    in_globs = False
+    for line in lakefile.read_text(encoding="utf-8").splitlines():
+        target_match = LEAN_LIB_RE.match(line)
+        if target_match:
+            current_target = target_match.group(1)
+            in_globs = False
+        elif line and not line[0].isspace():
+            current_target = None
+            in_globs = False
+        if current_target not in targets:
+            continue
+        if "globs := #[" in line:
+            in_globs = True
+        if in_globs:
+            modules.update(LEAN_GLOB_MODULE_RE.findall(line))
+            if "]" in line:
+                in_globs = False
+    return modules
 
 
 def module_name_for(rel_path: Path) -> str:
@@ -74,12 +113,12 @@ def import_closure_in_library(
 
 
 def check_umbrella_completeness(
-    root: Path, libraries, exe_roots: set[str]
+    root: Path, libraries, build_roots: set[str]
 ) -> list[str]:
     """Every regular module under `Foo/` must be reachable from either
-    `Foo.lean` (umbrella) or some `lean_exe` root.
+    `Foo.lean` (umbrella) or an explicit Lake executable/glob root.
 
-    A module reachable only from a `lean_exe` root is still absent from
+    A module reachable only from a separate build root is still absent from
     the library's shared object `libHex_Foo.dylib`, but that's fine —
     its symbols ship with the executable and downstream libraries don't
     expect to call into bench / emit-fixture code.
@@ -93,17 +132,17 @@ def check_umbrella_completeness(
         if not umbrella_path.exists():
             continue
         reachable = import_closure_in_library(root, owner, owner)
-        for exe_root in exe_roots:
-            reachable |= import_closure_in_library(root, exe_root, owner)
+        for build_root in build_roots:
+            reachable |= import_closure_in_library(root, build_root, owner)
         for lean_file in sorted(directory.rglob("*.lean")):
             module = module_name_for(lean_file.relative_to(root))
-            if module in exe_roots:
+            if module in build_roots:
                 continue
             if module in reachable:
                 continue
             errors.append(
                 f"{owner}.lean does not (transitively) import {module}; "
-                "add it to the umbrella, or declare it as a lean_exe root"
+                "add it to the umbrella, or declare it as an explicit Lake build root"
             )
     return errors
 
@@ -166,8 +205,11 @@ def main() -> int:
                 f"non-active libraries must not have a root file"
             )
 
-    exe_roots = lean_exe_roots(root / "lakefile.lean")
-    errors.extend(check_umbrella_completeness(root, libraries, exe_roots))
+    lakefile = root / "lakefile.lean"
+    build_roots = lean_exe_roots(lakefile) | lean_glob_modules(
+        lakefile, UMBRELLA_BUILD_TARGETS
+    )
+    errors.extend(check_umbrella_completeness(root, libraries, build_roots))
 
     for rel_path in project_lean_files(root):
         owner = library_owner_for_path(rel_path, libraries)

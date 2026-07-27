@@ -12,7 +12,13 @@ KNOWN_EXCEPTIONS = {"Hex", "HexManual"}
 # Build-only lean_libs that build the per-library bench/conformance drivers under
 # `bench/` and `conformance/`. They are not project libraries (no libraries.yml
 # entry, no repo-root file); exempt them from the Lake-config alignment check only.
-BUILD_ONLY_LIBS = {"HexLLLBenchSupport", "HexGF2BenchSupport", "HexConformance"}
+BUILD_ONLY_LIBS = {
+    "HexLLLBenchSupport",
+    "HexGF2BenchSupport",
+    "HexConformance",
+    "HexReleaseTests",
+    "HexReleaseExamples",
+}
 EXTERNAL_IMPORT_ROOTS = {"Mathlib", "Verso"}
 RELEASE_LIBRARIES = {
     1: [
@@ -49,6 +55,7 @@ RELEASE_LIBRARIES = {
         "HexPolyZ",
         "HexHensel",
         "HexBerlekampZassenhaus",
+        "HexBerlekampZassenhausMathlib",
     ],
     4: [
         "HexModArith",
@@ -64,7 +71,14 @@ RELEASE_LIBRARIES = {
         "HexPolyZ",
         "HexHensel",
         "HexBerlekampZassenhaus",
+        "HexBerlekampZassenhausMathlib",
         "HexLLL",
+    ],
+    5: [
+        "HexRoots",
+        "HexRootsMathlib",
+        "HexRealRoots",
+        "HexRealRootsMathlib",
     ],
 }
 

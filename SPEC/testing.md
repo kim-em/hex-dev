@@ -483,7 +483,7 @@ elaborate every `conformance/HexFoo/Conformance.lean` (and any
 
 Landing a new conformance-tree module therefore means adding it to the
 `HexConformance` globs in `lakefile.lean`. The same PR updates the sequential
-oracle runner when appropriate. It does not add a job, matrix entry, or
+oracle runner when it adds an oracle. It does not add a job, matrix entry, or
 workflow; see [CI.md § Job-count budget](CI.md#job-count-budget).
 
 ## Infrastructure contract

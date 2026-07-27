@@ -1,6 +1,6 @@
 # hex-real-roots-mathlib (depends on hex-real-roots + hex-poly-z-mathlib + Mathlib)
 
-Mathlib companion for [hex-real-roots](hex-real-roots.md). Proves
+Mathlib companion for [hex-real-roots](https://github.com/leanprover/hex-real-roots). Proves
 **soundness** of the certified isolations (a `RealRootIsolation`
 witness implies a unique real root in its half-open interval, and a
 `RealRootIsolations` value captures every real root exactly once) and
@@ -582,7 +582,7 @@ committed fixtures.
 
 - Sturm 1829/1835, Collins-Akritas 1976, Obreschkoff 1963,
   Krandick-Mehlhorn 2006, Eigenwillig 2008, Mahler 1964, Mignotte
-  1982: see [hex-real-roots.md](hex-real-roots.md) §"References".
+  1982: see the [hex-real-roots SPEC](https://github.com/leanprover/hex-real-roots/blob/main/SPEC/hex-real-roots.md) §"References".
 - Basu, Pollack, Roy. *Algorithms in Real Algebraic Geometry.*
   Springer, 2nd ed., 2006. Chapter 2: the generalised-chain form of
   Sturm's theorem used here.

@@ -81,7 +81,9 @@ Concretely:
   [SPEC/benchmarking.md §CI integration](benchmarking.md), and the
   conformance/oracle suite (FLINT, PARI, Conway) with the BZ gates. A
   `wait-all:` joins them and a fail-closed sentinel step fails the job
-  unless both tails signalled success.
+  unless both tails signalled success. The oracle tail sets
+  `HEX_REQUIRE_ORACLES=1`, so a missing FLINT, PARI, or Conway Python package
+  is a hard failure rather than a successful `SKIP`.
   **Bench verify runs on ubuntu**: per
   [SPEC/benchmarking.md §CI integration](benchmarking.md), `verify` is a
   smoke gate (does the bench module compile and run?), not a timing
