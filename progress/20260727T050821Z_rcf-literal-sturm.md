@@ -10,9 +10,10 @@
   literal replay array.
 - Added generic literal isolation structures and proved count-one uniqueness
   plus ordered complete coverage of every real root.
-- Added proof regressions for an abstract quadratic and for the four-entry
-  integer chain of `x³ - x`; the latter composes replay, squarefreeness,
-  literal counts, and three nontrivially ordered isolations end to end.
+- Added positive and malformed proof regressions for an abstract recurrence,
+  plus the four-entry integer chain of `x³ - x`; the latter composes replay,
+  squarefreeness, literal counts, and three nontrivially ordered isolations end
+  to end.
 - Promoted and deduplicated the small recurrence, cast, variation, and dyadic
   order lemmas needed by literal consumers, and updated the companion SPEC.
 - Incorporated two independent Claude Opus reviews. The first confirmed the

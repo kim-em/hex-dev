@@ -43,6 +43,14 @@ example : Squarefree quad := by
   apply Sturm.squarefree_of_replay replay 2 (by norm_num)
   simp [quad, Polynomial.derivative_pow]
 
+/-- A zero middle entry cannot satisfy a positive recurrence between `X` and
+the terminal constant. This guards the sign convention of malformed triples. -/
+example : ¬ Sturm.ReplayStep X 0 1 := by
+  rintro ⟨left, quotient, right, hleft, hright, hrel⟩
+  have heval := congrArg (Polynomial.eval (0 : ℝ)) hrel
+  have : (0 : ℝ) = -right := by simpa using heval
+  nlinarith
+
 /-! The integer replay below has four entries, so it exercises both supplied
 triple identities as well as the list-to-array count bridge. -/
 
