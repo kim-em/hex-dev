@@ -625,10 +625,11 @@ free to change.
   `HexRCF/CellsTests.lean`: enumeration,
   zero/singleton/multiple-root samples, endpoint equality/order guards,
   relevance tables, and malformed lower/upper claim regressions.
-- `HexRCF/CommonRoot.lean`: multiplication-checkable common-root packages,
-  constant/nonconstant replay branches, exact common-root semantics, and
-  cached root-cell queries; `HexRCF/CommonRootTests.lean`: shared-factor,
-  coprime, equal-polynomial, and tampered-evidence regressions.
+- `HexRCF/CommonRootCheck.lean`: Mathlib-free multiplication-checkable
+  common-root packages, replay branches, and cached interval queries;
+  `HexRCF/CommonRoot.lean`: exact common-root and root-cell semantics;
+  `HexRCF/CommonRootTests.lean`: shared-factor, coprime, equal-polynomial, and
+  tampered-evidence regressions.
 - `HexRCF/SignMatrix.lean`: three-way exact signs, coefficient-equality
   atom deduplication and common-package alignment, guarded open-cell
   evaluation, the `gⱼ` root-cell computation, and full Boolean reflection;
