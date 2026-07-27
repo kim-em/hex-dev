@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.CarrierCheck
-public import HexRCF.CommonRoot
+public import HexRCF.CommonRootCheck
 public import HexRCF.SignMatrix
 public import HexRCF.SturmBuilder
 
