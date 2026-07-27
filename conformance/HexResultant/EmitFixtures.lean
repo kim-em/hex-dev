@@ -10,11 +10,18 @@ import HexResultant
 /-!
 Deterministic JSONL fixtures for the `HexResultant` external oracle profile.
 
-The stream contains exactly the SPEC's 30 degree-10 integer-polynomial pairs,
-generated from seed `0xC0FFEE` by a fixed 64-bit LCG. Each leading coefficient
-is forced nonzero. For every original pair the driver emits both its resultant
-and the discriminant of the left input. The companion oracle recomputes these
-values independently with python-flint and cypari2/PARI.
+The stream contains the SPEC's 30 degree-10 integer-polynomial pairs, generated
+from seed `0xC0FFEE` by a fixed 64-bit LCG, plus explicit common-factor and
+repeated-root cases. Each random leading coefficient is forced nonzero. For
+every original pair the driver emits both its resultant and the discriminant
+of the left input. The companion oracle recomputes these values independently
+with python-flint and cypari2/PARI.
+
+The random profile deliberately follows the library SPEC's degree-10,
+four-bit-coefficient contract rather than the global ci-tier degree guideline:
+integer resultants already grow to hundreds of bits at this size. The two
+constructed cases cover return paths that a generic random sample will almost
+never reach.
 -/
 
 namespace Hex.ResultantEmit
@@ -55,7 +62,7 @@ private structure CaseState where
   cases : Array Case
 
 /-- The committed seed's 30 degree-10 pairs. -/
-private def cases : Array Case :=
+private def randomCases : Array Case :=
   ((Array.range 30).foldl
     (fun state i =>
       let (left, seed) := randomPoly 10 state.seed
@@ -66,6 +73,15 @@ private def cases : Array Case :=
             left := left
             right := right } })
     ({ seed := initialSeed, cases := #[] } : CaseState)).cases
+
+private def cases : Array Case :=
+  randomCases ++ #[
+    { id := "degenerate/common-factor"
+      left := [-1, 0, 1]
+      right := [-1, 1] },
+    { id := "degenerate/repeated-left"
+      left := [1, -2, 1]
+      right := [1, 1] }]
 
 private def emitCase (c : Case) : IO Unit := do
   emitPolyFixture lib (c.id ++ "/left") c.left

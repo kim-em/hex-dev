@@ -31,7 +31,8 @@ Covered properties:
   vanishing, recursive bivariate elimination, and the corrected defective-drop
   scale;
 - quadratic discriminants satisfy `b^2 - 4*c`, and repeated roots have
-  discriminant zero.
+  discriminant zero; the formal derivative-degree correction is exercised in
+  positive characteristic.
 
 Covered edge cases:
 - zero denominators and zero scalar divisors;
@@ -152,16 +153,19 @@ private def strictTail (chain : Array (DensePoly Int)) : Bool :=
 #guard
   let q := poly [1, 0, 1]
   let l := poly [-1, 1]
+  let xSubTwo := poly [-2, 1]
+  let cubic := poly [-1, 0, 0, 1]
   let common := poly [-1, 0, 1]
   resultant q l = (2 : Int) && resultant l q = 2 &&
-    resultant common l = 0
+    resultant xSubTwo cubic = 7 && resultant common l = 0 &&
+    resultant q q = 0
 
 -- Default-formal-degree totality conventions.
 #guard
   let q := poly [1, 0, 1]
   resultant (0 : DensePoly Int) 0 = (1 : Int) &&
     resultant (C (2 : Int)) (C 3) = 1 &&
-    resultant q 0 = 0 && resultant q (C 3) = 9
+    resultant q 0 = 0 && resultant q (C 3) = 9 && resultant q 1 = 1
 
 -- Defective drops exercise both the corrected scale and nonunit divisions.
 #guard
@@ -194,5 +198,36 @@ private def strictTail (chain : Array (DensePoly Int)) : Bool :=
   disc (poly [1, -2, 1]) = (0 : Int) &&
     disc (poly [1, 2, 3]) = -8 &&
     disc (poly [-1, 0, 0, 1]) = -27
+
+/- The derivative of `2*X^10 + 3*X` in characteristic five is the constant
+`3`, nine degrees below its formal degree. This reaches the leading-coefficient
+gap power that is unreachable over the integers. -/
+private structure F5 where
+  val : Fin 5
+deriving DecidableEq
+
+private instance : Zero F5 := ⟨⟨0⟩⟩
+private instance : One F5 := ⟨⟨1⟩⟩
+private instance (n : Nat) : OfNat F5 n :=
+  ⟨{ val := ⟨n % 5, Nat.mod_lt n (by decide)⟩ }⟩
+private instance : NatCast F5 :=
+  ⟨fun n => { val := ⟨n % 5, Nat.mod_lt n (by decide)⟩ }⟩
+private instance : Add F5 := ⟨fun a b => ⟨a.val + b.val⟩⟩
+private instance : Sub F5 := ⟨fun a b => ⟨a.val - b.val⟩⟩
+private instance : Mul F5 := ⟨fun a b => ⟨a.val * b.val⟩⟩
+private instance : Div F5 where
+  div a b :=
+    let inverse : Fin 5 :=
+      match b.val.val with
+      | 1 => 1
+      | 2 => 3
+      | 3 => 2
+      | 4 => 4
+      | _ => 0
+    ⟨a.val * inverse⟩
+
+#guard
+  let f : DensePoly F5 := ofList [0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+  disc f = 1
 
 end Hex.ResultantConformance

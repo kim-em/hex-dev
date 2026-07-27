@@ -252,13 +252,14 @@ quotient is exact over every stated exact-division domain.
   `conformance/HexResultant/EmitFixtures.lean`: conformance driver and
   fixture emission, in the shared `conformance/` sub-project.
 - `bench/HexResultant/Bench.lean`: bench driver, in the shared
-  `bench/` sub-project. Benches time `resultant` and `disc` on
-  committed fixture families of increasing degree. They are
-  Mathlib-free, per [SPEC/benchmarking.md](../../SPEC/benchmarking.md); there
-  is nothing to compare against in-process, since Mathlib's
-  `Polynomial.resultant` is noncomputable. Cross-checking values
-  against external systems happens in the conformance oracle, not in
-  the bench.
+  `bench/` sub-project. Benches time `pseudoDivMod`, `subresultantChain`,
+  `resultant`, and `disc` on committed fixture families of increasing degree.
+  They are Mathlib-free, per
+  [SPEC/benchmarking.md](../../SPEC/benchmarking.md). Mathlib's
+  `Polynomial.resultant` is noncomputable, so it is not an in-process
+  comparator. FLINT does provide a separately timed comparable
+  resultant/discriminant surface for the Phase-4 report; exact value
+  cross-checking against FLINT and PARI remains in the conformance oracle.
 
 ## Conformance fixtures
 

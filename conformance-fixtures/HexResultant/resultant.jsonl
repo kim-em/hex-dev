@@ -118,3 +118,11 @@
 {"kind":"poly","lib":"HexResultant","case":"random/deg10/29/right","coeffs":[4,8,9,5,-8,1,3,-5,4,3,6],"modulus":null}
 {"kind":"result","lib":"HexResultant","case":"random/deg10/29","op":"resultant","value":930452441653482994188}
 {"kind":"result","lib":"HexResultant","case":"random/deg10/29","op":"disc_left","value":76512096801416571984488025}
+{"kind":"poly","lib":"HexResultant","case":"degenerate/common-factor/left","coeffs":[-1,0,1],"modulus":null}
+{"kind":"poly","lib":"HexResultant","case":"degenerate/common-factor/right","coeffs":[-1,1],"modulus":null}
+{"kind":"result","lib":"HexResultant","case":"degenerate/common-factor","op":"resultant","value":0}
+{"kind":"result","lib":"HexResultant","case":"degenerate/common-factor","op":"disc_left","value":4}
+{"kind":"poly","lib":"HexResultant","case":"degenerate/repeated-left/left","coeffs":[1,-2,1],"modulus":null}
+{"kind":"poly","lib":"HexResultant","case":"degenerate/repeated-left/right","coeffs":[1,1],"modulus":null}
+{"kind":"result","lib":"HexResultant","case":"degenerate/repeated-left","op":"resultant","value":4}
+{"kind":"result","lib":"HexResultant","case":"degenerate/repeated-left","op":"disc_left","value":0}

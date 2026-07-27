@@ -66,10 +66,13 @@ def _parse_bench_roots(lakefile: Path) -> dict[str, str]:
     return out
 
 
-# Lean syntax: `import` lines appear at file start, before any other
-# top-level decl.  We scan until the first non-blank, non-comment,
-# non-import line.
-_IMPORT_RE = re.compile(r"^import\s+([A-Za-z][A-Za-z0-9_.]*)")
+# Lean syntax permits `module`, `public import`, and `public meta import` in the
+# module header. We scan until the first non-blank, non-comment, non-header line.
+_IMPORT_RE = re.compile(
+    r"^(?:(?:public|private)\s+)?(?:meta\s+)?import\s+"
+    r"([A-Za-z][A-Za-z0-9_.]*)"
+)
+_MODULE_PREAMBLE_RE = re.compile(r"^(?:module|prelude)\s*$")
 _LINE_COMMENT_RE = re.compile(r"^\s*--")
 _BLOCK_COMMENT_START = re.compile(r"^\s*/-")
 _BLOCK_COMMENT_END = re.compile(r"-/\s*$")
@@ -92,6 +95,8 @@ def _parse_imports(path: Path) -> list[str]:
                     in_block_comment = True
                 continue
             if _LINE_COMMENT_RE.match(line) or not line.strip():
+                continue
+            if _MODULE_PREAMBLE_RE.match(line):
                 continue
             m = _IMPORT_RE.match(line)
             if m:

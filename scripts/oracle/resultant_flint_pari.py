@@ -99,27 +99,28 @@ def check(
         left_coeffs = _coeffs(left_record)
         right_coeffs = _coeffs(right_record)
         input_record = {"left": left_record, "right": right_record}
-        try:
-            oracle_values: list[tuple[str, int]] = []
-            if fmpz_poly is not None:
-                left = fmpz_poly(left_coeffs)
-                right = fmpz_poly(right_coeffs)
-                if op == "resultant":
-                    oracle_values.append(("python-flint", int(left.resultant(right))))
-                elif op == "disc_left":
-                    oracle_values.append(("python-flint", int(left.discriminant())))
-                else:
-                    raise OracleMismatch(f"unsupported operation {op!r}")
-            if pari is not None:
-                left = pari.Polrev(left_coeffs, "x")
-                right = pari.Polrev(right_coeffs, "x")
-                if op == "resultant":
-                    oracle_values.append(("cypari2/PARI", int(pari.polresultant(left, right))))
-                elif op == "disc_left":
-                    oracle_values.append(("cypari2/PARI", int(pari.poldisc(left))))
-                else:
-                    raise OracleMismatch(f"unsupported operation {op!r}")
-            for implementation, oracle_value in oracle_values:
+        oracle_values: list[tuple[str, int]] = []
+        if fmpz_poly is not None:
+            left = fmpz_poly(left_coeffs)
+            right = fmpz_poly(right_coeffs)
+            if op == "resultant":
+                oracle_values.append(("python-flint", int(left.resultant(right))))
+            elif op == "disc_left":
+                oracle_values.append(("python-flint", int(left.discriminant())))
+            else:
+                raise OracleMismatch(f"unsupported operation {op!r}")
+        if pari is not None:
+            left = pari.Polrev(left_coeffs, "x")
+            right = pari.Polrev(right_coeffs, "x")
+            if op == "resultant":
+                oracle_values.append(("cypari2/PARI", int(pari.polresultant(left, right))))
+            elif op == "disc_left":
+                oracle_values.append(("cypari2/PARI", int(pari.poldisc(left))))
+            else:
+                raise OracleMismatch(f"unsupported operation {op!r}")
+        case_failed = False
+        for implementation, oracle_value in oracle_values:
+            try:
                 assert_equal(
                     lean_value,
                     oracle_value,
@@ -133,10 +134,15 @@ def check(
                     profile=profile,
                     seed=seed,
                 )
-            checked += 1
-        except OracleMismatch as exc:
+            except OracleMismatch as exc:
+                case_failed = True
+                print(
+                    f"FAIL {lib}/{case_id} ({op}, {implementation}): {exc}",
+                    file=sys.stderr,
+                )
+        checked += 1
+        if case_failed:
             failures += 1
-            print(f"FAIL {lib}/{case_id} ({op}): {exc}", file=sys.stderr)
     print(
         f"resultant_flint_pari.py: checked {checked} result(s), "
         f"{failures} failure(s) with {oracle_name}",
