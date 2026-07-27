@@ -28,6 +28,11 @@ Scientific registrations:
   `O(n^2)`.
 * `runDistinctDegreeChecksum`: distinct-degree factorization, `O(n^3)`.
 
+Fixed regression registration:
+
+* `runBerlekampFullySplitChecksum`: complete Berlekamp factorization of
+  `X^5 - X`, exercising recursive splitting and its linear-leaf fast path.
+
 Gating external comparators:
 
 * `runFlintRabinTestChecksum*`: FLINT `nmod_poly.is_irreducible` through
@@ -42,6 +47,23 @@ namespace BerlekampBench
 open Berlekamp
 
 private instance benchBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+
+private theorem benchPrimeFive : Hex.Nat.Prime 5 := by
+  constructor
+  · decide
+  · intro m hm
+    have hmle : m ≤ 5 := Nat.le_of_dvd (by decide : 0 < 5) hm
+    have hcases : m = 0 ∨ m = 1 ∨ m = 2 ∨ m = 3 ∨ m = 4 ∨ m = 5 := by omega
+    rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl
+    · simp at hm
+    · exact Or.inl rfl
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · exact Or.inr rfl
+
+private instance benchPrimeModulusFive : ZMod64.PrimeModulus 5 :=
+  ZMod64.primeModulusOfPrime benchPrimeFive
 
 private theorem one_ne_zero_five : (1 : ZMod64 5) ≠ 0 := by
   intro h
@@ -204,6 +226,16 @@ def prepMixedDegreeInput (n : Nat) : MonicInput :=
   { poly := monicPoly (n + 3) 211
     monic := monicPoly_monic (n + 3) 211 }
 
+/-- `X^5 - X`, the product of all five monic linear factors over `F_5`. -/
+def fullySplitFive : FpPoly 5 :=
+  { coeffs := #[(0 : ZMod64 5), 4, 0, 0, 0, 1]
+    normalized := by
+      right
+      decide }
+
+theorem fullySplitFive_monic : DensePoly.Monic fullySplitFive := by
+  rfl
+
 /-- Per-parameter fixture for one Berlekamp split-step factoring search.
 
 `poly = fibPoly (n + 2)`, `witness = fibPoly (n + 1)` is the textbook Euclidean
@@ -231,6 +263,12 @@ def runBerlekampFactorChecksum (input : SplitInput) : UInt64 :=
       mixHash acc <|
         checksumPoly (splitFactorAt input.poly input.witness (ZMod64.ofNat 5 c)))
     0
+
+/-- Benchmark target: run complete Berlekamp factorization through recursive
+splitting and checksum the stored factor order. -/
+def runBerlekampFullySplitChecksum (_ : Unit) : UInt64 :=
+  (berlekampFactor fullySplitFive fullySplitFive_monic).factors.foldl
+    (fun acc factor => mixHash acc (checksumPoly factor)) 0
 
 /-- Benchmark target: run distinct-degree factorization and checksum its buckets. -/
 def runDistinctDegreeChecksum (input : MonicInput) : UInt64 :=
@@ -385,6 +423,13 @@ setup_benchmark runBerlekampFactorChecksum n => n * n
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     slopeTolerance := 0.35
+  }
+
+/- Fixed regression for the complete recursive splitter. `X^5 - X` reaches
+five linear leaves, so bench verification executes the production fast path. -/
+setup_fixed_benchmark runBerlekampFullySplitChecksum where {
+    repeats := 5
+    maxSecondsPerCall := 6.0
   }
 
 /-
