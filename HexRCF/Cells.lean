@@ -488,6 +488,80 @@ theorem open_not_root {f : ZPoly} {cert : IsolationCert}
 
 end Cell
 
+namespace RootModel
+
+/-- The closed-on-the-right span from the open cell immediately left of root
+`i` to that root. -/
+def leftSpan {carrier : ZPoly} {cert : IsolationCert}
+    (M : RootModel carrier cert) (i : Fin cert.intervals.size) : Set ℝ :=
+  if hi : i.val = 0 then Set.Iic (M.root i)
+  else Set.Ioc (M.root ⟨i.val - 1, by omega⟩) (M.root i)
+
+/-- A root and the open cell immediately to its left form an interval. -/
+theorem isPreconnected_leftSpan {carrier : ZPoly} {cert : IsolationCert}
+    (M : RootModel carrier cert) (i : Fin cert.intervals.size) :
+    IsPreconnected (M.leftSpan i) := by
+  by_cases hi : i.val = 0
+  · simpa [leftSpan, hi] using isPreconnected_Iic
+  · simpa [leftSpan, hi] using isPreconnected_Ioc
+
+/-- The open cell immediately left of root `i` lies in its left span. -/
+theorem leftOpen_mem_leftSpan {carrier : ZPoly} {cert : IsolationCert}
+    (M : RootModel carrier cert) (i : Fin cert.intervals.size) {x : ℝ}
+    (hx : Cell.Sem M (.open i.castSucc) x) : x ∈ M.leftSpan i := by
+  have hsize : cert.intervals.size ≠ 0 := by
+    have := i.isLt
+    omega
+  by_cases hi : i.val = 0
+  · simp only [leftSpan, hi, dite_true, Set.mem_Iic]
+    have hx0 : x < M.root ⟨0, by omega⟩ := by
+      simpa [Cell.Sem, hsize, hi] using hx
+    have hieq : i = ⟨0, by omega⟩ := Fin.ext hi
+    rw [hieq]
+    exact hx0.le
+  · have hright : i.val ≠ cert.intervals.size := by omega
+    have hx' : M.root ⟨i.val - 1, by omega⟩ < x ∧ x < M.root i := by
+      simpa [Cell.Sem, hsize, hi, hright] using hx
+    simpa [leftSpan, hi] using And.intro hx'.1 hx'.2.le
+
+/-- Root `i` is the right endpoint of its left span. -/
+theorem root_mem_leftSpan {carrier : ZPoly} {cert : IsolationCert}
+    (M : RootModel carrier cert) (i : Fin cert.intervals.size) :
+    M.root i ∈ M.leftSpan i := by
+  by_cases hi : i.val = 0
+  · simp [leftSpan, hi]
+  · simp only [leftSpan, hi, dite_false, Set.mem_Ioc]
+    exact ⟨M.strictMono (Fin.mk_lt_mk.mpr (by omega)), le_rfl⟩
+
+/-- A carrier root in the left span of root `i` is root `i` itself. -/
+theorem root_eq_of_mem_leftSpan
+    {carrier : ZPoly} {cert : IsolationCert}
+    (M : RootModel carrier cert) (i : Fin cert.intervals.size) {x : ℝ}
+    (hxroot : (toPolyℝ carrier).IsRoot x) (hx : x ∈ M.leftSpan i) :
+    x = M.root i := by
+  obtain ⟨j, hj, _⟩ := M.complete x hxroot
+  rw [← hj] at hx ⊢
+  congr 1
+  apply Fin.ext
+  by_cases hi : i.val = 0
+  · simp only [leftSpan, hi, dite_true, Set.mem_Iic] at hx
+    by_contra hne
+    have hij : i < j := by omega
+    exact (not_lt_of_ge hx) (M.strictMono hij)
+  · simp only [leftSpan, hi, dite_false, Set.mem_Ioc] at hx
+    by_contra hne
+    rcases lt_or_gt_of_ne hne with hji | hij
+    · let prev : Fin cert.intervals.size := ⟨i.val - 1, by omega⟩
+      have hjprevIndex : j ≤ prev := by
+        apply Fin.mk_le_mk.mpr
+        omega
+      have hjprev : M.root j ≤ M.root ⟨i.val - 1, by omega⟩ :=
+        M.strictMono.monotone hjprevIndex
+      exact (not_lt_of_ge hjprev) hx.1
+    · exact (not_lt_of_ge hx.2) (M.strictMono (Fin.mk_lt_mk.mpr hij))
+
+end RootModel
+
 /-- Claimed carrier-root comparisons against the lower and upper endpoints of
 a bounded domain. -/
 structure IocCmps (n : Nat) where
