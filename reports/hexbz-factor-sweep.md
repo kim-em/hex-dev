@@ -263,6 +263,10 @@ PARI) — the natural target for those longer sweeps.
 - **Corpus:** `bench/corpus/hexbz-factor-corpus.jsonl`
   SHA-256 `0ef7574769d9161d8e3bda3b8c193b05191d75b4b473279520db4513e533b2df` (391 instances) —
   identical to the full-board record above, so the two merge cleanly.
+  This is the historical corpus pinned by those artifacts; the current corpus
+  has 392 rows and SHA-256
+  `619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`
+  after appending the certificate-boundary `quartic_a4` case.
 - **Why a companion record.** The original full-board run measured PARI with the
   pre-#8558 8 MB-stack driver, which errored rather than factoring on the two
   largest hoeij instances. This single-system record re-measured PARI with the
