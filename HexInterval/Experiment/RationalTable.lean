@@ -288,12 +288,15 @@ structure Cost where
   denominatorBits : Nat
   deriving DecidableEq, Repr
 
-/-- Caller-owned limits for the first raw-table boundary.  Arithmetic temporary
-work and wire bytes belong to later phases and are not guessed here. -/
+/-- Caller-owned limits for the first raw-table boundary.  GCD input size and
+aggregate GCD work are independent of retained endpoint size.  Arithmetic
+temporary work and wire bytes belong to later phases and are not guessed here. -/
 structure Limit where
   maxEntries : Nat
   maxNumeratorBits : Nat
   maxDenominatorBits : Nat
+  maxGcdInputBits : Nat
+  maxGcdWork : Nat
   deriving DecidableEq, Repr
 
 /-- Semantic canonicality required of an admitted raw endpoint. -/
@@ -304,6 +307,15 @@ def Canonical (q : RawRat) : Prop :=
 def cost (q : RawRat) : Cost :=
   { numeratorBits := EndpointCost.natBits q.num.natAbs
     denominatorBits := EndpointCost.natBits q.den }
+
+/-- Largest bit width presented to the canonicality GCD. -/
+def Cost.gcdInputBits (size : Cost) : Nat :=
+  max size.numeratorBits size.denominatorBits
+
+/-- Conservative nonzero work charged for one canonicality GCD.  Giving zero
+a one-unit cost ensures that every `Nat.gcd` invocation consumes budget. -/
+def Cost.gcdWork (size : Cost) : Nat :=
+  max 1 size.numeratorBits * max 1 size.denominatorBits
 
 /-- Logical malformed-entry reasons. -/
 inductive Invalid where
@@ -316,6 +328,8 @@ inductive Resource where
   | entries
   | numeratorBits
   | denominatorBits
+  | gcdInputBits
+  | gcdWork
   deriving DecidableEq, Repr
 
 /-- Result of validating one entry. -/
@@ -325,13 +339,18 @@ inductive EntryResult where
   | resourceLimit (reason : Resource)
   deriving DecidableEq, Repr
 
-/-- Validate retained size first, then positivity and reduced form. -/
-def check (limit : Limit) (q : RawRat) : EntryResult :=
+/-- Validate retained size and GCD resources before positivity and reduced
+form.  `remainingGcdWork` is owned and threaded by the whole-table checker. -/
+def check (limit : Limit) (remainingGcdWork : Nat) (q : RawRat) : EntryResult :=
   let size := q.cost
   if size.numeratorBits > limit.maxNumeratorBits then
     .resourceLimit .numeratorBits
   else if size.denominatorBits > limit.maxDenominatorBits then
     .resourceLimit .denominatorBits
+  else if size.gcdInputBits > limit.maxGcdInputBits then
+    .resourceLimit .gcdInputBits
+  else if size.gcdWork > remainingGcdWork then
+    .resourceLimit .gcdWork
   else if q.den = 0 then
     .malformed .zeroDenominator
   else if q.num.natAbs.gcd q.den = 1 then
@@ -340,10 +359,12 @@ def check (limit : Limit) (q : RawRat) : EntryResult :=
     .malformed .notReduced
 
 /-- A ready entry has a positive, coprime denominator. -/
-theorem canonical_of_check {limit : Limit} {q : RawRat}
-    (h : q.check limit = .ready) : q.Canonical := by
+theorem canonical_of_check {limit : Limit} {remainingGcdWork : Nat} {q : RawRat}
+    (h : q.check limit remainingGcdWork = .ready) : q.Canonical := by
   unfold check at h
   dsimp only at h
+  split at h <;> try contradiction
+  split at h <;> try contradiction
   split at h <;> try contradiction
   split at h <;> try contradiction
   split at h <;> try contradiction
@@ -354,8 +375,9 @@ theorem canonical_of_check {limit : Limit} {q : RawRat}
 
 /-- A ready raw endpoint interprets to the same canonical numerator and
 denominator that were checked. -/
-theorem value_fields {limit : Limit} {q : RawRat}
-    (h : q.check limit = .ready) : q.value.num = q.num ∧ q.value.den = q.den := by
+theorem value_fields {limit : Limit} {remainingGcdWork : Nat} {q : RawRat}
+    (h : q.check limit remainingGcdWork = .ready) :
+    q.value.num = q.num ∧ q.value.den = q.den := by
   have hc := canonical_of_check h
   have hvalue : q.value = Rat.mk' q.num q.den hc.1 hc.2 := by
     exact (Rat.mk_eq_mkRat q.num q.den hc.1 hc.2).symm
@@ -374,12 +396,14 @@ inductive Result where
   | resourceLimit (index : Option Nat) (reason : RawRat.Resource)
   deriving DecidableEq, Repr
 
-/-- Validate every entry in order after bounded collection preflight. -/
-def checkFrom (limit : RawRat.Limit) : Nat → List RawRat → Result
-  | _, [] => .ready
-  | index, entry :: tail =>
-      match entry.check limit with
-      | .ready => checkFrom limit (index + 1) tail
+/-- Validate every entry in order after bounded collection preflight, consuming
+the caller-owned aggregate GCD budget only after each successful entry. -/
+def checkFrom (limit : RawRat.Limit) : Nat → Nat → List RawRat → Result
+  | _, _, [] => .ready
+  | index, remainingGcdWork, entry :: tail =>
+      match entry.check limit remainingGcdWork with
+      | .ready =>
+          checkFrom limit (index + 1) (remainingGcdWork - entry.cost.gcdWork) tail
       | .malformed reason => .malformed index reason
       | .resourceLimit reason => .resourceLimit (some index) reason
 
@@ -387,19 +411,20 @@ def checkFrom (limit : RawRat.Limit) : Nat → List RawRat → Result
 The bounded length check precedes the whole-table scan. -/
 def check (limit : RawRat.Limit) (entries : List RawRat) : Result :=
   if lengthWithin limit.maxEntries entries then
-    checkFrom limit 0 entries
+    checkFrom limit 0 limit.maxGcdWork entries
   else
     .resourceLimit none .entries
 
 /-- A ready suffix scan contains only canonical raw endpoints. -/
 theorem canonical_of_checkFrom {limit : RawRat.Limit} {entries : List RawRat}
-    {index : Nat} (h : checkFrom limit index entries = .ready) :
+    {index remainingGcdWork : Nat}
+    (h : checkFrom limit index remainingGcdWork entries = .ready) :
     ∀ q ∈ entries, q.Canonical := by
-  induction entries generalizing index with
+  induction entries generalizing index remainingGcdWork with
   | nil => simp
   | cons head tail ih =>
       simp only [checkFrom] at h
-      cases hhead : head.check limit with
+      cases hhead : head.check limit remainingGcdWork with
       | ready =>
           simp only [hhead] at h
           intro q hq
@@ -429,7 +454,9 @@ end Table
 def fixtureTableLimit : RawRat.Limit :=
   { maxEntries := 5
     maxNumeratorBits := 8
-    maxDenominatorBits := 8 }
+    maxDenominatorBits := 8
+    maxGcdInputBits := 8
+    maxGcdWork := 64 }
 
 /-- An accepted table including canonical zero, negative, and non-dyadic
 values. -/
@@ -456,7 +483,14 @@ def checksTable : Bool :=
       [⟨2, 6⟩, ⟨256, 1⟩] == .malformed 0 .notReduced &&
     Table.check { fixtureTableLimit with maxDenominatorBits := 8 }
       (fixtureTable ++ [⟨1, 256⟩]) ==
-        .resourceLimit (some 4) .denominatorBits
+        .resourceLimit (some 4) .denominatorBits &&
+    Table.check { fixtureTableLimit with maxGcdInputBits := 7 } [⟨1, 255⟩] ==
+      .resourceLimit (some 0) .gcdInputBits &&
+    Table.check { fixtureTableLimit with maxGcdWork := 5 }
+      [⟨0, 1⟩, ⟨1, 2⟩, ⟨1, 3⟩] == .ready &&
+    Table.check { fixtureTableLimit with maxGcdWork := 4 }
+      [⟨0, 1⟩, ⟨1, 2⟩, ⟨1, 3⟩] ==
+        .resourceLimit (some 2) .gcdWork
 
 /-- Ordinary-kernel canary for canonical whole-table validation. -/
 theorem checksTable_eq_true : checksTable = true := by
