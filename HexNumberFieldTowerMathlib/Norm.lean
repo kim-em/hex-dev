@@ -59,13 +59,15 @@ noncomputable def rawOuter (levels : List Level)
 /-- One executable Trager elimination step is the corresponding polynomial
 resultant after semantic interpretation of the lower tower. -/
 theorem oneLevel_resultant (level : Level) (lower : List Level)
-    (f : Array (Array Rat)) (c : Int) :
+    (hlower : LevelsValid lower) (f : Array (Array Rat)) (c : Int) :
     rawPolynomial lower
         (DensePoly.ofCoeffs <| (oneLevel level lower f c).map
           (Arithmetic.raw lower)) =
       Polynomial.resultant
         (rawOuter lower (definingOuter level lower))
-        (rawOuter lower (shiftedOuter level lower f c)) := by
+        (rawOuter lower (shiftedOuter level lower f c))
+        (m := (definingOuter level lower).degree?.getD 0)
+        (n := (shiftedOuter level lower f c).degree?.getD 0) := by
   sorry
 
 /-- The finite characteristic-zero collision bound finds a squarefree norm

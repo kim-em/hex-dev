@@ -39,7 +39,7 @@ algebraic root. -/
 theorem eval?_eq (T : NumberTower) (a : Elem T) {root : AlgebraicRoot}
     (h : RawEvaluation.evalCoords? T.levels.toList (coeffs a) = some root) :
     T.eval? a = some root.toComplex := by
-  sorry
+  simp [eval?, h]
 
 /-- The complex value of a tower element. The fallback is unreachable by
 `eval?_isSome`. -/
@@ -68,13 +68,31 @@ theorem toComplex_injective (T : NumberTower) :
 theorem dim_pos (T : NumberTower) : 0 < T.dim := by
   sorry
 
-/-- Evaluation of every stored relative relation vanishes at that level's
-selected absolute generator. This is the semantic half of the central level
-invariant; relative irreducibility is recorded separately by the checked
-factorization bridge. -/
-theorem level_relation_vanishes (T : NumberTower)
-    (level : Level) (hlevel : level ∈ T.levels.toList) :
-    (HexRootsMathlib.toPolyℂ level.root.p).eval level.root.toComplex = 0 := by
+namespace LevelSemantics
+
+/-- Interpret raw lower-tower coordinates through their selected complex
+embedding. Validity makes the fallback unreachable. -/
+@[expose]
+noncomputable def toComplex (lower : List Level) (a : Array Rat) : ℂ :=
+  (RawEvaluation.evalCoords? lower a).map AlgebraicRoot.toComplex |>.getD 0
+
+/-- Interpret a raw polynomial over a lower tower in `Polynomial ℂ`. -/
+@[expose]
+noncomputable def polynomial (lower : List Level)
+    (f : Array (Array Rat)) : Polynomial ℂ :=
+  f.foldr
+    (fun a value => Polynomial.C (toComplex lower a) +
+      Polynomial.X * value) 0
+
+end LevelSemantics
+
+/-- A validated relative relation vanishes at its selected absolute generator.
+This is the semantic half of the central level invariant; relative
+irreducibility is recorded separately by the checked factorization bridge. -/
+theorem level_relation_vanishes (level : Level) (lower : List Level)
+    (hvalid : LevelsValid (level :: lower)) :
+    (LevelSemantics.polynomial lower (level.polynomial lower)).eval
+      level.root.toComplex = 0 := by
   sorry
 
 end Hex.NumberTower

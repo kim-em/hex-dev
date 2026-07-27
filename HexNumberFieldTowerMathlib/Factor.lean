@@ -65,7 +65,8 @@ end Factorization
 factor-theoretic meaning in a validated tower. -/
 theorem isIrreducible_iff (T : NumberTower) (f : Poly T) :
     Factor.isIrreducible T.levels.toList
-      (f.toArray.map coeffs) ↔ PolynomialIrreducible T f := by
+      (f.toArray.map coeffs) ↔
+        f.leadingCoeff = 1 ∧ PolynomialIrreducible T f := by
   sorry
 
 /-- Every returned Trager factorization satisfies reconstruction,

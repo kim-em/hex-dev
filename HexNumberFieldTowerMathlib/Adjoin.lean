@@ -78,6 +78,8 @@ end Extension
 absolute candidate under the fixed embedding. -/
 theorem selectFactor?_sound (T : NumberTower) (candidate : AlgebraicRoot)
     (factors : Array (Poly T × Nat)) {selected : Poly T}
+    (hirreducible : ∀ entry ∈ factors.toList,
+      PolynomialIrreducible T entry.1)
     (h : selectFactor? T candidate factors = some selected) :
     PolynomialIrreducible T selected ∧
       Polynomial.eval candidate.toComplex (T.toPolynomial selected) = 0 := by
