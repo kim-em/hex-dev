@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexNumberField.Basic
+public import HexNumberField.QAdjoin
 
 public section
 
