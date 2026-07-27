@@ -132,22 +132,25 @@ that lattice-backed tail: hex should solve under the declared cap where the
 verified classical Isabelle BZ reference times out or is slower, not merely
 match it.
 
-### Scheduled Swinnerton-Dyer seam comparator (#8868)
+### Dedicated-hardware Swinnerton-Dyer seam comparator (#8868)
 
-The SD5/SD6 seam is now recorded outside the spike-only workflow by the
-scheduled factor-sweep systems:
+As measured at commit `bc958d84c72236948ebc96eaaed44e9cfecd05c8` on
+`2026-07-03`, the SD5/SD6 seam is recorded outside the spike-only workflow by
+the dedicated-hardware factor-sweep systems:
 
 - `hex-factor`: production cost-based `factor` hybrid.
 - `hex-lattice`: lattice tier service.
 - `hex-classical-nodecline`: classical recombination with the early lattice
   decline disabled.
 - `isabelle-bz`: verified classical Isabelle/AFP BZ reference.
+- `isabelle-lll`: verified Isabelle/AFP LLL factorization reference.
+- `flint`, `ntl`, `pari`: unverified C/CAS implementation context.
 
 The traceable artefact is
 `reports/bench-results/hexbz-factor-sweep-bc958d84-carica.json`, SHA-256
 `a1452db9f3aa4d9c86c6ece4a716d17483f3734caf632c5baf9085a8e463ce23`.
-It was recorded on `carica` (Apple M2 Ultra, macOS/darwin arm64, 24 cores)
-at `2026-07-03T08:22:20Z`, commit
+It was recorded on `carica` (darwin arm64, 24 cores) at
+`2026-07-03T08:22:20Z`, commit
 `bc958d84c72236948ebc96eaaed44e9cfecd05c8` with a dirty worktree, using
 toolchain `leanprover/lean4:v4.32.0-rc1` and AFP release
 `afp-2026-05-29`. The corpus was
@@ -157,18 +160,23 @@ The declared cap was `--cutoff 10` seconds per system/instance; the sweep used
 median-of-5 for first calls under 1s and a single call otherwise. Its
 `cross_check` block has `ok: true` and an empty `mismatches` list, so all
 systems that solved a shared instance agreed on the factor-degree multiset.
+The committed artefact is the post-#8596 eight-system record: the retired
+`hex-fast` rows were stripped from the JSON after the original July 3 run, and
+the digest above is for that committed curated file.
 
 Sweep command:
 
 ```sh
 python3 scripts/bench/factor_sweep.py \
-    --systems hex-factor,hex-lattice,hex-fast,hex-classical-nodecline,flint,ntl,pari,isabelle-bz,isabelle-lll \
+    --systems hex-factor,hex-lattice,hex-classical-nodecline,flint,ntl,pari,isabelle-bz,isabelle-lll \
     --cutoff 10 \
     --no-early-terminate \
     --skip-unavailable
 ```
 
-Relevant result rows:
+Relevant result rows. The `r` column is carried over from the #8867 spike
+measurement at commit `afc8ca4d`; the sweep artefact records degree/status/time,
+but not the selected prime or modular-factor count.
 
 | rung | degree | measured `r` | system | status | median | factor count | verdict |
 | --- | ---: | ---: | --- | --- | ---: | ---: | --- |
@@ -176,18 +184,36 @@ Relevant result rows:
 | SD5 | 32 | 16 | `hex-classical-nodecline` | `ok` | 335.010 ms | 1 | classical side solves under cap |
 | SD5 | 32 | 16 | `hex-lattice` | `ok` | 508.589 ms | 1 | lattice side solves, slower than classical at the seam |
 | SD5 | 32 | 16 | `isabelle-bz` | `ok` | 30.562 ms | 1 | verified classical reference solves; no tail timeout yet |
+| SD5 | 32 | 16 | `isabelle-lll` | `timeout` | -- | -- | verified direct-LLL reference times out one rung before hex-lattice's SD6 solve |
+| SD5 | 32 | 16 | `flint` | `ok` | 1.604 ms | 1 | unverified C implementation context |
+| SD5 | 32 | 16 | `ntl` | `ok` | 3.131 ms | 1 | unverified C implementation context |
+| SD5 | 32 | 16 | `pari` | `ok` | 1.205 ms | 1 | unverified CAS implementation context |
 | SD6 | 64 | 32 | `hex-factor` | `timeout` | -- | -- | production hybrid did not finish inside this 10s sweep cap |
 | SD6 | 64 | 32 | `hex-classical-nodecline` | `timeout` | -- | -- | classical no-decline hits the exponential wall |
-| SD6 | 64 | 32 | `hex-lattice` | `ok` | 8922.642 ms | 1 | lattice-backed tier solves under the declared cap |
+| SD6 | 64 | 32 | `hex-lattice` | `ok` | 8922.642 ms (single call) | 1 | isolated lattice tier solved at 89% of the cap |
 | SD6 | 64 | 32 | `isabelle-bz` | `timeout` | -- | -- | verified classical reference has no finite wall-clock ratio |
+| SD6 | 64 | 32 | `isabelle-lll` | `timeout` | -- | -- | verified direct-LLL reference also times out |
+| SD6 | 64 | 32 | `flint` | `ok` | 7.470 ms | 1 | unverified C implementation context |
+| SD6 | 64 | 32 | `ntl` | `ok` | 13.286 ms | 1 | unverified C implementation context |
+| SD6 | 64 | 32 | `pari` | `ok` | 6.269 ms | 1 | unverified CAS implementation context |
 
-This is the scheduled-hardware comparator evidence for the seam. SD5 is still a
-small/medium-`r` classical rung: the verified classical Isabelle BZ reference is
-faster than hex on this input, so the row is a regime marker rather than a
-large-tail win. SD6 is the first recorded lattice-backed rung: `hex-lattice`
-solves under the 10s cap while `isabelle-bz` and
-`hex-classical-nodecline` both time out, so the result is recorded as
-solved-under-cap versus timeout rather than as a finite wall-clock ratio.
+This is dedicated-hardware comparator evidence for the seam, not a Phase-4 goal
+discharge. SD5 is the last small/medium-`r` classical rung; `hex-factor /
+isabelle-bz = 331.832 / 30.562 = 10.86x` on this artefact, so it misses the
+SPEC's parity target for the classical regime. SD6 is the first recorded rung
+where the isolated lattice tier solves while the verified classical Isabelle BZ
+reference times out, but the production hybrid `hex-factor` also timed out in
+this sweep. Therefore the large-`r` hybrid comparator goal is still not met by
+this artefact; the row records isolated `factorLattice` solved-under-cap versus
+verified classical timeout, with no finite wall-clock ratio.
+
+This artefact is also stale for current performance: it predates the later
+factor-path work called out by the 2026-07-27 spike re-measure above. That
+single-shot spike at commit `afc8ca4d` recorded SD6 lattice core at
+`11481.444 ms` and hybrid wall at `13926.582 ms` under high load, both above
+the 10s sweep cap. The July 3 SD6 `hex-lattice` under-cap result should
+therefore be treated as historical seam evidence pending a refreshed
+dedicated-hardware sweep on the current factor path.
 
 ### Per-call comparator overhead
 
