@@ -12,6 +12,10 @@
 - `Hex.LLLBench.runOfBasisHarshCubicChecksum`: `ofBasisHarshCubicComplexity n`
 - `Hex.LLLBench.runFirstShortVectorRandomBoundedChecksum`: `firstShortVectorRandomBoundedComplexity n`
 - `Hex.LLLBench.runSizeReduceColumnChecksum`: `sizeReduceColumnComplexity n`
+- `Hex.LLLBench.runIntervalGramRowsSquareChecksum`: `intervalGramRowsSquareComplexity n`
+- `Hex.LLLBench.runIntervalGramRowsWideChecksum`: `intervalGramRowsWideComplexity n`
+- `Hex.LLLBench.runReducedIntervalSquareChecksum`: `reducedIntervalSquareComplexity n`
+- `Hex.LLLBench.runReducedIntervalWideChecksum`: `reducedIntervalWideComplexity n`
 - `Hex.LLLBench.runFpylllFirstShortVectorBZRecombinationChecksum`: fixed, repeats `5`
 - `Hex.LLLBench.runIsabelleHarshCubicNormSq15`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorBZRecombinationNormSq`: fixed, repeats `3`
@@ -149,6 +153,42 @@ lake exe hexlll_bench verify
 At current worktree commit `924910079376c876da2e2fe9d94915505dd477e4`,
 the bench verify step succeeds for all 52 registered HexLLL benchmarks, including
 the densified Isabelle ladder added after the scientific run below.
+
+### Symmetry-aware interval-checker Gram rows
+
+The four focused targets live in `hexlll_gram_bench`, which imports the
+production interval checker without initializing the unrelated fixed-result
+LLL benchmark fixtures in `hexlll_bench`. They use deterministic integer bases
+at square shapes and at wide shapes with eight columns per row. The before and
+after runs were recorded on `chungus2` (AMD EPYC 9455, Linux x86-64) with:
+
+```sh
+lake exe hexlll_gram_bench run \
+  Hex.LLLBench.runIntervalGramRowsSquareChecksum \
+  Hex.LLLBench.runReducedIntervalSquareChecksum \
+  Hex.LLLBench.runIntervalGramRowsWideChecksum \
+  Hex.LLLBench.runReducedIntervalWideChecksum \
+  --export-file <artefact>
+```
+
+Baseline Gram construction represented 28.08% (`n = 32`) to 47.68%
+(`n = 96`) of the square interval checker, and 58.41% (`n = 16`) to 70.81%
+(`n = 48`) of the wide checker. Both paths clear the 10% Amdahl-adjusted gate.
+
+| Target | Representative `n` | Before | After | Improvement |
+| --- | ---: | ---: | ---: | ---: |
+| Gram rows, square | 96 | 36.168 ms | 26.900 ms | 25.63% |
+| Interval checker, square | 96 | 75.854 ms | 68.022 ms | 10.33% |
+| Gram rows, wide | 48 | 19.102 ms | 10.905 ms | 42.91% |
+| Interval checker, wide | 48 | 26.978 ms | 18.884 ms | 30.00% |
+
+All four before/after result-hash ladders match, and all eight benchmark
+verdicts are consistent with their declared complexity models. Artefacts:
+
+- `reports/bench-results/hex-lll-interval-gram-baseline-3d41529f-chungus2.json`,
+  SHA-256 `12267b61a8934f6c59198b43fc6fc4a178f785fba67cdba9404bb9cb31ef6f81`.
+- `reports/bench-results/hex-lll-interval-gram-after-02e35882-chungus2.json`,
+  SHA-256 `53f87841ae3524980a6227a578917cab3464500ff0c45aab91a75c41348472f4`.
 
 Current scientific rerun for the five formerly inconclusive parametric
 registrations at commit `924910079376c876da2e2fe9d94915505dd477e4` on
