@@ -9,6 +9,7 @@ module
 public import HexNumberField.Basic
 public import HexNumberField.Approx
 public import HexNumberField.QAdjoin
+public import HexNumberField.Convert
 
 public section
 
