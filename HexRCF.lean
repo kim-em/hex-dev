@@ -22,6 +22,7 @@ public import HexRCF.IsolationsTests
 public import HexRCF.SeparationCheck
 public import HexRCF.Separation
 public import HexRCF.SeparationTests
+public import HexRCF.CellsCheck
 public import HexRCF.Cells
 public import HexRCF.CellsTests
 public import HexRCF.CommonRootCheck

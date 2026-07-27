@@ -47,6 +47,12 @@ theorem check_of_checkStrict {replay : SturmReplay} {cert : IsolationCert}
   simp only [checkStrict, Bool.and_eq_true] at h
   exact h.1
 
+/-- Strict validation exposes its strict-gap component. -/
+theorem gaps_of_checkStrict {replay : SturmReplay} {cert : IsolationCert}
+    (h : cert.checkStrict replay = true) : cert.checkGaps = true := by
+  simp only [checkStrict, Bool.and_eq_true] at h
+  exact h.2
+
 /-- Every adjacent pair accepted by the strict-gap walk is strictly separated. -/
 theorem gap_of_check {cert : IsolationCert} (h : cert.checkGaps = true)
     (i : Nat) (hi : i + 1 < cert.intervals.size) :

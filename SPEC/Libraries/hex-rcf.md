@@ -622,9 +622,10 @@ free to change.
   `HexRCF/Separation.lean`: real-root ordering and classifier semantics;
   `HexRCF/SeparationTests.lean`: midpoint ownership, close-root, scan,
   malformed-input, and endpoint regressions.
-- `HexRCF/Cells.lean`: size-indexed executable cells, checked root models,
-  semantic partition, exact samples, canonical left-root spans,
-  endpoint-comparison vectors, and exact `Ioc` intersection;
+- `HexRCF/CellsCheck.lean`: Mathlib-free size-indexed cells, exact dyadic
+  samples, endpoint-comparison checks, and bounded-domain relevance;
+  `HexRCF/Cells.lean`: checked root models, semantic partition, canonical
+  left-root spans, and exact `Ioc` intersection;
   `HexRCF/CellsTests.lean`: enumeration,
   zero/singleton/multiple-root samples, endpoint equality/order guards,
   relevance tables, and malformed lower/upper claim regressions.
