@@ -321,6 +321,12 @@ theorem toPolyℝ_scale (c : Int) (p : Hex.ZPoly) :
     Polynomial.coeff_C_mul, coeff_toPolyℝ]
   push_cast; ring
 
+/-- The real cast is additive. -/
+theorem toPolyℝ_add (p q : Hex.ZPoly) :
+    toPolyℝ (p + q) = toPolyℝ p + toPolyℝ q := by
+  show (HexPolyMathlib.toPolynomial (p + q)).map (Int.castRingHom ℝ) = _
+  rw [HexPolyMathlib.toPolynomial_add, Polynomial.map_add]
+
 /-- The real cast of an `x^k` shift. -/
 theorem toPolyℝ_shift (k : Nat) (p : Hex.ZPoly) :
     toPolyℝ (Hex.DensePoly.shift k p) = Polynomial.X ^ k * toPolyℝ p := by
