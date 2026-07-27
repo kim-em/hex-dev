@@ -415,6 +415,84 @@ private theorem foldl_range_congr {A : Type v} (N : Nat)
       rw [ih (init := init) (fun acc i hi => h acc i (by omega))]
       exact h ((List.range N).foldl g init) N (by omega)
 
+/-- Moving a fixed addend through a commutative-ring sum fold preserves the
+accumulated sum. -/
+private theorem fold_add_right {S : Type u} [Lean.Grind.CommRing S]
+    (xs : List S) (a b : S) :
+    xs.foldl (fun acc x => acc + x) (a + b) =
+      xs.foldl (fun acc x => acc + x) a + b := by
+  induction xs generalizing a with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hacc : a + b + x = (a + x) + b := by grind
+      rw [hacc]
+      exact ih (a + x)
+
+/-- A finite commutative-ring sum is unchanged when its term list is
+reversed. -/
+private theorem fold_add_reverse {S : Type u} [Lean.Grind.CommRing S]
+    (xs : List S) (a : S) :
+    xs.reverse.foldl (fun acc x => acc + x) a =
+      xs.foldl (fun acc x => acc + x) a := by
+  induction xs generalizing a with
+  | nil => rfl
+  | cons x xs ih =>
+      rw [List.reverse_cons, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih, fold_add_right xs a x]
+
+/-- Reversing a natural range reflects every index around its final entry. -/
+private theorem range_reverse_eq_map_sub (N : Nat) :
+    (List.range N).reverse = (List.range N).map (fun i => N - 1 - i) := by
+  apply List.ext_getElem
+  · simp
+  · intro i hleft hright
+    simp [List.length_reverse] at hleft hright
+    rw [List.getElem_reverse]
+    simp [List.getElem_map, List.getElem_range]
+
+/-- A range sum may be reindexed by reflecting its finite index interval. -/
+private theorem range_fold_reflect {S : Type u} [Lean.Grind.CommRing S]
+    (N : Nat) (term : Nat → S) :
+    (List.range N).foldl (fun acc i => acc + term i) 0 =
+      (List.range N).foldl (fun acc i => acc + term (N - 1 - i)) 0 := by
+  have hrev :
+      (List.range N).reverse.foldl (fun acc i => acc + term i) 0 =
+        (List.range N).foldl (fun acc i => acc + term i) 0 := by
+    simpa [List.foldl_map, ← List.map_reverse] using
+      fold_add_reverse ((List.range N).map term) (0 : S)
+  rw [← hrev, range_reverse_eq_map_sub, List.foldl_map]
+
+/-- Extending a range sum by terms known to vanish changes nothing. -/
+private theorem range_fold_extend_zero {S : Type u} [Lean.Grind.CommRing S]
+    (term : Nat → S) (base extra : Nat)
+    (hzero : ∀ i, base ≤ i → term i = 0) :
+    (List.range (base + extra)).foldl (fun acc i => acc + term i) 0 =
+      (List.range base).foldl (fun acc i => acc + term i) 0 := by
+  induction extra with
+  | zero => simp
+  | succ extra ih =>
+      rw [Nat.add_succ, List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih, hzero (base + extra) (by omega),
+        Lean.Grind.Semiring.add_zero]
+
+/-- A fixed left factor distributes over a finite sum fold. -/
+private theorem range_fold_mul_left {S : Type u} [Lean.Grind.CommRing S]
+    (c : S) (term : Nat → S) (N : Nat) :
+    (List.range N).foldl (fun acc i => acc + c * term i) 0 =
+      c * (List.range N).foldl (fun acc i => acc + term i) 0 := by
+  induction N with
+  | zero =>
+      simp only [List.range_zero, List.foldl_nil]
+      rw [Lean.Grind.Semiring.mul_zero]
+  | succ N ih =>
+      rw [List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih]
+      grind
+
 /-- The product coefficient is the bounded convolution used by the
 pseudo-remainder builder. -/
 private theorem coeff_mul_bounded {S : Type u} [Lean.Grind.CommRing S]
@@ -433,6 +511,155 @@ private theorem coeff_mul_bounded {S : Type u} [Lean.Grind.CommRing S]
   rw [if_neg (by
     have himin : i < min (t + 1) bound := hi
     omega)]
+
+/-- Above the divisor degree, reflecting the quotient convolution exposes
+exactly the active recurrence: lower active entries form the correction, the
+current entry supplies the leading term, and all later entries hit
+coefficients beyond the divisor's support. -/
+private theorem high_convolution {S : Type u} [Lean.Grind.CommRing S]
+    [DecidableEq S] (g q : DensePoly S) (active powers : Array S)
+    (b : S) (n m d i : Nat)
+    (hnd : n + 1 = m + d) (hgsize : g.size = m + 1)
+    (hlc : g.coeff m = b)
+    (hpowers : ∀ k, k ≤ d → powers.getD k 0 = b ^ k)
+    (hq : ∀ k, q.coeff k =
+      if k < d then
+        active.getD (d - 1 - k) 0 * powers.getD k 0
+      else 0)
+    (hi : i < d) :
+    (Array.range (min (n - i + 1) d)).foldl
+        (fun acc k => acc + q.coeff k * g.coeff (n - i - k)) 0 =
+      powers.getD (d - i) 0 *
+        (active.getD i 0 +
+          (Array.range (i - (i - m))).foldl
+            (fun acc offset =>
+              let j := i - m + offset
+              acc + active.getD j 0 * powers.getD (i - 1 - j) 0 *
+                g.coeff (m + j - i))
+            0) := by
+  let L := min (n - i + 1) d
+  let start := i - m
+  let correctionLength := i - start
+  let piece : Nat → S := fun offset =>
+    if offset < correctionLength then
+      let j := start + offset
+      active.getD j 0 * powers.getD (i - 1 - j) 0 *
+        g.coeff (m + j - i)
+    else if offset = correctionLength then active.getD i 0 else 0
+  have hL : L = d - start := by
+    dsimp only [L, start]
+    by_cases him : i ≤ m
+    · rw [Nat.min_eq_right (by omega)]
+      omega
+    · rw [Nat.min_eq_left (by omega)]
+      omega
+  have hbase : correctionLength + 1 ≤ L := by
+    dsimp only [correctionLength]
+    omega
+  have hdecomp : correctionLength + 1 +
+      (L - (correctionLength + 1)) = L := by
+    omega
+  rw [← Array.foldl_toList]
+  simp only [Array.toList_range]
+  change
+    (List.range L).foldl
+        (fun acc k => acc + q.coeff k * g.coeff (n - i - k)) 0 = _
+  rw [range_fold_reflect]
+  have hreflect :
+      (List.range L).foldl
+          (fun acc offset =>
+            acc + q.coeff (L - 1 - offset) *
+              g.coeff (n - i - (L - 1 - offset))) 0 =
+        (List.range L).foldl
+          (fun acc offset =>
+            acc + powers.getD (d - i) 0 * piece offset) 0 := by
+    apply foldl_range_congr
+    intro acc offset hoffset
+    let j := start + offset
+    let k := L - 1 - offset
+    have hkL : k < L := by
+      dsimp only [k]
+      omega
+    have hk : k < d := by
+      dsimp only [L] at hkL
+      omega
+    have hjindex : d - 1 - k = j := by
+      dsimp only [k, j]
+      omega
+    have hgindex : n - i - k = m + j - i := by
+      dsimp only [k, j]
+      omega
+    rw [hq, if_pos hk, hjindex, hgindex]
+    by_cases hoff : offset < correctionLength
+    · have hj : j < i := by
+        dsimp only [j, correctionLength]
+        omega
+      have hkpow : k = (d - i) + (i - 1 - j) := by
+        dsimp only [k, j, correctionLength]
+        omega
+      rw [show piece offset =
+          active.getD j 0 * powers.getD (i - 1 - j) 0 *
+            g.coeff (m + j - i) by simp [piece, hoff, j]]
+      rw [hpowers k (by omega), hpowers (d - i) (by omega),
+        hpowers (i - 1 - j) (by omega), hkpow,
+        Lean.Grind.Semiring.pow_add]
+      grind
+    · by_cases heq : offset = correctionLength
+      · subst offset
+        have hj : j = i := by
+          dsimp only [j, correctionLength, start]
+          omega
+        have hkpow : k + 1 = d - i := by
+          dsimp only [k, correctionLength, start]
+          omega
+        have hgidx : m + i - i = m := by omega
+        rw [show piece correctionLength = active.getD i 0 by
+          simp [piece]]
+        rw [hj, hgidx, hlc, hpowers k (by omega),
+          hpowers (d - i) (by omega),
+          ← hkpow, Lean.Grind.Semiring.pow_succ]
+        grind
+      · have hj : m + 1 ≤ m + j - i := by
+          dsimp only [j, correctionLength, start]
+          omega
+        have hzero : g.coeff (m + j - i) = 0 :=
+          coeff_eq_zero_of_size_le g (by omega)
+        rw [show piece offset = 0 by simp [piece, hoff, heq], hzero]
+        simp only [Lean.Grind.Semiring.mul_zero,
+          Lean.Grind.Semiring.add_zero]
+  rw [hreflect, range_fold_mul_left]
+  have htruncate :
+      (List.range L).foldl (fun acc offset => acc + piece offset) 0 =
+        (List.range (correctionLength + 1)).foldl
+          (fun acc offset => acc + piece offset) 0 := by
+    rw [← hdecomp]
+    apply range_fold_extend_zero
+    intro offset hoffset
+    have hnotlt : ¬ offset < correctionLength := by omega
+    have hnoteq : offset ≠ correctionLength := by omega
+    simp [piece, hnotlt, hnoteq]
+  rw [htruncate, List.range_succ, List.foldl_append]
+  simp only [List.foldl_cons, List.foldl_nil]
+  have hprefix :
+      (List.range correctionLength).foldl
+          (fun acc offset => acc + piece offset) 0 =
+        (Array.range (i - (i - m))).foldl
+          (fun acc offset =>
+            let j := i - m + offset
+            acc + active.getD j 0 * powers.getD (i - 1 - j) 0 *
+              g.coeff (m + j - i))
+          0 := by
+    rw [← Array.foldl_toList]
+    simp only [Array.toList_range]
+    apply foldl_range_congr
+    intro acc offset hoffset
+    have hoff : offset < correctionLength := hoffset
+    simp [piece, hoff, correctionLength, start]
+  rw [hprefix]
+  have hlast : piece correctionLength = active.getD i 0 := by
+    simp [piece]
+  rw [hlast]
+  grind
 
 /-- Every completed active entry satisfies the cancellation recurrence used
 when it was appended; later entries do not change its prefix reads. -/
@@ -520,7 +747,139 @@ theorem pseudoDivMod_reconstruct_core {S : Type u}
     (f g : DensePoly S) (hg : g ≠ 0) (hfg : g.size ≤ f.size) :
     scale (g.leadingCoeff ^ (f.size - g.size + 1)) f =
       (pseudoDivMod f g).1 * g + (pseudoDivMod f g).2 := by
-  sorry
+  have hgpos : 0 < g.size := by
+    apply Nat.pos_of_ne_zero
+    intro hsize
+    apply hg
+    apply ext_coeff
+    intro i
+    rw [coeff_zero]
+    exact coeff_eq_zero_of_size_le g (by omega)
+  have hfpos : 0 < f.size := Nat.lt_of_lt_of_le hgpos hfg
+  have hgzero : g.isZero = false := (isZero_eq_false_iff g).2 hgpos
+  let n := f.size - 1
+  let m := g.size - 1
+  let d := f.size - g.size + 1
+  let b := g.leadingCoeff
+  let powers :=
+    pushBuild d #[1] fun table _ =>
+      table.getD (table.size - 1) 1 * b
+  let active :=
+    pushBuild d #[] fun active i =>
+      let first := i - m
+      let correction :=
+        (Array.range (i - first)).foldl
+          (fun acc offset =>
+            let j := first + offset
+            acc + active.getD j 0 * powers.getD (i - 1 - j) 0 *
+              g.coeff (m + j - i))
+          0
+      powers.getD i 0 * f.coeff (n - i) - correction
+  let quotient :=
+    pushBuild d #[] fun _ k =>
+      active.getD (d - 1 - k) 0 * powers.getD k 0
+  let q := ofCoeffs quotient
+  let remainder :=
+    pushBuild m #[] fun _ t =>
+      let correction :=
+        (Array.range (min (t + 1) d)).foldl
+          (fun acc k =>
+            acc + quotient.getD k (Zero.zero : S) * g.coeff (t - k))
+          0
+      powers.getD d 0 * f.coeff t - correction
+  let r := ofCoeffs remainder
+  have hnsize : n + 1 = f.size := by
+    dsimp only [n]
+    omega
+  have hmsize : m + 1 = g.size := by
+    dsimp only [m]
+    omega
+  have hnd : n + 1 = m + d := by
+    dsimp only [n, m, d]
+    omega
+  have hlc : g.coeff m = b := by
+    dsimp only [m, b]
+    exact (leadingCoeff_eq_coeff_last g hgpos).symm
+  have hpowersSpec :
+      powers.size = d + 1 ∧
+        ∀ k, k ≤ d → powers.getD k 0 = b ^ k := by
+    simpa only [powers] using pseudoPowers_spec b d
+  have hactiveSpec :
+      active.size = d ∧
+        ∀ i, i < d →
+          active.getD i 0 =
+            powers.getD i 0 * f.coeff (n - i) -
+              (Array.range (i - (i - m))).foldl
+                (fun acc offset =>
+                  let j := i - m + offset
+                  acc + active.getD j 0 * powers.getD (i - 1 - j) 0 *
+                    g.coeff (m + j - i))
+                0 := by
+    simpa only [active] using pseudoActive_spec f g powers n m d
+  have hqcoeff : ∀ k, q.coeff k =
+      if k < d then
+        active.getD (d - 1 - k) 0 * powers.getD k 0
+      else 0 := by
+    intro k
+    simpa only [q, quotient] using
+      pseudoQuotient_coeff active powers d k
+  have hrcoeff : ∀ t, r.coeff t =
+      if t < m then
+        powers.getD d 0 * f.coeff t -
+          (Array.range (min (t + 1) d)).foldl
+            (fun acc k => acc + q.coeff k * g.coeff (t - k)) 0
+      else 0 := by
+    intro t
+    simpa only [r, remainder, q] using
+      pseudoRemainder_coeff f g powers quotient d m t
+  have hqsize : q.size ≤ d := by
+    dsimp only [q, quotient]
+    exact Nat.le_trans (size_ofCoeffs_le _) (by
+      rw [pushBuild_size]
+      simp only [Array.size_empty, Nat.zero_add]
+      exact Nat.le_refl d)
+  have hqr : pseudoDivMod f g = (q, r) := by
+    simp only [pseudoDivMod, hgzero, Bool.false_eq_true, ↓reduceIte,
+      Nat.not_lt_of_ge hfg]
+    rfl
+  rw [hqr]
+  change scale (b ^ d) f = q * g + r
+  apply ext_coeff
+  intro t
+  rw [coeff_scale_semiring, coeff_add_semiring]
+  by_cases ht : t < m
+  · rw [hrcoeff t, if_pos ht, coeff_mul_bounded q g t d hqsize,
+      hpowersSpec.2 d (by omega)]
+    grind
+  · by_cases htf : t < f.size
+    · let i := n - t
+      have hnti : n - i = t := by
+        dsimp only [i]
+        omega
+      have hi : i < d := by
+        dsimp only [i]
+        omega
+      rw [hrcoeff t, if_neg ht, coeff_mul_bounded q g t d hqsize]
+      have hhigh := high_convolution g q active powers b n m d i hnd
+        hmsize.symm hlc hpowersSpec.2 hqcoeff hi
+      rw [← hnti, hhigh, hactiveSpec.2 i hi]
+      have hpower :
+          powers.getD (d - i) 0 * powers.getD i 0 = b ^ d := by
+        rw [hpowersSpec.2 (d - i) (by omega),
+          hpowersSpec.2 i (by omega), ← Lean.Grind.Semiring.pow_add]
+        congr 1
+        omega
+      grind
+    · have hfzero : f.coeff t = 0 :=
+        coeff_eq_zero_of_size_le f (Nat.le_of_not_gt htf)
+      have hprodsize : (q * g).size ≤ f.size :=
+        Nat.le_trans (size_mul_le q g) (by omega)
+      have hprodzero : (q * g).coeff t = 0 :=
+        coeff_eq_zero_of_size_le (q * g)
+          (Nat.le_trans hprodsize (Nat.le_of_not_gt htf))
+      rw [hrcoeff t, if_neg ht, hfzero, hprodzero]
+      simp only [Lean.Grind.Semiring.mul_zero,
+        Lean.Grind.Semiring.add_zero]
 
 /-- The quotient array is structurally bounded by the number of
 pseudo-division rounds. This bound does not use reconstruction correctness. -/
