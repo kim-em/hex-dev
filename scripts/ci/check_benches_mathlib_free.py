@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Structural lint for SPEC/benchmarking.md §Mathlib-free benches.
 
-Two invariants enforced:
+The computational-benchmark invariants are:
 
   1. No `Hex*Mathlib/Bench.lean`, `Hex*Mathlib/Bench/`, or
      `lean_exe *mathlib*_bench` exists.  `Hex*Mathlib` libraries are
@@ -12,6 +12,11 @@ Two invariants enforced:
      *_bench where root := `Module.Name`` in `lakefile.lean`), and
      no module transitively reachable from such a root via Lean
      `import`, may name a `Mathlib.*` module.
+
+A narrow exception permits build-only proof-elaboration probes below
+`bench/Hex*Mathlib/`.  Such files may import Mathlib, but may not import
+LeanBench, register a benchmark, define `main`, time work in-process, or
+serve as a `lean_exe` root.
 
 On any violation, exits 1 and prints (a) the offending root or
 file plus (b) for the import-graph case, the full import chain to
@@ -38,12 +43,12 @@ def _module_to_path(module: str) -> Path:
 #
 # The `root := \`Module.Name` may live on the same line or the line
 # below; we treat the file as a stream and pair them up.
-_LEAN_EXE_RE = re.compile(r"^lean_exe\s+(\S+_bench)\s+where\b")
+_LEAN_EXE_RE = re.compile(r"^lean_exe\s+(\S+)\s+where\b")
 _ROOT_RE = re.compile(r"root\s*:=\s*`([A-Za-z][A-Za-z0-9_.]*)")
 
 
-def _parse_bench_roots(lakefile: Path) -> dict[str, str]:
-    """Return {exe_name: root_module} from lakefile.lean."""
+def _parse_exe_roots(lakefile: Path) -> dict[str, str]:
+    """Return {exe_name: root_module} for every executable in lakefile.lean."""
     out: dict[str, str] = {}
     text = lakefile.read_text()
     lines = text.splitlines()
@@ -158,6 +163,75 @@ def _find_mathlib_bridge_bench_paths(repo_root: Path) -> list[Path]:
     return out
 
 
+def _is_mathlib_probe_path(path: Path, repo_root: Path) -> bool:
+    """Whether `path` lies below `bench/Hex*Mathlib/`."""
+    try:
+        rel = path.relative_to(repo_root / "bench")
+    except ValueError:
+        return False
+    return (
+        len(rel.parts) >= 2
+        and rel.parts[0].startswith("Hex")
+        and rel.parts[0].endswith("Mathlib")
+    )
+
+
+def _find_mathlib_probe_files(repo_root: Path) -> list[Path]:
+    """Find Lean proof probes admitted by the narrow Mathlib carveout."""
+    bench_root = repo_root / "bench"
+    if not bench_root.is_dir():
+        return []
+    out: list[Path] = []
+    for entry in sorted(bench_root.iterdir()):
+        if not entry.is_dir():
+            continue
+        if not (entry.name.startswith("Hex") and entry.name.endswith("Mathlib")):
+            continue
+        out.extend(sorted(entry.rglob("*.lean")))
+    return out
+
+
+_PROBE_FORBIDDEN = (
+    (
+        "imports LeanBench",
+        re.compile(r"^\s*(?:public\s+)?import\s+LeanBench(?:\.|\s|$)", re.MULTILINE),
+    ),
+    (
+        "registers a LeanBench benchmark",
+        re.compile(
+            r"^\s*setup_(?:fixed_)?benchmark\b",
+            re.MULTILINE,
+        ),
+    ),
+    (
+        "defines main",
+        re.compile(
+            r"^\s*(?:public\s+)?(?:unsafe\s+)?def\s+main\b",
+            re.MULTILINE,
+        ),
+    ),
+    (
+        "uses an in-process monotonic clock",
+        re.compile(r"\bIO\.mono(?:Nanos|Ms)Now\b"),
+    ),
+)
+
+
+def _probe_violations(path: Path) -> list[str]:
+    """Return forbidden computational-benchmark features used by one probe."""
+    text = path.read_text()
+    return [description for description, pattern in _PROBE_FORBIDDEN
+            if pattern.search(text)]
+
+
+def _probe_root_path(module: str, repo_root: Path) -> Path | None:
+    """Resolve a module when its source is an admitted Mathlib probe file."""
+    candidate = repo_root / "bench" / _module_to_path(module)
+    if candidate.is_file() and _is_mathlib_probe_path(candidate, repo_root):
+        return candidate
+    return None
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[2]
     lakefile = repo_root / "lakefile.lean"
@@ -178,13 +252,36 @@ def main() -> int:
         )
 
     # Invariant 1b: no `lean_exe *mathlib*_bench` in lakefile.
-    bench_roots = _parse_bench_roots(lakefile)
+    exe_roots = _parse_exe_roots(lakefile)
+    bench_roots = {
+        exe: root for exe, root in exe_roots.items() if exe.endswith("_bench")
+    }
     for exe in sorted(bench_roots):
         if "mathlib" in exe.lower():
             failures.append(
                 f"  FORBIDDEN: lakefile.lean declares `lean_exe {exe}` — "
                 f"bench exes for Hex*Mathlib libraries are not allowed.\n"
                 f"  See SPEC/benchmarking.md §Mathlib-free benches."
+            )
+
+    # The build-only proof-probe carveout is intentionally not an executable
+    # or a second computational benchmark harness.
+    probe_files = _find_mathlib_probe_files(repo_root)
+    for probe in probe_files:
+        for violation in _probe_violations(probe):
+            failures.append(
+                f"  FORBIDDEN: {probe.relative_to(repo_root)} {violation}.\n"
+                f"  Mathlib proof probes must be build-only and externally "
+                f"timed; see SPEC/benchmarking.md §Mathlib-free benches."
+            )
+    for exe, root in sorted(exe_roots.items()):
+        probe = _probe_root_path(root, repo_root)
+        if probe is not None:
+            failures.append(
+                f"  FORBIDDEN: executable `{exe}` is rooted at Mathlib proof "
+                f"probe `{probe.relative_to(repo_root)}`.\n"
+                f"  Proof probes must remain build-only; see "
+                f"SPEC/benchmarking.md §Mathlib-free benches."
             )
 
     # Invariant 2: no bench-exe root reaches `Mathlib.*` via imports.
@@ -203,17 +300,17 @@ def main() -> int:
         for f in failures:
             print(f, file=sys.stderr)
         print(
-            "\nFix: delete the offending bench file(s) (Hex*Mathlib "
-            "libraries are proof-only and have no computational kernel "
-            "to benchmark), or remove the Mathlib import from the "
-            "bench's transitive import graph.",
+            "\nFix: keep executable computational benches Mathlib-free. "
+            "A Mathlib proof-elaboration probe may instead be a build-only "
+            "module under bench/Hex*Mathlib/, with timing performed by an "
+            "external harness.",
             file=sys.stderr,
         )
         return 1
 
     print(f"check_benches_mathlib_free: OK "
           f"({len(bench_roots)} bench exe(s) checked, "
-          f"none import Mathlib).")
+          f"{len(probe_files)} build-only Mathlib proof probe(s) checked).")
     return 0
 
 

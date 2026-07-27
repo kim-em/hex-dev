@@ -43,10 +43,13 @@ def acceptedWork (iteration : Nat) : Bool :=
   runCheck fixtureCert
     { fixtureStructureLimit with maxLookupSteps := 74 + iteration % 2 }
 
-/-- Cheap rejection at lookup budgets 72 and 73, both below the required 74. -/
+/-- Rejection exactly one lookup step below the required 74. A harmless
+passing fact cap stays live so the call cannot collapse to a nullary value. -/
 def lookupWork (iteration : Nat) : Bool :=
   runCheck fixtureCert
-    { fixtureStructureLimit with maxLookupSteps := 72 + iteration % 2 }
+    { fixtureStructureLimit with
+      maxFacts := 10 + iteration % 2
+      maxLookupSteps := 73 }
 
 /-- Cheap rejection because the exact selected centered edge is absent. The
 passing node cap alternates so this call cannot collapse to a nullary value. -/

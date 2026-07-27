@@ -243,17 +243,26 @@ It never rounds an already rounded endpoint again. This prevents accumulated
 rounding drift and keeps arbitrary rational arithmetic out of the hot
 propagation path.
 
-The Mathlib-free library does not depend on `norm_num` to certify these source
-facts. Lean core's ordinary `Rat` operation instances are deliberately opaque,
-but core also supplies the reducible `Rat.normalize` computation and
-characterization lemmas such as `Rat.add_def`, `Rat.sub_def`, `Rat.mul_def`,
-and `Rat.inv_def`. A proof-facing rational backend may therefore use small
-exposed wrappers around those computations, or validate canonical
-numerator/denominator data by cross multiplication. D2 measures both styles
-under ordinary kernel reduction before choosing a rational trace encoding.
-The Mathlib companion may use `norm_num` when it is the cheapest way to close
-a frontend rational leaf; that convenience is not part of the shared
-library's trust or dependency story.
+The Mathlib-free rational path does not depend on `norm_num`. Rational source
+handling, and any exact-rational working-backend candidate, run as compiled
+Lean code over core `Rat`. A `Rat` already has a canonical integer numerator
+and a positive, coprime natural denominator. Core's compiled addition,
+subtraction, and multiplication implementations use gcd reduction and
+cross-cancellation; their deliberate opacity to kernel unfolding is a replay
+concern, not a limitation on compiled planning.
+
+When a successful plan is frozen, the planner extracts `Rat.num` and `Rat.den`
+into the selected raw certificate encoding. Proof-facing replay uses
+transparent integer computations justified by core lemmas such as
+`Rat.add_def`, `Rat.sub_def`, `Rat.mul_def`, `Rat.inv_def`, and the rational
+equality and order characterizations. All such checks use ordinary kernel
+reduction, including `decide +kernel` where appropriate; they never use
+`native_decide`.
+
+The Mathlib companion may optionally use `norm_num` only for a surface numeral
+or cast leaf connecting goal syntax to a caller-bound rational source. It is
+not used for rational planning, projection, certificate validation, arithmetic
+replay, or the shared soundness argument.
 
 Core also provides `Rat.toDyadic` together with its one-sided enclosure
 theorems. An upper projection can be obtained by applying the lower projection
@@ -261,16 +270,24 @@ to the negation and negating the result. The D2 rational arm compares this
 route with a small dedicated projector before duplicating any division or
 rounding machinery.
 
-The signed-denominator cross-product encoding is useful as a minimal soundness
-spike, but it is not yet the production trace choice. A canonical planner
-naturally emits `Rat.num` with its positive `Rat.den`; that shape simplifies
-order checks and lets a shared literal table validate size and canonicality at
-most once. Alternatively, arithmetic-edge soundness can accept noncanonical
-fractions, but then the checker must still reject inflated equivalent literals
-before their cross-products become a denial-of-service vector. Experiments
-separately measure compiled certificate production, serialization, and replay;
-they do not compare a verifier-only trace against direct normalization as if
-the two included the same work.
+The signed-denominator cross-product encoding is retained only as a minimal
+soundness spike. The baseline production candidate is a shared table of raw
+integer numerators and natural denominators extracted from canonical planner
+`Rat`s. Before any arithmetic edge is checked, replay bounds every entry,
+requires a nonzero denominator and `Nat.gcd num.natAbs den = 1`, and rejects
+rather than normalizes a noncanonical encoding. Thus zero has only the encoding
+`0 / 1`, denominators are positive, and inflated equivalent fractions cannot
+amplify later cross-products. Every retained entry, including an unused one,
+crosses this scan.
+
+Arithmetic edges then use preflighted transparent integer identities
+interpreted through `mkRat` and Core's characterization lemmas. Whether replay
+should use cancellation-aware cross-products, exposed normalization wrappers,
+or a hybrid remains an experimental question, as do the table's physical
+layout, uniqueness requirement, and wire format. Experiments separately
+measure compiled certificate production, interning, serialization, bounded
+decoding, table validation, and replay; they do not compare verifier-only work
+with end-to-end normalization as though the workloads were equal.
 
 Projection keeps the strongest strictness justified by order. For a lower
 source cut at `r`, a projected dyadic `q <= r` inherits the source strictness
@@ -499,6 +516,15 @@ generation zero, and a generated node is one plus the maximum relevant
 generation in the instance that caused it. The new expression is not trusted
 merely because a trigger matched or labeled itself generation zero.
 
+The current centered-product D2 vertical is deliberately narrower than this
+general recurrence. Its `Center.inferredGeneration` only recognizes one
+checked extension layer above an immutable base prefix and returns generation
+one for that layer. It is a kernel-reduction canary for generation-boundary
+validation, not the production algorithm for recomputing generations across
+several accepted instantiation rounds. The scaling experiment must add
+per-node provenance and exercise the recurrence above before that interface is
+frozen.
+
 Generation is explicitly budgeted by new nodes, new equality edges, rule
 applications, depth, and retained payload bytes. A canonical key consisting
 of the rule, substitution, scope, and generated expression prevents duplicate
@@ -557,13 +583,17 @@ source facts for hypotheses and imported solvers, remains a policy question;
 the generic checker does not impose that restriction.
 
 A small proof-facing implementation may use original-order `List` facts with a
-newest-first accumulator, provided it rejects forward references and charges
-every visited constructor—including final-result lookup—to a caller-owned work
-budget. That representation is a kernel-reduction canary, not the production
-storage decision. Array, chunked, and arena-backed traces remain candidates;
-they must implement the same exact-index, caller-bound, and work-accounting
-contract. A correspondence theorem between stored original indices and the
-chosen replay layout is required when that layout is selected.
+newest-first accumulator, provided it rejects forward references. In the D2
+canary, `maxLookupSteps` charges indexed derivation lookups—including traversal
+to prior facts—and the final-result lookup. It is not a unified counter for
+every constructor visited by the checker: whole program, source, equality,
+and fact scans are separately bounded by `maxNodes`, `maxSources`, `maxEdges`,
+and `maxFacts`. That representation and accounting split are experimental,
+not the production storage decision. Array, chunked, and arena-backed traces
+remain candidates; they must implement the same exact-index, caller-bound,
+and explicit work-accounting contract. A correspondence theorem between
+stored original indices and the chosen replay layout is required when that
+layout is selected.
 
 ## Rule protocol
 
@@ -890,6 +920,13 @@ but each must prevent an ostensibly small encoded exponent or denominator from
 bypassing the actual arithmetic-work budget and must expose its components in
 telemetry.
 
+For serialized rational certificates, entry counts and encoded integer byte
+lengths are checked before arbitrary-precision decoding. After decoding,
+numerator and denominator size checks precede the nonzero-denominator and
+coprimality checks; no gcd, shift, or cross-product is attempted before its
+input-size preflight. Per-operation temporary arithmetic and aggregate checker
+work are budgeted separately from retained endpoint size.
+
 For the dyadic candidate, before an exact comparison or arithmetic action the
 engine computes the required alignment shift without performing it. If it
 exceeds the budget, the action returns `resourceLimit` and records the
@@ -1103,6 +1140,10 @@ typical, boundary, and adversarial inputs. In particular it includes:
 - powers on negative, mixed-sign, open-zero, and singleton inputs;
 - rational-to-dyadic projection at exact and inexact values, including the
   strict cut gained by moving a closed source outward;
+- canonical raw rational tables, including negative numerators and canonical
+  `0 / 1`, and rejection of zero denominators, noncoprime equivalent
+  encodings, unused oversized entries, excessive projection shifts, and
+  one-step-over-budget cross-products before allocation;
 - regularization idempotence, outward containment, moved closed cuts, and
   exact-grid open cuts;
 - a dependency worklist in which one fact wakes only the affected consumers;
@@ -1149,7 +1190,13 @@ The Mathlib-free benchmark target measures:
   paged-trie, chunked-vector, and trail/rollback candidates, crossing program
   sizes 20, 50, and 500 with 8, 100, and 1,000 leaves;
 - policy selection over the number of available actions;
-- derivation slicing over total log size and retained proof size.
+- derivation slicing over total log size and retained proof size;
+- the same centered-product DAG under compiled Core `Rat` planning and
+  transparent canonical-table replay, separating planning, endpoint
+  interning, serialization, bounded decoding, table validation, and compiled
+  replay; an external build-only probe measures ordinary-kernel replay of the
+  same certificate, with dyadic-valued sources, `1 / 3`-valued sources, and a
+  denominator-height ladder.
 
 The declared models follow the complexity section above. Scientific runs also
 record accepted actions, endpoint heights, live leaves, retained derivations,

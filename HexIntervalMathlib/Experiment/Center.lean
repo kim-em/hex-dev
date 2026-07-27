@@ -922,6 +922,39 @@ end Certificate
 
 /-! ## Fixed centered-product consequence -/
 
+/-- Concrete valuation of every node in the fixed program at a chosen real
+input. Values outside the nine-node program are irrelevant and set to zero. -/
+noncomputable def valuationOf (x : ℝ) : Valuation := fun current =>
+  match current.index with
+  | 0 => x
+  | 1 => 1
+  | 2 => 1 - x
+  | 3 => x * (1 - x)
+  | 4 => dyadic half
+  | 5 => x - dyadic half
+  | 6 => (x - dyadic half) ^ 2
+  | 7 => dyadic quarter
+  | 8 => dyadic quarter - (x - dyadic half) ^ 2
+  | _ => 0
+
+/-- Reification is inhabited for every real input: the fixed SSA program has
+the concrete valuation described by its instructions. -/
+theorem valuationOf_holds (x : ℝ) : extendedProgram.Holds (valuationOf x) := by
+  intro current operation hlookup
+  rcases current with ⟨index⟩
+  have hindex : index < extendedProgram.length := by
+    by_contra hnot
+    have hnone : extendedProgram[index]? = none :=
+      List.getElem?_eq_none (Nat.le_of_not_gt hnot)
+    simp [Program.node?, hnone] at hlookup
+  norm_num [extendedProgram, baseProgram] at hindex
+  interval_cases index <;>
+    simp [Program.node?, extendedProgram, baseProgram] at hlookup <;>
+    subst operation <;>
+    simp [Prim.Holds, valuationOf, node, dyadic_one]
+  · simpa [half] using dyadic_half.symm
+  · simpa [quarter] using dyadic_quarter.symm
+
 /-- The committed replay transports the generated centered bound back to the
 original product node under exactly its caller-bound source hypothesis. -/
 theorem fixture_sound {valuation : Valuation}
@@ -978,5 +1011,12 @@ theorem fixture_expression_bound {valuation : Valuation}
       valuation (node 0) * (1 - valuation (node 0)) ≤ (1 / 4 : ℝ) := by
   rw [← fixture_product_eq hprogram]
   exact fixture_product_bound hprogram hsource
+
+/-- End-to-end consequence of the checked fixture, with the reified valuation
+constructed rather than assumed. -/
+theorem product_bound (x : ℝ) (hsource : 0 ≤ x ∧ x ≤ 1) :
+    0 ≤ x * (1 - x) ∧ x * (1 - x) ≤ (1 / 4 : ℝ) := by
+  simpa [valuationOf, node] using
+    fixture_expression_bound (valuationOf_holds x) hsource
 
 end Hex.Interval.Experiment.Center

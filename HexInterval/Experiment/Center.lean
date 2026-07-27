@@ -645,60 +645,6 @@ theorem checkFixture_eq_true : checkFixture = true := by
 
 /-! ## Resource and shape canaries -/
 
-/-- Every trusted structural cap is active. The lookup budget is exact for
-this fixture: 64 derivation steps plus 10 result-lookup steps succeed at 74,
-while 73 rejects. -/
-def rejectsStructureLimits : Bool :=
-  !(fixtureCert.check fixtureLimit
-      { fixtureStructureLimit with maxNodes := 8 }
-      baseProgram.length fixtureSources fixtureTarget) &&
-    !(fixtureCert.check fixtureLimit
-      { fixtureStructureLimit with maxSources := 0 }
-      baseProgram.length fixtureSources fixtureTarget) &&
-    !(fixtureCert.check fixtureLimit
-      { fixtureStructureLimit with maxEdges := 0 }
-      baseProgram.length fixtureSources fixtureTarget) &&
-    !(fixtureCert.check fixtureLimit
-      { fixtureStructureLimit with maxFacts := 9 }
-      baseProgram.length fixtureSources fixtureTarget) &&
-    !(fixtureCert.check fixtureLimit
-      { fixtureStructureLimit with maxGeneration := 0 }
-      baseProgram.length fixtureSources fixtureTarget) &&
-    !(fixtureCert.check fixtureLimit
-      { fixtureStructureLimit with maxLookupSteps := 73 }
-      baseProgram.length fixtureSources fixtureTarget)
-
-theorem rejectsStructureLimits_eq_true : rejectsStructureLimits = true := by
-  decide +kernel
-
-/-- Caller-bound base, source, and target metadata cannot be replaced by the
-certificate, and the selected center recipe must contribute its exact edge. -/
-def rejectsMetadataBypass : Bool :=
-  !(fixtureCert.check fixtureLimit fixtureStructureLimit 5
-      fixtureSources fixtureTarget) &&
-    !(fixtureCert.check fixtureLimit fixtureStructureLimit baseProgram.length
-      [⟨node 99, unitRange⟩] fixtureTarget) &&
-    !(fixtureCert.check fixtureLimit fixtureStructureLimit baseProgram.length
-      fixtureSources ⟨node 99, quarterRange⟩) &&
-    !({ fixtureCert with edges := [] }.check fixtureLimit fixtureStructureLimit
-      baseProgram.length fixtureSources fixtureTarget)
-
-theorem rejectsMetadataBypass_eq_true : rejectsMetadataBypass = true := by
-  decide +kernel
-
-/-- An unused, compactly encoded oversized literal is rejected before any
-center-recipe equality scan; without whole-program literal preflight it would
-not affect this fixture's derivation. -/
-def rejectsUnusedLiteral : Bool :=
-  let far : Dyadic := .ofOdd 1 1000000000 (by decide)
-  let certificate := { fixtureCert with program := extendedProgram ++ [Prim.lit far] }
-  !(certificate.check fixtureLimit
-    { fixtureStructureLimit with maxNodes := 10 }
-    baseProgram.length fixtureSources fixtureTarget)
-
-theorem rejectsUnusedLiteral_eq_true : rejectsUnusedLiteral = true := by
-  decide +kernel
-
 /-- Representative non-finite, non-closed, inconsistent, and over-budget
 claims are all rejected at the range boundary. -/
 def rejectsBadRows : Bool :=

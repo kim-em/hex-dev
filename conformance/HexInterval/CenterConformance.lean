@@ -76,8 +76,18 @@ private def forwardProgram : Program :=
 private def danglingProgram : Program :=
   extendedProgram.set 8 (.sub (node 7) (node 99))
 
+-- This extra node is outside the exact centered recipe, so only the complete
+-- program topology check rejects its self-reference.
+private def selfReferentialTail : Certificate :=
+  withProgram (extendedProgram ++ [.sub (node 9) (node 0)])
+
+private def tenNodeLimit : StructureLimit :=
+  { fixtureStructureLimit with maxNodes := 10 }
+
 #guard !accepts (withProgram forwardProgram)
 #guard !accepts (withProgram danglingProgram)
+#guard !selfReferentialTail.check fixtureLimit tenNodeLimit
+  baseProgram.length fixtureSources fixtureTarget
 
 -- The base/generated boundary is checked independently of the claimed
 -- generation, and the generation is recomputed rather than trusted.
@@ -180,9 +190,6 @@ private def oversizedLiteral : Dyadic :=
 private def unusedOversizedLiteral : Certificate :=
   { fixtureCert with program := extendedProgram ++ [.lit oversizedLiteral] }
 
-private def tenNodeLimit : StructureLimit :=
-  { fixtureStructureLimit with maxNodes := 10 }
-
 #guard !unusedOversizedLiteral.check fixtureLimit tenNodeLimit
   baseProgram.length fixtureSources fixtureTarget
 
@@ -233,10 +240,22 @@ private def openRange : Raw :=
 private def unboundedRange : Raw :=
   .bounds .unbounded (.finite 1 false)
 
+-- Keep the exact source consumed by fact zero, then append one unused source.
+-- These guards therefore isolate whole-source-table range preflight rather
+-- than failing because the first derivation no longer matches its source row.
+private def acceptsUnusedSource (limit : EndpointLimit) (range : Raw) : Bool :=
+  fixtureCert.check limit
+    { fixtureStructureLimit with maxSources := 2 }
+    baseProgram.length [⟨node 0, unitRange⟩, ⟨node 0, range⟩] fixtureTarget
+
 #guard !acceptsSource .empty
 #guard !acceptsSource openRange
 #guard !acceptsSource unboundedRange
 #guard !acceptsSource (closed 1 0)
+#guard !acceptsUnusedSource fixtureLimit .empty
+#guard !acceptsUnusedSource fixtureLimit openRange
+#guard !acceptsUnusedSource fixtureLimit unboundedRange
+#guard !acceptsUnusedSource fixtureLimit (closed 1 0)
 
 -- Compact huge exponents cannot bypass either endpoint-height or alignment
 -- budgets. The second case permits the endpoint heights but rejects before
@@ -253,5 +272,6 @@ private def farRange : Raw := closed far 1
 
 #guard !fixtureCert.check shiftLimit fixtureStructureLimit baseProgram.length
   [⟨node 0, farRange⟩] fixtureTarget
+#guard !acceptsUnusedSource shiftLimit farRange
 
 end Hex.Interval.CenterConformance

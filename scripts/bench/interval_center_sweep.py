@@ -46,6 +46,12 @@ REPLAY_MODULES = {
     "semantic_direct": "HexIntervalMathlib.CenterDirect",
 }
 
+AXIOM_REPORT_MODULES = {
+    "HexInterval.ReplayCenterChecked",
+    "HexIntervalMathlib.CenterReflected",
+    "HexIntervalMathlib.CenterDirect",
+}
+
 MODULE_SOURCES = {
     "HexInterval.ReplayCenterBaseline":
         ROOT / "bench" / "HexInterval" / "ReplayCenterBaseline.lean",
@@ -230,10 +236,14 @@ def build_module(module: str, facet: str = "olean") -> tuple[int, int | None, st
 def replay_sample(module: str) -> dict[str, object]:
     remove_module_outputs(module)
     elapsed, rss, output = build_module(module)
-    axioms: list[str] = []
+    axioms: list[str] | None = None
     match = re.search(r"depends on axioms: \[([^]]*)\]", output)
     if match:
         axioms = [item.strip() for item in match.group(1).split(",") if item.strip()]
+    elif re.search(r"does not depend on any axioms", output):
+        axioms = []
+    if module in AXIOM_REPORT_MODULES and axioms is None:
+        raise SystemExit(f"missing required axiom report for {module}")
     whnf_match = re.search(r"__HEX_WHNF_NANOS__=(\d+)", output)
     return {
         "wall_nanos": elapsed,
@@ -271,6 +281,10 @@ def artifact_sizes(module: str) -> dict[str, int | None]:
     paths = {
         "source": MODULE_SOURCES[module],
         "olean": BUILD / "lib" / "lean" / rel.with_suffix(".olean"),
+        "olean_private":
+            BUILD / "lib" / "lean" / rel.with_suffix(".olean.private"),
+        "olean_server":
+            BUILD / "lib" / "lean" / rel.with_suffix(".olean.server"),
         "ilean": BUILD / "lib" / "lean" / rel.with_suffix(".ilean"),
         "c": BUILD / "ir" / rel.with_suffix(".c"),
         "object": object_path,
@@ -410,7 +424,7 @@ def main() -> int:
         raise SystemExit("measurement inputs changed during the sweep")
 
     report = {
-        "schema": "hex-interval-d2-center-v2",
+        "schema": "hex-interval-d2-center-v3",
         "environment": environment(),
         "config": {
             "samples": args.samples,
