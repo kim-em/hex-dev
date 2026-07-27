@@ -7,9 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexNumberFieldTower.Split
-public import HexRowReduce
 public meta import HexNumberFieldTower.Split
-public meta import HexRowReduce
 
 public section
 
@@ -18,9 +16,9 @@ public section
 
 The fixed absolute generators are combined in deterministic signed-shift order.
 A candidate is admitted only when its canonical minimal-polynomial degree is the
-full accumulated tower dimension. Exact trace-pairing row reduction then
-recovers every old generator in the primitive power basis. Both coordinate
-maps are checked on their respective rational bases before they are returned.
+full accumulated tower dimension. Exact polynomial gcds then recover every old
+generator in the primitive power basis. Both coordinate maps are checked on
+their respective rational bases before they are returned.
 -/
 namespace Hex.NumberTower
 
@@ -51,9 +49,9 @@ structure Candidate (T : NumberTower) where
   dimension : Nat
   root : AlgebraicNumber
   value : Elem T
+  coordinates : Array (QAdjoin root.p root.x)
 
 /-- Standard coordinate vector of length `dimension`. -/
-@[expose]
 def unitCoords (dimension index : Nat) : Array Rat :=
   (Array.replicate dimension 0).set! index 1
 
@@ -76,19 +74,67 @@ candidate of the full required degree. -/
 def searchAux (theta alpha : AlgebraicNumber) (target start : Nat) : Nat →
     Option (Int × AlgebraicNumber)
   | 0 => none
-  | fuel + 1 => do
+  | fuel + 1 =>
       let shift := Norm.signedShift start
-      let candidate ← AlgebraicPoly.Common.shift? theta alpha shift
-      if AlgebraicPoly.Common.degree candidate = target then
-        some (shift, candidate)
-      else
-        searchAux theta alpha target (start + 1) fuel
+      match AlgebraicPoly.Common.shift? theta alpha shift with
+      | some candidate =>
+          if AlgebraicPoly.Common.degree candidate = target then
+            some (shift, candidate)
+          else
+            searchAux theta alpha target (start + 1) fuel
+      | none =>
+          searchAux theta alpha target (start + 1) fuel
 
 /-- Search exactly the primitive-element collision bound. -/
 @[expose]
 def search? (theta alpha : AlgebraicNumber) (target : Nat) :
     Option (Int × AlgebraicNumber) :=
   searchAux theta alpha target 0 (flattenShiftCount target)
+
+/-- Lift an integer polynomial coefficientwise into a fixed primitive
+presentation. -/
+@[expose]
+def liftZPoly {p : ZPoly} {x : SimpleRoot p}
+    (f : ZPoly) : DensePoly (QAdjoin p x) :=
+  DensePoly.ofCoeffs <| f.toArray.map fun (coefficient : Int) =>
+    (coefficient : Rat) • (1 : QAdjoin p x)
+
+/-- Evaluate a rational coordinate polynomial in another fixed presentation. -/
+@[expose]
+def evalRatPoly {p : ZPoly} {x : SimpleRoot p}
+    (f : DensePoly Rat) (a : QAdjoin p x) : QAdjoin p x :=
+  f.toArray.foldr
+    (fun coefficient value =>
+      value * a + coefficient • (1 : QAdjoin p x))
+    0
+
+/-- Recover `theta` and `alpha` in the accepted presentation
+`gamma = theta + shift * alpha`. Full-degree acceptance makes the gcd of their
+two lifted relations linear; the final basis round trips validate the selected
+coordinate before it becomes public. -/
+@[expose]
+def recoverPair? (theta alpha gamma : AlgebraicNumber) (shift : Int) :
+    Option (QAdjoin gamma.p gamma.x × QAdjoin gamma.p gamma.x) := do
+  if shift = 0 then
+    none
+  else
+    letI : ZPoly.CheckedIrreducible gamma.p := gamma.checked
+    let gammaCoordinate := gamma.toQAdjoin
+    let affine : DensePoly (QAdjoin gamma.p gamma.x) :=
+      DensePoly.ofList
+        [gammaCoordinate, (-(shift : Rat)) • (1 : QAdjoin gamma.p gamma.x)]
+    let thetaRelation :=
+      DensePoly.composeImpl (liftZPoly theta.p) affine
+    let alphaRelation : DensePoly (QAdjoin gamma.p gamma.x) :=
+      liftZPoly alpha.p
+    let common := DensePoly.gcd thetaRelation alphaRelation
+    if common.degree?.getD 0 = 1 && common.leadingCoeff != 0 then
+      let alphaCoordinate := -(common.coeff 0) / common.leadingCoeff
+      let thetaCoordinate :=
+        gammaCoordinate - (shift : Rat) • alphaCoordinate
+      some (thetaCoordinate, alphaCoordinate)
+    else
+      none
 
 /-- Combine the fixed generators one level at a time, retaining a tower
 coordinate for each accepted canonical primitive element. -/
@@ -97,16 +143,20 @@ def candidate? (T : NumberTower) (generators : Array (Generator T)) :
     Option (Candidate T) := do
   match generators[0]? with
   | none =>
-      some ⟨1, AlgebraicNumber.zero, 0⟩
+      some ⟨1, AlgebraicNumber.zero, 0, #[]⟩
   | some first => do
       if AlgebraicPoly.Common.degree first.root = first.degree then
         generators.toList.drop 1 |>.foldlM
           (fun current generator => do
             let target := current.dimension * generator.degree
             let (shift, root) ← search? current.root generator.root target
+            let (thetaCoordinate, alphaCoordinate) ←
+              recoverPair? current.root generator.root root shift
             let value := current.value + (shift : Rat) • generator.value
-            some ⟨target, root, value⟩)
-          ⟨first.degree, first.root, first.value⟩
+            let coordinates := current.coordinates.map fun coordinate =>
+              evalRatPoly coordinate.coeffs thetaCoordinate
+            some ⟨target, root, value, coordinates.push alphaCoordinate⟩)
+          ⟨first.degree, first.root, first.value, #[first.root.toQAdjoin]⟩
       else
         none
 
@@ -171,11 +221,7 @@ round-trip checks succeed. -/
 def flatten? (T : NumberTower) : Option (Flattening T) := do
   let generators ← Flatten.generators? T
   let candidate ← Flatten.candidate? T generators
-  let powers ← AlgebraicPoly.Common.powers? candidate.root
-    (2 * candidate.dimension - 2)
-  let coordinates ← generators.mapM fun generator =>
-    AlgebraicPoly.Common.coordinates? candidate.root generator.root powers
-  let images := Flatten.basisImages generators coordinates
+  let images := Flatten.basisImages generators candidate.coordinates
   if Flatten.roundTrips candidate images then
     some
       { root := candidate.root
@@ -237,6 +283,16 @@ private def flattenSqrtThreeRep : RefinedIsolation flattenSqrtThreePoly :=
 private def flattenSumPoly : ZPoly :=
   DensePoly.ofList [1, 0, -10, 0, 1]
 
+private def flattenFourthRootTwoPoly : ZPoly :=
+  DensePoly.ofList [-2, 0, 0, 0, 1]
+
+private def flattenFourthRootTwoSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 77936 16, 0, 17⟩
+
+private def flattenFourthRootTwoRep :
+    RefinedIsolation flattenFourthRootTwoPoly :=
+  ⟨⟨flattenFourthRootTwoSquare, by decide⟩, by decide⟩
+
 #guard
     if hirred : ZPoly.isIrreducible flattenSqrtTwoPoly = true then
       letI : ZPoly.CheckedIrreducible flattenSqrtTwoPoly :=
@@ -269,6 +325,46 @@ private def flattenSumPoly : ZPoly :=
                       DensePoly.ofList [0, 11 / 2, 0, -1 / 2] &&
                     flattened.fromPrimitive twoCoordinate == sqrtTwo &&
                     flattened.fromPrimitive threeCoordinate == sqrtThree
+              | none => false
+          | none => false
+        else
+          false
+      else
+        false
+    else
+      false
+
+-- The newest absolute generator has degree four but relative degree two. This
+-- distinguishes the accumulated relative-dimension target from the naive
+-- product of the two absolute minimal-polynomial degrees.
+#guard
+    if hirred : ZPoly.isIrreducible flattenSqrtTwoPoly = true then
+      letI : ZPoly.CheckedIrreducible flattenSqrtTwoPoly :=
+        ⟨hirred, by decide⟩
+      if htwo : HasOnlySimpleRoots flattenSqrtTwoPoly then
+        let base := ofQAdjoin (x := flattenSqrtTwoRoot)
+          htwo flattenSqrtTwoRep rfl
+        if hfourth : HasOnlySimpleRoots flattenFourthRootTwoPoly then
+          let root : AlgebraicRoot :=
+            { p := flattenFourthRootTwoPoly
+              prim := by rfl
+              pos_lc := by decide
+              pos_degree := by decide
+              squarefree := hfourth
+              x := SimpleRoot.mk flattenFourthRootTwoRep
+              rep := flattenFourthRootTwoRep
+              rep_mk := rfl }
+          match adjoin? base.tower root with
+          | some extension =>
+              match flatten? extension.tower with
+              | some flattened =>
+                  let sqrtTwo := extension.embed base.gen
+                  let fourthRoot := extension.gen
+                  flattened.root.p.degree?.getD 0 = 4 &&
+                    flattened.fromPrimitive
+                      (flattened.toPrimitive sqrtTwo) == sqrtTwo &&
+                    flattened.fromPrimitive
+                      (flattened.toPrimitive fourthRoot) == fourthRoot
               | none => false
           | none => false
         else

@@ -1,4 +1,4 @@
-# hex-number-field-tower (depends on hex-number-field + hex-resultant + hex-berlekamp-zassenhaus + hex-row-reduce)
+# hex-number-field-tower (depends on hex-number-field + hex-resultant + hex-berlekamp-zassenhaus)
 
 Executable successive algebraic extensions of `ℚ`. The library supports
 canonical arithmetic within a fixed tower, Trager factorization, adjoining a
@@ -261,20 +261,22 @@ the first candidate whose irreducible factor has degree equal to the combined
 dimension at that generator-adjoining step. This degree test is the executable
 primitive-element certificate.
 
-For a tower of dimension `D`, at most `choose(D, 2)` shifts collide two complex
-embeddings. `flattenShiftCount(D) = choose(D, 2) + 1`; test exactly the first
-that many values in the signed enumeration. Candidate factor selection uses
+At a generator-adjoining step whose combined dimension is `d`, at most
+`choose(d, 2)` shifts collide two complex embeddings.
+`flattenShiftCount(d) = choose(d, 2) + 1`; test exactly the first that many
+values in the signed enumeration, continuing past any candidate whose checked
+canonicalization fails. Candidate factor selection uses
 `evalDisambiguationPrec`, so both the shift search and the root selection have
 input-computable finite bounds.
 
-Recover every old generator as a polynomial in `γ` by gcd and rational row
-reduction. These coordinate expressions define `fromPrimitive`; evaluation of
-mixed-radix basis elements defines `toPrimitive`. Verify both coordinate
-composites on basis vectors before returning. Exactify `γ` to the canonical
-`AlgebraicNumber` stored by `Flattening`.
-
-The direct dependency on `hex-row-reduce` is intentional: flattening uses exact
-rational linear algebra even though tower arithmetic itself does not.
+For an accepted `γ = θ + cα`, lift the minimal polynomials of `θ` and `α` into
+`ℚ(γ)[Y]` and take the gcd of `mα(Y)` with `mθ(γ - cY)`. Full-degree acceptance
+makes this gcd linear, recovering `α`; then recover `θ = γ - cα` and substitute
+the prior generator coordinates through `θ`. These coordinate expressions
+define `toPrimitive`; evaluation at the corresponding tower element defines
+`fromPrimitive`. Verify both coordinate composites on basis vectors before
+returning. The accepted `γ` is already the canonical `AlgebraicNumber` stored
+by `Flattening`.
 
 ## Conformance
 
@@ -307,8 +309,8 @@ Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
   one rational factorization. This recurrence, rather than one absolute-norm
   factorization cost, is the implementation budget.
 - `split?` repeats factorization after genuine degree-reducing extensions.
-- `flatten?` computes primitive-element eliminants of degree at most `D` and
-  solves rational systems of dimension `D`.
+- `flatten?` computes primitive-element eliminants of degree at most `D`, then
+  performs linear-factor gcd recovery over the accepted fixed presentation.
 
 No standalone wall-clock ceiling is pinned before the first complete compiled
 implementation. Phase 4 records component timings, then sets each ceiling from
