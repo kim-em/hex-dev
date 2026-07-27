@@ -226,7 +226,7 @@ lean_lib HexGF2BenchSupport where
 -- `*_emit_fixtures` exes below, carrying `srcDir := "conformance"`.
 lean_lib HexConformance where
   srcDir := "conformance"
-  globs := #[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexNumberFieldTower.Conformance, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexRoots.Conformance]
+  globs := #[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexNumberFieldTower.Conformance, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexResultant.Conformance, `HexRoots.Conformance]
 
 lean_exe hexrowreduce_emit_fixtures where
   srcDir := "conformance"
@@ -260,9 +260,17 @@ lean_exe hexnumberfieldtower_emit_fixtures where
   srcDir := "conformance"
   root := `HexNumberFieldTower.EmitFixtures
 
+lean_exe hexresultant_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexResultant.EmitFixtures
+
 lean_exe hexroots_bench where
   srcDir := "bench"
   root := `HexRoots.Bench
+
+lean_exe hexresultant_bench where
+  srcDir := "bench"
+  root := `HexResultant.Bench
 
 lean_exe hexroots_demo where
   srcDir := "examples"
