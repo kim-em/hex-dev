@@ -17,42 +17,9 @@ Threaded dyadic-ball approximation for fixed-field elements.
 Rational coefficients are rounded downward to dyadics with an explicit
 one-ulp radius, then Horner evaluation propagates complex-ball errors. An
 input-derived guard-bit budget accounts for coefficient height, degree, and
-the defining polynomial's Cauchy root bound before refining the root once.
+the selected root's certified magnitude bound before refining the root once.
 -/
 namespace Hex
-
-namespace DyadicComplexBall
-
-/-- The exact zero complex ball. -/
-@[expose]
-def zero : DyadicComplexBall := ⟨0, 0, 0⟩
-
-/-- Minkowski sum of two closed dyadic complex balls. -/
-@[expose]
-def add (a b : DyadicComplexBall) : DyadicComplexBall :=
-  ⟨a.re + b.re, a.im + b.im, a.radius + b.radius⟩
-
-/-- Product enclosure for two closed dyadic complex balls. -/
-@[expose]
-def mul (a b : DyadicComplexBall) : DyadicComplexBall :=
-  let ac : GaussDyadic := (a.re, a.im)
-  let bc : GaussDyadic := (b.re, b.im)
-  let center := GaussDyadic.mul ac bc
-  let radius :=
-    GaussDyadic.hi ac * b.radius + GaussDyadic.hi bc * a.radius +
-      a.radius * b.radius
-  ⟨center.1, center.2, radius⟩
-
-/-- Enclose a rational number by a real-centred dyadic complex ball. Exact
-dyadic rationals receive radius zero; otherwise one ulp encloses the downward
-rounding error. -/
-@[expose]
-def ofRat (q : Rat) (prec : Int) : DyadicComplexBall :=
-  let lo := q.toDyadic prec
-  let radius := if lo.toRat = q then 0 else Dyadic.ofIntWithPrec 1 prec
-  ⟨lo, 0, radius⟩
-
-end DyadicComplexBall
 
 namespace QAdjoin
 
@@ -62,24 +29,35 @@ dyadic square. -/
 def evalRatBall (f : DensePoly Rat) (s : DyadicSquare)
     (coeffPrec : Int) : DyadicComplexBall :=
   let z := s.toBall
-  f.toArray.toList.foldr
-    (fun c acc => (DyadicComplexBall.ofRat c coeffPrec).add (z.mul acc))
-    DyadicComplexBall.zero
+  let cs := f.toArray
+  match cs.back? with
+  | none => DyadicComplexBall.zero
+  | some top =>
+      cs.pop.foldr
+        (fun c acc => (DyadicComplexBall.ofRat c coeffPrec).add (z.mul acc))
+        (DyadicComplexBall.ofRat top coeffPrec)
 
 /-- Bit-length upper bound for the magnitudes of rational coefficients. Since
 every rational denominator is positive, the numerator magnitude alone is a
 valid upper bound. -/
 @[expose]
 def coeffBits (f : DensePoly Rat) : Nat :=
-  f.toArray.toList.foldl
+  f.toArray.foldl
     (fun bits q => Nat.max bits (Hex.ceilLog2 (q.num.natAbs + 1))) 0
 
-/-- Guard bits sufficient for coefficient rounding and Horner amplification
-over the defining polynomial's Cauchy root bound. -/
+/-- Bit-length upper bound for the magnitude of every point in a square's
+circumscribed disc. The bound is clamped at zero when the disc lies inside the
+unit circle. -/
 @[expose]
-def approxGuardBits (p : ZPoly) (f : DensePoly Rat) : Nat :=
+def rootBits (s : DyadicSquare) : Nat :=
+  (max 0 (Hex.Dyadic.ceilLog2 (GaussDyadic.hi s.center + s.radiusHi))).toNat
+
+/-- Guard bits sufficient for coefficient rounding and Horner amplification
+over the selected root's certified circumscribed disc. -/
+@[expose]
+def approxGuardBits (s : DyadicSquare) (f : DensePoly Rat) : Nat :=
   8 + Hex.ceilLog2 (f.size + 1) + coeffBits f +
-    f.size * (cauchyExp p + 3)
+    f.size * (rootBits s + 3)
 
 /-! Compiled ball-arithmetic regressions. -/
 
@@ -95,6 +73,19 @@ def approxGuardBits (p : ZPoly) (f : DensePoly Rat) : Nat :=
     let b := DyadicComplexBall.ofRat (1 / 3 : Rat) 4
     b.re = Dyadic.ofIntWithPrec 5 4 && b.im = 0 &&
       b.radius = Dyadic.ofIntWithPrec 1 4
+
+#guard
+    let b := DyadicComplexBall.ofRat (-1 / 3 : Rat) 4
+    b.re = Dyadic.ofIntWithPrec (-6) 4 && b.im = 0 &&
+      b.radius = Dyadic.ofIntWithPrec 1 4
+
+#guard
+    let a : DyadicComplexBall :=
+      ⟨1, 2, Dyadic.ofIntWithPrec 1 3⟩
+    let b : DyadicComplexBall :=
+      ⟨3, -1, Dyadic.ofIntWithPrec 1 4⟩
+    let m := a.mul b
+    m.re = 5 && m.im = 5 && m.radius = Dyadic.ofIntWithPrec 89 7
 
 #guard
     let f := DensePoly.ofList ([1, 1] : List Rat)

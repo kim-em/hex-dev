@@ -139,11 +139,25 @@ original representative and therefore still returns a sound ball; the
 companion proves that branch unreachable and proves the requested radius. -/
 @[expose]
 def approx (a : QAdjoin p x) (rep : RefinedIsolation p)
-    (_h : SimpleRoot.mk rep = x) (prec : Int) :
+    (h : SimpleRoot.mk rep = x) (prec : Int) :
     RefinedIsolation p × DyadicComplexBall :=
-  let target := prec + (approxGuardBits p a.coeffs : Int)
-  let threaded := (rep.refineTo? target).getD ⟨rep, rfl⟩
+  let target := prec + (approxGuardBits rep.1.square a.coeffs : Int)
+  let threaded : {r' : RefinedIsolation p // SimpleRoot.mk r' = x} :=
+    match rep.refineTo? target with
+    | some r' => ⟨r'.1, r'.2.trans h⟩
+    | none => ⟨rep, h⟩
   (threaded.1, evalRatBall a.coeffs threaded.1.1.square target)
+
+/-- The representative returned by `approx` denotes the input root, so callers
+can pass it directly to their next approximation request. -/
+theorem approx_root (a : QAdjoin p x) (rep : RefinedIsolation p)
+    (h : SimpleRoot.mk rep = x) (prec : Int) :
+    SimpleRoot.mk (a.approx rep h prec).1 = x := by
+  unfold approx
+  dsimp only
+  split
+  · exact ‹{r' : RefinedIsolation p // SimpleRoot.mk r' = SimpleRoot.mk rep}›.2.trans h
+  · exact h
 
 /-! Compiled arithmetic regressions in `ℚ[X]/(X²-2)`. -/
 
@@ -190,6 +204,12 @@ example : LawfulBEq (QAdjoin sqrtTwoPoly sqrtTwoRoot) := inferInstance
         (0 : QAdjoin sqrtTwoPoly sqrtTwoRoot)⁻¹ = 0
     else
       false
+
+#guard
+    let xPoly := DensePoly.ofList ([0, 1] : List Rat)
+    let x : QAdjoin sqrtTwoPoly sqrtTwoRoot := reduce sqrtTwoPoly sqrtTwoRoot xPoly
+    let out := x.approx sqrtTwoRep rfl 64
+    out.2.radius ≤ Dyadic.ofIntWithPrec 1 64
 
 private def nonmonicQuadratic : ZPoly := DensePoly.ofList [-1, 0, 2]
 

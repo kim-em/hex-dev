@@ -160,6 +160,10 @@ irreducibility.
 def QAdjoin.approx (a : QAdjoin p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (prec : Int) :
     RefinedIsolation p × DyadicComplexBall
+
+theorem QAdjoin.approx_root (a : QAdjoin p x)
+    (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) (prec : Int) :
+    SimpleRoot.mk (a.approx rep h prec).1 = x
 ```
 
 Approximation refines once, returns the refined representative for threading,
@@ -326,7 +330,8 @@ total root wrappers; their `_isSome` theorems make it unreachable.
 ```text
 HexNumberField/
   Basic.lean          : core types, equality, zero, panicWith
-  QAdjoin.lean        : fixed-field operations and approximation
+  Approx.lean         : dyadic-ball evaluation and precision budgets
+  QAdjoin.lean        : fixed-field operations and threaded approximation
   Convert.lean        : canonicalization and exactification
   Lazy.lean           : eliminants and lazy arithmetic
   Disambiguate.lean   : candidate bounds and certified selection
