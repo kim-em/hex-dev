@@ -23,6 +23,9 @@ public import HexRCF.CommonRoot
 public import HexRCF.CommonRootTests
 public import HexRCF.SignMatrix
 public import HexRCF.SignMatrixTests
+public import HexRCF.Certificate
+public import HexRCF.Soundness
+public import HexRCF.CertificateTests
 
 public section
 
@@ -46,4 +49,8 @@ generalized replay per distinct nonconstant atom, with exact root-cell queries.
 The sign-matrix layer then recomputes guarded open and root signs, validates
 coefficient-equality package alignment, and reflects every Boolean formula
 to one exact truth value on each semantic cell.
+The top-level certificate replay handles empty domains, constants, root-free
+carriers, and positive-root cell decompositions as distinct fail-closed
+branches. Strict option-valued folds propagate malformed active cells, and
+the soundness theorem lifts every accepted verdict to the quantified sentence.
 -/

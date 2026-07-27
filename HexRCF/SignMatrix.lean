@@ -386,6 +386,54 @@ theorem openSign?_eq_some {p : ZPoly} {isolations : IsolationCert}
   cases hsign : evalSign p (isolations.openPoint cut) <;>
     simp_all [openSign?]
 
+/-- Exact sign on an open cell, with constant polynomials evaluated once at
+zero and nonconstant polynomials guarded against an impossible zero sample. -/
+@[expose]
+def openCellSign? (p : ZPoly) (isolations : IsolationCert)
+    (cut : Fin (isolations.intervals.size + 1)) : Option Sign :=
+  if 0 < p.degree?.getD 0 then openSign? p isolations cut
+  else some (evalSign p 0)
+
+/-- The shared open-cell lookup is total and exact for every formula atom of a
+checked carrier, including constants. -/
+theorem openCellSign_spec {sentence : Sentence} {carrier : CarrierCert}
+    (hcarrier : carrier.check sentence = true)
+    {isolations : IsolationCert}
+    (hstrict : isolations.checkStrict carrier.replay = true)
+    {p : ZPoly} (hp : p ∈ sentence.formula.polys)
+    (cut : Fin (isolations.intervals.size + 1)) {x : ℝ}
+    (hx : Cell.Sem
+      (isolations.rootModel (CarrierCert.replay_of_check hcarrier) hstrict)
+      (.open cut) x) :
+    ∃ sign, openCellSign? p isolations cut = some sign ∧
+      SignType.sign (((sign.toInt : Int) : ℝ)) =
+        SignType.sign ((toPolyℝ p).eval x) := by
+  by_cases hdegree : 0 < p.degree?.getD 0
+  · have hpmem : p ∈ sentence.polys := by
+      simp only [Sentence.polys, List.mem_filter, decide_eq_true_eq]
+      exact ⟨hp, hdegree⟩
+    let hreplay := CarrierCert.replay_of_check hcarrier
+    let model := isolations.rootModel hreplay hstrict
+    have hroot : ∀ z, (toPolyℝ p).IsRoot z →
+        (toPolyℝ carrier.carrier).IsRoot z := by
+      intro z hz
+      exact (carrier.isRoot_iff_atom hcarrier z).2 ⟨p, hpmem, hz⟩
+    have hsample : Cell.Sem model (.open cut)
+        (Dyadic.toReal (isolations.openPoint cut)) :=
+      Cell.openPoint_mem isolations hreplay hstrict cut
+    have hnotroot : ¬(toPolyℝ p).IsRoot
+        (Dyadic.toReal (isolations.openPoint cut)) := by
+      intro hpRoot
+      exact Cell.open_not_root model hsample (hroot _ hpRoot)
+    have hnonzero : evalSign p (isolations.openPoint cut) ≠ .zero :=
+      evalSign_ne_zero_of_not_root p _ hnotroot
+    refine ⟨evalSign p (isolations.openPoint cut), ?_, ?_⟩
+    · simp [openCellSign?, hdegree, openSign?_eq_some hnonzero]
+    · exact evalSign_open_of_atom hcarrier hstrict hpmem cut hx
+  · refine ⟨evalSign p 0, by simp [openCellSign?, hdegree], ?_⟩
+    rw [eval_eq_eval_zero_of_degree_nonpos p hdegree x]
+    simpa using evalSign_spec p 0
+
 /-- One cached sign associated with its literal polynomial. -/
 structure SignEntry where
   poly : ZPoly
@@ -479,13 +527,13 @@ common-root package. -/
 def signWith? (cert : SignMatrixCert) (commonPolys : List ZPoly)
     (isolations : IsolationCert) (cell : Cell isolations.intervals.size)
     (p : ZPoly) : Option Sign :=
-  if 0 < p.degree?.getD 0 then
-    match cell with
-    | .open cut => openSign? p isolations cut
-    | .root i => do
+  match cell with
+  | .open cut => openCellSign? p isolations cut
+  | .root i =>
+      if 0 < p.degree?.getD 0 then do
         let common ← Hex.RCF.findCommon? p commonPolys cert.commonRoots
         rootSign? p common isolations i
-  else some (evalSign p 0)
+      else some (evalSign p 0)
 
 /-- Public atom-sign lookup, recomputing the deterministic package order. -/
 @[expose]
@@ -527,16 +575,15 @@ theorem signWith?_spec {sentence : Sentence} {carrier : CarrierCert}
         have hsample : Cell.Sem model (.open cut)
             (Dyadic.toReal (isolations.openPoint cut)) :=
           Cell.openPoint_mem isolations hreplay hstrict cut
-        have hnotroot : ¬(toPolyℝ p).IsRoot
-            (Dyadic.toReal (isolations.openPoint cut)) := by
-          intro hpRoot
-          exact Cell.open_not_root model hsample (hroot _ hpRoot)
-        have hnonzero : evalSign p (isolations.openPoint cut) ≠ .zero :=
-          evalSign_ne_zero_of_not_root p _ hnotroot
-        refine ⟨evalSign p (isolations.openPoint cut), ?_, ?_⟩
-        · simp [signWith?, hdegree, openSign?_eq_some hnonzero]
-        · intro x hx
-          exact evalSign_open_of_atom hcarrier hstrict hpmem cut hx
+        obtain ⟨sign, hsign, _⟩ :=
+          openCellSign_spec hcarrier hstrict hp cut hsample
+        refine ⟨sign, by simpa [signWith?] using hsign, ?_⟩
+        intro x hx
+        obtain ⟨other, hother, hsound⟩ :=
+          openCellSign_spec hcarrier hstrict hp cut hx
+        rw [hsign] at hother
+        cases Option.some.inj hother
+        exact hsound
     | root i =>
         obtain ⟨common, hfind, hcommon⟩ :=
           cert.findCommon?_of_check hmatrix hpmem
@@ -585,10 +632,17 @@ theorem signWith?_spec {sentence : Sentence} {carrier : CarrierCert}
             rw [hxroot]
             exact evalSign_commonLeft hcarrier hstrict hpmem
               hcommon i hhasFalse
-  · refine ⟨evalSign p 0, by simp [signWith?, hdegree], ?_⟩
-    intro x _hx
-    rw [eval_eq_eval_zero_of_degree_nonpos p hdegree x]
-    simpa using evalSign_spec p 0
+  · cases cell with
+    | «open» cut =>
+        refine ⟨evalSign p 0, by simp [signWith?, openCellSign?, hdegree], ?_⟩
+        intro x _hx
+        rw [eval_eq_eval_zero_of_degree_nonpos p hdegree x]
+        simpa using evalSign_spec p 0
+    | root i =>
+        refine ⟨evalSign p 0, by simp [signWith?, hdegree], ?_⟩
+        intro x _hx
+        rw [eval_eq_eval_zero_of_degree_nonpos p hdegree x]
+        simpa using evalSign_spec p 0
 
 /-- Public atom-sign lookup is total and exact under the combined checker. -/
 theorem sign?_spec {sentence : Sentence} {carrier : CarrierCert}
