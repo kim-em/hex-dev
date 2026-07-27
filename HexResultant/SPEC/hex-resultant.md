@@ -40,6 +40,11 @@ namespace Hex.DensePoly
     coefficient division occurs. -/
 def pseudoDivMod (f g : DensePoly R) : DensePoly R × DensePoly R := ...
 
+/- The operation is total. Its two out-of-contract branches are stable public
+   behavior: `pseudoDivMod f 0 = (0, f)`, and if nonzero `g` has larger degree
+   than `f`, then `pseudoDivMod f g = (0, f)`. Both have corresponding rewrite
+   lemmas. -/
+
 /-- Subresultant pseudo-remainder sequence:
     `r₀ = f`, `r₁ = g`, and `r_{k+1}` is the pseudo-remainder of
     `r_{k-1}` by `r_k`, divided by the scale factor `β_k` (the division
@@ -111,7 +116,7 @@ ground.
 - `bench/HexResultant/Bench.lean`: bench driver, in the shared
   `bench/` sub-project. Benches time `resultant` and `disc` on
   committed fixture families of increasing degree. They are
-  Mathlib-free, per [SPEC/benchmarking.md](../benchmarking.md); there
+  Mathlib-free, per [SPEC/benchmarking.md](../../SPEC/benchmarking.md); there
   is nothing to compare against in-process, since Mathlib's
   `Polynomial.resultant` is noncomputable. Cross-checking values
   against external systems happens in the conformance oracle, not in
@@ -119,7 +124,7 @@ ground.
 
 ## Conformance fixtures
 
-Per [SPEC/testing.md](../testing.md), fixtures are tiered into
+Per [SPEC/testing.md](../../SPEC/testing.md), fixtures are tiered into
 `core` / `ci` / `local`:
 
 - *core* (Lean-only):
