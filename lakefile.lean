@@ -280,6 +280,10 @@ lean_exe hexnumberfield_bench where
   srcDir := "bench"
   root := `HexNumberField.Bench
 
+lean_exe hexnumberfieldtower_bench where
+  srcDir := "bench"
+  root := `HexNumberFieldTower.Bench
+
 lean_exe hexroots_demo where
   srcDir := "examples"
   root := `HexRootsDemo
