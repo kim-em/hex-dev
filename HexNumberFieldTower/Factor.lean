@@ -82,12 +82,19 @@ def yunRaw (levels : List Level) (f : Array (Array Rat)) :
     let d := c - Norm.derivative levels b
     yunAux levels b d 1 (p.size + 1) #[]
 
-/-- Polynomial power used by reconstruction checks. -/
+/-- Polynomial power used by reconstruction checks, computed by repeated
+squaring so high multiplicities do not induce a linear multiplication chain. -/
 @[expose]
-def polyPow {levels : List Level} (f : DensePoly (RawElem levels)) : Nat →
-    DensePoly (RawElem levels)
-  | 0 => 1
-  | n + 1 => polyPow f n * f
+def polyPow {levels : List Level} (f : DensePoly (RawElem levels)) (n : Nat) :
+    DensePoly (RawElem levels) :=
+  if n = 0 then
+    1
+  else
+    let half := polyPow f (n / 2)
+    let square := half * half
+    if n % 2 = 0 then square else square * f
+termination_by n
+decreasing_by omega
 
 /-- Reconstruct a monic polynomial from raw Yun components. -/
 @[expose]
@@ -104,7 +111,8 @@ def yunProduct (levels : List Level)
 def yunMultiplicitiesIncrease
     (components : Array (Array (Array Rat) × Nat)) : Bool :=
   (List.range (components.size - 1)).all fun i =>
-    components[i]!.2 < components[i + 1]!.2
+    (components.getD i (#[], 0)).2 <
+      (components.getD (i + 1) (#[], 0)).2
 
 /-- Check that distinct Yun components are pairwise coprime. -/
 @[expose]
@@ -112,8 +120,8 @@ def yunPairwiseCoprime (levels : List Level)
     (components : Array (Array (Array Rat) × Nat)) : Bool :=
   (List.range components.size).all fun i =>
     (List.range i).all fun j =>
-      (DensePoly.gcd (rawPoly levels components[i]!.1)
-        (rawPoly levels components[j]!.1)).size ≤ 1
+      (DensePoly.gcd (rawPoly levels (components.getD i (#[], 0)).1)
+        (rawPoly levels (components.getD j (#[], 0)).1)).size ≤ 1
 
 /-- Self-check a Yun decomposition: multiplicities are positive and strictly
 increasing, the monic squarefree components are pairwise coprime, and their
@@ -237,17 +245,20 @@ def factorSquarefree? : (levels : List Level) → Array (Array Rat) →
     Option (Array (Array (Array Rat)))
   | [], f => factorRat? (toRatPoly f)
   | level :: lower, f => do
-      let (shift, norm) ← Norm.findSquarefreeShift level lower f
-      let lowerFactors ← factorSquarefree? lower norm
-      let factors := recover level lower shift f lowerFactors
-      let p := Norm.monic (rawPoly (level :: lower) f)
-      let product := factors.foldl
-        (fun product factor => product * rawPoly (level :: lower) factor)
-        1
-      if factors.all (fun factor =>
-          0 < (rawPoly (level :: lower) factor).degree?.getD 0) &&
-          product = p then
-        some factors
+      if Norm.isSquarefree (level :: lower) f then
+        let (shift, norm) ← Norm.findSquarefreeShift level lower f
+        let lowerFactors ← factorSquarefree? lower norm
+        let factors := recover level lower shift f lowerFactors
+        let p := Norm.monic (rawPoly (level :: lower) f)
+        let product := factors.foldl
+          (fun product factor => product * rawPoly (level :: lower) factor)
+          1
+        if factors.all (fun factor =>
+            0 < (rawPoly (level :: lower) factor).degree?.getD 0) &&
+            product = p then
+          some factors
+        else
+          none
       else
         none
 
@@ -256,7 +267,6 @@ def factorSquarefree? : (levels : List Level) → Array (Array Rat) →
 structure RawFactorization where
   scalar : Array Rat
   factors : Array (Array (Array Rat) × Nat)
-deriving DecidableEq
 
 /-- Lexicographic order on rational lists. -/
 @[expose]
@@ -283,7 +293,8 @@ paired natural number. -/
 @[expose]
 def factorsSorted (factors : Array (Array (Array Rat) × Nat)) : Bool :=
   (List.range (factors.size - 1)).all fun i =>
-    factorLess factors[i]!.1 factors[i + 1]!.1
+    factorLess (factors.getD i (#[], 0)).1
+      (factors.getD (i + 1) (#[], 0)).1
 
 /-- Multiply a scalar and powered raw factor list. -/
 @[expose]
@@ -295,27 +306,33 @@ def factorProduct (levels : List Level) (scalar : Array Rat)
     (DensePoly.C (raw levels scalar))
 
 /-- Executable recursive irreducibility checker for a monic squarefree raw
-tower polynomial. It reruns Trager factorization and accepts exactly a
-singleton reconstruction. -/
+tower polynomial. The rational base uses the independent integer-polynomial
+checker; proper towers accept exactly a singleton Trager reconstruction. -/
 @[expose]
 def isIrreducible (levels : List Level) (f : Array (Array Rat)) : Bool :=
   let p := rawPoly levels f
   0 < p.degree?.getD 0 && p.leadingCoeff = 1 &&
     Norm.isSquarefree levels f &&
-    match factorSquarefree? levels f with
-    | some factors => factors = #[polyCoords p]
-    | none => false
+    match levels with
+    | [] => ZPoly.isIrreducible (ZPoly.ratPolyPrimitivePart (toRatPoly f))
+    | _ :: _ =>
+        match factorSquarefree? levels f with
+        | some factors => factors = #[polyCoords p]
+        | none => false
 
-/-- Full executable raw factorization certificate check. -/
+/-- Full executable raw factorization certificate check. At proper tower
+levels, “irreducible” means a piece the recursive Trager checker cannot split;
+the Mathlib companion supplies the semantic irreducibility theorem. Cheap
+reconstruction and canonical-order checks precede recursive replay. -/
 @[expose]
 def check (levels : List Level) (f : Array (Array Rat)) (scalar : Array Rat)
     (factors : Array (Array (Array Rat) × Nat)) : Bool :=
-  factors.all (fun factor => 0 < factor.2 && isIrreducible levels factor.1) &&
-    factorsSorted factors && factorProduct levels scalar factors = f
+  factorProduct levels scalar factors = f && factorsSorted factors &&
+    factors.all (fun factor => 0 < factor.2 && isIrreducible levels factor.1)
 
-/-- Complete factorization with Yun multiplicities and recursive Trager
-recovery. Every candidate is sorted and replayed through the full executable
-certificate check before it is returned. -/
+/-- Produce a canonical factorization candidate with checked Yun
+multiplicities and recursive Trager recovery. The public dependent constructor
+performs the one full executable certificate replay. -/
 @[expose]
 def factorRaw? (levels : List Level) (f : Array (Array Rat)) :
     Option RawFactorization := do
@@ -327,11 +344,10 @@ def factorRaw? (levels : List Level) (f : Array (Array Rat)) :
       let irreducibles ← factorSquarefree? levels component.1
       pure <| irreducibles.foldl
         (fun out factor => out.push (factor, component.2)) out) #[]
-    let factors := factors.qsort fun a b => factorLess a.1 b.1
-    if check levels f scalar factors then
-      some ⟨scalar, factors⟩
-    else
-      none
+    let keyed := factors.map fun factor => (flattenPoly factor.1, factor)
+    let factors :=
+      (keyed.qsort fun a b => ratListLess a.1 b.1).map fun entry => entry.2
+    some ⟨scalar, factors⟩
   else
     none
 
@@ -340,6 +356,11 @@ def factorRaw? (levels : List Level) (f : Array (Array Rat)) :
 private def yunSqrtTwoLevel : Level where
   degree := 2
   defining := #[#[-2], #[0]]
+  root := AlgebraicNumber.zero.toRoot
+
+private def factorSqrtThreeLevel : Level where
+  degree := 2
+  defining := #[#[-3, 0], #[0, 0]]
   root := AlgebraicNumber.zero.toRoot
 
 #guard
@@ -397,7 +418,7 @@ private def yunSqrtTwoLevel : Level where
     let xSubOne : DensePoly Rat := DensePoly.ofList [-1, 1]
     (factorRat? (xSubOne * xSubOne)).isNone
 
--- Trager's first two shifts collide conjugate sums for `X²-2`; the bounded
+-- Trager's first three shifts collide conjugate sums for `X²-2`; the bounded
 -- search reaches shift `2`, recovers both linear factors, and undoes the shift.
 #guard
     let levels := [yunSqrtTwoLevel]
@@ -420,6 +441,27 @@ private def yunSqrtTwoLevel : Level where
     | some factors =>
         factors = #[xSqSubThree]
     | none => false
+
+-- Recursive one-level Trager must retain the intermediate field. Over
+-- Q(sqrt(2), sqrt(3)), `X² - 3` splits at the top level even though an
+-- absolute norm would obscure that structure with repeated powers.
+#guard
+    let levels := [factorSqrtThreeLevel, yunSqrtTwoLevel]
+    let xSqSubThree : Array (Array Rat) :=
+      #[#[-3, 0, 0, 0], #[0, 0, 0, 0], #[1, 0, 0, 0]]
+    match factorRaw? levels xSqSubThree with
+    | some result =>
+        result.factors.size = 2 &&
+          check levels xSqSubThree result.scalar result.factors
+    | none => false
+
+-- The squarefree entry guard rejects invalid recursive calls before spending
+-- the full collision-bound search on resultants.
+#guard
+    let levels := [yunSqrtTwoLevel]
+    let xSubOne : DensePoly (RawElem levels) :=
+      rawPoly levels #[#[-1, 0], #[1, 0]]
+    (factorSquarefree? levels (polyCoords (polyPow xSubOne 2))).isNone
 
 #guard
     let levels := [yunSqrtTwoLevel]

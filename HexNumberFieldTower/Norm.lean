@@ -106,15 +106,27 @@ def signedShift (i : Nat) : Int :=
   else
     -Int.ofNat (i / 2)
 
+/-- Search successive signed shifts without materializing the remaining range. -/
+@[expose]
+def findSquarefreeShiftAux (level : Level) (lower : List Level)
+    (f : Array (Array Rat)) (i : Nat) : Nat →
+    Option (Int × Array (Array Rat))
+  | 0 => none
+  | fuel + 1 =>
+    let c := signedShift i
+    let norm := oneLevel level lower f c
+    if isSquarefree lower norm then
+      some (c, norm)
+    else
+      findSquarefreeShiftAux level lower f (i + 1) fuel
+
 /-- Search exactly the finite Trager collision bound and return the first
 shift whose one-level norm is squarefree over the lower tower. -/
 @[expose]
 def findSquarefreeShift (level : Level) (lower : List Level)
     (f : Array (Array Rat)) : Option (Int × Array (Array Rat)) :=
-  (List.range (tragerShiftCount level.degree (f.size - 1))).findSome? fun i =>
-    let c := signedShift i
-    let norm := oneLevel level lower f c
-    if isSquarefree lower norm then some (c, norm) else none
+  findSquarefreeShiftAux level lower f 0
+    (tragerShiftCount level.degree (f.size - 1))
 
 /-! Compiled one-level norm regressions over `ℚ(√2)`. -/
 
