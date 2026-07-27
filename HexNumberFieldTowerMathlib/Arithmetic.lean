@@ -23,6 +23,15 @@ namespace Hex.NumberTower
 
 namespace LevelSemantics
 
+private theorem block_map_mul (q : Rat) (data : Array Rat)
+    (index width : Nat) :
+    Arithmetic.block (data.map fun c => q * c) index width =
+      (Arithmetic.block data index width).map fun c => q * c := by
+  apply Array.ext
+  · simp [Arithmetic.block]
+  · intro i hi₁ hi₂
+    simp [Arithmetic.block, Array.getD]
+
 private theorem horner_eq_sum (x : ℂ) (coefficients : List ℂ) :
     coefficients.reverse.foldl
         (fun value coefficient => value * x + coefficient) 0 =
@@ -71,6 +80,21 @@ theorem denote_cons (level : Level) (lower : List Level) (data : Array Rat) :
   intro i hi
   have hi' : i < level.degree := Finset.mem_range.mp hi
   simp [hi']
+
+/-- Coordinatewise rational scaling commutes with direct tower denotation. -/
+theorem denote_smul (levels : List Level) (q : Rat) (data : Array Rat) :
+    denote levels (data.map fun c => q * c) =
+      (q : ℂ) * denote levels data := by
+  induction levels generalizing data with
+  | nil =>
+      by_cases hdata : 0 < data.size <;>
+        simp [denote, Array.getD, hdata]
+  | cons level lower ih =>
+      rw [denote_cons, denote_cons, Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro i hi
+      rw [block_map_mul, ih]
+      ring
 
 /-- Evaluate an array of lower-tower coefficient blocks as a power sum. -/
 @[expose]
@@ -722,7 +746,9 @@ theorem map_div (T : NumberTower) (a b : Elem T) :
 /-- The executable rational scalar action is semantic scalar multiplication. -/
 theorem map_smul (T : NumberTower) (q : Rat) (a : Elem T) :
     T.toComplex (q • a) = (q : ℂ) * T.toComplex a := by
-  sorry
+  rw [LevelSemantics.toComplex_eq_denote T (q • a),
+    LevelSemantics.toComplex_eq_denote T a, coeffs_smul,
+    LevelSemantics.denote_smul]
 
 /-- The Boolean zero test recognizes exactly semantic zero. -/
 theorem isZero_iff (T : NumberTower) (a : Elem T) :

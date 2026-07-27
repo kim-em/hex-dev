@@ -207,6 +207,16 @@ def smul {T : NumberTower} (q : Rat) (a : Elem T) : Elem T :=
 
 instance {T : NumberTower} : SMul Rat (Elem T) := ⟨smul⟩
 
+/-- Rational scalar multiplication exposes coordinatewise multiplication. -/
+@[simp]
+theorem coeffs_smul {T : NumberTower} (q : Rat) (a : Elem T) :
+    coeffs (q • a) = (coeffs a).map fun c => q * c := by
+  change coeffs (smul q a) = _
+  unfold smul
+  rw [coeffs_ofCoeffs]
+  apply normalizeCoeffs_eq_self
+  simp
+
 /-- Dense univariate polynomials over a fixed tower. -/
 abbrev Poly (T : NumberTower) := DensePoly (Elem T)
 
