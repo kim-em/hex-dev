@@ -332,10 +332,10 @@ setup_benchmark runScaledCoeffsChecksum n => scaledCoeffSurfaceComplexity n
     signalFloorMultiplier := 1.0
   }
 
-/- The square fixture performs `n^2` dot products of length `n`. This target
-isolates the live `gramRows` implementation from its downstream Schur pass so
-constant-factor changes in Gram construction remain attributable. -/
-setup_benchmark runGramRowsSquareChecksum n => gramRowsSquareComplexity n
+/- Cost-model derivation: the square fixture performs `n^2` dot products at
+linear cost `n`, hence `O(n^3) = gramRowsSquareComplexity n`. This target
+isolates the live `gramRows` implementation from its downstream Schur pass. -/
+setup_benchmark runGramRowsSquareChecksum n => (gramRowsSquareComplexity n)
   with prep := prepGramRowsSquareInput
   where {
     paramFloor := 32
@@ -346,9 +346,10 @@ setup_benchmark runGramRowsSquareChecksum n => gramRowsSquareComplexity n
     signalFloorMultiplier := 1.0
   }
 
-/- The wide fixture performs `n^2` dot products of length `8n + 1`, isolating
-the `n ≪ m` lattice shape separately from the square construction. -/
-setup_benchmark runGramRowsWideChecksum n => gramRowsWideComplexity n
+/- Cost-model derivation: the wide fixture performs `n^2` dot products at
+linear cost `8n + 1`, hence `O(n^2 * (8n + 1)) = gramRowsWideComplexity n`.
+This isolates the `n ≪ m` shape separately from the square construction. -/
+setup_benchmark runGramRowsWideChecksum n => (gramRowsWideComplexity n)
   with prep := prepGramRowsWideInput
   where {
     paramFloor := 16
