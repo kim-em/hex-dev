@@ -27,30 +27,6 @@ namespace Hex.RCF
 
 open HexRealRootsMathlib Polynomial
 
-/-- All atom polynomials in a formula, in deterministic left-to-right order. -/
-@[expose]
-def Formula.polys : Formula → List ZPoly
-  | .atom a => [a.p]
-  | .tt | .ff => []
-  | .not φ => φ.polys
-  | .and φ ψ | .or φ ψ | .imp φ ψ => φ.polys ++ ψ.polys
-
-/-- The body of a one-quantifier sentence. -/
-@[expose]
-def Sentence.formula : Sentence → Formula
-  | .forallReal φ | .existsReal φ | .forallIoc _ _ φ | .existsIoc _ _ φ => φ
-
-/-- The positive-degree atom polynomials used by the carrier decomposition.
-Constant atoms remain in the reflected formula but, after their truth values
-are evaluated, do not contribute carrier boundaries. -/
-@[expose]
-def Sentence.polys (s : Sentence) : List ZPoly :=
-  s.formula.polys.filter fun p => decide (0 < p.degree?.getD 0)
-
-/-- The product of all nonconstant atom polynomials. -/
-@[expose]
-def Sentence.product (s : Sentence) : ZPoly := s.polys.prod
-
 /-- Check that every polynomial in a literal list has positive degree. -/
 @[expose]
 def checkPosDegrees : List ZPoly → Bool
