@@ -38,6 +38,27 @@ def evalLowerDenom (q : ZPoly) : Nat :=
 
 end ZPoly
 
+namespace Disambiguation
+
+/-- Error-amplification majorant for Horner evaluation at a root of `q`,
+parameterized by an integer magnitude bound on coefficients so tower elements
+can reuse the same recurrence. Candidate-root square balls may have radius up
+to twice the nominal common input error because of their circumscribed-disc
+conversion. -/
+@[expose]
+def evalMajorant {A : Type} [Zero A] [DecidableEq A]
+    (f : DensePoly A) (valueBound : A → Nat) (q : ZPoly) : Nat :=
+  let rootBound := 2 ^ cauchyExp q + 1
+  let state := f.toArray.foldr
+    (fun coeff state =>
+      let value := state.1 * rootBound + valueBound coeff
+      let error := 2 * state.1 + rootBound * state.2 + 2 * state.2 + 1
+      (value, error))
+    (0, 0)
+  Nat.max 1 state.2
+
+end Disambiguation
+
 namespace QAdjoin
 
 /-- Ceiling of the absolute value of a rational, computed with integer
@@ -57,20 +78,14 @@ def valueMajorant {p : ZPoly} {x : SimpleRoot p} (a : QAdjoin p x) : Nat :=
 /-- Error-amplification majorant for Horner evaluation at a root of `q`.
 
 The state tracks a value bound `V` and a coefficient of the common input
-error `E`. For `(acc * y) + c`, with input errors at most one, the update
-`E' = V + B*E + E + 1` covers root error, propagated accumulator error, their
-product, and coefficient error. -/
+error `E`. For `(acc * y) + c`, coefficient errors are at most one nominal
+unit while the circumscribed root ball is at most two. The update
+`E' = 2*V + B*E + 2*E + 1` covers root error, propagated accumulator error,
+their product, and coefficient error. -/
 @[expose]
 def evalMajorant {p : ZPoly} {x : SimpleRoot p}
     (f : DensePoly (QAdjoin p x)) (q : ZPoly) : Nat :=
-  let rootBound := 2 ^ cauchyExp q + 1
-  let state := f.toArray.foldr
-    (fun coeff state =>
-      let value := state.1 * rootBound + valueMajorant coeff
-      let error := state.1 + rootBound * state.2 + state.2 + 1
-      (value, error))
-    (0, 0)
-  Nat.max 1 state.2
+  Disambiguation.evalMajorant f valueMajorant q
 
 end QAdjoin
 
@@ -81,11 +96,13 @@ the displayed ceiling is already exact. -/
 def evalDisambiguationLimit (q : ZPoly) (majorant : Nat) : Nat :=
   ceilLog2 (2 * q.evalLowerDenom * Nat.max 1 majorant) + 2
 
-/-- The evaluation radius is strictly below half the reciprocal-Cauchy lower
-bound, written without division as `2 * D * radius < 1`. -/
+/-- The evaluation radius is below one third of the reciprocal-Cauchy lower
+bound, written without division as `3 * D * radius < 1`. The factor three is
+needed because `excludesZero` uses the centre's maximum coordinate, which can
+be a factor `sqrt 2` below its Euclidean norm. -/
 @[expose]
 def evalRadiusSmall (q : ZPoly) (radius : Dyadic) : Bool :=
-  decide (((2 * q.evalLowerDenom : Nat) : Dyadic) * radius < 1)
+  decide (((3 * q.evalLowerDenom : Nat) : Dyadic) * radius < 1)
 
 /-- Least precision in the finite prescribed range whose certified Horner
 ball has sufficiently small radius. A failed ball construction is skipped;
@@ -120,6 +137,11 @@ def retainZero? (q : ZPoly) (majorant : Nat)
 
 #guard
     let q : ZPoly := DensePoly.ofList [-1, 1]
+    let f : DensePoly Nat := DensePoly.ofList [1, 2]
+    Disambiguation.evalMajorant f id q = 10
+
+#guard
+    let q : ZPoly := DensePoly.ofList [-1, 1]
     let evalAt := fun prec : Nat =>
       some ({ re := 0, im := 0, radius := Dyadic.ofIntWithPrec 1 prec } :
         DyadicComplexBall)
@@ -130,5 +152,12 @@ def retainZero? (q : ZPoly) (majorant : Nat)
 #guard
     let zeroEval : ZPoly := 0
     retainZero? zeroEval 1 (fun _ => none) = some true
+
+#guard
+    let q : ZPoly := DensePoly.ofList [-1, 1]
+    let evalAt := fun prec : Nat =>
+      some ({ re := 1, im := 0, radius := Dyadic.ofIntWithPrec 1 prec } :
+        DyadicComplexBall)
+    retainZero? q 8 evalAt = some false
 
 end Hex

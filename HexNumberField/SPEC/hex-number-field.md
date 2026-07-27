@@ -321,7 +321,10 @@ Define `evalDisambiguationPrec` as the least precision in the finite range
 0 .. ceilLog2(ceil(2 * (1 + height(q)) * C)) + 2
 ```
 
-whose Horner enclosure radius is below `1 / (2 * (1 + height(q)))`.
+whose Horner enclosure radius is below `1 / (3 * (1 + height(q)))`.
+The factor `3` accounts for the shipped zero-exclusion test using the maximum
+absolute centre coordinate, which may be a factor `sqrt 2` below the Euclidean
+centre norm. The displayed search endpoint still has sufficient slack.
 The displayed endpoint proves that the bounded search succeeds. The same
 construction, with the eliminant for each generator/factor evaluation, is used
 by tower adjoining. No API performs unbounded refinement.
