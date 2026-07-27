@@ -96,6 +96,13 @@ the fallback is unreachable in the current implementation. -/
 
 namespace Component
 
+/-- A Taylor shift cached at a component's enclosing-square centre. The
+    equality field prevents coefficient-level certification kernels from being
+    called with a shift from another centre. -/
+structure PelletShift (p : ZPoly) (c : Component) where
+  coeffs : Array GaussDyadic
+  valid : coeffs = taylor p (encSquare c.squares).center
+
 /-- One subdivision round: split every square into four children one bit
     finer, discard children whose disc certifiably contains no root (the
     `T₀` test; a child whose `T₀` test fails to certify is kept, which is
@@ -121,20 +128,28 @@ lineages. -/
       (fun s => !rootFree p s)
   (glueCovered survivors).map fun ss => { squares := ss, candidateK := 1 }
 
-/-- Attempt Pellet certification for one positive candidate count, including
-the same-count speculative Newton jump and its disc-containment guard. -/
-@[expose] def certifyPelletAt? (p : ZPoly) (c : Component)
+/-- Attempt Pellet certification for one positive candidate count from the
+    cached Taylor shift at the component's enclosing-square centre. The proof
+    argument ties the cache to that centre; it is erased from compiled code. -/
+@[expose] def certifyPelletAtShift? (p : ZPoly) (c : Component)
+    (shift : PelletShift p c)
     (k : Nat) : Option (Certified p) :=
   let enc := encSquare c.squares
   if hk : 0 < k then
-    if hw : witnessCheck p enc k = true then
-      let cluster : DyadicRootCluster p := ⟨c.squares, k, hk, hw⟩
+    if hw : Taylor.witnessCheck shift.coeffs enc k = true then
+      have hw₀ : witnessCheck p enc k = true := by
+        simpa [witnessCheck, shift.valid] using hw
+      let cluster : DyadicRootCluster p := ⟨c.squares, k, hk, hw₀⟩
       let base : Certified p :=
         if hk1 : k = 1 then .atom (cluster.atomize hk1) else .cluster cluster
-      let s' := newtonSquare p enc k
+      let s' := Taylor.newtonSquare shift.coeffs enc k
       if _hins : (encSquare #[s']).discInside enc = true then
-        if hw' : witnessCheck p (encSquare #[s']) k = true then
-          let cluster' : DyadicRootCluster p := ⟨#[s'], k, hk, hw'⟩
+        let cand := encSquare #[s']
+        let cs' := taylor p cand.center
+        if hw' : Taylor.witnessCheck cs' cand k = true then
+          have hw₀' : witnessCheck p cand k = true := by
+            simpa [witnessCheck] using hw'
+          let cluster' : DyadicRootCluster p := ⟨#[s'], k, hk, hw₀'⟩
           if hk1 : k = 1 then some (.atom (cluster'.atomize hk1))
           else some (.cluster cluster')
         else some base
@@ -142,12 +157,29 @@ the same-count speculative Newton jump and its disc-containment guard. -/
     else none
   else none
 
-/-- First successful Pellet certificate in a candidate-count list. -/
-@[expose] def certifyPelletList? (p : ZPoly) (c : Component)
+/-- Public one-count Pellet attempt. It computes the enclosing-centre Taylor
+    shift once and passes it to the cached implementation. -/
+@[expose] def certifyPelletAt? (p : ZPoly) (c : Component)
+    (k : Nat) : Option (Certified p) :=
+  let shift : PelletShift p c := ⟨taylor p (encSquare c.squares).center, rfl⟩
+  certifyPelletAtShift? p c shift k
+
+/-- First successful Pellet certificate in a candidate-count list, reusing
+    one enclosing-centre Taylor shift for every failed count. -/
+@[expose] def certifyPelletListShift? (p : ZPoly) (c : Component)
+    (shift : PelletShift p c)
     : List Nat → Option (Certified p)
   | [] => none
-  | k :: ks => (certifyPelletAt? p c k).orElse
-      fun _ => certifyPelletList? p c ks
+  | k :: ks => (certifyPelletAtShift? p c shift k).orElse
+      fun _ => certifyPelletListShift? p c shift ks
+
+/-- Public candidate-count search. The exact Taylor shift is shared by every
+    attempt; only a successful count's speculative candidate needs a new
+    shift for its witness recheck. -/
+@[expose] def certifyPelletList? (p : ZPoly) (c : Component)
+    (ks : List Nat) : Option (Certified p) :=
+  let shift : PelletShift p c := ⟨taylor p (encSquare c.squares).center, rfl⟩
+  certifyPelletListShift? p c shift ks
 
 /-- The Pellet half of component certification, factored from `certify?` so
 its base and speculative same-count branches have a narrow correspondence
@@ -173,15 +205,21 @@ theorem in the Mathlib companion. -/
   match strategy with
   | .nk | .nkThenPellet =>
     let base := enc.doubled
-    if h : nkWitnessCheck p base = true then
+    let cs := taylor p base.center
+    if h : Taylor.nkWitnessCheck cs base = true then
+      have h₀ : nkWitnessCheck p base = true := by
+        simpa [nkWitnessCheck] using h
       -- `base` certifies; try to sharpen with a speculative Newton jump,
       -- accepted only when the recentred square stays inside `base` and
       -- certifies in the same (NK) form.
-      let cand := (newtonSquare p base 1).doubled
+      let cand := (Taylor.newtonSquare cs base 1).doubled
       if cand.squareInside base = true then
-        if h' : nkWitnessCheck p cand = true then
-          return some (.atom ⟨cand, Or.inl h'⟩)
-      return some (.atom ⟨base, Or.inl h⟩)
+        let cs' := taylor p cand.center
+        if h' : Taylor.nkWitnessCheck cs' cand = true then
+          have h₀' : nkWitnessCheck p cand = true := by
+            simpa [nkWitnessCheck] using h'
+          return some (.atom ⟨cand, Or.inl h₀'⟩)
+      return some (.atom ⟨base, Or.inl h₀⟩)
   | .pellet => pure ()
   -- Pellet attempt, on a quadrupled enclosing square. The original component
   -- lies in its central quarter, giving the converse theorem a uniform

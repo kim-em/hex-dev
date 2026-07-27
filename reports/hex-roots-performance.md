@@ -14,6 +14,37 @@ two runnable processes), Lean `4.32.0-rc1`, lean-bench `0.1.0`. The export's
 `git_dirty: true` records the staged benchmark/report update; its branch point
 is commit `ed0086001407`.
 
+## Taylor-shift reuse ratchet
+
+Component certification now computes one exact Taylor shift at its base centre
+and shares it between the witness and Newton kernels. The Pellet candidate
+search shares that shift across all attempted root counts; the NK route shares
+it between its base witness and speculative Newton step. A recentred candidate
+still gets its own shift for re-certification. The cache carries an equality to
+the centre it represents, so this changes evaluation work without weakening
+the certificate interface.
+
+On the canonical degree-128 pinned-NK `runCertify` case, five-repeat medians on
+`chungus2` fell from **6.655 ms** to **4.419 ms** (**33.6%**), with the result
+hash unchanged at `0x1698ec123da6112f`. The canonical degree-12
+`runIsolateAll` case changed from 9.172 s to 8.994 s; its deeper subdivision
+work dominates the saved certification shifts.
+
+The SPEC budget table was remeasured with compiled `isolateAll?` calls on the
+seeded bounded-coefficient family and ratcheted to roughly twice each observed
+runtime:
+
+| degree | target precision | measured | regression ceiling |
+|---:|---:|---:|---:|
+| 10 | 32 | 0.266 s | 0.6 s |
+| 20 | 32 | 4.851 s | 10 s |
+| 50 | 64 | 413.846 s (6.90 min) | 14 min |
+
+Degree 100 / precision 128 remains unpinned: Taylor reuse removes redundant
+quadratic shifts but does not remove the deep-subdivision and large-witness
+costs that make that scale impractical. Graeffe iteration and soft-Pellet
+filtering therefore remain the next optimization steps tracked by issue #8751.
+
 ## Bench Targets
 
 Parametric registrations:

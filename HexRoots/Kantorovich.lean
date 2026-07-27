@@ -195,9 +195,11 @@ theorem Dyadic.invFloor_eq_invAtPrec_of_pos {x : Dyadic} (hx : 0 < x) (q : Int) 
       rw [← hpows] at hltmul
       grind
 
-/-- The Newton-Kantorovich contraction check on the closed square `s` itself
-    (sup norm), with `r = 2^{−s.prec}` the half-width. Writing
-    `cs = taylor p s.center` for the exact Taylor coefficients and requiring
+namespace Taylor
+
+/-- The Newton-Kantorovich contraction check from an already-computed Taylor
+    shift on the closed square `s` itself (sup norm), with `r = 2^{−s.prec}`
+    the half-width. Requiring
     `2 ≤ cs.size` with `0 < normSq c₁`, it builds the exact reciprocal
     `w = conj(c₁)·invFloor (normSq c₁) q` (pinned precision
     `q = 8 + max 0 (ceilLog2 (normSq c₁))`), the residuals `dₖ = w·cₖ`, and the
@@ -206,8 +208,7 @@ theorem Dyadic.invFloor_eq_invAtPrec_of_pos {x : Dyadic} (hx : 0 < x) (q : Int) 
     It then returns the conjunction of the three strict exact-dyadic
     comparisons `0 < normSq c₁`, `y + z₁·r + z₂·r²/2 < r`, and
     `z₁ + z₂·r < 1`. -/
-@[expose] def nkWitnessCheck (p : ZPoly) (s : DyadicSquare) : Bool :=
-  let cs := taylor p s.center
+@[expose] def nkWitnessCheck (cs : Array GaussDyadic) (s : DyadicSquare) : Bool :=
   if 2 ≤ cs.size then
     let c₁ := cs.getD 1 (0, 0)
     let nsq := GaussDyadic.normSq c₁
@@ -236,6 +237,13 @@ theorem Dyadic.invFloor_eq_invAtPrec_of_pos {x : Dyadic} (hx : 0 < x) (q : Int) 
       && decide (z₁ + z₂ * r < 1)
   else
     false
+
+end Taylor
+
+/-- The Newton-Kantorovich contraction check on the closed square `s` itself,
+    using the exact Taylor shift of `p` at `s.center`. -/
+@[expose] def nkWitnessCheck (p : ZPoly) (s : DyadicSquare) : Bool :=
+  Taylor.nkWitnessCheck (taylor p s.center) s
 
 /-- Newton-Kantorovich contraction witness on the closed square `s` itself
     (sup norm), with `r = 2^{−s.prec}` the half-width and `y, z₁, z₂` the exact

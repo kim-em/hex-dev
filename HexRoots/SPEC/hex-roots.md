@@ -360,6 +360,16 @@ def isolate (p : ZPoly) (h : Hex.HasOnlySimpleRoots p) (atom_prec : Int)
     Option (Array (DyadicRootIsolation p))
 ```
 
+`certify?` computes the exact Taylor shift once at each base square and passes
+the same coefficient array to the witness and Newton kernels. The Pellet
+candidate-count search also shares that base shift across every failed `k`;
+only a speculative recentred candidate that reaches its witness re-check needs
+a new shift. A proof field ties each cached array to the base centre, so the
+coefficient-level kernels cannot be used by certification with coefficients
+from another square. The Newton-Kantorovich route follows the same rule: its
+base witness and Newton step share one shift, and an accepted candidate gets
+one new shift for re-certification.
+
 The speculative Newton step computes `x' = x − k · c₀/c₁` (with
 `k = 1` for atoms; the k-order step for clusters is BSSY §5), places a
 much smaller square at `x'`, and re-runs the witness. If the witness
@@ -794,7 +804,11 @@ bit-length at precision `prec`.
   same shape and cost, plus one `Dyadic.invAtPrec` call, and tests
   one radius where the Pellet form tests three.
 - One Newton step costs the same order as one witness check, plus a
-  single `Dyadic.invAtPrec` call.
+  single `Dyadic.invAtPrec` call. Within `certify?`, the witness and
+  Newton kernels share one Taylor shift; the Pellet candidate-count
+  search likewise pays one base shift rather than one per attempted
+  count. This does not change the asymptotic bound, but removes the
+  repeated dominant `O(n²)` shift from those paths.
 - `isolate` for degree `n`, well-separated roots, target precision
   `prec`: heuristically `O(n³ · B²)` bit operations. Tight root
   clusters add subdivision depth up to `O(mahlerPrec p)`.
@@ -807,10 +821,10 @@ degree-100 rows are measured with `isolateAll?` at the stated
 precision, since `isolate`'s target carries a `separationDepth` floor
 that exceeds these precisions from degree 50 up):
 
-- Degree 10, prec 32: under 1 second (measured 0.14 s).
-- Degree 20, prec 32: under 30 seconds (measured about 15 s). This is
+- Degree 10, prec 32: under 0.6 seconds (measured 0.266 s).
+- Degree 20, prec 32: under 10 seconds (measured 4.85 s). This is
   the scale `hex-number-field` consumes.
-- Degree 50, prec 64: under 15 minutes (measured 8.3 minutes).
+- Degree 50, prec 64: under 14 minutes (measured 6.90 minutes).
 - Degree 100, prec 128: no budget pinned. The measured run did not
   complete within 19 minutes and the extrapolated cost is hours; a
   budget is set once the optimisation work below makes the scale

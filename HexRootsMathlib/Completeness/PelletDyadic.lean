@@ -370,7 +370,7 @@ theorem witness_one_of_roots {p : Hex.ZPoly} {sq : Hex.DyadicSquare}
   have hcheck0 :
       Hex.pelletAt (Hex.taylor p sq.center) 1 sq.radiusLo sq.radiusHi = true := by
     simpa only [Int.ofNat_zero, shift_zero] using hcheck 0 (by omega)
-  unfold Hex.witness Hex.witnessCheck
+  unfold Hex.witness Hex.witnessCheck Hex.Taylor.witnessCheck
   simpa [Bool.and_eq_true] using
     ⟨⟨hcheck0, hcheck 1 (by omega)⟩, hcheck 2 (by omega)⟩
 
