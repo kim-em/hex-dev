@@ -1,98 +1,158 @@
-# Kernel-evaluation cost of `Hex.factor` (`decide +kernel`)
+# `ZPoly.factorize` versus certificate-backed factor tactics
 
-With `native_decide` banned, the trusted way to run a hex computation inside a
-proof is **kernel reduction** (`decide +kernel`). This report measures that cost
-for the factorization algorithm directly: how long the Lean kernel takes to
-evaluate `Hex.factor` on each corpus instance, and at what size it stops being
-viable.
+This diagnostic compares two trusted-checking shapes for integer polynomial
+factorization:
 
-This is the interim, generator-free half of the `decide +kernel` trusted-checking
-curve requested on issue #8545. The full curve (kernel-check an irreducibility
-*certificate* per factor) waits on the compiled certificate generators of
-[#8552](https://github.com/kim-em/hex-dev/issues/8552); the architecture there is
-compiled `factor` + compiled certificate construction, with the kernel only
-checking (a) the factors multiply back to the input and (b) each certificate.
-This report is the "(a)-shaped" measurement plus the raw cost of running `factor`
-itself in the kernel.
+- direct kernel evaluation of `Hex.ZPoly.factorize` against the exact result of
+  the compiled factorizer;
+- the current `factor_poly` and `irreducibility` tactics, which perform compiled
+  search at elaboration time and leave the kernel reified literal witnesses and
+  certificates to check.
 
-Like the cross-system sweep, this is a diagnostic comparator run, **not CI**
-(see [SPEC/benchmarking.md § Cross-system comparator sweeps](../SPEC/benchmarking.md)):
-it measures the kernel, not a hex-internal performance claim.
+The committed record is a four-input validation sample, not a full frontier
+campaign.  It proves all required paths work on the current provider stack: a
+free modular witness, a reducible complete factorization, a multi-prime
+certificate, and a clean Swinnerton–Dyer provider decline.  A full corpus run is
+still required before claiming a degree/family crossover.
 
-## Method
+This is a manual diagnostic, not a phase-gating benchmark or CI target.  The
+sample validates measurement coverage; only a controlled full-corpus run can
+support a performance frontier claim.
 
-`scripts/bench/kernel_factor_sweep.py`, per corpus instance:
+## Method and timing labels
 
-1. Run the *compiled* `Hex.factor` (via the warm `hexbz_factor_service`) to get
-   hex's exact `Factorization`.
-2. Generate `example : Hex.factor <f> = <that factorization> := by decide +kernel`
-   and time a fresh `lean` invocation checking it. Forcing the full equality
-   (not just the factor count) makes the kernel normalize every factor
-   coefficient, so the wall time is honest end-to-end kernel evaluation — and it
-   double-checks that kernel reduction agrees with compiled evaluation on every
-   solved instance.
+For each selected corpus row,
+[`kernel_factor_sweep.py`](../scripts/bench/kernel_factor_sweep.py) asks the
+warm `hexbz_factor_service` for the exact compiled factorization, then runs
+fresh modules through `lake lean`:
 
-A fixed per-invocation **import baseline** (loading `HexBerlekampZassenhaus.Basic`)
-is measured once and subtracted to report marginal kernel time. Limits:
-`maxHeartbeats 0` (disabled, so the wall-clock `--timeout` is the sole cutoff)
-and a raised `maxRecDepth`. Instances over the timeout are **censored** (status
-`timeout`), which on a frontier chart reads as the curve stopping. Each family is
-swept in ascending degree. A **monotone** family (kernel cost rises with degree)
-is abandoned at the first cutoff-hit — everything above it only hammers the
-cutoff. The **non-monotone** families (`cyclotomic`, `cyclotomic-products`, whose
-kernel cost tracks the modular-factor count rather than degree — e.g. Φ₂₈
-finishes where Φ₂₂/Φ₂₄ time out) keep exploring, abandoned only after
-`--explore-stop-after` (default 3) consecutive censored points.
+1. `Hex.ZPoly.factorize f = <compiled Factorization> := by decide +kernel`;
+2. `Hex.ZPoly.Factored f := factor_poly f`;
+3. `Hex.ZPoly.Irreducible f := by irreducibility`, only when corpus degree
+   metadata and the compiled factorization show that the input itself has unit
+   content and one full-degree factor.
 
-Feasibility note: the `factor` call graph has **no `partial def`** (which would
-be kernel-opaque), and although it contains 15 well-founded recursions
-(`termination_by`, normally reluctant to kernel-reduce), they *do* reduce in
-practice. `UInt64`/`ZMod64` arithmetic reduces fine in the kernel (GMP-backed
-`Nat` literal reduction), so the finite-field inner loops are not a wall.
+The `factor_poly` and `irreducibility` numbers are **end-to-end fresh-module
+times**.  They include compiled factor/certificate construction, elaboration,
+reification, and kernel checking; they are not kernel-only times.  The record
+also carries median import-only baselines for the Mathlib-free factor module
+and the certificate umbrella.  Since Lake dependency checking and host cache
+state vary between invocations, the report uses total time for the small
+sample.  The signed `baseline_delta_nanos` fields are total minus the matching
+median import baseline.  They still include parsing, literal elaboration,
+instance synthesis, and kernel checking; they are neither pure kernel time nor
+clamped to zero when measurement noise makes the delta negative.
 
-## Frontier
+For every multi-prime witness an untimed preparation module serializes each
+nested Rabin factor and certificate.  The harness verifies both checker shapes
+accept it in compiled code, then emits paired modules containing identical
+imports and literal data.  Each checker runs three times, with execution order
+alternated by case and repeat; the record reports the median and range.  The
+only source difference within each pair is
+`checkIrreducibilityCertificateLinear` versus
+`checkIrreducibilityCertificateLinearIncremental`.  A checker returning false
+is an implementation error; timeout and kernel resource limits remain
+censored measurements.
 
-Canonical run on carica (commit `09a3f193`), 20 s wall timeout, import baseline
-0.41 s subtracted; record
-`reports/bench-results/hexbz-kernel-factor-canonical.json`. 60/93 instances
-kernel-checked; kernel reduction agreed with compiled `factor` on every solved
-instance.
+Statuses are distinct: `ok`, `provider-decline`, `timeout`, `maxRecDepth`,
+`maxHeartbeats`, and unexpected `error`.  Plain-provider decline is coverage
+data and marks the boundary at which the bang tactics must use kernel
+factorizer replay.
 
-| family | highest degree kernel-checked | first censored degree | slowest solved |
-| --- | ---: | ---: | ---: |
-| cyclotomic | 28 | 22 | 17s |
-| chebyshev | 12 | 12 | 11s |
-| legendre | 12 | 10 | 16s |
-| laguerre | 11 | 12 | 13s |
-| random-products | 11 | 12 | 17s |
-| wilkinson | 8 | 10 | 9s |
-| swinnerton-dyer | 8 | 16 | 6s |
-| sd-products | 8 | 16 | 5s |
-| cyclotomic-products | 6 | 12 | 6s |
-| hoeij-zimmermann | — | 128 | 0s |
+## Validation sample
 
-Kernel `decide` on `factor` is a cliff: sub-second to degree ~5, single-digit
-seconds through degree ~10, then over the wall in the low-to-mid teens. **Trusted
-`decide`-checking of the factorization is viable to roughly degree 10–15 at a
-20–40 s budget**, and the exact timeout barely moves the frontier because the
-cost grows ~exponentially in the recombination work. The family ordering mirrors
-the compiled sweep: cyclotomics (few clean modular factors) reach degree 28;
-Swinnerton-Dyer (many degree-2 modular factors, heavy recombination) walls at
-degree 8. `cyclotomic`/`cyclotomic-products` are the non-monotone cases — cost
-tracks the modular-factor count, not degree, so cyclotomic finishes degree 28
-above censored degrees 22/24.
+Record:
+[`hexbz-kernel-factor-03b05622-chungus2.json`](bench-results/hexbz-kernel-factor-03b05622-chungus2.json),
+SHA-256 `5b58a5fe9c1eb73d4c15ec9b346039402501c6446f9ddcf0e0d351038cbf2cf2`.
+The commit/host-qualified name follows the durable-record convention; the
+prior schema-1 frontier record remains available in repository history rather
+than being relabelled as a current-surface measurement.
+The run used Lean `v4.32.0-rc1` on `chungus2` (Linux x86-64), clean commit
+`03b05622`, a 30 s per-module timeout, `maxRecDepth = 100000`, and disabled
+heartbeats.  Median import baselines were 1.32 s for the direct factor module
+and 5.44 s for the certificate-umbrella module.  The corpus hash is
+`619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`.
 
-![Kernel evaluation frontier for Hex.factor](figures/hexbz-kernel-factor-frontier.svg)
+| input | role | direct kernel total | `factor_poly` total | `irreducibility` total | witness coverage |
+| --- | --- | ---: | ---: | ---: | --- |
+| `cyclo_phi5` | irreducible/free | 1.65 s | 4.40 s | 4.00 s | free mod-p, `p = 2` |
+| `xpow6_minus1` | reducible | 3.11 s | 4.33 s | not applicable | two free linear and two free mod-p factors |
+| `quartic_a4` | irreducible/multi-prime | 2.34 s | 4.48 s | 5.14 s | primes 17 and 5, two degree obstructions |
+| `sd2` | expected boundary decline | 2.14 s | decline at 4.56 s | decline at 5.05 s | outside free, Eisenstein, and multi-prime languages |
+
+The direct kernel path remains viable on every sampled degree-4/6 input.  The
+certificate path succeeds on all three inputs within its language and declines
+cleanly on `sd2`; there are no timeouts, kernel limit failures, or unexpected
+errors.  This sample is too small to locate the direct-factorization wall or a
+certificate crossover.  Those are outputs of the full command below, rather
+than claims inferred from low-degree startup-dominated points.  The figure
+therefore plots total time and draws the unequal 1.32 s and 5.44 s import
+baselines explicitly; vertical separation between methods is not by itself an
+algorithmic-cost comparison.
+
+## Witness-class and decline boundary
+
+The successful factors exercise three provider classes:
+
+| witness class | distinct factors | sample inputs |
+| --- | ---: | --- |
+| free linear | 2 | `xpow6_minus1` |
+| free mod-p | 3 | `cyclo_phi5`, `xpow6_minus1` |
+| multi-prime degree obstruction | 1 | `quartic_a4` |
+| provider decline | 1 | `sd2` |
+
+The appended `quartic_a4` corpus row is the current multi-prime regression
+case: its `{1,3}` and `{2,2}` modular splittings jointly obstruct every proper
+integer factor degree, while no single-prime or small-shift Eisenstein witness
+exists.  `sd2 = x^4 - 10x^2 + 1` remains deliberately present: every plain
+provider declines, so `factor_poly!` or `irreducibility!` must re-run the
+factorizer in the kernel for this small balanced input.
+
+## Linear versus incremental Rabin replay
+
+The A4 certificate contains four nested Rabin cases.  Each pair below has the
+same literal-data SHA-256 in the JSON record.  Values are median total
+fresh-module seconds with the three-sample range in parentheses.  Delta ratios
+use the signed median-total-minus-5.44 s-import-baseline fields, which still
+include literal elaboration and kernel type checking.  All four deltas are
+below baseline in this run: host/cache noise is larger than that derived
+signal, which does not mean zero checker work.
+
+| prime | modular factor degree | Linear total | Incremental total | total ratio | baseline-delta ratio |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 17 | 2 | 4.17 s (3.96–4.80) | 2.96 s (2.85–5.10) | 1.41x | below baseline |
+| 17 | 2 | 3.99 s (3.86–4.09) | 3.00 s (2.98–3.12) | 1.33x | below baseline |
+| 5 | 1 | 3.84 s (2.94–5.02) | 3.52 s (3.41–4.80) | 1.09x | below baseline |
+| 5 | 3 | 5.07 s (4.77–5.10) | 4.12 s (4.07–4.23) | 1.23x | below baseline |
+
+The incremental checker has lower median time in all four pairs, with disjoint
+ranges on the second `p = 17`, degree-2 case and the `p = 5`, degree-3 case.
+The other two ranges overlap.  This is consistent with the incremental
+checker's `O(n·p)` work versus the linear checker's `O(Σ p^k)`, but it is not a
+general asymptotic measurement because both modules still elaborate and
+kernel-check the same literal certificate.  The production certificate path
+already uses the incremental checker; this series provides focused empirical
+support for that choice against the legacy replay shape.
+
+![Kernel factorization and certificate comparison](figures/hexbz-kernel-factor-frontier.svg)
 
 ## Reproducing
 
-```
-# Frontier probe (fast: low degree cap, tight timeout):
-python3 scripts/bench/kernel_factor_sweep.py --max-degree 24 --timeout 40
+```bash
+lake build hexbz_factor_service HexBerlekampZassenhausMathlib
 
-# Canonical run (all families, ascending degree, monotone families stop at the wall):
-python3 scripts/bench/kernel_factor_sweep.py --timeout 20
+# Required-path validation sample.
+python3 scripts/bench/kernel_factor_sweep.py \
+  --name cyclo_phi5 --name xpow6_minus1 \
+  --name quartic_a4 --name sd2 \
+  --timeout 30 --rabin-repeats 3 \
+  --output reports/bench-results/hexbz-kernel-factor-03b05622-chungus2.json
 
-# Chart:
-python3 scripts/plots/hexbz-kernel-frontier.py --record reports/bench-results/<record>.json
+# Full frontier and coverage campaign. Certificate tactics continue after the
+# direct kernel curve reaches its per-family frontier.
+python3 scripts/bench/kernel_factor_sweep.py --timeout 60
+
+uv run --with 'matplotlib==3.11.1' \
+  python3 scripts/plots/hexbz-kernel-frontier.py \
+  --record reports/bench-results/hexbz-kernel-factor-03b05622-chungus2.json
 ```
