@@ -4,11 +4,12 @@
 The JSONL stream is emitted by ``lake exe hexnumberfield_emit_fixtures``.
 For lazy arithmetic, PARI forms the eliminant from the original operand
 polynomials and FLINT independently primitive-normalizes, factors, and removes
-multiplicity. For exactification, FLINT factors the original enclosing
-polynomial and PARI root approximations select the unique factor meeting the
-original dyadic isolation box. No Lean-produced result is used as an oracle
-input. Root-set fixtures are checked independently against FLINT's certified
-Arb root balls, including multiplicities.
+multiplicity. PARI also selects each operand through its emitted input box and
+checks that the independently computed operation value meets the emitted result
+box. For exactification, FLINT factors the original enclosing polynomial and
+PARI root approximations select the unique factor meeting the original dyadic
+isolation box. Root-set fixtures are checked independently against FLINT's
+certified Arb root balls, including multiplicities.
 """
 from __future__ import annotations
 
@@ -144,6 +145,36 @@ def _exact_factor(pari, fmpz_poly, coefficients: list[int], box_record):
     return result
 
 
+def _selected_root(
+    pari,
+    coefficients: list[int],
+    box_record: dict[str, Any],
+    *,
+    label: str,
+) -> complex:
+    """Select the unique PARI root meeting an emitted dyadic box."""
+    center, radius = _box(box_record)
+    roots = pari.polroots(pari.Polrev(coefficients, "x"))
+    matches = [complex(root) for root in roots if abs(complex(root) - center) <= radius]
+    if len(matches) != 1:
+        raise OracleMismatch(f"{label} box met {len(matches)} PARI roots")
+    return matches[0]
+
+
+def _check_result_box(
+    value: complex,
+    box_record: dict[str, Any],
+    *,
+    label: str,
+) -> None:
+    center, radius = _box(box_record)
+    if abs(value - center) > radius:
+        raise OracleMismatch(
+            f"{label} value {value!r} lies outside result box "
+            f"(center={center!r}, radius={radius!r})"
+        )
+
+
 def _version(module, pari) -> str:
     flint_version = getattr(module, "__version__", "unknown")
     try:
@@ -194,6 +225,9 @@ def check(
             if operation in {"add", "sub", "mul"}:
                 left_record = cases[(lib, f"{case_id}/left")]
                 right_record = cases[(lib, f"{case_id}/right")]
+                left_box = cases[(lib, f"{case_id}/left-box")]
+                right_box = cases[(lib, f"{case_id}/right-box")]
+                result_box = cases[(lib, f"{case_id}/result-box")]
                 left = _coeffs(left_record)
                 right = _coeffs(right_record)
                 raw = _lazy_raw(pari, left, right, operation)
@@ -201,12 +235,50 @@ def check(
                 if operation == "mul":
                     raw_coefficients = _remove_x(raw_coefficients)
                 expected = _flint_core(fmpz_poly, raw_coefficients)
-                input_record = {"left": left_record, "right": right_record}
+                left_value = _selected_root(
+                    pari, left, left_box, label=f"{case_id}/left"
+                )
+                right_value = _selected_root(
+                    pari, right, right_box, label=f"{case_id}/right"
+                )
+                if operation == "add":
+                    selected_value = left_value + right_value
+                elif operation == "sub":
+                    selected_value = left_value - right_value
+                else:
+                    selected_value = left_value * right_value
+                _check_result_box(
+                    selected_value, result_box, label=f"{case_id}:{operation}"
+                )
+                input_record = {
+                    "left": left_record,
+                    "right": right_record,
+                    "left_box": left_box,
+                    "right_box": right_box,
+                    "result_box": result_box,
+                }
             elif operation == "inv":
                 input_record = cases[(lib, f"{case_id}/input")]
+                input_box = cases[(lib, f"{case_id}/input-box")]
+                result_box = cases[(lib, f"{case_id}/result-box")]
                 coefficients = _coeffs(input_record)
                 raw = _inverse_raw(pari, coefficients)
                 expected = _flint_core(fmpz_poly, _pari_coeffs(pari, raw))
+                input_value = _selected_root(
+                    pari, coefficients, input_box, label=f"{case_id}/input"
+                )
+                if input_value == 0:
+                    selected_value = 0j
+                else:
+                    selected_value = 1 / input_value
+                _check_result_box(
+                    selected_value, result_box, label=f"{case_id}:{operation}"
+                )
+                input_record = {
+                    "polynomial": input_record,
+                    "input_box": input_box,
+                    "result_box": result_box,
+                }
             elif operation == "exact":
                 input_record = {
                     "polynomial": cases[(lib, f"{case_id}/input")],

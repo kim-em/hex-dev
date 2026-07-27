@@ -11,16 +11,21 @@ import HexNumberField
 Deterministic JSONL fixtures for the `HexNumberField` external oracle profile.
 
 Every lazy-arithmetic case emits the original operand polynomials and the
-polynomial retained by the checked Lean operation. The oracle independently
-forms the appropriate PARI resultant and then asks python-flint
-to primitive-normalize, square-free, and factor the resulting integer
-polynomial. The exactification case additionally emits the original selected
-root's dyadic box; the oracle factors the original enclosing polynomial and
-selects the unique factor whose root meets that box.
+selected operand and result boxes, as well as the polynomial retained by the
+checked Lean operation. The oracle independently forms the appropriate PARI
+resultant, checks the selected operation value against the result box, and asks
+python-flint to primitive-normalize, square-free, and factor the resulting
+integer polynomial. The exactification case additionally emits the original
+selected root's dyadic box; the oracle factors the original enclosing
+polynomial and selects the unique factor whose root meets that box.
 
-Root cases emit the original integer polynomial together with the discs and
-multiplicity buckets returned by the fixed-field or algebraic-coefficient API.
-The oracle compares those discs to python-flint's certified Arb root balls.
+The external root cases in this profile use rational-coefficient inputs. They
+emit the original integer polynomial together with the discs and multiplicity
+buckets returned by the fixed-field or algebraic-coefficient API; the oracle
+compares those discs to python-flint's certified Arb root balls. Embedding
+rejection for genuinely algebraic coefficients remains a Lean conformance
+check because its norm eliminant contains conjugate roots not returned by the
+selected embedding.
 -/
 
 namespace Hex.NumberFieldEmit
@@ -122,10 +127,10 @@ private def enclosingRoot? : Option AlgebraicRoot :=
   else
     none
 
-private def emitBox (case : String) (square : DyadicSquare) : IO Unit := do
+private def emitBox (case suffix : String) (square : DyadicSquare) : IO Unit := do
   let re := square.re.toRat
   let im := square.im.toRat
-  emitMatrixFixture lib (case ++ "/box")
+  emitMatrixFixture lib (case ++ "/" ++ suffix)
     [[re.num, Int.ofNat re.den], [im.num, Int.ofNat im.den],
       [square.prec]]
 
@@ -136,6 +141,8 @@ private def emitOperands (case : String) (left right : ZPoly) : IO Unit := do
 private def emitBinary (case operation : String)
     (left right : AlgebraicRoot) : IO Unit := do
   emitOperands case left.p right.p
+  emitBox case "left-box" left.rep.1.square
+  emitBox case "right-box" right.rep.1.square
   let result : Option AlgebraicRoot := match operation with
     | "add" => left.add? right
     | "sub" => left.sub? right
@@ -143,24 +150,27 @@ private def emitBinary (case operation : String)
     | _ => none
   match result with
   | some value =>
+      emitBox case "result-box" value.rep.1.square
       emitResult lib case operation (polyValue value.p.toArray.toList)
   | none => throw <| IO.userError (case ++ ": checked operation failed")
 
 private def emitUnary (case operation : String)
     (input : AlgebraicRoot) : IO Unit := do
   emitPolyFixture lib (case ++ "/input") input.p.toArray.toList
+  emitBox case "input-box" input.rep.1.square
   let result : Option AlgebraicRoot := match operation with
     | "inv" => input.inv?
     | _ => none
   match result with
   | some value =>
+      emitBox case "result-box" value.rep.1.square
       emitResult lib case operation (polyValue value.p.toArray.toList)
   | none => throw <| IO.userError (case ++ ": checked operation failed")
 
 private def emitExact : IO Unit := do
   let case := "exact/enclosing-sqrt2"
   emitPolyFixture lib (case ++ "/input") enclosingPoly.toArray.toList
-  emitBox case enclosingSquare
+  emitBox case "box" enclosingSquare
   match enclosingRoot? >>= AlgebraicRoot.exact? with
   | some value =>
       emitResult lib case "exact" (polyValue value.p.toArray.toList)
@@ -233,6 +243,7 @@ def main : IO Unit := do
       Hex.NumberFieldEmit.emitBinary
         "lazy/mul-sqrt2-two-with-zero-conjugate" "mul" sqrtTwo twoWithZero
       Hex.NumberFieldEmit.emitUnary "lazy/inv-sqrt2" "inv" sqrtTwo
+      Hex.NumberFieldEmit.emitUnary "lazy/inv-two-with-zero" "inv" twoWithZero
       Hex.NumberFieldEmit.emitExact
       Hex.NumberFieldEmit.emitFixedRoots
       Hex.NumberFieldEmit.emitAlgebraicRoots

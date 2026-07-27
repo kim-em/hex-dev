@@ -240,8 +240,9 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
       | some sum, some product, some difference =>
           sum.p.degree?.getD 0 = 4 && product.p.degree?.getD 0 = 2 &&
             difference.p.degree?.getD 0 = 4 &&
-            decide (0 < sum.rep.1.square.re) &&
+            decide (3 < sum.rep.1.square.re) &&
             decide (0 < product.rep.1.square.re) &&
+            decide (-1 < difference.rep.1.square.re) &&
             decide (difference.rep.1.square.re < 0)
       | _, _, _ => false
   | _, _ => false
@@ -275,7 +276,10 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
           some (DensePoly.ofList [-1024, 1]) &&
         (sqrtTwo.mul two).p = DensePoly.ofList [-8, 0, 1] &&
         (sqrtTwo.mul? two).map (fun product => product.p) =
-          some (DensePoly.ofList [-8, 0, 1])
+          some (DensePoly.ofList [-8, 0, 1]) &&
+        two.inv.p = DensePoly.ofList [-1, 2] &&
+        (two.inv?).map (fun inverse => inverse.p) =
+          some (DensePoly.ofList [-1, 2])
   | _, _, _ => false
 
 -- Cancellation, zero multiplication, and zero inversion are distinct edges.
@@ -310,7 +314,7 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
         (-a).p = sqrtTwoPoly && a⁻¹.p = DensePoly.ofList [-1, 0, 2] &&
         (a / a).p = DensePoly.ofList [-1, 1] &&
         (a - a).isZero && (a * 0).isZero &&
-        ((0 : AlgebraicNumber)⁻¹).isZero
+        ((0 : AlgebraicNumber)⁻¹).isZero && (a / 0).isZero
   | _, _ => false
 
 -- Same selected value through different enclosing polynomials; opposite

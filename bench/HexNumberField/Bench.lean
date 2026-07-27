@@ -34,8 +34,16 @@ private def requireSome (case : String) : Option α → IO α
 private def polyChecksum (p : ZPoly) : UInt64 :=
   hash p.toArray
 
+private def dyadicChecksum (d : Dyadic) : UInt64 :=
+  let q := d.toRat
+  mixHash (hash q.num) (hash (q.den : Int))
+
+private def squareChecksum (square : DyadicSquare) : UInt64 :=
+  mixHash (mixHash (dyadicChecksum square.re) (dyadicChecksum square.im))
+    (hash square.prec)
+
 private def rootChecksum (a : AlgebraicRoot) : UInt64 :=
-  mixHash (polyChecksum a.p) (hash a.rep.1.square.prec)
+  mixHash (polyChecksum a.p) (squareChecksum a.rep.1.square)
 
 private def ratChecksum (q : Rat) : UInt64 :=
   mixHash (hash q.num) (hash (q.den : Int))
@@ -94,7 +102,7 @@ relation performs `O(n²)` rational coefficient operations. This canonical
 `n = 10` case is fixed because the SPEC supplies an absolute 100 ms budget,
 not an asymptotic fit requirement. -/
 setup_fixed_benchmark runFixedMul where {
-  repeats := 5, maxSecondsPerCall := 1.0,
+  repeats := 5, maxSecondsPerCall := 0.1,
   expectedHash := some 0xc319ee2337214e59
 }
 
@@ -102,7 +110,7 @@ setup_fixed_benchmark runFixedMul where {
 quadratic number of coefficient operations with coefficient-size growth. The
 required degree-10 budget is tested as a fixed regression. -/
 setup_fixed_benchmark runFixedInv where {
-  repeats := 5, maxSecondsPerCall := 1.0,
+  repeats := 5, maxSecondsPerCall := 0.1,
   expectedHash := some 0x1525969728101d06
 }
 
@@ -152,24 +160,35 @@ private def addRaw : ZPoly :=
 private def addCore : ZPoly :=
   ZPoly.squareFreeCore addRaw
 
+private structure IsolateInput where
+  polynomial : ZPoly
+  simple : HasOnlySimpleRoots polynomial
+  depth : Nat
+
+private def isolateInput? : Option IsolateInput :=
+  if hsimple : HasOnlySimpleRoots addCore then
+    some ⟨addCore, hsimple, separationDepth addCore⟩
+  else
+    none
+
 initialize addInputRef : IO.Ref (Option (ZPoly × ZPoly)) ←
   IO.mkRef (some (sqrtTwoPoly, sqrtThreePoly))
+
+initialize isolateInputRef : IO.Ref (Option IsolateInput) ←
+  IO.mkRef isolateInput?
 
 def runAddEliminant : Unit → IO UInt64 := fun _ => do
   let input ← requireSome "lazy/add-eliminant" (← addInputRef.get)
   return polyChecksum (ZPoly.addEliminant input.1 input.2)
 
 def runIsolateAdd : Unit → IO UInt64 := fun _ => do
-  if hsimple : HasOnlySimpleRoots addCore then
-    match isolate addCore hsimple (separationDepth addCore : Int) with
-    | some isolations =>
-        return isolations.foldl
-          (fun checksum isolation =>
-            mixHash checksum (hash isolation.square.prec))
-          (hash isolations.size)
-    | none => throw <| IO.userError "lazy/isolate-add: isolation failed"
-  else
-    throw <| IO.userError "lazy/isolate-add: simple-root check failed"
+  let input ← requireSome "lazy/isolate-add" (← isolateInputRef.get)
+  let isolations ← requireSome "lazy/isolate-add"
+    (isolate input.polynomial input.simple (input.depth : Int))
+  return isolations.foldl
+    (fun checksum isolation =>
+      mixHash checksum (squareChecksum isolation.square))
+    (hash isolations.size)
 
 private def selectAdd (a b : AlgebraicRoot) : Option AlgebraicRoot :=
   AlgebraicRoot.ofEliminant? addRaw fun prec => do
@@ -199,7 +218,7 @@ degree-four square-free eliminant. It is the isolation baseline against which
 the following operation-ball selection registration is read. -/
 setup_fixed_benchmark runIsolateAdd where {
   repeats := 3, maxSecondsPerCall := 5.0,
-  expectedHash := some 0x267ab60faaa118bc
+  expectedHash := some 0x4367ab34a73ea4ed
 }
 
 /- The precomputed degree-four eliminant is square-free normalized, isolated
@@ -208,7 +227,7 @@ fixed case records the selection boundary; comparing it with `runIsolateAdd`
 attributes the additional operation-ball disambiguation work. -/
 setup_fixed_benchmark runSelectAdd where {
   repeats := 3, maxSecondsPerCall := 5.0,
-  expectedHash := some 0x78ea397c700d9ae6
+  expectedHash := some 0xb2956b93cac0235f
 }
 
 /- The complete lazy-add path is the preceding eliminant construction followed
@@ -216,7 +235,7 @@ by isolation and disambiguation. Its degree product is `2 * 2 = 4`, well below
 the merge-facing ceiling `20`; the fixed timing tracks end-to-end cost. -/
 setup_fixed_benchmark runLazyAdd where {
   repeats := 3, maxSecondsPerCall := 5.0,
-  expectedHash := some 0x78ea397c700d9ae6
+  expectedHash := some 0xb2956b93cac0235f
 }
 
 /-! ## Exactification and roots -/
@@ -273,7 +292,7 @@ private def rootSetChecksum : RootSet → UInt64
   | .finite roots => roots.foldl
       (fun checksum root =>
         mixHash checksum
-          (mixHash (polyChecksum root.root.p) (hash root.multiplicity)))
+          (mixHash (rootChecksum root.root) (hash root.multiplicity)))
       (hash roots.size)
 
 def runRoots : Unit → IO UInt64 :=
@@ -293,7 +312,7 @@ separation, one norm eliminant, candidate isolation, zero retention, and final
 deduplication. This fixed end-to-end root case has one root of multiplicity 2. -/
 setup_fixed_benchmark runRoots where {
   repeats := 3, maxSecondsPerCall := 5.0,
-  expectedHash := some 0xe4ebcfb3c7820a15
+  expectedHash := some 0x0927e3f02f6eee94
 }
 
 end Hex.NumberFieldBench
