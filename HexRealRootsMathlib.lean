@@ -12,6 +12,9 @@ public import HexRealRootsMathlib.Hadamard
 public import HexRealRootsMathlib.Discr
 public import HexRealRootsMathlib.Separation
 public import HexRealRootsMathlib.ChainCorrespond
+public import HexRealRootsMathlib.LiteralChain
+public import HexRealRootsMathlib.LiteralIsolations
+public import HexRealRootsMathlib.LiteralChainTests
 public import HexRealRootsMathlib.SquareFreeCore
 public import HexRealRootsMathlib.Isolations
 public import HexRealRootsMathlib.IsolateRoots
@@ -40,10 +43,12 @@ free of any `HexRealRoots` dependence, so it can be contributed to Mathlib
 
 The executable-correspondence and consequence files build on it:
 `ChainCorrespond` connects `Hex.sturmChain`, `Hex.sturmCount`, and `Hex.rootCount`
-to the abstract development; `Separation` supplies the Mahler separation bound,
-using `HexPolyZMathlib.MahlerSeparation` and the analysis re-exported by the
-`Discr`/`Hadamard` compatibility modules; `Isolations` and `Drivers` prove
-isolation soundness, run
+to the abstract development; `LiteralChain` proves the corresponding theorem
+for a supplied positive-scaled recurrence, and `LiteralIsolations` states
+isolation semantics for its supplied counts; `Separation` supplies the Mahler
+separation bound, using `HexPolyZMathlib.MahlerSeparation` and the analysis
+re-exported by the `Discr`/`Hadamard` compatibility modules; `Isolations` and
+`Drivers` prove isolation soundness, run
 completeness, driver completeness, and refinement; `SimpleRealRoot` proves the
 root-identity theorems (overlap classes are the real roots); and `TwoCircle`
 proves Descartes-engine termination (`isolateDescartes?_isSome`) behind its
