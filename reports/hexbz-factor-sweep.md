@@ -165,7 +165,7 @@ alongside these under `reports/figures/`.
 ### carica, 10 s cutoff (2026-07-03, with conway)
 
 - **Artifact:** `reports/bench-results/hexbz-factor-sweep-bc958d84-carica.json`
-  SHA-256 `5359fadc55573ea0427827d03248b18a43dbf74d9ce7da25bdd2133776f9af95`
+  SHA-256 `a1452db9f3aa4d9c86c6ece4a716d17483f3734caf632c5baf9085a8e463ce23`
 - **Command:**
   `python3 scripts/bench/factor_sweep.py --systems hex-factor,hex-lattice,hex-fast,hex-classical-nodecline,flint,ntl,pari,isabelle-bz,isabelle-lll --cutoff 10 --no-early-terminate --skip-unavailable`
   (full-fidelity: no monotonic early termination, so the conway curves include
