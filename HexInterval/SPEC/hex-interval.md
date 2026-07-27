@@ -54,6 +54,13 @@ stage order, and the preferred enclosure method for each function. A first
 implementation is a hypothesis about these choices, not a reason to close the
 design space.
 
+Implementation order follows the dependency structure. The first search
+milestone is the function-agnostic program, rule protocol, fact state,
+worklist, and bounded extension mechanism, exercised with opaque operation
+keys. Dyadic, rational, elementary-function, and Mathlib theorem backends plug
+into that framework; backend-specific replay experiments do not block or
+define the scheduler architecture.
+
 “Compiled search” means ordinary elaboration-time Lean execution of the
 untrusted planner. It does not authorize `precompileModules := true`; the Lake
 target continues to follow [the repository policy](../../SPEC/design-principles.md#lakefile),
@@ -510,6 +517,16 @@ meaning changes when the policy selects a different method. This distinction
 also prevents a dynamically registered user rule from being mistaken for an
 instruction understood by the fixed natural-evaluation checker.
 
+Registrations are a validated factory layer, not the hot scheduler data.
+Binding a registration to a matching node resolves its relative result and
+argument slots into a concrete rule application containing an anchor, an
+ordered read list, and an ordered write list. The dependency index maps each
+read node to the concrete applications that must wake when its fact changes.
+The scheduler sees only these concrete identifiers; it does not inspect an
+operation key to infer that, for example, addition reads two arguments or a
+contractor writes one of them. Later shape rules may propose validated
+cross-node applications without changing the scheduler protocol.
+
 The caller supplies nullary nodes for free variables and named constants.
 Unknown free variables begin with the whole interval. Hypotheses add source
 facts. A known constant may instead have one or more nullary propagators, so a
@@ -542,17 +559,21 @@ ordinary interval facts. Typical uses include:
 - instantiating a monotonicity theorem by adding product or difference nodes
   that were absent from the original goal.
 
-An instantiation proposal contains a versioned rule key, a canonical
-substitution, new SSA instructions, equality or derived-fact recipes, and an
-untrusted claimed generation. Acceptance validates operation arities and
-domains, topological order, scope visibility, and every referenced input;
-recomputes each node's generation from the trigger provenance and generated
-dependencies, rejecting a mismatch or over-budget descendant; deduplicates
-expressions by the same canonical CSE key as the base program; updates consumer
-and rule indexes; and freezes the proof recipe for replay. Base nodes have
-generation zero, and a generated node is one plus the maximum relevant
-generation in the instance that caused it. The new expression is not trusted
-merely because a trigger matched or labeled itself generation zero.
+An instantiation proposal contains a versioned rule key, replay-facing trigger
+data, new SSA instructions, equality or derived-fact recipes, and an untrusted
+claimed generation. The engine derives the canonical substitution from the
+selected action's anchor and declared input facts; a registry-provided trigger
+list cannot weaken generation accounting or change structural identity.
+Acceptance validates operation arities and domains, topological order, scope
+visibility, and every referenced input; recomputes generation from the
+engine-owned action provenance and generated dependencies,
+rejecting a mismatch or over-budget descendant; deduplicates expressions by
+the same canonical CSE key as the base program; updates consumer and rule
+indexes; and freezes the proof recipe for replay. Base nodes have generation
+zero. The production representation may record generation per theorem
+instance or per generated product; that choice remains open below. In either
+case, a new expression is not trusted merely because a trigger matched or
+labeled itself generation zero.
 
 The current centered-product D2 vertical is deliberately narrower than this
 general recurrence. Its `Center.inferredGeneration` only recognizes one
@@ -562,6 +583,140 @@ validation, not the production algorithm for recomputing generations across
 several accepted instantiation rounds. The scaling experiment must add
 per-node provenance and exercise the recurrence above before that interface is
 frozen.
+
+The general propagation experiment uses the same admission boundary with
+opaque operations. A selected proposal is resolved against an immutable
+operation table, checked for typed SSA order, CSE'd against old and newly
+proposed nodes, assigned an engine-recomputed generation, and committed
+atomically with rebuilt rule and watcher indexes. Its two-step canary adds
+`g (f x)` and then `h (g (f x))`; newly registered rules run through the
+ordinary request/reply path, producing generations one and two. Exact node,
+generation, application, queue, instance, equality, and proposal-list limits
+are independent, and failure retains the preceding snapshot. The current hot
+storage uses linear reference CSE and rebuilds indexes after an extension;
+that validates the state transition but does not select the production CSE or
+incremental-index representation.
+
+For inspection and mutation-cost experiments this provisional `Engine` is an
+exposed record. Consequently, its raw module does not enforce an authority
+boundary against a caller who fabricates an entire record value. The
+production engine must hide its constructor and expose checked observations
+and transitions; making one transition opaque would not provide that
+encapsulation and would obstruct ordinary-kernel theorems about admission.
+
+One atomic theorem instantiation initially assigns a single instantiation
+generation to all helper nodes it introduces: one plus the maximum generation
+of every old node referenced by the authoritative action substitution, draft,
+equality output, or CSE result. This measures theorem-instantiation depth
+rather than expression-tree depth. Per-product generation remains a possible
+refinement, but neither a false trigger list nor a draft's ordering may let a
+deeper theorem instance pass a shallower limit.
+
+The general experiment activates proposed equality edges as indexed,
+replayable search contractors: improving either endpoint wakes transport in
+the other direction, and admission of a new edge considers both current
+endpoint facts atomically. The edge payload remains untrusted, so an equality-
+derived contradiction is only a search signal until companion replay validates
+that payload. The first FIFO worklist still runs all compiled applications at
+their registered effort. A separate policy experiment makes escalation,
+retry, instantiation selection, and subdivision explicit state transitions
+over the same generic application protocol. Neither limitation is a reason to
+specialize the scheduler to rational operations or to bake function semantics
+into it.
+
+### Equality activation
+
+The initial production candidate treats each search-active equality as one
+engine-owned, undirected contractor. It neither merges equal nodes nor presents
+transport as a fake function rule to the external registry. The scheduler's
+dependency item is therefore a sum:
+
+```lean
+structure EqualityId where
+  index : Nat
+
+inductive WorkItem
+  | rule     (application : ApplicationId)
+  | equality (edge : EqualityId)
+```
+
+Both endpoints watch the equality item. When selected, the item reads the two
+facts and versions from one pre-step snapshot, rechecks that both nodes exist
+in the same domain, and asks the domain intersection operation to narrow left
+by right and right by left. It preflights the complete fact-history and wakeup
+cost, installs zero, one, or two improvements atomically, and then wakes the
+deduplicated union of rule and equality consumers. A single equality item,
+rather than two independently queued directions, is important when two
+incomparable partial facts can improve both endpoints to their meet.
+
+Adding an equality is also atomic. Instantiation constructs prospective new
+nodes, equality identifiers, evidence origins, rule applications, both kinds
+of watcher, queued bits, and initial work items before committing any of them.
+Every new equality receives one initial queue item, so propagation need not be
+hidden inside structural admission. Whether new equality items precede new
+function applications is policy data; equality-first is a useful first
+experiment because an alternate expression receives the known bound before
+its function rules run.
+
+Equality work is visible resource usage: each run charges one work-item pop,
+two domain intersections, dependency visits, zero to two accepted facts, and
+all resulting queue insertions. The global step budget counts equality items
+as well as registry invocations. Equality closure is never an unbounded
+recursive side effect of waking a node.
+
+Fact provenance distinguishes an external rule from transport:
+
+```lean
+structure FactRef where
+  node    : NodeId
+  version : Nat
+
+inductive FactCause
+  | rule (action : Action) (previous : FactRef) (payload : PayloadId)
+  | transport (equality : EqualityId) (source previous : FactRef)
+```
+
+The preceding target fact is required in both cases because the recorded
+result may be the intersection of that fact with a newly justified candidate.
+For transport, replay resolves the source fact, checks equality direction and
+scope, reconstructs the equality proof, transports the exact source fact, and
+then validates its intersection with the preceding target fact.
+
+An equality's evidence cannot be only an untyped payload index. The preferred
+shape makes it an output of a particular theorem instance, so one frozen
+instance payload can justify several products and equalities:
+
+```lean
+structure InstanceId where
+  index : Nat
+
+inductive EqualityOrigin
+  | source   (source : SourceId)
+  | instance (instance : InstanceId) (output : Nat)
+```
+
+The retained instantiation origin includes the complete triggering action,
+including its input fact versions, not only its rule and anchor. We leave two
+evidence questions open for experiment. First, shape equalities might be
+restricted to facts unconditional in their scope, or they might depend on the
+interval facts observed by the trigger; the latter is more expressive but
+adds those facts to replay dependencies. Second, several recipes may prove
+the same endpoint pair with different scopes or proof costs. A production
+table may separate one canonical transport link from several evidence records;
+the first experiment may retain the first deterministic evidence.
+
+Structural instance identity includes canonical unordered equality endpoint
+pairs as well as the originating rule, engine-derived substitution, and
+resolved products. An untrusted family label remains replay metadata but does
+not manufacture a new network extension. Equality resolution
+returns the identifiers of reused links as well as newly appended links, so a
+pure-equality instance is replayable and cannot collide with an empty
+extension. If every proposed node CSE-hits and every equality already exists,
+admission reports a duplicate without advancing the program snapshot or
+consuming an instance slot. Scope becomes part of this identity when branches are introduced.
+Structurally admitted equality evidence is search-active but not trusted:
+failure to reconstruct it rejects the eventual proof, just as a malformed
+function-rule payload does.
 
 The first structural scaling experiment deliberately keeps that same fixed
 one-generation witness while varying dead nodes, relevant and irrelevant
@@ -684,18 +839,37 @@ every structural goal; a hybrid may use the structural loop as one action.
 
 Rule-private caches can have arbitrary Lean types. For that reason the
 Mathlib-free library does not store them in a heterogeneous array. It exposes
-a request-and-reply state machine:
+a request-and-reply state machine. Binding first expands relative ports into
+concrete applications, and a registry request exposes exactly the declared
+read facts and write targets. It does not provide an unrestricted fact getter:
+a hidden read would be absent from the dependency index and could miss a
+required wakeup.
 
-1. The solver produces an `Action` naming a rule, node, input fact versions,
-   effort, and action kind.
+1. The solver produces an `Action` naming a program snapshot, concrete rule
+   application, anchor, declared input fact versions, effort, and action kind.
 2. The companion registry executes the rule and owns its cache.
 3. The registry returns an `Outcome` containing candidate facts, alternatives,
    suggestions, cost observations, and an opaque proof recipe identifier.
-4. When a fact is accepted, the registry freezes every value needed for replay
+4. A reply echoes the request serial, snapshot, and application. A delayed or
+   transplanted reply is rejected without clearing the current request.
+5. The solver validates every candidate target against the application's
+   declared writes and computes all intersections against the pre-outcome
+   state. It then commits the whole improving batch and wakes the deduplicated
+   union of affected applications once. A malformed later candidate or a
+   one-step-short fact or queue budget commits none of the batch.
+6. When a fact is accepted, the registry freezes every value needed for replay
    into an immutable per-run payload arena. The `PayloadId` in the trace points
    into this arena, never into a mutable or evictable rule cache.
-5. The solver intersects accepted facts into the state and records their
-   provenance.
+7. The solver records the snapshot, concrete application, anchor, action kind,
+   effort, input versions, target's preceding fact version, target, and frozen
+   payload in provenance. The preceding target fact is an explicit dependency
+   of intersection even when the rule did not declare that target as an input.
+
+Whether freezing is an explicit second request after the solver identifies
+the improving subset, or eager allocation before the `Outcome`, remains an
+experiment. Eager freezing has a simpler protocol but may retain payloads for
+weaker candidates; two-phase freezing adds a failure transition which must
+remain atomic.
 
 An invalid rule outcome may mislead search, but it cannot produce a theorem.
 The companion reconstructs every retained fact from the rule's soundness
@@ -744,10 +918,13 @@ observed contraction, and proof cost.
 
 An `Outcome` may be `noChange`, `inapplicable`, `resourceLimit`, or `failed`
 without affecting soundness. `resourceLimit` names the exhausted budget and is
-not cached as mathematical inapplicability. Rules do not promise that greater
-effort always gives a tighter answer. The solver intersects every result with
-existing facts, measures the actual improvement, and learns from that
-observation.
+not cached as mathematical inapplicability; a `failed` code is an opaque
+diagnostic identifier rather than a cost magnitude. Rules do not promise that
+greater effort always gives a tighter answer. The solver intersects every
+result with existing facts, measures the actual improvement, and learns from
+that observation. Retained suggestions are advisory: when their cumulative
+storage cap is full, the engine retains the bounded prefix, records how many
+were dropped, and still commits independently valid candidate facts.
 
 The base `Program` is static after validation. Generic cheap alternates may be
 present before search, and `rewrite` only changes which form in the current
@@ -795,11 +972,22 @@ changed side. The default implementation does not run repeated whole-program
 passes. A pass remains a useful diagnostic grouping, but the algorithm is an
 incremental worklist.
 
-The initial saturation runs all cheap forward rules once in program order and
-then drains the dependency worklist. It also runs zero-cost contradiction
-checks after every accepted fact. More expensive improvement and split actions
-start only after this cheap fixed point, unless a rule marks a singularity that
-requires an immediate split.
+The reference propagation queue coalesces a concrete application while it is
+already dirty. Several changed inputs therefore produce one registry call on
+the newest declared-input snapshot, while telemetry counts suppressed wakeups.
+A versioned priority policy may instead retain stale candidates and discard
+them lazily at pop time. Both implement the same request/reply contract; the
+benchmark compares rule calls, dependency visits, insertions, pops, stale or
+suppressed work, and peak live queue before selecting a default. Multi-output
+outcomes install every accepted fact before waking this union, so they do not
+manufacture stale work against their own half-installed state.
+
+The initial `balancedV1` candidate runs all cheap forward rules once in program
+order and then drains the dependency worklist. It also runs zero-cost
+contradiction checks after every accepted fact. More expensive improvement and
+split actions start only after this cheap fixed point, unless a rule marks a
+singularity that requires an immediate split. This staging is policy behavior,
+not an engine soundness condition.
 
 Backward propagation uses the same worklist. A contractor is valid only when
 its soundness theorem says that it preserves every assignment satisfying the
@@ -816,23 +1004,267 @@ conditional fact into the parent scope.
 
 ## Search policy
 
-The policy affects success and performance, never validity. The library
-exposes a pure interface with private state and incremental candidate events:
+The policy affects success and performance, never validity. In particular it
+does not construct an `Action`: action serials, program snapshots, concrete
+applications, and input versions are engine-owned authority. The engine owns a
+bounded frontier of offers and the policy returns only the stable identity and
+canonical key of one offer it observed. In the sketch below,
+`InstantiationSemanticKey` is the payload-erased canonical family, trigger,
+proposed-operation/reference graph, and unordered equality-pair key;
+`PolicyFeature` is a bounded exact integer key/value; and frontier events are
+engine-issued additions, refreshes, tombstones, and observations:
 
 ```lean
-structure Policy where
-  State      : Type
-  init       : Snapshot → State
-  insert     : State → Action → State
-  invalidate : State → ActionKey → State
-  choose     : State → Snapshot → Option (Action × State)
-  observe    : State → Action → Observation → State
+structure PolicyKey where
+  name    : String
+  version : Nat
+
+structure OfferId where
+  index : Nat
+
+structure InvocationKey where
+  scope          : ScopeId
+  programVersion : Nat
+  application    : ApplicationId
+  rule           : RuleKey
+  anchor         : NodeId
+  kind           : ActionKind
+  effort         : Nat
+  inputs         : List SeenVersion
+
+structure EqualityWorkKey where
+  scope          : ScopeId
+  programVersion : Nat
+  equality       : EqualityId
+  left right     : SeenVersion
+
+inductive OfferClass
+  | invoke
+  | equality
+  | retry
+  | instantiate
+  | split
+
+inductive OfferKey
+  | invoke (invocation : InvocationKey)
+  | equality (contractor : EqualityWorkKey)
+  | retry (source : InvocationKey) (effort : Nat)
+  | instantiate (source : InvocationKey) (request : InstantiationSemanticKey)
+  | split (source : InvocationKey) (node : NodeId) (point : Dyadic)
+      (reason : SplitReason)
+
+structure PolicyFeature where
+  key   : Nat
+  value : Int
+
+structure ObservationSummary where
+  outcome      : Nat
+  changedFacts : Nat
+  logicalWork  : Nat
+
+structure PolicyBudget where
+  decisions : Nat
+  traversal : Nat
+  noteBytes : Nat
+
+structure EngineBudgetView where
+  actions       : Nat
+  acceptedFacts : Nat
+  nodes         : Nat
+  equalities    : Nat
+  branches      : Nat
+
+structure FactDelta (Fact : Type) where
+  node          : NodeId
+  before after  : Fact
+  beforeVersion : Nat
+  afterVersion  : Nat
+
+inductive OutcomeTag
+  | success
+  | noChange
+  | inapplicable
+  | resourceLimit (budget : Nat)
+  | failed (code : Nat)
+
+structure RuleObservation (Fact : Type) where
+  invocation    : InvocationKey
+  outcome       : OutcomeTag
+  changes       : Array (FactDelta Fact)
+  contradiction : Bool
+  cost          : CostObservation
+
+structure OfferView where
+  id       : OfferId
+  key      : OfferKey
+  class    : OfferClass
+  age      : Nat
+  summary  : Option ObservationSummary
+  features : Array PolicyFeature
+
+structure PolicyView (Fact : Type) where
+  scope          : ScopeId
+  serial         : Nat
+  programVersion : Nat
+  offers         : Array OfferView
+  facts          : Snapshot Fact
+  goalFeatures   : Array PolicyFeature
+  remaining      : EngineBudgetView
+
+structure Selection where
+  scope          : ScopeId
+  serial         : Nat
+  programVersion : Nat
+  id             : OfferId
+  expected       : OfferKey
+
+inductive PolicyEvent (Fact : Type)
+  | frontier (added : Array OfferView) (removed : Array OfferId)
+  | rule (observation : RuleObservation Fact)
+  | instanceAdmitted (programVersion : Nat) (added : Array OfferView)
+  | splitPrepared (scope : ScopeId) (node : NodeId) (point : Dyadic)
+  | choiceRejected (choice : Selection) (reason : Nat)
+  | engineResource (resource : Resource)
+
+structure DecisionNote where
+  stage  : Nat
+  reason : Nat
+  score  : Nat
+
+inductive PolicyStep (State : Type)
+  | select  (choice : Selection) (note : DecisionNote) (next : State)
+  | dismiss (choice : Selection) (note : DecisionNote) (next : State)
+  | stop    (reason : Nat) (next : State)
+
+structure Policy (Fact : Type) where
+  key    : PolicyKey
+  State  : Type
+  init   : PolicyView Fact → State
+  update : State → PolicyView Fact → PolicyEvent Fact → State
+  choose : PolicyBudget → State → PolicyStep State
 ```
 
-The first `balancedV1` prototype uses a versioned priority queue. Changed facts insert or
-invalidate only affected candidates; stale entries are discarded lazily when
-popped. Policies intended for diagnostics may use a simpler complete scan,
-but their complexity is reported honestly.
+The policy state, like rule-private caches, may have an arbitrary Lean type and
+is owned by the external driver. `Policy.State.select` rechecks the decision serial,
+scope, program version, offer identifier, complete canonical key, eligibility,
+and budgets. It alone freezes current input versions and creates a registry
+`Action`, runs an engine equality contractor, admits a selected instance, or
+emits a resource-checked `SplitPlan`.
+The later scope/branch layer validates domain-specific interiority and creates
+complementary child assumptions. A stale, fabricated, or transplanted
+selection changes no facts, program, frontier membership, or pending action;
+it may consume one bounded decision step and append an audit disposition.
+
+Dirty concrete applications create or refresh invocation offers. Any
+structurally accepted bounded rule report may create engine-indexed retry,
+instantiation, and split offers; the policy cannot supply their structural
+payloads. Removing an offer emits a tombstone event, so stable identifiers do
+not require an ever-growing live frontier. Program extension invalidates
+exact-snapshot instantiation offers, refreshes dirty invocation offers, rechecks
+retry and split offers under their variant-specific guards, and inserts offers
+for new applications and equality jobs atomically with the extension.
+A selected retry prepares a fresh action carrying the bounded effort override;
+it does not mutate the compiled application's registration baseline, so later
+append-only program validation still compares an immutable application prefix.
+
+Each completed selection produces an engine-owned observation: outcome class,
+changed target versions, contradiction status, emitted offer identifiers,
+declared logical work, visited entries, estimated proof nodes, and exact
+resource result. Exact before/after facts may be passed ephemerally in the
+transition event; the engine retains only bounded summaries and trace
+references unless the separately charged observation-byte budget permits
+more. Width reduction and other domain-specific benefits are not inferred by
+the generic scheduler; bounded exact feature extractors may be provided by the
+fact domain or registry and influence search only.
+
+The concrete `RuleObservation` shown above records actual admitted deltas
+rather than a rule's claimed gain. Other `PolicyEvent` constructors distinguish
+structural admission, split preparation, rejected choices, and engine resource
+exhaustion from a rule-declared outcome.
+
+`PolicyEvent` is the single ordered transition stream. It wraps rule
+observations, instance admission, split preparation, offer additions and
+tombstones, rejected choices, and engine resource stops. `OfferView.summary`
+is merely the current bounded aggregate derived from earlier events, not a
+second observation channel. Every reply-supplied cost and feature integer is
+preflighted against value, count, and encoded-byte caps before it can enter
+policy scoring.
+
+It may be cleaner to normalize the registry result as one bounded `RuleReport`
+containing an outcome tag, candidate list, suggestion list, and cost. That
+allows `noChange` to recommend a stronger effort or landmark split without
+encoding itself as `success` with no candidates. This is an open protocol
+experiment; negative mathematical information is never inferred from a
+resource limit or failed rule.
+
+One `balancedV1` candidate uses a versioned priority queue over these offers.
+Changed facts insert or invalidate only affected offers; stale entries are
+discarded lazily when popped. Policies intended for diagnostics may use a
+simpler complete scan, but their complexity is reported honestly. An empty
+frontier means saturation. A `PolicyStep.stop` for a nonempty frontier is
+reported as `unknown`, not saturation.
+
+The shown first interface supplies the authoritative bounded scan frontier in
+each `PolicyView`; transition events let the policy update historical state
+without reconstructing it. An event-only priority implementation may later
+remove that repeated batch behind a different adapter while preserving
+`Selection` and `Policy.State.select`. We must also compare coalesced live offers
+with append-only stale entries and decide how much of a generic fact, as
+opposed to exact bounded policy features, a reusable policy should see. These
+choices change cost and convenience, not the admission or replay boundary.
+
+Freshness is offer-specific. An invocation or retry compares the concrete
+application and relevant current input versions. Instantiation initially uses
+the conservative exact program snapshot and then repeats all structural
+admission checks. A split compares its scope, target fact version, and endpoint
+interiority; an unrelated append-only program extension need not stale it.
+Proactive invalidation is an optimization, so selection always rechecks these
+conditions.
+
+Policy decisions, retained decision notes, effort, and live frontier size have
+independent deterministic limits. Even a rejected stale selection consumes a
+decision step, preventing a faulty policy from looping for free. A rule defines
+the meaning of its own bounded effort ladder: pieces, Taylor degree, reduction
+precision, or another function-specific choice. Different incomparable
+methods remain separate registrations rather than pretending their effort
+numbers share a scale.
+
+The engine bounds every choice attempt and every value it supplies, but it
+cannot force an arbitrary external callback to terminate. Shipped policies are
+structurally fuelled and audited; nontermination of a malicious policy or rule
+registry is outside theorem soundness and produces no proof.
+
+Every attempted choice has a bounded audit entry containing the decision
+serial, versioned policy key, expected semantic offer key, bounded note, and
+disposition (`selected`, `dismissed`, `stale`, `invalid`, or `resourceLimit`).
+Offer identifiers are never deterministic tie-breakers because allocation
+history can change them. The `replay` policy selects recorded semantic keys and
+reports divergence without state mutation when the expected offer is absent.
+Proof replay ignores this policy log and checks only fact, equality, instance,
+and split derivations.
+
+Canonical instantiation keys remain an experiment. They preserve proposed SSA
+dependency order while sorting/deduplicating equality sets and never deduplicate
+the ordered input-slot list. Payload erasure can leave two semantic duplicates
+with different proof recipes. The engine must either retain the first by
+bounded response ordinal, include that ordinal in the offer key, or require a
+stable registry-defined recipe key; freshly allocated payload identifiers are
+never canonical tie-breakers.
+
+The policy experiment proceeds in replaceable increments:
+
+1. retain the complete source invocation for every suggestion;
+2. split FIFO `poll` into engine operations which prepare one selected
+   concrete application or equality contractor;
+3. expose a bounded scan frontier and reproduce FIFO as a reference policy;
+4. return exact fact deltas, logical costs, and frontier changes from reply
+   admission;
+5. add the external policy driver and compare scan, staged, replay, and
+   versioned-priority implementations on identical semantic offers.
+
+Only after those transition traces agree do we choose the production frontier
+representation. This keeps scheduling experiments independent of any rational
+or elementary-function implementation.
 
 The initial prototype policies are:
 
@@ -851,11 +1283,12 @@ The normative requirements on any release default are smaller than one
 particular scoring formula.
 
 - For a fixed validated program, registry contents, configuration, and Lean
-  environment, action choice under a step budget is deterministic.
+  environment, offer choice under a step budget is deterministic.
 - Candidate maps are traversed in canonical sorted order. The final tie-break
   includes action kind, `NodeId`, versioned `RuleKey`, input fact versions,
-  effort, generation, and split point; hash-table order and freshly allocated
-  identifiers are not tie-breakers.
+  equality endpoints and endpoint versions, effort, generation, and split
+  point; hash-table order and freshly allocated identifiers are not
+  tie-breakers.
 - Scores use bounded integer or exact arithmetic with specified saturation,
   never `Float` or host timing.
 - A fairness mechanism eventually samples every continuously eligible action
@@ -866,7 +1299,7 @@ particular scoring formula.
 `balancedV1` is the initial empirical default candidate. Its first prototype
 uses four stages.
 
-1. Drain cheap forward and backward actions whose inputs changed.
+1. Drain cheap equality, forward, and backward work whose inputs changed.
 2. Run untried applicable enclosure methods with their initial effort.
 3. Compare targeted effort increases, rewrites, local range refinement, and
    contractor probes.
@@ -1137,6 +1570,95 @@ message uses `summary`. Machine-readable observations can be exported for
 offline policy tuning, but reading such telemetry is never required to check
 a proof.
 
+## Applications
+
+The tactic is the first client, not the only one. Two downstream applications
+constrain the framework without requiring either application to be implemented
+in the first release.
+
+### Verified raster graphs
+
+Given a real function, an exact dyadic viewport, and raster dimensions, a plot
+client can ask the engine for range enclosures over pixel columns or adaptive
+subcolumns. The primary certified-image contract is conservative coverage:
+
+- every point of the graph inside the viewport lies in a marked pixel; and
+- every unmarked pixel carries a checked proof that its rectangle is disjoint
+  from the graph.
+
+This makes every binary pixel claim correct: blank means proved absent, while
+marked means the graph may occur there. It does not falsely claim that every
+marked pixel is hit. A richer three-state raster may additionally mark a pixel
+`present` only when it carries an existence proof, for example from exact
+endpoint values and continuity plus an intermediate-value argument; remaining
+marked pixels are explicitly `unknown`. No finite algorithm can always decide
+intersection with every pixel boundary, so unresolved pixels are part of the
+honest interface rather than rendered as proved occupancy.
+
+Pixel rectangles use an exact, documented boundary convention, preferably
+half-open cells with a separately closed outer viewport. Open cuts matter:
+they decide whether a graph lying exactly on a pixel boundary belongs to one
+cell, its neighbour, both in a conservative mask, or neither outside the
+viewport. Raster indexing, clipping, integer dimensions, and the dyadic map
+between coordinates and pixels are checked data, not assumptions made by an
+image library.
+
+A certificate need not contain one independent proof per pixel. One interval
+fact over a column or adaptive tile usually proves a contiguous band of
+possibly occupied rows and simultaneously excludes the rows above and below.
+Run-length, tile, and derivation sharing are therefore certificate
+representations to benchmark. The untrusted renderer emits ordinary raster
+bytes plus a certified mask or classification table; a small checker validates
+that the bytes encode that table. Kernel replay proves the coverage/disjointness
+theorem from shared interval derivations, not from the PNG decoder.
+
+The ordinary framework supplies all required search mechanisms: arbitrary
+function propagators bound the range; instantiation introduces centered forms,
+range reductions, derivatives, or continuity witnesses when useful; local
+subdivision sharpens one column; and solver subdivision refines the spatial
+partition. Discontinuities and partial domains are never joined by a cosmetic
+line. A singular or out-of-domain subcolumn is split, clipped, classified
+unknown, or proved absent according to explicit facts.
+
+An initial conformance fixture should plot an opaque continuous function whose
+registry supplies only generic enclosures, then compare a coarse raster with
+an adaptively refined one. Both must satisfy the same coverage theorem; the
+refined mask may have fewer unknown pixels. Later challenge fixtures include a
+tangent asymptote, a narrow extremum requiring an instantiated derivative or
+centered form, and a curve exactly on pixel boundaries.
+
+### Certified differential-equation solvers
+
+A future validated ODE solver can use this engine as its expression,
+propagation, and policy component without making ODE algorithms part of the
+initial interval library. Over a time slab it may register arbitrary
+propagators for the right-hand side, Jacobian, Picard operator, Taylor
+coefficients and remainder, invariants, and event functions. Instantiation can
+introduce derivative and Taylor expressions only when a step method needs
+them; function-local refinement can subdivide a remainder calculation, while a
+solver split represents genuinely alternative state boxes or event cases.
+
+The eventual ODE companion remains responsible for the mathematical theorems:
+existence, uniqueness when claimed, enclosure of the solution tube, and
+composition of consecutive steps. The interval engine contributes checked
+facts and replayable dependencies to those theorems; successful numerical
+search alone never asserts that a solution exists.
+
+This downstream use argues for keeping the present abstractions:
+
+- domains and facts must extend beyond one scalar endpoint representation,
+  either through vector/box facts or coordinated scalar nodes;
+- operation keys and propagator caches must remain opaque to the scheduler;
+- expression instantiation, equality transport, scoped facts, and exact
+  resource limits must work over many consecutive program extensions; and
+- policy observations must distinguish local refinement from global branching
+  and proof cost from numerical gain.
+
+We do not choose Taylor models, affine arithmetic, zonotopes, a time-stepping
+scheme, or grind integration in this SPEC. Small mock ODE dependency graphs are
+useful scheduler and cache tests, but a certified integrator is a downstream
+design with its own SPEC.
+
 ## Complexity contract
 
 Let `n` be the number of program nodes, `e` the number of argument-to-consumer
@@ -1158,7 +1680,7 @@ states.
   a chunked vector, and a depth-first mutable trail with rollback. Their actual
   complexities and constant factors are reported. No one representation is
   selected before the crossover benchmark.
-- The first priority-queue prototype targets `O(log q)` amortized candidate
+- The priority-queue candidate targets `O(log q)` amortized candidate
   insertion, invalidation, and selection, excluding the declared cost of
   rescoring a stale candidate. A diagnostic policy that scans candidates
   reports `O(q)`; other policy data structures state and measure their own
@@ -1219,9 +1741,25 @@ typical, boundary, and adversarial inputs. In particular it includes:
 - regularization idempotence, outward containment, moved closed cuts, and
   exact-grid open cuts;
 - a dependency worklist in which one fact wakes only the affected consumers;
+- opaque unary chains, fan-out with a ternary join, and forward/backward rule
+  cycles in which the expression DAG remains acyclic;
 - multiple rules for one node, including a later effort result that does not
   improve the interval;
+- an atomic multi-output outcome, repeated-operand watcher deduplication,
+  projected-input enforcement, and rejection of an undeclared write or a
+  mismatched delayed reply without state mutation;
+- undirected equality transport, including incomparable endpoint facts that
+  improve both sides atomically, equality chains, reactivation after a later
+  function improvement, and an original expression transferring its bound to
+  an instantiated alternate before the alternate's arbitrary propagator runs;
+- exact equality provenance and reversed-edge deduplication, plus one-step-short
+  equality, queue, action, and accepted-fact limits with no partial update;
 - deterministic action choice for a fixed `balancedV1` configuration;
+- two policies over the same opaque `f` and dynamically introduced `g`: one
+  retries `f` before instantiation and one instantiates first. They must reach
+  the same final facts and checked split plan while recording different exact
+  rule-call counts; replay of either semantic offer log is exact, and a stale
+  effort or exhausted decision budget stops without state mutation;
 - derivation slicing that removes failed probes and unused facts;
 - branch validation that rejects sibling fact references and mutable or
   dangling payloads;
@@ -1230,6 +1768,9 @@ typical, boundary, and adversarial inputs. In particular it includes:
   instantiation beyond each generation budget;
 - deterministic deduplication of two triggers proposing the same expression
   and equality edge in different orders;
+- two successive opaque instantiations which add absent expressions, activate
+  their registered propagators, recompute generations one and two, and leave
+  the previous snapshot intact at each one-step-short limit;
 - budget exhaustion returning `unknown` with a nonempty diagnostic record.
 
 The `ci` profile cross-checks finite arithmetic against an independent Python
@@ -1269,6 +1810,15 @@ The Mathlib-free benchmark target measures:
   replay; an external build-only probe measures ordinary-kernel replay of the
   same certificate, with dyadic-valued sources, `1 / 3`-valued sources, and a
   denominator-height ladder.
+
+The opaque-forest logical-count canary starts from a saturated set of
+disconnected unary chains and tightens one root. With four depth-eight chains,
+the dependency worklist makes 8 rule calls while whole-network fixed-point
+rescanning makes 64; both accept 8 improvements and produce the same
+position-sensitive fact checksum. For `t > 0` chains of depth `d`, the current
+fixture records `d` incremental calls versus `2*t*d` structural calls. These
+counts motivate the incremental baseline without freezing queue coalescing,
+priority policy, or state storage.
 
 The declared models follow the complexity section above. Scientific runs also
 record accepted actions, endpoint heights, live leaves, retained derivations,
