@@ -47,6 +47,11 @@ irreducibility, so it is an embedding of fields. This file installs the
 law-bearing field structures for `QAdjoin` and canonical `AlgebraicNumber` and
 proves that their operations are the computational ones.
 
+When constructing the `Field (QAdjoin p x)` instance, set its rational scalar
+action explicitly to the computational `SMul Rat` instance shipped by
+HexNumberField. This keeps Mathlib's generated `qsmul` path definitionally
+identical and avoids a second, diamond-forming rational action.
+
 ## Equality, zero, and approximation
 
 ```lean

@@ -31,8 +31,7 @@ def reduceCoeffs (p : ZPoly) (f : DensePoly Rat) : DensePoly Rat :=
 @[expose]
 def reduce (p : ZPoly) (x : SimpleRoot p) (f : DensePoly Rat) : QAdjoin p x where
   coeffs := reduceCoeffs p f
-  degree_lt := by
-    sorry
+  degree_lt := ZPoly.rat_mod_zpoly_degree_lt _ _ x.posDegree
 
 /-- Coordinate equality in a fixed presentation. -/
 @[expose]
@@ -40,6 +39,25 @@ def beq (a b : QAdjoin p x) : Bool :=
   a.coeffs == b.coeffs
 
 instance : BEq (QAdjoin p x) := ⟨beq⟩
+
+/-- Fixed-presentation elements are equal when their canonical coordinates are
+equal. -/
+@[ext]
+theorem ext {a b : QAdjoin p x} (h : a.coeffs = b.coeffs) : a = b := by
+  cases a with
+  | mk ac ah =>
+      cases b with
+      | mk bc bh =>
+          change ac = bc at h
+          subst bc
+          rfl
+
+instance : DecidableEq (QAdjoin p x) := by
+  intro a b
+  if h : a.coeffs = b.coeffs then
+    exact isTrue (ext h)
+  else
+    exact isFalse fun hab => h (congrArg QAdjoin.coeffs hab)
 
 /-- Boolean zero test on canonical coordinates. -/
 @[expose]
@@ -85,25 +103,21 @@ def smul (c : Rat) (a : QAdjoin p x) : QAdjoin p x :=
 
 instance : SMul Rat (QAdjoin p x) := ⟨smul⟩
 
-/-- Extended-gcd inverse coordinates. Zero is fixed at zero; a successful
-irreducible-field input has a nonzero constant gcd, whose inverse normalizes
-the left Bézout coefficient. -/
-@[expose]
-def invCoeffs (p : ZPoly) (f : DensePoly Rat) : DensePoly Rat :=
-  if f.isZero then
-    0
-  else
-    let r := DensePoly.xgcd f (ZPoly.toRatPoly p)
-    let c := r.gcd.leadingCoeff
-    if c = 0 then
-      0
-    else
-      reduceCoeffs p (DensePoly.scale c⁻¹ r.left)
-
-/-- Inversion in a checked irreducible presentation, with `0⁻¹ = 0`. -/
+/-- Inversion in a checked irreducible presentation, with `0⁻¹ = 0`. The
+one-sided extended gcd tracks only the Bezout coefficient used for the inverse;
+the constant-gcd check is a defensive executable guard whose failure is
+unreachable under checked irreducibility. -/
 @[expose]
 def inv [ZPoly.CheckedIrreducible p] (a : QAdjoin p x) : QAdjoin p x :=
-  reduce p x (invCoeffs p a.coeffs)
+  if a.isZero then
+    0
+  else
+    let r := DensePoly.xgcdLeft a.coeffs (ZPoly.toRatPoly p)
+    if r.gcd.size = 1 then
+      let c := r.gcd.leadingCoeff
+      if c = 0 then 0 else reduce p x (DensePoly.scale c⁻¹ r.left)
+    else
+      0
 
 instance [ZPoly.CheckedIrreducible p] : Inv (QAdjoin p x) := ⟨inv⟩
 
@@ -118,6 +132,15 @@ instance [ZPoly.CheckedIrreducible p] : Div (QAdjoin p x) := ⟨div⟩
 
 private def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
 
+private def sqrtTwoSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
+
+private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
+  ⟨⟨sqrtTwoSquare, by decide⟩, by decide⟩
+
+private def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
+  SimpleRoot.mk sqrtTwoRep
+
 #guard
     reduceCoeffs sqrtTwoPoly (DensePoly.ofList ([0, 0, 1] : List Rat)) =
       DensePoly.C 2
@@ -128,9 +151,25 @@ private def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
 
 #guard
     let xPoly := DensePoly.ofList ([0, 1] : List Rat)
-    invCoeffs sqrtTwoPoly xPoly = DensePoly.ofList ([0, 1 / 2] : List Rat) &&
-      reduceCoeffs sqrtTwoPoly (xPoly * invCoeffs sqrtTwoPoly xPoly) = 1
+    let x : QAdjoin sqrtTwoPoly sqrtTwoRoot := reduce sqrtTwoPoly sqrtTwoRoot xPoly
+    let two : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
+      reduce sqrtTwoPoly sqrtTwoRoot (DensePoly.C 2)
+    (x * x).coeffs = two.coeffs && x != 0 &&
+      (x + x).coeffs = ((2 : Rat) • x).coeffs
 
-#guard invCoeffs sqrtTwoPoly 0 = 0
+private def nonmonicQuadratic : ZPoly := DensePoly.ofList [-1, 0, 2]
+
+#guard
+    let xPoly := DensePoly.ofList ([0, 1] : List Rat)
+    reduceCoeffs nonmonicQuadratic (xPoly * xPoly) = DensePoly.C (1 / 2)
+
+#guard
+    let xPoly := DensePoly.ofList ([0, 1] : List Rat)
+    let r := DensePoly.xgcdLeft xPoly (ZPoly.toRatPoly nonmonicQuadratic)
+    let candidate :=
+      reduceCoeffs nonmonicQuadratic
+        (DensePoly.scale r.gcd.leadingCoeff⁻¹ r.left)
+    candidate = DensePoly.ofList ([0, 2] : List Rat) &&
+      reduceCoeffs nonmonicQuadratic (xPoly * candidate) = 1
 
 end Hex.QAdjoin
