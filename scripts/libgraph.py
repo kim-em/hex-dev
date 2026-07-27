@@ -89,6 +89,15 @@ RELEASE_LIBRARIES = {
 
 VALID_STATUSES = {"active", "planned", "draft"}
 PHASE4_COMPARATOR_CLASSES = {"gating", "informational"}
+LIBRARY_FIELDS = {
+    "deps",
+    "mathlib",
+    "done_through",
+    "status",
+    "proof_probes",
+    "phase4",
+    "external",
+}
 
 
 @dataclass(frozen=True)
@@ -118,6 +127,7 @@ class LibraryInfo:
     mathlib: bool
     done_through: int
     status: str
+    proof_probes: tuple[str, ...] = ()
     phase4: Phase4Info | None = None
     external: str | None = None
 
@@ -152,6 +162,9 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
         nonlocal current_name, current_fields
         if current_name is None:
             return
+        unknown = current_fields.keys() - LIBRARY_FIELDS
+        if unknown:
+            raise ValueError(f"{current_name} has unknown fields: {sorted(unknown)}")
         missing = {"deps", "mathlib", "done_through", "status"} - current_fields.keys()
         if missing:
             raise ValueError(f"{current_name} missing fields: {sorted(missing)}")
@@ -176,6 +189,34 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
                 f"non-active libraries must have done_through == 0 "
                 f"(see PLAN/Conventions.md §'Library status')"
             )
+        proof_probes = current_fields.get("proof_probes", [])
+        if not isinstance(proof_probes, list) or not all(
+            isinstance(probe, str) for probe in proof_probes
+        ):
+            raise ValueError(f"{current_name} has malformed proof_probes")
+        if len(proof_probes) != len(set(proof_probes)):
+            raise ValueError(f"{current_name} has duplicate proof_probes entries")
+        if proof_probes and not mathlib:
+            raise ValueError(
+                f"{current_name} declares proof_probes but mathlib is false"
+            )
+        for probe in proof_probes:
+            parts = Path(probe).parts
+            if (
+                Path(probe).is_absolute()
+                or ".." in parts
+                or "\\" in probe
+                or any(char in probe for char in "*?[]{}")
+                or Path(probe).as_posix() != probe
+                or Path(probe).suffix == ".lean"
+                or len(parts) < 2
+                or parts[0] != "bench"
+                or parts[1] != current_name
+            ):
+                raise ValueError(
+                    f"{current_name} has invalid proof probe path {probe!r}; "
+                    f"expected bench/{current_name} or a subtree below it"
+                )
         phase4 = current_fields.get("phase4")
         if phase4 is not None and not isinstance(phase4, Phase4Info):
             raise ValueError(f"{current_name} has malformed phase4 block")
@@ -188,6 +229,7 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
             mathlib=mathlib,
             done_through=done_through,
             status=status,
+            proof_probes=tuple(proof_probes),
             phase4=phase4,
             external=external,
         )
@@ -234,6 +276,19 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
         for dep in info.deps:
             if dep not in libs:
                 raise ValueError(f"{name} depends on unknown library {dep}")
+
+    probe_paths = [
+        (name, Path(probe))
+        for name, info in libs.items()
+        for probe in info.proof_probes
+    ]
+    for index, (name, probe) in enumerate(probe_paths):
+        for other_name, other in probe_paths[index + 1:]:
+            if probe == other or probe in other.parents or other in probe.parents:
+                raise ValueError(
+                    f"overlapping proof probe paths: {name}:{probe} and "
+                    f"{other_name}:{other}"
+                )
 
     # Invariant: active libraries depend only on active libraries.
     # Non-active libraries may depend on anything (the dep graph is
