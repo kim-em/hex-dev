@@ -25,6 +25,10 @@ private def endpointLimit : EndpointLimit where
   maxEndpointHeight := 128
   maxAlignmentShift := 64
 
+private def tightAlignmentLimit : EndpointLimit where
+  maxEndpointHeight := 128
+  maxAlignmentShift := 4
+
 private def readyAs (result : Result) (expected : Raw) : Bool :=
   match result with
   | .ready fact => fact.view == expected
@@ -103,6 +107,22 @@ private def unboundedNeg : Option Result := do
   | some result =>
       readyAs result (.bounds .unbounded (.finite (-1) true))
   | none => false
+
+private def inverseShiftInput : Dyadic := .ofOdd 1 64 (by decide)
+
+private def subtractionPreflight : Option Result := do
+  let left ← imported?
+    (.bounds (.finite inverseShiftInput false) (.finite 1 false))
+  let right ← imported?
+    (.bounds (.finite inverseShiftInput false) (.finite inverseShiftInput false))
+  pure (sub tightAlignmentLimit left right)
+
+-- The cheap lower pair must not be subtracted before the upper pair's
+-- 64-place alignment has also passed preflight.
+#guard
+  match subtractionPreflight with
+  | some (.resourceLimit (.comparison cost)) => cost.alignmentShift == 64
+  | _ => false
 
 /-! ## Attainment-sensitive multiplication and square -/
 
@@ -323,17 +343,20 @@ private def roundedReciprocal : Option Result := do
           (.finite half true))
   | none => false
 
-private def tightInverseLimit : EndpointLimit where
-  maxEndpointHeight := 128
-  maxAlignmentShift := 4
-
 private def reciprocalPreflight : Option Result := do
   let input ← imported? (finite 1 false 2 false)
-  pure (reciprocal tightInverseLimit 16 input)
+  pure (reciprocal tightAlignmentLimit 16 input)
 
 #guard
   match reciprocalPreflight with
   | some (.resourceLimit (.inverse _ 16 shift)) => shift > 4
+  | _ => false
+
+-- Core performs these two shifts separately: their signed exponents cancel,
+-- but their allocation work does not.
+#guard
+  match inverseChecked tightAlignmentLimit (-64) inverseShiftInput with
+  | .error (.inverse _ 64 shift) => shift == 128
   | _ => false
 
 /-! ## Splitting -/

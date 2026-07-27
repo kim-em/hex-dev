@@ -125,10 +125,14 @@ def fitHeight (remaining : Nat) : List Nat -> Bool
   | cost :: costs =>
       if cost ≤ remaining then fitHeight (remaining - cost) costs else false
 
-def subtractionChecked (limit : EndpointLimit) (left right : Dyadic) :
-    Except WorkCost Dyadic := do
+def preflightSubtraction (limit : EndpointLimit) (left right : Dyadic) :
+    Except WorkCost Unit := do
   let comparison := CompareCost.ofDyadic left right
   if !comparison.allowed limit then throw (.comparison comparison)
+
+def subtractionChecked (limit : EndpointLimit) (left right : Dyadic) :
+    Except WorkCost Dyadic := do
+  preflightSubtraction limit left right
   let result := left - right
   endpointChecked limit result
   pure result
@@ -162,8 +166,10 @@ def negationChecked (limit : EndpointLimit) (value : Dyadic) : Except WorkCost D
 
 /-- Preflight the shift and retained endpoint work performed by `invAtPrec`.
 The check is deliberately conservative: a requested precision and the
-canonical input exponent must each fit the endpoint budget, and their combined
-shift must fit the alignment budget before Core's rational conversion runs. -/
+canonical input exponent must each fit the endpoint budget, and the sum of
+their magnitudes must fit the alignment budget before Core's two separate
+rational-conversion shifts run.  In particular, opposite-signed exponents do
+not cancel in the preflight merely because their signed sum is small. -/
 def inverseChecked (limit : EndpointLimit) (precision : Precision) (value : Dyadic) :
     Except WorkCost Dyadic := do
   let inputCost := EndpointCost.ofDyadic value
@@ -175,7 +181,7 @@ def inverseChecked (limit : EndpointLimit) (precision : Precision) (value : Dyad
   let alignmentShift :=
     match value with
     | .zero => 0
-    | .ofOdd _ exponent _ => (exponent + precision).natAbs
+    | .ofOdd _ exponent _ => exponent.natAbs + precisionMagnitude
   if alignmentShift > limit.maxAlignmentShift then
     throw (.inverse inputCost precisionMagnitude alignmentShift)
   let result := value.invAtPrec precision
@@ -310,17 +316,38 @@ def subtractUpper (limit : EndpointLimit) (left : Upper) (right : Lower) :
         (leftStrict || rightStrict))
   | _, _ => pure .unbounded
 
-/-- Exact interval subtraction, including independently unbounded sides. -/
+def preflightLowerSubtraction (limit : EndpointLimit) (left : Lower) (right : Upper) :
+    Except WorkCost Unit := do
+  match left, right with
+  | .finite leftValue _, .finite rightValue _ =>
+      preflightSubtraction limit leftValue rightValue
+  | _, _ => pure ()
+
+def preflightUpperSubtraction (limit : EndpointLimit) (left : Upper) (right : Lower) :
+    Except WorkCost Unit := do
+  match left, right with
+  | .finite leftValue _, .finite rightValue _ =>
+      preflightSubtraction limit leftValue rightValue
+  | _, _ => pure ()
+
+/-- Exact interval subtraction, including independently unbounded sides.  Both
+finite endpoint-alignment pairs are preflighted before either subtraction is
+evaluated. -/
 def sub (limit : EndpointLimit) (left right : Fact) : Result :=
   match left.raw, right.raw with
   | .empty, _ | _, .empty => .ready .empty
   | .bounds leftLower leftUpper, .bounds rightLower rightUpper =>
-      match subtractLower limit leftLower rightUpper with
+      match (do
+        preflightLowerSubtraction limit leftLower rightUpper
+        preflightUpperSubtraction limit leftUpper rightLower) with
       | .error cost => .resourceLimit cost
-      | .ok lower =>
-          match subtractUpper limit leftUpper rightLower with
+      | .ok () =>
+          match subtractLower limit leftLower rightUpper with
           | .error cost => .resourceLimit cost
-          | .ok upper => normalize limit (.bounds lower upper)
+          | .ok lower =>
+              match subtractUpper limit leftUpper rightLower with
+              | .error cost => .resourceLimit cost
+              | .ok upper => normalize limit (.bounds lower upper)
 
 /-! ## Extrema with endpoint-attainment witnesses -/
 
