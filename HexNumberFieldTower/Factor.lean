@@ -134,13 +134,14 @@ def checkYun (levels : List Level) (f : Array (Array Rat))
   if p.isZero then
     components.isEmpty
   else
-    components.all (fun component =>
+    yunMultiplicitiesIncrease components &&
+      components.all (fun component =>
         0 < component.2 &&
           let factor := rawPoly levels component.1
-          !factor.isZero && factor.leadingCoeff = 1 &&
-            Norm.isSquarefree levels component.1) &&
-      yunMultiplicitiesIncrease components &&
+          0 < factor.degree?.getD 0 && factor.leadingCoeff = 1) &&
       yunPairwiseCoprime levels components &&
+      components.all (fun component =>
+        Norm.isSquarefree levels component.1) &&
       yunProduct levels components = polyCoords (Norm.monic p)
 
 /-- Checked Yun decomposition in a fixed tower. -/
@@ -306,8 +307,9 @@ def factorProduct (levels : List Level) (scalar : Array Rat)
     (DensePoly.C (raw levels scalar))
 
 /-- Executable recursive irreducibility checker for a monic squarefree raw
-tower polynomial. The rational base uses the independent integer-polynomial
-checker; proper towers accept exactly a singleton Trager reconstruction. -/
+tower polynomial. The rational base delegates to the integer-polynomial checker
+shared by rational factorization; proper towers accept exactly a singleton
+Trager reconstruction. -/
 @[expose]
 def isIrreducible (levels : List Level) (f : Array (Array Rat)) : Bool :=
   let p := rawPoly levels f
@@ -327,8 +329,11 @@ reconstruction and canonical-order checks precede recursive replay. -/
 @[expose]
 def check (levels : List Level) (f : Array (Array Rat)) (scalar : Array Rat)
     (factors : Array (Array (Array Rat) × Nat)) : Bool :=
-  factorProduct levels scalar factors = f && factorsSorted factors &&
-    factors.all (fun factor => 0 < factor.2 && isIrreducible levels factor.1)
+  factors.all (fun factor =>
+      polyCoords (rawPoly levels factor.1) = factor.1) &&
+    factorProduct levels scalar factors = f && factorsSorted factors &&
+      factors.all (fun factor =>
+        0 < factor.2 && isIrreducible levels factor.1)
 
 /-- Produce a canonical factorization candidate with checked Yun
 multiplicities and recursive Trager recovery. The public dependent constructor
@@ -400,6 +405,12 @@ private def factorSqrtThreeLevel : Level where
     let f := polyPow xSubOne 3
     !checkYun [] (polyCoords f)
       #[(polyCoords xSubOne, 1), (polyCoords xSubOne, 2)]
+
+-- Positive multiplicity is not enough: Yun components must have positive
+-- polynomial degree, so the constant unit is never a component.
+#guard
+    let one : DensePoly (RawElem []) := 1
+    !checkYun [] (polyCoords one) #[(polyCoords one, 1)]
 
 #guard
     let xSqSubTwo : DensePoly Rat := DensePoly.ofList [-2, 0, 1]
@@ -483,6 +494,14 @@ private def factorSqrtThreeLevel : Level where
     let xSubOne : Array (Array Rat) := #[#[-1], #[1]]
     let f := polyCoords <| polyPow (rawPoly [] xSubOne) 3
     !check [] f #[1] #[(xSubOne, 1), (xSubOne, 2)]
+
+-- Coordinate padding cannot disguise a duplicate factor from the strict
+-- canonical-order check.
+#guard
+    let xSubOne : Array (Array Rat) := #[#[-1], #[1]]
+    let padded : Array (Array Rat) := #[#[-1, 0, 0], #[1]]
+    let f := polyCoords <| polyPow (rawPoly [] xSubOne) 3
+    !check [] f #[1] #[(padded, 2), (xSubOne, 1)]
 
 end Factor
 
