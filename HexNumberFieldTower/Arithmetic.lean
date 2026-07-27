@@ -95,37 +95,39 @@ def mulCoords : (levels : List Level) → Array Rat → Array Rat → Array Rat
           convolved
         flattenBlocks d lowerDim (reduced.take d)
 
-/-- Internal dynamically indexed lower-tower coefficient used only to invoke
-the generic dense-polynomial Euclidean algorithms. -/
-private structure RawElem (levels : List Level) where
+/-- Dynamically indexed tower coefficient used internally when an algorithm
+recurses through runtime level data rather than a dependent `NumberTower`.
+The `raw` helper normalizes to the represented mixed-radix dimension. -/
+structure RawElem (levels : List Level) where
   data : Array Rat
 
-private def raw (levels : List Level) (data : Array Rat) : RawElem levels :=
-  ⟨fixedCoeffs (levelsDim levels) data⟩
+@[expose]
+def raw (levels : List Level) (data : Array Rat) : RawElem levels :=
+  .mk (fixedCoeffs (levelsDim levels) data)
 
-private instance (levels : List Level) : DecidableEq (RawElem levels) :=
+instance (levels : List Level) : DecidableEq (RawElem levels) :=
   fun a b =>
     match decEq a.data.toList b.data.toList with
     | isTrue h => isTrue (by cases a; cases b; simpa using h)
     | isFalse h => isFalse fun hab => h (by simp [hab])
 
-private instance (levels : List Level) : Zero (RawElem levels) :=
+instance (levels : List Level) : Zero (RawElem levels) :=
   ⟨raw levels #[]⟩
 
-private instance (levels : List Level) : One (RawElem levels) :=
+instance (levels : List Level) : One (RawElem levels) :=
   ⟨raw levels #[1]⟩
 
-private instance (levels : List Level) : Add (RawElem levels) :=
-  ⟨fun a b => ⟨addCoords (levelsDim levels) a.data b.data⟩⟩
+instance (levels : List Level) : Add (RawElem levels) :=
+  ⟨fun a b => .mk (addCoords (levelsDim levels) a.data b.data)⟩
 
-private instance (levels : List Level) : Sub (RawElem levels) :=
-  ⟨fun a b => ⟨subCoords (levelsDim levels) a.data b.data⟩⟩
+instance (levels : List Level) : Sub (RawElem levels) :=
+  ⟨fun a b => .mk (subCoords (levelsDim levels) a.data b.data)⟩
 
-private instance (levels : List Level) : Neg (RawElem levels) :=
-  ⟨fun a => ⟨negCoords (levelsDim levels) a.data⟩⟩
+instance (levels : List Level) : Neg (RawElem levels) :=
+  ⟨fun a => .mk (negCoords (levelsDim levels) a.data)⟩
 
-private instance (levels : List Level) : Mul (RawElem levels) :=
-  ⟨fun a b => ⟨mulCoords levels a.data b.data⟩⟩
+instance (levels : List Level) : Mul (RawElem levels) :=
+  ⟨fun a b => .mk (mulCoords levels a.data b.data)⟩
 
 /-- Recursive inverse coordinates. The zero convention is inherited at every
 level; defensive nonconstant/zero gcd branches are unreachable for a tower
@@ -160,6 +162,12 @@ def invCoords : (levels : List Level) → Array Rat → Array Rat
         else
           Hex.panicWith (Array.replicate (d * lowerDim) 0)
             "NumberTower.inv: nonconstant gcd"
+
+instance (levels : List Level) : Inv (RawElem levels) :=
+  ⟨fun a => raw levels (invCoords levels a.data)⟩
+
+instance (levels : List Level) : Div (RawElem levels) :=
+  ⟨fun a b => a * b⁻¹⟩
 
 private def sqrtTwoLevel : Level where
   degree := 2

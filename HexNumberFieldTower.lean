@@ -9,6 +9,7 @@ module
 public import HexNumberFieldTower.Basic
 public import HexNumberFieldTower.Arithmetic
 public import HexNumberFieldTower.Embed
+public import HexNumberFieldTower.Norm
 
 public section
 
