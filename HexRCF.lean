@@ -30,6 +30,9 @@ public import HexRCF.Soundness
 public import HexRCF.CertificateTests
 public import HexRCF.Decision
 public import HexRCF.DecisionTests
+public import HexRCF.Reify
+public import HexRCF.Tactic
+public import HexRCF.ReifyTests
 
 public section
 
@@ -64,4 +67,10 @@ Compiled decision assembly runs isolation, strict separation, endpoint
 classification, and arithmetic preparation outside the kernel, retains only
 well-formed replay verdicts, and returns `true` only after the proof-producing
 certificate checker accepts.
+The `rcf` tactic reifies singly quantified real polynomial goals, clears exact
+rational denominators with kernel-checked positive scaling, runs certificate
+construction as compiled meta code, and embeds only literal evidence accepted
+by the Boolean checker. Its generated proof transports `check_sound` through a
+kernel-checked equivalence with the source goal; false verdicts remain
+cell-specific diagnostics.
 -/
