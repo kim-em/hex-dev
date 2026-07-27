@@ -93,9 +93,12 @@ def resultant [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul R]
     [Div R] (f g : DensePoly R) : R := ...
 
 /-- Standard discriminant. It is `1` for zero and constant polynomials. For
-    positive degree `n`, it is
-    `(-1)^(n·(n-1)/2) · exactDiv (resultant f f.derivative) (lc f)`;
-    that quotient is exact. -/
+    positive degree `n`, let `d = f.derivative` and
+    `gap = n - 1 - d.degree?.getD 0`. It is
+    `(-1)^(n·(n-1)/2) ·
+      exactDiv ((lc f)^gap · resultant f d) (lc f)`.
+    The leading-coefficient power promotes the default-degree executable
+    resultant to derivative formal degree `n - 1`; the quotient is exact. -/
 def disc [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul R]
     [Div R] [NatCast R] (f : DensePoly R) : R := ...
 
@@ -166,6 +169,13 @@ coefficientwise exact quotient of `prem prev curr` by
 denominators are nonzero over an exact-division domain. These signs and powers
 are part of the API contract; there is no later unpinned correction.
 
+The executable recurrence calls the proved runtime twins `scaleImpl` and
+`divScalarImpl`; `@[csimp]` correspondence theorems identify them with the
+list-facing specifications above. Its two fuel/junk exits are deterministic:
+fuel exhaustion returns the current `(chain, hPrev)`, while an unexpectedly
+zero `next` returns `(chain, hCurr)` without storing that zero. Neither branch
+is reachable from a valid ordered nonzero state over an exact-division domain.
+
 The public chain stores exactly Brown's nonzero `G₁, …, Gₖ`. It does not
 store the generated terminal zero, gap zeros from defective subresultants, the
 auxiliary `Hᵢ`, or the scalars `hᵢ`. Termination means
@@ -193,6 +203,8 @@ resultant f g = (-1)^(deg f * deg g) * resultantOrdered g f.
 ```
 
 Equivalently, the swap negates exactly when both degrees are odd.
+Equal-degree inputs retain caller order; only a strict degree reversal swaps
+the arguments, so the tie case does not acquire an extra sign.
 
 The total chain wrapper omits zero inputs:
 
@@ -216,8 +228,13 @@ resultant (C c) g = c ^ (g.degree?.getD 0)
 Consequently `resultant 0 0 = 1`. These conventions agree with the pinned
 Mathlib determinant resultant and its `0^0 = 1` behavior.
 
-Finally, `disc f = 1` whenever `f.size ≤ 1`. Only positive-degree inputs
-use the signed resultant quotient by `lc(f)`, where exactness holds.
+Finally, `disc f = 1` whenever `f.size ≤ 1`. For positive degree `n`, let
+`d = f.derivative` and `gap = n - 1 - d.degree?.getD 0`. The default-degree
+resultant is promoted to derivative formal degree `n - 1` by
+`powNat f.leadingCoeff gap * resultant f d` before taking the signed exact
+quotient by `lc(f)`. This correction is essential in positive characteristic,
+where the derivative's actual degree can fall below `n - 1`; with it the
+quotient is exact over every stated exact-division domain.
 
 ## File organisation
 
