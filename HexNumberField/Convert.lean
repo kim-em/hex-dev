@@ -9,6 +9,7 @@ module
 public import HexNumberField.QAdjoin
 public import HexRowReduce
 public meta import HexNumberField.QAdjoin
+public meta import HexRowReduce
 
 public section
 
@@ -195,9 +196,11 @@ variable {p : ZPoly} {x : SimpleRoot p}
 @[expose]
 def mulMatrix (a : QAdjoin p x) :
     Matrix Rat (p.degree?.getD 0) (p.degree?.getD 0) :=
+  let n := p.degree?.getD 0
+  let products : Vector (QAdjoin p x) n := Vector.ofFn fun j =>
+    a * reduce p x (DensePoly.monomial j.val 1)
   Matrix.ofFn fun i j =>
-    let basis := reduce p x (DensePoly.monomial j.val 1)
-    (a * basis).coeffs.coeff i.val
+    products[j].coeffs.coeff i.val
 
 /-- First monic relation in the Krylov orbit of the multiplication operator,
 normalized as a primitive positive-leading integer polynomial. -/
@@ -208,11 +211,11 @@ def minpoly? [ZPoly.CheckedIrreducible p]
   let M := a.mulMatrix
   let one : Vector Rat n := Vector.unit Rat ⟨0, ZPoly.CheckedIrreducible.pos_degree⟩
   let orbit := (List.range n).foldl
-    (fun vs _ => vs.push (M * vs.getD (vs.size - 1) 0)) #[one]
+    (fun vs _ => vs.push (M * vs[vs.size - 1]!)) #[one]
   let relation := fun (k : Nat) => do
     let previous : Matrix Rat k n := Matrix.ofFn fun i j =>
-      (orbit.getD i.val 0)[j]
-    let target : Vector Rat n := orbit.getD k 0
+      orbit[i.val]![j]
+    let target : Vector Rat n := orbit[k]!
     let coeffs ← Matrix.spanCoeffs previous target
     let rational := DensePoly.ofCoeffs ((coeffs.toArray.map fun c => -c).push 1)
     some (ZPoly.ratPolyPrimitivePart rational)
@@ -235,8 +238,17 @@ def toAlgebraicNumber? [ZPoly.CheckedIrreducible p]
             let refined ← isolations.mapM DyadicRootIsolation.toRefined?
             let requested : Int := mahlerPrec q
             let target := requested + (approxGuardBits rep.1.square a.coeffs : Int)
+            -- This checked bind is deliberate: `QAdjoin.approx` has a sound
+            -- but potentially coarse fallback when refinement fails, while
+            -- root selection must fail rather than compare that wide ball.
             let threaded ← rep.refineTo? target
             let valueBall := evalRatBall a.coeffs threaded.1.1.square target
+            -- Candidate discs have radius below `sep(q)/4`; the guarded value
+            -- ball requested at `mahlerPrec q` has radius below
+            -- `sep(q)/(4*sqrt 2)`. Hence two candidates meeting it would put
+            -- distinct roots less than `2r + 2R < sep(q)` apart. The first
+            -- match is therefore unique. The precision here must follow `q`,
+            -- not the defining polynomial `p`.
             let matching ← refined.toList.find? fun r =>
               r.1.square.meetsBall valueBall
             AlgebraicNumber.ofNormalized? q hprim hpos hdegree
@@ -280,15 +292,28 @@ private def sqrtTwo : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
 private def oneAddSqrtTwo : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
   1 + sqrtTwo
 
+private def three : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
+  reduce sqrtTwoPoly sqrtTwoRoot (DensePoly.C 3)
+
 #guard
     if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
       letI : ZPoly.CheckedIrreducible sqrtTwoPoly := ⟨hirred, by decide⟩
+      let shiftedPoly : ZPoly := DensePoly.ofList [-1, -2, 1]
+      let sqrtTwoTotal := sqrtTwo.toAlgebraicNumber sqrtTwoRep rfl
       sqrtTwo.minpoly? = some sqrtTwoPoly &&
+        three.minpoly? = some (DensePoly.ofList [-3, 1]) &&
+        oneAddSqrtTwo.minpoly? = some shiftedPoly &&
+        sqrtTwoTotal.p = sqrtTwoPoly &&
+        sqrtTwoTotal.rep.1.square.discsMeet sqrtTwoSquare &&
         (match sqrtTwo.toAlgebraicNumber? sqrtTwoRep rfl with
-        | some a => a.p = sqrtTwoPoly
+        | some a => a.p = sqrtTwoPoly && a.rep.1.square.discsMeet sqrtTwoSquare
         | none => false) &&
-        oneAddSqrtTwo.minpoly? =
-          some (DensePoly.ofList ([-1, -2, 1] : List Int))
+        (match (-sqrtTwo).toAlgebraicNumber? sqrtTwoRep rfl with
+        | some a => a.p = sqrtTwoPoly && !a.rep.1.square.discsMeet sqrtTwoSquare
+        | none => false) &&
+        (match oneAddSqrtTwo.toAlgebraicNumber? sqrtTwoRep rfl with
+        | some a => a.p = shiftedPoly && decide (0 < a.rep.1.square.re)
+        | none => false)
     else
       false
 
