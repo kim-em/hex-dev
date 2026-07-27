@@ -152,7 +152,7 @@ setup_benchmark runChain n => wallCostModel n
   }
 
 /- Resultant extraction is dominated by the same Brown chain. Its scalar
-output is much larger than a machine integer at the upper rungs, so the model
+output is much larger than a machine integer at the upper rungs, so the cost-model
 again includes the Hadamard bit-growth term rather than only counting loops. -/
 setup_benchmark runResultant n => wallCostModel n
   with prep := prepInput
