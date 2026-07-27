@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexRCF.SturmReplay
+public import HexRCF.SturmCheck
 public import HexRealRoots.Chain
 public import HexPolyZ.Core
 

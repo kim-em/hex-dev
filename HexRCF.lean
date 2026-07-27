@@ -9,6 +9,7 @@ module
 public import HexRCF.Syntax
 public import HexRCF.Language
 public import HexRCF.LanguageTests
+public import HexRCF.SturmCheck
 public import HexRCF.SturmReplay
 public import HexRCF.SturmBuilder
 public import HexRCF.SturmBuilderTests

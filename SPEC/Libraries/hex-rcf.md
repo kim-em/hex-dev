@@ -585,8 +585,10 @@ free to change.
   their structural polynomial traversals; `HexRCF/Language.lean`: real-valued
   `toProp` semantics;
   `HexRCF/LanguageTests.lean`: executable language-semantics tests.
-- `HexRCF/SturmReplay.lean`: generalized multiplication-only chain
-  replay and literal root counts.
+- `HexRCF/SturmCheck.lean`: Mathlib-free generalized multiplication-only
+  replay data, executable validation, and literal root counts;
+  `HexRCF/SturmReplay.lean`: Mathlib-facing replay soundness and root-count
+  correspondence.
 - `HexRCF/SturmBuilder.lean`: compiled pseudo-remainder instrumentation that
   emits replay witnesses and retains only checker-approved candidates;
   `HexRCF/SturmBuilderTests.lean`: valid, malformed, nonprimitive, and
