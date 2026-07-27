@@ -604,9 +604,10 @@ hard invariants:
    `Hex*Mathlib.*` modules are not what this rule forbids — but per
    invariant (1) above, no bench imports them either.
 
-There is one narrow, non-computational exception. A build-only library may
-place Mathlib proof-elaboration or kernel-replay probes under
-`bench/HexFooMathlib/`. Such a probe measures a fresh module build from an
+There is one narrow, non-computational exception. A library declared
+`mathlib: true` in `libraries.yml` may place Mathlib proof-elaboration or
+kernel-replay probes under `bench/HexFoo/`, where `HexFoo` is the exact
+manifest library name. Such a probe measures a fresh module build from an
 external harness; it is not a `lean-bench` registration. It must not import
 `LeanBench`, use `setup_benchmark` or `setup_fixed_benchmark`, define `main`,
 perform an in-process timing loop, or serve as the root of any `lean_exe`.
@@ -616,23 +617,24 @@ computational benches and everything in their import closures remain
 Mathlib-free.
 
 Both invariants are enforced by
-`scripts/ci/check_benches_mathlib_free.sh`, invoked from the `build`
+`scripts/ci/check_benches_mathlib_free.py`, invoked from the `build`
 job in `ci.yml`. The script:
 
-- Globs `lakefile.lean` for `lean_exe *_bench where root := ...` to
-  enumerate bench exe roots (handles top-level roots like
-  `HexGF2Bench` as well as `Hex*/Bench` modules).
-- Walks each root's transitive `import` graph (Lean syntax allows
-  `import` only at file start, so a simple `^import ` line scan up
-  to the first non-import/non-comment line is sound).
+- Parses `lakefile.lean` for each benchmark executable's literal `root` and
+  effective `srcDir`, failing closed on missing roots or computed source
+  directories.
+- Walks each root's transitive `import` graph through repository and configured
+  package source roots, recognizing module headers, `prelude`, import
+  visibility/meta modifiers, and `import all`.
 - Fails on the first reachable `Mathlib.*` import, printing the
   offending bench root and the full chain (e.g.
   `HexPolyMathlib.Bench → HexPolyMathlib.Euclid → Mathlib.Algebra.Polynomial.FieldDivision`).
 - Globs `Hex*Mathlib/Bench.lean` and `Hex*Mathlib/Bench/` and fails
   if any such path exists.
-- Checks `bench/Hex*Mathlib/` proof-probe trees for `LeanBench` imports,
-  benchmark registrations, `main`, in-process clocks, or an executable rooted
-  at a probe module.
+- Derives proof-probe owner directories from libraries declared `mathlib: true`
+  in `libraries.yml`, then checks their `bench/<Library>/` trees for `LeanBench`
+  imports, benchmark registrations, `main`, in-process clocks, or an executable
+  rooted at a probe module.
 
 A computational bench that needs Mathlib is a category error, not an oversight
 to work around: either it is measuring through Mathlib (slow and missing the
