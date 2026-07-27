@@ -546,6 +546,7 @@ structure FactEvent (Fact : Type) where
   kind : ActionKind
   effort : Nat
   node : NodeId
+  previous : SeenVersion
   fact : Fact
   version : Nat
   rule : RuleKey
@@ -901,6 +902,8 @@ def installImprovement (action : Action) (candidate : Candidate Fact)
     throw (.malformedFact 0, none, some .acceptedFacts)
   else
     let version := state.versions[candidate.node.index]! + 1
+    let previous : SeenVersion :=
+      { node := candidate.node, version := state.versions[candidate.node.index]! }
     pure
       { state with
         facts := state.facts.set! candidate.node.index fact
@@ -912,6 +915,7 @@ def installImprovement (action : Action) (candidate : Candidate Fact)
             kind := action.kind
             effort := action.effort
             node := candidate.node
+            previous
             fact
             version
             rule := action.key

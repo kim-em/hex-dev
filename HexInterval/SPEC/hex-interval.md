@@ -755,7 +755,9 @@ required wakeup.
    into an immutable per-run payload arena. The `PayloadId` in the trace points
    into this arena, never into a mutable or evictable rule cache.
 7. The solver records the snapshot, concrete application, anchor, action kind,
-   effort, input versions, target, and frozen payload in provenance.
+   effort, input versions, target's preceding fact version, target, and frozen
+   payload in provenance. The preceding target fact is an explicit dependency
+   of intersection even when the rule did not declare that target as an input.
 
 Whether freezing is an explicit second request after the solver identifies
 the improving subset, or eager allocation before the `Outcome`, remains an
