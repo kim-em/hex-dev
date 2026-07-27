@@ -171,6 +171,82 @@ theorem subresultantOrdered_fuel_core {S : Type u}
       subresultantOrdered f g := by
   sorry
 
+/-- Extract the resultant value from an ordered nonzero Brown run. The
+corrected terminal scale is returned exactly when the last stored term is a
+nonzero constant. -/
+@[expose]
+def resultantOrdered [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (f g : DensePoly R) : R :=
+  let run := subresultantOrdered f g
+  let last := run.chain.getD (run.chain.size - 1) 0
+  if last.size = 1 then run.scale else 0
+
+/-- Executable polynomial resultant with default formal-degree conventions.
+
+Zero polynomials are treated as degree zero, so two constants (including two
+zeros) have resultant one. Reversed nonzero inputs are ordered for the Brown
+run and receive the standard degree-product sign. -/
+@[expose]
+def resultant [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (f g : DensePoly R) : R :=
+  if f.isZero then
+    if g.size ≤ 1 then 1 else 0
+  else if g.isZero then
+    if f.size ≤ 1 then 1 else 0
+  else if f.size < g.size then
+    negOnePow ((f.size - 1) * (g.size - 1)) * resultantOrdered g f
+  else
+    resultantOrdered f g
+
+/-! Compiled regression checks for resultant extraction. -/
+
+-- Linear/quadratic values, including a strict odd-degree reversal whose sign
+-- factor is `-1`.
+#guard
+    let xSub2 := ofList ([-2, 1] : List Int)
+    let xSub5 := ofList ([-5, 1] : List Int)
+    let xSqAdd1 := ofList ([1, 0, 1] : List Int)
+    let xSub1 := ofList ([-1, 1] : List Int)
+    let cubic := ofList ([-1, 0, 0, 1] : List Int)
+    resultant xSub2 xSub5 = -3 &&
+      resultant xSqAdd1 xSub1 = 2 &&
+      resultant xSub1 xSqAdd1 = 2 &&
+      resultant xSub2 cubic = 7
+
+-- Default formal degrees make zero/constant resultants total.
+#guard
+    let c2 := C (2 : Int)
+    let c3 := C (3 : Int)
+    let quadratic := ofList ([1, 0, 1] : List Int)
+    resultant 0 0 = (1 : Int) &&
+      resultant c2 0 = 1 &&
+      resultant quadratic 0 = 0 &&
+      resultant quadratic c3 = 9 &&
+      resultant c2 c3 = 1 &&
+      resultant quadratic 1 = 1
+
+-- Common roots, self-resultants, and both defective Brown drops produce their
+-- pinned values.
+#guard
+    let commonLeft := ofList ([-1, 0, 1] : List Int)
+    let commonRight := ofList ([-1, 1] : List Int)
+    let defective1 := ofList ([2, 1, 0, 2, 2] : List Int)
+    let defective2 := ofList ([1, 0, 0, 2] : List Int)
+    let nonunit1 := ofList ([0, 0, 0, 0, -1] : List Int)
+    let nonunit2 := ofList ([-1, 0, 0, 2] : List Int)
+    resultant commonLeft commonRight = 0 &&
+      resultant commonLeft commonLeft = 0 &&
+      resultant defective1 defective2 = 16 &&
+      resultant nonunit1 nonunit2 = -1
+
+-- Bivariate elimination executes the recursive exact-division instance.
+#guard
+    let t : DensePoly Int := ofList [0, 1]
+    let one : DensePoly Int := 1
+    let ySqSubT : DensePoly (DensePoly Int) := ofList [0 - t, 0, one]
+    let ySubT : DensePoly (DensePoly Int) := ofList [0 - t, one]
+    resultant ySqSubT ySubT = t * t - t
+
 /-- Both zero inputs produce the empty nonzero chain. -/
 @[simp, grind =]
 theorem subresultantChain_zero_zero [One R] [Add R] [Sub R] [Mul R] [Div R] :

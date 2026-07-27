@@ -70,12 +70,14 @@ theorem eval_resultant_default
     eval (resultant f g) a =
       Polynomial.resultant (specialize f a) (specialize g a)
 
-/-- If two bivariate polynomials vanish at `(a, b)`, their resultant in the
-    second variable vanishes at `a`. -/
+/-- If two bivariate polynomials vanish at `(a, b)` and at least one genuinely
+    has positive degree in the second variable, their resultant in that
+    variable vanishes at `a`. -/
 theorem eval_resultant_eq_zero_of_common_root
     [CommRing R] [IsDomain R] [DecidableEq R]
     [Div R] [Hex.ExactDivLaws R]
     (f g : DensePoly (DensePoly R)) (a b : R)
+    (hpos : 1 < f.size ∨ 1 < g.size)
     (hfb : evalBivariate f a b = 0) (hgb : evalBivariate g a b = 0) :
     eval (resultant f g) a = 0
 
@@ -96,12 +98,24 @@ The finite sum in `specialize` avoids requiring a Mathlib `CommRing` instance
 on `DensePoly R`; the correspondence library intentionally exposes a ring
 equivalence without installing that global instance.
 
+Consequently the bivariate specialization theorems are **not** obtained by
+instantiating `toPolynomial_resultant` with coefficient type `DensePoly R`.
+Their proofs transfer the Brown recurrence directly through coefficient
+evaluation: prove that `specialize` preserves each executable coefficientwise
+operation and exact quotient used by the chain, then identify the specialized
+recurrence with the Mathlib resultant at the original formal degrees. This
+direct map argument keeps the deliberate no-global-`CommRing (DensePoly R)`
+boundary intact.
+
 The formal degrees on `eval_resultant` are essential: specialization can erase
 a leading coefficient. For example, specializing `t` to zero in `t*y + 1` and
 `t*y - 1` drops both degrees; the default-degree resultant of the specialized
 constants is not the specialization of the original resultant. Also provide a
 default-degree corollary under hypotheses that both leading coefficients remain
-nonzero. The Stage 1 one-way vanishing theorem remains unconditional.
+nonzero. The Stage 1 one-way vanishing theorem only needs to exclude the case
+where both outer formal degrees are zero: under the project convention the
+formal-degree `(0, 0)` resultant is `1`, even when both specialized constants
+vanish.
 
 The displayed root-product formula fixes intent rather than Mathlib's final
 multiset notation. The implementation uses the pinned revision's existing
@@ -136,8 +150,11 @@ factorization, splitting, or flattening.
 2. Identify the corrected final constant with the Sylvester determinant.
 3. Compose with Mathlib's determinant definition of `Polynomial.resultant` to
    prove `toPolynomial_resultant` generically.
-4. Derive `eval_resultant`, the root-product formula, norm identities, and
-   discriminant agreement.
+4. Prove `eval_resultant` by the direct coefficient-evaluation transfer above;
+   do not instantiate the generic theorem at `DensePoly R`.
+5. Specialize Mathlib's existing `Polynomial.resultant_eq_prod_eval` for the
+   root-product formula, then derive norm identities and discriminant
+   agreement.
 
 The prior scope estimate of about 600 lines covered only Stage 1. Stage 2 is a
 substantial computer-algebra development and must be estimated from the actual

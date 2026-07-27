@@ -202,7 +202,7 @@ for developments whose source-local move has not happened yet.
 - [hex-interval-mathlib.md](hex-interval-mathlib.md): real semantics, verified propagators, proof replay, and the `interval` tactic
 - [hex-rcf.md](hex-rcf.md): the `rcf` tactic for univariate real-closed-field sentences
 - [hex-resultant](../../HexResultant/SPEC/hex-resultant.md): polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
-- [hex-resultant-mathlib.md](hex-resultant-mathlib.md): executable resultant agreement, specialization, root-product, and discriminant theorems
+- [hex-resultant-mathlib](../../HexResultantMathlib/SPEC/hex-resultant-mathlib.md): executable resultant agreement, specialization, root-product, and discriminant theorems
 - [hex-number-field.md](hex-number-field.md): `QAdjoin`, factorization-lazy `AlgebraicRoot`, canonical `AlgebraicNumber`, and algebraic-coefficient roots
 - [hex-number-field-mathlib.md](hex-number-field-mathlib.md): fixed-field correspondence, exactification, lazy arithmetic, and root completeness
 - [hex-number-field-tower.md](hex-number-field-tower.md): successive extensions, Trager factorization, splitting fields, and flattening
