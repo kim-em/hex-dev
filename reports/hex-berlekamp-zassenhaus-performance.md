@@ -127,12 +127,67 @@ timing starts after normalization and prime selection.
 
 Because lattice still loses at SD4, `levelAwareSubsetBudget` was not changed.
 The measured seam is between SD5 (`r = 16`, classical) and SD6 (`r = 32`,
-classical decline to lattice).  The scheduled-hardware Phase-4 comparator
-follow-up should record SD5 as the last classical Swinnerton-Dyer rung and SD6
-as the first lattice-backed rung; #8868 tracks wiring that evidence outside this
-spike-only workflow.  The SPEC's stricter large-`r` goal applies to that
-lattice-backed tail: hex should solve under the declared cap where the verified
-classical Isabelle BZ reference times out or is slower, not merely match it.
+classical decline to lattice). The SPEC's stricter large-`r` goal applies to
+that lattice-backed tail: hex should solve under the declared cap where the
+verified classical Isabelle BZ reference times out or is slower, not merely
+match it.
+
+### Scheduled Swinnerton-Dyer seam comparator (#8868)
+
+The SD5/SD6 seam is now recorded outside the spike-only workflow by the
+scheduled factor-sweep systems:
+
+- `hex-factor`: production cost-based `factor` hybrid.
+- `hex-lattice`: lattice tier service.
+- `hex-classical-nodecline`: classical recombination with the early lattice
+  decline disabled.
+- `isabelle-bz`: verified classical Isabelle/AFP BZ reference.
+
+The traceable artefact is
+`reports/bench-results/hexbz-factor-sweep-bc958d84-carica.json`, SHA-256
+`a1452db9f3aa4d9c86c6ece4a716d17483f3734caf632c5baf9085a8e463ce23`.
+It was recorded on `carica` (Apple M2 Ultra, macOS/darwin arm64, 24 cores)
+at `2026-07-03T08:22:20Z`, commit
+`bc958d84c72236948ebc96eaaed44e9cfecd05c8` with a dirty worktree, using
+toolchain `leanprover/lean4:v4.32.0-rc1` and AFP release
+`afp-2026-05-29`. The corpus was
+`bench/corpus/hexbz-factor-corpus.jsonl`, SHA-256
+`0ef7574769d9161d8e3bda3b8c193b05191d75b4b473279520db4513e533b2df`.
+The declared cap was `--cutoff 10` seconds per system/instance; the sweep used
+median-of-5 for first calls under 1s and a single call otherwise. Its
+`cross_check` block has `ok: true` and an empty `mismatches` list, so all
+systems that solved a shared instance agreed on the factor-degree multiset.
+
+Sweep command:
+
+```sh
+python3 scripts/bench/factor_sweep.py \
+    --systems hex-factor,hex-lattice,hex-fast,hex-classical-nodecline,flint,ntl,pari,isabelle-bz,isabelle-lll \
+    --cutoff 10 \
+    --no-early-terminate \
+    --skip-unavailable
+```
+
+Relevant result rows:
+
+| rung | degree | measured `r` | system | status | median | factor count | verdict |
+| --- | ---: | ---: | --- | --- | ---: | ---: | --- |
+| SD5 | 32 | 16 | `hex-factor` | `ok` | 331.832 ms | 1 | production hybrid stays classical and solves |
+| SD5 | 32 | 16 | `hex-classical-nodecline` | `ok` | 335.010 ms | 1 | classical side solves under cap |
+| SD5 | 32 | 16 | `hex-lattice` | `ok` | 508.589 ms | 1 | lattice side solves, slower than classical at the seam |
+| SD5 | 32 | 16 | `isabelle-bz` | `ok` | 30.562 ms | 1 | verified classical reference solves; no tail timeout yet |
+| SD6 | 64 | 32 | `hex-factor` | `timeout` | -- | -- | production hybrid did not finish inside this 10s sweep cap |
+| SD6 | 64 | 32 | `hex-classical-nodecline` | `timeout` | -- | -- | classical no-decline hits the exponential wall |
+| SD6 | 64 | 32 | `hex-lattice` | `ok` | 8922.642 ms | 1 | lattice-backed tier solves under the declared cap |
+| SD6 | 64 | 32 | `isabelle-bz` | `timeout` | -- | -- | verified classical reference has no finite wall-clock ratio |
+
+This is the scheduled-hardware comparator evidence for the seam. SD5 is still a
+small/medium-`r` classical rung: the verified classical Isabelle BZ reference is
+faster than hex on this input, so the row is a regime marker rather than a
+large-tail win. SD6 is the first recorded lattice-backed rung: `hex-lattice`
+solves under the 10s cap while `isabelle-bz` and
+`hex-classical-nodecline` both time out, so the result is recorded as
+solved-under-cap versus timeout rather than as a finite wall-clock ratio.
 
 ### Per-call comparator overhead
 
