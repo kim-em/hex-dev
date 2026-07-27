@@ -96,13 +96,6 @@ the fallback is unreachable in the current implementation. -/
 
 namespace Component
 
-/-- A Taylor shift cached at a component's enclosing-square centre. The
-    equality field prevents coefficient-level certification kernels from being
-    called with a shift from another centre. -/
-structure PelletShift (p : ZPoly) (c : Component) where
-  coeffs : Array GaussDyadic
-  valid : coeffs = taylor p (encSquare c.squares).center
-
 /-- One subdivision round: split every square into four children one bit
     finer, discard children whose disc certifiably contains no root (the
     `T₀` test; a child whose `T₀` test fails to certify is kept, which is
@@ -132,23 +125,23 @@ lineages. -/
     cached Taylor shift at the component's enclosing-square centre. The proof
     argument ties the cache to that centre; it is erased from compiled code. -/
 @[expose] def certifyPelletAtShift? (p : ZPoly) (c : Component)
-    (shift : PelletShift p c)
+    (shift : TaylorShift p (encSquare c.squares).center)
     (k : Nat) : Option (Certified p) :=
   let enc := encSquare c.squares
   if hk : 0 < k then
-    if hw : Taylor.witnessCheck shift.coeffs enc k = true then
+    if hw : TaylorShift.witnessCheck enc shift k = true then
       have hw₀ : witnessCheck p enc k = true := by
-        simpa [witnessCheck, shift.valid] using hw
+        simpa using hw
       let cluster : DyadicRootCluster p := ⟨c.squares, k, hk, hw₀⟩
       let base : Certified p :=
         if hk1 : k = 1 then .atom (cluster.atomize hk1) else .cluster cluster
-      let s' := Taylor.newtonSquare shift.coeffs enc k
+      let s' := TaylorShift.newtonSquare enc shift k
       if _hins : (encSquare #[s']).discInside enc = true then
         let cand := encSquare #[s']
-        let cs' := taylor p cand.center
-        if hw' : Taylor.witnessCheck cs' cand k = true then
+        let shift' := TaylorShift.compute p cand.center
+        if hw' : TaylorShift.witnessCheck cand shift' k = true then
           have hw₀' : witnessCheck p cand k = true := by
-            simpa [witnessCheck] using hw'
+            simpa using hw'
           let cluster' : DyadicRootCluster p := ⟨#[s'], k, hk, hw₀'⟩
           if hk1 : k = 1 then some (.atom (cluster'.atomize hk1))
           else some (.cluster cluster')
@@ -161,13 +154,13 @@ lineages. -/
     shift once and passes it to the cached implementation. -/
 @[expose] def certifyPelletAt? (p : ZPoly) (c : Component)
     (k : Nat) : Option (Certified p) :=
-  let shift : PelletShift p c := ⟨taylor p (encSquare c.squares).center, rfl⟩
+  let shift := TaylorShift.compute p (encSquare c.squares).center
   certifyPelletAtShift? p c shift k
 
 /-- First successful Pellet certificate in a candidate-count list, reusing
     one enclosing-centre Taylor shift for every failed count. -/
 @[expose] def certifyPelletListShift? (p : ZPoly) (c : Component)
-    (shift : PelletShift p c)
+    (shift : TaylorShift p (encSquare c.squares).center)
     : List Nat → Option (Certified p)
   | [] => none
   | k :: ks => (certifyPelletAtShift? p c shift k).orElse
@@ -178,16 +171,22 @@ lineages. -/
     shift for its witness recheck. -/
 @[expose] def certifyPelletList? (p : ZPoly) (c : Component)
     (ks : List Nat) : Option (Certified p) :=
-  let shift : PelletShift p c := ⟨taylor p (encSquare c.squares).center, rfl⟩
+  let shift := TaylorShift.compute p (encSquare c.squares).center
   certifyPelletListShift? p c shift ks
 
-/-- The Pellet half of component certification, factored from `certify?` so
-its base and speculative same-count branches have a narrow correspondence
-theorem in the Mathlib companion. -/
-@[expose] def certifyPellet? (p : ZPoly) (c : Component) : Option (Certified p) :=
+/-- The Pellet half of component certification using a supplied shift. -/
+@[expose] def certifyPelletShift? (p : ZPoly) (c : Component)
+    (shift : TaylorShift p (encSquare c.squares).center) : Option (Certified p) :=
   let deg := p.degree?.getD 0
   let ks := #[c.candidateK] ++ ((Array.range (deg + 1)).filter (· != c.candidateK))
-  certifyPelletList? p c ks.toList
+  certifyPelletListShift? p c shift ks.toList
+
+/-- The public Pellet half of component certification. This proof-facing
+    compatibility surface computes its own shift; `certify?` supplies the
+    already-cached shift to `certifyPelletShift?`. -/
+@[expose] def certifyPellet? (p : ZPoly) (c : Component) : Option (Certified p) :=
+  let shift := TaylorShift.compute p (encSquare c.squares).center
+  certifyPelletShift? p c shift
 
 /-- Try to certify the component. Per `strategy`, first the
     Newton-Kantorovich atom witness on the doubled enclosing square (with a
@@ -201,23 +200,23 @@ theorem in the Mathlib companion. -/
 @[expose] def certify? (p : ZPoly) (strategy : AtomStrategy := .nkThenPellet)
     (c : Component) : Option (Certified p) := Id.run do
   let enc := encSquare c.squares
+  let shift := TaylorShift.compute p enc.center
   -- Newton-Kantorovich attempt, on the doubled enclosing square.
   match strategy with
   | .nk | .nkThenPellet =>
     let base := enc.doubled
-    let cs := taylor p base.center
-    if h : Taylor.nkWitnessCheck cs base = true then
+    if h : TaylorShift.nkWitnessCheck base shift = true then
       have h₀ : nkWitnessCheck p base = true := by
-        simpa [nkWitnessCheck] using h
+        simpa using h
       -- `base` certifies; try to sharpen with a speculative Newton jump,
       -- accepted only when the recentred square stays inside `base` and
       -- certifies in the same (NK) form.
-      let cand := (Taylor.newtonSquare cs base 1).doubled
+      let cand := (TaylorShift.newtonSquare base shift 1).doubled
       if cand.squareInside base = true then
-        let cs' := taylor p cand.center
-        if h' : Taylor.nkWitnessCheck cs' cand = true then
+        let shift' := TaylorShift.compute p cand.center
+        if h' : TaylorShift.nkWitnessCheck cand shift' = true then
           have h₀' : nkWitnessCheck p cand = true := by
-            simpa [nkWitnessCheck] using h'
+            simpa using h'
           return some (.atom ⟨cand, Or.inl h₀'⟩)
       return some (.atom ⟨base, Or.inl h₀⟩)
   | .pellet => pure ()
@@ -228,7 +227,11 @@ theorem in the Mathlib companion. -/
   | .pellet | .nkThenPellet =>
     let wide : Component :=
       { squares := #[enc.doubled.doubled], candidateK := c.candidateK }
-    return certifyPellet? p wide
+    let wideCenter := (encSquare wide.squares).center
+    let wideShift : TaylorShift p wideCenter :=
+      if hcenter : enc.center = wideCenter then shift.cast hcenter
+      else TaylorShift.compute p wideCenter
+    return certifyPelletShift? p wide wideShift
   | .nk => pure ()
   return none
 

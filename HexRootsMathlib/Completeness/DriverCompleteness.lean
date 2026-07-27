@@ -88,12 +88,10 @@ private theorem certifyPelletAt_one {p : Hex.ZPoly} {c : Hex.Component}
       Hex.Component.certifyPelletAt? p c 1 = some (.atom iso) ∧
         (Hex.encSquare c.squares).prec ≤ iso.square.prec := by
   simp only [Hex.witness] at hbase
-  have hbase' : Hex.Taylor.witnessCheck
-      (Hex.taylor p (Hex.encSquare c.squares).center) (Hex.encSquare c.squares) 1 = true := by
-    simpa [Hex.witnessCheck] using hbase
   unfold Hex.Component.certifyPelletAt?
   unfold Hex.Component.certifyPelletAtShift?
-  simp only [Nat.zero_lt_one, ↓reduceDIte, hbase']
+  simp only [Nat.zero_lt_one, ↓reduceDIte,
+    Hex.TaylorShift.witnessCheck_eq, hbase]
   split <;> rename_i hins
   · split <;> rename_i hcand
     · refine ⟨_, rfl, ?_⟩
@@ -104,8 +102,8 @@ private theorem certifyPelletAt_one {p : Hex.ZPoly} {c : Hex.Component}
 private theorem newtonCandidate_prec {p : Hex.ZPoly} {s : Hex.DyadicSquare}
     (hsize : 1 < p.size) :
     s.prec ≤ (Hex.newtonSquare p s 1).doubled.prec := by
-  simp [Hex.newtonSquare, Hex.Taylor.newtonSquare, Hex.taylor_size,
-    show ¬p.size < 2 by omega]
+  simp [Hex.newtonSquare, Hex.TaylorShift.newtonSquare,
+    Hex.TaylorShift.compute, Hex.taylor_size, show ¬p.size < 2 by omega]
 
 /-- A checked NK base makes the NK-only prefix return an atom without losing
 stored precision. -/
@@ -499,23 +497,37 @@ theorem certify_pellet_of_glueCovered {p : Hex.ZPoly}
   have hwitness' : Hex.witness p (Hex.encSquare wc.squares) 1 := by
     simpa [wc] using hwitness
   obtain ⟨iso, hat, hisoPrec⟩ := certifyPelletAt_one hwitness'
-  have hsearch : Hex.Component.certifyPellet? p wc = some (.atom iso) := by
+  have hsearch : Hex.Component.certifyPelletShift? p wc
+      (Hex.TaylorShift.compute p (Hex.encSquare wc.squares).center) =
+        some (.atom iso) := by
     have hat' : Hex.Component.certifyPelletAtShift? p wc
-        ⟨Hex.taylor p (Hex.encSquare wc.squares).center, rfl⟩ 1 = some (.atom iso) := by
+        (Hex.TaylorShift.compute p (Hex.encSquare wc.squares).center) 1 = some (.atom iso) := by
       simpa [Hex.Component.certifyPelletAt?] using hat
     have hlist (ks : List Nat) :
-        Hex.Component.certifyPelletList? p wc (1 :: ks) = some (.atom iso) := by
-      unfold Hex.Component.certifyPelletList?
+        Hex.Component.certifyPelletListShift? p wc
+            (Hex.TaylorShift.compute p (Hex.encSquare wc.squares).center) (1 :: ks) =
+          some (.atom iso) := by
       rw [Hex.Component.certifyPelletListShift?.eq_def]
       simp only
       rw [hat']
       rfl
-    unfold Hex.Component.certifyPellet?
+    unfold Hex.Component.certifyPelletShift?
     simpa using hlist
       (((Array.range (p.degree?.getD 0 + 1)).filter (· != wc.candidateK)).toList)
   have hcert : Hex.Component.certify? p .pellet ⟨component, 1⟩ =
       some (.atom iso) := by
-    simpa [Hex.Component.certify?, enc, wide, wc] using hsearch
+    let shift := Hex.TaylorShift.compute p enc.center
+    let wideCenter := (Hex.encSquare wc.squares).center
+    let wideShift : Hex.TaylorShift p wideCenter :=
+      if hcenter : enc.center = wideCenter then shift.cast hcenter
+      else Hex.TaylorShift.compute p wideCenter
+    have hwideShift : wideShift =
+        Hex.TaylorShift.compute p (Hex.encSquare wc.squares).center :=
+      Subsingleton.elim _ _
+    have hsearch' : Hex.Component.certifyPelletShift? p wc wideShift =
+        some (.atom iso) := by simpa [hwideShift] using hsearch
+    simpa [Hex.Component.certify?, enc, wide, wc, shift, wideCenter, wideShift]
+      using hsearch'
   have hleaf : (Hex.separationDepth p : Int) ≤ prec := by omega
   have henc := encSquare_prec_of_glueCovered hp hsize hsep hleaf hprec hkeep hc
   have hwideTarget : target ≤ wide.prec := by

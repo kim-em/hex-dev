@@ -32,13 +32,15 @@ precision choices here, only the success rate does.
 -/
 namespace Hex
 
-namespace Taylor
+namespace TaylorShift
 
 /-- Speculative Newton step from already-computed Taylor coefficients. The
     caller is responsible for supplying the shift at `s.center`; this kernel
     exists so certification can reuse the shift that established its base
     witness. -/
-@[expose] def newtonSquare (cs : Array GaussDyadic) (s : DyadicSquare) (k : Nat) : DyadicSquare :=
+@[expose] def newtonSquare {p : ZPoly} (s : DyadicSquare)
+    (shift : TaylorShift p s.center) (k : Nat) : DyadicSquare :=
+  let cs := shift.coeffs
   if cs.size < 2 then s else
   let c0 := cs.getD 0 (0, 0)
   let c1 := cs.getD 1 (0, 0)
@@ -73,7 +75,7 @@ namespace Taylor
     im := (s.im - t.2 * inv).roundDown (prec' + 3),
     prec := prec' }
 
-end Taylor
+end TaylorShift
 
 /-- Speculative Newton step `x' = x − k·c₀/c₁` from the centre of `s`,
     returning the recentred, much smaller square at
@@ -84,7 +86,15 @@ end Taylor
     the centre is returned unchanged (`x' = x`) at the finer `prec'`. Either
     way the degenerate result is rejected by the re-check. -/
 @[expose] def newtonSquare (p : ZPoly) (s : DyadicSquare) (k : Nat) : DyadicSquare :=
-  Taylor.newtonSquare (taylor p s.center) s k
+  TaylorShift.newtonSquare s (TaylorShift.compute p s.center) k
+
+/-- The centre-indexed coefficient kernel is exactly the public polynomial
+    Newton step. -/
+@[simp] theorem TaylorShift.newtonSquare_eq {p : ZPoly} (s : DyadicSquare)
+    (shift : TaylorShift p s.center) (k : Nat) :
+    TaylorShift.newtonSquare s shift k = _root_.Hex.newtonSquare p s k := by
+  rw [TaylorShift.newtonSquare, _root_.Hex.newtonSquare, shift.valid]
+  rfl
 
 /-- The square concentric with `s`, one level coarser (half-width doubled).
     The Newton-Kantorovich certification convention tests and stores this. -/

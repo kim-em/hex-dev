@@ -92,18 +92,19 @@ theorem two_lt_sqrt2Hi_sq : 2 < sqrt2Hi * sqrt2Hi := by decide
   else
     false
 
-namespace Taylor
+namespace TaylorShift
 
 /-- Three-radius strong Pellet check from an already-computed Taylor shift.
     Keeping this coefficient-level kernel separate lets a certifier test every
     candidate root count at one centre without repeating the quadratic Taylor
     shift. -/
-@[expose] def witnessCheck (cs : Array GaussDyadic) (s : DyadicSquare) (k : Nat) : Bool :=
-  pelletAt cs k s.radiusLo s.radiusHi
-    && pelletAt cs k (s.radiusLo <<< (1 : Int)) (s.radiusHi <<< (1 : Int))
-    && pelletAt cs k (s.radiusLo <<< (2 : Int)) (s.radiusHi <<< (2 : Int))
+@[expose] def witnessCheck {p : ZPoly} (s : DyadicSquare)
+    (shift : TaylorShift p s.center) (k : Nat) : Bool :=
+  pelletAt shift.coeffs k s.radiusLo s.radiusHi
+    && pelletAt shift.coeffs k (s.radiusLo <<< (1 : Int)) (s.radiusHi <<< (1 : Int))
+    && pelletAt shift.coeffs k (s.radiusLo <<< (2 : Int)) (s.radiusHi <<< (2 : Int))
 
-end Taylor
+end TaylorShift
 
 /-- Three-radius strong Pellet check for `k` roots (with multiplicity) in
     the circumscribed disc of `s`: the exact Taylor coefficients of `p` at
@@ -111,7 +112,15 @@ end Taylor
     4× the base radius (the radius bounds shifted left by 1 and 2). This is
     BSSY's Newton-readiness condition. -/
 @[expose] def witnessCheck (p : ZPoly) (s : DyadicSquare) (k : Nat) : Bool :=
-  Taylor.witnessCheck (taylor p s.center) s k
+  TaylorShift.witnessCheck s (TaylorShift.compute p s.center) k
+
+/-- The centre-indexed coefficient kernel is exactly the public polynomial
+    witness check. -/
+@[simp] theorem TaylorShift.witnessCheck_eq {p : ZPoly} (s : DyadicSquare)
+    (shift : TaylorShift p s.center) (k : Nat) :
+    TaylorShift.witnessCheck s shift k = _root_.Hex.witnessCheck p s k := by
+  rw [TaylorShift.witnessCheck, _root_.Hex.witnessCheck, shift.valid]
+  rfl
 
 /-- Strong Pellet witness: with `(c₀, …, c_n)` the exact Taylor
     coefficients of `p` at the centre of `s`, and `ρlo, ρhi` the dyadic
@@ -129,7 +138,10 @@ instance {p : ZPoly} {s : DyadicSquare} {k : Nat} : Decidable (witness p s k) :=
 
 /-- Single-radius `T_0` exclusion: the circumscribed disc of `s`
     certifiably contains no root of `p`, i.e. `lo(c₀) > Σ_{i ≥ 1} hi(c_i)·ρhi^i`
-    (the `rlo^0 = 1` power makes the base radius bound `rlo` unused). -/
+    (the `rlo^0 = 1` power makes the base radius bound `rlo` unused). This
+    fires more often than the three-radius `witness _ _ 0`; discarding a
+    square during refinement needs certification while keeping one is always
+    sound, so refinement uses this. -/
 @[expose] def rootFree (p : ZPoly) (s : DyadicSquare) : Bool :=
   pelletAt (taylor p s.center) 0 s.radiusLo s.radiusHi
 

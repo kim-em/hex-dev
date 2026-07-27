@@ -94,9 +94,9 @@ theorem witness_iff (p : Hex.ZPoly) (s : Hex.DyadicSquare) :
       0 < normSq p s ∧
       y p s + z1 p s * radius s + z2 p s * halfRadiusSq s < radius s ∧
       z1 p s + z2 p s * radius s < 1 := by
-  simp only [Hex.nkWitness, Hex.nkWitnessCheck, Hex.Taylor.nkWitnessCheck,
-    coeffs, c1, normSq, invPrec, inverse, residual, y, z1, z2Sum, z2, radius,
-    halfRadiusSq]
+  simp only [Hex.nkWitness, Hex.nkWitnessCheck, Hex.TaylorShift.nkWitnessCheck,
+    Hex.TaylorShift.compute, coeffs, c1, normSq, invPrec, inverse, residual, y,
+    z1, z2Sum, z2, radius, halfRadiusSq]
   split <;> rename_i hsize
   · simp only [Bool.and_eq_true, decide_eq_true_eq]
     constructor

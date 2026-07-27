@@ -195,7 +195,7 @@ theorem Dyadic.invFloor_eq_invAtPrec_of_pos {x : Dyadic} (hx : 0 < x) (q : Int) 
       rw [← hpows] at hltmul
       grind
 
-namespace Taylor
+namespace TaylorShift
 
 /-- The Newton-Kantorovich contraction check from an already-computed Taylor
     shift on the closed square `s` itself (sup norm), with `r = 2^{−s.prec}`
@@ -208,7 +208,9 @@ namespace Taylor
     It then returns the conjunction of the three strict exact-dyadic
     comparisons `0 < normSq c₁`, `y + z₁·r + z₂·r²/2 < r`, and
     `z₁ + z₂·r < 1`. -/
-@[expose] def nkWitnessCheck (cs : Array GaussDyadic) (s : DyadicSquare) : Bool :=
+@[expose] def nkWitnessCheck {p : ZPoly} (s : DyadicSquare)
+    (shift : TaylorShift p s.center) : Bool :=
+  let cs := shift.coeffs
   if 2 ≤ cs.size then
     let c₁ := cs.getD 1 (0, 0)
     let nsq := GaussDyadic.normSq c₁
@@ -238,12 +240,20 @@ namespace Taylor
   else
     false
 
-end Taylor
+end TaylorShift
 
 /-- The Newton-Kantorovich contraction check on the closed square `s` itself,
     using the exact Taylor shift of `p` at `s.center`. -/
 @[expose] def nkWitnessCheck (p : ZPoly) (s : DyadicSquare) : Bool :=
-  Taylor.nkWitnessCheck (taylor p s.center) s
+  TaylorShift.nkWitnessCheck s (TaylorShift.compute p s.center)
+
+/-- The centre-indexed coefficient kernel is exactly the public polynomial
+    Newton–Kantorovich check. -/
+@[simp] theorem TaylorShift.nkWitnessCheck_eq {p : ZPoly} (s : DyadicSquare)
+    (shift : TaylorShift p s.center) :
+    TaylorShift.nkWitnessCheck s shift = _root_.Hex.nkWitnessCheck p s := by
+  rw [TaylorShift.nkWitnessCheck, _root_.Hex.nkWitnessCheck, shift.valid]
+  rfl
 
 /-- Newton-Kantorovich contraction witness on the closed square `s` itself
     (sup norm), with `r = 2^{−s.prec}` the half-width and `y, z₁, z₂` the exact
