@@ -531,5 +531,5 @@ libraries:
   HexRCF:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 3
     status: active
