@@ -1407,6 +1407,33 @@ theorem toReal_le_toReal {a b : Dyadic} (h : a ≤ b) :
   unfold Dyadic.toReal
   exact_mod_cast h2
 
+/-- Dyadic order coincides with the order of the real values. -/
+theorem toReal_lt_toReal_iff {a b : Dyadic} :
+    Dyadic.toReal a < Dyadic.toReal b ↔ a < b := by
+  unfold Dyadic.toReal
+  rw [Rat.cast_lt, Dyadic.toRat_lt_toRat_iff]
+
+/-- The real value of an interval's exact dyadic midpoint. -/
+theorem toReal_midpoint (I : Hex.DyadicInterval) :
+    Dyadic.toReal I.midpoint =
+      (Dyadic.toReal I.lower + Dyadic.toReal I.upper) / 2 := by
+  unfold Hex.DyadicInterval.midpoint
+  rw [toReal_shiftRight, toReal_add]
+  norm_num
+  ring
+
+/-- The midpoint is strictly above the lower endpoint. -/
+theorem lower_lt_midpoint (I : Hex.DyadicInterval) : I.lower < I.midpoint := by
+  rw [← toReal_lt_toReal_iff, toReal_midpoint]
+  have := toReal_lt_toReal I.lt
+  linarith
+
+/-- The midpoint is strictly below the upper endpoint. -/
+theorem midpoint_lt_upper (I : Hex.DyadicInterval) : I.midpoint < I.upper := by
+  rw [← toReal_lt_toReal_iff, toReal_midpoint]
+  have := toReal_lt_toReal I.lt
+  linarith
+
 /-- **Sturm count correspondence.** For positive-degree, rationally squarefree
 `p`, the executable `Hex.sturmCount p I` equals the number of real roots of
 `toPolyℝ p` in the half-open interval `(I.lower, I.upper]`. -/
