@@ -96,10 +96,39 @@ def powNat [One R] [Mul R] (x : R) (n : Nat) : R :=
 termination_by n
 decreasing_by omega
 
+/-- Iterating a lightweight-semiring power multiplies its exponents. -/
+private theorem pow_pow {S : Type u} [Lean.Grind.Semiring S]
+    (x : S) (m n : Nat) : (x ^ m) ^ n = x ^ (m * n) := by
+  induction n with
+  | zero => simp [Lean.Grind.Semiring.pow_zero]
+  | succ n ih =>
+      rw [Lean.Grind.Semiring.pow_succ, ih,
+        ← Lean.Grind.Semiring.pow_add]
+      congr 1
+
 /-- The executable binary power agrees with the lightweight semiring power. -/
 theorem powNat_eq_pow {S : Type u} [Lean.Grind.Semiring S]
     (x : S) (n : Nat) : powNat x n = x ^ n := by
-  sorry
+  induction n using Nat.strongRecOn generalizing x with
+  | ind n ih =>
+      rw [powNat]
+      by_cases hn : n = 0
+      · subst n
+        simp [Lean.Grind.Semiring.pow_zero]
+      · rw [if_neg hn]
+        have hlt : n / 2 < n :=
+          Nat.div_lt_self (Nat.pos_of_ne_zero hn) (by decide : 1 < 2)
+        rw [ih (n / 2) hlt (x * x)]
+        have hdiv := Nat.mod_add_div n 2
+        by_cases heven : n % 2 = 0
+        · rw [if_pos heven, ← Lean.Grind.Semiring.pow_two, pow_pow]
+          congr 1
+          omega
+        · rw [if_neg heven, ← Lean.Grind.Semiring.pow_two, pow_pow,
+            ← Lean.Grind.Semiring.pow_succ]
+          congr 1
+          have hmod := Nat.mod_lt n (by decide : 0 < 2)
+          omega
 
 /-- Brown's scalar update `x^n / y^(n-1)`, with the same total zero behavior
 as `exactDiv`. -/

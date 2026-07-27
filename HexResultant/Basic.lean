@@ -42,7 +42,7 @@ for the degree-ordered case.
 -/
 namespace Hex.DensePoly
 
-universe u
+universe u v w
 
 variable {R : Type u} [Zero R] [DecidableEq R]
 
@@ -127,6 +127,14 @@ theorem pseudoDivMod_of_size_lt [One R] [Add R] [Sub R] [Mul R]
     (isZero_eq_false_iff g).2 (by omega)
   simp [pseudoDivMod, hg, h]
 
+/-- A fold that appends one value per input has the expected output size. -/
+private theorem size_foldl_push {A : Type v} {B : Type w}
+    (xs : Array A) (init : Array B)
+    (f : A → B) :
+    (xs.foldl (fun acc x => acc.push (f x)) init).size = init.size + xs.size := by
+  rw [Array.foldl_push_eq_append (stop := xs.size) rfl]
+  simp
+
 /-- Pseudo-division reconstructs the fixed leading-coefficient multiple of the dividend.
 
 This theorem deliberately uses a fresh coefficient type: an ambient `Zero`
@@ -144,7 +152,21 @@ theorem pseudoDivMod_remainder_lt_core {S : Type u}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (f g : DensePoly S) (hg : g ≠ 0) (hfg : g.size ≤ f.size) :
     (pseudoDivMod f g).2.size < g.size := by
-  sorry
+  have hgpos : 0 < g.size := by
+    apply Nat.pos_of_ne_zero
+    intro hsize
+    apply hg
+    apply ext_coeff
+    intro i
+    rw [coeff_zero]
+    exact coeff_eq_zero_of_size_le g (by omega)
+  have hgzero : g.isZero = false := (isZero_eq_false_iff g).2 hgpos
+  simp only [pseudoDivMod, hgzero, Bool.false_eq_true, ↓reduceIte,
+    Nat.not_lt_of_ge hfg]
+  exact Nat.lt_of_le_of_lt (size_ofCoeffs_le _) (by
+    rw [size_foldl_push]
+    simp only [Array.size_empty, Array.size_range]
+    omega)
 
 /-! Small compiled regressions for the pseudo-division loop. -/
 

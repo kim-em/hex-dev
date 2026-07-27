@@ -108,13 +108,15 @@ theorem coeff_toPolynomialAt (f : DensePoly (QAdjoin p x))
 
 /-- Fixed-field executable zero detection agrees with semantic polynomial
 zero. -/
-theorem poly_isZero_iff (f : DensePoly (QAdjoin p x))
+theorem poly_isZero_iff [ZPoly.CheckedIrreducible p]
+    (f : DensePoly (QAdjoin p x))
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
     f.isZero ↔ QAdjoin.toPolynomialAt f rep h = 0 := by
   sorry
 
 /-- A nonzero fixed-field polynomial has the expected semantic degree. -/
-theorem natDegree_toPolynomialAt (f : DensePoly (QAdjoin p x))
+theorem natDegree_toPolynomialAt [ZPoly.CheckedIrreducible p]
+    (f : DensePoly (QAdjoin p x))
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x)
     (hf : !f.isZero) :
     (QAdjoin.toPolynomialAt f rep h).natDegree = f.degree?.getD 0 := by
