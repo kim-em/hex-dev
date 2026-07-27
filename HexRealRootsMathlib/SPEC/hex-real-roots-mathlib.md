@@ -132,7 +132,8 @@ theorem squareFreeRat_of_hasSquarefreeSturmChain
 bridges (`coeff_toPolyℝ` / `coeff_toPolyℚ`, `eval_toPolyℝ` /
 `eval_toPolyℚ`) rewrite a root goal on a literal `ofCoeffs` to an explicit
 polynomial equation, and `toReal_ofInt_shiftRight` normalizes `n / 2ⁱ`
-dyadic endpoints.
+dyadic endpoints. `evalSign_zero_iff` packages exact dyadic Horner evaluation
+as the reusable equivalence between zero sign and a real root at the endpoint.
 
 ### Literal-chain replay API
 

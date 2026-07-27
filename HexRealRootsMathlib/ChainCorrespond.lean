@@ -178,6 +178,29 @@ theorem sign_dyadicSign (d : Dyadic) :
         rw [show ((1 : Int) : ℝ) = 1 by norm_num,
           sign_pos (mul_pos (by exact_mod_cast hpos) h2), sign_pos (by norm_num)]
 
+/-- Exact dyadic Horner evaluation has zero sign exactly at a real root. -/
+theorem evalSign_zero_iff (p : Hex.ZPoly) (x : Dyadic) :
+    Hex.dyadicSign (p.evalDyadic x) = 0 ↔
+      (toPolyℝ p).IsRoot (Dyadic.toReal x) := by
+  have hs : SignType.sign ((Hex.dyadicSign (p.evalDyadic x) : ℝ)) =
+      SignType.sign (Dyadic.toReal (p.evalDyadic x)) := sign_dyadicSign _
+  constructor
+  · intro h
+    rw [h] at hs
+    simp only [Int.cast_zero, sign_zero] at hs
+    have h0 : Dyadic.toReal (p.evalDyadic x) = 0 := sign_eq_zero_iff.mp hs.symm
+    rw [toReal_evalDyadic] at h0
+    exact h0
+  · intro h
+    have h0 : Dyadic.toReal (p.evalDyadic x) = 0 := by
+      rw [toReal_evalDyadic]
+      exact h
+    rw [h0] at hs
+    simp only [sign_zero] at hs
+    have hz : ((Hex.dyadicSign (p.evalDyadic x) : Int) : ℝ) = 0 :=
+      sign_eq_zero_iff.mp hs
+    exact_mod_cast hz
+
 /-- Filtering the real casts by nonzero commutes with filtering the integers by
 nonzero: casting to `ℝ` neither creates nor destroys zero entries. -/
 private theorem filter_map_ne_zero (l : List Int) :
