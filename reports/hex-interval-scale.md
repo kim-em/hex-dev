@@ -58,8 +58,8 @@ five compiled modes:
 All list-derived structural limits are computed once, outside the timed loops;
 the parity variants inside a loop are constant-time record updates. Both parity
 outcomes are asserted before timing. For fact-table `early` cases, the driver
-appends one valid irrelevant source
-fact and caps the table at the original length. The original selected result
+appends one valid irrelevant source fact and caps the table at the original
+length. The original selected result
 therefore remains in range, and rejection occurs only when `lengthWithin`
 encounters the extra constructor. This avoids accidentally measuring the
 constant-time result-index guard.
@@ -83,7 +83,8 @@ for theorem modules. The harness invokes Lean only through Lake and never uses
 Reproduce the record with:
 
 ```sh
-python3 scripts/bench/interval_scale_sweep.py --samples 5 --target-ms 250
+python3 scripts/bench/interval_scale_sweep.py --samples 5 --target-ms 250 \
+  --max-calibration-rounds 12
 ```
 
 ## Compiled results
@@ -93,17 +94,19 @@ of each family.
 
 | Family | Dimension | Build | Accept | One step short | Bad tail | Early cap |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| dead nodes | 9 → 2000 nodes | 0.095 → 29.062 | 4.820 → 14.294 | 4.696 → 14.178 | 4.782 → 14.127 | 0.041 → 5.617 |
-| adjacent | 10 → 500 facts | 0.120 → 14.155 | 4.842 → 51.373 | 4.695 → 51.284 | 4.832 → 50.673 | 0.049 → 1.413 |
-| far | 10 → 500 facts | 0.107 → 4.265 | 4.794 → 164.169 | 4.665 → 165.177 | 4.792 → 163.465 | 0.049 → 1.409 |
-| source pad | 10 → 500 facts | 0.110 → 3.905 | 4.812 → 44.648 | 4.706 → 44.699 | 4.754 → 44.818 | 0.050 → 1.419 |
+| dead nodes | 9 → 2000 nodes | 0.101 → 27.617 | 4.780 → 12.572 | 4.693 → 12.390 | 4.764 → 12.385 | 0.022 → 1.871 |
+| adjacent | 10 → 500 facts | 0.124 → 12.757 | 4.787 → 49.327 | 4.647 → 48.914 | 4.725 → 49.013 | 0.032 → 0.480 |
+| far | 10 → 500 facts | 0.106 → 3.993 | 4.767 → 163.124 | 4.701 → 162.496 | 4.709 → 162.593 | 0.032 → 0.479 |
+| source pad | 10 → 500 facts | 0.111 → 3.917 | 4.752 → 42.731 | 4.682 → 42.287 | 4.789 → 42.530 | 0.033 → 0.480 |
 
 Compiled samples were stable enough for descriptive fits: median coefficient
-of variation was 1.27% for construction and below 0.81% for every checker
-mode; the worst case was 3.91%. Over the committed ladders, construction fit
-14.56 ns per dead node, 28.81 ns per adjacent fact, 8.47 ns per far fact, and
-7.71 ns per source fact, all with `R² ≥ 0.9997`. Early cap rejection fit about
-2.8 ns per scanned node or fact with `R² ≥ 0.9992`.
+of variation was 1.92% for construction and 0.67–1.26% for the four checker
+modes. One tiny source-padding `below` point was a 21.09% outlier; every other
+compiled point was at most 7.44%. Over the committed ladders, construction fit
+13.82 ns per dead node, 25.89 ns per adjacent fact, 7.91 ns per far fact, and
+7.75 ns per source fact, all with `R² ≥ 0.9997`. With limit construction no
+longer timed, early cap rejection fit 0.92–0.93 ns per scanned node or fact
+with `R² ≥ 0.9993`.
 
 These fits describe this implementation and ladder; they are not asymptotic
 theorems. In particular, adjacent construction does extra alternating-tail
@@ -115,34 +118,34 @@ At 500 accepted facts, the exact decomposition is:
 
 | Workload | Program | Source | Edge | Prior fact | Result | Total | Median accept |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| adjacent | 44 | 1 | 491 | 508 | 500 | 1,544 | 51.373 µs |
-| far | 44 | 1 | 491 | 120,803 | 500 | 121,839 | 164.169 µs |
-| source pad | 44 | 491 | 1 | 18 | 10 | 564 | 44.648 µs |
+| adjacent | 44 | 1 | 491 | 508 | 500 | 1,544 | 49.327 µs |
+| far | 44 | 1 | 491 | 120,803 | 500 | 121,839 | 163.124 µs |
+| source pad | 44 | 491 | 1 | 18 | 10 | 564 | 42.731 µs |
 
 The far and adjacent certificates have identical node, fact, edge, and result
-counts. Far replay is 3.20 times slower because its original-order list
+counts. Far replay is 3.31 times slower because its original-order list
 references traverse much farther. Its charged work is 78.9 times larger; that
 ratio does not translate directly to wall time because endpoint checks and
 other fixed fact work dominate short references. A linear fit of far replay
-against charged lookup constructors is 1.29 ns per step with `R² = 0.9987`
+against charged lookup constructors is 1.28 ns per step with `R² = 0.9985`
 over this ladder.
 
-The three 501-fact early controls all take about 1.41 µs, because they fail in
+The three 501-fact early controls all take about 0.48 µs, because they fail in
 the structural scan before derivation lookup. Construction also goes the other
 way: far and source tails cost about 4 µs while the alternating adjacent tail
-costs 14.2 µs. These builders reuse closed fact terms differently, so their
+costs 12.8 µs. These builders reuse closed fact terms differently, so their
 construction costs are not a retained-size comparison. Even without that
 confounder, neither fact cardinality nor construction time can stand in for
 full replay work.
 
 ### Late failures really are late
 
-At each largest point, one-step-short and bad-tail replay are within about 1.4%
+At each largest point, one-step-short and bad-tail replay are within about 1.5%
 of exact acceptance. The one-step-short budget reaches the final charged
 lookup, while the malformed range is in the final fact. The controls therefore
 exercise the intended full-validation surface. Early structural failures are
-much cheaper: 39% of acceptance for 2,000 dead nodes and between 0.9% and 3.2%
-for the 500-fact families.
+much cheaper: 14.9% of acceptance for 2,000 dead nodes and between 0.3% and
+1.1% for the 500-fact families.
 
 ## Ordinary kernel results
 
@@ -150,14 +153,14 @@ Forced kernel reduction of each accepted point had these median endpoints:
 
 | Family | First point | Largest point |
 | --- | ---: | ---: |
-| dead nodes | 32.7 ms | 638.0 ms |
-| adjacent | 27.0 ms | 414.8 ms |
-| far | 25.5 ms | 300.2 ms |
-| source pad | 25.4 ms | 92.9 ms |
+| dead nodes | 59.4 ms | 734.7 ms |
+| adjacent | 26.8 ms | 405.3 ms |
+| far | 25.3 ms | 298.6 ms |
+| source pad | 25.0 ms | 92.3 ms |
 
-All 21 decisions reduced to `true`. Their median times sum to 2.174 s. These
+All 21 decisions reduced to `true`. Their median times sum to 2.291 s. These
 samples are materially noisier than compiled replay: the median per-case
-coefficient of variation is 7.6%, and a small cold case reaches 43%. The fixed
+coefficient of variation is 5.9%, and a small cold case reaches 39.9%. The fixed
 within-module case order is also a confounder.
 
 Kernel behavior is not a scaled copy of compiled behavior. The largest far
@@ -171,14 +174,15 @@ constructor before timing. A normalized-certificate arm is required before
 drawing a kernel lookup-cost conclusion.
 
 The ordinary maximum-boundary theorem took median fresh-module wall time
-4.022 s against 1.060 s for its import-matched fixed theorem. The median paired
-added wall time is 3.038 s, and the median paired ratio is 3.91. Median peak RSS
-is 800.1 versus 803.1 MiB; the median paired delta is only 4.2 MiB, so process
+4.225 s against 1.125 s for its import-matched fixed theorem. The median paired
+added wall time is 3.120 s, and the median ratio of medians is 3.76. Median peak
+RSS is 799.8 versus 796.9 MiB; the median paired delta is only 1.8 MiB, so process
 startup dominates that coarse measure.
 
-The forced-WHNF command module took median wall time 3.593 s against 1.400 s,
-with a median paired added time of 2.245 s and ratio 2.54. Median peak RSS is
-797.5 versus 883.2 MiB, with a median paired delta of 84.0 MiB.
+The forced-WHNF command module took median wall time 4.115 s against 1.520 s,
+with a median paired added time of 2.398 s and a ratio of medians of 2.71.
+Median peak RSS is 888.3 versus 795.5 MiB, with a median paired delta of
+89.9 MiB.
 
 The baseline and checked theorem axiom sets are both exactly
 `[propext, Quot.sound]`. There is no `sorryAx`, execution-trust axiom, or use of
