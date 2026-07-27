@@ -52,7 +52,7 @@ theorem toComplex_eq (T : NumberTower) (a : Elem T)
     {root : AlgebraicRoot}
     (h : RawEvaluation.evalCoords? T.levels.toList (coeffs a) = some root) :
     T.toComplex a = root.toComplex := by
-  sorry
+  simp [toComplex, eval?_eq T a h]
 
 /-- The rational tower embedding has its expected complex value. -/
 theorem toComplex_ofRat (T : NumberTower) (q : Rat) :
@@ -65,8 +65,15 @@ theorem toComplex_injective (T : NumberTower) :
   sorry
 
 /-- Every validated tower has positive absolute dimension. -/
+private theorem levelsDim_pos (levels : List Level)
+    (hvalid : LevelsValid levels) : 0 < levelsDim levels := by
+  induction levels with
+  | nil => simp [levelsDim]
+  | cons level lower ih =>
+      exact Nat.mul_pos hvalid.1.1 (ih hvalid.2.2)
+
 theorem dim_pos (T : NumberTower) : 0 < T.dim := by
-  sorry
+  exact levelsDim_pos T.levels.toList T.valid
 
 namespace LevelSemantics
 
