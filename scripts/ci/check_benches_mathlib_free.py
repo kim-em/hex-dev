@@ -14,7 +14,8 @@ The computational-benchmark invariants are:
      `import`, may name a `Mathlib.*` module.
 
 A narrow exception permits build-only proof-elaboration probes below
-`bench/Hex*Mathlib/`.  Such files may import Mathlib, but may not import
+`bench/HexFoo/` when `libraries.yml` declares `HexFoo.mathlib: true`. Such
+files may import Mathlib, but may not import
 LeanBench, register a benchmark, define `main`, time work in-process, or
 serve as a `lean_exe` root.
 
@@ -28,11 +29,18 @@ Stdlib only; runs from the repository root regardless of cwd.
 from __future__ import annotations
 
 import functools
+import os
 import re
 import sys
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT))
+from scripts.libgraph import _strip_comment as _strip_manifest_comment  # noqa: E402
+from scripts.libgraph import load_libraries  # noqa: E402
 
 
 # Module name -> file path: `A.B.C` ↔ `A/B/C.lean` relative to repo root.
@@ -318,21 +326,73 @@ def _find_mathlib_bridge_bench_paths(repo_root: Path) -> list[Path]:
     return out
 
 
-def _is_mathlib_probe_path(path: Path, repo_root: Path) -> bool:
-    """Whether `path` lies below `bench/Hex*Mathlib/`."""
-    try:
-        rel = path.relative_to(repo_root / "bench")
-    except ValueError:
-        return False
-    return (
-        len(rel.parts) >= 2
-        and rel.parts[0].startswith("Hex")
-        and rel.parts[0].endswith("Mathlib")
+_MANIFEST_LIBRARY_RE = re.compile(r"^ {2}(\S(?:.*\S)?):\s*$")
+_MANIFEST_FIELD_RE = re.compile(r"^ {4}(\S[^:]*):")
+
+
+def _check_manifest_uniqueness(path: Path) -> None:
+    """Reject duplicate library entries or fields before YAML-like parsing."""
+    seen_libraries: set[str] = set()
+    seen_fields: set[str] = set()
+    current: str | None = None
+    libraries_headers = 0
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = _strip_manifest_comment(raw).rstrip()
+        if line == "libraries:":
+            libraries_headers += 1
+            current = None
+            continue
+        library = _MANIFEST_LIBRARY_RE.match(line)
+        if library:
+            current = library.group(1)
+            if current in seen_libraries:
+                raise ValueError(f"{path}: duplicate library entry {current}")
+            seen_libraries.add(current)
+            seen_fields = set()
+            continue
+        field = _MANIFEST_FIELD_RE.match(line)
+        if current is not None and field:
+            name = field.group(1).strip()
+            if name in seen_fields:
+                raise ValueError(f"{path}: duplicate {current}.{name} field")
+            seen_fields.add(name)
+    if libraries_headers != 1:
+        raise ValueError(
+            f"{path}: expected exactly one libraries: header, got {libraries_headers}"
+        )
+
+
+def _mathlib_probe_owners(repo_root: Path) -> set[str]:
+    """Return the manifest-declared owners admitted to the probe carveout."""
+    manifest = repo_root / "libraries.yml"
+    _check_manifest_uniqueness(manifest)
+    libraries = load_libraries(manifest)
+    return {name for name, info in libraries.items() if info.mathlib}
+
+
+def _is_mathlib_probe_path(path: Path, repo_root: Path,
+                           owners: set[str]) -> bool:
+    """Whether `path` lies below a manifest-declared Mathlib probe owner."""
+    def has_owner(candidate: Path, bench_root: Path) -> bool:
+        try:
+            rel = candidate.relative_to(bench_root)
+        except ValueError:
+            return False
+        return len(rel.parts) >= 2 and rel.parts[0] in owners
+
+    # Lexical normalization keeps an owner symlink pointing outward covered;
+    # physical normalization catches a source-root alias pointing inward.
+    lexical = Path(os.path.abspath(path))
+    lexical_bench = Path(os.path.abspath(repo_root / "bench"))
+    physical = path.resolve()
+    physical_bench = (repo_root / "bench").resolve()
+    return has_owner(lexical, lexical_bench) or has_owner(
+        physical, physical_bench
     )
 
 
-def _find_mathlib_probe_files(repo_root: Path) -> list[Path]:
-    """Find Lean proof probes admitted by the narrow Mathlib carveout."""
+def _find_mathlib_probe_files(repo_root: Path, owners: set[str]) -> list[Path]:
+    """Find Lean proof probes admitted by the manifest-based carveout."""
     bench_root = repo_root / "bench"
     if not bench_root.is_dir():
         return []
@@ -340,7 +400,7 @@ def _find_mathlib_probe_files(repo_root: Path) -> list[Path]:
     for entry in sorted(bench_root.iterdir()):
         if not entry.is_dir():
             continue
-        if not (entry.name.startswith("Hex") and entry.name.endswith("Mathlib")):
+        if entry.name not in owners:
             continue
         out.extend(sorted(entry.rglob("*.lean")))
     return out
@@ -358,35 +418,46 @@ _PROBE_FORBIDDEN = (
     (
         "registers a LeanBench benchmark",
         re.compile(
-            r"^\s*setup_(?:fixed_)?benchmark\b",
+            rf"^\s*{_ATTR_PREFIX}(?:(?:public|private|meta)\s+)*"
+            r"setup_(?:fixed_)?benchmark\b",
             re.MULTILINE,
         ),
     ),
     (
         "defines main",
         re.compile(
-            r"^\s*(?:public\s+)?(?:unsafe\s+)?def\s+main\b",
+            rf"^\s*{_ATTR_PREFIX}"
+            r"(?:(?:public|private|protected|noncomputable|partial|unsafe|meta)\s+)*"
+            r"(?:def|opaque|abbrev)\s+"
+            r"(?:main(?![\w'.!?])|«main»(?![\w'.!?])|"
+            r"_root_\.(?:main(?![\w'.!?])|«main»(?![\w'.!?])))",
             re.MULTILINE,
         ),
     ),
     (
         "uses an in-process monotonic clock",
-        re.compile(r"\bIO\.mono(?:Nanos|Ms)Now\b"),
+        re.compile(
+            r"(?<![\w.])(?:_root_\.)?(?:IO\.)?"
+            r"(?:mono(?:Nanos|Ms)Now|«mono(?:Nanos|Ms)Now»)(?![\w'.])"
+        ),
     ),
 )
 
 
 def _probe_violations(path: Path) -> list[str]:
     """Return forbidden computational-benchmark features used by one probe."""
-    text = path.read_text()
+    text = _without_comments(path.read_text())
     return [description for description, pattern in _PROBE_FORBIDDEN
             if pattern.search(text)]
 
 
-def _probe_root_path(target: _ExeTarget, repo_root: Path) -> Path | None:
+def _probe_root_path(target: _ExeTarget, repo_root: Path,
+                     owners: set[str]) -> Path | None:
     """Resolve a module when its source is an admitted Mathlib probe file."""
     candidate = target.root_path(repo_root)
-    if candidate.is_file() and _is_mathlib_probe_path(candidate, repo_root):
+    if candidate.is_file() and _is_mathlib_probe_path(
+        candidate, repo_root, owners
+    ):
         return candidate
     return None
 
@@ -408,7 +479,7 @@ def _missing_exe_root_failures(
 
 
 def main() -> int:
-    repo_root = Path(__file__).resolve().parents[2]
+    repo_root = REPO_ROOT
     lakefile = repo_root / "lakefile.lean"
     if not lakefile.is_file():
         print(f"FATAL: lakefile.lean not found at {lakefile}",
@@ -430,6 +501,7 @@ def main() -> int:
     try:
         exe_targets = _parse_exe_targets(lakefile)
         _configured_source_roots(repo_root)
+        probe_owners = _mathlib_probe_owners(repo_root)
     except (OSError, ValueError, tomllib.TOMLDecodeError) as exc:
         print(f"FATAL: cannot resolve Lake module roots: {exc}", file=sys.stderr)
         return 2
@@ -448,7 +520,7 @@ def main() -> int:
 
     # The build-only proof-probe carveout is intentionally not an executable
     # or a second computational benchmark harness.
-    probe_files = _find_mathlib_probe_files(repo_root)
+    probe_files = _find_mathlib_probe_files(repo_root, probe_owners)
     for probe in probe_files:
         for violation in _probe_violations(probe):
             failures.append(
@@ -457,7 +529,7 @@ def main() -> int:
                 f"timed; see SPEC/benchmarking.md §Mathlib-free benches."
             )
     for exe, target in sorted(exe_targets.items()):
-        probe = _probe_root_path(target, repo_root)
+        probe = _probe_root_path(target, repo_root, probe_owners)
         if probe is not None:
             failures.append(
                 f"  FORBIDDEN: executable `{exe}` is rooted at Mathlib proof "
@@ -486,8 +558,8 @@ def main() -> int:
         print(
             "\nFix: keep executable computational benches Mathlib-free. "
             "A Mathlib proof-elaboration probe may instead be a build-only "
-            "module under bench/Hex*Mathlib/, with timing performed by an "
-            "external harness.",
+            "module under bench/<Library>/ when libraries.yml declares that "
+            "owner mathlib: true, with timing performed by an external harness.",
             file=sys.stderr,
         )
         return 1
