@@ -238,6 +238,13 @@ lean_lib HexIntervalMathlibReplayProbe where
   globs := #[`HexIntervalMathlib.CenterBaseline,
     `HexIntervalMathlib.CenterReflected, `HexIntervalMathlib.CenterDirect]
 
+lean_lib HexRealRootsMathlibReplayProbe where
+  srcDir := "bench"
+  globs := #[`HexRealRootsMathlib.Baseline,
+    `HexRealRootsMathlib.Natural6, `HexRealRootsMathlib.Natural8,
+    `HexRealRootsMathlib.Natural10, `HexRealRootsMathlib.Refined2,
+    `HexRealRootsMathlib.Refined4, `HexRealRootsMathlib.Refined6]
+
 -- Conformance #guard drivers live under `conformance/` and are built by this
 -- library (mirroring the released conformance sub-projects). Alongside each
 -- library's `Conformance` core module, the heavier cross-check sweeps and

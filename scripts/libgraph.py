@@ -19,6 +19,7 @@ BUILD_ONLY_LIBS = {
     "HexIntervalMathlibExperiment",
     "HexIntervalReplayProbe",
     "HexIntervalMathlibReplayProbe",
+    "HexRealRootsMathlibReplayProbe",
     "HexConformance",
     "HexReleaseTests",
     "HexReleaseExamples",
