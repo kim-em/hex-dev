@@ -360,6 +360,45 @@ instance (levels : List Level) : Neg (RawElem levels) :=
 instance (levels : List Level) : Mul (RawElem levels) :=
   ⟨fun a b => .mk (mulCoords levels a.data b.data)⟩
 
+/-- Canonical lower-tower coefficient used by recursive inversion. Unlike the
+general-purpose `RawElem`, this type carries the fixed-width invariant needed
+by the semantic field bridge for polynomial xgcd. -/
+structure Coeff (levels : List Level) where
+  data : Array Rat
+  size_eq : data.size = levelsDim levels
+
+/-- Normalize arbitrary data into a canonical lower-tower coefficient. -/
+@[expose]
+def Coeff.ofData (levels : List Level) (data : Array Rat) : Coeff levels :=
+  ⟨fixedCoeffs (levelsDim levels) data, by simp [fixedCoeffs]⟩
+
+instance (levels : List Level) : DecidableEq (Coeff levels) :=
+  fun a b =>
+    match decEq a.data.toList b.data.toList with
+    | isTrue h => isTrue (by cases a; cases b; simpa using h)
+    | isFalse h => isFalse fun hab => h (by simp [hab])
+
+instance (levels : List Level) : Zero (Coeff levels) :=
+  ⟨Coeff.ofData levels #[]⟩
+
+instance (levels : List Level) : One (Coeff levels) :=
+  ⟨Coeff.ofData levels #[1]⟩
+
+instance (levels : List Level) : Add (Coeff levels) :=
+  ⟨fun a b =>
+    ⟨addCoords (levelsDim levels) a.data b.data, by simp [addCoords]⟩⟩
+
+instance (levels : List Level) : Sub (Coeff levels) :=
+  ⟨fun a b =>
+    ⟨subCoords (levelsDim levels) a.data b.data, by simp [subCoords]⟩⟩
+
+instance (levels : List Level) : Neg (Coeff levels) :=
+  ⟨fun a => ⟨negCoords (levelsDim levels) a.data, by simp [negCoords]⟩⟩
+
+instance (levels : List Level) : Mul (Coeff levels) :=
+  ⟨fun a b =>
+    ⟨mulCoords levels a.data b.data, mulCoords_size levels a.data b.data⟩⟩
+
 /-- Recursive inverse coordinates. The zero convention is inherited at every
 level; defensive nonconstant/zero gcd branches are unreachable for certified
 level lists. -/
@@ -371,15 +410,15 @@ def invCoords : (levels : List Level) → Array Rat → Array Rat
       if (fixedCoeffs (d * lowerDim) a).all (fun q => q = 0) then
         Array.replicate (d * lowerDim) 0
       else
-        letI : Inv (RawElem lower) :=
-          ⟨fun x => raw lower (invCoords lower x.data)⟩
-        letI : Div (RawElem lower) := ⟨fun x y => x * y⁻¹⟩
-        let value : DensePoly (RawElem lower) :=
+        letI : Inv (Coeff lower) :=
+          ⟨fun x => Coeff.ofData lower (invCoords lower x.data)⟩
+        letI : Div (Coeff lower) := ⟨fun x y => x * y⁻¹⟩
+        let value : DensePoly (Coeff lower) :=
           DensePoly.ofCoeffs <| ((List.range d).map fun i =>
-            raw lower (block a i lowerDim)).toArray
-        let defining : DensePoly (RawElem lower) :=
+            Coeff.ofData lower (block a i lowerDim)).toArray
+        let defining : DensePoly (Coeff lower) :=
           DensePoly.ofCoeffs <| ((List.range d).map fun i =>
-            raw lower (level.defining.getD i #[])).toArray.push 1
+            Coeff.ofData lower (level.defining.getD i #[])).toArray.push 1
         let result := DensePoly.xgcdLeft value defining
         if result.gcd.size = 1 then
           let c := result.gcd.leadingCoeff
@@ -394,10 +433,32 @@ def invCoords : (levels : List Level) → Array Rat → Array Rat
           Hex.panicWith (Array.replicate (d * lowerDim) 0)
             "NumberTower.inv: nonconstant gcd"
 
+/-- Recursive inversion always returns the canonical mixed-radix width,
+including its defensive zero fallbacks. -/
+@[simp]
+theorem invCoords_size (levels : List Level) (a : Array Rat) :
+    (invCoords levels a).size = levelsDim levels := by
+  induction levels generalizing a with
+  | nil =>
+      simp [invCoords, levelsDim]
+  | cons level lower ih =>
+      simp only [invCoords, levelsDim]
+      split
+      · simp
+      · split
+        · split <;> simp [Hex.panicWith]
+        · simp [Hex.panicWith]
+
 instance (levels : List Level) : Inv (RawElem levels) :=
   ⟨fun a => raw levels (invCoords levels a.data)⟩
 
 instance (levels : List Level) : Div (RawElem levels) :=
+  ⟨fun a b => a * b⁻¹⟩
+
+instance (levels : List Level) : Inv (Coeff levels) :=
+  ⟨fun a => Coeff.ofData levels (invCoords levels a.data)⟩
+
+instance (levels : List Level) : Div (Coeff levels) :=
   ⟨fun a b => a * b⁻¹⟩
 
 /-! Compiled raw arithmetic regressions. -/
