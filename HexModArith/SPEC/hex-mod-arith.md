@@ -45,20 +45,16 @@ Mathlib dependency.
 ## Default operations
 
 Operations are stated as semantic contracts on the canonical
-representative. `mul` and `pow` carry mandatory `@[extern]` runtime
+representative. `mul`, `pow`, and `inv` carry mandatory `@[extern]` runtime
 paths; `add`/`sub` are one-line `ofNat` specifications, with the
 division-free branchy `UInt64` bodies in `addImpl`/`subImpl` behind
-proved `@[csimp]` equalities (design principle 11), and `inv` routes
-through the
-`@[extern "lean_hex_mpz_gcdext"]`-bearing `extGcd` declared in
-`HexArith.Int` (see "Extern contract: `mpz_gcdext`" in
-`SPEC/Libraries/hex-arith.md`). **`inv` must NOT call
-`Hex.pureIntExtGcd` directly** — that's the pure-Lean reference
-body the extern falls through to as a portable fallback, and is
-intended for proofs only. Calling it bypasses GMP and runs the
-recursive `Nat` reference at runtime, which allocates a fresh `Nat`
-blob per recursive step (the same regression class as omitting
-`@[extern]` on `mulHi`).
+proved `@[csimp]` equalities (design principle 11). `inv` retains the
+`HexArith.Int.extGcd`-based logical body used by proofs, while its
+`lean_hex_zmod64_inv` extern runs the same Euclidean remainder/cofactor
+recurrence directly in bounded word arithmetic. **`inv` must NOT call
+`Hex.pureIntExtGcd` directly at runtime** — that is the recursive proof
+reference and allocates a fresh `Nat` blob per step (the same regression class
+as omitting `@[extern]` on `mulHi`).
 
 ```lean
 @[extern "lean_hex_zmod64_mul"]
@@ -67,7 +63,8 @@ def ZMod64.add (a b : ZMod64 p) : ZMod64 p          -- spec: ofNat; runtime: add
 def ZMod64.sub (a b : ZMod64 p) : ZMod64 p          -- spec: ofNat; runtime: subImpl (@[csimp])
 def ZMod64.zero : ZMod64 p
 def ZMod64.one  : ZMod64 p                          -- equals zero when p = 1
-def ZMod64.inv  (a : ZMod64 p) : ZMod64 p           -- via Hex.Int.extGcd
+@[extern "lean_hex_zmod64_inv"]
+def ZMod64.inv  (a : ZMod64 p) : ZMod64 p           -- spec: Int.extGcd; runtime: words
 @[extern "lean_hex_zmod64_pow"]
 def ZMod64.pow  (a : ZMod64 p) (n : Nat) : ZMod64 p
 ```
@@ -136,6 +133,30 @@ precision `Nat` by two. The runtime result must agree with the
 logical body for every bounded modulus, including the degenerate
 modulus `1`.
 
+### `ZMod64.inv` runtime contract
+
+The transparent logical definition of `HexArith.Int.extGcd` reduces to
+`Hex.pureIntExtGcd`. The `inv` body selects that reference algorithm's first
+Bézout cofactor `s` and returns `s % p`; this pins the result even when the
+inputs are not coprime. The runtime implementation is `lean_hex_zmod64_inv` in
+`HexModArith/ffi/zmod64_mul.c`. For the nonnegative inputs `a < p`, it follows
+the same Euclidean quotient/remainder sequence as the logical reference, but
+tracks the first cofactor modulo `p`:
+
+```text
+(old_r, r) := (a, p)       (old_s, s) := (1, 0)
+q := old_r / r
+(old_r, r) := (r, old_r % r)
+(old_s, s) := (s, old_s - q*s mod p)
+```
+
+Reducing each cofactor update modulo `p` preserves the final cofactor residue,
+so this agrees with the logical body for every input, including composite
+moduli and non-coprime residues. This is not Fermat inversion. Under
+`p < 2^31`, every remainder and reduced cofactor is below `p`, every quotient
+is at most `p`, and `q*s < 2^62`; the complete runtime path therefore stays in
+`uint64_t` arithmetic and never constructs a Lean `Int` or calls GMP.
+
 ## Hot-loop optimization (opt-in)
 
 Sustained modular multiplication (polynomial arithmetic,
@@ -181,9 +202,9 @@ for `ZMod64`, not for `MontResidue`.
 runtime model is a `Nat` paired with a proof — every operation
 routes through GMP arbitrary-precision arithmetic. `ZMod64 p`
 exists to put the value in a `UInt64` and route every operation
-through native machine arithmetic, with `mul` going through the
-mandatory C extern above and the rest compiling to native UInt64
-ops in pure Lean.
+through native machine arithmetic, with `mul`, `pow`, and `inv` going through
+the mandatory C externs above and the remaining operations compiling to native
+`UInt64` ops in pure Lean.
 
 ## External comparators
 
@@ -191,8 +212,8 @@ No external comparator is required.
 
 **Justification:** `implementation-is-extern` per
 `SPEC/benchmarking.md §"Comparator naming"`. HexModArith's modular
-operations route through GMP (for `Nat`/`Int` residue arithmetic)
-or through the dedicated `UInt64`-modular C extern (for `ZMod64`).
+operations route through GMP (for general `Nat`/`Int` arithmetic)
+or through dedicated word-arithmetic C externs (for `ZMod64`).
 The Phase-4 surface is GMP / native arithmetic; there is no
 algorithmically distinct reference implementation to compare
 against externally.
