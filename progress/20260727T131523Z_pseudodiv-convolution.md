@@ -2,16 +2,17 @@
 
 ## Accomplished
 
-- Proved a Mathlib-free diagonal normal form for the executable dense
-  polynomial multiplication coefficient fold.
-- Proved that diagonal folds may be extended past the left support and
-  truncated past the requested product degree.
+- Reused the existing Mathlib-free diagonal normal form and support/degree
+  bounds from `HexPoly.Euclid.MulRing` through a proof-only `import all`.
+- Added only the new minimum-bound bridge needed by pseudo-division.
 - Bridged the List-based multiplication fold to the Array-based bounded fold
   used by pseudo-division.
 - Proved `coeff_mul_bounded` with only the left-factor size bound; no support
   assumption on the right factor is needed.
 - Independently cross-checked the bound and proof shape in a read-only Sol
   audit.
+- Incorporated the independent review that identified the initial duplicated
+  convolution layer; the duplicate definitions and proofs are removed.
 - Built `HexResultant` and `HexConformance`, verified all four Resultant
   benchmarks, and passed line-count, DAG, and diff checks.
 
