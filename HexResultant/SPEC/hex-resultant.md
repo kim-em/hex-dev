@@ -48,10 +48,15 @@ variable {R : Type u}
 def exactDiv [Zero R] [DecidableEq R] [Div R] (a b : R) : R :=
   if b = 0 then 0 else a / b
 
+/-- Natural powers using only the executable `One` and `Mul` operations. -/
+def powNat [One R] [Mul R] (x : R) : Nat → R
+  | 0 => 1
+  | n + 1 => powNat x n * x
+
 /-- Brown's scalar update `x^n / y^(n-1)`, through `exactDiv`. -/
-def divExp [Zero R] [DecidableEq R] [One R] [Div R] [HPow R Nat R]
+def divExp [Zero R] [DecidableEq R] [One R] [Mul R] [Div R]
     (x y : R) (n : Nat) : R :=
-  exactDiv (x ^ n) (y ^ (n - 1))
+  exactDiv (powNat x n) (powNat y (n - 1))
 
 namespace DensePoly
 
@@ -128,7 +133,7 @@ worker returns the pair `(chain, hFinal)`. It initializes
 
 ```text
 δ₁ := n₁ - n₂
-h₂ := g₂ ^ δ₁
+h₂ := powNat g₂ δ₁
 p := prem G₁ G₂
 
 if p = 0:
@@ -149,7 +154,7 @@ p := prem prev curr
 if p = 0:
   return (chain, hCurr)
 
-divisor := (-1)^(δ + 1) * lc(prev) * hPrev^δ
+divisor := (-1)^(δ + 1) * lc(prev) * powNat hPrev δ
 next := divScalar p divisor
 
 continue with (chain.push next, curr, next, hCurr)
