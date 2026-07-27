@@ -1381,7 +1381,11 @@ theorem divMod_eq_of_pos_lc_pos_degree_mul_eq
     (hmul : quotient * candidate = target) :
     DensePoly.divMod target candidate = (quotient, 0) := by
   have hlc_ne : DensePoly.leadingCoeff candidate ≠ 0 := by omega
-  apply DensePoly.divMod_eq_of_polynomial_mul target candidate quotient hdegree
+  have hcandidate_ne : candidate ≠ 0 := by
+    intro hzero
+    rw [hzero] at hdegree
+    simp at hdegree
+  apply DensePoly.divMod_eq_of_polynomial_mul target candidate quotient hcandidate_ne
   · intro a
     exact Int.mul_ediv_cancel a hlc_ne
   · intro a ha hzero

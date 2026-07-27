@@ -7,6 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexResultant.Basic
+public import HexResultant.ExactDiv
+public import HexResultant.Subresultant
 
 public section
 
@@ -15,7 +17,9 @@ The `HexResultant` library provides the fraction-free polynomial primitives
 used to compute subresultant pseudo-remainder sequences, resultants, and
 discriminants over exact coefficient rings. Its initial executable surface is
 polynomial pseudo-division over `Hex.DensePoly`, with the computational
-dependency surface kept at `HexPoly` alone.
+dependency surface kept at `HexPoly` alone. Brown's nonzero PRS chain tracks
+its corrected terminal principal-subresultant scalar separately, so defective
+degree drops retain the exact resultant scale without matrix construction.
 
 Correctness and correspondence with Mathlib's `Polynomial.resultant` and
 `Polynomial.discr` live in the companion `HexResultantMathlib` library.

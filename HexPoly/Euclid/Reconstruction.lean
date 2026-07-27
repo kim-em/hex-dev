@@ -1334,7 +1334,7 @@ private theorem mul_size_le_top_succ_general {S : Type _}
   intro i hi
   exact coeff_mul_above_top_general p q hp hq (by omega)
 
-/-- Public `divMod` identity for non-monic exact-multiple inputs: if `qq * q = p`,
+/-- Public `divMod` identity for nonzero, non-monic exact-multiple inputs: if `qq * q = p`,
 the scaling function `(· / q.leadingCoeff)` exactly recovers any `a` from
 `a * q.leadingCoeff`, and the leading-coefficient product never cancels, then
 `divMod p q = (qq, 0)`. The exactness and no-zero-divisor hypotheses replace the
@@ -1344,7 +1344,7 @@ required by `divMod_reconstruction` (which only holds in the monic case over
 theorem divMod_eq_of_polynomial_mul {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
     (p q qq : DensePoly S)
-    (hdegree : 0 < q.degree?.getD 0)
+    (hq_ne : q ≠ 0)
     (hexact : ∀ a : S, (a * q.leadingCoeff) / q.leadingCoeff = a)
     (h_top_ne : ∀ a : S, a ≠ (Zero.zero : S) →
         a * q.leadingCoeff ≠ (Zero.zero : S))
@@ -1352,15 +1352,14 @@ theorem divMod_eq_of_polynomial_mul {S : Type _}
     divMod p q = (qq, 0) := by
   -- Structural facts about q.
   have hq_pos : 0 < q.size := by
-    unfold degree? at hdegree
-    by_cases h : q.size = 0
-    · simp [h] at hdegree
-    · omega
-  have hq_size_ge_two : 2 ≤ q.size := by
-    unfold degree? at hdegree
-    by_cases h : q.size = 0
-    · simp [h] at hdegree
-    · simp [h] at hdegree; omega
+    by_cases hpos : 0 < q.size
+    · exact hpos
+    · exfalso
+      apply hq_ne
+      apply ext_coeff
+      intro i
+      rw [coeff_zero]
+      exact coeff_eq_zero_of_size_le q (by omega)
   have hq_lead_ne : q.leadingCoeff ≠ (Zero.zero : S) :=
     leadingCoeff_ne_zero_of_pos_size q hq_pos
   have hq_isZero : q.isZero = false := by
@@ -1456,16 +1455,6 @@ theorem divMod_eq_of_polynomial_mul {S : Type _}
           a * q.toArray.getD qDeg (Zero.zero : S) ≠ (Zero.zero : S) := by
       intro a ha
       rw [hq_lead_at_arr]; exact h_top_ne a ha
-    -- p.degree ≥ q.degree in this branch, so p.size ≥ qDeg + 1.
-    have hp_size_ge : qDeg + 1 ≤ p.size := by
-      unfold degree? at hdeg_short
-      have hq_ne : q.size ≠ 0 := by omega
-      by_cases hp_zero_size : p.size = 0
-      · simp [hp_zero_size, hq_ne] at hdeg_short
-        omega
-      · simp [hp_zero_size, hq_ne] at hdeg_short
-        show q.size - 1 + 1 ≤ p.size
-        omega
     have hp_toArray_size : p.toArray.size = p.size := by unfold toArray size; rfl
     -- Preconditions for the array lemma, with B = qq.size.
     have hsize_match : p.toArray.size ≤ qDeg + quot0.size := by
