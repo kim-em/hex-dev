@@ -41,11 +41,14 @@ theorem eval_resultant_default
       Polynomial.resultant (specialize f a) (specialize g a) := by
   sorry
 
-/-- A common bivariate zero forces the specialized eliminant to vanish. -/
+/-- A common bivariate zero forces the specialized eliminant to vanish when at
+least one input genuinely has positive degree in the eliminated variable. The
+condition excludes the formal-degree `(0, 0)` resultant, whose value is `1`. -/
 theorem eval_resultant_eq_zero_of_common_root
     [CommRing R] [IsDomain R] [DecidableEq R]
     [Div R] [Hex.ExactDivLaws R]
     (f g : DensePoly (DensePoly R)) (a b : R)
+    (hpos : 1 < f.size ∨ 1 < g.size)
     (hfb : evalBivariate f a b = 0) (hgb : evalBivariate g a b = 0) :
     eval (resultant f g) a = 0 := by
   sorry

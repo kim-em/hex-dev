@@ -70,12 +70,14 @@ theorem eval_resultant_default
     eval (resultant f g) a =
       Polynomial.resultant (specialize f a) (specialize g a)
 
-/-- If two bivariate polynomials vanish at `(a, b)`, their resultant in the
-    second variable vanishes at `a`. -/
+/-- If two bivariate polynomials vanish at `(a, b)` and at least one genuinely
+    has positive degree in the second variable, their resultant in that
+    variable vanishes at `a`. -/
 theorem eval_resultant_eq_zero_of_common_root
     [CommRing R] [IsDomain R] [DecidableEq R]
     [Div R] [Hex.ExactDivLaws R]
     (f g : DensePoly (DensePoly R)) (a b : R)
+    (hpos : 1 < f.size ∨ 1 < g.size)
     (hfb : evalBivariate f a b = 0) (hgb : evalBivariate g a b = 0) :
     eval (resultant f g) a = 0
 
@@ -110,7 +112,10 @@ a leading coefficient. For example, specializing `t` to zero in `t*y + 1` and
 `t*y - 1` drops both degrees; the default-degree resultant of the specialized
 constants is not the specialization of the original resultant. Also provide a
 default-degree corollary under hypotheses that both leading coefficients remain
-nonzero. The Stage 1 one-way vanishing theorem remains unconditional.
+nonzero. The Stage 1 one-way vanishing theorem only needs to exclude the case
+where both outer formal degrees are zero: under the project convention the
+formal-degree `(0, 0)` resultant is `1`, even when both specialized constants
+vanish.
 
 The displayed root-product formula fixes intent rather than Mathlib's final
 multiset notation. The implementation uses the pinned revision's existing
