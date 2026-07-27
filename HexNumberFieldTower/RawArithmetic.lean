@@ -45,6 +45,25 @@ def negCoords (n : Nat) (a : Array Rat) : Array Rat :=
 def block (a : Array Rat) (index width : Nat) : Array Rat :=
   (Vector.ofFn fun i : Fin width => a.getD (index * width + i.val) 0).toArray
 
+/-- A block of fixed-width coordinate addition is the sum of the blocks. -/
+theorem block_add (count width index : Nat) (a b : Array Rat)
+    (hindex : index < count) :
+    block (addCoords (count * width) a b) index width =
+      addCoords width (block a index width) (block b index width) := by
+  apply Array.ext
+  · simp [block, addCoords]
+  · intro i hi₁ hi₂
+    have hi : i < width := by
+      simpa [addCoords] using hi₂
+    have hglobal : index * width + i < count * width := by
+      calc
+        index * width + i < index * width + width :=
+          Nat.add_lt_add_left hi _
+        _ = (index + 1) * width := by simp [Nat.add_mul]
+        _ ≤ count * width :=
+          Nat.mul_le_mul_right width (Nat.succ_le_of_lt hindex)
+    simp [block, addCoords, Array.getD, hglobal]
+
 /-- Flatten a fixed number of equally wide coordinate blocks. -/
 @[expose]
 def flattenBlocks (count width : Nat) (blocks : Array (Array Rat)) : Array Rat :=

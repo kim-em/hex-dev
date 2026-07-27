@@ -80,6 +80,11 @@ namespace NumberTower
 def rat : NumberTower :=
   .mk #[] (by simp [LevelsValid])
 
+/-- The rational tower has no proper extension levels. -/
+@[simp]
+theorem rat_levels : rat.levels.toList = [] := by
+  rfl
+
 /-- Absolute dimension over `Rat`. -/
 @[expose]
 def dim (T : NumberTower) : Nat :=

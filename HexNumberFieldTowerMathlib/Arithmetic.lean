@@ -36,7 +36,11 @@ theorem map_one (T : NumberTower) :
 /-- Coordinate addition computes complex addition. -/
 theorem map_add (T : NumberTower) (a b : Elem T) :
     T.toComplex (a + b) = T.toComplex a + T.toComplex b := by
-  sorry
+  rw [LevelSemantics.toComplex_eq_denote T (a + b),
+    LevelSemantics.toComplex_eq_denote T a,
+    LevelSemantics.toComplex_eq_denote T b, coeffs_add]
+  simpa [dim] using
+    LevelSemantics.denote_add T.levels.toList (coeffs a) (coeffs b)
 
 /-- Coordinate negation computes complex negation. -/
 theorem map_neg (T : NumberTower) (a : Elem T) :
