@@ -397,8 +397,9 @@ structure ProposedNode where
 
 /-- An equality proposed alongside new expressions.  This experiment retains
 the opaque payload and endpoints as untrusted replay data.  Once admitted, the
-edge is search-active: the engine may use it to transport facts, but replay
-must reconstruct this payload before any transported fact can prove a goal. -/
+edge is scheduler-active: its typed endpoints drive equality contraction, and
+replay must reconstruct and check the payload before any transported fact can
+prove a goal. -/
 structure ProposedEquality where
   left : NodeRef
   right : NodeRef
@@ -441,10 +442,13 @@ inductive Suggestion where
   | instantiate (request : InstantiationRequest)
   | split (request : SplitRequest)
 
-/-- A policy candidate paired with engine-owned invocation provenance. -/
+/-- A policy candidate paired with engine-owned invocation provenance.  Split
+proposals retain the target version at proposal time; later policy adoption
+must not re-arm a guard from the then-current fact. -/
 structure RetainedSuggestion where
   action : Action
   suggestion : Suggestion
+  splitVersion : Option Nat
 
 /-- Engine-owned index of one retained policy suggestion. -/
 structure SuggestionId where
@@ -792,6 +796,20 @@ def factViews? (state : Engine Fact) : List NodeId -> Option (List (FactView Fac
       let rest <- factViews? state nodes
       some ({ node, fact, version } :: rest)
 
+/-- An invocation remains usable across an append-only program extension only
+when its concrete application, registration, and every watched fact version
+still agree with the engine-owned provenance captured in the action. -/
+def actionFresh (state : Engine Fact) (action : Action) : Bool :=
+  match state.applications[action.application.index]?,
+      state.rules[action.rule.index]?,
+      state.seenVersions? (action.inputs.map fun input => input.node) with
+  | some application, some rule, some current =>
+      application.rule == action.rule && application.node == action.node &&
+        application.kind == action.kind && rule.key == action.key &&
+        action.inputs.map (fun input => input.node) == application.watches &&
+        current == action.inputs
+  | _, _, _ => false
+
 /-- Insert work unless it is already dirty.  The queue is an append-only work
 log in this experiment, so its trusted cap also bounds total dependency churn. -/
 def enqueue (state : Engine Fact) (work : WorkItem) : Except Resource (Engine Fact) := do
@@ -920,6 +938,7 @@ inductive ReplyError where
   | tooManyCandidates
   | tooManySuggestions
   | oversizedProposal
+  | oversizedEffort
   | oversizedObservation
   | duplicateWrite
   | undeclaredWrite (node : NodeId)
@@ -947,12 +966,21 @@ inductive EqualityFactError where
   | malformed (code : Nat)
   | resourceLimit (budget : Nat)
 
+/-- Structural or fact-domain failure of an equality contraction. -/
+inductive EqualityFault where
+  | pendingReply
+  | missingEquality
+  | domainMismatch
+  | missingState
+  | malformedFact (code : Nat)
+  deriving DecidableEq, Repr
+
 /-- Equality contractors are internal, atomic scheduler transitions. -/
 inductive EqualityResult (Fact : Type) where
-  | advanced (state : Engine Fact)
-  | invalid (code : Nat) (state : Engine Fact)
-  | resourceLimit (resource : Resource) (state : Engine Fact)
-  | factResourceLimit (budget : Nat) (state : Engine Fact)
+  | advanced (narrowCalls : Nat) (state : Engine Fact)
+  | invalid (fault : EqualityFault) (narrowCalls : Nat) (state : Engine Fact)
+  | resourceLimit (resource : Resource) (narrowCalls : Nat) (state : Engine Fact)
+  | factResourceLimit (budget : Nat) (narrowCalls : Nat) (state : Engine Fact)
 
 def existingRefBounded (nodeCount : Nat) : NodeRef -> Bool
   | .existing node => node.index < nodeCount
@@ -978,6 +1006,13 @@ def suggestionBounded (limits : Limits) (nodeCount : Nat) : Suggestion -> Bool
 def suggestionsBounded (limits : Limits) (nodeCount : Nat)
     (suggestions : List Suggestion) : Bool :=
   suggestions.all (suggestionBounded limits nodeCount)
+
+def suggestionEffortBounded (limit : Nat) : Suggestion -> Bool
+  | .retry effort => effort <= limit
+  | .instantiate _ | .split _ => true
+
+def suggestionsEffortBounded (limit : Nat) (suggestions : List Suggestion) : Bool :=
+  suggestions.all (suggestionEffortBounded limit)
 
 namespace Engine
 
@@ -1006,6 +1041,16 @@ def outcomeNegative (state : Engine Fact) (outcome : Outcome Fact) : Engine Fact
       { state with
         metrics := { state.metrics with ruleFailures := state.metrics.ruleFailures + 1 } }
   | .success _ _ _ => state
+
+/-- Attach proposal-time guards before any candidates from the same reply can
+change facts. -/
+def retainSuggestion (state : Engine Fact) (action : Action)
+    (suggestion : Suggestion) : RetainedSuggestion :=
+  { action
+    suggestion
+    splitVersion := match suggestion with
+      | .split request => state.versions[request.node.index]?
+      | .retry _ | .instantiate _ => none }
 
 def candidateNodesUnique (candidates : List (Candidate Fact)) : Bool :=
   uniqueList (candidates.map (fun candidate => candidate.node))
@@ -1090,6 +1135,8 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
             .invalid .tooManyCandidates base
           else if !listWithin state.limits.maxOutcomeSuggestions suggestions then
             .invalid .tooManySuggestions base
+          else if !suggestionsEffortBounded state.limits.maxEffort suggestions then
+            .invalid .oversizedEffort base
           else if !suggestionsBounded state.limits state.program.nodes.size suggestions then
             .invalid .oversizedProposal base
           else if !candidateNodesUnique candidates then
@@ -1109,7 +1156,7 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
                       { base with
                         suggestions := retainedSuggestions.foldl
                           (fun retained suggestion => retained.push
-                            { action, suggestion })
+                            (state.retainSuggestion action suggestion))
                           base.suggestions
                         metrics :=
                           { base.metrics with
@@ -1173,9 +1220,9 @@ commit all improvements together, then wake their dependency union. -/
 def contractEquality (state : Engine Fact) (equalityId : EqualityId) :
     EqualityResult Fact :=
   if state.pending.isSome then
-    .invalid 3 state
+    .invalid .pendingReply 0 state
   else match state.equalities[equalityId.index]? with
-  | none => .invalid 0 state
+  | none => .invalid .missingEquality 0 state
   | some equality =>
       match state.program.node? equality.left, state.program.node? equality.right,
           state.facts[equality.left.index]?, state.facts[equality.right.index]?,
@@ -1183,28 +1230,29 @@ def contractEquality (state : Engine Fact) (equalityId : EqualityId) :
       | some leftNode, some rightNode, some leftFact, some rightFact,
           some leftVersion, some rightVersion =>
           if leftNode.domain != rightNode.domain then
-            .invalid 1 state
+            .invalid .domainMismatch 0 state
           else
-            let updates : Except EqualityFactError (List (TransportUpdate Fact)) := do
-              let left <- transportUpdate equality.left equality.right leftVersion rightVersion
-                (state.factDomain.narrow leftNode.domain leftFact rightFact)
-              let right <- transportUpdate equality.right equality.left rightVersion leftVersion
-                (state.factDomain.narrow leftNode.domain rightFact leftFact)
-              pure ([left, right].filterMap id)
-            match updates with
-            | .error (.malformed code) => .invalid code state
-            | .error (.resourceLimit budget) => .factResourceLimit budget state
-            | .ok updates =>
-                if state.limits.maxAcceptedFacts < state.history.size + updates.length then
-                  .resourceLimit .acceptedFacts state
-                else
-                  let working := updates.foldl
-                    (fun state update => installTransport equalityId update state) state
-                  let changed := updates.map fun update => update.target
-                  match working.wakeNodes changed with
-                  | .error resource => .resourceLimit resource state
-                  | .ok next => .advanced next
-      | _, _, _, _, _, _ => .invalid 2 state
+            match transportUpdate equality.left equality.right leftVersion rightVersion
+                (state.factDomain.narrow leftNode.domain leftFact rightFact) with
+            | .error (.malformed code) => .invalid (.malformedFact code) 1 state
+            | .error (.resourceLimit budget) => .factResourceLimit budget 1 state
+            | .ok left =>
+                match transportUpdate equality.right equality.left rightVersion leftVersion
+                    (state.factDomain.narrow leftNode.domain rightFact leftFact) with
+                | .error (.malformed code) => .invalid (.malformedFact code) 2 state
+                | .error (.resourceLimit budget) => .factResourceLimit budget 2 state
+                | .ok right =>
+                    let updates := [left, right].filterMap id
+                    if state.limits.maxAcceptedFacts < state.history.size + updates.length then
+                      .resourceLimit .acceptedFacts 2 state
+                    else
+                      let working := updates.foldl
+                        (fun state update => installTransport equalityId update state) state
+                      let changed := updates.map fun update => update.target
+                      match working.wakeNodes changed with
+                      | .error resource => .resourceLimit resource 2 state
+                      | .ok next => .advanced 2 next
+      | _, _, _, _, _, _ => .invalid .missingState 0 state
 
 end Engine
 
@@ -1250,11 +1298,11 @@ def drive (invoke : Cache -> RuleRequest Fact -> Outcome Fact × Cache) :
           { state, cache, stop := .engineResource resource }
       | .equality equality state =>
           match state.contractEquality equality with
-          | .advanced next => drive invoke fuel next cache
-          | .invalid _ next => { state := next, cache, stop := .invalidEngine }
-          | .resourceLimit resource next =>
+          | .advanced _ next => drive invoke fuel next cache
+          | .invalid _ _ next => { state := next, cache, stop := .invalidEngine }
+          | .resourceLimit resource _ next =>
               { state := next, cache, stop := .engineResource resource }
-          | .factResourceLimit budget next =>
+          | .factResourceLimit budget _ next =>
               { state := next, cache, stop := .factResource budget }
       | .awaitingReply state | .invalidState state =>
           { state, cache, stop := .invalidEngine }
@@ -1371,6 +1419,16 @@ def inferredGeneration? (generations : Array Nat) (baseSize : Nat)
     greatest := Nat.max greatest generation
   some (greatest + 1)
 
+/-- Recompute the generation advertised to policy from current engine-owned
+structure.  The rule's claimed generation is deliberately not trusted. -/
+def Engine.instantiationGeneration? (state : Engine Fact)
+    (retained : RetainedSuggestion) : Option Nat := do
+  if !state.actionFresh retained.action then none else pure ()
+  let .instantiate request := retained.suggestion | none
+  let baseSize := state.program.nodes.size
+  let (_, resolved) <- resolveDrafts baseSize state.program [] request.nodes
+  inferredGeneration? state.generations baseSize retained.action request resolved
+
 /-- Treat equality endpoints as unordered for structural deduplication. -/
 def EqualityEdge.sameEndpoints (edge : EqualityEdge) (left right : NodeId) : Bool :=
   (edge.left == left && edge.right == right) ||
@@ -1461,6 +1519,8 @@ def admitRetained (state : Engine Fact)
     | .instantiate request =>
         if !proposalBounded state.program.nodes.size state.limits.maxProposalItems request then
           .invalid .oversizedProposal state
+        else if !state.actionFresh retained.action then
+          .invalid (.staleSuggestion retained.action.programVersion state.programVersion) state
         else
           let baseSize := state.program.nodes.size
           match resolveDrafts baseSize state.program [] request.nodes with
@@ -1479,8 +1539,6 @@ def admitRetained (state : Engine Fact)
                   equalities := equalityPairs?.getD [] }
               if state.instances.contains instanceKey then
                 duplicateInstance state
-              else if retained.action.programVersion != state.programVersion then
-                .invalid (.staleSuggestion retained.action.programVersion state.programVersion) state
               else
                 match inferredGeneration? state.generations baseSize retained.action request resolved with
                 | none => .invalid .badReferenceOrShape state

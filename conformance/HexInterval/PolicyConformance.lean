@@ -95,17 +95,21 @@ def policyLimits : Experiment.Propagator.Policy.Limits :=
     maxTraversal := 512
     maxLiveOffers := 32 }
 
-def initialWith? (limits : Experiment.Propagator.Policy.Limits) : Option (State Rank) := do
-  let engine <- match Engine.start rankDomain program #[fRule, gRule] #[0, 0] engineLimits with
+def initialWithLimits? (engineLimit : Experiment.Propagator.Limits)
+    (policyLimit : Experiment.Propagator.Policy.Limits) : Option (State Rank) := do
+  let engine <- match Engine.start rankDomain program #[fRule, gRule] #[0, 0] engineLimit with
     | .ok engine => some engine
     | .error _ => none
-  some (State.start engine limits)
+  some (State.start engine policyLimit)
+
+def initialWith? (limits : Experiment.Propagator.Policy.Limits) : Option (State Rank) :=
+  initialWithLimits? engineLimits limits
 
 def initial? : Option (State Rank) := initialWith? policyLimits
 
 def selectOffer (state : State Rank) (id : OfferId) : SelectResult Rank :=
   match state.offer? id with
-  | none => state.reject .missingOffer
+  | none => .rejected .missingOffer state
   | some offer =>
       state.select
         { scope := state.scope
@@ -292,7 +296,8 @@ def retryFirst? : Option ScheduleResult := do
         result.state.metrics.selectedInstances == 1 &&
         result.state.metrics.selectedEqualities == 2 &&
         result.state.metrics.selectedSplits == 1 &&
-        (result.state.offers).toOption.any (fun pair => pair.1.isEmpty)
+        result.state.epoch == result.state.metrics.decisions &&
+        (result.state.view).toOption.any (fun pair => pair.1.offers.isEmpty)
   | none => false
 
 /-! ## Instantiation-first schedule -/
@@ -346,7 +351,8 @@ def instantiateFirst? : Option ScheduleResult := do
         result.state.metrics.selectedEqualities == 2 &&
         result.state.metrics.selectedSplits == 1 &&
         result.state.metrics.dismissals == 1 &&
-        (result.state.offers).toOption.any (fun pair => pair.1.isEmpty)
+        result.state.epoch == result.state.metrics.decisions &&
+        (result.state.view).toOption.any (fun pair => pair.1.offers.isEmpty)
   | none => false
 
 /-! ## Boundary revalidation and policy resources -/
@@ -356,6 +362,17 @@ def afterInitial? : Option (State Rank) := do
   let (request, state) <- request? state (.application (application 0))
   let (_, state) <- submit? state request
   some state
+
+def afterReplyWith? (engineLimit : Experiment.Propagator.Limits)
+    (reply : RuleRequest Rank -> Outcome Rank) : Option (State Rank) := do
+  let state <- initialWithLimits? engineLimit policyLimits
+  let (request, state) <- request? state (.application (application 0))
+  match state.submit (request.action.reply (reply request)) with
+  | .accepted _ next => some next
+  | _ => none
+
+def afterInitialWith? (engineLimit : Experiment.Propagator.Limits) : Option (State Rank) :=
+  afterReplyWith? engineLimit invoke
 
 -- A policy cannot turn an engine-advertised effort-one retry into effort two.
 #guard
@@ -374,7 +391,10 @@ def afterInitial? : Option (State Rank) := do
           | .rejected .wrongKey next =>
               next.metrics.decisions == state.metrics.decisions + 1 &&
                 next.metrics.rejected == state.metrics.rejected + 1 &&
-                (next.offer? (.suggestion (suggestion 0))).isSome
+                next.epoch == next.metrics.decisions &&
+                match next.offer? (.suggestion (suggestion 0)) with
+                | some retry => retry.age == 1
+                | none => false
           | _ => false
       | _ => false
 
@@ -422,5 +442,263 @@ def oneDecisionState? : Option (State Rank) :=
                     | .ok (view, _) => !view.offers.isEmpty
                     | _ => false
               | _ => false
+
+/-! ## Resource preservation and exact equality observations -/
+
+def retainedEngineWith? (limits : Experiment.Propagator.Limits) : Option (Engine Rank) := do
+  let engine <- match Engine.start rankDomain program #[fRule, gRule] #[0, 0] limits with
+    | .ok engine => some engine
+    | .error _ => none
+  match engine.poll with
+  | .request request awaiting =>
+      match awaiting.submit (request.action.reply (invoke request)) with
+      | .accepted next => some next
+      | _ => none
+  | _ => none
+
+def equalityReadyWith? (limits : Experiment.Propagator.Limits)
+    (domain : FactDomain Rank) : Option (State Rank) := do
+  let engine <- retainedEngineWith? limits
+  let state := State.start { engine with factDomain := domain } policyLimits
+  instantiate? state (suggestion 1)
+
+def rightResourceDomain : FactDomain Rank where
+  top _ := 0
+  narrow _ current candidate :=
+    if current < candidate then .resourceLimit 77 else .noChange
+
+def leftMalformedDomain : FactDomain Rank where
+  top _ := 0
+  narrow _ current candidate :=
+    if candidate < current then .malformed 91 else .noChange
+
+-- Exhausting the accepted-fact budget reports a typed equality observation,
+-- charges no engine action, and leaves the equality live for a later run.
+#guard
+  match equalityReadyWith? { engineLimits with maxAcceptedFacts := 1 } rankDomain with
+  | none => false
+  | some state =>
+      let beforePops := state.engine.metrics.queuePops
+      let beforeRuns := state.engine.metrics.equalityRuns
+      match selectOffer state (.equality (equality 0)) with
+      | .equality observation next =>
+          observation.outcome == .engineResource .acceptedFacts &&
+            observation.narrowCalls == 2 && observation.changes.isEmpty &&
+            next.engine.metrics.queuePops == beforePops &&
+            next.engine.metrics.equalityRuns == beforeRuns &&
+            next.engine.equalityQueued[0]? == some true &&
+            (next.offer? (.equality (equality 0))).isSome
+      | _ => false
+
+-- A fact-domain resource stop after the second endpoint call is likewise
+-- observed exactly and does not destroy the live contractor.
+#guard
+  match equalityReadyWith? engineLimits rightResourceDomain with
+  | none => false
+  | some state =>
+      match selectOffer state (.equality (equality 0)) with
+      | .equality observation next =>
+          observation.outcome == .factResource 77 && observation.narrowCalls == 2 &&
+            observation.changes.isEmpty && next.engine.equalityQueued[0]? == some true &&
+            (next.offer? (.equality (equality 0))).isSome
+      | _ => false
+
+-- Malformation on the first endpoint records one actual call rather than a
+-- fabricated zero or two.
+#guard
+  match equalityReadyWith? engineLimits leftMalformedDomain with
+  | none => false
+  | some state =>
+      match selectOffer state (.equality (equality 0)) with
+      | .equality observation next =>
+          observation.outcome == .invalid (.malformedFact 91) &&
+            observation.narrowCalls == 1 && observation.changes.isEmpty &&
+            next.engine.equalityQueued[0]? == some true
+      | _ => false
+
+/-! ## Proposal lifetime and program extension -/
+
+def proposedGAt (input : NodeId) : ProposedNode :=
+  { domain := real, op := { index := 2 }, args := [.existing input] }
+
+def instantiateAt (family : Nat) (input : NodeId) : InstantiationRequest :=
+  { key := family
+    triggers := [input]
+    claimedGeneration := 1
+    nodes := [proposedGAt input]
+    equalities := []
+    payload := { index := family } }
+
+def twoInstances (request : RuleRequest Rank) : Outcome Rank :=
+  .success [candidate request 1]
+    [.instantiate (instantiateAt 101 (node 0)),
+      .instantiate (instantiateAt 102 (node 1))]
+    {}
+
+def twoInstancesFinal? : Option (State Rank) := do
+  let state <- afterReplyWith? engineLimits twoInstances
+  let first <- match selectOffer state (.suggestion (suggestion 0)) with
+    | .completed (.instanceAdmitted [fresh]) next =>
+        if fresh == node 2 then some next else none
+    | _ => none
+  let secondOffer <- first.offer? (.suggestion (suggestion 1))
+  match secondOffer.key with
+  | .instantiate _ semantic =>
+      if semantic.generation != 1 then none else pure ()
+  | _ => none
+  match selectOffer first (.suggestion (suggestion 1)) with
+  | .completed (.instanceAdmitted [fresh]) next =>
+      if fresh == node 3 then some next else none
+  | _ => none
+
+-- Admitting one append-only extension does not tombstone an independent
+-- retained instantiation from the same still-fresh source invocation.
+#guard
+  match twoInstancesFinal? with
+  | some state =>
+      state.engine.programVersion == 2 && state.engine.program.nodes.size == 4 &&
+        state.engine.instanceHistory.size == 2 && state.metrics.selectedInstances == 2
+  | none => false
+
+def emptyInstance (request : RuleRequest Rank) : Outcome Rank :=
+  .success [candidate request 1]
+    [.instantiate
+      { key := 107
+        triggers := [request.action.node]
+        claimedGeneration := 1
+        nodes := []
+        equalities := []
+        payload := { index := 109 } }]
+    {}
+
+-- A structurally valid instantiation with no new node or equality is a
+-- duplicate: it consumes no instance slot and does not bump programVersion.
+#guard
+  match afterReplyWith?
+      { engineLimits with maxInstances := 0, maxGeneration := 0 } emptyInstance with
+  | none => false
+  | some state =>
+      match selectOffer state (.suggestion (suggestion 0)) with
+      | .completed .instanceDuplicate next =>
+          next.engine.programVersion == 0 && next.engine.instances.isEmpty &&
+            next.engine.instanceHistory.isEmpty &&
+            next.engine.metrics.duplicateInstances == 1
+      | _ => false
+
+def wrongGeneration (request : RuleRequest Rank) : Outcome Rank :=
+  let proposal := { instantiateAt 113 (node 0) with claimedGeneration := 99 }
+  .success [candidate request 1] [.instantiate proposal] {}
+
+-- The policy key exposes the engine-computed generation, and a proposal whose
+-- untrusted claim disagrees is never advertised as selectable work.
+#guard
+  match afterInitial? with
+  | some state =>
+      match state.offer? (.suggestion (suggestion 1)) with
+      | some { key := .instantiate _ semantic, .. } => semantic.generation == 1
+      | _ => false
+  | none => false
+
+#guard
+  match afterReplyWith? engineLimits wrongGeneration with
+  | some state =>
+      state.engine.suggestions.size == 1 &&
+        (state.offer? (.suggestion (suggestion 0))).isNone
+  | none => false
+
+def splitChangedTarget (request : RuleRequest Rank) : Outcome Rank :=
+  .success [candidate request 1]
+    [.split { node := request.action.node, point := 0, reason := .midpoint }]
+    {}
+
+-- The split guard is captured before candidates from the same reply commit.
+-- Starting or advancing policy control cannot launder version zero into the
+-- improved target's version one.
+#guard
+  match afterReplyWith? engineLimits splitChangedTarget with
+  | some state =>
+      match state.engine.suggestions[0]? with
+      | some retained =>
+          retained.splitVersion == some 0 && state.engine.versions[1]? == some 1 &&
+            (state.offer? (.suggestion (suggestion 0))).isNone
+      | none => false
+  | none => false
+
+/-! ## Rejections, completeness, clocks, and policy-visible budgets -/
+
+-- An action-limit rejection cannot consume the retry it failed to prepare.
+#guard
+  match afterInitialWith? { engineLimits with maxActions := 1 } with
+  | some state =>
+      match selectOffer state (.suggestion (suggestion 0)) with
+      | .rejected .actionLimit next =>
+          (next.offer? (.suggestion (suggestion 0))).isSome &&
+            next.metrics.selectedRetries == 0 && next.metrics.rejected == 1
+      | _ => false
+  | none => false
+
+-- A resource stop while admitting an instantiation is not a verdict on the
+-- proposal, so the offer remains available.
+#guard
+  match afterInitialWith? { engineLimits with maxInstances := 0 } with
+  | some state =>
+      match selectOffer state (.suggestion (suggestion 1)) with
+      | .engineResource .instances next =>
+          (next.offer? (.suggestion (suggestion 1))).isSome &&
+            next.metrics.selectedInstances == 1
+      | _ => false
+  | none => false
+
+-- Dismissing required propagation is visible in the bounded view; an empty
+-- frontier cannot then be mistaken for a proved fixed point.
+#guard
+  match initial? with
+  | some state =>
+      match state.offer? (.application (application 0)) with
+      | some offer =>
+          match state.dismiss
+              { scope := state.scope
+                serial := state.serial
+                programVersion := state.engine.programVersion
+                id := offer.id
+                expected := offer.key } with
+          | .completed .dismissed next =>
+              match next.view with
+              | .ok (view, _) => view.offers.isEmpty && view.incomplete
+              | _ => false
+          | _ => false
+      | none => false
+  | none => false
+
+-- The policy sees every structural budget that can reject its next
+-- instantiation, not only facts and node counts.
+#guard
+  match afterInitial? with
+  | some state =>
+      match state.view with
+      | .ok (view, _) =>
+          view.remaining.actions == 31 && view.remaining.acceptedFacts == 31 &&
+            view.remaining.nodes == 6 && view.remaining.applications == 15 &&
+            view.remaining.equalities == 8 && view.remaining.retainedSuggestions == 13 &&
+            view.remaining.instances == 8 && view.remaining.queueEntries == 63 &&
+            view.remaining.generation == 4
+      | _ => false
+  | none => false
+
+#guard
+  match initialWith? { policyLimits with maxTraversal := 0 } with
+  | some state =>
+      match state.view with
+      | .error .traversalLimit => true
+      | _ => false
+  | none => false
+
+#guard
+  match initialWith? { policyLimits with maxLiveOffers := 0 } with
+  | some state =>
+      match state.view with
+      | .error .liveOfferLimit => true
+      | _ => false
+  | none => false
 
 end Hex.Interval.PolicyConformance

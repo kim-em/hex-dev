@@ -88,16 +88,16 @@ structure ProposedEqualityKey where
 structure InstantiationSemanticKey where
   family : Nat
   triggers : List NodeId
-  claimedGeneration : Nat
+  generation : Nat
   nodes : List ProposedNodeKey
   equalities : List ProposedEqualityKey
   deriving DecidableEq, Repr
 
 def InstantiationSemanticKey.ofRequest
-    (request : InstantiationRequest) : InstantiationSemanticKey :=
+    (request : InstantiationRequest) (generation : Nat) : InstantiationSemanticKey :=
   { family := request.key
     triggers := request.triggers
-    claimedGeneration := request.claimedGeneration
+    generation
     nodes := request.nodes.map fun node =>
       { domain := node.domain, op := node.op, args := node.args }
     equalities := request.equalities.map fun equality =>
@@ -129,24 +129,11 @@ def OfferKey.offerClass : OfferKey -> OfferClass
   | .instantiate _ _ => .instantiate
   | .split _ _ _ _ => .split
 
-structure PolicyFeature where
-  key : Nat
-  value : Int
-  deriving DecidableEq, Repr
-
-structure ObservationSummary where
-  outcome : Nat
-  changedFacts : Nat
-  logicalWork : Nat
-  deriving DecidableEq, Repr
-
 structure OfferView where
   id : OfferId
   key : OfferKey
   offerClass : OfferClass
   age : Nat
-  summary : Option ObservationSummary := none
-  features : Array PolicyFeature := #[]
 
 /-! ## Engine-owned frontier state -/
 
@@ -159,6 +146,7 @@ structure Limits where
 
 structure Clock where
   active : Bool
+  /-- Decision epoch at which this work most recently became active. -/
   born : Nat
   deriving DecidableEq, Repr
 
@@ -183,10 +171,14 @@ structure Metrics where
   deriving DecidableEq, Repr
 
 /-- Trusted frontier bookkeeping around the generic propagator engine.
-Arbitrary policy-private state lives outside this structure. -/
+Arbitrary policy-private state lives outside this structure.  Its constructor
+is private: callers may inspect projections, but only validated opaque entry
+points can replace the underlying engine or frontier bookkeeping. -/
 structure State (Fact : Type) where
+  private mk ::
   scope : ScopeId
   serial : Nat
+  /-- Uniform logical time: exactly one tick per charged policy decision. -/
   epoch : Nat
   engine : Engine Fact
   applications : Array Clock
@@ -199,17 +191,12 @@ structure State (Fact : Type) where
 def clockArray (bits : Array Bool) (born : Nat) : Array Clock :=
   bits.map fun active => { active, born }
 
-def splitVersion? (engine : Engine Fact) (suggestion : RetainedSuggestion) : Option Nat :=
-  match suggestion.suggestion with
-  | .split request => engine.versions[request.node.index]?
-  | .retry _ | .instantiate _ => none
-
 def suggestionClocksFrom (engine : Engine Fact) (born : Nat) : Array SuggestionClock :=
   engine.suggestions.map fun retained =>
-    { active := true, born, splitVersion := splitVersion? engine retained }
+    { active := true, born, splitVersion := retained.splitVersion }
 
 /-- Begin policy control over an existing engine snapshot. -/
-def State.start (engine : Engine Fact) (limits : Limits)
+opaque State.start (engine : Engine Fact) (limits : Limits)
     (scope : ScopeId := { index := 0 }) : State Fact :=
   { scope
     serial := 0
@@ -245,7 +232,7 @@ def syncSuggestionClocks (epoch : Nat) (engine : Engine Fact)
           | some retained =>
               { active := true
                 born := epoch
-                splitVersion := splitVersion? engine retained }
+                splitVersion := retained.splitVersion }
           | none => { active := false, born := epoch, splitVersion := none }
     clocks := clocks.push clock
   return clocks
@@ -287,15 +274,7 @@ def State.equalityKey? (state : State Fact) (equalityId : EqualityId) : Option E
       right := { node := equality.right, version := rightVersion } }
 
 def actionFresh (state : State Fact) (action : Action) : Bool :=
-  match state.engine.applications[action.application.index]?,
-      state.engine.rules[action.rule.index]?,
-      state.engine.seenVersions? (action.inputs.map fun input => input.node) with
-  | some application, some rule, some current =>
-      application.rule == action.rule && application.node == action.node &&
-        application.kind == action.kind && rule.key == action.key &&
-        action.inputs.map (fun input => input.node) == application.watches &&
-        current == action.inputs
-  | _, _, _ => false
+  state.engine.actionFresh action
 
 def State.suggestionKey? (state : State Fact) (suggestionId : SuggestionId) : Option OfferKey := do
   let clock <- state.suggestions[suggestionId.index]?
@@ -309,9 +288,9 @@ def State.suggestionKey? (state : State Fact) (suggestionId : SuggestionId) : Op
         some (.retry source effort)
       else none
   | .instantiate request =>
-      if retained.action.programVersion == state.engine.programVersion then
-        some (.instantiate source (.ofRequest request))
-      else none
+      let generation <- state.engine.instantiationGeneration? retained
+      if request.claimedGeneration != generation then none
+      else some (.instantiate source (.ofRequest request generation))
   | .split request => do
       let version <- clock.splitVersion
       let current <- state.engine.versions[request.node.index]?
@@ -321,7 +300,7 @@ def State.suggestionKey? (state : State Fact) (suggestionId : SuggestionId) : Op
       some (.split source { node := request.node, version } request.point request.reason)
 
 /-- Permanently tombstone suggestions whose freshness guard has failed. -/
-def State.pruneSuggestions (state : State Fact) : State Fact := Id.run do
+private def pruneSuggestions (state : State Fact) : State Fact := Id.run do
   let mut clocks := state.suggestions
   for index in [0:clocks.size] do
     match clocks[index]? with
@@ -333,16 +312,14 @@ def State.pruneSuggestions (state : State Fact) : State Fact := Id.run do
 
 /-- Install a new engine snapshot, refresh live work clocks, and tombstone
 stale suggestions.  Previously consumed suggestions never reactivate. -/
-def State.advance (state : State Fact) (engine : Engine Fact) : State Fact :=
-  let epoch := state.epoch + 1
+private def advanceState (state : State Fact) (engine : Engine Fact) : State Fact :=
   let next : State Fact :=
     { state with
-      epoch
       engine
-      applications := syncClocks epoch state.applications engine.queued
-      equalities := syncClocks epoch state.equalities engine.equalityQueued
-      suggestions := syncSuggestionClocks epoch engine state.suggestions }
-  next.pruneSuggestions
+      applications := syncClocks state.epoch state.applications engine.queued
+      equalities := syncClocks state.epoch state.equalities engine.equalityQueued
+      suggestions := syncSuggestionClocks state.epoch engine state.suggestions }
+  pruneSuggestions next
 
 def State.offer? (state : State Fact) : OfferId -> Option OfferView
   | .application application => do
@@ -380,13 +357,12 @@ def State.offer? (state : State Fact) : OfferId -> Option OfferView
           age := state.epoch - clock.born }
 
 inductive ViewError where
-  | malformedState
   | traversalLimit
   | liveOfferLimit
   deriving DecidableEq, Repr
 
 /-- Authoritative bounded scan of every live semantic offer. -/
-def State.offers (state : State Fact) : Except ViewError (Array OfferView × Nat) := do
+private def stateOffers (state : State Fact) : Except ViewError (Array OfferView × Nat) := do
   let traversal := state.applications.size + state.equalities.size + state.suggestions.size
   if state.limits.maxTraversal < state.metrics.traversal + traversal then
     throw .traversalLimit
@@ -407,7 +383,12 @@ structure EngineBudgetView where
   actions : Nat
   acceptedFacts : Nat
   nodes : Nat
+  applications : Nat
   equalities : Nat
+  retainedSuggestions : Nat
+  instances : Nat
+  queueEntries : Nat
+  generation : Nat
   deriving DecidableEq, Repr
 
 structure View (Fact : Type) where
@@ -417,22 +398,34 @@ structure View (Fact : Type) where
   offers : Array OfferView
   facts : Snapshot Fact
   remaining : EngineBudgetView
+  incomplete : Bool
 
 def remaining (limit used : Nat) : Nat := limit - used
 
-def State.view (state : State Fact) : Except ViewError (View Fact × State Fact) := do
-  let (offers, traversal) <- state.offers
+opaque State.view (state : State Fact) : Except ViewError (View Fact × State Fact) := do
+  let (offers, traversal) <- stateOffers state
   pure
     ({ scope := state.scope
        serial := state.serial
        programVersion := state.engine.programVersion
        offers
        facts := state.engine.snapshot
+       incomplete := state.incomplete
        remaining :=
         { actions := remaining state.engine.limits.maxActions state.engine.metrics.queuePops
           acceptedFacts := remaining state.engine.limits.maxAcceptedFacts state.engine.history.size
           nodes := remaining state.engine.limits.maxNodes state.engine.program.nodes.size
-          equalities := remaining state.engine.limits.maxEqualities state.engine.equalities.size } },
+          applications :=
+            remaining state.engine.limits.maxApplications state.engine.applications.size
+          equalities := remaining state.engine.limits.maxEqualities state.engine.equalities.size
+          retainedSuggestions :=
+            remaining state.engine.limits.maxRetainedSuggestions state.engine.suggestions.size
+          instances := remaining state.engine.limits.maxInstances state.engine.instances.length
+          queueEntries :=
+            remaining state.engine.limits.maxQueueEntries state.engine.queue.size
+          generation :=
+            remaining state.engine.limits.maxGeneration
+              (state.engine.generations.foldl Nat.max 0) } },
      { state with
        metrics := { state.metrics with traversal := state.metrics.traversal + traversal } })
 
@@ -471,7 +464,7 @@ inductive EqualityOutcome where
   | contradiction
   | engineResource (resource : Resource)
   | factResource (budget : Nat)
-  | invalid (code : Nat)
+  | invalid (fault : EqualityFault)
   deriving DecidableEq, Repr
 
 /-- Equality work gets the same typed observation treatment as external rule
@@ -509,18 +502,41 @@ inductive SelectResult (Fact : Type) where
   | engineResource (resource : Resource) (state : State Fact)
   | factResource (budget : Nat) (state : State Fact)
 
-def State.chargeDecision (state : State Fact) (rejected : Bool := false) : State Fact :=
+private inductive DecisionClass where
+  | rejected
+  | invocation
+  | equality
+  | retry
+  | instantiate
+  | split
+  | dismissal
+
+/-- Charge exactly one policy decision and advance its uniform logical clock.
+Every class-specific counter is updated in this one place. -/
+private def chargeDecision (state : State Fact) (decision : DecisionClass) : State Fact :=
   { state with
     serial := state.serial + 1
+    epoch := state.epoch + 1
     metrics :=
       { state.metrics with
         decisions := state.metrics.decisions + 1
-        rejected := state.metrics.rejected + if rejected then 1 else 0 } }
+        rejected := state.metrics.rejected + if decision matches .rejected then 1 else 0
+        selectedInvocations := state.metrics.selectedInvocations +
+          if decision matches .invocation then 1 else 0
+        selectedEqualities := state.metrics.selectedEqualities +
+          if decision matches .equality then 1 else 0
+        selectedRetries := state.metrics.selectedRetries +
+          if decision matches .retry then 1 else 0
+        selectedInstances := state.metrics.selectedInstances +
+          if decision matches .instantiate then 1 else 0
+        selectedSplits := state.metrics.selectedSplits +
+          if decision matches .split then 1 else 0
+        dismissals := state.metrics.dismissals + if decision matches .dismissal then 1 else 0 } }
 
-def State.reject (state : State Fact) (reason : Rejection) : SelectResult Fact :=
+private def reject (state : State Fact) (reason : Rejection) : SelectResult Fact :=
   match reason with
   | .decisionLimit => .rejected reason state
-  | _ => .rejected reason (state.chargeDecision true)
+  | _ => .rejected reason (chargeDecision state .rejected)
 
 def State.validate (state : State Fact) (selection : Selection) : Except Rejection OfferView := do
   if state.limits.maxDecisions <= state.metrics.decisions then throw .decisionLimit
@@ -545,13 +561,13 @@ def deltasFor (before after : Engine Fact) (nodes : List NodeId) : Array (FactDe
 
 /-- Freeze an application only after validating the selected semantic offer.
 The optional effort is supplied only by an engine-retained retry offer. -/
-def State.prepareApplication (state : State Fact) (applicationId : ApplicationId)
-    (effort : Option Nat) (clearDirty : Bool) : SelectResult Fact :=
+private def prepareApplication (state : State Fact) (applicationId : ApplicationId)
+    (effort : Option Nat) (clearDirty : Bool) (decision : DecisionClass) : SelectResult Fact :=
   if state.engine.limits.maxActions <= state.engine.metrics.queuePops then
-    .rejected .actionLimit (state.chargeDecision true)
+    reject state .actionLimit
   else
     match state.engine.applications[applicationId.index]? with
-    | none => state.reject .malformedState
+    | none => reject state .malformedState
     | some application =>
         match state.engine.rules[application.rule.index]?,
             state.engine.seenVersions? application.watches,
@@ -578,11 +594,11 @@ def State.prepareApplication (state : State Fact) (applicationId : ApplicationId
                   { state.engine.metrics with
                     queuePops := state.engine.metrics.queuePops + 1
                     requests := state.engine.metrics.requests + 1 } }
-            let state := (state.advance engine).chargeDecision
+            let state := advanceState (chargeDecision state decision) engine
             .request { action, inputs := views, writes := application.writes } state
-        | _, _, _ => state.reject .malformedState
+        | _, _, _ => reject state .malformedState
 
-def State.consumeSuggestion (state : State Fact) (suggestion : SuggestionId) : State Fact :=
+private def consumeSuggestion (state : State Fact) (suggestion : SuggestionId) : State Fact :=
   match state.suggestions[suggestion.index]? with
   | none => state
   | some clock =>
@@ -596,9 +612,9 @@ def equalityObservation (key : EqualityWorkKey) (before after : Engine Fact)
     changes := deltasFor before after [key.left.node, key.right.node]
     narrowCalls }
 
-def State.selectEquality (state : State Fact) (key : EqualityWorkKey) : SelectResult Fact :=
+private def selectEquality (state : State Fact) (key : EqualityWorkKey) : SelectResult Fact :=
   if state.engine.limits.maxActions <= state.engine.metrics.queuePops then
-    .rejected .actionLimit (state.chargeDecision true)
+    reject state .actionLimit
   else
     let running : Engine Fact :=
       { state.engine with
@@ -607,73 +623,68 @@ def State.selectEquality (state : State Fact) (key : EqualityWorkKey) : SelectRe
           { state.engine.metrics with
             queuePops := state.engine.metrics.queuePops + 1
             equalityRuns := state.engine.metrics.equalityRuns + 1 } }
-    let selected :=
+    let selectedClock :=
       match state.equalities[key.equality.index]? with
       | some clock =>
-          { state with
-            engine := running
-            equalities := state.equalities.set! key.equality.index { clock with active := false } }
-      | none => { state with engine := running }
+          { state with equalities :=
+              state.equalities.set! key.equality.index { clock with active := false } }
+      | none => state
     match running.contractEquality key.equality with
-    | .advanced engine =>
+    | .advanced narrowCalls engine =>
         let outcome :=
           if engine.contradictory && !state.engine.contradictory then .contradiction
           else if engine.history.size == state.engine.history.size then .noChange
           else .improved
-        let observation := equalityObservation key state.engine engine outcome 2
-        let next := selected.advance engine
-        .equality observation
-          { (next.chargeDecision) with
-            metrics :=
-              { next.metrics with
-                decisions := next.metrics.decisions + 1
-                selectedEqualities := next.metrics.selectedEqualities + 1 } }
-    | .invalid code engine =>
-        .equality (equalityObservation key state.engine engine (.invalid code) 0)
-          ((selected.advance engine).chargeDecision)
-    | .resourceLimit resource engine =>
-        .engineResource resource ((selected.advance engine).chargeDecision)
-    | .factResourceLimit budget engine =>
-        .factResource budget ((selected.advance engine).chargeDecision)
+        let observation := equalityObservation key state.engine engine outcome narrowCalls
+        .equality observation (advanceState (chargeDecision selectedClock .equality) engine)
+    | .invalid fault narrowCalls engine =>
+        .equality (equalityObservation key state.engine engine (.invalid fault) narrowCalls)
+          (chargeDecision state .equality)
+    | .resourceLimit resource narrowCalls engine =>
+        .equality (equalityObservation key state.engine engine
+            (.engineResource resource) narrowCalls)
+          (chargeDecision state .equality)
+    | .factResourceLimit budget narrowCalls engine =>
+        .equality (equalityObservation key state.engine engine
+            (.factResource budget) narrowCalls)
+          (chargeDecision state .equality)
 
-def State.selectSuggestion (state : State Fact) (suggestionId : SuggestionId)
+private def selectSuggestion (state : State Fact) (suggestionId : SuggestionId)
     (key : OfferKey) : SelectResult Fact :=
-  let consumed := state.consumeSuggestion suggestionId
   match state.engine.suggestions[suggestionId.index]? with
-  | none => state.reject .malformedState
+  | none => reject state .malformedState
   | some retained =>
       match key, retained.suggestion with
       | .retry _ effort, .retry retainedEffort =>
-          if effort != retainedEffort then state.reject .wrongKey
+          if effort != retainedEffort then reject state .wrongKey
           else
-            match consumed.prepareApplication retained.action.application (some effort) false with
+            match prepareApplication state retained.action.application (some effort) false
+                .retry with
             | .request request next =>
-                .request request
-                  { next with
-                    metrics :=
-                      { next.metrics with selectedRetries := next.metrics.selectedRetries + 1 } }
+                .request request (consumeSuggestion next suggestionId)
             | result => result
       | .instantiate _ _, .instantiate _ =>
-          match consumed.engine.admitInstantiation suggestionId with
+          match state.engine.admitInstantiation suggestionId with
           | .admitted nodes engine =>
-              let next := consumed.advance engine
-              .completed (.instanceAdmitted nodes)
-                { (next.chargeDecision) with
-                  metrics :=
-                    { next.metrics with
-                      decisions := next.metrics.decisions + 1
-                      selectedInstances := next.metrics.selectedInstances + 1 } }
+              let selected := chargeDecision
+                (consumeSuggestion state suggestionId) .instantiate
+              .completed (.instanceAdmitted nodes) (advanceState selected engine)
           | .duplicate engine =>
-              .completed .instanceDuplicate ((consumed.advance engine).chargeDecision)
+              let selected := chargeDecision
+                (consumeSuggestion state suggestionId) .instantiate
+              .completed .instanceDuplicate (advanceState selected engine)
           | .invalid error engine =>
-              .completed (.instanceRejected error) ((consumed.advance engine).chargeDecision)
-          | .resourceLimit resource engine =>
-              .engineResource resource ((consumed.advance engine).chargeDecision)
+              let selected := chargeDecision
+                (consumeSuggestion state suggestionId) .instantiate
+              .completed (.instanceRejected error) (advanceState selected engine)
+          | .resourceLimit resource _ =>
+              .engineResource resource (chargeDecision state .instantiate)
       | .split source target point reason, .split request =>
-          match consumed.engine.facts[target.node.index]? with
-          | none => state.reject .malformedState
+          match state.engine.facts[target.node.index]? with
+          | none => reject state .malformedState
           | some fact =>
-              let consumed := { consumed with epoch := consumed.epoch + 1 }
+              let selected := chargeDecision
+                (consumeSuggestion state suggestionId) .split
               .split
                 { scope := state.scope
                   node := request.node
@@ -684,54 +695,42 @@ def State.selectSuggestion (state : State Fact) (suggestionId : SuggestionId)
                   point
                   reason
                   source }
-                { (consumed.chargeDecision) with
-                  metrics :=
-                    { consumed.metrics with
-                      decisions := consumed.metrics.decisions + 1
-                      selectedSplits := consumed.metrics.selectedSplits + 1 } }
-      | _, _ => state.reject .wrongKey
+                selected
+      | _, _ => reject state .wrongKey
 
 /-- Recheck and execute one policy selection. -/
-def State.select (state : State Fact) (selection : Selection) : SelectResult Fact :=
+opaque State.select (state : State Fact) (selection : Selection) : SelectResult Fact :=
   match state.validate selection with
-  | .error reason => state.reject reason
+  | .error reason => reject state reason
   | .ok offer =>
       match selection.id, offer.key with
       | .application application, .invoke _ =>
-          match state.prepareApplication application none true with
-          | .request request next =>
-              .request request
-                { next with
-                  metrics :=
-                    { next.metrics with
-                      selectedInvocations := next.metrics.selectedInvocations + 1 } }
+          match prepareApplication state application none true .invocation with
+          | .request request next => .request request next
           | result => result
-      | .equality _, .equality key => state.selectEquality key
-      | .suggestion suggestion, key => state.selectSuggestion suggestion key
-      | _, _ => state.reject .wrongKey
+      | .equality _, .equality key => selectEquality state key
+      | .suggestion suggestion, key => selectSuggestion state suggestion key
+      | _, _ => reject state .wrongKey
 
 /-- Dismissing ordinary propagation work makes the run incomplete; dismissing
 a suggestion merely declines one optional search action. -/
-def State.dismiss (state : State Fact) (selection : Selection) : SelectResult Fact :=
+opaque State.dismiss (state : State Fact) (selection : Selection) : SelectResult Fact :=
   match state.validate selection with
-  | .error reason => state.reject reason
+  | .error reason => reject state reason
   | .ok _ =>
       let next := match selection.id with
         | .application application =>
             let engine :=
               { state.engine with queued := state.engine.queued.set! application.index false }
-            { state.advance engine with incomplete := true }
+            { advanceState (chargeDecision state .dismissal) engine with incomplete := true }
         | .equality equality =>
             let engine :=
               { state.engine with
                 equalityQueued := state.engine.equalityQueued.set! equality.index false }
-            { state.advance engine with incomplete := true }
+            { advanceState (chargeDecision state .dismissal) engine with incomplete := true }
         | .suggestion suggestion =>
-            let next := state.consumeSuggestion suggestion
-            { next with epoch := next.epoch + 1 }
-      let next := next.chargeDecision
-      .completed .dismissed
-        { next with metrics := { next.metrics with dismissals := next.metrics.dismissals + 1 } }
+            chargeDecision (consumeSuggestion state suggestion) .dismissal
+      .completed .dismissed next
 
 /-! ## Exact rule observations -/
 
@@ -778,7 +777,7 @@ inductive SubmitResult (Fact : Type) where
 /-- Admit a reply through the underlying engine, then expose actual admitted
 fact deltas and newly engine-indexed suggestions.  Claimed candidate strength
 is never used as an observation. -/
-def State.submit (state : State Fact) (reply : Reply Fact) : SubmitResult Fact :=
+opaque State.submit (state : State Fact) (reply : Reply Fact) : SubmitResult Fact :=
   match state.engine.pending with
   | none => .malformedState state
   | some action =>
@@ -796,10 +795,10 @@ def State.submit (state : State Fact) (reply : Reply Fact) : SubmitResult Fact :
                   cost := outcomeCost reply.outcome
                   emittedSuggestions :=
                     emittedSuggestions before.suggestions.size engine.suggestions.size }
-              .accepted observation (state.advance engine)
-          | .invalid error engine => .invalid error (state.advance engine)
+              .accepted observation (advanceState state engine)
+          | .invalid error engine => .invalid error (advanceState state engine)
           | .resourceLimit resource engine =>
-              .engineResource resource (state.advance engine)
-          | .factResourceLimit budget engine => .factResource budget (state.advance engine)
+              .engineResource resource (advanceState state engine)
+          | .factResourceLimit budget engine => .factResource budget (advanceState state engine)
 
 end Hex.Interval.Experiment.Propagator.Policy

@@ -1240,17 +1240,42 @@ with append-only stale entries and decide how much of a generic fact, as
 opposed to exact bounded policy features, a reusable policy should see. These
 choices change cost and convenience, not the admission or replay boundary.
 
-The logical frontier benchmark makes the first representation choice less
-open. After one root changes in one of `p` disconnected depth-`l` chains, a
-complete view before each of `l` choices and the final saturation check visits
-`p·l·(l+1)` application slots. Adapting only the `l` dependency events visits
-`l` entries. Both paths cross the same validated semantic-selection boundary
-and are required to produce identical facts, decisions, calls, improvements,
-and checksum; the `p = 4`, `l = 8` canary is `288` versus `8` visits. Therefore
-the production candidate is event-indexed, while the bounded complete scan is
-retained as the simple executable reference and differential oracle. The
-choice of coalesced mutable entries versus an append-only stale log within the
-event-indexed family remains experimental.
+The corrected logical frontier experiment does **not** yet select a production
+representation. Its indexed arm maintains a binary maximum-priority heap from
+one seed view and newly appended work and suggestion events; it is not a FIFO
+queue cursor. Both arms execute the same maximum policy through
+`Policy.State.select`, start from a fixed point reached through the public
+request/reply API, and must agree on the complete choice trace, facts,
+decisions, calls, improvements, queue coalescing, dismissals, and checksum.
+
+The experiment reports a vector rather than the earlier incomplete
+`288`-versus-`8` scalar. It counts complete-view backing slots and emitted
+offers, clock slots rebuilt by each wrapper state advance, suggestion-pruning visits,
+dependency watcher visits including suppressed insertions, appended events,
+semantic rechecks, variable-length semantic-key items, priority comparisons,
+and heap moves. These logical units are shown separately: their machine costs
+are not assumed equal. On the small merge-gated fixtures:
+
+- one root fanning out to six sinks gives scan/index aggregate touch counts
+  `267/242`, while both arms already share `112` clock synchronizations and
+  `14` suggestion-pruning visits;
+- four roots densely waking five sinks records all `20` watcher visits—five
+  insertions and fifteen suppressed duplicates—and gives `277/250`;
+- five sinks each emitting three disposable split suggestions gives
+  `1267/754`; the scan inspects `424` historical backing slots, while the
+  index consumes five work plus fifteen suggestion events from a single
+  seven-slot seed view.
+
+The aggregate is only a convenient checksum over the reported columns, not a
+wall-time prediction. In particular, the current wrapper still rebuilds every
+application, equality, and retained-suggestion clock array on each
+request/reply transition. That shared work is often dominant and must itself
+be made incremental before an event-indexed production frontier can realize
+its intended asymptotics. The bounded complete scan remains the executable
+reference and differential oracle. Coalesced mutable entries, a versioned
+stale heap, and other incremental layouts remain open candidates until they
+are implemented at the clock-synchronization boundary and compared with
+scientific timing and larger traces.
 
 The first policy wrapper treats age as continuous eligibility age. A dirty
 application or equality keeps its birth time while its versioned semantic key
@@ -1878,6 +1903,16 @@ position-sensitive fact checksum. For `t > 0` chains of depth `d`, the current
 fixture records `d` incremental calls versus `2*t*d` structural calls. These
 counts motivate the incremental baseline without freezing queue coalescing,
 priority policy, or state storage.
+
+The separate policy-frontier canary compares complete scans with a genuinely
+maintained maximum-priority heap on fan-out, dense multi-output wake, and
+retained-suggestion churn workloads. Its executable prints the full logical
+work vector described in the policy section, and small instances are
+merge-gated twice: ordinary `#guard` equivalence checks build with
+`HexConformance`, while the compiled spike's `canary` mode builds and runs in
+the existing single CI job. This is deterministic representation evidence,
+not scientific timing; it neither uses a custom timing loop nor freezes the
+current touch-count aggregates as performance contracts.
 
 The declared models follow the complexity section above. Scientific runs also
 record accepted actions, endpoint heights, live leaves, retained derivations,
