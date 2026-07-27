@@ -36,7 +36,11 @@ whole-program scan without changing any fact reference.
 
 Every workload carries a closed-form budget. Replay independently recomputes
 both the scalar cost and a five-component decomposition into program, source,
-edge, prior-fact, and result lookups. Conformance checks exact acceptance,
+edge, prior-fact, and result lookups. This counter charges fact/result lookup
+distance, but it does not yet charge the equality-recipe checker's separate
+program-list lookups. The reference implementation bounds those lookups only
+indirectly by `maxEdges * maxNodes`; a production checker must charge them or
+replace them with validated random access. Conformance checks exact acceptance,
 one-step-short rejection, dimensions, and component counts at the largest
 committed points.
 
@@ -45,12 +49,16 @@ five compiled modes:
 
 - `build` constructs the exact requested workload behind a non-inlined generic
   boundary;
-- `accept` checks it at the exact lookup budget;
+- `accept` checks it at the exact lookup budget on even loop iterations and
+  with one harmless spare lookup step on odd iterations;
 - `below` checks it one lookup step short;
 - `bad-tail` preserves lookup shape but corrupts only the last fact's range;
 - `early` crosses the relevant structural cap by one constructor.
 
-For fact-table `early` cases, the driver appends one valid irrelevant source
+All list-derived structural limits are computed once, outside the timed loops;
+the parity variants inside a loop are constant-time record updates. Both parity
+outcomes are asserted before timing. For fact-table `early` cases, the driver
+appends one valid irrelevant source
 fact and caps the table at the original length. The original selected result
 therefore remains in range, and rejection occurs only when `lengthWithin`
 encounters the extra constructor. This avoids accidentally measuring the
@@ -122,8 +130,10 @@ over this ladder.
 The three 501-fact early controls all take about 1.41 µs, because they fail in
 the structural scan before derivation lookup. Construction also goes the other
 way: far and source tails cost about 4 µs while the alternating adjacent tail
-costs 14.2 µs. Thus neither fact cardinality nor construction time can stand in
-for full replay work.
+costs 14.2 µs. These builders reuse closed fact terms differently, so their
+construction costs are not a retained-size comparison. Even without that
+confounder, neither fact cardinality nor construction time can stand in for
+full replay work.
 
 ### Late failures really are late
 
@@ -152,11 +162,13 @@ within-module case order is also a confounder.
 
 Kernel behavior is not a scaled copy of compiled behavior. The largest far
 case has 78.9 times more charged reference constructors than adjacent but
-reduces faster. Kernel normalization sees different expression sharing and
-reduction structure from the compiled runtime, and the experiment reduces
-only the workload's outer constructor before timing. This result does not make
-far list references desirable; it requires a separate kernel cost model and a
-storage comparison in both execution modes.
+reduces faster. The timed term still constructs the certificate, and the far
+and adjacent builders reuse closed terms differently; this experiment therefore
+cannot attribute the inversion to lookup reduction itself. Kernel normalization
+also sees different expression sharing and reduction structure from the
+compiled runtime, and the experiment reduces only the workload's outer
+constructor before timing. A normalized-certificate arm is required before
+drawing a kernel lookup-cost conclusion.
 
 The ordinary maximum-boundary theorem took median fresh-module wall time
 4.022 s against 1.060 s for its import-matched fixed theorem. The median paired
@@ -199,6 +211,10 @@ SHA-256 hashes as well.
    edges, retained bytes, and representation-level lookup work. Fact count is
    not a safe proxy for replay work. A production checker recomputes every cost
    from validated references rather than trusting certificate claims.
+   The next structural experiment varies the equality-edge table independently;
+   until every edge-to-program lookup is charged or random-access, the current
+   `maxEdges * maxNodes` fallback is a reference-checker bound, not the desired
+   production accounting model.
 3. A bounded scan over a list is still linear. If adversarial preflight must be
    independent of submitted length, the selected representation needs cached
    trusted dimensions or a bounded random-access container. The checker must
@@ -261,5 +277,7 @@ storage, tactic elaboration, Mathlib semantic proof construction, or endpoint
 backend alternatives. Five samples on one host do not set regression
 thresholds or prove asymptotic bounds. Whole-process RSS cannot recover
 per-check allocation, and the kernel ladder does not isolate workload
-normalization from certificate checking. Those are requirements for the next
-comparisons, not conclusions to infer from this record.
+normalization from certificate checking. The construction measurements also
+reuse closed fact terms and are not retained heap-size proxies. Those are
+requirements for the next comparisons, not conclusions to infer from this
+record.

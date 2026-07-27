@@ -653,12 +653,17 @@ canary, `maxLookupSteps` charges indexed derivation lookups—including traversa
 to prior facts—and the final-result lookup. It is not a unified counter for
 every constructor visited by the checker: whole program, source, equality,
 and fact scans are separately bounded by `maxNodes`, `maxSources`, `maxEdges`,
-and `maxFacts`. That representation and accounting split are experimental,
-not the production storage decision. Array, chunked, and arena-backed traces
-remain candidates; they must implement the same exact-index, caller-bound,
-and explicit work-accounting contract. A correspondence theorem between
-stored original indices and the chosen replay layout is required when that
-layout is selected.
+and `maxFacts`. In particular, the reference centered checker does not add the
+equality-recipe checker's program-list traversal to `maxLookupSteps`; it only
+bounds that work indirectly by `maxEdges * maxNodes`. An edge-padding workload
+must measure this dimension independently. Production replay either charges
+every such traversal or uses validated random access—the product bound is not
+the desired final accounting model. This representation and accounting split
+is experimental, not the production storage decision. Array, chunked, and
+arena-backed traces remain candidates; they must implement the same exact-index,
+caller-bound, and explicit work-accounting contract. A correspondence theorem
+between stored original indices and the chosen replay layout is required when
+that layout is selected.
 
 ## Rule protocol
 
