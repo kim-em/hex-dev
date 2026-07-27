@@ -99,21 +99,7 @@ theorem bZero_iff (hi : Dyadic) :
     (Hex.dyadicSign (p.evalDyadic hi) == 0) = true
       ↔ (toPolyℝ p).IsRoot (Dyadic.toReal hi) := by
   rw [beq_iff_eq]
-  have hs : SignType.sign ((Hex.dyadicSign (p.evalDyadic hi) : ℝ))
-      = SignType.sign (Dyadic.toReal (p.evalDyadic hi)) := sign_dyadicSign _
-  constructor
-  · intro h
-    rw [h] at hs
-    simp only [Int.cast_zero, sign_zero] at hs
-    have h0 : Dyadic.toReal (p.evalDyadic hi) = 0 := sign_eq_zero_iff.mp hs.symm
-    rw [toReal_evalDyadic] at h0
-    exact h0
-  · intro h
-    have h0 : Dyadic.toReal (p.evalDyadic hi) = 0 := by rw [toReal_evalDyadic]; exact h
-    rw [h0] at hs
-    simp only [sign_zero] at hs
-    have : ((Hex.dyadicSign (p.evalDyadic hi) : Int) : ℝ) = 0 := sign_eq_zero_iff.mp hs
-    exact_mod_cast this
+  exact evalSign_zero_iff p hi
 
 /-! ### The exact node count -/
 

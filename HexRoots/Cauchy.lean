@@ -43,7 +43,7 @@ namespace Component
     Cauchy root bound, with `candidateK = deg p`. Its half-width is
     `2^{-prec}` with `prec = -(cauchyExp p)`, so its closed square
     contains every complex root of `p`. -/
-@[expose] def cauchy (p : ZPoly) (h : 0 < p.degree?.getD 0) : Component :=
+@[expose] def cauchy (p : ZPoly) (_h : 0 < p.degree?.getD 0) : Component :=
   { squares := #[⟨0, 0, -(cauchyExp p : Int)⟩], candidateK := p.degree?.getD 0 }
 
 end Component

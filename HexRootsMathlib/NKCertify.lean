@@ -33,7 +33,8 @@ theorem certify_nk_cases {p : Hex.ZPoly} {c : Hex.Component}
         r = .atom ⟨cand, Or.inl hcand⟩) ∨
       ∃ hbase : Hex.nkWitness p base,
         r = .atom ⟨base, Or.inl hbase⟩ := by
-  simp only [Hex.Component.certify?, Hex.nkWitness] at hcert ⊢
+  simp only [Hex.Component.certify?, Hex.nkWitness,
+    Hex.TaylorShift.nkWitnessCheck_eq, Hex.TaylorShift.newtonSquare_eq] at hcert ⊢
   split at hcert <;> rename_i hbase
   · split at hcert <;> rename_i hinside
     · split at hcert <;> rename_i hcand

@@ -354,9 +354,7 @@ theorem factorTrial_product (f : ZPoly) :
 /-- Product contract for the public total factorization entry point. Holds
 unconditionally: each non-backstop tier's result is accepted only when it
 reconstructs `f` (the self-certifying guard in `factorTraced`), and every
-fallback is the proven `factorTrial` backstop. Established without proving the
-classical recombination loop reconstructs (that, with per-factor irreducibility,
-is the still-blocked re-proof capstone #8384). -/
+fallback is the proven `factorTrial` backstop. -/
 theorem factorize_product (f : ZPoly) :
     Factorization.product (ZPoly.factorize f) = f := by
   unfold ZPoly.factorize factorTraced

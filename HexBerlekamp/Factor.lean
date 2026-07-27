@@ -59,6 +59,173 @@ def Factorization.product (result : Factorization p) : FpPoly p :=
 def splitFactorAt (f witness : FpPoly p) (c : ZMod64 p) : FpPoly p :=
   DensePoly.gcd f (witness - FpPoly.C c)
 
+/-- Subtracting a constant does not change the size of a polynomial with at
+least two stored coefficients. -/
+private theorem sub_C_size_eq (w : FpPoly p) (c : ZMod64 p)
+    (hw : 2 ≤ w.size) :
+    (w - FpPoly.C c).size = w.size := by
+  apply Nat.le_antisymm
+  · by_cases hle : (w - FpPoly.C c).size ≤ w.size
+    · exact hle
+    have hlt : w.size < (w - FpPoly.C c).size := by omega
+    have hpos : 0 < (w - FpPoly.C c).size := by omega
+    let i := (w - FpPoly.C c).size - 1
+    have hiw : w.size ≤ i := by omega
+    have hic : (FpPoly.C c).size ≤ i := by
+      have hcsize : (FpPoly.C c).size ≤ 1 := by
+        exact DensePoly.size_C_le_one (R := ZMod64 p) c
+      dsimp [i]
+      omega
+    have htop := DensePoly.coeff_last_ne_zero_of_pos_size (w - FpPoly.C c) hpos
+    have hwzero := DensePoly.coeff_eq_zero_of_size_le w hiw
+    have hczero := DensePoly.coeff_eq_zero_of_size_le (FpPoly.C c) hic
+    change (w - FpPoly.C c).coeff i ≠ 0 at htop
+    rw [DensePoly.coeff_sub_ring, hwzero, hczero] at htop
+    exact False.elim (htop (by grind))
+  · by_cases hle : w.size ≤ (w - FpPoly.C c).size
+    · exact hle
+    have hlt : (w - FpPoly.C c).size < w.size := by omega
+    let i := w.size - 1
+    have hir : (w - FpPoly.C c).size ≤ i := by omega
+    have hic : (FpPoly.C c).size ≤ i := by
+      have hcsize : (FpPoly.C c).size ≤ 1 := by
+        exact DensePoly.size_C_le_one (R := ZMod64 p) c
+      dsimp [i]
+      omega
+    have hwtop := DensePoly.coeff_last_ne_zero_of_pos_size w (by omega)
+    have hrzero := DensePoly.coeff_eq_zero_of_size_le (w - FpPoly.C c) hir
+    have hczero := DensePoly.coeff_eq_zero_of_size_le (FpPoly.C c) hic
+    change w.coeff i ≠ 0 at hwtop
+    change (w - FpPoly.C c).coeff i = 0 at hrzero
+    rw [DensePoly.coeff_sub_ring, hczero] at hrzero
+    exact False.elim (hwtop (by grind))
+
+/-- Reducing `witness - c` by the multiple `(witness / f) * f` of `f` lands on
+`(witness % f) - c`: the Euclidean remainder shifted by the same constant. -/
+private theorem mod_sub_C_eq
+    [ZMod64.PrimeModulus p] (f witness : FpPoly p) (c : ZMod64 p) :
+    (witness - FpPoly.C c) - (witness / f) * f = witness % f - FpPoly.C c := by
+  have hdm := DensePoly.div_mul_add_mod witness f
+  apply DensePoly.ext_coeff
+  intro n
+  have hc := congrArg (fun x : FpPoly p => x.coeff n) hdm
+  simp only [DensePoly.coeff_add_semiring, DensePoly.coeff_sub_ring] at hc ⊢
+  grind
+
+/-- Subtracting a constant from a polynomial already smaller than a
+positive-degree modulus keeps it smaller than that modulus. -/
+private theorem sub_C_size_lt (f w : FpPoly p) (c : ZMod64 p)
+    (hf : 2 ≤ f.size) (hw : w.size < f.size) :
+    (w - FpPoly.C c).size < f.size := by
+  by_cases hlt : (w - FpPoly.C c).size < f.size
+  · exact hlt
+  have hpos : 0 < (w - FpPoly.C c).size := by omega
+  let i := (w - FpPoly.C c).size - 1
+  have hiw : w.size ≤ i := by
+    dsimp [i]
+    omega
+  have hic : (FpPoly.C c).size ≤ i := by
+    have hcsize : (FpPoly.C c).size ≤ 1 := by
+      exact DensePoly.size_C_le_one (R := ZMod64 p) c
+    dsimp [i]
+    omega
+  have htop := DensePoly.coeff_last_ne_zero_of_pos_size (w - FpPoly.C c) hpos
+  have hwzero := DensePoly.coeff_eq_zero_of_size_le w hiw
+  have hczero := DensePoly.coeff_eq_zero_of_size_le (FpPoly.C c) hic
+  change (w - FpPoly.C c).coeff i ≠ 0 at htop
+  rw [DensePoly.coeff_sub_ring, hwzero, hczero] at htop
+  exact False.elim (htop (by grind))
+
+/-- Canonical remainder of a constant shift when the modulus has positive
+degree: reduce the witness once, then apply the same shift. -/
+private theorem sub_C_mod_eq
+    [ZMod64.PrimeModulus p] (f witness : FpPoly p) (c : ZMod64 p)
+    (hf : 2 ≤ f.size) :
+    (witness - FpPoly.C c) % f = witness % f - FpPoly.C c := by
+  have hfpos : 0 < f.size := by omega
+  have hfdegree : 0 < f.degree?.getD 0 := by
+    rw [DensePoly.degree?_eq_some_of_pos_size f hfpos]
+    simp only [Option.getD_some]
+    omega
+  have hdegree := DensePoly.mod_degree_lt_of_pos_degree witness f hfdegree
+  have hreduced : (witness % f).size < f.size := by
+    by_cases hzero : (witness % f).size = 0
+    · omega
+    have hpos : 0 < (witness % f).size := Nat.pos_of_ne_zero hzero
+    rw [DensePoly.degree?_eq_some_of_pos_size (witness % f) hpos,
+      DensePoly.degree?_eq_some_of_pos_size f hfpos] at hdegree
+    simp only [Option.getD_some] at hdegree
+    omega
+  have hshiftSize : (witness % f - FpPoly.C c).size < f.size :=
+    sub_C_size_lt f (witness % f) c hf hreduced
+  have hshiftDegree :
+      (witness % f - FpPoly.C c).degree?.getD 0 < f.degree?.getD 0 := by
+    by_cases hzero : (witness % f - FpPoly.C c).size = 0
+    · rw [DensePoly.degree?]
+      simp [hzero, DensePoly.degree?_eq_some_of_pos_size f hfpos]
+      omega
+    have hpos : 0 < (witness % f - FpPoly.C c).size := Nat.pos_of_ne_zero hzero
+    rw [DensePoly.degree?_eq_some_of_pos_size (witness % f - FpPoly.C c) hpos,
+      DensePoly.degree?_eq_some_of_pos_size f hfpos]
+    simp only [Option.getD_some]
+    omega
+  have hdiff :
+      (witness - FpPoly.C c) - (witness % f - FpPoly.C c) =
+        (witness / f) * f := by
+    have h := mod_sub_C_eq f witness c
+    apply DensePoly.ext_coeff
+    intro n
+    have hc := congrArg (fun x : FpPoly p => x.coeff n) h
+    simp only [DensePoly.coeff_sub_ring] at hc ⊢
+    grind
+  have hcongr :
+      DensePoly.Congr (witness - FpPoly.C c) (witness % f - FpPoly.C c) f := by
+    refine ⟨witness / f, ?_⟩
+    rw [hdiff]
+    exact FpPoly.mul_comm _ _
+  have hmods :
+      (witness - FpPoly.C c) % f = (witness % f - FpPoly.C c) % f :=
+    -- Keep the finite-field law package aligned with the operation instances
+    -- selected by this theorem; synthesis through `Lean.Grind.CommRing`
+    -- otherwise chooses a non-definitional instance family.
+    @DensePoly.mod_eq_mod_of_congr (ZMod64 p) inferInstance inferInstance
+      inferInstance (ZMod64.instDivModLawsZMod64Fp p) _ _ _ hcongr
+  exact hmods.trans
+    (DensePoly.mod_eq_self_of_degree_lt (witness % f - FpPoly.C c) f hshiftDegree)
+
+/-- GCD candidate that resumes the reference Euclidean sequence from a cached
+witness remainder only when the current factor is positive-degree and strictly
+smaller than the original witness.  This is exposed so the compiled profiler
+can exercise the production primitive directly; factorization clients should
+normally use `kernelWitnessSplit?`. -/
+def splitFactorCached
+    (f witness reduced : FpPoly p) (c : ZMod64 p) : FpPoly p :=
+  if 2 ≤ f.size ∧ f.size < witness.size then
+    DensePoly.gcdAux f (reduced - FpPoly.C c) (f.size + witness.size - 1)
+  else
+    splitFactorAt f witness c
+
+/-- With the actual witness remainder cached, `splitFactorCached` is exactly
+the reference candidate, including its unnormalised executable representative. -/
+theorem splitFactorCached_eq
+    [ZMod64.PrimeModulus p] (f witness : FpPoly p) (c : ZMod64 p) :
+    splitFactorCached f witness (witness % f) c = splitFactorAt f witness c := by
+  unfold splitFactorCached
+  by_cases hfast : 2 ≤ f.size ∧ f.size < witness.size
+  · rw [if_pos hfast]
+    have hf : f.isZero = false :=
+      (DensePoly.isZero_eq_false_iff f).mpr (by omega)
+    have hw : 2 ≤ witness.size := by omega
+    have hshiftSize := sub_C_size_eq witness c hw
+    have hshiftLt : f.size < (witness - FpPoly.C c).size := by
+      rw [hshiftSize]
+      exact hfast.2
+    symm
+    unfold splitFactorAt
+    rw [DensePoly.gcd_eq_aux_mod f (witness - FpPoly.C c) hf hshiftLt,
+      hshiftSize, sub_C_mod_eq f witness c hfast.1]
+  · rw [if_neg hfast]
+
 /-- `true` exactly when the gcd candidate is nonconstant and strictly smaller
 than `f` in size (i.e. strictly smaller in degree). Strict size suffices to
 imply `g ≠ f`; the strict form additionally rules out non-identity unit
@@ -80,6 +247,43 @@ private def kernelWitnessSplitAux (f witness : FpPoly p) : Nat → Nat → Optio
       else
         kernelWitnessSplitAux f witness fuel (c + 1)
 
+/-- Constant sweep using one cached witness remainder.  The reference sweep
+remains `kernelWitnessSplitAux`; `cachedSplitAux_eq` proves exact agreement. -/
+private def cachedSplitAux (f witness reduced : FpPoly p) :
+    Nat → Nat → Option (SplitResult p)
+  | 0, _ => none
+  | fuel + 1, c =>
+      let splitConstant := ZMod64.ofNat p c
+      let factor := splitFactorCached f witness reduced splitConstant
+      if isNontrivialSplitFactor f factor then
+        some
+          { splitConstant
+            factor
+            cofactor := f / factor }
+      else
+        cachedSplitAux f witness reduced fuel (c + 1)
+
+/-- The cached constant sweep is exactly the reference sweep when supplied
+the witness remainder, including every selected representative and cofactor. -/
+private theorem cachedSplitAux_eq
+    [ZMod64.PrimeModulus p] (f witness : FpPoly p) :
+    ∀ (fuel c : Nat),
+      cachedSplitAux f witness (witness % f) fuel c =
+        kernelWitnessSplitAux f witness fuel c := by
+  intro fuel
+  induction fuel with
+  | zero => intro c; rfl
+  | succ fuel ih =>
+      intro c
+      unfold cachedSplitAux kernelWitnessSplitAux
+      simp only [splitFactorCached_eq]
+      let splitConstant := ZMod64.ofNat p c
+      let factor := splitFactorAt f witness splitConstant
+      by_cases hnon : isNontrivialSplitFactor f factor
+      · simp [splitConstant, factor, hnon]
+      · simp only [splitConstant, factor, hnon, Bool.false_eq_true, if_false]
+        exact ih (c + 1)
+
 /--
 Search the Berlekamp split candidates `gcd(f, h - c)` over all constants
 `c : F_p`, returning the first nontrivial factorization found.
@@ -92,24 +296,35 @@ sweep in that case — the dominant cost once a factor is already irreducible,
 since every kernel witness is then constant modulo it.  The guard is
 value-preserving: `kernelWitnessSplitAux_none_of_mod_size_le_one` proves the
 skipped sweep would have returned `none` (over a field), so this agrees with
-the unguarded search at every input.
+the unguarded search at every input.  When the current factor has positive
+degree and is strictly smaller than the original witness, the sweep also
+resumes each GCD from this cached remainder with the reference execution's
+remaining fuel; `cachedSplitAux_eq` proves the exact representative and result
+are unchanged over a prime modulus, which is the intended domain of this
+Berlekamp API.  This cannot be an `@[csimp]` swap: the optimized aux has an
+extra cached-remainder argument and its equality proof needs `PrimeModulus`,
+so the reference aux instead remains intact behind an explicit equality.
 -/
 def kernelWitnessSplit? (f witness : FpPoly p) : Option (SplitResult p) :=
-  if (witness % f).size ≤ 1 then none
-  else kernelWitnessSplitAux f witness p 0
+  let reduced := witness % f
+  if reduced.size ≤ 1 then none
+  else cachedSplitAux f witness reduced p 0
 
 /-- A successful guarded search forces the underlying sweep to succeed: the
 `(witness % f).size ≤ 1` skip returns `none`, so a `some` result can only come
 from the `kernelWitnessSplitAux` branch.  Lets the structural `some`-lemmas
 delegate to their `kernelWitnessSplitAux` counterparts unchanged. -/
 private theorem kernelWitnessSplitAux_of_some
+    [ZMod64.PrimeModulus p]
     {f witness : FpPoly p} {r : SplitResult p}
     (hsplit : kernelWitnessSplit? f witness = some r) :
     kernelWitnessSplitAux f witness p 0 = some r := by
   unfold kernelWitnessSplit? at hsplit
   by_cases hguard : (witness % f).size ≤ 1
   · rw [if_pos hguard] at hsplit; exact absurd hsplit (by simp)
-  · rw [if_neg hguard] at hsplit; exact hsplit
+  · rw [if_neg hguard] at hsplit
+    rw [cachedSplitAux_eq] at hsplit
+    exact hsplit
 
 /-- Try a list of kernel witnesses against one current factor. -/
 private def splitWithWitnesses? (f : FpPoly p) : List (FpPoly p) → Option (SplitResult p)
@@ -124,8 +339,11 @@ Fully split a single factor into its witness-irreducible pieces.
 
 Once `splitWithWitnesses?` reports that `f` admits no kernel-witness split,
 `f` is irreducible and is emitted as a leaf — the recursion never re-tests
-it. Each side of a successful split recurses independently, so an
-already-irreducible factor is tested against the witnesses exactly once
+it. Polynomials of size at most two are emitted immediately: the split loop's
+proper factor must be nonconstant and strictly smaller, which is impossible
+for a polynomial of degree at most one. Each side of a successful split
+recurses independently, so an already-irreducible factor is tested against
+the witnesses exactly once
 (the former restart-from-front loop re-tested every irreducible factor on
 every pass). The fuel bounds the recursion depth; `f.size` strictly
 decreases at every split, so `f.size + 1` fuel reaches the
@@ -138,10 +356,12 @@ private def fullySplit (witnesses : List (FpPoly p)) :
     Nat → FpPoly p → List (FpPoly p)
   | 0, f => [f]
   | fuel + 1, f =>
-      match splitWithWitnesses? f witnesses with
-      | none => [f]
-      | some split =>
-          fullySplit witnesses fuel split.factor ++ fullySplit witnesses fuel split.cofactor
+      if f.size ≤ 2 then [f]
+      else
+        match splitWithWitnesses? f witnesses with
+        | none => [f]
+        | some split =>
+            fullySplit witnesses fuel split.factor ++ fullySplit witnesses fuel split.cofactor
 
 /--
 Compute the Berlekamp factorization of a monic polynomial over `F_p` by
@@ -335,6 +555,7 @@ Any successful Berlekamp split is nontrivial: the returned factor is neither
 `0`, `1`, nor the full input polynomial.
 -/
 theorem kernelWitnessSplit_nontrivial
+    [ZMod64.PrimeModulus p]
     (f witness : FpPoly p) (r : SplitResult p)
     (hsplit : kernelWitnessSplit? f witness = some r) :
     !r.factor.isZero ∧ r.factor ≠ 1 ∧ r.factor ≠ f := by
@@ -364,6 +585,7 @@ the input.  This is the strict-descent companion of `kernelWitnessSplit_nontrivi
 and is what drives the `Nodup` invariant on the running factor list.
 -/
 theorem kernelWitnessSplit_size_lt
+    [ZMod64.PrimeModulus p]
     (f witness : FpPoly p) (r : SplitResult p)
     (hsplit : kernelWitnessSplit? f witness = some r) :
     r.factor.size < f.size :=
@@ -428,18 +650,6 @@ private theorem size_le_one_of_coeff_ge_one_zero (s : FpPoly p)
     have hpos : 0 < s.size := by omega
     have htop : s.coeff (s.size - 1) = 0 := h (s.size - 1) (by omega)
     exact DensePoly.coeff_last_ne_zero_of_pos_size s hpos htop
-
-/-- Reducing `witness - c` by the multiple `(witness / f) * f` of `f` lands on
-`(witness % f) - c`: the Euclidean remainder shifted by the same constant. -/
-private theorem mod_sub_C_eq
-    [ZMod64.PrimeModulus p] (f witness : FpPoly p) (c : ZMod64 p) :
-    (witness - FpPoly.C c) - (witness / f) * f = witness % f - FpPoly.C c := by
-  have hdm := DensePoly.div_mul_add_mod witness f
-  apply DensePoly.ext_coeff
-  intro n
-  have hc := congrArg (fun x : FpPoly p => x.coeff n) hdm
-  simp only [DensePoly.coeff_add_semiring, DensePoly.coeff_sub_ring] at hc ⊢
-  grind
 
 /-- Coefficient-wise cancellation: a zero difference forces equality. -/
 private theorem eq_of_sub_eq_zero_fp (a b : FpPoly p) (h : a - b = 0) : a = b := by
@@ -567,6 +777,7 @@ theorem kernelWitnessSplit?_some_of_nontrivial_splitFactorAt
     rw [Nat.zero_add, hc_eq]; exact hnontriv
   unfold kernelWitnessSplit?
   rw [if_neg hguard]
+  rw [cachedSplitAux_eq]
   exact kernelWitnessSplitAux_some_of_nontrivial_offset f witness p 0 c.toNat hc_lt hnon
 
 /-- `isNontrivialSplitFactor` only sees its arguments through size and degree,
@@ -655,13 +866,14 @@ theorem kernelWitnessSplit?_none_scale
     · have h' := h
       unfold kernelWitnessSplit? at h'
       rw [if_neg hguard] at h'
+      rw [cachedSplitAux_eq] at h'
       exact h'
   have haux_sg : kernelWitnessSplitAux (DensePoly.scale c g) witness p 0 = none :=
     kernelWitnessSplitAux_none_scale hc g witness p 0 haux_g
   unfold kernelWitnessSplit?
   by_cases hguard2 : (witness % DensePoly.scale c g).size ≤ 1
   · rw [if_pos hguard2]
-  · rw [if_neg hguard2]; exact haux_sg
+  · rw [if_neg hguard2, cachedSplitAux_eq]; exact haux_sg
 
 private theorem splitWithWitnesses?_product_spec
     [ZMod64.PrimeModulus p]
@@ -730,14 +942,17 @@ private theorem factorProduct_fullySplit
       exact DensePoly.mul_one_right_poly f
   | succ fuel ih =>
       rw [fullySplit]
-      cases hsplit : splitWithWitnesses? f witnesses with
-      | none =>
-          show factorProduct [f] = f
-          rw [factorProduct_cons, factorProduct_nil]
-          exact DensePoly.mul_one_right_poly f
-      | some split =>
-          rw [factorProduct_append, ih, ih]
-          exact splitWithWitnesses?_product_spec f witnesses hsplit
+      by_cases hsize : f.size ≤ 2
+      · rw [if_pos hsize, factorProduct_cons, factorProduct_nil]
+        exact DensePoly.mul_one_right_poly f
+      · rw [if_neg hsize]
+        cases hsplit : splitWithWitnesses? f witnesses with
+        | none =>
+            rw [factorProduct_cons, factorProduct_nil]
+            exact DensePoly.mul_one_right_poly f
+        | some split =>
+            rw [factorProduct_append, ih, ih]
+            exact splitWithWitnesses?_product_spec f witnesses hsplit
 
 /-- The Berlekamp factor list's product equals the input polynomial.  Fully
 splitting preserves `factorProduct` without using square-freeness, so the
@@ -779,15 +994,19 @@ private theorem fullySplit_ne_nil
   | zero => show ([f] : List (FpPoly p)) ≠ []; exact List.cons_ne_nil f []
   | succ fuel ih =>
       rw [fullySplit]
-      cases hsplit : splitWithWitnesses? f witnesses with
-      | none => show ([f] : List (FpPoly p)) ≠ []; exact List.cons_ne_nil f []
-      | some split =>
-          show (fullySplit witnesses fuel split.factor
-            ++ fullySplit witnesses fuel split.cofactor) ≠ []
-          intro hcontra
-          cases hA : fullySplit witnesses fuel split.factor with
-          | nil => exact ih split.factor hA
-          | cons a as => rw [hA] at hcontra; simp at hcontra
+      by_cases hsize : f.size ≤ 2
+      · rw [if_pos hsize]
+        exact List.cons_ne_nil f []
+      · rw [if_neg hsize]
+        cases hsplit : splitWithWitnesses? f witnesses with
+        | none => exact List.cons_ne_nil f []
+        | some split =>
+            intro hcontra
+            change fullySplit witnesses fuel split.factor ++
+              fullySplit witnesses fuel split.cofactor = [] at hcontra
+            cases hA : fullySplit witnesses fuel split.factor with
+            | nil => exact ih split.factor hA
+            | cons a as => rw [hA] at hcontra; simp at hcontra
 
 /-- When `f` admits no kernel-witness split, fully splitting it (with positive
 fuel) returns the singleton `[f]`. -/
@@ -795,7 +1014,7 @@ private theorem fullySplit_succ_eq_self_of_none
     (witnesses : List (FpPoly p)) (fuel : Nat) (f : FpPoly p)
     (h : splitWithWitnesses? f witnesses = none) :
     fullySplit witnesses (fuel + 1) f = [f] := by
-  rw [fullySplit, h]
+  simp [fullySplit, h]
 
 /-- Executable Berlekamp factorization always retains at least one factor. -/
 theorem berlekampFactor_factors_ne_nil
@@ -830,42 +1049,6 @@ private theorem splitWithWitnesses?_none_iff_forall
             · exact h w' hmem
           · intro h w' hw'
             exact h w' (List.mem_cons_of_mem _ hw')
-
-/--
-Structural lemma about `berlekampFactor` output: if its `factors` list has
-length at most one, then every fixed-space kernel witness yields
-`kernelWitnessSplit? = none`. This is the loop-tracing half of the parent
-Berlekamp completeness theorem; the algebraic half (no kernel-witness split
-forces irreducibility for square-free monic inputs) belongs to a separate
-Mathlib-free finite-field module.
--/
-theorem kernelWitnessSplit?_none_of_berlekampFactor_factors_length_le_one
-    (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    [Lean.Grind.Field (ZMod64 p)]
-    (hsmall : (berlekampFactor f hmonic).factors.length ≤ 1) :
-    ∀ w ∈ (fixedSpaceKernel f hmonic).toList,
-      kernelWitnessSplit? f w = none := by
-  -- A length-≤-1 output forces `f` itself to admit no kernel-witness split:
-  -- a successful split would emit two nonempty subtrees, hence length ≥ 2.
-  have hsplit_none :
-      splitWithWitnesses? f ((fixedSpaceKernel f hmonic).toList) = none := by
-    cases hsp : splitWithWitnesses? f ((fixedSpaceKernel f hmonic).toList) with
-    | none => rfl
-    | some split =>
-        exfalso
-        have hfac_eq : (berlekampFactor f hmonic).factors
-            = fullySplit ((fixedSpaceKernel f hmonic).toList) f.size split.factor
-              ++ fullySplit ((fixedSpaceKernel f hmonic).toList) f.size split.cofactor := by
-          show fullySplit ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f = _
-          rw [fullySplit, hsp]
-        rw [hfac_eq, List.length_append] at hsmall
-        have h1 : 0 < (fullySplit ((fixedSpaceKernel f hmonic).toList) f.size split.factor).length :=
-          List.length_pos_iff.mpr (fullySplit_ne_nil _ _ _)
-        have h2 : 0 < (fullySplit ((fixedSpaceKernel f hmonic).toList) f.size split.cofactor).length :=
-          List.length_pos_iff.mpr (fullySplit_ne_nil _ _ _)
-        omega
-  rw [splitWithWitnesses?_none_iff_forall] at hsplit_none
-  exact hsplit_none
 
 /-! ### `Nodup` invariant on `berlekampFactor.factors`
 
@@ -933,12 +1116,14 @@ private theorem kernelWitnessSplitAux_factor_pos_degree
         exact ih (c + 1) hsplit
 
 theorem kernelWitnessSplit_factor_pos_degree
+    [ZMod64.PrimeModulus p]
     (f witness : FpPoly p) (r : SplitResult p)
     (hsplit : kernelWitnessSplit? f witness = some r) :
     0 < r.factor.degree?.getD 0 :=
   kernelWitnessSplitAux_factor_pos_degree f witness p 0 r (kernelWitnessSplitAux_of_some hsplit)
 
 private theorem splitWithWitnesses?_factor_pos_degree
+    [ZMod64.PrimeModulus p]
     (f : FpPoly p) (witnesses : List (FpPoly p))
     {r : SplitResult p}
     (h : splitWithWitnesses? f witnesses = some r) :
@@ -958,6 +1143,7 @@ private theorem splitWithWitnesses?_factor_pos_degree
           exact ih h
 
 private theorem splitWithWitnesses?_size_lt
+    [ZMod64.PrimeModulus p]
     (f : FpPoly p) (witnesses : List (FpPoly p))
     {r : SplitResult p}
     (h : splitWithWitnesses? f witnesses = some r) :
@@ -1040,6 +1226,63 @@ private theorem size_ge_two_of_pos_degree {g : FpPoly p}
     rw [hdeg] at h
     simp at h
   · exact hge
+
+/-- A polynomial of size at most two cannot admit the split loop's proper
+nonconstant factor: positive degree forces the candidate's size to be at least
+two, while strict descent would force it below two. -/
+private theorem splitWithWitnesses?_none_linear
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (witnesses : List (FpPoly p)) (hsize : f.size ≤ 2) :
+    splitWithWitnesses? f witnesses = none := by
+  cases hsplit : splitWithWitnesses? f witnesses with
+  | none => rfl
+  | some split =>
+      exfalso
+      have hpos := splitWithWitnesses?_factor_pos_degree f witnesses hsplit
+      have hge := size_ge_two_of_pos_degree hpos
+      have hlt := splitWithWitnesses?_size_lt f witnesses hsplit
+      omega
+
+/--
+Structural lemma about `berlekampFactor` output: if its `factors` list has
+length at most one, then every fixed-space kernel witness yields
+`kernelWitnessSplit? = none`. This is the loop-tracing half of the parent
+Berlekamp completeness theorem; the algebraic half (no kernel-witness split
+forces irreducibility for square-free monic inputs) belongs to a separate
+Mathlib-free finite-field module.
+-/
+theorem kernelWitnessSplit?_none_of_berlekampFactor_factors_length_le_one
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    [ZMod64.PrimeModulus p]
+    [Lean.Grind.Field (ZMod64 p)]
+    (hsmall : (berlekampFactor f hmonic).factors.length ≤ 1) :
+    ∀ w ∈ (fixedSpaceKernel f hmonic).toList,
+      kernelWitnessSplit? f w = none := by
+  have hsplit_none :
+      splitWithWitnesses? f ((fixedSpaceKernel f hmonic).toList) = none := by
+    by_cases hsize : f.size ≤ 2
+    · exact splitWithWitnesses?_none_linear f _ hsize
+    · cases hsp : splitWithWitnesses? f ((fixedSpaceKernel f hmonic).toList) with
+      | none => rfl
+      | some split =>
+          exfalso
+          have hfac_eq : (berlekampFactor f hmonic).factors
+              = fullySplit ((fixedSpaceKernel f hmonic).toList) f.size split.factor
+                ++ fullySplit ((fixedSpaceKernel f hmonic).toList) f.size split.cofactor := by
+            show fullySplit ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f = _
+            rw [fullySplit, if_neg hsize, hsp]
+          rw [hfac_eq, List.length_append] at hsmall
+          have h1 :
+              0 < (fullySplit ((fixedSpaceKernel f hmonic).toList)
+                f.size split.factor).length :=
+            List.length_pos_iff.mpr (fullySplit_ne_nil _ _ _)
+          have h2 :
+              0 < (fullySplit ((fixedSpaceKernel f hmonic).toList)
+                f.size split.cofactor).length :=
+            List.length_pos_iff.mpr (fullySplit_ne_nil _ _ _)
+          omega
+  rw [splitWithWitnesses?_none_iff_forall] at hsplit_none
+  exact hsplit_none
 
 /-- A successful `splitWithWitnesses?` cofactor is strictly smaller than the
 input.  Together with `splitWithWitnesses?_size_lt` this drives the recursion
@@ -1184,8 +1427,16 @@ private theorem fullySplit_nodup_pos
         exact h_pos
   | succ fuel ih =>
       rw [fullySplit]
-      cases hsplit : splitWithWitnesses? f witnesses with
-      | none =>
+      split
+      · refine ⟨?_, ?_⟩
+        · show ([f] : List (FpPoly p)).Nodup
+          exact List.nodup_cons.mpr ⟨List.not_mem_nil, List.nodup_nil⟩
+        · intro g hg
+          rw [List.mem_singleton] at hg
+          subst hg
+          exact h_pos
+      · cases hsplit : splitWithWitnesses? f witnesses with
+        | none =>
           refine ⟨?_, ?_⟩
           · show ([f] : List (FpPoly p)).Nodup
             exact List.nodup_cons.mpr ⟨List.not_mem_nil, List.nodup_nil⟩
@@ -1193,7 +1444,7 @@ private theorem fullySplit_nodup_pos
             rw [List.mem_singleton] at hg
             subst hg
             exact h_pos
-      | some split =>
+        | some split =>
           have hf_ne : f ≠ 0 := ne_zero_of_pos_degree h_pos
           have h_factor_pos := splitWithWitnesses?_factor_pos_degree f witnesses hsplit
           have h_cofactor_pos :=
@@ -1362,13 +1613,18 @@ private theorem fullySplit_pos
       exact h_pos
   | succ fuel ih =>
       rw [fullySplit]
-      cases hsplit : splitWithWitnesses? f witnesses with
-      | none =>
+      split
+      · intro g hg
+        rw [List.mem_singleton] at hg
+        subst hg
+        exact h_pos
+      · cases hsplit : splitWithWitnesses? f witnesses with
+        | none =>
           intro g hg
           rw [List.mem_singleton] at hg
           subst hg
           exact h_pos
-      | some split =>
+        | some split =>
           have hf_ne : f ≠ 0 := ne_zero_of_pos_degree h_pos
           have h_factor_pos := splitWithWitnesses?_factor_pos_degree f witnesses hsplit
           have h_cofactor_pos :=
@@ -1485,13 +1741,18 @@ private theorem fullySplit_unsplittable
   | succ fuel ih =>
       intro f hne hle g hg
       rw [fullySplit] at hg
-      cases hsplit : splitWithWitnesses? f witnesses with
-      | none =>
+      split at hg
+      · rename_i hsize
+        rw [List.mem_singleton] at hg
+        subst hg
+        exact splitWithWitnesses?_none_linear g witnesses hsize
+      · cases hsplit : splitWithWitnesses? f witnesses with
+        | none =>
           rw [hsplit] at hg
           rw [List.mem_singleton] at hg
           subst hg
           exact hsplit
-      | some split =>
+        | some split =>
           rw [hsplit] at hg
           rw [List.mem_append] at hg
           have hfac_pos := splitWithWitnesses?_factor_pos_degree f witnesses hsplit

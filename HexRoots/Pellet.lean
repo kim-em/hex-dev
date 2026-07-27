@@ -92,16 +92,35 @@ theorem two_lt_sqrt2Hi_sq : 2 < sqrt2Hi * sqrt2Hi := by decide
   else
     false
 
+namespace TaylorShift
+
+/-- Three-radius strong Pellet check from an already-computed Taylor shift.
+    Keeping this coefficient-level kernel separate lets a certifier test every
+    candidate root count at one centre without repeating the quadratic Taylor
+    shift. -/
+@[expose] def witnessCheck {p : ZPoly} (s : DyadicSquare)
+    (shift : TaylorShift p s.center) (k : Nat) : Bool :=
+  pelletAt shift.coeffs k s.radiusLo s.radiusHi
+    && pelletAt shift.coeffs k (s.radiusLo <<< (1 : Int)) (s.radiusHi <<< (1 : Int))
+    && pelletAt shift.coeffs k (s.radiusLo <<< (2 : Int)) (s.radiusHi <<< (2 : Int))
+
+end TaylorShift
+
 /-- Three-radius strong Pellet check for `k` roots (with multiplicity) in
     the circumscribed disc of `s`: the exact Taylor coefficients of `p` at
     `s.center`, tested by `pelletAt` at the base radius bounds and at 2× and
     4× the base radius (the radius bounds shifted left by 1 and 2). This is
     BSSY's Newton-readiness condition. -/
 @[expose] def witnessCheck (p : ZPoly) (s : DyadicSquare) (k : Nat) : Bool :=
-  let cs := taylor p s.center
-  pelletAt cs k s.radiusLo s.radiusHi
-    && pelletAt cs k (s.radiusLo <<< (1 : Int)) (s.radiusHi <<< (1 : Int))
-    && pelletAt cs k (s.radiusLo <<< (2 : Int)) (s.radiusHi <<< (2 : Int))
+  TaylorShift.witnessCheck s (TaylorShift.compute p s.center) k
+
+/-- The centre-indexed coefficient kernel is exactly the public polynomial
+    witness check. -/
+@[simp] theorem TaylorShift.witnessCheck_eq {p : ZPoly} (s : DyadicSquare)
+    (shift : TaylorShift p s.center) (k : Nat) :
+    TaylorShift.witnessCheck s shift k = _root_.Hex.witnessCheck p s k := by
+  rw [TaylorShift.witnessCheck, _root_.Hex.witnessCheck, shift.valid]
+  rfl
 
 /-- Strong Pellet witness: with `(c₀, …, c_n)` the exact Taylor
     coefficients of `p` at the centre of `s`, and `ρlo, ρhi` the dyadic

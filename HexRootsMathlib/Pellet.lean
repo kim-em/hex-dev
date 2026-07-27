@@ -311,7 +311,8 @@ theorem checks {p : Hex.ZPoly} {s : Hex.DyadicSquare} {k : ℕ}
         (s.radiusLo <<< (1 : Int)) (s.radiusHi <<< (1 : Int)) = true) ∧
       Hex.pelletAt (Hex.taylor p s.center) k
         (s.radiusLo <<< (2 : Int)) (s.radiusHi <<< (2 : Int)) = true := by
-  unfold Hex.witness Hex.witnessCheck at h
+  unfold Hex.witness Hex.witnessCheck Hex.TaylorShift.witnessCheck
+    Hex.TaylorShift.compute at h
   simpa only [Bool.and_eq_true] using h
 
 private theorem radiusLo_nonneg (s : Hex.DyadicSquare) :

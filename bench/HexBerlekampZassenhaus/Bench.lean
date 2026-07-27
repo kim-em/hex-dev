@@ -13,8 +13,8 @@ import LeanBench
 Phase 4 benchmark registrations for `hex-berlekamp-zassenhaus`.
 
 This module is the Phase 4 benchmark root for the BZ factorization API. It
-covers the public combinator, the proof-facing fast path, the exhaustive slow
-path, the (degree, height) matrix, the (degree, height, precision,
+covers the public total cascade, the option-valued lattice tier, the exact
+trial backstop, the (degree, height) matrix, the (degree, height, precision,
 local-factor-count) fast-path setup surface, a shared-domain `compare` family,
 and the HO-2 adversarial recombination shapes. Comparator ratios and the
 headline performance report still depend on the scheduled-hardware runs and
@@ -31,22 +31,22 @@ per-target comment annotates which one.
 
 Split-family registrations (`prep := smokeInput`):
 
-* `runFactorChecksum`: public `factor` combinator on split inputs over the
+* `runFactorChecksum`: public `ZPoly.factorize` cascade on split inputs over the
   scientific degree schedule
   `splitScientificSchedule = #[2, 3, 4, 5, 8, 10, 12, 14, 16, 18, 20, 22, 24]`.
-* `runFactorSlowChecksum`: exhaustive backstop on the fast schedule
+* `runFactorSlowChecksum`: exact trial backstop on the fast schedule
   `smokeSchedule = #[1, 2, 3, 4]`.
-* `runFactorFallbackProbeChecksum`: public `factor` combinator on the explicit
+* `runFactorFallbackProbeChecksum`: public `ZPoly.factorize` on the explicit
   cascade-trigger split-degree schedule `fallbackProbeSchedule`.
 
 Shared compare domain (`prep := smokeInput`, `paramSchedule := smokeSchedule`):
 
 * `runFactorCompareChecksum` vs `runFactorSlowCompareChecksum` checks the
-  public fallback factorization against the exhaustive slow path.
+  public cascade against exact trial factorization.
 
 Degree/height registrations (`prep := prepDegreeHeightInput`):
 
-* `runFactorDegreeHeightChecksum`: public `factor` over the scientific encoded
+* `runFactorDegreeHeightChecksum`: public `ZPoly.factorize` over the scientific encoded
   `degreeHeightSchedule`.
 * `runFactorSlowDegreeHeightChecksum`: bounded slow-path diagnostic on the
   smallest-completing encoded subset `slowDegreeHeightSchedule`.
@@ -60,7 +60,7 @@ Precision/local-factor registration (`prep := prepPrecisionLocalInput`):
 HO-2 adversarial singletons (each pinned at `paramSchedule := #[0]`):
 
 * `runFactorAdvX4Plus1Checksum`, `runFactorAdvQuadSqrt2Sqrt3Checksum`,
-  `runFactorAdvPhi15Checksum`: full public `factor` on the named adversarial
+  `runFactorAdvPhi15Checksum`: full public `ZPoly.factorize` on the named adversarial
   input.
 * `runFactorFastSetupAdvX4Plus1Checksum`,
   `runFactorFastSetupAdvPhi15Checksum`: lattice precision-cap *setup* only —
@@ -393,7 +393,7 @@ budget.
 def checksumFastPathSetup (f : ZPoly) (p : Nat) : UInt64 :=
   mixHash (hash (latticePrecisionCap f)) (checksumOptionNatArray (modularFactorDegreesAt? f p))
 
-/-- Benchmark target: public fast-with-slow-fallback factorization. -/
+/-- Benchmark target: the public total factorization cascade. -/
 def runFactorChecksum (f : ZPoly) : UInt64 :=
   checksumFactorization (ZPoly.factorize f)
 
@@ -402,7 +402,7 @@ def runFactorChecksum (f : ZPoly) : UInt64 :=
 def runFactorFallbackProbeChecksum (f : ZPoly) : UInt64 :=
   runFactorChecksum f
 
-/-- Benchmark target: public exhaustive slow backstop. -/
+/-- Benchmark target: the exact trial-division backstop. -/
 def runFactorSlowChecksum (f : ZPoly) : UInt64 :=
   checksumFactorization (factorTrial f)
 
@@ -410,7 +410,7 @@ def runFactorSlowChecksum (f : ZPoly) : UInt64 :=
 def runFactorCompareChecksum (f : ZPoly) : UInt64 :=
   checksumFactorization (ZPoly.factorize f)
 
-/-- Shared-domain compare target: exhaustive slow factorization on deterministic splits. -/
+/-- Shared-domain compare target: exact trial factorization on deterministic splits. -/
 def runFactorSlowCompareChecksum (f : ZPoly) : UInt64 :=
   checksumFactorization (factorTrial f)
 

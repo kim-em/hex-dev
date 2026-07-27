@@ -360,6 +360,18 @@ def isolate (p : ZPoly) (h : Hex.HasOnlySimpleRoots p) (atom_prec : Int)
     Option (Array (DyadicRootIsolation p))
 ```
 
+`certify?` computes an exact Taylor shift once at its enclosing-square centre
+and passes the same coefficient array to the witness and Newton kernels. The
+Pellet candidate-count search also shares one shift across every failed `k`;
+only a speculative recentred candidate that reaches its witness re-check needs
+a new shift. In the default Newton-then-Pellet route, the widened Pellet square
+is concentric with the Newton enclosure, so an exact centre-equality guard
+reuses the same shift across the fallback as well (and recomputes if that
+equality ever fails). A proof field indexes each cached array by its polynomial
+and centre, so none of the coefficient-level Pellet, Newton, or
+Newton-Kantorovich kernels can be called by certification with coefficients
+from another centre.
+
 The speculative Newton step computes `x' = x − k · c₀/c₁` (with
 `k = 1` for atoms; the k-order step for clusters is BSSY §5), places a
 much smaller square at `x'`, and re-runs the witness. If the witness
@@ -794,23 +806,32 @@ bit-length at precision `prec`.
   same shape and cost, plus one `Dyadic.invAtPrec` call, and tests
   one radius where the Pellet form tests three.
 - One Newton step costs the same order as one witness check, plus a
-  single `Dyadic.invAtPrec` call.
+  single `Dyadic.invAtPrec` call. Within `certify?`, the witness and
+  Newton kernels share one Taylor shift; the Pellet candidate-count
+  search likewise pays one base shift rather than one per attempted
+  count, and the default Newton-to-Pellet fallback reuses it because
+  the two base squares are concentric. This does not change the
+  asymptotic bound, but removes the repeated dominant `O(n²)` shift
+  from those paths.
 - `isolate` for degree `n`, well-separated roots, target precision
   `prec`: heuristically `O(n³ · B²)` bit operations. Tight root
   clusters add subdivision depth up to `O(mahlerPrec p)`.
 
 ## Time budgets (Phase 4 validation)
 
-Regression ceilings anchored to measured reality (chungus2, AMD EPYC
-9455, Lean 4.32.0-rc1, single compiled call; the degree-50 and
-degree-100 rows are measured with `isolateAll?` at the stated
-precision, since `isolate`'s target carries a `separationDepth` floor
-that exceeds these precisions from degree 50 up):
+Regression ceilings anchored to measured reality (quiet `chungus2`, AMD EPYC
+9455, Lean 4.32.0-rc1). Every pinned row runs the compiled expression
+`isolateAll? (seededPoly degree) target #[Component.cauchy ...]`; this avoids
+`isolate`'s higher `separationDepth` target and makes the stated precision the
+actual driver target. Degree 10 and 20 use five measured cold calls with no
+discarded warmup; the expensive degree-50 row uses one cold call:
 
-- Degree 10, prec 32: under 1 second (measured 0.14 s).
-- Degree 20, prec 32: under 30 seconds (measured about 15 s). This is
-  the scale `hex-number-field` consumes.
-- Degree 50, prec 64: under 15 minutes (measured 8.3 minutes).
+- Degree 10, prec 32: under 0.7 seconds (median 0.324 s, range
+  0.285–0.343 s).
+- Degree 20, prec 32: under 12 seconds (median 5.830 s, range
+  5.426–7.098 s). This is the scale `hex-number-field` consumes.
+- Degree 50, prec 64: under 14 minutes (measured 482.979 s,
+  8.05 minutes).
 - Degree 100, prec 128: no budget pinned. The measured run did not
   complete within 19 minutes and the extrapolated cost is hours; a
   budget is set once the optimisation work below makes the scale
@@ -824,9 +845,9 @@ https://github.com/kim-em/hex-dev/issues/8751
 tracks tightening the ceilings (Graeffe iteration, soft-Pellet
 filtering, Taylor-shift reuse), and any landed improvement re-measures
 the table and ratchets the ceilings down rather than leaving slack.
-MPSolve remains the informational performance comparator; the measured
-python-flint ratios are recorded in
-`reports/hexroots-performance.md`.
+MPSolve remains a local correctness oracle. The declared informational
+performance comparator is python-flint, whose measured ratios are recorded in
+[`reports/hex-roots-performance.md`](../../reports/hex-roots-performance.md).
 
 ## References
 

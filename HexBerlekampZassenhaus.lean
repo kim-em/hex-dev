@@ -22,7 +22,6 @@ public import HexBerlekampZassenhaus.IrreducibleCore
 public import HexBerlekampZassenhaus.IrreducibleDecide
 public import HexBerlekampZassenhaus.Factored
 public import HexBerlekampZassenhaus.FactorProvider
-public import HexBerlekampZassenhaus.FactorTacticTests
 public import HexBerlekampZassenhaus.RecombineProofs
 public import HexBerlekampZassenhaus.TrialProofs
 public import HexBerlekampZassenhaus.QuadraticRootProofs

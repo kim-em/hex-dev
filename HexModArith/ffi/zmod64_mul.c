@@ -30,6 +30,45 @@ LEAN_EXPORT uint64_t lean_hex_zmod64_mul(b_lean_obj_arg p, uint64_t a, uint64_t 
     return product % modulus;
 }
 
+/* Return the exact residue selected by the logical `ZMod64.inv` body without
+   constructing Lean Ints or entering GMP.  For the positive inputs here,
+   `Hex.pureIntExtGcd` starts with remainder rows `(a, p)` and cofactor rows
+   `(1, 0)`, then repeatedly applies
+
+       quotient := old_r / r
+       (old_r, r) := (r, old_r % r)
+       (old_s, s) := (s, old_s - quotient * s).
+
+   We need only `old_s % p`, so the cofactor recurrence can run modulo `p`.
+   This remains exact for composite moduli and non-coprime inputs: reducing
+   after every linear update preserves the final cofactor's residue.  Under
+   `ZMod64.Bounds`, `p < 2^31`; all remainders and reduced cofactors are below
+   `p`, every quotient is at most `p`, and `quotient * s < 2^62`, so every
+   operation fits in uint64_t. */
+LEAN_EXPORT uint64_t lean_hex_zmod64_inv(b_lean_obj_arg p, uint64_t a) {
+    uint64_t modulus = lean_uint64_of_nat(p);
+    uint64_t old_r = a;
+    uint64_t r = modulus;
+    uint64_t old_s = 1 % modulus;
+    uint64_t s = 0;
+
+    while (r != 0) {
+        uint64_t quotient = old_r / r;
+        uint64_t next_r = old_r % r;
+        uint64_t quotient_s = (quotient * s) % modulus;
+        uint64_t next_s = old_s >= quotient_s
+            ? old_s - quotient_s
+            : old_s + (modulus - quotient_s);
+
+        old_r = r;
+        r = next_r;
+        old_s = s;
+        s = next_s;
+    }
+
+    return old_s;
+}
+
 static uint64_t lean_hex_mul_mod_word(uint64_t a, uint64_t b, uint64_t modulus) {
     __uint128_t product = (__uint128_t)a * (__uint128_t)b;
     return (uint64_t)(product % modulus);

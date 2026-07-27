@@ -190,6 +190,39 @@ def gramRows (b : Matrix Int n m) : Array (Array Int) :=
     Array.ofFn fun j : Fin n =>
       (b.row i).dotProduct (b.row j)
 
+/-- Symmetry-aware implementation of integer Gram rows. The upper triangle is
+computed once, then the lower triangle is filled by reading its transpose. -/
+@[expose]
+def gramRowsImpl (b : Matrix Int n m) : Array (Array Int) :=
+  let upper : Vector (Vector Int n) n :=
+    Vector.ofFn fun i =>
+      Vector.ofFn fun j =>
+        if i.val ≤ j.val then
+          (b.row i).dotProduct (b.row j)
+        else
+          0
+  Array.ofFn fun i : Fin n =>
+    Array.ofFn fun j : Fin n =>
+      if i.val ≤ j.val then upper[i][j] else upper[j][i]
+
+/-- Compiled integer Gram-row construction uses symmetry while `gramRows`
+remains the direct reference definition used by proofs. -/
+@[csimp] theorem gramRows_eq_impl : @gramRows = @gramRowsImpl := by
+  funext n m b
+  apply Array.ext
+  · simp [gramRows, gramRowsImpl]
+  · intro i hi href
+    apply Array.ext
+    · simp [gramRows, gramRowsImpl]
+    · intro j hj hrefj
+      simp only [gramRows, gramRowsImpl, Array.getElem_ofFn,
+        Vector.getElem_ofFn, Fin.getElem_fin]
+      split <;> rename_i hij
+      · rfl
+      · have hji : j ≤ i := by omega
+        rw [if_pos hji]
+        exact Vector.dotProduct_comm (R := Int) _ _
+
 /-- Reading entry `(i, j)` of `gramRows b` recovers the Gram matrix entry
 `(gramMatrix b)[i][j]`. -/
 private theorem getArrayEntry_gramRows (b : Matrix Int n m) (i j : Fin n) :

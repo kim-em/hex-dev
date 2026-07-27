@@ -20,7 +20,7 @@ endpoints of the isolation output (`dyadicKey`), the chain coefficients, or
 the scalar result, so the harness's hash column doubles as a
 cross-implementation conformance check.
 
-Input families (per `SPEC/Libraries/hex-real-roots.md` §"Time budgets" and the
+Input families (per `HexRealRoots/SPEC/hex-real-roots.md` §"Time budgets" and the
 conformance §"local" tier). `isolate?` is deliberately exercised on three
 structurally different families, never a single happy-path shape:
 

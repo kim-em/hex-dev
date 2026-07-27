@@ -19,7 +19,8 @@ relevant cell was checked and found false. Operational totality of the
 compiled builder follows from the squarefree carrier and
 `isolate?_isSome`, together with the structurally fuel-bounded
 separation pass, from
-[hex-real-roots-mathlib](hex-real-roots-mathlib.md). It is not exposed
+[hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md).
+It is not exposed
 as a kernel-side completeness theorem for false verdicts.
 
 This is the user-facing payoff of the real-root machinery: neither
@@ -196,9 +197,12 @@ proved equivalences.
    and the sign matrix is the already-folded constant formula.
 
 5. **Separate.** Scan consecutive isolations in order. Already-strict
-   pairs are left unchanged. For a touching pair, repeatedly apply
-   cached-chain `refine1With` once to **both** intervals until
-   `upperᵢ < lowerᵢ₊₁`. The helper is structurally fuel-bounded by the
+   pairs are left unchanged. For a touching pair, repeatedly apply the
+   replay-based `Separation.refine1?` once to **both** intervals until
+   `upperᵢ < lowerᵢ₊₁`. This helper reads variation differences from the
+   cached generalized replay chain; it cannot use `RealRootIsolation.refine1With`,
+   whose types are tied to the executable `ZPoly.sturmChain`. The pair walk is
+   structurally fuel-bounded by the
    maximum of the two `refineTo` bounds
 
    ```text
@@ -348,6 +352,25 @@ is the corresponding `−∞/+∞` difference. The proof factors through
 separately because the interval-count theorem requires positive
 degree.
 
+The compiled builder obtains the witnesses by instrumenting the existing
+sign-managed pseudo-remainder loop. During division of `prev` by `cur` it
+maintains
+
+```text
+scale A prev = Q * cur + r.
+```
+
+One `spemStep` with positive multiplier `a`, cancelled leading monomial
+`monomial k b`, and new remainder `r'` updates
+`A := a*A`, `Q := scale a Q + monomial k b`, and `r := r'`. At a nonzero
+stopping remainder it emits `next := -primitivePart r` and
+`rightScale := content r`, turning the invariant into exactly the checked
+subtractive recurrence. The builder starts the chain at the literal input
+`f`; only its derivative is primitive-normalized, with `derivScale` equal to
+the derivative content. Fuel exhaustion and a zero remainder before a
+constant terminal entry are rejected, and the public builder retains a raw
+candidate only after `SturmReplay.check` accepts it.
+
 Three existing private lemmas in
 `HexRealRootsMathlib/ChainCorrespond.lean` transfer directly and should
 be exported: `coprime_step_rev`, `flank_of_key`, and
@@ -479,9 +502,23 @@ free to change.
   `HexRCF/LanguageTests.lean`: executable language-semantics tests.
 - `HexRCF/SturmReplay.lean`: generalized multiplication-only chain
   replay and literal root counts.
+- `HexRCF/SturmBuilder.lean`: compiled pseudo-remainder instrumentation that
+  emits replay witnesses and retains only checker-approved candidates;
+  `HexRCF/SturmBuilderTests.lean`: valid, malformed, nonprimitive, and
+  nonsquarefree regressions.
+- `HexRCF/Carrier.lean`: deterministic nonconstant-atom collection, the
+  multiplication-checkable carrier certificate, and root-set soundness;
+  `HexRCF/CarrierTests.lean`: constant filtering, genuine repeated-factor,
+  dropped-root, and other tampered-carrier regressions.
+- `HexRCF/Isolations.lean`: the raw generalized isolation checker and its
+  bridge to literal isolation semantics; `HexRCF/IsolationsTests.lean`:
+  count, order, completeness, and no-real-root regressions.
 - `HexRCF/Certificate.lean`: `Certificate`, `check`, `decide`.
-- `HexRCF/Cells.lean`: separation refinement, cell construction,
-  endpoint classification for bounded sentences.
+- `HexRCF/Separation.lean`: replay-based strict-separation refinement,
+  strict-gap checking, and endpoint classification for bounded sentences;
+  `HexRCF/SeparationTests.lean`: midpoint ownership, close-root, scan,
+  malformed-input, and endpoint regressions.
+- `HexRCF/Cells.lean`: semantic and executable cell construction.
 - `HexRCF/SignMatrix.lean`: test-point evaluation, the `gⱼ` root-cell
   computation, Boolean folding.
 - `HexRCF/Soundness.lean`: `check_sound` and its four factors.

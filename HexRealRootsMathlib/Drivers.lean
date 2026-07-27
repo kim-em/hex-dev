@@ -76,12 +76,6 @@ private theorem dlt_trans {a b c : Dyadic} (h1 : a < b) (h2 : b < c) : a < c := 
   rw [← Dyadic.toRat_lt_toRat_iff] at h1 h2 ⊢
   exact lt_trans h1 h2
 
-/-- Dyadic `≤` transfers to the real values. -/
-private theorem toReal_le_toReal {a b : Dyadic} (h : a ≤ b) :
-    Dyadic.toReal a ≤ Dyadic.toReal b := by
-  have h2 : a.toRat ≤ b.toRat := Dyadic.toRat_le_toRat_iff.mpr h
-  unfold Dyadic.toReal; exact_mod_cast h2
-
 /-- A right shift by one bit halves the real value. -/
 private theorem toReal_shiftRight_one (x : Dyadic) :
     Dyadic.toReal (x >>> (1 : Int)) = Dyadic.toReal x / 2 := by

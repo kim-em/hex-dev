@@ -115,6 +115,8 @@ lean_lib HexBerlekampZassenhaus where
 
 lean_lib HexRealRoots where
 
+lean_lib HexInterval where
+
 @[default_target]
 lean_lib HexPolyMathlib where
 
@@ -204,6 +206,21 @@ lean_lib HexGF2BenchSupport where
   srcDir := "bench"
   globs := #[`HexGF2.Bench]
 
+lean_lib HexIntervalExperiment where
+  globs := #[`HexInterval.Experiment.Representation,
+    `HexInterval.Experiment.Rational]
+
+lean_lib HexIntervalReplayProbe where
+  srcDir := "bench"
+  globs := #[`HexInterval.ReplayBaseline, `HexInterval.ReplayBundled,
+    `HexInterval.ReplayChecked, `HexInterval.ReplayRationalBaseline,
+    `HexInterval.ReplayRationalDirect, `HexInterval.ReplayRationalChecked,
+    `HexInterval.ReplayRational, `HexInterval.ImportBundled,
+    `HexInterval.ImportChecked, `HexInterval.WhnfBundled,
+    `HexInterval.WhnfChecked, `HexInterval.WhnfBaseline,
+    `HexInterval.WhnfRationalDirect, `HexInterval.WhnfRationalChecked,
+    `HexInterval.WhnfRationalBaseline]
+
 -- Conformance #guard drivers live under `conformance/` and are built by this
 -- library (mirroring the released conformance sub-projects). Alongside each
 -- library's `Conformance` core module, the heavier cross-check sweeps and
@@ -213,7 +230,25 @@ lean_lib HexGF2BenchSupport where
 -- `*_emit_fixtures` exes below, carrying `srcDir := "conformance"`.
 lean_lib HexConformance where
   srcDir := "conformance"
-  globs := #[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexRoots.Conformance]
+  globs := #[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexInterval.Conformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexRoots.Conformance]
+
+-- Public umbrellas intentionally contain only the supported API. Executable
+-- examples and regression tests are compiled through this separate target so
+-- removing them from an umbrella cannot silently remove them from CI.
+lean_lib HexReleaseTests where
+  globs := #[`HexBerlekamp.FactorTacticTests,
+    `HexBerlekampMathlib.FactorPolyTests,
+    `HexBerlekampZassenhaus.FactorTacticTests,
+    `HexBerlekampZassenhausMathlib.FactorPolyTests,
+    `HexRealRoots.ReplayTest,
+    `HexRealRootsMathlib.IsolateRootsTests,
+    `HexRealRootsMathlib.IsolateRootsElabTests,
+    `HexRootsMathlib.Examples]
+
+-- Canonical end-to-end examples are release artifacts rather than public API.
+-- Keep their target separate for the same reason as the regression tests.
+lean_lib HexReleaseExamples where
+  globs := #[`Examples.Release3, `Examples.Release4, `Examples.Release5]
 
 lean_exe hexrowreduce_emit_fixtures where
   srcDir := "conformance"
@@ -276,6 +311,10 @@ lean_exe hexlll_bench where
   supportInterpreter := true
   root := `HexLLLBench.Main
 
+lean_exe hexlll_gram_bench where
+  srcDir := "bench"
+  root := `HexLLLBench.GramBench
+
 lean_exe hex_arith_floor where
   srcDir := "bench"
   root := `HexBench.ArithFloor
@@ -291,6 +330,10 @@ lean_exe hex_lattice_spike where
 lean_exe hex_recursive_relift_spike where
   srcDir := "bench"
   root := `HexBench.RecursiveReliftSpike
+
+lean_exe hex_interval_representation_spike where
+  srcDir := "bench"
+  root := `HexBench.IntervalRepresentationSpike
 
 lean_exe hexbz_factor_service where
   srcDir := "bench"

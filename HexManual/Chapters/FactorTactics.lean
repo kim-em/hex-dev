@@ -100,16 +100,18 @@ example : facSplit.factors.length = 3 := rfl
 example : facSplit.scalar = 1 := rfl
 ```
 
-The structure unpacks with `obtain`, so the fields can be named and
-used however a proof needs them:
+The reconstruction and irreducibility fields can be consumed directly:
 
 ```lean
 open Polynomial
 
-example : True := by
-  obtain ⟨scalar, factors, factors_mul, factors_irred⟩ :=
-    factor_poly (X ^ 2 - 2 : Polynomial ℤ)
-  trivial
+example :
+    Polynomial.C facSplit.scalar * facSplit.factors.prod =
+    ((X ^ 2 - 1) * (X + 2) : Polynomial ℤ) :=
+  facSplit.factors_mul
+
+example : ∀ q ∈ facSplit.factors, Irreducible q :=
+  facSplit.factors_irred
 ```
 
 # The executable types
@@ -179,6 +181,47 @@ equivalent to Mathlib's `Irreducible` under `toPolynomial`. Goal-mode
 `irreducibility` closes all three spellings: `Hex.ZPoly.Irreducible f`,
 `Irreducible (HexPolyZMathlib.toPolynomial f)`, and `Irreducible P` for
 a parseable `P : Polynomial ℤ`.
+
+# Runtime factorization and dispatch
+%%%
+tag := "factor-tactics-runtime"
+%%%
+
+The tactic result is proof-oriented. Runtime clients instead use the total
+{name}`Hex.ZPoly.factorize` API, which stores multiplicities compactly:
+
+{docstring Hex.Factorization}
+
+{docstring Hex.ZPoly.factorize}
+
+The factorizer normalizes content, sign, powers of `X`, and repeated factors;
+factors the square-free core modulo a small admissible prime; Hensel-lifts the
+modular factors; and recombines them. Small modular factor counts use
+size-ordered classical recombination. When its subset budget is exhausted, the
+van Hoeij CLD lattice tier is tried. Exact integer trial division is the total
+backstop when neither modular tier answers.
+
+This separation is part of the public contract:
+
+* {name}`Hex.factorClassical` and {name}`Hex.factorLattice` are
+  `Option`-valued diagnostic entry points. `factorLattice` never silently runs
+  the exponential trial backstop.
+* {name}`Hex.factorTrial` is the explicit exact backstop.
+* {name}`Hex.factorTraced` returns the production result with a
+  {name}`Hex.FactorTrace`, making the chosen tier and decline status visible to
+  conformance and performance tests.
+* {name}`Hex.ZPoly.factorize` is the ordinary total API. Its soundness does not
+  depend on a polynomial-time claim: the unconditional guarantee is exact
+  factorization, while no-fallback lattice success is a separate conditional
+  theorem programme with explicit prime and precision hypotheses.
+
+For proof clients,
+{name}`HexBerlekampZassenhausMathlib.factorize_headline` bundles
+reconstruction, primitive irreducible factors, positive multiplicities,
+pairwise non-association, and the normalized signed scalar for every nonzero
+input. The sibling
+{name}`HexBerlekampZassenhausMathlib.factorize_headline_contract_core_with_posLeading`
+records the positive-leading convention.
 
 Finally, `Polynomial (ZMod q)` inputs reuse the prime-field pipeline
 through the parser-with-proof of `HexBerlekampMathlib`, producing the
