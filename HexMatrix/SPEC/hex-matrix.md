@@ -396,13 +396,15 @@ size-specialized kernel is therefore written as a single function that dispatche
 on the runtime dimensions and falls back to the naive kernel off its fast path.
 
 The demonstration config targets the Barrett-reduced prime-field residues
-(`ZMod64` / `Fp`) that `hex-berlekamp` multiplies in its nullspace computation
-(`HexBerlekamp/RabinSoundness/KernelWitness.lean`). The default base kernel
-reduces modulo `p` after every multiply-add through `BarrettCtx.mulMod`. The
-demonstration kernel instead accumulates each dot product in a wide accumulator
-and reduces less often. It must use the **periodic-reduction** form, reducing the
-accumulator modulo `p` every fixed number of terms chosen to preclude overflow,
-not a single reduction at the end over a 128-bit accumulator. The reason is that
+(`ZMod64` / `Fp`) as a standalone kernel for future product-shaped callers. The
+current tree has no production matrix-matrix consumer to route through it:
+Berlekamp nullspace and the other dense consumers use elimination or individual
+dot products, as recorded in the caller survey above. The default base kernel
+reduces modulo `p` after every multiply-add. The demonstration kernel instead
+accumulates each dot product in a wide accumulator and reduces less often. It
+must use the **periodic-reduction** form, reducing the accumulator modulo `p`
+every fixed number of terms chosen to preclude overflow, not a single reduction
+at the end over a 128-bit accumulator. The reason is that
 `Valid` quantifies over all `n`, `m`, `k`, and at a base-case leaf only one
 dimension is guaranteed below the cutoff: the inner dimension `m` (the dot-product
 length) can be arbitrarily large, so a fixed-width accumulator with one final
@@ -415,11 +417,10 @@ and it is `Valid` because reduction modulo `p` is a ring homomorphism, so the
 periodically-reduced sum has the same residue as reducing at each step. The proof
 is more than one lemma: it needs an accumulator invariant (the running sum modulo
 `p`), the per-window no-overflow bound, the final-reduction step, and the equality
-to the `ZMod64` / `Fp` dot product the naive kernel computes. `BarrettCtx` has no
-wide-accumulator layer today, so the small verified `UInt128` (or `UInt64`-pair
-carry) add-and-reduce lemmas the bound needs are themselves a deliverable of this
-config. `BarrettCtx.toNat_mulMod` is only the single-multiply building block in
-that chain, not the whole proof.
+to the `ZMod64` / `Fp` dot product the naive kernel computes. The verified
+two-word layer in `HexArith/Barrett/Accumulator.lean` supplies the add, reduce,
+and fold lemmas; `HexBerlekamp/DelayedKernel.lean` bridges the fold to the
+`ZMod64` dot product and the polymorphic matrix base kernel.
 
 Two honesty constraints on this config. First, a base kernel fires only below
 the cutoff, so it moves the constant factor and the crossover, never the
@@ -432,6 +433,20 @@ alternate config that still exercises the plug-in path, and the delayed-reductio
 kernel becomes follow-up work. A GF(2) four-Russians base kernel would be the
 strongest showcase, but the project has no bit-packed GF(2) matrix
 representation, so it is out of scope here.
+
+The shipped `strassenBarrett` uses a 4096-term window. The accumulator proof
+shows that the high word grows by at most one per product, so every unreduced
+window fits below `2^128`; reducing a window and the final partial window
+preserves the running residue for arbitrary inner dimension. The committed
+measurement compares `mulImpl` directly with the periodic leaf and compares
+full `mulStrassen` both as shipped and at matched cutoffs, at `p = 5`, `65537`,
+and `2^31 - 1`. Across the square and rectangular cases the leaf is
+`2.93`–`16.84×` faster and full Strassen is `13.32`–`15.30×` faster; the
+matched-cutoff controls are `5.68`–`15.80×`. Leaf contractions of length
+`12289` and `20481` cross three and five windows. A sweep against 256-term and
+effectively single-flush alternatives measures the selected window's periodic
+cost at `3.9`–`5.4%` against the single-flush loop. The result clears the 5%
+demonstration gate without changing `strassenDefault`.
 
 ### Conformance
 
@@ -447,6 +462,12 @@ not kernel `decide`: `mulStrassen` is defined by well-founded recursion and does
 not reduce cheaply in the kernel, so it stays off the `decide` cross-check path
 that design principle 11 discusses. Oracle: none; the surface is structural-layer
 exact arithmetic, as for the existing multiplication guards.
+
+`conformance/HexBerlekamp/Conformance.lean` adds the coefficient-specific
+cross-checks for `strassenBarrett`: near-upper-bound residues exercise high-word
+carries; inner dimensions `4095`, `4096`, and `4097` straddle the implementation
+dispatch and exact flush; `12289` covers three flushes plus a partial tail; and
+empty contraction/output axes cover the generic rectangular signature.
 
 ### New public names
 

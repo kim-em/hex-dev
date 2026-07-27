@@ -326,16 +326,20 @@ not. -/
 
 /-- Number of one-word products accumulated between reductions. Any value below
 `2^64` keeps the two-word accumulator's high word from overflowing (the add
-grows it by at most one per step); `2^32` sits comfortably above every realistic
-inner dimension, so a base-kernel dot product reduces exactly once. -/
+grows it by at most one per step). The `2^12` window keeps the periodic path
+operationally testable while amortizing each reduction across 4096 products; the
+committed window sweep compares it with shorter and effectively single-flush
+alternatives. -/
 @[irreducible]
-def barrettWindow : Nat := 2 ^ 32
+def barrettWindow : Nat := 2 ^ 12
 
 theorem barrettWindow_pos : 0 < barrettWindow := by
-  unfold barrettWindow; exact Nat.two_pow_pos 32
+  unfold barrettWindow; exact Nat.two_pow_pos 12
 
 theorem barrettWindow_lt_word : barrettWindow < UInt64.word := by
-  unfold barrettWindow; exact two_pow_32_lt_word
+  unfold barrettWindow
+  exact Nat.lt_trans (Nat.pow_lt_pow_right (by decide) (by decide : 12 < 32))
+    two_pow_32_lt_word
 
 /-- One delayed-reduction step: add the product word `q` into the accumulator
 `(lo, hi)`, and when the window count reaches `barrettWindow` flush the two-word
