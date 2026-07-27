@@ -228,21 +228,28 @@ proved equivalences.
    `Sturm.sturm_half_open` has no endpoint-nonroot premise, so this is
    valid even when the dyadic lower endpoint `l` is itself a root.
 
-6. **Build cells.** With isolations `I₁ < … < I_k` (roots
-   `r₁ < … < r_k`):
+6. **Build cells.** With `k` isolations `I₀ < … < Iₖ₋₁` (roots
+   `r₀ < … < rₖ₋₁`), use the size-indexed representation
 
-   ```
-   Cell = tailLeft            -- semantic (−∞, r₁),   point lower₁ − 1
-        | root i              -- semantic {rᵢ},       data Iᵢ
-        | gap i               -- semantic (rᵢ, rᵢ₊₁), test point in
-                              --   (upperᵢ, lowerᵢ₊₁), which step 5
-                              --   made nonempty
-        | tailRight           -- semantic (rₖ, +∞),   point upperₖ + 1
+   ```lean
+   inductive Cell (k : Nat)
+     | open (cut : Fin (k + 1))
+     | root (i : Fin k)
    ```
 
-   Use the dyadic midpoint of `upperᵢ` and `lowerᵢ₊₁` for a gap.
-   With no roots, use the sole open cell `ℝ` and test point `0`.
-   The semantic cells partition `ℝ`. Every `pⱼ` is sign-constant on
+   Open cut `0` is the left tail, cut `k` is the right tail, and an
+   interior cut `j` is `(rⱼ₋₁,rⱼ)`. `Cell.all` enumerates these cells
+   left-to-right with rank `2*j` for open cuts and `2*i+1` for roots.
+   `RootModel` packages the unique root of each checked isolation, their
+   strict monotonicity, and completeness. `Cell.Sem` interprets the indexed
+   representation, and `Cell.existsUnique_mem` states the partition theorem.
+
+   `IsolationCert.openPoint` uses the dyadic midpoint of `upperᵢ` and
+   `lowerᵢ₊₁` for an interior cut, `lower₀ - 1` and `upperₖ₋₁ + 1` for
+   the tails, and `0` for the sole no-root cell. `Cell.openPoint_mem`
+   certifies sample membership, `Cell.open_not_root` excludes carrier roots
+   from every open cell, and `Cell.isPreconnected_open` supplies the interval
+   topology needed by sign constancy. Every `pⱼ` is sign-constant on
    each open cell: a sign change would put a root of `pⱼ`, hence of
    `P`, strictly between consecutive roots of `P`.
 
@@ -288,9 +295,20 @@ proved equivalences.
       true; `existsIoc`: some such cell true. Under the step-3
       hypothesis `a < b`, meeting the domain is decided exactly:
       a root cell meets iff `a < rᵢ ∧ rᵢ ≤ b`; a gap meets iff
-      `rᵢ < b ∧ a < rᵢ₊₁`; `tailLeft` iff `a < r₁`; and `tailRight`
-      iff `rₖ < b`. The endpoint comparisons from step 5 decide every
-      conjunct. With no roots, the single cell `ℝ` meets `(a,b]`.
+      `rᵢ < b ∧ a < rᵢ₊₁`; open cut `0` iff `a < r₀`; and open
+      cut `k` iff `rₖ₋₁ < b`. The endpoint comparisons from step 5
+      decide every conjunct. With no roots, the single cell `ℝ` meets
+      `(a,b]`.
+
+      Executably, `IocCmps k` stores size-indexed lower and upper
+      `RootCmp` vectors. `IocCmps.check` replays every claim, and
+      `Cell.meetsIoc` implements the table above. Under `a < b`,
+      `Cell.meetsIoc_iff_of_check` proves that the Boolean is true exactly
+      when some semantic point of the cell lies in `Set.Ioc a b`. Thus a
+      lower-endpoint equality excludes a root cell while an upper-endpoint
+      equality includes it. `Cell.meetsIocOn` adds the step-3 guard and is
+      false for every cell when `a ≥ b`; `Cell.meetsIocOn_iff_of_check` is
+      the corresponding all-endpoint-order theorem.
 
 11. **Reflect.** A successful kernel replay gives
     `Sentence.toProp s`; the reifier's equivalence transports that
@@ -518,7 +536,11 @@ free to change.
   strict-gap checking, and endpoint classification for bounded sentences;
   `HexRCF/SeparationTests.lean`: midpoint ownership, close-root, scan,
   malformed-input, and endpoint regressions.
-- `HexRCF/Cells.lean`: semantic and executable cell construction.
+- `HexRCF/Cells.lean`: size-indexed executable cells, checked root models,
+  semantic partition, exact samples, endpoint-comparison vectors, and exact
+  `Ioc` intersection; `HexRCF/CellsTests.lean`: enumeration,
+  zero/singleton/multiple-root samples, endpoint equality/order guards,
+  relevance tables, and malformed lower/upper claim regressions.
 - `HexRCF/SignMatrix.lean`: test-point evaluation, the `gⱼ` root-cell
   computation, Boolean folding.
 - `HexRCF/Soundness.lean`: `check_sound` and its four factors.

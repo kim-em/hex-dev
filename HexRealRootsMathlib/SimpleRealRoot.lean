@@ -76,12 +76,6 @@ private theorem toReal_le_of_not_le {a b : Dyadic} (h : ¬ a ≤ b) :
   have h2 : b.toRat ≤ a.toRat := (not_le.mp h1).le
   unfold Dyadic.toReal; exact_mod_cast h2
 
-/-- Dyadic `<` coincides with the order of the real values. -/
-private theorem toReal_lt_toReal_iff {a b : Dyadic} :
-    Dyadic.toReal a < Dyadic.toReal b ↔ a < b := by
-  unfold Dyadic.toReal
-  rw [Rat.cast_lt, Dyadic.toRat_lt_toRat_iff]
-
 /-- `Dyadic.toReal` is subtractive. -/
 private theorem toReal_sub (a b : Dyadic) :
     Dyadic.toReal (a - b) = Dyadic.toReal a - Dyadic.toReal b := by

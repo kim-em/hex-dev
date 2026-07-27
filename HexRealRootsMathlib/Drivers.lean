@@ -62,51 +62,16 @@ noncomputable section
 
 variable {p : Hex.ZPoly}
 
-/-! ### Dyadic midpoint arithmetic -/
-
-/-- Dyadic order coincides with the order of the real values. -/
-theorem toReal_lt_toReal_iff {a b : Dyadic} :
-    Dyadic.toReal a < Dyadic.toReal b ↔ a < b := by
-  unfold Dyadic.toReal
-  rw [Rat.cast_lt, Dyadic.toRat_lt_toRat_iff]
-
 /-- Transitivity of the core dyadic `<` (routed through `toRat`, to stay in the
 `Dyadic.instLT` instance that `DyadicInterval.lt` uses). -/
 private theorem dlt_trans {a b c : Dyadic} (h1 : a < b) (h2 : b < c) : a < c := by
   rw [← Dyadic.toRat_lt_toRat_iff] at h1 h2 ⊢
   exact lt_trans h1 h2
 
-/-- A right shift by one bit halves the real value. -/
-private theorem toReal_shiftRight_one (x : Dyadic) :
-    Dyadic.toReal (x >>> (1 : Int)) = Dyadic.toReal x / 2 := by
-  have h : x >>> (1 : Int) = x <<< (-1 : Int) := by cases x <;> rfl
-  unfold Dyadic.toReal
-  rw [h, toRat_shiftLeft]
-  push_cast
-  ring
-
 /-- `Dyadic.toReal` is subtractive. -/
 private theorem toReal_sub (a b : Dyadic) :
     Dyadic.toReal (a - b) = Dyadic.toReal a - Dyadic.toReal b := by
   unfold Dyadic.toReal; rw [Dyadic.toRat_sub]; push_cast; ring
-
-/-- The real value of an interval's dyadic midpoint. -/
-theorem toReal_midpoint (I : Hex.DyadicInterval) :
-    Dyadic.toReal I.midpoint = (Dyadic.toReal I.lower + Dyadic.toReal I.upper) / 2 := by
-  unfold Hex.DyadicInterval.midpoint
-  rw [toReal_shiftRight_one, toReal_add]
-
-/-- The midpoint is strictly above the lower endpoint. -/
-theorem lower_lt_midpoint (I : Hex.DyadicInterval) : I.lower < I.midpoint := by
-  rw [← toReal_lt_toReal_iff, toReal_midpoint]
-  have := toReal_lt_toReal_iff.mpr I.lt
-  linarith
-
-/-- The midpoint is strictly below the upper endpoint. -/
-theorem midpoint_lt_upper (I : Hex.DyadicInterval) : I.midpoint < I.upper := by
-  rw [← toReal_lt_toReal_iff, toReal_midpoint]
-  have := toReal_lt_toReal_iff.mpr I.lt
-  linarith
 
 /-! ### Additivity of the Sturm count across a midpoint -/
 
