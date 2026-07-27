@@ -276,15 +276,20 @@ at square, even recursion nodes. It reuses two auxiliary `(n/2)²` matrices
 `X` and `Y`, writes each recursive product directly into one of the four
 output quadrants, and accumulates the `Uᵢ` values there without a
 `fromBlocks` copy. Rectangular top-level inputs and odd square recursion nodes
-retain `mulStrassenView` as the shape-safe fallback.
+retain `mulStrassenView` as the shape-safe fallback; reaching an odd node
+reverts that node's entire subtree, so a dimension such as 1000 uses the
+schedule for `1000 → 500 → 250` and the reference below 125.
 
 Writes use `Region`, a backing-free rectangle descriptor containing offsets
 and bounds proofs but no matrix. One owned output `Matrix` is threaded through
 every write and recursive call; quadrant descriptors therefore cannot create
-four aliases of its backing. Each update materializes one source/destination
-row before calling `Vector.set`, so the generated C passes the consumed array
-through `lean_array_fset` and can reuse it when uniquely referenced. The
-writer's proof has a stronger frame property: it returns exactly the reference
+four aliases of its backing. Each update operates directly on the owned
+region. Row-start arithmetic is hoisted outside the column loop; overwrite
+and accumulation both read the needed entries and then thread the consumed
+array through one `lean_array_fset`, without a copy-out/copy-back row. The
+generated C can therefore reuse the array when uniquely referenced. The
+writer's proof has a stronger
+frame property: it returns exactly the reference
 result in its destination and preserves every disjoint region. This proves the
 complete BDPZ accumulation order without introducing ring assumptions into
 the equality transfer.

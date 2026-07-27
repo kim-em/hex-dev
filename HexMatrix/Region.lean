@@ -52,15 +52,33 @@ def row (D : Region N M rows cols) (i : Fin rows) : Fin N :=
 def col (D : Region N M rows cols) (j : Fin cols) : Fin M :=
   ⟨D.c0 + j.val, by have := D.cols_le; omega⟩
 
-/-- Flat destination index corresponding to local region coordinates. -/
+/-- First flat destination index in a local region row. -/
+@[inline]
+def rowStart (D : Region N M rows cols) (i : Fin rows) : Nat :=
+  (D.r0 + i.val) * M + D.c0
+
+/-- Flat destination index corresponding to local region coordinates.  The
+row-invariant multiplication is kept in `rowStart`, outside column loops. -/
 @[inline]
 def index (D : Region N M rows cols) (i : Fin rows) (j : Fin cols) : Fin (N * M) :=
-  ⟨(row D i).val * M + (col D j).val, flatIdx_lt (row D i).isLt (col D j).isLt⟩
+  ⟨rowStart D i + j.val, by
+    have h := flatIdx_lt (row D i).isLt (col D j).isLt
+    simpa only [rowStart, row, col, Nat.add_assoc] using h⟩
 
 /-- Read a matrix entry through a region descriptor. -/
 @[inline]
 def get (D : Region N M rows cols) (A : Matrix R N M) (i : Fin rows) (j : Fin cols) : R :=
   A[(row D i, col D j)]
+
+/-- A region read is a read at its flat `index`. -/
+theorem get_eq_data (D : Region N M rows cols) (A : Matrix R N M)
+    (i : Fin rows) (j : Fin cols) :
+    get D A i j = A.data[(index D i j).val]'(index D i j).isLt := by
+  change A.data.get ⟨(D.r0 + i.val) * M + (D.c0 + j.val), _⟩ =
+    A.data.get (index D i j)
+  congr 1
+  apply Fin.ext
+  simp only [index, rowStart, Nat.add_assoc]
 
 /-- Materialize the entries described by a region.  This is a proof-facing
 operation; the storage-scheduled implementation writes through descriptors
@@ -251,7 +269,8 @@ private theorem index_ne_of_disjoint (D : Region N M rows cols)
     (index D i j).val ≠ (index E i' j').val := by
   intro heq
   have hd : (row D i).val * M + (col D j).val =
-      (row E i').val * M + (col E j').val := heq
+      (row E i').val * M + (col E j').val := by
+    simpa only [index, rowStart, row, col, Nat.add_assoc] using heq
   have hrowD : ((row D i).val * M + (col D j).val) / M = (row D i).val :=
     flatIdx_div (col D j).isLt
   have hrowE : ((row E i').val * M + (col E j').val) / M = (row E i').val :=
@@ -268,33 +287,45 @@ private theorem index_ne_of_disjoint (D : Region N M rows cols)
   unfold Disjoint at h
   rcases h with h | h | h | h <;> omega
 
-/-- Overwrite one row segment of a flat matrix buffer.  The buffer is consumed,
-so `Vector.set` reuses it when it is uniquely referenced. -/
+/-- Overwrite one row segment directly from an entry function.  `rowStart` is
+computed once, and the consumed array is not retained by a temporary row. -/
 @[inline]
-def writeRow (D : Region N M rows cols) (d : Vector R (N * M))
-    (i : Fin rows) (v : Vector R cols) : Vector R (N * M) :=
-  Fin.foldl cols (fun d j => d.set (index D i j).val (v.get j) (index D i j).isLt) d
+private def setRowWith (D : Region N M rows cols) (d : Vector R (N * M))
+    (i : Fin rows) (f : Fin cols → R) : Vector R (N * M) :=
+  let base := rowStart D i
+  Fin.foldl cols (fun d j => d.set (base + j.val) (f j) (index D i j).isLt) d
+
+/-- Update one row segment entrywise.  Each old value is read before
+`Vector.set` consumes the array, avoiding both a temporary row and
+`Vector.modify`'s clear-then-set implementation. -/
+@[inline]
+private def modifyRowWith (D : Region N M rows cols) (d : Vector R (N * M))
+    (i : Fin rows) (g : Fin cols → R → R) : Vector R (N * M) :=
+  let base := rowStart D i
+  Fin.foldl cols (fun d j =>
+    let p := base + j.val
+    let x := d[p]'(index D i j).isLt
+    d.set p (g j x) (index D i j).isLt) d
 
 /-- Flat indices inside a region are injective in their local coordinates. -/
 private theorem index_inj (D : Region N M rows cols) (i i' : Fin rows) (j j' : Fin cols)
     (h : (index D i j).val = (index D i' j').val) : i = i' ∧ j = j' := by
+  have hd : (row D i).val * M + (col D j).val =
+      (row D i').val * M + (col D j').val := by
+    simpa only [index, rowStart, row, col, Nat.add_assoc] using h
   have hr : (row D i).val = (row D i').val := by
     have hi : ((row D i).val * M + (col D j).val) / M = (row D i).val :=
       flatIdx_div (col D j).isLt
     have hi' : ((row D i').val * M + (col D j').val) / M = (row D i').val :=
       flatIdx_div (col D j').isLt
-    change (row D i).val * M + (col D j).val =
-      (row D i').val * M + (col D j').val at h
-    have hdiv := congrArg (fun x => x / M) h
+    have hdiv := congrArg (fun x => x / M) hd
     omega
   have hc : (col D j).val = (col D j').val := by
     have hj : ((row D i).val * M + (col D j).val) % M = (col D j).val :=
       flatIdx_mod (col D j).isLt
     have hj' : ((row D i').val * M + (col D j').val) % M = (col D j').val :=
       flatIdx_mod (col D j').isLt
-    change (row D i).val * M + (col D j).val =
-      (row D i').val * M + (col D j').val at h
-    have hmod := congrArg (fun x => x % M) h
+    have hmod := congrArg (fun x => x % M) hd
     omega
   constructor
   · apply Fin.ext
@@ -304,65 +335,25 @@ private theorem index_inj (D : Region N M rows cols) (i i' : Fin rows) (j j' : F
     simp only [col] at hc
     omega
 
-/-- `List.finRange k` has no repeated indices. -/
-private theorem nodup_finRange (k : Nat) : (List.finRange k).Nodup := by
-  induction k with
-  | zero => simp
-  | succ j ih =>
-    rw [List.finRange_succ, List.nodup_cons]
-    exact ⟨by simp [Fin.ext_iff],
-      List.Pairwise.map _ (fun _ _ hab h => hab (Fin.succ_inj.mp h)) ih⟩
-
-/-- A fold of single-index writes preserves an index that is never targeted. -/
-private theorem foldl_set_ne {count size : Nat} (idx : Fin count → Nat)
-    (val : Fin count → R) (bd : ∀ t, idx t < size) {p : Nat} (hp : p < size) :
-    ∀ (xs : List (Fin count)) (d : Vector R size), (∀ t ∈ xs, idx t ≠ p) →
-      (xs.foldl (fun d t => d.set (idx t) (val t) (bd t)) d)[p]'hp = d[p]'hp := by
-  intro xs
-  induction xs with
-  | nil => intro d _; rfl
-  | cons x xs ih =>
-    intro d hne
-    rw [List.foldl_cons, ih _ (fun t ht => hne t (List.mem_cons_of_mem _ ht)),
-      Vector.getElem_set_ne (bd x) hp (hne x List.mem_cons_self)]
-
-/-- A fold of injectively indexed writes stores the requested member's value. -/
-private theorem foldl_set_mem {count size : Nat} (idx : Fin count → Nat)
-    (val : Fin count → R) (bd : ∀ t, idx t < size)
-    (hinj : ∀ a b : Fin count, idx a = idx b → a = b) :
-    ∀ (xs : List (Fin count)), xs.Nodup → ∀ (d : Vector R size) (r : Fin count), r ∈ xs →
-      (xs.foldl (fun d t => d.set (idx t) (val t) (bd t)) d)[idx r]'(bd r) = val r := by
-  intro xs
-  induction xs with
-  | nil => intro _ _ r hr; simp at hr
-  | cons x xs ih =>
-    intro hnd d r hr
-    rw [List.foldl_cons]
-    rcases List.mem_cons.mp hr with rfl | hr'
-    · rw [foldl_set_ne idx val bd (bd r) xs _ (fun t ht heq =>
-        (List.nodup_cons.mp hnd).1 ((hinj t r heq) ▸ ht))]
-      exact Vector.getElem_set_self (bd r)
-    · rw [ih (List.nodup_cons.mp hnd).2 _ r hr']
-
 /-- Reading the row segment just written returns the supplied value. -/
-private theorem get_writeRow (D : Region N M rows cols) (d : Vector R (N * M))
-    (i : Fin rows) (v : Vector R cols) (j : Fin cols) :
-    (writeRow D d i v)[(index D i j).val]'(index D i j).isLt = v.get j := by
-  unfold writeRow
+private theorem get_setRowWith (D : Region N M rows cols) (d : Vector R (N * M))
+    (i : Fin rows) (f : Fin cols → R) (j : Fin cols) :
+    (setRowWith D d i f)[(index D i j).val]'(index D i j).isLt = f j := by
+  unfold setRowWith
   rw [Fin.foldl_eq_finRange_foldl]
-  exact foldl_set_mem (fun t : Fin cols => (index D i t).val) (fun t => v.get t)
+  exact Matrix.foldl_set_mem (fun t : Fin cols => (index D i t).val) f
     (fun t => (index D i t).isLt)
     (fun a b h => (index_inj D i i a b h).2)
-    (List.finRange cols) (nodup_finRange cols) d j (List.mem_finRange _)
+    (List.finRange cols) (Matrix.nodup_finRange cols) d j (List.mem_finRange _)
 
 /-- Writing a row segment preserves every flat index outside that segment. -/
-private theorem get_writeRow_ne (D : Region N M rows cols) (d : Vector R (N * M))
-    (i : Fin rows) (v : Vector R cols) (p : Nat) (hp : p < N * M)
+private theorem get_setRowWith_ne (D : Region N M rows cols) (d : Vector R (N * M))
+    (i : Fin rows) (f : Fin cols → R) (p : Nat) (hp : p < N * M)
     (hne : ∀ j : Fin cols, (index D i j).val ≠ p) :
-    (writeRow D d i v)[p]'hp = d[p]'hp := by
-  unfold writeRow
+    (setRowWith D d i f)[p]'hp = d[p]'hp := by
+  unfold setRowWith
   rw [Fin.foldl_eq_finRange_foldl]
-  exact foldl_set_ne (fun j : Fin cols => (index D i j).val) (fun j => v.get j)
+  exact Matrix.foldl_set_ne (fun j : Fin cols => (index D i j).val) f
     (fun j => (index D i j).isLt) hp (List.finRange cols) d
     (fun j _ => hne j)
 
@@ -401,38 +392,37 @@ private theorem foldl_rows_mem {count size : Nat}
           (List.nodup_cons.mp hnd).1 (h ▸ ht))), hself]
     · rw [ih (List.nodup_cons.mp hnd).2 _ r hr']
 
-/-- Fill a destination region from an entry function.  The destination matrix
-is threaded linearly; only one temporary row is materialized at a time. -/
+/-- Fill a destination region from an entry function, threading the destination
+array directly through its writes. -/
 @[inline]
 def overwrite (D : Region N M rows cols) (A : Matrix R N M)
     (f : Fin rows → Fin cols → R) : Matrix R N M :=
   match A with
   | ⟨d⟩ =>
-    ⟨Fin.foldl rows (fun d i => writeRow D d i (Vector.ofFn (f i))) d⟩
+    ⟨Fin.foldl rows (fun d i => setRowWith D d i (f i)) d⟩
 
 /-- Reading inside an overwritten region returns the supplied entry. -/
 @[grind =] theorem get_overwrite (D : Region N M rows cols) (A : Matrix R N M)
     (f : Fin rows → Fin cols → R) (i : Fin rows) (j : Fin cols) :
     get D (overwrite D A f) i j = f i j := by
   obtain ⟨d⟩ := A
+  rw [get_eq_data]
   change ((overwrite D ⟨d⟩ f).data[(index D i j).val]'(index D i j).isLt) = f i j
   simp only [overwrite]
   have hfold :
-      Fin.foldl rows (fun d i => writeRow D d i (Vector.ofFn (f i))) d =
+      Fin.foldl rows (fun d i => setRowWith D d i (f i)) d =
         (List.finRange rows).foldl
-          (fun d i => writeRow D d i (Vector.ofFn (f i))) d :=
-    Fin.foldl_eq_finRange_foldl (fun d i => writeRow D d i (Vector.ofFn (f i))) d
+          (fun d i => setRowWith D d i (f i)) d :=
+    Fin.foldl_eq_finRange_foldl (fun d i => setRowWith D d i (f i)) d
   have hmem := foldl_rows_mem
-    (fun d i => writeRow D d i (Vector.ofFn (f i)))
+    (fun d i => setRowWith D d i (f i))
     (fun i => (index D i j).val) (fun i => (index D i j).isLt) (fun i => f i j)
     (fun d i => by
-      rw [get_writeRow]
-      change (Vector.ofFn (f i))[j.val]'j.isLt = f i j
-      rw [Vector.getElem_ofFn])
-    (fun d a i hai => get_writeRow_ne D d a (Vector.ofFn (f a))
+      rw [get_setRowWith])
+    (fun d a i hai => get_setRowWith_ne D d a (f a)
       (index D i j).val (index D i j).isLt (fun t heq =>
         hai (index_inj D a i t j heq).1))
-    (List.finRange rows) (nodup_finRange rows) d i (List.mem_finRange _)
+    (List.finRange rows) (Matrix.nodup_finRange rows) d i (List.mem_finRange _)
   exact (congrArg (fun v : Vector R (N * M) => v.get (index D i j)) hfold).trans hmem
 
 /-- Overwriting one region preserves every disjoint region. -/
@@ -441,44 +431,42 @@ theorem get_overwrite_disjoint (D : Region N M rows cols)
     (f : Fin rows → Fin cols → R) (i : Fin rows') (j : Fin cols') :
     get E (overwrite D A f) i j = get E A i j := by
   obtain ⟨d⟩ := A
+  rw [get_eq_data, get_eq_data]
   change ((overwrite D ⟨d⟩ f).data[(index E i j).val]'(index E i j).isLt) =
     d[(index E i j).val]'(index E i j).isLt
   simp only [overwrite]
   have hfold :
-      Fin.foldl rows (fun d i => writeRow D d i (Vector.ofFn (f i))) d =
+      Fin.foldl rows (fun d i => setRowWith D d i (f i)) d =
         (List.finRange rows).foldl
-          (fun d i => writeRow D d i (Vector.ofFn (f i))) d :=
-    Fin.foldl_eq_finRange_foldl (fun d i => writeRow D d i (Vector.ofFn (f i))) d
+          (fun d i => setRowWith D d i (f i)) d :=
+    Fin.foldl_eq_finRange_foldl (fun d i => setRowWith D d i (f i)) d
   have hpres := foldl_rows_ne
-    (fun d i => writeRow D d i (Vector.ofFn (f i)))
+    (fun d i => setRowWith D d i (f i))
     (index E i j).val (index E i j).isLt (List.finRange rows)
-    (fun d a _ => get_writeRow_ne D d a (Vector.ofFn (f a))
+    (fun d a _ => get_setRowWith_ne D d a (f a)
       (index E i j).val (index E i j).isLt
       (fun b => index_ne_of_disjoint D E h a b i j)) d
   exact (congrArg (fun v : Vector R (N * M) => v.get (index E i j)) hfold).trans hpres
 
-/-- Combine a destination region with entries supplied by a read-only function.
-Each row is fully materialized before its writes begin. -/
+/-- Combine a destination region with entries supplied by a read-only function,
+modifying each destination entry directly. -/
 @[inline]
 def accumulateWith (D : Region N M rows cols) (A : Matrix R N M)
     (f : Fin rows → Fin cols → R) (op : R → R → R) : Matrix R N M :=
   match A with
   | ⟨d⟩ =>
     ⟨Fin.foldl rows (fun d i =>
-      let v := Vector.ofFn fun j => op (d.get (index D i j)) (f i j)
-      writeRow D d i v) d⟩
+      modifyRowWith D d i (fun j x => op x (f i j))) d⟩
 
-/-- Combine a destination region entrywise with a separate matrix.  A row is
-computed before its destination writes begin, so the owned destination backing
-continues to be threaded linearly. -/
+/-- Combine a destination region entrywise with a separate matrix, modifying
+each destination entry directly. -/
 @[inline]
 def accumulateExternal (D : Region N M rows cols) (A : Matrix R N M)
     (B : Matrix R rows cols) (op : R → R → R) : Matrix R N M :=
   match A with
   | ⟨d⟩ =>
     ⟨Fin.foldl rows (fun d i =>
-      let v := Vector.ofFn fun j => op (d.get (index D i j)) B[(i, j)]
-      writeRow D d i v) d⟩
+      modifyRowWith D d i (fun j x => op x B[(i, j)])) d⟩
 
 /-- A row fold whose own row update depends on the previous value stores the
 requested row's transformed value. -/
@@ -501,6 +489,43 @@ private theorem foldl_rows_modify {count size : Nat}
     · rw [ih (List.nodup_cons.mp hnd).2 _ r hr', hne d x r (fun h =>
         (List.nodup_cons.mp hnd).1 (h ▸ hr'))]
 
+/-- Reading an updated row returns the entrywise transformation. -/
+private theorem get_modifyRowWith (D : Region N M rows cols) (d : Vector R (N * M))
+    (i : Fin rows) (g : Fin cols → R → R) (j : Fin cols) :
+    (modifyRowWith D d i g)[(index D i j).val]'(index D i j).isLt =
+      g j (d[(index D i j).val]'(index D i j).isLt) := by
+  unfold modifyRowWith
+  rw [Fin.foldl_eq_finRange_foldl]
+  let step := fun (d : Vector R (N * M)) (j : Fin cols) =>
+    let p := (index D i j).val
+    let x := d[p]'(index D i j).isLt
+    d.set p (g j x) (index D i j).isLt
+  exact foldl_rows_modify step (fun j => (index D i j).val)
+    (fun j => (index D i j).isLt) g
+    (fun d j => by
+      dsimp only [step]
+      rw [Vector.getElem_set_self])
+    (fun d a j haj => by
+      dsimp only [step]
+      exact Vector.getElem_set_ne (index D i a).isLt (index D i j).isLt
+        (fun heq => haj (index_inj D i i a j heq).2))
+    (List.finRange cols) (Matrix.nodup_finRange cols) d j (List.mem_finRange _)
+
+/-- Updating a row preserves every flat index outside that row segment. -/
+private theorem get_modifyRowWith_ne (D : Region N M rows cols) (d : Vector R (N * M))
+    (i : Fin rows) (g : Fin cols → R → R) (p : Nat) (hp : p < N * M)
+    (hne : ∀ j : Fin cols, (index D i j).val ≠ p) :
+    (modifyRowWith D d i g)[p]'hp = d[p]'hp := by
+  unfold modifyRowWith
+  rw [Fin.foldl_eq_finRange_foldl]
+  let step := fun (d : Vector R (N * M)) (j : Fin cols) =>
+    let q := (index D i j).val
+    let x := d[q]'(index D i j).isLt
+    d.set q (g j x) (index D i j).isLt
+  exact foldl_rows_ne step p hp (List.finRange cols) (fun d j _ => by
+    dsimp only [step]
+    exact Vector.getElem_set_ne (index D i j).isLt hp (hne j)) d
+
 /-- Reading a region after accumulation with a function returns the entrywise
 combination. -/
 @[grind =] theorem get_accumulateWith (D : Region N M rows cols) (A : Matrix R N M)
@@ -508,11 +533,12 @@ combination. -/
     (i : Fin rows) (j : Fin cols) :
     get D (accumulateWith D A f op) i j = op (get D A i j) (f i j) := by
   obtain ⟨d⟩ := A
+  rw [get_eq_data, get_eq_data]
   change ((accumulateWith D ⟨d⟩ f op).data[(index D i j).val]'
     (index D i j).isLt) = op (d[(index D i j).val]'(index D i j).isLt) (f i j)
   simp only [accumulateWith]
   let step := fun d (i : Fin rows) =>
-    writeRow D d i (Vector.ofFn fun j => op (d.get (index D i j)) (f i j))
+    modifyRowWith D d i (fun j x => op x (f i j))
   have hfold : Fin.foldl rows step d = (List.finRange rows).foldl step d :=
     Fin.foldl_eq_finRange_foldl step d
   have hmem := foldl_rows_modify step
@@ -520,15 +546,12 @@ combination. -/
     (fun i x => op x (f i j))
     (fun d i => by
       dsimp only [step]
-      rw [get_writeRow]
-      change (Vector.ofFn (fun j => op (d.get (index D i j)) (f i j)))[j.val]'j.isLt = _
-      rw [Vector.getElem_ofFn]
-      rfl)
+      rw [get_modifyRowWith])
     (fun d a i hai => by
       dsimp only [step]
-      exact get_writeRow_ne D d a _ (index D i j).val (index D i j).isLt
+      exact get_modifyRowWith_ne D d a _ (index D i j).val (index D i j).isLt
         (fun t heq => hai (index_inj D a i t j heq).1))
-    (List.finRange rows) (nodup_finRange rows) d i (List.mem_finRange _)
+    (List.finRange rows) (Matrix.nodup_finRange rows) d i (List.mem_finRange _)
   exact (congrArg (fun v : Vector R (N * M) => v.get (index D i j)) hfold).trans hmem
 
 /-- Accumulation with a read-only function preserves every disjoint region. -/
@@ -538,17 +561,18 @@ theorem get_accumulateWith_disjoint (D : Region N M rows cols)
     (i : Fin rows') (j : Fin cols') :
     get E (accumulateWith D A f op) i j = get E A i j := by
   obtain ⟨d⟩ := A
+  rw [get_eq_data, get_eq_data]
   change ((accumulateWith D ⟨d⟩ f op).data[(index E i j).val]'
     (index E i j).isLt) = d[(index E i j).val]'(index E i j).isLt
   simp only [accumulateWith]
   let step := fun d (a : Fin rows) =>
-    writeRow D d a (Vector.ofFn fun b => op (d.get (index D a b)) (f a b))
+    modifyRowWith D d a (fun b x => op x (f a b))
   have hfold : Fin.foldl rows step d = (List.finRange rows).foldl step d :=
     Fin.foldl_eq_finRange_foldl step d
   have hpres := foldl_rows_ne step (index E i j).val (index E i j).isLt
     (List.finRange rows) (fun d a _ => by
       dsimp only [step]
-      exact get_writeRow_ne D d a _ (index E i j).val (index E i j).isLt
+      exact get_modifyRowWith_ne D d a _ (index E i j).val (index E i j).isLt
         (fun b => index_ne_of_disjoint D E h a b i j)) d
   exact (congrArg (fun v : Vector R (N * M) => v.get (index E i j)) hfold).trans hpres
 
@@ -559,12 +583,13 @@ combination. -/
     (i : Fin rows) (j : Fin cols) :
     get D (accumulateExternal D A B op) i j = op (get D A i j) B[(i, j)] := by
   obtain ⟨d⟩ := A
+  rw [get_eq_data, get_eq_data]
   change ((accumulateExternal D ⟨d⟩ B op).data[(index D i j).val]'
     (index D i j).isLt) =
       op (d[(index D i j).val]'(index D i j).isLt) B[(i, j)]
   simp only [accumulateExternal]
   let step := fun d (i : Fin rows) =>
-    writeRow D d i (Vector.ofFn fun j => op (d.get (index D i j)) B[(i, j)])
+    modifyRowWith D d i (fun j x => op x B[(i, j)])
   have hfold : Fin.foldl rows step d = (List.finRange rows).foldl step d :=
     Fin.foldl_eq_finRange_foldl step d
   have hmem := foldl_rows_modify step
@@ -572,15 +597,12 @@ combination. -/
     (fun i x => op x B[(i, j)])
     (fun d i => by
       dsimp only [step]
-      rw [get_writeRow]
-      change (Vector.ofFn (fun j => op (d.get (index D i j)) B[(i, j)]))[j.val]'j.isLt = _
-      rw [Vector.getElem_ofFn]
-      rfl)
+      rw [get_modifyRowWith])
     (fun d a i hai => by
       dsimp only [step]
-      exact get_writeRow_ne D d a _ (index D i j).val (index D i j).isLt
+      exact get_modifyRowWith_ne D d a _ (index D i j).val (index D i j).isLt
         (fun t heq => hai (index_inj D a i t j heq).1))
-    (List.finRange rows) (nodup_finRange rows) d i (List.mem_finRange _)
+    (List.finRange rows) (Matrix.nodup_finRange rows) d i (List.mem_finRange _)
   exact (congrArg (fun v : Vector R (N * M) => v.get (index D i j)) hfold).trans hmem
 
 /-- Accumulating into one region preserves every disjoint region. -/
@@ -589,34 +611,45 @@ theorem get_accumulateExternal_disjoint (D : Region N M rows cols)
     (B : Matrix R rows cols) (op : R → R → R) (i : Fin rows') (j : Fin cols') :
     get E (accumulateExternal D A B op) i j = get E A i j := by
   obtain ⟨d⟩ := A
+  rw [get_eq_data, get_eq_data]
   change ((accumulateExternal D ⟨d⟩ B op).data[(index E i j).val]'
     (index E i j).isLt) = d[(index E i j).val]'(index E i j).isLt
   simp only [accumulateExternal]
   let step := fun d (a : Fin rows) =>
-    writeRow D d a (Vector.ofFn fun b => op (d.get (index D a b)) B[(a, b)])
+    modifyRowWith D d a (fun b x => op x B[(a, b)])
   have hfold : Fin.foldl rows step d = (List.finRange rows).foldl step d :=
     Fin.foldl_eq_finRange_foldl step d
   have hpres := foldl_rows_ne step (index E i j).val (index E i j).isLt
     (List.finRange rows) (fun d a _ => by
       dsimp only [step]
-      exact get_writeRow_ne D d a _ (index E i j).val (index E i j).isLt
+      exact get_modifyRowWith_ne D d a _ (index E i j).val (index E i j).isLt
         (fun b => index_ne_of_disjoint D E h a b i j)) d
   exact (congrArg (fun v : Vector R (N * M) => v.get (index E i j)) hfold).trans hpres
 
-/-- Combine two disjoint regions of the owned output matrix, writing the first.
-The entire source/destination row is read before that row's writes begin. -/
+/-- Combine one row of two disjoint regions directly into the destination.  The
+two entries are read before `Vector.set` consumes the array, so the array is not
+retained by a temporary or modifying closure. -/
+@[inline]
+private def combineRowWith (D S : Region N M rows cols) (d : Vector R (N * M))
+    (i : Fin rows) (op : R → R → R) : Vector R (N * M) :=
+  let base := rowStart D i
+  Fin.foldl cols (fun d j =>
+    let p := base + j.val
+    let x := d[p]'(index D i j).isLt
+    let y := d.get (index S i j)
+    d.set p (op x y) (index D i j).isLt) d
+
+/-- Combine two disjoint regions of the owned output matrix, writing the first
+and threading the backing array directly through every entry update. -/
 @[inline]
 def accumulate (D S : Region N M rows cols) (_h : Disjoint D S)
     (A : Matrix R N M) (op : R → R → R) : Matrix R N M :=
   match A with
-  | ⟨d⟩ =>
-    ⟨Fin.foldl rows (fun d i =>
-      let v := Vector.ofFn fun j => op (d.get (index D i j)) (d.get (index S i j))
-      writeRow D d i v) d⟩
+  | ⟨d⟩ => ⟨Fin.foldl rows (fun d i => combineRowWith D S d i op) d⟩
 
 /-- A row fold can transform one index from both its old value and an invariant
 source index. -/
-private theorem foldl_rows_modify₂ {count size : Nat}
+private theorem foldl_modify₂ {count size : Nat}
     (step : Vector R size → Fin count → Vector R size)
     (dst src : Fin count → Nat) (bdDst : ∀ i, dst i < size) (bdSrc : ∀ i, src i < size)
     (g : Fin count → R → R → R)
@@ -640,41 +673,81 @@ private theorem foldl_rows_modify₂ {count size : Nat}
     · rw [ih (List.nodup_cons.mp hnd).2 _ r hr',
         hneDst d x r (fun h => (List.nodup_cons.mp hnd).1 (h ▸ hr')), hneSrc d x r]
 
+/-- Reading a directly combined row returns the entrywise combination. -/
+private theorem get_combineRowWith (D S : Region N M rows cols) (h : Disjoint D S)
+    (d : Vector R (N * M)) (i : Fin rows) (op : R → R → R) (j : Fin cols) :
+    (combineRowWith D S d i op)[(index D i j).val]'(index D i j).isLt =
+      op (d[(index D i j).val]'(index D i j).isLt)
+        (d[(index S i j).val]'(index S i j).isLt) := by
+  unfold combineRowWith
+  rw [Fin.foldl_eq_finRange_foldl]
+  let step := fun (d : Vector R (N * M)) (j : Fin cols) =>
+    let p := (index D i j).val
+    let x := d[p]'(index D i j).isLt
+    let y := d.get (index S i j)
+    d.set p (op x y) (index D i j).isLt
+  exact foldl_modify₂ step (fun j => (index D i j).val) (fun j => (index S i j).val)
+    (fun j => (index D i j).isLt) (fun j => (index S i j).isLt) (fun _ x y => op x y)
+    (fun d j => by
+      dsimp only [step]
+      rw [Vector.getElem_set_self]
+      rfl)
+    (fun d a j haj => by
+      dsimp only [step]
+      exact Vector.getElem_set_ne (index D i a).isLt (index D i j).isLt
+        (fun heq => haj (index_inj D i i a j heq).2))
+    (fun d a j => by
+      dsimp only [step]
+      exact Vector.getElem_set_ne (index D i a).isLt (index S i j).isLt
+        (index_ne_of_disjoint D S h i a i j))
+    (List.finRange cols) (Matrix.nodup_finRange cols) d j (List.mem_finRange _)
+
+/-- Combining one row preserves every flat index outside its destination. -/
+private theorem get_combineRowWith_ne (D S : Region N M rows cols)
+    (d : Vector R (N * M)) (i : Fin rows) (op : R → R → R)
+    (p : Nat) (hp : p < N * M) (hne : ∀ j : Fin cols, (index D i j).val ≠ p) :
+    (combineRowWith D S d i op)[p]'hp = d[p]'hp := by
+  unfold combineRowWith
+  rw [Fin.foldl_eq_finRange_foldl]
+  let step := fun (d : Vector R (N * M)) (j : Fin cols) =>
+    let q := (index D i j).val
+    let x := d[q]'(index D i j).isLt
+    let y := d.get (index S i j)
+    d.set q (op x y) (index D i j).isLt
+  exact foldl_rows_ne step p hp (List.finRange cols) (fun d j _ => by
+    dsimp only [step]
+    exact Vector.getElem_set_ne (index D i j).isLt hp (hne j)) d
+
 /-- Reading the destination of an in-buffer accumulation returns the requested
 entrywise combination. -/
 @[grind =] theorem get_accumulate (D S : Region N M rows cols) (h : Disjoint D S)
     (A : Matrix R N M) (op : R → R → R) (i : Fin rows) (j : Fin cols) :
     get D (accumulate D S h A op) i j = op (get D A i j) (get S A i j) := by
   obtain ⟨d⟩ := A
+  rw [get_eq_data, get_eq_data, get_eq_data]
   change ((accumulate D S h ⟨d⟩ op).data[(index D i j).val]'
     (index D i j).isLt) = op (d[(index D i j).val]'(index D i j).isLt)
       (d[(index S i j).val]'(index S i j).isLt)
   simp only [accumulate]
-  let step := fun d (i : Fin rows) =>
-    writeRow D d i (Vector.ofFn fun j =>
-      op (d.get (index D i j)) (d.get (index S i j)))
+  let step := fun d (i : Fin rows) => combineRowWith D S d i op
   have hfold : Fin.foldl rows step d = (List.finRange rows).foldl step d :=
     Fin.foldl_eq_finRange_foldl step d
-  have hmem := foldl_rows_modify₂ step
+  have hmem := foldl_modify₂ step
     (fun i => (index D i j).val) (fun i => (index S i j).val)
     (fun i => (index D i j).isLt) (fun i => (index S i j).isLt)
     (fun _ x y => op x y)
     (fun d i => by
       dsimp only [step]
-      rw [get_writeRow]
-      change (Vector.ofFn (fun j =>
-        op (d.get (index D i j)) (d.get (index S i j))))[j.val]'j.isLt = _
-      rw [Vector.getElem_ofFn]
-      rfl)
+      exact get_combineRowWith D S h d i op j)
     (fun d a i hai => by
       dsimp only [step]
-      exact get_writeRow_ne D d a _ (index D i j).val (index D i j).isLt
+      exact get_combineRowWith_ne D S d a op (index D i j).val (index D i j).isLt
         (fun t heq => hai (index_inj D a i t j heq).1))
     (fun d a i => by
       dsimp only [step]
-      exact get_writeRow_ne D d a _ (index S i j).val (index S i j).isLt
+      exact get_combineRowWith_ne D S d a op (index S i j).val (index S i j).isLt
         (fun t => index_ne_of_disjoint D S h a t i j))
-    (List.finRange rows) (nodup_finRange rows) d i (List.mem_finRange _)
+    (List.finRange rows) (Matrix.nodup_finRange rows) d i (List.mem_finRange _)
   exact (congrArg (fun v : Vector R (N * M) => v.get (index D i j)) hfold).trans hmem
 
 /-- In-buffer accumulation writes only its destination region. -/
@@ -683,18 +756,17 @@ theorem get_accumulate_disjoint (D S : Region N M rows cols) (hDS : Disjoint D S
     (op : R → R → R) (i : Fin rows') (j : Fin cols') :
     get E (accumulate D S hDS A op) i j = get E A i j := by
   obtain ⟨d⟩ := A
+  rw [get_eq_data, get_eq_data]
   change ((accumulate D S hDS ⟨d⟩ op).data[(index E i j).val]'
     (index E i j).isLt) = d[(index E i j).val]'(index E i j).isLt
   simp only [accumulate]
-  let step := fun d (a : Fin rows) =>
-    writeRow D d a (Vector.ofFn fun b =>
-      op (d.get (index D a b)) (d.get (index S a b)))
+  let step := fun d (a : Fin rows) => combineRowWith D S d a op
   have hfold : Fin.foldl rows step d = (List.finRange rows).foldl step d :=
     Fin.foldl_eq_finRange_foldl step d
   have hpres := foldl_rows_ne step (index E i j).val (index E i j).isLt
     (List.finRange rows) (fun d a _ => by
       dsimp only [step]
-      exact get_writeRow_ne D d a _ (index E i j).val (index E i j).isLt
+      exact get_combineRowWith_ne D S d a op (index E i j).val (index E i j).isLt
         (fun b => index_ne_of_disjoint D E hDE a b i j)) d
   exact (congrArg (fun v : Vector R (N * M) => v.get (index E i j)) hfold).trans hpres
 

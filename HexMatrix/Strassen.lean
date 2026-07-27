@@ -225,19 +225,20 @@ def mulStrassenView {R : Type u} [Mul R] [Add R] [Sub R] [OfNat R 0]
 /-! ### Two-buffer square schedule -/
 
 /-- Transport both matrix dimensions along equalities. -/
+@[expose]
 def castDims {R : Type u} {n m n' m' : Nat} (hn : n = n') (hm : m = m')
     (A : Matrix R n m) : Matrix R n' m' :=
   hn ▸ hm ▸ A
 
-/-- Transporting the same two matrices is injective. -/
-theorem castDims_inj {R : Type u} {n m n' m' : Nat} (hn : n = n') (hm : m = m')
+/-- `castDims hn hm` is injective. -/
+private theorem castDims_inj {R : Type u} {n m n' m' : Nat} (hn : n = n') (hm : m = m')
     {A B : Matrix R n m} (h : castDims hn hm A = castDims hn hm B) : A = B := by
   subst n'
   subst m'
   exact h
 
 /-- Transporting a materialized region changes only its index types. -/
-theorem castDims_toMatrix {R : Type u} {n m n' m' N M : Nat}
+private theorem castDims_toMatrix {R : Type u} {n m n' m' N M : Nat}
     (hn : n = n') (hm : m = m') (D : Region N M n m) (D' : Region N M n' m')
     (hr : D.r0 = D'.r0) (hc : D.c0 = D'.c0) (A : Matrix R N M) :
     castDims hn hm (D.toMatrix A) = D'.toMatrix A := by
@@ -257,7 +258,7 @@ theorem castDims_toMatrix {R : Type u} {n m n' m' N M : Nat}
 
 /-- Cropping a matrix to its full dimensions and transporting the result is the
 original matrix. -/
-theorem castDims_crop {R : Type u} {n h : Nat} (hn : n = h + h)
+private theorem castDims_crop {R : Type u} {n h : Nat} (hn : n = h + h)
     (A : Matrix R (h + h) (h + h)) :
     castDims hn hn
       (takeCols (takeRows A n (by omega)) n (by omega)) = A := by
@@ -275,6 +276,8 @@ reference view recursion as a shape-safe fallback. -/
 def mulStrassenInto {R : Type u} [Mul R] [Add R] [Sub R] [OfNat R 0]
     (cfg : StrassenConfig R) {n N M : Nat} (A B : Submatrix R n n)
     (C : Matrix R N M) (D : Region N M n n) : Matrix R N M :=
+  -- Keep the six repeated disjuncts: this is syntactically `mulStrassenView`'s
+  -- `n = m = k` guard, which makes the equality proof reduce without algebra.
   if n ≤ 1 ∨ n ≤ 1 ∨ n ≤ 1 ∨ n < cfg.cutoff ∨ n < cfg.cutoff ∨ n < cfg.cutoff then
     let P := cfg.baseMul A.toMatrix B.toMatrix
     D.overwrite C fun i j => P[(i, j)]
@@ -659,16 +662,19 @@ def mulStrassenImpl {R : Type u} [Mul R] [Add R] [Sub R] [OfNat R 0]
     Matrix R n k :=
   if hnm : n = m then
     if hmk : m = k then
-      let A' : Matrix R n n := castDims rfl hnm.symm A
-      let B' : Matrix R n n := castDims hnm.symm (hmk.symm.trans hnm.symm) B
-      let C : Matrix R n n := Matrix.ofFn fun _ _ => 0
-      castDims rfl (hnm.trans hmk)
-        (mulStrassenInto cfg (Submatrix.ofMatrix A') (Submatrix.ofMatrix B') C
-          (Region.full n n))
+      if n ≤ 1 ∨ n < cfg.cutoff then
+        mulStrassenView cfg (Submatrix.ofMatrix A) (Submatrix.ofMatrix B)
+      else
+        let A' : Matrix R n n := castDims rfl hnm.symm A
+        let B' : Matrix R n n := castDims hnm.symm (hmk.symm.trans hnm.symm) B
+        let C : Matrix R n n := Matrix.ofFn fun _ _ => 0
+        castDims rfl (hnm.trans hmk)
+          (mulStrassenInto cfg (Submatrix.ofMatrix A') (Submatrix.ofMatrix B') C
+            (Region.full n n))
     else
-      mulStrassen cfg A B
+      mulStrassenView cfg (Submatrix.ofMatrix A) (Submatrix.ofMatrix B)
   else
-    mulStrassen cfg A B
+    mulStrassenView cfg (Submatrix.ofMatrix A) (Submatrix.ofMatrix B)
 
 /-- The storage-scheduled implementation is extensionally equal to the reference
 entry point.  This transfers the implementation without changing
@@ -682,10 +688,12 @@ entry point.  This transfers the implementation without changing
     · rename_i hmk
       subst m
       subst k
-      simp only [castDims, mulStrassen]
-      simpa only [Region.toMatrix_full] using
-        (mulStrassenInto_spec cfg (Submatrix.ofMatrix A) (Submatrix.ofMatrix B)
-          (Matrix.ofFn fun _ _ => 0) (Region.full n n)).1.symm
+      split
+      · rfl
+      · simp only [castDims, mulStrassen]
+        simpa only [Region.toMatrix_full] using
+          (mulStrassenInto_spec cfg (Submatrix.ofMatrix A) (Submatrix.ofMatrix B)
+            (Matrix.ofFn fun _ _ => 0) (Region.full n n)).1.symm
     · rfl
   · rfl
 
