@@ -1227,6 +1227,10 @@ The shown first interface supplies the authoritative bounded scan frontier in
 each `PolicyView`; transition events let the policy update historical state
 without reconstructing it. Its traversal budget is cumulative across views,
 not merely a per-view size check, and counts inactive backing slots honestly.
+The decision budget does not suppress a read-only view: after the last allowed
+decision the driver may still use its separately charged traversal budget to
+distinguish a genuinely empty frontier from live work that must be reported as
+`unknown`.
 `maxLiveOffers` is initially a policy-view/output budget: making it an atomic
 frontier-mutation budget would require preflighting replies and instantiations
 before their already-atomic commits. An event-only priority implementation may

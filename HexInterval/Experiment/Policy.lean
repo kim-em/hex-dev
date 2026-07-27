@@ -381,7 +381,6 @@ def State.offer? (state : State Fact) : OfferId -> Option OfferView
 
 inductive ViewError where
   | malformedState
-  | decisionLimit
   | traversalLimit
   | liveOfferLimit
   deriving DecidableEq, Repr
@@ -422,7 +421,6 @@ structure View (Fact : Type) where
 def remaining (limit used : Nat) : Nat := limit - used
 
 def State.view (state : State Fact) : Except ViewError (View Fact × State Fact) := do
-  if state.limits.maxDecisions <= state.metrics.decisions then throw .decisionLimit
   let (offers, traversal) <- state.offers
   pure
     ({ scope := state.scope

@@ -402,7 +402,9 @@ def oneDecisionState? : Option (State Rank) :=
   initialWith? { policyLimits with maxDecisions := 1 }
 
 -- The decision budget is independent of the engine action budget and does not
--- charge a rejected over-budget selection a second time.
+-- charge a rejected over-budget selection a second time.  A post-decision
+-- view remains available under its separate traversal budget, so a driver can
+-- distinguish saturation from live work it no longer has permission to run.
 #guard
   match oneDecisionState? with
   | none => false
@@ -417,7 +419,7 @@ def oneDecisionState? : Option (State Rank) :=
               | .rejected .decisionLimit rejected =>
                   rejected.metrics.decisions == 1 && rejected.metrics.rejected == 0 &&
                     match rejected.view with
-                    | .error .decisionLimit => true
+                    | .ok (view, _) => !view.offers.isEmpty
                     | _ => false
               | _ => false
 
