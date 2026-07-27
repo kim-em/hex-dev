@@ -161,6 +161,7 @@ def engineLimits (workload : Workload) : Experiment.Propagator.Limits :=
     maxRetainedSuggestions := retainedCount workload
     maxEffort := 1
     maxObservationValue := 1
+    maxDiagnosticValue := 1
     maxOutcomeCandidates := Nat.max workload.roots 1
     maxOutcomeSuggestions := Nat.max workload.churn 1
     maxProposalItems := 0

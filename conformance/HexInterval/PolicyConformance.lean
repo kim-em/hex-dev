@@ -81,6 +81,7 @@ def engineLimits : Experiment.Propagator.Limits :=
     maxRetainedSuggestions := 16
     maxEffort := 4
     maxObservationValue := 64
+    maxDiagnosticValue := 128
     maxOutcomeCandidates := 8
     maxOutcomeSuggestions := 8
     maxProposalItems := 8

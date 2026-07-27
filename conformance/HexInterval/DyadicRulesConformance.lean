@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexInterval.Experiment.DyadicRules
+import HexInterval.Experiment.PolicyDriver
 
 /-!
 End-to-end conformance for concrete arbitrary-function propagators.  These
@@ -31,7 +32,7 @@ def config : Config :=
     reciprocalBasePrecision := 2
     maxReciprocalEffort := 4 }
 
-def registry : Registry := { config }
+abbrev ConcreteRegistry := Propagator.Registry Fact
 
 def limits : Experiment.Propagator.Limits :=
   { maxOperations := 16
@@ -45,6 +46,7 @@ def limits : Experiment.Propagator.Limits :=
     maxRetainedSuggestions := 32
     maxEffort := 8
     maxObservationValue := 256
+    maxDiagnosticValue := 256
     maxOutcomeCandidates := 4
     maxOutcomeSuggestions := 4
     maxProposalItems := 16
@@ -53,8 +55,16 @@ def limits : Experiment.Propagator.Limits :=
     maxEqualities := 8
     splitEndpointLimit := endpointLimit }
 
+def registry? : Option ConcreteRegistry :=
+  match buildRegistry config real limits with
+  | .ok registry => some registry
+  | .error _ => none
+
 def allOperations : Array Operation :=
-  operations real |>.push { key := sourceOp, inputs := [], output := real }
+  match registry? with
+  | some registry =>
+      registry.operations.push { key := sourceOp, inputs := [], output := real }
+  | none => #[]
 
 def instruction (operation : Nat) (args : List NodeId := []) : Node :=
   { domain := real, op := { index := operation }, args }
@@ -71,6 +81,11 @@ def whole : Raw := .bounds .unbounded .unbounded
 def exactFact (state : Engine Fact) (index : Nat) (expected : Raw) : Bool :=
   (state.facts[index]?).any fun fact => fact.view == expected
 
+def registryChecks (program : Program) : Bool :=
+  match registry? with
+  | some registry => registrationsCheck program registry.registrations
+  | none => false
+
 /-! ## Exact backward singleton multiplication -/
 
 /-- Nodes are `2`, `y`, and `z = 2*y`.  The output and input cuts deliberately
@@ -82,8 +97,8 @@ def scaleProgram : Program :=
         instruction 7,
         instruction 3 [node 0, node 1]] }
 
-def scaleStart? : Option (Engine Fact) :=
-  match DyadicInterval.start endpointLimit scaleProgram registrations
+def scaleStart? : Option (Engine Fact × ConcreteRegistry) :=
+  match DyadicRules.start config real scaleProgram
       #[finite 2 false 2 false,
         .bounds (.finite 0 true) .unbounded,
         finite 2 true 6 false]
@@ -91,12 +106,12 @@ def scaleStart? : Option (Engine Fact) :=
   | .ok state => some state
   | .error _ => none
 
-def scaleFinal? : Option (RunResult Fact Unit) := do
-  let state <- scaleStart?
-  pure (drive registry.invokeWithCache 32 state ())
+def scaleFinal? : Option (RunResult Fact ConcreteRegistry) := do
+  let (state, registry) <- scaleStart?
+  pure (drive Propagator.Registry.invoke 32 state registry)
 
 #guard scaleProgram.check
-#guard registrationsCheck scaleProgram registrations
+#guard registryChecks scaleProgram
 
 -- The unbounded forward image is honestly inapplicable.  The exact singleton
 -- backward contractor nevertheless derives `(1,3]`, then the now-finite
@@ -127,8 +142,8 @@ def cycleProgram : Program :=
         instruction 7,
         instruction 4 [node 5]] }
 
-def cycleStart? : Option (Engine Fact) :=
-  match DyadicInterval.start endpointLimit cycleProgram registrations
+def cycleStart? : Option (Engine Fact × ConcreteRegistry) :=
+  match DyadicRules.start config real cycleProgram
       #[whole,
         finite 1 false 2 false,
         finite 1 false 2 false,
@@ -140,12 +155,12 @@ def cycleStart? : Option (Engine Fact) :=
   | .ok state => some state
   | .error _ => none
 
-def cycleFinal? : Option (RunResult Fact Unit) := do
-  let state <- cycleStart?
-  pure (drive registry.invokeWithCache 48 state ())
+def cycleFinal? : Option (RunResult Fact ConcreteRegistry) := do
+  let (state, registry) <- cycleStart?
+  pure (drive Propagator.Registry.invoke 48 state registry)
 
 #guard cycleProgram.check
-#guard registrationsCheck cycleProgram registrations
+#guard registryChecks cycleProgram
 
 #guard
   match cycleFinal? with
@@ -171,8 +186,8 @@ def centeredProgram : Program :=
         instruction 2 [node 1, node 0],
         instruction 3 [node 0, node 2]] }
 
-def centeredStart? : Option (Engine Fact) :=
-  match DyadicInterval.start endpointLimit centeredProgram registrations
+def centeredStart? : Option (Engine Fact × ConcreteRegistry) :=
+  match DyadicRules.start config real centeredProgram
       #[finite 0 false 1 false,
         finite 1 false 1 false,
         whole,
@@ -181,22 +196,124 @@ def centeredStart? : Option (Engine Fact) :=
   | .ok state => some state
   | .error _ => none
 
-def centeredInitial? : Option (RunResult Fact Unit) := do
-  let state <- centeredStart?
-  pure (drive registry.invokeWithCache 32 state ())
+def centeredAt (input expected : Dyadic) : Bool :=
+  match DyadicInterval.closed endpointLimit input input with
+  | .ready fact =>
+      match centeredImage endpointLimit fact with
+      | .ready image =>
+          image.view ==
+            .bounds (.finite expected false) (.finite expected false)
+      | .inapplicable | .resourceLimit _ => false
+  | .inapplicable | .resourceLimit _ => false
 
-def centeredFinal? : Option (RunResult Fact Unit) := do
+def centeredInitial? : Option (RunResult Fact ConcreteRegistry) := do
+  let (state, registry) <- centeredStart?
+  pure (drive Propagator.Registry.invoke 32 state registry)
+
+def centeredAdmitted? : Option (Engine Fact × ConcreteRegistry) := do
   let initial <- centeredInitial?
   match initial.state.admitInstantiation (suggestion 0) with
   | .admitted [centered] state =>
       if centered == node 4 then
-        some (drive registry.invokeWithCache 32 state ())
+        some (state, initial.cache)
       else
         none
   | _ => none
 
+def centeredFinal? : Option (RunResult Fact ConcreteRegistry) := do
+  let (state, registry) <- centeredAdmitted?
+  pure (drive Propagator.Registry.invoke 32 state registry)
+
+def falseOneRun? : Option (RunResult Fact ConcreteRegistry) := do
+  let (state, registry) <-
+    match DyadicRules.start config real centeredProgram
+        #[finite 0 false 1 false,
+          finite 5 false 5 false,
+          whole,
+          whole]
+        limits with
+    | .ok state => some state
+    | .error _ => none
+  pure (drive Propagator.Registry.invoke 8 state registry)
+
 #guard centeredProgram.check
-#guard registrationsCheck centeredProgram registrations
+#guard registryChecks centeredProgram
+#guard centeredAt 0 0
+#guard centeredAt half quarter
+#guard centeredAt 1 0
+
+-- The old whole-program match is stale after extension, and admission has
+-- requeued the structural application so it can observe the new snapshot.
+#guard
+  match centeredAdmitted? with
+  | some (state, _) =>
+      match state.admitInstantiation (suggestion 0) with
+      | .invalid (.staleSuggestion 0 1) unchanged =>
+          unchanged.programVersion == 1 &&
+            unchanged.queue.toList.any fun work =>
+              match work with
+              | .application applicationId =>
+                  (unchanged.applications[applicationId.index]?).any fun application =>
+                    (unchanged.rules[application.rule.index]?).any fun registration =>
+                      registration.key == centeredInstantiateKey &&
+                        (unchanged.queued[applicationId.index]?).getD false
+              | .equality _ => false
+      | _ => false
+  | none => false
+
+def lowEffortLimits : Experiment.Propagator.Limits :=
+  { limits with maxEffort := 3 }
+
+def lowDiagnosticLimits : Experiment.Propagator.Limits :=
+  { limits with maxDiagnosticValue := 70 }
+
+def noCandidateLimits : Experiment.Propagator.Limits :=
+  { limits with maxOutcomeCandidates := 0 }
+
+def noSuggestionLimits : Experiment.Propagator.Limits :=
+  { limits with maxOutcomeSuggestions := 0 }
+
+def shortProposalLimits : Experiment.Propagator.Limits :=
+  { limits with maxProposalItems := 3 }
+
+def tinySplitLimits : Experiment.Propagator.Limits :=
+  { limits with
+    splitEndpointLimit := { maxEndpointHeight := 0, maxAlignmentShift := 0 } }
+
+def rejectsPackageLimits (candidateLimits : Experiment.Propagator.Limits) : Bool :=
+  match DyadicRules.start config real centeredProgram
+      #[finite 0 false 1 false, finite 1 false 1 false, whole, whole]
+      candidateLimits with
+  | .error .incompatibleLimits => true
+  | _ => false
+
+def badSignatureProgram : Program :=
+  { centeredProgram with
+    operations := centeredProgram.operations.set! 6
+      { key := centeredOp, inputs := [real, real], output := real } }
+
+#guard rejectsPackageLimits lowEffortLimits
+#guard rejectsPackageLimits lowDiagnosticLimits
+#guard rejectsPackageLimits noCandidateLimits
+#guard rejectsPackageLimits noSuggestionLimits
+#guard rejectsPackageLimits shortProposalLimits
+#guard rejectsPackageLimits tinySplitLimits
+
+#guard badSignatureProgram.check
+#guard
+  match DyadicRules.start config real badSignatureProgram
+      #[finite 0 false 1 false, finite 1 false 1 false, whole, whole]
+      limits with
+  | .error .operationMismatch => true
+  | _ => false
+
+-- The distinguished nullary operation carries its own semantics.  A caller
+-- cannot seed a node named `real.one` with `{5}` and let the structural
+-- identity matcher treat it as one.
+#guard
+  match falseOneRun? with
+  | some result => result.stop == .contradiction && result.state.contradictory
+  | none => false
 
 -- Ordinary interval evaluation loses the dependency between the two
 -- occurrences of `x` and obtains only `[0,1]`.  The shape rule has no fact
@@ -222,8 +339,9 @@ def centeredFinal? : Option (RunResult Fact Unit) := do
   | none => false
 
 -- Admission creates the opaque centered node and equality.  Its arbitrary
--- propagator proves `[0,1/4]`; equality transport then improves the original
--- product to the same fact.
+-- callback returns `[0,1/4]`; equality transport then improves the original
+-- product to the same fact.  The whole-program matcher also runs on the new
+-- snapshot rather than silently remaining dormant.
 #guard
   match centeredFinal? with
   | some result =>
@@ -234,6 +352,9 @@ def centeredFinal? : Option (RunResult Fact Unit) := do
           (.bounds (.finite 0 false) (.finite quarter false)) &&
         exactFact result.state 4
           (.bounds (.finite 0 false) (.finite quarter false)) &&
+        result.state.suggestions.toList.any (fun retained =>
+          retained.action.key == centeredInstantiateKey &&
+            retained.action.programVersion == 1) &&
         match result.state.program.node? (node 4), result.state.equalities[0]? with
         | some centered, some equality =>
             centered.args == [node 0] &&
@@ -243,30 +364,196 @@ def centeredFinal? : Option (RunResult Fact Unit) := do
         | _, _ => false
   | none => false
 
+/-! ## External policy over concrete function offers -/
+
+def policyLimits : Propagator.Policy.Limits :=
+  { maxDecisions := 128
+    maxTraversal := 16384
+    maxLiveOffers := 512 }
+
+inductive ConcreteCommand
+  | invoke (key : RuleKey)
+  | instantiate (key : RuleKey)
+  | retry (key : RuleKey) (effort : Nat)
+  | equality
+  | split (key : RuleKey)
+
+def commandMatches (command : ConcreteCommand)
+    (offer : Propagator.Policy.OfferView) : Bool :=
+  match command, offer.key with
+  | .invoke key, .invoke source => source.rule == key
+  | .instantiate key, .instantiate source _ => source.rule == key
+  | .retry key effort, .retry source offeredEffort =>
+      source.rule == key && offeredEffort == effort
+  | .equality, .equality _ => true
+  | .split key, .split source _ _ _ => source.rule == key
+  | _, _ => false
+
+def concreteChoose (commands : List ConcreteCommand)
+    (view : Propagator.Policy.View Fact) :
+    Propagator.Policy.Driver.Step (List ConcreteCommand) :=
+  match commands with
+  | [] => .stop []
+  | command :: rest =>
+      match view.offers.toList.find? (commandMatches command) with
+      | none => .stop rest
+      | some offer =>
+      .select
+        { scope := view.scope
+          serial := view.serial
+          programVersion := view.programVersion
+          id := offer.id
+          expected := offer.key }
+        rest
+
+def concreteController :
+    Propagator.Policy.Driver.Controller Fact (List ConcreteCommand) where
+  key := { name := "dyadic-rules.script", version := 0 }
+  update state _ := state
+  choose := concreteChoose
+
+def combinedProgram : Program :=
+  { operations := allOperations
+    nodes :=
+      #[instruction 7,
+        instruction 0,
+        instruction 2 [node 1, node 0],
+        instruction 3 [node 0, node 2],
+        instruction 7,
+        instruction 5 [node 4]] }
+
+def combinedStart? : Option (Engine Fact × ConcreteRegistry) :=
+  match DyadicRules.start config real combinedProgram
+      #[finite 0 false 1 false,
+        finite 1 false 1 false,
+        whole,
+        whole,
+        finite 3 false 3 false,
+        whole]
+      limits with
+  | .ok state => some state
+  | .error _ => none
+
+def concreteCommands : List ConcreteCommand :=
+  [.invoke subForwardKey,
+    .invoke mulForwardKey,
+    .invoke centeredInstantiateKey,
+    .instantiate centeredInstantiateKey,
+    .invoke centeredSplitKey,
+    .invoke centeredForwardKey,
+    .equality,
+    .invoke reciprocalForwardKey,
+    .retry reciprocalForwardKey 1,
+    .split centeredSplitKey]
+
+def combinedPolicyRun? : Option
+    (Propagator.Policy.Driver.Result Fact ConcreteRegistry
+      (List ConcreteCommand)) := do
+  let (engine, registry) <- combinedStart?
+  let state := Propagator.Policy.State.start engine policyLimits
+  pure (Propagator.Policy.Driver.drive concreteController Propagator.Registry.invoke
+    32 state registry concreteCommands)
+
+def exactConcreteEvents
+    (events : Array (Propagator.Policy.Driver.Event Fact)) : Bool :=
+  match events.toList with
+  | [.rule _ subObservation,
+      .rule _ mulObservation,
+      .rule _ instantiateObservation,
+      .instance _ (.admitted [fresh]),
+      .rule _ splitObservation,
+      .rule _ centeredObservation,
+      .equality _ equalityObservation,
+      .rule _ reciprocalObservation,
+      .rule _ retryObservation,
+      .splitPrepared _ plan] =>
+      subObservation.invocation.rule == subForwardKey &&
+        mulObservation.invocation.rule == mulForwardKey &&
+        instantiateObservation.invocation.rule == centeredInstantiateKey &&
+        fresh == node 6 && splitObservation.invocation.rule == centeredSplitKey &&
+        centeredObservation.invocation.rule == centeredForwardKey &&
+        equalityObservation.outcome == .improved &&
+        reciprocalObservation.invocation.rule == reciprocalForwardKey &&
+        reciprocalObservation.invocation.effort == 0 &&
+        retryObservation.invocation.rule == reciprocalForwardKey &&
+        retryObservation.invocation.effort == 1 &&
+        plan.node == node 0 && plan.version == 0
+  | _ => false
+
+#guard combinedProgram.check
+#guard registryChecks combinedProgram
+
+-- A single external schedule chooses propagation, instantiation, equality,
+-- one precision retry, and finally a function-owned split.  The split offer
+-- survives unrelated improvements, and retry effort two remains live when the
+-- policy deliberately chooses subdivision.  No branch is executed here.
+#guard
+  match combinedPolicyRun? with
+  | some result =>
+      result.policyState.isEmpty && result.events.size == 10 &&
+        exactConcreteEvents result.events &&
+        result.state.metrics.decisions == 10 &&
+        result.state.metrics.selectedInvocations == 6 &&
+        result.state.metrics.selectedRetries == 1 &&
+        result.state.metrics.selectedInstances == 1 &&
+        result.state.metrics.selectedSplits == 1 &&
+        result.state.metrics.selectedEqualities == 1 &&
+        result.state.engine.programVersion == 1 &&
+        result.state.engine.program.nodes.size == 7 &&
+        result.state.engine.applications.size == 12 &&
+        result.state.engine.equalities.size == 1 &&
+        result.state.engine.metrics.requests == 7 &&
+        result.state.engine.metrics.replies == 7 &&
+        result.state.engine.metrics.candidates == 5 &&
+        result.state.engine.metrics.improvements == 6 &&
+        result.state.engine.metrics.equalityRuns == 1 &&
+        result.state.engine.metrics.equalityImprovements == 1 &&
+        result.state.engine.versions.toList == [0, 0, 1, 2, 0, 2, 1] &&
+        exactFact result.state.engine 3
+          (.bounds (.finite 0 false) (.finite quarter false)) &&
+        exactFact result.state.engine 5
+          (.bounds (.finite quarter true)
+            (.finite (Dyadic.ofIntWithPrec 3 3) true)) &&
+        exactFact result.state.engine 6
+          (.bounds (.finite 0 false) (.finite quarter false)) &&
+        (match result.state.offer? (.suggestion (suggestion 3)) with
+         | some { key := .retry source 2, .. } =>
+             source.rule == reciprocalForwardKey &&
+               match result.stop with
+               | .split plan =>
+                   plan.node == node 0 && plan.version == 0 && plan.point == half &&
+                     plan.reason == .criticalPoint &&
+                     plan.origin.key == centeredSplitKey &&
+                     plan.source.rule == centeredSplitKey &&
+                     plan.fact.view == finite 0 false 1 false
+               | _ => false
+         | _ => false)
+  | none => false
+
 /-! ## Retry and malformed dispatch boundaries -/
 
 def reciprocalProgram : Program :=
   { operations := allOperations
     nodes := #[instruction 7, instruction 5 [node 0]] }
 
-def reciprocalStart? : Option (Engine Fact) :=
-  match DyadicInterval.start endpointLimit reciprocalProgram registrations
+def reciprocalStart? : Option (Engine Fact × ConcreteRegistry) :=
+  match DyadicRules.start config real reciprocalProgram
       #[finite 3 false 3 false, whole] limits with
   | .ok state => some state
   | .error _ => none
 
-def reciprocalFirstRequest? : Option (RuleRequest Fact) := do
-  let state <- reciprocalStart?
+def reciprocalFirstRequest? : Option (RuleRequest Fact × ConcreteRegistry) := do
+  let (state, registry) <- reciprocalStart?
   match state.poll with
-  | .request request _ => some request
+  | .request request _ => some (request, registry)
   | _ => none
 
 -- Precision two encloses `1/3` by open quarter-grid endpoints and emits the
 -- next effort as an advisory retry.
 #guard
   match reciprocalFirstRequest? with
-  | some request =>
-      match registry.invoke request with
+  | some (request, registry) =>
+      match (registry.invoke request).1 with
       | .success [candidate] [.retry 1] _ =>
           candidate.node == node 1 &&
             candidate.fact.view ==
@@ -296,8 +583,11 @@ def bogusRequest : RuleRequest Fact :=
 -- A callback outside the versioned registry cannot manufacture a candidate;
 -- unknown dispatch is a diagnostic failure with no writes.
 #guard
-  match registry.invoke bogusRequest with
-  | .failed 255 => true
-  | _ => false
+  match registry? with
+  | some registry =>
+      match (registry.invoke bogusRequest).1 with
+      | .failed code => code == DispatchCode.requestMismatch
+      | _ => false
+  | none => false
 
 end Hex.Interval.DyadicRulesConformance

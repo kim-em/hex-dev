@@ -502,6 +502,7 @@ private def engineLimits : Limits :=
     maxRetainedSuggestions := 0
     maxEffort := 4
     maxObservationValue := 16
+    maxDiagnosticValue := 16
     maxOutcomeCandidates := 2
     maxOutcomeSuggestions := 0
     maxProposalItems := 2

@@ -82,6 +82,7 @@ def limits : Limits :=
     maxRetainedSuggestions := 16
     maxEffort := 8
     maxObservationValue := 128
+    maxDiagnosticValue := 128
     maxOutcomeCandidates := 4
     maxOutcomeSuggestions := 4
     maxProposalItems := 8

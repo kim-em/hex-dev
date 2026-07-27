@@ -61,6 +61,7 @@ def generous : Limits :=
     maxRetainedSuggestions := 16
     maxEffort := 16
     maxObservationValue := 1024
+    maxDiagnosticValue := 2048
     maxOutcomeCandidates := 8
     maxOutcomeSuggestions := 8
     maxProposalItems := 16
@@ -111,6 +112,14 @@ def chainResult? : Option (RunResult Rank (List Nat)) := do
   pure (drive copyInvoke 16 state [])
 
 #guard chainProgram.check
+
+-- A registration cannot begin above the engine's effort envelope.
+#guard
+  match Engine.start rankDomain chainProgram
+      #[{ copyRule with initialEffort := generous.maxEffort + 1 }]
+      #[4, 0, 0, 0, 0] generous with
+  | .error (.resourceLimit .effort) => true
+  | _ => false
 
 #guard
   match chainResult? with
@@ -913,6 +922,24 @@ def firstChainRequest? : Option (RuleRequest Rank × Engine Rank) := do
   | .request request awaiting => some (request, awaiting)
   | _ => none
 
+def oversizedMalformedDomain : FactDomain Rank where
+  top _ := 0
+  narrow _ _ _ := .malformed (generous.maxDiagnosticValue + 1)
+
+def oversizedResourceDomain : FactDomain Rank where
+  top _ := 0
+  narrow _ _ _ := .resourceLimit (generous.maxDiagnosticValue + 1)
+
+def firstRequestWith? (domain : FactDomain Rank) :
+    Option (RuleRequest Rank × Engine Rank) := do
+  let initial <-
+    match Engine.start domain chainProgram #[copyRule] #[4, 0, 0, 0, 0] generous with
+    | .ok state => some state
+    | .error _ => none
+  match initial.poll with
+  | .request request awaiting => some (request, awaiting)
+  | _ => none
+
 -- Append-only recompilation must preserve every existing concrete
 -- application exactly, not merely preserve the old array length.
 #guard
@@ -924,6 +951,28 @@ def firstChainRequest? : Option (RuleRequest Rank × Engine Rank) := do
             !applicationsPrefix state.applications
               (state.applications.set! 0 { first with effort := first.effort + 1 })
       | none => false
+  | none => false
+
+-- Fact-domain diagnostics cross the same independent representation cap as
+-- callback diagnostics before they can enter driver or policy events.
+#guard
+  match firstRequestWith? oversizedMalformedDomain with
+  | some (request, awaiting) =>
+      match awaiting.submit (request.action.reply
+          (.success [candidate request 4] [] {})) with
+      | .invalid .oversizedObservation state =>
+          state.pending.isNone && state.history.isEmpty
+      | _ => false
+  | none => false
+
+#guard
+  match firstRequestWith? oversizedResourceDomain with
+  | some (request, awaiting) =>
+      match awaiting.submit (request.action.reply
+          (.success [candidate request 4] [] {})) with
+      | .invalid .oversizedObservation state =>
+          state.pending.isNone && state.history.isEmpty
+      | _ => false
   | none => false
 
 -- Reply-provided policy telemetry is checked before it can enter retained
@@ -958,7 +1007,7 @@ def firstChainRequest? : Option (RuleRequest Rank × Engine Rank) := do
   | none => false
 
 -- A failure code is an opaque diagnostic identifier, not a logical cost
--- magnitude governed by the observation-value budget.
+-- magnitude governed by the performed-work budget.  It has its own cap.
 #guard
   match firstChainRequest? with
   | some (request, awaiting) =>
@@ -966,6 +1015,16 @@ def firstChainRequest? : Option (RuleRequest Rank × Engine Rank) := do
           (.failed (generous.maxObservationValue + 1))) with
       | .accepted state =>
           state.pending.isNone && state.metrics.ruleFailures == 1 && state.history.isEmpty
+      | _ => false
+  | none => false
+
+#guard
+  match firstChainRequest? with
+  | some (request, awaiting) =>
+      match awaiting.submit (request.action.reply
+          (.failed (generous.maxDiagnosticValue + 1))) with
+      | .invalid .oversizedObservation state =>
+          state.pending.isNone && state.metrics.ruleFailures == 0 && state.history.isEmpty
       | _ => false
   | none => false
 

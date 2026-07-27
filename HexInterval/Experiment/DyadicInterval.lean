@@ -105,6 +105,15 @@ def workMagnitude : WorkCost -> Nat
   | .inverse input precisionMagnitude alignmentShift =>
       input.numeratorBits + input.exponentMagnitude + precisionMagnitude + alignmentShift
 
+/-- Bounded category code for generic engine and policy diagnostics.  The full
+preflight magnitude remains local typed data; it is not copied into an
+unbounded generic `Nat` event. -/
+def workCode : WorkCost -> Nat
+  | .endpoint _ => 1
+  | .comparison _ => 2
+  | .arithmetic _ _ => 3
+  | .inverse _ _ _ => 4
+
 /-! ## Preflight helpers -/
 
 def endpointChecked (limit : EndpointLimit) (value : Dyadic) : Except WorkCost Unit :=
@@ -677,7 +686,7 @@ def factDomain (limit : EndpointLimit) : FactDomain Fact where
   narrow _ current candidate :=
     match intersect limit current candidate with
     | .inapplicable => .malformed 1
-    | .resourceLimit cost => .resourceLimit (workMagnitude cost)
+    | .resourceLimit cost => .resourceLimit (workCode cost)
     | .ready result =>
         if result = current then .noChange
         else if result.isEmpty then .contradiction result
@@ -709,15 +718,12 @@ reported before the generic scheduler can observe them. -/
 def start (endpointLimit : EndpointLimit) (program : Program)
     (rules : Array Registration) (rawFacts : Array Raw) (limits : Limits) :
     Except StartError (Engine Fact) := do
-  -- Bound the raw-fact scan with the same early structural checks used by the
-  -- generic engine.  In particular, a wrong-sized untrusted array is never
-  -- converted to an unbounded intermediate list.
-  if limits.maxOperations < program.operations.size then
-    throw (.engine (.resourceLimit .operations))
-  if limits.maxNodes < program.nodes.size then
-    throw (.engine (.resourceLimit .nodes))
-  if rawFacts.size != program.nodes.size then
-    throw (.engine .wrongFactCount)
+  -- Bound the raw-fact scan with the same resource-first validation used by
+  -- the generic engine.  In particular, no oversized program, registry, or
+  -- wrong-sized fact array is traversed into an unbounded intermediate list.
+  match preflightStart program rules rawFacts.size limits with
+  | .error error => throw (.engine error)
+  | .ok () => pure ()
   let facts ← importInitialFacts endpointLimit 0 rawFacts.toList
   match Engine.start (factDomain endpointLimit) program rules facts.toArray limits with
   | .ok engine => pure engine

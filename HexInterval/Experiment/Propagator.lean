@@ -179,6 +179,10 @@ structure Registration where
   kind : ActionKind
   watches : List Slot
   writes : List Slot
+  /-- Re-run existing applications after any append-only program extension.
+  This is the coarse first trigger for rules whose result depends on shape
+  outside their anchor's immutable argument subgraph. -/
+  watchesProgram : Bool := false
   initialEffort : Nat := 0
   deriving Repr
 
@@ -217,6 +221,16 @@ def opKeyExists (program : Program) (key : OpKey) : Bool :=
 
 def Program.operationWithKey? (program : Program) (key : OpKey) : Option Operation :=
   program.operations.toList.find? fun operation => operation.key == key
+
+/-- Resolve both the signature and the compact identifier assigned by this
+particular final program.  Package-local operation order is not authoritative
+for frontend nodes. -/
+def Program.operationEntry? (program : Program) (key : OpKey) :
+    Option (OpId × Operation) := do
+  for index in [0:program.operations.size] do
+    let operation <- program.operations[index]?
+    if operation.key == key then return ({ index }, operation)
+  none
 
 def Slot.validFor (operation : Operation) : Slot -> Bool
   | .result => true
@@ -526,11 +540,13 @@ inductive Outcome (Fact : Type) where
   | resourceLimit (budget : Nat)
   | failed (code : Nat)
 
-def Outcome.observationBounded (limit : Nat) : Outcome Fact -> Bool
-  | .success _ _ cost | .noChange cost => cost.bounded limit
+/-- Bound performed-work observations separately from negative diagnostic
+encodings.  A `resourceLimit` number is not charged as work, but it still needs
+an independent representation cap before entering retained policy events. -/
+def Outcome.observationBounded (costLimit diagnosticLimit : Nat) : Outcome Fact -> Bool
+  | .success _ _ cost | .noChange cost => cost.bounded costLimit
+  | .resourceLimit diagnostic | .failed diagnostic => diagnostic <= diagnosticLimit
   | .inapplicable => true
-  | .resourceLimit budget => budget <= limit
-  | .failed _ => true
 
 /-- Registry response bound to the exact outstanding invocation. -/
 structure Reply (Fact : Type) where
@@ -580,6 +596,8 @@ inductive Resource where
   | applications
   | queueEntries
   | actions
+  | effort
+  | registryEntries
   | acceptedFacts
   | retainedSuggestions
   | outcomeCandidates
@@ -602,6 +620,7 @@ structure Limits where
   maxRetainedSuggestions : Nat
   maxEffort : Nat
   maxObservationValue : Nat
+  maxDiagnosticValue : Nat
   maxOutcomeCandidates : Nat
   maxOutcomeSuggestions : Nat
   maxProposalItems : Nat
@@ -764,27 +783,35 @@ def initialQueue (applicationCount : Nat) : Array WorkItem := Id.run do
     queue := queue.push (.application { index })
   queue
 
-/-- Validate and compile an engine.  The caller supplies one initial fact per
-node, ordinarily the domain top refined by source hypotheses. -/
-def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Array Registration)
-    (facts : Array Fact) (limits : Limits) : Except StartError (Engine Fact) := do
+/-- Resource-first validation shared by checked frontends and `Engine.start`.
+Size caps precede every traversal of untrusted program or registry metadata. -/
+def preflightStart (program : Program) (rules : Array Registration)
+    (factCount : Nat) (limits : Limits) : Except StartError Unit := do
   if limits.maxOperations < program.operations.size then
     throw (.resourceLimit .operations)
   if limits.maxNodes < program.nodes.size then
     throw (.resourceLimit .nodes)
   if limits.maxRules < rules.size then
     throw (.resourceLimit .rules)
+  if rules.any (fun rule => limits.maxEffort < rule.initialEffort) then
+    throw (.resourceLimit .effort)
   if program.operations.any (fun operation => !listWithin limits.maxArity operation.inputs) ||
       program.nodes.any (fun node => !listWithin limits.maxArity node.args) ||
       rules.any (fun rule => !listWithin (limits.maxArity + 1) rule.watches ||
         !listWithin (limits.maxArity + 1) rule.writes) then
     throw (.resourceLimit .arity)
-  if facts.size != program.nodes.size then
+  if factCount != program.nodes.size then
     throw .wrongFactCount
   if !program.check then
     throw .invalidProgram
   if !registrationsCheck program rules then
     throw .invalidRegistrations
+
+/-- Validate and compile an engine.  The caller supplies one initial fact per
+node, ordinarily the domain top refined by source hypotheses. -/
+def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Array Registration)
+    (facts : Array Fact) (limits : Limits) : Except StartError (Engine Fact) := do
+  preflightStart program rules facts.size limits
   let applications <-
     match compileApplicationsWithin limits.maxApplications program rules with
     | .ok applications => pure applications
@@ -862,6 +889,7 @@ def actionFresh (state : Engine Fact) (action : Action) : Bool :=
   | some application, some rule, some current =>
       application.rule == action.rule && application.node == action.node &&
         application.kind == action.kind && rule.key == action.key &&
+        (!rule.watchesProgram || action.programVersion == state.programVersion) &&
         action.inputs.map (fun input => input.node) == application.watches &&
         current == action.inputs
   | _, _, _ => false
@@ -1033,6 +1061,7 @@ inductive EqualityFault where
   | missingEquality
   | domainMismatch
   | missingState
+  | oversizedDiagnostic
   | malformedFact (code : Nat)
   deriving DecidableEq, Repr
 
@@ -1163,8 +1192,16 @@ def installCandidates (action : Action) :
       let next <-
         match state.factDomain.narrow target.domain current candidate.fact with
         | .noChange => pure state
-        | .malformed code => throw (.malformedFact code, none, none)
-        | .resourceLimit budget => throw (.malformedFact 0, some budget, none)
+        | .malformed code =>
+            if code <= state.limits.maxDiagnosticValue then
+              throw (.malformedFact code, none, none)
+            else
+              throw (.oversizedObservation, none, none)
+        | .resourceLimit budget =>
+            if budget <= state.limits.maxDiagnosticValue then
+              throw (.malformedFact 0, some budget, none)
+            else
+              throw (.oversizedObservation, none, none)
         | .improved fact => installImprovement action candidate fact false state
         | .contradiction fact => installImprovement action candidate fact true state
       let (next, changed) <- installCandidates action next candidates
@@ -1200,7 +1237,8 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
       if reply.serial != action.serial || reply.programVersion != action.programVersion ||
           reply.application != action.application then
         .invalid .mismatchedAction state
-      else if !reply.outcome.observationBounded state.limits.maxObservationValue then
+      else if !reply.outcome.observationBounded state.limits.maxObservationValue
+          state.limits.maxDiagnosticValue then
         .invalid .oversizedObservation state.finishReply
       else
       match reply.outcome with
@@ -1309,13 +1347,29 @@ def contractEquality (state : Engine Fact) (equalityId : EqualityId) :
           else
             match transportUpdate equality.left equality.right leftVersion rightVersion
                 (state.factDomain.narrow leftNode.domain leftFact rightFact) with
-            | .error (.malformed code) => .invalid (.malformedFact code) 1 state
-            | .error (.resourceLimit budget) => .factResourceLimit budget 1 state
+            | .error (.malformed code) =>
+                if code <= state.limits.maxDiagnosticValue then
+                  .invalid (.malformedFact code) 1 state
+                else
+                  .invalid .oversizedDiagnostic 1 state
+            | .error (.resourceLimit budget) =>
+                if budget <= state.limits.maxDiagnosticValue then
+                  .factResourceLimit budget 1 state
+                else
+                  .invalid .oversizedDiagnostic 1 state
             | .ok left =>
                 match transportUpdate equality.right equality.left rightVersion leftVersion
                     (state.factDomain.narrow leftNode.domain rightFact leftFact) with
-                | .error (.malformed code) => .invalid (.malformedFact code) 2 state
-                | .error (.resourceLimit budget) => .factResourceLimit budget 2 state
+                | .error (.malformed code) =>
+                    if code <= state.limits.maxDiagnosticValue then
+                      .invalid (.malformedFact code) 2 state
+                    else
+                      .invalid .oversizedDiagnostic 2 state
+                | .error (.resourceLimit budget) =>
+                    if budget <= state.limits.maxDiagnosticValue then
+                      .factResourceLimit budget 2 state
+                    else
+                      .invalid .oversizedDiagnostic 2 state
                 | .ok right =>
                     let updates := [left, right].filterMap id
                     if state.limits.maxAcceptedFacts < state.history.size + updates.length then
@@ -1333,6 +1387,8 @@ end Engine
 
 /-! # External registry driver -/
 
+universe u
+
 /-- Why a bounded request/reply run stopped. -/
 inductive RunStop where
   | saturated
@@ -1344,8 +1400,10 @@ inductive RunStop where
   | driverFuel
   deriving DecidableEq, Repr
 
-/-- A run returns both solver state and the registry's arbitrary private cache. -/
-structure RunResult (Fact Cache : Type) where
+/-- A run returns both solver state and the registry's arbitrary private cache.
+The cache may itself existentially package `Type`-valued rule caches, so its
+universe is independent of the engine's fact universe. -/
+structure RunResult (Fact : Type) (Cache : Type u) where
   state : Engine Fact
   cache : Cache
   stop : RunStop
@@ -1353,7 +1411,8 @@ structure RunResult (Fact Cache : Type) where
 /-- Execute the request/reply protocol with a registry-owned cache.  `invoke`
 is the only place where operation or rule keys acquire function-specific
 meaning. -/
-def drive (invoke : Cache -> RuleRequest Fact -> Outcome Fact × Cache) :
+def drive {Cache : Type u}
+    (invoke : Cache -> RuleRequest Fact -> Outcome Fact × Cache) :
     Nat -> Engine Fact -> Cache -> RunResult Fact Cache
   | 0, state, cache => { state, cache, stop := .driverFuel }
   | fuel + 1, state, cache =>
@@ -1563,6 +1622,24 @@ def enqueueNewApplications (oldCount newCount : Nat) (state : Engine Fact) :
   (List.range newCount).foldlM
     (fun state offset => state.enqueue (.application { index := oldCount + offset })) state
 
+/-- Existing applications which explicitly declared a dependency on the whole
+program and are not already dirty.  Program extension is their versioned
+wakeup source, analogous to a changed watched fact for ordinary rules. -/
+def dormantProgramWatchers? (state : Engine Fact) : Option (List ApplicationId) := do
+  let mut watchers := []
+  for index in [0:state.applications.size] do
+    let application <- state.applications[index]?
+    let registration <- state.rules[application.rule.index]?
+    let queued <- state.queued[index]?
+    if registration.watchesProgram && !queued then
+      watchers := { index } :: watchers
+  pure watchers.reverse
+
+def enqueueApplications (applications : List ApplicationId) (state : Engine Fact) :
+    Except Resource (Engine Fact) :=
+  applications.foldlM
+    (fun state application => state.enqueue (.application application)) state
+
 /-- Queue every newly admitted equality contractor. -/
 def enqueueNewEqualities (oldCount newCount : Nat) (state : Engine Fact) :
     Except Resource (Engine Fact) :=
@@ -1646,12 +1723,16 @@ def admitRetained (state : Engine Fact)
                                 if !applicationsPrefix state.applications applications then
                                   .invalid .invalidCompiledProgram state
                                 else
-                                  let addedApplications :=
-                                    applications.size - state.applications.size
-                                  if state.limits.maxQueueEntries <
-                                      state.queue.size + addedApplications + equalities.length then
-                                    .resourceLimit .queueEntries state
-                                  else
+                                  match dormantProgramWatchers? state with
+                                  | none => .invalid .invalidCompiledProgram state
+                                  | some programWatchers =>
+                                    let addedApplications :=
+                                      applications.size - state.applications.size
+                                    if state.limits.maxQueueEntries <
+                                        state.queue.size + addedApplications + equalities.length +
+                                          programWatchers.length then
+                                      .resourceLimit .queueEntries state
+                                    else
                                     let allEqualities := state.equalities ++ equalities.toArray
                                     match buildWatchers program.nodes.size applications
                                         allEqualities with
@@ -1704,7 +1785,10 @@ def admitRetained (state : Engine Fact)
                                             match enqueueNewApplications state.applications.size
                                                 addedApplications prospective with
                                             | .error resource => .resourceLimit resource state
-                                            | .ok next => .admitted generated next
+                                            | .ok prospective =>
+                                                match enqueueApplications programWatchers prospective with
+                                                | .error resource => .resourceLimit resource state
+                                                | .ok next => .admitted generated next
 
 /-- Select one proposal retained in this concrete engine snapshot.  This
 experiment keeps `Engine` inspectable for benchmarks, so callers can still
