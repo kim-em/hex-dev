@@ -17,6 +17,8 @@ public import HexRCF.Isolations
 public import HexRCF.IsolationsTests
 public import HexRCF.Separation
 public import HexRCF.SeparationTests
+public import HexRCF.Cells
+public import HexRCF.CellsTests
 
 public section
 
@@ -32,5 +34,7 @@ replays provide the certified literal root counts used by the decision
 pipeline. Multiplication-checkable carrier identities connect those counts to
 the sentence's atom roots. Raw generalized isolations are refined into
 strictly separated intervals, and exact replay counts classify their roots
-against bounded-domain endpoints.
+against bounded-domain endpoints. The checked roots induce an alternating,
+size-indexed partition into root and open cells with exact dyadic samples and
+exact guarded intersection tests for half-open bounded domains.
 -/
