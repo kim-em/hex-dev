@@ -14,6 +14,51 @@ two runnable processes), Lean `4.32.0-rc1`, lean-bench `0.1.0`. The export's
 `git_dirty: true` records the staged benchmark/report update; its branch point
 is commit `ed0086001407`.
 
+## Taylor-shift reuse ratchet
+
+Component certification now computes one exact Taylor shift at its base centre
+and shares it between the witness and Newton kernels. The Pellet candidate
+search shares that shift across all attempted root counts; the NK route shares
+it between its base witness and speculative Newton step. Because the widened
+Pellet fallback is concentric with the NK enclosure, the default combined
+route also reuses that same shift across the strategy boundary under an exact
+centre-equality guard. A recentred candidate still gets its own shift for
+re-certification. The cache is indexed by its polynomial and centre and carries
+the coefficient equality as a proof field, so this changes evaluation work
+without weakening the certificate interface.
+
+On the canonical degree-128 pinned-NK `runCertify` case, five-repeat medians on
+`chungus2` fell from **6.655 ms** to **4.434 ms** (**33.4%**), with the result
+hash unchanged at `0x1698ec123da6112f`. The canonical degree-12
+`runIsolateAll` case changed from 9.172 s to 8.916 s; its deeper subdivision
+work dominates the saved certification shifts. The final five-repeat ranges
+were 4.400–4.443 ms and 8.888–9.039 s respectively.
+
+The SPEC budget table was remeasured with the compiled expression
+`isolateAll? (seededPoly degree) target #[Component.cauchy ...]`. The degree-10
+and degree-20 rows used five cold measured calls (`warmup := false`); the
+degree-50 row used one cold call because each invocation takes several minutes.
+All runs used `Hex.RootsBench.runIsolateAll` with temporary fixture-only
+degree/target substitutions, `--ignore-expected-hash`, and JSON export. Those
+fixture substitutions were restored after measurement. Machine-readable
+developer-local artefacts are `/tmp/hexroots-8751-d10.json`,
+`/tmp/hexroots-8751-d20.json`, and `/tmp/hexroots-8751-d50.json`.
+
+These are current-tree regression measurements, not claimed controlled
+before/after speedups: the older issue numbers were single calls from earlier
+trees. The ceilings are ratcheted to roughly twice the current measurement:
+
+| degree | target precision | measured | regression ceiling |
+|---:|---:|---:|---:|
+| 10 | 32 | 0.324 s median (0.285–0.343 s, 5 calls) | 0.7 s |
+| 20 | 32 | 5.830 s median (5.426–7.098 s, 5 calls) | 12 s |
+| 50 | 64 | 482.979 s (8.05 min, 1 call) | 14 min |
+
+Degree 100 / precision 128 remains unpinned: Taylor reuse removes redundant
+quadratic shifts but does not remove the deep-subdivision and large-witness
+costs that make that scale impractical. Graeffe iteration and soft-Pellet
+filtering therefore remain the next optimization steps tracked by issue #8751.
+
 ## Bench Targets
 
 Parametric registrations:

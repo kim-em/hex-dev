@@ -504,6 +504,37 @@ private theorem coeffStage_final (p : ZPoly) (z : GaussDyadic) (k : Nat) :
   -- empty (`Nat` subtraction gives `0`), a no-op.
   (List.range n).foldl (init := a₀) (Taylor.pass n z)
 
+/-- Exact Taylor coefficients indexed by the polynomial and centre they
+    represent. The equality is proof-only; compiled values contain just the
+    coefficient array. -/
+structure TaylorShift (p : ZPoly) (center : GaussDyadic) where
+  coeffs : Array GaussDyadic
+  valid : coeffs = taylor p center
+
+namespace TaylorShift
+
+/-- At fixed polynomial and centre the coefficient equality determines the
+    cached shift uniquely. -/
+instance {p : ZPoly} {center : GaussDyadic} : Subsingleton (TaylorShift p center) where
+  allEq a b := by
+    rcases a with ⟨coeffs, hcoeffs⟩
+    rcases b with ⟨coeffs', hcoeffs'⟩
+    subst coeffs
+    subst coeffs'
+    rfl
+
+/-- Compute the exact Taylor shift at `center`. -/
+@[expose] def compute (p : ZPoly) (center : GaussDyadic) : TaylorShift p center :=
+  ⟨taylor p center, rfl⟩
+
+/-- Re-index a cached shift along an exact centre equality. This changes only
+    proof indices; the compiled coefficient array is reused. -/
+@[expose] def cast {p : ZPoly} {center center' : GaussDyadic}
+    (shift : TaylorShift p center) (h : center = center') : TaylorShift p center' :=
+  h ▸ shift
+
+end TaylorShift
+
 /-- A `List.foldl` whose step function preserves array size preserves the
     size of the accumulator. Used to see through the synthetic-division loop
     in `taylor`, whose only mutation is `Array.setIfInBounds`. -/

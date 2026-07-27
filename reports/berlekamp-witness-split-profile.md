@@ -1,5 +1,10 @@
 # Berlekamp witness-splitting profile (#8888)
 
+> Historical profile: the unconditional remainder-reuse prototype measured
+> here is not exact-representative preserving. The current conditional
+> executable-suffix design and fresh measurements are recorded in
+> [`berlekamp-cached-gcd-profile.md`](berlekamp-cached-gcd-profile.md).
+
 ## Headline
 
 On modular inputs whose emitted factors are linear, witness splitting grows
@@ -40,8 +45,8 @@ reductions.
 
 ## Method
 
-The existing compiled `RELIFT_PROFILE=berlekamp` arm in
-`bench/HexBench/RecursiveReliftSpike.lean` now has three matched witness
+At the measured revision, the compiled `RELIFT_PROFILE=berlekamp` arm in
+`bench/HexBench/RecursiveReliftSpike.lean` had three matched witness
 callbacks:
 
 - `baseline`: the pre-change recursion and unreduced GCD candidate;

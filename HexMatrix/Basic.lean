@@ -361,7 +361,7 @@ list-induction-over-`finRange` scheme as `Vector.getElem_finFoldl_modify`. -/
 
 /-- A left fold of per-index `set`s leaves untouched every position not among
 the written indices. -/
-private theorem foldl_set_ne {N : Nat} (idx : Fin m → Nat) (val : Fin m → R)
+theorem foldl_set_ne {N : Nat} (idx : Fin m → Nat) (val : Fin m → R)
     (bd : ∀ t, idx t < N) {p : Nat} (hp : p < N) :
     ∀ (xs : List (Fin m)) (d0 : Vector R N), (∀ t ∈ xs, idx t ≠ p) →
       (xs.foldl (fun d t => d.set (idx t) (val t) (bd t)) d0)[p]'hp = d0[p]'hp := by
@@ -375,7 +375,7 @@ private theorem foldl_set_ne {N : Nat} (idx : Fin m → Nat) (val : Fin m → R)
 
 /-- A left fold of per-index `set`s at injectively-indexed positions over a
 `Nodup` list writes `val r` at position `idx r` for every member `r`. -/
-private theorem foldl_set_mem {N : Nat} (idx : Fin m → Nat) (val : Fin m → R)
+theorem foldl_set_mem {N : Nat} (idx : Fin m → Nat) (val : Fin m → R)
     (bd : ∀ t, idx t < N) (hinj : ∀ a b : Fin m, idx a = idx b → a = b) :
     ∀ (xs : List (Fin m)), xs.Nodup → ∀ (d0 : Vector R N) (r : Fin m), r ∈ xs →
       (xs.foldl (fun d t => d.set (idx t) (val t) (bd t)) d0)[idx r]'(bd r) = val r := by
@@ -393,7 +393,7 @@ private theorem foldl_set_mem {N : Nat} (idx : Fin m → Nat) (val : Fin m → R
 
 /-- `List.finRange k` has no repeated indices (core-only proof; the Batteries
 `nodup_finRange` is outside this Mathlib-free module's import closure). -/
-private theorem nodup_finRange (k : Nat) : (List.finRange k).Nodup := by
+theorem nodup_finRange (k : Nat) : (List.finRange k).Nodup := by
   induction k with
   | zero => simp
   | succ j ih =>

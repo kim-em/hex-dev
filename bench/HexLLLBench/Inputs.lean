@@ -586,6 +586,11 @@ def ofBasisRandomBoundedBasis (rows salt : Nat) : Matrix Int rows rows :=
 def ofBasisHarshCubicBasis (rows salt : Nat) : Matrix Int rows rows :=
   Matrix.ofFn fun i j => ofBasisHarshCubicEntry rows i.val j.val salt
 
+/-- Deterministic bounded-entry basis with `8 * rows + 1` ambient columns.
+This is the `rows ≪ cols` companion to the square interval-checker fixture. -/
+def intervalWideBasis (rows salt : Nat) : Matrix Int rows (8 * rows + 1) :=
+  Matrix.ofFn fun i j => ofBasisRandomBoundedEntry rows i.val j.val salt
+
 /-- General constructor for an `LLLState.ofBasis` benchmark fixture.
 The benchmark parameter maps to `rows = n + 3`, so the final two row indices
 are always available for the result checksum. -/
@@ -621,6 +626,17 @@ def prepOfBasisHarshCubicInput (n : Nat) : OfBasisInput :=
   let basis := ofBasisHarshCubicBasis rows 887
   prepOfBasisInput n rows basis
 
+/-- Per-parameter square fixture for the interval reducedness path. -/
+def prepIntervalSquareInput (n : Nat) : OfBasisInput :=
+  prepOfBasisRandomBoundedInput n
+
+/-- Per-parameter wide fixture for the interval reducedness path. -/
+def prepIntervalWideInput (n : Nat) : OfBasisInput :=
+  let rows := n + 3
+  let cols := 8 * rows + 1
+  let basis := intervalWideBasis rows 941
+  prepOfBasisInput n cols basis
+
 /-- Stable checksum for integer vectors. -/
 def intVectorChecksum (v : Vector Int n) : Int :=
   (List.finRange n).foldl
@@ -631,6 +647,12 @@ def intVectorChecksum (v : Vector Int n) : Int :=
 def natVectorChecksum (v : Vector Nat n) : Nat :=
   (List.finRange n).foldl
     (fun acc i => acc * 65_537 + v[i])
+    0
+
+/-- Stable checksum for row-major nested integer arrays. -/
+def intRowsChecksum (rows : Array (Array Int)) : Int :=
+  rows.foldl
+    (fun acc row => row.foldl (fun rowAcc x => rowAcc * 65_537 + x) acc)
     0
 
 /-- Stable checksum for two integer rows. -/
@@ -713,6 +735,28 @@ def ofBasisHarshCubicComplexity (n : Nat) : Nat :=
   let rows := n + 3
   rows * ofBasisComplexity rows rows * Nat.log2 (rows + 1)
 
+/-- Construction model for the square interval-checker Gram rows. -/
+def intervalGramRowsSquareComplexity (n : Nat) : Nat :=
+  let rows := n + 3
+  rows * rows * rows
+
+/-- Construction model for the wide interval-checker Gram rows. -/
+def intervalGramRowsWideComplexity (n : Nat) : Nat :=
+  let rows := n + 3
+  rows * rows * (8 * rows + 1)
+
+/-- Full fixed-precision interval-checker model on a square basis: Gram-row
+construction plus the cubic interval Gram–Schmidt pass. -/
+def reducedIntervalSquareComplexity (n : Nat) : Nat :=
+  let rows := n + 3
+  2 * rows * rows * rows
+
+/-- Full fixed-precision interval-checker model on a wide basis: Gram-row
+construction plus the cubic interval Gram–Schmidt pass. -/
+def reducedIntervalWideComplexity (n : Nat) : Nat :=
+  let rows := n + 3
+  rows * rows * (8 * rows + 1) + rows * rows * rows
+
 /-- Benchmark target: construct the initial integer LLL state for a basis. -/
 def runOfBasisChecksum (input : OfBasisInput) : Int :=
   let s := LLLState.ofBasis input.basis
@@ -729,6 +773,26 @@ def runOfBasisRandomBoundedChecksum (input : OfBasisInput) : Int :=
 /-- Benchmark target for the harsh-cubic input family. -/
 def runOfBasisHarshCubicChecksum (input : OfBasisInput) : Int :=
   runOfBasisChecksum input
+
+/-- Benchmark target: construct the exact row-major Gram data currently fed
+to the interval checker on a square basis. -/
+def runIntervalGramRowsSquareChecksum (input : OfBasisInput) : Int :=
+  intRowsChecksum (GramSchmidt.Int.gramRows input.basis)
+
+/-- Benchmark target: construct the exact row-major Gram data currently fed
+to the interval checker on a wide basis. -/
+def runIntervalGramRowsWideChecksum (input : OfBasisInput) : Int :=
+  intRowsChecksum (GramSchmidt.Int.gramRows input.basis)
+
+/-- Benchmark target: run the fixed-precision reducedness checker on a square
+basis. -/
+def runReducedIntervalSquareChecksum (input : OfBasisInput) : Nat :=
+  if lllReducedInterval input.basis then 1 else 0
+
+/-- Benchmark target: run the fixed-precision reducedness checker on a basis
+with many more ambient columns than rows. -/
+def runReducedIntervalWideChecksum (input : OfBasisInput) : Nat :=
+  if lllReducedInterval input.basis then 1 else 0
 
 /-- Benchmark target: one targeted size-reduction step. -/
 def runSizeReduceColumnChecksum (input : StateInput) : Int :=

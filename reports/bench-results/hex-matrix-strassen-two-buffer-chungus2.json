@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "benchmark": "Hex.MatrixBench.runSquareMulStrassenChecksum",
+  "issue": 8851,
+  "method": "single-call cold child; five baseline processes per dimension, seven final processes at 512 and five at 1024",
+  "command": ".lake/build/bin/hexmatrix_bench profile Hex.MatrixBench.runSquareMulStrassenChecksum --param N --cache-mode cold --profiler '/run/current-system/sw/bin/time -v'",
+  "environment": {
+    "hostname": "chungus2",
+    "cpu": "AMD EPYC 9455 48-Core Processor",
+    "lean_toolchain": "leanprover/lean4:4.32.0-rc1",
+    "baseline_commit": "ce3ff80879fc473265f46a885543c441e5512c35"
+  },
+  "results": [
+    {
+      "dimension": 512,
+      "result_hash": "0x3ff9d8390625168",
+      "baseline": {
+        "per_call_nanos": [4991310555, 4924036450, 4940249884, 4948861355, 4954106583],
+        "peak_rss_kb": [106028, 105052, 111352, 112484, 111140],
+        "median_per_call_nanos": 4948861355,
+        "median_peak_rss_kb": 111140
+      },
+      "two_buffer": {
+        "per_call_nanos": [6156732425, 4900753501, 4656543446, 4703423338, 4730082246, 4786657621, 4686091991],
+        "peak_rss_kb": [91492, 103212, 96524, 102884, 103180, 92344, 102132],
+        "median_per_call_nanos": 4730082246,
+        "median_peak_rss_kb": 102132,
+        "per_call_range_nanos": [4656543446, 6156732425],
+        "peak_rss_range_kb": [91492, 103212]
+      },
+      "median_wall_time_change_percent": -4.421,
+      "median_peak_rss_change_percent": -8.105
+    },
+    {
+      "dimension": 1024,
+      "result_hash": "0x1ffbbcd11f386b8e",
+      "baseline": {
+        "per_call_nanos": [42617436656, 41997417698, 40767385316, 41935462353, 43621837006],
+        "peak_rss_kb": [218088, 225728, 232328, 224088, 225608],
+        "median_per_call_nanos": 41997417698,
+        "median_peak_rss_kb": 225608
+      },
+      "two_buffer": {
+        "per_call_nanos": [39864652303, 39765779571, 39296088685, 40044913482, 39848566413],
+        "peak_rss_kb": [200996, 201476, 200936, 200900, 194104],
+        "median_per_call_nanos": 39848566413,
+        "median_peak_rss_kb": 200936,
+        "per_call_range_nanos": [39296088685, 40044913482],
+        "peak_rss_range_kb": [194104, 201476]
+      },
+      "median_wall_time_change_percent": -5.117,
+      "median_peak_rss_change_percent": -10.936
+    }
+  ],
+  "gate": {
+    "projected_pointer_storage": {
+      "reference_slots_in_n_squared": "14/3",
+      "two_buffer_output_slots_in_n_squared": "5/3",
+      "projected_saving_mib_at_1024": 24.0,
+      "projected_fraction_of_baseline_peak_rss_percent": 10.6
+    },
+    "threshold_percent": 5.0,
+    "decision": "proceed: projected and measured peak-RSS savings clear the gate"
+  },
+  "heaptrack_512": {
+    "command": "heaptrack -o TRACE hexmatrix_bench _child --bench Hex.MatrixBench.runSquareMulStrassenChecksum --param 512 --target-nanos 500000000 --cache-mode cold",
+    "baseline": {
+      "allocations": 398980177,
+      "temporary_allocations": 88150227,
+      "peak_heap_mb": 4.06,
+      "peak_rss_with_heaptrack_mb": 111.76
+    },
+    "two_buffer": {
+      "allocations": 398980177,
+      "temporary_allocations": 88150226,
+      "peak_heap_mb": 2.92,
+      "peak_rss_with_heaptrack_mb": 114.91
+    },
+    "interpretation": "GMP call counts are unchanged because arithmetic is unchanged; peak tracked heap falls 28.1%. Lean-managed array traffic is evidenced by generated C and the cold-child RSS measurements."
+  },
+  "generated_c": {
+    "file": ".lake/build/ir/HexMatrix/Region.c",
+    "evidence": "The write helpers compute rowStart once per row; overwrite and accumulation read their needed entries and then call lean_array_fset once per destination entry, with no temporary row or Vector.modify clear-then-set sequence."
+  },
+  "dimension_2048": "not run: one uninstrumented sample was projected near five minutes, making a five-process before/after set unsuitable for this host session"
+}
