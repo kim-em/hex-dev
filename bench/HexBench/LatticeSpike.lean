@@ -158,7 +158,9 @@ def main (args : List String) : IO Unit := do
         let (φ, trace) ← IO.lazyPure (fun _ => factorTraced f)
         let t1 ← IO.monoNanosNow
         IO.println s!"{label}: {(t1 - t0).toFloat / 1.0e6} ms \
-          (tier={trace.tier}, declined={trace.declined}, factors={φ.factors.size})"
+          (tier={trace.tier}, declined={trace.declined}, prime={trace.prime}, \
+          r={trace.liftedFactorCount}, subsetCandidates={trace.subsetCandidates}, \
+          factors={φ.factors.size})"
         (← IO.getStdout).flush
       timeHybrid "hybrid reducible deg 4" quad
       timeHybrid "hybrid SD2   deg  4" sd2

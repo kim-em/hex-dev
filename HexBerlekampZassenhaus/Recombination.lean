@@ -429,7 +429,9 @@ where
 -- High `r` (the hopeless-burn regime, #8530): the budget stops at the last
 -- completable level boundary. `r = 32` (SD5(x)·SD5(x+1)): levels 0–5 fit,
 -- `∑_{d ≤ 5} C(31, d) = 206368`; level 6 (`C(31, 6) = 736281`) does not.
--- `r = 64` (SD6-shaped): levels 0–3 fit, `∑_{d ≤ 3} C(63, d) = 41728`.
+-- `r = 64` (the next doubled local-factor-count shape after the SD6 degree-64
+-- trace, which has `r = 32`): levels 0–3 fit,
+-- `∑_{d ≤ 3} C(63, d) = 41728`.
 #guard levelAwareSubsetBudget 32 defaultSubsetBudget = 206368
 #guard levelAwareSubsetBudget 64 defaultSubsetBudget = 41728
 

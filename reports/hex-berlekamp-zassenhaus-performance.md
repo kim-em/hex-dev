@@ -59,7 +59,7 @@ This section covers the gating single-input comparator wired through lean-bench.
 The gating comparator is `verified Isabelle BZ (AFP
 Berlekamp_Zassenhaus; Haskell extraction of factor_int_poly via
 Factorization_External_Interface.thy)`, declared in
-`SPEC/Libraries/hex-berlekamp-zassenhaus.md`. HO-5a wired the scheduled
+`HexBerlekampZassenhaus/SPEC/hex-berlekamp-zassenhaus.md`. HO-5a wired the scheduled
 hardware comparator initially as three fixed targets over the canonical
 `(x^2 - 2)(x^2 - 3)` input:
 
@@ -98,6 +98,41 @@ the parametric Lean targets (`runFactorChecksum`,
 family) — nine parallel `hex/isabelle` ladders against the
 AFP-extracted comparator, replacing the prior single-rung
 canonical-fixed verdict with the scaling-ladder trends below.
+
+### Hybrid seam re-measure (#8867)
+
+The post-#8854 hybrid/lattice seam was re-measured on `2026-07-27` at commit
+`afc8ca4d` using the spike driver:
+
+```sh
+lake build hex_lattice_spike
+.lake/build/bin/hex_lattice_spike hybrid
+.lake/build/bin/hex_lattice_spike core
+```
+
+This was a local single-shot run on `carica` with high background load
+(`14.55/18.92/12.07`), so it confirms the dispatch decision but is not a
+scheduled-hardware comparator verdict.  The ratio is `lattice core / hybrid
+wall`; values greater than `1` mean the current classical-first path is faster.
+This comparison is conservative for classical because the hybrid timing includes
+normalization, prime selection, reassembly, and product checking, while the core
+timing starts after normalization and prime selection.
+
+| rung | degree | measured `r` | hybrid trace | hybrid wall | lattice core | ratio | dispatch action |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | --- |
+| SD3 | 8 | 4 | `tier=classical`, `declined=false`, `prime=7` | 1.574 ms | 4.426 ms | 2.81x | keep boundary |
+| SD4 | 16 | 8 | `tier=classical`, `declined=false`, `prime=11` | 11.740 ms | 54.361 ms | 4.63x | keep boundary |
+| SD5 | 32 | 16 | `tier=classical`, `declined=false`, `prime=19` | 315.809 ms | 389.619 ms | 1.23x | keep boundary |
+| SD6 | 64 | 32 | `tier=lattice`, `declined=true`, `prime=19` | 13926.582 ms | 11481.444 ms | n/a | current first lattice-decline rung |
+
+Because lattice still loses at SD4, `levelAwareSubsetBudget` was not changed.
+The measured seam is between SD5 (`r = 16`, classical) and SD6 (`r = 32`,
+classical decline to lattice).  The scheduled-hardware Phase-4 comparator
+follow-up should record SD5 as the last classical Swinnerton-Dyer rung and SD6
+as the first lattice-backed rung; #8868 tracks wiring that evidence outside this
+spike-only workflow.  The SPEC's stricter large-`r` goal applies to that
+lattice-backed tail: hex should solve under the declared cap where the verified
+classical Isabelle BZ reference times out or is slower, not merely match it.
 
 ### Per-call comparator overhead
 
@@ -759,8 +794,8 @@ rung is now wiring evidence only.
 
 The entries below are retained as informational complexity-model evidence
 only. They no longer supply the headline Phase-4 verdict, because
-`SPEC/Libraries/hex-berlekamp-zassenhaus.md` now defines the external
-`hex/isabelle <= 1x` gating comparator.
+`HexBerlekampZassenhaus/SPEC/hex-berlekamp-zassenhaus.md` now defines the
+external verified-Isabelle comparator goal by `r` regime.
 
 Scientific run at commit `53771741e259` on `carica` (Apple M2 Ultra,
 macOS 14.6.1), command:

@@ -126,3 +126,34 @@ Concrete levers, in priority order, if the work resumes:
 - `HexBench/ClassicalSpike.lean` — classical BZ prototype + benchmarks.
 - `HexBench/ArithFloor.lean` — polynomial-arithmetic floor microbench.
 - `lean_exe hex_classical_spike`, `lean_exe hex_arith_floor` in `lakefile.lean`.
+
+## 2026-07-27 hybrid seam re-measure (#8867)
+
+Post-#8854 tree: commit `afc8ca4d` on `carica` (Apple Silicon, Darwin arm64),
+single-shot spike measurements from `hex_lattice_spike hybrid` and
+`hex_lattice_spike core`.  The host was not quiet
+(`load averages: 14.55/18.92/12.07`), so these are seam-orientation numbers,
+not scheduled-hardware comparator evidence.
+
+The ratio column is `lattice core / hybrid wall`; values greater than `1` mean
+the current classical-first dispatch is faster than sending the rung directly
+to the lattice core.  This comparison is conservative for classical: `hybrid`
+includes normalization, prime selection, reassembly, and product checking,
+while `core` times only the lattice core after normalization and prime
+selection.
+
+| rung | degree | measured `r` | hybrid trace | hybrid wall | lattice core | ratio | dispatcher verdict |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | --- |
+| SD3 | 8 | 4 | `tier=classical`, `declined=false`, `prime=7` | 1.574 ms | 4.426 ms | 2.81x | keep classical |
+| SD4 | 16 | 8 | `tier=classical`, `declined=false`, `prime=11` | 11.740 ms | 54.361 ms | 4.63x | keep classical |
+| SD5 | 32 | 16 | `tier=classical`, `declined=false`, `prime=19` | 315.809 ms | 389.619 ms | 1.23x | keep classical |
+| SD6 | 64 | 32 | `tier=lattice`, `declined=true`, `prime=19` | 13926.582 ms | 11481.444 ms | n/a | current first lattice-decline rung |
+
+The SD4 threshold-move hypothesis has no support on this tree: SD4 is still a
+small/medium-`r` classical rung and lattice is several times slower.  SD5 is the
+last measured classical Swinnerton-Dyer rung; it also remains faster than the
+lattice core on this local run, though by a narrower margin.  The current seam is
+between SD5 (`r = 16`, classical) and SD6 (`r = 32`, classical decline to
+lattice), so `levelAwareSubsetBudget` remains unchanged.  Further tuning of the
+SD6 pre-lattice classical burn is a separate large-`r` optimisation question,
+not evidence for moving the SD4/SD5 boundary earlier.
