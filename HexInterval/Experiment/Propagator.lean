@@ -138,6 +138,18 @@ structure ApplicationId where
   index : Nat
   deriving DecidableEq, Repr
 
+/-- Compact index of one admitted structural equality. -/
+structure EqualityId where
+  index : Nat
+  deriving DecidableEq, Repr
+
+/-- A single scheduler queue carries both companion-backed rule applications
+and engine-owned equality contractors. -/
+inductive WorkItem where
+  | application (application : ApplicationId)
+  | equality (equality : EqualityId)
+  deriving DecidableEq, Repr
+
 /-- Propagator roles are policy data, not operation semantics. -/
 inductive ActionKind where
   | forward
@@ -534,22 +546,25 @@ structure Metrics where
   duplicateInstances : Nat := 0
   generatedNodes : Nat := 0
   generatedEqualities : Nat := 0
+  equalityRuns : Nat := 0
+  equalityImprovements : Nat := 0
   deriving DecidableEq, Repr
+
+/-- Why one narrowed fact was admitted.  Equality transport is an engine
+operation and therefore does not invent a registry rule or payload. -/
+inductive FactCause where
+  | rule (action : Action) (payload : PayloadId)
+  | transport (equality : EqualityId) (source : SeenVersion)
+  deriving Repr
 
 /-- One retained fact provenance record. -/
 structure FactEvent (Fact : Type) where
   programVersion : Nat
-  application : ApplicationId
-  anchor : NodeId
-  kind : ActionKind
-  effort : Nat
   node : NodeId
   previous : SeenVersion
   fact : Fact
   version : Nat
-  rule : RuleKey
-  inputs : List SeenVersion
-  payload : PayloadId
+  cause : FactCause
 
 /-- Canonical key for one shape-rule application in this scope-free first
 experiment. -/
@@ -560,12 +575,13 @@ structure InstanceKey where
   products : List NodeId
   deriving DecidableEq, Repr
 
-/-- Structurally retained equality edge.  It remains inert in this experiment
-until its payload is validated and a rewrite/transport watcher is activated. -/
+/-- Structurally retained equality edge.  Its opaque payload is replay data;
+the engine uses only its typed endpoints for untrusted search propagation. -/
 structure EqualityEdge where
   left : NodeId
   right : NodeId
   generation : Nat
+  origin : Action
   payload : PayloadId
 
 /-- Replay-facing provenance for one committed program extension. -/
@@ -588,13 +604,14 @@ structure Engine (Fact : Type) where
   program : Program
   rules : Array Registration
   applications : Array Application
-  watchers : Array (List ApplicationId)
+  watchers : Array (List WorkItem)
   facts : Array Fact
   versions : Array Nat
   generations : Array Nat
-  queue : Array ApplicationId
+  queue : Array WorkItem
   queueHead : Nat
   queued : Array Bool
+  equalityQueued : Array Bool
   pending : Option Action
   history : Array (FactEvent Fact)
   suggestions : Array RetainedSuggestion
@@ -613,22 +630,29 @@ inductive StartError where
   | resourceLimit (resource : Resource)
   deriving DecidableEq, Repr
 
-/-- Build the dependency index in application order. -/
-def buildWatchers (nodeCount : Nat) (applications : Array Application) :
-    Option (Array (List ApplicationId)) := do
+/-- Build the dependency index in application order followed by equality order.
+Each equality is one undirected contractor watching both endpoints. -/
+def buildWatchers (nodeCount : Nat) (applications : Array Application)
+    (equalities : Array EqualityEdge) : Option (Array (List WorkItem)) := do
   let mut watchers := Array.replicate nodeCount []
   for applicationIndex in [0:applications.size] do
     let application <- applications[applicationIndex]?
     for node in dedupList application.watches do
       let current <- watchers[node.index]?
-      watchers := watchers.set! node.index ({ index := applicationIndex } :: current)
+      watchers := watchers.set! node.index
+        (.application { index := applicationIndex } :: current)
+  for equalityIndex in [0:equalities.size] do
+    let equality <- equalities[equalityIndex]?
+    for node in dedupList [equality.left, equality.right] do
+      let current <- watchers[node.index]?
+      watchers := watchers.set! node.index (.equality { index := equalityIndex } :: current)
   some (watchers.map List.reverse)
 
 /-- Initial queue containing every compiled application exactly once. -/
-def initialQueue (applicationCount : Nat) : Array ApplicationId := Id.run do
+def initialQueue (applicationCount : Nat) : Array WorkItem := Id.run do
   let mut queue := #[]
   for index in [0:applicationCount] do
-    queue := queue.push { index }
+    queue := queue.push (.application { index })
   queue
 
 /-- Validate and compile an engine.  The caller supplies one initial fact per
@@ -659,7 +683,7 @@ def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Arr
     | .error true => throw (.resourceLimit .applications)
   if limits.maxQueueEntries < applications.size then
     throw (.resourceLimit .queueEntries)
-  let some watchers := buildWatchers program.nodes.size applications
+  let some watchers := buildWatchers program.nodes.size applications #[]
     | throw .invalidRegistrations
   pure
     { factDomain
@@ -674,6 +698,7 @@ def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Arr
       queue := initialQueue applications.size
       queueHead := 0
       queued := Array.replicate applications.size true
+      equalityQueued := #[]
       pending := none
       history := #[]
       suggestions := #[]
@@ -711,13 +736,16 @@ def factViews? (state : Engine Fact) : List NodeId -> Option (List (FactView Fac
       let rest <- factViews? state nodes
       some ({ node, fact, version } :: rest)
 
-/-- Insert an application unless it is already dirty.  The queue is an
-append-only work log in this experiment, so its trusted cap also bounds total
-dependency churn. -/
-def enqueue (state : Engine Fact) (application : ApplicationId) :
-    Except Resource (Engine Fact) := do
-  let some alreadyQueued := state.queued[application.index]?
-    | throw .applications
+/-- Insert work unless it is already dirty.  The queue is an append-only work
+log in this experiment, so its trusted cap also bounds total dependency churn. -/
+def enqueue (state : Engine Fact) (work : WorkItem) : Except Resource (Engine Fact) := do
+  let alreadyQueued <- match work with
+    | .application application =>
+        let some queued := state.queued[application.index]? | throw .applications
+        pure queued
+    | .equality equality =>
+        let some queued := state.equalityQueued[equality.index]? | throw .equalities
+        pure queued
   if alreadyQueued then
     pure
       { state with
@@ -727,10 +755,14 @@ def enqueue (state : Engine Fact) (application : ApplicationId) :
   else if state.limits.maxQueueEntries <= state.queue.size then
     throw .queueEntries
   else
+    let state <- match work with
+      | .application application =>
+          pure { state with queued := state.queued.set! application.index true }
+      | .equality equality =>
+          pure { state with equalityQueued := state.equalityQueued.set! equality.index true }
     pure
       { state with
-        queue := state.queue.push application
-        queued := state.queued.set! application.index true
+        queue := state.queue.push work
         metrics :=
           { state.metrics with
             queueInsertions := state.metrics.queueInsertions + 1 } }
@@ -751,9 +783,11 @@ def wakeNodes (state : Engine Fact) (nodes : List NodeId) :
 
 end Engine
 
-/-- Result of asking the engine for its next action. -/
+/-- Result of asking the engine for its next action.  Equality work is returned
+as an internal step and never crosses the companion registry boundary. -/
 inductive Poll (Fact : Type) where
   | request (request : RuleRequest Fact) (state : Engine Fact)
+  | equality (equality : EqualityId) (state : Engine Fact)
   | saturated (state : Engine Fact)
   | contradiction (state : Engine Fact)
   | awaitingReply (state : Engine Fact)
@@ -762,8 +796,8 @@ inductive Poll (Fact : Type) where
 
 namespace Engine
 
-/-- Pop the next dirty application and freeze its watched versions in an
-action.  No other state transition is permitted until the reply arrives. -/
+/-- Pop the next dirty work item.  Rule work freezes watched versions in an
+action; equality work remains wholly inside the engine. -/
 def poll (state : Engine Fact) : Poll Fact :=
   if state.pending.isSome then
     .awaitingReply state
@@ -771,12 +805,24 @@ def poll (state : Engine Fact) : Poll Fact :=
     .contradiction state
   else if state.queue.size <= state.queueHead then
     .saturated state
-  else if state.limits.maxActions <= state.metrics.requests then
+  else if state.limits.maxActions <= state.metrics.queuePops then
     .resourceLimit .actions state
   else
     match state.queue[state.queueHead]? with
     | none => .invalidState state
-    | some applicationId =>
+    | some (.equality equalityId) =>
+        match state.equalities[equalityId.index]?, state.equalityQueued[equalityId.index]? with
+        | some _, some true =>
+            .equality equalityId
+              { state with
+                queueHead := state.queueHead + 1
+                equalityQueued := state.equalityQueued.set! equalityId.index false
+                metrics :=
+                  { state.metrics with
+                    queuePops := state.metrics.queuePops + 1
+                    equalityRuns := state.metrics.equalityRuns + 1 } }
+        | _, _ => .invalidState state
+    | some (.application applicationId) =>
         match state.applications[applicationId.index]?,
             state.queued[applicationId.index]? with
         | some application, some true =>
@@ -828,6 +874,26 @@ inductive ReplyError where
 inductive ReplyResult (Fact : Type) where
   | accepted (state : Engine Fact)
   | invalid (error : ReplyError) (state : Engine Fact)
+  | resourceLimit (resource : Resource) (state : Engine Fact)
+  | factResourceLimit (budget : Nat) (state : Engine Fact)
+
+/-- One endpoint update computed by an equality contractor from a common
+pre-step snapshot. -/
+structure TransportUpdate (Fact : Type) where
+  target : NodeId
+  previous : SeenVersion
+  source : SeenVersion
+  fact : Fact
+  contradiction : Bool
+
+inductive EqualityFactError where
+  | malformed (code : Nat)
+  | resourceLimit (budget : Nat)
+
+/-- Equality contractors are internal, atomic scheduler transitions. -/
+inductive EqualityResult (Fact : Type) where
+  | advanced (state : Engine Fact)
+  | invalid (code : Nat) (state : Engine Fact)
   | resourceLimit (resource : Resource) (state : Engine Fact)
   | factResourceLimit (budget : Nat) (state : Engine Fact)
 
@@ -908,17 +974,11 @@ def installImprovement (action : Action) (candidate : Candidate Fact)
         versions := state.versions.set! candidate.node.index version
         history := state.history.push
           { programVersion := action.programVersion
-            application := action.application
-            anchor := action.node
-            kind := action.kind
-            effort := action.effort
             node := candidate.node
             previous
             fact
             version
-            rule := action.key
-            inputs := action.inputs
-            payload := candidate.payload }
+            cause := .rule action candidate.payload }
         contradictory := state.contradictory || contradiction
         metrics :=
           { state.metrics with
@@ -1005,6 +1065,84 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
                           | .error resource => .resourceLimit resource base
                           | .ok next => .accepted next
 
+def transportUpdate (target source : NodeId) (targetVersion sourceVersion : Nat) :
+    NarrowResult Fact -> Except EqualityFactError (Option (TransportUpdate Fact))
+  | .noChange => pure none
+  | .improved fact =>
+      pure (some
+        { target
+          previous := { node := target, version := targetVersion }
+          source := { node := source, version := sourceVersion }
+          fact
+          contradiction := false })
+  | .contradiction fact =>
+      pure (some
+        { target
+          previous := { node := target, version := targetVersion }
+          source := { node := source, version := sourceVersion }
+          fact
+          contradiction := true })
+  | .malformed code => throw (.malformed code)
+  | .resourceLimit budget => throw (.resourceLimit budget)
+
+/-- Install one already-preflighted transport update without waking. -/
+def installTransport (equality : EqualityId) (update : TransportUpdate Fact)
+    (state : Engine Fact) : Engine Fact :=
+  let version := update.previous.version + 1
+  { state with
+    facts := state.facts.set! update.target.index update.fact
+    versions := state.versions.set! update.target.index version
+    history := state.history.push
+      { programVersion := state.programVersion
+        node := update.target
+        previous := update.previous
+        fact := update.fact
+        version
+        cause := .transport equality update.source }
+    contradictory := state.contradictory || update.contradiction
+    metrics :=
+      { state.metrics with
+        improvements := state.metrics.improvements + 1
+        equalityImprovements := state.metrics.equalityImprovements + 1
+        contradictions :=
+          state.metrics.contradictions + if update.contradiction then 1 else 0 } }
+
+/-- Contract both endpoints of one admitted equality against the same facts,
+commit all improvements together, then wake their dependency union. -/
+def contractEquality (state : Engine Fact) (equalityId : EqualityId) :
+    EqualityResult Fact :=
+  match state.equalities[equalityId.index]? with
+  | none => .invalid 0 state
+  | some equality =>
+      match state.program.node? equality.left, state.program.node? equality.right,
+          state.facts[equality.left.index]?, state.facts[equality.right.index]?,
+          state.versions[equality.left.index]?, state.versions[equality.right.index]? with
+      | some leftNode, some rightNode, some leftFact, some rightFact,
+          some leftVersion, some rightVersion =>
+          if leftNode.domain != rightNode.domain then
+            .invalid 1 state
+          else
+            let updates : Except EqualityFactError (List (TransportUpdate Fact)) := do
+              let left <- transportUpdate equality.left equality.right leftVersion rightVersion
+                (state.factDomain.narrow leftNode.domain leftFact rightFact)
+              let right <- transportUpdate equality.right equality.left rightVersion leftVersion
+                (state.factDomain.narrow leftNode.domain rightFact leftFact)
+              pure ([left, right].filterMap id)
+            match updates with
+            | .error (.malformed code) => .invalid code state
+            | .error (.resourceLimit budget) => .factResourceLimit budget state
+            | .ok updates =>
+                if state.limits.maxAcceptedFacts < state.history.size + updates.length then
+                  .resourceLimit .acceptedFacts state
+                else
+                  let working := updates.foldl
+                    (fun state update => installTransport equalityId update state) state
+                  let changed := updates.map fun update => update.target
+                  match working.wakeNodes changed with
+                  | .error resource => .resourceLimit resource state
+                  | .ok next => .advanced next
+      | _, _, _, _, _, _ => .invalid 2 state
+
 end Engine
 
 /-! ## External registry driver -/
@@ -1047,6 +1185,14 @@ def drive (invoke : Cache -> RuleRequest Fact -> Outcome Fact × Cache) :
       | .contradiction state => { state, cache, stop := .contradiction }
       | .resourceLimit resource state =>
           { state, cache, stop := .engineResource resource }
+      | .equality equality state =>
+          match state.contractEquality equality with
+          | .advanced next => drive invoke fuel next cache
+          | .invalid _ next => { state := next, cache, stop := .invalidEngine }
+          | .resourceLimit resource next =>
+              { state := next, cache, stop := .engineResource resource }
+          | .factResourceLimit budget next =>
+              { state := next, cache, stop := .factResource budget }
       | .awaitingReply state | .invalidState state =>
           { state, cache, stop := .invalidEngine }
 
@@ -1143,7 +1289,7 @@ def EqualityEdge.sameEndpoints (edge : EqualityEdge) (left right : NodeId) : Boo
   (edge.left == left && edge.right == right) ||
     (edge.left == right && edge.right == left)
 
-def resolveEqualities (baseSize generation : Nat) (program : Program)
+def resolveEqualities (baseSize generation : Nat) (origin : Action) (program : Program)
     (resolved : List NodeId) (existing : Array EqualityEdge) :
     List ProposedEquality -> Option (List EqualityEdge)
   | [] => some []
@@ -1155,13 +1301,13 @@ def resolveEqualities (baseSize generation : Nat) (program : Program)
       if left == right || leftNode.domain != rightNode.domain then
         none
       else
-        let rest <- resolveEqualities baseSize generation program resolved existing proposals
+        let rest <- resolveEqualities baseSize generation origin program resolved existing proposals
         let duplicateExisting := existing.any fun edge => edge.sameEndpoints left right
         let duplicateNew := rest.any fun edge => edge.sameEndpoints left right
         if duplicateExisting || duplicateNew then
           some rest
         else
-          some ({ left, right, generation, payload := proposal.payload } :: rest)
+          some ({ left, right, generation, origin, payload := proposal.payload } :: rest)
 
 def newNodeIds (baseSize totalSize : Nat) : List NodeId :=
   (List.range (totalSize - baseSize)).map fun offset => { index := baseSize + offset }
@@ -1175,7 +1321,13 @@ def newTopFacts (domain : FactDomain Fact) (baseSize : Nat)
 def enqueueNewApplications (oldCount newCount : Nat) (state : Engine Fact) :
     Except Resource (Engine Fact) :=
   (List.range newCount).foldlM
-    (fun state offset => state.enqueue { index := oldCount + offset }) state
+    (fun state offset => state.enqueue (.application { index := oldCount + offset })) state
+
+/-- Queue every newly admitted equality contractor. -/
+def enqueueNewEqualities (oldCount newCount : Nat) (state : Engine Fact) :
+    Except Resource (Engine Fact) :=
+  (List.range newCount).foldlM
+    (fun state offset => state.enqueue (.equality { index := oldCount + offset })) state
 
 namespace Engine
 
@@ -1222,7 +1374,7 @@ def admitRetained (state : Engine Fact)
                     else if state.limits.maxNodes < program.nodes.size then
                       .resourceLimit .nodes state
                     else
-                      match resolveEqualities baseSize generation program resolved
+                      match resolveEqualities baseSize generation retained.action program resolved
                           state.equalities request.equalities with
                       | none => .invalid .invalidEquality state
                       | some equalities =>
@@ -1241,16 +1393,20 @@ def admitRetained (state : Engine Fact)
                                   let addedApplications :=
                                     applications.size - state.applications.size
                                   if state.limits.maxQueueEntries <
-                                      state.queue.size + addedApplications then
+                                      state.queue.size + addedApplications + equalities.length then
                                     .resourceLimit .queueEntries state
                                   else
-                                    match buildWatchers program.nodes.size applications with
+                                    let allEqualities := state.equalities ++ equalities.toArray
+                                    match buildWatchers program.nodes.size applications
+                                        allEqualities with
                                     | none => .invalid .invalidCompiledProgram state
                                     | some watchers =>
                                         let addedNodes := program.nodes.size - baseSize
                                         let generated := newNodeIds baseSize program.nodes.size
                                         let queued := state.queued ++
                                           Array.replicate addedApplications false
+                                        let equalityQueued := state.equalityQueued ++
+                                          Array.replicate equalities.length false
                                         let prospective : Engine Fact :=
                                           { state with
                                             programVersion := state.programVersion + 1
@@ -1264,6 +1420,7 @@ def admitRetained (state : Engine Fact)
                                             generations := state.generations ++
                                               Array.replicate addedNodes generation
                                             queued
+                                            equalityQueued
                                             instances := instanceKey :: state.instances
                                             instanceHistory := state.instanceHistory.push
                                               { programVersion := state.programVersion + 1
@@ -1275,7 +1432,7 @@ def admitRetained (state : Engine Fact)
                                                 generation
                                                 equalities
                                                 payload := request.payload }
-                                            equalities := state.equalities ++ equalities.toArray
+                                            equalities := allEqualities
                                             metrics :=
                                               { state.metrics with
                                                 admittedInstances :=
@@ -1285,11 +1442,14 @@ def admitRetained (state : Engine Fact)
                                                 generatedEqualities :=
                                                   state.metrics.generatedEqualities +
                                                     equalities.length } }
-                                        match enqueueNewApplications state.applications.size
-                                            addedApplications prospective with
+                                        match enqueueNewEqualities state.equalities.size
+                                            equalities.length prospective with
                                         | .error resource => .resourceLimit resource state
-                                        | .ok next =>
-                                            .admitted generated next
+                                        | .ok prospective =>
+                                            match enqueueNewApplications state.applications.size
+                                                addedApplications prospective with
+                                            | .error resource => .resourceLimit resource state
+                                            | .ok next => .admitted generated next
 
 /-- Select only an engine-retained proposal; callers cannot fabricate rule
 provenance or transplant a proposal from another state. -/

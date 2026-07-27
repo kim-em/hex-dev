@@ -963,11 +963,12 @@ suppressed work, and peak live queue before selecting a default. Multi-output
 outcomes install every accepted fact before waking this union, so they do not
 manufacture stale work against their own half-installed state.
 
-The initial saturation runs all cheap forward rules once in program order and
-then drains the dependency worklist. It also runs zero-cost contradiction
-checks after every accepted fact. More expensive improvement and split actions
-start only after this cheap fixed point, unless a rule marks a singularity that
-requires an immediate split.
+The initial `balancedV1` candidate runs all cheap forward rules once in program
+order and then drains the dependency worklist. It also runs zero-cost
+contradiction checks after every accepted fact. More expensive improvement and
+split actions start only after this cheap fixed point, unless a rule marks a
+singularity that requires an immediate split. This staging is policy behavior,
+not an engine soundness condition.
 
 Backward propagation uses the same worklist. A contractor is valid only when
 its soundness theorem says that it preserves every assignment satisfying the
@@ -995,90 +996,65 @@ proposed-operation/reference graph, and unordered equality-pair key;
 engine-issued additions, refreshes, tombstones, and observations:
 
 ```lean
+structure PolicyKey where
+  name    : String
+  version : Nat
+
 structure OfferId where
   index : Nat
 
 structure InvocationKey where
+  scope          : ScopeId
   programVersion : Nat
   application    : ApplicationId
   rule           : RuleKey
   anchor         : NodeId
   kind           : ActionKind
   effort         : Nat
-  inputs         : Array SeenVersion
+  inputs         : List SeenVersion
+
+structure EqualityWorkKey where
+  scope          : ScopeId
+  programVersion : Nat
+  equality       : EqualityId
+  left right     : SeenVersion
 
 inductive OfferClass
   | invoke
+  | equality
   | retry
   | instantiate
   | split
 
 inductive OfferKey
   | invoke (invocation : InvocationKey)
+  | equality (contractor : EqualityWorkKey)
   | retry (source : InvocationKey) (effort : Nat)
   | instantiate (source : InvocationKey) (request : InstantiationSemanticKey)
   | split (source : InvocationKey) (node : NodeId) (point : Dyadic)
       (reason : SplitReason)
 
-structure OfferView where
-  id          : OfferId
-  key         : OfferKey
-  class       : OfferClass
-  age         : Nat
-  observation : Option ObservationSummary
-  features    : Array PolicyFeature
+structure PolicyFeature where
+  key   : Nat
+  value : Int
 
-structure DecisionRequest where
-  serial         : Nat
-  programVersion : Nat
-  offers         : Array OfferView
+structure ObservationSummary where
+  outcome      : Nat
+  changedFacts : Nat
+  logicalWork  : Nat
 
-structure Selection where
-  serial         : Nat
-  programVersion : Nat
-  id             : OfferId
-  expected       : OfferKey
+structure PolicyBudget where
+  decisions : Nat
+  traversal : Nat
+  noteBytes : Nat
 
-structure DecisionNote where
-  stage  : Nat
-  reason : Nat
-  score  : Nat
+structure EngineBudgetView where
+  actions       : Nat
+  acceptedFacts : Nat
+  nodes         : Nat
+  equalities    : Nat
+  branches      : Nat
 
-structure Policy where
-  State   : Type
-  init    : DecisionRequest → State
-  update  : State → FrontierEvent → State
-  choose  : State → DecisionRequest →
-    Option (Selection × DecisionNote × State)
-  observe : State → Selection → Observation → State
-```
-
-The policy state, like rule-private caches, may have an arbitrary Lean type and
-is owned by the external driver. `Engine.select` rechecks the decision serial,
-program version, offer identifier, complete canonical key, eligibility, and
-budgets. It alone freezes current input versions and creates a registry
-`Action`, admits a selected instance, or creates a checked complementary split.
-A stale, fabricated, or transplanted selection changes no engine state.
-
-Dirty concrete applications create or refresh invocation offers. A successful
-rule outcome may create engine-indexed retry, instantiation, and split offers;
-the policy cannot supply their structural payloads. Removing an offer emits a
-tombstone event, so stable identifiers do not require an ever-growing live
-frontier. Program extension invalidates old-snapshot offers and inserts offers
-for new applications and equality jobs atomically with the extension.
-
-Each completed selection produces an engine-owned observation: outcome class,
-changed target versions, contradiction status, emitted offer identifiers,
-declared logical work, visited entries, estimated proof nodes, and exact
-resource result. The engine retains these observations even if the selected
-policy ignores them. Width reduction and other domain-specific benefits are
-not inferred by the generic scheduler; bounded exact feature extractors may be
-provided by the fact domain or registry and influence search only.
-
-The concrete observation records actual admitted deltas rather than a rule's
-claimed gain:
-
-```lean
 structure FactDelta (Fact : Type) where
   node          : NodeId
   before after  : Fact
@@ -1098,7 +1074,99 @@ structure RuleObservation (Fact : Type) where
   changes       : Array (FactDelta Fact)
   contradiction : Bool
   cost          : CostObservation
+
+structure OfferView where
+  id       : OfferId
+  key      : OfferKey
+  class    : OfferClass
+  age      : Nat
+  summary  : Option ObservationSummary
+  features : Array PolicyFeature
+
+structure PolicyView (Fact : Type) where
+  scope          : ScopeId
+  serial         : Nat
+  programVersion : Nat
+  offers         : Array OfferView
+  facts          : Snapshot Fact
+  goalFeatures   : Array PolicyFeature
+  remaining      : EngineBudgetView
+
+structure Selection where
+  scope          : ScopeId
+  serial         : Nat
+  programVersion : Nat
+  id             : OfferId
+  expected       : OfferKey
+
+inductive PolicyEvent (Fact : Type)
+  | frontier (added : Array OfferView) (removed : Array OfferId)
+  | rule (observation : RuleObservation Fact)
+  | instanceAdmitted (programVersion : Nat) (added : Array OfferView)
+  | splitPrepared (scope : ScopeId) (node : NodeId) (point : Dyadic)
+  | choiceRejected (choice : Selection) (reason : Nat)
+  | engineResource (resource : Resource)
+
+structure DecisionNote where
+  stage  : Nat
+  reason : Nat
+  score  : Nat
+
+inductive PolicyStep (State : Type)
+  | select  (choice : Selection) (note : DecisionNote) (next : State)
+  | dismiss (choice : Selection) (note : DecisionNote) (next : State)
+  | stop    (reason : Nat) (next : State)
+
+structure Policy (Fact : Type) where
+  key    : PolicyKey
+  State  : Type
+  init   : PolicyView Fact → State
+  update : State → PolicyView Fact → PolicyEvent Fact → State
+  choose : PolicyBudget → State → PolicyStep State
 ```
+
+The policy state, like rule-private caches, may have an arbitrary Lean type and
+is owned by the external driver. `Engine.select` rechecks the decision serial,
+scope, program version, offer identifier, complete canonical key, eligibility,
+and budgets. It alone freezes current input versions and creates a registry
+`Action`, runs an engine equality contractor, admits a selected instance, or
+emits a resource-checked `SplitPlan`.
+The later scope/branch layer validates domain-specific interiority and creates
+complementary child assumptions. A stale, fabricated, or transplanted
+selection changes no facts, program, frontier membership, or pending action;
+it may consume one bounded decision step and append an audit disposition.
+
+Dirty concrete applications create or refresh invocation offers. Any
+structurally accepted bounded rule report may create engine-indexed retry,
+instantiation, and split offers; the policy cannot supply their structural
+payloads. Removing an offer emits a tombstone event, so stable identifiers do
+not require an ever-growing live frontier. Program extension invalidates
+exact-snapshot instantiation offers, refreshes dirty invocation offers, rechecks
+retry and split offers under their variant-specific guards, and inserts offers
+for new applications and equality jobs atomically with the extension.
+
+Each completed selection produces an engine-owned observation: outcome class,
+changed target versions, contradiction status, emitted offer identifiers,
+declared logical work, visited entries, estimated proof nodes, and exact
+resource result. Exact before/after facts may be passed ephemerally in the
+transition event; the engine retains only bounded summaries and trace
+references unless the separately charged observation-byte budget permits
+more. Width reduction and other domain-specific benefits are not inferred by
+the generic scheduler; bounded exact feature extractors may be provided by the
+fact domain or registry and influence search only.
+
+The concrete `RuleObservation` shown above records actual admitted deltas
+rather than a rule's claimed gain. Other `PolicyEvent` constructors distinguish
+structural admission, split preparation, rejected choices, and engine resource
+exhaustion from a rule-declared outcome.
+
+`PolicyEvent` is the single ordered transition stream. It wraps rule
+observations, instance admission, split preparation, offer additions and
+tombstones, rejected choices, and engine resource stops. `OfferView.summary`
+is merely the current bounded aggregate derived from earlier events, not a
+second observation channel. Every reply-supplied cost and feature integer is
+preflighted against value, count, and encoded-byte caps before it can enter
+policy scoring.
 
 It may be cleaner to normalize the registry result as one bounded `RuleReport`
 containing an outcome tag, candidate list, suggestion list, and cost. That
@@ -1107,19 +1175,21 @@ encoding itself as `success` with no candidates. This is an open protocol
 experiment; negative mathematical information is never inferred from a
 resource limit or failed rule.
 
-The first `balancedV1` prototype uses a versioned priority queue over these
-offers. Changed facts insert or invalidate only affected offers; stale entries
-are discarded lazily when popped. Policies intended for diagnostics may use a
+One `balancedV1` candidate uses a versioned priority queue over these offers.
+Changed facts insert or invalidate only affected offers; stale entries are
+discarded lazily when popped. Policies intended for diagnostics may use a
 simpler complete scan, but their complexity is reported honestly. An empty
-frontier means saturation. Returning no selection for a nonempty frontier is a
-policy stop reported as `unknown`, not saturation.
+frontier means saturation. A `PolicyStep.stop` for a nonempty frontier is
+reported as `unknown`, not saturation.
 
-The exact frontier interface remains experimental in three respects. We must
-compare push events with bounded snapshot batches; compare coalesced live
-offers with append-only stale entries; and decide how much of a generic fact,
-as opposed to exact bounded policy features, a reusable policy should see.
-These choices change cost and convenience, not the admission or replay
-boundary.
+The shown first interface supplies the authoritative bounded scan frontier in
+each `PolicyView`; transition events let the policy update historical state
+without reconstructing it. An event-only priority implementation may later
+remove that repeated batch behind a different adapter while preserving
+`Selection` and `Engine.select`. We must also compare coalesced live offers
+with append-only stale entries and decide how much of a generic fact, as
+opposed to exact bounded policy features, a reusable policy should see. These
+choices change cost and convenience, not the admission or replay boundary.
 
 Freshness is offer-specific. An invocation or retry compares the concrete
 application and relevant current input versions. Instantiation initially uses
@@ -1137,6 +1207,11 @@ precision, or another function-specific choice. Different incomparable
 methods remain separate registrations rather than pretending their effort
 numbers share a scale.
 
+The engine bounds every choice attempt and every value it supplies, but it
+cannot force an arbitrary external callback to terminate. Shipped policies are
+structurally fuelled and audited; nontermination of a malicious policy or rule
+registry is outside theorem soundness and produces no proof.
+
 Every attempted choice has a bounded audit entry containing the decision
 serial, versioned policy key, expected semantic offer key, bounded note, and
 disposition (`selected`, `dismissed`, `stale`, `invalid`, or `resourceLimit`).
@@ -1146,11 +1221,19 @@ reports divergence without state mutation when the expected offer is absent.
 Proof replay ignores this policy log and checks only fact, equality, instance,
 and split derivations.
 
+Canonical instantiation keys remain an experiment. They preserve proposed SSA
+dependency order while sorting/deduplicating equality sets and never deduplicate
+the ordered input-slot list. Payload erasure can leave two semantic duplicates
+with different proof recipes. The engine must either retain the first by
+bounded response ordinal, include that ordinal in the offer key, or require a
+stable registry-defined recipe key; freshly allocated payload identifiers are
+never canonical tie-breakers.
+
 The policy experiment proceeds in replaceable increments:
 
 1. retain the complete source invocation for every suggestion;
-2. split FIFO `poll` into an engine operation which prepares one selected
-   concrete application;
+2. split FIFO `poll` into engine operations which prepare one selected
+   concrete application or equality contractor;
 3. expose a bounded scan frontier and reproduce FIFO as a reference policy;
 4. return exact fact deltas, logical costs, and frontier changes from reply
    admission;
@@ -1178,11 +1261,12 @@ The normative requirements on any release default are smaller than one
 particular scoring formula.
 
 - For a fixed validated program, registry contents, configuration, and Lean
-  environment, action choice under a step budget is deterministic.
+  environment, offer choice under a step budget is deterministic.
 - Candidate maps are traversed in canonical sorted order. The final tie-break
   includes action kind, `NodeId`, versioned `RuleKey`, input fact versions,
-  effort, generation, and split point; hash-table order and freshly allocated
-  identifiers are not tie-breakers.
+  equality endpoints and endpoint versions, effort, generation, and split
+  point; hash-table order and freshly allocated identifiers are not
+  tie-breakers.
 - Scores use bounded integer or exact arithmetic with specified saturation,
   never `Float` or host timing.
 - A fairness mechanism eventually samples every continuously eligible action
@@ -1193,7 +1277,7 @@ particular scoring formula.
 `balancedV1` is the initial empirical default candidate. Its first prototype
 uses four stages.
 
-1. Drain cheap forward and backward actions whose inputs changed.
+1. Drain cheap equality, forward, and backward work whose inputs changed.
 2. Run untried applicable enclosure methods with their initial effort.
 3. Compare targeted effort increases, rewrites, local range refinement, and
    contractor probes.
@@ -1464,6 +1548,95 @@ message uses `summary`. Machine-readable observations can be exported for
 offline policy tuning, but reading such telemetry is never required to check
 a proof.
 
+## Applications
+
+The tactic is the first client, not the only one. Two downstream applications
+constrain the framework without requiring either application to be implemented
+in the first release.
+
+### Verified raster graphs
+
+Given a real function, an exact dyadic viewport, and raster dimensions, a plot
+client can ask the engine for range enclosures over pixel columns or adaptive
+subcolumns. The primary certified-image contract is conservative coverage:
+
+- every point of the graph inside the viewport lies in a marked pixel; and
+- every unmarked pixel carries a checked proof that its rectangle is disjoint
+  from the graph.
+
+This makes every binary pixel claim correct: blank means proved absent, while
+marked means the graph may occur there. It does not falsely claim that every
+marked pixel is hit. A richer three-state raster may additionally mark a pixel
+`present` only when it carries an existence proof, for example from exact
+endpoint values and continuity plus an intermediate-value argument; remaining
+marked pixels are explicitly `unknown`. No finite algorithm can always decide
+intersection with every pixel boundary, so unresolved pixels are part of the
+honest interface rather than rendered as proved occupancy.
+
+Pixel rectangles use an exact, documented boundary convention, preferably
+half-open cells with a separately closed outer viewport. Open cuts matter:
+they decide whether a graph lying exactly on a pixel boundary belongs to one
+cell, its neighbour, both in a conservative mask, or neither outside the
+viewport. Raster indexing, clipping, integer dimensions, and the dyadic map
+between coordinates and pixels are checked data, not assumptions made by an
+image library.
+
+A certificate need not contain one independent proof per pixel. One interval
+fact over a column or adaptive tile usually proves a contiguous band of
+possibly occupied rows and simultaneously excludes the rows above and below.
+Run-length, tile, and derivation sharing are therefore certificate
+representations to benchmark. The untrusted renderer emits ordinary raster
+bytes plus a certified mask or classification table; a small checker validates
+that the bytes encode that table. Kernel replay proves the coverage/disjointness
+theorem from shared interval derivations, not from the PNG decoder.
+
+The ordinary framework supplies all required search mechanisms: arbitrary
+function propagators bound the range; instantiation introduces centered forms,
+range reductions, derivatives, or continuity witnesses when useful; local
+subdivision sharpens one column; and solver subdivision refines the spatial
+partition. Discontinuities and partial domains are never joined by a cosmetic
+line. A singular or out-of-domain subcolumn is split, clipped, classified
+unknown, or proved absent according to explicit facts.
+
+An initial conformance fixture should plot an opaque continuous function whose
+registry supplies only generic enclosures, then compare a coarse raster with
+an adaptively refined one. Both must satisfy the same coverage theorem; the
+refined mask may have fewer unknown pixels. Later challenge fixtures include a
+tangent asymptote, a narrow extremum requiring an instantiated derivative or
+centered form, and a curve exactly on pixel boundaries.
+
+### Certified differential-equation solvers
+
+A future validated ODE solver can use this engine as its expression,
+propagation, and policy component without making ODE algorithms part of the
+initial interval library. Over a time slab it may register arbitrary
+propagators for the right-hand side, Jacobian, Picard operator, Taylor
+coefficients and remainder, invariants, and event functions. Instantiation can
+introduce derivative and Taylor expressions only when a step method needs
+them; function-local refinement can subdivide a remainder calculation, while a
+solver split represents genuinely alternative state boxes or event cases.
+
+The eventual ODE companion remains responsible for the mathematical theorems:
+existence, uniqueness when claimed, enclosure of the solution tube, and
+composition of consecutive steps. The interval engine contributes checked
+facts and replayable dependencies to those theorems; successful numerical
+search alone never asserts that a solution exists.
+
+This downstream use argues for keeping the present abstractions:
+
+- domains and facts must extend beyond one scalar endpoint representation,
+  either through vector/box facts or coordinated scalar nodes;
+- operation keys and propagator caches must remain opaque to the scheduler;
+- expression instantiation, equality transport, scoped facts, and exact
+  resource limits must work over many consecutive program extensions; and
+- policy observations must distinguish local refinement from global branching
+  and proof cost from numerical gain.
+
+We do not choose Taylor models, affine arithmetic, zonotopes, a time-stepping
+scheme, or grind integration in this SPEC. Small mock ODE dependency graphs are
+useful scheduler and cache tests, but a certified integrator is a downstream
+design with its own SPEC.
+
 ## Complexity contract
 
 Let `n` be the number of program nodes, `e` the number of argument-to-consumer
@@ -1485,7 +1658,7 @@ states.
   a chunked vector, and a depth-first mutable trail with rollback. Their actual
   complexities and constant factors are reported. No one representation is
   selected before the crossover benchmark.
-- The first priority-queue prototype targets `O(log q)` amortized candidate
+- The priority-queue candidate targets `O(log q)` amortized candidate
   insertion, invalidation, and selection, excluding the declared cost of
   rescoring a stale candidate. A diagnostic policy that scans candidates
   reports `O(q)`; other policy data structures state and measure their own

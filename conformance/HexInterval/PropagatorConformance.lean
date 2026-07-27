@@ -564,4 +564,209 @@ def batchAdmitted? : Option (Engine Rank) := do
         | none => false
   | none => false
 
+/-! ## Equality is one atomic, undirected contractor -/
+
+structure PairRank where
+  first : Nat
+  second : Nat
+  deriving DecidableEq, Repr
+
+def pair (first second : Nat) : PairRank := { first, second }
+
+def pairDomain : FactDomain PairRank where
+  top _ := pair 0 0
+  narrow _ current candidate :=
+    let merged := pair (Nat.max current.first candidate.first)
+      (Nat.max current.second candidate.second)
+    if merged == current then .noChange else .improved merged
+
+def pairEqualityKey : RuleKey := { name := "shape.pair-equality" }
+
+def pairEqualityRule : Registration :=
+  { key := pairEqualityKey
+    head := unaryOp
+    kind := .instantiate
+    watches := [.result]
+    writes := [] }
+
+def pairEqualityInvoke (calls : Nat) (request : RuleRequest PairRank) :
+    Outcome PairRank × Nat :=
+  let proposal : InstantiationRequest :=
+    { key := 47
+      triggers := [request.action.node]
+      claimedGeneration := 1
+      nodes := []
+      equalities :=
+        [{ left := .existing (node 0)
+           right := .existing (node 1)
+           payload := { index := 53 } }]
+      payload := { index := 59 } }
+  (.success [] [.instantiate proposal] {}, calls + 1)
+
+def pairInitial? (limits : Limits := generous) : Option (RunResult PairRank Nat) := do
+  let program : Program :=
+    { operations, nodes := #[sourceNode, sourceNode, unaryNode 0] }
+  let state <- match Engine.start pairDomain program #[pairEqualityRule]
+      #[pair 4 0, pair 0 5, pair 0 0] limits with
+    | .ok state => some state
+    | .error _ => none
+  pure (drive pairEqualityInvoke 8 state 0)
+
+def pairAdmitted? (limits : Limits := generous) : Option (Engine PairRank) := do
+  let initial <- pairInitial? limits
+  match initial.state.admitInstantiation (suggestion 0) with
+  | .admitted [] state => some state
+  | _ => none
+
+def pairFinal? (limits : Limits := generous) : Option (RunResult PairRank Nat) := do
+  let state <- pairAdmitted? limits
+  pure (drive pairEqualityInvoke 8 state 1)
+
+#guard
+  match pairFinal? with
+  | some result =>
+      result.stop == .saturated &&
+        result.state.facts.toList == [pair 4 5, pair 4 5, pair 0 0] &&
+        result.state.metrics.requests == 1 && result.state.metrics.equalityRuns == 2 &&
+        result.state.metrics.equalityImprovements == 2 &&
+        result.state.metrics.queuePops == 3 && result.state.history.size == 2 &&
+        match result.state.equalities[0]?, result.state.history[0]?,
+            result.state.history[1]? with
+        | some edge, some left, some right =>
+            edge.origin.key == pairEqualityKey && edge.origin.node == node 2 &&
+              left.node == node 0 && left.previous == { node := node 0, version := 0 } &&
+              right.node == node 1 && right.previous == { node := node 1, version := 0 } &&
+              match left.cause, right.cause with
+              | .transport leftEquality leftSource, .transport rightEquality rightSource =>
+                  leftEquality == { index := 0 } && rightEquality == { index := 0 } &&
+                    leftSource == { node := node 1, version := 0 } &&
+                    rightSource == { node := node 0, version := 0 }
+              | _, _ => false
+        | _, _, _ => false
+  | none => false
+
+-- Both endpoint updates roll back when their combined history budget is short.
+#guard
+  match pairFinal? { generous with maxAcceptedFacts := 1 } with
+  | some result =>
+      result.stop == .engineResource .acceptedFacts &&
+        result.state.facts.toList == [pair 4 0, pair 0 5, pair 0 0] &&
+        result.state.history.isEmpty && result.state.equalities.size == 1
+  | none => false
+
+-- A failed wakeup also rolls back both transported facts and their history.
+#guard
+  match pairFinal? { generous with maxQueueEntries := 2 } with
+  | some result =>
+      result.stop == .engineResource .queueEntries &&
+        result.state.facts.toList == [pair 4 0, pair 0 5, pair 0 0] &&
+        result.state.history.isEmpty && result.state.metrics.equalityImprovements == 0
+  | none => false
+
+-- The equality and its queue entry are part of the atomic admission commit.
+#guard
+  match pairInitial? { generous with maxQueueEntries := 1 } with
+  | some initial =>
+      match initial.state.admitInstantiation (suggestion 0) with
+      | .resourceLimit .queueEntries state =>
+          state.equalities.isEmpty && state.instances.isEmpty &&
+            state.programVersion == 0 && state.queue.size == 1
+      | _ => false
+  | none => false
+
+-- Equality work consumes the same deterministic action budget as rule work.
+#guard
+  match pairFinal? { generous with maxActions := 2 } with
+  | some result =>
+      result.stop == .engineResource .actions && result.state.metrics.requests == 1 &&
+        result.state.metrics.equalityRuns == 1 && result.state.metrics.queuePops == 2 &&
+        result.state.facts.toList == [pair 4 5, pair 4 5, pair 0 0]
+  | none => false
+
+/-! ## An equal alternate joins the ordinary propagator network -/
+
+def alternateEqualityKey : RuleKey := { name := "shape.equal-alternate" }
+
+def alternateEqualityRule : Registration :=
+  { key := alternateEqualityKey
+    head := unaryOp
+    kind := .instantiate
+    watches := [.argument 0]
+    writes := [] }
+
+def alternateEqualityProposal (request : RuleRequest Rank) : InstantiationRequest :=
+  { key := 61
+    triggers := [request.action.node]
+    claimedGeneration := 1
+    nodes :=
+      [proposedGeneratedRef (.existing request.action.node),
+        proposedNextRef (.proposed 0)]
+    equalities :=
+      [{ left := .existing request.action.node
+         right := .proposed 0
+         payload := { index := 67 } }]
+    payload := { index := 71 } }
+
+def alternateEqualityInvoke (calls : List String) (request : RuleRequest Rank) :
+    Outcome Rank × List String :=
+  let calls := request.action.key.name :: calls
+  if request.action.key == alternateEqualityKey then
+    (.success [] [.instantiate (alternateEqualityProposal request)] {}, calls)
+  else if request.action.key == nextCopyKey then
+    match oneInput? request with
+    | some rank => (.success [candidate request rank] [] {}, calls)
+    | none => (.failed 11, calls)
+  else
+    (.failed 12, calls)
+
+def alternateEqualityInitial? (limits : Limits := generous) :
+    Option (RunResult Rank (List String)) := do
+  let program : Program :=
+    { operations := ladderOperations, nodes := #[sourceNode, unaryNode 0] }
+  let state <- start? program #[alternateEqualityRule, nextCopyRule] #[4, 4] limits
+  pure (drive alternateEqualityInvoke 8 state [])
+
+def alternateEqualityAdmitted? (limits : Limits := generous) :
+    Option (Engine Rank × List String) := do
+  let initial <- alternateEqualityInitial? limits
+  match initial.state.admitInstantiation (suggestion 0) with
+  | .admitted [alternate, consumer] state =>
+      if alternate == node 2 && consumer == node 3 then some (state, initial.cache) else none
+  | _ => none
+
+def alternateEqualityFinal? : Option (RunResult Rank (List String)) := do
+  let (state, cache) <- alternateEqualityAdmitted?
+  pure (drive alternateEqualityInvoke 8 state cache)
+
+#guard
+  match alternateEqualityFinal? with
+  | some result =>
+      result.stop == .saturated && result.state.facts.toList == [4, 4, 4, 4] &&
+        result.state.metrics.requests == 2 && result.state.metrics.equalityRuns == 2 &&
+        result.state.metrics.equalityImprovements == 1 &&
+        result.state.metrics.improvements == 2 && result.state.history.size == 2 &&
+        result.cache == [nextCopyKey.name, alternateEqualityKey.name] &&
+        match result.state.history[0]?, result.state.history[1]? with
+        | some transported, some propagated =>
+            transported.node == node 2 && propagated.node == node 3 &&
+              match transported.cause, propagated.cause with
+              | .transport equality source, .rule action _ =>
+                  equality == { index := 0 } && source == { node := node 1, version := 0 } &&
+                    action.key == nextCopyKey &&
+                      action.inputs == [{ node := node 2, version := 1 }]
+              | _, _ => false
+        | _, _ => false
+  | none => false
+
+-- The new nodes, equality watcher, and arbitrary application commit together.
+#guard
+  match alternateEqualityInitial? { generous with maxQueueEntries := 2 } with
+  | some initial =>
+      match initial.state.admitInstantiation (suggestion 0) with
+      | .resourceLimit .queueEntries state =>
+          state.program.nodes.size == 2 && state.applications.size == 1 &&
+            state.equalities.isEmpty && state.instances.isEmpty && state.programVersion == 0
+      | _ => false
+  | none => false
+
 end Hex.Interval.PropagatorConformance
