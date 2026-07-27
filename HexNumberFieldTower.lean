@@ -11,6 +11,7 @@ public import HexNumberFieldTower.Arithmetic
 public import HexNumberFieldTower.Embed
 public import HexNumberFieldTower.Norm
 public import HexNumberFieldTower.Factor
+public import HexNumberFieldTower.Split
 
 public section
 
