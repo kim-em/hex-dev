@@ -522,4 +522,4 @@ libraries:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
     mathlib: true
     done_through: 0
-    status: planned
+    status: active
