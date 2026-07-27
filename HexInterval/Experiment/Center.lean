@@ -476,9 +476,11 @@ end Fact
 
 /-- Check a fact list with constant-time cons accumulation. Certificate fact
 indices retain their original order through `Fact.prior?`. Reverse-list
-lookup is not asymptotically ideal; this D2 probe explicitly charges every
-visited constructor against `maxLookupSteps`, and production storage remains
-an empirical choice. -/
+lookup is not asymptotically ideal; this D2 probe explicitly charges the list
+constructors visited by each indexed program, source, edge, prior-fact, and
+final-result lookup against `maxLookupSteps`. Sequential validation scans are
+bounded separately by the structural caps. Production storage and unified
+work accounting remain empirical choices. -/
 def checkFacts (limit : EndpointLimit) (program : Program) (sources : List Row)
     (edges : List EqEdge)
     (programCount sourceCount edgeCount : Nat) :
