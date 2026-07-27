@@ -38,11 +38,12 @@ Every workload carries a closed-form budget. Replay independently recomputes
 both the scalar cost and a five-component decomposition into program, source,
 edge, prior-fact, and result lookups. This counter charges fact/result lookup
 distance, but it does not yet charge the equality-recipe checker's separate
-program-list lookups. The reference implementation bounds those lookups only
-indirectly by `maxEdges * maxNodes`; a production checker must charge them or
-replace them with validated random access. Conformance checks exact acceptance,
-one-step-short rejection, dimensions, and component counts at the largest
-committed points.
+program-list lookups. The current recipe performs nine lookups for the selected
+center and nine per equality edge, so the reference implementation bounds
+their constructor work by `9 * (maxEdges + 1) * maxNodes`; a production checker
+must charge them or replace them with validated random access. Conformance
+checks exact acceptance, one-step-short rejection, dimensions, and component
+counts at the largest committed points.
 
 [`IntervalScaleSpike.lean`](../bench/HexBench/IntervalScaleSpike.lean) measures
 five compiled modes:
@@ -217,8 +218,8 @@ SHA-256 hashes as well.
    from validated references rather than trusting certificate claims.
    The next structural experiment varies the equality-edge table independently;
    until every edge-to-program lookup is charged or random-access, the current
-   `maxEdges * maxNodes` fallback is a reference-checker bound, not the desired
-   production accounting model.
+   `9 * (maxEdges + 1) * maxNodes` fallback is a reference-checker bound, not
+   the desired production accounting model.
 3. A bounded scan over a list is still linear. If adversarial preflight must be
    independent of submitted length, the selected representation needs cached
    trusted dimensions or a bounded random-access container. The checker must

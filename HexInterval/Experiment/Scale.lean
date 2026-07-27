@@ -23,9 +23,11 @@ The formulas below count exactly the fact/result indexed lookups charged by
 `StructureLimit.maxLookupSteps`. They do not count separately bounded
 whole-program and whole-table scans. They also do not yet charge the fixed
 center-recipe program lookups repeated for every equality edge: the reference
-checker bounds those by `maxEdges * maxNodes`, while a production checker must
-charge them explicitly or use validated random access. Edge-table growth is a
-separate required experiment.
+checker performs nine such lookups for the selected center and nine per edge,
+so it bounds their list-constructor work by
+`9 * (maxEdges + 1) * maxNodes`. A production checker must charge them
+explicitly or use validated random access. Edge-table growth is a separate
+required experiment.
 -/
 
 namespace Hex.Interval.Experiment.Scale
