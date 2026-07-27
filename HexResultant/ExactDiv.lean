@@ -96,7 +96,7 @@ def powNat [One R] [Mul R] (x : R) (n : Nat) : R :=
 termination_by n
 decreasing_by omega
 
-/-- Iterating a lightweight-semiring power multiplies its exponents. -/
+/-- Raising a power to another power multiplies the two exponents. -/
 private theorem pow_mul {S : Type u} [Lean.Grind.Semiring S]
     (x : S) (m n : Nat) : x ^ (m * n) = (x ^ m) ^ n := by
   symm

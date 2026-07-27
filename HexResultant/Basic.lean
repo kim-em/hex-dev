@@ -242,8 +242,8 @@ of the divisor's leading coefficient. -/
 private theorem pseudoPowers_spec {S : Type u} [Lean.Grind.CommRing S]
     (b : S) (d : Nat) :
     let powers :=
-      pushBuild d #[1] fun powers _ =>
-        powers.getD (powers.size - 1) 1 * b
+      pushBuild d #[1] fun table _ =>
+        table.getD (table.size - 1) 1 * b
     powers.size = d + 1 ∧
       ∀ k, k ≤ d → powers.getD k 0 = b ^ k := by
   let step : Array S → Nat → S := fun powers _ =>
@@ -255,7 +255,7 @@ private theorem pseudoPowers_spec {S : Type u} [Lean.Grind.CommRing S]
   | zero =>
       constructor
       · rw [pushBuild_size]
-        rfl
+        simp only [Array.size_singleton, Nat.zero_add]
       · intro k hk
         have hk0 : k = 0 := by omega
         subst k
@@ -306,8 +306,8 @@ coefficients with their residual leading-coefficient scaling. -/
 private theorem pseudoQuotient_coeff {S : Type u} [Zero S] [DecidableEq S]
     [Mul S] (active powers : Array S) (d k : Nat) :
     let quotient :=
-      pushBuild d #[] fun _ k =>
-        active.getD (d - 1 - k) 0 * powers.getD k 0
+      pushBuild d #[] fun _ idx =>
+        active.getD (d - 1 - idx) 0 * powers.getD idx 0
     (ofCoeffs quotient).coeff k =
       if k < d then
         active.getD (d - 1 - k) 0 * powers.getD k 0
@@ -335,18 +335,19 @@ private theorem pseudoQuotient_coeff {S : Type u} [Zero S] [DecidableEq S]
 /-- Coefficients of the pseudo-remainder are the low coefficients of the
 scaled dividend minus the bounded quotient-divisor convolution. -/
 private theorem pseudoRemainder_coeff {S : Type u}
-    [Lean.Grind.CommRing S] [DecidableEq S]
+    [Zero S] [DecidableEq S] [Add S] [Sub S] [Mul S]
     (f g : DensePoly S) (powers quotient : Array S)
     (d m t : Nat) :
     let q := ofCoeffs quotient
     let remainder :=
-      pushBuild m #[] fun _ t =>
+      pushBuild m #[] fun _ degree =>
         let correction :=
-          (Array.range (min (t + 1) d)).foldl
+          (Array.range (min (degree + 1) d)).foldl
             (fun acc k =>
-              acc + quotient.getD k (Zero.zero : S) * g.coeff (t - k))
+              acc + quotient.getD k (Zero.zero : S) *
+                g.coeff (degree - k))
             0
-        powers.getD d 0 * f.coeff t - correction
+        powers.getD d 0 * f.coeff degree - correction
     (ofCoeffs remainder).coeff t =
       if t < m then
         powers.getD d 0 * f.coeff t -
@@ -433,6 +434,82 @@ private theorem coeff_mul_bounded {S : Type u} [Lean.Grind.CommRing S]
     have himin : i < min (t + 1) bound := hi
     omega)]
 
+/-- Every completed active entry satisfies the cancellation recurrence used
+when it was appended; later entries do not change its prefix reads. -/
+private theorem pseudoActive_spec {S : Type u} [Lean.Grind.CommRing S]
+    [DecidableEq S] (f g : DensePoly S) (powers : Array S)
+    (n m d : Nat) :
+    let active :=
+      pushBuild d #[] fun active i =>
+        let first := i - m
+        let correction :=
+          (Array.range (i - first)).foldl
+            (fun acc offset =>
+              let j := first + offset
+              acc + active.getD j 0 * powers.getD (i - 1 - j) 0 *
+                g.coeff (m + j - i))
+            0
+        powers.getD i 0 * f.coeff (n - i) - correction
+    active.size = d ∧
+      ∀ i, i < d →
+        active.getD i 0 =
+          powers.getD i 0 * f.coeff (n - i) -
+            (Array.range (i - (i - m))).foldl
+              (fun acc offset =>
+                let j := i - m + offset
+                acc + active.getD j 0 * powers.getD (i - 1 - j) 0 *
+                  g.coeff (m + j - i))
+              0 := by
+  let step : Array S → Nat → S := fun active i =>
+    let first := i - m
+    let correction :=
+      (Array.range (i - first)).foldl
+        (fun acc offset =>
+          let j := first + offset
+          acc + active.getD j 0 * powers.getD (i - 1 - j) 0 *
+            g.coeff (m + j - i))
+        0
+    powers.getD i 0 * f.coeff (n - i) - correction
+  change
+    (pushBuild d #[] step).size = d ∧
+      ∀ i, i < d →
+        (pushBuild d #[] step).getD i 0 =
+          powers.getD i 0 * f.coeff (n - i) -
+            (Array.range (i - (i - m))).foldl
+              (fun acc offset =>
+                let j := i - m + offset
+                acc + (pushBuild d #[] step).getD j 0 *
+                  powers.getD (i - 1 - j) 0 * g.coeff (m + j - i))
+              0
+  constructor
+  · rw [pushBuild_size]
+    simp only [Array.size_empty, Nat.zero_add]
+  · intro i hi
+    have hget := pushBuild_getD d i #[] step (0 : S) hi
+    have hget' :
+        (pushBuild d #[] step).getD i (0 : S) =
+          step (pushBuild i #[] step) i := by
+      simpa only [Array.size_empty, Nat.zero_add] using hget
+    rw [hget']
+    dsimp only [step]
+    congr 1
+    rw [← Array.foldl_toList, ← Array.foldl_toList]
+    simp only [Array.toList_range]
+    apply foldl_range_congr
+    intro acc offset hoffset
+    let j := i - m + offset
+    have hj : j < i := by
+      dsimp only [j]
+      omega
+    have hstable := pushBuild_getD_stable d i j #[] step
+      (0 : S) hj (by omega)
+    have hstable' :
+        (pushBuild d #[] step).getD j (0 : S) =
+          (pushBuild i #[] step).getD j (0 : S) := by
+      simpa only [Array.size_empty, Nat.zero_add] using hstable
+    dsimp only [j] at hstable'
+    rw [hstable']
+
 /-- Pseudo-division reconstructs the fixed leading-coefficient multiple of the dividend.
 
 This theorem deliberately uses a fresh coefficient type: an ambient `Zero`
@@ -447,32 +524,28 @@ theorem pseudoDivMod_reconstruct_core {S : Type u}
 
 /-- The quotient array is structurally bounded by the number of
 pseudo-division rounds. This bound does not use reconstruction correctness. -/
-theorem pseudoDivMod_quotient_size_le_core {S : Type u}
-    [Lean.Grind.CommRing S] [DecidableEq S]
-    (f g : DensePoly S) (hg : g ≠ 0) (hfg : g.size ≤ f.size) :
+theorem pseudoDivMod_quotient_size_le [One R] [Add R] [Sub R] [Mul R]
+    (f g : DensePoly R) :
     (pseudoDivMod f g).1.size ≤ f.size - g.size + 1 := by
-  have hgpos : 0 < g.size := by
-    apply Nat.pos_of_ne_zero
-    intro hsize
-    apply hg
-    apply ext_coeff
-    intro i
-    rw [coeff_zero]
-    exact coeff_eq_zero_of_size_le g (by omega)
-  have hgzero : g.isZero = false := (isZero_eq_false_iff g).2 hgpos
-  simp only [pseudoDivMod, hgzero, Bool.false_eq_true, ↓reduceIte,
-    Nat.not_lt_of_ge hfg]
-  exact Nat.le_trans (size_ofCoeffs_le _) (by
-    rw [size_foldl_push]
-    simp only [Array.size_empty, Array.size_range]
-    omega)
+  by_cases hg : g.isZero = true
+  · simp [pseudoDivMod, hg]
+  · have hgfalse : g.isZero = false :=
+      by cases h : g.isZero <;> simp_all
+    by_cases hlt : f.size < g.size
+    · simp [pseudoDivMod, hgfalse, hlt]
+    · have hfg : g.size ≤ f.size := by omega
+      simp only [pseudoDivMod, hgfalse, Bool.false_eq_true, ↓reduceIte,
+        Nat.not_lt_of_ge hfg]
+      exact Nat.le_trans (size_ofCoeffs_le _) (by
+        rw [size_foldl_push]
+        simp only [Array.size_empty, Array.size_range]
+        omega)
 
 /-- The remainder array is structurally shorter than every nonzero divisor.
 This follows from the output fold's iteration count and does not constrain the
 computed coefficient values; reconstruction supplies the algebraic content. -/
-theorem pseudoDivMod_remainder_lt_core {S : Type u}
-    [Lean.Grind.CommRing S] [DecidableEq S]
-    (f g : DensePoly S) (hg : g ≠ 0) :
+theorem pseudoDivMod_remainder_lt [One R] [Add R] [Sub R] [Mul R]
+    (f g : DensePoly R) (hg : g ≠ 0) :
     (pseudoDivMod f g).2.size < g.size := by
   by_cases hlt : f.size < g.size
   · rw [pseudoDivMod_of_size_lt f g hlt]
