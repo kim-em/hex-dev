@@ -23,11 +23,8 @@ Write `pℚ` for `(toPolynomial p).map (algebraMap ℤ ℚ)`.
 ## Semantic maps
 
 ```lean
-def QAdjoin.equivAdjoinRoot {p : ZPoly} (x : SimpleRoot p) :
-    QAdjoin p x ≃+* AdjoinRoot pℚ
-
-def QAdjoin.toComplex {p : ZPoly} (x : SimpleRoot p) :
-    QAdjoin p x →+* ℂ
+noncomputable def QAdjoin.toComplex [ZPoly.CheckedIrreducible p]
+    (a : QAdjoin p x) : ℂ
 
 def AlgebraicRoot.toComplex (a : AlgebraicRoot) : ℂ := rootOf a.x
 def AlgebraicNumber.toComplex (a : AlgebraicNumber) : ℂ := rootOf a.x
@@ -43,9 +40,13 @@ theorem AlgebraicNumber.p_eq_minpoly (a : AlgebraicNumber) :
 
 `QAdjoin.toComplex` evaluates reduced coordinates at the selected root. Under
 `[ZPoly.CheckedIrreducible p]`, `ZPoly.isIrreducible_iff` supplies semantic
-irreducibility, so it is an embedding of fields. This file installs the
-law-bearing field structures for `QAdjoin` and canonical `AlgebraicNumber` and
-proves that their operations are the computational ones.
+irreducibility, so it is injective and preserves every executable operation.
+It is initially exposed as a plain function so the correspondence theorems do
+not presuppose the law-bearing structures they are meant to justify. After
+those laws are proved, this file installs the field structures for `QAdjoin`
+and canonical `AlgebraicNumber`, packages `QAdjoin.toComplex` as a ring
+embedding, and constructs the `AdjoinRoot` equivalence without changing any
+computational operation.
 
 When constructing the `Field (QAdjoin p x)` instance, set its rational scalar
 action explicitly to the computational `SMul Rat` instance shipped by
@@ -159,14 +160,16 @@ theorem AlgebraicPoly.roots?_isSome (f : AlgebraicPoly) :
 theorem AlgebraicPoly.roots_all_iff (f : AlgebraicPoly) :
     f.roots = .all ↔ f.toPolynomial = 0
 
-theorem AlgebraicPoly.mem_roots_iff (f : AlgebraicPoly) (a : AlgebraicRoot) :
-    a ∈ f.roots ↔ Polynomial.eval a.toComplex f.toPolynomial = 0
+theorem AlgebraicPoly.contains_roots_iff (f : AlgebraicPoly) (z : ℂ) :
+    RootSet.Contains f.roots z ↔ Polynomial.eval z f.toPolynomial = 0
 
-theorem AlgebraicPoly.multiplicity_eq (f : AlgebraicPoly)
-    (a : AlgebraicRoot) :
-    multiplicityOf a f.roots =
-      Polynomial.rootMultiplicity a.toComplex f.toPolynomial
+theorem AlgebraicPoly.multiplicity_roots (f : AlgebraicPoly) (z : ℂ) :
+    f.roots.multiplicityOf z =
+      Polynomial.rootMultiplicity z f.toPolynomial
 ```
+
+The semantic `RootSet.Contains` interface is deliberate: lazy roots have no
+structural or Boolean equality, while callers may ask about any complex root.
 
 State corresponding fixed-field theorems through `QAdjoin.toComplex`. For finite
 outputs also prove no duplicates, positive multiplicities, deterministic order,

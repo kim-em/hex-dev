@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexNumberFieldMathlib.Basic
+public import HexNumberFieldMathlib.Roots
 
 public section
 
