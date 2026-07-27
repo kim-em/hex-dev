@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexNumberField.QAdjoin
+public import HexRowReduce
 public meta import HexNumberField.QAdjoin
 
 public section
@@ -182,4 +183,114 @@ private def nearReducibleRoot
     q.coeffs = 0 && AlgebraicNumber.zero.toRoot.isZero
 
 end AlgebraicRoot
+
+namespace QAdjoin
+
+variable {p : ZPoly} {x : SimpleRoot p}
+
+/-! ## Fixed-presentation minimal polynomials -/
+
+/-- Matrix of multiplication by `a` in the power basis
+`1, X, ..., X^(degree p - 1)`. -/
+@[expose]
+def mulMatrix (a : QAdjoin p x) :
+    Matrix Rat (p.degree?.getD 0) (p.degree?.getD 0) :=
+  Matrix.ofFn fun i j =>
+    let basis := reduce p x (DensePoly.monomial j.val 1)
+    (a * basis).coeffs.coeff i.val
+
+/-- First monic relation in the Krylov orbit of the multiplication operator,
+normalized as a primitive positive-leading integer polynomial. -/
+@[expose]
+def minpoly? [ZPoly.CheckedIrreducible p]
+    (a : QAdjoin p x) : Option ZPoly :=
+  let n := p.degree?.getD 0
+  let M := a.mulMatrix
+  let one : Vector Rat n := Vector.unit Rat ⟨0, ZPoly.CheckedIrreducible.pos_degree⟩
+  let orbit := (List.range n).foldl
+    (fun vs _ => vs.push (M * vs.getD (vs.size - 1) 0)) #[one]
+  let relation := fun (k : Nat) => do
+    let previous : Matrix Rat k n := Matrix.ofFn fun i j =>
+      (orbit.getD i.val 0)[j]
+    let target : Vector Rat n := orbit.getD k 0
+    let coeffs ← Matrix.spanCoeffs previous target
+    let rational := DensePoly.ofCoeffs ((coeffs.toArray.map fun c => -c).push 1)
+    some (ZPoly.ratPolyPrimitivePart rational)
+  (List.range n).findSome? fun i => relation (i + 1)
+
+/-- Convert a fixed-presentation value to its canonical irreducible
+representation. Every stored certificate and every precision-sensitive step
+is checked before construction. -/
+@[expose]
+def toAlgebraicNumber? [ZPoly.CheckedIrreducible p]
+    (a : QAdjoin p x) (rep : RefinedIsolation p)
+    (_h : SimpleRoot.mk rep = x) : Option AlgebraicNumber := do
+  let q ← a.minpoly?
+  if hprim : ZPoly.content q = 1 then
+    if hpos : 0 < q.leadingCoeff then
+      if hdegree : 0 < q.degree?.getD 0 then
+        if hirred : ZPoly.isIrreducible q = true then
+          if hsquarefree : HasOnlySimpleRoots q then do
+            let isolations ← isolate q hsquarefree (separationDepth q : Int)
+            let refined ← isolations.mapM DyadicRootIsolation.toRefined?
+            let requested : Int := mahlerPrec q
+            let target := requested + (approxGuardBits rep.1.square a.coeffs : Int)
+            let threaded ← rep.refineTo? target
+            let valueBall := evalRatBall a.coeffs threaded.1.1.square target
+            let matching ← refined.toList.find? fun r =>
+              r.1.square.meetsBall valueBall
+            AlgebraicNumber.ofNormalized? q hprim hpos hdegree
+              ⟨hirred, hdegree⟩ hsquarefree matching
+          else
+            none
+        else
+          none
+      else
+        none
+    else
+      none
+  else
+    none
+
+/-- Total fixed-presentation conversion. The checked failure branch is proved
+unreachable by the Mathlib companion. -/
+@[expose]
+def toAlgebraicNumber [ZPoly.CheckedIrreducible p]
+    (a : QAdjoin p x) (rep : RefinedIsolation p)
+    (h : SimpleRoot.mk rep = x) : AlgebraicNumber :=
+  (a.toAlgebraicNumber? rep h).getD
+    (Hex.panicWith 0 "QAdjoin.toAlgebraicNumber: certification failed")
+
+/-! Compiled fixed-field conversion regressions. -/
+
+private def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
+
+private def sqrtTwoSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
+
+private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
+  ⟨⟨sqrtTwoSquare, by decide⟩, by decide⟩
+
+private def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
+  SimpleRoot.mk sqrtTwoRep
+
+private def sqrtTwo : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
+  reduce sqrtTwoPoly sqrtTwoRoot (DensePoly.ofList [0, 1])
+
+private def oneAddSqrtTwo : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
+  1 + sqrtTwo
+
+#guard
+    if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
+      letI : ZPoly.CheckedIrreducible sqrtTwoPoly := ⟨hirred, by decide⟩
+      sqrtTwo.minpoly? = some sqrtTwoPoly &&
+        (match sqrtTwo.toAlgebraicNumber? sqrtTwoRep rfl with
+        | some a => a.p = sqrtTwoPoly
+        | none => false) &&
+        oneAddSqrtTwo.minpoly? =
+          some (DensePoly.ofList ([-1, -2, 1] : List Int))
+    else
+      false
+
+end QAdjoin
 end Hex
