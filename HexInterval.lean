@@ -7,8 +7,6 @@ Authors: Kim Morrison
 module
 
 public import HexInterval.Basic
-public import HexInterval.Experiment.Representation
-public import HexInterval.Experiment.Rational
 
 public section
 
@@ -16,7 +14,7 @@ public section
 `HexInterval` is the Mathlib-free computational kernel for exact interval
 data, propagation search, and replayable derivations.
 
-The initial implementation exposes only the representation-independent raw
-cut layer.  D2 experiments select the opaque public interval representation
-before the wider arithmetic and search API is frozen.
+The initial public implementation exposes only the representation-independent
+raw cut layer. D2 experiments live outside this supported umbrella while they
+select the opaque interval representation and proof-facing encoding.
 -/

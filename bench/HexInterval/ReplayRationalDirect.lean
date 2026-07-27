@@ -21,6 +21,7 @@ theorem directFold433 : directFold 433 = 1 := by
 #guard_msgs in
 #print axioms directFold433
 
+-- The sweep harness parses this unguarded copy from Lake's captured output.
 #print axioms directFold433
 
 end Hex.Interval.Experiment.Rational

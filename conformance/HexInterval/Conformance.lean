@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Basic
+import HexInterval.Experiment.Representation
 
 /-!
 Conformance checks for exact raw interval cuts and canonical normalization.
@@ -25,36 +25,41 @@ private def smallLimit : EndpointLimit where
   maxEndpointHeight := 128
   maxAlignmentShift := 64
 
-#guard Raw.empty.normalize = .empty
-#guard (Raw.bounds .unbounded .unbounded).normalize = .bounds .unbounded .unbounded
+#guard Raw.empty.normalizeUnchecked = .empty
+#guard (Raw.bounds .unbounded .unbounded).normalizeUnchecked = .bounds .unbounded .unbounded
 #guard
-  (Raw.bounds .unbounded (.finite (d 1) false)).normalize =
+  (Raw.bounds .unbounded (.finite (d 1) false)).normalizeUnchecked =
     .bounds .unbounded (.finite (d 1) false)
 #guard
-  (Raw.bounds (.finite (d 0) true) .unbounded).normalize =
+  (Raw.bounds (.finite (d 0) true) .unbounded).normalizeUnchecked =
     .bounds (.finite (d 0) true) .unbounded
 
 -- Every closure combination is nonempty when the finite endpoints differ.
-#guard (finite 0 false 1 false).normalize = finite 0 false 1 false
-#guard (finite 0 false 1 true).normalize = finite 0 false 1 true
-#guard (finite 0 true 1 false).normalize = finite 0 true 1 false
-#guard (finite 0 true 1 true).normalize = finite 0 true 1 true
+#guard (finite 0 false 1 false).normalizeUnchecked = finite 0 false 1 false
+#guard (finite 0 false 1 true).normalizeUnchecked = finite 0 false 1 true
+#guard (finite 0 true 1 false).normalizeUnchecked = finite 0 true 1 false
+#guard (finite 0 true 1 true).normalizeUnchecked = finite 0 true 1 true
 
 -- Exactly the closed/closed equal-endpoint pair is a singleton.
-#guard (finite 1 false 1 false).normalize = finite 1 false 1 false
-#guard (finite 1 false 1 true).normalize = .empty
-#guard (finite 1 true 1 false).normalize = .empty
-#guard (finite 1 true 1 true).normalize = .empty
+#guard (finite 1 false 1 false).normalizeUnchecked = finite 1 false 1 false
+#guard (finite 1 false 1 true).normalizeUnchecked = .empty
+#guard (finite 1 true 1 false).normalizeUnchecked = .empty
+#guard (finite 1 true 1 true).normalizeUnchecked = .empty
 
 -- Reversed endpoints normalize to the unique empty representation.
-#guard (finite 2 false 1 false).normalize = .empty
-#guard (finite 2 true 1 true).normalize = .empty
+#guard (finite 2 false 1 false).normalizeUnchecked = .empty
+#guard (finite 2 true 1 true).normalizeUnchecked = .empty
 
 -- The executable and propositional consistency views agree on representative
 -- canonical and noncanonical values.
 #guard (finite 0 true 1 true).consistent
 #guard !(finite 1 true 1 false).consistent
 #guard (finite 1 false 1 false).CutConsistent
+
+-- The externally checked experiment rejects an unnormalized invalid trace
+-- element rather than silently treating it as an empty proved interval.
+#guard !Experiment.Checked.valid (finite 1 true 1 false)
+#guard !Experiment.Checked.valid (Experiment.sample 5)
 
 -- The planner-facing entry point agrees with exact normalization on inputs
 -- whose endpoint and alignment costs fit its budget.

@@ -21,6 +21,7 @@ theorem replayChecked433 : replayCheckedWork 433 = 5801550 := by
 #guard_msgs in
 #print axioms replayChecked433
 
+-- The sweep harness parses this unguarded copy from Lake's captured output.
 #print axioms replayChecked433
 
 end Hex.Interval.Experiment

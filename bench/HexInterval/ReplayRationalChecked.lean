@@ -21,6 +21,7 @@ theorem checkedFold433 : checkedFold 433 = true := by
 #guard_msgs in
 #print axioms checkedFold433
 
+-- The sweep harness parses this unguarded copy from Lake's captured output.
 #print axioms checkedFold433
 
 end Hex.Interval.Experiment.Rational

@@ -17,12 +17,12 @@ This module defines the representation-independent raw data shared by the
 `hex-interval` representation experiments.  A finite cut carries its exact
 dyadic value and a strictness bit; either side may instead be unbounded.
 
-`Raw.normalize` is the exact canonicalizer for values that have already passed
-an endpoint-cost preflight. `Raw.normalizeWithin` is the resource-safe entry
-point for untrusted values: it rejects an excessive dyadic height or alignment
-shift before comparison can allocate a shifted mantissa. The eventual opaque
-`Hex.Interval` backing store will be selected by the D2 measurements; neither
-candidate is baked into this module.
+`Raw.normalizeUnchecked` is the exact canonicalizer for values that have
+already passed an endpoint-cost preflight. `Raw.normalizeWithin` is the safe
+entry point for untrusted values: it rejects an excessive dyadic height or
+alignment shift before comparison can allocate a shifted mantissa. The
+eventual opaque `Hex.Interval` backing store will be selected by the D2
+measurements; neither candidate is baked into this module.
 -/
 
 namespace Hex.Interval
@@ -56,7 +56,9 @@ inductive Raw where
 
 /-- Resource limits that must be checked before comparing finite dyadics.
 `maxEndpointHeight` bounds mantissa bits plus exponent magnitude;
-`maxAlignmentShift` independently bounds the shift used by exact comparison. -/
+`maxAlignmentShift` independently bounds the shift used by exact comparison.
+The first bound is the SPEC's deliberate dynamic-range policy, not merely an
+allocation estimate for comparison. -/
 structure EndpointLimit where
   maxEndpointHeight : Nat
   maxAlignmentShift : Nat
@@ -163,7 +165,7 @@ representation.
 
 This function may align finite dyadic endpoints. Call `normalizeWithin` at an
 untrusted or planner-facing boundary. -/
-def normalize (raw : Raw) : Raw :=
+def normalizeUnchecked (raw : Raw) : Raw :=
   if raw.consistent then raw else .empty
 
 @[simp]
@@ -174,33 +176,37 @@ theorem cutConsistent_empty : Raw.empty.CutConsistent := rfl
 
 /-- Normalization always produces consistent cuts. -/
 @[simp]
-theorem consistent_normalize (raw : Raw) : raw.normalize.CutConsistent := by
+theorem consistent_normalizeUnchecked (raw : Raw) : raw.normalizeUnchecked.CutConsistent := by
   by_cases h : raw.consistent = true <;>
-    simp [CutConsistent, normalize, h]
+    simp [CutConsistent, normalizeUnchecked, h]
 
 /-- A consistent raw value is already canonical. -/
-theorem normalize_eq_self (raw : Raw) (h : raw.CutConsistent) : raw.normalize = raw := by
+theorem normalizeUnchecked_eq_self (raw : Raw) (h : raw.CutConsistent) :
+    raw.normalizeUnchecked = raw := by
   simp only [CutConsistent] at h
-  simp [normalize, h]
+  simp [normalizeUnchecked, h]
 
 /-- An inconsistent raw value normalizes to `empty`. -/
-theorem normalize_eq_empty (raw : Raw) (h : ¬raw.CutConsistent) : raw.normalize = .empty := by
+theorem normalizeUnchecked_eq_empty (raw : Raw) (h : ¬raw.CutConsistent) :
+    raw.normalizeUnchecked = .empty := by
   simp only [CutConsistent] at h
-  simp [normalize, h]
+  simp [normalizeUnchecked, h]
 
 /-- A raw value is fixed by normalization exactly when its cuts are
 consistent. -/
-theorem normalize_eq_self_iff (raw : Raw) : raw.normalize = raw ↔ raw.CutConsistent := by
+theorem normalizeUnchecked_eq_self_iff (raw : Raw) :
+    raw.normalizeUnchecked = raw ↔ raw.CutConsistent := by
   constructor
   · intro h
     rw [← h]
-    exact consistent_normalize raw
-  · exact normalize_eq_self raw
+    exact consistent_normalizeUnchecked raw
+  · exact normalizeUnchecked_eq_self raw
 
 /-- Canonicalization is idempotent. -/
 @[simp]
-theorem normalize_idem (raw : Raw) : raw.normalize.normalize = raw.normalize :=
-  normalize_eq_self _ (consistent_normalize raw)
+theorem normalizeUnchecked_idem (raw : Raw) :
+    raw.normalizeUnchecked.normalizeUnchecked = raw.normalizeUnchecked :=
+  normalizeUnchecked_eq_self _ (consistent_normalizeUnchecked raw)
 
 /-- Result of resource-safe normalization. A rejected value carries the cost
 that exceeded the configured endpoint or alignment limit. -/
@@ -214,7 +220,7 @@ shapes require no alignment and are immediately canonical. -/
 def normalizeWithin (limit : EndpointLimit) (raw : Raw) : NormalizeResult :=
   let cost := raw.normalizeCost
   if cost.allowed limit then
-    .ready raw.normalize (consistent_normalize raw)
+    .ready raw.normalizeUnchecked (consistent_normalizeUnchecked raw)
   else
     .resourceLimit cost
 

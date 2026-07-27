@@ -168,20 +168,20 @@ This gives all ordinary interval shapes:
 finite `bounds` pair has either `a < b`, or `a = b` with both cuts closed.
 Pairs with an infinite end are consistent. Over a dense ordered domain
 containing the dyadics, every consistent `bounds` value is nonempty.
-`normalize` returns `empty` when the lower value exceeds the upper value, or
+`normalizeUnchecked` returns `empty` when the lower value exceeds the upper value, or
 when equal finite values have at least one open cut. It is idempotent. Public
 smart constructors and operations return canonical observable values under
 either internal candidate. Infinite ends do not carry meaningless closure
 flags. This invariant deliberately does not claim that, for example, `(0,1)`
 contains an integer.
 
-Exact `normalize` is only for trusted or already-preflighted inputs: comparing
+Exact `normalizeUnchecked` is only for trusted or already-preflighted inputs: comparing
 two finite dyadics may align their exponents by shifting a mantissa. The
 planner-facing `normalizeWithin` first computes endpoint height and alignment
 shift from constructor fields and returns a distinct `resourceLimit` result
 when either bound is exceeded. It never interprets a refused comparison as an
-empty interval or as consistent cuts. Every public reifier, certificate
-decoder, and planner input path uses this resource-safe entry point.
+empty interval or as consistent cuts. Every future public reifier, certificate
+decoder, and planner input path must use this resource-safe entry point.
 
 The representation differs from IEEE 1788 set-based intervals in one
 important respect. IEEE intervals are closed as sets of finite real numbers,

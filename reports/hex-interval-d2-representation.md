@@ -64,12 +64,21 @@ Median compiled time per complete arena construction and checksum was:
 Construction differs by about one percent or less in this run.  Inspecting the
 generated C explains why: the proof field is erased, the one-live-field
 `Bundled` wrapper is a newtype, and both `Bundled.ofTrustedRaw` and
-`Checked.ofTrustedRaw` compile to the same call to `Raw.normalize`.
+`Checked.ofTrustedRaw` compile to the same call to `Raw.normalizeUnchecked`.
 `Bundled.view` is the identity.
 
 The externally checked boundary costs about 12–14% at these sizes because it
 performs an additional full consistency scan.  This is a
 real cost, but it is paid at handoff rather than on each propagation update.
+Every value in this timing was first canonicalized, so the scan is deliberately
+redundant validation of a valid handoff, not normalization of an untrusted raw
+trace. Separate conformance guards ensure malformed raw elements are rejected.
+
+The shape cycle is intentionally broad rather than comparison-heavy. At the
+boundary, two of every eight normalized values have two finite endpoints and
+therefore run `Dyadic.blt`; the other six are empty or have an unbounded side.
+An all-finite 256/1024-bit workload remains necessary before estimating the
+production cost of endpoint-heavy traces.
 
 Peak RSS varied between roughly 4 and 8 MiB even for definitionally identical
 paths.  It is too coarse to distinguish the layouts.  The installed Lean
@@ -126,8 +135,15 @@ avoid depending on Mathlib's `norm_num`:
   multiplication, and inverse claims are checked by integer cross-products.
 
 The latter has generic Mathlib-free soundness theorems into `Rat`, including
-Lean's total convention `0⁻¹ = 0`. Both encodings replay 433 addition edges
-with ordinary `decide +kernel`:
+Lean's total convention `0⁻¹ = 0`. Its fold-level soundness theorem composes
+successful checked edges to the exposed rational fold.
+
+Both microprobes concern the same 433 additions, but their measured workloads
+are deliberately different. The exposed arm constructs and normalizes every
+intermediate `Rat`; the checked arm validates numerator/denominator literals
+that a planner has already supplied. Thus the latter isolates certificate
+verification and excludes certificate production. Both replay with ordinary
+`decide +kernel`:
 
 | Encoding | Total wall | Baseline-subtracted | `.olean` | Axioms |
 | --- | ---: | ---: | ---: | --- |
@@ -135,16 +151,18 @@ with ordinary `decide +kernel`:
 | Cross-product checks | 1.151 s | 0.082 s | 4376 B | none |
 
 The rational import baseline was 1.069 s; the direct total fell slightly below
-that noisy baseline, so its subtracted margin is conservatively clamped to
-zero. Separate forced WHNF calls reached `true` in median 68.6 ms and 127.6 ms
-respectively; their whole fresh-module medians were 1.485 s and 1.563 s. This
-small repeated-addition case favors exposed normalization for reduction time,
-while cross-products produce a
-smaller and axiom-free proof module. It does not select the rational
-representation: high-precision denominator growth, validating shared nodes
-once instead of once per edge, and the same arithmetic DAG must still be
-measured. Mathlib-side `norm_num` remains a useful third arm for frontend
-leaves, not a dependency of the shared engine.
+that noisy baseline, which is retained as a signed margin rather than clamped.
+Separate forced WHNF calls reached `true` in median 68.6 ms and 127.6 ms
+respectively; their whole fresh-module medians were 1.485 s and 1.563 s. The
+forced-call timing is the useful comparison; fresh-module margins use a
+separate import-matched `Lean` plus rational baseline. This small
+repeated-addition case favors exposed normalization for reduction time, while
+cross-products produce a smaller and axiom-free proof module. It does not
+select the rational representation: end-to-end certificate production,
+high-precision denominator growth, validating shared nodes once instead of
+once per edge, and an identical arithmetic DAG must still be measured.
+Mathlib-side `norm_num` remains a useful third arm for frontend leaves, not a
+dependency of the shared engine.
 
 ### Replay encoding remains open
 
@@ -170,8 +188,9 @@ Two endpoint risks need explicit follow-up experiments:
    magnitude, encoded exponent bits, and alignment shift before normalization;
    its conformance suite rejects a compactly encoded gap of one billion as a
    `resourceLimit` without comparing the endpoints. The unchecked
-   `Raw.normalize` remains only the exact operation for trusted or already
-   preflighted values. Every later arithmetic rule still needs the same guard.
+   `Raw.normalizeUnchecked` remains only the exact operation for trusted or
+   already preflighted values. Every later arithmetic rule still needs the
+   same guard.
 2. Core `Rat.add`, `Rat.mul`, `Rat.sub`, and `Rat.inv` are opaque through their
    ordinary operation instances, so a bare `decide +kernel` does not unfold
    them. This is an encoding constraint, not an obstacle to Mathlib-free

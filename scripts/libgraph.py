@@ -15,6 +15,7 @@ KNOWN_EXCEPTIONS = {"Hex", "HexManual"}
 BUILD_ONLY_LIBS = {
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
+    "HexIntervalExperiment",
     "HexIntervalReplayProbe",
     "HexConformance",
     "HexReleaseTests",

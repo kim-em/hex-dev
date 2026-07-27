@@ -14,6 +14,7 @@ reduction is explicitly outside LeanBench's measurement contract.
 from __future__ import annotations
 
 import argparse
+import functools
 import hashlib
 import json
 import os
@@ -41,12 +42,14 @@ REPLAY_MODULES = {
     "import_checked": "HexInterval.ImportChecked",
     "whnf_bundled": "HexInterval.WhnfBundled",
     "whnf_checked": "HexInterval.WhnfChecked",
+    "whnf_baseline": "HexInterval.WhnfBaseline",
     "rational_baseline": "HexInterval.ReplayRationalBaseline",
     "rational_direct": "HexInterval.ReplayRationalDirect",
     "rational_checked": "HexInterval.ReplayRationalChecked",
     "rational_ops": "HexInterval.ReplayRational",
     "whnf_rational_direct": "HexInterval.WhnfRationalDirect",
     "whnf_rational_checked": "HexInterval.WhnfRationalChecked",
+    "whnf_rational_baseline": "HexInterval.WhnfRationalBaseline",
 }
 
 MODULE_SOURCES = {
@@ -57,6 +60,7 @@ MODULE_SOURCES = {
     "HexInterval.ImportChecked": ROOT / "bench" / "HexInterval" / "ImportChecked.lean",
     "HexInterval.WhnfBundled": ROOT / "bench" / "HexInterval" / "WhnfBundled.lean",
     "HexInterval.WhnfChecked": ROOT / "bench" / "HexInterval" / "WhnfChecked.lean",
+    "HexInterval.WhnfBaseline": ROOT / "bench" / "HexInterval" / "WhnfBaseline.lean",
     "HexInterval.ReplayRationalBaseline":
         ROOT / "bench" / "HexInterval" / "ReplayRationalBaseline.lean",
     "HexInterval.ReplayRationalDirect":
@@ -69,6 +73,8 @@ MODULE_SOURCES = {
         ROOT / "bench" / "HexInterval" / "WhnfRationalDirect.lean",
     "HexInterval.WhnfRationalChecked":
         ROOT / "bench" / "HexInterval" / "WhnfRationalChecked.lean",
+    "HexInterval.WhnfRationalBaseline":
+        ROOT / "bench" / "HexInterval" / "WhnfRationalBaseline.lean",
 }
 
 PROVENANCE_SOURCES = [
@@ -125,13 +131,27 @@ def source_hashes() -> dict[str, str]:
     }
 
 
+@functools.cache
 def time_binary() -> str | None:
-    candidate = shutil.which("time")
-    if candidate:
-        return candidate
-    for path in (Path("/usr/bin/time"), Path("/run/current-system/sw/bin/time")):
-        if path.is_file():
-            return str(path)
+    """Find a `time` implementation that actually accepts GNU's `-f`."""
+    candidates = [
+        shutil.which("time"),
+        "/usr/bin/time",
+        "/run/current-system/sw/bin/time",
+    ]
+    seen: set[str] = set()
+    for candidate in candidates:
+        if candidate is None or candidate in seen or not Path(candidate).is_file():
+            continue
+        seen.add(candidate)
+        probe = subprocess.run(
+            [candidate, "-f", RSS_MARKER + "%M", "true"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if probe.returncode == 0 and RSS_MARKER in probe.stderr:
+            return candidate
     return None
 
 
@@ -290,7 +310,7 @@ def main() -> int:
     replay: dict[str, object] = {}
     representation_keys = [
         "baseline", "bundled", "checked", "import_bundled", "import_checked",
-        "whnf_bundled", "whnf_checked",
+        "whnf_bundled", "whnf_checked", "whnf_baseline",
     ]
     representation_rows = replay_samples(representation_keys, args.samples)
     baseline_rows = representation_rows["baseline"]
@@ -311,7 +331,7 @@ def main() -> int:
             "samples": rows,
             "median_wall_nanos": median,
             "median_import_baseline_subtracted_nanos":
-                max(0, median - baseline) if median is not None and baseline is not None else None,
+                median - baseline if median is not None and baseline is not None else None,
             "median_peak_rss_kb": summarize(rows, "peak_rss_kb"),
         }
 
@@ -322,10 +342,9 @@ def main() -> int:
             "module": import_module,
             "samples": import_rows,
             "median_wall_nanos": summarize(import_rows, "wall_nanos"),
-            "median_import_baseline_subtracted_nanos": max(
-                0,
-                summarize(import_rows, "wall_nanos") - baseline,
-            ) if summarize(import_rows, "wall_nanos") is not None
+            "median_import_baseline_subtracted_nanos":
+                summarize(import_rows, "wall_nanos") - baseline
+            if summarize(import_rows, "wall_nanos") is not None
                  and baseline is not None else None,
             "median_peak_rss_kb": summarize(import_rows, "peak_rss_kb"),
         }
@@ -334,20 +353,32 @@ def main() -> int:
         whnf_module = REPLAY_MODULES[whnf_key]
         whnf_rows = representation_rows[whnf_key]
         whnf_median = summarize(whnf_rows, "wall_nanos")
+        whnf_baseline = summarize(
+            representation_rows["whnf_baseline"], "wall_nanos"
+        )
         replay[whnf_key] = {
             "module": whnf_module,
             "samples": whnf_rows,
             "median_wall_nanos": whnf_median,
             "median_import_baseline_subtracted_nanos":
-                max(0, whnf_median - baseline)
-                if whnf_median is not None and baseline is not None else None,
+                whnf_median - whnf_baseline
+                if whnf_median is not None and whnf_baseline is not None else None,
             "median_peak_rss_kb": summarize(whnf_rows, "peak_rss_kb"),
             "median_whnf_nanos": summarize(whnf_rows, "whnf_nanos"),
         }
 
+    whnf_baseline_rows = representation_rows["whnf_baseline"]
+    replay["whnf_baseline"] = {
+        "module": REPLAY_MODULES["whnf_baseline"],
+        "samples": whnf_baseline_rows,
+        "median_wall_nanos": summarize(whnf_baseline_rows, "wall_nanos"),
+        "median_peak_rss_kb": summarize(whnf_baseline_rows, "peak_rss_kb"),
+    }
+
     rational_keys = [
         "rational_baseline", "rational_direct", "rational_checked",
         "rational_ops", "whnf_rational_direct", "whnf_rational_checked",
+        "whnf_rational_baseline",
     ]
     rational_rows = replay_samples(rational_keys, args.samples)
     rational_baseline_rows = rational_rows["rational_baseline"]
@@ -368,7 +399,7 @@ def main() -> int:
             "samples": rows,
             "median_wall_nanos": median,
             "median_import_baseline_subtracted_nanos":
-                max(0, median - rational_baseline)
+                median - rational_baseline
                 if median is not None and rational_baseline is not None else None,
             "median_peak_rss_kb": summarize(rows, "peak_rss_kb"),
         }
@@ -377,16 +408,31 @@ def main() -> int:
         module = REPLAY_MODULES[variant]
         rows = rational_rows[variant]
         median = summarize(rows, "wall_nanos")
+        whnf_rational_baseline = summarize(
+            rational_rows["whnf_rational_baseline"], "wall_nanos"
+        )
         replay[variant] = {
             "module": module,
             "samples": rows,
             "median_wall_nanos": median,
             "median_import_baseline_subtracted_nanos":
-                max(0, median - rational_baseline)
-                if median is not None and rational_baseline is not None else None,
+                median - whnf_rational_baseline
+                if median is not None and whnf_rational_baseline is not None else None,
             "median_peak_rss_kb": summarize(rows, "peak_rss_kb"),
             "median_whnf_nanos": summarize(rows, "whnf_nanos"),
         }
+
+    whnf_rational_baseline_rows = rational_rows["whnf_rational_baseline"]
+    replay["whnf_rational_baseline"] = {
+        "module": REPLAY_MODULES["whnf_rational_baseline"],
+        "samples": whnf_rational_baseline_rows,
+        "median_wall_nanos": summarize(
+            whnf_rational_baseline_rows, "wall_nanos"
+        ),
+        "median_peak_rss_kb": summarize(
+            whnf_rational_baseline_rows, "peak_rss_kb"
+        ),
+    }
 
     for module in REPLAY_MODULES.values():
         build_module(module, "c.o")

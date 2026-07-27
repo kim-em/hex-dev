@@ -138,7 +138,7 @@ theorem inv_sound {a c : Raw} (h : invOk a c = true) : a.value⁻¹ = c.value :=
 
 end Raw
 
-/-! ## Matched 433-step replay probes -/
+/-! ## Rational replay microprobes -/
 
 /-- The exposed-wrapper operand for the BKLNW-sized addition fold. -/
 def directStep : Rat := Rat.divInt 1 433
@@ -148,10 +148,25 @@ def directFold : Nat → Rat
   | 0 => 0
   | n + 1 => add (directFold n) directStep
 
-/-- The same fold encoded as independently checkable raw addition edges. -/
+/-- A certificate-only replay for the same mathematical sequence of additions.
+
+Unlike `directFold`, this does not construct the proposed output literals: it
+checks a trace in which the planner has already supplied them.  The benchmark
+therefore isolates verifier replay, not end-to-end certificate production. -/
 def checkedFold : Nat → Bool
   | 0 => true
   | n + 1 =>
       checkedFold n && Raw.addOk ⟨n, 433⟩ ⟨1, 433⟩ ⟨n + 1, 433⟩
+
+/-- Successful certificate replay composes to the value computed by the
+exposed Core-rational fold. -/
+theorem checkedFold_sound {n : Nat} (h : checkedFold n = true) :
+    Raw.value ⟨n, 433⟩ = directFold n := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+      simp only [checkedFold, Bool.and_eq_true] at h
+      rw [directFold, add_eq, ← ih h.1]
+      exact (Raw.add_sound h.2).symm
 
 end Hex.Interval.Experiment.Rational

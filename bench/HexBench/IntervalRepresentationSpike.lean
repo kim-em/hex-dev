@@ -52,6 +52,9 @@ def main (args : List String) : IO UInt32 := do
       let some repeats := repeatsText.toNat?
         | IO.eprintln usage
           return 2
+      if repeats = 0 then
+        IO.eprintln usage
+        return 2
       match variant with
       | "bundled" => timeWork variant n repeats bundledWork
       | "checked" => timeWork variant n repeats checkedWork

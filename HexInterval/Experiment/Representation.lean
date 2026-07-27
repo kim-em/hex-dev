@@ -20,11 +20,11 @@ the two layouts required by the D2 experiment:
 * `Bundled` carries a proof of cut consistency;
 * `Checked` is plain raw data, revalidated at a replay boundary.
 
-Both candidates use the production `Raw.normalize`.  The deterministic arena
-workload includes empty, whole, one-sided unbounded, proper finite, reversed,
-open-singleton, and closed-singleton inputs.  The shared checksum makes timing
-comparisons detect semantic disagreement rather than merely forcing weak-head
-evaluation.
+Both candidates use `Raw.normalizeUnchecked` after constructing small trusted
+inputs. The deterministic arena workload includes empty, whole, one-sided
+unbounded, proper finite, reversed, open-singleton, and closed-singleton inputs.
+The shared checksum makes timing comparisons detect semantic disagreement
+rather than merely forcing weak-head evaluation.
 -/
 
 namespace Hex.Interval.Experiment
@@ -39,7 +39,7 @@ namespace Bundled
 /-- Construct a bundled candidate from a trusted experiment input. Production
 planner boundaries must call `Raw.normalizeWithin` before exact comparison. -/
 def ofTrustedRaw (raw : Raw) : Bundled :=
-  ⟨raw.normalize, Raw.consistent_normalize raw⟩
+  ⟨raw.normalizeUnchecked, Raw.consistent_normalizeUnchecked raw⟩
 
 /-- Observable raw view.  This is deliberately the operation whose generated
 C representation is inspected by the D2 harness. -/
@@ -55,7 +55,7 @@ namespace Checked
 
 /-- Construct a plain candidate from a trusted experiment input. Production
 planner boundaries must call `Raw.normalizeWithin` before exact comparison. -/
-def ofTrustedRaw (raw : Raw) : Checked := raw.normalize
+def ofTrustedRaw (raw : Raw) : Checked := raw.normalizeUnchecked
 
 /-- Revalidate a plain candidate at a trust boundary. -/
 def valid (interval : Checked) : Bool := interval.consistent

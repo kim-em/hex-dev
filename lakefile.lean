@@ -206,6 +206,10 @@ lean_lib HexGF2BenchSupport where
   srcDir := "bench"
   globs := #[`HexGF2.Bench]
 
+lean_lib HexIntervalExperiment where
+  globs := #[`HexInterval.Experiment.Representation,
+    `HexInterval.Experiment.Rational]
+
 lean_lib HexIntervalReplayProbe where
   srcDir := "bench"
   globs := #[`HexInterval.ReplayBaseline, `HexInterval.ReplayBundled,
@@ -213,8 +217,9 @@ lean_lib HexIntervalReplayProbe where
     `HexInterval.ReplayRationalDirect, `HexInterval.ReplayRationalChecked,
     `HexInterval.ReplayRational, `HexInterval.ImportBundled,
     `HexInterval.ImportChecked, `HexInterval.WhnfBundled,
-    `HexInterval.WhnfChecked, `HexInterval.WhnfRationalDirect,
-    `HexInterval.WhnfRationalChecked]
+    `HexInterval.WhnfChecked, `HexInterval.WhnfBaseline,
+    `HexInterval.WhnfRationalDirect, `HexInterval.WhnfRationalChecked,
+    `HexInterval.WhnfRationalBaseline]
 
 -- Conformance #guard drivers live under `conformance/` and are built by this
 -- library (mirroring the released conformance sub-projects). Alongside each

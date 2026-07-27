@@ -27,6 +27,7 @@ QUALIFIED_IMPORT_RE = re.compile(r"^\s*(?:public\s+|private\s+)?import\s+([A-Za-
 UMBRELLA_BUILD_TARGETS = {
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
+    "HexIntervalExperiment",
     "HexConformance",
     "HexReleaseTests",
     "HexReleaseExamples",
