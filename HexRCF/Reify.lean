@@ -10,7 +10,7 @@ public import HexRCF.Soundness
 public import HexRealRootsMathlib.IsolateRoots
 public import Mathlib.Tactic.NormNum
 public import Mathlib.Tactic.Ring
-public meta import HexRCF.Decision
+public meta import HexRCF.DecisionCheck
 public meta import Mathlib.Lean.Elab.Tactic.Meta
 public meta import Qq
 public import Lean
