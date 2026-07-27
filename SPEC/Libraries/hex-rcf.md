@@ -294,6 +294,14 @@ proved equivalences.
    responsibilities of the step-8 sign-matrix checker, not trusted fields of
    an individual package.
 
+   Compiled preparation computes the gcd and Bézout coefficients over
+   `ℚ[x]`, converts the exact factor quotients back to `ℤ[x]`, and clears one
+   positive common denominator across both Bézout coefficients and the
+   rational unit relating the executable gcd to its primitive integer
+   representative. `buildCommonRoots?` traverses exactly the
+   first-occurrence-preserving `dedupPolys s.polys` order and retains every
+   candidate only after `CommonRootCert.check` accepts it.
+
 8. **Sign matrix.** For each cell and each atom polynomial `pⱼ`:
    The checker first coefficient-deduplicates the recomputed nonconstant atom
    order and checks exactly one positional common-root package per result;
@@ -592,9 +600,12 @@ free to change.
   branches, three-valued replay, and `check`; `HexRCF/CertificateTests.lean`:
   all quantifiers, empty/reversed domains, constants, zero/single/multiple-root
   decompositions, endpoint equality, and malformed nested evidence.
-- `HexRCF/Builder.lean`: checker-retained compiled carrier, isolation,
-  common-root, endpoint, and certificate construction, plus the public
-  `decide` wrapper and its one-way soundness theorems.
+- `HexRCF/Builder.lean`: exact rational conversion and checker-retained
+  compiled carrier and deduplicated, aligned common-root construction;
+  `HexRCF/BuilderTests.lean`: signed-content, repeated-factor, rational-scale,
+  common-root alignment, and failure regressions. This module also owns the
+  later isolation, endpoint, certificate construction, and public `decide`
+  wrapper described below.
 - `HexRCF/Separation.lean`: replay-based strict-separation refinement,
   strict-gap checking, and endpoint classification for bounded sentences;
   `HexRCF/SeparationTests.lean`: midpoint ownership, close-root, scan,
