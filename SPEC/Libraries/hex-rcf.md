@@ -598,9 +598,11 @@ free to change.
   and root-set soundness;
   `HexRCF/CarrierTests.lean`: constant filtering, genuine repeated-factor,
   dropped-root, and other tampered-carrier regressions.
-- `HexRCF/Isolations.lean`: the raw generalized isolation checker and its
-  bridge to literal isolation semantics; `HexRCF/IsolationsTests.lean`:
-  count, order, completeness, and no-real-root regressions.
+- `HexRCF/IsolationCheck.lean`: Mathlib-free raw generalized isolation data,
+  checks, and ordering/count consequences; `HexRCF/Isolations.lean`: the
+  bridge to literal isolation and real-root semantics;
+  `HexRCF/IsolationsTests.lean`: count, order, completeness, and no-real-root
+  regressions.
 - `HexRCF/Certificate.lean`: strict option folds, the four `Certificate`
   branches, three-valued replay, and `check`; `HexRCF/CertificateTests.lean`:
   all quantifiers, empty/reversed domains, constants, zero/single/multiple-root
