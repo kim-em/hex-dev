@@ -7,8 +7,9 @@
 - Diagnosed PR #8945's CI failure as a Phase-4 derivation-comment lint, repaired
   the benchmark comment, and restacked/pushed PRs #8945, #8947, and #8948.
 - Proved `powNat_eq_pow` over the lightweight noncommutative semiring interface.
-- Proved the strict pseudo-remainder size bound directly from the output-fold
-  invariant and normalized dense-polynomial representation.
+- Proved the structural pseudo-remainder size bound from the output-fold
+  iteration count and normalized dense-polynomial representation; this bound
+  intentionally carries no coefficient-level reconstruction content.
 - Corrected two false NumberField companion contracts by requiring checked
   irreducibility for semantic zero detection and degree preservation.
 - Completed focused audits of Resultant, NumberField, and NumberFieldTower,

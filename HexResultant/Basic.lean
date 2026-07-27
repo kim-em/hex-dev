@@ -46,6 +46,12 @@ universe u v w
 
 variable {R : Type u} [Zero R] [DecidableEq R]
 
+/-- Build `N` successive array entries, allowing each entry to inspect the
+prefix built so far. -/
+private def pushBuild {A : Type v} (N : Nat) (init : Array A)
+    (step : Array A → Nat → A) : Array A :=
+  (Array.range N).foldl (fun acc i => acc.push (step acc i)) init
+
 /--
 Polynomial pseudo-division without coefficient division.
 
@@ -135,6 +141,247 @@ private theorem size_foldl_push {A : Type v} {B : Type w}
   rw [Array.foldl_push_eq_append (stop := xs.size) rfl]
   simp
 
+/-- A dependent push build exposes its final append at a successor bound. -/
+private theorem pushBuild_succ {A : Type v} (N : Nat) (init : Array A)
+    (step : Array A → Nat → A) :
+    pushBuild (N + 1) init step =
+      (pushBuild N init step).push (step (pushBuild N init step) N) := by
+  simp [pushBuild, Array.range_succ]
+
+/-- A dependent push build appends exactly one entry per iteration. -/
+private theorem pushBuild_size {A : Type v} (N : Nat) (init : Array A)
+    (step : Array A → Nat → A) :
+    (pushBuild N init step).size = init.size + N := by
+  induction N with
+  | zero =>
+      rw [pushBuild,
+        Array.range_eq_empty_iff.mpr rfl, Array.foldl_empty]
+      omega
+  | succ N ih =>
+      rw [pushBuild_succ, Array.size_push, ih]
+      omega
+
+/-- Reading an entry appended by a dependent push build recovers the step
+that created it. -/
+private theorem pushBuild_getD {A : Type v}
+    (N k : Nat) (init : Array A) (step : Array A → Nat → A)
+    (fallback : A) (hk : k < N) :
+    (pushBuild N init step).getD (init.size + k) fallback =
+      step (pushBuild k init step) k := by
+  induction N generalizing k with
+  | zero => omega
+  | succ N ih =>
+      rw [pushBuild_succ]
+      by_cases hkn : k = N
+      · subst k
+        have hsize : init.size + N = (pushBuild N init step).size := by
+          rw [pushBuild_size]
+        have hidx : init.size + N <
+            ((pushBuild N init step).push
+              (step (pushBuild N init step) N)).size := by
+          rw [Array.size_push, pushBuild_size]
+          omega
+        rw [← Array.getElem_eq_getD fallback (h := hidx)]
+        simpa only [hsize] using
+          (Array.getElem_push_eq
+            (xs := pushBuild N init step)
+            (x := step (pushBuild N init step) N))
+      · have hkN : k < N := by omega
+        have hidxOld : init.size + k < (pushBuild N init step).size := by
+          rw [pushBuild_size]
+          omega
+        have hidxNew : init.size + k <
+            ((pushBuild N init step).push
+              (step (pushBuild N init step) N)).size := by
+          rw [Array.size_push, pushBuild_size]
+          omega
+        rw [← Array.getElem_eq_getD fallback (h := hidxNew),
+          Array.getElem_push_lt hidxOld,
+          Array.getElem_eq_getD fallback]
+        exact ih k hkN
+
+/-- Once an appended entry exists, extending a dependent push build leaves
+that entry unchanged. -/
+private theorem pushBuild_getD_stable {A : Type v}
+    (N t k : Nat) (init : Array A) (step : Array A → Nat → A)
+    (fallback : A) (hk : k < t) (ht : t ≤ N) :
+    (pushBuild N init step).getD (init.size + k) fallback =
+      (pushBuild t init step).getD (init.size + k) fallback := by
+  rw [pushBuild_getD N k init step fallback (by omega),
+    pushBuild_getD t k init step fallback hk]
+
+/-- Appending leaves every existing `getD` entry unchanged. -/
+private theorem getD_push_lt {A : Type v} (xs : Array A) (x fallback : A)
+    (i : Nat) (hi : i < xs.size) :
+    (xs.push x).getD i fallback = xs.getD i fallback := by
+  have hi' : i < (xs.push x).size := by
+    rw [Array.size_push]
+    omega
+  rw [← Array.getElem_eq_getD fallback (h := hi'),
+    Array.getElem_push_lt hi, Array.getElem_eq_getD fallback]
+
+/-- The final `getD` entry of a push is the appended value. -/
+private theorem getD_push_eq {A : Type v} (xs : Array A) (x fallback : A) :
+    (xs.push x).getD xs.size fallback = x := by
+  have hi : xs.size < (xs.push x).size := by
+    rw [Array.size_push]
+    omega
+  rw [← Array.getElem_eq_getD fallback (h := hi),
+    Array.getElem_push_eq]
+
+/-- The fallback of `getD` is irrelevant at an in-bounds index. -/
+private theorem getD_fallback_eq {A : Type v} (xs : Array A)
+    (i : Nat) (a b : A) (hi : i < xs.size) :
+    xs.getD i a = xs.getD i b := by
+  rw [← Array.getElem_eq_getD a (h := hi),
+    Array.getElem_eq_getD b]
+
+/-- The pseudo-division power table contains the expected consecutive powers
+of the divisor's leading coefficient. -/
+private theorem pseudoPowers_spec {S : Type u} [Lean.Grind.CommRing S]
+    (b : S) (d : Nat) :
+    let powers :=
+      pushBuild d #[1] fun powers _ =>
+        powers.getD (powers.size - 1) 1 * b
+    powers.size = d + 1 ∧
+      ∀ k, k ≤ d → powers.getD k 0 = b ^ k := by
+  let step : Array S → Nat → S := fun powers _ =>
+    powers.getD (powers.size - 1) 1 * b
+  change
+    (pushBuild d #[1] step).size = d + 1 ∧
+      ∀ k, k ≤ d → (pushBuild d #[1] step).getD k 0 = b ^ k
+  induction d with
+  | zero =>
+      constructor
+      · rw [pushBuild_size]
+        rfl
+      · intro k hk
+        have hk0 : k = 0 := by omega
+        subst k
+        have hzero : pushBuild 0 #[1] step = #[1] := by
+          rw [pushBuild, Array.range_eq_empty_iff.mpr rfl,
+            Array.foldl_empty]
+        rw [hzero]
+        simp [Array.getD_eq_getD_getElem?,
+          Lean.Grind.Semiring.pow_zero]
+  | succ d ih =>
+      constructor
+      · rw [pushBuild_size]
+        simp only [Array.size_singleton]
+        omega
+      · intro k hk
+        rw [pushBuild_succ]
+        by_cases hkd : k ≤ d
+        · have hbound : k < (pushBuild d #[1] step).size := by
+            rw [pushBuild_size]
+            simp only [Array.size_singleton]
+            omega
+          rw [getD_push_lt _ _ _ _ hbound]
+          exact ih.2 k hkd
+        · have hkEq : k = d + 1 := by omega
+          subst k
+          have hnew :
+              ((pushBuild d #[1] step).push
+                (step (pushBuild d #[1] step) d)).getD (d + 1) 0 =
+                step (pushBuild d #[1] step) d := by
+            rw [show d + 1 = (pushBuild d #[1] step).size from ih.1.symm,
+              getD_push_eq]
+          rw [hnew]
+          dsimp only [step]
+          have hlast : (pushBuild d #[1] step).size - 1 = d := by
+            rw [pushBuild_size]
+            simp only [Array.size_singleton]
+            omega
+          rw [hlast]
+          have hbound : d < (pushBuild d #[1] step).size := by
+            rw [pushBuild_size]
+            simp only [Array.size_singleton]
+            omega
+          rw [getD_fallback_eq _ _ 1 0 hbound, ih.2 d (by omega),
+            Lean.Grind.Semiring.pow_succ]
+
+/-- Coefficients of the raw pseudo-quotient are the reversed active
+coefficients with their residual leading-coefficient scaling. -/
+private theorem pseudoQuotient_coeff {S : Type u} [Zero S] [DecidableEq S]
+    [Mul S] (active powers : Array S) (d k : Nat) :
+    let quotient :=
+      pushBuild d #[] fun _ k =>
+        active.getD (d - 1 - k) 0 * powers.getD k 0
+    (ofCoeffs quotient).coeff k =
+      if k < d then
+        active.getD (d - 1 - k) 0 * powers.getD k 0
+      else 0 := by
+  let step : Array S → Nat → S := fun _ k =>
+    active.getD (d - 1 - k) 0 * powers.getD k 0
+  change
+    (ofCoeffs (pushBuild d #[] step)).coeff k =
+      if k < d then
+        active.getD (d - 1 - k) 0 * powers.getD k 0
+      else 0
+  rw [coeff_ofCoeffs]
+  by_cases hk : k < d
+  · rw [if_pos hk]
+    have hget := pushBuild_getD d k #[] step (Zero.zero : S) hk
+    simpa only [Array.size_empty, Nat.zero_add] using hget
+  · rw [if_neg hk]
+    have hsize : (pushBuild d #[] step).size ≤ k := by
+      rw [pushBuild_size]
+      simp only [Array.size_empty]
+      omega
+    rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_none hsize]
+    rfl
+
+/-- Coefficients of the pseudo-remainder are the low coefficients of the
+scaled dividend minus the bounded quotient-divisor convolution. -/
+private theorem pseudoRemainder_coeff {S : Type u}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (f g : DensePoly S) (powers quotient : Array S)
+    (d m t : Nat) :
+    let q := ofCoeffs quotient
+    let remainder :=
+      pushBuild m #[] fun _ t =>
+        let correction :=
+          (Array.range (min (t + 1) d)).foldl
+            (fun acc k =>
+              acc + quotient.getD k (Zero.zero : S) * g.coeff (t - k))
+            0
+        powers.getD d 0 * f.coeff t - correction
+    (ofCoeffs remainder).coeff t =
+      if t < m then
+        powers.getD d 0 * f.coeff t -
+          (Array.range (min (t + 1) d)).foldl
+            (fun acc k => acc + q.coeff k * g.coeff (t - k)) 0
+      else 0 := by
+  let step : Array S → Nat → S := fun _ t =>
+    let correction :=
+      (Array.range (min (t + 1) d)).foldl
+        (fun acc k =>
+          acc + quotient.getD k (Zero.zero : S) * g.coeff (t - k))
+        0
+    powers.getD d 0 * f.coeff t - correction
+  change
+    (ofCoeffs (pushBuild m #[] step)).coeff t =
+      if t < m then
+        powers.getD d 0 * f.coeff t -
+          (Array.range (min (t + 1) d)).foldl
+            (fun acc k =>
+              acc + (ofCoeffs quotient).coeff k * g.coeff (t - k)) 0
+      else 0
+  rw [coeff_ofCoeffs]
+  by_cases ht : t < m
+  · rw [if_pos ht]
+    dsimp only [step]
+    have hget := pushBuild_getD m t #[] step (Zero.zero : S) ht
+    dsimp only [step] at hget
+    simpa only [Array.size_empty, Nat.zero_add, coeff_ofCoeffs] using hget
+  · rw [if_neg ht]
+    have hsize : (pushBuild m #[] step).size ≤ t := by
+      rw [pushBuild_size]
+      simp only [Array.size_empty]
+      omega
+    rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_none hsize]
+    rfl
+
 /-- Pseudo-division reconstructs the fixed leading-coefficient multiple of the dividend.
 
 This theorem deliberately uses a fresh coefficient type: an ambient `Zero`
@@ -143,15 +390,16 @@ instance is not necessarily coherent with the zero supplied by
 theorem pseudoDivMod_reconstruct_core {S : Type u}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (f g : DensePoly S) (hg : g ≠ 0) (hfg : g.size ≤ f.size) :
-    let qr := pseudoDivMod f g
-    scale (g.leadingCoeff ^ (f.size - g.size + 1)) f = qr.1 * g + qr.2 := by
+    scale (g.leadingCoeff ^ (f.size - g.size + 1)) f =
+      (pseudoDivMod f g).1 * g + (pseudoDivMod f g).2 := by
   sorry
 
-/-- Under the pseudo-division preconditions, the remainder is smaller than the divisor. -/
-theorem pseudoDivMod_remainder_lt_core {S : Type u}
+/-- The quotient array is structurally bounded by the number of
+pseudo-division rounds. This bound does not use reconstruction correctness. -/
+theorem pseudoDivMod_quotient_size_le_core {S : Type u}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (f g : DensePoly S) (hg : g ≠ 0) (hfg : g.size ≤ f.size) :
-    (pseudoDivMod f g).2.size < g.size := by
+    (pseudoDivMod f g).1.size ≤ f.size - g.size + 1 := by
   have hgpos : 0 < g.size := by
     apply Nat.pos_of_ne_zero
     intro hsize
@@ -163,10 +411,37 @@ theorem pseudoDivMod_remainder_lt_core {S : Type u}
   have hgzero : g.isZero = false := (isZero_eq_false_iff g).2 hgpos
   simp only [pseudoDivMod, hgzero, Bool.false_eq_true, ↓reduceIte,
     Nat.not_lt_of_ge hfg]
-  exact Nat.lt_of_le_of_lt (size_ofCoeffs_le _) (by
+  exact Nat.le_trans (size_ofCoeffs_le _) (by
     rw [size_foldl_push]
     simp only [Array.size_empty, Array.size_range]
     omega)
+
+/-- The remainder array is structurally shorter than every nonzero divisor.
+This follows from the output fold's iteration count and does not constrain the
+computed coefficient values; reconstruction supplies the algebraic content. -/
+theorem pseudoDivMod_remainder_lt_core {S : Type u}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (f g : DensePoly S) (hg : g ≠ 0) :
+    (pseudoDivMod f g).2.size < g.size := by
+  by_cases hlt : f.size < g.size
+  · rw [pseudoDivMod_of_size_lt f g hlt]
+    exact hlt
+  · have hfg : g.size ≤ f.size := by omega
+    have hgpos : 0 < g.size := by
+      apply Nat.pos_of_ne_zero
+      intro hsize
+      apply hg
+      apply ext_coeff
+      intro i
+      rw [coeff_zero]
+      exact coeff_eq_zero_of_size_le g (by omega)
+    have hgzero : g.isZero = false := (isZero_eq_false_iff g).2 hgpos
+    simp only [pseudoDivMod, hgzero, Bool.false_eq_true, ↓reduceIte,
+      Nat.not_lt_of_ge hfg]
+    exact Nat.lt_of_le_of_lt (size_ofCoeffs_le _) (by
+      rw [size_foldl_push]
+      simp only [Array.size_empty, Array.size_range]
+      omega)
 
 /-! Small compiled regressions for the pseudo-division loop. -/
 

@@ -97,8 +97,9 @@ termination_by n
 decreasing_by omega
 
 /-- Iterating a lightweight-semiring power multiplies its exponents. -/
-private theorem pow_pow {S : Type u} [Lean.Grind.Semiring S]
-    (x : S) (m n : Nat) : (x ^ m) ^ n = x ^ (m * n) := by
+private theorem pow_mul {S : Type u} [Lean.Grind.Semiring S]
+    (x : S) (m n : Nat) : x ^ (m * n) = (x ^ m) ^ n := by
+  symm
   induction n with
   | zero => simp [Lean.Grind.Semiring.pow_zero]
   | succ n ih =>
@@ -121,10 +122,10 @@ theorem powNat_eq_pow {S : Type u} [Lean.Grind.Semiring S]
         rw [ih (n / 2) hlt (x * x)]
         have hdiv := Nat.mod_add_div n 2
         by_cases heven : n % 2 = 0
-        · rw [if_pos heven, ← Lean.Grind.Semiring.pow_two, pow_pow]
+        · rw [if_pos heven, ← Lean.Grind.Semiring.pow_two, ← pow_mul]
           congr 1
           omega
-        · rw [if_neg heven, ← Lean.Grind.Semiring.pow_two, pow_pow,
+        · rw [if_neg heven, ← Lean.Grind.Semiring.pow_two, ← pow_mul,
             ← Lean.Grind.Semiring.pow_succ]
           congr 1
           have hmod := Nat.mod_lt n (by decide : 0 < 2)
