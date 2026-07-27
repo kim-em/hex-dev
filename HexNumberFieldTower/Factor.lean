@@ -277,11 +277,13 @@ def flattenPoly (f : Array (Array Rat)) : List Rat :=
 def factorLess (a b : Array (Array Rat)) : Bool :=
   ratListLess (flattenPoly a) (flattenPoly b)
 
-/-- Check that adjacent factors are in canonical nondecreasing order. -/
+/-- Check that adjacent factors are in strict canonical order. Strictness
+ensures each irreducible occurs once, with its multiplicity stored in the
+paired natural number. -/
 @[expose]
 def factorsSorted (factors : Array (Array (Array Rat) × Nat)) : Bool :=
   (List.range (factors.size - 1)).all fun i =>
-    !factorLess factors[i + 1]!.1 factors[i]!.1
+    factorLess factors[i]!.1 factors[i + 1]!.1
 
 /-- Multiply a scalar and powered raw factor list. -/
 @[expose]
@@ -320,13 +322,16 @@ def factorRaw? (levels : List Level) (f : Array (Array Rat)) :
   let p := rawPoly levels f
   let scalar := p.leadingCoeff.data
   let components := yunRaw levels f
-  let factors ← components.foldlM (fun out component => do
-    let irreducibles ← factorSquarefree? levels component.1
-    pure <| irreducibles.foldl
-      (fun out factor => out.push (factor, component.2)) out) #[]
-  let factors := factors.qsort fun a b => factorLess a.1 b.1
-  if check levels f scalar factors then
-    some ⟨scalar, factors⟩
+  if checkYun levels f components then
+    let factors ← components.foldlM (fun out component => do
+      let irreducibles ← factorSquarefree? levels component.1
+      pure <| irreducibles.foldl
+        (fun out factor => out.push (factor, component.2)) out) #[]
+    let factors := factors.qsort fun a b => factorLess a.1 b.1
+    if check levels f scalar factors then
+      some ⟨scalar, factors⟩
+    else
+      none
   else
     none
 
@@ -429,6 +434,13 @@ private def yunSqrtTwoLevel : Level where
           result.factors.all (fun factor => 0 < factor.2) &&
           check levels (polyCoords f) result.scalar result.factors
     | none => false
+
+-- A factor may appear only once in the canonical certificate; its complete
+-- multiplicity belongs in the paired natural number.
+#guard
+    let xSubOne : Array (Array Rat) := #[#[-1], #[1]]
+    let f := polyCoords <| polyPow (rawPoly [] xSubOne) 3
+    !check [] f #[1] #[(xSubOne, 1), (xSubOne, 2)]
 
 end Factor
 
