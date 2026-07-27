@@ -43,7 +43,10 @@ namespace Hex
 
 structure QAdjoin (p : ZPoly) (x : SimpleRoot p) where
   coeffs    : DensePoly Rat
-  degree_lt : coeffs.degree? < p.degree?
+  degree_lt : coeffs.degree?.getD 0 < p.degree?.getD 0
+
+@[ext] theorem QAdjoin.ext (h : a.coeffs = b.coeffs) : a = b
+instance : DecidableEq (QAdjoin p x)
 
 /-- A factorization-lazy algebraic number. -/
 structure AlgebraicRoot where

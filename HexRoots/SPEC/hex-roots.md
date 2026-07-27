@@ -602,6 +602,11 @@ def SimpleRoot (p : ZPoly) := Quot (Intersects (p := p))
 
 def SimpleRoot.mk (iso : RefinedIsolation p) : SimpleRoot p := Quot.mk _ iso
 
+/-- A represented simple root forces its defining polynomial to have positive
+    degree. -/
+theorem SimpleRoot.posDegree (x : SimpleRoot p) :
+    0 < p.degree?.getD 0
+
 /-- Boolean form of `Intersects`, used for equality tests on data
     containing roots (see hex-number-field). -/
 def RefinedIsolation.sameRoot (i₁ i₂ : RefinedIsolation p) : Bool := …

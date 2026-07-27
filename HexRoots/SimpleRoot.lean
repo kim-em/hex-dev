@@ -93,6 +93,40 @@ instance {p : ZPoly} {i₁ i₂ : RefinedIsolation p} : Decidable (Intersects i�
 @[expose] def RefinedIsolation.sameRoot {p : ZPoly} (i₁ i₂ : RefinedIsolation p) : Bool :=
   DyadicSquare.discsMeet i₁.1.square i₂.1.square
 
+/-- A certified atom can only exist for a positive-degree polynomial. Both
+witness checkers inspect the full Taylor array: Newton--Kantorovich requires at
+least two coefficients, while the `k = 1` Pellet branch requires coefficient
+index one to exist. -/
+theorem DyadicRootIsolation.posDegree {p : ZPoly} (i : DyadicRootIsolation p) :
+    0 < p.degree?.getD 0 := by
+  have hsize : 1 < p.size := by
+    rcases i.witness with hnk | hpellet
+    · by_cases h : 1 < p.size
+      · exact h
+      · have htaylor : ¬ 2 ≤ (taylor p i.square.center).size := by
+          rw [taylor_size]
+          omega
+        simp [nkWitness, nkWitnessCheck, htaylor] at hnk
+    · by_cases h : 1 < p.size
+      · exact h
+      · have htaylor : ¬ 1 < (taylor p i.square.center).size := by
+          rw [taylor_size]
+          omega
+        change witnessCheck p i.square 1 = true at hpellet
+        unfold witnessCheck at hpellet
+        simp [pelletAt, htaylor] at hpellet
+  have hpos : 0 < p.size := by omega
+  rw [DensePoly.degree?_eq_some_of_pos_size p hpos]
+  simp
+  omega
+
+/-- Every represented simple root belongs to a positive-degree polynomial. -/
+theorem SimpleRoot.posDegree {p : ZPoly} (x : SimpleRoot p) :
+    0 < p.degree?.getD 0 := by
+  refine Quot.inductionOn x ?_
+  intro i
+  exact i.1.posDegree
+
 /-- Wrap an isolation as a `RefinedIsolation` when it meets the separation
     precision, deciding the subtype bound. `isolate`'s output always
     qualifies (its target has a `separationDepth ≥ mahlerPrec` floor); this

@@ -34,7 +34,7 @@ class ZPoly.CheckedIrreducible (p : ZPoly) : Prop where
 /-- Canonical reduced rational coordinates in the fixed field `ℚ(x)`. -/
 structure QAdjoin (p : ZPoly) (x : SimpleRoot p) where
   coeffs : DensePoly Rat
-  degree_lt : coeffs.degree? < p.degree?
+  degree_lt : coeffs.degree?.getD 0 < p.degree?.getD 0
 
 /-- A factorization-lazy algebraic root with an eagerly certified isolating
 representative. -/
