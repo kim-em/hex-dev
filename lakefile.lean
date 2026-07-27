@@ -138,6 +138,9 @@ lean_lib HexResultantMathlib where
 lean_lib HexNumberFieldMathlib where
 
 @[default_target]
+lean_lib HexNumberFieldTowerMathlib where
+
+@[default_target]
 lean_lib HexBerlekampMathlib where
 
 @[default_target]

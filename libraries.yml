@@ -503,7 +503,7 @@ libraries:
     deps: [HexNumberFieldTower, HexNumberFieldMathlib, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRowReduceMathlib]
     mathlib: true
     done_through: 0
-    status: planned
+    status: active
   HexRealRoots:
     deps: [HexPolyZ]
     mathlib: false
