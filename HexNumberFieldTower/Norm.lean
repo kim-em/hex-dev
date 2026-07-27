@@ -70,6 +70,14 @@ def oneLevel (level : Level) (lower : List Level)
   (DensePoly.resultant (definingOuter level lower)
     (shiftedOuter level lower f c)).toArray.map RawElem.data
 
+/-- Eliminate every tower generator without shifting. This absolute norm is
+used to obtain root candidates for splitting; recursive Trager factorization
+continues to use `oneLevel` independently at each level. -/
+@[expose]
+def iterated : (levels : List Level) → Array (Array Rat) → Array (Array Rat)
+  | [], f => f
+  | level :: lower, f => iterated lower (oneLevel level lower f 0)
+
 /-- Formal derivative over a runtime-indexed lower tower. -/
 @[expose]
 def derivative (lower : List Level) (f : DensePoly (RawElem lower)) :
@@ -176,6 +184,14 @@ private def normCubeRootTwoLevel : Level where
     let repeatedOverLower : Array (Array Rat) :=
       #[#[2, 0], #[0, -2], #[1, 0]]
     !isSquarefree [normSqrtTwoLevel] repeatedOverLower
+
+-- Absolute elimination deliberately retains repeated conjugate copies; the
+-- splitting layer takes the squarefree integer core before isolation.
+#guard
+    let xSubSqrtThree : Array (Array Rat) :=
+      #[#[0, 0, -1, 0], #[1, 0, 0, 0]]
+    iterated [normSqrtThreeLevel, normSqrtTwoLevel] xSubSqrtThree =
+      #[#[9], #[0], #[-6], #[0], #[1]]
 
 -- This cubic elimination reaches Brown's nonunit polynomial exact-division
 -- branch and exercises cascading reduction in a degree-three level.

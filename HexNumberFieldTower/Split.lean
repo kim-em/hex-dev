@@ -87,6 +87,40 @@ def levelOfFactor (candidate : AlgebraicRoot) (selected : Poly T) : Level :=
     coeffs (selected.coeff i)).toArray
   ⟨d, defining, candidate⟩
 
+/-- Root data for a polynomial over a completed splitting tower. -/
+inductive Roots (T : NumberTower) where
+  | all
+  | finite (roots : Array (Elem T × Nat))
+
+/-- A checked extension together with all roots of the original polynomial in
+that extension. -/
+structure Splitting (T : NumberTower) (f : Poly T) where
+  extension : Extension T
+  roots : Roots extension.tower
+
+/-- Map polynomial coefficients through an explicitly supplied tower
+embedding. -/
+@[expose]
+def mapPoly {T U : NumberTower} (embed : Elem T → Elem U)
+    (f : Poly T) : Poly U :=
+  DensePoly.ofCoeffs (f.toArray.map embed)
+
+/-- The identity extension, used when no generator needs to be adjoined. -/
+def Extension.identity (T : NumberTower) : Extension T :=
+  { tower := T
+    embed := id
+    gen := 0
+    root := AlgebraicNumber.zero.toRoot }
+
+/-- Compose dependent tower extensions while retaining the most recently
+adjoined generator. -/
+def Extension.trans {T : NumberTower} (outer : Extension T)
+    (inner : Extension outer.tower) : Extension T :=
+  { tower := inner.tower
+    embed := fun a => inner.embed (outer.embed a)
+    gen := inner.gen
+    root := inner.root }
+
 /-- Adjoin the specified absolute algebraic root. A selected linear factor
 produces the identity extension; a nonlinear factor is admitted only through
 `Internal.extend?`, which reruns structural, relative-irreducibility, and fixed-
@@ -113,6 +147,95 @@ def adjoin? (T : NumberTower) (candidate : AlgebraicRoot) :
         embed := fun a => ofCoeffs tower (coeffs a)
         gen := ofCoeffs tower ((Array.replicate T.dim 0).push 1)
         root := candidate }
+
+/-- Squarefree primitive integer eliminant obtained by taking the selected
+factor's norm through every tower level. -/
+@[expose]
+def factorEliminant (T : NumberTower) (f : Poly T) : ZPoly :=
+  let absolute := Norm.iterated T.levels.toList (f.toArray.map coeffs)
+  ZPoly.squareFreeCore <|
+    ZPoly.ratPolyPrimitivePart (Factor.toRatPoly absolute)
+
+/-- Isolate the absolute eliminant and retain the first root that zeros the
+relative factor under the current fixed embedding. -/
+@[expose]
+def factorRoot? (T : NumberTower) (f : Poly T) : Option AlgebraicRoot := do
+  let p := factorEliminant T f
+  if hprim : ZPoly.content p = 1 then
+    if hpos : 0 < p.leadingCoeff then
+      if hdegree : 0 < p.degree?.getD 0 then
+        if hsimple : HasOnlySimpleRoots p then do
+          let isolations ← isolate p hsimple (separationDepth p : Int)
+          let refined ← isolations.mapM DyadicRootIsolation.toRefined?
+          let candidates := refined.toList.map fun rep : RefinedIsolation p =>
+            ({ p
+               prim := hprim
+               pos_lc := hpos
+               pos_degree := hdegree
+               squarefree := hsimple
+               x := SimpleRoot.mk rep
+               rep
+               rep_mk := rfl } : AlgebraicRoot)
+          let retained ← candidates.filterM fun candidate =>
+            Evaluation.vanishesAt? T f candidate
+          retained.head?
+        else
+          none
+      else
+        none
+    else
+      none
+  else
+    none
+
+/-- Recover all roots once a checked factorization is entirely linear. -/
+@[expose]
+def linearRoots? {T : NumberTower} (factors : Array (Poly T × Nat)) :
+    Option (Array (Elem T × Nat)) :=
+  factors.mapM fun entry =>
+    if entry.1.degree?.getD 0 = 1 && 0 < entry.2 then
+      some (-(entry.1.coeff 0) / entry.1.leadingCoeff, entry.2)
+    else
+      none
+
+/-- Fuel-bounded split/refactor loop. Every successful nonlinear iteration
+consumes one fuel unit and must strictly increase the tower dimension. The
+initial polynomial degree bounds the theoretical degree-reducing sequence. -/
+def splitAux {T : NumberTower} (original : Poly T)
+    (extension : Extension T) (current : Poly extension.tower) (fuel : Nat) :
+    Option (Splitting T original) := do
+  let factorization ← factor? extension.tower current
+  match linearRoots? factorization.factors with
+  | some roots =>
+      some { extension
+             roots := .finite roots }
+  | none =>
+      match fuel with
+      | 0 => none
+      | fuel + 1 => do
+          let nonlinear ← factorization.factors.toList.find? fun entry =>
+            decide (1 < entry.1.degree?.getD 0)
+          let candidate ← factorRoot? extension.tower nonlinear.1
+          let step ← adjoin? extension.tower candidate
+          if step.tower.dim ≤ extension.tower.dim then
+            none
+          else
+            let nextExtension := extension.trans step
+            let nextPolynomial := mapPoly step.embed current
+            splitAux original nextExtension nextPolynomial fuel
+
+/-- Construct an extension in which the input polynomial splits into linear
+factors, retaining multiplicities from checked factorization. -/
+def split? (T : NumberTower) (f : Poly T) : Option (Splitting T f) :=
+  let identity := Extension.identity T
+  if f.isZero then
+    some { extension := identity
+           roots := .all }
+  else if f.degree?.getD 0 = 0 then
+    some { extension := identity
+           roots := .finite #[] }
+  else
+    splitAux f identity f (f.degree?.getD 0)
 
 /-! Compiled fixed-embedding selection regression. -/
 
@@ -294,5 +417,70 @@ private def selectFourthRootTwoRep :
         false
     else
       false
+
+-- Zero and nonzero constants split in the identity tower without inventing
+-- roots.
+#guard
+    let constant : Poly rat := DensePoly.C (ofRat rat 5)
+    match split? rat 0, split? rat constant with
+    | some zeroResult, some constantResult =>
+        zeroResult.extension.tower.dim = 1 &&
+          constantResult.extension.tower.dim = 1 &&
+          match zeroResult.roots, constantResult.roots with
+          | .all, .finite roots => roots.isEmpty
+          | _, _ => false
+    | _, _ => false
+
+-- Splitting one rational quadratic adjoins one root and recovers both linear
+-- factors with multiplicity one.
+#guard
+    let quadratic : Poly rat := DensePoly.ofCoeffs
+      #[ofRat rat (-2), 0, 1]
+    match split? rat quadratic with
+    | some result =>
+        result.extension.tower.height = 1 &&
+          result.extension.tower.dim = 2 &&
+          match result.roots with
+          | .finite roots =>
+              roots.size = 2 && roots.all fun entry =>
+                entry.2 = 1 &&
+                  coeffs (entry.1 * entry.1) = #[2, 0]
+          | .all => false
+    | none => false
+
+-- Multiplicities survive the adjoin/refactor loop rather than being recovered
+-- from a squarefree absolute eliminant.
+#guard
+    let repeated : Poly rat := DensePoly.ofCoeffs
+      #[ofRat rat 4, 0, ofRat rat (-4), 0, 1]
+    match split? rat repeated with
+    | some result =>
+        match result.roots with
+        | .finite roots =>
+            result.extension.tower.dim = 2 && roots.size = 2 &&
+              roots.all fun entry =>
+                entry.2 = 2 &&
+                  coeffs (entry.1 * entry.1) = #[2, 0]
+        | .all => false
+    | none => false
+
+-- The quartic `(X² - 2)(X² - 3)` requires two genuine adjoining steps and
+-- ends in `Q(sqrt(2), sqrt(3))` with all four simple roots.
+#guard
+    let quartic : Poly rat := DensePoly.ofCoeffs
+      #[ofRat rat 6, 0, ofRat rat (-5), 0, 1]
+    match split? rat quartic with
+    | some result =>
+        result.extension.tower.height = 2 &&
+          result.extension.tower.dim = 4 &&
+          match result.roots with
+          | .finite roots =>
+              roots.size = 4 && roots.all fun entry =>
+                let square := coeffs (entry.1 * entry.1)
+                entry.2 = 1 &&
+                  (square = #[2, 0, 0, 0] ||
+                    square = #[3, 0, 0, 0])
+          | .all => false
+    | none => false
 
 end Hex.NumberTower
