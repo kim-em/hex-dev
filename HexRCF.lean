@@ -11,6 +11,10 @@ public import HexRCF.LanguageTests
 public import HexRCF.SturmReplay
 public import HexRCF.SturmBuilder
 public import HexRCF.SturmBuilderTests
+public import HexRCF.Carrier
+public import HexRCF.CarrierTests
+public import HexRCF.Isolations
+public import HexRCF.IsolationsTests
 
 public section
 
@@ -23,5 +27,7 @@ The reflected language supports Boolean combinations of integer-polynomial
 comparisons under one universal or existential quantifier, either over the real
 line or over a half-open dyadic interval. Multiplication-only generalized Sturm
 replays provide the certified literal root counts used by the decision
-pipeline.
+pipeline. Multiplication-checkable carrier identities connect those counts to
+the sentence's atom roots, and raw generalized isolation certificates package
+the roots as ordered, complete dyadic intervals.
 -/

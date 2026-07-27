@@ -204,6 +204,13 @@ theorem check_sound {f : ZPoly} {cert : SturmReplay}
       · exact checkDegrees_sound hdegrees
       · exact DensePoly.eq_of_beqCoeffs hderiv
 
+/-- The head of an accepted replay is nonzero. -/
+theorem head_ne_zero {f : ZPoly} {cert : SturmReplay}
+    (h : cert.check f = true) : f ≠ 0 := by
+  obtain ⟨s₁, rest, _hchain, _hrep, hnz, _hdegrees, _hpos, _hderiv, _hcount⟩ :=
+    check_sound h
+  exact hnz f (by simp)
+
 /-- An accepted replay is a Sturm chain after casting its literal entries to
 real polynomials. -/
 theorem isChain_of_check {f : ZPoly} {cert : SturmReplay}
