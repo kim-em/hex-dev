@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.SturmBuilder
+public import HexRCF.SturmReplay
 import all HexRCF.SturmBuilder
 
 public section
