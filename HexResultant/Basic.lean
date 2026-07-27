@@ -382,6 +382,196 @@ private theorem pseudoRemainder_coeff {S : Type u}
     rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_none hsize]
     rfl
 
+/-- The contribution of the left coefficient `i` to product degree `t`. -/
+private def diagonalTerm {S : Type u} [Lean.Grind.CommRing S]
+    [DecidableEq S] (p q : DensePoly S) (t i : Nat) : S :=
+  if t < i then 0 else p.coeff i * q.coeff (t - i)
+
+/-- The contribution of `i` while the inner multiplication fold is restricted
+to the first `m` coefficients of the right factor. -/
+private def boundedTerm {S : Type u} [Lean.Grind.CommRing S]
+    [DecidableEq S] (p q : DensePoly S) (t i m : Nat) : S :=
+  if t < i then 0
+  else if t - i < m then p.coeff i * q.coeff (t - i) else 0
+
+/-- One inner schoolbook fold adds its bounded diagonal contribution. -/
+private theorem fold_step_bounded {S : Type u} [Lean.Grind.CommRing S]
+    [DecidableEq S] (p q : DensePoly S) (t i m : Nat) (acc : S) :
+    (List.range m).foldl (mulCoeffStep p q t i) acc =
+      acc + boundedTerm p q t i m := by
+  induction m generalizing acc with
+  | zero =>
+      simp [boundedTerm]
+      exact (Lean.Grind.Semiring.add_zero acc).symm
+  | succ m ih =>
+      rw [List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih]
+      unfold mulCoeffStep boundedTerm
+      by_cases hlt : t < i
+      · have hne : i + m ≠ t := by omega
+        simp [hlt, hne]
+      · by_cases hm : t - i < m
+        · have hne : i + m ≠ t := by omega
+          simp [hlt, hm, hne]
+          rw [if_pos (by omega)]
+        · by_cases heq : i + m = t
+          · have hsub : t - i = m := by omega
+            simp [hlt, heq, hsub]
+            rw [Lean.Grind.Semiring.add_zero]
+          · have hm' : ¬ t - i < m + 1 := by omega
+            simp [hlt, hm, hm', heq]
+
+/-- The complete inner schoolbook fold adds the full diagonal contribution. -/
+private theorem fold_step_diagonal {S : Type u} [Lean.Grind.CommRing S]
+    [DecidableEq S] (p q : DensePoly S) (t i : Nat) (acc : S) :
+    (List.range q.size).foldl (mulCoeffStep p q t i) acc =
+      acc + diagonalTerm p q t i := by
+  rw [fold_step_bounded]
+  unfold boundedTerm diagonalTerm
+  by_cases hlt : t < i
+  · simp [hlt]
+  · by_cases hbound : t - i < q.size
+    · simp [hlt, hbound]
+    · have hcoeff : q.coeff (t - i) = 0 :=
+        coeff_eq_zero_of_size_le q (Nat.le_of_not_gt hbound)
+      simp [hlt, hbound, hcoeff]
+      rw [Lean.Grind.Semiring.mul_zero, Lean.Grind.Semiring.add_zero]
+
+/-- Replacing each inner multiplication fold by its diagonal contribution
+preserves an arbitrary outer fold. -/
+private theorem fold_outer_diagonal {S : Type u} [Lean.Grind.CommRing S]
+    [DecidableEq S] (p q : DensePoly S) (t : Nat)
+    (xs : List Nat) (acc : S) :
+    xs.foldl
+        (fun coeff i =>
+          (List.range q.size).foldl (mulCoeffStep p q t i) coeff)
+        acc =
+      xs.foldl (fun coeff i => coeff + diagonalTerm p q t i) acc := by
+  induction xs generalizing acc with
+  | nil => rfl
+  | cons i xs ih =>
+      simp only [List.foldl_cons]
+      rw [fold_step_diagonal]
+      exact ih (acc + diagonalTerm p q t i)
+
+/-- The executable multiplication coefficient sum is its diagonal fold. -/
+private theorem mulCoeffSum_diagonal {S : Type u} [Lean.Grind.CommRing S]
+    [DecidableEq S] (p q : DensePoly S) (t : Nat) :
+    mulCoeffSum p q t =
+      (List.range p.size).foldl
+        (fun acc i => acc + diagonalTerm p q t i) 0 := by
+  unfold mulCoeffSum
+  exact fold_outer_diagonal p q t (List.range p.size) 0
+
+/-- A diagonal contribution vanishes past the stored left support. -/
+private theorem diagonal_zero_size {S : Type u} [Lean.Grind.CommRing S]
+    [DecidableEq S] (p q : DensePoly S) (t i : Nat)
+    (hi : p.size ≤ i) : diagonalTerm p q t i = 0 := by
+  unfold diagonalTerm
+  by_cases hti : t < i
+  · rw [if_pos hti]
+  · rw [if_neg hti, coeff_eq_zero_of_size_le p hi]
+    change (0 : S) * q.coeff (t - i) = 0
+    rw [Lean.Grind.Semiring.zero_mul]
+
+/-- A diagonal contribution vanishes past the target degree. -/
+private theorem diagonal_zero_degree {S : Type u}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (p q : DensePoly S) (t i : Nat) (hi : t < i) :
+    diagonalTerm p q t i = 0 := by
+  simp [diagonalTerm, hi]
+
+/-- Extending a diagonal fold past the left support changes nothing. -/
+private theorem diagonal_extend {S : Type u} [Lean.Grind.CommRing S]
+    [DecidableEq S] (p q : DensePoly S) (t d : Nat) :
+    (List.range (p.size + d)).foldl
+        (fun acc i => acc + diagonalTerm p q t i) 0 =
+      (List.range p.size).foldl
+        (fun acc i => acc + diagonalTerm p q t i) 0 := by
+  induction d with
+  | zero => simp
+  | succ d ih =>
+      rw [Nat.add_succ, List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih, diagonal_zero_size p q t (p.size + d) (by omega),
+        Lean.Grind.Semiring.add_zero]
+
+/-- A diagonal fold may be evaluated at any bound containing the left
+support. -/
+private theorem diagonal_bound {S : Type u} [Lean.Grind.CommRing S]
+    [DecidableEq S] (p q : DensePoly S) (t bound : Nat)
+    (hp : p.size ≤ bound) :
+    (List.range p.size).foldl
+        (fun acc i => acc + diagonalTerm p q t i) 0 =
+      (List.range bound).foldl
+        (fun acc i => acc + diagonalTerm p q t i) 0 := by
+  have hbound : p.size + (bound - p.size) = bound := by omega
+  rw [← hbound]
+  exact (diagonal_extend p q t (bound - p.size)).symm
+
+/-- Extending the canonical degree fold changes nothing because all new
+diagonal terms vanish. -/
+private theorem diagonal_truncate {S : Type u} [Lean.Grind.CommRing S]
+    [DecidableEq S] (p q : DensePoly S) (t d : Nat) :
+    (List.range (t + 1 + d)).foldl
+        (fun acc i => acc + diagonalTerm p q t i) 0 =
+      (List.range (t + 1)).foldl
+        (fun acc i => acc + diagonalTerm p q t i) 0 := by
+  induction d with
+  | zero => simp
+  | succ d ih =>
+      rw [Nat.add_succ, List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih, diagonal_zero_degree p q t (t + 1 + d) (by omega),
+        Lean.Grind.Semiring.add_zero]
+
+/-- A diagonal fold over an ambient support bound truncates to the smaller of
+that bound and the target degree range. -/
+private theorem diagonal_min {S : Type u} [Lean.Grind.CommRing S]
+    [DecidableEq S] (p q : DensePoly S) (t bound : Nat) :
+    (List.range bound).foldl
+        (fun acc i => acc + diagonalTerm p q t i) 0 =
+      (List.range (min (t + 1) bound)).foldl
+        (fun acc i => acc + diagonalTerm p q t i) 0 := by
+  by_cases hbound : bound ≤ t + 1
+  · rw [Nat.min_eq_right hbound]
+  · have hsum : t + 1 + (bound - (t + 1)) = bound := by omega
+    rw [Nat.min_eq_left (by omega), ← hsum]
+    exact diagonal_truncate p q t (bound - (t + 1))
+
+/-- Pointwise-equal range-fold steps give equal accumulated results. -/
+private theorem range_foldl_eq {A : Type v} (N : Nat)
+    (f g : A → Nat → A) (init : A)
+    (h : ∀ acc i, i < N → f acc i = g acc i) :
+    (List.range N).foldl f init = (List.range N).foldl g init := by
+  induction N generalizing init with
+  | zero => rfl
+  | succ N ih =>
+      rw [List.range_succ]
+      simp only [List.foldl_append, List.foldl_cons, List.foldl_nil]
+      rw [ih (init := init) (fun acc i hi => h acc i (by omega))]
+      exact h ((List.range N).foldl g init) N (by omega)
+
+/-- The product coefficient is the bounded convolution used by the
+pseudo-remainder builder. -/
+private theorem coeff_mul_bounded {S : Type u} [Lean.Grind.CommRing S]
+    [DecidableEq S] (p q : DensePoly S) (t bound : Nat)
+    (hp : p.size ≤ bound) :
+    (p * q).coeff t =
+      (Array.range (min (t + 1) bound)).foldl
+        (fun acc k => acc + p.coeff k * q.coeff (t - k)) 0 := by
+  rw [coeff_mul, mulCoeffSum_diagonal, diagonal_bound p q t bound hp,
+    diagonal_min]
+  rw [← Array.foldl_toList]
+  simp only [Array.toList_range]
+  apply range_foldl_eq
+  intro acc i hi
+  unfold diagonalTerm
+  rw [if_neg (by
+    have himin : i < min (t + 1) bound := hi
+    omega)]
+
 /-- Pseudo-division reconstructs the fixed leading-coefficient multiple of the dividend.
 
 This theorem deliberately uses a fresh coefficient type: an ambient `Zero`
