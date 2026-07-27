@@ -136,7 +136,7 @@ instance : BEq AlgebraicNumber := ⟨AlgebraicNumber.beq⟩
 is `X`. -/
 @[expose]
 def AlgebraicNumber.isZero (a : AlgebraicNumber) : Bool :=
-  a.p == (DensePoly.monomial 1 1 : ZPoly)
+  a.p == ZPoly.X
 
 /-- The selected lazy root is zero exactly when its polynomial has zero
 constant coefficient and its closed isolating disc contains zero. The refined

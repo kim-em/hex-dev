@@ -33,13 +33,6 @@ def reduce (p : ZPoly) (x : SimpleRoot p) (f : DensePoly Rat) : QAdjoin p x wher
   coeffs := reduceCoeffs p f
   degree_lt := ZPoly.rat_mod_zpoly_degree_lt _ _ x.posDegree
 
-/-- Coordinate equality in a fixed presentation. -/
-@[expose]
-def beq (a b : QAdjoin p x) : Bool :=
-  a.coeffs == b.coeffs
-
-instance : BEq (QAdjoin p x) := ⟨beq⟩
-
 /-- Fixed-presentation elements are equal when their canonical coordinates are
 equal. -/
 @[ext]
@@ -51,6 +44,10 @@ theorem ext {a b : QAdjoin p x} (h : a.coeffs = b.coeffs) : a = b := by
           change ac = bc at h
           subst bc
           rfl
+
+/-- Equality is exactly equality of canonical coordinate polynomials. -/
+theorem eq_iff_coeffs {a b : QAdjoin p x} : a = b ↔ a.coeffs = b.coeffs :=
+  ⟨fun h => congrArg QAdjoin.coeffs h, ext⟩
 
 instance : DecidableEq (QAdjoin p x) := by
   intro a b
@@ -64,9 +61,14 @@ instance : DecidableEq (QAdjoin p x) := by
 def isZero (a : QAdjoin p x) : Bool :=
   a.coeffs.isZero
 
-instance : Zero (QAdjoin p x) := ⟨reduce p x 0⟩
+instance : Zero (QAdjoin p x) where
+  zero := ⟨0, by simpa using x.posDegree⟩
 
-instance : One (QAdjoin p x) := ⟨reduce p x 1⟩
+instance : One (QAdjoin p x) where
+  one := ⟨1, by
+    change (DensePoly.C (1 : Rat)).degree?.getD 0 < p.degree?.getD 0
+    rw [DensePoly.degree?_C_getD]
+    exact x.posDegree⟩
 
 /-- Reduced coordinate addition. -/
 @[expose]
@@ -143,6 +145,8 @@ private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
 
 private def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
   SimpleRoot.mk sqrtTwoRep
+
+example : LawfulBEq (QAdjoin sqrtTwoPoly sqrtTwoRoot) := inferInstance
 
 #guard
     reduceCoeffs sqrtTwoPoly (DensePoly.ofList ([0, 0, 1] : List Rat)) =

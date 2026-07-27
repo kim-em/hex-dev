@@ -170,6 +170,7 @@ theorem isUnit_of_eq_neg_one {f : ZPoly} (h : f = -1) : IsUnit f := by
   isUnit_of_eq_neg_one rfl
 
 /-- View an integer polynomial as a rational polynomial. -/
+@[expose]
 def toRatPoly (f : ZPoly) : DensePoly Rat :=
   DensePoly.ofCoeffs <| f.toArray.map fun coeff : Int => (coeff : Rat)
 
