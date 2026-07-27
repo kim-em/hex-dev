@@ -44,6 +44,11 @@ JSONL fixture record shape (one record per line):
                      (a, b are reduced operands modulo `m(x)`; `zexp`
                       is the integer exponent for the `zpow` op.  `b`
                       must be nonzero so that `a / b` is well-defined.)
+* ``rcf_sentence`` — ``{"kind": "rcf_sentence", "lib": str,
+                         "case": str, "schema": 1,
+                         "sentence": <recursive sentence AST>}``
+                     (one univariate real sentence; atoms contain integer
+                      polynomial coefficients in ascending degree order.)
 
 Result records (emitted by Lean alongside the fixture, on the same
 JSONL stream) carry the operation name and Lean's computed answer:
@@ -83,6 +88,7 @@ VALID_FIXTURE_KINDS = frozenset(
         "gfq_bridge",
         "gfqring",
         "gfqfield",
+        "rcf_sentence",
     }
 )
 
@@ -97,6 +103,98 @@ class OracleMismatch(AssertionError):
     Carries enough context that the failure record was written before
     re-raising; the oracle CLI converts this into a non-zero exit.
     """
+
+
+def _exact_keys(value: dict[str, Any], expected: set[str], context: str) -> None:
+    """Require exactly ``expected`` object fields in a versioned schema."""
+    actual = set(value)
+    if actual != expected:
+        missing = sorted(expected - actual)
+        extra = sorted(actual - expected)
+        raise FixtureError(
+            f"{context} has wrong fields (missing={missing}, extra={extra}): "
+            f"{value!r}"
+        )
+
+
+def _is_int(value: Any) -> bool:
+    """JSON integer check which rejects booleans (a Python ``int`` subclass)."""
+    return type(value) is int
+
+
+def _validate_rcf_dyadic(value: Any, context: str) -> None:
+    if not isinstance(value, list) or len(value) != 2 or not all(
+        _is_int(component) for component in value
+    ):
+        raise FixtureError(f"{context} must be [int, int]: {value!r}")
+    numerator, exponent = value
+    if numerator == 0:
+        if exponent != 0:
+            raise FixtureError(f"{context} zero must be encoded canonically as [0, 0]")
+    elif numerator % 2 == 0:
+        raise FixtureError(f"{context} nonzero numerator must be odd: {value!r}")
+
+
+def _validate_rcf_formula(value: Any, context: str = "rcf_sentence.formula") -> None:
+    """Validate the complete, version-1 recursive RCF formula grammar."""
+    if not isinstance(value, dict):
+        raise FixtureError(f"{context} must be an object: {value!r}")
+    tag = value.get("tag")
+    if tag in {"tt", "ff"}:
+        _exact_keys(value, {"tag"}, context)
+    elif tag == "atom":
+        _exact_keys(value, {"tag", "coeffs", "cmp"}, context)
+        coeffs = value["coeffs"]
+        if not isinstance(coeffs, list) or not all(_is_int(c) for c in coeffs):
+            raise FixtureError(f"{context}.coeffs must be List[int]: {value!r}")
+        if coeffs and coeffs[-1] == 0:
+            raise FixtureError(
+                f"{context}.coeffs must be canonical (empty or nonzero last): {value!r}"
+            )
+        if value["cmp"] not in {"lt", "le", "eq", "ge", "gt", "ne"}:
+            raise FixtureError(
+                f"{context}.cmp must be one of lt/le/eq/ge/gt/ne: {value!r}"
+            )
+    elif tag == "not":
+        _exact_keys(value, {"tag", "arg"}, context)
+        _validate_rcf_formula(value["arg"], f"{context}.arg")
+    elif tag in {"and", "or", "imp"}:
+        _exact_keys(value, {"tag", "left", "right"}, context)
+        _validate_rcf_formula(value["left"], f"{context}.left")
+        _validate_rcf_formula(value["right"], f"{context}.right")
+    else:
+        raise FixtureError(f"{context}.tag is invalid: {tag!r}")
+
+
+def _validate_rcf_sentence(record: dict[str, Any]) -> None:
+    _exact_keys(record, {"kind", "lib", "case", "schema", "sentence"}, "rcf_sentence")
+    if not _is_int(record["schema"]) or record["schema"] != 1:
+        raise FixtureError(f"rcf_sentence.schema must be exactly 1: {record!r}")
+    sentence = record["sentence"]
+    if not isinstance(sentence, dict):
+        raise FixtureError(f"rcf_sentence.sentence must be an object: {record!r}")
+    _exact_keys(sentence, {"quantifier", "bounds", "formula"}, "rcf_sentence.sentence")
+    quantifier = sentence["quantifier"]
+    if quantifier not in {"forall_real", "exists_real", "forall_ioc", "exists_ioc"}:
+        raise FixtureError(
+            f"rcf_sentence.sentence.quantifier is invalid: {quantifier!r}"
+        )
+    bounds = sentence["bounds"]
+    if quantifier in {"forall_real", "exists_real"}:
+        if bounds is not None:
+            raise FixtureError(
+                f"rcf_sentence.sentence.bounds must be null for {quantifier}: {bounds!r}"
+            )
+    else:
+        if not isinstance(bounds, dict):
+            raise FixtureError(
+                f"rcf_sentence.sentence.bounds must be an object for {quantifier}: "
+                f"{bounds!r}"
+            )
+        _exact_keys(bounds, {"lower", "upper"}, "rcf_sentence.sentence.bounds")
+        _validate_rcf_dyadic(bounds["lower"], "rcf_sentence.sentence.bounds.lower")
+        _validate_rcf_dyadic(bounds["upper"], "rcf_sentence.sentence.bounds.upper")
+    _validate_rcf_formula(sentence["formula"])
 
 
 def _validate_fixture(record: dict[str, Any]) -> None:
@@ -182,6 +280,8 @@ def _validate_fixture(record: dict[str, Any]) -> None:
                 raise FixtureError(
                     f"gfqfield.{key} must be List[int]: {record!r}"
                 )
+    elif kind == "rcf_sentence":
+        _validate_rcf_sentence(record)
     elif kind == "result":
         if not isinstance(record.get("op"), str):
             raise FixtureError(f"result.op must be str: {record!r}")

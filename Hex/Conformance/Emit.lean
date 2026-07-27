@@ -14,10 +14,11 @@ strings and write them to either stdout or the file named by the
 `HEX_FIXTURE_OUTPUT` environment variable.
 
 The helpers intentionally avoid pulling in any third-party JSON
-library: every record we need to emit is a flat object whose values
-are strings, integers, lists of integers, or `null`, so a hand-rolled
-serializer is small enough to read at a glance and keeps `Hex` (the
-library hosting this module) dependency-free.
+library. Most records are flat objects whose values are strings,
+integers, lists of integers, or `null`; the one recursive RCF sentence
+fixture uses a closed typed wire AST below. The resulting hand-rolled
+serializer remains small enough to audit and keeps `Hex` (the library
+hosting this module) dependency-free.
 
 Per-library emit drivers (e.g. `HexPoly/EmitFixtures.lean`) define a
 `main` that walks a fixture list and calls these helpers; a `lean_exe`
@@ -222,6 +223,120 @@ def emitGfqFieldFixture (lib case : String) (p : Int)
     ("a",       jsonIntList a),
     ("b",       jsonIntList b),
     ("zexp",    jsonInt zexp)
+  ]
+
+/-! ## Real-closed-field sentence fixtures -/
+
+/- Typed wire representation for the RCF sentence fixture.  Keeping this
+small AST in the dependency-free conformance helper prevents per-library
+emitters from hand-rolling nested JSON or accidentally serialising internal
+certificate evidence. -/
+namespace Rcf
+
+/-- A comparison tag in the RCF fixture schema. -/
+inductive Cmp where
+  | lt | le | eq | ge | gt | ne
+
+/-- A Boolean formula over ascending-coefficient integer polynomials. -/
+inductive Formula where
+  | atom (coeffs : List Int) (cmp : Cmp)
+  | tt
+  | ff
+  | not (arg : Formula)
+  | and (left right : Formula)
+  | or (left right : Formula)
+  | imp (left right : Formula)
+
+/-- A dyadic number as `(numerator, denominator exponent)`, denoting
+`numerator * 2^(-exponent)`. -/
+abbrev Dyadic := Int × Int
+
+/-- One quantified RCF sentence.  The constructors enforce that only bounded
+quantifiers carry endpoints. -/
+inductive Sentence where
+  | forallReal (formula : Formula)
+  | existsReal (formula : Formula)
+  | forallIoc (lower upper : Dyadic) (formula : Formula)
+  | existsIoc (lower upper : Dyadic) (formula : Formula)
+
+end Rcf
+
+private def rcfCmpValue : Rcf.Cmp → String
+  | .lt => jsonString "lt"
+  | .le => jsonString "le"
+  | .eq => jsonString "eq"
+  | .ge => jsonString "ge"
+  | .gt => jsonString "gt"
+  | .ne => jsonString "ne"
+
+private def rcfFormulaValue : Rcf.Formula → String
+  | .atom coeffs cmp => jsonObject [
+      ("tag", jsonString "atom"),
+      ("coeffs", jsonIntList coeffs),
+      ("cmp", rcfCmpValue cmp)
+    ]
+  | .tt => jsonObject [("tag", jsonString "tt")]
+  | .ff => jsonObject [("tag", jsonString "ff")]
+  | .not arg => jsonObject [
+      ("tag", jsonString "not"),
+      ("arg", rcfFormulaValue arg)
+    ]
+  | .and left right => jsonObject [
+      ("tag", jsonString "and"),
+      ("left", rcfFormulaValue left),
+      ("right", rcfFormulaValue right)
+    ]
+  | .or left right => jsonObject [
+      ("tag", jsonString "or"),
+      ("left", rcfFormulaValue left),
+      ("right", rcfFormulaValue right)
+    ]
+  | .imp left right => jsonObject [
+      ("tag", jsonString "imp"),
+      ("left", rcfFormulaValue left),
+      ("right", rcfFormulaValue right)
+    ]
+
+private def rcfDyadicValue (d : Rcf.Dyadic) : String :=
+  jsonIntList [d.1, d.2]
+
+private def rcfBoundsValue (lower upper : Rcf.Dyadic) : String :=
+  jsonObject [
+    ("lower", rcfDyadicValue lower),
+    ("upper", rcfDyadicValue upper)
+  ]
+
+private def rcfSentenceValue : Rcf.Sentence → String
+  | .forallReal formula => jsonObject [
+      ("quantifier", jsonString "forall_real"),
+      ("bounds", "null"),
+      ("formula", rcfFormulaValue formula)
+    ]
+  | .existsReal formula => jsonObject [
+      ("quantifier", jsonString "exists_real"),
+      ("bounds", "null"),
+      ("formula", rcfFormulaValue formula)
+    ]
+  | .forallIoc lower upper formula => jsonObject [
+      ("quantifier", jsonString "forall_ioc"),
+      ("bounds", rcfBoundsValue lower upper),
+      ("formula", rcfFormulaValue formula)
+    ]
+  | .existsIoc lower upper formula => jsonObject [
+      ("quantifier", jsonString "exists_ioc"),
+      ("bounds", rcfBoundsValue lower upper),
+      ("formula", rcfFormulaValue formula)
+    ]
+
+/-- Emit a version-1 `rcf_sentence` fixture containing only the original
+reflected input sentence. -/
+def emitRcfFixture (lib case : String) (sentence : Rcf.Sentence) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "rcf_sentence"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("schema", "1"),
+    ("sentence", rcfSentenceValue sentence)
   ]
 
 /-- Emit a `result` record carrying Lean's computed answer for one op
