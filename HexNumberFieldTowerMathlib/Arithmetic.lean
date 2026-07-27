@@ -60,7 +60,9 @@ theorem map_inv (T : NumberTower) (a : Elem T) :
 /-- Tower division computes complex division. -/
 theorem map_div (T : NumberTower) (a b : Elem T) :
     T.toComplex (a / b) = T.toComplex a / T.toComplex b := by
-  sorry
+  change T.toComplex (a * b⁻¹) = _
+  rw [map_mul, map_inv]
+  rfl
 
 /-- The executable rational scalar action is semantic scalar multiplication. -/
 theorem map_smul (T : NumberTower) (q : Rat) (a : Elem T) :

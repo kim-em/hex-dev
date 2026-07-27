@@ -42,23 +42,36 @@ theorem add?_isSome (a b : AlgebraicRoot) :
 /-- Total lazy addition computes complex addition. -/
 theorem add_toComplex (a b : AlgebraicRoot) :
     (a.add b).toComplex = a.toComplex + b.toComplex := by
-  sorry
+  cases h : a.add? b with
+  | none =>
+      have hsome := add?_isSome a b
+      simp [h] at hsome
+  | some c =>
+      simpa [AlgebraicRoot.add, h] using add?_sound a b h
 
 /-- A certified lazy difference denotes the difference of its inputs. -/
 theorem sub?_sound (a b : AlgebraicRoot) {c : AlgebraicRoot}
     (h : a.sub? b = some c) :
     c.toComplex = a.toComplex - b.toComplex := by
-  sorry
+  have hsum : c.toComplex = a.toComplex + b.neg.toComplex :=
+    add?_sound a b.neg h
+  rw [neg_toComplex] at hsum
+  exact hsum
 
 /-- The bounded lazy subtraction search always finds its certificate. -/
 theorem sub?_isSome (a b : AlgebraicRoot) :
     (a.sub? b).isSome := by
-  sorry
+  exact add?_isSome a b.neg
 
 /-- Total lazy subtraction computes complex subtraction. -/
 theorem sub_toComplex (a b : AlgebraicRoot) :
     (a.sub b).toComplex = a.toComplex - b.toComplex := by
-  sorry
+  cases h : a.sub? b with
+  | none =>
+      have hsome := sub?_isSome a b
+      simp [h] at hsome
+  | some c =>
+      simpa [AlgebraicRoot.sub, h] using sub?_sound a b h
 
 /-- A certified lazy product denotes the product of its inputs. -/
 theorem mul?_sound (a b : AlgebraicRoot) {c : AlgebraicRoot}
@@ -74,7 +87,12 @@ theorem mul?_isSome (a b : AlgebraicRoot) :
 /-- Total lazy multiplication computes complex multiplication. -/
 theorem mul_toComplex (a b : AlgebraicRoot) :
     (a.mul b).toComplex = a.toComplex * b.toComplex := by
-  sorry
+  cases h : a.mul? b with
+  | none =>
+      have hsome := mul?_isSome a b
+      simp [h] at hsome
+  | some c =>
+      simpa [AlgebraicRoot.mul, h] using mul?_sound a b h
 
 /-- A certified lazy inverse denotes the reciprocal of its input, including
 the executable convention `0⁻¹ = 0`. -/
@@ -91,23 +109,44 @@ theorem inv?_isSome (a : AlgebraicRoot) :
 /-- Total lazy inversion computes complex inversion. -/
 theorem inv_toComplex (a : AlgebraicRoot) :
     a.inv.toComplex = a.toComplex⁻¹ := by
-  sorry
+  cases h : a.inv? with
+  | none =>
+      have hsome := inv?_isSome a
+      simp [h] at hsome
+  | some b =>
+      simpa [AlgebraicRoot.inv, h] using inv?_sound a h
 
 /-- A certified lazy quotient denotes the quotient of its inputs. -/
 theorem div?_sound (a b : AlgebraicRoot) {c : AlgebraicRoot}
     (h : a.div? b = some c) :
     c.toComplex = a.toComplex / b.toComplex := by
-  sorry
+  cases hb : b.inv? with
+  | none => simp [AlgebraicRoot.div?, hb] at h
+  | some bInv =>
+      have hmul : a.mul? bInv = some c := by
+        simpa [AlgebraicRoot.div?, hb] using h
+      rw [mul?_sound a bInv hmul, inv?_sound b hb]
+      rfl
 
 /-- The bounded lazy division search always finds its certificate. -/
 theorem div?_isSome (a b : AlgebraicRoot) :
     (a.div? b).isSome := by
-  sorry
+  cases hb : b.inv? with
+  | none =>
+      have hsome := inv?_isSome b
+      simp [hb] at hsome
+  | some bInv =>
+      simpa [AlgebraicRoot.div?, hb] using mul?_isSome a bInv
 
 /-- Total lazy division computes complex division. -/
 theorem div_toComplex (a b : AlgebraicRoot) :
     (a.div b).toComplex = a.toComplex / b.toComplex := by
-  sorry
+  cases h : a.div? b with
+  | none =>
+      have hsome := div?_isSome a b
+      simp [h] at hsome
+  | some c =>
+      simpa [AlgebraicRoot.div, h] using div?_sound a b h
 
 end AlgebraicRoot
 
@@ -120,32 +159,44 @@ theorem zero_toComplex : (0 : AlgebraicNumber).toComplex = 0 := by
 /-- Canonical addition computes complex addition. -/
 theorem add_toComplex (a b : AlgebraicNumber) :
     (a + b).toComplex = a.toComplex + b.toComplex := by
-  sorry
+  change (a.toRoot.add b.toRoot).exact.toComplex = _
+  rw [AlgebraicRoot.exact_toComplex, AlgebraicRoot.add_toComplex,
+    AlgebraicNumber.toRoot_toComplex, AlgebraicNumber.toRoot_toComplex]
 
 /-- Canonical subtraction computes complex subtraction. -/
 theorem sub_toComplex (a b : AlgebraicNumber) :
     (a - b).toComplex = a.toComplex - b.toComplex := by
-  sorry
+  change (a.toRoot.sub b.toRoot).exact.toComplex = _
+  rw [AlgebraicRoot.exact_toComplex, AlgebraicRoot.sub_toComplex,
+    AlgebraicNumber.toRoot_toComplex, AlgebraicNumber.toRoot_toComplex]
 
 /-- Canonical multiplication computes complex multiplication. -/
 theorem mul_toComplex (a b : AlgebraicNumber) :
     (a * b).toComplex = a.toComplex * b.toComplex := by
-  sorry
+  change (a.toRoot.mul b.toRoot).exact.toComplex = _
+  rw [AlgebraicRoot.exact_toComplex, AlgebraicRoot.mul_toComplex,
+    AlgebraicNumber.toRoot_toComplex, AlgebraicNumber.toRoot_toComplex]
 
 /-- Canonical negation computes complex negation. -/
 theorem neg_toComplex (a : AlgebraicNumber) :
     (-a).toComplex = -a.toComplex := by
-  sorry
+  change a.toRoot.neg.exact.toComplex = _
+  rw [AlgebraicRoot.exact_toComplex, AlgebraicRoot.neg_toComplex,
+    AlgebraicNumber.toRoot_toComplex]
 
 /-- Canonical inversion computes complex inversion. -/
 theorem inv_toComplex (a : AlgebraicNumber) :
     a⁻¹.toComplex = a.toComplex⁻¹ := by
-  sorry
+  change a.toRoot.inv.exact.toComplex = _
+  rw [AlgebraicRoot.exact_toComplex, AlgebraicRoot.inv_toComplex,
+    AlgebraicNumber.toRoot_toComplex]
 
 /-- Canonical division computes complex division. -/
 theorem div_toComplex (a b : AlgebraicNumber) :
     (a / b).toComplex = a.toComplex / b.toComplex := by
-  sorry
+  change (a.toRoot.div b.toRoot).exact.toComplex = _
+  rw [AlgebraicRoot.exact_toComplex, AlgebraicRoot.div_toComplex,
+    AlgebraicNumber.toRoot_toComplex, AlgebraicNumber.toRoot_toComplex]
 
 end AlgebraicNumber
 

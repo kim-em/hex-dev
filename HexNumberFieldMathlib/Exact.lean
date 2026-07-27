@@ -45,7 +45,12 @@ theorem exact?_isSome (a : AlgebraicRoot) :
 /-- The total canonicalization wrapper preserves the represented value. -/
 theorem exact_toComplex (a : AlgebraicRoot) :
     a.exact.toComplex = a.toComplex := by
-  sorry
+  cases h : a.exact? with
+  | none =>
+      have hsome := exact?_isSome a
+      simp [h] at hsome
+  | some b =>
+      simpa [AlgebraicRoot.exact, h] using exact?_sound a h
 
 end AlgebraicRoot
 
@@ -76,7 +81,13 @@ theorem toAlgebraicNumber_toComplex [ZPoly.CheckedIrreducible p]
     (a : QAdjoin p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
     (a.toAlgebraicNumber rep h).toComplex = toComplex a rep h := by
-  sorry
+  cases hb : a.toAlgebraicNumber? rep h with
+  | none =>
+      have hsome := toAlgebraicNumber?_isSome a rep h
+      simp [hb] at hsome
+  | some b =>
+      simpa [QAdjoin.toAlgebraicNumber, hb] using
+        toAlgebraicNumber?_sound a rep h hb
 
 end QAdjoin
 
