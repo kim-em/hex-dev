@@ -125,6 +125,101 @@ instance {T : NumberTower} : DecidableEq (Elem T) := fun a b =>
 def ofRat (T : NumberTower) (q : Rat) : Elem T :=
   ofCoeffs T #[q]
 
+/-- A dependent extension result carries the canonical lower-field embedding,
+the new generator, and its selected absolute algebraic root. -/
+structure Extension (T : NumberTower) where
+  tower : NumberTower
+  embed : Elem T → Elem tower
+  gen : Elem tower
+  root : AlgebraicRoot
+
+/-- Primitive associate with positive leading coefficient. This leaves every
+complex root fixed and only normalizes a possible global sign. -/
+@[expose]
+def positiveAssociate (p : ZPoly) : ZPoly :=
+  if p.leadingCoeff < 0 then DensePoly.scale (-1 : Int) p else p
+
+/-- Checked integer irreducibility forces primitive content. -/
+theorem positiveAssociate_primitive (p : ZPoly)
+    (checked : ZPoly.CheckedIrreducible p) :
+    ZPoly.Primitive (positiveAssociate p) := by
+  sorry
+
+/-- A checked positive-degree polynomial's positive associate has positive
+leading coefficient. -/
+theorem positiveAssociate_lc_pos (p : ZPoly)
+    (checked : ZPoly.CheckedIrreducible p) :
+    0 < (positiveAssociate p).leadingCoeff := by
+  sorry
+
+/-- Sign association preserves positive degree. -/
+theorem positiveAssociate_degree_pos (p : ZPoly)
+    (checked : ZPoly.CheckedIrreducible p) :
+    0 < (positiveAssociate p).degree?.getD 0 := by
+  sorry
+
+/-- Sign association preserves the executable simple-root certificate. -/
+theorem positiveAssociate_simple (p : ZPoly) (hsf : HasOnlySimpleRoots p) :
+    HasOnlySimpleRoots (positiveAssociate p) := by
+  sorry
+
+/-- A root atom is unchanged by multiplication of its polynomial by `-1`. -/
+theorem atomWitness_positiveAssociate {p : ZPoly} {square : DyadicSquare}
+    (h : atomWitness p square) :
+    atomWitness (positiveAssociate p) square := by
+  sorry
+
+/-- Global sign normalization preserves the Mahler refinement precision. -/
+theorem mahlerPrec_positiveAssociate (p : ZPoly) :
+    mahlerPrec (positiveAssociate p) = mahlerPrec p := by
+  sorry
+
+/-- Transport a refined isolation across global sign normalization. -/
+def RefinedIsolation.positiveAssociate {p : ZPoly}
+    (rep : RefinedIsolation p) : RefinedIsolation (positiveAssociate p) :=
+  ⟨⟨rep.1.square, atomWitness_positiveAssociate rep.1.witness⟩, by
+    rw [mahlerPrec_positiveAssociate]
+    exact rep.2⟩
+
+/-- Build a one-level tower for a checked rational presentation. The level
+relation is the monic rational associate of `p`; its absolute generator uses
+the supplied isolation, transported only across a possible global sign. -/
+def ofQAdjoin {p : ZPoly} {x : SimpleRoot p}
+    [checked : ZPoly.CheckedIrreducible p]
+    (hsf : HasOnlySimpleRoots p) (rep : RefinedIsolation p)
+    (_h : SimpleRoot.mk rep = x) : Extension rat :=
+  let q := positiveAssociate p
+  let qrep := NumberTower.RefinedIsolation.positiveAssociate rep
+  let root : AlgebraicRoot :=
+    { p := q
+      prim := positiveAssociate_primitive p checked
+      pos_lc := positiveAssociate_lc_pos p checked
+      pos_degree := positiveAssociate_degree_pos p checked
+      squarefree := positiveAssociate_simple p hsf
+      x := SimpleRoot.mk qrep
+      rep := qrep
+      rep_mk := rfl }
+  let d := p.degree?.getD 0
+  let leading : Rat := p.leadingCoeff
+  let defining := ((List.range d).map fun i =>
+    #[(p.coeff i : Rat) / leading]).toArray
+  let level : Level := ⟨d, defining, root⟩
+  let tower : NumberTower := .mk #[level] (by
+    change level.Valid 1 ∧ True
+    constructor
+    · refine ⟨checked.pos_degree, by simp [level, defining], ?_⟩
+      intro i hi
+      simp [level, defining]
+    · trivial)
+  let generatorCoeffs := if d = 1 then
+    #[-((p.coeff 0 : Rat) / leading)]
+  else
+    #[0, 1]
+  { tower
+    embed := fun a => ofRat tower ((coeffs a).getD 0 0)
+    gen := ofCoeffs tower generatorCoeffs
+    root }
+
 /-! Compiled representation checks. -/
 
 #guard rat.dim = 1 && rat.height = 0
