@@ -21,6 +21,8 @@ public import HexRCF.Cells
 public import HexRCF.CellsTests
 public import HexRCF.CommonRoot
 public import HexRCF.CommonRootTests
+public import HexRCF.SignMatrix
+public import HexRCF.SignMatrixTests
 
 public section
 
@@ -41,4 +43,7 @@ size-indexed partition into root and open cells with exact dyadic samples and
 exact guarded intersection tests for half-open bounded domains.
 Checked common-root packages cache one multiplication-only gcd witness and
 generalized replay per distinct nonconstant atom, with exact root-cell queries.
+The sign-matrix layer then recomputes guarded open and root signs, validates
+coefficient-equality package alignment, and reflects every Boolean formula
+to one exact truth value on each semantic cell.
 -/

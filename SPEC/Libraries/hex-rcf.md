@@ -156,11 +156,12 @@ proved equivalences.
    the original goal described above.
 
 2. **Collect** the atom polynomials. Constant atoms (degree ≤ 0,
-   including the zero polynomial) are evaluated to `tt`/`ff` by the
-   decision pipeline and never reach the decomposition. The reifier
-   may perform the same fold as an optimisation, but `decide` and
-   `check` must also handle arbitrary directly constructed
-   `Sentence`s containing constant atoms.
+   including the zero polynomial) never contribute carrier boundaries or
+   common-root packages. Mixed formulas cache their constant signs alongside
+   nonconstant signs in each cell row; a constant-only formula is folded once
+   without constructing a carrier. The reifier may perform the same fold as
+   an optimisation, but `decide` and `check` must also handle arbitrary
+   directly constructed `Sentence`s containing constant atoms.
 
 3. **Handle empty bounded domains.** Before any cell reasoning, compare
    the dyadic endpoints. If `a < b` is false, `(a,b]` is empty:
@@ -253,6 +254,12 @@ proved equivalences.
    each open cell: a sign change would put a root of `pⱼ`, hence of
    `P`, strictly between consecutive roots of `P`.
 
+   For root-cell transfer, `RootModel.leftSpan` is the interval from the open
+   cell immediately left of root `i` through that root. Its preconnectedness,
+   open-sample and root membership lemmas, together with
+   `RootModel.root_eq_of_mem_leftSpan`, show that the only carrier root in the
+   span is root `i` itself.
+
 7. **Prepare common-root packages.** Do the expensive work once per
    distinct nonconstant atom, not once per root cell. For each `pⱼ`,
    the builder computes a rational gcd representative `gⱼ` and emits a
@@ -288,6 +295,11 @@ proved equivalences.
    an individual package.
 
 8. **Sign matrix.** For each cell and each atom polynomial `pⱼ`:
+   The checker first coefficient-deduplicates the recomputed nonconstant atom
+   order and checks exactly one positional common-root package per result;
+   missing, extra, swapped, or malformed packages fail. It also deduplicates
+   all formula polynomials and materializes one option-valued sign row per
+   cell, so repeated atom occurrences reuse the same arithmetic result.
    - Open cells: exact Horner evaluation at the cell's dyadic test
      point. The value is nonzero (the test point is in no isolation,
      and roots of `pⱼ` are roots of `P`). A zero value would refute
@@ -298,12 +310,18 @@ proved equivalences.
      Since `gⱼ ∣ P`, the interval contains at most one such root; the
      common-root identities make that root exist exactly when
      `pⱼ(rᵢ) = 0`. When `pⱼ(rᵢ) ≠ 0`, its sign at `rᵢ` equals its sign
-     on either adjacent open cell. The two adjacent signs agree,
-     because otherwise `pⱼ` would have another root before the next
-     carrier root.
+     on either adjacent open cell. The executable checker canonically uses
+     the open cell immediately to the left, which exists for every root.
+     Where both adjacent cells exist, their signs agree because otherwise
+     `pⱼ` would have another root before the next carrier root.
 
-9. **Evaluate.** Substitute each cell's signs into the atoms, fold
-   the Boolean structure: one truth value per cell.
+9. **Evaluate.** Look up each atom in the cached sign row and fold the Boolean
+   structure to one truth value per cell. All children are evaluated before a
+   connective is combined, so a missing sign returns `none` even when ordinary
+   Boolean short-circuiting could already determine the truth value. Under the
+   checked alignment and carrier hypotheses, the sign and formula evaluators
+   are total and their returned Boolean is equivalent to `Formula.toProp` at
+   every point of the semantic cell.
 
 10. **Quantify.**
 
@@ -430,11 +448,11 @@ The certificate contains:
 - isolating intervals whose `count_one`, ordering, and completeness
   fields are expressed using the literal carrier replay, plus the
   strict-gap checks;
-- all endpoint classifications, open-cell test points and their exact
-  polynomial evaluations, per-cell formula values, and the quantified
-  result; `check` re-evaluates these fields and derives every root-cell
-  sign from a `gⱼ` count (zero) or an adjacent open-cell sign
-  (nonzero), rather than trusting a supplied sign;
+- all endpoint classifications and the quantified result; open-cell test
+  points are deterministic, and exact polynomial signs and per-cell formula
+  values are recomputed rather than stored as redundant claims. `check`
+  derives every root-cell sign from a `gⱼ` count (zero) or the canonical
+  left-adjacent open-cell sign (nonzero), rather than trusting a supplied sign;
 - one common-root package per distinct nonconstant atom, with its
   three identities and at most one generalized replay for its `gⱼ`.
 
@@ -554,16 +572,21 @@ free to change.
   `HexRCF/SeparationTests.lean`: midpoint ownership, close-root, scan,
   malformed-input, and endpoint regressions.
 - `HexRCF/Cells.lean`: size-indexed executable cells, checked root models,
-  semantic partition, exact samples, endpoint-comparison vectors, and exact
-  `Ioc` intersection; `HexRCF/CellsTests.lean`: enumeration,
+  semantic partition, exact samples, canonical left-root spans,
+  endpoint-comparison vectors, and exact `Ioc` intersection;
+  `HexRCF/CellsTests.lean`: enumeration,
   zero/singleton/multiple-root samples, endpoint equality/order guards,
   relevance tables, and malformed lower/upper claim regressions.
 - `HexRCF/CommonRoot.lean`: multiplication-checkable common-root packages,
   constant/nonconstant replay branches, exact common-root semantics, and
   cached root-cell queries; `HexRCF/CommonRootTests.lean`: shared-factor,
   coprime, equal-polynomial, and tampered-evidence regressions.
-- `HexRCF/SignMatrix.lean`: test-point evaluation, the `gⱼ` root-cell
-  computation, Boolean folding.
+- `HexRCF/SignMatrix.lean`: three-way exact signs, coefficient-equality
+  atom deduplication and common-package alignment, guarded open-cell
+  evaluation, the `gⱼ` root-cell computation, and full Boolean reflection;
+  `HexRCF/SignMatrixTests.lean`: exhaustive comparisons/connectives,
+  zero/singleton/multiple-root cells, shared roots, constants, deduplication,
+  and malformed-alignment regressions.
 - `HexRCF/Soundness.lean`: `check_sound` and its four factors.
 - `HexRCF/Reify.lean`: `Qq`/`MetaM` reification, normalisation,
   fall-through messages.
@@ -631,7 +654,8 @@ Per [SPEC/testing.md](../testing.md):
 
 ## Complexity contract
 
-For a sentence with `m` atoms of degrees summing to `n`:
+For a sentence with `u` atom occurrences of degrees summing to `n`, of which
+`m` are distinct nonconstant polynomials and `c` are distinct constants:
 
 - Reification: linear in the goal.
 - `P`: one product and one `squareFreeCore`, `deg P ≤ n`.
@@ -641,8 +665,14 @@ For a sentence with `m` atoms of degrees summing to `n`:
   strict pairs pay no bisection cost and `k ≤ n` roots.
 - Common-root preparation: one gcd and one generalized chain per
   distinct nonconstant `gⱼ`, reused across all `k` root cells.
-- Sign matrix: `k·m` literal variation-count reads plus
-  `(k + 1)·m` open-cell evaluations; no per-root gcd computation.
+- Sign matrix: one cached sign per distinct polynomial and cell, so repeated
+  atom occurrences do not repeat arithmetic. There are `k·m` literal
+  variation-count reads, `(k + 1)·m` open-cell evaluations, and at most `k·m`
+  additional evaluations of the canonical left sample for nonzero root-cell
+  signs, plus `(2k + 1)·c` constant evaluations. The current cell-wise API
+  recomputes both distinct orders and performs coefficient-equality row lookups
+  in every row, contributing `O((2k + 1)·u² + k·m²)` coefficient-array
+  comparisons. There is no per-root gcd computation.
 - Certificate replay in the kernel: one pass over the certificate,
   using polynomial multiplication/subtraction, evaluation, and
   comparison only.
