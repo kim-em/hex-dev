@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexRCF.SignMatrix
+public import HexRCF.SignMatrixCheck
 
 public section
 

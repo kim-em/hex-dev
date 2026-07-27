@@ -10,7 +10,7 @@ public import HexRCF.Builder
 public meta import HexRCF.Builder
 public meta import HexRCF.Carrier
 public meta import HexRCF.CommonRoot
-public meta import HexRCF.SignMatrix
+public meta import HexRCF.SignMatrixCheck
 public meta import HexRCF.SturmBuilder
 
 public section

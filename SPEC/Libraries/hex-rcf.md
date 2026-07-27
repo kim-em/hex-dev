@@ -634,9 +634,11 @@ free to change.
   `HexRCF/CommonRoot.lean`: exact common-root and root-cell semantics;
   `HexRCF/CommonRootTests.lean`: shared-factor, coprime, equal-polynomial, and
   tampered-evidence regressions.
-- `HexRCF/SignMatrix.lean`: three-way exact signs, coefficient-equality
-  atom deduplication and common-package alignment, guarded open-cell
-  evaluation, the `gⱼ` root-cell computation, and full Boolean reflection;
+- `HexRCF/SignMatrixCheck.lean`: Mathlib-free three-way exact signs,
+  coefficient-equality atom deduplication and common-package alignment,
+  guarded open/root-cell evaluation, sign-row caching, and Boolean replay;
+  `HexRCF/SignMatrix.lean`: real-polynomial sign, root-cell, and full formula
+  reflection semantics;
   `HexRCF/SignMatrixTests.lean`: exhaustive comparisons/connectives,
   zero/singleton/multiple-root cells, shared roots, constants, deduplication,
   and malformed-alignment regressions.
