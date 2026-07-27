@@ -300,6 +300,176 @@ def roots [ZPoly.CheckedIrreducible p]
 
 end Hex.QAdjoin
 
+namespace Hex.AlgebraicPoly.Common
+
+/-- A primitive fixed-field presentation of an algebraic coefficient array. -/
+structure Presentation where
+  generator : AlgebraicNumber
+  coefficients : Array (QAdjoin generator.p generator.x)
+
+/-- Deterministic signed shift order `0, 1, -1, 2, -2, ...`. -/
+@[expose]
+def signedShift : Nat → Int
+  | 0 => 0
+  | k + 1 =>
+      if k % 2 = 0 then Int.ofNat (k / 2 + 1)
+      else -Int.ofNat (k / 2 + 1)
+
+/-- Checked canonical embedding of a rational number. -/
+@[expose]
+def rational? (q : Rat) : Option AlgebraicNumber :=
+  if q = 0 then
+    some 0
+  else do
+    let p := ZPoly.ratPolyPrimitivePart (DensePoly.ofList [-q, 1])
+    let root ← AlgebraicRoot.ofEliminant? p fun prec =>
+      some (DyadicComplexBall.ofRat q prec)
+    root.exact?
+
+/-- Checked canonical sum. -/
+@[expose]
+def add? (a b : AlgebraicNumber) : Option AlgebraicNumber := do
+  let root ← a.toRoot.add? b.toRoot
+  root.exact?
+
+/-- Checked canonical product. -/
+@[expose]
+def mul? (a b : AlgebraicNumber) : Option AlgebraicNumber := do
+  let root ← a.toRoot.mul? b.toRoot
+  root.exact?
+
+/-- Checked multiplication by an integer shift. -/
+@[expose]
+def scale? (c : Int) (a : AlgebraicNumber) : Option AlgebraicNumber := do
+  let scalar ← rational? c
+  mul? scalar a
+
+/-- One primitive-element shift candidate `theta + c * alpha`. -/
+@[expose]
+def shift? (theta alpha : AlgebraicNumber) (c : Int) : Option AlgebraicNumber :=
+  if c = 0 then
+    some theta
+  else do
+    let scaled ← scale? c alpha
+    add? theta scaled
+
+/-- Degree of a canonical algebraic number. -/
+@[expose]
+def degree (a : AlgebraicNumber) : Nat :=
+  a.p.degree?.getD 0
+
+/-- Extend a primitive presentation by one algebraic number. Testing
+`choose(deg(theta) * deg(alpha), 2) + 1` shifts is a conservative bounded
+primitive-element search. The maximum-degree candidate generates the
+compositum even when the two fields overlap. -/
+@[expose]
+def extend? (theta alpha : AlgebraicNumber) : Option AlgebraicNumber := do
+  let upper := degree theta * degree alpha
+  let count := Nat.choose upper 2 + 1
+  let best ← (List.range count).foldlM
+    (fun best k => do
+      let candidate ← shift? theta alpha (signedShift k)
+      some <| match best with
+      | none => some candidate
+      | some current =>
+          if degree current < degree candidate then some candidate
+          else some current)
+    (none : Option AlgebraicNumber)
+  best
+
+/-- Bounded primitive element for all nonzero coefficients. -/
+@[expose]
+def primitive? (coefficients : Array AlgebraicNumber) : Option AlgebraicNumber := do
+  let nonzero := coefficients.filter fun a => !a.isZero
+  let first ← nonzero[0]?
+  nonzero.toList.drop 1 |>.foldlM extend? first
+
+/-- Checked canonical powers `1, gamma, ..., gamma^last`. -/
+@[expose]
+def powers? (gamma : AlgebraicNumber) (last : Nat) :
+    Option (Array AlgebraicNumber) := do
+  let one ← rational? 1
+  (List.range last).foldlM
+    (fun powers _ => do
+      let previous ← powers.back?
+      let next ← mul? previous gamma
+      some (powers.push next))
+    #[one]
+
+/-- Field trace of `a` from a known ambient field degree. If `m` is the
+minimal-polynomial degree of `a`, this is `(ambient / m)` times the sum of its
+`m` conjugates. -/
+@[expose]
+def trace? (ambient : Nat) (a : AlgebraicNumber) : Option Rat :=
+  let m := degree a
+  if m = 0 || ambient % m != 0 then
+    none
+  else
+    let conjugateSum : Rat :=
+      -(a.p.coeff (m - 1) : Rat) / (a.p.leadingCoeff : Rat)
+    some (((ambient / m : Nat) : Rat) * conjugateSum)
+
+/-- Recover one coefficient in the power basis of `gamma` through the
+nondegenerate trace pairing, then validate the recovered coordinate by
+canonical algebraic equality. -/
+@[expose]
+def coordinates? (gamma a : AlgebraicNumber)
+    (powers : Array AlgebraicNumber) :
+    Option (QAdjoin gamma.p gamma.x) :=
+  if a.isZero then
+    some 0
+  else do
+    let d := degree gamma
+    let powerTraces ← powers.mapM (trace? d)
+    let gram : Matrix Rat d d := Matrix.ofFn fun i j =>
+      powerTraces[i.val + j.val]!
+    let indices : Vector Nat d :=
+      ⟨(List.range d).toArray, by simp⟩
+    let products ← indices.mapM fun k => mul? a powers[k]!
+    let rhs ← products.mapM (trace? d)
+    let coeffs ← Matrix.spanCoeffs gram rhs
+    let coordinate := QAdjoin.reduce gamma.p gamma.x
+      (DensePoly.ofCoeffs coeffs.toArray)
+    let recovered ← @QAdjoin.toAlgebraicNumber? gamma.p gamma.x gamma.checked
+      coordinate gamma.rep gamma.rep_mk
+    if recovered == a then some coordinate else none
+
+/-- Construct and validate one primitive fixed-field presentation for an
+algebraic coefficient array. -/
+@[expose]
+def presentation? (coefficients : Array AlgebraicNumber) :
+    Option Presentation := do
+  let generator ← primitive? coefficients
+  let d := degree generator
+  let powers ← powers? generator (2 * d - 2)
+  let embedded ← coefficients.mapM fun a => coordinates? generator a powers
+  some ⟨generator, embedded⟩
+
+end Hex.AlgebraicPoly.Common
+
+namespace Hex.AlgebraicPoly
+
+/-- Checked roots of a polynomial with canonical algebraic coefficients. All
+nonzero coefficients are first embedded in one bounded deterministic primitive
+presentation, then the fixed-field root driver is reused. -/
+@[expose]
+def roots? (f : AlgebraicPoly) : Option RootSet :=
+  if f.isZero then
+    some .all
+  else do
+    let common ← Common.presentation? f.coeffs
+    letI : ZPoly.CheckedIrreducible common.generator.p := common.generator.checked
+    let polynomial := DensePoly.ofCoeffs common.coefficients
+    QAdjoin.roots? polynomial common.generator.rep common.generator.rep_mk
+
+/-- Total roots of a polynomial with canonical algebraic coefficients. -/
+@[expose]
+def roots (f : AlgebraicPoly) : RootSet :=
+  f.roots?.getD
+    (Hex.panicWith .all "AlgebraicPoly.roots: certification failed")
+
+end Hex.AlgebraicPoly
+
 namespace Hex
 
 /-! Compiled fixed-field root regressions. -/
@@ -321,6 +491,20 @@ private def rootsSqrtTwo : QAdjoin rootsSqrtTwoPoly rootsSqrtTwoRoot :=
 
 private def rootsLinear : DensePoly (QAdjoin rootsSqrtTwoPoly rootsSqrtTwoRoot) :=
   DensePoly.ofList [-rootsSqrtTwo, 1]
+
+private def rootsSqrtTwoExact? : Option AlgebraicNumber :=
+  if hirred : ZPoly.isIrreducible rootsSqrtTwoPoly = true then
+    letI : ZPoly.CheckedIrreducible rootsSqrtTwoPoly :=
+      ⟨hirred, by decide⟩
+    rootsSqrtTwo.toAlgebraicNumber? rootsSqrtTwoRep rfl
+  else
+    none
+
+private def algebraicLinearRoots? : Option RootSet := do
+  let sqrtTwo ← rootsSqrtTwoExact?
+  let negSqrtTwo ← AlgebraicPoly.Common.scale? (-1) sqrtTwo
+  let one ← AlgebraicPoly.Common.rational? 1
+  AlgebraicPoly.roots? (AlgebraicPoly.ofArray #[negSqrtTwo, one])
 
 #guard QAdjoin.Roots.normEliminant rootsLinear = rootsSqrtTwoPoly
 
@@ -360,5 +544,25 @@ private def rootsLinear : DensePoly (QAdjoin rootsSqrtTwoPoly rootsSqrtTwoRoot) 
       | _, _ => false
     else
       false
+
+-- The algebraic-coefficient driver finds the positive root of `T - sqrt 2`
+-- after constructing and validating a common primitive presentation.
+#guard
+    match algebraicLinearRoots? with
+    | some (.finite roots) =>
+        roots.size = 1 &&
+          (roots[0]?).any fun root =>
+            root.multiplicity = 1 &&
+              decide (0 < root.root.rep.1.square.re)
+    | _ => false
+
+-- The public zero/constant conventions survive the common-field conversion.
+#guard
+    match
+        AlgebraicPoly.roots? (AlgebraicPoly.ofArray #[]),
+        rootsSqrtTwoExact? >>= fun one =>
+          AlgebraicPoly.roots? (AlgebraicPoly.ofArray #[one]) with
+    | some .all, some (.finite roots) => roots.isEmpty
+    | _, _ => false
 
 end Hex
