@@ -157,22 +157,139 @@ the matching pivot row and free column. -/
   simp [E.toIsEchelonForm.pivotCols_disjoint_freeCols i k,
     pivotIndex?_pivot E.toIsEchelonForm i]
 
+/-- Column → pivot-row lookup table: entry `c` holds the pivot-row index `i` when
+`c = D.pivotCols.get i`, and the sentinel `D.rank` when `c` is a free column. Built
+in one `O(rank)` pass, this replaces the per-entry `O(rank)` `pivotIndex?` scan the
+reference assembly used. Implementation helper for `nullspace`; the documented
+pivot/free reading holds when `D` is certified by an `IsEchelonForm` (whose pivot
+columns are distinct) — an arbitrary `RowEchelonData` with duplicate pivot columns
+has no such guarantee. -/
+@[expose]
+def pivotRowTable (D : RowEchelonData R n m) : Vector Nat m :=
+  Fin.foldl D.rank (fun t i => t.set (D.pivotCols.get i).val i.val (D.pivotCols.get i).isLt)
+    (Vector.replicate m D.rank)
+
+omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
+/-- A fold of `Vector.set`s at column indices distinct from `j` leaves entry `j`
+untouched. -/
+private theorem pivotRowTable_fold_ne (j : Fin m) :
+    ∀ (l : List (Fin D.rank)) (t : Vector Nat m),
+      (∀ i ∈ l, (D.pivotCols.get i).val ≠ j.val) →
+      (l.foldl (fun t i => t.set (D.pivotCols.get i).val i.val (D.pivotCols.get i).isLt) t)[j]
+        = t[j] := by
+  intro l
+  induction l with
+  | nil => intro t _; rfl
+  | cons x xs ih =>
+      intro t hne
+      rw [List.foldl_cons,
+        ih (t.set (D.pivotCols.get x).val x.val (D.pivotCols.get x).isLt)
+          (fun i hi => hne i (List.mem_cons_of_mem _ hi))]
+      exact Vector.getElem_set_ne (D.pivotCols.get x).isLt j.isLt (hne x List.mem_cons_self)
+
+/-- A fold of `Vector.set`s over a list containing `i₀` whose column indices are
+injective sets entry `(D.pivotCols.get i₀).val` to `i₀.val`. -/
+private theorem pivotRowTable_fold_mem (E : IsEchelonForm M D) (i₀ : Fin D.rank) :
+    ∀ (l : List (Fin D.rank)) (t : Vector Nat m), i₀ ∈ l →
+      (l.foldl (fun t i => t.set (D.pivotCols.get i).val i.val (D.pivotCols.get i).isLt) t)[D.pivotCols.get i₀]
+        = i₀.val := by
+  intro l
+  induction l with
+  | nil => intro t hmem; exact absurd hmem (List.not_mem_nil)
+  | cons x xs ih =>
+      intro t hmem
+      rw [List.foldl_cons]
+      rcases List.mem_cons.mp hmem with rfl | htail
+      · -- head is i₀: the tail never sets this column again (injectivity), so it survives
+        by_cases hx : i₀ ∈ xs
+        · exact ih _ hx
+        · rw [pivotRowTable_fold_ne (D.pivotCols.get i₀) xs
+              (t.set (D.pivotCols.get i₀).val i₀.val (D.pivotCols.get i₀).isLt)
+              (fun i hi hji => hx (by
+                have : i = i₀ := E.pivotCols_injective (Fin.ext hji)
+                exact this ▸ hi))]
+          exact Vector.getElem_set_self (D.pivotCols.get i₀).isLt
+      · exact ih _ htail
+
+private theorem pivotRowTable_get_pivot (E : IsEchelonForm M D) (i : Fin D.rank) :
+    (pivotRowTable D)[D.pivotCols.get i] = i.val := by
+  unfold pivotRowTable
+  rw [Fin.foldl_eq_finRange_foldl]
+  exact pivotRowTable_fold_mem E i (List.finRange D.rank)
+    (Vector.replicate m D.rank) (List.mem_finRange i)
+
+omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
+private theorem pivotRowTable_get_free (j : Fin m)
+    (hj : ∀ i : Fin D.rank, D.pivotCols.get i ≠ j) :
+    (pivotRowTable D)[j] = D.rank := by
+  unfold pivotRowTable
+  rw [Fin.foldl_eq_finRange_foldl,
+    pivotRowTable_fold_ne j (List.finRange D.rank) (Vector.replicate m D.rank)
+      (fun i _ hji => hj i (Fin.ext hji))]
+  exact Vector.getElem_replicate j.isLt
+
+/-- `Vector.get` of a `Vector.ofFn` is pointwise; a lightweight named form used to
+reduce `nullspace.get` without unfolding through the `Array.ofFn` backing. -/
+private theorem vector_get_ofFn {α : Type v} {N : Nat} (f : Fin N → α) (k : Fin N) :
+    (Vector.ofFn f).get k = f k := by
+  simp [Vector.get]
+
+/-- The nullspace basis assembly with the pivot-row table and free columns passed
+in, so both are computed once (in `nullspace`) rather than per basis vector.
+Implementation helper for `nullspace`; assumes the canonical arguments
+`tbl = pivotRowTable D` and `freeCols = E.freeCols` that `nullspace` supplies. -/
+@[expose]
+def nullspaceAux [Lean.Grind.Ring R] (E : IsRowReduced M D) (tbl : Vector Nat m)
+    (freeCols : Vector (Fin m) (m - D.rank)) :
+    Vector (Vector R m) (m - D.rank) :=
+  Vector.ofFn fun k =>
+    Vector.ofFn fun j =>
+      if j = freeCols.get k then (1 : R)
+      else if hi : tbl[j] < D.rank then
+        -(D.echelon[((⟨tbl[j], Nat.lt_of_lt_of_le hi E.toIsEchelonForm.rank_le_n⟩ : Fin n),
+            freeCols.get k)])
+      else (0 : R)
+
 /-- The individual nullspace basis vectors.
 
-Build the basis matrix once, then extract all of its columns. Keep
-`nullspaceMatrix` outside the per-column body so its free-column and pivot
-work remains shared. -/
+Assembled directly (no intermediate `nullspaceMatrix`, no `Matrix.col` re-read) with
+a single `O(rank)` `pivotRowTable` precomputation, giving `O(m²)` total instead of
+the `O(m³)` of a per-entry `pivotIndex?` scan. The characterization
+`nullspace_get` proves this equals the reference `Matrix.col nullspaceMatrix`
+assembly columnwise, so every downstream soundness/completeness lemma is unchanged. -/
 @[expose]
 def nullspace [Lean.Grind.Ring R] (E : IsRowReduced M D) :
     Vector (Vector R m) (m - D.rank) :=
-  let N := E.nullspaceMatrix
-  Vector.ofFn fun k => Matrix.col N k
+  nullspaceAux E (pivotRowTable D) E.toIsEchelonForm.freeCols
 
-private theorem nullspace_get [Lean.Grind.Ring R] (E : IsRowReduced M D)
+/-- The `k`-th nullspace basis vector is the `k`-th column of `nullspaceMatrix`:
+the fast direct assembly agrees columnwise with the reference. All downstream
+soundness/completeness lemmas route through this equality, so they are unaffected
+by the assembly rewrite. -/
+theorem nullspace_get [Lean.Grind.Ring R] (E : IsRowReduced M D)
     (k : Fin (m - D.rank)) :
     E.nullspace.get k = Matrix.col E.nullspaceMatrix k := by
-  unfold nullspace
-  exact Vector.getElem_ofFn _
+  simp only [nullspace, nullspaceAux, vector_get_ofFn, Matrix.col]
+  congr 1
+  funext j
+  rw [Matrix.getElem_pair_eq_nested]
+  by_cases hjfc : j = E.toIsEchelonForm.freeCols.get k
+  · -- free column of this basis vector: entry 1
+    rw [if_pos hjfc, hjfc, nullspaceMatrix_free]
+  · rw [if_neg hjfc]
+    rcases E.toIsEchelonForm.colPartition j with ⟨i, hi⟩ | ⟨l, hl⟩
+    · -- pivot column `j = D.pivotCols.get i`: entry `-echelon[pivotRow i][fc]`
+      subst hi
+      simp only [pivotRowTable_get_pivot E.toIsEchelonForm i]
+      rw [dif_pos i.isLt, nullspaceMatrix_pivot, Matrix.getElem_pair_eq_nested]
+      rfl
+    · -- other free column `j = freeCols.get l`, `l ≠ k`: entry 0
+      subst hl
+      have hlk : l ≠ k := fun h => hjfc (by rw [h])
+      simp only [pivotRowTable_get_free (E.toIsEchelonForm.freeCols.get l)
+        (fun i => E.toIsEchelonForm.pivotCols_disjoint_freeCols i l)]
+      rw [dif_neg (Nat.lt_irrefl D.rank),
+        nullspaceMatrix_free_ne E (k := k) (l := l) (fun h => hlk h.symm)]
 
 /-- On its own free column, a nullspace basis vector has entry `1`. -/
 @[grind =] theorem nullspace_get_free [Lean.Grind.Ring R] (E : IsRowReduced M D)

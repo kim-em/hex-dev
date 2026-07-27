@@ -70,8 +70,9 @@ private theorem vectorEquiv_nullspaceMatrix_mulVec [Field R]
   rw [Vector.getElem_ofFn j.isLt, foldl_finRange_eq_sum]
   apply Finset.sum_congr rfl
   intro k _
-  unfold Hex.Matrix.IsRowReduced.nullspace Hex.Matrix.col
-  simp [mul_comm, Vector.get, Vector.toArray_ofFn]
+  rw [E.nullspace_get k]
+  simp only [Hex.Matrix.getElem_col, ← Hex.Matrix.getElem_eq_getRow]
+  ring
 
 /-- Soundness of the executable `spanCoeffs`: when echelon-form data certifies
 `v` as a row combination with coefficients `c`, the Mathlib image of `v` is the
