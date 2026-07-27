@@ -777,12 +777,12 @@ def runOfBasisHarshCubicChecksum (input : OfBasisInput) : Int :=
 /-- Benchmark target: construct the exact row-major Gram data currently fed
 to the interval checker on a square basis. -/
 def runIntervalGramRowsSquareChecksum (input : OfBasisInput) : Int :=
-  intRowsChecksum ((Matrix.gramMatrix input.basis).rows.toArray.map Vector.toArray)
+  intRowsChecksum (GramSchmidt.Int.gramRows input.basis)
 
 /-- Benchmark target: construct the exact row-major Gram data currently fed
 to the interval checker on a wide basis. -/
 def runIntervalGramRowsWideChecksum (input : OfBasisInput) : Int :=
-  intRowsChecksum ((Matrix.gramMatrix input.basis).rows.toArray.map Vector.toArray)
+  intRowsChecksum (GramSchmidt.Int.gramRows input.basis)
 
 /-- Benchmark target: run the fixed-precision reducedness checker on a square
 basis. -/

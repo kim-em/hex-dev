@@ -905,8 +905,7 @@ theorem lllReducedInterval_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
     exact_mod_cast hS
   simp only [Hex.lllReducedInterval] at h
   set S : Int := (2 : Int) ^ Hex.Internal.intervalPrec with hSdef
-  set g : Array (Array Int) := (Matrix.gramMatrix b).rows.toArray.map Vector.toArray
-    with hgdef
+  set g : Array (Array Int) := GramSchmidt.Int.gramRows b with hgdef
   rcases hpass : IntervalGS.pass S g n with _ | ⟨mus, bstars⟩
   · rw [hpass] at h
     cases h
@@ -915,8 +914,9 @@ theorem lllReducedInterval_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
   obtain ⟨hsizeOK, hlovOK⟩ := h
   have hg : ∀ i (hi : i < n) j (hj : j ≤ i),
       (g[i]!)[j]! = (b.row ⟨i, hi⟩).dotProduct
-        (b.row ⟨j, Nat.lt_of_le_of_lt hj hi⟩) :=
-    fun i hi j hj => g_entries b i hi j (Nat.lt_of_le_of_lt hj hi)
+        (b.row ⟨j, Nat.lt_of_le_of_lt hj hi⟩) := by
+    intro i hi j hj
+    simp [g, GramSchmidt.Int.gramRows, hi, Nat.lt_of_le_of_lt hj hi]
   have hinv : Inv b S n (Nat.le_refl n) mus bstars :=
     pass_spec b hS g hg n (Nat.le_refl n) (mus, bstars) hpass
   obtain ⟨hszm, hszb, hrows⟩ := hinv
