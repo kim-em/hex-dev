@@ -1,7 +1,7 @@
 {
   "schema": "hex-interval-d2-center-v3",
   "environment": {
-    "git_commit": "943fce452e8b3c3b8fcaa2e6108de3452d2b5b0e",
+    "git_commit": "4123772fae532dba885ccee074ec331579514a1a",
     "git_dirty": false,
     "toolchain": "leanprover/lean4:v4.32.0-rc1",
     "hostname": "chungus2",
@@ -28,7 +28,7 @@
       "bench/HexIntervalMathlib/CenterDirect.lean": "c4382fb3b64c50fb974e9b9c5cca509e976cdc5b491c87e50d956aeeeb960732",
       "bench/HexIntervalMathlib/CenterReflected.lean": "112a7b89de02d1201020b07a84b7f1bb0c81b92fb8e0013d98f082dce1bdbe27",
       "lake-manifest.json": "5315ef9d575b3b13138a8e10e222cec2b7cf16a96069f550a79d2fe6d20e3264",
-      "lakefile.lean": "dd5cf3bcc5d14ff011ccf4f84314f49f58c31e31a90393cd843d3dca7445d07b",
+      "lakefile.lean": "2d0a3814afa3af8ba8db191a5699b12ed74516d9dde728aefcf27bc73e01acd9",
       "lean-toolchain": "72681913b978b3f7c2f48229836771f736f6e97d833917726b2263afbc6108ed",
       "scripts/bench/interval_center_sweep.py": "d4da66f79c013b7890c8f4f2d6fee01d51ca48a2e682a0066f50bfa3df656b5e"
     }
@@ -39,172 +39,172 @@
       "repeats": 100000,
       "samples": [
         {
-          "outer_wall_nanos": 491306470,
-          "inner_total_nanos": 484038072,
-          "per_call_nanos": 4840,
+          "outer_wall_nanos": 486520732,
+          "inner_total_nanos": 483682223,
+          "per_call_nanos": 4836,
           "checksum": 15902830050154145338,
-          "peak_rss_kb": 3884
+          "peak_rss_kb": 8372
         },
         {
-          "outer_wall_nanos": 502406972,
-          "inner_total_nanos": 499025658,
-          "per_call_nanos": 4990,
+          "outer_wall_nanos": 498842352,
+          "inner_total_nanos": 483248440,
+          "per_call_nanos": 4832,
           "checksum": 15902830050154145338,
-          "peak_rss_kb": 8400
+          "peak_rss_kb": 3916
         },
         {
-          "outer_wall_nanos": 484414409,
-          "inner_total_nanos": 481902304,
-          "per_call_nanos": 4819,
+          "outer_wall_nanos": 482933874,
+          "inner_total_nanos": 480039853,
+          "per_call_nanos": 4800,
           "checksum": 15902830050154145338,
-          "peak_rss_kb": 8296
+          "peak_rss_kb": 3928
         },
         {
-          "outer_wall_nanos": 488022731,
-          "inner_total_nanos": 485021380,
-          "per_call_nanos": 4850,
+          "outer_wall_nanos": 488962923,
+          "inner_total_nanos": 485725043,
+          "per_call_nanos": 4857,
           "checksum": 15902830050154145338,
-          "peak_rss_kb": 8304
+          "peak_rss_kb": 8344
         },
         {
-          "outer_wall_nanos": 491697370,
-          "inner_total_nanos": 487913689,
-          "per_call_nanos": 4879,
+          "outer_wall_nanos": 487405274,
+          "inner_total_nanos": 484648106,
+          "per_call_nanos": 4846,
           "checksum": 15902830050154145338,
-          "peak_rss_kb": 8392
+          "peak_rss_kb": 8352
         }
       ],
-      "median_per_call_nanos": 4850,
-      "median_peak_rss_kb": 8304
+      "median_per_call_nanos": 4836,
+      "median_peak_rss_kb": 8344
     },
     "lookup-budget": {
       "variant": "lookup-budget",
       "repeats": 100000,
       "samples": [
         {
-          "outer_wall_nanos": 474464383,
-          "inner_total_nanos": 470298546,
-          "per_call_nanos": 4702,
+          "outer_wall_nanos": 474468041,
+          "inner_total_nanos": 469898335,
+          "per_call_nanos": 4698,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8384
+          "peak_rss_kb": 8364
         },
         {
-          "outer_wall_nanos": 479705866,
-          "inner_total_nanos": 474199701,
-          "per_call_nanos": 4741,
+          "outer_wall_nanos": 470031202,
+          "inner_total_nanos": 466550091,
+          "per_call_nanos": 4665,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8380
+          "peak_rss_kb": 8292
         },
         {
-          "outer_wall_nanos": 471552406,
-          "inner_total_nanos": 468190120,
-          "per_call_nanos": 4681,
+          "outer_wall_nanos": 468456197,
+          "inner_total_nanos": 465616076,
+          "per_call_nanos": 4656,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8448
+          "peak_rss_kb": 8400
         },
         {
-          "outer_wall_nanos": 468458467,
-          "inner_total_nanos": 464648468,
-          "per_call_nanos": 4646,
+          "outer_wall_nanos": 472666049,
+          "inner_total_nanos": 469410814,
+          "per_call_nanos": 4694,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8324
+          "peak_rss_kb": 8316
         },
         {
-          "outer_wall_nanos": 474760904,
-          "inner_total_nanos": 471083230,
+          "outer_wall_nanos": 473894331,
+          "inner_total_nanos": 471081109,
           "per_call_nanos": 4710,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 6292
+          "peak_rss_kb": 8356
         }
       ],
-      "median_per_call_nanos": 4702,
-      "median_peak_rss_kb": 8380
+      "median_per_call_nanos": 4694,
+      "median_peak_rss_kb": 8356
     },
     "missing-edge": {
       "variant": "missing-edge",
       "repeats": 100000,
       "samples": [
         {
-          "outer_wall_nanos": 40221057,
-          "inner_total_nanos": 36885259,
-          "per_call_nanos": 368,
-          "checksum": 13692854070584439750,
-          "peak_rss_kb": 8420
-        },
-        {
-          "outer_wall_nanos": 38481107,
-          "inner_total_nanos": 35098349,
-          "per_call_nanos": 350,
-          "checksum": 13692854070584439750,
-          "peak_rss_kb": 8348
-        },
-        {
-          "outer_wall_nanos": 39100334,
-          "inner_total_nanos": 35431704,
-          "per_call_nanos": 354,
-          "checksum": 13692854070584439750,
-          "peak_rss_kb": 8332
-        },
-        {
-          "outer_wall_nanos": 38364453,
-          "inner_total_nanos": 35150818,
+          "outer_wall_nanos": 38376642,
+          "inner_total_nanos": 35129417,
           "per_call_nanos": 351,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8340
+          "peak_rss_kb": 8360
         },
         {
-          "outer_wall_nanos": 40326743,
-          "inner_total_nanos": 35231527,
-          "per_call_nanos": 352,
+          "outer_wall_nanos": 40909569,
+          "inner_total_nanos": 35576821,
+          "per_call_nanos": 355,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 6224
+          "peak_rss_kb": 6272
+        },
+        {
+          "outer_wall_nanos": 39604163,
+          "inner_total_nanos": 34741042,
+          "per_call_nanos": 347,
+          "checksum": 13692854070584439750,
+          "peak_rss_kb": 3940
+        },
+        {
+          "outer_wall_nanos": 37497249,
+          "inner_total_nanos": 34478292,
+          "per_call_nanos": 344,
+          "checksum": 13692854070584439750,
+          "peak_rss_kb": 8320
+        },
+        {
+          "outer_wall_nanos": 39511726,
+          "inner_total_nanos": 34593774,
+          "per_call_nanos": 345,
+          "checksum": 13692854070584439750,
+          "peak_rss_kb": 8384
         }
       ],
-      "median_per_call_nanos": 352,
-      "median_peak_rss_kb": 8340
+      "median_per_call_nanos": 347,
+      "median_peak_rss_kb": 8320
     },
     "unused-literal": {
       "variant": "unused-literal",
       "repeats": 100000,
       "samples": [
         {
-          "outer_wall_nanos": 11034244,
-          "inner_total_nanos": 8664950,
-          "per_call_nanos": 86,
+          "outer_wall_nanos": 15003015,
+          "inner_total_nanos": 9835383,
+          "per_call_nanos": 98,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8352
+          "peak_rss_kb": 8328
         },
         {
-          "outer_wall_nanos": 13009633,
-          "inner_total_nanos": 9621018,
-          "per_call_nanos": 96,
+          "outer_wall_nanos": 12993877,
+          "inner_total_nanos": 8719108,
+          "per_call_nanos": 87,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8376
+          "peak_rss_kb": 6260
         },
         {
-          "outer_wall_nanos": 11011971,
-          "inner_total_nanos": 8602938,
+          "outer_wall_nanos": 12240129,
+          "inner_total_nanos": 8649284,
           "per_call_nanos": 86,
+          "checksum": 13692854070584439750,
+          "peak_rss_kb": 3856
+        },
+        {
+          "outer_wall_nanos": 11411620,
+          "inner_total_nanos": 8705137,
+          "per_call_nanos": 87,
           "checksum": 13692854070584439750,
           "peak_rss_kb": 8348
         },
         {
-          "outer_wall_nanos": 13965911,
-          "inner_total_nanos": 9429814,
-          "per_call_nanos": 94,
-          "checksum": 13692854070584439750,
-          "peak_rss_kb": 8364
-        },
-        {
-          "outer_wall_nanos": 11497000,
-          "inner_total_nanos": 8872017,
+          "outer_wall_nanos": 11975507,
+          "inner_total_nanos": 8801100,
           "per_call_nanos": 88,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8336
+          "peak_rss_kb": 8364
         }
       ],
-      "median_per_call_nanos": 88,
-      "median_peak_rss_kb": 8352
+      "median_per_call_nanos": 87,
+      "median_peak_rss_kb": 8328
     }
   },
   "replay": {
@@ -212,45 +212,45 @@
       "module": "HexInterval.ReplayCenterBaseline",
       "samples": [
         {
-          "wall_nanos": 1148226921,
-          "peak_rss_kb": 819408,
+          "wall_nanos": 1425536498,
+          "peak_rss_kb": 814924,
           "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 823647663,
-          "peak_rss_kb": 820056,
+          "wall_nanos": 1059821172,
+          "peak_rss_kb": 812392,
           "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1672404201,
-          "peak_rss_kb": 812360,
+          "wall_nanos": 1128740024,
+          "peak_rss_kb": 814708,
           "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 839298873,
-          "peak_rss_kb": 819452,
+          "wall_nanos": 1254513006,
+          "peak_rss_kb": 806680,
           "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 794095429,
-          "peak_rss_kb": 821540,
+          "wall_nanos": 1135007581,
+          "peak_rss_kb": 806892,
           "axioms": null,
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 839298873,
-      "median_peak_rss_kb": 819452
+      "median_wall_nanos": 1135007581,
+      "median_peak_rss_kb": 812392
     },
     "checked": {
       "module": "HexInterval.ReplayCenterChecked",
       "samples": [
         {
-          "wall_nanos": 1098695668,
-          "peak_rss_kb": 813396,
+          "wall_nanos": 1034705708,
+          "peak_rss_kb": 814760,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -258,8 +258,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 923558136,
-          "peak_rss_kb": 822028,
+          "wall_nanos": 1033972844,
+          "peak_rss_kb": 818008,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -267,8 +267,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1953266141,
-          "peak_rss_kb": 805832,
+          "wall_nanos": 1273493227,
+          "peak_rss_kb": 805756,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -276,8 +276,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 999012323,
-          "peak_rss_kb": 822372,
+          "wall_nanos": 1050245899,
+          "peak_rss_kb": 805732,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -285,8 +285,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 839522977,
-          "peak_rss_kb": 820984,
+          "wall_nanos": 1157359183,
+          "peak_rss_kb": 809896,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -294,99 +294,99 @@
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 999012323,
+      "median_wall_nanos": 1050245899,
       "signed_import_baseline_wall_margin_nanos": [
-        -49531253,
-        99910473,
-        280861940,
-        159713450,
-        45427548
+        -390830790,
+        -25848328,
+        144753203,
+        -204267107,
+        22351602
       ],
-      "median_signed_import_baseline_wall_margin_nanos": 99910473,
-      "median_peak_rss_kb": 820984
+      "median_signed_import_baseline_wall_margin_nanos": -25848328,
+      "median_peak_rss_kb": 809896
     },
     "whnf_baseline": {
       "module": "HexInterval.WhnfCenterBaseline",
       "samples": [
         {
-          "wall_nanos": 1126797072,
-          "peak_rss_kb": 819924,
+          "wall_nanos": 1426966580,
+          "peak_rss_kb": 811792,
           "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1432653547,
-          "peak_rss_kb": 820896,
+          "wall_nanos": 1435000696,
+          "peak_rss_kb": 807764,
           "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1305764996,
-          "peak_rss_kb": 818564,
+          "wall_nanos": 1397314368,
+          "peak_rss_kb": 813072,
           "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1301680010,
-          "peak_rss_kb": 821240,
+          "wall_nanos": 1493894870,
+          "peak_rss_kb": 805708,
           "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1003101178,
-          "peak_rss_kb": 820492,
+          "wall_nanos": 1529113593,
+          "peak_rss_kb": 813020,
           "axioms": null,
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 1301680010,
-      "median_peak_rss_kb": 820492
+      "median_wall_nanos": 1435000696,
+      "median_peak_rss_kb": 811792
     },
     "whnf_checked": {
       "module": "HexInterval.WhnfCenterChecked",
       "samples": [
         {
-          "wall_nanos": 1108170620,
-          "peak_rss_kb": 821176,
+          "wall_nanos": 1421915652,
+          "peak_rss_kb": 818556,
           "axioms": null,
-          "whnf_nanos": 26127086
+          "whnf_nanos": 45100413
         },
         {
-          "wall_nanos": 1399617777,
-          "peak_rss_kb": 814616,
+          "wall_nanos": 1377763498,
+          "peak_rss_kb": 815700,
           "axioms": null,
-          "whnf_nanos": 30302798
+          "whnf_nanos": 29110213
         },
         {
-          "wall_nanos": 1916803377,
-          "peak_rss_kb": 813112,
+          "wall_nanos": 1619499424,
+          "peak_rss_kb": 805680,
           "axioms": null,
-          "whnf_nanos": 93505485
+          "whnf_nanos": 29026679
         },
         {
-          "wall_nanos": 2066662434,
-          "peak_rss_kb": 813560,
+          "wall_nanos": 1552540473,
+          "peak_rss_kb": 809644,
           "axioms": null,
-          "whnf_nanos": 44062414
+          "whnf_nanos": 45737428
         },
         {
-          "wall_nanos": 1095775481,
-          "peak_rss_kb": 821444,
+          "wall_nanos": 1624232091,
+          "peak_rss_kb": 810024,
           "axioms": null,
-          "whnf_nanos": 24818044
+          "whnf_nanos": 47189931
         }
       ],
-      "median_wall_nanos": 1399617777,
+      "median_wall_nanos": 1552540473,
       "signed_import_baseline_wall_margin_nanos": [
-        -18626452,
-        -33035770,
-        611038381,
-        764982424,
-        92674303
+        -5050928,
+        -57237198,
+        222185056,
+        58645603,
+        95118498
       ],
-      "median_signed_import_baseline_wall_margin_nanos": 92674303,
-      "median_whnf_nanos": 30302798,
-      "median_peak_rss_kb": 814616
+      "median_signed_import_baseline_wall_margin_nanos": 58645603,
+      "median_whnf_nanos": 45100413,
+      "median_peak_rss_kb": 810024
     }
   },
   "semantic": {
@@ -394,45 +394,45 @@
       "module": "HexIntervalMathlib.CenterBaseline",
       "samples": [
         {
-          "wall_nanos": 4801862465,
-          "peak_rss_kb": 2922656,
+          "wall_nanos": 6258979078,
+          "peak_rss_kb": 2890240,
           "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 4750581231,
-          "peak_rss_kb": 2920808,
+          "wall_nanos": 4965462610,
+          "peak_rss_kb": 2923228,
           "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 4860549107,
-          "peak_rss_kb": 2924620,
+          "wall_nanos": 4640562710,
+          "peak_rss_kb": 2921212,
           "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 4703364422,
-          "peak_rss_kb": 2921768,
+          "wall_nanos": 4801860588,
+          "peak_rss_kb": 2910736,
           "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 4763542528,
-          "peak_rss_kb": 2921048,
+          "wall_nanos": 5258141366,
+          "peak_rss_kb": 2890308,
           "axioms": null,
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 4763542528,
-      "median_peak_rss_kb": 2921768
+      "median_wall_nanos": 4965462610,
+      "median_peak_rss_kb": 2910736
     },
     "reflected": {
       "module": "HexIntervalMathlib.CenterReflected",
       "samples": [
         {
-          "wall_nanos": 5005576439,
-          "peak_rss_kb": 2926280,
+          "wall_nanos": 6239338074,
+          "peak_rss_kb": 2916520,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -441,8 +441,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 4904157405,
-          "peak_rss_kb": 2935232,
+          "wall_nanos": 5962031439,
+          "peak_rss_kb": 2910844,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -451,8 +451,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 4974177237,
-          "peak_rss_kb": 2947844,
+          "wall_nanos": 4929052885,
+          "peak_rss_kb": 2948196,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -461,8 +461,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 5094713055,
-          "peak_rss_kb": 2945112,
+          "wall_nanos": 5306465225,
+          "peak_rss_kb": 2944180,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -471,8 +471,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 4958944159,
-          "peak_rss_kb": 2944320,
+          "wall_nanos": 5048990950,
+          "peak_rss_kb": 2946416,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -481,23 +481,23 @@
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 4974177237,
+      "median_wall_nanos": 5306465225,
       "signed_import_baseline_wall_margin_nanos": [
-        203713974,
-        153576174,
-        113628130,
-        391348633,
-        195401631
+        -19641004,
+        996568829,
+        288490175,
+        504604637,
+        -209150416
       ],
-      "median_signed_import_baseline_wall_margin_nanos": 195401631,
-      "median_peak_rss_kb": 2944320
+      "median_signed_import_baseline_wall_margin_nanos": 288490175,
+      "median_peak_rss_kb": 2944180
     },
     "direct": {
       "module": "HexIntervalMathlib.CenterDirect",
       "samples": [
         {
-          "wall_nanos": 5110387604,
-          "peak_rss_kb": 2933652,
+          "wall_nanos": 5657261843,
+          "peak_rss_kb": 2885116,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -506,8 +506,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 4823588957,
-          "peak_rss_kb": 2938088,
+          "wall_nanos": 5363420456,
+          "peak_rss_kb": 2917096,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -516,8 +516,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 4905459996,
-          "peak_rss_kb": 2928748,
+          "wall_nanos": 5186730901,
+          "peak_rss_kb": 2916324,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -526,8 +526,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 4910972816,
-          "peak_rss_kb": 2934304,
+          "wall_nanos": 5056776483,
+          "peak_rss_kb": 2921472,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -536,8 +536,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 4859214205,
-          "peak_rss_kb": 2938016,
+          "wall_nanos": 4891503611,
+          "peak_rss_kb": 2921564,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -546,16 +546,16 @@
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 4905459996,
+      "median_wall_nanos": 5186730901,
       "signed_import_baseline_wall_margin_nanos": [
-        308525139,
-        73007726,
-        44910889,
-        207608394,
-        95671677
+        -601717235,
+        397957846,
+        546168191,
+        254915895,
+        -366637755
       ],
-      "median_signed_import_baseline_wall_margin_nanos": 95671677,
-      "median_peak_rss_kb": 2934304
+      "median_signed_import_baseline_wall_margin_nanos": 254915895,
+      "median_peak_rss_kb": 2917096
     }
   },
   "artifacts": {

@@ -100,10 +100,10 @@ generic boundary. Median time over 100,000 calls in each fresh process was:
 
 | Variant | Result | Median per check | Median peak RSS |
 | --- | --- | ---: | ---: |
-| accepted fixture | accept | 4.850 µs | 8.1 MiB |
-| one-step-short lookup budget | reject | 4.702 µs | 8.2 MiB |
-| selected equality edge missing | reject | 0.352 µs | 8.1 MiB |
-| dead oversized literal | reject | 0.088 µs | 8.2 MiB |
+| accepted fixture | accept | 4.836 µs | 8.1 MiB |
+| one-step-short lookup budget | reject | 4.694 µs | 8.2 MiB |
+| selected equality edge missing | reject | 0.347 µs | 8.1 MiB |
+| dead oversized literal | reject | 0.087 µs | 8.1 MiB |
 
 The exact indexed-lookup budget is 74 traversed list constructors; 73 reaches
 nearly the end and costs about as much as acceptance. Missing-edge and
@@ -111,7 +111,7 @@ literal-resource failures occur at earlier validation stages and are
 correspondingly cheaper. All samples returned stable checksums. RSS is
 process-level and too coarse to compare these small variants.
 
-One complete accepted check of this fixed certificate took a median 4.850 µs.
+One complete accepted check of this fixed certificate took a median 4.836 µs.
 There is no preflight-free control, so this experiment does not attribute a
 separate cost to trust-boundary hardening. It also does not predict asymptotic
 behavior: the list layout intentionally has charged linear lookups, and the
@@ -119,14 +119,14 @@ checker does not yet contain a general worklist or instantiation registry.
 
 ### Ordinary kernel replay
 
-The import-only core baseline had median fresh-module wall time 0.839 s. The
-checked proposition had median wall time 0.999 s and a median paired signed
-margin of 0.100 s. Fresh-module samples are noisy: paired margins ranged from
--0.050 s to +0.281 s.
+The import-only core baseline had median fresh-module wall time 1.135 s. The
+checked proposition had median wall time 1.050 s and a median paired signed
+margin of -0.026 s. Fresh-module samples are noisy: paired margins ranged from
+-0.391 s to +0.145 s.
 
 The separate forced `Lean.Kernel.whnf` canary reduced the checked proposition
-to `true` in median 30.3 ms. Its whole-module median was 1.400 s against a
-1.302 s matched baseline, with a median paired signed margin of 92.7 ms.
+to `true` in median 45.1 ms. Its whole-module median was 1.553 s against a
+1.435 s matched baseline, with a median paired signed margin of 58.6 ms.
 
 The checked theorem's axiom set is exactly `[propext, Quot.sound]`; it contains
 neither `sorryAx` nor an execution-trust axiom. The forced-WHNF probe executes
@@ -138,14 +138,14 @@ bytes versus 784.
 
 ### Reflected versus direct semantic proof
 
-The Mathlib import-only baseline had median fresh-module wall time 4.764 s.
+The Mathlib import-only baseline had median fresh-module wall time 4.965 s.
 
 | Proof | Median total wall | Median paired signed margin | Median peak RSS |
 | --- | ---: | ---: | ---: |
-| reflected certificate | 4.974 s | +0.195 s | 2875 MiB |
-| elementary direct | 4.905 s | +0.096 s | 2866 MiB |
+| reflected certificate | 5.306 s | +0.288 s | 2875 MiB |
+| elementary direct | 5.187 s | +0.255 s | 2849 MiB |
 
-Machine load remains material in this small comparison, and the 69 ms
+Machine load remains material in this small comparison, and the 120 ms
 difference between the two total medians is not stable evidence of a winner.
 The justified conclusion is that both downstream proof styles are feasible at
 this size.
