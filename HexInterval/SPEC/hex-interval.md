@@ -370,10 +370,14 @@ corresponding expression. A separate deterministic work counter charges each
 multiplication, addition/subtraction, comparison, gcd, shift, and division.
 The initial policy may use conservative units such as
 `mulWork(x,y) = x*y`, `addWork(x,y) = max(x,y)+1`, and
-`compareWork(x,y) = max(x,y)`. It consumes one operation at a time by checking
-`cost <= remaining` and then subtracting; it never constructs an unchecked
-aggregate supplied by the certificate. These units are a stable policy and
-telemetry contract, not a claim about GMP or kernel wall time.
+`compareWork(x,y) = max(x,y)`. A checker may consume one primitive at a time,
+or compute the fixed small per-edge sum from these already bounded counters
+and check that sum against the remaining aggregate before subtracting it. The
+current naive reference arm uses the latter; the number of terms is fixed by
+the edge tag, and neither the terms nor their sum are certificate supplied. It
+never trusts an unchecked aggregate from the certificate. These units are a
+stable policy and telemetry contract, not a claim about GMP or kernel wall
+time.
 
 Whole-table canonicality has its own `maxGcdInputBits` and `maxGcdWork` caps.
 Input-size and work preflight occur before calling `Nat.gcd` for every entry,

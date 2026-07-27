@@ -782,7 +782,9 @@ def fixtureTable : List RawRat :=
 def fixtureTableLimit : RawRat.Limit :=
   { maxEntries := 6
     maxNumeratorBits := 8
-    maxDenominatorBits := 8 }
+    maxDenominatorBits := 8
+    maxGcdInputBits := 8
+    maxGcdWork := 64 }
 
 /-- One successful edge of every first-slice operation. -/
 def fixtureEdges : List ArithEdge :=

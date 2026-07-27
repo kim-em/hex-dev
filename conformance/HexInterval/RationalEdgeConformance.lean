@@ -50,7 +50,9 @@ private def zeroTable : List Experiment.RationalTable.RawRat := [⟨0, 1⟩]
 private def zeroTableLimit : Experiment.RationalTable.RawRat.Limit :=
   { maxEntries := 1
     maxNumeratorBits := 0
-    maxDenominatorBits := 1 }
+    maxDenominatorBits := 1
+    maxGcdInputBits := 1
+    maxGcdWork := 1 }
 
 private def zeroInvLimit : Limit :=
   { maxEdges := 1
@@ -119,7 +121,9 @@ private def signedTable : List Experiment.RationalTable.RawRat :=
 private def signedTableLimit : Experiment.RationalTable.RawRat.Limit :=
   { maxEntries := 5
     maxNumeratorBits := 3
-    maxDenominatorBits := 2 }
+    maxDenominatorBits := 2
+    maxGcdInputBits := 2
+    maxGcdWork := 32 }
 
 private def signedLimit : Limit :=
   { maxEdges := 5
@@ -158,39 +162,48 @@ private def negThird : Experiment.RationalTable.RawRat := ⟨-1, 3⟩
 
 private theorem halfCanonical : half.Canonical :=
   Experiment.RationalTable.RawRat.canonical_of_check
-    (limit := fixtureTableLimit) (by decide +kernel)
+    (limit := fixtureTableLimit) (remainingGcdWork := fixtureTableLimit.maxGcdWork)
+    (by decide +kernel)
 
 private theorem thirdCanonical : third.Canonical :=
   Experiment.RationalTable.RawRat.canonical_of_check
-    (limit := fixtureTableLimit) (by decide +kernel)
+    (limit := fixtureTableLimit) (remainingGcdWork := fixtureTableLimit.maxGcdWork)
+    (by decide +kernel)
 
 private theorem fiveSixthsCanonical : fiveSixths.Canonical :=
   Experiment.RationalTable.RawRat.canonical_of_check
-    (limit := fixtureTableLimit) (by decide +kernel)
+    (limit := fixtureTableLimit) (remainingGcdWork := fixtureTableLimit.maxGcdWork)
+    (by decide +kernel)
 
 private theorem sixthCanonical : sixth.Canonical :=
   Experiment.RationalTable.RawRat.canonical_of_check
-    (limit := fixtureTableLimit) (by decide +kernel)
+    (limit := fixtureTableLimit) (remainingGcdWork := fixtureTableLimit.maxGcdWork)
+    (by decide +kernel)
 
 private theorem twoCanonical : two.Canonical :=
   Experiment.RationalTable.RawRat.canonical_of_check
-    (limit := fixtureTableLimit) (by decide +kernel)
+    (limit := fixtureTableLimit) (remainingGcdWork := fixtureTableLimit.maxGcdWork)
+    (by decide +kernel)
 
 private theorem zeroCanonical : zero.Canonical :=
   Experiment.RationalTable.RawRat.canonical_of_check
-    (limit := zeroTableLimit) (by decide +kernel)
+    (limit := zeroTableLimit) (remainingGcdWork := zeroTableLimit.maxGcdWork)
+    (by decide +kernel)
 
 private theorem negTwoThirdsCanonical : negTwoThirds.Canonical :=
   Experiment.RationalTable.RawRat.canonical_of_check
-    (limit := signedTableLimit) (by decide +kernel)
+    (limit := signedTableLimit) (remainingGcdWork := signedTableLimit.maxGcdWork)
+    (by decide +kernel)
 
 private theorem negThreeHalvesCanonical : negThreeHalves.Canonical :=
   Experiment.RationalTable.RawRat.canonical_of_check
-    (limit := signedTableLimit) (by decide +kernel)
+    (limit := signedTableLimit) (remainingGcdWork := signedTableLimit.maxGcdWork)
+    (by decide +kernel)
 
 private theorem negThirdCanonical : negThird.Canonical :=
   Experiment.RationalTable.RawRat.canonical_of_check
-    (limit := signedTableLimit) (by decide +kernel)
+    (limit := signedTableLimit) (remainingGcdWork := signedTableLimit.maxGcdWork)
+    (by decide +kernel)
 
 -- These proofs invoke the public soundness API, rather than asking reduction
 -- to normalize Core rational arithmetic as a test oracle.
