@@ -31,9 +31,11 @@ visited (`index + 1` for every valid reference).  Temporary widths use the
 standard conservative bounds `bits (x*y) <= bits x + bits y` and the analogous
 sum-or-difference bound `max (bits x) (bits y) + 1`.  Arithmetic work is an
 explicit schoolbook proxy: multiplying widths costs their product, and either
-adding or comparing two temporaries costs the larger width.  These formulas inspect only the bit
-lengths of already-retained inputs; they do not allocate any arithmetic
-cross-product.
+adding or comparing two temporaries costs the larger width.  The checker
+computes each edge's fixed, small aggregate from these bounded counters, then
+subtracts it from the caller-owned remaining total.  These formulas inspect
+only the bit lengths of already-retained inputs; they do not allocate any
+arithmetic cross-product.
 
 This is an experiment, not a frozen storage or certificate format.  In
 particular it adds no interval projection, wire decoder, cancellation-aware

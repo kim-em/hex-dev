@@ -67,6 +67,8 @@ private def zeroInvLimit : Limit :=
   .malformedEdge 0 (.badIndex .left 99)
 #guard check fixtureTableLimit fixtureLimit fixtureTable [.inv 99 4] ==
   .malformedEdge 0 (.badIndex .input 99)
+#guard check fixtureTableLimit fixtureLimit fixtureTable [.inv 0 99] ==
+  .malformedEdge 0 (.badIndex .result 99)
 #guard check fixtureTableLimit fixtureLimit fixtureTable [.add 0 1 99] ==
   .malformedEdge 0 (.badIndex .result 99)
 #guard check fixtureTableLimit fixtureLimit (fixtureTable ++ [⟨0, 1⟩]) [.inv 5 5] ==
@@ -100,6 +102,9 @@ private def zeroInvLimit : Limit :=
 #guard check fixtureTableLimit fixtureLimit fixtureTable
   [.add 0 1 0, .mul 0 99 3] ==
     .malformedEdge 1 (.badIndex .right 99)
+#guard check fixtureTableLimit { fixtureLimit with maxTemporaryBits := 6 }
+  fixtureTable [.add 0 1 0, .add 0 1 2] ==
+    .edgeResource (some 1) .temporaryBits
 
 -- Successful table validation remains a prerequisite of all edge work.
 #guard check fixtureTableLimit fixtureLimit
@@ -126,6 +131,20 @@ private def signedLimit : Limit :=
 -- cross-products with positive canonical denominators.
 #guard check signedTableLimit signedLimit signedTable
   [.inv 1 2, .eq 1 4, .le 1 3, .lt 1 3, .inv 0 0] == .ready
+
+private def signedArithmeticTable : List Experiment.RationalTable.RawRat :=
+  [⟨-2, 3⟩, ⟨1, 2⟩, ⟨-1, 6⟩, ⟨-7, 6⟩, ⟨-1, 3⟩]
+
+private def signedArithmeticLimit : Limit :=
+  { maxEdges := 3
+    maxLookupSteps := 21
+    maxTemporaryBits := 8
+    maxArithmeticWork := 200 }
+
+-- Signed and mixed-sign addition, subtraction, and multiplication all replay
+-- through the same integer identities as their positive fixtures.
+#guard check fixtureTableLimit signedArithmeticLimit signedArithmeticTable
+  [.add 0 1 2, .sub 0 1 3, .mul 0 1 4] == .ready
 
 private def half : Experiment.RationalTable.RawRat := ⟨1, 2⟩
 private def third : Experiment.RationalTable.RawRat := ⟨1, 3⟩
