@@ -167,7 +167,7 @@ alongside these under `reports/figures/`.
 - **Artifact:** `reports/bench-results/hexbz-factor-sweep-bc958d84-carica.json`
   SHA-256 `a1452db9f3aa4d9c86c6ece4a716d17483f3734caf632c5baf9085a8e463ce23`
 - **Command:**
-  `python3 scripts/bench/factor_sweep.py --systems hex-factor,hex-lattice,hex-fast,hex-classical-nodecline,flint,ntl,pari,isabelle-bz,isabelle-lll --cutoff 10 --no-early-terminate --skip-unavailable`
+  `python3 scripts/bench/factor_sweep.py --systems hex-factor,hex-lattice,hex-classical-nodecline,flint,ntl,pari,isabelle-bz,isabelle-lll --cutoff 10 --no-early-terminate --skip-unavailable`
   (full-fidelity: no monotonic early termination, so the conway curves include
   every prime-lucky high-degree solve)
 - **Corpus:** `bench/corpus/hexbz-factor-corpus.jsonl`
@@ -176,7 +176,11 @@ alongside these under `reports/figures/`.
   branch's corpus regeneration; the corpus SHA above is the reproducible pin),
   toolchain `leanprover/lean4:v4.32.0-rc1`, arm64, 24 cores, 2026-07-03T08:22:20Z;
   AFP release `afp-2026-05-29` for both Isabelle systems.
-- **Cross-check:** all nine answering systems agree — hex's factor degree
+- **Provenance note:** the original July 3 run also measured the retired
+  `hex-fast` curve, but #8596 stripped those result rows from the committed JSON
+  before this digest was updated. The hash above is the digest of the committed
+  eight-system artefact, not the pre-#8596 raw export.
+- **Cross-check:** all eight answering systems agree — hex's factor degree
   multisets match FLINT, NTL, PARI/GP, verified Isabelle BZ and verified Isabelle
   LLL on every instance any two solved (differential correctness across 391
   instances, six independent implementations). In particular every one of the
@@ -187,18 +191,17 @@ alongside these under `reports/figures/`.
 | --- | ---: | ---: | ---: | ---: | ---: |
 | hex-factor | 366 | 25 | 0 | 0 | 35.8 |
 | hex-lattice | 363 | 28 | 0 | 0 | 49.0 |
-| hex-fast | 198 | 137 | 56 | 0 | 51.0 |
 | hex-classical-nodecline | 366 | 25 | 0 | 0 | 50.7 |
 | flint | 390 | 1 | 0 | 0 | 30.4 |
 | ntl | 390 | 1 | 0 | 0 | 13.4 |
-| pari&nbsp;† | 390 | 1 | 0 | 0 | 32.8 |
+| pari | 390 | 1 | 0 | 0 | 32.8 |
 | isabelle-bz | 370 | 21 | 0 | 0 | 19.5 |
 | isabelle-lll | 309 | 82 | 0 | 0 | 17.2 |
 
-† PARI/GP is measured in the companion record below (same corpus SHA and 10 s
-cutoff, with the auto-growing-stack driver from #8558); the plotter merges it
-into every chart newest-per-system, so its row sits in this table while its
-curve is added to every plot.
+The committed full-board artefact includes the post-refresh PARI/GP rows. The
+single-system companion record below is retained as provenance for the
+auto-growing-stack PARI refresh from #8558 and for the plotter's
+newest-per-system merge workflow.
 
 The C-implementation ceiling (FLINT, NTL, PARI) solves 390/391, all missing only
 `hoeij_S9` (Swinnerton-Dyer SD₉, degree 512) at the 10 s cutoff.
@@ -209,18 +212,12 @@ irreducible over ℤ, so this family is a pure recombination stress test. Yet
 verified `isabelle-bz` each solve **all 186** — because a monic polynomial that
 stays irreducible modulo a well-chosen prime is proved irreducible immediately,
 with no recombination at all. The family therefore does not stress recombination
-so much as *prime selection*: it separates the paths with adaptive prime choice
-(everything above) from the two that lack it. `hex-fast`, the proof-facing path
-whose bounded prime search can exhaust before finding a prime that keeps the
-polynomial irreducible, solves only **82/186** — and, tellingly, its solves are
-spread across every degree 1–40, not a clean low-degree prefix: it times out on
-`C_{2,12}` yet solves `C_{2,16}` in milliseconds, because difficulty here tracks
-the *prime choice*, not the degree. `isabelle-lll`, whose full-degree direct-LLL
+so much as *prime selection*. `isabelle-lll`, whose full-degree direct-LLL
 lattice grows expensive with degree independently of the modular factor count,
-solves **167/186**, timing out on the higher-degree small-prime lifts. This
-non-monotonicity is exactly why the sweep's monotonic early termination treats
-conway with a consecutive-timeout threshold rather than stopping at the first
-timeout (see Methodology).
+solves **167/186**, timing out on the higher-degree small-prime lifts. The
+retired `hex-fast` curve formerly recorded here showed the same prime-selection
+sensitivity, but those rows are no longer present in the committed artefact
+(see the provenance note above).
 
 **The verified-vs-verified headline is the point of the two Isabelle curves.**
 On the corpus as a whole the counts are close (hex-factor 366, isabelle-bz 370,
@@ -249,14 +246,13 @@ The `hex-classical-nodecline` curve runs the classical recombination to
 completion or cutoff with the level-aware early decline disabled, so its 25
 timeouts are the classical exponential wall made visible on the same charts (it
 never declines — 0 declined — it either completes correctly or times out).
-`hex-fast` (the proof-facing path) is the weakest hex tier here. PARI/GP sits
-with FLINT and NTL at the C-implementation ceiling — 390/391 overall, reaching
-Swinnerton-Dyer and sd-products degree 128 (double hex-lattice's 64, and far
-past both verified Isabelle systems). Longer-cutoff (60 s / 300 s) sweeps record
-alongside this one, each carrying its own cutoff; the only instance no system
-solves at 10 s is `hoeij_S9` (degree 512), and the hardest hoeij-zimmermann
-entries fall only to the three C libraries (FLINT, NTL, PARI) — the natural
-target for those longer sweeps.
+PARI/GP sits with FLINT and NTL at the C-implementation ceiling — 390/391
+overall, reaching Swinnerton-Dyer and sd-products degree 128 (double
+hex-lattice's 64, and far past both verified Isabelle systems). Longer-cutoff
+(60 s / 300 s) sweeps record alongside this one, each carrying its own cutoff;
+the only instance no system solves at 10 s is `hoeij_S9` (degree 512), and the
+hardest hoeij-zimmermann entries fall only to the three C libraries (FLINT, NTL,
+PARI) — the natural target for those longer sweeps.
 
 ### carica, 10 s cutoff — PARI/GP refresh (2026-07-03)
 
@@ -267,15 +263,15 @@ target for those longer sweeps.
 - **Corpus:** `bench/corpus/hexbz-factor-corpus.jsonl`
   SHA-256 `0ef7574769d9161d8e3bda3b8c193b05191d75b4b473279520db4513e533b2df` (391 instances) —
   identical to the full-board record above, so the two merge cleanly.
-- **Why a companion record.** The full-board record above measured PARI with the
-  pre-#8558 8 MB-stack driver, which errors (rather than factoring) on the two
-  largest hoeij instances. This single-system record re-measures PARI with the
+- **Why a companion record.** The original full-board run measured PARI with the
+  pre-#8558 8 MB-stack driver, which errored rather than factoring on the two
+  largest hoeij instances. This single-system record re-measured PARI with the
   merged auto-growing-stack driver (`cypari2.Pari(size, sizemax)`), which solves
   `hoeij_F630` (degree 630) and leaves only `hoeij_S9` (degree 512) unsolved at
-  10 s: 390/391, no errors. The plotter takes the newest measurement of each
-  system (guarded by a matching corpus SHA), so this record supplies PARI's curve
-  to every chart while the other eight systems carry over from the full-board
-  record — the single-system workflow documented under [Reproducing](#reproducing).
+  10 s: 390/391, no errors. The current committed full-board artefact already
+  carries those post-refresh PARI rows; the companion record remains the
+  single-system provenance for that refresh and documents the workflow under
+  [Reproducing](#reproducing).
 
 ## Reproducing
 
