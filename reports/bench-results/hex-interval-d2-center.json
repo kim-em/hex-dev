@@ -1,7 +1,7 @@
 {
-  "schema": "hex-interval-d2-center-v2",
+  "schema": "hex-interval-d2-center-v3",
   "environment": {
-    "git_commit": "11c14fd40fa3d7b22aca07b2cd709079319642dc",
+    "git_commit": "943fce452e8b3c3b8fcaa2e6108de3452d2b5b0e",
     "git_dirty": false,
     "toolchain": "leanprover/lean4:v4.32.0-rc1",
     "hostname": "chungus2",
@@ -16,10 +16,10 @@
     "kernel_proof": "ordinary decide +kernel; native_decide forbidden",
     "source_sha256": {
       "HexInterval/Basic.lean": "3a0e40636583ba19b36b44f6858d8da25bc26a5bfdec52ac82034f866d2301fc",
-      "HexInterval/Experiment/Center.lean": "2d22125ddf6fe17f8c25fc096a5e753b9a91b34281334c4440dcd7844b072ebf",
+      "HexInterval/Experiment/Center.lean": "bb5741043b8809590b9acbab407eeecf461ccbd41b0ea09ed6fd559d2a206307",
       "HexInterval.lean": "c1178859f2397cea0c2e93b7c0808acaf394c2e6aae8934ea69211bf50205239",
-      "HexIntervalMathlib/Experiment/Center.lean": "a4a80bc862dae6493975cad596013fef0531c22b22f8f6b441013e239b8fda45",
-      "bench/HexBench/IntervalCenterSpike.lean": "93b84019f32019518587994251630eac04c802670e28cb54ecbd7a19a2eb4fc1",
+      "HexIntervalMathlib/Experiment/Center.lean": "6497f109358ff970009225d62a27803469627ab4ecaf794fe59b8d171dda1d15",
+      "bench/HexBench/IntervalCenterSpike.lean": "c88643426e7d23418f99c4f66cd3e31dcf593e4a088fac535463046e657753d9",
       "bench/HexInterval/ReplayCenterBaseline.lean": "a8256204973ec30e024313b7306df6c4b69aa156f43ebcc004d06212c63aaaba",
       "bench/HexInterval/ReplayCenterChecked.lean": "445f585dba8ff47e822239eb6c931eab075cd708abbc7da84d6318fd87f03af9",
       "bench/HexInterval/WhnfCenterBaseline.lean": "b100900babfc60a7365bc9c79ac78d83897d268b9ec8559c75481da1733ddecc",
@@ -30,7 +30,7 @@
       "lake-manifest.json": "5315ef9d575b3b13138a8e10e222cec2b7cf16a96069f550a79d2fe6d20e3264",
       "lakefile.lean": "dd5cf3bcc5d14ff011ccf4f84314f49f58c31e31a90393cd843d3dca7445d07b",
       "lean-toolchain": "72681913b978b3f7c2f48229836771f736f6e97d833917726b2263afbc6108ed",
-      "scripts/bench/interval_center_sweep.py": "4bec45173b06102605c07c55e5f0f72a77fe2618d5480f074eb695fb365c2c06"
+      "scripts/bench/interval_center_sweep.py": "d4da66f79c013b7890c8f4f2d6fee01d51ca48a2e682a0066f50bfa3df656b5e"
     }
   },
   "compiled": {
@@ -39,172 +39,172 @@
       "repeats": 100000,
       "samples": [
         {
-          "outer_wall_nanos": 480440053,
-          "inner_total_nanos": 476099725,
-          "per_call_nanos": 4760,
+          "outer_wall_nanos": 491306470,
+          "inner_total_nanos": 484038072,
+          "per_call_nanos": 4840,
           "checksum": 15902830050154145338,
-          "peak_rss_kb": 8324
+          "peak_rss_kb": 3884
         },
         {
-          "outer_wall_nanos": 494765977,
-          "inner_total_nanos": 491545689,
-          "per_call_nanos": 4915,
+          "outer_wall_nanos": 502406972,
+          "inner_total_nanos": 499025658,
+          "per_call_nanos": 4990,
           "checksum": 15902830050154145338,
-          "peak_rss_kb": 8388
+          "peak_rss_kb": 8400
         },
         {
-          "outer_wall_nanos": 491722181,
-          "inner_total_nanos": 488886774,
-          "per_call_nanos": 4888,
+          "outer_wall_nanos": 484414409,
+          "inner_total_nanos": 481902304,
+          "per_call_nanos": 4819,
           "checksum": 15902830050154145338,
-          "peak_rss_kb": 8364
+          "peak_rss_kb": 8296
         },
         {
-          "outer_wall_nanos": 477408135,
-          "inner_total_nanos": 474430097,
-          "per_call_nanos": 4744,
+          "outer_wall_nanos": 488022731,
+          "inner_total_nanos": 485021380,
+          "per_call_nanos": 4850,
           "checksum": 15902830050154145338,
-          "peak_rss_kb": 8404
+          "peak_rss_kb": 8304
         },
         {
-          "outer_wall_nanos": 476327932,
-          "inner_total_nanos": 473670670,
-          "per_call_nanos": 4736,
+          "outer_wall_nanos": 491697370,
+          "inner_total_nanos": 487913689,
+          "per_call_nanos": 4879,
           "checksum": 15902830050154145338,
-          "peak_rss_kb": 8344
+          "peak_rss_kb": 8392
         }
       ],
-      "median_per_call_nanos": 4760,
-      "median_peak_rss_kb": 8364
+      "median_per_call_nanos": 4850,
+      "median_peak_rss_kb": 8304
     },
     "lookup-budget": {
       "variant": "lookup-budget",
       "repeats": 100000,
       "samples": [
         {
-          "outer_wall_nanos": 463848129,
-          "inner_total_nanos": 460888408,
-          "per_call_nanos": 4608,
+          "outer_wall_nanos": 474464383,
+          "inner_total_nanos": 470298546,
+          "per_call_nanos": 4702,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8364
+          "peak_rss_kb": 8384
         },
         {
-          "outer_wall_nanos": 462305470,
-          "inner_total_nanos": 459886011,
-          "per_call_nanos": 4598,
+          "outer_wall_nanos": 479705866,
+          "inner_total_nanos": 474199701,
+          "per_call_nanos": 4741,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8348
+          "peak_rss_kb": 8380
         },
         {
-          "outer_wall_nanos": 464576760,
-          "inner_total_nanos": 461616077,
-          "per_call_nanos": 4616,
+          "outer_wall_nanos": 471552406,
+          "inner_total_nanos": 468190120,
+          "per_call_nanos": 4681,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8408
+          "peak_rss_kb": 8448
         },
         {
-          "outer_wall_nanos": 466158886,
-          "inner_total_nanos": 462611894,
-          "per_call_nanos": 4626,
+          "outer_wall_nanos": 468458467,
+          "inner_total_nanos": 464648468,
+          "per_call_nanos": 4646,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8388
+          "peak_rss_kb": 8324
         },
         {
-          "outer_wall_nanos": 466090764,
-          "inner_total_nanos": 463284552,
-          "per_call_nanos": 4632,
+          "outer_wall_nanos": 474760904,
+          "inner_total_nanos": 471083230,
+          "per_call_nanos": 4710,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8372
+          "peak_rss_kb": 6292
         }
       ],
-      "median_per_call_nanos": 4616,
-      "median_peak_rss_kb": 8372
+      "median_per_call_nanos": 4702,
+      "median_peak_rss_kb": 8380
     },
     "missing-edge": {
       "variant": "missing-edge",
       "repeats": 100000,
       "samples": [
         {
-          "outer_wall_nanos": 38307982,
-          "inner_total_nanos": 35371656,
-          "per_call_nanos": 353,
+          "outer_wall_nanos": 40221057,
+          "inner_total_nanos": 36885259,
+          "per_call_nanos": 368,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8404
+          "peak_rss_kb": 8420
         },
         {
-          "outer_wall_nanos": 38496582,
-          "inner_total_nanos": 35939428,
-          "per_call_nanos": 359,
+          "outer_wall_nanos": 38481107,
+          "inner_total_nanos": 35098349,
+          "per_call_nanos": 350,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8368
+          "peak_rss_kb": 8348
         },
         {
-          "outer_wall_nanos": 39015211,
-          "inner_total_nanos": 35825249,
-          "per_call_nanos": 358,
+          "outer_wall_nanos": 39100334,
+          "inner_total_nanos": 35431704,
+          "per_call_nanos": 354,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8328
+          "peak_rss_kb": 8332
         },
         {
-          "outer_wall_nanos": 38503832,
-          "inner_total_nanos": 35676898,
-          "per_call_nanos": 356,
+          "outer_wall_nanos": 38364453,
+          "inner_total_nanos": 35150818,
+          "per_call_nanos": 351,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8380
+          "peak_rss_kb": 8340
         },
         {
-          "outer_wall_nanos": 38808023,
-          "inner_total_nanos": 36060998,
-          "per_call_nanos": 360,
+          "outer_wall_nanos": 40326743,
+          "inner_total_nanos": 35231527,
+          "per_call_nanos": 352,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8408
+          "peak_rss_kb": 6224
         }
       ],
-      "median_per_call_nanos": 358,
-      "median_peak_rss_kb": 8380
+      "median_per_call_nanos": 352,
+      "median_peak_rss_kb": 8340
     },
     "unused-literal": {
       "variant": "unused-literal",
       "repeats": 100000,
       "samples": [
         {
-          "outer_wall_nanos": 11715560,
-          "inner_total_nanos": 9161962,
-          "per_call_nanos": 91,
+          "outer_wall_nanos": 11034244,
+          "inner_total_nanos": 8664950,
+          "per_call_nanos": 86,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8348
+          "peak_rss_kb": 8352
         },
         {
-          "outer_wall_nanos": 12325155,
-          "inner_total_nanos": 9109694,
-          "per_call_nanos": 91,
-          "checksum": 13692854070584439750,
-          "peak_rss_kb": 8364
-        },
-        {
-          "outer_wall_nanos": 12530920,
-          "inner_total_nanos": 9442038,
-          "per_call_nanos": 94,
-          "checksum": 13692854070584439750,
-          "peak_rss_kb": 8388
-        },
-        {
-          "outer_wall_nanos": 12513644,
-          "inner_total_nanos": 9416019,
-          "per_call_nanos": 94,
+          "outer_wall_nanos": 13009633,
+          "inner_total_nanos": 9621018,
+          "per_call_nanos": 96,
           "checksum": 13692854070584439750,
           "peak_rss_kb": 8376
         },
         {
-          "outer_wall_nanos": 11525348,
-          "inner_total_nanos": 8974805,
-          "per_call_nanos": 89,
+          "outer_wall_nanos": 11011971,
+          "inner_total_nanos": 8602938,
+          "per_call_nanos": 86,
           "checksum": 13692854070584439750,
-          "peak_rss_kb": 8368
+          "peak_rss_kb": 8348
+        },
+        {
+          "outer_wall_nanos": 13965911,
+          "inner_total_nanos": 9429814,
+          "per_call_nanos": 94,
+          "checksum": 13692854070584439750,
+          "peak_rss_kb": 8364
+        },
+        {
+          "outer_wall_nanos": 11497000,
+          "inner_total_nanos": 8872017,
+          "per_call_nanos": 88,
+          "checksum": 13692854070584439750,
+          "peak_rss_kb": 8336
         }
       ],
-      "median_per_call_nanos": 91,
-      "median_peak_rss_kb": 8368
+      "median_per_call_nanos": 88,
+      "median_peak_rss_kb": 8352
     }
   },
   "replay": {
@@ -212,45 +212,45 @@
       "module": "HexInterval.ReplayCenterBaseline",
       "samples": [
         {
-          "wall_nanos": 835051864,
-          "peak_rss_kb": 819256,
-          "axioms": [],
+          "wall_nanos": 1148226921,
+          "peak_rss_kb": 819408,
+          "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1051473607,
-          "peak_rss_kb": 808844,
-          "axioms": [],
+          "wall_nanos": 823647663,
+          "peak_rss_kb": 820056,
+          "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1276898950,
-          "peak_rss_kb": 808396,
-          "axioms": [],
+          "wall_nanos": 1672404201,
+          "peak_rss_kb": 812360,
+          "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1089046022,
-          "peak_rss_kb": 804076,
-          "axioms": [],
+          "wall_nanos": 839298873,
+          "peak_rss_kb": 819452,
+          "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1072395747,
-          "peak_rss_kb": 804188,
-          "axioms": [],
+          "wall_nanos": 794095429,
+          "peak_rss_kb": 821540,
+          "axioms": null,
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 1072395747,
-      "median_peak_rss_kb": 808396
+      "median_wall_nanos": 839298873,
+      "median_peak_rss_kb": 819452
     },
     "checked": {
       "module": "HexInterval.ReplayCenterChecked",
       "samples": [
         {
-          "wall_nanos": 1008783872,
-          "peak_rss_kb": 812744,
+          "wall_nanos": 1098695668,
+          "peak_rss_kb": 813396,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -258,8 +258,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1186041797,
-          "peak_rss_kb": 803424,
+          "wall_nanos": 923558136,
+          "peak_rss_kb": 822028,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -267,8 +267,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1102868680,
-          "peak_rss_kb": 804884,
+          "wall_nanos": 1953266141,
+          "peak_rss_kb": 805832,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -276,8 +276,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1302547777,
-          "peak_rss_kb": 804904,
+          "wall_nanos": 999012323,
+          "peak_rss_kb": 822372,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -285,8 +285,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1036766910,
-          "peak_rss_kb": 804648,
+          "wall_nanos": 839522977,
+          "peak_rss_kb": 820984,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -294,99 +294,99 @@
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 1102868680,
+      "median_wall_nanos": 999012323,
       "signed_import_baseline_wall_margin_nanos": [
-        173732008,
-        134568190,
-        -174030270,
-        213501755,
-        -35628837
+        -49531253,
+        99910473,
+        280861940,
+        159713450,
+        45427548
       ],
-      "median_signed_import_baseline_wall_margin_nanos": 134568190,
-      "median_peak_rss_kb": 804884
+      "median_signed_import_baseline_wall_margin_nanos": 99910473,
+      "median_peak_rss_kb": 820984
     },
     "whnf_baseline": {
       "module": "HexInterval.WhnfCenterBaseline",
       "samples": [
         {
-          "wall_nanos": 1479058071,
-          "peak_rss_kb": 809700,
-          "axioms": [],
+          "wall_nanos": 1126797072,
+          "peak_rss_kb": 819924,
+          "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1362550122,
-          "peak_rss_kb": 804964,
-          "axioms": [],
+          "wall_nanos": 1432653547,
+          "peak_rss_kb": 820896,
+          "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1522377418,
-          "peak_rss_kb": 804884,
-          "axioms": [],
+          "wall_nanos": 1305764996,
+          "peak_rss_kb": 818564,
+          "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1377319612,
-          "peak_rss_kb": 804860,
-          "axioms": [],
+          "wall_nanos": 1301680010,
+          "peak_rss_kb": 821240,
+          "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1371743287,
-          "peak_rss_kb": 803772,
-          "axioms": [],
+          "wall_nanos": 1003101178,
+          "peak_rss_kb": 820492,
+          "axioms": null,
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 1377319612,
-      "median_peak_rss_kb": 804884
+      "median_wall_nanos": 1301680010,
+      "median_peak_rss_kb": 820492
     },
     "whnf_checked": {
       "module": "HexInterval.WhnfCenterChecked",
       "samples": [
         {
-          "wall_nanos": 1490625270,
-          "peak_rss_kb": 804132,
-          "axioms": [],
-          "whnf_nanos": 46253489
+          "wall_nanos": 1108170620,
+          "peak_rss_kb": 821176,
+          "axioms": null,
+          "whnf_nanos": 26127086
         },
         {
-          "wall_nanos": 1464700325,
-          "peak_rss_kb": 804904,
-          "axioms": [],
-          "whnf_nanos": 30785542
+          "wall_nanos": 1399617777,
+          "peak_rss_kb": 814616,
+          "axioms": null,
+          "whnf_nanos": 30302798
         },
         {
-          "wall_nanos": 1572768944,
-          "peak_rss_kb": 805148,
-          "axioms": [],
-          "whnf_nanos": 40325404
+          "wall_nanos": 1916803377,
+          "peak_rss_kb": 813112,
+          "axioms": null,
+          "whnf_nanos": 93505485
         },
         {
-          "wall_nanos": 1482957952,
-          "peak_rss_kb": 804924,
-          "axioms": [],
-          "whnf_nanos": 33961243
+          "wall_nanos": 2066662434,
+          "peak_rss_kb": 813560,
+          "axioms": null,
+          "whnf_nanos": 44062414
         },
         {
-          "wall_nanos": 1429922606,
-          "peak_rss_kb": 805660,
-          "axioms": [],
-          "whnf_nanos": 54667320
+          "wall_nanos": 1095775481,
+          "peak_rss_kb": 821444,
+          "axioms": null,
+          "whnf_nanos": 24818044
         }
       ],
-      "median_wall_nanos": 1482957952,
+      "median_wall_nanos": 1399617777,
       "signed_import_baseline_wall_margin_nanos": [
-        11567199,
-        102150203,
-        50391526,
-        105638340,
-        58179319
+        -18626452,
+        -33035770,
+        611038381,
+        764982424,
+        92674303
       ],
-      "median_signed_import_baseline_wall_margin_nanos": 58179319,
-      "median_whnf_nanos": 40325404,
-      "median_peak_rss_kb": 804924
+      "median_signed_import_baseline_wall_margin_nanos": 92674303,
+      "median_whnf_nanos": 30302798,
+      "median_peak_rss_kb": 814616
     }
   },
   "semantic": {
@@ -394,45 +394,45 @@
       "module": "HexIntervalMathlib.CenterBaseline",
       "samples": [
         {
-          "wall_nanos": 8597080363,
-          "peak_rss_kb": 2853568,
-          "axioms": [],
+          "wall_nanos": 4801862465,
+          "peak_rss_kb": 2922656,
+          "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 6099739161,
-          "peak_rss_kb": 2859092,
-          "axioms": [],
+          "wall_nanos": 4750581231,
+          "peak_rss_kb": 2920808,
+          "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 5847271605,
-          "peak_rss_kb": 2862064,
-          "axioms": [],
+          "wall_nanos": 4860549107,
+          "peak_rss_kb": 2924620,
+          "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 5708313392,
-          "peak_rss_kb": 2866764,
-          "axioms": [],
+          "wall_nanos": 4703364422,
+          "peak_rss_kb": 2921768,
+          "axioms": null,
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 4712911646,
-          "peak_rss_kb": 2921560,
-          "axioms": [],
+          "wall_nanos": 4763542528,
+          "peak_rss_kb": 2921048,
+          "axioms": null,
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 5847271605,
-      "median_peak_rss_kb": 2862064
+      "median_wall_nanos": 4763542528,
+      "median_peak_rss_kb": 2921768
     },
     "reflected": {
       "module": "HexIntervalMathlib.CenterReflected",
       "samples": [
         {
-          "wall_nanos": 6461854159,
-          "peak_rss_kb": 2880664,
+          "wall_nanos": 5005576439,
+          "peak_rss_kb": 2926280,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -441,8 +441,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 6251245117,
-          "peak_rss_kb": 2874528,
+          "wall_nanos": 4904157405,
+          "peak_rss_kb": 2935232,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -451,8 +451,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 6165771756,
-          "peak_rss_kb": 2885532,
+          "wall_nanos": 4974177237,
+          "peak_rss_kb": 2947844,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -461,8 +461,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 6464856962,
-          "peak_rss_kb": 2918284,
+          "wall_nanos": 5094713055,
+          "peak_rss_kb": 2945112,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -471,8 +471,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 5008615572,
-          "peak_rss_kb": 2939656,
+          "wall_nanos": 4958944159,
+          "peak_rss_kb": 2944320,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -481,23 +481,23 @@
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 6251245117,
+      "median_wall_nanos": 4974177237,
       "signed_import_baseline_wall_margin_nanos": [
-        -2135226204,
-        151505956,
-        318500151,
-        756543570,
-        295703926
+        203713974,
+        153576174,
+        113628130,
+        391348633,
+        195401631
       ],
-      "median_signed_import_baseline_wall_margin_nanos": 295703926,
-      "median_peak_rss_kb": 2885532
+      "median_signed_import_baseline_wall_margin_nanos": 195401631,
+      "median_peak_rss_kb": 2944320
     },
     "direct": {
       "module": "HexIntervalMathlib.CenterDirect",
       "samples": [
         {
-          "wall_nanos": 6570819655,
-          "peak_rss_kb": 2864728,
+          "wall_nanos": 5110387604,
+          "peak_rss_kb": 2933652,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -506,8 +506,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 6436324470,
-          "peak_rss_kb": 2867376,
+          "wall_nanos": 4823588957,
+          "peak_rss_kb": 2938088,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -516,8 +516,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 6182985634,
-          "peak_rss_kb": 2877264,
+          "wall_nanos": 4905459996,
+          "peak_rss_kb": 2928748,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -526,8 +526,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 4757141919,
-          "peak_rss_kb": 2920696,
+          "wall_nanos": 4910972816,
+          "peak_rss_kb": 2934304,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -536,8 +536,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 4887237367,
-          "peak_rss_kb": 2929168,
+          "wall_nanos": 4859214205,
+          "peak_rss_kb": 2938016,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -546,22 +546,24 @@
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 6182985634,
+      "median_wall_nanos": 4905459996,
       "signed_import_baseline_wall_margin_nanos": [
-        -2026260708,
-        336585309,
-        335714029,
-        -951171473,
-        174325721
+        308525139,
+        73007726,
+        44910889,
+        207608394,
+        95671677
       ],
-      "median_signed_import_baseline_wall_margin_nanos": 174325721,
-      "median_peak_rss_kb": 2877264
+      "median_signed_import_baseline_wall_margin_nanos": 95671677,
+      "median_peak_rss_kb": 2934304
     }
   },
   "artifacts": {
     "baseline": {
       "source_bytes": 290,
       "olean_bytes": 1640,
+      "olean_private_bytes": 96,
+      "olean_server_bytes": 784,
       "ilean_bytes": 154,
       "c_bytes": 2799,
       "object_bytes": 3992
@@ -569,6 +571,8 @@
     "checked": {
       "source_bytes": 703,
       "olean_bytes": 3912,
+      "olean_private_bytes": 2520,
+      "olean_server_bytes": 1176,
       "ilean_bytes": 929,
       "c_bytes": 2792,
       "object_bytes": 3992
@@ -576,6 +580,8 @@
     "whnf_baseline": {
       "source_bytes": 383,
       "olean_bytes": 3920,
+      "olean_private_bytes": 1592,
+      "olean_server_bytes": 1208,
       "ilean_bytes": 548,
       "c_bytes": 3578,
       "object_bytes": 4568
@@ -583,6 +589,8 @@
     "whnf_checked": {
       "source_bytes": 987,
       "olean_bytes": 1672,
+      "olean_private_bytes": 928,
+      "olean_server_bytes": 792,
       "ilean_bytes": 2397,
       "c_bytes": 3106,
       "object_bytes": 4304
@@ -590,20 +598,26 @@
     "semantic_baseline": {
       "source_bytes": 305,
       "olean_bytes": 1648,
+      "olean_private_bytes": 96,
+      "olean_server_bytes": 792,
       "ilean_bytes": 162,
       "c_bytes": 2841,
       "object_bytes": 4000
     },
     "semantic_reflected": {
       "source_bytes": 2424,
-      "olean_bytes": 10888,
+      "olean_bytes": 10952,
+      "olean_private_bytes": 26672,
+      "olean_server_bytes": 1176,
       "ilean_bytes": 11611,
       "c_bytes": 2848,
       "object_bytes": 4000
     },
     "semantic_direct": {
       "source_bytes": 1093,
-      "olean_bytes": 10888,
+      "olean_bytes": 10952,
+      "olean_private_bytes": 14168,
+      "olean_server_bytes": 1176,
       "ilean_bytes": 2999,
       "c_bytes": 2827,
       "object_bytes": 3992
