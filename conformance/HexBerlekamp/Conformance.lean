@@ -166,6 +166,26 @@ private def bigPoly : FpPoly 5 :=
 private theorem bigPoly_monic : DensePoly.Monic bigPoly := by
   rfl
 
+/-- Reachable equal-size witness case where replacing the original GCD input
+by its remainder changes the unnormalised factor by a unit.  The cached fast
+path must fall back here to preserve these exact coefficients and their order. -/
+private def unitDriftPoly : FpPoly 5 :=
+  { coeffs := #[(2 : ZMod64 5), 2, 0, 1, 1]
+    normalized := by
+      right
+      decide }
+
+private theorem unitDriftPoly_monic : DensePoly.Monic unitDriftPoly := by
+  rfl
+
+private def unitDriftFactor : FpPoly 5 := polyFive #[3, 4, 1]
+
+private def unitDriftWitness : FpPoly 5 := polyFive #[0, 2, 1]
+
+/-- `x³ % (x² + 4) = x`, with a strictly larger original witness, so this
+pins the cached executable-suffix branch rather than its equal-size fallback. -/
+private def cachedWitness : FpPoly 5 := polyFive #[0, 0, 0, 1]
+
 set_option maxRecDepth 2048 in
 #guard bigPoly == linearPoly * irreducibleQuad * irreducibleQuint
 
@@ -300,10 +320,16 @@ example : Berlekamp.rabinTest irreducibleQuad irreducibleQuad_monic = true :=
   some (1, [4, 1], [1, 1])
 #guard splitSummary (Berlekamp.kernelWitnessSplit? linearPoly FpPoly.X) = none
 #guard splitSummary (Berlekamp.kernelWitnessSplit? irreducibleQuad FpPoly.X) = none
+#guard splitSummary (Berlekamp.kernelWitnessSplit? unitDriftFactor unitDriftWitness) =
+  some (3, [1, 2], [3, 3])
+#guard splitSummary (Berlekamp.kernelWitnessSplit? reducibleQuad cachedWitness) =
+  some (1, [4, 1], [1, 1])
 #guard (Berlekamp.berlekampFactor linearPoly linearPoly_monic).factors.map coeffNats =
   [[1, 1]]
 #guard (Berlekamp.berlekampFactor reducibleQuad reducibleQuad_monic).factors.map coeffNats =
   [[4, 1], [1, 1]]
+#guard (Berlekamp.berlekampFactor unitDriftPoly unitDriftPoly_monic).factors.map coeffNats =
+  [[4, 2, 1], [1, 2], [3, 3]]
 #guard
   let result := Berlekamp.berlekampFactor bigPoly bigPoly_monic
   result.factors.map (fun factor => factor.degree?.getD 0) = [1, 5, 2]
