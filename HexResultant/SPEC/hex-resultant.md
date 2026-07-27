@@ -1,8 +1,9 @@
 # hex-resultant (polynomial resultant via subresultant chain, depends on hex-poly)
 
-Polynomial resultant and discriminant for `Hex.DensePoly R` over a UFD
-`R`. Computed via the **subresultant pseudo-remainder sequence**
-(Collins 1967; Brown 1978), the standard fraction-free algorithm.
+Polynomial resultant and discriminant for `Hex.DensePoly R` over a
+commutative exact-division domain. Computed via the **subresultant
+pseudo-remainder sequence** (Collins 1967; Brown 1978), the standard
+fraction-free algorithm.
 
 The main instantiations are `R = Int` (that is, `ZPoly`), `R = ZPoly`
 for bivariate elimination, and `R = NumberTower.Elem T` for norms over
@@ -14,7 +15,7 @@ successive number-field extensions. The last consumer lives in
 A naive implementation could form the `(n+m) × (n+m)` Sylvester matrix
 and take its Bareiss determinant. That costs `O((n+m)³)` coefficient
 operations. The subresultant chain reaches the same value in at most
-`min(n, m)` pseudo-division steps, `O(n·m)` coefficient operations
+`min(n, m) + 1` pseudo-division calls, `O(n·m)` coefficient operations
 total. Intermediate coefficients in both algorithms are (up to sign)
 minors of the Sylvester matrix, so both have the same well-controlled
 coefficient growth: bit-length `O((n+m) · (log(n+m) + log ‖f‖∞ +
@@ -25,12 +26,39 @@ It also keeps the dependency surface minimal. The algorithm is
 iterated polynomial pseudo-division plus scale-factor bookkeeping.
 Pseudo-division stays inside `R` and is defined in this library
 (`HexPoly` has only Euclidean division, which needs `Div` on the
-coefficients). No matrix dependency, depth 1.
+coefficients). Exact scalar quotients reuse that `Div` operation behind
+the law package below. No matrix dependency, depth 1.
 
 ## Contents
 
 ```lean
-namespace Hex.DensePoly
+namespace Hex
+
+universe u
+
+/-- Law required of the coefficient quotient used by Brown's exact divisions.
+    It also implies cancellation by every nonzero right factor. -/
+class ExactDivLaws (R : Type u) [Zero R] [Mul R] [Div R] : Prop where
+  mul_div_cancel_right : ∀ a b : R, b ≠ 0 → (a * b) / b = a
+
+variable {R : Type u}
+
+/-- Total exact quotient wrapper. A zero denominator returns zero; on a
+    nonzero exact division this is the underlying lawful quotient. -/
+def exactDiv [Zero R] [DecidableEq R] [Div R] (a b : R) : R :=
+  if b = 0 then 0 else a / b
+
+/-- Brown's scalar update `x^n / y^(n-1)`, through `exactDiv`. -/
+def divExp [Zero R] [DecidableEq R] [One R] [Div R] [HPow R Nat R]
+    (x y : R) (n : Nat) : R :=
+  exactDiv (x ^ n) (y ^ (n - 1))
+
+namespace DensePoly
+
+/-- Divide every coefficient by the same scalar through `exactDiv`. -/
+noncomputable def divScalar [Zero R] [DecidableEq R] [Div R]
+    (p : DensePoly R) (b : R) : DensePoly R :=
+  if b = 0 then 0 else ofCoeffs (p.toList.map (fun a => a / b)).toArray
 
 /-- Polynomial pseudo-division: for `f, g : DensePoly R` with `g ≠ 0`
     and `g.degree? ≤ f.degree?`, returns `(quotient, pseudoRemainder)`
@@ -38,75 +66,161 @@ namespace Hex.DensePoly
     and `pseudoRemainder.degree? < g.degree?`. Pre-multiplying by
     `lc(g)^(deg f − deg g + 1)` keeps all coefficients in `R`, so no
     coefficient division occurs. -/
-def pseudoDivMod (f g : DensePoly R) : DensePoly R × DensePoly R := ...
+def pseudoDivMod [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul R]
+    (f g : DensePoly R) : DensePoly R × DensePoly R := ...
 
 /- The operation is total. Its two out-of-contract branches are stable public
    behavior: `pseudoDivMod f 0 = (0, f)`, and if nonzero `g` has larger degree
    than `f`, then `pseudoDivMod f g = (0, f)`. Both have corresponding rewrite
    lemmas. -/
 
-/-- Subresultant pseudo-remainder sequence:
-    `r₀ = f`, `r₁ = g`, and `r_{k+1}` is the pseudo-remainder of
-    `r_{k-1}` by `r_k`, divided by the scale factor `β_k` (the division
-    is exact). The sequence terminates when some `r_N = 0`. Requires
-    `g.degree? ≤ f.degree?`; `resultant` handles the swap. -/
-def subresultantChain (f g : DensePoly R) : Array (DensePoly R) := ...
+/-- Brown's nonzero subresultant pseudo-remainder sequence. For two nonzero
+    inputs it orders them by decreasing degree, stores both ordered inputs,
+    and stops before the generated terminal zero. Zero inputs are omitted. -/
+def subresultantChain [Zero R] [DecidableEq R] [One R] [Add R] [Sub R]
+    [Mul R] [Div R] (f g : DensePoly R) : Array (DensePoly R) := ...
 
-/-- Resultant of `f` and `g`. When `f.degree? < g.degree?`, computed as
-    `(-1)^(deg f · deg g) · resultant g f`. Returns `0` when the chain
-    terminates with a final nonzero element of positive degree (that
-    is, when `gcd(f, g)` has positive degree, which over the algebraic
-    closure of the fraction field means `f` and `g` share a common
-    root). Otherwise returns the constant `r_{N-1}` corrected by the
-    accumulated scale factors and signs from the chain. -/
-def resultant (f g : DensePoly R) : R := ...
+/-- Resultant with Mathlib's default-formal-degree conventions. For ordered
+    nonzero inputs the Brown worker returns `(chain, hFinal)`; the value is
+    `hFinal` exactly when the last chain element is constant and zero
+    otherwise. Reversed inputs receive the standard degree-product sign. -/
+def resultant [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul R]
+    [Div R] (f g : DensePoly R) : R := ...
 
-/-- Discriminant, by the standard formula
-    `disc f = (-1)^(n·(n-1)/2) · resultant f f.derivative / lc(f)`
-    where `n = deg f`. For nonzero `f` the division is exact, since
-    `lc(f)` divides `resultant f f.derivative`. -/
-def disc (f : DensePoly R) : R := ...
+/-- Standard discriminant. It is `1` for zero and constant polynomials. For
+    positive degree `n`, it is
+    `(-1)^(n·(n-1)/2) · exactDiv (resultant f f.derivative) (lc f)`;
+    that quotient is exact. -/
+def disc [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul R]
+    [Div R] [NatCast R] (f : DensePoly R) : R := ...
 
-end Hex.DensePoly
+end DensePoly
+end Hex
 ```
 
-The implementation works for any commutative ring `R` with
-multiplicative cancellation (a UFD suffices). `DensePoly R` itself
-needs `[Zero R] [DecidableEq R]` plus the ring operations; both
-`R = Int` and `R = ZPoly` qualify.
+The executable definitions require only the operations they call: in
+particular `[Div R]`, but not `ExactDivLaws R`. Correctness theorems require
+`Lean.Grind.CommRing R`, decidable equality, and `ExactDivLaws R`. The law
+implies nonzero-product and right-cancellation facts by applying `/ b` to an
+equality with `b ≠ 0`.
 
-## Algorithm exposition
+`Int` supplies the law via `Int.mul_ediv_cancel`. There is a recursive
+instance for `DensePoly R` whenever `R` has the law, so `ZPoly = DensePoly
+Int` supports bivariate elimination, including nonunit constant and nonmonic
+polynomial divisors. A future `NumberTower.Elem T` uses its existing `/`; its
+Mathlib adjunct supplies the law once it installs the field laws. The tower's
+computational core therefore remains law-free.
 
-The subresultant chain construction (Collins 1967, in Brown's 1978
-formulation):
+## Exact-division totality
 
-- Start with `r₀ = f`, `r₁ = g`. Track auxiliary scale factors
-  `β_k` and `ψ_k` per the standard recurrence. These absorb the
-  pseudo-division blow-up, so intermediate coefficients stay
-  polynomial-size in the input.
-- At each step: pseudo-divide `r_{k-1}` by `r_k` to get a remainder,
-  then divide it exactly by `β_k` (a specific product of leading
-  coefficients of `r_k` and earlier `ψ` values) to get `r_{k+1}`.
-- Continue until `r_N = 0`.
+`exactDiv a 0 = 0`. For nonzero denominators it is definitionally `a / b`;
+`ExactDivLaws.mul_div_cancel_right` is the only quotient law used by the
+correctness development. `divExp` and `divScalar` inherit the same zero branch.
+A valid Brown run proves every denominator nonzero and every quotient exact.
+On an invalid coefficient implementation or unreachable junk state, the
+executable value remains deterministic but carries no algebraic claim.
 
-The resultant is then:
+## Ordered Brown run
 
-- `0` if the last nonzero element `r_{N-1}` has positive degree (`f`
-  and `g` share a common root);
-- otherwise, the constant `r_{N-1}` scaled by a specific power of
-  `ψ_{N-1}` and a sign determined by the degree sequence of the chain.
+For nonzero `G₁, G₂` with `deg G₁ ≥ deg G₂`, write `nᵢ = deg Gᵢ`,
+`gᵢ = lc(Gᵢ)`, and `prem A B = (pseudoDivMod A B).2`. The internal
+worker returns the pair `(chain, hFinal)`. It initializes
 
-The exact recurrences for `β_k`, `ψ_k`, and the final correction are
-standard textbook material. Follow Geddes-Czapor-Labahn ch. 7
-(Algorithm 7.3 and the surrounding discussion), which spells out all
-of the bookkeeping; von zur Gathen and Gerhard ch. 6 covers the same
-ground.
+```text
+δ₁ := n₁ - n₂
+h₂ := g₂ ^ δ₁
+p := prem G₁ G₂
+
+if p = 0:
+  return (#[G₁, G₂], h₂)
+
+G₃ := scale ((-1)^(δ₁ + 1)) p
+state := (#[G₁, G₂, G₃], G₂, G₃, h₂)
+```
+
+Each loop state contains nonzero adjacent terms `prev = Gᵢ₋₁`, `curr =
+Gᵢ`, and `hPrev = hᵢ₋₁`. One step is exactly
+
+```text
+δ := deg prev - deg curr
+hCurr := divExp (lc curr) hPrev δ
+p := prem prev curr
+
+if p = 0:
+  return (chain, hCurr)
+
+divisor := (-1)^(δ + 1) * lc(prev) * hPrev^δ
+next := divScalar p divisor
+
+continue with (chain.push next, curr, next, hCurr)
+```
+
+Thus `hCurr = lc(curr)^δ / hPrev^(δ-1)`, and `next` is the
+coefficientwise exact quotient of `prem prev curr` by
+`(-1)^(δ+1) * lc(prev) * hPrev^δ`. Both divisions are exact and their
+denominators are nonzero over an exact-division domain. These signs and powers
+are part of the API contract; there is no later unpinned correction.
+
+The public chain stores exactly Brown's nonzero `G₁, …, Gₖ`. It does not
+store the generated terminal zero, gap zeros from defective subresultants, the
+auxiliary `Hᵢ`, or the scalars `hᵢ`. Termination means
+`prem Gₖ₋₁ Gₖ = 0`.
+
+### Defective degree drops
+
+Degrees strictly decrease after `G₂`. A drop `δ > 1` is retained as one
+step. The new `Gᵢ` is the subresultant at the previous degree minus one even
+when its actual degree is lower. Subresultants at the intervening degrees are
+zero; the lower endpoint `Hᵢ` is a scalar multiple of `Gᵢ`, with leading
+coefficient `hᵢ`. None of those implicit values is inserted into the public
+chain, but `hᵢ` remains in the worker state because it determines both the
+next exact divisor and the final resultant.
+
+### Terminal value and input order
+
+For an ordered nonzero run ending in `(#[G₁, …, Gₖ], hₖ)`, the resultant
+is `hₖ` if `Gₖ` has degree zero and `0` otherwise. In particular, a final
+constant `Gₖ` need not itself equal the resultant. For reversed nonzero
+inputs,
+
+```text
+resultant f g = (-1)^(deg f * deg g) * resultantOrdered g f.
+```
+
+Equivalently, the swap negates exactly when both degrees are odd.
+
+The total chain wrapper omits zero inputs:
+
+```text
+subresultantChain 0 0 = #[]
+subresultantChain f 0 = #[f]    when f ≠ 0
+subresultantChain 0 g = #[g]    when g ≠ 0
+```
+
+For two reversed nonzero inputs it starts with the degree-ordered pair. The
+resultant handles zero inputs before the run, using default formal degrees:
+
+```text
+resultant f 0 = if f.size ≤ 1 then 1 else 0
+resultant 0 g = if g.size ≤ 1 then 1 else 0
+resultant (C a) (C b) = 1
+resultant f (C c) = c ^ (f.degree?.getD 0)
+resultant (C c) g = c ^ (g.degree?.getD 0)
+```
+
+Consequently `resultant 0 0 = 1`. These conventions agree with the pinned
+Mathlib determinant resultant and its `0^0 = 1` behavior.
+
+Finally, `disc f = 1` whenever `f.size ≤ 1`. Only positive-degree inputs
+use the signed resultant quotient by `lc(f)`, where exactness holds.
 
 ## File organisation
 
-- `HexResultant/Basic.lean`: `pseudoDivMod`, `subresultantChain`,
-  `resultant`, and their basic computational properties (chain
-  termination, degree bounds).
+- `HexResultant/ExactDiv.lean`: `ExactDivLaws`, the total exact-division
+  wrappers, and the `Int`, field, and recursive dense-polynomial instances.
+- `HexResultant/Basic.lean`: `pseudoDivMod` and its computational properties.
+- `HexResultant/Subresultant.lean`: the Brown worker,
+  `subresultantChain`, `resultant`, chain termination, and degree bounds.
 - `HexResultant/Discriminant.lean`: `disc` and the algebraic
   identities we need downstream (for example
   `disc (f * g) = disc f · disc g · (resultant f g)²`).
@@ -132,9 +246,16 @@ Per [SPEC/testing.md](../../SPEC/testing.md), fixtures are tiered into
   - `resultant f 1 = 1` for any `f`.
   - `resultant (X² + 1) (X − 1) = 2`, plus a few small
     quadratic-times-linear cases.
+  - Total conventions: `resultant 0 0 = 1`, two constants give `1`,
+    and a positive-degree polynomial paired with zero gives `0`.
   - `disc (X² + b·X + c) = b² − 4·c` for small `b, c`.
+  - `disc 0 = 1` and `disc (C c) = 1`, including nonunit `c`.
   - Common-root cases: `resultant (X − 1) (X² − 1) = 0`,
     `resultant (X² + 1) (X² + 1) = 0`.
+  - The defective-drop examples `G₁ = 2X⁴+2X³+X+2`,
+    `G₂ = 2X³+1`, whose final chain constant is `4` but resultant is
+    `16`, and `G₁ = -X⁴`, `G₂ = 2X³-1`, which exercises both
+    nonunit exact divisions and has resultant `-1`.
   - A bivariate case over `R = ZPoly`, exercising the
     `hex-number-field` instantiation: for example
     `resultant_y (y² − t) (y − t) = t² − t`.
@@ -152,9 +273,12 @@ External oracles: python-flint (`fmpz_poly.resultant`) and cypari2
 - `pseudoDivMod` for `f, g` of degrees `n, m` runs in
   `O((n − m + 1) · m)` coefficient operations, the same as schoolbook
   polynomial division.
-- `subresultantChain f g` has at most `min(n, m) + 1` elements, hence
-  `O(min(n, m))` pseudo-division steps and `O(n·m)` coefficient
-  operations total. Over `R = Int`, intermediate coefficients have
+- For two nonzero inputs, `subresultantChain f g` stores at most
+  `min(n, m) + 2` nonzero elements. It performs exactly one fewer
+  pseudo-division calls than stored elements, including the final call whose
+  zero result is not stored, hence at most `min(n, m) + 1` calls and
+  `O(n·m)` coefficient operations total. Zero-input wrappers store at most
+  one element and perform no pseudo-division. Over `R = Int`, intermediate coefficients have
   bit-length `O((n+m) · (log(n+m) + log ‖f‖∞ + log ‖g‖∞))`, since
   every chain element's coefficients are (up to sign) minors of the
   Sylvester matrix (the subresultant theorem) and Hadamard's bound
@@ -169,8 +293,12 @@ is faster by a factor of roughly `n+m`.
 
 - Collins, G. E. *Subresultants and reduced polynomial remainder
   sequences.* J. ACM 14 (1967), 128-142. The original.
-- Brown, W. S. *The subresultant PRS algorithm.* ACM TOMS 4 (1978),
-  237-249. The standard reference for the modern formulation.
+- Brown, W. S. [*The subresultant PRS algorithm*](https://people.eecs.berkeley.edu/~fateman/282/readings/brown.pdf).
+  ACM TOMS 4 (1978), 237-249. Algorithm 1 is the recurrence pinned above.
+- Eberl, M. [*Subresultants*](https://isa-afp.org/browser_info/current/AFP/Subresultants/Subresultant.html),
+  Archive of Formal Proofs. Its verified `subresultant_prs` and
+  `resultant_impl` are the executable reference for the state, signs, exact
+  divisors, defective drops, and terminal convention.
 - Geddes, K. O.; Czapor, S. R.; Labahn, G. *Algorithms for Computer
   Algebra.* Kluwer, 1992. Chapter 7 is a clean textbook treatment
   with all the scale-factor bookkeeping spelt out.
