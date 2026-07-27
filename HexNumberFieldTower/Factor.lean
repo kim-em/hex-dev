@@ -181,6 +181,155 @@ def factorRat? (input : DensePoly Rat) :
     else
       none
 
+/-- The newest generator as a runtime-indexed element. A linear level already
+lies in the lower field, so its generator is the negative constant term of its
+monic relation. -/
+@[expose]
+def topGenerator (level : Level) (lower : List Level) :
+    RawElem (level :: lower) :=
+  if level.degree = 1 then
+    -raw (level :: lower) (level.defining.getD 0 #[])
+  else
+    raw (level :: lower) ((Array.replicate (levelsDim lower) 0).push 1)
+
+/-- Substitute `X - c*alpha` in a current-level polynomial. -/
+@[expose]
+def shiftTop (level : Level) (lower : List Level)
+    (f : Array (Array Rat)) (c : Int) : Array (Array Rat) :=
+  let levels := level :: lower
+  let delta := raw levels #[(c : Rat)] * topGenerator level lower
+  let substitution : DensePoly (RawElem levels) :=
+    DensePoly.ofCoeffs #[-delta, 1]
+  polyCoords (DensePoly.compose (rawPoly levels f) substitution)
+
+/-- Embed a lower-tail polynomial into the current level. Mixed-radix order
+places lower coordinates in the first top-generator block. -/
+@[expose]
+def embedLower (level : Level) (lower : List Level)
+    (f : Array (Array Rat)) : Array (Array Rat) :=
+  let levels := level :: lower
+  polyCoords <| DensePoly.ofCoeffs <| f.map fun coefficient =>
+    raw levels coefficient
+
+/-- Recover current-level factors from irreducible lower factors of a
+squarefree Trager norm, then undo the selected generator shift. -/
+@[expose]
+def recover (level : Level) (lower : List Level)
+    (shift : Int) (component : Array (Array Rat))
+    (lowerFactors : Array (Array (Array Rat))) :
+    Array (Array (Array Rat)) :=
+  let levels := level :: lower
+  let shifted := rawPoly levels (shiftTop level lower component shift)
+  lowerFactors.foldl (fun out lowerFactor =>
+    let lifted := rawPoly levels (embedLower level lower lowerFactor)
+    let common := Norm.monic (DensePoly.gcd shifted lifted)
+    if 0 < common.degree?.getD 0 then
+      let unshifted := shiftTop level lower (polyCoords common) (-shift)
+      out.push (polyCoords (Norm.monic (rawPoly levels unshifted)))
+    else
+      out) #[]
+
+/-- Recursive Trager factorization of one monic squarefree component. The
+recursion is structural in the tower height; every proper level performs one
+bounded one-level norm search and recurses only on the lower tail. -/
+@[expose]
+def factorSquarefree? : (levels : List Level) → Array (Array Rat) →
+    Option (Array (Array (Array Rat)))
+  | [], f => factorRat? (toRatPoly f)
+  | level :: lower, f => do
+      let (shift, norm) ← Norm.findSquarefreeShift level lower f
+      let lowerFactors ← factorSquarefree? lower norm
+      let factors := recover level lower shift f lowerFactors
+      let p := Norm.monic (rawPoly (level :: lower) f)
+      let product := factors.foldl
+        (fun product factor => product * rawPoly (level :: lower) factor)
+        1
+      if factors.all (fun factor =>
+          0 < (rawPoly (level :: lower) factor).degree?.getD 0) &&
+          product = p then
+        some factors
+      else
+        none
+
+/-- Runtime factorization payload before re-indexing coefficients by a public
+`NumberTower`. -/
+structure RawFactorization where
+  scalar : Array Rat
+  factors : Array (Array (Array Rat) × Nat)
+deriving DecidableEq
+
+/-- Lexicographic order on rational lists. -/
+@[expose]
+def ratListLess : List Rat → List Rat → Bool
+  | [], [] => false
+  | [], _ :: _ => true
+  | _ :: _, [] => false
+  | a :: as, b :: bs =>
+      if a < b then true else if b < a then false else ratListLess as bs
+
+/-- Flatten polynomial coefficient coordinates for canonical sorting. -/
+@[expose]
+def flattenPoly (f : Array (Array Rat)) : List Rat :=
+  f.toList.flatMap Array.toList
+
+/-- Canonical lexicographic factor order. -/
+@[expose]
+def factorLess (a b : Array (Array Rat)) : Bool :=
+  ratListLess (flattenPoly a) (flattenPoly b)
+
+/-- Check that adjacent factors are in canonical nondecreasing order. -/
+@[expose]
+def factorsSorted (factors : Array (Array (Array Rat) × Nat)) : Bool :=
+  (List.range (factors.size - 1)).all fun i =>
+    !factorLess factors[i + 1]!.1 factors[i]!.1
+
+/-- Multiply a scalar and powered raw factor list. -/
+@[expose]
+def factorProduct (levels : List Level) (scalar : Array Rat)
+    (factors : Array (Array (Array Rat) × Nat)) : Array (Array Rat) :=
+  polyCoords <| factors.foldl
+    (fun product factor =>
+      product * polyPow (rawPoly levels factor.1) factor.2)
+    (DensePoly.C (raw levels scalar))
+
+/-- Executable recursive irreducibility checker for a monic squarefree raw
+tower polynomial. It reruns Trager factorization and accepts exactly a
+singleton reconstruction. -/
+@[expose]
+def isIrreducible (levels : List Level) (f : Array (Array Rat)) : Bool :=
+  let p := rawPoly levels f
+  0 < p.degree?.getD 0 && p.leadingCoeff = 1 &&
+    Norm.isSquarefree levels f &&
+    match factorSquarefree? levels f with
+    | some factors => factors = #[polyCoords p]
+    | none => false
+
+/-- Full executable raw factorization certificate check. -/
+@[expose]
+def check (levels : List Level) (f : Array (Array Rat)) (scalar : Array Rat)
+    (factors : Array (Array (Array Rat) × Nat)) : Bool :=
+  factors.all (fun factor => 0 < factor.2 && isIrreducible levels factor.1) &&
+    factorsSorted factors && factorProduct levels scalar factors = f
+
+/-- Complete factorization with Yun multiplicities and recursive Trager
+recovery. Every candidate is sorted and replayed through the full executable
+certificate check before it is returned. -/
+@[expose]
+def factorRaw? (levels : List Level) (f : Array (Array Rat)) :
+    Option RawFactorization := do
+  let p := rawPoly levels f
+  let scalar := p.leadingCoeff.data
+  let components := yunRaw levels f
+  let factors ← components.foldlM (fun out component => do
+    let irreducibles ← factorSquarefree? levels component.1
+    pure <| irreducibles.foldl
+      (fun out factor => out.push (factor, component.2)) out) #[]
+  let factors := factors.qsort fun a b => factorLess a.1 b.1
+  if check levels f scalar factors then
+    some ⟨scalar, factors⟩
+  else
+    none
+
 /-! Compiled Yun regressions. -/
 
 private def yunSqrtTwoLevel : Level where
@@ -242,6 +391,109 @@ private def yunSqrtTwoLevel : Level where
 #guard
     let xSubOne : DensePoly Rat := DensePoly.ofList [-1, 1]
     (factorRat? (xSubOne * xSubOne)).isNone
+
+-- Trager's first two shifts collide conjugate sums for `X²-2`; the bounded
+-- search reaches shift `2`, recovers both linear factors, and undoes the shift.
+#guard
+    let levels := [yunSqrtTwoLevel]
+    let xSqSubTwo : Array (Array Rat) :=
+      #[#[-2, 0], #[0, 0], #[1, 0]]
+    match Norm.findSquarefreeShift yunSqrtTwoLevel [] xSqSubTwo,
+        factorSquarefree? levels xSqSubTwo with
+    | some (shift, _), some factors =>
+        let product := factors.foldl
+          (fun product factor => product * rawPoly levels factor) 1
+        shift = 2 && factors.size = 2 &&
+          product = rawPoly levels xSqSubTwo
+    | _, _ => false
+
+#guard
+    let levels := [yunSqrtTwoLevel]
+    let xSqSubThree : Array (Array Rat) :=
+      #[#[-3, 0], #[0, 0], #[1, 0]]
+    match factorSquarefree? levels xSqSubThree with
+    | some factors =>
+        factors = #[xSqSubThree]
+    | none => false
+
+#guard
+    let levels := [yunSqrtTwoLevel]
+    let xSqSubTwo : DensePoly (RawElem levels) :=
+      rawPoly levels #[#[-2, 0], #[0, 0], #[1, 0]]
+    let xSubOne : DensePoly (RawElem levels) :=
+      rawPoly levels #[#[-1, 0], #[1, 0]]
+    let f := polyPow xSqSubTwo 2 * polyPow xSubOne 3
+    match factorRaw? levels (polyCoords f) with
+    | some result =>
+        result.factors.size = 3 &&
+          result.factors.all (fun factor => 0 < factor.2) &&
+          check levels (polyCoords f) result.scalar result.factors
+    | none => false
+
 end Factor
+
+/-- Reconstruct and recursively certify a proposed public factorization. -/
+@[expose]
+def checkFactorization {T : NumberTower} (f : Poly T) (scalar : Elem T)
+    (factors : Array (Poly T × Nat)) : Bool :=
+  Factor.check T.levels.toList
+    (f.toArray.map coeffs) (coeffs scalar)
+    (factors.map fun factor =>
+      (factor.1.toArray.map coeffs, factor.2))
+
+/-- A checked complete factorization in a fixed tower. -/
+structure Factorization (T : NumberTower) (f : Poly T) where
+  scalar : Elem T
+  factors : Array (Poly T × Nat)
+  checked : checkFactorization f scalar factors = true
+
+/-- Complete irreducible factorization with multiplicity. -/
+def factor? (T : NumberTower) (f : Poly T) : Option (Factorization T f) := do
+  let raw ← Factor.factorRaw? T.levels.toList (f.toArray.map coeffs)
+  let scalar := ofCoeffs T raw.scalar
+  let factors := raw.factors.map fun factor =>
+    (DensePoly.ofCoeffs (factor.1.map (ofCoeffs T)), factor.2)
+  if h : checkFactorization f scalar factors then
+    some ⟨scalar, factors, h⟩
+  else
+    none
+
+/-! Compiled public dependent-result regression. -/
+
+private def factorSqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
+
+private def factorSqrtTwoSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
+
+private def factorSqrtTwoRep : RefinedIsolation factorSqrtTwoPoly :=
+  ⟨⟨factorSqrtTwoSquare, by decide⟩, by decide⟩
+
+private def factorSqrtTwoRoot : SimpleRoot factorSqrtTwoPoly :=
+  SimpleRoot.mk factorSqrtTwoRep
+
+#guard
+    if hirred : ZPoly.isIrreducible factorSqrtTwoPoly = true then
+      letI : ZPoly.CheckedIrreducible factorSqrtTwoPoly :=
+        ⟨hirred, by decide⟩
+      if hsimple : HasOnlySimpleRoots factorSqrtTwoPoly then
+        let extension := ofQAdjoin (x := factorSqrtTwoRoot)
+          hsimple factorSqrtTwoRep rfl
+        let f : Poly extension.tower := DensePoly.ofCoeffs
+          #[ofRat extension.tower (-2), 0, 1]
+        match factor? extension.tower f,
+            factor? extension.tower 0,
+            factor? extension.tower (DensePoly.C (ofRat extension.tower 5)) with
+        | some result, some zeroResult, some constantResult =>
+            result.factors.size = 2 &&
+              coeffs result.scalar = #[1, 0] &&
+              zeroResult.factors.isEmpty &&
+              isZero zeroResult.scalar &&
+              constantResult.factors.isEmpty &&
+              coeffs constantResult.scalar = #[5, 0]
+        | _, _, _ => false
+      else
+        false
+    else
+      false
 
 end Hex.NumberTower
