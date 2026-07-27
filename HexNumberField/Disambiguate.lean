@@ -42,9 +42,10 @@ namespace Disambiguation
 
 /-- Error-amplification majorant for Horner evaluation at a root of `q`,
 parameterized by an integer magnitude bound on coefficients so tower elements
-can reuse the same recurrence. Candidate-root square balls may have radius up
-to twice the nominal common input error because of their circumscribed-disc
-conversion. -/
+can reuse the same recurrence. The factor two on the root bound covers the
+`|re| + |im|` centre magnitude used by complex-ball multiplication; the three
+extra propagated-error units cover centre-radius conversion and the bilinear
+radius term. -/
 @[expose]
 def evalMajorant {A : Type} [Zero A] [DecidableEq A]
     (f : DensePoly A) (valueBound : A → Nat) (q : ZPoly) : Nat :=
@@ -52,7 +53,8 @@ def evalMajorant {A : Type} [Zero A] [DecidableEq A]
   let state := f.toArray.foldr
     (fun coeff state =>
       let value := state.1 * rootBound + valueBound coeff
-      let error := 2 * state.1 + rootBound * state.2 + 2 * state.2 + 1
+      let error :=
+        2 * state.1 + 2 * rootBound * state.2 + 3 * state.2 + 1
       (value, error))
     (0, 0)
   Nat.max 1 state.2
@@ -79,9 +81,9 @@ def valueMajorant {p : ZPoly} {x : SimpleRoot p} (a : QAdjoin p x) : Nat :=
 
 The state tracks a value bound `V` and a coefficient of the common input
 error `E`. For `(acc * y) + c`, coefficient errors are at most one nominal
-unit while the circumscribed root ball is at most two. The update
-`E' = 2*V + B*E + 2*E + 1` covers root error, propagated accumulator error,
-their product, and coefficient error. -/
+unit. The update `E' = 2*V + 2*B*E + 3*E + 1` covers root error, the
+`|re| + |im|` inflation in propagated accumulator error, their product, and
+coefficient error. -/
 @[expose]
 def evalMajorant {p : ZPoly} {x : SimpleRoot p}
     (f : DensePoly (QAdjoin p x)) (q : ZPoly) : Nat :=
@@ -138,7 +140,7 @@ def retainZero? (q : ZPoly) (majorant : Nat)
 #guard
     let q : ZPoly := DensePoly.ofList [-1, 1]
     let f : DensePoly Nat := DensePoly.ofList [1, 2]
-    Disambiguation.evalMajorant f id q = 10
+    Disambiguation.evalMajorant f id q = 14
 
 #guard
     let q : ZPoly := DensePoly.ofList [-1, 1]
