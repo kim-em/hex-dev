@@ -409,6 +409,12 @@ theorem toPolyℝ_neg (p : Hex.ZPoly) : toPolyℝ (-p) = -(toPolyℝ p) := by
   show (HexPolyMathlib.toPolynomial (-p)).map (Int.castRingHom ℝ) = _
   rw [HexPolyMathlib.toPolynomial_neg, Polynomial.map_neg]
 
+/-- The real cast is multiplicative. -/
+theorem toPolyℝ_mul (p q : Hex.ZPoly) :
+    toPolyℝ (p * q) = toPolyℝ p * toPolyℝ q := by
+  show (HexPolyZMathlib.toPolynomial (p * q)).map (Int.castRingHom ℝ) = _
+  rw [HexPolyZMathlib.toPolynomial_mul, Polynomial.map_mul]
+
 /-- The real cast of the zero polynomial. -/
 @[simp] theorem toPolyℝ_zero : toPolyℝ 0 = 0 := by
   show (HexPolyMathlib.toPolynomial 0).map (Int.castRingHom ℝ) = _
@@ -954,7 +960,7 @@ private theorem chainList_last_unit :
 `C c₀ · a = Q · b − C k · c'` (with `k ≠ 0`) transports `IsCoprime b c'` *back* to
 `IsCoprime a b`: solving the relation for `c'` and substituting into a Bezout
 combination for `(b, c')` yields one for `(a, b)`. -/
-private theorem coprime_step_rev {a b c' : Polynomial ℝ} {c₀ k : ℝ} {Q : Polynomial ℝ}
+theorem coprime_step_rev {a b c' : Polynomial ℝ} {c₀ k : ℝ} {Q : Polynomial ℝ}
     (hk : k ≠ 0)
     (hrel : Polynomial.C c₀ * a = Q * b - Polynomial.C k * c')
     (h : IsCoprime b c') : IsCoprime a b := by
@@ -1075,7 +1081,7 @@ private theorem eventually_flank_of_deriv_pos {f : Polynomial ℝ} {r : ℝ}
 `s₀' = C γ · s₁` with `γ > 0` (the executable seeds: the primitive parts of
 `p` and `p'`), then `s₀ · s₁` is negative just left of `r` and positive just
 right: its derivative at `r` is `γ · s₁(r)² > 0`. -/
-private theorem flank_of_key {s₀ s₁ : Polynomial ℝ} {γ : ℝ} (hγ : 0 < γ)
+theorem flank_of_key {s₀ s₁ : Polynomial ℝ} {γ : ℝ} (hγ : 0 < γ)
     (hkey : Polynomial.derivative s₀ = Polynomial.C γ * s₁)
     {r : ℝ} (h0 : s₀.eval r = 0) (h1 : s₁.eval r ≠ 0) :
     (∀ᶠ x in nhdsWithin r (Set.Iio r), (s₀ * s₁).eval x < 0) ∧
@@ -1090,7 +1096,7 @@ private theorem flank_of_key {s₀ s₁ : Polynomial ℝ} {γ : ℝ} (hγ : 0 < 
 /-! ### Assembly: the executable chain is a Sturm chain -/
 
 /-- Coprime polynomials never vanish together. -/
-private theorem eval_ne_zero_of_isCoprime {a b : Polynomial ℝ} (h : IsCoprime a b)
+theorem eval_ne_zero_of_isCoprime {a b : Polynomial ℝ} (h : IsCoprime a b)
     {x : ℝ} (ha : a.eval x = 0) : b.eval x ≠ 0 := by
   obtain ⟨u, v, huv⟩ := h
   intro hb
@@ -1365,9 +1371,16 @@ private theorem squarefree_toPolyℝ_primitivePart (p : Hex.ZPoly) (hp0 : p ≠ 
       by rw [toPolyℝ_eq_C_content_mul_primitivePart p]; ring⟩ hsep.squarefree
 
 /-- Dyadic order transfers to the real values. -/
-private theorem toReal_lt_toReal {a b : Dyadic} (h : a < b) :
+theorem toReal_lt_toReal {a b : Dyadic} (h : a < b) :
     Dyadic.toReal a < Dyadic.toReal b := by
   have h2 : a.toRat < b.toRat := Dyadic.toRat_lt_toRat_iff.mpr h
+  unfold Dyadic.toReal
+  exact_mod_cast h2
+
+/-- Nonstrict dyadic order transfers to the real values. -/
+theorem toReal_le_toReal {a b : Dyadic} (h : a ≤ b) :
+    Dyadic.toReal a ≤ Dyadic.toReal b := by
+  have h2 : a.toRat ≤ b.toRat := Dyadic.toRat_le_toRat_iff.mpr h
   unfold Dyadic.toReal
   exact_mod_cast h2
 
@@ -1408,7 +1421,7 @@ private theorem sign_intCast_sign (n : Int) :
 
 /-- The executable `+∞` variation count matches the abstract one: both read
 the signs of the leading coefficients. -/
-private theorem sturmVarPosInf_eq (chain : Array Hex.ZPoly) :
+theorem sturmVarPosInf_eq (chain : Array Hex.ZPoly) :
     Hex.sturmVarPosInf chain = Sturm.sturmVarPosInf (chain.toList.map toPolyℝ) := by
   rw [Hex.sturmVarPosInf, signVar_eq, Sturm.sturmVarPosInf]
   apply Sturm.signVariations_congr
@@ -1421,7 +1434,7 @@ private theorem sturmVarPosInf_eq (chain : Array Hex.ZPoly) :
 
 /-- The executable `−∞` variation count matches the abstract one: both read
 `sign(lc) · (−1)^degree`. -/
-private theorem sturmVarNegInf_eq (chain : Array Hex.ZPoly) :
+theorem sturmVarNegInf_eq (chain : Array Hex.ZPoly) :
     Hex.sturmVarNegInf chain = Sturm.sturmVarNegInf (chain.toList.map toPolyℝ) := by
   rw [Hex.sturmVarNegInf, signVar_eq, Sturm.sturmVarNegInf]
   apply Sturm.signVariations_congr

@@ -87,12 +87,6 @@ theorem aeval_eq_eval_toPolyℝ (q : Hex.ZPoly) (x : ℝ) :
     aeval x (toPolynomial q) = (toPolyℝ q).eval x := by
   rw [aeval_def, eval₂_eq_eval_map, algebraMap_int_eq]
 
-/-- The real cast is multiplicative. -/
-theorem toPolyℝ_mul (p q : Hex.ZPoly) :
-    toPolyℝ (p * q) = toPolyℝ p * toPolyℝ q := by
-  show (HexPolyZMathlib.toPolynomial (p * q)).map (Int.castRingHom ℝ) = _
-  rw [HexPolyZMathlib.toPolynomial_mul, Polynomial.map_mul]
-
 /-- The real cast is the composition of the rational cast with `ℚ → ℝ`. -/
 theorem toPolyℝ_eq_map_toPolyℚ (q : Hex.ZPoly) :
     toPolyℝ q = (toPolyℚ q).map (algebraMap ℚ ℝ) := by

@@ -141,28 +141,32 @@ multiplication identities without identifying it with the executable
 `sturmChain`. The companion therefore exposes a second bridge from
 literal integer-polynomial chains to the same abstract theorem.
 
-The reusable proof is an induction over an abstract nonempty list
+The reusable proof is an induction over an abstract list of at least two entries
 `[f, s₁, ..., sₙ]` with these hypotheses:
 
-- every entry is nonzero, degrees strictly descend, and `sₙ` is a
-  nonzero constant;
+- every entry is nonzero and `sₙ` is a nonzero constant;
 - `derivative f = scale δ s₁` for a positive integer `δ`;
 - every consecutive triple satisfies
   `scale α sᵢ = q * sᵢ₊₁ - scale β sᵢ₊₂` for positive integers
   `α`, `β` and a supplied `q`.
 
 It concludes that the cast list is an `IsSturmChain (toPolyℝ f)` and
-that `toPolyℝ f` is squarefree. The induction is independent of
-`chainList`; the existing executable correspondence instantiates it,
-as does RCF's Boolean literal-chain checker. The generic supporting
-lemmas for reverse coprimality, derivative flanks, and exclusion of a
-common zero are public short APIs, not duplicated consumer proofs.
+that `toPolyℝ f` is squarefree. Degree descent is useful for bounding and
+validating a compiled replay certificate, but is not an axiom of
+`IsSturmChain` and is therefore not a hypothesis of this proof. The induction
+is independent of `chainList` and serves RCF's Boolean literal-chain checker;
+the older executable correspondence remains a separate proof for the chain it
+constructs. Both use the public supporting lemmas for reverse coprimality,
+derivative flanks, and exclusion of a common zero.
 
 The finite-point bridge `sturmVarAt_eq` and the infinity bridges
 `sturmVarNegInf_eq` / `sturmVarPosInf_eq` are public for an arbitrary
 literal `Array ZPoly`. Together with `Sturm.sturm_half_open` and
 `Sturm.sturm_line`, they turn literal executable variation reads into
-root counts without calling `sturmCount` or `rootCount`.
+root counts without calling `sturmCount` or `rootCount`. The
+`ZReplay.count_eq_card_roots` and `ZReplay.total_eq_card_roots` corollaries
+perform the list-to-array alignment and compose replay, squarefreeness, and
+counting in the form consumed by a checker.
 
 The same layer supplies generalized isolation semantics parameterized
 by those literal counts: count-one gives a unique root in `(lower,
@@ -170,7 +174,10 @@ upper]`, while an ordered complete array captures every root exactly
 once. These statements consume `Squarefree (toPolyℝ f)` and `f ≠ 0`,
 not the executable `SquareFreeRat f` predicate, and do not reuse the
 current `RealRootIsolation` fields that are definitionally tied to
-`sturmCount`.
+`sturmCount`. The existing executable isolation theorem remains separate for
+API compatibility: the generic statement intentionally mirrors its finite
+cardinality argument rather than coupling the literal layer back to the
+executable structures it is meant to abstract over.
 
 ### Consequences for the executable counts
 
@@ -544,16 +551,20 @@ Status and boundaries:
 HexRealRootsMathlib/
   SturmChainDefs.lean  -- IsSturmChain, sturmVar over Polynomial ℝ
   SturmTheorem.lean    -- the counting theorem and the line form
-  ChainCorrespond.lean -- executable-chain correspondence plus the abstract
-                          literal-recurrence bridge and finite/infinity
-                          variation casts; sturmCount_eq_card_roots;
+  ChainCorrespond.lean -- executable-chain correspondence and the shared
+                          recurrence/cast helpers; sturmCount_eq_card_roots;
                           compatibility aliases for HexPolyZMathlib.Squarefree
+  LiteralChain.lean    -- abstract and integer literal recurrences,
+                          IsSturmChain/squarefree consequences, literal counts
+  LiteralChainTests.lean -- proof-level literal-replay regressions
+  LiteralIsolations.lean -- unique-root and full-coverage semantics for
+                            supplied interval and total counts
   Discr.lean            -- compatibility import of the shared discriminant API
   Hadamard.lean         -- compatibility import of the shared determinant bound
   Separation.lean      -- sepPrec_separates, rootBound_bounds_roots;
                           specializes shared Mahler/Vandermonde analysis
-  Isolations.lean      -- executable and literal-count forms of
-                          exists_unique_root and isolates
+  Isolations.lean      -- executable-count forms of exists_unique_root,
+                          isolates
   IsolateRoots.lean    -- IsolatedRealRoots, its constructors, the
                           bridge tactic, and the isolate_roots
                           term elaborator
