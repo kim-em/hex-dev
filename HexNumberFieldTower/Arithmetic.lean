@@ -175,6 +175,17 @@ def mul {T : NumberTower} (a b : Elem T) : Elem T :=
 
 instance {T : NumberTower} : Mul (Elem T) := ⟨mul⟩
 
+/-- Multiplication exposes its fixed-width recursively reduced coordinates. -/
+@[simp]
+theorem coeffs_mul {T : NumberTower} (a b : Elem T) :
+    coeffs (a * b) =
+      Arithmetic.mulCoords T.levels.toList (coeffs a) (coeffs b) := by
+  change coeffs (mul a b) = _
+  unfold mul
+  rw [coeffs_ofCoeffs]
+  apply normalizeCoeffs_eq_self
+  simp [dim]
+
 /-- Recursive extended-gcd inversion, totalized by `0⁻¹ = 0`. -/
 @[expose]
 def inv {T : NumberTower} (a : Elem T) : Elem T :=

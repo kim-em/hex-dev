@@ -133,6 +133,31 @@ theorem denote_add (levels : List Level) (a b : Array Rat) :
           (fun i => denote lower (Arithmetic.block a i (levelsDim lower)))
           (fun i => denote lower (Arithmetic.block b i (levelsDim lower))) 0 0
 
+/-- Direct tower denotation only observes the canonical mixed-radix width. -/
+theorem denote_fixed (levels : List Level) (data : Array Rat) :
+    denote levels (Arithmetic.fixedCoeffs (levelsDim levels) data) =
+      denote levels data := by
+  induction levels generalizing data with
+  | nil =>
+      simp [denote, Arithmetic.fixedCoeffs, levelsDim, Array.getD]
+  | cons level lower ih =>
+      simp only [denote, levelsDim]
+      congr 1
+      apply congrArg List.reverse
+      apply List.map_congr_left
+      intro i hi
+      rw [Arithmetic.block_fixed level.degree (levelsDim lower) i data
+        (List.mem_range.mp hi), ih]
+
+/-- Direct tower denotation is subtractive on fixed-width coordinates. -/
+theorem denote_sub (levels : List Level) (a b : Array Rat) :
+    denote levels (Arithmetic.subCoords (levelsDim levels) a b) =
+      denote levels a - denote levels b := by
+  have h := denote_add levels
+    (Arithmetic.subCoords (levelsDim levels) a b) b
+  rw [Arithmetic.add_subCoords, denote_fixed] at h
+  exact eq_sub_of_add_eq h.symm
+
 private theorem foldlM_sound (x : AlgebraicRoot)
     (coefficients : List AlgebraicRoot) (acc : AlgebraicRoot)
     {out : AlgebraicRoot}
@@ -257,19 +282,12 @@ theorem toComplex_eq_denote (T : NumberTower) (a : Elem T) :
   | some root =>
       rw [NumberTower.toComplex_eq T a h, evalCoords_sound _ _ h]
 
-/-- Interpret raw lower-tower coordinates through their selected complex
-embedding. Validity makes the fallback unreachable. -/
-@[expose]
-noncomputable def toComplex (lower : List Level) (a : Array Rat) : ℂ :=
-  (RawEvaluation.evalCoords? lower a).map AlgebraicRoot.toComplex |>.getD 0
-
 /-- Interpret a raw polynomial over a lower tower in `Polynomial ℂ`. -/
 @[expose]
 noncomputable def polynomial (lower : List Level)
     (f : Array (Array Rat)) : Polynomial ℂ :=
-  f.foldr
-    (fun a value => Polynomial.C (toComplex lower a) +
-      Polynomial.X * value) 0
+  ∑ i ∈ Finset.range f.size,
+    Polynomial.monomial i (denote lower (f.getD i #[]))
 
 end LevelSemantics
 

@@ -19,6 +19,16 @@ arithmetic is a thin dependent wrapper defined later.
 -/
 namespace Hex.NumberTower.Arithmetic
 
+private theorem foldl_array_size {α β : Type} (indices : List β)
+    (step : Array α → β → Array α) (initial : Array α)
+    (hstep : ∀ work index, (step work index).size = work.size) :
+    (indices.foldl step initial).size = initial.size := by
+  induction indices generalizing initial with
+  | nil => rfl
+  | cons index indices ih =>
+      simp only [List.foldl_cons]
+      rw [ih, hstep]
+
 /-- Fixed-width rational coordinates, padding with zero and truncating excess
 entries. -/
 @[expose]
@@ -40,10 +50,67 @@ def subCoords (n : Nat) (a b : Array Rat) : Array Rat :=
 def negCoords (n : Nat) (a : Array Rat) : Array Rat :=
   (Vector.ofFn fun i : Fin n => -a.getD i.val 0).toArray
 
+/-- Adding back the subtrahend recovers the fixed-width minuend. -/
+theorem add_subCoords (n : Nat) (a b : Array Rat) :
+    addCoords n (subCoords n a b) b = fixedCoeffs n a := by
+  apply Array.ext
+  · simp [addCoords, subCoords, fixedCoeffs]
+  · intro i hi₁ hi₂
+    simp [addCoords, subCoords, fixedCoeffs, Array.getD,
+      Rat.sub_add_cancel]
+
 /-- One mixed-radix block. -/
 @[expose]
 def block (a : Array Rat) (index width : Nat) : Array Rat :=
   (Vector.ofFn fun i : Fin width => a.getD (index * width + i.val) 0).toArray
+
+/-- A block of fixed-width coordinates is the fixed-width source block. -/
+theorem block_fixed (count width index : Nat) (a : Array Rat)
+    (hindex : index < count) :
+    block (fixedCoeffs (count * width) a) index width =
+      fixedCoeffs width (block a index width) := by
+  apply Array.ext
+  · simp [block, fixedCoeffs]
+  · intro i hi₁ hi₂
+    have hi : i < width := by
+      simpa [fixedCoeffs] using hi₂
+    have hglobal : index * width + i < count * width := by
+      calc
+        index * width + i < index * width + width :=
+          Nat.add_lt_add_left hi _
+        _ = (index + 1) * width := by simp [Nat.add_mul]
+        _ ≤ count * width :=
+          Nat.mul_le_mul_right width (Nat.succ_le_of_lt hindex)
+    simp [block, fixedCoeffs, Array.getD, hglobal]
+
+/-- The only nonzero block of the fixed-width coordinate one is its constant
+block. -/
+theorem block_one (count width index : Nat) (hindex : index < count) :
+    block (fixedCoeffs (count * width) #[1]) index width =
+      if index = 0 then fixedCoeffs width #[1]
+      else fixedCoeffs width #[] := by
+  by_cases hindex0 : index = 0
+  · subst index
+    apply Array.ext
+    · simp [block, fixedCoeffs]
+    · intro i hi₁ hi₂
+      have hi : i < width := by
+        simpa [fixedCoeffs] using hi₂
+      have htotal : 0 < count * width :=
+        Nat.mul_pos hindex (Nat.zero_lt_of_lt hi)
+      rcases i with _ | i
+      · simp [block, fixedCoeffs, Array.getD, Nat.ne_of_gt htotal]
+      · simp [block, fixedCoeffs, Array.getD]
+  · simp only [if_neg hindex0]
+    apply Array.ext
+    · simp [block, fixedCoeffs]
+    · intro i hi₁ hi₂
+      have hi : i < width := by
+        simpa [fixedCoeffs] using hi₂
+      have hwidth : 0 < width := Nat.zero_lt_of_lt hi
+      have hmul : 0 < index * width :=
+        Nat.mul_pos (Nat.pos_of_ne_zero hindex0) hwidth
+      simp [block, fixedCoeffs, Array.getD, Nat.ne_of_gt hmul]
 
 /-- A block of fixed-width coordinate addition is the sum of the blocks. -/
 theorem block_add (count width index : Nat) (a b : Array Rat)
@@ -73,6 +140,165 @@ def flattenBlocks (count width : Nat) (blocks : Array (Array Rat)) : Array Rat :
     (Vector.ofFn fun i : Fin (count * width) =>
       (blocks.getD (i.val / width) #[]).getD (i.val % width) 0).toArray
 
+/-- Flattening fixed-width blocks always produces the requested total width. -/
+@[simp]
+theorem flattenBlocks_size (count width : Nat) (blocks : Array (Array Rat)) :
+    (flattenBlocks count width blocks).size = count * width := by
+  by_cases hwidth : width = 0
+  · simp [flattenBlocks, hwidth]
+  · simp [flattenBlocks, hwidth]
+
+/-- Reading an in-range block after flattening recovers that source block at
+the fixed lower width. -/
+theorem block_flatten (count width index : Nat)
+    (blocks : Array (Array Rat)) (hindex : index < count) :
+    block (flattenBlocks count width blocks) index width =
+      fixedCoeffs width (blocks.getD index #[]) := by
+  by_cases hwidth : width = 0
+  · subst width
+    simp [block, flattenBlocks, fixedCoeffs]
+  · apply Array.ext
+    · simp [block, fixedCoeffs]
+    · intro i hi₁ hi₂
+      have hi : i < width := by
+        simpa [fixedCoeffs] using hi₂
+      have hglobal : index * width + i < count * width := by
+        calc
+          index * width + i < index * width + width :=
+            Nat.add_lt_add_left hi _
+          _ = (index + 1) * width := by simp [Nat.add_mul]
+          _ ≤ count * width :=
+            Nat.mul_le_mul_right width (Nat.succ_le_of_lt hindex)
+      have hdiv : (index * width + i) / width = index := by
+        calc
+          _ = (width * index + i) / width := by
+            rw [Nat.mul_comm index width]
+          _ = index + i / width :=
+            Nat.mul_add_div (Nat.pos_of_ne_zero hwidth) index i
+          _ = index := by simp [Nat.div_eq_of_lt hi]
+      have himod : i % width = i := Nat.mod_eq_of_lt hi
+      simp [block, flattenBlocks, fixedCoeffs, Array.getD, hwidth, hglobal,
+        hdiv, himod]
+
+/-- Add one row of schoolbook block products to a convolution workspace. -/
+@[expose]
+def convolveRow (degree width i : Nat)
+    (multiply : Array Rat → Array Rat → Array Rat)
+    (a b : Array Rat) (work : Array (Array Rat)) : Array (Array Rat) :=
+  let zeroBlock : Array Rat := Array.replicate width 0
+  (List.range degree).foldl
+    (fun work j =>
+      let product := multiply (block a i width) (block b j width)
+      let k := i + j
+      work.set! k (addCoords width (work.getD k zeroBlock) product))
+    work
+
+@[simp]
+theorem convolveRow_size (degree width i : Nat)
+    (multiply : Array Rat → Array Rat → Array Rat)
+    (a b : Array Rat) (work : Array (Array Rat)) :
+    (convolveRow degree width i multiply a b work).size = work.size := by
+  unfold convolveRow
+  apply foldl_array_size
+  intro inner j
+  simp
+
+/-- Schoolbook convolution of fixed-width coefficient blocks. -/
+@[expose]
+def convolve (degree width : Nat)
+    (multiply : Array Rat → Array Rat → Array Rat)
+    (a b : Array Rat) : Array (Array Rat) :=
+  let zeroBlock : Array Rat := Array.replicate width 0
+  let work := Array.replicate (2 * degree - 1) zeroBlock
+  (List.range degree).foldl
+    (fun work i => convolveRow degree width i multiply a b work)
+    work
+
+/-- Convolution allocates exactly the coefficient range of a product of two
+polynomials of degree below `degree`. -/
+@[simp]
+theorem convolve_size (degree width : Nat)
+    (multiply : Array Rat → Array Rat → Array Rat)
+    (a b : Array Rat) :
+    (convolve degree width multiply a b).size = 2 * degree - 1 := by
+  unfold convolve
+  rw [foldl_array_size]
+  · simp
+  · intro work i
+    simp
+
+/-- Apply all lower-coefficient corrections for eliminating the coefficient
+at `k` with a monic relation. -/
+@[expose]
+def reduceCoeffs (degree width k : Nat) (defining : Array (Array Rat))
+    (multiply : Array Rat → Array Rat → Array Rat)
+    (work : Array (Array Rat)) : Array (Array Rat) :=
+  let zeroBlock : Array Rat := Array.replicate width 0
+  let high := work.getD k zeroBlock
+  (List.range degree).foldl
+    (fun work j =>
+      let relation := defining.getD j zeroBlock
+      let correction := multiply high relation
+      let target := k - degree + j
+      work.set! target
+        (subCoords width (work.getD target zeroBlock) correction))
+    work
+
+@[simp]
+theorem reduceCoeffs_size (degree width k : Nat)
+    (defining : Array (Array Rat))
+    (multiply : Array Rat → Array Rat → Array Rat)
+    (work : Array (Array Rat)) :
+    (reduceCoeffs degree width k defining multiply work).size = work.size := by
+  unfold reduceCoeffs
+  apply foldl_array_size
+  intro inner j
+  simp
+
+/-- Eliminate the coefficient at `k`, then discard it. -/
+@[expose]
+def reduceAt (degree width k : Nat) (defining : Array (Array Rat))
+    (multiply : Array Rat → Array Rat → Array Rat)
+    (work : Array (Array Rat)) : Array (Array Rat) :=
+  (reduceCoeffs degree width k defining multiply work).take k
+
+/-- One descending reduction step removes exactly its top coefficient. -/
+@[simp]
+theorem reduceAt_size (degree width k : Nat)
+    (defining : Array (Array Rat))
+    (multiply : Array Rat → Array Rat → Array Rat)
+    (work : Array (Array Rat)) (hsize : work.size = k + 1) :
+    (reduceAt degree width k defining multiply work).size = k := by
+  simp [reduceAt, hsize]
+
+/-- Descending monic reduction of all coefficients at or above `degree`. -/
+@[expose]
+def reduce (degree width : Nat) (defining : Array (Array Rat))
+    (multiply : Array Rat → Array Rat → Array Rat) :
+    Nat → Array (Array Rat) → Array (Array Rat)
+  | 0, work => work.take degree
+  | fuel + 1, work =>
+      reduce degree width defining multiply fuel
+        (reduceAt degree width (degree + fuel) defining multiply work)
+
+/-- Descending reduction consumes its whole high-coefficient fuel. -/
+@[simp]
+theorem reduce_size (degree width fuel : Nat)
+    (defining : Array (Array Rat))
+    (multiply : Array Rat → Array Rat → Array Rat)
+    (work : Array (Array Rat)) (hsize : work.size = degree + fuel) :
+    (reduce degree width defining multiply fuel work).size = degree := by
+  induction fuel generalizing work with
+  | zero => simp [reduce, hsize]
+  | succ fuel ih =>
+      have hstep :
+          (reduceAt degree width (degree + fuel) defining multiply work).size =
+            degree + fuel := by
+        apply reduceAt_size
+        omega
+      simpa [reduce] using
+        ih (reduceAt degree width (degree + fuel) defining multiply work) hstep
+
 /-- Recursive mixed-radix multiplication on top-first raw level data. -/
 @[expose]
 def mulCoords : (levels : List Level) → Array Rat → Array Rat → Array Rat
@@ -83,31 +309,22 @@ def mulCoords : (levels : List Level) → Array Rat → Array Rat → Array Rat
       if d = 0 then
         #[]
       else
-        let zeroBlock : Array Rat := Array.replicate lowerDim 0
-        let work := Array.replicate (2 * d - 1) zeroBlock
-        let convolved := (List.range d).foldl
-          (fun work i => (List.range d).foldl
-            (fun work j =>
-              let product := mulCoords lower
-                (block a i lowerDim) (block b j lowerDim)
-              let k := i + j
-              work.set! k (addCoords lowerDim work[k]! product))
-            work)
-          work
-        let reduced := (List.range (d - 1)).foldl
-          (fun work offset =>
-            let k := 2 * d - 2 - offset
-            let high := work[k]!
-            (List.range d).foldl
-              (fun work j =>
-                let relation := level.defining.getD j zeroBlock
-                let correction := mulCoords lower high relation
-                let target := k - d + j
-                work.set! target
-                  (subCoords lowerDim work[target]! correction))
-              work)
-          convolved
-        flattenBlocks d lowerDim (reduced.take d)
+        let convolved := convolve d lowerDim (mulCoords lower) a b
+        let reduced := reduce d lowerDim level.defining (mulCoords lower)
+          (d - 1) convolved
+        flattenBlocks d lowerDim reduced
+
+/-- Recursive multiplication returns exactly one mixed-radix coordinate
+vector. -/
+@[simp]
+theorem mulCoords_size (levels : List Level) (a b : Array Rat) :
+    (mulCoords levels a b).size = levelsDim levels := by
+  induction levels generalizing a b with
+  | nil => simp [mulCoords, levelsDim]
+  | cons level lower ih =>
+      by_cases hdegree : level.degree = 0
+      · simp [mulCoords, levelsDim, hdegree]
+      · simp [mulCoords, levelsDim, hdegree]
 
 /-- Dynamically indexed tower coefficient used internally when an algorithm
 recurses through runtime level data rather than a dependent `NumberTower`.
