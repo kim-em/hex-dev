@@ -495,7 +495,7 @@ libraries:
     done_through: 0
     status: planned
   HexNumberFieldTower:
-    deps: [HexNumberField, HexResultant, HexBerlekampZassenhaus, HexRowReduce]
+    deps: [HexNumberField, HexResultant, HexBerlekampZassenhaus]
     mathlib: false
     done_through: 0
     status: active

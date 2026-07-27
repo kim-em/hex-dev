@@ -262,21 +262,25 @@ dimension at that generator-adjoining step. This degree test is the executable
 primitive-element certificate.
 
 At a generator-adjoining step whose combined dimension is `d`, at most
-`choose(d, 2)` shifts collide two complex embeddings.
-`flattenShiftCount(d) = choose(d, 2) + 1`; test exactly the first that many
-values in the signed enumeration, continuing past any candidate whose checked
-canonicalization fails. Candidate factor selection uses
+`choose(d, 2)` shifts collide two complex embeddings. A full-degree candidate
+can have another recovery collision: an incompatible conjugate pair can share
+the same affine value without defining an embedding of the combined field.
+There are at most another `choose(d, 2)` such bad shifts. Thus
+`flattenShiftCount(d) = 2 * choose(d, 2) + 1`; test exactly the first that many
+values in the signed enumeration, continuing past failed canonicalization and
+past candidates whose recovery gcd is not linear. Candidate factor selection uses
 `evalDisambiguationPrec`, so both the shift search and the root selection have
 input-computable finite bounds.
 
 For an accepted `γ = θ + cα`, lift the minimal polynomials of `θ` and `α` into
-`ℚ(γ)[Y]` and take the gcd of `mα(Y)` with `mθ(γ - cY)`. Full-degree acceptance
-makes this gcd linear, recovering `α`; then recover `θ = γ - cα` and substitute
-the prior generator coordinates through `θ`. These coordinate expressions
-define `toPrimitive`; evaluation at the corresponding tower element defines
-`fromPrimitive`. Verify both coordinate composites on basis vectors before
-returning. The accepted `γ` is already the canonical `AlgebraicNumber` stored
-by `Flattening`.
+`ℚ(γ)[Y]` and take the gcd of `mα(Y)` with `mθ(γ - cY)`. Accept the shift only
+when this gcd is linear, recovering `α`; then recover `θ = γ - cα` and
+substitute the prior generator coordinates through `θ`. These coordinate
+expressions define `toPrimitive`; evaluation at the corresponding tower
+element defines `fromPrimitive`. Verify their composite on a rational basis of
+the tower and verify that the tower element representing `γ` zeros its claimed
+minimal polynomial before returning. The accepted `γ` is already the canonical
+`AlgebraicNumber` stored by `Flattening`.
 
 ## Conformance
 
@@ -310,7 +314,10 @@ Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
   factorization cost, is the implementation budget.
 - `split?` repeats factorization after genuine degree-reducing extensions.
 - `flatten?` computes primitive-element eliminants of degree at most `D`, then
-  performs linear-factor gcd recovery over the accepted fixed presentation.
+  performs linear-factor gcd recovery over each full-degree candidate. The
+  exact Euclidean gcd over `ℚ(γ)` includes repeated quotient-field inversions
+  and is expected to dominate before the bounded shift enumeration does on
+  taller towers.
 
 No standalone wall-clock ceiling is pinned before the first complete compiled
 implementation. Phase 4 records component timings, then sets each ceiling from
