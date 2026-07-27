@@ -29,11 +29,11 @@ def Sound {T : NumberTower} (F : Flattening T) : Prop :=
   Function.LeftInverse F.fromPrimitive F.toPrimitive ∧
     Function.RightInverse F.fromPrimitive F.toPrimitive ∧
     (∀ a : Elem T,
-      @QAdjoin.toComplex F.root.p F.root.x F.root.checked
-        (F.toPrimitive a) = T.toComplex a) ∧
+      QAdjoin.toComplex (F.toPrimitive a) F.root.rep F.root.rep_mk =
+        T.toComplex a) ∧
     (∀ a : QAdjoin F.root.p F.root.x,
       T.toComplex (F.fromPrimitive a) =
-        @QAdjoin.toComplex F.root.p F.root.x F.root.checked a) ∧
+        QAdjoin.toComplex a F.root.rep F.root.rep_mk) ∧
     (∀ a b : Elem T,
       F.toPrimitive (a + b) = F.toPrimitive a + F.toPrimitive b) ∧
     (∀ a b : Elem T,
@@ -58,15 +58,15 @@ theorem flatten?_isSome (T : NumberTower) :
 /-- The forward primitive coordinate map preserves the fixed complex value. -/
 theorem flatten_toComplex (T : NumberTower) {F : Flattening T}
     (h : T.flatten? = some F) (a : Elem T) :
-    @QAdjoin.toComplex F.root.p F.root.x F.root.checked
-      (F.toPrimitive a) = T.toComplex a := by
+    QAdjoin.toComplex (F.toPrimitive a) F.root.rep F.root.rep_mk =
+      T.toComplex a := by
   sorry
 
 /-- The inverse primitive coordinate map preserves the fixed complex value. -/
 theorem flatten_fromComplex (T : NumberTower) {F : Flattening T}
     (h : T.flatten? = some F) (a : QAdjoin F.root.p F.root.x) :
     T.toComplex (F.fromPrimitive a) =
-      @QAdjoin.toComplex F.root.p F.root.x F.root.checked a := by
+      QAdjoin.toComplex a F.root.rep F.root.rep_mk := by
   sorry
 
 end Hex.NumberTower
