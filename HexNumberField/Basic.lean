@@ -81,6 +81,21 @@ def ofNormalized?
   some (.mk p prim pos_lc pos_degree checked squarefree (SimpleRoot.mk canonical)
     canonical rfl)
 
+/-- Successful canonicalization retains the supplied normalized polynomial. -/
+theorem ofNormalized?_p
+    (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
+    (pos_degree : 0 < p.degree?.getD 0)
+    (checked : ZPoly.CheckedIrreducible p) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p) {a : AlgebraicNumber}
+    (h : ofNormalized? p prim pos_lc pos_degree checked squarefree rep = some a) :
+    a.p = p := by
+  unfold ofNormalized? at h
+  obtain ⟨isolations, _, h⟩ := Option.bind_eq_some_iff.mp h
+  obtain ⟨refined, _, h⟩ := Option.bind_eq_some_iff.mp h
+  obtain ⟨canonical, _, h⟩ := Option.bind_eq_some_iff.mp h
+  cases h
+  rfl
+
 private def zeroSquare : DyadicSquare :=
   ⟨0, 0, (mahlerPrec ZPoly.X : Int)⟩
 
@@ -113,6 +128,12 @@ private theorem zeroCandidate_isSome : zeroCandidate.isSome := by
 root of the normalized polynomial `X`. -/
 def zero : AlgebraicNumber :=
   Option.get zeroCandidate zeroCandidate_isSome
+
+/-- The canonical zero retains `X` as its normalized polynomial. -/
+theorem zero_p : zero.p = ZPoly.X := by
+  apply ofNormalized?_p ZPoly.X (by rfl) (by decide) (by decide)
+    ⟨zero_isIrreducible, by decide⟩ zero_squarefree zeroRep
+  exact (Option.some_get zeroCandidate_isSome).symm
 
 instance : Zero AlgebraicNumber := ⟨zero⟩
 

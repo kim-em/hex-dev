@@ -24,27 +24,30 @@ namespace Hex.NumberTower
 /-- Executable zero denotes complex zero. -/
 theorem map_zero (T : NumberTower) :
     T.toComplex (0 : Elem T) = 0 := by
-  sorry
+  rw [zero_eq_ofRat]
+  simpa using toComplex_ofRat T 0
 
 /-- Executable one denotes complex one. -/
 theorem map_one (T : NumberTower) :
     T.toComplex (1 : Elem T) = 1 := by
-  sorry
+  rw [one_eq_ofRat]
+  simpa using toComplex_ofRat T 1
 
 /-- Coordinate addition computes complex addition. -/
 theorem map_add (T : NumberTower) (a b : Elem T) :
     T.toComplex (a + b) = T.toComplex a + T.toComplex b := by
   sorry
 
-/-- Coordinate subtraction computes complex subtraction. -/
-theorem map_sub (T : NumberTower) (a b : Elem T) :
-    T.toComplex (a - b) = T.toComplex a - T.toComplex b := by
-  sorry
-
 /-- Coordinate negation computes complex negation. -/
 theorem map_neg (T : NumberTower) (a : Elem T) :
     T.toComplex (-a) = -T.toComplex a := by
   sorry
+
+/-- Coordinate subtraction computes complex subtraction. -/
+theorem map_sub (T : NumberTower) (a b : Elem T) :
+    T.toComplex (a - b) = T.toComplex a - T.toComplex b := by
+  rw [NumberTower.sub_eq_add_neg, map_add, map_neg]
+  rfl
 
 /-- Recursive reduced multiplication computes complex multiplication. -/
 theorem map_mul (T : NumberTower) (a b : Elem T) :

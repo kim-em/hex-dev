@@ -154,7 +154,14 @@ namespace AlgebraicNumber
 
 /-- Canonical zero denotes complex zero. -/
 theorem zero_toComplex : (0 : AlgebraicNumber).toComplex = 0 := by
-  sorry
+  have hroot := AlgebraicRoot.toComplex_isRoot
+    (0 : AlgebraicNumber).toRoot
+  change (HexRootsMathlib.toPolyℂ (0 : AlgebraicNumber).p).eval
+    (0 : AlgebraicNumber).toComplex = 0 at hroot
+  have hp : (0 : AlgebraicNumber).p = ZPoly.X :=
+    AlgebraicNumber.zero_p
+  rw [hp] at hroot
+  simpa [HexRootsMathlib.toPolyℂ, ZPoly.X] using hroot
 
 /-- Canonical addition computes complex addition. -/
 theorem add_toComplex (a b : AlgebraicNumber) :

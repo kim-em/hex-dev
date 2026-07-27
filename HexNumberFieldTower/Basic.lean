@@ -126,6 +126,15 @@ truncating excess coordinates and padding missing coordinates with zero. -/
 def normalizeCoeffs (T : NumberTower) (coefficients : Array Rat) : Array Rat :=
   (Vector.ofFn fun i : Fin T.dim => coefficients.getD i.val 0).toArray
 
+/-- Normalization fixes an array that already has the tower width. -/
+theorem normalizeCoeffs_eq_self (T : NumberTower) (coefficients : Array Rat)
+    (hsize : coefficients.size = T.dim) :
+    normalizeCoeffs T coefficients = coefficients := by
+  apply Array.ext
+  · simp [normalizeCoeffs, hsize]
+  · intro i hi₁ hi₂
+    simp [normalizeCoeffs, Array.getD, hi₂]
+
 /-- Construct the unique fixed-width element represented by a raw coordinate
 array. -/
 def ofCoeffs (T : NumberTower) (coefficients : Array Rat) : Elem T :=
@@ -135,6 +144,12 @@ def ofCoeffs (T : NumberTower) (coefficients : Array Rat) : Elem T :=
 @[expose]
 def coeffs {T : NumberTower} (a : Elem T) : Array Rat :=
   a.data
+
+/-- Reading a freshly normalized element returns its normalized coordinates. -/
+@[simp]
+theorem coeffs_ofCoeffs (T : NumberTower) (coefficients : Array Rat) :
+    coeffs (ofCoeffs T coefficients) = normalizeCoeffs T coefficients := by
+  rfl
 
 /-- Equality is exact coordinate equality inside a fixed tower. -/
 @[ext]
@@ -156,6 +171,11 @@ instance {T : NumberTower} : DecidableEq (Elem T) := fun a b =>
 /-- Embed a rational number into the constant mixed-radix coordinate. -/
 def ofRat (T : NumberTower) (q : Rat) : Elem T :=
   ofCoeffs T #[q]
+
+/-- Rational embedding is the singleton-coordinate constructor. -/
+theorem ofRat_eq_ofCoeffs (T : NumberTower) (q : Rat) :
+    T.ofRat q = T.ofCoeffs #[q] := by
+  rfl
 
 /-- A dependent extension result carries the canonical lower-field embedding,
 the new generator, and its selected absolute algebraic root. -/
