@@ -255,6 +255,23 @@ The Mathlib companion may use `norm_num` when it is the cheapest way to close
 a frontend rational leaf; that convenience is not part of the shared
 library's trust or dependency story.
 
+Core also provides `Rat.toDyadic` together with its one-sided enclosure
+theorems. An upper projection can be obtained by applying the lower projection
+to the negation and negating the result. The D2 rational arm compares this
+route with a small dedicated projector before duplicating any division or
+rounding machinery.
+
+The signed-denominator cross-product encoding is useful as a minimal soundness
+spike, but it is not yet the production trace choice. A canonical planner
+naturally emits `Rat.num` with its positive `Rat.den`; that shape simplifies
+order checks and lets a shared literal table validate size and canonicality at
+most once. Alternatively, arithmetic-edge soundness can accept noncanonical
+fractions, but then the checker must still reject inflated equivalent literals
+before their cross-products become a denial-of-service vector. Experiments
+separately measure compiled certificate production, serialization, and replay;
+they do not compare a verifier-only trace against direct normalization as if
+the two included the same work.
+
 Projection keeps the strongest strictness justified by order. For a lower
 source cut at `r`, a projected dyadic `q <= r` inherits the source strictness
 when `q = r`; when `q < r`, the projected cut is strict even if the source was
@@ -502,6 +519,51 @@ The initial feasibility comparison has three arms:
 The corpus measures program size, duplicate instances, useful-instance ratio,
 search time, and replay size. Safe budget exhaustion leaves the already
 validated program and facts usable.
+
+#### Instantiation certificate boundary
+
+The proof-facing checker treats the proposed program extension, recipe
+witnesses, equality edges, propagation facts, and selected result index as
+untrusted certificate data. The caller separately supplies the immutable base
+snapshot boundary, initial source rows, requested target row, and every
+resource limit. Successful replay proves exactly that caller-selected target
+from exactly those caller-supplied sources; certificate fields cannot replace
+either side of this implication. In the tactic, the caller obligations are
+discharged from reification and local hypotheses, rather than accepted as
+external axioms.
+
+Validation proceeds in a fail-closed order:
+
+1. bounded-length checks stop after one constructor beyond each trusted node,
+   source, equality, and fact cap;
+2. every program literal is endpoint-preflighted, including a dead literal
+   not reached by the selected trace;
+3. SSA topology and the trigger's exact source and generated instruction
+   shapes are checked against the caller's base boundary;
+4. the selected witness must contribute its exact equality edge, and every
+   retained edge is independently checked against the same base boundary and
+   generation cap;
+5. each propagation fact uses exact optional lookups of existing program,
+   source, equality, and prior-fact entries; and
+6. an in-bounds selected fact must equal the caller's target row exactly.
+
+The generic soundness API exposes introduction and elimination lemmas for
+source-table invariants and row membership, so a downstream frontend can use
+the checker without unfolding implementation-private definitions. Source rows
+may soundly describe any existing node, including a composite expression,
+because each is an explicit theorem hypothesis. Whether the first frontend
+offers only variable-domain bindings by default, while reserving composite
+source facts for hypotheses and imported solvers, remains a policy question;
+the generic checker does not impose that restriction.
+
+A small proof-facing implementation may use original-order `List` facts with a
+newest-first accumulator, provided it rejects forward references and charges
+every visited constructor—including final-result lookup—to a caller-owned work
+budget. That representation is a kernel-reduction canary, not the production
+storage decision. Array, chunked, and arena-backed traces remain candidates;
+they must implement the same exact-index, caller-bound, and work-accounting
+contract. A correspondence theorem between stored original indices and the
+chosen replay layout is required when that layout is selected.
 
 ## Rule protocol
 
@@ -838,6 +900,17 @@ budget when regularization actually helps. Existing stronger facts are never
 deleted to satisfy the limit, and an oversized result is reported distinctly
 from `noChange`. The rational candidate applies the common exact-cost preflight
 above to cross-multiplication and denominator growth instead.
+
+Retained endpoint height and temporary arithmetic work are distinct limits.
+For subtraction, every endpoint-alignment pair needed by an interval rule is
+preflighted before the first subtraction runs; temporary aligned work is
+bounded from `H + S`, while each canonical result must separately return within
+retained height `H`. For multiplication, the checker predicts the sum of input
+mantissa bit lengths and the signed sum of exponents before constructing the
+product, then checks the canonical result. Using the signed exponent sum is
+important: it admits cheap cancellation such as a tiny power of two times its
+inverse while still rejecting a genuinely oversized product. Comparable
+preflight-before-allocation obligations apply to rational cross-products.
 
 Payload limits are enforced when an accepted recipe is frozen. Deduplicated
 tables are counted once in the immutable arena. A one-node derivation cannot
