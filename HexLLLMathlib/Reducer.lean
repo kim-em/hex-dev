@@ -2453,7 +2453,7 @@ theorem lll_isLLLReduced (b : Matrix Int n m) (δ : Rat)
 /-- The generated lattice is preserved by `Hex.lll`. -/
 theorem lll_memLattice_iff (b : Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
-    (hind : b.independent) (v : Vector Int m) :
+    (_hind : b.independent) (v : Vector Int m) :
     Matrix.memLattice (lll b δ hδ hδ' hn) v ↔ Matrix.memLattice b v := by
   unfold lll
   cases hd : LLLProvider.dispatch b δ with
@@ -2503,4 +2503,3 @@ theorem lll_short_vector
   simpa [hηη] using hbnd
 
 end Hex
-

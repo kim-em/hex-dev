@@ -9,7 +9,6 @@ module
 public import HexBerlekampMathlib.Basic
 public import HexBerlekampMathlib.FactorPoly
 public import HexBerlekampMathlib.FactorProvider
-public import HexBerlekampMathlib.FactorPolyTests
 
 public section
 

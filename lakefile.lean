@@ -215,6 +215,24 @@ lean_lib HexConformance where
   srcDir := "conformance"
   globs := #[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexRoots.Conformance]
 
+-- Public umbrellas intentionally contain only the supported API. Executable
+-- examples and regression tests are compiled through this separate target so
+-- removing them from an umbrella cannot silently remove them from CI.
+lean_lib HexReleaseTests where
+  globs := #[`HexBerlekamp.FactorTacticTests,
+    `HexBerlekampMathlib.FactorPolyTests,
+    `HexBerlekampZassenhaus.FactorTacticTests,
+    `HexBerlekampZassenhausMathlib.FactorPolyTests,
+    `HexRealRoots.ReplayTest,
+    `HexRealRootsMathlib.IsolateRootsTests,
+    `HexRealRootsMathlib.IsolateRootsElabTests,
+    `HexRootsMathlib.Examples]
+
+-- Canonical end-to-end examples are release artifacts rather than public API.
+-- Keep their target separate for the same reason as the regression tests.
+lean_lib HexReleaseExamples where
+  globs := #[`Examples.Release3, `Examples.Release4, `Examples.Release5]
+
 lean_exe hexrowreduce_emit_fixtures where
   srcDir := "conformance"
   root := `HexRowReduce.EmitFixtures

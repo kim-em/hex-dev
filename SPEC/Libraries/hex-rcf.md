@@ -19,7 +19,8 @@ relevant cell was checked and found false. Operational totality of the
 compiled builder follows from the squarefree carrier and
 `isolate?_isSome`, together with the structurally fuel-bounded
 separation pass, from
-[hex-real-roots-mathlib](hex-real-roots-mathlib.md). It is not exposed
+[hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md).
+It is not exposed
 as a kernel-side completeness theorem for false verdicts.
 
 This is the user-facing payoff of the real-root machinery: neither

@@ -14,13 +14,14 @@ public section
 
 /-!
 Word-sized (Montgomery) computation of the CLD quotient for the
-Berlekamp-Zassenhaus lattice tier (issue #8691, Phase 1b).
+Berlekamp--Zassenhaus lattice tier.
 
 `cldQuotientModWord?` mirrors `Hex.cldQuotientMod` but runs all mod-`p^a`
 polynomial arithmetic over `Hex.WordMod` (residue arrays with single-reduction
-Montgomery multiplication) instead of `Int`/bignum, whenever `p^a` fits an odd
-machine word. It is byte-identical to `cldQuotientMod` on a monic divisor `g`;
-the correspondence proof is Phase 2, after which it is wired via `@[csimp]`.
+Montgomery multiplication) instead of `Int`/bignum whenever `p^a` fits an odd
+machine word. The Mathlib bridge proves it byte-identical to the bignum path on
+a positive-degree monic divisor; the production lattice path uses the word
+result when available and retains the bignum computation as its exact fallback.
 -/
 
 namespace Hex

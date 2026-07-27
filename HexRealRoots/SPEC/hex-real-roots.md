@@ -20,10 +20,10 @@ Every emitted isolation carries a Sturm-count witness regardless of
 which engine found it, and every full output is checked against the
 exact total root count. The Descartes engine therefore contributes
 speed and no trust. The correctness and completeness theorems in
-[hex-real-roots-mathlib](hex-real-roots-mathlib.md) rest on Sturm
+[hex-real-roots-mathlib](https://github.com/leanprover/hex-real-roots-mathlib) rest on Sturm
 counts alone.
 
-The companion library to [hex-roots](hex-roots.md) (complex root
+The companion library to [hex-roots](https://github.com/leanprover/hex-roots) (complex root
 isolation): the same conventions for dyadic data, exact witness
 arithmetic, fueled `Option`-valued drivers, and the
 quotient-by-overlap identity of a root.

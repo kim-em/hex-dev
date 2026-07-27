@@ -120,8 +120,7 @@ theorem fpPolyIrreducible_of_irreducible_toMathlibPolynomial
         by_contra hs
         have : g.size = 0 := by omega
         exact hg_ne ((Hex.DensePoly.isZero_eq_true_iff g).mp
-          (by simp [Hex.DensePoly.isZero, Hex.DensePoly.size,
-            Array.isEmpty_iff_size_eq_zero] at this ⊢; omega) |>
+          (by simp [Hex.DensePoly.isZero, Hex.DensePoly.size] at this ⊢; omega) |>
             fun h => by
               apply Hex.DensePoly.ext_coeff
               intro n
@@ -355,7 +354,7 @@ theorem subFloorScan_piece_facts {p : Nat} [Hex.ZMod64.Bounds p]
               HexPolyMathlib.leadingCoeff_toPolynomial,
               HexPolyMathlib.leadingCoeff_toPolynomial] at hmul
             by_contra hq
-            push_neg at hq
+            push Not at hq
             have hprod_nonpos :
                 Hex.DensePoly.leadingCoeff quot *
                   Hex.DensePoly.leadingCoeff cand ≤ 0 :=
@@ -521,9 +520,6 @@ theorem classicalCoreFactorsRecursiveAux_some_deg_pos
       split at h
       · exact absurd h (by simp)
       · rename_i hdeg0
-        omega
-      all_goals
-        rename_i hdeg0 _
         omega
 
 /-- Folding the recursion step over `none` stays `none`. -/

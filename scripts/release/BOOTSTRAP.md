@@ -1,72 +1,99 @@
-# Bootstrapping new released repos
+# Bootstrapping released repositories
 
-`scripts/release/released.yml` lists every repo the publish sync
-(`sync_released.py`, driven by `.github/workflows/sync-released.yml`)
-regenerates from this monorepo. The sync **clones each repo's `main`**, overwrites
-its *managed* paths, rewrites its cross-repo Hex pins, and pushes. It does **not**
-create repos and does **not** author their non-managed skeleton (root lakefile,
-`lean-toolchain`, `lake-manifest.json`, LICENSE, README, CI). A new repo must be
-bootstrapped with that skeleton **before** its first sync.
+`scripts/release/released.yml` is the authoritative publication graph for the
+33 split repositories and the `leanprover/hex` aggregate. The sync workflow
+clones each repository's `main`, overwrites its managed paths from this
+monorepo, rewrites every published Hex revision, and pushes the result. It does
+not create repositories or author their un-managed Lake and CI skeletons.
 
-`synced.json` is deliberately **not** seeded for new repos: a repo absent from the
-baseline has no uncoordinated-commit guard, so the first real sync publishes it and
-advances the baseline (committed to the `release-sync-baseline` branch). Never seed
-a placeholder/zero SHA — any truthy baseline that differs from the cloned `main`
-HEAD makes the sync skip the repo.
+The manifest is checked locally by:
 
-## The six repos added for the HexMatrix split
+```sh
+python3 scripts/release/check_released_manifest.py
+```
 
-Computational (Mathlib-free), then their Mathlib bridges:
+That check is network-free. It verifies source paths, unique destinations,
+topological ordering, aggregate coverage, the standalone regression-test
+module lists, and that every `pins` list is exactly the published part of the
+library's transitive dependency closure.
 
-| repo | lib | direct upstream `require`s | lakefile |
-|---|---|---|---|
-| `hex-row-reduce` | `HexRowReduce` | `hex-matrix`, batteries | toml |
-| `hex-determinant` | `HexDeterminant` | `hex-matrix`, batteries | toml |
-| `hex-bareiss` | `HexBareiss` | `hex-determinant`, batteries | toml |
-| `hex-row-reduce-mathlib` | `HexRowReduceMathlib` | `hex-row-reduce`, `hex-matrix-mathlib`, mathlib | toml |
-| `hex-determinant-mathlib` | `HexDeterminantMathlib` | `hex-determinant`, `hex-bareiss`, `hex-matrix-mathlib`, mathlib | toml |
-| `hex-bareiss-mathlib` | `HexBareissMathlib` | `hex-determinant-mathlib`, mathlib | toml |
+## Repository set added for factorization and roots
 
-`require`s list only **direct** dependencies; Lake pulls the rest transitively.
-The full transitive Hex closure that the sync keeps pinned is the `pins:` list for
-each repo in `released.yml`.
+The factorization and roots publication adds these repositories, in dependency
+order (the manifest remains the source of truth for the exact order):
 
-## Procedure (per repo)
+- foundations: `hex-arith`, `hex-poly`, `hex-mod-arith`, `hex-poly-mathlib`,
+  `hex-poly-fp`, `hex-poly-z`, `hex-mod-arith-mathlib`, `hex-gfq-ring`;
+- lifting and root bounds: `hex-hensel`, `hex-poly-z-mathlib`,
+  `hex-hensel-mathlib`, `hex-roots`, `hex-real-roots`, `hex-roots-mathlib`,
+  `hex-real-roots-mathlib`;
+- factorization: `hex-berlekamp`, `hex-berlekamp-mathlib`,
+  `hex-berlekamp-zassenhaus`, and `hex-berlekamp-zassenhaus-mathlib`.
 
-Model the skeleton on the closest existing released repo: `hex-gram-schmidt` for a
-computational lib that pins an upstream Hex repo, `hex-matrix-mathlib` for a
-Mathlib bridge.
+Computational repositories remain Mathlib-free. Repositories ending in
+`-mathlib` are bridge layers containing correspondence proofs and
+Mathlib-facing APIs.
 
-1. `gh repo create kim-em/<repo> --public`
-2. Author the skeleton on `main`:
-   - `lean-toolchain` — copy from `hex-matrix` (`leanprover/lean4:v4.30.0-rc2`).
-   - `lakefile.toml` — `name`, `defaultTargets = ["<Lib>"]`, a `[[require]]` per
-     direct upstream (batteries and/or mathlib, plus each upstream Hex repo by its
-     `github.com/kim-em/<repo>.git` URL), and `[[lean_lib]] name = "<Lib>"`.
-   - `lake-manifest.json` — for a **computational** repo, copy `hex-gram-schmidt`'s
-     (two packages) and adjust the Hex entries. For a **Mathlib bridge**, copy
-     `hex-matrix-mathlib`'s manifest verbatim (the mathlib transitive closure is
-     identical at this toolchain) and add/adjust the Hex package entries. The Hex
-     revs are placeholders here — the sync rewrites them on first publish.
-   - LICENSE, README.md, AGENTS.md, `.gitignore`, `.github/` CI, `.claude/` — copy
-     from the closest existing released repo.
-   - The bench/conformance sub-project lakefiles, if `bench`/`conformance` is true
-     for the repo in `released.yml`, mirroring the matching sub-project skeleton.
-3. Commit and push `main` (the skeleton does not build standalone until its
-   upstream Hex repos have been published — that is expected).
+## Skeleton checklist
 
-## First publish
+Create each repository under `leanprover`, then model its un-managed skeleton
+on the closest already released package. The initial `main` must contain:
 
-Once all six repos exist with `main`:
+- `lean-toolchain`, copied verbatim from this monorepo;
+- a root `lakefile.toml` or `lakefile.lean` matching the `lakefile` field in the
+  manifest, with only direct `require`s and the library's `lean_lib` target;
+- `lake-manifest.json` generated by Lake, not assembled by hand;
+- `LICENSE`, `AGENTS.md`, `.gitignore`, and the standard single-job CI files;
+- root and sidecar Lake projects for each enabled `bench` or `conformance`
+  directory; and
+- a non-public regression-test `lean_lib` containing every module named by the
+  manifest entry's `test_modules` list. These modules are intentionally absent
+  from the public umbrella, and the released repository's CI must build this
+  target explicitly.
 
-1. Ensure this monorepo is at or ahead of every released repo's `main`.
-2. Dispatch `.github/workflows/sync-released.yml` with `dry_run=true`; confirm the
-   planned managed-path writes and pin rewrites for all thirteen repos, with no
-   uncoordinated-commit skips.
-3. Dispatch again with `dry_run=false`. The topological order in `released.yml`
-   guarantees each upstream is published (and its new SHA known) before its
-   downstream consumers are pinned. The run advances the baseline on the
-   `release-sync-baseline` branch.
+Source, the umbrella module, README, SPEC, benchmarks, conformance drivers,
+fixtures, and oracle helpers are managed by the sync when listed in the
+manifest. Do not duplicate or hand-edit those files in a released mirror.
 
-Finally, update the released-set list in the top-level `.claude/CLAUDE.md` to name
-the six new repos.
+`require`s list direct dependencies only; Lake resolves the rest transitively.
+The longer `pins` list in `released.yml` is deliberate: the sync rewrites the
+entire published transitive closure in every root and sidecar lockfile.
+
+### Native-library skeletons
+
+Copy the matching `extern_lib` configuration as well as the Lean target for
+packages that ship native code. In particular:
+
+- `hex-arith` builds the wide-word arithmetic implementation under
+  `HexArith/c`;
+- `hex-mod-arith` builds the modular-arithmetic implementation under
+  `HexModArith/c`;
+- downstream packages such as `hex-poly-fp` consume those native symbols
+  through their package dependencies;
+- `hex-lll` and `hex-berlekamp-zassenhaus` use their existing native-provider
+  and benchmark sidecar configuration.
+
+A skeleton that omits these targets can elaborate yet fail at executable link
+time, so standalone `lake build` and bench/conformance builds are required
+before the first real publish.
+
+## Baseline and first publish
+
+Do not add placeholder entries to `scripts/release/synced.json`. An absent
+baseline is how the first publish is distinguished; any truthy, incorrect SHA
+causes the uncoordinated-commit guard to skip the repository.
+
+After every skeleton exists on `main`:
+
+1. Run the local manifest check and the complete monorepo build.
+2. Dispatch `.github/workflows/sync-released.yml` with `dry_run=true`.
+3. Inspect every managed-path copy and pin rewrite, and confirm there are no
+   missing-source warnings or uncoordinated-commit skips.
+4. Dispatch again with `dry_run=false` only after the dry run is clean.
+5. Clone each published repository afresh and run its root build plus every
+   bench and conformance verification target.
+
+The real workflow advances the `release-sync-baseline` branch in the same run.
+Future out-of-band changes to a released `main` must be re-seeded into this
+monorepo before publication continues; never bypass that reconciliation with
+`--force` merely to make a release proceed.

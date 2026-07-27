@@ -824,9 +824,9 @@ https://github.com/kim-em/hex-dev/issues/8751
 tracks tightening the ceilings (Graeffe iteration, soft-Pellet
 filtering, Taylor-shift reuse), and any landed improvement re-measures
 the table and ratchets the ceilings down rather than leaving slack.
-MPSolve remains the informational performance comparator; the measured
-python-flint ratios are recorded in
-`reports/hexroots-performance.md`.
+MPSolve remains a local correctness oracle. The declared informational
+performance comparator is python-flint, whose measured ratios are recorded in
+[`reports/hex-roots-performance.md`](../../reports/hex-roots-performance.md).
 
 ## References
 

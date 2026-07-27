@@ -263,6 +263,30 @@ theorem isolate_roots_ne (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     subst atoms
     simp at hi
 
+/-- Distinct output atoms have disjoint closed circumscribed discs, for every
+strategy accepted by the general isolation driver. -/
+theorem isolate_disjoint (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+    (atomPrec : Int) (strategy : Hex.AtomStrategy)
+    {atoms : Array (Hex.DyadicRootIsolation p)}
+    (hrun : Hex.isolate p h atomPrec strategy = some atoms)
+    {i j : Nat} (hi : i < atoms.size) (hj : j < atoms.size) (hij : i ≠ j) :
+    Disjoint (DyadicSquare.closedDisc atoms[i].square)
+      (DyadicSquare.closedDisc atoms[j].square) := by
+  by_cases hdegree : 0 < p.degree?.getD 0
+  · obtain ⟨rs, hall, hsize, hrel⟩ :=
+      isolate_run p h atomPrec strategy hdegree hrun
+    have hi' : i < rs.size := by simpa [hsize] using hi
+    have hj' : j < rs.size := by simpa [hsize] using hj
+    have hri := hrel i hi' hi
+    have hrj := hrel j hj' hj
+    have hdisj := (isolateAll_sound hall).2 hi' hj' hij
+    rw [hri, hrj] at hdisj
+    exact hdisj
+  · obtain ⟨-, hatoms⟩ :=
+      isolate_nonpositive p h atomPrec strategy hdegree hrun
+    subst atoms
+    simp at hi
+
 /-- The number of returned atoms is the polynomial's complex natural degree.
 Together with `isolate_roots_ne`, this records that the exact enumeration has
 no duplicate representatives. -/
