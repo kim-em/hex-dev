@@ -548,13 +548,211 @@ def timeArms (reps : Nat) (inputs : Array ZPoly) (coreOf : ZPoly → ZPoly)
   timePhase "prod-rec   " reps inputs
     (fun f => factorChecksum (classicalFactorProductionRec (coreOf f) (bOf f)))
 
+/-! ### Direct Berlekamp sub-phase profile -/
+
+/-- A dependent-prime Berlekamp input erased behind phase callbacks. Preparing
+the record runs prime selection once, outside every timed region; each callback
+starts from the selected monic modular image. -/
+structure BerlekampProfileInput where
+  label : String
+  degree : Nat
+  p : Nat
+  factorCount : Nat
+  matrix : Nat → UInt64
+  repeatedKernel : Nat → UInt64
+  repeatedFactor : Nat → UInt64
+  kernel : Nat → UInt64
+  factor : Nat → UInt64
+
+def fpChecksum [ZMod64.Bounds p] (seed : UInt64) (f : FpPoly p) : UInt64 :=
+  f.toArray.foldl (fun acc c => acc * 1000003 + UInt64.ofNat c.toNat)
+    (seed * 1000003 + UInt64.ofNat f.size)
+
+def fpListChecksum [ZMod64.Bounds p] (seed : UInt64) (fs : List (FpPoly p)) : UInt64 :=
+  fs.foldl fpChecksum (seed * 1000003 + UInt64.ofNat fs.length)
+
+def fpMatrixChecksum [ZMod64.Bounds p]
+    (seed : UInt64) (M : Matrix (ZMod64 p) n n) : UInt64 :=
+  M.rows.toArray.foldl
+    (fun acc row => row.toArray.foldl
+      (fun a c => a * 1000003 + UInt64.ofNat c.toNat) acc)
+    seed
+
+@[noinline]
+def berlekampMatrixProfile [ZMod64.Bounds p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (salt : Nat) : UInt64 :=
+  fpMatrixChecksum (UInt64.ofNat salt) (Berlekamp.fixedSpaceMatrix f hmonic)
+
+@[noinline]
+def berlekampKernelProfile [ZMod64.Bounds p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    [Lean.Grind.Field (ZMod64 p)] (salt : Nat) : UInt64 :=
+  fpListChecksum (UInt64.ofNat salt) (Berlekamp.fixedSpaceKernel f hmonic).toList
+
+/-- Pre-#8700 nullspace shape: rebuild the whole basis matrix for every column. -/
+def repeatedNullspace [Lean.Grind.Field R] [DecidableEq R]
+    (M : Matrix R n m) :
+    Vector (Vector R m) (m - Matrix.rowReduce_rank M) :=
+  let E := Matrix.rowReduce_isRowReduced M
+  Vector.ofFn fun k => Matrix.col E.nullspaceMatrix k
+
+/-- Pre-#8700 fixed-space vector kernel, including the repeated nullspace matrix. -/
+def repeatedKernelVectors [ZMod64.Bounds p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    [Lean.Grind.Field (ZMod64 p)] :
+    Vector (Vector (ZMod64 p) (Berlekamp.basisSize f))
+      (Berlekamp.basisSize f - Matrix.rowReduce_rank
+        (Berlekamp.fixedSpaceMatrix f hmonic)) :=
+  repeatedNullspace (Berlekamp.fixedSpaceMatrix f hmonic)
+
+def profileSplitWithWitnesses? [ZMod64.Bounds p]
+    (f : FpPoly p) : List (FpPoly p) → Option (Berlekamp.SplitResult p)
+  | [] => none
+  | witness :: witnesses =>
+      match Berlekamp.kernelWitnessSplit? f witness with
+      | some split => some split
+      | none => profileSplitWithWitnesses? f witnesses
+
+def profileFullySplit [ZMod64.Bounds p] (witnesses : List (FpPoly p)) :
+    Nat → FpPoly p → List (FpPoly p)
+  | 0, f => [f]
+  | fuel + 1, f =>
+      match profileSplitWithWitnesses? f witnesses with
+      | none => [f]
+      | some split =>
+          profileFullySplit witnesses fuel split.factor ++
+            profileFullySplit witnesses fuel split.cofactor
+
+/-- Complete pre-#8700 kernel shape retained as a matched-input baseline: the
+fixed-space vector kernel is rebuilt once per returned polynomial. -/
+@[noinline]
+def berlekampRepeatedKernelProfile [ZMod64.Bounds p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    [Lean.Grind.Field (ZMod64 p)] (salt : Nat) : UInt64 :=
+  fpListChecksum (UInt64.ofNat salt) <|
+    (Vector.ofFn fun i =>
+      Berlekamp.vectorToPoly ((repeatedKernelVectors f hmonic).get i)).toList
+
+/-- Complete pre-#8700 factorization shape for a direct matched-input A/B. -/
+@[noinline]
+def berlekampRepeatedFactorProfile [ZMod64.Bounds p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    [Lean.Grind.Field (ZMod64 p)] (salt : Nat) : UInt64 :=
+  let witnesses :=
+    (Vector.ofFn fun i =>
+      Berlekamp.vectorToPoly ((repeatedKernelVectors f hmonic).get i)).toList
+  fpListChecksum (UInt64.ofNat salt) (profileFullySplit witnesses (f.size + 1) f)
+
+@[noinline]
+def berlekampFactorProfile [ZMod64.Bounds p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    [Lean.Grind.Field (ZMod64 p)] (salt : Nat) : UInt64 :=
+  fpListChecksum (UInt64.ofNat salt) (Berlekamp.berlekampFactor f hmonic).factors
+
+/-- IO-sequenced identity pinning a pure phase callback between timestamps. -/
+@[noinline]
+def profileForce (x : UInt64) : IO UInt64 := pure x
+
+def prepareBerlekampProfile (label : String) (f : ZPoly) : Option BerlekampProfileInput :=
+  match choosePrimeData? f with
+  | none => none
+  | some data =>
+      letI := data.bounds
+      if hp : Nat.isPrimeTrial data.p then
+        let hprime := Nat.isPrimeTrial_isPrime hp
+        letI : ZMod64.PrimeModulus data.p := ZMod64.primeModulusOfPrime hprime
+        if hzero : data.fModP.isZero = false then
+          let g := monicModularImage data.fModP
+          let hmonic := monicModularImage_monic hprime data.fModP hzero
+          some
+            { label
+              degree := f.degree?.getD 0
+              p := data.p
+              factorCount := data.factorsModP.size
+              matrix := berlekampMatrixProfile g hmonic
+              repeatedKernel := berlekampRepeatedKernelProfile g hmonic
+              repeatedFactor := berlekampRepeatedFactorProfile g hmonic
+              kernel := berlekampKernelProfile g hmonic
+              factor := berlekampFactorProfile g hmonic }
+        else none
+      else none
+
+def medianNat (xs : Array Nat) : Nat :=
+  if xs.isEmpty then 0
+  else
+    let sorted := xs.qsort fun a b => a < b
+    sorted[sorted.size / 2]!
+
+/-- Median single-call wall time. The callback is noinline and its result is
+forced through `profileForce`, preventing the compiler from floating the pure
+work past the closing timestamp. -/
+def profileMedianNs (iters : Nat) (act : Nat → UInt64) : IO (Nat × UInt64) := do
+  let _ ← profileForce (act 0)
+  let mut samples : Array Nat := #[]
+  let mut sink : UInt64 := 0
+  for i in [0:iters] do
+    let t0 ← IO.monoNanosNow
+    let r ← profileForce (act (1000 + 13 * i))
+    let t1 ← IO.monoNanosNow
+    samples := samples.push (t1 - t0)
+    sink := sink + r
+  return (medianNat samples, sink)
+
+def percent (part total : Nat) : Float :=
+  if total = 0 then 0 else 100.0 * part.toFloat / total.toFloat
+
+def profileBerlekampInput (iters : Nat) (input : BerlekampProfileInput) : IO Unit := do
+  let repeatedCheck ← profileForce (input.repeatedKernel 7)
+  let sharedCheck ← profileForce (input.kernel 7)
+  if repeatedCheck != sharedCheck then
+    throw <| IO.userError s!"{input.label}: repeated/shared kernel checksum mismatch"
+  let repeatedFactorCheck ← profileForce (input.repeatedFactor 7)
+  let sharedFactorCheck ← profileForce (input.factor 7)
+  if repeatedFactorCheck != sharedFactorCheck then
+    throw <| IO.userError s!"{input.label}: repeated/shared factor checksum mismatch"
+  let (matrixNs, matrixSink) ← profileMedianNs iters input.matrix
+  let (repeatedKernelNs, repeatedSink) ← profileMedianNs iters input.repeatedKernel
+  let (repeatedFactorNs, repeatedFactorSink) ← profileMedianNs iters input.repeatedFactor
+  let (kernelNs, kernelSink) ← profileMedianNs iters input.kernel
+  let (factorNs, factorSink) ← profileMedianNs iters input.factor
+  if repeatedFactorNs < repeatedKernelNs then
+    throw <| IO.userError s!"{input.label}: repeated-factor median below repeated-kernel median"
+  if factorNs < kernelNs then
+    throw <| IO.userError s!"{input.label}: factor median below kernel median"
+  if repeatedKernelNs < matrixNs then
+    throw <| IO.userError s!"{input.label}: repeated-kernel median below matrix median"
+  if kernelNs < matrixNs then
+    throw <| IO.userError s!"{input.label}: kernel median below matrix median"
+  let repeatedSplittingNs := repeatedFactorNs - repeatedKernelNs
+  let splittingNs := factorNs - kernelNs
+  let baselineNs := repeatedFactorNs
+  let rebuildNs := repeatedKernelNs - matrixNs
+  let fixedNullspaceNs := kernelNs - matrixNs
+  let speedup := if factorNs = 0 then 0 else baselineNs.toFloat / factorNs.toFloat
+  let kernelRatio := if kernelNs = 0 then 0 else repeatedKernelNs.toFloat / kernelNs.toFloat
+  IO.println s!"{input.label},deg={input.degree},p={input.p},r={input.factorCount},baseline_us={baselineNs.toFloat / 1000.0},matrix_us={matrixNs.toFloat / 1000.0},matrix_pct={percent matrixNs baselineNs},rebuild_us={rebuildNs.toFloat / 1000.0},rebuild_pct={percent rebuildNs baselineNs},split_us={repeatedSplittingNs.toFloat / 1000.0},split_pct={percent repeatedSplittingNs baselineNs},fixed_us={factorNs.toFloat / 1000.0},fixed_matrix_pct={percent matrixNs factorNs},fixed_nullspace_pct={percent fixedNullspaceNs factorNs},fixed_split_pct={percent splittingNs factorNs},kernel_ratio={kernelRatio},speedup={speedup},sink={matrixSink + repeatedSink + repeatedFactorSink + kernelSink + factorSink}"
+
+def profileBerlekampPhases : IO Unit := do
+  for n in [6, 8, 10, 12, 14, 16, 18, 20, 22, 24] do
+    let label := s!"split-h2-{n}"
+    match prepareBerlekampProfile label (splitDegreeHeight n 2) with
+    | some input => profileBerlekampInput 31 input
+    | none => IO.println s!"{label},status=skipped"
+  for (label, f) in [("phi15", phi15), ("SD3", advSD3), ("SD4", advSD4)] do
+    match prepareBerlekampProfile label f with
+    | some input => profileBerlekampInput 31 input
+    | none => IO.println s!"{label},status=skipped"
+
 def main : IO Unit := do
-  -- Focused profile mode: `RELIFT_PROFILE=today|recursive|sameprime|phases`
-  -- runs only the split deg-24 family under the selected arm (for
-  -- `perf record`), then exits.
+  -- Focused profile mode: `RELIFT_PROFILE=today|recursive|sameprime|phases|berlekamp`
+  -- runs only the selected arm, then exits. Most arms use the split deg-24
+  -- family for `perf record`; `berlekamp` runs its direct degree/family grid.
   if let some arm ← IO.getEnv "RELIFT_PROFILE" then
     let inputs := (Array.range 8).map (linearProductShift 24)
-    if arm == "recursive" then
+    if arm == "berlekamp" then
+      profileBerlekampPhases
+    else if arm == "recursive" then
       timePhase "profile recursive" 30 inputs
         (fun f => factorChecksum (recursiveFactorInt f))
     else if arm == "sameprime" then
