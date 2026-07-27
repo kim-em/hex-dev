@@ -6,8 +6,9 @@ propagators, and provides the `interval` tactic. It depends on Mathlib and
 `hex-interval`. There is no separate proof-only companion beyond this library.
 
 The tactic proves bounds for ordinary Lean expressions over `ℝ`. It reads
-bounds from the local context, reifies shared expressions to a static
-single-assignment program, runs the compiled `hex-interval` search, and turns
+bounds from the local context, reifies shared expressions to an immutable
+single-assignment base plus validated bounded extensions, runs the compiled
+`hex-interval` search, and turns
 the successful trace into an ordinary Lean proof. Search is untrusted. A rule
 can affect the generated theorem only by supplying a proof through its
 registered soundness theorem or verified certificate checker.
@@ -87,7 +88,7 @@ def Upper.Holds : Upper → ℝ → Prop
 end Interval
 
 def Interval.Mem (I : Interval) (x : ℝ) : Prop :=
-  match I.repr with
+  match I.view with
   | .empty        => False
   | .bounds lo hi => lo.Holds x ∧ hi.Holds x
 
@@ -158,12 +159,25 @@ The planner is never reduced in the kernel. The compiler does not certify any
 mathematical fact. A compiler error may cause search to fail or propose bad
 data, but bad data cannot satisfy the replay theorem.
 
-Every kernel-facing checker uses structural recursion or an explicit natural
-fuel whose decrease is visible after reduction. A checker must not hide a
-well-founded recursion whose proof terms block ordinary kernel evaluation.
-This applies in particular to logarithm and bit-precision helpers. Compiled
+Every kernel-facing checker must demonstrably reduce in the module that emits
+the proof. Structural recursion is preferred, but explicit natural fuel and
+well-founded recursion with an explicit `Nat` measure are permitted when
+`decide +kernel` and `Lean.Kernel.whnf` probes show that the complete exposure
+closure reduces and replay benchmarks remain acceptable. Auto-derived
+lexicographic measures on multi-clause recursion are rejected when those probes
+stick. A checker path must not contain an `@[extern]`-backed opaque constant,
+and the emitting module must expose transitive helper bodies rather than assume
+that an umbrella import recursively exposes them.
+
+When the kernel-friendly specification and fast runtime shape differ, the
+public name follows the repository's proved `@[csimp]` `*Impl`-twin policy,
+never `@[implemented_by]`. A compiled precheck runs first, but raw proof
+emission constructs the equivalent of
+`of_decide_eq_true (Eq.refl true)` with the decision instance explicit and
+without asking elaborator `isDefEq` to normalize the reflexivity slot. Compiled
 and kernel evaluation are benchmarked separately before a checker is admitted
-to generated proofs.
+to generated proofs. This applies in particular to logarithm, bit-precision,
+fold, and trace-validation helpers.
 
 A compiled call to a Boolean checker is only a preflight optimization. It is
 never converted into a proof. Every premise such as
@@ -208,12 +222,18 @@ scheme below rather than one enormous kernel reduction.
 
 ## Program semantics and the golden theorem
 
+The design below is the primary D2 candidate. The fixed requirement is a
+generic soundness theorem over a validated shared program with semantic links
+back to the quoted Lean terms. D2 selects the checker granularity, exact
+`Natural.Prim` encoding, and balance between reflected regions and direct
+theorem leaves before this representation is frozen.
+
 The reified program is an array of typed instructions whose arguments refer to
 earlier entries. A valuation assigns real values to free-variable nodes. The
 program's `OpKey` table gives each instruction its real meaning; a chosen
 `RuleKey` is only a method for enclosing that meaning.
 
-The natural checker does not interpret arbitrary operation keys from the
+In this candidate, the natural checker does not interpret arbitrary operation keys from the
 extension registry. It has a fixed, kernel-visible `Natural.Prim` language for
 variables, exact constants, negation, addition, subtraction, multiplication,
 and natural powers. A validated natural region records the translation from
@@ -246,6 +266,13 @@ checked program value and the original goal expression. Goal closure composes
 about an internal program. A missing or ill-typed link is a reification
 failure, not an unchecked assumption.
 
+Every accepted instantiation extends this same contract. The extension is a
+new immutable, topologically validated snapshot; each generated instruction
+has either fixed natural semantics or an explicit semantic-link recipe, and
+each new equality edge has a scoped equality proof. `Natural.eval_mem` is
+applied to the validated snapshot actually referenced by the retained trace.
+No theorem observes an in-place mutation of a previously checked program.
+
 This theorem is the fast path for straight natural evaluation. Adaptive
 derivations use additional theorem nodes for intersection, centered forms,
 rewrites, contractors, and branches. The result is a hybrid proof:
@@ -276,6 +303,8 @@ A registration supplies:
   theorem;
 - optional backward contractor, rewrite, local-refinement, and split-suggestion
   declarations;
+- optional bounded-instantiation triggers, generated-operation schemas, and
+  semantic/equality proof recipes;
 - a stable rule name and natural certificate-schema version, together forming
   the `RuleKey` used in diagnostics and replay traces.
 
@@ -334,13 +363,14 @@ The first arithmetic language contains:
 - real variables and exact integer, rational, and decimal constants;
 - negation, addition, subtraction, multiplication, division, inverse, and
   natural powers;
-- `abs`, `min`, `max`, and `Real.sqrt`;
+- `abs`, `min`, `max`, and the syntax of `Real.sqrt` (whose first enclosure
+  rule arrives at D7, so earlier use safely reports no applicable rule);
 - named real constants with registered nullary rules;
 - registered unary and binary functions.
 
-The first elementary-function milestone adds `Real.exp`, `Real.log`,
-`Real.sin`, `Real.cos`, `Real.atan`, and `Real.rpow` on proved positive bases.
-The LeanCert compatibility milestone then audits the rest of the expression
+The D5 elementary-function milestone adds `Real.sin` and `Real.cos`. D7 adds
+`Real.exp`, `Real.log`, `Real.sqrt`, `Real.atan`, and `Real.rpow` on proved
+positive bases. The LeanCert compatibility milestone then audits the rest of the expression
 heads its downstream users need, including hyperbolic functions, `arsinh`,
 `atanh`, `sinc`, and `erf`. A name in the reified language is not considered
 supported until at least one sound propagator covers its stated domain.
@@ -353,11 +383,17 @@ The frontend recognizes:
 - equality as two closed bounds;
 - all finite and one-sided `Set.Ixx` membership forms;
 - conjunctions of recognized facts;
-- local definitions that are definitionally equal after elaboration.
+- local definitions that are definitionally equal after elaboration;
+- the intrinsic fact `0 ≤ (n : ℝ)` for every reified cast from `n : ℕ`, proved
+  by `Nat.cast_nonneg` even when no local hypothesis states it. Casts from `ℤ`
+  contribute no sign fact by themselves.
 
 Facts about arbitrary derived terms are retained. They are not restricted to
 free variables. Unknown hypotheses remain in the context but do not enter the
 interval program.
+
+`interval only [...]` restricts user hypotheses, not intrinsic type-driven
+facts such as nonnegativity of a natural-number cast.
 
 A propositional hypothesis `h : s = t` does not merge SSA nodes. It becomes a
 source constraint with `SourceId h` and bidirectional bound transfer. This
@@ -378,6 +414,11 @@ Normalization is a portfolio, not one irreversible simplification pass.
 - Polynomial fragments may keep the original form, a Horner form, a centered
   form, and a normalized polynomial form. Each alternate has a proof of
   equality to the original node.
+- A source equality may justify a contextual alternate. The first required
+  case reduces the target `x^4 + y^4` modulo `x^2 + y^2 = 1` to
+  `1 - 2*x^2*y^2`, with a `ring` or `linear_combination` proof recipe. How far
+  to extend polynomial ideal reduction is an explicit experiment; the tactic
+  does not silently normalize every goal modulo every equality.
 - Repeated finite sums use a fold instruction instead of an expanded chain of
   additions.
 - Function-specific rewrites such as `exp (-log N / k)` or trigonometric range
@@ -392,6 +433,40 @@ fails safely with a budget diagnostic. If alternate generation reaches either
 limit, the original DAG remains valid, skipped alternates are reported, and
 search continues without them.
 
+### Instantiation frontend
+
+The frontend supports versioned instantiation rules whose triggers match
+expressions, source facts, or newly proved bounds and propose additional
+expressions for the shared program. A rule can return:
+
+- new typed SSA instructions with a canonical expression key;
+- equality edges to existing nodes;
+- derived interval facts about a generated residual or difference node;
+- side conditions and a theorem or certificate recipe for replay;
+- suggestions for contractors or local partitions that become applicable to
+  the new node.
+
+For example, a monotonicity rule may need the shaped expression `a*b ≤ a*c`
+even though neither product appears in the original goal; it can instead add
+the difference node `a*b - a*c` and derive its upper bound from `0 ≤ a` and
+`b ≤ c`. An inverse exponential contractor may introduce `log y` while
+processing `y = exp x`. These are not trusted e-matching consequences: the
+program extension and every first fact about it are replayed from the rule's
+registered theorem.
+
+Triggers are indexed by head symbols and explicit patterns rather than
+recursive typeclass search. The engine deduplicates substitutions and generated
+expressions, enforces generation and node budgets, and records why a tempting
+trigger was suppressed. Branch-local inputs produce branch-scoped facts and
+edges. The companion validates each new program snapshot before assigning any
+goal metavariable.
+
+The first prototype compares eager bounded closure, propagation-epoch
+instantiation, and fully lazy append-only generation. It also compares
+`grind`-style E-matching, a structural `apply_rules` loop, and rule-supplied
+direct proposals. Success rate, useless instances, program growth, proof size,
+and deterministic work decide the production default.
+
 ## Tactic interface
 
 The planned syntax is:
@@ -404,6 +479,12 @@ interval (config := { maxSplits := 8, maxEffort := 80 })
 interval?
 interval_bound e
 ```
+
+The tactic parser interprets the partial record in `(config := { ... })` as an
+update of the fully populated `Hex.Interval.defaultConfig`; users need not
+supply every budget field. `interval?` prints a complete versioned
+configuration when exact search reproducibility matters. Default budget values
+may be tuned before release and are benchmark data, not soundness constants.
 
 `interval [h₁, h₂]` adds the named facts to the local facts already recognized.
 `only` restricts hypothesis ingestion to the supplied facts. `interval?` runs
@@ -420,9 +501,12 @@ branch tree to prove that hull even when the original search result is
 `unknown`.
 
 The programmatic frontend exposes a `deriveBound` entry point for other
-tactics. It returns the dyadic search interval, any stronger exact rational
-source cuts, proof expressions for the selected global bounds, and search
-diagnostics.
+tactics. It returns an exact proof-facing bound bundle, including its endpoint
+encoding, a dyadic projection when requested, proof expressions for the
+selected global cuts, and search diagnostics. Under the dyadic prototype it
+also retains stronger exact rational source cuts; under a rational working
+backend, propagated rational cuts are first-class rather than mislabeled as
+sources.
 This is the future integration seam. This SPEC does not register it with
 `grind`.
 
@@ -431,10 +515,14 @@ This is the future integration seam. This SPEC does not register it with
 The stable configuration fields are:
 
 ```lean
-structure Interval.Config where
+structure Hex.Interval.Config where
   policy         : Name := `balancedV1
   maxProgramNodes : Nat
   maxFormsPerNode : Nat
+  maxGeneratedNodes : Nat
+  maxEqualityEdges : Nat
+  maxInstantiations : Nat
+  maxGenerationDepth : Nat
   maxSteps       : Nat
   maxRuleCalls   : Nat
   maxEffort      : Nat
@@ -452,8 +540,19 @@ structure Interval.Config where
   rules          : RuleFilter
 ```
 
+The displayed `balancedV1` value is the D4 prototype default, not a promise to
+make it the first public release default. The versioned name remains available
+for pinned experiments if measurements select a different default alias.
+
 The implementation also has an emergency timeout, but test expectations and
 successful replay do not depend on a particular machine reaching it.
+
+`Config.policy` is resolved in the fixed importing environment through the
+companion's versioned registry to a pure `Policy` implementation. A missing,
+ambiguous, or wrong-kind name is a configuration error before search starts;
+it never falls back to an environment-dependent arbitrary choice. Determinism
+claims quantify over a fixed import closure and registry contents as well as a
+fixed program and configuration.
 
 Effort is a natural-number precision tier. Rules are encouraged to interpret
 effort `p` as an error target near `2^-p`, but no monotonicity or error law is
@@ -470,9 +569,9 @@ planner may intersect several results.
 The required initial rules are constants, identity, negation, addition,
 subtraction, multiplication, natural powers, `abs`, `min`, and `max`. Inverse
 and division use the precision-indexed outward operations, with sign-specific
-rules and a sound coarse fallback. Square root uses monotonicity on nonnegative
-inputs and accounts for Mathlib's value on negative inputs when the interval
-is not known nonnegative.
+rules and a sound coarse fallback. The `D7` elementary portfolio adds square
+root using monotonicity on nonnegative inputs and accounts for Mathlib's value
+on negative inputs when the interval is not known nonnegative.
 
 Exact arithmetic primitives preserve their tight endpoint-attainment flags.
 An approximate elementary or user rule may deliberately close a cut when that
@@ -566,7 +665,9 @@ A point algorithm works only with exact dyadic or rational data:
 2. evaluate a convergent series or rational approximation on a small domain;
 3. prove an outward remainder bound;
 4. reconstruct the original function with proved identities;
-5. round the final cut outward to the requested dyadic precision.
+5. in the dyadic prototype, round the final cut outward to the requested
+   dyadic precision; a selected rational backend supplies its corresponding
+   exact projection contract.
 
 The certificate contains the reduction parameters, approximation order,
 endpoint values, and remainder witness. The planner selects them. The checker
@@ -575,9 +676,10 @@ verifies them.
 ### Sine and cosine
 
 The initial sine rule follows the existing experiment on `[-1,1]`: evaluate a
-rational Taylor polynomial and bound the Lagrange remainder. The implementation
-uses dyadic endpoints in its hot arithmetic and retains the experiment's
-Mathlib proof of the analytic remainder.
+rational Taylor polynomial and bound the Lagrange remainder. Its dyadic D2
+candidate uses dyadic endpoints in hot arithmetic and retains the experiment's
+Mathlib proof of the analytic remainder; the backend comparison measures the
+same certificate with rational working endpoints.
 
 Outside that range, two proved methods may coexist:
 
@@ -658,15 +760,23 @@ certificate contains the element enclosures and a balanced aggregation tree.
 A generic theorem proves the fold bound.
 
 Large batches are checked in measured chunks and combined by a balanced proof
-tree. The initial chunk ceiling is selected by batch-replay measurements. It is not
-hard-coded by this SPEC. This avoids both a linear-depth proof term and one
+tree. The initial chunk ceiling is selected by batch-replay measurements. It is
+not hard-coded by this SPEC. This avoids both a linear-depth proof term and one
 enormous Boolean reduction. Kernel-facing recursive checkers use exposed
 definitions and reduction-stable payload types. They do not rely on opaque
 array equality reduction across module boundaries.
 
 The BKLNW sums with upper limits 29, 37, 63, 145, 289, and 433 are the scaling
 ladder. Their index set is `Icc 3 N`, so they contain `N - 2` summands. The
-13,590-cell FKS2 corpus is the large-batch acceptance test.
+13,590-cell FKS2 corpus is the full `local` acceptance test used by the
+replacement and release gates. Per-PR
+`core` uses a small deterministic sample, while per-PR `ci` uses a measured
+medium shard. The complete data is streamed from split JSONL fixtures; it is
+not generated as one enormous Lean source file. JSONL is only data transport:
+the runner turns each measured chunk into the same proof/checker invocation,
+elaborates it, kernel-replays it, and includes the resulting theorems in the
+axiom audit. A compiled pass over all cells without those proof obligations
+does not satisfy the replacement criterion.
 
 ### Failure during replay
 
@@ -739,8 +849,10 @@ failure cases.
   includes `exp 1 < 2.7182818284591`, a logarithm product, nested `exp` and
   `log`, and real powers. It also records ordinary reduction getting stuck on
   a well-founded `Nat.log2`, then succeeding after a structural or fueled
-  implementation replaced it. This is the reason for the checker recursion
-  rule above.
+  implementation replaced it. Later repository experiments show that explicit
+  `Nat`-measure well-founded recursion can itself kernel-reduce when definitions
+  are exposed; the durable requirement is the mechanical reducibility probe
+  above, not a blanket ban on that recursion style.
 - A newer
   [transcendental `norm_num` discussion](https://leanprover.zulipchat.com/#narrow/channel/287929-mathlib4/topic/norm_num.20extension.20for.20Real.2Eexp.2C.20Real.2Elog.2C.20sin.2C.20cos/near/612728678)
   links the kernel-clean
@@ -763,6 +875,15 @@ failure cases.
   `x^2 + y^2 = 1 ⊢ x^4 + y^4 ≤ 1`. It also exposed awkward definitional
   interactions between `WithTop` and `WithBot`. Dedicated lower and upper cut
   types avoid making those implementation details part of the theorem API.
+- A public
+  [`grind` failure analysis](https://leanprover.zulipchat.com/#narrow/channel/113488-general/topic/grind.20failures/near/599591286)
+  gives a concrete expression-generation failure: a theorem's E-matching
+  pattern has the shape `a*b ≤ a*c`, but those product expressions are absent
+  from the local expression database, so no instance is produced; a useful
+  distributive equality can likewise remain outside the relevant congruence
+  classes. This is the direct regression for the bounded instantiation
+  frontend above. Saturating bounds only on syntax that happened to occur in
+  the original goal is not enough.
 - The
   [sharp inequalities thread](https://leanprover.zulipchat.com/#narrow/channel/239415-metaprogramming-.2F-tactics/topic/Proving.20sharp.20inequalities.20using.20interval.20arithmetic/near/446334247)
   supplies an entropy inequality with a sharp endpoint and singular derivative,
@@ -786,13 +907,13 @@ certificates, and test nonlinear-equality handoffs plus active-subset split
 planning. Public artifacts linked by that discussion are cited in the corpus
 below; the unpublished planner case is represented by a synthetic generator.
 
-The working endpoint choice remains empirical. This SPEC selects arbitrary
-dyadics for propagated facts and preserves exact rational source facts. The
-backend-comparison milestone compares that hybrid against a separate exact
-rational search prototype with deliberate regularization on tactic-scale
-examples. The public search protocol and certificate concepts should not
-prevent a later representation revision if measured proof cost favors the
-rational variant.
+The working endpoint choice remains empirical. The primary D2 candidate uses
+arbitrary dyadics for propagated facts and preserves exact rational source
+facts. The backend-comparison milestone compares that hybrid against a
+separate exact-rational search prototype with deliberate regularization on
+tactic-scale examples. D2 records a selection before endpoint-dependent trace
+formats are frozen; the public search protocol and certificate concepts do not
+prejudge the outcome.
 
 ### Existing `bound` tactic
 
@@ -908,6 +1029,94 @@ replacement. A few translated README examples are also insufficient.
   endpoints, adaptive partitions, and verified integration. Integration
   itself is not part of the first interval tactic release.
 
+### RealPaver
+
+RealPaver is the closest operational model for the constraint-solving half of
+this design. The inspected historical description is
+[Algorithm 852](https://hal.science/hal-00480813); the current
+implementation is
+[`realpaver/realpaver` at `f9d4223`](https://github.com/realpaver/realpaver/tree/f9d422354c67daf9fcc292ff599acbe8d66cceec),
+described by the
+[RealPaver 1.1 JOSS paper](https://doi.org/10.21105/joss.09331). It does not
+provide Lean certificates, but its decomposition supplies concrete scheduler
+and contractor hypotheses to test.
+
+- RealPaver builds a shared DAG of constraint expressions, records parent and
+  child links, variable dependencies, and occurrence counts, and attaches one
+  contractor per constraint. This supports the shared SSA program and suggests
+  that repeated-occurrence count is useful policy input.
+- Its HC4 path evaluates a constraint forward and applies inverse operations
+  backward. A dependency queue reactivates only contractors mentioning a
+  variable whose domain improved past a configurable relative threshold. The
+  first Lean contractor milestone implements this recognizable baseline before
+  more elaborate learning policies.
+- Box-consistency contractors perform a one-variable search when repeated
+  occurrences make direct inversion weak. RealPaver's 3B contractor scans
+  boundary slices until it finds a survivor on each side; CID contracts every
+  slice and hulls all nonempty contracted boxes in its scope. Both temporarily
+  run another contractor on slices. They map to local `shave` actions with
+  branch certificates, not automatically to global proof-state splits.
+- ACID orders variable contractors by derivative-based smear and alternates
+  learning and exploitation phases, adapting how many expensive contractors it
+  applies from observed contraction gain. This is a particularly relevant
+  comparison for `balancedV1`: learning from gain is promising, but RealPaver's
+  constants and phase lengths are benchmark inputs, not Lean defaults.
+- RealPaver combines HC4 or BC4 propagation with interval Newton, interval
+  Gauss-Seidel, affine or Taylor linear relaxations, and polytope-hull
+  contraction. These become separately registered actions so the policy can
+  compare cost, contraction, and generated proof size.
+- It separates node exploration order from split-variable selection and offers
+  depth-first, breadth-first, distant-most, largest-domain, round-robin, and
+  derivative-smear choices. Even its ordinary split point is configurable and
+  need not be the midpoint. Lean therefore benchmarks these choices instead of
+  baking one tree discipline into soundness.
+- Its result lattice distinguishes proved empty, proved feasible/existence,
+  wholly inner, and unresolved boxes. The first interval tactic needs only
+  universal closure, contradiction, and `unknown`, but later root isolation and
+  verified graphing should preserve room for existence and inner-box
+  certificates.
+- Current RealPaver supports real variables with interval unions plus integer,
+  Boolean, conditional, table, and piecewise constraints. Those domains do not
+  enter the first release, but the operation-key and scoped-constraint design
+  must not assume every future fact is one closed real interval.
+
+One historical profile is especially instructive: inverse propagation applied
+`log` while solving constraints whose input syntax used `exp`, so the inverse
+operator did not occur in the original expression. This is a direct precedent
+for bounded expression instantiation. The Lean design compares keeping such an
+inverse expression inside a rule payload against adding a reusable validated
+node to the network.
+
+What does not translate is equally important. RealPaver relies on GAOL and
+directed hardware floating-point rounding, represents closed numerical boxes,
+and reports numerical solver status rather than proof objects. Lean uses exact
+certificate endpoints and ordinary kernel replay, retains open and unbounded
+cuts, and charges local branching and contractor work by proof size as well as
+runtime.
+
+The source-pinned comparison corpus starts with:
+
+- [`DescartesFolium.rp`](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/benchmarks/csp/DescartesFolium.rp),
+  a small polynomial-plus-exponential dependency case;
+- [`Caprasse.rp`](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/benchmarks/csp/Caprasse.rp),
+  a four-variable polynomial system;
+- [`Transistor.rp`](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/benchmarks/csp/Transistor.rp),
+  a repeated-occurrence exponential system for HC4 versus shaving;
+- the sparse
+  [`BroydenBanded-10.rp`](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/benchmarks/csp/BroydenBanded-10.rp)
+  and larger generated variants for worklist scaling;
+- [`Bratu-10.rp`](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/benchmarks/csp/Bratu-10.rp),
+  [`Troesch-10.rp`](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/benchmarks/csp/Troesch-10.rp),
+  and their larger discretizations as bridges toward certified differential
+  equations;
+- [`Trigexp1-10.rp`](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/benchmarks/csp/Trigexp1-10.rp)
+  for sparse mixed trigonometric/exponential propagation.
+
+Early translated fixtures prove contraction and contradiction for small boxes.
+Whole-system root enumeration and existence certificates are later milestones;
+the benchmark statements are not misleadingly marked as first-release tactic
+successes.
+
 ### Lessons from other systems
 
 | System or method | Adopted lesson | Deliberate limit |
@@ -918,6 +1127,7 @@ replacement. A few translated README examples are also insufficient.
 | MPFR and MPFI | Arbitrary precision, directed rounding, and argument reduction guide endpoint algorithms. | Hardware rounding state and foreign results are not trusted. |
 | Arb | Midpoint-radius balls and cached high-precision point evaluation are efficient for narrow inputs. | Balls are an internal candidate representation. Public semantics remain endpoint intervals because balls do not express open or half-infinite sets. |
 | IBEX HC4 | Dependency worklists, forward-backward contractors, contraction thresholds, smear scores, and split policies transfer directly. | Constraint solving heuristics never justify a Lean fact by themselves. |
+| RealPaver | HC4/BC4, 3B/CID shaving, gain-adaptive ACID, interval Newton, and independent choices of node order, split variable, and split point form a concrete contractor-policy ladder. | Hardware-directed rounding, closed numerical boxes, and numerical status codes are replaced by exact replayable certificates and open/unbounded cuts. |
 | HOL Light nonlinear verification | Monotonicity, convexity, boundary reuse, and certificate DAGs can scale to hard inequalities. | Full Flyspeck-style second-order verification is a later milestone. |
 | Affine arithmetic | Noise symbols retain first-order correlations and are formally verifiable. | Open and unbounded sets stay in the endpoint layer. Affine forms are a later method. |
 | Taylor models | Polynomial plus rigorous remainder is the strongest planned dependency-control method. | Full multivariate Taylor models do not block the first release. |
@@ -930,11 +1140,23 @@ selected policy, search statistics, replay time, certificate size, and axiom
 set. Exact imported statements are pinned to upstream commits when licensing
 permits copying them into test modules.
 
+Every executable fixture also records its earliest development milestone
+`D1`–`D10`, the exact rule set and budget configuration, and one of
+`success`, `unknown`, or `rejectedCertificate`. An expected `unknown` belongs
+to that pinned configuration, not to the mathematical statement forever; a
+later milestone may promote the same statement to `success` without deleting
+the diagnostic fixture. This prevents an aspirational challenge from silently
+becoming a per-PR release gate, and prevents a current limitation from being
+mistaken for an architectural prohibition.
+
 ### Endpoint semantics
 
-- all four closure combinations at finite ends;
-- both one-sided unbounded shapes and the whole interval;
-- singleton normalization and the three empty equal-endpoint shapes;
+The endpoint-shape and exact-operation cases below default to `D1`; logarithm
+domain behavior is the `D7` override.
+
+- `[D1]` all four closure combinations at finite ends;
+- `[D1]` both one-sided unbounded shapes and the whole interval;
+- `[D1]` singleton normalization and the three empty equal-endpoint shapes;
 - strict conclusion from one open summand, such as
   `x ∈ (0,1), y ∈ [0,1] ⟹ x + y < 2`;
 - reciprocal on positive open and half-open intervals, including the outward
@@ -943,11 +1165,24 @@ permits copying them into test modules.
 - logarithm at, below, and just above zero;
 - a split whose cut equals a parent endpoint.
 
+The `D1` table is exhaustive about emptiness: every unary operation preserves
+empty; arithmetic binary image and intersection operations absorb empty; hull
+uses empty as an identity; an empty split returns two empty pieces; and
+`pow empty n = empty`, including `n = 0`, while `pow I 0 = {1}` for every
+nonempty `I`. It separately checks `{0} * whole = {0}` so an
+implementation cannot confuse an empty operand with a zero singleton, and
+checks `whole * {0} = {0}` independently to catch operand-order mistakes in
+sign partitioning.
+
 ### Arithmetic and dependency
+
+Unless a later override is stated, the shared arithmetic cases in this block
+are `D3` fixtures.
 
 ```lean
 x - x = 0
 x ∈ [0,1]             ⟹ x * (1 - x) ≤ 1/4
+x ∈ [0,1]             ⟹ x * (2 - 3*x) ≤ 1/3
 x ∈ [-1,1]            ⟹ x^2 ≤ 1
 x ∈ (0,+∞)            ⟹ 0 < x / (x + 1)
 x ∈ [0,1], y ∈ [0,1]  ⟹ (x+y)*x + (x+y) ≥ 0
@@ -956,20 +1191,43 @@ x ∈ [0,1], y ∈ [0,1]  ⟹ (x+y)*x + (x+y) ≥ 0
 These cases distinguish proved same-node cancellation, centered forms,
 contractors, and subdivision from naive repeated interval evaluation. Sharing
 alone does not prove `x - x = 0`; the exact cancellation alternate does.
+The first sharp quadratic is a `D6` success without a global split, through
+the exact centered identity `x*(1-x) = 1/4 - (x-1/2)^2`; merely observing that
+its extremum is dyadic is not the certificate. The second is retained as
+`unknown` under a pinned `D9` diagnostic using `bisectV1`, exactly the natural
+and derivative-sign rule filters, `maxSplits := 16`, `maxDepth := 16`,
+`maxSteps := 1000`, and `maxEffort := 32`, with no symbolic square completion
+or polynomial certificate. Its sharp maximizer is `1/3`, so every finite
+dyadic partition leaves one cell containing it. It becomes an expected `D10`
+success through exact square completion/SOS or a certified symbolic rational
+critical-point partition. Bernstein remains a comparison method; by itself on
+finite dyadic cells it is not promised to attain the sharp nondyadic maximum.
 
 Additional coordination and handoff cases are:
 
-- `x^2 + y^2 = 1 ⟹ x^4 + y^4 ≤ 1`, which needs information to move from a
-  nonlinear equality into the forward bounds;
-- `y * 2 - y * Real.sqrt 2 ^ 2 ≤ 0`, using
+- `[D4]` `x^2 + y^2 = 1 ⟹ x^4 + y^4 ≤ 1`, using a certified contextual
+  alternate such as `x^4 + y^4 = 1 - 2*x^2*y^2`; this is not advertised as a
+  natural-interval consequence;
+- `[D4]` a sparse-registry instantiation regression modeled on the public
+  `grind` case: the input program contains `a*(b-c)` with facts `0 ≤ a` and
+  `b ≤ c`, while a registered trigger proposes `a*b`, `a*c`, and a proved
+  distributive equality edge. With instantiation disabled the pinned registry
+  returns `unknown`; with it enabled the generated nodes are deduplicated and
+  replay closes the same goal;
+- `[D7]` `y * 2 - y * Real.sqrt 2 ^ 2 ≤ 0`, using
   `Real.sq_sqrt zero_le_two` before the linear arithmetic handoff;
-- the four-corner multiplication theorem: from `a ≤ u ≤ b`, `c ≤ v ≤ d`,
+- `[D3]` the four-corner multiplication theorem: from `a ≤ u ≤ b`,
+  `c ≤ v ≤ d`,
   and a lower bound below all four products `a*c`, `a*d`, `b*c`, `b*d`, prove
   that it is below `u*v`;
-- `0 ≤ 1 - 3*x^2*y^2 + x^2*y^4 + x^4*y^2` as a handoff case. A polynomial
-  certificate tactic can solve the residual, while plain intervals over
-  unbounded variables should decline it;
-- a deterministic synthetic generator parameterized by variable count,
+- `[D10 unknown]` `0 ≤ 1 - 3*x^2*y^2 + x^2*y^4 + x^4*y^2` as a handoff
+  case. This is the
+  Motzkin polynomial, which is nonnegative but not a sum of polynomial
+  squares; an ordinary SOS certificate is therefore not an honest expected
+  solver. Plain intervals over unbounded variables must decline it. A later
+  multiplier/Positivstellensatz-style or dedicated polynomial certificate may
+  solve the residual;
+- `[D9]` a deterministic synthetic generator parameterized by variable count,
   irrelevant linear constraints, and constraints of the form `ν ≤ max a b`.
   Its known solution uses a small active subset while the number of apparent
   max branches grows rapidly. It tests split planning without reproducing an
@@ -977,9 +1235,11 @@ Additional coordination and handoff cases are:
 
 ### Elementary functions
 
-- the sine experiment's point bounds
+These are `D7` fixtures unless marked otherwise.
+
+- `[D5]` the sine experiment's point bounds
   `-25/48 ≤ sin (-1/2)` and `sin (1/3) ≤ 637/1944`;
-- `|sin x| ≤ 1` on an unbounded input;
+- `[D5]` `|sin x| ≤ 1` on an unbounded input;
 - a narrow sine interval crossing a critical point;
 - a large-argument sine that uses periodic reduction;
 - exact `sin π = 0` through a symbolic rewrite;
@@ -998,7 +1258,7 @@ Additional coordination and handoff cases are:
 
 ### PNT+ compatibility
 
-The committed compatibility subset includes:
+The committed compatibility subset is `D8` unless marked `D9`:
 
 - two-sided `log 2` and `log 3` bounds;
 - the one-sided nested bound `0.633415 < log (log 6.58)` and the two-sided
@@ -1008,10 +1268,12 @@ The committed compatibility subset includes:
   `10^9 ≤ exp 22`;
 - representative `10^-20` and `10^-100` tail bounds;
 - BKLNW sums with upper limits 29, 37, 63, 145, 289, and 433;
-- one Table 10 shard and the recorded false target as an expected failure;
-- the approximately 135-case Table 12 batch, plus one of its four false
+- `[D9]` one Table 10 shard and the recorded false target as an expected
+  failure;
+- `[D9]` the approximately 135-case Table 12 batch, plus one of its four false
   original boundary rows as an expected failure;
-- a small, medium, and complete 13,590-cell FKS2 batch;
+- `[D9]` a small deterministic FKS2 sample in per-PR `core`, a measured medium
+  shard in per-PR `ci`, and all 13,590 cells in the `local`/release profile;
 - mutated Taylor, range-reduction, fold, and split certificates, all rejected.
 
 The [PNT+ log-table generator](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/blob/be5e07e04cde20c5ceabf63759bd097a9c88173f/scripts/gen_log_tables.py)
@@ -1223,6 +1485,107 @@ g/v * tan (35*d) ∈ [3*d, 3.1*d].
 These cases do not enlarge the trusted base. A new method must still finish by
 producing ordinary interval facts and replay the same branch theorem.
 
+## Downstream applications
+
+The following applications are not gates for the first tactic release. They
+do constrain a few interfaces now: best-bound queries must return proofs,
+batch certificates and subdivision must be reusable outside goal closure, and
+the result type must leave room for existence as well as universal enclosure.
+
+### Verified raster graphs
+
+A verified graphing layer takes a function `f : ℝ → ℝ`, a proved input
+domain, an exact dyadic viewport, and a finite pixel grid. Pixel ownership is
+defined mathematically, using a canonical half-open partition with an explicit
+convention for the outermost edges; it is not inferred from a graphics
+library's floating-point coordinate conversion. For horizontal cell `X_j` and
+vertical cell `Y_i`, its proof-facing result is initially three-valued:
+
+```lean
+inductive PixelClass
+  | miss
+  | hit
+  | unknown
+```
+
+The raster certificate associates each `miss` with a proof that no
+`x ∈ domain ∩ X_j` has `f x ∈ Y_i`, and each `hit` with a proof that some
+such `x` exists. `unknown` is an honest unresolved cell, not a colored guess.
+Direct exact witnesses, a certified point enclosure wholly inside a pixel, an
+intermediate-value bracket, or a root-isolation certificate may establish a
+hit. Ordinary range enclosure most naturally proves misses.
+
+Two useful output contracts are deliberately distinct:
+
+1. An **outer raster** marks a set of pixels whose union provably contains the
+   graph in the viewport. It guarantees no missing graph point but may contain
+   false-positive pixels. Column-wise range enclosures already provide this.
+2. An **exact raster** proves for every pixel that it is lit if and only if its
+   mathematical cell intersects the graph. It can be emitted only when every
+   cell has a `hit` or `miss` certificate. A three-valued raster remains fully
+   verified even when this stronger binary projection is unavailable.
+
+The planner may use adaptive horizontal subdivision, a quadtree, derivative
+and monotonicity bounds, continuity, and batched evaluation of shared
+subexpressions. It should refine only pixels or columns whose classification
+can change. The proof object binds the exact row-major classification array,
+grid dimensions, viewport transform, and boundary convention. PNG encoding,
+color selection, antialiasing, and display remain untrusted presentation; a
+renderer is correct only insofar as it is shown or independently checked to
+render that certified array. A hash may identify an exported array, but a hash
+alone is not a theorem about a decoded image.
+
+The first graphing milestone should target proved outer rasters plus explicit
+misses and a small set of easy hits. Exact binary rasters, discontinuities,
+implicit curves, and antialiased coverage are later experiments. RealPaver's
+empty/feasible/inner/maybe distinction is evidence that retaining these result
+classes is operationally useful.
+
+### Certified differential equations
+
+A later ODE layer can reuse the interval program, automatic differentiation,
+Taylor payloads, local subdivision, batch checking, and gain-based policy. Its
+basic certificate concerns an initial-value problem `u' = F(t,u)`. The API
+distinguishes three claims: existence of at least one solution inside a tube;
+an enclosure of the unique flow when an applicable uniqueness theorem covers
+all solutions with the given initial data; and a universal reachable-set
+enclosure for a set of initial data. Only the latter two justify saying that a
+tube contains every solution of interest. A certified endpoint enclosure is
+tagged by which claim proved it before adjacent step theorems are composed.
+
+The additional mathematics is substantial and is not smuggled into the first
+release requirements:
+
+- a Picard or related inclusion proving that a solution exists in the proposed
+  tube; a Lipschitz/contraction argument covering the ambient solution class
+  when uniqueness is claimed; or a separate all-solutions a-priori containment
+  theorem when a universal reachable tube is claimed;
+- certified Taylor coefficients and a truncation/remainder enclosure over the
+  whole step, not only a numerical endpoint evaluation;
+- interval Jacobians, matrix bounds, and eventually affine or Taylor-model
+  state to control the wrapping effect;
+- exact composition of time-step domains and endpoint enclosures, including
+  rejected steps and adaptive changes of step size and order;
+- certified event isolation and preservation of invariants when a solver
+  crosses a guard or changes regimes.
+
+Step size, method order, preconditioning, and subdivision are untrusted search
+choices. Their certificates replay through ordinary Lean theorems. The Bratu,
+Troesch, and Broyden benchmark families are useful contractor and scaling
+proxies before a full ODE certificate format exists, but passing their static
+discretizations is not evidence by itself for existence, uniqueness, or a
+validated flow. The current architecture should therefore preserve reusable
+rule state and typed payloads without prematurely fixing an ODE-specific trace
+format.
+
+Step composition respects the claim tag. Two existence-only certificates do
+not compose merely because their endpoint intervals overlap: the first may end
+at a state different from the initial witness chosen by the second. The next
+existence theorem must be uniform over every admitted predecessor endpoint, or
+carry a dependent continuation theorem for the actual endpoint witness.
+Unique-flow and universal-reachable certificates instead require the previous
+output enclosure to be contained in the next step's certified input set.
+
 ## Conformance
 
 The required Lean-only checks include:
@@ -1230,31 +1593,69 @@ The required Lean-only checks include:
 - semantic theorems for every interval operation and endpoint shape;
 - one direct and one certificate-backed propagator registration;
 - failure of a deliberately corrupted registration payload;
+- `[D4]` a dishonest compiled evaluator whose proposal is accepted into an
+  untrusted retained trace and is then rejected by replay before goal
+  assignment. The fixture uses a singleton whose true value lies outside the
+  proposed interval, so an early heuristic rejection cannot accidentally be
+  the only trust-boundary test;
 - rejection of out-of-range operation, node, fact, and payload identifiers;
+- `[D4]` rejection of a generated program extension with a bad topological order,
+  invisible scope, duplicate canonical key, or equality edge whose proof
+  recipe has different endpoints;
 - rejection of a wrong input side or fact version, sibling or non-ancestor
   dependencies, cyclic or multiply-parented scopes, a mismatched split
   assumption, and a `Close.goal` whose facts do not imply the target;
 - raw-expression reification for casts, decimals, powers, `abs`, shared terms,
   and finite folds;
+- `[D4]` a cast regression in which intrinsic `0 ≤ (n : ℝ)` for `n : ℕ` is
+  necessary inside a larger product, both normally and under `interval only`;
 - goal closure for strict, non-strict, equality, disequality, membership,
   contradiction, and conjunction targets;
 - safe refusal for an unsupported function and an exhausted budget;
 - a proof axiom audit excluding compiler trust and `sorryAx`;
 - proof sharing across repeated subexpressions and split branches;
-- chunked fold replay at every chunk boundary.
+- chunked fold replay at every chunk boundary;
+- `[D2]` a `Lean.Kernel.whnf` and `decide +kernel` reduction probe in a
+  downstream module for every registered kernel-facing checker, with one small
+  case covering each recursive route and the complete transitive exposure
+  closure rather than only the defining module;
+- `[D4]` metamorphic determinism checks for `balancedV1` at a fixed step budget.
+  Alpha-renaming and permutation of independent hypotheses compare normalized
+  action keys and mathematical outputs, not unstable source identifiers. An
+  inserted disconnected consistent fact is required to preserve only the
+  result status and mathematical bound, because it legitimately changes the
+  reified program and falls outside fixed-program trace determinism;
+- `[D4]` one deliberately false target, `x ≤ 1` from `x ∈ [0,2]`, whose same
+  exhausted `SearchResult` records a counterexample scope narrowed to `(1,2]`
+  yet extracts the global best bound `[0,2]` under `ProofPlan.direct`; no fresh
+  second search may satisfy the fixture, and no fact learned under the
+  temporary negated target may appear in that plan.
 
 Every malformed-trace case must fail before the tactic assigns the user's
 goal metavariable.
 
 The external oracle profile uses `python-flint` Arb for independently computed
-point and elementary-function enclosures. A fixture fixes an input box and a
-coarse rational target. Lean proves that the function image lies in the target.
-Arb independently encloses the complete closed input ball at higher precision
-and checks that its enclosure also lies in the same target. Separate fixtures
-sample deterministic rational points and exercise known extrema and domain
-boundaries. This is bug-finding evidence, not a proof and not a runtime
-dependency. CoqInterval or MPFI comparison runs may be local informational
-tests.
+point and elementary-function enclosures. For designated point, monotone, or
+range fixtures where the pinned high-precision Arb computation is
+independently known to enclose the complete original closed box more tightly
+than the expected Lean result, Arb starts again from those exact inputs; after
+an explicit outward conversion and stated rounding slack, its enclosure must
+lie inside the enclosure returned by Lean. A separate assertion requires
+Lean's enclosure to meet the fixture's width or endpoint target. Generic ball
+evaluation is not required to fit inside a dependency-aware Lean enclosure:
+fixtures where that premise is not justified instead use deterministic
+rational samples, certified known extrema, and domain-boundary checks. Merely
+placing both results inside the same coarse target is not an oracle check.
+This is bug-finding evidence, not a proof and not a runtime dependency.
+CoqInterval or MPFI comparison runs may be local informational tests.
+
+The `core` profile runs on every PR. The medium FKS2 shard and available Arb
+checks form `ci`; the complete 13,590-cell stream, complete translated solver
+families, and expensive comparison campaigns are `local`/release tests. Split
+JSONL fixtures keep generation and comparison streaming and avoid a single
+large generated Lean module. “Release” means a pinned mandatory invocation of
+that `local` profile, including chunked elaboration, kernel replay, and the
+axiom audit; it is not a separate testing profile.
 
 ## Performance acceptance
 
@@ -1282,9 +1683,11 @@ validation, are:
   depth;
 - batch replay: no linear elaboration-depth growth and no chunk requiring an
   increased recursion limit;
-- the complete FKS2 corpus: bounded per-cell certificate size, shared static
-  data, and no theorem or object-file blowup proportional to duplicated
-  transcendental tables.
+- the per-PR FKS2 shard: bounded per-cell certificate size, shared static data,
+  and no theorem or object-file blowup proportional to duplicated
+  transcendental tables;
+- the complete 13,590-cell FKS2 `local` run as a replacement/release criterion,
+  with the same per-cell metrics and a reported total wall-clock time.
 
 The LeanCert version pinned by PNT+ is a migration baseline. The new tactic is
 not declared a replacement until it proves the selected downstream corpus,
@@ -1293,36 +1696,74 @@ size on every large tier without a serious regression on the other measure.
 
 ## Development order
 
-1. Prove interval semantics, normalization, arithmetic enclosure, rational
-   projection, regularization, and split coverage.
-2. Before freezing checker or trace formats, build a narrow vertical
-   feasibility prototype for one small arithmetic DAG, the BKLNW fold with
+1. **D1 — endpoint kernel.** Prove interval semantics, normalization,
+   arithmetic enclosure, rational projection, regularization, split coverage,
+   and the complete empty-operation table.
+2. **D2 — replay feasibility.** Before freezing representation, checker, or
+   trace formats, build a narrow vertical feasibility prototype for one small
+   arithmetic DAG, one bounded instantiation that adds a node and transports a
+   fact across its equality edge, the BKLNW fold with
    upper limit 433, and one high-precision `exp` or `log` certificate. For each,
    record compiled checking, proof construction, kernel replay, transitive
    axioms, proof and object bytes, and incremental import time. Failure to make
    ordinary kernel replay practical changes the architecture before wider
-   implementation.
-3. Implement the production shared program, natural evaluator, generic
-   soundness theorem, reifier, and scoped proof slicer for arithmetic over
-   `ℝ`.
-4. Add the explicit rule registry, multiple methods per head, diagnostics, and
-   the `interval` and `interval_bound` frontends.
-5. Port the sine experiment to dyadic endpoints. Add stateful Taylor
-   certificates and the triple-angle rewrite.
-6. Add centered automatic differentiation, derivative-sign monotonicity, and
-   dependency-aware backward propagation.
-7. Add `π`, `exp`, `log`, square root, `atan`, positive-base real powers,
-   certified range reduction, and symbolic special values.
-8. Add production chunked folds and the PNT+ point and sum corpus. Remove every
-   need for a `native_decide` proof path in the selected compatibility files.
-9. Add arbitrary and function-suggested subdivision, then the Table 10, Table
-   12, FKS2, and complete IMO partition tiers.
-10. Compare Bernstein, second-order, affine, and Taylor-model methods on the
-    challenge corpus before selecting further defaults.
+   implementation. Compare bundled versus externally checked interval
+   invariants, dyadic versus rational working facts, the branch-storage
+   candidates, and direct versus reflected trace leaves. Install downstream
+   kernel-reduction probes at this milestone and retain them thereafter. The
+   trace schema remains provisional through D4 if this tiny extension case has
+   not yet selected a representation.
+3. **D3 — shared arithmetic.** Implement the production shared program,
+   natural evaluator, generic soundness theorem, reifier, and scoped proof
+   slicer for arithmetic over `ℝ`.
+4. **D4 — extensible network.** Add the explicit rule registry, multiple
+   methods per head, bounded expression instantiation, equality transport,
+   contextual polynomial alternates, diagnostics, and the `interval` and
+   `interval_bound` frontends. Compare eager, epoch-based, and lazy generation
+   before selecting a default.
+5. **D5 — first analytic rules.** Port the sine experiment to exact endpoints,
+   add the paired cosine enclosure, stateful Taylor certificates, and the
+   triple-angle rewrite.
+6. **D6 — contractors.** Add centered automatic differentiation,
+   derivative-sign monotonicity, and a recognizable HC4 forward/backward
+   baseline with event-driven reactivation. Prototype 3B/CID-style local
+   shaving and compare relative-improvement thresholds against unconditional
+   worklist wakeups.
+7. **D7 — elementary portfolio.** Add `π`, `exp`, `log`, square root, `atan`,
+   positive-base real powers, certified range reduction, and symbolic special
+   values.
+8. **D8 — large certificates.** Add production chunked folds and the PNT+
+   point and sum corpus. Remove every need for a `native_decide` proof path in
+   the selected compatibility files.
+9. **D9 — branch search.** Add arbitrary and function-suggested subdivision,
+   plus the Table 10, Table 12, and tiered FKS2 tests. Compare split variable,
+   point, and node-order strategies rather than coupling them. Local shaving,
+   interval Newton, the complete IMO partition, the full FKS2 run, and small
+   translated RealPaver benchmarks are separately labeled prototype or
+   replacement-acceptance subtargets within this milestone.
+10. **D10 — advanced dependency control.** Compare Bernstein,
+    second-order, affine, and Taylor-model methods, plus gain-adaptive ACID-like
+    contractor scheduling, on the challenge corpus before selecting further
+    defaults. Exercise clean handoff to `hex-rcf` for genuinely univariate
+    real-closed-field residuals; multivariate cases such as Motzkin remain
+    outside that tactic's contract.
 
 Every stage has real executable definitions and tests for its advertised
 surface. Unimplemented methods remain absent rather than returning ceremonial
 wide answers that masquerade as the intended algorithm.
+
+`D1`–`D10` is a dependency order, not ten uniform release gates. The first
+public release target is D1–D8 plus the basic arbitrary/function-suggested
+split path and small per-PR D9 samples. Claiming that the tactic replaces
+LeanCert additionally requires the selected full PNT+ local profile, including
+the complete FKS2 stream and whichever D9 contractor prototypes those cases
+actually need. D10 is comparative follow-on work and does not block either
+claim unless the measured replacement corpus demonstrates that one of its
+methods is necessary.
+
+Verified raster graphing begins only after the `interval_bound` and batch APIs
+are stable; certified ODE integration is a later client of D6/D10 machinery.
+Neither application is a release or replacement gate above.
 
 ## Open design questions
 
@@ -1350,7 +1791,32 @@ the fixed soundness and trust contracts.
 9. Does the dyadic-working and exact-rational-source hybrid beat an exact
    rational working backend with regularization on real tactic workloads?
 10. For the initial rule portfolio, do function-specific subdivision
-    suggestions produce better gain per proof node than backward contractors?
+    suggestions produce better gain per proof node than HC4, box consistency,
+    3B/CID shaving, or interval Newton? Which RealPaver-style improvement
+    thresholds and ACID learning signals remain useful after proof-construction
+    cost is included?
+11. Does `Hex.Interval` internally bundle the cut-consistency proof, or use
+    plain normalized data with Boolean validation at construction and replay
+    boundaries?
+12. Which branch-state representation wins at the observed sizes: array
+    copy-on-write, a persistent paged trie, chunked parent/delta overlays, or
+    depth-first mutation with a rollback trail? Is a hybrid crossover useful?
+13. What is the smallest stable derivation language after the D2 vertical
+    prototype: explicit equality transport and program-extension constructors,
+    or validated tables referenced by fewer generic constructors?
+14. Should bounded expression instantiation be eager, propagation-epoch based,
+    or fully lazy? Which triggers need congruence/E-matching, which should make
+    direct structural proposals, and when should generated nodes be global
+    rather than branch-local?
+15. Which deterministic policy becomes the release default after comparing the
+    staged `balancedV1` prototype, simple fair queues, RealPaver-style
+    gain-adaptive scheduling, and bandit-like scores? The answer may differ by
+    pinned policy name without altering proof validity.
+16. For verified graphs, is the most useful first artifact a certified outer
+    cover, a ternary raster with local hit/miss proofs, or both? Which hit
+    certificates justify the cost of exact binary pixels?
+17. Which interval, affine, or Taylor payload API can later serve validated ODE
+    steps without freezing an ODE trace or complicating the first tactic?
 
 ## File organization
 
@@ -1376,16 +1842,36 @@ the fixed soundness and trust contracts.
 - `conformance/HexInterval/EmitFixtures.lean`: Mathlib-free arithmetic oracle
   fixtures.
 - `conformance/HexIntervalMathlib/Conformance.lean`: tactic, replay, axiom, and
-  migrated downstream regressions.
+  small migrated downstream regressions in the per-PR `core` profile.
+- `conformance/HexIntervalMathlib/CrossCheck.lean`: the measured deterministic
+  medium FKS2 shard, included in the per-PR `HexConformance` target under the
+  repository's standard heavier-check module name.
 - `conformance/HexIntervalMathlib/EmitFixtures.lean`: elementary-function
   fixtures for the external oracle.
+- `conformance-fixtures/HexIntervalMathlib/`: split JSONL inputs and pinned
+  release manifests for the elementary and full-corpus campaigns.
+- `conformance/HexIntervalMathlib/Generated/`: gitignored Lean chunk modules
+  materialized only for a full local run. They belong to the explicit
+  non-default `HexIntervalLocalConformance` Lake target, not the per-PR
+  `HexConformance` globs.
+- `scripts/conformance/run_hex_interval_local.sh`: stream the split JSONL,
+  first regenerate the complete fixed set of chunk modules plus a balanced
+  aggregator under that `Generated/` directory, then run
+  `lake build HexIntervalLocalConformance`, and finally audit every resulting
+  theorem. The target is never invoked without this generation step. The
+  pinned release invocation records fixture hashes, chunk size, config, and
+  toolchain.
 
 Unlike a correspondence-only companion, `hex-interval-mathlib` contains an
 executable reifier, rule registry, and tactic. Its own conformance target tests
 that runtime-facing API while keeping the released Mathlib-free conformance
 target free of Mathlib imports. Small explanatory examples remain in
 `Examples.lean`; the bulk PNT+, nonlinear, and challenge corpus belongs in the
-companion conformance project and is built in CI.
+companion conformance project. Its `core` and measured `ci` profiles are built
+on every PR; complete FKS2 and other full campaigns remain `local` campaigns,
+with pinned invocations used as release gates. The generated local modules are
+proof-bearing inputs to an ordinary Lake build, not a compiled fixture-only
+shortcut, and no additional workflow or CI job is introduced.
 
 ## References
 
@@ -1409,6 +1895,11 @@ companion conformance project and is built in CI.
   [Arb: efficient arbitrary-precision midpoint-radius interval arithmetic](https://arxiv.org/abs/1611.02831).
 - [IBEX contractors](https://ibex-team.github.io/ibex-lib/contractor.html)
   and [IBEX strategies](https://ibex-team.github.io/ibex-lib/strategy.html).
+- Laurent Granvilliers and Frédéric Benhamou,
+  [Algorithm 852: RealPaver](https://hal.science/hal-00480813),
+  together with the
+  [RealPaver 1.1 paper](https://doi.org/10.21105/joss.09331) and
+  [source repository](https://github.com/realpaver/realpaver).
 - [Isabelle verified affine arithmetic](https://isa-afp.org/entries/Affine_Arithmetic.html)
   and [verified Taylor models](https://isa-afp.org/entries/Taylor_Models.html).
 - Lawrence Paulson,

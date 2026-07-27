@@ -30,7 +30,7 @@ agent/feature branch even before a PR exists. Restricting `push:` to
 PR commit fire each workflow exactly once.
 
 `workflow_dispatch:` is allowed wherever an ad-hoc manual run is
-useful (currently `conformance.yml`).
+useful (currently the consolidated `ci.yml`).
 
 Other triggers (`schedule:`, `repository_dispatch:`, `release:`,
 `merge_group:`) are case-by-case; they must be documented in the
