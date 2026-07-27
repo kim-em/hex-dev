@@ -1,7 +1,7 @@
 # hex-interval-mathlib (real semantics, verified propagators, and the `interval` tactic)
 
 `hex-interval-mathlib` gives mathematical meaning to
-[hex-interval](hex-interval.md), proves soundness theorems for interval
+[hex-interval](../../HexInterval/SPEC/hex-interval.md), proves soundness theorems for interval
 propagators, and provides the `interval` tactic. It depends on Mathlib and
 `hex-interval`. There is no separate proof-only companion beyond this library.
 
@@ -219,6 +219,14 @@ fixture. Small literal checks may use kernel `decide` when their transparent
 reduction is measured and stable. Proof-producing tactics such as `norm_num`,
 `ring`, and `linarith` are also admissible. Large batches use the certificate
 scheme below rather than one enormous kernel reduction.
+
+In particular, `norm_num` is a useful Mathlib-side way to discharge exact
+rational leaves, but it is not required by `hex-interval`. The shared library
+can replay rational arithmetic through exposed wrappers for core's
+`Rat.normalize`, justified by the core `Rat.*_def` lemmas, or through a
+canonical numerator/denominator checker. D2 compares these proof-facing
+encodings with direct Mathlib `norm_num` leaves; the compiled planner remains
+free to use the ordinary optimized `Rat` operations in every case.
 
 ## Program semantics and the golden theorem
 
