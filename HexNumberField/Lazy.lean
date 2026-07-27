@@ -103,7 +103,8 @@ def DyadicSquare.neg (s : DyadicSquare) : DyadicSquare :=
 
 /-- Reflection transports a root atom to the reflected polynomial. -/
 theorem atomWitness_negRoots {p : ZPoly} {s : DyadicSquare}
-    (h : atomWitness p s) : atomWitness p.negRoots s.neg := by
+    (hprim : ZPoly.Primitive p) (h : atomWitness p s) :
+    atomWitness p.negRoots s.neg := by
   sorry
 
 namespace DyadicComplexBall
@@ -119,8 +120,8 @@ def sub (a b : DyadicComplexBall) : DyadicComplexBall :=
   a.add b.neg
 
 /-- Checked reciprocal enclosure. The centre reciprocal is rounded downward
-coordinatewise; three ulps cover both coordinate errors and upward rounding
-of the radial distortion bound. -/
+coordinatewise; three ulps cover both coordinate errors and the downward
+rounding of the radial distortion bound. -/
 @[expose]
 def inv? (b : DyadicComplexBall) (prec : Int) : Option DyadicComplexBall :=
   let c : GaussDyadic := (b.re, b.im)
@@ -143,7 +144,7 @@ separation precision. -/
 @[expose]
 def RefinedIsolation.neg {p : ZPoly} (r : RefinedIsolation p)
     (hprim : ZPoly.Primitive p) : RefinedIsolation p.negRoots :=
-  ⟨⟨r.1.square.neg, atomWitness_negRoots r.1.witness⟩, by
+  ⟨⟨r.1.square.neg, atomWitness_negRoots hprim r.1.witness⟩, by
     rw [ZPoly.mahlerPrec_negRoots p hprim]
     exact r.2⟩
 
@@ -163,16 +164,18 @@ def ofEliminant? (raw : ZPoly)
           let ball ← ballAt prec
           let isolations ← isolate p hsimple prec
           let refined ← isolations.mapM DyadicRootIsolation.toRefined?
-          let matching ← refined.toList.find? fun r => r.1.square.meetsBall ball
-          some
-            { p
-              prim := hprim
-              pos_lc := hpos
-              pos_degree := hdegree
-              squarefree := hsimple
-              x := SimpleRoot.mk matching
-              rep := matching
-              rep_mk := rfl }
+          match refined.toList.filter fun r => r.1.square.meetsBall ball with
+          | [matching] =>
+              some
+                { p
+                  prim := hprim
+                  pos_lc := hpos
+                  pos_degree := hdegree
+                  squarefree := hsimple
+                  x := SimpleRoot.mk matching
+                  rep := matching
+                  rep_mk := rfl }
+          | _ => none
         else
           none
       else
@@ -228,6 +231,15 @@ def sub (a b : AlgebraicRoot) : AlgebraicRoot :=
 def mulGuardBits (a b : AlgebraicRoot) : Nat :=
   8 + QAdjoin.rootBits a.rep.1.square + QAdjoin.rootBits b.rep.1.square
 
+/-- Guard bits for reciprocal-ball amplification. For a nonzero root of the
+primitive integer polynomial `p`, reciprocal Cauchy gives
+`|a| ≥ 1 / (1 + coeffAbsMax p)`. Doubling the bit bound pays for the
+`|a|⁻²` distortion in inversion; sixteen further bits cover the strict
+nonzero guard and dyadic rounding. -/
+@[expose]
+def invGuardBits (a : AlgebraicRoot) : Nat :=
+  2 * Hex.ceilLog2 (ZPoly.coeffAbsMax a.p + 1) + 16
+
 /-- Checked lazy product through the product eliminant. -/
 @[expose]
 def mul? (a b : AlgebraicRoot) : Option AlgebraicRoot :=
@@ -255,7 +267,7 @@ def inv? (a : AlgebraicRoot) : Option AlgebraicRoot :=
     some AlgebraicNumber.zero.toRoot
   else
     ofEliminant? a.p.reciprocal fun prec => do
-      let target := prec + (separationDepth a.p : Int) + 16
+      let target := prec + (invGuardBits a : Int)
       let ar ← a.rep.refineTo? target
       ar.1.1.square.toBall.inv? target
 
@@ -351,6 +363,39 @@ private def sqrtTwoRoot (hsimple : HasOnlySimpleRoots sqrtTwoPoly) :
             quotient.p = DensePoly.ofList [-1, 0, 1] &&
               decide (0 < quotient.rep.1.square.re)
       | _, _, _, _, _ => false
+    else
+      false
+
+private def tinyRootDen : Int := (2 : Int) ^ 60
+
+private def tinyRootPoly : ZPoly := DensePoly.ofList [-1, tinyRootDen]
+
+private def tinyRootSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 1 60, 0, 70⟩
+
+private def tinyRootRep : RefinedIsolation tinyRootPoly :=
+  ⟨⟨tinyRootSquare, by decide⟩, by decide⟩
+
+private def tinyRoot (hsimple : HasOnlySimpleRoots tinyRootPoly) :
+    AlgebraicRoot where
+  p := tinyRootPoly
+  prim := by rfl
+  pos_lc := by decide
+  pos_degree := by decide
+  squarefree := hsimple
+  x := SimpleRoot.mk tinyRootRep
+  rep := tinyRootRep
+  rep_mk := rfl
+
+-- Regression for reciprocal precision depending on root magnitude rather than
+-- only degree: the old fixed degree-one budget returned `none` here.
+#guard
+    if hsimple : HasOnlySimpleRoots tinyRootPoly then
+      match (tinyRoot hsimple).inv? with
+      | some inverse =>
+          inverse.p = DensePoly.ofList [-tinyRootDen, 1] &&
+            decide (0 < inverse.rep.1.square.re)
+      | none => false
     else
       false
 
