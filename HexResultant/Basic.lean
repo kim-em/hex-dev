@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPoly
-import all Init.Data.Array.Basic
+public meta import HexPoly.Dense
 
 public section
 
@@ -28,7 +28,7 @@ where `max(0, i-m) <= j < i`.  The quotient coefficients are
 `q[k] = a_(d-1-k) * b^k`; the low `m` coefficients of
 `b^d*f - q*g` are the remainder.  This dynamic coefficient recurrence avoids
 materializing and rescaling the full quotient and remainder at every
-elimination step.  It performs `O(d*m)` coefficient operations and uses
+elimination step.  Its nested folds have `O(d*m)` summands and it uses
 `O(d+m)` coefficient storage.
 
 The fixed `b^d` factor is built into both output formulas.  Consequently the
@@ -127,57 +127,86 @@ theorem pseudoDivMod_of_size_lt [One R] [Add R] [Sub R] [Mul R]
     (isZero_eq_false_iff g).2 (by omega)
   simp [pseudoDivMod, hg, h]
 
-/-- Pseudo-division reconstructs the fixed leading-coefficient multiple of the dividend. -/
-theorem pseudoDivMod_reconstruct [Lean.Grind.CommRing R]
-    (f g : DensePoly R) (hg : g ≠ 0) (hfg : g.size ≤ f.size) :
+/-- Pseudo-division reconstructs the fixed leading-coefficient multiple of the dividend.
+
+This theorem deliberately uses a fresh coefficient type: an ambient `Zero`
+instance is not necessarily coherent with the zero supplied by
+`Lean.Grind.CommRing`. -/
+theorem pseudoDivMod_reconstruct_core {S : Type u}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (f g : DensePoly S) (hg : g ≠ 0) (hfg : g.size ≤ f.size) :
     let qr := pseudoDivMod f g
     scale (g.leadingCoeff ^ (f.size - g.size + 1)) f = qr.1 * g + qr.2 := by
   sorry
 
 /-- Under the pseudo-division preconditions, the remainder is smaller than the divisor. -/
-theorem pseudoDivMod_remainder_lt [Lean.Grind.CommRing R]
-    (f g : DensePoly R) (hg : g ≠ 0) (hfg : g.size ≤ f.size) :
+theorem pseudoDivMod_remainder_lt_core {S : Type u}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (f g : DensePoly S) (hg : g ≠ 0) (hfg : g.size ≤ f.size) :
     (pseudoDivMod f g).2.size < g.size := by
   sorry
 
-/-! Small kernel-reduced regressions for the pseudo-division loop. -/
+/-! Small compiled regressions for the pseudo-division loop. -/
 
-/-- `4 * (X^2 + 1) = (2*X - 1) * (2*X + 1) + 5`. -/
-example :
-    pseudoDivMod
+-- `4 * (X^2 + 1) = (2*X - 1) * (2*X + 1) + 5`.
+#guard
+    let qr := pseudoDivMod
         (ofList ([1, 0, 1] : List Int))
-        (ofList ([1, 2] : List Int)) =
-      (ofList ([-1, 2] : List Int), ofList ([5] : List Int)) := by
-  decide
+        (ofList ([1, 2] : List Int))
+    qr.1.toArray.toList = [-1, 2] ∧ qr.2.toArray.toList = [5]
 
-/-- Monic pseudo-division specializes to ordinary monic division. -/
-example :
-    pseudoDivMod
+-- Monic pseudo-division specializes to ordinary monic division.
+#guard
+    let qr := pseudoDivMod
         (ofList ([1, 0, 1] : List Int))
-        (ofList ([1, 1] : List Int)) =
-      (ofList ([-1, 1] : List Int), ofList ([2] : List Int)) := by
-  decide
+        (ofList ([1, 1] : List Int))
+    qr.1.toArray.toList = [-1, 1] ∧ qr.2.toArray.toList = [2]
 
-/-- Early cancellation still scales the quotient for every unused round. -/
-example :
-    pseudoDivMod
+-- Early cancellation still scales the quotient for every unused round.
+#guard
+    let qr := pseudoDivMod
         (ofList ([0, 0, 1] : List Int))
-        (ofList ([0, 2] : List Int)) =
-      (ofList ([0, 2] : List Int), 0) := by
-  decide
+        (ofList ([0, 2] : List Int))
+    qr.1.toArray.toList = [0, 2] ∧ qr.2.toArray.toList = []
 
-/-- An already-smaller dividend is returned unchanged as the remainder. -/
-example :
-    pseudoDivMod
+-- A degree drop greater than one retains the residual leading-coefficient scaling.
+-- `4*X^3 = (2*X)*(2*X^2 + 1) - 2*X`.
+#guard
+    let qr := pseudoDivMod
+        (ofList ([0, 0, 0, 1] : List Int))
+        (ofList ([1, 0, 2] : List Int))
+    qr.1.toArray.toList = [0, 2] ∧ qr.2.toArray.toList = [0, -2]
+
+-- Division by a constant uses all `degree(f) + 1` scaling rounds.
+-- `27*(X^2 + 1) = (9*X^2 + 9)*3`.
+#guard
+    let qr := pseudoDivMod
+        (ofList ([1, 0, 1] : List Int))
         (ofList ([3] : List Int))
-        (ofList ([1, 1] : List Int)) =
-      (0, ofList ([3] : List Int)) := by
-  decide
+    qr.1.toArray.toList = [9, 0, 9] ∧ qr.2.toArray.toList = []
 
-/-- The documented zero-divisor junk case is total and leaves the dividend alone. -/
-example :
-    pseudoDivMod (ofList ([1, 0, 1] : List Int)) 0 =
-      (0, ofList ([1, 0, 1] : List Int)) := by
-  decide
+-- Equal-degree inputs take one round: `2*(X + 1) = 2*X + 3 - 1`.
+#guard
+    let qr := pseudoDivMod
+        (ofList ([1, 1] : List Int))
+        (ofList ([3, 2] : List Int))
+    qr.1.toArray.toList = [1] ∧ qr.2.toArray.toList = [-1]
+
+-- An already-smaller dividend is returned unchanged as the remainder.
+#guard
+    let qr := pseudoDivMod
+        (ofList ([3] : List Int))
+        (ofList ([1, 1] : List Int))
+    qr.1.toArray.toList = [] ∧ qr.2.toArray.toList = [3]
+
+-- The zero dividend takes the smaller-degree branch for a nonconstant divisor.
+#guard
+    let qr := pseudoDivMod 0 (ofList ([1, 1] : List Int))
+    qr.1.toArray.toList = ([] : List Int) ∧ qr.2.toArray.toList = []
+
+-- The documented zero-divisor junk case is total and leaves the dividend alone.
+#guard
+    let qr := pseudoDivMod (ofList ([1, 0, 1] : List Int)) 0
+    qr.1.toArray.toList = ([] : List Int) ∧ qr.2.toArray.toList = [1, 0, 1]
 
 end Hex.DensePoly
