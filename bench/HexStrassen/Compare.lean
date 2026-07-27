@@ -211,15 +211,17 @@ def cmpWindowBest {p : Nat} [ZMod64.Bounds p] (ctx : Hex.BarrettCtx p)
     let salt := 2000 + iter * 17
     let a ← cmpForce (cmpMat p n m salt)
     let b ← cmpForce (cmpMat p m k (salt + 9))
+    let reference ← cmpForce (Matrix.mulImpl a b)
+    let referenceChecksum := cmpChecksum p reference
     let mut checksums := windowCandidates.map (fun _ => 0)
     for offset in [0:windowCandidates.size] do
       let which := (offset + iter) % windowCandidates.size
       let sample ← timeWindow ctx windowCandidates[which]! a b
       best := best.set! which (updateBest best[which]! sample.nanos)
       checksums := checksums.set! which sample.checksum
-    unless checksums.all (· = checksums[0]!) do
+    unless checksums.all (· = referenceChecksum) do
       throw <| IO.userError s!"window checksum mismatch at {n}x{m}x{k}"
-    sink := sink + checksums[0]!
+    sink := sink + referenceChecksum
   IO.eprintln s!"  window {n}x{m}x{k}: checksum={sink % 1000000007}"
   return (best, sink % 1000000007)
 

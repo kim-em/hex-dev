@@ -434,16 +434,19 @@ kernel becomes follow-up work. A GF(2) four-Russians base kernel would be the
 strongest showcase, but the project has no bit-packed GF(2) matrix
 representation, so it is out of scope here.
 
-The shipped `strassenBarrett` uses a 256-term window. The accumulator proof
+The shipped `strassenBarrett` uses a 4096-term window. The accumulator proof
 shows that the high word grows by at most one per product, so every unreduced
 window fits below `2^128`; reducing a window and the final partial window
 preserves the running residue for arbitrary inner dimension. The committed
 measurement compares `mulImpl` directly with the periodic leaf and compares
 full `mulStrassen` both as shipped and at matched cutoffs, at `p = 5`, `65537`,
 and `2^31 - 1`. Across the square and rectangular cases the leaf is
-`1.25`–`1.44×` faster and full Strassen is `1.22`–`1.42×` faster; contractions
-of length `768` and `1280` cross three and five windows. The result clears the
-5% demonstration gate without changing `strassenDefault`.
+`3.02`–`17.50×` faster and full Strassen is `13.49`–`15.87×` faster; the
+matched-cutoff controls are `5.79`–`16.72×`. Leaf contractions of length
+`12289` and `20481` cross three and five windows. A sweep against 256-term and
+effectively single-flush alternatives measures the selected window's periodic
+cost at `4.4`–`8.9%` against the single-flush loop. The result clears the 5%
+demonstration gate without changing `strassenDefault`.
 
 ### Conformance
 
@@ -459,6 +462,12 @@ not kernel `decide`: `mulStrassen` is defined by well-founded recursion and does
 not reduce cheaply in the kernel, so it stays off the `decide` cross-check path
 that design principle 11 discusses. Oracle: none; the surface is structural-layer
 exact arithmetic, as for the existing multiplication guards.
+
+`conformance/HexBerlekamp/Conformance.lean` adds the coefficient-specific
+cross-checks for `strassenBarrett`: near-upper-bound residues exercise high-word
+carries; inner dimensions `4095`, `4096`, and `4097` straddle the implementation
+dispatch and exact flush; `12289` covers three flushes plus a partial tail; and
+empty contraction/output axes cover the generic rectangular signature.
 
 ### New public names
 
