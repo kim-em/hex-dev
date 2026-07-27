@@ -197,9 +197,12 @@ proved equivalences.
    and the sign matrix is the already-folded constant formula.
 
 5. **Separate.** Scan consecutive isolations in order. Already-strict
-   pairs are left unchanged. For a touching pair, repeatedly apply
-   cached-chain `refine1With` once to **both** intervals until
-   `upperᵢ < lowerᵢ₊₁`. The helper is structurally fuel-bounded by the
+   pairs are left unchanged. For a touching pair, repeatedly apply the
+   replay-based `Separation.refine1?` once to **both** intervals until
+   `upperᵢ < lowerᵢ₊₁`. This helper reads variation differences from the
+   cached generalized replay chain; it cannot use `RealRootIsolation.refine1With`,
+   whose types are tied to the executable `ZPoly.sturmChain`. The pair walk is
+   structurally fuel-bounded by the
    maximum of the two `refineTo` bounds
 
    ```text
@@ -511,8 +514,11 @@ free to change.
   bridge to literal isolation semantics; `HexRCF/IsolationsTests.lean`:
   count, order, completeness, and no-real-root regressions.
 - `HexRCF/Certificate.lean`: `Certificate`, `check`, `decide`.
-- `HexRCF/Cells.lean`: separation refinement, cell construction,
-  endpoint classification for bounded sentences.
+- `HexRCF/Separation.lean`: replay-based strict-separation refinement,
+  strict-gap checking, and endpoint classification for bounded sentences;
+  `HexRCF/SeparationTests.lean`: midpoint ownership, close-root, scan,
+  malformed-input, and endpoint regressions.
+- `HexRCF/Cells.lean`: semantic and executable cell construction.
 - `HexRCF/SignMatrix.lean`: test-point evaluation, the `gⱼ` root-cell
   computation, Boolean folding.
 - `HexRCF/Soundness.lean`: `check_sound` and its four factors.
