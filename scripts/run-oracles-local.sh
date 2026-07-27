@@ -14,7 +14,7 @@
 #
 # Supported oracles map to system + pip dependencies:
 #   poly_flint, berlekamp_flint, bz_flint  → python-flint
-#   hensel_pari, number_field_tower_pari                 → cypari2 (+libpari)
+#   hensel_pari, number_field_tower_pari → cypari2 (+libpari)
 #
 # Platform detection picks one of:
 #   * NixOS  — re-exec under `nix shell` with the required nixpkgs.

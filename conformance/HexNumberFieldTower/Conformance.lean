@@ -14,7 +14,10 @@ profile uses independent algebraic identities and committed exact coordinates.
 Mode: if_available.
 
 Covered operations:
-- `ofQAdjoin` for rational, positive-leading, and sign-normalized inputs;
+- `ofQAdjoin` for rational, both selected conjugates, and non-unit or
+  sign-normalized leading coefficients;
+- all tower arithmetic operations over genuine one- and two-level fields,
+  including recursive inversion and the `0⁻¹ = 0` convention;
 - `adjoin?` for present roots and proper relative extensions;
 - `factor?` and `checkFactorization` with content and multiplicity;
 - `split?` for degenerate, repeated, and multi-step inputs;
@@ -32,8 +35,8 @@ Covered properties:
   maps are inverse on committed tower generators.
 
 Covered edge cases:
-- a linear rational presentation, a negative-leading presentation, and the
-  rational tower;
+- a linear rational presentation, a negative-leading presentation, both
+  conjugates, a non-unit leading coefficient, and the rational tower;
 - adjoining a root already present in the tower;
 - zero and constant polynomials;
 - repeated factors and a polynomial whose roots lie in an intermediate level;
@@ -83,6 +86,45 @@ private def negSqrtTwo? : Option (Extension rat) :=
     if hsimple : HasOnlySimpleRoots negSqrtTwoPoly then
       some (ofQAdjoin (x := SimpleRoot.mk negSqrtTwoRep)
         hsimple negSqrtTwoRep rfl)
+    else
+      none
+  else
+    none
+
+private def negativeSqrtTwoSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec (-181) 7, 0, 8⟩
+
+private def negativeSqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
+  ⟨⟨negativeSqrtTwoSquare, by decide⟩, by decide⟩
+
+private def negativeSqrtTwo? : Option (Extension rat) :=
+  if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
+    letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
+      ⟨hirred, by decide⟩
+    if hsimple : HasOnlySimpleRoots sqrtTwoPoly then
+      some (ofQAdjoin (x := SimpleRoot.mk negativeSqrtTwoRep)
+        hsimple negativeSqrtTwoRep rfl)
+    else
+      none
+  else
+    none
+
+private def sqrtThreeHalvesPoly : ZPoly :=
+  DensePoly.ofList [-3, 0, 2]
+
+private def sqrtThreeHalvesSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 157 7, 0, 9⟩
+
+private def sqrtThreeHalvesRep : RefinedIsolation sqrtThreeHalvesPoly :=
+  ⟨⟨sqrtThreeHalvesSquare, by decide⟩, by decide⟩
+
+private def sqrtThreeHalves? : Option (Extension rat) :=
+  if hirred : ZPoly.isIrreducible sqrtThreeHalvesPoly = true then
+    letI : ZPoly.CheckedIrreducible sqrtThreeHalvesPoly :=
+      ⟨hirred, by decide⟩
+    if hsimple : HasOnlySimpleRoots sqrtThreeHalvesPoly then
+      some (ofQAdjoin (x := SimpleRoot.mk sqrtThreeHalvesRep)
+        hsimple sqrtThreeHalvesRep rfl)
     else
       none
   else
@@ -202,6 +244,72 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
           coeffs (extension.gen * extension.gen) = #[2, 0]
     | none => false
 
+-- Adversarial fixed embedding: the negative conjugate must remain negative.
+#guard
+    match negativeSqrtTwo? with
+    | some extension =>
+        extension.root.rep.1.square = negativeSqrtTwoSquare &&
+          extension.root.rep.1.square != sqrtTwoSquare &&
+          coeffs (extension.gen * extension.gen) = #[2, 0]
+    | none => false
+
+-- Non-unit leading coefficients exercise rational monic normalization.
+#guard
+    match sqrtThreeHalves? with
+    | some extension =>
+        extension.root.rep.1.square = sqrtThreeHalvesSquare &&
+          coeffs (extension.gen * extension.gen) = #[3 / 2, 0]
+    | none => false
+
+/-! ## Tower arithmetic -/
+
+-- Typical arithmetic in a genuine quadratic field, including inversion and
+-- division by non-rational elements.
+#guard
+    match sqrtTwo? with
+    | some base =>
+        let T := base.tower
+        let a := ofRat T 1 + base.gen
+        let b := ofRat T 2 - base.gen
+        coeffs (a + b) = #[3, 0] &&
+          coeffs (a - b) = #[-1, 2] &&
+          coeffs (-a) = #[-1, -1] &&
+          coeffs (a * b) = #[0, 1] &&
+          coeffs a⁻¹ = #[-1, 1] &&
+          coeffs (a / b) = #[2, 3 / 2]
+    | none => false
+
+-- Edge identities, including both totalized divisions through zero.
+#guard
+    match sqrtTwo? with
+    | some base =>
+        let T := base.tower
+        let g := base.gen
+        coeffs (0 + g) = coeffs g && coeffs (g - 0) = coeffs g &&
+          isZero (-(0 : Elem T)) && isZero (0 * g) &&
+          coeffs (g * 1) = coeffs g && isZero (0⁻¹ : Elem T) &&
+          isZero (g / 0) && isZero (0 / g)
+    | none => false
+
+-- Adversarial recursive inversion in `Q(sqrt(2), sqrt(3))`: the inverse of
+-- `sqrt(2) + sqrt(3)` is `sqrt(3) - sqrt(2)`.
+#guard
+    match twoLevel? with
+    | some tower =>
+        let T := tower.extension.tower
+        let sqrtTwo := tower.extension.embed tower.base.gen
+        let sqrtThree := tower.extension.gen
+        let sum := sqrtTwo + sqrtThree
+        let difference := sqrtTwo - sqrtThree
+        coeffs (sum + difference) = #[0, 2, 0, 0] &&
+          coeffs (sum - difference) = #[0, 0, 2, 0] &&
+          coeffs (-sum) = #[0, -1, -1, 0] &&
+          coeffs (sum * difference) = #[-1, 0, 0, 0] &&
+          coeffs sum⁻¹ = #[0, -1, 1, 0] &&
+          coeffs (sum / difference) = #[-5, 0, 0, -2] &&
+          !isZero (1 : Elem T)
+    | none => false
+
 /-! ## `adjoin?` -/
 
 -- Typical proper relative extension.
@@ -272,6 +380,33 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
           checkFactorization input result.scalar result.factors &&
           result.factors.all fun entry =>
             entry.2 = 2 && polyCoords entry.1 = #[#[-2], #[0], #[1]]
+    | none => false
+
+-- Non-unit content is separated into the scalar and reconstructs exactly.
+#guard
+    let input := rationalPoly [-12, 0, 6]
+    match factor? rat input with
+    | some result =>
+        coeffs result.scalar = #[6] && result.factors.size = 1 &&
+          checkFactorization input result.scalar result.factors &&
+          result.factors.all fun entry =>
+            entry.2 = 1 && polyCoords entry.1 = #[#[-2], #[0], #[1]]
+    | none => false
+
+-- The shift-zero norm over `Q(sqrt(2))` is repeated; recursive Trager must
+-- advance before returning the unchanged irreducible quadratic.
+#guard
+    match sqrtTwo? with
+    | some base =>
+        let T := base.tower
+        let input : Poly T := DensePoly.ofCoeffs #[ofRat T (-3), 0, 1]
+        match factor? T input with
+        | some result =>
+            coeffs result.scalar = #[1, 0] && result.factors.size = 1 &&
+              checkFactorization input result.scalar result.factors &&
+              result.factors.all fun entry =>
+                entry.2 = 1 && polyCoords entry.1 = polyCoords input
+        | none => false
     | none => false
 
 -- Adversarial recursive Trager case: over `Q(sqrt(2), sqrt(3))`, `X^2 - 3`
@@ -406,7 +541,7 @@ private def sqrtSumPoly : ZPoly := DensePoly.ofList [1, 0, -10, 0, 1]
             let sqrtThree := tower.extension.gen
             let twoCoordinate := flattened.toPrimitive sqrtTwo
             let threeCoordinate := flattened.toPrimitive sqrtThree
-            flattenShiftCount 4 = 7 &&
+            flattenShiftCount 4 = 13 &&
               flattened.root.p = sqrtSumPoly &&
               twoCoordinate.coeffs =
                 DensePoly.ofList [0, -9 / 2, 0, 1 / 2] &&
