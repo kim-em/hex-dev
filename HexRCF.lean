@@ -28,6 +28,8 @@ public import HexRCF.BuilderTests
 public import HexRCF.Certificate
 public import HexRCF.Soundness
 public import HexRCF.CertificateTests
+public import HexRCF.Decision
+public import HexRCF.DecisionTests
 
 public section
 
@@ -58,4 +60,8 @@ The top-level certificate replay handles empty domains, constants, root-free
 carriers, and positive-root cell decompositions as distinct fail-closed
 branches. Strict option-valued folds propagate malformed active cells, and
 the soundness theorem lifts every accepted verdict to the quantified sentence.
+Compiled decision assembly runs isolation, strict separation, endpoint
+classification, and arithmetic preparation outside the kernel, retains only
+well-formed replay verdicts, and returns `true` only after the proof-producing
+certificate checker accepts.
 -/
