@@ -17,8 +17,8 @@ public section
 The fixed absolute generators are combined in deterministic signed-shift order.
 A candidate is admitted only when its canonical minimal-polynomial degree is the
 full accumulated tower dimension. Exact polynomial gcds then recover every old
-generator in the primitive power basis. Both coordinate maps are checked on
-their respective rational bases before they are returned.
+generator in the primitive power basis. A tower-basis coordinate round trip and
+the primitive polynomial relation are checked before the maps are returned.
 -/
 namespace Hex.NumberTower
 
@@ -33,7 +33,7 @@ structure Flattening (T : NumberTower) where
 collisions in a field of dimension `dimension`. -/
 @[expose]
 def flattenShiftCount (dimension : Nat) : Nat :=
-  2 * Nat.choose dimension 2 + 1
+  Nat.choose dimension 2 + 1
 
 namespace Flatten
 
@@ -68,22 +68,19 @@ def generators? (T : NumberTower) : Option (Array (Generator T)) := do
     (#[], 1)
   if state.2 = T.dim then some state.1 else none
 
-/-- Search a prescribed suffix of the deterministic signed shifts for a
-candidate of the full required degree. -/
+/-- Try one deterministic signed shift for a candidate of the full required
+degree. -/
 @[expose]
-def searchAux (theta alpha : AlgebraicNumber) (target start : Nat) : Nat →
-    Option (Int × AlgebraicNumber)
-  | 0 => none
-  | fuel + 1 =>
-      let shift := Norm.signedShift start
-      match AlgebraicPoly.Common.shift? theta alpha shift with
-      | some candidate =>
-          if AlgebraicPoly.Common.degree candidate = target then
-            some (shift, candidate)
-          else
-            searchAux theta alpha target (start + 1) fuel
-      | none =>
-          searchAux theta alpha target (start + 1) fuel
+def candidateAt? (theta alpha : AlgebraicNumber) (target index : Nat) :
+    Option (Int × AlgebraicNumber) :=
+  let shift := Norm.signedShift index
+  match AlgebraicPoly.Common.shift? theta alpha shift with
+  | some candidate =>
+      if AlgebraicPoly.Common.degree candidate = target then
+        some (shift, candidate)
+      else
+        none
+  | none => none
 
 /-- Lift an integer polynomial coefficientwise into a fixed primitive
 presentation. -/
@@ -145,7 +142,7 @@ def searchRecoveredAux (theta alpha : AlgebraicNumber)
     (target start : Nat) : Nat → Option Recovered
   | 0 => none
   | fuel + 1 =>
-      match searchAux theta alpha target start 1 with
+      match candidateAt? theta alpha target start with
       | none =>
           searchRecoveredAux theta alpha target (start + 1) fuel
       | some (shift, root) =>
@@ -160,7 +157,7 @@ linear coordinate recovery. -/
 @[expose]
 def searchRecovered? (theta alpha : AlgebraicNumber) (target : Nat) :
     Option Recovered :=
-  searchRecoveredAux theta alpha target 0 (flattenShiftCount target)
+  searchRecoveredAux theta alpha target 1 (flattenShiftCount target)
 
 /-- Combine the fixed generators one level at a time, retaining a tower
 coordinate for each accepted canonical primitive element. -/
@@ -234,7 +231,9 @@ def evalZPoly {T : NumberTower} (f : ZPoly) (a : Elem T) : Elem T :=
 /-- Verify the coordinate composite on the tower basis and check that the
 candidate tower element satisfies its claimed primitive minimal polynomial.
 The first condition makes the rational-linear coordinate maps inverse; the
-root relation makes evaluation through the primitive quotient multiplicative. -/
+root relation and irreducibility make evaluation through the primitive
+quotient an injective ring map. The resulting dimension squeeze makes the
+linear inverse multiplicative as well. -/
 @[expose]
 def certifies {T : NumberTower} (candidate : Candidate T)
     (images : Array (QAdjoin candidate.root.p candidate.root.x)) : Bool :=
@@ -249,8 +248,8 @@ def certifies {T : NumberTower} (candidate : Candidate T)
 end Flatten
 
 /-- Replace a checked tower by one canonical primitive-element presentation.
-The result is returned only after exact generator recovery and both basis
-round-trip checks succeed. -/
+The result is returned only after exact generator recovery, a tower-basis
+round trip, and the primitive polynomial relation succeed. -/
 def flatten? (T : NumberTower) : Option (Flattening T) := do
   let generators ← Flatten.generators? T
   let candidate ← Flatten.candidate? T generators
@@ -399,7 +398,7 @@ private def flattenFourthRootTwoRep :
                       DensePoly.ofList [2, -8, -4, 0, 1] &&
                     fourthCoordinate.coeffs =
                       DensePoly.ofList [-10 / 9, -1 / 3, -1 / 9, 2 / 9] &&
-                    flattened.toPrimitive (fourthRoot * fourthRoot) ==
+                    fourthCoordinate * fourthCoordinate ==
                       flattened.toPrimitive sqrtTwo &&
                     flattened.fromPrimitive
                       (flattened.toPrimitive sqrtTwo) == sqrtTwo &&

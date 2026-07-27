@@ -261,14 +261,20 @@ the first candidate whose irreducible factor has degree equal to the combined
 dimension at that generator-adjoining step. This degree test is the executable
 primitive-element certificate.
 
-At a generator-adjoining step whose combined dimension is `d`, at most
-`choose(d, 2)` shifts collide two complex embeddings. A full-degree candidate
-can have another recovery collision: an incompatible conjugate pair can share
-the same affine value without defining an embedding of the combined field.
-There are at most another `choose(d, 2)` such bad shifts. Thus
-`flattenShiftCount(d) = 2 * choose(d, 2) + 1`; test exactly the first that many
-values in the signed enumeration, continuing past failed canonicalization and
-past candidates whose recovery gcd is not linear. Candidate factor selection uses
+At a generator-adjoining step, write `n = deg θ`, `M = deg α`, and let the
+combined dimension be `d`. Both a degree collision and a non-linear recovery
+gcd require a conjugate pair satisfying
+`θᵢ - θ₁ = c * (α₁ - αⱼ)` with `αⱼ ≠ α₁`. Thus both failure modes form one set
+of at most `n * (M - 1)` bad shifts. A proper relative level has degree at
+least two, so `n ≤ d / 2`; the absolute field `ℚ(α)` is a subfield of the
+combined field, so `M ≤ d`. Hence the shared bad set has size at most
+`choose(d, 2)`.
+
+Set `flattenShiftCount(d) = choose(d, 2) + 1` and test exactly that many
+nonzero values in signed order, continuing past failed canonicalization and
+past candidates whose recovery gcd is not linear. The Mathlib companion's
+totality proof discharges the checked canonicalization failures on valid
+algebraic inputs; they are not a second algebraic collision class. Candidate factor selection uses
 `evalDisambiguationPrec`, so both the shift search and the root selection have
 input-computable finite bounds.
 
@@ -287,7 +293,7 @@ minimal polynomial before returning. The accepted `γ` is already the canonical
 - *core*: rational tower identity; `ℚ(√2)` arithmetic; the two-level tower
   `ℚ(√2, √3)`; adjoining a root already present; factorization of a polynomial
   with repeated factors; splitting a quadratic and a quartic; flattening both
-  one-level and two-level towers; both flattening coordinate round trips.
+  one-level and two-level towers; flattening coordinate recovery and round trips.
 - Every public operation has typical, edge, and adversarial cases. Adversarial
   cases include a bad first Trager shift, conjugate factor impostors, and a
   reducible absolute polynomial whose selected relative factor is irreducible.
