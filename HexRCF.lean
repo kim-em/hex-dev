@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexRCF.Syntax
 public import HexRCF.Language
 public import HexRCF.LanguageTests
 public import HexRCF.SturmReplay

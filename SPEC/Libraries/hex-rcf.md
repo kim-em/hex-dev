@@ -581,7 +581,9 @@ free to change.
 
 ## File organisation
 
-- `HexRCF/Language.lean`: `Atom`, `Formula`, `Sentence`, `toProp`;
+- `HexRCF/Syntax.lean`: Mathlib-free `Cmp`, `Atom`, `Formula`, `Sentence`, and
+  their structural polynomial traversals; `HexRCF/Language.lean`: real-valued
+  `toProp` semantics;
   `HexRCF/LanguageTests.lean`: executable language-semantics tests.
 - `HexRCF/SturmReplay.lean`: generalized multiplication-only chain
   replay and literal root counts.
