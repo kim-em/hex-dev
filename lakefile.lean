@@ -311,6 +311,10 @@ lean_exe hexlll_bench where
   supportInterpreter := true
   root := `HexLLLBench.Main
 
+lean_exe hexlll_gram_bench where
+  srcDir := "bench"
+  root := `HexLLLBench.GramBench
+
 lean_exe hex_arith_floor where
   srcDir := "bench"
   root := `HexBench.ArithFloor

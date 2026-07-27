@@ -49,7 +49,7 @@ Soundness (`lllReducedInterval_sound`, HexLLLMathlib) entails
 @[expose]
 def lllReducedInterval (b : Matrix Int n m) (δ : Rat := 3/4) (η : Rat := 1/2) : Bool :=
   let S : Int := (2 : Int) ^ intervalPrec
-  let g := (Matrix.gramMatrix b).rows.toArray.map Vector.toArray
+  let g := GramSchmidt.Int.gramRows b
   match IntervalGS.pass S g n with
   | none => false
   | some (mus, bstars) =>
