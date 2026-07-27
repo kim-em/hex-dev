@@ -135,15 +135,12 @@ available to every ring-typed caller.
 Making Strassen "the default at runtime" therefore has a concrete, stated
 mechanism, not an implicit one:
 
-1. `mulStrassen` is the ring-level entry point: a computable recursive `def`
-   whose compiled body runs at runtime. The naive `mul` stays the semantic
-   reference it is proved equal to (`mulStrassen_eq_mul`). Unlike `mul`,
-   `mulStrassen` needs no `@[csimp]` twin, because it is already the fast body
-   rather than a kernel-facing specification with a slow reference form. If a
-   later `decide` cross-check needs `mulStrassen` to reduce cheaply in the
-   kernel, add a `mulStrassenImpl` twin with a proved
-   `@[csimp] mulStrassen_eq_impl`, mirroring `mul` / `mulImpl` /
-   `mul_eq_mulImpl`, never `@[implemented_by]`.
+1. `mulStrassen` remains the ring-level reference entry point and the theorem
+   `mulStrassen_eq_mul` continues to state its equality to naive `mul`.
+   Compiled calls are transferred to the storage-scheduled
+   `mulStrassenImpl` by the proved function equality
+   `@[csimp] mulStrassen_eq_impl : @mulStrassen = @mulStrassenImpl`, mirroring
+   `mul` / `mulImpl` / `mul_eq_mulImpl`, never `@[implemented_by]`.
 2. Ring-typed callers with genuine matrix-matrix products opt in by calling
    `mulStrassen` at their own call sites. A survey of the tree found no such
    caller: the dense consumers (`hex-determinant`, `hex-bareiss`,
@@ -273,14 +270,24 @@ which is why the public `baseMul` keeps the clean
 a materialized `Matrix` at each leaf.
 
 The `Sᵢ` and `Tᵢ` operand sums are genuinely new values, so the *logical*
-schedule names fifteen sums. The *storage* schedule is separate: Boyer-Dumas-
-Pernet-Zhou show the product needs only two auxiliary `(n/2)²` buffers beyond
-the recursion, reusing them across the `Sᵢ`/`Tᵢ`/`Pᵢ` steps and adding the `Uᵢ`
-results directly into the `C` quadrant views so the output assembles in place
-with no quadrant copy-back. The first correct implementation may use the naive
-storage (one buffer per sum) and the storage schedule is a later refinement; the
-logical schedule and the correctness proof do not depend on which storage
-schedule is used.
+schedule names fifteen sums. The *storage* schedule is separate:
+`mulStrassenImpl` implements the Boyer-Dumas-Pernet-Zhou two-buffer schedule
+at square, even recursion nodes. It reuses two auxiliary `(n/2)²` matrices
+`X` and `Y`, writes each recursive product directly into one of the four
+output quadrants, and accumulates the `Uᵢ` values there without a
+`fromBlocks` copy. Rectangular top-level inputs and odd square recursion nodes
+retain `mulStrassenView` as the shape-safe fallback.
+
+Writes use `Region`, a backing-free rectangle descriptor containing offsets
+and bounds proofs but no matrix. One owned output `Matrix` is threaded through
+every write and recursive call; quadrant descriptors therefore cannot create
+four aliases of its backing. Each update materializes one source/destination
+row before calling `Vector.set`, so the generated C passes the consumed array
+through `lean_array_fset` and can reuse it when uniquely referenced. The
+writer's proof has a stronger frame property: it returns exactly the reference
+result in its destination and preserves every disjoint region. This proves the
+complete BDPZ accumulation order without introducing ring assumptions into
+the equality transfer.
 
 The **flat row-major backing** (see "Backing representation" above) is what
 makes such views cheap: stride-and-cache locality across a whole block, cheap
@@ -290,10 +297,11 @@ that is pure offset-and-stride arithmetic into one shared buffer
 one-field structure (design principle 10) precisely so that representation
 switch stayed invisible to consumers when it landed. The recursion runs over
 the `Submatrix` view type (backing matrix plus row/column offsets plus block
-dimensions plus real-data extent), so the only allocations are the fifteen
-`Sᵢ`/`Tᵢ`/`Uᵢ` operand sums, the seven recursive products, the top-level
-full-matrix view of each operand, and the leaf materialization for `cfg.baseMul`
-— the per-level quadrant and pad copies are gone. Correctness reduces to the
+dimensions plus real-data extent). The reference recursion still exposes the
+logical `Sᵢ`/`Tᵢ`/`Uᵢ`, product, assembly, and crop allocations; the compiled
+square/even path replaces that node-local storage with `X`, `Y`, and the
+already-owned output, while leaf materialization remains for `cfg.baseMul`.
+Correctness reduces to the
 same three lemmas: a view-to-matrix abstraction lemma (`toMatrix` of a quadrant
 view equals `toBlocks` of the materialized parent, and `toMatrix` of a widened
 view equals `Matrix.pad` of the materialized source) carries the view recursion

@@ -135,6 +135,33 @@ Profile captured on `carica` through the bench-timed-region filtering wrapper
 The dominant inclusive costs all map to registered `HexMatrix.Bench`
 targets. No unattributed dominant cost was observed.
 
+## Strassen two-buffer storage schedule
+
+The BDPZ schedule was gated and measured on `chungus2` with the same toolchain
+as above. Each wall/RSS observation is one cold child and one multiplication;
+five independent processes were used per dimension. Raw observations and
+commands are committed in
+`reports/bench-results/hex-matrix-strassen-two-buffer-chungus2.json`.
+
+| dimension | reference wall median | two-buffer wall median | change | reference RSS median | two-buffer RSS median | change |
+|---:|---:|---:|---:|---:|---:|---:|
+| 512 | 4.949 s | 4.973 s | +0.5% | 111,140 KiB | 92,216 KiB | −17.0% |
+| 1024 | 41.997 s | 41.033 s | −2.3% | 225,608 KiB | 196,064 KiB | −13.1% |
+
+All trials produced the pre-change hashes (`0x3ff9d8390625168` at 512 and
+`0x1ffbbcd11f386b8e` at 1024). The wall-time result is neutral to modestly
+positive; peak RSS clears the 5% gate at both sizes. Dimension 2048 was not
+run because a single sample was projected near five minutes on this host.
+
+A cold heaptrack run at 512 reported unchanged GMP-dominated allocation-call
+counts (398,980,177 total, 291,803,993 through `__gmp_default_allocate`) and a
+tracked peak-heap reduction from 4.06 MiB to 2.92 MiB (−28.1%). This is
+consistent with unchanged arithmetic and lower live matrix storage; heaptrack
+does not account for Lean-managed arrays as ordinary allocation calls.
+Generated C supplies that evidence: `Region.writeRow` threads its consumed
+array through `lean_array_fset`, and each accumulation builds the complete
+source/destination row before the write fold begins.
+
 ## Concerns
 
 None for the dense base surface.
