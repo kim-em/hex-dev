@@ -8,24 +8,92 @@ is empty. This report records the Phase-4 evidence per
 [PLAN/Phase4.md](../PLAN/Phase4.md) and
 [SPEC/benchmarking.md §Headline reports](../SPEC/benchmarking.md#headline-reports).
 
-Final numbers come from `reports/bench-results/hex-roots-973c2cd-round5.json`,
-recorded on quiet `chungus2` (AMD EPYC 9455 48-Core, 96 CPUs; load 2.26 with
-two runnable processes), Lean `4.32.0-rc1`, lean-bench `0.1.0`. The export's
-`git_dirty: true` records the staged benchmark/report update; its branch point
-is commit `ed0086001407`.
+The original Phase-4 sweep is
+`reports/bench-results/hex-roots-973c2cd-round5.json`, recorded on quiet
+`chungus2` (AMD EPYC 9455 48-Core, 96 CPUs), Lean `4.32.0-rc1`, lean-bench
+`0.1.0`. The post-ratchet fixed rerun is
+`reports/bench-results/hex-roots-b96b03f-issue8751.json` on the same quiet
+host and toolchain. Its `git_dirty: true` records the staged benchmark cap and
+post-review core/report update.
+
+## Graeffe and soft-Pellet ratchet
+
+The issue-8751 implementation adds an exact-dyadic soft front end without
+changing the certificate proposition. `CoeffBall` keeps a rounded
+Gaussian-dyadic centre and an outward-rounded `L¹` error radius; its arithmetic
+encloses the locally scaled Taylor coefficients. Each Graeffe step computes
+`E(X)² - X O(X)²`, transports all three radius intervals by squaring, and
+tests every candidate count before building the next coefficient array.
+Shallow centres use one exact Taylor shift rounded to 64 significant bits;
+the seeded orbit now reuses the proof-indexed Taylor cache from #8927. Deep
+centres use a fully soft 64/128/256-bit ladder. Failure remains
+inconclusive and takes the exact cached-shift path. The same machinery gives a
+cheap `T₀` discard for far subdivision squares. The combined per-count
+kernel preserves the exact-first order below precision 32, avoiding a soft-
+setup regression on the small canonical fixed benchmarks, and switches to
+soft-first once centre precision is large.
+
+Once a driver round consists entirely of atoms, the Pellet-bearing strategies
+whose current certificate discs are already pairwise disjoint now refine those
+atoms independently to the requested target and emit only if every local
+refinement succeeds and the final discs remain pairwise disjoint.
+This avoids carrying already-separated roots through the conservative global
+`separationDepth` prefix. The Mathlib companion proves coefficient-ball
+enclosure, Graeffe root squaring with multiplicity, transported Pellet root
+counts and boundary exclusion, soft `T₀` soundness, and the local finisher's
+atom/precision/disjointness/coverage contracts. Failure of the optional path
+returns to the unchanged globally normalized completeness proof.
+
+The SPEC budget expression was remeasured on quiet `chungus2` with a compiled
+direct driver. The expensive degree-100 row now completes, so it is pinned for
+the first time:
+
+| degree | target precision | measured after ratchet | prior checkpoint | new ceiling |
+|---:|---:|---:|---:|---:|
+| 10 | 32 | 0.130 s median (0.129–0.131 s, 3 calls) | 0.324 s median | 0.3 s |
+| 20 | 32 | 3.433 s median (3.421–3.436 s, 3 calls) | 5.830 s median | 7 s |
+| 50 | 64 | 52.234–52.289 s (2 calls) | 482.979 s | 105 s |
+| 100 | 128 | 630.421 s (10.51 min, 1 call) | >1143 s, no completion | 21 min |
+
+The slower degree-50 call is **9.24× faster** than the preceding 482.979 s
+checkpoint. Degree 100 improves from no result inside 19 minutes to a completed
+100-atom isolation in 10.51 minutes. The soft front end is gated at polynomial
+size 32: the degree-10/20 gains come from the all-atoms local finisher (on top
+of #8927's Taylor reuse), while degree 50/100 exercise Graeffe and soft Pellet.
+The original 10 s / 1 min aspirations remain stretch targets rather than
+gates. The local finisher also makes the deferred 50-case degree-20
+python-flint fixture tier practical again; fresh emission is restored instead
+of relying on the reduced degree-6–12 subset. The full 56-case
+stream (six curated plus fifty seeded) emitted in **308.82 s** and occupied
+140 KB; every case returned certificates rather than `none`, and python-flint
+replayed all 56 with zero failures.
+
+The post-review canonical fixed sweep also passes every digest. The changed local
+finisher output shape intentionally updates the `runIsolateAll` and
+`runRefineTo` hashes. Its driver medians are 3.41×–5.15× slower than the
+older round-five export: `runIsolate` 144.621→492.894 ms, `runIsolateAll`
+1.726→8.541 s, NK-only 2.627→9.809 s, Pellet-only 0.485→2.500 s, and
+combined 0.502→2.469 s. This is not hidden as a ratchet win. The historical
+artifact predates #8839's soundness-motivated global-normalization prefix; the
+NK-only executable path is unchanged by this branch, and temporarily restoring
+this branch's old outer-loop emission code still measured 9.664 s. The old
+8-second NK cap therefore no longer describes current `main`; 20 seconds is
+roughly 2× the current five-repeat median. The issue-8751 ratchet is the SPEC
+budget table above, whose fixed expression improves materially on the preceding
+checkpoint. The fixed table below records the current-tree medians and hashes.
 
 ## Taylor-shift reuse ratchet
 
 Component certification now computes one exact Taylor shift at its base centre
-and shares it between the witness and Newton kernels. The Pellet candidate
-search shares that shift across all attempted root counts; the NK route shares
-it between its base witness and speculative Newton step. Because the widened
-Pellet fallback is concentric with the NK enclosure, the default combined
-route also reuses that same shift across the strategy boundary under an exact
-centre-equality guard. A recentred candidate still gets its own shift for
-re-certification. The cache is indexed by its polynomial and centre and carries
-the coefficient equality as a proof field, so this changes evaluation work
-without weakening the certificate interface.
+and shares it between the witness and Newton kernels. The exact Pellet
+candidate fallback shares that shift across all attempted root counts; the NK
+route shares it between its base witness and speculative Newton step. Because
+the widened Pellet fallback is concentric with the NK enclosure, the default
+combined route also reuses that same shift across the strategy boundary under
+an exact centre-equality guard. A recentred candidate still gets its own shift
+for re-certification. The cache is indexed by its polynomial and centre and
+carries the coefficient equality as a proof field, so this changes evaluation
+work without weakening the certificate interface.
 
 On the canonical degree-128 pinned-NK `runCertify` case, five-repeat medians on
 `chungus2` fell from **6.655 ms** to **4.434 ms** (**33.4%**), with the result
@@ -54,10 +122,9 @@ trees. The ceilings are ratcheted to roughly twice the current measurement:
 | 20 | 32 | 5.830 s median (5.426–7.098 s, 5 calls) | 12 s |
 | 50 | 64 | 482.979 s (8.05 min, 1 call) | 14 min |
 
-Degree 100 / precision 128 remains unpinned: Taylor reuse removes redundant
-quadratic shifts but does not remove the deep-subdivision and large-witness
-costs that make that scale impractical. Graeffe iteration and soft-Pellet
-filtering therefore remain the next optimization steps tracked by issue #8751.
+This table is the earlier Taylor-reuse-only checkpoint. The Graeffe and
+soft-Pellet table above supersedes its ceilings and completes the next
+optimization steps tracked by issue #8751.
 
 ## Bench Targets
 
@@ -175,18 +242,18 @@ Fixed medians (all five repeats agree on the shown hash):
 
 | registration | canonical input | median | hash |
 |---|---|---:|---|
-| `runIsolate` | fixed-separation degree 8 | 144.621 ms | `0x16c307fd2a36d31e` |
-| `runTaylor` | seeded degree 128, centre 1 | 2.199 ms | `0x9917b7b230496af4` |
-| `runWitnessCheck` | bounded-height degree 128 | 2.328 ms | `0xb` |
-| `runNkWitnessCheck` | bounded-height degree 128 | 2.244 ms | `0xb` |
-| `runNewtonSquare` | bounded-height degree 128 | 2.151 ms | `0x450307c7dcbe905c` |
-| `runRefine1` | fixed-separation degree 8 | 2.197 ms | `0xc5cb1ba3f05326fd` |
-| `runCertify` | pinned-NK degree 128 | 6.530 ms | `0x1698ec123da6112f` |
-| `runIsolateAll` | fixed-separation degree 12 | 1.726 s | `0xecd908d19d73e5c4` |
-| `runRefineTo` | achieved precision 131077 | 313.285 ms | `0x05eb22e5c1f4a7a5` |
-| `runIsolateNk` | `linProdPoly 10` | 2.627 s | `0xda631bdf13415a4f` |
-| `runIsolatePellet` | `linProdPoly 10` | 484.986 ms | `0xda631bdf13415a4f` |
-| `runIsolateNkThenPellet` | `linProdPoly 10` | 501.670 ms | `0xda631bdf13415a4f` |
+| `runIsolate` | fixed-separation degree 8 | 492.894 ms | `0x16c307fd2a36d31e` |
+| `runTaylor` | seeded degree 128, centre 1 | 2.170 ms | `0x9917b7b230496af4` |
+| `runWitnessCheck` | bounded-height degree 128 | 2.288 ms | `0xb` |
+| `runNkWitnessCheck` | bounded-height degree 128 | 2.193 ms | `0xb` |
+| `runNewtonSquare` | bounded-height degree 128 | 2.090 ms | `0x450307c7dcbe905c` |
+| `runRefine1` | fixed-separation degree 8 | 2.121 ms | `0x6dd99fc71c5233ae` |
+| `runCertify` | pinned-NK degree 128 | 4.311 ms | `0x1698ec123da6112f` |
+| `runIsolateAll` | fixed-separation degree 12 | 8.541 s | `0x5e4b3fd1d798497a` |
+| `runRefineTo` | achieved precision 131077 | 313.955 ms | `0x8dd3e4ee56489bf8` |
+| `runIsolateNk` | `linProdPoly 10` | 9.809 s | `0xda631bdf13415a4f` |
+| `runIsolatePellet` | `linProdPoly 10` | 2.500 s | `0xda631bdf13415a4f` |
+| `runIsolateNkThenPellet` | `linProdPoly 10` | 2.469 s | `0xda631bdf13415a4f` |
 | `runSameRoot` | fixed refined atom | 131 ns | `0xb` |
 
 ### Superseded round-one verdict record
@@ -306,12 +373,12 @@ Final registered canonical points:
 
 | degree | Lean surface | hex | flint | ratio hex/flint |
 |---:|---|---:|---:|---:|
-| 8 | `runIsolate` | 144.621 ms | 215.234 µs | 671.9 |
-| 12 | `runIsolateAll` | 1.726 s | 591.777 µs | 2915.9 |
+| 8 | `runIsolate` | 492.894 ms | 215.234 µs | 2290.0 |
+| 12 | `runIsolateAll` | 8.541 s | 591.777 µs | 14433.2 |
 
 **Trend.** On the diagnostic ladder, apart from the degree-8 local dip, the
 ratio diverges from `112×` at degree 4 to `1470×` at degree 10; the
-equal-precision canonical `runIsolateAll` point is `2916×` at degree 12. That
+equal-precision canonical `runIsolateAll` point is `14433×` at degree 12. That
 direction is expected: the Lean drivers perform certified exact isolation
 with degree- and precision-dependent exact-dyadic work, while FLINT uses a
 structurally different multiprecision ball algorithm. No scalar asymptotic
@@ -517,7 +584,8 @@ target.
 
 The transition-band and family/schedule items above are resolved by the final
 fixed/parametric split. The two obsolete time-budget items were reality-anchored
-by #8762; #8751 is a non-blocking future tightening programme.
+by #8762 and subsequently tightened by the Graeffe/soft-Pellet ratchet recorded
+at the top of this report.
 
 ## Concerns
 

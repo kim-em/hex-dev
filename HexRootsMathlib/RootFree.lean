@@ -6,8 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexRootsMathlib.Taylor
-public import HexRootsMathlib.Geometry
+public import HexRootsMathlib.SoftPellet
 
 public section
 
@@ -90,11 +89,29 @@ private theorem eval_ne_zero_of_dominates {q : Polynomial ℂ} {z : ℂ} {n : Na
         rw [norm_mul, norm_pow]
   exact (hcoeff.trans_lt hdom).false
 
+private theorem sum_erase_range {M : Type*} [AddCommMonoid M]
+    (f : ℕ → M) (n k : ℕ) :
+    (∑ i ∈ (Finset.range n).erase k, f i) =
+      ∑ i ∈ Finset.range n, if i = k then 0 else f i := by
+  classical
+  calc
+    (∑ i ∈ (Finset.range n).erase k, f i) =
+        ∑ i ∈ (Finset.range n).filter (fun i => i ≠ k), f i := by
+      congr 1
+      ext i
+      simp [and_comm]
+    _ = ∑ i ∈ Finset.range n, if i ≠ k then f i else 0 := by
+      rw [Finset.sum_filter]
+    _ = ∑ i ∈ Finset.range n, if i = k then 0 else f i := by
+      apply Finset.sum_congr rfl
+      intro i _
+      by_cases hik : i = k <;> simp [hik]
+
 /-- A successful root-exclusion test can only occur for a nonempty stored
 polynomial. -/
-theorem rootFree_size_pos {p : Hex.ZPoly} {s : Hex.DyadicSquare}
-    (h : Hex.rootFree p s = true) : 0 < p.size := by
-  unfold Hex.rootFree Hex.pelletAt at h
+theorem exactRootFree_size_pos {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    (h : Hex.exactRootFree p s = true) : 0 < p.size := by
+  unfold Hex.exactRootFree Hex.pelletAt at h
   rw [Hex.taylor_size] at h
   by_contra hp
   rw [if_neg (by omega)] at h
@@ -114,15 +131,15 @@ theorem shift_natDegree_lt_size (p : Hex.ZPoly) (hp : 0 < p.size) (c : ℂ) :
 
 /-- The Boolean `rootFree` result exposes the strict real Taylor-dominance
 inequality used by its soundness proof. -/
-theorem rootFree_bound {p : Hex.ZPoly} {s : Hex.DyadicSquare}
-    (h : Hex.rootFree p s = true) :
+theorem exactRootFree_bound {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    (h : Hex.exactRootFree p s = true) :
     (∑ i ∈ Finset.range p.size,
         if i = 0 then 0 else
           Dyadic.toReal (Hex.GaussDyadic.hi ((Hex.taylor p s.center).getD i (0, 0))) *
             Dyadic.toReal s.radiusHi ^ i) <
       Dyadic.toReal (Hex.GaussDyadic.lo ((Hex.taylor p s.center).getD 0 (0, 0))) := by
-  have hsize : 0 < p.size := rootFree_size_pos h
-  unfold Hex.rootFree Hex.pelletAt at h
+  have hsize : 0 < p.size := exactRootFree_size_pos h
+  unfold Hex.exactRootFree Hex.pelletAt at h
   rw [Hex.taylor_size] at h
   rw [if_pos hsize] at h
   simp only [_root_.Dyadic.pow_zero, _root_.Dyadic.mul_one] at h
@@ -147,14 +164,14 @@ theorem rootFree_bound {p : Hex.ZPoly} {s : Hex.DyadicSquare}
 /-- **Elementary `T₀` soundness.** If `rootFree` succeeds, the polynomial has
 no zero anywhere in the open disc using the executable upper-radius bound.
 This is stronger than exclusion on the square's circumscribed disc. -/
-theorem rootFree_ne_zero {p : Hex.ZPoly} {s : Hex.DyadicSquare}
-    (h : Hex.rootFree p s = true) {z : ℂ}
+private theorem exactRootFree_ne_zero {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    (h : Hex.exactRootFree p s = true) {z : ℂ}
     (hz : z ∈ Metric.ball (DyadicSquare.center s) (Dyadic.toReal s.radiusHi)) :
     (toPolyℂ p).eval z ≠ 0 := by
   let c := DyadicSquare.center s
   let d := z - c
   let q := (toPolyℂ p).comp (X + C c)
-  have hsize : 0 < p.size := rootFree_size_pos h
+  have hsize : 0 < p.size := exactRootFree_size_pos h
   have hdegree : q.natDegree < p.size := shift_natDegree_lt_size p hsize c
   have hdist : ‖d‖ < Dyadic.toReal s.radiusHi := by
     rw [Metric.mem_ball, Complex.dist_eq] at hz
@@ -192,7 +209,7 @@ theorem rootFree_ne_zero {p : Hex.ZPoly} {s : Hex.DyadicSquare}
             hhi
       _ < Dyadic.toReal
           (Hex.GaussDyadic.lo ((Hex.taylor p s.center).getD 0 (0, 0))) :=
-        rootFree_bound h
+        exactRootFree_bound h
       _ ≤ ‖q.coeff 0‖ := by
         rw [show q.coeff 0 =
             GaussDyadic.toComplex ((Hex.taylor p s.center).getD 0 (0, 0)) by
@@ -207,6 +224,210 @@ theorem rootFree_ne_zero {p : Hex.ZPoly} {s : Hex.DyadicSquare}
   rw [Polynomial.eval_comp, Polynomial.eval_add, Polynomial.eval_X,
     Polynomial.eval_C]
   simpa only [d, c, sub_add_cancel] using hpz
+
+private theorem softPelletZero_eval {cs : Array Hex.CoeffBall} {q : ℂ[X]}
+    {rlo rhi : _root_.Dyadic} (henclose : BallsEnclose cs q)
+    (hcheck : Hex.softPelletAt cs 0 rlo rhi = true)
+    (hrlo : 0 ≤ Dyadic.toReal rlo) (hlo : Dyadic.toReal rlo ≤ Dyadic.toReal rhi)
+    {z : ℂ} (hz : ‖z‖ < Dyadic.toReal rhi) : q.eval z ≠ 0 := by
+  have hdomR := softPelletAt_dominates henclose hcheck hrlo hlo le_rfl
+  have hdomR' :
+      (∑ i ∈ Finset.range cs.size,
+        if i = 0 then 0 else ‖q.coeff i‖ * Dyadic.toReal rhi ^ i) <
+          ‖q.coeff 0‖ := by
+    simpa only [sum_erase_range, pow_zero, mul_one] using hdomR
+  have hdomZ :
+      (∑ i ∈ Finset.range cs.size,
+        if i = 0 then 0 else ‖q.coeff i‖ * ‖z‖ ^ i) < ‖q.coeff 0‖ := by
+    calc
+      _ ≤ ∑ i ∈ Finset.range cs.size,
+          if i = 0 then 0 else ‖q.coeff i‖ * Dyadic.toReal rhi ^ i := by
+        apply Finset.sum_le_sum
+        intro i _
+        by_cases hi : i = 0
+        · simp [hi]
+        · simp only [hi, if_false]
+          gcongr
+      _ < ‖q.coeff 0‖ := hdomR'
+  exact eval_ne_zero_of_dominates henclose.degree_lt hdomZ
+
+private theorem softRootFreeLoop_size {bits rounds : Nat}
+    {cs : Array Hex.CoeffBall} {rlo rhi : _root_.Dyadic}
+    (h : Hex.softRootFreeLoop bits rounds cs rlo rhi = true) : 0 < cs.size := by
+  induction rounds generalizing cs rlo rhi with
+  | zero => exact softPelletAt_size h
+  | succ rounds ih =>
+      simp only [Hex.softRootFreeLoop, Bool.or_eq_true] at h
+      rcases h with hnow | hlater
+      · exact softPelletAt_size hnow
+      · have hs := ih hlater
+        simpa [Hex.graeffe] using hs
+
+private theorem softRootFreeLoop_eval {cs : Array Hex.CoeffBall} {q : ℂ[X]}
+    {bits rounds : Nat} {rlo rhi : _root_.Dyadic}
+    (henclose : BallsEnclose cs q)
+    (hcheck : Hex.softRootFreeLoop bits rounds cs rlo rhi = true)
+    (hrlo : 0 ≤ Dyadic.toReal rlo) (hlo : Dyadic.toReal rlo ≤ Dyadic.toReal rhi)
+    {z : ℂ} (hz : ‖z‖ < Dyadic.toReal rhi) : q.eval z ≠ 0 := by
+  induction rounds generalizing cs q rlo rhi z with
+  | zero => exact softPelletZero_eval henclose hcheck hrlo hlo hz
+  | succ rounds ih =>
+      simp only [Hex.softRootFreeLoop, Bool.or_eq_true] at hcheck
+      rcases hcheck with hnow | hlater
+      · exact softPelletZero_eval henclose hnow hrlo hlo hz
+      · have hhi : 0 ≤ Dyadic.toReal rhi := hrlo.trans hlo
+        have hrlo' : 0 ≤ Dyadic.toReal (rlo * rlo) := by
+          simp only [Dyadic.toReal_mul]
+          positivity
+        have hlo' :
+            Dyadic.toReal (rlo * rlo) ≤ Dyadic.toReal (rhi * rhi) := by
+          simp only [Dyadic.toReal_mul]
+          nlinarith
+        have hz' : ‖z ^ 2‖ < Dyadic.toReal (rhi * rhi) := by
+          rw [norm_pow, Dyadic.toReal_mul]
+          nlinarith [norm_nonneg z]
+        have hrec := ih (graeffe_enclosePoly henclose bits) hlater hrlo' hlo' hz'
+        intro hqz
+        apply hrec
+        have heval := congrArg (fun f : ℂ[X] => f.eval z) (expand_graeffePoly q)
+        rw [expand_eval, eval_mul, eval_comp, eval_neg, eval_X] at heval
+        rw [heval, hqz, zero_mul]
+
+private theorem firstSoftRootCount_zero {cs : Array Hex.CoeffBall}
+    {rlo rhi : _root_.Dyadic} {ks : List Nat}
+    (h : Hex.firstSoftRootCount? cs rlo rhi ks = some 0) :
+    Hex.softPelletAt cs 0 rlo rhi = true := by
+  induction ks with
+  | nil => contradiction
+  | cons k ks ih =>
+      unfold Hex.firstSoftRootCount? at h
+      split at h <;> rename_i hcheck
+      · have hk : k = 0 := by simpa using h
+        simpa [hk] using hcheck
+      · exact ih h
+
+private theorem softRootCountLoop_zero {bits rounds : Nat} {ks : List Nat}
+    {cs : Array Hex.CoeffBall} {rlo rhi : _root_.Dyadic}
+    (h : Hex.softRootCountLoop bits ks rounds cs rlo rhi = some 0) :
+    Hex.softRootFreeLoop bits rounds cs rlo rhi = true := by
+  induction rounds generalizing cs rlo rhi with
+  | zero => exact firstSoftRootCount_zero h
+  | succ rounds ih =>
+      unfold Hex.softRootCountLoop at h
+      split at h <;> rename_i hfirst
+      · rename_i k
+        have hk : k = 0 := by simpa using h
+        subst k
+        simp [Hex.softRootFreeLoop, firstSoftRootCount_zero hfirst]
+      · have hrec := ih h
+        simp [Hex.softRootFreeLoop, hrec]
+
+private theorem rootFreeLoop_ne_zero {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    {bits : Nat} {cs : Array Hex.CoeffBall}
+    (henclose : BallsEnclose cs (localPoly p s))
+    (hcheck : Hex.softRootFreeLoop bits (Hex.graeffeRounds (p.degree?.getD 0))
+      cs Hex.softSqrt2Lo Hex.softSqrt2Hi = true)
+    {z : ℂ}
+    (hz : z ∈ Metric.ball (DyadicSquare.center s) (Dyadic.toReal s.radiusHi)) :
+    (toPolyℂ p).eval z ≠ 0 := by
+  let q := localPoly p s
+  let R := Dyadic.toReal Hex.softSqrt2Hi
+  have hrlo : 0 ≤ Dyadic.toReal Hex.softSqrt2Lo := by
+    simp [Hex.softSqrt2Lo, Dyadic.toReal_ofIntWithPrec]
+    positivity
+  have hlo : Dyadic.toReal Hex.softSqrt2Lo ≤ R := by
+    change Dyadic.toReal Hex.sqrt2Lo ≤ Dyadic.toReal Hex.sqrt2Hi
+    exact sqrt2Lo_lt_sqrt_two.le.trans sqrt_two_lt_sqrt2Hi.le
+  let width : ℝ := Dyadic.toReal (.ofIntWithPrec 1 s.prec)
+  let c : ℂ := DyadicSquare.center s
+  let w : ℂ := (width : ℂ)⁻¹ * (z - c)
+  have hwidth : 0 < width := by
+    simp only [width, Dyadic.toReal_ofIntWithPrec]
+    positivity
+  have hwidthEq : width = DyadicSquare.halfWidth s := by
+    simp [width, DyadicSquare.halfWidth_eq, Dyadic.toReal_ofIntWithPrec]
+  have hwNorm : ‖w‖ < R := by
+    simp only [w, norm_mul, norm_inv, Complex.norm_real, Real.norm_eq_abs,
+      abs_of_pos hwidth]
+    have hdist : dist z c < width * R := by
+      have hz' : dist z c < Dyadic.toReal s.radiusHi := by
+        simpa only [Metric.mem_ball, c] using hz
+      rw [DyadicSquare.radiusHi_eq] at hz'
+      rw [hwidthEq]
+      simpa only [R, Hex.softSqrt2Hi, Hex.sqrt2Hi] using hz'
+    rw [show ‖z - c‖ = dist z c by rw [Complex.dist_eq]]
+    exact (inv_mul_lt_iff₀ hwidth).mpr hdist
+  have hqeval : q.eval w ≠ 0 := by
+    apply softRootFreeLoop_eval (q := q) henclose hcheck hrlo hlo hwNorm
+  have hwidthℂ : (width : ℂ) ≠ 0 := by exact_mod_cast hwidth.ne'
+  have hwarg : (width : ℂ) * w + c = z := by
+    dsimp only [w]
+    rw [← mul_assoc, mul_inv_cancel₀ hwidthℂ, one_mul]
+    ring
+  intro hpz
+  apply hqeval
+  dsimp only [q]
+  unfold localPoly
+  rw [Polynomial.eval_comp, Polynomial.eval_add, Polynomial.eval_mul,
+    Polynomial.eval_C, Polynomial.eval_X, Polynomial.eval_C]
+  have hwarg' :
+      (Dyadic.toReal (.ofIntWithPrec 1 s.prec) : ℂ) * w +
+        GaussDyadic.toComplex s.center = z := by
+    simpa only [width, c, DyadicSquare.center_eq] using hwarg
+  rw [hwarg']
+  exact hpz
+
+private theorem softRootFreeAt_ne_zero {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    {bits : Nat} (hcheck : Hex.softRootFreeAt p s bits = true) {z : ℂ}
+    (hz : z ∈ Metric.ball (DyadicSquare.center s) (Dyadic.toReal s.radiusHi)) :
+    (toPolyℂ p).eval z ≠ 0 := by
+  have hk : 0 < p.size := by
+    have hsize := softRootFreeLoop_size hcheck
+    simpa [Hex.softRootFreeAt, Hex.taylorBalls] using hsize
+  apply rootFreeLoop_ne_zero (taylorBalls_enclosePoly p s bits hk) hcheck hz
+
+private theorem softSeededCount_ne_zero {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    (hcheck : Hex.softSeededRootCount? p s (Array.range p.size).toList 64 = some 0)
+    {z : ℂ}
+    (hz : z ∈ Metric.ball (DyadicSquare.center s) (Dyadic.toReal s.radiusHi)) :
+    (toPolyℂ p).eval z ≠ 0 := by
+  have hloop := softRootCountLoop_zero hcheck
+  have hk : 0 < p.size := by
+    have hsize := softRootFreeLoop_size hloop
+    simpa [Hex.exactTaylorBalls, Hex.seededTaylorBalls, Hex.taylor_size] using hsize
+  apply rootFreeLoop_ne_zero (exactTaylorBalls_enclosePoly p s 64 hk) hloop hz
+
+private theorem softRootFree_ne_zero {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    (h : Hex.softRootFree p s = true) {z : ℂ}
+    (hz : z ∈ Metric.ball (DyadicSquare.center s) (Dyadic.toReal s.radiusHi)) :
+    (toPolyℂ p).eval z ≠ 0 := by
+  have hcases :
+      Hex.softRootFreeAt p s 64 = true ∨
+      Hex.softRootFreeAt p s 128 = true ∨
+      Hex.softRootFreeAt p s 256 = true := by
+    simpa [Hex.softRootFree, Hex.softPrecisions] using h
+  rcases hcases with h | h | h
+  all_goals exact softRootFreeAt_ne_zero h hz
+
+/-- **Combined `T₀` soundness.** The bounded-precision filter and the exact
+Taylor fallback both exclude every zero from the executable upper-radius
+disc. -/
+theorem rootFree_ne_zero {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    (h : Hex.rootFree p s = true) {z : ℂ}
+    (hz : z ∈ Metric.ball (DyadicSquare.center s) (Dyadic.toReal s.radiusHi)) :
+    (toPolyℂ p).eval z ≠ 0 := by
+  unfold Hex.rootFree at h
+  split at h
+  · split at h
+    · dsimp only at h
+      split at h <;> rename_i hcount
+      · exact softSeededCount_ne_zero hcount hz
+      · exact exactRootFree_ne_zero h hz
+    · simp only [Bool.or_eq_true] at h
+      rcases h with hsoft | hexact
+      · exact softRootFree_ne_zero hsoft hz
+      · exact exactRootFree_ne_zero hexact hz
+  · exact exactRootFree_ne_zero h hz
 
 /-- A successful `rootFree` test excludes roots from the represented closed
 square. -/

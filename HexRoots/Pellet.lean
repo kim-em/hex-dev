@@ -6,17 +6,18 @@ Authors: Kim Morrison
 
 module
 
-public import HexRoots.Taylor
+public import HexRoots.SoftPellet
 
 public section
 
 /-!
-The Pellet witnesses of the complex root isolator: dyadic lower and upper
-bounds `lo`/`hi` on the modulus of a Gaussian dyadic, the rational bounds
+The Pellet witnesses of the complex root isolator: exact dyadic lower and
+upper bounds `lo`/`hi` on a Gaussian-dyadic modulus, the rational bounds
 `181/128 < √2 < 1449/1024` on the circumscribed-disc factor, the
-three-radius strong Pellet predicate `witness` with its `Decidable`
-instance, and the certified cluster type `DyadicRootCluster` whose field
-carries that witness.
+three-radius strong Pellet predicate `witness` with its `Decidable` instance,
+and the certified cluster type `DyadicRootCluster` whose field carries that
+witness. `HexRoots.SoftPellet` supplies the bounded-precision coefficient-ball
+and Graeffe front end; the exact Taylor kernel here remains its fallback.
 
 With `(c₀, …, c_n)` the exact Taylor coefficients of `p` at the centre of a
 square `s` (from `HexRoots.Taylor`) and `ρlo, ρhi` the dyadic bounds on the
@@ -28,7 +29,9 @@ lo(c_k) · ρlo^k > Σ_{i ≠ k} hi(c_i) · ρhi^i
 
 a strict comparison between two exact dyadics. Each `|c_i|` is replaced by
 an exact dyadic on the safe side (`lo` below on the left, `hi` above on the
-right), so the whole test is `Decidable` with no error budget. The
+right), so the whole test is `Decidable` with no floating-point trust. A soft
+success proves this same predicate; a soft failure falls through to the exact
+comparison. The
 three-radius form checks this at the base radius and at 2× and 4× the base,
 BSSY's condition for Newton readiness. The single-radius `T_0` variant
 `rootFree` certifies the disc contains no root at all; it drives the
@@ -106,44 +109,94 @@ namespace TaylorShift
 
 end TaylorShift
 
-/-- Three-radius strong Pellet check for `k` roots (with multiplicity) in
-    the circumscribed disc of `s`: the exact Taylor coefficients of `p` at
-    `s.center`, tested by `pelletAt` at the base radius bounds and at 2× and
-    4× the base radius (the radius bounds shifted left by 1 and 2). This is
-    BSSY's Newton-readiness condition. -/
+namespace TaylorShift
+
+/-- At shallow centre precision, try the cached exact Taylor check first; this
+preserves its small constant on easy canonical inputs. At deep precision, try
+soft Graeffe first so successful witnesses avoid evaluating the increasingly
+large exact coefficients. -/
+@[expose] def combinedWitnessCheck {p : ZPoly} (s : DyadicSquare)
+    (shift : TaylorShift p s.center) (k : Nat) : Bool :=
+  if s.prec < 32 then
+    TaylorShift.witnessCheck s shift k || shift.softWitnessCheck s k
+  else
+    shift.softWitnessCheck s k || TaylorShift.witnessCheck s shift k
+
+end TaylorShift
+
+/-- Three-radius strong Pellet check for `k` roots (with multiplicity) in the
+    circumscribed disc of `s`. It accepts either the exact Taylor comparison at
+    the base, doubled, and quadrupled radii, or an outward-rounded comparison
+    after transporting the polynomial and all three radii through Graeffe
+    root-squaring. Both routes imply BSSY's three-radius root-count condition. -/
 @[expose] def witnessCheck (p : ZPoly) (s : DyadicSquare) (k : Nat) : Bool :=
-  TaylorShift.witnessCheck s (TaylorShift.compute p s.center) k
+  TaylorShift.combinedWitnessCheck s (TaylorShift.compute p s.center) k
 
-/-- The centre-indexed coefficient kernel is exactly the public polynomial
+/-- The centre-indexed combined kernel is exactly the public polynomial
     witness check. -/
-@[simp] theorem TaylorShift.witnessCheck_eq {p : ZPoly} (s : DyadicSquare)
+@[simp] theorem TaylorShift.combinedWitnessCheck_eq {p : ZPoly} (s : DyadicSquare)
     (shift : TaylorShift p s.center) (k : Nat) :
-    TaylorShift.witnessCheck s shift k = _root_.Hex.witnessCheck p s k := by
-  rw [TaylorShift.witnessCheck, _root_.Hex.witnessCheck, shift.valid]
-  rfl
+    TaylorShift.combinedWitnessCheck s shift k = _root_.Hex.witnessCheck p s k := by
+  by_cases hprec : s.prec < 32 <;>
+    simp [TaylorShift.combinedWitnessCheck, _root_.Hex.witnessCheck,
+      TaylorShift.witnessCheck, hprec, shift.valid,
+      (TaylorShift.compute p s.center).valid,
+      TaylorShift.softWitnessCheck_eq s shift k,
+      TaylorShift.softWitnessCheck_eq s (TaylorShift.compute p s.center) k]
 
-/-- Strong Pellet witness: with `(c₀, …, c_n)` the exact Taylor
-    coefficients of `p` at the centre of `s`, and `ρlo, ρhi` the dyadic
-    bounds on the circumscribed radius `2^{−s.prec}·√2`, the inequality
+/-- A successful exact centre-indexed check implies the public disjunctive
+    witness check. -/
+theorem TaylorShift.witnessCheck_implies {p : ZPoly} (s : DyadicSquare)
+    (shift : TaylorShift p s.center) (k : Nat)
+    (h : TaylorShift.witnessCheck s shift k = true) :
+    _root_.Hex.witnessCheck p s k = true := by
+  rw [← TaylorShift.combinedWitnessCheck_eq s shift k]
+  simp [TaylorShift.combinedWitnessCheck, h]
 
-      `lo(c_k) · ρlo^k > Σ_{i ≠ k} hi(c_i) · ρhi^i`
-
-    holds at the base radius and at 2 and 4 times the base radius.
-    Implies (Mathlib companion): `p` has exactly `k` roots, with
-    multiplicity, in each of the three discs. -/
+/-- Strong Pellet witness accepted by the exact or outward-rounded Graeffe
+    route. Implies (Mathlib companion): `p` has exactly `k` roots, with
+    multiplicity, in the circumscribed disc of `s` and in its doubled and
+    quadrupled concentric discs, with no roots on their boundaries. -/
 @[expose] def witness (p : ZPoly) (s : DyadicSquare) (k : Nat) : Prop := witnessCheck p s k = true
 
 instance {p : ZPoly} {s : DyadicSquare} {k : Nat} : Decidable (witness p s k) :=
   inferInstanceAs (Decidable (_ = true))
 
-/-- Single-radius `T_0` exclusion: the circumscribed disc of `s`
+/-- Exact single-radius `T_0` exclusion: the circumscribed disc of `s`
     certifiably contains no root of `p`, i.e. `lo(c₀) > Σ_{i ≥ 1} hi(c_i)·ρhi^i`
     (the `rlo^0 = 1` power makes the base radius bound `rlo` unused). This
     fires more often than the three-radius `witness _ _ 0`; discarding a
     square during refinement needs certification while keeping one is always
     sound, so refinement uses this. -/
-@[expose] def rootFree (p : ZPoly) (s : DyadicSquare) : Bool :=
+@[expose] def exactRootFree (p : ZPoly) (s : DyadicSquare) : Bool :=
   pelletAt (taylor p s.center) 0 s.radiusLo s.radiusHi
+
+/-- Graeffe `T₀` discard with exact fallback.  Shallow centres seed the
+coefficient balls from one exact Taylor shift; large centres use the fully
+soft constructor whose mantissas are independent of centre bit-length. -/
+@[expose] def rootFree (p : ZPoly) (s : DyadicSquare) : Bool :=
+  if 32 ≤ p.size then
+    if s.prec < 32 then
+      let ks := (Array.range p.size).toList
+      match softSeededRootCount? p s ks 64 with
+      | some 0 => true
+      | _ => exactRootFree p s
+    else softRootFree p s || exactRootFree p s
+  else exactRootFree p s
+
+/-- Exact exclusion remains a sufficient result for the combined filter. -/
+theorem exactRootFree_implies_rootFree {p : ZPoly} {s : DyadicSquare}
+    (h : exactRootFree p s = true) : rootFree p s = true := by
+  unfold rootFree
+  split
+  · split
+    · dsimp only
+      generalize softSeededRootCount? p s (Array.range p.size).toList 64 = result
+      cases result with
+      | none => simp [h]
+      | some k => cases k <;> simp [h]
+    · simp [h]
+  · exact h
 
 /-! ### Ball geometry and ball evaluation
 

@@ -10,8 +10,9 @@ stored square's disc); every
 multiplicity; refinement preserves roots; `sameRoot` decides whether
 two refined isolations isolate the same root; and `mahlerPrec` meets
 its separation contract. **Completeness** proves that the actual driver either
-emits an already-ready, pairwise-disjoint all-atom worklist early or reaches a
-normalized depth where every retained component certifies as one atom, so
+uses its verified Pellet-bearing all-atoms local finisher, directly emits an
+already-ready NK-only atom array, or reaches a normalized depth where every
+retained component certifies as one atom, so
 `isolate` never returns `none` on nonzero squarefree input under any atom
 strategy. The soundness theorems remain independently useful: they are stated
 conditionally on a `some` result and do not depend on completeness.
@@ -253,6 +254,14 @@ direction, that a sufficiently isolating disc makes the witness hold
 despite the factor-2 slack, belongs to the completeness development
 below.
 
+`HexRootsMathlib/SoftPellet.lean` supplies the bounded-precision bridge. It
+proves that every `CoeffBall` constructor encloses the corresponding complex
+coefficient, identifies `E(X)² - X O(X)²` with root squaring including
+multiplicity, transports root counts through every Graeffe level, and derives
+exact Pellet dominance from each outward-rounded comparison. Thus a soft
+success proves the same root-count and boundary statements as the exact Taylor
+witness; soft failure remains semantically inert.
+
 ## Correspondence theorems
 
 These files connect the `HexRoots` data structures to the two
@@ -315,8 +324,9 @@ developments above.
   leading-term inequality `|aₙ|·Rⁿ > Σ_{i<n}|aᵢ|·Rⁱ` only improves as
   `R` grows past the Cauchy bound.
 - `HexRootsMathlib/RootFree.lean`: elementary `T₀` soundness. The exact
-  accumulator inequality and the Taylor coefficient bridge imply, by the
-  finite triangle inequality, that a successful `rootFree` test excludes
+  accumulator inequality or the coefficient-ball/Graeffe bridge implies, by
+  the finite triangle inequality and root-count transport, that a successful
+  `rootFree` test excludes
   roots from the open disc of radius `radiusHi`. This contains both the
   represented closed square and its true closed circumscribed disc because
   `√2 < 1449/1024`.
@@ -374,7 +384,7 @@ and it is the analytically hardest part:
 
 9. **Pellet converse with margin**: if the disc is
    `(ρ₁, ρ₂)`-isolating with a wide enough ratio, then the
-   dyadic-bound witness holds. Without Graeffe iteration the required
+   exact dyadic-bound fallback witness holds. Its required
    ratio is *linear in `deg p`* (each remote root contributes to the
    higher Taylor coefficients; the relevant bound is
    `(1 + ρ/d)^{n−1} − 1`), times a fixed factor absorbing the
@@ -393,7 +403,10 @@ and it is the analytically hardest part:
    executable radius bounds. At each of the base, doubled, and quadrupled
    radii, writing `R = radiusHi`, `r = radiusLo`, it uses the explicit margin
    `2|a| + (2R + 5|a|)((1 + R/d)^m - 1) < r`; the three margins imply the
-   actual executable `witness p s 1` proposition.
+   actual executable `witness p s 1` proposition. Runtime soft Graeffe
+   certification can fire at a fixed isolation ratio before this threshold;
+   completeness deliberately retains the exact converse because bounded-
+   precision failure is inconclusive.
 10. **Newton success**: on a sufficiently refined atom the speculative
     Newton step recertifies (via `ContractingWith` on the Newton map).
     `Completeness/NewtonContraction.lean` supplies the analytic foundation:
@@ -432,9 +445,13 @@ and it is the analytically hardest part:
     The preceding NK and Pellet converses then make every component pass
     `certify?` with `k = 1` under `.nk`, `.pellet`, and `.nkThenPellet`.
     Mahler separation makes their stored discs pairwise disjoint. An
-    already-ready, pairwise-disjoint all-atom worklist may emit before that
-    depth; the fuel induction discharges this fast path directly from the
-    executable `allAtoms` guard. Otherwise the proof carries coverage and
+    Under either Pellet-bearing strategy, an all-atom worklist may instead run
+    the local one-atom refinement loop independently on each atom and emit
+    before that depth when every refinement succeeds and the resulting discs
+    are pairwise disjoint. `Loop.lean` proves that this optional finisher
+    preserves coverage and returns only target-ready disjoint atoms. Otherwise
+    the NK-only strategy retains its direct ready/disjoint all-atoms emission,
+    and the proof carries coverage and
     precision through the actual `refineAll`, closes the structural fuel
     induction for `isolateLoop`/`isolateAll?`, and proves:
 
@@ -475,6 +492,7 @@ Correspondence theorems (depend on hex-roots data structures):
   HexRootsMathlib/Basic.lean
   HexRootsMathlib/Geometry.lean
   HexRootsMathlib/Taylor.lean
+  HexRootsMathlib/SoftPellet.lean
   HexRootsMathlib/HasOnlySimpleRoots.lean
   HexRootsMathlib/MahlerPrec.lean
   HexRootsMathlib/RootFree.lean

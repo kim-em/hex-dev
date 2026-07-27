@@ -31,58 +31,13 @@ theorem refineTo_root {p : Hex.ZPoly} (iso : Hex.DyadicRootIsolation p)
     {iso' : Hex.DyadicRootIsolation p}
     (hrun : iso.refineTo? target strategy = some iso') :
     root iso' = root iso := by
-  by_cases hready : target ≤ iso.square.prec
-  · simp only [Hex.DyadicRootIsolation.refineTo?, if_pos hready,
-      Option.some.injEq] at hrun
-    subst iso'
-    rfl
-  · rw [Hex.DyadicRootIsolation.refineTo?, if_neg hready] at hrun
-    let fuel := Hex.fuelFor p target iso.square.prec
-    let work : Array Hex.Component := #[⟨#[iso.square.doubled], 1⟩]
-    cases hloop : Hex.refineLoop p target strategy fuel work with
-    | none => simp [fuel, work, hloop] at hrun
-    | some rs =>
-        have hrun' := hrun
-        simp only [fuel, work, hloop] at hrun'
-        by_cases hsize : rs.size = 1
-        · simp only [hsize, ↓reduceIte] at hrun'
-          cases hget : rs[0]? with
-          | none => simp [hget] at hrun'
-          | some r =>
-              cases hr : r with
-              | atom out =>
-                  rw [hget, hr] at hrun'
-                  have hout : out = iso' := Option.some.inj hrun'
-                  subst out
-                  have hzregion : root iso ∈ region iso :=
-                    openRegion_subset_region iso (root_spec iso).2.1
-                  have hzwork : root iso ∈ Worklist.region work := by
-                    refine ⟨⟨#[iso.square.doubled], 1⟩, ?_, ?_⟩
-                    · simp [work]
-                    · simpa [Component.region, Hex.Certified.square] using
-                        (Certified.region_subset_toComponent (.atom iso) hzregion)
-                  have hzresults : root iso ∈ Results.region rs :=
-                    refineLoop_covers (certifier_preserves p strategy) hloop
-                      (isRoot iso) hzwork
-                  obtain ⟨r', hr'mem, hzr'⟩ := hzresults
-                  have hzero : 0 < rs.size := by omega
-                  have hget0 : rs[0] = .atom iso' := by
-                    rw [Array.getElem?_eq_getElem hzero] at hget
-                    exact (Option.some.inj hget).trans hr
-                  have hr'eq : r' = .atom iso' := by
-                    obtain ⟨i, hiList, hir⟩ := List.getElem_of_mem hr'mem
-                    have hi : i < rs.size := by simpa using hiList
-                    have hi0 : i = 0 := by omega
-                    subst i
-                    have hr'zero : r' = rs[0] := by
-                      rw [← hir]
-                      exact Array.getElem_toList hi
-                    rw [hr'zero, hget0]
-                  rw [hr'eq] at hzr'
-                  exact ((root_spec iso').2.2.2 (root iso)
-                    (isRoot iso) hzr').symm
-              | cluster cl => simp [hget, hr] at hrun'
-        · simp [hsize] at hrun'
+  rw [Hex.DyadicRootIsolation.refineTo?] at hrun
+  have hzregion : root iso ∈ Certified.region (.atom iso) :=
+    openRegion_subset_region iso (root_spec iso).2.1
+  have hzout : root iso ∈ Certified.region (.atom iso') :=
+    refineAtom_preserves (certifier_preserves p strategy) hrun
+      (isRoot iso) hzregion
+  exact ((root_spec iso').2.2.2 (root iso) (isRoot iso) hzout).symm
 
 end DyadicRootIsolation
 
