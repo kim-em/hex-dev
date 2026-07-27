@@ -58,8 +58,8 @@ Median compiled time per complete arena construction and checksum was:
 
 | Values | Bundled | Checked | Bundled boundary | Checked boundary |
 | ---: | ---: | ---: | ---: | ---: |
-| 433 | 39.2 µs | 38.7 µs | 39.5 µs | 44.3 µs |
-| 4096 | 386.3 µs | 386.9 µs | 386.8 µs | 437.4 µs |
+| 433 | 39.3 µs | 39.4 µs | 39.7 µs | 45.0 µs |
+| 4096 | 387.5 µs | 389.2 µs | 387.9 µs | 437.6 µs |
 
 Construction differs by about one percent or less in this run.  Inspecting the
 generated C explains why: the proof field is erased, the one-live-field
@@ -67,8 +67,8 @@ generated C explains why: the proof field is erased, the one-live-field
 `Checked.ofTrustedRaw` compile to the same call to `Raw.normalize`.
 `Bundled.view` is the identity.
 
-The externally checked boundary costs about 13–14% at both sizes
-values because it performs an additional full consistency scan.  This is a
+The externally checked boundary costs about 12–14% at these sizes because it
+performs an additional full consistency scan.  This is a
 real cost, but it is paid at handoff rather than on each propagation update.
 
 Peak RSS varied between roughly 4 and 8 MiB even for definitionally identical
@@ -78,25 +78,24 @@ allocation-byte claim.
 
 ### Ordinary kernel replay
 
-The import-only Lake baseline had median wall time 0.948 s. The candidate
+The import-only Lake baseline had median wall time 1.052 s. The candidate
 module medians and baseline-subtracted margins were:
 
 | Candidate | Total wall | Baseline-subtracted | Peak RSS |
 | --- | ---: | ---: | ---: |
-| Bundled | 1.575 s | 0.628 s | 805 MiB |
-| Checked | 1.699 s | 0.751 s | 804 MiB |
+| Bundled | 1.655 s | 0.604 s | 801 MiB |
+| Checked | 1.680 s | 0.628 s | 804 MiB |
 
 Lake startup and module loading dominate these small proofs, and individual
-candidate samples ranged from 1.206 s to 1.828 s. The checked path performs an
-extra consistency test on each value and is slower in this run, but whole
-fresh-module timings remain load-sensitive. Both generated-constructor
-canaries are feasible at 433 values, and this projected-value workload does not
-justify closing the trace-layout design space.
+candidate samples ranged from 1.461 s to 1.948 s. Whole fresh-module timings
+remain load-sensitive. Both generated-constructor canaries are feasible at 433
+values, and this projected-value workload does not justify closing the
+trace-layout design space.
 
 The independent `Lean.Kernel.whnf` canaries also reduce to `true` under the
 default limits. Directly timing the forced `Lean.Kernel.whnf` calls gave
-medians of 589 ms for bundled and 664 ms for checked. Their whole fresh-module
-times were 2.010 s and 2.036 s respectively. The direct timer isolates the
+medians of 615 ms for bundled and 596 ms for checked. Their whole fresh-module
+times were 2.125 s and 2.117 s respectively. The direct timer isolates the
 reduction call; the whole-module number includes process startup, imports, and
 elaboration.
 
@@ -132,13 +131,15 @@ with ordinary `decide +kernel`:
 
 | Encoding | Total wall | Baseline-subtracted | `.olean` | Axioms |
 | --- | ---: | ---: | ---: | --- |
-| Exposed normalization | 1.014 s | 0.117 s | 4920 B | `propext`, `Classical.choice`, `Quot.sound` |
-| Cross-product checks | 1.140 s | 0.243 s | 4376 B | none |
+| Exposed normalization | 1.057 s | 0.000 s | 4920 B | `propext`, `Classical.choice`, `Quot.sound` |
+| Cross-product checks | 1.151 s | 0.082 s | 4376 B | none |
 
-The rational import baseline was 0.897 s. Separate forced WHNF calls reached
-`true` in median 65.8 ms and 121.3 ms respectively; their whole fresh-module
-medians were 1.417 s and 1.431 s. This small repeated-addition case favors
-exposed normalization for reduction time, while cross-products produce a
+The rational import baseline was 1.069 s; the direct total fell slightly below
+that noisy baseline, so its subtracted margin is conservatively clamped to
+zero. Separate forced WHNF calls reached `true` in median 68.6 ms and 127.6 ms
+respectively; their whole fresh-module medians were 1.485 s and 1.563 s. This
+small repeated-addition case favors exposed normalization for reduction time,
+while cross-products produce a
 smaller and axiom-free proof module. It does not select the rational
 representation: high-precision denominator growth, validating shared nodes
 once instead of once per edge, and the same arithmetic DAG must still be
