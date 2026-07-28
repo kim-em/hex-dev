@@ -21,7 +21,8 @@ Core representations for exact algebraic numbers.
 `AlgebraicRoot` stores a squarefree factorization-lazy root, and
 `AlgebraicNumber` seals the canonical irreducible representation behind a
 private constructor. The only constructor exposed to later implementation
-modules re-runs the fixed root isolator and selects its canonical disc.
+modules uses the fixed representative of zero for `X`; all other inputs run
+the fixed root isolator and select its canonical disc.
 -/
 namespace Hex
 
@@ -48,8 +49,8 @@ structure AlgebraicRoot where
   rep : RefinedIsolation p
   rep_mk : SimpleRoot.mk rep = x
 
-/-- A canonical algebraic number. Construction is sealed so every value can
-be normalized and re-isolated through the fixed deterministic strategy. -/
+/-- A canonical algebraic number. Construction is sealed so each normalized
+polynomial/root pair receives one fixed representative. -/
 structure AlgebraicNumber where
   private mk ::
   p : ZPoly
@@ -64,22 +65,99 @@ structure AlgebraicNumber where
 
 namespace AlgebraicNumber
 
+private def zeroSquare : DyadicSquare :=
+  ⟨0, 0, (separationDepth ZPoly.X : Int)⟩
+
+/-- The fixed explicit representative of the root of `X`. -/
+private def zeroRep : RefinedIsolation ZPoly.X :=
+  ⟨⟨zeroSquare, by
+      left
+      decide⟩,
+    by
+      simp only [zeroSquare, separationDepth]
+      omega⟩
+
+private theorem zero_isIrreducible : ZPoly.isIrreducible ZPoly.X = true := by
+  exact ZPoly.isIrreducible_X
+
+private theorem zero_squarefree : HasOnlySimpleRoots ZPoly.X := by
+  -- Kernel reduction stops inside rational-polynomial gcd, so this cannot be
+  -- replaced by `by decide` under the module system.
+  have hX : ZPoly.toRatPoly ZPoly.X =
+      DensePoly.monomial 1 (1 : Rat) := by
+    apply DensePoly.ext_coeff
+    intro n
+    rw [ZPoly.coeff_toRatPoly, DensePoly.coeff_monomial]
+    by_cases hn : n = 1
+    · subst n
+      simp [ZPoly.X]
+    · rw [if_neg hn]
+      rw [ZPoly.X, DensePoly.coeff_monomial, if_neg hn]
+      change ((0 : Int) : Rat) = 0
+      simp
+  have hderiv : DensePoly.derivative (ZPoly.toRatPoly ZPoly.X) =
+      DensePoly.C (1 : Rat) := by
+    rw [hX]
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_derivative_semiring, DensePoly.coeff_C,
+      DensePoly.coeff_monomial]
+    by_cases hn : n = 0
+    · simp [hn]
+    · rw [if_neg hn, if_neg (by omega : n + 1 ≠ 1)]
+      change ((n + 1 : Nat) : Rat) * 0 = 0
+      exact Rat.mul_zero _
+  unfold HasOnlySimpleRoots ZPoly.SquareFreeRat
+  rw [hderiv]
+  by_cases hg : (DensePoly.gcd (ZPoly.toRatPoly ZPoly.X)
+      (DensePoly.C (1 : Rat))).size = 0
+  · omega
+  · exact ZPoly.rat_size_le_of_dvd_nonzero hg (by decide)
+      (DensePoly.gcd_dvd_right _ _)
+
+private def zeroRaw : AlgebraicNumber :=
+  .mk ZPoly.X (by rfl) (by decide) (by decide)
+    ⟨zero_isIrreducible, by decide⟩ zero_squarefree (SimpleRoot.mk zeroRep)
+    zeroRep rfl
+
+-- Keep executable evidence that the ordinary isolator also meets its stated
+-- completeness bound on `X`; the explicit zero path makes totality independent
+-- of this bounded computation.
+#guard (isolate ZPoly.X zero_squarefree
+  (separationDepth ZPoly.X : Int)).isSome
+
+/-- The canonical algebraic number zero, represented by the fixed explicit
+isolation of the normalized polynomial `X`. -/
+def zero : AlgebraicNumber :=
+  zeroRaw
+
+instance : Zero AlgebraicNumber := ⟨zero⟩
+
+/-- The canonical zero retains `X` as its normalized polynomial. -/
+@[simp] theorem zero_p : (0 : AlgebraicNumber).p = ZPoly.X := by
+  rfl
+
 /-- Re-isolate an already normalized irreducible polynomial with the fixed
 default strategy and retain the unique canonical disc matching `rep`.
 
-This is the implementation boundary used by later smart constructors. It is
-checked because failure of the bounded isolation driver is retired only by the
-Mathlib companion's completeness proof. -/
+The normalized polynomial `X` takes the explicit canonical-zero fast path, so
+the total `Zero` instance does not depend on success of a bounded driver. For
+all other inputs this is the implementation boundary used by later smart
+constructors. It is checked because failure of the bounded isolation driver is
+retired only by the Mathlib companion's completeness proof. -/
 def ofNormalized?
     (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
     (pos_degree : 0 < p.degree?.getD 0)
     (checked : ZPoly.CheckedIrreducible p) (squarefree : HasOnlySimpleRoots p)
-    (rep : RefinedIsolation p) : Option AlgebraicNumber := do
-  let isolations ← isolate p squarefree (separationDepth p : Int)
-  let refined ← isolations.mapM DyadicRootIsolation.toRefined?
-  let canonical ← refined.toList.find? fun r => r.sameRoot rep
-  some (.mk p prim pos_lc pos_degree checked squarefree (SimpleRoot.mk canonical)
-    canonical rfl)
+    (rep : RefinedIsolation p) : Option AlgebraicNumber :=
+  if _hzero : p = ZPoly.X then
+    some zeroRaw
+  else do
+    let isolations ← isolate p squarefree (separationDepth p : Int)
+    let refined ← isolations.mapM DyadicRootIsolation.toRefined?
+    let canonical ← refined.toList.find? fun r => r.sameRoot rep
+    some (.mk p prim pos_lc pos_degree checked squarefree (SimpleRoot.mk canonical)
+      canonical rfl)
 
 /-- Successful canonicalization retains the supplied normalized polynomial. -/
 theorem ofNormalized?_p
@@ -90,52 +168,43 @@ theorem ofNormalized?_p
     (h : ofNormalized? p prim pos_lc pos_degree checked squarefree rep = some a) :
     a.p = p := by
   unfold ofNormalized? at h
-  obtain ⟨isolations, _, h⟩ := Option.bind_eq_some_iff.mp h
-  obtain ⟨refined, _, h⟩ := Option.bind_eq_some_iff.mp h
-  obtain ⟨canonical, _, h⟩ := Option.bind_eq_some_iff.mp h
-  cases h
-  rfl
+  split at h
+  · next hp =>
+    cases h
+    simp [zeroRaw, hp]
+  · obtain ⟨isolations, _, h⟩ := Option.bind_eq_some_iff.mp h
+    obtain ⟨refined, _, h⟩ := Option.bind_eq_some_iff.mp h
+    obtain ⟨canonical, _, h⟩ := Option.bind_eq_some_iff.mp h
+    cases h
+    rfl
 
-private def zeroSquare : DyadicSquare :=
-  ⟨0, 0, (mahlerPrec ZPoly.X : Int)⟩
-
-/-- A small explicit representative of the root of `X`, used only to select
-the default isolator's canonical representative. -/
-private def zeroRep : RefinedIsolation ZPoly.X :=
-  ⟨⟨zeroSquare, by
-      left
-      decide⟩,
-    by simp [zeroSquare]⟩
-
-private theorem zero_isIrreducible : ZPoly.isIrreducible ZPoly.X = true := by
-  sorry
-
-private theorem zero_squarefree : HasOnlySimpleRoots ZPoly.X := by
-  sorry
-
-private def zeroCandidate : Option AlgebraicNumber :=
-  ofNormalized? ZPoly.X (by rfl) (by decide) (by decide)
-    ⟨zero_isIrreducible, by decide⟩ zero_squarefree zeroRep
-
-#guard ZPoly.isIrreducible ZPoly.X
-#guard decide (HasOnlySimpleRoots ZPoly.X)
-#guard zeroCandidate.isSome
-
-private theorem zeroCandidate_isSome : zeroCandidate.isSome := by
-  sorry
-
-/-- The canonical algebraic number zero, represented by the default isolated
-root of the normalized polynomial `X`. -/
-def zero : AlgebraicNumber :=
-  Option.get zeroCandidate zeroCandidate_isSome
-
-/-- The canonical zero retains `X` as its normalized polynomial. -/
-theorem zero_p : zero.p = ZPoly.X := by
-  apply ofNormalized?_p ZPoly.X (by rfl) (by decide) (by decide)
-    ⟨zero_isIrreducible, by decide⟩ zero_squarefree zeroRep
-  exact (Option.some_get zeroCandidate_isSome).symm
-
-instance : Zero AlgebraicNumber := ⟨zero⟩
+/-- A successful canonicalization either takes the explicit zero path or
+stores a representative intersecting the supplied isolation. This is the
+Mathlib-free behavioral boundary used by semantic soundness proofs. -/
+theorem ofNormalized?_spec
+    (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
+    (pos_degree : 0 < p.degree?.getD 0)
+    (checked : ZPoly.CheckedIrreducible p) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p) {a : AlgebraicNumber}
+    (h : ofNormalized? p prim pos_lc pos_degree checked squarefree rep = some a) :
+    (p = ZPoly.X ∧ a = 0) ∨
+      ∃ hp : a.p = p, Intersects (hp ▸ a.rep) rep := by
+  unfold ofNormalized? at h
+  split at h
+  · next hp =>
+    left
+    refine ⟨hp, ?_⟩
+    cases h
+    rfl
+  · right
+    obtain ⟨isolations, _, h⟩ := Option.bind_eq_some_iff.mp h
+    obtain ⟨refined, _, h⟩ := Option.bind_eq_some_iff.mp h
+    obtain ⟨canonical, hcanonical, h⟩ := Option.bind_eq_some_iff.mp h
+    have hsame : canonical.sameRoot rep = true :=
+      List.find?_some (p := fun r : RefinedIsolation p => r.sameRoot rep)
+        hcanonical
+    cases h
+    exact ⟨rfl, hsame⟩
 
 instance : Inhabited AlgebraicNumber := ⟨zero⟩
 

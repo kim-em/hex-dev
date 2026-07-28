@@ -83,6 +83,39 @@ private theorem radius_lt_quarter {p : Hex.ZPoly}
     _ < ‖root i - z‖ / 4 :=
       mahlerPrec_separates p hsep (root i) z (isRoot i) hz hne
 
+/-- A polynomial root in the closed circumscribed disc of a refined isolation
+is the isolation's selected root. -/
+theorem eq_root_of_mem_closedDisc {p : Hex.ZPoly}
+    (hsep : (HexPolyZMathlib.toPolyℚ p).Separable)
+    (i : Hex.RefinedIsolation p) {z : ℂ}
+    (hzroot : (toPolyℂ p).IsRoot z)
+    (hzmem : z ∈ DyadicSquare.closedDisc i.1.square) :
+    z = root i := by
+  by_contra hne
+  have hne' : root i ≠ z := Ne.symm hne
+  have hradius := radius_lt_quarter hsep i hzroot hne'
+  have hrootmem :
+      dist (root i) (DyadicSquare.center i.1.square) ≤
+        DyadicSquare.radius i.1.square := by
+    simpa only [DyadicSquare.closedDisc, Metric.mem_closedBall] using
+      root_mem_closedDisc i
+  have hzmem' :
+      dist (DyadicSquare.center i.1.square) z ≤
+        DyadicSquare.radius i.1.square := by
+    rw [dist_comm]
+    simpa only [DyadicSquare.closedDisc, Metric.mem_closedBall] using hzmem
+  have hdist : dist (root i) z ≤ 2 * DyadicSquare.radius i.1.square := by
+    calc
+      dist (root i) z ≤
+          dist (root i) (DyadicSquare.center i.1.square) +
+            dist (DyadicSquare.center i.1.square) z := dist_triangle _ _ _
+      _ ≤ DyadicSquare.radius i.1.square +
+          DyadicSquare.radius i.1.square := add_le_add hrootmem hzmem'
+      _ = 2 * DyadicSquare.radius i.1.square := by ring
+  rw [Complex.dist_eq] at hdist
+  have hnorm : 0 ≤ ‖root i - z‖ := norm_nonneg _
+  linarith
+
 /-- At separation precision, executable disc intersection is exactly semantic
 root equality. Global separability is explicit because a local atom witness
 does not imply that every root of the polynomial is simple. -/

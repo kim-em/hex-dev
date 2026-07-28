@@ -24,6 +24,12 @@ noncomputable section
 
 namespace GaussDyadic
 
+/-- The zero Gaussian dyadic embeds as complex zero. -/
+@[simp] theorem toComplex_zero :
+    toComplex ((0, 0) : Hex.GaussDyadic) = 0 := by
+  apply Complex.ext <;>
+    simp [toComplex, Dyadic.toReal_zero]
+
 /-- The real value of the executable lower modulus bound. -/
 @[simp] theorem toReal_lo (z : Hex.GaussDyadic) :
     Dyadic.toReal (Hex.GaussDyadic.lo z) =
@@ -294,6 +300,50 @@ Euclidean distance. -/
     Dyadic.toReal (Hex.GaussDyadic.distSq z w) =
       dist (GaussDyadic.toComplex z) (GaussDyadic.toComplex w) ^ 2 := by
   simp [Hex.GaussDyadic.distSq, Complex.dist_eq, Complex.sq_norm]
+
+/-- The exact executable point-in-disc test is membership in the represented
+closed circumscribed disc. -/
+theorem discContains_iff_mem_closedDisc (s : Hex.DyadicSquare)
+    (z : Hex.GaussDyadic) :
+    s.discContains z = true ↔ GaussDyadic.toComplex z ∈ closedDisc s := by
+  have hs : (2 : ℝ) ^ (-(2 * s.prec)) = ((2 : ℝ) ^ (-s.prec)) ^ 2 := by
+    rw [show -(2 * s.prec) = (-s.prec) * 2 by ring, zpow_mul]
+    rfl
+  have htwo : Dyadic.toReal (2 : _root_.Dyadic) = (2 : ℝ) :=
+    Dyadic.toReal_two
+  have hradius :
+      Dyadic.toReal
+          ((2 : _root_.Dyadic) * .ofIntWithPrec 1 (2 * s.prec)) =
+        radius s ^ 2 := by
+    rw [Dyadic.toReal_mul, htwo, Dyadic.toReal_ofIntWithPrec, radius_eq, hs]
+    simp only [Int.cast_one, one_mul, mul_pow,
+      Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)]
+    ring
+  have hrnonneg : 0 ≤ radius s := by
+    rw [radius_eq]
+    exact mul_nonneg (zpow_pos (by norm_num : (0 : ℝ) < 2) _).le
+      (Real.sqrt_nonneg _)
+  constructor
+  · intro h
+    change decide (Hex.GaussDyadic.distSq s.center z ≤
+      (2 : _root_.Dyadic) * .ofIntWithPrec 1 (2 * s.prec)) = true at h
+    have hreal := Dyadic.toReal_le_toReal_iff.mpr (of_decide_eq_true h)
+    rw [toReal_distSq, hradius] at hreal
+    rw [closedDisc, Metric.mem_closedBall, dist_comm]
+    exact (sq_le_sq₀ dist_nonneg hrnonneg).mp hreal
+  · intro h
+    rw [closedDisc, Metric.mem_closedBall, dist_comm] at h
+    have hsq :
+        dist (center s) (GaussDyadic.toComplex z) ^ 2 ≤ radius s ^ 2 :=
+      (sq_le_sq₀ dist_nonneg hrnonneg).mpr h
+    have hreal :
+        Dyadic.toReal (Hex.GaussDyadic.distSq s.center z) ≤
+          Dyadic.toReal
+            ((2 : _root_.Dyadic) * .ofIntWithPrec 1 (2 * s.prec)) := by
+      simpa only [toReal_distSq, center_eq, hradius] using hsq
+    change decide (Hex.GaussDyadic.distSq s.center z ≤
+      (2 : _root_.Dyadic) * .ofIntWithPrec 1 (2 * s.prec)) = true
+    exact decide_eq_true (Dyadic.toReal_le_toReal_iff.mp hreal)
 
 /-- A negative executable disc-intersection test certifies disjoint closed
 circumscribed discs. -/
