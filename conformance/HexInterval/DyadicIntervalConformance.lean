@@ -110,15 +110,25 @@ private def unboundedNeg : Option Result := do
 
 private def inverseShiftInput : Dyadic := .ofOdd 1 64 (by decide)
 
+private def wide : Dyadic :=
+  Dyadic.ofInt (Int.ofNat (2 ^ 128 - 1))
+
 private def subtractionPreflight : Option Result := do
   let left ← imported?
-    (.bounds (.finite inverseShiftInput false) (.finite 1 false))
+    (.bounds (.finite (-wide) false) (.finite 1 false))
   let right ← imported?
-    (.bounds (.finite inverseShiftInput false) (.finite inverseShiftInput false))
+    (.bounds (.finite inverseShiftInput false) (.finite wide false))
   pure (sub tightAlignmentLimit left right)
 
--- The cheap lower pair must not be subtracted before the upper pair's
--- 64-place alignment has also passed preflight.
+-- The lower subtraction itself would exceed the endpoint budget.
+#guard
+  match subtractionChecked tightAlignmentLimit (-wide) wide with
+  | .error (.endpoint cost) => !cost.allowed tightAlignmentLimit
+  | _ => false
+
+-- Nevertheless, the whole operation reports the later upper-pair alignment
+-- failure.  This distinguishes complete preflight from an implementation that
+-- performs the lower subtraction before checking the upper pair.
 #guard
   match subtractionPreflight with
   | some (.resourceLimit (.comparison cost)) => cost.alignmentShift == 64
@@ -343,6 +353,19 @@ private def roundedReciprocal : Option Result := do
           (.finite half true))
   | none => false
 
+-- Cut inversion treats zero only as a component limit.  In particular, a
+-- closed zero never reaches `invAtPrec`; the interval-level operation still
+-- rejects intervals containing closed zero.
+#guard
+  match inverseLower endpointLimit 8 (.finite 0 false) with
+  | .ok .unbounded => true
+  | _ => false
+
+#guard
+  match inverseUpper endpointLimit 8 (.finite 0 false) with
+  | .ok .unbounded => true
+  | _ => false
+
 private def reciprocalPreflight : Option Result := do
   let input ← imported? (finite 1 false 2 false)
   pure (reciprocal tightAlignmentLimit 16 input)
@@ -448,6 +471,13 @@ private def domainNoChange : Option (NarrowResult Fact) := do
 #guard
   match domainNoChange with
   | some .noChange => true
+  | _ => false
+
+-- Re-narrowing an already contradictory branch with the same empty fact is a
+-- fixed point, not a newly discovered contradiction.
+#guard
+  match (factDomain endpointLimit).narrow { index := 0 } .empty .whole with
+  | .noChange => true
   | _ => false
 
 private def real : DomainId := { index := 0 }

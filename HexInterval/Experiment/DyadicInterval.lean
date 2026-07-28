@@ -557,24 +557,34 @@ def unscaleExact (limit : EndpointLimit) (scalar : Dyadic) (image : Fact) : Resu
 
 /-! ## Precision-indexed reciprocal -/
 
+/-- Lower cut of a sign-separated reciprocal component.  A zero endpoint is
+the one-sided unbounded limit and is never passed to pointwise inversion;
+`reciprocal` separately rejects a closed zero in the original interval. -/
 def inverseLower (limit : EndpointLimit) (precision : Precision)
     (upper : Upper) : Except WorkCost Lower := do
   match upper with
   | .unbounded => pure (.finite 0 true)
   | .finite value strict =>
-      if value = 0 && strict then
+      -- Zero is a boundary limit, never an input to `invAtPrec`.  The outer
+      -- component check decides whether a closed zero makes the whole
+      -- reciprocal inapplicable.
+      if value = 0 then
         pure .unbounded
       else
         let rounded ← inverseChecked limit precision value
         let exact ← exactReciprocal? limit value
         pure (.finite rounded (strict || exact != some rounded))
 
+/-- Upper cut of a sign-separated reciprocal component, with the same
+zero-limit contract as `inverseLower`. -/
 def inverseUpper (limit : EndpointLimit) (precision : Precision)
     (lower : Lower) : Except WorkCost Upper := do
   match lower with
   | .unbounded => pure (.finite 0 true)
   | .finite value strict =>
-      if value = 0 && strict then
+      -- As above, zero denotes the unbounded component limit and must not be
+      -- passed to the pointwise inverse implementation.
+      if value = 0 then
         pure .unbounded
       else
         let roundedDown ← inverseChecked limit precision (-value)
@@ -669,8 +679,8 @@ def factDomain (limit : EndpointLimit) : FactDomain Fact where
     | .inapplicable => .malformed 1
     | .resourceLimit cost => .resourceLimit (workMagnitude cost)
     | .ready result =>
-        if result.isEmpty then .contradiction result
-        else if result = current then .noChange
+        if result = current then .noChange
+        else if result.isEmpty then .contradiction result
         else .improved result
 
 /-- Error at the checked initial-fact boundary. -/
