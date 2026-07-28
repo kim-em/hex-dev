@@ -411,6 +411,152 @@ theorem factorize_entries_primitive_of_ne_zero
     exact ⟨raw, hraw_mem, by simp only [hrecord, if_true]⟩
   exact hmem_filtered entry.1 hentry_in
 
+/-- Every recorded entry of a nonzero default factorization has positive
+degree.
+
+The recording filter alone does not exclude nonunit constants. Primitivity is
+the essential extra fact: a primitive constant is a unit, while recorded
+factors are nonunits. -/
+theorem factorize_entries_degree_pos
+    (f : ZPoly) (hf : f ≠ 0) :
+    ∀ entry ∈ (ZPoly.factorize f).factors, 0 < entry.1.degree?.getD 0 := by
+  intro entry hentry
+  have hmem := Array.mem_toList_iff.mpr hentry
+  exact degree_pos_of_primitive_norm_record entry.1
+    (factorize_entries_primitive_of_ne_zero f hf entry hentry)
+    (factorize_entry_normalizeFactorSign_id f entry hmem)
+    (factorize_entry_shouldRecord f entry hmem)
+
+private theorem factorPower_size (q : ZPoly) (hq : 0 < q.size) (n : Nat) :
+    (Factorization.factorPower q n).size = n * (q.size - 1) + 1 := by
+  induction n with
+  | zero =>
+      rw [Factorization.factorPower_zero]
+      simpa using DensePoly.size_one (R := Int) (by decide : (1 : Int) ≠ 0)
+  | succ n ih =>
+      rw [Factorization.factorPower_succ]
+      have hpow : 0 < (Factorization.factorPower q n).size := by
+        rw [ih]
+        omega
+      rw [ZPoly.mul_size_eq_top_succ_of_nonzero _ _ hpow hq, ih]
+      rw [Nat.add_mul]
+      omega
+
+private theorem length_le_sum_of_pos (xs : List Nat)
+    (hpos : ∀ x ∈ xs, 0 < x) : xs.length ≤ xs.sum := by
+  induction xs with
+  | nil => simp
+  | cons x xs ih =>
+      simp only [List.length_cons, List.sum_cons]
+      have hx := hpos x (by simp)
+      have htail : ∀ y ∈ xs, 0 < y := by
+        intro y hy
+        exact hpos y (by simp [hy])
+      have := ih htail
+      omega
+
+private theorem foldl_factorPower_size
+    (entries : List (ZPoly × Nat)) (acc : ZPoly) (hacc : 0 < acc.size)
+    (hentries : ∀ entry ∈ entries, 0 < entry.1.size) :
+    (entries.foldl
+      (fun product entry => product * Factorization.factorPower entry.1 entry.2)
+      acc).size =
+      acc.size + (entries.map fun entry => entry.2 * (entry.1.size - 1)).sum := by
+  induction entries generalizing acc with
+  | nil => simp
+  | cons entry entries ih =>
+      have hentry : 0 < entry.1.size := hentries entry (by simp)
+      have hpow_size := factorPower_size entry.1 hentry entry.2
+      have hpow : 0 < (Factorization.factorPower entry.1 entry.2).size := by
+        rw [hpow_size]
+        omega
+      have hproduct := ZPoly.mul_size_eq_top_succ_of_nonzero acc
+        (Factorization.factorPower entry.1 entry.2) hacc hpow
+      rw [List.foldl_cons,
+        ih (acc := acc * Factorization.factorPower entry.1 entry.2)]
+      · rw [hproduct, hpow_size]
+        simp only [List.map_cons, List.sum_cons]
+        omega
+      · rw [hproduct]
+        omega
+      · intro tailEntry htail
+        exact hentries tailEntry (by simp [htail])
+
+/-- The factorization-backed executable irreducibility checker accepts the
+indeterminate `X`. This follows from product preservation: positive-degree
+factors with positive multiplicities can contribute total degree one only as
+one factor of multiplicity one. -/
+theorem ZPoly.isIrreducible_X : ZPoly.isIrreducible ZPoly.X = true := by
+  have hx0 : ZPoly.X ≠ (0 : ZPoly) := by decide
+  have hxdeg : ZPoly.X.degree?.getD 0 ≠ 0 := by decide
+  rw [ZPoly.isIrreducible, if_neg hx0, if_neg hxdeg]
+  dsimp only
+  let φ := ZPoly.factorize ZPoly.X
+  have hscalar : φ.scalar = 1 := by
+    dsimp [φ]
+    rw [factorize_scalar_of_leadingCoeff_pos hx0 (by decide)]
+    decide
+  have hentry_size : ∀ entry ∈ φ.factors.toList, 0 < entry.1.size := by
+    intro entry hentry
+    have hdegree := factorize_entries_degree_pos ZPoly.X hx0 entry
+      (Array.mem_toList_iff.mp hentry)
+    by_cases hsize : entry.1.size = 0
+    · simp [DensePoly.degree?, hsize] at hdegree
+    · omega
+  have hfold := foldl_factorPower_size φ.factors.toList (DensePoly.C φ.scalar)
+    (by simp [hscalar, DensePoly.size_C_of_ne_zero]) hentry_size
+  have hproduct : φ.product = ZPoly.X := by
+    exact factorize_product ZPoly.X
+  have hsum :
+      (φ.factors.toList.map fun entry => entry.2 * (entry.1.size - 1)).sum = 1 := by
+    rw [Factorization.product_eq_foldl_factorPower, ← Array.foldl_toList] at hproduct
+    rw [hproduct] at hfold
+    have hXsize : ZPoly.X.size = 2 := by decide
+    have hCsize : (DensePoly.C φ.scalar : ZPoly).size = 1 := by
+      rw [hscalar]
+      exact DensePoly.size_C_of_ne_zero (R := Int) (by decide)
+    rw [hXsize, hCsize] at hfold
+    omega
+  have hterm_pos : ∀ n ∈
+      (φ.factors.toList.map fun entry => entry.2 * (entry.1.size - 1)), 0 < n := by
+    intro n hn
+    rw [List.mem_map] at hn
+    obtain ⟨entry, hentry, rfl⟩ := hn
+    have hmult := factorize_entry_multiplicity_pos ZPoly.X entry hentry
+    have hdegree := factorize_entries_degree_pos ZPoly.X hx0 entry
+      (Array.mem_toList_iff.mp hentry)
+    have hsize := hentry_size entry hentry
+    have hdegree_size : entry.1.degree?.getD 0 = entry.1.size - 1 := by
+      rw [DensePoly.degree?_eq_some_of_pos_size entry.1 hsize]
+      rfl
+    rw [hdegree_size] at hdegree
+    exact Nat.mul_pos hmult hdegree
+  have hlength_le : φ.factors.toList.length ≤
+      (φ.factors.toList.map fun entry => entry.2 * (entry.1.size - 1)).sum := by
+    simpa only [List.length_map] using length_le_sum_of_pos _ hterm_pos
+  have hlength : φ.factors.toList.length = 1 := by
+    rw [hsum] at hlength_le
+    by_cases hzero : φ.factors.toList.length = 0
+    · have : φ.factors.toList = [] := List.eq_nil_of_length_eq_zero hzero
+      rw [this] at hsum
+      simp at hsum
+    · omega
+  obtain ⟨entry, hentry⟩ := List.length_eq_one_iff.mp hlength
+  have hmult : entry.2 = 1 := by
+    rw [hentry] at hsum
+    simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil,
+      Nat.add_zero] at hsum
+    have hdvd : entry.2 ∣ 1 := ⟨entry.1.size - 1, hsum.symm⟩
+    have hle := Nat.le_of_dvd (by decide : 0 < (1 : Nat)) hdvd
+    have hentry_mem : entry ∈ φ.factors.toList := by simp [hentry]
+    have hpos := factorize_entry_multiplicity_pos ZPoly.X entry hentry_mem
+    omega
+  change (decide (φ.scalar.natAbs = 1) && φ.factors.size == 1 &&
+    match φ.factors.toList with
+    | [entry] => decide (entry.2 = 1)
+    | _ => false) = true
+  simp [hscalar, ← Array.length_toList, hentry, hmult]
+
 /--
 A successful integer certificate exposes the per-prime polynomial check fact:
 every recorded `PrimeFactorData` block satisfies `checkForPolynomial f` —

@@ -68,6 +68,13 @@ division and gcd routines rely on. -/
   change (C (1 : R)).leadingCoeff = 1
   rw [leadingCoeff_C]
 
+/-- The constant polynomial `1` stores one coefficient when the coefficient
+ring's `1` is nonzero. -/
+theorem size_one [One R] (hone : (1 : R) ≠ 0) :
+    (1 : DensePoly R).size = 1 := by
+  change (C (1 : R)).size = 1
+  exact size_C_of_ne_zero hone
+
 /-- A polynomial is monic when its leading coefficient is `1`. -/
 @[expose]
 def Monic [One R] (p : DensePoly R) : Prop :=

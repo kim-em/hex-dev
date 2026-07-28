@@ -104,12 +104,14 @@ requirement that the implementation literally use an `opaque` Lean declaration.
 Implementations use representation-private structures where constructors or
 recursors are needed internally.
 
-Every `AlgebraicNumber` smart constructor normalizes the primitive polynomial,
-then re-isolates with the fixed default strategy at `separationDepth` and stores
-the unique matching disc. Thus equal complex values have identical hidden data,
-not merely a semantic `BEq`; this representation can support field laws stated
-with Lean equality. User-supplied alternative refined discs cannot enter the
-private constructor.
+Every `AlgebraicNumber` smart constructor normalizes the primitive polynomial.
+The normalized polynomial `X` uses one fixed explicit certified representative;
+this makes canonical zero total without depending on success of the bounded
+isolation driver. Every other polynomial is re-isolated with the fixed default
+strategy at `separationDepth`, storing the unique matching disc. Thus equal
+complex values have identical hidden data, not merely a semantic `BEq`; this
+representation can support field laws stated with Lean equality. User-supplied
+alternative refined discs cannot enter the private constructor.
 
 Do not instantiate `DensePoly AlgebraicNumber` in the Mathlib-free layer.
 `DensePoly` requires a kernel `DecidableEq` on coefficients so trailing-zero

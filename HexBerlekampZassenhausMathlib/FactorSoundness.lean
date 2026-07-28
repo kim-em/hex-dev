@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexBerlekampZassenhaus.ProductProofs
 public import HexBerlekampZassenhausMathlib.IntReductionMod
 public import HexBerlekampZassenhausMathlib.LatticeTier
 
@@ -130,13 +131,8 @@ leading coefficient, and is sign-normalized. The constant case is excluded by
 -/
 theorem factorize_entries_degree_pos
     (f : Hex.ZPoly) (hf : f ≠ 0) :
-    ∀ entry ∈ (Hex.ZPoly.factorize f).factors, 0 < entry.1.degree?.getD 0 := by
-  intro entry hentry
-  have hmem := Array.mem_toList_iff.mpr hentry
-  exact Hex.degree_pos_of_primitive_norm_record entry.1
-    (Hex.factorize_entries_primitive_of_ne_zero f hf entry hentry)
-    (Hex.factorize_entry_normalizeFactorSign_id f entry hmem)
-    (Hex.factorize_entry_shouldRecord f entry hmem)
+    ∀ entry ∈ (Hex.ZPoly.factorize f).factors, 0 < entry.1.degree?.getD 0 :=
+  Hex.factorize_entries_degree_pos f hf
 
 /--
 Uniqueness specialised against the default executable factorization, so callers
