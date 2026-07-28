@@ -220,7 +220,13 @@ determinant libraries. The theorems `coeffMinor_map`, `poly_map`, and
 and that every mapped minor coefficient has a base-ring image witness.
 The theorems `poly_scale_left` and `poly_scale_right` establish the first
 Brown--Traub transformation law: scaling an input contributes one scalar for
-each column in that input's generalized Sylvester block.
+each column in that input's generalized Sylvester block. The concrete
+`rotateBlocks` transformation moves two consecutive coefficient blocks using
+adjacent swaps and proves the determinant factor
+`(-1)^(left * right)`. Applied to the generalized Sylvester family,
+`poly_swap` gives
+`S_J(f, g) = (-1)^((deg f - J) * (deg g - J)) S_J(g, f)` without importing a
+matrix or determinant library.
 
 The injective coefficient map extends to dense polynomials and preserves
 normalized size, leading coefficients, constants, addition, subtraction,
@@ -372,6 +378,9 @@ quotient is exact over every stated exact-division domain.
   adjacent swaps and swap-sequence parity, arbitrary alternation and update
   laws, consecutive-block scaling, and the resulting left/right homogeneity
   laws for generalized subresultants.
+- `HexResultant/BlockDeterminant.lean`: dimension recasting, numeric adjacent
+  swaps, consecutive-block rotation with its parity law, and the resulting
+  generalized-subresultant input-swap law.
 - `HexResultant/Subresultant.lean`: the Brown worker,
   `subresultantChain`, `resultant`, chain termination, and degree bounds.
 - `HexResultant/Discriminant.lean`: `disc` and the algebraic

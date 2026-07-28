@@ -12,6 +12,7 @@ public import HexResultant.PseudoDivMod
 public import HexResultant.FractionPoly
 public import HexResultant.SubresultantMinor
 public import HexResultant.DeterminantAlgebra
+public import HexResultant.BlockDeterminant
 public import HexResultant.Subresultant
 public import HexResultant.Discriminant
 
@@ -31,3 +32,13 @@ formal derivative and an exact leading-coefficient quotient.
 Correctness and correspondence with Mathlib's `Polynomial.resultant` and
 `Polynomial.discr` live in the companion `HexResultantMathlib` library.
 -/
+
+namespace Hex.DensePoly
+
+/-- The executable Brown recurrence and the proof-only minor construction use
+the same alternating sign convention. -/
+theorem negOnePow_eq_sign {R : Type u} [Zero R] [One R] [Sub R] (n : Nat) :
+    negOnePow (R := R) n = SubresultantMinor.sign (R := R) n := by
+  rfl
+
+end Hex.DensePoly

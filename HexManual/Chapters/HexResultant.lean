@@ -120,13 +120,19 @@ The local Laplace determinant supplies column multilinearity, arbitrary
 alternation and column updates, and the parity law for adjacent-transposition
 sequences without importing `hex-matrix` or `hex-determinant`. In particular,
 scaling either input polynomial scales the generalized subresultant by one
-scalar for each column in that input's Sylvester block.
+scalar for each column in that input's Sylvester block. A consecutive-block
+rotation then exchanges those blocks, contributing one sign for every crossed
+pair of columns and yielding the generalized-subresultant input-swap law.
 
 {docstring Hex.SubresultantMinor.det_setCol_add}
 
 {docstring Hex.SubresultantMinor.det_swapAdjacent}
 
 {docstring Hex.SubresultantMinor.det_applySwaps}
+
+{docstring Hex.SubresultantMinor.rotateBlocks}
+
+{docstring Hex.SubresultantMinor.det_rotateBlocks}
 
 {docstring Hex.SubresultantMinor.det_eq_zero_of_col_eq}
 
@@ -137,6 +143,8 @@ scalar for each column in that input's Sylvester block.
 {docstring Hex.DensePoly.Subresultant.poly_scale_left}
 
 {docstring Hex.DensePoly.Subresultant.poly_scale_right}
+
+{docstring Hex.DensePoly.Subresultant.poly_swap}
 
 {docstring Hex.DensePoly.Subresultant.Fraction.poly_map}
 
