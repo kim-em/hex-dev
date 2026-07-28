@@ -218,18 +218,71 @@ example : ∃ x : ℝ,
 When `rcf` sees `Set.Icc` or `Set.Ioo` directly, its error message includes
 the corresponding rewrite above.
 
+# The reflected and compiled APIs
+%%%
+tag := "hex-rcf-reflected-api"
+%%%
+
+Most users only need the `rcf` tactic. Programs that construct or inspect
+sentences directly use the reflected language below. A comparison applies to
+one integer polynomial, formulas combine comparisons, and a sentence adds the
+single supported quantifier.
+
+{docstring Hex.RCF.Cmp}
+
+{docstring Hex.RCF.Atom}
+
+{docstring Hex.RCF.Formula}
+
+{docstring Hex.RCF.Sentence}
+
+Coefficient arrays use ascending order. This direct construction represents
+`∀ x : ℝ, x² + 1 > 0` and sends it through the same compiled decision
+procedure used by the tactic:
+
+```lean
+open Hex.RCF
+
+private def positiveQuadratic : Sentence :=
+  .forallReal (.atom {
+    p := Hex.DensePoly.ofCoeffs #[1, 0, 1]
+    cmp := .gt
+  })
+
+#guard Hex.RCF.decide positiveQuadratic == some true
+```
+
+For clients that need the evidence as well as the verdict, `build?` returns a
+certificate retained with its replay result:
+
+{docstring Hex.RCF.BuildResult}
+
+```lean
+open Hex.RCF
+
+example (result : BuildResult)
+    (h : build? positiveQuadratic = some result) :
+    result.certificate.replay? positiveQuadratic =
+      some result.verdict :=
+  replay_build h
+```
+
+`none` means certificate construction or replay failed. It is distinct from a
+successful result whose `verdict` is `false`.
+
 # Certificates and the trust boundary
 %%%
 tag := "hex-rcf-trust"
 %%%
 
-The reflected input type records the same four quantifier forms:
+The four certificate shapes correspond to empty bounded domains, constant
+formulas, root-free carriers, and positive-root cell decompositions:
 
-{docstring Hex.RCF.Sentence}
+{docstring Hex.RCF.Certificate}
 
 `HexRCF` is classified as a Mathlib-facing library because its reifier, tactic,
 real semantics, and soundness theorem use Mathlib. There is no separate
-`HexRCFMathlib` bridge library. By contrast, `HexRCF.DecisionCheck` exposes the
+`HexRCFMathlib` library. By contrast, `HexRCF.DecisionCheck` exposes the
 complete compiled search, certificate construction, replay, and
 {name}`Hex.RCF.decide` path, with a mechanically checked Mathlib-free import
 closure. The soundness theorem remains on the Mathlib-facing side of this
@@ -261,11 +314,9 @@ false verdict (`some false`), and a checked true verdict (`some true`).
 `Certificate.check` accepts only the last case. The convenience function
 {name}`Hex.RCF.decide` returns `some true` only after this checker accepts the
 certificate. Advanced clients can use {name}`Hex.RCF.build?` to retain the
-certificate and its diagnostic or proof-producing verdict. A `none` result
-means that compiled construction did not produce a replay-accepted
-certificate; it does not mean that the mathematical sentence is false. A
-successfully checked false sentence instead produces `some false`. Neither
-`check_sound` nor the tactic turns `some false` into a proof of a negation.
+certificate and its diagnostic or proof-producing verdict. A successfully
+checked false sentence produces `some false`. Neither `check_sound` nor the
+tactic turns `some false` into a proof of a negation.
 
 The kernel replays polynomial identities, signs, root counts, endpoint
 comparisons, and Boolean folds on literal data. It does not repeat root

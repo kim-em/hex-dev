@@ -28,11 +28,17 @@ namespace Hex.RCF
 
 /-- The six comparisons supported by reflected polynomial atoms. -/
 inductive Cmp where
+  /-- Strictly less than zero. -/
   | lt
+  /-- Less than or equal to zero. -/
   | le
+  /-- Equal to zero. -/
   | eq
+  /-- Greater than or equal to zero. -/
   | ge
+  /-- Strictly greater than zero. -/
   | gt
+  /-- Not equal to zero. -/
   | ne
   deriving DecidableEq
 
