@@ -29,8 +29,9 @@ Covered properties:
 - coefficient-indexed Sylvester minors reproduce pinned scalar resultants and
   the expected first nontrivial subresultant; their local determinant obeys
   adjacent-transposition sequence parity, arbitrary alternation and column
-  updates, consecutive-block rotation, and the generalized polynomials obey
-  left/right homogeneity and the input-swap sign law;
+  updates, consecutive-block rotation, Brown multiplier updates, and the
+  generalized polynomials obey left/right homogeneity, the input-swap sign law,
+  and Brown--Traub equation (18);
 - Brown chains omit zero terms, order unequal-degree inputs, strictly decrease
   after their first two entries, obey the sharp length bound, and are stable
   under extra fuel;
@@ -355,6 +356,32 @@ example (M : SubresultantMinor.Square Int 3) :
     SubresultantMinor.det
       (SubresultantMinor.setCol M 1 (fun i => M i 2)) = 0 &&
     SubresultantMinor.det (SubresultantMinor.addCol M 0 1 7) = 1
+
+example (f g b h : DensePoly Int) (hb : b.size ≤ 2)
+    (hh : h = f + b * g) :
+    DensePoly.Subresultant.coeffMinorAt 2 1 0 0 f g =
+      SubresultantMinor.sign (R := Int) 2 *
+        DensePoly.Subresultant.coeffMinorAt 1 2 0 0 g h :=
+  DensePoly.Subresultant.coeffMinorAt_addMul 2 1 1 0 0 f g b h
+    (by omega) rfl hb hh
+
+-- Equal input degrees, odd swap parity, `J > 0`, and a remainder whose degree
+-- drops below `G` pin the nontrivial Brown column-update regime entrywise.
+#guard
+  let f := poly [3, 1, 1]
+  let g := poly [2, 0, 1]
+  let b := poly [-1]
+  let h := poly [1, 1]
+  let transformed := SubresultantMinor.productCols
+    (DensePoly.Subresultant.coeffMatrixAt 2 2 1 0 g f)
+      1 0 b 1 (by omega) (by omega)
+  let target := DensePoly.Subresultant.coeffMatrixAt 2 2 1 0 g h
+  h = f + b * g &&
+    transformed 0 0 = target 0 0 && transformed 0 1 = target 0 1 &&
+    transformed 1 0 = target 1 0 && transformed 1 1 = target 1 1 &&
+    DensePoly.Subresultant.coeffMinorAt 2 2 1 0 f g =
+      SubresultantMinor.sign (R := Int) 1 *
+        DensePoly.Subresultant.coeffMinorAt 2 2 1 0 g h
 
 /-! # Brown chain -/
 

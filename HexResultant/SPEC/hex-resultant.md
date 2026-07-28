@@ -228,6 +228,22 @@ adjacent swaps and proves the determinant factor
 `S_J(f, g) = (-1)^((deg f - J) * (deg g - J)) S_J(g, f)` without importing a
 matrix or determinant library.
 
+The next Brown--Traub transformation is also internal to this local
+determinant. `SubresultantMinor.productCols` realizes the required unit
+upper-triangular operation by adding multiplier-weighted `G` columns to the
+later `F` columns; all sources stay strictly to the left of the destination
+block, and `det_productCols` proves determinant preservation. For
+`H = F + B * G` with `deg F = deg B + deg G`, `productCols_addMul` identifies
+the transformed swapped matrix with the existing
+`coeffMatrixAt (deg G) (deg F) J l G H`. Its explicit second formal degree keeps
+`F`'s degree even when `H` drops. The coefficient identity `coeffFold_eq_mul`
+includes negative and out-of-range indices, so the special coefficient row and
+every ordinary Sylvester row use the same proof. Consequently
+`coeffMinorAt_addMul` proves the column-operation form of Brown--Traub equation
+(18): the original minor is the `G, H` minor times only the usual block-swap
+sign. Collapsing the retained formal degree of `H` and producing the
+leading-coefficient power is the next transformation.
+
 The injective coefficient map extends to dense polynomials and preserves
 normalized size, leading coefficients, constants, addition, subtraction,
 scaling, multiplication, and ordered pseudo-division. Generalized Sylvester
@@ -381,6 +397,9 @@ quotient is exact over every stated exact-division domain.
 - `HexResultant/BlockDeterminant.lean`: dimension recasting, numeric adjacent
   swaps, consecutive-block rotation with its parity law, and the resulting
   generalized-subresultant input-swap law.
+- `HexResultant/BrownTraub.lean`: multiplier-convolution column updates, the
+  resulting `G, H` coefficient matrix, and the signed column-operation identity
+  of Brown--Traub equation (18).
 - `HexResultant/Subresultant.lean`: the Brown worker,
   `subresultantChain`, `resultant`, chain termination, and degree bounds.
 - `HexResultant/Discriminant.lean`: `disc` and the algebraic
@@ -424,8 +443,10 @@ Per [SPEC/testing.md](../../SPEC/testing.md), fixtures are tiered into
     Brown-chain terms, left/right homogeneity, and a bivariate `ZPoly`
     coefficient ring. Direct local-determinant checks cover adjacent swaps,
     swap-sequence parity and action, arbitrary duplicate columns, and arbitrary
-    column updates. The local Laplace determinant is factorial proof
-    infrastructure, so these checks stay deliberately small rather than
+    column updates. An equal-degree `H = F + B * G` pin with `J > 0`, odd swap
+    parity, and `deg H < deg G` checks the multiplier transformation entrywise
+    and then checks equation (18). The local Laplace determinant is factorial
+    proof infrastructure, so these checks stay deliberately small rather than
     joining the random degree-10 resultant sweep.
   - A bivariate case over `R = ZPoly`, exercising the
     `hex-number-field` instantiation: for example

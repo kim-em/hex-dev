@@ -13,6 +13,7 @@ public import HexResultant.FractionPoly
 public import HexResultant.SubresultantMinor
 public import HexResultant.DeterminantAlgebra
 public import HexResultant.BlockDeterminant
+public import HexResultant.BrownTraub
 public import HexResultant.Subresultant
 public import HexResultant.Discriminant
 

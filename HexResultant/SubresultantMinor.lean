@@ -137,6 +137,17 @@ variable {R : Type u} [Zero R] [DecidableEq R]
 def coeffInt (p : DensePoly R) (i : Int) : R :=
   if i < 0 then 0 else p.coeff i.toNat
 
+/-- Integer-indexed coefficient lookup distributes over polynomial addition. -/
+theorem coeffInt_add {S : Type u} [Lean.Grind.CommRing S] [DecidableEq S]
+    (p q : DensePoly S) (t : Int) :
+    coeffInt (p + q) t = coeffInt p t + coeffInt q t := by
+  by_cases ht : t < 0
+  · unfold coeffInt
+    rw [if_pos ht, if_pos ht, if_pos ht]
+    grind
+  · unfold coeffInt
+    rw [if_neg ht, if_neg ht, if_neg ht, coeff_add_semiring]
+
 /-- Default formal degree: zero and nonzero constants both have degree zero. -/
 @[expose]
 def formalDegree (p : DensePoly R) : Nat :=
