@@ -229,6 +229,8 @@ prime searches can certify candidates beyond any precomputed list.
 
 {docstring Hex.Nat.isPrimeTrial_isPrime}
 
+{docstring Hex.Nat.isPrimeTrial_of_prime}
+
 # Worked example
 %%%
 tag := "hex-arith-worked"

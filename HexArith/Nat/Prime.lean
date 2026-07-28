@@ -533,6 +533,8 @@ Balanced trial division over the `2 ^ fuel` candidates starting at `k`.
 The square guard is checked before descending into an interval, so no
 candidate with `n < k * k` is tested. Splitting the interval in half keeps
 kernel reduction depth logarithmic in the number of candidate divisors.
+This helper is a primality test only with a range large enough to cover every
+small divisor; `isPrimeTrial` is the supported entry point.
 -/
 @[expose] def isPrimeTrialAux (n : Nat) : Nat → Nat → Bool
   | 0, k =>
@@ -717,6 +719,7 @@ squares, and semiprimes whose least factor is close to the square root. -/
 #guard isPrimeTrial 49 = false
 #guard isPrimeTrial 121 = false
 #guard isPrimeTrial 899 = false
+#guard ((List.range 1000).filter isPrimeTrial).length = 168
 
 end Nat
 

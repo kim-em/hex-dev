@@ -92,6 +92,10 @@ example := irreducibility (3 : Polynomial (ZMod 5))
 
 /-! ## Bounded primality replay -/
 
+/-- The former linear checker exceeded default recursion depth on this
+modulus; the balanced square-root scan kernel-replays directly. -/
+example : Hex.Nat.isPrimeTrial 67108879 = true := by decide
+
 /--
 error: irreducibility: the polynomial
   3

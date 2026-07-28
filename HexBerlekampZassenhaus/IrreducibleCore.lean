@@ -186,9 +186,11 @@ by the greedy expansion helper. -/
 def Associated (a b : ZPoly) : Prop :=
   ∃ u : ZPoly, ZPoly.IsUnit u ∧ b = a * u
 
+/-- Integer primality checker used by constant-polynomial irreducibility.
+This is the shared verified bounded checker from `HexArith`. -/
 @[expose]
 def isNatPrime (n : Nat) : Bool :=
-  2 ≤ n && !((List.range n).any fun d => 2 ≤ d && d * d ≤ n && n % d == 0)
+  Hex.Nat.isPrimeTrial n
 
 /--
 Computational irreducibility checker backed by the public factorization API.
@@ -259,36 +261,53 @@ private theorem isNatPrime_iff (n : Nat) :
     isNatPrime n = true ↔
       2 ≤ n ∧ ∀ d : Nat, 2 ≤ d → d * d ≤ n → ¬ d ∣ n := by
   unfold isNatPrime
-  rw [Bool.and_eq_true, decide_eq_true_iff, Bool.not_eq_true', List.any_eq_false]
-  refine Iff.intro ?fwd ?bwd
-  case fwd =>
-    rintro ⟨h2, hany⟩
-    refine ⟨h2, fun d hd2 hdd_le hdvd => ?_⟩
-    have hd_lt_n : d < n := by
-      have h2d_le_dd : 2 * d ≤ d * d := Nat.mul_le_mul_right d hd2
-      have h2d_le_n : 2 * d ≤ n := Nat.le_trans h2d_le_dd hdd_le
+  constructor
+  · intro h
+    have hp : Hex.Nat.Prime n := Hex.Nat.isPrimeTrial_isPrime h
+    refine ⟨hp.two_le, fun d hd2 hdd_le hdvd => ?_⟩
+    rcases hp.2 d hdvd with hd1 | hdn
+    · omega
+    · subst d
+      have hn_lt_mul : n < n * n := by
+        simpa using (Nat.mul_lt_mul_left hp.pos).2 hp.one_lt
       omega
-    have hmem : d ∈ List.range n := List.mem_range.mpr hd_lt_n
-    have hpred_ne_true : ¬
-        ((decide (2 ≤ d) && decide (d * d ≤ n) && (n % d == 0)) = true) :=
-      hany d hmem
-    apply hpred_ne_true
-    have h1 : (decide (2 ≤ d)) = true := decide_eq_true hd2
-    have h2 : (decide (d * d ≤ n)) = true := decide_eq_true hdd_le
-    have h3 : (n % d == 0) = true := by
-      rw [beq_iff_eq]
-      exact Nat.mod_eq_zero_of_dvd hdvd
-    rw [h1, h2, h3]
-    rfl
-  case bwd =>
-    rintro ⟨h2, hno⟩
-    refine ⟨h2, fun d hmem => ?_⟩
-    have hd_lt_n : d < n := List.mem_range.mp hmem
-    intro hpred_true
-    rw [Bool.and_eq_true, Bool.and_eq_true, decide_eq_true_iff,
-      decide_eq_true_iff, beq_iff_eq] at hpred_true
-    obtain ⟨⟨hd2, hdd_le⟩, hmod⟩ := hpred_true
-    exact hno d hd2 hdd_le (Nat.dvd_of_mod_eq_zero hmod)
+  · rintro ⟨h2, hno⟩
+    apply Hex.Nat.isPrimeTrial_of_prime
+    refine ⟨h2, ?_⟩
+    intro m hm
+    by_cases hm1 : m = 1
+    · exact Or.inl hm1
+    by_cases hmn : m = n
+    · exact Or.inr hmn
+    exfalso
+    rcases hm with ⟨c, hc⟩
+    have hm0 : m ≠ 0 := by
+      intro h
+      subst m
+      simp at hc
+      omega
+    have hm2 : 2 ≤ m := by omega
+    have hc0 : c ≠ 0 := by
+      intro h
+      subst c
+      simp at hc
+      omega
+    have hc1 : c ≠ 1 := by
+      intro h
+      subst c
+      simp at hc
+      exact hmn hc.symm
+    have hc2 : 2 ≤ c := by omega
+    by_cases hmc : m ≤ c
+    · apply hno m hm2
+      · rw [hc]
+        exact Nat.mul_le_mul_left m hmc
+      · exact ⟨c, hc⟩
+    · have hcm : c ≤ m := Nat.le_of_not_ge hmc
+      apply hno c hc2
+      · rw [hc]
+        simpa [Nat.mul_comm] using Nat.mul_le_mul_left c hcm
+      · exact ⟨m, by simpa [Nat.mul_comm] using hc⟩
 
 /-- `DensePoly.C` on integers commutes with multiplication: `C (a*b) = C a * C b`.
 Used by the constant-polynomial Irreducible characterisation to split integer

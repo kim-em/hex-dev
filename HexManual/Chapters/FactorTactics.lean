@@ -348,13 +348,14 @@ content of the input.
 Finally, `Polynomial (ZMod q)` inputs reuse the prime-field pipeline
 through the parser-with-proof of `HexBerlekampMathlib`, producing the
 same {name}`Hex.FactoredPoly` shape as the integer case. The modulus
-must be a literal prime inside the `ZMod64` bound (`q < 2³¹`). The
-primality checker tests candidates from `2` through `⌊√q⌋`, so checking
-the emitted proof takes `Θ(√q)` remainder tests. The provider budgets
-that exact worst-case candidate count; throughout the `ZMod64` range it
-is at most `46,339`, below the `2¹⁶` primality replay ceiling. The separate
-per-factor `(degree + 1) · q` Rabin-certificate replay budget of the
-{ref "factor-tactics-coverage"}[coverage section] still applies:
+must be a literal prime inside the `ZMod64` bound (`q < 2³¹`), but the
+per-factor Rabin-certificate budget binds first for every nonconstant
+input: `(degree + 1) · q ≤ 2²⁶`, as described in the
+{ref "factor-tactics-coverage"}[coverage section]. The primality checker
+tests candidates from `2` through `⌊√q⌋`, so checking that part of the
+emitted proof takes `Θ(√q)` remainder tests. The provider budgets that
+exact worst-case candidate count against a separate `2¹⁶` ceiling;
+throughout the `ZMod64` range it is at most `46,339`.
 
 ```lean
 open Polynomial
@@ -447,7 +448,7 @@ certificate for a prime where the factor stays irreducible), and
 Eisenstein-after-shift. Each is found by a bounded search, so an
 input can lie inside a certificate language yet outside the
 implemented search: the single-prime search tries primes below `512`
-(those within the replay budget), the Eisenstein search tries shifts
+(with the Rabin budget enforced separately), the Eisenstein search tries shifts
 `0, ±1, ±2, ±3` with witness primes capped at `128` to keep that
 auxiliary search bounded, and a prime-constant witness must itself fit
 the replay budget. The

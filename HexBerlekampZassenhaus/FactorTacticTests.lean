@@ -44,10 +44,13 @@ example : True := by
 def linZ : ZPoly := DensePoly.ofCoeffs #[3, 2]
 def quadZ : ZPoly := DensePoly.ofCoeffs #[1, 0, 1]
 def constZ : ZPoly := DensePoly.C (-7)
+def largeConstZ : ZPoly := DensePoly.C 10007
 
 theorem lin_irred : ZPoly.Irreducible linZ := irreducibility linZ
 theorem quad_irred : ZPoly.Irreducible quadZ := irreducibility quadZ
 theorem const_irred : ZPoly.Irreducible constZ := irreducibility constZ
+theorem large_const_irred : ZPoly.Irreducible largeConstZ :=
+  irreducibility largeConstZ
 
 example : ZPoly.Irreducible quadZ := by irreducibility
 
@@ -109,11 +112,11 @@ is a unit (±1), not irreducible -/
 
 /--
 info: irreducibility: deciding primality of the constant
-  DensePoly.C 67108879
-needs a kernel replay of roughly 67108879 steps, over the supported budget (67108864)
+  DensePoly.C 4295229444
+needs a kernel replay of 65537 candidate remainder tests, over the supported budget (65536)
 -/
 #guard_msgs in
-#check_failure (irreducibility (DensePoly.C (67108879 : Int)))
+#check_failure (irreducibility (DensePoly.C (4295229444 : Int)))
 
 /-! ## Axiom hygiene -/
 

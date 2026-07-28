@@ -170,12 +170,15 @@ is used only at elaboration time to budget the proof that the kernel will
 replay.
 -/
 meta def primeReplayCost (n : Nat) : Nat := Id.run do
-  let mut k := 2
-  let mut cost := 0
-  while k * k ≤ n do
-    cost := cost + 1
-    k := k + 1
-  return cost
+  let mut lo := 0
+  let mut hi := n + 1
+  while lo + 1 < hi do
+    let mid := (lo + hi) / 2
+    if mid * mid ≤ n then
+      lo := mid
+    else
+      hi := mid
+  return lo - 1
 
 /-- Fail fast when a Rabin replay for a degree-`deg` factor at modulus `p`
 would exceed `replayBudget`. -/
