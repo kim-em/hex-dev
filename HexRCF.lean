@@ -28,6 +28,7 @@ public import HexRCF.CellsTests
 public import HexRCF.CommonRootCheck
 public import HexRCF.CommonRoot
 public import HexRCF.CommonRootTests
+public import HexRCF.SignMatrixCheck
 public import HexRCF.SignMatrix
 public import HexRCF.SignMatrixTests
 public import HexRCF.Builder

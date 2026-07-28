@@ -8,7 +8,7 @@ module
 
 public import HexRCF.CarrierCheck
 public import HexRCF.CommonRootCheck
-public import HexRCF.SignMatrix
+public import HexRCF.SignMatrixCheck
 public import HexRCF.SturmBuilder
 
 public section

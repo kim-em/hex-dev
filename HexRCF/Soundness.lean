@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.Certificate
+public import HexRCF.SignMatrix
 
 public section
 
