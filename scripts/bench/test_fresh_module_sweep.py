@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import io
+import json
 import os
 import signal
 import subprocess
@@ -212,6 +213,262 @@ class ProcessGroupTests(unittest.TestCase):
 
 
 class PairingTests(unittest.TestCase):
+    @staticmethod
+    def shared_arm(
+        *,
+        foreign: float = 0.0,
+        residual: float = 0.0,
+        noninterrupt_residual: float | None = None,
+        interrupt: float = 0.0,
+        sibling_busy: float = 0.0,
+    ) -> dict[str, object]:
+        host = {
+            "concurrent_lake_lean_count": 0,
+            "load_1m_per_cpu": 0.0,
+            "affinity_cpu_frequency_khz": "2500000",
+        }
+        return {
+            "wall_nanos": 1_000_000_000,
+            "peak_rss_kb": 1,
+            "axioms": None,
+            "cpu_percent": 100.0,
+            "host_before": host,
+            "host_after": host,
+            "cpu_accounting": {
+                "clock_ticks_per_second": 100,
+                "measurement_cpu_residual_seconds": residual,
+                "measurement_cpu_interrupt_seconds": interrupt,
+                "measurement_cpu_noninterrupt_residual_seconds": (
+                    residual
+                    if noninterrupt_residual is None
+                    else noninterrupt_residual
+                ),
+                "measurement_cpu_foreign_seconds": foreign,
+                "aggregate_core_interference_seconds":
+                    foreign + sibling_busy,
+                "mean_frequency_khz": 2_500_000,
+                "pressure_some_delta_us": 0,
+                "per_cpu": {"95": {"busy_seconds": sibling_busy}},
+            },
+        }
+
+    def test_interrupt_ticks_are_not_classified_as_foreign_work(self) -> None:
+        raw, noninterrupt, foreign = sweep.foreign_cpu_accounting(
+            target_busy_seconds=1.08,
+            child_cpu_seconds=0.99,
+            runner_cpu_seconds_value=0.01,
+            interrupt_seconds=0.07,
+        )
+        self.assertAlmostEqual(raw, 0.08)
+        self.assertAlmostEqual(noninterrupt, 0.01)
+        self.assertAlmostEqual(foreign, 0.01)
+
+    def test_shared_host_retries_complete_pair_in_same_order(self) -> None:
+        bad = self.shared_arm(sibling_busy=0.10)
+        good = self.shared_arm(sibling_busy=0.01)
+        modules = (
+            ("reference", sweep.ProbeModule("Probe.Baseline")),
+            ("candidate", sweep.ProbeModule("Probe.Candidate")),
+        )
+        with mock.patch.object(
+            sweep, "build_sample", side_effect=[bad, good, good, good]
+        ) as build, mock.patch.object(
+            sweep, "sampled_host_state", return_value={}
+        ), mock.patch.object(sweep, "cpu_affinity", return_value=[47]):
+            with mock.patch.object(
+                sweep,
+                "wait_for_shared_host_window",
+                return_value={
+                    "admitted": True,
+                    "elapsed_seconds": 2.0,
+                    "rejected_windows": [],
+                    "accepted_window": {},
+                },
+            ):
+                accepted, rejected, preflight_failure = (
+                    sweep.build_shared_host_pair(
+                        "pair", 1, 0, modules,
+                        60.0, 47, [47, 95], [95], 0.002, 2,
+                        2.0, 300.0,
+                    )
+                )
+        assert accepted is not None
+        self.assertIsNone(preflight_failure)
+        self.assertEqual(accepted["measurement_attempt"], 2)
+        self.assertEqual(len(rejected), 1)
+        self.assertEqual(
+            [call.args[0] for call in build.call_args_list],
+            [
+                "Probe.Baseline", "Probe.Candidate",
+                "Probe.Baseline", "Probe.Candidate",
+            ],
+        )
+        self.assertRegex(
+            "; ".join(rejected[0]["issues"]),
+            "aggregate measurement-CPU foreign and SMT-sibling",
+        )
+
+    def test_shared_host_retry_exhaustion_admits_no_pair(self) -> None:
+        modules = (
+            ("candidate", sweep.ProbeModule("Probe.Candidate")),
+            ("reference", sweep.ProbeModule("Probe.Baseline")),
+        )
+        with mock.patch.object(
+            sweep,
+            "build_sample",
+            side_effect=[
+                self.shared_arm(foreign=0.10),
+                self.shared_arm(foreign=0.10),
+                self.shared_arm(foreign=0.10),
+                self.shared_arm(foreign=0.10),
+            ],
+        ), mock.patch.object(
+            sweep, "sampled_host_state", return_value={}
+        ), mock.patch.object(sweep, "cpu_affinity", return_value=[47]):
+            with mock.patch.object(
+                sweep,
+                "wait_for_shared_host_window",
+                return_value={
+                    "admitted": True,
+                    "elapsed_seconds": 2.0,
+                    "rejected_windows": [],
+                    "accepted_window": {},
+                },
+            ):
+                accepted, rejected, preflight_failure = (
+                    sweep.build_shared_host_pair(
+                        "pair", 1, 0, modules,
+                        60.0, 47, [47, 95], [95], 0.002, 1,
+                        2.0, 300.0,
+                    )
+                )
+        self.assertIsNone(accepted)
+        self.assertIsNone(preflight_failure)
+        self.assertEqual(len(rejected), 2)
+        self.assertEqual(rejected[-1]["build_order"], [
+            "candidate", "reference"
+        ])
+        self.assertRegex(
+            "; ".join(rejected[-1]["issues"]),
+            "aggregate measurement-CPU foreign",
+        )
+
+    def test_interrupt_cannot_mask_negative_cpu_accounting(self) -> None:
+        arm = self.shared_arm(
+            residual=0.10,
+            noninterrupt_residual=-0.05,
+            interrupt=0.15,
+        )
+        issues = sweep.shared_host_arm_issues(
+            "pair", 1, "reference", arm, 47, [95], 0.02
+        )
+        self.assertRegex(
+            "; ".join(issues),
+            "child CPU time exceeds pinned-CPU busy time",
+        )
+
+    def test_foreign_and_sibling_interference_share_one_allowance(self) -> None:
+        arm = self.shared_arm(foreign=0.02, sibling_busy=0.02)
+        issues = sweep.shared_host_arm_issues(
+            "pair", 1, "reference", arm, 47, [95], 0.02
+        )
+        self.assertRegex(
+            "; ".join(issues),
+            "aggregate measurement-CPU foreign and SMT-sibling",
+        )
+
+    def test_preflight_waits_out_sibling_activity(self) -> None:
+        def ticks(
+            target_user: int = 0, sibling_user: int = 0
+        ) -> dict[int, dict[str, int]]:
+            fields = {
+                "user": 0, "nice": 0, "system": 0, "idle": 100,
+                "iowait": 0, "irq": 0, "softirq": 0, "steal": 0,
+            }
+            target = dict(fields)
+            target["user"] = target_user
+            sibling = dict(fields)
+            sibling["user"] = sibling_user
+            return {47: target, 95: sibling}
+
+        with mock.patch.object(
+            sweep,
+            "cpu_ticks",
+            side_effect=[
+                ticks(), ticks(sibling_user=5),
+                ticks(), ticks(target_user=1),
+            ],
+        ), mock.patch.object(
+            sweep.time, "sleep"
+        ) as sleep, mock.patch.object(
+            sweep.time, "monotonic", side_effect=[0.0, 2.0, 4.0]
+        ):
+            result = sweep.wait_for_shared_host_window(
+                47, [47, 95], [95], 2.0, 300.0
+            )
+        self.assertTrue(result["admitted"])
+        self.assertEqual(len(result["rejected_windows"]), 1)
+        self.assertEqual(
+            result["accepted_window"]["per_cpu"]["47"][
+                "noninterrupt_busy_ticks"
+            ],
+            1,
+        )
+        self.assertEqual(sleep.call_count, 2)
+
+    def test_preflight_timeout_is_explicit(self) -> None:
+        fields = {
+            "user": 0, "nice": 0, "system": 0, "idle": 100,
+            "iowait": 0, "irq": 0, "softirq": 0, "steal": 0,
+        }
+        before = {47: dict(fields), 95: dict(fields)}
+        after = {47: dict(fields), 95: {**fields, "user": 5}}
+        with mock.patch.object(
+            sweep, "cpu_ticks", side_effect=[before, after]
+        ), mock.patch.object(
+            sweep.time, "sleep"
+        ), mock.patch.object(
+            sweep.time, "monotonic", side_effect=[0.0, 2.0]
+        ):
+            result = sweep.wait_for_shared_host_window(
+                47, [47, 95], [95], 2.0, 2.0
+            )
+        self.assertFalse(result["admitted"])
+        self.assertEqual(len(result["rejected_windows"]), 1)
+        self.assertRegex(
+            "; ".join(result["issues"]), "did not become quiet"
+        )
+
+    def test_preflight_timeout_builds_no_pair(self) -> None:
+        modules = (
+            ("reference", sweep.ProbeModule("Probe.Baseline")),
+            ("candidate", sweep.ProbeModule("Probe.Candidate")),
+        )
+        failure = {
+            "admitted": False,
+            "elapsed_seconds": 300.0,
+            "rejected_windows": [],
+            "accepted_window": None,
+            "issues": ["physical core remained busy"],
+        }
+        with mock.patch.object(
+            sweep, "wait_for_shared_host_window", return_value=failure
+        ), mock.patch.object(sweep, "build_sample") as build:
+            accepted, rejected, preflight_failure = (
+                sweep.build_shared_host_pair(
+                    "pair", 1, 0, modules,
+                    60.0, 47, [47, 95], [95], 0.002, 8,
+                    2.0, 300.0,
+                )
+            )
+        self.assertIsNone(accepted)
+        self.assertEqual(rejected, [])
+        assert preflight_failure is not None
+        self.assertEqual(preflight_failure["issues"], [
+            "physical core remained busy"
+        ])
+        build.assert_not_called()
+
     def test_frequency_residency_uses_arm_weighted_mean(self) -> None:
         delta = sweep.frequency_residency_delta(
             {1_500_000: 10, 3_000_000: 20},
@@ -463,7 +720,10 @@ class PairingTests(unittest.TestCase):
                 "host_after": host,
                 "cpu_accounting": {
                     "measurement_cpu_residual_seconds": 0.01,
+                    "measurement_cpu_noninterrupt_residual_seconds": 0.01,
                     "measurement_cpu_foreign_seconds": 0.01,
+                    "aggregate_core_interference_seconds":
+                        0.01 + sibling_busy,
                     "mean_frequency_khz": 2_500_000,
                     "pressure_some_delta_us": 5,
                     "per_cpu": {
@@ -484,7 +744,8 @@ class PairingTests(unittest.TestCase):
         )
         self.assertEqual(observed["max_smt_sibling_busy_ratio"], 0.10)
         self.assertRegex(
-            "; ".join(observed["violations"]), "SMT sibling CPU 95"
+            "; ".join(observed["violations"]),
+            "aggregate measurement-CPU foreign and SMT-sibling",
         )
 
     def test_shared_host_observations_reject_missing_frequency(self) -> None:
@@ -499,7 +760,9 @@ class PairingTests(unittest.TestCase):
             "host_after": host,
             "cpu_accounting": {
                 "measurement_cpu_residual_seconds": 0.0,
+                "measurement_cpu_noninterrupt_residual_seconds": 0.0,
                 "measurement_cpu_foreign_seconds": 0.0,
+                "aggregate_core_interference_seconds": 0.0,
                 "mean_frequency_khz": None,
                 "pressure_some_delta_us": 0,
                 "per_cpu": {"95": {"busy_seconds": 0.0}},
@@ -533,8 +796,11 @@ class PairingTests(unittest.TestCase):
             "host_before": host,
             "host_after": host,
             "cpu_accounting": {
-                "measurement_cpu_residual_seconds": -0.5,
+                "measurement_cpu_residual_seconds": 0.1,
+                "measurement_cpu_interrupt_seconds": 0.6,
+                "measurement_cpu_noninterrupt_residual_seconds": -0.5,
                 "measurement_cpu_foreign_seconds": 0.0,
+                "aggregate_core_interference_seconds": 0.0,
                 "mean_frequency_khz": 2_500_000,
                 "pressure_some_delta_us": 0,
                 "per_cpu": {"95": {"busy_seconds": 0.0}},
@@ -570,7 +836,9 @@ class PairingTests(unittest.TestCase):
                 "host_after": host,
                 "cpu_accounting": {
                     "measurement_cpu_residual_seconds": 0.0,
+                    "measurement_cpu_noninterrupt_residual_seconds": 0.0,
                     "measurement_cpu_foreign_seconds": 0.0,
+                    "aggregate_core_interference_seconds": 0.0,
                     "mean_frequency_khz": mean_frequency,
                     "pressure_some_delta_us": 0,
                     "per_cpu": {"95": {"busy_seconds": 0.0}},
@@ -733,6 +1001,92 @@ class HarnessValidationTests(unittest.TestCase):
                         "--cpu", "3", "--allow-busy",
                     ],
                 )
+
+    def test_pair_retry_limit_is_capped_at_eight(self) -> None:
+        with mock.patch.object(sys, "stderr", new=io.StringIO()):
+            with self.assertRaises(SystemExit):
+                sweep.parse_args(
+                    "shared", ["--max-pair-retries", "9"]
+                )
+            with self.assertRaises(SystemExit):
+                sweep.parse_args(
+                    "shared", ["--max-arm-retries", "9"]
+                )
+
+    def test_exhausted_pair_emits_unsummarized_partial_artifact(self) -> None:
+        rejected = [{
+            "attempt": 1,
+            "issues": ["synthetic aggregate interference"],
+            "reference": {"wall_nanos": 1},
+            "candidate": {"wall_nanos": 2},
+        }]
+        env = {
+            "repository": {"state_sha256": "stable"},
+            "dependency_checkouts": {},
+            "host_before": {},
+            "git_commit": "deadbeef",
+            "hostname": "chungus2",
+        }
+        topology = {"thread_siblings_list": "22,70"}
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "partial.json"
+            with mock.patch.object(sweep, "validate_spec"), \
+                    mock.patch.object(sweep, "configure_shared_host"), \
+                    mock.patch.object(
+                        sweep, "shared_host_protocol_issues", return_value=[]
+                    ), mock.patch.object(
+                        sweep, "environment", return_value=env
+                    ), mock.patch.object(
+                        sweep, "dirty_issues", return_value=[]
+                    ), mock.patch.object(
+                        sweep, "host_issues", return_value=[]
+                    ), mock.patch.object(sweep, "warm_imports"), \
+                    mock.patch.object(
+                        sweep, "source_hashes",
+                        return_value={"source": "hash"},
+                    ), mock.patch.object(
+                        sweep, "cpu_topology", return_value=topology
+                    ), mock.patch.object(
+                        sweep, "host_state", return_value={}
+                    ), mock.patch.object(
+                        sweep, "build_shared_host_pair",
+                        return_value=(None, rejected, None),
+                    ), mock.patch.object(
+                        sweep, "checkout_state",
+                        return_value={"state_sha256": "stable"},
+                    ), mock.patch.object(
+                        sweep, "dependency_checkouts", return_value={}
+                    ), mock.patch.object(
+                        sweep, "summarize"
+                    ) as summarize:
+                status = sweep.run_cli(
+                    SPEC,
+                    CALLER,
+                    [
+                        "--samples", "6",
+                        "--shared-host",
+                        "--expected-host", "chungus2",
+                        "--cpu", "22",
+                        "--output", str(output),
+                    ],
+                )
+            record = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(status, 2)
+        summarize.assert_not_called()
+        self.assertEqual(record["measurement_state"], "incomplete")
+        self.assertEqual(record["results"], {})
+        self.assertEqual(record["partial_samples"][PAIR.name], [])
+        self.assertEqual(len(record["rejected_pair_attempts"]), 1)
+        self.assertEqual(record["validity"]["observed"][
+            "total_rejected_pair_attempts"
+        ], 1)
+        self.assertEqual(record["validity"]["observed"][
+            "total_exhausted_pairs"
+        ], 1)
+        self.assertRegex(
+            "; ".join(record["validity"]["exceptions"]),
+            "exhausted 1 pair attempt",
+        )
 
     def test_shared_host_pins_named_machine(self) -> None:
         args = sweep.parse_args(

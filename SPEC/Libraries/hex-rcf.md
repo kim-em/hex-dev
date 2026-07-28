@@ -728,8 +728,11 @@ set, and refuses release claims from a dirty or uncontrolled host. On the
 named shared release machine it uses the designated-shared-host protocol from
 `SPEC/benchmarking.md`: a preregistered hostname and logical CPU, runner-enforced
 affinity inherited by timed children, six balanced rounds, all null controls,
-and per-arm pinned-core/SMT scheduler accounting. Global load is recorded
-context; the scoped core-interference ceiling is the release gate.
+and per-arm pinned-core/SMT scheduler accounting with bounded whole-pair
+retries after a bounded quiet-core preflight. The admitted foreign-plus-SMT
+aggregate shares one interference ceiling, and a rejected preflight window or
+pair attempt never enters timing summaries. Global load is recorded context;
+the scoped core-interference ceiling is the release gate.
 
 The committed implementation lives under `bench/HexRCF/ProofProbe/`.
 `Support.lean` owns the fixed source and reflected cases plus the precompiled
