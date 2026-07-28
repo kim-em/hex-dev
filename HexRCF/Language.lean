@@ -21,8 +21,8 @@ Nested quantifiers and additional variables are unrepresentable by
 construction. Rational coefficients are handled by the tactic's reifier,
 which clears denominators before constructing an `Atom`.
 
-Reification transports atom evaluation and dyadic endpoints propositionally,
-through the `aeval` and `Dyadic.toReal` bridge lemmas. Normalisation and
+Reification relates atom evaluation and dyadic endpoints propositionally
+using the `aeval` and `Dyadic.toReal` lemmas. Normalisation and
 denominator clearing are not expected to make the reflected semantics
 definitionally equal to the source goal.
 -/
