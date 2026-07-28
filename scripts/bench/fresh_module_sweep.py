@@ -60,6 +60,7 @@ class ProbePair:
     reference: ProbeModule
     candidate: ProbeModule
     metadata: dict[str, object]
+    null_control: bool = False
 
 
 @dataclass(frozen=True)
@@ -315,7 +316,12 @@ def validate_spec(spec: SweepSpec) -> None:
         raise RuntimeError("fresh-module sweep pair names must be unique")
     measured = probe_modules(spec)
     for pair in spec.pairs:
-        if pair.reference.module == pair.candidate.module:
+        identical = pair.reference.module == pair.candidate.module
+        if pair.null_control and not identical:
+            raise RuntimeError(
+                f"{pair.name}: null control modules must be identical"
+            )
+        if not pair.null_control and identical:
             raise RuntimeError(f"{pair.name}: reference and candidate are identical")
     target = _ExeTarget(spec.probe_target, "", spec.src_dir)
     package_root = ROOT / ".lake" / "packages"
@@ -560,6 +566,7 @@ def summarize(
         deltas = [int(sample["signed_wall_delta_nanos"]) for sample in samples]
         result: dict[str, object] = {
             **pair.metadata,
+            "null_control": pair.null_control,
             "reference": {
                 "module": pair.reference.module,
                 "expected_axioms": pair.reference.expected_axioms,

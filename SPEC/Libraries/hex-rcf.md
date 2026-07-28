@@ -689,14 +689,20 @@ distinct sign entries, and formula occurrences). The fixed
 quadratic/degree-10/degree-50 cases below do not participate in those
 complexity verdicts.
 
-The tactic track uses matched fresh-module variants for each fixed case:
+The tactic track begins with one same-module `Baseline − Baseline` null control,
+then uses matched fresh-module variants for each fixed case:
 `Baseline` (identical imports), `Reify` (reify-only checksum), `Input`
 (reflected sentence literal), `Search` (the same input plus a meta checksum of
 compiled certificate construction, emitting no proof), `Literal` (input plus
 the pre-generated certificate), `Replay` (literal plus its kernel-checked
 theorem), and `Tactic` (the source goal closed by `rcf`). An external runner
-rotates fresh builds and reports raw paired deltas for reification, search,
-literal elaboration, replay, and the full tactic. `Search − Input` is
+rotates fresh builds and reports the null calibration followed by raw paired
+deltas for reification, search, literal elaboration, replay, and the full
+tactic. The null's five signed deltas, range, and median describe fresh-build
+noise only: they are reported before the substantive pairs and are never
+subtracted, promoted to a significance test, or used to alter the fixed tactic
+budgets. A substantive delta inside the observed null spread is noise-sized or
+unresolved. `Search − Input` is
 phase-attribution evidence only; the matching LeanBench target supplies the
 scientific asymptotic verdict, and the report neither substitutes nor adds the
 two. The headline report records source hashes, commit/toolchain/host/load
@@ -713,7 +719,9 @@ independently rebuildable. All measured modules import the same generated
 support module and no measured module imports another measured module.
 
 There is one shared `Baseline` and six measured modules under each of
-`Quadratic/`, `Degree10/`, and `Degree50/`. The five report pairs are exactly:
+`Quadratic/`, `Degree10/`, and `Degree50/`. The report contains sixteen pairs:
+the `Baseline − Baseline` null control first, then these five pairs for each of
+the three cases:
 
 | Report component | Reference | Candidate |
 | --- | --- | --- |

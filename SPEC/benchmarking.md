@@ -287,6 +287,16 @@ in-process clock, or contain a timing loop. A probe also cannot root any
 - refuse a release-quality verdict on a dirty tree, a busy shared host, a
   timed-out build, or a provenance mismatch.
 
+A proof-track sweep may precede its substantive pairs with a marked
+same-module null control: the exact same committed module is independently
+rebuilt in the reference and candidate roles under the ordinary alternating
+orientation. Its raw signed deltas describe fresh-build noise under that run's
+host conditions. The report records their range and median before interpreting
+the proof deltas, but does not subtract the null median, widen a budget by the
+null range, assign significance, or use the control as scientific evidence.
+With the small preregistered sample counts used here, a substantive delta
+inside the observed null spread is described only as noise-sized or unresolved.
+
 Phase attribution uses matched module variants, not clocks embedded in the
 probe. A tactic library may use a baseline; a reify-only module; an input module
 containing the reflected sentence literal; a search module that runs compiled
@@ -849,7 +859,8 @@ The report contains five subsections:
    "inconclusive", with the verdict text). Each fixed registration's
    median per-call time and observed-hash agreement. Proof-track entries report
    all raw rotated fresh-build samples and paired deltas, never a complexity
-   verdict.
+   verdict. When the sweep has a null control, its raw deltas, range, and median
+   precede the substantive proof deltas and remain descriptive only.
 3. **Comparator ratios.** Each comparator named in the per-library
    SPEC ([§Comparator naming](#comparator-naming)) — `gating` and
    `informational` alike — with measured ratios across the full

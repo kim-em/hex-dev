@@ -202,6 +202,7 @@ class PairingTests(unittest.TestCase):
         self.assertEqual(
             summary[PAIR.name]["signed_wall_delta_nanos"], [25]
         )
+        self.assertFalse(summary[PAIR.name]["null_control"])
 
     def test_axiom_policy_is_per_module(self) -> None:
         sample = {
@@ -232,6 +233,56 @@ class PairingTests(unittest.TestCase):
             [role for role, _module in sweep.ordered_modules(PAIR, 1)],
             ["candidate", "reference"],
         )
+
+    def test_null_pair_orientation_alternates_with_one_module(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        pair = sweep.ProbePair(
+            "null", module, module, {}, null_control=True
+        )
+        self.assertEqual(
+            sweep.ordered_modules(pair, 0),
+            [("reference", module), ("candidate", module)],
+        )
+        self.assertEqual(
+            sweep.ordered_modules(pair, 1),
+            [("candidate", module), ("reference", module)],
+        )
+
+    def test_null_summary_preserves_candidate_minus_reference_sign(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        pair = sweep.ProbePair(
+            "null", module, module, {}, null_control=True
+        )
+        spec = sweep.SweepSpec(
+            description="null",
+            pairs=(pair,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        rows = {
+            pair.name: [{
+                "round": 1,
+                "build_order": ["candidate", "reference"],
+                "reference": {
+                    "wall_nanos": 120,
+                    "peak_rss_kb": None,
+                    "axioms": None,
+                },
+                "candidate": {
+                    "wall_nanos": 100,
+                    "peak_rss_kb": None,
+                    "axioms": None,
+                },
+                "signed_wall_delta_nanos": -20,
+            }]
+        }
+        with mock.patch.object(sweep, "artifact_sizes", return_value={}):
+            summary = sweep.summarize(spec, rows)[pair.name]
+        self.assertTrue(summary["null_control"])
+        self.assertEqual(summary["signed_wall_delta_nanos"], [-20])
+        self.assertEqual(summary["median_signed_wall_delta_nanos"], -20)
 
 
 class HarnessValidationTests(unittest.TestCase):
@@ -293,6 +344,55 @@ class HarnessValidationTests(unittest.TestCase):
             output_stem="test",
         )
         with self.assertRaisesRegex(RuntimeError, "must be unique"):
+            sweep.validate_spec(spec)
+
+    def test_ordinary_identical_pair_fails_closed(self) -> None:
+        module = sweep.ProbeModule("Probe.Same")
+        spec = sweep.SweepSpec(
+            description="ordinary identical",
+            pairs=(sweep.ProbePair("same", module, module, {}),),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        with self.assertRaisesRegex(RuntimeError, "are identical"):
+            sweep.validate_spec(spec)
+
+    def test_null_control_requires_identical_modules(self) -> None:
+        pair = sweep.ProbePair(
+            "null",
+            sweep.ProbeModule("Probe.Reference"),
+            sweep.ProbeModule("Probe.Candidate"),
+            {},
+            null_control=True,
+        )
+        spec = sweep.SweepSpec(
+            description="invalid null",
+            pairs=(pair,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        with self.assertRaisesRegex(RuntimeError, "must be identical"):
+            sweep.validate_spec(spec)
+
+    def test_same_module_null_control_is_valid(self) -> None:
+        module = sweep.ProbeModule("Probe.Same")
+        pair = sweep.ProbePair("null", module, module, {}, null_control=True)
+        spec = sweep.SweepSpec(
+            description="valid null",
+            pairs=(pair,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        source = Path("/unused/Probe/Same.lean")
+        with mock.patch.object(sweep, "probe_source", return_value=source), \
+                mock.patch.object(Path, "is_file", return_value=True), \
+                mock.patch.object(sweep, "_parse_imports", return_value=[]):
             sweep.validate_spec(spec)
 
     def test_transitive_measured_module_import_fails_closed(self) -> None:

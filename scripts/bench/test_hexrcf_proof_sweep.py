@@ -11,15 +11,31 @@ from scripts.bench import hexrcf_proof_sweep as rcf
 
 class ManifestTests(unittest.TestCase):
     def test_five_pairs_per_fixed_case(self) -> None:
-        self.assertEqual(len(rcf.SPEC.pairs), 15)
+        self.assertEqual(len(rcf.SPEC.pairs), 16)
         self.assertEqual(
             [pair.name for pair in rcf.SPEC.pairs],
-            [
+            ["fresh-build-null", *[
                 f"{case}-{component}"
                 for case in ("quadratic", "degree10", "degree50")
                 for component in ("reify", "search", "literal", "replay", "tactic")
-            ],
+            ]],
         )
+
+    def test_null_control_is_first_and_uses_exact_module_identity(self) -> None:
+        null = rcf.SPEC.pairs[0]
+        self.assertTrue(null.null_control)
+        self.assertIs(null.reference, rcf.BASELINE)
+        self.assertIs(null.candidate, rcf.BASELINE)
+        self.assertEqual(null.metadata["interpretation"], "calibration-only")
+
+    def test_substantive_pairs_remain_five_per_case(self) -> None:
+        substantive = [pair for pair in rcf.SPEC.pairs if not pair.null_control]
+        self.assertEqual(len(substantive), 15)
+        for case in ("quadratic", "degree10", "degree50"):
+            self.assertEqual(
+                len([pair for pair in substantive if pair.name.startswith(case)]),
+                5,
+            )
 
     def test_only_replay_and_tactic_report_axioms(self) -> None:
         for pair in rcf.SPEC.pairs:
