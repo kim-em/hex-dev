@@ -238,6 +238,25 @@ lean_lib HexIntervalMathlibReplayProbe where
   globs := #[`HexIntervalMathlib.CenterBaseline,
     `HexIntervalMathlib.CenterReflected, `HexIntervalMathlib.CenterDirect]
 
+lean_lib HexRCFProofProbe where
+  srcDir := "bench"
+  globs := #[`HexRCF.BenchHash, `HexRCF.ProofProbe.Support,
+    `HexRCF.ProofProbe.Generated,
+    `HexRCF.ProofProbe.Validate, `HexRCF.ProofProbe.Baseline,
+    `HexRCF.ProofProbe.Quadratic.Reify, `HexRCF.ProofProbe.Quadratic.Input,
+    `HexRCF.ProofProbe.Quadratic.Search, `HexRCF.ProofProbe.Quadratic.Literal,
+    `HexRCF.ProofProbe.Quadratic.Replay, `HexRCF.ProofProbe.Quadratic.Tactic]
+
+lean_lib HexRCFProofProbeScientific where
+  srcDir := "bench"
+  globs := #[`HexRCF.ProofProbe.Degree10.Reify,
+    `HexRCF.ProofProbe.Degree10.Input, `HexRCF.ProofProbe.Degree10.Search,
+    `HexRCF.ProofProbe.Degree10.Literal, `HexRCF.ProofProbe.Degree10.Replay,
+    `HexRCF.ProofProbe.Degree10.Tactic, `HexRCF.ProofProbe.Degree50.Reify,
+    `HexRCF.ProofProbe.Degree50.Input, `HexRCF.ProofProbe.Degree50.Search,
+    `HexRCF.ProofProbe.Degree50.Literal, `HexRCF.ProofProbe.Degree50.Replay,
+    `HexRCF.ProofProbe.Degree50.Tactic]
+
 -- Conformance #guard drivers live under `conformance/` and are built by this
 -- library (mirroring the released conformance sub-projects). Alongside each
 -- library's `Conformance` core module, the heavier cross-check sweeps and
