@@ -13,7 +13,7 @@ Oracle: core uses Lean-only checks (Sturm counts, exact dyadic evaluation, and
 cross-engine agreement are their own algebraic oracle); the CI oracle profile
 uses `python-flint` (`fmpz_poly` real-root isolation) via
 `scripts/oracle/realroots_flint.py`, landing in the parallel oracle PR.
-Mode: always for core, if_available for the `python-flint` oracle profile.
+Mode: always for core, `if_available` for the `python-flint` oracle profile.
 
 Covered operations:
 - `Hex.ZPoly.evalDyadic`
@@ -80,7 +80,7 @@ namespace RealRootsConformance
 
 open Hex.RealRootIsolation
 
-/-! ### Dyadic literals used in the expected interval endpoints. -/
+/-! # Dyadic literals used in the expected interval endpoints. -/
 
 /-- The integer dyadic `n`. -/
 private def di (n : Int) : Dyadic := Dyadic.ofInt n
@@ -89,7 +89,7 @@ private def half (n : Int) : Dyadic := (Dyadic.ofInt n) >>> (1 : Int)
 /-- The dyadic `n / 4`. -/
 private def quarter (n : Int) : Dyadic := (Dyadic.ofInt n) >>> (2 : Int)
 
-/-! ### Committed fixtures.
+/-! # Committed fixtures.
 
 Each polynomial is stored once, in ascending-degree coefficient order. The
 factored form and real roots are named in the comment so the expectations below
@@ -130,7 +130,7 @@ private def quadIrr : ZPoly := DensePoly.ofCoeffs #[(-2 : Int), 0, 1]
 /-- `2x − 1`; single dyadic root `1/2` at a bisection midpoint. -/
 private def dyadicRoot : ZPoly := DensePoly.ofCoeffs #[(-1 : Int), 2]
 
-/-! ### Projection and property helpers. -/
+/-! # Projection and property helpers. -/
 
 /-- The `(lower, upper]` endpoint pairs of an isolation run, so expectations are
 `#guard`-comparable (`Dyadic` has `DecidableEq`). -/
@@ -187,7 +187,7 @@ private def refinedSubinterval {p : ZPoly} (i : RealRootIsolation p) : Option Bo
     decide (i.interval.lower ≤ r.1.interval.lower) &&
       decide (r.1.interval.upper ≤ i.interval.upper)
 
-/-! ### Whole-run isolation, per fixture.
+/-! # Whole-run isolation, per fixture.
 
 For each fixture: the exact interval endpoints of `isolate?` (a human-readable
 regression pin, cross-checked against `python-flint` in the oracle PR); the
@@ -238,7 +238,7 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
 #guard endpoints (isolateSturm? cubicSingle) = some #[(di (-4), di 4)]
 #guard endpoints (isolate? cubicSingle) = some #[(di 0, di 4)]
 
-/-! ### Edge cases: zero, constant, non-square-free. -/
+/-! # Edge cases: zero, constant, non-square-free. -/
 
 -- The zero polynomial is rejected by every engine (input-contract classification,
 -- independent of the termination theorem).
@@ -270,7 +270,7 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
 #guard (ZPoly.squareFreeCore (DensePoly.ofCoeffs #[(-1 : Int), 3, -3, 1])).toArray
   = #[(-1 : Int), 1]
 
-/-! ### `evalDyadic`: exact Horner evaluation. -/
+/-! # `evalDyadic`: exact Horner evaluation. -/
 
 -- typical: `x² − 1` at `3/2` is `9/4 − 1 = 5/4`.
 #guard ZPoly.evalDyadic quadPair (half 3) = quarter 5
@@ -279,14 +279,14 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
 -- adversarial: `x − 5` hits an exact `0` at its root `5`.
 #guard ZPoly.evalDyadic linear (di 5) = 0
 
-/-! ### `dyadicSign`: exact sign of a dyadic. -/
+/-! # `dyadicSign`: exact sign of a dyadic. -/
 
 -- typical positive / negative, edge zero.
 #guard dyadicSign (quarter 5) = 1
 #guard dyadicSign (half (-3)) = -1
 #guard dyadicSign (0 : Dyadic) = 0
 
-/-! ### `signVar`: zero-skipping sign variations. -/
+/-! # `signVar`: zero-skipping sign variations. -/
 
 -- typical, the SPEC's `(+, 0, −)` zero-skip, an alternating adversarial list,
 -- and the empty edge.
@@ -295,7 +295,7 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
 #guard signVar [-1, 1, -1] = 2
 #guard signVar [] = 0
 
-/-! ### `spem`: sign-managed pseudo-remainder. -/
+/-! # `spem`: sign-managed pseudo-remainder. -/
 
 -- typical with a negative leading coefficient in `g`: `spem (x² + 1) (−2x + 1)`
 -- is `4 · (5/4) = 5` (see `Chain.lean`).
@@ -305,7 +305,7 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
 -- adversarial: `g` a nonzero constant divides everything, so the remainder is `0`.
 #guard (ZPoly.spem quadNone const7).toArray = (#[] : Array Int)
 
-/-! ### `sturmChain`: the signed-remainder chain. -/
+/-! # `sturmChain`: the signed-remainder chain. -/
 
 -- typical square-free quadratic: `[x² − 1, x, 1]`, ending in a nonzero constant.
 #guard (ZPoly.sturmChain quadPair).map (·.toArray)
@@ -316,7 +316,7 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
 -- edge: a constant has the empty chain.
 #guard (ZPoly.sturmChain const7).map (·.toArray) = (#[] : Array (Array Int))
 
-/-! ### `sturmVarAt`, `sturmVarNegInf`, `sturmVarPosInf`. -/
+/-! # `sturmVarAt`, `sturmVarNegInf`, `sturmVarPosInf`. -/
 
 -- `x² − 1` chain `[x²−1, x, 1]`: at `−2` signs `(+,−,+)` → 2, at `0` `(−,0,+)` → 1,
 -- at `2` `(+,+,+)` → 0.
@@ -339,7 +339,7 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
 #guard sturmVarNegInf (ZPoly.sturmChain const7) = 0
 #guard sturmVarPosInf (ZPoly.sturmChain const7) = 0
 
-/-! ### `sturmCount` and `rootCount`. -/
+/-! # `sturmCount` and `rootCount`. -/
 
 -- `x² − 1`: `(−4, 4]` counts both roots, `(0, 4]` only `1`, `(1, 2]` excludes
 -- the left-endpoint root `1` (half-open) so `0`.
@@ -354,7 +354,7 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
 #guard rootCount quadNone = 0
 #guard rootCount cubicTriple = 3
 
-/-! ### `mobiusTransform` and `descartesVar`. -/
+/-! # `mobiusTransform` and `descartesVar`. -/
 
 -- `mobiusTransform` returns the literal SPEC numerator on committed intervals.
 -- `x − 1` on `(0, 2]` is `x − 1`; `x² − 3` on `(1, 2]` is `x² − 2x − 2`;
@@ -373,7 +373,7 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
 -- has `V = 0` (no roots in the open interval).
 #guard descartesVar (mobiusTransform quadNone ⟨di 3, di 4, by decide⟩) = 0
 
-/-! ### `twoPow`, `ceilLog2Nat`, `ceilLog2Dyadic`. -/
+/-! # `twoPow`, `ceilLog2Nat`, `ceilLog2Dyadic`. -/
 
 #guard twoPow 0 = di 1
 #guard twoPow 3 = di 8
@@ -385,7 +385,7 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
 #guard ceilLog2Dyadic (di 5) = 3
 #guard ceilLog2Dyadic (quarter 1) = -2
 
-/-! ### `rootBound`, `sepPrec`, `isolationDepth`. -/
+/-! # `rootBound`, `sepPrec`, `isolationDepth`. -/
 
 -- `rootBound`: `x² − 3 → 2³ = 8`, `x − 1 → 2² = 4`, `2x + 1 → 2¹ = 2`.
 #guard rootBound (DensePoly.ofCoeffs #[(-3 : Int), 0, 1]) = twoPow 3
@@ -404,7 +404,7 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
 #guard isolationDepth zeroPoly = 8
 #guard isolationDepth quadPair = 17
 
-/-! ### `refine1`, `refineTo`, `refined`, `sameRoot`.
+/-! # `refine1`, `refineTo`, `refined`, `sameRoot`.
 
 Hand-built isolations (`count_one` by `decide`) exercise refinement and the root
 identity, which the whole-run fixtures above do not reach directly. -/

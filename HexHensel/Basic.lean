@@ -21,7 +21,7 @@ reductions and lifts that later Hensel steps reuse.
 namespace Hex
 
 /-- Indexed lookup into `(List.range size).map f`: returns `f n` for `n < size` and the
-zero default otherwise. Shared coefficient-lookup plumbing used by the `modP`, `reduceModPow`,
+zero default otherwise. This shared coefficient-lookup lemma is used by the `modP`, `reduceModPow`,
 and `liftToZ` conversions in this file. -/
 private theorem list_getD_map_range {α : Type} [Zero α] (size n : Nat) (f : Nat → α) :
     ((List.range size).map f).getD n (Zero.zero : α) =

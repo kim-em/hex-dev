@@ -37,7 +37,7 @@ namespace FpPoly
 
 variable {p : Nat} [ZMod64.Bounds p]
 
-/-! ### Basic compose laws -/
+/-! # Basic compose laws -/
 
 private theorem C_zero_eq_zero :
     FpPoly.C (0 : ZMod64 p) = (0 : FpPoly p) := by
@@ -76,7 +76,7 @@ private theorem one_ne_zero_of_prime [ZMod64.PrimeModulus p] :
       Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
   exact absurd htoNat (by omega)
 
-/-- Substituting `q` into `X` returns `q`; `X` is the identity of
+/-- Substituting `q` into {name}`X` returns `q`; {name}`X` is the identity of
 composition. -/
 @[simp, grind =] theorem compose_X [ZMod64.PrimeModulus p] (q : FpPoly p) :
     DensePoly.compose (FpPoly.X : FpPoly p) q = q := by
@@ -101,9 +101,9 @@ theorem compose_one [ZMod64.PrimeModulus p] (q : FpPoly p) :
   change DensePoly.compose (DensePoly.C (1 : ZMod64 p)) q = DensePoly.C 1
   exact compose_C 1 q
 
-/-! ### Compose-as-sum characterization
+/-! # Compose-as-sum characterization
 
-The Horner-form `DensePoly.compose` evaluates to the explicit sum
+The Horner-form {name}`DensePoly.compose` evaluates to the explicit sum
 `∑_i C (f.coeff i) * linearPow q i`. This characterization is proved by
 mirroring the `evalScalarCoeffList` / `evalCoeffPowerSumFrom`
 infrastructure used by scalar evaluation, but with `ZMod64` replaced by
@@ -147,7 +147,7 @@ private theorem composeScalarCoeffList_eq_powerSumFrom_zero (q : FpPoly p) :
       change DensePoly.C c = DensePoly.C c * 1
       rw [FpPoly.mul_one]
 
-/-- `DensePoly.compose` agrees with the iterative power-sum form. -/
+/-- {name}`DensePoly.compose` agrees with the iterative power-sum form. -/
 private theorem compose_eq_powerSum (f q : FpPoly p) :
     DensePoly.compose f q = composeCoeffPowerSumFrom f.toList 0 q := by
   rw [DensePoly.compose_eq_composeScalarCoeffList_of_step f q]
@@ -162,13 +162,13 @@ theorem compose_eq_composeScalarCoeffList (f q : FpPoly p) :
   intro acc c
   rw [FpPoly.add_comm, FpPoly.mul_comm q acc]
 
-/-! ### Constant-polynomial homomorphism laws
+/-! # Constant-polynomial homomorphism laws
 
-Small `C` homomorphism laws for `+`, `-`, `*` and `Neg` are needed to
+Small {name}`C` homomorphism laws for `+`, `-`, `*` and `Neg` are needed to
 manipulate the coefficients of products like `f * (X - C c)`.
 -/
 
-/-- The constant embedding `C` is additive: `C (a + b) = C a + C b`. -/
+/-- The constant embedding {name}`C` is additive: `C (a + b) = C a + C b`. -/
 theorem C_add_eq (a b : ZMod64 p) :
     (DensePoly.C (a + b) : FpPoly p) = DensePoly.C a + DensePoly.C b := by
   apply DensePoly.ext_coeff
@@ -180,7 +180,7 @@ theorem C_add_eq (a b : ZMod64 p) :
   | succ n =>
       exact (by grind : (0 : ZMod64 p) + 0 = 0).symm
 
-/-- The constant embedding `C` turns a difference of scalars into a
+/-- The constant embedding {name}`C` turns a difference of scalars into a
 difference of constant polynomials. Used to push coefficient subtractions
 through products such as `f * (X - C c)`. -/
 theorem C_sub_eq (a b : ZMod64 p) :
@@ -194,7 +194,7 @@ theorem C_sub_eq (a b : ZMod64 p) :
   | succ n =>
       exact (by grind : (0 : ZMod64 p) - 0 = 0).symm
 
-/-- The constant embedding `C` turns a product of scalars into a product
+/-- The constant embedding {name}`C` turns a product of scalars into a product
 of constant polynomials. Used to normalise constant coefficients when
 expanding products of linear factors. -/
 theorem C_mul_C_eq (a b : ZMod64 p) :
@@ -210,7 +210,7 @@ theorem C_mul_C_eq (a b : ZMod64 p) :
       simp
       exact hzero
 
-/-! ### Compose of `monomial k 1` and `linearPow X k`
+/-! # Compose of `monomial k 1` and `linearPow X k`
 
 The composition `compose (linearPow X k) w = linearPow w k` follows by
 unfolding `linearPow X k` to `monomial k 1` and then reading off the
@@ -273,9 +273,9 @@ theorem compose_linearPow_X
   rw [linearPow_monomial_one]
   exact compose_monomial_k_one_eq w k
 
-/-! ### Coefficient-indexed power-sum form
+/-! # Coefficient-indexed power-sum form
 
-A coefficient-indexed analogue of `composeCoeffPowerSumFrom`, mirroring
+A coefficient-indexed analogue of {name}`composeCoeffPowerSumFrom`, mirroring
 `evalCoeffPowerSumUpTo` from `HexPolyFp/Basic.lean`. The size-bounded form
 `compose_eq_coeff_power_sum_upTo_bound` lets us express
 `compose (f - h) w` and `compose f w - compose h w` over a single
@@ -304,8 +304,8 @@ private theorem composePower_eq_linearPow (w : FpPoly p) :
       simp only [DensePoly.composePower]
       rw [composePower_eq_linearPow w k, linearPow_succ_left]
 
-/-- The local `FpPoly` power-sum accumulator built from `linearPow` agrees
-with the shared `DensePoly.composeCoeffPowerSumUpTo`. Callers use this to
+/-- The local `FpPoly` power-sum accumulator built from {name}`linearPow` agrees
+with the shared {name}`DensePoly.composeCoeffPowerSumUpTo`. Callers use this to
 transfer the explicit compose-as-sum characterization onto the `DensePoly`
 API that downstream files import. -/
 theorem composeCoeffPowerSumUpTo_eq
@@ -318,7 +318,7 @@ theorem composeCoeffPowerSumUpTo_eq
       simp only [composeCoeffPowerSumUpTo, DensePoly.composeCoeffPowerSumUpTo]
       rw [composePower_eq_linearPow, composeCoeffPowerSumUpTo_eq coeff n (base + 1) w]
 
-/-- The list-fed accumulator `composeCoeffPowerSumFrom` over the coefficient
+/-- The list-fed accumulator {name}`composeCoeffPowerSumFrom` over the coefficient
 slice `[coeff base, …, coeff (base + n - 1)]` agrees with the index-fed
 `composeCoeffPowerSumUpTo coeff n base w`. This bridges the two power-sum
 representations so the explicit list form can be rewritten into the bounded
@@ -338,7 +338,7 @@ private theorem composeCoeffPowerSumFrom_range_eq_upTo
       simpa [Function.comp_def, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm]
         using composeCoeffPowerSumFrom_range_eq_upTo coeff w n (base + 1)
 
-/-- `compose f w` equals the bounded accumulator `composeCoeffPowerSumUpTo`
+/-- `compose f w` equals the bounded accumulator {name}`composeCoeffPowerSumUpTo`
 run up to exactly `f.size` with `f`'s coefficients. This is the base
 characterization of composition as a power sum, from which the
 extend-past-the-bound variant `compose_eq_coeff_power_sum_upTo_bound` follows. -/
@@ -404,7 +404,7 @@ private theorem composeCoeffPowerSumUpTo_le_extend
   exact composeCoeffPowerSumUpTo_le_extend_base
     coeff w (base := 0) (bound := bound) (by simpa using hzero) extra
 
-/-- `compose f w` equals `composeCoeffPowerSumUpTo` evaluated up to any
+/-- `compose f w` equals {name}`composeCoeffPowerSumUpTo` evaluated up to any
 upper bound that is at least `f.size`. Out-of-range coefficients of `f`
 vanish, so the recursion safely extends past `f.size`. -/
 theorem compose_eq_coeff_power_sum_upTo_bound (f w : FpPoly p)
@@ -417,15 +417,15 @@ theorem compose_eq_coeff_power_sum_upTo_bound (f w : FpPoly p)
     (fun i => f.coeff i) w
     (fun i hi => DensePoly.coeff_eq_zero_of_size_le f hi) extra
 
-/-! ### Distributivity of compose over subtraction
+/-! # Distributivity of compose over subtraction
 
 The rearrangement
 `(C a - C b) * w^k + (S_a - S_b) = (C a * w^k + S_a) - (C b * w^k + S_b)`
 is the key ring step. We prove it via the coefficient-level argument:
-the multiplication `(a - b) * c = a*c - b*c` follows from `right_distrib`
-and `DensePoly.neg_mul_right_poly`; the residual identity
+the multiplication `(a - b) * c = a*c - b*c` follows from {name}`right_distrib`
+and {name}`DensePoly.neg_mul_right_poly`; the residual identity
 `(x - y) + (u - v) = (x + u) - (y + v)` reduces to a pointwise ZMod64
-identity through `DensePoly.ext_coeff`. -/
+identity through {name}`DensePoly.ext_coeff`. -/
 
 private theorem fp_sub_mul_right
     (a b c : FpPoly p) :
@@ -445,7 +445,7 @@ private theorem fp_add_sub_add_sub
   grind
 
 /-- The accumulator is additive under coefficient subtraction: running
-`composeCoeffPowerSumUpTo` with the pointwise difference `f.coeff i - h.coeff i`
+{name}`composeCoeffPowerSumUpTo` with the pointwise difference `f.coeff i - h.coeff i`
 equals the difference of the two separate accumulators. This linearity step
 feeds the `compose_sub` distributivity theorem. -/
 private theorem composeCoeffPowerSumUpTo_sub
@@ -509,25 +509,25 @@ theorem compose_sub [ZMod64.PrimeModulus p] (f h w : FpPoly p) :
   exact composeCoeffPowerSumUpTo_sub f h w bound 0
 
 /-- Narrow specialisation needed by the witness-substitution caller:
-substituting `w` for `X` in `a - X` yields `compose a w - w`. -/
+substituting `w` for {name}`X` in `a - X` yields `compose a w - w`. -/
 theorem compose_sub_X [ZMod64.PrimeModulus p] (a w : FpPoly p) :
     DensePoly.compose (a - FpPoly.X) w = DensePoly.compose a w - w := by
   rw [compose_sub, compose_X]
 
 /-- The `linearPow X k - X` substitution: substituting `w`
-for `X` in `linearPow X k - X` yields `linearPow w k - w`. -/
+for {name}`X` in `linearPow X k - X` yields `linearPow w k - w`. -/
 theorem compose_linearPow_X_sub_X
     [ZMod64.PrimeModulus p] (w : FpPoly p) (k : Nat) :
     DensePoly.compose (FpPoly.linearPow FpPoly.X k - FpPoly.X) w =
       FpPoly.linearPow w k - w := by
   rw [compose_sub, compose_linearPow_X, compose_X]
 
-/-! ### Substitution into `a * (X - C c)`
+/-! # Substitution into `a * (X - C c)`
 
 Substituting `w` into `a * (X - FpPoly.C c)` yields
 `compose a w * (w - FpPoly.C c)`. The proof goes through a list-level
 coefficient model: `mulXSubCList c cs` is the coefficient list of
-`(ofCoeffs cs.toArray) * (X - C c)`, and `DensePoly.composeScalarCoeffList`
+`(ofCoeffs cs.toArray) * (X - C c)`, and {name}`DensePoly.composeScalarCoeffList`
 distributes over that list operation in the obvious way.
 -/
 
@@ -545,7 +545,7 @@ private def mulXSubCList (c : ZMod64 p) (cs : List (ZMod64 p)) : List (ZMod64 p)
 private theorem fp_C_zero :
     (FpPoly.C (0 : ZMod64 p) : FpPoly p) = 0 := C_zero_eq_zero
 
-/-- `DensePoly.composeScalarCoeffList` ignores trailing zeros. -/
+/-- {name}`DensePoly.composeScalarCoeffList` ignores trailing zeros. -/
 private theorem composeScalarCoeffList_trim
     [ZMod64.PrimeModulus p] (q : FpPoly p) :
     ∀ cs : List (ZMod64 p),
@@ -584,7 +584,7 @@ private theorem composeScalarCoeffList_trim
         rw [composeScalarCoeffList_trim q cs]
 
 /-- `compose` on a polynomial built from a raw coefficient list agrees with
-`DensePoly.composeScalarCoeffList` on that list, even if the list has trailing zeros. -/
+{name}`DensePoly.composeScalarCoeffList` on that list, even if the list has trailing zeros. -/
 private theorem compose_ofCoeffs_eq_composeScalarCoeffList
     [ZMod64.PrimeModulus p] (cs : List (ZMod64 p)) (q : FpPoly p) :
     DensePoly.compose (DensePoly.ofCoeffs cs.toArray : FpPoly p) q =
@@ -691,7 +691,7 @@ private theorem array_getD_eq_list_getD
   rw [Array.getElem?_toList]
   rfl
 
-/-- `mulXSubCListAux`'s `getD` form: combines the prev with the off-by-one
+/-- {name}`mulXSubCListAux`'s `getD` form: combines the prev with the off-by-one
 shifted coefficient list. -/
 private theorem mulXSubCListAux_getD (c : ZMod64 p) :
     ∀ (prev : ZMod64 p) (cs : List (ZMod64 p)) (n : Nat),
@@ -734,7 +734,7 @@ private theorem mulXSubCList_getD (c : ZMod64 p) (cs : List (ZMod64 p)) (n : Nat
   unfold mulXSubCList
   rw [mulXSubCListAux_getD c 0 cs n]
 
-/-- The polynomial-level equality matching `mulXSubCList` to the
+/-- The polynomial-level equality matching {name}`mulXSubCList` to the
 coefficient list of `a * (X - C c)`. -/
 private theorem mul_X_sub_C_eq_ofCoeffs_mulXSubCList
     (a : FpPoly p) (c : ZMod64 p) :
@@ -783,14 +783,14 @@ theorem compose_mul_X_sub_C [ZMod64.PrimeModulus p]
     composeScalarCoeffList_mulXSubCList, compose_eq_composeScalarCoeffList]
   rfl
 
-/-! ### foldl transport for the prime-field linear product
+/-! # foldl transport for the prime-field linear product
 
 The product `xs.foldl (fun acc c => acc * (X - C c)) init` substituted at
-`w` reduces to the same foldl with each `X` replaced by `w`.
+`w` reduces to the same foldl with each {name}`X` replaced by `w`.
 -/
 
 /-- Substituting `w` into a left-fold product of linear factors
-`∏ (X - C c)` equals the same fold with each `X` replaced by `w`. The
+`∏ (X - C c)` equals the same fold with each {name}`X` replaced by `w`. The
 transport law underlying composition of the prime-field linear product. -/
 theorem compose_foldl_X_sub_C [ZMod64.PrimeModulus p]
     (xs : List (ZMod64 p)) (init w : FpPoly p) :
@@ -815,7 +815,7 @@ theorem compose_primeFieldLinearProduct [ZMod64.PrimeModulus p]
         (fun acc c => acc * (w - FpPoly.C c)) 1 := by
   rw [compose_foldl_X_sub_C, compose_one]
 
-/-! ### Compose-form Frobenius
+/-! # Compose-form Frobenius
 
 The substitution identity `compose w (linearPow X p) = linearPow w p` over
 `F_p` packages Freshman's dream applied to a polynomial: viewing
@@ -934,7 +934,7 @@ private theorem composeCoeffPowerSumUpTo_self_X_eq_self
     rw [if_neg (by intro ⟨_, h⟩; omega : ¬ (0 ≤ k ∧ k < 0 + w.size))]
     exact (DensePoly.coeff_eq_zero_of_size_le w hk').symm
 
-/-- Compose-form Frobenius: substituting `linearPow X p` for `X` in `w`
+/-- Compose-form Frobenius: substituting `linearPow X p` for {name}`X` in `w`
 yields `linearPow w p`, over `F_p`. This is Freshman's dream packaged
 through the polynomial composition surface: viewed as
 `w = ∑_i a_i X^i`, the right-hand side equals `∑_i a_i X^(p·i)`. -/

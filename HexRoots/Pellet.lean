@@ -210,10 +210,10 @@ theorem exactRootFree_implies_rootFree {p : ZPoly} {s : DyadicSquare}
     · simp [h]
   · exact h
 
-/-! ### Ball geometry and ball evaluation
+/-! # Ball geometry and ball evaluation
 
-`DyadicComplexBall` consumers (numerical evaluation in this library's
-future callers, and `hex-number-field`'s root disambiguation) need the
+`DyadicComplexBall` consumers, including numerical evaluation and
+`hex-number-field` root disambiguation, use the
 disc-to-ball view of a square, a sound enclosure of `p` on a square's
 disc, and the exclusion and intersection tests on balls. The radius
 conventions here reuse the audited `radiusHi` upper bound, so callers

@@ -135,7 +135,7 @@ theorem pellet_ne_zero {p : ℂ[X]} {n k : ℕ} {r : ℝ}
   rw [hpz, zero_sub, norm_neg] at hlt
   exact hlt.false
 
-/-! ### Graeffe coefficient-ball witnesses -/
+/-! # Graeffe coefficient-ball witnesses -/
 
 /-- The three original radii transported through the Graeffe loop. -/
 private inductive SoftRadiusChoice
@@ -281,7 +281,7 @@ private theorem softGraeffeLoop_boundary {cs : Array Hex.CoeffBall}
         simpa only [expand_eval, eval_mul, eval_comp, eval_neg, eval_X, hzq,
           zero_mul] using hid
 
-/-! ### Executable dyadic inequalities -/
+/-! # Executable dyadic inequalities -/
 
 /-- A successful executable Pellet check names an actual stored
 coefficient. -/
@@ -323,7 +323,7 @@ theorem pelletAt_bound {cs : Array Hex.GaussDyadic} {k : ℕ}
   simpa only [Dyadic.toReal_mul, Dyadic.toReal_pow,
     sum_erase_range] using hreal
 
-/-! ### Exact Taylor dominance -/
+/-! # Exact Taylor dominance -/
 
 /-- Dyadic lower and upper coefficient/radius bounds imply the exact
 coefficient dominance required by Pellet's theorem. -/

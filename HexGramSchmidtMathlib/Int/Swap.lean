@@ -14,7 +14,7 @@ public section
 namespace Hex
 namespace GramSchmidt
 namespace Int
-/-! ### Adjacent-swap pivot Gram-determinant product
+/-! # Adjacent-swap pivot Gram-determinant product
 
 Swapping adjacent rows `km1, k` (with `km1 + 1 = k`) of `b` changes only the
 leading `k × k` Gram determinant within `0 ≤ t ≤ k + 1`. The new pivot Gram

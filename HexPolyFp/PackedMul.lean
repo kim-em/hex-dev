@@ -23,18 +23,9 @@ single native C call (no per-term FFI boundary or boxed-`ZMod64` traffic).
 `mulPacked_eq` proves it equals the reference `*`, so a `@[csimp]`/kernel swap is
 value-identical.
 
-**Status: dormant infrastructure.** Microbenchmarks put `mulPacked` at ~7x the
-reference `*` on a raw large-by-large `FpPoly` multiply, but wiring it into the
-hot paths (via `Quotient.mul`) was measured to give **no** improvement — neither
-on the `hexpolyfp_bench` Frobenius/exponentiation targets nor on end-to-end
-Berlekamp-Zassenhaus factorization (a full A/B factor sweep was flat, ~1.00x).
-The finite-field polynomial workloads are **reduction-bound** (`modByMonic`, the
-boxed per-term long division), not multiply-bound, so a faster multiply is
-invisible in the total. The actual lever is a packed *reduction* kernel of the
-`HexPolyFp/Packed.lean` `modByMonicPacked` shape; see the follow-up issue. This
-module is kept as a correct, proven, tested building block for a future workload
-that *is* raw-multiply-bound (or a packed-`modByMonic` rewrite that reuses the
-`__uint128_t` accumulation idea). It is intentionally **not** wired into `*`.
+The packed operation is an optional value-equivalent multiplication kernel.
+The standard `FpPoly` multiplication remains the generic schoolbook
+convolution.
 -/
 
 namespace Hex
@@ -71,7 +62,7 @@ variable {p : Nat} [ZMod64.Bounds p]
 
 /-- One output coefficient of the lazy convolution: sum (in `Nat`, no per-term
 reduction) all products contributing to degree `k`, then reduce once mod `m`.
-This is the trusted spec the `lean_hex_fp_convolve` extern must match. -/
+The `lean_hex_fp_convolve` extern must compute this value. -/
 private def convolveCoeff (a b : Array UInt64) (m : UInt64) (k : Nat) : UInt64 :=
   UInt64.ofNat
     (((List.range a.size).foldl

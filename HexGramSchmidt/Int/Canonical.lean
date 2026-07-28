@@ -13,7 +13,7 @@ public section
 
 namespace Hex
 namespace GramSchmidt.Int
-/-! ### Gram row-span invariant for no-pivot Bareiss -/
+/-! # Gram row-span invariant for no-pivot Bareiss -/
 
 /-- Row-vector interpretation of the trailing block during a no-pivot Bareiss
 pass over a Gram matrix.  Each active trailing row carries an explicit integer
@@ -302,7 +302,7 @@ theorem bareissGramRowInvariantStepCoeff_support
     simpa [k] using hck
   simp [hciNat, hckNat, Matrix.exactDiv]
 
-/-! ### Canonical coefficient vector and canonicity predicate -/
+/-! # Canonical coefficient vector and canonicity predicate -/
 
 /-- Canonical row-coefficient vector for the initial no-pivot Gram trajectory.
 
@@ -439,7 +439,7 @@ is *canonical at `fuel`* when every row's coefficient vector matches
 kernel vector while keeping `entry_eq_dot` satisfied) cannot invoke the
 witness's quotient identity.
 
-The SPEC counterexample at rows `(1,1), (1,0), (-1,-1)` (#6505) produces two
+The rows `(1,1), (1,0), (-1,-1)` produce two
 distinct `BareissGramRowInvariant` instances at the same loop state whose
 coefficient vectors differ by the kernel vector. Both satisfy `entry_eq_dot`,
 but only one (the canonical one) yields an integer Bareiss-step quotient. -/
@@ -899,7 +899,7 @@ restricted to *canonical* row-coefficient witnesses via `IsCanonicalAt`.
 canonicity gate (`h_canon`) prevents non-canonical `BareissGramRowInvariant`
 witnesses — which can shift coefficients by a kernel vector while still
 satisfying `entry_eq_dot` — from supplying integer quotients. The kernel-shift
-counterexample (SPEC #6505: rows `(1,1), (1,0), (-1,-1)` at row 2 step 1)
+counterexample with rows `(1,1), (1,0), (-1,-1)` at row 2 step 1
 shows the restriction is necessary: distinct non-canonical witnesses produce
 numerators differing by `1`, which is not divisible by `prevPivot = 2`. -/
 abbrev StepWitness.Cell

@@ -18,7 +18,7 @@ open Hex Polynomial HexRealRootsMathlib
 
 namespace HexRealRootsMathlib.ElabTests
 
-/-! ## `x⁴ − 2` -/
+/-! # `x⁴ − 2` -/
 
 /-- `x⁴ − 2` as a `Hex.ZPoly`. -/
 def x4m2 : ZPoly := DensePoly.ofCoeffs #[(-2 : Int), 0, 0, 0, 1]
@@ -41,7 +41,7 @@ noncomputable def iso_w100 := isolate_roots (width := 10 ^ (-2 : ℤ)) (X ^ 4 - 
 /-- `x⁴ − 2` as a `ZPoly`, refined to width `2^(-20)`. -/
 noncomputable def iso_zpoly_w20 := isolate_roots (width := 2 ^ (-20 : ℤ)) x4m2
 
-/-! ## Coefficient rings -/
+/-! # Coefficient rings -/
 
 /-- Wilkinson-6 `∏_{i=1}^{6}(x − i)` over `Polynomial ℤ`. -/
 noncomputable def iso_wilkinson :=
@@ -50,18 +50,18 @@ noncomputable def iso_wilkinson :=
 /-- A `Polynomial ℚ` case: `2x² − 3x + 1 = (2x − 1)(x − 1)`. -/
 noncomputable def iso_rat := isolate_roots (2 * X ^ 2 - 3 * X + 1 : Polynomial ℚ)
 
-/-! ## Non-squarefree (exercises the core transport) -/
+/-! # Non-squarefree (exercises the core transport) -/
 
 /-- `(x − 1)²(x − 3)` over `Polynomial ℤ`: two distinct real roots. -/
 noncomputable def iso_nonsqfree :=
   isolate_roots ((X - 1) ^ 2 * (X - 3) : Polynomial ℤ)
 
-/-! ## Nonzero constant -/
+/-! # Nonzero constant -/
 
 /-- A nonzero constant has no real roots: the empty isolation. -/
 noncomputable def iso_const := isolate_roots (7 : Polynomial ℝ)
 
-/-! ## Consumption demos -/
+/-! # Consumption demos -/
 
 /-- `obtain` the four fields directly out of the elaborator's result. -/
 example : True := by
@@ -84,7 +84,7 @@ example : True := by
       (H.intervals[i].2 : ℚ) ≤ (H.intervals[j].1 : ℚ) := by grind
   trivial
 
-/-! ## Error taxonomy (deliverable 6)
+/-! # Error taxonomy
 
 Each distinct diagnostic is pinned with `#guard_msgs`. The internal
 certificate-mismatch path (`radicalCert` reassembly failure) is a defensive code
@@ -138,8 +138,7 @@ end Errors
 
 end HexRealRootsMathlib.ElabTests
 
-/-! ### Review-hardening tests: dispatch, certification link, and taxonomy
-completeness (from the Codex review of #8843). -/
+/-! # Dispatch, certification-link, and diagnostic-taxonomy tests -/
 
 /-- error: isolate_roots: expected a closed `Hex.ZPoly` or `Polynomial ℤ/ℚ/ℝ` term, but the argument has type
   ℕ -/

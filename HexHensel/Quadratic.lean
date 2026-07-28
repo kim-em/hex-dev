@@ -1866,7 +1866,7 @@ def quadraticHenselStepWord? (m : Nat) (f g h s t : ZPoly) : Option QuadraticLif
 
 Inputs: the target polynomial `f`, the current monic factor `g`, the
 complementary factor `h`, and the Bezout witnesses `s`, `t` for the current
-factorisation. Preconditions consumed by the spec theorems below are `g`
+factorisation. Preconditions consumed by the correctness theorems below are `g`
 monic, `g * h ≡ f (mod m)`, and `s * g + t * h ≡ 1 (mod m)`; the returned
 `QuadraticLiftResult` then satisfies the same conjuncts modulo `m^2`. -/
 def quadraticHenselStepBignum
@@ -2245,7 +2245,7 @@ private theorem quadraticHenselStep_g_update_monic
     addModSquare_divModMonicModSquare_remainder_monic m te g hm hmonic
   simpa [factorQR, rFactor] using hmono
 
-/-! ### Word transport of the mod-`m²` primitives and the byte-identity proof -/
+/-! # Word transport of the mod-`m²` primitives and the byte-identity proof -/
 
 private theorem QuadraticLiftResult.ext' {r1 r2 : QuadraticLiftResult}
     (hg : r1.g = r2.g) (hh : r1.h = r2.h) (hs : r1.s = r2.s) (ht : r1.t = r2.t) :

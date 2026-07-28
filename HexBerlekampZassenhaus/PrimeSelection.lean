@@ -490,8 +490,7 @@ A small-prime candidate for the Berlekamp-Zassenhaus prime-selection hot path.
 
 Bundles a candidate prime `p` together with the `ZMod64.Bounds p` instance and
 the propositional primality witness needed to drive the modular Berlekamp
-factorisation. Exposed (alongside `hotPathCandidates`) so that the SPEC D2
-composition theorem
+factorisation. Exposed alongside `hotPathCandidates` so that
 `HexBerlekampZassenhausMathlib.choosePrimeData?_none_implies_huge` can pull a
 specific candidate out of the fixed hot-path list and bridge to the Mathlib
 per-prime discriminant lemma.
@@ -618,9 +617,9 @@ def extendedSmallPrimeCandidates : List SmallPrimeCandidate :=
     smallPrimeCandidateOfTrial 499 (by decide) (by decide) ]
 
 /--
-The SPEC hot-path prime candidate list: the deterministic small-prime prefix
-followed by every prime up to `499`. Exposed so that the SPEC D2 composition
-theorem can pull a specific candidate out and bridge to the Mathlib per-prime
+The hot-path prime candidate list: the deterministic small-prime prefix followed
+by every prime up to `499`. Exposed so that the composition theorem can pull a
+specific candidate out and bridge to the Mathlib per-prime
 discriminant lemma.
 -/
 def hotPathCandidates : List SmallPrimeCandidate :=
@@ -651,8 +650,7 @@ set_option maxRecDepth 4096 in
 /--
 Coverage of the hot-path prime candidate list: every prime `p` with
 `3 ≤ p ≤ 500` appears as the `.p` field of some candidate in
-`hotPathCandidates`. Used by SPEC D2's
-`choosePrimeData?_none_implies_huge` bridge to walk the executable's
+`hotPathCandidates`. Used by `choosePrimeData?_none_implies_huge` to walk the executable's
 candidate fold over any prime in the admissible range.
 -/
 theorem exists_mem_hotPathCandidates_of_prime

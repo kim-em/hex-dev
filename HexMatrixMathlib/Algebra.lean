@@ -28,7 +28,7 @@ universe u
 
 variable {R : Type u} {n m : Nat}
 
-/-! ### Base operations on the opaque structure
+/-! # Base operations on the opaque structure
 
 The abbreviation representation inherited these pointwise operations from
 `Vector`; the opaque structure delegates them to the row data, so the
@@ -51,7 +51,7 @@ instance instSub [Sub R] : Sub (Hex.Matrix R n m) := ⟨fun A B => ⟨A.data - B
   have hdata : (A - B).data = A.data - B.data := rfl
   ext i hi j hj
   simp [Hex.Matrix.getElem_rows, Hex.Matrix.getElem_getRow_nat, hdata, Vector.getElem_sub]
-/-! ### Preservation of the additive operations -/
+/-! # Preservation of the additive operations -/
 
 @[simp, grind =] theorem matrixEquiv_zero [Zero R] :
     matrixEquiv (0 : Hex.Matrix R n m) = 0 := by
@@ -97,7 +97,7 @@ instance instOne [OfNat R 0] [OfNat R 1] : One (Hex.Matrix R n n) := ⟨Hex.Matr
 /-- Regression guard: `1` on a square matrix is `Matrix.identity`. -/
 example [Zero R] [One R] : (1 : Hex.Matrix R n n) = Hex.Matrix.identity n := rfl
 
-/-! ### Additive instances and the additive equivalence -/
+/-! # Additive instances and the additive equivalence -/
 
 instance instAddCommMonoid [AddCommMonoid R] : AddCommMonoid (Hex.Matrix R n m) :=
   matrixEquiv.injective.addCommMonoid _ matrixEquiv_zero matrixEquiv_add
@@ -115,7 +115,7 @@ def matrixAddEquiv [AddCommMonoid R] : Hex.Matrix R n m ≃+ Matrix (Fin n) (Fin
 @[simp] theorem matrixAddEquiv_apply [AddCommMonoid R] (M : Hex.Matrix R n m) :
     matrixAddEquiv M = matrixEquiv M := rfl
 
-/-! ### Module structure and the linear equivalence -/
+/-! # Module structure and the linear equivalence -/
 
 instance instModule [Semiring R] : Module R (Hex.Matrix R n m) :=
   Function.Injective.module R (M := Matrix (Fin n) (Fin m) R)
@@ -133,7 +133,7 @@ def matrixLinearEquiv [Semiring R] : Hex.Matrix R n m ≃ₗ[R] Matrix (Fin n) (
 @[simp] theorem matrixLinearEquiv_apply [Semiring R] (M : Hex.Matrix R n m) :
     matrixLinearEquiv M = matrixEquiv M := rfl
 
-/-! ### Multiplicative preservation -/
+/-! # Multiplicative preservation -/
 
 @[simp, grind =] theorem matrixEquiv_one [Zero R] [One R] :
     matrixEquiv (1 : Hex.Matrix R n n) = 1 := by
@@ -152,7 +152,7 @@ def matrixLinearEquiv [Semiring R] : Hex.Matrix R n m ≃ₗ[R] Matrix (Fin n) (
   refine Finset.sum_congr rfl (fun k _ => ?_)
   grind
 
-/-! ### Auxiliary operations, pulled back through `matrixEquiv`
+/-! # Auxiliary operations, pulled back through `matrixEquiv`
 
 These `NatCast`, `IntCast`, and `Pow` instances exist only to populate the
 corresponding fields of the `Semiring`/`Ring` structures. They are *proof-facing*:
@@ -182,7 +182,7 @@ instance instPow [Semiring R] : Pow (Hex.Matrix R n n) ℕ :=
     matrixEquiv (M ^ k) = matrixEquiv M ^ k :=
   matrixEquiv.apply_symm_apply (matrixEquiv M ^ k)
 
-/-! ### Ring structure and the ring equivalence -/
+/-! # Ring structure and the ring equivalence -/
 
 instance instSemiring [Semiring R] : Semiring (Hex.Matrix R n n) :=
   matrixEquiv.injective.semiring _ matrixEquiv_zero matrixEquiv_one matrixEquiv_add
@@ -203,7 +203,7 @@ def matrixRingEquiv [Semiring R] : Hex.Matrix R n n ≃+* Matrix (Fin n) (Fin n)
 @[simp] theorem matrixRingEquiv_apply [Semiring R] (M : Hex.Matrix R n n) :
     matrixRingEquiv M = matrixEquiv M := rfl
 
-/-! ### Algebra structure and the algebra equivalence -/
+/-! # Algebra structure and the algebra equivalence -/
 
 instance instAlgebra [CommSemiring R] : Algebra R (Hex.Matrix R n n) :=
   Algebra.ofModule

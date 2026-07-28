@@ -17,16 +17,17 @@ public section
 Hot-loop optimization wrappers for `hex-mod-arith`.
 
 This module lifts the `UInt64`-level Barrett and Montgomery contexts from
-`hex-arith` to the `Hex.ZMod64` surface promised by the `hex-mod-arith` spec.
+`hex-arith` to the `Hex.ZMod64` API.
 The wrappers keep the executable contexts explicit while providing typed entry
 and exit points for standard residues and Montgomery-form loop temporaries.
 -/
 namespace Hex
 
 /--
-Barrett reduction context specialized to a `ZMod64` modulus.
+Barrett reduction context specialized to a {name}`Hex.ZMod64` modulus.
 
-The stored `UInt64` modulus must agree with the Nat-indexed `ZMod64` modulus;
+The stored `UInt64` modulus must agree with the Nat-indexed
+{name}`Hex.ZMod64` modulus;
 the underlying `HexArith` context then provides the small-modulus fast path.
 -/
 structure BarrettCtx (p : Nat) [ZMod64.Bounds p] where
@@ -40,7 +41,7 @@ structure BarrettCtx (p : Nat) [ZMod64.Bounds p] where
 /--
 Montgomery reduction context specialized to a `ZMod64` modulus.
 
-As with `BarrettCtx`, the executable context stores the machine-word modulus
+As with {name}`Hex.BarrettCtx`, the executable context stores the machine-word modulus
 used by the underlying `HexArith` Montgomery code.
 -/
 structure MontCtx (p : Nat) [ZMod64.Bounds p] where
@@ -54,7 +55,7 @@ structure MontCtx (p : Nat) [ZMod64.Bounds p] where
 /--
 Temporary Montgomery-form residue for hot loops.
 
-This is intentionally distinct from `ZMod64`: values are still reduced into
+This is intentionally distinct from {name}`Hex.ZMod64`: values are still reduced into
 `[0, p)`, but they represent residues in Montgomery form rather than the
 canonical standard representative.
 -/
@@ -173,14 +174,14 @@ private theorem residue_lt_modulus (ctx : BarrettCtx p) (a : ZMod64 p) :
 
 /--
 Multiply two standard residues using the Barrett context and repackage the
-result as a `ZMod64`.
+result as a {name}`Hex.ZMod64`.
 -/
 @[expose]
 def mulMod (ctx : BarrettCtx p) (a b : ZMod64 p) : ZMod64 p :=
   ZMod64.ofNat p ((_root_.BarrettCtx.mulMod ctx.toUInt64Ctx a.toUInt64 b.toUInt64).toNat)
 
 /--
-The `ZMod64` Barrett wrapper computes the ordinary modular product on reduced
+The {name}`Hex.ZMod64` Barrett wrapper computes the ordinary modular product on reduced
 representatives.
 -/
 @[simp, grind =] theorem toNat_mulMod (ctx : BarrettCtx p) (a b : ZMod64 p) :
@@ -345,25 +346,25 @@ def mulMont (ctx : MontCtx p) (a b : MontResidue p) : MontResidue p :=
   ⟨w, hw⟩
 
 /--
-Convert a Montgomery-form loop temporary back to the standard `ZMod64`
+Convert a Montgomery-form loop temporary back to the standard {name}`Hex.ZMod64`
 representation.
 -/
 @[expose]
 def fromMont (ctx : MontCtx p) (a : MontResidue p) : ZMod64 p :=
   ZMod64.ofNat p ((_root_.MontCtx.fromMont ctx.toUInt64Ctx a.toUInt64).toNat)
 
-/-- `toMont` delegates to the underlying `UInt64` Montgomery conversion. -/
+/-- {name}`toMont` delegates to the underlying `UInt64` Montgomery conversion. -/
 theorem toUInt64_toMont (ctx : MontCtx p) (a : ZMod64 p) :
     (ctx.toMont a).toUInt64 = _root_.MontCtx.toMont ctx.toUInt64Ctx a.toUInt64 := by
   simp [toMont, MontResidue.toUInt64_eq_val]
 
-/-- `mulMont` delegates to the underlying `UInt64` Montgomery multiplication. -/
+/-- {name}`mulMont` delegates to the underlying `UInt64` Montgomery multiplication. -/
 theorem toUInt64_mulMont (ctx : MontCtx p) (a b : MontResidue p) :
     (ctx.mulMont a b).toUInt64 =
       _root_.MontCtx.mulMont ctx.toUInt64Ctx a.toUInt64 b.toUInt64 := by
   simp [mulMont, MontResidue.toUInt64_eq_val]
 
-/-- `fromMont` exposes the reduced Nat value computed by the underlying context. -/
+/-- {name}`fromMont` exposes the reduced Nat value computed by the underlying context. -/
 theorem toNat_fromMont (ctx : MontCtx p) (a : MontResidue p) :
     (ctx.fromMont a).toNat =
       (_root_.MontCtx.fromMont ctx.toUInt64Ctx a.toUInt64).toNat := by
@@ -375,7 +376,7 @@ theorem toNat_fromMont (ctx : MontCtx p) (a : MontResidue p) :
     simpa [ctx.modulus_eq] using UInt64.lt_iff_toNat_lt.mp hlt64
   rw [fromMont, ZMod64.toNat_ofNat, Nat.mod_eq_of_lt hlt]
 
-/-- The Nat value of `toMont` is multiplication by the Montgomery radix. -/
+/-- The Nat value of {name}`toMont` is multiplication by the Montgomery radix. -/
 @[simp, grind =] theorem toNat_toMont (ctx : MontCtx p) (a : ZMod64 p) :
     (ctx.toMont a).toNat = (a.toNat * UInt64.word) % p := by
   have ha := zmod64_lt_modulus ctx a
@@ -384,7 +385,7 @@ theorem toNat_fromMont (ctx : MontCtx p) (a : MontResidue p) :
     (_root_.MontCtx.toNat_toMont ctx.toUInt64Ctx a.toUInt64 ha)
 
 /--
-`fromMont` removes one Montgomery radix factor from a Montgomery-form loop
+{name}`fromMont` removes one Montgomery radix factor from a Montgomery-form loop
 temporary.
 -/
 theorem fromMont_repr (ctx : MontCtx p) (a : MontResidue p) :
@@ -456,7 +457,7 @@ when converted back out of Montgomery form.
 
 /--
 Multiplying two standard residues by entering Montgomery form, multiplying, and
-leaving Montgomery form agrees with ordinary `ZMod64` multiplication.
+leaving Montgomery form agrees with ordinary {name}`Hex.ZMod64` multiplication.
 -/
 @[simp, grind =] theorem fromMont_mulMont_toMont (ctx : MontCtx p) (a b : ZMod64 p) :
     ctx.fromMont (ctx.mulMont (ctx.toMont a) (ctx.toMont b)) = a * b := by

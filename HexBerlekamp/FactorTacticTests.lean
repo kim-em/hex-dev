@@ -30,7 +30,7 @@ def testF : FpPoly 5 :=
     (FpPoly.ofCoeffs #[z 1, z 1] * FpPoly.ofCoeffs #[z 1, z 1] *
      FpPoly.ofCoeffs #[z 2, z 0, z 1])
 
-/-! ## `factor_poly`, term form -/
+/-! # `factor_poly`, term form -/
 
 noncomputable def fac := factor_poly testF
 
@@ -63,7 +63,7 @@ noncomputable def facRawLeaves := factor_poly rawLeaves
 example : facRawLeaves.factors.length = 3 := rfl
 example : facRawLeaves.scalar = y 1 := rfl
 
-/-! ## `factor_poly`, tactic form -/
+/-! # `factor_poly`, tactic form -/
 
 example : True := by
   factor_poly testF
@@ -71,7 +71,7 @@ example : True := by
   have : factors.length = 3 := rfl
   exact True.intro
 
-/-! ## `irreducibility` -/
+/-! # `irreducibility` -/
 
 def irr1 : FpPoly 5 := FpPoly.ofCoeffs #[z 2, z 0, z 1]
 /-- Non-monic irreducible: `3 · (x²+2)`. -/
@@ -87,7 +87,7 @@ example : True := by
   irreducibility h : irr2
   exact h.elim fun _ _ => True.intro
 
-/-! ## Negative tests -/
+/-! # Negative tests -/
 
 instance : ZMod64.Bounds 6 := ⟨by decide, by decide⟩
 
@@ -115,7 +115,7 @@ is not irreducible over F_5: factor_poly finds 3 irreducible factors (with multi
 #guard_msgs in
 example := irreducibility testF
 
-/-! ## Axiom hygiene -/
+/-! # Axiom hygiene -/
 
 /-- info: 'HexBerlekamp.FactorTacticTests.fac' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

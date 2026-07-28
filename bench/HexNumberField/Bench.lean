@@ -54,7 +54,7 @@ private def fixedChecksum {p : ZPoly} {x : SimpleRoot p}
     (fun checksum q => mixHash checksum (ratChecksum q))
     (hash a.coeffs.size)
 
-/-! ## Degree-10 fixed presentation -/
+/-! # Degree-10 fixed presentation -/
 
 private def degreeTenPoly : ZPoly :=
   DensePoly.ofList [-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
@@ -114,7 +114,7 @@ setup_fixed_benchmark runFixedInv where {
   expectedHash := some 0x1525969728101d06
 }
 
-/-! ## Lazy arithmetic fixtures -/
+/-! # Lazy arithmetic fixtures -/
 
 private def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
 
@@ -238,7 +238,7 @@ setup_fixed_benchmark runLazyAdd where {
   expectedHash := some 0xb2956b93cac0235f
 }
 
-/-! ## Exactification and roots -/
+/-! # Exactification and roots -/
 
 private def enclosingPoly : ZPoly :=
   sqrtTwoPoly * DensePoly.ofList [-3, 1]

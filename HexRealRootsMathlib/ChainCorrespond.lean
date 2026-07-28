@@ -79,7 +79,7 @@ theorem squareFreeRat_iff (f : Hex.ZPoly) (hf : f ≠ 0) :
     Hex.ZPoly.SquareFreeRat f ↔ Squarefree (toPolyℚ f) :=
   HexPolyZMathlib.squareFreeRat_iff f hf
 
-/-! ### Sign-variation correspondence at a dyadic point -/
+/-! # Sign-variation correspondence at a dyadic point -/
 
 /-- `Dyadic.toReal` is additive. -/
 theorem toReal_add (a b : Dyadic) :
@@ -281,7 +281,7 @@ theorem sturmVarAt_eq (chain : Array Hex.ZPoly) (x : Dyadic) :
   intro q _
   rw [Function.comp_apply, Function.comp_apply, sign_dyadicSign, toReal_evalDyadic]
 
-/-! ### `spem` correspondence: the sign-managed pseudo-remainder over `ℝ`
+/-! # `spem` correspondence: the sign-managed pseudo-remainder over `ℝ`
 
 The executable `spem f g` is a **positive integer multiple** of the field
 remainder `f mod g`. We prove the underlying Euclidean-division relation over
@@ -431,7 +431,7 @@ theorem toPolyℝ_spem (f g : Hex.ZPoly) (hg : g.leadingCoeff ≠ 0)
   rw [hspem]
   exact spemAux_relate g hg f.size f
 
-/-! ### Cast and executable-layer helpers for the chain axioms -/
+/-! # Cast and executable-layer helpers for the chain axioms -/
 
 /-- The real cast of a negation. -/
 theorem toPolyℝ_neg (p : Hex.ZPoly) : toPolyℝ (-p) = -(toPolyℝ p) := by
@@ -529,7 +529,7 @@ private theorem spem_of_degree_zero (f : Hex.ZPoly) {g : Hex.ZPoly} (hg : g ≠ 
   rw [hg0]
   rfl
 
-/-! ### Degree control: the reduction loop terminates before its fuel runs out -/
+/-! # Degree control: the reduction loop terminates before its fuel runs out -/
 
 /-- One `spemStep` strictly drops the degree (or reaches zero): the sign
 management makes the two leading terms cancel exactly. Proved over `ℝ` via
@@ -644,7 +644,7 @@ private theorem spem_degree {f g : Hex.ZPoly} (hg : g ≠ 0)
       · exact h
     omega
 
-/-! ### Squarefreeness and root transfers to `ℝ` -/
+/-! # Squarefreeness and root transfers to `ℝ` -/
 
 /-- **Squarefree-to-separable transfer.** If the rational cast `toPolyℚ p` is
 squarefree, its real cast `toPolyℝ p` is separable. Over the perfect field `ℚ`,
@@ -668,7 +668,7 @@ theorem roots_toPolyℝ_eq_primitivePart (p : Hex.ZPoly) (hp : p ≠ 0) :
   rw [toPolyℝ_eq_C_content_mul_primitivePart p,
     Polynomial.roots_C_mul _ (ne_of_gt (content_real_pos hp))]
 
-/-! ### Structure of the executable chain -/
+/-! # Structure of the executable chain -/
 
 /-- The tail the chain-extension loop appends past its two seeds: pure-list
 mirror of `sturmChainAux` (which threads an `Array` accumulator). -/
@@ -738,7 +738,7 @@ theorem sturmChain_map_ne_nil (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0) :
     (Hex.ZPoly.sturmChain p).toList.map toPolyℝ ≠ [] := by
   rw [sturmChain_toList p hp]; simp
 
-/-! ### The per-step chain relation -/
+/-! # The per-step chain relation -/
 
 /-- **One chain step over `ℝ`.** When the loop pushes a new element past the
 pair `(prev, cur)` (that is, `spem prev cur ≠ 0`), the three consecutive
@@ -795,7 +795,7 @@ private theorem one_le_degree_of_spem_ne_zero {prev cur : Hex.ZPoly} (hcur : cur
   by_contra hh
   exact hr (spem_of_degree_zero prev hcur (by omega))
 
-/-! ### The chain-tail inductions: the four analytic `IsSturmChain` fields -/
+/-! # The chain-tail inductions: the four analytic `IsSturmChain` fields -/
 
 /-- Every element of the extended chain is nonzero: the loop pushes only
 negated primitive parts of nonzero pseudo-remainders. -/
@@ -983,7 +983,7 @@ private theorem chainList_last_unit :
         exact ih cur (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)))
           (neg_primitivePart_ne_zero hr) (by omega) hco' z hz
 
-/-! ### Converse: a terminal-constant chain forces coprime seeds -/
+/-! # Converse: a terminal-constant chain forces coprime seeds -/
 
 /-- **Reverse of `coprime_step`.** The three-term relation
 `C c₀ · a = Q · b − C k · c'` (with `k ≠ 0`) transports `IsCoprime b c'` *back* to
@@ -1063,7 +1063,7 @@ private theorem chainList_seeds_coprime :
             hnext_ne (by omega) hunit'
         exact coprime_step_rev (ne_of_gt hk) hrel hco_tail
 
-/-! ### Sign flanks at a simple zero -/
+/-! # Sign flanks at a simple zero -/
 
 /-- A real polynomial vanishing at `r` with positive derivative there is
 negative on a punctured left neighbourhood of `r` and positive on a punctured
@@ -1122,7 +1122,7 @@ theorem flank_of_key {s₀ s₁ : Polynomial ℝ} {γ : ℝ} (hγ : 0 < γ)
       Polynomial.eval_C, mul_assoc]
     exact mul_pos hγ (mul_self_pos.mpr h1)
 
-/-! ### Assembly: the executable chain is a Sturm chain -/
+/-! # Assembly: the executable chain is a Sturm chain -/
 
 /-- Coprime polynomials never vanish together. -/
 theorem eval_ne_zero_of_isCoprime {a b : Polynomial ℝ} (h : IsCoprime a b)
@@ -1218,8 +1218,8 @@ rationally squarefree `p`, the real cast of `Hex.ZPoly.sturmChain p` satisfies
 all the `Sturm.IsSturmChain` sign axioms for `toPolyℝ (primitivePart p)`.
 
 Stated at the primitive part: the executable chain's head is `primitivePart p`
-(the content is stripped), so the SPEC's `IsSturmChain (toPolyℝ p) …` form is
-unsatisfiable as written; `p` and its primitive part have the same real roots
+(the content is stripped), so an `IsSturmChain (toPolyℝ p) …` conclusion would
+have the wrong head; `p` and its primitive part have the same real roots
 (`roots_toPolyℝ_eq_primitivePart`), so the counting consequences are
 unaffected. -/
 theorem sturmChain_isSturmChain (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0)
@@ -1387,7 +1387,7 @@ theorem squareFreeRat_of_hasSquarefreeSturmChain (p : Hex.ZPoly)
     have hsep_ℚ : (toPolyℚ p).Separable := (separable_map (algebraMap ℚ ℝ)).mp (hmap ▸ hsep_ℝ)
     exact (squareFreeRat_iff p hp0).mpr hsep_ℚ.squarefree
 
-/-! ### Consequences: the executable counts equal Mathlib root counts -/
+/-! # Consequences: the executable counts equal Mathlib root counts -/
 
 /-- The real cast of the primitive part inherits squarefreeness. -/
 private theorem squarefree_toPolyℝ_primitivePart (p : Hex.ZPoly) (hp0 : p ≠ 0)

@@ -26,7 +26,7 @@ variable {p : Nat} [ZMod64.Bounds p]
 
 /--
 Exponentiation by squaring in the quotient `F_p[x] / (f)`, reducing after
-every multiplication with the executable `DensePoly.modByMonic` routine.
+every multiplication with the executable {name}`DensePoly.modByMonic` routine.
 -/
 @[expose]
 def powModMonicAux
@@ -59,7 +59,7 @@ def powModMonic (base f : FpPoly p) (hmonic : DensePoly.Monic f) (n : Nat) :
 
 /--
 Structurally recursive modular exponentiation. This is intentionally linear in
-the exponent: unlike `powModMonic`, it reduces by kernel computation on small
+the exponent: unlike {name}`powModMonic`, it reduces by kernel computation on small
 closed terms.
 -/
 @[expose]
@@ -73,7 +73,7 @@ def powModMonicLinear (base f : FpPoly p) (hmonic : DensePoly.Monic f) :
 def frobeniusXMod (f : FpPoly p) (hmonic : DensePoly.Monic f) : FpPoly p :=
   powModMonic X f hmonic p
 
-/-- Kernel-reducible variant of `frobeniusXMod` for small closed terms. -/
+/-- Kernel-reducible variant of {name}`frobeniusXMod` for small closed terms. -/
 @[expose]
 def frobeniusXModLinear (f : FpPoly p) (hmonic : DensePoly.Monic f) : FpPoly p :=
   powModMonicLinear X f hmonic p
@@ -84,13 +84,13 @@ def frobeniusXPowMod (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat) :
     FpPoly p :=
   powModMonic X f hmonic (p ^ k)
 
-/-- Kernel-reducible variant of `frobeniusXPowMod` for small closed terms. -/
+/-- Kernel-reducible variant of {name}`frobeniusXPowMod` for small closed terms. -/
 @[expose]
 def frobeniusXPowModLinear (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat) :
     FpPoly p :=
   powModMonicLinear X f hmonic (p ^ k)
 
-/-- The zeroth Frobenius power is the canonical representative of `X` modulo `f`. -/
+/-- The zeroth Frobenius power is the canonical representative of {name}`X` modulo `f`. -/
 @[simp, grind =] theorem frobeniusXPowMod_zero
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
@@ -98,14 +98,14 @@ def frobeniusXPowModLinear (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat)
   simp [frobeniusXPowMod, powModMonic, powModMonicAux, modByMonic,
     DensePoly.modByMonic_eq_mod, DensePoly.mod_mod]
 
-/-! ### Successor step lemma for `frobeniusXPowMod`
+/-! # Successor step lemma for {name}`frobeniusXPowMod`
 
 The bucket-invariant proof in `HexBerlekamp.DistinctDegree` needs the identity
 
     `frobeniusXPowMod f hmonic (k + 1) =`
     `  powModMonic (frobeniusXPowMod f hmonic k) f hmonic p`
 
-We derive it from a generic `powModMonic` characterization in terms of
+We derive it from a generic {name}`powModMonic` characterization in terms of
 `powLinear`, a right-fold version of polynomial exponentiation, reduced
 modulo `f`.  These helpers stay private to this file. -/
 
@@ -122,7 +122,7 @@ private theorem powModMonicAux_succ_eq
         (if (n + 1) % 2 = 0 then acc else modByMonic f (acc * base) hmonic) := by
   rw [powModMonicAux.eq_def]
 
-/-- `FpPoly.modByMonic` is just the polynomial `%` operator. -/
+/-- {name}`FpPoly.modByMonic` is just the polynomial `%` operator. -/
 private theorem modByMonic_eq_mod_swap
     [ZMod64.PrimeModulus p]
     (f g : FpPoly p) (hmonic : DensePoly.Monic f) :
@@ -198,7 +198,7 @@ private theorem powLinear_powLinear_mul (f : FpPoly p) (m n : Nat) :
         _ = powLinear f (m * n + n) := (powLinear_add f (m * n) n).symm
         _ = powLinear f ((m + 1) * n) := by rw [Nat.succ_mul]
 
-/-- Reducing the base of `powLinear` modulo `f` does not change the result
+/-- Reducing the base of {name}`powLinear` modulo `f` does not change the result
 modulo `f`. -/
 private theorem mod_powLinear_mod_eq
     [ZMod64.PrimeModulus p]
@@ -220,7 +220,7 @@ private theorem linearPow_eq_powLinear (f : FpPoly p) (n : Nat) :
   | succ n ih =>
       rw [FpPoly.linearPow_succ, powLinear_succ, ih]
 
-/-- `linearPow` has the same canonical remainder for bases with the same
+/-- {name}`linearPow` has the same canonical remainder for bases with the same
 canonical remainder. -/
 theorem linearPow_mod_eq_of_mod_eq_mod (f h r : FpPoly p) (n : Nat)
     [ZMod64.PrimeModulus p]
@@ -243,7 +243,7 @@ theorem linearPow_mod_eq_of_mod_eq_mod (f h r : FpPoly p) (n : Nat)
                 inferInstance (ZMod64.instDivModLawsZMod64Fp p) _ _ f).symm
         _ = FpPoly.linearPow r (n + 1) % f := by rw [FpPoly.linearPow_succ]
 
-/-- The structural power loop computes the same remainder as `powLinear`. -/
+/-- The structural power loop computes the same remainder as {name}`powLinear`. -/
 private theorem powModMonicLinear_mod_eq
     [ZMod64.PrimeModulus p]
     (base f : FpPoly p) (hmonic : DensePoly.Monic f) (n : Nat) :
@@ -275,7 +275,7 @@ private theorem powModMonicLinear_pos_self_mod
           DensePoly.modByMonic_eq_mod _ _ hmonic]
       rw [DensePoly.mod_mod]
 
-/-- Loop invariant for `powModMonicAux`: `acc * base^k` modulo `f`. -/
+/-- Loop invariant for {name}`powModMonicAux`: `acc * base^k` modulo `f`. -/
 private theorem powModMonicAux_mod_eq
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
@@ -373,7 +373,7 @@ private theorem powModMonicAux_pos_self_mod
             Nat.div_lt_self (Nat.succ_pos k) (by decide)
           exact ih ((k + 1) / 2) hlt hpos2 _ _
 
-/-- For a positive exponent, `powModMonic` returns an already-reduced value. -/
+/-- For a positive exponent, {name}`powModMonic` returns an already-reduced value. -/
 theorem powModMonic_pos_self_mod
     [ZMod64.PrimeModulus p]
     (base f : FpPoly p) (hmonic : DensePoly.Monic f) (n : Nat) (hn : 0 < n) :
@@ -382,7 +382,7 @@ theorem powModMonic_pos_self_mod
   exact powModMonicAux_pos_self_mod f hmonic n hn _ _
 
 /--
-The `modByMonic` spelling of `powModMonic_pos_self_mod`, useful for callers
+The {name}`modByMonic` spelling of {name}`powModMonic_pos_self_mod`, useful for callers
 working entirely with the executable monic-reduction API.
 -/
 @[simp, grind =] theorem modByMonic_powModMonic_pos_eq_self
@@ -393,7 +393,7 @@ working entirely with the executable monic-reduction API.
   rw [modByMonic, DensePoly.modByMonic_eq_mod]
   exact powModMonic_pos_self_mod base f hmonic n hn
 
-/-- `powModMonic` characterization in terms of `powLinear` mod `f`. -/
+/-- {name}`powModMonic` characterization in terms of {name}`powLinear` mod `f`. -/
 private theorem powModMonic_mod_eq
     [ZMod64.PrimeModulus p]
     (base f : FpPoly p) (hmonic : DensePoly.Monic f) (n : Nat) :
@@ -404,7 +404,7 @@ private theorem powModMonic_mod_eq
         DensePoly.modByMonic_eq_mod _ _ hmonic]
   rw [one_mul, mod_powLinear_mod_eq f base hmonic n]
 
-/-- `powModMonic` computes the same residue as `linearPow`. -/
+/-- {name}`powModMonic` computes the same residue as {name}`linearPow`. -/
 theorem powModMonic_mod_eq_linearPow
     [ZMod64.PrimeModulus p]
     (base f : FpPoly p) (hmonic : DensePoly.Monic f) (n : Nat) :
@@ -470,7 +470,7 @@ theorem frobeniusXMod_eq_frobeniusXPowMod_one
   unfold frobeniusXMod frobeniusXPowMod
   rw [Nat.pow_one]
 
-/-- `frobeniusXMod` outputs an already-reduced polynomial. -/
+/-- {name}`frobeniusXMod` outputs an already-reduced polynomial. -/
 @[simp, grind =] theorem frobeniusXMod_mod_self
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
@@ -481,7 +481,7 @@ theorem frobeniusXMod_eq_frobeniusXPowMod_one
     omega
   exact powModMonic_pos_self_mod X f hmonic p hp_pos
 
-/-- The `modByMonic` spelling of `frobeniusXMod_mod_self`. -/
+/-- The {name}`modByMonic` spelling of {name}`frobeniusXMod_mod_self`. -/
 @[simp, grind =] theorem modByMonic_frobeniusXMod_eq_self
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
@@ -489,7 +489,7 @@ theorem frobeniusXMod_eq_frobeniusXPowMod_one
   rw [modByMonic, DensePoly.modByMonic_eq_mod]
   exact frobeniusXMod_mod_self f hmonic
 
-/-- Successor step for `frobeniusXPowMod`: raising the previous Frobenius
+/-- Successor step for {name}`frobeniusXPowMod`: raising the previous Frobenius
 image to the `p`-th power (mod `f`) advances the index by one. -/
 theorem frobeniusXPowMod_succ
     [ZMod64.PrimeModulus p]
@@ -526,9 +526,9 @@ theorem frobeniusXPowMod_succ
   rw [show (p : Nat) * p ^ k = p ^ (k + 1) from by
         rw [Nat.pow_succ]; exact Nat.mul_comm _ _]
 
-/-! ### Reduction to the absolute monomial
+/-! # Reduction to the absolute monomial
 
-Connect `frobeniusXPowMod` to the absolute polynomial `X^(p^k)` via
+Connect {name}`frobeniusXPowMod` to the absolute polynomial `X^(p^k)` via
 `monomial (p^k) 1`, modulo `f`. This is consumed by the project-side
 Rabin soundness proof in `HexBerlekamp.RabinSoundness`. -/
 
@@ -563,7 +563,7 @@ theorem frobeniusXPowMod_mod_eq_monomial_mod
   unfold frobeniusXPowMod
   rw [powModMonic_mod_eq, powLinear_X_eq_monomial]
 
-/-- `frobeniusXPowMod` outputs an already-reduced polynomial. -/
+/-- {name}`frobeniusXPowMod` outputs an already-reduced polynomial. -/
 @[simp, grind =] theorem frobeniusXPowMod_mod_self
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat) :
@@ -574,7 +574,7 @@ theorem frobeniusXPowMod_mod_eq_monomial_mod
   unfold frobeniusXPowMod
   exact powModMonic_pos_self_mod _ _ hmonic _ (Nat.pow_pos hp_pos)
 
-/-- The `modByMonic` spelling of `frobeniusXPowMod_mod_self`. -/
+/-- The {name}`modByMonic` spelling of {name}`frobeniusXPowMod_mod_self`. -/
 @[simp, grind =] theorem modByMonic_frobeniusXPowMod_eq_self
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat) :

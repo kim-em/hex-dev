@@ -15,7 +15,7 @@ public section
 
 This module gives executable dyadic balls their ordinary closed-disc meaning
 in `ℂ` and states the enclosure and requested-radius contracts for
-`QAdjoin.approx`.
+{name}`Hex.QAdjoin.approx`.
 -/
 
 open Metric Set

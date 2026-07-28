@@ -55,7 +55,8 @@ of reduced representatives).
 Two further definitions are the main entry points: the smart constructor
 {name}`Hex.GFqRing.ofPoly` and the projection
 {name}`Hex.GFqRing.repr`. Callers never manage reduction by hand:
-`ofPoly` runs the canonical reduction and `repr` reads back the stored
+{name}`Hex.GFqRing.ofPoly` runs the canonical reduction and
+{name}`Hex.GFqRing.repr` reads back the stored
 representative.
 
 {docstring Hex.GFqRing.ofPoly}
@@ -199,7 +200,7 @@ has degree strictly below the modulus.
 
 {docstring Hex.GFqRing.degree_repr_lt_degree}
 
-Reduction is idempotent, so calling `reduceMod` on something already
+Reduction is idempotent, so calling {name}`Hex.GFqRing.reduceMod` on something already
 reduced is a no-op, and the modulus reduces to zero:
 
 {docstring Hex.GFqRing.reduceMod_idem}
@@ -228,10 +229,10 @@ tag := "hex-gfq-ring-cross-references"
 `HexGFqRing` depends on a polynomial-arithmetic library, and a
 finite-field library depends on it:
 
-* `HexPolyFp` provides the `Hex.FpPoly` representation that
+* `HexPolyFp` provides the {name}`Hex.FpPoly` representation that
   {name}`Hex.GFqRing.reduceMod` operates on, together with the
-  `Hex.DensePoly.divMod` and `Hex.DensePoly.mod` operations from which
-  `reduceMod` is built. The univariate polynomial division laws
+  {name}`Hex.DensePoly.divMod` and {name}`Hex.DensePoly.mod` operations from which
+  {name}`Hex.GFqRing.reduceMod` is built. The univariate polynomial division laws
   packaged there are what justify the canonical-representative
   invariant.
 * `HexGFqField` specializes the same quotient to an irreducible
@@ -239,7 +240,7 @@ finite-field library depends on it:
   `HexGFqField` is a thin wrapper carrying a
   {name}`Hex.GFqRing.PolyQuotient` value plus the irreducibility
   hypothesis, so every operation in `HexGFqField` reduces through the
-  same `reduceMod` and the same canonical-representative invariant
+  same {name}`Hex.GFqRing.reduceMod` and the same canonical-representative invariant
   documented in this chapter. Downstream callers such as `HexConway`
   reach `HexGFqRing` transitively through `HexGFqField`.
 

@@ -19,9 +19,8 @@ public section
 # Semantic interpretation of executable algebraic numbers
 
 This module fixes the complex value represented by every selected isolation and
-the evaluation map for a checked fixed presentation. The algebraic laws and
-completeness results are split into later modules so downstream proof work can
-depend on the semantic boundary without importing one monolithic development.
+the evaluation map for a checked fixed presentation. Separate modules state
+the algebraic laws and completeness results over this semantic boundary.
 -/
 
 namespace Hex

@@ -190,7 +190,7 @@ theorem inTwoCircle_ofReal (a b w : ℝ) (h1 : a < w) (h2 : w < b) :
   simp only [Complex.ofReal_re, Complex.ofReal_im]
   nlinarith [mul_pos (sub_pos.mpr h1) (sub_pos.mpr h2)]
 
-/-! ### Sanity checks on concrete points (`a = 0`, `b = 2`). -/
+/-! # Sanity checks on concrete points (`a = 0`, `b = 2`). -/
 
 -- Midpoint `w = 1`: `s = 1` is real positive, so in-region.
 example : InTwoCircle 0 2 1 := by

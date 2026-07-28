@@ -455,9 +455,9 @@ At row `k`, the loop size-reduces the current row, checks the integer
 Lovasz condition, and either advances to `k + 1` or swaps adjacent rows and
 continues from the previous position.
 
-The `fuel = 0` branch returns the current basis as the total fallback for a
-pipeline-unreachable case: issue #6567 tracks the fuel-sufficiency theorem
-showing that `lllFuel` is enough for public pipeline calls. -/
+The `fuel = 0` branch returns the current basis as a total fallback.
+The fuel-sufficiency theorem proves that `lllFuel` reaches the completed state
+for valid independent inputs used by the public pipeline. -/
 @[expose]
 def lllLoop (s : LLLState n m) (k : Nat) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hk : 1 ≤ k) (hkn : k ≤ n) :
@@ -527,16 +527,15 @@ def lllLoop (s : LLLState n m) (k : Nat) (δ : Rat)
       · rw [if_neg hcond, ih, LLLState.swapStep_memLattice_iff,
           LLLState.sizeReduce_memLattice_iff]
 
-/-- Initial fuel bound for `lllLoop`; issue #6567 tracks the proof that this
-bound is sufficient for the public LLL pipeline. -/
+/-- Initial fuel bound for `lllLoop`, sufficient for valid independent inputs
+used by the public LLL pipeline. -/
 @[expose]
 def lllFuel (s : LLLState n m) : Nat :=
   (s.potential + 1) * (n + 1)
 
-/-- Outer LLL loop, dispatched by `lll`.
-
-Compatibility wrapper preserving the original `lllAux` signature while the
-executable recursion is structurally bounded by `lllFuel`. -/
+/-- Runs the outer LLL loop with the same signature as the unbounded recurrence,
+using {name}`Hex.Internal.lllFuel` to give the executable recursion a structural
+bound. -/
 @[expose]
 def lllAux (s : LLLState n m) (k : Nat) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hk : 1 ≤ k) (hkn : k ≤ n) :
@@ -548,8 +547,8 @@ end Internal
 open Hex.Internal
 
 /-- Native (non-dispatched) executable LLL entry point. Builds the canonical
-integer state via `LLLState.ofBasis` and dispatches to `lllAux`.
-This is the body the public `lll` runs by default; its output achieves the
+integer state via {name}`Hex.Internal.LLLState.ofBasis` and runs
+{name}`Hex.Internal.lllAux`. Its output achieves the
 classical size-reduction bound `|μ| ≤ 1/2` (η = 1/2), so its short-vector
 guarantee uses `α = 1/(δ − 1/4)` with the classical precondition `1/4 < δ`.
 `δ` defaults to the classical `3/4`, so `lllNative b` reduces at that parameter. -/

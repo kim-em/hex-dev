@@ -10,7 +10,7 @@ import HexRoots
 Core conformance checks for `HexRoots`, the certified complex-root isolator.
 
 Oracle: python-flint (`fmpz_poly.complex_roots()`; ci tier, wired by a sibling
-work unit). Mode: if_available.
+work unit). Mode: `if_available`.
 
 The checks below assert *independently derived* mathematical facts about the
 roots of committed polynomials — the number of roots (fundamental theorem of
@@ -73,10 +73,10 @@ elaboration-time budget. The small Mignotte polynomial
 namespace Hex
 namespace RootsConformance
 
-/-! ### Committed polynomial fixtures (coefficients low degree first). -/
+/-! # Committed polynomial fixtures (coefficients low degree first). -/
 
-/-- `(x − 1)(x − 2)(x + 3) = x³ − 7x + 6`; roots `1, 2, −3`. This is the SPEC's
-    `p₁`, with `mahlerPrec p₁ = 16` and `cauchyExp p₁ = 3`. -/
+/-- `(x − 1)(x − 2)(x + 3) = x³ − 7x + 6`; roots `1, 2, −3`, with
+    `mahlerPrec p₁ = 16` and `cauchyExp p₁ = 3`. -/
 private def rat1 : ZPoly := DensePoly.ofCoeffs #[6, -7, 0, 1]
 /-- `x³ − x`; roots `0, 1, −1`. -/
 private def rat2 : ZPoly := DensePoly.ofCoeffs #[0, -1, 0, 1]
@@ -106,7 +106,7 @@ private def constant : ZPoly := DensePoly.ofCoeffs #[7]
 /-- The linear polynomial `x`: one simple root at the origin. -/
 private def linear : ZPoly := DensePoly.ofCoeffs #[0, 1]
 
-/-! ### Geometry helpers (exact `Rat` arithmetic on stored squares). -/
+/-! # Geometry helpers (exact `Rat` arithmetic on stored squares). -/
 
 /-- The circumscribed disc of `s` (radius `√2·2^{−prec}`, squared `2·4^{−prec}`)
     contains the rational point `(x, y)`: `(x − cᵣ)² + (y − cᵢ)² ≤ 2·hw²` with
@@ -168,7 +168,7 @@ private def matchAcross {p : ZPoly} (a b : Array (DyadicRootIsolation p)) : Bool
     (b.all fun bi =>
       (a.filter fun ai => DyadicSquare.discsMeet ai.square bi.square).size == 1)
 
-/-! ### Runtime entry points.
+/-! # Runtime entry points.
 
 `HasOnlySimpleRoots` is discharged at runtime through its compiled `Decidable`
 instance (an `if h : …`), not by kernel `decide`: the instance routes through a
@@ -180,7 +180,7 @@ private def isoAtoms (p : ZPoly) (prec : Int) (strat : AtomStrategy) :
     Option (Array (DyadicRootIsolation p)) :=
   if h : HasOnlySimpleRoots p then isolate p h prec strat else none
 
-/-! ### `isolate`: atom count, root coverage, geometry, strategy agreement.
+/-! # `isolate`: atom count, root coverage, geometry, strategy agreement.
 
 Each squarefree fixture is isolated under all three strategies once; the single
 check per fixture asserts the atom count (its degree), the cross-strategy
@@ -235,7 +235,7 @@ under `nkThenPellet` alone for the same budget reason. -/
     | some ax => ax.size == 6 && ax.all fun i => onUnitCircle i.square
     | none => false)
 
-/-! ### `isolate`: degenerate inputs.
+/-! # `isolate`: degenerate inputs.
 
 `HasOnlySimpleRoots 0` holds (the gcd of `0` and its derivative is `0`, whose
 stored size is `0 ≤ 1`), so the zero polynomial reaches `isolate`, which pins it
@@ -249,7 +249,7 @@ atom whose disc covers the origin. -/
     | some a => a.size == 1 && coverCount 0 0 a == 1
     | none => false)
 
-/-! ### `isolateAll?`: clusters and direct atom output.
+/-! # `isolateAll?`: clusters and direct atom output.
 
 The multiple-root input keeps its double root as a `k = 2` cluster whose
 enclosing disc covers `(5, 0)`, alongside the two simple atoms at `±i`; the
@@ -282,7 +282,7 @@ squarefree fixtures return all atoms. -/
     | some rs => rs.size == 1
     | none => false)
 
-/-! ### `refineTo?` and `sameRoot`.
+/-! # `refineTo?` and `sameRoot`.
 
 A coarse atom is built by hand at an exact integer root of `rat1` (its centre is
 the root, so both witnesses certify) — `isolate` itself always overshoots to a
@@ -326,7 +326,7 @@ private def refined2_20 : RefinedIsolation rat1 := ⟨atom2_20, by decide⟩
 #guard RefinedIsolation.sameRoot refined1_20 refined1_20
 #guard !RefinedIsolation.sameRoot refined1_20 refined2_20
 
-/-! ### Witnesses `witness` / `nkWitness` at degree 3.
+/-! # Witnesses `witness` / `nkWitness` at degree 3.
 
 At degree 3 both witnesses are dischargeable by kernel `decide` (the `@[expose]`
 list-fold witness bodies reduce), which is exercised here on the square
@@ -347,7 +347,7 @@ example : witness rat1 ⟨1, 0, 4⟩ 1 := by decide
 #guard nkWitnessCheck rat1 ⟨2, 0, 4⟩
 #guard !nkWitnessCheck rat1 ⟨10, 10, 4⟩
 
-/-! ### `rootFree`: `T₀` emptiness certificate.
+/-! # `rootFree`: `T₀` emptiness certificate.
 
 Certifies a disc holds no root far from the roots, and (correctly) fails to
 certify a disc centred on a root. -/
@@ -360,7 +360,7 @@ certify a disc centred on a root. -/
 -- the public small-degree route above intentionally keeps the exact fast path.
 #guard softRootFree cheb10 ⟨10, 10, 4⟩
 
-/-! ### `taylor`: exact Gaussian-dyadic expansion.
+/-! # `taylor`: exact Gaussian-dyadic expansion.
 
 `taylor p 0` casts the coefficients (`p(X + 0) = p(X)`); a shift by the root `1`
 of `rat1` gives `p(X + 1) = X³ + 3X² − 4X`, hand-computed by synthetic division.
@@ -375,7 +375,7 @@ coefficient arrays. -/
   #[((-1 : Dyadic), (0 : Dyadic)), (0, 0), (50, 0), (0, 0), (-400, 0), (0, 0),
     (1120, 0), (0, 0), (-1280, 0), (0, 0), (512, 0)]
 
-/-! ### `mahlerPrec` and `cauchyExp`: closed forms.
+/-! # `mahlerPrec` and `cauchyExp`: closed forms.
 
 Each value is the hand-evaluated closed form of the module docstrings, not a
 value read back from the function. -/
@@ -392,7 +392,7 @@ value read back from the function. -/
 #guard cauchyExp cheb10 == 2              -- L = 512, M = 1280
 #guard cauchyExp constant == 0            -- degenerate degree 0
 
-/-! ### `Component.refine1`: subdivision, `T₀` discard, gluing.
+/-! # `Component.refine1`: subdivision, `T₀` discard, gluing.
 
 One round splits each square into four children one bit finer, discards children
 whose discs certifiably hold no root, and glues the survivors. Far from every
@@ -458,7 +458,7 @@ private def twoCornerComponents : Array DyadicSquare :=
   let components := glueCovered twoCornerComponents
   components.size == 2 && components.all fun squares => squares.size == 4
 
-/-! ### `Component.certify?`: per-component certification.
+/-! # `Component.certify?`: per-component certification.
 
 A tight component at a simple root certifies as an atom; a component far from
 every root certifies as nothing; a component around the double root of the
@@ -474,17 +474,15 @@ non-squarefree input certifies as a `k = 2` cluster. -/
     | some (.cluster cl) => cl.k == 2
     | _ => false)
 
-/-! ### `mignotte` (squarefree): the adversarial close-pair fixture.
+/-! # `mignotte` (squarefree): the adversarial close-pair fixture.
 
 The runtime squarefreeness decision confirms `mignotte` has only simple
 roots, and its coefficient array is re-derived by `taylor` at `0` above.
 `isolate` must find all five roots: the close real pair straddling `1/100`
 (separation about `2^{−16.4}`), the real root near `21.5377`, and the
-complex pair near `−10.78 ± 18.66i`. This fixture originally exposed the
-root-coverage defect fixed in #8743 (worklist re-entry retained a square
-that did not cover the certified disc, so the three large-magnitude roots
-were silently dropped); it now pins the fixed behaviour under all three
-atom strategies. -/
+complex pair near `−10.78 ± 18.66i`. It checks that worklist re-entry retains
+only squares covering the certified disc and that all three large-magnitude
+roots are preserved under every atom strategy. -/
 
 #guard (if HasOnlySimpleRoots mignotte then true else false)
 

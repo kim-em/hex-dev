@@ -60,7 +60,7 @@ abbrev toPolyℝ (p : Hex.ZPoly) : Polynomial ℝ :=
 abbrev toPolyℂ (p : Hex.ZPoly) : Polynomial ℂ :=
   (toPolynomial p).map (Int.castRingHom ℂ)
 
-/-! ### Dyadic and ceiling-logarithm helpers -/
+/-! # Dyadic and ceiling-logarithm helpers -/
 
 /-- `toRat` turns a left shift into multiplication by a power of two. -/
 theorem toRat_shiftLeft (x : Dyadic) (i : Int) :
@@ -139,7 +139,7 @@ theorem range_foldl_max_eq_finset_sup (g : Nat → Nat) (m : Nat) :
     rw [ih, Finset.range_add_one, Finset.sup_insert]
     exact Nat.max_comm _ _
 
-/-! ### Cast bridges to the executable polynomial -/
+/-! # Cast bridges to the executable polynomial -/
 
 @[simp] theorem coeff_toPolyℝ (p : Hex.ZPoly) (n : Nat) :
     (toPolyℝ p).coeff n = (p.coeff n : ℝ) := by
@@ -185,7 +185,7 @@ theorem leadingCoeff_toPolyℂ (p : Hex.ZPoly) :
 theorem toPolyℂ_eq_map (p : Hex.ZPoly) :
     toPolyℂ p = (toPolynomial p).map (Int.castRingHom ℂ) := rfl
 
-/-! ### `rootBound` soundness -/
+/-! # `rootBound` soundness -/
 
 /-- The power-of-two Cauchy bound `Hex.rootBound p` dominates Cauchy's bound. -/
 theorem cauchyBound_le_rootBound (p : Hex.ZPoly) :
@@ -277,7 +277,7 @@ theorem rootBound_bounds_roots (p : Hex.ZPoly) (hp : toPolyℝ p ≠ 0) :
   rw [this]
   linarith
 
-/-! ### Mahler's root-separation bound
+/-! # Mahler's root-separation bound
 
 The remainder of this file proves `sepPrec_separates`. The classical proof
 (Mahler 1964; textbook form Mignotte 1982) bounds the Vandermonde determinant of

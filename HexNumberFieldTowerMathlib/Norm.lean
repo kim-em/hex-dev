@@ -34,7 +34,7 @@ theorem coeff_toPolynomial (T : NumberTower) (f : Poly T) (n : Nat) :
 namespace Norm
 
 /-- Interpret raw coordinates for a validated level list. The fallback is
-unreachable when the list comes from a `NumberTower`. -/
+unreachable when the list comes from a {name}`Hex.NumberTower`. -/
 @[expose]
 noncomputable def rawToComplex (levels : List Level) (a : Array Rat) : ℂ :=
   (RawEvaluation.evalCoords? levels a).map AlgebraicRoot.toComplex |>.getD 0

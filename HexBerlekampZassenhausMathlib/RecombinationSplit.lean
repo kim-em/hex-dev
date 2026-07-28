@@ -35,7 +35,7 @@ noncomputable section
 
 open Polynomial
 
-/-! ### LiftedFactorSubset → executable recombination split
+/-! # LiftedFactorSubset → executable recombination split
 
 The executable recombination search at the lifted-factor surface enumerates
 order-preserving partitions of `d.liftedFactors.toList` via
@@ -340,7 +340,7 @@ Hensel-coprimality fact about the local factors of `d`: distinct lifted
 factors are pairwise coprime, so when monic they are not equal as
 polynomials.  Producing the injectivity witness from partition data (or
 directly from `henselLiftData` invariants) is the caller's responsibility
-in #4301; this shim covers only the pure list-level step. -/
+and this theorem covers only the pure list-level step. -/
 theorem LiftedFactorListMatches.nodup_of_injOn
     {d : Hex.LiftData} {J : LiftedFactorSubset d}
     {localFactors : List Hex.ZPoly}

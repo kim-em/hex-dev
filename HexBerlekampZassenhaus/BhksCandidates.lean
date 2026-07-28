@@ -81,10 +81,9 @@ for a true integer factor `g'` of `f` that Hensel-lifts to `g`) congruent to
 `2 * bhksCoeffBound f j < p^a` and `p ≥ 2`, the executable `cldCoeffs` entry
 at index `j` is bounded by `bhksCoeffBound f j`.
 
-This replaces the original unconditional `#5224` target — the
-counterexample of `#6217` showed the executable cut had to be re-centered at
-the ambient modulus before this column bound could hold. The recentering
-landed in `Hex.psiCut`; the bound is then a direct consequence of
+The executable cut must be re-centered at the ambient modulus for this column
+bound to hold. {name}`Hex.psiCut` performs that recentering; the bound is then a
+direct consequence of
 `abs_psiCut_le_of_natAbs_le` plus `precisionForCoeffBound_spec` for the
 lower cut threshold.
 -/

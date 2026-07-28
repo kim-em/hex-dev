@@ -19,7 +19,7 @@ and modular multiplication modulo a fixed irreducible polynomial.
 
 The public quotient-field surface is the `GF2n`/`GF2nPoly` operation API and
 its characterising lemmas. Finite coefficient enumeration, divided-difference
-root counting, and linear product/power helpers are proof-facing scaffolding;
+root counting, and linear product/power helpers support the field proofs;
 they live under `GF2Poly.Internal` or `GF2nPoly.Internal` unless they are
 explicitly exposed as quotient enumeration data, such as `GF2nPoly.elements`.
 -/
@@ -1560,7 +1560,7 @@ theorem add_sq (a b : GF2nPoly f hirr) :
     _ = a * a + b * b := by
       rw [add_self, add_zero]
 
-/-! ## Quotient-coefficient polynomial evaluation -/
+/-! # Quotient-coefficient polynomial evaluation -/
 
 /--
 Evaluate a low-to-high quotient-coefficient list at a quotient point.

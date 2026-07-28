@@ -37,7 +37,7 @@ def leadingCoeff (p : DensePoly R) : R :=
   p.coeffs.getD (p.coeffs.size - 1) (Zero.zero : R)
 
 /-- The zero polynomial has leading coefficient `0`. Registered as a `simp`
-normal form so callers reasoning about `leadingCoeff` discharge the zero case
+normal form so callers reasoning about {name}`leadingCoeff` discharge the zero case
 automatically. -/
 @[simp, grind =] theorem leadingCoeff_zero : (0 : DensePoly R).leadingCoeff = 0 := by
   unfold leadingCoeff
@@ -62,7 +62,7 @@ lets callers read the leading coefficient off any constant. -/
     rfl
 
 /-- The constant polynomial `1` has leading coefficient `1`, hence is monic.
-Specialises `leadingCoeff_C` and feeds the monicity facts about `1` that the
+Specialises {name}`leadingCoeff_C` and feeds the monicity facts about `1` that the
 division and gcd routines rely on. -/
 @[simp, grind =] theorem leadingCoeff_one [One R] : (1 : DensePoly R).leadingCoeff = 1 := by
   change (C (1 : R)).leadingCoeff = 1
@@ -74,15 +74,16 @@ def Monic [One R] (p : DensePoly R) : Prop :=
   p.leadingCoeff = 1
 
 /-- A monic polynomial has leading coefficient `1`. Forwarding lemma so callers
-do not need to unfold `Monic`. -/
+do not need to unfold {name}`Monic`. -/
 theorem leadingCoeff_eq_one_of_monic [One R] {p : DensePoly R} (hp : p.Monic) :
     p.leadingCoeff = 1 := hp
 
-/-- Characterization of `Monic` by the leading coefficient equation. -/
+/-- Characterization of {name}`Hex.DensePoly.Monic` by the leading coefficient
+equation. -/
 theorem monic_iff_leadingCoeff_eq_one [One R] {p : DensePoly R} :
     p.Monic ↔ p.leadingCoeff = 1 := Iff.rfl
 
-/-- For a nonzero normalized dense polynomial, `leadingCoeff` is the coefficient
+/-- For a nonzero normalized dense polynomial, {name}`leadingCoeff` is the coefficient
 at the last stored index. -/
 theorem leadingCoeff_eq_coeff_last (p : DensePoly R) (_hpos : 0 < p.size) :
     p.leadingCoeff = p.coeff (p.size - 1) := by
@@ -112,7 +113,7 @@ when every coefficient is zero, computed by scanning from `coeffs.size` downward
 def arrayDegree? (coeffs : Array R) : Option Nat :=
   arrayDegreeAux coeffs coeffs.size
 
-/-- A degree `arrayDegreeAux` reports lies strictly below the scan ceiling `fuel`. -/
+/-- A degree {name}`arrayDegreeAux` reports lies strictly below the scan ceiling `fuel`. -/
 private theorem arrayDegreeAux_some_lt {coeffs : Array R} {fuel rd : Nat}
     (h : arrayDegreeAux coeffs fuel = some rd) :
     rd < fuel := by
@@ -128,7 +129,7 @@ private theorem arrayDegreeAux_some_lt {coeffs : Array R} {fuel rd : Nat}
         subst rd
         omega
 
-/-- The coefficient at a degree `arrayDegreeAux` reports is nonzero. -/
+/-- The coefficient at a degree {name}`arrayDegreeAux` reports is nonzero. -/
 private theorem arrayDegreeAux_some_coeff_ne_zero {coeffs : Array R} {fuel rd : Nat}
     (h : arrayDegreeAux coeffs fuel = some rd) :
     coeffs.getD rd (Zero.zero : R) ≠ (Zero.zero : R) := by
@@ -145,7 +146,7 @@ private theorem arrayDegreeAux_some_coeff_ne_zero {coeffs : Array R} {fuel rd : 
         rw [Array.getD_eq_getD_getElem?]
         exact hcoeff
 
-/-- When `arrayDegreeAux` returns `none`, every coefficient at an index below `fuel` is zero. -/
+/-- When {name}`arrayDegreeAux` returns `none`, every coefficient at an index below `fuel` is zero. -/
 private theorem arrayDegreeAux_none_getD_eq_zero {coeffs : Array R} {fuel i : Nat}
     (h : arrayDegreeAux coeffs fuel = none) (hi : i < fuel) :
     coeffs.getD i (Zero.zero : R) = (Zero.zero : R) := by
@@ -163,7 +164,7 @@ private theorem arrayDegreeAux_none_getD_eq_zero {coeffs : Array R} {fuel i : Na
           exact hcoeff
       · simp [hcoeff] at h
 
-/-- Every coefficient strictly above a degree `arrayDegreeAux` reports and below `fuel` is zero. -/
+/-- Every coefficient strictly above a degree {name}`arrayDegreeAux` reports and below `fuel` is zero. -/
 private theorem arrayDegreeAux_some_above_eq_zero {coeffs : Array R} {fuel rd i : Nat}
     (h : arrayDegreeAux coeffs fuel = some rd) (hrd : rd < i) (hi : i < fuel) :
     coeffs.getD i (Zero.zero : R) = (Zero.zero : R) := by
@@ -183,19 +184,19 @@ private theorem arrayDegreeAux_some_above_eq_zero {coeffs : Array R} {fuel rd i 
         cases h
         omega
 
-/-- A degree `arrayDegree?` reports lies strictly below `coeffs.size`. -/
+/-- A degree {name}`arrayDegree?` reports lies strictly below `coeffs.size`. -/
 private theorem arrayDegree?_some_lt {coeffs : Array R} {rd : Nat}
     (h : arrayDegree? coeffs = some rd) :
     rd < coeffs.size := by
   exact arrayDegreeAux_some_lt h
 
-/-- The coefficient at a degree `arrayDegree?` reports is nonzero. -/
+/-- The coefficient at a degree {name}`arrayDegree?` reports is nonzero. -/
 private theorem arrayDegree?_some_coeff_ne_zero {coeffs : Array R} {rd : Nat}
     (h : arrayDegree? coeffs = some rd) :
     coeffs.getD rd (Zero.zero : R) ≠ (Zero.zero : R) := by
   exact arrayDegreeAux_some_coeff_ne_zero h
 
-/-- Every coefficient at an index above a degree `arrayDegree?` reports is zero. -/
+/-- Every coefficient at an index above a degree {name}`arrayDegree?` reports is zero. -/
 private theorem arrayDegree?_some_above_eq_zero {coeffs : Array R} {rd i : Nat}
     (h : arrayDegree? coeffs = some rd) (hrd : rd < i) :
     coeffs.getD i (Zero.zero : R) = (Zero.zero : R) := by
@@ -204,7 +205,7 @@ private theorem arrayDegree?_some_above_eq_zero {coeffs : Array R} {rd i : Nat}
   · unfold Array.getD
     exact dif_neg hi
 
-/-- When `arrayDegree?` returns `none`, every coefficient is zero. -/
+/-- When {name}`arrayDegree?` returns `none`, every coefficient is zero. -/
 private theorem arrayDegree?_none_getD_eq_zero {coeffs : Array R} {i : Nat}
     (h : arrayDegree? coeffs = none) :
     coeffs.getD i (Zero.zero : R) = (Zero.zero : R) := by
@@ -255,7 +256,7 @@ def subtractScaledShiftStep [Sub R] [Mul R]
 
 /-- Subtract `coeff` times the divisor `q` shifted up by `shift` positions from the
 remainder `rem`, i.e. one full long-division step `rem - coeff * xˢʰⁱᶠᵗ * q`, realised by
-folding `subtractScaledShiftStep` over every index of `q`. -/
+folding {name}`subtractScaledShiftStep` over every index of `q`. -/
 @[expose]
 def subtractScaledShift [Sub R] [Mul R]
     (rem q : Array R) (shift : Nat) (coeff : R) : Array R :=
@@ -273,7 +274,7 @@ private theorem array_getD_set!_same (xs : Array R) (n : Nat) (v : R)
 omit [DecidableEq R] in
 /-- Writing at index `k ≠ n` leaves the value read back at `n` of `xs.set! k v`
 unchanged, the disjoint-index half of the `set!`/`getD` interaction used to show
-`subtractScaledShift` only perturbs the elimination window. -/
+{name}`subtractScaledShift` only perturbs the elimination window. -/
 private theorem array_getD_set!_ne (xs : Array R) (n k : Nat) (v : R)
     (hne : k ≠ n) :
     (xs.set! k v).getD n (Zero.zero : R) = xs.getD n (Zero.zero : R) := by
@@ -286,7 +287,7 @@ private theorem array_getD_set!_ne (xs : Array R) (n k : Nat) (v : R)
       simp [Array.set!_eq_setIfInBounds, hn]
 
 omit [DecidableEq R] in
-/-- A fold of `subtractScaledShiftStep` over index list `xs` leaves position `n`
+/-- A fold of {name}`subtractScaledShiftStep` over index list `xs` leaves position `n`
 untouched whenever no step writes there (`shift + j ≠ n` for all `j ∈ xs`), the key
 disjointness fact underpinning the `getD` characterisations below. -/
 private theorem subtractScaledShift_fold_getD_of_forall_ne [Sub R] [Mul R]
@@ -309,7 +310,7 @@ private theorem subtractScaledShift_fold_getD_of_forall_ne [Sub R] [Mul R]
         (hne j List.mem_cons_self)
 
 omit [DecidableEq R] in
-/-- Folding `subtractScaledShiftStep` preserves the array length, since each step is a
+/-- Folding {name}`subtractScaledShiftStep` preserves the array length, since each step is a
 `set!` that never grows the array; needed to keep elimination-window bounds valid across
 the fold. -/
 private theorem subtractScaledShift_fold_size [Sub R] [Mul R]
@@ -325,7 +326,7 @@ private theorem subtractScaledShift_fold_size [Sub R] [Mul R]
       simp [Array.set!_eq_setIfInBounds]
 
 omit [DecidableEq R] in
-/-- `subtractScaledShift` leaves position `n` unchanged when it lies outside the
+/-- {name}`subtractScaledShift` leaves position `n` unchanged when it lies outside the
 elimination window (`shift + j ≠ n` for every `j < q.size`), specialising the fold
 disjointness lemma to a full subtract step. -/
 private theorem subtractScaledShift_getD_of_forall_ne [Sub R] [Mul R]
@@ -339,7 +340,7 @@ private theorem subtractScaledShift_getD_of_forall_ne [Sub R] [Mul R]
   exact hne j (List.mem_range.mp hj)
 
 omit [DecidableEq R] in
-/-- Closed form for position `n` after folding `subtractScaledShiftStep` over
+/-- Closed form for position `n` after folding {name}`subtractScaledShiftStep` over
 `List.range m`: indices inside the window `shift ≤ n < shift + m` get
 `coeff * q[n - shift]` subtracted, all others are untouched; the engine behind the full
 `subtractScaledShift_getD` characterisation. -/
@@ -427,7 +428,7 @@ private theorem subtractScaledShift_fold_getD_range [Lean.Grind.CommRing R]
         · omega
 
 omit [DecidableEq R] in
-/-- Full pointwise specification of `subtractScaledShift`: each position `n` in the
+/-- Full pointwise specification of {name}`subtractScaledShift`: each position `n` in the
 window `shift ≤ n < shift + q.size` has `coeff * q[n - shift]` subtracted and every other
 position is unchanged, the definitive `getD` law callers reason with. -/
 private theorem subtractScaledShift_getD [Lean.Grind.CommRing R]
@@ -442,7 +443,7 @@ private theorem subtractScaledShift_getD [Lean.Grind.CommRing R]
   exact subtractScaledShift_fold_getD_range rem q shift coeff n q.size hbound
 
 omit [DecidableEq R] in
-/-- At the top window position `shift + qDegree`, `subtractScaledShift` subtracts
+/-- At the top window position `shift + qDegree`, {name}`subtractScaledShift` subtracts
 `coeff` times the leading coefficient `q[qDegree]`; the case that, with the right
 `coeff`, zeroes the remainder's leading term and drops its degree. -/
 private theorem subtractScaledShift_getD_last [Sub R] [Mul R]
@@ -480,7 +481,7 @@ private theorem subtractScaledShift_getD_last [Sub R] [Mul R]
   · simpa [hprefix_size] using hidx
 
 omit [DecidableEq R] in
-/-- Above the top window position (`shift + qDegree < n`), `subtractScaledShift` leaves
+/-- Above the top window position (`shift + qDegree < n`), {name}`subtractScaledShift` leaves
 `rem[n]` unchanged, confirming the elimination step never touches coefficients strictly
 higher than the remainder's current degree. -/
 private theorem subtractScaledShift_getD_above_last [Sub R] [Mul R]
@@ -496,7 +497,7 @@ private theorem subtractScaledShift_getD_above_last [Sub R] [Mul R]
 omit [DecidableEq R] in
 /-- When the chosen `coeff` makes the leading subtraction cancel exactly
 (`rem[shift+qDegree] - coeff * q[qDegree] = 0`), the top window position of
-`subtractScaledShift` becomes zero, the degree-drop guarantee each long-division step
+{name}`subtractScaledShift` becomes zero, the degree-drop guarantee each long-division step
 relies on. -/
 private theorem subtractScaledShift_getD_last_cancel [Sub R] [Mul R]
     (rem q : Array R) (shift qDegree : Nat) (coeff : R)
@@ -509,7 +510,7 @@ private theorem subtractScaledShift_getD_last_cancel [Sub R] [Mul R]
   rw [subtractScaledShift_getD_last rem q shift qDegree coeff hsize hidx]
   exact hcancel
 
-/-- Runtime helper for `subtractScaledShift`: subtract `coeff * q[j]` from position
+/-- Runtime helper for {name}`subtractScaledShift`: subtract `coeff * q[j]` from position
 `shift + j` of `rem` for `j = 0 … cnt-1`, tail-recursively. Returns the same array
 value as `(List.range q.size).foldl (subtractScaledShiftStep q shift coeff) rem` when
 called with `j = 0`, `cnt = q.size`, but does not allocate the index list. -/
@@ -550,7 +551,7 @@ private def divModArrayAuxImplGo [Sub R] [Mul R]
 
 /-- Runtime implementation of `divModArrayAux`. Seeds the scan ceiling at `rem.size`, so
 the first iteration is identical to the reference's `arrayDegree? rem`; thereafter the
-ceiling tracks the working degree (see `divModArrayAuxImplGo`). -/
+ceiling tracks the working degree (see {name}`divModArrayAuxImplGo`). -/
 def divModArrayAuxImpl [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) (scaleLead : R → R)
     (fuel : Nat) (quot rem : Array R) : Array R × Array R :=
@@ -558,9 +559,9 @@ def divModArrayAuxImpl [Sub R] [Mul R]
 
 /-- The fuel-bounded long-division loop: while the remainder's degree `rd` is at least
 the divisor degree `qDegree`, pick the quotient coefficient `scaleLead (rem[rd])`, record
-it in `quot`, eliminate the leading term via `subtractScaledShift`, and recurse, returning
+it in `quot`, eliminate the leading term via {name}`subtractScaledShift`, and recurse, returning
 the final `(quotient, remainder)` pair. The compiled runtime uses the value-equal
-`divModArrayAuxImpl` (proved by `divModArrayAux_eq_impl`, registered `@[csimp]`), which
+{name}`divModArrayAuxImpl` (proved by `divModArrayAux_eq_impl`, registered `@[csimp]`), which
 tracks the working degree instead of rescanning. -/
 @[expose]
 noncomputable def divModArrayAux [Sub R] [Mul R]
@@ -582,7 +583,7 @@ noncomputable def divModArrayAux [Sub R] [Mul R]
             divModArrayAux q qDegree scaleLead fuel quot rem
 
 /-- Dropping a run of indices on which `coeffs` is zero does not change what
-`arrayDegreeAux` reports: scanning down from `c + n` through `n` zeros reaches the same
+{name}`arrayDegreeAux` reports: scanning down from `c + n` through `n` zeros reaches the same
 answer as scanning down from `c`. -/
 private theorem arrayDegreeAux_drop {coeffs : Array R} {c : Nat}
     (h : ∀ i, c ≤ i → coeffs.getD i (Zero.zero : R) = (Zero.zero : R)) (n : Nat) :
@@ -615,8 +616,8 @@ private theorem arrayDegreeAux_eq_arrayDegree? {coeffs : Array R} {ceil : Nat}
     exact hdrop
 
 omit [DecidableEq R] in
-/-- The tail-recursive `subtractScaledShiftImpl` realises the same fold as
-`subtractScaledShiftStep` over `List.range' j cnt`. -/
+/-- The tail-recursive {name}`subtractScaledShiftImpl` realises the same fold as
+{name}`subtractScaledShiftStep` over `List.range' j cnt`. -/
 private theorem subtractScaledShiftImpl_eq_foldl [Sub R] [Mul R]
     (q : Array R) (shift : Nat) (coeff : R) (cnt : Nat) :
     ∀ (j : Nat) (rem : Array R),
@@ -631,15 +632,15 @@ private theorem subtractScaledShiftImpl_eq_foldl [Sub R] [Mul R]
       exact ih (j + 1) (subtractScaledShiftStep q shift coeff rem j)
 
 omit [DecidableEq R] in
-/-- The runtime subtraction loop computes the same array as `subtractScaledShift`. -/
+/-- The runtime subtraction loop computes the same array as {name}`subtractScaledShift`. -/
 private theorem subtractScaledShiftImpl_eq [Sub R] [Mul R]
     (rem q : Array R) (shift : Nat) (coeff : R) :
     subtractScaledShiftImpl q shift coeff 0 q.size rem =
       subtractScaledShift rem q shift coeff := by
   rw [subtractScaledShiftImpl_eq_foldl, subtractScaledShift, List.range_eq_range']
 
-/-- The ceiling-tracking loop `divModArrayAuxImplGo` agrees with the rescanning reference
-`divModArrayAux`, provided every coefficient at or above the seed ceiling is already zero. -/
+/-- The ceiling-tracking loop {name}`divModArrayAuxImplGo` agrees with the rescanning reference
+{name}`divModArrayAux`, provided every coefficient at or above the seed ceiling is already zero. -/
 private theorem divModArrayAuxImplGo_eq [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) (scaleLead : R → R) (fuel : Nat) :
     ∀ (ceil : Nat) (quot rem : Array R),
@@ -687,15 +688,15 @@ private theorem divModArrayAuxImpl_eq [Sub R] [Mul R]
   unfold Array.getD
   exact dif_neg (by omega)
 
-/-- Register the value-equal `divModArrayAuxImpl` as the compiled implementation of
-`divModArrayAux`. Unlike `@[implemented_by]`, the `@[csimp]` swap is backed by the proof
-`divModArrayAuxImpl_eq`, so the runtime loop is verified equal to the specification. -/
+/-- Register the value-equal {name}`divModArrayAuxImpl` as the compiled implementation of
+{name}`divModArrayAux`. Unlike `@[implemented_by]`, the `@[csimp]` swap is backed by the proof
+{name}`divModArrayAuxImpl_eq`, so the runtime loop is verified equal to the specification. -/
 @[csimp]
 theorem divModArrayAux_eq_impl : @divModArrayAux = @divModArrayAuxImpl := by
   funext R _ _ _ _ q qDegree scaleLead fuel quot rem
   exact (divModArrayAuxImpl_eq q qDegree scaleLead fuel quot rem).symm
 
-/-- `divModArrayAux` depends only on the pointwise values of its `scaleLead` argument:
+/-- {name}`divModArrayAux` depends only on the pointwise values of its `scaleLead` argument:
 two scaling functions agreeing on every input produce identical quotient/remainder, so
 callers may swap in any extensionally-equal leading-coefficient scaler. -/
 private theorem divModArrayAux_scaleLead_congr [Sub R] [Mul R]
@@ -720,7 +721,7 @@ private theorem divModArrayAux_scaleLead_congr [Sub R] [Mul R]
             exact ih _ _
 
 /-- Under a `scaleLead` that cancels each leading term (`a - scaleLead a * q[qDegree] = 0`),
-`divModArrayAux` drives every remainder coefficient at index `≥ qDegree` to zero, i.e. the
+{name}`divModArrayAux` drives every remainder coefficient at index `≥ qDegree` to zero, i.e. the
 final remainder has degree `< qDegree`; the core invariant establishing the division
 remainder-degree bound. -/
 private theorem divModArrayAux_remainder_zero_ge [Sub R] [Mul R]
@@ -790,7 +791,7 @@ private theorem divModArrayAux_remainder_zero_ge [Sub R] [Mul R]
             simpa [Array.getD_eq_getD_getElem?] using hrec
 
 /-- Array-backed long division of dense polynomial `p` by `q`: returns `(0, p)` when `q`
-is zero, otherwise seeds a zero quotient and runs `divModArrayAux` with `p.size` fuel,
+is zero, otherwise seeds a zero quotient and runs {name}`divModArrayAux` with `p.size` fuel,
 packaging the resulting coefficient arrays back as `DensePoly` quotient and remainder. -/
 @[expose]
 def divModArray [Sub R] [Mul R]
@@ -938,7 +939,7 @@ def divMod [One R] [Add R] [Sub R] [Mul R] [Div R]
   else
     divModArray p q (fun coeff => coeff / q.leadingCoeff)
 
-/-- For a positive-degree divisor, the field-style `divMod` returns a remainder strictly smaller
+/-- For a positive-degree divisor, the field-style {name}`divMod` returns a remainder strictly smaller
 in degree, given an explicit cancellation hypothesis for the coefficient ring. Concrete coefficient
 libraries discharge `hcancel` once and re-export this as the unconditional
 `divMod_remainder_degree_lt_of_pos_degree` via the `DivModLaws` instance. -/
@@ -954,7 +955,7 @@ theorem divMod_remainder_degree_lt_of_pos_degree_of_cancel [One R] [Add R] [Sub 
     exact divModArray_remainder_degree_lt_of_pos_degree p q
       (fun coeff => coeff / q.leadingCoeff) hdegree hcancel
 
-/-- For a size-one (degree-zero, nonzero) divisor, the field-style `divMod` returns zero
+/-- For a size-one (degree-zero, nonzero) divisor, the field-style {name}`divMod` returns zero
 remainder, given an explicit cancellation hypothesis for the coefficient ring. Concrete coefficient
 libraries discharge `hcancel` once and re-export the result via the `DivModLaws` instance. -/
 theorem divMod_remainder_eq_zero_of_degree_zero_of_cancel [One R] [Add R] [Sub R] [Mul R] [Div R]
@@ -1066,11 +1067,11 @@ def modByMonic [One R] [Add R] [Sub R] [Mul R]
     (p q : DensePoly R) (hmonic : Monic q) : DensePoly R :=
   (divModMonic p q hmonic).2
 
-/-- The `/` notation on dense polynomials dispatches to `DensePoly.div`. -/
+/-- The `/` notation on dense polynomials dispatches to {name}`DensePoly.div`. -/
 instance [One R] [Add R] [Sub R] [Mul R] [Div R] : Div (DensePoly R) where
   div := div
 
-/-- The `%` notation on dense polynomials dispatches to `DensePoly.mod`. -/
+/-- The `%` notation on dense polynomials dispatches to {name}`DensePoly.mod`. -/
 instance [One R] [Add R] [Sub R] [Mul R] [Div R] : Mod (DensePoly R) where
   mod := mod
 
@@ -1175,11 +1176,11 @@ theorem xgcdLeft_left_eq_xgcd [One R] [Add R] [Sub R] [Mul R] [Div R]
   xgcdLeftAux_left_eq p 1 0 q 0 1 _
 
 /-- Tail-recursive Euclidean gcd tracking only the remainder sequence, **without**
-the Bezout coefficients. `xgcd`/`xgcdAux` carry the Bezout accumulators `s`, `t`
+the Bezout coefficients. {name}`xgcd`/{name}`xgcdAux` carry the Bezout accumulators `s`, `t`
 and update them with a polynomial multiplication (`q * s₁`, `q * t₁`) at every
 step on polynomials whose degree grows through the run — that is `O(deg³)` work
 and pure waste when only the gcd value is wanted (the common case: the square-free
-/ separability test `gcd(f, f') = 1`). `gcdAux` keeps only the remainders and is
+/ separability test `gcd(f, f') = 1`). {name}`gcdAux` keeps only the remainders and is
 `O(deg²)`. -/
 @[expose]
 def gcdAux [One R] [Add R] [Sub R] [Mul R] [Div R]
@@ -1193,7 +1194,7 @@ def gcdAux [One R] [Add R] [Sub R] [Mul R] [Div R]
         gcdAux r₁ (divMod r₀ r₁).2 fuel
 
 /-- The plain remainder gcd agrees with the `gcd` component of the extended
-algorithm: `XGCDResult.gcd` never depends on the Bezout accumulators. -/
+algorithm: {name}`XGCDResult.gcd` never depends on the Bezout accumulators. -/
 theorem gcdAux_eq_xgcdAux_gcd [One R] [Add R] [Sub R] [Mul R] [Div R]
     (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly R) (fuel : Nat) :
     gcdAux r₀ r₁ fuel = (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd := by
@@ -1206,22 +1207,22 @@ theorem gcdAux_eq_xgcdAux_gcd [One R] [Add R] [Sub R] [Mul R] [Div R]
       · exact ih _ _ _ _ _ _
 
 /-- Polynomial gcd over a field. Computed by the plain remainder sequence
-(`gcdAux`), **not** the extended algorithm: the gcd value is independent of the
+{name}`Hex.DensePoly.gcdAux`, **not** the extended algorithm: the gcd value is independent of the
 Bezout coefficients, and computing them costs an extra polynomial multiplication
-per step (`O(deg³)` vs `O(deg²)`). `xgcd` stays available for callers that
+per step (`O(deg³)` vs `O(deg²)`). {name}`Hex.DensePoly.xgcd` stays available for callers that
 genuinely need Bezout coefficients. -/
 @[expose]
 def gcd [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : DensePoly R :=
   gcdAux p q (p.size + q.size + 1)
 
-/-- `gcd` equals the gcd component of `xgcd`; lets lemmas proved against the
-extended algorithm transfer to the plain `gcd`. -/
+/-- {name}`gcd` equals the gcd component of {name}`xgcd`; lets lemmas proved against the
+extended algorithm transfer to the plain {name}`gcd`. -/
 theorem gcd_eq_xgcd_gcd [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : gcd p q = (xgcd p q).gcd :=
   gcdAux_eq_xgcdAux_gcd p 1 0 q 0 1 (p.size + q.size + 1)
 
-/-- The gcd component returned by `xgcd` is the executable gcd. -/
+/-- The gcd component returned by {name}`xgcd` is the executable gcd. -/
 theorem xgcd_gcd_eq_gcd [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) :
     (xgcd p q).gcd = gcd p q := (gcd_eq_xgcd_gcd p q).symm
@@ -1278,7 +1279,7 @@ class GcdLaws (R : Type u) [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul
       let r := xgcd p q
       r.left * p + r.right * q = r.gcd
 
-/-- Euclidean division spec: the field-style quotient and remainder reconstruct the dividend. -/
+/-- The field-style quotient and remainder reconstruct the dividend. -/
 @[grind =>]
 theorem divMod_spec [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
     (p q : DensePoly R) :
@@ -1316,7 +1317,7 @@ theorem xgcd_bezout [One R] [Add R] [Sub R] [Mul R] [Div R] [GcdLaws R]
     r.left * p + r.right * q = r.gcd := by
   exact GcdLaws.xgcd_bezout p q
 
-/-- `modByMonic` is definitionally the second component of `divModMonic`. -/
+/-- {name}`modByMonic` is definitionally the second component of {name}`divModMonic`. -/
 theorem modByMonic_eq_divModMonic [One R] [Add R] [Sub R] [Mul R]
     (p q : DensePoly R) (hq : Monic q) :
     modByMonic p q hq = (divModMonic p q hq).2 := by
@@ -1333,7 +1334,7 @@ theorem modByMonic_zero [One R] [Add R] [Sub R] [Mul R]
     change (ofCoeffs (#[] : Array R) : DensePoly R) = 0
     rfl
 
-/-- The `%` notation unfolds to the second component of `divMod`. -/
+/-- The `%` notation unfolds to the second component of {name}`divMod`. -/
 theorem mod_eq_divMod [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) :
     p % q = (divMod p q).2 := by
@@ -1356,7 +1357,7 @@ theorem mod_eq_divMod [One R] [Add R] [Sub R] [Mul R] [Div R]
     unfold divModArray
     simp [hzero, isZero, size, toArray, divModArrayAux]
 
-/-- If the dividend already has degree strictly below the divisor, `divMod` short-circuits to
+/-- If the dividend already has degree strictly below the divisor, {name}`divMod` short-circuits to
 `(0, p)` without entering the long-division loop. -/
 theorem divMod_eq_zero_self_of_degree_lt [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) :
@@ -1365,7 +1366,7 @@ theorem divMod_eq_zero_self_of_degree_lt [One R] [Add R] [Sub R] [Mul R] [Div R]
   simp [divMod, hdeg]
 
 /-- When the nonzero left input is strictly smaller than the right input,
-resume `gcd` after its first two Euclidean steps.  The explicit fuel is the
+resume {name}`gcd` after its first two Euclidean steps. The explicit fuel is the
 fuel of the original execution after those steps, so this preserves its exact
 unnormalised remainder representative rather than merely an associate. -/
 theorem gcd_eq_aux_mod [One R] [Add R] [Sub R] [Mul R] [Div R]
@@ -1478,7 +1479,7 @@ theorem divModArray_eq_zero_self_of_degree_lt [Sub R] [Mul R]
               hquot_zero']
 
 /-- If field-style coefficient division agrees pointwise with the monic scaling function, then
-the executable monic division path agrees with the general `divMod` path away from the early
+the executable monic division path agrees with the general {name}`divMod` path away from the early
 degree shortcut. -/
 theorem divModMonic_eq_divMod_of_monic_of_scale [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) (hq : Monic q)
@@ -1489,7 +1490,7 @@ theorem divModMonic_eq_divMod_of_monic_of_scale [One R] [Add R] [Sub R] [Mul R] 
   rw [if_neg hnot_lt]
   exact (divModArray_scaleLead_congr p q (fun a => hscale a)).symm
 
-/-- Core division invariant: for positive-degree divisors, `divMod` returns a remainder whose
+/-- Core division invariant: for positive-degree divisors, {name}`divMod` returns a remainder whose
 degree is strictly smaller than the divisor degree. -/
 @[grind =>]
 theorem divMod_remainder_degree_lt_of_pos_degree [One R] [Add R] [Sub R] [Mul R] [Div R]
@@ -1499,7 +1500,7 @@ theorem divMod_remainder_degree_lt_of_pos_degree [One R] [Add R] [Sub R] [Mul R]
   exact DivModLaws.divMod_remainder_degree_lt_of_pos_degree p q
 
 /-- Monic division agrees with field-style division when the divisor is monic. This is the
-implementation invariant relating the specialized `divModMonic` path to `divMod`. -/
+implementation invariant relating the specialized {name}`divModMonic` path to {name}`divMod`. -/
 @[grind =>]
 theorem divModMonic_eq_divMod_of_monic [One R] [Add R] [Sub R] [Mul R] [Div R]
     [DivModLaws R]

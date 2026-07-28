@@ -27,32 +27,15 @@ division-free sign-test `subImpl` via `@[csimp]`), so the packed kernel equals
 the reference for *every* `Bounds p`. `modByMonicPacked_eq` is the
 value-correspondence theorem.
 
-**Status: dormant, measured neutral — intentionally not wired.** This kernel
-was built to test the hypothesis (issue #8642) that `FpPoly` is *reduction*-
-bound and that a packed `modByMonic` on backing words is the speedup lever, the
-way `FpPoly.mulPacked` (`PackedMul.lean`) was the multiply analogue. It is not.
-Two facts kill the premise:
+This packed operation is an optional value-equivalent division kernel. The
+standard {name}`Hex.FpPoly.modByMonic` implementation remains in use because:
 
 * `Array UInt64` is **not** an unboxed word buffer: Lean boxes every element
   (`lean_box_uint64` / `lean_unbox_uint64`, visible in the `lean_hex_fp_convolve`
   extern), exactly as `Array (ZMod64 p)` boxes its trivially-wrapped `UInt64`
-  coefficients. Packing to words saves no boxing; it only adds two copy passes,
-  so a `@[csimp]` swap for the pure-Lean kernel here measures ~3% *slower* on the
-  `powModMonic` / Frobenius hot path.
-* Even a native C long-division extern that removes *all* boxing, per-term FFI
-  (`lean_hex_zmod64_mul` per coefficient) and Lean `foldl` overhead measures only
-  ~1% faster on the reduction in isolation and flat end-to-end. `modByMonic` is
-  bound by its intrinsic `O(n²)` modular-reduction `% p` divisions, which the
-  reference and any per-term packed kernel perform identically — not by boxing.
-
-The only representation that cuts the *division count* is lazy `__uint128_t`
-accumulation (one reduction per output coefficient). That works for the
-convolution `mulPacked` but not for long division, whose sequential
-pivot dependency forces each pivot to be reduced before use; a genuinely lazy
-long-division kernel (wider deferred-normalization accumulators) is a different,
-much larger piece, and given `mulPacked`'s null end-to-end result is unlikely to
-pay off. So this kernel is kept as proven, tested infrastructure but is **not**
-registered as the compiled implementation of `FpPoly.modByMonic`.
+  coefficients, so conversion adds two copy passes without removing boxing.
+* Long division has an intrinsic `O(n²)` sequence of modular reductions; each
+  pivot must be reduced before the next pivot uses it.
 -/
 
 namespace Hex
@@ -62,14 +45,14 @@ namespace ZMod64
 variable {p : Nat} [Bounds p]
 
 /-- Overflow-safe modular product of two raw words, reconstructing residues and
-delegating to the (extern-backed) `ZMod64.mul`. Defined so that
+delegating to the (extern-backed) {name}`ZMod64.mul`. Defined so that
 `mulWord p x.val y.val = (x * y).val`. -/
 @[expose]
 def mulWord (p : Nat) [Bounds p] (a b : UInt64) : UInt64 :=
   (mul (ofNat p a.toNat) (ofNat p b.toNat)).val
 
 /-- Overflow-safe modular difference of two raw words, reconstructing residues
-and delegating to `ZMod64.sub`. Defined so that
+and delegating to {name}`ZMod64.sub`. Defined so that
 `subWord p x.val y.val = (x - y).val`. -/
 @[expose]
 def subWord (p : Nat) [Bounds p] (a b : UInt64) : UInt64 :=
@@ -162,7 +145,7 @@ theorem ofWords_toWords (a : Array (ZMod64 p)) : ofWords p (toWords a) = a := by
   rw [hid, Array.map_id]
 
 /-- Packed downward degree scan: the highest index below `fuel` with a nonzero
-word, mirroring `DensePoly.arrayDegreeAux`. -/
+word, mirroring {name}`DensePoly.arrayDegreeAux`. -/
 @[expose]
 def arrayDegreeAuxPacked (coeffs : Array UInt64) : Nat → Option Nat
   | 0 => none
@@ -173,13 +156,13 @@ def arrayDegreeAuxPacked (coeffs : Array UInt64) : Nat → Option Nat
         some fuel
 
 /-- Packed degree: the highest index of a nonzero word, mirroring
-`DensePoly.arrayDegree?`. -/
+{name}`DensePoly.arrayDegree?`. -/
 @[expose]
 def arrayDegreePacked? (coeffs : Array UInt64) : Option Nat :=
   arrayDegreeAuxPacked coeffs coeffs.size
 
 /-- One packed elimination coefficient write, mirroring
-`DensePoly.subtractScaledShiftStep` with overflow-safe word arithmetic. -/
+{name}`DensePoly.subtractScaledShiftStep` with overflow-safe word arithmetic. -/
 @[expose]
 def subtractScaledShiftStepPacked (p : Nat) [ZMod64.Bounds p]
     (q : Array UInt64) (shift : Nat) (coeff : UInt64) (next : Array UInt64) (j : Nat) :
@@ -188,14 +171,14 @@ def subtractScaledShiftStepPacked (p : Nat) [ZMod64.Bounds p]
     (ZMod64.subWord p (next.getD (shift + j) 0) (ZMod64.mulWord p coeff (q.getD j 0)))
 
 /-- One full packed elimination step `rem - coeff * xˢʰⁱᶠᵗ * q`, mirroring
-`DensePoly.subtractScaledShift`. -/
+{name}`DensePoly.subtractScaledShift`. -/
 @[expose]
 def subtractScaledShiftPacked (p : Nat) [ZMod64.Bounds p]
     (rem q : Array UInt64) (shift : Nat) (coeff : UInt64) : Array UInt64 :=
   (List.range q.size).foldl (subtractScaledShiftStepPacked p q shift coeff) rem
 
 /-- The packed fuel-bounded long-division loop, mirroring
-`DensePoly.divModArrayAux`. -/
+{name}`DensePoly.divModArrayAux`. -/
 @[expose]
 def divModArrayAuxPacked (p : Nat) [ZMod64.Bounds p]
     (q : Array UInt64) (qDegree : Nat) (scaleLead : UInt64 → UInt64)
@@ -215,7 +198,7 @@ def divModArrayAuxPacked (p : Nat) [ZMod64.Bounds p]
             let rem := subtractScaledShiftPacked p rem q shift coeff
             divModArrayAuxPacked p q qDegree scaleLead fuel quot rem
 
-/-- Packed monic division remainder, sharing the signature of `FpPoly.modByMonic`
+/-- Packed monic division remainder, sharing the signature of {name}`FpPoly.modByMonic`
 (so a `@[csimp]` swap would be well-typed, though it is intentionally not
 registered — see the module docstring). Packs both operand arrays, runs the
 packed loop with `scaleLead = id` (the divisor is monic), and reconstructs the
@@ -307,7 +290,7 @@ theorem divModArrayAuxPacked_eq (q : Array (ZMod64 p)) (qDegree : Nat) (fuel : N
                 (rem.getD rd (Zero.zero : ZMod64 p)))
 
 /-- **Value correspondence.** The packed monic-division remainder equals the
-reference `FpPoly.modByMonic` for every modulus `p` (every `Bounds p`). -/
+reference {name}`FpPoly.modByMonic` for every modulus `p` (every `Bounds p`). -/
 theorem modByMonicPacked_eq (f g : FpPoly p) (hmonic : DensePoly.Monic f) :
     FpPoly.modByMonic f g hmonic = modByMonicPacked f g hmonic := by
   rw [FpPoly.modByMonic, DensePoly.modByMonic, DensePoly.divModMonic, DensePoly.divModArray]

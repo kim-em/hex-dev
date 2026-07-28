@@ -114,7 +114,7 @@ def prepStateInput (n : Nat) : StateInput :=
       change n + 1 < n + 2
       omega }
 
-/-! ## Phase-4 `lll.firstShortVector` input families. -/
+/-! # Phase-4 `lll.firstShortVector` input families. -/
 
 /-- BZ-shaped triangular coefficient block from `HexLLL/EmitFixtures.lean`. -/
 def bzRecombinationCoeff (factor col : Nat) : Int :=
@@ -223,7 +223,7 @@ def prepHarshCubicInput (n : Nat) : FirstShortVectorInput :=
     hn := by
       exact Nat.le_max_right n 1 }
 
-/-! ### Ajtai-style worst-case family (fplll `gen_trg` port)
+/-! # Ajtai-style worst-case family (fplll `gen_trg` port)
 
 This is the lower-triangular worst-case family that drives LLL toward its
 `Θ(d² log B)` swap bound (Nguyen-Stehlé, *LLL on the Average*, ANTS-VII 2006).
@@ -320,7 +320,7 @@ def ajtaiProfileSteep (d : Nat) : Bool :=
 -- `#guard` is a command and cannot carry a docstring).
 #guard ajtaiProfileSteep 8
 
-/-! ### q-ary (LWE/SIS) family (fplll `gen_qary` port)
+/-! # q-ary (LWE/SIS) family (fplll `gen_qary` port)
 
 Faithful port of fplll's `gen_qary` (`latticegen q <d> <k> <b>`): the `d × d`
 block matrix `[[I_{d-k}, H], [0, q·I_k]]` with `H` uniform mod `q` and
@@ -356,7 +356,7 @@ def prepQaryInput (n : Nat) : FirstShortVectorInput :=
 
 #guard qaryModulus 8 ≥ 128 && qaryModulus 8 < 256
 
-/-! ### NTRU family (fplll `gen_ntrulike` port)
+/-! # NTRU family (fplll `gen_ntrulike` port)
 
 Faithful port of fplll's `gen_ntrulike` (`latticegen n <2d> <b>`): the `2d × 2d`
 block matrix `[[I, Rot(h)], [0, q·I]]` where `Rot(h)` is the circulant of a
@@ -401,7 +401,7 @@ def prepNtruInput (n : Nat) : FirstShortVectorInput :=
 -- The planted property `h(1) ≡ 0 mod q` (the row sum of `Rot(h)` is `0 mod q`).
 #guard (let q := ntruModulus; (List.range 4).foldl (fun a i => (a + ntruH 4 i) % q) 0 == 0)
 
-/-! ### knapsack / integer-relation family (fplll `gen_intrel` port)
+/-! # knapsack / integer-relation family (fplll `gen_intrel` port)
 
 Faithful port of fplll's `gen_intrel` (`latticegen r <d> <b>`): the **rectangular**
 `d × (d+1)` matrix whose row `i` is `[rand_b, e_{i+1}]` (a random `b`-bit weight
@@ -553,7 +553,7 @@ initialize certifiedHarshCubic60Ref : IO.Ref (Option (FirstShortVectorInput × A
 initialize certifiedHarshCubic65Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
   IO.mkRef none
 
-/-! ## Phase-4 `LLLState.ofBasis` input families. -/
+/-! # Phase-4 `LLLState.ofBasis` input families. -/
 
 /-- Entry generator for bounded random-looking square bases. -/
 def ofBasisRandomBoundedEntry (rows row col salt : Nat) : Int :=

@@ -127,7 +127,7 @@ def takeCols (M : Matrix R n m) (k : Nat) (hk : k ≤ m) : Matrix R n k :=
 
 end Matrix
 
-/-! ### Copy-free submatrix views
+/-! # Copy-free submatrix views
 
 A `Submatrix R rows cols` is a **view** into a backing `Matrix R N M`: a row/column
 offset plus the real-data extent, with the logical `rows × cols` shape carried as
@@ -138,8 +138,7 @@ data without copying. The backing dims `N, M` never change through a recursion, 
 `r0 + i < rhi` (the real-row bound, a prefix of the logical rows) is the exact
 real-vs-pad test at every nesting depth. Quadrant-of-a-view is a view (offset
 arithmetic, no copy); this is the recursion surface `mulStrassen` runs over
-(`HexMatrix/Strassen.lean`). See `HexMatrix/SPEC/hex-matrix.md` § "Avoiding
-sub-block copies". -/
+(`HexMatrix/Strassen.lean`). -/
 
 /-- A copy-free view of a `rows × cols` block, possibly zero-padded past its
 real-data extent, into a shared backing `Matrix R N M`. Reading `(i, j)` returns

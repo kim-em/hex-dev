@@ -42,7 +42,8 @@ def elemMajorant (T : NumberTower) (a : Elem T) : Nat :=
 
 /-- Certified ball Horner evaluation at the tower's fixed embedding and one
 absolute candidate root. Each exact coefficient is refined far enough to
-supply the common `2^-prec` input-error unit consumed by `evalMajorant`. -/
+supply the common `2^-prec` input-error unit consumed by
+{name}`Hex.Disambiguation.evalMajorant`. -/
 @[expose]
 def evalBall? (T : NumberTower) (f : Poly T) (candidate : AlgebraicRoot)
     (prec : Nat) : Option DyadicComplexBall :=
@@ -123,7 +124,8 @@ def Extension.trans {T : NumberTower} (outer : Extension T)
 
 /-- Adjoin the specified absolute algebraic root. A selected linear factor
 produces the identity extension; a nonlinear factor is admitted only through
-`Internal.extend?`, which reruns structural, relative-irreducibility, and fixed-
+{name}`Hex.NumberTower.Internal.extend?`, which reruns structural,
+relative-irreducibility, and fixed-
 embedding checks before constructing the new carrier index. -/
 def adjoin? (T : NumberTower) (candidate : AlgebraicRoot) :
     Option (Extension T) := do

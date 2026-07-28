@@ -218,13 +218,15 @@ theorem choose_symm : ∀ {n k : Nat}, k ≤ n → choose n (n - k) = choose n k
 /--
 Linear-time binomial coefficient.
 
-`binom n k` walks a single Pascal row from `choose n 0 = 1` using the
-multiplicative recurrence `succ_mul_choose_succ`, folding over the shorter half
-`min k (n - k)` of the row (the row is symmetric, `choose_symm`), so it costs
-`O(min k (n - k))` natural-number operations.  The proof-facing `choose` is the
-exponential Pascal double recursion (`choose n k` spawns `Θ(choose n k)` calls);
-`binom` is proven equal to it (`binom_eq_choose`) and registered `@[csimp]`, so
-every compiled caller of `choose` runs this instead. -/
+{name}`Hex.Nat.binom` walks a single Pascal row from
+`choose n 0 = 1` using the multiplicative recurrence
+{name}`Hex.Nat.succ_mul_choose_succ`, folding over the shorter half
+`min k (n - k)` of the row using {name}`Hex.Nat.choose_symm`. It therefore
+costs `O(min k (n - k))` natural-number operations. The proof-facing
+{name}`Hex.Nat.choose` is the exponential Pascal recursion; the forward
+correctness theorem `binom_eq_choose`, registered with `@[csimp]`, makes
+compiled callers use this linear fold.
+-/
 @[expose]
 def binom (n k : Nat) : Nat :=
   if n < k then 0
@@ -638,10 +640,9 @@ private theorem exists_trial_divisor {n m : Nat} (hn : 0 < n) (hm : m ∣ n)
     · simpa [Nat.mul_comm] using hc
 
 /--
-Soundness of the trial-division primality test against the project-local
-`Hex.Nat.Prime` predicate. Used by the BZ extended prime search to lift a
-runtime candidate into a `SmallPrimeCandidate` with explicit primality
-evidence, without falling back to a hardcoded list.
+Soundness of the trial-division primality test against the Mathlib-free
+{name}`Hex.Nat.Prime` predicate. It turns a successful runtime test into
+explicit primality evidence without relying on a hardcoded prime table.
 -/
 theorem isPrimeTrial_isPrime {n : Nat} (h : isPrimeTrial n = true) :
     Prime n := by

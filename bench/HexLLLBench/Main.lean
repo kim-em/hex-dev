@@ -96,7 +96,7 @@ External comparator:
   `HEX_LLL_ISABELLE_CERTIFIED_SVP` to an already-built persistent driver
   to avoid setup in the first measured call.
 
-## Comparator-call protocol
+# Comparator-call protocol
 
 The `fpLLL via fplll-ffi` comparator is an in-process FFI call: each
 request marshals the matrix into the `Array String` payload the

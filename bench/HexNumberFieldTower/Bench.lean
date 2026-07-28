@@ -100,7 +100,7 @@ private def recoveredChecksum (result : Flatten.Recovered) : UInt64 :=
     mixHash (qAdjoinChecksum result.thetaCoordinate)
       (qAdjoinChecksum result.alphaCoordinate)
 
-/-! ## Shared fixed-embedding fixtures -/
+/-! # Shared fixed-embedding fixtures -/
 
 private def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
 
@@ -355,7 +355,7 @@ private def getRecoveryInput : IO RecoveryInput := do
       recoveryInputRef.set (some input)
       pure input
 
-/-! ## Arithmetic and adjoining -/
+/-! # Arithmetic and adjoining -/
 
 def runOfQAdjoin : Unit → IO UInt64 := fun _ => do
   let input ← getQAdjoinInput
@@ -438,7 +438,7 @@ setup_fixed_benchmark runAdjoinIdentity where {
   expectedHash := some 0x51ddf5878af8a696
 }
 
-/-! ## Trager factorization -/
+/-! # Trager factorization -/
 
 private def repeatedNormInput : Array (Array Rat) :=
   #[#[-3, 0], #[0, 0], #[1, 0]]
@@ -550,7 +550,7 @@ setup_fixed_benchmark runCheckFactorization where {
   expectedHash := some 0x000000000000000b
 }
 
-/-! ## Splitting and flattening -/
+/-! # Splitting and flattening -/
 
 private def quarticInput : Poly rat :=
   rationalPoly [6, 0, -5, 0, 1]

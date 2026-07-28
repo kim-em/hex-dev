@@ -28,20 +28,20 @@ namespace DensePoly
 
 /-- The `i`-th summand of the degree-`n` convolution diagonal of `p * q`,
 `p.coeff i * q.coeff (n - i)`, zeroed once the degree guard `n < i` fires;
-the single-index term that `mulCoeffSum` is reorganised into. -/
+the single-index term that {name}`mulCoeffSum` is reorganised into. -/
 @[expose]
 def diagonalMulCoeffTerm {S : Type _} [Zero S] [DecidableEq S] [Mul S]
     (p q : DensePoly S) (n i : Nat) : S :=
   if n < i then 0 else p.coeff i * q.coeff (n - i)
 
-/-- Like `diagonalMulCoeffTerm`, but additionally zeroed once the partner index
+/-- Like {name}`diagonalMulCoeffTerm`, but additionally zeroed once the partner index
 `n - i` reaches the cutoff `m`; the partial value of the inner schoolbook fold
 restricted to `List.range m`. -/
 private def boundedDiagonalMulCoeffTerm {S : Type _} [Zero S] [DecidableEq S] [Mul S]
     (p q : DensePoly S) (n i m : Nat) : S :=
   if n < i then 0 else if n - i < m then p.coeff i * q.coeff (n - i) else 0
 
-/-- Folding `mulCoeffStep` over `List.range m` accumulates exactly
+/-- Folding {name}`mulCoeffStep` over `List.range m` accumulates exactly
 `acc + boundedDiagonalMulCoeffTerm p q n i m`, identifying one truncated inner
 schoolbook fold with its bounded diagonal term. -/
 private theorem fold_mulCoeffStep_eq_bounded_diagonal {S : Type _}
@@ -72,9 +72,9 @@ private theorem fold_mulCoeffStep_eq_bounded_diagonal {S : Type _}
           · have hm' : ¬ n - i < m + 1 := by omega
             simp [hlt, hm, hm', heq]
 
-/-- Folding `mulCoeffStep` over the full `List.range q.size` yields
+/-- Folding {name}`mulCoeffStep` over the full `List.range q.size` yields
 `acc + diagonalMulCoeffTerm p q n i`, since coefficients past `q.size` vanish;
-the unbounded specialisation of `fold_mulCoeffStep_eq_bounded_diagonal`. -/
+the unbounded specialisation of {name}`fold_mulCoeffStep_eq_bounded_diagonal`. -/
 private theorem fold_mulCoeffStep_eq_diagonal {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n i : Nat) (acc : S) :
@@ -92,7 +92,7 @@ private theorem fold_mulCoeffStep_eq_diagonal {S : Type _}
       grind
 
 /-- Rewrites the outer schoolbook fold, where each index `i` runs an inner
-`mulCoeffStep` fold, into the pointwise diagonal fold adding
+{name}`mulCoeffStep` fold, into the pointwise diagonal fold adding
 `diagonalMulCoeffTerm p q n i` at each step. -/
 private theorem fold_mulCoeff_outer_eq_diagonal {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
@@ -163,7 +163,7 @@ private theorem diagonalSum_eq_bound {S : Type _}
   exact (fold_diagonal_extend p q n (m - p.size)).symm
 
 /-- A diagonal term vanishes when `n < i`, the degree guard built into
-`diagonalMulCoeffTerm`; lets diagonal sums be truncated at degree `n`. -/
+{name}`diagonalMulCoeffTerm`; lets diagonal sums be truncated at degree `n`. -/
 private theorem diagonalMulCoeffTerm_eq_zero_of_degree_lt {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n i : Nat) (hi : n < i) :
@@ -259,7 +259,7 @@ private theorem diagonalMulCoeffTerm_comm_reindex {S : Type _}
   simp [diagonalMulCoeffTerm, hleft, hright, Nat.sub_sub_self hile]
   grind
 
-/-- Pointwise application of `diagonalMulCoeffTerm_comm_reindex` across a fold over
+/-- Pointwise application of {name}`diagonalMulCoeffTerm_comm_reindex` across a fold over
 indices all `< n + 1`, swapping each reflected `p, q` term for the matching
 `q, p` term; the list-level step toward `fold_diagonal_comm`. -/
 private theorem fold_diagonal_comm_reindex_list {S : Type _}
@@ -1215,7 +1215,7 @@ cancel multiplications by the unit polynomial through it. -/
   exact fold_diagonal_one_right p n
 
 /-- `DensePoly S` is a multiplicative monoid: these `Std` instances let the
-shared `List.foldl_mul_*` algebra (and core's `List.foldl_assoc`) apply to
+shared `List.foldl_mul_*` algebra (and core's {name}`List.foldl_assoc`) apply to
 fold-products of polynomials such as `FpPoly`/`ZPoly`. -/
 instance instAssociativeMulDensePoly {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S] :
     Std.Associative (· * · : DensePoly S → DensePoly S → DensePoly S) :=

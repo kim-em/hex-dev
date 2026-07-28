@@ -120,7 +120,7 @@ def reifyRabinCert (cert : Hex.Berlekamp.IrreducibilityCertificate) : Expr :=
       mkApp5 (mkConst ``Hex.Berlekamp.IrreducibilityCertificate.mk)
         pE boundsE (mkNatLit n) powChainE bezoutE
 
-/-! ### Serialized views for round-trip testing
+/-! # Serialized views for round-trip testing
 
 The round-trip tests evaluate a reified certificate back to a value and
 compare it with the original. The certificate tower has no derivable `BEq`

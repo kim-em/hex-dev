@@ -998,7 +998,7 @@ This is a thin wrapper over the abstract-bound variant
 `centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision_of_bound`
 that instantiates `B' := defaultFactorCoeffBound core` and discharges
 `hvalid` via `defaultFactorCoeffBound_valid core hcore_ne factor hdvd`.
-HO-1 callers should prefer the `_of_bound` variant directly with
+  callers should prefer the `_of_bound` variant directly with
 `B' := defaultFactorCoeffBound f`, bypassing the squareFreeCore-bound
 monotonicity obligation called out by
 `factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`.

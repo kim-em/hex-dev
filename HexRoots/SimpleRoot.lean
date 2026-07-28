@@ -35,7 +35,7 @@ exactly the simple roots, and hence that `sameRoot` decides equality in the
 quotient. Code in the Mathlib-free layer compares roots with `sameRoot`
 directly.
 
-### The threading pattern
+# The threading pattern
 
 `SimpleRoot p` values carry no usable computational content in this layer
 (nothing lifts out of the `Quot` here). Numerical work happens on
@@ -43,7 +43,7 @@ directly.
 repeatedly needs high-precision approximations of the same root should refine
 its representative once and pass the refined value forward:
 
-```lean
+```
 -- DON'T: each use re-refines from the stored representative
 def slow (r : RefinedIsolation p) : Foo :=
   let a := (r.1.refineTo? 32).map …

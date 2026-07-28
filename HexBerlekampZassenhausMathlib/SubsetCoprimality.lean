@@ -318,11 +318,10 @@ can discharge positive natural degree of every lifted factor from the
 positivity.
 
 The per-modular-factor natural-degree positivity premise mirrors the
-`hfactorsModP_nodup` premise on the injectivity umbrella (#4525): it is
+`hfactorsModP_nodup` premise on the injectivity umbrella: it is
 exposed as an explicit hypothesis here because discharging it from
 `choosePrimeData` invariants requires composing with `factorsModPBerlekampForm`
-and the underlying Berlekamp factor-degree positivity, which lives in a
-separate supporting lemma task. -/
+and the underlying Berlekamp factor-degree positivity. -/
 theorem henselLiftData_liftedFactor_natDegree_pos_of_choosePrimeData
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hcore_monic : Hex.DensePoly.Monic core)
@@ -379,8 +378,8 @@ The discharge requires three facts on `core` and `primeData`:
   Basic.lean`);
 * `hgood : Hex.isGoodPrime core primeData.p = true` — recorded by
   `Hex.choosePrimeData?_isGoodPrime`;
-* `hcore_pos : 0 < core.degree?.getD 0` — supplied by the caller (the slow-path
-  arm of the HO-1 capstone uses `normalizeForFactor.squareFreeCore` as `core`,
+* `hcore_pos : 0 < core.degree?.getD 0` — supplied by the caller (the slow path
+  uses `normalizeForFactor.squareFreeCore` as `core`,
   which has positive degree on every non-unit input).
 
 The signature otherwise mirrors `_of_choosePrimeData` exactly, so downstream
@@ -428,12 +427,10 @@ theorem henselLiftData_liftedFactor_natDegree_pos_of_factorsModPBerlekampForm
 `Hex.henselLiftData`, parametrised on the `factorsModPBerlekampForm` invariant
 instead of an explicit `factorsModP.toList.Nodup` premise.
 
-This is the injective sibling of
+This is the injective counterpart of
 `henselLiftData_liftedFactor_natDegree_pos_of_factorsModPBerlekampForm` (the
-natural-degree analog just above) and the natural follow-up to the `Nodup`
-chain landed in `factorsModP_nodup_of_factorsModPBerlekampForm` (line
-4010): it drops `hfactorsModP_nodup` from
-`henselLiftData_liftedFactor_injective_of_choosePrimeData` (line 4260) by
+natural-degree analog just above). It drops `hfactorsModP_nodup` from
+`henselLiftData_liftedFactor_injective_of_choosePrimeData` by
 discharging that premise through
 `factorsModP_nodup_of_factorsModPBerlekampForm`.  No `hcore_pos` premise is
 needed (the `Nodup` discharge routes through `isGoodPrime`'s
@@ -797,7 +794,7 @@ theorem henselLiftData_liftedSubset_product_congr_mod_base
     (Hex.ZPoly.congr_liftToZ_of_modP_eq primeData.p (modPFactorProduct primeData S)
       (liftedFactorProduct d (liftedSubsetOfModPSubset primeData d hsize S)) hmodP)
 
-/-! ### Subset/complement coprimality of Hensel-lifted factors mod `p`
+/-! # Subset/complement coprimality of Hensel-lifted factors mod `p`
 
 The next group of theorems supplies the `IsCoprime` input over
 `(ZMod primeData.p)[X]` required by `HexHenselMathlib.hensel_unique` when
@@ -996,7 +993,7 @@ complement are coprime.
 
 This is the `IsCoprime` input over `(ZMod primeData.p)[X]` consumed by
 `HexHenselMathlib.hensel_unique` when applied to the subset/complement
-pair of Hensel-lifted factor products (#4761 precursor for #4733).
+pair of Hensel-lifted factor products.
 -/
 theorem henselLiftData_liftedSubset_complement_isCoprime_mod_p
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
@@ -1123,8 +1120,8 @@ The proof routes through `HexPolyZMathlib.equiv.injective`: under the
 `polyProduct_toPolynomial`, and `Finset.prod_univ_fun_getElem` modulo the
 `Array.length_toList` size identification.
 
-This is the structural identification needed to feed the multifactor-lift product
-spec into subset-based recombination reasoning.
+This structural identification feeds the multifactor-lift product equality
+into subset-based recombination reasoning.
 -/
 theorem liftedFactorProduct_univ_eq_polyProduct_liftedFactors
     (d : Hex.LiftData) :

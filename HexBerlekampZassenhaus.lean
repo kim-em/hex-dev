@@ -38,8 +38,8 @@ Berlekamp-Zassenhaus factorization pipeline: normalization, good-prime
 selection, Hensel-lift packaging, LLL-based recombination, bounded/default
 factor entry points, and the integer irreducibility certificate checker.
 
-The Phase 3 core checks (`HexBerlekampZassenhaus.Conformance`) and the
-SPEC-sanctioned LLL-vs-exhaustive recombination cross-check
+The core checks (`HexBerlekampZassenhaus.Conformance`) and the
+LLL-vs-exhaustive recombination cross-check
 (`HexBerlekampZassenhaus.CrossCheck`) live under the `conformance/`
 sub-project, which builds in the same `lake build`.
 -/

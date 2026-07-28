@@ -756,7 +756,7 @@ setup_benchmark runPolyCRTChecksum n => n * n
     signalFloorMultiplier := 1.0
   }
 
-/-! ## FLINT `fmpz_poly` informational comparator fixed registrations
+/-! # FLINT `fmpz_poly` informational comparator fixed registrations
 
 Each parametric Lean target on `DensePoly Int` is paired with the
 matching FLINT `fmpz_poly` op via the shared persistent-subprocess

@@ -236,7 +236,7 @@ private theorem noPivotLoop_extends_singularStep
     rw [h_sing_a, h_step_a]
   exact Matrix.noPivotLoop_id_at_singular_fixedpoint (n := n) b S hDone hp_zero h_sing_step
 
-/-! ### Augmented Gram matrix for determinantal identification of
+/-! # Augmented Gram matrix for determinantal identification of
 `bareissGramCanonicalCoeff`
 
 The canonical row-coefficient vector of the initial no-pivot Bareiss trajectory
@@ -1150,8 +1150,9 @@ theorem scaledCoeffs_eq_scaledCoeffMatrix_bareiss
 
 /-- Below the diagonal, the rational image of the integer scaled
 Gram-Schmidt coefficient factors as `gramDet b (j+1) * coeffs[i,j]`. Derived
-from the unconditional `scaledCoeffs_lower_eq_det_scaledCoeffMatrix` and
-`scaledCoeffMatrix_det_eq_gramDet_mul_coeffs`. -/
+from {name}`Hex.GramSchmidt.Int.scaledCoeffs_lower_eq_det_scaledCoeffMatrix`
+and
+{name}`Hex.GramSchmidt.Int.scaledCoeffMatrix_det_eq_gramDet_mul_coeffs`. -/
 theorem scaledCoeffs_eq (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < i) :
     ((GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ : Int) : Rat) =

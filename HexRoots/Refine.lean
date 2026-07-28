@@ -25,8 +25,7 @@ survivors; this eliminates rootless halo components and is the invariant used
 by the completeness proof. Afterwards the hold/adopt optimization takes over
 while the loop recurses on the smaller fuel. The fuel counts down
 structurally on a `Nat`, so the recursion needs no termination proof;
-`stopDepth p target` fixes the depth at which the drivers give up, following
-the SPEC "Termination" and "Separation of the output" sections. Every
+`stopDepth p target` fixes the depth at which the drivers give up. Every
 quantity here is exact: the emission test is a pairwise
 `DyadicSquare.discsMeet` comparison of stored squares, and the precision
 comparisons are on the exact `Int` precs.
@@ -39,7 +38,7 @@ namespace Hex
     normalized prefix ends three levels before this bound. -/
 @[expose] def stopSlack : Nat := 8
 
-/-- SPEC Termination: the depth at which the drivers give up,
+/-- The depth at which the drivers give up,
     `max target (separationDepth p) + stopSlack`. A `none` from a driver means
     that its full emission condition was not reached within this fuel bound. -/
 @[expose] def stopDepth (p : ZPoly) (target : Int) : Int :=
@@ -267,7 +266,7 @@ end IsolationLoop
 
 /-- The shared driver loop over the worklist. It may emit before
     `completenessDepth` when every result is already an atom and target-ready,
-    with pairwise-disjoint discs (SPEC "Separation of the output"). Before
+    with pairwise-disjoint discs. Before
     that depth, every non-emitting round globally refines and reglues the
     retained squares, irrespective of attempted certificates. At and beyond
     that depth, ready and disjoint cluster results may emit too. Otherwise: a
@@ -283,7 +282,7 @@ end IsolationLoop
     overlapping disc, so `fuelFor` budgets a second climb on top: past
     `separationDepth` every certified disc is below `sep/4` and distinct
     roots' discs are disjoint, so `(stopDepth − target)` further rounds
-    suffice. `fuel = 0` returns `none`, the SPEC give-up semantics (up to a
+    suffice. `fuel = 0` returns `none` (up to a
     harmless constant of overshoot). The recursion is structural on the
     fuel `Nat`. -/
 @[expose] def isolateLoop (p : ZPoly) (target : Int) (strategy : AtomStrategy) :

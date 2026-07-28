@@ -26,7 +26,7 @@ open Hex Polynomial HexRealRootsMathlib
 
 namespace HexRealRootsMathlib.Tests
 
-/-! ## The `isolate_roots_bridge` tactic (deliverable 7) -/
+/-! # The `isolate_roots_bridge` tactic -/
 
 /-- `x⁴ − 2` over `ℝ`. -/
 example : ∀ x : ℝ,
@@ -52,7 +52,7 @@ example : ∀ x : ℝ,
       aeval x (-(X ^ 2) + 1 : Polynomial ℝ) = 0 := by
   isolate_roots_bridge
 
-/-! ## `IsolatedRealRoots.of` on `x⁴ − 2` (deliverable 8) -/
+/-! # `IsolatedRealRoots.of` on `x⁴ − 2` -/
 
 /-- `x⁴ − 2`, reified: `-2 + x⁴`. -/
 def x4m2 : ZPoly := DensePoly.ofCoeffs #[(-2 : Int), 0, 0, 0, 1]
@@ -74,7 +74,7 @@ noncomputable def iso_x4m2_of :
     IsolatedRealRoots (HexPolyZMathlib.toPolynomial x4m2) run_x4m2.isolations.size :=
   IsolatedRealRoots.of x4m2 (ne_zero_of_size_ne_zero (by decide)) sqfree_x4m2 run_x4m2
 
-/-! ## The replay constructor `IsolatedRealRoots.ofCert` on `x⁴ − 2` -/
+/-! # The replay constructor `IsolatedRealRoots.ofCert` on `x⁴ − 2` -/
 
 /-- The reified Sturm chain of `x⁴ − 2`: `[x⁴ − 2, x³, 1]`. -/
 def chain_x4m2 : Array ZPoly :=
@@ -95,7 +95,7 @@ noncomputable def iso_x4m2_replay :
     (hsize := by decide) (hsf := by decide) (hcert := by decide)
     (hordered := by decide) (hcomplete := by decide)
 
-/-! ## Replay + `congrRoots` on `(x − 1)²(x − 3)` -/
+/-! # Replay + `congrRoots` on `(x − 1)²(x − 3)` -/
 
 /-- `(x − 1)²(x − 3) = x³ − 5x² + 7x − 3`, reified. -/
 def q : ZPoly := DensePoly.ofCoeffs #[(-3 : Int), 7, -5, 1]
@@ -157,7 +157,7 @@ noncomputable def transport_via_squareFreeCore
   IsolatedRealRoots.congrRoots
     (fun x => aevalIff_squareFreeCore (ne_zero_of_size_ne_zero (by decide)) x) H
 
-/-! ## `IsolatedRealRoots.constant` -/
+/-! # `IsolatedRealRoots.constant` -/
 
 /-- A nonzero constant has no real roots: the empty isolation. -/
 def iso_const : IsolatedRealRoots (Polynomial.C (3 : ℝ)) 0 :=

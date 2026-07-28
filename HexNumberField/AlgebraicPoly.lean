@@ -16,7 +16,7 @@ Polynomials with canonical algebraic coefficients.
 
 This representation owns semantic trailing-zero normalization. In particular,
 the Mathlib-free layer never instantiates `DensePoly AlgebraicNumber`: its
-normalizer would require a kernel `DecidableEq`, while canonical algebraic
+normalizer would require a kernel {name}`DecidableEq`, while canonical algebraic
 equality is intentionally exposed here only through checked Boolean equality.
 -/
 namespace Hex

@@ -14,8 +14,8 @@ public section
 /-!
 Executable Berlekamp split-step factoring for `hex-berlekamp`.
 
-This module adds the factoring-facing surface promised by the spec. It first
-exposes the single-witness split primitive `gcd(f, h - c)`, then builds the
+This module exposes the single-witness split primitive `gcd(f, h - c)`, then
+builds the
 public Berlekamp factorization driver by computing the fixed-space kernel once
 and repeatedly applying those witnesses to the current factor list.
 -/
@@ -591,7 +591,7 @@ theorem kernelWitnessSplit_size_lt
     r.factor.size < f.size :=
   kernelWitnessSplitAux_size_lt f witness p 0 r (kernelWitnessSplitAux_of_some hsplit)
 
-/-! ### Invariance of the split search under a unit scaling
+/-! # Invariance of the split search under a unit scaling
 
 The factors returned by `berlekampFactor` are raw `gcd` outputs, hence
 defined only up to a unit scalar.  To feed them to the monic-divisor
@@ -631,7 +631,7 @@ private theorem size_eq_of_dvd_dvd
       (FpPoly.size_le_of_dvd_of_ne_zero hab hb)
       (FpPoly.size_le_of_dvd_of_ne_zero hba ha)
 
-/-! ### The constant-witness guard is value-preserving
+/-! # The constant-witness guard is value-preserving
 
 `kernelWitnessSplit?` skips the full `p`-wide constant sweep when
 `(witness % f).size ≤ 1`, i.e. when the witness is constant modulo `f`.  The
@@ -976,7 +976,7 @@ theorem prod_berlekampFactor
   simp only [Factorization.product_def]
   exact factorProduct_berlekampFactor f hmonic
 
-/-! ### Witness-irreducible leaf structure
+/-! # Witness-irreducible leaf structure
 
 `fullySplit` emits a factor as a singleton leaf exactly when it admits no
 kernel-witness split, and a successful split produces two nonempty subtrees.
@@ -1050,7 +1050,7 @@ private theorem splitWithWitnesses?_none_iff_forall
           · intro h w' hw'
             exact h w' (List.mem_cons_of_mem _ hw')
 
-/-! ### `Nodup` invariant on `berlekampFactor.factors`
+/-! # `Nodup` invariant on `berlekampFactor.factors`
 
 The running factor list maintained by the executable Berlekamp loop is
 `Nodup` whenever no positive-degree polynomial squares to a divisor of the
@@ -1717,7 +1717,7 @@ theorem berlekampFactor_factors_ne_zero
     rw [hlead_zero] at hmonic
     exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hmonic.symm
 
-/-! ### Every returned factor resists all kernel-witness splits
+/-! # Every returned factor resists all kernel-witness splits
 
 The completeness theorem for monic divisors needs, for each returned factor,
 that no fixed-space kernel witness splits it.  This is structural for

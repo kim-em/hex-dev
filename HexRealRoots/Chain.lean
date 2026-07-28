@@ -83,12 +83,12 @@ The reduction loop repeatedly subtracts a `shift`ed, `scale`d copy of `g`
 from `f`, each step multiplying by `|lc g|` (see `spemStep`), so the result
 is a **positive** integer multiple of the rational remainder `f mod g`. The
 accumulated multiplier is a product of `|lc g|` factors, hence positive;
-this differs from the SPEC's `(lc g)^δ` pseudo-remainder (with
+this differs from the conventional `(lc g)^δ` pseudo-remainder (with
 `δ = deg f − deg g + 1`, negated when `(lc g)^δ < 0`) only by a positive
 scalar, which the `primitivePart` in `sturmChain` erases. That is why the
-per-step `|lc g|` scheme meets the SPEC's `spem` contract.
+per-step `|lc g|` scheme has the same sign behavior.
 
-Junk values, per the SPEC's input-contract convention:
+Values outside the main positive-degree input:
 
 - `spem f 0 = f` (the loop never starts: `g` has no degree).
 - `spem f g = 0` when `g` is a nonzero constant (a constant divides
@@ -108,7 +108,7 @@ Given the two most recent elements `prev`, `cur` and the accumulator `acc`,
 it computes `r := spem prev cur`; if `r = 0` the chain is complete, otherwise
 it pushes `next := −primitivePart r` and recurses. `primitivePart` divides by
 the nonnegative content without sign-normalizing, so the explicit negation
-carries exactly the SPEC's sign. The degree of `cur` strictly decreases along
+carries the required sign. The degree of `cur` strictly decreases along
 the recursion, so `fuel = p.size` at the top level never truncates.
 
 Engine internal, not user API: public only so the exposed `sturmChain` closure

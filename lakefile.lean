@@ -7,6 +7,9 @@ public section
 open System Lake DSL
 
 package Hex where
+  -- Parse docstrings as Verso markup. Suggestions remain opt-in because they
+  -- attempt to elaborate ordinary code spans, including local expressions.
+  leanOptions := #[⟨`doc.verso, true⟩, ⟨`doc.verso.suggestions, false⟩]
 
 require verso from git
   "https://github.com/leanprover/verso.git" @ "v4.32.0-rc1"

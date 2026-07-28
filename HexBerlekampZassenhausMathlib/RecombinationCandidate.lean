@@ -248,7 +248,7 @@ partition of a subset `T ⊆ J` containing `J.min'`.  The rejected component is 
 selected list of `J \ T` (the natural form for the descent into `scaledRecombinationSmartAux`
 on the rest list), and the product / candidate identities specialise as before.
 
-This is the shape `#8413` consumes when walking
+This is the shape consumed by the recursive coverage proof while walking
 `scaledRecombinationSmartAux`/`SizeLoop`/`CandLoop`, where the running
 `localFactors` is the matched list of the remaining indices `J`, not the full
 universe. -/
@@ -420,7 +420,7 @@ theorem representingSubset_subset_of_dvd_liftedRecoveryCandidate_of_bound
     hirr hfactor_dvd_target hTJ hfactor_dvd_candidate hSJ hrep
 
 /-- Primitive + positive-leading-core variant of
-`representingSubset_subset_of_dvd_recombinationCandidate` (#4646 chain).
+`representingSubset_subset_of_dvd_recombinationCandidate`.
 
 The original `hcore_monic` parameter is vestigial in the monic version (the
 proof body never uses it), so the primitive variant has identical body and
@@ -968,12 +968,10 @@ theorem scaledRecombinationCandidate_eq_factor_of_recovery_of_bound
   rw [hprimitive]
   exact hfactor_norm
 
-/--
-Primitive non-monic recovery supporting lemma: the scaled recombination candidate
+/-- The scaled recombination candidate
 equals the represented integer `factor` under primitive/sign-normalised
 hypotheses on `factor` plus the standard Mignotte-precision and representation
-hypotheses. This is the corrected first recovery step for the primitive
-non-monic recombination chain (parent #4638, replaces stale #4643).
+hypotheses.
 
 Unlike `recombinationCandidate_eq_factor_of_recovery_of_monic_core`, this
 theorem does *not* require `Monic core` and does *not* route through the
@@ -983,8 +981,7 @@ The inner equality is supplied directly by
 `primitivePart_eq_self_of_primitive` and the supplied `normalizeFactorSign`
 fixed-point discharge the outer normalisation pipeline.
 
-Downstream callers (#4644, #4646, #4647, #4648) call this in place of the
-monic-core recovery when the core hypotheses are
+Callers use this in place of the monic-core recovery when the core hypotheses are
 `core ≠ 0 ∧ Primitive core ∧ 0 < leadingCoeff core`; the primitive/sign
 hypotheses on `factor` are supplied by their primitive-factor packaging step.
 

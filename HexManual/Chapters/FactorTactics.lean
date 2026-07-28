@@ -45,7 +45,7 @@ and `import HexBerlekamp` suffices for {name}`Hex.FpPoly` alone.
 tag := "factor-tactics-irreducibility"
 %%%
 
-The bare tactic form closes an `Irreducible` goal. Here it proves
+The bare tactic form closes an {name}`Irreducible` goal. Here it proves
 that `x² − 2` does not factor over `ℤ`, the algebraic core of the
 irrationality of `√2`, in its Mathlib form over `Polynomial ℤ`:
 
@@ -215,9 +215,10 @@ theorem quadZ_irred : ZPoly.Irreducible quadZ :=
   irreducibility quadZ
 ```
 
-Irreducibility of a `ZPoly` is stated with the Mathlib-free class
+Irreducibility of a {name}`Hex.ZPoly` is stated with the Mathlib-free class
 {name}`Hex.ZPoly.Irreducible`, which the correspondence library proves
-equivalent to Mathlib's `Irreducible` under `toPolynomial`. Goal-mode
+equivalent to Mathlib's {name}`Irreducible` under
+{name}`HexPolyZMathlib.toPolynomial`. Goal-mode
 `irreducibility` closes all three spellings: `Hex.ZPoly.Irreducible f`,
 `Irreducible (HexPolyZMathlib.toPolynomial f)`, and `Irreducible P` for
 a parseable `P : Polynomial ℤ`.
@@ -410,7 +411,7 @@ tag := "factor-tactics-coverage"
 All inputs must be closed terms: a polynomial mentioning a local
 hypothesis or metavariable is rejected with `must be a closed term
 (no local hypotheses or metavariables)`. Beyond that the contract
-splits by input type. The executable types (`FpPoly p`, `ZPoly`) must
+splits by input type. The executable types (`FpPoly p`, {name}`Hex.ZPoly`) must
 be evaluable and definitionally transparent: the compiled evaluator
 has to see the actual coefficients at elaboration time (a definition
 whose body it cannot access produces an evaluation error suggesting a
@@ -429,7 +430,7 @@ input to `irreducibility` reports the factor count that `factor_poly`
 found.
 
 For `FpPoly p` coverage is complete within that contract: any closed
-input at a literal prime modulus inside the `ZMod64` bounds factors,
+input at a literal prime modulus inside the {name}`Hex.ZMod64` bounds factors,
 subject to the certificate replay budget: each Rabin-certified factor
 must satisfy `(degree + 1) · p ≤ 2²⁶`, checked once per distinct
 factor for `factor_poly` and against the input itself for
@@ -514,7 +515,7 @@ tag := "factor-tactics-bang"
 
 `irreducibility!` and `factor_poly!` first run the normal certificate
 pipeline; whenever the plain form fails, they fall back to a proof by
-`decide`, making the kernel re-run the full factorization to verify
+{tactic}`decide`, making the kernel re-run the full factorization to verify
 the claim. `irreducibility!` has all the plain forms: term, bare goal
 mode, and the `irreducibility! f` / `irreducibility! h : f` tactics.
 `factor_poly!` has the term form and the argument-taking tactic form.
@@ -544,7 +545,7 @@ seconds, degree 12 tens of seconds), so a dense-size budget of 13
 rejects larger inputs at elaboration time with a message quoting the
 budget. Inputs whose factorization is routed to the native-LLL
 lattice tier cannot be certified this way at any size: the FFI
-`lllNative` has no kernel-reducible body for the kernel to re-run.
+{name}`Hex.lllNative` has no kernel-reducible body for the kernel to re-run.
 Two further costs land on the calling file when it uses the
 module system: the kernel can only re-run definitions whose bodies it
 can see, so a `module`-based caller must `import all` the executable
@@ -565,8 +566,8 @@ The tactic family is the user surface of the factoring pipeline, whose
 pieces have their own chapters and libraries:
 
 * {ref "hex-poly-fp"}[HexPolyFp] provides the prime-field polynomials
-  {name}`Hex.FpPoly` and the square-free (Yun) decomposition the
-  factor search starts from; {ref "hex-poly-z"}[HexPolyZ] provides
+  {name}`Hex.FpPoly` and the square-free (Yun) decomposition used to
+  start the factor search; {ref "hex-poly-z"}[HexPolyZ] provides
   {name}`Hex.ZPoly`, content and primitive parts.
 * `HexBerlekamp` implements the finite-field factorizer and the Rabin
   irreducibility certificates, and declares the `factor_poly` /
@@ -574,7 +575,7 @@ pieces have their own chapters and libraries:
 * {ref "hex-hensel"}[HexHensel] lifts modular factorizations to prime
   powers, and `HexBerlekampZassenhaus` builds the integer factorizer
   on top of it (with the {ref "hex-lll"}[HexLLL] lattice tier for
-  adversarial recombination cases), registering the `Hex.ZPoly`
+  adversarial recombination cases), registering the {name}`Hex.ZPoly`
   provider and the free-layer witness classes.
 * `HexBerlekampMathlib` and `HexBerlekampZassenhausMathlib` are the
   correspondence libraries: they identify the executable results with

@@ -40,7 +40,7 @@ noncomputable section
 
 open Polynomial
 
-/-! ### Monicness of the executable recombination candidate -/
+/-! # Monicness of the executable recombination candidate -/
 
 /--
 Under monic lifted local factors and modulus `2 ≤ d.p ^ d.k`, the executable
@@ -100,8 +100,8 @@ theorem toPolynomial_recombinationCandidate_monic
 from a square-free `target`, given `candidate ∣ target` (supplied by the
 executable quotient witness `hquot`).
 
-The reverse-coverage proof for the main candidate divisibility theorem
-(see `representedFactor_dvd_recombinationCandidate_of_subset`, #4457) needs
+The reverse-coverage proof for
+`representedFactor_dvd_recombinationCandidate_of_subset` needs
 `toPolynomial candidate` square-free to factor it into a Multiset of pairwise
 non-associated irreducibles. -/
 theorem toPolynomial_recombinationCandidate_squarefree
@@ -123,7 +123,7 @@ theorem toPolynomial_recombinationCandidate_squarefree
 /-- Scaled-candidate counterpart of `toPolynomial_recombinationCandidate_squarefree`:
 inherits squarefreeness from a squarefree `target` via the exact-quotient witness.
 Consumed by the scaled `mem_T_iff_*` chain for the primitive recursive
-recombination coverage proof (#4647 / #4737). -/
+recombination coverage proof. -/
 theorem toPolynomial_scaledRecombinationCandidate_squarefree
     {core target quotient : Hex.ZPoly} {d : Hex.LiftData}
     {J T : LiftedFactorSubset d}
@@ -247,7 +247,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_bound
     exact Finset.notMem_empty _ h_in_sdiff
   exact Finset.mem_biUnion.mp hi_in_bU
 
-/-- Reverse-coverage finite degree-counting step (issue #4468).
+/-- Reverse-coverage finite degree-counting step.
 
 Given a `LiftedFactorSubsetPartition core d J target` and a subset `T ⊆ J`,
 suppose `gs` is a finite family of `Hex.ZPoly` elements such that each
@@ -263,9 +263,9 @@ If the candidate's `natDegree` decomposes as the sum of the `natDegree`s of
 the family, then every index `i ∈ T` lies in some `S_of g`.
 
 This is the finite Finset bookkeeping ingredient of the reverse-coverage
-existence lemma (successor split from #4465). It does not extract irreducible
+existence lemma. It does not extract irreducible
 factors itself; the downstream `mem_T_iff_exists_irreducibleFactor_representingSubset`
-assembler (#4467) supplies `gs` from `UniqueFactorizationMonoid.normalizedFactors`
+assembler supplies `gs` from `UniqueFactorizationMonoid.normalizedFactors`
 together with the non-association hypothesis.
 
 This is a thin wrapper over `exists_mem_representedSubset_of_degree_cover_of_bound`
@@ -424,7 +424,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core_of
 
 /--
 Primitive + positive-leading-core variant of
-`exists_mem_representedSubset_of_degree_cover` (#4646 chain).
+`exists_mem_representedSubset_of_degree_cover`.
 
 Identical to the monic variant except the per-factor natDegree identity routes
 through `natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core`
@@ -836,8 +836,7 @@ theorem exists_representingSubset_of_mem_normalizedFactors_recombinationCandidat
     hSrep, hSJ, hST, hg_content, hg_norm_sign⟩
 
 /-- Primitive + positive-leading-core variant of
-`exists_representingSubset_of_mem_normalizedFactors_recombinationCandidate`
-(#4646 chain).
+`exists_representingSubset_of_mem_normalizedFactors_recombinationCandidate`.
 
 The monic-core hypothesis is threaded only through
 `representingSubset_subset_of_dvd_recombinationCandidate` (vestigial there);
@@ -927,15 +926,15 @@ candidate, with `S_g ⊆ J`.
 The proof packages the UFD normalized factorisation of
 `HexPolyZMathlib.toPolynomial (recombinationCandidate d T)` through the
 per-factor lemma `exists_representingSubset_of_mem_normalizedFactors_recombinationCandidate`
-(#4467), then closes the degree-counting obligation of
-`exists_mem_representedSubset_of_degree_cover` (#4468) using monicness and
+and then closes the degree-counting obligation of
+`exists_mem_representedSubset_of_degree_cover` using monicness and
 squarefreeness of the candidate together with
 `Polynomial.natDegree_multiset_prod_of_monic`.
 
 Together with the forward divisor extraction
 `exists_representingSubset_dvd_recombinationCandidate_of_exactQuotient`, this
 theorem supplies the bidirectional content the main candidate divisibility
-theorem (#4457) needs to relate every `i ∈ T` to a partition-representing
+theorem needs to relate every `i ∈ T` to a partition-representing
 irreducible divisor of the recombination candidate. -/
 theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_bound
     {core target quotient : Hex.ZPoly} {d : Hex.LiftData}
@@ -1205,7 +1204,7 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset
   exact defaultFactorCoeffBound_valid core hcore_ne g hg_dvd_core
 
 /-- Primitive + positive-leading-core variant of
-`mem_T_iff_exists_irreducibleFactor_representingSubset` (#4646 chain).
+`mem_T_iff_exists_irreducibleFactor_representingSubset`.
 
 Same proof structure as the monic variant, but the per-factor representing
 subset is obtained via
@@ -1413,7 +1412,7 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_primitive_pos_l
   exact ⟨g, S_of g, h_irr, h_dvd_c, h_rep, h_SJ, hi_in_Sg⟩
 
 /-- Primitive + positive-leading-core variant of
-`mem_T_iff_exists_irreducibleFactor_representingSubset` (#4646 chain).
+`mem_T_iff_exists_irreducibleFactor_representingSubset`.
 
 This is the `defaultFactorCoeffBound core`-instantiated thin wrapper for
 `mem_T_iff_exists_irreducibleFactor_representingSubset_of_primitive_pos_lc_core_of_bound`.
@@ -1702,7 +1701,7 @@ theorem coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd
   exact defaultFactorCoeffBound_valid core hcore_ne g hg_dvd_core
 
 /-- Abstract-bound primitive + positive-leading-core variant of
-`exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd` (#4646 chain).
+`exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd`.
 
 Routes through the abstract-bound
 `mem_T_iff_exists_irreducibleFactor_representingSubset_of_primitive_pos_lc_core_of_bound`
@@ -1757,7 +1756,7 @@ theorem exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd_of_prim
   exact ⟨f, S, hf_irr, hf_dvd_target, hf_dvd_candidate, hSJ, hiS, hrep⟩
 
 /-- Primitive + positive-leading-core variant of
-`exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd` (#4646 chain).
+`exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd`.
 
 This is the `defaultFactorCoeffBound core`-instantiated thin wrapper for
 `exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd_of_primitive_pos_lc_core_of_bound`.
@@ -1828,7 +1827,7 @@ theorem exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd_of_prim
       hprecision hpartition htarget_dvd_core hTJ hrecord hquot hi
 
 /-- Abstract-bound primitive + positive-leading-core variant of
-`coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd` (#4646 chain).
+`coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd`.
 
 Routes through
 `exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd_of_primitive_pos_lc_core_of_bound`
@@ -1916,7 +1915,7 @@ theorem coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd_of_pr
   exact ⟨f, S, hf_irr, hf_dvd_target, hSJ, hmin_in_S, hrep, hST⟩
 
 /-- Primitive + positive-leading-core variant of
-`coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd` (#4646 chain).
+`coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd`.
 
 This is the `defaultFactorCoeffBound core`-instantiated thin wrapper for
 `coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd_of_primitive_pos_lc_core_of_bound`.

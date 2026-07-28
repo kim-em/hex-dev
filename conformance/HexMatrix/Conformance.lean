@@ -15,7 +15,7 @@ Oracle: none
 Mode: always
 Covered operations:
 - dense matrix constructors and accessors (`ofFn`, `row`, `col`, `transpose`, `principalSubmatrix`)
-- vector and matrix arithmetic (`dotProduct`, ``.normSq, `mulVec`, `mul`, `gramMatrix`)
+- vector and matrix arithmetic (`dotProduct`, `normSq`, `mulVec`, `mul`, `gramMatrix`)
 - elementary row operations (`rowSwap`, `rowScale`, `rowAdd`)
 - Strassen-Winograd multiplication (`mulStrassen`) under the default and a custom
   base-kernel configuration

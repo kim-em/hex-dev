@@ -135,8 +135,8 @@ The point of committing a table rather than computing on demand is that
 each entry carries a machine-checked irreducibility proof. For every
 supported pair the library proves `luebeckConwayPolynomial_p_n_irreducible :
 FpPoly.Irreducible luebeckConwayPolynomial_p_n`, discharged by running
-the Berlekamp Rabin irreducibility certificate checker
-(`Berlekamp.rabinTest_imp_irreducible`) on a committed certificate. The
+the Berlekamp Rabin irreducibility certificate checker, whose soundness is
+{name}`Hex.Berlekamp.rabinTest_imp_irreducible`, on a committed certificate. The
 representative statement for `C(2, 3)`:
 
 {docstring Hex.Conway.luebeckConwayPolynomial_2_3_irreducible}
@@ -154,7 +154,8 @@ tag := "hex-conway-cross-references"
 `HexConway` is near the top of the finite-field portion of the DAG:
 
 * `HexBerlekamp` is the direct dependency. Its Rabin irreducibility
-  test and the soundness theorem `rabinTest_imp_irreducible` (lifting a
+  test and the soundness theorem
+  {name}`Hex.Berlekamp.rabinTest_imp_irreducible` (lifting a
   passing certificate to {name}`Hex.FpPoly.Irreducible`) certify every
   committed entry in the
   {ref "hex-conway-correctness"}[correctness section]. The prime-field

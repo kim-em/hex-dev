@@ -17,7 +17,7 @@ public section
 # Checked fixed-tower polynomial factorization
 
 Runtime Yun and recursive Trager machinery lives in `FactorRaw`; this module
-re-indexes its candidates by a certified public `NumberTower` and performs the
+re-indexes its candidates by a certified public {name}`Hex.NumberTower` and performs the
 single full executable certificate replay.
 -/
 namespace Hex.NumberTower

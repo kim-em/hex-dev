@@ -122,7 +122,8 @@ def multifactorLiftQuadraticList
 Quadratic multifactor Hensel lift.
 
 Lifts an ordered array of factors of `f` from congruence modulo `p` to
-congruence modulo `p^k` using the doubling step `quadraticHenselStep`
+congruence modulo `p^k` using the doubling step
+{name}`Hex.ZPoly.quadraticHenselStep`
 inside a balanced product tree.
 -/
 @[expose]
@@ -139,10 +140,9 @@ in this order:
 2. **Bezout congruence**: `acc.s * acc.g + acc.t * acc.h ≡ 1 (mod m)`;
 3. **Leading factor monic**: `acc.g` is monic.
 
-The constructor `QuadraticLiftLoopInvariant.of_product_bezout_monic`
-takes the three facts in the same order. Together they are exactly the
-preconditions consumed by one application of `quadraticHenselStep` (and,
-inductively, by the doubling loop in `iterateQuadraticHensel`). -/
+The forward theorem `QuadraticLiftLoopInvariant.of_product_bezout_monic` takes
+the three facts in the same order. Together they are exactly the preconditions consumed by one application of
+{name}`Hex.ZPoly.quadraticHenselStep` and, inductively, by the doubling loop. -/
 def QuadraticLiftLoopInvariant
     (m : Nat) (f : ZPoly) (acc : QuadraticLiftResult) : Prop :=
   ZPoly.congr (acc.g * acc.h) f m ∧
@@ -848,7 +848,7 @@ Specialisation of `monic_of_congr_mul_monic_monic` for cofactors already
 canonicalised by `Hex.ZPoly.reduceModPow`; its coefficients automatically lie
 in `[0, p^k)`.
 
-Consumed by `henselLiftQuadratic_h_monic`, where the spec congruence
+Consumed by `henselLiftQuadratic_h_monic`, where the correctness congruence
 `(lifted.g * lifted.h) ≡ f (mod p^k)` already supplies a `reduceModPow`-form
 cofactor.
 -/
@@ -904,7 +904,7 @@ theorem henselLiftQuadratic_g_monic
 
 /-- The lifted cofactor `lifted.h` produced by `henselLiftQuadratic` is monic
 when `f` is monic. Derived from the cofactor monic lemma
-`monic_reduceModPow_of_congr_mul_monic_monic` applied to the spec congruence
+`monic_reduceModPow_of_congr_mul_monic_monic` applied to the correctness congruence
 `(lifted.g * lifted.h) ≡ f (mod p^k)` and `henselLiftQuadratic_g_monic`.
 
 Consumed (alongside `henselLiftQuadratic_g_monic`) by
@@ -1222,7 +1222,7 @@ corresponding input factor, given the monic / lift-invariant / mod-`p` product
 hypotheses of `quadraticMultifactorLiftInvariant_of_factorsModP`.
 
 This is the per-output mod-`p` preservation surface consumed by the Mathlib
-theorem `henselLiftData_liftedFactor_injective` (#4525): pairing it with
+theorem `henselLiftData_liftedFactor_injective`: pairing it with
 `Nodup` of the original modular factor list shows distinct lifted factors
 remain distinct as integer polynomials.
 
@@ -1287,13 +1287,13 @@ private theorem multifactorLiftQuadraticList_each_monic
       · exact ihL' entry h
       · exact ihR' entry h
 
-/-- Every output of `multifactorLiftQuadratic` is monic when the input
+/-- Every output of {name}`Hex.ZPoly.multifactorLiftQuadratic` is monic when the input
 polynomial `f` is monic and the quadratic multifactor lift invariant package
 holds.
 
-Driven by `henselLiftQuadratic_g_monic` and `henselLiftQuadratic_h_monic`
-applied at each sequential split node. Consumed by the Mathlib-facing wrapper
-`HexBerlekampZassenhausMathlib.henselLiftData_liftedFactor_monic`. -/
+The proof applies {name}`Hex.ZPoly.henselLiftQuadratic_g_monic` and
+{name}`Hex.ZPoly.henselLiftQuadratic_h_monic` at each sequential split node,
+providing the monicness fact used by the Mathlib-facing wrapper. -/
 theorem multifactorLiftQuadratic_each_monic
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (factors : Array ZPoly)

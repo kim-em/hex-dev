@@ -144,13 +144,13 @@ jobs:
       # emit-fixture exes are all elaborated here so the two verification tails
       # below only *run* things, never rebuild them -- which is what lets the
       # previously-separate conformance workflow reuse this job's build instead
-      # of recompiling the whole graph a second time. Kept as two sequential
-      # `lake build` invocations (matching the two former workflows) rather than
-      # one: a single invocation lets Lake parallelize the Mathlib-heavy library
-      # compiles, the exe links, and the conformance/fixture builds all at once,
-      # whose combined memory peak exhausts the runner. Sequential invocations
-      # share `.lake/build` (no recompilation) but cap the peak at whichever
-      # single invocation is largest, each of which is known to fit.
+      # of recompiling the whole graph a second time. Kept as three sequential
+      # `lake build` invocations rather than one: a single invocation lets Lake
+      # parallelize the Mathlib-heavy library compiles, the exe links, the
+      # conformance/fixture builds, and the Verso manual all at once, whose
+      # combined memory peak exhausts the runner. Sequential invocations share
+      # `.lake/build` (no recompilation) but cap the peak at whichever single
+      # invocation is largest, each of which is known to fit.
       - name: Build hex libraries + bench exes
         run: lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS}
       - name: Build conformance + emit-fixture targets
@@ -171,6 +171,8 @@ jobs:
             hexroots_emit_fixtures hexresultant_emit_fixtures \
             hexnumberfield_emit_fixtures \
             hexnumberfieldtower_emit_fixtures
+      - name: Build HexManual
+        run: lake build HexManual
       # Publish hex-dev's oleans on a trusted main push so later builds (and any
       # consumer) restore them. Skips silently without the upload key.
       - name: Publish hex-dev oleans to the Lake cache (main only)
@@ -193,7 +195,9 @@ jobs:
             echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
           } > "$CFG"
           export LAKE_CONFIG="$CFG"
-          lake build --no-build -o .lake/outputs.jsonl ${HEX_LIB_TARGETS}
+          # HexManual is built in its own memory-bounded phase above, so append
+          # it only while collecting the outputs to publish.
+          lake build --no-build -o .lake/outputs.jsonl ${HEX_LIB_TARGETS} HexManual
           echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
           lake cache put .lake/outputs.jsonl --service hex-r2 --repo kim-em/hex-dev
       # --- Parallel verification tails (single job, in-job parallel steps) ---

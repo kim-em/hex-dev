@@ -186,7 +186,7 @@ def distinctDegreeFactor
     residual := result.2 }
 
 /--
-Predicate used by the SPEC-facing bucket invariant theorem: the recorded
+Predicate used by the bucket invariant theorem: the recorded
 factor divides the corresponding `X^(p^d) - X mod f`. The unnormalised
 executable `DensePoly.gcd` does not return `bucket.factor` literally on the
 left of `gcd bucket.factor (frobeniusDiffMod ...) = bucket.factor` (e.g.
@@ -585,7 +585,7 @@ private theorem distinctDegreePowerLoop_bucket_degree
               (acc * DensePoly.gcd residual diff) bucket hbucket
 
 /-!
-### Same-degree extraction divisibility
+# Same-degree extraction divisibility
 
 `finishDegreePower` and `distinctDegreePowerLoop` both emit at most one bucket
 recording the accumulated product of repeated same-degree gcds against the

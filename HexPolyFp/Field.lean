@@ -472,7 +472,7 @@ private theorem canonical_remainder_unique_of_pos_degree
     have hmk_eq_rs : (m * k).size = (r - s).size := by rw [← hk]
     omega
 
-/-- `mod_remainders_congr_of_congr` shows that congruent inputs have congruent remainders modulo the same modulus, providing the general remainder-congruence step. -/
+/-- {name}`mod_remainders_congr_of_congr` shows that congruent inputs have congruent remainders modulo the same modulus, providing the general remainder-congruence step. -/
 private theorem mod_remainders_congr_of_congr [PrimeModulus p]
     (f g m : DensePoly (ZMod64 p))
     (hcongr : DensePoly.Congr f g m) :
@@ -513,7 +513,7 @@ private theorem mod_remainders_congr_of_congr [PrimeModulus p]
       exact (DensePoly.mul_add_right_poly m (q + rf)
         ((0 : DensePoly (ZMod64 p)) - rg)).symm
 
-/-- `mod_eq_mod_of_congr_pos_degree` turns congruence modulo a positive-degree modulus into equality of canonical remainders. -/
+/-- {name}`mod_eq_mod_of_congr_pos_degree` turns congruence modulo a positive-degree modulus into equality of canonical remainders. -/
 private theorem mod_eq_mod_of_congr_pos_degree
     [PrimeModulus p] (f g m : DensePoly (ZMod64 p))
     (hdegree : 0 < m.degree?.getD 0)
@@ -524,13 +524,13 @@ private theorem mod_eq_mod_of_congr_pos_degree
   · exact mod_remainder_degree_lt g m hdegree
   · exact mod_remainders_congr_of_congr f g m hcongr
 
-/-- `mod_zero_right_of_size_zero` identifies remainder by a size-zero modulus with the original polynomial for the degenerate modulus case. -/
+/-- {name}`mod_zero_right_of_size_zero` identifies remainder by a size-zero modulus with the original polynomial for the degenerate modulus case. -/
 private theorem mod_zero_right_of_size_zero (f m : DensePoly (ZMod64 p))
     (hm : m.size = 0) :
     f % m = f := by
   exact DensePoly.divMod_remainder_eq_self_of_size_zero f m hm
 
-/-- `eq_of_sub_eq_zero` recovers equality of dense polynomials from a zero difference, supplying the algebraic cancellation used in the degenerate case. -/
+/-- {name}`eq_of_sub_eq_zero` recovers equality of dense polynomials from a zero difference, supplying the algebraic cancellation used in the degenerate case. -/
 private theorem eq_of_sub_eq_zero (f g : DensePoly (ZMod64 p))
     (hsub : f - g = 0) :
     f = g := by
@@ -541,7 +541,7 @@ private theorem eq_of_sub_eq_zero (f g : DensePoly (ZMod64 p))
   rw [DensePoly.coeff_sub_ring, DensePoly.coeff_zero] at hcoeff
   grind
 
-/-- `mod_eq_mod_of_congr_not_pos_degree` handles the zero and constant modulus cases of remainder congruence when the modulus has no positive degree. -/
+/-- {name}`mod_eq_mod_of_congr_not_pos_degree` handles the zero and constant modulus cases of remainder congruence when the modulus has no positive degree. -/
 private theorem mod_eq_mod_of_congr_not_pos_degree
     [PrimeModulus p] (f g m : DensePoly (ZMod64 p))
     (hdegree : ¬ 0 < m.degree?.getD 0)
@@ -585,7 +585,7 @@ private theorem mod_eq_mod_of_congr_not_pos_degree
         (fun a => zmod_div_mul_cancel_of_ne a m.leadingCoeff hlead_ne)
     rw [hfmod, hgmod]
 
-/-- `mod_eq_mod_of_congr` combines the positive-degree and non-positive-degree branches into the core equality of congruent remainders. -/
+/-- {name}`mod_eq_mod_of_congr` combines the positive-degree and non-positive-degree branches into the core equality of congruent remainders. -/
 private theorem mod_eq_mod_of_congr
     [PrimeModulus p] (f g m : DensePoly (ZMod64 p))
     (hcongr : DensePoly.Congr f g m) :
@@ -594,7 +594,7 @@ private theorem mod_eq_mod_of_congr
   · exact mod_eq_mod_of_congr_pos_degree f g m hdegree hcongr
   · exact mod_eq_mod_of_congr_not_pos_degree f g m hdegree hcongr
 
-/-- `sub_zero_poly` simplifies subtraction of zero for dense polynomials, feeding divisibility into the congruence form. -/
+/-- {name}`sub_zero_poly` simplifies subtraction of zero for dense polynomials, feeding divisibility into the congruence form. -/
 private theorem sub_zero_poly (f : DensePoly (ZMod64 p)) :
     f - 0 = f := by
   apply DensePoly.ext_coeff
@@ -602,7 +602,7 @@ private theorem sub_zero_poly (f : DensePoly (ZMod64 p)) :
   rw [DensePoly.coeff_sub_ring, DensePoly.coeff_zero]
   grind
 
-/-- `mod_eq_zero_of_dvd` converts divisibility by the modulus into a zero remainder using the core remainder-congruence theorem. -/
+/-- {name}`mod_eq_zero_of_dvd` converts divisibility by the modulus into a zero remainder using the core remainder-congruence theorem. -/
 private theorem mod_eq_zero_of_dvd
     [PrimeModulus p] (f g : DensePoly (ZMod64 p)) (hdiv : g ∣ f) :
     f % g = 0 := by

@@ -106,7 +106,7 @@ theorem natDegree_reflect_le {R : Type*} [CommRing R] {N : ℕ} {f : Polynomial 
   rw [Polynomial.coeff_reflect, Polynomial.revAt_eq_self_of_lt hm]
   exact Polynomial.coeff_eq_zero_of_natDegree_lt (lt_of_le_of_lt hf hm)
 
-/-! ### The reflect evaluation identity over a field -/
+/-! # The reflect evaluation identity over a field -/
 
 /-- **Reflect evaluation.** Over a field, for `f.natDegree ≤ N` and `z ≠ 0`,
 `(reflect N f).eval z = z^N * f.eval z⁻¹`: reflection is the `x ↦ 1/x`
@@ -127,7 +127,7 @@ theorem eval_reflect {K : Type*} [Field K] {N : ℕ} {f : Polynomial K}
     Polynomial.revAt_le (Nat.sub_le N j), Nat.sub_sub_self hjle, inv_pow, pow_sub₀ z hz hjle]
   ring
 
-/-! ### Multiplicativity -/
+/-! # Multiplicativity -/
 
 /-- **Multiplicativity of the Möbius transform.** With degrees split across the
 two factors, `mobiusPoly` of a product is the product of the transforms. The
@@ -145,7 +145,7 @@ theorem mobiusPoly_mul {R : Type*} [CommRing R] {n₁ n₂ : ℕ} (a b : R)
       (le_trans (natDegree_mobiusInner_le a b Q) hQ),
     Polynomial.mul_comp]
 
-/-! ### The evaluation identity over a field -/
+/-! # The evaluation identity over a field -/
 
 /-- **Evaluation identity.** Over a field, for `P.natDegree ≤ n` and `1 + z ≠ 0`,
 `(mobiusPoly n a b P).eval z = (1+z)^n * P.eval ((a+b*z)/(1+z))`. This is the
@@ -166,7 +166,7 @@ theorem mobiusPoly_eval {K : Type*} [Field K] {n : ℕ} (a b : K) {P : Polynomia
   field_simp
   ring
 
-/-! ### The value at `-1`: leading-coefficient extraction and nonvanishing -/
+/-! # The value at `-1`: leading-coefficient extraction and nonvanishing -/
 
 /-- **Value at `-1`.** `(mobiusPoly n a b P).eval (-1) = (P.comp (X + C b)).coeff n · (a-b)^n`.
 The homogenization sends the top coefficient to the constant term, read off at
@@ -213,7 +213,7 @@ theorem mobiusPoly_ne_zero {K : Type*} [Field K] {n : ℕ} (a b : K)
   exact (mul_ne_zero (leadingCoeff_ne_zero.mpr hP)
     (pow_ne_zero _ (sub_ne_zero.mpr hab))) hval.symm
 
-/-! ### Linear values -/
+/-! # Linear values -/
 
 /-- **Linear value (interior).** For `w ≠ b`, the degree-one transform maps the
 factor `X - C w` to `C (b-w) · (X - C ((w-a)/(b-w)))`: the root `w` of `X - C w`
@@ -258,7 +258,7 @@ theorem mobiusPoly_X_sub_C_upper {R : Type*} [CommRing R] (a b : R) :
   simp only [Nat.sub_self, pow_zero, mul_one]
   rw [C_comp]
 
-/-! ### Powers, nonvanishing, and root correspondences -/
+/-! # Powers, nonvanishing, and root correspondences -/
 
 /-- `mobiusPoly 0` fixes constants. -/
 theorem mobiusPoly_C {R : Type*} [CommRing R] (a b c : R) :
@@ -554,7 +554,7 @@ theorem roots_mobiusPoly {a b : ℂ} (hab : a ≠ b) {P : Polynomial ℂ} (hP : 
   rw [hsplit, ← C_pow, roots_C_mul _ hCab, hfilter,
     roots_mobiusPoly_of_eval_ne hab Q.natDegree Q rfl hQ0 hQb]
 
-/-! ### The Descartes variation-count bridge
+/-! # The Descartes variation-count bridge
 
 `Hex.descartesVar` counts sign variations of the *ascending* coefficient list via
 `Hex.signVar` (adjacent opposite-sign pairs), while `Polynomial.signVariations`
@@ -724,7 +724,7 @@ theorem descartesVar_eq_signVariations (q : Hex.ZPoly) :
     intro x _
     exact sign_intCast_sign' x
 
-/-! ### The executable bridge: `Hex.mobiusTransform` is `mobiusPoly` up to `2^{s·n}`
+/-! # The executable bridge: `Hex.mobiusTransform` is `mobiusPoly` up to `2^{s·n}`
 
 The executable pipeline works over `ℤ` after clearing the dyadic endpoint
 denominators by `2^s`. The private `Hex.mobiusEndpoints`/`Hex.dyadicNumExp`
@@ -999,7 +999,7 @@ theorem toPolyℝ_mobiusTransform' (p : Hex.ZPoly) (I : Hex.DyadicInterval)
             (Dyadic.toReal I.lower) (Dyadic.toReal I.upper) (toPolyℝ p) :=
   ⟨_, by positivity, toPolyℝ_mobiusTransform p I hdeg⟩
 
-/-! ### The composed Descartes corollary -/
+/-! # The composed Descartes corollary -/
 
 /-- **The Descartes count of the transform is the abstract sign-variation
 count.** The `2^{s·n}` clearing factor is absorbed by

@@ -18,9 +18,9 @@ decomposition of matrix multiplication.
 Blocks are typed over sum-shaped dimensions (`n₁ + n₂`, `m₁ + m₂`), so every
 block equation is well-typed with no side conditions. `fromBlocks` assembles a
 matrix from its four quadrants; `toBlocks₁₁ … toBlocks₂₂` extract them back.
-The capstone is `fromBlocks_mul_fromBlocks`: multiplying two block matrices is
-the assembly of the four quadrant products, the first of the three lemmas the
-SPEC decomposes Strassen-Winograd correctness into.
+The theorem `fromBlocks_mul_fromBlocks` states that multiplying two block matrices is
+the assembly of the four quadrant products used by the Strassen-Winograd
+correctness proof.
 -/
 
 namespace Hex

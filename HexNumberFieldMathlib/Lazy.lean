@@ -14,7 +14,7 @@ public section
 # Semantics of lazy and canonical arithmetic
 
 Each checked lazy operation has a soundness theorem and a bounded-search
-completeness theorem.  The total headline then follows for the executable
+completeness theorem. These imply the corresponding theorem for the total
 fallback wrapper, and exactification transfers it to canonical algebraic
 numbers.
 -/

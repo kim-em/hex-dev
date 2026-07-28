@@ -15,7 +15,7 @@ public section
 
 Run from the repository root with:
 
-```text
+```
 lake exe hexroots_demo
 ```
 

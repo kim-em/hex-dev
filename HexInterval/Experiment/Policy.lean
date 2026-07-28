@@ -28,7 +28,7 @@ compared before either becomes the production representation.
 
 namespace Hex.Interval.Experiment.Propagator.Policy
 
-/-! ## Stable semantic offer descriptions -/
+/-! # Stable semantic offer descriptions -/
 
 /-- Scope identity is explicit even though the first experiment has one root
 scope.  It prevents a later branch-local choice from being transplanted. -/
@@ -135,7 +135,7 @@ structure OfferView where
   offerClass : OfferClass
   age : Nat
 
-/-! ## Engine-owned frontier state -/
+/-! # Engine-owned frontier state -/
 
 /-- Policy resources are independent of proof-producing engine resources. -/
 structure Limits where
@@ -441,7 +441,7 @@ opaque State.view (state : State Fact) : Except ViewError (View Fact × State Fa
      { state with
        metrics := { state.metrics with traversal := state.metrics.traversal + traversal } })
 
-/-! ## Validated selection -/
+/-! # Validated selection -/
 
 /-- A policy echoes both the engine identity and the semantic key from one
 particular view. -/
@@ -756,7 +756,7 @@ opaque State.dismiss (state : State Fact) (selection : Selection) : SelectResult
                 { next with incomplete := true }
       .completed .dismissed next
 
-/-! ## Exact rule observations -/
+/-! # Exact rule observations -/
 
 inductive OutcomeTag where
   | success

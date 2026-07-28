@@ -18,7 +18,7 @@ public section
 Mathlib-side correctness of the executable LLL reducers. The per-step
 `Valid`/independence preservation, the potential strict-decrease and fuel
 sufficiency, and the loop-invariant induction culminate in the reducedness,
-lattice, and rational short-vector capstones for `Hex.lllNative` and
+lattice, and rational short-vector theorems for `Hex.lllNative` and
 `Hex.lll`.
 -/
 
@@ -35,7 +35,7 @@ open Hex.Internal
 namespace Matrix
 
 /-- The identity matrix is independent: every executable leading Gram
-determinant is positive. Used by Phase 4 benchmarks of
+determinant is positive. Used by benchmarks of
 `lll.firstShortVector`, where the identity basis is the degenerate BZ-style
 recombination input with all-zero lift coefficients. -/
 theorem identity_independent {n : Nat} : (Matrix.identity (R := Int) n).independent := by
@@ -774,7 +774,7 @@ theorem swapStep_independent (s : LLLState n m) (k : Nat)
     rw [hbridge]
     exact hind t
 
-/-! ### Prefix LLL invariants under `swapStep`
+/-! # Prefix LLL invariants under `swapStep`
 
 For row indices strictly below `k - 1`, both the Gram-Schmidt basis row and
 the rational coefficient entries are preserved by `swapStep s k`, because
@@ -1016,7 +1016,7 @@ theorem swapStep_prefixLLLReduced (s : LLLState n m) (k : Nat) (δ : Rat)
       apply h.mono
       apply max_le <;> omega
 
-/-! ### Size-reduce Valid preservation
+/-! # Size-reduce Valid preservation
 
 The single-column update `sizeReduceColumn` edits `b`, `ν` at row `k`,
 and leaves `d` alone.  Validity is preserved because the integer
@@ -1223,7 +1223,7 @@ theorem sizeReduce_valid (s : LLLState n m) (k : Nat) (hvalid : s.Valid) :
   · rw [dif_neg hk]
     exact hvalid
 
-/-! ### Size-reduce size-reducedness
+/-! # Size-reduce size-reducedness
 
 After `LLLState.sizeReduce s k`, the row `k` of the integer scaled coefficients
 satisfies `2 * |ν[k][j]| ≤ d[j+1]` for every `j < k` (the integer formulation
@@ -1465,8 +1465,7 @@ theorem sizeReduce_ν_bound (s : LLLState n m) (k : Nat) (hk : k < n)
       (pairwise_finRange_reverse_lt k)
       s hvalid hind ⟨j, hj⟩ (List.mem_reverse.mpr (List.mem_finRange _))
 
-/-- **The size-reduce size-reducedness theorem (Sub-issue A of #6576).**
-After `LLLState.sizeReduce s k`, the row `k` of the rational Gram-Schmidt
+/-- After `LLLState.sizeReduce s k`, the row `k` of the rational Gram-Schmidt
 coefficients is size-reduced: `4 * μ[k][j]² ≤ 1` for every `j < k`. -/
 theorem sizeReduce_size_reduced (s : LLLState n m) (k : Nat) (hk : k < n)
     (hvalid : s.Valid) (hind : s.b.independent) :
@@ -1565,7 +1564,7 @@ theorem sizeReduce_size_reduced (s : LLLState n m) (k : Nat) (hk : k < n)
   rw [div_le_one (by positivity)]
   exact hsq_le
 
-/-! ### Potential strict-decrease under failing Lovász
+/-! # Potential strict-decrease under failing Lovász
 
 These lemmas package the multiplicative termination potential
 `d_1 · … · d_{n-1}` behaviour under the two inner-loop updates:
@@ -1885,11 +1884,10 @@ theorem swapStep_potential_lt (s : LLLState n m) (k : Nat)
   exact foldl_mul_strict_lt (List.nodup_finRange _) hi₀_mem f g hf_pos hfg_eq hglt 1
     Nat.one_pos
 
-/-! ### Fuel sufficiency for `lllLoop`
+/-! # Fuel sufficiency for `lllLoop`
 
-The outer LLL loop `lllLoop` was made total in #6564 by structural
-recursion on a `fuel` argument, with `fuel = 0` returning the current
-basis as a pipeline-unreachable fallback (per SPEC §8).  This section
+The outer LLL loop `lllLoop` is total by structural recursion on a `fuel`
+argument, with `fuel = 0` returning the current basis. This section
 proves the fallback unreachable for valid input: the bound
 `lllFuel s = (s.potential + 1) * (n + 1)` is sufficient for the loop
 started at `k = 1` on `s = ofBasis b`.
@@ -2086,9 +2084,8 @@ independent basis, started at row `k = 1`, the bound
 `lllFuel s = (s.potential + 1) * (n + 1)` is enough fuel to reach the
 `k = n` base case.  Equivalently, `lllLoop` is fuel-stable above this
 threshold: running with any `fuel' ≥ lllFuel s` returns the same matrix.
-This discharges the SPEC §8 "unreachable-by-pipeline-invariant"
-classification for the `fuel = 0` fallback in `lllLoop` (introduced by
-the Route A totality refactor #6564). -/
+Thus the `fuel = 0` fallback in `lllLoop` is unreachable from valid public
+pipeline inputs. -/
 theorem lllLoop_fuel_sufficient
     (s : LLLState n m) (δ : Rat) (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hvalid : s.Valid) (hind : s.b.independent) {fuel' : Nat}
@@ -2103,7 +2100,7 @@ theorem lllLoop_fuel_sufficient
     omega
   · exact hfuel
 
-/-! ### Size-reduce coefficient-row preservation
+/-! # Size-reduce coefficient-row preservation
 
 Size reduction at row `k` rewrites only that row's coefficients; rows at
 indices `i ≠ k` are preserved by every iteration of the inner foldl.  This
@@ -2204,7 +2201,7 @@ theorem sizeReduce_prefixLLLReduced (s : LLLState n m) (k : Nat) (δ : Rat)
     rw [hb_i, hb_ip1, hμ_eq]
     exact h.2 i hik hin
 
-/-! ### Loop invariant induction
+/-! # Loop invariant induction
 
 The `prefixLLLReduced` predicate is preserved by every iteration of `lllLoop`
 under the standard validity / independence hypotheses, and at the `k = n`
@@ -2344,7 +2341,7 @@ theorem lllLoop_independent
 
 end Internal.LLLState
 
-/-! ### Capstones
+/-! # Public correctness theorems
 
 The unconditional LLL guarantees split across two surfaces:
 

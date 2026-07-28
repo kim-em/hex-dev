@@ -29,7 +29,7 @@ witness), and count `≥ 2` bisects at the dyadic midpoint until the depth
 budget `isolationDepth p` is exhausted. A left-first depth-first traversal
 keeps the emitted isolations in increasing order, so `assemble?` never sorts.
 
-The engine holds to the memoisation discipline of the SPEC: the Sturm chain
+The engine builds the Sturm chain
 is built once per polynomial, and every endpoint's `sturmVarAt` count is
 computed once and reused in both child intervals of a bisection. The witness
 of an emitted root re-evaluates the two endpoints against the memoised chain
@@ -54,7 +54,7 @@ interval is `vlo − vhi`, so the dispatch reads off the two memoised counts:
   the memoised-chain difference into `sturmCount p (lo, hi] = 1`
   definitionally, so no chain construction is repeated per emission;
 - otherwise (count `≥ 2` on honest data, or negative on junk): if the depth
-  budget is exhausted return `none` (the SPEC's fuel discipline), else bisect
+  budget is exhausted return `none`, else bisect
   at the dyadic midpoint, computing the midpoint count `vmid` once and passing
   it to both children. Left-first recursion keeps emissions ordered; a `none`
   from either child aborts the whole run.
@@ -91,8 +91,7 @@ private def sturmVisit (p : ZPoly) (chain : Array ZPoly)
 
 /-- The Sturm isolation engine.
 
-Following the SPEC's input contract, `isolateSturm?` classifies its input
-explicitly:
+`isolateSturm?` classifies its input explicitly:
 
 - `p = 0` (`degree? = none`): `none`.
 - `p` a nonzero constant (`degree? = some 0`): `some` with an empty isolation

@@ -29,7 +29,7 @@ universe u
 namespace DensePoly
 /-- The nonnegative gcd of the coefficients of an integer polynomial.
 
-Kernel-facing specification: one fold over the spec-level coefficient list.
+Kernel-facing specification: one fold over the reference coefficient list.
 Compiled code runs the `Array.foldl` loop `contentNatImpl` via the `@[csimp]`
 proof `contentNat_eq_impl`. -/
 @[expose]
@@ -43,7 +43,7 @@ registered `@[csimp]`). -/
 def contentNatImpl (p : DensePoly Int) : Nat :=
   p.toArray.foldl (fun acc coeff => Nat.gcd acc coeff.natAbs) 0
 
-/-- The spec `contentNat` and the `Array.foldl` runtime loop agree. -/
+/-- The reference `contentNat` and the `Array.foldl` runtime loop agree. -/
 theorem contentNat_eq_contentNatImpl (p : DensePoly Int) :
     contentNat p = contentNatImpl p := by
   unfold contentNat contentNatImpl
@@ -63,7 +63,7 @@ def content (p : DensePoly Int) : Int :=
 
 /-- The primitive part obtained by dividing every coefficient by the content.
 
-Kernel-facing specification: one map over the spec-level coefficient list.
+Kernel-facing specification: one map over the reference coefficient list.
 Compiled code runs the `Array.map` pass `primitivePartImpl` via the `@[csimp]`
 proof `primitivePart_eq_impl`. -/
 @[expose]
@@ -87,7 +87,7 @@ def primitivePartImpl (p : DensePoly Int) : DensePoly Int :=
     let c := Int.ofNat cNat
     ofCoeffs (p.toArray.map (fun coeff => coeff / c))
 
-/-- The spec `primitivePart` and the `Array.map` runtime pass agree. -/
+/-- The reference `primitivePart` and the `Array.map` runtime pass agree. -/
 theorem primitivePart_eq_primitivePartImpl (p : DensePoly Int) :
     primitivePart p = primitivePartImpl p := by
   simp only [primitivePart, primitivePartImpl, ← contentNat_eq_contentNatImpl]
@@ -891,7 +891,7 @@ private theorem foldl_gcd_natAbs_of_all_zero (xs : List Int) (acc : Nat)
       simp only [List.foldl_cons, hx, Int.natAbs_zero, Nat.gcd_zero_right]
       exact ih acc hxs'
 
-/-- The defining `cons` unfolding of `trimTrailingZerosList` on `Int` lists:
+/-- The defining `cons` unfolding of {name}`trimTrailingZerosList` on `Int` lists:
 the head is dropped only when the trimmed tail is empty and the head itself is
 zero, otherwise it is kept in front of the trimmed tail. -/
 private theorem trimTrailingZerosList_cons_int (x : Int) (xs : List Int) :
@@ -901,7 +901,7 @@ private theorem trimTrailingZerosList_cons_int (x : Int) (xs : List Int) :
 
 /-- If trimming trailing zeros empties a list entirely, then every entry of the
 original list was zero. The converse direction needed to push the gcd fold
-through `trimTrailingZerosList`. -/
+through {name}`trimTrailingZerosList`. -/
 private theorem all_zero_of_trimTrailingZerosList_nil (xs : List Int)
     (htrim : trimTrailingZerosList xs = []) :
     ∀ y ∈ xs, y = (0 : Int) := by

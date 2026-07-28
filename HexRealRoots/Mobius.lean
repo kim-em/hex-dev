@@ -80,7 +80,7 @@ The pipeline, with `n = deg p` fixed up front and `(α, β, s)` from
   in `(α, β)` map to `(0, 1)` with `y = α ↦ u = 1` and `y = β ↦ u = 0`.
 * **(e) reverse at the *original* degree `n`.** Build the coefficient array of
   length `n+1` with entry `i` equal to `coeff (n − i)` and renormalize; this is
-  the `x ↦ 1/x` homogenization `(1+x)^{deg p}` of the SPEC contract, sending
+  the `x ↦ 1/x` homogenization `(1+x)^{deg p}`, sending
   `(0, 1)` to `(1, ∞)`. Reversing at `n` rather than the *current* degree is
   essential: when `p(b) = 0` with multiplicity `m`, the `m` lowest
   coefficients after (c)/(d) vanish; the reversal turns them into trailing
@@ -89,7 +89,7 @@ The pipeline, with `n = deg p` fixed up front and `(α, β, s)` from
   not in the open `(a, b)`).
 * **(f) shift back to the positive axis.** `r ↦ r(x + 1)` via `compose`, sending
   `(1, ∞)` to `(0, ∞)`. Chasing the maps: a root `x₀` of `p` corresponds to the
-  final root `t` with `x₀ = (a + b·t)/(1 + t)` — exactly the SPEC's Möbius map,
+  final root `t` with `x₀ = (a + b·t)/(1 + t)` — the required Möbius map,
   with `t > 0 ⟺ x₀ ∈ (a, b)`. A root at `a` lands at `t = 0` (a vanishing
   constant term, not a positive root), a root at `b` disappears at `∞` via the
   degree drop in (e), so the positive real roots of the result are exactly the
@@ -127,7 +127,7 @@ def descartesVar (p : ZPoly) : Nat :=
 
 /-! Sanity checks (kept light; conformance lives in the shared sub-project).
 Each transform below is hand-verified in the comment: the pipeline computes
-the literal SPEC numerator `(1+x)^n·p((a+bx)/(1+x))`, cleared to integers by
+the numerator `(1+x)^n·p((a+bx)/(1+x))`, cleared to integers by
 a positive power of two. -/
 
 -- `descartesVar` basics.

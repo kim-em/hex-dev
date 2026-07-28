@@ -20,7 +20,7 @@ open Polynomial
 
 namespace HexBerlekampMathlib.FactorPolyTests
 
-/-! ## `factor_poly` on `Polynomial (ZMod 5)` -/
+/-! # `factor_poly` on `Polynomial (ZMod 5)` -/
 
 /-- `3·(x+1)²·(x²+2)` over `F_5`: non-monic, non-square-free. -/
 noncomputable def facP :=
@@ -46,7 +46,7 @@ example : True := by
 noncomputable def facNeg :=
   factor_poly (-(X + 1) * (X - 1) * Polynomial.C 2 : Polynomial (ZMod 5))
 
-/-! ## `irreducibility` on `Polynomial (ZMod 5)` -/
+/-! # `irreducibility` on `Polynomial (ZMod 5)` -/
 
 theorem quad_irred : Irreducible (X ^ 2 + 2 : Polynomial (ZMod 5)) :=
   irreducibility (X ^ 2 + 2 : Polynomial (ZMod 5))
@@ -68,7 +68,7 @@ example : True := by
   irreducibility h : (Polynomial.C 3 * X + 1 : Polynomial (ZMod 5))
   exact True.intro
 
-/-! ## Reducible/degenerate inputs: targeted errors -/
+/-! # Reducible/degenerate inputs: targeted errors -/
 
 /--
 error: irreducibility: the polynomial
@@ -90,7 +90,7 @@ is a nonzero constant, hence a unit over F_5, not irreducible
 #guard_msgs in
 example := irreducibility (3 : Polynomial (ZMod 5))
 
-/-! ## Bounded primality replay -/
+/-! # Bounded primality replay -/
 
 /-- The former linear checker exceeded default recursion depth on this
 modulus; the balanced square-root scan kernel-replays directly. -/
@@ -104,7 +104,7 @@ is a nonzero constant, hence a unit over F_67108879, not irreducible
 #guard_msgs in
 example := irreducibility (3 : Polynomial (ZMod 67108879))
 
-/-! ## Composite modulus: the provider declines, the driver reports -/
+/-! # Composite modulus: the provider declines, the driver reports -/
 
 /--
 info: factor_poly: unsupported polynomial type
@@ -126,7 +126,7 @@ irreducibility: Polynomial (ZMod q) inputs need a prime modulus, but 6 is not pr
 #guard_msgs in
 #check_failure (irreducibility (X + 1 : Polynomial (ZMod 6)))
 
-/-! ## Axiom hygiene -/
+/-! # Axiom hygiene -/
 
 /-- info: 'HexBerlekampMathlib.FactorPolyTests.facP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

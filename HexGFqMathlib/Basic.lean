@@ -370,14 +370,16 @@ theorem fintype_card_eq_pow (h : Hex.Conway.SupportedEntry p n) :
     Fintype.card (Hex.GFq p n h) = p ^ n := by
   rw [fintype_card h, modulus_degree h]
 
-/-- Canonical `GFq` and Mathlib's `GaloisField` have matching cardinalities. -/
+/-- Canonical {name}`Hex.GFq` and Mathlib's
+{name}`GaloisField` have matching cardinalities. -/
 theorem card_eq_galoisField_card [Fact p.Prime]
     (h : Hex.Conway.SupportedEntry p n) (hn : n ≠ 0) :
     Fintype.card (Hex.GFq p n h) = Nat.card (GaloisField p n) := by
   rw [fintype_card_eq_pow h, GaloisField.card p n hn]
 
-/-- Canonical `GFq` values are ring-equivalent to Mathlib's `GaloisField`
-with the same characteristic and extension degree. -/
+/-- Canonical {name}`Hex.GFq` values are ring-equivalent to Mathlib's
+{name}`GaloisField` with the same characteristic and
+extension degree. -/
 noncomputable def equivGaloisField [Fact p.Prime]
     (h : Hex.Conway.SupportedEntry p n) (hn : n ≠ 0) :
     _root_.RingEquiv (Hex.GFq p n h) (GaloisField p n) := by

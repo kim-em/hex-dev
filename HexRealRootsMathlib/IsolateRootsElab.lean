@@ -26,7 +26,7 @@ The production front-end that automates the `x⁴ − 2` worked example: it runs
 executable real-root isolator at elaboration time and emits a single certified
 `Hex.IsolatedRealRoots` term the caller can `obtain`, `have`, or feed to `grind`.
 
-Fat-API / thin-meta: every proof obligation the emitted term carries is a single
+Every proof obligation the emitted term carries is a single
 `decide` on literal data against the reified Sturm chain (the replay constructor
 `IsolatedRealRoots.ofCert` from `HexRealRootsMathlib.IsolateRoots`), or a
 pointwise ring identity closed by `isolate_roots_bridge`. The kernel never re-runs
@@ -48,15 +48,14 @@ certificate** relating the two *literal* polynomials directly: reified cofactors
 `t · core ^ (k+1) = a * b`. `aevalIff_radical` turns these two pointwise ring
 identities into the real-root equivalence, which `congrRoots` uses to carry the
 core's isolation onto the original polynomial. This is fully sound and needs no
-`squareFreeCore` reduction; see the report note on the SPEC's original
-`aevalIff_squareFreeCore (by decide)` suggestion.
+`squareFreeCore` reduction.
 -/
 
 open Polynomial
 
 namespace HexRealRootsMathlib
 
-/-! ## The square-free-radical transport lemma -/
+/-! # The square-free-radical transport lemma -/
 
 /-- **Radical root-equivalence from a divisibility certificate.** Given reified
 integer polynomials `orig`, `core`, `a`, `b`, a nonzero integer scalar `t`, and
@@ -118,7 +117,7 @@ namespace IsolateRoots
 
 open Lean Elab Meta Term
 
-/-! ## Elaboration-time evaluation shims -/
+/-! # Elaboration-time evaluation shims -/
 
 private meta unsafe def evalZPolyUnsafe (e : Expr) : MetaM (Except String Hex.ZPoly) :=
   try return .ok (← evalExpr Hex.ZPoly (mkConst ``Hex.ZPoly) e)
@@ -139,7 +138,7 @@ time (hoisted to `HexPolyZMathlib.PolyParse`). -/
 meta def evalRat (e : Expr) : MetaM Rat :=
   HexPolyZMathlib.PolyParse.evalRat "isolate_roots" e
 
-/-! ## The integer-polynomial interpreter
+/-! # The integer-polynomial interpreter
 
 The interpreter itself (`getNat`/`evalIntLit`/`evalCoeff`/`parsePoly`) is
 hoisted to `HexPolyZMathlib.PolyParse`, shared with the
@@ -151,7 +150,7 @@ non-integer rejection. -/
 meta def parsePoly (isRat : Bool) (fuel : Nat) (e : Expr) : MetaM Hex.ZPoly :=
   HexPolyZMathlib.PolyParse.parsePoly "isolate_roots" isRat fuel e
 
-/-! ## Exact integer-polynomial arithmetic (for the radical certificate) -/
+/-! # Exact integer-polynomial arithmetic (for the radical certificate) -/
 
 /-- `base ^ k` for `Hex.ZPoly`, via the executable `Mul` (`csimp` to `mulImpl`). -/
 meta def powZ (base : Hex.ZPoly) (k : Nat) : Hex.ZPoly := Id.run do
@@ -194,7 +193,7 @@ meta def divExactInt (num den : Array Int) : Option (Array Int) := Id.run do
     if r != 0 then return none
   return some (trim q)
 
-/-! ## Backend run -/
+/-! # Backend run -/
 
 /-- The certified isolation data extracted at elaboration time: a reified
 polynomial (the square-free core, when a swap happened), its Sturm chain, and the
@@ -221,7 +220,7 @@ meta def runBackend (f : Hex.ZPoly) (widthK : Option Int) : MetaM IsoData := do
     (fun iso : Hex.RealRootIsolation f => (iso.interval.lower, iso.interval.upper))
   return { poly := f, chain, endpoints }
 
-/-! ## Reification helpers (term syntax) -/
+/-! # Reification helpers (term syntax) -/
 
 /-- Term syntax for an `Int` literal. -/
 meta def intStx (c : Int) : MetaM (TSyntax `term) := do
@@ -248,7 +247,7 @@ meta def dyadicStx (d : Dyadic) : MetaM (TSyntax `term) := do
     let sStx ← intStx (Int.ofNat s)
     `(Dyadic.ofInt $mStx >>> ($sStx : Int))
 
-/-! ## Emission -/
+/-! # Emission -/
 
 /-- Emit the replay term `IsolatedRealRoots.ofCert` for `d.poly` (a square-free
 polynomial), stated over `HexPolyZMathlib.toPolynomial d.poly`. Every field is a
@@ -301,7 +300,7 @@ meta def emitOfCert (d : IsoData) : MetaM (TSyntax `term) := do
       (hordered := by decide) (hcomplete := by decide)
       (hw := by intro i; fin_cases i <;> first $[| exact $pairPfs]*))
 
-/-! ## Width target -/
+/-! # Width target -/
 
 /-- Convert a positive rational width `q` to the bit target `k = max 0 ⌈log₂ q⁻¹⌉`
 in exact integer arithmetic: the least `k ≥ 0` with `2 ^ (-k) ≤ q`. Widths above
@@ -319,7 +318,7 @@ meta def widthTarget (q : Rat) : MetaM Int := do
     pw := pw * 2
   return Int.ofNat k
 
-/-! ## The square-free-radical divisibility certificate -/
+/-! # The square-free-radical divisibility certificate -/
 
 /-- Trimmed coefficient array (drop trailing zeros). -/
 private meta def trimArr (a : Array Int) : Array Int := Id.run do
@@ -357,7 +356,7 @@ meta def radicalCert (orig core : Hex.ZPoly) :
   if t == 0 then throwError msg
   return (a, b, t, e - 1)
 
-/-! ## The driver -/
+/-! # The driver -/
 
 /-- Emit `coreTerm : IsolatedRealRoots (toPolynomial fLit) n` for the reflected
 integer polynomial `f` (the reflection of the user's input), classifying it as
@@ -488,7 +487,7 @@ meta def elabIsolate (widthStx : Option (TSyntax `term)) (pStx : TSyntax `term)
           $coreTerm)
   Term.elabTermEnsuringType term expectedType?
 
-/-! ## Syntax -/
+/-! # Syntax -/
 
 /-- `isolate_roots p` / `isolate_roots (width := x) p`. The `atomic` lookahead on
 `"(" "width" ":="` lets a parenthesised polynomial argument (e.g.

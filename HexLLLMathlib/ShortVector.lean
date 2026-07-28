@@ -13,7 +13,7 @@ public import HexLLL.Basic
 public section
 
 /-!
-The headline Mathlib capstones: the Euclidean short-vector bounds on the
+Euclidean short-vector bounds on the
 algorithm outputs, `lll_first_row_norm_sq_le` (at `η = 11/20`) and
 `lllNative_first_row_norm_sq_le` (classical `η = 1/2`). Unlike the conditional
 `reduced_first_row_norm_sq_le`, these discharge the `isLLLReduced` hypothesis

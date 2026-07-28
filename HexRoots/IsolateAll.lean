@@ -33,13 +33,12 @@ namespace Hex
   | .atom iso => some iso
   | .cluster _ => none
 
-/-- Refine every component until certified at prec at least `target`, with
-    the certified stored squares' circumscribed discs pairwise disjoint (SPEC
-    "Separation of the output"). Before `completenessDepth`, refinement is
-    global so rootless survivor halos rejoin the root-bearing component. The
-    fuel is sized from the worklist's coarsest prec so the loop reaches
-    `stopDepth p target`. `none` only if the full emission condition has not
-    happened within that fuel bound. -/
+/-- Refine every component to precision at least `target` and require the
+circumscribed discs of the certified squares to be pairwise disjoint. Before
+`completenessDepth`, refinement is global so rootless survivor halos rejoin the
+root-bearing component. The fuel is sized from the worklist's coarsest
+precision so the loop reaches `stopDepth p target`. `none` means the full
+emission condition was not reached within that fuel bound. -/
 @[expose] def isolateAll? (p : ZPoly) (target : Int) (worklist : Array Component)
     (strategy : AtomStrategy := .nkThenPellet) :
     Option (Array (Certified p)) :=
@@ -48,11 +47,11 @@ namespace Hex
   isolateLoop p target strategy (fuelFor p target start) worklist
 
 /-- All-atoms output for polynomials with only simple roots: run
-    `isolateAll?` from `Component.cauchy` with
+    {name}`Hex.isolateAll?` from {name}`Hex.Component.cauchy` with
     `target := max atom_prec (separationDepth p)`, and require every result to
-    be an atom. `none` if `isolateAll?` fails or (impossible for squarefree
+    be an atom. `none` if {name}`Hex.isolateAll?` fails or (impossible for squarefree
     `p`, proven in the companion) some result is a `k ≥ 2` cluster.
-    `HasOnlySimpleRoots` does not force positive degree, so the degenerate
+    {name}`Hex.HasOnlySimpleRoots` does not force positive degree, so the degenerate
     inputs are pinned here: a nonzero constant returns `some #[]` (no roots to
     isolate), and the zero polynomial returns `none`. -/
 @[expose] def isolate (p : ZPoly) (_h : HasOnlySimpleRoots p) (atom_prec : Int)

@@ -27,7 +27,7 @@ working-endpoint representation.
 
 namespace Hex.Interval.Experiment.Rational
 
-/-! ## Exposed Core rational operations -/
+/-! # Exposed Core rational operations -/
 
 /-- Kernel-reducible rational addition using Core's normalization formula. -/
 def add (a b : Rat) : Rat :=
@@ -59,7 +59,7 @@ theorem mul_eq (a b : Rat) : mul a b = a * b := (Rat.mul_def a b).symm
 /-- The exposed inversion wrapper computes Core rational inversion. -/
 theorem inv_eq (a : Rat) : inv a = a⁻¹ := (Rat.inv_def a).symm
 
-/-! ## Cross-product certificates -/
+/-! # Cross-product certificates -/
 
 /-- An untrusted rational certificate.  `den` is signed so that interpretation
 is exactly Core's `Rat.divInt`; validity rejects its zero-denominator fallback. -/
@@ -138,7 +138,7 @@ theorem inv_sound {a c : Raw} (h : invOk a c = true) : a.value⁻¹ = c.value :=
 
 end Raw
 
-/-! ## Rational replay microprobes -/
+/-! # Rational replay microprobes -/
 
 /-- The exposed-wrapper operand for the BKLNW-sized addition fold. -/
 def directStep : Rat := Rat.divInt 1 433

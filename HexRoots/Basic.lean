@@ -33,7 +33,7 @@ called fully qualified. All data-level defs are `@[expose]` so kernel
 -/
 namespace Hex
 
-/-! ### Dyadic helpers
+/-! # Dyadic helpers
 
 `Dyadic` in Lean core carries no `abs`/`min`/`max`; these supply them.
 They are placed in namespace `Hex.Dyadic`, so `Hex.Dyadic.abs` etc.
@@ -58,7 +58,7 @@ to resolve against the core `Dyadic` namespace by dot notation. -/
   | .zero => 0
   | .ofOdd n k _ => if n < 0 then 0 else (Hex.ceilLog2 n.toNat : Int) - k
 
-/-! ### Gaussian dyadics
+/-! # Gaussian dyadics
 
 `GaussDyadic` is a pair `(re, im)` of dyadic numbers standing for the
 Gaussian-dyadic number `re + im·i`. It carries no typeclass instances:
@@ -99,7 +99,7 @@ namespace GaussDyadic
 
 end GaussDyadic
 
-/-! ### Dyadic squares
+/-! # Dyadic squares
 
 A `DyadicSquare` is the closed axis-aligned square centred at
 `re + im·i` with half-width `2^{−prec}`. Its circumscribed disc (the
@@ -159,7 +159,7 @@ so the test is one exact dyadic comparison. -/
   let dim : Dyadic := Hex.Dyadic.abs (inner.im - outer.im)
   decide (Hex.Dyadic.max dre dim + inner.halfWidth ≤ outer.halfWidth)
 
-/-! ### Enclosing squares, balls, and components -/
+/-! # Enclosing squares, balls, and components -/
 
 /-- A complex ball with dyadic data, the output type of numerical
     evaluation here and in `hex-number-field`. -/
@@ -238,11 +238,12 @@ structure SquareBounds where
       let q := -(Hex.Dyadic.ceilLog2 w)
       ⟨cx, cy, q⟩
 
-/-! ### Squarefreeness -/
+/-! # Squarefreeness -/
 
-/-- `p` has only simple complex roots: the executable rational gcd of
-    `p` and `p'` is constant. Defeq to `ZPoly.SquareFreeRat`; the
-    companion relates it to `Squarefree` (for `p ≠ 0`). -/
+/-- `p` has only simple complex roots when the executable rational gcd of `p`
+and `p'` is constant. This is definitionally
+{name}`Hex.ZPoly.SquareFreeRat`; the Mathlib bridge proves its equivalence to
+polynomial squarefreeness when `p ≠ 0`. -/
 @[expose] def HasOnlySimpleRoots (p : ZPoly) : Prop := ZPoly.SquareFreeRat p
 
 instance (p : ZPoly) : Decidable (HasOnlySimpleRoots p) :=

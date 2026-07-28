@@ -15,7 +15,7 @@ public section
 Euclidean-algorithm correspondence for `HexPolyMathlib`.
 
 This module transfers the executable `Hex.DensePoly` gcd and extended-gcd
-surface across the `HexPolyMathlib.equiv` ring equivalence to Mathlib's
+surface across the {name}`HexPolyMathlib.equiv` ring equivalence to Mathlib's
 `Polynomial` Euclidean-domain API.
 -/
 
@@ -27,7 +27,7 @@ variable {R : Type u}
 
 noncomputable section
 
-/-! ### Lawfulness of executable division over a field -/
+/-! # Lawfulness of executable division over a field -/
 
 private theorem field_div_cancel [Field R] (a b : R) (hb : b ≠ 0) :
     a - (a / b) * b = 0 := by
@@ -292,9 +292,9 @@ private theorem toPolynomial_dvd_of_dense_ofPolynomial_dvd [CommRing R] [Decidab
 
 /--
 The raw executable dense-polynomial gcd is associated to Mathlib's normalized
-polynomial gcd under `toPolynomial`. It is not generally equal before normalization:
-`Hex.DensePoly.gcd` returns the last Euclidean remainder, while
-`EuclideanDomain.gcd` for polynomials over a field is normalized.
+polynomial gcd under {name}`toPolynomial`. It is not generally equal before normalization:
+{name}`Hex.DensePoly.gcd` returns the last Euclidean remainder, while
+{name}`EuclideanDomain.gcd` for polynomials over a field is normalized.
 -/
 theorem toPolynomial_gcd_associated [Field R] [DecidableEq R] [Hex.DensePoly.GcdLaws R]
     (p q : Hex.DensePoly R) :
@@ -310,9 +310,9 @@ theorem toPolynomial_gcd_associated [Field R] [DecidableEq R] [Hex.DensePoly.Gcd
     · exact dense_dvd_of_toPolynomial_dvd (EuclideanDomain.gcd_dvd_right (toPolynomial p) (toPolynomial q))
 
 /--
-The raw gcd component of `Hex.DensePoly.xgcd` is associated to Mathlib's
+The raw gcd component of {name}`Hex.DensePoly.xgcd` is associated to Mathlib's
 normalized polynomial gcd. This is the xgcd-facing form of
-`toPolynomial_gcd_associated`, not a literal equality of raw outputs.
+{name}`toPolynomial_gcd_associated`, not a literal equality of raw outputs.
 -/
 theorem toPolynomial_xgcd_gcd_associated [Field R] [DecidableEq R] [Hex.DensePoly.GcdLaws R]
     (p q : Hex.DensePoly R) :
@@ -321,7 +321,7 @@ theorem toPolynomial_xgcd_gcd_associated [Field R] [DecidableEq R] [Hex.DensePol
   simpa [Hex.DensePoly.xgcd_gcd_eq_gcd] using toPolynomial_gcd_associated (R := R) p q
 
 /--
-The executable Bezout identity transports across `toPolynomial`.
+The executable Bezout identity transports across {name}`toPolynomial`.
 The right hand side is the executable raw gcd component, not Mathlib's
 normalized polynomial gcd. The `@[simp]` direction collapses the transported
 Bezout combination to the named raw gcd; the matching pattern only fires when

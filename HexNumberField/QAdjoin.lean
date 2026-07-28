@@ -166,7 +166,7 @@ def approx (a : QAdjoin p x) (rep : RefinedIsolation p)
     | none => ⟨rep, h⟩
   (threaded.1, evalRatBall a.coeffs threaded.1.1.square target)
 
-/-- The representative returned by `approx` denotes the input root, so callers
+/-- The representative returned by {name}`Hex.QAdjoin.approx` denotes the input root, so callers
 can pass it directly to their next approximation request. -/
 theorem approx_root (a : QAdjoin p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (prec : Int) :

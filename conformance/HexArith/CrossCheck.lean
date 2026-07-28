@@ -130,7 +130,7 @@ private def barrettInverse (a : UInt64) : Option UInt64 :=
 private def montInverse (a : UInt64) : UInt64 :=
   montPowMod a (streamModulusNat - 2)
 
-/-! ## mulMod cross-check stream -/
+/-! # mulMod cross-check stream -/
 
 /-- Predicate: Barrett and Montgomery agree on `a * b mod p`. -/
 private def mulModAgree (a b : UInt64) : Bool :=
@@ -163,7 +163,7 @@ private def mulStream : List (UInt64 × UInt64) := mulPairs streamSeed mulStream
 -- Full fast-vs-fast stream: Barrett and Montgomery agree on every entry.
 #guard mulStream.all (fun (a, b) => mulModAgree a b)
 
-/-! ## powMod cross-check stream -/
+/-! # powMod cross-check stream -/
 
 private def powStreamSize : Nat := 100
 
@@ -174,7 +174,7 @@ private def powModAgree (base : UInt64) (exp : Nat) : Bool :=
 
 #guard powStream.all (fun (base, exp) => powModAgree base exp)
 
-/-! ## inverseStream cross-check -/
+/-! # inverseStream cross-check -/
 
 private def invStreamSize : Nat := 100
 

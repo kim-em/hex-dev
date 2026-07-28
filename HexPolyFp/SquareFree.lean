@@ -146,7 +146,7 @@ private theorem squareFreeAuxRev_multiplicity_pos_raw
               ih (pthRoot loop.2) (multiplicity * p) loop.1
                 (Nat.mul_pos hmultiplicity hp_pos) hloop
 
-/-- The factors emitted by `squareFreeDecomposition` are pairwise coprime,
+/-- The factors emitted by {name}`squareFreeDecomposition` are pairwise coprime,
 witnessed by the normalized gcd of any two distinct factors reducing to `1`.
 This is the underlying coprimality result that the public
 `squareFreeDecomposition_pairwise_coprime` wrapper delegates to; callers reason
@@ -187,7 +187,7 @@ theorem squareFree_weightedProduct (hp : Hex.Nat.Prime p) (f : FpPoly p) :
       hresidual (yunDerivativeActiveRawStateProvider_holds hp)]
     exact normalizeMonic_reconstruct hp f
 
-/-- Each factor emitted by `squareFreeDecomposition` is itself square-free,
+/-- Each factor emitted by {name}`Hex.FpPoly.squareFreeDecomposition` is itself square-free,
 witnessed by the normalized gcd of the factor with its derivative reducing to
 `1`. This is the underlying square-freeness result that the public
 `squareFreeDecomposition_factors_squareFree` wrapper delegates to; it is the
@@ -202,8 +202,8 @@ theorem squareFree_factors_squareFree (hp : Hex.Nat.Prime p) (f : FpPoly p) :
   intro sf hsf
   simp at hsf
 
-/-- Public square-freeness wrapper: every factor emitted by
-`squareFreeDecomposition` is square-free, witnessed by the normalized gcd with
+/-- Every factor emitted by {name}`Hex.FpPoly.squareFreeDecomposition` is
+square-free, witnessed by the normalized gcd with
 its derivative reducing to `1`. The provider instantiation is closed internally,
 so no provider arguments appear in the statement. -/
 theorem squareFreeDecomposition_factors_squareFree (hp : Hex.Nat.Prime p) (f : FpPoly p) :
@@ -212,7 +212,7 @@ theorem squareFreeDecomposition_factors_squareFree (hp : Hex.Nat.Prime p) (f : F
       (normalizeMonic (DensePoly.gcd sf.factor (DensePoly.derivative sf.factor))).2 = 1 :=
   squareFree_factors_squareFree hp f
 
-/-- Every factor emitted by `squareFreeDecomposition` carries a strictly positive
+/-- Every factor emitted by {name}`Hex.FpPoly.squareFreeDecomposition` carries a strictly positive
 multiplicity, so no factor is recorded at multiplicity `0`. A caller iterating
 the factor list can therefore treat each recorded exponent as a genuine power and
 need not special-case a zero exponent. -/
@@ -321,7 +321,7 @@ private theorem linearPow_eq_powLinear (f : FpPoly p) (n : Nat) :
       have h2 : powLinear f (n + 1) = powLinear f n * f := rfl
       rw [h1, h2, ih]
 
-/-- Freshman's dream for `FpPoly.linearPow`: in characteristic `p`, raising to
+/-- Freshman's dream for {name}`FpPoly.linearPow`: in characteristic `p`, raising to
 the prime power is additive. -/
 theorem linearPow_add_prime
     (hp : Hex.Nat.Prime p) (f g : FpPoly p) :
@@ -330,7 +330,7 @@ theorem linearPow_add_prime
   rw [linearPow_eq_powLinear, linearPow_eq_powLinear, linearPow_eq_powLinear]
   exact powLinear_add_prime hp f g
 
-/-- `FpPoly.linearPow` of a product factors over the base. -/
+/-- {name}`FpPoly.linearPow` of a product factors over the base. -/
 theorem linearPow_mul_base (f g : FpPoly p) (n : Nat) :
     FpPoly.linearPow (f * g) n =
       FpPoly.linearPow f n * FpPoly.linearPow g n := by

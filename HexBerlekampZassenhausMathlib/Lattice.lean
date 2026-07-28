@@ -14,10 +14,7 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-BHKS lattice-side objects for the van Hoeij `W ⊆ L'` adequacy (#8519).
-
-Resurrected (from the pre-#8411 `Lattice.lean`, commit 6bf20977^) and adapted
-to the current `Matrix.rowReduce` / `vecMul` API: the projected-row spans, the
+BHKS lattice-side objects for the van Hoeij `W ⊆ L'` adequacy: the projected-row spans, the
 `0/1` support indicators, the `RecoveredLift` certificate, the Gram-Schmidt
 prefix-survivor lemma (Klüners Lemma 1: any lattice vector within the cut
 radius lies in the retained prefix span), and the cut-projection producer
@@ -180,7 +177,7 @@ Sum of the per-selected-factor executable CLD quotients, taken over the same
 factor order as `supportProduct`.  Its `j`-th coefficient is the pre-`psiCut`,
 pre-indicator column-`j` entry of the true-factor CLD vector; the centering
 (`psiCut`) and indicator weighting are layered on top by the tight-column work
-(`#7651`).
+described later in this module.
 -/
 @[expose]
 def supportCldSum (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L)
@@ -728,7 +725,7 @@ theorem projectedRow_mem_projectedRowSpanInt
   exact Submodule.subset_span ⟨i, rfl⟩
 
 /-!
-### True-factor cut-projection producer
+# True-factor cut-projection producer
 
 The following bridges the BHKS prefix survivor-span lemma
 (`mem_prefixSubmodule_of_normSq_le`) to `CutProjectionHypotheses` *without*

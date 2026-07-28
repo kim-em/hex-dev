@@ -1203,7 +1203,7 @@ theorem checkIrreducibilityCertificate_irreducible
 end
 
 /-!
-### Computable, kernel-reducible irreducibility over `F_p`
+# Computable, kernel-reducible irreducibility over `F_p`
 
 The instance above is classical, so `decide +kernel` gets stuck on it. This
 block gives a *computable* `Bool`-valued irreducibility test backed by
@@ -1227,7 +1227,7 @@ variable {p : Nat} [Hex.ZMod64.Bounds p]
 /-- Monicity of an executable finite-field polynomial is decidable: `Monic m` is
 the equality `leadingCoeff m = 1`, and `ZMod64 p` has decidable equality. This is
 the instance that lets the `Bool`-valued `fpIsIrreducible` branch on monicity and
-still reduce in the kernel (obstacle 1 of the SPEC requirement). -/
+still reduce in the kernel. -/
 instance instDecidableMonic (m : Hex.FpPoly p) :
     Decidable (Hex.DensePoly.Monic m) :=
   inferInstanceAs (Decidable (Hex.DensePoly.leadingCoeff m = 1))

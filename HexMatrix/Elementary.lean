@@ -101,8 +101,8 @@ theorem rowSwap_diag_of_ne (M : Matrix R n n) {k pivot : Fin n}
 
 /-- Scale row `i` by `c`.
 
-Per-entry in place via `modifyEntries`: each of the row's `m` entries is a
-single `Vector.modify` of the flat backing buffer, with no row
+Per-entry in place via {name}`Hex.Matrix.modifyEntries`: each of the row's `m`
+entries is a single {name}`Vector.modify` of the flat backing buffer, with no row
 materialization, when `M` is uniquely referenced. -/
 @[expose]
 def rowScale [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) : Matrix R n m :=
@@ -140,7 +140,7 @@ theorem row_rowScale_of_ne [Mul R] (M : Matrix R n m) {i r : Fin n} (c : R)
 /-- Replace row `dst` by `row dst + c * row src`.
 
 The source row is read once into `rsrc` (one contiguous copy, a borrowed read
-taken before the write); the subsequent `modifyEntries` then holds the only
+taken before the write); the subsequent {name}`Hex.Matrix.modifyEntries` then holds the only
 live reference to the buffer and updates the `dst` row's entries in place when
 the runtime sees it uniquely referenced, with no destination-row
 materialization. -/
@@ -417,10 +417,10 @@ replaced by `M[i][dst] + M[i][src] * c`. -/
 /-- Swap columns `i` and `j` in a dense matrix.
 
 Both columns are read once (two borrowed `O(n)` reads taken before the writes),
-then written back with two `setCol` passes that update one flat-buffer entry per
+then written back with two {name}`Hex.Matrix.setCol` passes that update one flat-buffer entry per
 row in place, reusing the backing store when `M` is uniquely referenced. This
-replaces the former `mapRows` pass, which materialized and reflattened every row.
-The column mirror of `rowSwap`. -/
+replaces the former {name}`Hex.Matrix.mapRows` pass, which materialized and
+reflattened every row. The column mirror of {name}`Hex.Matrix.rowSwap`. -/
 @[expose]
 def colSwap (M : Matrix R n m) (i j : Fin m) : Matrix R n m :=
   let ci := M.col i
@@ -489,9 +489,9 @@ theorem transpose_colSwap (M : Matrix R n m) (i j : Fin m) :
 
 /-- Scale column `j` by `c`.
 
-In-place per-entry column update via `modifyCol`: each row's single `j` entry is
+In-place per-entry column update via {name}`Hex.Matrix.modifyCol`: each row's single `j` entry is
 multiplied by `c`, reusing the freed row slot when `M` is uniquely referenced.
-The column mirror of `rowScale`. -/
+The column mirror of {name}`Hex.Matrix.rowScale`. -/
 @[expose]
 def colScale [Mul R] (M : Matrix R n m) (j : Fin m) (c : R) : Matrix R n m :=
   M.modifyCol j fun _ x => c * x

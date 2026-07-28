@@ -260,9 +260,9 @@ end Internal.LLLCore
 /-- LLL short-vector core inequality, parameterized by the size-reduction bound
 `η`. For a `(δ, η)`-LLL-reduced basis with `1/2 ≤ η`, `η² < δ ≤ 1`, the
 squared norm of the first row is at most `(1 / (δ - η²)) ^ (n - 1)` times the
-squared norm of any nonzero lattice vector. Combines `LLLCore.teleBound` with
-the lower bound on the smallest Gram-Schmidt vector contained in the
-lattice. -/
+squared norm of any nonzero lattice vector. The proof combines the telescoping
+Gram-Schmidt inequality with the lower bound on the smallest Gram-Schmidt
+vector contained in the lattice. -/
 theorem short_vector_bound_of_size_bound (b : Matrix Int n m) {δ η : Rat}
     (hli : Matrix.independent b) (hred : isLLLReduced b δ η)
     (hη : (1 / 2 : Rat) ≤ η) (hδη : η * η < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)

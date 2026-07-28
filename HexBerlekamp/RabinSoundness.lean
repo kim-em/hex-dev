@@ -31,7 +31,7 @@ namespace Hex
 namespace Berlekamp
 
 variable {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
-/-! ### Berlekamp completeness composition
+/-! # Berlekamp completeness composition
 
 Combining the CRT-produced kernel polynomial with the matrix-kernel iff
 yields the algebraic half of Berlekamp completeness: if no fixed-space
@@ -429,7 +429,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
     rw [hno_w] at hsplit
     nomatch hsplit
 
-/-! ### Divisor-generalized Berlekamp completeness
+/-! # Divisor-generalized Berlekamp completeness
 
 The single-polynomial theorem above ranges `hno_split` over `f`'s own kernel.
 The executable `berlekampFactor` (`HexBerlekamp/Factor.lean`) computes the
@@ -972,7 +972,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd
 requirement on the divisor `g` of `irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd`
 to bare nonzeroness. The factors returned by `berlekampFactor` are raw `gcd`
 outputs and so are only monic up to a unit; this is the form the executable
-capstone consumes. Positive-degree divisors are normalized to their monic
+completeness theorem consumes. Positive-degree divisors are normalized to their monic
 associate `scale (leadingCoeff g)⁻¹ g`, to which the monic theorem applies after
 transporting the no-split fact via `kernelWitnessSplit?_none_scale`; a nonzero
 constant divisor is irreducible directly.

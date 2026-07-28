@@ -42,7 +42,7 @@ namespace UFDPartition
 /--
 The cardinality of the sum of a multiset of multisets equals the sum of the
 cardinalities. This is the multiset version of `Multiset.card_add` applied
-under `Multiset.sum`.
+under {name}`Multiset.sum`.
 -/
 private lemma card_multiset_sum {α : Type*} (s : Multiset (Multiset α)) :
     s.sum.card = (s.map Multiset.card).sum := by
@@ -97,9 +97,9 @@ Upper cardinality bound for a product partition in a UFD.
 If a non-zero element `f` is associated to the product of a list of non-zero
 non-unit factors, then that list cannot have more entries than the multiset of
 normalized irreducible factors of `f`. Each list entry contributes at least one
-normalized factor. Callers use this for algorithm branches that already expose
-product preservation and `shouldRecord`/non-unit facts, but have not yet proved
-irreducibility of the emitted factors.
+normalized factor. The bound requires product preservation and
+`shouldRecord`/non-unit facts, but does not assume irreducibility of the
+emitted factors.
 -/
 theorem length_le_normalizedFactors_card
     {α : Type*} [CommMonoidWithZero α] [NormalizationMonoid α]
@@ -154,7 +154,7 @@ If a list of irreducible factors has product associated to `f`, then the
 multiset of normalized factors of `f` has exactly the length of the list.
 
 This is the converse cardinality direction to
-`length_le_normalizedFactors_card` for the already-certified irreducible
+{name}`length_le_normalizedFactors_card` for the already-certified irreducible
 partition case. It is kept as the exact equality form because the exported
 lower-bound theorem below is the shape used by branch-level callers.
 -/
@@ -204,7 +204,7 @@ Lower cardinality bound for a coverage-style square-free partition.
 When `f` is square-free and every irreducible factor of `f` is associated to
 some emitted entry in `gs`, the emitted list has at least as many entries as
 `f` has normalized irreducible factors.  Combined with
-`length_le_normalizedFactors_card`, this gives the cardinality equality
+{name}`length_le_normalizedFactors_card`, this gives the cardinality equality
 needed by `irreducible_of_partition_card_eq_normalizedFactors_card`.
 
 Distinct normalized factors of a square-free `f` cannot share an emitted
@@ -344,12 +344,12 @@ theorem scalar_eq_and_normalizedFactors_eq_of_monic_irreducible_product_eq
 
 /--
 Variant of `scalar_eq_and_normalizedFactors_eq_of_monic_irreducible_product_eq`
-for nonconstant `normalize`-fixed irreducible integer polynomial factors, which
+for nonconstant {name}`normalize`-fixed irreducible integer polynomial factors, which
 is what the BZ uniqueness theorem actually has (the executable
 `normalizeFactorSign` only enforces a nonnegative leading coefficient, not a
 unit leading coefficient).
 
-If two nonzero integer scalars multiply products of nonconstant `normalize`-fixed
+If two nonzero integer scalars multiply products of nonconstant {name}`normalize`-fixed
 irreducible integer polynomial factors to the same polynomial, the scalars
 agree and the flattened factor lists agree as multisets. Constant factors are
 ruled out by the `natDegree ≠ 0` hypothesis, so they cannot leak between the
@@ -601,7 +601,7 @@ In a unique factorization monoid, if `factors` is a `Nodup` multiset of
 normalize-fixed irreducibles and `d` is a normalize-fixed divisor of
 `factors.prod`, then there is a unique sub-multiset `S ≤ factors` whose
 product equals `d`. The witness is `normalizedFactors d`; uniqueness uses
-`normalizedFactors_prod_eq` to recover any candidate from its product.
+{name}`normalizedFactors_prod_eq` to recover any candidate from its product.
 
 This is the abstract Mathlib half of the
 `existsUnique_modPFactorSubset_of_choosePrimeData` assembly: the final
@@ -670,7 +670,7 @@ multiset of irreducible polynomials `qs`, then `g.natDegree` is the sum of
 some sub-multiset of `qs.map natDegree`.
 
 This is the degree-subset-sum packaging of
-`normalizedFactors_le_map_normalize_of_dvd_prod_irreducibles` that the BZ
+{name}`normalizedFactors_le_map_normalize_of_dvd_prod_irreducibles` that the BZ
 certificate degree-obstruction caller needs: the recorded modular factor
 degrees are the `qs.map natDegree` values, and the contradiction with a
 "no subset sums to `g.natDegree`" obstruction comes from this lemma.

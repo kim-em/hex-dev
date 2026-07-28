@@ -160,7 +160,7 @@ public section
 End-to-end tests for the `Polynomial ℤ` / strong `Hex.ZPoly` provider of
 `factor_poly`/`irreducibility`, including the goal-mode subsumption of the
 deleted `irreducible_cert` tactic (its generator guard polynomials from
-#8552 Part 1 migrate here), the certificate reification round-trips, the
+the compiled generator), the certificate reification round-trips, the
 decline→multi-prime handover on an A4 quartic the free provider cannot
 certify, the free-layer Eisenstein handover on `x⁴ + 1`, and the decline
 diagnostic for balanced inputs outside every certificate language.
@@ -170,7 +170,7 @@ namespace HexBerlekampZassenhausMathlib.FactorPolyTests
 
 open Lean Polynomial
 
-/-! ### Elaboration-time evaluation shims for the round-trip tests -/
+/-! # Elaboration-time evaluation shims for the round-trip tests -/
 
 private meta unsafe def evalZPolyUnsafe (e : Expr) :
     MetaM (Except String Hex.ZPoly) :=
@@ -205,10 +205,10 @@ private meta def evalCertificate (e : Expr) :
   | .ok cert => return cert
   | .error msg => throwError "failed to evaluate the certificate{indentExpr e}\n{msg}"
 
-/-! ### Certificate reification round-trips
+/-! # Certificate reification round-trips
 
-The generator guard polynomials from the compiled-generator PR (#8552
-Part 1): two monic quadratics, a linear polynomial (empty certificate), and
+The compiled generator's guard polynomials are two monic quadratics, a linear
+polynomial (empty certificate), and
 the inert-prime cubic `x³ - x - 1`. Reify each generated certificate,
 typecheck the resulting `Expr`, evaluate it back, and compare
 field-by-field through the canonical `certificateData` serialization. -/
@@ -247,7 +247,7 @@ run_meta do
     unless (← roundTrips f) do
       throwError "certificate reification round-trip failed for {name}"
 
-/-! ### Goal-mode subsumption of `irreducible_cert`
+/-! # Goal-mode subsumption of `irreducible_cert`
 
 Every `Irreducible (HexPolyZMathlib.toPolynomial f)` goal the deleted
 `irreducible_cert` tactic closed is now closed by goal-mode
@@ -278,7 +278,7 @@ info: 'HexBerlekampZassenhausMathlib.FactorPolyTests.cubicInert_irreducible' dep
 #guard_msgs in
 #print axioms cubicInert_irreducible
 
-/-! ### `Polynomial ℤ` inputs (bridge-only: the provider-liveness canary) -/
+/-! # `Polynomial ℤ` inputs (bridge-only: the provider-liveness canary) -/
 
 theorem sqrt2_irred : Irreducible ((X : Polynomial ℤ) ^ 2 - 2) :=
   irreducibility ((X : Polynomial ℤ) ^ 2 - 2)
@@ -329,7 +329,7 @@ example : True := by
   have := factors_irred
   exact True.intro
 
-/-! ### The decline→multi-prime handover on `Hex.ZPoly`
+/-! # The decline→multi-prime handover on `Hex.ZPoly`
 
 `x⁴ + 8x + 12` has Galois group `A₄`: no 4-cycle, so it is reducible mod
 every prime and `searchWitness` finds no single-prime witness; it is not
@@ -377,7 +377,7 @@ info: 'HexBerlekampZassenhausMathlib.FactorPolyTests.quarticA4_factored' depends
 example : Irreducible (X ^ 4 + Polynomial.C 8 * X + 12 : Polynomial ℤ) := by
   irreducibility
 
-/-! ### Reducible and degenerate inputs: targeted errors -/
+/-! # Reducible and degenerate inputs: targeted errors -/
 
 /-- `x² - 1`, reducible: the provider reports the factor count instead of
 handing the kernel a bogus certificate. -/
@@ -412,7 +412,7 @@ is a unit (±1), not irreducible
 #guard_msgs in
 example := irreducibility (1 : Polynomial ℤ)
 
-/-! ### The Eisenstein handover: `x⁴ + 1` never reaches this provider
+/-! # The Eisenstein handover: `x⁴ + 1` never reaches this provider
 
 `x⁴ + 1` is reducible mod every prime *and* a degree-2 factor sum is
 available in every mod-p splitting (`{1,1,1,1}` or `{2,2}`), so neither the
@@ -433,7 +433,7 @@ info: 'HexBerlekampZassenhausMathlib.FactorPolyTests.x4p1_irred' depends on axio
 -- The transported `Polynomial ℤ` statement.
 example : Irreducible (X ^ 4 + 1 : Polynomial ℤ) := by irreducibility
 
-/-! ### Balanced beyond every certificate language: the decline diagnostic
+/-! # Balanced beyond every certificate language: the decline diagnostic
 
 `x⁴ - 10x² + 1` (Swinnerton-Dyer for `√2 + √3`) is reducible mod every
 prime, not Eisenstein at any small shift, and every mod-p splitting leaves
@@ -456,7 +456,7 @@ has no single-prime modular witness, is not Eisenstein at any small shift, and i
 #guard_msgs in
 example := irreducibility (Hex.DensePoly.ofCoeffs #[1, 0, -10, 0, 1] : Hex.ZPoly)
 
-/-! ### The kernel-decide fallbacks `irreducibility!` / `factor_poly!`
+/-! # The kernel-decide fallbacks `irreducibility!` / `factor_poly!`
 
 The Swinnerton-Dyer quartic `x⁴ - 10x² + 1` is exactly the decline case
 above, so the bang forms exercise the genuine fallback path: the emitted

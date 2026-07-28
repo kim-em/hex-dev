@@ -42,7 +42,7 @@ namespace HexLLLMathlib
 
 open Hex Hex.Internal
 
-/-! ### Rounding helpers -/
+/-! # Rounding helpers -/
 
 private theorem intCast_fdiv_le (p : Int) {S : Int} (hS : 0 < S) :
     ((Int.fdiv p S : Int) : Rat) ≤ (p : Rat) / (S : Rat) := by
@@ -83,7 +83,7 @@ private theorem div_le_div_of_nonpos_den {a b c : Rat} (ha : a ≤ 0) (hb : 0 < 
   rw [div_eq_mul_one_div a b, div_eq_mul_one_div a c]
   exact mul_le_mul_of_nonpos_left (one_div_le_one_div_of_le hb h) ha
 
-/-! ### Containment lemmas for the interval kernel -/
+/-! # Containment lemmas for the interval kernel -/
 
 private theorem mem_ofInt (S z : Int) : (Ival.ofInt S z).mem S (z : Rat) := by
   unfold Ival.ofInt Ival.mem
@@ -254,7 +254,7 @@ private theorem mem_ofRat {S : Int} (_hS : 0 < S) (q : Rat) :
   · exact le_of_le_of_eq (intCast_fdiv_le _ hden) hqS
   · exact le_of_eq_of_le hqS.symm (div_le_intCast_cdiv _ hden)
 
-/-! ### Exact Gram-Schmidt recurrence over the Gram matrix -/
+/-! # Exact Gram-Schmidt recurrence over the Gram matrix -/
 
 private theorem foldl_finRange_eq_sum {R : Type*} [AddCommMonoid R] {k : Nat}
     (f : Fin k → R) :
@@ -443,7 +443,7 @@ private theorem gsDot_self (b : Hex.Matrix Int n m) (i : Fin n) :
     rw [horth, mul_zero]
   rw [hsum, add_zero, dot_comm, nrm_eq_dot]
 
-/-! ### Containment induction over the executable pass -/
+/-! # Containment induction over the executable pass -/
 
 private theorem getElem!_push_lt {α : Type*} [Inhabited α] (a : Array α) (x : α)
     {j : Nat} (hj : j < a.size) : (a.push x)[j]! = a[j]! := by
@@ -843,7 +843,7 @@ private theorem pass_spec (b : Hex.Matrix Int n m) {S : Int} (hS : 0 < S)
       · rw [if_neg hpos] at hres'
         cases hres'
 
-/-! ### Positivity of the Gram-determinant product -/
+/-! # Positivity of the Gram-determinant product -/
 
 private theorem normProduct_pos (b : Hex.Matrix Int n m)
     (hpos : ∀ j : Fin n, 0 < nrm b j) :
@@ -869,7 +869,7 @@ private theorem independent_of_nrm_pos (b : Hex.Matrix Int n m)
   rw [← h] at hp
   exact_mod_cast hp
 
-/-! ### Soundness of the interval reducedness checker -/
+/-! # Soundness of the interval reducedness checker -/
 
 /-- Acceptance by the fixed-precision interval checker entails the exact
 rational reducedness predicate and independence. This is the trusted

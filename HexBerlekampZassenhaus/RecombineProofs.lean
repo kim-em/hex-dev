@@ -1078,7 +1078,7 @@ Structurally identical to the unscaled step lemma, with the inner `let
 candidate' := ...` expression in both the prefix-none hypothesis and the goal
 applying `ZPoly.dilate coreLc` (the substitution `X ↦ coreLc · X`) to the
 centre-lifted lifted-factor product.  This is the step driver the primitive
-recursive coverage proof in #4647 will use, where the candidate is recovered
+recursive coverage proof in will use, where the candidate is recovered
 from the integer factor via `scaledRecombinationCandidate_eq_factor_of_recovery`.
 -/
 theorem scaledRecombinationSearchModAux_eq_some_of_step_of_prefix_none

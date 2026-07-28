@@ -353,13 +353,14 @@ open Hex.Internal
 
 /-- Executable same-lattice certificate: two integer transforms that multiply
 the bases into each other. Each product equality is verified by the packed
-certificate `mulEqCert`, so neither product matrix is ever formed. -/
+certificate {name}`Hex.Internal.mulEqCert`, so neither product matrix is ever
+formed. -/
 @[expose]
 def sameLatticeCert (B B' : Matrix Int n m) (U V : Matrix Int n n) : Bool :=
   mulEqCert U B B' && mulEqCert V B' B
 
-/-- Soundness of `sameLatticeCert`: accepted certificates prove identical
-integer row lattices. -/
+/-- An accepted {name}`Hex.Matrix.sameLatticeCert` proves that the two bases
+generate identical integer row lattices. -/
 theorem sameLatticeCert_sound {B B' : Matrix Int n m} {U V : Matrix Int n n} :
     sameLatticeCert B B' U V = true →
       ∀ v, B.memLattice v ↔ B'.memLattice v := by

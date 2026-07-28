@@ -109,7 +109,7 @@ theorem barrettReduce_lt_mod (ctx : BarrettCtx p) (T : UInt64) :
   rw [UInt64.lt_iff_toNat_lt, toNat_barrettReduce_mod ctx T]
   exact Nat.mod_lt _ (Nat.lt_trans (by decide : 0 < 1) ctx.p_gt)
 
-/-! ### Two-word accumulator -/
+/-! # Two-word accumulator -/
 
 /-- The value carried by a two-word accumulator `(lo, hi)` in radix `2^64`. -/
 @[expose]
@@ -193,7 +193,7 @@ theorem accAddWord_eq_inline (lo hi q : UInt64) :
     rw [hc', if_neg Bool.false_ne_true, if_neg (fun h => hnover (hlt.mp h)),
       UInt64.add_zero]
 
-/-! ### Two-word reduction -/
+/-! # Two-word reduction -/
 
 /-- Reduce the two-word accumulator `(lo, hi)` modulo `p`, using the precomputed
 constant `cR = 2^64 % p`. The scheme reduces each half, folds the high half in
@@ -274,11 +274,11 @@ theorem accReduce_lt (ctx : BarrettCtx p) (cR lo hi : UInt64)
   rw [UInt64.lt_iff_toNat_lt, toNat_accReduce ctx cR lo hi hcR]
   exact Nat.mod_lt _ (Nat.lt_trans (by decide : 0 < 1) ctx.p_gt)
 
-/-! ### The radix residue as a context-level constant
+/-! # The radix residue as a context-level constant
 
 `accReduce` needs the constant `2^64 % p`; storing it on the context (rather than
 threading a `cR` word plus its `hcR` proof through every caller) keeps the
-delayed-reduction fold below free of that plumbing. -/
+delayed-reduction fold's interface minimal. -/
 
 /-- `2^32 < 2^64`, the radix headroom that keeps a reduced residue and the
 window inside a single machine word. -/
@@ -313,7 +313,7 @@ theorem toNat_radixResidue (ctx : BarrettCtx p) :
       _ = UInt64.word % p.toNat := by rw [Nat.sub_add_cancel (Nat.le_of_lt hpw)]
   rw [radixResidue, UInt64.toNat_mod, hneg, hsub]
 
-/-! ### Periodic-reduction fold
+/-! # Periodic-reduction fold
 
 A delayed-reduction dot product accumulates one-word products into the two-word
 accumulator and flushes through `accReduce` every `barrettWindow` additions. The

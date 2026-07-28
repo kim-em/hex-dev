@@ -30,7 +30,7 @@ namespace Quotient
 
 variable {g : FpPoly p} {hmonic : DensePoly.Monic g}
 variable {hg_pos : 0 < g.degree?.getD 0}
-/-! ## Quotient-coefficient polynomial evaluation -/
+/-! # Quotient-coefficient polynomial evaluation -/
 
 namespace Internal
 
@@ -431,7 +431,7 @@ private theorem foldl_eval_reverse_eq_evalScalarCoeffList
         (g := g) (hmonic := hmonic) (hg_pos := hg_pos) coeffs β) β]
       rw [add_comm]
 
-/-- `evalCoeffList` of the per-coefficient `reduce (DensePoly.C ·)` list equals
+/-- {name}`evalCoeffList` of the per-coefficient `reduce (DensePoly.C ·)` list equals
 `evalScalarCoeffList coeffs β` on the raw scalar coefficients. -/
 private theorem evalCoeffList_map_reduce_C_eq_evalScalarCoeffList
     (β : Quotient g hmonic hg_pos) :
@@ -544,7 +544,7 @@ theorem eval_eq_sub_mul_evalDividedDifference_of_eval_eq_zero
   rw [hα, sub_zero] at h
   exact h
 
-/-- `eval f β` equals `evalCoeffPowerSumFrom` over `f`'s stored coefficient list
+/-- `eval f β` equals {name}`evalCoeffPowerSumFrom` over `f`'s stored coefficient list
 started at exponent zero. -/
 private theorem eval_eq_coeff_power_sum (f : FpPoly p)
     (β : Quotient g hmonic hg_pos) :
@@ -696,7 +696,7 @@ private theorem evalCoeffPowerSumUpTo_succ_of_next_zero
         simpa [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using hzero)]
       simp only [evalCoeffPowerSumUpTo]
 
-/-- `evalCoeffPowerSumUpTo` is unchanged by extending its bound past the point
+/-- {name}`evalCoeffPowerSumUpTo` is unchanged by extending its bound past the point
 where the coefficients vanish, here from the offset `base`. -/
 private theorem evalCoeffPowerSumUpTo_le_extend_base
     (coeff : Nat → ZMod64 p) (β : Quotient g hmonic hg_pos)
@@ -715,7 +715,7 @@ private theorem evalCoeffPowerSumUpTo_le_extend_base
       exact evalCoeffPowerSumUpTo_succ_of_next_zero
         coeff β (bound + extra) base (hzero (base + (bound + extra)) (by omega))
 
-/-- `evalCoeffPowerSumUpTo` from offset `0` is unchanged by extending its bound
+/-- {name}`evalCoeffPowerSumUpTo` from offset `0` is unchanged by extending its bound
 past the point where the coefficients vanish. -/
 private theorem evalCoeffPowerSumUpTo_le_extend
     (coeff : Nat → ZMod64 p) (β : Quotient g hmonic hg_pos)
@@ -748,7 +748,7 @@ private theorem eval_eq_coeff_power_sum_upTo_bound (f : FpPoly p)
     (fun i hi => DensePoly.coeff_eq_zero_of_size_le f hi) extra
 
 omit [ZMod64.PrimeModulus p] in
-/-- `DensePoly.C` of a sum is the sum of the constant embeddings. -/
+/-- {name}`DensePoly.C` of a sum is the sum of the constant embeddings. -/
 private theorem C_add_eq (a b : ZMod64 p) :
     (DensePoly.C (a + b) : FpPoly p) = DensePoly.C a + DensePoly.C b := by
   apply DensePoly.ext_coeff
@@ -762,7 +762,7 @@ private theorem C_add_eq (a b : ZMod64 p) :
       grind
 
 omit [ZMod64.PrimeModulus p] in
-/-- `DensePoly.C` of a difference is the difference of the constant
+/-- {name}`DensePoly.C` of a difference is the difference of the constant
 embeddings. -/
 private theorem C_sub_eq (a b : ZMod64 p) :
     (DensePoly.C (a - b) : FpPoly p) = DensePoly.C a - DensePoly.C b := by
@@ -777,7 +777,7 @@ private theorem C_sub_eq (a b : ZMod64 p) :
       grind
 
 omit [ZMod64.PrimeModulus p] in
-/-- `DensePoly.C` of a product is the product of the constant embeddings. -/
+/-- {name}`DensePoly.C` of a product is the product of the constant embeddings. -/
 private theorem C_mul_C_eq (a b : ZMod64 p) :
     (DensePoly.C (a * b) : FpPoly p) = DensePoly.C a * DensePoly.C b := by
   rw [FpPoly.C_mul_eq_scale]
@@ -839,7 +839,7 @@ private theorem reduce_C_mul (a b : ZMod64 p) :
   exact reduce_mul (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
     (DensePoly.C a) (DensePoly.C b)
 
-/-- `evalCoeffPowerSumUpTo` is additive in its coefficient sequence: summing the
+/-- {name}`evalCoeffPowerSumUpTo` is additive in its coefficient sequence: summing the
 coefficients of `f` and `h` splits as the sum of the two power-sums. -/
 private theorem evalCoeffPowerSumUpTo_add
     (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
@@ -1074,7 +1074,7 @@ theorem mul_left_injective (hg_irr : FpPoly.Irreducible g)
   rw [← mul_assoc, ← mul_assoc, inv_mul_cancel hg_irr ha, one_mul, one_mul] at h
   exact h
 
-/-! ## Root counting over quotient coefficient lists -/
+/-! # Root counting over quotient coefficient lists -/
 
 /--
 The highest coefficient in a low-to-high quotient coefficient list is nonzero.
@@ -1350,7 +1350,7 @@ theorem rootsOfCoeffList_length_le_degree
                       exact hrootsP_bound
   exact hmain cs.length cs rfl htop
 
-/-- Direct root-count bound for the canonical `elements` filter form used by
+/-- Direct root-count bound for the canonical {name}`elements` filter form used by
 callers. -/
 theorem evalCoeffList_rootsIn_elements_length_le_degree
     (hg_irr : FpPoly.Irreducible g)
@@ -1466,7 +1466,7 @@ theorem rootsOfFpPoly_length_le_degree
     (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f] at hcoeff_bound
   exact hcoeff_bound
 
-/-- Direct root-count bound for the canonical `elements` filter form used by
+/-- Direct root-count bound for the canonical {name}`elements` filter form used by
 callers evaluating an `FpPoly` in the quotient. -/
 theorem eval_rootsIn_elements_length_le_degree
     (hg_irr : FpPoly.Irreducible g)

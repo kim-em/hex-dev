@@ -33,23 +33,25 @@ public section
 The `HexRealRootsMathlib` library is the Mathlib companion for the executable
 real-root isolation library `HexRealRoots`.
 
-The **self-contained Sturm slice** — the zero-skipping sign-variation count
-`Sturm.sturmVar`, the generalised-chain predicate `Sturm.IsSturmChain`, and the
-counting/line forms of Sturm's theorem over `Polynomial ℝ` — is deliberately
-free of any `HexRealRoots` dependence, so it can be contributed to Mathlib
-(which does not yet have Sturm's theorem) once exercised here.
+The Sturm development includes the zero-skipping sign-variation count
+{name}`Sturm.sturmVar`, the generalised-chain predicate
+{name}`Sturm.IsSturmChain`, and the counting and line forms of Sturm's theorem
+over `Polynomial ℝ`, independently of the executable `HexRealRoots` types.
 
-The executable-correspondence and consequence files build on it:
-`ChainCorrespond` connects `Hex.sturmChain`, `Hex.sturmCount`, and `Hex.rootCount`
-to the abstract development; `LiteralChain` proves the corresponding theorem
+The executable correspondence builds on these results:
+`ChainCorrespond` connects {name}`Hex.ZPoly.sturmChain`,
+{name}`Hex.sturmCount`, and
+{name}`Hex.rootCount` to the abstract development; `LiteralChain` proves the
+corresponding theorem
 for a supplied positive-scaled recurrence, and `LiteralIsolations` states
 isolation semantics for its supplied counts; `Separation` supplies the Mahler
 separation bound, using `HexPolyZMathlib.MahlerSeparation` and the analysis
-re-exported by the `Discr`/`Hadamard` compatibility modules; `Isolations` and
-`Drivers` prove isolation soundness, run
+re-exported by the `Discr`/`Hadamard` modules; `Isolations` and `Drivers` prove
+isolation soundness, run
 completeness, driver completeness, and refinement; `SimpleRealRoot` proves the
 root-identity theorems (overlap classes are the real roots); and `TwoCircle`
-proves Descartes-engine termination (`isolateDescartes?_isSome`) behind its
+proves Descartes-engine termination
+({name}`HexRealRootsMathlib.isolateDescartes?_isSome`) behind its
 Obreshkoff two-circle prerequisite (the λ-graded sector bound in
 `TwoCircleSector`, the region geometry in `TwoCircleRegion`, and the Descartes
 parity in `DescartesParity`).

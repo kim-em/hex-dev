@@ -23,7 +23,7 @@ The backing is a single contiguous buffer holding the `n * m` entries in
 row-major order: entry `(i, j)` lives at flat index `i * m + j`. The structure
 stays an opaque one-field record so this representation is invisible to
 consumers, who go through `ofFn`/`ofRows`/`getRow`/`rows` and the entry accessor
-`M[(i, j)]` (see `HexMatrix/SPEC/hex-matrix.md`).
+`M[(i, j)]`.
 -/
 namespace Hex
 
@@ -49,19 +49,16 @@ namespace Vector
 
 /-- Dot product of two vectors.
 
-This `List.finRange` form is the reference definition the entry lemmas reason
+This {name}`List.finRange` form is the reference definition the entry lemmas reason
 about; crucially it kernel-reduces, so `#guard`/`decide` checks over
 `dotProduct` (e.g. `memLattice` membership) stay evaluable — core `Fin.foldl`
-does not reduce in the kernel. Compiled code runs the allocation-free
-`Fin.foldl` loop `dotProductImpl` via the `@[csimp]` below.
-
-TODO: once https://github.com/leanprover/lean4/pull/14267 (make `Fin.foldl`
-reduce in the kernel) lands and this project's toolchain is bumped past it,
-collapse this reference/compiled split: define
-`dotProduct` directly as the native `Fin.foldl` loop and delete `dotProductImpl`
-and `dotProduct_eq_impl`. The native form will then kernel-reduce on its own, so
-the `memLattice` `decide` checks keep working without the `List.finRange`
-reference allocation. -/
+does not yet reduce in the kernel. Compiled code therefore uses the
+allocation-free `Vector.dotProductImpl`, selected by
+`Vector.dotProduct_eq_impl`, while logical evaluation retains the
+list-based form. -/
+-- Once https://github.com/leanprover/lean4/pull/14267 is available in the
+-- project toolchain, define `dotProduct` directly with `Fin.foldl` and remove
+-- `dotProductImpl` and `dotProduct_eq_impl`.
 @[expose]
 noncomputable def dotProduct [Mul R] [Add R] [OfNat R 0] (u v : Vector R n) : R :=
   (List.finRange n).foldl (fun acc i => acc + u[i] * v[i]) 0
@@ -100,7 +97,7 @@ namespace Matrix
 
 variable {R : Type u} {n m k : Nat}
 
-/-! ### Flat-index arithmetic
+/-! # Flat-index arithmetic
 
 Row-major flattening sends entry `(i, j)` to flat index `i * m + j`. These
 helpers give the in-range bound and recover `i`, `j` from the flat index. -/
@@ -133,7 +130,7 @@ theorem col_of_lt {n m : Nat} (p : Fin (n * m)) : p.val % m < m := by
     · exact h
   exact Nat.mod_lt _ hm
 
-/-! ### Entry and row access
+/-! # Entry and row access
 
 Both entry accessors and `getRow` read the flat buffer directly at `i * m + j`,
 so a single-entry read is `O(1)` and never materializes a row. -/
@@ -181,7 +178,7 @@ backing buffer. -/
 def ofFn (f : Fin n → Fin m → R) : Matrix R n m :=
   ⟨Vector.ofFn fun p : Fin (n * m) => f ⟨p.val / m, row_of_lt p⟩ ⟨p.val % m, col_of_lt p⟩⟩
 
-/-! ### Core reduction lemmas -/
+/-! # Core reduction lemmas -/
 
 /-- Row access `M[i]` normalizes to the computable `getRow M i`. -/
 @[simp, grind =] theorem getElem_eq_getRow (M : Matrix R n m) (i : Fin n) : M[i] = getRow M i := rfl
@@ -295,7 +292,7 @@ def col (M : Matrix R n m) (j : Fin m) : Vector R n :=
     (col M j)[i] = M[i][j] := by
   simp [col]
 
-/-! ### In-place row mutation
+/-! # In-place row mutation
 
 The elementary operations update the single backing buffer in place when the
 matrix is uniquely referenced. `writeRow` overwrites the `m` entries of one row;
@@ -351,7 +348,7 @@ def mapRows (M : Matrix R n m) (f : Vector R m → Vector R m') : Matrix R n m' 
     M.rows[i]'hi = getRow M ⟨i, hi⟩ := by
   simp only [rows, Vector.getElem_ofFn]
 
-/-! ### Scatter characterizations of the in-place row loops
+/-! # Scatter characterizations of the in-place row loops
 
 `writeRow` and the `swap` loop are `Fin.foldl`s of per-column single-index
 updates into the flat buffer. Distinct fold steps touch distinct flat indices
@@ -658,25 +655,25 @@ def mulVec [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) (v : Vector R m) :
 /--
 Multiply two matrices, using the naive algorithm.
 
-This reads each column `col N j` and is the reference definition the entry lemmas
-reason about. Compiled code runs `mulImpl`, which transposes `N` once (via the
-`@[csimp]` below) so each column is materialized a single time instead of being
-rebuilt for every row of `M`.
+This reads each column `col N j` and is the reference definition the entry
+lemmas reason about. Compiled code uses the implementation below, which
+transposes `N` once so each column is materialized a single time instead of
+being rebuilt for every row of `M`; `Hex.Matrix.mul_eq_impl` selects
+`Hex.Matrix.mulImpl` for compiled code.
 
 Strassen-Winograd multiplication, with a customizable base kernel for small
-sizes, is implemented as `mulStrassen` in `HexMatrix/Strassen.lean` and proved
-equal to this `mul` by `mulStrassen_eq_mul`. It is a separate ring-level entry
-point rather than a `@[csimp]` replacement of `mul`: the Winograd schedule
-subtracts blocks, so `mulStrassen` needs `[Sub R]`, which this `mul` does not
-have, and a `@[csimp]` replacement must preserve the declaration's type. Callers
-over a ring opt into it explicitly.
+sizes, is available as `Hex.Matrix.mulStrassen`, with equality proved by
+`Hex.Matrix.mulStrassen_eq_mul`. It cannot replace this definition
+through `@[csimp]`: the Winograd schedule subtracts blocks and therefore needs
+`[Sub R]`, while naive multiplication does not. Callers over a ring opt into
+the Strassen-Winograd algorithm explicitly.
 -/
 @[expose]
 noncomputable def mul [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) (N : Matrix R m k) :
     Matrix R n k :=
   ofFn fun i j => (row M i).dotProduct (col N j)
 
-/-- Cache-friendly implementation of `mul`: transpose `N` once (turning its columns
+/-- Cache-friendly implementation of {name}`Hex.Matrix.mul`: transpose `N` once (turning its columns
 into contiguous rows), materialize the transposed rows once, then take row-by-row
 dot products, so each column is built a single time rather than once per row of
 `M`. Swapped in for compiled code by the `@[csimp]` lemma; `mul` stays the

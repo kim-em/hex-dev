@@ -24,13 +24,13 @@ and the same-lattice property. The interval branch consumes
 
 namespace HexLLLMathlib
 
-/-! ### Soundness of the integer reducedness checker
+/-! # Soundness of the integer reducedness checker
 
 `Hex.lllReduced b δ η` accepts iff three integer-only inequalities hold over
 `Hex.GramSchmidt.Int.data b`. This section bridges those integer inequalities
 to the rational predicate `Hex.isLLLReduced b δ η` and to `b.independent`, the
-last theorem (`Hex.lllReduced_sound`) being the D2 deliverable used by the
-combined `certCheck_sound` of `hex-lll` §"Certified external dispatch". -/
+last theorem (`Hex.lllReduced_sound`) feeding the combined
+`certCheck_sound` theorem for certified external dispatch. -/
 
 /-- Independence from the executable checker's `d`-positivity pass.
 

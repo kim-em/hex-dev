@@ -174,7 +174,7 @@ rebuilds the (tiny) chain per step, so the loop's cost is dominated by the
 bisection depth the escalating target demands, not by the chain. -/
 def refineP : ZPoly := DensePoly.ofCoeffs #[(-5 : Int), 1]
 
-/-! ### Timed targets. -/
+/-! # Timed targets. -/
 
 /-- `isolate?` on the well-separated integer-root product. -/
 def runIsolateWellSep (p : ZPoly) : Int := isolationsChecksum (isolate? p)
@@ -225,7 +225,7 @@ def runRefineTo (n : Nat) : Int :=
       let refined := Hex.RealRootIsolation.refineTo iso (Int.ofNat (8 * (n + 1)))
       dyadicKey refined.interval.lower * 257 + dyadicKey refined.interval.upper
 
-/-! ### Registrations.
+/-! # Registrations.
 
 Each `setup_benchmark` carries a cost-model derivation naming the dominant
 step and how the fixture parameter maps onto that step's input size, per

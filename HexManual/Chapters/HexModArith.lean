@@ -203,7 +203,7 @@ This block builds both contexts for the prime `7` and checks that each
 hot-loop product reproduces the ordinary residue product `3 · 5 ≡ 1`.
 The Barrett smart constructor needs `1 < p` and `p < 2^32`; the
 Montgomery one needs an odd modulus. Both side conditions are discharged
-by `decide`.
+by {tactic}`decide`.
 
 ```lean
 open Hex Hex.ZMod64
@@ -293,7 +293,7 @@ They are mutually inverse:
 
 {docstring HexModArithMathlib.ZMod64.toZMod_ofZMod}
 
-`toZMod` preserves the ring operations: addition and multiplication
+{name}`HexModArithMathlib.ZMod64.toZMod` preserves the ring operations: addition and multiplication
 transfer, as do negation, subtraction, the casts, and powers (each a
 `@[simp]` lemma):
 

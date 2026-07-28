@@ -27,7 +27,7 @@ namespace Hex
 namespace Berlekamp
 
 variable {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
-/-! ### Prime-field product identity -/
+/-! # Prime-field product identity -/
 
 /-- Every prime-field residue is a root of `xPowSubX 1`: this is Fermat's
 little theorem packaged through the executable `FpPoly` evaluation. -/
@@ -336,7 +336,7 @@ theorem primeFieldLinearProduct_monic :
   exact (foldl_size_and_monic (p := p) (ZMod64.values p) 1
     fpPoly_one_ne_zero fpPoly_one_monic).2.1
 
-/-! ### `xPowSubX 1` shape and the final identity -/
+/-! # `xPowSubX 1` shape and the final identity -/
 
 /-- The coefficient of `xPowSubX 1` at index `p` is `1` (the leading position). -/
 private theorem xPowSubX_one_coeff_p :
@@ -469,8 +469,7 @@ theorem primeFieldProduct_X_eq_xPowSubX :
     xPowSubX_one_monic
 
 /-- Substituting `w` into `xPowSubX 1 = X^p - X` yields `linearPow w p - w`.
-This is deliverable 3 of issue #4187 and the missing transport step that
-takes the variable identity `primeFieldProduct_X_eq_xPowSubX` to its
+This transport takes the variable identity `primeFieldProduct_X_eq_xPowSubX` to its
 witness-substituted form. -/
 theorem compose_xPowSubX_one (w : FpPoly p) :
     DensePoly.compose (xPowSubX (p := p) 1) w =
@@ -504,7 +503,7 @@ theorem dvd_primeFieldProduct_witness_of_dvd_linearPow_sub_self
   rw [primeFieldProduct_witness_eq w]
   exact hdvd
 
-/-! ### Structural lemmas
+/-! # Structural lemmas
 
 These small consequences only use the foundational lemmas above plus
 existing infrastructure in `HexBerlekamp.Irreducibility`. -/
@@ -546,7 +545,7 @@ theorem isUnitPolynomial_of_dvd_gcd_isUnit
   isUnitPolynomial_of_dvd_isUnitPolynomial
     (DensePoly.dvd_gcd g f q hgf hgq) hgcd
 
-/-! ### Soundness theorem -/
+/-! # Soundness theorem -/
 
 /--
 Soundness of the executable Rabin test against the project-side
@@ -651,7 +650,7 @@ theorem rabinTest_imp_irreducible
   rw [hg_not_unit] at hg_unit
   exact Bool.noConfusion hg_unit
 
-/-! ### Convenience corollary for the certificate checker -/
+/-! # Convenience corollary for the certificate checker -/
 
 /--
 Accepted executable irreducibility certificates imply project-side

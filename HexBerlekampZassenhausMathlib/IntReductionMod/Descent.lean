@@ -108,7 +108,7 @@ theorem intCast_zmod_leadingCoeff_ne_zero_iff_leadingCoeffModP_ne_zero
 /--
 Reduction modulo `p` preserves natural degree when the executable
 `leadingCoeffModP` data records a nonzero leading coefficient. This is the
-issue-spec `_of_unit_lc_mod_p` shape: the executable good-prime check supplies
+`_of_unit_lc_mod_p` shape: the executable good-prime check supplies
 the `leadingCoeffModP ≠ 0` hypothesis, and `natDegree` is preserved along the
 Mathlib `Polynomial.map` reduction.
 -/
@@ -790,7 +790,7 @@ theorem modPFactorSubset_disjoint_of_modPFactorization
       hval.prime hval.good)
     hf_irr hf_dvd hg_irr hg_dvd hS hT hnotassoc
 
-/-! ### Base discharges for the small-mod singleton branch
+/-! # Base discharges for the small-mod singleton branch
 
 The two lemmas below feed `squareFreeCore_irreducible_of_small_mod_singleton`
 its `hprim` and `hlc_map_ne` side-conditions from the executable invariants
@@ -922,7 +922,7 @@ private theorem isPrimitive_pow {p : Polynomial ℤ} (hp : p.IsPrimitive) (N : N
   | succ N ih =>
       simpa [pow_succ] using ih.mul hp
 
-/-! ### Squarefree transport for the square-free core
+/-! # Squarefree transport for the square-free core
 
 The lemmas below identify the executable `Hex.ZPoly.SquareFreeRat` invariant
 (from `Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore`) to
@@ -1122,10 +1122,8 @@ Gauss-style descent
 existing primitivity lemma
 `normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive`.
 
-This discharges the explicit `hcore_sqfree` hypothesis previously threaded
-through `liftedFactorSubsetPartition_outerBound_of_choosePrimeData`
-(`HexBerlekampZassenhausMathlib`); the outer-bound
-specialisation is rewired to consume `f ≠ 0` directly. -/
+This lets `liftedFactorSubsetPartition_outerBound_of_choosePrimeData`
+derive squarefreeness directly from `f ≠ 0`. -/
 theorem normalizeForFactor_squareFreeCore_toPolynomial_squarefree
     (f : Hex.ZPoly) (hf : f ≠ 0) :
     Squarefree
@@ -1267,10 +1265,7 @@ private lemma dvd_gcd_mul_gcd_of_dvd_mul {α : Type*} [EuclideanDomain α]
   have h2 : g ∣ gcd g y * gcd g x := dvd_gcd_mul_of_dvd_mul h1
   rwa [mul_comm] at h2
 
-/--
-**#4617 base task (HO-1, sub-issue of #4610).**
-
-For a polynomial `p` over a characteristic-zero field `K`, the executable gcd
+/-- For a polynomial `p` over a characteristic-zero field `K`, the executable gcd
 `gcd p p'` is associated to `divRadical p = p / radical p`.
 
 Mathlib already supplies the easy direction

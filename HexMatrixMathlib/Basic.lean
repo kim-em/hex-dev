@@ -28,8 +28,8 @@ namespace HexMatrixMathlib
 
 universe u
 
-/-- The bijection between a `Hex.Matrix` and the Mathlib `Matrix` with the
-same entries. -/
+/-- The bijection between a {name}`Hex.Matrix` and the Mathlib
+{name}`Matrix` with the same entries. -/
 @[expose]
 def matrixEquiv : Hex.Matrix R n m ≃ Matrix (Fin n) (Fin m) R where
   toFun M := fun i j => M[(i, j)]

@@ -79,7 +79,7 @@ theorem gramDet_pos (b : Matrix Int n m)
       have hrn : r < n := Nat.lt_of_succ_le hk
       exact hli ⟨r, hrn⟩
 
-/-! ### Gram determinant as a squared-norm product
+/-! # Gram determinant as a squared-norm product
 
 The remaining theorems below build the rational column-operation reduction
 from the leading Gram matrix to the diagonal Gram-Schmidt norm-squared

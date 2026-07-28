@@ -255,7 +255,7 @@ private def positiveQuadratic : Sentence :=
 #guard Hex.RCF.decide positiveQuadratic == some true
 ```
 
-Bounded sentences use Lean's core `Dyadic` endpoints and the half-open
+Bounded sentences use Lean's core {name}`Dyadic` endpoints and the half-open
 interval `(a, b]`. This sentence represents
 `∀ x ∈ Set.Ioc (0 : ℝ) 1, x ≥ 0`:
 
@@ -272,7 +272,8 @@ private def nonnegativeOnUnit : Sentence :=
 #guard Hex.RCF.decide nonnegativeOnUnit == some true
 ```
 
-For clients that need the evidence as well as the verdict, `build?` returns
+For clients that need the evidence as well as the verdict,
+{name}`Hex.RCF.build?` returns
 the certificate together with its replay verdict:
 
 {docstring Hex.RCF.build?}
@@ -332,13 +333,13 @@ example (s : Sentence)
   decide_sound s h
 ```
 
-`Certificate.replay?` distinguishes malformed evidence (`none`), a checked
+{name}`Hex.RCF.Certificate.replay?` distinguishes malformed evidence (`none`), a checked
 false verdict (`some false`), and a checked true verdict (`some true`).
-`Certificate.check` accepts only the last case. The convenience function
+{name}`Hex.RCF.Certificate.check` accepts only the last case. The convenience function
 {name}`Hex.RCF.decide` returns `some true` only after this checker accepts the
 certificate. Advanced clients can use {name}`Hex.RCF.build?` to retain the
 certificate and its diagnostic or proof-producing verdict. A successfully
-checked false sentence produces `some false`. Neither `check_sound` nor the
+checked false sentence produces `some false`. Neither {name}`Hex.RCF.check_sound` nor the
 tactic turns `some false` into a proof of a negation.
 
 A `none` from {name}`Hex.RCF.decide` means the compiled path did not produce a

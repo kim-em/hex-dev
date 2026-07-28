@@ -275,7 +275,7 @@ test for `X^(2^deg f) - X` modulo `f`. -/
 theorem rabinDividesTest_spec (f : GF2Poly) :
     rabinDividesTest f = (frobeniusDiffMod f f.degree).isZero := rfl
 
-/-! ## Soundness of the certificate checker against `rabinTest`
+/-! # Soundness of the certificate checker against `rabinTest`
 
 The proofs mirror `HexBerlekamp.checkIrreducibilityCertificate_rabinTest`.
 This file proves the checker-to-`rabinTest` bridge; `HexGF2/RabinSoundness.lean`

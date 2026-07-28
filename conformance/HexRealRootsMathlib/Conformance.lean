@@ -65,7 +65,7 @@ namespace Conformance
 
 open Polynomial
 
-/-! ### Committed fixtures.
+/-! # Committed fixtures.
 
 Stored in ascending-degree coefficient order; the factored form and real roots
 are named so the Mathlib-side counts are hand-derivable. -/
@@ -82,7 +82,7 @@ private def cubicTriple : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[(0 : Int), -1, 0
 theorem's positive-degree hypothesis). -/
 private def const7 : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[(7 : Int)]
 
-/-! ### Real casts: the executable polynomial as an explicit `Polynomial ℝ`. -/
+/-! # Real casts: the executable polynomial as an explicit `Polynomial ℝ`. -/
 
 private theorem toPolyℝ_linear : toPolyℝ linear = X - C 5 := by
   apply Polynomial.ext; intro n
@@ -132,7 +132,7 @@ private theorem toPolyℝ_const7 : toPolyℝ const7 = C 7 := by
   | 0 => norm_num [Array.getD]
   | (k + 1) => norm_num [Array.getD]
 
-/-! ### Mathlib-side root counts (hand-derived by factorisation). -/
+/-! # Mathlib-side root counts (hand-derived by factorisation). -/
 
 private theorem card_linear : (toPolyℝ linear).roots.card = 1 := by
   rw [toPolyℝ_linear, roots_X_sub_C]; simp
@@ -179,7 +179,7 @@ private theorem card_cubicTriple : (toPolyℝ cubicTriple).roots.card = 3 := by
 private theorem card_const7 : (toPolyℝ const7).roots.card = 0 := by
   rw [toPolyℝ_const7, roots_C]; simp
 
-/-! ### Executable root counts agree with the Mathlib counts (runtime). -/
+/-! # Executable root counts agree with the Mathlib counts (runtime). -/
 
 #guard Hex.rootCount linear = 1
 #guard Hex.rootCount quadPair = 2
@@ -187,7 +187,7 @@ private theorem card_const7 : (toPolyℝ const7).roots.card = 0 := by
 #guard Hex.rootCount cubicTriple = 3
 #guard Hex.rootCount const7 = 0
 
-/-! ### The full formal tie on the linear fixture.
+/-! # The full formal tie on the linear fixture.
 
 `rootCount_eq_card_roots` needs a `SquareFreeRat` witness; for `x − 5` it comes
 from `squareFreeRat_iff` and the irreducibility of the linear rational cast.
@@ -212,7 +212,7 @@ private theorem squareFreeRat_linear : Hex.ZPoly.SquareFreeRat linear := by
 private theorem rootCount_x_sub_5 : Hex.rootCount linear = 1 := by
   rw [rootCount_eq_card_roots linear (by decide) squareFreeRat_linear, card_linear]
 
-/-! ### End-to-end ergonomics regression on `x⁴ − 2`.
+/-! # End-to-end ergonomics regression on `x⁴ − 2`.
 
 This exercises the caller-facing API added for isolating the real roots of a
 concrete polynomial, so the "one certified interval, `simp`" path stays green:

@@ -244,6 +244,6 @@ through its Mathlib bridge:
   proves that the squarefree core shares the real roots of the original
   polynomial, and provides {name}`Hex.IsolatedRealRoots` and the
   {ref "hex-real-roots-isolate"}[`isolate_roots`] elaborator documented
-  here. The Mathlib dependency lives entirely in this bridge; a `ZPoly`
+  here. The Mathlib dependency lives entirely in this bridge; a {name}`Hex.ZPoly`
   input keeps every emitted statement Mathlib-facing only through
-  `toPolynomial`.
+  {name}`HexPolyZMathlib.toPolynomial`.

@@ -48,8 +48,7 @@ tag := "hex-poly-z-core-type"
 There is no new structure: an integer polynomial is just a normalized
 dense polynomial with `Int` coefficients, so the whole `HexPoly` API
 (constructors, arithmetic, evaluation, Euclidean division over `Rat`)
-is available unchanged. `HexPolyZ` adds operations as plain functions
-in the `Hex.ZPoly` namespace.
+is available unchanged. `HexPolyZ` adds operations for {name}`Hex.ZPoly`.
 
 {docstring Hex.ZPoly}
 
@@ -251,7 +250,7 @@ a bounded overestimate of the Euclidean norm.
 
 Second, every individual Mignotte bound within the ambient degree
 range, and the norm bound itself, is dominated by the single uniform
-`defaultFactorCoeffBound`, so a caller can use one bound for all
+{name}`Hex.ZPoly.defaultFactorCoeffBound`, so a caller can use one bound for all
 factors.
 
 {docstring Hex.ZPoly.mignotteCoeffBound_le_defaultFactorCoeffBound}
@@ -285,6 +284,6 @@ integer-factorization libraries:
   corresponding `Polynomial ℤ`. The executable quantities in this
   chapter compute the bound that theorem proves valid. The Mathlib
   dependency lives entirely there, never inside `HexPolyZ` itself.
-* `HexHensel` consumes the congruence predicate and the
-  `defaultFactorCoeffBound` to drive the Hensel-lifting and
+* `HexHensel` consumes the congruence predicate and
+  {name}`Hex.ZPoly.defaultFactorCoeffBound` to drive the Hensel-lifting and
   coefficient-recovery steps of integer polynomial factorization.

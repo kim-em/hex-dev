@@ -38,7 +38,7 @@ theorem scale_add (c : ZMod64 p) (f g : FpPoly p) :
     DensePoly.coeff_scale _ _ _ hzero, DensePoly.coeff_scale _ _ _ hzero]
   grind
 
-/-- Scaling a product equals scaling its left factor. With `mul_comm` this lets
+/-- Scaling a product equals scaling its left factor. With {name}`mul_comm` this lets
 a scalar be absorbed into either factor of a product. -/
 theorem scale_mul_left (c : ZMod64 p) (f g : FpPoly p) :
     DensePoly.scale c (f * g) =
@@ -151,7 +151,7 @@ private theorem mul_eq_fold_shift_scale_rows (f h : FpPoly p) :
   rfl
 
 /-- Evaluation is multiplicative: the value of a product is the product of the
-values. Together with `eval_add` this is the ring-homomorphism property of
+values. Together with {name}`eval_add` this is the ring-homomorphism property of
 evaluation, used wherever a root or factorization is checked pointwise. -/
 @[simp, grind =]
 theorem eval_mul (f h : FpPoly p) (x : ZMod64 p) :
@@ -276,7 +276,7 @@ theorem scale_size_eq_of_ne_zero [ZMod64.PrimeModulus p]
         exact hcoeff (DensePoly.coeff_eq_zero_of_size_le (DensePoly.scale c f) hle')
 
 /-- Scaling by a nonzero scalar preserves the optional degree. The degree-level
-counterpart of `scale_size_eq_of_ne_zero`, used when reasoning in terms of
+counterpart of {name}`scale_size_eq_of_ne_zero`, used when reasoning in terms of
 `degree?` rather than `size`. -/
 theorem scale_degree?_eq_of_ne_zero [ZMod64.PrimeModulus p]
     {c : ZMod64 p} (hc : c ≠ 0) (f : FpPoly p) :
@@ -338,7 +338,7 @@ theorem leadingCoeff_scale_of_ne_zero_of_pos_degree [ZMod64.PrimeModulus p]
     DensePoly.coeff_scale _ _ _ hscale_zero]
 
 /-- The same leading-coefficient scaling law as
-`leadingCoeff_scale_of_ne_zero_of_pos_degree`, stated from the weaker nonempty
+{name}`leadingCoeff_scale_of_ne_zero_of_pos_degree`, stated from the weaker nonempty
 hypothesis `f.size ≠ 0` so it applies to constants as well as higher-degree
 polynomials. -/
 theorem leadingCoeff_scale_of_ne_zero_of_nonzero [ZMod64.PrimeModulus p]
@@ -459,7 +459,7 @@ theorem irreducible_scale_iff_of_ne_zero [ZMod64.PrimeModulus p]
       · right
         exact hb
 
-/-- Forward direction of `irreducible_scale_iff_of_ne_zero`: a nonzero scaling
+/-- Forward direction of {name}`irreducible_scale_iff_of_ne_zero`: a nonzero scaling
 of an irreducible polynomial is irreducible. The convenient form when the
 hypothesis is irreducibility of the unscaled polynomial. -/
 theorem irreducible_scale_of_ne_zero [ZMod64.PrimeModulus p]
@@ -468,7 +468,7 @@ theorem irreducible_scale_of_ne_zero [ZMod64.PrimeModulus p]
     FpPoly.Irreducible (DensePoly.scale c f) :=
   (irreducible_scale_iff_of_ne_zero (p := p) hc f).2 hf
 
-/-- Reverse direction of `irreducible_scale_iff_of_ne_zero`: if a nonzero
+/-- Reverse direction of {name}`irreducible_scale_iff_of_ne_zero`: if a nonzero
 scaling is irreducible then so is the unscaled polynomial. Lets callers
 transfer irreducibility back from a normalized representative. -/
 theorem irreducible_of_scale_of_ne_zero [ZMod64.PrimeModulus p]
@@ -485,7 +485,7 @@ theorem dvd_scale_of_dvd {c : ZMod64 p} {f g : FpPoly p}
   rcases hfg with ⟨q, hq⟩
   exact ⟨q, by rw [← scale_mul_left, hq]⟩
 
-/-- Converse of `dvd_scale_of_dvd` for a nonzero scalar: a divisibility between
+/-- Converse of {name}`dvd_scale_of_dvd` for a nonzero scalar: a divisibility between
 equally scaled polynomials reflects back to the originals. Lets callers strip a
 common unit scaling from both sides of a divisibility. -/
 theorem dvd_of_scale_dvd [ZMod64.PrimeModulus p]
@@ -631,7 +631,7 @@ theorem size_pos_of_ne_zero {f : FpPoly p} (hf : f ≠ 0) : 0 < f.size := by
 /--
 Over a prime modulus, the executable size of a product of two nonzero polynomials in
 `FpPoly p` is the sum of their sizes minus one. This is the no-zero-divisors identity at
-the level of `DensePoly.size`.
+the level of {name}`DensePoly.size`.
 -/
 theorem size_mul_eq_add_sub_one
     [ZMod64.PrimeModulus p] (a b : FpPoly p)
@@ -684,7 +684,7 @@ theorem mul_ne_zero_of_ne_zero
 
 /-- Leading coefficient of a product equals the product of leading coefficients
 on nonzero `FpPoly p` factors: the top-coefficient lemma `coeff_mul_at_top` plus
-the size identity `size_mul_eq_add_sub_one` give this directly. -/
+the size identity {name}`size_mul_eq_add_sub_one` give this directly. -/
 theorem leadingCoeff_mul
     [ZMod64.PrimeModulus p] (a b : FpPoly p)
     (ha : a ≠ 0) (hb : b ≠ 0) :
@@ -727,7 +727,7 @@ theorem mul_right_cancel_of_ne_zero
 /--
 Over a prime modulus, divisibility implies a size bound: if `a ∣ b` and `b ≠ 0`, then
 `a.size ≤ b.size`. The standard polynomial fact that a divisor has degree at most the
-degree of the dividend, expressed at the level of `DensePoly.size`.
+degree of the dividend, expressed at the level of {name}`DensePoly.size`.
 -/
 theorem size_le_of_dvd_of_ne_zero
     [ZMod64.PrimeModulus p] {a b : FpPoly p}
@@ -876,7 +876,7 @@ theorem gcd_eq_one_of_monic_of_common_dvd_one
 Bezout-style coprime cancellation for `FpPoly p`. If `g ∣ c * h` and every
 common divisor of `c` and `g` divides the unit polynomial `1`, then `g ∣ h`.
 
-The proof uses the extended Euclidean algorithm `DensePoly.xgcd`: from the
+The proof uses the extended Euclidean algorithm {name}`DensePoly.xgcd`: from the
 Bezout identity `r.left * c + r.right * g = DensePoly.gcd c g` and the fact
 that `DensePoly.gcd c g ∣ 1` (via the coprime hypothesis), one concludes that
 `g` divides `h`.
@@ -932,7 +932,7 @@ theorem dvd_of_dvd_mul_of_common_dvd_one
           DensePoly.mul_comm_poly (DensePoly.gcd c g * h) e
   exact hh_eq ▸ DensePoly.dvd_mul_left_poly e hg_Dh
 
-/-! ### Monomial multiplication and geometric-series divisibility
+/-! # Monomial multiplication and geometric-series divisibility
 
 These lemmas support the `xPowSubX` divisibility chain in
 `HexBerlekamp/RabinSoundness.lean`. -/
@@ -1023,7 +1023,7 @@ private def scalarDividedDifferenceCoeffs :
   | _ :: c :: cs, α =>
       evalScalarCoeffList (c :: cs) α :: scalarDividedDifferenceCoeffs (c :: cs) α
 
-/-- Routine bridge: the `Zero.zero` literal coincides with `0` in `ZMod64 p`. -/
+/-- Routine bridge: the {name}`Zero.zero` literal coincides with `0` in `ZMod64 p`. -/
 private theorem zmod_Zero_zero_eq_zero :
     (Zero.zero : ZMod64 p) = (0 : ZMod64 p) := by
   apply zmod_eq_of_toNat_eq
@@ -1032,7 +1032,7 @@ private theorem zmod_Zero_zero_eq_zero :
 
 /-- Entry `n` of the divided-difference quotient list (default `0`) is the
 Horner value `evalScalarCoeffList (cs.drop (n+1)) α`; characterises
-`scalarDividedDifferenceCoeffs` entrywise. -/
+{name}`scalarDividedDifferenceCoeffs` entrywise. -/
 private theorem scalarDividedDifferenceCoeffs_getD
     (cs : List (ZMod64 p)) (α : ZMod64 p) (n : Nat) :
     (scalarDividedDifferenceCoeffs cs α).getD n (0 : ZMod64 p) =
@@ -1078,8 +1078,8 @@ private theorem ofCoeffs_toArray_fp (f : FpPoly p) :
   rw [DensePoly.coeff_ofCoeffs]
   rfl
 
-/-- `getElem?`/`getD` restatement of `scalarDividedDifferenceCoeffs_getD`, the
-form used when reading quotient coefficients out of `ofCoeffs` arrays. -/
+/-- {name}`getElem?`/`getD` restatement of {name}`scalarDividedDifferenceCoeffs_getD`, the
+form used when reading quotient coefficients out of {name}`ofCoeffs` arrays. -/
 private theorem scalarDividedDifferenceCoeffs_getElem?_getD
     (cs : List (ZMod64 p)) (α : ZMod64 p) (n : Nat) :
     (scalarDividedDifferenceCoeffs cs α)[n]?.getD (0 : ZMod64 p) =
@@ -1129,11 +1129,11 @@ private theorem scalar_linear_factor_mul_dividedDifference_coeff
         scalarDividedDifferenceCoeffs_getElem?_getD cs α (n + 1)]
       grind
 
-/-- Capstone factorization (Ruffini / Horner remainder identity): the polynomial
+/-- Ruffini/Horner remainder identity: the polynomial
 built from coefficients `cs` splits as `C (eval cs α) + (X - C α) · q`, where `q`
 is the divided-difference quotient `scalarDividedDifferenceCoeffs cs α`. Combines
 the constant-term Horner unfolding with
-`scalar_linear_factor_mul_dividedDifference_coeff` coefficientwise. -/
+{name}`scalar_linear_factor_mul_dividedDifference_coeff` coefficientwise. -/
 private theorem ofCoeffs_eq_C_eval_add_linear_mul_dividedDifference
     (cs : List (ZMod64 p)) (α : ZMod64 p) :
     (DensePoly.ofCoeffs cs.toArray : FpPoly p) =
@@ -1239,12 +1239,12 @@ theorem linearPow_succ_left (f : FpPoly p) (n : Nat) :
         _ = f * (linearPow f n * f) := mul_assoc f (linearPow f n) f
         _ = f * linearPow f (n + 1) := rfl
 
-/-- The first `linearPow` of a polynomial is the polynomial itself. -/
+/-- The first {name}`linearPow` of a polynomial is the polynomial itself. -/
 @[grind =] theorem linearPow_one (f : FpPoly p) :
     linearPow f 1 = f := by
   grind
 
-/-- `linearPow` turns exponent addition into polynomial multiplication. -/
+/-- {name}`linearPow` turns exponent addition into polynomial multiplication. -/
 theorem linearPow_add (f : FpPoly p) (m n : Nat) :
     linearPow f (m + n) = linearPow f m * linearPow f n := by
   induction n with
@@ -1259,7 +1259,7 @@ theorem linearPow_add (f : FpPoly p) (m n : Nat) :
         _ = linearPow f m * (linearPow f n * f) := mul_assoc _ _ _
         _ = linearPow f m * linearPow f (n + 1) := rfl
 
-/-- Iterated `linearPow` multiplies exponents. -/
+/-- Iterated {name}`linearPow` multiplies exponents. -/
 theorem linearPow_iterate_mul (f : FpPoly p) (m : Nat) :
     ∀ n, linearPow (linearPow f m) n = linearPow f (m * n)
   | 0 => by
@@ -1268,7 +1268,7 @@ theorem linearPow_iterate_mul (f : FpPoly p) (m : Nat) :
       rw [linearPow_succ, linearPow_iterate_mul f m n, Nat.mul_succ,
         linearPow_add]
 
-/-- Scalar evaluation distributes over `linearPow`: `eval (f^n) x = (eval f x)^n`. -/
+/-- Scalar evaluation distributes over {name}`linearPow`: `eval (f^n) x = (eval f x)^n`. -/
 theorem eval_linearPow (f : FpPoly p) (n : Nat) (x : ZMod64 p) :
     DensePoly.eval (linearPow f n) x = (DensePoly.eval f x) ^ n := by
   induction n with
@@ -1320,7 +1320,7 @@ private theorem C_mul_C (a b : ZMod64 p) :
   | zero => rfl
   | succ n => rfl
 
-/-- `linearPow` of a constant polynomial stays constant. -/
+/-- {name}`linearPow` of a constant polynomial stays constant. -/
 theorem linearPow_C (c : ZMod64 p) (n : Nat) :
     linearPow (FpPoly.C c) n = FpPoly.C (c ^ n) := by
   induction n with

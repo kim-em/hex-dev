@@ -71,7 +71,7 @@ the function is total.
 
 The bisection logic is factored into `refine1With`, which takes an already-built
 `chain`; `refine1` supplies `ZPoly.sturmChain p` (rebuilt per call, matching its
-fixed SPEC signature), while callers refining many levels thread one chain
+fixed signature), while callers refining many levels thread one chain
 through `refineToWithChain`. -/
 def refine1With (chain : Array ZPoly) (hchain : chain = ZPoly.sturmChain p)
     (iso : RealRootIsolation p) : RealRootIsolation p :=

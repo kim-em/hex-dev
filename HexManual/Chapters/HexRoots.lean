@@ -122,7 +122,7 @@ both other roots have norm below one, which is the Pisot condition for `β`.
 
 {docstring HexRootsMathlib.Examples.pisot}
 
-The polynomial has only simple roots, so it meets `isolate`'s precondition. The
+The polynomial has only simple roots, so it meets {name}`Hex.isolate`'s precondition. The
 companion proves this once, from a Bézout identity for `p` and `p'`, and
 reusing that lemma discharges the precondition:
 
@@ -157,7 +157,7 @@ statement of what it found.
 tag := "hex-roots-soundness"
 %%%
 
-A successful `isolate` run is not just a list of squares; the companion reads a
+A successful {name}`Hex.isolate` run is not just a list of squares; the companion reads a
 complete root enumeration out of it. Each atom names a genuine complex root,
 distinct atoms name distinct roots, and together they exhaust the root set:
 
@@ -238,6 +238,6 @@ isolator, and is consumed through its Mathlib companion:
   Newton-Kantorovich theorem and develops the argument principle, Rouché's
   theorem, and the Mahler separation bound for polynomials on circles, then
   proves soundness and completeness of the isolator: every certificate names
-  the roots it claims, and `isolate` never fails on a nonzero squarefree input.
-  The Mathlib dependency lives entirely in this companion; a `ZPoly` input
+  the roots it claims, and {name}`Hex.isolate` never fails on a nonzero squarefree input.
+  The Mathlib dependency lives entirely in this companion; a {name}`Hex.ZPoly` input
   keeps the executable core Mathlib-free.

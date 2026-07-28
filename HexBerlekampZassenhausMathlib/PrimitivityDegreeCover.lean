@@ -450,8 +450,8 @@ theorem representsIntegerFactorAtLift_primitive_of_bound
   exact ⟨hfactor_primitive, hfactor_lc_pos⟩
 
 /--
-Primitive/positive-leading capstone for represented factors under a primitive
-non-monic core.
+Represented factors under a primitive non-monic core are primitive and have
+positive leading coefficient.
 
 Given an integer factor `factor` of `target ∣ core` represented at the Hensel
 lift, primitive `core`, positive leading coefficient for `core`, monic lifted
@@ -649,7 +649,7 @@ which forces `factor = 1` whenever `d.p^d.k ≥ 2`; the residual `d.p^d.k = 1`
 case forces `factor = 0`.  Both outcomes contradict irreducibility of
 `HexPolyZMathlib.toPolynomial factor`.
 
-Used by `representedFactor_dvd_recombinationCandidate_of_subset` (#4457) to
+Used by `representedFactor_dvd_recombinationCandidate_of_subset` to
 close the `S = ∅` subcase of the squarefreeness contradiction.
 
 This is a thin wrapper over
@@ -719,7 +719,7 @@ private theorem not_represents_empty_of_primitive_bound
 
 /--
 Primitive + positive-leading-core variant of
-`not_represents_empty_of_monic` (#4646).
+`not_represents_empty_of_monic`.
 
 For primitive non-monic `core`, the empty-prefix collapse becomes
 `scaledLiftedFactorProduct core d ∅ = C (lc core)`, and the centred-lift

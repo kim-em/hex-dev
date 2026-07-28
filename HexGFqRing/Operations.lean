@@ -227,7 +227,7 @@ theorem zero_ne_one (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
       simp at hcoeffs
   exact zmod64_zero_ne_one_of_pos_degree f hf hcoeff
 
-/-- `natCast` unfolds to the corresponding constant quotient element. -/
+/-- {name}`natCast` unfolds to the corresponding constant quotient element. -/
 @[simp, grind =] theorem natCast_eq_const
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (n : Nat) :
     natCast f hf n = const f hf (n : ZMod64 p) :=
@@ -258,7 +258,7 @@ theorem natCast_eq_of_mod_eq
 
 /-- Equality of natural-number casts is equivalent to equality of the underlying reduced
 constant polynomials. Internal stepping stone toward `natCast_eq_natCast_iff_mod_eq`; the forward
-direction projects quotient-level natCast equality to `reduceMod`-level equality. -/
+direction projects quotient-level natCast equality to {name}`reduceMod`-level equality. -/
 theorem natCast_eq_natCast_iff_reduceMod_const_eq
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (m n : Nat) :
     ((m : PolyQuotient f hf) = n) ↔
@@ -273,7 +273,7 @@ theorem natCast_eq_natCast_iff_reduceMod_const_eq
 
 /-- Equality of natural-number casts in the quotient ring is exactly equality modulo `p`.
 This is the user-facing iff form (consumed for example by `Lean.Grind.IsCharP` on the field
-layer); the reverse direction reduces to `natCast_eq_of_mod_eq`. -/
+layer); the reverse direction reduces to {name}`natCast_eq_of_mod_eq`. -/
 theorem natCast_eq_natCast_iff_mod_eq
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (m n : Nat) :
     ((m : PolyQuotient f hf) = n) ↔ m % p = n % p := by
@@ -321,7 +321,7 @@ theorem natCast_eq_natCast_iff_mod_eq
     repr (x - y) = reduceMod f (repr x - repr y) :=
   rfl
 
-/-- Quotient exponentiation via the `Pow` instance agrees with the internal `pow` definition. -/
+/-- Quotient exponentiation via the `Pow` instance agrees with the internal {name}`pow` definition. -/
 @[simp, grind =] theorem repr_pow {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) (n : Nat) :
     repr (x ^ n) = repr (pow x n) :=
@@ -329,7 +329,7 @@ theorem natCast_eq_natCast_iff_mod_eq
 
 /-- Proof-only linear recurrence `x^(n+1) = x^n * x`, used to discharge the
 `pow_zero` / `pow_succ` fields of the `Lean.Grind.Semiring` instance. The
-executable `pow` is square-and-multiply (`O(log n)`); `pow_eq_linearPow` ties
+executable {name}`pow` is square-and-multiply (`O(log n)`); `pow_eq_linearPow` ties
 the two together. -/
 @[expose]
 def linearPow {f : FpPoly p} {hf : 0 < FpPoly.degree f}
@@ -367,7 +367,7 @@ private theorem fpPoly_C_add (a b : ZMod64 p) :
     grind
 
 /-- Textbook iterated addition `x + x + ⋯ + x` (`n` summands), used only as a proof
-device. The public `nsmul` runs binary decomposition via `nsmul.go`; this textbook
+device. The public {name}`nsmul` runs binary decomposition via {name}`nsmul.go`; this textbook
 form mediates between that implementation and the `Lean.Grind.Semiring` axioms via
 `nsmul_eq_linearNSmul`. -/
 private def linearNSmul {f : FpPoly p} {hf : 0 < FpPoly.degree f}
@@ -375,35 +375,35 @@ private def linearNSmul {f : FpPoly p} {hf : 0 < FpPoly.degree f}
   | 0 => 0
   | n + 1 => linearNSmul x n + x
 
-/-- Recurrence base of `linearNSmul`. Consumed indirectly by the public `nsmul_zero`
+/-- Recurrence base of {name}`linearNSmul`. Consumed indirectly by the public `nsmul_zero`
 through `nsmul_eq_linearNSmul`. -/
 @[simp] private theorem linearNSmul_zero {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     linearNSmul x 0 = 0 :=
   rfl
 
-/-- Recurrence step of `linearNSmul`. This is the textbook `n+1 ↦ pred + 1` shape
+/-- Recurrence step of {name}`linearNSmul`. This is the textbook `n+1 ↦ pred + 1` shape
 that `Lean.Grind.Semiring.nsmul_succ` consumes (via `nsmul_eq_linearNSmul`); the
-shape is forbidden for the implementation `nsmul.go`, which uses binary
+shape is forbidden for the implementation {name}`nsmul.go`, which uses binary
 decomposition. -/
 @[simp] private theorem linearNSmul_succ {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) (n : Nat) :
     linearNSmul x (n + 1) = linearNSmul x n + x :=
   rfl
 
-/-- `ofPoly` applied to the zero polynomial yields the canonical zero quotient element. -/
+/-- {name}`ofPoly` applied to the zero polynomial yields the canonical zero quotient element. -/
 @[simp, grind =] theorem ofPoly_zero_eq_zero
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
     ofPoly f hf 0 = (0 : PolyQuotient f hf) :=
   rfl
 
-/-- `ofPoly` applied to the one polynomial yields the canonical one quotient element. -/
+/-- {name}`ofPoly` applied to the one polynomial yields the canonical one quotient element. -/
 @[simp, grind =] theorem ofPoly_one_eq_one
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
     ofPoly f hf 1 = (1 : PolyQuotient f hf) :=
   rfl
 
-/-- `ofPoly` applied to a constant polynomial agrees with `const`. -/
+/-- {name}`ofPoly` applied to a constant polynomial agrees with {name}`const`. -/
 @[simp, grind =] theorem ofPoly_const_eq_const
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (c : ZMod64 p) :
     ofPoly f hf (FpPoly.C c) = const f hf c :=
@@ -476,7 +476,7 @@ private theorem const_add (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a b : ZMod6
     simpa using hf
   rw [ha, hb, ← fpPoly_C_add]
 
-/-- `linearPow_mul_comm` supplies commutativity for quotient multiplication when
+/-- {name}`linearPow_mul_comm` supplies commutativity for quotient multiplication when
 the odd binary-decomposition step reorders the final base factor. -/
 private theorem linearPow_mul_comm {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (a b : PolyQuotient f hf) :
@@ -485,7 +485,7 @@ private theorem linearPow_mul_comm {f : FpPoly p} {hf : 0 < FpPoly.degree f}
   exact repr_mul_comm a b
 
 /-- The `OfNat` literal at `n + 1` decomposes as the `OfNat` literal at `n` plus one in the
-quotient ring. Witnesses the `Lean.Grind.Semiring.natCast_succ` axiom field. -/
+quotient ring. Witnesses the {name}`Lean.Grind.Semiring.natCast_succ` axiom field. -/
 theorem natCast_succ (f : FpPoly p) (hf : 0 < FpPoly.degree f) (n : Nat) :
     (OfNat.ofNat (α := PolyQuotient f hf) (n + 1)) =
       OfNat.ofNat (α := PolyQuotient f hf) n + 1 := by
@@ -496,7 +496,7 @@ theorem natCast_succ (f : FpPoly p) (hf : 0 < FpPoly.degree f) (n : Nat) :
   rw [hsucc]
   exact const_add f hf (n : ZMod64 p) (1 : ZMod64 p)
 
-/-- Integer cast of a non-negative integer unfolds to the corresponding `natCast`. -/
+/-- Integer cast of a non-negative integer unfolds to the corresponding {name}`natCast`. -/
 @[simp, grind =] theorem intCast_ofNat
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (n : Nat) :
     intCast f hf (.ofNat n) = natCast f hf n :=
@@ -515,8 +515,8 @@ theorem natCast_succ (f : FpPoly p) (hf : 0 < FpPoly.degree f) (n : Nat) :
   rfl
 
 /-- Canonical representative of `intCast (Int.negSucc n)` is the reduction of the negation of the
-reduced `C (n + 1 : ZMod64 p)`. The double `reduceMod` is the projection of the negation of the
-canonical `natCast` representative. -/
+reduced `C (n + 1 : ZMod64 p)`. The double {name}`reduceMod` is the projection of the negation of the
+canonical {name}`natCast` representative. -/
 @[simp, grind =] theorem repr_intCast_negSucc
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (n : Nat) :
     repr (intCast f hf (.negSucc n)) =
@@ -537,7 +537,7 @@ multiplication. -/
     zsmul (.negSucc n) x = -(nsmul (n + 1) x) :=
   rfl
 
-/-- Canonical representative of `zsmul (Int.ofNat n) x` reduces to the `nsmul`-level
+/-- Canonical representative of `zsmul (Int.ofNat n) x` reduces to the {name}`nsmul`-level
 representative. -/
 @[simp, grind =] theorem repr_zsmul_ofNat {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (n : Nat) (x : PolyQuotient f hf) :
@@ -552,7 +552,7 @@ representative. -/
   rfl
 
 /-- Negation of the quotient zero is the quotient zero. Used by `neg_zsmul_eq` and
-`intCast_neg_eq` (the `Lean.Grind.Ring.neg_zsmul` / `intCast_neg` axiom witnesses) for the
+`intCast_neg_eq` (the {name}`Lean.Grind.Ring.neg_zsmul` / `intCast_neg` axiom witnesses) for the
 boundary `n = 0` case. -/
 theorem neg_zero_eq {f : FpPoly p} {hf : 0 < FpPoly.degree f} :
     -(0 : PolyQuotient f hf) = 0 := by
@@ -563,7 +563,7 @@ theorem neg_zero_eq {f : FpPoly p} {hf : 0 < FpPoly.degree f} :
 -- that need `ZMod64 p` to be a field, so the modulus must be prime.
 variable [ZMod64.PrimeModulus p]
 
-/-- Public alias for `reduceMod_mul_reduceMod_congr`: reducing both factors before quotient
+/-- Public alias for {name}`reduceMod_mul_reduceMod_congr`: reducing both factors before quotient
 reduction preserves the canonical representative. -/
 theorem reduceMod_mul_reduceMod (f : FpPoly p) (a b : FpPoly p) :
     reduceMod f (a * b) = reduceMod f (reduceMod f a * reduceMod f b) :=
@@ -578,7 +578,7 @@ theorem reduceMod_mul_reduceMod (f : FpPoly p) (a b : FpPoly p) :
 
 /-- The representative of a sum of constructed quotient elements is the
 canonical reduction of the unreduced polynomial sum. This is the simp normal form
-for addition through `ofPoly`. -/
+for addition through {name}`ofPoly`. -/
 @[simp, grind =] theorem repr_add_ofPoly
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a b : FpPoly p) :
     repr (ofPoly f hf a + ofPoly f hf b) = reduceMod f (a + b) := by
@@ -587,7 +587,7 @@ for addition through `ofPoly`. -/
 
 /-- The representative of a product of constructed quotient elements is the
 canonical reduction of the unreduced polynomial product. This is the simp normal
-form for multiplication through `ofPoly`. -/
+form for multiplication through {name}`ofPoly`. -/
 @[simp, grind =] theorem repr_mul_ofPoly
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a b : FpPoly p) :
     repr (ofPoly f hf a * ofPoly f hf b) = reduceMod f (a * b) := by
@@ -756,8 +756,8 @@ private theorem linearNSmul_double_add_one {f : FpPoly p} {hf : 0 < FpPoly.degre
   rw [linearNSmul_succ, linearNSmul_double]
   exact ext (repr_add_comm (linearNSmul (x + x) n) x)
 
-/-- Strong-recursion equation between the binary-decomposition loop `nsmul.go`
-and the textbook recurrence `linearNSmul`: any accumulator-base-counter triple
+/-- Strong-recursion equation between the binary-decomposition loop {name}`nsmul.go`
+and the textbook recurrence {name}`linearNSmul`: any accumulator-base-counter triple
 factors as `acc + linearNSmul base k`. Consumed by `nsmul_eq_linearNSmul`. -/
 private theorem nsmul_go_eq_acc_add_linearNSmul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
@@ -805,8 +805,8 @@ private theorem nsmul_go_eq_acc_add_linearNSmul
               _ = add acc (linearNSmul base k) := by
                     rw [← hk_eq]
 
-/-- Public equation between the binary-decomposition implementation `nsmul` and
-the textbook recurrence `linearNSmul`. Consumed by `nsmul_zero` / `nsmul_succ`
+/-- Public equation between the binary-decomposition implementation {name}`nsmul` and
+the textbook recurrence {name}`linearNSmul`. Consumed by `nsmul_zero` / `nsmul_succ`
 to expose the recurrence shape that `Lean.Grind.Semiring` axiom fields require. -/
 private theorem nsmul_eq_linearNSmul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
@@ -816,19 +816,19 @@ private theorem nsmul_eq_linearNSmul
   rw [nsmul_go_eq_acc_add_linearNSmul]
   exact ext (repr_zero_add (linearNSmul x n))
 
-/-- Unfolded base of the `nsmul` recurrence: zero scalar multiplication yields the quotient zero.
-The implementation `nsmul.go` runs binary decomposition (via `linearNSmul`); this lemma exposes
-the textbook recurrence shape that `Lean.Grind.Semiring`'s `nsmul_zero` axiom field consumes. -/
+/-- Unfolded base of the {name}`nsmul` recurrence: zero scalar multiplication yields the quotient zero.
+The implementation {name}`nsmul.go` runs binary decomposition (via {name}`linearNSmul`); this lemma exposes
+the textbook recurrence shape that `Lean.Grind.Semiring`'s {name}`nsmul_zero` axiom field consumes. -/
 @[simp, grind =] theorem nsmul_zero {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     nsmul 0 x = 0 := by
   rw [nsmul_eq_linearNSmul]
   rfl
 
-/-- Unfolded step of the `nsmul` recurrence. This is a theorem about the projected behaviour, not
-the implementation strategy: `nsmul.go` uses binary decomposition (via `linearNSmul_double` /
-`linearNSmul_double_add_one`) per the SPEC's prohibition on the textbook `n+1 ↦ pred + 1`
-recursion. Consumed by `Lean.Grind.Semiring`'s `nsmul_succ` axiom field. -/
+/-- Unfolded step of the {name}`nsmul` recurrence. This is a theorem about the projected behaviour, not
+the implementation strategy: {name}`nsmul.go` uses binary decomposition (via {name}`linearNSmul_double` /
+{name}`linearNSmul_double_add_one`) instead of textbook `n+1 ↦ pred + 1` recursion.
+Consumed by `Lean.Grind.Semiring`'s {name}`nsmul_succ` axiom field. -/
 @[simp, grind =] theorem nsmul_succ {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (n : Nat) (x : PolyQuotient f hf) :
     nsmul (n + 1) x = nsmul n x + x := by
@@ -849,8 +849,8 @@ nsmul's representative and `repr x`. -/
     repr (nsmul (n + 1) x) = reduceMod f (repr (nsmul n x) + repr x) := by
   rw [nsmul_succ, repr_add]
 
-/-- Natural scalar multiplication agrees with multiplication by the corresponding `natCast`.
-Witnesses the `Lean.Grind.Semiring.nsmul_eq_natCast_mul` axiom field. -/
+/-- Natural scalar multiplication agrees with multiplication by the corresponding {name}`natCast`.
+Witnesses the {name}`Lean.Grind.Semiring.nsmul_eq_natCast_mul` axiom field. -/
 theorem nsmul_eq_natCast_mul {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (n : Nat) (x : PolyQuotient f hf) :
     n • x = (Nat.cast n : PolyQuotient f hf) * x := by
@@ -907,7 +907,7 @@ theorem neg_neg_eq {f : FpPoly p} {hf : 0 < FpPoly.degree f}
       exact repr_zero_add x
 
 /-- Negation distributes over integer scalar multiplication. Witnesses the
-`Lean.Grind.Ring.neg_zsmul` axiom field. The three branches handle `i = Int.ofNat 0`,
+{name}`Lean.Grind.Ring.neg_zsmul` axiom field. The three branches handle `i = Int.ofNat 0`,
 `i = Int.ofNat (n + 1)`, and `i = Int.negSucc n` separately because `Int.neg` evaluates
 differently on each. -/
 theorem neg_zsmul_eq {f : FpPoly p} {hf : 0 < FpPoly.degree f}
@@ -925,8 +925,8 @@ theorem neg_zsmul_eq {f : FpPoly p} {hf : 0 < FpPoly.degree f}
   | negSucc n =>
       exact (neg_neg_eq (nsmul (n + 1) a)).symm
 
-/-- Negation distributes over integer cast. Witnesses the `Lean.Grind.Ring.intCast_neg` axiom
-field. Three branches mirror `neg_zsmul_eq`. -/
+/-- Negation distributes over integer cast. Witnesses the {name}`Lean.Grind.Ring.intCast_neg` axiom
+field. Three branches mirror {name}`neg_zsmul_eq`. -/
 theorem intCast_neg_eq (f : FpPoly p) (hf : 0 < FpPoly.degree f)
     (i : Int) :
     ↑(-i) = -(↑i : PolyQuotient f hf) := by
@@ -940,7 +940,7 @@ theorem intCast_neg_eq (f : FpPoly p) (hf : 0 < FpPoly.degree f)
   | negSucc n =>
       exact (neg_neg_eq (natCast f hf (n + 1))).symm
 
-/-- `linearPow_mul_assoc` supplies associativity for quotient multiplication in
+/-- {name}`linearPow_mul_assoc` supplies associativity for quotient multiplication in
 the proof-only recurrence used by the square-and-multiply correctness bridge. -/
 private theorem linearPow_mul_assoc {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (a b c : PolyQuotient f hf) :
@@ -948,31 +948,31 @@ private theorem linearPow_mul_assoc {f : FpPoly p} {hf : 0 < FpPoly.degree f}
   apply ext
   exact repr_mul_assoc a b c
 
-/-- `linearPow_mul_assoc_raw` restates quotient associativity in executable
-`mul` form so the accumulator-loop proof can rewrite raw multiplications. -/
+/-- {name}`linearPow_mul_assoc_raw` restates quotient associativity in executable
+{name}`mul` form so the accumulator-loop proof can rewrite raw multiplications. -/
 private theorem linearPow_mul_assoc_raw {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (a b c : PolyQuotient f hf) :
     mul (mul a b) c = mul a (mul b c) := by
   apply ext
   exact repr_mul_assoc a b c
 
-/-- `linearPow_mul_one_raw` restates the right-identity law in executable `mul`
-form for the zero-exponent branch of `pow.go`. -/
+/-- {name}`linearPow_mul_one_raw` restates the right-identity law in executable {name}`mul`
+form for the zero-exponent branch of {name}`pow.go`. -/
 private theorem linearPow_mul_one_raw {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (a : PolyQuotient f hf) :
     mul a 1 = a := by
   apply ext
   exact repr_mul_one a
 
-/-- `linearPow_one_mul_raw` restates the left-identity law in executable `mul`
-form to remove the initial accumulator after `pow.go` is related to `linearPow`. -/
+/-- {name}`linearPow_one_mul_raw` restates the left-identity law in executable {name}`mul`
+form to remove the initial accumulator after {name}`pow.go` is related to {name}`linearPow`. -/
 private theorem linearPow_one_mul_raw {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (a : PolyQuotient f hf) :
     mul (one f hf) a = a := by
   apply ext
   exact repr_one_mul a
 
-/-- `linearPow_double` is the even binary-decomposition step for the proof-only
+/-- {name}`linearPow_double` is the even binary-decomposition step for the proof-only
 recurrence, replacing exponent `2 * n` by one recursive square. -/
 private theorem linearPow_double {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) (n : Nat) :
@@ -988,7 +988,7 @@ private theorem linearPow_double {f : FpPoly p} {hf : 0 < FpPoly.degree f}
       rw [linearPow_succ, linearPow_succ, ih]
       exact linearPow_mul_assoc (linearPow (x * x) n) x x
 
-/-- `linearPow_double_add_one` is the odd binary-decomposition step, separating
+/-- {name}`linearPow_double_add_one` is the odd binary-decomposition step, separating
 one base factor before recurring on the squared base. -/
 private theorem linearPow_double_add_one {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) (n : Nat) :
@@ -996,7 +996,7 @@ private theorem linearPow_double_add_one {f : FpPoly p} {hf : 0 < FpPoly.degree 
   rw [linearPow_succ, linearPow_double]
   exact linearPow_mul_comm (linearPow (x * x) n) x
 
-/-- `pow_go_eq_acc_mul_linearPow` bridges the executable accumulator loop to the
+/-- {name}`pow_go_eq_acc_mul_linearPow` bridges the executable accumulator loop to the
 proof-only recurrence used to prove square-and-multiply exponentiation correct. -/
 private theorem pow_go_eq_acc_mul_linearPow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
@@ -1042,8 +1042,8 @@ private theorem pow_go_eq_acc_mul_linearPow
               _ = mul acc (linearPow base k) := by
                     rw [← hk_eq]
 
-/-- The executable square-and-multiply `pow` returns the same element as the
-proof-only linear recurrence `linearPow`. The `Lean.Grind.Semiring` instance
+/-- The executable square-and-multiply {name}`pow` returns the same element as the
+proof-only linear recurrence {name}`linearPow`. The `Lean.Grind.Semiring` instance
 rewrites by this equality to discharge its `pow_succ` field. -/
 theorem pow_eq_linearPow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}

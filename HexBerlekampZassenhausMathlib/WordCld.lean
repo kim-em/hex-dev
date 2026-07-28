@@ -122,7 +122,7 @@ theorem map_divMod_monic {S : Type*} [CommRing S] [DecidableEq S] [Div S]
     hgmonic ⟨hrec3, hrdeg⟩
   exact huniq.1.symm
 
-/-! ### Coefficient bridges -/
+/-! # Coefficient bridges -/
 
 theorem intCast_intModNat (c : Int) (M : Nat) (hM : 0 < M) :
     ((ZPoly.intModNat c M : Nat) : ZMod M) = (c : ZMod M) := by
@@ -187,7 +187,7 @@ theorem cW_derivative {m : UInt64} (ctx : _root_.MontCtx m)
     cW ctx (Hex.DensePoly.derivative a) = Polynomial.derivative (cW ctx a) := by
   simp only [cW, HexPolyMathlib.toPolynomial_derivative, Polynomial.derivative_map]
 
-/-! ### Guard correctness -/
+/-! # Guard correctness -/
 
 theorem powLtWord?_go_eq (p : Nat) : ∀ (n acc r : Nat),
     Hex.powLtWordAux p n acc = some r → r = acc * p ^ n := by
@@ -228,7 +228,7 @@ theorem powLtWord?_eq {p a mval : Nat} (h : Hex.powLtWord? p a = some mval) :
   have := powLtWord?_go_eq p a 1 mval hgo
   simpa using this
 
-/-! ### Degree transport -/
+/-! # Degree transport -/
 
 open HexPolyMathlib in
 theorem toPoly_degree_lt {S : Type*} [CommRing S] [DecidableEq S] {r g : Hex.DensePoly S}
@@ -248,7 +248,7 @@ theorem intModNat_lt (y : Int) (M : Nat) (hM : 0 < M) : ZPoly.intModNat y M < M 
   have h2 : 0 ≤ y % (M : Int) := Int.emod_nonneg y hM0
   rw [ZPoly.intModNat, Int.ofNat_eq_natCast]; omega
 
-/-! ### Main equality -/
+/-! # Main equality -/
 
 open HexPolyMathlib in
 theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)

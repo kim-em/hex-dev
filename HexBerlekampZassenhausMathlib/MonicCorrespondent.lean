@@ -331,13 +331,13 @@ theorem HenselFactorData.ofToMonicPrimeData
   · exact hmodulus
   · exact hprec_spec
 
-/-! ### Forward monic correspondent
+/-! # Forward monic correspondent
 
 `exists_monicCorrespondent_of_dvd` is the forward map from an integer factor of
 `core` to a monic factor of `(toMonic core).monic`, the section of the
 `primitivePart ∘ dilate` recovery map proved in `dilate_recovery`.
 
-Sign note (the caveat #7365 flagged): `Hex.ZPoly.primitivePart` divides by the
+Sign note (the caveat flagged): `Hex.ZPoly.primitivePart` divides by the
 *nonnegative* content but does **not** sign-normalize, so
 `primitivePart (dilate lc g) = sign(lc)^(deg) * sign(lf) * factor`.  The
 hypothesis `normalizeFactorSign factor = factor` only forces
@@ -410,8 +410,7 @@ theorem scale_mul_scale (a b : Int) (p q : Hex.ZPoly) :
     HexPolyZMathlib.toPolynomial_C, Polynomial.C_mul]
   ring
 
-/-- **Honest scale-coordinate congruence from a `monicTarget` subset correspondence**
-(the algebraic core of deliverable (b) of #8319).
+/-- **Scale-coordinate congruence from a `monicTarget` subset correspondence.**
 
 Given the per-support `monicTarget`-coordinate correspondence
 `scale (leadingCoeff factor) (∏ S) ≡ factor (mod p^k)` — the selected lifted
@@ -947,9 +946,7 @@ theorem primitivePart_dilate_centeredLift_eq_candidate
     unfold Hex.normalizeFactorSign; simp [hcond]
   rw [hchar, hnc, hns]
 
-/-- **Mod-`p` representation of the monic correspondent (#7381, prereq of #7364).**
-
-For prime data selected by `toMonicPrimeData? core` — that is, `choosePrimeData?`
+/-- For prime data selected by `toMonicPrimeData? core` — that is, `choosePrimeData?`
 applied to `M := (toMonic core).monic` — any irreducible integer divisor `g`
 of `M` has a representing subset of `M`'s recorded mod-`p` factors. This
 discharges the `hrepP` input of `henselLiftData_represents_lifted_of_modP`
@@ -961,9 +958,8 @@ partition, which already ranges over `M`'s mod-`p` factors via
 `modPSubsetPartitionHypotheses_of_choosePrimeData`; it is *not* transported from
 a representation of the original-core divisor. The correspondent `g` and its
 non-monic preimage differ by a dilation `X ↦ (leadingCoeff core)·X`, and
-`monicModPImage` is not dilation-invariant (the transport equality
-`monicModPImage (modP p factor) = monicModPImage (modP p g)` was refuted in
-\#7366). Consequently `g`'s representing subset is its own, so the sound
+`monicModPImage` is not dilation-invariant. Consequently `g`'s representing
+subset is its own, so the sound
 conclusion is existential — there is no representation at a subset prescribed
 by the preimage. -/
 theorem representsModP_correspondent
@@ -1074,7 +1070,8 @@ theorem irreducible_toPolynomial_monicCorrespondent
 coefficient and positive degree, every monic irreducible factor `g` of
 `(toMonic core).monic` descends to an irreducible, sign-normalized integer factor
 `f := primitivePart (dilate (leadingCoeff core) g)` of `core`.  This is the
-inverse of `exists_monicCorrespondent_of_dvd`, gating the `cover` field of #7362.
+inverse of `exists_monicCorrespondent_of_dvd` and supplies the factors used by
+the downstream cover proof.
 
 `f ∣ core` is read off the keystone `dilate lc M = scale (lc^(d-1)) core`
 (`dilate_monic_toMonic`): writing `g ∣ M` as `M = g * cof` with `cof` monic and
@@ -1258,8 +1255,8 @@ If the monic correspondents `gf`, `gg` of two factors have associated integer
 images, then so do the factors `f`, `g` recovered from them by the variable
 dilation `X ↦ (leadingCoeff core)·X` followed by taking the primitive part.
 
-Used contrapositively for #7362's `pairwise_disjoint`: distinct deterministic
-recoveries `¬Associated f g` force the monic correspondents apart
+Used contrapositively, it shows that distinct deterministic recoveries
+`¬Associated f g` have non-associated monic correspondents
 (`¬Associated gf gg`). The dilation embeds (`toPolynomial_dilate`) to
 composition with `C lc * X`, a monoid endomorphism that transports the
 association; the residual content scalars are stripped by
@@ -1335,9 +1332,9 @@ The route is: build the monic correspondent `g` of `factor`
 (`exists_monicCorrespondent_of_dvd`), transport its irreducibility
 (`irreducible_toPolynomial_monicCorrespondent`), read off `g`'s mod-`p`
 representation (`representsModP_correspondent`), lift it to the monic coordinate
-(`toMonicLiftData_represents_lifted_monicCorrespondent`, #7453), then transfer
+(`toMonicLiftData_represents_lifted_monicCorrespondent`), then transfer
 back to `factor` over the original `core`
-(`representsIntegerFactorAtLift_of_monicCorrespondent`, #7452). -/
+(`representsIntegerFactorAtLift_of_monicCorrespondent`). -/
 theorem toMonicLiftData_represents_lifted_of_modP
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hval : ModPFactorization (Hex.ZPoly.toMonic core).monic primeData)

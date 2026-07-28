@@ -27,7 +27,7 @@ transports the centered `[0, 1/4]` range back to `x * (1 - x)`.
 
 namespace Hex.Interval.Experiment.Center
 
-/-! ## Dyadic and raw-interval interpretation -/
+/-! # Dyadic and raw-interval interpretation -/
 
 /-- Mathematical real value of a Core dyadic. -/
 def dyadic (value : Dyadic) : ℝ := (value.toRat : ℝ)
@@ -225,7 +225,7 @@ theorem max4?_sound {limit : EndpointLimit} {a b c d result : Dyadic}
 
 end Row
 
-/-! ## Total program semantics -/
+/-! # Total program semantics -/
 
 /-- A total real valuation of typed node identifiers.  Totality is harmless:
 `Program.Holds` constrains exactly the nodes actually present in the program,
@@ -277,7 +277,7 @@ theorem holds_closed_iff {valuation : Valuation} {node : NodeId .real}
 
 end Row
 
-/-! ## Finite-closed rule soundness -/
+/-! # Finite-closed rule soundness -/
 
 /-- A literal belongs to its singleton range. -/
 theorem contains_lit (value : Dyadic) : Contains (closed value value) (dyadic value) := by
@@ -579,7 +579,7 @@ theorem sq?_sound {limit : EndpointLimit} {valuation : Valuation}
 
 end Row
 
-/-! ## Checked centered equality -/
+/-! # Checked centered equality -/
 
 /-- The algebraic identity installed by the versioned `centerV1` recipe. -/
 theorem centerV1_identity (x : ℝ) :
@@ -651,7 +651,7 @@ theorem sound {program : Program} {edge : EqEdge} {valuation : Valuation}
 
 end EqEdge
 
-/-! ## Generic checked-trace soundness -/
+/-! # Generic checked-trace soundness -/
 
 /-- Every row in a proof-facing table is semantically true. -/
 def RowsHold (valuation : Valuation) (rows : List Row) : Prop :=
@@ -920,7 +920,7 @@ theorem sound {certificate : Certificate} {endpointLimit : EndpointLimit}
 
 end Certificate
 
-/-! ## Fixed centered-product consequence -/
+/-! # Fixed centered-product consequence -/
 
 /-- Concrete valuation of every node in the fixed program at a chosen real
 input. Values outside the nine-node program are irrelevant and set to zero. -/

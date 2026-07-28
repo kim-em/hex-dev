@@ -163,7 +163,7 @@ theorem recombinationSearchModAux_factor_associated_of_bound
   exact ⟨result, hresult, hcovers factor hfactor_irr hfactor_dvd_target⟩
 
 /--
-Recursive coverage capstone for `Hex.recombinationSearchModAux` (#4301).
+Recursive coverage theorem for `Hex.recombinationSearchModAux`.
 
 Given a `LiftedFactorSubsetPartition core d J target` rest-state predicate at
 a recursive recombination level, and an irreducible integer divisor `factor`
@@ -262,7 +262,7 @@ theorem scaledRecombinationSearchModAux_some_factor_associated_of_liftedFactorSu
   exact ⟨result, hresult, hcovers factor hfactor_irr hfactor_dvd_target⟩
 
 /--
-Primitive + positive-leading recursive coverage capstone for
+Primitive and positive-leading recursive coverage theorem for
 `Hex.scaledRecombinationSearchModAux`.
 
 This is the scaled counterpart of
@@ -365,7 +365,7 @@ theorem recombinationSearchModAux_factor_associated_of_primitive_bound
 
 /--
 Primitive + positive-leading public wrapper for the scaled recombination
-search.  This is the #4648 boundary form of the old monic-core
+search. This is the boundary form of the old monic-core
 `recombinationSearchModAux_factor_associated`
 surface: callers with a primitive positive-leading core and recursive target
 use the scaled executable search directly, while the monic wrapper remains
@@ -425,10 +425,9 @@ This is the deliberately explicit replacement for the old universal
 successful-lift / descent / classical partition evidence that proves them,
 instead of obtaining them from an unsound arbitrary-prime fallback.
 
-Note: the issue text suggested deriving `pairwise_disjoint` /
-`unique_up_to_associated` from `unique_subset` alone, but the public predicate
-still represents a chosen integer factor, not an associate class of factors.
-Both fields therefore remain part of this explicit evidence package. -/
+The public predicate represents a chosen integer factor rather than an
+associate class, so `unique_subset` alone does not imply `pairwise_disjoint` or
+`unique_up_to_associated`. Both fields therefore remain explicit evidence. -/
 structure InitialLiftedFactorSubsetPartitionEvidence
     (core : Hex.ZPoly) (d : Hex.LiftData) : Prop where
   cover :
@@ -560,9 +559,7 @@ theorem liftedFactorSubsetPartition_initial_liftedRecoveryCandidate_eq_of_choose
   intro d f S hirr hdvd_core hrep
   exact hinitial.liftedRecoveryCandidate_eq hirr hdvd_core hrep
 
-/-- **#4549 supporting lemma (HO-1).**
-
-Parametric constructor for `LiftedFactorSubsetPartition core d
+/-- Construct `LiftedFactorSubsetPartition core d
 Finset.univ core` over the successful
 `Hex.choosePrimeData? core = some primeData` surface, parametric in the core
 and the precision count `B` passed to `Hex.ZPoly.toMonicLiftData`.
@@ -571,10 +568,10 @@ Square-freeness of `HexPolyZMathlib.toPolynomial core` is taken as an
 explicit hypothesis `hcore_sqfree`: the outer-bound specialisation
 below threads it in at
 `core = (Hex.normalizeForFactor f).squareFreeCore` (where it is
-expected to hold by construction), and downstream HO-1 assemblies
+expected to hold by construction), and downstream assemblies
 supply it from the caller's own square-free-core invariants.  This
-matches the issue's option (a) for handling
-`target_squarefree`.
+provides the `target_squarefree` field without assuming it for an arbitrary
+prime choice.
 
 Composes:
 
@@ -643,13 +640,10 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
             liftedFactorSubsetPartition_initial_liftedRecoveryCandidate_eq_of_choosePrimeData
               core B primeData hinitial hirr hdvd_target hSrep }
 
-/-- **#6172 supporting lemma (HO-1, non-monic-core sibling).**
-
-Parallel to `liftedFactorSubsetPartition_of_choosePrimeData` but consumes
+/-- Parallel to `liftedFactorSubsetPartition_of_choosePrimeData`, but consumes
 the `Hex.ZPoly.toMonicPrimeData? core = some primeData` witness directly.
 Used by the non-monic-friendly substrate constructor
-`HenselFactorData.ofToMonicPrimeData` below, which feeds the
-slow-path arm of #4170 from `(Hex.normalizeForFactor f).squareFreeCore`.
+`HenselFactorData.ofToMonicPrimeData` below.
 The embedded Hensel correspondence is supplied explicitly as `hcorr`. -/
 theorem liftedFactorSubsetPartition_of_toMonicModP_evidence
     (core : Hex.ZPoly) (B : Nat)
@@ -703,7 +697,7 @@ theorem liftedFactorSubsetPartition_of_toMonicModP_evidence
             liftedFactorSubsetPartition_initial_liftedRecoveryCandidate_eq_of_choosePrimeData
               core B primeData hinitial hirr hdvd_target hSrep }
 
-/-! ### `ModPSubsetPartitionHypotheses` existence/uniqueness assembly
+/-! # `ModPSubsetPartitionHypotheses` existence/uniqueness assembly
 
 These theorems compose the `monicModPImage` divisibility lemma,
 `factors_irreducible_of_choosePrimeData_of_some`, and the UFD subset
@@ -713,8 +707,8 @@ in the `choosePrimeData? core = some primeData` branch. The wrapper
 exposes the caller-facing shape under the same `hsome` hypothesis. -/
 
 /-- `factorsModP.toList` mapped to Mathlib polynomials has product equal to the
-Mathlib transport of `monicModularImage (modP p core)`. Re-keyed (#8625) from
-the literal Berlekamp-output form to the semantic bundle: the bundle's
+Mathlib transport of `monicModularImage (modP p core)`. The proof uses the
+semantic bundle: its
 `product` congruence over `ℤ` descends to an `FpPoly` product equality via
 `modP_eq_of_congr` and the `modP`/`liftToZ` roundtrip, and the monic-image
 layer collapses on the monic lift target. -/
@@ -1196,18 +1190,16 @@ theorem existsUnique_modPFactorSubset_of_modPFactorization
   exact existsUnique_modPFactorSubset_of_choosePrimeData_of_some core
     hirr hdvd hcore_ne hcore_pos primeData hval
 
-/-- **HO-1 supporting lemma (#4688).**
-
-`ModPSubsetPartitionHypotheses` constructor at the executable
+/-- Construct `ModPSubsetPartitionHypotheses` at the executable
 `Hex.choosePrimeData` boundary.
 
 Composes:
 
 * `Hex.choosePrimeData?_fModP_eq` for `fModP_eq`;
 * `trivial` for the `True` `admissible_prime` / `square_free_reduction` hooks;
-* `factors_irreducible_of_choosePrimeData_of_some` (#4686) for the per-factor
+* `factors_irreducible_of_choosePrimeData_of_some` for the per-factor
   irreducibility component;
-* `existsUnique_modPFactorSubset_of_choosePrimeData` (#4693) for both the
+* `existsUnique_modPFactorSubset_of_choosePrimeData` for both the
   existence and uniqueness components.
 
 The `hchoose` hypothesis is an explicit `choosePrimeData? = some` witness,
@@ -1288,7 +1280,7 @@ theorem toMathlibPolynomial_modPFactor_monic_of_modPFactorization
   intro i
   exact HexBerlekampMathlib.toMathlibPolynomial_monic _ (hmonic _ (Array.getElem_mem _))
 
-/-- **modP cover (#6796).** Every selected modular factor index lies in the
+/-- **modP cover.** Every selected modular factor index lies in the
 representing subset of some irreducible integer divisor of `core`.
 
 Assembled from `exists_factor_of_modPIndex` (recover an irreducible divisor `g`
@@ -1358,19 +1350,18 @@ theorem henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData_descent
       hdescent
       hlifted_of_modP
 
-/-- **#4697 supporting lemma (HO-1).**
-
-Assembly constructor for `HenselSubsetLiftHypotheses` at the executable
+/-- Construct `HenselSubsetLiftHypotheses` at the executable
 `Hex.choosePrimeData` / `Hex.henselLiftData` surface.
 
 The constructor composes:
 
-* `henselLiftData_liftedFactors_size_eq` (PR #4698) for `factor_count_eq`;
-* the supplied forward transport `hlifted_of_modP` for `represents_lifted_of_modP`
-  (sourced in practice from `henselLiftData_represents_lifted_of_modP`, landed
-  in #4733, once the caller has discharged its analytic prerequisites);
-* the landed descent wrapper `henselLiftData_represents_modP_of_lifted`
-  (PR #4739) for `represents_modP_of_lifted`, instantiated with the supplied
+* `henselLiftData_liftedFactors_size_eq` for `factor_count_eq`;
+* the supplied forward transport `hlifted_of_modP` for
+  `represents_lifted_of_modP` (typically obtained from
+  `henselLiftData_represents_lifted_of_modP` once the caller has discharged its
+  hypotheses);
+* the descent wrapper `henselLiftData_represents_modP_of_lifted`
+  for `represents_modP_of_lifted`, instantiated with the supplied
   `hmod` / `hcorr` partition-and-correspondence inputs together with
   `hlifted_of_modP`.
 
@@ -1420,9 +1411,7 @@ theorem henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData
       (Hex.ZPoly.toMonicLiftData_liftedFactors_size_eq core B primeData)
       hlifted_of_modP hirr hdvd hT
 
-/-- **#5689 supporting lemma (HO-1 successful branch).**
-
-Successful-branch constructor for the lifted Hensel subset correspondence at
+/-- Construct the lifted Hensel subset correspondence at
 the witness-form `Hex.choosePrimeData?` boundary.
 
 The explicit `hchoose` hypothesis selects the analyzable
@@ -1451,9 +1440,7 @@ theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success
           hcore_pos))
       hlift
 
-/-- **#5689 supporting lemma (HO-1 successful branch).**
-
-Caller-facing wrapper for the common successful-branch shape: compose the
+/-- Compose the
 `choosePrimeData? = some ...` mod-`p` partition with a non-circular lifted-side
 descent package and explicit forward Hensel transport to obtain the standard
 `HenselSubsetCorrespondenceHypotheses` surface. -/
@@ -1486,9 +1473,7 @@ theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
       (henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData_descent
         core B primeData hchoose hdescent hlifted_of_modP)
 
-/-- **#6683 supporting lemma (HO-1), outer-bound successful branch.**
-
-Successful-descent specialisation of
+/-- Specialise
 `henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent` at the
 precision count consumed by the slow exhaustive branch of `Hex.ZPoly.factorize f`. -/
 theorem henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData
@@ -1533,11 +1518,10 @@ theorem henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData
         (Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf0)
         hcore_pos hchoose hdescent hlifted_of_modP
 
-/-- **#6354 supporting lemma (HO-1 successful branch).**
-
-Successful-branch sibling of `liftedFactorSubsetPartition_of_choosePrimeData`.
-The partition-cover fields still come from the localized partition analytic
-obligation, but the embedded Hensel subset correspondence is sourced from the
+/-- Successful-branch sibling of
+`liftedFactorSubsetPartition_of_choosePrimeData`. The partition-cover fields
+come from the supplied initial partition evidence, while the embedded Hensel
+subset correspondence comes from the
 non-circular descent/forward-transport path. -/
 theorem liftedFactorSubsetPartition_of_choosePrimeData_success_descent
     (core : Hex.ZPoly) (B : Nat)

@@ -954,7 +954,7 @@ private theorem trailing_corner_entry_eq_det
   rw [h_trail, borderedMinor_corner_eq_principalSubmatrix M step' hk',
     principalSubmatrix_self M (Nat.succ_le_of_lt hk')]
 
-/-- Capstone: under `NonzeroBareissPivots`, the no-pivot Bareiss recurrence
+/-- Under `NonzeroBareissPivots`, the no-pivot Bareiss recurrence
 computes the Mathlib determinant of the source matrix. -/
 theorem bareissNoPivot_eq_det
     (M : Hex.Matrix Int n n) (h : NonzeroBareissPivots M) :
@@ -1018,7 +1018,7 @@ theorem bareissNoPivot_eq_det
             (⟨k, hk⟩ : Fin (k + 1))] = Hex.Matrix.det M from hentry]
       exact det_eq M
 
-/-! ### Failed Bareiss column dependence
+/-! # Failed Bareiss column dependence
 
 Helper for the row-pivoted singular Bareiss branch: if the pivot search at
 level `k` fails (the entire `k`-bordered trailing column is zero) and the
@@ -1027,8 +1027,7 @@ linear combination of the columns of `source` — with coefficients given by the
 signed `k × k` cofactors of the leading prefix augmented with column `k` —
 that vanishes at every row. The coefficient on column `k` is
 `Hex.Matrix.det (Hex.Matrix.principalSubmatrix source k _)`, which is nonzero by
-hypothesis. The follow-up issue closes the determinant via
-`Matrix.det_updateCol_sum` and the duplicate-column determinant identity. -/
+hypothesis. -/
 
 /-- The `k × (k+1)` top block used to define the failed-pivot column
 dependence: leading `k` rows of `source`, restricted to columns `0..k-1`
@@ -1451,8 +1450,8 @@ theorem pivotLoop_initial_singularStep_ne_none_det_eq_zero
   pivotLoop_singularStep_ne_none_det_eq_zero M n (Hex.Matrix.noPivotInitialState M)
     (bareissPivotInvariant_initial M) hsing
 
-/-- Data-facing singular branch theorem for the final row-pivoted Bareiss
-capstone. -/
+/-- If the row-pivoted Bareiss result records a singular step, the Mathlib
+determinant of the input is zero. -/
 theorem bareissData_singularStep_ne_none_det_eq_zero
     (M : Hex.Matrix Int n n)
     (hsing : (Hex.Matrix.bareissData M).singularStep ≠ none) :

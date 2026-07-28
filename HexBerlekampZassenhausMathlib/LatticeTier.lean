@@ -18,12 +18,12 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-# Irreducibility of the van Hoeij / CLD lattice tier (#8417)
+# Irreducibility of the van Hoeij / CLD lattice tier
 
 The large-`r` lattice tier `Hex.latticeCoreFactorsWithBound` is the van Hoeij
 CLD recovery, run past the classical subset budget.  For a square-free `core`
 selected by `Hex.ZPoly.toMonicPrimeData?` (the monic-transform selection, so the
-Hensel seeds match the lift target; #8519) it has three arms:
+Hensel seeds match the lift target) it has three arms:
 
 1. `primeData.factorsModP.size ≤ 1` → `some #[core]`.  The core is irreducible
    mod `p`, hence irreducible over `ℤ`.  **Proved unconditionally here** by
@@ -34,8 +34,8 @@ Hensel seeds match the lift target; #8519) it has three arms:
    `bhksRecoveryCoreWithBound` success; irreducibility of the emitted factors is
    the BHKS count-equality obligation, already isolated by
    `bhksFactors_zpolyIrreducible_of_count` and threaded
-   here as the `harm2_count` hypothesis), or the certificate-backed early stop
-   (#8395): `some #[core]` with a witness precision `k'` at/above the
+   here as the `harm2_count` hypothesis), or the certificate-backed early stop:
+   `some #[core]` with a witness precision `k'` at/above the
    column-adequacy floor whose partition is the single all-ones class,
    discharged by the adequacy hypothesis at `k'`.
 
@@ -48,7 +48,7 @@ Hensel seeds match the lift target; #8519) it has three arms:
 
 The reduction below discharges arm 1 and reduces the whole tier to the two BHKS
 obligations, mirroring the fast-path `_of_count` convention and the classical
-capstone `classicalCoreFactorsWithBound_factor_irreducible` (#8413).  It is the
+theorem `classicalCoreFactorsWithBound_factor_irreducible`. It is the
 proof architecture the deep-content successors plug into.
 -/
 
@@ -58,8 +58,7 @@ noncomputable section
 
 open Polynomial
 
-/--
-**#8417 (lattice-tier irreducibility, reduced form).**  Every factor the
+/-- Every factor the
 van Hoeij CLD lattice tier `Hex.latticeCoreFactorsWithBound` returns for the
 square-free core of `normalizeForFactor f` is irreducible, given the two BHKS
 obligations as hypotheses.
@@ -73,7 +72,7 @@ The arms of `latticeCoreFactorsWithBound` are discharged as follows:
   `bhksRecoveryCoreWithBound` success, discharged from the count-equality
   hypothesis `harm2_count` via
   `bhksFactors_zpolyIrreducible_of_count`) and the
-  certificate-backed early stop (#8395: output `#[core]` with a witness
+  certificate-backed early stop (: output `#[core]` with a witness
   precision `k'` clearing the column-adequacy floor, discharged from the
   adequacy hypothesis `harm3_adequacy` at `k'`);
 * the cap all-ones certification arm (`bhksSingleAllOnesPartition = true` at
@@ -160,7 +159,7 @@ theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible_of_bh
 
 
 /-!
-## Lattice geometry: the BHKS basis is LLL-independent (arm-3 foundation)
+# Lattice geometry: the BHKS basis is LLL-independent (arm-3 foundation)
 
 The van Hoeij knapsack basis `[I_r | Ã ; 0 | diag(p^(a-l_j))]` is upper-triangular
 with strictly positive diagonal (1's in the `I_r` block, `p^(a-l_j)` in the
@@ -254,7 +253,7 @@ theorem bhksLatticeBasis_lllNative_first_row_short
 
 
 /-!
-## The `W ⊆ L'` adequacy assembly (#8519)
+# The `W ⊆ L'` adequacy assembly
 
 Both deep obligations reduce to the count lower bound
 `(normalizedFactors (toPolynomial core)).card ≤
@@ -266,7 +265,7 @@ prefix-survivor lemma places it in the projected row span (`W ⊆ L'`,
 `BHKS.cutProjectionHypotheses_of_shortVectors`), so the RREF signature classes
 refine the true-support partition
 (`BHKS.supportPartitionByMinColumn_length_le_bhksEquivalenceClassIndicators_size`),
-whose length the #8413 partition machinery identifies with the number of
+whose length the partition machinery identifies with the number of
 irreducible factors of `core`
 (`BHKS.supportPartitionByMinColumn_length_eq_normalizedFactors_card`).
 -/
@@ -430,7 +429,7 @@ noncomputable def recoveredLiftOfRecoveredAtLift
       exact hcl }
 
 set_option maxHeartbeats 1000000 in
-/-- **The `W ⊆ L'` count lower bound (#8519).**  For a primitive square-free
+/-- **The `W ⊆ L'` count lower bound.** For a primitive square-free
 positive-degree `core` under the monic-transform prime selection at a
 coefficient bound `B` clearing the fast-core acceptance floor, the number of
 irreducible factors of `core` over `ℤ` is at most the number of executable
@@ -675,7 +674,7 @@ theorem normalizedFactors_card_le_bhksEquivalenceClassIndicators_size
   omega
 
 /-!
-## Top-down attack on the deep BHKS content (#8417)
+# Top-down attack on the deep BHKS content
 
 The two remaining obligations of
 `latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible_of_bhks`
@@ -857,8 +856,7 @@ theorem squareFreeCore_irreducible_of_bhksSingleAllOnes
     rwa [hp, Multiset.prod_singleton] at hprod
   exact hassoc.irreducible_iff.mp hp_irr
 
-/--
-**#8417 (lattice-tier irreducibility, at adequate precision).**  Every factor the
+/-- Every factor the
 van Hoeij CLD lattice tier `latticeCoreFactorsWithBound` returns for the
 square-free core of `normalizeForFactor f` is irreducible over `ℤ`, provided the
 precision clears the fast-core acceptance floor (`hB_floor`).  Arm 1 (small-mod
@@ -887,7 +885,7 @@ theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
         f hf_ne B' primeData hselected hdeg_ne
         hB'_floor hB'_ne hbhks)
 /-!
-## Lattice-branch assembly
+# Lattice-branch assembly
 
 The raw lattice-factor irreducibility theorem lives here because it consumes
 the LLL-backed `LatticeTier` core lemma. Its hybrid assembly is in the same
@@ -895,10 +893,10 @@ module, and `FactorSoundness` consumes that assembly for the public
 factorization theorem.
 -/
 
-/-- **Lattice-core reassembly completeness (#8520).**  When the lattice tier
+/-- **Lattice-core reassembly completeness.** When the lattice tier
 returns core factors for the square-free core of `normalizeForFactor f` at
 adequate precision, the reassembly is expansion-complete.  The lattice analog of
-`reassemblyExpansionComplete_classicalCore_of_ne_zero` (#8511): it composes the
+`reassemblyExpansionComplete_classicalCore_of_ne_zero`: it composes the
 `LatticeTier` core irreducibility lemma
 `latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible`, the
 polyProduct / normalizeFactorSign / degree-positivity structural companions
@@ -934,7 +932,7 @@ theorem reassemblyExpansionComplete_latticeCore_of_ne_zero
     (Hex.latticeCoreFactorsWithBound_normalizeFactorSign _ _ _ hcore_pos hlattice)
     (Hex.latticeCoreFactorsWithBound_degree_pos _ _ _ hcore_deg hlattice)
 
-/-- **Lattice-branch raw-factor irreducibility (#8417).**  Every raw factor of the
+/-- **Lattice-branch raw-factor irreducibility.** Every raw factor of the
 CLD lattice tier's output that passes the recorded-factor filter is irreducible.
 Reduces through the reassembly bridge to the `LatticeTier` core lemma. -/
 theorem factorLatticeFactorsWithBound_factor_irreducible

@@ -42,7 +42,8 @@ rational matrix directly. `Hex.GramSchmidt.Int` works on an integer
 matrix, and its *computable* operations — the leading Gram determinants
 and the integer scaled coefficient matrix — stay entirely in exact
 integer arithmetic. That is the whole point of the integer namespace:
-lattice code reads the exact `gramDet` and `scaledCoeffs` values and
+lattice code reads the exact {name}`Hex.GramSchmidt.Int.gramDet` and
+{name}`Hex.GramSchmidt.Int.scaledCoeffs` values and
 never leaves `Int`. The orthogonal basis and rational coefficients
 themselves involve division, which is usually a performance bottleneck,
 so {name}`Hex.GramSchmidt.Rat.basis` and {name}`Hex.GramSchmidt.Rat.coeffs`
@@ -89,8 +90,8 @@ integer.
 {docstring Hex.GramSchmidt.Int.scaledCoeffs}
 
 The scaled coefficients are packaged together with the Gram-determinant
-vector inside {name}`Hex.GramSchmidt.Int.Data`. `scaledCoeffs` projects
-out its coefficient matrix.
+vector inside {name}`Hex.GramSchmidt.Int.Data`.
+{name}`Hex.GramSchmidt.Int.scaledCoeffs` projects out its coefficient matrix.
 
 ## Worked example: Gram determinants and scaled coefficients
 %%%
@@ -100,7 +101,8 @@ tag := "hex-gram-schmidt-worked"
 The block below works over the integer matrix with rows `(1,1,0)`,
 `(1,0,1)`, `(0,1,1)`. It reads off the leading Gram determinants, prints
 the whole scaled coefficient matrix, and applies a size-reduction row
-operation. The `gramDet` bound is filled by its `by omega` autoparam, so
+operation. The {name}`Hex.GramSchmidt.Int.gramDet` bound is filled by its
+`by omega` autoparam, so
 the calls need no explicit proof.
 
 ```lean (name := gramWorked)
@@ -233,11 +235,12 @@ tag := "hex-gram-schmidt-cross-references"
 `HexGramSchmidt` depends only on `HexMatrix` and underpins `HexLLL`:
 
 * `HexMatrix` supplies the {name}`Hex.Matrix` representation and the row
-  operations (`rowAdd`, `rowSwap`) that the
+  operations ({name}`Hex.Matrix.rowAdd`, {name}`Hex.Matrix.rowSwap`) that the
   {ref "hex-gram-schmidt-updates"}[update formulas] reason about. The
   orthogonalization here is built entirely on that representation.
 * `HexGramSchmidtMathlib` re-exports this executable theory as theorems
-  about Mathlib's `LinearMap` and `Matrix` Gram-Schmidt. `HexGramSchmidt`
+  about Mathlib's {name}`LinearMap` and
+  Mathlib's {name}`_root_.Matrix` Gram-Schmidt. `HexGramSchmidt`
   itself imports only `HexMatrix` and `Std`.
 * `HexLLL` consumes the {ref "hex-gram-schmidt-core"}[integer data]
   (the Gram determinants and scaled coefficients) and the

@@ -13,7 +13,7 @@ public section
 /-!
 # Root-product form of the polynomial discriminant
 
-This module derives the classical root-product formula for `Polynomial.discr`
+This module derives the classical root-product formula for {name}`Polynomial.discr`
 and the consequences shared by the real- and complex-root separation
 developments: non-vanishing of the discriminant of a separable polynomial,
 and the integer corollary `1 ≤ |discr f|` used in Mahler's separation bound.
@@ -29,13 +29,13 @@ statement live over an arbitrary splitting field, `ℂ` included. The familiar
 into `D` recovers `discr f = leadingCoeff f ^ (2 n - 2) * ∏_{i<j} (rᵢ - rⱼ)²`.
 
 The derivation runs through Mathlib's resultant API
-(`Polynomial.resultant_deriv`, `Polynomial.resultant_eq_prod_eval`) and the
-derivative-at-a-root product `Polynomial.Splits.eval_root_derivative`.
+({name}`Polynomial.resultant_deriv`, {name}`Polynomial.resultant_eq_prod_eval`) and the
+derivative-at-a-root product {name}`Polynomial.Splits.eval_root_derivative`.
 
 Everything here is stated in ordinary Mathlib generality (an arbitrary field,
 or an arbitrary injective base change for `discr_map_of_injective`) and is
 upstreamable: Mathlib currently has the root-product discriminant formula only
-for cubics (`Cubic.discr_eq_prod_three_roots`), not in general degree.
+for cubics ({name}`Cubic.discr_eq_prod_three_roots`), not in general degree.
 -/
 
 open Multiset
@@ -47,7 +47,7 @@ variable {K : Type*} [Field K]
 /-- Derivative of a split polynomial evaluated at one of its roots, as a product
 over the remaining roots: `f'(x) = leadingCoeff f * ∏_{y ∈ roots.erase x} (x - y)`.
 
-This is the non-monic companion of `Polynomial.Splits.eval_root_derivative`;
+This is the non-monic companion of {name}`Polynomial.Splits.eval_root_derivative`;
 it scales that monic statement by the leading coefficient. When `x` is a
 repeated root both sides vanish. -/
 theorem eval_derivative_of_mem_roots [DecidableEq K] {f : K[X]} (hsplit : f.Splits)
@@ -148,7 +148,7 @@ theorem discr_ne_zero_of_nodup_roots {f : K[X]} (hf : 0 < f.degree)
 domain: `discr (f.map φ) = φ (discr f)`, for `f` of positive degree. The
 discriminant is a universal polynomial in the coefficients, so this holds for
 any injective `φ`; the proof cancels the (nonzero) leading coefficient in the
-resultant identity `Polynomial.resultant_deriv`. -/
+resultant identity {name}`Polynomial.resultant_deriv`. -/
 theorem discr_map_of_injective {R S : Type*} [CommRing R] [CommRing S] [IsDomain S]
     (φ : R →+* S) (hφ : Function.Injective φ) {f : R[X]} (hf : 0 < f.degree) :
     (f.map φ).discr = φ f.discr := by

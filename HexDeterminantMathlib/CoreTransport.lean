@@ -256,11 +256,12 @@ private theorem equivs_toFinset (n : Nat) :
   ext σ
   simp [PermutationVector.equivs_complete]
 
-/-- The executable Leibniz determinant `Hex.Matrix.det` agrees with Mathlib's
-`Matrix.det` of the corresponding Mathlib matrix `matrixEquiv M`. This is the
-bridge that lets a fact about `Matrix.det` be discharged by running the
-executable determinant, or the executable determinant be reasoned about with
-Mathlib's determinant theory. -/
+/-- The executable Leibniz determinant {name}`Hex.Matrix.det` agrees with
+Mathlib's {name}`Matrix.det` of the corresponding matrix
+under {name}`HexMatrixMathlib.matrixEquiv`. This bridge lets a fact about
+{name}`Matrix.det` be discharged by running the executable
+determinant, or lets the executable determinant be analyzed with Mathlib's
+determinant theory. -/
 theorem det_eq [CommRing R] (M : Hex.Matrix R n n) :
     Hex.Matrix.det M = Matrix.det (matrixEquiv M) := by
   let term : Equiv.Perm (Fin n) → R := fun σ =>
@@ -674,7 +675,7 @@ theorem det_mul_det_setRow_setRow_eq_cofactorRowPairing_mul_sub
       Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl] at h
     exact h
 
-/-! ### Ordered `nMatrix` row transport helpers -/
+/-! # Ordered `nMatrix` row transport helpers -/
 
 theorem skipIndex2_ordered_four_row_p2 {n : Nat}
     (p1 p2 p3 q : Fin (n + 2))
@@ -878,7 +879,7 @@ theorem ordered_four_cofactorRowPairing_p3_q_eq_det_setRow
   intro M r3
   exact (Hex.Matrix.det_setRow_eq_cofactorRowPairing M r3 B[q]).symm
 
-/-! ### Cyclic shift permutation for ordered four-row `B[p1]` transports
+/-! # Cyclic shift permutation for ordered four-row `B[p1]` transports
 
 These helpers package the row permutation that moves `B[p1]` from position
 `p1.val` past the intermediate rows up to position `p_t.val - 1`. Together

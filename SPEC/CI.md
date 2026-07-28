@@ -75,7 +75,8 @@ Concretely:
   lints, then elaborates the hex graph **once** (`lake build` of the
   libraries, the bench exes, the conformance `#guard` drivers, and the
   emit-fixture exes — including the `HexBerlekampZassenhausMathlib`
-  bridge required by the HO-1 correctness chain). It then runs the two
+  bridge required by integer-factorization correctness — followed by a
+  separate memory-bounded `lake build HexManual`). It then runs the two
   independent verification tails concurrently as `background:` steps: the
   per-library `bench verify` smoke gate per
   [SPEC/benchmarking.md §CI integration](benchmarking.md), and the

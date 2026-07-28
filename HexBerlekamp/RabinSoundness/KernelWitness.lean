@@ -28,7 +28,7 @@ namespace Hex
 namespace Berlekamp
 
 variable {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
-/-! ### Distinct-degree saturation infrastructure
+/-! # Distinct-degree saturation infrastructure
 
 These lemmas package the Leibniz-rule consequence used by the distinct-degree
 factorization assembly: if `r` is square-free (i.e. `gcd r r' = 1`) and
@@ -327,10 +327,10 @@ theorem isUnitPolynomial_gcd_quotient_of_squareFree
   exact isUnitPolynomial_of_squareFree_of_squared_dvd
     (squareFree_common_of_gcd_eq_one hsf) hg2_dvd_r
 
-/-! ### Square-free divisor distribution across kernel-witness gcds
+/-! # Square-free divisor distribution across kernel-witness gcds
 
-These lemmas package Step 3 of the Berlekamp completeness argument
-(see `SPEC/Libraries/hex-berlekamp-mathlib.md`). Working from the
+These lemmas package the divisor-distribution step of the Berlekamp
+completeness argument. Working from the
 witness-level product/divisibility form `f ∣ Π_{c ∈ F_p} (w - C c)`,
 they distribute the divisibility across the pairwise-coprime gcd
 factors `gcd f (w - C c)`. Combined with a non-constancy hypothesis on
@@ -338,8 +338,8 @@ the witness (no single `(w - C c)` is divisible by `f`), this yields a
 nontrivial Berlekamp split candidate.
 
 The witness-level divisibility hypothesis is the caller-facing
-interface; deriving it from `f ∣ FpPoly.linearPow w p - w` via the
-prime-field product identity is tracked separately (see #4160). -/
+interface; it follows from `f ∣ FpPoly.linearPow w p - w` via the
+prime-field product identity. -/
 
 omit [ZMod64.PrimeModulus p] in
 /-- The difference of two distinct witness linear factors collapses to
@@ -494,10 +494,8 @@ some witness gcd is nonzero, nonconstant, and not equal to `f`. This is
 the form consumed by the executable Berlekamp split surface (see
 `HexBerlekamp.Berlekamp.kernelWitnessSplit?_some_of_nontrivial_splitFactorAt`).
 
-`f` does not need to be square-free for this statement; the deliverable
-shape exposes the square-freeness hypothesis at the call site, where
-the witness-level divisibility hypothesis itself is derived from
-square-freeness (#4160). -/
+`f` does not need to be square-free for this statement. Square-freeness is
+used at the call site to derive the witness-level divisibility hypothesis. -/
 theorem exists_nontrivial_gcd_of_witnessProduct_dvd_of_pos_degree
     {f w : FpPoly p}
     (hf_pos : 0 < f.degree?.getD 0)
@@ -591,7 +589,7 @@ theorem exists_kernelWitnessSplit?_some_of_witnessProduct_dvd_of_pos_degree
     (by simpa [splitFactorAt] using hdegree)
     (by simpa [splitFactorAt] using hsize_lt)
 
-/-! ### Bezout-coefficient route for square-free monic splits
+/-! # Bezout-coefficient route for square-free monic splits
 
 From any nontrivial product factorization of a square-free monic `f`, the
 common-divisor form `gcd a b ∣ 1` supplied by `common_dvd_one_of_squareFree_mul`

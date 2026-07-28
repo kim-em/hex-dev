@@ -34,7 +34,7 @@ layered on this module later without changing the logical workload.
 
 namespace Hex.Interval.Experiment.Propagator.Bench
 
-/-! ## Opaque unary forest fixture -/
+/-! # Opaque unary forest fixture -/
 
 def rankDomain : DomainId := { index := 0 }
 
@@ -117,7 +117,7 @@ def generousLimits (trees depth : Nat) : Limits :=
     maxEqualities := 0
     splitEndpointLimit := { maxEndpointHeight := 64, maxAlignmentShift := 64 } }
 
-/-! ## Shared workload and observables -/
+/-! # Shared workload and observables -/
 
 /-- Larger `Nat` facts are stronger. -/
 def factDomain : FactDomain Nat where
@@ -211,7 +211,7 @@ def runIncremental (trees depth : Nat) : LogicalResult :=
         sweeps := 0
         checksum := factsChecksum result.state.facts }
 
-/-! ## Whole-network structural baseline -/
+/-! # Whole-network structural baseline -/
 
 structure ScanState where
   facts : Array Nat
@@ -286,7 +286,7 @@ def compare (trees depth : Nat) : Comparison :=
   { incremental := runIncremental trees depth
     structural := runStructural trees depth }
 
-/-! ## Exact logical-count formulas -/
+/-! # Exact logical-count formulas -/
 
 def expectedIncrementalInvocations (depth : Nat) : Nat := depth
 

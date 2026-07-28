@@ -113,8 +113,8 @@ end ZPoly
 /--
 Integer upper bound for the BHKS fast-recombination precision schedule.
 
-This is the conservative all-integer cap from the `hex-berlekamp-zassenhaus`
-SPEC: `1 + n * 4^(n^2) * (sumSquared + 1)^n * log2(sumSquared + 1)^n`, where
+The conservative all-integer cap is
+`1 + n * 4^(n^2) * (sumSquared + 1)^n * log2(sumSquared + 1)^n`, where
 `n` is the executable degree bound and `sumSquared` is the squared coefficient
 norm.
 -/
@@ -163,7 +163,6 @@ For the Mignotte criterion `p^a > 2·B`, returns the smallest exponent
 `a` with `p^a ≥ 2·B + 1` (equivalently `p^a > 2·B`). The two quantities
 are different — `B` is a magnitude on integer coefficients, `a` is the
 small exponent on the Hensel modulus `p^a` — and must not be conflated.
-See SPEC/Libraries/hex-berlekamp-zassenhaus.md §"Slow path".
 -/
 @[expose]
 def precisionForCoeffBound (B p : Nat) : Nat :=
@@ -227,7 +226,7 @@ private theorem ceilLogPAux_pow_bound (p : Nat) :
 Correctness of `ceilLogP`: when `2 ≤ p`, the returned exponent satisfies
 `target ≤ p ^ ceilLogP p target`.
 
-This is the small spec consumed by `precisionForCoeffBound_spec` below; the
+This bound is consumed by `precisionForCoeffBound_spec` below; the
 strict-inequality Mignotte side condition `2 * B < p ^ precisionForCoeffBound B p`
 follows by chaining this with the target `target = 2 * B + 1`.
 -/
@@ -292,7 +291,7 @@ The executable Mignotte precision exponent satisfies the Mignotte side
 condition `2 * B < p ^ precisionForCoeffBound B p` whenever the modulus is at
 least `2`.
 
-This is the reusable spec consumed by `ForwardRecoveryInputs` constructors that
+This is the reusable bound consumed by `ForwardRecoveryInputs` constructors that
 need to discharge the `mignotte_precision` field at the actual executable
 precision returned by `henselLiftData f (precisionForCoeffBound B p)`.
 -/

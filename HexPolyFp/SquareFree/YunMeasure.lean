@@ -605,10 +605,10 @@ private theorem yunFactorsDerivativeActiveReachable_nonzero
 /-- Every node reachable in the derivative-active Yun recursion has a monic
 residual `w`, and both `c` and `w` are nonzero and square-free-contribution
 reachable. The monic residual is the load-bearing invariant: `w` starts monic
-(a `monicGcd`) and each `step` keeps it monic, while `c` is either a `monicGcd`
-(monic) or the derivative-split quotient (whose `squareFreeContributionReachable`
+(a {name}`monicGcd`) and each `step` keeps it monic, while `c` is either a {name}`monicGcd`
+(monic) or the derivative-split quotient (whose {name}`squareFreeContributionReachable`
 is the vacuous size-one case). This is what discharges the former
-`YunDerivativeActiveRawStateProvider` hypothesis. -/
+{name}`YunDerivativeActiveRawStateProvider` hypothesis. -/
 private theorem yunFactorsDerivativeActiveReachable_state
     (hp : Hex.Nat.Prime p) (f c w : FpPoly p) (fuel : Nat)
     (hr : yunFactorsDerivativeActiveReachable hp f c w fuel) :
@@ -649,7 +649,7 @@ private theorem yunFactorsDerivativeActiveReachable_state
       · exact squareFreeContributionReachable_of_monic _ hw'_monic
 
 /-- The derivative-active raw state provider is unconditionally true: it is just
-the `c`/`w` projection of `yunFactorsDerivativeActiveReachable_state`. This
+the `c`/`w` projection of {name}`yunFactorsDerivativeActiveReachable_state`. This
 discharges the former `hrawState` hypothesis threaded through the contribution
 correctness chain. -/
 private theorem yunDerivativeActiveRawStateProvider_holds
@@ -965,7 +965,7 @@ private theorem yunFactorsLevelCompletes_of_derivative_active_initial_split
 /-- Initial-split completion wrapper for the normalized derivative-active branch.
 
 This is the scalar-aware analogue of
-`yunFactorsLevelCompletes_of_derivative_active_initial_split`: it consumes the
+{name}`yunFactorsLevelCompletes_of_derivative_active_initial_split`: it consumes the
 normalized state provider and proves the normalized completion predicate, so raw
 nonzero scalar-unit states do not need to satisfy `isOne c = true`. -/
 private theorem yunFactorsNormalizedLevelCompletes_of_derivative_active_initial_split
@@ -1091,11 +1091,11 @@ private theorem yunFactorsContributionWithLevel_normalized_pow_invariant
         simpa [g, c, contribution] using hrawProduct)
 
 /--
-Combined provider for `yunFactorsContributionResidualComplete` driven by a
-`yunFactorsLevelCompletes` termination witness and a pairwise reachability
+Combined provider for {name}`yunFactorsContributionResidualComplete` driven by a
+{name}`yunFactorsLevelCompletes` termination witness and a pairwise reachability
 chain. Walks the recursion through the `LevelCompletes` predicate; at each
 state where `isOne c = true` the residual derivative-zero fact comes from
-`yunFactorsPairwiseReachable_terminal_residual_derivative_zero`.
+{name}`yunFactorsPairwiseReachable_terminal_residual_derivative_zero`.
 -/
 private theorem yunFactorsContributionResidualComplete_of_pairwise_reachable_levelCompletes
     [ZMod64.PrimeModulus p]
@@ -1141,10 +1141,10 @@ private theorem yunFactorsContributionResidualComplete_of_pairwise_reachable_lev
 
 /--
 Unscaled derivative-active provider for the contribution residual derivative-zero
-fact. Discharges the `yunFactorsContributionResidualDerivativeZero` hypothesis
+fact. Discharges the {name}`yunFactorsContributionResidualDerivativeZero` hypothesis
 on `(c, g) = (f / gcd f f', gcd f f')` purely from the size bound, the
 nonzero/derivative-active hypotheses on `f`, and a derivative-active state
-provider, by combining `yunFactorsLevelCompletes_of_size_bound_derivative_active`
+provider, by combining {name}`yunFactorsLevelCompletes_of_size_bound_derivative_active`
 with the pairwise-reachable terminal residual derivative-zero lemma.
 -/
 private theorem yunFactorsContributionResidualDerivativeZero_of_derivative_split
@@ -1204,10 +1204,10 @@ private theorem yunFactorsContributionResidualDerivativeZero_of_derivative_split
 /--
 Scaled-loop residual derivative-zero invariant for the derivative-active
 branch. Composes the unscaled witness
-`yunFactorsContributionResidualDerivativeZero_of_derivative_split` with the
-equality `yunFactorsContributionWithLevel_residual_derivative_zero_of_unscaled`:
-the residual `.2` of `yunFactorsContributionWithLevel` agrees with that of
-`yunFactorsContribution`, so derivative-zero transports directly.
+{name}`yunFactorsContributionResidualDerivativeZero_of_derivative_split` with the
+equality {name}`yunFactorsContributionWithLevel_residual_derivative_zero_of_unscaled`:
+the residual `.2` of {name}`yunFactorsContributionWithLevel` agrees with that of
+{name}`yunFactorsContribution`, so derivative-zero transports directly.
 -/
 private theorem yunFactorsContributionWithLevel_residual_derivative_zero_of_derivative_split
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (base level fuel : Nat)
@@ -1237,7 +1237,7 @@ private theorem yunFactorsContributionWithLevel_residual_derivative_zero_of_deri
 
 /-- The residual invariant holds for any size-`≤ 1` input at any fuel: a nonzero
 size-one polynomial is a constant, so its derivative is zero and the recursion
-descends through `pthRoot`, which keeps the size `≤ 1`, bottoming out at fuel
+descends through {name}`pthRoot`, which keeps the size `≤ 1`, bottoming out at fuel
 `0`. -/
 private theorem squareFreeAuxRevResidualSatisfied_of_size_le_one
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (m fuel : Nat) (hsize : f.size ≤ 1) :
@@ -1268,9 +1268,9 @@ private theorem squareFreeAuxRevResidualSatisfied_of_size_le_one
 
 /-- The residual invariant holds whenever fuel exceeds the size: with monic
 intermediates the loop residual divides the monic gcd (hence the input), so it
-shrinks below the fuel and `pthRoot` strictly decreases it. The derivative-zero
-residual fact is `yunFactorsContributionWithLevel_residual_derivative_zero_of_derivative_split`
-and the recursion bound is `yunFactorsWithLevel_pthRoot_tail_fuel_bound`, both
+shrinks below the fuel and {name}`pthRoot` strictly decreases it. The derivative-zero
+residual fact is {name}`yunFactorsContributionWithLevel_residual_derivative_zero_of_derivative_split`
+and the recursion bound is {name}`yunFactorsWithLevel_pthRoot_tail_fuel_bound`, both
 discharged by the now-proven raw state provider. This is the size-bounded
 replacement for the (false at small fuel) `∀ fuel` `residualInvariant`
 hypothesis. -/

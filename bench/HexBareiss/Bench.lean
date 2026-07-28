@@ -156,7 +156,7 @@ setup_benchmark runBareissDet n => n * n * n
     targetInnerNanos := 2000000000
   }
 
-/-! ## FLINT `fmpz_mat_det` informational comparator fixed registrations
+/-! # FLINT `fmpz_mat_det` informational comparator fixed registrations
 
 `runBareissDet` is paired with the FLINT `fmpz_mat.det` op via the
 shared persistent-subprocess driver. The pairs are registered as

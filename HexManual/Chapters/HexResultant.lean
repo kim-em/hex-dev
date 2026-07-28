@@ -85,9 +85,9 @@ end HexResultantChapter
 tag := "hex-resultant-correspondence"
 %%%
 
-These Phase-1 declarations fix the intended correspondence API; their proof
-bodies are not yet complete. The central contract identifies the executable
-scalar with Mathlib's determinant-defined resultant:
+These declarations describe the executable results in Mathlib terms. The
+central contract identifies the executable scalar with Mathlib's
+determinant-defined resultant:
 
 {docstring Hex.DensePoly.toPolynomial_resultant}
 

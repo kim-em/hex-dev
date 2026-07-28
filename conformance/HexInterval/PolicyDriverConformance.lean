@@ -23,7 +23,7 @@ open Experiment.Propagator.Policy
 open Experiment.Propagator.Policy.Driver
 open PolicyConformance
 
-/-! ## A deterministic scripted policy -/
+/-! # A deterministic scripted policy -/
 
 inductive Command
   | select (id : OfferId)
@@ -119,7 +119,7 @@ def invokeLimited (calls : Calls) (request : RuleRequest Rank) :
     Outcome Rank × Calls :=
   (.resourceLimit 59, calls ++ [(request.action.key.name, request.action.effort)])
 
-/-! ## Exact event predicates -/
+/-! # Exact event predicates -/
 
 def exactSelection (selection : Selection) (serial programVersion : Nat)
     (id : OfferId) : Bool :=
@@ -238,7 +238,7 @@ def instantiationFirstCommands : List Command :=
     .dismiss (.suggestion (suggestion 0)),
     .select (.suggestion (suggestion 2))]
 
-/-! ## Two valid schedules, one semantic result -/
+/-! # Two valid schedules, one semantic result -/
 
 #guard
   match run? 7 retryFirstCommands with
@@ -264,7 +264,7 @@ def instantiationFirstCommands : List Command :=
         | _ => false
   | none => false
 
-/-! ## Saturation and stopping boundaries -/
+/-! # Saturation and stopping boundaries -/
 
 def saturationCommands : List Command :=
   retryFirstCommands.dropLast ++ [.dismiss (.suggestion (suggestion 2))]
@@ -420,7 +420,7 @@ def exactSaturationPrefix (events : Array (Event Rank)) : Bool :=
         | _, _ => false
   | none => false
 
-/-! ## Resource boundaries -/
+/-! # Resource boundaries -/
 
 def initialWithLimits? (limits : Experiment.Propagator.Policy.Limits) : Option (State Rank) :=
   initialWith? limits
@@ -487,7 +487,7 @@ def initialWithLimits? (limits : Experiment.Propagator.Policy.Limits) : Option (
         | _, _ => false
   | none => false
 
-/-! ## Typed equality stops -/
+/-! # Typed equality stops -/
 
 -- Equality resource failures remain typed observations, then stop the driver
 -- with a second event which identifies the selected policy choice as origin.
@@ -540,7 +540,7 @@ def initialWithLimits? (limits : Experiment.Propagator.Policy.Limits) : Option (
         | _, _ => false
   | none => false
 
-/-! ## Revalidation of untrusted selections -/
+/-! # Revalidation of untrusted selections -/
 
 #guard
   match run? 2 [.stale (.application (application 0)), .stop] with
@@ -566,7 +566,7 @@ def initialWithLimits? (limits : Experiment.Propagator.Policy.Limits) : Option (
         | _, _ => false
   | none => false
 
-/-! ## Split plans are returned, never executed by the driver -/
+/-! # Split plans are returned, never executed by the driver -/
 
 #guard
   match run? 1 [.select (.suggestion (suggestion 2))] afterInitial? with

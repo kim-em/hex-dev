@@ -14,7 +14,7 @@ public section
 namespace Hex
 namespace GramSchmidt
 namespace Int
-/-! ### Row-add determinant helper lemmas -/
+/-! # Row-add determinant helper lemmas -/
 
 /-- Entry-level expansion of the leading Gram matrix, with rows in the
 `getElem` normal form. -/
@@ -448,7 +448,7 @@ theorem gramDet_rowAdd_earlier
     rw [leadingGramMatrixInt_rowAdd_outside b j k c t ht hkt']
 
 
-/-! ### `scaledCoeffs` row-by-row updates under earlier-row addition
+/-! # `scaledCoeffs` row-by-row updates under earlier-row addition
 
 The three theorems below package the scaled-coefficient update under
 `Matrix.rowAdd b j k c` with `j.val < k.val` at each below-diagonal column
@@ -606,7 +606,7 @@ theorem scaledCoeffs_rowAdd_above_pivot (b : Matrix Int n m) (j k : Fin n)
     _ = ((GramSchmidt.entry (scaledCoeffs b) k l : Int) : Rat) := hold.symm
 
 
-/-! ### Determinant-backed independence
+/-! # Determinant-backed independence
 
 These determinant-positivity lemmas for `gramDet` live in
 `HexGramSchmidtMathlib` because their proofs identify `gramDet` with the
@@ -664,7 +664,7 @@ theorem independent_identity {n : Nat} : independent (Matrix.identity (R := Int)
     decide)
 
 
-/-! ### Singular-prefix zero propagation for the Gram-Bareiss surface
+/-! # Singular-prefix zero propagation for the Gram-Bareiss surface
 
 When the no-pivot Bareiss loop on a Gram matrix records a singular step at
 index `s`, the `(s+1)`-leading Gram prefix has zero determinant. By the
@@ -913,7 +913,7 @@ theorem principalSubmatrix_gram_bareiss_eq_zero_of_singularStep_lt
   rw [HexMatrixMathlib.bareiss_eq_det]
   exact h_det_prefix_r1_zero
 
-/-- Capstone for the Gram determinant vector: the no-pivot
+/-- The no-pivot
 Bareiss pass over the full Gram matrix records, at slot `r + 1`, the same
 leading-prefix determinant as the public row-pivoted Bareiss surface on that
 prefix.

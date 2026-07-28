@@ -225,7 +225,7 @@ def emitGfqFieldFixture (lib case : String) (p : Int)
     ("zexp",    jsonInt zexp)
   ]
 
-/-! ## Real-closed-field sentence fixtures -/
+/-! # Real-closed-field sentence fixtures -/
 
 /- Typed wire representation for the RCF sentence fixture.  Keeping this
 small AST in the dependency-free conformance helper prevents per-library

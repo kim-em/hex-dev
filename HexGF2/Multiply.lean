@@ -82,15 +82,14 @@ example (p q : GF2Poly) (n : Nat) :
     (p * q).coeff n = coeffWords (mulWords p.words q.words) n := by
   simp
 
-/-! ### Public carryless-convolution coefficient lemma
+/-! # Public carryless-convolution coefficient lemma
 
 `coeff_mul_diagonal` (below) expresses bit `n` of a packed product as the
 XOR-parity of the diagonal `p.coeff i && q.coeff (n - i)` over `i ∈ range (n+1)`.
-This is the public coefficient-level convolution the Mathlib bridge
-`HexGF2Mathlib` needs to relate the carryless `clmul` product to the schoolbook
-`mulCoeffSum` over `ZMod64 2`. The proof reindexes the `(word, bit)` double
-decomposition `64 * I + A` / `64 * J + B` of the internal source-pair sum into
-the flat coefficient indices `s + t = n`. -/
+This coefficient-level convolution relates the carryless {name}`Hex.clmul`
+product to ordinary polynomial convolution. The proof reindexes the `(word,
+bit)` double decomposition `64 * I + A` / `64 * J + B` of the internal
+source-pair sum into the flat coefficient indices `s + t = n`. -/
 
 /-- Split `range (m + k)` into a low block and a shifted high block. -/
 private theorem range_eq_append_map_add (m k : Nat) :
@@ -292,9 +291,9 @@ private theorem clmulCoeffAt_diag (c : Nat) (x y : UInt64) (n : Nat) :
 
 /-- Carryless-convolution coefficient law: bit `n` of a packed `GF(2)` product
 is the XOR-parity of the diagonal `p.coeff i && q.coeff (n - i)` for
-`i ∈ range (n + 1)`. This is the public coefficient-level convolution that the
-`HexGF2Mathlib` bridge uses to relate the carryless `clmul` product to the
-schoolbook `mulCoeffSum` over `ZMod64 2`. -/
+`i ∈ range (n + 1)`. This identity relates the carryless {name}`Hex.clmul`
+product to ordinary polynomial convolution over the two-element coefficient
+ring. -/
 theorem coeff_mul_diagonal (p q : GF2Poly) (n : Nat) :
     (p * q).coeff n =
       xorBoolList ((List.range (n + 1)).map (fun s => p.coeff s && q.coeff (n - s))) := by

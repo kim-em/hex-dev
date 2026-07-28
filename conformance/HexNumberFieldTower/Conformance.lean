@@ -11,7 +11,7 @@ Core conformance checks for `HexNumberFieldTower`.
 
 Oracle: PARI/GP through cypari2 for the external JSONL profile; the core
 profile uses independent algebraic identities and committed exact coordinates.
-Mode: if_available.
+Mode: `if_available`.
 
 Covered operations:
 - `ofQAdjoin` for rational, both selected conjugates, and non-unit or
@@ -50,7 +50,7 @@ namespace Hex.NumberTowerConformance
 open Hex
 open Hex.NumberTower
 
-/-! ## Shared fixed-embedding fixtures -/
+/-! # Shared fixed-embedding fixtures -/
 
 private def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
 
@@ -267,7 +267,7 @@ private def rationalPoly (coefficients : List Rat) : Poly rat :=
 private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
   f.toArray.map coeffs
 
-/-! ## `ofQAdjoin` -/
+/-! # `ofQAdjoin` -/
 
 -- Typical one-level field: the generator satisfies its defining relation and
 -- rationals occupy the constant coordinate.
@@ -317,7 +317,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
           coeffs (extension.gen * extension.gen) = #[3 / 2, 0]
     | none => false
 
-/-! ## Tower arithmetic -/
+/-! # Tower arithmetic -/
 
 -- Typical arithmetic in a genuine quadratic field, including inversion and
 -- division by non-rational elements.
@@ -366,7 +366,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
           !isZero (1 : Elem T)
     | none => false
 
-/-! ## `adjoin?` -/
+/-! # `adjoin?` -/
 
 -- Typical proper relative extension.
 #guard
@@ -404,7 +404,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
         | none => false
     | _, _ => false
 
-/-! ## `factor?` and `checkFactorization` -/
+/-! # `factor?` and `checkFactorization` -/
 
 -- Typical rational factorization into two distinct linear factors.
 #guard
@@ -484,7 +484,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
         | none => false
     | none => false
 
-/-! ## `split?` -/
+/-! # `split?` -/
 
 -- Typical quadratic: one adjoining step and both simple roots.
 #guard
@@ -559,7 +559,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
           | .all => false
     | none => false
 
-/-! ## `flatten?` -/
+/-! # `flatten?` -/
 
 -- Recovery retry: shift `+1` has full degree but a nonlinear gcd, and the
 -- same bounded search continues to the recoverable shift `-1`.

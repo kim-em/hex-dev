@@ -43,9 +43,10 @@ the Gram-Schmidt data of `b` from its exact integer Gram matrix and accepts
 only when every independence, size-reduction, and Lovász inequality is
 decided with the enclosure strictly on the correct side. `false` means
 "not reduced or indecisive at this precision": callers must fall back to
-the exact checker `lllReduced`, which keeps completeness structural.
-Soundness (`lllReducedInterval_sound`, HexLLLMathlib) entails
-`b.independent ∧ isLLLReduced b δ η` at the exact rational parameters. -/
+the exact `Hex.lllReduced` checker, which keeps completeness structural.
+The bridge theorem `HexLLLMathlib.lllReducedInterval_sound` proves that
+acceptance entails independence and LLL reducedness at the exact rational
+parameters. -/
 @[expose]
 def lllReducedInterval (b : Matrix Int n m) (δ : Rat := 3/4) (η : Rat := 1/2) : Bool :=
   let S : Int := (2 : Int) ^ intervalPrec
@@ -69,12 +70,14 @@ Verifies, over integer arithmetic only:
 
 No validity hypothesis on `η` is required: a malformed `η` (e.g. negative) is
 incompatible with a positive `d[j+1]` and the size-reduced bound, so the
-checker simply returns `false`. Soundness
-(`lllReduced_sound`, HexLLLMathlib) bridges to the rational predicate
-`isLLLReduced` via the integer correspondence
-(`Hex.GramSchmidt.Int.scaledCoeffs_eq`, `basis_normSq`, `gramDet_pos`).
-`δ` and `η` default to the classical `3/4` and `1/2`, so `lllReduced b` tests
-textbook LLL-reducedness (the bound `lllNative` achieves). -/
+checker simply returns `false`. The bridge theorem
+`HexLLLMathlib.lllReduced_sound` relates this checker to rational LLL
+reducedness using
+`Hex.GramSchmidt.Int.scaledCoeffs_eq`,
+`Hex.GramSchmidt.Int.basis_normSq`, and
+`Hex.GramSchmidt.Int.gramDet_pos`. `δ` and `η` default to the classical `3/4`
+and `1/2`, so `lllReduced b` tests textbook LLL-reducedness (the bound achieved
+by the native reducer). -/
 @[expose]
 def lllReduced (b : Matrix Int n m) (δ : Rat := 3/4) (η : Rat := 1/2) : Bool :=
   let gs := GramSchmidt.Int.data b
@@ -214,8 +217,9 @@ end Internal
 
 /-- Reducedness clause of the certified dispatch. On the same integer
 `d`/`ν` data, two checkers can decide reducedness: the exact integer
-checker `lllReduced`, always complete, and a faster fixed-precision
-interval pass. The size predictor `intervalWins` picks which to run first;
+checker {name}`Hex.lllReduced`, always complete, and the fixed-precision
+{name}`Hex.lllReducedInterval`. The size predictor
+{name}`Hex.Internal.intervalWins` picks which to run first;
 when the interval pass is indecisive it falls back to the exact checker,
 so completeness stays structural rather than numerical. Records each
 decision in the checker tally, distinguishing all three outcomes. -/
@@ -233,11 +237,12 @@ def lllReducedCheck (b : Matrix Int n m) (δ : Rat := 3/4) (η : Rat := 1/2) : B
 external candidate for reducing `B`, i.e. `B` and `B'` generate the same integer
 row lattice (witnessed by `U`, `V`) and `B'` is `(δ, η)`-reduced.
 
-Composes the Mathlib-free Bool checkers `Matrix.sameLatticeCert` and
-`lllReducedCheck` (interval decision with exact `lllReduced` fallback).
-Soundness (`certCheck_sound`, HexLLLMathlib) entails the property triple
-`(same lattice, B' independent, isLLLReduced B' δ η)` and is the single
-trusted bridge that the certified-dispatch path of `lll` depends on. -/
+Composes the Mathlib-free Boolean checkers
+{name}`Hex.Matrix.sameLatticeCert` and {name}`Hex.lllReducedCheck`, whose
+interval decision has an exact {name}`Hex.lllReduced` fallback. The bridge
+theorem `HexLLLMathlib.certCheck_sound` entails the property triple
+`(same lattice, B' independent, isLLLReduced B' δ η)` and makes this check the
+trust boundary for certified external dispatch. -/
 @[expose]
 def certCheck (B B' : Matrix Int n m) (U V : Matrix Int n n) (δ η : Rat) : Bool :=
   Matrix.sameLatticeCert B B' U V && lllReducedCheck B' δ η

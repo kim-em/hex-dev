@@ -18,7 +18,7 @@ the enclosure reducedness checker. Mathlib-free; no floating point.
 
 namespace Hex.Internal
 
-/-! ### Fixed-precision dyadic interval kernel
+/-! # Fixed-precision dyadic interval kernel
 
 The certified-dispatch reducedness clause is decided first by a sound
 enclosure pass at fixed working precision; only on indecision does it fall

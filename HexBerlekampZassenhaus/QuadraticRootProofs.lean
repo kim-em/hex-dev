@@ -213,7 +213,7 @@ private theorem nodup_flatMap_pos_divisor_pairs (ds : List Nat)
 integer roots: positive divisors are distinct, and the per-divisor pair
 `[d, -d]` is duplicate-free for `d ≠ 0` (which `positiveDivisors` ensures by
 filtering out `d = 0`). The two pairs for distinct positive `d₁ ≠ d₂` share
-no elements either. Consumed by the #4785 pairwise non-association proof
+no elements either. Consumed by the pairwise non-association proof
 together with `splitIntegerRootFactorsAux_factors_form` to read off
 pairwise distinctness of the factor roots. -/
 private theorem integerRootCandidates_nodup (f : ZPoly) :
@@ -228,8 +228,7 @@ private theorem integerRootCandidates_nodup (f : ZPoly) :
     simp at hpred
     omega
 
-/-- **#4747 HO-1 support lemma — `normalizeFactorSign` identity on quadratic-arm
-core factors.** Every factor emitted by `quadraticIntegerRootFactors? core` is a
+/-- Every factor emitted by `quadraticIntegerRootFactors? core` is a
 fixed point of `normalizeFactorSign`. For linear factors `linearFactorForRoot r`,
 the leading coefficient is `1`; for the optional residual, positivity of its
 leading coefficient is forced by `0 < DensePoly.leadingCoeff core` combined with
@@ -238,8 +237,7 @@ the splitter invariant
 Mathlib-side discharger
 `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` to discharge
 the `hnorm` precondition of
-`normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`
-(#4759). -/
+`normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`. -/
 theorem quadraticIntegerRootFactors?_normalizeFactorSign
     {core : ZPoly} {factors : Array ZPoly}
     (hcore_pos : 0 < DensePoly.leadingCoeff core)
@@ -728,26 +726,25 @@ theorem quadraticIntegerRootFactors?_product
           contradiction
   · simp [hdeg] at hquad
 
-/-- **#4747 HO-1 support lemma — public surface for the polyProduct invariant of the
-quadratic integer-root branch.** Whenever `quadraticIntegerRootFactors? core`
+/-- Whenever `quadraticIntegerRootFactors? core`
 returns `some coreFactors`, the executable `Array.polyProduct` of the recorded
 factors reconstructs `core` exactly. Public wrapper of the private
 `quadraticIntegerRootFactors?_product`, used by the Mathlib-side
 discharger `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
 (`HexBerlekampZassenhausMathlib/IntReductionMod.lean`) when feeding the
-factorPower repeated-part decomposition (#4759) and the no-tail divisibility
-lemma (#4807) into `Hex.reassemblyExpansionComplete`. Sibling dischargers:
-constant arm `Hex.reassemblyExpansionComplete_constant_of_ne_zero` (#4585 /
-PR #4598); small-mod singleton arm
-`Hex.reassemblyExpansionComplete_singleton_of_irreducible` (#4597). -/
+factorPower repeated-part decomposition and the no-tail divisibility
+lemma into `Hex.reassemblyExpansionComplete`. The corresponding constant and
+small-mod singleton branch theorems are
+`Hex.reassemblyExpansionComplete_constant_of_ne_zero` and
+`Hex.reassemblyExpansionComplete_singleton_of_irreducible`. -/
 theorem polyProduct_quadraticIntegerRootFactors?_some
     {core : ZPoly} {coreFactors : Array ZPoly}
     (hquad : quadraticIntegerRootFactors? core = some coreFactors) :
     Array.polyProduct coreFactors = core :=
   quadraticIntegerRootFactors?_product hquad
 
-/-- **#4747 HO-1 support lemma — every factor emitted by `quadraticIntegerRootFactors?`
-has dense size two.** The branch is only entered when
+/-- Every factor emitted by `quadraticIntegerRootFactors?` has dense size two.
+The branch is only entered when
 `core.degree?.getD 0 = 2`. Linear factors emitted by the splitter are
 `linearFactorForRoot r = X - r`, which has size `2` by
 `linearFactorForRoot_size_eq_two`. The optional final residual has
@@ -919,8 +916,7 @@ private theorem toRatPoly_dvd {p q : ZPoly} (h : p ∣ q) :
 sense) is not divisible by `(X - r)²` for any integer root `r`.
 
 This is consumed by the pairwise non-association proof for
-`quadraticIntegerRootFactors? core` (#4785, downstream of the
-`reassemblyExpansionComplete` discharger #4747): if the residual final
+`quadraticIntegerRootFactors? core`: if the residual final
 factor were associated to an extracted linear factor `linearFactorForRoot r`,
 then `linearFactorForRoot r * linearFactorForRoot r` would divide `core`,
 which this lemma rules out under squarefreeness. The `(X - r)` shape of
@@ -987,7 +983,7 @@ the unit factor `u` in any `Associated` witness `LF s = LF r * u` is forced to
 `C 1` (the `C (-1)` branch flips the leading coefficient). With `u = C 1`,
 comparing the constant coefficient yields `-r = -s`, contradicting `r ≠ s`.
 Consumed by the linear-vs-linear case of
-`quadraticIntegerRootFactors?_pairwise_not_associated` (#4785). -/
+`quadraticIntegerRootFactors?_pairwise_not_associated`. -/
 private theorem linearFactorForRoot_not_associated_of_ne
     {r s : Int} (hrs : r ≠ s) :
     ¬ ZPoly.Associated (linearFactorForRoot r) (linearFactorForRoot s) := by
@@ -1037,7 +1033,7 @@ of `rs.map linearFactorForRoot`. Proven by induction on `rs`: the head case is
 direct, and the tail case lifts the inductive divisor over a single left
 multiplication using `list_foldl_mul_eq_mul_foldl_one`. Consumed by the
 linear-vs-residual case of
-`quadraticIntegerRootFactors?_pairwise_not_associated` (#4785) to extract
+`quadraticIntegerRootFactors?_pairwise_not_associated` to extract
 a copy of `linearFactorForRoot r` from `Array.polyProduct split.1` and pair
 it with the residual to yield `(linearFactorForRoot r)^2 ∣ core`, then refuted
 via `linearFactor_squared_not_dvd_of_squareFreeRat`. -/
@@ -1063,8 +1059,7 @@ private theorem linearFactor_dvd_listFoldl_of_mem
           DensePoly.mul_assoc_poly (S := Int) (linearFactorForRoot r)
             (linearFactorForRoot head) k]
 
-/-- **#4785 HO-1 support lemma — pairwise non-association of the quadratic
-integer-root branch output.** The factors emitted by
+/-- The factors emitted by
 `quadraticIntegerRootFactors? core` are pairwise non-`ZPoly`-associated
 whenever `core` is primitive, has positive leading coefficient, and is
 square-free over `Rat[x]`.
@@ -1081,9 +1076,8 @@ leading coefficient via the splitter's monic-product invariant), and the
 `u = C 1` branch produces `(linearFactorForRoot r)^2 ∣ core`, refuted by
 `linearFactor_squared_not_dvd_of_squareFreeRat`.
 
-Combines with `irreducible_not_dvd_of_not_associated` (HO-1 support lemma #4603)
-into the `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
-discharger (#4747 residual). -/
+Combines with `irreducible_not_dvd_of_not_associated` in
+`reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`. -/
 theorem quadraticIntegerRootFactors?_pairwise_not_associated
     {core : ZPoly} (hcore_lc_pos : 0 < DensePoly.leadingCoeff core)
     (hcore_primitive : ZPoly.Primitive core)

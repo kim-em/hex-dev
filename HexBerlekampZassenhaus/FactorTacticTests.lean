@@ -39,7 +39,7 @@ example : True := by
   have : scalar = -6 := rfl
   exact True.intro
 
-/-! ## `irreducibility` on ZPoly -/
+/-! # `irreducibility` on ZPoly -/
 
 def linZ : ZPoly := DensePoly.ofCoeffs #[3, 2]
 def quadZ : ZPoly := DensePoly.ofCoeffs #[1, 0, 1]
@@ -58,7 +58,7 @@ example : True := by
   irreducibility h : linZ
   exact True.intro
 
-/-! ## Eisenstein-after-shift certificates -/
+/-! # Eisenstein-after-shift certificates -/
 
 /-- `X⁴+1`: irreducible over ℤ but reducible mod every prime, so there is no
 single-prime witness; the Eisenstein-after-shift search certifies it at
@@ -83,7 +83,7 @@ def x2m127 : ZPoly := DensePoly.ofCoeffs #[-127, 0, 1]
 
 example : ZPoly.checkIrredWitness x2m127 (.eisenstein 127 0) = true := rfl
 
-/-! ## Balanced inputs: no free-layer certificate, clean decline -/
+/-! # Balanced inputs: no free-layer certificate, clean decline -/
 
 /-- A product with a Swinnerton-Dyer factor: `(x+1)·(x⁴−10x²+1)`. The
 factorization search succeeds but the SD factor has no free-layer witness
@@ -94,7 +94,7 @@ def sdProd : ZPoly :=
 
 #check_failure (factor_poly sdProd)
 
-/-! ## Reducible/unit inputs: targeted errors -/
+/-! # Reducible/unit inputs: targeted errors -/
 
 /--
 info: irreducibility: the polynomial
@@ -118,7 +118,7 @@ needs a kernel replay of 65537 candidate remainder tests, over the supported bud
 #guard_msgs in
 #check_failure (irreducibility (DensePoly.C (4295229444 : Int)))
 
-/-! ## Axiom hygiene -/
+/-! # Axiom hygiene -/
 
 /-- info: 'HexBerlekampZassenhaus.FactorTacticTests.facZ' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

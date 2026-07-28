@@ -36,7 +36,7 @@ factorization in `HexPolyFp` to the integer factorization pipelines
 built on top of it.
 
 The library connects integer polynomials
-({ref "hex-poly-z"}[HexPolyZ], `Hex.ZPoly`) with prime-field
+({ref "hex-poly-z"}[HexPolyZ], {name}`Hex.ZPoly`) with prime-field
 polynomials (`HexPolyFp`, `Hex.FpPoly p`). It provides coefficientwise
 reduction modulo powers of `p`, the linear and quadratic single-step
 corrections, the iterative {name}`Hex.ZPoly.henselLift` wrapper, and the
@@ -200,7 +200,7 @@ tag := "hex-hensel-cross-references"
 integer-factorization libraries depend on it:
 
 * {ref "hex-poly-z"}[HexPolyZ] supplies the integer polynomial type
-  `Hex.ZPoly`, the coefficientwise congruence predicate the lift
+  {name}`Hex.ZPoly`, the coefficientwise congruence predicate the lift
   invariants are stated against, and the executable Mignotte bound that
   fixes the target precision `k`. `HexPolyFp` supplies the prime-field
   type `Hex.FpPoly p` and the mod-`p` Bezout witnesses that seed a lift.

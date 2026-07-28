@@ -20,14 +20,14 @@ set_option backward.proofsInPublic true
 /-!
 # The `IsolatedRealRoots` API
 
-The result type of the `isolate_roots` term elaborator (stage 3d) and the
-library-side constructors it emits: a complete, certified real-root isolation
+The result type and library-side constructors used by the `isolate_roots` term
+elaborator provide a complete, certified real-root isolation
 of `P : Polynomial R` over `ℝ`. All proof content lives here, so the emitted
 term only instantiates these constructors with reified literals and
-`decide`-style certificates (fat-API / thin-meta).
+`decide`-style certificates.
 
-The **replay constructor** `IsolatedRealRoots.ofCert` is the production
-certificate shape. Its hypotheses are exactly the cheap kernel checks landed in
+The replay constructor `IsolatedRealRoots.ofCert` is the
+certificate shape. Its hypotheses are exactly the cheap kernel checks from
 `HexRealRoots.Cert`: a single `SturmChainCert p chain` validity check, a
 per-interval sign-variation gap of `1` (`count_one` via `sturmCount_eq_of_cert`,
 packaged as `RealRootIsolation.count_one_of_cert`), an `orderedAdjacent` check
@@ -41,13 +41,13 @@ open Polynomial
 
 namespace Hex
 
-/-! ## The user-facing structure -/
+/-! # The user-facing structure -/
 
 /-- A complete, certified real-root isolation of `P : Polynomial R` over `ℝ`:
 `n` rational intervals, each holding exactly one real root, together covering
 every real root, sorted and pairwise disjoint. Props are in `aeval` form so the
-same structure serves `R = ℤ` (a `ZPoly` via `toPolynomial`), `R = ℚ`, and
-`R = ℝ`. -/
+same structure serves `R = ℤ` (a {name}`Hex.ZPoly` via
+{name}`HexPolyZMathlib.toPolynomial`), `R = ℚ`, and `R = ℝ`. -/
 structure IsolatedRealRoots {R : Type*} [CommRing R] [Algebra R ℝ]
     (P : Polynomial R) (n : ℕ) where
   /-- The `n` isolating intervals `(lower, upper]`, as pairs of rationals. -/
@@ -104,7 +104,7 @@ namespace HexRealRootsMathlib
 
 open Hex
 
-/-! ## Glue lemmas -/
+/-! # Glue lemmas -/
 
 /-- `aeval` over `ℝ` of an embedded integer polynomial is the degree-indexed sum
 of its integer coefficients cast to `ℝ` — the coefficient-sum form of
@@ -143,7 +143,7 @@ through this (a `Nat` `decide` on `p.size`), never through structural
 theorem ne_zero_of_size_ne_zero {p : Hex.ZPoly} (h : p.size ≠ 0) : p ≠ 0 :=
   fun he => h (by rw [he]; exact Hex.DensePoly.size_zero)
 
-/-! ## The from-`RealRootIsolations` constructor -/
+/-! # The from-`RealRootIsolations` constructor -/
 
 /-- **`IsolatedRealRoots.of`.** Assemble the user structure from a complete
 Sturm-certified run, via `exists_unique_root` + `isolates` + the `aeval` bridge,
@@ -181,7 +181,7 @@ noncomputable def _root_.Hex.IsolatedRealRoots.of (p : Hex.ZPoly) (hp0 : p ≠ 0
     simp only [Fin.getElem_fin, Vector.getElem_ofFn]
     exact Dyadic.toRat_le_toRat_iff.mpr (out.ordered i j hij)
 
-/-! ## The replay constructor -/
+/-! # The replay constructor -/
 
 /-- A per-interval `count_one` witness from the chain certificate and a single
 sign-variation gap `decide`: `sturmCount_eq_of_cert` rewrites the certified count
@@ -224,7 +224,7 @@ noncomputable def _root_.Hex.IsolatedRealRoots.ofCert {p : Hex.ZPoly} {chain : A
         complete := iso.size_toArray.trans
           (hcomplete.symm.trans (Hex.ZPoly.rootCount_eq_of_cert hcert).symm) }
 
-/-! ## Pretty interval literals -/
+/-! # Pretty interval literals -/
 
 /-- Re-express an isolation over different interval literals: any vector whose
 endpoints agree with the originals **as reals** carries the same three
@@ -317,7 +317,7 @@ endpoints without unfolding the constructor by hand. -/
     (IsolatedRealRoots.ofCertPretty iso w hsize hsf hcert hordered hcomplete hw).intervals = w :=
   rfl
 
-/-! ## The bridge tactic -/
+/-! # The bridge tactic -/
 
 /-- Close `∀ x : ℝ, aeval x (toPolynomial (ofCoeffs #[…])) = 0 ↔ aeval x P = 0`
 for a reflected literal `ofCoeffs` polynomial and a user polynomial `P` over

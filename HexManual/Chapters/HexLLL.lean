@@ -42,7 +42,7 @@ decreasing profile forces a `Θ(d² log B)` swap count:
 
 ![HexLLL reducers on Ajtai-style worst-case bases](https://kim-em.github.io/hex-dev/figures/hex-lll-comparator-ajtai.svg)
 
-The exact integer reducers (Lean's `lllNative` and the verified Isabelle
+The exact integer reducers (Lean's {name}`Hex.lllNative` and the verified Isabelle
 extraction) blow up `~d⁷`. The certified path (an `fpLLL` candidate
 checked by a verified Lean checker) stays cheap, near raw floating-point speed.
 The {ref "hex-lll-performance"}[performance comparison] below describes every
@@ -55,7 +55,7 @@ external candidate is fed through a verified integer checker. Only a basis
 the checker accepts is returned, and the checker's soundness theorem
 (proved on the Mathlib side) turns that acceptance into the mathematical
 guarantee. When no external candidate certifies, the exact all-integer
-reducer `lllNative` runs directly, and its guarantee is proved outright.
+reducer {name}`Hex.lllNative` runs directly, and its guarantee is proved outright.
 
 `HexLLL` is Mathlib-free. It takes the Gram-Schmidt machinery underlying
 both the predicates and the checkers from
@@ -153,7 +153,7 @@ the exact `d`/`ν` Gram-Schmidt data. Its size-reduction step produces exact
 The public entry point unifies two internal paths behind one signature.
 Given a basis with independent rows and `δ` in the classical range,
 {name}`Hex.lll` returns a reduced basis for the same lattice. It gets there
-either by running `lllNative` directly, or, when an external `fpLLL` provider
+either by running {name}`Hex.lllNative` directly, or, when an external `fpLLL` provider
 is available at runtime, by certifying the provider's candidate with the
 verified checker and returning that instead (the
 {ref "hex-lll-dispatch"}[next section] describes the switch). Accepting a
@@ -168,7 +168,7 @@ post-conditions, so callers and proofs never see which one ran.
 tag := "hex-lll-bound"
 %%%
 
-The public `Hex.lll` certifies its output `(δ, 11/20)`-reduced: every
+The public {name}`Hex.lll` certifies its output `(δ, 11/20)`-reduced: every
 Gram-Schmidt coefficient satisfies `|μ| ≤ 11/20`. Two numbers in its signature
 follow from `η = 11/20`. The precondition is `121/400 < δ`, because
 `121/400 = (11/20)² = η²` and the bound is well-defined only when `η² < δ`. The
@@ -176,11 +176,11 @@ short-vector constant is `1/(δ − 121/400)`. So the `121/400` stands exactly
 where the classical bound would put `1/4 = (1/2)²`.
 
 Why `11/20` rather than the classical `1/2`? Solely the external provider. The
-exact `Hex.lllNative` already lands at `|μ| ≤ 1/2`, but a black-box reducer
+exact {name}`Hex.lllNative` already lands at `|μ| ≤ 1/2`, but a black-box reducer
 cannot be forced to exactly `1/2` (fpLLL's default size-reduction target sits
 slightly above it), so the certified path accepts its candidate at the looser
-`11/20`. When you want the tighter guarantee, call `Hex.lllNative` directly: its
-short-vector theorem `lllNative_short_vector` carries the precondition
+`11/20`. When you want the tighter guarantee, call {name}`Hex.lllNative` directly: its
+Mathlib-side short-vector theorem `lllNative_short_vector` carries the precondition
 `1/4 < δ` and the strictly better constant `1/(δ − 1/4)`.
 
 ## Short vectors
@@ -199,7 +199,7 @@ basis as an ordered candidate list.
 
 Each has a counterpart under the {name}`Hex.lllNative` namespace.
 {name}`Hex.lllNative.firstShortVector` and {name}`Hex.lllNative.shortVectors`
-call `lllNative` directly, so they take the tighter native precondition
+call {name}`Hex.lllNative` directly, so they take the tighter native precondition
 `1/4 < δ` and skip the provider dispatch and its certification. They also omit
 the `b.independent` hypothesis — and this is the key point: independence is a
 precondition of the *theorems* about the output, not of the *computation*. The
@@ -217,20 +217,20 @@ experimentation.
 tag := "hex-lll-dispatch"
 %%%
 
-By default `Hex.lll` runs the exact `Hex.lllNative`. To let it accelerate
+By default {name}`Hex.lll` runs the exact {name}`Hex.lllNative`. To let it accelerate
 through the external `fpLLL` provider instead, call {name}`Hex.lll.loadProvider`
 with the path to a built fpLLL-ffi shared library
 (`scripts/oracle/setup_fplll_ffi.sh` builds one and prints its path); it
 `dlopen`s the library, installs it as the process provider, and returns `true`
 on success. {name}`Hex.lll.providerActive` reports whether one is installed.
 This is a runtime switch, not a matter of importing a different module —
-`HexLLL` always links its small provider shim, and the *same* `Hex.lll` call
+`HexLLL` always links its small provider shim, and the *same* {name}`Hex.lll` call
 takes the certified path exactly when a provider is installed. Loading is an
-explicit, discoverable Lean action next to `lll`: there is no environment
-variable read on the `lll` path and no implicit `dlopen`.
+explicit, discoverable Lean action next to {name}`Hex.lll`: there is no environment
+variable read on the {name}`Hex.lll` path and no implicit `dlopen`.
 
 Either way the result is `(δ, 11/20)`-reduced. When the provider is in use,
-`Hex.lll` asks it for a reduced basis and re-checks the candidate with
+{name}`Hex.lll` asks it for a reduced basis and re-checks the candidate with
 {name}`Hex.certCheck` before returning it; a candidate the checker rejects,
 or an absent provider, falls straight through to the native reducer. The
 foreign numerics can therefore speed things up but can never affect
@@ -258,11 +258,11 @@ bit-length grows with the dimension:
 Each plot is log-scale wall-time per reduction against the family dimension:
 
 * `fpLLL`: the raw floating-point reducer, unverified; the speed baseline.
-* `Lean native`: `Hex.lllNative`, the exact all-integer `d`/`ν` reducer.
+* `Lean native`: {name}`Hex.lllNative`, the exact all-integer `d`/`ν` reducer.
   Correct by construction, but its exact arithmetic pays for wide operands and
   high swap counts.
 * `Lean certified`: an `fpLLL` candidate *checked* by the verified Lean checker
-  `Hex.certCheck`. It inherits floating-point speed and adds only a cheap
+  {name}`Hex.certCheck`. It inherits floating-point speed and adds only a cheap
   integer check, so it stays close to the `fpLLL` curve while remaining fully
   verified.
 * `verified Isabelle native`: the Isabelle extraction's own reducer; the

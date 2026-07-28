@@ -287,7 +287,7 @@ def runMultifactorLiftChecksum (input : MultifactorInput) : UInt64 :=
 def runMultifactorLiftQuadraticChecksum (input : MultifactorInput) : UInt64 :=
   checksumZPolyArray <| ZPoly.multifactorLiftQuadratic 5 input.k input.f input.factors
 
-/-! ## FLINT `nmod_poly_hensel_lift_*` informational comparator surfaces
+/-! # FLINT `nmod_poly_hensel_lift_*` informational comparator surfaces
 
 Each of the five Hensel-lift Hex targets is paired with a corresponding
 call into the shared persistent-subprocess python-flint driver
@@ -697,7 +697,7 @@ setup_benchmark runMultifactorLiftQuadraticChecksum param => liftQuadraticComple
     signalFloorMultiplier := 1.0
   }
 
-/-! ## FLINT `nmod_poly_hensel_lift_*` informational comparator fixed registrations
+/-! # FLINT `nmod_poly_hensel_lift_*` informational comparator fixed registrations
 
 Each Hensel-lift Lean target is paired with the matching FLINT
 `nmod_poly_hensel` op via the shared persistent-subprocess driver. The pairs

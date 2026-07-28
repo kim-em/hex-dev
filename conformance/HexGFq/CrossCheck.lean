@@ -36,7 +36,7 @@ representation-correspondence scope.
 namespace Hex
 namespace GfqCrossCheck
 
-/-! ## Pseudorandom input streams
+/-! # Pseudorandom input streams
 
 Deterministic 64-bit linear congruential generator using Knuth's MMIX
 constants.  Each fixture seeds its own stream so the failure modes are
@@ -68,7 +68,7 @@ private def streamPairs (seed : UInt64) (count : Nat) : Array (UInt64 × UInt64)
       acc := acc.push (raw[2 * i]!, raw[2 * i + 1]!)
     pure acc
 
-/-! ## Bit-level word ↔ `FpPoly 2` conversions
+/-! # Bit-level word ↔ `FpPoly 2` conversions
 
 Each bit of a `UInt64` corresponds to one binary coefficient of the
 generic `FpPoly 2` representative, which makes the correspondence between
@@ -112,7 +112,7 @@ private def poly2ToWord (f : FpPoly 2) (n : Nat) : UInt64 :=
     else
       acc ||| ((1 : UInt64) <<< i.toUInt64)
 
-/-! ## `Hex.Nat.Prime 2` and `ZMod64.PrimeModulus 2` -/
+/-! # `Hex.Nat.Prime 2` and `ZMod64.PrimeModulus 2` -/
 
 /-- `primeTwo` is the primality witness for 2, used to build the prime-modulus
 instance for the binary base field. -/
@@ -783,7 +783,7 @@ theorem genericN16_irr :
       genericN16Cert
       genericN16Cert_check)
 
-/-! ## Per-degree fixtures
+/-! # Per-degree fixtures
 
 For each extension degree `n` we fix a known irreducible packed
 modulus, declare the matching `FpPoly 2` modulus via

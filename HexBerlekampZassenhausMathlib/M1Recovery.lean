@@ -34,7 +34,7 @@ noncomputable section
 
 open Polynomial
 
-/-! ### M1 (`monicTarget`-coordinate) recovery math
+/-! # M1 (`monicTarget`-coordinate) recovery math
 
 Additive congruence machinery for routing the fast-core recovery through the van
 Hoeij `M1` target `monicTarget core p k = core · ℓf⁻¹ (mod p^k)`
@@ -136,7 +136,7 @@ theorem scaledLiftedFactorProduct_congr_core_of_product_congr_monicTarget
     (scale_congr_of_congr (Hex.DensePoly.leadingCoeff core) _ _ _ hprod)
     (leadingCoeff_scale_monicTarget_congr_core core d.p d.k hpk hgcd)
 
-/-- Core-coordinate recovery capstone (`M1`): when the lifted product is congruent
+/-- Core-coordinate recovery theorem: when the lifted product is congruent
 to the whole `monicTarget core p k` modulo the Hensel modulus `p^a`, the executable
 centred lift of the `ℓf`-scaled lifted product recovers `core` exactly, provided the
 modulus is beyond twice the default Mignotte coefficient bound for `core`.
@@ -239,10 +239,8 @@ theorem centeredLiftPoly_congr_self (g : Hex.ZPoly) (m : Nat) :
   apply Int.emod_eq_zero_of_dvd
   simpa [neg_sub] using (dvd_neg (α := Int)).mpr (Hex.self_sub_centeredModNat_dvd (g.coeff i) m)
 
-/-- **Recovery proportionality (the `#8290` recovery glue).**
-
-From an `M1` recovery witness `RecoveredAtLiftM1 core d factor S`, the `ℓf`-scaled
-selected lifted product is congruent to a constant multiple of the recovered integer
+/-- An `M1` recovery witness `RecoveredAtLiftM1 core d factor S` implies that the
+`ℓf`-scaled selected lifted product is congruent to a constant multiple of the recovered integer
 factor modulo `p^k`: `ℓf · (∏ S) ≡ c · factor (mod p^k)`, where `c` is the content
 of the centred lift.  This is the proportionality hypothesis consumed by the
 logarithmic-derivative bridge `congr_logDeriv_bridge_of_scale_congr`.
@@ -277,7 +275,7 @@ theorem exists_scale_congr_factor_of_recoveredM1
   rw [hLeq]
   exact Hex.ZPoly.congr_symm _ _ _ hcong
 
-/-! ### M1 Hensel lift invariant: `monicTarget` mod-`p` structure transfers from `core`
+/-! # M1 Hensel lift invariant: `monicTarget` mod-`p` structure transfers from `core`
 
 The fast-core lift `coreLiftData` lifts `core`'s Berlekamp factors against the
 `monicTarget`, but the prime is selected against `core`.  Over `ℤ/p` the
@@ -675,7 +673,7 @@ theorem henselSubsetCorrespondenceRest_transport_of_disjoint
 
 /--
 Strengthened rest predicate that augments `HenselSubsetCorrespondenceRest`
-with the structural facts the recursive-coverage proof (issue #4301) needs:
+with the structural facts needed by the recursive-coverage proof:
 square-freeness of `target` in `Polynomial ℤ`, a cover field saying every
 remaining index lies in *some* representing subset, a pairwise-disjoint
 field for non-associated irreducible divisors, and a uniqueness-up-to-
@@ -687,10 +685,8 @@ flags the disjointness obligation as "discharged from square-free
 factorisation by later coverage proofs"; this predicate packages exactly
 that information.
 
-The initial-state constructor (from `HenselSubsetCorrespondenceHypotheses`
-plus a square-free reduction hypothesis) is intentionally deferred to a
-follow-up issue: #4301 only needs the abstract predicate and its transport
-through one emitted recombination factor.
+The predicate is designed to transport through one emitted recombination
+factor.
 -/
 structure LiftedFactorSubsetPartition
     (core : Hex.ZPoly) (d : Hex.LiftData)

@@ -39,7 +39,8 @@ factorially slow, so it is the specification the faster
 a caller runs on a large matrix.
 
 `HexDeterminant` is Mathlib-free. Its identification with Mathlib's
-`Matrix.det` is the {ref "hex-determinant-mathlib"}[last section]; the
+{name _root_.Matrix.det}`Matrix.det` is the
+{ref "hex-determinant-mathlib"}[last section]; the
 identification with the executable Bareiss determinant lives in
 `HexBareissMathlib` and is covered in the
 {ref "hex-bareiss"}[HexBareiss chapter].
@@ -71,8 +72,9 @@ it unchanged; and the determinant is invariant under transpose.
 
 Because the determinant is transpose-invariant, every row law has a
 column mirror, proved by transposing rather than by re-deriving anything:
-`det_colSwap`, `det_colScale`, and `det_colAdd` correspond to the three
-row operations, and `det_setRow_add` is the row mirror of the column
+{name}`Hex.Matrix.det_colSwap`, {name}`Hex.Matrix.det_colScale`, and
+{name}`Hex.Matrix.det_colAdd` correspond to the three row operations, and
+{name}`Hex.Matrix.det_setRow_add` is the row mirror of the column
 linearity below.
 
 {docstring Hex.Matrix.det_colSwap}
@@ -176,14 +178,15 @@ tag := "hex-determinant-mathlib"
 %%%
 
 Everything above is executable and Mathlib-free. `HexDeterminantMathlib`
-connects it to Mathlib: the Leibniz determinant `Hex.Matrix.det` equals
-Mathlib's `Matrix.det` of the corresponding Mathlib matrix, transported
+connects it to Mathlib: the Leibniz determinant {name}`Hex.Matrix.det` equals
+Mathlib's {name _root_.Matrix.det}`Matrix.det` of the corresponding
+Mathlib matrix, transported
 through {name}`HexMatrixMathlib.matrixEquiv` (the same equivalence the
 {ref "hex-matrix-mathlib"}[HexMatrix chapter] introduces).
 
 {docstring HexMatrixMathlib.det_eq}
 
-So a fact about Mathlib's `Matrix.det` can be discharged by running the
+So a fact about Mathlib's {name _root_.Matrix.det}`Matrix.det` can be discharged by running the
 executable determinant, and a fact about the executable determinant can
 be proved with Mathlib's determinant theory.
 
@@ -197,7 +200,8 @@ matrix type, arithmetic, and elementary operations (whose determinant
 laws are proved here).
 
 * {ref "hex-bareiss"}[HexBareiss] computes the same integer determinant
-  fraction-free in cubic time, using this Leibniz `det` as its
+  fraction-free in cubic time, using {name}`Hex.Matrix.det` as its Leibniz
   specification.
 * `HexDeterminantMathlib` identifies this executable determinant with
-  Mathlib's `Matrix.det`. `HexDeterminant` itself is Mathlib-free.
+  Mathlib's {name _root_.Matrix.det}`Matrix.det`.
+  `HexDeterminant` itself is Mathlib-free.

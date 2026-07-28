@@ -16,8 +16,7 @@ public section
 /-!
 Strassen-Winograd matrix multiplication.
 
-`mulStrassen` is the recursive, ring-level multiplication entry point specified in
-`HexMatrix/SPEC/hex-matrix.md` § "Strassen-Winograd multiplication". It computes a
+`mulStrassen` is the recursive, ring-level multiplication entry point. It computes a
 2×2 block product with **seven** recursive block multiplications (`P₁…P₇`) and
 **fifteen** block additions/subtractions (`S₁…S₄`, `T₁…T₄`, `U₁…U₇`), following
 Winograd's memory-efficient schedule, giving `Θ(n^{log₂ 7})` coefficient
@@ -37,8 +36,7 @@ Winograd schedule identity (`Winograd.c11…c22`), the block decomposition
 *defined* over `[Mul R] [Add R] [Sub R] [OfNat R 0]` and *proved* correct over
 `[Lean.Grind.Ring R]`, which additionally supplies the ring laws. Because `mul`
 lacks `[Sub R]`, `mulStrassen` cannot be a type-preserving `@[csimp]` replacement
-of `mul`; it is a separate entry point that callers opt into (SPEC §
-"Coefficient-ring requirement").
+of `mul`; it is a separate entry point that callers opt into.
 -/
 
 namespace Hex
@@ -49,7 +47,7 @@ namespace Matrix
 
 variable {R : Type u} {n m k : Nat}
 
-/-! ### View-to-matrix abstraction
+/-! # View-to-matrix abstraction
 
 The Strassen recursion runs over `Submatrix` views (`HexMatrix/Submatrix.lean`).
 These lemmas relate a view's `toMatrix` materialization to the corresponding
@@ -140,8 +138,8 @@ down to a `64×64` naive leaf; that leaf class wins from the first splitting
 dimension (`n = 128`) and stays within ~4% of the `128×128`-leaf class at
 `n = 512` (which edges ahead there), so `96` is shipped as its representative,
 extending Strassen to non-power-of-two blocks in `[96, 128)` as well. The value
-has been re-measured twice per `HexMatrix/SPEC/hex-matrix.md` § "Benchmarks":
-on the flat row-major backing with materialized quadrants and again on the
+has been re-measured twice: on the flat row-major backing with materialized
+quadrants and again on the
 `Submatrix`-view recursion, both within noise of the original sweep (the
 quadrant copies the views remove are `O(n²)` per level against the `O(n^2.81)`
 multiply work, so they never dominated at benched sizes) — the crossover
@@ -160,8 +158,7 @@ theorem strassenDefault_valid [Mul R] [Add R] [OfNat R 0] :
   rw [mul_eq_mulImpl]
 
 /-- The internal Strassen-Winograd recursion over copy-free `Submatrix` **views**.
-Recurses on the runtime dimensions following the Winograd schedule from
-`HexMatrix/SPEC/hex-matrix.md`.
+Recurses on the runtime dimensions following the Winograd schedule.
 
 Base case: when any of `n`, `m`, `k` is `≤ 1` or below `cfg.cutoff`, materialize
 the current view blocks (`toMatrix`) and call `cfg.baseMul` — the only leaf
@@ -222,7 +219,7 @@ def mulStrassenView {R : Type u} [Mul R] [Add R] [Sub R] [OfNat R 0]
   termination_by n + m + k
   decreasing_by all_goals (simp_wf; omega)
 
-/-! ### Two-buffer square schedule -/
+/-! # Two-buffer square schedule -/
 
 /-- Transport both matrix dimensions along equalities. -/
 @[expose]
@@ -646,8 +643,7 @@ theorem mulStrassenInto_spec {R : Type u} [Mul R] [Add R] [Sub R] [OfNat R 0]
 /-- **Strassen-Winograd multiplication.** The public entry point wraps the operands
 as full-matrix `Submatrix` views and runs the view recursion `mulStrassenView`;
 the quadrant splitting inside never materializes or copies a quadrant buffer —
-only O(1) view records (see that def and `HexMatrix/SPEC/hex-matrix.md`
-§ "Avoiding sub-block copies"). -/
+only O(1) view records. -/
 @[expose]
 def mulStrassen {R : Type u} [Mul R] [Add R] [Sub R] [OfNat R 0]
     (cfg : StrassenConfig R) {n m k : Nat} (M : Matrix R n m) (N : Matrix R m k) :

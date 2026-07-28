@@ -999,7 +999,7 @@ theorem det_colPermute_vector {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
           (R := R) sigma hsigma (fun tau => detTerm M tau)]
 
 /-- Swapping two distinct columns negates the determinant. The column mirror of
-`det_rowSwap`, proved by transposing to the row law. -/
+{name}`Hex.Matrix.det_rowSwap`, proved by transposing to the row law. -/
 @[grind =]
 theorem det_colSwap {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (i j : Fin n) (h : i ≠ j) :

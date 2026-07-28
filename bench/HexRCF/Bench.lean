@@ -24,7 +24,7 @@ separate `runFlintDecisionOverhead` registration sends `∀ x, True` through the
 same path to measure the steady-state protocol floor used by the eventual
 raw/overhead-adjusted ratio report:
 
-```text
+```
 {"family":"rcf","op":"decide","sentence":<v1 sentence>}
   -> {"ok":true,"result":<bool>}
 ```
@@ -43,7 +43,7 @@ namespace Hex.RCFBench
 
 open Hex Hex.RCF
 
-/-! ## Controlled fixture families -/
+/-! # Controlled fixture families -/
 
 private def one : ZPoly := DensePoly.ofCoeffs #[(1 : Int)]
 
@@ -70,7 +70,7 @@ def prepDecisionCarrierDegree (n : Nat) : Sentence :=
 def runDecisionCarrierDegree (sentence : Sentence) : Option Bool :=
   Hex.RCF.decide sentence
 
-/-! ## Informational python-flint decision comparator -/
+/-! # Informational python-flint decision comparator -/
 
 private def cmpJson : Cmp → Lean.Json
   | .lt => .str "lt"
@@ -374,7 +374,7 @@ def runReplayCells : Option ReplayInput → Option Bool := replayPrepared
 def runReplaySigns : Option ReplayInput → Option Bool := replayPrepared
 def runReplayFormula : Option ReplayInput → Option Bool := replayPrepared
 
-/-! ## Parametric registrations -/
+/-! # Parametric registrations -/
 
 /-
 The carrier has `n` active intervals over `n` Descartes levels, each dominated

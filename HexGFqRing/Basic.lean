@@ -28,7 +28,7 @@ variable {p : Nat} [ZMod64.Bounds p]
 def degree (f : FpPoly p) : Nat :=
   f.degree?.getD 0
 
-/-- Constant polynomials have `FpPoly.degree` equal to `0`. -/
+/-- Constant polynomials have {name}`FpPoly.degree` equal to `0`. -/
 @[simp, grind =] theorem degree_C (c : ZMod64 p) : degree (C c) = 0 := by
   simp [degree, C]
 
@@ -138,7 +138,7 @@ variable [ZMod64.PrimeModulus p]
   simpa [repr, hx, IsReduced, reduceMod, FpPoly.degree, DensePoly.mod_eq_divMod]
     using DensePoly.mod_degree_lt_of_pos_degree g f hf
 
-/-- Reducing a representative a second time is a no-op: `reduceMod` is idempotent. -/
+/-- Applying {name}`reduceMod` to a reduced representative is a no-op. -/
 @[simp, grind =] theorem reduceMod_idem (f : FpPoly p) (g : FpPoly p) :
     reduceMod f (reduceMod f g) = reduceMod f g := by
   simpa [reduceMod, DensePoly.mod_eq_divMod] using (DensePoly.mod_mod g f)
@@ -229,7 +229,7 @@ theorem reduceMod_add_mul_self_right (f : FpPoly p) (hf : 0 < FpPoly.degree f)
     _ = reduceMod f q := by
           simp [reduceMod_zero f hf, FpPoly.add_zero]
 
-/-- Reducing the argument before applying `ofPoly` does not change the resulting quotient
+/-- Reducing the argument before applying {name}`ofPoly` does not change the resulting quotient
 element. -/
 @[simp, grind =] theorem ofPoly_reduceMod (f : FpPoly p) (hf : 0 < FpPoly.degree f) (g : FpPoly p) :
     ofPoly f hf (reduceMod f g) = ofPoly f hf g := by

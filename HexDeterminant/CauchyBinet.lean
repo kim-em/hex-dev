@@ -252,7 +252,7 @@ private def columnSumMatrixWithPrefix
   rw [getElem_ofFn]
   simp only [getElem_pair_eq_nested, Fin.foldl_eq_finRange_foldl]
 
-/-! ### Suffix-based partial assignment
+/-! # Suffix-based partial assignment
 
 We use a SUFFIX-based parametrization (chosen represents right-fixed columns)
 to align with the natural recursion of `columnTupleVectors`, which factors out

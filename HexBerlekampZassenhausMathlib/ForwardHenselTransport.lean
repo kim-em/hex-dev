@@ -41,14 +41,14 @@ noncomputable section
 
 open Polynomial
 
-/-! ### Forward Hensel transport for the canonical lifted subset
+/-! # Forward Hensel transport for the canonical lifted subset
 
 The next theorem closes the forward `represents_lifted_of_modP` direction of
 `HenselSubsetLiftHypotheses`: if `factor` is a monic integer divisor of `core`
 that is represented modulo `primeData.p` by the modular-factor subset `S`,
 then the canonical Hensel lift `liftedSubsetOfModPSubset` of `S` represents
 `factor` modulo `primeData.p ^ B` on the integer side. The proof feeds the
-packaged subset/complement product (`#4752`) and coprimality (`#4761`) inputs
+packaged subset/complement product and coprimality inputs
 into `HexHenselMathlib.hensel_unique` and converts the resulting Mathlib
 `Polynomial.map` equality back to the executable `Hex.ZPoly.reduceModPow`
 equality stored by `RepresentsIntegerFactorAtLift`. -/
@@ -127,11 +127,9 @@ mod-`p` subset representation hypothesis. Converting the resulting Mathlib
 `Hex.ZPoly.reduceModPow_eq_of_congr` discharges
 `RepresentsIntegerFactorAtLift`.
 
-This is the forward `represents_lifted_of_modP` field of
-`HenselSubsetLiftHypotheses` (#4733 for parent #4695); the analytic
-hypotheses listed here are the inputs that the constructor successor #4697
-will package from `Hex.choosePrimeData`/`Hex.henselLiftData` boundary
-facts. -/
+This supplies the forward `represents_lifted_of_modP` field of
+`HenselSubsetLiftHypotheses`; its hypotheses are the boundary facts provided
+by `Hex.choosePrimeData` and `Hex.henselLiftData`. -/
 theorem henselLiftData_represents_lifted_of_modP
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hcore_monic : Hex.DensePoly.Monic core)
@@ -667,10 +665,8 @@ theorem coreLiftData_subset_congr_monicTarget
       hfactor_monic hproduct hrepP'
   simpa [Hex.ZPoly.coreLiftData, htarget_def, hfactor_def, hprecision_def] using hcongr
 
-/-- **#7453.**
-
-Monic-coordinate forward Hensel-lift transport for `toMonicLiftData`
-correspondents.
+/-- Transport a modular representation to the monic-coordinate Hensel lift
+constructed by `toMonicLiftData`.
 
 For `M := (Hex.ZPoly.toMonic core).monic`, this instantiates
 `henselLiftData_represents_lifted_of_modP` at Hensel precision
@@ -684,8 +680,9 @@ which is definitionally
 The result is the monic-coordinate lifted representation only: a monic factor
 `g ∣ M` represented modulo `primeData.p` by `S` is represented at the lift on
 the monic coordinate `M`.  Recovering the original non-monic `factor` from this
-(via `primitivePart ∘ dilate`) is the separate transfer of #7452; this lemma
-deliberately stops at the monic coordinate.
+via `primitivePart ∘ dilate` is handled by
+`representsIntegerFactorAtLift_of_monicCorrespondent`; this lemma deliberately
+stops at the monic coordinate.
 
 `hcore_lc_pos` and `hcore_pos` make `M` monic
 (`Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree`).  `hB_ne_zero` is required
@@ -890,12 +887,11 @@ private theorem polyProduct_monic_of_all_monic
 /--
 Derive the **dilated centered-lift** reconstruction equality from a proof-side
 lifted-subset representation.  This is the producer-side bridge consumed by the
-migrated fast-path BHKS recovery wrappers
+fast-path BHKS recovery wrappers
 (`candidatesOfDilatedCenteredLift`, `ofMignottePrecisionCandidateProducts`),
 which restate the reconstruction in the executable monic-transform recovery
 coordinate `dilate (leadingCoeff core) ∘ centeredLiftPoly` rather than the
-additive `scale`-coordinate modular congruence removed by the fast-path
-migration (#7044 / #2564).
+additive `scale`-coordinate modular congruence.
 
 The fast-path recovery chain is monic-gated (its producer
 `bhksIndicatorCandidate?_representsIntegerFactorAtLift` carries `hcore_monic`),
@@ -943,7 +939,7 @@ monic-selected-factor hypotheses, the canonical modular product equality
 
 This is the per-candidate modular-product fact needed to derive the
 `RepresentsIntegerFactorAtLift` certificate from a successful candidate path
-(see issue #6455 / #6450). The proof routes through:
+and routes through:
 
 - the centred-lift round-trip identity `centeredLiftPoly_reduceModPow_eq`,
 - `monic_centeredLiftPoly_of_monic` to push monicness through the centred lift,
@@ -1065,7 +1061,7 @@ sum over the subset.
 
 This is the candidate-side ingredient of the reverse-coverage degree-counting
 argument in the `representedFactor_dvd_recombinationCandidate_of_subset`
-divisibility theorem; see issue #4439.
+divisibility theorem.
 -/
 theorem natDegree_toPolynomial_recombinationCandidate_eq_sum
     {d : Hex.LiftData}
@@ -1589,7 +1585,7 @@ coefficient via `leadingCoeff_eq_coeff_last`.
 
 Companion scaled variant of `natDegree_toPolynomial_recombinationCandidate_eq_sum`.
 Consumed by the scaled cover-at-min chain for the primitive recursive
-recombination coverage proof (#4647 / #4737). -/
+recombination coverage proof. -/
 theorem natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum
     {core : Hex.ZPoly} {d : Hex.LiftData}
     (hcore_ne : core ≠ 0)
@@ -1725,7 +1721,7 @@ recovery call is routed through
 `centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound`
 in place of the core-shape recovery. Both changes make this sibling
 independent of `scaledRecombinationCandidate_eq_factor_of_recovery`
-and hence of the scaled recovery-candidate `_of_bound` chain (#4882).
+and hence of the scaled recovery-candidate `_of_bound` chain.
 
 Note: this sibling needs `hcore_lc_le` in addition to `hvalid`
 because the size-preservation step
@@ -1766,12 +1762,12 @@ theorem natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_
 
 /--
 Primitive + positive-leading-core variant of
-`natDegree_toPolynomial_eq_sum_of_represents` (#4646).
+`natDegree_toPolynomial_eq_sum_of_represents`.
 
 For primitive non-monic `core`, the represented factor's natDegree equals the
 sum of natDegrees of the selected lifted factors. The proof routes through the
 scaled recovery identity `scaledRecombinationCandidate core d S = factor`
-(#4652) and the size identities
+  and the size identities
 `factor.size = (scaledLiftedFactorProduct core d S).size =
  (liftedFactorProduct d S).size`. Scaling by `C (lc core)` and the centred lift
 both preserve stored size under the Mignotte half-window bound on `lc core`,
@@ -1779,7 +1775,7 @@ so the sum decomposition `natDegree_prod_of_monic` over `liftedFactorProduct`
 applies unchanged. The `hcore_primitive` and `hfactor_irr` hypotheses are
 threaded for API uniformity with the monic variant but are not used by the
 proof; the natDegree extraction depends only on the leading-coefficient bound
-and the primitive/sign-normalised facts on `factor` consumed by #4652.
+and the primitive/sign-normalised facts on `factor`.
 
 This is a thin wrapper over
 `natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound`
@@ -1891,9 +1887,9 @@ When the scaled candidate equals a monic integer divisor of `target` of
 positive degree, the executable exact-division check on `target` returns
 `some` of the proof-side cofactor.
 
-Used by the primitive recursive coverage proof in #4647 against the new
-`Hex.scaledRecombinationSearchModAux` executable, paired with the recovery
-identity `scaledRecombinationCandidate_eq_factor_of_recovery` from #4652. -/
+This connects the recovery identity
+`scaledRecombinationCandidate_eq_factor_of_recovery` to the exact-division
+check in `Hex.scaledRecombinationSearchModAux`. -/
 theorem exactQuotient?_scaledRecombinationCandidate_eq_some_of_eq_factor
     {core target factor : Hex.ZPoly} {d : Hex.LiftData}
     {S : LiftedFactorSubset d}
@@ -1924,10 +1920,10 @@ on `target` returns `some` of the proof-side cofactor.
 Drops `Monic factor` in favour of `0 < lc factor`, routing through
 `exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq` instead of the
 monic-only `exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree`.  Consumed
-by the primitive recursive coverage proof in #4647, paired with the recovery
-identity `scaledRecombinationCandidate_eq_factor_of_recovery` from #4652 and
-the primitive + positive-leading bound from
-`representsIntegerFactorAtLift_primitive` (#4644). -/
+by the primitive recursive coverage proof together with the recovery identity
+`scaledRecombinationCandidate_eq_factor_of_recovery` and the primitive,
+positive-leading bound from
+`representsIntegerFactorAtLift_primitive`. -/
 theorem exactQuotient?_scaledRecombinationCandidate_eq_some_of_eq_factor_of_primitive_pos_lc
     {core target factor : Hex.ZPoly} {d : Hex.LiftData}
     {S : LiftedFactorSubset d}
@@ -2306,7 +2302,7 @@ recombination search produces.  The lemma packages from these:
   divisor of `target` with representing subset `S ⊆ J`.
 
 Used by the prefix-none assembler in the recursive coverage proof for
-`Hex.recombinationSearchModAux` (#4367/#4301) to compare an earlier executable
+`Hex.recombinationSearchModAux` to compare an earlier executable
 split's selected subset against the partition's representing subsets using
 `pairwise_disjoint` / `unique_up_to_associated`.
 -/
