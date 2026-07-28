@@ -38,7 +38,7 @@ private theorem field_divMod_spec [Field R] [DecidableEq R]
     let qr := Hex.DensePoly.divMod p q
     qr.1 * q + qr.2 = p := by
   by_cases hq : q.size = 0
-  · have hrem := Hex.DensePoly.divMod_remainder_eq_self_of_size_zero_core p q hq
+  · have hrem := Hex.DensePoly.divMod_remainder_eq_self_of_size_zero p q hq
     have hqzero : q = 0 := by
       apply Hex.DensePoly.ext_coeff
       intro n
@@ -56,7 +56,7 @@ private theorem field_divMod_spec [Field R] [DecidableEq R]
 private theorem field_divMod_remainder_degree_lt [Field R] [DecidableEq R]
     (p q : Hex.DensePoly R) (hdegree : 0 < q.degree?.getD 0) :
     (Hex.DensePoly.divMod p q).2.degree?.getD 0 < q.degree?.getD 0 := by
-  apply Hex.DensePoly.divMod_remainder_degree_lt_of_pos_degree_core p q hdegree
+  apply Hex.DensePoly.divMod_remainder_degree_lt_of_pos_degree_of_cancel p q hdegree
   intro a
   apply field_div_cancel
   apply Hex.DensePoly.leadingCoeff_ne_zero_of_pos_size
@@ -80,7 +80,7 @@ private theorem field_divMod_remainder_eq_zero_of_not_pos_degree
       simp [Hex.DensePoly.degree?, hqsize_ne]
     rw [hdeg] at hdegree
     omega
-  exact Hex.DensePoly.divMod_remainder_eq_zero_of_degree_zero_core p q hqsize
+  exact Hex.DensePoly.divMod_remainder_eq_zero_of_degree_zero_of_cancel p q hqsize
     (fun a => field_div_cancel a q.leadingCoeff
       (Hex.DensePoly.leadingCoeff_ne_zero_of_pos_size q (by omega)))
 
@@ -129,7 +129,7 @@ theorem toPolynomial_mod [Field R] [DecidableEq R]
   · subst q
     rw [toPolynomial_zero, EuclideanDomain.mod_zero]
     change toPolynomial (Hex.DensePoly.divMod p 0).2 = toPolynomial p
-    rw [Hex.DensePoly.divMod_remainder_eq_self_of_size_zero_core]
+    rw [Hex.DensePoly.divMod_remainder_eq_self_of_size_zero]
     rfl
   · let qr := Hex.DensePoly.divMod p q
     let qp := toPolynomial q
@@ -197,7 +197,7 @@ instance (priority := 50) instDivModLawsField [Field R] [DecidableEq R] :
     · rw [Hex.DensePoly.divMod_eq_zero_self_of_degree_lt p q hlt]
       unfold Hex.DensePoly.divModMonic
       exact Hex.DensePoly.divModArray_eq_zero_self_of_degree_lt p q id hlt
-    · apply Hex.DensePoly.divModMonic_eq_divMod_of_monic_core p q hmonic hlt
+    · apply Hex.DensePoly.divModMonic_eq_divMod_of_monic_of_scale p q hmonic hlt
       intro a
       rw [hmonic]
       simp
