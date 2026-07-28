@@ -210,8 +210,8 @@ a second central recipe tag alongside `PayloadArena.Entry.origin`.
 -/
 
 def factLabel : PayloadId := { index := 0 }
-def instanceLabel : PayloadId := { index := 0 }
-def equalityLabel : PayloadId := { index := 1 }
+def instanceLabel : PayloadId := { index := 1 }
+def equalityLabel : PayloadId := { index := 2 }
 
 def emptyDraft (label : PayloadId) (role : PayloadArena.Role) :
     PayloadArena.Draft :=
@@ -439,6 +439,9 @@ def centeredProposal? (request : RuleRequest Fact)
            payload := equalityLabel }]
       payload := instanceLabel }
 
+/-- Propose the package-owned identity
+`x * (1 - x) = 1/4 - (x - 1/2)^2`. Its instantiation and equality evidence
+use distinct reply-local labels and schema-zero replay formats. -/
 def invokeCenteredInstantiate (request : RuleRequest Fact) : Plan Fact :=
   match centeredBinding? request >>= centeredProposal? request with
   | none => withoutPayloads .inapplicable
@@ -486,7 +489,7 @@ def centeredPackage (config : Config) (real : DomainId) : Package Fact :=
     requiredOperations := centeredRequirements real
     handlers :=
       #[Handler.statelessPlanned centeredForward (invokeCenteredForward config),
-        Handler.stateless centeredSplit invokeCenteredSplit,
+        Handler.statelessDroppingDrafts centeredSplit invokeCenteredSplit,
         Handler.statelessPlanned centeredInstantiate invokeCenteredInstantiate]
     acceptsLimits := fun _ limits =>
       4 ≤ limits.maxObservationValue &&

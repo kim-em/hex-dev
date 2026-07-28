@@ -319,7 +319,9 @@ def freezeDrafts (arena : Arena) (origin : Action)
 /-- Validate and freeze every reply-local payload reference in an outcome.
 
 This function does not mutate the supplied arena.  A caller should retain the
-returned arena only if the surrounding reply transaction also commits. -/
+returned arena only if the surrounding reply transaction also commits.
+Starting from `arena.wellFormed`, every ready result remains well formed; a
+session-owned arena supplies that precondition by construction. -/
 def freeze (limits : Limits) (arena : Arena) (origin : Action)
     (outcome : Outcome Fact) (drafts : List Draft) : Result Fact :=
   match preflightUses limits.maxUses outcome with

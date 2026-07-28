@@ -111,7 +111,7 @@ def scaleStart? : Option (Engine Fact × ConcreteRegistry) :=
 
 def scaleFinal? : Option (RunResult Fact ConcreteRegistry) := do
   let (state, registry) <- scaleStart?
-  pure (drive Propagator.Registry.invoke 32 state registry)
+  pure (drive Propagator.Registry.invokeDroppingDrafts 32 state registry)
 
 #guard scaleProgram.check
 #guard registryChecks scaleProgram
@@ -160,7 +160,7 @@ def cycleStart? : Option (Engine Fact × ConcreteRegistry) :=
 
 def cycleFinal? : Option (RunResult Fact ConcreteRegistry) := do
   let (state, registry) <- cycleStart?
-  pure (drive Propagator.Registry.invoke 48 state registry)
+  pure (drive Propagator.Registry.invokeDroppingDrafts 48 state registry)
 
 #guard cycleProgram.check
 #guard registryChecks cycleProgram
@@ -285,7 +285,7 @@ def centeredAt (input expected : Dyadic) : Bool :=
 
 def centeredInitial? : Option (RunResult Fact ConcreteRegistry) := do
   let (state, registry) <- centeredStart?
-  pure (drive Propagator.Registry.invoke 32 state registry)
+  pure (drive Propagator.Registry.invokeDroppingDrafts 32 state registry)
 
 def centeredAdmitted? : Option (Engine Fact × ConcreteRegistry) := do
   let initial <- centeredInitial?
@@ -299,7 +299,7 @@ def centeredAdmitted? : Option (Engine Fact × ConcreteRegistry) := do
 
 def centeredFinal? : Option (RunResult Fact ConcreteRegistry) := do
   let (state, registry) <- centeredAdmitted?
-  pure (drive Propagator.Registry.invoke 32 state registry)
+  pure (drive Propagator.Registry.invokeDroppingDrafts 32 state registry)
 
 def falseOneRun? : Option (RunResult Fact ConcreteRegistry) := do
   let (state, registry) <-
@@ -311,7 +311,7 @@ def falseOneRun? : Option (RunResult Fact ConcreteRegistry) := do
         limits with
     | .ok state => some state
     | .error _ => none
-  pure (drive Propagator.Registry.invoke 8 state registry)
+  pure (drive Propagator.Registry.invokeDroppingDrafts 8 state registry)
 
 #guard centeredProgram.check
 #guard registryChecks centeredProgram
@@ -623,8 +623,8 @@ def combinedPolicyRun? : Option
       (List ConcreteCommand)) := do
   let (engine, registry) <- combinedStart?
   let state := Propagator.Policy.State.start engine policyLimits
-  pure (Propagator.Policy.Driver.drive concreteController Propagator.Registry.invoke
-    32 state registry concreteCommands)
+  pure (Propagator.Policy.Driver.drive concreteController
+    Propagator.Registry.invokeDroppingDrafts 32 state registry concreteCommands)
 
 def exactConcreteEvents
     (events : Array (Propagator.Policy.Driver.Event Fact)) : Bool :=
@@ -741,7 +741,7 @@ def reciprocalFirstRequest? : Option (RuleRequest Fact × ConcreteRegistry) := d
 #guard
   match reciprocalFirstRequest? with
   | some (request, registry) =>
-      match (registry.invoke request).1 with
+      match (registry.invokeDroppingDrafts request).1 with
       | .success [candidate] [.retry 1] _ =>
           candidate.node == node 1 &&
             candidate.fact.view ==
@@ -793,7 +793,7 @@ def bogusRequest : RuleRequest Fact :=
 #guard
   match registry? with
   | some registry =>
-      match (registry.invoke bogusRequest).1 with
+      match (registry.invokeDroppingDrafts bogusRequest).1 with
       | .failed code => code == DispatchCode.requestMismatch
       | _ => false
   | none => false

@@ -25,8 +25,9 @@ operations, registrations, callbacks, routes, or start checks.  Package caches
 are performance state only: for the same request and logical budget, cache
 contents must not change the callback's observable outcome.  Semantic state
 instead needs an explicit versioned dependency and wakeup protocol.  Immutable
-proof-payload drafts travel beside the outcome; `PayloadSession` freezes them
-in a separate per-run arena before their identifiers enter engine provenance.
+proof-payload drafts travel beside the outcome; a session layer must freeze
+them in a separate per-run arena before their identifiers enter engine
+provenance.
 -/
 
 namespace Hex.Interval.Experiment.Propagator
@@ -42,8 +43,8 @@ abbrev Invoke (Fact Cache : Type) :=
   Cache -> RuleRequest Fact -> Plan Fact × Cache
 
 /-- Compatibility shape for a callback that produces no immutable evidence.
-Its positive outcomes are deliberately rejected by the payload session if they
-refer to any payload identifier. -/
+`PayloadArena.freeze` rejects any positive outcome from such a callback if it
+refers to a payload identifier. -/
 abbrev BareInvoke (Fact Cache : Type) :=
   Cache -> RuleRequest Fact -> Outcome Fact × Cache
 
@@ -54,23 +55,25 @@ structure Handler (Fact Cache : Type) where
 
 namespace Handler
 
-/-- Lift a callback with no payload drafts into the planned protocol. -/
-def bare (registration : Registration)
+/-- Lift a callback with no payload drafts into the planned protocol.
+The explicit name prevents proof-producing packages from choosing this
+evidence-discarding compatibility path by accident. -/
+def bareDroppingDrafts (registration : Registration)
     (invoke : BareInvoke Fact Cache) : Handler Fact Cache :=
   { registration
     invoke := fun cache request =>
       let (outcome, cache) := invoke cache request
       ({ outcome, drafts := [] }, cache) }
 
-/-- Lift a cache-independent callback into any package cache. -/
-def readOnly (registration : Registration)
+/-- Lift a cache-independent callback while producing no proof drafts. -/
+def readOnlyDroppingDrafts (registration : Registration)
     (invoke : RuleRequest Fact -> Outcome Fact) : Handler Fact Cache :=
-  bare registration fun cache request => (invoke request, cache)
+  bareDroppingDrafts registration fun cache request => (invoke request, cache)
 
-/-- A cache-independent handler for a package whose cache is `Unit`. -/
-def stateless (registration : Registration)
+/-- A cache-independent handler which produces no proof drafts. -/
+def statelessDroppingDrafts (registration : Registration)
     (invoke : RuleRequest Fact -> Outcome Fact) : Handler Fact Unit :=
-  readOnly registration invoke
+  readOnlyDroppingDrafts registration invoke
 
 /-- A cache-independent callback that returns complete reply-local evidence. -/
 def readOnlyPlanned (registration : Registration)
@@ -329,9 +332,10 @@ def invokePlanned (registry : Registry Fact) (request : RuleRequest Fact) :
                       { registry with
                         packages := registry.packages.set! route.package package })
 
-/-- Compatibility adapter for search experiments that do not yet retain proof
-payloads. Proof-producing runs use `invokePlanned` through `PayloadSession`. -/
-def invoke (registry : Registry Fact) (request : RuleRequest Fact) :
+/-- Explicitly evidence-discarding adapter for search experiments. A
+proof-producing session must use `invokePlanned` and freeze its drafts before
+submission. -/
+def invokeDroppingDrafts (registry : Registry Fact) (request : RuleRequest Fact) :
     Outcome Fact × Registry Fact :=
   let (plan, registry) := registry.invokePlanned request
   (plan.outcome, registry)

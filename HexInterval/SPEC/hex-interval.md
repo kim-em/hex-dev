@@ -1009,11 +1009,13 @@ precision ladder against its arithmetic endpoint-height limit; otherwise a
 configuration known in advance to exceed the backend limit is rejected at
 start rather than advertised as compatible.
 
-`Registry.invoke` cross-checks the flattened registration, routed handler
+`Registry.invokePlanned` cross-checks the flattened registration, routed handler
 metadata, and structural projection of an engine-produced request before
 entering the callback, then replaces only the selected package's cache. The
 engine still authenticates the pending serial, application, fact values, and
-versions; direct registry invocation is not an authentication boundary.
+versions. The explicitly named `Registry.invokeDroppingDrafts` adapter exists
+only for search experiments; it is not a proof-producing authentication
+boundary.
 
 The current package type does not yet carry replay decoders or a schema
 registry. Arena drafts do carry an explicit numeric payload schema, but a
