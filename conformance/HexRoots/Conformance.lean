@@ -356,6 +356,9 @@ certify a disc centred on a root. -/
 #guard !rootFree rat1 ⟨1, 0, 4⟩
 #guard !rootFree rat1 ⟨-3, 0, 4⟩
 #guard rootFree cheb10 ⟨10, 10, 4⟩
+-- Exercise the bounded-precision Graeffe `T₀` kernel directly even though
+-- the public small-degree route above intentionally keeps the exact fast path.
+#guard softRootFree cheb10 ⟨10, 10, 4⟩
 
 /-! ### `taylor`: exact Gaussian-dyadic expansion.
 
@@ -415,8 +418,9 @@ private def cauchyRat1 : Component :=
 
 /-- A rational-complex conjugate pair chosen so that one root is within
 `0.0005` leaf units of a grid corner at `separationDepth = 40`. The four
-retained corner squares must glue before Pellet succeeds: each singleton
-fails its witness, while their enclosing component passes. -/
+corner squares survive `T₀` and glue. Their exact level-zero Pellet checks
+remain inconclusive; the public Graeffe witness may now succeed before gluing,
+but the overlapping squares still cannot emit separately. -/
 private def cornerPair : ZPoly :=
   DensePoly.ofCoeffs #[1458, -265410, 24157225]
 
@@ -430,7 +434,12 @@ private def cornerSurvivors : Array DyadicSquare :=
 
 #guard separationDepth cornerPair == 40
 #guard cornerSurvivors.all fun s =>
-  !rootFree cornerPair s && !witnessCheck cornerPair s 1
+  !rootFree cornerPair s &&
+    !TaylorShift.witnessCheck s (TaylorShift.compute cornerPair s.center) 1
+-- Graeffe resolves at least one singleton that the exact level-zero check
+-- above cannot; overlapping discs still force the squares through gluing.
+#guard cornerSurvivors.any fun s => softWitnessCheck cornerPair s 1
+#guard cornerSurvivors.any fun s => softCandidate? cornerPair s [1, 2] == some 1
 #guard
   (match glueCovered cornerSurvivors with
     | #[squares] =>

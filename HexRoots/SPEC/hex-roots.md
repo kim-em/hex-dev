@@ -28,6 +28,15 @@ cₖ = Σ_{j ≥ k} binomial(j,k) · aⱼ · (a + b·i)^{j−k}
 each term an integer times a Gaussian-dyadic power, so
 `cₖ ∈ Dyadic[i]` *exactly*.
 
+The exact Taylor array remains the fallback certificate kernel. The fast
+front end instead encloses coefficients of the locally scaled polynomial
+`p(c + hX)`, `h = 2^(−s.prec)`, in `CoeffBall`s: a Gaussian-dyadic centre
+and a nonnegative dyadic `L¹` error radius. Centres are rounded to a requested
+number of significant bits and every radius is rounded outward. Addition,
+subtraction, multiplication, and Taylor accumulation transport the error
+radius exactly, so coefficient magnitude is decoupled from the working
+mantissa length without introducing floating-point trust.
+
 The Pellet inequalities compare absolute values `|cₖ|` against sums of
 absolute values, and `|cₖ|` is irrational in general. The witnesses
 therefore replace each absolute value by an exact dyadic bound on the
@@ -40,15 +49,17 @@ correct side:
 - the factor `√2` in disc radii (below) is bounded by the dyadic
   rationals `181/128 < √2 < 1449/1024`, each within `10⁻³` of `√2`.
 
-Every witness in this library is a strict comparison between two exact
-dyadics: `Decidable`, with no error budget and no interval-arithmetic
-infrastructure. The bounds cost slack: a witness holds only when the
-true Pellet inequality holds with a factor-2 margin (each side loses
-at most `√2`, plus the negligible slack from the rational `√2`
-bounds). Soundness is unaffected, since a witness implies the true
-inequality. The slack only tightens the isolation ratio a disc must
-reach before the witness fires, and it is carried through the
-completeness analysis in the Mathlib companion. The Newton step itself
+Every accepted witness in this library is a strict comparison between exact
+dyadics: `Decidable`, with no floating-point error budget. On the soft path the
+comparison uses outward-rounded ball endpoints; a failed comparison is
+inconclusive and falls back to the exact Taylor kernel. On the exact route,
+the `lo`/`hi` bounds require a factor-2 margin (each side loses at most `√2`,
+plus the negligible slack from the rational `√2` bounds). The soft route
+additionally needs the current coefficient-ball radii to fit within that
+margin; the significant-bit ladder shrinks this extra slack. Soundness is
+unaffected, since either accepted route implies the true root-count
+condition. The slack only tightens the isolation ratio a disc must reach
+before the witness fires. The Newton step itself
 uses the approximate `Dyadic.invAtPrec`, but the witness re-check
 after Newton uses the new exact dyadic centre and is again exact.
 
@@ -78,24 +89,38 @@ Gaussian-dyadic centres.
 ## Pellet witnesses
 
 ```lean
-/-- Strong Pellet witness: with `(c₀, …, c_n)` the exact Taylor
-    coefficients of `p` at the centre of `s`, and `ρlo, ρhi` the dyadic
-    bounds on the circumscribed radius `2^{−s.prec}·√2`, the inequality
-
-      `lo(c_k) · ρlo^k > Σ_{i ≠ k} hi(c_i) · ρhi^i`
-
-    holds at the base radius and at 2 and 4 times the base radius.
-    Implies (Mathlib companion): `p` has exactly `k` roots, with
-    multiplicity, in each of the three discs. -/
+/-- Strong Pellet witness accepted by the exact or outward-rounded Graeffe
+    route. Implies (Mathlib companion): exactly `k` roots, with multiplicity,
+    in the base, doubled, and quadrupled discs, and none on their boundaries. -/
 def witness (p : ZPoly) (s : DyadicSquare) (k : Nat) : Prop := …
 instance : Decidable (witness p s k) := …
 ```
 
 The three-radius form is BSSY's condition for Newton readiness, and it
 makes an atom interchangeable with a one-square cluster (both carry
-the same witness shape). "No roots on the boundary circles" follows
-from the strict inequality and is exposed as a derived lemma in the
-Mathlib companion.
+the same witness shape). On the exact route, with `(c₀, …, c_n)` the exact
+Taylor coefficients and `ρlo, ρhi` the radius bounds, each comparison is
+
+```
+lo(c_k) · ρlo^k > Σ_{i ≠ k} hi(c_i) · ρhi^i.
+```
+
+The soft route proves the corresponding strict comparison on an enclosing
+coefficient array after zero or more root-squaring transforms. The companion
+transports the count back to the original radii. Either route also proves no
+root lies on any of the three boundary circles.
+
+For sufficiently large inputs, the executable candidate check scans every
+count through a shared Graeffe orbit. One Graeffe step forms
+`E(X)² - X O(X)²` from
+`p(X) = E(X²) + X O(X²)`; roots and all three radius intervals are squared
+together. Repeated squaring amplifies modulus separation, so a constant
+isolation ratio can resolve the Pellet comparison. Shallow centres seed the
+balls from one exact Taylor shift at 64 bits; deeper centres use a fully soft
+Taylor fold at 64, 128, then 256 bits. The individual combined check keeps the
+exact cached comparison first below precision 32 and soft-first above it. A
+soft success implies the ordinary `witness` proposition. Failure at every tier
+invokes the exact cached-shift test and has no semantic meaning.
 
 ## Newton-Kantorovich atom witnesses
 
@@ -310,8 +335,11 @@ def refine1 (p : ZPoly) : Component → Array Component
     Newton-Kantorovich atom witness on the doubled enclosing square
     (with a speculative Newton recentring attempted first), then the
     Pellet witness on the enclosing square's disc with
-    `k = candidateK` first and then the remaining `k ≤ deg p`; a
-    `k = 1` Pellet success is returned as an atom via `atomize`.
+    `k = candidateK` first and then the remaining `k ≤ deg p`.
+    The Pellet route uses the all-count soft Graeffe filter first, then
+    rechecks the selected count through the cached combined certifier so the
+    same guarded Newton candidate is available; exact candidate scanning is
+    the fallback. A `k = 1` success is returned as an atom via `atomize`.
     Speculative Newton results are accepted only under the coverage
     guard (see "Speculative Newton" below). -/
 def certify? (p : ZPoly) (strategy : AtomStrategy := .nkThenPellet) :
@@ -360,17 +388,20 @@ def isolate (p : ZPoly) (h : Hex.HasOnlySimpleRoots p) (atom_prec : Int)
     Option (Array (DyadicRootIsolation p))
 ```
 
-`certify?` computes an exact Taylor shift once at its enclosing-square centre
-and passes the same coefficient array to the witness and Newton kernels. The
-Pellet candidate-count search also shares one shift across every failed `k`;
-only a speculative recentred candidate that reaches its witness re-check needs
-a new shift. In the default Newton-then-Pellet route, the widened Pellet square
-is concentric with the Newton enclosure, so an exact centre-equality guard
-reuses the same shift across the fallback as well (and recomputes if that
-equality ever fails). A proof field indexes each cached array by its polynomial
-and centre, so none of the coefficient-level Pellet, Newton, or
-Newton-Kantorovich kernels can be called by certification with coefficients
-from another centre.
+`certify?` computes one exact Taylor shift at its enclosing-square centre and
+passes the same coefficient array to the exact witness and Newton kernels. The
+soft Pellet scan tests every requested root count against each coefficient-ball
+array before performing the next Graeffe transform; after a soft success, the
+chosen count passes through the combined per-count kernel, retaining the
+cached exact shift for an exact fallback and for its guarded Newton candidate.
+The exact candidate-list fallback likewise shares one shift across every
+failed `k`; only a speculative recentred candidate that reaches its witness
+re-check needs a new shift. In the default Newton-then-Pellet route, the widened
+Pellet square is concentric with the Newton enclosure, so an exact
+centre-equality guard reuses the same shift across the strategy boundary as
+well (and recomputes if that equality ever fails). A proof field indexes each
+cached array by its polynomial and centre, so no exact coefficient-level
+kernel can receive coefficients from another centre.
 
 The speculative Newton step computes `x' = x − k · c₀/c₁` (with
 `k = 1` for atoms; the k-order step for clusters is BSSY §5), places a
@@ -457,8 +488,14 @@ completenessDepth p target := max target (separationDepth p) + 5
 ```
 
 each non-emitting driver round globally subdivides and reglues the complete
-survivor set. The driver may emit earlier only when every ready,
-pairwise-disjoint result is already an atom. At this depth, every component is
+survivor set. Under either Pellet-bearing strategy, an opportunistic finisher
+may emit earlier when every current attempt is an atom: it locally refines each
+atom to `target`, then accepts the array only if every refinement succeeds and
+the resulting discs are pairwise disjoint. Failure of any local refinement or
+the final disjointness check returns to the unchanged global path. The NK-only
+strategy retains its direct early emission when every current attempt is
+already a target-ready atom with pairwise-disjoint discs. At the
+normalized depth, every component is
 root-bearing; the Mathlib companion proves that all three strategies
 certify it as an atom and that the atom discs are pairwise disjoint.
 Thus `isolate` returns `some` for every nonzero squarefree input.
@@ -482,9 +519,13 @@ double-counting. A component whose squares contain no root (its
 neighbouring component and captures the neighbour's root. The driver
 therefore emits a set of certified results only when the
 circumscribed discs of their stored squares are **pairwise
-disjoint** and, before `completenessDepth`, every result is already an atom
-(one dyadic comparison per pair, as in the `SimpleRoot`
-intersection test); components violating the check keep subdividing,
+disjoint** (one dyadic comparison per pair, as in the `SimpleRoot`
+intersection test). Before normalization, the Pellet-bearing all-atoms
+finisher starts only when the current atom discs are pairwise disjoint, then
+requires every local refinement to reach `target` and the resulting discs to
+remain pairwise disjoint; components failing that optional path return to
+global subdivision. The NK-only route may directly emit an
+already-ready all-atoms array. Components violating the ordinary check keep subdividing,
 while a component already certified at target with a disc disjoint
 from every other certified disc holds its position (continuing to
 refine while waiting would double its precision every round through
@@ -571,14 +612,18 @@ roots, the higher Taylor coefficients collect contributions from all
 inequality to the left is bounded by `(1 + ρ/d)^{n−1} − 1`, so the
 witness needs `ρ/d` of order `1/n`. That is what the
 `ceilLog2 (deg p)` term buys, one doubling at a time. (This is the
-price of omitting Graeffe iteration; the fixed-ratio test Graeffe
-enables would make this term a constant.) The remaining `sepSlack`
+conservative exact-fallback requirement; a successful Graeffe pass instead
+needs only a fixed ratio.) The remaining `sepSlack`
 covers the fixed factors: one level for the factor-2 witness slack,
 at most two for the enclosing square of a multi-square component,
 one for the circumscribed `√2`, and margin. The completeness
-analysis certifies the formula; overshoot costs only extra
-subdivision rounds on inputs where certification had not already
-happened. It is the depth bound used by `stopDepth` above.
+analysis certifies the formula without assuming a bounded-precision filter
+succeeds, because soft failure is inconclusive. Consequently the static
+worst-case depth retains the degree term. In ordinary runs, successful Graeffe
+comparisons and the all-atoms finisher exit before this conservative global
+depth. The remaining overshoot costs only extra subdivision rounds on inputs
+where soft certification has not appeared. It is the depth bound used by
+`stopDepth` above.
 
 ## `SimpleRoot`: identity of a root, up to isolation
 
@@ -668,12 +713,12 @@ inherit the precision.
 
 ## Differences from BSSY
 
-- **No Graeffe iteration.** Deferred as a future optimisation. Without
-  it the witness needs an isolation ratio of order `deg p` before it
-  certifies (every remote root contributes to the higher Taylor
-  coefficients), which costs the `ceilLog2 (deg p)` term in
-  `separationDepth`. Graeffe iteration would let a fixed ratio
-  suffice and reduce that term to a constant.
+- **Bounded-precision Graeffe front end.** Graeffe iteration uses
+  outward-rounded dyadic coefficient balls and a fixed significant-bit ladder,
+  then falls back to the exact cached Taylor check. This gives the fixed-ratio
+  behaviour of BSSY when the balls resolve the comparison while keeping the
+  public witness a decidable exact-dyadic proposition. The conservative
+  completeness depth still retains `ceilLog2 (deg p)` for the fallback path.
 - **No squarefree preprocessing.** A multiple root fails the `k = 1`
   witness at every radius, so it stays a `k ≥ 2` cluster and is
   reported as such. Squarefree inputs atomize. Non-squarefree inputs
@@ -705,6 +750,9 @@ inherit the precision.
 - `HexRoots/Taylor.lean`: exact Gaussian-dyadic Taylor expansion of a
   `ZPoly` at a Gaussian-dyadic centre, returning
   `Array (Dyadic × Dyadic)`.
+- `HexRoots/SoftPellet.lean`: outward-rounded coefficient balls, locally
+  scaled Taylor construction, Graeffe transforms with transported radii, and
+  all-count soft Pellet / `T₀` scans.
 - `HexRoots/Pellet.lean`: the dyadic bounds `lo`/`hi`, the rational
   `√2` constants with their `decide`-checked defining inequalities,
   the `witness` predicate and its `Decidable` instance,
@@ -759,7 +807,10 @@ polynomials rarely have clustered roots.
 - *ci* (CI, with external oracle when available):
   - 50 degree-20 polynomials with deterministic seed `0xC0FFEE` and
     coefficients in `[−10, 10]`, cross-checked against the python-flint
-    oracle (below).
+    oracle (below), plus the six curated atom/cluster cases retained for
+    explicit simple/multiple-root coverage. Fresh emission of the full stream
+    takes about 5.2 minutes on `chungus2`; at degree 20 the all-atoms local
+    finisher supplies the speedup, while the size-gated soft front end is idle.
 - *local* (developer-driven):
   - Adversarial families cross-checked against MPSolve: Mignotte
     `(n, a)` for `n ∈ {10, 20}` and `a ∈ {1000, 10⁶}`, the Wilkinson
@@ -800,9 +851,13 @@ Write `n = deg p` and `B = prec + n · log ‖p‖∞` for the working
 bit-length at precision `prec`.
 
 - `mahlerPrec p` runs in `O(n · log ‖p‖∞)` integer operations.
-- One witness check costs `O(n²)` exact-dyadic operations (the Taylor
+- One exact witness check costs `O(n²)` exact-dyadic operations (the Taylor
   shift dominates) on `B`-bit values, so `O(n² · B²)` bit operations
-  with schoolbook arithmetic. The Newton-Kantorovich check has the
+  with schoolbook arithmetic. A soft pass costs `O(n²)` bounded-mantissa ball
+  operations per Graeffe level; the number of levels is
+  `O(log log n)`, and all candidate counts share each level. The fixed
+  64/128/256-bit ladder therefore decouples a successful soft check from `B`;
+  worst-case failure still pays the exact bound. The Newton-Kantorovich check has the
   same shape and cost, plus one `Dyadic.invAtPrec` call, and tests
   one radius where the Pellet form tests three.
 - One Newton step costs the same order as one witness check, plus a
@@ -819,32 +874,31 @@ bit-length at precision `prec`.
 
 ## Time budgets (Phase 4 validation)
 
-Regression ceilings anchored to measured reality (quiet `chungus2`, AMD EPYC
-9455, Lean 4.32.0-rc1). Every pinned row runs the compiled expression
+Regression ceilings anchored to measured reality (`chungus2`, AMD EPYC 9455,
+96 logical CPUs with substantial idle capacity, Lean 4.32.0-rc1). Every pinned row runs the compiled expression
 `isolateAll? (seededPoly degree) target #[Component.cauchy ...]`; this avoids
 `isolate`'s higher `separationDepth` target and makes the stated precision the
-actual driver target. Degree 10 and 20 use five measured cold calls with no
-discarded warmup; the expensive degree-50 row uses one cold call:
+actual driver target. Degree 10 and 20 use three measured cold calls with no
+discarded warmup, degree 50 uses two, and degree 100 uses one. The direct
+driver prints and checks the returned atom count; unlike the canonical fixed
+benchmarks, the one- and two-call large rows have no five-repeat digest sample:
 
-- Degree 10, prec 32: under 0.7 seconds (median 0.324 s, range
-  0.285–0.343 s).
-- Degree 20, prec 32: under 12 seconds (median 5.830 s, range
-  5.426–7.098 s). This is the scale `hex-number-field` consumes.
-- Degree 50, prec 64: under 14 minutes (measured 482.979 s,
-  8.05 minutes).
-- Degree 100, prec 128: no budget pinned. The measured run did not
-  complete within 19 minutes and the extrapolated cost is hours; a
-  budget is set once the optimisation work below makes the scale
-  practical.
+- Degree 10, prec 32: under 0.3 seconds (median 0.130 s, range
+  0.129–0.131 s).
+- Degree 20, prec 32: under 7 seconds (median 3.433 s, range
+  3.421–3.436 s). This is the scale `hex-number-field` consumes.
+- Degree 50, prec 64: under 105 seconds (range 52.234–52.289 s).
+- Degree 100, prec 128: under 21 minutes (measured 630.421 s,
+  10.51 minutes).
 
-These are ceilings for regression detection, not aspirations. The
-original rough first guesses (1 s / 10 s / 1 min) proved optimistic by
-one to two orders of magnitude for the exact-dyadic, no-Graeffe
-design;
+These are ceilings for regression detection, not aspirations. The original
+rough first guesses (1 s / 10 s / 1 min) remain stretch targets; degree 10 is
+now comfortably below its aspiration, while the larger rows retain roughly
+2× regression margin over the measurements. Issue
 https://github.com/kim-em/hex-dev/issues/8751
-tracks tightening the ceilings (Graeffe iteration, soft-Pellet
-filtering, Taylor-shift reuse), and any landed improvement re-measures
-the table and ratchets the ceilings down rather than leaving slack.
+records the Graeffe, soft-Pellet, Taylor-reuse, and local-finisher ratchet. Any
+later improvement re-measures the table and tightens the ceilings again rather
+than accumulating slack.
 MPSolve remains a local correctness oracle. The declared informational
 performance comparator is python-flint, whose measured ratios are recorded in
 [`reports/hex-roots-performance.md`](../../reports/hex-roots-performance.md).

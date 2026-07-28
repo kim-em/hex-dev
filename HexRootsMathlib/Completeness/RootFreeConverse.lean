@@ -215,6 +215,8 @@ theorem rootFree_one_root_of_margin {p : Hex.ZPoly} {sq : Hex.DyadicSquare}
       _ = roots.card + 2 := by
         rw [natDegree_eq_of_roots hroots]
       _ = t.card + 2 := by simp [t]
+  apply Hex.exactRootFree_implies_rootFree
+  unfold Hex.exactRootFree
   apply pelletAt_zero_of_slack (by omega : 0 < p.size) hR
   change 2 * (∑ i ∈ (Finset.range p.size).erase 0,
       ‖q.coeff i‖ * R ^ i) < ‖q.coeff 0‖
@@ -309,6 +311,8 @@ theorem rootFree_of_roots {p : Hex.ZPoly} {s : Hex.DyadicSquare} {d : ℝ}
       _ ≤ ‖q.coeff 0‖ * E := by
         gcongr
         exact remotePoly_tail_le hd hR hremote'
+  apply Hex.exactRootFree_implies_rootFree
+  unfold Hex.exactRootFree
   apply pelletAt_zero_of_slack hsize hR
   change 2 * (∑ i ∈ (Finset.range p.size).erase 0, ‖q.coeff i‖ * R ^ i) <
     ‖q.coeff 0‖

@@ -130,13 +130,14 @@ namespace IsolationLoop
     (tried : Array (Component × Option (Certified p))) : Array (Certified p) :=
   tried.filterMap (·.2)
 
-/-- Every successful certificate is already an atom. Failures do not matter:
-    the separate `allReady` guard rejects them before emission. -/
+/-- Every attempted component certified as an atom. This stronger form is
+also the guard for leaving global reglue early: failures and cluster results
+must remain in the globally normalized subdivision path. -/
 @[expose] def allAtoms {p : ZPoly}
     (tried : Array (Component × Option (Certified p))) : Bool :=
-  (outputs tried).all fun
-    | .atom _ => true
-    | .cluster _ => false
+  tried.all fun t => match t.2 with
+    | some (.atom _) => true
+    | _ => false
 
 /-- The stored squares of successful attempts are pairwise disjoint. -/
 @[expose] def disjoint {p : ZPoly}
@@ -185,6 +186,85 @@ all squares refine and reglue globally; afterwards this is `nextLocal`. -/
 
 end IsolationLoop
 
+/-- Local refinement loop for one already-isolated atom. Unlike the
+Cauchy-started full driver, it does not pay the global halo-normalization
+prefix: there are no sibling lineages to reglue. -/
+@[expose] def refineLoop (p : ZPoly) (target : Int) (strategy : AtomStrategy) :
+    Nat → Array Component → Option (Array (Certified p))
+  | 0, _ => none
+  | fuel + 1, work =>
+    if work.isEmpty then some #[] else
+    let tried := IsolationLoop.attempts p strategy work
+    if IsolationLoop.allReady target tried && IsolationLoop.disjoint tried then
+      some (IsolationLoop.outputs tried)
+    else
+      refineLoop p target strategy fuel <|
+        IsolationLoop.nextLocal p target tried
+
+/-- Internal atom refiner shared by the public one-atom API and the
+all-atoms fast path in the full isolation driver. -/
+@[expose] def refineAtom? {p : ZPoly} (iso : DyadicRootIsolation p)
+    (target : Int) (strategy : AtomStrategy) : Option (DyadicRootIsolation p) :=
+  if target ≤ iso.square.prec then some iso else
+  let fuel := fuelFor p target iso.square.prec
+  match refineLoop p target strategy fuel #[⟨#[iso.square.doubled], 1⟩] with
+  | some rs =>
+    if rs.size = 1 then
+      match rs[0]? with
+      | some (Certified.atom iso') => some iso'
+      | _ => none
+    else none
+  | none => none
+
+namespace IsolationLoop
+
+/-- Refine the atom returned by one successful component attempt. -/
+@[expose] def refineAttempt? {p : ZPoly} (target : Int)
+    (strategy : AtomStrategy) (t : Component × Option (Certified p)) :
+    Option (DyadicRootIsolation p) :=
+  match t.2 with
+  | some (.atom iso) => refineAtom? iso target strategy
+  | _ => none
+
+/-- Strategy-parametric implementation of the all-atoms finishing pass. -/
+@[expose] def finishAtomsCore? (p : ZPoly) (target : Int)
+    (strategy : AtomStrategy)
+    (tried : Array (Component × Option (Certified p))) :
+    Option (Array (Certified p)) :=
+  if allAtoms tried && disjoint tried then
+    match tried.mapM (refineAttempt? target strategy) with
+    | none => none
+    | some atoms =>
+      if pairwiseDisjoint (atoms.map (·.square)) then
+        some (atoms.map Certified.atom)
+      else none
+  else none
+
+/-- Opportunistically refine every successful atom to the requested target.
+The nested work starts only when every attempt is an atom and the current
+discs are pairwise disjoint; the result is accepted only when every local
+refinement succeeds and the refined discs remain pairwise disjoint. The
+NK-only strategy keeps its existing proof-specialized loop path. -/
+@[expose] def finishAtoms? (p : ZPoly) (target : Int) (strategy : AtomStrategy)
+    (tried : Array (Component × Option (Certified p))) :
+    Option (Array (Certified p)) :=
+  match strategy with
+  | .nk => none
+  | .pellet | .nkThenPellet => finishAtomsCore? p target strategy tried
+
+/-- Ordinary output guard after the optional local finisher. Normalized
+worklists may emit any ready, disjoint certificates. The NK-only strategy also
+retains its historical early all-atoms emission; Pellet-bearing strategies use
+the stronger local finisher above. -/
+@[expose] def emitReady {p : ZPoly} (target : Int) (strategy : AtomStrategy)
+    (tried : Array (Component × Option (Certified p))) : Bool :=
+  (normalized p target tried || match strategy with
+    | .nk => allAtoms tried
+    | .pellet | .nkThenPellet => false) &&
+    (allReady target tried && disjoint tried)
+
+end IsolationLoop
+
 /-- The shared driver loop over the worklist. It may emit before
     `completenessDepth` when every result is already an atom and target-ready,
     with pairwise-disjoint discs (SPEC "Separation of the output"). Before
@@ -212,36 +292,17 @@ end IsolationLoop
   | fuel + 1, work =>
     if work.isEmpty then some #[] else
     let tried := IsolationLoop.attempts p strategy work
-    if (IsolationLoop.normalized p target tried || IsolationLoop.allAtoms tried) &&
-        (IsolationLoop.allReady target tried && IsolationLoop.disjoint tried) then
-      some (IsolationLoop.outputs tried)
-    else
-      -- A component whose certification already meets the target and whose
-      -- disc is disjoint from every other certified disc holds its position
-      -- (re-entering unchanged) while the laggards catch up; only
-      -- disjointness violators and unready components keep refining (SPEC
-      -- "Separation of the output"). Without the hold, a waiting component
-      -- would keep adopting Newton results, doubling its precision every
-      -- round and blowing the working bit-length while a slow sibling
-      -- (e.g. a tight cluster forced down to its separation depth)
-      -- subdivides.
-      isolateLoop p target strategy fuel <|
-        IsolationLoop.next p target tried
-
-/-- Local refinement loop for one already-isolated atom. Unlike the
-Cauchy-started full driver, it does not pay the global halo-normalization
-prefix: there are no sibling lineages to reglue. -/
-@[expose] def refineLoop (p : ZPoly) (target : Int) (strategy : AtomStrategy) :
-    Nat → Array Component → Option (Array (Certified p))
-  | 0, _ => none
-  | fuel + 1, work =>
-    if work.isEmpty then some #[] else
-    let tried := IsolationLoop.attempts p strategy work
-    if IsolationLoop.allReady target tried && IsolationLoop.disjoint tried then
-      some (IsolationLoop.outputs tried)
-    else
-      refineLoop p target strategy fuel <|
-        IsolationLoop.nextLocal p target tried
+    match IsolationLoop.finishAtoms? p target strategy tried with
+    | some rs => some rs
+    | none =>
+      if IsolationLoop.emitReady target strategy tried then
+        some (IsolationLoop.outputs tried)
+      else
+        -- A component whose certification already meets the target and whose
+        -- disc is disjoint from every other certified disc holds its position
+        -- (re-entering unchanged) while the laggards catch up.
+        isolateLoop p target strategy fuel <|
+          IsolationLoop.next p target tried
 
 /-- Refine to `target` precision: speculative Newton steps, falling back to
     local subdivision of the atom's square as a one-square component. This
@@ -249,16 +310,6 @@ prefix: there are no sibling lineages to reglue. -/
     ready/disjoint emission condition has not appeared within its fuel bound. -/
 @[expose] def DyadicRootIsolation.refineTo? {p : ZPoly} (iso : DyadicRootIsolation p)
     (target : Int) (strategy : AtomStrategy := .nkThenPellet) :
-    Option (DyadicRootIsolation p) :=
-  if target ≤ iso.square.prec then some iso else
-  let fuel := fuelFor p target iso.square.prec
-  match refineLoop p target strategy fuel #[⟨#[iso.square.doubled], 1⟩] with
-  | some rs =>
-    if rs.size = 1 then
-      match rs[0]? with
-      | some (Certified.atom iso') => some iso'
-      | _ => none
-    else none
-  | none => none
+    Option (DyadicRootIsolation p) := refineAtom? iso target strategy
 
 end Hex
