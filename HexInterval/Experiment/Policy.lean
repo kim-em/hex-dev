@@ -754,8 +754,9 @@ opaque State.dismiss (state : State Fact) (selection : Selection) : SelectResult
         | .suggestion suggestion =>
             let next := chargeDecision (consumeSuggestion state suggestion) .dismissal
             match offer.key with
-            | .retry _ _ | .instantiate _ _ => { next with incomplete := true }
-            | .split _ _ _ _ | .invoke _ | .equality _ => next
+            | .split _ _ _ _ => next
+            | .retry _ _ | .instantiate _ _ | .invoke _ | .equality _ =>
+                { next with incomplete := true }
       .completed .dismissed next
 
 /-! ## Exact rule observations -/
@@ -811,7 +812,10 @@ inductive SubmitResult (Fact : Type) where
 
 /-- Admit a reply through the underlying engine, then expose actual admitted
 fact deltas and newly engine-indexed suggestions.  Claimed candidate strength
-is never used as an observation. -/
+is never used as an observation.  A rejected or resource-limited reply which
+clears the pending latch has consumed its selected application and therefore
+makes propagation incomplete; a mismatched reply which preserves that latch
+remains directly resubmittable. -/
 opaque State.submit (state : State Fact) (reply : Reply Fact) : SubmitResult Fact :=
   match state.engine.pending with
   | none => .malformedState state
@@ -838,9 +842,16 @@ opaque State.submit (state : State Fact) (reply : Reply Fact) : SubmitResult Fac
                   | .success _ _ _ | .noChange _ | .inapplicable => false
               let next := if incomplete then { next with incomplete := true } else next
               .accepted observation next
-          | .invalid error engine => .invalid error (advanceState state engine)
+          | .invalid error engine =>
+              let next := advanceState state engine
+              let next :=
+                if engine.pending.isNone then { next with incomplete := true } else next
+              .invalid error next
           | .resourceLimit resource engine =>
-              .engineResource resource (advanceState state engine)
-          | .factResourceLimit budget engine => .factResource budget (advanceState state engine)
+              let next := advanceState state engine
+              .engineResource resource { next with incomplete := true }
+          | .factResourceLimit budget engine =>
+              let next := advanceState state engine
+              .factResource budget { next with incomplete := true }
 
 end Hex.Interval.Experiment.Propagator.Policy

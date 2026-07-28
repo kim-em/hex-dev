@@ -1254,6 +1254,10 @@ resource limit or failed rule. An accepted `resourceLimit` or `failed` report
 clears the request/reply latch and remains an exact policy observation, but it
 also marks propagation incomplete: consuming that application did not
 establish either successful contraction or mathematical inapplicability.
+Reply rejection, engine-resource exhaustion, or fact-domain-resource
+exhaustion has the same status when it clears the pending latch. A mismatched
+reply which preserves that exact pending action remains resubmittable and does
+not by itself lose completeness.
 
 One `balancedV1` candidate uses a versioned priority queue over these offers.
 Changed facts insert or invalidate only affected offers; stale entries are
@@ -1332,7 +1336,10 @@ variant-specific freshness guard tombstones them permanently. A rejected
 instantiation, or automatic tombstoning of a retry or instantiation, marks the
 scope incomplete; a discarded stale split remains optional. This accounting
 also applies when policy control adopts an engine snapshot containing an
-already-invalid retained suggestion.
+already-invalid retained suggestion. The prototype conservatively treats
+every automatically tombstoned retry as completeness-relevant, including a
+weak or stale retry. Whether some failure reasons can be proved redundant and
+discarded without that penalty remains an open policy question.
 
 Freshness is offer-specific. An invocation or retry compares the concrete
 application and relevant current input versions. Instantiation initially uses

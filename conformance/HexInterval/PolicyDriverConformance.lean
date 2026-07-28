@@ -98,6 +98,13 @@ def contradictionInitial? : Option (State Rank) := do
     | .error _ => none
   some (State.start engine policyLimits)
 
+def factResourceInitial? : Option (State Rank) := do
+  let engine <- match Engine.start rightResourceDomain program #[fRule, gRule] #[0, 0]
+      engineLimits with
+    | .ok engine => some engine
+    | .error _ => none
+  some (State.start engine policyLimits)
+
 def invokeUndeclared (calls : Calls) (request : RuleRequest Rank) :
     Outcome Rank × Calls :=
   (.success
@@ -344,13 +351,18 @@ def exactSaturationPrefix (events : Array (Event Rank)) : Bool :=
   | some state =>
       let result := drive controller invokeUndeclared 1 state []
         [.select (.application (application 0))]
-      result.cache == [(fKey.name, 0)] && result.state.engine.pending.isNone &&
-        match result.events.toList, result.stop with
-        | [.replyRejected selection invocation (.undeclaredWrite target)],
-            .invalidReply (.undeclaredWrite stoppedTarget) =>
-              target == node 0 && stoppedTarget == node 0 &&
-                exactInvokeSelection selection 0 0 (.application (application 0))
-                  invocation
+      let resumed := drive controller invokeLogged 0 result.state result.cache []
+      result.cache == [(fKey.name, 0)] && result.state.incomplete &&
+        result.state.engine.pending.isNone &&
+        (match result.events.toList, result.stop with
+          | [.replyRejected selection invocation (.undeclaredWrite target)],
+              .invalidReply (.undeclaredWrite stoppedTarget) =>
+                target == node 0 && stoppedTarget == node 0 &&
+                  exactInvokeSelection selection 0 0 (.application (application 0))
+                    invocation
+          | _, _ => false) &&
+        match resumed.events.toList, resumed.stop with
+        | [.incomplete], .unknown .incomplete => resumed.state.incomplete
         | _, _ => false
 
 -- A registry failure is an accepted, typed observation, but it cannot close
@@ -412,6 +424,43 @@ def exactSaturationPrefix (events : Array (Event Rank)) : Bool :=
 
 def initialWithLimits? (limits : Experiment.Propagator.Policy.Limits) : Option (State Rank) :=
   initialWith? limits
+
+-- An engine resource stop rolls back the candidate transaction but consumes
+-- the selected application. Restarting from the returned snapshot therefore
+-- reports incomplete rather than saturation.
+#guard
+  match PolicyConformance.initialWithLimits?
+      { engineLimits with maxAcceptedFacts := 0 } policyLimits with
+  | none => false
+  | some state =>
+      let result := drive controller invokeLogged 1 state []
+        [.select (.application (application 0))]
+      let resumed := drive controller invokeLogged 0 result.state result.cache []
+      result.state.incomplete && result.state.engine.pending.isNone &&
+        (match result.events.toList, result.stop with
+          | [.engineResource (.invocation selection invocation) .acceptedFacts],
+              .engineResource .acceptedFacts =>
+                exactInvokeSelection selection 0 0 (.application (application 0))
+                  invocation
+          | _, _ => false) &&
+        match resumed.events.toList, resumed.stop with
+        | [.incomplete], .unknown .incomplete => resumed.state.incomplete
+        | _, _ => false
+
+-- Fact-domain resource exhaustion carries its exact budget and the same
+-- completeness status.
+#guard
+  match factResourceInitial? with
+  | none => false
+  | some state =>
+      let result := drive controller invokeLogged 1 state []
+        [.select (.application (application 0))]
+      result.state.incomplete && result.state.engine.pending.isNone &&
+        match result.events.toList, result.stop with
+        | [.factResource (.invocation selection invocation) 77], .factResource 77 =>
+            exactInvokeSelection selection 0 0 (.application (application 0))
+              invocation
+        | _, _ => false
 
 #guard
   match run? 2 retryFirstCommands

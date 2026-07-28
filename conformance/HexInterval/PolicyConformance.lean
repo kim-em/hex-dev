@@ -383,6 +383,49 @@ def observedWith? (engineLimit : Experiment.Propagator.Limits)
 def afterInitialWith? (engineLimit : Experiment.Propagator.Limits) : Option (State Rank) :=
   afterReplyWith? engineLimit invoke
 
+-- A structurally invalid reply clears the pending latch and consumes the
+-- selected application.  The wrapper must remember that the resulting empty
+-- frontier is incomplete.
+#guard
+  match initial? with
+  | none => false
+  | some state =>
+      match request? state (.application (application 0)) with
+      | none => false
+      | some (request, awaiting) =>
+          match awaiting.submit (request.action.reply
+              (.success [] [.retry (engineLimits.maxEffort + 1)] {})) with
+          | .invalid .oversizedEffort next =>
+              next.incomplete && next.engine.pending.isNone &&
+                (next.view).toOption.any fun pair =>
+                  pair.1.offers.isEmpty && pair.1.incomplete
+          | _ => false
+
+-- A mismatched action leaves the exact pending request intact.  Correcting
+-- and resubmitting it remains complete, so the retryable mismatch must not
+-- poison the state.
+#guard
+  match initial? with
+  | none => false
+  | some state =>
+      match request? state (.application (application 0)) with
+      | none => false
+      | some (request, awaiting) =>
+          let mismatched : Reply Rank :=
+            { serial := request.action.serial + 1
+              programVersion := request.action.programVersion
+              application := request.action.application
+              outcome := .inapplicable }
+          match awaiting.submit mismatched with
+          | .invalid .mismatchedAction retryable =>
+              !retryable.incomplete && retryable.engine.pending.isSome &&
+                match retryable.submit (request.action.reply (invoke request)) with
+                | .accepted observation resumed =>
+                    exactInitialObservation observation && !resumed.incomplete &&
+                      resumed.engine.pending.isNone
+                | _ => false
+          | _ => false
+
 -- A policy cannot turn an engine-advertised effort-one retry into effort two.
 #guard
   match afterInitial? with
@@ -480,6 +523,43 @@ def leftMalformedDomain : FactDomain Rank where
   top _ := 0
   narrow _ current candidate :=
     if candidate < current then .malformed 91 else .noChange
+
+-- An engine resource failure during reply admission rolls back candidate
+-- effects, but the selected application is no longer live.
+#guard
+  match initialWithLimits?
+      { engineLimits with maxAcceptedFacts := 0 } policyLimits with
+  | none => false
+  | some state =>
+      match request? state (.application (application 0)) with
+      | none => false
+      | some (request, awaiting) =>
+          match awaiting.submit (request.action.reply (invoke request)) with
+          | .engineResource .acceptedFacts next =>
+              next.incomplete && next.engine.pending.isNone &&
+                next.engine.history.isEmpty &&
+                (next.view).toOption.any fun pair =>
+                  pair.1.offers.isEmpty && pair.1.incomplete
+          | _ => false
+
+-- A fact-domain resource failure has the same consumed-obligation boundary
+-- while retaining its exact domain budget.
+#guard
+  match Engine.start rightResourceDomain program #[fRule, gRule] #[0, 0]
+      engineLimits with
+  | .error _ => false
+  | .ok engine =>
+      let state := State.start engine policyLimits
+      match request? state (.application (application 0)) with
+      | none => false
+      | some (request, awaiting) =>
+          match awaiting.submit (request.action.reply (invoke request)) with
+          | .factResource 77 next =>
+              next.incomplete && next.engine.pending.isNone &&
+                next.engine.history.isEmpty &&
+                (next.view).toOption.any fun pair =>
+                  pair.1.offers.isEmpty && pair.1.incomplete
+          | _ => false
 
 -- Exhausting the accepted-fact budget reports a typed equality observation,
 -- charges no engine action, and leaves the equality live for a later run.
