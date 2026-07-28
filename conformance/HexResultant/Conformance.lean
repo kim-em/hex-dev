@@ -27,8 +27,9 @@ Covered properties:
   and leaves a remainder smaller than the divisor; reconstruction plus that
   bound is unique, and nonzero input scaling obeys the two homogeneity laws;
 - coefficient-indexed Sylvester minors reproduce pinned scalar resultants and
-  the expected first nontrivial subresultant, and obey left/right
-  homogeneity;
+  the expected first nontrivial subresultant; their local determinant obeys
+  adjacent-transposition sequence parity, arbitrary alternation and column
+  updates, while the generalized polynomials obey left/right homogeneity;
 - Brown chains omit zero terms, order unequal-degree inputs, strictly decrease
   after their first two entries, obey the sharp length bound, and are stable
   under extra fuel;
@@ -283,6 +284,44 @@ example {c : Int} (hc : c ≠ 0) (J : Nat) (f g : DensePoly Int) :
       scale 27 resultantBase &&
     DensePoly.Subresultant.poly 2 (scale (-2) cubic) quadratic = topBase &&
     DensePoly.Subresultant.poly 2 cubic (scale 3 quadratic) = scale 3 topBase
+
+example (M : SubresultantMinor.Square Int 3) (left : Fin 2) :
+    SubresultantMinor.det (SubresultantMinor.swapAdjacent M left) =
+      0 - SubresultantMinor.det M :=
+  SubresultantMinor.det_swapAdjacent M left
+
+example (M : SubresultantMinor.Square Int 3) (swaps : List (Fin 2)) :
+    SubresultantMinor.det (SubresultantMinor.applySwaps M swaps) =
+      SubresultantMinor.sign (R := Int) swaps.length *
+        SubresultantMinor.det M :=
+  SubresultantMinor.det_applySwaps M swaps
+
+example (M : SubresultantMinor.Square Int 3) (a b : Fin 3)
+    (hab : a ≠ b) (hcol : ∀ i, M i a = M i b) :
+    SubresultantMinor.det M = 0 :=
+  SubresultantMinor.det_eq_zero_of_col_eq M a b hab hcol
+
+example (M : SubresultantMinor.Square Int 3) (src dst : Fin 3)
+    (c : Int) (h : src ≠ dst) :
+    SubresultantMinor.det (SubresultantMinor.addCol M src dst c) =
+      SubresultantMinor.det M :=
+  SubresultantMinor.det_addCol M src dst c h
+
+-- An asymmetric matrix pins the adjacent action, odd/even signs, arbitrary
+-- duplicate-column vanishing, and arbitrary column update.
+#guard
+  let rows : List (List Int) := [[1, 2, 3], [0, 1, 4], [5, 6, 0]]
+  let M : SubresultantMinor.Square Int 3 :=
+    fun i j => (rows.getD i.val []).getD j.val 0
+  let moved := SubresultantMinor.applySwaps M [0, 1]
+  SubresultantMinor.det M = 1 &&
+    SubresultantMinor.det (SubresultantMinor.swapAdjacent M 0) = -1 &&
+    SubresultantMinor.det (SubresultantMinor.applySwaps M [0]) = -1 &&
+    SubresultantMinor.det moved = 1 &&
+    moved 0 0 = 2 && moved 0 1 = 3 && moved 0 2 = 1 &&
+    SubresultantMinor.det
+      (SubresultantMinor.setCol M 1 (fun i => M i 2)) = 0 &&
+    SubresultantMinor.det (SubresultantMinor.addCol M 0 1 7) = 1
 
 /-! # Brown chain -/
 
