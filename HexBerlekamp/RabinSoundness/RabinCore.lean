@@ -291,7 +291,7 @@ private theorem constant_eq_zero_of_mod_eq_zero
     rw [DensePoly.degree?_C_getD]
     exact ha_pos
   have hzero : (0 : FpPoly p) % a = 0 := by
-    exact DensePoly.zero_mod_eq_zero_core (S := ZMod64 p) a
+    exact DensePoly.zero_mod_eq_zero (S := ZMod64 p) a
   have hpoly : (DensePoly.C c : FpPoly p) = 0 := by
     simpa [hC, hzero] using hmod
   have hcoeff := congrArg (fun q : FpPoly p => q.coeff 0) hpoly
@@ -661,7 +661,7 @@ theorem frobeniusDiffMod_mod_self_of_degree_zero
   have hmod_zero : ∀ q : FpPoly p, q % f = 0 := by
     intro q
     show (DensePoly.divMod q f).2 = 0
-    exact DensePoly.divMod_remainder_eq_zero_of_degree_zero_core q f hf_size hcancel
+    exact DensePoly.divMod_remainder_eq_zero_of_degree_zero_of_cancel q f hf_size hcancel
   -- Show frobeniusDiffMod = 0.
   have hfrob_zero : FpPoly.frobeniusXPowMod f hmonic k = 0 := by
     have h := hmod_zero (FpPoly.frobeniusXPowMod f hmonic k)

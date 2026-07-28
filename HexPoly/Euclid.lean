@@ -67,7 +67,7 @@ private theorem mod_sub_self_eq_mul_neg_div {S : Type _}
 
 /-- Packages `mod_sub_self_eq_mul_neg_div` as the divisibility `m ∣ (p % m - p)`, the core
 fact behind the public `congr_mod`. -/
-private theorem congr_mod_core {S : Type _}
+private theorem dvd_mod_sub {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (p m : DensePoly S) :
     m ∣ (p % m - p) := by
@@ -79,7 +79,7 @@ theorem congr_mod {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
     [DivModLaws S]
     (p m : DensePoly S) :
     Congr (p % m) p m := by
-  exact congr_mod_core p m
+  exact dvd_mod_sub p m
 
 /-- Rearranges a difference-as-multiple `p - q = m * r` into the additive form
 `p = q + m * r`. -/
@@ -125,23 +125,6 @@ private theorem mod_self_eq_zero {S : Type _}
     (m : DensePoly S) :
     m % m = 0 := by
   exact DivModLaws.mod_self_eq_zero m
-
-/-- The zero polynomial reduces to `0` modulo any `m`, `0 % m = 0`. -/
-private theorem zero_mod_eq_zero {S : Type _}
-    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
-    (m : DensePoly S) :
-    (0 : DensePoly S) % m = 0 := by
-  change (divMod (0 : DensePoly S) m).2 = 0
-  unfold divMod
-  have hzero : (0 : DensePoly S).coeffs = #[] := rfl
-  have hdeg_zero : (0 : DensePoly S).degree?.getD 0 = 0 := by
-    simp [degree?, size, hzero]
-  rw [hdeg_zero]
-  by_cases hpos : 0 < m.degree?.getD 0
-  · simp [hpos]
-  · rw [if_neg hpos]
-    unfold divModArray
-    simp [hzero, isZero, size, toArray, divModArrayAux]
 
 /-- Divisibility of a difference `m ∣ (p - q)` forces equal canonical remainders
 `p % m = q % m`. -/

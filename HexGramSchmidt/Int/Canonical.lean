@@ -793,7 +793,7 @@ private theorem noPivotLoop_matrix_processed_col_eq_zero {n : Nat} (fuel : Nat) 
       by_cases hDone : state.step + 1 < n
       · by_cases hp : state.matrix[state.step][state.step] = 0
         · -- Singular branch contradicts h_result_none.
-          rw [Matrix.noPivotLoop_singular_branch f state hDone hp] at h_result_none
+          rw [Matrix.noPivotLoop_of_singular f state hDone hp] at h_result_none
           simp at h_result_none
         · -- Regular branch.
           let next : Matrix.BareissState n :=
@@ -805,7 +805,7 @@ private theorem noPivotLoop_matrix_processed_col_eq_zero {n : Nat} (fuel : Nat) 
               singularStep := none }
           have h_eq_next : Matrix.noPivotLoop (f + 1) state =
               Matrix.noPivotLoop f next :=
-            Matrix.noPivotLoop_regular_branch f state hDone hp
+            Matrix.noPivotLoop_of_regular f state hDone hp
           rw [h_eq_next] at h_result_none hk_lt ⊢
           by_cases hk_eq : k = state.step
           · -- k just got processed: column k was zeroed by stepMatrix.
@@ -1027,7 +1027,7 @@ private theorem bareissGramCanonicalCoeff_eq_of_singular
             singularStep := some (Matrix.noPivotLoop elapsed
               (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step } := by
         rw [noPivotLoop_add elapsed 1]
-        exact Matrix.noPivotLoop_singular_branch 0 _ hDone hp
+        exact Matrix.noPivotLoop_of_singular 0 _ hDone hp
       have h_state_eq :
           Matrix.noPivotLoop (elapsed + 1 + j)
             (Matrix.noPivotInitialState (Matrix.gramMatrix b)) =

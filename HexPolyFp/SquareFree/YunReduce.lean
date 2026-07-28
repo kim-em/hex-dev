@@ -1027,7 +1027,7 @@ private theorem quotient_dvd_of_mul_right_dvd_mul_right
             _ = (z * q) * y := (DensePoly.mul_assoc_poly z q y).symm
 
 set_option maxHeartbeats 800000 in
-private theorem yunStep_residual_dvd_derivative_product_core
+private theorem yunStep_residual_dvd_derivative_product_of_factors
     [ZMod64.PrimeModulus p]
     (c w y a z : FpPoly p)
     (hcy : a * y = c)
@@ -1083,7 +1083,7 @@ private theorem yunStep_residual_dvd_derivative_product_of_previous
         (by simpa [a, y] using hda)
         (by simpa [z, y] using hdz)
   exact
-    yunStep_residual_dvd_derivative_product_core
+    yunStep_residual_dvd_derivative_product_of_factors
       c w y a z hcy hwy hcommon_az hprev
 
 private theorem yunFactorsPairwiseReachable_residual_dvd_derivative_product
@@ -1274,7 +1274,7 @@ explicit scalar power preserves the same product.
 This lemma deliberately does not assume `DensePoly.gcd` is monic: all scalar
 ambiguity is isolated in `DensePoly.C (normalizeMonic contribution.2).1`.
 -/
-private theorem yunFactorsContributionWithLevel_normalized_tail_product_bridge
+private theorem yunFactorsContributionWithLevel_normalized_tail_product
     (hp : Hex.Nat.Prime p) (f c w : FpPoly p)
     (base level fuel multiplicity : Nat)
     (hproduct :
@@ -1306,7 +1306,7 @@ private theorem yunFactorsContributionWithLevel_normalized_tail_product_bridge
     _ = pow f multiplicity := by
           simpa [contribution] using hproduct
 
-private theorem squareFreeAuxRevContribution_pthRoot_normalized_tail_bridge
+private theorem squareFreeAuxRevContribution_normalized_pthRoot
     (hp : Hex.Nat.Prime p) (tail : FpPoly p) (multiplicity fuel : Nat)
     (hmultiplicity : 0 < multiplicity)
     (hzero : tail.isZero = false)
@@ -1337,7 +1337,7 @@ private theorem squareFreeAuxRevContribution_pthRoot_normalized_tail_bridge
             (multiplicity * p) fuel := by
           rw [hnormalized]
 
-private theorem derivative_active_normalized_tail_weighted_product_bridge
+private theorem derivativeActive_normalizedTail_product
     (hp : Hex.Nat.Prime p) (f tail contribution : FpPoly p)
     (multiplicity fuel : Nat)
     (hzero : tail.isZero = false)
@@ -1368,7 +1368,7 @@ private theorem derivative_active_normalized_tail_weighted_product_bridge
           rw [htail_pow]
     _ = pow f multiplicity := hproduct
 
-private theorem derivative_active_raw_tail_weighted_product_bridge_via_normalized
+private theorem derivativeActive_rawTail_product
     (hp : Hex.Nat.Prime p) (f tail contribution : FpPoly p)
     (multiplicity fuel : Nat)
     (hmultiplicity : 0 < multiplicity)
@@ -1407,7 +1407,7 @@ private theorem derivative_active_raw_tail_weighted_product_bridge_via_normalize
     hcorrect (pthRoot tail) (multiplicity * p)
       hmultiplicity_tail hrawFuel hrawZero hrawReachable hrawResidual
   have htail_bridge :=
-    squareFreeAuxRevContribution_pthRoot_normalized_tail_bridge
+    squareFreeAuxRevContribution_normalized_pthRoot
       hp tail multiplicity fuel hmultiplicity hzero hdf hraw hnormalized
   calc
     contribution *
@@ -1418,7 +1418,7 @@ private theorem derivative_active_raw_tail_weighted_product_bridge_via_normalize
               (multiplicity * p) fuel) := by
           rw [htail_bridge]
     _ = pow f multiplicity := by
-          exact derivative_active_normalized_tail_weighted_product_bridge
+          exact derivativeActive_normalizedTail_product
             hp f tail contribution multiplicity fuel hzero hdf hnormalized hproduct
 
 private theorem pthRoot_size_of_derivative_zero

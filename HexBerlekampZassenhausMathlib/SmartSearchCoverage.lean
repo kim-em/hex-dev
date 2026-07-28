@@ -568,7 +568,7 @@ private theorem smartAux_none_budget_zero
           have hS_empty : S = ∅ := by
             rw [hJ_empty] at hSJ; exact Finset.subset_empty.mp hSJ
           have hg_dvd_core : g ∣ core := zpoly_dvd_trans hg_dvd_target htarget_dvd_core
-          apply not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core_of_bound
+          apply not_represents_empty_of_primitive_bound
             B' (hvalid g hg_dvd_core) hcore_ne hcore_primitive hcore_lc_pos
             hcore_lc_le hd_modulus hpartition hg_dvd_target hg_irr_toPoly hprecision
           rw [← hS_empty]; exact hSrep

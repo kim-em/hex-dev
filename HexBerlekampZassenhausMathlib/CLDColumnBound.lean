@@ -428,7 +428,7 @@ theorem cldQuotientMod_congr_mul_derivative
       ∀ a : Int, a - (a / g.leadingCoeff) * g.leadingCoeff = 0 := by
     intro a; rw [hg_monic]; omega
   have hrdeg : r.degree?.getD 0 < g.degree?.getD 0 :=
-    Hex.DensePoly.divMod_remainder_degree_lt_of_pos_degree_core num g hg_deg hcancel
+    Hex.DensePoly.divMod_remainder_degree_lt_of_pos_degree_of_cancel num g hg_deg hcancel
   -- Move the goal to Mathlib polynomials reduced modulo `p ^ k`.
   refine HexHenselMathlib.zpoly_congr_of_toPolynomial_map_eq _ _ (p ^ k) ?_
   intro φ

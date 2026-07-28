@@ -1024,7 +1024,7 @@ private theorem noPivotLoop_initial_gram_diag_ne_zero
       Matrix.noPivotLoop 1 (Matrix.noPivotLoop q state₀) =
         { (Matrix.noPivotLoop q state₀) with
           singularStep := some (Matrix.noPivotLoop q state₀).step } :=
-    Matrix.noPivotLoop_singular_branch 0 _ hDone hp_at_step
+    Matrix.noPivotLoop_of_singular 0 _ hDone hp_at_step
   have h_q_plus_one :
       Matrix.noPivotLoop (q + 1) state₀ =
         Matrix.noPivotLoop 1 (Matrix.noPivotLoop q state₀) :=
@@ -1152,7 +1152,7 @@ private theorem schurSigma_foldl_eq
           (b := b) p_out 0 hp_out_pos hp_out_n h_nonsing
       simp only [Matrix.noPivotInitialState]
       exact key
-    rw [Matrix.noPivotLoop_regular_branch 0
+    rw [Matrix.noPivotLoop_of_regular 0
         (Matrix.noPivotInitialState (Matrix.gramMatrix b)) hDone hpivot]
     simp [Matrix.noPivotLoop_zero_fuel, Matrix.noPivotInitialState]
     have hofFn : ∀ (f : Fin n → Fin n → Int) (r : Fin n) (jj : Nat) (hjj : jj < n),
@@ -1258,9 +1258,9 @@ private theorem schurSigma_foldl_eq
               (⟨(Matrix.noPivotLoop q' state₀).step,
                   Nat.lt_of_succ_lt hDone⟩ : Fin n)] ≠ 0 :=
         h_eq_diag ▸ h_diag_at_q'
-      rw [h_add, Matrix.noPivotLoop_regular_branch 0 _ hDone h_diag_at_step,
+      rw [h_add, Matrix.noPivotLoop_of_regular 0 _ hDone h_diag_at_step,
         Matrix.noPivotLoop_zero_fuel]
-      -- The `noPivotLoop_regular_branch` rewrite makes the goal:
+      -- The `noPivotLoop_of_regular` rewrite makes the goal:
       --   matrix[⟨step, ⋯⟩][⟨step, ⋯⟩] = matrix[⟨q', hq'_n⟩][⟨q', hq'_n⟩]
       -- which we close by the index equality.
       exact congrArg
@@ -1313,7 +1313,7 @@ private theorem schurSigma_foldl_eq
             (fun (i : Fin n) =>
               (Matrix.noPivotLoop (q' + 1) state₀).matrix[i][i]) h_idx
         exact h_eq ▸ h_diag
-      rw [Matrix.noPivotLoop_regular_branch 0 _ hDone hp,
+      rw [Matrix.noPivotLoop_of_regular 0 _ hDone hp,
         Matrix.noPivotLoop_zero_fuel]
       have ha : (Matrix.noPivotLoop (q' + 1) state₀).step < a := by
         rw [h_step_q'_succ]; exact hp_a_lt

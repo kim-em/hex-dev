@@ -497,13 +497,13 @@ theorem refineAtom_preserves {p : Hex.ZPoly} {strategy : Hex.AtomStrategy}
         · simp at hrefine
 
 /-- The opportunistic all-atoms fast path returns atoms only. -/
-theorem finishAtomsCore_atoms {p : Hex.ZPoly} {target : Int}
+theorem finishAllAtoms_atoms {p : Hex.ZPoly} {target : Int}
     {strategy : Hex.AtomStrategy}
     {tried : Array (Hex.Component × Option (Hex.Certified p))}
     {rs : Array (Hex.Certified p)}
-    (hfinish : Hex.IsolationLoop.finishAtomsCore? p target strategy tried = some rs) :
+    (hfinish : Hex.IsolationLoop.finishAllAtoms? p target strategy tried = some rs) :
     ∀ r ∈ rs.toList, ∃ iso : Hex.DyadicRootIsolation p, r = .atom iso := by
-  unfold Hex.IsolationLoop.finishAtomsCore? at hfinish
+  unfold Hex.IsolationLoop.finishAllAtoms? at hfinish
   split at hfinish
   · cases hmap : tried.mapM
         (Hex.IsolationLoop.refineAttempt? target strategy) with
@@ -526,14 +526,14 @@ theorem finishAtomsCore_atoms {p : Hex.ZPoly} {target : Int}
 
 /-- A successful all-atoms fast path meets the target and returns pairwise
 disjoint atom discs. -/
-theorem finishAtomsCore_ready_disjoint {p : Hex.ZPoly} {target : Int}
+theorem finishAllAtoms_ready_disjoint {p : Hex.ZPoly} {target : Int}
     {strategy : Hex.AtomStrategy}
     {tried : Array (Hex.Component × Option (Hex.Certified p))}
     {rs : Array (Hex.Certified p)}
-    (hfinish : Hex.IsolationLoop.finishAtomsCore? p target strategy tried = some rs) :
+    (hfinish : Hex.IsolationLoop.finishAllAtoms? p target strategy tried = some rs) :
     (∀ r ∈ rs.toList, target ≤ r.square.prec) ∧
       Hex.pairwiseDisjoint (rs.map (·.square)) = true := by
-  unfold Hex.IsolationLoop.finishAtomsCore? at hfinish
+  unfold Hex.IsolationLoop.finishAllAtoms? at hfinish
   split at hfinish
   · cases hmap : tried.mapM
         (Hex.IsolationLoop.refineAttempt? target strategy) with
@@ -576,10 +576,10 @@ theorem finishAtomsCore_ready_disjoint {p : Hex.ZPoly} {target : Int}
 
 /-- The all-atoms fast path preserves every polynomial root covered by its
 attempted worklist. -/
-theorem finishAtomsCore_covers {p : Hex.ZPoly} {target : Int}
+theorem finishAllAtoms_covers {p : Hex.ZPoly} {target : Int}
     {strategy : Hex.AtomStrategy} (hcert : Certifier.Preserves p strategy)
     {work : Array Hex.Component} {rs : Array (Hex.Certified p)}
-    (hfinish : Hex.IsolationLoop.finishAtomsCore? p target strategy
+    (hfinish : Hex.IsolationLoop.finishAllAtoms? p target strategy
       (Hex.IsolationLoop.attempts p strategy work) = some rs)
     {z : ℂ} (hzroot : (toPolyℂ p).IsRoot z)
     (hz : z ∈ Worklist.region work) : z ∈ Results.region rs := by
@@ -588,8 +588,8 @@ theorem finishAtomsCore_covers {p : Hex.ZPoly} {target : Int}
   have ht : (c, Hex.Component.certify? p strategy c) ∈ tried := by
     apply Array.mem_map_of_mem
     exact Array.mem_toList_iff.mp hc
-  change Hex.IsolationLoop.finishAtomsCore? p target strategy tried = some rs at hfinish
-  unfold Hex.IsolationLoop.finishAtomsCore? at hfinish
+  change Hex.IsolationLoop.finishAllAtoms? p target strategy tried = some rs at hfinish
+  unfold Hex.IsolationLoop.finishAllAtoms? at hfinish
   split at hfinish
   · rename_i hatoms
     have hguard : Hex.IsolationLoop.allAtoms tried = true ∧
@@ -639,10 +639,10 @@ theorem finishAtoms_atoms {p : Hex.ZPoly} {target : Int}
   cases strategy with
   | nk => simp [Hex.IsolationLoop.finishAtoms?] at hfinish
   | pellet =>
-      apply finishAtomsCore_atoms
+      apply finishAllAtoms_atoms
       simpa [Hex.IsolationLoop.finishAtoms?] using hfinish
   | nkThenPellet =>
-      apply finishAtomsCore_atoms
+      apply finishAllAtoms_atoms
       simpa [Hex.IsolationLoop.finishAtoms?] using hfinish
 
 theorem finishAtoms_ready_disjoint {p : Hex.ZPoly} {target : Int}
@@ -655,10 +655,10 @@ theorem finishAtoms_ready_disjoint {p : Hex.ZPoly} {target : Int}
   cases strategy with
   | nk => simp [Hex.IsolationLoop.finishAtoms?] at hfinish
   | pellet =>
-      apply finishAtomsCore_ready_disjoint
+      apply finishAllAtoms_ready_disjoint
       simpa [Hex.IsolationLoop.finishAtoms?] using hfinish
   | nkThenPellet =>
-      apply finishAtomsCore_ready_disjoint
+      apply finishAllAtoms_ready_disjoint
       simpa [Hex.IsolationLoop.finishAtoms?] using hfinish
 
 theorem finishAtoms_covers {p : Hex.ZPoly} {target : Int}
@@ -671,15 +671,15 @@ theorem finishAtoms_covers {p : Hex.ZPoly} {target : Int}
   cases strategy with
   | nk => simp [Hex.IsolationLoop.finishAtoms?] at hfinish
   | pellet =>
-      have hcore : Hex.IsolationLoop.finishAtomsCore? p target .pellet
+      have hcore : Hex.IsolationLoop.finishAllAtoms? p target .pellet
           (Hex.IsolationLoop.attempts p .pellet work) = some rs := by
         simpa [Hex.IsolationLoop.finishAtoms?] using hfinish
-      exact finishAtomsCore_covers hcert hcore hzroot hz
+      exact finishAllAtoms_covers hcert hcore hzroot hz
   | nkThenPellet =>
-      have hcore : Hex.IsolationLoop.finishAtomsCore? p target .nkThenPellet
+      have hcore : Hex.IsolationLoop.finishAllAtoms? p target .nkThenPellet
           (Hex.IsolationLoop.attempts p .nkThenPellet work) = some rs := by
         simpa [Hex.IsolationLoop.finishAtoms?] using hfinish
-      exact finishAtomsCore_covers hcert hcore hzroot hz
+      exact finishAllAtoms_covers hcert hcore hzroot hz
 
 /-- Parametric coverage theorem for the fuel-based isolation loop. No
 certificate analysis enters: the proof consumes only `Certifier.Preserves`

@@ -1923,7 +1923,7 @@ polynomial yields `0`. -/
 private theorem div_zero_eq_zero (f : FpPoly p) :
     f / (0 : FpPoly p) = 0 := by
   have hpair :=
-    DensePoly.divMod_eq_zero_self_of_size_zero_core f (0 : FpPoly p) (by simp)
+    DensePoly.divMod_eq_zero_self_of_size_zero f (0 : FpPoly p) (by simp)
   exact congrArg Prod.fst hpair
 
 /-- `div_zero_C_mul_left` shows constant scaling commutes with division by the

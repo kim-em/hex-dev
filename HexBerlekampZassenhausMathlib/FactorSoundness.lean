@@ -284,7 +284,7 @@ theorem Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
           have : g.size = f.size := by
             rw [hg_def, Hex.normalizeFactorSign]
             by_cases hlc : Hex.DensePoly.leadingCoeff f < 0
-            · rw [if_pos hlc]; exact Hex.ZPoly.scale_size_of_nonzero (-1) f (by norm_num)
+            · rw [if_pos hlc]; exact Hex.ZPoly.scale_size_of_ne_zero (-1) f (by norm_num)
             · rw [if_neg hlc]
           have hfsz : 0 < f.size := Hex.ZPoly.size_pos_of_ne_zero f hf0
           have hgeq : g.degree?.getD 0 = g.size - 1 := by

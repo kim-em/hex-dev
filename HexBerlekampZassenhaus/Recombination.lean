@@ -1206,7 +1206,7 @@ theorem monicTarget_monic (core : ZPoly) (p k : Nat)
     exact absurd hemod (by decide)
   have hscale_size :
       (DensePoly.scale (leadingCoeffInverse core p k) core).size = core.size :=
-    scale_size_of_nonzero _ core hs_ne
+    scale_size_of_ne_zero _ core hs_ne
   have hscale_pos :
       0 < (DensePoly.scale (leadingCoeffInverse core p k) core).size := by
     rw [hscale_size]; exact hcore

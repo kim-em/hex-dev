@@ -21,7 +21,7 @@ and `lllNative`. Key #8519 facts that supersede older notes below:
   `bhksRecoverClassified` / `bhksSingleAllOnesPartition` build
   `bhksLatticeBasis (ZPoly.toMonic f).monic …`, and the lattice tier
   (`factorLatticeFactorsWithBound`) selects `ZPoly.toMonicPrimeData?` — so the
-  toMonic partition producers (`liftedFactorSubsetPartition_of_toMonicPrimeData_complete`)
+  toMonic partition producers (`liftedFactorSubsetPartition_of_toMonicModP`)
   and the monic-regime short-vector producer
   (`BHKS.supportShortVectorData_of_recoveredLift`, which needs
   `leadingCoeff f = 1`) apply directly. The standalone fast tier
@@ -877,7 +877,7 @@ fast-BHKS-monic-lift migration issue.
 
 ### "Final integration" issues: confirm the substrate *producer* exists, not just that the feeder issue closed
 
-A `feature` issue that says "instantiate `SlowPathHenselSubstrate` / `…Evidence`
+A `feature` issue that says "instantiate `HenselFactorData` / `…Evidence`
 constructed by the prerequisite issues" is only a token-swap if a theorem
 *concludes* that structure. A closed feeder issue does **not** prove its
 producer landed: these substrate issues are sometimes closed COMPLETED on a
@@ -898,7 +898,7 @@ lemma, even when no theorem states it.** #8068 was nearly skipped a 5th time on
 "no original→monic `RepresentsIntegerFactorAtLift` inversion exists"
 (`representsIntegerFactorAtLift_of_monicCorrespondent` only goes monic→original);
 that conclusion was *wrong* — the partition producer
-`initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData` already
+`initialPartitionEvidence_of_toMonicModP` already
 reconstructs the monic correspondent from the *factor itself* (a local `descent`
 `have`, `IntReductionMod.lean`), via `exists_monicCorrespondent_of_dvd` +
 `representsModP_correspondent` + `toMonicLiftData_represents_lifted_monicCorrespondent`,
@@ -909,9 +909,9 @@ report a confident, wrong "NO" here — read the construction sites yourself.
 Substrate producers
 still missing as of this writing: `HenselLiftDescentHypotheses` and the
 `toMonicLiftData` modP→lift transport. `InitialLiftedFactorSubsetPartitionEvidence`
-now *has* one — `initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData`
+now *has* one — `initialPartitionEvidence_of_toMonicModP`
 (`IntReductionMod.lean`, #7362). Note where it landed: not next to its natural
-consumer (`slowPathHenselSubstrate_*` in `Basic.lean`) but downstream in
+consumer (`HenselFactorData.of*` in `MonicCorrespondent.lean`) but downstream in
 `IntReductionMod.lean`, because its `pairwise_disjoint` field needs the mod-`p`
 squarefreeness datum (`modPFactorSubset_disjoint_of_choosePrimeData` /
 `squarefree_toMathlibPolynomial_monicModPImage_of_choosePrimeData`) that lives
@@ -921,16 +921,17 @@ de-privatising any `private` `Basic.lean` helpers it calls (visibility-only, saf
 Wiring it back up into the upstream slow-path substrate is a separate follow-up
 (the substrate cannot import downstream modules). That follow-up landed (#7584):
 `IntReductionMod.lean` now carries carrier-free toMonic producers that need only a
-`toMonicPrimeData?` selection witness plus core facts (lc>0, deg>0, primitive,
-squarefree, B≠0, the monic-correspondent bound) — `liftedFactorSubsetPartition_of_toMonicPrimeData_complete`
-and `slowPathHenselSubstrate_of_toMonicPrimeData`, both discharging `hinitial` via
-the #7362 producer above and `hcorr` via the new Basic.lean
-`henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData` (the carrier-free
+mod-`p` factorization of the monic transform plus core facts (lc>0, deg>0, primitive,
+squarefree, B≠0, the monic-correspondent bound) — `liftedFactorSubsetPartition_of_toMonicModP`
+and `HenselFactorData.ofToMonicModP`, both discharging `hinitial` via
+the #7362 producer above and `hcorr` via the new `ToMonicUniqueness.lean`
+`henselSubsetCorrespondenceHypotheses_of_toMonicModP` (the carrier-free
 correspondence: at `True True`, `MonicDescentHypotheses`' only consumed fields
 `lift_eq`/`successful_lift` are `rfl`/`trivial`, so no descent carrier is needed —
 there is still no `MonicDescentHypotheses` *producer*, but the partition/substrate
 chain no longer needs one). So when wiring #6771/#7561, **do not re-derive these** —
-consume `slowPathHenselSubstrate_of_toMonicPrimeData` / `…_complete` directly. They
+consume `HenselFactorData.ofToMonicModP` /
+`liftedFactorSubsetPartition_of_toMonicModP` directly. They
 have no in-tree consumer yet; the slow-exhaustive branch
 (`liftedFactorSubsetPartition_outerBound_of_choosePrimeData`) is keyed on the
 different `choosePrimeData? squareFreeCore` selection, not `toMonicPrimeData?`.
@@ -998,7 +999,7 @@ one **only at `leadingCoeff core = 1`** (`liftedRecoveryCandidate.eq_productCand
 `MonicDescentHypotheses` / `hexists_lifted` adapter is **not** the blocker — `hcorr`
 and `hinitial` are producible from core facts now
 (`henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent`,
-`initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData`), and the
+`initialPartitionEvidence_of_toMonicModP`), and the
 heavy `descends` field is not consumed when building the correspondence (only
 `lift_eq = rfl` / `successful_lift = trivial`). Land the unscaled-support
 producer first, then #7561 is the thin composition.

@@ -308,7 +308,7 @@ private theorem composePower_eq_linearPow (w : FpPoly p) :
 with the shared `DensePoly.composeCoeffPowerSumUpTo`. Callers use this to
 transfer the explicit compose-as-sum characterization onto the `DensePoly`
 API that downstream files import. -/
-theorem composeCoeffPowerSumUpTo_eq_core
+theorem composeCoeffPowerSumUpTo_eq
     (coeff : Nat → ZMod64 p) :
     ∀ n base w,
       composeCoeffPowerSumUpTo coeff n base w =
@@ -316,7 +316,7 @@ theorem composeCoeffPowerSumUpTo_eq_core
   | 0, _, _ => rfl
   | n + 1, base, w => by
       simp only [composeCoeffPowerSumUpTo, DensePoly.composeCoeffPowerSumUpTo]
-      rw [composePower_eq_linearPow, composeCoeffPowerSumUpTo_eq_core coeff n (base + 1) w]
+      rw [composePower_eq_linearPow, composeCoeffPowerSumUpTo_eq coeff n (base + 1) w]
 
 /-- The list-fed accumulator `composeCoeffPowerSumFrom` over the coefficient
 slice `[coeff base, …, coeff (base + n - 1)]` agrees with the index-fed

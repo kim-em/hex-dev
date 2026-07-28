@@ -590,7 +590,7 @@ private theorem matrixActionPolySum_eq_linearPow_mod
         rw [DensePoly.coeff_eq_zero_of_size_le _ (by omega : _ ≤ n), DensePoly.coeff_zero]
         rfl
       rw [h_zero]
-      exact DensePoly.zero_mod_eq_zero_core (S := ZMod64 p) f
+      exact DensePoly.zero_mod_eq_zero (S := ZMod64 p) f
     · apply DensePoly.mod_eq_self_of_degree_lt
       have hbasis_pos : 0 < basisSize f := Nat.pos_of_ne_zero h_basis_zero
       have hf_size_pos : 0 < f.size := size_pos_of_basisSize_pos f hbasis_pos

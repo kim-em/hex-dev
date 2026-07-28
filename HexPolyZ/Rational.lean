@@ -68,7 +68,7 @@ private theorem normalizePrimitiveSign_ne_zero_of_ne_zero (p : ZPoly) (hp : p �
     intro hzero
     have hsize : p.size = 0 := by
       have hscaled_size : (DensePoly.scale (-1 : Int) p).size = p.size :=
-        scale_size_of_nonzero (-1 : Int) p (by decide)
+        scale_size_of_ne_zero (-1 : Int) p (by decide)
       rw [hzero, DensePoly.size_zero] at hscaled_size
       omega
     apply hp
@@ -171,12 +171,6 @@ theorem ratPolyPrimitivePart_primitive (f : DensePoly Rat)
     Primitive (ratPolyPrimitivePart f) := by
   unfold ratPolyPrimitivePart at h ⊢
   exact normalizePrimitiveSign_primitivePart_primitive _ h
-
-/-- A rational polynomial is a rational scalar multiple of the rationalization
-of its integer primitive part. -/
-theorem ratPolyPrimitivePart_rational_associate (f : DensePoly Rat) :
-    ∃ unit : Rat, f = DensePoly.scale unit (toRatPoly (ratPolyPrimitivePart f)) := by
-  exact ratPolyPrimitivePart_rational_associate_core f
 
 /--
 Gauss-style cancellation: if two primitive nonzero integer polynomials are
@@ -538,13 +532,13 @@ private theorem rat_div_mul_cancel_of_ne (a b : Rat) (hb : b ≠ 0) :
     a - (a / b) * b = 0 := by
   grind [Rat.div_def, Rat.mul_assoc, Rat.mul_comm]
 
-/-- `rat_divMod_remainder_degree_lt_core`: over `DensePoly Rat`, the
+/-- `rat_divMod_remainder_degree_lt`: over `DensePoly Rat`, the
 `divMod` remainder has strictly smaller degree than a positive-degree
 divisor. -/
-private theorem rat_divMod_remainder_degree_lt_core (p q : DensePoly Rat)
+private theorem rat_divMod_remainder_degree_lt (p q : DensePoly Rat)
     (hdegree : 0 < q.degree?.getD 0) :
     (DensePoly.divMod p q).2.degree?.getD 0 < q.degree?.getD 0 := by
-  apply DensePoly.divMod_remainder_degree_lt_of_pos_degree_core p q hdegree
+  apply DensePoly.divMod_remainder_degree_lt_of_pos_degree_of_cancel p q hdegree
   intro a
   apply rat_div_mul_cancel_of_ne
   apply rat_leadingCoeff_ne_zero_of_pos_size
@@ -554,13 +548,13 @@ private theorem rat_divMod_remainder_degree_lt_core (p q : DensePoly Rat)
     omega
   · exact Nat.pos_of_ne_zero hq
 
-/-- `rat_divMod_spec_core`: the `DensePoly Rat` reconstruction identity
+/-- The `DensePoly Rat` reconstruction identity
 `qr.1 * q + qr.2 = p` for `DensePoly.divMod` (holds unconditionally). -/
-private theorem rat_divMod_spec_core (p q : DensePoly Rat) :
+private theorem rat_divMod_spec (p q : DensePoly Rat) :
     let qr := DensePoly.divMod p q
     qr.1 * q + qr.2 = p := by
   by_cases hq : q.size = 0
-  · have hrem := DensePoly.divMod_remainder_eq_self_of_size_zero_core p q hq
+  · have hrem := DensePoly.divMod_remainder_eq_self_of_size_zero p q hq
     have hqzero : q = 0 := by
       apply DensePoly.ext_coeff
       intro n
@@ -585,10 +579,10 @@ private theorem rat_divMod_spec_core (p q : DensePoly Rat) :
       exact DensePoly.divModArray_reconstruction p q
         (fun coeff : Rat => coeff / q.leadingCoeff) hcancel
 
-/-- `rat_divMod_spec_core_of_not_isZero`: the `DensePoly Rat`
-reconstruction identity `qr.1 * q + qr.2 = p` for `DensePoly.divMod`
+/-- The `DensePoly Rat` reconstruction identity `qr.1 * q + qr.2 = p`
+for `DensePoly.divMod`
 under a nonzero-divisor hypothesis. -/
-private theorem rat_divMod_spec_core_of_not_isZero (p q : DensePoly Rat)
+private theorem rat_divMod_spec_of_not_isZero (p q : DensePoly Rat)
     (hqzero : ¬ q.isZero) :
     let qr := DensePoly.divMod p q
     qr.1 * q + qr.2 = p := by
@@ -607,20 +601,20 @@ private theorem rat_divMod_spec_core_of_not_isZero (p q : DensePoly Rat)
             simpa [DensePoly.isZero, Array.isEmpty_iff_size_eq_zero] using hcoeffs
           simpa [DensePoly.size, Nat.pos_iff_ne_zero] using hcoeffs)))
 
-/-- `rat_mod_remainder_degree_lt_core`: over `DensePoly Rat`, the `mod`
+/-- `rat_mod_remainder_degree_lt`: over `DensePoly Rat`, the `mod`
 remainder `p % q` has strictly smaller degree than a positive-degree
 divisor. -/
-private theorem rat_mod_remainder_degree_lt_core (p q : DensePoly Rat)
+private theorem rat_mod_remainder_degree_lt (p q : DensePoly Rat)
     (hdegree : 0 < q.degree?.getD 0) :
     (p % q).degree?.getD 0 < q.degree?.getD 0 := by
-  exact rat_divMod_remainder_degree_lt_core p q hdegree
+  exact rat_divMod_remainder_degree_lt p q hdegree
 
 /-- `rat_mod_zero_right_of_size_zero`: over `DensePoly Rat`, `p % m = p`
 when the divisor `m` has size zero. -/
 private theorem rat_mod_zero_right_of_size_zero (p m : DensePoly Rat)
     (hm : m.size = 0) :
     p % m = p := by
-  exact DensePoly.divMod_remainder_eq_self_of_size_zero_core p m hm
+  exact DensePoly.divMod_remainder_eq_self_of_size_zero p m hm
 
 /-- `rat_mod_sub_self_eq_mul_neg_div_of_not_isZero`: over `DensePoly Rat`
 with a nonzero divisor, `p % m - p = m * (0 - p / m)`. -/
@@ -628,7 +622,7 @@ private theorem rat_mod_sub_self_eq_mul_neg_div_of_not_isZero (p m : DensePoly R
     (hmzero : ¬ m.isZero) :
     p % m - p = m * (0 - p / m) := by
   have hdiv : (p / m) * m + (p % m) = p := by
-    exact rat_divMod_spec_core_of_not_isZero p m hmzero
+    exact rat_divMod_spec_of_not_isZero p m hmzero
   calc
     p % m - p = 0 - (p / m) * m := by
       apply DensePoly.ext_coeff
@@ -644,9 +638,9 @@ private theorem rat_mod_sub_self_eq_mul_neg_div_of_not_isZero (p m : DensePoly R
     _ = m * (0 - (p / m)) := by
       exact (DensePoly.mul_sub_zero_comm m (p / m)).symm
 
-/-- `rat_congr_mod_core`: over `DensePoly Rat`, the remainder `p % m` is
+/-- `rat_congr_mod`: over `DensePoly Rat`, the remainder `p % m` is
 congruent to `p` modulo `m`, i.e. `DensePoly.Congr (p % m) p m`. -/
-private theorem rat_congr_mod_core (p m : DensePoly Rat) :
+private theorem rat_congr_mod (p m : DensePoly Rat) :
     DensePoly.Congr (p % m) p m := by
   by_cases hmzero : m.isZero
   · refine ⟨0, ?_⟩
@@ -710,7 +704,7 @@ private theorem rat_sub_zero_right (p : DensePoly Rat) :
 `(0 : DensePoly Rat) % m = 0`. -/
 private theorem rat_zero_mod_eq_zero (m : DensePoly Rat) :
     (0 : DensePoly Rat) % m = 0 :=
-  DensePoly.zero_mod_eq_zero_core m
+  DensePoly.zero_mod_eq_zero m
 
 /-- `rat_sub_self_right_add`: cancels the shared left summand, `(a + b) - a = b` over
 `DensePoly Rat`, used to discard the `p * q` term in the remainder-delta product
@@ -1053,8 +1047,8 @@ multiplier is assembled from those of `p ≡ p % m`, `q ≡ q % m`, and `p ≡ q
 private theorem rat_mod_remainders_congr_of_congr (p q m : DensePoly Rat)
     (hcongr : DensePoly.Congr p q m) :
     DensePoly.Congr (p % m) (q % m) m := by
-  rcases rat_congr_mod_core p m with ⟨rp, hp⟩
-  rcases rat_congr_mod_core q m with ⟨rq, hq⟩
+  rcases rat_congr_mod p m with ⟨rp, hp⟩
+  rcases rat_congr_mod q m with ⟨rq, hq⟩
   rcases hcongr with ⟨k, hk⟩
   refine ⟨(k + rp) + (0 - rq), ?_⟩
   have hp_add : p % m = p + m * rp := rat_eq_add_mul_of_sub_eq_mul hp
@@ -1098,8 +1092,8 @@ private theorem rat_mod_eq_mod_of_congr_pos_degree (p q m : DensePoly Rat)
     (hcongr : DensePoly.Congr p q m) :
     p % m = q % m := by
   apply rat_canonical_remainder_unique_of_pos_degree
-  · exact rat_mod_remainder_degree_lt_core p m hdegree
-  · exact rat_mod_remainder_degree_lt_core q m hdegree
+  · exact rat_mod_remainder_degree_lt p m hdegree
+  · exact rat_mod_remainder_degree_lt q m hdegree
   · exact rat_mod_remainders_congr_of_congr p q m hcongr
 
 /-- Coefficientwise cancellation: if `p - q = 0` then `p = q`. -/
@@ -1146,18 +1140,18 @@ private theorem rat_mod_eq_mod_of_congr_not_pos_degree (p q m : DensePoly Rat)
       exact rat_leadingCoeff_ne_zero_of_pos_size m (by omega)
     have hpmod :
         p % m = 0 := by
-      exact DensePoly.divMod_remainder_eq_zero_of_degree_zero_core p m hm_size
+      exact DensePoly.divMod_remainder_eq_zero_of_degree_zero_of_cancel p m hm_size
         (fun a => rat_div_mul_cancel_of_ne a m.leadingCoeff hlead_ne)
     have hqmod :
         q % m = 0 := by
-      exact DensePoly.divMod_remainder_eq_zero_of_degree_zero_core q m hm_size
+      exact DensePoly.divMod_remainder_eq_zero_of_degree_zero_of_cancel q m hm_size
         (fun a => rat_div_mul_cancel_of_ne a m.leadingCoeff hlead_ne)
     rw [hpmod, hqmod]
 
 /-- Congruent polynomials always have equal remainders modulo `m`, obtained by
 case-splitting on whether `m` has positive degree and dispatching to the two
 preceding lemmas. This is the workhorse behind the `mod_eq_mod_of_congr` law. -/
-private theorem rat_mod_eq_mod_of_congr_core (p q m : DensePoly Rat)
+private theorem rat_mod_eq_mod_of_congr (p q m : DensePoly Rat)
     (hcongr : DensePoly.Congr p q m) :
     p % m = q % m := by
   by_cases hdegree : 0 < m.degree?.getD 0
@@ -1167,12 +1161,12 @@ private theorem rat_mod_eq_mod_of_congr_core (p q m : DensePoly Rat)
 /-- Divisibility makes the remainder vanish: if `q ∣ p` then `p % q = 0`. Since
 `q ∣ p` gives `p ≡ 0 (mod q)`, the remainders of `p` and `0` agree, and `0 % q`
 is `0`. -/
-private theorem rat_mod_eq_zero_of_dvd_core (p q : DensePoly Rat)
+private theorem rat_mod_eq_zero_of_dvd (p q : DensePoly Rat)
     (hdiv : q ∣ p) :
     p % q = 0 := by
   rcases hdiv with ⟨r, hr⟩
   rw [← rat_zero_mod_eq_zero q]
-  apply rat_mod_eq_mod_of_congr_core
+  apply rat_mod_eq_mod_of_congr
   exact ⟨r, by
     rw [rat_sub_zero_right, hr]⟩
 
@@ -1196,45 +1190,45 @@ private theorem rat_divMod_remainder_eq_zero_of_not_pos_degree (p q : DensePoly 
     omega
   have hlead_ne : q.leadingCoeff ≠ (Zero.zero : Rat) := by
     exact rat_leadingCoeff_ne_zero_of_pos_size q (by omega)
-  exact DensePoly.divMod_remainder_eq_zero_of_degree_zero_core p q hqsize
+  exact DensePoly.divMod_remainder_eq_zero_of_degree_zero_of_cancel p q hqsize
     (fun a => rat_div_mul_cancel_of_ne a q.leadingCoeff hlead_ne)
 
 instance instDivModLawsRat : DensePoly.DivModLaws Rat where
   divMod_spec := by
     intro p q
-    exact rat_divMod_spec_core p q
+    exact rat_divMod_spec p q
   divMod_remainder_degree_lt_of_pos_degree := by
     intro p q hdegree
-    exact rat_divMod_remainder_degree_lt_core p q hdegree
+    exact rat_divMod_remainder_degree_lt p q hdegree
   divModMonic_eq_divMod_of_monic := by
     intro p q hmonic
     by_cases hlt : p.degree?.getD 0 < q.degree?.getD 0
     · rw [DensePoly.divMod_eq_zero_self_of_degree_lt p q hlt]
       unfold DensePoly.divModMonic
       exact DensePoly.divModArray_eq_zero_self_of_degree_lt p q id hlt
-    · apply DensePoly.divModMonic_eq_divMod_of_monic_core p q hmonic hlt
+    · apply DensePoly.divModMonic_eq_divMod_of_monic_of_scale p q hmonic hlt
       intro a
       rw [hmonic]
       grind [Rat.div_def]
   mod_self_eq_zero := by
     intro p
-    apply rat_mod_eq_zero_of_dvd_core
+    apply rat_mod_eq_zero_of_dvd
     exact ⟨1, (DensePoly.mul_one_right_poly p).symm⟩
   mod_eq_zero_of_dvd := by
     intro p q hdiv
-    exact rat_mod_eq_zero_of_dvd_core p q hdiv
+    exact rat_mod_eq_zero_of_dvd p q hdiv
   mod_mod_of_not_pos_degree := by
     intro p q hdegree
-    exact rat_mod_eq_mod_of_congr_core (p % q) p q (rat_congr_mod_core p q)
+    exact rat_mod_eq_mod_of_congr (p % q) p q (rat_congr_mod p q)
   mod_eq_mod_of_congr := by
     intro p q m hcongr
-    exact rat_mod_eq_mod_of_congr_core p q m hcongr
+    exact rat_mod_eq_mod_of_congr p q m hcongr
   mod_add_mod := by
     intro p q m
     apply Eq.symm
-    apply rat_mod_eq_mod_of_congr_core
-    rcases rat_congr_mod_core p m with ⟨rp, hp⟩
-    rcases rat_congr_mod_core q m with ⟨rq, hq⟩
+    apply rat_mod_eq_mod_of_congr
+    rcases rat_congr_mod p m with ⟨rp, hp⟩
+    rcases rat_congr_mod q m with ⟨rq, hq⟩
     exact ⟨rp + rq, by
       calc
         (p % m + q % m) - (p + q)
@@ -1246,9 +1240,9 @@ instance instDivModLawsRat : DensePoly.DivModLaws Rat where
   mod_mul_mod := by
     intro p q m
     apply Eq.symm
-    apply rat_mod_eq_mod_of_congr_core
-    rcases rat_congr_mod_core p m with ⟨rp, hp⟩
-    rcases rat_congr_mod_core q m with ⟨rq, hq⟩
+    apply rat_mod_eq_mod_of_congr
+    rcases rat_congr_mod p m with ⟨rp, hp⟩
+    rcases rat_congr_mod q m with ⟨rq, hq⟩
     exact ⟨rp * (q % m) + p * rq, by
       have hp' : p % m = p + m * rp := rat_eq_add_mul_of_sub_eq_mul hp
       have hq' : q % m = q + m * rq := rat_eq_add_mul_of_sub_eq_mul hq
@@ -1532,7 +1526,7 @@ private theorem rat_div_eq_zero_of_right_size_zero
     p / q = 0 := by
   change DensePoly.div p q = 0
   simpa [DensePoly.div] using
-    congrArg Prod.fst (DensePoly.divMod_eq_zero_self_of_size_zero_core p q hq)
+    congrArg Prod.fst (DensePoly.divMod_eq_zero_self_of_size_zero p q hq)
 
 private theorem rat_quotient_derivative_squareFree
     (ratPrimitive : DensePoly Rat) :

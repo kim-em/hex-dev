@@ -65,7 +65,7 @@ private def bareissGramRowInvariant_noPivotLoop_initialAux
         · have hp : state.matrix[state.step][state.step] = 0 := by
             rw [Matrix.getElem_nat_eq_getRow]
             simpa using hp0
-          rw [Matrix.noPivotLoop_singular_branch fuel state hDone hp]
+          rw [Matrix.noPivotLoop_of_singular fuel state hDone hp]
           refine ⟨{ coeff := hinv.coeff
                     coeff_supp := ?_
                     entry_eq_dot := ?_ }, ?_⟩
@@ -80,7 +80,7 @@ private def bareissGramRowInvariant_noPivotLoop_initialAux
         · have hp : state.matrix[state.step][state.step] ≠ 0 := by
             rw [Matrix.getElem_nat_eq_getRow]
             simpa using hp0
-          rw [Matrix.noPivotLoop_regular_branch fuel state hDone hp]
+          rw [Matrix.noPivotLoop_of_regular fuel state hDone hp]
           have hstep :
               Matrix.noPivotLoop (elapsed + 1)
                   (Matrix.noPivotInitialState (Matrix.gramMatrix b)) =
@@ -92,7 +92,7 @@ private def bareissGramRowInvariant_noPivotLoop_initialAux
                    singularStep := none } : Matrix.BareissState n) := by
             rw [noPivotLoop_add elapsed 1
               (Matrix.noPivotInitialState (Matrix.gramMatrix b))]
-            rw [Matrix.noPivotLoop_regular_branch 0 state hDone hp]
+            rw [Matrix.noPivotLoop_of_regular 0 state hDone hp]
             simp [Matrix.noPivotLoop_zero_fuel]
           have hentry := fun i j hi =>
             bareissGramInitialRegularStep_entry_eq_dot
@@ -776,7 +776,7 @@ private theorem pivotLoop_singularStep_some
       subst h_state_eq
       rcases fuel with _ | fuel'
       · omega
-      exact (Matrix.pivotLoop_singular_branch_no_pivot fuel' state hStepLt hp_zero h_find_none
+      exact (Matrix.pivotLoop_of_singular_no_pivot fuel' state hStepLt hp_zero h_find_none
         ▸ rfl)
   | succ a' ih =>
       intro fuel state result h_partial h_init_sing hfuel h_part_none hStepLt hp_zero
@@ -791,7 +791,7 @@ private theorem pivotLoop_singularStep_some
         have h_sing_branch :
             Matrix.noPivotLoop (a' + 1) state =
               { state with singularStep := some state.step } :=
-          Matrix.noPivotLoop_singular_branch a' state hDone_state hp0_state
+          Matrix.noPivotLoop_of_singular a' state hDone_state hp0_state
         rw [h_sing_branch] at h_partial
         rw [← h_partial] at h_part_none
         simp at h_part_none
@@ -804,7 +804,7 @@ private theorem pivotLoop_singularStep_some
                 prevPivot := state.matrix[state.step][state.step]
                 rowSwaps := state.rowSwaps
                 singularStep := none } :=
-          Matrix.noPivotLoop_regular_branch a' state hDone_state hp0_state
+          Matrix.noPivotLoop_of_regular a' state hDone_state hp0_state
         rcases fuel with _ | fuel'
         · omega
         have h_fuel' : a' + 1 ≤ fuel' := by omega
@@ -816,7 +816,7 @@ private theorem pivotLoop_singularStep_some
                 prevPivot := state.matrix[state.step][state.step]
                 rowSwaps := state.rowSwaps
                 singularStep := none } :=
-          Matrix.pivotLoop_regular_branch_no_swap fuel' state hDone_state hp0_state
+          Matrix.pivotLoop_of_regular_no_swap fuel' state hDone_state hp0_state
         rw [h_unfold_piv]
         have h_next_partial :
             Matrix.noPivotLoop a'
@@ -1034,7 +1034,7 @@ private theorem scaledCoeffArrayLoop_id_at_done (fuel : Nat)
 /-- Singular branch of one array-loop iteration: a zero pivot strictly before
 the last column halts the loop, writing the scaled column at the current step
 but leaving the matrix and step untouched. -/
-private theorem scaledCoeffArrayLoop_singular_branch (fuel : Nat)
+private theorem scaledCoeffArrayLoop_of_singular (fuel : Nat)
     (state : ScaledCoeffArrayState)
     (hStep : state.step < n) (hNext : state.step + 1 < n)
     (hp : getArrayEntry state.matrix state.step state.step = 0) :
@@ -1057,7 +1057,7 @@ private theorem scaledCoeffArrayLoop_last_step (fuel : Nat)
 /-- Regular branch of one array-loop iteration: a nonzero pivot strictly before
 the last column applies one row-mutating Bareiss update, advances
 `step`, records the new `prevPivot`, and recurses on the remaining fuel. -/
-private theorem scaledCoeffArrayLoop_regular_branch (fuel : Nat)
+private theorem scaledCoeffArrayLoop_of_regular (fuel : Nat)
     (state : ScaledCoeffArrayState)
     (hStep : state.step < n) (hNext : state.step + 1 < n)
     (hp : getArrayEntry state.matrix state.step state.step ≠ 0) :
@@ -1097,11 +1097,11 @@ private theorem getArrayEntry_scaledCoeffArrayLoop_current_col_written
     exact Nat.lt_trans hji hin
   by_cases hNext : state.step + 1 < n
   · by_cases hp : getArrayEntry state.matrix state.step state.step = 0
-    · rw [scaledCoeffArrayLoop_singular_branch fuel state hArrayStep hNext hp]
+    · rw [scaledCoeffArrayLoop_of_singular fuel state hArrayStep hNext hp]
       rw [hstep]
       exact getArrayEntry_writeScaledColumn_below state.coeffs state.matrix n j i
         hji hin hrow hcol
-    · rw [scaledCoeffArrayLoop_regular_branch fuel state hArrayStep hNext hp]
+    · rw [scaledCoeffArrayLoop_of_regular fuel state hArrayStep hNext hp]
       let next : ScaledCoeffArrayState :=
         { step := state.step + 1
           matrix := stepScaledRows state.matrix n state.step

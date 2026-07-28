@@ -942,7 +942,7 @@ def divMod [One R] [Add R] [Sub R] [Mul R] [Div R]
 in degree, given an explicit cancellation hypothesis for the coefficient ring. Concrete coefficient
 libraries discharge `hcancel` once and re-export this as the unconditional
 `divMod_remainder_degree_lt_of_pos_degree` via the `DivModLaws` instance. -/
-theorem divMod_remainder_degree_lt_of_pos_degree_core [One R] [Add R] [Sub R] [Mul R] [Div R]
+theorem divMod_remainder_degree_lt_of_pos_degree_of_cancel [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R)
     (hdegree : 0 < q.degree?.getD 0)
     (hcancel : ∀ a : R, a - (a / q.leadingCoeff) * q.leadingCoeff = (Zero.zero : R)) :
@@ -957,7 +957,7 @@ theorem divMod_remainder_degree_lt_of_pos_degree_core [One R] [Add R] [Sub R] [M
 /-- For a size-one (degree-zero, nonzero) divisor, the field-style `divMod` returns zero
 remainder, given an explicit cancellation hypothesis for the coefficient ring. Concrete coefficient
 libraries discharge `hcancel` once and re-export the result via the `DivModLaws` instance. -/
-theorem divMod_remainder_eq_zero_of_degree_zero_core [One R] [Add R] [Sub R] [Mul R] [Div R]
+theorem divMod_remainder_eq_zero_of_degree_zero_of_cancel [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R)
     (hqsize : q.size = 1)
     (hcancel : ∀ a : R, a - (a / q.leadingCoeff) * q.leadingCoeff = (Zero.zero : R)) :
@@ -1019,8 +1019,8 @@ theorem divMod_remainder_eq_zero_of_degree_zero_core [One R] [Add R] [Sub R] [Mu
   exact hzero_final i (by omega)
 
 /-- Dividing by a size-zero (zero) polynomial returns the dividend as remainder.
-The companion `divMod_eq_zero_self_of_size_zero_core` gives the full quotient-and-remainder pair. -/
-theorem divMod_remainder_eq_self_of_size_zero_core [One R] [Add R] [Sub R] [Mul R] [Div R]
+The companion `divMod_eq_zero_self_of_size_zero` gives the full quotient-and-remainder pair. -/
+theorem divMod_remainder_eq_self_of_size_zero [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) (hqsize : q.size = 0) :
     (divMod p q).2 = p := by
   unfold divMod
@@ -1035,7 +1035,7 @@ theorem divMod_remainder_eq_self_of_size_zero_core [One R] [Add R] [Sub R] [Mul 
 
 /-- Dividing by a size-zero dense polynomial returns zero quotient and the
 original dividend as remainder. -/
-theorem divMod_eq_zero_self_of_size_zero_core [One R] [Add R] [Sub R] [Mul R] [Div R]
+theorem divMod_eq_zero_self_of_size_zero [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) (hqsize : q.size = 0) :
     divMod p q = (0, p) := by
   unfold divMod
@@ -1340,7 +1340,7 @@ theorem mod_eq_divMod [One R] [Add R] [Sub R] [Mul R] [Div R]
   rfl
 
 /-- Zero has zero remainder for the executable division algorithm. -/
-@[simp, grind =] theorem zero_mod_eq_zero_core {S : Type _}
+@[simp, grind =] theorem zero_mod_eq_zero {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
     (m : DensePoly S) :
     (0 : DensePoly S) % m = 0 := by
@@ -1480,7 +1480,7 @@ theorem divModArray_eq_zero_self_of_degree_lt [Sub R] [Mul R]
 /-- If field-style coefficient division agrees pointwise with the monic scaling function, then
 the executable monic division path agrees with the general `divMod` path away from the early
 degree shortcut. -/
-theorem divModMonic_eq_divMod_of_monic_core [One R] [Add R] [Sub R] [Mul R] [Div R]
+theorem divModMonic_eq_divMod_of_monic_of_scale [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) (hq : Monic q)
     (hnot_lt : ¬ p.degree?.getD 0 < q.degree?.getD 0)
     (hscale : ∀ a : R, a / q.leadingCoeff = a) :

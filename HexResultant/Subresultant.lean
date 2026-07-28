@@ -148,7 +148,7 @@ def subresultantChain [One R] [Add R] [Sub R] [Mul R] [Div R]
 /-- Ordered nonzero inputs establish every nonzero-denominator and exactness
 obligation recorded by `BrownLaw`, including the unreachability of the junk
 zero-quotient branch. -/
-theorem subresultantOrdered_valid_core {S : Type u}
+theorem subresultantOrdered_brownLaw {S : Type u}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
     (f g : DensePoly S) (hf : f ≠ 0) (hg : g ≠ 0) (hgf : g.size ≤ f.size) :
     let delta := f.size - g.size
@@ -163,7 +163,7 @@ theorem subresultantOrdered_valid_core {S : Type u}
 
 /-- The public ordered-run fuel is sufficient: adding any extra fuel leaves
 the result unchanged over a lawful exact-division domain. -/
-theorem subresultantOrdered_fuel_core {S : Type u}
+theorem subresultantOrderedFuel_eq {S : Type u}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
     (f g : DensePoly S) (hf : f ≠ 0) (hg : g ≠ 0) (hgf : g.size ≤ f.size)
     (extra : Nat) :
@@ -288,7 +288,7 @@ theorem subresultantChain_zero_left [One R] [Add R] [Sub R] [Mul R] [Div R]
   simp [hgz, hzz]
 
 /-- Every stored term is nonzero over a lawful exact-division domain. -/
-theorem subresultantChain_ne_zero_core {S : Type u}
+theorem subresultantChain_ne_zero {S : Type u}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
     (f g : DensePoly S) (p : DensePoly S) (hp : p ∈ subresultantChain f g) :
     p ≠ 0 := by
@@ -296,7 +296,7 @@ theorem subresultantChain_ne_zero_core {S : Type u}
 
 /-- After the possibly equal-degree ordered inputs, stored degrees strictly
 decrease. -/
-theorem subresultantChain_strict_core {S : Type u}
+theorem subresultantChain_size_strict {S : Type u}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
     (f g : DensePoly S) (i : Nat) (hi : 1 ≤ i)
     (hnext : i + 1 < (subresultantChain f g).size) :
@@ -306,7 +306,7 @@ theorem subresultantChain_strict_core {S : Type u}
 
 /-- The nonzero Brown chain stores at most two inputs plus one term for every
 possible degree at or below the smaller input degree. -/
-theorem subresultantChain_size_le_core {S : Type u}
+theorem subresultantChain_size_le {S : Type u}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
     (f g : DensePoly S) (hf : f ≠ 0) (hg : g ≠ 0) :
     (subresultantChain f g).size ≤

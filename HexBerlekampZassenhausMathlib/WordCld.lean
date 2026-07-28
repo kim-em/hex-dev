@@ -359,7 +359,7 @@ theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)
         (by rw [Polynomial.degree_map_eq_of_leadingCoeff_ne_zero]
             rw [leadingCoeff_toPolynomial, Hex.DensePoly.leadingCoeff_eq_one_of_monic hg]; simp)
         (toPoly_degree_lt htgne
-          (Hex.DensePoly.divMod_remainder_degree_lt_of_pos_degree_core _ g hgdeg hcancelZ))
+          (Hex.DensePoly.divMod_remainder_degree_lt_of_pos_degree_of_cancel _ g hgdeg hcancelZ))
     -- word-side monic division in the image
     have htgWm : (toPolynomial (toWMap ctx g)).Monic := by
       have : (toPolynomial (toWMap ctx g)).leadingCoeff = 1 := by
@@ -380,7 +380,7 @@ theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)
         (Polynomial.degree_map_eq_of_leadingCoeff_ne_zero _
           (by rw [leadingCoeff_toPolynomial, Hex.DensePoly.leadingCoeff_eq_one_of_monic hgWm]; simp))
         (toPoly_degree_lt htgWne
-          (Hex.DensePoly.divMod_remainder_degree_lt_of_pos_degree_core _ (toWMap ctx g) hgWd hcancelW))
+          (Hex.DensePoly.divMod_remainder_degree_lt_of_pos_degree_of_cancel _ (toWMap ctx g) hgWd hcancelW))
     -- numerator / divisor agreement, then chain
     have hgdiv : cW ctx (toWMap ctx g) = cZ (UInt64.ofNat mval) g := cW_toWMap_eq_cZ ctx g
     have hnum : cW ctx (toWMap ctx f * Hex.DensePoly.derivative (toWMap ctx g))

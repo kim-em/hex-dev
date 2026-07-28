@@ -1423,13 +1423,13 @@ private theorem size_normalizeFactorSign_eq (f : Hex.ZPoly) :
   unfold Hex.normalizeFactorSign
   by_cases hneg : Hex.DensePoly.leadingCoeff f < 0
   · rw [if_pos hneg]
-    exact Hex.ZPoly.scale_size_of_nonzero (-1 : Int) f (by decide)
+    exact Hex.ZPoly.scale_size_of_ne_zero (-1 : Int) f (by decide)
   · rw [if_neg hneg]
 
 /-- `Hex.ZPoly.primitivePart` preserves stored size on nonzero inputs.
 
 Reconstruct `f = scale (content f) (primitivePart f)` via
-`content_mul_primitivePart`, then apply `Hex.ZPoly.scale_size_of_nonzero` with
+`content_mul_primitivePart`, then apply `Hex.ZPoly.scale_size_of_ne_zero` with
 the fact that `content f ≠ 0` whenever `f ≠ 0`. -/
 private theorem size_primitivePart_eq_of_ne_zero {f : Hex.ZPoly} (hf : f ≠ 0) :
     (Hex.ZPoly.primitivePart f).size = f.size := by
@@ -1454,7 +1454,7 @@ private theorem size_primitivePart_eq_of_ne_zero {f : Hex.ZPoly} (hf : f ≠ 0) 
   have h_scale_size :
       (Hex.DensePoly.scale (Hex.ZPoly.content f) (Hex.ZPoly.primitivePart f)).size =
         (Hex.ZPoly.primitivePart f).size :=
-    Hex.ZPoly.scale_size_of_nonzero (Hex.ZPoly.content f)
+    Hex.ZPoly.scale_size_of_ne_zero (Hex.ZPoly.content f)
       (Hex.ZPoly.primitivePart f) hcontent_ne
   calc (Hex.ZPoly.primitivePart f).size
       = (Hex.DensePoly.scale (Hex.ZPoly.content f)

@@ -1035,7 +1035,7 @@ theorem checkPowChainLinearIncrementalQuotientWitnesses_first_of_coeffs_beq
   checkPowChainLinearIncrementalQuotientWitnesses_first_of_coeffs
     f first hmonic cert hfirst (eq_of_beq hcoeffs)
 
-private theorem checkPowChainLinearIncrementalQuotientWitnessStep_zero_pilot :
+example :
     let zero : FpPoly 2 := 0
     let cert : SamePrimeIrreducibilityCertificate 2 :=
       { n := 1, powChain := #[zero, zero], bezout := #[] }
@@ -1049,7 +1049,7 @@ private theorem checkPowChainLinearIncrementalQuotientWitnessStep_zero_pilot :
   · decide
   · rfl
 
-private theorem checkPowChainLinearIncrementalQuotientWitnessStep_zero_bool_pilot :
+example :
     let zero : FpPoly 2 := 0
     let cert : SamePrimeIrreducibilityCertificate 2 :=
       { n := 1, powChain := #[zero, zero], bezout := #[] }

@@ -362,7 +362,7 @@ meta def radicalCert (orig core : Hex.ZPoly) :
 /-- Emit `coreTerm : IsolatedRealRoots (toPolynomial fLit) n` for the reflected
 integer polynomial `f` (the reflection of the user's input), classifying it as
 zero / nonzero constant / square-free / non-squarefree and routing accordingly. -/
-meta def emitCore (f : Hex.ZPoly) (widthK : Option Int) : MetaM (TSyntax `term) := do
+meta def emitIsolation (f : Hex.ZPoly) (widthK : Option Int) : MetaM (TSyntax `term) := do
   let fStx ← zpolyStx f
   if f.size == 0 then
     throwError "isolate_roots: the zero polynomial (every real number is a root, \
@@ -468,7 +468,7 @@ meta def elabIsolate (widthStx : Option (TSyntax `term)) (pStx : TSyntax `term)
     else
       throwError "isolate_roots: expected a closed `Hex.ZPoly` or `Polynomial ℤ/ℚ/ℝ` \
         term, but the argument has type{indentExpr ty}"
-  let coreTerm ← emitCore f widthK
+  let coreTerm ← emitIsolation f widthK
   let term ←
     if isPolyInput then
       `(Hex.IsolatedRealRoots.congrRoots (Q := $pStx) (by aeval_iff_bridge) $coreTerm)

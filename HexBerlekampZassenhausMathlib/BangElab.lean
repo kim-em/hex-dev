@@ -203,7 +203,7 @@ syntax (name := irreducibilityBangTerm) "irreducibility!" term:max : term
   | `(irreducibility! $t) => do
       let e ←
         try
-          Hex.FactorTactic.elabIrreducibilityCore stx t expectedType?
+          Hex.FactorTactic.elabIrreducibilityArgument stx t expectedType?
         catch _ =>
           elabBangArg "irreducibility!" t
             (bangZPolyIrred "irreducibility!") (bangIntIrred "irreducibility!")
@@ -273,7 +273,7 @@ syntax (name := irreducibilityBangTac)
   | `(tactic| irreducibility! $t:term) => do
       let proof ← Tactic.withMainContext do
         try
-          Hex.FactorTactic.elabIrreducibilityCore stx t none
+          Hex.FactorTactic.elabIrreducibilityArgument stx t none
         catch _ =>
           elabBangArg "irreducibility!" t
             (bangZPolyIrred "irreducibility!") (bangIntIrred "irreducibility!")
@@ -284,7 +284,7 @@ syntax (name := irreducibilityBangTac)
   | `(tactic| irreducibility! $h:ident : $t:term) => do
       let proof ← Tactic.withMainContext do
         try
-          Hex.FactorTactic.elabIrreducibilityCore stx t none
+          Hex.FactorTactic.elabIrreducibilityArgument stx t none
         catch _ =>
           elabBangArg "irreducibility!" t
             (bangZPolyIrred "irreducibility!") (bangIntIrred "irreducibility!")
@@ -295,10 +295,10 @@ syntax (name := irreducibilityBangTac)
   | _ => Elab.throwUnsupportedSyntax
 
 /-- Shared plain-then-bang elaboration for `factor_poly!`. -/
-meta def elabFactorBangCore (stx : Syntax) (t : Syntax)
+meta def elabFactorBangArgument (stx : Syntax) (t : Syntax)
     (expectedType? : Option Expr) : Term.TermElabM Expr := do
   try
-    Hex.FactorTactic.elabFactorPolyCore stx t expectedType?
+    Hex.FactorTactic.elabFactorPolyArgument stx t expectedType?
   catch _ =>
     elabBangArg "factor_poly!" t bangZPolyFactor bangIntFactor
 
@@ -311,7 +311,7 @@ syntax (name := factorPolyBangTerm) "factor_poly!" term:max : term
   fun stx expectedType? => do
     match stx with
     | `(factor_poly! $t) => do
-        let e ← elabFactorBangCore stx t expectedType?
+        let e ← elabFactorBangArgument stx t expectedType?
         Term.ensureHasType expectedType? e
     | _ => Elab.throwUnsupportedSyntax
 
@@ -325,7 +325,7 @@ syntax (name := factorPolyBangTac) "factor_poly!" term:max : tactic
     match stx with
     | `(tactic| factor_poly! $t) => do
         let e ← Tactic.withMainContext do
-          elabFactorBangCore stx t none
+          elabFactorBangArgument stx t none
         Hex.FactorTactic.introFactored e
     | _ => Elab.throwUnsupportedSyntax
 

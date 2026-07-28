@@ -725,15 +725,15 @@ private theorem noPivotLoop_sync_borderedMinor_aux
       · -- Singular branch on both sides.
         have hp_bm : state_bm.matrix[k_bm][k_bm] = 0 := by
           rw [← h_pivot_eq]; exact hp_full
-        rw [Matrix.noPivotLoop_singular_branch f state_full h_full_done hp_full,
-          Matrix.noPivotLoop_singular_branch f state_bm h_bm_done hp_bm]
+        rw [Matrix.noPivotLoop_of_singular f state_full h_full_done hp_full,
+          Matrix.noPivotLoop_of_singular f state_bm h_bm_done hp_bm]
         refine ⟨h_step, h_prev, h_rows, ?_, h_mat⟩
         simp [h_step]
       · -- Regular branch on both sides; apply IH to the updated states.
         have hp_bm : state_bm.matrix[k_bm][k_bm] ≠ 0 := by
           rw [← h_pivot_eq]; exact hp_full
-        rw [Matrix.noPivotLoop_regular_branch f state_full h_full_done hp_full,
-          Matrix.noPivotLoop_regular_branch f state_bm h_bm_done hp_bm]
+        rw [Matrix.noPivotLoop_of_regular f state_full h_full_done hp_full,
+          Matrix.noPivotLoop_of_regular f state_bm h_bm_done hp_bm]
         have h_new_mat :
             Matrix.borderedMinor
               (Matrix.stepMatrix state_full.matrix state_full.step
@@ -801,10 +801,10 @@ private theorem noPivotLoop_step_le_add
   | succ f ih =>
       by_cases hDone : state.step + 1 < n
       · by_cases hp : state.matrix[state.step][state.step] = 0
-        · rw [Matrix.noPivotLoop_singular_branch f state hDone hp]
+        · rw [Matrix.noPivotLoop_of_singular f state hDone hp]
           show state.step ≤ state.step + (f + 1)
           omega
-        · rw [Matrix.noPivotLoop_regular_branch f state hDone hp]
+        · rw [Matrix.noPivotLoop_of_regular f state hDone hp]
           calc (Matrix.noPivotLoop f
               { step := state.step + 1
                 matrix := Matrix.stepMatrix state.matrix state.step
@@ -846,13 +846,13 @@ private theorem noPivotLoop_matrix_symm_preserve
       by_cases hDone : state.step + 1 < n
       · by_cases hp : state.matrix[state.step][state.step] = 0
         · -- Singular branch: result is `{state with singularStep := some state.step}`.
-          rw [Matrix.noPivotLoop_singular_branch f state hDone hp] at ha hb ⊢
+          rw [Matrix.noPivotLoop_of_singular f state hDone hp] at ha hb ⊢
           change state.matrix[a][b] = state.matrix[b][a]
           change state.step ≤ a.val at ha
           change state.step ≤ b.val at hb
           exact h_sym a b ha hb
         · -- Regular branch: recurse on the updated state with step + 1.
-          rw [Matrix.noPivotLoop_regular_branch f state hDone hp] at ha hb ⊢
+          rw [Matrix.noPivotLoop_of_regular f state hDone hp] at ha hb ⊢
           let kFin : Fin n := ⟨state.step, Nat.lt_of_succ_lt hDone⟩
           have h_sym_new : ∀ (a' b' : Fin n),
               state.step + 1 ≤ a'.val → state.step + 1 ≤ b'.val →
@@ -1010,15 +1010,15 @@ private theorem noPivotLoop_sync_principalSubmatrix_aux
       · -- Singular branch on both sides.
         have hp_pref : state_pref.matrix[k_pref][k_pref] = 0 := by
           rw [← h_pivot_eq]; exact hp_full
-        rw [Matrix.noPivotLoop_singular_branch f state_full h_full_done hp_full,
-          Matrix.noPivotLoop_singular_branch f state_pref h_pref_done hp_pref]
+        rw [Matrix.noPivotLoop_of_singular f state_full h_full_done hp_full,
+          Matrix.noPivotLoop_of_singular f state_pref h_pref_done hp_pref]
         refine ⟨h_step, h_prev, h_rows, ?_, h_mat⟩
         simp [h_step]
       · -- Regular branch on both sides; apply IH to the updated states.
         have hp_pref : state_pref.matrix[k_pref][k_pref] ≠ 0 := by
           rw [← h_pivot_eq]; exact hp_full
-        rw [Matrix.noPivotLoop_regular_branch f state_full h_full_done hp_full,
-          Matrix.noPivotLoop_regular_branch f state_pref h_pref_done hp_pref]
+        rw [Matrix.noPivotLoop_of_regular f state_full h_full_done hp_full,
+          Matrix.noPivotLoop_of_regular f state_pref h_pref_done hp_pref]
         -- After one step, the new states are still linked.
         have h_new_mat :
             Matrix.principalSubmatrix
@@ -1063,7 +1063,7 @@ theorem noPivotLoop_id_at_singular_fixedpoint
   induction fuel with
   | zero => rfl
   | succ f _ih =>
-      rw [Matrix.noPivotLoop_singular_branch f state hDone hp]
+      rw [Matrix.noPivotLoop_of_singular f state hDone hp]
       -- Goal: {state with singularStep := some state.step} = state.
       cases state with
       | mk step matrix prevPivot rowSwaps singularStep =>
@@ -1092,11 +1092,11 @@ theorem noPivotLoop_add
                 {state with singularStep := some state.step} := by
             have : a' + 1 + b = (a' + b) + 1 := by omega
             rw [this]
-            exact Matrix.noPivotLoop_singular_branch (a' + b) state hDone hp
+            exact Matrix.noPivotLoop_of_singular (a' + b) state hDone hp
           have h_rhs_inner :
               Matrix.noPivotLoop (a' + 1) state =
                 {state with singularStep := some state.step} :=
-            Matrix.noPivotLoop_singular_branch a' state hDone hp
+            Matrix.noPivotLoop_of_singular a' state hDone hp
           rw [h_lhs, h_rhs_inner]
           symm
           -- Now show: noPivotLoop b {state with singularStep := some state.step} = that.
@@ -1118,7 +1118,7 @@ theorem noPivotLoop_add
                     singularStep := none } := by
             have : a' + 1 + b = (a' + b) + 1 := by omega
             rw [this]
-            exact Matrix.noPivotLoop_regular_branch (a' + b) state hDone hp
+            exact Matrix.noPivotLoop_of_regular (a' + b) state hDone hp
           have h_rhs_inner :
               Matrix.noPivotLoop (a' + 1) state =
                 Matrix.noPivotLoop a'
@@ -1128,7 +1128,7 @@ theorem noPivotLoop_add
                     prevPivot := state.matrix[k][k]
                     rowSwaps := state.rowSwaps
                     singularStep := none } :=
-            Matrix.noPivotLoop_regular_branch a' state hDone hp
+            Matrix.noPivotLoop_of_regular a' state hDone hp
           rw [h_lhs, h_rhs_inner]
           exact ih _
       · -- Boundary: both sides return `state` unchanged.
@@ -1161,12 +1161,12 @@ theorem noPivotLoop_singular_inv
         · -- Singular branch: result = {state with singularStep := some state.step}.
           right
           refine ⟨k, ?_, ?_, ?_, hDone⟩
-          · rw [Matrix.noPivotLoop_singular_branch f state hDone hp]
-          · rw [Matrix.noPivotLoop_singular_branch f state hDone hp]
-          · rw [Matrix.noPivotLoop_singular_branch f state hDone hp]
+          · rw [Matrix.noPivotLoop_of_singular f state hDone hp]
+          · rw [Matrix.noPivotLoop_of_singular f state hDone hp]
+          · rw [Matrix.noPivotLoop_of_singular f state hDone hp]
             exact hp
         · -- Regular branch
-          rw [Matrix.noPivotLoop_regular_branch f state hDone hp]
+          rw [Matrix.noPivotLoop_of_regular f state hDone hp]
           exact ih _ rfl
       · -- Boundary
         rw [Matrix.noPivotLoop_done f state hDone]
@@ -1192,10 +1192,10 @@ theorem noPivotLoop_singularStep_lt
   | succ f ih =>
       by_cases hDone : state.step + 1 < n
       · by_cases hp : state.matrix[state.step][state.step] = 0
-        · rw [Matrix.noPivotLoop_singular_branch f state hDone hp] at h_sing
+        · rw [Matrix.noPivotLoop_of_singular f state hDone hp] at h_sing
           simp at h_sing
           omega
-        · rw [Matrix.noPivotLoop_regular_branch f state hDone hp] at h_sing
+        · rw [Matrix.noPivotLoop_of_regular f state hDone hp] at h_sing
           have h_ih := ih
             { step := state.step + 1
               matrix := Matrix.stepMatrix state.matrix state.step
@@ -1228,10 +1228,10 @@ private theorem noPivotLoop_step_eq_add_of_singularStep_none
   | succ f ih =>
       have hDone : state.step + 1 < n := by omega
       by_cases hp : state.matrix[state.step][state.step] = 0
-      · rw [Matrix.noPivotLoop_singular_branch f state hDone hp] at h_no_sing
+      · rw [Matrix.noPivotLoop_of_singular f state hDone hp] at h_no_sing
         simp at h_no_sing
-      · rw [Matrix.noPivotLoop_regular_branch f state hDone hp] at h_no_sing
-        rw [Matrix.noPivotLoop_regular_branch f state hDone hp]
+      · rw [Matrix.noPivotLoop_of_regular f state hDone hp] at h_no_sing
+        rw [Matrix.noPivotLoop_of_regular f state hDone hp]
         have h_next_room : state.step + 1 + f + 1 ≤ n := by omega
         have h_next_step := ih
           { step := state.step + 1
@@ -1260,10 +1260,10 @@ private theorem noPivotLoop_prevPivot_ne_zero
   | succ f ih =>
       by_cases hDone : state.step + 1 < n
       · by_cases hp : state.matrix[state.step][state.step] = 0
-        · rw [Matrix.noPivotLoop_singular_branch f state hDone hp] at h_no_sing
+        · rw [Matrix.noPivotLoop_of_singular f state hDone hp] at h_no_sing
           simp at h_no_sing
-        · rw [Matrix.noPivotLoop_regular_branch f state hDone hp] at h_no_sing
-          rw [Matrix.noPivotLoop_regular_branch f state hDone hp]
+        · rw [Matrix.noPivotLoop_of_regular f state hDone hp] at h_no_sing
+          rw [Matrix.noPivotLoop_of_regular f state hDone hp]
           exact ih
             { step := state.step + 1
               matrix := Matrix.stepMatrix state.matrix state.step
@@ -1288,10 +1288,10 @@ theorem noPivotLoop_step_monotone
       by_cases hDone : state.step + 1 < n
       · have hStepLt : state.step < n := Nat.lt_of_succ_lt hDone
         by_cases hp : state.matrix[state.step][state.step] = 0
-        · rw [Matrix.noPivotLoop_singular_branch f state hDone hp]
+        · rw [Matrix.noPivotLoop_of_singular f state hDone hp]
           show state.step ≤ state.step
           omega
-        · rw [Matrix.noPivotLoop_regular_branch f state hDone hp]
+        · rw [Matrix.noPivotLoop_of_regular f state hDone hp]
           have h_ih := ih
             { step := state.step + 1
               matrix := Matrix.stepMatrix state.matrix state.step

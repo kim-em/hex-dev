@@ -136,27 +136,27 @@ Structural heads are matched on the raw term: `whnf` would unfold
 `Polynomial.C`/`X`/numerals into their `Finsupp` normal form and defeat the
 match.
 -/
-meta partial def parseCore (tactic : String) (q : Nat) [Hex.ZMod64.Bounds q]
+meta partial def parsePolynomial (tactic : String) (q : Nat) [Hex.ZMod64.Bounds q]
     (pE boundsE : Expr) (fuel : Nat) (e : Expr) :
     MetaM (Hex.FpPoly q × Expr × Expr) := do
   match e.getAppFnArgs with
   | (``HAdd.hAdd, #[_, _, _, _, a, b]) => do
-      let (va, vaE, pa) ← parseCore tactic q pE boundsE fuel a
-      let (vb, vbE, pb) ← parseCore tactic q pE boundsE fuel b
+      let (va, vaE, pa) ← parsePolynomial tactic q pE boundsE fuel a
+      let (vb, vbE, pb) ← parsePolynomial tactic q pE boundsE fuel b
       combineBinary pE boundsE e (va + vb) vaE vbE pa pb
         ``HexBerlekampMathlib.toMathlibPolynomial_add ``HAdd.hAdd
   | (``HSub.hSub, #[_, _, _, _, a, b]) => do
-      let (va, vaE, pa) ← parseCore tactic q pE boundsE fuel a
-      let (vb, vbE, pb) ← parseCore tactic q pE boundsE fuel b
+      let (va, vaE, pa) ← parsePolynomial tactic q pE boundsE fuel a
+      let (vb, vbE, pb) ← parsePolynomial tactic q pE boundsE fuel b
       combineBinary pE boundsE e (va - vb) vaE vbE pa pb
         ``HexBerlekampMathlib.toMathlibPolynomial_sub ``HSub.hSub
   | (``HMul.hMul, #[_, _, _, _, a, b]) => do
-      let (va, vaE, pa) ← parseCore tactic q pE boundsE fuel a
-      let (vb, vbE, pb) ← parseCore tactic q pE boundsE fuel b
+      let (va, vaE, pa) ← parsePolynomial tactic q pE boundsE fuel a
+      let (vb, vbE, pb) ← parsePolynomial tactic q pE boundsE fuel b
       combineBinary pE boundsE e (va * vb) vaE vbE pa pb
         ``HexBerlekampMathlib.toMathlibPolynomial_mul ``HMul.hMul
   | (``Neg.neg, #[_, _, a]) => do
-      let (va, vaE, pa) ← parseCore tactic q pE boundsE fuel a
+      let (va, vaE, pa) ← parsePolynomial tactic q pE boundsE fuel a
       let vE ← mkAppM ``Neg.neg #[vaE]
       let t1 ← mkAppOptM ``HexBerlekampMathlib.toMathlibPolynomial_neg
         #[some pE, some boundsE, some vaE]
@@ -165,7 +165,7 @@ meta partial def parseCore (tactic : String) (q : Nat) [Hex.ZMod64.Bounds q]
       let t2 ← mkCongrArg negFn pa
       return (-va, vE, ← mkEqTrans t1 t2)
   | (``HPow.hPow, #[_, _, _, _, a, nE]) => do
-      let (va, vaE, pa) ← parseCore tactic q pE boundsE fuel a
+      let (va, vaE, pa) ← parsePolynomial tactic q pE boundsE fuel a
       let n ← getNatLit tactic nE
       let polyTy ← inferType e
       let fpTy := Hex.CertReify.fpPolyType pE boundsE
@@ -225,17 +225,17 @@ meta partial def parseCore (tactic : String) (q : Nat) [Hex.ZMod64.Bounds q]
         throwError "{tactic}: unsupported polynomial syntax{indentExpr e}"
       else
         match ← unfoldDefinition? e with
-        | some e' => parseCore tactic q pE boundsE (fuel - 1) e'
+        | some e' => parsePolynomial tactic q pE boundsE (fuel - 1) e'
         | none => throwError "{tactic}: unsupported polynomial syntax{indentExpr e}"
 
-/-- Parse the full input: run `parseCore`, then recombine the parsed
+/-- Parse the full input with `parsePolynomial`, then recombine the parsed
 expression with the flat reified literal of its value through one
 `eq_of_beqCoeffs` kernel check, yielding `(f, fLit, hP)` with
 `hP : toMathlibPolynomial fLit = e`. -/
 meta def parseInput (tactic : String) (q : Nat) [Hex.ZMod64.Bounds q]
     (pE boundsE : Expr) (e : Expr) :
     MetaM (Hex.FpPoly q × Expr × Expr) := do
-  let (v, vE, prf) ← parseCore tactic q pE boundsE 16 e
+  let (v, vE, prf) ← parsePolynomial tactic q pE boundsE 16 e
   let fLit := Hex.CertReify.reifyFpPolyOfNats pE boundsE (Hex.CertReify.fpCoeffNats v)
   let RE := Hex.CertReify.zmodType pE boundsE
   let zeroE ← synthInstance (← mkAppM ``Zero #[RE])
