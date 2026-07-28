@@ -28,6 +28,9 @@
 - Shortened five overqualified semantic theorem names, including
   `IsolationCert.existsUnique_root`, `RootModel.root_unique_leftSpan`, and
   `Polynomial.sign_eq_of_noRoot`.
+- Verified with a downstream import probe that the generic sign-constancy
+  theorem is in the root `Polynomial` namespace rather than an RCF-local
+  namespace with the same suffix.
 - Moved the decision-builder meta import from `Reify` to its actual consumer,
   `Tactic`, and made tactic-only Mathlib and Lean imports meta-only. Added the
   direct Syntax meta dependency required to compile reifier constructors.

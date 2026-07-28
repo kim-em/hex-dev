@@ -50,9 +50,13 @@ theorem ofInt_spec (value : Int) :
 
 end Sign
 
+end Hex.RCF
+
+namespace Polynomial
+
 /-- The sign of a continuous polynomial evaluation is constant on a
 preconnected set containing no root of the polynomial. -/
-theorem Polynomial.sign_eq_of_noRoot {p : Polynomial ℝ} {s : Set ℝ}
+theorem sign_eq_of_noRoot {p : Polynomial ℝ} {s : Set ℝ}
     (hs : IsPreconnected s) (hnz : ∀ z ∈ s, ¬p.IsRoot z)
     {x y : ℝ} (hx : x ∈ s) (hy : y ∈ s) :
     SignType.sign (p.eval x) = SignType.sign (p.eval y) := by
@@ -63,6 +67,12 @@ theorem Polynomial.sign_eq_of_noRoot {p : Polynomial ℝ} {s : Set ℝ}
     exact continuousAt_sign_of_ne_zero (fun hzero => hnz z hz hzero)
   exact (hs.image _ hcont).subsingleton
     (Set.mem_image_of_mem _ hx) (Set.mem_image_of_mem _ hy)
+
+end Polynomial
+
+namespace Hex.RCF
+
+open HexRealRootsMathlib Polynomial
 
 /-- Exact dyadic Horner evaluation computes the sign of the corresponding
 real-polynomial evaluation. -/
