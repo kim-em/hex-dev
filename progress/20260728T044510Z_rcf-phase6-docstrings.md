@@ -4,7 +4,7 @@
 
 - Ran the Mathlib linter with legacy import semantics, which retain imported
   documentation metadata under Lean's module system. The final audit reports
-  zero errors across 391 HexRCF declarations and 14 linters.
+  zero errors across 391 HexRCF declarations and the default 14 linters.
 - Added documentation for every genuinely undocumented public structure field
   and tactic implementation reported by the linter.
 - Added documentation for 31 public theorems that another module could
@@ -39,6 +39,9 @@
   public `rcf_ring` macro, so retained it.
 - Added `HexRCF.LintTests` to the existing default regression target, making
   the zero-error public namespace lint a permanent build invariant.
+- Made every linter import explicit so an umbrella import-graph change cannot
+  silently shrink the enforced set. The non-default theorem-doc linter was
+  separately audited; only three generated constructor-index theorems fail it.
 - Verified that every private HexRCF declaration has at least one textual use,
   then built all changed modules and the complete `HexRCF` target.
 
@@ -47,8 +50,9 @@
 - The documentation, linter, API, dead-declaration, and import-boundary audits
   are complete on `rcf-phase6-docstrings`, rebased over merged PRs #9032 and
   #9033.
-- `lake build HexRCF HexRCFTests HexConformance HexManual` succeeds with 9,526
-  jobs, including the permanent zero-error lint regression.
+- `lake build HexRCF HexRCFTests HexConformance HexManual HexRCFProofProbe`
+  succeeds with 9,538 jobs, including the permanent zero-error lint regression
+  and the strict module-mode tactic/replay axiom guards.
 - Repository DAG, release-manifest, trust-surface, Phase 4, copyright, and diff
   checks pass.
 

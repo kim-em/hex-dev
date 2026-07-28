@@ -5,7 +5,10 @@ Authors: Kim Morrison
 -/
 
 import HexRCF
-import Mathlib.Tactic.Linter
+import Batteries.Tactic.Lint
+import Mathlib.Tactic.Linter.Lint
+import Mathlib.Tactic.Linter.Style
+import Mathlib.Tactic.Linter.TacticDocumentation
 
 /-!
 # Public RCF lint regression
@@ -15,4 +18,4 @@ docstring metadata is not available to the linter through module imports, which
 would make every imported declaration appear undocumented.
 -/
 
-#lint in HexRCF
+#lint- in HexRCF

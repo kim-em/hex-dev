@@ -47,8 +47,8 @@ sentence and is never supplied by the certificate. -/
 @[expose]
 def check (s : Sentence) (cert : CarrierCert) : Bool :=
   let q := s.product
-  -- `Sentence.polys` filters by this predicate. Retaining the explicit walk
-  -- states the certificate condition at the point where it is checked.
+  -- `Sentence.polys` filters by this predicate. Retaining this redundant
+  -- re-check states the certificate condition where it is checked.
   s.polys.all (fun p => decide (0 < p.degree?.getD 0)) &&
   decide (0 < q.degree?.getD 0) &&
   !cert.repeated.isZero &&

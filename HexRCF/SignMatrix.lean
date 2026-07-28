@@ -413,7 +413,7 @@ theorem evalSign_iff {cmp : Cmp} {sign : Sign} {value : ℝ}
 
 end Cmp
 
-/-- Bridge the reflected atom semantics to real-cast polynomial evaluation. -/
+/-- Relate the reflected atom semantics to real-cast polynomial evaluation. -/
 theorem Atom.toProp_iff_eval (a : Atom) (x : ℝ) :
     a.toProp x ↔ a.cmp.toProp ((toPolyℝ a.p).eval x) 0 := by
   unfold Atom.toProp
