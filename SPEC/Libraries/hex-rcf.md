@@ -703,6 +703,46 @@ two. The headline report records source hashes, commit/toolchain/host/load
 state, raw samples, artifact sizes, timeout cleanup, and the theorem's axiom
 set, and refuses release claims from a dirty or busy host.
 
+The committed implementation lives under `bench/HexRCF/ProofProbe/`.
+`Support.lean` owns the fixed source and reflected cases plus the precompiled
+reify, search, and replay elaborators; `Generated.lean` owns the three
+pre-generated certificate macros. The generator replaces exactly the
+certificate's dyadic-interval order-proof omissions with `by decide` and
+rejects any other pretty-printer omission, so the committed macro source is
+independently rebuildable. All measured modules import the same generated
+support module and no measured module imports another measured module.
+
+There is one shared `Baseline` and six measured modules under each of
+`Quadratic/`, `Degree10/`, and `Degree50/`. The five report pairs are exactly:
+
+| Report component | Reference | Candidate |
+| --- | --- | --- |
+| reification | `Baseline` | `<Case>.Reify` |
+| compiled-search attribution | `<Case>.Input` | `<Case>.Search` |
+| literal elaboration | `<Case>.Input` | `<Case>.Literal` |
+| kernel replay | `<Case>.Literal` | `<Case>.Replay` |
+| end-to-end tactic | `Baseline` | `<Case>.Tactic` |
+
+`HexRCFProofProbe` is the reduced structural CI target: it builds the shared
+support, reifies all three source goals, checks every committed literal against
+the accepted checker and the builder-output hash, and builds the quadratic
+matrix. Each Search module repeats its Input module's reflected declaration
+before running the search command, so `Search - Input` does not subtract work
+absent from the candidate. `HexRCFProofProbeScientific` owns the degree-10 and
+degree-50 measured modules without adding them to routine CI. Both are
+build-only Lake libraries; there is no proof-probe executable or in-process
+clock. The complete external sweep is:
+
+```bash
+python3 scripts/bench/hexrcf_proof_sweep.py --samples 5
+```
+
+Only `Replay` and `Tactic` print an axiom report, fixed to
+`[propext, Classical.choice, Quot.sound]`. `Search` also checks stable
+structural sentence and certificate hashes, so a successful build forces the
+compiled result instead of merely invoking the builder and discarding its
+output.
+
 python-flint is an **informational** comparator for the compiled decision
 verdict on committed shared sentence families. It is not proof-producing, and
 no comparable proof-producing univariate RCF tactic is currently named; the
