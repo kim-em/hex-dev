@@ -24,10 +24,12 @@ still record a failed invocation because they are explicitly non-semantic;
 engine facts, expression nodes, provenance, and the arena remain atomic.
 Malformed package evidence is submitted to the engine as a failed rule reply:
 the request latch is cleared, the session remains usable, and completeness is
-permanently lost. Resource-failed or engine-invalid transitions return a
+permanently lost. Exceeding a package-local payload-use, atom, or schema bound
+has the same recoverable behavior. Exhausting a whole-run arena entry or body
+budget, or encountering an engine-invalid transition, instead returns a
 non-live session snapshot which cannot later be resumed and mislabeled
-saturated. Package failure and unprocessed narrowing suggestions likewise
-make the final status incomplete.
+saturated. Package failure and unprocessed narrowing suggestions likewise make
+the final status incomplete.
 -/
 
 namespace Hex.Interval.Experiment.PayloadSession
@@ -78,8 +80,10 @@ def limitsCoherent (limits : Propagator.Limits)
     (arenaLimits : PayloadArena.Limits) : Bool :=
   requiredUses limits ≤ arenaLimits.maxUses
 
-/-- Validate package metadata and signatures before compiling the engine, then
-start with an empty proof arena. -/
+/-- Bound package metadata, compile and validate the engine-owned program,
+then run package-specific program checks and start with an empty proof arena.
+The generic engine preflight precedes any package callback which may traverse
+the program. -/
 opaque Session.start (factDomain : FactDomain Fact) (program : Program)
     (packages : Array (Package Fact)) (facts : Array Fact)
     (limits : Propagator.Limits) (arenaLimits : PayloadArena.Limits) :
@@ -87,16 +91,18 @@ opaque Session.start (factDomain : FactDomain Fact) (program : Program)
   match Registry.buildWithin limits packages with
   | .error error => .error (.registry error)
   | .ok registry =>
-      if !registry.acceptsProgram program then
-        .error .programRejected
-      else if !limitsCoherent limits arenaLimits then
+      if !limitsCoherent limits arenaLimits then
         .error .incoherentLimits
-      else if !registry.acceptsLimits program limits arenaLimits then
-        .error .limitsRejected
       else
         match Engine.start factDomain program registry.registrations facts limits with
         | .error error => .error (.engine error)
-        | .ok engine => .ok (make engine registry arenaLimits)
+        | .ok engine =>
+            if !registry.acceptsProgram program then
+              .error .programRejected
+            else if !registry.acceptsLimits program limits arenaLimits then
+              .error .limitsRejected
+            else
+              .ok (make engine registry arenaLimits)
 
 /-- Result of one session-owned rule or equality transition. -/
 inductive Step (Fact : Type) where
@@ -108,6 +114,10 @@ inductive Step (Fact : Type) where
   | factResource (budget : Nat) (session : Session Fact)
   | invalidReply (error : ReplyError) (session : Session Fact)
   | invalidPayload (error : PayloadArena.Invalid) (session : Session Fact)
+  /-- A package exceeded a per-reply payload encoding bound. The failed reply
+  is consumed and other independent work may continue. -/
+  | rejectedPayload (resource : PayloadArena.Resource) (session : Session Fact)
+  /-- A whole-run payload arena bound was exhausted. -/
   | payloadResource (resource : PayloadArena.Resource) (session : Session Fact)
   | invalidEngine (session : Session Fact)
 
@@ -128,10 +138,6 @@ private def commit (session : Session Fact) (engine : Engine Fact)
     (droppedWork : Bool) : Session Fact :=
   { session with engine, registry, arena, droppedWork }
 
-private def narrows : Suggestion -> Bool
-  | .retry _ | .instantiate _ => true
-  | .split _ => false
-
 /-- Whether the session still has all work required for a propagation fixed
 point. This deliberately covers fatal snapshots, previously dropped work, and
 retained narrowing suggestions; callers need not reconstruct those conditions
@@ -139,15 +145,14 @@ from public projections. -/
 def Session.complete (session : Session Fact) : Bool :=
   session.live && !session.droppedWork &&
     !session.engine.suggestions.any fun retained =>
-      match retained.suggestion with
-      | .retry _ | .instantiate _ => true
-      | .split _ => false
+      retained.suggestion.affectsClosure
 
 private def outcomeDropsWork (engine : Engine Fact) : Outcome Fact -> Bool
   | .resourceLimit _ | .failed _ => true
   | .success _ suggestions _ =>
-      let room := engine.limits.maxRetainedSuggestions - engine.suggestions.size
-      (suggestions.drop room).any narrows
+      match engine.suggestionPlan suggestions with
+      | .ready plan => plan.dropped.any Suggestion.affectsClosure
+      | .malformed => false
   | .noChange _ | .inapplicable => false
 
 /-- Check the two outer reply lists using the engine's own trusted bounds
@@ -162,9 +167,10 @@ private def outcomeListsBounded (limits : Propagator.Limits) : Outcome Fact -> B
 
 namespace PayloadFailureCode
 
-/-- Stable engine diagnostic for a package plan whose proof drafts do not
-match its outcome. Zero is valid under every diagnostic limit. -/
-def malformed : Nat := 0
+/-- Stable engine diagnostic for a package plan rejected before semantic
+admission, whether for malformed drafts or a per-reply encoding bound. Zero is
+valid under every diagnostic limit. -/
+def rejected : Nat := 0
 
 end PayloadFailureCode
 
@@ -174,7 +180,7 @@ drivers continue the live session and ultimately report incompleteness. -/
 private def failPayload (session : Session Fact) (engine : Engine Fact)
     (registry : Registry Fact) (action : Action)
     (error : PayloadArena.Invalid) : Step Fact :=
-  match engine.submit (action.reply (.failed PayloadFailureCode.malformed)) with
+  match engine.submit (action.reply (.failed PayloadFailureCode.rejected)) with
   | .accepted next =>
       .invalidPayload error
         (commit session next registry session.arena true)
@@ -182,6 +188,23 @@ private def failPayload (session : Session Fact) (engine : Engine Fact)
       .invalidReply replyError (haltRegistry session next registry)
   | .resourceLimit resource next =>
       .engineResource resource (haltRegistry session next registry)
+  | .factResourceLimit budget next =>
+      .factResource budget (haltRegistry session next registry)
+
+/-- Treat a package-local payload bound violation like malformed package
+evidence: consume a bounded failed reply, retain no prospective arena entries,
+continue independent work, and permanently withhold completeness. -/
+private def rejectPayload (session : Session Fact) (engine : Engine Fact)
+    (registry : Registry Fact) (action : Action)
+    (resource : PayloadArena.Resource) : Step Fact :=
+  match engine.submit (action.reply (.failed PayloadFailureCode.rejected)) with
+  | .accepted next =>
+      .rejectedPayload resource
+        (commit session next registry session.arena true)
+  | .invalid replyError next =>
+      .invalidReply replyError (haltRegistry session next registry)
+  | .resourceLimit engineResource next =>
+      .engineResource engineResource (haltRegistry session next registry)
   | .factResourceLimit budget next =>
       .factResource budget (haltRegistry session next registry)
 
@@ -211,8 +234,12 @@ opaque Session.advance (session : Session Fact) : Step Fact :=
         | .invalid error _ =>
             failPayload session engine registry request.action error
         | .resourceLimit resource _ =>
-            .payloadResource resource
-              (haltRegistry session engine.finishReply registry)
+            match resource with
+            | .uses | .atom | .schema =>
+                rejectPayload session engine registry request.action resource
+            | .entries | .bodyCells =>
+                .payloadResource resource
+                  (haltRegistry session engine.finishReply registry)
         | .ready arena outcome =>
             match engine.submit (request.action.reply outcome) with
             | .accepted next =>
@@ -278,6 +305,7 @@ private def runSteps : Nat -> Session Fact -> Run Fact
       | .invalidReply error next =>
           { session := next, stop := .invalidReply error }
       | .invalidPayload _ next => runSteps fuel next
+      | .rejectedPayload _ next => runSteps fuel next
       | .payloadResource resource next =>
           { session := next, stop := .payloadResource resource }
       | .invalidEngine next => { session := next, stop := .invalidEngine }

@@ -29,6 +29,11 @@ def retryKey : RuleKey := { name := "payload-session.mystery.retry" }
 def longCandidatesKey : RuleKey := { name := "payload-session.mystery.long-candidates" }
 def longSuggestionsKey : RuleKey := { name := "payload-session.mystery.long-suggestions" }
 def nestedKey : RuleKey := { name := "payload-session.mystery.nested-instance" }
+def atomKey : RuleKey := { name := "payload-session.mystery.atom" }
+def schemaKey : RuleKey := { name := "payload-session.mystery.schema" }
+def usesKey : RuleKey := { name := "payload-session.mystery.uses" }
+def bodyKey : RuleKey := { name := "payload-session.mystery.body" }
+def overflowKey : RuleKey := { name := "payload-session.mystery.overflow" }
 
 def sourceOperation : Operation :=
   { key := sourceOp, inputs := [], output := real }
@@ -241,6 +246,73 @@ def nestedPackage : Package Nat :=
     handlers :=
       #[Handler.statelessPlanned (registration nestedKey) nestedPlan] }
 
+def draftPlan (schema : Nat) (body : List Nat)
+    (request : RuleRequest Nat) : Plan Nat :=
+  match request.writes with
+  | [target] =>
+      { outcome :=
+          .success
+            [{ node := target, fact := 7, payload := payload 700 }]
+            [] {}
+        drafts := [{ label := payload 700, role := .fact, schema, body }] }
+  | _ => { outcome := .failed 6, drafts := [] }
+
+def atomPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned (registration atomKey) (draftPlan 1 [101])] }
+
+def schemaPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned (registration schemaKey) (draftPlan 11 [1])] }
+
+def bodyPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned (registration bodyKey)
+          (draftPlan 1 [1, 1, 1, 1, 1, 1, 1, 1, 1])] }
+
+def excessDrafts : List PayloadArena.Draft :=
+  [{ label := payload 0, role := .fact, schema := 1, body := [] },
+   { label := payload 1, role := .fact, schema := 1, body := [] },
+   { label := payload 2, role := .fact, schema := 1, body := [] },
+   { label := payload 3, role := .fact, schema := 1, body := [] },
+   { label := payload 4, role := .fact, schema := 1, body := [] },
+   { label := payload 5, role := .fact, schema := 1, body := [] },
+   { label := payload 6, role := .fact, schema := 1, body := [] },
+   { label := payload 7, role := .fact, schema := 1, body := [] },
+   { label := payload 8, role := .fact, schema := 1, body := [] }]
+
+def usesPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned (registration usesKey) fun _ =>
+          { outcome := .noChange {}, drafts := excessDrafts }] }
+
+def overflowPlan (request : RuleRequest Nat) : Plan Nat :=
+  { outcome :=
+      .success []
+        [.split { node := request.action.node, point := 0, reason := .midpoint },
+         .split { node := request.action.node, point := 1, reason := .midpoint },
+         .retry 1] {}
+    drafts := [] }
+
+def overflowPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned (registration overflowKey) overflowPlan] }
+
 def arenaAwarePackage : Package Nat :=
   { Cache := Unit
     cache := ()
@@ -255,6 +327,16 @@ def start (package : Package Nat)
     Except PayloadSession.StartError (PayloadSession.Session Nat) :=
   PayloadSession.Session.start factDomain program #[package] #[3, 0, 0]
     limits payloadLimits
+
+def overflowLimits : Propagator.Limits :=
+  { limits with maxOutcomeSuggestions := 3 }
+
+def overflowArenaLimits : PayloadArena.Limits :=
+  { arenaLimits with maxUses := PayloadSession.requiredUses overflowLimits }
+
+def oversizedProgram : Program :=
+  { program with
+    nodes := program.nodes.push (instruction 1 [node 0]) |>.push (instruction 1 [node 0]) }
 
 def goodRun? : Option (PayloadSession.Run Nat) :=
   match start goodPackage with
@@ -327,6 +409,45 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
       | _ => false
   | .error _ => false
 
+-- Per-reply encoding excess is a package failure, not exhaustion of the
+-- whole run. The prospective arena is discarded, the request is consumed,
+-- and independent work can continue, but completeness is permanently lost.
+#guard
+  match start atomPackage with
+  | .ok session =>
+      match session.advance with
+      | .rejectedPayload .atom next =>
+          next.arena.entries.isEmpty && next.engine.history.isEmpty &&
+            next.engine.pending.isNone && next.live && next.droppedWork &&
+            !next.complete && next.engine.metrics.ruleFailures == 1 &&
+            let run := next.drive 8
+            run.stop == .incomplete && run.session.live &&
+              run.session.engine.metrics.ruleFailures == 2
+      | _ => false
+  | .error _ => false
+
+#guard
+  match start schemaPackage with
+  | .ok session =>
+      match session.advance with
+      | .rejectedPayload .schema next =>
+          next.arena.entries.isEmpty && next.engine.history.isEmpty &&
+            next.engine.pending.isNone && next.live && next.droppedWork &&
+            !next.complete && next.engine.metrics.ruleFailures == 1
+      | _ => false
+  | .error _ => false
+
+#guard
+  match start usesPackage with
+  | .ok session =>
+      match session.advance with
+      | .rejectedPayload .uses next =>
+          next.arena.entries.isEmpty && next.engine.history.isEmpty &&
+            next.engine.pending.isNone && next.live && next.droppedWork &&
+            !next.complete && next.engine.metrics.ruleFailures == 1
+      | _ => false
+  | .error _ => false
+
 -- Arena exhaustion is typed, prospective, and atomic.
 #guard
   match start goodPackage { arenaLimits with maxEntries := 0 } with
@@ -335,6 +456,31 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
       | .payloadResource .entries next =>
           next.arena.entries.isEmpty && next.engine.history.isEmpty &&
             next.engine.pending.isNone && !next.live
+      | _ => false
+  | .error _ => false
+
+#guard
+  match start bodyPackage with
+  | .ok session =>
+      match session.advance with
+      | .payloadResource .bodyCells next =>
+          next.arena.entries.isEmpty && next.engine.history.isEmpty &&
+            next.engine.pending.isNone && !next.live
+      | _ => false
+  | .error _ => false
+
+-- Completeness uses the engine's exact retained-prefix calculation. Here the
+-- two harmless splits fit, while a closure-relevant retry is the one item
+-- dropped by the cap.
+#guard
+  match PayloadSession.Session.start factDomain program #[overflowPackage]
+      #[3, 0, 0] overflowLimits overflowArenaLimits with
+  | .ok session =>
+      match session.advance with
+      | .advanced next =>
+          next.engine.suggestions.size == 2 &&
+            next.engine.metrics.droppedSuggestions == 1 &&
+            next.droppedWork && !next.complete
       | _ => false
   | .error _ => false
 
@@ -393,6 +539,13 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
 #guard
   match start arenaAwarePackage { arenaLimits with maxEntries := 3 } with
   | .error .limitsRejected => true
+  | _ => false
+
+-- Generic engine bounds precede package-specific scans of the program.
+#guard
+  match PayloadSession.Session.start factDomain oversizedProgram #[arenaAwarePackage]
+      #[3, 0, 0, 0, 0] limits { arenaLimits with maxEntries := 3 } with
+  | .error (.engine (.resourceLimit .nodes)) => true
   | _ => false
 
 -- Oversized outer lists are rejected by the engine before malformed or

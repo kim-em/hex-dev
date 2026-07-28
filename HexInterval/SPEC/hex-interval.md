@@ -1170,19 +1170,31 @@ suggestion may be an instantiation with at most `maxProposalItems` nested
 equalities. This is a sound per-reply traversal bound, not a whole-run entry
 bound. Packages see the complete engine and arena envelopes and may impose
 stronger method-specific requirements.
+Before any package-specific program check traverses nodes, session start runs
+the generic engine preflight and compilation, so the engine's operation, node,
+rule, arity, application, and queue bounds already hold.
 
-Engine rejection, fact-domain or engine resource refusal, and arena resource
-refusal retain the preceding arena, facts, program, and proof history and make
-the returned session non-live. A caller cannot resume that snapshot and later
-relabel the partial run saturated. Malformed package evidence is different:
-the prospective arena is discarded, but the session submits a bounded
-synthetic `failed` outcome through the ordinary engine reply path. This clears
-the request latch, retains non-semantic cache telemetry, leaves facts and
-history unchanged, keeps the session live, and records that required work was
-dropped. The FIFO driver may therefore continue other independent rules but
-must eventually report incomplete. The selected package's cache may record
-either kind of attempt because caches and invocation telemetry are explicitly
-non-semantic.
+The eager protocol's `maxEntries` is a separate whole-run waste bound. It must
+cover drafts frozen for every invoked action up to the action limit, including
+entries later unused because a candidate was not improving or a suggestion was
+dropped, dismissed, stale, invalid, or duplicate. Sizing it from
+`maxAcceptedFacts` is therefore unsound. A coarse safe envelope is the action
+limit times a per-reply draft bound; tighter package-declared envelopes and
+two-phase freezing remain experiments to compare.
+
+Engine rejection, fact-domain or engine resource refusal, and exhaustion of
+the whole-run arena entry or body-cell budget retain the preceding arena,
+facts, program, and proof history and make the returned session non-live. A
+caller cannot resume that snapshot and later relabel the partial run
+saturated. Malformed package evidence and package-local payload-use, atom, or
+schema excess are different: the prospective arena is discarded, but the
+session submits a bounded synthetic `failed` outcome through the ordinary
+engine reply path. This clears the request latch, retains non-semantic cache
+telemetry, leaves facts and history unchanged, keeps the session live, and
+records that required work was dropped. The FIFO driver may therefore continue
+other independent rules but must eventually report incomplete. The selected
+package's cache may record either kind of attempt because caches and invocation
+telemetry are explicitly non-semantic.
 This executable eager protocol does not foreclose measuring a two-phase
 production protocol.
 
