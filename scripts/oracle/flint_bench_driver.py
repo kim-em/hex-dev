@@ -180,7 +180,13 @@ from typing import Any, Callable
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from scripts.oracle.rcf_flint import decide_sentence
+try:
+    from scripts.oracle.rcf_flint import decide_sentence
+
+    _rcf_import_error: str | None = None
+except Exception as exc:  # pragma: no cover - defensive isolation
+    decide_sentence = None  # type: ignore[assignment]
+    _rcf_import_error = f"HexRCF oracle unavailable: {exc!r}"
 
 # Import flint at startup so the first request does not pay the
 # `import flint` cost. The CI workflow installs python-flint in its
@@ -599,6 +605,8 @@ _NMOD_POLY_HENSEL_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
 
 
 def _rcf_decide(req: dict[str, Any]) -> bool:
+    if decide_sentence is None:
+        raise RuntimeError(_rcf_import_error or "HexRCF oracle unavailable")
     sentence = req.get("sentence")
     if not isinstance(sentence, dict):
         raise ValueError("rcf/decide request missing object 'sentence' field")

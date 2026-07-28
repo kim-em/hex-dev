@@ -755,14 +755,17 @@ version-1 fixture encoding. The persistent-driver request and response are
   -> {"ok":true,"result":<bool>}
 ```
 
-Both sides return `Bool`, pin `Hashable.hash true`, use five repeats and a
-0.2-second minimum total, and differ only in the FLINT registration's
+Both sides return `Bool` and share one config that pins `Hashable.hash true`,
+uses five repeats and a 0.2-second minimum total, and enables
 `warmupFirstIter`. LeanBench starts one fresh child per outer warmup or repeat.
-That discarded first call starts one `python3` process in the child, and the
-timed auto-tuned inner-repeat batch reuses its streams; no driver process is
-shared between outer children. Routine `hexrcf_bench verify` performs one
-semantic call through every fixed registration. Scientific runs and ratio
-reporting require `python3` with `python-flint` and remain on the scheduled
+The discarded first call warms the Lean decision path on both sides; for FLINT
+it also starts one `python3` process in the child. The timed auto-tuned
+inner-repeat batch reuses that process's streams, and no driver is shared
+between outer children. The complete FLINT request line, including the exact
+version-1 sentence encoding, is precomputed; pipe transport and Python JSON
+decoding remain measured comparator overhead. Routine `hexrcf_bench verify`
+performs one semantic call through every fixed registration. Scientific runs
+and ratio reporting require `python3` with `python-flint` on the named release
 benchmark host.
 
 This comparison covers carrier degree and real-root count only. It does not

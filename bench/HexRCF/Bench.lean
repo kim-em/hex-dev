@@ -26,13 +26,14 @@ version-1 JSON encoding through the shared persistent driver protocol:
   -> {"ok":true,"result":<bool>}
 ```
 
-Every outer fixed-benchmark warmup or repeat runs in a fresh Lean child. The
-FLINT registration uses `warmupFirstIter`, so that child starts one Python
-process before timing and reuses it for its auto-tuned inner-repeat batch.
-Scientific execution and ratio reporting are scheduled-only and require
-`python3` with `python-flint`; routine `verify` still exercises one semantic
-smoke call for every fixed registration. This comparator is not
-proof-producing and supplies no tactic/elaboration or kernel-replay ratio.
+Every outer fixed-benchmark warmup or repeat runs in a fresh Lean child. Both
+paired registrations use `warmupFirstIter`, giving a steady-state comparison;
+on the FLINT side that call also starts one Python process before timing. The
+child then reuses it for its auto-tuned inner-repeat batch. Scheduled-only
+release execution and ratio reporting require `python3` with `python-flint`;
+routine `verify` still exercises one semantic smoke call for every fixed
+registration. This comparator is not proof-producing and supplies no
+tactic/elaboration or kernel-replay ratio.
 -/
 
 namespace Hex.RCFBench
@@ -125,25 +126,72 @@ private def sentenceJson : Sentence → Lean.Json
       ("bounds", boundsJson lower upper),
       ("formula", formulaJson formula)]
 
+private def jsonMatches (actual : Lean.Json) (expected : String) : Bool :=
+  match Lean.Json.parse expected with
+  | .ok value => actual == value
+  | .error _ => false
+
+private def wireX : ZPoly := DensePoly.ofCoeffs #[(0 : Int), 1]
+private def wireAtom (cmp : Cmp) : Formula := .atom ⟨wireX, cmp⟩
+
+/- These guards cover the complete version-1 wire vocabulary, including
+constructors not used by the five current comparator inputs. Schema drift is
+therefore a build failure rather than a scheduled-host surprise. -/
+#guard jsonMatches (cmpJson .lt) "\"lt\""
+#guard jsonMatches (cmpJson .le) "\"le\""
+#guard jsonMatches (cmpJson .eq) "\"eq\""
+#guard jsonMatches (cmpJson .ge) "\"ge\""
+#guard jsonMatches (cmpJson .gt) "\"gt\""
+#guard jsonMatches (cmpJson .ne) "\"ne\""
+#guard jsonMatches (formulaJson (wireAtom .lt))
+  "{\"tag\":\"atom\",\"coeffs\":[0,1],\"cmp\":\"lt\"}"
+#guard jsonMatches (formulaJson .tt) "{\"tag\":\"tt\"}"
+#guard jsonMatches (formulaJson .ff) "{\"tag\":\"ff\"}"
+#guard jsonMatches (formulaJson (.not .tt))
+  "{\"tag\":\"not\",\"arg\":{\"tag\":\"tt\"}}"
+#guard jsonMatches (formulaJson (.and .tt .ff))
+  "{\"tag\":\"and\",\"left\":{\"tag\":\"tt\"},\"right\":{\"tag\":\"ff\"}}"
+#guard jsonMatches (formulaJson (.or .tt .ff))
+  "{\"tag\":\"or\",\"left\":{\"tag\":\"tt\"},\"right\":{\"tag\":\"ff\"}}"
+#guard jsonMatches (formulaJson (.imp .tt .ff))
+  "{\"tag\":\"imp\",\"left\":{\"tag\":\"tt\"},\"right\":{\"tag\":\"ff\"}}"
+#guard jsonMatches (dyadicJson 0) "[0,0]"
+#guard jsonMatches (dyadicJson ((Dyadic.ofInt (-1)) >>> (1 : Int))) "[-1,1]"
+#guard jsonMatches (sentenceJson (.forallReal .tt))
+  "{\"quantifier\":\"forall_real\",\"bounds\":null,\"formula\":{\"tag\":\"tt\"}}"
+#guard jsonMatches (sentenceJson (.existsReal .ff))
+  "{\"quantifier\":\"exists_real\",\"bounds\":null,\"formula\":{\"tag\":\"ff\"}}"
+#guard jsonMatches (sentenceJson (.forallIoc 0 1 .tt))
+  "{\"quantifier\":\"forall_ioc\",\"bounds\":{\"lower\":[0,0],\"upper\":[1,0]},\"formula\":{\"tag\":\"tt\"}}"
+#guard jsonMatches
+  (sentenceJson (.existsIoc ((Dyadic.ofInt (-1)) >>> (1 : Int)) 0 .ff))
+  "{\"quantifier\":\"exists_ioc\",\"bounds\":{\"lower\":[-1,1],\"upper\":[0,0]},\"formula\":{\"tag\":\"ff\"}}"
+
 private structure DecisionInput where
+  degree : Nat
   sentence : Sentence
-  json : Lean.Json
+  request : String
 
 private def prepDecisionInput (n : Nat) : DecisionInput :=
   let sentence := prepDecisionCarrierDegree n
-  { sentence, json := sentenceJson sentence }
+  let request := Lean.Json.mkObj [
+    ("family", .str "rcf"),
+    ("op", .str "decide"),
+    ("sentence", sentenceJson sentence)]
+  { degree := n, sentence, request := request.compress }
 
-/-- The five Sentence/JSON pairs are allocated once at module initialization.
-The timed wrappers perform only the same indexed reference read before entering
-their respective decision engines. -/
+/-- The five Sentence/request-line pairs are allocated once at module
+initialization. Both timed wrappers read the same degree-keyed record. The
+FLINT timing includes pipe transport and Python JSON decoding, but not Lean
+request construction or serialization. -/
 private initialize decisionInputs : IO.Ref (Array DecisionInput) ←
   IO.mkRef <| #[16, 20, 24, 28, 32].map prepDecisionInput
 
-private def decisionInput (index : Nat) : IO DecisionInput := do
+private def decisionInput (degree : Nat) : IO DecisionInput := do
   let inputs ← decisionInputs.get
-  match inputs[index]? with
+  match inputs.find? fun input => input.degree == degree with
   | some input => return input
-  | none => throw <| IO.userError s!"HexRCF decision comparator: missing input {index}"
+  | none => throw <| IO.userError s!"HexRCF decision comparator: missing degree {degree}"
 
 private def runLeanDecision (input : DecisionInput) : IO Bool :=
   match runDecisionCarrierDegree input.sentence with
@@ -151,29 +199,28 @@ private def runLeanDecision (input : DecisionInput) : IO Bool :=
   | none => throw <| IO.userError "HexRCF decision comparator: Lean builder failed"
 
 private def runFlintDecision (input : DecisionInput) : IO Bool := do
-  let result ← Hex.BenchOracle.Flint.runOp "rcf" "decide"
-    #[("sentence", input.json)]
+  let result ← Hex.BenchOracle.Flint.runLine "rcf" "decide" input.request
   match result.getBool? with
   | Except.ok value => return value
   | Except.error message =>
       throw <| IO.userError s!"HexRCF decision comparator: FLINT result was not Boolean: {message}"
 
-private def runLeanDecisionAt (index : Nat) : Unit → IO Bool := fun _ => do
-  runLeanDecision (← decisionInput index)
+private def runLeanDecisionAt (degree : Nat) : Unit → IO Bool := fun _ => do
+  runLeanDecision (← decisionInput degree)
 
-private def runFlintDecisionAt (index : Nat) : Unit → IO Bool := fun _ => do
-  runFlintDecision (← decisionInput index)
+private def runFlintDecisionAt (degree : Nat) : Unit → IO Bool := fun _ => do
+  runFlintDecision (← decisionInput degree)
 
-def runLeanDecision16 : Unit → IO Bool := runLeanDecisionAt 0
-def runFlintDecision16 : Unit → IO Bool := runFlintDecisionAt 0
-def runLeanDecision20 : Unit → IO Bool := runLeanDecisionAt 1
-def runFlintDecision20 : Unit → IO Bool := runFlintDecisionAt 1
-def runLeanDecision24 : Unit → IO Bool := runLeanDecisionAt 2
-def runFlintDecision24 : Unit → IO Bool := runFlintDecisionAt 2
-def runLeanDecision28 : Unit → IO Bool := runLeanDecisionAt 3
-def runFlintDecision28 : Unit → IO Bool := runFlintDecisionAt 3
-def runLeanDecision32 : Unit → IO Bool := runLeanDecisionAt 4
-def runFlintDecision32 : Unit → IO Bool := runFlintDecisionAt 4
+def runLeanDecision16 : Unit → IO Bool := runLeanDecisionAt 16
+def runFlintDecision16 : Unit → IO Bool := runFlintDecisionAt 16
+def runLeanDecision20 : Unit → IO Bool := runLeanDecisionAt 20
+def runFlintDecision20 : Unit → IO Bool := runFlintDecisionAt 20
+def runLeanDecision24 : Unit → IO Bool := runLeanDecisionAt 24
+def runFlintDecision24 : Unit → IO Bool := runFlintDecisionAt 24
+def runLeanDecision28 : Unit → IO Bool := runLeanDecisionAt 28
+def runFlintDecision28 : Unit → IO Bool := runFlintDecisionAt 28
+def runLeanDecision32 : Unit → IO Bool := runLeanDecisionAt 32
+def runFlintDecision32 : Unit → IO Bool := runFlintDecisionAt 32
 
 def prepDedupRepeated (n : Nat) : List ZPoly :=
   List.replicate (positiveParam n) x
@@ -322,32 +369,30 @@ setup_benchmark runDecisionCarrierDegree n => n ^ 4
     signalFloorMultiplier := 1.0
   }
 
-/-- Matching steady-state timing floor for the in-process Lean decisions. -/
-def leanDecisionConfig : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 5
-    maxSecondsPerCall := 8.0
-    minTotalSeconds := 0.2
-    expectedHash := some (Hashable.hash true) }
-
-/-- The same shape for FLINT, with its persistent driver started before the
-timed auto-tuner batch in each outer child. -/
-def flintDecisionConfig : LeanBench.FixedBenchmarkConfig :=
+/-- Shared steady-state timing shape. The discarded first call warms the Lean
+decision path on both sides and starts the persistent driver on the FLINT side. -/
+def decisionConfig : LeanBench.FixedBenchmarkConfig :=
   { repeats := 5
     maxSecondsPerCall := 8.0
     minTotalSeconds := 0.2
     warmupFirstIter := true
     expectedHash := some (Hashable.hash true) }
 
-setup_fixed_benchmark runLeanDecision16 where leanDecisionConfig
-setup_fixed_benchmark runFlintDecision16 where flintDecisionConfig
-setup_fixed_benchmark runLeanDecision20 where leanDecisionConfig
-setup_fixed_benchmark runFlintDecision20 where flintDecisionConfig
-setup_fixed_benchmark runLeanDecision24 where leanDecisionConfig
-setup_fixed_benchmark runFlintDecision24 where flintDecisionConfig
-setup_fixed_benchmark runLeanDecision28 where leanDecisionConfig
-setup_fixed_benchmark runFlintDecision28 where flintDecisionConfig
-setup_fixed_benchmark runLeanDecision32 where leanDecisionConfig
-setup_fixed_benchmark runFlintDecision32 where flintDecisionConfig
+#guard decisionConfig.repeats == 5
+#guard decisionConfig.minTotalSeconds == 0.2
+#guard decisionConfig.warmupFirstIter
+#guard decisionConfig.expectedHash == some (Hashable.hash true)
+
+setup_fixed_benchmark runLeanDecision16 where decisionConfig
+setup_fixed_benchmark runFlintDecision16 where decisionConfig
+setup_fixed_benchmark runLeanDecision20 where decisionConfig
+setup_fixed_benchmark runFlintDecision20 where decisionConfig
+setup_fixed_benchmark runLeanDecision24 where decisionConfig
+setup_fixed_benchmark runFlintDecision24 where decisionConfig
+setup_fixed_benchmark runLeanDecision28 where decisionConfig
+setup_fixed_benchmark runFlintDecision28 where decisionConfig
+setup_fixed_benchmark runLeanDecision32 where decisionConfig
+setup_fixed_benchmark runFlintDecision32 where decisionConfig
 
 /-
 After the first occurrence the seen prefix has size one, so each of the `u`

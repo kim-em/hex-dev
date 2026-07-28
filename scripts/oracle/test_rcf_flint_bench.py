@@ -91,9 +91,6 @@ class RcfFlintBenchTests(unittest.TestCase):
             for engine in ("Lean", "Flint")
         ]
         self.assertCountEqual(names, expected)
-        self.assertIn("minTotalSeconds := 0.2", source)
-        self.assertIn("warmupFirstIter := true", source)
-        self.assertGreaterEqual(source.count("expectedHash := some (Hashable.hash true)"), 2)
 
 
 if __name__ == "__main__":

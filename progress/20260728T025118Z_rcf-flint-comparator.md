@@ -9,11 +9,12 @@
   public decision entry point, shared dispatch, malformed requests, and
   continued service after an error frame.
 - Added an exact Mathlib-free encoder for the version-1 reflected sentence
-  schema and precomputed the five shared Sentence/JSON inputs at carrier
-  degrees 16, 20, 24, 28, and 32 outside every timed body.
+  schema, pinned its complete vocabulary with build guards, and precomputed
+  the five shared Sentence/request-line inputs at carrier degrees 16, 20, 24,
+  28, and 32 outside every timed body.
 - Registered paired fixed Lean and FLINT Boolean decisions at all five rungs,
-  with matching five-repeat and 0.2-second steady-state floors, a pinned true
-  hash, and per-child FLINT warmup.
+  with one shared five-repeat and 0.2-second steady-state config, a pinned true
+  hash, and matched per-child warmups.
 - Corrected the persistent-driver lifetime documentation: LeanBench creates a
   fresh child for each outer fixed warmup or repeat, while the Python process
   is warmed and reused across the auto-tuned inner batch inside that child.
