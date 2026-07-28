@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import io
 import json
 import os
@@ -352,6 +353,45 @@ class PairingTests(unittest.TestCase):
             "; ".join(rejected[-1]["issues"]),
             "aggregate measurement-CPU foreign",
         )
+
+    def test_shared_host_hard_cap_is_33_complete_attempts(self) -> None:
+        modules = (
+            ("reference", sweep.ProbeModule("Probe.Baseline")),
+            ("candidate", sweep.ProbeModule("Probe.Candidate")),
+        )
+        with (
+            mock.patch.object(
+                sweep,
+                "build_sample",
+                return_value=self.shared_arm(foreign=0.10),
+            ) as build,
+            mock.patch.object(sweep, "sampled_host_state", return_value={}),
+            mock.patch.object(sweep, "cpu_affinity", return_value=[47]),
+            mock.patch.object(sys, "stdout", new=io.StringIO()),
+            mock.patch.object(sys, "stderr", new=io.StringIO()),
+            mock.patch.object(
+                sweep,
+                "wait_for_shared_host_window",
+                return_value={
+                    "admitted": True,
+                    "elapsed_seconds": 2.0,
+                    "rejected_windows": [],
+                    "accepted_window": {},
+                },
+            ),
+        ):
+            accepted, rejected, preflight_failure = (
+                sweep.build_shared_host_pair(
+                    "pair", 1, 0, modules,
+                    60.0, 47, [47, 95], [95], 0.002,
+                    sweep.MAX_PAIR_RETRIES, 2.0, 300.0,
+                )
+            )
+        self.assertIsNone(accepted)
+        self.assertIsNone(preflight_failure)
+        self.assertEqual(len(rejected), 33)
+        self.assertEqual(build.call_count, 66)
+        self.assertEqual(rejected[-1]["measurement_attempt"], 33)
 
     def test_interrupt_cannot_mask_negative_cpu_accounting(self) -> None:
         arm = self.shared_arm(
@@ -1002,15 +1042,52 @@ class HarnessValidationTests(unittest.TestCase):
                     ],
                 )
 
-    def test_pair_retry_limit_is_capped_at_eight(self) -> None:
+    def test_pair_retry_default_and_hard_cap_are_distinct(self) -> None:
+        self.assertEqual(
+            sweep.parse_args("shared", []).max_pair_retries, 8
+        )
+        self.assertEqual(
+            sweep.parse_args(
+                "shared", ["--max-pair-retries", "32"]
+            ).max_pair_retries,
+            32,
+        )
+        self.assertEqual(
+            sweep.parse_args(
+                "shared", ["--max-arm-retries", "32"]
+            ).max_pair_retries,
+            32,
+        )
         with mock.patch.object(sys, "stderr", new=io.StringIO()):
             with self.assertRaises(SystemExit):
                 sweep.parse_args(
-                    "shared", ["--max-pair-retries", "9"]
+                    "shared", ["--max-pair-retries", "33"]
                 )
             with self.assertRaises(SystemExit):
                 sweep.parse_args(
-                    "shared", ["--max-arm-retries", "9"]
+                    "shared", ["--max-arm-retries", "33"]
+                )
+            with self.assertRaises(SystemExit):
+                sweep.parse_args(
+                    "shared", ["--max-pair-retries", "-1"]
+                )
+
+    def test_suite_preregisters_exact_shared_host_retry_bound(self) -> None:
+        spec = dataclasses.replace(SPEC, max_pair_retries=32)
+        with mock.patch.object(sweep, "configure_shared_host"):
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "requires --max-pair-retries 32, got 8",
+            ):
+                sweep.run_cli(
+                    spec,
+                    CALLER,
+                    [
+                        "--samples", "6",
+                        "--shared-host",
+                        "--expected-host", "chungus2",
+                        "--cpu", "22",
+                    ],
                 )
 
     def test_exhausted_pair_emits_unsummarized_partial_artifact(self) -> None:

@@ -316,13 +316,18 @@ preregistered ratio or three scheduler ticks rejects the complete pair
 attempt.
 
 A rejected pair attempt is retained with both arms, their fixed orientation,
-and all counters. The runner then rebuilds both arms in the same order, up to
-eight retries; it never retry-warms one arm in isolation. Before each attempt,
-the runner waits up to five minutes for a two-second physical-core observation
-with at most two non-interrupt busy ticks on the pinned CPU and two busy ticks
-on each sibling. This preflight avoids spending the finite build-retry budget
-inside a sustained burst; every rejected preflight window and its counters are
-retained, and the unchanged per-arm admission gate remains authoritative.
+and all counters. The runner then rebuilds both arms in the same order; it
+never retry-warms one arm in isolation. The default is eight retries, while a
+suite with preregistered long arms may explicitly request at most 32. The
+requested value counts retries after the initial attempt. The chosen finite
+bound is recorded and changes only how many clean-pair opportunities are
+attempted, never the admission threshold. Before each
+attempt, the runner waits up to five minutes for a two-second physical-core
+observation with at most two non-interrupt busy ticks on the pinned CPU and two
+busy ticks on each sibling. This preflight avoids spending the finite
+build-retry budget inside a sustained burst; every rejected preflight window
+and its counters are retained, and the unchanged per-arm admission gate
+remains authoritative.
 Only a wholly clean, adjacent pair attempt enters the timing sample. Exhausting
 the build-retry bound or the preflight wait emits an explicit partial artifact,
 records every rejected attempt or window, and never places a contaminated arm

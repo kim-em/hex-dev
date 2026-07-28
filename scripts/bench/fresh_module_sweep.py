@@ -43,7 +43,7 @@ DEFAULT_MAX_LOAD_PER_CPU = 0.5
 DEFAULT_MAX_CORE_INTERFERENCE_RATIO = 0.002
 DEFAULT_MAX_FREQUENCY_SPREAD_RATIO = 0.15
 DEFAULT_MAX_PAIR_RETRIES = 8
-MAX_PAIR_RETRIES = 8
+MAX_PAIR_RETRIES = 32
 DEFAULT_PREFLIGHT_WINDOW_SECONDS = 2.0
 DEFAULT_PREFLIGHT_TIMEOUT_SECONDS = 300.0
 PREFLIGHT_MAX_BUSY_TICKS = 2
@@ -92,6 +92,7 @@ class SweepSpec:
     src_dir: Path = Path("bench")
     extra_sources: tuple[Path, ...] = ()
     required_samples: int | None = None
+    max_pair_retries: int = DEFAULT_MAX_PAIR_RETRIES
 
 
 def parse_args(
@@ -162,7 +163,8 @@ def parse_args(
         default=DEFAULT_MAX_PAIR_RETRIES,
         help=(
             "maximum contaminated-pair retries under the shared-host "
-            "protocol (default 8)"
+            f"protocol (default {DEFAULT_MAX_PAIR_RETRIES}, hard cap "
+            f"{MAX_PAIR_RETRIES}; counts retries after the initial attempt)"
         ),
     )
     parser.add_argument(
@@ -1882,6 +1884,11 @@ def run_cli(
         raise RuntimeError(
             f"this sweep requires --samples {spec.required_samples}, "
             f"got {args.samples}"
+        )
+    if args.shared_host and args.max_pair_retries != spec.max_pair_retries:
+        raise RuntimeError(
+            "this sweep requires --max-pair-retries "
+            f"{spec.max_pair_retries}, got {args.max_pair_retries}"
         )
     if args.samples % 2 != 0:
         raise RuntimeError(
