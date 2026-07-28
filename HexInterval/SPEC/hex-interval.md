@@ -1071,6 +1071,14 @@ experimental. The older direct registry and engine interfaces remain available
 for search experiments, but proof-producing execution goes through the
 session.
 
+`PolicySession.Session` is the corresponding proof-producing policy canary.
+Its checked start stores one bundle containing the engine, policy, and arena
+limits and owns the resulting `Policy.State`, exact registry, and arena.
+`Session.view` returns the same owned session with traversal accounting
+committed, while `Session.choose` accepts only a checked selection or
+dismissal and returns the next coherent session. No public transition accepts
+separately assembled engine, registry, policy state, or arena values.
+
 The explicit registration and validation boundary is fixed. Discovery and
 scheduling above it remain empirical: one arm uses an incremental registry
 worklist to share facts and retain state, while a second traverses the same
@@ -1207,9 +1215,9 @@ construction and identifier assignment are one traversal, so a relocated
 identifier denotes exactly the entry appended for its local draft.
 Candidate, instantiation, and equality roles are distinct, and ordinary replay
 lookup checks the expected role. Failure returns the old arena.
-The session commits that returned arena only if submission of the relocated
-outcome also succeeds. Before freezing, it checks the candidate and suggestion
-list lengths against the engine's own trusted limits. Let
+Both private sessions commit that returned arena only if submission of the
+relocated outcome also succeeds. Before freezing, they check the candidate and
+suggestion list lengths against the engine's own trusted limits. Let
 `requiredUses = maxOutcomeCandidates + maxOutcomeSuggestions *
 (maxProposalItems + 1)`: every candidate and suggestion costs one payload use,
 and every suggestion may be an instantiation with at most
@@ -1315,14 +1323,22 @@ requires a live session and no retained retry or instantiation. At a FIFO
 fixed point this predicate is the sole gate between saturated and incomplete.
 Package `failed`/`resourceLimit` results, malformed evidence, dropped narrowing
 suggestions, and unprocessed retained narrowing therefore cannot be laundered
-into saturation. The next policy experiment must preserve this same session
-transaction while allowing an external policy to choose invocations,
-instantiations, equalities, retries, and splits; it must not regain access to
-separable engine, registry, and arena values. The FIFO session can already
-freeze an instantiation and its nested equality payloads, but it deliberately
-has no public admission escape hatch. Honest session-level execution coverage
-for the resulting equality contractor therefore belongs to that private
-policy-session layer, not to a test-only constructor or engine replacement.
+into saturation.
+
+The policy session now preserves the same transaction while allowing an
+external policy to select invocations and retries, instantiations, equality
+contractors, and splits, or to dismiss any live offer. A selected invocation
+or retry routes through `Registry.invokePlanned`, freezes its complete draft
+set prospectively, submits the relocated reply through `Policy.State`, and
+commits the new arena only for an accepted reply. The policy can observe a
+bounded view and echo a semantic selection, but cannot extract and later
+recombine the engine, registry, arena, or policy bookkeeping. Its
+`Session.complete` predicate additionally scans for live invocation and
+equality work and treats retries and instantiations, but not optional splits,
+as closure obligations. The policy state's monotone incompleteness bit covers
+failed replies, rejected or stale narrowing suggestions, and required
+dismissals; the session bit covers malformed proof drafts. Resource-failed or
+structurally invalid snapshots become non-live.
 
 ### Action kinds
 
@@ -1844,15 +1860,20 @@ The policy experiment proceeds in replaceable increments:
    retryable enclosure, a structure-triggered alternate form, equality
    contraction, and a function-owned split landmark.
 
-The concrete package canary reaches step 6 with the unchanged external driver.
-One deterministic schedule selects subtraction and multiplication propagation,
-the structure matcher, instantiation admission, the centered function's split
-handler and forward propagator, equality contraction, reciprocal propagation,
-a precision retry, and finally the centered function's split suggestion. It
-adds the centered node at generation one, narrows both representations to
-`[0,1/4]`, improves the enclosure of `1/3` at effort one, and returns a prepared
-plan at `x = 1/2` while the effort-two retry remains live. No branch is
-executed, so this is evidence for policy routing and freshness, not for scope
+The concrete package canary reaches step 6 in both search-only and
+proof-producing modes. One deterministic schedule selects subtraction and
+multiplication propagation, the structure matcher, instantiation admission,
+the centered function's split handler and forward propagator, equality
+contraction, reciprocal propagation, a precision retry, and finally the
+centered function's split suggestion. It adds the centered node at generation
+one, narrows both representations to `[0,1/4]`, improves the enclosure of
+`1/3` at effort one, and returns a prepared plan at `x = 1/2`. The
+proof-producing schedule also dismisses the effort-two retry and therefore
+retains an honest incomplete marker. Its arena contains the exact sequence of
+fact, instance, and equality roles; the admitted instance event, equality
+edge, and centered fact provenance resolve to entries owned by their
+originating package actions. No branch is executed, so this is evidence for
+policy routing, ownership, evidence freezing, and freshness, not for scope
 creation or split interiority.
 
 Once policy control begins, the wrapper is the sole scheduling authority for
