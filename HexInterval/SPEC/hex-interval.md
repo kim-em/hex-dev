@@ -1011,11 +1011,13 @@ start rather than advertised as compatible.
 
 `Registry.invokePlanned` cross-checks the flattened registration, routed handler
 metadata, and structural projection of an engine-produced request before
-entering the callback, then replaces only the selected package's cache. The
-engine still authenticates the pending serial, application, fact values, and
-versions. The explicitly named `Registry.invokeDroppingDrafts` adapter exists
-only for search experiments; it is not a proof-producing authentication
-boundary.
+entering the callback, then replaces only the selected package's cache. It is
+the proof-producing registry route because it retains the callback's
+reply-local drafts for freezing. Neither it nor
+`Registry.invokeDroppingDrafts` is an authentication boundary: the engine
+still authenticates the pending serial, application, fact values, and
+versions. The explicitly named dropping-drafts adapter exists only for search
+experiments.
 
 The current package type does not yet carry replay decoders or a schema
 registry. Arena drafts do carry an explicit numeric payload schema, but a

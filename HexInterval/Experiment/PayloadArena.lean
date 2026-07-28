@@ -78,9 +78,9 @@ def entry? (arena : Arena) (payload : PayloadId) (expected : Role) : Option Entr
   let entry ← arena.rawEntry? payload
   if entry.role == expected then some entry else none
 
-/-- Check the cached aggregate used by the body-cell resource bound.  Session
-ownership will eventually make malformed arenas unconstructible; the
-standalone experiment keeps this executable structural check in the meantime. -/
+/-- Check the cached aggregate used by the body-cell resource bound.  Callers
+must enforce this condition while the standalone experiment exposes `Arena`; a
+later session abstraction will own the invariant by construction. -/
 def wellFormed (arena : Arena) : Bool :=
   arena.bodyCells ==
     arena.entries.foldl (fun total entry => total + entry.body.length) 0
@@ -320,8 +320,9 @@ def freezeDrafts (arena : Arena) (origin : Action)
 
 This function does not mutate the supplied arena.  A caller should retain the
 returned arena only if the surrounding reply transaction also commits.
-Starting from `arena.wellFormed`, every ready result remains well formed; a
-session-owned arena supplies that precondition by construction. -/
+Starting from `arena.wellFormed`, every ready result remains well formed.
+Callers must supply that precondition until a later session abstraction owns
+the arena by construction. -/
 def freeze (limits : Limits) (arena : Arena) (origin : Action)
     (outcome : Outcome Fact) (drafts : List Draft) : Result Fact :=
   match preflightUses limits.maxUses outcome with

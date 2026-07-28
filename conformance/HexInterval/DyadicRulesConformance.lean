@@ -380,9 +380,9 @@ def ownsV0 (arena : PayloadArena.Arena) (payload : PayloadId)
     sameAction entry.origin origin && entry.schema == 0 && entry.body.isEmpty
 
 -- The real nullary fact handler and structural instantiator both use the
--- planned registry route.  Local label zero is reused across replies, then
--- relocated to distinct global entries.  Replay needs no central recipe
--- number: the frozen action key, role, and schema identify each v0 checker.
+-- planned registry route.  Their fact, instantiation, and equality labels are
+-- frozen into distinct global entries.  Replay needs no central recipe number:
+-- the frozen action key, role, and schema identify each v0 checker.
 #guard
   match registry? with
   | none => false

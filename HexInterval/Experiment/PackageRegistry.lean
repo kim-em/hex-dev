@@ -43,8 +43,10 @@ abbrev Invoke (Fact Cache : Type) :=
   Cache -> RuleRequest Fact -> Plan Fact × Cache
 
 /-- Compatibility shape for a callback that produces no immutable evidence.
-`PayloadArena.freeze` rejects any positive outcome from such a callback if it
-refers to a payload identifier. -/
+Every candidate carries a payload identifier, so a handler lifted through a
+dropping-drafts constructor cannot contribute candidates through a
+proof-producing session: `PayloadArena.freeze` requires a matching draft for
+every payload use, while this callback shape supplies none. -/
 abbrev BareInvoke (Fact Cache : Type) :=
   Cache -> RuleRequest Fact -> Outcome Fact × Cache
 
