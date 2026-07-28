@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.Decision
-public meta import HexRCF.Decision
+public meta import HexRCF.DecisionCheck
 
 public section
 

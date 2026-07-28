@@ -611,9 +611,10 @@ free to change.
   compiled carrier and deduplicated, aligned common-root construction;
   `HexRCF/BuilderTests.lean`: signed-content, repeated-factor, rational-scale,
   common-root alignment, and failure regressions.
-- `HexRCF/Decision.lean`: compiled root isolation, strict separation, endpoint
-  classification, sign-matrix and certificate assembly, retained diagnostic
-  build results, and the public one-way-sound `decide` wrapper;
+- `HexRCF/DecisionCheck.lean`: Mathlib-free compiled root isolation, strict
+  separation, endpoint classification, sign-matrix and certificate assembly,
+  retained diagnostic build results, and `decide`;
+  `HexRCF/Decision.lean`: the public one-way soundness theorem;
   `HexRCF/DecisionTests.lean`: all four certificate branches and quantifiers,
   half-open endpoint ownership, multiple/repeated/shared roots, helper failure,
   and output-check regressions.

@@ -36,6 +36,7 @@ public import HexRCF.BuilderTests
 public import HexRCF.Certificate
 public import HexRCF.Soundness
 public import HexRCF.CertificateTests
+public import HexRCF.DecisionCheck
 public import HexRCF.Decision
 public import HexRCF.DecisionTests
 public import HexRCF.Reify
