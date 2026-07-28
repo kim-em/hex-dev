@@ -63,7 +63,7 @@ theorem gap_of_check {cert : IsolationCert} (h : cert.checkGaps = true)
   simp only [hi, dif_pos] at hstep
   exact of_decide_eq_true hstep
 
-/-- Transitivity for the core dyadic strict order. -/
+/-- Transitivity of strict order on dyadic numbers. -/
 private theorem dlt_trans {a b c : Dyadic} (hab : a < b) (hbc : b < c) : a < c := by
   rw [← Dyadic.toRat_lt_toRat_iff] at hab hbc ⊢
   exact Std.lt_trans hab hbc
@@ -114,8 +114,8 @@ def classify? (f : ZPoly) (replay : SturmReplay)
   if hleft : endpoint ≤ I.lower then some .gt
   else if _hright : I.upper < endpoint then some .lt
   else
-    -- Core's names are the converses of the usual Mathlib convention:
-    -- `Dyadic.not_lt` turns `¬e ≤ l` into `l < e`.
+    -- `Dyadic.not_lt` uses the converse naming convention from Mathlib and
+    -- turns `¬e ≤ l` into `l < e`.
     let initial := DyadicInterval.mk I.lower endpoint (Dyadic.not_lt.mp hleft)
     if replay.count initial = 0 then some .gt
     else if replay.count initial = 1 then
@@ -192,7 +192,7 @@ def separateList? (p : ZPoly) (replay : SturmReplay) :
   | first :: rest => separateFrom? p replay first rest
 
 /-- Run untrusted strict separation and retain only checker-approved output.
-The caller pairs `p` with a replay checked against it; a mismatch can only
+The caller pairs `p` with a replay checked against it. A mismatch can only
 choose inadequate fuel and make this builder return `none`, because the output
 checker reads counts solely from `replay`. -/
 def separate? (p : ZPoly) (replay : SturmReplay)
@@ -204,7 +204,7 @@ def separate? (p : ZPoly) (replay : SturmReplay)
       if out.checkStrict replay then some out else none
 
 /-- The public builder never returns an unchecked strict isolation array. -/
-theorem check_of_separate_eq_some {p : ZPoly} {replay : SturmReplay}
+theorem check_separate {p : ZPoly} {replay : SturmReplay}
     {input output : IsolationCert} (h : separate? p replay input = some output) :
     output.checkStrict replay = true := by
   unfold separate? at h

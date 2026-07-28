@@ -257,7 +257,7 @@ proved equivalences.
    For root-cell transfer, `RootModel.leftSpan` is the interval from the open
    cell immediately left of root `i` through that root. Its preconnectedness,
    open-sample and root membership lemmas, together with
-   `RootModel.root_eq_of_mem_leftSpan`, show that the only carrier root in the
+   `RootModel.root_unique_leftSpan`, show that the only carrier root in the
    span is root `i` itself.
 
 7. **Prepare common-root packages.** Do the expensive work once per
@@ -519,7 +519,7 @@ cannot pass a fixture expecting either verdict. The required one-way
 connections are
 
 ```lean
-theorem decide_eq_some_true_imp_exists_cert :
+theorem exists_cert_of_decide :
     decide s = some true → ∃ cert, Certificate.check s cert = true
 
 theorem decide_sound (s : Sentence) :
@@ -648,6 +648,13 @@ free to change.
 - `HexRCF/Reify.lean`: `Qq`/`MetaM` reification, normalisation,
   fall-through messages; `HexRCF/ReifyTests.lean`: checked tactic examples,
   false-sentence diagnostics, and out-of-fragment rejection tests.
+- `HexRCF/LintTests.lean`: Batteries' default environment linters, applied to
+  declarations whose defining module is under the `HexRCF` module prefix. This
+  enforces definition, structure, field, and tactic documentation plus the
+  default naming/style checks. Theorem docstrings remain a review convention:
+  `docBlameThm` is not default-enabled and also flags generated constructor-index
+  theorems. The file intentionally uses legacy syntax so imported docstring
+  metadata is available to the linters.
 - `HexRCF/Tactic.lean`: the `rcf` front end.
 - `conformance/HexRCF/{Conformance,EmitFixtures}.lean`: conformance
   in the shared sub-project.

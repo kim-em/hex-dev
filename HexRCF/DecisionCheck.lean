@@ -50,11 +50,11 @@ theorem check_buildIsolations {carrier : CarrierCert}
   · simp at h
   · dsimp only at h
     split at h
-    · exact Separation.check_of_separate_eq_some h
+    · exact Separation.check_separate h
     · simp at h
 
 /-- Classify every isolated carrier root against one exact endpoint. -/
-def buildRootCmps? (carrier : CarrierCert) (isolations : IsolationCert)
+private def buildRootCmps? (carrier : CarrierCert) (isolations : IsolationCert)
     (endpoint : Dyadic) :
     Option (Vector Separation.RootCmp isolations.intervals.size) :=
   Vector.ofFnM fun i =>
@@ -159,7 +159,7 @@ theorem replay_build {s : Sentence} {result : BuildResult}
   · cases Option.some.inj h
     exact hreplay
 
-/-- Compiled convenience decision. False is diagnostic; true is returned only
+/-- Compiled convenience decision. False is diagnostic. True is returned only
 after the kernel-facing Boolean checker accepts the retained certificate. -/
 def decide (s : Sentence) : Option Bool :=
   match build? s with
@@ -170,7 +170,7 @@ def decide (s : Sentence) : Option Bool :=
       else some false
 
 /-- A true compiled verdict exposes a certificate accepted by the checker. -/
-theorem decide_eq_some_true_imp_exists_cert {s : Sentence}
+theorem exists_cert_of_decide {s : Sentence}
     (h : decide s = some true) :
     ∃ cert, Certificate.check s cert = true := by
   unfold decide at h

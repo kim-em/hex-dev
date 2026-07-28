@@ -43,22 +43,24 @@ namespace IsolationCert
 noncomputable def rootAt {f : ZPoly} {replay : SturmReplay}
     (cert : IsolationCert) (hreplay : replay.check f = true)
     (hcert : cert.check replay = true) (i : Fin cert.intervals.size) : ℝ :=
-  Classical.choose (exists_unique_root_of_check hreplay hcert i)
+  Classical.choose (existsUnique_root hreplay hcert i)
 
+/-- The chosen point is a root of the polynomial in the specified interval. -/
 theorem rootAt_spec {f : ZPoly} {replay : SturmReplay}
     (cert : IsolationCert) (hreplay : replay.check f = true)
     (hcert : cert.check replay = true) (i : Fin cert.intervals.size) :
     (toPolyℝ f).IsRoot (cert.rootAt hreplay hcert i) ∧
       Literal.InInterval cert.intervals[i] (cert.rootAt hreplay hcert i) :=
-  (Classical.choose_spec (exists_unique_root_of_check hreplay hcert i)).1
+  (Classical.choose_spec (existsUnique_root hreplay hcert i)).1
 
+/-- Every root in the specified interval equals the chosen root. -/
 theorem rootAt_unique {f : ZPoly} {replay : SturmReplay}
     (cert : IsolationCert) (hreplay : replay.check f = true)
     (hcert : cert.check replay = true) (i : Fin cert.intervals.size)
     {x : ℝ} (hx : (toPolyℝ f).IsRoot x)
     (hmem : Literal.InInterval cert.intervals[i] x) :
     x = cert.rootAt hreplay hcert i :=
-  (Classical.choose_spec (exists_unique_root_of_check hreplay hcert i)).2 x
+  (Classical.choose_spec (existsUnique_root hreplay hcert i)).2 x
     ⟨hx, hmem⟩
 
 /-- Package all semantic consequences of an accepted strict isolation array. -/
@@ -236,6 +238,7 @@ theorem exists_mem {f : ZPoly} {cert : IsolationCert}
     refine ⟨.open (Fin.last cert.intervals.size), ?_⟩
     simpa [Sem, hzero, last] using hlast
 
+/-- A point in an open cell lies below the root at the cell's upper boundary. -/
 private theorem open_lt_upper {f : ZPoly} {cert : IsolationCert}
     (M : RootModel f cert) (cut : Fin (cert.intervals.size + 1)) (x : ℝ)
     (hcut : cut.val < cert.intervals.size) (hx : Sem M (.open cut) x) :
@@ -247,6 +250,7 @@ private theorem open_lt_upper {f : ZPoly} {cert : IsolationCert}
     simp [Sem, hzero, hleft, hright] at hx
     exact hx.2
 
+/-- A point in an open cell lies above the root at the cell's lower boundary. -/
 private theorem lower_lt_open {f : ZPoly} {cert : IsolationCert}
     (M : RootModel f cert) (cut : Fin (cert.intervals.size + 1)) (x : ℝ)
     (hcut : 0 < cut.val) (hx : Sem M (.open cut) x) :
@@ -450,7 +454,7 @@ theorem root_mem_leftSpan {carrier : ZPoly} {cert : IsolationCert}
     exact ⟨M.strictMono (Fin.mk_lt_mk.mpr (by omega)), le_rfl⟩
 
 /-- A carrier root in the left span of root `i` is root `i` itself. -/
-theorem root_eq_of_mem_leftSpan
+theorem root_unique_leftSpan
     {carrier : ZPoly} {cert : IsolationCert}
     (M : RootModel carrier cert) (i : Fin cert.intervals.size) {x : ℝ}
     (hxroot : (toPolyℝ carrier).IsRoot x) (hx : x ∈ M.leftSpan i) :
@@ -516,16 +520,19 @@ end IocCmps
 
 namespace Cell
 
+/-- A valid root comparison equals `gt` exactly when the endpoint is below the root. -/
 private theorem eq_gt_iff {cmp : Separation.RootCmp} {root endpoint : ℝ}
     (h : cmp.Holds root endpoint) :
     (cmp == .gt) = true ↔ endpoint < root := by
   cases cmp <;> simp [Separation.RootCmp.Holds] at h ⊢ <;> linarith
 
+/-- A valid root comparison differs from `gt` exactly when the root is at most the endpoint. -/
 private theorem ne_gt_iff {cmp : Separation.RootCmp} {root endpoint : ℝ}
     (h : cmp.Holds root endpoint) :
     (cmp != .gt) = true ↔ root ≤ endpoint := by
   cases cmp <;> simp [Separation.RootCmp.Holds] at h ⊢ <;> linarith
 
+/-- A valid root comparison equals `lt` exactly when the root is below the endpoint. -/
 private theorem eq_lt_iff {cmp : Separation.RootCmp} {root endpoint : ℝ}
     (h : cmp.Holds root endpoint) :
     (cmp == .lt) = true ↔ root < endpoint := by

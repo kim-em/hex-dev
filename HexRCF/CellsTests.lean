@@ -53,7 +53,6 @@ and right of both roots. -/
 example : strict.openPoint ⟨0, by decide⟩ = Dyadic.ofInt (-3) := by decide
 example : strict.openPoint ⟨1, by decide⟩ = 0 := by decide
 example : strict.openPoint ⟨2, by decide⟩ = Dyadic.ofInt 3 := by decide
-example : strict.sample? (Cell.root ⟨0, by decide⟩) = none := by decide
 
 /-- The proof-facing sample and partition APIs consume the same checked data. -/
 example : Cell.Sem (strict.rootModel (f := quad) (replay := replay)
@@ -135,7 +134,6 @@ private def emptyVec : Vector Separation.RootCmp 0 := ⟨#[], rfl⟩
 private def noRootCmps : IocCmps 0 := ⟨emptyVec, emptyVec⟩
 
 example : noRoots.openPoint ⟨0, by decide⟩ = 0 := by decide
-example : noRoots.sample? (Cell.open ⟨0, by decide⟩) = some 0 := by decide
 example : Cell.meetsIoc noRootCmps (Cell.open ⟨0, by decide⟩) = true := by decide
 example : IocCmps.check posQuad posReplay noRoots 0 (Dyadic.ofInt 1)
     noRootCmps = true := by decide

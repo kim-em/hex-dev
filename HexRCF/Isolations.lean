@@ -17,7 +17,7 @@ public section
 
 The Mathlib-free certificate and checker live in `HexRCF.IsolationCheck`.
 Soundness packages accepted raw intervals into `LiteralIsolations` and applies
-the generic semantic isolation theorem; it never identifies the replay with
+the generic semantic isolation theorem. It never identifies the replay with
 the executable pseudo-remainder chain.
 -/
 
@@ -45,11 +45,13 @@ def toLiteral (replay : SturmReplay) (cert : IsolationCert)
   complete := by
     simpa using complete_of_check h
 
+/-- Converting an isolation certificate preserves the number of intervals. -/
 @[simp] theorem size_toLiteral (replay : SturmReplay) (cert : IsolationCert)
     (h : cert.check replay = true) :
     (cert.toLiteral replay h).isolations.size = cert.intervals.size := by
   simp [toLiteral]
 
+/-- The interval at each index is unchanged by conversion to literal isolations. -/
 theorem interval_toLiteral (replay : SturmReplay) (cert : IsolationCert)
     (h : cert.check replay = true)
     (i : Nat) (hi : i < (cert.toLiteral replay h).isolations.size) :
@@ -58,7 +60,7 @@ theorem interval_toLiteral (replay : SturmReplay) (cert : IsolationCert)
   simp [toLiteral]
 
 /-- Every accepted interval contains exactly one real root of the replay head. -/
-theorem exists_unique_root_of_check {f : ZPoly} {replay : SturmReplay}
+theorem existsUnique_root {f : ZPoly} {replay : SturmReplay}
     {cert : IsolationCert} (hreplay : replay.check f = true)
     (hcert : cert.check replay = true) (i : Fin cert.intervals.size) :
     ∃! r : ℝ, (toPolyℝ f).IsRoot r ∧

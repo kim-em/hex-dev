@@ -67,15 +67,24 @@ end OptionFold
 
 /-- Carrier and isolation data for a carrier with no real roots. -/
 structure DecompCert where
+  /-- Certificate data for the proposed square-free carrier. -/
   carrier : CarrierCert
+  /-- Proposed carrier isolation data. The root-free replay branch requires
+  this array to contain no intervals. -/
   isolations : IsolationCert
 
 /-- Full positive-root decomposition data. Endpoint comparisons are present
 exactly for bounded sentences. -/
 structure CellsCert where
+  /-- Certificate data for the proposed square-free carrier. -/
   carrier : CarrierCert
+  /-- Proposed carrier isolation data. Cell replay requires at least one
+  interval. -/
   isolations : IsolationCert
+  /-- Common-root data used to compute atom signs on every cell. -/
   signs : SignMatrixCert
+  /-- Endpoint comparisons for bounded sentences, or `none` for sentences over
+  the whole real line. -/
   iocCmps : Option (IocCmps isolations.intervals.size)
 
 /-- The four disjoint replay branches. -/
@@ -96,7 +105,7 @@ def Sentence.evalOpen? (s : Sentence) (isolations : IsolationCert)
   s.formula.evalSigns fun p => openCellSign? p isolations cut
 
 /-- Replay the carrier-free constant branch. Nonempty bounded domains are
-checked here; empty domains belong to `Certificate.emptyIoc`. -/
+checked here. Empty domains belong to `Certificate.emptyIoc`. -/
 @[expose]
 def Sentence.replayConstants? (s : Sentence) : Option Bool :=
   if s.polys.isEmpty then
@@ -120,7 +129,7 @@ def Sentence.replayNoRoots? (s : Sentence) (data : DecompCert) : Option Bool :=
   else none
 
 /-- Replay a checked positive-root decomposition. Real sentences forbid
-endpoint data; bounded sentences require and verify it. -/
+endpoint data. Bounded sentences require and verify it. -/
 @[expose]
 def Sentence.replayCells? (s : Sentence) (data : CellsCert) : Option Bool :=
   if data.carrier.check s &&

@@ -38,7 +38,7 @@ def checkCounts (replay : SturmReplay) (cert : IsolationCert) : Bool :=
     else false
 
 /-- Check the emitted order in linear time using only adjacent pairs. This is
-intentionally non-strict for half-open isolations; strict gaps are checked by
+intentionally non-strict for half-open isolations. Strict gaps are checked by
 the later cell-separation certificate. -/
 @[expose]
 def checkOrder (cert : IsolationCert) : Bool :=
@@ -75,7 +75,7 @@ theorem adjacent_of_check {cert : IsolationCert} (h : cert.checkOrder = true)
   simp only [hi, dif_pos] at hstep
   exact of_decide_eq_true hstep
 
-/-- `Dyadic` version of `le_of_lt`, derived from the core total order API. -/
+/-- Derive non-strict dyadic order from strict dyadic order. -/
 private theorem dyadic_le_of_lt {a b : Dyadic} (h : a < b) : a ≤ b := by
   rcases Dyadic.le_total a b with hle | hle
   · exact hle

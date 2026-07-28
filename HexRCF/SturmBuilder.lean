@@ -69,7 +69,7 @@ private def buildSpem (dividend divisor : ZPoly) : Option SpemWitness :=
     remainder := dividend }
 
 /-- Extend a replay until its current entry is a nonzero constant. A zero
-remainder before that point detects a nonsquarefree input; fuel exhaustion is
+remainder before that point detects a nonsquarefree input. Fuel exhaustion is
 rejected directly. -/
 private def buildReplayAux (derivScale : Int) :
     Nat → ZPoly → ZPoly → Array ZPoly → Array SturmStep → Option SturmReplay
@@ -119,7 +119,7 @@ def buildSturmReplay? (f : ZPoly) : Option SturmReplay :=
 
 /-- Every certificate returned by the builder has passed the kernel-facing
 Boolean checker. -/
-theorem check_of_build_eq_some {f : ZPoly} {replay : SturmReplay}
+theorem check_buildSturmReplay {f : ZPoly} {replay : SturmReplay}
     (h : buildSturmReplay? f = some replay) : replay.check f = true := by
   unfold buildSturmReplay? at h
   split at h

@@ -147,7 +147,7 @@ example : ∃ x : ℝ, x ^ 2 + 1 = 0 := by
   rcf
 ```
 ```leanOutput rcfFalseExistential
-rcf: the existential sentence is false; every relevant decomposition
+rcf: the existential sentence is false. Every relevant decomposition
 cell was checked and found false, so there is no witness
 ```
 

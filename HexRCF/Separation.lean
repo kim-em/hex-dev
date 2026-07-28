@@ -62,7 +62,7 @@ theorem classify_sound {f : ZPoly} {replay : SturmReplay}
       cmp.Holds root (Dyadic.toReal endpoint) := by
   classical
   obtain ⟨root, hroot, huniq⟩ :=
-    IsolationCert.exists_unique_root_of_check hreplay hcert i
+    IsolationCert.existsUnique_root hreplay hcert i
   have hP : toPolyℝ f ≠ 0 := by
     intro hzero
     exact SturmReplay.head_ne_zero hreplay (toPolyℝ_eq_zero_iff.mp hzero)
