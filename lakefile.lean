@@ -283,6 +283,7 @@ lean_lib HexReleaseTests where
 
 -- HexRCF is not yet a published split repository, so its verification-only
 -- modules stay separate from the release-manifest-backed target above.
+@[default_target]
 lean_lib HexRCFTests where
   globs := #[`HexRCF.LanguageTests,
     `HexRCF.SturmBuilderTests,

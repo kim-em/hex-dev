@@ -11,7 +11,8 @@
   registries while leaving the released-repository test manifest unchanged.
 - Documented the public/test boundary and the previously omitted
   `ReifyTests.lean` module in the HexRCF SPEC.
-- Built `HexRCF` and all twelve regression modules successfully.
+- Built `HexRCF`, all twelve regression modules, `HexManual`,
+  `HexConformance`, and `HexRCFProofProbe` successfully.
 
 ## Current frontier
 
@@ -28,5 +29,5 @@
 ## Blockers
 
 - None for this milestone.
-- Advancing the phase marker remains gated on HexRealRootsMathlib Phase 4 and
+- Advancing the phase marker remains blocked on HexRealRootsMathlib Phase 4 and
   release-quality HexRCF evidence.
