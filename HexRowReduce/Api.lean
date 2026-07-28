@@ -25,14 +25,16 @@ namespace Matrix
 
 variable {R : Type u} {n m : Nat}
 
-/-- Convenience wrapper: compute row-span coefficients using `rowReduce` internally. -/
+/-- Compute row-span coefficients using {name}`Hex.Matrix.rowReduce`
+internally. -/
 @[expose]
 def spanCoeffs [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) (v : Vector R m) :
     Option (Vector R n) :=
   let E := (rowReduce_isRowReduced M).toIsEchelonForm
   E.spanCoeffs v
 
-/-- Wrapper-layer soundness contract for `Matrix.spanCoeffs`. -/
+/-- Soundness of {name}`Hex.Matrix.spanCoeffs`: returned coefficients reconstruct
+the requested vector. -/
 @[grind =>]
 theorem spanCoeffs_sound [Lean.Grind.Field R] [DecidableEq R]
     (M : Matrix R n m) (v : Vector R m) (c : Vector R n) :
@@ -40,21 +42,21 @@ theorem spanCoeffs_sound [Lean.Grind.Field R] [DecidableEq R]
   intro h
   exact (rowReduce_isRowReduced M).toIsEchelonForm.spanCoeffs_sound v c h
 
-/-- Convenience wrapper: decide row-span membership using `rowReduce` internally. -/
+/-- Decide row-span membership using {name}`Hex.Matrix.rowReduce` internally. -/
 @[expose]
 def spanContains [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) (v : Vector R m) :
     Bool :=
   let E := (rowReduce_isRowReduced M).toIsEchelonForm
   E.spanContains v
 
-/-- The public `spanContains` wrapper is the Boolean `isSome` view of
-`spanCoeffs`. -/
+/-- {name}`Hex.Matrix.spanContains` is the Boolean `isSome` view of
+{name}`Hex.Matrix.spanCoeffs`. -/
 @[simp, grind =] theorem spanContains_eq_isSome [Lean.Grind.Field R] [DecidableEq R]
     (M : Matrix R n m) (v : Vector R m) :
     spanContains M v = (spanCoeffs M v).isSome := by
   rfl
 
-/-- The public `spanContains` wrapper is exactly row-span membership. -/
+/-- {name}`Hex.Matrix.spanContains` is exactly row-span membership. -/
 @[grind =]
 theorem spanContains_iff [Lean.Grind.Field R] [DecidableEq R]
     (M : Matrix R n m) (v : Vector R m) :
@@ -62,7 +64,7 @@ theorem spanContains_iff [Lean.Grind.Field R] [DecidableEq R]
   unfold spanContains
   simpa using (rowReduce_isRowReduced M).spanContains_iff v
 
-/-- `spanCoeffs` returns `none` exactly when `v` is in no row combination of `M`,
+/-- {name}`Hex.Matrix.spanCoeffs` returns `none` exactly when `v` is in no row combination of `M`,
 so a `none` result certifies that `v` is not in the row span. -/
 @[grind =]
 theorem spanCoeffs_eq_none_iff [Lean.Grind.Field R] [DecidableEq R]
@@ -71,7 +73,7 @@ theorem spanCoeffs_eq_none_iff [Lean.Grind.Field R] [DecidableEq R]
   rw [← spanContains_iff, spanContains_eq_isSome]
   cases spanCoeffs M v <;> simp
 
-/-- The rank returned by `rowReduce`. -/
+/-- The rank returned by {name}`Hex.Matrix.rowReduce`. -/
 @[expose]
 def rowReduce_rank [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) : Nat :=
   (rowReduce M).rank
@@ -83,16 +85,15 @@ def nullspaceBasisMatrix [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m)
   let E := rowReduce_isRowReduced M
   E.nullspaceMatrix
 
-/-- Convenience wrapper: compute the nullspace basis using `rowReduce` internally. -/
+/-- Compute the nullspace basis using {name}`Hex.Matrix.rowReduce` internally. -/
 @[expose]
 def nullspace [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) :
     Vector (Vector R m) (m - rowReduce_rank M) :=
   let E := rowReduce_isRowReduced M
   E.nullspace
 
-/-- Public column bridge between the matrix and vector nullspace wrappers:
-the `k`-th column of `nullspaceBasisMatrix M` is the `k`-th vector in
-`nullspace M`. -/
+/-- The `k`-th column of {name}`Hex.Matrix.nullspaceBasisMatrix` is the `k`-th
+vector in {name}`Hex.Matrix.nullspace`. -/
 @[grind =>]
 theorem nullspaceBasisMatrix_col [Lean.Grind.Field R] [DecidableEq R]
     (M : Matrix R n m) (k : Fin (m - rowReduce_rank M)) :
@@ -100,7 +101,8 @@ theorem nullspaceBasisMatrix_col [Lean.Grind.Field R] [DecidableEq R]
   unfold nullspaceBasisMatrix nullspace
   exact ((rowReduce_isRowReduced M).nullspace_get k).symm
 
-/-- Every vector returned by the public `nullspace` wrapper is annihilated by `M`. -/
+/-- Every vector returned by {name}`Hex.Matrix.nullspace` is annihilated by
+`M`. -/
 @[grind =>]
 theorem nullspace_sound [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m)
     (k : Fin (m - rowReduce_rank M)) :

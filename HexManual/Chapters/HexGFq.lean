@@ -67,7 +67,7 @@ tag := "hex-gfq-generic"
 %%%
 
 The headline type is {name}`Hex.GFq`: given an explicit
-`Hex.Conway.SupportedEntry p n`, it is the `HexGFqField` finite field over
+{name}`Hex.Conway.SupportedEntry` for `(p, n)`, it is the `HexGFqField` finite field over
 the committed Conway modulus, with the positive-degree, primality, and
 irreducibility hypotheses discharged from the entry. Its ergonomic
 sibling {name}`Hex.GFqC` is the same field with the entry resolved by
@@ -75,9 +75,9 @@ sibling {name}`Hex.GFqC` is the same field with the entry resolved by
 `GF(8)` with no further arguments.
 
 Each field element is a polynomial over `F_p` of degree below `n`: the
-remainder of an `FpPoly` modulo the field's Conway polynomial. `repr`
+remainder of an {name}`Hex.FpPoly` modulo the field's Conway polynomial. `repr`
 returns that remainder. The generic constructor reduces an arbitrary
-`FpPoly` to it:
+{name}`Hex.FpPoly` to it:
 
 {docstring Hex.GFq.ofPoly}
 
@@ -86,8 +86,8 @@ from the ambient instance:
 
 {docstring Hex.GFqC.ofPoly}
 
-A family of `*_eq_gfq` lemmas characterises the `GFqC` spelling against
-the explicit `GFq` one, so a proof may always unfold the convenience
+A family of `*_eq_gfq` lemmas characterises the {name}`Hex.GFqC` spelling against
+the explicit {name}`Hex.GFq` one, so a proof may always unfold the convenience
 spelling back to the entry-explicit form. The modulus delegation is
 representative:
 
@@ -116,21 +116,24 @@ The translation from a packed single-word modulus to the generic
 
 A committed binary entry that also admits the packed view is recorded by
 the class {name}`Hex.Conway.PackedGF2Entry`. Its fields bundle the
-`HexConway` `SupportedEntry`, the packed lower-word modulus `lower`, the
+`HexConway` {name}`Hex.Conway.SupportedEntry`, the packed lower-word modulus
+{name}`Hex.Conway.PackedGF2Entry.lower`, the
 extension-degree bounds `0 < n < 64`, the certified irreducibility of the
-packed modulus, and (crucially) `conway_eq_packed`, the proof that the
+packed modulus, and (crucially)
+{name}`Hex.Conway.PackedGF2Entry.conway_eq_packed`, the proof that the
 committed Conway polynomial *equals* the packed modulus viewed as an
-`FpPoly 2`. That equality is what lets the optimized field stand in for
+{name}`Hex.FpPoly` with modulus `2`. That equality is what lets the optimized field stand in for
 the canonical one without changing the mathematics. The committed
 instances are named `packedGF2Entry_2_n`.
 
 The optimized field itself is {name}`Hex.GF2q`: for a committed
-`PackedGF2Entry n`, the single-word `HexGF2` field `GF2n` with that
+{name}`Hex.Conway.PackedGF2Entry` at degree `n`, the single-word `HexGF2` field
+{name}`Hex.GF2n` with that
 modulus. A `UInt64` word becomes a packed element through:
 
 {docstring Hex.GF2q.ofWord}
 
-and the map from a packed element to its generic `GFq` counterpart is:
+and the map from a packed element to its generic {name}`Hex.GFq` counterpart is:
 
 {docstring Hex.GF2q.toGFq}
 
@@ -184,8 +187,9 @@ A finite field exists only when its modulus is irreducible, so every
 constructor in this library ultimately rests on an irreducibility proof.
 For the generic constructors that proof is the `HexConway` entry's; for
 the packed constructors it is a separate certificate over the `HexGF2`
-`GF2Poly.Irreducible` predicate, discharged by `decide` on a checkable
-certificate, never by `native_decide`. The degree-one case is small
+{name}`Hex.GF2Poly.Irreducible` predicate, discharged by
+{tactic}`decide` on a checkable
+certificate, never by {tactic}`native_decide`. The degree-one case is small
 enough to prove by exhausting the two monic linear polynomials over
 `𝔽₂`:
 
@@ -227,10 +231,11 @@ tag := "hex-gfq-cross-references"
   {ref "hex-gfq-ring"}[`HexGFqRing`]) is the generic quotient field
   backing {name}`Hex.GFq` and {name}`Hex.GFqC`; every generic operation
   delegates to it.
-* `HexGF2` provides the single-word packed field `GF2n` backing
-  {name}`Hex.GF2q`, together with the `GF2Poly.Irreducible` predicate the
+* `HexGF2` provides the single-word packed field {name}`Hex.GF2n` backing
+  {name}`Hex.GF2q`, together with the
+  {name}`Hex.GF2Poly.Irreducible` predicate the
   packed certificates discharge.
 
 `HexGFq` is Mathlib-free. Its Mathlib correspondence
 ({ref "hex-gfq-mathlib"}[above], via `HexGFqMathlib`) identifies the
-executable field with Mathlib's `GaloisField`.
+executable field with Mathlib's {name}`GaloisField`.

@@ -18,8 +18,7 @@ Zero-padding of dense matrices and the top-left-block product lemma.
 the border with zeros. Its correctness lemma — the **padding lemma** — says that
 bordering each operand with zero rows and columns and reading back the top-left
 block of the product returns the unpadded product (`takeCols_takeRows_mul_pad`).
-This is the second of the three lemmas the SPEC decomposes `mulStrassen_eq_mul`
-into; it lets the Strassen recursion pad an odd dimension up to even and recover
+It lets the Strassen recursion pad an odd dimension up to even and recover
 the true product from the padded one.
 -/
 

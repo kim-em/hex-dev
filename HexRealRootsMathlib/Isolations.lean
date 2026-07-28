@@ -39,8 +39,8 @@ The correspondence theorems carry a `1 ≤ (p.degree?).getD 0` hypothesis
 `exists_unique_root` does **not** need any extra hypothesis: a
 `RealRootIsolation` carries `count_one`, and a Sturm count of `1` forces a
 nonempty chain, hence positive degree (`degree_pos_of_count_one`), so the
-statement matches the SPEC verbatim. `isolates` takes `p ≠ 0` (the SPEC's
-`SquareFreeRat`-only form fails at `p = 0`, where every real is a root but
+statement needs no additional hypothesis. `isolates` takes `p ≠ 0` because
+the `SquareFreeRat`-only form fails at `p = 0`, where every real is a root but
 `complete` forces zero isolations); the nonzero-constant case is vacuous, and
 the positive-degree case is the real content.
 -/
@@ -196,7 +196,7 @@ private theorem isolates_of_degree_pos (hdeg : 1 ≤ (p.degree?).getD 0)
 squarefree `p` names every real root of `toPolyℝ p` exactly once: each root lies
 in exactly one of the emitted half-open intervals.
 
-The SPEC states this with only `SquareFreeRat p`, but that is unsound: for
+The `SquareFreeRat p` hypothesis alone is insufficient: for
 `p = 0` (which passes `SquareFreeRat`) every real is a root while `complete`
 forces zero isolations, so no root is captured. `p ≠ 0` is the honest
 hypothesis: a nonzero constant has no roots (vacuous case), and the

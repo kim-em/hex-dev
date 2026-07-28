@@ -89,7 +89,7 @@ noncomputable section
 
 variable {p : Hex.ZPoly}
 
-/-! ### The exact endpoint test -/
+/-! # The exact endpoint test -/
 
 /-- The executable endpoint test `dyadicSign (p(hi)) == 0` decides whether `hi`
 is a real root of `toPolyℝ p`: the exact dyadic evaluation has the same sign as
@@ -101,7 +101,7 @@ theorem bZero_iff (hi : Dyadic) :
   rw [beq_iff_eq]
   exact evalSign_zero_iff p hi
 
-/-! ### The exact node count -/
+/-! # The exact node count -/
 
 /-- **Node count.** For positive-degree square-free `p` and `lo < hi`, the exact
 Sturm count on `(lo, hi]` splits as the number of positive roots of the Möbius
@@ -167,7 +167,7 @@ theorem descartes_node_count (hdeg : 1 ≤ (p.degree?).getD 0)
   push_cast
   ring
 
-/-! ### Node truthfulness -/
+/-! # Node truthfulness -/
 
 /-- The Descartes dispatch Boolean at a node. -/
 private def dispatchC (p : Hex.ZPoly) (lo hi : Dyadic) (hlt : lo < hi) : Bool :=
@@ -238,7 +238,7 @@ private theorem node_discard (hdeg : 1 ≤ (p.degree?).getD 0)
   have hcp := Polynomial.countP_pos_eq_zero_of_signVariations_eq_zero hMne hSV0
   rw [hcnt, hcp, if_neg hnroot]; norm_num
 
-/-! ### Depth-budget refutation of the bisecting rows -/
+/-! # Depth-budget refutation of the bisecting rows -/
 
 /-- The real cast of `toPolyℝ p` to `ℂ` is `toPolyℂ p`. -/
 private theorem map_toPolyℝ_eq_toPolyℂ (p : Hex.ZPoly) :
@@ -369,7 +369,7 @@ theorem bisect_refute_double (hdeg : 1 ≤ (p.degree?).getD 0)
       - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi ≤ 1 := hle
   omega
 
-/-! ### The Descartes worklist drains -/
+/-! # The Descartes worklist drains -/
 
 /-- **The `descartesVisit` worklist drains, ordered and count-exact.** For a
 positive-degree square-free `p`, on a nonempty interval whose width is within the
@@ -558,7 +558,7 @@ private theorem descartesVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
           · exact dle_trans (hLhi I h) (dle_of_lt hmh)
           · exact hRhi I h
 
-/-! ### Driver completeness -/
+/-! # Driver completeness -/
 
 /-- The positive-degree core: the worklist drains (`descartesVisit_spec`) and the
 emitted total matches `rootCount p = sturmVarNegInf − sturmVarPosInf` (the
@@ -607,10 +607,10 @@ private theorem isolateDescartes?_isSome_of_degree_zero (hd : p.degree? = some 0
   · intro i j hij; exact absurd i.isLt (by simp)
   · rw [hchain0]; rfl
 
-/-- **The Descartes engine succeeds on nonzero square-free input.** The last
-theorem of `HexRealRootsMathlib`: `isolateDescartes? p ≠ none` for nonzero `p`
-passing the executable `SquareFreeRat` test, so the runtime never falls back to
-the Sturm engine.
+/-- **The Descartes engine succeeds on nonzero square-free input.**
+For nonzero `p` passing the executable `SquareFreeRat` test,
+`isolateDescartes? p ≠ none`, so the runtime never falls back to the Sturm
+engine.
 
 Positive degree is the real content (`isolateDescartes?_isSome_of_degree_pos`,
 the two-circle termination argument); a nonzero constant certifies through the

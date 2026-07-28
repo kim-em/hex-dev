@@ -46,15 +46,15 @@ argument:
 `theRoot hp iso` is the unique real root delivered by
 `RealRootIsolation.exists_unique_root` for the isolation underlying `iso`.
 
-## SPEC signature note
+## Hypotheses
 
-The SPEC states these with only `SquareFreeRat p`, and that is exactly what
-they carry here — no separate `p ≠ 0` hypothesis. Unlike `RealRootIsolations.
+These statements require only `SquareFreeRat p`, with no separate `p ≠ 0`
+hypothesis. Unlike `RealRootIsolations.
 isolates` or `isolateSturm?_isSome` (which have no isolation on hand and so
 must assume `p ≠ 0`), every theorem here is handed a `RefinedRealIsolation`,
 whose underlying `RealRootIsolation` carries `count_one`; that forces positive
-degree (`degree_pos_of_count_one`), hence `p ≠ 0`. So the nonzero fact is
-derived internally and the statements match the SPEC verbatim.
+degree (`degree_pos_of_count_one`), hence `p ≠ 0`. The nonzero fact is therefore
+derived internally.
 -/
 
 namespace HexRealRootsMathlib
@@ -65,7 +65,7 @@ noncomputable section
 
 variable {p : Hex.ZPoly}
 
-/-! ### Dyadic-order helpers (real values) -/
+/-! # Dyadic-order helpers (real values) -/
 
 /-- Failing dyadic `≤` gives the reverse inequality on the real values (the
 core `Dyadic` order need not be a `LinearOrder`, so this routes through the
@@ -94,7 +94,7 @@ private theorem isRoot_toPolyℂ {r : ℝ} (hr : (toPolyℝ p).IsRoot r) :
   have h2 : Polynomial.IsRoot ((toPolyℝ p).map (algebraMap ℝ ℂ)) (algebraMap ℝ ℂ r) := hr.map
   simpa using h2
 
-/-! ### The root of a refined isolation -/
+/-! # The root of a refined isolation -/
 
 /-- The unique real root isolated by a refined isolation, delivered by
 `RealRootIsolation.exists_unique_root` for the underlying `RealRootIsolation`. -/
@@ -126,7 +126,7 @@ private theorem refined_width (i : Hex.RefinedRealIsolation p) :
   rw [toReal_sub, toReal_twoPow] at h
   exact h
 
-/-! ### `Overlaps` as a real-interval intersection -/
+/-! # `Overlaps` as a real-interval intersection -/
 
 /-- `Overlaps` unfolds to a genuine intersection of the half-open real
 intervals: `max lower < min upper`. -/
@@ -149,7 +149,7 @@ private theorem overlaps_iff_real (i₁ i₂ : Hex.RefinedRealIsolation p) :
   rw [hmax, hmin, toReal_lt_toReal_iff]
   exact Iff.rfl
 
-/-! ### Overlap iff same root -/
+/-! # Overlap iff same root -/
 
 /-- **`Overlaps` classes are the real roots.** Two refined isolations of `p`
 overlap iff they name the same real root of `toPolyℝ p`.
@@ -211,7 +211,7 @@ theorem overlaps_iff_same_root (hp : Hex.ZPoly.SquareFreeRat p)
     rw [hsame] at h1l h1u
     exact lt_of_lt_of_le (max_lt h1l h2l) (le_min h1u h2u)
 
-/-! ### The quotient `SimpleRealRoot p` -/
+/-! # The quotient `SimpleRealRoot p` -/
 
 /-- The real value of a root identity: `theRoot` lifted through the overlap
 quotient. Well-defined by the forward direction of `overlaps_iff_same_root`. -/

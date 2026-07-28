@@ -86,9 +86,9 @@ by `recombinationCandidate_eq_factor_of_recovery` (`content factor = 1` and
 `normalizeFactorSign factor = factor`) into one consequence of `Monic factor`,
 together with restating the monic hypothesis itself.
 
-Intended use by the recursive coverage proof for `Hex.recombinationSearchModAux`
-(#4301): once the proof obtains a monic integer divisor of the current target
-via the Hensel-lift partition, this helper discharges the primitive and
+The recursive coverage proof for `Hex.recombinationSearchModAux` uses this
+after obtaining a monic integer divisor of the current target. Together with
+the Hensel-lift partition, this helper discharges the primitive and
 sign-normalised hypotheses of `recombinationCandidate_eq_factor_of_recovery`
 for that factor. Monicness itself is taken as a hypothesis here because the
 `LiftedFactorSubsetPartition.cover` field does not constrain the integer
@@ -2011,9 +2011,9 @@ the modular square-freeness from `Hex.isGoodPrime_squareFreeModP`.
 
 This is the per-index irreducibility component consumed by the
 `ModPSubsetPartitionHypotheses` constructor.  The sibling existence /
-uniqueness component is `existsUnique_modPFactorSubset_of_choosePrimeData`
-(#4687); the constructor wrapper itself is `modPSubsetPartitionHypotheses_of_choosePrimeData`
-(#4688). -/
+uniqueness component is `existsUnique_modPFactorSubset_of_choosePrimeData`;
+the constructor wrapper itself is
+`modPSubsetPartitionHypotheses_of_choosePrimeData`. -/
 theorem factors_irreducible_of_factorsModPBerlekampForm
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (hform : Hex.factorsModPBerlekampForm core primeData)
@@ -2177,8 +2177,8 @@ hypothesis are both supplied automatically by
 `Hex.choosePrimeData?_factorsModP_berlekamp_form` and
 `Hex.choosePrimeData?_isGoodPrime` respectively; the `none` branch is
 excluded by the explicit-witness premise `hselected`.  The constructor
-wrapper #4688 will compose this with the sibling
-`existsUnique_modPFactorSubset_of_choosePrimeData` (#4687) and the
+wrapper will compose this with the sibling
+`existsUnique_modPFactorSubset_of_choosePrimeData` and the
 trivial `fModP_eq` / `admissible_prime` / `square_free_reduction` fields. -/
 theorem factors_irreducible_of_choosePrimeData_of_some
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)

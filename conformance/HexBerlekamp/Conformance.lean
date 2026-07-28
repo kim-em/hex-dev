@@ -13,7 +13,7 @@ irreducibility, certificate-checker, split-step, and distinct-degree surface.
 
 Oracle: FLINT or Sage for external factorisation profiles; core uses Lean-only
 property checks.
-Mode: if_available
+Mode: `if_available`
 Covered operations:
 - `basisSize`, `coeffVector`, `berlekampColumn`, `berlekampMatrix`, and
   `fixedSpaceMatrix`, and `fixedSpaceKernel`

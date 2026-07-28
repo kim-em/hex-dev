@@ -20,26 +20,23 @@ checks that the committed input has the intended split over a named
 prime.
 
 Fixtures are integer polynomials at degrees 4, 6, 8, 10, 16, and 20,
-covering the currently Phase-2-stable shapes:
+covering the supported factorization shapes:
 
 * scalar/sign edge cases from the public `Factorization` convention,
 * already-irreducible Mignotte-bounded polynomials (cyclotomic
-  Φ_p for `p ∈ {5, 7, 11, 17}`),
+  `Φ_p` for `p ∈ {5, 7, 11, 17}`),
 * reducible products whose current output is already fully refined into
   irreducible components,
 * polynomials with content greater than `1`,
 * the degree-20 `Φ_11 · Φ_22` reducible product,
-* HO-2 (#2565) adversarial cases where mod-p factors split more finely
-  than the integer factorisation; see "HO-2 adversarial coverage" below.
+* adversarial cases where mod-p factors split more finely than the integer
+  factorisation; see "Adversarial modular-split coverage" below.
 
-HO-2 adversarial coverage
--------------------------
+# Adversarial modular-split coverage
 
-`SPEC/Libraries/hex-berlekamp-zassenhaus.md` §"Conformance fixtures"
-requires the core profile to include at least one input where the integer
-factorisation requires a non-trivial subset product of lifted mod-p factors,
-and at least one input that splits heavily (≥ 4 distinct mod-p factors)
-over a small admissible prime.  Four `adv/*` cases are emitted with pinned
+The corpus includes inputs where integer factorisation requires a non-trivial
+subset product of lifted mod-p factors and inputs that split into at least four
+distinct mod-p factors over a small admissible prime. Four `adv/*` cases carry pinned
 `modFactorPrime` / `modFactorDegrees` metadata so the oracle independently
 verifies the named modular split:
 
@@ -54,12 +51,10 @@ verifies the named modular split:
 * `adv/phi15` — Φ₁₅, irreducible over ℤ, splits completely as eight
   linear factors over F₃₁ (heavy split, small admissible prime).
 
-Lattice-tier merge requirement
-------------------------------
+# Lattice-tier dispatch coverage
 
-Two corpus cases can be answered **only by the lattice tier**, one per
-lattice answer arm, so together they make both answer paths
-merge-required through the public dispatcher:
+Two corpus cases can be answered **only by the lattice tier**, one for each
+lattice result:
 
 * `adv/swinnerton_dyer_sd5_pair` — `SD₅(x)·SD₅(x+1)` (degree 64, the
   two true factors are the 32-blocks `SD₅(x)` and `SD₅(x+1)`) exercises
@@ -68,7 +63,7 @@ merge-required through the public dispatcher:
 * `adv/swinnerton_dyer_sd6` — SD₆ (degree 64, minimal polynomial of
   √2+√3+√5+√7+√11+√13, irreducible over ℤ) exercises the
   **irreducibility-certification** arm: recovery converges to the
-  single all-ones class and the certificate-backed early stop (#8395)
+  single all-ones class and the certificate-backed early stop
   answers `some #[core]` without grinding to the `bhksBound` cap.
 
 Swinnerton-Dyer blocks split into factors of degree ≤ 2 modulo every
@@ -81,23 +76,19 @@ where the two 16-block factors live, and for `sd6` that is what
 exhausting all nontrivial subset products takes — far past its
 level-aware budget (`levelAwareSubsetBudget 32 defaultSubsetBudget =
 206368`), so it provably declines and the hybrid falls through to the
-van Hoeij CLD lattice arm.  Both cases emit the
-*hybrid* trace (`factorTraced`) rather than the classical one,
-making the tier a merge requirement three ways: the emit helper itself
-errors unless the lattice tier answered, the committed-fixture
-byte-diff pins the exact trace (`tier = "lattice"`, `declined = true`,
-the prime, `r = 32`; since the recursive per-remainder re-lift (#8625)
-the classical trace no longer reports scan candidate counts, so
-`subsetCandidates = 0` and the recombination-blow-up tripwire lives in
-the wallclock bench gate), and the `bz_trace_gate.py` baseline pins
-tier/decline and upper-bounds the candidate count.  A dispatch change, a lattice regression, or a
-precision-cap change that silently loses the tier fails the merge.
+van Hoeij CLD lattice arm. Both cases emit the
+*hybrid* trace (`factorTraced`) rather than the classical one. The emit helper
+rejects a run unless the lattice tier answered, while the committed trace records
+`tier = "lattice"`, `declined = true`, the prime, and `r = 32`. Since each
+remainder is lifted independently, the classical trace reports
+`subsetCandidates = 0`; the separate wall-clock benchmark detects excessive
+recombination work. The `bz_trace_gate.py` baseline also checks the tier,
+decline status, and candidate-count bound.
 There is deliberately no `#guard` twin in `Conformance.lean` —
 elaboration-time interpretation of the lattice run would cost minutes
 of build time; the compiled emit executable covers it in seconds.
 
-Cross-checked operation
------------------------
+# Cross-checked operation
 
 * `factor` — `Hex.ZPoly.factorize` from `HexBerlekampZassenhaus` (the
   default-bound public entry point).  Lean serialises the resulting
@@ -110,7 +101,7 @@ Cross-checked operation
 The fixture set is committed under
 `conformance-fixtures/HexBerlekampZassenhaus/bz.jsonl` and is
 intentionally small.  Coordinate any future case-id additions with
-`HexBerlekampZassenhaus/Conformance.lean` and the Phase-3 oracle script
+`HexBerlekampZassenhaus/Conformance.lean` and the oracle script
 so identical ids stay in sync.
 -/
 
@@ -246,12 +237,12 @@ private def mkPinnedExpected (id : String) (coeffs : Array Int)
     (factors : List (List Int × Nat)) : PinnedExpectedCase :=
   { id, coeffs, p, degrees, scalar, factors }
 
-/-! ## Already-irreducible Mignotte-bounded polynomials
+/-! # Already-irreducible Mignotte-bounded polynomials
 
-Cyclotomic Φ_p(x) = x^(p-1) + ... + x + 1 has `coeffL2NormBound`
+Cyclotomic `Φ_p(x) = x^(p-1) + ... + x + 1` has `coeffL2NormBound`
 `⌈√p⌉`, well inside the production lift's tractable range. -/
 
-/-! ## Signed-scalar and multiplicity convention edge cases -/
+/-! # Signed-scalar and multiplicity convention edge cases -/
 
 /- These cases intentionally emit the actual public `factor` result via
 `emitCase`; the python-flint oracle supplies the independent expected scalar
@@ -296,7 +287,7 @@ private def cases_irr_expected : List ExpectedCase :=
       1
       [([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1)] ]
 
-/-! ## Reducible products of two or three irreducibles
+/-! # Reducible products of two or three irreducibles
 
 These polynomials all factor over `Z` into two or three irreducibles
 and are oracle-checked against committed expected `Factorization` data. -/
@@ -313,11 +304,9 @@ private def cases_red : List ExpectedCase :=
       [ ([1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1], 1)
       , ([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1) ] ]
 
-/-! ## HO-2 adversarial cases with pinned modular split metadata
+/-! # Adversarial cases with pinned modular split metadata
 
-These cases discharge `SPEC/Libraries/hex-berlekamp-zassenhaus.md`
-§"Conformance fixtures" (HO-2, #2565); see the module docstring above
-for the case-by-case role.  Each case is emitted with
+Each case is emitted with
 `modFactorPrime` / `modFactorDegrees`, which the python-flint oracle
 cross-checks via `nmod_poly.factor`.  Conformance buckets for the same
 polynomials live in `HexBerlekampZassenhaus/Conformance.lean` under
@@ -328,31 +317,28 @@ the local Lean polynomial names there. -/
 private def cases_pinned_factor : List PinnedCase :=
   [ -- adv/quad_sqrt2_sqrt3 — (X^2 - 2)(X^2 - 3) splits over F_23 into
     -- four linear factors that the integer factorisation recombines
-    -- into two quadratics.  Discharges the HO-2 non-trivial
-    -- subset-product requirement.
+    -- into two quadratics, exercising non-trivial subset recombination.
     mkPinned "adv/quad_sqrt2_sqrt3" #[6, 0, -5, 0, 1] 23 [1, 1, 1, 1] ]
 
 private def cases_pinned_expected : List PinnedExpectedCase :=
   [ -- adv/x4_plus_1 — X^4 + 1 is irreducible over Z and splits over F_5
-    -- into two quadratics; HO-2 subset-product case at a small
-    -- admissible prime.
+    -- into two quadratics at a small admissible prime.
     mkPinnedExpected "adv/x4_plus_1" #[1, 0, 0, 0, 1] 5 [2, 2]
       1 [([1, 0, 0, 0, 1], 1)]
     -- adv/swinnerton_dyer_sd3 — Swinnerton-Dyer SD_3 (degree 8, root
     -- field Q(√2, √3, √5)) is irreducible over Z and splits completely
-    -- over F_71 as eight linear factors; HO-2 heavy-split case.
+    -- over F_71 as eight linear factors.
   , mkPinnedExpected "adv/swinnerton_dyer_sd3"
       #[576, 0, -960, 0, 352, 0, -40, 0, 1]
       71 [1, 1, 1, 1, 1, 1, 1, 1]
       1 [([576, 0, -960, 0, 352, 0, -40, 0, 1], 1)]
     -- adv/phi15 — Φ_15 (degree 8) is irreducible over Z and splits
-    -- completely over F_31 as eight linear factors; HO-2 heavy-split
-    -- case at a small admissible prime.
+    -- completely over F_31 as eight linear factors at a small admissible prime.
   , mkPinnedExpected "adv/phi15" #[1, -1, 0, 1, -1, 1, 0, -1, 1]
       31 [1, 1, 1, 1, 1, 1, 1, 1]
       1 [([1, -1, 0, 1, -1, 1, 0, -1, 1], 1)] ]
 
-/-! ## Polynomials with non-unit content -/
+/-! # Polynomials with non-unit content -/
 
 private def cases_content : List ExpectedCase :=
   [ -- 2·Φ_5 — content 2 around an irreducible quartic.
@@ -362,7 +348,7 @@ private def cases_content : List ExpectedCase :=
   , mkExpected "content3/cyclo7" #[3, 3, 3, 3, 3, 3, 3]
       3 [([1, 1, 1, 1, 1, 1, 1], 1)] ]
 
-/-! ## Good-prime regression cases
+/-! # Good-prime regression cases
 
 These split products exercise the path where the raw executable gcd can return
 a non-monic unit for square-free modular images.  Results are pinned rather
@@ -401,9 +387,9 @@ private def cases_adversarial : List Case :=
   , mk "adv/large_plus_distractors" #[-6, 5, -1, 0, 0, 6, -5, 1]
   , mk "adv/mignotte_swell" #[1, 0, -10000, 0, 2, 0, 0, 0, 1] ]          -- (x⁴-100x+1)(x⁴+100x+1)
 
-/-! ## Lattice-tier merge requirement
+/-! # Lattice-tier dispatch coverage
 
-See the module docstring §"Lattice-tier merge requirement".  The cases are
+See the module docstring section "Lattice-tier dispatch coverage". The cases are
 emitted through the public `factorize` path (`factorTraced`, whose `.1`
 is `factorize`) so the pinned trace catches dispatch regressions, not just
 lattice ones. -/
@@ -521,14 +507,15 @@ private def emitPinnedCase (c : PinnedCase) : IO Unit := do
   emitResult lib c.id "factor" (factorValue (ZPoly.factorize f))
   emitClassicalResult c.id f
 
-/-- Emit one lattice-sentinel fixture through the *hybrid* traced path: a
+/-- Emit one lattice-only fixture through the traced public dispatch path.
+
 single `factorTraced` run supplies the `factorize` result (its `.1` is the
 public `factorize`) **and** the trace, so the committed trace pins the tier
 `factorize` actually used.  The helper is sentinel-only: it errors out unless the
 classical tier declined and the lattice tier answered, which is the case's
-whole point — a case that stops routing to the lattice arm must not emit
-quietly.  (The merge still fails either way: a tier change also breaks the
-committed-fixture byte-diff and the `bz_trace_gate.py` baseline.)  Since the
+purpose — a case that stops routing to the lattice arm must not emit
+quietly. A tier change also breaks the committed-fixture byte comparison and
+the `bz_trace_gate.py` baseline. Since the
 lattice tier answered, the classical tier returned `none`, so
 `classicalFactor` is `null` (an oracle skip) without paying the classical
 decline burn a second time.  The exact `prime` / `r` / `subsetCandidates`

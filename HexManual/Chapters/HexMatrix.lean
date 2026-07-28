@@ -38,8 +38,8 @@ separate libraries built on it: {ref "hex-determinant"}[HexDeterminant],
 
 The type and its operations are Mathlib-free. The
 {ref "hex-matrix-mathlib"}[last section] connects them to Mathlib: the
-`Semiring`/`Ring` and `One` instances, and the identification with
-Mathlib's `Matrix`.
+{name}`Semiring`/{name}`Ring` and {name}`One` instances, and the
+identification with Mathlib's {name}`_root_.Matrix`.
 
 # The dense matrix type
 %%%
@@ -50,8 +50,8 @@ This section is the definitions; the {ref "hex-matrix-lemmas"}[next
 section] collects the theorems about them.
 
 {name}`Hex.Matrix.ofFn` builds a matrix from an entry function
-`Fin n → Fin m → R`. `row` and `col` return its rows and columns, and
-`transpose` swaps them.
+`Fin n → Fin m → R`. {name}`Hex.Matrix.row` and {name}`Hex.Matrix.col`
+return its rows and columns, and {name}`Hex.Matrix.transpose` swaps them.
 
 {docstring Hex.Matrix.ofFn}
 
@@ -127,8 +127,9 @@ tag := "hex-matrix-lemmas"
 Every operation above carries a complete set of description lemmas: an
 entry lemma `getElem_…` fixing `M[i][j]`, and `row_…`/`col_…` lemmas
 fixing a whole row or column. This grid is kept total — `zero`,
-`identity`, `transpose`, `mulVec`, `vecMul`, `mul`, `gramMatrix`,
-`principalSubmatrix`, and every elementary operation each carry all
+{name}`Hex.Matrix.identity`, {name}`Hex.Matrix.transpose`,
+{name}`Hex.Matrix.mulVec`, {name}`Hex.Matrix.vecMul`, {name}`Hex.Matrix.mul`,
+{name}`Hex.Matrix.gramMatrix`, {name}`Hex.Matrix.principalSubmatrix`, and every elementary operation each carry all
 three — so a proof can rewrite in whichever shape it needs. The lemmas
 below are representative rather than exhaustive.
 
@@ -170,8 +171,9 @@ tag := "hex-matrix-elementary"
 %%%
 
 The elementary operations work over any ring. Each row operation has a
-column mirror — `rowSwap`/`colSwap`, `rowScale`/`colScale`,
-`rowAdd`/`colAdd` — and each has a determinant law proved in
+column mirror — {name}`Hex.Matrix.rowSwap`/{name}`Hex.Matrix.colSwap`,
+{name}`Hex.Matrix.rowScale`/{name}`Hex.Matrix.colScale`,
+{name}`Hex.Matrix.rowAdd`/{name}`Hex.Matrix.colAdd` — and each has a determinant law proved in
 {ref "hex-determinant"}[HexDeterminant].
 {ref "hex-row-reduce"}[HexRowReduce] uses the row operations for
 Gauss-Jordan reduction over a field.
@@ -223,13 +225,13 @@ tag := "hex-matrix-mathlib"
 %%%
 
 Everything above is executable and Mathlib-free. `HexMatrixMathlib`
-connects it to Mathlib: every `Hex.Matrix` corresponds to a Mathlib
-`Matrix` with the same entries.
+connects it to Mathlib: every {name}`Hex.Matrix` corresponds to a Mathlib
+Mathlib's {name}`_root_.Matrix` type with the same entries.
 
 {docstring HexMatrixMathlib.matrixEquiv}
 
-The `Semiring`, `Ring`, and `Algebra` structure on square matrices, and
-the `One` instance, are defined by transport through
+The {name}`Semiring`, {name}`Ring`, and {name}`Algebra` structure on square matrices, and
+the {name}`One` instance, are defined by transport through
 {name}`HexMatrixMathlib.matrixEquiv`, bundled
 as {name}`HexMatrixMathlib.matrixRingEquiv` and
 {name}`HexMatrixMathlib.matrixAlgEquiv`. The elementary row operations

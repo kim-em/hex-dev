@@ -19,7 +19,7 @@ to the exact `lllNative` path. The provider is acceleration only.
 
 namespace Hex
 
-/-! ## External LLL provider
+/-! # External LLL provider
 
 Optional runtime hook for an external reducer (e.g. fpLLL) reached through the
 C FFI shim in `HexLLL/ffi/`. A provider is installed either by the explicit
@@ -30,7 +30,7 @@ there is no environment-variable read and no implicit `dlopen`.
 is present, or a returned candidate fails validation, callers fall back to the
 verified native reducer `lllNative`. The provider is acceleration only and is
 never part of the trusted path — every candidate it returns is checked before
-use. See `SPEC/hex-lll.md` for the dispatch and certification details. -/
+use. -/
 namespace Internal.LLLProvider
 
 @[extern "lean_hexlll_provider_available"]
@@ -198,7 +198,7 @@ def tryReduce (rows cols : USize) (entries : Array String)
 Definitionally `k`, so kernel reduction and proofs treat it as identity on the
 continuation. The `@[implemented_by]` attribute redirects compiled code to a
 side-effecting implementation that bumps `diagnosticsRef` via `unsafeBaseIO`
-before returning `k`, giving us the diagnostic tally that the SPEC requires
+before returning `k`, providing the diagnostic tally
 without forcing `lll` into `IO`. The pattern mirrors `Init.Util.withPtrEq`. -/
 unsafe def withRecordOutcomeImpl {α : Sort u} (o : Outcome) (k : α) : α :=
   match unsafeBaseIO (diagnosticsRef.modify (fun d => bump d o)) with

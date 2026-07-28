@@ -319,7 +319,7 @@ meta def elabIrredZMod (tactic : String) (q : Nat) [Hex.ZMod64.Bounds q]
     throwError "{tactic}: internal error: non-monic normalization; please \
         report this"
 
-/-- Shared modulus scaffolding: match the input type, check primality and the
+/-- Match the input type, check primality and the
 `ZMod64` bounds, and run the continuation with the `Bounds` instance in
 scope. Non-`Polynomial (ZMod q)` types are `notApplicable`; composite or
 oversized moduli are declined with a diagnostic. -/

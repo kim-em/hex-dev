@@ -1418,7 +1418,7 @@ setup_fixed_benchmark runIsabelleCertifiedHarshCubicNormSq65 where {
 
 
 -- BEGIN Ajtai family targets (generated)
-/-! ## Ajtai-style worst-case `lll.firstShortVector` targets. -/
+/-! # Ajtai-style worst-case `lll.firstShortVector` targets. -/
 
 initialize ajtaiInput8Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
 
@@ -1920,7 +1920,7 @@ setup_fixed_benchmark runCertifiedFirstShortVectorAjtai36Checksum where {
 
 
 -- BEGIN Qary family targets (generated)
-/-! ## qary `lll.firstShortVector` targets. -/
+/-! # qary `lll.firstShortVector` targets. -/
 
 initialize qaryInput16Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
 
@@ -2235,7 +2235,7 @@ setup_fixed_benchmark runCertifiedFirstShortVectorQary48Checksum where {
 -- END Qary family targets
 
 -- BEGIN Ntru family targets (generated)
-/-! ## ntru `lll.firstShortVector` targets. -/
+/-! # ntru `lll.firstShortVector` targets. -/
 
 initialize ntruInput8Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
 
@@ -2550,7 +2550,7 @@ setup_fixed_benchmark runCertifiedFirstShortVectorNtru24Checksum where {
 -- END Ntru family targets
 
 -- BEGIN Knapsack family targets (generated)
-/-! ## knapsack `lll.firstShortVector` targets. -/
+/-! # knapsack `lll.firstShortVector` targets. -/
 
 initialize knapsackInput16Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
 

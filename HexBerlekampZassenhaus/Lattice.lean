@@ -324,11 +324,11 @@ def centeredResiduePow (p b : Nat) (x : Int) : Int :=
 BHKS two-sided cut `Psi^a_b(x) = (x_amb - (x_amb mod^± p^b)) / p^b`, where
 `x_amb := x mod^± p^a` is the centered ambient representative.
 
-Centering at the ambient modulus `p^a` before taking the lower-precision cut
-is required to match the SPEC semantics: a CLD coefficient passed in as a
+Centering at the ambient modulus `p^a` before taking the lower-precision cut is
+required for the intended semantics: a CLD coefficient passed in as a
 nonnegative `p^a`-residue `(p^a - c)` of a negative exact value `-c` must be
 recentered to `-c` before applying the `p^b` cut. Without this step the cut
-produces an oversized output for negative exact coefficients — see #6217 for
+produces an oversized output for negative exact coefficients, as shown by
 the `f = x^2 - 5*x + 6`, `g = x - 2`, `p = 5`, `a = 6` counterexample to the
 old uncentered formulation.
 -/

@@ -265,8 +265,8 @@ theorem zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
 
 /--
 Every polynomial factor emitted by the default executable factorization of a
-nonzero input is primitive. The public path is the self-certifying hybrid
-(#8383), so primitivity is discharged from `f ≠ 0` alone (the filtered product
+nonzero input is primitive. The public factorization verifies its own output,
+so primitivity is discharged from `f ≠ 0` alone (the filtered product
 reconstructs `f`); no raw-source hypothesis is needed.
 -/
 theorem factorize_entries_primitive_of_chosen_raw_primitive
@@ -462,7 +462,7 @@ set_option maxHeartbeats 3000000 in
 /--
 Recorded entries of the default executable factorization of a nonzero input are
 pairwise non-associated after transport to `Polynomial ℤ`. Primitivity is
-discharged from `f ≠ 0` (the self-certifying hybrid, #8383).
+discharged from `f ≠ 0` by the self-certifying path.
 -/
 theorem factorize_entries_not_associated
     (f : Hex.ZPoly) (hf : f ≠ 0) :
@@ -495,7 +495,7 @@ private theorem mem_factorizationFlattenedFactors_iff
 
 /--
 The transport coercion of `factorizationFlattenedFactors` to a multiset
-equals the issue-spec multiplicity sum over the original entry list. -/
+equals the multiplicity sum over the original entry list. -/
 private theorem coe_factorizationFlattenedFactors_eq
     (φ : Hex.Factorization) :
     (factorizationFlattenedFactors φ : Multiset Hex.ZPoly) =
@@ -640,7 +640,7 @@ theorem factorize_unique
   rw [hcoe_map_φ, hcoe_map_ψ] at hflat_eq
   exact Multiset.map_injective HexPolyZMathlib.equiv.injective hflat_eq
 
-/-! ### Mathlib-side correspondence for executable certificate factor-product equalities
+/-! # Mathlib-side correspondence for executable certificate factor-product equalities
 
 These lemmas identify the executable `Hex.PrimeFactorData.factorProduct` with
 the Mathlib `Polynomial.map (Int.castRingHom (ZMod p))` image of the underlying

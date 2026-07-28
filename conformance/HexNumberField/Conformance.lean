@@ -11,7 +11,7 @@ Core conformance checks for `HexNumberField`.
 
 Oracle: cypari2/PARI for algebraic-number minimal polynomials and
 python-flint for the integer eliminants and factorization checks in the
-external JSONL profile. Mode: if_available.
+external JSONL profile. Mode: `if_available`.
 
 Covered operations:
 - fixed-presentation `QAdjoin.reduce`, arithmetic, inversion, division, and
@@ -37,7 +37,7 @@ namespace Hex.NumberFieldConformance
 
 open Hex
 
-/-! ## Selected-root fixtures -/
+/-! # Selected-root fixtures -/
 
 private def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
 
@@ -179,7 +179,7 @@ private def sqrtTwoExact? : Option AlgebraicNumber :=
 private def sqrtThreeExact? : Option AlgebraicNumber :=
   sqrtThree? >>= AlgebraicRoot.exact?
 
-/-! ## Fixed-presentation arithmetic and approximation -/
+/-! # Fixed-presentation arithmetic and approximation -/
 
 #guard
   if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
@@ -216,7 +216,7 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
     second.2.radius ≤ Dyadic.ofIntWithPrec 1 48 &&
     first.1.1.square.discsMeet second.1.1.square
 
-/-! ## Lazy algebraic arithmetic -/
+/-! # Lazy algebraic arithmetic -/
 
 #guard
   match sqrtTwo? with
@@ -293,7 +293,7 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
       | _, _, _ => false
   | _, _ => false
 
-/-! ## Exactification and semantic identity -/
+/-! # Exactification and semantic identity -/
 
 #guard
   match enclosingRoot? with
@@ -327,7 +327,7 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
         QAdjoin.Roots.sameValue? positive positive = some true
   | _, _, _ => false
 
-/-! ## Polynomial roots -/
+/-! # Polynomial roots -/
 
 private def fixedSqrtTwo : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
   QAdjoin.reduce sqrtTwoPoly sqrtTwoRoot
@@ -393,7 +393,7 @@ private def fixedLinear : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot) :=
   else
     false
 
-/-! ## Algebraic-coefficient polynomials -/
+/-! # Algebraic-coefficient polynomials -/
 
 private def algebraicOne? : Option AlgebraicNumber :=
   AlgebraicPoly.Common.rational? 1

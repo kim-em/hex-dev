@@ -52,12 +52,12 @@ inductive Raw where
   | bounds (lower : Lower) (upper : Upper)
   deriving DecidableEq
 
-/-! ## Endpoint comparison preflight -/
+/-! # Endpoint comparison preflight -/
 
 /-- Resource limits that must be checked before comparing finite dyadics.
 `maxEndpointHeight` bounds mantissa bits plus exponent magnitude;
 `maxAlignmentShift` independently bounds the shift used by exact comparison.
-The first bound is the SPEC's deliberate dynamic-range policy, not merely an
+The first bound is a deliberate dynamic-range policy, not merely an
 allocation estimate for comparison. -/
 structure EndpointLimit where
   maxEndpointHeight : Nat

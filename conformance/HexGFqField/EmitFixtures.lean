@@ -177,7 +177,7 @@ private def emitAt
   emitResult lib caseId "frob" (polyValue (liftCoeffs (repr (frob xa))))
   emitResult lib caseId "zpow" (polyValue (liftCoeffs (repr (zpow xa zexp))))
 
-/-! ## Per-modulus declarations and emit helpers.
+/-! # Per-modulus declarations and emit helpers.
 
 Sixteen `(p, n)` pairs.  For each, define the irreducible modulus,
 record positive-degree by `decide`, and discharge `FpPoly.Irreducible`

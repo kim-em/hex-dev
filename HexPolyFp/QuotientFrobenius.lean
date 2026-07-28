@@ -192,8 +192,8 @@ theorem reduce_C_pow_pPow_eq (c : ZMod64 p) (k : Nat) :
         _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
               (DensePoly.C c) := reduce_C_pow_prime_eq c
 
-/-- Iterated Frobenius is the identity on `Quotient.X` powers, given a fixed
-point at `Quotient.X` itself. -/
+/-- Iterated Frobenius is the identity on {name}`Quotient.X` powers, given a fixed
+point at {name}`Quotient.X` itself. -/
 theorem X_pow_pPowN (hp_pos : 0 < p) {n : Nat}
     (hX : (X (g := g) (hmonic := hmonic) (hg_pos := hg_pos)) ^ (p ^ n) =
             X (g := g) (hmonic := hmonic) (hg_pos := hg_pos))
@@ -372,8 +372,8 @@ private theorem quotMonoSum_pow_pPow_eq_self
       congr 1
       rw [reduce_monomial_eq, mul_pow, reduce_C_pow_pPow_eq, X_pow_pPowN hp_pos hX m]
 
-/-- **Capstone:** if the Frobenius iterate `β ↦ β ^ (p ^ n)` fixes
-`Quotient.X`, it fixes every quotient element.
+/-- If the Frobenius iterate `β ↦ β ^ (p ^ n)` fixes
+{name}`Quotient.X`, it fixes every quotient element.
 
 The irreducibility hypothesis is recorded for downstream callers but is
 not used in the proof: the X-generation argument is purely an algebra fact

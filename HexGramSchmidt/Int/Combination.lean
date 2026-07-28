@@ -13,7 +13,7 @@ public section
 
 namespace Hex
 namespace GramSchmidt.Int
-/-! ### Prefix coefficient vector for integer row combinations -/
+/-! # Prefix coefficient vector for integer row combinations -/
 
 /-- Cast the first `k.val + 1` entries of an integer coefficient vector into a
 rational prefix coefficient vector. Used to package an integer row combination
@@ -493,7 +493,7 @@ theorem exists_top_index_normSq_le_of_memLattice
   rw [← hnorm]
   exact hle
 
-/-! ### Dot-product symmetry support -/
+/-! # Dot-product symmetry support -/
 
 private theorem foldl_dot_comm_int {n' : Nat} (xs : List (Fin n'))
     (u v : Vector Int n') (accU accV : Int) (hacc : accU = accV) :
@@ -657,8 +657,8 @@ full Gram matrix has not recorded a singular step before reaching column `j`,
 the executable scaled-coefficient array entry below the diagonal at `(i, j)`
 matches the trailing entry of the no-pivot Bareiss-style loop on the
 corresponding Cramer determinant matrix `scaledCoeffMatrix b i j hji`. This
-composes `scaledCoeffArrayLoop_lower_matches_target_column` (from #4103),
-`noPivotLoop_full_eq_borderedMinor_at_trailing` (from #4028), and the
+composes `scaledCoeffArrayLoop_lower_matches_target_column`,
+`noPivotLoop_full_eq_borderedMinor_at_trailing`, and the
 symmetry/transpose equation `noPivotLoop_scaledCoeffMatrix_eq`. -/
 theorem scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix
     (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val)
@@ -2134,7 +2134,7 @@ theorem scaledCoeffMatrix_rowSwap_adjacent_pivot_transpose
       · dsimp [GramSchmidt.liftFinLE]
         omega
 
-/-! ### Coefficient bordered minor and multilinearity entry equation
+/-! # Coefficient bordered minor and multilinearity entry equation
 
 The `coeffBM` matrix shares its first `k` columns with `borderedMinor G k hk i j`
 (those columns do not depend on `j`) and replaces the last column with the

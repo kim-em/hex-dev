@@ -17,7 +17,7 @@ Correspondence between the executable `Hex.WordMod` residue ring and Mathlib's
 the transport lemmas below (mirroring `HexModArithMathlib.ZMod64`) are the
 homomorphism laws used to lift the executable word arithmetic to Mathlib and,
 downstream, to prove the word-sized CLD kernel byte-identical to the bignum path
-(issue #8691, Phase 2).
+on inputs whose modulus fits in one word.
 
 `m.toNat` is positive (`ctx.p_pos`) but that fact needs `ctx`, which `m.toNat`
 does not mention, so `NeZero m.toNat` cannot be a free instance; each proof
@@ -98,7 +98,7 @@ theorem toZMod_injective : Function.Injective (toZMod (ctx := ctx)) := by
         rw [Nat.cast_add, Nat.cast_sub hle]
     _ = toZMod a - toZMod b := by rw [ZMod.natCast_self]; simp [toZMod, sub_eq_add_neg]
 
-/-! ### Mathlib `CommRing` structure, transferred along `toZMod`.
+/-! # Mathlib `CommRing` structure, transferred along `toZMod`.
 
 `WordMod` already carries all ring operations in the Mathlib-free base. Each
 operation transports to `ZMod`, then `Function.Injective.commRing` pulls the

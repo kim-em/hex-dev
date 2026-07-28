@@ -16,8 +16,8 @@ public section
 Delayed-reduction Barrett base kernel as a demonstration `StrassenConfig`.
 
 The default `StrassenConfig` base kernel (`strassenDefault`) reduces modulo `p`
-after every multiply-add. This module supplies the SPEC's demonstration
-non-default config for the Barrett-reduced prime field `ZMod64 p`: a base kernel
+after every multiply-add. This module supplies a non-default configuration for
+the Barrett-reduced prime field `ZMod64 p`: a base kernel
 whose dot product accumulates one-word residue products in the two-word
 accumulator and reduces modulo `p` only periodically (`delayedDot`, built on the
 `HexArith.Barrett.Accumulator` fold `foldReduce`).
@@ -366,9 +366,8 @@ theorem strassenBarrett_valid (ctx : Hex.BarrettCtx p) :
 /-- **A trivial alternate config** that plugs the naive `mulImpl` base kernel
 into a non-default `StrassenConfig` (with a distinct cutoff): the minimal
 example of the pluggable-base-kernel path, with a verified-`Valid` config
-supplied by the caller and no performance claim attached. The *performance*
-demonstration required by honesty constraint (b) of `HexMatrix/SPEC/hex-matrix.md`
-§ "A demonstration non-default config" is `strassenBarrett` above. -/
+supplied by the caller and no performance claim attached. The performance
+example is `strassenBarrett` above. -/
 @[expose]
 def strassenDemo : Matrix.StrassenConfig (ZMod64 p) where
   cutoff := 48

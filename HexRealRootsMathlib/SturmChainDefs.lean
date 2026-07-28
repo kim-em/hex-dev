@@ -11,15 +11,13 @@ public import Mathlib
 public section
 
 /-!
-Self-contained scaffolding for Sturm's theorem over `Polynomial ℝ`.
+Definitions supporting Sturm's theorem over `Polynomial ℝ`.
 
 This module defines the zero-skipping sign-variation count `Sturm.sturmVar`
 of a chain of real polynomials at a point, and the predicate
 `Sturm.IsSturmChain` capturing the sign axioms that the root-counting
-argument uses. Nothing here refers to any `HexRealRoots` executable type:
-the development is a slice over `Polynomial ℝ` that is intended to be
-upstreamable to Mathlib once exercised by the executable-correspondence
-files that arrive in later PRs.
+argument uses. Nothing here refers to any `HexRealRoots` executable type; the
+definitions are stated directly over `Polynomial ℝ`.
 
 The zero-skipping convention: the variation count of a sign pattern such as
 `(+, 0, −)` is `1`. Concretely we drop the zero evaluations and count the
@@ -236,10 +234,10 @@ theorem SVRel.signVariations_eq {L M : List ℝ} (h : SVRel L M) :
 /-- A generalised Sturm chain for `p`: the sign axioms that the counting
 argument actually uses, packaged as explicit fields. The chain is stored as
 a plain `List (Polynomial ℝ)` and elements are addressed by index through
-`getElem?`, so no length lower bound is baked in (a nonzero constant `p` has
+{name}`getElem?`, so no length lower bound is baked in (a nonzero constant `p` has
 the one-element chain `[p]`).
 
-The fields, in the numbering of the SPEC:
+The fields are:
 
 * `nonempty` / `head` — the chain is nonempty and its head is `p`;
 * `root_flank` — at every real root `r` of `p` there is a second element

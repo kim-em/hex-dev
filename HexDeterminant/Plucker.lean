@@ -18,7 +18,7 @@ universe u
 namespace Matrix
 variable {α : Type u}
 
-/-! ### Plucker minor helpers
+/-! # Plucker minor helpers
 
 Encoding for the universal 3-term Plucker identity substrate. -/
 
@@ -150,7 +150,7 @@ def nDet {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hpq : p.val < q.val) : R :=
   det (nMatrix B p q hpq)
 
-/-! ### Row-move infrastructure for ordered four-row transports
+/-! # Row-move infrastructure for ordered four-row transports
 
 These helpers transport the determinant of a matrix whose rows are an
 ordered `nMatrix` row sequence with one row displaced downward. Each
@@ -317,7 +317,7 @@ private theorem rowMoveUp_row_between {R : Type u} {n m : Nat}
           apply Fin.ext; simp; omega
         rw [hii]
 
-/-! ### One-row `setRow` transports to ordered `nDet` minors
+/-! # One-row `setRow` transports to ordered `nDet` minors
 
 For `a < b < t` in `Fin (n + 2)`, the private helpers
 `rowMoveUp_setRow_nMatrix_replace_first` and
@@ -722,7 +722,7 @@ private theorem det_setRow_nMatrix_r3_r1
   rw [h_nDet, hdet_rm, ← Lean.Grind.Semiring.mul_assoc,
       neg_one_pow_mul_self, Lean.Grind.Semiring.one_mul]
 
-/-! ### Double-row `setRow` transport to ordered `nDet` minors
+/-! # Double-row `setRow` transport to ordered `nDet` minors
 
 For ordered rows `r0 < r1 < r2 < r3`, the double replacement
 `setRow (setRow (nMatrix B r0 r1 h01) s2 B[r0]) s3 B[r1]` (with

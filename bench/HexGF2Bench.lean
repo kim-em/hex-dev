@@ -12,7 +12,7 @@ Executable-root additions for `hexgf2_bench`.
 
 The library-owned `HexGF2/Bench.lean` module stays inside the `HexGF2`
 dependency boundary. This executable root adds the cross-library `GF2Poly`
-versus `FpPoly 2` comparison registrations named by the HexGF2 Phase 4 spec.
+versus `FpPoly 2` comparison registrations.
 The comparison cases share deterministic input families and return
 coefficient-domain checksums, so `lake exe hexgf2_bench compare ...` joins on a
 real common domain.

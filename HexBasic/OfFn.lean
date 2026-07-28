@@ -11,33 +11,30 @@ public import Std
 public section
 
 /-!
-Kernel-reducible `ofFn` for `Array` and `Vector`.
+Kernel-reducible function tabulation for {name}`Array` and {name}`Vector`.
 
-`Array.ofFn` delegates to its `ofFn.go` auxiliary, which is not exposed, so
+{name}`Array.ofFn` delegates to its `ofFn.go` auxiliary, which is not exposed, so
 under the module system its body is unavailable downstream and
-`(Array.ofFn f)` does not reduce in the kernel. `Vector.ofFn` is itself
-`@[expose]` but calls `Array.ofFn`, so it inherits the stall.
+`(Array.ofFn f)` does not reduce in the kernel. {name}`Vector.ofFn` is itself
+`@[expose]` but calls {name}`Array.ofFn`, so it inherits the stall.
 
-`List.ofFn` is fully exposed and reduces, so the definitions below go through
+{name}`List.ofFn` is fully exposed and reduces, so the definitions below go through
 it. That is the wrong shape for compiled code, which wants to push into an
 array of known capacity rather than build a linked list and convert, so each
 carries a `@[csimp]` lemma redirecting the compiler back to the core version.
-The `List` route is then paid only in the kernel, which is where it is needed.
-
-**Delete this file** once
-[leanprover/lean4#14270](https://github.com/leanprover/lean4/pull/14270) lands
-and the toolchain is bumped past it, replacing uses with `Array.ofFn` and
-`Vector.ofFn`. See `progress/lean4-array-decidableeq-module-repro.md` for the
-full cleanup checklist.
+The {name}`List` route is then paid only in the kernel, which is where it is
+needed.
 -/
 
 namespace Hex
 
-/-- `Array.ofFn` that reduces in the kernel under the module system. -/
+/-- An {name}`Array.ofFn` equivalent that reduces in the kernel under the
+module system. -/
 @[expose] def Array.ofFn' {α : Type u} {n : Nat} (f : Fin n → α) : Array α :=
   (List.ofFn f).toArray
 
-/-- `Vector.ofFn` that reduces in the kernel under the module system. -/
+/-- A {name}`Vector.ofFn` equivalent that reduces in the kernel under the
+module system. -/
 @[expose] def Vector.ofFn' {n : Nat} {α : Type u} (f : Fin n → α) : Vector α n :=
   ⟨(List.ofFn f).toArray, by simp⟩
 
@@ -49,13 +46,13 @@ namespace Hex
     Vector.ofFn' f = Vector.ofFn f := by
   simp [Vector.ofFn', _root_.Vector.ofFn]
 
-/-! ## Compatibility lemmas
+/-! # Compatibility lemmas
 
-Core's lemmas (`Array.size_ofFn`, `Vector.getElem_ofFn`, …) are stated about
-`ofFn` and do not apply to `ofFn'`. `ofFn'_eq_ofFn` is `@[simp]`, so ordinary
-`simp` bridges the gap on its own; these exist so that `simp only` proofs and
-`rfl`-closing steps keep working after a definition is migrated, without having
-to thread the equality in by hand. -/
+Core's lemmas ({name}`Array.size_ofFn`, {name}`Vector.getElem_ofFn`, …) are
+stated about {name}`Array.ofFn` and {name}`Vector.ofFn` and do not apply
+directly to {name}`Hex.Array.ofFn'` or {name}`Hex.Vector.ofFn'`.
+{name}`Hex.Array.ofFn'_eq_ofFn` is `@[simp]`, so ordinary `simp` bridges the
+gap; these lemmas also support `simp only` proofs and `rfl`-closing steps. -/
 
 @[simp] theorem Array.size_ofFn' {α : Type u} {n : Nat} (f : Fin n → α) :
     (Array.ofFn' f).size = n := by
@@ -73,13 +70,14 @@ to thread the equality in by hand. -/
     (h : i < n) : (Vector.ofFn' f)[i] = f ⟨i, h⟩ := by
   simp [Vector.ofFn']
 
-/-- Compiled code uses the core `Array.ofFn`, which fills an array of known
-capacity instead of building a `List` first. The `List` route exists only so
-that the kernel can reduce it. -/
+/-- Compiled code uses the core {name}`Array.ofFn`, which fills an array of known
+capacity instead of building a {name}`List` first. The {name}`List` route exists
+only so that the kernel can reduce it. -/
 @[csimp] theorem Array.ofFn'_eq_ofFn' : @Array.ofFn' = @_root_.Array.ofFn := by
   funext α n f; exact Array.ofFn'_eq_ofFn f
 
-/-- As `Array.ofFn'_eq_ofFn'`. -/
+/-- The {name}`Hex.Vector.ofFn'` analogue of
+{name}`Hex.Array.ofFn'_eq_ofFn'`. -/
 @[csimp] theorem Vector.ofFn'_eq_ofFn' : @Vector.ofFn' = @_root_.Vector.ofFn := by
   funext n α f; exact Vector.ofFn'_eq_ofFn f
 

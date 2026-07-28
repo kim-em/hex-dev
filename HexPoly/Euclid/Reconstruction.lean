@@ -145,7 +145,7 @@ theorem divMod_reconstruction_step {S : Type _}
 
 /-- The polynomial-level reading of one step of the array-based long-division
 remainder update: subtracting `coeff * q * x^shift` from `rem`, in coefficient
-form, matches the in-place `subtractScaledShift` array update whenever the
+form, matches the in-place {name}`subtractScaledShift` array update whenever the
 update window stays within `rem`. -/
 private theorem ofCoeffs_subtractScaledShift_eq_sub_monomial_mul {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
@@ -355,7 +355,7 @@ theorem dvd_sub_poly {S : Type _}
   refine ⟨a + (0 - b), ?_⟩
   rw [sub_eq_add_neg_poly, ha, hb, mul_add_right_poly, mul_sub_zero_comm, mul_comm_poly b d]
 
-/-- `xgcdAux` base case: when the right input `r₁` is zero, the returned gcd
+/-- {name}`xgcdAux` base case: when the right input `r₁` is zero, the returned gcd
 equals the left input `r₀`. -/
 private theorem xgcdAux_gcd_eq_left_of_right_zero {S : Type _}
     [Zero S] [DecidableEq S] [One S] [Add S] [Sub S] [Mul S] [Div S]
@@ -367,7 +367,7 @@ private theorem xgcdAux_gcd_eq_left_of_right_zero {S : Type _}
   | succ fuel =>
       simp [xgcdAux, hr₁, isZero_zero]
 
-/-- `xgcd_bezout_step` is the single recursion step of the Bezout coefficients:
+/-- {name}`xgcd_bezout_step` is the single recursion step of the Bezout coefficients:
 pairing `(s₀ - a * s₁, t₀ - a * t₁)` with `p, q` equals
 `(s₀ * p + t₀ * q) - a * (s₁ * p + t₁ * q)`. -/
 private theorem xgcd_bezout_step {S : Type _}
@@ -392,8 +392,8 @@ private theorem xgcd_bezout_step {S : Type _}
     coeff_add (s₀ * p) (t₀ * q) n hzero_add, coeff_add (a * (s₁ * p)) (a * (t₁ * q)) n hzero_add]
   grind
 
-/-- `xgcdAux` satisfies the Bezout identity: the returned `left * p + right * q`
-equals the returned `gcd`. -/
+/-- {name}`xgcdAux` satisfies the Bezout identity: the returned `left * p + right * q`
+equals the returned {name}`gcd`. -/
 private theorem xgcdAux_bezout {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (p q r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S) (fuel : Nat)
@@ -435,7 +435,7 @@ private theorem xgcdAux_bezout {S : Type _}
                 · exact hzero_add
               · exact hzero_sub
 
-/-- Bezout identity for `xgcd`, proved from `DivModLaws` for use when building
+/-- Bezout identity for {name}`xgcd`, proved from `DivModLaws` for use when building
 the corresponding `GcdLaws` instance. -/
 theorem xgcd_bezout_of_divModLaws {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
@@ -448,7 +448,7 @@ theorem xgcd_bezout_of_divModLaws {S : Type _}
   · rw [zero_mul, mul_comm_poly (1 : DensePoly S) q, mul_one_right_poly, zero_add]
 
 /-- Common-divisor direction: any `d` dividing both `r₀` and `r₁` divides the
-gcd returned by `xgcdAux`. -/
+gcd returned by {name}`xgcdAux`. -/
 private theorem xgcdAux_common_dvd_gcd {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (d r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S) (fuel : Nat)
@@ -483,7 +483,7 @@ private theorem xgcdAux_common_dvd_gcd {S : Type _}
           rw [hrem]
           exact dvd_sub_poly hr₀ (dvd_mul_left_poly qr.1 hr₁)
 
-/-- gcd-divides-inputs direction: the gcd returned by `xgcdAux` divides both
+/-- gcd-divides-inputs direction: the gcd returned by {name}`xgcdAux` divides both
 inputs `r₀` and `r₁`. -/
 private theorem xgcdAux_gcd_dvd_inputs {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
@@ -543,7 +543,7 @@ private theorem xgcdAux_gcd_dvd_inputs {S : Type _}
           · rw [hg_eq]
             exact dvd_refl_poly r₁
 
-/-- The gcd returned by `xgcd` divides the left input, assuming `DivModLaws`
+/-- The gcd returned by {name}`xgcd` divides the left input, assuming `DivModLaws`
 and the one-off `hsmall` fact for nonzero divisors of degree zero. This is
 intended for `GcdLaws` instance construction. -/
 theorem gcd_dvd_left_of_divModLaws {S : Type _}
@@ -560,7 +560,7 @@ theorem gcd_dvd_left_of_divModLaws {S : Type _}
       have hq := degree_getD_lt_size_add_one q
       omega)).1
 
-/-- The gcd returned by `xgcd` divides the right input, assuming `DivModLaws`
+/-- The gcd returned by {name}`xgcd` divides the right input, assuming `DivModLaws`
 and the one-off `hsmall` fact for nonzero divisors of degree zero. This is
 intended for `GcdLaws` instance construction. -/
 theorem gcd_dvd_right_of_divModLaws {S : Type _}
@@ -577,7 +577,7 @@ theorem gcd_dvd_right_of_divModLaws {S : Type _}
       have hq := degree_getD_lt_size_add_one q
       omega)).2
 
-/-- Any common divisor divides the gcd returned by `xgcd`; this packages the
+/-- Any common divisor divides the gcd returned by {name}`xgcd`; this packages the
 `DivModLaws` proof needed by `GcdLaws` instance construction. -/
 theorem dvd_gcd_of_divModLaws {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
@@ -590,7 +590,7 @@ theorem dvd_gcd_of_divModLaws {S : Type _}
 
 /-- Recursive reconstruction invariant for the array-backed long-division loop.
 Under the cancellation hypothesis for the leading-coefficient scaling function
-together with sparsity bounds on `quot` and `rem`, each step of `divModArrayAux`
+together with sparsity bounds on `quot` and `rem`, each step of {name}`divModArrayAux`
 preserves the polynomial-level identity `quot * q + rem`. The bound parameter `B`
 is chosen freshly per recursive call so that strict descent of the loop's pivot
 position keeps the slot of `quot` about to be written zero. -/
@@ -933,7 +933,7 @@ theorem leadingCoeff_mul {S : Type _}
   rw [hidx, htop_coeff]
 
 /-- Array-level "polynomial-multiple" reconstruction-and-termination identity
-for `divModArrayAux`. When the running remainder coincides at the polynomial
+for {name}`divModArrayAux`. When the running remainder coincides at the polynomial
 level with `m * q` for some `DensePoly` factor `m`, and the leading-coefficient
 scaling function exactly recovers any `a` from `a * lc`, the loop terminates
 with a clean quotient `quot + m` and zero remainder.
@@ -1334,12 +1334,12 @@ private theorem mul_size_le_top_succ_general {S : Type _}
   intro i hi
   exact coeff_mul_above_top_general p q hp hq (by omega)
 
-/-- Public `divMod` identity for nonzero, non-monic exact-multiple inputs: if `qq * q = p`,
+/-- Public {name}`divMod` identity for nonzero, non-monic exact-multiple inputs: if `qq * q = p`,
 the scaling function `(· / q.leadingCoeff)` exactly recovers any `a` from
 `a * q.leadingCoeff`, and the leading-coefficient product never cancels, then
 `divMod p q = (qq, 0)`. The exactness and no-zero-divisor hypotheses replace the
 global cancellation invariant `∀ a, a - (a / q.leadingCoeff) * q.leadingCoeff = 0`
-required by `divMod_reconstruction` (which only holds in the monic case over
+required by {name}`divMod_reconstruction` (which only holds in the monic case over
 `Int`). -/
 theorem divMod_eq_of_polynomial_mul {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S]

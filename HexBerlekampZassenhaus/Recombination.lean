@@ -452,8 +452,8 @@ deriving Repr, DecidableEq
 /-- Size-ordered scaled recombination with a candidate budget, returning the
 recovered factor list (on success within budget) and the candidate statistics.
 
-The supplied `budget` is first tightened to `levelAwareSubsetBudget r budget`
-(#8530): a search that cannot complete stops at the last subset-size level
+The supplied `budget` is first tightened to `levelAwareSubsetBudget r budget`.
+A search that cannot complete stops at the last subset-size level
 boundary it can finish instead of burning the rest of the budget partway into
 a level it cannot, since the partial level adds nothing to the declined
 verdict. Small-`r` searches (every level fits) see the budget unchanged. -/
@@ -746,7 +746,7 @@ mutual
 /-- Every factor emitted by the size-ordered recombination search is a recorded
 polynomial factor: it is added only at the `shouldRecordPolynomialFactor` gate.
 Shared conclusion across the three loops, proved by structural recursion on
-`fuel`. Used by the classical-tier irreducibility wiring (the recorded factors
+`fuel`. The classical-tier irreducibility proof uses the fact that recorded factors
 are non-unit non-zero). -/
 theorem scaledRecombinationSmartAux_shouldRecord
     (coreLc : Int) (target : ZPoly) (modulus : Nat) (localFactors : List ZPoly)
@@ -843,8 +843,8 @@ mutual
 `normalizeFactorSign`: each recorded candidate is `normalizeFactorSign …` by
 construction, so `normalizeFactorSign_idem` closes it. Shared conclusion across
 the three loops, proved by structural recursion on `fuel`. Sibling of
-`scaledRecombinationSmartAux_shouldRecord`; consumed by the classical-tier
-completeness wiring. -/
+`scaledRecombinationSmartAux_shouldRecord`; the classical-tier completeness
+proof uses this normalization property. -/
 theorem scaledRecombinationSmartAux_normalizeFactorSign
     (coreLc : Int) (target : ZPoly) (modulus : Nat) (localFactors : List ZPoly)
     (budget fuel : Nat) (factors : List ZPoly) (b : Nat)
@@ -944,8 +944,8 @@ each recorded candidate is `normalizeFactorSign (primitivePart …)`, and the
 `shouldRecordPolynomialFactor` gate forces the candidate nonzero, hence the inner
 `primitivePart` argument has nonzero content, so the candidate is primitive.
 Shared conclusion across the three loops, proved by structural recursion on
-`fuel`. Consumed by the classical-tier completeness wiring (positive degree
-via `degree_pos_of_primitive_norm_record`). -/
+`fuel`. The classical-tier completeness proof combines this with
+`degree_pos_of_primitive_norm_record` to obtain positive degree. -/
 theorem scaledRecombinationSmartAux_primitive
     (coreLc : Int) (target : ZPoly) (modulus : Nat) (localFactors : List ZPoly)
     (budget fuel : Nat) (factors : List ZPoly) (b : Nat)
@@ -1260,7 +1260,7 @@ def cldCoeffFloor (core : ZPoly) : Nat :=
 monic transform.  A success accepted at `k ≥ bhksRecoveryFloor core` is both
 column-adequate and running at a Hensel modulus `p ^ precisionForCoeffBound k p`
 that clears twice both Mignotte bounds — which is what the lattice-tier
-count-equality and adequacy proofs consume (#8519): the toMonic partition
+count-equality and adequacy proofs consume: the toMonic partition
 producers need `2 * defaultFactorCoeffBound (toMonic core).monic < p ^ a`, and
 the true-support nonemptiness argument needs the same for `core` itself. -/
 def bhksRecoveryFloor (core : ZPoly) : Nat :=

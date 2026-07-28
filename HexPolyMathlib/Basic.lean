@@ -56,7 +56,7 @@ def toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) : Polynomial
 def ofPolynomial [Semiring R] [DecidableEq R] (p : Polynomial R) : Hex.DensePoly R :=
   Hex.DensePoly.ofCoeffs <| ((List.range (p.natDegree + 1)).map p.coeff).toArray
 
-/-- Rebuilding via `ofPolynomial` preserves coefficients: the `n`th coefficient
+/-- Rebuilding via {name}`ofPolynomial` preserves coefficients: the `n`th coefficient
 of `ofPolynomial p` agrees with the `n`th coefficient of `p`. -/
 @[simp, grind =]
 theorem coeff_ofPolynomial [Semiring R] [DecidableEq R] (p : Polynomial R) (n : Nat) :
@@ -77,7 +77,7 @@ private def denseDiagonalMulCoeffTerm [Zero R] [DecidableEq R] [Mul R]
     (p q : Hex.DensePoly R) (n i : Nat) : R :=
   if n < i then 0 else p.coeff i * q.coeff (n - i)
 
-/-- The bounded version of `denseDiagonalMulCoeffTerm` seen by an inner
+/-- The bounded version of {name}`denseDiagonalMulCoeffTerm` seen by an inner
 `List.range m` fold. It keeps only diagonal terms whose second index is within
 the current bound, forming the bridge from `mulCoeffStep` to the unbounded
 diagonal term. -/
@@ -170,7 +170,7 @@ private theorem denseDiagonalMulCoeffTerm_eq_zero_of_size_le [Semiring R] [Decid
 
 /-- Extending the diagonal fold by any number of indices past `p.size` does not
 change the sum. The added terms vanish by
-`denseDiagonalMulCoeffTerm_eq_zero_of_size_le`. -/
+{name}`denseDiagonalMulCoeffTerm_eq_zero_of_size_le`. -/
 private theorem fold_diagonal_extend [Semiring R] [DecidableEq R]
     (p q : Hex.DensePoly R) (n d : Nat) :
     (List.range (p.size + d)).foldl (fun acc i => acc + denseDiagonalMulCoeffTerm p q n i) 0 =
@@ -187,7 +187,7 @@ private theorem fold_diagonal_extend [Semiring R] [DecidableEq R]
       simp [hterm]
 
 /-- The diagonal fold can be evaluated over any range whose size is at least
-`p.size`. This packages `fold_diagonal_extend` for later comparison with the
+`p.size`. This packages {name}`fold_diagonal_extend` for later comparison with the
 degree-indexed range used by Mathlib's coefficient formula. -/
 private theorem diagonalSum_eq_bound [Semiring R] [DecidableEq R]
     (p q : Hex.DensePoly R) (n m : Nat) (hm : p.size ≤ m) :
@@ -224,7 +224,7 @@ private theorem fold_diagonal_truncate_degree [Semiring R] [DecidableEq R]
       simp [hterm]
 
 /-- The diagonal fold over `p.size` agrees with the canonical degree bound
-`n + 1`. This aligns `mulCoeffSum_eq_diagonal` with the range used by Mathlib's
+`n + 1`. This aligns {name}`mulCoeffSum_eq_diagonal` with the range used by Mathlib's
 antidiagonal coefficient formula in `toPolynomial_mul`. -/
 private theorem diagonalSum_eq_degree_bound [Semiring R] [DecidableEq R]
     (p q : Hex.DensePoly R) (n : Nat) :
@@ -249,7 +249,7 @@ private theorem range_foldl_add_eq_finset_sum [AddCommMonoid R] (f : Nat → R) 
       simp only [List.foldl_cons, List.foldl_nil]
       rw [ih, Finset.sum_range_succ]
 
-/-- Converting via `toPolynomial` preserves coefficients: the `n`th coefficient
+/-- Converting via {name}`toPolynomial` preserves coefficients: the `n`th coefficient
 of `toPolynomial p` agrees with the `n`th coefficient of the dense polynomial `p`. -/
 @[simp, grind =]
 theorem coeff_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) (n : Nat) :
@@ -269,7 +269,7 @@ theorem coeff_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) (n
 
 /-- Coefficient-sum evaluation bridge: evaluating `toPolynomial p` through a ring
 hom `f` at `x` is the degree-indexed sum `∑ f (p.coeff i) * x ^ i`. For a literal
-`ofCoeffs` array this unfolds via `Finset.sum_range_succ` into an explicit
+`ofCoeffs` array this unfolds via {name}`Finset.sum_range_succ` into an explicit
 polynomial in `x`, which `ring`/`norm_num` can then discharge. -/
 theorem eval₂_toPolynomial {S : Type*} [Semiring R] [DecidableEq R] [Semiring S]
     (f : R →+* S) (p : Hex.DensePoly R) (x : S) :
@@ -278,7 +278,7 @@ theorem eval₂_toPolynomial {S : Type*} [Semiring R] [DecidableEq R] [Semiring 
   rw [Polynomial.eval₂_finsetSum]
   exact Finset.sum_congr rfl fun i _ => Polynomial.eval₂_monomial f x
 
-/-- `ofPolynomial` sends Mathlib's zero polynomial to the executable zero. -/
+/-- {name}`ofPolynomial` sends Mathlib's zero polynomial to the executable zero. -/
 @[simp, grind =]
 theorem ofPolynomial_zero [Semiring R] [DecidableEq R] :
     ofPolynomial (0 : Polynomial R) = 0 := by
@@ -286,7 +286,7 @@ theorem ofPolynomial_zero [Semiring R] [DecidableEq R] :
   intro n
   simp [coeff_ofPolynomial, Hex.DensePoly.coeff_zero]
 
-/-- `ofPolynomial` sends Mathlib's polynomial `1` to the executable constant `1`. -/
+/-- {name}`ofPolynomial` sends Mathlib's polynomial `1` to the executable constant `1`. -/
 @[simp, grind =]
 theorem ofPolynomial_one [Semiring R] [DecidableEq R] :
     ofPolynomial (1 : Polynomial R) = 1 := by
@@ -296,7 +296,7 @@ theorem ofPolynomial_one [Semiring R] [DecidableEq R] :
   rw [coeff_ofPolynomial, Hex.DensePoly.coeff_C, Polynomial.coeff_one]
   rfl
 
-/-- `ofPolynomial` sends Mathlib's polynomial constant to the executable constant. -/
+/-- {name}`ofPolynomial` sends Mathlib's polynomial constant to the executable constant. -/
 @[simp, grind =]
 theorem ofPolynomial_C [Semiring R] [DecidableEq R] (c : R) :
     ofPolynomial (Polynomial.C c) = Hex.DensePoly.C c := by
@@ -308,7 +308,7 @@ theorem ofPolynomial_C [Semiring R] [DecidableEq R] (c : R) :
   · simp [hn]
     rfl
 
-/-- `ofPolynomial` commutes with polynomial negation. -/
+/-- {name}`ofPolynomial` commutes with polynomial negation. -/
 @[simp, grind =]
 theorem ofPolynomial_neg [Ring R] [DecidableEq R] (p : Polynomial R) :
     ofPolynomial (-p) = -ofPolynomial p := by
@@ -317,7 +317,7 @@ theorem ofPolynomial_neg [Ring R] [DecidableEq R] (p : Polynomial R) :
   rw [Hex.DensePoly.coeff_neg _ _ (by show (0 : R) - 0 = 0; simp)]
   simp [coeff_ofPolynomial, Polynomial.coeff_neg]
 
-/-- `ofPolynomial` commutes with polynomial subtraction. -/
+/-- {name}`ofPolynomial` commutes with polynomial subtraction. -/
 @[simp, grind =]
 theorem ofPolynomial_sub [Ring R] [DecidableEq R] (p q : Polynomial R) :
     ofPolynomial (p - q) = ofPolynomial p - ofPolynomial q := by
@@ -326,7 +326,7 @@ theorem ofPolynomial_sub [Ring R] [DecidableEq R] (p q : Polynomial R) :
   rw [Hex.DensePoly.coeff_sub _ _ _ (by show (0 : R) - 0 = 0; simp)]
   simp [coeff_ofPolynomial, Polynomial.coeff_sub]
 
-/-- `ofPolynomial` commutes with polynomial addition. -/
+/-- {name}`ofPolynomial` commutes with polynomial addition. -/
 @[simp, grind =]
 theorem ofPolynomial_add [Semiring R] [DecidableEq R] (p q : Polynomial R) :
     ofPolynomial (p + q) = ofPolynomial p + ofPolynomial q := by
@@ -335,7 +335,7 @@ theorem ofPolynomial_add [Semiring R] [DecidableEq R] (p q : Polynomial R) :
   rw [Hex.DensePoly.coeff_add _ _ _ (by show (0 : R) + 0 = 0; simp)]
   simp [coeff_ofPolynomial, Polynomial.coeff_add]
 
-/-- `ofPolynomial` sends Mathlib's monomial to the executable monomial. -/
+/-- {name}`ofPolynomial` sends Mathlib's monomial to the executable monomial. -/
 @[simp, grind =]
 theorem ofPolynomial_monomial [Semiring R] [DecidableEq R] (n : Nat) (c : R) :
     ofPolynomial (Polynomial.monomial n c) = Hex.DensePoly.monomial n c := by
@@ -348,14 +348,14 @@ theorem ofPolynomial_monomial [Semiring R] [DecidableEq R] (n : Nat) (c : R) :
   · simp [hi, Ne.symm hi]
     rfl
 
-/-- `toPolynomial` sends the executable zero to Mathlib's zero polynomial. -/
+/-- {name}`toPolynomial` sends the executable zero to Mathlib's zero polynomial. -/
 @[simp, grind =]
 theorem toPolynomial_zero [Semiring R] [DecidableEq R] :
     toPolynomial (0 : Hex.DensePoly R) = 0 := by
   ext n
   simp [coeff_toPolynomial, Hex.DensePoly.coeff_zero]
 
-/-- `toPolynomial` sends the executable constant to Mathlib's polynomial constant. -/
+/-- {name}`toPolynomial` sends the executable constant to Mathlib's polynomial constant. -/
 @[simp, grind =]
 theorem toPolynomial_C [Semiring R] [DecidableEq R] (c : R) :
     toPolynomial (Hex.DensePoly.C c) = Polynomial.C c := by
@@ -366,7 +366,7 @@ theorem toPolynomial_C [Semiring R] [DecidableEq R] (c : R) :
   · simp [hn]
     rfl
 
-/-- `toPolynomial` sends the executable constant `1` to Mathlib's polynomial `1`. -/
+/-- {name}`toPolynomial` sends the executable constant `1` to Mathlib's polynomial `1`. -/
 @[simp, grind =]
 theorem toPolynomial_one [Semiring R] [DecidableEq R] :
     toPolynomial (1 : Hex.DensePoly R) = 1 := by
@@ -384,7 +384,7 @@ theorem toPolynomial_scale [Semiring R] [DecidableEq R]
   rw [coeff_toPolynomial, Hex.DensePoly.coeff_scale_semiring,
     Polynomial.coeff_C_mul, coeff_toPolynomial]
 
-/-- `toPolynomial` sends the executable monomial to Mathlib's monomial. -/
+/-- {name}`toPolynomial` sends the executable monomial to Mathlib's monomial. -/
 @[simp, grind =]
 theorem toPolynomial_monomial [Semiring R] [DecidableEq R]
     (n : Nat) (c : R) :
@@ -397,7 +397,7 @@ theorem toPolynomial_monomial [Semiring R] [DecidableEq R]
     simp [h, h']
     rfl
 
-/-- `toPolynomial` commutes with polynomial addition. -/
+/-- {name}`HexPolyMathlib.toPolynomial` commutes with polynomial addition. -/
 @[simp, grind =]
 theorem toPolynomial_add [Semiring R] [DecidableEq R] (p q : Hex.DensePoly R) :
     toPolynomial (p + q) = toPolynomial p + toPolynomial q := by
@@ -407,7 +407,7 @@ theorem toPolynomial_add [Semiring R] [DecidableEq R] (p q : Hex.DensePoly R) :
     show (0 : R) + (0 : R) = 0
     simp)
 
-/-- `toPolynomial` commutes with executable polynomial negation. -/
+/-- {name}`toPolynomial` commutes with executable polynomial negation. -/
 @[simp, grind =]
 theorem toPolynomial_neg [Ring R] [DecidableEq R] (p : Hex.DensePoly R) :
     toPolynomial (-p) = -toPolynomial p := by
@@ -415,7 +415,7 @@ theorem toPolynomial_neg [Ring R] [DecidableEq R] (p : Hex.DensePoly R) :
   rw [coeff_toPolynomial, Polynomial.coeff_neg, coeff_toPolynomial,
       Hex.DensePoly.coeff_neg p n (by show (0 : R) - 0 = 0; simp), zero_sub]
 
-/-- `toPolynomial` commutes with executable polynomial subtraction. -/
+/-- {name}`toPolynomial` commutes with executable polynomial subtraction. -/
 @[simp, grind =]
 theorem toPolynomial_sub [Ring R] [DecidableEq R] (p q : Hex.DensePoly R) :
     toPolynomial (p - q) = toPolynomial p - toPolynomial q := by
@@ -425,7 +425,8 @@ theorem toPolynomial_sub [Ring R] [DecidableEq R] (p q : Hex.DensePoly R) :
     show (0 : R) - (0 : R) = 0
     simp)
 
-/-- `toPolynomial` commutes with polynomial multiplication. -/
+/-- {name}`HexPolyMathlib.toPolynomial` commutes with polynomial
+multiplication. -/
 @[simp, grind =]
 theorem toPolynomial_mul [Semiring R] [DecidableEq R] (p q : Hex.DensePoly R) :
     toPolynomial (p * q) = toPolynomial p * toPolynomial q := by
@@ -446,8 +447,8 @@ theorem toPolynomial_mul [Semiring R] [DecidableEq R] (p q : Hex.DensePoly R) :
     omega
   simp [denseDiagonalMulCoeffTerm, hle]
 
-/-- `toPolynomial` intertwines the executable derivative with Mathlib's
-polynomial derivative. -/
+/-- {name}`HexPolyMathlib.toPolynomial` intertwines the executable derivative
+with Mathlib's polynomial derivative. -/
 @[simp, grind =]
 theorem toPolynomial_derivative [CommSemiring R] [DecidableEq R] (p : Hex.DensePoly R) :
     toPolynomial p.derivative = Polynomial.derivative (toPolynomial p) := by
@@ -459,7 +460,8 @@ theorem toPolynomial_derivative [CommSemiring R] [DecidableEq R] (p : Hex.DenseP
   rw [Nat.cast_add, Nat.cast_one, mul_comm]
 
 /-- Converting a Mathlib polynomial into the executable representation and back
-recovers the original: `toPolynomial` is a left inverse of `ofPolynomial`. -/
+recovers the original: {name}`HexPolyMathlib.toPolynomial` is a left inverse of
+{name}`HexPolyMathlib.ofPolynomial`. -/
 @[simp, grind =]
 theorem toPolynomial_ofPolynomial [CommRing R] [DecidableEq R] (p : Polynomial R) :
     toPolynomial (ofPolynomial p) = p := by
@@ -467,7 +469,8 @@ theorem toPolynomial_ofPolynomial [CommRing R] [DecidableEq R] (p : Polynomial R
   simp [coeff_toPolynomial, coeff_ofPolynomial]
 
 /-- Converting an executable polynomial into a Mathlib polynomial and back
-recovers the original: `ofPolynomial` is a left inverse of `toPolynomial`. -/
+recovers the original: {name}`HexPolyMathlib.ofPolynomial` is a left inverse of
+{name}`HexPolyMathlib.toPolynomial`. -/
 @[simp, grind =]
 theorem ofPolynomial_toPolynomial [CommRing R] [DecidableEq R] (p : Hex.DensePoly R) :
     ofPolynomial (toPolynomial p) = p := by
@@ -485,26 +488,26 @@ def equiv [CommRing R] [DecidableEq R] : Hex.DensePoly R ≃+* Polynomial R wher
   map_mul' := toPolynomial_mul
   map_add' := toPolynomial_add
 
-/-- The ring isomorphism `equiv` is computed by `toPolynomial` in the forward
+/-- The ring isomorphism {name}`equiv` is computed by {name}`toPolynomial` in the forward
 direction. -/
 @[simp, grind =]
 theorem equiv_apply [CommRing R] [DecidableEq R] (p : Hex.DensePoly R) :
     equiv p = toPolynomial p := by
   rfl
 
-/-- The inverse of the ring isomorphism `equiv` is computed by `ofPolynomial`. -/
+/-- The inverse of the ring isomorphism {name}`equiv` is computed by {name}`ofPolynomial`. -/
 @[simp, grind =]
 theorem equiv_symm_apply [CommRing R] [DecidableEq R] (p : Polynomial R) :
     equiv.symm p = ofPolynomial p := by
   rfl
 
-/-- `ofPolynomial` commutes with polynomial multiplication. -/
+/-- {name}`ofPolynomial` commutes with polynomial multiplication. -/
 @[simp, grind =]
 theorem ofPolynomial_mul [CommRing R] [DecidableEq R] (p q : Polynomial R) :
     ofPolynomial (p * q) = ofPolynomial p * ofPolynomial q :=
   map_mul (equiv (R := R)).symm p q
 
-/-- `toPolynomial` transports the executable degree to Mathlib's `natDegree`,
+/-- {name}`HexPolyMathlib.toPolynomial` transports the executable degree to Mathlib's `natDegree`,
 with the zero polynomial mapping to `0`. -/
 @[simp, grind =]
 theorem natDegree_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) :
@@ -530,7 +533,7 @@ theorem natDegree_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R
       rw [coeff_toPolynomial]
       exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size p hpos
 
-/-- `toPolynomial` transports the executable leading coefficient to Mathlib's
+/-- {name}`toPolynomial` transports the executable leading coefficient to Mathlib's
 `leadingCoeff`. -/
 @[simp, grind =]
 theorem leadingCoeff_toPolynomial [Semiring R] [DecidableEq R]
@@ -552,7 +555,7 @@ theorem leadingCoeff_toPolynomial [Semiring R] [DecidableEq R]
     show p.coeff (p.size - 1) = p.leadingCoeff
     simp [Hex.DensePoly.leadingCoeff, Hex.DensePoly.coeff, Hex.DensePoly.size]
 
-/-- `toPolynomial` preserves divisibility: a divisibility in the executable
+/-- {name}`toPolynomial` preserves divisibility: a divisibility in the executable
 representation transfers to the corresponding Mathlib polynomials. -/
 theorem toPolynomial_dvd [CommRing R] [DecidableEq R] {p q : Hex.DensePoly R}
     (hdvd : p ∣ q) :
@@ -561,7 +564,7 @@ theorem toPolynomial_dvd [CommRing R] [DecidableEq R] {p q : Hex.DensePoly R}
   refine ⟨toPolynomial r, ?_⟩
   rw [← toPolynomial_mul, hr]
 
-/-- `ofPolynomial` preserves divisibility: a divisibility of Mathlib polynomials
+/-- {name}`ofPolynomial` preserves divisibility: a divisibility of Mathlib polynomials
 transfers to the corresponding executable representations. -/
 theorem ofPolynomial_dvd [CommRing R] [DecidableEq R] {p q : Polynomial R}
     (hdvd : p ∣ q) :
@@ -570,7 +573,7 @@ theorem ofPolynomial_dvd [CommRing R] [DecidableEq R] {p q : Polynomial R}
   refine ⟨ofPolynomial r, ?_⟩
   rw [← ofPolynomial_mul, hr]
 
-/-- `toPolynomial` both preserves and reflects divisibility: executable
+/-- {name}`HexPolyMathlib.toPolynomial` both preserves and reflects divisibility: executable
 polynomials divide one another exactly when their Mathlib images do. -/
 theorem toPolynomial_dvd_iff [CommRing R] [DecidableEq R]
     {p q : Hex.DensePoly R} :
@@ -580,7 +583,7 @@ theorem toPolynomial_dvd_iff [CommRing R] [DecidableEq R]
     simpa using ofPolynomial_dvd (R := R) hdvd
   · exact toPolynomial_dvd
 
-/-! ### Composition -/
+/-! # Composition -/
 
 /-- The Horner polynomial built from a coefficient list, lowest degree first:
 `hornerList (c :: cs) = C c + X * hornerList cs`. -/
@@ -624,7 +627,7 @@ private theorem toPolynomial_eq_hornerList [Semiring R] [DecidableEq R]
   ext n
   rw [coeff_toPolynomial, coeff_hornerList, toList_getD]
 
-/-- `toPolynomial` intertwines the executable Horner composition with Mathlib's
+/-- {name}`toPolynomial` intertwines the executable Horner composition with Mathlib's
 polynomial composition. -/
 @[simp, grind =]
 theorem toPolynomial_compose [CommSemiring R] [DecidableEq R] (p q : Hex.DensePoly R) :

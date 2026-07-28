@@ -153,8 +153,8 @@ plus the Gram-Schmidt cut, extracts BHKS Lemma 3.3 equivalence-class
 indicators by RREF, reconstructs every indicated candidate by centred lifting,
 and accepts only when the verified candidates multiply back to `f`.
 
-The lattice tier runs the fused `bhksRecoverClassifiedWithAllOnes` instead (one
-lattice build for both the classification and the all-ones certificate, #8543);
+The lattice tier runs the fused `bhksRecoverClassifiedWithAllOnes` instead,
+sharing one lattice build between the classification and the all-ones certificate;
 keep the two bodies in sync — `bhksRecoverClassifiedWithAllOnes_fst` fails to
 build if they drift.
 -/
@@ -193,7 +193,8 @@ single-all-ones partition flag.
 The lattice tier's `.degenerate` arm needs the all-ones flag to certify
 irreducibility, but recomputing it through `bhksSingleAllOnesPartition` rebuilds
 the whole Hensel-lift/CLD-lattice/LLL/indicator pipeline that the classifier
-already ran (#8543). This
+already ran, adding roughly 1.5–2× to the step that dominates irreducible
+inputs. This
 def shares that pass: `bhksRecoverClassifiedWithAllOnes_fst` pins `.1` to
 `bhksRecoverClassified` and `bhksRecoverClassifiedWithAllOnes_snd` (in
 `FactorEntryPoints`) pins `.2` to `bhksSingleAllOnesPartition`, so the loop reads
@@ -223,7 +224,7 @@ private def bhksRecoverClassifiedWithAllOnes (f : ZPoly) (d : LiftData) :
     (.degenerate, false)
 
 /-- The fused recovery step's classification equals the standalone classifier:
-the control flow is identical, only the paired all-ones flag is extra (#8543). -/
+the control flow is identical, only the paired all-ones flag is extra. -/
 private theorem bhksRecoverClassifiedWithAllOnes_fst (f : ZPoly) (d : LiftData) :
     (bhksRecoverClassifiedWithAllOnes f d).1 = bhksRecoverClassified f d := by
   rw [bhksRecoverClassifiedWithAllOnes, bhksRecoverClassified]

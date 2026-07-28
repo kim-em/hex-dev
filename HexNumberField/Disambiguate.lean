@@ -100,7 +100,8 @@ def evalDisambiguationLimit (q : ZPoly) (majorant : Nat) : Nat :=
 
 /-- The evaluation radius is below one third of the reciprocal-Cauchy lower
 bound, written without division as `3 * D * radius < 1`. The factor three is
-needed because `excludesZero` uses the centre's maximum coordinate, which can
+needed because {name}`Hex.DyadicComplexBall.excludesZero` uses the centre's
+maximum coordinate, which can
 be a factor `sqrt 2` below its Euclidean norm. -/
 @[expose]
 def evalRadiusSmall (q : ZPoly) (radius : Dyadic) : Bool :=

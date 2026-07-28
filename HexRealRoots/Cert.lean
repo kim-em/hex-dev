@@ -21,8 +21,9 @@ inside each field. `SturmChainCert p chain` is the single decidable predicate
 that validates the reified chain: it verifies, by coefficient-level checks that
 kernel-reduce, that `chain` *is* the Sturm chain of `p`. Its soundness bridge
 `cert_imp_eq` proves `chain = sturmChain p` as a proposition (the ban is only on
-*deciding* an `Array ZPoly` equality in the kernel — the core
-`Array.instDecidableEqImpl` module issue — not on proving one), whence the two
+*deciding* an `Array ZPoly` equality in the kernel — because
+`Array.instDecidableEqImpl` is not exposed by the module system — not on proving
+one), whence the two
 transport lemmas `sturmCount_eq_of_cert` / `rootCount_eq_of_cert` rewrite the
 certified counts onto the literal chain.
 

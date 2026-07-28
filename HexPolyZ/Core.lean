@@ -23,7 +23,7 @@ from `HexPoly`. -/
 abbrev ZPoly := DensePoly Int
 
 /-- `ZPoly` is a multiplicative monoid for `Std`, so the shared
-`List.foldl_mul_*` algebra and core's `List.foldl_assoc` apply to fold-products
+`List.foldl_mul_*` algebra and core's {name}`List.foldl_assoc` apply to fold-products
 of integer polynomials. -/
 instance : Std.Associative (· * · : ZPoly → ZPoly → ZPoly) :=
   ⟨DensePoly.mul_assoc_poly⟩
@@ -78,12 +78,14 @@ def primitivePart (f : ZPoly) : ZPoly :=
 /-- Substitute the variable `X ↦ c * X`: the `i`-th coefficient is multiplied by
 `c ^ i`.
 
-On a monic transform `c^(d-1) · core(X / c)` (the polynomial built by
-`toMonic`), this is the inverse of the integer-scaling substitution: it maps a
+On a monic transform `c^(d-1) · core(X / c)`, this is the inverse of the
+integer-scaling substitution: it maps a
 monic factor `g` of the transform to `g(c · X)`, an integer multiple of the
-corresponding factor of `core`. Composing with `primitivePart` recovers the
-primitive integer factor of `core`. This is *not* the same as `DensePoly.scale`,
-which multiplies the whole polynomial by a constant. -/
+corresponding factor of `core`. Composing with
+{name}`Hex.ZPoly.primitivePart` recovers the
+primitive integer factor of `core`. This is *not* the same as
+{name}`Hex.DensePoly.scale`, which multiplies the whole polynomial by a
+constant. -/
 @[expose]
 def dilate (c : Int) (p : ZPoly) : ZPoly :=
   DensePoly.ofCoeffs <| ((List.range p.size).map fun i => c ^ i * p.coeff i).toArray
@@ -108,23 +110,24 @@ the trivial dilation. -/
   intro n
   rw [coeff_dilate, Int.one_pow, Int.one_mul]
 
-/-- A `ZPoly` is primitive when its content is `1`. -/
+/-- A {name}`Hex.ZPoly` is primitive when its content is `1`. -/
 @[expose]
 def Primitive (f : ZPoly) : Prop :=
   content f = 1
 
-/-- A `ZPoly` is a unit iff it is the constant polynomial `1` or `-1`. -/
+/-- A {name}`Hex.ZPoly` is a unit iff it is the constant polynomial `1` or
+`-1`. -/
 @[expose]
 def IsUnit (f : ZPoly) : Prop :=
   f = DensePoly.C 1 ∨ f = DensePoly.C (-1)
 
-/-- `IsUnit` is decidable: it reduces to equality with the constant polynomials
+/-- {name}`Hex.ZPoly.IsUnit` is decidable: it reduces to equality with the constant polynomials
 `C 1` or `C (-1)`, both of which are decidable. -/
 instance instDecidableIsUnit (f : ZPoly) : Decidable (IsUnit f) := by
   unfold IsUnit
   infer_instance
 
-/-- The `IsUnit` predicate is exactly equality with the constant polynomial `1`
+/-- The {name}`Hex.ZPoly.IsUnit` predicate is exactly equality with the constant polynomial `1`
 or the constant polynomial `-1`. -/
 theorem isUnit_iff (f : ZPoly) :
     IsUnit f ↔ f = DensePoly.C 1 ∨ f = DensePoly.C (-1) := by
@@ -285,7 +288,7 @@ theorem toRatPoly_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
     simpa [size_toRatPoly f] using hrat_size
   exact DensePoly.coeff_eq_zero_of_size_le f (by omega)
 
-/-- A single `DensePoly.mulCoeffStep` of the convolution accumulator commutes with
+/-- A single {name}`DensePoly.mulCoeffStep` of the convolution accumulator commutes with
 `toRatPoly`: the rational step on the cast polynomials equals the cast of the integer step. -/
 private theorem toRatPoly_mulCoeffStep (f g : ZPoly) (n i : Nat) (a : Int) (j : Nat) :
     DensePoly.mulCoeffStep (toRatPoly f) (toRatPoly g) n i (a : Rat) j =
@@ -295,7 +298,7 @@ private theorem toRatPoly_mulCoeffStep (f g : ZPoly) (n i : Nat) (a : Int) (j : 
   · simp [hij, coeff_toRatPoly]
   · simp [hij]
 
-/-- Folding `DensePoly.mulCoeffStep` over a list of inner indices commutes with
+/-- Folding {name}`DensePoly.mulCoeffStep` over a list of inner indices commutes with
 `toRatPoly`: the rational fold equals the cast of the integer fold. -/
 private theorem toRatPoly_mulCoeffStep_fold (f g : ZPoly) (n i : Nat)
     (xs : List Nat) (a : Int) :
@@ -331,7 +334,7 @@ private theorem toRatPoly_mulCoeffOuter_fold (f g : ZPoly) (n : Nat)
       simpa [size_toRatPoly g] using
         ih ((List.range g.size).foldl (DensePoly.mulCoeffStep (R := Int) f g n i) a)
 
-/-- The full convolution coefficient `DensePoly.mulCoeffSum` commutes with `toRatPoly`:
+/-- The full convolution coefficient {name}`DensePoly.mulCoeffSum` commutes with `toRatPoly`:
 the rational sum equals the cast of the integer sum, the key step for `toRatPoly_mul`. -/
 private theorem toRatPoly_mulCoeffSum (f g : ZPoly) (n : Nat) :
     DensePoly.mulCoeffSum (toRatPoly f) (toRatPoly g) n =
@@ -465,7 +468,7 @@ private theorem list_getD_map_ratCoeffToIntWithDen (den : Nat) (coeffs : List Ra
           simpa using ih n
 
 /-- Indexing `f`'s coefficient array as a list with default `0` agrees with
-`DensePoly.coeff`. -/
+{name}`DensePoly.coeff`. -/
 private theorem list_getD_toArray_eq_coeff (f : DensePoly Rat) (n : Nat) :
     f.toArray.toList.getD n 0 = f.coeff n := by
   unfold DensePoly.toArray DensePoly.coeff Array.getD
@@ -610,7 +613,7 @@ def SquareFreeRat (f : ZPoly) : Prop :=
 
 /-- `SquareFreeRat` is by definition a `Nat` size inequality on the executable
 rational gcd, so `Nat.decLe` decides it. Drivers branch on this instance for
-the SPEC's admissibility test. -/
+their square-freeness precondition. -/
 instance (f : ZPoly) : Decidable (SquareFreeRat f) :=
   inferInstanceAs (Decidable (_ ≤ 1))
 
@@ -685,7 +688,7 @@ private theorem dvd_mul_sub_mul_of_dvd_sub (m a b c d : Int)
   refine ⟨u * c + b * v, ?_⟩
   grind
 
-/-- `m` divides the difference between corresponding `DensePoly.mulCoeffStep`
+/-- `m` divides the difference between corresponding {name}`DensePoly.mulCoeffStep`
 updates of congruent inputs, given accumulators that already differ by a
 multiple of `m`. -/
 private theorem dvd_mulCoeffStep_sub (f g f' g' : ZPoly) (m : Nat)
@@ -707,7 +710,7 @@ private theorem dvd_mulCoeffStep_sub (f g f' g' : ZPoly) (m : Nat)
   · simp [hij]
     exact hab
 
-/-- `m` divides the difference between the `DensePoly.mulCoeffStep` inner folds
+/-- `m` divides the difference between the {name}`DensePoly.mulCoeffStep` inner folds
 over `xs` for congruent inputs, propagating the accumulator congruence. -/
 private theorem dvd_mulCoeffStep_fold_sub (f g f' g' : ZPoly) (m : Nat)
     (hf : congr f f' m) (hg : congr g g' m) (n i : Nat) (xs : List Nat) (a b : Int)
@@ -724,7 +727,7 @@ private theorem dvd_mulCoeffStep_fold_sub (f g f' g' : ZPoly) (m : Nat)
         (DensePoly.mulCoeffStep f' g' n i b j)
         (dvd_mulCoeffStep_sub f g f' g' m hf hg n i j a b hab)
 
-/-- Extending the inner `DensePoly.mulCoeffStep` fold past `q.size` adds nothing,
+/-- Extending the inner {name}`DensePoly.mulCoeffStep` fold past `q.size` adds nothing,
 since the extra `q` coefficients vanish. -/
 private theorem fold_mulCoeffStep_range_add_zero_tail (p q : ZPoly)
     (n i : Nat) (a : Int) (d : Nat) :
@@ -744,7 +747,7 @@ private theorem fold_mulCoeffStep_range_add_zero_tail (p q : ZPoly)
       · simp [h, hcoeff]
       · simp [h]
 
-/-- The inner `DensePoly.mulCoeffStep` fold over any range at least `q.size`
+/-- The inner {name}`DensePoly.mulCoeffStep` fold over any range at least `q.size`
 agrees with the fold over `q.size`. -/
 private theorem fold_mulCoeffStep_range_of_size_le (p q : ZPoly)
     (n i : Nat) (a : Int) {s : Nat} (hs : q.size ≤ s) :
@@ -754,7 +757,7 @@ private theorem fold_mulCoeffStep_range_of_size_le (p q : ZPoly)
   rw [← hs']
   exact fold_mulCoeffStep_range_add_zero_tail p q n i a (s - q.size)
 
-/-- When `p.coeff i = 0`, the inner `DensePoly.mulCoeffStep` fold over `q.size`
+/-- When `p.coeff i = 0`, the inner {name}`DensePoly.mulCoeffStep` fold over `q.size`
 leaves the accumulator unchanged. -/
 private theorem fold_mulCoeffStep_zero_left (p q : ZPoly) (n i : Nat) (a : Int)
     (hi : p.coeff i = 0) :
@@ -771,7 +774,7 @@ private theorem fold_mulCoeffStep_zero_left (p q : ZPoly) (n i : Nat) (a : Int)
       · simp [h, hi]
       · simp [h]
 
-/-- Extending the outer `DensePoly.mulCoeffStep` fold past `p.size` adds nothing,
+/-- Extending the outer {name}`DensePoly.mulCoeffStep` fold past `p.size` adds nothing,
 since the extra `p` coefficients vanish. -/
 private theorem fold_mulCoeffOuter_range_add_zero_tail (p q : ZPoly)
     (n d : Nat) :
@@ -793,7 +796,7 @@ private theorem fold_mulCoeffOuter_range_add_zero_tail (p q : ZPoly)
           (fun acc i => (List.range q.size).foldl (DensePoly.mulCoeffStep p q n i) acc) 0)
         hcoeff
 
-/-- The outer `DensePoly.mulCoeffStep` fold over any range at least `p.size`
+/-- The outer {name}`DensePoly.mulCoeffStep` fold over any range at least `p.size`
 computes `DensePoly.mulCoeffSum p q n`. -/
 private theorem mulCoeffSum_eq_outer_range_of_size_le (p q : ZPoly)
     (n : Nat) {s : Nat} (hs : p.size ≤ s) :
@@ -805,7 +808,7 @@ private theorem mulCoeffSum_eq_outer_range_of_size_le (p q : ZPoly)
   rw [← hs']
   exact fold_mulCoeffOuter_range_add_zero_tail p q n (s - p.size)
 
-/-- `m` divides the difference between the outer `DensePoly.mulCoeffStep` folds
+/-- `m` divides the difference between the outer {name}`DensePoly.mulCoeffStep` folds
 over `xs` for congruent inputs, propagating the accumulator congruence through
 each inner fold. -/
 private theorem dvd_mulCoeffOuter_fold_sub (f g f' g' : ZPoly) (m : Nat)
@@ -902,14 +905,15 @@ theorem primitive_mul (p q : ZPoly)
     Primitive (p * q) := by
   simpa [Primitive, content] using DensePoly.content_mul_of_primitive p q hp hq
 
-/-- `ZPoly`-level wrapper for `DensePoly.content_mul`: the content of a
+/-- {name}`Hex.ZPoly`-level wrapper for {name}`Hex.DensePoly.content_mul`: the content of a
 product of integer polynomials is the product of their contents. -/
 @[grind =]
 theorem content_mul (p q : ZPoly) :
     content (p * q) = content p * content q := by
   simpa [content] using DensePoly.content_mul p q
 
-/-- `ZPoly`-level wrapper for `DensePoly.primitivePart_mul` (Gauss's lemma): the
+/-- {name}`Hex.ZPoly`-level wrapper for
+{name}`Hex.DensePoly.primitivePart_mul` (Gauss's lemma): the
 primitive part of a product of integer polynomials is the product of their
 primitive parts. -/
 @[grind =]
@@ -1258,7 +1262,7 @@ theorem size_le_of_dvd_nonzero {d r : ZPoly}
 /-- Euclidean reconstruction for a monic integer divisor: the executable
 dense-polynomial division recomposes the dividend, `quot * candidate + rem =
 target`, for any dividend. This is the monic specialization over `Int` of
-`DensePoly.divMod_reconstruction`; the leading-coefficient cancellation
+{name}`DensePoly.divMod_reconstruction`; the leading-coefficient cancellation
 invariant it requires holds because a monic divisor has leading coefficient `1`.
 Unlike `divMod_eq_of_monic_mul_eq`, no exact-multiple hypothesis is needed, so
 the remainder may be nonzero. -/

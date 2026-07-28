@@ -16,25 +16,23 @@ public import HexInterval.Experiment.Center
 This module keeps the centered-product theorem, endpoints, source, target,
 equality edge, and one-generation witness fixed while varying only the amount
 and lookup shape of untrusted certificate data.  The builders are transparent
-and Mathlib-free so later compiled and ordinary-kernel probes can consume the
-same deterministic workloads.
+and Mathlib-free so compiled and ordinary-kernel probes consume the same
+deterministic workloads.
 
 The formulas below count exactly the fact/result indexed lookups charged by
-`StructureLimit.maxLookupSteps`. They do not count separately bounded
-whole-program and whole-table scans. They also do not yet charge the fixed
+`StructureLimit.maxLookupSteps`. They exclude separately bounded
+whole-program and whole-table scans, as well as the fixed
 center-recipe program lookups repeated for every equality edge: the reference
 checker performs nine such lookups for the selected center and nine per edge,
 so it bounds their list-constructor work by
-`9 * (maxEdges + 1) * maxNodes`. A production checker must charge them
-explicitly or use validated random access. Edge-table growth is a separate
-required experiment.
+`9 * (maxEdges + 1) * maxNodes`. Edge-table growth is outside these fixtures.
 -/
 
 namespace Hex.Interval.Experiment.Scale
 
 open Hex.Interval.Experiment.Center
 
-/-! ## Shared workload boundary -/
+/-! # Shared workload boundary -/
 
 /-- A certificate together with the exact indexed-lookup budget expected by
 the reference checker. -/
@@ -172,7 +170,7 @@ def checksSome : Option Workload → Bool
   | none => false
   | some workload => workload.checksBoundary
 
-/-! ## Node-only scaling -/
+/-! # Node-only scaling -/
 
 /-- The original fixture's exact indexed-lookup budget. Appending dead program
 nodes does not change it. -/
@@ -197,7 +195,7 @@ def deadNodes? (totalNodes : Nat) : Option Workload :=
   else
     none
 
-/-! ## Fact-table scaling -/
+/-! # Fact-table scaling -/
 
 /-- The first nine centered facts end at the generated form.  Scaling tails
 replace the fixture's final transport while preserving that prefix exactly. -/

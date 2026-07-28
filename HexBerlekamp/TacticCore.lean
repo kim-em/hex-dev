@@ -22,7 +22,7 @@ input classification, compiled-evaluation shims, the kernel-replay budget, and
 the provider hook through which downstream libraries extend the tactics to
 further input types.
 
-## The provider hook
+# The provider hook
 
 The elaborators handle `Hex.FpPoly p` natively. Every other input type is
 offered to *providers*: values of `Hex.FactorTactic.Provider` declared by

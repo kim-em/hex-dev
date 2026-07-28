@@ -25,7 +25,7 @@ namespace ZMod64
 variable {p : Nat} [Bounds p]
 
 /-- The canonical representative of negating a nonzero element: for `a ≠ 0`
-the negation primitive `-a.val - complementWord p hpLt` has `toNat` value
+the negation primitive `-a.val - complementWord p hpLt` has {name}`toNat` value
 `p - a.toNat`. This identifies the witness produced by the negation surface
 with the expected modular representative, and the side condition
 `hpLt : p < UInt64.word` keeps the complement word in range. -/
@@ -64,8 +64,8 @@ private theorem neg_nonzero_toNat (a : ZMod64 p) {hpLt : p < UInt64.word}
   simpa [UInt64.word] using hfinal
 
 /-- The negation representative stays in canonical range: for `a ≠ 0` the
-`toNat` value of `-a.val - complementWord p hpLt` is `< p`. This is the
-`p - a.toNat < p` bound (using `neg_nonzero_toNat`), needed so the negated
+{name}`toNat` value of `-a.val - complementWord p hpLt` is `< p`. This is the
+`p - a.toNat < p` bound (using {name}`neg_nonzero_toNat`), needed so the negated
 element is itself a valid `ZMod64 p` residue. The side condition
 `hpLt : p < UInt64.word` keeps the complement word in range. -/
 private theorem neg_nonzero_lt (a : ZMod64 p) {hpLt : p < UInt64.word}
@@ -158,7 +158,7 @@ theorem natCast_eq_ofNat (n : Nat) :
     natCast p n = ofNat p n := by
   rfl
 
-/-- Operator-level form of `natCast_eq_ofNat`. -/
+/-- Operator-level form of {name}`natCast_eq_ofNat`. -/
 theorem natCast_op_eq_ofNat (n : Nat) :
     (n : ZMod64 p) = ofNat p n := by
   exact natCast_eq_ofNat (p := p) n
@@ -191,7 +191,7 @@ theorem neg_eq_ofNat (a : ZMod64 p) :
     neg a = ofNat p (p - a.toNat) := by
   rw [eq_iff_toNat_eq, toNat_neg, toNat_ofNat]
 
-/-- Operator-level form of `neg_eq_ofNat`. -/
+/-- Operator-level form of {name}`neg_eq_ofNat`. -/
 theorem neg_op_eq_ofNat (a : ZMod64 p) :
     -a = ofNat p (p - a.toNat) := by
   exact neg_eq_ofNat a
@@ -206,7 +206,7 @@ theorem nsmul_eq_ofNat (n : Nat) (a : ZMod64 p) :
     nsmul n a = ofNat p (n * a.toNat) := by
   rw [eq_iff_toNat_eq, toNat_nsmul, toNat_ofNat]
 
-/-- Operator-level form of `nsmul_eq_ofNat`. -/
+/-- Operator-level form of {name}`nsmul_eq_ofNat`. -/
 theorem nsmul_op_eq_ofNat (n : Nat) (a : ZMod64 p) :
     n • a = ofNat p (n * a.toNat) := by
   exact nsmul_eq_ofNat n a
@@ -258,7 +258,7 @@ theorem natCast_eq_zero_iff_dvd (n : Nat) : ((n : ZMod64 p) = 0) ↔ p ∣ n := 
 @[simp, grind =] theorem natCast_self : ((p : Nat) : ZMod64 p) = 0 := by
   exact (natCast_eq_natCast_iff (p := p) p 0).2 (by simp)
 
-/-- The spec-level inverse law on canonical representatives. -/
+/-- The reference inverse law on canonical representatives. -/
 theorem toNat_inv (a : ZMod64 p) (hcop : Nat.Coprime a.val.toNat p) :
     (a.inv * a).toNat = 1 % p := by
   exact inv_mul_eq_one (p := p) a hcop
@@ -350,9 +350,9 @@ theorem nat_mul_comm_mod (x y m : Nat) :
     (x * y) % m = (y * x) % m := by
   rw [Nat.mul_comm]
 
-/-- Negation on `ZMod64 p` is involutive: applying `ZMod64.neg` twice is the
+/-- Negation on `ZMod64 p` is involutive: applying {name}`ZMod64.neg` twice is the
 identity. This is the `ZMod64`-level consequence of `nat_neg_neg_mod`,
-lifted through `toNat`. -/
+lifted through {name}`toNat`. -/
 private theorem neg_neg (a : ZMod64 p) : ZMod64.neg (ZMod64.neg a) = a := by
   apply ext_toNat
   rw [toNat_neg, toNat_neg]

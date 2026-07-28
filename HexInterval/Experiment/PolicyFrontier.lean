@@ -36,7 +36,7 @@ open Policy
 
 abbrev Rank := Nat
 
-/-! ## Workloads over opaque arbitrary functions -/
+/-! # Workloads over opaque arbitrary functions -/
 
 /-- One public-API workload.  In a dense workload every sink watches every
 root; otherwise every sink watches only root zero.  Each post-trigger sink
@@ -226,7 +226,7 @@ def prepare (workload : Workload) : Option (Policy.State Rank) := do
   if driven.stop != .saturated || driven.state.suggestions.size != 1 then none
   else some (Policy.State.start driven.state (policyLimits workload))
 
-/-! ## One deterministic non-FIFO policy -/
+/-! # One deterministic non-FIFO policy -/
 
 structure Priority where
   tier : Nat
@@ -271,7 +271,7 @@ def chooseMaximum (offers : Array OfferView) : Option OfferView × Nat := Id.run
         if offerHigher offer previous then best := some offer
   return (best, comparisons)
 
-/-! ## Maintained event-indexed max-heap -/
+/-! # Maintained event-indexed max-heap -/
 
 structure Entry where
   id : OfferId
@@ -359,7 +359,7 @@ def Heap.ofOffers (offers : Array OfferView) : Heap × HeapCost := Id.run do
     cost := cost.add step
   return (heap, cost)
 
-/-! ## Complete logical accounting -/
+/-! # Complete logical accounting -/
 
 structure Work where
   /-- Backing application, equality, and retained-suggestion slots inspected
@@ -502,7 +502,7 @@ def execute (workload : Workload) (state : Policy.State Rank)
       | _ => none
   | .equality => none
 
-/-! ## Complete-scan run -/
+/-! # Complete-scan run -/
 
 inductive Stop where
   | saturated
@@ -624,7 +624,7 @@ def runScan (workload : Workload) : Result :=
   | none => failedResult .setupFailure
   | some state => runScanPrepared workload state
 
-/-! ## Maintained event-indexed run -/
+/-! # Maintained event-indexed run -/
 
 structure Index where
   heap : Heap

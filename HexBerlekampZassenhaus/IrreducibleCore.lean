@@ -120,7 +120,7 @@ private def quadraticCubeRegression : ZPoly :=
 #guard (ZPoly.factorize quadraticCubeRegression).factors =
   #[(linearFactorForRoot (-1), 3), (linearFactorForRoot 1, 3)]
 
-/-- Soundness regression for issue #6799: the primitive non-monic cubic
+/-- The primitive non-monic cubic
 `2X³+9X²+10X+3 = (2X+1)(X+1)(X+3)` must split into three factors, not be
 reported as a single irreducible factor.  Before the `ZPoly.dilate`
 inverse-transform fix, the slow exhaustive recombination recombined against the
@@ -180,7 +180,7 @@ class Irreducible (f : ZPoly) : Prop where
 
 /-- Mathlib-free associatedness predicate for integer polynomials: `a` and
 `b` are associated when `b = a * u` for some `ZPoly`-unit `u` (i.e. `u = ±1`).
-Used by HO-1 irreducibility dischargers to translate "Mathlib-side irreducible factor
+Used by irreducibility dischargers to translate "Mathlib-side irreducible factor
 of the square-free core" to the direct non-divisibility hypothesis required
 by the greedy expansion helper. -/
 def Associated (a b : ZPoly) : Prop :=
@@ -993,7 +993,7 @@ and `-1` is a `ZPoly` unit, so the no-proper-factorization predicate
 transfers. Mathlib-free counterpart of the Mathlib-side
 `zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible`
 (`HexBerlekampZassenhausMathlib`).  Consumed by the
-Mathlib-free `factor_factors_irreducible` assembly (#4825). -/
+Mathlib-free `factor_factors_irreducible` assembly. -/
 theorem zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
     {f : ZPoly} (hirr : ZPoly.Irreducible f) :
     ZPoly.Irreducible (normalizeFactorSign f) := by

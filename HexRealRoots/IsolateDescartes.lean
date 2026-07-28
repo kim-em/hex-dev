@@ -26,7 +26,7 @@ The Descartes isolation engine.
 `isolateDescartes?` runs the same bisection search as `isolateSturm?`, but
 dispatches each sub-interval on the Descartes variation count
 `V := descartesVar (mobiusTransform p (a, b])` together with the exact test
-`p(b) = 0`, per the SPEC's five-row table:
+`p(b) = 0`:
 
 | `V` | `p(b) = 0` | action                         |
 |-----|------------|--------------------------------|
@@ -76,7 +76,7 @@ Per node, with `V` the variation count and `bZero := (p(hi) = 0)`:
   Sturm count `(sturmVarAt chain lo) − sturmVarAt chain hi`. If it is `1` emit
   the isolation (`subst hchain` turns the memoised-chain difference into
   `sturmCount p (lo, hi] = 1` definitionally); otherwise return `none`, which
-  aborts the engine (the SPEC's "a candidate whose count is not `1` aborts");
+  aborts the engine;
 - `V = 1`, `bZero`, or `V ≥ 2`: bisect. Match `depth`: `0` returns `none` (the
   fuel discipline), `d + 1` recurses left then right at the dyadic midpoint.
   Left-first recursion keeps emissions ordered; a `none` from either child
@@ -122,8 +122,7 @@ private def descartesVisit (p : ZPoly) (chain : Array ZPoly)
 
 /-- The Descartes isolation engine.
 
-Following the SPEC's input contract, `isolateDescartes?` classifies its input
-exactly as `isolateSturm?` does:
+`isolateDescartes?` classifies its input exactly as `isolateSturm?` does:
 
 - `p = 0` (`degree? = none`): `none`.
 - `p` a nonzero constant (`degree? = some 0`): `some` with an empty isolation
@@ -137,7 +136,7 @@ exactly as `isolateSturm?` does:
 
 The engine trusts Descartes' rule for nothing; it is a search heuristic
 wrapped in Sturm certificates. A `none` on square-free positive-degree input
-has one of the SPEC's precise meanings: a candidate's Sturm count was not `1`,
+means a candidate's Sturm count was not `1`,
 an interval bisected past the depth budget, or the emitted total disagreed
 with `rootCount p`. The deferred companion theorem `isolateDescartes?_isSome`
 (the Obreshkoff two-circle theorem) says none of them happen for square-free

@@ -29,7 +29,7 @@ variable {p : Nat} [ZMod64.Bounds p]
 /--
 Recursive residual derivative-zero invariant for the `squareFreeAuxRev`
 loop. At each non-trivial step the residual `loop.2` is either trivial
-(`isOne`) or has zero derivative, and the recursion into `pthRoot loop.2`
+({name}`isOne`) or has zero derivative, and the recursion into `pthRoot loop.2`
 continues to satisfy the same invariant.
 -/
 private def squareFreeAuxRevResidualSatisfied
@@ -408,8 +408,8 @@ private theorem yunFactorsContributionResidualDerivativeZero_of_complete
 
 /--
 The residual component of the scaled Yun contribution
-`yunFactorsContributionWithLevel` agrees with that of the unscaled
-`yunFactorsContribution`. The two recursions share an identical
+{name}`yunFactorsContributionWithLevel` agrees with that of the unscaled
+{name}`yunFactorsContribution`. The two recursions share an identical
 `.2`-projection: the base/level scaling only affects the emitted
 `pow z (base * level)` exponents in the first component.
 -/
@@ -429,8 +429,8 @@ private theorem yunFactorsContributionWithLevel_residual_eq_yunFactorsContributi
 
 /--
 Derivative-zero of the residual carries between the scaled
-`yunFactorsContributionWithLevel` and the unscaled
-`yunFactorsContribution`: both have the same residual, so the
+{name}`yunFactorsContributionWithLevel` and the unscaled
+{name}`yunFactorsContribution`: both have the same residual, so the
 derivative-zero fact transports directly.
 -/
 private theorem yunFactorsContributionWithLevel_residual_derivative_zero_of_unscaled
@@ -623,7 +623,7 @@ private theorem powLinear_ne_zero
       change powLinear d n * d ≠ 0
       exact mul_ne_zero_of_ne_zero ih hd
 
-/-- `pow d n ≠ 0` for a nonzero base `d`, transported from `powLinear_ne_zero` via `pow_eq_powLinear`. -/
+/-- `pow d n ≠ 0` for a nonzero base `d`, transported from {name}`powLinear_ne_zero` via {name}`pow_eq_powLinear`. -/
 private theorem pow_ne_zero
     [ZMod64.PrimeModulus p] {d : FpPoly p}
     (hd : d ≠ 0) (n : Nat) :
@@ -649,7 +649,7 @@ private theorem powLinear_degree?_getD
       rw [degree?_mul_eq_add_degree? (powLinear d n) d
         (powLinear_ne_zero hd n) hd, ih, Nat.succ_mul]
 
-/-- The same linear degree identity `deg (pow d n) = n * deg d`, transported from `powLinear_degree?_getD`. -/
+/-- The same linear degree identity `deg (pow d n) = n * deg d`, transported from {name}`powLinear_degree?_getD`. -/
 private theorem pow_degree?_getD
     [ZMod64.PrimeModulus p] {d : FpPoly p}
     (hd : d ≠ 0) (n : Nat) :
@@ -1253,7 +1253,7 @@ private theorem pow_normalized_pthRoot_reconstruct_of_derivative_zero
 The raw repeated tail emitted by the scaled Yun contribution loop is recovered
 from its normalized tail together with the explicit leading scalar. This is the
 local synchronization fact used by the derivative-active proof path; it keeps
-the scalar ambiguity of executable `DensePoly.gcd` visible rather than treating
+the scalar ambiguity of executable {name}`DensePoly.gcd` visible rather than treating
 raw gcd output as monic.
 -/
 private theorem yunFactorsContributionWithLevel_normalized_tail_reconstruct
@@ -1271,7 +1271,7 @@ tail. If the raw contribution and residual reconstruct `pow f multiplicity`,
 then replacing the residual power by the normalized residual power and the
 explicit scalar power preserves the same product.
 
-This lemma deliberately does not assume `DensePoly.gcd` is monic: all scalar
+This lemma deliberately does not assume {name}`DensePoly.gcd` is monic: all scalar
 ambiguity is isolated in `DensePoly.C (normalizeMonic contribution.2).1`.
 -/
 private theorem yunFactorsContributionWithLevel_normalized_tail_product

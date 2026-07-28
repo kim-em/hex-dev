@@ -17,7 +17,7 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-Coefficient-level scaffolding: `clmulCoeffAt`, `xorBoolList`,
+Coefficient-level definitions and lemmas for `clmulCoeffAt`, `xorBoolList`,
 `xorWordList`, `clmulWordAt`, and the word-array-to-coefficient lemmas.
 -/
 namespace Hex
@@ -640,7 +640,7 @@ private theorem foldl_mulWords_coeff_contrib
         have h := hbound i' (by simp [hi']) j hj
         simpa [foldl_xorClmulAt_size] using h
 
-/-- Capstone: bit `n` of `mulWords xs ys` is the flat XOR over all `(i, j)`
+/-- Bit `n` of `mulWords xs ys` is the flat XOR over all `(i, j)`
 word-pair `clmulCoeffAt (i + j) xs[i]! ys[j]!` contributions, starting from the
 all-zero accumulator. -/
 private theorem coeffWords_mulWords_contrib (xs ys : Array UInt64) (n : Nat) :

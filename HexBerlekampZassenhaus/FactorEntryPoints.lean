@@ -98,7 +98,7 @@ This is the prime selector for every tier that lifts through
 `toMonicLiftData` (fast, classical, lattice, slow modular): the selected
 modular factor data is the Berlekamp-form mod-`p` factorisation of
 `(toMonic core).monic`, the polynomial that `toMonicLiftData` passes to
-`henselLiftData`, so the Hensel seeds match the lift target (#8519, #8533).
+`henselLiftData`, so the Hensel seeds match the lift target.
 -/
 @[expose]
 def toMonicPrimeData? (core : ZPoly) : Option PrimeChoiceData :=
@@ -174,16 +174,15 @@ def classicalCoreFactorsWithBound
       | some factors => some (if factors.isEmpty then #[core] else factors.toArray)
       | none => some #[core]
 
-/-! ### Recursive per-remainder re-lift (#8625, deliverable 2)
+/-! # Recursive per-remainder re-lift
 
 The classical tier's irreducibility certificate for an unsplit remainder is
-gated at the monic-core Mignotte floor of the WHOLE core (#8620): the
+gated at the monic-core Mignotte floor of the whole core: the
 transported partition cannot certify below it. The only sound sub-floor
 route is a fresh lift/partition/coverage stack per remainder, at the
-remainder's OWN monic floor, reusing the parent's prime and per-remainder
-tracked mod-p factors (re-running the prime walk or Berlekamp per remainder
-was measured and rejected; see `reports/bz-recursive-relift-findings.md`
-and the #8625 thread).
+remainder's own monic floor, reusing the parent's prime and per-remainder
+tracked mod-p factors. Re-running the prime walk or Berlekamp factorization for
+each remainder is deliberately avoided.
 
 Structure: an escalation ladder lifts each node's tracked factors to
 `k = 1, 2, 4, ...` strictly below the node's floor exponent, scanning
@@ -193,8 +192,7 @@ coverage obligation); peeled pieces recurse with tracked data derived by
 monic-dilation transport plus a mod-p divisibility filter. A node that
 reaches its floor unsplit runs today's full budgeted scan
 (`classicalCoreFactorsWithBound`) at its own floor, whose coverage
-certifies irreducibility. Each rung re-lifts from the mod-p seeds
-(incremental rung-to-rung lifting is a later optimization). -/
+certifies irreducibility. Each rung re-lifts from the mod-p seeds. -/
 
 namespace FpPoly
 
@@ -430,7 +428,7 @@ def reliftLadder (pd : PrimeChoiceData) (cap : Nat) (g : ZPoly)
         else reliftLadder pd cap g floorK qbound (2 * k) fuel
       else none
 
-/-! ### Product soundness for the sub-floor peel
+/-! # Product soundness for the sub-floor peel
 
 Every piece array the sub-floor machinery emits multiplies back to the node
 target. Peels are gated by `boundedExactQuotient?`'s re-multiplication guard,
@@ -558,7 +556,7 @@ theorem reliftLadder_polyProduct
         · exact reliftLadder_polyProduct pd cap g floorK qbound (2 * k) fuel h
       · simp at h
 
-/-! ### Membership soundness for the sub-floor peel
+/-! # Membership soundness for the sub-floor peel
 
 Every seed a peel consumes, and every pair it threads onward, comes from the
 rung's original pair list — so tracked seeds are always members of the
@@ -739,12 +737,12 @@ theorem reliftLadder_seeds_mem
         · exact reliftLadder_seeds_mem pd cap g floorK qbound (2 * k) fuel h hmem u hu
       · simp at h
 
-/-- Sub-floor scan-size cap for the recursive re-lift, per the #8625
-measurement: cap 1 misses the pair splits of the Mignotte-swell family, and
+/-- Sub-floor scan-size cap for the recursive re-lift. A cap of `1` misses the
+pair splits of the Mignotte-swell family, and
 larger caps grow the failed sub-floor scan tails combinatorially. -/
 def reliftSubFloorCap : Nat := 2
 
-/-- Recursive per-remainder classical certification (#8625): sub-floor ladder
+/-- Recursive per-remainder classical certification: sub-floor ladder
 plus recursion on peels, falling back to today's full floor scan
 (`classicalCoreFactorsWithBound`) for nodes that never split early. Pieces
 are certified at their OWN monic-core Mignotte floor — below the parent's
@@ -784,10 +782,9 @@ def classicalCoreFactorsRecursiveAux (cap : Nat) :
             classicalCoreFactorsWithBound g
               (B?.getD (ZPoly.defaultFactorCoeffBound g)) pd
 
-/-- Entry point for the recursive classical tier: same signature and decline
-semantics as `classicalCoreFactorsWithBound`, with sub-floor per-remainder
-certification. Not yet wired into `factorClassicalFactorsWithBound`; the
-switch lands with the certification re-key. -/
+/-- Run the recursive classical tier with sub-floor per-remainder
+certification. It has the same signature and decline semantics as
+`classicalCoreFactorsWithBound`. -/
 @[expose]
 def classicalCoreFactorsRecursive
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Option (Array ZPoly) :=
@@ -883,7 +880,7 @@ search enumerates every subset and either splits or certifies irreducibility,
 with no early stop. -/
 def completionSubsetBudget (r : Nat) : Nat := 2 ^ r
 
-/-- `scaledRecombinationSmart` with the #8530 level-aware tightening removed: the
+/-- `scaledRecombinationSmart` with the level-aware tightening removed: the
 supplied `budget` is used directly instead of `levelAwareSubsetBudget r budget`,
 so the search runs to the full budget rather than stopping at the last completable
 subset-size level. Reuses the same proven size/candidate loops; used only by the
@@ -935,7 +932,7 @@ def factorClassicalNoDeclineFactorsWithBound (f : ZPoly) (B : Nat) : Option (Arr
 def factorClassicalNoDeclineWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
   (factorClassicalNoDeclineFactorsWithBound f B).map (factorizationOfFactors f)
 
-/-- Classical recombination run to completion or cutoff, with the #8530 level-
+/-- Classical recombination run to completion or cutoff, with the level-
 aware early decline disabled. The `hexbz_factor_service --entry
 factorClassicalNoDecline` line uses this to make the classical exponential wall
 visible on the cross-system cactus charts: it runs the full subset enumeration
@@ -975,7 +972,7 @@ Handles the deg-0 core and integer-root cases up front via the same
 constant/quadratic-root short-circuits as the classical tier; the residual
 exhaustive branch dispatches to the standalone integer trial-division core
 (`exhaustiveIntegerTrialCoreFactorsWithBound`). This is the trial-division
-tier of the three-tier `factorize` combinator (SPEC PR #6580). -/
+tier of the three-tier `factorize` combinator. -/
 @[expose]
 def factorTrialFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   let normalized := normalizeForFactor f
@@ -1006,7 +1003,7 @@ theorem factorTrialWithBound_eq_factorizationOfFactors
 /--
 Factor using the integer trial-division path at the default Mignotte
 coefficient bound. This is the trial-division tier of the three-tier
-`factorize` combinator (SPEC PR #6580).
+`factorize` combinator.
 -/
 def factorTrial (f : ZPoly) : Factorization :=
   factorTrialWithBound f (ZPoly.defaultFactorCoeffBound f)
@@ -1027,7 +1024,7 @@ The BHKS component is computed from `(normalizeForFactor f).squareFreeCore`
 `f` itself: a square-free core can have a larger coefficient norm than `f`
 (for `f = (x¹⁸ - 1)(x¹⁹ - 1)` the core `f / (x - 1)` has `coeffNormSq 36`
 against `f`'s `4`, and `bhksBound core > bhksBound f`), so a cap keyed on
-`f` can sit below the core's separation threshold (#8521).
+`f` can sit below the core's separation threshold.
 -/
 def latticePrecisionCap (f : ZPoly) : Nat :=
   let core := (normalizeForFactor f).squareFreeCore
@@ -1042,7 +1039,7 @@ theorem bhksBound_squareFreeCore_le_latticePrecisionCap (f : ZPoly) :
   exact Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _)
 
 /-- The cap clears the CLD column-adequacy floor of the square-free core, so the
-lattice tier's cap-precision run is column-adequate by construction (#8519). -/
+lattice tier's cap-precision run is column-adequate by construction. -/
 theorem cldCoeffFloor_squareFreeCore_le_latticePrecisionCap (f : ZPoly) :
     cldCoeffFloor (normalizeForFactor f).squareFreeCore ≤ latticePrecisionCap f := by
   unfold latticePrecisionCap
@@ -1054,7 +1051,7 @@ theorem defaultFactorCoeffBound_le_latticePrecisionCap (f : ZPoly) :
   exact Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_right _ _)
 
 /-- The public precision cap clears the whole fast-core acceptance floor, so
-the gated loop always has admissible precisions on its schedule (#8519). -/
+the gated loop always has admissible precisions on its schedule. -/
 theorem bhksRecoveryFloor_squareFreeCore_le_latticePrecisionCap (f : ZPoly) :
     bhksRecoveryFloor (normalizeForFactor f).squareFreeCore ≤ latticePrecisionCap f := by
   unfold bhksRecoveryFloor
@@ -1068,7 +1065,7 @@ theorem bhksRecoveryFloor_squareFreeCore_le_latticePrecisionCap (f : ZPoly) :
       (Nat.le_max_right _ _)
 
 /-- The cap dominates the Mignotte bound of the square-free core itself, needed
-by the true-support nonemptiness argument at cap precision (#8519). -/
+by the true-support nonemptiness argument at cap precision. -/
 theorem defaultFactorCoeffBound_squareFreeCore_le_latticePrecisionCap (f : ZPoly) :
     ZPoly.defaultFactorCoeffBound (normalizeForFactor f).squareFreeCore ≤
       latticePrecisionCap f := by
@@ -1078,7 +1075,7 @@ theorem defaultFactorCoeffBound_squareFreeCore_le_latticePrecisionCap (f : ZPoly
 
 /-- The cap dominates the Mignotte bound of the monic transform of the
 square-free core, the `hbound` input of the toMonic partition producers
-(#8519). -/
+used by the lattice tier. -/
 theorem defaultFactorCoeffBound_toMonic_squareFreeCore_le_latticePrecisionCap
     (f : ZPoly) :
     ZPoly.defaultFactorCoeffBound
@@ -1092,7 +1089,7 @@ theorem defaultFactorCoeffBound_toMonic_squareFreeCore_le_latticePrecisionCap
 At the public precision cap, the monic lift for the square-free core clears
 the BHKS separation threshold: `2 · bhksBound core < p ^ k`.  This is the
 `hprec` obligation of the lattice tier's cap-precision irreducibility
-certification (#8417 / #8521); it is what forces the cap's BHKS component to
+certification; it is what forces the cap's BHKS component to
 be computed from the core rather than from `f`.
 -/
 theorem two_mul_bhksBound_squareFreeCore_lt_pow_cap
@@ -1127,7 +1124,7 @@ theorem two_mul_bhksBound_squareFreeCore_lt_pow_cap_of_choosePrimeData
     (choosePrimeData?_prime _ primeData hchoose).two_le
 
 /-- Variant of `two_mul_bhksBound_squareFreeCore_lt_pow_cap` keyed on the
-lattice tier's monic-transform prime-selection witness (#8519). -/
+lattice tier's monic-transform prime-selection witness. -/
 theorem two_mul_bhksBound_squareFreeCore_lt_pow_cap_of_toMonicPrimeData
     (f : ZPoly) (primeData : PrimeChoiceData)
     (hselected :
@@ -1177,7 +1174,7 @@ def bhksSingleAllOnesPartition (f : ZPoly) (d : LiftData) : Bool :=
 /-- The fused recovery step's all-ones flag equals `bhksSingleAllOnesPartition`:
 both read the single-all-ones signature off the same CLD lattice / RREF indicator
 partition, so the lattice tier reads it off the one lattice build the classifier
-already ran (#8543). -/
+already ran. -/
 private theorem bhksRecoverClassifiedWithAllOnes_snd (f : ZPoly) (d : LiftData) :
     (bhksRecoverClassifiedWithAllOnes f d).2 = bhksSingleAllOnesPartition f d := by
   rw [bhksRecoverClassifiedWithAllOnes, bhksSingleAllOnesPartition]
@@ -1188,7 +1185,7 @@ private theorem bhksRecoverClassifiedWithAllOnes_snd (f : ZPoly) (d : LiftData) 
   · simp only [dif_neg hrows]
 
 /-- Lattice-tier recombination loop: `bhksRecoveryLoop` plus certificate-backed
-early termination (#8395).  The split path is byte-identical to the fast loop —
+early termination. The split path is byte-identical to the fast loop —
 below `floor` every step is skipped, and at/above `floor` a classified recovery
 success is accepted immediately.  The single change is the `.degenerate` arm: at
 `k ≥ floor` the loop re-examines the partition, and the single all-ones class is
@@ -1242,7 +1239,7 @@ private def latticeCoreLoop
             latticeCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
 
 /-- Lattice-tier core loop entry: `bhksRecoveryCoreWithBound` with certificate-backed
-early termination on the single all-ones partition (#8395).  Computes the CLD
+early termination on the single all-ones partition. Computes the CLD
 column-adequacy floor once (through the irreducible `bhksRecoveryFloorGate`) and runs
 `latticeCoreLoop`. -/
 def latticeCoreWithBound
@@ -1252,10 +1249,9 @@ def latticeCoreWithBound
 
 /-- Behavioural unfolding for the lattice-tier loop: the fused-step body is
 propositionally equal to the two-call form (`bhksRecoverClassified` for the
-classification, `bhksSingleAllOnesPartition` for the certificate).  The fused step
-only shares the one lattice build across the classification and the all-ones flag
-(#8543); `bhksRecoverClassifiedWithAllOnes_fst`/`_snd` pin the two projections to
-those surfaces, so the loop's spec reasons about it exactly as before. -/
+classification, `bhksSingleAllOnesPartition` for the certificate). The fused
+step shares one lattice build across the classification and the all-ones flag;
+`bhksRecoverClassifiedWithAllOnes_fst`/`_snd` identify its two projections. -/
 private theorem latticeCoreLoop_unfold
     (core : ZPoly) (B floor : Nat) (primeData : PrimeChoiceData) (k fuel : Nat) :
     latticeCoreLoop core B floor primeData k (fuel + 1) =
@@ -1284,7 +1280,7 @@ private theorem latticeCoreLoop_unfold
   · rw [if_neg hfl, if_neg hfl]
     simp only [bhksRecoverClassifiedWithAllOnes_fst, bhksRecoverClassifiedWithAllOnes_snd]
 
-/-- Structural spec for the lattice-tier loop: every success is either a fast-loop
+/-- Every successful lattice-tier loop result is either a fast-loop
 success (the split path is untouched) or the certificate-backed early stop — the
 singleton `#[core]` together with a concrete witness precision `k'` at/above the
 column-adequacy floor whose partition is the single all-ones class. -/
@@ -1341,7 +1337,7 @@ private theorem latticeCoreLoop_some_spec
               · rw [if_neg hk] at h ⊢
                 exact ih _ cf h
 
-/-- Public structural spec for `latticeCoreWithBound`: a success is either a
+/-- A successful `latticeCoreWithBound` call is either a
 `bhksRecoveryCoreWithBound` success or the early irreducibility certificate — the
 singleton `#[core]` with a witness precision `k'` clearing `bhksRecoveryFloor core`
 whose partition is the single all-ones class.  The witness pair is exactly the
@@ -1365,7 +1361,7 @@ theorem latticeCoreWithBound_some_spec
 /-- Large-`r` lattice-tier core factorisation: the van Hoeij CLD recovery, plus
 **irreducibility certification**. When the recovery splits `core`, use its
 factors; when the loop's certificate-backed early stop fires (single all-ones
-partition at column-adequate precision, #8395), `core` is irreducible
+partition at column-adequate precision), `core` is irreducible
 (`#[core]`); when the loop declines all the way to the cap, check the
 cap-precision partition once more: the single all-ones class means `core` is
 irreducible (`#[core]`), anything else is a genuine failure (`none`).
@@ -1441,20 +1437,20 @@ def factorLattice (f : ZPoly) : Option Factorization :=
 #guard ((factorLattice (DensePoly.ofCoeffs #[6, 0, -5, 0, 1])).map Factorization.product)
   = some (DensePoly.ofCoeffs #[6, 0, -5, 0, 1])
 
-/-- Cost-based hybrid dispatch (the public combinator, once swapped in).
+/-- Total integer-polynomial factorization with bounded fast paths.
 
-**Policy: classical-first.** The size-ordered classical tier handles every input
+The size-ordered classical tier handles every input
 within its subset budget — fast for reducibles (it peels factors) and bounded for
 irreducibles (it exhausts subsets up to the budget, then
-declines). The lattice tier is *correct but slow* (it grinds to the precision cap),
-so we never run it speculatively: we run classical first and fall back to the
+declines). The lattice tier is correct but slower because it runs to the precision
+cap, so the function runs the classical tier first and falls back to the
 lattice only when classical declines (budget exhausted, i.e. `r` too large), then
 to trial division when no admissible prime exists. This dominates an up-front
 `r`-estimate that could mis-route a reducible high-`r` input to the slow lattice.
 
 Returns the chosen `Factorization` and a `FactorTrace` whose `tier` records which
 tier answered; `declined = true` marks that the classical tier did not answer and
-a fallback was taken (the merge gate asserts this never happens unexpectedly).
+a fallback was taken.
 
 **Self-certifying.** Each non-backstop tier's `Factorization` is accepted only
 when it reconstructs the input (`Factorization.product φ = f`, decidable on
@@ -1687,11 +1683,10 @@ private def finitePrimeSearchProduct : Int :=
   8519695066439135286155430686880858459745606608870837864424372151015956571725147275621002356920661035228663328981905
 
 /--
-Regression fixture for the old bounded prime search. It is `P * X^2 + X + 1`,
-where `P` is the product of every odd prime in the former closed candidate set.
-The expanded SPEC prefix now includes primes that were not in that former set;
-this fixture confirms one of them is enough to keep prime selection from
-falling through to the no-prime branch on this input.
+Regression fixture for bounded prime search. It is `P * X^2 + X + 1`, where `P`
+is the product of every odd prime in the former closed candidate set. The
+extended prefix includes additional primes, and this fixture confirms one of
+them keeps prime selection from falling through to the no-prime branch.
 -/
 private def finitePrimeSearchNoneQuadratic : ZPoly :=
   DensePoly.ofCoeffs #[1, 1, finitePrimeSearchProduct]
@@ -1795,7 +1790,7 @@ theorem factorize_scalar (f : ZPoly) :
 
 /-- The default factorization of `0` records no polynomial factors: the
 square-free core of `0` is the unit `1`, so every reassembled raw factor is
-dropped by the `shouldRecordPolynomialFactor` filter.  This lets the capstone
+dropped by the `shouldRecordPolynomialFactor` filter. This lets
 `factorize_irreducible_of_nonUnit` discharge the degenerate `f = 0` case
 vacuously, without a nonzero hypothesis. -/
 theorem factorize_zero_factors : (ZPoly.factorize (0 : ZPoly)).factors = #[] := by

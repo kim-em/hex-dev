@@ -8,9 +8,8 @@ name: Pages
 # rendering is a full Mathlib-backed build (~20 min), so running it on every
 # PR commit would duplicate that cost for no added safety. Manual content
 # errors -- broken cross-references, missing docstrings, non-compiling
-# example blocks -- already fail when `lake build HexManual` elaborates the
-# chapters; the manual gains a dedicated PR gate the day it is added to
-# ci.yml's build list. Use `workflow_dispatch` to render a branch on demand.
+# example blocks -- fail in `ci.yml`'s dedicated `lake build HexManual` PR
+# gate. Use `workflow_dispatch` to render a branch on demand.
 on:
   push:
     branches: [main]

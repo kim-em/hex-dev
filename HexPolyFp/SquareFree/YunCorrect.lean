@@ -659,10 +659,10 @@ private theorem squareFreeAuxRev_reverse_append
 /--
 Under the recursive residual derivative-zero invariant, every output factor
 of `squareFreeAuxRev g m fuel []` divides `g`. The proof tracks the loop
-through both the `pthRoot`-direct branch and the Yun-then-`pthRoot` branch,
-relying on `pthRoot_dvd_self_of_derivative_zero` for the `pthRoot` steps and
-on `yunFactorsWithLevel_factor_dvd_current` /
-`yunFactorsWithLevel_repeated_dvd_repeated` for the Yun steps.
+through both the {name}`pthRoot`-direct branch and the Yun-then-{name}`pthRoot` branch,
+relying on {name}`pthRoot_dvd_self_of_derivative_zero` for the {name}`pthRoot` steps and
+on {name}`yunFactorsWithLevel_factor_dvd_current` /
+{name}`yunFactorsWithLevel_repeated_dvd_repeated` for the Yun steps.
 -/
 private theorem squareFreeAuxRev_factor_dvd_input
     (hp : Hex.Nat.Prime p) (g : FpPoly p) (m fuel : Nat)
@@ -977,7 +977,7 @@ private theorem yunFactorsWithLevel_squareFreeAuxRev_tail_cross_coprime
   simpa [squareFreeFactorCoprimeRel] using hnormalized
 
 /-- A size-`≤ 1` input produces no factors: it is a nonzero constant (or zero),
-so the loop only ever descends through the derivative-zero `pthRoot` branch,
+so the loop only ever descends through the derivative-zero {name}`pthRoot` branch,
 which keeps the size `≤ 1` and never conses a factor. -/
 private theorem squareFreeAuxRev_eq_nil_of_size_le_one
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)

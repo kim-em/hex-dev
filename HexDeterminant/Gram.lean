@@ -20,7 +20,7 @@ universe u
 namespace Matrix
 variable {α : Type u}
 
-/-! ### Strictly-increasing column-tuple enumeration
+/-! # Strictly-increasing column-tuple enumeration
 
 The Cauchy-Binet sum-of-squares formula needs a Mathlib-free enumeration of the
 "essentially distinct" column choices: each strictly increasing length-`n`
@@ -278,7 +278,7 @@ theorem selectedColumnTuples_nodup {n m : Nat} :
     (selectedColumnTuples n m).Nodup :=
   selectedColumnTuplesUpTo_nodup m n m
 
-/-! ### Canonical sort and orbit factorization for injective column tuples
+/-! # Canonical sort and orbit factorization for injective column tuples
 
 For the Cauchy-Binet orbit-grouping argument we need, for every injective
 ordered column tuple `cols : Vector (Fin m) n`, a canonical factorization
@@ -557,7 +557,7 @@ theorem sortInjTuple_mem_selectedColumnTuples {m n : Nat}
   (mem_selectedColumnTuples_iff (sortInjTuple cols)).mpr
     (isStrictlyIncreasingColumnTuple_sortInjTuple cols hinj)
 
-/-! ### Forward injectivity of the sort/permutation pair -/
+/-! # Forward injectivity of the sort/permutation pair -/
 
 /-- Pairwise distinctness: two injective column tuples that map to the
 same `(sortInjTuple, sortInjPerm)` pair must be equal. -/
@@ -581,7 +581,7 @@ theorem sortInj_pair_injective {m n : Nat} {cols cols' : Vector (Fin m) n}
   rw [hsort]
   exact congrArg (fun k : Fin n => (sortInjTuple cols')[k]) hperm_apply
 
-/-! ### Reconstruction from `selectedColumnTuples × permutationVectors`
+/-! # Reconstruction from `selectedColumnTuples × permutationVectors`
 
 For a strictly-increasing `sel` and a permutation `perm`, the
 "reconstruction" `Vector.ofFn (fun i => sel[perm[i]])` is itself
@@ -832,7 +832,7 @@ theorem sortInjTuple_reconstructInjTuple {m n : Nat}
   -- Therefore: sel[perm[(inv perm)[r]]] = sel[r] via congrArg.
   exact congrArg (fun k : Fin n => sel[k]) hperm_apply
 
-/-! ### Bijection wrappers -/
+/-! # Bijection wrappers -/
 
 /-- Forward-then-backward identity: reconstruction inverts the canonical
 sort/permutation pair on injective column tuples. -/

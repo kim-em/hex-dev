@@ -139,7 +139,7 @@ theorem size_toWP_le (x : ZPoly) : (toWP ctx x).size ≤ x.size := by
 
 end ZPoly
 
-/-! ### Common-range normalisation of `mulCoeffSum` -/
+/-! # Common-range normalisation of `mulCoeffSum` -/
 
 namespace DensePoly
 
@@ -208,7 +208,7 @@ theorem mulCoeffSum_norm (p q : DensePoly R) (n s t : Nat) (hs : p.size ≤ s) (
 
 end DensePoly
 
-/-! ### Multiplicative transport -/
+/-! # Multiplicative transport -/
 
 namespace ZPoly
 
@@ -312,7 +312,7 @@ theorem toWP_mul (x y : ZPoly) : toWP ctx (x * y) = toWP ctx x * toWP ctx y := b
     DensePoly.coeff_mul, DensePoly.coeff_mul]
   exact (toNat_eq_intModNat_of_Res ctx (Res_mulCoeffSum ctx x y j)).symm
 
-/-! ### Readback round-trip and monic/degree preservation -/
+/-! # Readback round-trip and monic/degree preservation -/
 
 private theorem one_ne_zero_wordMod (h1 : 1 < m.toNat) : (1 : WordMod ctx) ≠ 0 := by
   intro h

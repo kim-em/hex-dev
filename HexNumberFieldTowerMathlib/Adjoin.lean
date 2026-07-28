@@ -13,8 +13,9 @@ public section
 /-!
 # Correctness of checked root adjoining
 
-An `Extension` is a dependent runtime payload and its constructor is public,
-so semantic validity is an explicit predicate proved for `adjoin?` results.
+An {name}`Hex.NumberTower.Extension` is a dependent runtime payload and its
+constructor is public, so semantic validity is an explicit predicate proved
+for {name}`Hex.NumberTower.adjoin?` results.
 -/
 
 namespace Hex.NumberTower

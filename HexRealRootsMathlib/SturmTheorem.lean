@@ -11,8 +11,8 @@ public import HexRealRootsMathlib.SturmChainDefs
 public section
 
 /-!
-Sturm's theorem over `Polynomial ℝ`, stated as the five-step chain of the
-SPEC. Everything here is a slice over `Polynomial ℝ` with no `HexRealRoots`
+Sturm's theorem over `Polynomial ℝ`, proved as a five-step chain. Everything
+here is a slice over `Polynomial ℝ` with no `HexRealRoots`
 dependence.
 
 The three local lemmas (`sturmVar_const_of_no_zero`, `sturmVar_interior_cross`,
@@ -161,9 +161,9 @@ variable {p : Polynomial ℝ} {chain : List (Polynomial ℝ)}
 /-- **Local constancy.** On a closed interval `[a, b]` containing no zero of
 any chain element, `sturmVar` takes the same value at the two endpoints.
 
-Proof sketch (SPEC step 1): each element keeps a constant nonzero sign across
-`[a, b]` by continuity of polynomial evaluation (`Polynomial.continuous_aeval`)
-and the intermediate value theorem (`intermediate_value_Icc`): a sign change
+Proof sketch: each element keeps a constant nonzero sign across
+`[a, b]` by continuity of polynomial evaluation ({name}`Polynomial.continuous_aeval`)
+and the intermediate value theorem ({name}`intermediate_value_Icc`): a sign change
 would force a zero. The list of evaluation signs is therefore the same at `a`
 and `b`, so `signVariations` — which depends only on those signs — agrees. -/
 theorem sturmVar_const_of_no_zero (_hchain : IsSturmChain p chain)
@@ -181,7 +181,7 @@ theorem sturmVar_const_of_no_zero (_hchain : IsSturmChain p chain)
 `p` and the only chain zeros in `[a, b]` occur at `r` (necessarily zeros of
 interior elements), then `sturmVar` is unchanged from `a` to `b`.
 
-Proof sketch (SPEC step 2): away from `r` local constancy applies on `[a, r]`
+Proof sketch: away from `r` local constancy applies on `[a, r]`
 and `[r, b]`. At `r` the vanishing interior elements sit between neighbours of
 opposite sign (`IsSturmChain.interior_alternates`), so each contributes exactly
 one variation both immediately before and immediately after `r` regardless of
@@ -230,7 +230,7 @@ If `r` is a (simple, by squarefreeness) root of `p` and the only chain zeros in
 exactly one, and the drop has already registered at `r`: the value at `r`
 equals the value at `b`.
 
-Proof sketch (SPEC step 3): the head pair `(p, q)` with `q = chain[1]` has
+Proof sketch: the head pair `(p, q)` with `q = chain[1]` has
 `p * q < 0` just left of `r` and `p * q > 0` just right (`root_flank`), so this
 pair contributes one variation for `x < r` and none for `x ≥ r`; with the
 zero-skipping convention the zero of `p` at `r` is dropped, so the change
@@ -489,7 +489,7 @@ generalised Sturm chain, the drop in `sturmVar` from `a` to `b` equals the
 number of real roots of `p` in the half-open interval `(a, b]`, counted as the
 cardinality of the corresponding filtered submultiset of `p.roots`.
 
-Proof sketch (SPEC step 4): telescope steps 1–3 over the finitely many zeros of
+Proof sketch: telescope the preceding lemmas over the finitely many zeros of
 the chain elements in `(a, b]`. Zeros of interior elements are variation-neutral
 (step 2); each root of `p` drops the count by exactly one and registers at the
 root under the half-open convention (step 3); between consecutive chain zeros
@@ -650,7 +650,7 @@ theorem eval_sign_neg_inf {q : Polynomial ℝ} (hq : q ≠ 0) {x : ℝ}
 Sturm chain, the total number of real roots of `p` equals the drop in `sturmVar`
 from `−∞` to `+∞`.
 
-Proof sketch (SPEC step 5): take `a` below and `b` above every real root
+Proof sketch: take `a` below and `b` above every real root
 (e.g. beyond a Cauchy bound). Then `sturmVar chain a = sturmVarNegInf chain` and
 `sturmVar chain b = sturmVarPosInf chain`, because each chain element has
 constant sign past its largest real zero equal to its sign at the corresponding

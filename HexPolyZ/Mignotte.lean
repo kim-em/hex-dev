@@ -250,7 +250,7 @@ private theorem sqrtStep_gap_halves
 
 /-- While the iterate has not yet undershot, `fuel` Newton steps shrink the gap
 by a factor `2 ^ fuel`: `2 ^ fuel * sqrtGap n (sqrtAux n fuel x) ≤ sqrtGap n x`.
-This geometric gap contraction drives phase-one convergence. -/
+This geometric gap contraction drives the initial convergence bound. -/
 private theorem sqrtAux_two_pow_gap_le_of_not_le
     (n fuel x : Nat) (hx : 0 < x)
     (hnot_sq :
@@ -335,7 +335,7 @@ private theorem sqrtAux_sq_le_after_log
 
 /-- The iteration composes over fuel:
 `sqrtAux n (fuel₁ + fuel₂) x = sqrtAux n fuel₂ (sqrtAux n fuel₁ x)`, letting a
-full-fuel run split into a phase-one prefix and a refinement tail. -/
+full-fuel run split into an initial prefix and a refinement tail. -/
 private theorem sqrtAux_append
     (n fuel₁ fuel₂ x : Nat) :
     sqrtAux n (fuel₁ + fuel₂) x =
@@ -402,7 +402,8 @@ def coeffL2NormBound (f : ZPoly) : Nat :=
   ceilSqrt (coeffNormSq f)
 
 /-- The executable Mignotte bound for the `j`-th coefficient of a degree-`k`
-factor of `f`, using the conservative `coeffL2NormBound`. -/
+factor of `f`, using the conservative
+{name}`Hex.ZPoly.coeffL2NormBound`. -/
 @[expose]
 def mignotteCoeffBound (f : ZPoly) (k j : Nat) : Nat :=
   Nat.binom k j * coeffL2NormBound f
@@ -415,9 +416,9 @@ It takes the maximum of the executable Mignotte coefficient bounds over every
 candidate factor degree up to `f.degree?.getD 0` and every coefficient index up
 to that degree.
 
-The compiled runtime uses the value-equal `defaultFactorCoeffBoundImpl` (proved
-by `defaultFactorCoeffBound_eq_impl`, registered `@[csimp]`), which computes the
-loop-invariant `coeffL2NormBound f` once instead of recomputing the whole bignum
+The compiled runtime uses the value-equal closed form below, registered through
+`@[csimp]`, which computes the loop-invariant
+{name}`Hex.ZPoly.coeffL2NormBound` once instead of recomputing the whole bignum
 coefficient norm inside every one of the `O(deg^2)` `mignotteCoeffBound` terms.
 -/
 @[expose]
@@ -451,10 +452,10 @@ theorem floorSqrt_sq_le (n : Nat) : floorSqrt n * floorSqrt n ≤ n := by
   simp [ceilSqrt]
 
 /--
-The square of `ceilSqrt n` is at least `n`.  This is the executable upper-square
+The square of {name}`Hex.ZPoly.ceilSqrt` applied to `n` is at least `n`. This is the executable upper-square
 bound used by the Mignotte coefficient norm chain: in the perfect-square branch
-of `ceilSqrt`, equality holds; in the non-perfect-square branch, the bound
-follows from the Newton iterator invariant `sqrtAux_upper_succ`.
+of the ceiling square root, equality holds; in the non-perfect-square branch,
+the bound follows from the Newton iterator invariant.
 -/
 theorem le_ceilSqrt_sq (n : Nat) : n ≤ (ceilSqrt n) ^ 2 := by
   by_cases hn : n = 0
@@ -763,10 +764,8 @@ theorem coeffL2NormBound_pos_of_ne_zero {f : ZPoly} (hf : f ≠ 0) :
 A nonzero integer polynomial has positive uniform default factor coefficient
 bound.
 
-This is the Mignotte-side fact downstream callers need to derive
-`B ≠ 0` and the precision-modulus invariant `2 ≤ p ^ precisionForCoeffBound B p`
-from `f ≠ 0` alone (combined with the standard `p ≥ 2` provenance from
-the selected-prime primality lemma and `precisionForCoeffBound_spec`).
+Consequently, `f ≠ 0` gives `B ≠ 0`; together with `p ≥ 2`, it also gives the
+precision-modulus lower bound required by coefficient reconstruction.
 -/
 theorem defaultFactorCoeffBound_pos_of_ne_zero {f : ZPoly} (hf : f ≠ 0) :
     0 < defaultFactorCoeffBound f :=
@@ -774,7 +773,7 @@ theorem defaultFactorCoeffBound_pos_of_ne_zero {f : ZPoly} (hf : f ≠ 0) :
     (coeffL2NormBound_le_defaultFactorCoeffBound f)
 
 /-!
-### Closed-form runtime implementation of `defaultFactorCoeffBound`
+# Closed-form runtime implementation of `defaultFactorCoeffBound`
 
 The specification maxes `binom k j * coeffL2NormBound f` over the whole
 `j ≤ k ≤ degree f` rectangle, recomputing the loop-invariant bignum norm

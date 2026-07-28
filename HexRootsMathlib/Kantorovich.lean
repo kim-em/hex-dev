@@ -49,7 +49,7 @@ theorem eq_of_fixedPoints {s : Set α} (hsf : MapsTo f s s)
 
 variable (f) in
 /-- Let `s` be a complete, nonempty, forward-invariant set of a self-map `f`.
-If `f` contracts on `s`, then `fixedPoint'` is the unique fixed point of the
+If `f` contracts on `s`, then {name}`fixedPoint'` is the unique fixed point of the
 restriction of `f` to `s`. -/
 noncomputable def fixedPoint' {s : Set α} (hsc : IsClosed s) (hs' : s.Nonempty)
     (hsf : MapsTo f s s)
@@ -87,7 +87,7 @@ variable {Y : Type*} [NormedAddCommGroup Y] [NormedSpace ℝ Y]
 
 open NNReal ENNReal
 
-/-- Membership in a closed ball, phrased with `nnnorm`. -/
+/-- Membership in a closed ball, phrased with {name}`nnnorm`. -/
 theorem mem_closedBall_iff_nnnorm {E : Type*} [SeminormedAddCommGroup E]
     {a b : E} {r : ℝ≥0} :
     b ∈ Metric.closedBall a r ↔ ‖b - a‖₊ ≤ r :=
@@ -95,7 +95,7 @@ theorem mem_closedBall_iff_nnnorm {E : Type*} [SeminormedAddCommGroup E]
 
 open Metric in
 omit [CompleteSpace X] in
-/-- Derivative criterion for `ContractingWith`. -/
+/-- Derivative criterion for {name}`ContractingWith`. -/
 theorem contractingWith_of_nnnorm_fderiv_le
     {T : X → X} {DT : X → X →L[ℝ] X} (hT : ∀ x, HasFDerivAt T (DT x) x)
     {x₀ : X} {r : ℝ≥0} (hTx₀ : (closedBall x₀ r).MapsTo T (closedBall x₀ r))

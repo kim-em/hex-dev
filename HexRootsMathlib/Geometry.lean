@@ -65,7 +65,7 @@ theorem hi_le_sqrt_two_mul_norm (z : Hex.GaussDyadic) :
 
 end GaussDyadic
 
-/-! ### Rational bounds for `√2` -/
+/-! # Rational bounds for `√2` -/
 
 /-- The executable lower approximation `181/128` is strictly below `√2`. -/
 theorem sqrt2Lo_lt_sqrt_two : Dyadic.toReal Hex.sqrt2Lo < √2 := by
@@ -91,7 +91,7 @@ theorem sqrt_two_lt_sqrt2Hi : √2 < Dyadic.toReal Hex.sqrt2Hi := by
   rw [htwo] at h
   simpa only [Dyadic.toReal_mul, pow_two] using h
 
-/-! ### Sup-norm squares and circumscribed discs -/
+/-! # Sup-norm squares and circumscribed discs -/
 
 namespace SquareBounds
 

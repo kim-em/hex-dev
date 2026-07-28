@@ -215,7 +215,7 @@ theorem rootsInDisc_graeffePoly {p : ℂ[X]} (hp : p ≠ 0) (r : ℝ) (hr : 0 �
       · rw [if_neg hz, if_neg]
         nlinarith [norm_nonneg z]
 
-/-! ### Coefficient-ball arithmetic -/
+/-! # Coefficient-ball arithmetic -/
 
 /-- The coordinate `L¹` norm used by the executable coefficient balls. -/
 private def complexL1 (z : ℂ) : ℝ := |z.re| + |z.im|
@@ -761,7 +761,7 @@ theorem graeffe_enclosePoly {cs : Array Hex.CoeffBall} {q : ℂ[X]}
       rw [coeff_sub, hx]
       exact hs
 
-/-! ### Soundness of a soft coefficient comparison -/
+/-! # Soundness of a soft coefficient comparison -/
 
 private theorem sum_erase_range {M : Type*} [AddCommMonoid M]
     (f : ℕ → M) (n k : ℕ) :

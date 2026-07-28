@@ -702,7 +702,7 @@ theorem denote_mul (levels : List Level) (hvalid : LevelsValid levels)
         (Arithmetic.mulCoords lower) hdegree hmul]
       rw [denote_cons, denote_cons]
 
-/-! ### Canonical coefficient denotation -/
+/-! # Canonical coefficient denotation -/
 
 /-- Complex denotation restricted to the canonical fixed-width coefficient
 carrier used by recursive inversion. -/
@@ -1875,7 +1875,8 @@ theorem eq_iff_toComplex (T : NumberTower) (a b : Elem T) :
 namespace Extension
 
 /-- An extension embedding preserves the fixed absolute embedding. This is a
-property of checked constructors, not of arbitrary `Extension` records. -/
+property of checked constructors, not of arbitrary
+{name}`Hex.NumberTower.Extension` records. -/
 def PreservesEmbedding {T : NumberTower} (E : Extension T) : Prop :=
   ∀ a, E.tower.toComplex (E.embed a) = T.toComplex a
 

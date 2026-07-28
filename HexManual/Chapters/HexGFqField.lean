@@ -116,7 +116,7 @@ The standard typeclass instances `Zero`, `One`, `Add`, `Mul`, `Neg`,
 `Sub`, `Pow`, `Inv`, and `Div` on {name}`Hex.GFqField.FiniteField` are
 backed by these operations, so ordinary field notation
 (`x + y`, `x * y`, `-x`, `x - y`, `x ^ n`, `x⁻¹`, and `x / y`) works
-over a `FiniteField`.
+over a {name}`Hex.GFqField.FiniteField`.
 
 ## Worked example: GF(5⁴) as F₅ modulo x⁴ + 2
 %%%
@@ -308,8 +308,9 @@ finite-field-valued callers downstream:
 
 * `HexGFqRing` (see {ref "hex-gfq-ring"}[its chapter]) supplies the
   underlying {name}`Hex.GFqRing.PolyQuotient` representation and all of
-  the ring arithmetic. A `FiniteField` is a one-field wrapper around a
-  `PolyQuotient`, and every field operation reduces through the same
+  the ring arithmetic. A {name}`Hex.GFqField.FiniteField` is a one-field wrapper
+  around a {name}`Hex.GFqRing.PolyQuotient`, and every field operation reduces
+  through the same
   {name}`Hex.GFqRing.reduceMod`, so the canonical-representative
   invariant documented there carries over verbatim.
 * `HexBerlekamp` provides the irreducibility infrastructure. The

@@ -44,7 +44,7 @@ noncomputable section
 open Polynomial
 
 /-!
-### Size-ordered (smart) recombination coverage (#8413)
+# Size-ordered (smart) recombination coverage
 
 The classical tier runs `Hex.scaledRecombinationSmart`, the size-ordered
 budgeted search, not `Hex.scaledRecombinationSearchMod`.  These theorems are the
@@ -176,7 +176,7 @@ private theorem liftedSubsetSplit_mem_subsetsOfSizeWithComplement_of_matches
   rw [hx1_len] at hx_size
   exact List.mem_map.mpr ⟨x, hx_size, hx_eq⟩
 
-/-! ### Prefilter soundness for the classical candidate loop
+/-! # Prefilter soundness for the classical candidate loop
 
 `Hex.scaledCandidatePrefilter` may reject a subset only when `exactQuotient?`
 provably fails on its candidate

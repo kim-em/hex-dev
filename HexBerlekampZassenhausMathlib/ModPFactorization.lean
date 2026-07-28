@@ -16,7 +16,7 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-The semantic mod-p factorization bundle (#8625).
+The semantic mod-p factorization bundle.
 
 `ModPFactorization f data` collects every fact the Berlekamp-Zassenhaus
 certification cone actually consumes about a `PrimeChoiceData`: primality,
@@ -186,7 +186,7 @@ theorem modPFactorization_of_toMonicPrimeData
   exact modPFactorization_of_choosePrimeData_of_monic hselected hmonic hpos
 
 
-/-! ### Piece transport (#8625): dilated tracked factors
+/-! # Piece transport: dilated tracked factors
 
 `Hex.piecePrimeData?` builds a piece's prime data by undilating the tracked
 seed factors; its executable guards verify monicity, positive degree, the
@@ -457,7 +457,7 @@ theorem monic_modP_of_monic
   rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred _ hmodP_size_pos, hmodP_size_eq]
   exact hmodP_coeff_lead
 
-/-- **The fresh per-remainder partition producer (#8625).** A successful
+/-- **The fresh per-remainder partition producer.** A successful
 `piecePrimeData?` yields a semantic bundle for the piece's monic transform:
 `good`, `fModP_eq`, `monic`, `ne_nil`, `natDegree_pos`, and `product` read
 off the executable guards; `nodup` and `coprime` follow from squarefreeness

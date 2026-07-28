@@ -220,7 +220,7 @@ theorem mahlerMeasure_derivative_le_of_schurRootPath_monotone
       exact le_mul_of_one_le_left (mahlerMeasure_nonneg _) hα.le
 
 /--
-`MonotoneOn`-hypothesis form of `mahlerMeasure_derivative_le_of_schurRootPath_monotone`:
+{name}`MonotoneOn`-hypothesis form of `mahlerMeasure_derivative_le_of_schurRootPath_monotone`:
 the path-monotonicity premise is reduced to the endpoint comparison automatically.
 -/
 theorem mahlerMeasure_derivative_le_of_schurRootPath_monotoneOn
@@ -782,7 +782,7 @@ theorem prod_max_one_norm_roots_derivative_le_of_schmeisser_radius_one
 
 /--
 The Schmeisser specialization is naturally applied to `X * p.derivative`.
-The extra root contributed by `X` is `0`, hence it is removed by the
+The extra root contributed by {name}`X` is `0`, hence it is removed by the
 `1 ≤ ‖β‖` filter.
 -/
 theorem roots_filter_norm_product_derivative_le_of_X_mul_derivative

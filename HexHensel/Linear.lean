@@ -76,9 +76,9 @@ end ZPoly
 
 /--
 Result of one linear Hensel lift step, packaging the lifted first factor `g`
-and the lifted complementary factor `h`. Callers can pattern-match on the
-two projections directly, or rewrite via the unfolding simp lemmas
-`linearHenselStep_g` / `linearHenselStep_h`.
+and the lifted complementary factor `h`. Callers can pattern-match on the two
+projections directly; the forward theorems `linearHenselStep_g` and
+`linearHenselStep_h` provide simplifying equations for them.
 -/
 structure LinearLiftResult where
   /-- The lifted first factor. -/

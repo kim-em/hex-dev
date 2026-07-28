@@ -57,15 +57,15 @@ bounded by the modulus degree while preserving the same result as composing
 first and reducing once at the end.
 
 Kernel-facing specification: one cons walk of the coefficient list. Compiled
-code runs the downward `Array.foldr` loop `composeModMonicImpl` via the
-`@[csimp]` proof `composeModMonic_eq_impl`. -/
+code uses the value-equal downward `Array.foldr` loop below through
+`@[csimp]`. -/
 @[expose]
 noncomputable def composeModMonic (f g modulus : FpPoly p)
     (hmonic : DensePoly.Monic modulus) : FpPoly p :=
   composeModMonicList g modulus hmonic f.toList
 
-/-- Runtime implementation of `composeModMonic`: a downward `Array.foldr`
-Horner loop (value-equal to `composeModMonic` by `composeModMonic_eq_impl`,
+/-- Runtime implementation of {name}`composeModMonic`: a downward `Array.foldr`
+Horner loop (value-equal to {name}`composeModMonic` by `composeModMonic_eq_impl`,
 registered `@[csimp]`). -/
 @[expose]
 def composeModMonicImpl (f g modulus : FpPoly p)
@@ -74,7 +74,7 @@ def composeModMonicImpl (f g modulus : FpPoly p)
     (fun coeff acc => modByMonic modulus (acc * g + C coeff) hmonic)
     0
 
-/-- `composeModMonicList` is the `List.foldr` of the modular Horner step. -/
+/-- {name}`composeModMonicList` is the `List.foldr` of the modular Horner step. -/
 private theorem composeModMonicList_eq_foldr
     (g modulus : FpPoly p) (hmonic : DensePoly.Monic modulus)
     (coeffs : List (ZMod64 p)) :
@@ -88,7 +88,7 @@ private theorem composeModMonicList_eq_foldr
       simp only [composeModMonicList, List.foldr_cons]
       rw [ih]
 
-/-- The spec `composeModMonic` and the `Array.foldr` runtime loop compute the
+/-- The reference {name}`composeModMonic` and the `Array.foldr` runtime loop compute the
 same polynomial. -/
 theorem composeModMonic_eq_composeModMonicImpl
     (f g modulus : FpPoly p) (hmonic : DensePoly.Monic modulus) :
@@ -98,7 +98,7 @@ theorem composeModMonic_eq_composeModMonicImpl
   rfl
 
 /-- Register the `Array.foldr` loop as the compiled implementation of
-`composeModMonic`. -/
+{name}`composeModMonic`. -/
 @[csimp]
 theorem composeModMonic_eq_impl : @composeModMonic = @composeModMonicImpl := by
   funext p _ f g modulus hmonic
@@ -156,7 +156,7 @@ theorem composeModMonic_eq_modByMonic_compose
       rfl
 
 /--
-The converse rewrite direction for `composeModMonic_eq_modByMonic_compose`.
+The converse rewrite direction for {name}`composeModMonic_eq_modByMonic_compose`.
 This is useful when a proof has already produced the reduced ordinary
 composition and needs to recover the executable modular-composition spelling.
 -/
@@ -168,9 +168,9 @@ theorem modByMonic_compose_eq_composeModMonic
   (composeModMonic_eq_modByMonic_compose f g modulus hmonic).symm
 
 /--
-Executable modular composition agrees with `DensePoly.compose f g % modulus`,
-the quotient-ring spelling preferred by downstream callers that reason with
-`%` rather than `modByMonic`.
+Executable modular composition agrees with
+`DensePoly.compose f g % modulus`, the quotient-ring spelling preferred by
+callers that reason with `%` rather than {name}`Hex.FpPoly.modByMonic`.
 -/
 theorem composeModMonic_eq_mod
     [ZMod64.PrimeModulus p]
@@ -179,7 +179,7 @@ theorem composeModMonic_eq_mod
   rw [composeModMonic_eq_modByMonic_compose]
   exact DensePoly.modByMonic_eq_mod (DensePoly.compose f g) modulus hmonic
 
-/-- The result of `composeModMonic` is already reduced modulo the monic modulus. -/
+/-- The result of {name}`composeModMonic` is already reduced modulo the monic modulus. -/
 @[simp, grind =] theorem composeModMonic_mod_eq_self
     [ZMod64.PrimeModulus p]
     (f g modulus : FpPoly p) (hmonic : DensePoly.Monic modulus) :
@@ -188,8 +188,8 @@ theorem composeModMonic_eq_mod
   rw [composeModMonic_eq_mod, DensePoly.mod_mod]
 
 /--
-The `modByMonic` spelling of `composeModMonic_mod_eq_self`, useful for
-callers that state reduction via `modByMonic` rather than `%`.
+The {name}`modByMonic` spelling of {name}`composeModMonic_mod_eq_self`, useful for
+callers that state reduction via {name}`modByMonic` rather than `%`.
 -/
 @[simp, grind =] theorem modByMonic_composeModMonic_eq_self
     [ZMod64.PrimeModulus p]

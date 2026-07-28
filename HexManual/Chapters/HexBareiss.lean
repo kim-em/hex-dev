@@ -39,7 +39,7 @@ specification it is checked against).
 
 `HexBareiss` is Mathlib-free. The theorem identifying the Bareiss
 determinant with the Leibniz determinant (and hence with Mathlib's
-`Matrix.det`), via the Desnanot-Jacobi invariant, is the
+{name _root_.Matrix.det}`Matrix.det`), via the Desnanot-Jacobi invariant, is the
 {ref "hex-bareiss-mathlib"}[last section].
 
 # The elimination record
@@ -161,7 +161,7 @@ specification agree outright.
 
 Composed with the {ref "hex-determinant-mathlib"}[determinant
 correspondence], this also identifies the Bareiss determinant with
-Mathlib's `Matrix.det`.
+Mathlib's {name _root_.Matrix.det}`Matrix.det`.
 
 {docstring HexMatrixMathlib.bareissDet_eq_det}
 
@@ -173,7 +173,8 @@ tag := "hex-bareiss-cross-references"
 `HexBareiss` is the fast route to an exact integer determinant.
 
 * It depends on {ref "hex-matrix"}[HexMatrix] for the matrix type and on
-  {ref "hex-determinant"}[HexDeterminant] for the Leibniz `det` it uses
+  {ref "hex-determinant"}[HexDeterminant] for the Leibniz
+  {name}`Hex.Matrix.det` it uses
   as its specification.
 * `HexBareissMathlib` proves the Bareiss determinant equals the Leibniz
   determinant (and hence Mathlib's), via the Desnanot-Jacobi invariant.

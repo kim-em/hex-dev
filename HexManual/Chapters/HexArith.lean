@@ -27,15 +27,15 @@ tag := "hex-arith-intro"
 on. It has no dependencies, and everything above it (modular arithmetic,
 polynomials, finite fields) uses these routines transitively.
 
-It has four pieces. The wide-word `UInt64` operations give a two-word
+It has four pieces. The wide-word {name}`UInt64` operations give a two-word
 view of machine arithmetic (full products and add/subtract-with-carry),
 so higher libraries can build multi-word modular reduction in
 native-word code. Two single-word modular reducers,
 {name}`barrettReduce` and {name}`montgomeryReduce`, each come
 with a `Nat`-level model stating the arithmetic before the machine-word
 encoding is pinned down. {name}`HexArith.extGcd` is the extended
-Euclidean algorithm in three flavours (`Nat`, GMP-backed `Int`, and
-`UInt64`), and {name}`Hex.Nat.isPrimeTrial` is a trial-division
+Euclidean algorithm in three flavours ({name}`Nat`, GMP-backed {name}`Int`, and
+{name}`UInt64`), and {name}`Hex.Nat.isPrimeTrial` is a trial-division
 primality test that produces a primality witness without `native_decide`
 or a hardcoded prime list.
 
@@ -52,10 +52,10 @@ laws below are stated about the Lean definitions. See
 tag := "hex-arith-wide"
 %%%
 
-These operations treat a `UInt64` as a digit in radix `R = 2^64`.
+These operations treat a {name}`UInt64` as a digit in radix `R = 2^64`.
 {name}`UInt64.word` names that radix, and the two structural facts below
-(every word is below the radix, and `ofNat` reduces modulo it) connect
-machine words to `Nat` reasoning.
+(every word is below the radix, and {name}`UInt64.ofNat` reduces modulo it) connect
+machine words to {name}`Nat` reasoning.
 
 {docstring UInt64.word}
 

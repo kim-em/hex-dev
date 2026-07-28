@@ -11,7 +11,7 @@ Core conformance checks for `HexLLL`.
 
 Oracle: core uses Lean-only checks; the CI oracle profile uses `fpylll` via
 `scripts/oracle/lll_fpylll.py`.
-Mode: always for core, if_available for the `fpylll` oracle profile.
+Mode: always for core, `if_available` for the `fpylll` oracle profile.
 
 Covered operations:
 - `Hex.Matrix.memLattice`

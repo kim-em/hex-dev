@@ -43,7 +43,7 @@ def ofCoeffs (coeffs : Array (ZMod64 p)) : FpPoly p :=
 def C (c : ZMod64 p) : FpPoly p :=
   DensePoly.C c
 
-/-- The polynomial indeterminate `X`. -/
+/-- The polynomial indeterminate {name}`X`. -/
 @[expose]
 def X : FpPoly p :=
   DensePoly.monomial 1 (1 : ZMod64 p)
@@ -98,8 +98,8 @@ theorem eval_C (c x : ZMod64 p) :
   unfold FpPoly.C
   exact DensePoly.eval_C c x (zmod_zero_mul x) (zmod_zero_add c)
 
-/-- The variable `X` evaluates to the evaluation point. The companion base
-case to `eval_C` for reasoning about the evaluation map. -/
+/-- The variable {name}`X` evaluates to the evaluation point. The companion base
+case to {name}`eval_C` for reasoning about the evaluation map. -/
 @[simp, grind =]
 theorem eval_X [ZMod64.PrimeModulus p] (x : ZMod64 p) :
     DensePoly.eval (FpPoly.X : FpPoly p) x = x := by
@@ -162,7 +162,7 @@ private def evalScalarCoeffList :
   | [], _ => 0
   | coeff :: coeffs, x => coeff + x * evalScalarCoeffList coeffs x
 
-/-- Multiplying an `evalCoeffPowerSumFrom` value by `x` shifts its base exponent
+/-- Multiplying an {name}`evalCoeffPowerSumFrom` value by `x` shifts its base exponent
 up by one. -/
 private theorem mul_evalCoeffPowerSumFrom_eq_succ
     (x : ZMod64 p) :
@@ -194,7 +194,7 @@ private theorem evalScalarCoeffList_eq_powerSumFrom_zero
         mul_evalCoeffPowerSumFrom_eq_succ x coeffs 0]
       grind
 
-/-- The generic low-to-high Horner walk equals `evalScalarCoeffList`; the two
+/-- The generic low-to-high Horner walk equals {name}`evalScalarCoeffList`; the two
 recursions differ only by the commutations `acc * x = x * acc` and
 `acc + c = c + acc`. -/
 private theorem evalCoeffList_eq_evalScalarCoeffList
@@ -285,7 +285,7 @@ private def evalCoeffPowerSumUpTo
       coeff base * x ^ base + evalCoeffPowerSumUpTo coeff n (base + 1) x
 
 /-- The list-based power sum over a `range`-mapped coefficient function equals the
-function-based `evalCoeffPowerSumUpTo`. -/
+function-based {name}`evalCoeffPowerSumUpTo`. -/
 private theorem evalCoeffPowerSumFrom_range_eq_upTo
     (coeff : Nat → ZMod64 p) (x : ZMod64 p) :
     ∀ n base,
@@ -739,7 +739,7 @@ private theorem coeff_mul_one_fold (f : FpPoly p) (n k : Nat) :
     f * 1 = f := by
   exact DensePoly.mul_one_right_poly f
 
-/-! ### Schoolbook coefficient helpers (proof-facing Hensel scaffolding)
+/-! # Schoolbook coefficient helpers for Hensel proofs
 
 `mulCoeffTerm` and `mulCoeffSum` are kept public only because
 `HexHensel/Linear.lean` reasons about the per-coefficient diagonal
@@ -751,25 +751,25 @@ gives the same value without committing to the schoolbook fold shape.
 
 The private cluster of lemmas that follows these two definitions
 (`coeff_mul_fold`, `foldl_mulCoeffStep_*`, `mulCoeffTerm_*`,
-`fold_mulCoeff_*`, `mulCoeffSum_eq_bound`, etc.) is proof plumbing for
+`fold_mulCoeff_*`, `mulCoeffSum_eq_bound`, etc.) supports
 the multiplication characterisations and is intentionally not exported. -/
 
 /-- The `i`th schoolbook contribution to coefficient `n` of `f * g`.
-Proof-facing Hensel scaffolding: ordinary `FpPoly` multiplication callers
+Ordinary `FpPoly` multiplication callers
 should use `coeff_mul`, not this definition. -/
 @[expose]
 def mulCoeffTerm (f g : FpPoly p) (n i : Nat) : ZMod64 p :=
   if n < i then 0 else f.coeff i * g.coeff (n - i)
 
 /-- The executable schoolbook coefficient sum matching `FpPoly`
-multiplication. Proof-facing Hensel scaffolding: ordinary `FpPoly`
+multiplication. Ordinary `FpPoly`
 multiplication callers should use `coeff_mul`, not this definition. -/
 @[expose]
 def mulCoeffSum (f g : FpPoly p) (n : Nat) : ZMod64 p :=
   (List.range f.size).foldl (fun acc i => acc + mulCoeffTerm f g n i) 0
 
 /-- The `n`-th coefficient of the `shift`/`scale` product fold equals the
-`mulCoeffTerm` fold over the same indices, started from `acc.coeff n`. -/
+{name}`mulCoeffTerm` fold over the same indices, started from `acc.coeff n`. -/
 private theorem coeff_mul_fold (xs : List Nat) (acc f g : FpPoly p) (n : Nat) :
     (xs.foldl
         (fun acc i => acc + DensePoly.shift i (DensePoly.scale (f.coeff i) g))
@@ -863,7 +863,8 @@ private theorem foldl_mulCoeffStep_outer_eq_mulCoeffTerm
             DensePoly.coeff_eq_zero_of_size_le g (Nat.le_of_not_gt hbound)
           simp [hlt, hbound, hcoeff]
 
-/-- The `n`-th coefficient of a product is the convolution sum `mulCoeffSum`.
+/-- The `n`-th coefficient of a product is the convolution sum
+{name}`Hex.FpPoly.mulCoeffSum`.
 This is the coefficient-level specification of the executable multiplication,
 the entry point for proving every higher multiplicative law. -/
 theorem coeff_mul (f g : FpPoly p) (n : Nat) :

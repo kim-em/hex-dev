@@ -55,7 +55,7 @@ Informational external comparator:
 * `NTL GF2X` (via the persistent C++ subprocess driver
   `scripts/oracle/gf2_ntl_bench_driver.cc`): paired Hex/NTL
   `setup_fixed_benchmark` registrations record raw and overhead-adjusted
-  wall-time ratios on the SPEC-named packed-word GF(2)[x] operations
+  wall-time ratios on the packed polynomial operations over `GF(2)`
   (`add`, `mul`, `div` quotient, `rem` modular reduction, `gcd`). The
   comparator is classified `informational` in
   `SPEC/Libraries/hex-gf2.md §"External comparators"`: NTL ships
@@ -64,7 +64,7 @@ Informational external comparator:
   structural; ratios are recorded for orientation but do not block
   Phase 4.
 
-## NTL comparator-call protocol (persistent subprocess)
+# NTL comparator-call protocol (persistent subprocess)
 
 Per `SPEC/benchmarking.md` (post-#3657) §"External comparators" §"Process
 call", the NTL comparator uses a persistent subprocess: one
@@ -386,11 +386,11 @@ def runGF2nPolyDivChecksum (input : GF2nPolyInput) : UInt64 :=
 def runGF2nPolyPowChecksum (input : GF2nPolyPowInput) : UInt64 :=
   checksumGF2nPoly (input.base ^ input.exponent)
 
-/-! ## NTL `GF2X` persistent-subprocess driver
+/-! # NTL `GF2X` persistent-subprocess driver
 
 Wires `scripts/oracle/gf2_ntl_bench_driver.cc` (built on-demand by
 `scripts/oracle/setup_gf2_ntl_driver.sh`) as the informational external
-comparator for the SPEC-named packed-word GF(2)[x] operations. Per-rung
+comparator for the packed polynomial operations over `GF(2)`. Per-rung
 paired Hex/NTL `setup_fixed_benchmark` registrations populate the
 headline report's Comparator Ratios subsection at densified rungs of
 each parametric ladder. -/
@@ -562,7 +562,7 @@ def runNtlModChecksum (input : BinaryInput) : IO UInt64 :=
 def runNtlGcdChecksum (input : BinaryInput) : IO UInt64 :=
   runNtlBinaryOp "gcd" input.lhs input.rhs
 
-/-! ### Per-rung wrappers for paired Hex/NTL fixed registrations
+/-! # Per-rung wrappers for paired Hex/NTL fixed registrations
 
 The Hex parametric `setup_benchmark` ladders above own the algorithmic
 verdict; the per-rung wrappers below replay one rung of the prep
@@ -945,7 +945,7 @@ setup_benchmark runGF2nPolyPowChecksum n => Nat.log2 (n + 1)
     signalFloorMultiplier := 1.0
   }
 
-/-! ## NTL `GF2X` informational comparator fixed registrations
+/-! # NTL `GF2X` informational comparator fixed registrations
 
 Paired Hex/NTL `setup_fixed_benchmark` rungs feed the headline report's
 Comparator Ratios subsection at densified rungs of each SPEC-named

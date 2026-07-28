@@ -22,7 +22,7 @@ norms of its columns.
 * `Matrix.norm_det_le_prod_norm_column`: for `A : Matrix n n 𝕜` with `[RCLike 𝕜]`,
   `‖A.det‖ ≤ ∏ j, √(∑ i, ‖A i j‖ ^ 2)`, the product of the Euclidean lengths of the columns.
 
-This is genuinely sharper than the entrywise bound `Matrix.det_le`
+This is genuinely sharper than the entrywise bound {name}`Matrix.det_le`
 (which gives the crude `n! · xⁿ` estimate). Equality holds exactly when the columns are
 pairwise orthogonal.
 
@@ -33,10 +33,10 @@ matrix upper triangular, so
 Each factor is bounded by `‖e i‖ * ‖columns i‖ = ‖columns i‖` by Cauchy-Schwarz, and the
 determinant with respect to any orthonormal basis has the same norm as the ordinary matrix
 determinant because the change of basis between two orthonormal bases is unitary
-(`OrthonormalBasis.det_to_matrix_orthonormalBasis`).
+({name}`OrthonormalBasis.det_to_matrix_orthonormalBasis`).
 
-This lemma is not currently in Mathlib (only the weak `Matrix.det_le` entrywise bound and
-the unrelated `Matrix.IsHadamard` `±1`-matrix theory) and is a natural upstream target. It
+This lemma is not currently in Mathlib (only the weak {name}`Matrix.det_le` entrywise bound and
+the unrelated {name}`Matrix.IsHadamard` `±1`-matrix theory) and is a natural upstream target. It
 is consumed by the real- and complex-root separation developments, where Mahler's
 root-separation bound is obtained by applying Hadamard to a Vandermonde matrix.
 -/
@@ -53,7 +53,7 @@ variable {𝕜 : Type*} [RCLike 𝕜] {n : Type*} [Fintype n] [DecidableEq n]
 over an `RCLike` field is at most the product of the Euclidean (L²) norms of its columns:
 `‖A.det‖ ≤ ∏ j, √(∑ i, ‖A i j‖ ^ 2)`.
 
-This dominates the crude entrywise bound `Matrix.det_le`; equality holds precisely when the
+This dominates the crude entrywise bound {name}`Matrix.det_le`; equality holds precisely when the
 columns are pairwise orthogonal. -/
 theorem norm_det_le_prod_norm_column (A : Matrix n n 𝕜) :
     ‖A.det‖ ≤ ∏ j, Real.sqrt (∑ i, ‖A i j‖ ^ 2) := by

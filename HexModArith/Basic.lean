@@ -356,18 +356,19 @@ Add two reduced residues: the residue of the sum of canonical representatives.
 
 This is the kernel-reduction-friendly specification: reducing it unfolds to a
 single `Nat` addition and mod, so `decide`-style proofs walk a straight-line
-computation. Compiled code instead runs the branchy machine-word `addImpl`,
-registered by the `@[csimp]` proof `add_eq_impl`.
+computation. Compiled code instead runs the branchy machine-word implementation
+`addImpl`, registered by the `@[csimp]` theorem `add_eq_impl`.
 -/
 @[expose]
 noncomputable def add (a b : ZMod64 p) : ZMod64 p :=
   ofNat p (a.toNat + b.toNat)
 
 /--
-Runtime implementation of `add`: one faithful machine-word addition followed by
-a single conditional subtraction of the modulus (`reduceOnce`), with no carry
-branch and no division. Value-equal to `add` (`add_eq_impl`, registered
-`@[csimp]`). Under `p < 2^31` the sum `a.val + b.val` never overflows the word.
+Runtime implementation of {name}`Hex.ZMod64.add`: one faithful machine-word
+addition followed by a single conditional subtraction of the modulus
+({name}`reduceOnce`), with no carry branch and no division. Its correctness proof is
+the `@[csimp]` theorem `add_eq_impl`. Under `p < 2^31` the sum
+`a.val + b.val` never overflows the word.
 -/
 @[expose]
 def addImpl (a b : ZMod64 p) : ZMod64 p :=
@@ -381,14 +382,15 @@ def addImpl (a b : ZMod64 p) : ZMod64 p :=
 Subtract two residues: the residue of `a.toNat + (p - b.toNat)`, the canonical
 representative of the modular difference.
 
-Like `add`, this is the kernel-reduction-friendly specification; compiled code
-runs the branchy machine-word `subImpl` via the `@[csimp]` proof `sub_eq_impl`.
+Like {name}`Hex.ZMod64.add`, this is the kernel-reduction-friendly
+specification; compiled code runs `subImpl` through the `@[csimp]` theorem
+`sub_eq_impl`.
 -/
 @[expose]
 noncomputable def sub (a b : ZMod64 p) : ZMod64 p :=
   ofNat p (a.toNat + (p - b.toNat))
 
-/-- No-borrow branch of `sub`: when `b ≤ a` the machine-word difference is
+/-- No-borrow branch of {name}`sub`: when `b ≤ a` the machine-word difference is
 already the canonical representative `< p`. -/
 theorem sub_noBorrow_lt (a b : ZMod64 p) (h : b.val ≤ a.val) :
     (a.val - b.val).toNat < p := by
@@ -396,7 +398,7 @@ theorem sub_noBorrow_lt (a b : ZMod64 p) (h : b.val ≤ a.val) :
   have ha : a.val.toNat < p := a.isLt
   omega
 
-/-- Borrow branch of `sub`: when `a < b` the faithful word `a + (p - b)` has
+/-- Borrow branch of {name}`sub`: when `a < b` the faithful word `a + (p - b)` has
 representative `p - (b - a)`, which stays in canonical range `< p`. -/
 theorem sub_borrow_lt (a b : ZMod64 p) (h : ¬ b.val ≤ a.val) :
     (a.val + (modulusWord p (Bounds.pLtWord p) - b.val)).toNat < p := by
@@ -407,10 +409,10 @@ theorem sub_borrow_lt (a b : ZMod64 p) (h : ¬ b.val ≤ a.val) :
   omega
 
 /--
-Runtime implementation of `sub`: a single sign test picks the fast common path
+Runtime implementation of {name}`Hex.ZMod64.sub`: a single sign test picks the fast common path
 `a - b` (already canonical when `b ≤ a`) or the corrected `a + (p - b)`, with no
-division and no wraparound reasoning. Value-equal to `sub` (`sub_eq_impl`,
-registered `@[csimp]`). Under `p < 2^31` neither branch overflows the word.
+division and no wraparound reasoning. Its correctness proof is the `@[csimp]`
+theorem `sub_eq_impl`. Under `p < 2^31` neither branch overflows the word.
 -/
 @[expose]
 def subImpl (a b : ZMod64 p) : ZMod64 p :=
@@ -468,14 +470,14 @@ def inv (a : ZMod64 p) : ZMod64 p :=
     (add a b).toNat = (a.toNat + b.toNat) % p :=
   toNat_ofNat (a.toNat + b.toNat)
 
-/-- The runtime `addImpl` also computes the residue of the representative sum;
-the reduction is delegated to `reduceOnce` on the faithful word sum. -/
+/-- The runtime {name}`addImpl` also computes the residue of the representative sum;
+the reduction is delegated to {name}`reduceOnce` on the faithful word sum. -/
 private theorem toNat_addImpl (a b : ZMod64 p) :
     (addImpl a b).toNat = (a.toNat + b.toNat) % p := by
   unfold addImpl
   rw [toNat_reduceOnce, toNat_val_add]
 
-/-- The kernel-facing `add` and the runtime `addImpl` compute the same residue.
+/-- The kernel-facing {name}`add` and the runtime {name}`addImpl` compute the same residue.
 Registered `@[csimp]`, so compiled code runs the division-free machine-word
 implementation while kernel reduction sees the one-line specification. -/
 @[csimp] theorem add_eq_impl : @add = @addImpl := by
@@ -488,8 +490,8 @@ implementation while kernel reduction sees the one-line specification. -/
     (sub a b).toNat = (a.toNat + (p - b.toNat)) % p :=
   toNat_ofNat (a.toNat + (p - b.toNat))
 
-/-- The runtime `subImpl` also computes the canonical modular difference;
-the reduction is delegated to `reduceOnce` on the faithful word `a + (p - b)`. -/
+/-- The runtime {name}`subImpl` also computes the canonical modular difference;
+the reduction is delegated to {name}`reduceOnce` on the faithful word `a + (p - b)`. -/
 private theorem toNat_subImpl (a b : ZMod64 p) :
     (subImpl a b).toNat = (a.toNat + (p - b.toNat)) % p := by
   unfold subImpl
@@ -510,7 +512,7 @@ private theorem toNat_subImpl (a b : ZMod64 p) :
     have hbp : b.toNat < p := b.toNat_lt
     rw [Nat.mod_eq_of_lt (by omega)]
 
-/-- The kernel-facing `sub` and the runtime `subImpl` compute the same residue.
+/-- The kernel-facing {name}`sub` and the runtime {name}`subImpl` compute the same residue.
 Registered `@[csimp]`, so compiled code runs the division-free machine-word
 implementation while kernel reduction sees the one-line specification. -/
 @[csimp] theorem sub_eq_impl : @sub = @subImpl := by
@@ -553,7 +555,7 @@ theorem add_eq_ofNat (a b : ZMod64 p) :
     add a b = ofNat p (a.toNat + b.toNat) :=
   rfl
 
-/-- Operator-level form of `add_eq_ofNat`. -/
+/-- Operator-level form of {name}`add_eq_ofNat`. -/
 theorem add_op_eq_ofNat (a b : ZMod64 p) :
     a + b = ofNat p (a.toNat + b.toNat) := by
   exact add_eq_ofNat a b
@@ -563,7 +565,7 @@ theorem sub_eq_ofNat (a b : ZMod64 p) :
     sub a b = ofNat p (a.toNat + (p - b.toNat)) :=
   rfl
 
-/-- Operator-level form of `sub_eq_ofNat`. -/
+/-- Operator-level form of {name}`sub_eq_ofNat`. -/
 theorem sub_op_eq_ofNat (a b : ZMod64 p) :
     a - b = ofNat p (a.toNat + (p - b.toNat)) := by
   exact sub_eq_ofNat a b
@@ -578,7 +580,7 @@ theorem mul_eq_ofNat (a b : ZMod64 p) :
     mul a b = ofNat p (a.toNat * b.toNat) := by
   rw [eq_iff_toNat_eq, toNat_mul, toNat_ofNat]
 
-/-- Operator-level form of `mul_eq_ofNat`. -/
+/-- Operator-level form of {name}`mul_eq_ofNat`. -/
 theorem mul_op_eq_ofNat (a b : ZMod64 p) :
     a * b = ofNat p (a.toNat * b.toNat) := by
   exact mul_eq_ofNat a b
@@ -587,8 +589,8 @@ theorem mul_op_eq_ofNat (a b : ZMod64 p) :
 Definition-level representative equation for the extended-GCD inverse candidate.
 
 Most callers should prefer `inv_mul_eq_one_of_coprime`; this lemma exposes the
-exact executable residue produced by `inv`. It is intentionally not tagged as a
-default simplification rule, since unfolding `inv` exposes the extended-GCD
+exact executable residue produced by {name}`inv`. It is intentionally not tagged as a
+default simplification rule, since unfolding {name}`inv` exposes the extended-GCD
 implementation body.
 -/
 theorem toNat_inv_def (a : ZMod64 p) :
@@ -607,7 +609,7 @@ theorem inv_eq_ofNat (a : ZMod64 p) :
             % Int.ofNat p)) := by
   rw [eq_iff_toNat_eq, toNat_inv_def, toNat_ofNat]
 
-/-- Operator-level form of `inv_eq_ofNat`. -/
+/-- Operator-level form of {name}`inv_eq_ofNat`. -/
 theorem inv_op_eq_ofNat (a : ZMod64 p) :
     a⁻¹ =
       ofNat p
@@ -620,8 +622,8 @@ theorem inv_op_eq_ofNat (a : ZMod64 p) :
 /-- A Bézout cofactor for `gcd a p = 1` reduces to a modular inverse of `a`:
 given `s * a + t * p = 1`, the centered representative `s % p` satisfies
 `(s % p) * a ≡ 1 (mod p)`. This is the step turning the extended-GCD output
-(`HexArith.Int.extGcd`, consumed by `inv`) into the modular-inverse
-correctness spec. -/
+(`HexArith.Int.extGcd`, consumed by {name}`inv`) into the modular-inverse
+correctness statement. -/
 private theorem invBezout_mul_mod_eq_one {a p : Nat} (hp : 0 < p)
     {s t : Int} (hbez : s * Int.ofNat a + t * Int.ofNat p = 1) :
     (Int.toNat (s % Int.ofNat p) * a) % p = 1 % p := by
@@ -688,7 +690,7 @@ private theorem invBezout_mul_mod_eq_one {a p : Nat} (hp : 0 < p)
 /-- Even case of one square-and-multiply step: when `k` is even, replacing
 `base ^ k` by `(base * base) ^ (k / 2)` under modular reduction leaves the
 accumulator unchanged mod `p`. Used by `pow_go_toNat` to discharge the even
-branch of the `pow.go` recursion. -/
+branch of the {name}`pow.go` recursion. -/
 private theorem nat_mod_mul_pow_square_even (acc base k p : Nat) (heven : k % 2 = 0) :
     (acc * ((base * base) % p) ^ (k / 2)) % p = (acc * base ^ k) % p := by
   have hk : 2 * (k / 2) = k := by
@@ -711,7 +713,7 @@ private theorem nat_mod_mul_pow_square_even (acc base k p : Nat) (heven : k % 2 
 /-- Odd case of one square-and-multiply step: when `k` is odd, folding one
 factor of `base` into the accumulator and replacing `base ^ k` by
 `(base * base) ^ (k / 2)` under modular reduction reproduces `acc * base ^ k`
-mod `p`. Used by `pow_go_toNat` for the odd branch of the `pow.go` recursion. -/
+mod `p`. Used by `pow_go_toNat` for the odd branch of the {name}`pow.go` recursion. -/
 private theorem nat_mod_mul_pow_square_odd (acc base k p : Nat) (hodd : k % 2 ≠ 0) :
     ((acc * base) % p * ((base * base) % p) ^ (k / 2)) % p =
       (acc * base ^ k) % p := by
@@ -739,7 +741,7 @@ private theorem nat_mod_mul_pow_square_odd (acc base k p : Nat) (hodd : k % 2 �
       simp [Nat.pow_add]
     _ = (acc * base ^ k) % p := by rw [hk]
 
-/-- Loop invariant of the `pow.go` tail recursion: the canonical representative
+/-- Loop invariant of the {name}`pow.go` tail recursion: the canonical representative
 of `pow.go base acc k` is `(acc.toNat * base.toNat ^ k) % p`, linking the
 tail-recursive accumulator to `base ^ k` mod `p`. This is the workhorse behind
 `toNat_pow`. -/
@@ -781,7 +783,7 @@ theorem pow_eq_ofNat (a : ZMod64 p) (n : Nat) :
     pow a n = ofNat p (a.toNat ^ n) := by
   rw [eq_iff_toNat_eq, toNat_pow, toNat_ofNat]
 
-/-- Operator-level form of `pow_eq_ofNat`. -/
+/-- Operator-level form of {name}`pow_eq_ofNat`. -/
 theorem pow_op_eq_ofNat (a : ZMod64 p) (n : Nat) :
     a ^ n = ofNat p (a.toNat ^ n) := by
   exact pow_eq_ofNat a n
@@ -819,7 +821,7 @@ theorem inv_mul_eq_one_of_coprime (a : ZMod64 p) (hcop : Nat.Coprime a.toNat p) 
     mul (inv a) a = ZMod64.one := by
   rw [eq_iff_toNat_eq, inv_mul_eq_one a hcop, toNat_one]
 
-/-- Operator-level form of `inv_mul_eq_one_of_coprime`. -/
+/-- Operator-level form of {name}`inv_mul_eq_one_of_coprime`. -/
 @[grind =]
 theorem inv_op_mul_eq_one_of_coprime (a : ZMod64 p) (hcop : Nat.Coprime a.toNat p) :
     a⁻¹ * a = 1 := by

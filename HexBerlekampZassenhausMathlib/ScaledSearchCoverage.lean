@@ -199,7 +199,7 @@ end liftedTrueSupports
 
 /--
 Main candidate divisibility theorem for the Mathlib-side correspondence of the
-Berlekamp-Zassenhaus recombination search (#4430 capstone).
+Berlekamp-Zassenhaus recombination search.
 
 Given a `LiftedFactorSubsetPartition core d J target` and a subset `T ⊆ J`,
 suppose the candidate `recombinationCandidate d T` is recordable and admits
@@ -217,7 +217,7 @@ divisibility into two cases:
   `factor ∣ recombinationCandidate d T`.
 * `toPolynomial factor ∣ toPolynomial quotient` — assemble a contradiction:
   when `S` is non-empty, pick any `i ∈ S ⊆ T` and apply
-  `mem_T_iff_exists_irreducibleFactor_representingSubset` (#4469) to obtain
+  `mem_T_iff_exists_irreducibleFactor_representingSubset` to obtain
   an irreducible divisor `g` of the candidate whose representing subset
   `S_g` also contains `i`; the partition's `pairwise_disjoint` field
   contrapositively forces `Associated (toPolynomial factor) (toPolynomial g)`,
@@ -473,10 +473,10 @@ theorem liftedFactorSubsetPartition_prefix_none_of_bound
   · rw [if_neg hrec]
 
 /--
-Prefix-none discharge under a `LiftedFactorSubsetPartition` (#4367 capstone).
+Discharge the prefix-none condition under a `LiftedFactorSubsetPartition`.
 
 Caller for the recursive coverage proof of
-`Hex.recombinationSearchModAux` (#4301).  Every executable split in `pre`
+`Hex.recombinationSearchModAux`. Every executable split in `pre`
 — i.e. enumerated **before** the canonical boundary split
 `(liftedSubsetSelectedList d S, liftedSubsetSelectedList d (J \ S))` —
 returns `none` when threaded through one step of the recombination search,
@@ -485,7 +485,7 @@ provided `S` is the representing subset of an irreducible integer factor at
 
 Proof outline.
 1. Apply `liftedSubsetSplit_prefix_exists_mem_sdiff_of_matches` (the
-   #4508 wrapper) to recover the proof-side subset `T ⊆ J` with
+   split-matching wrapper) to recover the proof-side subset `T ⊆ J` with
    `J.min' ∈ T` whose canonical split equals `split`, and to obtain a
    witness index `i ∈ J ∩ S \ T`.
 2. Identify the inline `candidate'` with `recombinationCandidate d T`
@@ -495,7 +495,7 @@ Proof outline.
    - `true`: suppose `Hex.exactQuotient? target (recombinationCandidate d T)
      = some quotient'`. Then
      `coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd`
-     (#4395 / PR #4498) produces a representing subset `S_cov ⊆ T` with
+     produces a representing subset `S_cov ⊆ T` with
      `J.min' ∈ S_cov` representing some irreducible `f_cov`.  Together with
      the hypothesised representing factor for `S`, the partition's
      `pairwise_disjoint` field (via the shared `J.min'`) forces
@@ -506,9 +506,8 @@ Proof outline.
 The `hlocal_nodup` precondition is required by the wrapper for the
 mask-level bit-diff argument (without `Nodup`, the executable
 `subsetSplits` enumeration can produce collisions on shared masked lists).
-The caller in #4301 threads `Nodup` from a Hensel-coprimality fact
-against the partition; a self-contained `liftedFactor d`-injectivity
-helper at the partition level is left as a separable sub-task.
+The recursive coverage theorem obtains `Nodup` from a Hensel-coprimality fact
+against the partition.
 
 This is the `defaultFactorCoeffBound core`-instantiated thin wrapper for
 `liftedFactorSubsetPartition_prefix_none_of_bound`: the universal coefficient
@@ -711,7 +710,7 @@ theorem liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core_of_boun
   · rw [if_neg hrec]
 
 /-- Primitive + positive-leading-core variant of
-`liftedFactorSubsetPartition_prefix_none` (#4646).
+`liftedFactorSubsetPartition_prefix_none`.
 
 Identical to the monic version except the cover-at-min step routes through
 `coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd_of_primitive_pos_lc_core`.
@@ -1925,13 +1924,13 @@ private theorem recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetP
         exact ⟨emitted, List.mem_cons_of_mem _ hemitted_mem, hemitted_assoc⟩
 
 /--
-Universal-quantifier auxiliary for the recursive coverage capstone (#4301):
+Universal-quantifier auxiliary for recursive coverage:
 under a `LiftedFactorSubsetPartition core d J target` rest-state predicate,
 `Hex.recombinationSearchModAux` returns `some result` and **every**
 irreducible integer divisor of `target` is associated to some emitted
 candidate in `result`.
 
-The deliverable theorem
+The theorem
 `recombinationSearchModAux_factor_associated`
 specialises this universal statement to a fixed `factor` hypothesis.
 

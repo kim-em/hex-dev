@@ -494,7 +494,7 @@ theorem det_setCol_add_otherCols {R : Type u}
   rw [hcomb]
   grind
 
-/-! ### All-column ordered tuple expansion
+/-! # All-column ordered tuple expansion
 
 Iterates `det_columnSumMatrix_expand_column` over every column to express
 `det (columnSumMatrix source coeff)` as a sum over ordered column tuples.

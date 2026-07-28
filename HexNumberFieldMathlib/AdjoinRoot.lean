@@ -15,9 +15,9 @@ public section
 # Fixed-presentation semantic laws
 
 This module proves the operation laws needed to install a scoped field
-structure on `QAdjoin`. The executable carrier deliberately supplies only its
-concrete operations; the `AdjoinRoot` correspondence packages those laws
-without changing the operations or their rational scalar action.
+structure on {name}`Hex.QAdjoin`. The executable carrier deliberately supplies
+only its concrete operations; the {name}`AdjoinRoot` correspondence packages
+those laws without changing the operations or their rational scalar action.
 -/
 
 namespace Hex.QAdjoin
@@ -85,16 +85,16 @@ theorem definingPolynomial_irreducible (p : ZPoly)
     Polynomial.irreducible_mul_leadingCoeff_inv]
   exact hirr
 
-/-- Send reduced executable coordinates to the corresponding `AdjoinRoot`
+/-- Send reduced executable coordinates to the corresponding {name}`AdjoinRoot`
 class. This function is defined before a ring structure is installed on
-`QAdjoin`. -/
+{name}`Hex.QAdjoin`. -/
 @[expose]
 noncomputable def toAdjoinRoot (a : QAdjoin p x) :
     AdjoinRoot (definingPolynomial p) :=
   AdjoinRoot.mk (definingPolynomial p)
     (HexPolyMathlib.toPolynomial a.coeffs)
 
-/-- Recover the unique reduced executable coordinates of an `AdjoinRoot`
+/-- Recover the unique reduced executable coordinates of an {name}`AdjoinRoot`
 class. -/
 @[expose]
 noncomputable def fromAdjoinRoot [ZPoly.CheckedIrreducible p]
@@ -202,7 +202,7 @@ theorem isZero_iff (a : QAdjoin p x) : a.isZero ↔ a = 0 := by
     exact DensePoly.size_zero
 
 /-- Irreducibility and the reduced-degree invariant make the executable gcd
-guard in `QAdjoin.inv` succeed for every nonzero element. -/
+guard in {name}`Hex.QAdjoin.inv` succeed for every nonzero element. -/
 theorem inverse_gcd_size [ZPoly.CheckedIrreducible p]
     (a : QAdjoin p x) (ha : a.isZero = false) :
     (DensePoly.xgcdLeft a.coeffs (ZPoly.toRatPoly p)).gcd.size = 1 := by
@@ -607,7 +607,7 @@ noncomputable def toAdjoinRootHom [ZPoly.CheckedIrreducible p] :
   map_mul' := toAdjoinRoot_mul
 
 /-- Reduced executable coordinates are ring-equivalent to the monic rational
-`AdjoinRoot` presentation. -/
+{name}`AdjoinRoot` presentation. -/
 @[expose]
 noncomputable def adjoinRootEquiv [ZPoly.CheckedIrreducible p] :
     QAdjoin p x ≃+* AdjoinRoot (definingPolynomial p) :=

@@ -627,7 +627,7 @@ theorem checkIrreducibilityCertificateLinear_rabinTest
         (checkPowChainLinear_spec f hmonic samePrimeCert hpowCheck)
         hdividesWitness hwitnesses
 
-/-! ### Incremental pow-chain check
+/-! # Incremental pow-chain check
 
 `checkPowChainLinear` re-evaluates each `cert.powChain[k]` from scratch via
 `FpPoly.frobeniusXPowModLinear`, which expands to `p^k` modular

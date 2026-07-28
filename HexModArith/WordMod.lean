@@ -21,9 +21,8 @@ supported (unlike `ZMod64`, which caps at `2^31`). The represented residue of
 an element is `ctx.fromMont a.val`, and every operation is proven to compute the
 right residue modulo `m` via that map.
 
-This is the scalar layer for the word-sized poly-mod-`p^a` arithmetic of the
-Berlekamp-Zassenhaus lattice tier (issue #8691): an odd prime power `p^a < 2^64`
-is a valid modulus here.
+This is the scalar layer for word-sized polynomial arithmetic modulo `p^a`:
+an odd prime power `p^a < 2^64` is a valid modulus here.
 -/
 
 namespace Hex

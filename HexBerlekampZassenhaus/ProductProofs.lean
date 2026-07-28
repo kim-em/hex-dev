@@ -53,9 +53,8 @@ This module collects `factorTrial_product`, `factorize_product`, and the `checkI
 -/
 namespace Hex
 
-/-- **#4585 HO-1 support lemma — fast-path constant arm `reassemblyExpansionComplete`
-discharger.** When the recorded square-free core has degree zero (and `f ≠ 0`),
-the singleton-core reassembly is automatically expansion-complete: the
+/-- When the recorded square-free core has degree zero (and `f ≠ 0`),
+the fast-path singleton-core reassembly is automatically expansion-complete: the
 square-free core collapses to `1` via
 `squareFreeCore_eq_one_of_constant_of_ne_zero`, the singleton-`1` expansion is
 the identity via `expandRepeatedPartFactorArray_singleton_one`, and the residual
@@ -64,10 +63,9 @@ the identity via `expandRepeatedPartFactorArray_singleton_one`, and the residual
 specialisation of
 `ZPoly.primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeCore_degree_zero`).
 Used by the fast-path constant arm public wrapper
-`factor_constant_branch_entry_irreducible_of_choosePrimeData` (#4565) so it can
-drop its explicit `hcomplete` hypothesis. The small-mod singleton (#4564),
-slow-quadratic (#4575), and fast-quadratic (#4571) `hcomplete` dischargers are
-siblings tracked separately. -/
+`factor_constant_branch_entry_irreducible_of_choosePrimeData` so it can
+drop its explicit `hcomplete` hypothesis. The small-mod singleton,
+slow-quadratic, and fast-quadratic branches have analogous theorems. -/
 theorem reassemblyExpansionComplete_constant_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0)
     (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) :
@@ -81,7 +79,7 @@ theorem reassemblyExpansionComplete_constant_of_ne_zero
 
 /-- The normalized square-free core has positive leading coefficient
 (`squareFreeCore_leadingCoeff_pos_of_ne_zero`), so its sign-normalisation
-is the identity. Exposed publicly for HO-1 support-lemma callers in the
+is the identity. Exposed publicly for support-lemma callers in the
 Mathlib-side layer (notably the small-mod singleton arm specialisation of
 `normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`,
 which discharges its `hnorm` precondition with this lemma). -/

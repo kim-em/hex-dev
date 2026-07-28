@@ -65,7 +65,7 @@ private theorem mod_sub_self_eq_mul_neg_div {S : Type _}
     mul_sub_zero_comm m (p / m), coeff_sub 0 ((p / m) * m) n hzero_sub, coeff_zero]
   grind
 
-/-- Packages `mod_sub_self_eq_mul_neg_div` as the divisibility `m ∣ (p % m - p)`, the core
+/-- Packages {name}`mod_sub_self_eq_mul_neg_div` as the divisibility `m ∣ (p % m - p)`, the core
 fact behind the public `congr_mod`. -/
 private theorem dvd_mod_sub {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
@@ -142,7 +142,7 @@ theorem mod_eq_mod_of_congr {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S]
     Congr p q m -> p % m = q % m := by
   exact mod_eq_mod_of_dvd_sub
 
-/-- Reverse direction of `mod_eq_mod_of_congr`: equal canonical remainders force the
+/-- Reverse direction of {name}`mod_eq_mod_of_congr`: equal canonical remainders force the
 operands to be congruent modulo the divisor. -/
 theorem dvd_of_mod_eq_mod {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
     [DivModLaws S]
@@ -342,7 +342,7 @@ theorem polyCRT_mod_snd :
   intro S _ _ _ _ a b u v s t hb hbez
   simpa [modByMonic_eq_mod] using polyCRT_modByMonic_snd a b u v s t hb hbez
 
-/-! ## Gauss's lemma on content multiplicativity for `DensePoly Int`. -/
+/-! # Gauss's lemma on content multiplicativity for `DensePoly Int`. -/
 
 /-- Local primality predicate for `Nat`. `HexPoly` is foundational and does not
 public import the `Hex.Nat.Prime` API; we keep a private copy of just enough machinery
@@ -569,7 +569,7 @@ private theorem mul_ne_zero_of_primitive (p q : DensePoly Int)
     rw [hq0, content_zero]
   exact mul_ne_zero_int p q hp_ne hq_ne
 
-/-- Factoring a constant out of a `diagonalMulCoeffTerm` foldl with `scale`'d
+/-- Factoring a constant out of a {name}`diagonalMulCoeffTerm` foldl with {name}`scale`'d
 polynomials. -/
 private theorem foldl_add_int_diagonal_scaled
     (a b : Int) (r s : DensePoly Int) (n : Nat) :
@@ -805,8 +805,7 @@ theorem primitivePart_mul (p q : DensePoly Int) :
 /-- Gauss's lemma on content (divisibility form): if a natural number `d`
 divides every coefficient of `p * q`, then it divides `contentNat p *
 contentNat q`. This is the divisibility witness needed by the McCoy row
-construction in #3440 and the downstream chain `#3440 → #3435 → #3389 →
-#3346 → #3252`. -/
+construction used to obtain scalar annihilators. -/
 theorem dvd_contentNat_mul_of_dvd_mul_coeff
     (p q : DensePoly Int) (d : Nat)
     (h : ∀ n, (d : Int) ∣ (p * q).coeff n) :

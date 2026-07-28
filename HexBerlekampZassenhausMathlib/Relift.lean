@@ -15,12 +15,12 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-Certification of the recursive per-remainder re-lift (#8625, deliverable 2).
+Certification of the recursive per-remainder re-lift.
 
 The computational recursion `classicalCoreFactorsRecursive` certifies each
 returned factor either through a floor call to `classicalCoreFactorsWithBound`
-at the piece's own `ModPFactorization` bundle (whose coverage theorem was
-re-keyed to the bundle) or through the two leaf certificates (linear pieces
+at the piece's own `ModPFactorization` bundle or through the two leaf
+certificates (linear pieces
 and mod-p-irreducible pieces). This module proves the leaves, the shape
 facts the induction threads through the sub-floor scan (positive leading
 coefficient, primitivity, divisibility of the node target), and the main
@@ -151,7 +151,7 @@ theorem fpPolyIrreducible_of_irreducible_toMathlibPolynomial
     · exact Or.inl (hdeg_of_unit a h)
     · exact Or.inr (hdeg_of_unit b h)
 
-/-! ### Shape facts threaded through the sub-floor scan -/
+/-! # Shape facts threaded through the sub-floor scan -/
 
 /-- Every peel candidate is either monic (fast path) or the sign-normalized
 primitive part of some polynomial (slow path). -/
@@ -782,7 +782,7 @@ theorem classicalCoreFactorsRecursive_factor_irreducible
     (defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne)
     (defaultFactorCoeffBound_valid core hcore_ne) hprecision
 
-/-! ### Structural companions: product, sign normalization, degree -/
+/-! # Structural companions: product, sign normalization, degree -/
 
 /-- Fold-level product reconstruction: each certified piece's output
 multiplies to the piece, so the fold's output multiplies to the accumulator

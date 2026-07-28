@@ -232,13 +232,13 @@ private def toMonicGuardZero : ToMonicData :=
 end ZPoly
 
 /--
-Public integer-polynomial factorization result.
+Public factorization result for an integer polynomial {name}`Hex.ZPoly`.
 
 The scalar carries the input's signed content: for nonzero inputs this is
 `sign(lc f) * ZPoly.content f`, while zero inputs use scalar `0`. Polynomial
 factors are primitive, positive-leading-coefficient factors stored with
 explicit multiplicities; factor order remains operational, with the
-mathematical contract expressed through `Factorization.product`.
+mathematical contract expressed by multiplying the scalar and stored factors.
 -/
 structure Factorization where
   /-- Signed scalar absorbing both sign and integer content. -/

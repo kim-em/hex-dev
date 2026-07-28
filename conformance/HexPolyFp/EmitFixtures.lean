@@ -52,7 +52,7 @@ private theorem primeFive : Hex.Nat.Prime 5 := by
   · simp at hm
   · exact Or.inr rfl
 
-/-! ## Coefficient generation -/
+/-! # Coefficient generation -/
 
 /-- Deterministic `(seed, i) → ZMod64 p` mixing function.  The integer
 constants are large odd primes so distinct seeds give visibly different
@@ -66,7 +66,7 @@ coefficient happens to be zero (`ofCoeffs` trims trailing zeros). -/
 private def randomPoly (p : Nat) [ZMod64.Bounds p] (seed deg : Nat) : FpPoly p :=
   ofCoeffs (Array.ofFn (n := deg + 1) fun i => coeffOf p seed i.val)
 
-/-! ## Monic polynomial construction (for Frobenius modulus)
+/-! # Monic polynomial construction (for Frobenius modulus)
 
 We build the array as `(coefficients of degree 0..deg-1).push 1` so the
 leading coefficient is provably `1` after `ofCoeffs` trims trailing
@@ -115,12 +115,12 @@ private theorem randomMonicPoly_monic
   unfold DensePoly.Monic DensePoly.leadingCoeff randomMonicPoly
   simp [monicArray, Array.getElem_push] <;> rfl
 
-/-! ## Coefficient ↔ Int conversion -/
+/-! # Coefficient ↔ Int conversion -/
 
 private def coeffInts {p : Nat} [ZMod64.Bounds p] (f : FpPoly p) : List Int :=
   f.toArray.toList.map (fun c => (c.toNat : Int))
 
-/-! ## gcd output normalisation -/
+/-! # gcd output normalisation -/
 
 /-- Scale a non-zero polynomial so its leading coefficient becomes `1`.
 Returns `f` unchanged when `f.isZero`. -/
@@ -128,7 +128,7 @@ private def monicNormalize {p : Nat} [ZMod64.Bounds p] (f : FpPoly p) : FpPoly p
   if f.isZero then f
   else DensePoly.scale (ZMod64.inv (DensePoly.leadingCoeff f)) f
 
-/-! ## Square-free output normalisation -/
+/-! # Square-free output normalisation -/
 
 /-- Lexicographic compare on `List Int`. -/
 private def lexLessInts : List Int → List Int → Bool
@@ -168,7 +168,7 @@ private def normalizeSqFree {p : Nat} [ZMod64.Bounds p]
   let (unit, rawFactors) := decomp.factors.foldl go (decomp.unit, [])
   (unit, rawFactors.toArray.qsort factorLess |>.toList)
 
-/-! ## JSON value builders for square-free output -/
+/-! # JSON value builders for square-free output -/
 
 private def jsonNat (n : Nat) : String := toString n
 private def jsonInt (n : Int) : String := toString n
@@ -196,7 +196,7 @@ private def jsonFactorList (xs : List (List Int × Nat)) : String := Id.run do
 private def sqFreeValue (unit : Int) (factors : List (List Int × Nat)) : String :=
   "[" ++ jsonInt unit ++ "," ++ jsonFactorList factors ++ "]"
 
-/-! ## Per-fixture emission helpers -/
+/-! # Per-fixture emission helpers -/
 
 private def caseName (op : String) (p deg : Nat) : String :=
   op ++ "/p" ++ toString p ++ "/deg" ++ toString deg

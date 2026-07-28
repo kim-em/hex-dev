@@ -177,7 +177,7 @@ private def crossCheckBuckets
           sameCoeffSet (factorCoeffSummary recovered) (factorCoeffSummary expectedFactors)
   decide (Factorization.product slow = f) && fastMatches
 
-/-! ## Fixture batches by lifted-factor count `n` -/
+/-! # Fixture batches by lifted-factor count `n` -/
 
 private def fixturesN3 : List (List Int) :=
   [ [1, 2, 3]
@@ -205,7 +205,7 @@ private def fixturesN5 : List (List Int) :=
 #guard sqrtTwoThreeLiftData.liftedFactors.size = 4
 #guard crossCheckBuckets sqrtTwoThreeProduct sqrtTwoThreeLiftData sqrtTwoThreeExpectedFactors
 
-/-! ## Good-prime regression fixtures -/
+/-! # Good-prime regression fixtures -/
 
 private def splitProduct11 : ZPoly := fromRoots (positiveRoots 11)
 private def splitProduct24 : ZPoly := fromRoots (positiveRoots 24)

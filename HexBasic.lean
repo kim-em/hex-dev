@@ -18,7 +18,7 @@ public section
 /-!
 `HexBasic` is the lowest Mathlib-free `hex` library: a home for small,
 general-purpose helpers that clearly belong in the standard library and are
-reproduced here only until they migrate up to lean4. It provides the shared
+reproduced here so the library remains Mathlib-free. It provides the shared
 `List.foldl` algebra (`HexBasic.Fold`), the `Batteries` list lemmas reproduced
 in `HexBasic.ListShim`, the `Vector.modify` update helper, and
 kernel-reducible `Array`/`Vector` equality (`HexBasic.ArrayDecEq`) and

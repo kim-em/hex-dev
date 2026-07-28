@@ -32,8 +32,7 @@ factoring-entrypoint soundness theorems (`factorTrialFactorsWithBound_*`,
 `factorClassicalFactorsWithBound_*`).
 -/
 namespace HexBerlekampZassenhausMathlib
-/-- **#7584 core-facts producer (lifted-subset partition).**
-
+/-- Construct
 `LiftedFactorSubsetPartition core (toMonicLiftData core B primeData) Finset.univ
 core` from a mod-`p` factorization of the monic transform and the standard
 core side conditions alone.  The embedded Hensel correspondence comes from the
@@ -81,7 +80,7 @@ theorem liftedFactorSubsetPartition_of_toMonicModP
     (IntReductionMod.initialPartitionEvidence_of_toMonicModP
       core B primeData hval hcore_lc_pos hcore_pos hcore_prim hB_ne_zero hbound)
 
-/-- Constructs `HenselFactorData core B primeData` from a mod-`p`
+/-- Construct `HenselFactorData core B primeData` from a mod-`p`
 factorization of the monic transform and the standard square-free-core
 hypotheses.  The correspondence and partition follow from the preceding
 theorems; the remaining fields follow directly from the factorization and
@@ -139,22 +138,20 @@ theorem HenselFactorData.ofToMonicModP
   · exact hmodulus
   · exact hprec_spec
 
-/-- **#4549 base task (HO-1), outer-bound specialisation, rewired for #4553.**
-
-Specialisation of `liftedFactorSubsetPartition_of_choosePrimeData`
+/-- Specialise `liftedFactorSubsetPartition_of_choosePrimeData`
 (`HexBerlekampZassenhausMathlib`) at the precision count
 actually consumed by the slow exhaustive branch of `Hex.ZPoly.factorize f`.
 The resulting partition value has the exact `core` / `d` /
 `J = Finset.univ` / `target = core` shape expected by the `hpartition`
-hypothesis of the slow-path exhaustive-branch irreducibility wrapper
-(PR #4537), so the HO-1 slow-path assembly can apply that wrapper
-directly together with the #4543 base value at the same outer-bound
+hypothesis of the slow-path exhaustive-branch irreducibility theorem, so the
+slow-path assembly can apply that theorem
+directly together with the base value at the same outer-bound
 shape.
 
 The explicit `hcore_sqfree` hypothesis previously threaded through this
 constructor is now discharged internally from `f ≠ 0` via
 `IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree`.
-Downstream HO-1 assemblies only need to supply the much weaker non-zero
+Downstream assemblies only need to supply the much weaker non-zero
 premise on `f`. -/
 theorem liftedFactorSubsetPartition_outerBound_of_choosePrimeData
     (f : Hex.ZPoly) (hf : f ≠ 0)
@@ -711,8 +708,8 @@ theorem reassemblyComplete_of_bhksRecovery_irreducible
   exact IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_pos_lc
     f hf_ne expectedFactors hirr hprod hnorm hpos_lc hdegree hfuel
 
-/-- **#8413 (classical-tier irreducibility).**  Every factor the size-ordered
-classical recombination search returns is irreducible: when
+/-- Every factor returned by the size-ordered
+classical recombination search is irreducible: when
 `classicalCoreFactorsWithBound core B primeData = some cf` for a nonzero,
 primitive, square-free, positive-degree `core` selected by `toMonicPrimeData?`,
 each entry of `cf` is irreducible over `ℤ`.
@@ -863,7 +860,7 @@ theorem classicalCoreFactorsWithBound_factor_irreducible_of_validBound
       rw [List.toList_toArray] at hg
       exact hirr g hg
 
-/-- **#8413 (classical-tier irreducibility, default-bound form).**  The
+/-- The
 `B' = defaultFactorCoeffBound core` specialization of
 `classicalCoreFactorsWithBound_factor_irreducible_of_validBound`: the abstract
 leading-coefficient and all-divisors bound hypotheses are discharged from
@@ -894,7 +891,7 @@ theorem classicalCoreFactorsWithBound_factor_irreducible_of_bound
     (defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne)
     (defaultFactorCoeffBound_valid core hcore_ne) hprecision
 
-/-- **#8413 (classical-tier irreducibility, natural-bound form).**  The precision
+/-- The precision
 side condition of `classicalCoreFactorsWithBound_factor_irreducible_of_bound` is
 discharged from the natural hypothesis `defaultFactorCoeffBound core ≤ B` (which
 also gives `B ≠ 0`, since a positive-degree core has a positive Mignotte bound):
@@ -929,7 +926,7 @@ theorem classicalCoreFactorsWithBound_factor_irreducible
     hclassical hselected hcore_ne hcore_primitive hcore_lc_pos hcore_sqfree hcore_pos
     hB_ne hprecision
 
-/-- **#8510 (classical residual-arm specialization).**  Every factor the
+/-- Every factor the
 size-ordered classical recombination search returns for the square-free core of
 `normalizeForFactor f` at the hybrid search bound `B = defaultFactorCoeffBound f`
 is irreducible in the executable `Hex.ZPoly` sense.
@@ -944,8 +941,8 @@ a divisor of `f`, bounded by `defaultFactorCoeffBound f` via Mignotte
 and the lift modulus exceeds `2 * defaultFactorCoeffBound f`
 (`exhaustiveLiftBound_precision`).  The `Polynomial ℤ` irreducibility from
 `classicalCoreFactorsWithBound_factor_irreducible_of_validBound` is transported
-back to `Hex.ZPoly.Irreducible` per factor.  Consumed (with the
-completeness-structural lemmas of #8511) by the classical residual arm of #8414. -/
+back to `Hex.ZPoly.Irreducible` per factor. This supplies the irreducibility
+facts used by the classical residual arm. -/
 theorem classicalCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
     (f : Hex.ZPoly) (hf_ne : f ≠ 0) (primeData : Hex.PrimeChoiceData)
     (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
@@ -1003,14 +1000,14 @@ factors of `(normalizeForFactor f).squareFreeCore` at the public bound
 expansion-complete.  The size-ordered classical analog of
 `reassemblyExpansionComplete_exhaustiveIntegerTrial_of_ne_zero`: it composes the
 public-bound classical-core irreducibility wrapper
-`classicalCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible` (#8510),
+`classicalCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible`,
 the polyProduct / normalizeFactorSign / degree-positivity structural companions
-(#8511, `classicalCoreFactorsWithBound_{polyProduct,normalizeFactorSign,degree_pos}`),
+`classicalCoreFactorsWithBound_{polyProduct,normalizeFactorSign,degree_pos}`,
 and the sign-normalized expansion-complete surface
 `reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_norm` (which
 derives the per-factor positive leading coefficient and the fuel bound
 internally).  Consumed by the classical residual arm of
-`factorClassicalFactorsWithBound_factor_irreducible` (#8414). -/
+`factorClassicalFactorsWithBound_factor_irreducible`. -/
 theorem reassemblyExpansionComplete_classicalCore_of_ne_zero
     (f : Hex.ZPoly) (hf : f ≠ 0) (primeData : Hex.PrimeChoiceData)
     (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore

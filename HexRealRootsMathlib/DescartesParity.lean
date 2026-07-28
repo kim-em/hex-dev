@@ -13,7 +13,7 @@ public section
 /-!
 # Parity of Descartes sign variations
 
-Mathlib's `Polynomial.roots_countP_pos_le_signVariations` is the inequality half of
+Mathlib's {name}`Polynomial.roots_countP_pos_le_signVariations` is the inequality half of
 Descartes' rule of signs: a real polynomial has at most as many positive roots (with
 multiplicity) as it has sign variations. This file proves the companion **parity**
 statement
@@ -38,7 +38,7 @@ inequality to pin the number of positive roots exactly when there are zero or on
 variations.
 
 Everything here is `Hex`-free and stated over `ℝ`; it is intended to be upstreamable to
-Mathlib alongside `Polynomial.roots_countP_pos_le_signVariations`.
+Mathlib alongside {name}`Polynomial.roots_countP_pos_le_signVariations`.
 -/
 
 namespace Polynomial
@@ -62,7 +62,7 @@ private lemma sign_ite_mul {a b : SignType} (ha : a ≠ 0) (hb : b ≠ 0) :
     (if a * b = 1 then (0 : ℕ) else 1) = if a = b then 0 else 1 := by
   fin_cases a <;> fin_cases b <;> simp_all
 
-/-- `eraseLead` only removes the top coefficient, so it leaves the trailing coefficient
+/-- {name}`eraseLead` only removes the top coefficient, so it leaves the trailing coefficient
 unchanged (as long as it does not empty the polynomial). -/
 theorem trailingCoeff_eraseLead {P : ℝ[X]} (h : P.eraseLead ≠ 0) :
     P.eraseLead.trailingCoeff = P.trailingCoeff := by

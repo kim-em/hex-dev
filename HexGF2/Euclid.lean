@@ -67,7 +67,7 @@ instance : Dvd GF2Poly where
   dvd p q := ∃ r : GF2Poly, q = p * r
 
 /-- Polynomial irreducibility over `GF(2)` phrased in terms of nontrivial
-factorizations inside the packed `GF2Poly` execution model. -/
+factorizations inside the packed {name}`Hex.GF2Poly` execution model. -/
 @[expose]
 def Irreducible (f : GF2Poly) : Prop :=
   f ≠ 0 ∧ ∀ a b : GF2Poly, a * b = f → a.degree = 0 ∨ b.degree = 0

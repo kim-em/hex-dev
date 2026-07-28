@@ -14,7 +14,8 @@ public import HexInterval.Experiment.Policy
 # External driver for engine-owned interval-policy offers
 
 This module connects an arbitrary external search policy and an arbitrary
-external rule registry to `Policy.State`.  The policy sees only bounded views
+external rule registry to
+{name}`Hex.Interval.Experiment.Propagator.Policy.State`. The policy sees only bounded views
 and returns `select`, `dismiss`, or `stop`; `Policy.State` remains the sole
 authority which freezes rule actions, contracts equalities, admits expression
 instances, and prepares split plans.
@@ -27,7 +28,7 @@ creation.
 
 namespace Hex.Interval.Experiment.Propagator.Policy.Driver
 
-/-! ## External policy protocol -/
+/-! # External policy protocol -/
 
 /-- One external policy decision.  Policy-private state has an arbitrary Lean
 type and remains outside the trusted engine. -/
@@ -78,7 +79,7 @@ structure Controller (Fact PolicyState : Type) where
   update : PolicyState -> Event Fact -> PolicyState
   choose : PolicyState -> View Fact -> Step PolicyState
 
-/-! ## Driver result -/
+/-! # Driver result -/
 
 inductive UnknownReason
   | policyStop (liveOffers : Nat)
@@ -141,10 +142,12 @@ def dismissalCauses (before : State Fact) (selection : Selection)
 def invocationOfRequest (scope : ScopeId) (request : RuleRequest Fact) : InvocationKey :=
   invocationOfAction scope request.action
 
-/-! ## Ordered execution -/
+/-! # Ordered execution -/
 
 /-- Internal fuelled loop.  The only action passed to the registry comes from
-`State.select`; the driver merely echoes it through `Action.reply`. -/
+{name}`Hex.Interval.Experiment.Propagator.Policy.State.select`; the driver
+merely echoes it through
+{name}`Hex.Interval.Experiment.Propagator.Action.reply`. -/
 def driveFrom (controller : Controller Fact PolicyState)
     (invoke : Cache -> RuleRequest Fact -> Outcome Fact × Cache) :
     Nat -> State Fact -> Cache -> PolicyState -> Array (Event Fact) ->

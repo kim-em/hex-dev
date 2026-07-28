@@ -437,7 +437,7 @@ The search first folds `choosePrimeDataScoreStep` over the deterministic
 small-prime prefix. If that prefix selects an admissible prime, the original
 tie-breaking is preserved. If the prefix exhausts without selecting any prime,
 the search folds over the fixed extended prime list through `499`, covering
-every odd prime in the SPEC hot-path interval `[3, 500]`.
+every odd prime in the hot-path interval `[3, 500]`.
 -/
 @[expose]
 def choosePrimeData? (f : ZPoly) : Option PrimeChoiceData :=
@@ -604,11 +604,10 @@ private theorem choosePrimeDataScore_fold_none_forall_isGoodPrime_false
           exact (choosePrimeDataScore_fold_some_ne_none f cs new hfold).elim
 
 /--
-When `choosePrimeData? f` returns `none`, every candidate in the SPEC hot-path
+When `choosePrimeData? f` returns `none`, every candidate in the hot-path
 prime list fails the executable good-prime predicate `Hex.isGoodPrime f`.
 
-This is the provenance ingredient for SPEC D2's
-`choosePrimeData?_none_implies_huge` composition: the executable's failure to
+This feeds `choosePrimeData?_none_implies_huge`: the executable's failure to
 find any good prime over the fixed list means every prime in the admissible
 range was tried and rejected, and rejection (`isGoodPrime ... = false`) feeds
 the Mathlib-side per-prime divisibility bridge.

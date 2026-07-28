@@ -67,8 +67,8 @@ def LevelsValid : List Level → Prop
 end NumberTower
 
 /-- A validated, fixed-embedding tower of successive algebraic extensions of
-`Rat`. Construction is sealed; later modules extend towers only through checked
-smart constructors. -/
+{name}`Rat`. Construction is sealed, and checked smart constructors are the
+only API for extending towers. -/
 structure NumberTower where
   private mk ::
   levels : Array NumberTower.Level

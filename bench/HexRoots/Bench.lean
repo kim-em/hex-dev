@@ -104,7 +104,7 @@ namespace Hex.RootsBench
 
 open Hex
 
-/-! ### Deterministic input families -/
+/-! # Deterministic input families -/
 
 /-- The LCG step from `conformance/HexRoots/EmitFixtures.lean`
 (`6364136223846793005·s + 1442695040888963407 mod 2^64`, realised as `UInt64`
@@ -160,7 +160,7 @@ At this radius the square remains well inside the witness's firing threshold
 for the canonical input. -/
 def rootSquare : DyadicSquare := ⟨Dyadic.ofInt 1, 0, 12⟩
 
-/-! ### Result checksums (stable observables) -/
+/-! # Result checksums (stable observables) -/
 
 /-- Stable observable for a dyadic number: its exact reduced rational. -/
 def dyadicChecksum (d : Dyadic) : UInt64 :=
@@ -199,7 +199,7 @@ def componentsChecksum (cs : Array Component) : UInt64 :=
   cs.foldl (fun acc c => mixHash acc (c.squares.foldl
     (fun a s => mixHash a (squareChecksum s)) (hash c.candidateK))) (hash cs.size)
 
-/-! ### `Hashable` instances for benchmark input types
+/-! # `Hashable` instances for benchmark input types
 
 `setup_benchmark` records a hash of the prepared input alongside each JSONL row.
 `ZPoly`, `DyadicSquare`, `Component`, and `DyadicRootIsolation` carry no derived
@@ -216,7 +216,7 @@ instance : Hashable Component where
 instance {p : ZPoly} : Hashable (DyadicRootIsolation p) where
   hash iso := squareChecksum iso.square
 
-/-! ### Strategy-invariant projection for the `compare` group
+/-! # Strategy-invariant projection for the `compare` group
 
 The three strategies isolate the same integer roots but store different squares
 (different precisions, sometimes off-by-one levels). The projection below is
@@ -245,7 +245,7 @@ def rootsDigest {p : ZPoly} (atoms : Array (DyadicRootIsolation p)) : UInt64 :=
   buckets.foldl (fun acc b => mixHash (mixHash acc (hash b.1)) (hash b.2))
     (hash atoms.size)
 
-/-! ### Mid-refinement component fixture -/
+/-! # Mid-refinement component fixture -/
 
 /-- A representative mid-refinement component of `seededPoly degree`: two
 `refine1` rounds down from `Component.cauchy`, keeping the first surviving
@@ -272,7 +272,7 @@ def separatedMidComponent (degree : Nat) : ZPoly × Component :=
   else
     (p, ⟨#[⟨0, 0, 0⟩], 0⟩)
 
-/-! ### Refined-atom fixture for `refineTo?` and `sameRoot` -/
+/-! # Refined-atom fixture for `refineTo?` and `sameRoot` -/
 
 /-- A small fixed polynomial with distinct simple roots for the refined-atom
 fixtures: `(x−1)(x−2)(x+3)`. -/
@@ -293,7 +293,7 @@ precision required by `RefinedIsolation`. -/
 def refinedAtom? : Option (RefinedIsolation refinePoly) :=
   refineAtom?.bind DyadicRootIsolation.toRefined?
 
-/-! ### Benchmark targets -/
+/-! # Benchmark targets -/
 
 /-- Benchmark target: exact Gaussian-dyadic Taylor shift at the fixed centre. -/
 def taylorChecksum (p : ZPoly) : UInt64 :=
@@ -372,7 +372,7 @@ the target precision the parameter encodes. -/
 def prepRefineTo (target : Nat) : Option (DyadicRootIsolation refinePoly) × Int :=
   (refineAtom?, (target : Int))
 
-/-! ### Canonical fixed inputs -/
+/-! # Canonical fixed inputs -/
 
 initialize taylorRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (seededPoly 128))
 initialize witnessRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (boundedRootPoly 128))
@@ -407,7 +407,7 @@ def runIsolateNk : Unit → IO UInt64 := fun _ => do return (← compareRef.get)
 def runIsolatePellet : Unit → IO UInt64 := fun _ => do return (← compareRef.get).map isolatePelletChecksum |>.getD 0
 def runIsolateNkThenPellet : Unit → IO UInt64 := fun _ => do return (← compareRef.get).map isolateNkThenPelletChecksum |>.getD 0
 
-/-! ### `taylor` / `mahlerPrec` : dense seeded family -/
+/-! # `taylor` / `mahlerPrec` : dense seeded family -/
 
 /-
 Cost model. `taylor` produces `p(X + z) = Σ cₖ Xᵏ` by repeated synthetic
@@ -442,7 +442,7 @@ setup_benchmark runMahlerPrec n => n
     signalFloorMultiplier := 1.0
   }
 
-/-! ### witness checks / Newton step : root-centred `linProdPoly` -/
+/-! # witness checks / Newton step : root-centred `linProdPoly` -/
 
 /-
 Cost model. `witnessCheck` computes the exact Taylor coefficients at the
@@ -477,7 +477,7 @@ GMP-transition case without asserting a scalar asymptotic fit.
 setup_fixed_benchmark runNewtonSquare where {
   repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x450307c7dcbe905c }
 
-/-! ### refinement primitives : canonical fixed fixtures -/
+/-! # refinement primitives : canonical fixed fixtures -/
 
 /-
 Cost model. `refine1` subdivides each square of the component four ways and
@@ -507,7 +507,7 @@ fixture-path or semantic regression visible.
 setup_fixed_benchmark runCertify where {
   repeats := 5, maxSecondsPerCall := 6.0, expectedHash := some 0x1698ec123da6112f }
 
-/-! ### whole-polynomial drivers -/
+/-! # whole-polynomial drivers -/
 
 /-
 Cost model. `isolateAll?` refines the Cauchy component to disjoint certified
@@ -563,7 +563,7 @@ fixed case tracks the high-precision regression directly.
 setup_fixed_benchmark runRefineTo where {
   repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x8dd3e4ee56489bf8 }
 
-/-! ### `compare` group : dual-route atom-certificate experiment
+/-! # `compare` group : dual-route atom-certificate experiment
 
 `runIsolateNk`, `runIsolatePellet`, and `runIsolateNkThenPellet` isolate the
 same `linProdPoly` inputs under the three `AtomStrategy` values and digest the
@@ -619,7 +619,7 @@ Pellet as fallback.
 setup_fixed_benchmark runIsolateNkThenPellet where {
   repeats := 5, maxSecondsPerCall := 8.0, expectedHash := some 0xda631bdf13415a4f }
 
-/-! ### `sameRoot` : fixed microsecond benchmark -/
+/-! # `sameRoot` : fixed microsecond benchmark -/
 
 /-- The prebuilt refined-atom pair for the `sameRoot` benchmark, threaded through
 an `IO.Ref` so the single dyadic comparison is not constant-folded away. -/

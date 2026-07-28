@@ -225,14 +225,14 @@ def elements : List (Quotient g hmonic hg_pos) :=
   (Enumeration.polysBelowDegree p (g.degree?.getD 0)).map
     (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos))
 
-/-- `elements` enumerates exactly `p ^ deg g` canonical representatives —
+/-- {name}`elements` enumerates exactly `p ^ deg g` canonical representatives —
 the order of the quotient ring `FpPoly p / g`. -/
 @[simp, grind =] theorem elements_length :
     (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).length =
       p ^ g.degree?.getD 0 := by
   simp [elements]
 
-/-- Every quotient element appears in `elements`. -/
+/-- Every quotient element appears in {name}`elements`. -/
 theorem mem_elements (a : Quotient g hmonic hg_pos) :
     a ∈ elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos) := by
   unfold elements
@@ -286,13 +286,13 @@ instance : Zero (Quotient g hmonic hg_pos) where
 namespace Internal
 
 /-- The nonzero quotient elements, as a concrete duplicate-free sublist of
-`elements`. -/
+{name}`elements`. -/
 @[expose]
 def nonzeroElements : List (Quotient g hmonic hg_pos) :=
   (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).filter
     (fun a => decide (a ≠ 0))
 
-/-- Membership in `nonzeroElements` is exactly nonzero quotient membership. -/
+/-- Membership in {name}`nonzeroElements` is exactly nonzero quotient membership. -/
 theorem mem_nonzeroElements (a : Quotient g hmonic hg_pos) :
     a ∈ nonzeroElements (g := g) (hmonic := hmonic) (hg_pos := hg_pos) ↔
       a ≠ 0 := by
@@ -679,8 +679,8 @@ theorem reduce_monomial_eq_const_mul_X_pow (n : Nat) (c : ZMod64 p) :
           rw [FpPoly.zero_add]
     _ = a := reduce_val_self a
 
-/-- Quotient addition is associative.  Together with `add_zero`, `zero_add`,
-`add_comm` and `add_left_neg` this supplies the additive-group axioms behind the
+/-- Quotient addition is associative. Together with {name}`add_zero`, {name}`zero_add`,
+{name}`add_comm` and {name}`add_left_neg` this supplies the additive-group axioms behind the
 `Field (Quotient g hmonic hg_pos)` instance. -/
 theorem add_assoc (a b c : Quotient g hmonic hg_pos) :
     (a + b) + c = a + (b + c) := by
@@ -997,8 +997,8 @@ def inv (a : Quotient g hmonic hg_pos) : Quotient g hmonic hg_pos :=
 instance : Inv (Quotient g hmonic hg_pos) where
   inv := inv
 
-/-- The inverse of `0` is `0`, the conventional junk value fixed by `inv`.  This
-is the `inv_zero` field axiom required by `Field`; it holds unconditionally and,
+/-- The inverse of `0` is `0`, the conventional junk value fixed by {name}`inv`. This
+is the {name}`inv_zero` field axiom required by `Field`; it holds unconditionally and,
 unlike `mul_inv_cancel`, needs no irreducibility hypothesis. -/
 theorem inv_zero :
     (0 : Quotient g hmonic hg_pos)⁻¹ = 0 := by
@@ -1013,8 +1013,10 @@ theorem inv_zero :
 
 /-- Multiplicative cancellation: when `g` is irreducible, every nonzero quotient
 element `a` satisfies `a * a⁻¹ = 1`.  This is the field-inverse axiom that
-promotes `Quotient g hmonic hg_pos` from a commutative ring to a `Field`; the
-`FpPoly.Irreducible g` hypothesis is essential, since for reducible `g` a nonzero
+promotes `Quotient g hmonic hg_pos` from a commutative ring to a
+{name (full:= Lean.Grind.Field)}`Field`; the
+{name}`Hex.FpPoly.Irreducible` hypothesis is
+essential, since for reducible `g` a nonzero
 zero-divisor has no inverse. -/
 theorem mul_inv_cancel (hg_irr : FpPoly.Irreducible g)
     {a : Quotient g hmonic hg_pos} (ha : a ≠ 0) :

@@ -19,8 +19,7 @@ uses fifteen block additions and subtractions. This file proves the schedule
 correct: the four result blocks it assembles equal the four blocks of the naive
 2×2 block product `mul`.
 
-The schedule is transcribed from `HexMatrix/SPEC/hex-matrix.md` §
-"The Winograd schedule":
+The schedule is:
 
     S₁ = A₂₁ + A₂₂    T₁ = B₁₂ − B₁₁
     S₂ = S₁ − A₁₁     T₂ = B₂₂ − T₁
@@ -40,10 +39,10 @@ The schedule is transcribed from `HexMatrix/SPEC/hex-matrix.md` §
 with output blocks `C₁₁ = U₁`, `C₁₂ = U₅`, `C₂₁ = U₆`, `C₂₂ = U₇`.
 
 The blocks share uniform dimensions: the four `A`-blocks are `Matrix R n m` and
-the four `B`-blocks are `Matrix R m k`. The heterogeneous split the SPEC's block
-partition wants (`Aᵢⱼ` of possibly different shapes) does *not* typecheck: the
+the four `B`-blocks are `Matrix R m k`. A heterogeneous split with differently
+shaped `Aᵢⱼ` blocks does *not* typecheck: the
 operand sum `S₁ = A₂₁ + A₂₂` adds two `A`-blocks, forcing their shapes to agree,
-and likewise for `T₁ = B₁₂ − B₁₁`. This matches the SPEC's own observation that
+and likewise for `T₁ = B₁₂ − B₁₁`. Thus
 the balanced schedule requires every dimension split exactly in half (equal
 quadrants), not `⌊n/2⌋`/`⌈n/2⌉`.
 -/

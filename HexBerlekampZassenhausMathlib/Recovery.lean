@@ -13,11 +13,9 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-Executable class-count semantics for the BHKS equivalence-class indicators
-(#8519).
+Executable class-count semantics for the BHKS equivalence-class indicators.
 
-Resurrected from the pre-#8411 `Recovery.lean` (6bf20977^), forward-count
-cluster only: the executable `bhksEquivalenceClassIndicators` array has size
+The executable `bhksEquivalenceClassIndicators` array has size
 equal to the RREF signature partition (`bhksEquivalenceClassIndicators_size_eq`),
 and — given the cut inclusion `W ⊆ L'` (`CutProjectionHypotheses`) — at least
 one class per true-support-equivalence class

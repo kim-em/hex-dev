@@ -109,7 +109,7 @@ theorem trimTrailingZerosList_length_le (coeffs : List R) :
         omega
 
 /-- Trimming leaves the list either empty or with a nonzero last entry; this is the list-level
-form of the `DensePolyNormalized` invariant. -/
+form of the {name}`DensePolyNormalized` invariant. -/
 theorem trimTrailingZerosList_normalized (coeffs : List R) :
     trimTrailingZerosList coeffs = [] ∨
       (trimTrailingZerosList coeffs).getLast? ≠ some (Zero.zero : R) := by
@@ -156,10 +156,10 @@ private theorem trimTrailingZerosList_append_ne_zero (L : List R) {v : R}
       unfold trimTrailingZerosList
       rw [ih]; simp
 
-/-- Normalize a coefficient array by discarding all trailing zeros. The compiled runtime
-uses the value-equal `trimTrailingZerosImpl` (proved by `trimTrailingZeros_eq_impl`,
-registered `@[csimp]`), which pops trailing zeros off the array in place instead of
-round-tripping through `coeffs.toList`. -/
+/-- Normalize a coefficient array by discarding all trailing zeros. The compiled
+runtime uses the value-equal in-place implementation below, registered through
+`@[csimp]`, which pops trailing zeros off the array instead of round-tripping
+through `coeffs.toList`. -/
 @[expose]
 noncomputable def trimTrailingZeros (coeffs : Array R) : Array R :=
   (trimTrailingZerosList coeffs.toList).toArray
@@ -203,7 +203,7 @@ private theorem trimTrailingZeros_pop (coeffs : Array R)
   unfold trimTrailingZeros
   rw [toList_eq_pop_append coeffs hb, trimTrailingZerosList_append_zero]
 
-/-- Runtime loop for `trimTrailingZeros`: pop trailing zeros off the array, up to `n` of
+/-- Runtime loop for {name}`trimTrailingZeros`: pop trailing zeros off the array, up to `n` of
 them. With `n = coeffs.size` it pops the whole trailing-zero run, reusing the input
 storage in place when it is uniquely referenced rather than allocating a list. -/
 @[expose]
@@ -212,8 +212,8 @@ def trimTrailingZerosGo (coeffs : Array R) : Nat → Array R
   | n + 1 =>
       if coeffs.back? = some (Zero.zero : R) then trimTrailingZerosGo coeffs.pop n else coeffs
 
-/-- Once the fuel `n` is at least the array size, `trimTrailingZerosGo` has popped the whole
-trailing-zero run and so agrees with `trimTrailingZeros`. -/
+/-- Once the fuel `n` is at least the array size, {name}`trimTrailingZerosGo` has popped the whole
+trailing-zero run and so agrees with {name}`trimTrailingZeros`. -/
 private theorem trimTrailingZerosGo_eq (n : Nat) :
     ∀ (coeffs : Array R), coeffs.size ≤ n →
       trimTrailingZerosGo coeffs n = trimTrailingZeros coeffs := by
@@ -231,14 +231,14 @@ private theorem trimTrailingZerosGo_eq (n : Nat) :
       · rw [if_pos hb, ih coeffs.pop (by rw [Array.size_pop]; omega), trimTrailingZeros_pop coeffs hb]
       · rw [if_neg hb, trimTrailingZeros_self coeffs hb]
 
-/-- Runtime implementation of `trimTrailingZeros`. -/
+/-- Runtime implementation of {name}`trimTrailingZeros`. -/
 @[expose]
 def trimTrailingZerosImpl (coeffs : Array R) : Array R :=
   trimTrailingZerosGo coeffs coeffs.size
 
-/-- Register the value-equal `trimTrailingZerosImpl` as the compiled implementation of
-`trimTrailingZeros`. Unlike `@[implemented_by]`, the `@[csimp]` swap is backed by the proof
-`trimTrailingZerosGo_eq`, so the runtime loop is verified equal to the specification. -/
+/-- Register the value-equal {name}`trimTrailingZerosImpl` as the compiled implementation of
+{name}`trimTrailingZeros`. Unlike `@[implemented_by]`, the `@[csimp]` swap is backed by the proof
+{name}`trimTrailingZerosGo_eq`, so the runtime loop is verified equal to the specification. -/
 @[csimp]
 theorem trimTrailingZeros_eq_impl : @trimTrailingZeros = @trimTrailingZerosImpl := by
   funext R _ _ coeffs
@@ -255,7 +255,7 @@ def ofCoeffs (coeffs : Array R) : DensePoly R :=
       simpa using trimTrailingZerosList_normalized (R := R) coeffs.toList }
 
 /-- `#p[a₀, a₁, ...]` constructs a dense polynomial whose coefficient of
-`xⁱ` is `aᵢ`. Trailing zero coefficients are removed by `ofCoeffs`. -/
+`xⁱ` is `aᵢ`. Trailing zero coefficients are removed by {name}`ofCoeffs`. -/
 syntax (name := densePolyLiteral) "#p[" term,* "]" : term
 
 macro_rules
@@ -377,9 +377,9 @@ the value at any index. -/
     (ofList coeffs).coeff n = coeffs.getD n (Zero.zero : R) := by
   simp [ofList, coeff_ofCoeffs]
 
-/-- List-level companion to `coeff_ofCoeffs`, retained as a compatibility alias for callers that
-construct lists explicitly before converting them to arrays. Prefer `coeff_ofList` when the
-caller-facing constructor is `ofList`. -/
+/-- List-level companion to {name}`coeff_ofCoeffs`, retained as a compatibility alias for callers that
+construct lists explicitly before converting them to arrays. Prefer {name}`coeff_ofList` when the
+caller-facing constructor is {name}`ofList`. -/
 @[simp, grind =] theorem coeff_ofCoeffs_list (coeffs : List R) (n : Nat) :
     (ofCoeffs coeffs.toArray).coeff n = coeffs.getD n (Zero.zero : R) := by
   simp
@@ -459,8 +459,8 @@ theorem size_eq_of_coeff_eq {p q : DensePoly R}
     exact False.elim (hp_ne h)
 
 /-- Extensionality for normalized dense polynomials by their coefficient functions. This is the
-preferred form of extensionality: it asks only for coefficient agreement, since size agreement
-is forced (via `size_eq_of_coeff_eq`). -/
+preferred form of extensionality: it asks only for coefficient agreement, since
+size agreement is forced by {name}`Hex.DensePoly.size_eq_of_coeff_eq`. -/
 @[ext] theorem ext_coeff {p q : DensePoly R}
     (hcoeff : ∀ i, p.coeff i = q.coeff i) :
     p = q := by
@@ -472,14 +472,14 @@ is forced (via `size_eq_of_coeff_eq`). -/
 sizes and equal coefficients at every stored index. Because `DensePoly` is
 normalized (no trailing zeros), this decides genuine equality, and unlike the
 structural `DecidableEq (DensePoly R)` — which delegates to the core
-`Array.instDecidableEqImpl` and does not kernel-reduce under the module system
+{name}`Array.instDecidableEqImpl` and does not kernel-reduce under the module system
 (see `progress/lean4-array-decidableeq-module-repro.md`) — it is a plain
 `Bool` fold that reduces on literal data under plain `public import`. -/
 @[expose]
 def beqCoeffs (a b : DensePoly R) : Bool :=
   a.size == b.size && (List.range a.size).all fun i => decide (a.coeff i = b.coeff i)
 
-/-- `beqCoeffs` is sound: a `true` result forces genuine polynomial equality. -/
+/-- {name}`beqCoeffs` is sound: a `true` result forces genuine polynomial equality. -/
 theorem eq_of_beqCoeffs {a b : DensePoly R} (h : beqCoeffs a b = true) : a = b := by
   unfold beqCoeffs at h
   rw [Bool.and_eq_true] at h
@@ -493,7 +493,7 @@ theorem eq_of_beqCoeffs {a b : DensePoly R} (h : beqCoeffs a b = true) : a = b :
     have hb : b.coeff i = 0 := coeff_eq_zero_of_size_le b (by omega)
     rw [ha, hb]
 
-/-- `beqCoeffs` decides equality: the checker returns `true` exactly on equal
+/-- {name}`beqCoeffs` decides equality: the checker returns `true` exactly on equal
 polynomials. -/
 theorem beqCoeffs_iff_eq {a b : DensePoly R} : beqCoeffs a b = true ↔ a = b := by
   constructor
@@ -526,7 +526,7 @@ def degree? (p : DensePoly R) : Option Nat :=
 @[simp, grind =] theorem degree?_zero_getD (d : Nat) : ((0 : DensePoly R).degree?).getD d = d := by
   simp
 
-/-- `isZero` is the Boolean test for having no stored coefficients. -/
+/-- {name}`isZero` is the Boolean test for having no stored coefficients. -/
 theorem isZero_eq_true_iff (p : DensePoly R) :
     p.isZero = true ↔ p.size = 0 := by
   simp [isZero, size]
@@ -544,7 +544,7 @@ empty. -/
   simp [C, ofCoeffs, trimTrailingZeros, trimTrailingZerosList]
 
 /-- A constant polynomial with a nonzero scalar stores a single-element coefficient array; this is
-the companion to `coeffs_C_zero` for the nonzero case. -/
+the companion to {name}`coeffs_C_zero` for the nonzero case. -/
 theorem coeffs_C_of_ne_zero {c : R} (hc : c ≠ (0 : R)) : (C c).coeffs = #[c] := by
   change c ≠ Zero.zero at hc
   simp [C, ofCoeffs, trimTrailingZeros, trimTrailingZerosList, hc]
@@ -622,7 +622,7 @@ theorem isZero_monomial_eq_false_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R
   intro hzero
   exact hc ((isZero_monomial_eq_true_iff n c).1 hzero)
 
-/-- The `degree?` of a constant polynomial, defaulted to `0`, is `0` regardless of the scalar:
+/-- The {name}`degree?` of a constant polynomial, defaulted to `0`, is `0` regardless of the scalar:
 either `degree? = none` (when `c = 0`) and `getD 0 = 0`, or `degree? = some 0` (otherwise). -/
 @[simp, grind =] theorem degree?_C_getD (c : R) : (C c).degree?.getD 0 = 0 := by
   by_cases hc : c = (0 : R)
@@ -670,7 +670,7 @@ theorem monomial_ne_zero_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :
 def support (p : DensePoly R) : List Nat :=
   (List.range p.size).filter fun i => p.coeff i ≠ (Zero.zero : R)
 
-/-- Membership in `support` is coefficient nonzeroness inside the stored range. -/
+/-- Membership in {name}`support` is coefficient nonzeroness inside the stored range. -/
 @[simp] theorem mem_support {p : DensePoly R} {i : Nat} :
     i ∈ p.support ↔ i < p.size ∧ p.coeff i ≠ (Zero.zero : R) := by
   simp [support]
@@ -738,7 +738,7 @@ coefficient function. -/
     p.toArray.getD n (Zero.zero : R) = p.coeff n := by
   rfl
 
-/-- Spec-level view of the stored coefficients as a list, lowest degree first.
+/-- View of the stored coefficients as a list, lowest degree first.
 `noncomputable` by design: kernel-facing specifications, theorem statements,
 and proofs read coefficients through this list view, while runtime code stays
 on the `Array` API. A deliberate runtime list round-trip spells out
@@ -747,7 +747,7 @@ on the `Array` API. A deliberate runtime list round-trip spells out
 noncomputable def toList (p : DensePoly R) : List R :=
   p.toArray.toList
 
-/-- The spec-level coefficient list has one entry per stored coefficient. -/
+/-- The coefficient list has one entry per stored coefficient. -/
 @[simp, grind =] theorem length_toList (p : DensePoly R) :
     p.toList.length = p.size := by
   simp [toList, toArray, size]
@@ -760,7 +760,7 @@ noncomputable def toList (p : DensePoly R) : List R :=
   rw [coeff_ofCoeffs]
   rfl
 
-/-- Building from the spec-level coefficient list reconstructs the same polynomial. -/
+/-- Building from the reference coefficient list reconstructs the same polynomial. -/
 @[simp, grind =] theorem ofList_toList (p : DensePoly R) :
     ofList p.toList = p := by
   simp [toList, ofList]

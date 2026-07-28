@@ -13,7 +13,7 @@ public section
 
 namespace Hex.RCF
 
-/-! ## Quantifier shapes -/
+/-! # Quantifier shapes -/
 
 example : ∀ x : ℝ, x ^ 2 ≥ 0 := by
   rcf
@@ -44,7 +44,7 @@ example : ∀ x : ℝ, x ∈ Set.Ioc (0 : ℝ) 1 → x ≤ 1 := by
 example : ∃ x : ℝ, x ∈ Set.Ioc (0 : ℝ) 1 ∧ x = 1 := by
   rcf
 
-/-! ## Comparisons, connectives, and rational normalization -/
+/-! # Comparisons, connectives, and rational normalization -/
 
 example : ∀ x : ℝ,
     (x < 0 ∨ x ≥ 0) ∧ (x ≤ 0 ∨ x > 0) ∧ (x = 0 ∨ x ≠ 0) := by
@@ -71,7 +71,7 @@ example : ∀ x : ℝ, x ^ 2 / 3 + 1 / 5 > 0 := by
 example : ∀ x : ℝ, x ^ 2 + 2 * x + 2 ≠ 0 := by
   rcf
 
-/-! ## Roots and half-open endpoint ownership -/
+/-! # Roots and half-open endpoint ownership -/
 
 example : ∃ x : ℝ, x ^ 3 - x - 1 = 0 ∧ 1 < x ∧ x < 2 := by
   rcf
@@ -94,7 +94,7 @@ example : ∀ x : ℝ, x ∈ Set.Ioc (1 : ℝ) 1 → x ^ 2 < 0 := by
 example : ∀ x : ℝ, x ∈ Set.Ioc (2 : ℝ) 1 → x ^ 2 < 0 := by
   rcf
 
-/-! ## False verdicts and clean fall-through -/
+/-! # False verdicts and clean fall-through -/
 
 /-- error: rcf: the universal sentence is false on the root cell isolated in (-2, 2] -/
 #guard_msgs in
@@ -128,7 +128,7 @@ example : ∃ x : ℝ, x ∈ Set.Ioc (2 : ℝ) 1 ∧ x = x := by
 example : (0 : ℝ) < 1 := by
   first | rcf | norm_num
 
-/-! ## Out-of-fragment diagnostics -/
+/-! # Out-of-fragment diagnostics -/
 
 variable (a : ℝ)
 

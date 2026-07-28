@@ -16,7 +16,7 @@ universe u
 namespace Matrix
 variable {α : Type u}
 
-/-! ### Adjugate matrix and `M * adjugate M = det M • 1`
+/-! # Adjugate matrix and `M * adjugate M = det M • 1`
 
 The local adjugate matrix is the transpose of the cofactor matrix. The
 defining property is `(M * adjugate M)[i][j] = det M * δᵢⱼ`, which we
@@ -274,7 +274,7 @@ the leading prefix minor obtained by deleting the last row and column. -/
   rw [adjugate_get]
   exact cofactor_last_last M
 
-/-! ### Multiplicativity helpers
+/-! # Multiplicativity helpers
 
 These private helpers prove determinant multiplicativity for Hex.det. -/
 
@@ -394,7 +394,7 @@ theorem det_mul
         (Matrix.identity (R := R) n) N.transpose]
   rw [← eq_columnSumMatrix_one_transpose N]
 
-/-! ### Two-row replacement determinant Plucker kernel
+/-! # Two-row replacement determinant Plucker kernel
 
 The square-matrix two-row determinant Plucker identity: replacing distinct
 rows `a` and `b` of an `(n+1) × (n+1)` matrix `M` by vectors `u` and `v` is

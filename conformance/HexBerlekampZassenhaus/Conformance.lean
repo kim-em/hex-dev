@@ -12,7 +12,7 @@ Berlekamp-Zassenhaus pipeline.
 
 Oracle: python-flint for the external JSONL factorization profile; core uses
 Lean-only property and committed-fixture checks.
-Mode: if_available
+Mode: `if_available`
 Covered operations:
 - `isGoodPrime`, `choosePrime`, and `choosePrimeData?`
 - `normalizeForFactor`, `normalizationPrefixFactors`, and
@@ -168,13 +168,11 @@ private def negativeRepeatedRootWithContent : ZPoly :=
 private def leadingCoeffDivisibleByFive : ZPoly :=
   zpoly #[1, 1, 5]
 
-/-! ## Adversarial modular split cases (HO-2, #2565)
+/-! # Adversarial modular split cases
 
-These named polynomials exercise the SPEC-required shapes from
-`SPEC/Libraries/hex-berlekamp-zassenhaus.md` §"Conformance fixtures":
-at least one input where the integer factors require a non-trivial subset
-product of lifted mod-p factors, and at least one input that splits heavily
-(≥ 4 distinct mod-p factors) over a small admissible prime.
+These named polynomials cover an input whose integer factors require a
+non-trivial subset product of lifted mod-p factors and inputs that split into
+at least four distinct mod-p factors over a small admissible prime.
 
 The Lean-only guards below check the local modular split facts and, where
 the executable BHKS recovery surface exposes it, the recombined integer
@@ -392,18 +390,16 @@ private def factorizationCaseMatches (c : FactorizationCase) : Bool :=
   | none => false
   | some data => 3 <= data.p
 
-/-! ### Extended-search cascade (HO-5d-3, #5819)
+/-! # Extended prime search
 
-The `(x-1)(x-2)…(x-n)` cascade exhausts the historical fixed prefix once
-`n ≥ 72`, because then every old prefix prime had a colliding residue pair
-somewhere in `{1, ..., n}` and the modular image failed the square-free
-predicate. Materializing the degree-72 input via `fromRoots` in kernel
-reduction time is prohibitively slow (~10 minutes of `#guard` cost), so the
-fixture instead uses the engineered degree-2 cascade
-`(x - 1)(x - (1 + D))` with `D = product p` over the old fixed-list primes
-`p ∈ {3, 5, 7, 11, 13, 17, 19, 23, 31, 71}`. The expanded SPEC prefix now
-includes `29`, and `D mod 29 ≠ 0`, so `choosePrimeData?` reaches the new
-candidate instead of falling through to the post-prefix range.
+The `(x-1)(x-2)…(x-n)` cascade has colliding residue pairs at many small
+primes, so those modular images fail the square-free predicate. Materializing
+the degree-72 input via `fromRoots` in kernel reduction time is prohibitively
+slow, so the fixture instead uses the engineered quadratic
+`(x - 1)(x - (1 + D))`, where `D` is the product of
+`{3, 5, 7, 11, 13, 17, 19, 23, 31, 71}`. Each of those primes divides `D`,
+while `D mod 29 ≠ 0`, so `choosePrimeData?` continues the search and selects
+an admissible prime.
 -/
 
 /-- Product of the fixed-list primes, used to engineer the extended-
@@ -631,7 +627,7 @@ recovered true factor.
 #guard !checkIrreducibleCert (zpoly #[2, 0, 1]) certMissingObstruction
 #guard !checkIrreducibleCert (zpoly #[1, -3, 2]) certValidQuad
 
-/-! ### Compiled certificate generators (#8552)
+/-! # Compiled certificate generators
 
 The generators are the compiled *prep* half of certifying irreducibility. They
 carry no soundness proof; the round-trip guards below confirm that whatever they
@@ -645,9 +641,9 @@ the generator output). The complementary *kernel* replay — reducing the checke
 on literal certificate data under `decide` — is demonstrated for the
 finite-field layer by `validQuadCert_linear_check` in
 `conformance/HexBerlekamp/Conformance.lean`, and for the integer checker by
-the `irreducible_cert` tactic (#8566, Part 2 of #8552): the tactic reifies
-generator output as literal data at elaboration time and lets the kernel
-reduce `checkIrreducibleCertLinear`; its end-to-end tests live in
+the `irreducible_cert` tactic: it reifies generator output as literal data at
+elaboration time and lets the kernel reduce `checkIrreducibleCertLinear`; its
+end-to-end tests live in
 `HexBerlekampZassenhausMathlib/IrreducibleCertTest.lean`. The `Linear`
 round-trip guards below pin the compiled form of exactly the check the kernel
 replays. -/

@@ -37,7 +37,7 @@ underlying Rabin's test.
 def xPowSubX (k : Nat) : FpPoly p :=
   DensePoly.monomial (p ^ k) (1 : ZMod64 p) - FpPoly.X
 
-/-! ### Prime-field linear product -/
+/-! # Prime-field linear product -/
 
 /-- The executable product `∏ c ∈ F_p, (X - c)` over canonical residues. -/
 def primeFieldLinearProduct : FpPoly p :=
@@ -98,7 +98,7 @@ theorem primeFieldLinearFactor_dvd_primeFieldLinearProduct (c : ZMod64 p) :
     (ZMod64.values p).length = p :=
   ZMod64.values_length (p := p)
 
-/-! ### CRT representatives for Berlekamp completeness -/
+/-! # CRT representatives for Berlekamp completeness -/
 
 /--
 The zero-one CRT representative used to separate a coprime product
@@ -372,11 +372,10 @@ section
 
 variable [ZMod64.PrimeModulus p]
 
-/-! ### Foundational lemmas
+/-! # Foundational lemmas
 
-The following declarations are stated with proofs deferred to their own
-follow-up issues. Every other declaration in this file is a small
-orchestration step on top of them. -/
+The following declarations provide the algebraic facts used by the
+orchestration steps later in this file. -/
 
 /-- Divisibility by `f` is equivalent to a zero canonical remainder. -/
 theorem dvd_iff_mod_eq_zero (f q : FpPoly p) :
@@ -1564,8 +1563,8 @@ theorem pos_degree_of_ne_zero_of_not_isUnit
 
 /--
 The degree of a factor `a` is strictly less than the degree of `f` whenever
-the cofactor `b` has positive degree. Phrased relative to `basisSize` to
-match the Berlekamp / Rabin scaffolding.
+the cofactor `b` has positive degree. The bound is phrased relative to
+`basisSize`, as required by the Berlekamp and Rabin proofs.
 -/
 theorem factor_degree_lt_basisSize
     {f a b : FpPoly p}

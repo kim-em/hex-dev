@@ -37,12 +37,12 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-This module collects the non-circular lift-stage subset-uniqueness core (#7474).
+This module collects the non-circular lift-stage subset-uniqueness core.
 -/
 
 namespace HexBerlekampZassenhausMathlib
 
-/-! ### Non-circular lift-stage subset-uniqueness core (#7474)
+/-! # Non-circular lift-stage subset-uniqueness core
 
 The lemmas below establish, for `d := Hex.ZPoly.toMonicLiftData core B primeData`
 on a non-monic `core` with positive leading coefficient and a prime selected by

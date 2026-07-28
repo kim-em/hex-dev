@@ -349,11 +349,10 @@ private theorem expandRepeatedPartFactorArray_singleton_one (rp : ZPoly) :
       ((#[] : Array ZPoly), rp).2) = (#[], rp)
   simp
 
-/-- **#4603 HO-1 support lemma — irreducibility/non-associate translation.** Two
-irreducible integer polynomials that are not associated do not divide one
+/-- Two irreducible integer polynomials that are not associated do not divide one
 another: if `q₁` divides `q₂` and both are irreducible, the irreducibility
 decomposition `q₂ = q₁ * w` forces either `q₁` or `w` to be a unit, and the
-first case contradicts `Irreducible q₁`. Used by downstream HO-1 dischargers
+first case contradicts `Irreducible q₁`. Used by downstream dischargers
 to translate the Mathlib structural fact's "pairwise non-associate
 irreducible factors" condition into the direct non-divisibility hypothesis
 consumed by `expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition`. -/
@@ -397,8 +396,8 @@ private theorem consumeExactPower_eq_self_zero_of_not_dvd
       unfold consumeExactPower
       rw [exactQuotient?_eq_none_of_not_dvd hnot_dvd]
 
-/-- **#4603 HO-1 support lemma — single-factor expansion helper.** For a monic
-positive-degree integer polynomial `q` that does not divide a residual `r`,
+/-- For a monic positive-degree integer polynomial `q` that does not divide a
+residual `r`,
 the greedy `consumeExactPower` on `q ^ k * r` extracts exactly `k` copies of
 `q` and returns `r` as the residual, provided the fuel covers `k + 1`
 iterations. The monic positive-degree hypothesis is what makes
@@ -441,18 +440,16 @@ private theorem consumeExactPower_pow_mul_of_not_dvd
           simp only
           rw [ih fuel' hfuel']
 
-/-- **#4778 HO-1 support lemma — non-monic single-factor expansion helper.**
-Non-monic analogue of `consumeExactPower_pow_mul_of_not_dvd`: drops the
+/-- Non-monic analogue of `consumeExactPower_pow_mul_of_not_dvd`: drops the
 `Monic q` hypothesis in favour of `0 < leadingCoeff q`, routing the
 divisibility-extraction step through
-`exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq` (the non-monic
-companion of `exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree`,
-landed via #4773 → #4774). Used by
+`exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq`, the non-monic
+companion of `exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree`. Used by
 `expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decomposition_of_pos_lc`
 to handle quadratic-arm core factors emitted by
 `quadraticIntegerRootFactors?` that are primitive, positive-leading, but
-non-monic (e.g. the `2X + 3` residual from `(X-1)(2X+3) = 2X^2 + X - 3`).
-Dependency chain: #4773 → #4774 → this. -/
+non-monic (e.g. the `2X + 3` residual from
+`(X-1)(2X+3) = 2X^2 + X - 3`). -/
 private theorem consumeExactPower_pow_mul_of_not_dvd_of_pos_lc
     (q r : ZPoly) (k : Nat)
     (hq_pos_lc : 0 < DensePoly.leadingCoeff q)
@@ -486,8 +483,7 @@ private theorem consumeExactPower_pow_mul_of_not_dvd_of_pos_lc
           simp only
           rw [ih fuel' hfuel']
 
-/-- **#4603 HO-1 support lemma — list-level pow-decomposition expansion helper.**
-Given a list of monic positive-degree polynomials and a matching list of
+/-- Given a list of monic positive-degree polynomials and a matching list of
 exponents, if the running residual `rp` factors as
 `(∏ (qᵢ, eᵢ) ∈ pairs, qᵢ ^ eᵢ)` and each head factor fails to divide its
 suffix product (the "tail non-divisibility" prefix witness), then
@@ -576,17 +572,16 @@ private theorem expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decompositio
           exact ih es tailProduct fuel hlen' hmonic' hdegree'
             hnot_dvd_tail' htail_def hfuel'
 
-/-- **#4778 HO-1 support lemma — non-monic list-level pow-decomposition expansion
-helper.** Non-monic analogue of
+/-- Non-monic analogue of
 `expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decomposition`: replaces
 the per-factor `Monic q` hypothesis by `0 < leadingCoeff q`, routing the
-single-factor extraction through `consumeExactPower_pow_mul_of_not_dvd_of_pos_lc`
-(which itself uses `exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq` from
-the #4773 → #4774 dependency chain). Used by the public array-level surface
+single-factor extraction through
+`consumeExactPower_pow_mul_of_not_dvd_of_pos_lc`, which itself uses
+`exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq`. Used by the public array-level surface
 `expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`,
-which is the quadratic-arm discharger
-`reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` (#4747
-residual) precondition that needs to admit a non-monic primitive
+which supplies a precondition of
+`reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` and needs
+to admit a non-monic primitive
 positive-leading core factor such as `2X + 3`. -/
 private theorem expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decomposition_of_pos_lc :
     ∀ (coreFactors : List ZPoly) (exponents : List Nat) (rp : ZPoly) (fuel : Nat),
@@ -668,19 +663,18 @@ private theorem expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decompositio
           exact ih es tailProduct fuel hlen' hpos_lc' hdegree'
             hnot_dvd_tail' htail_def hfuel'
 
-/-- **#4603 HO-1 support lemma — array-level pow-decomposition expansion helper.**
-Public surface for `expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decomposition`
+/-- Array-level power-decomposition expansion helper.
+This is the array form of `expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decomposition`
 that targets `expandRepeatedPartFactorArray` directly. Given a list of monic
 positive-degree core factors, a matching list of exponents, a head-product
 decomposition `rp = ∏ qᵢ ^ eᵢ`, and pairwise tail-non-divisibility for each
 head factor relative to the suffix product, the greedy expansion completely
-consumes `rp` and reports residual `1`. The downstream discharger
-`reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` (HO-1
-support-lemma sub-issue C) supplies the structural decomposition (Mathlib-side,
-from sub-issue #4602) and uses this helper to conclude
-`reassemblyExpansionComplete` on the quadratic arms. Compare the small-mod
-singleton sibling `expandRepeatedPartFactorArray_pow_singleton` (#4597
-deliverable 2), which specialises this shape to a single irreducible. -/
+consumes `rp` and reports residual `1`. The downstream theorem
+`reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` supplies
+the Mathlib-side structural decomposition and uses this helper to conclude
+`reassemblyExpansionComplete` for quadratic inputs. The singleton theorem
+`expandRepeatedPartFactorArray_pow_singleton` specializes this shape to one
+irreducible factor. -/
 theorem expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition
     (rp : ZPoly) (coreFactors : Array ZPoly)
     (hmonic : ∀ q ∈ coreFactors.toList, DensePoly.Monic q)
@@ -739,8 +733,7 @@ theorem expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decompositi
     simpa [Factorization.factorPower] using hnot_dvd_tail pre q e suf hsplit
   · simpa [Factorization.factorPower] using hdecomp
 
-/-- **#4778 HO-1 support lemma — non-monic array-level pow-decomposition expansion
-helper.** Non-monic analogue of
+/-- Non-monic analogue of
 `expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition`:
 replaces the per-factor `Monic q` hypothesis by `0 < leadingCoeff q`,
 delegating to the list-level non-monic helper
@@ -749,8 +742,7 @@ Intermediate between the list-level proof and the public-API factorPower
 wrapper below; used by
 `expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`
 (the surface used by the quadratic-arm discharger
-`reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`,
-#4747 residual). Dependency chain: #4773 → #4774 → here. -/
+`reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`). -/
 theorem expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition_of_pos_lc
     (rp : ZPoly) (coreFactors : Array ZPoly)
     (hpos_lc : ∀ q ∈ coreFactors.toList, 0 < DensePoly.leadingCoeff q)
@@ -776,16 +768,15 @@ theorem expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition_of_po
     coreFactors.toList exponents rp (rp.size + 1)
     hlen' hpos_lc hdegree hnot_dvd_tail hdecomp hfuel
 
-/-- **#4778 HO-1 support lemma — non-monic public `factorPower` array-level
-expansion-complete surface.** Non-monic analogue of
+/-- Non-monic analogue of
 `expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition`:
 replaces the per-factor `Monic q` hypothesis by `0 < leadingCoeff q`, exposing
 the contract using `Factorization.factorPower` (the public-API power operation
 referenced by Mathlib-side assemblers). Consumed by the quadratic-arm
 discharger `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
-(#4747 residual) when the core factor emitted by `quadraticIntegerRootFactors?`
+when the core factor emitted by `quadraticIntegerRootFactors?`
 is primitive and positive-leading but non-monic (e.g. the `2X + 3` residual
-from `(X-1)(2X+3) = 2X^2 + X - 3`). Dependency chain: #4773 → #4774 → here. -/
+from `(X-1)(2X+3) = 2X^2 + X - 3`). -/
 theorem expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc
     (rp : ZPoly) (coreFactors : Array ZPoly)
     (hpos_lc : ∀ q ∈ coreFactors.toList, 0 < DensePoly.leadingCoeff q)
@@ -813,7 +804,7 @@ theorem expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decompositi
 
 /-- An irreducible `ZPoly` does not divide the unit `1`. Used by the small-mod
 singleton arm specialisation `expandRepeatedPartFactorArray_pow_singleton`
-(#4597 deliverable 2) to discharge the wrapper's tail-non-divisibility
+to discharge the wrapper's tail-non-divisibility
 precondition for the singleton case, where the suffix product collapses to
 `1` and the only obligation is `¬ q ∣ 1`. The proof is a direct size argument:
 `size_le_of_dvd_nonzero` would force `q.size ≤ 1`, but irreducibility (via the
@@ -868,19 +859,14 @@ private theorem irreducible_not_dvd_one {q : ZPoly}
   · left; rw [hq_eq, h]
   · right; rw [hq_eq, h]
 
-/-- **#4597 HO-1 support lemma — small-mod singleton arm expansion specialisation.**
-Singleton specialisation of
+/-- Singleton expansion specialization of
 `expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition`:
 when the repeated part `rp` is the `k`-th `Hex.Factorization.factorPower` of an
 irreducible monic positive-degree `q`, expanding against the singleton core
 `#[q]` consumes the repeated part exactly, emitting `k` copies of `q` and
-reporting residual `1`. Used by the small-mod singleton arm public wrapper
-`factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData`
-(#4564 / PR #4581) via the public discharger
-`Hex.reassemblyExpansionComplete_singleton_of_irreducible` (#4597
-deliverable 3). Sibling specialisations: constant arm
-`reassemblyExpansionComplete_constant_of_ne_zero` (#4585 / PR #4598);
-quadratic arm tracked by #4747. -/
+reporting residual `1`. It feeds the public discharger
+`Hex.reassemblyExpansionComplete_singleton_of_irreducible`; the corresponding
+constant-input theorem is `reassemblyExpansionComplete_constant_of_ne_zero`. -/
 theorem expandRepeatedPartFactorArray_pow_singleton
     (q : ZPoly) (k : Nat)
     (hq_monic : DensePoly.Monic q)
@@ -908,21 +894,20 @@ theorem expandRepeatedPartFactorArray_pow_singleton
   unfold expandRepeatedPartFactorsAux
   simp
 
-/-- **#4955 support lemma — non-monic singleton arm expansion specialisation.**
-Non-monic counterpart of `expandRepeatedPartFactorArray_pow_singleton`:
+/-- Non-monic counterpart of `expandRepeatedPartFactorArray_pow_singleton`:
 replaces the `Monic q` premise by `0 < leadingCoeff q`, with a
 **weakened conclusion** — only the residual projection `.2 = 1`, not the
 full pair. The full-pair version has no non-monic counterpart at the
 executable layer (`consumeExactPower_pow_mul_of_not_dvd` is genuinely
 monic-only; under non-monic `q`, the recursive `consumeExactPower` step's
 quotient is not in general a power of `q`, even if the residual collapses
-to `1`). The residual-only form suffices for the mid-layer
+to `1`). The residual-only form suffices for the
 `_of_pos_lc` sibling of
-`reassemblyExpansionComplete_singleton_of_irreducible` (#4956), which
+`reassemblyExpansionComplete_singleton_of_irreducible`, which
 unfolds `reassemblyExpansionComplete` to `(expand ...).2 = 1`. The
 proof routes through the array-level public surface
 `expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`
-(#4778) specialised to `coreFactors = #[q]`, `exponents = [k]`. -/
+specialised to `coreFactors = #[q]`, `exponents = [k]`. -/
 theorem expandRepeatedPartFactorArray_pow_singleton_of_pos_lc
     (q : ZPoly) (k : Nat)
     (hq_pos_lc : 0 < DensePoly.leadingCoeff q)

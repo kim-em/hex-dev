@@ -51,7 +51,7 @@ checked against. See {ref "hex-gf2-cross-references"}[Cross-references].
 tag := "hex-gf2-words"
 %%%
 
-A `GF2Poly` is an array of 64-bit words carrying a normalization
+A {name}`Hex.GF2Poly` is an array of 64-bit words carrying a normalization
 invariant: bit `j` of word `i` is the coefficient of `x^(64·i + j)`,
 and the array stores no trailing zero word, so equal polynomials have
 equal word arrays.
@@ -121,7 +121,7 @@ representation supports a direct shift-and-XOR division.
 
 {docstring Hex.GF2Poly.divMod}
 
-The Euclidean algorithm built on `divMod` gives both the plain gcd and
+The Euclidean algorithm built on {name}`Hex.GF2Poly.divMod` gives both the plain gcd and
 its extended form, which additionally returns the Bézout cofactors.
 
 {docstring Hex.GF2Poly.gcd}
@@ -144,7 +144,7 @@ field. {name}`Hex.GF2n` is the single-word wrapper for `GF(2ⁿ)` with
 monic degree-`n` modulus, and the type carries the irreducibility proof
 of that modulus so only genuine fields can be formed.
 {name}`Hex.GF2nPoly` is the arbitrary-degree counterpart, backed by a
-full `GF2Poly` rather than a single word. Both expose the field
+full {name}`Hex.GF2Poly` rather than a single word. Both expose the field
 operations (addition, multiplication, inverse, division) and a
 square-and-multiply exponentiation {name}`Hex.GF2n.pow`.
 
@@ -238,7 +238,7 @@ also commits machine-checked certificates: a
 {name}`Hex.GF2Poly.IrreducibilityCertificate` packages the
 Frobenius-residue chain and Bézout witnesses, and
 {name}`Hex.GF2Poly.checkIrreducibilityCertificate` verifies one with
-`checkIrreducibilityCertificate_imp_irreducible` as its soundness
+{name}`Hex.GF2Poly.checkIrreducibilityCertificate_imp_irreducible` as its soundness
 target. The committed cryptographic moduli (the AES modulus and its
 siblings) are proved this way, none of them through `native_decide`.
 
@@ -258,7 +258,7 @@ Where `HexGF2` fits in the executable DAG:
   packed word layout and carry-less multiply apply.
 * `HexGF2` is consumed by the finite-field constructors that build on
   it (the packed characteristic-two entries of the `GFq` constructors),
-  which reuse its `GF2n`/`GF2nPoly` wrappers and committed
+  which reuse its {name}`Hex.GF2n` and {name}`Hex.GF2nPoly` wrappers and committed
   irreducibility certificates.
 * `HexGF2` is Mathlib-free. The Mathlib correspondence for the `GF(2ⁿ)`
   field theory is provided by the `*Mathlib` counterparts of the

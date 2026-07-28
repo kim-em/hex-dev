@@ -73,7 +73,7 @@ private theorem toReal_sub (a b : Dyadic) :
     Dyadic.toReal (a - b) = Dyadic.toReal a - Dyadic.toReal b := by
   unfold Dyadic.toReal; rw [Dyadic.toRat_sub]; push_cast; ring
 
-/-! ### Additivity of the Sturm count across a midpoint -/
+/-! # Additivity of the Sturm count across a midpoint -/
 
 /-- **Sturm count is additive across a splitting point.** For a positive-degree
 squarefree `p` and `lo < mid < hi`, the count over `(lo, hi]` is the sum of the
@@ -133,7 +133,7 @@ private theorem no_root_of_count_zero (hdeg : 1 ≤ (p.degree?).getD 0)
   have hpos := Multiset.card_pos_iff_exists_mem.mpr ⟨r, hmem⟩
   omega
 
-/-! ### Refinement preserves the isolated root -/
+/-! # Refinement preserves the isolated root -/
 
 /-- **One refinement step preserves the root and halves the width.** For a
 squarefree `p`, `iso.refine1` isolates the same real root as `iso` (a root lies
@@ -222,7 +222,7 @@ theorem refine1_isolates_same (hp : Hex.ZPoly.SquareFreeRat p)
         exact ⟨lt_trans htlm hrlo, hrhi⟩
     · rw [href]; exact hwidth_right
 
-/-! ### The initial interval carries all roots: `±rootBound` counts `rootCount` -/
+/-! # The initial interval carries all roots: `±rootBound` counts `rootCount` -/
 
 /-- `Dyadic.toReal` is negation-compatible. -/
 private theorem toReal_neg (x : Dyadic) : Dyadic.toReal (-x) = -Dyadic.toReal x := by
@@ -329,7 +329,7 @@ theorem initial_width_le (p : Hex.ZPoly) (hdeg : 1 ≤ (p.degree?).getD 0) :
   have hslack : (0 : ℤ) ≤ (Hex.depthSlack : ℤ) := by positivity
   linarith
 
-/-! ### The `sturmVisit` worklist drains -/
+/-! # The `sturmVisit` worklist drains -/
 
 /-- Dyadic `≤` is reflexive (routed through `toRat`, staying in the core
 instances that `DyadicInterval` uses). -/
@@ -642,7 +642,7 @@ private theorem isolateSturm?_eq {d : Nat} (hd : p.degree? = some (d + 1))
   rw [if_pos hp]
   rfl
 
-/-! ### Driver completeness -/
+/-! # Driver completeness -/
 
 /-- The positive-degree core of `isolateSturm?_isSome`: the worklist drains
 (`sturmVisit_spec`) and the emitted total matches
@@ -694,8 +694,8 @@ private theorem isolateSturm?_isSome_of_degree_zero (hd : p.degree? = some 0) :
 is the real content (`isolateSturm?_isSome_of_degree_pos`); a nonzero constant
 certifies through the empty chain.
 
-The SPEC states this with only `SquareFreeRat p`; the `p ≠ 0` hypothesis is
-added because `SquareFreeRat 0` is vacuous while `isolateSturm? 0 = none`. -/
+The `p ≠ 0` hypothesis is necessary because `SquareFreeRat 0` is vacuous while
+`isolateSturm? 0 = none`. -/
 theorem isolateSturm?_isSome (p : Hex.ZPoly) (hp0 : p ≠ 0)
     (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.isolateSturm? p).isSome := by
   rcases hd : p.degree? with _ | n

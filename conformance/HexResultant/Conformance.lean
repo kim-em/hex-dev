@@ -11,7 +11,7 @@ Core conformance checks for `HexResultant`.
 
 Oracle: python-flint (`fmpz_poly.resultant` and `fmpz_poly.discriminant`),
 with cypari2 as a secondary implementation for the external JSONL profile.
-Mode: if_available.
+Mode: `if_available`.
 
 Covered operations:
 - `exactDiv`, `powNat`, `divExp`, and `DensePoly.divScalar`;
@@ -67,7 +67,7 @@ private def strictTail (chain : Array (DensePoly Int)) : Bool :=
     let i := offset + 1
     (chain.getD (i + 1) 0).size < (chain.getD i 0).size
 
-/-! ## Exact-division helpers -/
+/-! # Exact-division helpers -/
 
 #guard exactDiv (12 : Int) 3 = 4
 #guard exactDiv (-21 : Int) 7 = -3
@@ -85,7 +85,7 @@ private def strictTail (chain : Array (DensePoly Int)) : Bool :=
 #guard coeffs (divScalar (poly [6, -3, 9]) (0 : Int)) = []
 #guard coeffs (divScalar (poly [12, 0, -6]) (-3 : Int)) = [-4, 0, 2]
 
-/-! ## Pseudo-division -/
+/-! # Pseudo-division -/
 
 -- Typical nonmonic division: `4*(X^2+1) = (2X-1)*(2X+1)+5`.
 #guard
@@ -113,7 +113,7 @@ private def strictTail (chain : Array (DensePoly Int)) : Bool :=
   let g := poly [1, 1]
   pseudoDivMod f g = (0, f)
 
-/-! ## Brown chain -/
+/-! # Brown chain -/
 
 #guard
   let f := poly [1, 0, 1]
@@ -141,7 +141,7 @@ private def strictTail (chain : Array (DensePoly Int)) : Bool :=
   chainCoeffs run.chain =
     [[2, 1, 0, 2, 2], [1, 0, 0, 2], [4]] && run.scale = 16
 
-/-! ## Resultant -/
+/-! # Resultant -/
 
 -- Linear evaluation gives `resultant (X-a) (X-b) = a-b`.
 #guard
@@ -180,7 +180,7 @@ private def strictTail (chain : Array (DensePoly Int)) : Bool :=
   let g : DensePoly (DensePoly Int) := ofList [0 - t, one]
   resultant f g = t * t - t
 
-/-! ## Discriminant -/
+/-! # Discriminant -/
 
 -- The independently stated quadratic formula is checked on three inputs.
 #guard

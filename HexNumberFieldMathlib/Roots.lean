@@ -14,7 +14,7 @@ public section
 /-!
 # Correctness of algebraic root APIs
 
-This module gives `RootSet` a semantic interface independent of structural
+This module gives {name}`Hex.RootSet` a semantic interface independent of structural
 equality on algebraic roots, then states completeness, multiplicity, and
 normal-form contracts for both fixed-field and algebraic-coefficient drivers.
 -/
@@ -33,7 +33,7 @@ root set of the zero polynomial. -/
 
 /-- The recorded multiplicity of a complex value, or zero when it is absent.
 The `.all` case also returns zero, matching Mathlib's convention for
-`Polynomial.rootMultiplicity` of the zero polynomial. -/
+{name}`Polynomial.rootMultiplicity` of the zero polynomial. -/
 @[expose]
 noncomputable def multiplicityOf (roots : RootSet) (z : ℂ) : Nat := by
   classical

@@ -28,8 +28,8 @@ emitted terms.
 namespace Hex
 
 /-- A certified irreducible factorization of `P : Polynomial R`; Mathlib-side
-counterpart of `FpPoly.Factored`/`ZPoly.Factored`. Produced by the
-`factor_poly` elaborator via the Mathlib bridge providers. -/
+counterpart of `FpPoly.Factored` and `ZPoly.Factored`.
+Produced by the `factor_poly` elaborator via the Mathlib bridge providers. -/
 structure FactoredPoly {R : Type*} [CommRing R] (P : Polynomial R) where
   /-- The scalar factored out of `P`: over a finite field the leading unit of
   nonzero `P`; over `ℤ` the signed content. -/

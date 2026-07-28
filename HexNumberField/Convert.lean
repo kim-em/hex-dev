@@ -19,7 +19,8 @@ Canonical fixed-presentation conversion and exactification of lazy roots.
 Exactification factors the enclosing squarefree polynomial, rechecks each
 factor's executable normalization certificates, isolates its roots, and keeps
 the unique factor isolation whose disc meets the input representative. The
-selected factor is finally passed through `AlgebraicNumber.ofNormalized?`, so
+selected factor is finally passed through
+{name}`Hex.AlgebraicNumber.ofNormalized?`, so
 the stored representative follows the library's deterministic canonical
 isolation strategy.
 -/
@@ -189,7 +190,7 @@ namespace QAdjoin
 
 variable {p : ZPoly} {x : SimpleRoot p}
 
-/-! ## Fixed-presentation minimal polynomials -/
+/-! # Fixed-presentation minimal polynomials -/
 
 /-- Matrix of multiplication by `a` in the power basis
 `1, X, ..., X^(degree p - 1)`. -/

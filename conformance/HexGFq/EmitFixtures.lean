@@ -208,7 +208,7 @@ underlying array is canonical. -/
 private def fp2Coeffs (f : FpPoly 2) : List Int :=
   f.toArray.toList.map (fun c => Int.ofNat c.toNat)
 
-/-! ## Per-degree case bundles
+/-! # Per-degree case bundles
 
 Each namespace fixes a known irreducible packed modulus, packages the
 matching generic `FpPoly 2` modulus via `Conway.packedGF2FpPoly`, and

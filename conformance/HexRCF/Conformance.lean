@@ -38,7 +38,7 @@ non-polynomial functions, variable division, and unsupported closed intervals.
 
 namespace Hex.RCF.Conformance
 
-/-! ## Public tactic contract -/
+/-! # Public tactic contract -/
 
 example : ∀ x : ℝ, x ^ 2 + 1 > 0 := by rcf
 example : ∀ x : ℝ, 0 ≤ x → x ^ 3 + x ≥ 0 := by rcf
@@ -95,7 +95,7 @@ private def checked (sentence : Sentence) (expected : Bool) : Bool :=
 #guard checked rootExists true
 #guard checked constantFalse false
 
-/-! ## Fail-closed arithmetic replay -/
+/-! # Fail-closed arithmetic replay -/
 
 private def one : ZPoly := poly [1]
 private def zX : ZPoly := poly [0, 1]
@@ -169,7 +169,7 @@ private def common : CommonRootCert where
 #guard !({ common with atomFactor := zX }).check quad quad
 #guard !({ common with atomCoeff := 0 }).check quad quad
 
-/-! ## Stable refusal and false-verdict diagnostics -/
+/-! # Stable refusal and false-verdict diagnostics -/
 
 /-- error: rcf: more than one variable or a nested quantifier is unsupported -/
 #guard_msgs in

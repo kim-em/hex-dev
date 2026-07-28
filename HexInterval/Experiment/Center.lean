@@ -31,7 +31,7 @@ system.  All data are untrusted: `checkFixture` recomputes topology, the exact
 
 namespace Hex.Interval.Experiment.Center
 
-/-! ## Typed expression program -/
+/-! # Typed expression program -/
 
 /-- Domain tag for the provisional typed expression language. -/
 inductive Ty where
@@ -82,7 +82,7 @@ def check (program : Program) : Bool := checkFrom 0 program
 
 end Program
 
-/-! ## Trusted structural budgets -/
+/-! # Trusted structural budgets -/
 
 /-- Trusted bounds on every untrusted certificate collection and on generated
 expression depth. These are separate from endpoint arithmetic limits. -/
@@ -103,7 +103,7 @@ def lengthWithin {α : Type} : Nat → List α → Bool
   | 0, _ :: _ => false
   | limit + 1, _ :: tail => lengthWithin limit tail
 
-/-! ## Centered instantiation and equality edge -/
+/-! # Centered instantiation and equality edge -/
 
 /-- Node substitution and generated outputs for the `centerV1` recipe.
 The last five nodes are admitted at exactly one generation beyond the four
@@ -187,7 +187,7 @@ def containsCenter (edges : List EqEdge) (center : Center) : Bool :=
 
 end EqEdge
 
-/-! ## Finite-closed interval rows -/
+/-! # Finite-closed interval rows -/
 
 /-- Construct an exact finite interval with both endpoints closed. -/
 def closed (lower upper : Dyadic) : Raw :=
@@ -376,7 +376,7 @@ def sq? (limit : EndpointLimit) (node : NodeId .real) (input : Row) : Option Row
 
 end Row
 
-/-! ## Checked derivation -/
+/-! # Checked derivation -/
 
 /-- Derivation instructions refer only to earlier fact rows. -/
 inductive Derivation where
@@ -554,7 +554,7 @@ def check (certificate : Certificate) (endpointLimit : EndpointLimit)
 
 end Certificate
 
-/-! ## Fixed nine-node fixture -/
+/-! # Fixed nine-node fixture -/
 
 def node (index : Nat) : NodeId .real := ⟨index⟩
 
@@ -645,7 +645,7 @@ downstream replay probes. -/
 theorem checkFixture_eq_true : checkFixture = true := by
   decide +kernel
 
-/-! ## Resource and shape canaries -/
+/-! # Resource and shape canaries -/
 
 /-- Representative non-finite, non-closed, inconsistent, and over-budget
 claims are all rejected at the range boundary. -/

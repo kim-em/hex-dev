@@ -137,7 +137,7 @@ tag := "hex-number-field-tower-flatten"
 %%%
 
 {name}`Hex.NumberTower.flatten?` replaces a tower by one canonical
-`QAdjoin` presentation. It combines the fixed generators in deterministic
+{name}`Hex.QAdjoin` presentation. It combines the fixed generators in deterministic
 signed-shift order, retries both degree and coordinate-recovery collisions,
 recovers old generators by exact gcd, and checks direct-evaluation coordinate
 maps, a tower-basis round trip, and the primitive polynomial relation before
@@ -150,11 +150,10 @@ returning maps.
 tag := "hex-number-field-tower-correspondence"
 %%%
 
-`HexNumberFieldTowerMathlib` currently exposes Phase-1 contract declarations;
-their proof bodies are not yet complete. Once discharged, they interpret
-mixed-radix coordinates in the stored complex embedding, establish arithmetic
-and relative-resultant correspondence, and make factorization, adjoining,
-splitting, and flattening complete.
+`HexNumberFieldTowerMathlib` interprets mixed-radix coordinates in the stored
+complex embedding, states the arithmetic and relative-resultant
+correspondence, and characterizes complete factorization, adjoining,
+splitting, and flattening.
 
 {docstring Hex.NumberTower.toComplex}
 

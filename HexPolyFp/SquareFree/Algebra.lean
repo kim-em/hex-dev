@@ -105,12 +105,12 @@ private theorem pow_one (f : FpPoly p) :
   simp [pow.go]
 
 /-- Reference exponentiation by linear recursion (`powLinear f n = f ^ n`),
-the specification the square-and-multiply `pow` is proved against. -/
+the specification the square-and-multiply {name}`pow` is proved against. -/
 private def powLinear (f : FpPoly p) : Nat → FpPoly p
   | 0 => 1
   | n + 1 => powLinear f n * f
 
-/-- `powLinear` turns exponent addition into multiplication. -/
+/-- {name}`powLinear` turns exponent addition into multiplication. -/
 private theorem powLinear_add (f : FpPoly p) (m n : Nat) :
     powLinear f (m + n) = powLinear f m * powLinear f n := by
   induction n with
@@ -120,7 +120,7 @@ private theorem powLinear_add (f : FpPoly p) (m n : Nat) :
       rw [Nat.add_succ, powLinear, ih, powLinear]
       exact DensePoly.mul_assoc_poly (powLinear f m) (powLinear f n) f
 
-/-- Doubling the exponent of `powLinear` is the same as squaring the base. -/
+/-- Doubling the exponent of {name}`powLinear` is the same as squaring the base. -/
 private theorem powLinear_double (f : FpPoly p) (n : Nat) :
     powLinear f (2 * n) = powLinear (f * f) n := by
   induction n with
@@ -134,14 +134,14 @@ private theorem powLinear_double (f : FpPoly p) (n : Nat) :
       rw [powLinear, powLinear, ih]
       exact DensePoly.mul_assoc_poly (powLinear (f * f) n) f f
 
-/-- An odd exponent of `powLinear` peels off one base factor and squares the rest. -/
+/-- An odd exponent of {name}`powLinear` peels off one base factor and squares the rest. -/
 private theorem powLinear_double_add_one (f : FpPoly p) (n : Nat) :
     powLinear f (2 * n + 1) = f * powLinear (f * f) n := by
   rw [powLinear, powLinear_double]
   exact mul_comm (powLinear (f * f) n) f
 
 /-- The square-and-multiply loop computes `acc * powLinear base k`, linking the
-executable `pow.go` to the reference `powLinear`. -/
+executable {name}`pow.go` to the reference {name}`powLinear`. -/
 private theorem pow_go_eq_mul_powLinear (acc base : FpPoly p) (k : Nat) :
     pow.go acc base k = acc * powLinear base k := by
   induction k using Nat.strongRecOn generalizing acc base with
@@ -184,14 +184,14 @@ private theorem pow_go_eq_mul_powLinear (acc base : FpPoly p) (k : Nat) :
               _ = acc * powLinear base k := by
                     rw [← hk_eq]
 
-/-- The square-and-multiply `pow` agrees with the reference `powLinear`. -/
+/-- The square-and-multiply {name}`pow` agrees with the reference {name}`powLinear`. -/
 private theorem pow_eq_powLinear (f : FpPoly p) (n : Nat) :
     pow f n = powLinear f n := by
   unfold pow
   rw [pow_go_eq_mul_powLinear]
   exact one_mul (powLinear f n)
 
-/-- Iterating `powLinear` multiplies the exponents. -/
+/-- Iterating {name}`powLinear` multiplies the exponents. -/
 private theorem powLinear_powLinear_mul (f : FpPoly p) (m n : Nat) :
     powLinear (powLinear f n) m = powLinear f (m * n) := by
   induction m with
@@ -201,7 +201,7 @@ private theorem powLinear_powLinear_mul (f : FpPoly p) (m n : Nat) :
       rw [powLinear, ih]
       simpa [Nat.succ_mul] using (powLinear_add f (m * n) n).symm
 
-/-- `powLinear` distributes over a product of bases. -/
+/-- {name}`powLinear` distributes over a product of bases. -/
 private theorem powLinear_mul_base (f g : FpPoly p) (n : Nat) :
     powLinear (f * g) n = powLinear f n * powLinear g n := by
   induction n with
@@ -226,7 +226,7 @@ private theorem powLinear_mul_base (f g : FpPoly p) (n : Nat) :
               exact (DensePoly.mul_assoc_poly
                 (powLinear f n) f (powLinear g n * g)).symm
 
-/-- `pow` turns exponent addition into multiplication. -/
+/-- {name}`pow` turns exponent addition into multiplication. -/
 private theorem pow_add_exp (f : FpPoly p) (m n : Nat) :
     pow f (m + n) = pow f m * pow f n := by
   rw [pow_eq_powLinear, pow_eq_powLinear, pow_eq_powLinear]
@@ -238,13 +238,13 @@ private theorem pow_succ (f : FpPoly p) (n : Nat) :
   rw [pow_eq_powLinear, pow_eq_powLinear]
   rfl
 
-/-- `pow` distributes over a product of bases. -/
+/-- {name}`pow` distributes over a product of bases. -/
 private theorem pow_mul_base (f g : FpPoly p) (n : Nat) :
     pow (f * g) n = pow f n * pow g n := by
   rw [pow_eq_powLinear, pow_eq_powLinear, pow_eq_powLinear]
   exact powLinear_mul_base f g n
 
-/-- Iterating `pow` multiplies the exponents. -/
+/-- Iterating {name}`pow` multiplies the exponents. -/
 private theorem pow_pow_mul' (f : FpPoly p) (m n : Nat) :
     pow (pow f n) m = pow f (m * n) := by
   rw [pow_eq_powLinear, pow_eq_powLinear, pow_eq_powLinear]
@@ -576,7 +576,7 @@ private theorem powLinear_add_prime
 def weightedProduct (factors : List (SquareFreeFactor p)) : FpPoly p :=
   factors.foldl (fun acc sf => acc * pow sf.factor sf.multiplicity) 1
 
-/-- `weightedProduct` of the empty factor list is the constant polynomial `1`. -/
+/-- {name}`weightedProduct` of the empty factor list is the constant polynomial `1`. -/
 private theorem weightedProduct_nil :
     weightedProduct ([] : List (SquareFreeFactor p)) = 1 := by
   rfl
@@ -602,7 +602,7 @@ private theorem weightedProduct_foldl_eq_mul
       rw [hone]
       exact DensePoly.mul_assoc_poly acc (pow sf.factor sf.multiplicity) (weightedProduct factors)
 
-/-- `weightedProduct` of a cons splits off the head factor raised to its multiplicity. -/
+/-- {name}`weightedProduct` of a cons splits off the head factor raised to its multiplicity. -/
 private theorem weightedProduct_cons
     (sf : SquareFreeFactor p) (factors : List (SquareFreeFactor p)) :
     weightedProduct (sf :: factors) =
@@ -612,7 +612,7 @@ private theorem weightedProduct_cons
   rw [weightedProduct_foldl_eq_mul]
   exact congrArg (fun x => x * weightedProduct factors) (one_mul (pow sf.factor sf.multiplicity))
 
-/-- `weightedProduct` of an append is the product of the two sublist weighted products. -/
+/-- {name}`weightedProduct` of an append is the product of the two sublist weighted products. -/
 private theorem weightedProduct_append
     (left right : List (SquareFreeFactor p)) :
     weightedProduct (left ++ right) = weightedProduct left * weightedProduct right := by
@@ -624,13 +624,13 @@ private theorem weightedProduct_append
       (left.foldl (fun acc sf => acc * pow sf.factor sf.multiplicity) 1)
       right
 
-/-- `weightedProduct` of a singleton is that factor raised to its multiplicity. -/
+/-- {name}`weightedProduct` of a singleton is that factor raised to its multiplicity. -/
 private theorem weightedProduct_singleton (sf : SquareFreeFactor p) :
     weightedProduct [sf] = pow sf.factor sf.multiplicity := by
   rw [weightedProduct_cons, weightedProduct_nil]
   exact DensePoly.mul_one_right_poly (pow sf.factor sf.multiplicity)
 
-/-- `weightedProduct` of a reversed cons appends the new factor's power on the right. -/
+/-- {name}`weightedProduct` of a reversed cons appends the new factor's power on the right. -/
 private theorem weightedProduct_reverse_cons
     (sf : SquareFreeFactor p) (accRev : List (SquareFreeFactor p)) :
     weightedProduct (sf :: accRev).reverse =
@@ -1094,7 +1094,7 @@ private theorem zmod64_one_ne_zero_of_prime
   rw [ZMod64.toNat_one, ZMod64.toNat_zero, Nat.mod_eq_of_lt hp_gt] at hnat
   omega
 
-/-- `isOne` returns `true` on the constant polynomial `1 : FpPoly p` over a prime modulus. -/
+/-- {name}`isOne` returns `true` on the constant polynomial `1 : FpPoly p` over a prime modulus. -/
 private theorem isOne_one [ZMod64.PrimeModulus p] :
     isOne (1 : FpPoly p) = true := by
   unfold isOne
@@ -1156,7 +1156,7 @@ def normalizeMonic (f : FpPoly p) : ZMod64 p × FpPoly p :=
     let unit := DensePoly.leadingCoeff f
     (unit, DensePoly.scale unit⁻¹ f)
 
-/-- `normalizeMonic` returns `(0, 0)` on a zero input polynomial. -/
+/-- {name}`normalizeMonic` returns `(0, 0)` on a zero input polynomial. -/
 private theorem normalizeMonic_zero
     (f : FpPoly p) (hzero : f.isZero = true) :
     normalizeMonic f = (0, 0) := by
@@ -1260,7 +1260,7 @@ private theorem normalizeMonic_nonzero_isZero_false
 /-- Monic-normalized gcd: the canonical monic associate of `DensePoly.gcd c w`.
 
 Routing the Yun square-free loop's gcd through this keeps every intermediate
-polynomial monic. A raw `DensePoly.gcd` of a coprime pair can be a non-trivial
+polynomial monic. A raw {name}`DensePoly.gcd` of a coprime pair can be a non-trivial
 constant unit over `F_p` for `p > 2` (e.g. `gcd (x^2+1) (x+1) = 2` over `F_5`);
 emitting `c / gcd c w` then leaks that scalar into the square-free factor,
 breaking the exact reconstruction `weightedProduct = f`. The monic associate
@@ -1270,8 +1270,8 @@ identity carries over, but the emitted quotient stays monic. -/
 def monicGcd (c w : FpPoly p) : FpPoly p :=
   (normalizeMonic (DensePoly.gcd c w)).2
 
-/-- Definitional unfolding lemma for `monicGcd`. The def itself is sealed
-`@[irreducible]` (below) to keep `normalizeMonic` from being unfolded by
+/-- Definitional unfolding lemma for {name}`monicGcd`. The def itself is sealed
+`@[irreducible]` (below) to keep {name}`normalizeMonic` from being unfolded by
 `simp`/`decide` during defeq, which otherwise causes kernel-reduction timeouts;
 this lemma is the controlled re-entry point. -/
 private theorem monicGcd_def (c w : FpPoly p) :
@@ -1279,8 +1279,8 @@ private theorem monicGcd_def (c w : FpPoly p) :
 
 attribute [irreducible] monicGcd
 
-/-- The raw gcd is a constant multiple of `monicGcd`, recovered from
-`normalizeMonic_reconstruct`. -/
+/-- The raw gcd is a constant multiple of {name}`monicGcd`, recovered from
+{name}`normalizeMonic_reconstruct`. -/
 private theorem gcd_eq_C_mul_monicGcd
     (hp : Hex.Nat.Prime p) (c w : FpPoly p) :
     DensePoly.C (normalizeMonic (DensePoly.gcd c w)).1 * monicGcd c w =
@@ -1316,7 +1316,7 @@ private theorem monicGcd_dvd_right
     _ = monicGcd c w * q1 * q2 := by rw [h1]
     _ = monicGcd c w * (q1 * q2) := DensePoly.mul_assoc_poly (monicGcd c w) q1 q2
 
-/-- Left exact-division reconstruction across `monicGcd`. -/
+/-- Left exact-division reconstruction across {name}`monicGcd`. -/
 private theorem div_monicGcd_mul_reconstruct
     [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p) (c w : FpPoly p) :
     (c / monicGcd c w) * monicGcd c w = c := by
@@ -1326,7 +1326,7 @@ private theorem div_monicGcd_mul_reconstruct
   rw [hmod, add_zero] at hspec
   exact hspec
 
-/-- Right exact-division reconstruction across `monicGcd`. -/
+/-- Right exact-division reconstruction across {name}`monicGcd`. -/
 private theorem div_monicGcd_right_mul_reconstruct
     [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p) (c w : FpPoly p) :
     (w / monicGcd c w) * monicGcd c w = w := by
@@ -1350,10 +1350,10 @@ private theorem monicGcd_isZero_false_of_gcd_nonzero
     (monicGcd c w).isZero = false := by
   rw [monicGcd_def]; exact normalizeMonic_nonzero_isZero_false (DensePoly.gcd c w) hgcd
 
-/-! ### Scalar-multiple algebra foundations
+/-! # Scalar-multiple algebra foundations
 
-Foundational `FpPoly p` algebra for transporting `DensePoly.derivative`,
-`DensePoly.gcd`, and exact division across a common nonzero scalar multiple
+Foundational `FpPoly p` algebra for transporting {name}`DensePoly.derivative`,
+{name}`DensePoly.gcd`, and exact division across a common nonzero scalar multiple
 `DensePoly.C u * f`. These lemmas underpin the Yun split-synchronization
 theorem used by the square-free decomposition correctness chain.
 -/
@@ -1449,7 +1449,7 @@ private theorem one_size_eq
 /--
 Polynomial units in `FpPoly p` (over a prime modulus) are size-one polynomials:
 if `a * b = 1` then both factors have size one. The product-size identity
-`size_mul_eq_add_sub_one` forces each size to one.
+{name}`size_mul_eq_add_sub_one` forces each size to one.
 -/
 private theorem size_eq_one_of_mul_eq_one
     [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p) {a b : FpPoly p}
@@ -1479,8 +1479,8 @@ private theorem size_eq_one_of_mul_eq_one
 
 /--
 Polynomial units in `FpPoly p` are scalar constants: if `a * b = 1` then there
-exists `w ≠ 0` with `a = C w`. Combines `size_eq_one_of_mul_eq_one` with
-`eq_C_of_size_one` and `coeff_zero_ne_zero_of_size_one`.
+exists `w ≠ 0` with `a = C w`. Combines {name}`size_eq_one_of_mul_eq_one` with
+{name}`eq_C_of_size_one` and {name}`coeff_zero_ne_zero_of_size_one`.
 -/
 private theorem eq_C_of_mul_eq_one
     [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p) {a b : FpPoly p}
@@ -1492,10 +1492,10 @@ private theorem eq_C_of_mul_eq_one
 
 /--
 Gcd scalar-multiple bridge over a prime modulus: scaling both arguments of
-`DensePoly.gcd` by the same nonzero constant scales the gcd by some nonzero
+{name}`DensePoly.gcd` by the same nonzero constant scales the gcd by some nonzero
 constant `v`. The proof uses Bezout (`xgcd_bezout`) to extract a candidate
 generator and the `GcdLaws.dvd_gcd` package to show the two generators are
-associates; the unit characterisation (`eq_C_of_mul_eq_one`) pins it as a
+associates; the unit characterisation ({name}`eq_C_of_mul_eq_one`) pins it as a
 constant.
 -/
 private theorem gcd_C_mul_C_mul_eq_C_mul_gcd
@@ -1637,7 +1637,7 @@ private theorem gcd_C_mul_C_mul_eq_C_mul_gcd
       _ = DensePoly.C (u * w) * DensePoly.gcd f g := by rw [hC_mul_C]
 
 /--
-Two-`DensePoly.C` constants combine into a single `DensePoly.C` of the
+Two-{name}`DensePoly.C` constants combine into a single {name}`DensePoly.C` of the
 product, in `FpPoly p`. Used by the asymmetric scalar bridges below to
 fold scalar factors during cancellation.
 -/
@@ -1697,10 +1697,10 @@ private theorem C_mul_dvd_of_C_mul_dvd_unit_swap
 
 /--
 Asymmetric gcd scalar-multiple bridge: scaling the two arguments of
-`DensePoly.gcd` by *different* nonzero constants `u_c`, `u_w` scales the
+{name}`DensePoly.gcd` by *different* nonzero constants `u_c`, `u_w` scales the
 gcd by some nonzero constant `v`. The proof routes through divisibility
 manipulation (rather than the Bezout factoring used by
-`gcd_C_mul_C_mul_eq_C_mul_gcd`) because the two scalars cannot be
+{name}`gcd_C_mul_C_mul_eq_C_mul_gcd`) because the two scalars cannot be
 factored out as a single common constant. Used by the inner Yun split
 synchronization to thread scalar factors through one step of
 `yunFactorsContributionWithLevel`.
@@ -1893,7 +1893,7 @@ private theorem gcd_C_mul_left_C_mul_right_eq_C_mul_gcd
       _ = DensePoly.C (u_c * w_unit) * DensePoly.gcd c w :=
           DensePoly.mul_comm_poly _ _
 
-/-- `gcd_eq_zero_forces_zero` shows a vanishing `gcd c w` forces both `c` and
+/-- {name}`gcd_eq_zero_forces_zero` shows a vanishing `gcd c w` forces both `c` and
 `w` to vanish, since the gcd divides each input. -/
 private theorem gcd_eq_zero_forces_zero [ZMod64.PrimeModulus p] (c w : FpPoly p)
     (h : DensePoly.gcd c w = 0) :
@@ -1908,7 +1908,7 @@ private theorem gcd_eq_zero_forces_zero [ZMod64.PrimeModulus p] (c w : FpPoly p)
     rcases hdvd with ⟨q, hq⟩
     simpa using hq
 
-/-- `scaled_gcd_eq_zero` shows scaling both inputs by constants keeps a
+/-- {name}`scaled_gcd_eq_zero` shows scaling both inputs by constants keeps a
 vanishing `gcd c w` vanishing. -/
 private theorem scaled_gcd_eq_zero
     [ZMod64.PrimeModulus p]
@@ -1918,7 +1918,7 @@ private theorem scaled_gcd_eq_zero
   rcases gcd_eq_zero_forces_zero c w h with ⟨hc, hw⟩
   rw [hc, hw, mul_zero, mul_zero, DensePoly.gcd_zero_zero]
 
-/-- `div_zero_eq_zero` states that dividing any polynomial by the zero
+/-- {name}`div_zero_eq_zero` states that dividing any polynomial by the zero
 polynomial yields `0`. -/
 private theorem div_zero_eq_zero (f : FpPoly p) :
     f / (0 : FpPoly p) = 0 := by
@@ -1926,7 +1926,7 @@ private theorem div_zero_eq_zero (f : FpPoly p) :
     DensePoly.divMod_eq_zero_self_of_size_zero f (0 : FpPoly p) (by simp)
   exact congrArg Prod.fst hpair
 
-/-- `div_zero_C_mul_left` shows constant scaling commutes with division by the
+/-- {name}`div_zero_C_mul_left` shows constant scaling commutes with division by the
 zero polynomial on the left input `c` when `gcd c w` vanishes. -/
 private theorem div_zero_C_mul_left
     [ZMod64.PrimeModulus p]
@@ -1936,7 +1936,7 @@ private theorem div_zero_C_mul_left
   have hc : c = 0 := (gcd_eq_zero_forces_zero c w h).1
   simp [hc, div_zero_eq_zero]
 
-/-- `div_zero_C_mul_right` shows constant scaling commutes with division by the
+/-- {name}`div_zero_C_mul_right` shows constant scaling commutes with division by the
 zero polynomial on the right input `w` when `gcd c w` vanishes. -/
 private theorem div_zero_C_mul_right
     [ZMod64.PrimeModulus p]

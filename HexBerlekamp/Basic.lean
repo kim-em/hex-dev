@@ -229,7 +229,7 @@ theorem berlekampColumn_powModMonic_mod_eq_linearPow_X
       FpPoly.linearPow FpPoly.X (p * j.val) % f :=
   berlekampColumn_poly_mod_eq_linearPow_X f hmonic j
 
-/-! ### Berlekamp matrix action on coefficient vectors
+/-! # Berlekamp matrix action on coefficient vectors
 
 The Berlekamp matrix `Q_f` is the matrix of the `g ↦ g^p` map on the
 quotient `F_p[X] / (f)` in the basis `{1, X, …, X^(n - 1)}`. Applied to

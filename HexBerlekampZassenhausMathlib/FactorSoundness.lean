@@ -125,7 +125,7 @@ constant like `Hex.DensePoly.C 2` passes the recording filter, has positive
 leading coefficient, and is sign-normalized. The constant case is excluded by
 *primitivity* (content `1` forces a constant to be `±1`), so this carries the
 `f ≠ 0` side condition that `Hex.factorize_entries_primitive_of_ne_zero` needs
-(the self-certifying hybrid, #8383). The constant-exclusion argument itself is
+(the self-certifying path). The constant-exclusion argument itself is
 `Hex.degree_pos_of_primitive_norm_record`.
 -/
 theorem factorize_entries_degree_pos

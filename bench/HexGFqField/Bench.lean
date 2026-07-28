@@ -126,7 +126,7 @@ private theorem maxProperDiv_5 : Berlekamp.maximalProperDivisors 5 = [1] := by d
 private theorem maxProperDiv_6 : Berlekamp.maximalProperDivisors 6 = [2, 3] := by decide
 private theorem maxProperDiv_8 : Berlekamp.maximalProperDivisors 8 = [4] := by decide
 
-/-! ## Certificate-backed benchmark moduli -/
+/-! # Certificate-backed benchmark moduli -/
 
 /-- `x^2 + 6x + 3` over `F_7`. -/
 private def m_p7_n2 : FpPoly 7 :=
@@ -925,7 +925,7 @@ setup_benchmark runFrobChecksum n => n * n * Nat.log2 7
     signalFloorMultiplier := 1.0
   }
 
-/-! ## FLINT `fq_default` informational comparator fixed registrations -/
+/-! # FLINT `fq_default` informational comparator fixed registrations -/
 
 setup_fixed_benchmark runOfPoly2 where { repeats := 5, maxSecondsPerCall := 6.0 }
 setup_fixed_benchmark runFlintOfPoly2 where { repeats := 5, maxSecondsPerCall := 6.0 }

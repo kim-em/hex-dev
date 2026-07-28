@@ -20,10 +20,10 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-BHKS CLD-column coefficient bounds (van Hoeij `W ⊆ L'` analytics, #8519).
+BHKS CLD-column coefficient bounds for the van Hoeij inclusion `W ⊆ L'`.
 
-Resurrected from the pre-#8411 `CLDColumnBound.lean` (6bf20977^): the exact
-integer CLD column `phi g = f * g' / g` with its Landau-Mignotte coefficient
+The module provides the exact integer CLD column `phi g = f * g' / g` with its
+Landau-Mignotte coefficient
 bound, the aggregate-residue congruence for a recovered true-factor support,
 the period-aware carry bound `two_mul_natAbs_sum_psiCut_period_le`, and the
 short-vector producer `supportShortVectorData_of_recoveredLift` feeding
@@ -931,13 +931,13 @@ theorem supportProduct_cldSum_congr_of_factors
 
 open Classical in
 
-/-- **Aggregate CLD residue from a `RecoveredLift` (monic coordinate, issue
-#7872).**  In the monic regime (`leadingCoeff f = 1`, so the `dilate` in
+/-- **Aggregate CLD residue from a `RecoveredLift` in monic coordinates.**
+In the monic regime (`leadingCoeff f = 1`, so the `dilate` in
 `recovered_eq` is the identity) the aggregate centred residue of the per-factor
 CLD coefficients equals the integer `Phi`-column coefficient of the *whole*
 recovered factor, and that coefficient is Mignotte-bounded.  This is exactly the
-`hagg` / `hy` input shape consumed by `two_mul_natAbs_sum_psiCut_period_le`
-(#7869), with `y = phi(...).coeff j` and `B = bhksCoeffBound f j`.
+`hagg` / `hy` input shape consumed by `two_mul_natAbs_sum_psiCut_period_le`,
+with `y = phi(...).coeff j` and `B = bhksCoeffBound f j`.
 
 The per-selected-factor `hfac` (monic, positive degree, modular cofactor) is the
 Hensel-factorisation datum `∏ gᵢ ≡ f (mod pᵃ)`; the recovered factor itself only
@@ -1032,11 +1032,11 @@ theorem recoveredLift_aggregate_residue
   exact listSum_emod_eq _ _ _ _
     (fun i _ => centeredResiduePow_emod_self D.p D.a _)
 
-/-! ### Period-adjusted true-factor short vector from a `RecoveredLift` (issue #7876)
+/-! # Period-adjusted true-factor short vector from a `RecoveredLift`
 
 The per-factor tight column (`tightColumnBound_of_lift`) bounds the *zero-period*
 tail `∑_{i∈S} psiCut(zᵢ)` and routes through per-factor integer divisibility,
-which a `RecoveredLift` cannot supply (the period trap of #7866/#7867).  The
+which a `RecoveredLift` cannot supply. The
 sound route uses the BHKS lattice's own period rows `diag(p^(a−ℓⱼ))`: the
 *period-adjusted* tail `∑_{i∈S} psiCut(zᵢ) − tⱼ·p^(a−ℓⱼ)` is still bounded by
 `factorCount/2` (`two_mul_natAbs_sum_psiCut_period_le`) from only the aggregate
@@ -1306,14 +1306,13 @@ theorem four_mul_sq_norm_le_of_colBound
   push_cast
   ring
 
-/-- **Period-adjusted true-factor short vector from a `RecoveredLift` (issue
-#7876).**  In the monic regime, the aggregate residue bridge
+/-- **Period-adjusted true-factor short vector from a `RecoveredLift`.**
+In the monic regime, the aggregate residue bridge
 (`recoveredLift_aggregate_residue`) and the period-aware carry lemma
 (`two_mul_natAbs_sum_psiCut_period_le`) bound each tail column of the
 period-adjusted vector by `factorCount/2`.  Together with the structural project
 and lattice-membership facts, this yields a `SupportShortVectorData` for the
-recovered support — the genuine aggregate-tail lattice path the period trap
-(#7866/#7867) forces, feeding the fast-disjunct consumer through
+recovered support, feeding the fast-disjunct consumer through
 `cutProjectionHypotheses_of_shortVectors`. -/
 def supportShortVectorData_of_recoveredLift
     {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}

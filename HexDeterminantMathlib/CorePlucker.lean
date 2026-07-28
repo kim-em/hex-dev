@@ -87,7 +87,7 @@ theorem ordered_four_det_mul_det_setRow_setRow_eq_det_setRow_mul_sub
   exact ordered_four_det_mul_det_setRow_setRow_eq_cofactorRowPairing_mul_sub
     B p1 p2 p3 q h12 h23 h3q
 
-/-! ### Double-row replacement transport to `nDet B p2 p3`
+/-! # Double-row replacement transport to `nDet B p2 p3`
 
 The double `setRow` matrix `setRow (setRow M r2 B[p1]) r3 B[q]` (with
 `M = nMatrix B p1 q`, `r2 = ⟨p2.val - 1, _⟩`, `r3 = ⟨p3.val - 1, _⟩`)
@@ -388,7 +388,7 @@ theorem det_double_setRow_eq_pow_mul_nDet
 is identified with the signed `nDet B p2 p3` minor, and the two p1-side
 cofactor-row pairings on the RHS are identified with their signed `nDet B p_t q`
 minors. The remaining q-side cofactor-row pairings are left in
-`cofactorRowPairing` form so the assembly in #6012 can finish them after
+`cofactorRowPairing` form so the assembly in can finish them after
 the q-row signed transports land. -/
 theorem ordered_four_signed_Plucker_p1_side
     {R : Type u} [CommRing R] {n : Nat}

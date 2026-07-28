@@ -12,7 +12,7 @@ Core conformance checks for the `HexHensel` conversion and ordered-product surfa
 
 Oracle: Sage or FLINT for external Hensel-lifting profiles; core uses Lean-only
 property checks.
-Mode: if_available
+Mode: `if_available`
 Covered operations:
 - `ZPoly.modP`
 - `FpPoly.liftToZ`

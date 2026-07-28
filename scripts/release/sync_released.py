@@ -3,15 +3,14 @@
 
 For each repo in scripts/release/released.yml (topological order), this:
   1. clones the repo's `main`,
-  2. overwrites its *managed* paths from this monorepo (leaving lakefiles, CI,
-     toolchains, LICENSE, manifests untouched),
-  3. rewrites the root lakefile's cross-repo Hex pins to the commits synced
-     this run,
-  4. commits `chore: sync from hex-dev@<sha>` and pushes to `main`
+  2. overwrites its *managed* paths from this monorepo,
+  3. for managed-source repos, enables native Verso docstrings,
+  4. rewrites cross-repo Hex pins in the repo's Lake files,
+  5. commits `chore: sync from hex-dev@<sha>` and pushes to `main`
      (unless --dry-run, which prints the planned changes and pin rewrites).
 
-A `pins_only` entry (the `leanprover/hex` aggregate) skips step 2 entirely: it
-manages no source from the monorepo, so the sync only re-pins it (steps 3-4) to
+A `pins_only` entry (the `leanprover/hex` aggregate) skips steps 2-3 entirely: it
+manages no source from the monorepo, so the sync only re-pins it (steps 4-5) to
 the SHAs published this run. Listed last, after its upstreams, so its pins
 resolve to the freshly-pushed commits.
 
@@ -33,6 +32,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tomllib
 from pathlib import Path
 
 import yaml
@@ -153,6 +153,168 @@ def _lake_files(clone: Path, name_globs: list[str]) -> list[Path]:
     return sorted(out)
 
 
+def _flatten_lean_options(options: dict, prefix: str = "") -> list[tuple[str, object]]:
+    """Flatten Lake's dotted-table option encoding to ``(name, value)`` pairs."""
+    flattened: list[tuple[str, object]] = []
+    for key, value in options.items():
+        name = f"{prefix}.{key}" if prefix else key
+        if isinstance(value, dict):
+            flattened.extend(_flatten_lean_options(value, name))
+        else:
+            flattened.append((name, value))
+    return flattened
+
+
+def _render_lean_options(options: list[tuple[str, object]]) -> str:
+    """Render options using Lake's array form, which permits prefix option names."""
+    lines = ["leanOptions = ["]
+    for name, value in options:
+        if isinstance(value, bool):
+            rendered = "true" if value else "false"
+        elif isinstance(value, int) and value >= 0:
+            rendered = str(value)
+        elif isinstance(value, str):
+            rendered = json.dumps(value)
+        else:
+            raise RuntimeError(f"unsupported Lean option value for {name}: {value!r}")
+        lines.append(f"  {{ name = {json.dumps(name)}, value = {rendered} }},")
+    lines.append("]")
+    return "\n".join(lines)
+
+
+def _replace_toml_lean_options(text: str, source: Path) -> str:
+    """Add the Verso options while preserving all existing package options."""
+    try:
+        parsed = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as err:
+        raise RuntimeError(f"invalid TOML in {source}: {err}") from err
+
+    raw_options = parsed.get("leanOptions")
+    if raw_options is None:
+        options: list[tuple[str, object]] = []
+    elif isinstance(raw_options, dict):
+        options = _flatten_lean_options(raw_options)
+    elif isinstance(raw_options, list):
+        options = []
+        for option in raw_options:
+            if (not isinstance(option, dict) or
+                    not isinstance(option.get("name"), str) or
+                    "value" not in option):
+                raise RuntimeError(f"unsupported leanOptions entry in {source}: {option!r}")
+            options.append((option["name"], option["value"]))
+    else:
+        raise RuntimeError(f"unsupported leanOptions value in {source}: {raw_options!r}")
+
+    required = {"doc.verso": True, "doc.verso.suggestions": False}
+    merged: list[tuple[str, object]] = []
+    seen: set[str] = set()
+    for name, value in options:
+        if name in seen:
+            raise RuntimeError(f"duplicate Lean option {name} in {source}")
+        seen.add(name)
+        merged.append((name, required.get(name, value)))
+    for name, value in required.items():
+        if name not in seen:
+            merged.append((name, value))
+    replacement = _render_lean_options(merged)
+
+    section = re.search(r"(?m)^\[leanOptions\]\s*(?:#.*)?$", text)
+    if section is not None:
+        following = re.search(r"(?m)^\[", text[section.end():])
+        end = section.end() + following.start() if following is not None else len(text)
+        text = text[:section.start()] + replacement + "\n\n" + text[end:]
+    else:
+        assignment = re.search(r"(?m)^leanOptions\s*=", text)
+        if assignment is not None:
+            first_table = re.search(r"(?m)^\[", text)
+            if first_table is not None and assignment.start() > first_table.start():
+                raise RuntimeError(f"cannot locate package leanOptions assignment in {source}")
+            value_start = assignment.end()
+            while value_start < len(text) and text[value_start].isspace():
+                value_start += 1
+            if value_start >= len(text) or text[value_start] not in "[{":
+                raise RuntimeError(f"unsupported leanOptions syntax in {source}")
+            opening = text[value_start]
+            closing = "]" if opening == "[" else "}"
+            depth = 0
+            in_string = False
+            escaped = False
+            end = value_start
+            while end < len(text):
+                char = text[end]
+                if in_string:
+                    if escaped:
+                        escaped = False
+                    elif char == "\\":
+                        escaped = True
+                    elif char == '"':
+                        in_string = False
+                elif char == '"':
+                    in_string = True
+                elif char == opening:
+                    depth += 1
+                elif char == closing:
+                    depth -= 1
+                    if depth == 0:
+                        end += 1
+                        break
+                end += 1
+            else:
+                raise RuntimeError(f"unterminated leanOptions value in {source}")
+            text = text[:assignment.start()] + replacement + text[end:]
+        else:
+            first_table = re.search(r"(?m)^\[", text)
+            insert_at = first_table.start() if first_table is not None else len(text)
+            text = text[:insert_at] + replacement + "\n\n" + text[insert_at:]
+
+    try:
+        tomllib.loads(text)
+    except tomllib.TOMLDecodeError as err:
+        raise RuntimeError(f"Verso rewrite produced invalid TOML in {source}: {err}") from err
+    return text
+
+
+def rewrite_doc_verso(clone: Path) -> list[str]:
+    """Enable native Verso docstrings in every released Lake project.
+
+    Managed Lean sources use native Verso markup, including declaration roles
+    and module-doc headings. Released repos keep their Lake files locally, so
+    the sync must carry the parser options across explicitly.
+    """
+    notes: list[str] = []
+    for lf in _lake_files(clone, ["lakefile.toml", "lakefile.lean"]):
+        text = lf.read_text(encoding="utf-8")
+        orig = text
+        if lf.name == "lakefile.toml":
+            text = _replace_toml_lean_options(text, lf)
+        else:
+            package = re.search(r"(?m)^package\b[^\n]*\bwhere\s*$", text)
+            if package is None:
+                raise RuntimeError(f"cannot find package declaration in {lf}")
+            following = re.search(r"(?m)^\S", text[package.end():])
+            block_end = (package.end() + following.start()
+                         if following is not None else len(text))
+            package_block = text[package.end():block_end]
+            has_verso = re.search(r"⟨`doc\.verso,\s*true⟩", package_block)
+            has_suggestions = re.search(
+                r"⟨`doc\.verso\.suggestions,\s*false⟩", package_block)
+            if has_verso and has_suggestions:
+                pass
+            elif re.search(r"(?m)^\s+leanOptions\s*:=", package_block):
+                raise RuntimeError(
+                    f"cannot safely merge native Verso options into existing "
+                    f"package leanOptions in {lf}")
+            else:
+                insert_at = package.end()
+                options = ("\n  leanOptions := #[⟨`doc.verso, true⟩, "
+                           "⟨`doc.verso.suggestions, false⟩]")
+                text = text[:insert_at] + options + text[insert_at:]
+        if text != orig:
+            lf.write_text(text, encoding="utf-8")
+            notes.append(f"  native Verso docstrings ({lf.relative_to(clone)})")
+    return notes
+
+
 def rewrite_pins(entry: dict, clone: Path, synced: dict[str, str],
                  dep_owner: dict[str, str]) -> list[str]:
     """Rewrite every synced-repo git pin across all lakefiles (root + the
@@ -242,6 +404,9 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
             print(msg + " Overriding (--force).")
         for line in apply_paths(entry, clone):
             print(line)
+        if not entry.get("pins_only"):
+            for line in rewrite_doc_verso(clone):
+                print(line)
         for line in rewrite_pins(entry, clone, synced, dep_owner):
             print(line)
         for line in rewrite_manifest(entry, clone, synced, dep_owner):

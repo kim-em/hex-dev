@@ -15,7 +15,7 @@ public section
 
 The input leading coefficient supplies the scalar omitted from the compact
 runtime root array.  Thus the soundness predicate reconstructs nonmonic inputs
-without adding redundant data to `Splitting`.
+without adding redundant data to {name}`Hex.NumberTower.Splitting`.
 -/
 
 namespace Hex.NumberTower

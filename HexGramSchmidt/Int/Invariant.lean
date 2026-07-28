@@ -304,9 +304,8 @@ private theorem foldl_int_dot_self_eq_zero_of_mem (xs : List (Fin m))
       | inr h =>
           exact ih (acc := acc + v[head] * v[head]) hnext_nonneg hzero i h
 
-/-- `int_dot_self_eq_zero_get`: from a vanishing self-dot `v.dotProduct v = 0`
-each component `v[i]` is zero, specialising the fold lemma to the full index
-list and the running form of ``..dotProduct -/
+/-- From a vanishing self-dot `v.dotProduct v = 0`, each component `v[i]` is
+zero, specializing the fold lemma to the full index list. -/
 private theorem int_dot_self_eq_zero_get (v : Vector Int m)
     (hzero : v.dotProduct v = 0) (i : Fin m) :
     v[i] = 0 := by

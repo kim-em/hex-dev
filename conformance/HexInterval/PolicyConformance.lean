@@ -260,7 +260,7 @@ structure ScheduleResult where
   calls : List (String × Nat)
   observationsExact : Bool
 
-/-! ## Retry-first schedule -/
+/-! # Retry-first schedule -/
 
 def retryFirst? : Option ScheduleResult := do
   let state <- initial?
@@ -310,7 +310,7 @@ def retryFirst? : Option ScheduleResult := do
         (result.state.view).toOption.any (fun pair => pair.1.offers.isEmpty)
   | none => false
 
-/-! ## Instantiation-first schedule -/
+/-! # Instantiation-first schedule -/
 
 def instantiateFirst? : Option ScheduleResult := do
   let state <- initial?
@@ -365,7 +365,7 @@ def instantiateFirst? : Option ScheduleResult := do
         (result.state.view).toOption.any (fun pair => pair.1.offers.isEmpty)
   | none => false
 
-/-! ## Boundary revalidation and policy resources -/
+/-! # Boundary revalidation and policy resources -/
 
 def afterInitial? : Option (State Rank) := do
   let state <- initial?
@@ -532,7 +532,7 @@ def oneDecisionState? : Option (State Rank) :=
                     | _ => false
               | _ => false
 
-/-! ## Resource preservation and exact equality observations -/
+/-! # Resource preservation and exact equality observations -/
 
 def retainedEngineWith? (limits : Experiment.Propagator.Limits) : Option (Engine Rank) := do
   let engine <- match Engine.start rankDomain program #[fRule, gRule] #[0, 0] limits with
@@ -642,7 +642,7 @@ def leftMalformedDomain : FactDomain Rank where
             next.engine.equalityQueued[0]? == some true
       | _ => false
 
-/-! ## Proposal lifetime and program extension -/
+/-! # Proposal lifetime and program extension -/
 
 def proposedGAt (input : NodeId) : ProposedNode :=
   { domain := real, op := { index := 2 }, args := [.existing input] }
@@ -874,7 +874,7 @@ def splitChangedTarget (request : RuleRequest Rank) : Outcome Rank :=
       | none => false
   | none => false
 
-/-! ## Rejections, completeness, clocks, and policy-visible budgets -/
+/-! # Rejections, completeness, clocks, and policy-visible budgets -/
 
 -- An action-limit rejection cannot consume the retry it failed to prepare.
 #guard

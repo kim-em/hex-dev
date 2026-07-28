@@ -40,7 +40,7 @@ open Polynomial HexPolyZMathlib
 
 noncomputable section
 
-/-! ### The field-generic quotient-roots lemma -/
+/-! # The field-generic quotient-roots lemma -/
 
 /-- **Field-generic square-free-core root transfer.** Over a characteristic-zero
 field, if `q = c * r` (with `q ≠ 0`) and `r` divides the derivative `q'`, then a
@@ -79,7 +79,7 @@ theorem isRoot_left_iff_of_mul_of_dvd_derivative {K : Type*} [Field K] [CharZero
     rw [hderiv] at hle
     omega
 
-/-! ### Cast helpers -/
+/-! # Cast helpers -/
 
 /-- `aeval` at a real point of an embedded integer polynomial is the evaluation
 of its real cast. -/
@@ -120,7 +120,7 @@ theorem toPolyℝ_repeatedPart_dvd_derivative (p : Hex.ZPoly) :
     ← toPolyℝ_eq_map_toPolyℚ] at hcong
   exact hcong
 
-/-! ### The square-free-core root iff -/
+/-! # The square-free-core root iff -/
 
 /-- **Square-free core preserves real roots.** A nonzero integer polynomial and
 its executable square-free core have exactly the same real roots, stated through

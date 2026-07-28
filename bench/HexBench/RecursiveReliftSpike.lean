@@ -61,7 +61,7 @@ open Hex
 
 local instance : Inhabited ZPoly := ⟨0⟩
 
-/-! ### Recombination (smart subset scan, after `ClassicalSpike.lean`) -/
+/-! # Recombination (smart subset scan, after `ClassicalSpike.lean`) -/
 
 /-- All size-`k` sub-lists of `xs`, each paired with its complement. Structural;
 worst-case `2^|xs|`, but the caller tries small `k` first and stops early. -/
@@ -163,7 +163,7 @@ def recombInt (target : ZPoly) (factors : List ZPoly) (modulus qbound : Nat) :
   (recombPairs target (factors.map fun g => (g, g)) modulus qbound
     factors.length #[]).map (·.1)
 
-/-! ### The recursive per-remainder certification -/
+/-! # The recursive per-remainder certification -/
 
 /-- Accounting record for one certification node (one remainder). -/
 structure NodeRec where
@@ -283,13 +283,11 @@ partial def certifySamePrimeAux
         let (fs, rs) := certifySamePrimeAux pd subFloorCap piece.1 piece.2 st.2
         (st.1 ++ fs, rs)
 
-/-- Same-prime recursion entry point. `subFloorCap` caps the subset size the
-recombination scan tries at rungs BELOW the floor (the floor rung always runs
-the full scan). Sub-floor rungs necessarily fail on every candidate the rung
-cannot yet recover, and the failed tail costs one bounded division per
-candidate, so the cap trades sub-floor discovery of multi-local-factor splits
-(`cap >= 2`, e.g. the mignotte_swell quartics) against a failed tail that
-grows like `C(r, cap)` per rung. -/
+/-- Starts same-prime recursive certification. At precision levels below the
+coefficient-bound threshold, recombination examines subsets of at most
+`subFloorCap` factors; at the threshold it examines every subset. Smaller
+limits reduce unsuccessful bounded divisions but may delay splits that require
+combining several local factors. -/
 def certifySamePrime (core : ZPoly) (subFloorCap : Nat) :
     Array ZPoly × Array NodeRec :=
   match choosePrimeData? core with
@@ -396,7 +394,7 @@ def classicalFactorTodayWithB (core : ZPoly) (B : Nat) : Array ZPoly :=
       let ld := henselLiftData core k pd
       recombInt core ld.liftedFactors.toList (pd.p ^ k) qbound
 
-/-! ### Inputs -/
+/-! # Inputs -/
 
 /-- `(x-1-s)(x-2-s)...(x-n-s)`: shifted fully-split family (distinct inputs). -/
 def linearProductShift (n s : Nat) : ZPoly :=
@@ -447,7 +445,7 @@ def classicalFactorProductionRec (core : ZPoly) (B : Nat) : Array ZPoly :=
   | none => #[]
   | some pd => (classicalCoreFactorsRecursive core B pd).getD #[]
 
-/-! ### Reporting -/
+/-! # Reporting -/
 
 /-- Sorted multiset of factor degrees, for a quick correctness signature. -/
 def degreeSignature (fs : Array ZPoly) : List Nat :=
@@ -548,7 +546,7 @@ def timeArms (reps : Nat) (inputs : Array ZPoly) (coreOf : ZPoly → ZPoly)
   timePhase "prod-rec   " reps inputs
     (fun f => factorChecksum (classicalFactorProductionRec (coreOf f) (bOf f)))
 
-/-! ### Direct Berlekamp sub-phase profile -/
+/-! # Direct Berlekamp sub-phase profile -/
 
 /-- Dynamic work and exclusive operation timings from one instrumented witness-splitting
 run. The outer `totalNs` clock covers the complete recursive traversal; the four inner

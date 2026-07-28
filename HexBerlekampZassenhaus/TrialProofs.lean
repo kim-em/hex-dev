@@ -412,7 +412,7 @@ private theorem splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos
 /-- The factors emitted by `splitIntegerRootFactorsAux` are exactly the
 images of some sublist of the input `roots` list under `linearFactorForRoot`.
 Sibling of `splitIntegerRootFactorsAux_product` / `_irreducible` / etc.
-Consumed by the #4785 pairwise non-association proof to read off the
+Consumed by the pairwise non-association proof to read off the
 distinct-roots invariant via `List.Sublist`-then-`Nodup` transfer. -/
 private theorem splitIntegerRootFactorsAux_factors_distinct_roots
     (target : ZPoly) (roots : List Int) (fuel : Nat) :
@@ -466,7 +466,7 @@ private theorem splitIntegerRootFactorsAux_factors_distinct_roots
 by `splitIntegerRootFactorsAux` are `linearFactorForRoot rᵢ` for some sublist
 `rs` of the input `roots`. Composed with `roots.Nodup` (e.g. via
 `integerRootCandidates_nodup`) to read off pairwise distinctness of the
-factor roots, used by the #4785 linear-vs-linear pairwise non-association
+factor roots, used by the linear-vs-linear pairwise non-association
 case. -/
 theorem splitIntegerRootFactorsAux_factors_form
     {target : ZPoly} {roots : List Int} {fuel : Nat}

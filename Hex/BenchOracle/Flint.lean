@@ -11,10 +11,9 @@ import Lean.Data.Json.FromToJson
 # Shared FLINT persistent-subprocess bench driver helper
 
 This module is the Lean-side companion to
-`scripts/oracle/flint_bench_driver.py`. Per
-`SPEC/benchmarking.md` (post-#3657) §"External comparators"
-§"Process call", FLINT comparators with non-negligible per-call
-overhead are wired as a persistent subprocess: the driver loops on
+`scripts/oracle/flint_bench_driver.py`. FLINT comparators with
+non-negligible per-call overhead run as a persistent subprocess:
+the driver loops on
 stdin (one JSON request per line, see the driver's docstring for the
 framing protocol). LeanBench starts a fresh child for every outer
 fixed-benchmark warmup or repeat. Inside that child, a
@@ -35,18 +34,19 @@ This module owns:
   driver-side errors as `IO.userError`. On stream errors the cached child is
   dropped, a fresh driver is spawned, and the request is retried once.
 
-## Per-library wiring
+## Per-library use
 
 Each consuming library (HexPoly, HexPolyZ, HexHensel, HexMatrix,
 HexBerlekamp, HexGFqRing, HexRCF) calls `Hex.BenchOracle.Flint.runOp` from
 its `Bench.lean` and parses the returned `Json` per its family's
-result schema. Example (sketch — actual wiring lands in the
-per-library HOs, HO-21..HO-26)::
+result schema. For example:
 
+```
   open Lean (Json)
   let result ← Hex.BenchOracle.Flint.runOp "fmpz_poly" "mul"
     #[("a", coeffsToJson a), ("b", coeffsToJson b)]
   let coeffs ← jsonToCoeffs result
+```
 
 ## Configuration
 

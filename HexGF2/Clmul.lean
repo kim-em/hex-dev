@@ -554,13 +554,14 @@ theorem pureClmul_oneHot_left (a : UInt64) {bit : Nat} (hbit : bit < 64) :
 
 /-- Trusted runtime hook for carry-less multiplication.
 
-The compiled C shim must return the same `(hi, lo)` pair as `pureClmul`; the
-intrinsic-backed implementations are an optimization only. -/
+The compiled C shim must return the same `(hi, lo)` pair as
+{name}`Hex.pureClmul`; the intrinsic-backed implementations are an optimization
+only. -/
 @[extern "lean_hex_clmul_u64", expose]
 def clmul (a b : @& UInt64) : UInt64 × UInt64 :=
   pureClmul a b
 
-/-- The trusted extern-backed multiplier has `pureClmul` as its logical
+/-- The trusted extern-backed multiplier has {name}`Hex.pureClmul` as its logical
 reference semantics. -/
 theorem clmul_eq_pureClmul (a b : UInt64) : clmul a b = pureClmul a b := by
   rw [clmul]
@@ -839,7 +840,7 @@ private theorem foldl_pureClmul_eq_right_bits (bits : List Nat) (w y : UInt64)
       · simp [clmulPureRightStep, clmulRightBitFoldStep, hset]
         exact ih htail acc
 
-/-- Headline equivalence of the executable multiplier with the bit-indexed
+/-- The executable multiplier equals the bit-indexed
 specification: `clmul y w` equals the right one-hot fold of `clmulRightBitFoldStep`
 over all 64 bit positions. This is the form `clmul_comm` consumes to swap the
 two word arguments. -/

@@ -15,8 +15,8 @@ General `List.foldl` algebra shared across the Mathlib-free `hex` libraries.
 
 The computational libraries repeatedly fold an accumulator with a single
 operation, `xs.foldl (fun acc x => acc + f x) z` or its multiplicative twin.
-Lean core already proves the underlying facts — `List.foldl_assoc`,
-`List.sum_eq_foldl`, `List.foldl_map` — but those need `Std.Associative` /
+Lean core already proves the underlying facts — {name}`List.foldl_assoc`,
+{name}`List.sum_eq_foldl`, `List.foldl_map` — but those need `Std.Associative` /
 `Std.LawfulIdentity` instances on the carrier, which a bare
 `Lean.Grind.Semiring` does not carry. This module supplies those four
 instances **file-locally** (just enough to prove the lemmas below) and then
@@ -24,13 +24,13 @@ states the fold-algebra the libraries actually use.
 
 The lemmas live in the `List` namespace and follow the standard-library
 naming: name the operation, not the use site (`foldl_add_*`, `foldl_mul_*`),
-mirror `List.foldl_assoc`/`List.foldl_map`, and keep `foldl_add_eq_add_foldl`
+mirror {name}`List.foldl_assoc`/`List.foldl_map`, and keep `foldl_add_eq_add_foldl`
 symmetric with `foldl_mul_eq_mul_foldl`. The one exception is
 `foldl_const_step`: core/Mathlib already use `List.foldl_const` for the
 unrelated iterate lemma, so reusing that name here would collide in the
 Mathlib bridge layers (which import both this module and Mathlib). These are
-candidates to migrate up to lean4; the Grind `Std` instances in particular
-belong with the Grind algebra hierarchy.
+kept here so the computational libraries can use them without importing
+Mathlib.
 -/
 
 namespace List
@@ -40,7 +40,7 @@ universe u v w
 variable {α : Type v} {β : Type w} {R : Type u}
 
 /-!
-The `Std.Associative` / `Std.LawfulIdentity` instances that `List.foldl_assoc`
+The `Std.Associative` / `Std.LawfulIdentity` instances that {name}`List.foldl_assoc`
 and friends need are kept **file-local**: they are used only to prove the
 lemmas below, which state their conclusions over `Lean.Grind.Ring` / `CommRing`
 without exposing the instances. Keeping them local avoids adding a second
@@ -67,7 +67,7 @@ local instance {R : Type u} [Lean.Grind.Semiring R] : Std.LawfulIdentity (· * �
   left_id := Lean.Grind.Semiring.one_mul
   right_id := Lean.Grind.Semiring.mul_one
 
-/-! ### Congruence -/
+/-! # Congruence -/
 
 /-- Two folds over `xs` agree when their step functions agree pointwise on the
 elements of `xs` (for every accumulator). The fully general fold congruence. -/
@@ -110,7 +110,7 @@ theorem foldl_mul_eq_mul_foldl {M : Type u} [Mul M] [One M]
     _ = z * xs.foldl (fun acc x => acc * f x) 1 := by
         rw [List.foldl_map (l := xs) (f := f) (g := (· * ·)) (init := 1)]
 
-/-! ### Constant step -/
+/-! # Constant step -/
 
 /-- Folding with a step that discards the element and returns the accumulator
 unchanged yields the initial accumulator. (Core's `List.foldl_const` is the
@@ -121,7 +121,7 @@ theorem foldl_const_step (xs : List α) (z : β) :
   | nil => rfl
   | cons x xs ih => simp only [List.foldl_cons]; exact ih z
 
-/-! ### Permutation invariance -/
+/-! # Permutation invariance -/
 
 /-- An additive fold-sum is invariant under permuting the list. -/
 theorem foldl_add_perm [Lean.Grind.Ring R] (f : α → R) {xs ys : List α}
@@ -147,10 +147,10 @@ section Ring
 
 variable [Lean.Grind.Ring R]
 
-/-! ### Accumulator extraction -/
+/-! # Accumulator extraction -/
 
 /-- Pull the running accumulator out of an additive fold-sum, taking the sum
-from a `0` start. The additive twin of `foldl_mul_eq_mul_foldl`. -/
+from a `0` start. The additive twin of {name}`foldl_mul_eq_mul_foldl`. -/
 theorem foldl_add_eq_add_foldl (xs : List α) (f : α → R) (z : R) :
     xs.foldl (fun acc x => acc + f x) z
       = z + xs.foldl (fun acc x => acc + f x) 0 :=
@@ -162,7 +162,7 @@ theorem foldl_add_eq_add_foldl (xs : List α) (f : α → R) (z : R) :
     _ = z + xs.foldl (fun acc x => acc + f x) 0 := by
         rw [List.foldl_map (l := xs) (f := f) (g := (· + ·)) (init := 0)]
 
-/-! ### All-zero collapse -/
+/-! # All-zero collapse -/
 
 /-- An additive fold-sum whose every summand vanishes on `xs` returns the
 initial accumulator. -/
@@ -179,7 +179,7 @@ theorem foldl_add_zero (xs : List α) (z : R) :
     xs.foldl (fun acc _ => acc + 0) z = z :=
   foldl_add_eq_self xs (fun _ => 0) z fun _ _ => rfl
 
-/-! ### Scalar factoring -/
+/-! # Scalar factoring -/
 
 /-- Factor a left scalar out of an additive fold-sum. -/
 theorem foldl_add_mul_left (xs : List α) (c : R) (f : α → R) (z : R) :
@@ -210,7 +210,7 @@ theorem foldl_add_mul_right (xs : List α) (f : α → R) (c z : R) :
     simp only [List.foldl_cons]
     rw [ih (z := z + f x), show (z + f x) * c = z * c + f x * c by grind]
 
-/-! ### Negation and subtraction -/
+/-! # Negation and subtraction -/
 
 /-- Negation distributes through an additive fold-sum. -/
 theorem foldl_add_neg (xs : List α) (f : α → R) (z : R) :
@@ -223,7 +223,7 @@ theorem foldl_add_neg (xs : List α) (f : α → R) (z : R) :
     rw [show -z + -f x = -(z + f x) by grind]
     exact ih (z + f x)
 
-/-! ### Additivity -/
+/-! # Additivity -/
 
 /-- An additive fold-sum of a pointwise sum splits into two folds, distributing
 the starting accumulator. -/
@@ -280,7 +280,7 @@ theorem foldl_add_sub_zero (xs : List α) (f g : α → R) :
   have h := foldl_add_sub xs f g 0 0
   rwa [show (0 : R) - 0 = 0 by grind] at h
 
-/-! ### Fubini -/
+/-! # Fubini -/
 
 /-- Sum-swap (Fubini) for nested additive fold-sums. -/
 theorem foldl_add_comm {γ : Type w} (xs : List α) (ys : List γ) (f : α → γ → R) :
@@ -343,7 +343,7 @@ theorem foldl_add_mul_right_zero (xs : List α) (f : α → R) (c : R) :
 
 end CommRing
 
-/-! ### flatMap -/
+/-! # flatMap -/
 
 /-- An additive fold-sum over `xs.flatMap f` equals the fold over `xs` whose
 body folds each sublist `f x` into the accumulator. -/
@@ -357,7 +357,7 @@ theorem foldl_add_flatMap [Add R] {γ : Type w}
     simp only [List.flatMap_cons, List.foldl_append, List.foldl_cons]
     exact ih ((f x).foldl (fun acc y => acc + g y) z)
 
-/-! ### Indicator pickout -/
+/-! # Indicator pickout -/
 
 /-- An additive fold-sum over a `Nodup` list whose summand is supported at a
 single matching element collects exactly that summand. -/
@@ -386,7 +386,7 @@ theorem foldl_add_single [Lean.Grind.CommRing R] [DecidableEq α]
         | inr h => exact h
       exact ih z hmem' (List.nodup_cons.mp hnodup).2
 
-/-! ### Monotone bounds (`Nat`) -/
+/-! # Monotone bounds (`Nat`) -/
 
 /-- An additive fold-sum over `Nat` is at least its starting accumulator. -/
 theorem le_foldl_add_self (xs : List α) (g : α → Nat) (init : Nat) :

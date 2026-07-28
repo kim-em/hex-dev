@@ -38,7 +38,7 @@ The file provides three layers:
 namespace Hex
 namespace ZPoly
 
-/-! ## The Taylor shift `translate` -/
+/-! # The Taylor shift `translate` -/
 
 /-- Horner fold for the Taylor shift: `translateAux s cs` is
 `Σᵢ cs[i]·(X + s)^i`. Structural recursion on the coefficient list keeps the
@@ -148,7 +148,7 @@ private theorem translateAux_congr (s : Int) :
           simp only [translateAux]
           rw [ih bs hcs, hc]
 
-/-! ## The `X`-quotient decomposition -/
+/-! # The `X`-quotient decomposition -/
 
 /-- Drop the constant coefficient and shift down one degree; the structural
 recursion handle for `ZPoly` inductions (`f = C f₀ + X · divX f`). -/
@@ -277,7 +277,7 @@ theorem translate_X (s : Int) : translate s X = X + DensePoly.C s := by
   rw [hdivX, translate_one, hcoeff, C_zero, DensePoly.add_zero_poly,
     DensePoly.mul_comm_poly, DensePoly.mul_one_right_poly]
 
-/-! ## `translate` is a ring homomorphism -/
+/-! # `translate` is a ring homomorphism -/
 
 private theorem divX_add (p q : ZPoly) : divX (p + q) = divX p + divX q := by
   apply DensePoly.ext_coeff
@@ -446,7 +446,7 @@ theorem translate_mul (s : Int) (a b : ZPoly) :
     translate s (a * b) = translate s a * translate s b :=
   translate_mul_bounded s a.size a b (Nat.le_refl _)
 
-/-! ## The inverse shift -/
+/-! # The inverse shift -/
 
 private theorem translate_neg_translate_bounded (s : Int) :
     ∀ (n : Nat) (f : ZPoly), f.size ≤ n →
@@ -480,7 +480,7 @@ theorem translate_neg_translate (s : Int) (f : ZPoly) :
     translate (-s) (translate s f) = f :=
   translate_neg_translate_bounded s f.size f (Nat.le_refl _)
 
-/-! ## Size preservation and unit reflection -/
+/-! # Size preservation and unit reflection -/
 
 /-- Addition cannot escape a common size bound. -/
 private theorem size_add_le_of_le {p q : ZPoly} {k : Nat}
@@ -599,7 +599,7 @@ theorem irreducible_of_translate_irreducible (s : Int) (f : ZPoly)
     · exact Or.inl ((isUnit_translate_iff s a).mp ha)
     · exact Or.inr ((isUnit_translate_iff s b).mp hb)
 
-/-! ## Eisenstein's criterion -/
+/-! # Eisenstein's criterion -/
 
 private theorem int_dvd_add {d x y : Int} (hx : d ∣ x) (hy : d ∣ y) :
     d ∣ x + y := by
@@ -934,7 +934,7 @@ theorem irreducible_of_eisenstein
       exact eisenstein_aux g b a q hq (hab.trans (DensePoly.mul_comm_poly a b))
         hb_pos ha2 hlead hlow ha0
 
-/-! ## The kernel-decidable certificate form -/
+/-! # The kernel-decidable certificate form -/
 
 /-- Kernel-decidable Eisenstein-after-shift irreducibility: every hypothesis
 is a Boolean check on the literal shifted polynomial `translate shift f`,

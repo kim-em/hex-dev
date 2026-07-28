@@ -24,14 +24,15 @@ declared fact reads and writes, then replies with an `Outcome` bound to that
 action.  Candidate facts are intersected by an engine-owned `FactDomain`;
 function-specific code never enters the scheduler.
 
-This is an experiment, not yet the supported `HexInterval` API.  Selecting a
+This experimental module is separate from the supported `HexInterval` API.
+Selecting a
 retained expression proposal runs a separate atomic validator before extending
 the live program and rebuilding its concrete rule applications.
 -/
 
 namespace Hex.Interval.Experiment.Propagator
 
-/-! ## Typed expression program -/
+/-! # Typed expression program -/
 
 /-- Compact domain identifier.  The initial corpus uses only the real domain,
 but the scheduler does not assume that all nodes have the same type. -/
@@ -120,7 +121,7 @@ def check (program : Program) : Bool :=
 
 end Program
 
-/-! ## Rule registration -/
+/-! # Rule registration -/
 
 /-- Stable rule name.  `schema` versions the proof payload understood by the
 companion checker. -/
@@ -309,7 +310,7 @@ def applicationsPrefix (old new : Array Application) : Bool := Id.run do
     | _, _ => return false
   return true
 
-/-! ## Request/reply protocol -/
+/-! # Request/reply protocol -/
 
 /-- Monotone version observed for one watched fact. -/
 structure SeenVersion where
@@ -544,7 +545,7 @@ def Action.reply (action : Action) (outcome : Outcome Fact) : Reply Fact :=
     application := action.application
     outcome }
 
-/-! ## Fact intersection boundary -/
+/-! # Fact intersection boundary -/
 
 /-- Result of intersecting an untrusted candidate with the current strongest
 fact.  The explicit record passed to `submit` supplies this operation; the
@@ -568,7 +569,7 @@ def listWithin {alpha : Type} : Nat -> List alpha -> Bool
   | 0, _ :: _ => false
   | limit + 1, _ :: items => listWithin limit items
 
-/-! ## Deterministic engine resources -/
+/-! # Deterministic engine resources -/
 
 /-- Solver-owned resource whose trusted limit was exhausted. -/
 inductive Resource where
@@ -817,7 +818,7 @@ def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Arr
       metrics := { queueInsertions := applications.size }
       limits }
 
-/-! ## Incremental scheduling -/
+/-! # Incremental scheduling -/
 
 namespace Engine
 
@@ -988,7 +989,7 @@ def poll (state : Engine Fact) : Poll Fact :=
 
 end Engine
 
-/-! ## Atomic outcome admission -/
+/-! # Atomic outcome admission -/
 
 /-- Invalid registry reply.  These failures identify a broken registration or
 an untrusted malformed outcome; none can establish a theorem. -/
@@ -1330,7 +1331,7 @@ def contractEquality (state : Engine Fact) (equalityId : EqualityId) :
 
 end Engine
 
-/-! ## External registry driver -/
+/-! # External registry driver -/
 
 /-- Why a bounded request/reply run stopped. -/
 inductive RunStop where
@@ -1381,7 +1382,7 @@ def drive (invoke : Cache -> RuleRequest Fact -> Outcome Fact × Cache) :
       | .awaitingReply state | .invalidState state =>
           { state, cache, stop := .invalidEngine }
 
-/-! ## Atomic expression instantiation -/
+/-! # Atomic expression instantiation -/
 
 /-- Structural failure while validating a retained instantiation request. -/
 inductive AdmissionError where

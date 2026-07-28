@@ -100,7 +100,7 @@ def start? (program : Program) (rules : Array Registration) (facts : Array Rank)
   | .ok state => some state
   | .error _ => none
 
-/-! ## Chain: arbitrary unary propagation -/
+/-! # Chain: arbitrary unary propagation -/
 
 def chainProgram : Program :=
   { operations
@@ -124,7 +124,7 @@ def chainResult? : Option (RunResult Rank (List Nat)) := do
         result.cache == [4, 3, 2, 1]
   | none => false
 
-/-! ## Fanout and opaque ternary join -/
+/-! # Fanout and opaque ternary join -/
 
 def fanoutProgram : Program :=
   { operations := operations.push
@@ -174,7 +174,7 @@ def fanoutResult? : Option (RunResult Rank (List Nat)) := do
         result.cache == [4, 3, 2, 1]
   | none => false
 
-/-! ## Forward/backward propagation over an acyclic expression DAG -/
+/-! # Forward/backward propagation over an acyclic expression DAG -/
 
 def forwardRule : Registration :=
   { key := forwardKey
@@ -218,7 +218,7 @@ def cycleResult? : Option (RunResult Rank (List String)) := do
         result.cache.length == 7
   | none => false
 
-/-! ## Several independent methods for one opaque function -/
+/-! # Several independent methods for one opaque function -/
 
 def methodRule (key : RuleKey) (kind : ActionKind := .forward) : Registration :=
   { key
@@ -260,7 +260,7 @@ def methodResult? : Option (RunResult Rank (List String)) := do
         result.state.history.size == 3
   | none => false
 
-/-! ## Structural requests are suggestions, not mutation authority -/
+/-! # Structural requests are suggestions, not mutation authority -/
 
 def instantiateKey : RuleKey := { name := "shape.add-expression" }
 
@@ -300,7 +300,7 @@ def instantiationResult? : Option (RunResult Rank Nat) := do
         result.state.history.isEmpty
   | none => false
 
-/-! ## Selecting a request atomically extends the network -/
+/-! # Selecting a request atomically extends the network -/
 
 def generatedOp : OpKey := { name := "opaque.generated" }
 def generatedKey : RuleKey := { name := "opaque.generated.copy" }
@@ -401,7 +401,7 @@ def dynamicFinal? : Option (RunResult Rank (List String) × SuggestionId) := do
       | _ => false
   | none => false
 
-/-! ## Two successive shape triggers exercise general generation recurrence -/
+/-! # Two successive shape triggers exercise general generation recurrence -/
 
 def nextOp : OpKey := { name := "opaque.next-generation" }
 def nextCopyKey : RuleKey := { name := "opaque.next.copy" }
@@ -528,7 +528,7 @@ def ladderFinal? : Option (RunResult Rank (List String)) := do
       | none => false
   | none => false
 
-/-! ## One atomic batch: CSE, several products, and an equality draft -/
+/-! # One atomic batch: CSE, several products, and an equality draft -/
 
 def batchKey : RuleKey := { name := "shape.batch" }
 
@@ -595,7 +595,7 @@ def batchAdmitted? : Option (Engine Rank) := do
         | none => false
   | none => false
 
-/-! ## Equality is one atomic, undirected contractor -/
+/-! # Equality is one atomic, undirected contractor -/
 
 structure PairRank where
   first : Nat
@@ -819,7 +819,7 @@ def pairReuseAdmitted? : Option (Engine PairRank) := do
         result.state.facts.toList == [pair 4 5, pair 4 5, pair 0 0]
   | none => false
 
-/-! ## An equal alternate joins the ordinary propagator network -/
+/-! # An equal alternate joins the ordinary propagator network -/
 
 def alternateEqualityKey : RuleKey := { name := "shape.equal-alternate" }
 
@@ -905,7 +905,7 @@ def alternateEqualityFinal? : Option (RunResult Rank (List String)) := do
       | _ => false
   | none => false
 
-/-! ## Bounded observations, effort, and structural requests -/
+/-! # Bounded observations, effort, and structural requests -/
 
 def firstChainRequest? : Option (RuleRequest Rank × Engine Rank) := do
   let initial <- start? chainProgram #[copyRule] #[4, 0, 0, 0, 0]

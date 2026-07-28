@@ -17,7 +17,7 @@ Executable finite-field operations for `F_p[x] / (f)`.
 
 This module keeps `GFqField.FiniteField` on the quotient-ring arithmetic path:
 all operations, exponentiation, and Frobenius are implemented by delegating to
-`Hex.GFqRing.PolyQuotient` and then rewrapping the reduced representative.
+{name}`Hex.GFqRing.PolyQuotient` and then rewrapping the reduced representative.
 -/
 namespace Hex
 
@@ -248,7 +248,7 @@ private theorem zmod64_mul_inv_eq_one_of_prime_ne_zero
   apply UInt64.toNat_inj.mp
   simpa [ZMod64.toNat_eq_val] using hinv
 
-/-- Left multiplication by a constant polynomial agrees with `DensePoly.scale`,
+/-- Left multiplication by a constant polynomial agrees with {name}`DensePoly.scale`,
 allowing inverse soundness proofs to move between the two forms. -/
 private theorem C_mul_eq_scale (c : ZMod64 p) (f : FpPoly p) :
     DensePoly.C c * f = DensePoly.scale c f := by
@@ -495,8 +495,8 @@ def inv {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
   else
     ofPoly f hf hp hirr (invPoly x.toQuotient)
 
-/-- For nonzero `x`, the quotient representative of `inv x` is `invPoly` of `x`'s
-representative; rewrites `inv` through `toQuotient` so inverse cancellation can be
+/-- For nonzero `x`, the quotient representative of `inv x` is {name}`invPoly` of `x`'s
+representative; rewrites {name}`inv` through `toQuotient` so inverse cancellation can be
 discharged at the quotient-ring level. -/
 private theorem toQuotient_inv_of_ne_zero
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -1018,7 +1018,7 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
   simpa using Lean.Grind.CommSemiring.mul_comm a.toQuotient b.toQuotient
 
 /-- A right inverse is the inverse: `a * b = 1` forces `a = b⁻¹`; the uniqueness
-fact that lets the `FiniteField` field-structure proofs identify computed inverses
+fact that lets the {name}`FiniteField` field-structure proofs identify computed inverses
 with the canonical `⁻¹`. -/
 private theorem eq_inv_of_mul_eq_one
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -1061,8 +1061,8 @@ theorem inv_inv
     apply eq_inv_of_mul_eq_one
     exact mul_inv_cancel (x := x) hx
 
-/-- Double inverse stated through the `inv`-named function: `(inv x)⁻¹ = x`; the
-form consumed where the explicit `inv` definition appears rather than the `⁻¹`
+/-- Double inverse stated through the {name}`inv`-named function: `(inv x)⁻¹ = x`; the
+form consumed where the explicit {name}`inv` definition appears rather than the `⁻¹`
 notation. -/
 theorem inv_inv_def
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -1071,7 +1071,7 @@ theorem inv_inv_def
   inv_inv x
 
 /-- The empty product `pow x 0 = 1`; the base case anchoring the exponentiation
-recursion in the `FiniteField` power API. -/
+recursion in the {name}`FiniteField` power API. -/
 theorem pow_zero_eq_one
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) :

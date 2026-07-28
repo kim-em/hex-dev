@@ -18,11 +18,10 @@ python-flint's `fmpz_poly.complex_roots()` (certified Arb balls with
 multiplicities) and cross-checks that the Lean certification discs
 cover the flint roots with matching multiplicities.
 
-Per the SPEC design decision the operation is `isolateAll?` at target
-`32` rather than `isolate`: the oracle needs root *locations*, not the
-separation precision `isolate` forces.
+The driver uses `isolateAll?` at target `32` rather than `isolate`: the oracle
+needs root *locations*, not the separation precision `isolate` forces.
 
-**Fixture set.** The ci tier contains the SPEC's 50 degree-20 dense
+**Fixture set.** The CI tier contains 50 degree-20 dense
 polynomials from the seed-`0xC0FFEE` LCG, plus the small curated rational and
 Gaussian-rational cases that exercise simple atoms and real/complex
 multiple-root clusters. The all-atoms local finisher makes fresh degree-20
@@ -39,8 +38,8 @@ not churn the committed fixture. Each object carries
 disc centre as an exact rational (`re_num` / `re_den` / `im_num` /
 `im_den`, from `DyadicSquare.re`/`im` via `Dyadic.toRat`), and `prec`
 (the stored square's precision). A `none` outcome from the driver
-serialises as the JSON string `"none"`; this is SPEC-noteworthy and is
-reported to stderr with its case id.
+serialises as the JSON string `"none"` and is reported to stderr with its case
+id.
 
 The local JSON builders below (`certValue`, `noneValue`) exist because
 the shared `Hex.Conformance.Emit` helpers only cover flat records; the
@@ -83,7 +82,7 @@ private def randomCases (degree count : Nat) (seed : UInt64) : List Case := Id.r
     out := out.push { id := s!"random/deg{degree}_{i}", coeffs := coeffs.toList }
   return out.toList
 
-/-- Curated atom/cluster cases followed by the SPEC's full seeded degree-20
+/-- Curated atom/cluster cases followed by the full seeded degree-20
 ci tier. -/
 private def cases : List Case := [
   -- Real simple roots.
@@ -99,7 +98,7 @@ private def cases : List Case := [
   { id := "cluster/x2p1sq", coeffs := [1, 0, 2, 0, 1] }           -- (x²+1)²
 ] ++ randomCases 20 50 0xC0FFEE
 
-/-! ## Result serialisation. -/
+/-! # Result serialisation. -/
 
 /-- Serialise one certification result as a JSON object. -/
 private def certObject {p : ZPoly} (c : Certified p) : String :=
@@ -121,9 +120,8 @@ private def certValue {p : ZPoly} (rs : Array (Certified p)) : String :=
 /-- The `result.value` for a driver give-up. -/
 private def noneValue : String := "\"none\""
 
-/-- Emit the `poly` fixture and `isolateAll32` result for one case,
-    returning `true` when the driver gave up (a SPEC-noteworthy
-    `none`). -/
+/-- Emit the `poly` fixture and `isolateAll32` result for one case, returning
+    `true` when the driver returned `none`. -/
 private def emitCase (c : Case) : IO Bool := do
   emitPolyFixture lib c.id c.coeffs
   let p : ZPoly := DensePoly.ofCoeffs c.coeffs.toArray

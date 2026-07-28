@@ -118,7 +118,7 @@ theorem genLC (hA : PosLogConcave A) :
 
 end PosLogConcave
 
-/-! ### Coefficient formulas for the linear and quadratic factors -/
+/-! # Coefficient formulas for the linear and quadratic factors -/
 
 private theorem coeff_X_add_C_mul_succ (r : ℝ) (A : ℝ[X]) (k : ℕ) :
     ((X + C r) * A).coeff (k + 1) = A.coeff k + r * A.coeff (k + 1) := by
@@ -164,7 +164,7 @@ private theorem monic_quad (b c : ℝ) : Monic (X ^ 2 + C b * X + C c : ℝ[X]) 
   have : (X ^ 2 + C b * X + C c : ℝ[X]) = C 1 * X ^ 2 + C b * X + C c := by rw [C_1, one_mul]
   rw [Monic, this, leadingCoeff_quadratic one_ne_zero]
 
-/-! ### Closure of `PosLogConcave` under the sector factors -/
+/-! # Closure of `PosLogConcave` under the sector factors -/
 
 /-- Multiplying a `PosLogConcave` polynomial by a positive linear factor `X + C r`
 (`0 < r`) preserves `PosLogConcave`. -/
@@ -271,7 +271,7 @@ theorem PosLogConcave.mul_quadratic (hA : PosLogConcave A) {b c : ℝ} (hb : 0 <
         mul_nonneg hc.le (sub_nonneg.mpr (hA.genLC m (m + 3) (by lia))),
         mul_nonneg (sub_nonneg.mpr hbc) (sub_nonneg.mpr (hA.lc (m + 1)))]
 
-/-! ### The Obreshkoff sector -/
+/-! # The Obreshkoff sector -/
 
 open Complex in
 /-- The closed Obreshkoff sector `{z | z.re ≤ -‖z‖ / 2}`: the closed sector of
@@ -292,7 +292,7 @@ theorem ofReal_mem_sector {t : ℝ} : ((t : ℝ) : ℂ) ∈ sector ↔ t ≤ 0 :
 theorem conj_mem_sector {z : ℂ} (hz : z ∈ sector) : (starRingEnd ℂ) z ∈ sector := by
   rw [mem_sector, Complex.conj_re, Complex.norm_conj]; exact hz
 
-/-! ### From roots in the sector to `PosLogConcave` -/
+/-! # From roots in the sector to `PosLogConcave` -/
 
 /-- A monic real linear factor whose complex root lies in `sector ∖ {0}` has the
 form `X + C r` with `0 < r`, hence multiplying preserves `PosLogConcave`. -/
@@ -448,10 +448,10 @@ theorem posLogConcave_of_aeval_mem_sector {Q : ℝ[X]} (hQ : Q.Monic) (h0 : Q.co
         rw [hQeq]
         exact posLogConcave_mul_of_monicDegTwo hf2plc hf₁ hf10 hroots₁
 
-/-! ### Sign-variation bounds from coefficient signs
+/-! # Sign-variation bounds from coefficient signs
 
-Both bounds are proved by `eraseLead` induction on the coefficient predicates,
-so no `coeffList` surgery is needed. -/
+Both bounds are proved by {name}`eraseLead` induction on the coefficient predicates,
+so no {name}`coeffList` surgery is needed. -/
 
 /-- A nonnegative-coefficient polynomial has no sign variations. -/
 theorem signVariations_eq_zero_of_coeff_nonneg {P : ℝ[X]} (h : ∀ i, 0 ≤ P.coeff i) :
@@ -561,9 +561,9 @@ theorem signVariations_le_one_of_coeff_threshold {P : ℝ[X]} {θ : ℕ}
         · exact h2 i hi
       exact ih _ heLnd h1' h2' rfl
 
-/-! ### The threshold instantiation -/
+/-! # The threshold instantiation -/
 
-/-- A `PosLogConcave` polynomial times any power of `X` has no sign variations. -/
+/-- A `PosLogConcave` polynomial times any power of {name}`X` has no sign variations. -/
 theorem PosLogConcave.signVariations_X_pow_mul (hQ : PosLogConcave A) (k : ℕ) :
     ((X : ℝ[X]) ^ k * A).signVariations = 0 := by
   apply signVariations_eq_zero_of_coeff_nonneg
@@ -574,7 +574,7 @@ theorem PosLogConcave.signVariations_X_pow_mul (hQ : PosLogConcave A) (k : ℕ) 
   · exact le_refl 0
 
 /-- **The peeled threshold bound.** Multiplying a `PosLogConcave` polynomial by
-one real linear factor `X - C r` (any `r : ℝ`) and any power of `X` yields at
+one real linear factor `X - C r` (any `r : ℝ`) and any power of {name}`X` yields at
 most one sign variation. For `r ≤ 0` all coefficients stay nonnegative; for
 `0 < r` the monotone-ratio consequence of log-concavity produces a single
 nonpositive-to-nonnegative threshold in the coefficients. -/
@@ -651,7 +651,7 @@ theorem PosLogConcave.signVariations_X_pow_mul_X_sub_C_mul (hA : PosLogConcave A
       rw [coeff_X_pow_mul', if_pos (by omega)]
       exact h2 _ (by omega)
 
-/-! ### Assembly -/
+/-! # Assembly -/
 
 /-- Every nonzero real polynomial is a nonzero scalar times `X ^ k` times a
 monic polynomial with nonzero constant coefficient. -/
@@ -782,7 +782,7 @@ theorem signVariations_eq_zero_of_sector {P : ℝ[X]} (hP : P ≠ 0)
       ((mem_roots_map hQne).mpr (by rwa [← aeval_def])) hzout
   rw [hPeq, signVariations_C_mul _ hc, hQplc.signVariations_X_pow_mul]
 
-/-! ### Sharpness
+/-! # Sharpness
 
 The naive per-factor bound `signVariations ((X² + bX + c) * P) ≤ signVariations P`
 for sector quadratics is false, and so is the general count bound

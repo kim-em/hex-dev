@@ -21,10 +21,9 @@ This file provides the scalar bridge used by a word-sized Hensel step:
 `ZPoly.intModNat` (the canonical `[0, M)` residue) commutes with `+`, `*`, and the
 full-range modular `-` of `WordMod` (`intModNat_add`/`intModNat_mul`/`intModNat_sub`).
 
-These are the reusable, general pieces. The full polynomial ring-homomorphism
-transport built on top (the multiplicative `toWP` law is the deep piece, requiring
-a fold-congruence over the coefficient convolution) and the byte-identical Hensel
-correspondence are follow-up work; see the discussion on issue #8854.
+These reusable scalar laws support the polynomial ring-homomorphism transport:
+the multiplicative `toWP` law additionally requires a fold congruence over the
+coefficient convolution.
 -/
 
 namespace Hex
@@ -54,7 +53,7 @@ theorem eq_iff_toNat {a b : WordMod ctx} : a = b ↔ a.toNat = b.toNat :=
   have ha : a.toNat < m.toNat := toNat_lt a
   rw [Nat.add_sub_cancel' (Nat.le_of_lt ha), Nat.mod_self]
 
-/-! ### `Lean.Grind.CommRing (WordMod ctx)`
+/-! # `Lean.Grind.CommRing (WordMod ctx)`
 
 The Montgomery residue ring is a commutative ring; the axioms transport through
 `toNat` (which is `+`/`*`/`-`-compatible modulo `m`). This is what lets the

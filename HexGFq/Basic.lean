@@ -727,7 +727,8 @@ abbrev entry : Conway.SupportedEntry p n :=
 abbrev modulus : FpPoly p :=
   GFq.modulus (entry (p := p) (n := n))
 
-/-- `GFqC.modulus` delegates to the explicit-entry `GFq.modulus`. -/
+/-- {name}`Hex.GFqC.modulus` delegates to the explicit-entry
+{name}`Hex.GFq.modulus`. -/
 theorem modulus_eq_gfq :
     modulus (p := p) (n := n) =
       GFq.modulus (entry (p := p) (n := n)) :=

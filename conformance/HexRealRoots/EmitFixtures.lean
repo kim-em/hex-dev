@@ -90,7 +90,7 @@ private def emitCase (id : String) (coeffs : List Int) (squarefree : Bool) : IO 
     | some _ =>
       throw <| IO.userError s!"{lib}/{id}: expected isolate? to reject a non-square-free input"
 
-/-! ## SPEC core fixtures. -/
+/-! # SPEC core fixtures. -/
 
 /-- The square-free core cases: a coefficient list (ascending degree)
 and a human-readable id. -/
@@ -113,7 +113,7 @@ private def coreRejection : List (String × List Int) := [
   ("core/nonsquarefree/x-1_sq_x+1", [1, -1, -1, 1])  -- (x − 1)²(x + 1)
 ]
 
-/-! ## ci tier: seeded degree-15 square-free polynomials. -/
+/-! # ci tier: seeded degree-15 square-free polynomials. -/
 
 /-- POSIX `rand` LCG step: `x ↦ (1103515245·x + 12345) mod 2^31`. -/
 private def lcgStep (x : Nat) : Nat := (1103515245 * x + 12345) % 2147483648

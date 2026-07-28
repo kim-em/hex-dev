@@ -13,13 +13,12 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-Support-partition counting for the BHKS class-count lower bound (#8519).
+Support-partition counting for the BHKS class-count lower bound.
 
-Resurrected from the pre-#8411 `PartitionRefinement.lean` (6bf20977^): when
-the true supports genuinely partition the lifted-factor indices (cover,
+When the true supports genuinely partition the lifted-factor indices (cover,
 uniqueness, nonemptiness — supplied by `LiftedFactorSubsetPartition`), the
 support-equivalence partition has exactly one class per support, so its
-length is `(liftedTrueSupports core d).ncard`, which the #8413 machinery
+length is `(liftedTrueSupports core d).ncard`, which the machinery
 identifies with `(normalizedFactors (toPolynomial core)).card`.
 -/
 
@@ -29,7 +28,7 @@ noncomputable section
 
 namespace BHKS
 
-/-! ### Support-partition length from a genuine partition
+/-! # Support-partition length from a genuine partition
 
 The B8 partition-refinement hypothesis `hpartition` consumed by the fast-core
 irreducibility wrappers is an equality

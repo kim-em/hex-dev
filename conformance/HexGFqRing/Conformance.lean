@@ -210,7 +210,7 @@ private def x5 : Q := q #[0, 0, 0, 0, 0, 1]
 #guard zsmul 7 a = ((7 : Int) : Q) * a
 #guard zsmul (-2) x = ((-2 : Int) : Q) * x
 
-/-! ## Second concrete quotient: `F_7[x] / (x^2 + 1)` -/
+/-! # Second concrete quotient: `F_7[x] / (x^2 + 1)` -/
 
 private instance conformanceBoundsSeven : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
 

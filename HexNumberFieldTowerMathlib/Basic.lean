@@ -42,7 +42,7 @@ theorem eval?_eq (T : NumberTower) (a : Elem T) {root : AlgebraicRoot}
   simp [eval?, h]
 
 /-- The complex value of a tower element. The fallback is unreachable by
-`eval?_isSome`. -/
+{name}`Hex.NumberTower.eval?_isSome`. -/
 @[expose]
 noncomputable def toComplex (T : NumberTower) (a : Elem T) : ℂ :=
   (T.eval? a).getD 0

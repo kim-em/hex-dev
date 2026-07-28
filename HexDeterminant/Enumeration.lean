@@ -264,7 +264,7 @@ private theorem inversionCount_swap_separated_parity {n : Nat}
 
 
 
-/-! ### Generic list and `Fin` combinatorics
+/-! # Generic list and `Fin` combinatorics
 
 These determinant-agnostic helpers about folds, `Nodup`, and `insertAt`
 support the enumeration completeness and duplicate-freeness proofs below,
@@ -385,7 +385,7 @@ private theorem finLast_mem {n : Nat} {xs : List (Fin (n + 1))}
     omega
 
 
-/-! ### Completeness and duplicate-freeness of the enumeration -/
+/-! # Completeness and duplicate-freeness of the enumeration -/
 
 /-- `lowerFinLast x h` reinterprets an `x : Fin (n + 1)` that is not `Fin.last n`
 as an element of `Fin n` carrying the same underlying value. -/

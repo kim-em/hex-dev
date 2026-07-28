@@ -19,8 +19,7 @@ record per cross-checked operation to `stdout` (or to
 operation through python-flint's `nmod_poly` (for `F_2[x]` arithmetic)
 and `fq_default_ctx` (for the `GF(2^n)` extension fields).
 
-Two families of fixtures
-------------------------
+# Two families of fixtures
 
 * **`F_2[x]` arithmetic** — `mul`, `gcd`, `divmod` on polynomial pairs
   at degrees 16, 32, 64, 128.  Source polynomials are standard
@@ -61,7 +60,7 @@ form expected by the gf2 oracle. -/
 private def emitPoly2 (case : String) (p : GF2Poly) : IO Unit :=
   emitPolyFixture lib case (coeffsOf p) (some 2)
 
-/-! ## `F_2[x]` arithmetic fixtures -/
+/-! # `F_2[x]` arithmetic fixtures -/
 
 private structure PolyCase where
   id : String
@@ -104,7 +103,7 @@ private def cases_f2x : List PolyCase :=
       a  := ofUInt64 0x87 + monomial 128
       b  := ofWords #[0xDEADBEEFCAFEBABE, 0x0123456789ABCDEF] } ]
 
-/-! ## `GF(2^n)` field fixtures -/
+/-! # `GF(2^n)` field fixtures -/
 
 private theorem gf16Irr :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x3 4) :=

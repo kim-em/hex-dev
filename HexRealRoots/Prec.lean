@@ -56,8 +56,8 @@ With `c := |aₙ|` the leading coefficient and `A := max_{i < n} |aᵢ|` the
 largest non-leading coefficient in absolute value, the result is
 `twoPow (ceilLog2Nat (⌊A / c⌋ + 2))`. Since `2^k ≥ ⌊A / c⌋ + 2 >
 1 + A / c ≥ 1 + max |aᵢ| / |aₙ|`, this power of two strictly exceeds the
-Cauchy bound. For `deg p ≤ 0` there are no roots to bound and the SPEC
-junk value `1` is returned; no theorem reads it. -/
+Cauchy bound. For `deg p ≤ 0` there are no roots to bound and the placeholder
+value `1` is returned; no theorem reads it. -/
 @[expose] def rootBound (p : ZPoly) : Dyadic :=
   match p.degree? with
   | none | some 0 => Dyadic.ofInt 1
@@ -83,12 +83,14 @@ theorem rootBound_of_degree?_pos {p : ZPoly} {d : Nat} (h : p.degree? = some (d 
 /-- Separation precision: for squarefree `p` of degree `n ≥ 2`,
 `2^{−sepPrec p} < sep(p) / 4`, where `sep(p) := min_{i ≠ j} |αᵢ − αⱼ|`
 over the distinct complex roots. The contract is pairwise, hence vacuous
-for `deg p ≤ 1`, which is exactly when nothing needs it (SPEC junk `0`).
+for `deg p ≤ 1`, which is exactly when nothing needs the placeholder `0`.
 
 Derivation of the closed form (the companion's proof script). The Mahler
 separation bound (Mahler 1964) gives
 
+```
   sep(p) ≥ √3 · n^{−(n+2)/2} · |disc p|^{1/2} · M(p)^{−(n−1)}.
+```
 
 For a squarefree integer polynomial `disc p` is a nonzero integer, so
 `|disc p| ≥ 1`, and `√3 ≥ 1`; dropping both factors keeps a lower bound.
@@ -96,8 +98,10 @@ Landau's inequality bounds the Mahler measure `M(p) ≤ ‖p‖₂ ≤ L`, where
 `L := coeffL2NormBound p` is the conservative integer L2-norm bound from
 `HexPolyZ.Mignotte`. Hence
 
+```
   sep(p) ≥ n^{−(n+2)/2} · L^{−(n−1)}
          = 2^{−((n+2)/2 · log₂ n + (n−1) · log₂ L)}.
+```
 
 Rounding each logarithm up: `⌈(n+2)/2 · log₂ n⌉ ≤ ⌈((n+2) · ⌈log₂ n⌉ +
 1) / 2⌉`, realised by the integer form `((n + 2) * ceilLog2Nat n + 1) / 2`
@@ -105,7 +109,9 @@ Rounding each logarithm up: `⌈(n+2)/2 · log₂ n⌉ ≤ ⌈((n+2) · ⌈log�
 half-integer exponent up), and `(n−1) · log₂ L ≤ (n − 1) · ceilLog2Nat L`.
 This yields `sep(p) ≥ 2^{−(E)}` with
 
+```
   E = ((n + 2) * ceilLog2Nat n + 1) / 2 + (n − 1) * ceilLog2Nat L.
+```
 
 Finally `sepPrec p := E + 3`, where `+2` provides the `/4` margin
 (`2^{−(E+2)} = 2^{−E} / 4 ≤ sep(p) / 4`) and `+1` makes the inequality
@@ -129,8 +135,8 @@ halvings to shrink the initial interval `(−rootBound p, rootBound p]`
 For positive degree the depth is `sepPrec p +
 (ceilLog2Dyadic (2 · rootBound p)).toNat + depthSlack`. The `.toNat` is
 lossless: `2 · rootBound p ≥ 2` (a positive power of two doubled), so its
-ceiling logarithm is `≥ 1 > 0`. For `deg p ≤ 0` the SPEC contract is that
-`isolationDepth` returns `depthSlack`; that branch is special-cased,
+ceiling logarithm is `≥ 1 > 0`. For `deg p ≤ 0`, `isolationDepth` returns
+`depthSlack`; that branch is special-cased,
 since the junk `rootBound` value `1` would otherwise contribute a
 spurious `ceilLog2Dyadic 2 = 1`. -/
 def isolationDepth (p : ZPoly) : Nat :=

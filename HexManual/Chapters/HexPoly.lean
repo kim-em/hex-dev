@@ -117,8 +117,9 @@ optional degree.
 {docstring Hex.DensePoly.toArray}
 
 The coefficient function is characterised against each constructor, so
-proofs and `simp` can read coefficients off `ofCoeffs`, `C`, and
-`monomial` without unfolding normalization:
+proofs and `simp` can read coefficients off {name}`Hex.DensePoly.ofCoeffs`,
+{name}`Hex.DensePoly.C`, and
+{name}`Hex.DensePoly.monomial` without unfolding normalization:
 
 {docstring Hex.DensePoly.coeff_ofCoeffs}
 
@@ -305,7 +306,7 @@ The Euclidean operators are pinned down by a small set of laws. The
 quotient-remainder identity reconstructs the dividend, and the
 remainder has strictly smaller degree than a positive-degree divisor.
 Together these are the defining properties of Euclidean division. They
-are stated under the `DivModLaws` hypothesis bundling the per-field
+are stated under the {name}`Hex.DensePoly.DivModLaws` hypothesis bundling the per-field
 proof obligations, which `HexPolyFp` discharges for the concrete prime
 fields.
 
@@ -324,7 +325,8 @@ divides its dividend exactly when the remainder is zero.
 
 The gcd divides both arguments and is divisible by every common
 divisor (its universal property), and the extended coefficients
-satisfy the Bezout identity. These are bundled under the `GcdLaws`
+satisfy the Bezout identity. These are bundled under the
+{name}`Hex.DensePoly.GcdLaws`
 hypothesis, again discharged downstream.
 
 {docstring Hex.DensePoly.gcd_dvd_left}
@@ -355,7 +357,7 @@ They are mutually inverse:
 
 {docstring HexPolyMathlib.ofPolynomial_toPolynomial}
 
-`toPolynomial` is a degree-preserving ring homomorphism. Addition,
+{name}`HexPolyMathlib.toPolynomial` is a degree-preserving ring homomorphism. Addition,
 multiplication, and the degree transfer:
 
 {docstring HexPolyMathlib.toPolynomial_add}
@@ -380,8 +382,9 @@ tag := "hex-poly-cross-references"
 
 * `HexPolyZ` specializes the coefficient type to `Int` and adds the
   integer-specific theory (content, primitive parts), and `HexPolyFp`
-  specializes to the prime fields `ZMod64 p`, supplying the concrete
-  `DivModLaws` and `GcdLaws` instances that turn the
+  specializes to the prime fields `ZMod64 p`, supplying
+  the concrete {name}`Hex.DensePoly.DivModLaws` and
+  {name}`Hex.DensePoly.GcdLaws` instances that turn the
   {ref "hex-poly-key-correctness"}[Euclidean laws] above into usable
   facts. The finite-field and factorization libraries, including `HexGFqRing`
   and `HexBerlekamp`, reach this representation transitively through

@@ -51,7 +51,7 @@ def yunFactorsWithLevel
             { factor := z, multiplicity := base * level } :: accRev
         yunFactorsWithLevel y (w / y) base (level + 1) fuel accRev'
 
-/-- `yunFactors` is the multiplicity-indexed Yun inner loop, peeling factors off
+/-- {name}`yunFactors` is the multiplicity-indexed Yun inner loop, peeling factors off
 the coprime/repeated split `(c, w)` and tagging each with the running
 multiplicity `i`. -/
 private def yunFactors
@@ -74,7 +74,7 @@ private def yunFactors
         yunFactors y (w / y) (i + 1) fuel accRev'
 
 /--
-Specification payload for `yunFactors`: the first component is the product
+Specification payload for {name}`yunFactors`: the first component is the product
 contributed by factors discovered from `(c, w, i, fuel)`, and the second is
 the repeated part that remains for the `p`-th-root descent.
 -/
@@ -95,7 +95,7 @@ private def yunFactorsContributionWithLevel
             pow z (base * level) * tail.1
         (contribution, tail.2)
 
-/-- `yunFactorsContribution` is the specification payload for `yunFactors`: the
+/-- {name}`yunFactorsContribution` is the specification payload for {name}`yunFactors`: the
 product contributed by the discovered factors paired with the repeated part that
 remains. -/
 private def yunFactorsContribution
@@ -115,8 +115,8 @@ private def yunFactorsContribution
             pow z i * tail.1
         (contribution, tail.2)
 
-/-- `yunFactorsWithLevel_reconstruction_invariant` ties `yunFactorsWithLevel` to
-`yunFactorsContributionWithLevel`: the loop's residual matches the contribution's
+/-- {name}`yunFactorsWithLevel_reconstruction_invariant` ties {name}`yunFactorsWithLevel` to
+{name}`yunFactorsContributionWithLevel`: the loop's residual matches the contribution's
 residual, and the reverse-order accumulator product equals the prior accumulator
 product times the contribution. -/
 private theorem yunFactorsWithLevel_reconstruction_invariant
@@ -165,8 +165,8 @@ private theorem yunFactorsWithLevel_reconstruction_invariant
                             (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).1
             simpa [y, z, hz] using hmul
 
-/-- `yunFactors_reconstruction_invariant` ties `yunFactors` to
-`yunFactorsContribution`: the loop's residual matches the contribution's
+/-- {name}`yunFactors_reconstruction_invariant` ties {name}`yunFactors` to
+{name}`yunFactorsContribution`: the loop's residual matches the contribution's
 residual, and the reverse-order accumulator product equals the prior accumulator
 product times the contribution. -/
 private theorem yunFactors_reconstruction_invariant
@@ -303,7 +303,7 @@ private theorem size_eq_zero_of_isZero_true
     f.size = 0 := by
   simpa [DensePoly.isZero, DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hzero
 
-/-- `pthRoot` fixes the constant polynomial `1`, the unit base case of the `pthRoot` recursion. -/
+/-- {name}`pthRoot` fixes the constant polynomial `1`, the unit base case of the {name}`pthRoot` recursion. -/
 private theorem pthRoot_one
     (hp : Hex.Nat.Prime p) :
     pthRoot (1 : FpPoly p) = 1 := by
@@ -370,7 +370,7 @@ private theorem derivative_isZero_true_of_size_one
   have h := DensePoly.size_derivative_le f
   omega
 
-/-- Square-free contribution correctness on `pthRoot 1`: it equals `pow (pthRoot 1) multiplicity`, the constant base case of the `pthRoot` branch. -/
+/-- Square-free contribution correctness on `pthRoot 1`: it equals `pow (pthRoot 1) multiplicity`, the constant base case of the {name}`pthRoot` branch. -/
 private theorem squareFreeAuxRevContribution_pthRoot_constant_correct
     (hp : Hex.Nat.Prime p) (multiplicity fuel : Nat) :
     squareFreeAuxRevContribution (pthRoot (1 : FpPoly p)) multiplicity fuel =
@@ -423,7 +423,7 @@ private theorem pthRoot_nonzero_of_derivative_zero_nonconstant
     have hpos : 0 < f.size := by omega
     exact False.elim (DensePoly.coeff_last_ne_zero_of_pos_size f hpos hcoeff_f_zero)
 
-/-- Taking `pthRoot` of a nonconstant polynomial strictly shrinks its `size`, so the recursion's fuel still bounds it. -/
+/-- Taking {name}`pthRoot` of a nonconstant polynomial strictly shrinks its `size`, so the recursion's fuel still bounds it. -/
 private theorem pthRoot_fuel_decrease_of_derivative_zero_nonconstant
     (hp : Hex.Nat.Prime p) (f : FpPoly p) {fuel : Nat}
     (hfuel : f.size < fuel + 1)
@@ -492,7 +492,7 @@ private theorem pthRoot_dvd_self_of_derivative_zero
     _ = pthRoot f * pow (pthRoot f) (p - 1) := by
       rw [pow_one]
 
-/-- Iterating `pow` multiplies the exponents. -/
+/-- Iterating {name}`pow` multiplies the exponents. -/
 private theorem pow_pow_mul
     (f : FpPoly p) (m n : Nat) (_hm : 0 < m) :
     pow (pow f n) m = pow f (m * n) := by
@@ -604,7 +604,7 @@ private theorem pthRoot_reachable_of_derivative_zero
   exact pthRoot_one hp
 
 /-- A monic prime-field polynomial is nonzero: its leading coefficient `1` is
-nonzero by `zmod64_one_ne_zero_of_prime`, while a zero polynomial has leading
+nonzero by {name}`zmod64_one_ne_zero_of_prime`, while a zero polynomial has leading
 coefficient `0`. -/
 private theorem ne_zero_of_monic_fpoly
     (hp : Hex.Nat.Prime p) {f : FpPoly p} (hmonic : DensePoly.Monic f) :
@@ -617,7 +617,7 @@ private theorem ne_zero_of_monic_fpoly
   rw [hlead_zero] at hlead_one
   exact zmod64_one_ne_zero_of_prime hp hlead_one.symm
 
-/-- A monic prime-field polynomial has unit scalar `1` under `normalizeMonic`:
+/-- A monic prime-field polynomial has unit scalar `1` under {name}`normalizeMonic`:
 the recorded leading coefficient is `1`, matching the leading coefficient of
 the input. Companion to `normalizeMonic_eq_self_of_monic`. -/
 private theorem normalizeMonic_fst_eq_one_of_monic
@@ -635,10 +635,10 @@ private theorem normalizeMonic_fst_eq_one_of_monic
   rw [normalizeMonic_nonzero f hzero]
   exact hmonic
 
-/-- `normalizeMonic` is transparent on an already-monic polynomial: the
+/-- {name}`normalizeMonic` is transparent on an already-monic polynomial: the
 polynomial component of the split is the input unchanged. This lets downstream
 code collapse a normalized provider back to the raw polynomial whenever it has
-an explicit `DensePoly.Monic` hypothesis for that exact polynomial. -/
+an explicit {name}`DensePoly.Monic` hypothesis for that exact polynomial. -/
 private theorem normalizeMonic_eq_self_of_monic
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     (normalizeMonic f).2 = f := by
@@ -654,8 +654,8 @@ private theorem normalizeMonic_eq_self_of_monic
 /-- Exact-quotient monicity: given a multiplicative factorization `q * b = a`
 with `a` and `b` both monic in `FpPoly p`, the quotient `q` is also monic.
 
-Used as substrate for the Yun derivative-active monic-residual invariant
-(#6155): each Yun-loop transition produces an exact-quotient residual
+This supplies the Yun derivative-active monic-residual invariant: each
+Yun-loop transition produces an exact-quotient residual
 `w / gcd c w` whose monicity is dispatched by combining this lemma with the
 reconstruction identity `(w / gcd c w) * gcd c w = w`. The lemma also handles
 the initial split residual `f / gcd f f'` symmetrically. -/
@@ -687,7 +687,7 @@ private theorem monic_of_mul_eq_monic_of_monic
     simpa using hlead_q_b
   exact hlead_q
 
-/-- Exact-quotient monicity for the right Yun residual through `monicGcd`: from
+/-- Exact-quotient monicity for the right Yun residual through {name}`monicGcd`: from
 monic `w` and a monic `monicGcd c w` divisor, the right exact quotient
 `w / monicGcd c w` is monic. This is the residual threaded into the next Yun
 state, so it carries the monic invariant forward. -/
@@ -798,7 +798,7 @@ private def yunFactorsLevelCompletes (c w : FpPoly p) (base : Nat) :
 
 /--
 Normalized termination predicate for the scaled Yun loop. This mirrors
-`yunFactorsLevelCompletes`, but tests the normalized current contribution.
+{name}`yunFactorsLevelCompletes`, but tests the normalized current contribution.
 It is the right progress predicate for raw scalar-unit states, where `c` may
 be a non-one constant while `(normalizeMonic c).2 = 1`.
 -/
@@ -927,7 +927,7 @@ private theorem yunFactorsContribution_step_split
   · exact div_monicGcd_mul_reconstruct hp c w
   · exact div_monicGcd_right_mul_reconstruct hp c w
 
-/-- `dvd_add_poly`: a common divisor of `a` and `b` divides their sum `a + b`. -/
+/-- {name}`dvd_add_poly`: a common divisor of `a` and `b` divides their sum `a + b`. -/
 private theorem dvd_add_poly
     {d a b : FpPoly p} (hda : d ∣ a) (hdb : d ∣ b) :
     d ∣ a + b := by
@@ -938,7 +938,7 @@ private theorem dvd_add_poly
       = d * qa + d * qb := by rw [hqa, hqb]
     _ = d * (qa + qb) := (DensePoly.mul_add_right_poly d qa qb).symm
 
-/-- `dvd_mul_left_of_dvd`: if `d ∣ a` then `d` divides the left-multiplied
+/-- {name}`dvd_mul_left_of_dvd`: if `d ∣ a` then `d` divides the left-multiplied
 product `b * a`. -/
 private theorem dvd_mul_left_of_dvd
     {d a b : FpPoly p} (hda : d ∣ a) :
@@ -952,7 +952,7 @@ private theorem dvd_mul_left_of_dvd
           exact congrArg (fun x => x * q) (DensePoly.mul_comm_poly b d)
     _ = d * (b * q) := DensePoly.mul_assoc_poly d b q
 
-/-- `dvd_mul_right_of_dvd`: if `d ∣ a` then `d` divides the right-multiplied
+/-- {name}`dvd_mul_right_of_dvd`: if `d ∣ a` then `d` divides the right-multiplied
 product `a * b`. -/
 private theorem dvd_mul_right_of_dvd
     {d a b : FpPoly p} (hda : d ∣ a) :
@@ -963,7 +963,7 @@ private theorem dvd_mul_right_of_dvd
       = (d * q) * b := by rw [hq]
     _ = d * (q * b) := DensePoly.mul_assoc_poly d q b
 
-/-- `monicGcd` analogue of `DensePoly.dvd_gcd`: any common divisor of `c` and
+/-- {name}`monicGcd` analogue of {name}`DensePoly.dvd_gcd`: any common divisor of `c` and
 `w` divides their monic gcd. The monic gcd is a constant-scalar associate of the
 raw gcd, so it has the same divisors. -/
 private theorem dvd_monicGcd
@@ -985,14 +985,14 @@ private theorem dvd_monicGcd
       rw [hmg]
       exact dvd_mul_left_of_dvd hdg
 
-/-- `dvd_sub_poly`: a common divisor of `a` and `b` divides their difference
+/-- {name}`dvd_sub_poly`: a common divisor of `a` and `b` divides their difference
 `a - b`. -/
 private theorem dvd_sub_poly
     {d a b : FpPoly p} (hda : d ∣ a) (hdb : d ∣ b) :
     d ∣ a - b := by
   exact DensePoly.dvd_sub_poly hda hdb
 
-/-- `pow_succ_dvd_mul_right_of_dvd`: the extra factor of `d` in `a * d * b` bumps
+/-- {name}`pow_succ_dvd_mul_right_of_dvd`: the extra factor of `d` in `a * d * b` bumps
 a prime-power divisor's exponent, so `pow d (n+1) ∣ a` gives
 `pow d (n+2) ∣ a * d * b`. -/
 private theorem pow_succ_dvd_mul_right_of_dvd
@@ -1016,7 +1016,7 @@ private theorem pow_succ_dvd_mul_right_of_dvd
           rw [← pow_succ d (n + 1)]
           exact DensePoly.mul_assoc_poly (pow d (n + 2)) q b
 
-/-- `pow_succ_dvd_mul_of_dvd_left_of_pow_dvd_right`: combining `d ∣ a` on the left
+/-- {name}`pow_succ_dvd_mul_of_dvd_left_of_pow_dvd_right`: combining `d ∣ a` on the left
 factor with `pow d n ∣ b` on the right gives `pow d (n+1) ∣ a * b`. -/
 private theorem pow_succ_dvd_mul_of_dvd_left_of_pow_dvd_right
     {d a b : FpPoly p} {n : Nat}
@@ -1042,7 +1042,7 @@ private theorem pow_succ_dvd_mul_of_dvd_left_of_pow_dvd_right
                   exact DensePoly.mul_assoc_poly (pow d n * d) qa qb
     _ = pow d (n + 1) * (qa * qb) := by rw [← pow_succ d n]
 
-/-- `pow_succ_dvd_mul_of_pow_dvd_left_of_dvd_right`: combining `pow d n ∣ a` on the
+/-- {name}`pow_succ_dvd_mul_of_pow_dvd_left_of_dvd_right`: combining `pow d n ∣ a` on the
 left factor with `d ∣ b` on the right gives `pow d (n+1) ∣ a * b`. -/
 private theorem pow_succ_dvd_mul_of_pow_dvd_left_of_dvd_right
     {d a b : FpPoly p} {n : Nat}

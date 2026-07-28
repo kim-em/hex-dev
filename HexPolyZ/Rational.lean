@@ -549,7 +549,7 @@ private theorem rat_divMod_remainder_degree_lt (p q : DensePoly Rat)
   · exact Nat.pos_of_ne_zero hq
 
 /-- The `DensePoly Rat` reconstruction identity
-`qr.1 * q + qr.2 = p` for `DensePoly.divMod` (holds unconditionally). -/
+`qr.1 * q + qr.2 = p` for {name}`DensePoly.divMod` (holds unconditionally). -/
 private theorem rat_divMod_spec (p q : DensePoly Rat) :
     let qr := DensePoly.divMod p q
     qr.1 * q + qr.2 = p := by
@@ -580,7 +580,7 @@ private theorem rat_divMod_spec (p q : DensePoly Rat) :
         (fun coeff : Rat => coeff / q.leadingCoeff) hcancel
 
 /-- The `DensePoly Rat` reconstruction identity `qr.1 * q + qr.2 = p`
-for `DensePoly.divMod`
+for {name}`DensePoly.divMod`
 under a nonzero-divisor hypothesis. -/
 private theorem rat_divMod_spec_of_not_isZero (p q : DensePoly Rat)
     (hqzero : ¬ q.isZero) :

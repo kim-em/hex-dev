@@ -32,10 +32,10 @@ def natDivMod (a b : Nat) : Nat × Nat :=
 /--
 Pure natural-number extended GCD.
 
-`HexArith.extGcd a b` returns `(g, s, t)` with `g = Nat.gcd a b` and
+The result `(g, s, t)` satisfies `g = Nat.gcd a b` and
 `s * a + t * b = g` after coercing the inputs to `Int`. Use
-`HexArith.Int.extGcd` for the GMP-backed integer API and
-`HexArith.UInt64.extGcd` for machine-word inputs.
+the GMP-backed `HexArith.Int.extGcd` entry point for integer inputs and
+`HexArith.UInt64.extGcd` for `UInt64` inputs.
 -/
 @[expose]
 def extGcd (a b : Nat) : Nat × Int × Int :=
@@ -143,7 +143,7 @@ rewritten through `extGcd_fst`.
   rw [extGcd_bezout_proj, extGcd_fst]
 
 /--
-Combined correctness theorem for `extGcd`.
+Combined correctness theorem for {name}`HexArith.extGcd`.
 
 Use this when a caller needs both the gcd projection and the Bezout
 certificate after destructuring the returned triple.

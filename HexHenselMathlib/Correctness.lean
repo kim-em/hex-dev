@@ -1370,9 +1370,8 @@ head's Mathlib degree so `hensel_unique` can identify the linear and
 quadratic lifts. See `multifactorLiftList_map_eq_quadratic` for the
 congruent-target induction behind the proof.
 
-This is the lift-uniqueness obligation that `hex-hensel` defers to
-`hex-hensel-mathlib`; see `SPEC/Libraries/hex-hensel.md` and the
-companion-statement note at the top of `HexHensel/QuadraticMultifactor.lean`.
+This proves the lift-uniqueness correspondence between the executable
+`hex-hensel` algorithms and their Mathlib polynomial interpretations.
 -/
 theorem multifactorLift_eq_multifactorLiftQuadratic
     (p k : Nat) [Fact (Nat.Prime p)] [Hex.ZMod64.Bounds p]

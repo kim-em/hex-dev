@@ -34,7 +34,7 @@ theorem sub_mul_poly {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S]
     mul_comm_poly (0 - b) c, mul_sub_zero_comm c b,
     ← sub_eq_add_neg_poly (a * c) (b * c)]
 
-/-- The `degree?`-getD of a difference of two polynomials each of degree below a
+/-- The {name}`degree?`-getD of a difference of two polynomials each of degree below a
 positive-degree `g` is again below `g`. -/
 theorem degree_getD_sub_lt {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S]
     (a b g : DensePoly S)
@@ -87,7 +87,7 @@ theorem degree_getD_sub_lt {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S]
 
 /-- Uniqueness of Euclidean division by a positive-degree divisor whose leading
 coefficient is a two-sided unit (in particular, a monic divisor): a reconstruction
-with a small remainder is `divMod`. -/
+with a small remainder is {name}`divMod`. -/
 theorem divMod_eq_of_reconstruction {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
     (num g q r : DensePoly S)

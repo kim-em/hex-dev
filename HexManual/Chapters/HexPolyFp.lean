@@ -118,8 +118,8 @@ degree below the modulus, together with a proof of that bound.
 The quotient is unconditionally a commutative ring. It becomes a
 *field* only when `g` is irreducible, and `HexPolyFp` parametrizes
 over that fact rather than deciding it. There is no unconditional
-`Field` instance. Instead the field-promoting laws are theorems that
-take `FpPoly.Irreducible g` as an explicit hypothesis. A downstream
+unconditional field instance. Instead the field-promoting laws are theorems that
+take {name}`Hex.FpPoly.Irreducible` of `g` as an explicit hypothesis. A downstream
 caller supplies an irreducibility witness (in practice a checkable
 Rabin certificate from `HexBerlekamp`), and only then are inverses
 available. The inverse-cancellation laws are stated in
@@ -298,12 +298,13 @@ the prime-field specialization the finite-field libraries use:
   {name}`Hex.FpPoly` is an `abbrev` over {name}`Hex.DensePoly`, so every
   constructor, arithmetic, evaluation, and Euclidean operation
   documented in that chapter is inherited at the specialized type. The
-  concrete `DivModLaws`/`GcdLaws` the generic Euclidean laws are stated
-  under are discharged here for `ZMod64 p`.
-* {ref "hex-mod-arith"}[`HexModArith`] supplies the `ZMod64 p`
+  concrete {name}`Hex.DensePoly.DivModLaws` and
+  {name}`Hex.DensePoly.GcdLaws` the generic Euclidean laws are stated
+  under are discharged here for {name}`Hex.ZMod64` at modulus `p`.
+* {ref "hex-mod-arith"}[`HexModArith`] supplies {name}`Hex.ZMod64` at modulus `p`
   coefficient arithmetic: the machine-word modular add, multiply, and
   inverse that every operation in this chapter ultimately calls, along
-  with the `ZMod64.Bounds`/`ZMod64.PrimeModulus` instances the
+  with the {name}`Hex.ZMod64.Bounds`/{name}`Hex.ZMod64.PrimeModulus` instances the
   prime-field operations require.
 
 Downstream, the finite-field libraries consume `HexPolyFp` directly:

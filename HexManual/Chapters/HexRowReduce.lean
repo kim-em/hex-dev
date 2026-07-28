@@ -162,11 +162,12 @@ genuine basis, not just a spanning set:
 tag := "hex-row-reduce-recipe-kernel-proof"
 %%%
 
-Everything above is purely executable: `#eval` runs the `Hex.Matrix`
+Everything above is purely executable: `#eval` runs the {name}`Hex.Matrix`
 routines and reads back concrete numbers. *This recipe crosses into
 Mathlib.* `HexRowReduceMathlib` proves the executable rank,
-span, and nullspace agree with Mathlib's noncomputable `Matrix.rank`,
-`Submodule.span`, and `LinearMap.ker`, so you can settle a Mathlib goal
+span, and nullspace agree with Mathlib's noncomputable
+{name _root_.Matrix.rank}`Matrix.rank`,
+{name}`Submodule.span`, and {name}`LinearMap.ker`, so you can settle a Mathlib goal
 by running the executable and rewriting through a correspondence
 theorem.
 

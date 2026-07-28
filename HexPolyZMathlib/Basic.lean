@@ -305,7 +305,7 @@ theorem comp_unit_mul_X_dvd_iff {R : Type*} [CommRing R] {u : R} (hu : IsUnit u)
     have hdvd := map_dvd (Polynomial.compRingHom (Polynomial.C u * Polynomial.X)) h
     rwa [Polynomial.coe_compRingHom_apply, Polynomial.coe_compRingHom_apply] at hdvd⟩
 
-/-! ### Gauss content/primitive-part correspondence
+/-! # Gauss content/primitive-part correspondence
 
 The executable `Hex.ZPoly.content`/`primitivePart` carry their own Gauss theory
 (`content_mul`, `content_mul_primitivePart`, `primitivePart_primitive`). These
