@@ -724,11 +724,14 @@ There is one shared `Baseline` and six measured modules under each of
 | end-to-end tactic | `Baseline` | `<Case>.Tactic` |
 
 `HexRCFProofProbe` is the reduced structural CI target: it builds the shared
-support, all three committed-literal acceptance checks, and the quadratic
-matrix. `HexRCFProofProbeScientific` owns the degree-10 and degree-50 measured
-modules without adding them to routine CI. Both are build-only Lake libraries;
-there is no proof-probe executable or in-process clock. The complete external
-sweep is:
+support, reifies all three source goals, checks every committed literal against
+the accepted checker and the builder-output hash, and builds the quadratic
+matrix. Each Search module repeats its Input module's reflected declaration
+before running the search command, so `Search - Input` does not subtract work
+absent from the candidate. `HexRCFProofProbeScientific` owns the degree-10 and
+degree-50 measured modules without adding them to routine CI. Both are
+build-only Lake libraries; there is no proof-probe executable or in-process
+clock. The complete external sweep is:
 
 ```bash
 python3 scripts/bench/hexrcf_proof_sweep.py --samples 5

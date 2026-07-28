@@ -14,6 +14,8 @@ public section
 
 namespace Hex.RCF.ProofProbe.Quadratic
 
+def input : Sentence := rcfQuadraticSentence
+
 rcf_search_probe quadratic : rcfQuadraticSentence
 
 end Hex.RCF.ProofProbe.Quadratic

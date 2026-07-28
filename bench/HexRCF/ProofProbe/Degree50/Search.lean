@@ -14,6 +14,8 @@ public section
 
 namespace Hex.RCF.ProofProbe.Degree50
 
+def input : Sentence := rcfDegree50Sentence
+
 rcf_search_probe degree50 : rcfDegree50Sentence
 
 end Hex.RCF.ProofProbe.Degree50

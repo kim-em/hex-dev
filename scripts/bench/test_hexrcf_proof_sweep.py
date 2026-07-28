@@ -62,6 +62,32 @@ class ManifestTests(unittest.TestCase):
                 self.assertNotIn("build?", source)
                 self.assertNotIn("certificateExpr", source)
 
+    def test_search_and_input_declare_the_same_literal(self) -> None:
+        for module_case, macro in (
+            ("Quadratic", "rcfQuadraticSentence"),
+            ("Degree10", "rcfDegree10Sentence"),
+            ("Degree50", "rcfDegree50Sentence"),
+        ):
+            expected = f"def input : Sentence := {macro}"
+            for variant in ("Input", "Search"):
+                source = sweep.probe_source(
+                    f"HexRCF.ProofProbe.{module_case}.{variant}",
+                    rcf.SPEC.src_dir,
+                ).read_text(encoding="utf-8")
+                self.assertIn(expected, source)
+
+    def test_unmeasured_validation_covers_every_case(self) -> None:
+        source = sweep.probe_source(
+            "HexRCF.ProofProbe.Validate", rcf.SPEC.src_dir
+        ).read_text(encoding="utf-8")
+        for case, goal, certificate in (
+            ("quadratic", "rcfQuadraticGoal", "rcfQuadraticCertificate"),
+            ("degree10", "rcfDegree10Goal", "rcfDegree10Certificate"),
+            ("degree50", "rcfDegree50Goal", "rcfDegree50Certificate"),
+        ):
+            self.assertIn(f"rcf_reify_probe {case} : {goal}", source)
+            self.assertIn(f"rcf_literal_probe {case} : {certificate}", source)
+
 
 if __name__ == "__main__":
     unittest.main()
