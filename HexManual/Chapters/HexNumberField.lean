@@ -164,11 +164,13 @@ rational `AdjoinRoot` quotient, their executable extended-GCD inverse is
 validated, and an opt-in `Field` instance preserves the existing computational
 operations and rational scalar action. Open the
 `Hex.QAdjoin.QAdjoinField` scope when Mathlib field notation and laws are
-wanted.
+wanted. Opening this scope makes that notation proof-bearing and
+noncomputable; executable code should continue to use the unscoped operations.
 
-The later approximation, exactification, lazy-arithmetic, and root-array
-contracts remain staged declarations for subsequent proof-completion
-milestones.
+Semantic equality and zero tests, together with the later approximation,
+exactification, lazy-arithmetic, and root-array contracts, remain staged
+declarations for subsequent proof-completion milestones. Some constructor
+certification in the Mathlib-free layer is likewise still staged.
 
 {docstring Hex.AlgebraicRoot.toComplex}
 

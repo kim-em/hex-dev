@@ -423,13 +423,6 @@ theorem map_div [ZPoly.CheckedIrreducible p] (a b : QAdjoin p x)
   rw [map_mul, map_inv]
   rfl
 
-/-- Natural powers assembled from executable fixed-presentation
-multiplication. -/
-@[expose]
-def natPow (a : QAdjoin p x) : Nat → QAdjoin p x
-  | 0 => 1
-  | n + 1 => natPow a n * a
-
 /-- Executable natural powers preserve the selected interpretation. -/
 theorem map_natPow (a : QAdjoin p x) (n : Nat)
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
@@ -437,13 +430,6 @@ theorem map_natPow (a : QAdjoin p x) (n : Nat)
   induction n with
   | zero => simp [natPow, map_one]
   | succ n ih => rw [natPow, map_mul, ih, pow_succ]
-
-/-- Integer powers assembled from executable multiplication and inversion. -/
-@[expose]
-def intPow [ZPoly.CheckedIrreducible p]
-    (a : QAdjoin p x) : Int → QAdjoin p x
-  | .ofNat n => natPow a n
-  | .negSucc n => (natPow a (n + 1))⁻¹
 
 /-- Executable integer powers preserve the selected interpretation. -/
 theorem map_intPow [ZPoly.CheckedIrreducible p]
@@ -469,10 +455,8 @@ noncomputable def field (p : ZPoly) (x : SimpleRoot p)
     ⟨fun n a => (n : Rat) • a⟩
   letI : SMul ℚ≥0 (QAdjoin p x) :=
     ⟨fun q a => (q : Rat) • a⟩
-  letI : Pow (QAdjoin p x) Nat :=
-    ⟨fun a n => natPow a n⟩
-  letI : Pow (QAdjoin p x) Int :=
-    ⟨fun a n => intPow a n⟩
+  -- Deliberately retain the executable `SMul Rat` and `Pow` instances. The
+  -- injected field must prove laws for those operations, not replace them.
   letI : NatCast (QAdjoin p x) :=
     ⟨fun n => (n : Rat) • (1 : QAdjoin p x)⟩
   letI : IntCast (QAdjoin p x) :=
@@ -526,14 +510,43 @@ noncomputable def field (p : ZPoly) (x : SimpleRoot p)
 
 namespace QAdjoinField
 
+/-- Opt-in irreducibility witness for the monic rational defining polynomial. -/
+scoped instance factIrreducible (p : ZPoly) [ZPoly.CheckedIrreducible p] :
+    Fact (_root_.Irreducible (definingPolynomial p)) :=
+  ⟨definingPolynomial_irreducible p⟩
+
 /-- Opt-in field instance for a checked fixed presentation. It is scoped so
-computational imports never acquire a noncomputable proof dictionary. -/
+computational imports never acquire a noncomputable proof dictionary. Opening
+the scope makes field notation proof-bearing and therefore noncomputable;
+executable code should use the unscoped operations instead. -/
 noncomputable scoped instance (p : ZPoly) (x : SimpleRoot p)
     [ZPoly.CheckedIrreducible p] : Field (QAdjoin p x) := field p x
 
 end QAdjoinField
 
 open scoped QAdjoinField
+
+/-! These examples pin the scoped field's data fields to the executable
+operations. They intentionally use definitional equality, so a future change
+that silently replaces an operation or the rational scalar action fails here. -/
+
+section OperationRegression
+
+variable (a b : QAdjoin p x) (q : Rat) [ZPoly.CheckedIrreducible p]
+
+example : (0 : QAdjoin p x) = QAdjoin.instZero.zero := rfl
+example : (1 : QAdjoin p x) = QAdjoin.instOne.one := rfl
+example : a + b = QAdjoin.add a b := rfl
+example : a - b = QAdjoin.sub a b := rfl
+example : a * b = QAdjoin.mul a b := rfl
+example : -a = QAdjoin.neg a := rfl
+example : a⁻¹ = QAdjoin.inv a := rfl
+example : a / b = QAdjoin.div a b := rfl
+example : a ^ (3 : Nat) = QAdjoin.natPow a 3 := rfl
+example : a ^ (-3 : Int) = QAdjoin.intPow a (-3) := rfl
+example : q • a = QAdjoin.smul q a := rfl
+
+end OperationRegression
 
 /-- The quotient comparison preserves executable zero. -/
 theorem toAdjoinRoot_zero [ZPoly.CheckedIrreducible p] :

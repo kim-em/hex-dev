@@ -133,6 +133,24 @@ def div [ZPoly.CheckedIrreducible p] (a b : QAdjoin p x) : QAdjoin p x :=
 
 instance [ZPoly.CheckedIrreducible p] : Div (QAdjoin p x) := ⟨div⟩
 
+/-- Natural powers assembled from executable fixed-presentation
+multiplication. -/
+@[expose]
+def natPow (a : QAdjoin p x) : Nat → QAdjoin p x
+  | 0 => 1
+  | n + 1 => natPow a n * a
+
+instance : Pow (QAdjoin p x) Nat := ⟨natPow⟩
+
+/-- Integer powers assembled from executable multiplication and inversion. -/
+@[expose]
+def intPow [ZPoly.CheckedIrreducible p]
+    (a : QAdjoin p x) : Int → QAdjoin p x
+  | .ofNat n => natPow a n
+  | .negSucc n => (natPow a (n + 1))⁻¹
+
+instance [ZPoly.CheckedIrreducible p] : Pow (QAdjoin p x) Int := ⟨intPow⟩
+
 /-- Refine a fixed-field generator representative once and evaluate canonical
 coordinates on its disc. The checked driver's `none` fallback retains the
 original representative and therefore still returns a sound ball; the
