@@ -36,7 +36,7 @@ This PR codifies four orchestration requirements for
 current Phase-4 bench scaffolding landed under HO-3 (#2566). All four
 trace to a single live regression — hex BZ's `factor` returns
 mathematically wrong output on `(x-1)…(x-n)` for several `n ∈ [11, 24]`
-and is 200–2,400× slower than the AFP Isabelle BZ extracted-Haskell
+and was reported as slower than the AFP Isabelle BZ extracted-Haskell
 binary even when correct — investigated in
 [reports/bz-vs-isabelle-investigation.md](../reports/bz-vs-isabelle-investigation.md).
 The investigation traces the bug to:

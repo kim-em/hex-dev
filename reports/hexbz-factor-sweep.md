@@ -1,339 +1,144 @@
-# Cross-system Berlekamp–Zassenhaus factorization sweep
+# HexBZ Cross-System Factorization Sweep
 
-This report documents the re-runnable cross-system factorization benchmark suite
-(issue #8545): a publication-quality comparison of hex against FLINT, NTL,
-PARI/GP, and two verified Isabelle/AFP factorizers over a multi-family
-polynomial corpus, with durable records and cumulative-time ("cactus") charts.
-
-The suite is **explicitly not CI**. No workflow under `.github/workflows/` runs
-it; sweeps run manually on dedicated hardware (carica) and their records are
-committed. See the
-[SPEC/benchmarking.md § Cross-system comparator sweeps](../SPEC/benchmarking.md)
-addendum for how this sits beside the one-harness rule: the sweep is a
-comparator, not a parallel harness for hex-internal claims.
-
-> **Changing a hex factor path?** Re-measure the hex entries and refresh these
-> charts, then show them to the requester — the external comparators do not need
-> re-running (the plotter merges records newest-per-system). The exact commands
-> and when a full re-measure is required are in
-> [`HexBerlekampZassenhaus/SPEC/hex-berlekamp-zassenhaus.md` § Cross-system sweep
-> charts](../HexBerlekampZassenhaus/SPEC/hex-berlekamp-zassenhaus.md) and under
-> [Reproducing](#reproducing) below.
+Current at revision `5c371a5abb85ca6ef6510ec60888f3048db71719`,
+measured 2026-07-28 on `chungus2` (AMD EPYC 9455, Linux x86-64),
+pinned to CPU 0.
 
 ## Systems
 
-Every measured system runs as a warm persistent process speaking one line
-protocol — request `{"coeffs":[...]}` (integer coefficients, ascending degree),
-reply `{"ok":true,"result":{"scalar":s,"factors":[{"coeffs":[...],
-"multiplicity":m},...]}}`, a decline reply `{"ok":true,"result":null}`, or an
-error `{"ok":false,"error":...}`. A decline is counted as unsolved, deliberately
-not distinguished from a timeout.
+- `hex-factor`: public production dispatcher
+- `hex-lattice`: lattice factorization entry point
+- `hex-classical-nodecline`: classical entry point without decline
+- `flint`: python-flint 0.9.0
+- `pari`: PARI/GP 2.17.3 through cypari2 2.2.4
+- `ntl`: NTL 11.6.0 `ZZXFactoring`
+- `isabelle-bz`: Isabelle2025-2 extraction from AFP
+  `Berlekamp_Zassenhaus`, AFP 2026-05-29
+- `isabelle-lll`: Isabelle2025-2 extraction from AFP
+  `LLL_Factorization`, AFP 2026-05-29
 
-| curve | system | reconstruction | driver |
-| --- | --- | --- | --- |
-| `hex-factor` | hex | production cost-based hybrid | `hexbz_factor_service --entry factor` |
-| `hex-lattice` | hex | van Hoeij CLD knapsack (lattice tier) | `--entry factorLattice` |
-| `hex-fast` | hex | proof-facing fast path | `--entry factorFast` |
-| `hex-classical-nodecline` | hex | classical recombination to completion/cutoff | `--entry factorClassicalNoDecline` |
-| `flint` | FLINT | `fmpz_poly.factor` | `bz_flint_service.py` |
-| `ntl` | NTL | `ZZXFactoring` | `bz_ntl_service.cc` |
-| `pari` | PARI/GP | `factor` | `bz_pari_service.py` |
-| `isabelle-bz` | verified Isabelle | exponential subset recombination | AFP `Berlekamp_Zassenhaus`, `setup_bz_isabelle.sh` |
-| `isabelle-lll` | verified Isabelle | polynomial-time direct-LLL | AFP `LLL_Factorization`, `setup_bz_lll_isabelle.sh` |
+The external toolchains came from transient nixpkgs environments. Isabelle
+session and Haskell-export builds completed before the timed sweeps.
 
-**Why two verified Isabelle systems.** hex, Isabelle's `Berlekamp_Zassenhaus`,
-and Isabelle's `LLL_Factorization` share the same modular front end (Berlekamp
-mod p + Hensel lift) and differ only in reconstruction: BZ does exponential
-subset recombination; `LLL_Factorization` finds each factor as a short lattice
-vector in polynomial time; hex is the van Hoeij CLD knapsack recombination, also
-polynomial but over a small lattice (dimension = number of modular factors).
-Comparing only against exponential BZ makes "hex beats verified Isabelle" a soft
-claim (polynomial beats exponential); adding the verified polynomial-time
-`LLL_Factorization` turns it into a verified-poly-vs-verified-poly comparison
-isolating the knapsack advantage over direct-LLL.
-
-**The `factorClassicalNoDecline` curve.** Production `factor` declines a
-hopeless classical recombination early and routes to the lattice tier. The
-`factorClassicalNoDecline` entry (library additions `scaledRecombinationFull` /
-`classicalCoreFactorsToCompletion` / `factorClassicalNoDecline`, reusing the
-proven recombination loops with the #8530 level-aware tightening removed) instead
-runs the full subset enumeration to completion or the wall-clock cutoff. Its
-answers are correct where it terminates; where it does not, it times out. This
-makes the classical exponential wall visible on the same charts. Production
-`factor` and the CI-gated Mathlib proofs are untouched.
-
-### isabelle-lll build spike — passed
-
-The build spike (issue #8545) is confirmed on carica: the AFP `LLL_Factorization`
-session builds and code-exports to Haskell, the export theory
-`scripts/oracle/bz-lll-isabelle/Hex_LLL_Factor_Export.thy` compiles, and the
-built `lll_isabelle` driver agrees with hex, FLINT, NTL and `isabelle-bz` on
-every cross-checked instance. The AFP bundles the verified direct-LLL
-reconstruction as `one_lattice_LLL_factorization :: int_poly_factorization_algorithm`
-(a `typedef` pairing the algorithm with its soundness proof), and
-`factorize_int_poly_generic` takes that bundle; the correct composition is
-`factorize_int_poly_generic one_lattice_LLL_factorization`, mirroring BZ's
-`factorize_int_poly_generic berlekamp_zassenhaus_factorization_algorithm`. Both
-Isabelle drivers contribute curves to the recorded sweep below.
+The exports record `5c371a5-dirty` because the benchmark registrations and
+reports were being repaired in the same worktree; the measured library revision
+is the full hash above.
 
 ## Methodology
 
-- **Corpus.** `bench/corpus/hexbz-factor-corpus.jsonl`, generated deterministically
-  by `scripts/bench/gen_factor_corpus.py` (regenerates byte-identically). 391
-  instances across 11 families (cyclotomic, cyclotomic-products, swinnerton-dyer,
-  sd-products, chebyshev, legendre, laguerre, wilkinson, random-products,
-  hoeij-zimmermann, conway), degrees 1–1030. Each record carries
-  `expectedFactorDegrees` where known and a deterministic `combined` flag (mix
-  doctrine).
-- **Conway family (irreducible over ℤ, two-axis).** The `conway` family
-  (issue #8557) lifts every entry of the committed Lübeck Conway cache
-  (`scripts/oracle/luebeck_conway_cache.json`) to a monic integer polynomial,
-  taking the ascending 𝔽_p coefficients (non-negative representatives `0..p-1`)
-  verbatim. Each `C_{p,n}` is monic and irreducible over 𝔽_p, and a monic integer
-  polynomial irreducible modulo a prime is irreducible over ℤ (its degree is
-  preserved because it is monic), so every lift has `expectedFactorDegrees = [n]`.
-  This is the recombination worst case (like Swinnerton-Dyer), but the tables
-  sweep two axes at once: degree grows with `n` (small primes `p ∈ {2,3,5,7}`, up
-  to degree 40) and coefficient height grows with `p` (a lift has height up to
-  `p − 1`, so high primes `p ∈ {11,13,97,521,65537}` at low degree load the height
-  axis). It also probes hex's own prime selection: if the reducer picks `p`
-  itself, `C_{p,n}` is irreducible mod `p` and irreducibility is immediate;
-  modulo any other prime it is the full recombination worst case. The 186 lifts
-  were confirmed irreducible over ℤ by the sweep's own FLINT/PARI cross-check
-  before the labels were trusted.
-- **Per-call overhead.** Each system is timed on a trivial input (`x - 1`) over
-  21 calls; the median is recorded in the sweep `config` block, per the
-  [external-comparator overhead clause](../SPEC/benchmarking.md).
-- **Repeats policy.** Median-of-5 when the first real call is under 1 s, single
-  call otherwise. Timings are `perf_counter_ns` wall-clock.
-- **Cutoff.** Default 10 s per call, parameterized (`--cutoff`) so 60 s / 300 s
-  sweeps can be recorded later; each record carries its cutoff so sweeps at
-  different cutoffs coexist. On timeout the process is killed, the abandonment
-  recorded as `timeout`, and the process respawned.
-- **Monotonic early termination.** For the difficulty-monotonic families
-  (swinnerton-dyer, sd-products, hoeij-zimmermann, conway) the sweep, by default,
-  stops a system after `--early-terminate-run` consecutive timeouts (default 3,
-  degree-ordered) and records the remaining higher-degree instances as timeouts
-  without running them (`early_terminated: true`, counted as unsolved exactly
-  like a real timeout). A solve resets the run counter. For a strictly monotonic
-  family this is result-preserving up to at most `run − 1` extra timeouts. For
-  conway it is a deliberate approximation — a lifted Conway polynomial is *not*
-  strictly monotonic in degree (the reducer's prime choice varies, so
-  `factorFast` can time out on C_{2,12} yet solve C_{2,16} in milliseconds), and
-  the consecutive-run threshold is what keeps it honest: an isolated prime-lucky
-  solve resets the counter and survives, only a long unbroken run of timeouts is
-  cut. The committed baseline record below was collected full-fidelity
-  (`--no-early-terminate`), so its conway curves include every prime-lucky
-  high-degree solve; default runs trade a few such solves for a much shorter
-  wall-clock.
-- **Statuses.** `ok | declined | timeout | error` — failures are always recorded,
-  never dropped.
-- **Differential correctness.** Per instance, the factor degree multiset is
-  cross-checked against `expectedFactorDegrees` where present and pairwise across
-  every system that answered; a mismatch fails the sweep. The sweep therefore
-  doubles as a differential-correctness test of hex against the other
-  implementations.
-- **Mix doctrine.** The `combined` flag caps every family at an equal count
-  (spread across its degree range) so the combined cactus plot is a balanced
-  mixture rather than dominated by the largest family. Per-family plots use all
-  instances.
+- Corpus: `bench/corpus/hexbz-factor-corpus.jsonl`
+- Instances: 392
+- Corpus SHA-256:
+  `619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`
+- Per-call cutoff: 10 seconds
+- Repeats: median of five if the first call is below one second; otherwise one
+  call
+- Early termination: disabled
+- Warm line-protocol services; per-system protocol overhead recorded in JSON
+- Cross-check: against committed `expectedFactorDegrees` for 385 oracle-backed
+  rows; pairwise factor counts for the seven no-oracle Hoeij rows. The
+  historical combined sweep retained degree-multiset agreement.
+
+## Recorded Sweep
+
+| System | OK | Timeout | p50 solved | p90 solved | Slowest solved | Protocol overhead |
+|---|---:|---:|---:|---:|---:|---:|
+| Hex public factor | 371 | 21 | 1.244 ms | 24.831 ms | 5.016 s | 15.373 µs |
+| Hex lattice | 365 | 27 | 2.258 ms | 99.293 ms | 9.540 s | 19.569 µs |
+| Hex classical, no decline | 371 | 21 | 1.008 ms | 12.708 ms | 4.032 s | 19.219 µs |
+| FLINT | 391 | 1 | 66.850 µs | 1.184 ms | 1.228 s | 19.219 µs |
+| PARI/GP | 391 | 1 | 99.958 µs | 1.254 ms | 823.201 ms | 23.755 µs |
+| NTL | 391 | 1 | 135.631 µs | 2.714 ms | 1.919 s | 11.487 µs |
+| Verified Isabelle BZ | 371 | 21 | 441.134 µs | 5.128 ms | 8.363 s | 17.777 µs |
+| Verified Isabelle LLL | 314 | 78 | 6.109 ms | 1.219 s | 9.528 s | 17.136 µs |
+
+These are service wall-clock values; protocol overhead is not subtracted.
+Consequently, the lowest external medians include a material protocol share,
+and per-row ratios near the overhead floor need a signal filter.
+
+Every returned factor-degree multiset with a committed corpus oracle matched
+it. The seven Hoeij-Zimmermann rows without a committed degree oracle retain
+their previous combined cross-system agreement; current FLINT, PARI/GP, and
+NTL factor counts also agree on all seven.
+
+Compared with the previous 391-row record, the public and classical paths move
+from 366 solved rows to 371 of 392; the lattice path moves from 363 to 365;
+verified Isabelle BZ moves from 370 to 371; and verified Isabelle LLL moves
+from 309 to 314. PARI/GP and NTL now both solve 391 rows, with `hoeij_S9` the
+only timeout. Because the corpus gained one row and the host changed, exact
+timeout sets and per-row JSON should be preferred to raw percentage or
+cross-host timing comparisons.
 
 ## Charts
 
-Per system, the cactus plot sorts its solved instances by median runtime and
-plots cumulative time (log y) against the number of instances solved (x); a curve
-ends at that system's solved count. One SVG per family plus the combined mixture,
-regenerated deterministically by `scripts/plots/hexbz-cactus.py` from the
-committed sweep JSON.
+- [Combined cactus plot](figures/hexbz-cactus-combined.svg)
+- [Swinnerton-Dyer cactus plot](figures/hexbz-cactus-swinnerton-dyer.svg)
+- [Swinnerton-Dyer runtime by degree](figures/hexbz-runtime-degree-swinnerton-dyer.svg)
+- [Hoeij-Zimmermann cactus plot](figures/hexbz-cactus-hoeij-zimmermann.svg)
+- [Cyclotomic cactus plot](figures/hexbz-cactus-cyclotomic.svg)
 
-![Combined-mixture cactus plot](figures/hexbz-cactus-combined.svg)
+All 25 current family charts are under `reports/figures/hexbz-*`. Regenerate
+them from the committed current-corpus records with:
 
-![Swinnerton-Dyer cactus plot](figures/hexbz-cactus-swinnerton-dyer.svg)
+```sh
+uv run --with matplotlib python3 scripts/plots/hexbz-cactus.py
+```
 
-![Swinnerton-Dyer runtime vs degree](figures/hexbz-runtime-degree-swinnerton-dyer.svg)
+Current exports:
 
-![Cyclotomic cactus plot](figures/hexbz-cactus-cyclotomic.svg)
-
-![Conway cactus plot](figures/hexbz-cactus-conway.svg)
-
-Per-family figures for the remaining families
-(`hexbz-cactus-<family>.svg`, `hexbz-runtime-degree-<family>.svg`) are published
-alongside these under `reports/figures/`.
-
-## Recorded sweeps
-
-### carica, 10 s cutoff (2026-07-03, with conway)
-
-- **Artifact:** `reports/bench-results/hexbz-factor-sweep-bc958d84-carica.json`
-  SHA-256 `a1452db9f3aa4d9c86c6ece4a716d17483f3734caf632c5baf9085a8e463ce23`
-- **Command:**
-  `python3 scripts/bench/factor_sweep.py --systems hex-factor,hex-lattice,hex-classical-nodecline,flint,ntl,pari,isabelle-bz,isabelle-lll --cutoff 10 --no-early-terminate --skip-unavailable`
-  (full-fidelity: no monotonic early termination, so the conway curves include
-  every prime-lucky high-degree solve)
-- **Corpus:** `bench/corpus/hexbz-factor-corpus.jsonl`
-  SHA-256 `0ef7574769d9161d8e3bda3b8c193b05191d75b4b473279520db4513e533b2df` (391 instances)
-- **Env:** host carica, commit `bc958d84` (working tree ahead of it by this
-  branch's corpus regeneration; the corpus SHA above is the reproducible pin),
-  toolchain `leanprover/lean4:v4.32.0-rc1`, arm64, 24 cores, 2026-07-03T08:22:20Z;
-  AFP release `afp-2026-05-29` for both Isabelle systems.
-- **Provenance note:** the original July 3 run also measured the retired
-  `hex-fast` curve, but #8596 stripped those result rows from the committed JSON
-  before this digest was updated. The hash above is the digest of the committed
-  eight-system artefact, not the pre-#8596 raw export.
-- **Cross-check:** all eight answering systems agree — hex's factor degree
-  multisets match FLINT, NTL, PARI/GP, verified Isabelle BZ and verified Isabelle
-  LLL on every instance any two solved (differential correctness across 391
-  instances, six independent implementations). In particular every one of the
-  186 lifted Conway polynomials is confirmed a single irreducible factor of
-  degree `n` by every system that solved it.
-
-| system | ok | timeout | declined | error | overhead (µs) |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| hex-factor | 366 | 25 | 0 | 0 | 35.8 |
-| hex-lattice | 363 | 28 | 0 | 0 | 49.0 |
-| hex-classical-nodecline | 366 | 25 | 0 | 0 | 50.7 |
-| flint | 390 | 1 | 0 | 0 | 30.4 |
-| ntl | 390 | 1 | 0 | 0 | 13.4 |
-| pari | 390 | 1 | 0 | 0 | 32.8 |
-| isabelle-bz | 370 | 21 | 0 | 0 | 19.5 |
-| isabelle-lll | 309 | 82 | 0 | 0 | 17.2 |
-
-The committed full-board artefact includes the post-refresh PARI/GP rows. The
-single-system companion record below is retained as provenance for the
-auto-growing-stack PARI refresh from #8558 and for the plotter's
-newest-per-system merge workflow.
-
-The C-implementation ceiling (FLINT, NTL, PARI) solves 390/391, all missing only
-`hoeij_S9` (Swinnerton-Dyer SD₉, degree 512) at the 10 s cutoff.
-
-**Conway — the prime-selection probe.** All 186 lifted Conway polynomials are
-irreducible over ℤ, so this family is a pure recombination stress test. Yet
-`hex-factor`, `hex-lattice`, `hex-classical-nodecline`, FLINT, NTL, PARI and
-verified `isabelle-bz` each solve **all 186** — because a monic polynomial that
-stays irreducible modulo a well-chosen prime is proved irreducible immediately,
-with no recombination at all. The family therefore does not stress recombination
-so much as *prime selection*. `isabelle-lll`, whose full-degree direct-LLL
-lattice grows expensive with degree independently of the modular factor count,
-solves **167/186**, timing out on the higher-degree small-prime lifts. The
-retired `hex-fast` curve formerly recorded here showed the same prime-selection
-sensitivity, but those rows are no longer present in the committed artefact
-(see the provenance note above).
-
-**The verified-vs-verified headline is the point of the two Isabelle curves.**
-On the corpus as a whole the counts are close (hex-factor 366, isabelle-bz 370,
-hex-lattice 363, isabelle-lll 309), because the mixture is dominated by easy
-instances where exponential recombination is cheap. The interesting signal is
-where the reconstruction actually matters — the lattice-stress families, by
-maximum degree solved:
-
-| family | hex-lattice | isabelle-bz | isabelle-lll | flint | pari |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| swinnerton-dyer | **64** | 32 | 16 | 128 | 128 |
-| sd-products | **56** | 42 | 16 | 128 | 128 |
-
-On Swinnerton-Dyer, hex's van Hoeij CLD lattice tier reaches degree 64 —
-double the reach of verified exponential BZ (32) and four times that of verified
-direct-LLL (16). `isabelle-lll` (the full-degree direct-LLL lattice) is the
-slowest verified system on every hard family and across the corpus (309/391,
-82 timeouts), matching the literature: a full-degree lattice with large entries
-is notoriously slow in practice. hex's small knapsack lattice (dimension = number
-of modular factors) is the advantage this comparison isolates. On irreducible
-cyclotomics the picture inverts — exponential `isabelle-bz` confirms
-irreducibility fastest among the verified systems (reaching degree 1030) — an
-honest, family-dependent result.
-
-The `hex-classical-nodecline` curve runs the classical recombination to
-completion or cutoff with the level-aware early decline disabled, so its 25
-timeouts are the classical exponential wall made visible on the same charts (it
-never declines — 0 declined — it either completes correctly or times out).
-PARI/GP sits with FLINT and NTL at the C-implementation ceiling — 390/391
-overall, reaching Swinnerton-Dyer and sd-products degree 128 (double
-hex-lattice's 64, and far past both verified Isabelle systems). Longer-cutoff
-(60 s / 300 s) sweeps record alongside this one, each carrying its own cutoff;
-the only instance no system solves at 10 s is `hoeij_S9` (degree 512), and the
-hardest hoeij-zimmermann entries fall only to the three C libraries (FLINT, NTL,
-PARI) — the natural target for those longer sweeps.
-
-### carica, 10 s cutoff — PARI/GP refresh (2026-07-03)
-
-- **Artifact:** `reports/bench-results/hexbz-factor-sweep-2ad0b2fe-carica.json`
-  SHA-256 `110ca4163382266e21adb125130c975662ed75d4dbb7a85278c3f2d94aa09a0b`
-- **Command:**
-  `python3 scripts/bench/factor_sweep.py --systems pari --cutoff 10 --no-early-terminate --skip-unavailable`
-- **Corpus:** `bench/corpus/hexbz-factor-corpus.jsonl`
-  SHA-256 `0ef7574769d9161d8e3bda3b8c193b05191d75b4b473279520db4513e533b2df` (391 instances) —
-  identical to the full-board record above, so the two merge cleanly.
-  This is the historical corpus pinned by those artifacts; the current corpus
-  has 392 rows and SHA-256
-  `619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`
-  after appending the certificate-boundary `quartic_a4` case.
-- **Why a companion record.** The original full-board run measured PARI with the
-  pre-#8558 8 MB-stack driver, which errored rather than factoring on the two
-  largest hoeij instances. This single-system record re-measured PARI with the
-  merged auto-growing-stack driver (`cypari2.Pari(size, sizemax)`), which solves
-  `hoeij_F630` (degree 630) and leaves only `hoeij_S9` (degree 512) unsolved at
-  10 s: 390/391, no errors. The current committed full-board artefact already
-  carries those post-refresh PARI rows; the companion record remains the
-  single-system provenance for that refresh and documents the workflow under
-  [Reproducing](#reproducing).
+- `reports/bench-results/hexbz-factor-sweep-hex-5c371a5a-chungus2.json`
+  (SHA-256
+  `f3bef5656aae3eebf8ac3ab64bf970c65c0f3a086ceddd25044024df45f838bd`)
+- `reports/bench-results/hexbz-factor-sweep-flint-5c371a5a-chungus2.json`
+  (SHA-256
+  `f656372a18c85fe5fd35dd415033842de95348f718e89031213bb310fdc88da5`)
+- `reports/bench-results/hexbz-factor-sweep-pari-5c371a5a-chungus2.json`
+  (SHA-256
+  `fdd253e8944a90f7cdf112a7e36f9d28ec9a481f4c142122ddda47cbd3216ed9`)
+- `reports/bench-results/hexbz-factor-sweep-ntl-5c371a5a-chungus2.json`
+  (SHA-256
+  `65db4a80bac19ac390e0e495c56bfa7d0a899a240fe71d61a4de60b2796442ed`)
+- `reports/bench-results/hexbz-factor-sweep-isabelle-bz-5c371a5a-chungus2.json`
+  (SHA-256
+  `da44a233d02f8a321ad50878180366df9f5cacb91e9f657ed8138046f7a21e3f`)
+- `reports/bench-results/hexbz-factor-sweep-isabelle-lll-5c371a5a-chungus2.json`
+  (SHA-256
+  `512d59e13be1737a71c2f06a93bcdfab4729f0afdfea3452d89f1393dfda2789`)
 
 ## Reproducing
 
-> **Run only the systems that changed — never the whole board.** The plotter
-> merges records **newest-per-system** (guarded by a matching corpus SHA), so
-> every chart is assembled from whichever record measured each system most
-> recently. To add a new comparator or refresh one that changed, run
-> `--systems <that-one>` and commit the small record next to the baseline; its
-> curve slots into every chart and the other systems carry over untouched. Do
-> **not** re-run the expensive external comparators to "add" one — re-running
-> FLINT/NTL/PARI wastes an afternoon and the two Isabelle setups rebuild AFP
-> session heaps (many minutes each) for no benefit. Full-board runs are for the
-> first-ever record on a host or a corpus change, not for incremental additions.
-
-```
-# Regenerate the corpus (byte-identical) and confirm:
-python3 scripts/bench/gen_factor_corpus.py
-python3 scripts/bench/gen_factor_corpus.py --check
-
-# First-ever record on a host (or after a corpus change): run every available
-# system at the 10 s cutoff. This is the ONLY time you run the whole board.
-python3 scripts/bench/factor_sweep.py --cutoff 10 --skip-unavailable
-
-# Regenerate the charts (default: merge every committed record, newest-per-system):
-python3 scripts/plots/hexbz-cactus.py
-```
-
-### Adding or refreshing one system — the common case
-
-Each sweep writes a permanent, timestamped record naming every system and its
-version. Because the merge is newest-per-system, adding a comparator (e.g.
-bringing PARI onto the charts once `cypari2` is installed) or re-measuring the
-hex entries after a factor-path change is a **single-system** run against the
-same corpus at the same cutoff — the other curves come from the committed
-baseline automatically:
-
-```
-# Add one external comparator (PARI/GP shown; same shape for any single system):
-python3 scripts/bench/factor_sweep.py --systems pari --cutoff 10 --skip-unavailable
-
-# Re-measure just the hex entries as they evolve:
-python3 scripts/bench/factor_sweep.py \
-    --systems hex-factor,hex-lattice,hex-fast,hex-classical-nodecline \
-    --cutoff 10 --skip-unavailable
-
-# Regenerate charts: the fresh record wins for the systems it measured, and every
-# other curve carries over from the committed baseline it was last measured in
-# (newest measurement per system, guarded by a matching corpus SHA):
-python3 scripts/plots/hexbz-cactus.py
+```sh
+lake build hexbz_factor_service
+taskset -c 0 python3 scripts/bench/factor_sweep.py \
+  --systems hex-factor,hex-lattice,hex-classical-nodecline \
+  --cutoff 10 --no-early-terminate \
+  --output reports/bench-results/hexbz-factor-sweep-hex-5c371a5a-chungus2.json
+taskset -c 0 uv run --with python-flint \
+  python3 scripts/bench/factor_sweep.py \
+  --systems flint --cutoff 10 --no-early-terminate \
+  --output reports/bench-results/hexbz-factor-sweep-flint-5c371a5a-chungus2.json
+taskset -c 0 nix-shell \
+  -p 'python3.withPackages (ps: [ ps.cypari2 ps.cysignals ])' \
+  --run "python3 scripts/bench/factor_sweep.py \
+    --systems pari --cutoff 10 --no-early-terminate \
+    --output reports/bench-results/hexbz-factor-sweep-pari-5c371a5a-chungus2.json"
+taskset -c 0 nix-shell -p ntl gmp pkg-config gcc \
+  --run "python3 scripts/bench/factor_sweep.py \
+    --systems ntl --cutoff 10 --no-early-terminate \
+    --output reports/bench-results/hexbz-factor-sweep-ntl-5c371a5a-chungus2.json"
+nix-shell -p isabelle ghc curl coreutils gnutar gzip \
+  --run "bash scripts/oracle/setup_bz_isabelle.sh"
+taskset -c 0 nix-shell -p isabelle ghc curl coreutils gnutar gzip \
+  --run "python3 scripts/bench/factor_sweep.py \
+    --systems isabelle-bz --cutoff 10 --no-early-terminate \
+    --output reports/bench-results/hexbz-factor-sweep-isabelle-bz-5c371a5a-chungus2.json"
+nix-shell -p isabelle ghc curl coreutils gnutar gzip \
+  --run "bash scripts/oracle/setup_bz_lll_isabelle.sh"
+taskset -c 0 nix-shell -p isabelle ghc curl coreutils gnutar gzip \
+  --run "python3 scripts/bench/factor_sweep.py \
+    --systems isabelle-lll --cutoff 10 --no-early-terminate \
+    --output reports/bench-results/hexbz-factor-sweep-isabelle-lll-5c371a5a-chungus2.json"
 ```
 
-A single-system record still cross-checks that system's factor-degree multisets
-against `expectedFactorDegrees` (present on 384/391 instances), which is the same
-oracle every other system was validated against — so a green single-system run is
-the differential-correctness check for the system you added, without re-running
-the rest. The plotter prints a per-system provenance line (record timestamp and
-cutoff) so a mixed-time chart is honest about which curves are fresh; merging
-records over different corpora is refused. Keep the cutoff identical across the
-records you merge, or the solved-counts are not comparable (the subtitle flags a
-mixed cutoff). Commit the fresh record alongside the baseline; both coexist under
-`reports/bench-results/`.
+Commit-named older sweep exports remain historical records. They are not
+merged into the current 392-row summary because their corpus hash differs.

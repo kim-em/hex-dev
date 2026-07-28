@@ -20,7 +20,7 @@ without re-running the expensive external comparators: record a fresh hex-only
 sweep, then regenerate charts and each external curve is carried over from the
 committed baseline it was last measured in.
 
-Run (default: merge every committed record, newest per system):
+Run (default: merge committed records for the current corpus, newest per system):
 ``python3 scripts/plots/hexbz-cactus.py``
 or pin explicit records: ``python3 scripts/plots/hexbz-cactus.py --sweep a.json b.json``.
 
@@ -36,6 +36,7 @@ record the same hex-only sweep on ``main`` and on a change branch, then::
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -186,6 +187,18 @@ def plot_runtime_degree(results, systems, names, corpus, output, title, subtitle
 BENCH_RESULTS = ROOT / "reports" / "bench-results"
 
 
+def default_sweep_paths():
+    """Return committed sweep records whose corpus hash matches today's corpus."""
+    corpus_sha = hashlib.sha256(CORPUS_PATH.read_bytes()).hexdigest()
+    candidates = sorted(BENCH_RESULTS.glob("hexbz-factor-sweep-*.json"))
+    paths = []
+    for path in candidates:
+        report_sha = json.loads(path.read_text()).get("config", {}).get("corpus_sha256")
+        if report_sha == corpus_sha:
+            paths.append(path)
+    return paths, len(candidates) - len(paths)
+
+
 def merge_reports(paths):
     """Merge several sweep records, taking the NEWEST measurement of each system.
 
@@ -230,8 +243,8 @@ def main():
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--sweep", type=Path, nargs="+", default=None,
                    help="one or more sweep JSONs; when several are given (or by "
-                        "default, all committed records), the newest measurement "
-                        "of each system wins")
+                        "default, all committed records for the current corpus), "
+                        "the newest measurement of each system wins")
     p.add_argument("--baseline", type=Path, nargs="+", default=None,
                    help="one or more sweep JSONs measured BEFORE a change; each "
                         "system's before curve is overlaid as a dotted, hollow "
@@ -239,9 +252,16 @@ def main():
     p.add_argument("--outdir", type=Path, default=FIGURES)
     args = p.parse_args()
 
-    paths = args.sweep or sorted(BENCH_RESULTS.glob("hexbz-factor-sweep-*.json"))
+    if args.sweep:
+        paths = args.sweep
+        skipped = 0
+    else:
+        paths, skipped = default_sweep_paths()
     if not paths:
-        raise SystemExit("no sweep records found")
+        note = f"; skipped {skipped} records for other or unknown corpora" if skipped else ""
+        raise SystemExit(f"no sweep records found for the current corpus{note}")
+    if skipped:
+        print(f"skipped {skipped} historical sweep records with a different corpus hash")
     results, systems, provenance, cutoffs = merge_reports(paths)
 
     baseline_results = None

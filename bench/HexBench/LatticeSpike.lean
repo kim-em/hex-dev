@@ -10,8 +10,7 @@ import HexBerlekampZassenhaus
 Measurement artifact for the lattice tier's certificate-backed early
 termination (#8395): single-shot wall-clock for `factorLattice` on the
 Swinnerton-Dyer / cyclotomic irreducible family, where the pre-#8395 loop
-ground the doubling schedule to the conservative BHKS precision cap
-(SD2 14ms, Phi_15 216ms, SD3 1.8s, SD4 >120s).  Inputs are routed through an
+ground the doubling schedule to the conservative BHKS precision cap. Inputs are routed through an
 `IO.Ref` so the compiler cannot fold the factorization; the coefficient
 checksum sink forces the full result.  Proves nothing.
 -/

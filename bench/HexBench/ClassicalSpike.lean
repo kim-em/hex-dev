@@ -51,7 +51,7 @@ def reduceModInt (g : ZPoly) (m : Nat) : ZPoly :=
 
 /-- Product of a subset of lifted factors, reduced mod `m` after each multiply. -/
 def productModInt (s : List ZPoly) (m : Nat) : ZPoly :=
-  s.foldl (fun acc g => reduceModInt (acc * g) m) (1 : ZPoly)
+  s.foldl (fun acc g => _root_.reduceModInt (acc * g) m) (1 : ZPoly)
 
 /-- First subset of `remaining` (sizes `lo..hi`) whose centered product exactly
 divides `target`; returns the integer factor, the quotient, and the unused
@@ -62,7 +62,7 @@ partial def findDivisorInt
   if size > hi then none
   else
     let scan := firstSomeList (chooseWithComplement remaining size) fun sc =>
-      let cand := centeredLiftPoly (productModInt sc.1 modulus) modulus
+      let cand := centeredLiftPoly (_root_.productModInt sc.1 modulus) modulus
       match exactQuotient? target cand with
       | some q => some (cand, q, sc.2)
       | none => none

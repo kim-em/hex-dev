@@ -57,7 +57,7 @@ Precision/local-factor registration (`prep := prepPrecisionLocalInput`):
   over encoded degree, root-height, Hensel-precision, and local-factor-count
   regimes.
 
-HO-2 adversarial singletons (each pinned at `paramSchedule := #[0]`):
+HO-2 adversarial fixed targets:
 
 * `runFactorAdvX4Plus1Checksum`, `runFactorAdvQuadSqrt2Sqrt3Checksum`,
   `runFactorAdvPhi15Checksum`: full public `ZPoly.factorize` on the named adversarial
@@ -68,14 +68,13 @@ HO-2 adversarial singletons (each pinned at `paramSchedule := #[0]`):
   because a full lattice factorization exceeds the verifier's one-call budget
   on these inputs.
 * `runAdvSwinnertonDyerSD3ModularSplitChecksum`: pinned modular split profile
-  for SD3 at the conformance prime, keeping the worst-case recombination
-  shape visible without running the full integer factorization (which exceeds
-  the `verify` budget).
+  for SD3 at the conformance prime, keeping the worst-case recombination shape
+  independently visible.
 * `runFactorLatticeAdvSwinnertonDyerSD3Checksum`,
   `runFactorLatticeAdvSwinnertonDyerSD4Checksum`: full `factorLattice` on SD3
   and SD4 — the lattice tier's certificate-backed early stop (#8395) makes the
   complete lattice factorization of these extreme-`r` irreducibles affordable
-  in `verify` (SD3 ~5ms, SD4 ~55ms vs >120s at the pre-#8395 cap grind).
+  in `verify`.
 
 Gating external comparator:
 
@@ -414,83 +413,72 @@ def runFactorCompareChecksum (f : ZPoly) : UInt64 :=
 def runFactorSlowCompareChecksum (f : ZPoly) : UInt64 :=
   checksumFactorization (factorTrial f)
 
-/-- Singleton benchmark target: public factorization on `X^4 + 1`. -/
+/-- Opaque IO boundary for fixed full-factorization benchmarks. -/
 @[noinline]
-def runFactorAdvX4Plus1Checksum (f : ZPoly) : UInt64 :=
-  runFactorChecksum f
+def factorChecksumIO (f : ZPoly) : IO UInt64 :=
+  pure (runFactorChecksum f)
 
-/-- Singleton benchmark target: fast-path setup on `X^4 + 1`, pinned at `p = 5`. -/
+/-- Opaque IO boundary for fixed fast-path-setup benchmarks. -/
 @[noinline]
-def runFactorFastSetupAdvX4Plus1Checksum (f : ZPoly) : UInt64 :=
-  checksumFastPathSetup f 5
+def setupChecksumIO (f : ZPoly) (p : Nat) : IO UInt64 :=
+  pure (checksumFastPathSetup f p)
 
-/-- Singleton benchmark target: public factorization on `(X^2 - 2)(X^2 - 3)`. -/
+/-- Opaque IO boundary for fixed modular-split benchmarks. -/
 @[noinline]
-def runFactorAdvQuadSqrt2Sqrt3Checksum (f : ZPoly) : UInt64 :=
-  runFactorChecksum f
+def splitChecksumIO (f : ZPoly) (p : Nat) : IO UInt64 :=
+  pure (checksumOptionNatArray (modularFactorDegreesAt? f p))
 
-/-- Singleton benchmark target: public factorization on `Phi_15`. -/
+/-- Opaque IO boundary for fixed lattice-tier benchmarks. -/
 @[noinline]
-def runFactorAdvPhi15Checksum (f : ZPoly) : UInt64 :=
-  runFactorChecksum f
+def latticeChecksumIO (f : ZPoly) : IO UInt64 :=
+  pure (checksumOptionFactorization (factorLattice f))
 
-/-- Singleton benchmark target: fast-path setup on `Phi_15`, pinned at `p = 31`. -/
-@[noinline]
-def runFactorFastSetupAdvPhi15Checksum (f : ZPoly) : UInt64 :=
-  checksumFastPathSetup f 31
+/-- Fixed benchmark target: public factorization on `X^4 + 1`. -/
+def runFactorAdvX4Plus1Checksum : Unit → IO UInt64 := fun _ =>
+  factorChecksumIO advX4Plus1
+
+/-- Fixed benchmark target: fast-path setup on `X^4 + 1`, pinned at `p = 5`. -/
+def runFactorFastSetupAdvX4Plus1Checksum : Unit → IO UInt64 := fun _ =>
+  setupChecksumIO advX4Plus1 5
+
+/-- Fixed benchmark target: public factorization on `(X^2 - 2)(X^2 - 3)`. -/
+def runFactorAdvQuadSqrt2Sqrt3Checksum : Unit → IO UInt64 := fun _ =>
+  factorChecksumIO advQuadSqrt2Sqrt3
+
+/-- Fixed benchmark target: public factorization on `Phi_15`. -/
+def runFactorAdvPhi15Checksum : Unit → IO UInt64 := fun _ =>
+  factorChecksumIO advPhi15
+
+/-- Fixed benchmark target: fast-path setup on `Phi_15`, pinned at `p = 31`. -/
+def runFactorFastSetupAdvPhi15Checksum : Unit → IO UInt64 := fun _ =>
+  setupChecksumIO advPhi15 31
 
 /--
 Singleton benchmark target: pinned modular split profile for Swinnerton-Dyer
 `SD_3` at `p = 71`, where the degree-eight integer polynomial splits into
 eight local linear factors.
 -/
-@[noinline]
-def runAdvSwinnertonDyerSD3ModularSplitChecksum (f : ZPoly) : UInt64 :=
-  checksumOptionNatArray (modularFactorDegreesAt? f 71)
+def runAdvSwinnertonDyerSD3ModularSplitChecksum : Unit → IO UInt64 := fun _ =>
+  splitChecksumIO advSwinnertonDyerSD3 71
 
 /--
 Singleton benchmark target: CLD lattice tier (`factorLattice`) on
 Swinnerton-Dyer `SD_3`.  The certificate-backed early stop (#8395) certifies
 irreducibility at the first column-adequate precision instead of grinding the
 doubling schedule to the BHKS cap, which is what makes the full lattice-tier
-factorization affordable inside the `verify` budget (pre-#8395: ~1.8s; with
-the early stop: ~5ms).
+factorization affordable inside the `verify` budget.
 -/
-@[noinline]
-def runFactorLatticeAdvSwinnertonDyerSD3Checksum (f : ZPoly) : UInt64 :=
-  checksumOptionFactorization (factorLattice f)
+def runFactorLatticeAdvSwinnertonDyerSD3Checksum : Unit → IO UInt64 := fun _ =>
+  latticeChecksumIO advSwinnertonDyerSD3
 
 /--
 Singleton benchmark target: CLD lattice tier (`factorLattice`) on
-Swinnerton-Dyer `SD_4` (degree 16, 16-way modular split).  Pre-#8395 this
-input exceeded 120s (the doubling schedule ground to the conservative BHKS
-precision cap); the early-stop separation certificate terminates at the
-column-adequacy floor (~55ms), keeping the extreme-`r` tail visible in
-`verify`.
+Swinnerton-Dyer `SD_4` (degree 16, 16-way modular split). The early-stop
+separation certificate terminates at the column-adequacy floor, keeping the
+extreme-`r` tail visible in `verify`.
 -/
-@[noinline]
-def runFactorLatticeAdvSwinnertonDyerSD4Checksum (f : ZPoly) : UInt64 :=
-  checksumOptionFactorization (factorLattice f)
-
-/-- Constant prep returning the `X^4 + 1` adversarial fixture for the pinned singleton schedule. -/
-def prepAdvX4Plus1 (_ : Nat) : ZPoly :=
-  advX4Plus1
-
-/-- Constant prep returning the `(X^2 - 2)(X^2 - 3)` adversarial fixture. -/
-def prepAdvQuadSqrt2Sqrt3 (_ : Nat) : ZPoly :=
-  advQuadSqrt2Sqrt3
-
-/-- Constant prep returning the Swinnerton-Dyer `SD_3` adversarial fixture. -/
-def prepAdvSwinnertonDyerSD3 (_ : Nat) : ZPoly :=
-  advSwinnertonDyerSD3
-
-/-- Constant prep returning the Swinnerton-Dyer `SD_4` adversarial fixture. -/
-def prepAdvSwinnertonDyerSD4 (_ : Nat) : ZPoly :=
-  advSwinnertonDyerSD4
-
-/-- Constant prep returning the cyclotomic `Phi_15` adversarial fixture. -/
-def prepAdvPhi15 (_ : Nat) : ZPoly :=
-  advPhi15
+def runFactorLatticeAdvSwinnertonDyerSD4Checksum : Unit → IO UInt64 := fun _ =>
+  latticeChecksumIO advSwinnertonDyerSD4
 
 /-- Benchmark target: public combinator over the degree/height matrix. -/
 def runFactorDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
@@ -768,8 +756,8 @@ match on these rungs.
 `expectedHash` is left as `none` rather than computing
 `checksumCanonicalLeanFactorization (ZPoly.factorize (prepFallbackProbeInput n))` at
 elaboration time, because that compile-time call would invoke the same cascade
-the post-mortem documents (200×–2,400× slower than Isabelle plus reducible
-factor entries on these inputs), inflating compile time. Bench-time multiset
+the post-mortem documents as producing reducible factor entries on these
+inputs, inflating compile time. Bench-time multiset
 agreement is recorded by comparing the observed Isabelle hash against the
 known split factorisation post-hoc.
 -/
@@ -976,19 +964,15 @@ setup_benchmark runFactorSlowCompareChecksum n => 2 ^ n * bzClassicalSmokeComple
     signalFloorMultiplier := 1.0
   }
 
-/- Singleton HO-2 adversarial target: `X^4 + 1`. The declared cost model is
-`n + 1` because the schedule pins `n = 0`; this constant bound records a
-canonical recombination shape where the integer polynomial is irreducible but
-splits modulo `5` without widening this PR into the full Phase-4 matrix. -/
-setup_benchmark runFactorAdvX4Plus1Checksum n => n + 1
-  with prep := prepAdvX4Plus1
-  where {
-    paramFloor := 0
-    paramCeiling := 0
-    paramSchedule := .custom #[0]
+/- Fixed HO-2 adversarial target: `X^4 + 1`. This records one canonical
+recombination shape where the integer polynomial is irreducible but splits
+modulo `5`; a fixed registration avoids a meaningless singleton scaling
+verdict. -/
+setup_fixed_benchmark runFactorAdvX4Plus1Checksum where {
+    repeats := 5
+    minTotalSeconds := 0.2
     maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+    expectedHash := some 0xdbadaf53f188eac1
   }
 
 /-
@@ -1008,20 +992,15 @@ setup_benchmark runFactorDegreeHeightChecksum param => bzClassicalDegreeHeightCo
     signalFloorMultiplier := 1.0
   }
 
-/- Singleton HO-2 adversarial lattice precision-cap setup target for `X^4 + 1`.
-A full lattice factorization exceeds the `verify` mode's one-call budget; the
-declared cost model is the constant `n + 1` singleton bound for the pinned
-`n = 0` schedule. This registration narrows the measured operation to the
-public precision cap plus the pinned `p = 5` modular split profile. -/
-setup_benchmark runFactorFastSetupAdvX4Plus1Checksum n => n + 1
-  with prep := prepAdvX4Plus1
-  where {
-    paramFloor := 0
-    paramCeiling := 0
-    paramSchedule := .custom #[0]
+/- Fixed HO-2 adversarial lattice precision-cap setup target for `X^4 + 1`.
+A full lattice factorization exceeds the `verify` mode's one-call budget, so
+this measures the public precision cap plus the pinned `p = 5` modular split
+profile. -/
+setup_fixed_benchmark runFactorFastSetupAdvX4Plus1Checksum where {
+    repeats := 5
+    minTotalSeconds := 0.2
     maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+    expectedHash := some 0xf2fde7ff68ef63ab
   }
 
 /-
@@ -1059,96 +1038,65 @@ setup_benchmark runFastPathPrecisionLocalChecksum param => bzPrecisionLocalCompl
     signalFloorMultiplier := 1.0
   }
 
-/- Singleton HO-2 adversarial target: `(X^2 - 2)(X^2 - 3)`. The declared cost
-model is `n + 1`, a constant bound; at the pinned fixture prime this splits into
-four local linear factors and recombines into two true quadratics. -/
-setup_benchmark runFactorAdvQuadSqrt2Sqrt3Checksum n => n + 1
-  with prep := prepAdvQuadSqrt2Sqrt3
-  where {
-    paramFloor := 0
-    paramCeiling := 0
-    paramSchedule := .custom #[0]
+/- Fixed HO-2 adversarial target: `(X^2 - 2)(X^2 - 3)`. At the pinned fixture
+prime this splits into four local linear factors and recombines into two true
+quadratics. -/
+setup_fixed_benchmark runFactorAdvQuadSqrt2Sqrt3Checksum where {
+    repeats := 5
+    minTotalSeconds := 0.2
     maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+    expectedHash := some 0x2939937eff41b345
   }
 
-/- Singleton HO-2 adversarial target: `Phi_15`. The declared cost model is
-`n + 1`, a constant bound for the pinned singleton schedule; the degree-eight
-cyclotomic case exercises the recombination hot path without a wider matrix. -/
-setup_benchmark runFactorAdvPhi15Checksum n => n + 1
-  with prep := prepAdvPhi15
-  where {
-    paramFloor := 0
-    paramCeiling := 0
-    paramSchedule := .custom #[0]
+/- Fixed HO-2 adversarial target: `Phi_15`. This degree-eight cyclotomic case
+exercises the recombination hot path on a canonical fixture. -/
+setup_fixed_benchmark runFactorAdvPhi15Checksum where {
+    repeats := 5
+    minTotalSeconds := 0.2
     maxSecondsPerCall := 6.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+    expectedHash := some 0x0f794f386e54863f
   }
 
-/- Singleton HO-2 adversarial fast-path setup target for `Phi_15`. The declared
-cost model is the constant `n + 1` singleton bound for the pinned `n = 0`
-schedule. This setup-only registration keeps the fast-path precision cap and
-pinned `p = 31` eight-linear split visible without routing through the public
-fallback combinator. -/
-setup_benchmark runFactorFastSetupAdvPhi15Checksum n => n + 1
-  with prep := prepAdvPhi15
-  where {
-    paramFloor := 0
-    paramCeiling := 0
-    paramSchedule := .custom #[0]
+/- Fixed HO-2 adversarial fast-path setup target for `Phi_15`. This keeps the
+fast-path precision cap and pinned `p = 31` eight-linear split visible without
+routing through the public fallback combinator. -/
+setup_fixed_benchmark runFactorFastSetupAdvPhi15Checksum where {
+    repeats := 5
+    minTotalSeconds := 0.2
     maxSecondsPerCall := 6.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+    expectedHash := some 0xf58fd4dcfb9a609a
   }
 
 /-
-Singleton HO-2 adversarial shape: Swinnerton-Dyer `SD_3`. Full `factor` and
+Fixed HO-2 adversarial shape: Swinnerton-Dyer `SD_3`. Full `factor` and
 the CLD lattice tier on this degree-eight worst-case recombination input currently
 exceed the `verify`-mode budget, so this reduced registration pins the same
 canonical polynomial at the same conformance prime and records its eight-linear
-modular split profile. The constant model is intentional: the schedule fixes
-one canonical shape while keeping SD3 visible to `list` and `verify` until a
-scientific-only full factorization registration is affordable.
+modular split profile while keeping SD3 visible to `list` and `verify`.
 -/
-setup_benchmark runAdvSwinnertonDyerSD3ModularSplitChecksum n => n + 1
-  with prep := prepAdvSwinnertonDyerSD3
-  where {
-    paramFloor := 0
-    paramCeiling := 0
-    paramSchedule := .custom #[0]
+setup_fixed_benchmark runAdvSwinnertonDyerSD3ModularSplitChecksum where {
+    repeats := 5
+    minTotalSeconds := 0.2
     maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+    expectedHash := some 0xe2da56484730f726
   }
 
-/- Singleton lattice-tier target: full `factorLattice` on Swinnerton-Dyer
-`SD_3`, certifying irreducibility via the early-stop separation certificate
-(#8395).  The constant `n + 1` model is the pinned singleton bound. -/
-setup_benchmark runFactorLatticeAdvSwinnertonDyerSD3Checksum n => n + 1
-  with prep := prepAdvSwinnertonDyerSD3
-  where {
-    paramFloor := 0
-    paramCeiling := 0
-    paramSchedule := .custom #[0]
+/- Fixed lattice-tier target: full `factorLattice` on Swinnerton-Dyer `SD_3`,
+certifying irreducibility via the early-stop separation certificate (#8395). -/
+setup_fixed_benchmark runFactorLatticeAdvSwinnertonDyerSD3Checksum where {
+    repeats := 5
+    minTotalSeconds := 0.2
     maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+    expectedHash := some 0xd91e58bd22915e00
   }
 
-/- Singleton lattice-tier target: full `factorLattice` on Swinnerton-Dyer
-`SD_4` (degree 16), the extreme-`r` tail case that exceeded 120s before the
-#8395 early stop.  The constant `n + 1` model is the pinned singleton bound. -/
-setup_benchmark runFactorLatticeAdvSwinnertonDyerSD4Checksum n => n + 1
-  with prep := prepAdvSwinnertonDyerSD4
-  where {
-    paramFloor := 0
-    paramCeiling := 0
-    paramSchedule := .custom #[0]
+/- Fixed lattice-tier target: full `factorLattice` on Swinnerton-Dyer
+`SD_4` (degree 16), the extreme-`r` tail case for the #8395 early stop. -/
+setup_fixed_benchmark runFactorLatticeAdvSwinnertonDyerSD4Checksum where {
+    repeats := 5
+    minTotalSeconds := 0.2
     maxSecondsPerCall := 6.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+    expectedHash := some 0x687e925fbe11193b
   }
 
 /- Fixed bottom-rung verified-Isabelle comparator pair. Both targets return the
