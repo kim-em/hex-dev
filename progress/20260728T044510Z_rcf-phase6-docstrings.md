@@ -4,7 +4,7 @@
 
 - Ran the Mathlib linter with legacy import semantics, which retain imported
   documentation metadata under Lean's module system. The final audit reports
-  zero errors across 392 HexRCF declarations and 14 linters.
+  zero errors across 391 HexRCF declarations and 14 linters.
 - Added documentation for every genuinely undocumented public structure field
   and tactic implementation reported by the linter.
 - Added documentation for 31 public theorems that another module could
@@ -21,9 +21,10 @@
   `exists_cert_of_decide`.
 - Removed the unused `IsolationCert.sample?` wrapper and its theorem. The
   implemented pipeline and SPEC use `IsolationCert.openPoint` directly.
-- Replaced the checker-local positive-degree recursion with `List.all`. Kept
-  endpoint-vector, duplicate-removal, and separation helpers public because
-  exposed definitions depend on them or the SPEC and tests exercise them.
+- Replaced the checker-local positive-degree recursion with `List.all` and made
+  the endpoint-vector builder private. Kept duplicate-removal and separation
+  helpers public because exposed definitions depend on them or the SPEC and
+  tests exercise them.
 - Shortened five overqualified semantic theorem names, including
   `IsolationCert.existsUnique_root`, `RootModel.root_unique_leftSpan`, and
   `Polynomial.sign_eq_of_noRoot`.

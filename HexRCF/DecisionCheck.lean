@@ -54,7 +54,7 @@ theorem check_buildIsolations {carrier : CarrierCert}
     · simp at h
 
 /-- Classify every isolated carrier root against one exact endpoint. -/
-def buildRootCmps? (carrier : CarrierCert) (isolations : IsolationCert)
+private def buildRootCmps? (carrier : CarrierCert) (isolations : IsolationCert)
     (endpoint : Dyadic) :
     Option (Vector Separation.RootCmp isolations.intervals.size) :=
   Vector.ofFnM fun i =>
