@@ -24,6 +24,8 @@ type. As with `ofCoeffs`, trailing zero coefficients are removed.
 
 **Operations:**
 - Addition, subtraction, multiplication (schoolbook, Karatsuba for large degree)
+- Coefficient scaling, with public composition, addition, and multiplication
+  transport laws (`scale_scale`, `scale_add`, `scale_mul`, `mul_scale`)
 - Division with remainder (for monic divisors; general division over fields)
 - Polynomial GCD (plain Euclidean remainder sequence — **not** the extended
   algorithm). `gcd` tracks only the remainders, so it is `O(deg²)`. The extended

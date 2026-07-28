@@ -363,6 +363,49 @@ theorem mul_sub_zero_comm {S : Type _}
     diagonalSum_eq_degree_bound p (0 - q) n, diagonalSum_eq_degree_bound q p n,
     diagonalSum_neg_right p q n, fold_diagonal_comm p q n]
 
+/-- Pull a coefficient scalar through the left polynomial factor. -/
+theorem scale_mul {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S]
+    (a : S) (p q : DensePoly S) :
+    scale a (p * q) = scale a p * q := by
+  apply ext_coeff
+  intro n
+  rw [coeff_scale_semiring, coeff_mul, coeff_mul,
+    mulCoeffSum_eq_diagonal, mulCoeffSum_eq_diagonal,
+    diagonalSum_eq_degree_bound (scale a p) q n,
+    diagonalSum_eq_degree_bound p q n]
+  let term : DensePoly S → Nat → S := fun r i =>
+    diagonalMulCoeffTerm r q n i
+  have hfold : ∀ m acc,
+      (List.range m).foldl (fun x i => x + term (scale a p) i) acc =
+        acc + a * (List.range m).foldl (fun x i => x + term p i) 0 := by
+    intro m
+    induction m with
+    | zero =>
+        intro acc
+        simp
+        grind
+    | succ m ih =>
+        intro acc
+        rw [List.range_succ, List.foldl_append, List.foldl_append]
+        simp only [List.foldl_cons, List.foldl_nil]
+        rw [ih]
+        have hterm : term (scale a p) m = a * term p m := by
+          unfold term diagonalMulCoeffTerm
+          by_cases hnm : n < m
+          · simp only [hnm, if_true]
+            grind
+          · simp only [hnm, if_false, coeff_scale_semiring]
+            grind
+        rw [hterm]
+        grind
+  have h := hfold (n + 1) 0
+  have hzero : (0 : S) +
+      a * (List.range (n + 1)).foldl (fun x i => x + term p i) 0 =
+        a * (List.range (n + 1)).foldl (fun x i => x + term p i) 0 := by
+    grind
+  rw [hzero] at h
+  simpa only [term] using h.symm
+
 /-- Commutativity of `DensePoly` multiplication. Hand-proved because `DensePoly`
 carries only `Lean.Grind.CommRing`, not Mathlib's `CommRing`, so `mul_comm`
 is unavailable. -/
@@ -374,6 +417,13 @@ theorem mul_comm_poly {S : Type _}
   intro n
   rw [coeff_mul, coeff_mul, mulCoeffSum_eq_diagonal p q n, mulCoeffSum_eq_diagonal q p n,
     diagonalSum_eq_degree_bound p q n, diagonalSum_eq_degree_bound q p n, fold_diagonal_comm p q n]
+
+/-- Pull a coefficient scalar through the right polynomial factor. -/
+theorem mul_scale {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S]
+    (a : S) (p q : DensePoly S) :
+    scale a (p * q) = p * scale a q := by
+  rw [mul_comm_poly p q, scale_mul a q p,
+    mul_comm_poly (scale a q) p]
 
 /-- Cancellation rearrangement `(x + y) - (z + x) = y + (0 - z)`, used to
 simplify mixed add/sub combinations arising in the Euclidean update steps. -/

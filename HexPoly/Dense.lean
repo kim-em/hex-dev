@@ -517,6 +517,20 @@ def degree? (p : DensePoly R) : Option Nat :=
 @[simp, grind =] theorem size_zero : (0 : DensePoly R).size = 0 := by
   rfl
 
+/-- A normalized dense polynomial has no stored coefficients exactly when it
+is the zero polynomial. -/
+@[simp]
+theorem size_eq_zero_iff (p : DensePoly R) : p.size = 0 ↔ p = 0 := by
+  constructor
+  · intro hp
+    apply ext_of_size_eq
+    · rw [hp, size_zero]
+    · intro i hi
+      omega
+  · intro hp
+    subst p
+    exact size_zero
+
 /-- The zero polynomial has no degree. -/
 @[simp, grind =] theorem degree?_zero : (0 : DensePoly R).degree? = none := by
   unfold degree?

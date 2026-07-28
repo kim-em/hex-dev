@@ -174,6 +174,15 @@ rewrite because the required `c * 0 = 0` law is available from the semiring stru
     (scale c p).coeff n = c * p.coeff n :=
   coeff_scale c p n (Lean.Grind.Semiring.mul_zero c)
 
+/-- Scaling twice multiplies the two scalars. -/
+theorem scale_scale {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
+    (a b : S) (p : DensePoly S) :
+    scale a (scale b p) = scale (a * b) p := by
+  apply ext_coeff
+  intro n
+  simp only [coeff_scale_semiring]
+  grind
+
 /-- Semiring-specialized left zero law for scalar multiplication. -/
 @[simp, grind =] theorem scale_zero_left_semiring {S : Type u}
     [Lean.Grind.Semiring S] [DecidableEq S]
@@ -1447,6 +1456,15 @@ theorem coeff_add [Add R] (p q : DensePoly R) (n : Nat)
     (hzero : AddZeroLaw S := by infer_instance) :
     (p + q).coeff n = p.coeff n + q.coeff n :=
   coeff_add p q n hzero.add_zero_zero
+
+/-- Scaling distributes over polynomial addition. -/
+theorem scale_add {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
+    (a : S) (p q : DensePoly S) :
+    scale a (p + q) = scale a p + scale a q := by
+  apply ext_coeff
+  intro n
+  simp only [coeff_scale_semiring, coeff_add_semiring]
+  grind
 
 /-- Coefficient law for subtraction. The explicit zero law is needed because the generic
 `Sub`/`Zero` interface does not imply `0 - 0 = 0`. -/

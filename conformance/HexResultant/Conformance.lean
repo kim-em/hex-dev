@@ -24,7 +24,8 @@ Covered properties:
 - exact quotients, binary powers, and coefficientwise quotients obey their
   independently calculated integer values;
 - pseudo-division reconstructs the prescribed leading-coefficient multiple
-  and leaves a remainder smaller than the divisor;
+  and leaves a remainder smaller than the divisor; reconstruction plus that
+  bound is unique, and nonzero input scaling obeys the two homogeneity laws;
 - Brown chains omit zero terms, order unequal-degree inputs, strictly decrease
   after their first two entries, obey the sharp length bound, and are stable
   under extra fuel;
@@ -93,6 +94,25 @@ private def withinChainBound (f g : DensePoly Int) : Bool :=
 
 /-! # Pseudo-division -/
 
+example (f g q r : DensePoly Int) (hg : g ≠ 0) (hgf : g.size ≤ f.size)
+    (hrec : scale (g.leadingCoeff ^ (f.size - g.size + 1)) f = q * g + r)
+    (hr : r.size < g.size) : pseudoDivMod f g = (q, r) :=
+  pseudoDivMod_unique f g q r hg hgf hrec hr
+
+example (f g : DensePoly Int) {a : Int} (ha : a ≠ 0)
+    (hg : g ≠ 0) (hgf : g.size ≤ f.size) :
+    pseudoDivMod (scale a f) g =
+      (scale a (pseudoDivMod f g).1, scale a (pseudoDivMod f g).2) :=
+  pseudoDivMod_scale_left f g ha hg hgf
+
+example (f g : DensePoly Int) {a : Int} (ha : a ≠ 0)
+    (hg : g ≠ 0) (hgf : g.size ≤ f.size) :
+    let d := f.size - g.size + 1
+    pseudoDivMod f (scale a g) =
+      (scale (a ^ (d - 1)) (pseudoDivMod f g).1,
+        scale (a ^ d) (pseudoDivMod f g).2) :=
+  pseudoDivMod_scale_right f g ha hg hgf
+
 -- Typical nonmonic division: `4*(X^2+1) = (2X-1)*(2X+1)+5`.
 #guard
   let f := poly [1, 0, 1]
@@ -118,6 +138,49 @@ private def withinChainBound (f g : DensePoly Int) : Bool :=
   let f := poly [3]
   let g := poly [1, 1]
   pseudoDivMod f g = (0, f)
+
+-- Scaling the dividend scales both outputs by the same nonzero scalar.
+#guard
+  let f := poly [1, 0, 1]
+  let g := poly [1, 2]
+  let qr := pseudoDivMod (scale (-3) f) g
+  coeffs qr.1 = [3, -6] && coeffs qr.2 = [-15]
+
+-- Scaling the divisor by `a` scales quotient and remainder by `a^(d-1)`
+-- and `a^d`, respectively.
+#guard
+  let f := poly [1, 0, 1]
+  let g := poly [1, 2]
+  let qr := pseudoDivMod f (scale 3 g)
+  coeffs qr.1 = [-3, 6] && coeffs qr.2 = [45]
+
+-- The constant-divisor branch has `d = f.size` and zero remainder.
+#guard
+  let f := poly [1, 0, 1]
+  let g := poly [3]
+  let qr := pseudoDivMod f (scale 2 g)
+  coeffs qr.1 = [36, 0, 36] && coeffs qr.2 = []
+
+-- Equal-size inputs have `d = 1`, so scaling the divisor leaves the
+-- pseudo-quotient unchanged and scales only the remainder.
+#guard
+  let f := poly [1, 1]
+  let g := poly [3, 2]
+  let qr := pseudoDivMod f (scale 5 g)
+  coeffs qr.1 = [1] && coeffs qr.2 = [-5]
+
+-- Divisor scaling preserves the unused factor across a defective degree drop.
+#guard
+  let f := poly [0, 0, 0, 1]
+  let g := poly [1, 0, 2]
+  let qr := pseudoDivMod f (scale (-2) g)
+  coeffs qr.1 = [0, -4] && coeffs qr.2 = [0, -8]
+
+-- Nonzero scaling preserves normalized size and scales the leading coefficient.
+#guard
+  let p := poly [1, 0, -2]
+  let q := scale (-3) p
+  q.size = p.size && q.leadingCoeff = 6
 
 /-! # Brown chain -/
 

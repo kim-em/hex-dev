@@ -140,6 +140,38 @@ def divExp [Zero R] [DecidableEq R] [One R] [Mul R] [Div R]
 
 namespace DensePoly
 
+/-- A nonzero scalar does not change the normalized dense size. -/
+theorem size_scale [Lean.Grind.CommRing R] [DecidableEq R] [Div R]
+    [ExactDivLaws R] {a : R} (ha : a ≠ 0) (p : DensePoly R) :
+    (scale a p).size = p.size := by
+  have hle : (scale a p).size ≤ p.size := by
+    rw [scale_eq_scaleImpl]
+    exact size_scaleImpl_le a p
+  by_cases hp : p.size = 0
+  · omega
+  have hp_pos : 0 < p.size := Nat.pos_of_ne_zero hp
+  have hcoeff : (scale a p).coeff (p.size - 1) ≠ (0 : R) := by
+    rw [coeff_scale_semiring]
+    exact ExactDivLaws.mul_ne_zero ha
+      (coeff_last_ne_zero_of_pos_size p hp_pos)
+  apply Nat.le_antisymm hle
+  apply Nat.le_of_not_gt
+  intro hlt
+  exact hcoeff (coeff_eq_zero_of_size_le (scale a p) (by omega))
+
+/-- The leading coefficient scales with a nonzero coefficient scalar. -/
+theorem leadingCoeff_scale [Lean.Grind.CommRing R] [DecidableEq R] [Div R]
+    [ExactDivLaws R] {a : R} (ha : a ≠ 0) (p : DensePoly R) :
+    (scale a p).leadingCoeff = a * p.leadingCoeff := by
+  by_cases hp : p.size = 0
+  · have hp0 : p = 0 := (size_eq_zero_iff p).mp hp
+    subst p
+    simp [Lean.Grind.Semiring.mul_zero]
+  have hp_pos : 0 < p.size := Nat.pos_of_ne_zero hp
+  have hsize := size_scale ha p
+  rw [leadingCoeff_eq_coeff_last _ (hsize ▸ hp_pos), hsize,
+    coeff_scale_semiring, leadingCoeff_eq_coeff_last p hp_pos]
+
 /-- Divide every coefficient by the same scalar.
 
 Kernel-facing specification: one map over the coefficient list. Compiled code

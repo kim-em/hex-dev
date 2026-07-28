@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexResultant.Basic
 public import HexResultant.ExactDiv
+public import HexResultant.PseudoDivMod
 public meta import HexResultant.ExactDiv
 public meta import HexPoly.Dense
 public meta import HexPoly.Euclid.DivGcd
@@ -158,12 +158,8 @@ private theorem ne_zero_of_isZero_false (p : DensePoly R)
 zero. -/
 private theorem eq_zero_of_isZero_true (p : DensePoly R)
     (hp : p.isZero = true) : p = 0 := by
-  apply ext_coeff
-  intro i
-  rw [coeff_zero]
-  exact coeff_eq_zero_of_size_le p (by
-    have hsize := (isZero_eq_true_iff p).1 hp
-    omega)
+  apply (size_eq_zero_iff p).mp
+  exact (isZero_eq_true_iff p).1 hp
 
 /-- A propositionally nonzero polynomial is rejected by the executable zero
 test. -/
@@ -689,10 +685,7 @@ theorem subresultantChain_zero_right [One R] [Add R] [Sub R] [Mul R] [Div R]
     · exact hpos
     · exfalso
       apply hf
-      apply ext_coeff
-      intro i
-      rw [coeff_zero]
-      exact coeff_eq_zero_of_size_le f (by omega)
+      exact (size_eq_zero_iff f).mp (by omega)
   have hzz : (0 : DensePoly R).isZero = true := rfl
   simp [hfz, hzz]
 
@@ -706,10 +699,7 @@ theorem subresultantChain_zero_left [One R] [Add R] [Sub R] [Mul R] [Div R]
     · exact hpos
     · exfalso
       apply hg
-      apply ext_coeff
-      intro i
-      rw [coeff_zero]
-      exact coeff_eq_zero_of_size_le g (by omega)
+      exact (size_eq_zero_iff g).mp (by omega)
   have hzz : (0 : DensePoly R).isZero = true := rfl
   simp [hgz, hzz]
 

@@ -130,6 +130,37 @@ A valid Brown run proves every denominator nonzero and every quotient exact.
 On an invalid coefficient implementation or unreachable junk state, the
 executable value remains deterministic but carries no algebraic claim.
 
+## Certified pseudo-remainder algebra
+
+For an ordered nonzero pair, reconstruction together with the strict
+remainder-size bound uniquely determines `pseudoDivMod`. The public
+`pseudoDivMod_unique` theorem packages that characterization; it lets the
+correctness development reason from the algebraic contract instead of the
+array folds implementing the quotient and remainder.
+
+The same API proves the two homogeneity laws used in polynomial remainder
+sequence arguments. For nonzero `a` and an ordered nonzero pair
+(`g ≠ 0`, `g.size ≤ f.size`), if `d = f.size - g.size + 1`, then
+
+```text
+pseudoDivMod (a·f) g = (a·q, a·r)
+pseudoDivMod f (a·g) = (a^(d-1)·q, a^d·r)
+```
+
+where `(q,r) = pseudoDivMod f g`. Nonzero scaling preserves dense size and
+leading coefficients scale by `a`; those facts are exposed separately as
+`size_scale` and `leadingCoeff_scale` under `[Div S] [ExactDivLaws S]`, whose
+no-zero-divisor consequence is exactly what makes size preservation valid.
+
+In the Mathlib adjunct, `PseudoDivMod.resultant_step` transports one reconstructed
+pseudo-division step through the formal-degree Sylvester determinant. It
+combines scalar homogeneity, the resultant row operation, and the swap sign.
+This is the value recurrence needed by Brown correctness. It deliberately does
+not claim the later coefficientwise exact divisions: their integrality is the
+separate Brown--Traub subresultant theorem recorded by `BrownLaw`.
+In particular, reversing `divScalar` by scaling requires the coefficientwise
+exactness certified by that law; the homogeneity API does not assume it.
+
 ## Ordered Brown run
 
 For nonzero `G₁, G₂` with `deg G₁ ≥ deg G₂`, write `nᵢ = deg Gᵢ`,
@@ -254,6 +285,8 @@ quotient is exact over every stated exact-division domain.
 - `HexResultant/ExactDiv.lean`: `ExactDivLaws`, the total exact-division
   wrappers, and the `Int`, field, and recursive dense-polynomial instances.
 - `HexResultant/Basic.lean`: `pseudoDivMod` and its computational properties.
+- `HexResultant/PseudoDivMod.lean`: uniqueness, nonzero scaling, and the
+  left/right pseudo-division homogeneity laws.
 - `HexResultant/Subresultant.lean`: the Brown worker,
   `subresultantChain`, `resultant`, chain termination, and degree bounds.
 - `HexResultant/Discriminant.lean`: `disc` and the algebraic

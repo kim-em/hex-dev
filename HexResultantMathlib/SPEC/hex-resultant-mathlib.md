@@ -13,7 +13,8 @@ resultant, including its units, powers, and signs.
 
 The exact typeclass assumptions follow the executable algorithm: `R` is a
 commutative integral domain with decidable equality, a quotient operation, and
-`Hex.ExactDivLaws R`.
+`Hex.ExactDivLaws R`. The `PseudoDivMod` transport theorems are deliberately
+more general and need only `[CommRing R] [DecidableEq R]`.
 
 ```lean
 namespace Hex.DensePoly
@@ -33,6 +34,67 @@ noncomputable def specialize [CommRing R] [DecidableEq R]
 noncomputable def evalBivariate [CommRing R] [DecidableEq R]
     (f : DensePoly (DensePoly R)) (a b : R) : R :=
   (specialize f a).eval b
+
+namespace PseudoDivMod
+
+/-- Transport the executable pseudo-division reconstruction to Mathlib
+    polynomials. -/
+theorem reconstruct [CommRing R] [DecidableEq R]
+    (f g : DensePoly R) (hg : g ≠ 0) (hgf : g.size ≤ f.size) :
+    let q := (pseudoDivMod f g).1
+    let r := (pseudoDivMod f g).2
+    Polynomial.C (g.leadingCoeff ^ (f.size - g.size + 1)) *
+        HexPolyMathlib.toPolynomial f =
+      HexPolyMathlib.toPolynomial q * HexPolyMathlib.toPolynomial g +
+        HexPolyMathlib.toPolynomial r
+
+/-- The pseudo-quotient fits the formal-degree gap used by the resultant row
+    operation. -/
+theorem quotient_degree [CommRing R] [DecidableEq R]
+    (f g : DensePoly R) (hg : g ≠ 0) (hgf : g.size ≤ f.size) :
+    (HexPolyMathlib.toPolynomial (pseudoDivMod f g).1).natDegree +
+        (HexPolyMathlib.toPolynomial g).natDegree ≤
+      (HexPolyMathlib.toPolynomial f).natDegree
+
+/-- The pseudo-remainder is zero or has strictly smaller Mathlib degree than
+    the nonzero divisor. -/
+theorem remainder_degree [CommRing R] [DecidableEq R]
+    (f g : DensePoly R) (hg : g ≠ 0) :
+    HexPolyMathlib.toPolynomial (pseudoDivMod f g).2 = 0 ∨
+      (HexPolyMathlib.toPolynomial (pseudoDivMod f g).2).natDegree <
+        (HexPolyMathlib.toPolynomial g).natDegree
+
+/-- Transport one pseudo-division step through the formal-degree Sylvester
+    resultant, including its scalar power and swap sign. -/
+theorem resultant_step [CommRing R] [DecidableEq R]
+    (f g : DensePoly R) (hg : g ≠ 0) (hgf : g.size ≤ f.size) :
+    let r := (pseudoDivMod f g).2
+    let F := HexPolyMathlib.toPolynomial f
+    let G := HexPolyMathlib.toPolynomial g
+    let P := HexPolyMathlib.toPolynomial r
+    let n := F.natDegree
+    let m := G.natDegree
+    (g.leadingCoeff ^ (f.size - g.size + 1)) ^ m *
+        Polynomial.resultant F G n m =
+      (-1 : R) ^ (n * m) * Polynomial.resultant G P m n
+
+/-- The same identity with the remainder returned to its actual default
+    degree and the compensating leading-coefficient power explicit. -/
+theorem resultant_step_degree [CommRing R] [DecidableEq R]
+    (f g : DensePoly R) (hg : g ≠ 0) (hgf : g.size ≤ f.size) :
+    let r := (pseudoDivMod f g).2
+    let F := HexPolyMathlib.toPolynomial f
+    let G := HexPolyMathlib.toPolynomial g
+    let P := HexPolyMathlib.toPolynomial r
+    let n := F.natDegree
+    let m := G.natDegree
+    let k := P.natDegree
+    (g.leadingCoeff ^ (f.size - g.size + 1)) ^ m *
+        Polynomial.resultant F G n m =
+      (-1 : R) ^ (n * m) *
+        (g.leadingCoeff ^ (n - k) * Polynomial.resultant G P m k)
+
+end PseudoDivMod
 
 /-- The executable and Mathlib resultants agree under the dense-polynomial
     correspondence. -/
@@ -129,8 +191,11 @@ multiplicity representation.
 Stage 1 is sufficient for `AlgebraicRoot` operation soundness and can land before
 the determinant correspondence.
 
-1. Define Mathlib polynomial pseudo-division and prove its quotient/remainder
-   identity and degree bound.
+1. Transport the executable pseudo-division reconstruction and degree bounds to
+   Mathlib polynomials. `PseudoDivMod.resultant_step` and
+   `resultant_step_degree` already
+   package the resulting Sylvester row operation, scalar power, swap sign, and
+   formal-degree promotion.
 2. Transfer the executable pseudo-remainder sequence through `toPolynomial`.
 3. Prove forward and backward preservation of common roots along the chain.
 4. Relate a positive-degree final gcd to executable resultant zero.
@@ -179,6 +244,7 @@ Sylvester-minor proof rather than retaining that obsolete total.
 ```text
 HexResultantMathlib/
   Basic.lean           : public theorem statements
+  PseudoDivMod.lean    : reconstruction and one-step resultant transport
   Chain.lean           : pseudo-division transfer and Stage 1
   Sylvester.lean       : subresultant minors and full agreement
   Specialize.lean      : bivariate specialization and norm corollaries
