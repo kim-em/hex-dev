@@ -8,12 +8,13 @@ is JSON encode/decode and the FLINT operation itself.
 
 Per `SPEC/benchmarking.md` (post-#3657) §"External comparators"
 §"Process call": this driver is the persistent-subprocess shape
-required when per-call overhead is non-negligible. The bench harness
-spawns the driver once per `lake exe hexfoo_bench run` invocation,
-holds its stdin / stdout handles in an `IO.Ref` (see
-`Hex/BenchOracle/Flint.lean`), and reuses the file descriptors
-across every measured call in that bench process. One process
-startup is amortised across all comparator calls in the run.
+required when per-call overhead is non-negligible. A fixed benchmark
+starts a fresh Lean child for each outer warmup or repeat. Within one
+child, `warmupFirstIter` starts this driver before timing, stores its
+stdin / stdout handles in an `IO.Ref` (see
+`Hex/BenchOracle/Flint.lean`), and the auto-tuned inner-repeat batch
+reuses those handles. Thus one driver startup is amortised across the
+measured calls in that child; it is not shared across outer repeats.
 
 ## Framing
 
@@ -141,6 +142,15 @@ schema is the textbook Newton-style quadratic lift. HO-24 owns
 the Hensel-family wiring on the Lean side and may extend the
 operation set here as its bench targets require.
 
+### `rcf` (univariate real-closed-field sentences)
+
+Request field: ``sentence``, a version-1 HexRCF sentence object using the
+same schema as ``scripts/oracle/rcf_flint.py``.
+
+* ``decide`` — returns the Boolean verdict produced by the shared independent
+  python-flint RCF engine. The benchmark driver imports that engine rather
+  than duplicating its carrier, root certification, or cell evaluation.
+
 ## Per-call overhead
 
 The driver imports ``flint`` once at startup; per-call cost in the
@@ -164,11 +174,23 @@ from __future__ import annotations
 import json
 import sys
 import traceback
+from pathlib import Path
 from typing import Any, Callable
 
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+
+try:
+    from scripts.oracle.rcf_flint import decide_sentence
+
+    _rcf_import_error: str | None = None
+except Exception as exc:  # pragma: no cover - defensive isolation
+    decide_sentence = None  # type: ignore[assignment]
+    _rcf_import_error = f"HexRCF oracle unavailable: {exc!r}"
+
 # Import flint at startup so the first request does not pay the
-# `import flint` cost. The CI workflow installs python-flint at the
-# top of `conformance.yml`; if it is unavailable the driver still
+# `import flint` cost. The CI workflow installs python-flint in its
+# shared dependency step; if it is unavailable the driver still
 # starts but every request that needs flint will reply with an
 # error frame.
 try:
@@ -578,6 +600,25 @@ _NMOD_POLY_HENSEL_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
 
 
 # ---------------------------------------------------------------------
+# `rcf` (univariate real-closed-field sentences)
+# ---------------------------------------------------------------------
+
+
+def _rcf_decide(req: dict[str, Any]) -> bool:
+    if decide_sentence is None:
+        raise RuntimeError(_rcf_import_error or "HexRCF oracle unavailable")
+    sentence = req.get("sentence")
+    if not isinstance(sentence, dict):
+        raise ValueError("rcf/decide request missing object 'sentence' field")
+    return decide_sentence(sentence)
+
+
+_RCF_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
+    "decide": _rcf_decide,
+}
+
+
+# ---------------------------------------------------------------------
 # Dispatch
 # ---------------------------------------------------------------------
 
@@ -588,6 +629,7 @@ _FAMILIES: dict[str, dict[str, Callable[[dict[str, Any]], Any]]] = {
     "fmpz_mat": _FMPZ_MAT_OPS,
     "fq_default": _FQ_DEFAULT_OPS,
     "nmod_poly_hensel": _NMOD_POLY_HENSEL_OPS,
+    "rcf": _RCF_OPS,
 }
 
 
@@ -641,6 +683,7 @@ def _serve(stdin, stdout) -> None:
 #       '{"family":"fmpz_poly","op":"mul","a":[1,2,3],"b":[4,5]}' \\
 #       '{"family":"nmod_poly","op":"is_irreducible","p":7,"a":[1,1,1]}' \\
 #       '{"family":"fmpz_mat","op":"det","rows":[[1,2],[3,4]]}' \\
+#       '{"family":"rcf","op":"decide","sentence":{"quantifier":"exists_real","bounds":null,"formula":{"tag":"tt"}}}' \\
 #       | python3 scripts/oracle/flint_bench_driver.py
 #
 # Expected replies (one per request, in order)::
@@ -648,6 +691,7 @@ def _serve(stdin, stdout) -> None:
 #   {"ok":true,"result":[4,13,22,15]}
 #   {"ok":true,"result":true}
 #   {"ok":true,"result":-2}
+#   {"ok":true,"result":true}
 #
 # Malformed requests are echoed back as `{"ok":false,"error":"..."}`
 # and never terminate the driver.
