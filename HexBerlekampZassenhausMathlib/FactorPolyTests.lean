@@ -141,7 +141,9 @@ import all HexBasic.Fold
 import all HexBasic.ListShim
 import all HexBasic.Vector.Modify
 import all Init.Data.Array.Basic
-import all Init.Data.Array.DecidableEq
+-- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
+-- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
+public import HexBasic.ArrayDecEq
 import all Init.Data.Fin.Fold
 import all Init.Data.Fin.Basic
 import all Init.Data.Fin.Iterate
@@ -149,6 +151,8 @@ import all Init.Data.List.Basic
 import all Init.Data.List.Range
 import all Init.Data.Nat.Fold
 import all Init.Data.Range.Basic
+
+open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
 
 public section
 

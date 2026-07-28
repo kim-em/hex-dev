@@ -7,14 +7,13 @@ Authors: Kim Morrison
 module
 
 public import HexRealRoots.Chain
--- `import all` on the two source modules so `decide` reduces the sanity
--- checks below in the kernel: plain (non-`@[expose]`) defs like `sturmChain`,
--- `evalDyadic`, and `dyadicSign` have opaque bodies across the module
--- boundary, so a `decide` that unfolds them here would get stuck without
--- these. The Array-equality `import all` is the same workaround as Chain.lean.
-import all Init.Data.Array.DecidableEq
+-- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
+-- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
+public import HexBasic.ArrayDecEq
 import all HexRealRoots.Basic
 import all HexRealRoots.Chain
+
+open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
 
 public section
 

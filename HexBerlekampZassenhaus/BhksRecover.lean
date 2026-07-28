@@ -21,11 +21,9 @@ public import HexBerlekamp.Irreducibility
 public import HexHensel.Multifactor
 public import HexHensel.QuadraticMultifactor
 public import HexLLL.Basic
--- Needed so `decide`/`rfl` over `DensePoly`/`Array` equality reduces in the
--- kernel: the core `Array.instDecidableEq` delegates its nonempty case to the
--- non-`@[expose]` `Array.instDecidableEqImpl`, which is otherwise opaque under
--- the module system. Drop once that impl is exposed upstream (lean4).
-import all Init.Data.Array.DecidableEq
+-- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
+-- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
+public import HexBasic.ArrayDecEq
 
 public import HexBerlekampZassenhaus.BhksCandidates
 public meta import HexBerlekampZassenhaus.BhksCandidates
@@ -36,6 +34,8 @@ import all HexBerlekampZassenhaus.ChoosePrimeData
 import all HexBerlekampZassenhaus.ReassemblyProofs
 import all HexBerlekampZassenhaus.Lattice
 import all HexBerlekampZassenhaus.BhksCandidates
+
+open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
 
 public section
 set_option backward.proofsInPublic true

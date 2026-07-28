@@ -7,15 +7,12 @@ Authors: Kim Morrison
 module
 
 public import HexRealRoots.Var
--- `import all` so `decide` reduces the sanity checks below in the kernel.
--- `signVar` (in `Var.lean`) is a plain, non-`@[expose]` def, so its body is
--- opaque across the module boundary; `import all` exposes it. The Möbius
--- pipeline itself only calls `@[expose]` `DensePoly`/`ZPoly` operations, whose
--- bodies are already visible. The `Array`-equality `import all` is the same
--- kernel-`decide` workaround as `Chain.lean`/`Var.lean`, needed because the
--- array-literal assertions compare `ZPoly` (hence `Array Int`) values.
-import all Init.Data.Array.DecidableEq
+-- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
+-- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
+public import HexBasic.ArrayDecEq
 import all HexRealRoots.Var
+
+open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
 
 public section
 

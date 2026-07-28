@@ -9,16 +9,14 @@ module
 public import HexRealRoots.Prec
 public import HexRealRoots.Var
 public import HexRealRoots.Mobius
--- `import all` on the source modules so `decide` reduces the zero and
--- constant sanity checks below in the kernel: plain (non-`@[expose]`) defs
--- like `sturmChain`, `evalDyadic`, `dyadicSign`, and `sturmVarAt` have opaque
--- bodies across the module boundary, so a `decide` that unfolds the driver
--- would get stuck without these. The Array-equality `import all` is the same
--- workaround as `IsolateSturm.lean`.
-import all Init.Data.Array.DecidableEq
+-- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
+-- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
+public import HexBasic.ArrayDecEq
 import all HexRealRoots.Basic
 import all HexRealRoots.Chain
 import all HexRealRoots.Var
+
+open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
 
 public section
 

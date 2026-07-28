@@ -10,3 +10,6 @@ conformance-failures/*.json
 .pod/
 sessions/
 _out/
+
+# Accidentally-committed scratch benchmark tree; see PR #9044.
+/scratch-mvpoly-bench/

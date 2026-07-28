@@ -6,7 +6,10 @@ Authors: Kim Morrison
 
 module
 
+public import HexBasic.ArrayDecEq
 public import HexBasic.Fold
+public import HexBasic.ModuleBoundaryTests
+public import HexBasic.OfFn
 public import HexBasic.ListShim
 public import HexBasic.Vector.Modify
 
@@ -17,5 +20,7 @@ public section
 general-purpose helpers that clearly belong in the standard library and are
 reproduced here only until they migrate up to lean4. It provides the shared
 `List.foldl` algebra (`HexBasic.Fold`), the `Batteries` list lemmas reproduced
-in `HexBasic.ListShim`, and the `Vector.modify` update helper.
+in `HexBasic.ListShim`, the `Vector.modify` update helper, and
+kernel-reducible `Array`/`Vector` equality (`HexBasic.ArrayDecEq`) and
+`ofFn` (`HexBasic.OfFn`).
 -/

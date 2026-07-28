@@ -41,8 +41,12 @@ variable {R : Type u} [Zero R] [DecidableEq R]
 `Array.instDecidableEq` delegates its nonempty case to the non-`@[expose]`
 `Array.instDecidableEqImpl`, whose body is unavailable downstream under the
 module system, so `decide`/`rfl` on `DensePoly` equalities would get stuck
-(see `progress/lean4-array-decidableeq-module-repro.md`). `List` equality is
-fully exposed and kernel-reduces. -/
+(see `progress/lean4-array-decidableeq-module-repro.md`, fixed upstream by
+leanprover/lean4#14270). `List` equality is fully exposed and kernel-reduces.
+
+`HexBasic.ArrayDecEq` carries the same workaround as a reusable instance, but
+`hex-poly` has no dependencies and so cannot import it; this instance stays
+local until either that dependency is added or the upstream fix lands. -/
 instance : DecidableEq (DensePoly R) := fun a b =>
   match decEq a.coeffs.toList b.coeffs.toList with
   | isTrue h =>
