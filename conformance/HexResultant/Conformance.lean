@@ -25,8 +25,9 @@ Covered properties:
   independently calculated integer values;
 - pseudo-division reconstructs the prescribed leading-coefficient multiple
   and leaves a remainder smaller than the divisor;
-- Brown chains omit zero terms, order unequal-degree inputs, and strictly
-  decrease after their first two entries;
+- Brown chains omit zero terms, order unequal-degree inputs, strictly decrease
+  after their first two entries, obey the sharp length bound, and are stable
+  under extra fuel;
 - resultants obey linear evaluation, the degree-product swap sign, common-root
   vanishing, recursive bivariate elimination, and the corrected defective-drop
   scale;
@@ -66,6 +67,11 @@ private def strictTail (chain : Array (DensePoly Int)) : Bool :=
   (Array.range (chain.size - 2)).all fun offset =>
     let i := offset + 1
     (chain.getD (i + 1) 0).size < (chain.getD i 0).size
+
+/-- Check the public sharp length bound for a nonzero input pair. -/
+private def withinChainBound (f g : DensePoly Int) : Bool :=
+  decide ((subresultantChain f g).size ≤
+    min (f.degree?.getD 0) (g.degree?.getD 0) + 2)
 
 /-! # Exact-division helpers -/
 
@@ -115,12 +121,33 @@ private def strictTail (chain : Array (DensePoly Int)) : Bool :=
 
 /-! # Brown chain -/
 
+/- The public proof API certifies the same nonzero, descent, and length
+properties exercised by the executable guards below. -/
+example (f g p : DensePoly Int) (hp : p ∈ subresultantChain f g) : p ≠ 0 :=
+  subresultantChain_ne_zero f g p hp
+
+example (f g : DensePoly Int) (i : Nat) (hi : 1 ≤ i)
+    (hnext : i + 1 < (subresultantChain f g).size) :
+    ((subresultantChain f g).getD (i + 1) 0).size <
+      ((subresultantChain f g).getD i 0).size :=
+  subresultantChain_size_strict f g i hi hnext
+
+example (f g : DensePoly Int) (hf : f ≠ 0) (hg : g ≠ 0) :
+    (subresultantChain f g).size ≤
+      min (f.degree?.getD 0) (g.degree?.getD 0) + 2 :=
+  subresultantChain_size_le f g hf hg
+
+example (f g : DensePoly Int) (hg : g ≠ 0) (extra : Nat) :
+    subresultantOrderedFuel f g (g.size + 1 + extra) =
+      subresultantOrdered f g :=
+  subresultantOrderedFuel_eq f g hg extra
+
 #guard
   let f := poly [1, 0, 1]
   let g := poly [-1, 1]
   let chain := subresultantChain f g
   chain.size = 3 && chain.getD 0 0 = f && chain.getD 1 0 = g &&
-    chain.all (fun p => !p.isZero) && strictTail chain
+    chain.all (fun p => !p.isZero) && strictTail chain && withinChainBound f g
 
 #guard
   subresultantChain (0 : DensePoly Int) 0 = #[] &&
@@ -132,7 +159,22 @@ private def strictTail (chain : Array (DensePoly Int)) : Bool :=
   let linear := poly [-1, 1]
   let cubic := poly [-1, 0, 0, 1]
   let chain := subresultantChain linear cubic
-  chain.getD 0 0 = cubic && chain.getD 1 0 = linear && strictTail chain
+  chain.getD 0 0 = cubic && chain.getD 1 0 = linear &&
+    chain.all (fun p => !p.isZero) && strictTail chain &&
+    withinChainBound linear cubic
+
+-- A four-term defective chain exercises two tail descents and a degree gap.
+#guard
+  let f := poly [0, 0, 0, 0, -1]
+  let g := poly [-1, 0, 0, 2]
+  let chain := subresultantChain f g
+  let publicRun := subresultantOrdered f g
+  let extraRun := subresultantOrderedFuel f g (g.size + 8)
+  chainCoeffs chain =
+      [[0, 0, 0, 0, -1], [-1, 0, 0, 2], [0, -2], [-1]] &&
+    chain.all (fun p => !p.isZero) && strictTail chain &&
+    withinChainBound f g &&
+    extraRun.chain == publicRun.chain && extraRun.scale == publicRun.scale
 
 -- The final polynomial is `4`, while the corrected terminal scale is `16`.
 #guard

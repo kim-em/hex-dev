@@ -145,6 +145,409 @@ def subresultantChain [One R] [Add R] [Sub R] [Mul R] [Div R]
     (f g : DensePoly R) : Array (DensePoly R) :=
   (subresultantRun f g).chain
 
+/-- A polynomial rejected by the executable zero test is propositionally
+nonzero. -/
+private theorem ne_zero_of_isZero_false (p : DensePoly R)
+    (hp : p.isZero = false) : p ≠ 0 := by
+  intro hzero
+  subst p
+  change true = false at hp
+  exact Bool.noConfusion hp
+
+/-- A polynomial accepted by the executable zero test is propositionally
+zero. -/
+private theorem eq_zero_of_isZero_true (p : DensePoly R)
+    (hp : p.isZero = true) : p = 0 := by
+  apply ext_coeff
+  intro i
+  rw [coeff_zero]
+  exact coeff_eq_zero_of_size_le p (by
+    have hsize := (isZero_eq_true_iff p).1 hp
+    omega)
+
+/-- A propositionally nonzero polynomial is rejected by the executable zero
+test. -/
+private theorem isZero_false_of_ne_zero (p : DensePoly R) (hp : p ≠ 0) :
+    p.isZero = false := by
+  cases hzero : p.isZero with
+  | false => rfl
+  | true => exact (hp (eq_zero_of_isZero_true p hzero)).elim
+
+/-- A propositionally nonzero dense polynomial stores at least one
+coefficient. -/
+private theorem size_pos_of_ne_zero (p : DensePoly R) (hp : p ≠ 0) :
+    0 < p.size :=
+  (isZero_eq_false_iff p).1 (isZero_false_of_ne_zero p hp)
+
+/-- Once the worker has more fuel than the current polynomial has stored
+coefficients, its result is independent of the exact fuel value. Every
+recursive call first takes a pseudo-remainder and then maps its coefficients,
+so the next current polynomial is strictly smaller even when an exact quotient
+falls into a junk branch. -/
+private theorem subresultantAux_fuel_eq
+    [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (prev curr : DensePoly R) (hPrev : R) (chain : Array (DensePoly R))
+    (fuel fuel' : Nat) (hcurr : curr ≠ 0)
+    (hfuel : curr.size < fuel) (hfuel' : curr.size < fuel') :
+    subresultantAux prev curr hPrev chain fuel =
+      subresultantAux prev curr hPrev chain fuel' := by
+  induction fuel generalizing prev curr hPrev chain fuel' with
+  | zero => omega
+  | succ fuel ih =>
+      cases fuel' with
+      | zero => omega
+      | succ fuel' =>
+          let delta := prev.size - curr.size
+          let hCurr := divExp curr.leadingCoeff hPrev delta
+          let p := (pseudoDivMod prev curr).2
+          cases hp : p.isZero with
+          | true =>
+              simp [subresultantAux, p, hp]
+          | false =>
+              let divisor :=
+                negOnePow (delta + 1) * prev.leadingCoeff * powNat hPrev delta
+              let next := divScalarImpl p divisor
+              cases hnext : next.isZero with
+              | true =>
+                  simp [subresultantAux, delta, p, hp, divisor, next,
+                    hnext]
+              | false =>
+                  have hnext_ne : next ≠ 0 :=
+                    ne_zero_of_isZero_false next hnext
+                  have hp_size : p.size < curr.size := by
+                    simpa only [p] using
+                      (pseudoDivMod_remainder_lt prev curr hcurr)
+                  have hnext_size : next.size < curr.size := by
+                    have hmap : next.size ≤ p.size := by
+                      simpa only [next] using size_divScalarImpl_le p divisor
+                    omega
+                  have hrec := ih curr next hCurr (chain.push next) fuel'
+                    hnext_ne (by omega) (by omega)
+                  simpa [subresultantAux, delta, hCurr, p, hp, divisor, next,
+                    hnext] using hrec
+
+/-- The worker preserves the invariant that every stored chain term is
+nonzero. The invariant uses only the explicit zero guard before each push. -/
+private theorem subresultantAux_ne_zero
+    [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (prev curr : DensePoly R) (hPrev : R) (chain : Array (DensePoly R))
+    (fuel : Nat) (hchain : ∀ q, q ∈ chain → q ≠ 0) :
+    ∀ q, q ∈ (subresultantAux prev curr hPrev chain fuel).chain → q ≠ 0 := by
+  induction fuel generalizing prev curr hPrev chain with
+  | zero =>
+      simpa [subresultantAux] using hchain
+  | succ fuel ih =>
+      let delta := prev.size - curr.size
+      let hCurr := divExp curr.leadingCoeff hPrev delta
+      let p := (pseudoDivMod prev curr).2
+      cases hp : p.isZero with
+      | true =>
+          simpa [subresultantAux, p, hp] using hchain
+      | false =>
+          let divisor :=
+            negOnePow (delta + 1) * prev.leadingCoeff * powNat hPrev delta
+          let next := divScalarImpl p divisor
+          cases hnext : next.isZero with
+          | true =>
+              have hp' : (pseudoDivMod prev curr).2.isZero = false := by
+                simpa only [p] using hp
+              have hnext' :
+                  (divScalarImpl (pseudoDivMod prev curr).2
+                    (negOnePow (prev.size - curr.size + 1) *
+                      prev.leadingCoeff * powNat hPrev (prev.size - curr.size))).isZero =
+                    true := by
+                simpa only [next, divisor, delta, p] using hnext
+              simpa [subresultantAux, hp', hnext'] using hchain
+          | false =>
+              have hnext_ne : next ≠ 0 :=
+                ne_zero_of_isZero_false next hnext
+              have hpush : ∀ q, q ∈ chain.push next → q ≠ 0 := by
+                intro q hq
+                rcases Array.mem_push.mp hq with hq | rfl
+                · exact hchain q hq
+                · exact hnext_ne
+              have hrec := ih curr next hCurr (chain.push next) hpush
+              simpa [subresultantAux, delta, hCurr, p, hp, divisor, next,
+                hnext] using hrec
+
+/-- Ordered nonzero inputs seed a worker chain containing only nonzero terms. -/
+private theorem subresultantOrdered_ne_zero
+    [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (f g : DensePoly R) (hf : f ≠ 0) (hg : g ≠ 0) :
+    ∀ q, q ∈ (subresultantOrdered f g).chain → q ≠ 0 := by
+  unfold subresultantOrdered subresultantOrderedFuel
+  let delta := f.size - g.size
+  let h₂ := powNat g.leadingCoeff delta
+  let p := (pseudoDivMod f g).2
+  have hseed : ∀ q, q ∈ #[f, g] → q ≠ 0 := by
+    intro q hq
+    have hq' := Array.mem_def.mp hq
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at hq'
+    rcases hq' with rfl | rfl
+    · exact hf
+    · exact hg
+  cases hp : p.isZero with
+  | true =>
+      simpa [delta, h₂, p, hp] using hseed
+  | false =>
+      let g₃ := scaleImpl (negOnePow (delta + 1)) p
+      cases hg₃ : g₃.isZero with
+      | true =>
+          simpa [delta, h₂, p, hp, g₃, hg₃] using hseed
+      | false =>
+          have hg₃_ne : g₃ ≠ 0 := ne_zero_of_isZero_false g₃ hg₃
+          have hseed₃ : ∀ q, q ∈ #[f, g, g₃] → q ≠ 0 := by
+            intro q hq
+            have hq' := Array.mem_def.mp hq
+            simp only [List.mem_cons, List.not_mem_nil, or_false] at hq'
+            rcases hq' with rfl | rfl | rfl
+            · exact hf
+            · exact hg
+            · exact hg₃_ne
+          simpa [delta, h₂, p, hp, g₃, hg₃] using
+            subresultantAux_ne_zero g g₃ h₂ #[f, g, g₃] (g.size + 1)
+              hseed₃
+
+/-- Strict descent for every adjacent pair after the two ordered inputs. -/
+private def ChainStrict (chain : Array (DensePoly R)) : Prop :=
+  ∀ i, 1 ≤ i → i + 1 < chain.size →
+    (chain.getD (i + 1) 0).size < (chain.getD i 0).size
+
+/-- A push leaves every old default-indexed array read unchanged. -/
+private theorem getD_push_old {A : Type u} (xs : Array A) (x fallback : A)
+    (i : Nat) (hi : i < xs.size) :
+    (xs.push x).getD i fallback = xs.getD i fallback := by
+  have hi' : i < (xs.push x).size := by
+    rw [Array.size_push]
+    omega
+  rw [← Array.getElem_eq_getD fallback (h := hi'),
+    Array.getElem_push_lt hi, Array.getElem_eq_getD fallback]
+
+/-- The new final default-indexed array read is the pushed value. -/
+private theorem getD_push_last {A : Type u} (xs : Array A) (x fallback : A) :
+    (xs.push x).getD xs.size fallback = x := by
+  have hi : xs.size < (xs.push x).size := by
+    rw [Array.size_push]
+    omega
+  rw [← Array.getElem_eq_getD fallback (h := hi), Array.getElem_push_eq]
+
+/-- Appending a smaller successor preserves strict tail descent. -/
+private theorem ChainStrict.push
+    (chain : Array (DensePoly R)) (curr next : DensePoly R)
+    (hlast : chain.getD (chain.size - 1) 0 = curr)
+    (hstrict : ChainStrict chain) (hnext : next.size < curr.size) :
+    ChainStrict (chain.push next) := by
+  intro i hi hbound
+  by_cases hold : i + 1 < chain.size
+  · rw [getD_push_old _ _ _ _ hold,
+      getD_push_old _ _ _ _ (by omega)]
+    exact hstrict i hi hold
+  · have heq : i + 1 = chain.size := by
+      rw [Array.size_push] at hbound
+      omega
+    have hiold : i < chain.size := by omega
+    rw [heq, getD_push_last, getD_push_old _ _ _ _ hiold]
+    have hiEq : i = chain.size - 1 := by omega
+    rw [hiEq, hlast]
+    exact hnext
+
+/-- The worker preserves strict tail descent when its seed ends in the current
+polynomial. -/
+private theorem subresultantAux_strict
+    [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (prev curr : DensePoly R) (hPrev : R) (chain : Array (DensePoly R))
+    (fuel : Nat) (hcurr : curr ≠ 0)
+    (hlast : chain.getD (chain.size - 1) 0 = curr)
+    (hstrict : ChainStrict chain) :
+    ChainStrict (subresultantAux prev curr hPrev chain fuel).chain := by
+  induction fuel generalizing prev curr hPrev chain with
+  | zero =>
+      simpa [subresultantAux] using hstrict
+  | succ fuel ih =>
+      let delta := prev.size - curr.size
+      let hCurr := divExp curr.leadingCoeff hPrev delta
+      let p := (pseudoDivMod prev curr).2
+      cases hp : p.isZero with
+      | true =>
+          simpa [subresultantAux, p, hp] using hstrict
+      | false =>
+          let divisor :=
+            negOnePow (delta + 1) * prev.leadingCoeff * powNat hPrev delta
+          let next := divScalarImpl p divisor
+          cases hnext : next.isZero with
+          | true =>
+              have hnext' :
+                  (divScalarImpl (pseudoDivMod prev curr).2
+                    (negOnePow (prev.size - curr.size + 1) *
+                      prev.leadingCoeff * powNat hPrev (prev.size - curr.size))).isZero =
+                    true := by
+                simpa only [next, divisor, delta, p] using hnext
+              simpa [subresultantAux, hp, hnext'] using hstrict
+          | false =>
+              have hnext_ne : next ≠ 0 :=
+                ne_zero_of_isZero_false next hnext
+              have hp_size : p.size < curr.size := by
+                simpa only [p] using
+                  (pseudoDivMod_remainder_lt prev curr hcurr)
+              have hnext_size : next.size < curr.size := by
+                have hmap : next.size ≤ p.size := by
+                  simpa only [next] using size_divScalarImpl_le p divisor
+                omega
+              have hstrict' : ChainStrict (chain.push next) :=
+                hstrict.push chain curr next hlast hnext_size
+              have hlast' :
+                  (chain.push next).getD ((chain.push next).size - 1) 0 =
+                    next := by
+                rw [Array.size_push, show chain.size + 1 - 1 = chain.size by omega,
+                  getD_push_last]
+              have hrec := ih curr next hCurr (chain.push next) hnext_ne
+                hlast' hstrict'
+              simpa [subresultantAux, delta, hCurr, p, hp, divisor, next,
+                hnext] using hrec
+
+/-- Ordered nonzero inputs produce a chain with strict descent after its first
+two entries. -/
+private theorem subresultantOrdered_strict
+    [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (f g : DensePoly R) (hg : g ≠ 0) :
+    ChainStrict (subresultantOrdered f g).chain := by
+  unfold subresultantOrdered subresultantOrderedFuel
+  let delta := f.size - g.size
+  let h₂ := powNat g.leadingCoeff delta
+  let p := (pseudoDivMod f g).2
+  have hseed : ChainStrict (#[f, g] : Array (DensePoly R)) := by
+    intro i hi hnext
+    simp at hnext
+    omega
+  cases hp : p.isZero with
+  | true =>
+      simpa [delta, h₂, p, hp] using hseed
+  | false =>
+      let g₃ := scaleImpl (negOnePow (delta + 1)) p
+      cases hg₃ : g₃.isZero with
+      | true =>
+          simpa [delta, h₂, p, hp, g₃, hg₃] using hseed
+      | false =>
+          have hg₃_ne : g₃ ≠ 0 := ne_zero_of_isZero_false g₃ hg₃
+          have hp_size : p.size < g.size := by
+            simpa only [p] using (pseudoDivMod_remainder_lt f g hg)
+          have hg₃_size : g₃.size < g.size := by
+            have hmap : g₃.size ≤ p.size := by
+              simpa only [g₃] using
+                size_scaleImpl_le (negOnePow (delta + 1)) p
+            omega
+          have hlast :
+              (#[f, g] : Array (DensePoly R)).getD
+                ((#[f, g] : Array (DensePoly R)).size - 1) 0 = g := by
+            rfl
+          have hseed₃ : ChainStrict (#[f, g, g₃] : Array (DensePoly R)) := by
+            change ChainStrict ((#[f, g] : Array (DensePoly R)).push g₃)
+            exact hseed.push #[f, g] g g₃ hlast hg₃_size
+          simpa [delta, h₂, p, hp, g₃, hg₃] using
+            subresultantAux_strict g g₃ h₂ #[f, g, g₃] (g.size + 1)
+              hg₃_ne (by rfl) hseed₃
+
+/-- A worker can append at most one term for each unit of size lost by its
+current polynomial. -/
+private theorem subresultantAux_size_le
+    [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (prev curr : DensePoly R) (hPrev : R) (chain : Array (DensePoly R))
+    (fuel : Nat) (hcurr : curr ≠ 0) :
+    (subresultantAux prev curr hPrev chain fuel).chain.size + 1 ≤
+      chain.size + curr.size := by
+  induction fuel generalizing prev curr hPrev chain with
+  | zero =>
+      simp only [subresultantAux]
+      have hpos := size_pos_of_ne_zero curr hcurr
+      omega
+  | succ fuel ih =>
+      let delta := prev.size - curr.size
+      let hCurr := divExp curr.leadingCoeff hPrev delta
+      let p := (pseudoDivMod prev curr).2
+      cases hp : p.isZero with
+      | true =>
+          simp only [subresultantAux, p, hp, ↓reduceIte]
+          have hpos := size_pos_of_ne_zero curr hcurr
+          omega
+      | false =>
+          let divisor :=
+            negOnePow (delta + 1) * prev.leadingCoeff * powNat hPrev delta
+          let next := divScalarImpl p divisor
+          cases hnext : next.isZero with
+          | true =>
+              have hp' : (pseudoDivMod prev curr).2.isZero = false := by
+                simpa only [p] using hp
+              have hnext' :
+                  (divScalarImpl (pseudoDivMod prev curr).2
+                    (negOnePow (prev.size - curr.size + 1) *
+                      prev.leadingCoeff * powNat hPrev (prev.size - curr.size))).isZero =
+                    true := by
+                simpa only [next, divisor, delta, p] using hnext
+              simp only [subresultantAux, hp', Bool.false_eq_true, ↓reduceIte,
+                hnext']
+              have hpos := size_pos_of_ne_zero curr hcurr
+              omega
+          | false =>
+              have hnext_ne : next ≠ 0 :=
+                ne_zero_of_isZero_false next hnext
+              have hp_size : p.size < curr.size := by
+                simpa only [p] using
+                  (pseudoDivMod_remainder_lt prev curr hcurr)
+              have hnext_size : next.size < curr.size := by
+                have hmap : next.size ≤ p.size := by
+                  simpa only [next] using size_divScalarImpl_le p divisor
+                omega
+              have hrec := ih curr next hCurr (chain.push next) hnext_ne
+              have hrec' :
+                  (subresultantAux curr next hCurr (chain.push next) fuel).chain.size + 1 ≤
+                    chain.size + 1 + next.size := by
+                simpa only [Array.size_push] using hrec
+              simpa [subresultantAux, delta, hCurr, p, hp, divisor, next,
+                hnext] using (show
+                  (subresultantAux curr next hCurr (chain.push next) fuel).chain.size + 1 ≤
+                    chain.size + curr.size by omega)
+
+/-- An ordered run stores at most the two inputs plus one term per possible
+degree of the smaller input. -/
+private theorem subresultantOrdered_size_le
+    [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (f g : DensePoly R) (hg : g ≠ 0) :
+    (subresultantOrdered f g).chain.size ≤ g.size + 1 := by
+  unfold subresultantOrdered subresultantOrderedFuel
+  let delta := f.size - g.size
+  let h₂ := powNat g.leadingCoeff delta
+  let p := (pseudoDivMod f g).2
+  have hgpos := size_pos_of_ne_zero g hg
+  cases hp : p.isZero with
+  | true =>
+      simp [p, hp]
+      omega
+  | false =>
+      let g₃ := scaleImpl (negOnePow (delta + 1)) p
+      cases hg₃ : g₃.isZero with
+      | true =>
+          simp [delta, p, hp, g₃, hg₃]
+          omega
+      | false =>
+          have hg₃_ne : g₃ ≠ 0 := ne_zero_of_isZero_false g₃ hg₃
+          have hp_size : p.size < g.size := by
+            simpa only [p] using (pseudoDivMod_remainder_lt f g hg)
+          have hg₃_size : g₃.size < g.size := by
+            have hmap : g₃.size ≤ p.size := by
+              simpa only [g₃] using
+                size_scaleImpl_le (negOnePow (delta + 1)) p
+            omega
+          have haux := subresultantAux_size_le g g₃ h₂ #[f, g, g₃]
+            (g.size + 1) hg₃_ne
+          have haux' :
+              (subresultantAux g g₃ h₂ #[f, g, g₃]
+                (g.size + 1)).chain.size + 1 ≤ 3 + g₃.size := by
+            simpa using haux
+          simpa [delta, h₂, p, hp, g₃, hg₃] using
+            (show
+              (subresultantAux g g₃ h₂ #[f, g, g₃]
+                (g.size + 1)).chain.size ≤ g.size + 1 by omega)
+
 /-- Ordered nonzero inputs establish every nonzero-denominator and exactness
 obligation recorded by `BrownLaw`, including the unreachability of the junk
 zero-quotient branch. -/
@@ -161,15 +564,38 @@ theorem subresultantOrdered_brownLaw {S : Type u}
       g₃ ≠ 0 ∧ BrownLaw g g₃ h₂ (g.size + 1) := by
   sorry
 
-/-- The public ordered-run fuel is sufficient: adding any extra fuel leaves
-the result unchanged over a lawful exact-division domain. -/
+/-- Adding fuel beyond the public ordered-run budget leaves the result
+unchanged. This is a structural consequence of strict remainder-size descent
+and needs no divisibility laws. -/
 theorem subresultantOrderedFuel_eq {S : Type u}
-    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
-    (f g : DensePoly S) (hf : f ≠ 0) (hg : g ≠ 0) (hgf : g.size ≤ f.size)
-    (extra : Nat) :
+    [Zero S] [DecidableEq S] [One S] [Add S] [Sub S] [Mul S] [Div S]
+    (f g : DensePoly S) (hg : g ≠ 0) (extra : Nat) :
     subresultantOrderedFuel f g (g.size + 1 + extra) =
       subresultantOrdered f g := by
-  sorry
+  unfold subresultantOrdered subresultantOrderedFuel
+  let delta := f.size - g.size
+  let h₂ := powNat g.leadingCoeff delta
+  let p := (pseudoDivMod f g).2
+  cases hp : p.isZero with
+  | true =>
+      simp [p, hp]
+  | false =>
+      let g₃ := scaleImpl (negOnePow (delta + 1)) p
+      cases hg₃ : g₃.isZero with
+      | true =>
+          simp [delta, p, hp, g₃, hg₃]
+      | false =>
+          have hg₃_ne : g₃ ≠ 0 := ne_zero_of_isZero_false g₃ hg₃
+          have hp_size : p.size < g.size := by
+            simpa only [p] using (pseudoDivMod_remainder_lt f g hg)
+          have hg₃_size : g₃.size < g.size := by
+            have hmap : g₃.size ≤ p.size := by
+              simpa only [g₃] using
+                size_scaleImpl_le (negOnePow (delta + 1)) p
+            omega
+          have hfuel := subresultantAux_fuel_eq g g₃ h₂ #[f, g, g₃]
+            (g.size + 1 + extra) (g.size + 1) hg₃_ne (by omega) (by omega)
+          simpa [delta, h₂, p, hp, g₃, hg₃] using hfuel
 
 /-- Extract the resultant value from an ordered nonzero Brown run. The
 corrected terminal scale is returned exactly when the last stored term is a
@@ -287,31 +713,100 @@ theorem subresultantChain_zero_left [One R] [Add R] [Sub R] [Mul R] [Div R]
   have hzz : (0 : DensePoly R).isZero = true := rfl
   simp [hgz, hzz]
 
-/-- Every stored term is nonzero over a lawful exact-division domain. -/
+/-- Every stored term is nonzero. This follows from the worker's explicit zero
+guards and needs no divisibility laws. -/
 theorem subresultantChain_ne_zero {S : Type u}
-    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
+    [Zero S] [DecidableEq S] [One S] [Add S] [Sub S] [Mul S] [Div S]
     (f g : DensePoly S) (p : DensePoly S) (hp : p ∈ subresultantChain f g) :
     p ≠ 0 := by
-  sorry
+  unfold subresultantChain subresultantRun at hp
+  cases hfz : f.isZero with
+  | true =>
+      cases hgz : g.isZero with
+      | true =>
+          simp [hfz, hgz] at hp
+      | false =>
+          have hg : g ≠ 0 := ne_zero_of_isZero_false g hgz
+          have hp_single : p ∈ #[g] := by simpa [hfz, hgz] using hp
+          have hp' := Array.mem_def.mp hp_single
+          simp only [List.mem_singleton] at hp'
+          subst p
+          exact hg
+  | false =>
+      have hf : f ≠ 0 := ne_zero_of_isZero_false f hfz
+      cases hgz : g.isZero with
+      | true =>
+          have hp_single : p ∈ #[f] := by simpa [hfz, hgz] using hp
+          have hp' := Array.mem_def.mp hp_single
+          simp only [List.mem_singleton] at hp'
+          subst p
+          exact hf
+      | false =>
+          have hg : g ≠ 0 := ne_zero_of_isZero_false g hgz
+          by_cases hfg : f.size < g.size
+          · apply subresultantOrdered_ne_zero g f hg hf p
+            simpa [hfz, hgz, hfg] using hp
+          · apply subresultantOrdered_ne_zero f g hf hg p
+            simpa [hfz, hgz, hfg] using hp
 
 /-- After the possibly equal-degree ordered inputs, stored degrees strictly
 decrease. -/
 theorem subresultantChain_size_strict {S : Type u}
-    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
+    [Zero S] [DecidableEq S] [One S] [Add S] [Sub S] [Mul S] [Div S]
     (f g : DensePoly S) (i : Nat) (hi : 1 ≤ i)
     (hnext : i + 1 < (subresultantChain f g).size) :
     ((subresultantChain f g).getD (i + 1) 0).size <
       ((subresultantChain f g).getD i 0).size := by
-  sorry
+  unfold subresultantChain subresultantRun at hnext ⊢
+  cases hfz : f.isZero with
+  | true =>
+      cases hgz : g.isZero with
+      | true => simp [hfz, hgz] at hnext
+      | false => simp [hfz, hgz] at hnext
+  | false =>
+      have hf : f ≠ 0 := ne_zero_of_isZero_false f hfz
+      cases hgz : g.isZero with
+      | true => simp [hfz, hgz] at hnext
+      | false =>
+          have hg : g ≠ 0 := ne_zero_of_isZero_false g hgz
+          by_cases hfg : f.size < g.size
+          · have hnext' : i + 1 < (subresultantOrdered g f).chain.size := by
+              simpa [hfz, hgz, hfg] using hnext
+            have hstrict := subresultantOrdered_strict g f hf i hi hnext'
+            simpa [hfz, hgz, hfg] using hstrict
+          · have hnext' : i + 1 < (subresultantOrdered f g).chain.size := by
+              simpa [hfz, hgz, hfg] using hnext
+            have hstrict := subresultantOrdered_strict f g hg i hi hnext'
+            simpa [hfz, hgz, hfg] using hstrict
 
 /-- The nonzero Brown chain stores at most two inputs plus one term for every
 possible degree at or below the smaller input degree. -/
 theorem subresultantChain_size_le {S : Type u}
-    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
+    [Zero S] [DecidableEq S] [One S] [Add S] [Sub S] [Mul S] [Div S]
     (f g : DensePoly S) (hf : f ≠ 0) (hg : g ≠ 0) :
     (subresultantChain f g).size ≤
       min (f.degree?.getD 0) (g.degree?.getD 0) + 2 := by
-  sorry
+  have hfz : f.isZero = false := isZero_false_of_ne_zero f hf
+  have hgz : g.isZero = false := isZero_false_of_ne_zero g hg
+  have hfpos : 0 < f.size := (isZero_eq_false_iff f).1 hfz
+  have hgpos : 0 < g.size := (isZero_eq_false_iff g).1 hgz
+  have hfdeg : f.degree?.getD 0 = f.size - 1 := by
+    simp [degree?, Nat.ne_of_gt hfpos]
+  have hgdeg : g.degree?.getD 0 = g.size - 1 := by
+    simp [degree?, Nat.ne_of_gt hgpos]
+  by_cases hfg : f.size < g.size
+  · have hchain :
+        subresultantChain f g = (subresultantOrdered g f).chain := by
+      simp [subresultantChain, subresultantRun, hfz, hgz, hfg]
+    rw [hchain, hfdeg, hgdeg, Nat.min_eq_left (by omega)]
+    have hbound := subresultantOrdered_size_le g f hf
+    omega
+  · have hchain :
+        subresultantChain f g = (subresultantOrdered f g).chain := by
+      simp [subresultantChain, subresultantRun, hfz, hgz, hfg]
+    rw [hchain, hfdeg, hgdeg, Nat.min_eq_right (by omega)]
+    have hbound := subresultantOrdered_size_le f g hg
+    omega
 
 /-! Compiled regression checks for the exact Brown state. -/
 

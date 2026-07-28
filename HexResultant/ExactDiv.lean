@@ -168,6 +168,15 @@ theorem divScalar_eq_divScalarImpl [Zero R] [DecidableEq R] [Div R]
     show ((p.toArray.toList).map (fun a => a / b)).toArray = _
     rw [← Array.toList_map, Array.toArray_toList]
 
+/-- Coefficientwise scalar division cannot increase the stored polynomial size. -/
+theorem size_divScalarImpl_le [Zero R] [DecidableEq R] [Div R]
+    (p : DensePoly R) (b : R) : (divScalarImpl p b).size ≤ p.size := by
+  unfold divScalarImpl
+  by_cases hb : b = 0
+  · simp [hb]
+  · rw [if_neg hb]
+    exact Nat.le_trans (size_ofCoeffs_le _) (by simp)
+
 /-- Register the array pass as the compiled scalar-division implementation. -/
 @[csimp]
 theorem divScalar_eq_impl : @divScalar = @divScalarImpl := by
