@@ -421,13 +421,18 @@ validation, and complete source provenance.
 `HexRealRootsMathlibReplayProbeScientific` owns the larger release arms and
 remains outside routine CI.
 
-On the named shared release machine the command is:
+On the named shared release machine a canonical invocation is:
 
 ```bash
 python3 scripts/bench/real_roots_mathlib_sweep.py --samples 6 \
   --timeout 180 --warm-timeout 600 \
   --shared-host --expected-host chungus2 --cpu 22
 ```
+
+The release run preregisters its selected logical CPU and aggregate
+interference ratio on the command line; the artifact and headline report record
+those exact values. They govern that run rather than the illustrative CPU
+number above.
 
 The runner enforces the designated-shared-host contract in
 `SPEC/benchmarking.md`, including bounded retries of complete rejected pairs
