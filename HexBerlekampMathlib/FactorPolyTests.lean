@@ -90,6 +90,20 @@ is a nonzero constant, hence a unit over F_5, not irreducible
 #guard_msgs in
 example := irreducibility (3 : Polynomial (ZMod 5))
 
+/-! ## Bounded primality replay -/
+
+/-- The former linear checker exceeded default recursion depth on this
+modulus; the balanced square-root scan kernel-replays directly. -/
+example : Hex.Nat.isPrimeTrial 67108879 = true := by decide
+
+/--
+error: irreducibility: the polynomial
+  3
+is a nonzero constant, hence a unit over F_67108879, not irreducible
+-/
+#guard_msgs in
+example := irreducibility (3 : Polynomial (ZMod 67108879))
+
 /-! ## Composite modulus: the provider declines, the driver reports -/
 
 /--

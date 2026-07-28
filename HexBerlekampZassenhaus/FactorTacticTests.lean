@@ -44,10 +44,13 @@ example : True := by
 def linZ : ZPoly := DensePoly.ofCoeffs #[3, 2]
 def quadZ : ZPoly := DensePoly.ofCoeffs #[1, 0, 1]
 def constZ : ZPoly := DensePoly.C (-7)
+def largeConstZ : ZPoly := DensePoly.C 10007
 
 theorem lin_irred : ZPoly.Irreducible linZ := irreducibility linZ
 theorem quad_irred : ZPoly.Irreducible quadZ := irreducibility quadZ
 theorem const_irred : ZPoly.Irreducible constZ := irreducibility constZ
+theorem large_const_irred : ZPoly.Irreducible largeConstZ :=
+  irreducibility largeConstZ
 
 example : ZPoly.Irreducible quadZ := by irreducibility
 
@@ -75,9 +78,7 @@ theorem x2m2_irred : ZPoly.Irreducible x2m2 :=
   ZPoly.irreducible_of_checkIrredWitness x2m2 (.eisenstein 2 0) rfl
 
 /-- The largest admissible Eisenstein prime (`eisensteinPrimeCap = 128`, so
-prime `127`) still kernel-replays within the default `maxRecDepth`: the
-`isPrimeTrial` reduction is depth-linear in the prime, and stalls a little
-above 150, which is why the search caps its candidates. -/
+prime `127`) still produces a replayable boundary witness. -/
 def x2m127 : ZPoly := DensePoly.ofCoeffs #[-127, 0, 1]
 
 example : ZPoly.checkIrredWitness x2m127 (.eisenstein 127 0) = true := rfl
@@ -111,11 +112,11 @@ is a unit (±1), not irreducible -/
 
 /--
 info: irreducibility: deciding primality of the constant
-  DensePoly.C 67108879
-needs a kernel replay of roughly 67108879 steps, over the supported budget (67108864)
+  DensePoly.C 4295229444
+needs a kernel replay of 65537 candidate remainder tests, over the supported budget (65536)
 -/
 #guard_msgs in
-#check_failure (irreducibility (DensePoly.C (67108879 : Int)))
+#check_failure (irreducibility (DensePoly.C (4295229444 : Int)))
 
 /-! ## Axiom hygiene -/
 

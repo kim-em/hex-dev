@@ -631,31 +631,6 @@ def hotPathCandidates : List SmallPrimeCandidate :=
 #guard hotPathCandidates.length == 94
 
 /--
-Converse of `Hex.Nat.isPrimeTrial_isPrime`: a `Hex.Nat.Prime` witness
-implies the trial-division boolean test returns `true`. Used to bridge
-between the propositional prime predicate and the kernel-decidable
-boolean surface needed to enumerate primes in a bounded range.
--/
-private theorem isPrimeTrial_of_prime {n : Nat} (hn : Hex.Nat.Prime n) :
-    Hex.Nat.isPrimeTrial n = true := by
-  unfold Hex.Nat.isPrimeTrial
-  rw [Bool.and_eq_true]
-  refine ⟨decide_eq_true hn.two_le, ?_⟩
-  rw [List.all_eq_true]
-  intro k hk
-  have hkn : k < n := List.mem_range.mp hk
-  rw [Bool.or_eq_true]
-  by_cases hk2 : k < 2
-  · exact Or.inl (decide_eq_true hk2)
-  · refine Or.inr (decide_eq_true ?_)
-    have hk2' : 2 ≤ k := Nat.le_of_not_lt hk2
-    intro hmod
-    have hdvd : k ∣ n := Nat.dvd_of_mod_eq_zero hmod
-    rcases hn.2 k hdvd with hk1 | hkn'
-    · omega
-    · omega
-
-/--
 Soundness of the hot-path prime candidate list: every entry carries a
 prime in the closed range `[3, 500]`. The `Hex.Nat.Prime` conjunct is
 the structure field directly; the bounds follow by a decidable check
@@ -683,7 +658,8 @@ candidate fold over any prime in the admissible range.
 theorem exists_mem_hotPathCandidates_of_prime
     {p : Nat} (hprime : Hex.Nat.Prime p) (hge : 3 ≤ p) (hle : p ≤ 500) :
     ∃ c ∈ hotPathCandidates, c.p = p := by
-  have htrial : Hex.Nat.isPrimeTrial p = true := isPrimeTrial_of_prime hprime
+  have htrial : Hex.Nat.isPrimeTrial p = true :=
+    Hex.Nat.isPrimeTrial_of_prime hprime
   have key : ∀ q : Fin 501,
       3 ≤ q.val → Hex.Nat.isPrimeTrial q.val = true →
         q.val ∈ hotPathCandidates.map (fun x : SmallPrimeCandidate => x.p) := by
