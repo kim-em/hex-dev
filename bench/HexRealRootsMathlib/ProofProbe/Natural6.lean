@@ -12,7 +12,7 @@ public section
 
 open Hex Polynomial
 
-namespace HexRealRootsMathlib.Probe
+namespace HexRealRootsMathlib.ProofProbe
 
 /-! Natural-width `isolate_roots` replay on the Wilkinson degree-6 product. -/
 
@@ -27,4 +27,4 @@ noncomputable def natural6 :
 
 #print axioms natural6
 
-end HexRealRootsMathlib.Probe
+end HexRealRootsMathlib.ProofProbe

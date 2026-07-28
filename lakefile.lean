@@ -251,10 +251,16 @@ lean_lib HexIntervalMathlibReplayProbe where
 
 lean_lib HexRealRootsMathlibReplayProbe where
   srcDir := "bench"
-  globs := #[`HexRealRootsMathlib.Baseline,
-    `HexRealRootsMathlib.Natural6, `HexRealRootsMathlib.Natural8,
-    `HexRealRootsMathlib.Natural10, `HexRealRootsMathlib.Refined2,
-    `HexRealRootsMathlib.Refined4, `HexRealRootsMathlib.Refined6]
+  globs := #[`HexRealRootsMathlib.ProofProbe.Baseline,
+    `HexRealRootsMathlib.ProofProbe.Natural6,
+    `HexRealRootsMathlib.ProofProbe.Refined2]
+
+lean_lib HexRealRootsMathlibReplayProbeScientific where
+  srcDir := "bench"
+  globs := #[`HexRealRootsMathlib.ProofProbe.Natural8,
+    `HexRealRootsMathlib.ProofProbe.Natural10,
+    `HexRealRootsMathlib.ProofProbe.Refined4,
+    `HexRealRootsMathlib.ProofProbe.Refined6]
 
 lean_lib HexRCFProofProbe where
   srcDir := "bench"

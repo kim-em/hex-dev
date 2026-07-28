@@ -12,7 +12,7 @@ public section
 
 open Hex Polynomial
 
-namespace HexRealRootsMathlib.Probe
+namespace HexRealRootsMathlib.ProofProbe
 
 /-! Width-`2⁻²⁰` replay on the Wilkinson degree-2 product. -/
 
@@ -23,4 +23,4 @@ noncomputable def refined2 :
 
 #print axioms refined2
 
-end HexRealRootsMathlib.Probe
+end HexRealRootsMathlib.ProofProbe

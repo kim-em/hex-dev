@@ -12,19 +12,19 @@ public section
 
 open Hex Polynomial
 
-namespace HexRealRootsMathlib.Probe
+namespace HexRealRootsMathlib.ProofProbe
 
-/-! Natural-width `isolate_roots` replay on the Wilkinson degree-10 product. -/
+/-! Natural-width `isolate_roots` replay on the Wilkinson degree-8 product. -/
 
 set_option maxHeartbeats 1000000 in
-noncomputable def natural10 :
+noncomputable def natural8 :
     IsolatedRealRoots
       ((X - 1) * (X - 2) * (X - 3) * (X - 4) * (X - 5) * (X - 6) *
-        (X - 7) * (X - 8) * (X - 9) * (X - 10) : Polynomial ℤ) 10 :=
+        (X - 7) * (X - 8) : Polynomial ℤ) 8 :=
   isolate_roots
     ((X - 1) * (X - 2) * (X - 3) * (X - 4) * (X - 5) * (X - 6) *
-      (X - 7) * (X - 8) * (X - 9) * (X - 10) : Polynomial ℤ)
+      (X - 7) * (X - 8) : Polynomial ℤ)
 
-#print axioms natural10
+#print axioms natural8
 
-end HexRealRootsMathlib.Probe
+end HexRealRootsMathlib.ProofProbe

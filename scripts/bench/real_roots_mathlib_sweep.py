@@ -24,7 +24,13 @@ from scripts.bench.fresh_module_sweep import (  # noqa: E402
 
 
 EXPECTED_AXIOMS = ("propext", "Classical.choice", "Quot.sound")
-BASELINE = ProbeModule("HexRealRootsMathlib.Baseline")
+BASELINE = ProbeModule("HexRealRootsMathlib.ProofProbe.Baseline")
+NATURAL6 = ProbeModule(
+    "HexRealRootsMathlib.ProofProbe.Natural6", EXPECTED_AXIOMS
+)
+NATURAL10 = ProbeModule(
+    "HexRealRootsMathlib.ProofProbe.Natural10", EXPECTED_AXIOMS
+)
 
 
 def probe(
@@ -45,56 +51,95 @@ def probe(
 SPEC = SweepSpec(
     description=__doc__ or "isolate_roots fresh-module sweep",
     pairs=(
+        ProbePair(
+            "fresh-build-null",
+            BASELINE,
+            BASELINE,
+            {
+                "family": "fresh-build-noise",
+                "magnitude": "baseline",
+                "interpretation": "calibration-only",
+            },
+            null_control=True,
+        ),
+        ProbePair(
+            "natural-10-null",
+            NATURAL10,
+            NATURAL10,
+            {
+                "family": "fresh-build-noise",
+                "magnitude": "natural-10",
+                "interpretation": "calibration-only",
+            },
+            null_control=True,
+        ),
         probe(
             "natural-6",
-            "HexRealRootsMathlib.Natural6",
+            "HexRealRootsMathlib.ProofProbe.Natural6",
             "natural-width",
             6,
             None,
         ),
         probe(
             "natural-8",
-            "HexRealRootsMathlib.Natural8",
+            "HexRealRootsMathlib.ProofProbe.Natural8",
             "natural-width",
             8,
             None,
         ),
         probe(
             "natural-10",
-            "HexRealRootsMathlib.Natural10",
+            "HexRealRootsMathlib.ProofProbe.Natural10",
             "natural-width",
             10,
             None,
         ),
         probe(
             "refined-2",
-            "HexRealRootsMathlib.Refined2",
+            "HexRealRootsMathlib.ProofProbe.Refined2",
             "width-2^-20",
             2,
             20,
         ),
         probe(
             "refined-4",
-            "HexRealRootsMathlib.Refined4",
+            "HexRealRootsMathlib.ProofProbe.Refined4",
             "width-2^-20",
             4,
             20,
         ),
         probe(
             "refined-6",
-            "HexRealRootsMathlib.Refined6",
+            "HexRealRootsMathlib.ProofProbe.Refined6",
             "width-2^-20",
             6,
             20,
         ),
+        ProbePair(
+            "refine-6",
+            NATURAL6,
+            ProbeModule(
+                "HexRealRootsMathlib.ProofProbe.Refined6",
+                EXPECTED_AXIOMS,
+            ),
+            {
+                "family": "refinement-attribution",
+                "degree": 6,
+                "width_bits": 20,
+            },
+        ),
     ),
     probe_target="HexRealRootsMathlibReplayProbe",
-    schema="hex-real-roots-mathlib-proof-probe-v1",
-    measurement=(
-        "fresh-module end-to-end elaboration, compiled certificate search, "
-        "literal elaboration, and ordinary kernel checking"
+    schema="hex-real-roots-mathlib-proof-probe-v2",
+    measurement="paired-fresh-module-olean-wall-v1",
+    extra_sources=(
+        Path("libraries.yml"),
+        Path("PLAN/Phase4.md"),
+        Path("SPEC/benchmarking.md"),
+        Path("HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md"),
     ),
     output_stem="hex-real-roots-mathlib",
+    required_samples=6,
 )
 
 
