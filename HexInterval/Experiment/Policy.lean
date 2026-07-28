@@ -195,18 +195,6 @@ def suggestionClocksFrom (engine : Engine Fact) (born : Nat) : Array SuggestionC
   engine.suggestions.map fun retained =>
     { active := true, born, splitVersion := retained.splitVersion }
 
-/-- Begin policy control over an existing engine snapshot. -/
-opaque State.start (engine : Engine Fact) (limits : Limits)
-    (scope : ScopeId := { index := 0 }) : State Fact :=
-  { scope
-    serial := 0
-    epoch := 0
-    engine
-    applications := clockArray engine.queued 0
-    equalities := clockArray engine.equalityQueued 0
-    suggestions := suggestionClocksFrom engine 0
-    limits }
-
 def syncClocks (epoch : Nat) (old : Array Clock) (bits : Array Bool) : Array Clock := Id.run do
   let mut clocks := #[]
   for index in [0:bits.size] do
@@ -299,16 +287,43 @@ def State.suggestionKey? (state : State Fact) (suggestionId : SuggestionId) : Op
           state.engine.limits.splitEndpointLimit then none else pure ()
       some (.split source { node := request.node, version } request.point request.reason)
 
-/-- Permanently tombstone suggestions whose freshness guard has failed. -/
+/-- Whether losing a retained suggestion can leave propagation unfinished. -/
+def affectsClosure : Suggestion -> Bool
+  | .retry _ | .instantiate _ => true
+  | .split _ => false
+
+/-- Permanently tombstone suggestions whose freshness guard has failed.
+Dropping a retry or instantiation also records that fixed-point completeness
+is no longer available; a stale split affects search only. -/
 private def pruneSuggestions (state : State Fact) : State Fact := Id.run do
   let mut clocks := state.suggestions
+  let mut incomplete := state.incomplete
   for index in [0:clocks.size] do
     match clocks[index]? with
     | some clock =>
         if clock.active && (state.suggestionKey? { index }).isNone then
           clocks := clocks.set! index { clock with active := false }
+          match state.engine.suggestions[index]? with
+          | some retained =>
+              if affectsClosure retained.suggestion then incomplete := true
+          | none => pure ()
     | none => pure ()
-  return { state with suggestions := clocks }
+  return { state with suggestions := clocks, incomplete }
+
+/-- Begin policy control over an existing engine snapshot.  Invalid retained
+retry and instantiation suggestions are accounted for before the first view,
+so adopting a snapshot cannot manufacture a false fixed point. -/
+opaque State.start (engine : Engine Fact) (limits : Limits)
+    (scope : ScopeId := { index := 0 }) : State Fact :=
+  pruneSuggestions
+    { scope
+      serial := 0
+      epoch := 0
+      engine
+      applications := clockArray engine.queued 0
+      equalities := clockArray engine.equalityQueued 0
+      suggestions := suggestionClocksFrom engine 0
+      limits }
 
 /-- Install a new engine snapshot, refresh live work clocks, and tombstone
 stale suggestions.  Previously consumed suggestions never reactivate. -/
@@ -681,7 +696,8 @@ private def selectSuggestion (state : State Fact) (suggestionId : SuggestionId)
           | .invalid error engine =>
               let selected := chargeDecision
                 (consumeSuggestion state suggestionId) .instantiate
-              .completed (.instanceRejected error) (advanceState selected engine)
+              let next := advanceState selected engine
+              .completed (.instanceRejected error) { next with incomplete := true }
           | .resourceLimit resource _ =>
               .engineResource resource (chargeDecision state .instantiate)
       | .split source target point reason, .split request =>
@@ -777,6 +793,15 @@ def emittedSuggestions (before after : Nat) : Array OfferId := Id.run do
     emitted := emitted.push (.suggestion { index := before + offset })
   return emitted
 
+/-- Detect narrowing-capable suggestions which the engine's bounded retained
+prefix will discard.  This must run against the pre-reply engine because the
+dropped suffix is intentionally absent from the accepted snapshot. -/
+def droppedAffectsClosure (state : Engine Fact) : Outcome Fact -> Bool
+  | .success _ suggestions _ =>
+      let room := state.limits.maxRetainedSuggestions - state.suggestions.size
+      (suggestions.drop room).any affectsClosure
+  | .noChange _ | .inapplicable | .resourceLimit _ | .failed _ => false
+
 inductive SubmitResult (Fact : Type) where
   | accepted (observation : RuleObservation Fact) (state : State Fact)
   | invalid (error : ReplyError) (state : State Fact)
@@ -805,7 +830,14 @@ opaque State.submit (state : State Fact) (reply : Reply Fact) : SubmitResult Fac
                   cost := outcomeCost reply.outcome
                   emittedSuggestions :=
                     emittedSuggestions before.suggestions.size engine.suggestions.size }
-              .accepted observation (advanceState state engine)
+              let next := advanceState state engine
+              let incomplete :=
+                droppedAffectsClosure before reply.outcome ||
+                  match reply.outcome with
+                  | .resourceLimit _ | .failed _ => true
+                  | .success _ _ _ | .noChange _ | .inapplicable => false
+              let next := if incomplete then { next with incomplete := true } else next
+              .accepted observation next
           | .invalid error engine => .invalid error (advanceState state engine)
           | .resourceLimit resource engine =>
               .engineResource resource (advanceState state engine)

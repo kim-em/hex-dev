@@ -371,6 +371,15 @@ def afterReplyWith? (engineLimit : Experiment.Propagator.Limits)
   | .accepted _ next => some next
   | _ => none
 
+def observedWith? (engineLimit : Experiment.Propagator.Limits)
+    (reply : RuleRequest Rank -> Outcome Rank) :
+    Option (RuleObservation Rank × State Rank) := do
+  let state <- initialWithLimits? engineLimit policyLimits
+  let (request, state) <- request? state (.application (application 0))
+  match state.submit (request.action.reply (reply request)) with
+  | .accepted observation next => some (observation, next)
+  | _ => none
+
 def afterInitialWith? (engineLimit : Experiment.Propagator.Limits) : Option (State Rank) :=
   afterReplyWith? engineLimit invoke
 
@@ -589,6 +598,47 @@ def wrongGeneration (request : RuleRequest Rank) : Outcome Rank :=
   let proposal := { instantiateAt 113 (node 0) with claimedGeneration := 99 }
   .success [candidate request 1] [.instantiate proposal] {}
 
+def selfEqualityInstance (request : RuleRequest Rank) : Outcome Rank :=
+  .success []
+    [.instantiate
+      { key := 127
+        triggers := [request.action.node]
+        claimedGeneration := 1
+        nodes := []
+        equalities :=
+          [{ left := .existing (node 0)
+             right := .existing (node 0)
+             payload := { index := 131 } }]
+        payload := { index := 137 } }]
+    {}
+
+def weakRetry (_ : RuleRequest Rank) : Outcome Rank :=
+  .success [] [.retry 0] {}
+
+def overflowRetry (_ : RuleRequest Rank) : Outcome Rank :=
+  .success []
+    [.split { node := node 0, point := 0, reason := .midpoint }, .retry 1] {}
+
+def overflowInstance (request : RuleRequest Rank) : Outcome Rank :=
+  .success []
+    [.split { node := node 0, point := 0, reason := .midpoint },
+      .instantiate (instantiateG request)] {}
+
+def overflowSplit (_ : RuleRequest Rank) : Outcome Rank :=
+  .success []
+    [.split { node := node 0, point := 0, reason := .midpoint }] {}
+
+def startWithWeakRetry? : Option (State Rank) := do
+  let engine <- match Engine.start rankDomain program #[fRule, gRule] #[0, 0] engineLimits with
+    | .ok engine => some engine
+    | .error _ => none
+  match engine.poll with
+  | .request request awaiting =>
+      match awaiting.submit (request.action.reply (weakRetry request)) with
+      | .accepted next => some (State.start next policyLimits)
+      | _ => none
+  | _ => none
+
 -- The policy key exposes the engine-computed generation, and a proposal whose
 -- untrusted claim disagrees is never advertised as selectable work.
 #guard
@@ -602,8 +652,90 @@ def wrongGeneration (request : RuleRequest Rank) : Outcome Rank :=
 #guard
   match afterReplyWith? engineLimits wrongGeneration with
   | some state =>
-      state.engine.suggestions.size == 1 &&
-        (state.offer? (.suggestion (suggestion 0))).isNone
+      state.engine.suggestions.size == 1 && state.incomplete &&
+        (state.offer? (.suggestion (suggestion 0))).isNone &&
+        (state.view).toOption.any fun pair =>
+          pair.1.offers.isEmpty && pair.1.incomplete
+  | none => false
+
+-- A structurally advertised instantiation may still fail a later admission
+-- check. Consuming that rejected proposal leaves the current propagation
+-- closure incomplete.
+#guard
+  match afterReplyWith? engineLimits selfEqualityInstance with
+  | none => false
+  | some state =>
+      !state.incomplete &&
+        match selectOffer state (.suggestion (suggestion 0)) with
+        | .completed (.instanceRejected .invalidEquality) next =>
+            next.incomplete &&
+              (next.view).toOption.any fun pair =>
+                pair.1.offers.isEmpty && pair.1.incomplete
+        | _ => false
+
+-- A retry which fails its variant-specific freshness guard is tombstoned, but
+-- its disappearance cannot be mistaken for successful propagation.
+#guard
+  match afterReplyWith? engineLimits weakRetry with
+  | some state =>
+      state.engine.suggestions.size == 1 && state.incomplete &&
+        (state.offer? (.suggestion (suggestion 0))).isNone &&
+        (state.view).toOption.any fun pair =>
+          pair.1.offers.isEmpty && pair.1.incomplete
+  | none => false
+
+-- The same accounting occurs when policy control adopts an engine snapshot
+-- which already contains the unusable retained retry.
+#guard
+  match startWithWeakRetry? with
+  | some state =>
+      state.incomplete &&
+        (state.offer? (.suggestion (suggestion 0))).isNone &&
+        (state.view).toOption.any fun pair =>
+          pair.1.offers.isEmpty && pair.1.incomplete
+  | none => false
+
+-- Retained-suggestion overflow is inspected before the engine discards its
+-- suffix. Here the split is retained, but the dropped retry still makes
+-- fixed-point completeness unavailable.
+#guard
+  match observedWith?
+      { engineLimits with maxRetainedSuggestions := 1 } overflowRetry with
+  | some (observation, state) =>
+      observation.outcome == .success &&
+        observation.emittedSuggestions.toList == [.suggestion (suggestion 0)] &&
+        state.engine.suggestions.size == 1 &&
+        state.engine.metrics.droppedSuggestions == 1 && state.incomplete &&
+        match state.engine.suggestions[0]? with
+        | some retained =>
+            match retained.suggestion with
+            | .split _ => true
+            | .retry _ | .instantiate _ => false
+        | none => false
+  | none => false
+
+-- A dropped instantiation has the same closure consequence as a dropped
+-- retry, even though neither proposal survives in the retained prefix.
+#guard
+  match observedWith?
+      { engineLimits with maxRetainedSuggestions := 1 } overflowInstance with
+  | some (observation, state) =>
+      observation.outcome == .success &&
+        observation.emittedSuggestions.toList == [.suggestion (suggestion 0)] &&
+        state.engine.suggestions.size == 1 &&
+        state.engine.metrics.droppedSuggestions == 1 && state.incomplete
+  | none => false
+
+-- Dropping only optional split advice does not make propagation incomplete.
+#guard
+  match observedWith?
+      { engineLimits with maxRetainedSuggestions := 0 } overflowSplit with
+  | some (observation, state) =>
+      observation.outcome == .success && observation.emittedSuggestions.isEmpty &&
+        state.engine.suggestions.isEmpty &&
+        state.engine.metrics.droppedSuggestions == 1 && !state.incomplete &&
+        (state.view).toOption.any fun pair =>
+          pair.1.offers.isEmpty && !pair.1.incomplete
   | none => false
 
 def splitChangedTarget (request : RuleRequest Rank) : Outcome Rank :=
@@ -619,7 +751,8 @@ def splitChangedTarget (request : RuleRequest Rank) : Outcome Rank :=
   | some state =>
       match state.engine.suggestions[0]? with
       | some retained =>
-          retained.splitVersion == some 0 && state.engine.versions[1]? == some 1 &&
+          !state.incomplete && retained.splitVersion == some 0 &&
+            state.engine.versions[1]? == some 1 &&
             (state.offer? (.suggestion (suggestion 0))).isNone
       | none => false
   | none => false

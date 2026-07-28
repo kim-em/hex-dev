@@ -56,7 +56,7 @@ inductive Event (Fact : Type)
       (error : ReplyError)
   | equality (selection : Selection) (observation : EqualityObservation Fact)
   | instance (selection : Selection) (outcome : InstanceOutcome)
-  | dismissal (selection : Selection) (required : Bool)
+  | dismissal (selection : Selection) (halts : Bool) (causesIncomplete : Bool)
   | splitPrepared (selection : Selection) (plan : SplitPlan Fact)
   | choiceRejected (selection : Selection) (reason : Rejection)
   | engineResource (origin : ResourceOrigin) (resource : Resource)
@@ -122,9 +122,21 @@ def finish (controller : Controller Fact PolicyState) (event : Event Fact)
   let (policyState, events) := emit controller event policyState events
   { state, policy := controller.key, cache, policyState, events, stop }
 
-def requiredOffer : OfferId -> Bool
+def dismissalHalts : OfferId -> Bool
   | .application _ | .equality _ => true
   | .suggestion _ => false
+
+def dismissalAffects : OfferClass -> Bool
+  | .invoke | .equality | .retry | .instantiate => true
+  | .split => false
+
+/-- Whether this dismissal is responsible for completeness being unavailable.
+The offer class remains visible even if an earlier transition had already
+made the state incomplete. -/
+def dismissalCauses (before : State Fact) (selection : Selection)
+    (after : State Fact) : Bool :=
+  after.incomplete &&
+    (!before.incomplete || dismissalAffects selection.expected.offerClass)
 
 def invocationOfRequest (scope : ScopeId) (request : RuleRequest Fact) : InvocationKey :=
   invocationOfAction scope request.action
@@ -269,10 +281,12 @@ def driveFrom (controller : Controller Fact PolicyState)
                   | .dismiss selection next =>
                       match viewed.dismiss selection with
                       | .completed .dismissed afterDismissal =>
-                          let required := requiredOffer selection.id
+                          let halts := dismissalHalts selection.id
+                          let causesIncomplete :=
+                            dismissalCauses viewed selection afterDismissal
                           let (next, events) := emit controller
-                            (.dismissal selection required) next events
-                          if required then
+                            (.dismissal selection halts causesIncomplete) next events
+                          if halts then
                             { state := afterDismissal
                               policy := controller.key
                               cache

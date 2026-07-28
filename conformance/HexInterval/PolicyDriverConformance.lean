@@ -104,6 +104,14 @@ def invokeUndeclared (calls : Calls) (request : RuleRequest Rank) :
       [{ node := node 0, fact := 1, payload := { index := request.action.serial } }]
       [] {}, calls ++ [(request.action.key.name, request.action.effort)])
 
+def invokeFailed (calls : Calls) (request : RuleRequest Rank) :
+    Outcome Rank × Calls :=
+  (.failed 73, calls ++ [(request.action.key.name, request.action.effort)])
+
+def invokeLimited (calls : Calls) (request : RuleRequest Rank) :
+    Outcome Rank × Calls :=
+  (.resourceLimit 59, calls ++ [(request.action.key.name, request.action.effort)])
+
 /-! ## Exact event predicates -/
 
 def exactSelection (selection : Selection) (serial programVersion : Nat)
@@ -184,7 +192,7 @@ def exactInstantiationFirstEvents (events : Array (Event Rank)) : Bool :=
       .rule gSelection gObservation,
       .equality firstEqualitySelection firstEquality,
       .equality lastEqualitySelection lastEquality,
-      .dismissal retrySelection false,
+      .dismissal retrySelection false true,
       .splitPrepared splitSelection plan] =>
       exactInitialObservation fObservation &&
         exactInvokeSelection fSelection 0 0 (.application (application 0))
@@ -263,7 +271,7 @@ def exactSaturationPrefix (events : Array (Event Rank)) : Bool :=
   match events.toList with
   | [.rule _ initial, .rule _ retry, .instance _ (.admitted [fresh]),
       .equality _ firstEquality, .rule _ gObservation, .equality _ lastEquality,
-      .dismissal splitSelection false, .saturated] =>
+      .dismissal splitSelection false false, .saturated] =>
       exactInitialObservation initial && exactRetryObservation retry true &&
         fresh == node 2 &&
         exactEqualityObservation firstEquality .improved (some (node 2, 0, 4, 0, 1)) &&
@@ -304,8 +312,8 @@ def exactSaturationPrefix (events : Array (Event Rank)) : Bool :=
       result.state.incomplete && result.policyState.isEmpty &&
         result.state.metrics.decisions == 4 &&
         match result.events.toList, result.stop with
-        | [.dismissal retry false, .dismissal instanceSelection false,
-            .dismissal split false, .incomplete],
+        | [.dismissal retry false true, .dismissal instanceSelection false true,
+            .dismissal split false false, .incomplete],
             .unknown .incomplete =>
               exactSelection retry 1 0 (.suggestion (suggestion 0)) &&
                 exactSelection instanceSelection 2 0 (.suggestion (suggestion 1)) &&
@@ -345,6 +353,41 @@ def exactSaturationPrefix (events : Array (Event Rank)) : Bool :=
                   invocation
         | _, _ => false
 
+-- A registry failure is an accepted, typed observation, but it cannot close
+-- the selected propagation obligation.  An empty frontier is therefore
+-- unknown rather than saturated.
+#guard
+  match initial? with
+  | none => false
+  | some state =>
+      let result := drive controller invokeFailed 1 state []
+        [.select (.application (application 0))]
+      result.state.incomplete && result.state.engine.pending.isNone &&
+        result.cache == [(fKey.name, 0)] &&
+        match result.events.toList, result.stop with
+        | [.rule selection observation, .incomplete], .unknown .incomplete =>
+            exactInvokeSelection selection 0 0 (.application (application 0))
+                observation.invocation &&
+              observation.outcome == .failed 73 && observation.changes.isEmpty
+        | _, _ => false
+
+-- A rule-declared resource limit has the same completeness boundary.  It is
+-- not an engine resource stop and cannot be reinterpreted as inapplicability.
+#guard
+  match initial? with
+  | none => false
+  | some state =>
+      let result := drive controller invokeLimited 1 state []
+        [.select (.application (application 0))]
+      result.state.incomplete && result.state.engine.pending.isNone &&
+        result.cache == [(fKey.name, 0)] &&
+        match result.events.toList, result.stop with
+        | [.rule selection observation, .incomplete], .unknown .incomplete =>
+            exactInvokeSelection selection 0 0 (.application (application 0))
+                observation.invocation &&
+              observation.outcome == .resourceLimit 59 && observation.changes.isEmpty
+        | _, _ => false
+
 #guard
   match run? 1 [.stop] with
   | some result =>
@@ -359,7 +402,7 @@ def exactSaturationPrefix (events : Array (Event Rank)) : Bool :=
   | some result =>
       result.state.metrics.decisions == 1 &&
         match result.events.toList, result.stop with
-        | [.dismissal selection true], .unknown (.requiredDismissal stopped) =>
+        | [.dismissal selection true true], .unknown (.requiredDismissal stopped) =>
             exactSelection selection 0 0 (.application (application 0)) &&
               selection.serial == stopped.serial && selection.id == stopped.id
         | _, _ => false
