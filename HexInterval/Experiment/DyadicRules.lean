@@ -201,28 +201,25 @@ structure Config where
   reciprocalBasePrecision : Precision
   maxReciprocalEffort : Nat
 
-/-! ## Stable replay payload keys
+/-! ## Reply-local proof payloads
 
-These identifiers name rule-specific proof recipes; effort is already retained
-in the engine-owned action and therefore is not encoded into a payload number.
+Labels distinguish uses only within one callback reply.  Version-zero recipes
+have empty bodies: after freezing, replay dispatch is determined by the
+engine-owned origin rule, semantic role, and schema.  This deliberately avoids
+a second central recipe tag alongside `PayloadArena.Entry.origin`.
 -/
 
-def onePayload : PayloadId := { index := 1 }
-def negForwardPayload : PayloadId := { index := 10 }
-def negBackwardPayload : PayloadId := { index := 11 }
-def subForwardPayload : PayloadId := { index := 20 }
-def subLeftPayload : PayloadId := { index := 21 }
-def subRightPayload : PayloadId := { index := 22 }
-def mulForwardPayload : PayloadId := { index := 30 }
-def mulLeftPayload : PayloadId := { index := 31 }
-def mulRightPayload : PayloadId := { index := 32 }
-def squareForwardPayload : PayloadId := { index := 40 }
-def reciprocalForwardPayload : PayloadId := { index := 50 }
-def reciprocalBackwardPayload : PayloadId := { index := 60 }
-def centeredForwardPayload : PayloadId := { index := 70 }
-def centeredInstancePayload : PayloadId := { index := 80 }
-/-- Replay obligation: `x * (1 - x) = 1/4 - (x - 1/2)^2`. -/
-def centeredEqualityPayload : PayloadId := { index := 81 }
+def factLabel : PayloadId := { index := 0 }
+def instanceLabel : PayloadId := { index := 0 }
+def equalityLabel : PayloadId := { index := 1 }
+
+def emptyDraft (label : PayloadId) (role : PayloadArena.Role) :
+    PayloadArena.Draft :=
+  { label, role, schema := 0, body := [] }
+
+def withoutPayloads (outcome : Outcome Fact) : Plan Fact :=
+  { outcome, drafts := [] }
+
 def centeredFamilyKey : Nat := 1
 
 def Config.precisionAt (config : Config) (effort : Nat) : Precision :=
@@ -243,13 +240,16 @@ def Config.reciprocalPrecisionsAllowed (config : Config) : Bool :=
 def successCost (arithmeticWork proofNodes : Nat) : CostObservation :=
   { arithmeticWork, estimatedProofNodes := proofNodes }
 
-def outcomeOfResult (target : NodeId) (payload : PayloadId) (work proofNodes : Nat)
-    (suggestions : List Suggestion) : DyadicInterval.Result -> Outcome Fact
+def planOfResult (target : NodeId) (work proofNodes : Nat)
+    (suggestions : List Suggestion) : DyadicInterval.Result -> Plan Fact
   | .ready fact =>
-      .success [{ node := target, fact, payload }]
-        suggestions (successCost work proofNodes)
-  | .inapplicable => .inapplicable
-  | .resourceLimit cost => .resourceLimit (DyadicInterval.workCode cost)
+      { outcome :=
+          .success [{ node := target, fact, payload := factLabel }]
+            suggestions (successCost work proofNodes)
+        drafts := [emptyDraft factLabel .fact] }
+  | .inapplicable => withoutPayloads .inapplicable
+  | .resourceLimit cost =>
+      withoutPayloads (.resourceLimit (DyadicInterval.workCode cost))
 
 def bindResult (result : DyadicInterval.Result)
     (next : Fact -> DyadicInterval.Result) : DyadicInterval.Result :=
@@ -280,101 +280,101 @@ def retrySuggestion (config : Config) (action : Action) : List Suggestion :=
 
 /-! ## Arithmetic callbacks -/
 
-def invokeOneForward (config : Config) (request : RuleRequest Fact) : Outcome Fact :=
+def invokeOneForward (config : Config) (request : RuleRequest Fact) : Plan Fact :=
   match request.inputs, request.writes with
   | [], [target] =>
-      outcomeOfResult target onePayload 1 1 []
+      planOfResult target 1 1 []
         (DyadicInterval.closed config.endpointLimit 1 1)
-  | _, _ => .failed 1
+  | _, _ => withoutPayloads (.failed 1)
 
-def invokeNegForward (config : Config) (request : RuleRequest Fact) : Outcome Fact :=
+def invokeNegForward (config : Config) (request : RuleRequest Fact) : Plan Fact :=
   match request.inputs, request.writes with
   | [input], [target] =>
-      outcomeOfResult target negForwardPayload 1 1 []
+      planOfResult target 1 1 []
         (DyadicInterval.neg config.endpointLimit input.fact)
-  | _, _ => .failed 10
+  | _, _ => withoutPayloads (.failed 10)
 
-def invokeNegBackward (config : Config) (request : RuleRequest Fact) : Outcome Fact :=
+def invokeNegBackward (config : Config) (request : RuleRequest Fact) : Plan Fact :=
   match request.inputs, request.writes with
   | [output], [target] =>
-      outcomeOfResult target negBackwardPayload 1 1 []
+      planOfResult target 1 1 []
         (DyadicInterval.neg config.endpointLimit output.fact)
-  | _, _ => .failed 11
+  | _, _ => withoutPayloads (.failed 11)
 
-def invokeSubForward (config : Config) (request : RuleRequest Fact) : Outcome Fact :=
+def invokeSubForward (config : Config) (request : RuleRequest Fact) : Plan Fact :=
   match request.inputs, request.writes with
   | [left, right], [target] =>
-      outcomeOfResult target subForwardPayload 1 1 []
+      planOfResult target 1 1 []
         (DyadicInterval.sub config.endpointLimit left.fact right.fact)
-  | _, _ => .failed 20
+  | _, _ => withoutPayloads (.failed 20)
 
-def invokeSubLeft (config : Config) (request : RuleRequest Fact) : Outcome Fact :=
+def invokeSubLeft (config : Config) (request : RuleRequest Fact) : Plan Fact :=
   match request.inputs, request.writes with
   | [output, right], [target] =>
-      outcomeOfResult target subLeftPayload 2 2 []
+      planOfResult target 2 2 []
         (addViaSub config.endpointLimit output.fact right.fact)
-  | _, _ => .failed 21
+  | _, _ => withoutPayloads (.failed 21)
 
-def invokeSubRight (config : Config) (request : RuleRequest Fact) : Outcome Fact :=
+def invokeSubRight (config : Config) (request : RuleRequest Fact) : Plan Fact :=
   match request.inputs, request.writes with
   | [left, output], [target] =>
-      outcomeOfResult target subRightPayload 1 1 []
+      planOfResult target 1 1 []
         (DyadicInterval.sub config.endpointLimit left.fact output.fact)
-  | _, _ => .failed 22
+  | _, _ => withoutPayloads (.failed 22)
 
-def invokeMulForward (config : Config) (request : RuleRequest Fact) : Outcome Fact :=
+def invokeMulForward (config : Config) (request : RuleRequest Fact) : Plan Fact :=
   match request.inputs, request.writes with
   | [left, right], [target] =>
-      outcomeOfResult target mulForwardPayload 1 1 []
+      planOfResult target 1 1 []
         (DyadicInterval.mul config.endpointLimit left.fact right.fact)
-  | _, _ => .failed 30
+  | _, _ => withoutPayloads (.failed 30)
 
-def invokeMulLeft (config : Config) (request : RuleRequest Fact) : Outcome Fact :=
+def invokeMulLeft (config : Config) (request : RuleRequest Fact) : Plan Fact :=
   match request.inputs, request.writes with
   | [output, right], [target] =>
       match singleton? right.fact with
-      | none => .inapplicable
+      | none => withoutPayloads .inapplicable
       | some scalar =>
-          outcomeOfResult target mulLeftPayload 1 1 []
+          planOfResult target 1 1 []
             (DyadicInterval.unscaleExact config.endpointLimit scalar output.fact)
-  | _, _ => .failed 31
+  | _, _ => withoutPayloads (.failed 31)
 
-def invokeMulRight (config : Config) (request : RuleRequest Fact) : Outcome Fact :=
+def invokeMulRight (config : Config) (request : RuleRequest Fact) : Plan Fact :=
   match request.inputs, request.writes with
   | [output, left], [target] =>
       match singleton? left.fact with
-      | none => .inapplicable
+      | none => withoutPayloads .inapplicable
       | some scalar =>
-          outcomeOfResult target mulRightPayload 1 1 []
+          planOfResult target 1 1 []
             (DyadicInterval.unscaleExact config.endpointLimit scalar output.fact)
-  | _, _ => .failed 32
+  | _, _ => withoutPayloads (.failed 32)
 
-def invokeSquareForward (config : Config) (request : RuleRequest Fact) : Outcome Fact :=
+def invokeSquareForward (config : Config) (request : RuleRequest Fact) : Plan Fact :=
   match request.inputs, request.writes with
   | [input], [target] =>
-      outcomeOfResult target squareForwardPayload 1 1 []
+      planOfResult target 1 1 []
         (DyadicInterval.square config.endpointLimit input.fact)
-  | _, _ => .failed 40
+  | _, _ => withoutPayloads (.failed 40)
 
 def invokeReciprocalForward (config : Config)
-    (request : RuleRequest Fact) : Outcome Fact :=
+    (request : RuleRequest Fact) : Plan Fact :=
   match request.inputs, request.writes with
   | [input], [target] =>
-      outcomeOfResult target reciprocalForwardPayload 1 1
+      planOfResult target 1 1
         (retrySuggestion config request.action)
         (DyadicInterval.reciprocal config.endpointLimit
           (config.precisionAt request.action.effort) input.fact)
-  | _, _ => .failed 50
+  | _, _ => withoutPayloads (.failed 50)
 
 def invokeReciprocalBackward (config : Config)
-    (request : RuleRequest Fact) : Outcome Fact :=
+    (request : RuleRequest Fact) : Plan Fact :=
   match request.inputs, request.writes with
   | [output], [target] =>
-      outcomeOfResult target reciprocalBackwardPayload 1 1
+      planOfResult target 1 1
         (retrySuggestion config request.action)
         (DyadicInterval.reciprocal config.endpointLimit
           (config.precisionAt request.action.effort) output.fact)
-  | _, _ => .failed 60
+  | _, _ => withoutPayloads (.failed 60)
 
 /-! ## Centered arbitrary function and shape-triggered instantiation -/
 
@@ -391,12 +391,12 @@ def centeredImage (limit : EndpointLimit) (input : Fact) : DyadicInterval.Result
           DyadicInterval.sub limit quarterFact squared
 
 def invokeCenteredForward (config : Config)
-    (request : RuleRequest Fact) : Outcome Fact :=
+    (request : RuleRequest Fact) : Plan Fact :=
   match request.inputs, request.writes with
   | [input], [target] =>
-      outcomeOfResult target centeredForwardPayload 4 4 []
+      planOfResult target 4 4 []
         (centeredImage config.endpointLimit input.fact)
-  | _, _ => .failed 70
+  | _, _ => withoutPayloads (.failed 70)
 
 def invokeCenteredSplit (request : RuleRequest Fact) : Outcome Fact :=
   match request.inputs, request.writes with
@@ -436,16 +436,20 @@ def centeredProposal? (request : RuleRequest Fact)
       equalities :=
         [{ left := .existing binding.anchor
            right := .proposed 0
-           payload := centeredEqualityPayload }]
-      payload := centeredInstancePayload }
+           payload := equalityLabel }]
+      payload := instanceLabel }
 
-def invokeCenteredInstantiate (request : RuleRequest Fact) : Outcome Fact :=
+def invokeCenteredInstantiate (request : RuleRequest Fact) : Plan Fact :=
   match centeredBinding? request >>= centeredProposal? request with
-  | none => .inapplicable
+  | none => withoutPayloads .inapplicable
   | some proposal =>
-      .success [] [.instantiate proposal]
-        { visitedEntries := request.program.operations.size + request.program.nodes.size
-          estimatedProofNodes := 1 }
+      { outcome :=
+          .success [] [.instantiate proposal]
+            { visitedEntries := request.program.operations.size + request.program.nodes.size
+              estimatedProofNodes := 1 }
+        drafts :=
+          [emptyDraft instanceLabel .instance,
+            emptyDraft equalityLabel .equality] }
 
 /-! ## Independently composable function packages -/
 
@@ -454,18 +458,18 @@ def arithmeticPackage (config : Config) (real : DomainId) : Package Fact :=
     cache := ()
     operations := arithmeticOperations real
     handlers :=
-      #[Handler.stateless oneForward (invokeOneForward config),
-        Handler.stateless negForward (invokeNegForward config),
-        Handler.stateless negBackward (invokeNegBackward config),
-        Handler.stateless subForward (invokeSubForward config),
-        Handler.stateless subLeft (invokeSubLeft config),
-        Handler.stateless subRight (invokeSubRight config),
-        Handler.stateless mulForward (invokeMulForward config),
-        Handler.stateless mulLeft (invokeMulLeft config),
-        Handler.stateless mulRight (invokeMulRight config),
-        Handler.stateless squareForward (invokeSquareForward config),
-        Handler.stateless reciprocalForward (invokeReciprocalForward config),
-        Handler.stateless reciprocalBackward (invokeReciprocalBackward config)]
+      #[Handler.statelessPlanned oneForward (invokeOneForward config),
+        Handler.statelessPlanned negForward (invokeNegForward config),
+        Handler.statelessPlanned negBackward (invokeNegBackward config),
+        Handler.statelessPlanned subForward (invokeSubForward config),
+        Handler.statelessPlanned subLeft (invokeSubLeft config),
+        Handler.statelessPlanned subRight (invokeSubRight config),
+        Handler.statelessPlanned mulForward (invokeMulForward config),
+        Handler.statelessPlanned mulLeft (invokeMulLeft config),
+        Handler.statelessPlanned mulRight (invokeMulRight config),
+        Handler.statelessPlanned squareForward (invokeSquareForward config),
+        Handler.statelessPlanned reciprocalForward (invokeReciprocalForward config),
+        Handler.statelessPlanned reciprocalBackward (invokeReciprocalBackward config)]
     acceptsLimits := fun _ limits =>
       config.maxReciprocalEffort ≤ limits.maxEffort &&
         config.reciprocalPrecisionsAllowed &&
@@ -481,9 +485,9 @@ def centeredPackage (config : Config) (real : DomainId) : Package Fact :=
     operations := centeredOperations real
     requiredOperations := centeredRequirements real
     handlers :=
-      #[Handler.stateless centeredForward (invokeCenteredForward config),
+      #[Handler.statelessPlanned centeredForward (invokeCenteredForward config),
         Handler.stateless centeredSplit invokeCenteredSplit,
-        Handler.stateless centeredInstantiate invokeCenteredInstantiate]
+        Handler.statelessPlanned centeredInstantiate invokeCenteredInstantiate]
     acceptsLimits := fun _ limits =>
       4 ≤ limits.maxObservationValue &&
         71 ≤ limits.maxDiagnosticValue &&

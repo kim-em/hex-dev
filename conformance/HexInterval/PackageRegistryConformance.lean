@@ -103,21 +103,21 @@ def sharedPackage : Package Nat :=
     cache := 0
     operations := #[sourceOperation, sharedOperation]
     handlers :=
-      #[{ registration := tickRegistration, invoke := tickInvoke },
-        { registration := observeRegistration, invoke := observeInvoke }] }
+      #[Handler.bare tickRegistration tickInvoke,
+        Handler.bare observeRegistration observeInvoke] }
 
 def thirdPackage : Package Nat :=
   { Cache := List Nat
     cache := []
     operations := #[thirdOperation]
     requiredOperations := #[sourceOperation]
-    handlers := #[{ registration := thirdRegistration, invoke := thirdInvoke }] }
+    handlers := #[Handler.bare thirdRegistration thirdInvoke] }
 
 def limitedPackage : Package Nat :=
   { Cache := Bool
     cache := false
     operations := #[limitedOperation]
-    handlers := #[{ registration := limitedRegistration, invoke := limitedInvoke }]
+    handlers := #[Handler.bare limitedRegistration limitedInvoke]
     acceptsLimits := fun _ limits =>
       8 ≤ limits.maxObservationValue && 1000000 ≤ limits.maxDiagnosticValue }
 

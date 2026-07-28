@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexInterval.Experiment.Propagator
+public import HexInterval.Experiment.PayloadArena
 
 @[expose] public section
 
@@ -25,14 +25,26 @@ operations, registrations, callbacks, routes, or start checks.  Package caches
 are performance state only: for the same request and logical budget, cache
 contents must not change the callback's observable outcome.  Semantic state
 instead needs an explicit versioned dependency and wakeup protocol.  Immutable
-proof payloads must eventually be frozen in a separate per-run arena before
-their identifiers enter engine provenance.
+proof-payload drafts travel beside the outcome; `PayloadSession` freezes them
+in a separate per-run arena before their identifiers enter engine provenance.
 -/
 
 namespace Hex.Interval.Experiment.Propagator
 
-/-- The callback shape shared by the FIFO and policy-controlled drivers. -/
+/-- One package-produced result before its reply-local proof labels are frozen
+into the run's immutable arena. -/
+structure Plan (Fact : Type) where
+  outcome : Outcome Fact
+  drafts : List PayloadArena.Draft
+
+/-- The callback shape shared by direct and session-owned drivers. -/
 abbrev Invoke (Fact Cache : Type) :=
+  Cache -> RuleRequest Fact -> Plan Fact × Cache
+
+/-- Compatibility shape for a callback that produces no immutable evidence.
+Its positive outcomes are deliberately rejected by the payload session if they
+refer to any payload identifier. -/
+abbrev BareInvoke (Fact Cache : Type) :=
   Cache -> RuleRequest Fact -> Outcome Fact × Cache
 
 /-- One registration and the only callback allowed to interpret its key. -/
@@ -42,16 +54,33 @@ structure Handler (Fact Cache : Type) where
 
 namespace Handler
 
+/-- Lift a callback with no payload drafts into the planned protocol. -/
+def bare (registration : Registration)
+    (invoke : BareInvoke Fact Cache) : Handler Fact Cache :=
+  { registration
+    invoke := fun cache request =>
+      let (outcome, cache) := invoke cache request
+      ({ outcome, drafts := [] }, cache) }
+
 /-- Lift a cache-independent callback into any package cache. -/
 def readOnly (registration : Registration)
     (invoke : RuleRequest Fact -> Outcome Fact) : Handler Fact Cache :=
-  { registration
-    invoke := fun cache request => (invoke request, cache) }
+  bare registration fun cache request => (invoke request, cache)
 
 /-- A cache-independent handler for a package whose cache is `Unit`. -/
 def stateless (registration : Registration)
     (invoke : RuleRequest Fact -> Outcome Fact) : Handler Fact Unit :=
   readOnly registration invoke
+
+/-- A cache-independent callback that returns complete reply-local evidence. -/
+def readOnlyPlanned (registration : Registration)
+    (invoke : RuleRequest Fact -> Plan Fact) : Handler Fact Cache :=
+  { registration, invoke := fun cache request => (invoke request, cache) }
+
+/-- A stateless callback that returns complete reply-local evidence. -/
+def statelessPlanned (registration : Registration)
+    (invoke : RuleRequest Fact -> Plan Fact) : Handler Fact Unit :=
+  readOnlyPlanned registration invoke
 
 end Handler
 
@@ -266,36 +295,46 @@ end Registration
 
 namespace Registry
 
-/-- Route one engine-owned rule identifier to its package callback.  Dispatch
-uses compact validated indices; it never branches on the semantic operation
-or rule key.  Only the selected package cache is replaced. -/
-def invoke (registry : Registry Fact) (request : RuleRequest Fact) :
-    Outcome Fact × Registry Fact :=
+/-- Route one engine-owned rule identifier to its package callback and retain
+its reply-local proof drafts. Dispatch uses compact validated indices; it never
+branches on the semantic operation or rule key. Only the selected package
+cache is replaced. -/
+def invokePlanned (registry : Registry Fact) (request : RuleRequest Fact) :
+    Plan Fact × Registry Fact :=
   match registry.routes[request.action.rule.index]? with
-  | none => (.failed DispatchCode.missingRoute, registry)
+  | none => ({ outcome := .failed DispatchCode.missingRoute, drafts := [] }, registry)
   | some route =>
       match registry.registrations[request.action.rule.index]? with
-      | none => (.failed DispatchCode.missingRegistration, registry)
+      | none =>
+          ({ outcome := .failed DispatchCode.missingRegistration, drafts := [] }, registry)
       | some registration =>
           match registry.packages[route.package]? with
-          | none => (.failed DispatchCode.missingPackage, registry)
+          | none => ({ outcome := .failed DispatchCode.missingPackage, drafts := [] }, registry)
           | some package =>
               match package.handlers[route.handler]? with
-              | none => (.failed DispatchCode.missingHandler, registry)
+              | none =>
+                  ({ outcome := .failed DispatchCode.missingHandler, drafts := [] }, registry)
               | some handler =>
                   if !registration.same handler.registration then
-                    (.failed DispatchCode.registryMismatch, registry)
+                    ({ outcome := .failed DispatchCode.registryMismatch, drafts := [] }, registry)
                   else if !handler.registration.accepts request then
-                    (.failed DispatchCode.requestMismatch, registry)
+                    ({ outcome := .failed DispatchCode.requestMismatch, drafts := [] }, registry)
                   else
-                    let (outcome, cache) := handler.invoke package.cache request
+                    let (plan, cache) := handler.invoke package.cache request
                     let package :=
                       { package with
                         cache := cache
                         invocations := package.invocations + 1 }
-                    (outcome,
+                    (plan,
                       { registry with
                         packages := registry.packages.set! route.package package })
+
+/-- Compatibility adapter for search experiments that do not yet retain proof
+payloads. Proof-producing runs use `invokePlanned` through `PayloadSession`. -/
+def invoke (registry : Registry Fact) (request : RuleRequest Fact) :
+    Outcome Fact × Registry Fact :=
+  let (plan, registry) := registry.invokePlanned request
+  (plan.outcome, registry)
 
 end Registry
 

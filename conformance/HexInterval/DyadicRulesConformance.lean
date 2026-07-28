@@ -319,6 +319,100 @@ def falseOneRun? : Option (RunResult Fact ConcreteRegistry) := do
 #guard centeredAt half quarter
 #guard centeredAt 1 0
 
+/-! ## Real package payload plans -/
+
+def payloadLimits : PayloadArena.Limits :=
+  { maxEntries := 3
+    maxBodyCells := 0
+    maxAtom := 0
+    maxSchema := 0
+    maxUses := 3 }
+
+def ruleIdFrom? (key : RuleKey) : Nat -> List Registration -> Option RuleId
+  | _, [] => none
+  | index, registration :: registrations =>
+      if registration.key == key then some { index }
+      else ruleIdFrom? key (index + 1) registrations
+
+def ruleId? (registry : ConcreteRegistry) (key : RuleKey) : Option RuleId :=
+  ruleIdFrom? key 0 registry.registrations.toList
+
+def payloadView : ProgramView :=
+  { programVersion := 0
+    operations := centeredProgram.operations
+    nodes := centeredProgram.nodes
+    generations := #[0, 0, 0, 0]
+    depths := #[0, 0, 1, 2] }
+
+def plannedRequest? (registry : ConcreteRegistry) (serial : Nat)
+    (key : RuleKey) (anchor : NodeId) (kind : ActionKind)
+    (writes : List NodeId) : Option (RuleRequest Fact) := do
+  let rule <- ruleId? registry key
+  pure
+    { action :=
+        { serial
+          programVersion := 0
+          application := { index := rule.index }
+          rule
+          key
+          node := anchor
+          kind
+          effort := 0
+          inputs := [] }
+      program := payloadView
+      inputs := []
+      writes }
+
+def sameAction (left right : Action) : Bool :=
+  left.serial == right.serial &&
+    left.programVersion == right.programVersion &&
+    left.application == right.application &&
+    left.rule == right.rule &&
+    left.key == right.key &&
+    left.node == right.node &&
+    left.kind == right.kind &&
+    left.effort == right.effort &&
+    left.inputs == right.inputs
+
+def ownsV0 (arena : PayloadArena.Arena) (payload : PayloadId)
+    (role : PayloadArena.Role) (origin : Action) : Bool :=
+  (arena.entry? payload role).any fun entry =>
+    sameAction entry.origin origin && entry.schema == 0 && entry.body.isEmpty
+
+-- The real nullary fact handler and structural instantiator both use the
+-- planned registry route.  Local label zero is reused across replies, then
+-- relocated to distinct global entries.  Replay needs no central recipe
+-- number: the frozen action key, role, and schema identify each v0 checker.
+#guard
+  match registry? with
+  | none => false
+  | some registry =>
+      match
+          plannedRequest? registry 7 oneForwardKey (node 1) .forward [node 1],
+          plannedRequest? registry 8 centeredInstantiateKey (node 3) .instantiate [] with
+      | some factRequest, some instanceRequest =>
+          let (factPlan, registry) := registry.invokePlanned factRequest
+          match PayloadArena.freeze payloadLimits .empty factRequest.action
+              factPlan.outcome factPlan.drafts with
+          | .ready factArena (.success [candidate] [] _) =>
+              let (instancePlan, _) := registry.invokePlanned instanceRequest
+              match PayloadArena.freeze payloadLimits factArena instanceRequest.action
+                  instancePlan.outcome instancePlan.drafts with
+              | .ready arena (.success [] [.instantiate request] _) =>
+                  match request.equalities with
+                  | [equality] =>
+                      candidate.payload.index == 0 &&
+                        request.payload.index == 1 &&
+                        equality.payload.index == 2 &&
+                        arena.entries.size == 3 && arena.bodyCells == 0 &&
+                        ownsV0 arena candidate.payload .fact factRequest.action &&
+                        ownsV0 arena request.payload .instance instanceRequest.action &&
+                        ownsV0 arena equality.payload .equality instanceRequest.action
+                  | _ => false
+              | _ => false
+          | _ => false
+      | _, _ => false
+
 -- The anchor-local match remains fresh after its own append-only extension.
 -- Selecting it again is a structural duplicate, and the matcher is not
 -- spuriously requeued as a whole-program dependency.

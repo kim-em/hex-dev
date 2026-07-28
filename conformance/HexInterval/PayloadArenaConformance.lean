@@ -101,7 +101,6 @@ def seedPreserved (arena : Arena) : Bool :=
 def mixedRequest : InstantiationRequest :=
   { key := 77
     triggers := [node 0]
-    claimedGeneration := 1
     nodes := []
     equalities :=
       [{ left := .existing (node 0)
