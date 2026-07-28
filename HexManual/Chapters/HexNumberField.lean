@@ -158,15 +158,27 @@ finite root array carrying positive multiplicities.
 tag := "hex-number-field-correspondence"
 %%%
 
-`HexNumberFieldMathlib` currently exposes Phase-1 contract declarations; their
-proof bodies are not yet complete. Once discharged, they interpret selected
-roots in `ℂ`, establish the fixed-coordinate laws and approximation
-enclosure, make exactification and lazy arithmetic complete, and identify the
-returned arrays with Mathlib polynomial roots and multiplicities.
+`HexNumberFieldMathlib` interprets selected roots in `ℂ`. For a checked fixed
+presentation, the reduced coordinates are now ring-equivalent to the monic
+rational `AdjoinRoot` quotient, their executable extended-GCD inverse is
+validated, and an opt-in `Field` instance preserves the existing computational
+operations and rational scalar action. Open the
+`Hex.QAdjoin.QAdjoinField` scope when Mathlib field notation and laws are
+wanted. Opening this scope makes that notation proof-bearing and
+noncomputable; executable code should continue to use the unscoped operations.
+
+Semantic equality and zero tests, together with the later approximation,
+exactification, lazy-arithmetic, and root-array contracts, remain staged
+declarations for subsequent proof-completion milestones. Some constructor
+certification in the Mathlib-free layer is likewise still staged.
 
 {docstring Hex.AlgebraicRoot.toComplex}
 
 {docstring Hex.QAdjoin.toComplex}
+
+{docstring Hex.QAdjoin.adjoinRootEquiv}
+
+{docstring Hex.QAdjoin.embedding}
 
 {docstring Hex.AlgebraicRoot.exact_toComplex}
 
