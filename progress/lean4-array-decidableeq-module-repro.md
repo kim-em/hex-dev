@@ -107,6 +107,59 @@ All three are fixed by
   through the fully exposed `List.ofFn` and do reduce. They are proved equal to
   the core versions (`ofFn'_eq_ofFn`), so the swap back is a rewrite.
 
+## Audit: existing `Array.ofFn` / `Vector.ofFn` call sites
+
+Done 2026-07-28, to decide whether the tree should adopt `ofFn'` ahead of the
+upstream fix. **Conclusion: no, apart from any site with a demonstrated kernel
+need.** Recorded so it is not re-litigated from scratch.
+
+**Scale.** 297 raw occurrences across 48 files, but only about 100 sit in
+`def` / `abbrev` / `instance` bodies, which is the only position where kernel
+reduction is affected; the other ~200 are theorem statements. Of the ~100, 93
+are in libraries that already reach `hex-basic` and could adopt `ofFn'` with no
+dependency change. `hex-poly` accounts for 13 and cannot, having no
+dependencies.
+
+**The defect is real, not hypothetical.** `Hex.Vector.unit` in `HexMatrix.Basic`
+is `@[expose]`, is built with core `Vector.ofFn`, and does not reduce from a
+downstream module:
+
+```lean
+module
+public import HexMatrix.Basic
+public import HexBasic.ArrayDecEq
+open scoped Hex
+example : (Vector.unit Nat (n := 3) 1) = #v[0, 1, 0] := by decide +kernel
+-- reduction gets stuck; passes after switching that one definition to `ofFn'`
+```
+
+`hex-matrix` is a released library, so this ships.
+
+**Why a blanket migration still fails.** Rewriting all 62 mechanically
+reachable sites produced 29 build errors in three distinct classes:
+
+1. **Not every file is a module file.** `HexGF2Mathlib/Basic.lean` uses plain
+   `import`, so `public import` is a syntax error there and the exposure
+   question does not arise at all.
+2. **`ofFn'` is not definitionally equal to `ofFn`.** `HexMatrix/Basic.lean`
+   proofs that closed by `rfl` after `simp only [..., Vector.getElem_ofFn, ...]`
+   stop working, because the core simp lemma no longer matches.
+3. **The shim has no lemma ecosystem.** Core's `Vector.getElem_ofFn`,
+   `size_ofFn`, and friends are stated about `ofFn`; `ofFn'` has only
+   `ofFn'_eq_ofFn`. Anything reasoning about a migrated definition needs that
+   rewrite inserted by hand, which is the type-mismatch class in
+   `HexRealRootsMathlib/IsolateRoots.lean`.
+
+So each migrated site costs local proof churn proportional to how much its
+callers reason about the array's contents. That is affordable for a definition
+with a real kernel consumer and pure waste otherwise.
+
+**Recommendation.** Fix it upstream and leave the tree alone. Migrate an
+individual definition only when something concretely needs it to reduce, and
+expect to repair its lemma uses at the same time. Do not migrate `*Impl`
+definitions, which are runtime implementations behind `@[csimp]` where core
+`ofFn` is correct.
+
 ## Cleanup once #14270 lands
 
 After the toolchain is bumped past the fix:
