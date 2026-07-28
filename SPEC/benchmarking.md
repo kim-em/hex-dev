@@ -356,8 +356,11 @@ sample count so each role is built first equally often. Its raw signed deltas
 describe fresh-build noise under that run's host conditions. The report follows
 the manifest's `config.order`, records each control's absolute and relative
 range and median before interpreting a magnitude-comparable proof delta, but
-does not subtract a null median, widen a budget by a null range, assign
-significance, or use a control as scientific evidence. With the small
+does not, within that run, subtract a null median, widen its preregistered
+budget by a null range, assign significance, or use a control as scientific
+evidence. A later contract revision may use a complete archived run to
+preregister a future budget only when it records the source evidence and
+derivation rule; this never changes the producing run. With the small
 preregistered sample counts used here, a substantive delta inside a comparable
 zero-centred null envelope is described only as noise-sized or unresolved; a
 cheap control does not resolve noise for a much more expensive build.

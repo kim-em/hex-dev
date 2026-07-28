@@ -22,7 +22,9 @@ ALLOWED_AXIOMS = ("propext", "Classical.choice", "Quot.sound")
 BASELINE = ProbeModule("HexRCF.ProofProbe.Baseline")
 
 
-def case_pairs(case: str, module_case: str, budget_ms: int) -> tuple[ProbePair, ...]:
+def case_pairs(
+    case: str, module_case: str, budget_ms: int, budget_kind: str
+) -> tuple[ProbePair, ...]:
     """The five preregistered deltas for one fixed source/reflected case."""
     prefix = f"HexRCF.ProofProbe.{module_case}"
     input_module = ProbeModule(f"{prefix}.Input")
@@ -61,6 +63,7 @@ def case_pairs(case: str, module_case: str, budget_ms: int) -> tuple[ProbePair, 
                 **common,
                 "component": "end-to-end-tactic",
                 "tactic_budget_ms": budget_ms,
+                "budget_kind": budget_kind,
             },
         ),
     )
@@ -102,12 +105,23 @@ SPEC = SweepSpec(
             },
             null_control=True,
         ),
-        *case_pairs("quadratic", "Quadratic", 100),
-        *case_pairs("degree10", "Degree10", 1_000),
-        *case_pairs("degree50", "Degree50", 30_000),
+        ProbePair(
+            "double-degree50-null",
+            ProbeModule("HexRCF.ProofProbe.DoubleDegree50", ALLOWED_AXIOMS),
+            ProbeModule("HexRCF.ProofProbe.DoubleDegree50", ALLOWED_AXIOMS),
+            {
+                "component": "fresh-build-noise",
+                "interpretation": "calibration-only",
+                "magnitude": "double-degree50-tactic",
+            },
+            null_control=True,
+        ),
+        *case_pairs("quadratic", "Quadratic", 2_000, "regression-bound"),
+        *case_pairs("degree10", "Degree10", 12_000, "regression-bound"),
+        *case_pairs("degree50", "Degree50", 30_000, "adversarial-ceiling"),
     ),
     probe_target="HexRCFProofProbe",
-    schema="hexrcf-proof-probes-v5",
+    schema="hexrcf-proof-probes-v6",
     measurement="paired-fresh-module-olean-wall-v1",
     output_stem="hexrcf-proof-probes",
     extra_sources=(
