@@ -276,9 +276,10 @@ closure may import `LeanBench`, register a benchmark, define `main`, read an
 in-process clock, or contain a timing loop. A probe also cannot root any
 `lean_exe`. Their external runner must:
 
-- build a matched import baseline and each probe in isolated fresh build
-  directories, rotating baseline/probe order rather than measuring all
-  baselines first;
+- before each sample, remove only the measured module's generated artefacts
+  and run `lake build +<module>:olean`, keeping imported dependency artefacts
+  warm; build each matched reference/candidate pair adjacently, rotate pair
+  order, and alternate pair orientation between rounds;
 - retain every raw wall-time sample and paired delta, and identify the exact
   source hashes, repository commit, dirty-state decision, toolchain, command,
   host/CPU/OS, load state, and timeout/cleanup policy;
