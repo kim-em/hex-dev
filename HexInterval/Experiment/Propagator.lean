@@ -19,9 +19,10 @@ does not interpret either of them.  It owns only the expression DAG, current
 facts, fact versions, dependency indexes, and deterministic resource counters.
 
 A companion registry may keep caches of any Lean type.  It receives a
-`RuleRequest` containing exactly the declared reads and writes, then replies
-with an `Outcome` bound to that action.  Candidate facts are intersected by an
-engine-owned `FactDomain`; function-specific code never enters the scheduler.
+`RuleRequest` containing a bounded immutable structural view and exactly the
+declared fact reads and writes, then replies with an `Outcome` bound to that
+action.  Candidate facts are intersected by an engine-owned `FactDomain`;
+function-specific code never enters the scheduler.
 
 This is an experiment, not yet the supported `HexInterval` API.  Selecting a
 retained expression proposal runs a separate atomic validator before extending
@@ -355,10 +356,50 @@ structure FactView (Fact : Type) where
   fact : Fact
   version : Nat
 
+/-- Immutable structural metadata supplied to a propagator.  The engine builds
+this view only from a validated program whose operation, node, arity, and
+generation arrays are already covered by its structural limits.  It contains
+no interval facts: semantic fact access remains restricted to declared
+`FactView`s.
+
+The explicit version lets registries key structural caches by the exact
+append-only snapshot.  Reply validation remains bound to the engine-owned
+`Action`, while retained instantiations recheck action freshness and resolve
+their complete structural effect against the current program.  Observing this
+view grants no mutation authority. -/
+structure ProgramView where
+  programVersion : Nat
+  operations : Array Operation
+  nodes : Array Node
+  generations : Array Nat
+
+namespace ProgramView
+
+/-- Exact optional operation lookup in this immutable snapshot. -/
+def operation? (view : ProgramView) (operation : OpId) : Option Operation :=
+  view.operations[operation.index]?
+
+/-- Exact optional node lookup in this immutable snapshot. -/
+def node? (view : ProgramView) (node : NodeId) : Option Node :=
+  view.nodes[node.index]?
+
+/-- Exact optional instantiation-generation lookup. -/
+def generation? (view : ProgramView) (node : NodeId) : Option Nat :=
+  view.generations[node.index]?
+
+/-- Resolve a node's opaque semantic operation key without interpreting it. -/
+def operationKey? (view : ProgramView) (node : NodeId) : Option OpKey := do
+  let instruction <- view.node? node
+  let operation <- view.operation? instruction.op
+  pure operation.key
+
+end ProgramView
+
 /-- Function-specific registry request with exactly the application's declared
-inputs. -/
+fact inputs and a bounded structural snapshot. -/
 structure RuleRequest (Fact : Type) where
   action : Action
+  program : ProgramView
   inputs : List (FactView Fact)
   writes : List NodeId
 
@@ -779,6 +820,13 @@ def snapshot (state : Engine Fact) : Snapshot Fact :=
     versions := state.versions
     contradictory := state.contradictory }
 
+/-- Freeze the current bounded expression structure for one registry request. -/
+def programView (state : Engine Fact) : ProgramView :=
+  { programVersion := state.programVersion
+    operations := state.program.operations
+    nodes := state.program.nodes
+    generations := state.generations }
+
 /-- Read the versions of exactly the watched nodes in registration order. -/
 def seenVersions? (state : Engine Fact) : List NodeId -> Option (List SeenVersion)
   | [] => some []
@@ -922,7 +970,12 @@ def poll (state : Engine Fact) : Poll Fact :=
                       { state.metrics with
                         queuePops := state.metrics.queuePops + 1
                         requests := state.metrics.requests + 1 } }
-                .request { action, inputs := views, writes := application.writes } next
+                .request
+                  { action
+                    program := state.programView
+                    inputs := views
+                    writes := application.writes }
+                  next
             | _, _, _ => .invalidState state
         | _, _ => .invalidState state
 
