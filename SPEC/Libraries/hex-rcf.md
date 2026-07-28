@@ -648,6 +648,9 @@ free to change.
 - `HexRCF/Reify.lean`: `Qq`/`MetaM` reification, normalisation,
   fall-through messages; `HexRCF/ReifyTests.lean`: checked tactic examples,
   false-sentence diagnostics, and out-of-fragment rejection tests.
+- `HexRCF/LintTests.lean`: the standard Mathlib linter suite over the public
+  `HexRCF` namespace. It intentionally uses legacy file syntax so imported
+  docstring metadata is available to the linter.
 - `HexRCF/Tactic.lean`: the `rcf` front end.
 - `conformance/HexRCF/{Conformance,EmitFixtures}.lean`: conformance
   in the shared sub-project.

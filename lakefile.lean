@@ -296,7 +296,8 @@ lean_lib HexRCFTests where
     `HexRCF.BuilderTests,
     `HexRCF.CertificateTests,
     `HexRCF.DecisionTests,
-    `HexRCF.ReifyTests]
+    `HexRCF.ReifyTests,
+    `HexRCF.LintTests]
 
 -- Canonical end-to-end examples are release artifacts rather than public API.
 -- Keep their target separate for the same reason as the regression tests.

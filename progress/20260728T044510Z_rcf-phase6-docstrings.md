@@ -4,7 +4,7 @@
 
 - Ran the Mathlib linter with legacy import semantics, which retain imported
   documentation metadata under Lean's module system. The final audit reports
-  zero errors across 396 HexRCF declarations and 14 linters.
+  zero errors across 392 HexRCF declarations and 14 linters.
 - Added documentation for every genuinely undocumented public structure field
   and tactic implementation reported by the linter.
 - Added documentation for 31 public theorems that another module could
@@ -33,25 +33,26 @@
 - Confirmed by downstream tactic tests that the direct public
   `HexRealRootsMathlib.IsolateRoots` import is required for expansion of the
   public `rcf_ring` macro, so retained it.
+- Added `HexRCF.LintTests` to the existing default regression target, making
+  the zero-error public namespace lint a permanent build invariant.
 - Verified that every private HexRCF declaration has at least one textual use,
   then built all changed modules and the complete `HexRCF` target.
 
 ## Current frontier
 
-- The documentation and linter corrections are complete on the stacked
-  `rcf-phase6-docstrings` branch.
-- The branch still needs the public/test separation milestone from PR #9032
-  before its lint audit can become a permanent non-public test module.
-- Public characterising lemmas with no current in-repository caller remain
-  under API and dead-declaration review. They are not being removed solely
-  because a textual search found no caller.
+- The documentation, linter, API, dead-declaration, and import-boundary audits
+  are complete on `rcf-phase6-docstrings`, rebased over merged PRs #9032 and
+  #9033.
+- `lake build HexRCF HexRCFTests HexConformance HexManual` succeeds with 9,526
+  jobs, including the permanent zero-error lint regression.
+- Repository DAG, release-manifest, trust-surface, Phase 4, copyright, and diff
+  checks pass.
 
 ## Next step
 
-- Rebase onto main after PRs #9032 and #9033 merge.
-- Add the permanent lint module to `HexRCFTests`, finish the API and
-  dead-declaration review, and publish the Phase 6 quality milestone.
+- Publish the Phase 6 quality milestone, obtain an independent Claude Opus
+  review, address any actionable findings, and merge after CI.
 
 ## Blockers
 
-- None. The two preceding milestone PRs are already queued to merge after CI.
+- None for this milestone.
