@@ -38,6 +38,8 @@ import all HexBerlekampZassenhaus.BhksRecover
 import all HexBerlekampZassenhaus.Recombination
 import all HexBerlekampZassenhaus.FactorEntryPoints
 
+open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
+
 public section
 set_option backward.proofsInPublic true
 

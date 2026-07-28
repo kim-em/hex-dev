@@ -51,8 +51,7 @@ body is unavailable to the kernel downstream — `#print Array.instDecidableEqIm
 
 ## Two further instances of the same defect
 
-Chasing the `Vector` case turned up two more, both with the same shape and neither
-fixable from the consumer side.
+Chasing the `Vector` case turned up two more, both with the same shape.
 
 **Every `deriving DecidableEq` instance.** `Lean.Elab.Deriving.DecEq.mkAuxFunction`
 emits the generated `decEq` as a plain `def`, so its body is opaque across a module
@@ -73,9 +72,11 @@ example : (⟨1⟩ : P) ≠ ⟨2⟩ := by decide   -- stuck at instDecidableEqP.
 ```
 
 `Vector`'s instance is derived, which is why `Vector` equality stalls even once
-`Array` is fixed. There is no workaround: `@[expose]` cannot be attached to a
-structure, and `attribute [expose] …` after the fact is rejected ("can only be
-added when declaring a `def`").
+`Array` is fixed. The generated `decEq` cannot be exposed retrospectively:
+`@[expose]` cannot be attached to a structure, and `attribute [expose] …` after
+the fact is rejected ("can only be added when declaring a `def`"). A consumer
+can still supply a replacement instance, which is what `HexBasic.ArrayDecEq`
+does.
 
 **`Array.ofFn`.** Delegates to its `ofFn.go` auxiliary, so
 `(Array.ofFn f).size = n` does not reduce. `Vector.ofFn` is already `@[expose]`
@@ -110,19 +111,34 @@ All three are fixed by
 
 After the toolchain is bumped past the fix:
 
-1. Delete `HexBasic/ArrayDecEq.lean` and `HexBasic/OfFn.lean`, and their entries
-   in `HexBasic.lean`.
-2. Remove the `public import HexBasic.ArrayDecEq` line and its two-line comment
-   from every module that carries it (`grep -rl HexBasic.ArrayDecEq`), and
-   replace every `Array.ofFn'` / `Vector.ofFn'` use with the core version
-   (`grep -rl "ofFn'"`); `ofFn'_eq_ofFn` makes that a rewrite.
-3. Replace `HexPoly.Dense`'s hand-written `DecidableEq (DensePoly R)` with the
-   ordinary `Array`-based comparison, and drop the explanatory comment.
-4. Reconsider `HexPoly.Euclid.leadingCoeff`, which avoids `Array.back?` for the
-   related reason below, and any code that avoids `Array.ofFn` for kernel
-   reasons.
-5. Re-run the kernel-facing conformance and bench targets, since the point of
-   all of this is reduction behaviour rather than elaboration.
+Record the first toolchain containing the fix, then, **in this order** (call
+sites before deletions, so nothing is briefly unbuildable):
+
+1. Re-point `HexBasic/ModuleBoundaryTests.lean` at the core definitions
+   (`Array.ofFn`, `Vector.ofFn`, and core equality) and confirm it still
+   passes. This is the check that the upstream fix actually landed; do not
+   skip it.
+2. Replace Lean call sites:
+   `rg -l "ofFn'" --glob '*.lean'` and rewrite each to the core version;
+   `ofFn'_eq_ofFn` makes that a rewrite rather than a reproof.
+3. Remove the `public import HexBasic.ArrayDecEq` line and its two-line
+   comment from every module carrying it:
+   `rg -l "HexBasic.ArrayDecEq" --glob '*.lean'`.
+4. Replace `HexPoly.Dense`'s hand-written `DecidableEq (DensePoly R)` with
+   `fun a b => decEq a.coeffs b.coeffs` lifted through proof irrelevance on the
+   `normalized` field, and drop its explanatory comment. Update the
+   `beqCoeffs` docstring, which describes the pre-workaround behaviour.
+5. Delete `HexBasic/ArrayDecEq.lean`, `HexBasic/OfFn.lean`, and
+   `HexBasic/ModuleBoundaryTests.lean`, and their entries in `HexBasic.lean`.
+6. Assert the cleanup is complete: `rg "ofFn'|HexBasic.ArrayDecEq" --glob
+   '*.lean'` must return nothing.
+7. Run a full `lake build` plus the kernel-facing conformance and bench
+   targets, since the point of all of this is reduction behaviour rather than
+   elaboration.
+
+`HexPoly.Euclid.leadingCoeff` avoids `Array.back?`, which is a related
+exposure gap but is **not** fixed by #14270. Leave it alone; it needs its own
+upstream change.
 
 ## Related
 

@@ -8,6 +8,7 @@ module
 
 public import HexBasic.ArrayDecEq
 public import HexBasic.Fold
+public import HexBasic.ModuleBoundaryTests
 public import HexBasic.OfFn
 public import HexBasic.ListShim
 public import HexBasic.Vector.Modify

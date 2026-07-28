@@ -42,6 +42,8 @@ import all HexBerlekampZassenhaus.RecombineProofs
 import all HexBerlekampZassenhaus.TrialProofs
 import all HexBerlekampZassenhaus.QuadraticRootProofs
 
+open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
+
 public section
 set_option backward.proofsInPublic true
 

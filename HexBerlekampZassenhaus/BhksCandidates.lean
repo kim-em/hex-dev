@@ -34,6 +34,8 @@ import all HexBerlekampZassenhaus.ChoosePrimeData
 import all HexBerlekampZassenhaus.ReassemblyProofs
 import all HexBerlekampZassenhaus.Lattice
 
+open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
+
 public section
 set_option backward.proofsInPublic true
 

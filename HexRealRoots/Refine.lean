@@ -16,6 +16,8 @@ import all HexRealRoots.Chain
 import all HexRealRoots.Var
 import all HexRealRoots.Prec
 
+open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
+
 public section
 
 /-!

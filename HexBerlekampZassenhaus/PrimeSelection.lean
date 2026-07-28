@@ -25,6 +25,8 @@ public import HexLLL.Basic
 -- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
 public import HexBasic.ArrayDecEq
 
+open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
+
 
 public section
 set_option backward.proofsInPublic true

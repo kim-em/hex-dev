@@ -39,6 +39,8 @@ import all HexBerlekampZassenhaus.Recombination
 import all HexBerlekampZassenhaus.FactorEntryPoints
 import all HexBerlekampZassenhaus.IrreducibleCore
 
+open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
+
 public section
 set_option backward.proofsInPublic true
 

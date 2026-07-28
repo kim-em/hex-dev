@@ -18,6 +18,8 @@ import all HexRealRoots.Prec
 import all HexRealRoots.IsolateSturm
 import all HexRealRoots.IsolateDescartes
 
+open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
+
 public section
 
 /-!

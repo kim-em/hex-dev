@@ -152,6 +152,8 @@ import all Init.Data.List.Range
 import all Init.Data.Nat.Fold
 import all Init.Data.Range.Basic
 
+open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
+
 public section
 
 /-!

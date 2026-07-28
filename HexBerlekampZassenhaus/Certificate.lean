@@ -30,6 +30,8 @@ public meta import HexBerlekampZassenhaus.Records
 import all HexBerlekampZassenhaus.PrimeSelection
 import all HexBerlekampZassenhaus.Records
 
+open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
+
 public section
 set_option backward.proofsInPublic true
 

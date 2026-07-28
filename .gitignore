@@ -11,5 +11,5 @@ conformance-failures/*.json
 sessions/
 _out/
 
-# Scratch experiments kept out of the tree.
-scratch-*/
+# Accidentally-committed scratch benchmark tree; see PR #9044.
+/scratch-mvpoly-bench/
