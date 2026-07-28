@@ -118,7 +118,7 @@ theorem factor_irreducible_of_covers
 
 /--
 Abstract-bound variant of
-`recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition`:
+`recombinationSearchModAux_factor_associated`:
 the concrete `2 * defaultFactorCoeffBound core < d.p ^ d.k` Mignotte
 precision is replaced by `2 * B' < d.p ^ d.k` against an abstract bound
 `B'`, paired with the leading-coefficient bound on `core` and the
@@ -127,7 +127,7 @@ universal divisor coefficient bound `∀ g ∣ core, ∀ i, (g.coeff i).natAbs
 `recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition_of_bound`
 that extracts the per-factor coverage at the supplied `factor`.
 -/
-theorem recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_bound
+theorem recombinationSearchModAux_factor_associated_of_bound
     {core target factor : Hex.ZPoly} {d : Hex.LiftData}
     {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly} {fuel : Nat}
     (B' : Nat)
@@ -171,12 +171,12 @@ of `target`, the executable recombination search returns `some result` with
 `factor` (up to `Associated`) among the emitted candidates.
 
 Thin wrapper over
-`recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_bound`
+`recombinationSearchModAux_factor_associated_of_bound`
 that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound core` and
 discharges the abstract bound hypotheses via
 `defaultFactorCoeffBound_leadingCoeff_natAbs_le` paired with
 `defaultFactorCoeffBound_valid`. -/
-theorem recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition
+theorem recombinationSearchModAux_factor_associated
     {core target factor : Hex.ZPoly} {d : Hex.LiftData}
     {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly} {fuel : Nat}
     (hcore_ne : core ≠ 0)
@@ -202,7 +202,7 @@ theorem recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPa
         Associated (HexPolyZMathlib.toPolynomial emitted)
           (HexPolyZMathlib.toPolynomial factor) := by
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
-  exact recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_bound
+  exact recombinationSearchModAux_factor_associated_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_lc_le
     (defaultFactorCoeffBound_valid core hcore_ne)
@@ -266,7 +266,7 @@ Primitive + positive-leading recursive coverage capstone for
 `Hex.scaledRecombinationSearchModAux`.
 
 This is the scaled counterpart of
-`recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition`.
+`recombinationSearchModAux_factor_associated`.
 It keeps the same fixed-factor conclusion, but the recursive target invariant is
 primitive plus positive leading coefficient, and the executable boundary is the
 scaled recombination search.
@@ -317,7 +317,7 @@ theorem scaledRecombinationSearchModAux_some_factor_associated_of_liftedFactorSu
 
 /--
 Abstract-bound variant of
-`recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_primitive_pos_lc_core`:
+`recombinationSearchModAux_factor_associated_of_primitive`:
 the concrete `2 * defaultFactorCoeffBound core < d.p ^ d.k` Mignotte
 precision is replaced by `2 * B' < d.p ^ d.k` against an abstract bound
 `B'`, paired with the leading-coefficient bound on `core` and the
@@ -325,7 +325,7 @@ universal divisor coefficient bound `∀ g ∣ core, ∀ i, (g.coeff i).natAbs
 ≤ B'`. Thin wrapper that forwards verbatim to
 `scaledRecombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_bound`.
 -/
-theorem recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_primitive_pos_lc_core_of_bound
+theorem recombinationSearchModAux_factor_associated_of_primitive_bound
     {core target factor : Hex.ZPoly} {d : Hex.LiftData}
     {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly} {fuel : Nat}
     (B' : Nat)
@@ -366,18 +366,18 @@ theorem recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPa
 /--
 Primitive + positive-leading public wrapper for the scaled recombination
 search.  This is the #4648 boundary form of the old monic-core
-`recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition`
+`recombinationSearchModAux_factor_associated`
 surface: callers with a primitive positive-leading core and recursive target
 use the scaled executable search directly, while the monic wrapper remains
 available for existing unscaled callers.
 
 Thin wrapper over
-`recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_primitive_pos_lc_core_of_bound`
+`recombinationSearchModAux_factor_associated_of_primitive_bound`
 that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound core` and
 discharges the abstract bound hypotheses via `defaultFactorCoeffBound_valid`
 paired with `leadingCoeff_eq_coeff_last`.
 -/
-theorem recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_primitive_pos_lc_core
+theorem recombinationSearchModAux_factor_associated_of_primitive
     {core target factor : Hex.ZPoly} {d : Hex.LiftData}
     {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly} {fuel : Nat}
     (hcore_ne : core ≠ 0)
@@ -406,7 +406,7 @@ theorem recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPa
         Associated (HexPolyZMathlib.toPolynomial emitted)
           (HexPolyZMathlib.toPolynomial factor) := by
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
-  exact recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_primitive_pos_lc_core_of_bound
+  exact recombinationSearchModAux_factor_associated_of_primitive_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_lc_le
     (defaultFactorCoeffBound_valid core hcore_ne)
@@ -648,10 +648,10 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
 Parallel to `liftedFactorSubsetPartition_of_choosePrimeData` but consumes
 the `Hex.ZPoly.toMonicPrimeData? core = some primeData` witness directly.
 Used by the non-monic-friendly substrate constructor
-`HenselFactorData.ofToMonicChoosePrime` below, which feeds the
+`HenselFactorData.ofToMonicPrimeData` below, which feeds the
 slow-path arm of #4170 from `(Hex.normalizeForFactor f).squareFreeCore`.
 The embedded Hensel correspondence is supplied explicitly as `hcorr`. -/
-theorem liftedFactorSubsetPartition_of_toMonicPrimeData
+theorem liftedFactorSubsetPartition_of_toMonicModP_evidence
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
     (_hval : ModPFactorization (Hex.ZPoly.toMonic core).monic primeData)

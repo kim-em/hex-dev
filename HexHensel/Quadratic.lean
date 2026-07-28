@@ -1740,25 +1740,6 @@ private theorem one_sub_square_congr_one_of_square_congr_zero
   rw [hcoeff]
   exact Int.emod_eq_zero_of_dvd hneg
 
-private theorem quadraticHenselStep_bezout_error_of_factor_update
-    (m : Nat)
-    (f g h s t : ZPoly)
-    (hm : 1 < m)
-    (hprod : ZPoly.congr (g * h) f m)
-    (hbez : ZPoly.congr (s * g + t * h) 1 m)
-    (hmonic : DensePoly.Monic g) :
-    let e := QuadraticLiftResult.factorError f g h
-    let te := mulModSquare t e m
-    let factorQR := divModMonicModSquare te g m
-    let qFactor := factorQR.1
-    let rFactor := factorQR.2
-    let g' := addModSquare g rFactor m
-    let hCorrection := addModSquare (mulModSquare s e m) (mulModSquare qFactor h m) m
-    let h' := addModSquare h hCorrection m
-    let b := subModSquare (addModSquare (mulModSquare s g' m) (mulModSquare t h' m) m) 1 m
-    ZPoly.congr b 0 m := by
-  exact quadraticHenselStep_bezout_error_from_factor_update m f g h s t hm hprod hbez hmonic
-
 private theorem mul_sub_right_exact
     (x y z : ZPoly) :
     x * z - y * z = (x - y) * z := by
@@ -2079,7 +2060,7 @@ private theorem quadraticHenselStep_bezout_error_congr_zero
     let h' := addModSquare h hCorrection m
     let b := subModSquare (addModSquare (mulModSquare s g' m) (mulModSquare t h' m) m) 1 m
     ZPoly.congr b 0 m := by
-  exact quadraticHenselStep_bezout_error_of_factor_update m f g h s t hm hprod hbez hmonic
+  exact quadraticHenselStep_bezout_error_from_factor_update m f g h s t hm hprod hbez hmonic
 
 private theorem quadraticHenselStep_bezout_correction_congr
     (m : Nat)

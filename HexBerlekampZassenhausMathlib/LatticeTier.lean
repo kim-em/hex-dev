@@ -500,7 +500,7 @@ theorem normalizedFactors_card_le_bhksEquivalenceClassIndicators_size
   -- the #8413 partition of the lifted indices by true-factor supports
   have hpartition : LiftedFactorSubsetPartition core
       (Hex.ZPoly.toMonicLiftData core B primeData) Finset.univ core :=
-    liftedFactorSubsetPartition_of_toMonicPrimeData_complete core B primeData
+    liftedFactorSubsetPartition_of_toMonicModP core B primeData
       (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos)
       hcore_lc_pos hcore_pos hcore_prim hcore_sqfree hB_ne hbound_monic
   -- per-factor Hensel facts
@@ -703,7 +703,7 @@ the fast-core floor, so every true-factor support survives the LLL/Gram-Schmidt
 cut as a distinct equivalence class, and one verified candidate is emitted per
 class (`bhksIndicatorCandidates?_size_eq`).
 -/
-theorem bhksRecovery_factor_count
+theorem bhksRecoveryCoreWithBound_some_factor_count_eq
     (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
       = some primeData)
@@ -756,7 +756,7 @@ so `bhksSingleAllOnesPartition` could report `true` on a *reducible* core.
 The `factorLattice` call site supplies adequate precision via
 `latticePrecisionCap`, which contains the floor by construction.
 -/
-theorem bhksSingleAllOnes_irreducible
+theorem squareFreeCore_irreducible_of_bhksSingleAllOnes
     (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
       = some primeData)
@@ -863,7 +863,8 @@ van Hoeij CLD lattice tier `latticeCoreFactorsWithBound` returns for the
 square-free core of `normalizeForFactor f` is irreducible over `ℤ`, provided the
 precision clears the fast-core acceptance floor (`hB_floor`).  Arm 1 (small-mod
 singleton) is proved directly; arms 2/3 are the deep CLD obligations
-`bhksRecovery_factor_count` / `bhksSingleAllOnes_irreducible`.  The
+`bhksRecoveryCoreWithBound_some_factor_count_eq` /
+`squareFreeCore_irreducible_of_bhksSingleAllOnes`.  The
 `factorLattice` call site supplies `hB_floor` via `latticePrecisionCap`.
 -/
 theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
@@ -879,9 +880,11 @@ theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
     ∀ g ∈ cf.toList, Hex.ZPoly.Irreducible g :=
   latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible_of_bhks
     f hf_ne B primeData hselected hdeg_ne hB_floor hB_ne hlattice
-    (bhksRecovery_factor_count f hf_ne B primeData hselected hdeg_ne)
+    (bhksRecoveryCoreWithBound_some_factor_count_eq
+      f hf_ne B primeData hselected hdeg_ne)
     (fun B' hB'_floor hB'_ne hbhks =>
-      bhksSingleAllOnes_irreducible f hf_ne B' primeData hselected hdeg_ne
+      squareFreeCore_irreducible_of_bhksSingleAllOnes
+        f hf_ne B' primeData hselected hdeg_ne
         hB'_floor hB'_ne hbhks)
 /-!
 ## Lattice-branch assembly
@@ -906,8 +909,8 @@ Consumed by the lattice residual arm of
 `factorLatticeFactorsWithBound_factor_irreducible`.
 
 The core irreducibility input is supplied by
-`bhksRecovery_factor_count` and
-`bhksSingleAllOnes_irreducible`; the reassembly side introduces no
+`bhksRecoveryCoreWithBound_some_factor_count_eq` and
+`squareFreeCore_irreducible_of_bhksSingleAllOnes`; the reassembly side introduces no
 additional assumption. -/
 theorem reassemblyExpansionComplete_latticeCore_of_ne_zero
     (f : Hex.ZPoly) (hf : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)

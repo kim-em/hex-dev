@@ -293,7 +293,7 @@ theorem montgomeryReduceNat_lt (hp_pos : 0 < p) (hp_lt : p < R)
     (hpp' : p * p' % R = R - 1) (hT : T < p * R) :
     montgomeryReduceNat p p' T < p
 
-theorem montgomeryReduceNat_u_lt_two_p (hp_pos : 0 < p) (hp_lt : p < R)
+theorem montgomeryReduceNat_quotient_lt_two_p (hp_pos : 0 < p) (hp_lt : p < R)
     (hpp' : p * p' % R = R - 1) (hT : T < p * R) :
     (T + ((T % R) * p' % R) * p) / R < 2 * p
 ```

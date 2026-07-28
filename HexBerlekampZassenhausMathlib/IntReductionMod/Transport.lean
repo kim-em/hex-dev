@@ -1577,8 +1577,8 @@ private theorem one_le_degree_getD_of_irreducible_dvd_primitive
 /-- **Producer for `InitialLiftedFactorSubsetPartitionEvidence` at `toMonicLiftData`.**
 
 Assembles the five-field initial lifted-partition evidence package over
-`Hex.ZPoly.toMonicLiftData core B primeData`, from a `toMonicPrimeData?` selection
-witness and the standard non-monic core side conditions (positive leading
+`Hex.ZPoly.toMonicLiftData core B primeData`, from a mod-`p` factorization of
+the monic transform and the standard non-monic core side conditions (positive leading
 coefficient, positive degree, primitivity, `B ≠ 0`, precision bound).
 
 The `cover` field reads each lifted index back through the mod-`p` index cover of
@@ -1591,7 +1591,7 @@ uniqueness) and applies `modPFactorSubset_disjoint_of_choosePrimeData`.
 candidate (primitive, positive-leading) to collapse association to equality, then
 applies `toMonicLiftData_unique_subset`.  The two recovery fields are the landed
 non-circular `liftedRecoveryCandidate` analytics. -/
-theorem initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData
+theorem initialPartitionEvidence_of_toMonicModP
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hval : ModPFactorization (Hex.ZPoly.toMonic core).monic primeData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
@@ -1856,7 +1856,7 @@ theorem initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData
 **Monic-correspondent descent for a represented integer factor (#8068).**
 
 Top-level extraction of the `descent` step inside
-`initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData`.  From an
+`initialPartitionEvidence_of_toMonicModP`.  From an
 original-core represented factor `f` (irreducible, dividing `core`, represented
 at the `toMonicLiftData` lift by subset `S`) this reconstructs the *monic
 correspondent* `gf` of `f` from `f` alone: the monic irreducible factor of

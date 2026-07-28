@@ -1005,18 +1005,14 @@ private theorem gramDet_rat_eq_progressMatrix_zero_det (b : Matrix Int n m)
     push_cast; rfl
   rw [hcast_chain, hstep1, hstep2, hstep3]
 
-/-- The leading Gram determinant is the product of the corresponding squared
-Gram-Schmidt norms.  The proof follows the chain
-`(gramDet b k hk : Rat) = det (progressMatrix b k hk 0) =
-det (progressMatrix b k hk k) = det (auxMatrix b k hk) = gramSchmidtNormProduct`.
-Note: the proof does not use the independence hypothesis since both sides are
-computed purely from `b`; the hypothesis matches the surrounding API. -/
+/-- For an independent integer matrix, each leading Gram determinant, cast to
+`Rat`, equals the product of the squared norms of its Gram-Schmidt basis rows. -/
 theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
-    (_hli : independent b) (k : Nat) (hk : k ≤ n) :
+    (hli : independent b) (k : Nat) (hk : k ≤ n) :
     (gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk := by
   rw [gramDet_rat_eq_progressMatrix_zero_det b k hk,
     ← progressMatrix_det_invariant b k hk k (Nat.le_refl k), progressMatrix_full_eq_auxMatrix]
-  exact auxMatrix_det_eq_prod_normSq b k hk
+  exact (fun _ : independent b => auxMatrix_det_eq_prod_normSq b k hk) hli
 
 /-- One-step extension of `gramSchmidtNormProduct`: appending the `k`-th
 factor multiplies the `k`-fold product by `((basis b).row ⟨k, _⟩)`..normSq

@@ -608,7 +608,7 @@ private theorem zpoly_primitive_scaledRecombinationCandidate
     (Hex.ZPoly.defaultFactorCoeffBound core) hcore_lc_le
     hcore_ne hcore_lc_pos hd_liftedFactor_monic hprecision T
 
-/-- Abstract-bound variant of `not_represents_empty_of_irreducible_dvd_core`.
+/-- Abstract-bound variant of `not_represents_empty_of_monic`.
 
 Routes through the partition's sound recovery equality
 `LiftedFactorSubsetPartition.liftedRecoveryCandidate_eq`: on the empty subset
@@ -617,7 +617,7 @@ the recovered candidate is the constant `1`
 `factor = 1`, contradicting irreducibility. The `hcore_monic` hypothesis is no
 longer load-bearing for the recovery itself but is retained for API
 uniformity with the consuming monic recursion. -/
-private theorem not_represents_empty_of_irreducible_dvd_core_of_bound
+private theorem not_represents_empty_of_monic_bound
     {core target factor : Hex.ZPoly} {d : Hex.LiftData}
     {J : LiftedFactorSubset d}
     (B' : Nat)
@@ -653,11 +653,11 @@ Used by `representedFactor_dvd_recombinationCandidate_of_subset` (#4457) to
 close the `S = ∅` subcase of the squarefreeness contradiction.
 
 This is a thin wrapper over
-`not_represents_empty_of_irreducible_dvd_core_of_bound` that instantiates
+`not_represents_empty_of_monic_bound` that instantiates
 `B' := defaultFactorCoeffBound core` and discharges `hvalid` via
 `defaultFactorCoeffBound_valid core hcore_ne factor hfactor_dvd`.
 -/
-private theorem not_represents_empty_of_irreducible_dvd_core
+private theorem not_represents_empty_of_monic
     {core target factor : Hex.ZPoly} {d : Hex.LiftData}
     {J : LiftedFactorSubset d}
     (hcore_ne : core ≠ 0)
@@ -676,14 +676,14 @@ private theorem not_represents_empty_of_irreducible_dvd_core
     rw [hlead] at hcore_lc_le
     simp only [Int.natAbs_one] at hcore_lc_le
     omega
-  exact not_represents_empty_of_irreducible_dvd_core_of_bound
+  exact not_represents_empty_of_monic_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     (defaultFactorCoeffBound_valid core hcore_ne factor hfactor_dvd)
     hcore_ne hcore_monic hd_modulus hpartition hfactor_dvd_target hfactor_irr
     hprecision
 
 /-- Abstract-bound variant of
-`not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core`.
+`not_represents_empty_of_primitive`.
 
 Routes through the partition's sound recovery equality
 `LiftedFactorSubsetPartition.liftedRecoveryCandidate_eq`: on the empty subset
@@ -692,7 +692,7 @@ the recovered candidate is the constant `1`
 `factor = 1`, contradicting irreducibility. The primitive/positive-leading
 core hypotheses are no longer load-bearing for the recovery itself but are
 retained for API uniformity with the consuming primitive recursion. -/
-private theorem not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core_of_bound
+private theorem not_represents_empty_of_primitive_bound
     {core target factor : Hex.ZPoly} {d : Hex.LiftData}
     {J : LiftedFactorSubset d}
     (B' : Nat)
@@ -719,7 +719,7 @@ private theorem not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc
 
 /--
 Primitive + positive-leading-core variant of
-`not_represents_empty_of_irreducible_dvd_core` (#4646).
+`not_represents_empty_of_monic` (#4646).
 
 For primitive non-monic `core`, the empty-prefix collapse becomes
 `scaledLiftedFactorProduct core d ∅ = C (lc core)`, and the centred-lift
@@ -730,13 +730,13 @@ recovery forces `factor = C (lc core)`. Together with
 `d.p^d.k = 1` degenerate case is excluded as in the monic proof.
 
 This is a thin wrapper over
-`not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core_of_bound`
+`not_represents_empty_of_primitive_bound`
 that instantiates `B' := defaultFactorCoeffBound core`, discharges
 `hvalid` via `defaultFactorCoeffBound_valid core hcore_ne factor hfactor_dvd`,
 and discharges the leading-coefficient bound via the same lemma applied to
 `core ∣ core`.
 -/
-private theorem not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core
+private theorem not_represents_empty_of_primitive
     {core target factor : Hex.ZPoly} {d : Hex.LiftData}
     {J : LiftedFactorSubset d}
     (hcore_ne : core ≠ 0)
@@ -755,7 +755,7 @@ private theorem not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc
   have hlc_natAbs_pos : 0 < (Hex.DensePoly.leadingCoeff core).natAbs :=
     Int.natAbs_pos.mpr (ne_of_gt hcore_lc_pos)
   have hd_modulus : 2 ≤ d.p ^ d.k := by omega
-  exact not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core_of_bound
+  exact not_represents_empty_of_primitive_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     (defaultFactorCoeffBound_valid core hcore_ne factor hfactor_dvd)
     hcore_ne hcore_primitive hcore_lc_pos hcore_lc_le hd_modulus hpartition

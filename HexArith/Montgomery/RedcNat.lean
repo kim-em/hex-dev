@@ -94,7 +94,7 @@ private theorem montgomeryReduceNat_exact_dvd (p p' T : Nat)
             (Nat.mod_lt T hword_pos)
 
 /-- Core quotient bound before threading the inverse and modulus-size hypotheses. -/
-private theorem montgomeryReduceNat_quotient_lt (hp_pos : 0 < p)
+private theorem montgomeryReduceNat_quotient_lt_two_p_of_bound (hp_pos : 0 < p)
     (hT : T < p * UInt64.word) :
     (T + ((T % UInt64.word) * p' % UInt64.word) * p) / UInt64.word < 2 * p := by
   have hword_pos : 0 < UInt64.word := by
@@ -164,7 +164,7 @@ theorem montgomeryReduceNat_lt (hp_pos : 0 < p) (hp_lt : p < UInt64.word)
   have hc := montgomeryReduceNat_correction_eq p' T
   have hu : (T + (T * p' % UInt64.word) * p) / UInt64.word < 2 * p := by
     rw [hc]
-    exact montgomeryReduceNat_quotient_lt hp_pos hT
+    exact montgomeryReduceNat_quotient_lt_two_p_of_bound hp_pos hT
   by_cases h : (T + (T * p' % UInt64.word) * p) / UInt64.word < p
   · simp [montgomeryReduceNat, h]
   · simp [montgomeryReduceNat, h]
@@ -174,9 +174,9 @@ theorem montgomeryReduceNat_lt (hp_pos : 0 < p) (hp_lt : p < UInt64.word)
 The unreduced Montgomery quotient is always below `2p`, so one subtraction is
 enough to normalize the result.
 -/
-theorem montgomeryReduceNat_u_lt_two_p (hp_pos : 0 < p) (hp_lt : p < UInt64.word)
+theorem montgomeryReduceNat_quotient_lt_two_p (hp_pos : 0 < p) (hp_lt : p < UInt64.word)
     (hpp' : p * p' % UInt64.word = UInt64.word - 1) (hT : T < p * UInt64.word) :
     (T + ((T % UInt64.word) * p' % UInt64.word) * p) / UInt64.word < 2 * p := by
   have _hp_lt : p < UInt64.word := hp_lt
   have _hpp' : p * p' % UInt64.word = UInt64.word - 1 := hpp'
-  exact montgomeryReduceNat_quotient_lt hp_pos hT
+  exact montgomeryReduceNat_quotient_lt_two_p_of_bound hp_pos hT

@@ -49,7 +49,7 @@ without having to construct the internal `QuadraticMultifactorLiftInvariant`
 themselves.
 
 Consumed by
-`recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition`
+`recombinationSearchModAux_factor_associated`
 (via `LiftedFactorListMatches.nodup_of_injOn`).
 
 The `factorsModP.toList.Nodup` hypothesis is the load-bearing ingredient;

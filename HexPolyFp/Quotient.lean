@@ -921,9 +921,7 @@ private theorem size_le_of_coeff_eq_zero_from_local (f : FpPoly p) (bound : Nat)
     have htop_zero : f.coeff (f.size - 1) = 0 := hzero (f.size - 1) (by omega)
     exact False.elim (DensePoly.coeff_last_ne_zero_of_pos_size f hpos htop_zero)
 
-/-- Evaluation of a sum equals the sum of evaluations, proved by expanding both
-sides as coefficient-power sums up to a common bound (`max f.size h.size`) and
-applying additivity of the bounded power-sum evaluator. -/
+/-- Evaluation of a sum equals the sum of the evaluations. -/
 theorem eval_add
     (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f + h) β =
@@ -958,10 +956,7 @@ theorem eval_add
     show (0 : ZMod64 p) + 0 = 0
     grind
 
-/-- Evaluation of a difference equals the difference of evaluations, proved by
-expanding both sides as coefficient-power sums up to a common bound
-(`max f.size h.size`) and applying subtractivity of the bounded power-sum
-evaluator. -/
+/-- Evaluation of a difference equals the difference of the evaluations. -/
 theorem eval_sub
     (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f - h) β =
@@ -996,9 +991,8 @@ theorem eval_sub
     show (0 : ZMod64 p) - 0 = 0
     grind
 
-/-- Evaluation of a constant-scaled polynomial factors as the reduced constant
-times the evaluation, proved by rewriting `C c * f` as a coefficient scaling and
-applying the constant-multiple law of the bounded power-sum evaluator. -/
+/-- Evaluation of a constant multiple equals the reduced constant times the
+evaluation. -/
 theorem eval_C_mul
     (c : ZMod64 p) (f : FpPoly p) (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
@@ -1028,10 +1022,8 @@ theorem eval_C_mul
     rw [DensePoly.coeff_eq_zero_of_size_le f hi]
     exact hzero
 
-/-- Evaluating a monomial `monomial n c` yields the reduced constant `C c` times
-the `n`-th power of the evaluation point; the zero-coefficient case collapses to
-`0` and the nonzero case unfolds the dense representation and folds over the
-trailing zeros. -/
+/-- Evaluating `monomial n c` yields the reduced constant `C c` times the
+`n`-th power of the evaluation point. -/
 theorem eval_monomial (n : Nat) (c : ZMod64 p)
     (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos)

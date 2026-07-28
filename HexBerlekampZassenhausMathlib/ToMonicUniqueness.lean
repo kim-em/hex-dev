@@ -868,8 +868,8 @@ theorem henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
       hcore_lc_pos hcore_pos
       (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos) hprecision hbound hirr hdvd hS hT
 
-/-- Hensel subset correspondence obtained directly from a
-`toMonicPrimeData?` factorization.
+/-- Hensel subset correspondence obtained directly from a mod-`p`
+factorization of the monic transform.
 
 Same conclusion as
 `henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent`, but
@@ -878,7 +878,7 @@ only descent fields that constructor consumed (`lift_eq`, `successful_lift`) are
 `rfl`/`trivial`, and the existence/uniqueness fields come directly from the core
 facts via `toMonicLiftData_represents_lifted_of_modP` and
 `toMonicLiftData_unique_subset`. -/
-theorem henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData
+theorem henselSubsetCorrespondenceHypotheses_of_toMonicModP
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
     (hval : ModPFactorization (Hex.ZPoly.toMonic core).monic primeData)
@@ -942,7 +942,7 @@ theorem liftedFactorSubsetPartition_of_toMonicPrimeData_success_descent
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     LiftedFactorSubsetPartition core d Finset.univ core := by
   intro d
-  exact liftedFactorSubsetPartition_of_toMonicPrimeData
+  exact liftedFactorSubsetPartition_of_toMonicModP_evidence
     core B primeData
     (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos)
     (henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
@@ -951,14 +951,14 @@ theorem liftedFactorSubsetPartition_of_toMonicPrimeData_success_descent
     hcore_sqfree hinitial
 
 /-- Successful-descent variant of
-`HenselFactorData.ofToMonicChoosePrime`.  The `corr` field is
+`HenselFactorData.ofToMonicPrimeData`.  The `corr` field is
 sourced from the non-circular `toMonicPrimeData?` correspondence constructor
 above, using the monic-correspondent reverse descent carrier.  The partition
 field uses `liftedFactorSubsetPartition` with that same correspondence;
 recovered partition evidence is supplied by
 `InitialLiftedFactorSubsetPartitionEvidence`.
 -/
-theorem HenselFactorData.ofToMonicChoosePrimeDescent
+theorem HenselFactorData.ofToMonicPrimeDataDescent
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
     (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)

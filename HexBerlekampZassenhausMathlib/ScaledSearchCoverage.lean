@@ -64,7 +64,7 @@ theorem nonempty_of_partition
     have hiff := Set.ext_iff.mp hnot i
     simpa using hiff
   subst hS_empty
-  exact not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core
+  exact not_represents_empty_of_primitive
     hcore_ne hcore_primitive hcore_lc_pos hprecision hdvd hpartition hdvd hirr hrep
 
 /-- The lifted true-support family is in bijection with the normalized
@@ -226,7 +226,7 @@ divisibility into two cases:
   squarefreeness via `Irreducible.not_unit`.  When `S = ∅`, the recovery
   equation forces `factor = 1` (or `factor = 0` in the degenerate
   `d.p^d.k = 1` regime), again contradicting irreducibility — packaged in
-  `not_represents_empty_of_irreducible_dvd_core`.
+  `not_represents_empty_of_monic`.
 -/
 theorem representedFactor_dvd_recombinationCandidate_of_subset
     {core target factor quotient : Hex.ZPoly} {d : Hex.LiftData}
@@ -285,7 +285,7 @@ theorem representedFactor_dvd_recombinationCandidate_of_subset
       omega
     by_cases hS_empty : S = (∅ : LiftedFactorSubset d)
     · -- Subcase B2: `S = ∅` — packaged by the empty-support helper.
-      apply not_represents_empty_of_irreducible_dvd_core
+      apply not_represents_empty_of_monic
         hcore_ne hcore_monic hprecision hfactor_dvd_core hpartition
         hfactor_dvd_target hfactor_irr
       rw [hS_empty] at hrep
@@ -1656,7 +1656,7 @@ precision is replaced by `2 * B' < d.p ^ d.k` against an abstract bound
 `B'`, paired with the universal divisor coefficient bound
 `∀ g ∣ core, ∀ i, (g.coeff i).natAbs ≤ B'`. The `B'`/`hvalid`/`hprecision`
 abstract-bound hypotheses remain load-bearing at the empty-`J` step
-(`not_represents_empty_of_irreducible_dvd_core_of_bound`, specialised by
+(`not_represents_empty_of_monic_bound`, specialised by
 `hvalid g hg_dvd_core`) and the prefix-none discharge
 (`liftedFactorSubsetPartition_prefix_none_of_bound`, receiving the
 universal `hvalid` and `B'` unchanged). At the cover-at-min recovery the
@@ -1727,7 +1727,7 @@ private theorem recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetP
         exact htarget_monic
       -- Step 1: `J` is nonempty (else the partition produces a representing
       -- subset `S ⊆ ∅` for an irreducible divisor of `target`, contradicting
-      -- `not_represents_empty_of_irreducible_dvd_core_of_bound`).
+      -- `not_represents_empty_of_monic_bound`).
       have hJ_ne : J.Nonempty := by
         by_contra hJ_empty
         rw [Finset.not_nonempty_iff_eq_empty] at hJ_empty
@@ -1758,7 +1758,7 @@ private theorem recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetP
           exact Finset.subset_empty.mp hSJ
         have hg_dvd_core : g ∣ core :=
           zpoly_dvd_trans hg_dvd_target htarget_dvd_core
-        apply not_represents_empty_of_irreducible_dvd_core_of_bound
+        apply not_represents_empty_of_monic_bound
           B' (hvalid g hg_dvd_core) hcore_ne hcore_monic hd_modulus
           hpartition hg_dvd_target hg_irr_toPoly hprecision
         rw [← hS_empty]; exact hSrep
@@ -1932,7 +1932,7 @@ irreducible integer divisor of `target` is associated to some emitted
 candidate in `result`.
 
 The deliverable theorem
-`recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition`
+`recombinationSearchModAux_factor_associated`
 specialises this universal statement to a fixed `factor` hypothesis.
 
 Proof outline (induction on `fuel`):
@@ -1940,7 +1940,7 @@ Proof outline (induction on `fuel`):
 * `fuel = fuel' + 1`:
   - If `J = ∅`: the partition's inherited `exists_subset` forces every
     irreducible divisor of `target` to be represented by `∅`, contradicting
-    `not_represents_empty_of_irreducible_dvd_core`. Therefore `target` has
+    `not_represents_empty_of_monic`. Therefore `target` has
     no irreducible divisors; combined with `target` monic and
     `target ∣ core`, this gives `target = 1` and the executable returns
     `some []`. The universal claim is vacuous (no irreducibles divide 1).
@@ -2107,7 +2107,7 @@ theorem RecoveredScaledSearch.covers_of_bound
           exact Finset.subset_empty.mp hSJ
         have hg_dvd_core : g ∣ core :=
           zpoly_dvd_trans hg_dvd_target htarget_dvd_core
-        apply not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core_of_bound
+        apply not_represents_empty_of_primitive_bound
           B' (hvalid g hg_dvd_core) hcore_ne hcore_primitive hcore_lc_pos
           hcore_lc_le hd_modulus hpartition hg_dvd_target hg_irr_toPoly hprecision
         rw [← hS_empty]; exact hSrep

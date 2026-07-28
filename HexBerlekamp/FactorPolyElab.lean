@@ -120,7 +120,7 @@ meta def fpCoverEntries (tactic : String) (p : Nat) [Hex.ZMod64.Bounds p]
 /-- Constructs the value emitted by `factor_poly` for
 `f : FpPoly p`: returns the `Hex.FpPoly.Factored f` value as a raw `Expr`
 over reified literal data. -/
-meta def proveFpFactored (tactic : String) (p : Nat)
+meta def mkFpFactored (tactic : String) (p : Nat)
     [Hex.ZMod64.Bounds p] (hpt : Hex.Nat.isPrimeTrial p = true)
     (pE boundsE RE zeroE decE fE : Expr) : MetaM Expr := do
       let hp : Hex.Nat.Prime p := Hex.Nat.isPrimeTrial_isPrime hpt
@@ -169,7 +169,7 @@ meta def elabFactorPolyFp (tactic : String) (p : Nat)
   if hpt : Hex.Nat.isPrimeTrial p = true then
     if h1 : 0 < p then
       if h2 : p < 2 ^ 31 then
-        @proveFpFactored tactic p ⟨h1, h2⟩ hpt pE boundsE RE zeroE decE fE
+        @mkFpFactored tactic p ⟨h1, h2⟩ hpt pE boundsE RE zeroE decE fE
       else
         throwError "{tactic}: internal error: modulus over the ZMod64 bound \
             despite a Bounds instance"

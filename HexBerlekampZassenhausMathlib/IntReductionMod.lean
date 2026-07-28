@@ -35,17 +35,17 @@ namespace HexBerlekampZassenhausMathlib
 /-- **#7584 core-facts producer (lifted-subset partition).**
 
 `LiftedFactorSubsetPartition core (toMonicLiftData core B primeData) Finset.univ
-core` from the executable `toMonicPrimeData?` selection witness and the standard
+core` from a mod-`p` factorization of the monic transform and the standard
 core side conditions alone.  The embedded Hensel correspondence comes from the
-carrier-free `henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData` (no
+carrier-free `henselSubsetCorrespondenceHypotheses_of_toMonicModP` (no
 `MonicDescentHypotheses` input), and the recovered-coordinate partition evidence
 from
-`IntReductionMod.initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData`,
+`IntReductionMod.initialPartitionEvidence_of_toMonicModP`,
 so the caller supplies neither the descent carrier nor a separate
 `InitialLiftedFactorSubsetPartitionEvidence`.  The monic-only unscaled support
 field stays guarded by `leadingCoeff core = 1`; the non-monic path routes through
 the recovered `liftedRecoveryCandidate` coordinate. -/
-theorem liftedFactorSubsetPartition_of_toMonicPrimeData_complete
+theorem liftedFactorSubsetPartition_of_toMonicModP
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
     (hval : ModPFactorization (Hex.ZPoly.toMonic core).monic primeData)
@@ -74,19 +74,19 @@ theorem liftedFactorSubsetPartition_of_toMonicPrimeData_complete
     have hzero : Hex.precisionForCoeffBound B primeData.p = 0 := by omega
     rw [hzero, pow_zero] at hmodulus
     omega
-  exact liftedFactorSubsetPartition_of_toMonicPrimeData core B primeData hval
-    (henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData core B primeData
+  exact liftedFactorSubsetPartition_of_toMonicModP_evidence core B primeData hval
+    (henselSubsetCorrespondenceHypotheses_of_toMonicModP core B primeData
       hval hcore_lc_pos hcore_pos hcore_prim hprecision hbound hB_ne_zero)
     hcore_sqfree
-    (IntReductionMod.initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData
+    (IntReductionMod.initialPartitionEvidence_of_toMonicModP
       core B primeData hval hcore_lc_pos hcore_pos hcore_prim hB_ne_zero hbound)
 
-/-- Constructs `HenselFactorData core B primeData` from a
-`toMonicPrimeData?` factorization and the standard square-free-core
+/-- Constructs `HenselFactorData core B primeData` from a mod-`p`
+factorization of the monic transform and the standard square-free-core
 hypotheses.  The correspondence and partition follow from the preceding
 theorems; the remaining fields follow directly from the factorization and
 precision bound. -/
-theorem HenselFactorData.ofToMonicPrime
+theorem HenselFactorData.ofToMonicModP
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
     (hval : ModPFactorization (Hex.ZPoly.toMonic core).monic primeData)
@@ -121,10 +121,10 @@ theorem HenselFactorData.ofToMonicPrime
       liftedFactor_inj := ?_
       modulus := ?_
       precision := ?_ }
-  · exact henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData
+  · exact henselSubsetCorrespondenceHypotheses_of_toMonicModP
       core B primeData hval hcore_lc_pos hcore_pos hcore_prim
       hprec_pos hbound hB_ne_zero
-  · exact liftedFactorSubsetPartition_of_toMonicPrimeData_complete
+  · exact liftedFactorSubsetPartition_of_toMonicModP
       core B primeData hval hcore_lc_pos hcore_pos hcore_prim
       hcore_sqfree hB_ne_zero hbound
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
@@ -793,7 +793,7 @@ theorem classicalCoreFactorsWithBound_factor_irreducible_of_validBound
       hval hprec_pos
   have hpartition : LiftedFactorSubsetPartition core
       (Hex.ZPoly.toMonicLiftData core LB primeData) Finset.univ core :=
-    liftedFactorSubsetPartition_of_toMonicPrimeData_complete core LB primeData hval
+    liftedFactorSubsetPartition_of_toMonicModP core LB primeData hval
       hcore_lc_pos hcore_pos hcore_primitive hcore_sqfree hLB_ne hbound_monic
   have hmatches : LiftedFactorListMatches (Hex.ZPoly.toMonicLiftData core LB primeData)
       Finset.univ (Hex.ZPoly.toMonicLiftData core LB primeData).liftedFactors.toList :=

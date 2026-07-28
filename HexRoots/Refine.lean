@@ -227,7 +227,7 @@ namespace IsolationLoop
   | _ => none
 
 /-- Strategy-parametric implementation of the all-atoms finishing pass. -/
-@[expose] def refineAtoms? (p : ZPoly) (target : Int)
+@[expose] def finishAllAtoms? (p : ZPoly) (target : Int)
     (strategy : AtomStrategy)
     (tried : Array (Component × Option (Certified p))) :
     Option (Array (Certified p)) :=
@@ -250,7 +250,7 @@ NK-only strategy keeps its existing proof-specialized loop path. -/
     Option (Array (Certified p)) :=
   match strategy with
   | .nk => none
-  | .pellet | .nkThenPellet => refineAtoms? p target strategy tried
+  | .pellet | .nkThenPellet => finishAllAtoms? p target strategy tried
 
 /-- Ordinary output guard after the optional local finisher. Normalized
 worklists may emit any ready, disjoint certificates. The NK-only strategy also

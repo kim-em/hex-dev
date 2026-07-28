@@ -267,7 +267,7 @@ Composes (no new analytic obligation; the recovered initial partition fields
 come from the explicit `InitialLiftedFactorSubsetPartitionEvidence` argument):
 
 * `hcorr` for `corr`;
-* `liftedFactorSubsetPartition_of_toMonicPrimeData` applied to `hcorr` for
+* `liftedFactorSubsetPartition_of_toMonicModP_evidence` applied to `hcorr` for
   `partition`;
 * the `_of_monicPrimeData` umbrellas
   (`Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData`,
@@ -276,7 +276,7 @@ come from the explicit `InitialLiftedFactorSubsetPartitionEvidence` argument):
   natDegree positivity / injectivity facts;
 * `Hex.precisionForCoeffBound_spec` for `precision`, refined to `modulus`
   via `B ≠ 0`. -/
-theorem HenselFactorData.ofToMonicChoosePrime
+theorem HenselFactorData.ofToMonicPrimeData
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
     (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
@@ -315,7 +315,7 @@ theorem HenselFactorData.ofToMonicChoosePrime
       modulus := ?_
       precision := ?_ }
   · exact hcorr
-  · exact liftedFactorSubsetPartition_of_toMonicPrimeData
+  · exact liftedFactorSubsetPartition_of_toMonicModP_evidence
       core B primeData
       (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos)
       hcorr hcore_sqfree hinitial
@@ -816,7 +816,7 @@ theorem monic_eq_of_primitivePart_dilate_eq
   have hpp_size : pp.size = m₁.size := by
     have : (Hex.DensePoly.scale K₁ pp).size = m₁.size := by
       rw [hrec₁]; exact size_dilate_eq_of_monic_of_ne_zero hc hm₁
-    rwa [Hex.ZPoly.scale_size_of_nonzero K₁ pp hK₁_ne] at this
+    rwa [Hex.ZPoly.scale_size_of_ne_zero K₁ pp hK₁_ne] at this
   have hpp_lead_ne : Hex.DensePoly.leadingCoeff pp ≠ 0 :=
     Hex.DensePoly.leadingCoeff_ne_zero_of_pos_size pp
       (by rw [hpp_size]; exact zpoly_size_pos_of_monic hm₁)
@@ -824,7 +824,7 @@ theorem monic_eq_of_primitivePart_dilate_eq
   have hpp_size₂ : pp.size = m₂.size := by
     have : (Hex.DensePoly.scale K₂ pp).size = m₂.size := by
       rw [hrec₂]; exact size_dilate_eq_of_monic_of_ne_zero hc hm₂
-    rwa [Hex.ZPoly.scale_size_of_nonzero K₂ pp hK₂_ne] at this
+    rwa [Hex.ZPoly.scale_size_of_ne_zero K₂ pp hK₂_ne] at this
   have hsize_eq : m₁.size = m₂.size := hpp_size ▸ hpp_size₂
   -- Match leading coefficients to deduce `K₁ = K₂`.
   have hlc₁ : c ^ (m₁.size - 1) = K₁ * Hex.DensePoly.leadingCoeff pp := by

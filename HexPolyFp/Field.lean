@@ -79,7 +79,7 @@ instance : DensePoly.ZeroSubNegLaw (ZMod64 p) where
     simp [Nat.zero_add]
 
 /-- `DensePoly.divMod f g` returns a quotient-remainder pair `(q, r)` with `q * g + r = f`. -/
-private theorem divMod_reconstruct [PrimeModulus p] (f g : DensePoly (ZMod64 p)) :
+private theorem divMod_spec [PrimeModulus p] (f g : DensePoly (ZMod64 p)) :
     let qr := DensePoly.divMod f g
     qr.1 * g + qr.2 = f := by
   by_cases hgzero : g.isZero
@@ -132,7 +132,7 @@ private theorem divMod_reconstruct [PrimeModulus p] (f g : DensePoly (ZMod64 p))
 private theorem mod_sub_self_eq_mul_neg_div [PrimeModulus p] (f m : DensePoly (ZMod64 p)) :
     f % m - f = m * (0 - (f / m)) := by
   have hdiv : (f / m) * m + (f % m) = f := by
-    exact divMod_reconstruct f m
+    exact divMod_spec f m
   calc
     f % m - f = 0 - (f / m) * m := by
       apply DensePoly.ext_coeff
@@ -711,7 +711,7 @@ instance instDivModLawsZMod64Fp (p : Nat) [Bounds p] [PrimeModulus p] :
     DensePoly.DivModLaws (ZMod64 p) where
   divMod_spec := by
     intro f g
-    exact divMod_reconstruct f g
+    exact divMod_spec f g
   divMod_remainder_degree_lt_of_pos_degree := by
     intro f g hdegree
     exact divMod_remainder_degree_lt f g hdegree

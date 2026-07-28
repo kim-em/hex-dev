@@ -68,7 +68,7 @@ private theorem normalizePrimitiveSign_ne_zero_of_ne_zero (p : ZPoly) (hp : p �
     intro hzero
     have hsize : p.size = 0 := by
       have hscaled_size : (DensePoly.scale (-1 : Int) p).size = p.size :=
-        scale_size_of_nonzero (-1 : Int) p (by decide)
+        scale_size_of_ne_zero (-1 : Int) p (by decide)
       rw [hzero, DensePoly.size_zero] at hscaled_size
       omega
     apply hp
@@ -171,12 +171,6 @@ theorem ratPolyPrimitivePart_primitive (f : DensePoly Rat)
     Primitive (ratPolyPrimitivePart f) := by
   unfold ratPolyPrimitivePart at h ⊢
   exact normalizePrimitiveSign_primitivePart_primitive _ h
-
-/-- A rational polynomial is a rational scalar multiple of the rationalization
-of its integer primitive part. -/
-theorem ratPolyPrimitivePart_rational_associate (f : DensePoly Rat) :
-    ∃ unit : Rat, f = DensePoly.scale unit (toRatPoly (ratPolyPrimitivePart f)) := by
-  exact ratPolyPrimitivePart_exists_scale f
 
 /--
 Gauss-style cancellation: if two primitive nonzero integer polynomials are
@@ -554,9 +548,9 @@ private theorem rat_divMod_remainder_degree_lt (p q : DensePoly Rat)
     omega
   · exact Nat.pos_of_ne_zero hq
 
-/-- `rat_divMod_reconstruct`: the `DensePoly Rat` reconstruction identity
+/-- The `DensePoly Rat` reconstruction identity
 `qr.1 * q + qr.2 = p` for `DensePoly.divMod` (holds unconditionally). -/
-private theorem rat_divMod_reconstruct (p q : DensePoly Rat) :
+private theorem rat_divMod_spec (p q : DensePoly Rat) :
     let qr := DensePoly.divMod p q
     qr.1 * q + qr.2 = p := by
   by_cases hq : q.size = 0
@@ -585,10 +579,10 @@ private theorem rat_divMod_reconstruct (p q : DensePoly Rat) :
       exact DensePoly.divModArray_reconstruction p q
         (fun coeff : Rat => coeff / q.leadingCoeff) hcancel
 
-/-- `rat_divMod_reconstruct_of_not_isZero`: the `DensePoly Rat`
-reconstruction identity `qr.1 * q + qr.2 = p` for `DensePoly.divMod`
+/-- The `DensePoly Rat` reconstruction identity `qr.1 * q + qr.2 = p`
+for `DensePoly.divMod`
 under a nonzero-divisor hypothesis. -/
-private theorem rat_divMod_reconstruct_of_not_isZero (p q : DensePoly Rat)
+private theorem rat_divMod_spec_of_not_isZero (p q : DensePoly Rat)
     (hqzero : ¬ q.isZero) :
     let qr := DensePoly.divMod p q
     qr.1 * q + qr.2 = p := by
@@ -628,7 +622,7 @@ private theorem rat_mod_sub_self_eq_mul_neg_div_of_not_isZero (p m : DensePoly R
     (hmzero : ¬ m.isZero) :
     p % m - p = m * (0 - p / m) := by
   have hdiv : (p / m) * m + (p % m) = p := by
-    exact rat_divMod_reconstruct_of_not_isZero p m hmzero
+    exact rat_divMod_spec_of_not_isZero p m hmzero
   calc
     p % m - p = 0 - (p / m) * m := by
       apply DensePoly.ext_coeff
@@ -1202,7 +1196,7 @@ private theorem rat_divMod_remainder_eq_zero_of_not_pos_degree (p q : DensePoly 
 instance instDivModLawsRat : DensePoly.DivModLaws Rat where
   divMod_spec := by
     intro p q
-    exact rat_divMod_reconstruct p q
+    exact rat_divMod_spec p q
   divMod_remainder_degree_lt_of_pos_degree := by
     intro p q hdegree
     exact rat_divMod_remainder_degree_lt p q hdegree

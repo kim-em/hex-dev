@@ -126,23 +126,6 @@ private theorem mod_self_eq_zero {S : Type _}
     m % m = 0 := by
   exact DivModLaws.mod_self_eq_zero m
 
-/-- The zero polynomial reduces to `0` modulo any `m`, `0 % m = 0`. -/
-private theorem zero_mod_eq_zero_of_laws {S : Type _}
-    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
-    (m : DensePoly S) :
-    (0 : DensePoly S) % m = 0 := by
-  change (divMod (0 : DensePoly S) m).2 = 0
-  unfold divMod
-  have hzero : (0 : DensePoly S).coeffs = #[] := rfl
-  have hdeg_zero : (0 : DensePoly S).degree?.getD 0 = 0 := by
-    simp [degree?, size, hzero]
-  rw [hdeg_zero]
-  by_cases hpos : 0 < m.degree?.getD 0
-  · simp [hpos]
-  · rw [if_neg hpos]
-    unfold divModArray
-    simp [hzero, isZero, size, toArray, divModArrayAux]
-
 /-- Divisibility of a difference `m ∣ (p - q)` forces equal canonical remainders
 `p % m = q % m`. -/
 private theorem mod_eq_mod_of_dvd_sub {S : Type _}
@@ -228,7 +211,7 @@ private theorem mod_mul_self_left {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (m r : DensePoly S) :
     (m * r) % m = 0 := by
-  rw [mod_mul_mod, mod_self_eq_zero, zero_mul_left, zero_mod_eq_zero_of_laws]
+  rw [mod_mul_mod, mod_self_eq_zero, zero_mul_left, zero_mod_eq_zero]
 
 /-- Adding a multiple of `m` leaves the canonical remainder unchanged,
 `(q + m * r) % m = q % m`. -/

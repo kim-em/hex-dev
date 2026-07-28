@@ -251,7 +251,7 @@ private theorem sqrtStep_gap_halves
 /-- While the iterate has not yet undershot, `fuel` Newton steps shrink the gap
 by a factor `2 ^ fuel`: `2 ^ fuel * sqrtGap n (sqrtAux n fuel x) ≤ sqrtGap n x`.
 This geometric gap contraction drives phase-one convergence. -/
-private theorem sqrtAux_gap_bound
+private theorem sqrtAux_two_pow_gap_le_of_not_le
     (n fuel x : Nat) (hx : 0 < x)
     (hnot_sq :
       ¬ (sqrtAux n fuel x) * (sqrtAux n fuel x) ≤ n) :
@@ -308,7 +308,7 @@ private theorem sqrtAux_sq_le_after_log
   · exact hsq
   · have hgap_le :
         2 ^ (n.log2 + 1) * sqrtGap n (sqrtAux n (n.log2 + 1) n) ≤ sqrtGap n n :=
-      sqrtAux_gap_bound n (n.log2 + 1) n hn hsq
+      sqrtAux_two_pow_gap_le_of_not_le n (n.log2 + 1) n hn hsq
     have hgap_pos :
         0 < sqrtGap n (sqrtAux n (n.log2 + 1) n) := by
       have hpos : 0 < sqrtAux n (n.log2 + 1) n := by

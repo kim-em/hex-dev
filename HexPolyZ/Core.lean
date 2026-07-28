@@ -548,7 +548,9 @@ representative of the resulting rational associate.
 def ratPolyPrimitivePart (f : DensePoly Rat) : ZPoly :=
   normalizePrimitiveSign (primitivePart (ratPolyPrimitivePartCleared f))
 
-private theorem ratPolyPrimitivePart_exists_scale (f : DensePoly Rat) :
+/-- A rational polynomial is a rational scalar multiple of the rationalization
+of its integer primitive part. -/
+theorem ratPolyPrimitivePart_rational_associate (f : DensePoly Rat) :
     ∃ unit : Rat, f = DensePoly.scale unit (toRatPoly (ratPolyPrimitivePart f)) := by
   let den := ratCommonDen f.toArray.toList
   let scaled := ratPolyPrimitivePartCleared f
@@ -1055,7 +1057,8 @@ theorem C_mul_eq_scale (c : Int) (p : ZPoly) :
       change (0 : Int) = c * 0
       rw [Int.mul_zero]
 
-private theorem scale_size_eq {c : Int} (hc : c ≠ 0) (p : ZPoly) :
+/-- Nonzero integer scalar multiplication preserves the stored size. -/
+theorem scale_size_of_ne_zero (c : Int) (p : ZPoly) (hc : c ≠ 0) :
     (DensePoly.scale c p).size = p.size := by
   apply Nat.le_antisymm
   · by_cases hle : (DensePoly.scale c p).size ≤ p.size
@@ -1087,24 +1090,19 @@ private theorem scale_size_eq {c : Int} (hc : c ≠ 0) (p : ZPoly) :
         exact hscaled_zero
       exact (Int.mul_eq_zero.mp hmul_zero).resolve_left hc
 
-/-- Nonzero integer scalar multiplication preserves the stored size. -/
-theorem scale_size_of_nonzero (c : Int) (p : ZPoly) (hc : c ≠ 0) :
-    (DensePoly.scale c p).size = p.size :=
-  scale_size_eq (c := c) hc p
-
 /-- Leading coefficient after nonzero integer scalar multiplication. -/
 theorem leadingCoeff_scale_of_nonzero (c : Int) (p : ZPoly) (hc : c ≠ 0) :
     (DensePoly.scale c p).leadingCoeff = c * p.leadingCoeff := by
   by_cases hp : 0 < p.size
   · rw [DensePoly.leadingCoeff_eq_coeff_last (DensePoly.scale c p)]
-    · rw [scale_size_of_nonzero c p hc]
+    · rw [scale_size_of_ne_zero c p hc]
       rw [DensePoly.coeff_scale (R := Int) c p (p.size - 1) (Int.mul_zero c),
         DensePoly.leadingCoeff_eq_coeff_last p hp]
-    · rw [scale_size_of_nonzero c p hc]
+    · rw [scale_size_of_ne_zero c p hc]
       exact hp
   · have hpsize : p.size = 0 := by omega
     have hscaled_size : (DensePoly.scale c p).size = 0 := by
-      rw [scale_size_of_nonzero c p hc, hpsize]
+      rw [scale_size_of_ne_zero c p hc, hpsize]
     have hpzero : p = 0 := by
       apply DensePoly.ext_coeff
       intro n
@@ -1113,7 +1111,7 @@ theorem leadingCoeff_scale_of_nonzero (c : Int) (p : ZPoly) (hc : c ≠ 0) :
     rw [hpzero]
     simp
 
-private theorem shift_size_eq (k : Nat) {p : ZPoly} (hp : p ≠ 0) :
+private theorem shift_size_of_ne_zero (k : Nat) {p : ZPoly} (hp : p ≠ 0) :
     (DensePoly.shift k p).size = k + p.size := by
   have hpos : 0 < p.size := by
     by_cases hpos : 0 < p.size
@@ -1168,12 +1166,12 @@ theorem leadingCoeff_shift_of_nonzero (k : Nat) (p : ZPoly) (hp : p ≠ 0) :
       rw [DensePoly.coeff_zero]
       exact DensePoly.coeff_eq_zero_of_size_le p (by omega)
   rw [DensePoly.leadingCoeff_eq_coeff_last (DensePoly.shift k p)]
-  · rw [shift_size_eq k hp]
+  · rw [shift_size_of_ne_zero k hp]
     rw [DensePoly.coeff_shift]
     have hnot : ¬ k + p.size - 1 < k := by omega
     have hidx : k + p.size - 1 - k = p.size - 1 := by omega
     rw [if_neg hnot, hidx, DensePoly.leadingCoeff_eq_coeff_last p hpos]
-  · rw [shift_size_eq k hp]
+  · rw [shift_size_of_ne_zero k hp]
     omega
 
 /-- Integer dense polynomials have no zero divisors. -/

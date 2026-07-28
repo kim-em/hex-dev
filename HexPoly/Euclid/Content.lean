@@ -411,11 +411,10 @@ private theorem dvd_coeff_product_of_dvd_finiteCoeffConvolution_of_dvd_other_ter
   have hsub : i + j - i = j := by omega
   simpa [hsub] using hterm
 
-/-- `dvd_coeff_product_last_of_dvd_finiteCoeffConvolution_of_dvd_larger_left_products`:
-refines the previous lemma to derive `d ∣ pCoeff i * qCoeff k` from `d` dividing
+/-- The preceding convolution lemma derives `d ∣ pCoeff i * qCoeff k` from `d` dividing
 `qCoeff` above index `k` together with every larger-left product
 `pCoeff r * qCoeff (i + k - r)` (`i < r`). -/
-private theorem dvd_coeff_product_last_of_dvd_finiteCoeffConvolution_of_dvd_larger_left_products
+example
     (pCoeff qCoeff : Nat → Int) (d i k : Nat)
     (hprod : (d : Int) ∣ finiteCoeffConvolution pCoeff qCoeff (i + k))
     (hqAbove : ∀ s, k < s → (d : Int) ∣ qCoeff s)
