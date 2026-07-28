@@ -957,7 +957,10 @@ greater effort always gives a tighter answer. The solver intersects every
 result with existing facts, measures the actual improvement, and learns from
 that observation. Retained suggestions are advisory: when their cumulative
 storage cap is full, the engine retains the bounded prefix, records how many
-were dropped, and still commits independently valid candidate facts.
+were dropped, and still commits independently valid candidate facts. Before
+that suffix disappears, the policy wrapper checks its variants: dropping a
+retry or instantiation marks propagation incomplete, while dropping only
+split advice preserves fixed-point completeness.
 
 The base `Program` is static after validation. Generic cheap alternates may be
 present before search, and `rewrite` only changes which form in the current
@@ -1247,14 +1250,28 @@ containing an outcome tag, candidate list, suggestion list, and cost. That
 allows `noChange` to recommend a stronger effort or landmark split without
 encoding itself as `success` with no candidates. This is an open protocol
 experiment; negative mathematical information is never inferred from a
-resource limit or failed rule.
+resource limit or failed rule. An accepted `resourceLimit` or `failed` report
+clears the request/reply latch and remains an exact policy observation, but it
+also marks propagation incomplete: consuming that application did not
+establish either successful contraction or mathematical inapplicability.
+Reply rejection, engine-resource exhaustion, or fact-domain-resource
+exhaustion has the same status when it clears the pending latch. A mismatched
+reply which preserves that exact pending action remains resubmittable and does
+not by itself lose completeness.
 
 One `balancedV1` candidate uses a versioned priority queue over these offers.
 Changed facts insert or invalidate only affected offers; stale entries are
 discarded lazily when popped. Policies intended for diagnostics may use a
 simpler complete scan, but their complexity is reported honestly. An empty
-frontier means saturation. A `PolicyStep.stop` for a nonempty frontier is
-reported as `unknown`, not saturation.
+frontier means saturation only when no narrowing-capable work was dismissed.
+Declining an invocation, equality contractor, retry, or instantiation makes
+the run incomplete; declining a split does not, because it changes proof
+search rather than the propagation closure of the current scope. An empty
+frontier after an incomplete dismissal is reported as `unknown`. A
+`PolicyStep.stop` for a nonempty frontier is likewise reported as `unknown`,
+not saturation. The dismissal event records these as two separate facts:
+whether the driver halts immediately, and whether the dismissed offer makes
+fixed-point completeness unavailable.
 
 The shown first interface supplies the authoritative bounded scan frontier in
 each `PolicyView`; transition events let the policy update historical state
@@ -1315,7 +1332,17 @@ application or equality keeps its birth time while its versioned semantic key
 refreshes, becomes inactive when selected, and receives a new birth time if a
 later dependency change wakes it again. Retained suggestions never refresh
 into different proposals: selection, dismissal, or failure of their
-variant-specific freshness guard tombstones them permanently.
+variant-specific freshness guard tombstones them permanently. A rejected
+instantiation, or automatic tombstoning of a retry or instantiation, marks the
+scope incomplete; a discarded stale split remains optional. This accounting
+also applies when policy control adopts an engine snapshot containing an
+already-invalid retained suggestion. Adopting a snapshot with an open reply
+latch also marks the scope incomplete: the selected application is not exposed
+as a second offer, so an empty visible frontier is not a fixed point. The
+prototype conservatively treats
+every automatically tombstoned retry as completeness-relevant, including a
+weak or stale retry. Whether some failure reasons can be proved redundant and
+discarded without that penalty remains an open policy question.
 
 Freshness is offer-specific. An invocation or retry compares the concrete
 application and relevant current input versions. Instantiation initially uses

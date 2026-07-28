@@ -107,6 +107,16 @@ def initialWith? (limits : Experiment.Propagator.Policy.Limits) : Option (State 
 
 def initial? : Option (State Rank) := initialWith? policyLimits
 
+def pendingAdoption? : Option (State Rank) := do
+  let engine <- match Engine.start rankDomain program #[fRule, gRule] #[0, 0]
+      engineLimits with
+    | .ok engine => some engine
+    | .error _ => none
+  match engine.poll with
+  | .request _ awaiting => some (State.start awaiting policyLimits)
+  | .equality _ _ | .awaitingReply _ | .saturated _ | .contradiction _
+  | .resourceLimit _ _ | .invalidState _ => none
+
 def selectOffer (state : State Rank) (id : OfferId) : SelectResult Rank :=
   match state.offer? id with
   | none => .rejected .missingOffer state
@@ -371,8 +381,87 @@ def afterReplyWith? (engineLimit : Experiment.Propagator.Limits)
   | .accepted _ next => some next
   | _ => none
 
+def observedWith? (engineLimit : Experiment.Propagator.Limits)
+    (reply : RuleRequest Rank -> Outcome Rank) :
+    Option (RuleObservation Rank × State Rank) := do
+  let state <- initialWithLimits? engineLimit policyLimits
+  let (request, state) <- request? state (.application (application 0))
+  match state.submit (request.action.reply (reply request)) with
+  | .accepted observation next => some (observation, next)
+  | _ => none
+
 def afterInitialWith? (engineLimit : Experiment.Propagator.Limits) : Option (State Rank) :=
   afterReplyWith? engineLimit invoke
+
+-- Adopting a snapshot with an open reply latch cannot reconstruct the selected
+-- application as a fresh offer. It therefore records incompleteness before an
+-- empty frontier could be mistaken for a fixed point.
+#guard
+  match pendingAdoption? with
+  | some state =>
+      state.incomplete && state.engine.pending.isSome &&
+        (state.view).toOption.any fun pair =>
+          pair.1.offers.isEmpty && pair.1.incomplete
+  | none => false
+
+-- A structurally invalid reply clears the pending latch and consumes the
+-- selected application.  The wrapper must remember that the resulting empty
+-- frontier is incomplete.
+#guard
+  match initial? with
+  | none => false
+  | some state =>
+      match request? state (.application (application 0)) with
+      | none => false
+      | some (request, awaiting) =>
+          match awaiting.submit (request.action.reply
+              (.success [] [.retry (engineLimits.maxEffort + 1)] {})) with
+          | .invalid .oversizedEffort next =>
+              next.incomplete && next.engine.pending.isNone &&
+                (next.view).toOption.any fun pair =>
+                  pair.1.offers.isEmpty && pair.1.incomplete
+          | _ => false
+
+-- Retry selection follows a different dirty-bit path from an initial
+-- invocation. A rejected retry reply still clears its pending latch and is
+-- therefore completeness-relevant.
+#guard
+  match afterInitial? with
+  | none => false
+  | some state =>
+      match request? state (.suggestion (suggestion 0)) with
+      | none => false
+      | some (request, awaiting) =>
+          match awaiting.submit (request.action.reply
+              (.success [] [.retry (engineLimits.maxEffort + 1)] {})) with
+          | .invalid .oversizedEffort next =>
+              next.incomplete && next.engine.pending.isNone
+          | _ => false
+
+-- A mismatched action leaves the exact pending request intact.  Correcting
+-- and resubmitting it remains complete, so the retryable mismatch must not
+-- poison the state.
+#guard
+  match initial? with
+  | none => false
+  | some state =>
+      match request? state (.application (application 0)) with
+      | none => false
+      | some (request, awaiting) =>
+          let mismatched : Reply Rank :=
+            { serial := request.action.serial + 1
+              programVersion := request.action.programVersion
+              application := request.action.application
+              outcome := .inapplicable }
+          match awaiting.submit mismatched with
+          | .invalid .mismatchedAction retryable =>
+              !retryable.incomplete && retryable.engine.pending.isSome &&
+                match retryable.submit (request.action.reply (invoke request)) with
+                | .accepted observation resumed =>
+                    exactInitialObservation observation && !resumed.incomplete &&
+                      resumed.engine.pending.isNone
+                | _ => false
+          | _ => false
 
 -- A policy cannot turn an engine-advertised effort-one retry into effort two.
 #guard
@@ -471,6 +560,43 @@ def leftMalformedDomain : FactDomain Rank where
   top _ := 0
   narrow _ current candidate :=
     if candidate < current then .malformed 91 else .noChange
+
+-- An engine resource failure during reply admission rolls back candidate
+-- effects, but the selected application is no longer live.
+#guard
+  match initialWithLimits?
+      { engineLimits with maxAcceptedFacts := 0 } policyLimits with
+  | none => false
+  | some state =>
+      match request? state (.application (application 0)) with
+      | none => false
+      | some (request, awaiting) =>
+          match awaiting.submit (request.action.reply (invoke request)) with
+          | .engineResource .acceptedFacts next =>
+              next.incomplete && next.engine.pending.isNone &&
+                next.engine.history.isEmpty &&
+                (next.view).toOption.any fun pair =>
+                  pair.1.offers.isEmpty && pair.1.incomplete
+          | _ => false
+
+-- A fact-domain resource failure has the same consumed-obligation boundary
+-- while retaining its exact domain budget.
+#guard
+  match Engine.start rightResourceDomain program #[fRule, gRule] #[0, 0]
+      engineLimits with
+  | .error _ => false
+  | .ok engine =>
+      let state := State.start engine policyLimits
+      match request? state (.application (application 0)) with
+      | none => false
+      | some (request, awaiting) =>
+          match awaiting.submit (request.action.reply (invoke request)) with
+          | .factResource 77 next =>
+              next.incomplete && next.engine.pending.isNone &&
+                next.engine.history.isEmpty &&
+                (next.view).toOption.any fun pair =>
+                  pair.1.offers.isEmpty && pair.1.incomplete
+          | _ => false
 
 -- Exhausting the accepted-fact budget reports a typed equality observation,
 -- charges no engine action, and leaves the equality live for a later run.
@@ -589,6 +715,47 @@ def wrongGeneration (request : RuleRequest Rank) : Outcome Rank :=
   let proposal := { instantiateAt 113 (node 0) with claimedGeneration := 99 }
   .success [candidate request 1] [.instantiate proposal] {}
 
+def selfEqualityInstance (request : RuleRequest Rank) : Outcome Rank :=
+  .success []
+    [.instantiate
+      { key := 127
+        triggers := [request.action.node]
+        claimedGeneration := 1
+        nodes := []
+        equalities :=
+          [{ left := .existing (node 0)
+             right := .existing (node 0)
+             payload := { index := 131 } }]
+        payload := { index := 137 } }]
+    {}
+
+def weakRetry (_ : RuleRequest Rank) : Outcome Rank :=
+  .success [] [.retry 0] {}
+
+def overflowRetry (_ : RuleRequest Rank) : Outcome Rank :=
+  .success []
+    [.split { node := node 0, point := 0, reason := .midpoint }, .retry 1] {}
+
+def overflowInstance (request : RuleRequest Rank) : Outcome Rank :=
+  .success []
+    [.split { node := node 0, point := 0, reason := .midpoint },
+      .instantiate (instantiateG request)] {}
+
+def overflowSplit (_ : RuleRequest Rank) : Outcome Rank :=
+  .success []
+    [.split { node := node 0, point := 0, reason := .midpoint }] {}
+
+def startWithWeakRetry? : Option (State Rank) := do
+  let engine <- match Engine.start rankDomain program #[fRule, gRule] #[0, 0] engineLimits with
+    | .ok engine => some engine
+    | .error _ => none
+  match engine.poll with
+  | .request request awaiting =>
+      match awaiting.submit (request.action.reply (weakRetry request)) with
+      | .accepted next => some (State.start next policyLimits)
+      | _ => none
+  | _ => none
+
 -- The policy key exposes the engine-computed generation, and a proposal whose
 -- untrusted claim disagrees is never advertised as selectable work.
 #guard
@@ -602,8 +769,90 @@ def wrongGeneration (request : RuleRequest Rank) : Outcome Rank :=
 #guard
   match afterReplyWith? engineLimits wrongGeneration with
   | some state =>
-      state.engine.suggestions.size == 1 &&
-        (state.offer? (.suggestion (suggestion 0))).isNone
+      state.engine.suggestions.size == 1 && state.incomplete &&
+        (state.offer? (.suggestion (suggestion 0))).isNone &&
+        (state.view).toOption.any fun pair =>
+          pair.1.offers.isEmpty && pair.1.incomplete
+  | none => false
+
+-- A structurally advertised instantiation may still fail a later admission
+-- check. Consuming that rejected proposal leaves the current propagation
+-- closure incomplete.
+#guard
+  match afterReplyWith? engineLimits selfEqualityInstance with
+  | none => false
+  | some state =>
+      !state.incomplete &&
+        match selectOffer state (.suggestion (suggestion 0)) with
+        | .completed (.instanceRejected .invalidEquality) next =>
+            next.incomplete &&
+              (next.view).toOption.any fun pair =>
+                pair.1.offers.isEmpty && pair.1.incomplete
+        | _ => false
+
+-- A retry which fails its variant-specific freshness guard is tombstoned, but
+-- its disappearance cannot be mistaken for successful propagation.
+#guard
+  match afterReplyWith? engineLimits weakRetry with
+  | some state =>
+      state.engine.suggestions.size == 1 && state.incomplete &&
+        (state.offer? (.suggestion (suggestion 0))).isNone &&
+        (state.view).toOption.any fun pair =>
+          pair.1.offers.isEmpty && pair.1.incomplete
+  | none => false
+
+-- The same accounting occurs when policy control adopts an engine snapshot
+-- which already contains the unusable retained retry.
+#guard
+  match startWithWeakRetry? with
+  | some state =>
+      state.incomplete &&
+        (state.offer? (.suggestion (suggestion 0))).isNone &&
+        (state.view).toOption.any fun pair =>
+          pair.1.offers.isEmpty && pair.1.incomplete
+  | none => false
+
+-- Retained-suggestion overflow is inspected before the engine discards its
+-- suffix. Here the split is retained, but the dropped retry still makes
+-- fixed-point completeness unavailable.
+#guard
+  match observedWith?
+      { engineLimits with maxRetainedSuggestions := 1 } overflowRetry with
+  | some (observation, state) =>
+      observation.outcome == .success &&
+        observation.emittedSuggestions.toList == [.suggestion (suggestion 0)] &&
+        state.engine.suggestions.size == 1 &&
+        state.engine.metrics.droppedSuggestions == 1 && state.incomplete &&
+        match state.engine.suggestions[0]? with
+        | some retained =>
+            match retained.suggestion with
+            | .split _ => true
+            | .retry _ | .instantiate _ => false
+        | none => false
+  | none => false
+
+-- A dropped instantiation has the same closure consequence as a dropped
+-- retry, even though neither proposal survives in the retained prefix.
+#guard
+  match observedWith?
+      { engineLimits with maxRetainedSuggestions := 1 } overflowInstance with
+  | some (observation, state) =>
+      observation.outcome == .success &&
+        observation.emittedSuggestions.toList == [.suggestion (suggestion 0)] &&
+        state.engine.suggestions.size == 1 &&
+        state.engine.metrics.droppedSuggestions == 1 && state.incomplete
+  | none => false
+
+-- Dropping only optional split advice does not make propagation incomplete.
+#guard
+  match observedWith?
+      { engineLimits with maxRetainedSuggestions := 0 } overflowSplit with
+  | some (observation, state) =>
+      observation.outcome == .success && observation.emittedSuggestions.isEmpty &&
+        state.engine.suggestions.isEmpty &&
+        state.engine.metrics.droppedSuggestions == 1 && !state.incomplete &&
+        (state.view).toOption.any fun pair =>
+          pair.1.offers.isEmpty && !pair.1.incomplete
   | none => false
 
 def splitChangedTarget (request : RuleRequest Rank) : Outcome Rank :=
@@ -619,7 +868,8 @@ def splitChangedTarget (request : RuleRequest Rank) : Outcome Rank :=
   | some state =>
       match state.engine.suggestions[0]? with
       | some retained =>
-          retained.splitVersion == some 0 && state.engine.versions[1]? == some 1 &&
+          !state.incomplete && retained.splitVersion == some 0 &&
+            state.engine.versions[1]? == some 1 &&
             (state.offer? (.suggestion (suggestion 0))).isNone
       | none => false
   | none => false

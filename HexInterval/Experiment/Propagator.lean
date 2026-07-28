@@ -483,6 +483,13 @@ inductive Suggestion where
   | instantiate (request : InstantiationRequest)
   | split (request : SplitRequest)
 
+/-- Whether losing this suggestion can leave propagation unfinished. Splits
+are optional proof search; retry and instantiation can expose further
+contraction in the current branch. -/
+def Suggestion.affectsClosure : Suggestion -> Bool
+  | .retry _ | .instantiate _ => true
+  | .split _ => false
+
 /-- A policy candidate paired with engine-owned invocation provenance.  Split
 proposals retain the target version at proposal time; later policy adoption
 must not re-arm a guard from the then-current fact. -/
@@ -1167,6 +1174,22 @@ def installCandidates (action : Action) :
           candidate.node :: changed
       pure (next, changed)
 
+/-- Remaining capacity in the engine-owned retained-suggestion prefix. -/
+def suggestionRoom (state : Engine Fact) : Nat :=
+  state.limits.maxRetainedSuggestions - state.suggestions.size
+
+/-- The exact suggestion prefix which `submit` will retain. Policy layers use
+this helper rather than duplicating the retention arithmetic when deciding
+whether discarded work affects completeness. -/
+def keptSuggestions (state : Engine Fact)
+    (suggestions : List Suggestion) : List Suggestion :=
+  suggestions.take state.suggestionRoom
+
+/-- The exact suggestion suffix which `submit` will discard. -/
+def droppedSuggestions (state : Engine Fact)
+    (suggestions : List Suggestion) : List Suggestion :=
+  suggestions.drop state.suggestionRoom
+
 /-- Validate and atomically admit one rule reply.  Candidate facts are all
 installed before the union of affected dependencies is woken. -/
 def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
@@ -1201,10 +1224,8 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
                 match candidatesAuthorized application.writes candidates with
                 | some error => .invalid error base
                 | none =>
-                    let suggestionRoom :=
-                      state.limits.maxRetainedSuggestions - state.suggestions.size
-                    let retainedSuggestions := suggestions.take suggestionRoom
-                    let droppedSuggestions := suggestions.length - retainedSuggestions.length
+                    let retainedSuggestions := state.keptSuggestions suggestions
+                    let droppedSuggestions := (state.droppedSuggestions suggestions).length
                     let working : Engine Fact :=
                       { base with
                         suggestions := retainedSuggestions.foldl
