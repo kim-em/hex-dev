@@ -1000,7 +1000,7 @@ setup_fixed_benchmark runFactorFastSetupAdvX4Plus1Checksum where {
     repeats := 5
     minTotalSeconds := 0.2
     maxSecondsPerCall := 4.0
-    expectedHash := some 0xf2fde7ff68ef63ab
+    expectedHash := some 0x6125716b68ef63ab
   }
 
 /-

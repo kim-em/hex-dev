@@ -24,8 +24,10 @@ factors:
   extreme-`r` tail is a separate optimisation (it currently grinds to
   the precision cap — see the early-termination follow-up).
 - **`factorTrial`** (total) — exhaustive integer trial division. No
-  modular reduction; the unconditional totality backstop, reached only
-  when no admissible prime exists.
+  modular reduction; the unconditional totality backstop. Once Group D's
+  lattice-totality theorem is available, the selector and dispatch theorems
+  below imply that this backstop is reached only when no hot-path admissible
+  prime exists.
 
 The public combinator `factorize` runs `factorClassical` first under a
 budget read off the modular factorisation, `factorLattice` when the
@@ -249,7 +251,7 @@ the modular reduction prime: at minimum `p ∤ lc(f)`, `p ≥ 3` (avoid
 test is a single modular **GCD** — `gcd(f mod p, f' mod p)` is a unit —
 **not** a factorisation, so `isGoodPrime` is cheap.
 
-`choosePrime` selects the **first suitable prime**: it walks the
+`choosePrime` selects the **first suitable prime**: it checks the
 candidate primes in increasing order and returns the first `p` with
 `isGoodPrime f p`, then factors `f mod p` only for that prime. This
 matches the verified Isabelle/AFP `Berlekamp_Zassenhaus` reference
@@ -257,7 +259,7 @@ matches the verified Isabelle/AFP `Berlekamp_Zassenhaus` reference
 `berlekamp_zassenhaus_main` then runs `finite_field_factorization_int p f`
 once). It does not *exhaustively* minimise the modular-factor count
 across all candidate primes — that classical Zassenhaus heuristic costs
-one modular factorisation per candidate prime (≈95 per call here). No
+one modular factorisation per candidate prime (94 per call here). No
 per-prime `r` minimisation is needed: `r` drives the classical tier's
 subset budget (§*Hybrid dispatch*), so a first-suitable prime with
 unusually large `r` costs only a budgeted classical attempt before the
@@ -293,9 +295,10 @@ def henselLiftData (f : ZPoly) (B : Nat) (d : PrimeChoiceData) : LiftData
 def bhksBound (f : ZPoly) : Nat
 ```
 
-`bhksBound` is the BHKS component of the lattice tier's precision cap
-(keyed on the square-free core); it is the integer-arithmetic upper
-bound on BHKS Theorem 5.2's threshold (see *Precision schedule* below).
+`bhksBound` is the current executable component of the lattice tier's
+precision cap (keyed on the square-free core). Its required relationship to
+the BHKS Theorem 5.8 threshold is stated in *Precision schedule* and Group D;
+the current formula is not yet justified as an upper bound.
 
 `choosePrimeData?` is `Option`-valued. The executable searches a
 **bounded hot-path candidate set** `HotPathCandidates`, fixed in
@@ -304,26 +307,26 @@ SPEC as
 > `HotPathCandidates := { p : Nat | 3 ≤ p ∧ p ≤ 500 ∧ Nat.Prime p }`
 
 i.e. every prime in the closed range `[3, 500]` (`p = 2` is
-excluded by `isGoodPrime`). This set has 95 elements; their
-primorial `∏ HotPathCandidates ≈ 10^203`, which is the lower
+excluded by `isGoodPrime`). This set has 94 elements; their
+primorial `∏ HotPathCandidates ≈ 6.24 × 10^205`, which is the lower
 bound D2 below uses to characterise `factorTrial` inputs.
 
 The cap of 500 balances two constraints: the primorial must be large
 enough that no realistic polynomial reaches the lower bound (so the
 `none` case is unreachable in practice, per D2); and the cap must be
 small enough that the modular kernel uses `ZMod64` throughout. The
-primorial `10^203` exceeds any realistic `|lc(f)·disc(f)|` by tens of
+primorial exceeds any realistic `|lc(f)·disc(f)|` by tens of
 orders of magnitude, and `p ≤ 500` is far inside `ZMod64`'s
 `UInt64.word` domain.
 
-`choosePrimeData?` walks `HotPathCandidates` in increasing order and
-returns the **first** prime with `isGoodPrime f p`, factoring `f mod p`
-only for that prime (first-suitable selection; see `choosePrime`
-above). On realistic input a suitable prime appears among the first few
-candidates, so the walk stops almost immediately. Only when **no**
-candidate is suitable does the walk visit all 95 — and because
-suitability is the cheap separability GCD (not a factorisation), even
-that exhaustive `none`-case walk is fast.
+`choosePrimeData?` checks `smallPrimeCandidates` first and, only if that
+fold returns `none`, checks `extendedSmallPrimeCandidates`. Their append is
+exactly `HotPathCandidates`, in increasing order. It returns the **first**
+prime with `isGoodPrime f p`, factoring `f mod p` only for that prime
+(first-suitable selection; see `choosePrime` above). On realistic input a
+suitable prime appears in the first fold. Only when **no** candidate is
+suitable do both folds visit all 94 candidates; there is no input-dependent
+fuel cap or post-prefix search.
 
 The candidate set is SPEC-fixed: the `none` case MUST check every
 element of `HotPathCandidates` before concluding `none` (this is what
@@ -438,11 +441,11 @@ No silent suite-shrinking, and no silent tier-downgrade.
 Three recombination tiers, all with full Mathlib-bridge proofs:
 
 - **`factorClassical : ZPoly → Option Factorization`.** Size-ordered subset recombination with factor removal, under a hard subset budget. Same algorithm class as the verified reference. **Unconditional correctness when it returns `some`:** the output is the irreducible factorisation of `f`. Returns `none` only on budget exhaustion or no admissible prime.
-- **`factorLattice : ZPoly → Option Factorization`.** Van Hoeij CLD at the full BHKS precision cap (`max (bhksBound core) (defaultFactorCoeffBound f)` where `core := (normalizeForFactor f).squareFreeCore`; the BHKS component is keyed on the square-free core the CLD pipeline actually lifts, not on `f` — a core can have larger coefficient norm than `f`, e.g. `f = (x¹⁸−1)(x¹⁹−1)`, so `bhksBound f` can undershoot the core's separation threshold). **Conditional correctness:** `factorLattice f = some φ ⟹ φ is the irreducible factorisation of f`. May return `none`.
+- **`factorLattice : ZPoly → Option Factorization`.** Van Hoeij CLD at the full lattice precision cap. With `core := (normalizeForFactor f).squareFreeCore`, the cap dominates both `bhksBound core` and `bhksBound (toMonic core).monic`, plus the CLD and Mignotte floors. Both BHKS terms matter: the core can be larger than `f` (e.g. `f = (x¹⁸−1)(x¹⁹−1)`), while the integer monic transform can amplify lower coefficients by powers of `leadingCoeff core` and is the polynomial whose CLD lattice is actually reduced. **Conditional correctness:** `factorLattice f = some φ ⟹ φ is the irreducible factorisation of f`. May return `none`.
 - **`factorTrial : ZPoly → Factorization`.** Exhaustive integer trial division. **Unconditional correctness:** `factorTrial f = irreducibleFactorisationOf f`.
 - **`ZPoly.factorize : ZPoly → Factorization`.** The hybrid combinator (above): classical first, lattice on decline, `factorTrial` as the total backstop. Unconditionally correct.
 
-No axioms. BHKS Theorem 5.2 ("for precision exceeding a paper-stated
+No axioms. BHKS Theorem 5.8 ("for precision exceeding a paper-stated
 bound, `factorLattice` always returns `some`") is a leaf theorem of
 this development: it is in the project's requirements (Group D
 obligation D1 below) but no `Decidable` instance, no `factorize`
@@ -560,14 +563,36 @@ where `Ã[i, j] := Ψ^a_{ℓ_j}([x^j] Φ(g_i))` for `i ∈ {1,…,r}, j ∈ {0,�
 
 ### Precision schedule
 
-Pinned: start at `a = 4`, double on lattice/verification failure, cap at `bhksBound core` for `core := (normalizeForFactor f).squareFreeCore` — the polynomial the pipeline actually lifts and separates. The papers have a single polynomial, but the executable normalizes first, and the square-free core's coefficient norm can *exceed* `f`'s (Mignotte divisor growth; witness `f = (x¹⁸−1)(x¹⁹−1)`, whose core `f/(x−1)` has `coeffNormSq 36` against `f`'s `4` and a strictly larger `bhksBound`), so keying the cap on `f` would undershoot the core's separation threshold. `bhksBound` is a Lean-computable integer upper bound for the BHKS Theorem 5.2 threshold `c · n · (2C)^(n²) · ‖f‖₂^(2n−1) · (log ‖f‖₂)^n`; an explicit choice is given below. The cap is the BHKS bound rather than the Mignotte coefficient bound because BHKS dominates Mignotte for every `n ≥ 2` (BHKS §5.3 explicitly: "an annoying extra factor of `n` … coming from a resultant upper bound"); a smaller cap would leave the CLD tier's `none` reachable on inputs the algorithm could in principle solve. The constant `4` start is pinned.
+The executable schedule is over a coefficient-bound parameter `B`, not
+directly over the Hensel exponent `a`: it starts at `min(B, 4)`, doubles that
+bound on lattice/verification failure, and visits the full
+`latticePrecisionCap`. At each visit, `toMonicLiftData` converts the bound to
+the exponent `a := precisionForCoeffBound B p`. The cap dominates the BHKS
+bounds of both `core := (normalizeForFactor f).squareFreeCore` and
+`(toMonic core).monic`, the latter being the polynomial whose lattice is
+actually reduced. It also dominates the reconstruction and column-adequacy
+floors. A core can have larger norm than `f`, while the monic transform of a
+nonmonic core can be much larger than the core.
 
-The `bhksBound : ZPoly → Nat` helper is SPEC-pinned. A safe explicit choice (sound integer upper bound for BHKS eq. 5.3): `bhksBound f := 1 + n · 4^(n²) · (sumSquared f + 1)^n · (log2 (sumSquared f + 1))^n` where `n := deg f` and `sumSquared f := Σ |a_i|²`. Pure `Nat` arithmetic; the upper-bound argument is straightforward (each factor of (5.3) bounded by the corresponding piece of `bhksBound`).
+The executable `bhksBound` is the conservative integer threshold derived from
+the actual retained-row estimate and full-vector resultant reconstruction in
+D1 item 4. Writing `n := degree f`, it uses
+`R := 4n + n³`, `V := 2n · 2^(2n) · R`,
+`E := V + V·R + 2^n·R`,
+`C := 500 · (bhksColumnFloor f + 1)`,
+`M := (n+1)·E·C`, and
+`A := max (defaultFactorCoeffBound f) M`, then sets
+`bhksBound f := 1 + ((2n)·A)^(2n)`. The leading `1` makes the threshold
+strictly larger than the absolute resultant; `adjustedCoordBound_lt_bhksBound`
+and `cldFullAux_resultant_natAbs_lt_bhksBound` close the corresponding
+production obligations. The executable applies `precisionForCoeffBound` to
+the cap before lifting, so the coefficient-bound parameter remains distinct
+from the paper's exponent `ℓ`.
 
 Termination of the doubling loop:
 
 - If the loop reaches a state where every equivalence-class candidate verifies via exact division and `∏ candidates = f` (up to `lc(f)` and content), the CLD tier returns `some gs`. This is the success path; conditional correctness applies. **In practice, the BHKS algorithm exits via this `L' = W` certificate at precision much lower than the BHKS-bound cap** (BHKS §4.4 explicitly: "a practical implementation should not use the precision bound … because the equations could already be sufficient for smaller values of `ℓ`"); the cap is a theoretical guarantee, not a usual exit condition.
-- If the loop reaches the precision cap without satisfying that condition, the CLD tier returns `none`. The hybrid combinator `factorize` then falls through to the `factorTrial` backstop. **A recombination-exit `some` makes no irreducibility claim on its own**; verified irreducibility is the property of `factorize` (via the combinator), the cap-precision certificate exit, or the unconditional trial backstop. D1 will prove the `none` branch is unreachable given a good prime, but the existence of the branch makes `factorize` correct without needing D1 first.
+- If the loop reaches the precision cap without satisfying that condition, the CLD tier returns `none`. The hybrid combinator `factorize` then falls through to the `factorTrial` backstop. **A recombination-exit `some` makes no irreducibility claim on its own**; verified irreducibility is the property of `factorize` (via the combinator), the cap-precision certificate exit, or the unconditional trial backstop. D1 proves the `none` branch unreachable once the monic-core selector has succeeded; the bounded selector can still fail, and the existence of the branch makes `factorize` correct independently of D1.
 
 An additive-coefficient lattice that decodes short vectors as `Σ λ_i g_i (mod p^a)` candidate polynomials is *not* van Hoeij and is not admissible.
 
@@ -612,7 +637,7 @@ A5. **Normalisation + reassembly extend A4 to arbitrary input.** `factorize` han
 
 ### Group B — lattice-tier conditional correctness (`factorLattice f = some gs ⟹ gs is the irreducible factorisation of f`)
 
-The lattice tier is allowed to return `none`; we only prove correctness conditional on `some` output. BHKS Theorem 5.2 (existence of a precision at which `none` is impossible) is *not* a Group B obligation — it's Group D.
+The lattice tier is allowed to return `none`; we only prove correctness conditional on `some` output. BHKS Theorem 5.8 (existence of a precision at which `none` is impossible) is *not* a Group B obligation — it's Group D.
 
 B1. **CLD additivity.** `Φ(g · h) = Φ(g) + Φ(h)` whenever `gh | f` in `(ℤ/p^a)[x]`. The identity is `(gh)'/(gh) = g'/g + h'/h`; no coprimality hypothesis. (BHKS Lemma 3.1.) Routine.
 
@@ -645,26 +670,79 @@ C1. **`factorize` unconditional correctness.** `factorize f = irreducibleFactori
 
 C2. **Public-API consequences** (`checkIrreducibleCert_sound`, `Hex.ZPoly.isIrreducible_iff`, and the `Decidable (Hex.ZPoly.Irreducible f)` instance it backs) follow from C1. Like C1 itself, these are bridge-side and are stated in `hex-berlekamp-zassenhaus-mathlib` (the Mathlib-free library provides only the `Irreducible` class and the `isIrreducible` checker — see the §`Mathlib-free Hex.ZPoly.Irreducible class`). Product preservation needs no separate bound-aware theorem: it is clause 1 of C1, and the dispatch's acceptance guard makes it self-certifying per tier.
 
-### Group D — leaf performance theorem (BHKS Theorem 5.2; not on the correctness critical path)
+### Group D — leaf performance theorem (BHKS Theorem 5.8; not on the correctness critical path)
 
-Required deliverable; structurally a leaf — no other proof obligation, public-API contract, `Decidable` instance, or theorem statement in the bridge depends on D1 or D2. Both are stated against the hybrid (see *Hybrid dispatch* above): D1 is the CLD lattice tier's completeness (`factorLattice f ≠ none` given a good prime), D2 the tight characterisation of the inputs that reach the `factorTrial` backstop.
+This theorem group is structurally a leaf: unconditional correctness still
+comes from the exact trial backstop. D1 proves conditional CLD completeness;
+D2 turns selector hypotheses into a branch-tagged modular-dispatch result.
 
-D1. **The lattice tier succeeds when a good prime exists on the core: `toMonicPrimeData? (normalizeForFactor f).squareFreeCore ≠ none → factorLattice f ≠ none`.** The antecedent is keyed on `toMonicPrimeData?` of the square-free core — the monic-transform prime the CLD pipeline actually Hensel-lifts against — and the theorem is about the implementation as written, with the lattice tier's precision cap (keyed on the core, per *Precision schedule* below), not `bhksBound f`. BHKS Theorem 5.2 supplies the precision/recombination half, conditional on a good prime being available. The unconditional `factorLattice f ≠ none` is **false**: the `1 + L·X` family witnesses inputs where the hot-path prime search exhausts its bounded candidate set (the library keeps executable regression witnesses for this). This is by design; the unconditional safety net is the hybrid combinator's `factorTrial` backstop (per *Hybrid dispatch* above), not inside any modular tier. D2 below pins down exactly which inputs reach that backstop.
+D1. **The lattice tier succeeds when a good prime exists on the core: `toMonicPrimeData? (normalizeForFactor f).squareFreeCore ≠ none → factorLattice f ≠ none`.** The antecedent is keyed on `toMonicPrimeData?` of the square-free core — the monic-transform prime the CLD pipeline actually Hensel-lifts against — and the cap dominates the BHKS bound of that same monic transform. BHKS Theorem 5.8 supplies the shape of the precision/recombination argument, conditional on a good prime being available. The unconditional `factorLattice f ≠ none` is **false**: for `P := hotPathPrimorial`, the monic cubic `X³ − P` reduces to `X³` at every one of the 94 candidates, and kernel-checked guards show both `toMonicPrimeData?` and `factorLattice` return `none`. This is by design; the unconditional safety net is the hybrid combinator's `factorTrial` backstop.
 
-    **Pathway:**
+    **Established proof chain:**
 
-    1. **Resultant in Mathlib4.** If `Polynomial.resultant` is not yet ported from Mathlib3, port it. The required surface: definition; `Res(f, g) = 0 ⟺ gcd(f, g) ≠ 1`; norm bound `|Res(f, g)| ≤ ‖f‖₂^(deg g) · ‖g‖₂^(deg f)` (Hadamard's inequality on the Sylvester matrix, which Mathlib has in `Mathlib.LinearAlgebra.Matrix.Determinant`).
-    2. **BHKS Lemma 3.2 (bad-vector size bound).** Any vector `v ∈ L' \ W` has its associated polynomial `H_v` (built from `v`'s Φ-block) satisfying: `H_v` is divisible by some `f_i mod p^a` but not by the corresponding integer factor over ℤ, so `Res(f, H_v)` is a nonzero integer divisible by `p^(a·d)` for some `d ≥ 1`, while Hadamard bounds `|Res(f, H_v)| ≤ ‖f‖₂^(deg H_v) · ‖H_v‖₂^n`. Combining: `‖v‖₂` grows with `a`.
-    3. **BHKS Theorem 5.2 (eq. 5.3 termination).** At precision satisfying `v^ℓ > c · n · (2C)^(n²) · ‖f‖₂^(2n−1) · (log ‖f‖₂)^n`, the bad-vector lower bound from step 2 exceeds the LLL-cut radius `B'` from B4, so `L' \ W = ∅`. Combined with B6 (`W ⊆ L'`): `L' = W`. Read BHKS §5 (lines around eq. 5.3 and the proof following).
-    4. **`bhksBound f` is a sound upper bound for the BHKS threshold.** Show that the integer-arithmetic `bhksBound f` (from the precision schedule) is `≥ ⌈log_v of the BHKS threshold⌉`. Step-by-step bounding of each factor: `n` direct; `(2C)^(n²) ≤ 4^(n²)` for `C ≥ 2` (which `hex-lll` uses); `‖f‖₂^(2n−1) ≤ (sumSquared f + 1)^n`; `(log ‖f‖₂)^n ≤ (log2 (sumSquared f + 1))^n`.
-    5. **Forward verification at precision ≥ Mignotte.** The BHKS bound dominates Mignotte for every `n ≥ 2` (a one-line inequality), so any precision sufficient for separation is also sufficient for reconstruction. With `L' = W` from step 3 and precision ≥ Mignotte: B7 produces exactly the irreducible-factor indicators (Lemma 3.3), A2 gives exact integer-coefficient lifts of each `g_{w_C}`, and exact division of `f` succeeds for every candidate. So the algorithm exits via `some _`, not `none`, given a good prime is available.
-    6. **Final theorem.** `theorem factorLattice_ne_none_of_goodPrime : ∀ f : ZPoly, toMonicPrimeData? (normalizeForFactor f).squareFreeCore ≠ none → factorLattice f ≠ none`. Internal proof structure is the chain above; the implementation-level statement is on the bounded raw tier at the lattice precision cap, `factorLatticeFactorsWithBound f cap ≠ none`, with `factorLattice f ≠ none` as the `Factorization`-level corollary.
+    1. **Formalize both spans.** Define the true-support lattice `W` and the
+       retained projected lattice `L'` against the current
+       period-adjusted aggregate vector construction.
+       `trueSupportSpanInt_le_projectedRowSpanInt` proves `W ⊆ L'`;
+       `projectedRowSpanInt_le_trueSupportSpanInt` proves the reverse
+       inclusion at sufficient precision, and
+       `bhksProjectedSpan_eq_trueSupportSpan` packages `L' = W`.
+    2. **Retained-row bound.** Extend the LLL bridge from its first-row bound
+       to the general retained-row Gram--Schmidt bound required by the cut.
+       `LLLCore.rowNormSq_le_basisNormSq`, `retainedRow_normSq_le`, and
+       `traceRetainedRow_normSq_le` provide the reusable estimates used here.
+    3. **Paper-correct bad-vector polynomial.** Adjust a retained **full**
+       lattice row by full true-support short vectors as in Lemma 3.2, then
+       reconstruct `H := POL(g) mod v^ℓ`. If the adjusted row has first block
+       `e`, tail coordinate `t_j`, and cut exponent `ℓ_j`, use
+       `H_j = p^ℓ_j t_j + Σ_i e_i centeredResiduePow p ℓ_j
+       (centeredResiduePow p a (q_i.coeff j))`. The diagonal-period
+       contribution then becomes a multiple of `p^a`, proving congruence with
+       the uncut `POL(g)` coefficient modulo `p^a`. The cut CLD coordinates
+       bound `H`; they are not themselves `H`. Select the integer factor on
+       which divisibility differs, prove the
+       required resultant is nonzero and has the paper's modular divisibility,
+       and combine this with a Hadamard resultant bound. Mathlib already has
+       `Polynomial.resultant`; no resultant port is needed.
 
-    The bridge file gets one new theorem (`factorLattice_ne_none_of_goodPrime`) and a small handful of supporting lemmas (resultant Hadamard bound, BHKS Lemma 3.2, BHKS Theorem 5.2 instantiated at the core's `bhksBound`, BHKS-bound-dominates-Mignotte). Existing theorem statements (A1–A5, B1–B9, C1–C2) are unchanged.
+       **Do not use the discarded shortcut** that forms an auxiliary
+       polynomial directly from the cut/downscaled CLD tail and claims its
+       resultant is divisible by `p^ℓ`. That statement is false: for
+       `f = x² + 1`, `p = 5`, `ℓ = 3`, and the valid lattice representative
+       `g = x - 57`, the cut tail gives the constant polynomial `2`, whose
+       resultant with `f` is `4`, whereas the uncut modular reconstruction has
+       the expected 5-adic divisibility. The paper's `POL(g) mod v^ℓ`
+       construction is the essential bridge.
+    4. **BHKS Theorem 5.8, equation (4).** The executable theorem uses a
+       directly proved conservative integer threshold, not an unstated paper
+       constant. For `n = degree f`, set
+       `R = 4n + n³`, `V = 2n·2^(2n)·R`,
+       `E = V + V·R + 2^n·R`,
+       `C = 500·(bhksColumnFloor f + 1)`,
+       `M = (n+1)·E·C`, and
+       `A = max (defaultFactorCoeffBound f) M`. Then
+       `bhksBound f = 1 + ((2n)·A)^(2n)`.
+       `adjustedCoordBound_lt_bhksBound`,
+       `cldFullAux_resultant_natAbs_lt_bhksBound`, and `no_badVector`
+       establish the resultant contradiction when
+       `2 * bhksBound f < p^a`. The production cap proves this inequality for
+       `f = (toMonic core).monic`.
+    5. **Executable exit.** Exact span equality makes the RREF signature
+       partition equal the true-support partition. The one-class case passes
+       `bhksSingleAllOnesPartition`; the multi-class case reconstructs and
+       verifies one exact factor per class. Cap membership in the Hensel
+       schedule then makes the bounded raw tier return `some _`.
+       `factorLatticeFactorsWithBound_ne_none_of_toMonicPrimeData` and
+       `factorLattice_ne_none_of_toMonicPrimeData` expose the two public
+       conditional totality results.
 
-    *Reading list:* BHKS §3.2 (Lemma 3.2 / "bad vector"), §5 (Theorem 5.2 termination + eq. 5.3 explicit bound, lines around `c · n · (2C)^(n²) · ‖f‖₂^(2n−1) · (log ‖f‖₂)^n`); §4.4 (why the algorithm exits early in practice via the L'=W certificate); Hadamard's inequality in `Mathlib.LinearAlgebra.Matrix.Determinant`; resultant infrastructure in Mathlib4 (port from Mathlib3 if absent).
+    *Reading list:* BHKS §3.2 (Lemma 3.2 and the definition of `POL(g)`),
+    Theorem 5.8 and equation (4), and §4.4; Mathlib's existing resultant and
+    determinant bounds; the current `CLDColumnBound`, `Lattice`, `Recovery`,
+    and HexLLL Mathlib bridge files.
 
-D2. **Tight characterisation of trial-backstop inputs.** Statement shape:
+D2. **Bounded-selector criterion and modular dispatch.** Per-candidate
+badness and selector failure have the following statement shape:
 
     ```lean
     theorem choosePrimeData?_none_implies_huge
@@ -676,7 +754,17 @@ D2. **Tight characterisation of trial-backstop inputs.** Statement shape:
 
     Equivalently, `|lc(f) · disc(f)| ≥ ∏ HotPathCandidates`, an astronomically large lower bound that no realistic polynomial reaches. (`HotPathCandidates` is the SPEC-fixed set defined in the algorithmic-architecture clause above.)
 
-    `factorTrial` is reached only when no admissible hot-path prime exists, i.e. `choosePrimeData? f = none` (both modular tiers rest on the same hot-path candidate set, so neither `factorClassical` nor `factorLattice` has a prime to lift when there isn't one). Given a good prime, D1 makes `factorLattice` succeed on classical decline, so the classical-first dispatch resolves in a modular tier and never falls through. So D2 is the tight delineation of inputs that hit the trial backstop: any `f` with `|lc(f) · disc(f)| < ∏ HotPathCandidates` is provably handled by `factorClassical` or `factorLattice`, runs at `ZMod64` speed, and never touches `factorTrial`.
+    Both modular tiers select on
+    `(toMonic (normalizeForFactor f).squareFreeCore).monic`, not directly on
+    `f`. Given success of that selector, D1 makes `factorLattice` succeed on
+    classical decline. The public product theorems make both packed-product
+    guards pass, so `factorFactors_modular_of_toMonicPrimeData` returns a
+    branch-tagged classical-or-lattice result and excludes every syntactic
+    route to `factorTrial`. The wrappers
+    `factorFactors_modular_of_normalizedCore_good` and
+    `factorFactors_modular_of_normalizedCore_lt_primorial` supply this result
+    from, respectively, a good listed prime and the strict normalized-core
+    discriminant bound.
 
     **Pathway:**
 
@@ -684,9 +772,22 @@ D2. **Tight characterisation of trial-backstop inputs.** Statement shape:
     2. **Reverse-engineer `choosePrimeData? f = none`.** It means every candidate `p` in `HotPathCandidates` failed `isGoodPrime f p`, which by step 1 means every such `p` divides `lc(f) · disc(f)`.
     3. **Primorial lower bound.** If every prime in a set `S` divides `M ∈ ℤ`, then `|M| ≥ ∏ S` (standard).
 
-    The bridge file gets one new theorem (`choosePrimeData?_none_implies_huge`) and a small helper unfolding `isGoodPrime`. No new mathematical content; the bound is a clean divisibility argument.
+    The bridge implements this as `HotPath.primorial_dvd_of_none` and
+    `HotPath.primorial_le_of_none`, with corresponding monic-transform and
+    strict-bound corollaries. `HotPath.normalizedCore_toMonic_ne_none_of_lt_primorial`
+    is the dispatcher-facing selector theorem. Successful raw classical and
+    lattice results satisfy public packed-product theorems
+    `factorClassicalFactorsWithBound_product` and
+    `factorLatticeFactorsWithBound_product`, so the executable product guards
+    are mathematically redundant even though they remain as cheap defensive
+    checks in the Mathlib-free dispatcher.
 
-    **Executable precondition.** D2 is about the `none` case only: `choosePrimeData? f = none` must mean *no* element of `HotPathCandidates` is suitable, so the `none` path MUST test every one of the 95 primes in `[3, 500]` before concluding `none`. First-suitable selection short-circuits on *success* (returning at the first suitable prime, which is correct and required for performance), but it must **not** short-circuit the `none` conclusion: a curated subset that skips primes, or an input-dependent fuel cap on the `none`-case walk, is a SPEC violation that would weaken D2.
+    **Executable precondition.** D2 is about the `none` case only:
+    `choosePrimeData? f = none` must mean *no* element of
+    `HotPathCandidates` is suitable, so the two fixed folds MUST test every one
+    of the 94 primes in `[3, 500]` before concluding `none`. First-suitable
+    selection short-circuits on success, but there is no curated omission,
+    input-dependent fuel cap, or post-prefix fallback search.
 
 ## Normalized factorization theorem
 
@@ -871,7 +972,7 @@ re-measure is cheap after the first build.
 ## References
 
 - van Hoeij, *Factoring polynomials and the knapsack problem* (2002) "KP": https://www.math.fsu.edu/~hoeij/knapsack/paper/May16_2001/knapsack.pdf — original lattice + Lemma 2.6 (rounding error) + Lemma 2.8 (structural test).
-- Belabas, van Hoeij, Klüners, Steel, *Factoring polynomials over global fields* (2009) "BHKS": https://www.math.u-bordeaux.fr/~kbelabas/research/factor-2008.pdf — pinned variant. CLD §3.1.1; lattice §5.2 eq. 5.1; bound Lemma 5.1; rounding Lemma 5.2; norm bound Cor. 5.2; cut soundness Lemma 5.7 (the GS-only "cut", *not* the full LLL-reduction theorem); equivalence-class Lemma 3.3; verification (`L' = W` certified by exact division) Lemma 3.4; separation/termination Theorem 5.2 with explicit threshold eq. 5.3 (`v^ℓ > c · n · (2C)^(n²) · ‖f‖₂^(2n−1) · (log ‖f‖₂)^n`) — obligation D1, not relied on by the rest of the project; §4.4 on why practical implementations exit early via the L'=W certificate; §5.3 for the resultant-based proof structure.
+- Belabas, van Hoeij, Klüners, Steel, *Factoring polynomials over global fields* (2008) "BHKS": https://www.math.u-bordeaux.fr/~kbelabas/research/factor-2008.pdf — pinned variant. CLD §3.1.1; lattice §5.2 eq. 5.1; bound Lemma 5.1; rounding Lemma 5.2; norm bound Cor. 5.2; cut soundness Lemma 5.7 (the GS-only "cut", *not* the full LLL-reduction theorem); equivalence-class Lemma 3.3; verification (`L' = W` certified by exact division) Lemma 3.4; separation/termination Theorem 5.8 with threshold equation (4) (`v^ℓ > c^n · (2C)^(n²) · ‖f‖₂^(2n−1) · (log ‖f‖₂)^n`) — obligation D1, not relied on by the rest of the project; §4.4 on why practical implementations exit early via the `L' = W` certificate. The paper says `c` is explicitly computable but does not state its value.
 - Hart, van Hoeij, Novocin, *Practical polynomial factoring in polynomial time* (2011) "HHN": https://wrap.warwick.ac.uk/id/eprint/43600/1/WRAP_Hart_0584144-ma-270913-poly_factor.pdf — referenced for completeness; incremental-column refinements are *not* used.
 
 ## Certificate structures for Z[x] irreducibility

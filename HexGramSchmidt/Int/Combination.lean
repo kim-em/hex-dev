@@ -259,6 +259,23 @@ Gram-Schmidt basis rows: `coeffs b * basis b` collapses to the cast input
   rw [← hentry']
   exact Lean.Grind.Semiring.add_comm _ _
 
+/-- Row form of the Gram--Schmidt triangular factorization: the cast input row
+is the row of Gram--Schmidt coefficients applied to the orthogonal basis. -/
+theorem row_reconstruction (b : Matrix Int n m) (i : Fin n) :
+    Vector.map (fun x : Int => (x : Rat)) (b.row i) =
+      Matrix.vecMul ((coeffs b).row i) (basis b) := by
+  have hmat := coeffs_mul_basis_eq_castIntMatrix b
+  apply Vector.ext
+  intro j hj
+  let jj : Fin m := ⟨j, hj⟩
+  have hentry := congrArg (fun M : Matrix Rat n m => M[i][jj]) hmat
+  rw [Matrix.getElem_mul] at hentry
+  have hcoord : ((b.row i)[jj] : Rat) =
+      (Matrix.vecMul ((coeffs b).row i) (basis b))[jj] := by
+    rw [Matrix.vecMul, Matrix.getElem_mulVec, Matrix.row_transpose]
+    simpa [castIntMatrix, Matrix.row, Vector.dotProduct_comm] using hentry.symm
+  simpa [Vector.getElem_map] using hcoord
+
 /-- Integer row combinations reconstruct through the Gram-Schmidt basis after
 first combining the Gram-Schmidt coefficient rows. -/
 theorem vecMul_basis_coeffs_reconstruction

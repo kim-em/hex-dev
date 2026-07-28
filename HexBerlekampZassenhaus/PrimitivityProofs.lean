@@ -299,7 +299,7 @@ private theorem polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
 appearing in `reassemblePolynomialFactors` is either a normalization-prefix
 factor (handled by `polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero`)
 or appears in the supplied `coreFactors`. -/
-private theorem reassemblePolynomialFactors_normalizeFactorSign_of_ne_zero
+theorem reassemblePolynomialFactors_normalizeFactorSign_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0) (coreFactors : Array ZPoly)
     (hcore : ∀ factor ∈ coreFactors.toList, normalizeFactorSign factor = factor)
     (factor : ZPoly)
@@ -312,7 +312,7 @@ private theorem reassemblePolynomialFactors_normalizeFactorSign_of_ne_zero
   · exact hcore factor hcoreMem
 
 /-- Lift a per-coreFactor `shouldRecord` property through the reassembly. -/
-private theorem reassemblePolynomialFactors_shouldRecord_of_ne_zero
+theorem reassemblePolynomialFactors_shouldRecord_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0) (coreFactors : Array ZPoly)
     (hcore : ∀ factor ∈ coreFactors.toList, shouldRecordPolynomialFactor factor = true)
     (factor : ZPoly)

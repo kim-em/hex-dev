@@ -1453,6 +1453,18 @@ private theorem foldl_orthogonal_expansion_normSq_zero
   rw [hzero_add] at h
   exact h
 
+/-- The squared norm of a linear combination of pairwise orthogonal rows is
+the sum of the coefficient squares times the row squared norms. -/
+theorem normSq_vecMul_of_orthogonal
+    (rows : Matrix Rat n m) (coeffs : Vector Rat n)
+    (horth : ∀ i j : Fin n, i ≠ j →
+      (rows.row i).dotProduct (rows.row j) = 0) :
+    Vector.normSq (Matrix.vecMul coeffs rows) =
+      Fin.foldl n
+        (fun total i => total + coeffs[i] * coeffs[i] * (rows.row i).normSq) 0 := by
+  rw [vecMul_eq_foldl_rows]
+  exact foldl_orthogonal_expansion_normSq_zero rows coeffs horth
+
 /-- The weighted-squared-norm fold `xs.foldl (· + coeffs[i] * coeffs[i] *
 (rows.row i).normSq) 0` is nonnegative, being a sum of nonnegative
 terms. -/

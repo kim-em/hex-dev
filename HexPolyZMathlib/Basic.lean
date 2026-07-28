@@ -305,6 +305,36 @@ theorem comp_unit_mul_X_dvd_iff {R : Type*} [CommRing R] {u : R} (hu : IsUnit u)
     have hdvd := map_dvd (Polynomial.compRingHom (Polynomial.C u * Polynomial.X)) h
     rwa [Polynomial.coe_compRingHom_apply, Polynomial.coe_compRingHom_apply] at hdvd⟩
 
+/-- Coprimality is invariant under the invertible variable substitution
+`X ↦ u * X`.  This is the Bézout counterpart of
+`comp_unit_mul_X_dvd_iff`. -/
+theorem isCoprime_comp_unit_mul_X_iff {R : Type*} [CommSemiring R]
+    {u : R} (hu : IsUnit u) {a b : Polynomial R} :
+    IsCoprime
+        (a.comp (Polynomial.C u * Polynomial.X))
+        (b.comp (Polynomial.C u * Polynomial.X)) ↔
+      IsCoprime a b := by
+  obtain ⟨w, hw⟩ := hu
+  set v : R := ↑w⁻¹ with hv
+  have huv : u * v = 1 := by rw [hv, ← hw]; exact w.mul_inv
+  have hcomp :
+      (Polynomial.C u * Polynomial.X).comp
+          (Polynomial.C v * Polynomial.X) = Polynomial.X := by
+    rw [Polynomial.mul_comp, Polynomial.C_comp, Polynomial.X_comp, ← mul_assoc,
+      ← Polynomial.C_mul, huv, Polynomial.C_1, one_mul]
+  have key : ∀ p : Polynomial R,
+      (p.comp (Polynomial.C u * Polynomial.X)).comp
+          (Polynomial.C v * Polynomial.X) = p := by
+    intro p
+    rw [Polynomial.comp_assoc, hcomp, Polynomial.comp_X]
+  constructor
+  · intro h
+    have hm := h.map (Polynomial.compRingHom (Polynomial.C v * Polynomial.X))
+    simpa only [Polynomial.coe_compRingHom_apply, key] using hm
+  · intro h
+    simpa only [Polynomial.coe_compRingHom_apply] using
+      h.map (Polynomial.compRingHom (Polynomial.C u * Polynomial.X))
+
 /-! # Gauss content/primitive-part correspondence
 
 The executable `Hex.ZPoly.content`/`primitivePart` carry their own Gauss theory

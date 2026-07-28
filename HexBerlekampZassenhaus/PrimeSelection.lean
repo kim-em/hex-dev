@@ -110,6 +110,19 @@ def isGoodPrime (f : ZPoly) (p : Nat) [ZMod64.Bounds p] : Bool :=
     ZPoly.leadingCoeffModP f p != 0 &&
     gcdIsUnit (DensePoly.gcd fModP (DensePoly.derivative fModP))
 
+/-- Assemble the executable good-prime result from its three mathematical
+components. -/
+theorem isGoodPrime_of_admissible
+    (f : ZPoly) (p : Nat) [ZMod64.Bounds p]
+    (hp : 3 ≤ p)
+    (hlc : ZPoly.leadingCoeffModP f p ≠ 0)
+    (hsq : gcdIsUnit
+      (DensePoly.gcd (ZPoly.modP p f) (DensePoly.derivative (ZPoly.modP p f))) = true) :
+    isGoodPrime f p = true := by
+  unfold isGoodPrime
+  simp only [Bool.and_eq_true]
+  exact ⟨⟨decide_eq_true hp, by simpa [bne_iff_ne] using hlc⟩, hsq⟩
+
 /-- The `ZMod64.Bounds` instance witness for `p = 2`. -/
 private theorem bounds_two : ZMod64.Bounds 2 := by
   constructor <;> decide
@@ -625,9 +638,20 @@ discriminant lemma.
 def hotPathCandidates : List SmallPrimeCandidate :=
   smallPrimeCandidates ++ extendedSmallPrimeCandidates
 
+/-- Product of the fixed hot-path candidate primes. -/
+@[expose]
+def hotPathPrimorial : Nat :=
+  (hotPathCandidates.map fun c => c.p).prod
+
 #guard smallPrimeCandidates.length == 19
 #guard extendedSmallPrimeCandidates.length == 75
 #guard hotPathCandidates.length == 94
+
+set_option maxRecDepth 10000 in
+/-- The fixed hot-path list contains no repeated prime values. -/
+theorem hotPathPrimeValues_nodup :
+    (hotPathCandidates.map fun c => c.p).Nodup := by
+  decide
 
 /--
 Soundness of the hot-path prime candidate list: every entry carries a

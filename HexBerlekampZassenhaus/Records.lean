@@ -183,16 +183,22 @@ def toMonic (core : ZPoly) : ToMonicData :=
 @[simp, grind =] theorem toMonic_degree (core : ZPoly) :
     (toMonic core).degree = core.degree?.getD 0 := rfl
 
-/-- The `monic` field of `toMonic core` is monic once the source has positive
-degree. -/
-theorem toMonic_monic_isMonic_of_pos_degree
-    (core : ZPoly) (_hpos_lc : 0 < DensePoly.leadingCoeff core)
-    (_hdegree : 0 < (toMonic core).degree) :
+/-- The polynomial stored by `toMonic` is monic, including the degenerate
+constant branches. -/
+theorem toMonic_monic_isMonic (core : ZPoly) :
     DensePoly.Monic (toMonic core).monic := by
   unfold toMonic
   by_cases hmonic : DensePoly.leadingCoeff core = 1
   · simp [hmonic, DensePoly.Monic]
   · simp [hmonic, ToMonicData.transformedCore_monic]
+
+/-- The `monic` field of `toMonic core` is monic once the source has positive
+degree. -/
+theorem toMonic_monic_isMonic_of_pos_degree
+    (core : ZPoly) (_hpos_lc : 0 < DensePoly.leadingCoeff core)
+    (_hdegree : 0 < (toMonic core).degree) :
+    DensePoly.Monic (toMonic core).monic :=
+  toMonic_monic_isMonic core
 
 /-- The `monic` field preserves the recorded degree in nonconstant cases. -/
 theorem toMonic_monic_degree_eq_of_pos_degree

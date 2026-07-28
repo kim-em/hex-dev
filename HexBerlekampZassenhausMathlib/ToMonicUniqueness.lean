@@ -175,7 +175,7 @@ theorem toMonicLiftData_isCoprime_liftedFactorProduct_complement
 
 /-- Each lifted factor of `toMonicLiftData core B primeData` reduces modulo
 `primeData.p` to an irreducible polynomial (the corresponding `modPFactor`). -/
-private theorem toMonicLiftData_liftedFactor_map_irreducible
+theorem toMonicLiftData_liftedFactor_map_irreducible
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_pos : 0 < core.degree?.getD 0)

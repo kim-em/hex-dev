@@ -219,6 +219,50 @@ theorem teleBound (b : Matrix Int n m) {δ η : Rat}
             rw [Lean.Grind.Semiring.pow_succ]
             grind
 
+/-- Telescoped Gram--Schmidt norm bound from an arbitrary row `j` through
+`d` adjacent reduced-basis steps. -/
+theorem teleBoundAdd (b : Matrix Int n m) {δ η : Rat}
+    (hred : isLLLReduced b δ η) (hδη : η * η < δ)
+    (j d : Nat) (hi : j + d < n) :
+    basisNormSq (GramSchmidt.Int.basis b)
+        ⟨j, Nat.lt_of_le_of_lt (Nat.le_add_right j d) hi⟩ ≤
+      (1 / (δ - η * η)) ^ d *
+        basisNormSq (GramSchmidt.Int.basis b) ⟨j + d, hi⟩ := by
+  let α : Rat := 1 / (δ - η * η)
+  have hα_nonneg : 0 ≤ α := by
+    have hpos : 0 < δ - η * η := by grind
+    have hα_pos : 0 < α := by
+      dsimp [α]
+      rw [Rat.div_def]
+      simpa using (Rat.inv_pos.mpr hpos)
+    grind
+  induction d with
+  | zero =>
+      simp only [Nat.add_zero, Lean.Grind.Semiring.pow_zero]
+      grind
+  | succ d ih =>
+      have hiprev : j + d < n := by omega
+      have hchain := ih hiprev
+      have hstep := stepAlpha b hred hδη (j + d) (by omega : j + d + 1 < n)
+      have hmul := Rat.mul_le_mul_of_nonneg_left hstep
+        (ratPow_nonneg α hα_nonneg d)
+      calc
+        basisNormSq (GramSchmidt.Int.basis b)
+            ⟨j, Nat.lt_of_le_of_lt (Nat.le_add_right j (d + 1)) hi⟩
+            ≤ α ^ d * basisNormSq (GramSchmidt.Int.basis b)
+                ⟨j + d, hiprev⟩ := by simpa [α] using hchain
+        _ ≤ α ^ d * (α * basisNormSq (GramSchmidt.Int.basis b)
+                ⟨j + d + 1, by omega⟩) := by
+              simpa [α] using hmul
+        _ = α ^ (d + 1) * basisNormSq (GramSchmidt.Int.basis b)
+                ⟨j + (d + 1), hi⟩ := by
+              have hfin :
+                  (⟨j + d + 1, by omega⟩ : Fin n) = ⟨j + (d + 1), hi⟩ :=
+                Fin.ext rfl
+              rw [hfin]
+              rw [Lean.Grind.Semiring.pow_succ]
+              grind
+
 /-- First Gram-Schmidt basis vector identity: the 0-th Gram-Schmidt vector
 coincides with the 0-th input row, so their squared norms agree. -/
 theorem basisNormSq_zero (b : Matrix Int n m) (hn : 0 < n) :
@@ -254,6 +298,134 @@ private theorem ratPow_le_pow_of_one_le {α : Rat} (hα : 1 ≤ α) :
           Nat.le_antisymm hij (Nat.succ_le_of_lt (Nat.lt_of_not_ge hi))
         subst hi'
         exact Rat.le_refl
+
+/-- A fold of terms individually bounded by `C` is bounded by the list length
+times `C`, with an arbitrary running accumulator. -/
+private theorem foldl_le_acc_add_length_mul {α : Type} (l : List α)
+    (f : α → Rat) (C acc : Rat) (hf : ∀ x ∈ l, f x ≤ C) :
+    l.foldl (fun acc x => acc + f x) acc ≤ acc + (l.length : Rat) * C := by
+  induction l generalizing acc with
+  | nil => simp; grind
+  | cons x xs ih =>
+      simp only [List.foldl_cons, List.length_cons]
+      have htail := ih (acc := acc + f x) (fun y hy => hf y (by simp [hy]))
+      have hx := hf x (by simp)
+      calc
+        xs.foldl (fun acc x => acc + f x) (acc + f x)
+            ≤ acc + f x + (xs.length : Rat) * C := htail
+        _ ≤ acc + C + (xs.length : Rat) * C := by grind
+        _ = acc + ((xs.length + 1 : Nat) : Rat) * C := by
+          push_cast
+          grind
+
+/-- Every row up to index `i` in an LLL-reduced integer basis is controlled by
+the `i`-th Gram--Schmidt norm.  The extra factor `n` accounts for the at most
+`n` Gram--Schmidt components of the row; the geometric factor is the usual
+telescoped Lovasz bound. -/
+theorem rowNormSq_le_basisNormSq (b : Matrix Int n m) {δ η : Rat}
+    (hred : isLLLReduced b δ η) (hηsq : η * η ≤ 1)
+    (hδη : η * η < δ) (hδ' : δ ≤ 1)
+    (j i : Fin n) (hji : j.val ≤ i.val) :
+    (((b.row j).normSq : Int) : Rat) ≤
+      (n : Rat) * (1 / (δ - η * η)) ^ (n - 1) *
+        basisNormSq (GramSchmidt.Int.basis b) i := by
+  let α : Rat := 1 / (δ - η * η)
+  let basis := GramSchmidt.Int.basis b
+  let coeffs := GramSchmidt.Int.coeffs b
+  have hpos : 0 < δ - η * η := by grind
+  have hαpos : 0 < α := by
+    dsimp [α]
+    rw [Rat.div_def]
+    simpa using (Rat.inv_pos.mpr hpos)
+  have hαnn : 0 ≤ α := by grind
+  have hden_le_one : δ - η * η ≤ 1 := by
+    have hsqnn : 0 ≤ η * η := ratMulSelfNonneg η
+    grind
+  have hden_ne : δ - η * η ≠ 0 := by grind
+  have hα_one : 1 ≤ α := by
+    have hunit : α * (δ - η * η) = 1 := by
+      dsimp [α]
+      rw [Rat.div_def, show (1 : Rat) * (δ - η * η)⁻¹ =
+        (δ - η * η)⁻¹ by grind, Rat.inv_mul_cancel _ hden_ne]
+    have hmul := Rat.mul_le_mul_of_nonneg_left hden_le_one hαnn
+    rw [hunit] at hmul
+    simpa using hmul
+  have horth : ∀ k l : Fin n, k ≠ l →
+      (basis.row k).dotProduct (basis.row l) = 0 := by
+    intro k l hkl
+    exact GramSchmidt.Int.basis_orthogonal b k.val l.val k.isLt l.isLt
+      (fun h => hkl (Fin.ext h))
+  have hreconstruct := GramSchmidt.Int.row_reconstruction b j
+  have hnorm := congrArg Vector.normSq hreconstruct
+  rw [GramSchmidt.Int.normSq_map_intCast,
+    GramSchmidt.normSq_vecMul_of_orthogonal basis (coeffs.row j) horth,
+    Fin.foldl_eq_finRange_foldl] at hnorm
+  rw [hnorm]
+  have hfold := foldl_le_acc_add_length_mul (List.finRange n)
+    (fun k : Fin n =>
+      (coeffs.row j)[k] * (coeffs.row j)[k] * (basis.row k).normSq)
+    (α ^ (n - 1) * basisNormSq basis i) 0 (by
+      intro k _hk
+      by_cases hkj : k.val ≤ j.val
+      · have hki : k.val ≤ i.val := Nat.le_trans hkj hji
+        have hcoeff : (coeffs.row j)[k] * (coeffs.row j)[k] ≤ 1 := by
+          rcases Nat.lt_or_eq_of_le hkj with hlt | heq
+          · have hsize := hred.1 j.val k.val j.isLt hlt
+            exact Rat.le_trans hsize hηsq
+          · have hfin : k = j := Fin.ext heq
+            rw [hfin]
+            have hdiag : (coeffs.row j)[j] = 1 := by
+              simpa [coeffs, GramSchmidt.entry] using
+                GramSchmidt.Int.coeffs_diag b j.val j.isLt
+            rw [hdiag]
+            grind
+        have hbasisnn : 0 ≤ basisNormSq basis k := basisNormSq_nonneg basis k
+        have hfirst :
+            (coeffs.row j)[k] * (coeffs.row j)[k] * (basis.row k).normSq ≤
+              basisNormSq basis k := by
+          have hmul := Rat.mul_le_mul_of_nonneg_right hcoeff hbasisnn
+          simpa [basisNormSq, basis] using hmul
+        have htele := teleBoundAdd b hred hδη k.val (i.val - k.val) (by omega)
+        have hadd : k.val + (i.val - k.val) = i.val := Nat.add_sub_of_le hki
+        have hkfin :
+            (⟨k.val, Nat.lt_of_le_of_lt (Nat.le_add_right k.val (i.val - k.val))
+              (by omega)⟩ : Fin n) = k := Fin.ext rfl
+        have hifin : (⟨k.val + (i.val - k.val), by omega⟩ : Fin n) = i :=
+          Fin.ext hadd
+        rw [hkfin, hifin] at htele
+        have hpow : α ^ (i.val - k.val) ≤ α ^ (n - 1) :=
+          ratPow_le_pow_of_one_le hα_one (by omega)
+        have hibasisnn : 0 ≤ basisNormSq basis i := basisNormSq_nonneg basis i
+        have hpowmul := Rat.mul_le_mul_of_nonneg_right hpow hibasisnn
+        exact Rat.le_trans hfirst (Rat.le_trans (by simpa [α, basis] using htele)
+          (by simpa [α, basis] using hpowmul))
+      · have hjk : j.val < k.val := Nat.lt_of_not_ge hkj
+        have hzero : (coeffs.row j)[k] = 0 := by
+          simpa [coeffs, GramSchmidt.entry] using
+            GramSchmidt.Int.coeffs_upper b j.val k.val j.isLt k.isLt hjk
+        rw [hzero]
+        have hnonneg : 0 ≤ α ^ (n - 1) * basisNormSq basis i :=
+          Rat.mul_nonneg (ratPow_nonneg α hαnn (n - 1))
+            (basisNormSq_nonneg basis i)
+        grind)
+  have hfold' :
+      (List.finRange n).foldl
+        (fun acc k => acc +
+          (coeffs.row j)[k] * (coeffs.row j)[k] * (basis.row k).normSq) 0
+        ≤ (n : Rat) * (α ^ (n - 1) * basisNormSq basis i) := by
+    calc
+      _ ≤ 0 + (n : Rat) * (α ^ (n - 1) * basisNormSq basis i) := by
+        simpa using hfold
+      _ = (n : Rat) * (α ^ (n - 1) * basisNormSq basis i) := by grind
+  calc
+    (List.finRange n).foldl
+        (fun acc k => acc +
+          (coeffs.row j)[k] * (coeffs.row j)[k] * (basis.row k).normSq) 0
+        ≤ (n : Rat) * (α ^ (n - 1) * basisNormSq basis i) := hfold'
+    _ = (n : Rat) * (1 / (δ - η * η)) ^ (n - 1) *
+          basisNormSq (GramSchmidt.Int.basis b) i := by
+          dsimp [α, basis]
+          grind
 
 end Internal.LLLCore
 

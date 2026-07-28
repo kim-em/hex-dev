@@ -47,7 +47,7 @@ This module collects `factorClassical`/`Trial`/`Lattice`/`factorize` and the `fa
 -/
 namespace Hex
 
-private theorem bhksRecoveryCoreWithBound_ne_none_of_recovery_on_schedule
+theorem bhksRecoveryCoreWithBound_ne_none_of_recovery_on_schedule
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     {start fuel target : Nat} {factors : Array ZPoly}
     (hfloor : bhksRecoveryFloor core ≤ target)
@@ -103,6 +103,15 @@ modular factor data is the Berlekamp-form mod-`p` factorisation of
 @[expose]
 def toMonicPrimeData? (core : ZPoly) : Option PrimeChoiceData :=
   choosePrimeData? (toMonic core).monic
+
+/-- A good hot-path candidate for the transformed monic polynomial forces the
+selector used by every Hensel-lifting tier to succeed. -/
+theorem toMonicPrimeData?_ne_none_of_good
+    {core : ZPoly} {c : SmallPrimeCandidate}
+    (hc : c ∈ hotPathCandidates)
+    (hgood : @isGoodPrime (toMonic core).monic c.p c.bounds = true) :
+    toMonicPrimeData? core ≠ none := by
+  exact choosePrimeData?_ne_none_of_good hc hgood
 
 /-- Internal Hensel precision bound for the slow exhaustive branch.
 
@@ -809,6 +818,7 @@ def factorClassicalFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly)
           (classicalCoreFactorsRecursive normalized.squareFreeCore B primeData).map fun coreFactors =>
             reassemblePolynomialFactors normalized coreFactors
 
+@[expose]
 def factorClassicalWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
   (factorClassicalFactorsWithBound f B).map (factorizationOfFactors f)
 
@@ -1019,16 +1029,19 @@ square-free core and the Mignotte coefficient bound of the input, so later
 termination proofs can use the same precision for both lattice separation
 and exact integer reconstruction.
 
-The BHKS component is computed from `(normalizeForFactor f).squareFreeCore`
-— the polynomial the CLD pipeline actually lifts and separates — not from
-`f` itself: a square-free core can have a larger coefficient norm than `f`
-(for `f = (x¹⁸ - 1)(x¹⁹ - 1)` the core `f / (x - 1)` has `coeffNormSq 36`
-against `f`'s `4`, and `bhksBound core > bhksBound f`), so a cap keyed on
-`f` can sit below the core's separation threshold.
+The BHKS component dominates both `(normalizeForFactor f).squareFreeCore` and
+its integer monic transform.  The latter is the polynomial whose CLD lattice is
+actually reduced; on nonmonic inputs its lower coefficients can be amplified by
+powers of the leading coefficient, so a bound on the untransformed core alone
+does not justify lattice separation.  The former remains explicit because a
+square-free core can also have a larger coefficient norm than `f` (for
+`f = (x¹⁸ - 1)(x¹⁹ - 1)` the core `f / (x - 1)` has `coeffNormSq 36` against
+`f`'s `4`).
 -/
 def latticePrecisionCap (f : ZPoly) : Nat :=
   let core := (normalizeForFactor f).squareFreeCore
-  max (max (bhksBound core) (cldCoeffFloor core))
+  max (max (max (bhksBound core) (bhksBound (ZPoly.toMonic core).monic))
+        (cldCoeffFloor core))
     (max (ZPoly.defaultFactorCoeffBound f)
       (max (ZPoly.defaultFactorCoeffBound core)
         (ZPoly.defaultFactorCoeffBound (ZPoly.toMonic core).monic)))
@@ -1036,7 +1049,17 @@ def latticePrecisionCap (f : ZPoly) : Nat :=
 theorem bhksBound_squareFreeCore_le_latticePrecisionCap (f : ZPoly) :
     bhksBound (normalizeForFactor f).squareFreeCore ≤ latticePrecisionCap f := by
   unfold latticePrecisionCap
-  exact Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _)
+  exact Nat.le_trans (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _))
+    (Nat.le_max_left _ _)
+
+/-- The public lattice cap dominates the BHKS bound of the monic transform,
+which is the polynomial used to build the production CLD lattice. -/
+theorem bhksBound_toMonic_squareFreeCore_le_latticePrecisionCap (f : ZPoly) :
+    bhksBound (ZPoly.toMonic (normalizeForFactor f).squareFreeCore).monic ≤
+      latticePrecisionCap f := by
+  unfold latticePrecisionCap
+  exact Nat.le_trans (Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_left _ _))
+    (Nat.le_max_left _ _)
 
 /-- The cap clears the CLD column-adequacy floor of the square-free core, so the
 lattice tier's cap-precision run is column-adequate by construction. -/
@@ -1109,6 +1132,26 @@ theorem two_mul_bhksBound_squareFreeCore_lt_pow_cap
   have hspec := precisionForCoeffBound_spec hp (latticePrecisionCap f)
   omega
 
+/-- At the public cap the actual monic-coordinate CLD lattice also clears its
+BHKS bound.  This is the separation inequality needed by lattice totality; the
+core-coordinate variant above is not a substitute on nonmonic inputs. -/
+theorem two_mul_bhksBound_toMonic_squareFreeCore_lt_pow_cap
+    (f : ZPoly) (primeData : PrimeChoiceData) (hp : 2 ≤ primeData.p) :
+    2 * bhksBound (ZPoly.toMonic (normalizeForFactor f).squareFreeCore).monic <
+      primeData.p ^
+        (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
+          (latticePrecisionCap f) primeData).k := by
+  have hk :
+      (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
+          (latticePrecisionCap f) primeData).k =
+        precisionForCoeffBound (latticePrecisionCap f) primeData.p := by
+    unfold ZPoly.toMonicLiftData
+    exact henselLiftData_k _ _ _
+  rw [hk]
+  have hle := bhksBound_toMonic_squareFreeCore_le_latticePrecisionCap f
+  have hspec := precisionForCoeffBound_spec hp (latticePrecisionCap f)
+  omega
+
 /-- Variant of `two_mul_bhksBound_squareFreeCore_lt_pow_cap` keyed on the
 lattice tier's prime-selection witness, matching the shape of the `hprec`
 side goal at the `factorLatticeFactorsWithBound` call site. -/
@@ -1136,16 +1179,13 @@ theorem two_mul_bhksBound_squareFreeCore_lt_pow_cap_of_toMonicPrimeData
   two_mul_bhksBound_squareFreeCore_lt_pow_cap f primeData
     (ZPoly.toMonicPrimeData?_prime _ primeData hselected).two_le
 
--- #8521 regression witness: for `f = (x¹⁸ - 1)(x¹⁹ - 1) = x³⁷ - x¹⁹ - x¹⁸ + 1`
--- the square-free core `f / (x - 1)` has `bhksBound` exceeding the pre-fix cap
--- `max (bhksBound f) (defaultFactorCoeffBound f)`, so keying the cap's BHKS
--- component on `f` undershoots the core's separation threshold.
+-- #8521 regression witness: normalization can increase the square-free core's
+-- coefficient norm, so the cap must not rely on norm monotonicity.
 #guard
   let f : ZPoly := DensePoly.ofCoeffs
     #[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-  bhksBound (normalizeForFactor f).squareFreeCore >
-    max (bhksBound f) (ZPoly.defaultFactorCoeffBound f)
+  ZPoly.coeffNormSq f < ZPoly.coeffNormSq (normalizeForFactor f).squareFreeCore
 
 /-- The CLD recovery's equivalence-class partition at this precision is the single
 all-ones class — the signature of an *irreducible* input (all lifted mod-`p`
@@ -1280,7 +1320,87 @@ private theorem latticeCoreLoop_unfold
   · rw [if_neg hfl, if_neg hfl]
     simp only [bhksRecoverClassifiedWithAllOnes_fst, bhksRecoverClassifiedWithAllOnes_snd]
 
-/-- Every successful lattice-tier loop result is either a fast-loop
+/-- The certificate-aware lattice loop can only turn a fast-loop failure into
+an additional success; if it returns `none`, the underlying BHKS recovery loop
+also returns `none`. -/
+private theorem latticeCoreLoop_none_imp_bhksRecoveryLoop_none
+    (core : ZPoly) (B floor : Nat) (primeData : PrimeChoiceData) :
+    ∀ fuel k,
+      latticeCoreLoop core B floor primeData k fuel = none →
+        bhksRecoveryLoop core B floor primeData k fuel = none := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro k _
+      simp [bhksRecoveryLoop]
+  | succ fuel ih =>
+      intro k hnone
+      rw [latticeCoreLoop_unfold] at hnone
+      rw [bhksRecoveryLoop]
+      by_cases hfl : k < floor
+      · rw [if_pos hfl] at hnone ⊢
+        by_cases hk : k ≥ B
+        · simp [hk]
+        · rw [if_neg hk] at hnone ⊢
+          exact ih _ hnone
+      · rw [if_neg hfl] at hnone ⊢
+        cases hclass :
+            bhksRecoverClassified core
+              (ZPoly.toMonicLiftData core k primeData) with
+        | success factors =>
+            rw [hclass] at hnone
+            simp at hnone
+        | candidateFailure =>
+            rw [hclass] at hnone
+            by_cases hk : k ≥ B
+            · simp [hk]
+            · rw [if_neg hk] at hnone ⊢
+              exact ih _ hnone
+        | productMismatch candidates =>
+            rw [hclass] at hnone
+            by_cases hk : k ≥ B
+            · simp [hk]
+            · rw [if_neg hk] at hnone ⊢
+              exact ih _ hnone
+        | degenerate =>
+            rw [hclass] at hnone
+            by_cases hones :
+                bhksSingleAllOnesPartition core
+                  (ZPoly.toMonicLiftData core k primeData) = true
+            · rw [if_pos hones] at hnone
+              simp at hnone
+            · rw [if_neg hones] at hnone
+              by_cases hk : k ≥ B
+              · simp [hk]
+              · rw [if_neg hk] at hnone ⊢
+                exact ih _ hnone
+
+/-- A successful fixed-precision recovery on the scheduled lattice path forces
+the certificate-aware lattice core loop to return some result. -/
+theorem latticeCoreWithBound_ne_none_of_recovery_on_schedule
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    {start fuel target : Nat} {factors : Array ZPoly}
+    (hfloor : bhksRecoveryFloor core ≤ target)
+    (hmem : target ∈ henselPrecisionSchedule B start fuel)
+    (hrecover :
+      bhksRecover? core (ZPoly.toMonicLiftData core target primeData) =
+        some factors) :
+    latticeCoreWithBound core B primeData start fuel ≠ none := by
+  intro hnone
+  have hfast_none :
+      bhksRecoveryCoreWithBound core B primeData start fuel = none := by
+    change latticeCoreLoop core B (bhksRecoveryFloorGate core)
+      primeData start fuel = none at hnone
+    change bhksRecoveryLoop core B (bhksRecoveryFloorGate core)
+      primeData start fuel = none
+    rw [bhksRecoveryFloorGate_eq] at hnone ⊢
+    exact latticeCoreLoop_none_imp_bhksRecoveryLoop_none
+      core B (bhksRecoveryFloor core) primeData fuel start hnone
+  exact
+    (bhksRecoveryCoreWithBound_ne_none_of_recovery_on_schedule
+      core B primeData hfloor hmem hrecover) hfast_none
+
+/-- Structural spec for the lattice-tier loop: every success is either a fast-loop
 success (the split path is untouched) or the certificate-backed early stop — the
 singleton `#[core]` together with a concrete witness precision `k'` at/above the
 column-adequacy floor whose partition is the single all-ones class. -/
@@ -1415,6 +1535,29 @@ def factorLatticeFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :
         | some primeData =>
             (latticeCoreFactorsWithBound normalized.squareFreeCore B primeData).map
               fun coreFactors => reassemblePolynomialFactors normalized coreFactors
+
+theorem factorLatticeFactorsWithBound_zero (B : Nat) :
+    factorLatticeFactorsWithBound 0 B =
+      some (reassemblePolynomialFactors (normalizeForFactor 0)
+        #[(normalizeForFactor 0).squareFreeCore]) := by
+  have hprimitive : ZPoly.primitivePart (0 : ZPoly) = 0 := by
+    apply DensePoly.primitivePart_eq_zero_of_content_eq_zero
+    exact DensePoly.content_zero
+  have hxcore : (ZPoly.extractXPower (0 : ZPoly)).core = 0 := by
+    rfl
+  have hsquare :
+      (ZPoly.primitiveSquareFreeDecomposition (0 : ZPoly)).squareFreeCore = 0 := by
+    unfold ZPoly.primitiveSquareFreeDecomposition
+    rw [hprimitive]
+    rfl
+  have hnormalized : (normalizeForFactor (0 : ZPoly)).squareFreeCore = 0 := by
+    simp only [normalizeForFactor, hprimitive]
+    change
+      (ZPoly.primitiveSquareFreeDecomposition
+        (ZPoly.extractXPower (0 : ZPoly)).core).squareFreeCore = 0
+    rw [hxcore, hsquare]
+  unfold factorLatticeFactorsWithBound
+  simp [hnormalized]
 
 @[expose]
 def factorLatticeWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
@@ -1552,6 +1695,7 @@ self-certifying guard mirrored here), and every fallback is the proven
 `factorTrial` backstop's raw array. The identity
 `ZPoly.factorize f = factorizationOfFactors f (factorFactors f)` is
 `factorize_eq_factorizationOfFactors`. -/
+@[expose]
 def factorFactors (f : ZPoly) : Array ZPoly :=
   match factorClassicalFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) with
   | some cf =>
