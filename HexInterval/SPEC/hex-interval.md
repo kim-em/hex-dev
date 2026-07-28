@@ -1112,6 +1112,13 @@ fact. The current `(node, versions[node])` lookup likewise agrees with
 `facts[node]`. These properties become checker invariants when engine fields
 are made opaque.
 
+`Engine.factAt?` is an observation over an already-valid engine, not the
+checker for an untrusted trace: it searches the complete retained history.
+Certificate replay must instead fold events in chronological order and
+resolve every positive-version dependency only from the already-validated
+prefix. This rejects future references and cyclic provenance even if a forged
+final history contains an entry with the requested `(node, version)`.
+
 Whether freezing is an explicit second request after the solver identifies
 the improving subset, or eager allocation before the `Outcome`, remains an
 experiment. Eager freezing has a simpler protocol but may retain payloads for
