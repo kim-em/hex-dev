@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexResultantMathlib.Basic
+public import HexResultantMathlib.PseudoDivMod
 public import HexResultantMathlib.Chain
 public import HexResultantMathlib.Sylvester
 public import HexResultantMathlib.Specialize

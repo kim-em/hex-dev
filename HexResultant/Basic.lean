@@ -748,13 +748,8 @@ theorem pseudoDivMod_reconstruct {S : Type u}
     scale (g.leadingCoeff ^ (f.size - g.size + 1)) f =
       (pseudoDivMod f g).1 * g + (pseudoDivMod f g).2 := by
   have hgpos : 0 < g.size := by
-    apply Nat.pos_of_ne_zero
-    intro hsize
-    apply hg
-    apply ext_coeff
-    intro i
-    rw [coeff_zero]
-    exact coeff_eq_zero_of_size_le g (by omega)
+    exact Nat.pos_of_ne_zero fun hsize =>
+      hg ((size_eq_zero_iff g).mp hsize)
   have hfpos : 0 < f.size := Nat.lt_of_lt_of_le hgpos hfg
   have hgzero : g.isZero = false := (isZero_eq_false_iff g).2 hgpos
   let n := f.size - 1

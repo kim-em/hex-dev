@@ -49,6 +49,35 @@ nonzero polynomial.
 
 {docstring Hex.DensePoly.subresultantChain}
 
+# Certified pseudo-division algebra
+%%%
+tag := "hex-resultant-pseudo-division"
+%%%
+
+The coefficient recurrence is characterized independently of its array
+implementation: reconstruction and a remainder smaller than the divisor
+determine the quotient/remainder pair uniquely. Nonzero scaling of either
+input then follows from that characterization.
+
+{docstring Hex.DensePoly.pseudoDivMod_unique}
+
+{docstring Hex.DensePoly.pseudoDivMod_scale_left}
+
+{docstring Hex.DensePoly.pseudoDivMod_scale_right}
+
+The Mathlib companion transports the same step through the formal-degree
+Sylvester determinant. This is the resultant recurrence used by the later
+Brown correctness argument; the coefficientwise integrality of Brown's exact
+quotients remains its own subresultant theorem.
+
+{docstring Hex.DensePoly.PseudoDivMod.quotient_degree}
+
+{docstring Hex.DensePoly.PseudoDivMod.remainder_degree}
+
+{docstring Hex.DensePoly.PseudoDivMod.resultant_step}
+
+{docstring Hex.DensePoly.PseudoDivMod.resultant_step_degree}
+
 # Certified chain structure
 %%%
 tag := "hex-resultant-chain-structure"
