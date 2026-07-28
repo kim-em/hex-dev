@@ -35,6 +35,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexRCFProofProbeScientific",
     "HexConformance",
     "HexReleaseTests",
+    "HexRCFTests",
     "HexReleaseExamples",
 }
 

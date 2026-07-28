@@ -654,7 +654,7 @@ free to change.
 
 The public `HexRCF` umbrella imports only the supported implementation and
 proof API. The `*Tests.lean` regression modules above are compiled through the
-separate `HexReleaseTests` Lake target and are not re-exported to consumers.
+separate `HexRCFTests` Lake target and are not re-exported to consumers.
 
 ## Phase-4 evidence tracks
 

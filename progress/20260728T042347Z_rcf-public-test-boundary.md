@@ -5,11 +5,13 @@
 - Audited the post-Phase-4 HexRCF frontier against the repository's Phase 5–7
   contracts instead of treating performance evidence as the end of the library.
 - Removed all twelve regression-test imports from the public `HexRCF` umbrella.
-- Added the twelve regression modules to the dedicated `HexReleaseTests` Lake
+- Added the twelve regression modules to the dedicated `HexRCFTests` Lake
   target so they remain build-checked without being re-exported to consumers.
+- Added that build-only target to the existing single CI job and DAG exception
+  registries while leaving the released-repository test manifest unchanged.
 - Documented the public/test boundary and the previously omitted
   `ReifyTests.lean` module in the HexRCF SPEC.
-- Built `HexRCF` and the complete `HexReleaseTests` target successfully.
+- Built `HexRCF` and all twelve regression modules successfully.
 
 ## Current frontier
 

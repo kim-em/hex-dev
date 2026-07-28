@@ -279,7 +279,12 @@ lean_lib HexReleaseTests where
     `HexRealRoots.ReplayTest,
     `HexRealRootsMathlib.IsolateRootsTests,
     `HexRealRootsMathlib.IsolateRootsElabTests,
-    `HexRCF.LanguageTests,
+    `HexRootsMathlib.Examples]
+
+-- HexRCF is not yet a published split repository, so its verification-only
+-- modules stay separate from the release-manifest-backed target above.
+lean_lib HexRCFTests where
+  globs := #[`HexRCF.LanguageTests,
     `HexRCF.SturmBuilderTests,
     `HexRCF.CarrierTests,
     `HexRCF.IsolationsTests,
@@ -290,8 +295,7 @@ lean_lib HexReleaseTests where
     `HexRCF.BuilderTests,
     `HexRCF.CertificateTests,
     `HexRCF.DecisionTests,
-    `HexRCF.ReifyTests,
-    `HexRootsMathlib.Examples]
+    `HexRCF.ReifyTests]
 
 -- Canonical end-to-end examples are release artifacts rather than public API.
 -- Keep their target separate for the same reason as the regression tests.
