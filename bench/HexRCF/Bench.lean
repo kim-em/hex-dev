@@ -185,23 +185,20 @@ private structure DecisionInput where
   sentence : Sentence
   request : String
 
-private def prepDecisionInput (n : Nat) : DecisionInput :=
-  let sentence := prepDecisionCarrierDegree n
+private def prepDecisionInput (n : Nat) (sentence : Sentence) : DecisionInput :=
   let request := decisionRequest sentence
   { degree := n, sentence, request := request.compress }
 
-/-- The five Sentence/request-line pairs are allocated once at module
-initialization. Both timed wrappers read the same degree-keyed record. The
-FLINT timing includes pipe transport and Python JSON decoding, but not Lean
-request construction or serialization. -/
-private initialize decisionInputs : IO.Ref (Array DecisionInput) ←
-  IO.mkRef <| #[16, 20, 24, 28, 32].map prepDecisionInput
+private def prepDecisionCarrierInput (n : Nat) : DecisionInput :=
+  prepDecisionInput n (prepDecisionCarrierDegree n)
 
-/-- The protocol-floor request is compressed once at module initialization, so
-its timed body measures only the same persistent-driver path as the substantive
-FLINT rungs. -/
-private initialize decisionOverheadRequest : IO.Ref String ←
-  IO.mkRef (decisionRequest (.forallReal .tt)).compress
+/-- The five substantive Sentence/request-line pairs and the key-zero protocol
+floor are allocated once at module initialization. Every timed wrapper reads
+the same degree-keyed array. The FLINT timing includes pipe transport and
+Python JSON decoding, but not Lean request construction or serialization. -/
+private initialize decisionInputs : IO.Ref (Array DecisionInput) ←
+  IO.mkRef <| #[prepDecisionInput 0 (.forallReal .tt)] ++
+    #[16, 20, 24, 28, 32].map prepDecisionCarrierInput
 
 private def decisionInput (degree : Nat) : IO DecisionInput := do
   let inputs ← decisionInputs.get
@@ -235,7 +232,7 @@ floor. The request still runs the public `rcf/decide` path, but has no atom or
 root work. Reports retain the raw FLINT medians and subtract this floor only
 when the difference is positive. -/
 def runFlintDecisionOverhead : Unit → IO Bool := fun _ => do
-  runFlintRequest (← decisionOverheadRequest.get)
+  runFlintDecision (← decisionInput 0)
 
 def runLeanDecision16 : Unit → IO Bool := runLeanDecisionAt 16
 def runFlintDecision16 : Unit → IO Bool := runFlintDecisionAt 16

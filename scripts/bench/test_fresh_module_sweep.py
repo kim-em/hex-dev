@@ -247,6 +247,12 @@ class PairingTests(unittest.TestCase):
             sweep.ordered_modules(pair, 1),
             [("candidate", module), ("reference", module)],
         )
+        first_roles = [
+            sweep.ordered_modules(pair, round_index)[0][0]
+            for round_index in range(6)
+        ]
+        self.assertEqual(first_roles.count("reference"), 3)
+        self.assertEqual(first_roles.count("candidate"), 3)
 
     def test_null_summary_preserves_candidate_minus_reference_sign(self) -> None:
         module = sweep.ProbeModule("Probe.Baseline")
@@ -283,6 +289,30 @@ class PairingTests(unittest.TestCase):
         self.assertTrue(summary["null_control"])
         self.assertEqual(summary["signed_wall_delta_nanos"], [-20])
         self.assertEqual(summary["median_signed_wall_delta_nanos"], -20)
+
+    def test_summary_metadata_cannot_spoof_null_control(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        pair = sweep.ProbePair(
+            "null", module, module, {"null_control": False}, null_control=True
+        )
+        spec = sweep.SweepSpec(
+            description="null",
+            pairs=(pair,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        rows = {
+            pair.name: [{
+                "reference": {"wall_nanos": 1, "peak_rss_kb": None},
+                "candidate": {"wall_nanos": 1, "peak_rss_kb": None},
+                "signed_wall_delta_nanos": 0,
+            }]
+        }
+        with mock.patch.object(sweep, "artifact_sizes", return_value={}):
+            summary = sweep.summarize(spec, rows)[pair.name]
+        self.assertTrue(summary["null_control"])
 
 
 class HarnessValidationTests(unittest.TestCase):
@@ -378,6 +408,25 @@ class HarnessValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "must be identical"):
             sweep.validate_spec(spec)
 
+    def test_null_control_requires_identical_axiom_policies(self) -> None:
+        pair = sweep.ProbePair(
+            "null",
+            sweep.ProbeModule("Probe.Same"),
+            sweep.ProbeModule("Probe.Same", EXPECTED_AXIOMS),
+            {},
+            null_control=True,
+        )
+        spec = sweep.SweepSpec(
+            description="invalid null policy",
+            pairs=(pair,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        with self.assertRaisesRegex(RuntimeError, "axiom policies"):
+            sweep.validate_spec(spec)
+
     def test_same_module_null_control_is_valid(self) -> None:
         module = sweep.ProbeModule("Probe.Same")
         pair = sweep.ProbePair("null", module, module, {}, null_control=True)
@@ -394,6 +443,35 @@ class HarnessValidationTests(unittest.TestCase):
                 mock.patch.object(Path, "is_file", return_value=True), \
                 mock.patch.object(sweep, "_parse_imports", return_value=[]):
             sweep.validate_spec(spec)
+
+    def test_required_sample_count_is_enforced_before_warmup(self) -> None:
+        spec = sweep.SweepSpec(
+            description="required samples",
+            pairs=(PAIR,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+            required_samples=6,
+        )
+        with mock.patch.object(sweep, "validate_spec"):
+            with self.assertRaisesRegex(RuntimeError, "requires --samples 6"):
+                sweep.run_cli(spec, CALLER, ["--samples", "4"])
+
+    def test_null_control_requires_even_sample_count(self) -> None:
+        module = sweep.ProbeModule("Probe.Same")
+        pair = sweep.ProbePair("null", module, module, {}, null_control=True)
+        spec = sweep.SweepSpec(
+            description="balanced null",
+            pairs=(pair,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        with mock.patch.object(sweep, "validate_spec"):
+            with self.assertRaisesRegex(RuntimeError, "even --samples"):
+                sweep.run_cli(spec, CALLER, ["--samples", "5"])
 
     def test_transitive_measured_module_import_fails_closed(self) -> None:
         pair = sweep.ProbePair(

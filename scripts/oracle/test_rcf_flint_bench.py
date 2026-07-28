@@ -84,28 +84,21 @@ class RcfFlintBenchTests(unittest.TestCase):
         self.assertIn("missing object 'sentence'", replies[1]["error"])
         self.assertEqual(replies[2], {"ok": True, "result": True})
 
-    def test_exact_five_paired_registrations(self) -> None:
+    def test_exact_fixed_registration_mapping(self) -> None:
         source = (REPO_ROOT / "bench" / "HexRCF" / "Bench.lean").read_text(
             encoding="utf-8"
         )
-        names = re.findall(
-            r"^setup_fixed_benchmark (run(?:Lean|Flint)Decision\d+) where",
-            source,
-            re.MULTILINE,
+        registrations = re.findall(
+            r"^setup_fixed_benchmark (\w+) where (\w+)$", source, re.MULTILINE
         )
-        expected = [
-            f"run{engine}Decision{degree}"
+        expected = {
+            (f"run{engine}Decision{degree}", "decisionConfig")
             for degree in (16, 20, 24, 28, 32)
             for engine in ("Lean", "Flint")
-        ]
-        self.assertCountEqual(names, expected)
-        self.assertEqual(
-            source.count(
-                "setup_fixed_benchmark runFlintDecisionOverhead where "
-                "decisionOverheadConfig"
-            ),
-            1,
-        )
+        }
+        expected.add(("runFlintDecisionOverhead", "decisionOverheadConfig"))
+        self.assertEqual(set(registrations), expected)
+        self.assertEqual(len(registrations), len(expected))
 
 
 if __name__ == "__main__":

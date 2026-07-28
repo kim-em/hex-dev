@@ -75,6 +75,7 @@ class SweepSpec:
     output_stem: str
     src_dir: Path = Path("bench")
     extra_sources: tuple[Path, ...] = ()
+    required_samples: int | None = None
 
 
 def parse_args(
@@ -316,13 +317,16 @@ def validate_spec(spec: SweepSpec) -> None:
         raise RuntimeError("fresh-module sweep pair names must be unique")
     measured = probe_modules(spec)
     for pair in spec.pairs:
-        identical = pair.reference.module == pair.candidate.module
+        identical = pair.reference == pair.candidate
         if pair.null_control and not identical:
             raise RuntimeError(
-                f"{pair.name}: null control modules must be identical"
+                f"{pair.name}: null control modules and axiom policies "
+                "must be identical"
             )
-        if not pair.null_control and identical:
+        if not pair.null_control and pair.reference.module == pair.candidate.module:
             raise RuntimeError(f"{pair.name}: reference and candidate are identical")
+    if spec.required_samples is not None and spec.required_samples < 1:
+        raise RuntimeError("fresh-module sweep required_samples must be positive")
     target = _ExeTarget(spec.probe_target, "", spec.src_dir)
     package_root = ROOT / ".lake" / "packages"
     for root_module in measured:
@@ -617,6 +621,16 @@ def run_cli(
 ) -> int:
     validate_spec(spec)
     args = parse_args(spec.description, argv)
+    if spec.required_samples is not None and args.samples != spec.required_samples:
+        raise RuntimeError(
+            f"this sweep requires --samples {spec.required_samples}, "
+            f"got {args.samples}"
+        )
+    if any(pair.null_control for pair in spec.pairs) and args.samples % 2 != 0:
+        raise RuntimeError(
+            "null-control sweeps require an even --samples so pair "
+            "orientation is balanced"
+        )
     warm_imports(spec, args.warm_timeout)
     env = environment()
     validity_exceptions: list[str] = []

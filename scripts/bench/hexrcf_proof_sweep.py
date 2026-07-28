@@ -72,6 +72,18 @@ SPEC = SweepSpec(
             {
                 "component": "fresh-build-noise",
                 "interpretation": "calibration-only",
+                "magnitude": "baseline",
+            },
+            null_control=True,
+        ),
+        ProbePair(
+            "degree50-tactic-null",
+            ProbeModule("HexRCF.ProofProbe.Degree50.Tactic", ALLOWED_AXIOMS),
+            ProbeModule("HexRCF.ProofProbe.Degree50.Tactic", ALLOWED_AXIOMS),
+            {
+                "component": "fresh-build-noise",
+                "interpretation": "calibration-only",
+                "magnitude": "degree50-tactic",
             },
             null_control=True,
         ),
@@ -89,6 +101,7 @@ SPEC = SweepSpec(
         Path("SPEC/benchmarking.md"),
         Path("SPEC/Libraries/hex-rcf.md"),
     ),
+    required_samples=6,
 )
 
 

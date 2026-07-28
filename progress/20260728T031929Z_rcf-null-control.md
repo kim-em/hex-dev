@@ -14,8 +14,8 @@
 
 ## Current frontier
 
-- The null-control infrastructure is implementation-complete and independently
-  audited with no blocker or medium finding.
+- The null-control infrastructure is implemented with focused validation,
+  orientation, sign, schema, and manifest tests.
 - No timing samples or release claims have been produced on this development
   machine.
 
