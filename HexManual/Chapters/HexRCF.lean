@@ -13,7 +13,7 @@ open Verso.Genre.Manual.InlineLean
 
 set_option pp.rawOnError true
 
-#doc (Manual) "HexRCF: certified univariate real arithmetic" =>
+#doc (Manual) "HexRCF: a decision procedure for univariate real arithmetic" =>
 %%%
 tag := "hex-rcf"
 %%%
@@ -23,11 +23,11 @@ tag := "hex-rcf"
 tag := "hex-rcf-intro"
 %%%
 
-The `rcf` tactic proves closed propositions about one real variable by exact
-decision. Its input is one universal or existential quantifier over `ℝ`, or
-over a half-open interval `Set.Ioc a b`. The quantifier body may use Boolean
-combinations of comparisons between univariate polynomials with rational
-coefficients.
+The `rcf` tactic proves closed propositions about exactly one quantified real
+variable by exact decision. Its input is one universal or existential
+quantifier over `ℝ`, or over a half-open interval `Set.Ioc a b`, with no other
+free variables. The quantifier body may use Boolean combinations of
+comparisons between univariate polynomials with rational coefficients.
 
 The computation uses exact integer and rational arithmetic. It isolates the
 real roots that can change an atom's sign, evaluates the formula on the
@@ -75,12 +75,16 @@ example : ∃ x : ℝ, x ∈ Set.Ioc (0 : ℝ) 1 ∧ x = 1 := by
 ```
 
 An interval is empty when `a ≥ b`. Universal statements on an empty
-interval are true, while existential statements are false. This example also
-shows that the lower endpoint is not part of a nonempty interval:
+interval are true, while existential statements are false. These examples
+also show that the lower endpoint is not part of a nonempty interval:
 
 ```lean
 example : ∀ x : ℝ, x ∈ Set.Ioc (1 : ℝ) 1 → x ^ 2 < 0 := by
   rcf
+
+example : ¬ ∃ x : ℝ, x ∈ Set.Ioc (1 : ℝ) 1 ∧ x = x := by
+  rintro ⟨x, hx, _⟩
+  exact (not_lt_of_ge hx.2) hx.1
 
 example : ∀ x : ℝ, x ∈ Set.Ioc (0 : ℝ) 1 → x ≠ 0 := by
   rcf
@@ -92,11 +96,13 @@ tag := "hex-rcf-syntax"
 %%%
 
 Polynomial expressions may use numerals, the quantified variable, `+`, `-`,
-`*`, negation, natural powers, and division by rational constants. The tactic
-clears rational denominators before constructing its certificate:
+`*`, negation, natural powers, and division by rational constants. The first
+example exercises all of these arithmetic forms. The tactic clears rational
+denominators before constructing its certificate:
 
 ```lean
-example : ∀ x : ℝ, x ^ 2 / 3 + 1 / 5 > 0 := by
+example : ∀ x : ℝ,
+    -(2 * x - 1) ^ 2 / 3 + 1 / 5 ≤ 1 / 5 := by
   rcf
 
 example : ∀ x : ℝ,
@@ -108,13 +114,14 @@ example : ∀ x : ℝ,
 
 The coefficients may be any exact rationals, but bounded endpoints must be
 dyadic rationals. Thus `1 / 3` is valid as a coefficient and is not valid as
-an endpoint. Integer endpoints, fractions whose reduced denominator is a
-power of two, and their negations are supported.
+an endpoint. An endpoint is supported exactly when its reduced denominator is
+a power of two.
 
-The proposition must contain exactly one real variable. Nested quantifiers,
-symbolic coefficients, division by an expression containing the variable,
-and non-polynomial functions such as `Real.sin` are outside the supported
-fragment. The tactic reports which of these conditions failed.
+The proposition must contain exactly one quantified real variable and no other
+free variables. Nested quantifiers, symbolic coefficients, division by an
+expression containing the variable, and non-polynomial functions such as
+`Real.sin` are outside the supported fragment. The tactic reports which of
+these conditions failed.
 
 # False sentences and fall-through
 %%%
@@ -124,26 +131,33 @@ tag := "hex-rcf-false"
 The tactic constructs proofs only for true sentences. For a false universal
 sentence it identifies a cell on which the body is false:
 
-```lean
-/-- error: rcf: the universal sentence is false -/
-#guard_msgs (substring := true) in
+```lean +error (name := rcfFalseUniversal)
 example : ∀ x : ℝ, x ^ 2 > 0 := by
   rcf
+```
+```leanOutput rcfFalseUniversal
+rcf: the universal sentence is false on the root cell isolated in (-2, 2]
 ```
 
 For a false existential sentence it reports that all relevant cells were
 checked and that none supplies a witness:
 
-```lean
-/-- error: rcf: the existential sentence is false -/
-#guard_msgs (substring := true) in
+```lean +error (name := rcfFalseExistential)
 example : ∃ x : ℝ, x ^ 2 + 1 = 0 := by
   rcf
 ```
+```leanOutput rcfFalseExistential
+rcf: the existential sentence is false; every relevant decomposition
+cell was checked and found false, so there is no witness
+```
 
-A false result never becomes a proof term. It is an ordinary tactic failure,
-so tactic combinators can try another method when a goal is not in the
-supported fragment:
+A supported sentence may be false even though reification and certified
+decision both succeed. Such a checked `false` verdict never becomes a proof
+term: `rcf` reports the relevant false-sentence diagnostic above. An
+out-of-fragment goal is different: reification fails before the decision
+procedure runs. Both are ordinary tactic failures, so tactic combinators may
+fall through to another method. Here the unquantified goal is outside the
+fragment and `norm_num` handles it:
 
 ```lean
 example : (0 : ℝ) < 1 := by
@@ -172,8 +186,24 @@ For an open interval `Set.Ioo`, exclude the upper endpoint from `Set.Ioc`:
   `∃ x ∈ Set.Ioc a b, φ x ∧ x ≠ b`.
 
 After the endpoint proposition has been handled separately, `rcf` can prove
-the remaining singly quantified part. For example, the open-interval rewrite
-is accepted directly:
+the remaining singly quantified part. This worked closed-interval example
+checks the lower endpoint separately and sends the `Set.Ioc` tail to `rcf`:
+
+```lean
+example : ∀ x : ℝ,
+    x ∈ Set.Icc (0 : ℝ) 1 → x ^ 2 ≤ 1 := by
+  have endpoint : (0 : ℝ) ^ 2 ≤ 1 := by norm_num
+  have tail : ∀ x : ℝ,
+      x ∈ Set.Ioc (0 : ℝ) 1 → x ^ 2 ≤ 1 := by
+    rcf
+  intro x hx
+  rcases eq_or_lt_of_le hx.1 with h | h
+  · subst x
+    exact endpoint
+  · exact tail x ⟨h, hx.2⟩
+```
+
+The open-interval rewrite is likewise accepted directly:
 
 ```lean
 example : ∀ x : ℝ,
@@ -196,6 +226,14 @@ tag := "hex-rcf-trust"
 The reflected input type records the same four quantifier forms:
 
 {docstring Hex.RCF.Sentence}
+
+`HexRCF` is classified as a Mathlib-facing library because its reifier, tactic,
+real semantics, and soundness theorem use Mathlib. There is no separate
+`HexRCFMathlib` bridge library. By contrast, `HexRCF.DecisionCheck` exposes the
+complete compiled search, certificate construction, replay, and
+{name}`Hex.RCF.decide` path, with a mechanically checked Mathlib-free import
+closure. The soundness theorem remains on the Mathlib-facing side of this
+boundary.
 
 Certificate construction runs as compiled elaboration code. That search is
 not trusted. The tactic embeds its reflected sentence and a literal
@@ -224,8 +262,10 @@ false verdict (`some false`), and a checked true verdict (`some true`).
 {name}`Hex.RCF.decide` returns `some true` only after this checker accepts the
 certificate. Advanced clients can use {name}`Hex.RCF.build?` to retain the
 certificate and its diagnostic or proof-producing verdict. A `none` result
-means certificate construction or replay failed. Neither `check_sound` nor
-the tactic turns `some false` into a proof of a negation.
+means that compiled construction did not produce a replay-accepted
+certificate; it does not mean that the mathematical sentence is false. A
+successfully checked false sentence instead produces `some false`. Neither
+`check_sound` nor the tactic turns `some false` into a proof of a negation.
 
 The kernel replays polynomial identities, signs, root counts, endpoint
 comparisons, and Boolean folds on literal data. It does not repeat root
@@ -251,6 +291,8 @@ tag := "hex-rcf-cross-references"
 
 * {ref "hex-poly-z"}[HexPolyZ] provides the dense integer polynomial
   operations used to normalize atoms and check polynomial identities.
-* {ref "hex-real-roots"}[HexRealRoots] describes the exact Sturm-based root
-  isolation used elsewhere in Hex. `HexRCF` uses related generalized Sturm
-  certificates to partition the real line at every atom root.
+* {ref "hex-real-roots"}[HexRealRoots] provides the exact real-root isolator
+  used by `HexRCF` during compiled certificate construction. The generalized
+  multiplication-only Sturm certificates in `HexRCF` are kernel-replay
+  evidence for the resulting root-count facts, not a separate compiled
+  isolation algorithm.
