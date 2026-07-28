@@ -1057,19 +1057,28 @@ role/schema pair or malformed body without committing the prospective arena or
 engine outcome.
 Package caches may record the failed attempt because they remain non-semantic.
 
-This first format API validates representation shape only. It does not attest
+The format API validates representation shape only; it does not itself attest
 that a body proves the proposed interval fact, instance, or equality. The
-Mathlib companion must dispatch on the same immutable key, decode the frozen
-entry independently of package cache state, and recheck the corresponding
-rule theorem during semantic replay. Until that companion layer exists, it is
-an explicit compatibility obligation—not a property enforced by this format
-API—that a different callback implementation under an existing versioned rule
-schema leave every retained payload semantically replayable. Whether production
+cache-free semantic replay protocol separately assembles theorem schemas
+package-for-package against one sealed executable registry. Its constructor is
+private, and its checked builder requires exact bidirectional coverage between
+fact schemas and executable fact formats on the complete
+`(RuleKey, role, schema)` key. Thus a checker from another package cannot be
+selected merely because two rules reuse a numeric schema. Instance and
+equality formats are reported explicitly as deferred rather than silently
+treated as checked.
+
+A Mathlib companion must instantiate those abstract schemas, decode each
+frozen entry independently of package cache state, and recheck the
+corresponding rule theorem. It remains an explicit compatibility
+obligation—not a property enforced by the representation validator—that a
+different callback implementation under an existing versioned rule schema
+leave every retained payload semantically replayable. Whether production
 retains these existential snapshots, compiles a dispatch table, adds typed
 decoders, supports hot replacement, or uses another lookup structure remains
-experimental. The older direct registry and engine interfaces remain available
-for search experiments, but proof-producing execution goes through the
-session.
+experimental. The older direct registry and engine interfaces remain
+available for search experiments, but proof-producing execution goes through
+the session.
 
 The explicit registration and validation boundary is fixed. Discovery and
 scheduling above it remain empirical: one arm uses an incremental registry
