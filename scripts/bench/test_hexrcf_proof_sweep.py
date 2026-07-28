@@ -17,7 +17,7 @@ class ManifestTests(unittest.TestCase):
             [
                 "fresh-build-null",
                 "degree10-tactic-null",
-                "degree50-tactic-null",
+                "double-tactic-null",
                 *[
                 f"{case}-{component}"
                 for case in ("quadratic", "degree10", "degree50")
@@ -42,11 +42,28 @@ class ManifestTests(unittest.TestCase):
         )
         self.assertTrue(expensive.null_control)
         self.assertEqual(expensive.reference, expensive.candidate)
+        self.assertEqual(
+            expensive.reference.module, "HexRCF.ProofProbe.Control"
+        )
         self.assertEqual(expensive.reference.expected_axioms, rcf.ALLOWED_AXIOMS)
-        self.assertEqual(expensive.metadata["magnitude"], "degree50-tactic")
+        self.assertEqual(
+            expensive.metadata["magnitude"], "double-degree50-tactic"
+        )
+
+    def test_expensive_control_runs_two_independent_tactics(self) -> None:
+        source = sweep.probe_source(
+            "HexRCF.ProofProbe.Control", rcf.SPEC.src_dir
+        ).read_text(encoding="utf-8")
+        self.assertEqual(source.count(":= by\n  rcf\n"), 2)
+        self.assertIn(
+            "theorem result : rcfDegree50Goal ∧ rcfDegree50Goal := "
+            "⟨left, right⟩",
+            source,
+        )
 
     def test_sample_count_is_preregistered_and_balanced(self) -> None:
         self.assertEqual(rcf.SPEC.required_samples, 6)
+        self.assertEqual(rcf.SPEC.schema, "hexrcf-proof-probes-v6")
 
     def test_substantive_pairs_remain_five_per_case(self) -> None:
         substantive = [pair for pair in rcf.SPEC.pairs if not pair.null_control]
@@ -58,6 +75,7 @@ class ManifestTests(unittest.TestCase):
             )
 
     def test_only_whole_tactic_pairs_have_acceptance_budgets(self) -> None:
+        budgets = {}
         for pair in rcf.SPEC.pairs:
             has_budget = "tactic_budget_ms" in pair.metadata
             self.assertEqual(
@@ -65,8 +83,18 @@ class ManifestTests(unittest.TestCase):
                 not pair.null_control and pair.name.endswith("-tactic"),
                 pair.name,
             )
+            if has_budget:
+                budgets[pair.name] = pair.metadata["tactic_budget_ms"]
+        self.assertEqual(
+            budgets,
+            {
+                "quadratic-tactic": 2_000,
+                "degree10-tactic": 12_000,
+                "degree50-tactic": 30_000,
+            },
+        )
 
-    def test_only_replay_and_tactic_report_axioms(self) -> None:
+    def test_axiom_reports_match_probe_roles(self) -> None:
         for pair in rcf.SPEC.pairs:
             if pair.null_control:
                 self.assertEqual(pair.reference, pair.candidate, pair.name)

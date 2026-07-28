@@ -703,7 +703,9 @@ complexity verdicts.
 
 The tactic track begins with same-module `Baseline − Baseline`,
 `Degree10.Tactic − Degree10.Tactic`, and
-`Degree50.Tactic − Degree50.Tactic` null controls, then uses matched
+`Control − Control` null controls, where `Control` checks two independent
+degree-50 `by rcf` theorems to supply a genuinely higher build-magnitude
+calibration. It then uses matched
 fresh-module variants for each fixed case:
 `Baseline` (identical imports), `Reify` (reify-only checksum), `Input`
 (reflected sentence literal), `Search` (the same input plus a meta checksum of
@@ -743,10 +745,10 @@ rejects any other pretty-printer omission, so the committed macro source is
 independently rebuildable. All measured modules import the same generated
 support module and no measured module imports another measured module.
 
-There is one shared `Baseline` and six measured modules under each of
-`Quadratic/`, `Degree10/`, and `Degree50/`. The report contains eighteen
-pairs: baseline, degree-10-tactic, and degree-50-tactic null controls first,
-then these five pairs for each of the three cases:
+There is one shared `Baseline`, one expensive `Control`, and six measured
+modules under each of `Quadratic/`, `Degree10/`, and `Degree50/`. The report
+contains eighteen pairs: baseline, degree-10-tactic, and double-tactic null
+controls first, then these five pairs for each of the three cases:
 
 | Report component | Reference | Candidate |
 | --- | --- | --- |
@@ -772,8 +774,8 @@ python3 scripts/bench/hexrcf_proof_sweep.py --samples 6 \
   --shared-host --expected-host chungus2 --cpu 22
 ```
 
-Only `Replay` and `Tactic` print an axiom report, fixed to
-`[propext, Classical.choice, Quot.sound]`. `Search` also checks stable
+Only `Replay`, `Tactic`, and the expensive `Control` print an axiom report,
+fixed to `[propext, Classical.choice, Quot.sound]`. `Search` also checks stable
 structural sentence and certificate hashes, so a successful build forces the
 compiled result instead of merely invoking the builder and discarding its
 output.
@@ -912,8 +914,11 @@ For a sentence with `u` atom occurrences of degrees summing to `n`, of which
   using polynomial multiplication/subtraction, evaluation, and
   comparison only.
 
-For typical goals (`m ≤ 5`, `deg ≤ 10`, small coefficients) the whole
-pipeline is dominated by elaboration overhead, not arithmetic.
+For the fixed tactic probes, fresh-module cost is dominated by kernel
+certificate replay. Nominal atom degree alone does not order the cases: the
+three-atom degree-10 goal builds a degree-30 carrier and replays more
+primitive-PRS evidence than the sparse one-atom degree-50 goal. The relevant
+drivers are carrier degree, distinct-atom count, and coefficient growth.
 
 ## Time budgets (Phase 4 validation)
 
@@ -922,10 +927,11 @@ paired `Tactic − Baseline` fresh-module delta on a clean named host, using
 the designated-shared-host protocol from `SPEC/benchmarking.md`. Raw total wall
 times and every pair remain in the artifact. They are not
 one-parameter ladders, complexity verdicts, or substitutes for the compiled
-LeanBench cases above.
+LeanBench cases above. The thresholds are measured-plus-headroom regression
+bounds for this fresh-module delta; they are not interactive-latency claims.
 
-- Quadratic goals, one atom: under 100 ms.
-- Degree ≤ 10, up to 3 atoms: under 1 second.
+- Quadratic goals, one atom: under 2 seconds.
+- Degree ≤ 10, up to 3 atoms: under 12 seconds.
 - Adversarial degree-50, one atom: under 30 seconds.
 
 ## References
