@@ -171,7 +171,7 @@ The full normalized reassembly: combining the array-product layout from
 recovers the original polynomial exactly. Handles `f = 0` separately because
 `signedContentScalar 0 = 0` collapses the scalar prefix.
 -/
-private theorem reassemblePolynomialFactors_product_eq_input
+theorem reassemblePolynomialFactors_product_eq_input
     (f : ZPoly) (coreFactors : Array ZPoly)
     (hcore : Array.polyProduct coreFactors =
       (normalizeForFactor f).squareFreeCore) :

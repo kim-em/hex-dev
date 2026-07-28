@@ -338,6 +338,39 @@ method inside an interactive theorem prover. This is a cautious claim about
 the implementation, not a claim that the outstanding completeness theorem
 above has already been proved.
 
+Successful modular answers have direct packed-product contracts:
+{name}`HexBerlekampZassenhausMathlib.factorClassicalFactorsWithBound_product`
+and
+{name}`HexBerlekampZassenhausMathlib.factorLatticeFactorsWithBound_product`
+prove that packing either raw factor array reconstructs the input. Thus the
+two executable product guards in the hybrid are mathematically redundant;
+they remain as cheap defensive checks in the Mathlib-free implementation.
+The public {name}`HexBerlekampZassenhausMathlib.factorize_product` theorem can
+therefore be understood branch-by-branch through these modular contracts and
+the exact trial contract, rather than relying on an unproved property of a
+successful modular result.
+
+The fixed prime selector checks all 94 odd primes at most 500, in two
+increasing fixed folds. The selector bridge proves both that any good listed
+prime forces success and that selector failure forces their primorial to
+divide the leading-coefficient/discriminant product; the dispatcher-facing
+strict-bound theorem is
+{name}`HexBerlekampZassenhausMathlib.HotPath.normalizedCore_toMonic_ne_none_of_lt_primorial`.
+Finally,
+{name}`HexBerlekampZassenhausMathlib.factorLatticeFactorsWithBound_ne_none_of_toMonicPrimeData`
+and
+{name}`HexBerlekampZassenhausMathlib.factorLattice_ne_none_of_toMonicPrimeData`
+prove that the lattice tier cannot decline once its actual monic-core selector
+has succeeded. Composing this with the product contracts gives
+{name}`HexBerlekampZassenhausMathlib.factorFactors_modular_of_toMonicPrimeData`,
+whose conclusion records whether the classical or lattice branch supplied the
+raw hybrid result. The good-prime and strict-primorial wrappers
+{name}`HexBerlekampZassenhausMathlib.factorFactors_modular_of_normalizedCore_good`
+and
+{name}`HexBerlekampZassenhausMathlib.factorFactors_modular_of_normalizedCore_lt_primorial`
+therefore exclude every route to the trial branch under their stated
+hypotheses.
+
 For proof clients,
 {name}`HexBerlekampZassenhausMathlib.factorize_normalized` gives the full
 mathematical description of the output on a nonzero input. It proves that the

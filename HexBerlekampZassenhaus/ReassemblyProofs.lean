@@ -110,24 +110,47 @@ theorem QuadraticMultifactorLiftInvariant_of_choosePrimeData
 
 end ZPoly
 
-/--
-Integer upper bound for the BHKS fast-recombination precision schedule.
-
-The conservative all-integer cap is
-`1 + n * 4^(n^2) * (sumSquared + 1)^n * log2(sumSquared + 1)^n`, where
-`n` is the executable degree bound and `sumSquared` is the squared coefficient
-norm.
--/
-def bhksBound (f : ZPoly) : Nat :=
-  let n := f.degree?.getD 0
-  let sumSquared := ZPoly.coeffNormSq f
-  1 + n * 4 ^ (n * n) * (sumSquared + 1) ^ n * (Nat.log2 (sumSquared + 1)) ^ n
-
 /-- Integer coefficient bound `B_j` used by the BHKS all-coefficients CLD lattice. -/
 @[expose]
 def bhksCoeffBound (f : ZPoly) (j : Nat) : Nat :=
   let n := f.degree?.getD 0
   Nat.choose (n - 1) j * n * ZPoly.coeffL2NormBound f
+
+/-- Twice the largest per-column CLD coefficient bound of `f`. -/
+def bhksColumnFloor (f : ZPoly) : Nat :=
+  let n := f.degree?.getD 0
+  2 * (List.range (n + 1)).foldl
+    (fun acc j => max acc (bhksCoeffBound f j)) 0
+
+/--
+Integer upper bound for the production BHKS resultant contradiction.
+
+Writing `n = degree f`, the components are deliberately coarse:
+
+* `R = 4n + n³` bounds the cut radius;
+* `V = 2n · 2^(2n) · R` bounds a retained LLL row coordinate;
+* `E = V + V·R + 2^n·R` bounds every coordinate after the full-lattice
+  true-support adjustment;
+* `C = 500 · (bhksColumnFloor f + 1)` bounds every cut power and low residue,
+  using the production selector's `p ≤ 500`;
+* `M = (n+1)·E·C` bounds every coefficient of the reconstructed auxiliary;
+* the final power term bounds the Leibniz expansion of a Sylvester matrix of
+  size at most `2n` (using `(2n)! ≤ (2n)^(2n)`).
+
+The leading `1` makes the bound strictly larger than the absolute resultant.
+Unlike the former paper-shaped placeholder, every component here is tied
+directly to the executable lattice, selector, and resultant proof.
+-/
+@[expose]
+def bhksBound (f : ZPoly) : Nat :=
+  let n := f.degree?.getD 0
+  let R := 4 * n + n * n * n
+  let V := (2 * n) * 2 ^ (2 * n) * R
+  let E := V + V * R + 2 ^ n * R
+  let C := 500 * (bhksColumnFloor f + 1)
+  let M := (n + 1) * E * C
+  let A := max (ZPoly.defaultFactorCoeffBound f) M
+  1 + ((2 * n) * A) ^ (2 * n)
 
 def ceilLogPAux (p target : Nat) : Nat → Nat → Nat → Nat
   | 0, ell, _ => ell
@@ -285,6 +308,72 @@ theorem ceilLogP_le_of_le_pow {p : Nat} (hp : 2 ≤ p) (target a : Nat)
   rw [if_neg (by omega : ¬ p ≤ 1)]
   have := ceilLogPAux_le p hp target a h (target + 1) 0 (Nat.zero_le a)
   simpa using this
+
+/-- The power selected by `ceilLogP` overshoots a positive target by at most
+one factor of the base.  This is the upper-bound companion needed when a BHKS
+proof reconstructs ordinary coefficients from the high-bit lattice columns. -/
+theorem pow_ceilLogP_le_mul {p target : Nat} (hp : 2 ≤ p) (htarget : 0 < target) :
+    p ^ ceilLogP p target ≤ p * target := by
+  generalize hell : ceilLogP p target = ell
+  cases ell with
+  | zero =>
+      simp only [Nat.pow_zero]
+      exact Nat.mul_pos (by omega) htarget
+  | succ e =>
+      have hprev : p ^ e < target := by
+        by_cases hle : target ≤ p ^ e
+        · have hell_le := ceilLogP_le_of_le_pow hp target e hle
+          rw [hell] at hell_le
+          omega
+        · exact Nat.lt_of_not_ge hle
+      rw [Nat.pow_succ]
+      simpa [Nat.mul_comm] using Nat.mul_le_mul_left p (Nat.le_of_lt hprev)
+
+private theorem foldl_max_le_init (l : List Nat) (g : Nat → Nat) (acc : Nat) :
+    acc ≤ l.foldl (fun a j => max a (g j)) acc := by
+  induction l generalizing acc with
+  | nil => exact Nat.le_refl _
+  | cons x xs ih => exact Nat.le_trans (Nat.le_max_left _ _) (ih _)
+
+private theorem le_foldl_max {g : Nat → Nat} :
+    ∀ {l : List Nat} {j : Nat}, j ∈ l →
+      ∀ acc, g j ≤ l.foldl (fun a j => max a (g j)) acc := by
+  intro l
+  induction l with
+  | nil => intro j hj; cases hj
+  | cons x xs ih =>
+      intro j hj acc
+      rcases List.mem_cons.mp hj with rfl | hj'
+      · exact Nat.le_trans (Nat.le_max_right _ _) (foldl_max_le_init _ _ _)
+      · exact ih hj' _
+
+/-- Every in-range CLD column bound is dominated by `bhksColumnFloor`. -/
+theorem two_mul_bhksCoeffBound_le_bhksColumnFloor
+    (f : ZPoly) {j : Nat} (hj : j ≤ f.degree?.getD 0) :
+    2 * bhksCoeffBound f j ≤ bhksColumnFloor f := by
+  have hmem : j ∈ List.range (f.degree?.getD 0 + 1) :=
+    List.mem_range.mpr (by omega)
+  have hle := le_foldl_max
+    (g := fun k => bhksCoeffBound f k) hmem 0
+  simpa only [bhksColumnFloor] using Nat.mul_le_mul_left 2 hle
+
+/--
+For the production selector range `p ≤ 500`, every in-range cut power is
+bounded by the explicit `C` component of `bhksBound`.
+-/
+theorem pow_bhksCoeffCutThreshold_le
+    (f : ZPoly) {p j : Nat} (hp2 : 2 ≤ p) (hp500 : p ≤ 500)
+    (hj : j ≤ f.degree?.getD 0) :
+    p ^ bhksCoeffCutThreshold p f j ≤
+      500 * (bhksColumnFloor f + 1) := by
+  change p ^ ceilLogP p (2 * bhksCoeffBound f j + 1) ≤ _
+  have hpow := pow_ceilLogP_le_mul
+    (p := p) (target := 2 * bhksCoeffBound f j + 1) hp2 (by omega)
+  have hfloor := two_mul_bhksCoeffBound_le_bhksColumnFloor f hj
+  have htarget :
+      2 * bhksCoeffBound f j + 1 ≤ bhksColumnFloor f + 1 := by omega
+  exact Nat.le_trans hpow
+    (Nat.mul_le_mul hp500 htarget)
 
 /--
 The executable Mignotte precision exponent satisfies the Mignotte side
@@ -1277,7 +1366,9 @@ private theorem factorizationOfFactors_product_of_filtered_product
   rw [factorizationOfFactors_product, hfiltered]
   exact hraw
 
-private theorem factorizationOfFactors_product_of_raw_product_of_all_recorded_normalized
+/-- Packing a sign-normalized, fully recorded raw factor array preserves its
+known product. -/
+theorem factorizationOfFactors_product_of_raw_product_of_all_recorded_normalized
     (f : ZPoly) (factors : Array ZPoly)
     (hraw : DensePoly.C (signedContentScalar f) *
       Array.polyProduct factors = f)
@@ -1295,7 +1386,9 @@ private theorem signedContentScalar_zero :
   unfold signedContentScalar
   simp
 
-private theorem factorizationOfFactors_product_of_zero (factors : Array ZPoly) :
+/-- Packing any raw factor array against the zero input has product zero,
+because the packed scalar is zero. -/
+theorem factorizationOfFactors_product_of_zero (factors : Array ZPoly) :
     Factorization.product (factorizationOfFactors 0 factors) = 0 := by
   rw [factorizationOfFactors_product, signedContentScalar_zero]
   change DensePoly.C (0 : Int) *

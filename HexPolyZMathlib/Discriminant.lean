@@ -144,6 +144,26 @@ theorem discr_ne_zero_of_nodup_roots {f : K[X]} (hf : 0 < f.degree)
   subst hxy'
   exact (hnd.mem_erase_iff.mp hy).1 rfl
 
+/-- Base change of the discriminant when the leading coefficient survives.
+The hypothesis is exactly what is needed to preserve degree and cancel the
+leading coefficient in `Polynomial.resultant_deriv`. -/
+theorem discr_map_of_lc {R S : Type*} [CommRing R] [CommRing S] [IsDomain S]
+    (φ : R →+* S) {f : R[X]} (hf : 0 < f.degree)
+    (hlc : φ f.leadingCoeff ≠ 0) :
+    (f.map φ).discr = φ f.discr := by
+  have hfm : 0 < (f.map φ).degree := by
+    rw [degree_map_eq_of_leadingCoeff_ne_zero φ hlc]
+    exact hf
+  have hmn : (f.map φ).natDegree = f.natDegree :=
+    natDegree_map_of_leadingCoeff_ne_zero φ hlc
+  have h1 := resultant_deriv hfm
+  rw [derivative_map, hmn, resultant_map_map, resultant_deriv hf] at h1
+  simp only [map_mul, map_pow, map_neg, map_one,
+    leadingCoeff_map_of_leadingCoeff_ne_zero φ hlc] at h1
+  have hne : (-1 : S) ^ (f.natDegree * (f.natDegree - 1) / 2) * φ f.leadingCoeff ≠ 0 :=
+    mul_ne_zero (pow_ne_zero _ (neg_ne_zero.mpr one_ne_zero)) hlc
+  exact (mul_left_cancel₀ hne h1).symm
+
 /-- Base change of the discriminant along an injective ring homomorphism into a
 domain: `discr (f.map φ) = φ (discr f)`, for `f` of positive degree. The
 discriminant is a universal polynomial in the coefficients, so this holds for

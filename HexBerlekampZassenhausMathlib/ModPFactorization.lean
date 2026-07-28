@@ -185,6 +185,100 @@ theorem modPFactorization_of_toMonicPrimeData
     Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
   exact modPFactorization_of_choosePrimeData_of_monic hselected hmonic hpos
 
+/--
+A modular factorization into positive-degree factors has no more factors than
+the degree of its monic target.
+-/
+theorem ModPFactorization.factorCount_le_degree
+    {f : Hex.ZPoly} {data : Hex.PrimeChoiceData}
+    (h : ModPFactorization f data)
+    (hmonic : Hex.DensePoly.Monic f) :
+    data.factorsModP.size ≤ f.degree?.getD 0 := by
+  letI := data.bounds
+  have hp : 1 < data.p := h.prime.one_lt
+  haveI : Fact (_root_.Nat.Prime data.p) :=
+    ⟨natPrime_of_hexNatPrime h.prime⟩
+  haveI : Nontrivial (ZMod data.p) := inferInstance
+  let t : Multiset (Polynomial ℤ) :=
+    (data.factorsModP.toList : Multiset (Hex.FpPoly data.p)).map
+      (fun g => HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ g))
+  have ht_monic : ∀ q ∈ t, q.Monic := by
+    intro q hq
+    rw [Multiset.mem_map] at hq
+    obtain ⟨g, hg, rfl⟩ := hq
+    apply HexHenselMathlib.toPolynomial_monic_of_dense_monic
+    apply Hex.FpPoly.monic_liftToZ_of_monic g hp
+    exact h.monic g (by simpa [t] using hg)
+  have ht_pos : ∀ q ∈ t, 0 < q.natDegree := by
+    intro q hq
+    rw [Multiset.mem_map] at hq
+    obtain ⟨g, hg, rfl⟩ := hq
+    exact h.natDegree_pos g (by simpa [t] using hg)
+  have hcard_le_sum :
+      t.card ≤ (t.map Polynomial.natDegree).sum := by
+    have aux : ∀ u : Multiset (Polynomial ℤ),
+        (∀ q ∈ u, 0 < q.natDegree) →
+          u.card ≤ (u.map Polynomial.natDegree).sum := by
+      intro u hu
+      induction u using Multiset.induction_on with
+      | empty => simp
+      | @cons q u ih =>
+          have hq : 0 < q.natDegree := hu q (by simp)
+          have hu' : ∀ z ∈ u, 0 < z.natDegree :=
+            fun z hz => hu z (Multiset.mem_cons_of_mem hz)
+          have hih := ih hu'
+          simp only [Multiset.card_cons, Multiset.map_cons, Multiset.sum_cons]
+          omega
+    exact aux t ht_pos
+  have hprod :
+      t.prod =
+        HexPolyZMathlib.toPolynomial
+          (Array.polyProduct (data.factorsModP.map Hex.FpPoly.liftToZ)) := by
+    rw [polyProduct_toPolynomial]
+    simp only [t, Multiset.map_coe, Multiset.prod_coe, Array.toList_map,
+      List.map_map]
+    congr 1
+  have hcongr := h.product_congr_target hmonic
+  have hmap :=
+    HexHenselMathlib.zpoly_congr_toPolynomial_map_eq
+      (Array.polyProduct (data.factorsModP.map Hex.FpPoly.liftToZ))
+      f data.p hcongr
+  have hprod_monic : t.prod.Monic := by
+    have aux : ∀ u : Multiset (Polynomial ℤ),
+        (∀ q ∈ u, q.Monic) → u.prod.Monic := by
+      intro u hu
+      induction u using Multiset.induction_on with
+      | empty => simp
+      | @cons q u ih =>
+          rw [Multiset.prod_cons]
+          exact (hu q (by simp)).mul
+            (ih (fun z hz => hu z (Multiset.mem_cons_of_mem hz)))
+    exact aux t ht_monic
+  have hf_monic : (HexPolyZMathlib.toPolynomial f).Monic :=
+    HexHenselMathlib.toPolynomial_monic_of_dense_monic f hmonic
+  have hdegree :
+      t.prod.natDegree =
+        (HexPolyZMathlib.toPolynomial f).natDegree := by
+    have hleft :=
+      hprod_monic.natDegree_map (Int.castRingHom (ZMod data.p))
+    have hright :=
+      hf_monic.natDegree_map (Int.castRingHom (ZMod data.p))
+    have hmap' :
+        t.prod.map (Int.castRingHom (ZMod data.p)) =
+          (HexPolyZMathlib.toPolynomial f).map
+            (Int.castRingHom (ZMod data.p)) := by
+      rw [hprod]
+      simpa using hmap
+    rw [← hleft, ← hright, hmap']
+  have hsum :
+      (t.map Polynomial.natDegree).sum =
+        (HexPolyZMathlib.toPolynomial f).natDegree := by
+    rw [← Polynomial.natDegree_multiset_prod_of_monic t ht_monic, hdegree]
+  have hcard : t.card = data.factorsModP.size := by
+    simp [t]
+  rw [← hcard, ← HexPolyMathlib.natDegree_toPolynomial f, ← hsum]
+  exact hcard_le_sum
+
 
 /-! # Piece transport: dilated tracked factors
 
@@ -364,14 +458,14 @@ theorem natDegree_toPolynomial_liftToZ_pos {g : Hex.FpPoly q}
 nontrivial divisor has no duplicates: a repeated factor would contribute a
 square. -/
 theorem nodup_of_factorProduct_no_squared
-    (hprime : Hex.Nat.Prime q)
+    (_hprime : Hex.Nat.Prime q)
     {factors : List (Hex.FpPoly q)} {mg : Hex.FpPoly q}
     (hprod : Hex.Berlekamp.factorProduct factors = mg)
     (h_no_squared :
       ∀ d : Hex.FpPoly q, d * d ∣ mg → ¬ (0 < d.degree?.getD 0))
     (hdeg : ∀ v ∈ factors, 0 < v.degree?.getD 0) :
     factors.Nodup := by
-  haveI : Fact (_root_.Nat.Prime q) := ⟨natPrime_of_hexNatPrime hprime⟩
+  haveI : Fact (_root_.Nat.Prime q) := ⟨natPrime_of_hexNatPrime _hprime⟩
   by_contra hdup
   obtain ⟨v, hv⟩ := List.exists_duplicate_iff_not_nodup.mpr hdup
   have hv_mem : v ∈ factors := hv.mem

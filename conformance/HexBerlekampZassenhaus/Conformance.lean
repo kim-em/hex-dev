@@ -354,6 +354,16 @@ private def factorizationCaseMatches (c : FactorizationCase) : Bool :=
 #guard isGoodPrime squareFreeTypical 3
 #guard choosePrime leadingCoeffDivisibleByFive = 3
 
+/-- A live bounded-selector counterexample. For
+`g = X^3 - P`, where `P` is the product of all 94 hot-path candidates,
+the monic transform is `g` itself and every candidate reduction is `X^3`.
+Thus neither the bounded selector nor the conditional lattice tier succeeds. -/
+private def hotPathNoPrimeCubic : ZPoly :=
+  DensePoly.ofCoeffs #[-(hotPathPrimorial : Int), 0, 0, 1]
+
+#guard ZPoly.toMonicPrimeData? hotPathNoPrimeCubic = none
+#guard factorLattice hotPathNoPrimeCubic = none
+
 #guard
   match choosePrimeData? squareFreeTypical with
   | none => false
@@ -420,9 +430,10 @@ private def extendedCascade2 : ZPoly :=
   | none => false
   | some data => 29 ≤ data.p
 
-#guard bhksBound (0 : ZPoly) = 1
-#guard bhksBound ZPoly.X = 9
-#guard bhksBound (DensePoly.ofCoeffs #[1, 0, 1]) = 4609
+#guard bhksBound (0 : ZPoly) = 2
+#guard bhksBound ZPoly.X = 2250000000001
+#guard bhksBound (DensePoly.ofCoeffs #[1, 0, 1]) =
+  792401927702564082548736000000000001
 
 #guard
   let data := normalizeForFactor monomialWithContent

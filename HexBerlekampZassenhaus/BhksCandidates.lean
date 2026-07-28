@@ -317,6 +317,7 @@ def bhksIndicatorSelectedFactors
       none
 
 /-- The array selected by a `0/1` BHKS indicator row. -/
+@[expose]
 def bhksIndicatorSelectedFactorsArray
     (liftedFactors : Array ZPoly) (indicator : Array Int) : Array ZPoly :=
   (List.range indicator.size).foldl
@@ -886,6 +887,93 @@ theorem bhksIndicatorCandidate?_eq_some_of_dilatedCenteredLift
        none) = some (expectedFactor, quotient)
   simp [liftModulus, hnormalize, hrecord, hquotient]
 
+/--
+Reconstruct one monic-transform BHKS indicator from the honest primitive-part
+identity carried by a recovered monic factor.
+
+Unlike `bhksIndicatorCandidate?_eq_some_of_dilatedCenteredLift`, this surface
+does not require the raw dilation to be primitive.  This is the shape needed
+for nonmonic inputs: the selected monic factor may acquire content after
+dilation, and the executable candidate deliberately removes that content.
+-/
+theorem bhksIndicatorCandidate?_eq_some_of_monicLift
+    (f : ZPoly) (d : LiftData) (indicator : Array Int)
+    (selected : Array ZPoly) (monicFactor expectedFactor : ZPoly)
+    (hselected :
+      bhksIndicatorSelectedFactors d.liftedFactors indicator = some selected)
+    (hdvd : expectedFactor ∣ f)
+    (hexpected_sign : 0 ≤ DensePoly.leadingCoeff expectedFactor)
+    (hexpected_pos_lc : 0 < DensePoly.leadingCoeff expectedFactor)
+    (hexpected_degree : 0 < expectedFactor.degree?.getD 0)
+    (hcenter :
+      centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k) = monicFactor)
+    (hrecovered :
+      ZPoly.primitivePart
+          (ZPoly.dilate (DensePoly.leadingCoeff f) monicFactor) =
+        expectedFactor) :
+    ∃ quotient,
+      bhksIndicatorCandidate? f d indicator =
+        some (expectedFactor, quotient) := by
+  have hnormalizeCandidate :
+      normalizeCandidateFactor
+          (ZPoly.dilate (DensePoly.leadingCoeff f)
+            (centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k))) =
+        expectedFactor := by
+    rw [hcenter]
+    unfold normalizeCandidateFactor
+    rw [hrecovered]
+    simp [Int.not_lt.mpr hexpected_sign]
+  have hnormalize :
+      normalizeFactorSign
+          (normalizeCandidateFactor
+            (ZPoly.dilate (DensePoly.leadingCoeff f)
+              (centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k)))) =
+        expectedFactor := by
+    rw [hnormalizeCandidate]
+    exact normalizeFactorSign_eq_self_of_leadingCoeff_nonneg
+      expectedFactor hexpected_sign
+  have hrecord :
+      shouldRecordPolynomialFactor expectedFactor = true := by
+    apply shouldRecordPolynomialFactor_eq_true_of_ne
+    · intro hzero
+      rw [hzero] at hexpected_degree
+      simp [DensePoly.degree?] at hexpected_degree
+    · intro hone
+      rw [hone] at hexpected_degree
+      have hdeg0 : (DensePoly.degree? (1 : ZPoly)).getD 0 = 0 := by rfl
+      rw [hdeg0] at hexpected_degree
+      omega
+    · intro hneg
+      rw [hneg] at hexpected_degree
+      have hdeg0 :
+          (DensePoly.degree? (DensePoly.C (-1 : Int))).getD 0 = 0 := by simp
+      rw [hdeg0] at hexpected_degree
+      omega
+  rcases hdvd with ⟨quotient, hquotient_mul⟩
+  have hmul : quotient * expectedFactor = f := by
+    rw [DensePoly.mul_comm_poly (S := Int)]
+    exact hquotient_mul.symm
+  have hquotient :
+      exactQuotient? f expectedFactor = some quotient :=
+    exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq
+      hexpected_pos_lc hexpected_degree hmul
+  refine ⟨quotient, ?_⟩
+  unfold bhksIndicatorCandidate?
+  rw [hselected]
+  change
+    (let modulus := liftModulus d
+     let candidate :=
+       normalizeFactorSign <| normalizeCandidateFactor
+         (ZPoly.dilate (DensePoly.leadingCoeff f)
+           (centeredLiftPoly (Array.polyProduct selected) modulus))
+     if shouldRecordPolynomialFactor candidate then
+       match exactQuotient? f candidate with
+       | some quotient => some (candidate, quotient)
+       | none => none
+     else
+       none) = some (expectedFactor, quotient)
+  simp [liftModulus, hnormalize, hrecord, hquotient]
+
 def bhksIndicatorOneCount (r : Nat) (indicator : Array Int) : Nat :=
   (List.range r).foldl
     (fun count i => if indicator.getD i 0 == 1 then count + 1 else count)
@@ -893,6 +981,37 @@ def bhksIndicatorOneCount (r : Nat) (indicator : Array Int) : Nat :=
 
 def bhksIndicatorAllOnes (r : Nat) (indicator : Array Int) : Bool :=
   indicator.size == r && bhksIndicatorOneCount r indicator == r
+
+/-- An indicator of the expected width whose every coordinate is one passes
+the executable all-ones check. -/
+theorem bhksIndicatorAllOnes_eq_true_of_getD
+    (r : Nat) (indicator : Array Int)
+    (hsize : indicator.size = r)
+    (hones : ∀ i, i < r → indicator.getD i 0 = 1) :
+    bhksIndicatorAllOnes r indicator = true := by
+  have hfold :
+      ∀ (l : List Nat) (acc : Nat),
+        (∀ i ∈ l, i < r) →
+        l.foldl
+            (fun count i =>
+              if indicator.getD i 0 == 1 then count + 1 else count)
+            acc =
+          acc + l.length := by
+    intro l
+    induction l with
+    | nil =>
+        intro acc _
+        simp
+    | cons i l ih =>
+        intro acc hlt
+        have hi : i < r := hlt i (List.mem_cons_self ..)
+        have htail : ∀ j ∈ l, j < r :=
+          fun j hj => hlt j (List.mem_cons_of_mem i hj)
+        rw [List.foldl_cons, if_pos (by simp [hones i hi]), ih _ htail]
+        simp [Nat.add_comm, Nat.add_left_comm]
+  unfold bhksIndicatorAllOnes bhksIndicatorOneCount
+  rw [hfold (List.range r) 0 (fun i hi => List.mem_range.mp hi)]
+  simp [hsize]
 
 /-- The recovery early-bailout predicate: the projected lattice is empty, the
 indicator partition is empty, or the indicator partition is the trivial
@@ -903,6 +1022,16 @@ def bhksDegenerateIndicatorPartition
     L.projectedRows.isEmpty ||
     (indicators.size == 1 &&
       bhksIndicatorAllOnes L.factorCount (indicators.getD 0 #[]))
+
+/-- The proof-facing successful branch of the BHKS degeneracy guard. -/
+theorem bhksDegenerateIndicatorPartition_eq_false
+    (L : BhksProjectedRows) (indicators : Array (Array Int))
+    (hindicators : indicators.isEmpty = false)
+    (hrows : L.projectedRows.isEmpty = false)
+    (hsize : (indicators.size == 1) = false) :
+    bhksDegenerateIndicatorPartition L indicators = false := by
+  unfold bhksDegenerateIndicatorPartition
+  simp [hindicators, hrows, hsize]
 
 private def bhksIndicatorCandidatesStep
     (f : ZPoly) (d : LiftData) :

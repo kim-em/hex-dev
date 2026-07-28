@@ -211,6 +211,195 @@ theorem projectedRowsRrefColumnSignature_eq_imp_supportEquivalent_of_cut
       simp [intVectorToRat, indicatorVector, hjS, hkS] at heq
     · exact iff_of_false hjS hkS
 
+/-- Exact RREF signature semantics once the retained projected lattice is the
+true-support lattice. -/
+theorem projectedRowsRrefColumnSignature_eq_iff_supportEquivalent_of_span_eq
+    (L : Hex.BhksProjectedRows)
+    (trueSupports : Set (Set (Fin L.factorCount)))
+    (hspan : projectedRowSpanInt L = trueSupportSpanInt trueSupports)
+    {j k : Nat} (hj : j < L.factorCount) (hk : k < L.factorCount) :
+    projectedRowsRrefColumnSignature L j =
+        projectedRowsRrefColumnSignature L k ↔
+      supportEquivalent trueSupports ⟨j, hj⟩ ⟨k, hk⟩ := by
+  rw [projectedRowsRrefColumnSignature_eq_iff_forall_mem_projectedRowSpaceRat_coord_eq
+    L hj hk]
+  exact projectedRowSpace_coordAgreement_iff_supportEquivalent
+    L trueSupports hspan ⟨j, hj⟩ ⟨k, hk⟩
+
+/-- Equality `L' = W` identifies the canonical RREF signature partition with
+the canonical true-support partition, including class order and member order. -/
+theorem partitionByMinColumn_eq_supportPartition_of_span_eq
+    (L : Hex.BhksProjectedRows)
+    (trueSupports : Set (Set (Fin L.factorCount)))
+    (hspan : projectedRowSpanInt L = trueSupportSpanInt trueSupports) :
+    partitionByMinColumn L.factorCount
+        (projectedRowsRrefColumnSignature L) =
+      supportPartitionByMinColumn trueSupports := by
+  classical
+  let sig := projectedRowsRrefColumnSignature L
+  have hrel {j k : Nat} (hj : j < L.factorCount) (hk : k < L.factorCount) :
+      sig j = sig k ↔ supportEquivalentAt trueSupports j k := by
+    exact
+      (projectedRowsRrefColumnSignature_eq_iff_supportEquivalent_of_span_eq
+        L trueSupports hspan hj hk).trans
+        (supportEquivalentAt_iff trueSupports hj hk).symm
+  have hreps :
+      representativeColumns L.factorCount sig =
+        supportRepresentativeColumns trueSupports := by
+    unfold representativeColumns supportRepresentativeColumns
+    apply List.filter_congr
+    intro j hj
+    have hjlt : j < L.factorCount := List.mem_range.mp hj
+    apply congrArg List.isEmpty
+    apply List.filter_congr
+    intro k hk
+    have hklt : k < L.factorCount :=
+      lt_trans (List.mem_range.mp hk) hjlt
+    exact Bool.decide_congr (hrel hklt hjlt)
+  unfold partitionByMinColumn supportPartitionByMinColumn
+  change
+    (representativeColumns L.factorCount sig).map
+        (fun rep => (List.range L.factorCount).filter (fun j => sig j = sig rep)) =
+      (supportRepresentativeColumns trueSupports).map
+        (fun rep => supportClassMembers trueSupports rep)
+  rw [hreps]
+  apply List.map_congr_left
+  intro rep hrep
+  unfold supportClassMembers
+  apply List.filter_congr
+  intro j hj
+  have hjlt : j < L.factorCount := List.mem_range.mp hj
+  have hreplt : rep < L.factorCount :=
+    supportRepresentativeColumns_lt trueSupports hrep
+  exact Bool.decide_congr (hrel hjlt hreplt)
+
+/--
+At `L' = W`, the executable indicator array is exactly the ordered array of
+indicator vectors for the true-support equivalence classes.
+-/
+theorem bhksEquivalenceClassIndicators_eq_supportPartition
+    (L : Hex.BhksProjectedRows)
+    (trueSupports : Set (Set (Fin L.factorCount)))
+    (hspan : projectedRowSpanInt L = trueSupportSpanInt trueSupports) :
+    Hex.bhksEquivalenceClassIndicators L =
+      ((supportPartitionByMinColumn trueSupports).map
+        (classIndicatorArray L.factorCount)).toArray := by
+  let sig := projectedRowsRrefColumnSignature L
+  have hfold :
+      ((List.range L.factorCount).foldl
+        (fun acc j => Hex.bhksInsertSignatureClass (sig j) j acc) []).map Prod.snd =
+        partitionByMinColumn L.factorCount sig :=
+    bhksInsertSignatureClass_fold_eq_partitionByMinColumn L.factorCount sig
+  have hpartition :=
+    partitionByMinColumn_eq_supportPartition_of_span_eq L trueSupports hspan
+  unfold Hex.bhksEquivalenceClassIndicators
+  change
+    (((((List.range L.factorCount).foldl
+      (fun acc j => Hex.bhksInsertSignatureClass (sig j) j acc) []).map Prod.snd).map
+        (fun cls => classIndicatorArray L.factorCount cls)).toArray) =
+      ((supportPartitionByMinColumn trueSupports).map
+        (classIndicatorArray L.factorCount)).toArray
+  rw [hfold, hpartition]
+
+/--
+For a genuine partition, the support-equivalence class represented by `rep`
+is the unique true support containing `rep`.
+
+This is the set-level half of the executable recovery bridge: after
+`L' = W`, an RREF class is not merely support-equivalent to a true support;
+its ascending member list enumerates that support exactly.
+-/
+theorem supportClassMembers_eq_support_of_partition
+    {r : Nat} (trueSupports : Set (Set (Fin r)))
+    (hcover : ∀ i : Fin r, ∃ S ∈ trueSupports, i ∈ S)
+    (hdisjoint :
+      ∀ S ∈ trueSupports, ∀ T ∈ trueSupports,
+        ∀ i : Fin r, i ∈ S → i ∈ T → S = T)
+    {rep : Nat} (hrep : rep ∈ supportRepresentativeColumns trueSupports) :
+    ∃ S ∈ trueSupports,
+      ∀ j, j ∈ supportClassMembers trueSupports rep ↔
+        ∃ hj : j < r, (⟨j, hj⟩ : Fin r) ∈ S := by
+  classical
+  have hreplt : rep < r :=
+    supportRepresentativeColumns_lt trueSupports hrep
+  obtain ⟨S, hS, hrepS⟩ := hcover ⟨rep, hreplt⟩
+  refine ⟨S, hS, ?_⟩
+  intro j
+  constructor
+  · intro hj
+    have hjlt : j < r := (mem_supportClassMembers_iff trueSupports rep j).mp hj |>.1
+    have hequiv :
+        supportEquivalent trueSupports ⟨j, hjlt⟩ ⟨rep, hreplt⟩ :=
+      (supportEquivalentAt_iff trueSupports hjlt hreplt).mp
+        ((mem_supportClassMembers_iff trueSupports rep j).mp hj |>.2)
+    exact ⟨hjlt, (hequiv S hS).mpr hrepS⟩
+  · rintro ⟨hjlt, hjS⟩
+    rw [mem_supportClassMembers_iff]
+    refine ⟨hjlt, (supportEquivalentAt_iff trueSupports hjlt hreplt).mpr ?_⟩
+    intro T hT
+    constructor
+    · intro hjT
+      have hTS : T = S :=
+        hdisjoint T hT S hS ⟨j, hjlt⟩ hjT hjS
+      simpa [hTS] using hrepS
+    · intro hrepT
+      have hTS : T = S :=
+        hdisjoint T hT S hS ⟨rep, hreplt⟩ hrepT hrepS
+      simpa [hTS] using hjS
+
+/--
+Selecting lifted factors with a canonical class indicator is the same
+order-preserving filter of the lifted-factor array by class membership.
+-/
+theorem bhksIndicatorSelectedFactorsArray_classIndicatorArray_toList
+    (liftedFactors : Array Hex.ZPoly) (members : List Nat) :
+    (Hex.bhksIndicatorSelectedFactorsArray liftedFactors
+        (classIndicatorArray liftedFactors.size members)).toList =
+      ((List.range liftedFactors.size).filter (fun i => i ∈ members)).map
+        (fun i => liftedFactors.getD i 0) := by
+  classical
+  let indicator := classIndicatorArray liftedFactors.size members
+  have hfold :
+      ∀ (l : List Nat) (acc : Array Hex.ZPoly),
+        (∀ i ∈ l, i < liftedFactors.size) →
+        (l.foldl
+            (fun selected i =>
+              if indicator.getD i 0 == 1 then
+                selected.push (liftedFactors.getD i 0)
+              else
+                selected)
+            acc).toList =
+          acc.toList ++
+            (l.filter (fun i => i ∈ members)).map
+              (fun i => liftedFactors.getD i 0) := by
+    intro l
+    induction l with
+    | nil =>
+        intro acc _
+        simp
+    | cons i l ih =>
+        intro acc hlt
+        have hi : i < liftedFactors.size := hlt i (List.mem_cons_self ..)
+        have htail : ∀ j ∈ l, j < liftedFactors.size :=
+          fun j hj => hlt j (List.mem_cons_of_mem i hj)
+        rw [List.foldl_cons]
+        by_cases himem : i ∈ members
+        · have hone : indicator.getD i 0 = 1 := by
+            simpa [indicator] using
+              classIndicatorArray_has_one_of_mem liftedFactors.size members hi himem
+          rw [if_pos (by simp [hone]), ih _ htail]
+          simp [himem, Array.toList_push, List.append_assoc]
+        · have hzero : indicator.getD i 0 = 0 := by
+            change
+              (classIndicatorArray liftedFactors.size members).getD i 0 = 0
+            rw [classIndicatorArray_getD]
+            simp [hi, himem]
+          rw [if_neg (by simp [hzero]), ih _ htail]
+          simp [himem]
+  unfold Hex.bhksIndicatorSelectedFactorsArray
+  simpa [indicator] using
+    hfold (List.range liftedFactors.size) #[] (fun i hi => List.mem_range.mp hi)
+
 /-- The number of executable equivalence-class indicators equals the length of
 the signature partition `partitionByMinColumn` over the RREF column signatures.
 This is a pure restatement of the executable fold semantics, independent of any
