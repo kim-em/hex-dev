@@ -251,7 +251,7 @@ private theorem sqrtStep_gap_halves
 /-- While the iterate has not yet undershot, `fuel` Newton steps shrink the gap
 by a factor `2 ^ fuel`: `2 ^ fuel * sqrtGap n (sqrtAux n fuel x) ≤ sqrtGap n x`.
 This geometric gap contraction drives phase-one convergence. -/
-private theorem sqrtAux_gap_contract_of_not_done
+private theorem sqrtAux_gap_le_of_not_done
     (n fuel x : Nat) (hx : 0 < x)
     (hnot_sq :
       ¬ (sqrtAux n fuel x) * (sqrtAux n fuel x) ≤ n) :
@@ -306,9 +306,9 @@ private theorem sqrtAux_phase_one_sq_le
   by_cases hsq :
       (sqrtAux n (n.log2 + 1) n) * (sqrtAux n (n.log2 + 1) n) ≤ n
   · exact hsq
-  · have hcontract :
+  · have hgap_le :
         2 ^ (n.log2 + 1) * sqrtGap n (sqrtAux n (n.log2 + 1) n) ≤ sqrtGap n n :=
-      sqrtAux_gap_contract_of_not_done n (n.log2 + 1) n hn hsq
+      sqrtAux_gap_le_of_not_done n (n.log2 + 1) n hn hsq
     have hgap_pos :
         0 < sqrtGap n (sqrtAux n (n.log2 + 1) n) := by
       have hpos : 0 < sqrtAux n (n.log2 + 1) n := by
@@ -323,7 +323,7 @@ private theorem sqrtAux_phase_one_sq_le
         2 ^ (n.log2 + 1) ≤
             2 ^ (n.log2 + 1) * sqrtGap n (sqrtAux n (n.log2 + 1) n) := by
               exact Nat.le_mul_of_pos_right _ hgap_pos
-        _ ≤ sqrtGap n n := hcontract
+        _ ≤ sqrtGap n n := hgap_le
     have hgap_lt : sqrtGap n n < 2 ^ (n.log2 + 1) := by
       unfold sqrtGap
       have hdiv : n / n = 1 := Nat.div_self hn

@@ -297,45 +297,6 @@ theorem isRoot_mem_outputs {p : Hex.ZPoly} {target : Int}
       rw [Hex.IsolationLoop.outputs, Array.mem_filterMap]
       exact ⟨(c, some r), by simpa [htry] using ht, rfl⟩
 
-/-- Parametric coverage theorem for the fuel-based isolation loop. No
-certificate analysis enters: the proof consumes only `Certifier.Preserves`
-and follows the executable emitting and non-emitting branches. -/
-theorem isolateLoop_covers {p : Hex.ZPoly} {target : Int}
-    {strategy : Hex.AtomStrategy} (hcert : Certifier.Preserves p strategy)
-    {fuel : Nat} {work : Array Hex.Component} {rs : Array (Hex.Certified p)}
-    (hloop : Hex.isolateLoop p target strategy fuel work = some rs)
-    {z : ℂ} (hzroot : (toPolyℂ p).IsRoot z)
-    (hz : z ∈ Worklist.region work) : z ∈ Results.region rs := by
-  induction fuel generalizing work rs with
-  | zero => simp [Hex.isolateLoop] at hloop
-  | succ fuel ih =>
-      rw [Hex.isolateLoop] at hloop
-      split at hloop
-      · rename_i hempty
-        have hwork : work = #[] := Array.eq_empty_of_size_eq_zero
-          (Array.isEmpty_iff_size_eq_zero.mp hempty)
-        subst work
-        simp [Worklist.region] at hz
-      · rename_i hnonempty
-        let tried := Hex.IsolationLoop.attempts p strategy work
-        change (if (Hex.IsolationLoop.normalized p target tried ||
-              Hex.IsolationLoop.allAtoms tried) &&
-            (Hex.IsolationLoop.allReady target tried &&
-              Hex.IsolationLoop.disjoint tried) then
-          some (Hex.IsolationLoop.outputs tried)
-        else Hex.isolateLoop p target strategy fuel
-          (Hex.IsolationLoop.next p target tried)) = some rs at hloop
-        split at hloop
-        · rename_i hemit
-          have hrs : rs = Hex.IsolationLoop.outputs tried := by
-            exact Option.some.inj hloop.symm
-          subst rs
-          have hready : Hex.IsolationLoop.allReady target tried := by
-            simp only [Bool.and_eq_true] at hemit
-            exact hemit.2.1
-          exact isRoot_mem_outputs hcert hzroot hz hready
-        · exact ih hloop (isRoot_mem_next hcert hzroot hz)
-
 /-- Parametric coverage theorem for the local single-atom refinement loop. -/
 theorem refineLoop_covers {p : Hex.ZPoly} {target : Int}
     {strategy : Hex.AtomStrategy} (hcert : Certifier.Preserves p strategy)
@@ -371,6 +332,402 @@ theorem refineLoop_covers {p : Hex.ZPoly} {target : Int}
           exact isRoot_mem_outputs hcert hzroot hz hready
         · exact ih hloop (isRoot_mem_nextLocal hcert hzroot hz)
 
+/-- A successful local refinement loop meets its target and returns disjoint
+certificates. -/
+theorem refineLoop_ready_disjoint {p : Hex.ZPoly} {target : Int}
+    {strategy : Hex.AtomStrategy} {fuel : Nat} {work : Array Hex.Component}
+    {rs : Array (Hex.Certified p)}
+    (hloop : Hex.refineLoop p target strategy fuel work = some rs) :
+    (∀ r ∈ rs.toList, target ≤ r.square.prec) ∧
+      Hex.pairwiseDisjoint (rs.map (·.square)) = true := by
+  induction fuel generalizing work rs with
+  | zero => simp [Hex.refineLoop] at hloop
+  | succ fuel ih =>
+      rw [Hex.refineLoop] at hloop
+      split at hloop
+      · have hrs : rs = #[] := Option.some.inj hloop.symm
+        subst rs
+        simp [Hex.pairwiseDisjoint]
+      · let tried := Hex.IsolationLoop.attempts p strategy work
+        change (if Hex.IsolationLoop.allReady target tried &&
+            Hex.IsolationLoop.disjoint tried then
+          some (Hex.IsolationLoop.outputs tried)
+        else Hex.refineLoop p target strategy fuel
+          (Hex.IsolationLoop.nextLocal p target tried)) = some rs at hloop
+        split at hloop
+        · rename_i hemit
+          simp only [Bool.and_eq_true] at hemit
+          have hrs : rs = Hex.IsolationLoop.outputs tried :=
+            Option.some.inj hloop.symm
+          subst rs
+          exact ⟨outputs_ready hemit.1, by
+            simpa [Hex.IsolationLoop.disjoint] using hemit.2⟩
+        · exact ih hloop
+
+private theorem list_mapM_some_get { α β : Type* } {f : α → Option β}
+    {xs : List α} {ys : List β} (hmap : xs.mapM f = some ys) :
+    xs.length = ys.length ∧
+      ∀ (i : Nat) (hi : i < xs.length) (hj : i < ys.length),
+        f xs[i] = some ys[i] := by
+  induction xs generalizing ys with
+  | nil =>
+      simp at hmap
+      subst ys
+      simp
+  | cons x xs ih =>
+      cases hfx : f x with
+      | none => simp [hfx] at hmap
+      | some y =>
+          cases htail : xs.mapM f with
+          | none => simp [hfx, htail] at hmap
+          | some ys' =>
+              have heq : some (y :: ys') = some ys := by
+                simpa [hfx, htail] using hmap
+              have hys : ys = y :: ys' := (Option.some.inj heq).symm
+              subst ys
+              obtain ⟨hlen, hget⟩ := ih htail
+              constructor
+              · simp [hlen]
+              · intro i hi hj
+                cases i with
+                | zero => simpa using hfx
+                | succ i =>
+                    simp only [List.getElem_cons_succ]
+                    exact hget i (by simpa using hi) (by simpa using hj)
+
+private theorem array_mapM_some_get { α β : Type* } {f : α → Option β}
+    {xs : Array α} {ys : Array β} (hmap : xs.mapM f = some ys) :
+    xs.size = ys.size ∧
+      ∀ (i : Nat) (hi : i < xs.size) (hj : i < ys.size),
+        f xs[i] = some ys[i] := by
+  have hlist : xs.toList.mapM f = some ys.toList := by
+    calc
+      xs.toList.mapM f = Array.toList <$> xs.mapM f :=
+        Array.toList_mapM.symm
+      _ = some ys.toList := by rw [hmap]; rfl
+  obtain ⟨hlen, hget⟩ := list_mapM_some_get hlist
+  refine ⟨by simpa using hlen, ?_⟩
+  intro i hi hj
+  simpa only [← Array.getElem_toList] using hget i (by simpa using hi)
+    (by simpa using hj)
+
+/-- A successful internal atom refinement reaches the requested precision. -/
+theorem refineAtom_ready {p : Hex.ZPoly} {iso iso' : Hex.DyadicRootIsolation p}
+    {target : Int} {strategy : Hex.AtomStrategy}
+    (hrefine : Hex.refineAtom? iso target strategy = some iso') :
+    target ≤ iso'.square.prec := by
+  rw [Hex.refineAtom?] at hrefine
+  split at hrefine
+  · rename_i hready
+    have hiso : iso = iso' := Option.some.inj hrefine
+    subst iso'
+    exact hready
+  · rename_i hnotReady
+    let fuel := Hex.fuelFor p target iso.square.prec
+    cases hloop : Hex.refineLoop p target strategy fuel
+        #[⟨#[iso.square.doubled], 1⟩] with
+    | none => simp [fuel, hloop] at hrefine
+    | some rs =>
+        simp only [fuel, hloop] at hrefine
+        split at hrefine
+        · rename_i hsize
+          cases hget : rs[0]? with
+          | none => simp [hget] at hrefine
+          | some r =>
+              cases r with
+              | cluster cl => simp [hget] at hrefine
+              | atom tau =>
+                  simp only [hget, Option.some.injEq] at hrefine
+                  subst tau
+                  have hzero : 0 < rs.size := by omega
+                  have hget0 : rs[0] = .atom iso' := by
+                    rw [Array.getElem?_eq_getElem hzero] at hget
+                    exact Option.some.inj hget
+                  have hready := (refineLoop_ready_disjoint hloop).1 rs[0]
+                    (Array.getElem_mem_toList hzero)
+                  rw [hget0] at hready
+                  exact hready
+        · simp at hrefine
+
+/-- Internal atom refinement preserves the atom's semantic root. -/
+theorem refineAtom_preserves {p : Hex.ZPoly} {strategy : Hex.AtomStrategy}
+    (hcert : Certifier.Preserves p strategy)
+    {iso iso' : Hex.DyadicRootIsolation p} {target : Int}
+    (hrefine : Hex.refineAtom? iso target strategy = some iso')
+    {z : ℂ} (hzroot : (toPolyℂ p).IsRoot z)
+    (hz : z ∈ Certified.region (.atom iso)) :
+    z ∈ Certified.region (.atom iso') := by
+  rw [Hex.refineAtom?] at hrefine
+  split at hrefine
+  · have hiso : iso = iso' := Option.some.inj hrefine
+    simpa [hiso] using hz
+  · let fuel := Hex.fuelFor p target iso.square.prec
+    cases hloop : Hex.refineLoop p target strategy fuel
+        #[⟨#[iso.square.doubled], 1⟩] with
+    | none => simp [fuel, hloop] at hrefine
+    | some rs =>
+        simp only [fuel, hloop] at hrefine
+        split at hrefine
+        · rename_i hsize
+          cases hget : rs[0]? with
+          | none => simp [hget] at hrefine
+          | some r =>
+              cases r with
+              | cluster cl => simp [hget] at hrefine
+              | atom tau =>
+                  simp only [hget, Option.some.injEq] at hrefine
+                  subst tau
+                  have hzstart : z ∈ Worklist.region
+                      #[⟨#[iso.square.doubled], 1⟩] := by
+                    refine ⟨⟨#[iso.square.doubled], 1⟩, by simp,
+                      iso.square.doubled, by simp, ?_⟩
+                    exact Certified.region_subset_doubled (.atom iso) hz
+                  have hzrs := refineLoop_covers hcert hloop hzroot hzstart
+                  obtain ⟨r, hr, hzr⟩ := hzrs
+                  obtain ⟨i, hi, hri⟩ :=
+                    Array.getElem_of_mem (Array.mem_toList_iff.mp hr)
+                  have hi0 : i = 0 := by omega
+                  subst i
+                  have hr0 : r = rs[0] := hri.symm
+                  have hrs0 : rs[0] = .atom iso' := by
+                    have hzero : 0 < rs.size := by omega
+                    rw [Array.getElem?_eq_getElem hzero] at hget
+                    exact Option.some.inj hget
+                  simpa [hr0, hrs0] using hzr
+        · simp at hrefine
+
+/-- The opportunistic all-atoms fast path returns atoms only. -/
+theorem finishAtomsCore_atoms {p : Hex.ZPoly} {target : Int}
+    {strategy : Hex.AtomStrategy}
+    {tried : Array (Hex.Component × Option (Hex.Certified p))}
+    {rs : Array (Hex.Certified p)}
+    (hfinish : Hex.IsolationLoop.finishAtomsCore? p target strategy tried = some rs) :
+    ∀ r ∈ rs.toList, ∃ iso : Hex.DyadicRootIsolation p, r = .atom iso := by
+  unfold Hex.IsolationLoop.finishAtomsCore? at hfinish
+  split at hfinish
+  · cases hmap : tried.mapM
+        (Hex.IsolationLoop.refineAttempt? target strategy) with
+    | none =>
+        rw [hmap] at hfinish
+        simp at hfinish
+    | some atoms =>
+        rw [hmap] at hfinish
+        dsimp only at hfinish
+        split at hfinish
+        · have hrs : rs = atoms.map Hex.Certified.atom :=
+            Option.some.inj hfinish.symm
+          subst rs
+          intro r hr
+          obtain ⟨iso, -, rfl⟩ :=
+            Array.mem_map.mp (Array.mem_toList_iff.mp hr)
+          exact ⟨iso, rfl⟩
+        · simp at hfinish
+  · simp at hfinish
+
+/-- A successful all-atoms fast path meets the target and returns pairwise
+disjoint atom discs. -/
+theorem finishAtomsCore_ready_disjoint {p : Hex.ZPoly} {target : Int}
+    {strategy : Hex.AtomStrategy}
+    {tried : Array (Hex.Component × Option (Hex.Certified p))}
+    {rs : Array (Hex.Certified p)}
+    (hfinish : Hex.IsolationLoop.finishAtomsCore? p target strategy tried = some rs) :
+    (∀ r ∈ rs.toList, target ≤ r.square.prec) ∧
+      Hex.pairwiseDisjoint (rs.map (·.square)) = true := by
+  unfold Hex.IsolationLoop.finishAtomsCore? at hfinish
+  split at hfinish
+  · cases hmap : tried.mapM
+        (Hex.IsolationLoop.refineAttempt? target strategy) with
+    | none =>
+        rw [hmap] at hfinish
+        simp at hfinish
+    | some atoms =>
+        rw [hmap] at hfinish
+        dsimp only at hfinish
+        split at hfinish
+        · rename_i hpair
+          have hrs : rs = atoms.map Hex.Certified.atom :=
+            Option.some.inj hfinish.symm
+          subst rs
+          constructor
+          · intro r hr
+            obtain ⟨iso, hiso, hr⟩ :=
+              Array.mem_map.mp (Array.mem_toList_iff.mp hr)
+            subst r
+            obtain ⟨i, hi, hget⟩ := Array.getElem_of_mem hiso
+            have hsize := (array_mapM_some_get hmap).1
+            have hiTried : i < tried.size := by omega
+            have hmapGet := (array_mapM_some_get hmap).2 i hiTried hi
+            rw [hget] at hmapGet
+            unfold Hex.IsolationLoop.refineAttempt? at hmapGet
+            split at hmapGet <;> try contradiction
+            exact refineAtom_ready hmapGet
+          · have harr :
+                (atoms.map Hex.Certified.atom).map (·.square) =
+                  atoms.map (·.square) := by
+                apply Array.ext
+                · simp
+                · intro i hi₁ hi₂
+                  simp only [Array.getElem_map]
+                  rfl
+            rw [harr]
+            exact hpair
+        · simp at hfinish
+  · simp at hfinish
+
+/-- The all-atoms fast path preserves every polynomial root covered by its
+attempted worklist. -/
+theorem finishAtomsCore_covers {p : Hex.ZPoly} {target : Int}
+    {strategy : Hex.AtomStrategy} (hcert : Certifier.Preserves p strategy)
+    {work : Array Hex.Component} {rs : Array (Hex.Certified p)}
+    (hfinish : Hex.IsolationLoop.finishAtomsCore? p target strategy
+      (Hex.IsolationLoop.attempts p strategy work) = some rs)
+    {z : ℂ} (hzroot : (toPolyℂ p).IsRoot z)
+    (hz : z ∈ Worklist.region work) : z ∈ Results.region rs := by
+  obtain ⟨c, hc, hzc⟩ := hz
+  let tried := Hex.IsolationLoop.attempts p strategy work
+  have ht : (c, Hex.Component.certify? p strategy c) ∈ tried := by
+    apply Array.mem_map_of_mem
+    exact Array.mem_toList_iff.mp hc
+  change Hex.IsolationLoop.finishAtomsCore? p target strategy tried = some rs at hfinish
+  unfold Hex.IsolationLoop.finishAtomsCore? at hfinish
+  split at hfinish
+  · rename_i hatoms
+    have hguard : Hex.IsolationLoop.allAtoms tried = true ∧
+        Hex.IsolationLoop.disjoint tried = true := by
+      simpa only [Bool.and_eq_true] using hatoms
+    have htAtom := (Array.all_eq_true_iff_forall_mem.mp hguard.1) _ ht
+    cases htry : Hex.Component.certify? p strategy c with
+    | none => simp [htry] at htAtom
+    | some result =>
+        cases result with
+        | cluster cl => simp [htry] at htAtom
+        | atom iso =>
+            cases hmap : tried.mapM
+                (Hex.IsolationLoop.refineAttempt? target strategy) with
+            | none =>
+                rw [hmap] at hfinish
+                simp at hfinish
+            | some atoms =>
+                rw [hmap] at hfinish
+                dsimp only at hfinish
+                split at hfinish
+                · have hrs : rs = atoms.map Hex.Certified.atom :=
+                      Option.some.inj hfinish.symm
+                  subst rs
+                  obtain ⟨i, hi, hget⟩ := Array.getElem_of_mem ht
+                  have hsize := (array_mapM_some_get hmap).1
+                  have hiAtoms : i < atoms.size := by omega
+                  have hmapGet := (array_mapM_some_get hmap).2 i hi hiAtoms
+                  rw [hget] at hmapGet
+                  simp [Hex.IsolationLoop.refineAttempt?, htry] at hmapGet
+                  have hziso : z ∈ Certified.region (.atom iso) :=
+                    hcert c (.atom iso) htry z hzroot hzc
+                  have hzrefined := refineAtom_preserves hcert hmapGet hzroot hziso
+                  refine ⟨.atom atoms[i], ?_, hzrefined⟩
+                  apply Array.mem_toList_iff.mpr
+                  apply Array.mem_map_of_mem
+                  exact Array.getElem_mem hiAtoms
+                · simp at hfinish
+  · simp at hfinish
+
+theorem finishAtoms_atoms {p : Hex.ZPoly} {target : Int}
+    {strategy : Hex.AtomStrategy}
+    {tried : Array (Hex.Component × Option (Hex.Certified p))}
+    {rs : Array (Hex.Certified p)}
+    (hfinish : Hex.IsolationLoop.finishAtoms? p target strategy tried = some rs) :
+    ∀ r ∈ rs.toList, ∃ iso : Hex.DyadicRootIsolation p, r = .atom iso := by
+  cases strategy with
+  | nk => simp [Hex.IsolationLoop.finishAtoms?] at hfinish
+  | pellet =>
+      apply finishAtomsCore_atoms
+      simpa [Hex.IsolationLoop.finishAtoms?] using hfinish
+  | nkThenPellet =>
+      apply finishAtomsCore_atoms
+      simpa [Hex.IsolationLoop.finishAtoms?] using hfinish
+
+theorem finishAtoms_ready_disjoint {p : Hex.ZPoly} {target : Int}
+    {strategy : Hex.AtomStrategy}
+    {tried : Array (Hex.Component × Option (Hex.Certified p))}
+    {rs : Array (Hex.Certified p)}
+    (hfinish : Hex.IsolationLoop.finishAtoms? p target strategy tried = some rs) :
+    (∀ r ∈ rs.toList, target ≤ r.square.prec) ∧
+      Hex.pairwiseDisjoint (rs.map (·.square)) = true := by
+  cases strategy with
+  | nk => simp [Hex.IsolationLoop.finishAtoms?] at hfinish
+  | pellet =>
+      apply finishAtomsCore_ready_disjoint
+      simpa [Hex.IsolationLoop.finishAtoms?] using hfinish
+  | nkThenPellet =>
+      apply finishAtomsCore_ready_disjoint
+      simpa [Hex.IsolationLoop.finishAtoms?] using hfinish
+
+theorem finishAtoms_covers {p : Hex.ZPoly} {target : Int}
+    {strategy : Hex.AtomStrategy} (hcert : Certifier.Preserves p strategy)
+    {work : Array Hex.Component} {rs : Array (Hex.Certified p)}
+    (hfinish : Hex.IsolationLoop.finishAtoms? p target strategy
+      (Hex.IsolationLoop.attempts p strategy work) = some rs)
+    {z : ℂ} (hzroot : (toPolyℂ p).IsRoot z)
+    (hz : z ∈ Worklist.region work) : z ∈ Results.region rs := by
+  cases strategy with
+  | nk => simp [Hex.IsolationLoop.finishAtoms?] at hfinish
+  | pellet =>
+      have hcore : Hex.IsolationLoop.finishAtomsCore? p target .pellet
+          (Hex.IsolationLoop.attempts p .pellet work) = some rs := by
+        simpa [Hex.IsolationLoop.finishAtoms?] using hfinish
+      exact finishAtomsCore_covers hcert hcore hzroot hz
+  | nkThenPellet =>
+      have hcore : Hex.IsolationLoop.finishAtomsCore? p target .nkThenPellet
+          (Hex.IsolationLoop.attempts p .nkThenPellet work) = some rs := by
+        simpa [Hex.IsolationLoop.finishAtoms?] using hfinish
+      exact finishAtomsCore_covers hcert hcore hzroot hz
+
+/-- Parametric coverage theorem for the fuel-based isolation loop. No
+certificate analysis enters: the proof consumes only `Certifier.Preserves`
+and follows the executable emitting and non-emitting branches. -/
+theorem isolateLoop_covers {p : Hex.ZPoly} {target : Int}
+    {strategy : Hex.AtomStrategy} (hcert : Certifier.Preserves p strategy)
+    {fuel : Nat} {work : Array Hex.Component} {rs : Array (Hex.Certified p)}
+    (hloop : Hex.isolateLoop p target strategy fuel work = some rs)
+    {z : ℂ} (hzroot : (toPolyℂ p).IsRoot z)
+    (hz : z ∈ Worklist.region work) : z ∈ Results.region rs := by
+  induction fuel generalizing work rs with
+  | zero => simp [Hex.isolateLoop] at hloop
+  | succ fuel ih =>
+      rw [Hex.isolateLoop] at hloop
+      split at hloop
+      · rename_i hempty
+        have hwork : work = #[] := Array.eq_empty_of_size_eq_zero
+          (Array.isEmpty_iff_size_eq_zero.mp hempty)
+        subst work
+        simp [Worklist.region] at hz
+      · let tried := Hex.IsolationLoop.attempts p strategy work
+        change (match Hex.IsolationLoop.finishAtoms? p target strategy tried with
+          | some out => some out
+          | none =>
+            if Hex.IsolationLoop.emitReady target strategy tried then
+              some (Hex.IsolationLoop.outputs tried)
+            else Hex.isolateLoop p target strategy fuel
+              (Hex.IsolationLoop.next p target tried)) = some rs at hloop
+        cases hfinish : Hex.IsolationLoop.finishAtoms? p target strategy tried with
+        | some out =>
+            simp only [hfinish] at hloop
+            have hrs : rs = out := Option.some.inj hloop.symm
+            subst rs
+            exact finishAtoms_covers hcert hfinish hzroot hz
+        | none =>
+            simp only [hfinish] at hloop
+            split at hloop
+            · rename_i hemit
+              have hrs : rs = Hex.IsolationLoop.outputs tried :=
+                Option.some.inj hloop.symm
+              subst rs
+              have hready : Hex.IsolationLoop.allReady target tried := by
+                unfold Hex.IsolationLoop.emitReady at hemit
+                simp only [Bool.and_eq_true] at hemit
+                exact hemit.2.1
+              exact isRoot_mem_outputs hcert hzroot hz hready
+            · exact ih hloop (isRoot_mem_next hcert hzroot hz)
+
 /-- Every successful loop result meets the requested precision and passes the
 executable pairwise-disjoint-disc test. -/
 theorem isolateLoop_ready_disjoint {p : Hex.ZPoly} {target : Int}
@@ -388,22 +745,31 @@ theorem isolateLoop_ready_disjoint {p : Hex.ZPoly} {target : Int}
         subst rs
         simp [Hex.pairwiseDisjoint]
       · let tried := Hex.IsolationLoop.attempts p strategy work
-        change (if (Hex.IsolationLoop.normalized p target tried ||
-              Hex.IsolationLoop.allAtoms tried) &&
-            (Hex.IsolationLoop.allReady target tried &&
-              Hex.IsolationLoop.disjoint tried) then
-          some (Hex.IsolationLoop.outputs tried)
-        else Hex.isolateLoop p target strategy fuel
-          (Hex.IsolationLoop.next p target tried)) = some rs at hloop
-        split at hloop
-        · rename_i hemit
-          simp only [Bool.and_eq_true] at hemit
-          have hrs : rs = Hex.IsolationLoop.outputs tried :=
-            Option.some.inj hloop.symm
-          subst rs
-          exact ⟨outputs_ready hemit.2.1, by
-            simpa [Hex.IsolationLoop.disjoint] using hemit.2.2⟩
-        · exact ih hloop
+        change (match Hex.IsolationLoop.finishAtoms? p target strategy tried with
+          | some out => some out
+          | none =>
+            if Hex.IsolationLoop.emitReady target strategy tried then
+              some (Hex.IsolationLoop.outputs tried)
+            else Hex.isolateLoop p target strategy fuel
+              (Hex.IsolationLoop.next p target tried)) = some rs at hloop
+        cases hfinish : Hex.IsolationLoop.finishAtoms? p target strategy tried with
+        | some out =>
+            simp only [hfinish] at hloop
+            have hrs : rs = out := Option.some.inj hloop.symm
+            subst rs
+            exact finishAtoms_ready_disjoint hfinish
+        | none =>
+            simp only [hfinish] at hloop
+            split at hloop
+            · rename_i hemit
+              unfold Hex.IsolationLoop.emitReady at hemit
+              simp only [Bool.and_eq_true] at hemit
+              have hrs : rs = Hex.IsolationLoop.outputs tried :=
+                Option.some.inj hloop.symm
+              subst rs
+              exact ⟨outputs_ready hemit.2.1, by
+                simpa [Hex.IsolationLoop.disjoint] using hemit.2.2⟩
+            · exact ih hloop
 
 /-- Distinct loop outputs have disjoint closed circumscribed discs. -/
 theorem isolateLoop_disjoint {p : Hex.ZPoly} {target : Int}

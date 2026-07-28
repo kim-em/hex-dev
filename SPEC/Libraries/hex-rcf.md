@@ -257,7 +257,7 @@ proved equivalences.
    For root-cell transfer, `RootModel.leftSpan` is the interval from the open
    cell immediately left of root `i` through that root. Its preconnectedness,
    open-sample and root membership lemmas, together with
-   `RootModel.root_eq_of_mem_leftSpan`, show that the only carrier root in the
+   `RootModel.root_unique_leftSpan`, show that the only carrier root in the
    span is root `i` itself.
 
 7. **Prepare common-root packages.** Do the expensive work once per
@@ -519,7 +519,7 @@ cannot pass a fixture expecting either verdict. The required one-way
 connections are
 
 ```lean
-theorem decide_eq_some_true_imp_exists_cert :
+theorem exists_cert_of_decide :
     decide s = some true → ∃ cert, Certificate.check s cert = true
 
 theorem decide_sound (s : Sentence) :
@@ -581,21 +581,28 @@ free to change.
 
 ## File organisation
 
-- `HexRCF/Language.lean`: `Atom`, `Formula`, `Sentence`, `toProp`;
+- `HexRCF/Syntax.lean`: Mathlib-free `Cmp`, `Atom`, `Formula`, `Sentence`, and
+  their structural polynomial traversals; `HexRCF/Language.lean`: real-valued
+  `toProp` semantics;
   `HexRCF/LanguageTests.lean`: executable language-semantics tests.
-- `HexRCF/SturmReplay.lean`: generalized multiplication-only chain
-  replay and literal root counts.
+- `HexRCF/SturmCheck.lean`: Mathlib-free generalized multiplication-only
+  replay data, executable validation, and literal root counts;
+  `HexRCF/SturmReplay.lean`: Mathlib-facing replay soundness and root-count
+  correspondence.
 - `HexRCF/SturmBuilder.lean`: compiled pseudo-remainder instrumentation that
   emits replay witnesses and retains only checker-approved candidates;
   `HexRCF/SturmBuilderTests.lean`: valid, malformed, nonprimitive, and
   nonsquarefree regressions.
-- `HexRCF/Carrier.lean`: deterministic nonconstant-atom collection, the
-  multiplication-checkable carrier certificate, and root-set soundness;
+- `HexRCF/CarrierCheck.lean`: Mathlib-free multiplication-checkable carrier
+  certificates and Boolean validation; `HexRCF/Carrier.lean`: squarefreeness
+  and root-set soundness;
   `HexRCF/CarrierTests.lean`: constant filtering, genuine repeated-factor,
   dropped-root, and other tampered-carrier regressions.
-- `HexRCF/Isolations.lean`: the raw generalized isolation checker and its
-  bridge to literal isolation semantics; `HexRCF/IsolationsTests.lean`:
-  count, order, completeness, and no-real-root regressions.
+- `HexRCF/IsolationCheck.lean`: Mathlib-free raw generalized isolation data,
+  checks, and ordering/count consequences; `HexRCF/Isolations.lean`: literal
+  isolation and real-root semantics;
+  `HexRCF/IsolationsTests.lean`: count, order, completeness, and no-real-root
+  regressions.
 - `HexRCF/Certificate.lean`: strict option folds, the four `Certificate`
   branches, three-valued replay, and `check`; `HexRCF/CertificateTests.lean`:
   all quantifiers, empty/reversed domains, constants, zero/single/multiple-root
@@ -604,46 +611,211 @@ free to change.
   compiled carrier and deduplicated, aligned common-root construction;
   `HexRCF/BuilderTests.lean`: signed-content, repeated-factor, rational-scale,
   common-root alignment, and failure regressions.
-- `HexRCF/Decision.lean`: compiled root isolation, strict separation, endpoint
-  classification, sign-matrix and certificate assembly, retained diagnostic
-  build results, and the public one-way-sound `decide` wrapper;
+- `HexRCF/DecisionCheck.lean`: Mathlib-free compiled root isolation, strict
+  separation, endpoint classification, sign-matrix and certificate assembly,
+  retained diagnostic build results, and `decide`;
+  `HexRCF/Decision.lean`: the public one-way soundness theorem;
   `HexRCF/DecisionTests.lean`: all four certificate branches and quantifiers,
   half-open endpoint ownership, multiple/repeated/shared roots, helper failure,
   and output-check regressions.
-- `HexRCF/Separation.lean`: replay-based strict-separation refinement,
-  strict-gap checking, and endpoint classification for bounded sentences;
+- `HexRCF/SeparationCheck.lean`: Mathlib-free strict-gap checks, endpoint
+  classification, and replay-based separation refinement;
+  `HexRCF/Separation.lean`: real-root ordering and classifier semantics;
   `HexRCF/SeparationTests.lean`: midpoint ownership, close-root, scan,
   malformed-input, and endpoint regressions.
-- `HexRCF/Cells.lean`: size-indexed executable cells, checked root models,
-  semantic partition, exact samples, canonical left-root spans,
-  endpoint-comparison vectors, and exact `Ioc` intersection;
+- `HexRCF/CellsCheck.lean`: Mathlib-free size-indexed cells, exact dyadic
+  samples, endpoint-comparison checks, and bounded-domain relevance;
+  `HexRCF/Cells.lean`: checked root models, semantic partition, canonical
+  left-root spans, and exact `Ioc` intersection;
   `HexRCF/CellsTests.lean`: enumeration,
   zero/singleton/multiple-root samples, endpoint equality/order guards,
   relevance tables, and malformed lower/upper claim regressions.
-- `HexRCF/CommonRoot.lean`: multiplication-checkable common-root packages,
-  constant/nonconstant replay branches, exact common-root semantics, and
-  cached root-cell queries; `HexRCF/CommonRootTests.lean`: shared-factor,
-  coprime, equal-polynomial, and tampered-evidence regressions.
-- `HexRCF/SignMatrix.lean`: three-way exact signs, coefficient-equality
-  atom deduplication and common-package alignment, guarded open-cell
-  evaluation, the `gⱼ` root-cell computation, and full Boolean reflection;
+- `HexRCF/CommonRootCheck.lean`: Mathlib-free multiplication-checkable
+  common-root packages, replay branches, and cached interval queries;
+  `HexRCF/CommonRoot.lean`: exact common-root and root-cell semantics;
+  `HexRCF/CommonRootTests.lean`: shared-factor, coprime, equal-polynomial, and
+  tampered-evidence regressions.
+- `HexRCF/SignMatrixCheck.lean`: Mathlib-free three-way exact signs,
+  coefficient-equality atom deduplication and common-package alignment,
+  guarded open/root-cell evaluation, sign-row caching, and Boolean replay;
+  `HexRCF/SignMatrix.lean`: real-polynomial sign, root-cell, and full formula
+  reflection semantics;
   `HexRCF/SignMatrixTests.lean`: exhaustive comparisons/connectives,
   zero/singleton/multiple-root cells, shared roots, constants, deduplication,
   and malformed-alignment regressions.
 - `HexRCF/Soundness.lean`: strict-fold reflection, quantified cell lifting,
   the four replay factors, and `check_sound`.
 - `HexRCF/Reify.lean`: `Qq`/`MetaM` reification, normalisation,
-  fall-through messages.
+  fall-through messages; `HexRCF/ReifyTests.lean`: checked tactic examples,
+  false-sentence diagnostics, and out-of-fragment rejection tests.
+- `HexRCF/LintTests.lean`: Batteries' default environment linters, applied to
+  declarations whose defining module is under the `HexRCF` module prefix. This
+  enforces definition, structure, field, and tactic documentation plus the
+  default naming/style checks. Theorem docstrings remain a review convention:
+  `docBlameThm` is not default-enabled and also flags generated constructor-index
+  theorems. The file intentionally uses legacy syntax so imported docstring
+  metadata is available to the linters.
 - `HexRCF/Tactic.lean`: the `rcf` front end.
 - `conformance/HexRCF/{Conformance,EmitFixtures}.lean`: conformance
   in the shared sub-project.
 
-No bench target: bench targets must not import Mathlib
-([SPEC/benchmarking.md](../benchmarking.md)), and this library
-cannot avoid it. The time budgets below are validated through the
-Phase-4 timing harness. The Phase-3 `local` emitter exercises the same
-compiled decision workloads but is not an elaboration benchmark and does not
-run on each PR.
+The public `HexRCF` umbrella imports only the supported implementation and
+proof API. The `*Tests.lean` regression modules above are compiled through the
+separate `HexRCFTests` Lake target and are not re-exported to consumers.
+
+## Phase-4 evidence tracks
+
+HexRCF is a mixed library. `HexRCF.DecisionCheck` contains the complete
+compiled search, certificate construction, replay, and `decide` path in a
+mechanically checked import closure containing neither `Mathlib.*` nor
+`HexRealRootsMathlib.*`. That track uses the ordinary Mathlib-free
+`bench/HexRCF/Bench.lean` LeanBench executable. `by rcf` reification, proof
+emission, and kernel checking remain Mathlib-facing and use build-only modules
+below the explicit `libraries.yml` root `bench/HexRCF/ProofProbe/`.
+
+The compiled track requires these stable parametric cases. Every ladder varies
+only the named parameter, and fixture generation stays outside the timed
+region. LeanBench's mandatory conformance hash is computed before its timer
+stops; each target therefore returns a result whose structural hash has no
+higher asymptotic order than the named operation, and each nonconstant hash
+walk is included in the adjacent derivation. The adjacent registration
+comments repeat these derivations.
+
+| Case | Timed operation and controlled ladder | Declared textbook model |
+| --- | --- | --- |
+| `runDecisionCarrierDegree` | `decide` on one square-free product of `n` unit-separated linear factors; one atom and one Boolean node | `O(n⁴)` integer operations: `O(n)` active intervals over `O(n)` levels, each dominated by an `O(n²)` Möbius transform; other fixed-shape RCF phases are no worse on this family. |
+| `runDedupRepeated` | `dedupPolys` on `u` repetitions of one fixed-degree polynomial | `O(u)`: after the first entry the seen set has fixed size one; the one-polynomial output has constant hash cost. |
+| `runDedupDistinct` | `dedupPolys` on the first `u` entries of a committed fixed-degree, fixed-bit-width distinct-polynomial corpus | `O(u²)`: first-occurrence insertion scans a seen prefix of lengths `0 … u-1`; coefficient comparison cost is bounded by the corpus contract, and the `O(u)` structural output hash is lower-order. |
+| `runCommonCoprime` | a strict batch of public `buildCommonRoot?` calls on the first `m` atoms in the committed fixed-degree coprime corpus against one fixed-degree carrier | `O(m)`: one bounded-size gcd, identity package, and checker call per atom; the required hash walks `m` bounded certificates. Distinct-order deduplication is excluded here and measured by `runDedupDistinct`. |
+| `runCommonShared` | the same strict public-builder batch over `m` distinct fixed-degree scalar multiples sharing the carrier root | `O(m)`: carrier/atom degrees and coefficient-width range are bounded by the committed schedule, so each nonconstant-gcd package, checker call, and result-hash entry has bounded cost. |
+| `runCommonRepeated` | the same strict public-builder batch over `m` repetitions of one fixed atom/carrier pair, deliberately without deduplication | `O(m)`: the public builder is invoked once per occurrence on an unchanged bounded-size pair, and the structural result hash is another linear pass. |
+| `runSeparationDepth` | `Separation.separate?` at fixed carrier degree while coefficient height forces a dyadic close pair to depth `b` | There are `O(b)` exact-arithmetic operations, but their operands have `O(b)` bits. The wall-cost contract is `O(b M(b))`; the registration uses the quasi-linear multiplication proxy `b² ceilLog₂(b+1)` on a homogeneous multiprecision schedule, avoiding the immediate-`Int`/GMP seam. |
+| `runReplayCells` | `Certificate.replay?` on prebuilt accepted `.cells` certificates for a unit-separated degree-`k` carrier with one atom, varying its `k` roots and `2k+1` cells | Isolation validation and `k` root-cell `hasRoot` checks take `O(k³)` exact operations. For `Pₖ = ∏_{j≤k}(x-j)`, primitive-PRS operand height is `B(k) = O(k² log k)`, so the wall-cost contract is `O(k³ M(B(k)))`; the registration uses the quasi-linear proxy `k⁵ ceilLog₂(k+1)²` on one multiprecision regime. |
+| `runReplaySigns` | `Certificate.replay?` on prebuilt accepted `.cells` certificates with a fixed one-root carrier and `u` distinct fixed-width scalar multiples of its linear atom | `O(u²)` exact-arithmetic/list operations: sentence-product construction and the repeated-factor witness grow at most quadratically, while deduplication, aligned common-root lookup, sign-row construction, and formula lookup each scan prefixes of the `u` entries. |
+| `runReplayFormula` | `Certificate.replay?` on prebuilt accepted `.cells` certificates with carrier, cell count, and atom multiset fixed while appending `s` literal `.tt`/`.ff` nodes by one fixed tree recipe | `O(s)`: the arithmetic payload is fixed, while the formula/polynomial discovery traversals and the strict option-valued fold visit each added literal/connective node a bounded number of times. |
+
+The five manifest input-family dimensions map respectively to carrier
+degree/root count, distinct versus repeated occurrences, common-root package
+count, separation depth, and the three independent replay subladders (cells,
+distinct sign entries, and formula occurrences). The fixed
+quadratic/degree-10/degree-50 cases below do not participate in those
+complexity verdicts.
+
+The tactic track begins with same-module `Baseline − Baseline` and
+`Degree50.Tactic − Degree50.Tactic` null controls, then uses matched
+fresh-module variants for each fixed case:
+`Baseline` (identical imports), `Reify` (reify-only checksum), `Input`
+(reflected sentence literal), `Search` (the same input plus a meta checksum of
+compiled certificate construction, emitting no proof), `Literal` (input plus
+the pre-generated certificate), `Replay` (literal plus its kernel-checked
+theorem), and `Tactic` (the source goal closed by `rcf`). An external runner
+rotates fresh builds and reports both null calibrations followed by raw paired
+deltas for reification, search, literal elaboration, replay, and the full
+tactic. Six rounds balance which role builds first. Each null's signed deltas,
+absolute and relative ranges, and median describe fresh-build noise only: they
+are reported before the substantive pairs in artifact `config.order` and are
+never subtracted, promoted to a significance test, or used to alter the fixed
+tactic budgets. A substantive delta is noise-sized only against a null with a
+comparable total build magnitude, or when its relative spread agrees with both
+controls; otherwise the sweep leaves it unresolved. `Search − Input` is
+phase-attribution evidence only; the matching LeanBench target supplies the
+scientific asymptotic verdict, and the report neither substitutes nor adds the
+two. The headline report records source hashes, commit/toolchain/host/load
+state, raw samples, artifact sizes, timeout cleanup, and the theorem's axiom
+set, and refuses release claims from a dirty or busy host.
+
+The committed implementation lives under `bench/HexRCF/ProofProbe/`.
+`Support.lean` owns the fixed source and reflected cases plus the precompiled
+reify, search, and replay elaborators; `Generated.lean` owns the three
+pre-generated certificate macros. The generator replaces exactly the
+certificate's dyadic-interval order-proof omissions with `by decide` and
+rejects any other pretty-printer omission, so the committed macro source is
+independently rebuildable. All measured modules import the same generated
+support module and no measured module imports another measured module.
+
+There is one shared `Baseline` and six measured modules under each of
+`Quadratic/`, `Degree10/`, and `Degree50/`. The report contains seventeen
+pairs: the baseline and degree-50-tactic null controls first, then these five
+pairs for each of the three cases:
+
+| Report component | Reference | Candidate |
+| --- | --- | --- |
+| reification | `Baseline` | `<Case>.Reify` |
+| compiled-search attribution | `<Case>.Input` | `<Case>.Search` |
+| literal elaboration | `<Case>.Input` | `<Case>.Literal` |
+| kernel replay | `<Case>.Literal` | `<Case>.Replay` |
+| end-to-end tactic | `Baseline` | `<Case>.Tactic` |
+
+`HexRCFProofProbe` is the reduced structural CI target: it builds the shared
+support, reifies all three source goals, checks every committed literal against
+the accepted checker and the builder-output hash, and builds the quadratic
+matrix. Each Search module repeats its Input module's reflected declaration
+before running the search command, so `Search - Input` does not subtract work
+absent from the candidate. `HexRCFProofProbeScientific` owns the degree-10 and
+degree-50 measured modules without adding them to routine CI. Both are
+build-only Lake libraries; there is no proof-probe executable or in-process
+clock. The complete external sweep is:
+
+```bash
+python3 scripts/bench/hexrcf_proof_sweep.py --samples 6
+```
+
+Only `Replay` and `Tactic` print an axiom report, fixed to
+`[propext, Classical.choice, Quot.sound]`. `Search` also checks stable
+structural sentence and certificate hashes, so a successful build forces the
+compiled result instead of merely invoking the builder and discarding its
+output.
+
+python-flint is an **informational**, scheduled-only comparator for the
+compiled carrier-degree decision family. The paired fixed registrations are
+`runLeanDecision{16,20,24,28,32}` and
+`runFlintDecision{16,20,24,28,32}`. The additional fixed registration
+`runFlintDecisionOverhead` sends the atom-free sentence `∀ x, True` through the
+same warmed `rcf/decide` path and supplies a conservative steady-state
+per-call floor. At each substantive rung both sides consume the same
+precomputed `Sentence`; the FLINT side also consumes its precomputed exact
+version-1 fixture encoding. The persistent-driver request and response are
+
+```text
+{"family":"rcf","op":"decide","sentence":<v1 sentence>}
+  -> {"ok":true,"result":<bool>}
+```
+
+Both sides return `Bool` and share one config that pins `Hashable.hash true`,
+uses five repeats and a 0.2-second minimum total, and enables
+`warmupFirstIter`. `runFlintDecisionOverhead` shares it except for eleven outer
+repeats, which stabilize the floor median without changing the timed inner
+batch. LeanBench starts one fresh child per outer warmup or repeat.
+The discarded first call warms the Lean decision path on both sides; for FLINT
+it also starts one `python3` process in the child. The timed auto-tuned
+inner-repeat batch reuses that process's streams, and no driver is shared
+between outer children. The complete FLINT request line, including the exact
+version-1 sentence encoding, is precomputed; pipe transport and Python JSON
+decoding remain measured comparator overhead. The floor includes the complete
+request/reply path and minimal formula evaluation, but excludes process startup
+and understates the parsing cost of the longer degree-rung requests. The
+headline report retains raw times and ratios at every rung, then subtracts the
+floor median from the FLINT median only on rungs where the floor is at most 50%
+of the FLINT median. A rung above that threshold is floor-dominated, ineligible,
+and reported raw-only. On an eligible rung where the floor exceeds 5%, both raw
+and adjusted ratios are mandatory; below 5%, the raw ratio suffices. Routine
+`hexrcf_bench verify` performs one semantic call through every fixed
+registration. Scientific runs and ratio reporting require `python3` with
+`python-flint` on the named release benchmark host.
+
+This comparison covers carrier degree and real-root count only. It does not
+measure atom multiplicity, common-root preparation, separation, certificate
+replay, reification, literal elaboration, or end-to-end tactic cost.
+python-flint is not proof-producing, and no comparable proof-producing
+univariate RCF tactic is currently named; the tactic/elaboration track is
+therefore `no-comparable-surface-in-named-comparator` rather than assigned a
+fake ratio. The Phase-3 `local` emitter exercises related compiled workloads
+but is neither an elaboration benchmark nor Phase-4 asymptotic evidence.
+
+This contract and the pure-module extraction do not advance the phase marker.
+`HexRCF.done_through` remains `3` until every dependency, including
+HexRealRootsMathlib, has completed Phase 4 and both evidence tracks have their
+required structural wiring and scientific artifacts.
 
 ## Conformance fixtures
 
@@ -732,6 +904,12 @@ For typical goals (`m ≤ 5`, `deg ≤ 10`, small coefficients) the whole
 pipeline is dominated by elaboration overhead, not arithmetic.
 
 ## Time budgets (Phase 4 validation)
+
+These are fixed whole-tactic acceptance cases, measured as the preregistered
+paired `Tactic − Baseline` fresh-module delta on a clean, quiescent named host.
+Raw total wall times and every pair remain in the artifact. They are not
+one-parameter ladders, complexity verdicts, or substitutes for the compiled
+LeanBench cases above.
 
 - Quadratic goals, one atom: under 100 ms.
 - Degree ≤ 10, up to 3 atoms: under 1 second.

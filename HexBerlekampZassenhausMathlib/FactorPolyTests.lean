@@ -316,10 +316,13 @@ example : True := by
     factor_poly (X ^ 2 - 2 : Polynomial ℤ)
   trivial
 
--- Tactic form (providers emitting `FactoredPoly.ofZ` land as a single
--- `factored` hypothesis).
+-- Tactic form: Mathlib providers expose the same four local names as the
+-- executable providers.
 example : True := by
   factor_poly (X ^ 2 - 2 : Polynomial ℤ)
+  have : factors.length = 1 := rfl
+  have := factors_mul
+  have := factors_irred
   exact True.intro
 
 /-! ### The decline→multi-prime handover on `Hex.ZPoly`

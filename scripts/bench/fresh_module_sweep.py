@@ -60,6 +60,7 @@ class ProbePair:
     reference: ProbeModule
     candidate: ProbeModule
     metadata: dict[str, object]
+    null_control: bool = False
 
 
 @dataclass(frozen=True)
@@ -74,6 +75,7 @@ class SweepSpec:
     output_stem: str
     src_dir: Path = Path("bench")
     extra_sources: tuple[Path, ...] = ()
+    required_samples: int | None = None
 
 
 def parse_args(
@@ -82,6 +84,7 @@ def parse_args(
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--samples", type=int, default=3)
     parser.add_argument("--timeout", type=float, default=60.0)
+    parser.add_argument("--warm-timeout", type=float, default=600.0)
     parser.add_argument("--output", type=Path)
     parser.add_argument(
         "--allow-dirty",
@@ -104,6 +107,8 @@ def parse_args(
         parser.error("--samples must be positive")
     if args.timeout <= 0:
         parser.error("--timeout must be positive")
+    if args.warm_timeout <= 0:
+        parser.error("--warm-timeout must be positive")
     if args.max_load_per_cpu <= 0:
         parser.error("--max-load-per-cpu must be positive")
     return args
@@ -312,8 +317,16 @@ def validate_spec(spec: SweepSpec) -> None:
         raise RuntimeError("fresh-module sweep pair names must be unique")
     measured = probe_modules(spec)
     for pair in spec.pairs:
-        if pair.reference.module == pair.candidate.module:
+        identical = pair.reference == pair.candidate
+        if pair.null_control and not identical:
+            raise RuntimeError(
+                f"{pair.name}: null control modules and axiom policies "
+                "must be identical"
+            )
+        if not pair.null_control and pair.reference.module == pair.candidate.module:
             raise RuntimeError(f"{pair.name}: reference and candidate are identical")
+    if spec.required_samples is not None and spec.required_samples < 1:
+        raise RuntimeError("fresh-module sweep required_samples must be positive")
     target = _ExeTarget(spec.probe_target, "", spec.src_dir)
     package_root = ROOT / ".lake" / "packages"
     for root_module in measured:
@@ -491,6 +504,22 @@ def build_sample(module: str, timeout: float) -> dict[str, object]:
     }
 
 
+def warm_imports(spec: SweepSpec, timeout: float) -> None:
+    """Build every measured module's imports before recording any pair."""
+    modules = sorted(probe_modules(spec))
+    command = ["lake", "build", *[f"+{module}:deps" for module in modules]]
+    print(f"[warm] {' '.join(command)}", flush=True)
+    try:
+        proc, _elapsed, _rss = run_timed(command, timeout)
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(
+            f"probe import warmup timed out after {timeout:g}s"
+        ) from exc
+    if proc.returncode != 0:
+        sys.stderr.write(proc.stdout + proc.stderr)
+        raise RuntimeError(f"probe import warmup failed ({proc.returncode})")
+
+
 def artifact_sizes(module: str, src_dir: Path) -> dict[str, int | None]:
     rel = Path(*module.split("."))
     paths = {
@@ -541,6 +570,7 @@ def summarize(
         deltas = [int(sample["signed_wall_delta_nanos"]) for sample in samples]
         result: dict[str, object] = {
             **pair.metadata,
+            "null_control": pair.null_control,
             "reference": {
                 "module": pair.reference.module,
                 "expected_axioms": pair.reference.expected_axioms,
@@ -591,6 +621,17 @@ def run_cli(
 ) -> int:
     validate_spec(spec)
     args = parse_args(spec.description, argv)
+    if spec.required_samples is not None and args.samples != spec.required_samples:
+        raise RuntimeError(
+            f"this sweep requires --samples {spec.required_samples}, "
+            f"got {args.samples}"
+        )
+    if any(pair.null_control for pair in spec.pairs) and args.samples % 2 != 0:
+        raise RuntimeError(
+            "null-control sweeps require an even --samples so pair "
+            "orientation is balanced"
+        )
+    warm_imports(spec, args.warm_timeout)
     env = environment()
     validity_exceptions: list[str] = []
     dirt = dirty_issues(
@@ -674,6 +715,8 @@ def run_cli(
         "config": {
             "samples": args.samples,
             "timeout_seconds": args.timeout,
+            "warm_timeout_seconds": args.warm_timeout,
+            "warm_command_template": "lake build +<module>:deps",
             "command_template": "lake build +<module>:olean",
             "order": [pair.name for pair in pairs],
             "rotation": "pairs left by round index; pair orientation alternates",

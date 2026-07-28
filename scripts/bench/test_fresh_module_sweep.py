@@ -14,18 +14,38 @@ from pathlib import Path
 from unittest import mock
 
 from scripts.bench import fresh_module_sweep as sweep
-from scripts.bench import real_roots_mathlib_sweep as real_roots
+
+
+EXPECTED_AXIOMS = ("propext", "Classical.choice", "Quot.sound")
+PAIR = sweep.ProbePair(
+    name="center-direct",
+    reference=sweep.ProbeModule("HexIntervalMathlib.CenterBaseline"),
+    candidate=sweep.ProbeModule(
+        "HexIntervalMathlib.CenterDirect", EXPECTED_AXIOMS
+    ),
+    metadata={"family": "test"},
+)
+SPEC = sweep.SweepSpec(
+    description="generic harness test",
+    pairs=(PAIR,),
+    probe_target="HexIntervalMathlibProofProbe",
+    schema="test",
+    measurement="test",
+    output_stem="test",
+)
+CALLER = Path(__file__)
 
 
 class ProvenanceTests(unittest.TestCase):
     def test_transitive_local_sources_are_included(self) -> None:
-        sources = set(sweep.provenance_sources(
-            real_roots.SPEC, Path(real_roots.__file__)
-        ))
-        self.assertIn(sweep.ROOT / "HexPoly" / "Dense.lean", sources)
-        self.assertIn(sweep.ROOT / "HexHensel" / "Basic.lean", sources)
+        sources = set(sweep.provenance_sources(SPEC, CALLER))
         self.assertIn(
-            sweep.ROOT / "HexModArithMathlib" / "Basic.lean", sources
+            sweep.ROOT / "HexIntervalMathlib" / "Experiment" / "Center.lean",
+            sources,
+        )
+        self.assertIn(
+            sweep.ROOT / "HexInterval" / "Experiment" / "Center.lean",
+            sources,
         )
 
     def test_source_hash_changes_with_source_content(self) -> None:
@@ -36,13 +56,9 @@ class ProvenanceTests(unittest.TestCase):
             with mock.patch.object(sweep, "ROOT", root), mock.patch.object(
                 sweep, "provenance_sources", return_value=[source]
             ):
-                before = sweep.source_hashes(
-                    real_roots.SPEC, Path(real_roots.__file__)
-                )
+                before = sweep.source_hashes(SPEC, CALLER)
                 source.write_text("def value := 2\n", encoding="utf-8")
-                after = sweep.source_hashes(
-                    real_roots.SPEC, Path(real_roots.__file__)
-                )
+                after = sweep.source_hashes(SPEC, CALLER)
             self.assertNotEqual(before, after)
 
     def test_untracked_checkout_content_marks_dirty_and_changes_state(self) -> None:
@@ -164,9 +180,8 @@ class ProcessGroupTests(unittest.TestCase):
 
 class PairingTests(unittest.TestCase):
     def test_summary_uses_each_pairs_adjacent_measurements(self) -> None:
-        rows: dict[str, list[dict[str, object]]] = {}
-        for pair in real_roots.SPEC.pairs:
-            rows[pair.name] = [{
+        rows: dict[str, list[dict[str, object]]] = {
+            PAIR.name: [{
                 "round": 1,
                 "build_order": ["reference", "candidate"],
                 "reference": {
@@ -177,25 +192,27 @@ class PairingTests(unittest.TestCase):
                 "candidate": {
                     "wall_nanos": 125,
                     "peak_rss_kb": None,
-                    "axioms": list(real_roots.EXPECTED_AXIOMS),
+                    "axioms": list(EXPECTED_AXIOMS),
                 },
                 "signed_wall_delta_nanos": 25,
             }]
+        }
         with mock.patch.object(sweep, "artifact_sizes", return_value={}):
-            summary = sweep.summarize(real_roots.SPEC, rows)
+            summary = sweep.summarize(SPEC, rows)
         self.assertEqual(
-            summary["natural-6"]["signed_wall_delta_nanos"], [25]
+            summary[PAIR.name]["signed_wall_delta_nanos"], [25]
         )
+        self.assertFalse(summary[PAIR.name]["null_control"])
 
     def test_axiom_policy_is_per_module(self) -> None:
         sample = {
             "wall_nanos": 1,
             "peak_rss_kb": None,
-            "axioms": list(real_roots.EXPECTED_AXIOMS),
+            "axioms": list(EXPECTED_AXIOMS),
         }
         sweep.validate_axioms(
             "case", "candidate",
-            sweep.ProbeModule("Probe", real_roots.EXPECTED_AXIOMS),
+            sweep.ProbeModule("Probe", EXPECTED_AXIOMS),
             sample,
         )
         with self.assertRaisesRegex(RuntimeError, "axiom set mismatch"):
@@ -208,18 +225,125 @@ class PairingTests(unittest.TestCase):
         self.assertEqual(sweep.rotate(["a", "b", "c"], 4), ["b", "c", "a"])
 
     def test_pair_orientation_alternates(self) -> None:
-        pair = real_roots.SPEC.pairs[0]
         self.assertEqual(
-            [role for role, _module in sweep.ordered_modules(pair, 0)],
+            [role for role, _module in sweep.ordered_modules(PAIR, 0)],
             ["reference", "candidate"],
         )
         self.assertEqual(
-            [role for role, _module in sweep.ordered_modules(pair, 1)],
+            [role for role, _module in sweep.ordered_modules(PAIR, 1)],
             ["candidate", "reference"],
         )
 
+    def test_null_pair_orientation_alternates_with_one_module(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        pair = sweep.ProbePair(
+            "null", module, module, {}, null_control=True
+        )
+        self.assertEqual(
+            sweep.ordered_modules(pair, 0),
+            [("reference", module), ("candidate", module)],
+        )
+        self.assertEqual(
+            sweep.ordered_modules(pair, 1),
+            [("candidate", module), ("reference", module)],
+        )
+        first_roles = [
+            sweep.ordered_modules(pair, round_index)[0][0]
+            for round_index in range(6)
+        ]
+        self.assertEqual(first_roles.count("reference"), 3)
+        self.assertEqual(first_roles.count("candidate"), 3)
+
+    def test_null_summary_preserves_candidate_minus_reference_sign(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        pair = sweep.ProbePair(
+            "null", module, module, {}, null_control=True
+        )
+        spec = sweep.SweepSpec(
+            description="null",
+            pairs=(pair,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        rows = {
+            pair.name: [{
+                "round": 1,
+                "build_order": ["candidate", "reference"],
+                "reference": {
+                    "wall_nanos": 120,
+                    "peak_rss_kb": None,
+                    "axioms": None,
+                },
+                "candidate": {
+                    "wall_nanos": 100,
+                    "peak_rss_kb": None,
+                    "axioms": None,
+                },
+                "signed_wall_delta_nanos": -20,
+            }]
+        }
+        with mock.patch.object(sweep, "artifact_sizes", return_value={}):
+            summary = sweep.summarize(spec, rows)[pair.name]
+        self.assertTrue(summary["null_control"])
+        self.assertEqual(summary["signed_wall_delta_nanos"], [-20])
+        self.assertEqual(summary["median_signed_wall_delta_nanos"], -20)
+
+    def test_summary_metadata_cannot_spoof_null_control(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        pair = sweep.ProbePair(
+            "null", module, module, {"null_control": False}, null_control=True
+        )
+        spec = sweep.SweepSpec(
+            description="null",
+            pairs=(pair,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        rows = {
+            pair.name: [{
+                "reference": {"wall_nanos": 1, "peak_rss_kb": None},
+                "candidate": {"wall_nanos": 1, "peak_rss_kb": None},
+                "signed_wall_delta_nanos": 0,
+            }]
+        }
+        with mock.patch.object(sweep, "artifact_sizes", return_value={}):
+            summary = sweep.summarize(spec, rows)[pair.name]
+        self.assertTrue(summary["null_control"])
+
 
 class HarnessValidationTests(unittest.TestCase):
+    def test_warmup_builds_every_unique_import_closure(self) -> None:
+        completed = subprocess.CompletedProcess(
+            ["lake", "build"], 0, stdout="", stderr=""
+        )
+        with mock.patch.object(
+            sweep, "run_timed", return_value=(completed, 1, None)
+        ) as timed:
+            sweep.warm_imports(SPEC, 30)
+        command, timeout = timed.call_args.args
+        self.assertEqual(timeout, 30)
+        self.assertEqual(command[:2], ["lake", "build"])
+        self.assertEqual(
+            set(command[2:]),
+            {
+                "+HexIntervalMathlib.CenterBaseline:deps",
+                "+HexIntervalMathlib.CenterDirect:deps",
+            },
+        )
+
+    def test_warmup_timeout_fails_closed(self) -> None:
+        with mock.patch.object(
+            sweep,
+            "run_timed",
+            side_effect=subprocess.TimeoutExpired(["lake", "build"], 1),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "warmup timed out"):
+                sweep.warm_imports(SPEC, 1)
+
     def test_remove_outputs_is_exact_to_selected_module(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             build = Path(directory)
@@ -241,10 +365,9 @@ class HarnessValidationTests(unittest.TestCase):
             self.assertTrue(untouched.is_file())
 
     def test_duplicate_pair_names_fail_closed(self) -> None:
-        pair = real_roots.SPEC.pairs[0]
         spec = sweep.SweepSpec(
             description="duplicate",
-            pairs=(pair, pair),
+            pairs=(PAIR, PAIR),
             probe_target="Probe",
             schema="test",
             measurement="test",
@@ -252,6 +375,103 @@ class HarnessValidationTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(RuntimeError, "must be unique"):
             sweep.validate_spec(spec)
+
+    def test_ordinary_identical_pair_fails_closed(self) -> None:
+        module = sweep.ProbeModule("Probe.Same")
+        spec = sweep.SweepSpec(
+            description="ordinary identical",
+            pairs=(sweep.ProbePair("same", module, module, {}),),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        with self.assertRaisesRegex(RuntimeError, "are identical"):
+            sweep.validate_spec(spec)
+
+    def test_null_control_requires_identical_modules(self) -> None:
+        pair = sweep.ProbePair(
+            "null",
+            sweep.ProbeModule("Probe.Reference"),
+            sweep.ProbeModule("Probe.Candidate"),
+            {},
+            null_control=True,
+        )
+        spec = sweep.SweepSpec(
+            description="invalid null",
+            pairs=(pair,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        with self.assertRaisesRegex(RuntimeError, "must be identical"):
+            sweep.validate_spec(spec)
+
+    def test_null_control_requires_identical_axiom_policies(self) -> None:
+        pair = sweep.ProbePair(
+            "null",
+            sweep.ProbeModule("Probe.Same"),
+            sweep.ProbeModule("Probe.Same", EXPECTED_AXIOMS),
+            {},
+            null_control=True,
+        )
+        spec = sweep.SweepSpec(
+            description="invalid null policy",
+            pairs=(pair,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        with self.assertRaisesRegex(RuntimeError, "axiom policies"):
+            sweep.validate_spec(spec)
+
+    def test_same_module_null_control_is_valid(self) -> None:
+        module = sweep.ProbeModule("Probe.Same")
+        pair = sweep.ProbePair("null", module, module, {}, null_control=True)
+        spec = sweep.SweepSpec(
+            description="valid null",
+            pairs=(pair,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        source = Path("/unused/Probe/Same.lean")
+        with mock.patch.object(sweep, "probe_source", return_value=source), \
+                mock.patch.object(Path, "is_file", return_value=True), \
+                mock.patch.object(sweep, "_parse_imports", return_value=[]):
+            sweep.validate_spec(spec)
+
+    def test_required_sample_count_is_enforced_before_warmup(self) -> None:
+        spec = sweep.SweepSpec(
+            description="required samples",
+            pairs=(PAIR,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+            required_samples=6,
+        )
+        with mock.patch.object(sweep, "validate_spec"):
+            with self.assertRaisesRegex(RuntimeError, "requires --samples 6"):
+                sweep.run_cli(spec, CALLER, ["--samples", "4"])
+
+    def test_null_control_requires_even_sample_count(self) -> None:
+        module = sweep.ProbeModule("Probe.Same")
+        pair = sweep.ProbePair("null", module, module, {}, null_control=True)
+        spec = sweep.SweepSpec(
+            description="balanced null",
+            pairs=(pair,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        with mock.patch.object(sweep, "validate_spec"):
+            with self.assertRaisesRegex(RuntimeError, "even --samples"):
+                sweep.run_cli(spec, CALLER, ["--samples", "5"])
 
     def test_transitive_measured_module_import_fails_closed(self) -> None:
         pair = sweep.ProbePair(

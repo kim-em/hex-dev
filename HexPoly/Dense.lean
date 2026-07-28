@@ -250,6 +250,14 @@ def ofCoeffs (coeffs : Array R) : DensePoly R :=
       unfold trimTrailingZeros DensePolyNormalized
       simpa using trimTrailingZerosList_normalized (R := R) coeffs.toList }
 
+/-- `#p[a₀, a₁, ...]` constructs a dense polynomial whose coefficient of
+`xⁱ` is `aᵢ`. Trailing zero coefficients are removed by `ofCoeffs`. -/
+syntax (name := densePolyLiteral) "#p[" term,* "]" : term
+
+macro_rules
+  | `(#p[$coeffs,*]) =>
+      `(Hex.DensePoly.ofCoeffs #[$coeffs,*])
+
 /-- The zero polynomial. -/
 @[expose]
 def zero : DensePoly R :=

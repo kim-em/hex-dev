@@ -97,6 +97,10 @@ lean_lib HexRoots where
 
 lean_lib HexResultant where
 
+lean_lib HexNumberField where
+
+lean_lib HexNumberFieldTower where
+
 lean_lib HexPolyFp where
 
 lean_lib HexGFqRing where
@@ -131,6 +135,12 @@ lean_lib HexRootsMathlib where
 
 @[default_target]
 lean_lib HexResultantMathlib where
+
+@[default_target]
+lean_lib HexNumberFieldMathlib where
+
+@[default_target]
+lean_lib HexNumberFieldTowerMathlib where
 
 @[default_target]
 lean_lib HexBerlekampMathlib where
@@ -213,7 +223,8 @@ lean_lib HexIntervalExperiment where
   globs := #[`HexInterval.Experiment.Representation,
     `HexInterval.Experiment.Rational, `HexInterval.Experiment.Center,
     `HexInterval.Experiment.Scale, `HexInterval.Experiment.Propagator,
-    `HexInterval.Experiment.Policy, `HexInterval.Experiment.PolicyFrontier]
+    `HexInterval.Experiment.Policy, `HexInterval.Experiment.PolicyFrontier,
+    `HexInterval.Experiment.PolicyDriver]
 
 lean_lib HexIntervalMathlibExperiment where
   globs := #[`HexIntervalMathlib.Experiment.Center]
@@ -245,6 +256,25 @@ lean_lib HexRealRootsMathlibReplayProbe where
     `HexRealRootsMathlib.Natural10, `HexRealRootsMathlib.Refined2,
     `HexRealRootsMathlib.Refined4, `HexRealRootsMathlib.Refined6]
 
+lean_lib HexRCFProofProbe where
+  srcDir := "bench"
+  globs := #[`HexRCF.BenchHash, `HexRCF.ProofProbe.Support,
+    `HexRCF.ProofProbe.Generated,
+    `HexRCF.ProofProbe.Validate, `HexRCF.ProofProbe.Baseline,
+    `HexRCF.ProofProbe.Quadratic.Reify, `HexRCF.ProofProbe.Quadratic.Input,
+    `HexRCF.ProofProbe.Quadratic.Search, `HexRCF.ProofProbe.Quadratic.Literal,
+    `HexRCF.ProofProbe.Quadratic.Replay, `HexRCF.ProofProbe.Quadratic.Tactic]
+
+lean_lib HexRCFProofProbeScientific where
+  srcDir := "bench"
+  globs := #[`HexRCF.ProofProbe.Degree10.Reify,
+    `HexRCF.ProofProbe.Degree10.Input, `HexRCF.ProofProbe.Degree10.Search,
+    `HexRCF.ProofProbe.Degree10.Literal, `HexRCF.ProofProbe.Degree10.Replay,
+    `HexRCF.ProofProbe.Degree10.Tactic, `HexRCF.ProofProbe.Degree50.Reify,
+    `HexRCF.ProofProbe.Degree50.Input, `HexRCF.ProofProbe.Degree50.Search,
+    `HexRCF.ProofProbe.Degree50.Literal, `HexRCF.ProofProbe.Degree50.Replay,
+    `HexRCF.ProofProbe.Degree50.Tactic]
+
 -- Conformance #guard drivers live under `conformance/` and are built by this
 -- library (mirroring the released conformance sub-projects). Alongside each
 -- library's `Conformance` core module, the heavier cross-check sweeps and
@@ -254,7 +284,7 @@ lean_lib HexRealRootsMathlibReplayProbe where
 -- `*_emit_fixtures` exes below, carrying `srcDir := "conformance"`.
 lean_lib HexConformance where
   srcDir := "conformance"
-  globs := #[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexInterval.Conformance, `HexInterval.CenterConformance, `HexInterval.ScaleConformance, `HexInterval.PropagatorConformance, `HexInterval.PolicyConformance, `HexInterval.PolicyFrontierConformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRCF.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexRoots.Conformance].map Glob.one
+  globs := #[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexInterval.Conformance, `HexInterval.CenterConformance, `HexInterval.ScaleConformance, `HexInterval.PropagatorConformance, `HexInterval.StructureViewConformance, `HexInterval.PolicyConformance, `HexInterval.PolicyFrontierConformance, `HexInterval.PolicyDriverConformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexNumberField.Conformance, `HexNumberFieldTower.Conformance, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRCF.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexResultant.Conformance, `HexRoots.Conformance].map Glob.one
 
 -- Public umbrellas intentionally contain only the supported API. Executable
 -- examples and regression tests are compiled through this separate target so
@@ -268,6 +298,24 @@ lean_lib HexReleaseTests where
     `HexRealRootsMathlib.IsolateRootsTests,
     `HexRealRootsMathlib.IsolateRootsElabTests,
     `HexRootsMathlib.Examples]
+
+-- HexRCF is not yet a published split repository, so its verification-only
+-- modules stay separate from the release-manifest-backed target above.
+@[default_target]
+lean_lib HexRCFTests where
+  globs := #[`HexRCF.LanguageTests,
+    `HexRCF.SturmBuilderTests,
+    `HexRCF.CarrierTests,
+    `HexRCF.IsolationsTests,
+    `HexRCF.SeparationTests,
+    `HexRCF.CellsTests,
+    `HexRCF.CommonRootTests,
+    `HexRCF.SignMatrixTests,
+    `HexRCF.BuilderTests,
+    `HexRCF.CertificateTests,
+    `HexRCF.DecisionTests,
+    `HexRCF.ReifyTests,
+    `HexRCF.LintTests]
 
 -- Canonical end-to-end examples are release artifacts rather than public API.
 -- Keep their target separate for the same reason as the regression tests.
@@ -306,9 +354,33 @@ lean_exe hexroots_emit_fixtures where
   srcDir := "conformance"
   root := `HexRoots.EmitFixtures
 
+lean_exe hexnumberfield_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexNumberField.EmitFixtures
+
+lean_exe hexnumberfieldtower_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexNumberFieldTower.EmitFixtures
+
+lean_exe hexresultant_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexResultant.EmitFixtures
+
 lean_exe hexroots_bench where
   srcDir := "bench"
   root := `HexRoots.Bench
+
+lean_exe hexresultant_bench where
+  srcDir := "bench"
+  root := `HexResultant.Bench
+
+lean_exe hexnumberfield_bench where
+  srcDir := "bench"
+  root := `HexNumberField.Bench
+
+lean_exe hexnumberfieldtower_bench where
+  srcDir := "bench"
+  root := `HexNumberFieldTower.Bench
 
 lean_exe hexroots_demo where
   srcDir := "examples"
@@ -333,6 +405,10 @@ lean_exe hexgramschmidt_bench where
 lean_exe hexrealroots_bench where
   srcDir := "bench"
   root := `HexRealRoots.Bench
+
+lean_exe hexrcf_bench where
+  srcDir := "bench"
+  root := `HexRCF.Bench
 
 lean_exe hexlll_bench where
   srcDir := "bench"

@@ -76,6 +76,13 @@ primitive normalizer drops trailing zeros from a raw array, and
 
 {docstring Hex.DensePoly.ofList}
 
+For a coefficient literal, `#p[a₀, a₁, ...]` constructs the same value
+as {name}`Hex.DensePoly.ofCoeffs` applied to `#[a₀, a₁, ...]`. The
+expected dense-polynomial type determines the coefficient type.
+Coefficients are listed in ascending degree order, so `aᵢ` is the
+coefficient of `xⁱ`. The literal uses the same normalization as
+`ofCoeffs`, including removal of trailing zeros.
+
 The remaining constructors build the common shapes directly. The zero
 polynomial is the empty array; a constant collapses to zero when its
 scalar is zero; a monomial collapses likewise.
@@ -180,7 +187,7 @@ open Hex Hex.DensePoly
 namespace HexPolyChapterArith
 
 -- a = 1 + 2x + 3x²
-private def a : DensePoly Int := ofCoeffs #[1, 2, 3]
+private def a : DensePoly Int := #p[1, 2, 3]
 -- b = x
 private def b : DensePoly Int := monomial 1 1
 
@@ -193,8 +200,8 @@ private def b : DensePoly Int := monomial 1 1
 #guard a.support = [0, 1, 2]
 #guard a.coeff 2 = 3
 
--- A padded array collapses to the trimmed value.
-#guard ofCoeffs #[1, 2, 3, 0, 0] = a
+-- A literal with padding collapses to the trimmed value.
+#guard #p[1, 2, 3, 0, 0] = a
 -- The zero constant is the zero polynomial.
 #guard C (0 : Int) = (0 : DensePoly Int)
 
@@ -265,8 +272,8 @@ open Hex Hex.DensePoly
 namespace HexPolyChapterEuclid
 
 -- p = x² - 1, q = x - 1
-private def p : DensePoly Rat := ofCoeffs #[-1, 0, 1]
-private def q : DensePoly Rat := ofCoeffs #[-1, 1]
+private def p : DensePoly Rat := #p[-1, 0, 1]
+private def q : DensePoly Rat := #p[-1, 1]
 
 -- x² - 1 = (x - 1)(x + 1), so the division is exact.
 -- Quotient x + 1, remainder 0.
@@ -284,7 +291,7 @@ private def q : DensePoly Rat := ofCoeffs #[-1, 1]
 #guard modByMonic p q (by rfl) = (0 : DensePoly Rat)
 
 -- gcd(x² - 1, x + 1) = x + 1: a monic gcd.
-#guard gcd p (ofCoeffs #[1, 1]) = ofCoeffs #[1, 1]
+#guard gcd p #p[1, 1] = #p[1, 1]
 
 end HexPolyChapterEuclid
 ```

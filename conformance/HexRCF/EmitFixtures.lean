@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import Hex.Conformance.Emit
-import HexRCF.Decision
+import HexRCF.DecisionCheck
 
 /-!
 JSONL fixture emission for the independent HexRCF oracle.

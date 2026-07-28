@@ -179,12 +179,12 @@ example : ∀ a x : ℝ, a * x ^ 2 + 1 > 0 := by rcf
 #guard_msgs in
 example : ∀ x : ℝ, Real.sin x = 0 := by rcf
 
-/-- error: rcf: division by an expression containing the variable is not polynomial; clear denominators by hand -/
+/-- error: rcf: division by an expression containing the variable is not polynomial. Clear denominators by hand -/
 #guard_msgs in
 example : ∀ x : ℝ, x + 1 / x ≥ 2 := by rcf
 
 /--
-error: rcf: Set.Icc quantifiers are unsupported; rewrite
+error: rcf: Set.Icc quantifiers are unsupported. Rewrite
   ∀ x ∈ Set.Icc a b, φ x
 as
   (a ≤ b → φ a) ∧ ∀ x ∈ Set.Ioc a b, φ x
@@ -197,7 +197,7 @@ example : ∀ x : ℝ, x ∈ Set.Icc (0 : ℝ) 1 → x ≤ 1 := by rcf
 example : ∀ x : ℝ, x ^ 2 > 0 := by rcf
 
 /--
-error: rcf: the existential sentence is false; every relevant decomposition
+error: rcf: the existential sentence is false. Every relevant decomposition
 cell was checked and found false, so there is no witness
 -/
 #guard_msgs in

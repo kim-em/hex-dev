@@ -24,23 +24,21 @@ tag := "factor-tactics"
 tag := "factor-tactics-intro"
 %%%
 
-`factor_poly` and `irreducibility` factor a concrete polynomial, or
-prove one irreducible, in a single call. The factorization runs as
-compiled, untrusted search while the file elaborates; the emitted proof
-term carries only certificate checks the kernel replays on literal
-data. One call site, no visible certificates, no `native_decide`, and
-no axioms beyond the standard three.
+The `factor_poly` and `irreducibility` tactics can be used to factorize a
+specific polynomial, or prove that it is irreducible.
 
-The tactics accept four input types, enabled by imports. The drivers
-live in `HexBerlekamp` and handle {name}`Hex.FpPoly` (dense
-polynomials over a prime field) natively. Importing
-`HexBerlekampZassenhaus` adds {name}`Hex.ZPoly` (dense integer
-polynomials); the correspondence libraries `HexBerlekampMathlib` and
-`HexBerlekampZassenhausMathlib` add `Polynomial (ZMod q)` and
-`Polynomial ℤ`. Each library registers its arm as a provider probed by
-name at elaboration time, so the drivers need no imports in that
-direction; with everything imported the tactics simply accept all four
-types.
+The tactics accept four input types, and become increasingly capable
+as further libraries are imported.
+
+Once `HexBerlekampZassenhausMathlib` is imported, the tactics
+handle `Polynomial ℤ`, `Polynomial (ZMod q)`,
+{name}`Hex.ZPoly` (dense integer polynomials),
+and {name}`Hex.FpPoly` (dense polynomials over a prime field).
+
+If you don't need all these capabilities (or want to avoid the extra dependencies),
+`import HexBerlekampMathlib` suffices for `Polynomial (ZMod q)` and {name}`Hex.FpPoly`,
+`import HexBerlekampZassenhaus` suffices for {name}`Hex.ZPoly`,
+and `import HexBerlekamp` suffices for {name}`Hex.FpPoly` alone.
 
 # Proving irreducibility
 %%%
@@ -58,8 +56,7 @@ example : Irreducible (X ^ 2 - 2 : Polynomial ℤ) := by
   irreducibility
 ```
 
-The same name is a term elaborator, so the proof can be a definition's
-entire body:
+`irreducibility` can also be used as a term elaborator:
 
 ```lean
 open Polynomial
@@ -67,6 +64,21 @@ open Polynomial
 theorem sqrt2_irred :
     Irreducible (X ^ 2 - 2 : Polynomial ℤ) :=
   irreducibility (X ^ 2 - 2 : Polynomial ℤ)
+```
+
+When the current goal is something else, `irreducibility f` adds the
+corresponding theorem as `this`; the form `irreducibility h : f` gives it an
+explicit name:
+
+```lean
+open Polynomial
+
+example :
+    Irreducible (X ^ 2 - 2 : Polynomial ℤ) ∧
+      Irreducible (X ^ 2 + X + 1 : Polynomial ℤ) := by
+  irreducibility (X ^ 2 - 2 : Polynomial ℤ)
+  irreducibility h : (X ^ 2 + X + 1 : Polynomial ℤ)
+  exact ⟨this, h⟩
 ```
 
 Behind the call, the input expression is parsed to an executable
@@ -114,20 +126,53 @@ example : ∀ q ∈ facSplit.factors, Irreducible q :=
   facSplit.factors_irred
 ```
 
+`factor_poly` can also be invoked as a tactic. It introduces `scalar` and
+`factors` as transparent `let` bindings, followed by the reconstruction
+hypothesis `factors_mul` and the irreducibility hypothesis `factors_irred`:
+
+```lean
+open Polynomial
+
+example :
+    ∃ (scalar : ℤ) (factors : List (Polynomial ℤ)),
+      Polynomial.C scalar * factors.prod =
+          ((X ^ 2 - 1) * (X + 2) : Polynomial ℤ) ∧
+        ∀ q ∈ factors, Irreducible q := by
+  factor_poly ((X ^ 2 - 1) * (X + 2) : Polynomial ℤ)
+  exact ⟨scalar, factors, factors_mul, factors_irred⟩
+```
+
+If you need to name these fields, it is best to use the term elaborator with `obtain`, e.g., as:
+
+```lean
+open Polynomial
+
+example :
+    ∃ (content : ℤ) (factors : List (Polynomial ℤ)),
+      Polynomial.C content * factors.prod =
+          ((X ^ 2 - 1) * (X + 2) : Polynomial ℤ) ∧
+        ∀ q ∈ factors, Irreducible q := by
+  obtain ⟨content, factors, hproduct, hirreducible⟩ :=
+    factor_poly ((X ^ 2 - 1) * (X + 2) : Polynomial ℤ)
+  exact ⟨content, factors, hproduct, hirreducible⟩
+```
+
 # The executable types
 %%%
 tag := "factor-tactics-executable"
 %%%
 
 The Mathlib-facing forms above are transports of the same machinery
-working on the executable types, which are user surfaces in their
-own right. Over a prime field the input is a {name}`Hex.FpPoly`
+working on the executable types. Over a prime field the input is a {name}`Hex.FpPoly`
 (see the {ref "hex-poly-fp"}[HexPolyFp chapter]) and the result is an
 {name}`Hex.FpPoly.Factored`:
 
 {docstring Hex.FpPoly.Factored}
 
-The example below factors `3 · (x+1)² · (x²+2)` over `F₅`: non-monic
+The literal `#p[a₀, a₁, ...]` lists polynomial coefficients in ascending
+degree order.
+
+The example below factors `3 * (x+1)² * (x²+2)` over `F₅`: non-monic
 and non-square-free, so the scalar, multiplicity, and normalization
 conventions are all visible. The factors come back monic, in
 nondecreasing degree order, repeated to multiplicity, with the leading
@@ -138,22 +183,17 @@ open Hex
 
 instance : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
 
-def z (n : Nat) : ZMod64 5 := ZMod64.ofNat 5 n
-
 /-- `3 · (x+1)² · (x²+2)` over `F₅`: non-monic and
 non-square-free. -/
 def testF : FpPoly 5 :=
-  DensePoly.C (z 3) *
-    (FpPoly.ofCoeffs #[z 1, z 1] *
-     FpPoly.ofCoeffs #[z 1, z 1] *
-     FpPoly.ofCoeffs #[z 2, z 0, z 1])
+  .C 3 * #p[1, 1] * #p[1, 1] * #p[2, 0, 1]
 
 noncomputable def facF := factor_poly testF
 
 example : facF.factors.length = 3 := rfl
-example : facF.scalar = z 3 := rfl
+example : facF.scalar = 3 := rfl
 
-def irrF : FpPoly 5 := FpPoly.ofCoeffs #[z 2, z 0, z 1]
+def irrF : FpPoly 5 := #p[2, 0, 1]
 
 theorem irrF_irred : FpPoly.Irreducible irrF :=
   irreducibility irrF
@@ -169,7 +209,7 @@ primitive positive-leading-coefficient factors:
 ```lean
 open Hex
 
-def quadZ : ZPoly := DensePoly.ofCoeffs #[1, 0, 1]
+def quadZ : ZPoly := #p[1, 0, 1]
 
 theorem quadZ_irred : ZPoly.Irreducible quadZ :=
   irreducibility quadZ
@@ -194,43 +234,128 @@ The tactic result is proof-oriented. Runtime clients instead use the total
 
 {docstring Hex.ZPoly.factorize}
 
-The factorizer normalizes content, sign, powers of `X`, and repeated factors;
-factors the square-free core modulo a small admissible prime; Hensel-lifts the
-modular factors; and recombines them. Small modular factor counts use
-size-ordered classical recombination. When its subset budget is exhausted, the
-van Hoeij CLD lattice tier is tried. Exact integer trial division is the total
-backstop when neither modular tier answers.
+After removing content and repeated factors, modular factorization replaces a
+problem over `ℤ` by one over a small finite field. For a suitable prime `p`,
+factor the square-free polynomial modulo `p`, then use Hensel lifting to obtain
+factors modulo a sufficiently large power `pᵃ`. Each irreducible integer
+factor is represented by a product of some of these lifted modular factors.
+The remaining problem—deciding which modular factors belong together—is
+called *recombination*.
 
-This separation is part of the public contract:
+No single recombination method is best at every size. Classical Zassenhaus
+recombination tries subsets of the lifted factors, reconstructs the
+corresponding integer polynomial, and tests it by exact division. This has low
+overhead when the number `r` of modular factors is small, but its worst-case
+search is exponential in `r`.
 
-* {name}`Hex.factorClassical` and {name}`Hex.factorLattice` are
-  `Option`-valued diagnostic entry points. `factorLattice` never silently runs
-  the exponential trial backstop.
-* {name}`Hex.factorTrial` is the explicit exact backstop.
-* {name}`Hex.factorTraced` returns the production result with a
-  {name}`Hex.FactorTrace`, making the chosen tier and decline status visible to
-  conformance and performance tests.
-* {name}`Hex.ZPoly.factorize` is the ordinary total API. Its soundness does not
-  depend on a polynomial-time claim: the unconditional guarantee is exact
-  factorization, while no-fallback lattice success is a separate conditional
-  theorem programme with explicit prime and precision hypotheses.
+[Van Hoeij's method](https://doi.org/10.1006/jnth.2001.2763) replaces that
+subset search by a lattice problem. For a lifted factor `g`, its combined
+logarithmic derivative is `Φ(g) = f · g′ / g` modulo `pᵃ`. The identity
+`Φ(gh) = Φ(g) + Φ(h)` turns products of modular factors into sums of
+coefficient vectors. LLL reduction then isolates the short indicator vectors
+that can describe integer factors. Building and reducing the lattice costs
+more for small examples, but avoids the exponential dependence on `r`.
+
+This use of LLL should not be confused with the older *LLL factorization
+algorithm*. The
+[1982 Lenstra–Lenstra–Lovász paper](https://eudml.org/doc/182903) uses lattice
+reduction to recover an integer factor itself from sufficiently accurate
+modular information. Its historical significance is that it gave the first
+polynomial-time algorithm for factoring univariate polynomials over `ℚ`.
+That algorithm was not competitive with Berlekamp–Zassenhaus in practice: its
+lattices had large dimensions and coefficients. Van Hoeij retains the
+practical modular factorization and Hensel-lifting pipeline, and gives lattice
+reduction the narrower job of determining which lifted factors belong
+together.
+
+The Isabelle/HOL development
+[LLL Factorization](https://www.isa-afp.org/entries/LLL_Factorization.html)
+formalizes the 1982 algorithm for square-free integer polynomials, including
+its polynomial complexity. Hex does not implement that factorization
+algorithm. {name}`Hex.lll` provides the lattice-basis reduction used by the
+van Hoeij recombination tier, but factor recovery follows van Hoeij's CLD
+method rather than the older LLL factorizer.
+
+There is also a direct search for exact divisors over `ℤ`. It does not require
+a suitable modular prime and therefore provides a slower but unconditional
+last resort. These complementary costs explain the three tiers:
+
+* {name}`Hex.factorClassical` runs subset recombination under a fixed search
+  budget and returns `none` if that budget is exhausted or no admissible prime
+  is found.
+* {name}`Hex.factorLattice` runs van Hoeij recombination and returns `none` if
+  the available prime or precision does not produce a verified answer.
+* {name}`Hex.factorTrial` performs the direct exact search.
+* {name}`Hex.ZPoly.factorize` tries the two optional methods in that order,
+  accepts an answer only after its product reconstructs the input, and uses
+  the direct search if both decline.
+* {name}`Hex.factorTraced` returns the same result together with a
+  {name}`Hex.FactorTrace` recording which route was taken.
+
+For each optional tier there are two separate proof questions: whether a
+successful answer is correct, and whether the tier is guaranteed to return an
+answer. These should not be conflated.
+
+On the first question, the Mathlib bridge already proves that every factor
+which would be recorded from a successful default-bound classical run is
+irreducible; the corresponding result holds for a successful lattice run at
+the public precision cap. These are
+{name}`HexBerlekampZassenhausMathlib.factorClassicalFactorsWithBound_factor_irreducible`
+and
+{name}`HexBerlekampZassenhausMathlib.factorLatticeFactorsWithBound_factor_irreducible`.
+The library does not yet expose the complementary packed-product implications
+`factorClassical f = some φ → φ.product = f` and
+`factorLattice f = some φ → φ.product = f`. Consequently, the reconstruction
+check in {name}`Hex.factorTraced` is not yet redundant: an optional answer is
+accepted only if its product is `f`; otherwise the proved
+{name}`Hex.factorTrial_product` backstop supplies the result. This case split
+is what the current {name}`Hex.factorize_product` theorem uses.
+
+On the second question, classical recombination is deliberately allowed to
+decline when its resource budget is exhausted. The stronger theorem intended
+for the lattice tier says that it cannot decline once the monic-core prime
+selector has succeeded and the public precision cap is used. That conditional
+completeness theorem has not yet been proved. It would not say that
+{name}`Hex.factorLattice` succeeds on every input: the fixed admissible-prime
+search can itself fail. A further selector theorem will give checkable
+sufficient conditions for prime selection and, together with lattice
+completeness and the two packed-product implications, show that the hybrid
+never reaches trial division on those inputs. The trial tier remains the
+unconditional backstop for arbitrary inputs.
+
+Other formal precedents are the Isabelle/HOL developments
+[Polynomial Factorization](https://www.isa-afp.org/entries/Polynomial_Factorization.html),
+[The Factorization Algorithm of Berlekamp and Zassenhaus](https://www.isa-afp.org/entries/Berlekamp_Zassenhaus.html),
+which verify the surrounding polynomial algorithms and classical
+Berlekamp–Zassenhaus recombination.
+The accompanying
+[Isabelle LLL paper](https://doi.org/10.1007/s10817-020-09552-1) identifies a
+verified van Hoeij algorithm as future work. We have not found a later
+formalization in the current AFP or published prover literature, so, to the
+best of our knowledge, Hex is the first implementation of van Hoeij's CLD
+method inside an interactive theorem prover. This is a cautious claim about
+the implementation, not a claim that the outstanding completeness theorem
+above has already been proved.
 
 For proof clients,
-{name}`HexBerlekampZassenhausMathlib.factorize_headline` bundles
-reconstruction, primitive irreducible factors, positive multiplicities,
-pairwise non-association, and the normalized signed scalar for every nonzero
-input. The sibling
-{name}`HexBerlekampZassenhausMathlib.factorize_headline_contract_core_with_posLeading`
-records the positive-leading convention.
+{name}`HexBerlekampZassenhausMathlib.factorize_normalized` gives the full
+mathematical description of the output on a nonzero input. It proves that the
+recorded product reconstructs the input; each factor is primitive,
+irreducible, and has positive leading coefficient; every multiplicity is
+positive; distinct factors are not associates; and the scalar is the signed
+content of the input.
 
 Finally, `Polynomial (ZMod q)` inputs reuse the prime-field pipeline
 through the parser-with-proof of `HexBerlekampMathlib`, producing the
 same {name}`Hex.FactoredPoly` shape as the integer case. The modulus
-must be a literal prime with `q ≤ 2²⁶`: the emitted term kernel-replays
-a trial-division primality check costing roughly `q` steps, so larger
-moduli are declined even inside the `ZMod64` bound, and the per-factor
-`(degree + 1) · q` replay budget of the
-{ref "factor-tactics-coverage"}[coverage section] applies as well:
+must be a literal prime inside the `ZMod64` bound (`q < 2³¹`), but the
+per-factor Rabin-certificate budget binds first for every nonconstant
+input: `(degree + 1) · q ≤ 2²⁶`, as described in the
+{ref "factor-tactics-coverage"}[coverage section]. The primality checker
+tests candidates from `2` through `⌊√q⌋`, so checking that part of the
+emitted proof takes `Θ(√q)` remainder tests. The provider budgets that
+exact worst-case candidate count against a separate `2¹⁶` ceiling;
+throughout the `ZMod64` range it is at most `46,339`.
 
 ```lean
 open Polynomial
@@ -244,45 +369,6 @@ noncomputable def facP :=
     ((X + 1) ^ 2 * (X ^ 2 + 2) * 3 : Polynomial (ZMod 5))
 
 example : facP.factors.length = 3 := rfl
-```
-
-# Tactic forms
-%%%
-tag := "factor-tactics-tactic-forms"
-%%%
-
-Both names are also tactics. For the executable types,
-`factor_poly f` introduces `scalar` and `factors` as transparent `let`
-bindings plus the two hypotheses `factors_mul` and `factors_irred`;
-because the `let`s are transparent, facts about them are available by
-`rfl`:
-
-```lean
-open Hex
-
-example : True := by
-  factor_poly testF
-  have : factors.length = 3 := rfl
-  exact True.intro
-```
-
-(For the `Polynomial` input types the tactic form instead lands the
-whole structure as a single `factored` hypothesis.)
-
-The `irreducibility` tactic has three forms: bare, closing an
-`Irreducible` goal as in the {ref "factor-tactics-irreducibility"}[lead
-example]; `irreducibility f`, adding the fact as an anonymous
-hypothesis; and `irreducibility h : f`, naming it:
-
-```lean
-open Hex Polynomial
-
-example : FpPoly.Irreducible irrF := by irreducibility
-
-example : True := by
-  irreducibility (X ^ 2 - 2 : Polynomial ℤ)
-  irreducibility h : (X ^ 2 + X + 1 : Polynomial ℤ)
-  exact True.intro
 ```
 
 # What the proofs cost, and what to trust
@@ -306,8 +392,8 @@ The factorizer itself never runs in the kernel, except in the opt-in
 
 Kernel time therefore scales with the certificate replays, not with
 the search: it does not matter how many candidate recombinations the
-elaboration-time factorizer explored. And because everything is an
-ordinary proof term, the axiom cone stays clean:
+elaboration-time factorizer explored. The generated proof adds no
+project-specific axioms:
 
 ```lean (name := axiomsCheck)
 #print axioms sqrt2_irred
@@ -362,10 +448,10 @@ certificate for a prime where the factor stays irreducible), and
 Eisenstein-after-shift. Each is found by a bounded search, so an
 input can lie inside a certificate language yet outside the
 implemented search: the single-prime search tries primes below `512`
-(those within the replay budget), the Eisenstein search tries shifts
-`0, ±1, ±2, ±3` with witness primes capped at `128` (a larger prime's
-trial-division replay would exceed the kernel's recursion depth), and
-a prime-constant witness must itself fit the replay budget. The
+(with the Rabin budget enforced separately), the Eisenstein search tries shifts
+`0, ±1, ±2, ±3` with witness primes capped at `128` to keep that
+auxiliary search bounded, and a prime-constant witness must itself fit
+the replay budget. The
 Eisenstein kind deserves a story: `x⁴ + 1` is irreducible over `ℤ`
 yet reducible modulo *every* prime, so no single-prime witness
 exists, but shifting by `1` gives
@@ -375,7 +461,7 @@ shift search finds exactly that certificate:
 ```lean
 open Hex Polynomial
 
-def x4p1 : ZPoly := DensePoly.ofCoeffs #[1, 0, 0, 0, 1]
+def x4p1 : ZPoly := #p[1, 0, 0, 0, 1]
 
 theorem x4p1_irred : ZPoly.Irreducible x4p1 :=
   irreducibility x4p1
@@ -400,7 +486,7 @@ open Hex Polynomial
 multi-prime degree obstruction, since no single-prime or
 Eisenstein witness exists. -/
 def quarticA4 : ZPoly :=
-  DensePoly.ofCoeffs #[12, 8, 0, 0, 1]
+  #p[12, 8, 0, 0, 1]
 
 theorem quarticA4_irred : ZPoly.Irreducible quarticA4 :=
   irreducibility quarticA4
@@ -441,7 +527,7 @@ quartic:
 open Hex Polynomial
 
 def swinDyer : ZPoly :=
-  DensePoly.ofCoeffs #[1, 0, -10, 0, 1]
+  #p[1, 0, -10, 0, 1]
 
 theorem swinDyer_irred : ZPoly.Irreducible swinDyer := by
   irreducibility!

@@ -6,9 +6,9 @@ Authors: Kim Morrison
 
 module
 
-public import HexRCF.Carrier
-public import HexRCF.CommonRoot
-public import HexRCF.SignMatrix
+public import HexRCF.CarrierCheck
+public import HexRCF.CommonRootCheck
+public import HexRCF.SignMatrixCheck
 public import HexRCF.SturmBuilder
 
 public section
@@ -102,7 +102,7 @@ relating the executable rational gcd to its primitive integer representative. -/
 private def commonDen3 (left right : DensePoly Rat) (unit : Rat) : Nat :=
   Nat.lcm (Nat.lcm (ratCommonDen left) (ratCommonDen right)) unit.den
 
-/-- Constants need no replay; nonconstant common-root polynomials do. -/
+/-- Constants need no replay. Nonconstant common-root polynomials do. -/
 private def buildGcdReplay? (gcd : ZPoly) : Option (Option SturmReplay) :=
   if gcd.size = 1 then some none
   else (buildSturmReplay? gcd).map some

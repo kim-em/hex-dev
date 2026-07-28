@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.Certificate
+public import HexRCF.SignMatrix
 
 public section
 
@@ -18,6 +19,7 @@ open HexRealRootsMathlib
 
 namespace OptionFold
 
+/-- A strict universal fold returns `none` exactly when an input evaluates to `none`. -/
 theorem all_eq_none_iff {f : α → Option Bool} {xs : List α} :
     all f xs = none ↔ ∃ x ∈ xs, f x = none := by
   induction xs with
@@ -41,6 +43,7 @@ theorem all_eq_none_iff {f : α → Option Bool} {xs : List α} :
         · have htail := ih.mpr ⟨y, hy, hfy⟩
           cases hx : f x <;> simp [all, hx, htail]
 
+/-- A strict existential fold returns `none` exactly when an input evaluates to `none`. -/
 theorem any_eq_none_iff {f : α → Option Bool} {xs : List α} :
     any f xs = none ↔ ∃ x ∈ xs, f x = none := by
   induction xs with
@@ -64,6 +67,7 @@ theorem any_eq_none_iff {f : α → Option Bool} {xs : List α} :
         · have htail := ih.mpr ⟨y, hy, hfy⟩
           cases hx : f x <;> simp [any, hx, htail]
 
+/-- A total strict universal fold is true exactly when every input is true. -/
 theorem all_spec {f : α → Option Bool} {xs : List α}
     (htotal : ∀ x ∈ xs, ∃ value, f x = some value) :
     ∃ value, all f xs = some value ∧
@@ -78,6 +82,7 @@ theorem all_spec {f : α → Option Bool} {xs : List α}
       refine ⟨head && tail, by simp [all, hhead, htail], ?_⟩
       cases head <;> cases tail <;> simp_all
 
+/-- A total strict existential fold is true exactly when some input is true. -/
 theorem any_spec {f : α → Option Bool} {xs : List α}
     (htotal : ∀ x ∈ xs, ∃ value, f x = some value) :
     ∃ value, any f xs = some value ∧
@@ -92,14 +97,17 @@ theorem any_spec {f : α → Option Bool} {xs : List α}
       refine ⟨head || tail, by simp [any, hhead, htail], ?_⟩
       cases head <;> cases tail <;> simp_all
 
+/-- A strict universal array fold returns `none` exactly when an entry evaluates to `none`. -/
 theorem allArray_none {xs : Array α} {f : α → Option Bool} :
     allArray xs f = none ↔ ∃ x ∈ xs, f x = none := by
   simpa [allArray] using all_eq_none_iff (xs := xs.toList) (f := f)
 
+/-- A strict existential array fold returns `none` exactly when an entry evaluates to `none`. -/
 theorem anyArray_none {xs : Array α} {f : α → Option Bool} :
     anyArray xs f = none ↔ ∃ x ∈ xs, f x = none := by
   simpa [anyArray] using any_eq_none_iff (xs := xs.toList) (f := f)
 
+/-- A filtered universal array fold returns `none` exactly at a relevant undefined entry. -/
 theorem allWhereArray_none {xs : Array α}
     {relevant : α → Bool} {f : α → Option Bool} :
     allWhereArray xs relevant f = none ↔
@@ -108,6 +116,7 @@ theorem allWhereArray_none {xs : Array α}
   simp only [List.mem_filter]
   aesop
 
+/-- A filtered existential array fold returns `none` exactly at a relevant undefined entry. -/
 theorem anyWhereArray_none {xs : Array α}
     {relevant : α → Bool} {f : α → Option Bool} :
     anyWhereArray xs relevant f = none ↔
@@ -116,6 +125,7 @@ theorem anyWhereArray_none {xs : Array α}
   simp only [List.mem_filter]
   aesop
 
+/-- A total strict universal array fold is true exactly when every entry is true. -/
 theorem allArray_spec {xs : Array α} {f : α → Option Bool}
     (htotal : ∀ x ∈ xs, ∃ value, f x = some value) :
     ∃ value, allArray xs f = some value ∧
@@ -125,6 +135,7 @@ theorem allArray_spec {xs : Array α} {f : α → Option Bool}
       intro x hx
       exact htotal x (by simpa using hx))
 
+/-- A total strict existential array fold is true exactly when some entry is true. -/
 theorem anyArray_spec {xs : Array α} {f : α → Option Bool}
     (htotal : ∀ x ∈ xs, ∃ value, f x = some value) :
     ∃ value, anyArray xs f = some value ∧
@@ -134,6 +145,7 @@ theorem anyArray_spec {xs : Array α} {f : α → Option Bool}
       intro x hx
       exact htotal x (by simpa using hx))
 
+/-- A total filtered universal fold is true exactly when every relevant entry is true. -/
 theorem allWhereArray_spec {xs : Array α} {relevant : α → Bool}
     {f : α → Option Bool}
     (htotal : ∀ x ∈ xs, relevant x = true → ∃ value, f x = some value) :
@@ -150,6 +162,7 @@ theorem allWhereArray_spec {xs : Array α} {relevant : α → Bool}
   simp only [List.mem_filter]
   aesop
 
+/-- A total filtered existential fold is true exactly when some relevant entry is true. -/
 theorem anyWhereArray_spec {xs : Array α} {relevant : α → Bool}
     {f : α → Option Bool}
     (htotal : ∀ x ∈ xs, relevant x = true → ∃ value, f x = some value) :
@@ -172,6 +185,9 @@ namespace CellFold
 
 open OptionFold
 
+/--
+Universal folding over all cells is equivalent to universal quantification over the real line.
+-/
 theorem forall_spec {carrier : ZPoly} {cert : IsolationCert}
     (M : RootModel carrier cert) (eval : Cell cert.intervals.size → Option Bool)
     (P : ℝ → Prop)
@@ -202,6 +218,9 @@ theorem forall_spec {carrier : ZPoly} {cert : IsolationCert}
     have hvtrue : v = true := (hsound x hx).mpr (hP x)
     simpa [hvtrue] using hev
 
+/--
+Existential folding over all cells is equivalent to existential quantification over the real line.
+-/
 theorem exists_spec {carrier : ZPoly} {cert : IsolationCert}
     (M : RootModel carrier cert) (eval : Cell cert.intervals.size → Option Bool)
     (P : ℝ → Prop)
@@ -232,6 +251,9 @@ theorem exists_spec {carrier : ZPoly} {cert : IsolationCert}
     have hvtrue : v = true := (hsound x hcx).mpr hPx
     simpa [hvtrue] using hev
 
+/--
+Universal folding over relevant cells is equivalent to quantification over the specified domain.
+-/
 theorem forallWhere_spec {carrier : ZPoly} {cert : IsolationCert}
     (M : RootModel carrier cert) (eval : Cell cert.intervals.size → Option Bool)
     (relevant : Cell cert.intervals.size → Bool) (D P : ℝ → Prop)
@@ -266,6 +288,9 @@ theorem forallWhere_spec {carrier : ZPoly} {cert : IsolationCert}
     have hvtrue : v = true := (hsound x hcx).mpr (hP x hDx)
     simpa [hvtrue] using hev
 
+/--
+Existential folding over relevant cells is equivalent to quantification over the specified domain.
+-/
 theorem existsWhere_spec {carrier : ZPoly} {cert : IsolationCert}
     (M : RootModel carrier cert) (eval : Cell cert.intervals.size → Option Bool)
     (relevant : Cell cert.intervals.size → Bool) (D P : ℝ → Prop)
@@ -299,6 +324,7 @@ theorem existsWhere_spec {carrier : ZPoly} {cert : IsolationCert}
     have hvtrue : v = true := (hsound x hcx).mpr hPx
     simpa [hvtrue] using hev
 
+/-- Universal folding over cells that meet `(a, b]` computes the bounded universal proposition. -/
 theorem forallIoc_spec {carrier : ZPoly} {replay : SturmReplay}
     (hreplay : replay.check carrier = true) {cert : IsolationCert}
     (hstrict : cert.checkStrict replay = true)
@@ -317,6 +343,9 @@ theorem forallIoc_spec {carrier : ZPoly} {replay : SturmReplay}
     (fun x => x ∈ Set.Ioc (Dyadic.toReal a) (Dyadic.toReal b)) P hcell
   exact fun c => Cell.meetsIocOn_iff_of_check cmps a b hreplay hstrict hcmps c
 
+/--
+Existential folding over cells that meet `(a, b]` computes the bounded existential proposition.
+-/
 theorem existsIoc_spec {carrier : ZPoly} {replay : SturmReplay}
     (hreplay : replay.check carrier = true) {cert : IsolationCert}
     (hstrict : cert.checkStrict replay = true)
@@ -337,6 +366,7 @@ theorem existsIoc_spec {carrier : ZPoly} {replay : SturmReplay}
 
 end CellFold
 
+/-- An accepted certificate has three-valued replay result `some true`. -/
 theorem Certificate.replay_true {s : Sentence}
     {cert : Certificate} (h : cert.check s = true) :
     cert.replay? s = some true := by

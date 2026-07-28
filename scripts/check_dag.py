@@ -32,8 +32,11 @@ UMBRELLA_BUILD_TARGETS = {
     "HexIntervalReplayProbe",
     "HexIntervalMathlibReplayProbe",
     "HexRealRootsMathlibReplayProbe",
+    "HexRCFProofProbe",
+    "HexRCFProofProbeScientific",
     "HexConformance",
     "HexReleaseTests",
+    "HexRCFTests",
     "HexReleaseExamples",
 }
 

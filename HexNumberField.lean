@@ -1,0 +1,24 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexNumberField.Basic
+public import HexNumberField.Approx
+public import HexNumberField.QAdjoin
+public import HexNumberField.Convert
+public import HexNumberField.Lazy
+public import HexNumberField.Disambiguate
+public import HexNumberField.AlgebraicPoly
+public import HexNumberField.Roots
+
+public section
+
+/-!
+The `HexNumberField` library provides executable fixed-field coordinates,
+factorization-lazy algebraic roots, canonical algebraic numbers, and root APIs
+for polynomials with algebraic coefficients.
+-/

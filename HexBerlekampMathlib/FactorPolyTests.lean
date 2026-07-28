@@ -33,10 +33,13 @@ example : True := by
     factor_poly ((X + 1) * (X + 1) * (X ^ 2 + 2) * 3 : Polynomial (ZMod 5))
   trivial
 
--- Tactic form: providers emitting `FactoredPoly.ofFp` land as a single
--- `factored` hypothesis.
+-- Tactic form: Mathlib providers expose the same four local names as the
+-- executable providers.
 example : True := by
   factor_poly ((X + 1) * (X + 1) * (X ^ 2 + 2) * 3 : Polynomial (ZMod 5))
+  have : factors.length = 3 := rfl
+  have := factors_mul
+  have := factors_irred
   exact True.intro
 
 -- Negation and subtraction arms; `Polynomial.C` coefficients.
@@ -86,6 +89,20 @@ is a nonzero constant, hence a unit over F_5, not irreducible
 -/
 #guard_msgs in
 example := irreducibility (3 : Polynomial (ZMod 5))
+
+/-! ## Bounded primality replay -/
+
+/-- The former linear checker exceeded default recursion depth on this
+modulus; the balanced square-root scan kernel-replays directly. -/
+example : Hex.Nat.isPrimeTrial 67108879 = true := by decide
+
+/--
+error: irreducibility: the polynomial
+  3
+is a nonzero constant, hence a unit over F_67108879, not irreducible
+-/
+#guard_msgs in
+example := irreducibility (3 : Polynomial (ZMod 67108879))
 
 /-! ## Composite modulus: the provider declines, the driver reports -/
 

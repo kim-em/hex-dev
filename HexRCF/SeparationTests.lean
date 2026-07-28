@@ -18,6 +18,7 @@ public meta import HexRealRoots.Var
 public meta import HexRealRoots.Prec
 public meta import HexPolyZ.Mignotte
 import all HexRCF.Separation
+import all HexRCF.SeparationCheck
 import all HexRCF.SturmBuilder
 import all Init.Data.Array.DecidableEq
 import all HexRealRoots.Basic

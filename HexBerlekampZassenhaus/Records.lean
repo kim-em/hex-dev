@@ -299,7 +299,6 @@ def normalizeForFactor (f : ZPoly) : FactorNormalizationData :=
     squareFreeCore := sqData.squareFreeCore
     repeatedPart := sqData.repeatedPart }
 
-set_option maxRecDepth 4000 in
 /-- Certified probe prime for the modular square-free fast path.  `499` is a
 cheap fixed choice: it is large enough that a distinct-root input rarely reduces
 non-square-free at it, but it carries no guarantee (a rationally square-free

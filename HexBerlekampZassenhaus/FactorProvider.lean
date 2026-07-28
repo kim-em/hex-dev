@@ -94,17 +94,15 @@ meta def searchModPWitness (q : Hex.ZPoly) : Option Hex.ZPoly.ModPWitness := Id.
 meta def eisensteinShifts : List Int :=
   [0, 1, -1, 2, -2, 3, -3]
 
-/-- Ceiling on Eisenstein witness primes. The emitted certificate
-kernel-replays `Hex.Nat.isPrimeTrial q`, whose `List.range q` reduction is
-recursion-depth linear in `q` and hits the default `maxRecDepth` a little
-above 150, so a larger witness prime would elaborate to a proof the kernel
-cannot check. `128` leaves margin below that boundary (the boundary replay
-`checkIrredWitness (X² − 127) (.eisenstein 127 0)` is locked by a test). -/
+/-- Fixed breadth limit for the auxiliary Eisenstein witness search. Raising
+it expands coefficient-divisor enumeration and should be benchmarked as a
+separate tactic-coverage change; the current boundary witness
+`checkIrredWitness (X² − 127) (.eisenstein 127 0)` is locked by a test. -/
 meta def eisensteinPrimeCap : Nat := 128
 
 /-- Prime divisors of `n` up to `eisensteinPrimeCap`, by trial division. Any
-cofactor above the cap is dropped: its `isPrimeTrial` replay would blow the
-kernel recursion depth. -/
+cofactor above the cap is dropped because the Eisenstein witness search is
+deliberately bounded. -/
 meta def smallPrimeDivisors (n : Nat) : List Nat := Id.run do
   let mut n := n
   let mut acc : List Nat := []
@@ -137,10 +135,10 @@ meta def searchEisenstein (f : Hex.ZPoly) : Option Hex.ZPoly.IrredWitness := Id.
 /-- Search for an irreducibility witness for `q`. -/
 meta def searchWitness (q : Hex.ZPoly) : Option Hex.ZPoly.IrredWitness := Id.run do
   if q.size = 1 then
-    -- The kernel replay of `isNatPrime c` costs roughly `c` steps
-    -- (`List.range c`), so budget-check before even computing it.
     let c := (q.coeff 0).natAbs
-    if c ≤ Hex.FactorTactic.replayBudget && Hex.ZPoly.isNatPrime c then
+    let primeCost := Hex.FactorTactic.primeReplayCost c
+    if primeCost ≤ Hex.FactorTactic.primeReplayBudget &&
+        Hex.ZPoly.isNatPrime c then
       return some .primeConst
     else
       return none
@@ -189,8 +187,8 @@ meta def balancedDecline (tactic : String) (q : Hex.ZPoly) : MetaM MessageData :
       bridge's multi-prime degree-obstruction certificates may certify it \
       — import HexBerlekampZassenhausMathlib."
 
-/-- The opaque-input contract check: the user's term must be definitionally
-transparent down to its evaluated literal. -/
+/-- Checks that the user's term is definitionally transparent down to its
+evaluated literal. -/
 meta def checkTransparent (tactic : String) (f : Hex.ZPoly) (fE : Expr) :
     MetaM Expr := do
   let fLit ← Hex.CertReify.reifyZPoly f
@@ -266,11 +264,15 @@ meta def irredProof (fE : Expr) (f : Hex.ZPoly) :
       return .ok (mkApp3 (mkConst ``Hex.ZPoly.irreducible_of_checkIrredWitness)
         fE (reifyWitness w) Hex.CertReify.reflTrue)
   | none =>
-      if f.size = 1 && (f.coeff 0).natAbs > Hex.FactorTactic.replayBudget then
-        throwError "irreducibility: deciding primality of the constant\
-            {indentExpr fE}\
-            \nneeds a kernel replay of roughly {(f.coeff 0).natAbs} steps, \
-            over the supported budget ({Hex.FactorTactic.replayBudget})"
+      if f.size = 1 then
+        let primeCost :=
+          Hex.FactorTactic.primeReplayCost (f.coeff 0).natAbs
+        if primeCost > Hex.FactorTactic.primeReplayBudget then
+          throwError "irreducibility: deciding primality of the constant\
+              {indentExpr fE}\
+              \nneeds a kernel replay of {primeCost} candidate remainder \
+              tests, over the supported budget \
+              ({Hex.FactorTactic.primeReplayBudget})"
       if Hex.ZPoly.isIrreducible f then
         return .error (← balancedDecline "irreducibility" f)
       else

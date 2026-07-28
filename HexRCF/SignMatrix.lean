@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexRCF.SignMatrixCheck
 public import HexRCF.Carrier
 public import HexRCF.CommonRoot
 public import Mathlib.Topology.Instances.Sign
@@ -13,41 +14,19 @@ public import Mathlib.Topology.Instances.Sign
 public section
 
 /-!
-# Certified sign matrices for RCF cells
+# Semantics of certified sign matrices for RCF cells
 
-This file computes exact polynomial signs on the semantic cells cut out by a
-checked square-free carrier.  Open-cell signs come from exact dyadic Horner
-evaluation and preconnected root-free sign constancy. Root-cell zero tests use
-the cached common-root packages; nonzero root signs are transferred from an
-adjacent open cell. Formula evaluation is option-valued so missing or
-misaligned certificate data fails closed.
+The Mathlib-free checker and replay live in `HexRCF.SignMatrixCheck`. This file
+proves that its exact dyadic signs and cached common-root decisions agree with
+polynomial signs over the semantic cells cut out by a checked square-free
+carrier, and connects Boolean formula replay to reflected propositions.
 -/
 
 namespace Hex.RCF
 
 open HexRealRootsMathlib Polynomial
 
-/-- The three possible signs stored by an RCF sign matrix. -/
-inductive Sign where
-  | neg
-  | zero
-  | pos
-  deriving DecidableEq, Repr
-
 namespace Sign
-
-/-- Canonical integer representative used to connect signs to Mathlib's
-`SignType.sign`. -/
-@[expose]
-def toInt : Sign → Int
-  | .neg => -1
-  | .zero => 0
-  | .pos => 1
-
-/-- Collapse an arbitrary integer to its three-way sign. -/
-@[expose]
-def ofInt (value : Int) : Sign :=
-  if value < 0 then .neg else if 0 < value then .pos else .zero
 
 /-- Collapsing an integer preserves its mathematical sign. -/
 theorem ofInt_spec (value : Int) :
@@ -71,9 +50,13 @@ theorem ofInt_spec (value : Int) :
 
 end Sign
 
+end Hex.RCF
+
+namespace Polynomial
+
 /-- The sign of a continuous polynomial evaluation is constant on a
 preconnected set containing no root of the polynomial. -/
-theorem sign_eval_eq_of_noRoot {p : Polynomial ℝ} {s : Set ℝ}
+theorem sign_eq_of_noRoot {p : Polynomial ℝ} {s : Set ℝ}
     (hs : IsPreconnected s) (hnz : ∀ z ∈ s, ¬p.IsRoot z)
     {x y : ℝ} (hx : x ∈ s) (hy : y ∈ s) :
     SignType.sign (p.eval x) = SignType.sign (p.eval y) := by
@@ -85,10 +68,11 @@ theorem sign_eval_eq_of_noRoot {p : Polynomial ℝ} {s : Set ℝ}
   exact (hs.image _ hcont).subsingleton
     (Set.mem_image_of_mem _ hx) (Set.mem_image_of_mem _ hy)
 
-/-- Exact executable sign of an integer polynomial at a dyadic point. -/
-@[expose]
-def evalSign (p : ZPoly) (x : Dyadic) : Sign :=
-  Sign.ofInt (Hex.dyadicSign (p.evalDyadic x))
+end Polynomial
+
+namespace Hex.RCF
+
+open HexRealRootsMathlib Polynomial
 
 /-- Exact dyadic Horner evaluation computes the sign of the corresponding
 real-polynomial evaluation. -/
@@ -100,7 +84,7 @@ theorem evalSign_spec (p : ZPoly) (x : Dyadic) :
 
 /-- A polynomial whose executable degree is not positive is constant after
 casting, including the zero polynomial. -/
-theorem eval_eq_eval_zero_of_degree_nonpos (p : ZPoly)
+theorem eval_eq_at_zero (p : ZPoly)
     (hdegree : ¬0 < p.degree?.getD 0) (x : ℝ) :
     (toPolyℝ p).eval x = (toPolyℝ p).eval 0 := by
   have hnat : (toPolyℝ p).natDegree = 0 := by
@@ -121,7 +105,7 @@ theorem sign_eval_eq_open {carrier : ZPoly} {replay : SturmReplay}
       (Dyadic.toReal (isolations.openPoint cut))) =
       SignType.sign ((toPolyℝ atom).eval x) := by
   let model := isolations.rootModel hreplay hstrict
-  apply sign_eval_eq_of_noRoot (Cell.isPreconnected_open model cut)
+  apply Polynomial.sign_eq_of_noRoot (Cell.isPreconnected_open model cut)
   · intro z hz hatom
     exact Cell.open_not_root model hz (hroot z hatom)
   · exact Cell.openPoint_mem isolations hreplay hstrict cut
@@ -169,11 +153,11 @@ theorem sign_eval_eq_leftRoot {carrier atom : ZPoly} {cert : IsolationCert}
     {sample : ℝ} (hsample : Cell.Sem model (.open i.castSucc) sample) :
     SignType.sign ((toPolyℝ atom).eval sample) =
       SignType.sign ((toPolyℝ atom).eval (model.root i)) := by
-  apply sign_eval_eq_of_noRoot (model.isPreconnected_leftSpan i) _
+  apply Polynomial.sign_eq_of_noRoot (model.isPreconnected_leftSpan i) _
       (model.leftOpen_mem_leftSpan i hsample) (model.root_mem_leftSpan i)
   intro z hz hzroot
   exact hnonzero (by
-    rw [← model.root_eq_of_mem_leftSpan i (hroot z hzroot) hz]
+    rw [← model.root_unique_leftSpan i (hroot z hzroot) hz]
     exact hzroot)
 
 /-- Exact left-open sample sign at a carrier root where the atom does not
@@ -226,7 +210,7 @@ theorem evalSign_commonLeft
   exact evalSign_leftRoot hreplay hstrict hroot i hnonzero
 
 /-- Exact evaluation cannot report zero at a certified nonroot. -/
-theorem evalSign_ne_zero_of_not_root (p : ZPoly) (x : Dyadic)
+theorem evalSign_ne_zero (p : ZPoly) (x : Dyadic)
     (hroot : ¬(toPolyℝ p).IsRoot (Dyadic.toReal x)) :
     evalSign p x ≠ .zero := by
   intro hzero
@@ -236,163 +220,6 @@ theorem evalSign_ne_zero_of_not_root (p : ZPoly) (x : Dyadic)
     apply sign_eq_zero_iff.mp
     simpa [Sign.toInt] using hsign.symm
   exact hroot heval
-
-/-- Coefficient-equality membership test for literal polynomials. This avoids
-the derived array equality that does not kernel-reduce through modules. -/
-@[expose]
-def containsPoly (p : ZPoly) : List ZPoly → Bool
-  | [] => false
-  | q :: qs => DensePoly.beqCoeffs p q || containsPoly p qs
-
-theorem containsPoly_iff {p : ZPoly} {ps : List ZPoly} :
-    containsPoly p ps = true ↔ p ∈ ps := by
-  induction ps with
-  | nil => simp [containsPoly]
-  | cons q qs ih =>
-      simp [containsPoly, Bool.or_eq_true, DensePoly.beqCoeffs_iff_eq, ih]
-
-/-- The coefficient-equality membership test is false exactly on
-nonmembership. -/
-theorem containsPoly_eq_false_iff {p : ZPoly} {ps : List ZPoly} :
-    containsPoly p ps = false ↔ p ∉ ps := by
-  rw [Bool.eq_false_iff]
-  exact not_congr containsPoly_iff
-
-/-- First-occurrence-preserving duplicate removal with an explicit seen set. -/
-@[expose]
-def dedupPolysAux (seen : List ZPoly) : List ZPoly → List ZPoly
-  | [] => []
-  | p :: ps =>
-      if containsPoly p seen then dedupPolysAux seen ps
-      else p :: dedupPolysAux (p :: seen) ps
-
-/-- Deterministic first-occurrence-preserving duplicate removal using only
-coefficient equality. -/
-@[expose]
-def dedupPolys (ps : List ZPoly) : List ZPoly := dedupPolysAux [] ps
-
-theorem mem_dedupPolysAux {p : ZPoly} {seen ps : List ZPoly} :
-    p ∈ dedupPolysAux seen ps ↔ p ∈ ps ∧ p ∉ seen := by
-  classical
-  induction ps generalizing seen p with
-  | nil => simp [dedupPolysAux]
-  | cons q qs ih =>
-      simp only [dedupPolysAux]
-      split <;> rename_i hq
-      · have hqmem : q ∈ seen := containsPoly_iff.mp hq
-        simp only [ih, List.mem_cons]
-        by_cases hpq : p = q
-        · subst p
-          simp [hqmem]
-        · simp [hpq]
-      · have hqmem : q ∉ seen :=
-          containsPoly_eq_false_iff.mp (Bool.eq_false_of_not_eq_true hq)
-        simp only [List.mem_cons, ih]
-        by_cases hpq : p = q
-        · subst p
-          simp [hqmem]
-        · simp [hpq]
-
-theorem mem_dedupPolys {p : ZPoly} {ps : List ZPoly} :
-    p ∈ dedupPolys ps ↔ p ∈ ps := by
-  simp [dedupPolys, mem_dedupPolysAux]
-
-theorem dedupPolysAux_nodup (seen ps : List ZPoly) :
-    (dedupPolysAux seen ps).Nodup := by
-  induction ps generalizing seen with
-  | nil => simp [dedupPolysAux]
-  | cons p ps ih =>
-      simp only [dedupPolysAux]
-      split
-      · exact ih seen
-      · apply List.nodup_cons.mpr
-        exact ⟨by simp [mem_dedupPolysAux], ih (p :: seen)⟩
-
-theorem dedupPolys_nodup (ps : List ZPoly) : (dedupPolys ps).Nodup :=
-  dedupPolysAux_nodup [] ps
-
-/-- Pair a recomputed polynomial order with common-root packages and validate
-every package. Length mismatches and malformed packages are rejected. -/
-@[expose]
-def checkCommon (carrier : ZPoly) :
-    List ZPoly → List CommonRootCert → Bool
-  | [], [] => true
-  | p :: ps, common :: commons =>
-      common.check p carrier && checkCommon carrier ps commons
-  | _, _ => false
-
-/-- Positional lookup in an aligned common-root package list. -/
-@[expose]
-def findCommon? (p : ZPoly) :
-    List ZPoly → List CommonRootCert → Option CommonRootCert
-  | q :: qs, common :: commons =>
-      if DensePoly.beqCoeffs p q then some common
-      else findCommon? p qs commons
-  | _, _ => none
-
-/-- Checked alignment makes positional lookup total and validates the package
-against the requested external polynomial. -/
-theorem findCommon?_of_check {carrier p : ZPoly} {ps : List ZPoly}
-    {commons : List CommonRootCert} (hcheck : checkCommon carrier ps commons = true)
-    (hmem : p ∈ ps) :
-    ∃ common, findCommon? p ps commons = some common ∧
-      common.check p carrier = true := by
-  induction ps generalizing commons with
-  | nil => simp at hmem
-  | cons q qs ih =>
-      cases commons with
-      | nil => simp [checkCommon] at hcheck
-      | cons common commons =>
-          simp only [checkCommon, Bool.and_eq_true] at hcheck
-          rcases hcheck with ⟨hhead, htail⟩
-          by_cases hpq : p = q
-          · subst q
-            exact ⟨common, by simp [findCommon?, DensePoly.beqCoeffs_iff_eq], hhead⟩
-          · have htailMem : p ∈ qs := by
-              simpa [hpq] using hmem
-            obtain ⟨found, hfind, hfound⟩ := ih htail htailMem
-            refine ⟨found, ?_, hfound⟩
-            simp [findCommon?, DensePoly.beqCoeffs_iff_eq, hpq, hfind]
-
-/-- Common-root data carried by the sign-matrix layer.  No signs or formula
-truth values are trusted fields: both are recomputed exactly. -/
-structure SignMatrixCert where
-  commonRoots : List CommonRootCert
-
-/-- Exact sign on an open cell, rejecting the impossible zero result for a
-nonconstant atom of a valid carrier decomposition. -/
-@[expose]
-def openSign? (p : ZPoly) (isolations : IsolationCert)
-    (cut : Fin (isolations.intervals.size + 1)) : Option Sign :=
-  match evalSign p (isolations.openPoint cut) with
-  | .zero => none
-  | sign => some sign
-
-/-- Exact sign on a root cell from the cached common-root zero test, or from
-the canonical left open sample when the atom does not vanish. -/
-@[expose]
-def rootSign? (p : ZPoly) (common : CommonRootCert)
-    (isolations : IsolationCert) (i : Fin isolations.intervals.size) :
-    Option Sign :=
-  match common.hasRoot isolations.intervals[i] with
-  | true => some .zero
-  | false => openSign? p isolations i.castSucc
-
-theorem openSign?_eq_some {p : ZPoly} {isolations : IsolationCert}
-    {cut : Fin (isolations.intervals.size + 1)}
-    (hnonzero : evalSign p (isolations.openPoint cut) ≠ .zero) :
-    openSign? p isolations cut =
-      some (evalSign p (isolations.openPoint cut)) := by
-  cases hsign : evalSign p (isolations.openPoint cut) <;>
-    simp_all [openSign?]
-
-/-- Exact sign on an open cell, with constant polynomials evaluated once at
-zero and nonconstant polynomials guarded against an impossible zero sample. -/
-@[expose]
-def openCellSign? (p : ZPoly) (isolations : IsolationCert)
-    (cut : Fin (isolations.intervals.size + 1)) : Option Sign :=
-  if 0 < p.degree?.getD 0 then openSign? p isolations cut
-  else some (evalSign p 0)
 
 /-- The shared open-cell lookup is total and exact for every formula atom of a
 checked carrier, including constants. -/
@@ -426,121 +253,15 @@ theorem openCellSign_spec {sentence : Sentence} {carrier : CarrierCert}
       intro hpRoot
       exact Cell.open_not_root model hsample (hroot _ hpRoot)
     have hnonzero : evalSign p (isolations.openPoint cut) ≠ .zero :=
-      evalSign_ne_zero_of_not_root p _ hnotroot
+      evalSign_ne_zero p _ hnotroot
     refine ⟨evalSign p (isolations.openPoint cut), ?_, ?_⟩
     · simp [openCellSign?, hdegree, openSign?_eq_some hnonzero]
     · exact evalSign_open_of_atom hcarrier hstrict hpmem cut hx
   · refine ⟨evalSign p 0, by simp [openCellSign?, hdegree], ?_⟩
-    rw [eval_eq_eval_zero_of_degree_nonpos p hdegree x]
+    rw [eval_eq_at_zero p hdegree x]
     simpa using evalSign_spec p 0
 
-/-- One cached sign associated with its literal polynomial. -/
-structure SignEntry where
-  poly : ZPoly
-  sign : Sign
-
-/-- Coefficient-equality lookup in a cached sign row. -/
-@[expose]
-def findSign? (p : ZPoly) : List SignEntry → Option Sign
-  | [] => none
-  | entry :: entries =>
-      if DensePoly.beqCoeffs p entry.poly then some entry.sign
-      else findSign? p entries
-
-/-- Materialize a sign row once for each polynomial in a recomputed distinct
-order. Any missing sign fails the whole row. -/
-@[expose]
-def buildSigns? (signOf : ZPoly → Option Sign) :
-    List ZPoly → Option (List SignEntry)
-  | [] => some []
-  | p :: ps => do
-      let sign ← signOf p
-      let entries ← buildSigns? signOf ps
-      pure (⟨p, sign⟩ :: entries)
-
-/-- A row built from an option-valued environment returns exactly that
-environment on every polynomial included in the row order. -/
-theorem findSign?_of_build {signOf : ZPoly → Option Sign} {ps : List ZPoly}
-    {entries : List SignEntry} (hbuild : buildSigns? signOf ps = some entries)
-    {p : ZPoly} (hmem : p ∈ ps) : findSign? p entries = signOf p := by
-  induction ps generalizing entries with
-  | nil => simp at hmem
-  | cons q qs ih =>
-      cases hq : signOf q with
-      | none => simp [buildSigns?, hq] at hbuild
-      | some sign =>
-          cases hrest : buildSigns? signOf qs with
-          | none => simp [buildSigns?, hq, hrest] at hbuild
-          | some rest =>
-              have hentries : entries = ⟨q, sign⟩ :: rest := by
-                simpa [buildSigns?, hq, hrest] using hbuild.symm
-              subst entries
-              by_cases hpq : p = q
-              · subst q
-                simp [findSign?, DensePoly.beqCoeffs_iff_eq, hq]
-              · have htail : p ∈ qs := by simpa [hpq] using hmem
-                simp [findSign?, DensePoly.beqCoeffs_iff_eq, hpq,
-                  ih hrest htail]
-
-/-- A total option-valued environment builds a complete cached row. -/
-theorem buildSigns?_total {signOf : ZPoly → Option Sign} {ps : List ZPoly}
-    (htotal : ∀ p ∈ ps, ∃ sign, signOf p = some sign) :
-    ∃ entries, buildSigns? signOf ps = some entries := by
-  induction ps with
-  | nil => exact ⟨[], rfl⟩
-  | cons p ps ih =>
-      obtain ⟨sign, hsign⟩ := htotal p (by simp)
-      obtain ⟨entries, hentries⟩ := ih (by
-        intro q hq
-        exact htotal q (by simp [hq]))
-      exact ⟨⟨p, sign⟩ :: entries, by simp [buildSigns?, hsign, hentries]⟩
-
 namespace SignMatrixCert
-
-/-- Recompute the distinct nonconstant atom order and validate exact package
-alignment against the checked carrier. -/
-@[expose]
-def check (sentence : Sentence) (carrier : CarrierCert)
-    (cert : SignMatrixCert) : Bool :=
-  checkCommon carrier.carrier (dedupPolys sentence.polys) cert.commonRoots
-
-/-- Look up the package associated with one nonconstant atom. -/
-@[expose]
-def findCommon? (sentence : Sentence) (cert : SignMatrixCert)
-    (p : ZPoly) : Option CommonRootCert :=
-  Hex.RCF.findCommon? p (dedupPolys sentence.polys) cert.commonRoots
-
-/-- Every recomputed nonconstant atom has a checked package after successful
-alignment. -/
-theorem findCommon?_of_check {sentence : Sentence} {carrier : CarrierCert}
-    {cert : SignMatrixCert} (hcheck : cert.check sentence carrier = true)
-    {p : ZPoly} (hmem : p ∈ sentence.polys) :
-    ∃ common, cert.findCommon? sentence p = some common ∧
-      common.check p carrier.carrier = true := by
-  apply Hex.RCF.findCommon?_of_check hcheck
-  exact mem_dedupPolys.mpr hmem
-
-/-- Recompute one atom sign on one carrier cell using a precomputed distinct
-nonconstant order. Constants use evaluation at zero and consume no
-common-root package. -/
-@[expose]
-def signWith? (cert : SignMatrixCert) (commonPolys : List ZPoly)
-    (isolations : IsolationCert) (cell : Cell isolations.intervals.size)
-    (p : ZPoly) : Option Sign :=
-  match cell with
-  | .open cut => openCellSign? p isolations cut
-  | .root i =>
-      if 0 < p.degree?.getD 0 then do
-        let common ← Hex.RCF.findCommon? p commonPolys cert.commonRoots
-        rootSign? p common isolations i
-      else some (evalSign p 0)
-
-/-- Public atom-sign lookup, recomputing the deterministic package order. -/
-@[expose]
-def sign? (cert : SignMatrixCert) (sentence : Sentence)
-    (isolations : IsolationCert) (cell : Cell isolations.intervals.size)
-    (p : ZPoly) : Option Sign :=
-  cert.signWith? (dedupPolys sentence.polys) isolations cell p
 
 /-- A checked sign-matrix package returns a total exact sign for every atom on
 every semantic carrier cell when given the checker-derived package order. -/
@@ -619,7 +340,7 @@ theorem signWith?_spec {sentence : Sentence} {carrier : CarrierCert}
             intro hpRoot
             exact Cell.open_not_root model hsample (hroot _ hpRoot)
           have hnonzero : evalSign p (isolations.openPoint i.castSucc) ≠ .zero :=
-            evalSign_ne_zero_of_not_root p _ hnotroot
+            evalSign_ne_zero p _ hnotroot
           refine ⟨evalSign p (isolations.openPoint i.castSucc), ?_, ?_⟩
           · simp only [signWith?, if_pos hdegree]
             rw [hfind']
@@ -636,12 +357,12 @@ theorem signWith?_spec {sentence : Sentence} {carrier : CarrierCert}
     | «open» cut =>
         refine ⟨evalSign p 0, by simp [signWith?, openCellSign?, hdegree], ?_⟩
         intro x _hx
-        rw [eval_eq_eval_zero_of_degree_nonpos p hdegree x]
+        rw [eval_eq_at_zero p hdegree x]
         simpa using evalSign_spec p 0
     | root i =>
         refine ⟨evalSign p 0, by simp [signWith?, hdegree], ?_⟩
         intro x _hx
-        rw [eval_eq_eval_zero_of_degree_nonpos p hdegree x]
+        rw [eval_eq_at_zero p hdegree x]
         simpa using evalSign_spec p 0
 
 /-- Public atom-sign lookup is total and exact under the combined checker. -/
@@ -663,17 +384,6 @@ theorem sign?_spec {sentence : Sentence} {carrier : CarrierCert}
 end SignMatrixCert
 
 namespace Cmp
-
-/-- Evaluate a comparison from the sign of its left-hand side. -/
-@[expose]
-def evalSign (cmp : Cmp) (sign : Sign) : Bool :=
-  match cmp with
-  | .lt => sign == .neg
-  | .le => sign != .pos
-  | .eq => sign == .zero
-  | .ge => sign != .neg
-  | .gt => sign == .pos
-  | .ne => sign != .zero
 
 /-- Comparison evaluation depends only on the mathematical sign. -/
 theorem evalSign_iff {cmp : Cmp} {sign : Sign} {value : ℝ}
@@ -703,7 +413,7 @@ theorem evalSign_iff {cmp : Cmp} {sign : Sign} {value : ℝ}
 
 end Cmp
 
-/-- Bridge the reflected atom semantics to real-cast polynomial evaluation. -/
+/-- Relate the reflected atom semantics to real-cast polynomial evaluation. -/
 theorem Atom.toProp_iff_eval (a : Atom) (x : ℝ) :
     a.toProp x ↔ a.cmp.toProp ((toPolyℝ a.p).eval x) 0 := by
   unfold Atom.toProp
@@ -711,32 +421,6 @@ theorem Atom.toProp_iff_eval (a : Atom) (x : ℝ) :
   rfl
 
 namespace Formula
-
-/-- Evaluate a formula from an option-valued polynomial-sign environment.
-Every Boolean branch evaluates both children, so any missing sign fails closed.
--/
-@[expose]
-def evalSigns (signOf : ZPoly → Option Sign) : Formula → Option Bool
-  | .atom a => do
-      let sign ← signOf a.p
-      pure (a.cmp.evalSign sign)
-  | .tt => some true
-  | .ff => some false
-  | .not φ => do
-      let value ← φ.evalSigns signOf
-      pure (!value)
-  | .and φ ψ => do
-      let left ← φ.evalSigns signOf
-      let right ← ψ.evalSigns signOf
-      pure (left && right)
-  | .or φ ψ => do
-      let left ← φ.evalSigns signOf
-      let right ← ψ.evalSigns signOf
-      pure (left || right)
-  | .imp φ ψ => do
-      let left ← φ.evalSigns signOf
-      let right ← ψ.evalSigns signOf
-      pure (!left || right)
 
 /-- Formula evaluation returns a Boolean whose truth is exactly the semantic
 formula, provided every referenced polynomial lookup carries its exact sign.
@@ -819,12 +503,6 @@ theorem evalSigns_eq_true_iff {formula : Formula}
     have : value = true := hsound.mpr hprop
     simpa [this] using hvalue
 
-/-- Evaluate a formula whose atoms are all constant, without constructing a
-carrier decomposition. -/
-@[expose]
-def evalConstants? (formula : Formula) : Option Bool :=
-  formula.evalSigns fun p => some (Hex.RCF.evalSign p 0)
-
 /-- Constant-only formula evaluation is exact at every real point, including
 formulas containing the zero polynomial. -/
 theorem evalConstants_eq_true_iff {formula : Formula}
@@ -833,24 +511,12 @@ theorem evalConstants_eq_true_iff {formula : Formula}
   apply evalSigns_eq_true_iff
   intro p hp
   refine ⟨Hex.RCF.evalSign p 0, rfl, ?_⟩
-  rw [eval_eq_eval_zero_of_degree_nonpos p (hconstant p hp) x]
+  rw [eval_eq_at_zero p (hconstant p hp) x]
   simpa using Hex.RCF.evalSign_spec p 0
 
 end Formula
 
 namespace SignMatrixCert
-
-/-- Recompute the formula truth value on one carrier cell after materializing
-one exact sign per distinct polynomial. Repeated atom occurrences reuse the
-cached row entry. -/
-@[expose]
-def evalCell? (cert : SignMatrixCert) (sentence : Sentence)
-    (isolations : IsolationCert) (cell : Cell isolations.intervals.size) :
-    Option Bool := do
-  let commonPolys := dedupPolys sentence.polys
-  let entries ← buildSigns? (cert.signWith? commonPolys isolations cell)
-    (dedupPolys sentence.formula.polys)
-  sentence.formula.evalSigns (findSign? · entries)
 
 /-- A checked package computes one Boolean valid uniformly throughout each
 semantic carrier cell. -/

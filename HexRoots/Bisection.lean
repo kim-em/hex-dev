@@ -129,7 +129,7 @@ lineages. -/
     (k : Nat) : Option (Certified p) :=
   let enc := encSquare c.squares
   if hk : 0 < k then
-    if hw : TaylorShift.witnessCheck enc shift k = true then
+    if hw : TaylorShift.combinedWitnessCheck enc shift k = true then
       have hw₀ : witnessCheck p enc k = true := by
         simpa using hw
       let cluster : DyadicRootCluster p := ⟨c.squares, k, hk, hw₀⟩
@@ -139,9 +139,63 @@ lineages. -/
       if _hins : (encSquare #[s']).discInside enc = true then
         let cand := encSquare #[s']
         let shift' := TaylorShift.compute p cand.center
-        if hw' : TaylorShift.witnessCheck cand shift' k = true then
+        if hw' : TaylorShift.combinedWitnessCheck cand shift' k = true then
           have hw₀' : witnessCheck p cand k = true := by
             simpa using hw'
+          let cluster' : DyadicRootCluster p := ⟨#[s'], k, hk, hw₀'⟩
+          if hk1 : k = 1 then some (.atom (cluster'.atomize hk1))
+          else some (.cluster cluster')
+        else some base
+      else some base
+    else none
+  else none
+
+/-- Build a certificate directly from the first all-count soft Graeffe
+candidate.  The threshold keeps bounded-precision setup off the small-degree
+path where the exact dyadic kernel is already cheaper. -/
+@[expose] def certifyPelletSoft? (p : ZPoly) (c : Component)
+    (shift : TaylorShift p (encSquare c.squares).center)
+    (ks : List Nat) : Option (Certified p) :=
+  let enc := encSquare c.squares
+  if 32 ≤ p.size && 8 ≤ enc.prec then
+    match h : shift.softRefinementCandidate? enc ks with
+    | none => none
+    | some k =>
+      have hpublic : softRefinementCandidate? p enc ks = some k := by
+        rw [← shift.softRefinementCandidate?_eq enc ks]
+        exact h
+      have hs := softRefinementCandidate?_sound hpublic
+      have hs' : (TaylorShift.compute p enc.center).softWitnessCheck enc k = true := by
+        rw [TaylorShift.softWitnessCheck_eq]
+        exact hs.2
+      have hw : witnessCheck p enc k = true := by
+        by_cases hprec : enc.prec < 32 <;>
+          simp [witnessCheck, TaylorShift.combinedWitnessCheck, hprec, hs']
+      let cluster : DyadicRootCluster p := ⟨c.squares, k, hs.1, hw⟩
+      if hk1 : k = 1 then some (.atom (cluster.atomize hk1))
+      else some (.cluster cluster)
+  else none
+
+/-- Exact cached-Taylor certification for one count, used after the all-count
+soft search has failed. -/
+@[expose] def certifyPelletExactAt? (p : ZPoly) (c : Component)
+    (shift : TaylorShift p (encSquare c.squares).center)
+    (k : Nat) : Option (Certified p) :=
+  let enc := encSquare c.squares
+  if hk : 0 < k then
+    if hw : TaylorShift.witnessCheck enc shift k = true then
+      have hw₀ : witnessCheck p enc k = true :=
+        TaylorShift.witnessCheck_implies enc shift k hw
+      let cluster : DyadicRootCluster p := ⟨c.squares, k, hk, hw₀⟩
+      let base : Certified p :=
+        if hk1 : k = 1 then .atom (cluster.atomize hk1) else .cluster cluster
+      let s' := TaylorShift.newtonSquare enc shift k
+      if _hins : (encSquare #[s']).discInside enc = true then
+        let cand := encSquare #[s']
+        let shift' := TaylorShift.compute p cand.center
+        if hw' : TaylorShift.witnessCheck cand shift' k = true then
+          have hw₀' : witnessCheck p cand k = true :=
+            TaylorShift.witnessCheck_implies cand shift' k hw'
           let cluster' : DyadicRootCluster p := ⟨#[s'], k, hk, hw₀'⟩
           if hk1 : k = 1 then some (.atom (cluster'.atomize hk1))
           else some (.cluster cluster')
@@ -157,14 +211,26 @@ lineages. -/
   let shift := TaylorShift.compute p (encSquare c.squares).center
   certifyPelletAtShift? p c shift k
 
-/-- First successful Pellet certificate in a candidate-count list, reusing
-    one enclosing-centre Taylor shift for every failed count. -/
-@[expose] def certifyPelletListShift? (p : ZPoly) (c : Component)
+/-- First exact Pellet certificate in a candidate-count list, reusing one
+enclosing-centre Taylor shift for every failed count. -/
+@[expose] def certifyPelletExactList? (p : ZPoly) (c : Component)
     (shift : TaylorShift p (encSquare c.squares).center)
     : List Nat → Option (Certified p)
   | [] => none
-  | k :: ks => (certifyPelletAtShift? p c shift k).orElse
-      fun _ => certifyPelletListShift? p c shift ks
+  | k :: ks => (certifyPelletExactAt? p c shift k).orElse
+      fun _ => certifyPelletExactList? p c shift ks
+
+/-- First soft all-count certificate. On success, rerun its single selected
+count through the cached-shift certifier so the guarded Newton candidate is
+reused instead of returning the coarse soft base square. Failure falls back
+to the exact cached list. -/
+@[expose] def certifyPelletListShift? (p : ZPoly) (c : Component)
+    (shift : TaylorShift p (encSquare c.squares).center)
+    (ks : List Nat) : Option (Certified p) :=
+  match certifyPelletSoft? p c shift ks with
+  | some (.atom _) => certifyPelletAtShift? p c shift 1
+  | some (.cluster cl) => certifyPelletAtShift? p c shift cl.k
+  | none => certifyPelletExactList? p c shift ks
 
 /-- Public candidate-count search. The exact Taylor shift is shared by every
     attempt; only a successful count's speculative candidate needs a new
@@ -185,13 +251,15 @@ lineages. -/
     compatibility surface computes its own shift; `certify?` supplies the
     already-cached shift to `certifyPelletShift?`. -/
 @[expose] def certifyPellet? (p : ZPoly) (c : Component) : Option (Certified p) :=
-  let shift := TaylorShift.compute p (encSquare c.squares).center
-  certifyPelletShift? p c shift
+  let deg := p.degree?.getD 0
+  let ks := #[c.candidateK] ++ ((Array.range (deg + 1)).filter (· != c.candidateK))
+  certifyPelletList? p c ks.toList
 
-/-- Try to certify the component. Per `strategy`, first the
-    Newton-Kantorovich atom witness on the doubled enclosing square (with a
-    speculative Newton recentring attempted first), then the Pellet witness
-    on a quadrupled enclosing square with `k = candidateK` first and then the
+/-- Try to certify the component. For Pellet-enabled strategies, run the
+    all-count bounded-precision Graeffe filter before the exact candidate
+    fallback. Share one exact shift between the
+    Newton-Kantorovich atom witness and the exact Pellet fallback. Pellet uses
+    a quadrupled enclosing square with `k = candidateK` first and then the
     remaining `k ≤ deg p`; a `k = 1` Pellet success is returned as an atom
     via `atomize`. Speculative Newton results are accepted only under the
     coverage guard: the base region must certify the same count in the same
@@ -231,7 +299,10 @@ lineages. -/
     let wideShift : TaylorShift p wideCenter :=
       if hcenter : enc.center = wideCenter then shift.cast hcenter
       else TaylorShift.compute p wideCenter
-    return certifyPelletShift? p wide wideShift
+    let deg := p.degree?.getD 0
+    let ks := #[wide.candidateK] ++
+      ((Array.range (deg + 1)).filter (· != wide.candidateK))
+    return certifyPelletListShift? p wide wideShift ks.toList
   | .nk => pure ()
   return none
 

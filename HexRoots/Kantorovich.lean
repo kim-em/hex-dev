@@ -247,6 +247,13 @@ end TaylorShift
 @[expose] def nkWitnessCheck (p : ZPoly) (s : DyadicSquare) : Bool :=
   TaylorShift.nkWitnessCheck s (TaylorShift.compute p s.center)
 
+/-- A Newton--Kantorovich witness needs the linear Taylor coefficient. -/
+theorem nkWitnessCheck_false {p : ZPoly} {s : DyadicSquare} (h : p.size ≤ 1) :
+    nkWitnessCheck p s = false := by
+  have h' : ¬2 ≤ p.size := by omega
+  simp [nkWitnessCheck, TaylorShift.nkWitnessCheck, TaylorShift.compute,
+    taylor_size, h']
+
 /-- The centre-indexed coefficient kernel is exactly the public polynomial
     Newton–Kantorovich check. -/
 @[simp] theorem TaylorShift.nkWitnessCheck_eq {p : ZPoly} (s : DyadicSquare)

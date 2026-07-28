@@ -463,9 +463,8 @@ structure Step where
   work : Work
 
 /-- Execute the common policy choice.  Invocation and retry offers call the
-arbitrary registry.  The fixture deliberately dismisses optional split and
-instantiation suggestions; dismissing ordinary propagation would make the run
-incomplete and is never used here. -/
+arbitrary registry, instantiations go through engine-owned structural
+admission, and only optional split suggestions are dismissed. -/
 def execute (workload : Workload) (state : Policy.State Rank)
     (offer : OfferView) (work : Work) : Option Step :=
   let selection := selectionFor state offer
@@ -474,9 +473,20 @@ def execute (workload : Workload) (state : Policy.State Rank)
       selectionRechecks := work.selectionRechecks + 1
       semanticItems := work.semanticItems + offerSemanticItems state offer.id }
   match offer.offerClass with
-  | .split | .instantiate =>
+  | .split =>
       match state.dismiss selection with
       | .completed .dismissed next => some { state := next, work }
+      | _ => none
+  | .instantiate =>
+      let before := state.engine
+      match state.select selection with
+      | .completed completion next =>
+          match completion with
+          | .instanceAdmitted _ | .instanceDuplicate | .instanceRejected _ =>
+              some
+                { state := next
+                  work := (work.advance next).dependencies before next.engine }
+          | .dismissed => none
       | _ => none
   | .invoke | .retry =>
       match state.select selection with
@@ -496,6 +506,7 @@ def execute (workload : Workload) (state : Policy.State Rank)
 
 inductive Stop where
   | saturated
+  | incomplete
   | setupFailure
   | frontierResource
   | invalidTransition
@@ -595,7 +606,9 @@ def scanLoop (workload : Workload) (base : Policy.State Rank) :
             { work with
               priorityComparisons := work.priorityComparisons + comparisons }
           match choice with
-          | none => result .saturated base scanned work choices
+          | none =>
+              result (if scanned.incomplete then .incomplete else .saturated)
+                base scanned work choices
           | some offer =>
               match execute workload scanned offer work with
               | none => result .invalidTransition base scanned work choices
@@ -681,7 +694,9 @@ def indexedLoop (workload : Workload) (base : Policy.State Rank) :
   | 0, state, _, work, choices => result .fuel base state work choices
   | fuel + 1, state, index, work, choices =>
       match index.heap.pop with
-      | none => result .saturated base state work choices
+      | none =>
+          result (if state.incomplete then .incomplete else .saturated)
+            base state work choices
       | some (entry, heap, heapCost) =>
           let index := { index with heap }
           let work := (work.heap heapCost)

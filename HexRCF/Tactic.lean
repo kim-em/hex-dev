@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.Reify
+public meta import HexRCF.DecisionCheck
 
 public section
 
@@ -54,7 +55,7 @@ private meta def falseMessage (sentence : Sentence)
     (certificate : Certificate) : MessageData :=
   match sentence with
   | .existsReal _ | .existsIoc _ _ _ =>
-      "rcf: the existential sentence is false; every relevant decomposition\n\
+      "rcf: the existential sentence is false. Every relevant decomposition\n\
         cell was checked and found false, so there is no witness"
   | .forallReal _ | .forallIoc _ _ _ =>
       match certificate with
@@ -96,6 +97,7 @@ private meta def proveRCFGoal (target : Expr) : MetaM Expr := do
 building and replaying a literal certificate. -/
 syntax (name := rcfTac) "rcf" : tactic
 
+/-- Elaborate `rcf` by constructing and replaying a checked certificate. -/
 @[tactic rcfTac] meta def evalRCFTac : Tactic := fun stx => do
   match stx with
   | `(tactic| rcf) =>

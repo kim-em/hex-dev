@@ -6,76 +6,23 @@ Authors: Kim Morrison
 
 module
 
+public import HexRCF.CellsCheck
 public import HexRCF.Separation
 
 public section
 
 /-!
-# Cells cut out by strictly isolated carrier roots
+# Semantics of cells cut out by strictly isolated carrier roots
 
-An array of `n` strictly ordered carrier roots cuts the real line into `n`
-root cells and `n + 1` open cells.  Open cut `0` is the left tail, cut `n`
-is the right tail, and an interior cut is the gap between its predecessor and
-successor roots.  For `n = 0`, the sole open cell is all of `ℝ`.
-
-The executable layer stores only indices and exact dyadic sample points.  A
-noncomputable `RootModel` packages the semantic roots justified by the replay
-and isolation checkers.
+The Mathlib-free cell data, exact samples, endpoint-comparison checks, and
+bounded-domain relevance table live in `HexRCF.CellsCheck`. A noncomputable
+`RootModel` packages the semantic roots justified by the replay and isolation
+checkers, and the theorems here interpret every executable cell over `ℝ`.
 -/
 
 namespace Hex.RCF
 
 open HexRealRootsMathlib
-
-/-- A root cell or one of the open cuts around `n` ordered roots. -/
-inductive Cell (n : Nat) where
-  /-- Open cell at a cut between roots, including both tails. -/
-  | open (cut : Fin (n + 1))
-  /-- Singleton cell at an isolated root. -/
-  | root (i : Fin n)
-  deriving DecidableEq, Repr
-
-namespace Cell
-
-/-- Alternating position of a cell in the left-to-right decomposition. -/
-@[expose]
-def rank : Cell n → Nat
-  | .open cut => 2 * cut.val
-  | .root i => 2 * i.val + 1
-
-/-- Every rank is a valid index into a `2 * n + 1` cell vector. -/
-theorem rank_lt (c : Cell n) : c.rank < 2 * n + 1 := by
-  cases c with
-  | «open» cut => simp [rank]; omega
-  | root i => simp [rank]
-
-/-- Deterministic left-to-right enumeration of all `2 * n + 1` cells. -/
-@[expose]
-def all (n : Nat) : Array (Cell n) :=
-  (((List.finRange n).flatMap fun i =>
-      [Cell.open i.castSucc, Cell.root i]) ++
-    [Cell.open (Fin.last n)]).toArray
-
-@[simp] theorem size_all (n : Nat) : (all n).size = 2 * n + 1 := by
-  simp [all]
-  omega
-
-/-- Every size-correct cell occurs in the executable enumeration. -/
-theorem mem_all (c : Cell n) : c ∈ all n := by
-  cases c with
-  | root i =>
-      simp [all]
-  | «open» cut =>
-      by_cases hlast : cut.val = n
-      · have hcut : cut = Fin.last n := Fin.ext (by simpa [Fin.last] using hlast)
-        subst cut
-        simp [all]
-      · let i : Fin n := ⟨cut.val, by omega⟩
-        have hcut : i.castSucc = cut := Fin.ext rfl
-        simp [all]
-        exact Or.inl ⟨i, hcut.symm⟩
-
-end Cell
 
 /-- The semantic roots named by a checked isolation array. -/
 structure RootModel (f : ZPoly) (cert : IsolationCert) where
@@ -96,29 +43,25 @@ namespace IsolationCert
 noncomputable def rootAt {f : ZPoly} {replay : SturmReplay}
     (cert : IsolationCert) (hreplay : replay.check f = true)
     (hcert : cert.check replay = true) (i : Fin cert.intervals.size) : ℝ :=
-  Classical.choose (exists_unique_root_of_check hreplay hcert i)
+  Classical.choose (existsUnique_root hreplay hcert i)
 
+/-- The chosen point is a root of the polynomial in the specified interval. -/
 theorem rootAt_spec {f : ZPoly} {replay : SturmReplay}
     (cert : IsolationCert) (hreplay : replay.check f = true)
     (hcert : cert.check replay = true) (i : Fin cert.intervals.size) :
     (toPolyℝ f).IsRoot (cert.rootAt hreplay hcert i) ∧
       Literal.InInterval cert.intervals[i] (cert.rootAt hreplay hcert i) :=
-  (Classical.choose_spec (exists_unique_root_of_check hreplay hcert i)).1
+  (Classical.choose_spec (existsUnique_root hreplay hcert i)).1
 
+/-- Every root in the specified interval equals the chosen root. -/
 theorem rootAt_unique {f : ZPoly} {replay : SturmReplay}
     (cert : IsolationCert) (hreplay : replay.check f = true)
     (hcert : cert.check replay = true) (i : Fin cert.intervals.size)
     {x : ℝ} (hx : (toPolyℝ f).IsRoot x)
     (hmem : Literal.InInterval cert.intervals[i] x) :
     x = cert.rootAt hreplay hcert i :=
-  (Classical.choose_spec (exists_unique_root_of_check hreplay hcert i)).2 x
+  (Classical.choose_spec (existsUnique_root hreplay hcert i)).2 x
     ⟨hx, hmem⟩
-
-/-- Strict validation exposes its strict-gap component. -/
-theorem gaps_of_checkStrict {replay : SturmReplay} {cert : IsolationCert}
-    (h : cert.checkStrict replay = true) : cert.checkGaps = true := by
-  simp only [checkStrict, Bool.and_eq_true] at h
-  exact h.2
 
 /-- Package all semantic consequences of an accepted strict isolation array. -/
 noncomputable def rootModel {f : ZPoly} {replay : SturmReplay}
@@ -142,31 +85,6 @@ noncomputable def rootModel {f : ZPoly} {replay : SturmReplay}
       apply huniq j
       rw [← hj]
       exact (rootAt_spec cert hreplay (check_of_checkStrict hstrict) j).2
-
-/-- Exact dyadic sample for an open cut. -/
-@[expose]
-def openPoint (cert : IsolationCert) :
-    Fin (cert.intervals.size + 1) → Dyadic
-  | cut =>
-      if hzero : cert.intervals.size = 0 then 0
-      else if hleft : cut.val = 0 then
-        (cert.intervals[0]'(by omega)).lower + Dyadic.ofInt (-1)
-      else if hright : cut.val = cert.intervals.size then
-        (cert.intervals[cert.intervals.size - 1]'(by omega)).upper + Dyadic.ofInt 1
-      else
-        ((cert.intervals[cut.val - 1]'(by omega)).upper +
-          (cert.intervals[cut.val]'(by omega)).lower) >>> (1 : Int)
-
-/-- Open cells carry exact dyadic samples; root cells are represented by their
-certified isolation instead. -/
-@[expose]
-def sample? (cert : IsolationCert) : Cell cert.intervals.size → Option Dyadic
-  | .open cut => some (cert.openPoint cut)
-  | .root _ => none
-
-@[simp] theorem sample?_open (cert : IsolationCert)
-    (cut : Fin (cert.intervals.size + 1)) :
-    cert.sample? (.open cut) = some (cert.openPoint cut) := rfl
 
 end IsolationCert
 
@@ -320,6 +238,7 @@ theorem exists_mem {f : ZPoly} {cert : IsolationCert}
     refine ⟨.open (Fin.last cert.intervals.size), ?_⟩
     simpa [Sem, hzero, last] using hlast
 
+/-- A point in an open cell lies below the root at the cell's upper boundary. -/
 private theorem open_lt_upper {f : ZPoly} {cert : IsolationCert}
     (M : RootModel f cert) (cut : Fin (cert.intervals.size + 1)) (x : ℝ)
     (hcut : cut.val < cert.intervals.size) (hx : Sem M (.open cut) x) :
@@ -331,6 +250,7 @@ private theorem open_lt_upper {f : ZPoly} {cert : IsolationCert}
     simp [Sem, hzero, hleft, hright] at hx
     exact hx.2
 
+/-- A point in an open cell lies above the root at the cell's lower boundary. -/
 private theorem lower_lt_open {f : ZPoly} {cert : IsolationCert}
     (M : RootModel f cert) (cut : Fin (cert.intervals.size + 1)) (x : ℝ)
     (hcut : 0 < cut.val) (hx : Sem M (.open cut) x) :
@@ -534,7 +454,7 @@ theorem root_mem_leftSpan {carrier : ZPoly} {cert : IsolationCert}
     exact ⟨M.strictMono (Fin.mk_lt_mk.mpr (by omega)), le_rfl⟩
 
 /-- A carrier root in the left span of root `i` is root `i` itself. -/
-theorem root_eq_of_mem_leftSpan
+theorem root_unique_leftSpan
     {carrier : ZPoly} {cert : IsolationCert}
     (M : RootModel carrier cert) (i : Fin cert.intervals.size) {x : ℝ}
     (hxroot : (toPolyℝ carrier).IsRoot x) (hx : x ∈ M.leftSpan i) :
@@ -562,27 +482,7 @@ theorem root_eq_of_mem_leftSpan
 
 end RootModel
 
-/-- Claimed carrier-root comparisons against the lower and upper endpoints of
-a bounded domain. -/
-structure IocCmps (n : Nat) where
-  /-- Each root's order relative to the excluded lower endpoint. -/
-  lower : Vector Separation.RootCmp n
-  /-- Each root's order relative to the included upper endpoint. -/
-  upper : Vector Separation.RootCmp n
-  deriving Repr
-
 namespace IocCmps
-
-/-- Recompute every claimed endpoint comparison. This validates comparison
-data only; the bounded-domain layer separately checks `a < b`. -/
-@[expose]
-def check (f : ZPoly) (replay : SturmReplay) (cert : IsolationCert)
-    (a b : Dyadic) (cmps : IocCmps cert.intervals.size) : Bool :=
-  (List.range cert.intervals.size).all fun i =>
-    if hi : i < cert.intervals.size then
-      Separation.checkCmp f replay cert.intervals[i] a cmps.lower[i] &&
-        Separation.checkCmp f replay cert.intervals[i] b cmps.upper[i]
-    else false
 
 /-- A checked comparison vector has its claimed meaning against the chosen
 semantic roots. -/
@@ -620,37 +520,19 @@ end IocCmps
 
 namespace Cell
 
-/-- Executable bounded-domain relevance test for a cell. The surrounding
-certificate first checks `a < b`; this core assumes that nonempty-domain
-hypothesis. -/
-@[expose]
-def meetsIoc (cmps : IocCmps n) : Cell n → Bool
-  | .root i => cmps.lower[i] == .gt && cmps.upper[i] != .gt
-  | .open cut =>
-      if hzero : n = 0 then true
-      else if hleft : cut.val = 0 then
-        cmps.lower[0] == .gt
-      else if hright : cut.val = n then
-        cmps.upper[n - 1] == .lt
-      else
-        cmps.upper[cut.val - 1] == .lt && cmps.lower[cut.val] == .gt
-
-/-- Guard the nonempty-domain relevance table against equal or reversed
-endpoints. -/
-@[expose]
-def meetsIocOn (a b : Dyadic) (cmps : IocCmps n) (c : Cell n) : Bool :=
-  decide (a < b) && meetsIoc cmps c
-
+/-- A valid root comparison equals `gt` exactly when the endpoint is below the root. -/
 private theorem eq_gt_iff {cmp : Separation.RootCmp} {root endpoint : ℝ}
     (h : cmp.Holds root endpoint) :
     (cmp == .gt) = true ↔ endpoint < root := by
   cases cmp <;> simp [Separation.RootCmp.Holds] at h ⊢ <;> linarith
 
+/-- A valid root comparison differs from `gt` exactly when the root is at most the endpoint. -/
 private theorem ne_gt_iff {cmp : Separation.RootCmp} {root endpoint : ℝ}
     (h : cmp.Holds root endpoint) :
     (cmp != .gt) = true ↔ root ≤ endpoint := by
   cases cmp <;> simp [Separation.RootCmp.Holds] at h ⊢ <;> linarith
 
+/-- A valid root comparison equals `lt` exactly when the root is below the endpoint. -/
 private theorem eq_lt_iff {cmp : Separation.RootCmp} {root endpoint : ℝ}
     (h : cmp.Holds root endpoint) :
     (cmp == .lt) = true ↔ root < endpoint := by

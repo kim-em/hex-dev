@@ -1199,7 +1199,7 @@ private theorem rat_divMod_remainder_eq_zero_of_not_pos_degree (p q : DensePoly 
   exact DensePoly.divMod_remainder_eq_zero_of_degree_zero_core p q hqsize
     (fun a => rat_div_mul_cancel_of_ne a q.leadingCoeff hlead_ne)
 
-private instance ratDivModLaws : DensePoly.DivModLaws Rat where
+instance instDivModLawsRat : DensePoly.DivModLaws Rat where
   divMod_spec := by
     intro p q
     exact rat_divMod_spec_core p q
@@ -1253,6 +1253,24 @@ private instance ratDivModLaws : DensePoly.DivModLaws Rat where
       have hp' : p % m = p + m * rp := rat_eq_add_mul_of_sub_eq_mul hp
       have hq' : q % m = q + m * rq := rat_eq_add_mul_of_sub_eq_mul hq
       exact rat_mul_left_remainder_delta p q m rp rq hp' hq'⟩
+
+/-- The rational remainder has degree below every positive-degree divisor.
+This direct wrapper lets downstream computational structures consume the
+public law without repeatedly elaborating the full typeclass dictionary. -/
+theorem rat_mod_degree_lt (f g : DensePoly Rat)
+    (h : 0 < g.degree?.getD 0) :
+    (f % g).degree?.getD 0 < g.degree?.getD 0 :=
+  instDivModLawsRat.divMod_remainder_degree_lt_of_pos_degree f g h
+
+/-- Remainder degree bound specialized to an integer polynomial cast to
+rational coefficients. -/
+theorem rat_mod_zpoly_degree_lt (f : DensePoly Rat) (p : ZPoly)
+    (h : 0 < p.degree?.getD 0) :
+    (f % toRatPoly p).degree?.getD 0 < p.degree?.getD 0 := by
+  have hrat : 0 < (toRatPoly p).degree?.getD 0 := by
+    simpa [DensePoly.degree?, size_toRatPoly p] using h
+  simpa [DensePoly.degree?, size_toRatPoly p] using
+    rat_mod_degree_lt f (toRatPoly p) hrat
 
 instance ratGcdLaws : DensePoly.GcdLaws Rat where
   gcd_dvd_left := by

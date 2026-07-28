@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.Decision
-public meta import HexRCF.Decision
+public meta import HexRCF.DecisionCheck
 
 public section
 
@@ -175,7 +175,7 @@ example {s : Sentence} {result : BuildResult} (h : build? s = some result) :
 
 example {s : Sentence} (h : Hex.RCF.decide s = some true) :
     ∃ cert : Certificate, cert.check s = true :=
-  decide_eq_some_true_imp_exists_cert h
+  exists_cert_of_decide h
 
 example {s : Sentence} (h : Hex.RCF.decide s = some true) : s.toProp :=
   decide_sound s h

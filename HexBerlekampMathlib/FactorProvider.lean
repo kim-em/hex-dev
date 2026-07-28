@@ -328,12 +328,12 @@ meta def withZModInput (tactic : String) (ty : Expr)
       Expr → Term.TermElabM Expr) :
     Term.TermElabM ProviderResult := do
   let some (q, qE) ← zmodInput? ty | return .notApplicable
-  -- `isPrimeTrial` is Θ(q) at elaboration time, and its emitted slot
-  -- kernel-replays at the same cost, so check the `ZMod64` bound and the
-  -- replay budget before running it.
+  -- The emitted primality slot kernel-replays the bounded trial scan, so
+  -- budget its worst-case number of candidate remainder tests.
   if h1 : 0 < q then
     if h2 : q < 2 ^ 31 then
-      if q ≤ Hex.FactorTactic.replayBudget then
+      let primeCost := Hex.FactorTactic.primeReplayCost q
+      if primeCost ≤ Hex.FactorTactic.primeReplayBudget then
         if hpt : Hex.Nat.isPrimeTrial q = true then
           return .success (← k q ⟨h1, h2⟩ hpt qE)
         else
@@ -341,8 +341,8 @@ meta def withZModInput (tactic : String) (ty : Expr)
               prime modulus, but {q} is not prime"
       else
         return .declined m!"{tactic}: the modulus {q} needs a kernel \
-            primality replay of roughly {q} steps, over the supported \
-            budget ({Hex.FactorTactic.replayBudget})"
+            primality replay of {primeCost} candidate remainder tests, \
+            over the supported budget ({Hex.FactorTactic.primeReplayBudget})"
     else
       return .declined m!"{tactic}: the modulus {q} is over the ZMod64 \
           bound (2^31), so the Polynomial (ZMod q) provider cannot \
