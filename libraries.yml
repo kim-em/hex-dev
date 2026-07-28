@@ -546,7 +546,7 @@ libraries:
   HexRealRootsMathlib:
     deps: [HexRealRoots, HexPolyZMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
     proof_probes: [bench/HexRealRootsMathlib/ProofProbe]
   HexRCF:
