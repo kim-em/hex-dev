@@ -92,7 +92,7 @@ SPEC = SweepSpec(
         *case_pairs("degree50", "Degree50", 30_000),
     ),
     probe_target="HexRCFProofProbe",
-    schema="hexrcf-proof-probes-v2",
+    schema="hexrcf-proof-probes-v3",
     measurement="paired-fresh-module-olean-wall-v1",
     output_stem="hexrcf-proof-probes",
     extra_sources=(

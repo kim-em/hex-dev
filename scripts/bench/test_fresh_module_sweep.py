@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import io
 import os
 import signal
 import subprocess
@@ -116,8 +117,38 @@ class ProvenanceTests(unittest.TestCase):
                     with self.assertRaisesRegex(RuntimeError, "forced failure"):
                         sweep.checkout_state(Path("/unused"))
 
+    def test_missing_declared_provenance_source_fails_closed(self) -> None:
+        spec = sweep.SweepSpec(
+            description="missing provenance",
+            pairs=(PAIR,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+            extra_sources=(Path("missing.md"),),
+        )
+        with tempfile.TemporaryDirectory() as directory, mock.patch.object(
+            sweep, "ROOT", Path(directory)
+        ), mock.patch.object(
+            sweep, "local_import_sources", return_value=set()
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError, "missing declared provenance"
+            ):
+                sweep.provenance_sources(spec, CALLER)
+
 
 class ProcessGroupTests(unittest.TestCase):
+    def test_run_timed_records_scheduler_metrics(self) -> None:
+        proc, elapsed, metrics = sweep.run_timed(["true"], 5)
+        self.assertEqual(proc.returncode, 0)
+        self.assertGreater(elapsed, 0)
+        if sweep.time_binary() is not None:
+            self.assertIsNotNone(metrics["peak_rss_kb"])
+            self.assertIsNotNone(metrics["user_seconds"])
+            self.assertIsNotNone(metrics["system_seconds"])
+            self.assertIsNotNone(metrics["cpu_percent"])
+
     @unittest.skipUnless(Path("/proc").is_dir(), "requires procfs")
     def test_run_timed_invokes_group_cleanup(self) -> None:
         with mock.patch.object(sweep, "time_binary", return_value=None), \
@@ -314,8 +345,128 @@ class PairingTests(unittest.TestCase):
             summary = sweep.summarize(spec, rows)[pair.name]
         self.assertTrue(summary["null_control"])
 
+    def test_summary_resolves_against_magnitude_comparable_control(self) -> None:
+        cheap = sweep.ProbeModule("Probe.Cheap")
+        expensive = sweep.ProbeModule("Probe.Expensive")
+        candidate = sweep.ProbeModule("Probe.Candidate")
+        pairs = (
+            sweep.ProbePair("cheap", cheap, cheap, {}, null_control=True),
+            sweep.ProbePair(
+                "expensive", expensive, expensive, {}, null_control=True
+            ),
+            sweep.ProbePair(
+                "tactic",
+                expensive,
+                candidate,
+                {"tactic_budget_ms": 100},
+            ),
+        )
+        spec = sweep.SweepSpec(
+            description="resolution",
+            pairs=pairs,
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+
+        def rows(wall: int, deltas: list[int]) -> list[dict[str, object]]:
+            return [{
+                "reference": {
+                    "wall_nanos": wall,
+                    "peak_rss_kb": None,
+                },
+                "candidate": {
+                    "wall_nanos": wall + delta,
+                    "peak_rss_kb": None,
+                },
+                "signed_wall_delta_nanos": delta,
+            } for delta in deltas]
+
+        samples = {
+            "cheap": rows(100_000_000, [-1_000_000, 1_000_000]),
+            "expensive": rows(
+                1_000_000_000, [-10_000_000, 10_000_000]
+            ),
+            "tactic": rows(
+                1_000_000_000, [85_000_000, 95_000_000]
+            ),
+        }
+        with mock.patch.object(sweep, "artifact_sizes", return_value={}):
+            summary = sweep.summarize(spec, samples)
+        self.assertEqual(
+            summary["tactic"]["comparable_control"], "expensive"
+        )
+        self.assertEqual(summary["tactic"]["resolution"], "resolved")
+        self.assertEqual(summary["tactic"]["budget_status"], "unresolved")
+
+    def test_shared_host_observations_reject_sibling_contention(self) -> None:
+        def arm(sibling_busy: float) -> dict[str, object]:
+            host = {
+                "concurrent_lake_lean_count": 2,
+                "load_1m_per_cpu": 0.25,
+                "affinity_cpu_frequency_khz": "2500000",
+            }
+            return {
+                "wall_nanos": 1_000_000_000,
+                "host_before": host,
+                "host_after": host,
+                "cpu_accounting": {
+                    "measurement_cpu_foreign_seconds": 0.01,
+                    "pressure_some_delta_us": 5,
+                    "per_cpu": {
+                        "95": {"busy_seconds": sibling_busy},
+                    },
+                },
+            }
+
+        rows = {
+            "pair": [{
+                "round": 1,
+                "reference": arm(0.01),
+                "candidate": arm(0.10),
+            }]
+        }
+        observed = sweep.shared_host_observations(
+            rows, 47, [95], 0.02
+        )
+        self.assertEqual(observed["max_smt_sibling_busy_ratio"], 0.10)
+        self.assertRegex(
+            "; ".join(observed["violations"]), "SMT sibling CPU 95"
+        )
+
+    def test_contention_violation_makes_release_quality_false(self) -> None:
+        args = sweep.parse_args("validity", [])
+        observations = {"violations": ["sibling contention"]}
+        quality, issues = sweep.validity_summary(
+            SPEC,
+            args,
+            {"center-direct": {}},
+            observations,
+            [],
+        )
+        self.assertFalse(quality)
+        self.assertEqual(issues, ["sibling contention"])
+
 
 class HarnessValidationTests(unittest.TestCase):
+    def test_shared_host_arguments_are_complete_and_exclusive(self) -> None:
+        with mock.patch.object(sys, "stderr", new=io.StringIO()):
+            with self.assertRaises(SystemExit):
+                sweep.parse_args("shared", ["--shared-host"])
+            with self.assertRaises(SystemExit):
+                sweep.parse_args(
+                    "shared", ["--expected-host", "bench-host", "--cpu", "3"]
+                )
+            with self.assertRaises(SystemExit):
+                sweep.parse_args(
+                    "shared",
+                    [
+                        "--shared-host", "--expected-host", "bench-host",
+                        "--cpu", "3", "--allow-busy",
+                    ],
+                )
+
     def test_shared_host_pins_named_machine(self) -> None:
         args = sweep.parse_args(
             SPEC.description,
@@ -351,7 +502,13 @@ class HarnessValidationTests(unittest.TestCase):
                 sweep.configure_shared_host(args)
 
     def test_shared_host_requires_single_cpu_affinity(self) -> None:
-        args = sweep.parse_args(SPEC.description, ["--shared-host", "--samples", "6"])
+        args = sweep.parse_args(
+            SPEC.description,
+            [
+                "--shared-host", "--expected-host", "bench-host",
+                "--cpu", "3", "--samples", "6",
+            ],
+        )
         with mock.patch.object(
             sweep, "cpu_affinity", return_value=[3, 4]
         ):
@@ -361,7 +518,13 @@ class HarnessValidationTests(unittest.TestCase):
             )
 
     def test_shared_host_requires_two_controls(self) -> None:
-        args = sweep.parse_args(SPEC.description, ["--shared-host", "--samples", "6"])
+        args = sweep.parse_args(
+            SPEC.description,
+            [
+                "--shared-host", "--expected-host", "bench-host",
+                "--cpu", "3", "--samples", "6",
+            ],
+        )
         with mock.patch.object(sweep, "cpu_affinity", return_value=[3]):
             self.assertRegex(
                 "; ".join(sweep.shared_host_protocol_issues(SPEC, args)),
@@ -369,10 +532,19 @@ class HarnessValidationTests(unittest.TestCase):
             )
 
     def test_shared_host_accepts_balanced_controlled_spec(self) -> None:
-        module = sweep.ProbeModule("Probe.Same")
+        cheap = sweep.ProbeModule("Probe.Cheap")
+        expensive = sweep.ProbeModule("Probe.Expensive")
         controls = (
-            sweep.ProbePair("cheap", module, module, {}, null_control=True),
-            sweep.ProbePair("expensive", module, module, {}, null_control=True),
+            sweep.ProbePair("cheap", cheap, cheap, {}, null_control=True),
+            sweep.ProbePair(
+                "expensive", expensive, expensive, {}, null_control=True
+            ),
+            sweep.ProbePair(
+                "substantive",
+                cheap,
+                sweep.ProbeModule("Probe.Candidate"),
+                {},
+            ),
         )
         spec = sweep.SweepSpec(
             description="shared",
@@ -384,28 +556,32 @@ class HarnessValidationTests(unittest.TestCase):
             required_samples=6,
         )
         args = sweep.parse_args(
-            spec.description, ["--shared-host", "--samples", "6"]
+            spec.description,
+            [
+                "--shared-host", "--expected-host", "bench-host",
+                "--cpu", "3", "--samples", "6",
+            ],
         )
         with mock.patch.object(sweep, "cpu_affinity", return_value=[3]):
             self.assertEqual(sweep.shared_host_protocol_issues(spec, args), [])
 
-    def test_shared_host_ignores_process_presence_but_not_saturation(self) -> None:
+    def test_shared_host_records_global_activity_without_rejecting_it(self) -> None:
         state = {
             "concurrent_lake_lean": [{"pid": 1, "command": "lake build"}],
             "load_1m_per_cpu": 0.25,
         }
         self.assertEqual(
             sweep.host_issues(
-                state, 0.5, concurrent_is_issue=False
+                state, 0.5, concurrent_is_issue=False, load_is_issue=False
             ),
             [],
         )
         state["load_1m_per_cpu"] = 0.75
-        self.assertRegex(
-            "; ".join(sweep.host_issues(
-                state, 0.5, concurrent_is_issue=False
-            )),
-            "exceeds",
+        self.assertEqual(
+            sweep.host_issues(
+                state, 0.5, concurrent_is_issue=False, load_is_issue=False
+            ),
+            [],
         )
 
     def test_warmup_builds_every_unique_import_closure(self) -> None:

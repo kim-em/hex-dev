@@ -6,7 +6,7 @@
   designated-shared-host protocol for fresh-module proof evidence.
 - Added fail-closed hostname and logical-CPU preregistration. The runner pins
   itself before warmup, timed children inherit that affinity, and every arm
-  verifies that the affinity has not changed.
+  verifies that the runner affinity has not changed.
 - Required at least two representative same-module null controls and six
   balanced rounds for shared-host release evidence; all fresh-module sweeps
   now require an even number of rounds.

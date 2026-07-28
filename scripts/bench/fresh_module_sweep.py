@@ -33,7 +33,14 @@ from typing import Sequence, TypeVar
 ROOT = Path(__file__).resolve().parents[2]
 BUILD = ROOT / ".lake" / "build"
 RSS_MARKER = "__HEX_MAX_RSS_KB__="
+USER_MARKER = "__HEX_USER_SECONDS__="
+SYSTEM_MARKER = "__HEX_SYSTEM_SECONDS__="
+CPU_PERCENT_MARKER = "__HEX_CPU_PERCENT__="
+INVOLUNTARY_CONTEXT_MARKER = "__HEX_INVOLUNTARY_CONTEXT__="
+VOLUNTARY_CONTEXT_MARKER = "__HEX_VOLUNTARY_CONTEXT__="
 DEFAULT_MAX_LOAD_PER_CPU = 0.5
+DEFAULT_MAX_CORE_INTERFERENCE_RATIO = 0.02
+NULL_MAGNITUDE_FACTOR = 3.0
 T = TypeVar("T")
 
 sys.path.insert(0, str(ROOT))
@@ -79,10 +86,13 @@ class SweepSpec:
 
 
 def parse_args(
-    description: str, argv: Sequence[str] | None = None
+    description: str,
+    argv: Sequence[str] | None = None,
+    *,
+    default_samples: int = 4,
 ) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("--samples", type=int, default=4)
+    parser.add_argument("--samples", type=int, default=default_samples)
     parser.add_argument("--timeout", type=float, default=60.0)
     parser.add_argument("--warm-timeout", type=float, default=600.0)
     parser.add_argument("--output", type=Path)
@@ -120,6 +130,15 @@ def parse_args(
         default=DEFAULT_MAX_LOAD_PER_CPU,
         help="maximum one-minute load average divided by logical CPU count",
     )
+    parser.add_argument(
+        "--max-core-interference-ratio",
+        type=float,
+        default=DEFAULT_MAX_CORE_INTERFERENCE_RATIO,
+        help=(
+            "maximum foreign busy-time fraction on the measurement CPU or "
+            "busy-time fraction on its SMT sibling"
+        ),
+    )
     args = parser.parse_args(argv)
     if args.samples < 1:
         parser.error("--samples must be positive")
@@ -129,10 +148,20 @@ def parse_args(
         parser.error("--warm-timeout must be positive")
     if args.max_load_per_cpu <= 0:
         parser.error("--max-load-per-cpu must be positive")
+    if not 0 < args.max_core_interference_ratio < 1:
+        parser.error("--max-core-interference-ratio must be between 0 and 1")
     if args.allow_busy and args.shared_host:
         parser.error("--allow-busy and --shared-host are mutually exclusive")
     if args.cpu is not None and args.cpu < 0:
         parser.error("--cpu must be nonnegative")
+    if args.shared_host and (
+        args.expected_host is None or args.cpu is None
+    ):
+        parser.error("--shared-host requires both --expected-host and --cpu")
+    if not args.shared_host and (
+        args.expected_host is not None or args.cpu is not None
+    ):
+        parser.error("--expected-host/--cpu require --shared-host")
     return args
 
 
@@ -247,19 +276,18 @@ def cpu_topology(cpu: int) -> dict[str, object]:
         "scaling_governor": _read_optional(
             root / "cpufreq" / "scaling_governor"
         ),
+        "scaling_cur_freq_khz": _read_optional(
+            root / "cpufreq" / "scaling_cur_freq"
+        ),
     }
 
 
 def configure_shared_host(args: argparse.Namespace) -> None:
     """Pin this runner before warmup and verify the named release machine."""
     if not args.shared_host:
-        if args.expected_host is not None or args.cpu is not None:
-            raise RuntimeError("--expected-host/--cpu require --shared-host")
         return
-    if args.expected_host is None or args.cpu is None:
-        raise RuntimeError(
-            "--shared-host requires both --expected-host and --cpu"
-        )
+    assert args.expected_host is not None
+    assert args.cpu is not None
     actual_host = socket.gethostname()
     if actual_host != args.expected_host:
         raise RuntimeError(
@@ -274,18 +302,98 @@ def configure_shared_host(args: argparse.Namespace) -> None:
         raise RuntimeError(f"cannot pin runner to CPU {args.cpu}: {exc}") from exc
 
 
+def parse_cpu_list(text: str | None) -> list[int]:
+    """Parse Linux cpulist syntax such as ``0-2,7``."""
+    if not text:
+        return []
+    cpus: list[int] = []
+    for part in text.split(","):
+        bounds = part.split("-", 1)
+        start = int(bounds[0])
+        stop = int(bounds[-1])
+        cpus.extend(range(start, stop + 1))
+    return sorted(set(cpus))
+
+
+def cpu_ticks(cpus: Sequence[int]) -> dict[int, dict[str, int]]:
+    """Read per-logical-CPU scheduler counters from ``/proc/stat``."""
+    wanted = set(cpus)
+    result: dict[int, dict[str, int]] = {}
+    fields = (
+        "user", "nice", "system", "idle", "iowait", "irq", "softirq",
+        "steal", "guest", "guest_nice",
+    )
+    try:
+        lines = Path("/proc/stat").read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return result
+    for line in lines:
+        columns = line.split()
+        if not columns or not columns[0].startswith("cpu"):
+            continue
+        suffix = columns[0][3:]
+        if not suffix.isdigit() or int(suffix) not in wanted:
+            continue
+        values = [int(value) for value in columns[1:]]
+        result[int(suffix)] = dict(zip(fields, values, strict=False))
+    return result
+
+
+def cpu_tick_delta(
+    before: dict[int, dict[str, int]],
+    after: dict[int, dict[str, int]],
+    cpu: int,
+) -> dict[str, int] | None:
+    if cpu not in before or cpu not in after:
+        return None
+    return {
+        field: after[cpu].get(field, 0) - value
+        for field, value in before[cpu].items()
+    }
+
+
+def busy_ticks(delta: dict[str, int] | None) -> int | None:
+    if delta is None:
+        return None
+    return sum(
+        delta.get(field, 0)
+        for field in ("user", "nice", "system", "irq", "softirq", "steal")
+    )
+
+
+def pressure_total_us(text: str | None) -> int | None:
+    if text is None:
+        return None
+    match = re.search(r"^some .*?\btotal=(\d+)", text, flags=re.MULTILINE)
+    return int(match.group(1)) if match else None
+
+
 def host_state() -> dict[str, object]:
     cpus = os.cpu_count() or 1
     try:
         load = list(os.getloadavg())
     except OSError:
         load = []
+    affinity = cpu_affinity()
+    loadavg = _read_optional(Path("/proc/loadavg"))
+    runnable = None
+    if loadavg is not None:
+        fields = loadavg.split()
+        runnable = fields[3] if len(fields) > 3 else None
+    pressure = _read_optional(Path("/proc/pressure/cpu"))
     return {
         "logical_cpus": cpus,
         "load_average": load,
         "load_1m_per_cpu": load[0] / cpus if load else None,
-        "cpu_affinity": cpu_affinity(),
-        "cpu_pressure": _read_optional(Path("/proc/pressure/cpu")),
+        "runnable_tasks": runnable,
+        "cpu_affinity": affinity,
+        "cpu_pressure": pressure,
+        "cpu_pressure_some_total_us": pressure_total_us(pressure),
+        "affinity_cpu_frequency_khz": (
+            cpu_topology(affinity[0])["scaling_cur_freq_khz"]
+            if affinity is not None and len(affinity) == 1
+            else None
+        ),
         "concurrent_lake_lean": lean_processes(),
     }
 
@@ -295,13 +403,14 @@ def host_issues(
     max_load_per_cpu: float,
     *,
     concurrent_is_issue: bool = True,
+    load_is_issue: bool = True,
 ) -> list[str]:
     issues: list[str] = []
     processes = state["concurrent_lake_lean"]
     if concurrent_is_issue and processes:
         issues.append(f"{len(processes)} concurrent Lake/Lean process(es)")
     load = state["load_1m_per_cpu"]
-    if load is not None and float(load) > max_load_per_cpu:
+    if load_is_issue and load is not None and float(load) > max_load_per_cpu:
         issues.append(
             f"one-minute load/CPU {float(load):.3f} exceeds {max_load_per_cpu:.3f}"
         )
@@ -332,6 +441,12 @@ def shared_host_protocol_issues(
         issues.append(
             "shared-host evidence requires at least two same-module null controls"
         )
+    elif not all(pair.null_control for pair in spec.pairs[:2]):
+        issues.append("the first two manifest pairs must be null controls")
+    elif controls[0].reference.module == controls[1].reference.module:
+        issues.append("the first two null controls must use distinct magnitudes")
+    if not any(not pair.null_control for pair in spec.pairs):
+        issues.append("shared-host evidence requires a substantive pair")
     if args.samples < 6 or args.samples % 2 != 0:
         issues.append(
             "shared-host evidence requires at least six and an even number "
@@ -347,8 +462,11 @@ def sampled_host_state(state: dict[str, object]) -> dict[str, object]:
         "logical_cpus": state["logical_cpus"],
         "load_average": state["load_average"],
         "load_1m_per_cpu": state["load_1m_per_cpu"],
+        "runnable_tasks": state["runnable_tasks"],
         "cpu_affinity": state["cpu_affinity"],
         "cpu_pressure": state["cpu_pressure"],
+        "cpu_pressure_some_total_us": state["cpu_pressure_some_total_us"],
+        "affinity_cpu_frequency_khz": state["affinity_cpu_frequency_khz"],
         "concurrent_lake_lean_count": len(processes),
     }
 
@@ -405,6 +523,7 @@ def environment() -> dict[str, object]:
         "dependency_checkouts": dependencies,
         "toolchain": (ROOT / "lean-toolchain").read_text(encoding="utf-8").strip(),
         "hostname": socket.gethostname(),
+        "machine_id": _read_optional(Path("/etc/machine-id")),
         "platform": platform.platform(),
         "architecture": platform.machine(),
         "cpu_model": cpu_model(),
@@ -509,10 +628,17 @@ def provenance_sources(spec: SweepSpec, caller_file: Path) -> list[Path]:
         caller_file.resolve(),
         ROOT / "scripts" / "ci" / "check_benches_mathlib_free.py",
     }
-    files.update(
+    extras = [
         path if path.is_absolute() else ROOT / path
         for path in spec.extra_sources
-    )
+    ]
+    missing = [path for path in extras if not path.is_file()]
+    if missing:
+        raise RuntimeError(
+            "missing declared provenance source(s): "
+            + ", ".join(str(path) for path in missing)
+        )
+    files.update(extras)
     return sorted(path for path in files if path.is_file())
 
 
@@ -556,10 +682,18 @@ def remove_module_outputs(module: str) -> None:
 
 def run_timed(
     command: list[str], timeout: float
-) -> tuple[subprocess.CompletedProcess[str], int, int | None]:
+) -> tuple[subprocess.CompletedProcess[str], int, dict[str, int | float | None]]:
     timer = time_binary()
+    timer_format = "\n".join((
+        RSS_MARKER + "%M",
+        USER_MARKER + "%U",
+        SYSTEM_MARKER + "%S",
+        CPU_PERCENT_MARKER + "%P",
+        INVOLUNTARY_CONTEXT_MARKER + "%c",
+        VOLUNTARY_CONTEXT_MARKER + "%w",
+    ))
     wrapped = command if timer is None else [
-        timer, "-f", RSS_MARKER + "%M", *command
+        timer, "-f", timer_format, *command
     ]
     start = time.perf_counter_ns()
     child = subprocess.Popen(
@@ -579,12 +713,36 @@ def run_timed(
     proc = subprocess.CompletedProcess(
         wrapped, child.returncode, stdout=stdout, stderr=stderr
     )
-    rss = None
+    metrics: dict[str, int | float | None] = {
+        "peak_rss_kb": None,
+        "user_seconds": None,
+        "system_seconds": None,
+        "cpu_percent": None,
+        "involuntary_context_switches": None,
+        "voluntary_context_switches": None,
+    }
     if timer is not None:
-        match = re.search(rf"{re.escape(RSS_MARKER)}(\d+)", proc.stderr)
-        if match:
-            rss = int(match.group(1))
-    return proc, elapsed, rss
+        integer_metrics = (
+            (RSS_MARKER, "peak_rss_kb"),
+            (INVOLUNTARY_CONTEXT_MARKER, "involuntary_context_switches"),
+            (VOLUNTARY_CONTEXT_MARKER, "voluntary_context_switches"),
+        )
+        for marker, key in integer_metrics:
+            match = re.search(rf"{re.escape(marker)}(\d+)", proc.stderr)
+            if match:
+                metrics[key] = int(match.group(1))
+        float_metrics = (
+            (USER_MARKER, "user_seconds"),
+            (SYSTEM_MARKER, "system_seconds"),
+            (CPU_PERCENT_MARKER, "cpu_percent"),
+        )
+        for marker, key in float_metrics:
+            match = re.search(
+                rf"{re.escape(marker)}([0-9]+(?:\.[0-9]+)?)", proc.stderr
+            )
+            if match:
+                metrics[key] = float(match.group(1))
+    return proc, elapsed, metrics
 
 
 def terminate_process_group(child: subprocess.Popen[str], grace: float = 5.0) -> None:
@@ -614,12 +772,18 @@ def parse_axioms(output: str) -> list[str] | None:
     return None
 
 
-def build_sample(module: str, timeout: float) -> dict[str, object]:
-    host_before = sampled_host_state(host_state())
+def build_sample(
+    module: str,
+    timeout: float,
+    measurement_cpu: int | None = None,
+    monitored_cpus: Sequence[int] = (),
+) -> dict[str, object]:
     remove_module_outputs(module)
+    host_before = sampled_host_state(host_state())
+    ticks_before = cpu_ticks(monitored_cpus)
     command = ["lake", "build", f"+{module}:olean"]
     try:
-        proc, elapsed, rss = run_timed(command, timeout)
+        proc, elapsed, metrics = run_timed(command, timeout)
     except subprocess.TimeoutExpired as exc:
         raise RuntimeError(
             f"probe timed out after {timeout:g}s: {' '.join(command)}"
@@ -630,12 +794,54 @@ def build_sample(module: str, timeout: float) -> dict[str, object]:
         raise RuntimeError(
             f"probe failed ({proc.returncode}): {' '.join(command)}"
         )
+    ticks_after = cpu_ticks(monitored_cpus)
+    host_after = sampled_host_state(host_state())
+    tick_hz = int(os.sysconf("SC_CLK_TCK"))
+    per_cpu: dict[str, dict[str, object]] = {}
+    for cpu in monitored_cpus:
+        delta = cpu_tick_delta(ticks_before, ticks_after, cpu)
+        busy = busy_ticks(delta)
+        per_cpu[str(cpu)] = {
+            "ticks": delta,
+            "busy_seconds": (
+                float(busy) / tick_hz if busy is not None else None
+            ),
+        }
+    child_cpu_seconds = None
+    if (
+        metrics["user_seconds"] is not None
+        and metrics["system_seconds"] is not None
+    ):
+        child_cpu_seconds = (
+            float(metrics["user_seconds"])
+            + float(metrics["system_seconds"])
+        )
+    foreign_seconds = None
+    if measurement_cpu is not None and str(measurement_cpu) in per_cpu:
+        target_busy = per_cpu[str(measurement_cpu)]["busy_seconds"]
+        if target_busy is not None and child_cpu_seconds is not None:
+            foreign_seconds = max(
+                0.0, float(target_busy) - child_cpu_seconds
+            )
+    pressure_before = host_before["cpu_pressure_some_total_us"]
+    pressure_after = host_after["cpu_pressure_some_total_us"]
     result = {
         "wall_nanos": elapsed,
-        "peak_rss_kb": rss,
+        **metrics,
         "axioms": parse_axioms(output),
         "host_before": host_before,
-        "host_after": sampled_host_state(host_state()),
+        "host_after": host_after,
+        "cpu_accounting": {
+            "clock_ticks_per_second": tick_hz,
+            "per_cpu": per_cpu,
+            "child_cpu_seconds": child_cpu_seconds,
+            "measurement_cpu_foreign_seconds": foreign_seconds,
+            "pressure_some_delta_us": (
+                int(pressure_after) - int(pressure_before)
+                if pressure_before is not None and pressure_after is not None
+                else None
+            ),
+        },
     }
     return result
 
@@ -646,7 +852,7 @@ def warm_imports(spec: SweepSpec, timeout: float) -> None:
     command = ["lake", "build", *[f"+{module}:deps" for module in modules]]
     print(f"[warm] {' '.join(command)}", flush=True)
     try:
-        proc, _elapsed, _rss = run_timed(command, timeout)
+        proc, _elapsed, _metrics = run_timed(command, timeout)
     except subprocess.TimeoutExpired as exc:
         raise RuntimeError(
             f"probe import warmup timed out after {timeout:g}s"
@@ -738,7 +944,194 @@ def summarize(
             "median_signed_wall_delta_nanos": int(statistics.median(deltas)),
         }
         summary[pair.name] = result
+    controls: list[tuple[str, int, int]] = []
+    for pair in spec.pairs:
+        result = summary[pair.name]
+        if not pair.null_control:
+            continue
+        deltas = list(result["signed_wall_delta_nanos"])
+        magnitude = max(
+            int(result["median_reference_wall_nanos"]),
+            int(result["median_candidate_wall_nanos"]),
+        )
+        spread = max(deltas) - min(deltas)
+        result["null_spread_nanos"] = spread
+        result["null_max_absolute_delta_nanos"] = max(
+            abs(int(delta)) for delta in deltas
+        )
+        controls.append((pair.name, magnitude, spread))
+    for pair in spec.pairs:
+        if pair.null_control:
+            continue
+        result = summary[pair.name]
+        magnitude = max(
+            int(result["median_reference_wall_nanos"]),
+            int(result["median_candidate_wall_nanos"]),
+        )
+        comparable = [
+            (name, control_magnitude, spread)
+            for name, control_magnitude, spread in controls
+            if min(magnitude, control_magnitude) > 0
+            and max(magnitude, control_magnitude)
+            / min(magnitude, control_magnitude) <= NULL_MAGNITUDE_FACTOR
+        ]
+        if comparable:
+            name, control_magnitude, spread = min(
+                comparable,
+                key=lambda item: abs(
+                    magnitude - item[1]
+                ) / max(magnitude, item[1]),
+            )
+            result["comparable_control"] = name
+            result["control_magnitude_ratio"] = (
+                max(magnitude, control_magnitude)
+                / min(magnitude, control_magnitude)
+            )
+            result["comparable_null_spread_nanos"] = spread
+            result["resolution"] = (
+                "unresolved"
+                if abs(int(result["median_signed_wall_delta_nanos"])) <= spread
+                else "resolved"
+            )
+        else:
+            result["comparable_control"] = None
+            result["control_magnitude_ratio"] = None
+            result["comparable_null_spread_nanos"] = None
+            result["resolution"] = "no-comparable-control"
+        budget_ms = pair.metadata.get("tactic_budget_ms")
+        if budget_ms is not None:
+            budget_nanos = int(budget_ms) * 1_000_000
+            median_delta = int(result["median_signed_wall_delta_nanos"])
+            spread_value = result["comparable_null_spread_nanos"]
+            if median_delta >= budget_nanos:
+                budget_status = "failed"
+            elif spread_value is None:
+                budget_status = "no-comparable-control"
+            elif median_delta + int(spread_value) >= budget_nanos:
+                budget_status = "unresolved"
+            else:
+                budget_status = "passed"
+            result["budget_nanos"] = budget_nanos
+            result["budget_status"] = budget_status
     return summary
+
+
+def shared_host_observations(
+    rows: dict[str, list[dict[str, object]]],
+    measurement_cpu: int,
+    sibling_cpus: Sequence[int],
+    max_ratio: float,
+) -> dict[str, object]:
+    """Aggregate auditable per-arm contention measurements."""
+    max_foreign_ratio = 0.0
+    max_sibling_ratio = 0.0
+    max_pressure_delta = 0
+    max_concurrent = 0
+    max_load = 0.0
+    frequencies: list[int] = []
+    violations: list[str] = []
+    missing_accounting = False
+    tick_hz = int(os.sysconf("SC_CLK_TCK"))
+    for pair_name, samples in rows.items():
+        for sample in samples:
+            round_index = int(sample["round"])
+            for role in ("reference", "candidate"):
+                arm = dict(sample[role])
+                wall_seconds = int(arm["wall_nanos"]) / 1_000_000_000
+                accounting = dict(arm["cpu_accounting"])
+                foreign = accounting["measurement_cpu_foreign_seconds"]
+                per_cpu = dict(accounting["per_cpu"])
+                if foreign is None or wall_seconds <= 0:
+                    missing_accounting = True
+                    continue
+                foreign_ratio = float(foreign) / wall_seconds
+                max_foreign_ratio = max(max_foreign_ratio, foreign_ratio)
+                allowance = max(2 / tick_hz, max_ratio * wall_seconds)
+                if float(foreign) > allowance:
+                    violations.append(
+                        f"{pair_name} round {round_index} {role}: "
+                        f"measurement CPU foreign time {float(foreign):.3f}s "
+                        f"exceeds {allowance:.3f}s"
+                    )
+                for sibling in sibling_cpus:
+                    busy = dict(per_cpu.get(str(sibling), {})).get(
+                        "busy_seconds"
+                    )
+                    if busy is None:
+                        missing_accounting = True
+                        continue
+                    sibling_ratio = float(busy) / wall_seconds
+                    max_sibling_ratio = max(
+                        max_sibling_ratio, sibling_ratio
+                    )
+                    if float(busy) > allowance:
+                        violations.append(
+                            f"{pair_name} round {round_index} {role}: "
+                            f"SMT sibling CPU {sibling} busy time "
+                            f"{float(busy):.3f}s exceeds {allowance:.3f}s"
+                        )
+                pressure = accounting.get("pressure_some_delta_us")
+                if pressure is not None:
+                    max_pressure_delta = max(
+                        max_pressure_delta, int(pressure)
+                    )
+                for state_key in ("host_before", "host_after"):
+                    state = dict(arm[state_key])
+                    max_concurrent = max(
+                        max_concurrent,
+                        int(state["concurrent_lake_lean_count"]),
+                    )
+                    load = state.get("load_1m_per_cpu")
+                    if load is not None:
+                        max_load = max(max_load, float(load))
+                    frequency = state.get("affinity_cpu_frequency_khz")
+                    if frequency is not None:
+                        frequencies.append(int(frequency))
+    if missing_accounting:
+        violations.append("per-arm CPU accounting is incomplete")
+    return {
+        "measurement_cpu": measurement_cpu,
+        "smt_sibling_cpus": list(sibling_cpus),
+        "max_core_interference_ratio": max_ratio,
+        "max_measurement_cpu_foreign_ratio": max_foreign_ratio,
+        "max_smt_sibling_busy_ratio": max_sibling_ratio,
+        "max_cpu_pressure_some_delta_us": max_pressure_delta,
+        "max_concurrent_lake_lean_count": max_concurrent,
+        "max_load_1m_per_cpu": max_load,
+        "min_frequency_khz": min(frequencies) if frequencies else None,
+        "max_frequency_khz": max(frequencies) if frequencies else None,
+        "violations": violations,
+    }
+
+
+def validity_summary(
+    spec: SweepSpec,
+    args: argparse.Namespace,
+    results: dict[str, dict[str, object]],
+    observations: dict[str, object] | None,
+    exceptions: Sequence[str],
+) -> tuple[bool, list[str]]:
+    """Derive release validity from provenance, contention, and conclusions."""
+    issues = list(exceptions)
+    if observations is not None:
+        issues.extend(
+            issue for issue in observations["violations"]
+            if issue not in issues
+        )
+    for pair in spec.pairs:
+        if pair.null_control or "tactic_budget_ms" not in pair.metadata:
+            continue
+        status = results[pair.name].get("budget_status")
+        if status != "passed":
+            issue = f"{pair.name}: tactic budget {status}"
+            if issue not in issues:
+                issues.append(issue)
+    release_quality = (
+        not args.allow_dirty
+        and not args.allow_busy
+        and not issues
+    )
+    return release_quality, issues
 
 
 def default_output(env: dict[str, object], output_stem: str) -> Path:
@@ -756,7 +1149,11 @@ def run_cli(
     argv: Sequence[str] | None = None,
 ) -> int:
     validate_spec(spec)
-    args = parse_args(spec.description, argv)
+    args = parse_args(
+        spec.description,
+        argv,
+        default_samples=spec.required_samples or 4,
+    )
     configure_shared_host(args)
     if spec.required_samples is not None and args.samples != spec.required_samples:
         raise RuntimeError(
@@ -773,7 +1170,6 @@ def run_cli(
         raise RuntimeError(
             "invalid shared-host protocol: " + "; ".join(protocol_issues)
         )
-    warm_imports(spec, args.warm_timeout)
     env = environment()
     validity_exceptions: list[str] = []
     dirt = dirty_issues(
@@ -787,24 +1183,64 @@ def run_cli(
         dict(env["host_before"]),
         args.max_load_per_cpu,
         concurrent_is_issue=not args.shared_host,
+        load_is_issue=not args.shared_host,
     )
     if busy and not args.allow_busy:
         raise RuntimeError("busy measurement environment: " + "; ".join(busy))
     if busy:
         validity_exceptions.extend(busy)
+    warm_imports(spec, args.warm_timeout)
+    post_warm = host_issues(
+        host_state(),
+        args.max_load_per_cpu,
+        concurrent_is_issue=not args.shared_host,
+        load_is_issue=False,
+    )
+    if post_warm and not args.allow_busy:
+        raise RuntimeError(
+            "busy measurement environment after warmup: "
+            + "; ".join(post_warm)
+        )
+    validity_exceptions.extend(
+        issue for issue in post_warm if issue not in validity_exceptions
+    )
     before = source_hashes(spec, caller_file)
     pairs = list(spec.pairs)
     rows: dict[str, list[dict[str, object]]] = {
         pair.name: [] for pair in pairs
     }
+    topology = (
+        cpu_topology(args.cpu)
+        if args.shared_host and args.cpu is not None
+        else None
+    )
+    monitored_cpus: list[int] = []
+    sibling_cpus: list[int] = []
+    if topology is not None and args.cpu is not None:
+        monitored_cpus = parse_cpu_list(
+            str(topology["thread_siblings_list"])
+            if topology["thread_siblings_list"] is not None
+            else None
+        )
+        if args.cpu not in monitored_cpus:
+            monitored_cpus.append(args.cpu)
+        monitored_cpus.sort()
+        sibling_cpus = [
+            cpu for cpu in monitored_cpus if cpu != args.cpu
+        ]
+        if not sibling_cpus:
+            raise RuntimeError(
+                "shared-host CPU topology has no recorded SMT sibling"
+            )
 
     for round_index in range(args.samples):
-        for pair in rotate(pairs, round_index):
+        for slot_index, pair in enumerate(rotate(pairs, round_index)):
             state = host_state()
             issues = host_issues(
                 state,
                 args.max_load_per_cpu,
                 concurrent_is_issue=not args.shared_host,
+                load_is_issue=not args.shared_host,
             )
             if issues and not args.allow_busy:
                 raise RuntimeError("host became busy: " + "; ".join(issues))
@@ -818,21 +1254,13 @@ def run_cli(
                     f"{role} ({module.module})",
                     flush=True,
                 )
-                sample = build_sample(module.module, args.timeout)
+                sample = build_sample(
+                    module.module,
+                    args.timeout,
+                    measurement_cpu=args.cpu if args.shared_host else None,
+                    monitored_cpus=monitored_cpus,
+                )
                 validate_axioms(pair.name, role, module, sample)
-                arm_issues = host_issues(
-                    host_state(),
-                    args.max_load_per_cpu,
-                    concurrent_is_issue=not args.shared_host,
-                )
-                if arm_issues and not args.allow_busy:
-                    raise RuntimeError(
-                        "host became busy: " + "; ".join(arm_issues)
-                    )
-                validity_exceptions.extend(
-                    issue for issue in arm_issues
-                    if issue not in validity_exceptions
-                )
                 expected_affinity = [args.cpu] if args.shared_host else None
                 if (
                     expected_affinity is not None
@@ -846,6 +1274,7 @@ def run_cli(
             candidate = built["candidate"]
             rows[pair.name].append({
                 "round": round_index + 1,
+                "slot_index": slot_index,
                 "build_order": [role for role, _module in modules],
                 "host_before_pair": sampled_host_state(state),
                 "reference": reference,
@@ -873,22 +1302,40 @@ def run_cli(
         host_after,
         args.max_load_per_cpu,
         concurrent_is_issue=not args.shared_host,
+        load_is_issue=not args.shared_host,
     )
     if final_busy and not args.allow_busy:
         raise RuntimeError("host became busy: " + "; ".join(final_busy))
     validity_exceptions.extend(issue for issue in final_busy
                                if issue not in validity_exceptions)
     env["host_after"] = host_after
+    results = summarize(spec, rows)
+    observations = None
+    if args.shared_host and args.cpu is not None:
+        observations = shared_host_observations(
+            rows,
+            args.cpu,
+            sibling_cpus,
+            args.max_core_interference_ratio,
+        )
+    release_quality, validity_exceptions = validity_summary(
+        spec,
+        args,
+        results,
+        observations,
+        validity_exceptions,
+    )
 
     record = {
         "schema": spec.schema,
         "measurement": spec.measurement,
         "environment": env,
         "validity": {
-            "release_quality": not validity_exceptions,
+            "release_quality": release_quality,
             "exceptions": validity_exceptions,
+            "observed": observations,
             "host_protocol": (
-                "designated-shared-host-v1"
+                "designated-shared-host-v2"
                 if args.shared_host
                 else "quiescent-host-v1"
             ),
@@ -903,19 +1350,17 @@ def run_cli(
             "rotation": "pairs left by round index; pair orientation alternates",
             "pairing": "adjacent measured reference and candidate fresh modules",
             "max_load_per_cpu": args.max_load_per_cpu,
+            "max_core_interference_ratio":
+                args.max_core_interference_ratio,
             "allow_dirty": args.allow_dirty,
             "allow_busy": args.allow_busy,
             "shared_host": args.shared_host,
             "expected_host": args.expected_host,
             "requested_cpu": args.cpu,
             "cpu_affinity": cpu_affinity(),
-            "cpu_topology": (
-                cpu_topology(args.cpu)
-                if args.shared_host and args.cpu is not None
-                else None
-            ),
+            "cpu_topology": topology,
         },
-        "results": summarize(spec, rows),
+        "results": results,
         "source_sha256": before,
     }
     output = args.output or default_output(env, spec.output_stem)
@@ -930,4 +1375,4 @@ def run_cli(
     except ValueError:
         display = output
     print(display)
-    return 0
+    return 0 if release_quality else 2

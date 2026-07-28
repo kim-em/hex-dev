@@ -291,17 +291,28 @@ in-process clock, or contain a timing loop. A probe also cannot root any
 The default release protocol uses a quiescent host and rejects concurrent
 Lake/Lean processes. A named shared machine is also admissible through the
 explicit designated-shared-host protocol: the command preregisters the expected
-hostname and logical CPU, and the runner itself pins and verifies its complete
-process tree before warmup; the manifest begins with at
-least two same-module null controls spanning cheap and expensive build
-magnitudes; the preregistered sample count is even and at least six; and host
-load, CPU-pressure state, physical-core topology, affinity, and
-concurrent-process counts are retained around every measured arm.
-Background Lake/Lean process presence is metadata rather than an automatic
-failure in this mode, but the ordinary load-per-CPU ceiling remains binding.
-The report must leave any required conclusion unresolved when a
-magnitude-comparable null spread could change it. A diagnostic `--allow-busy`
-run remains non-release evidence and is not this protocol.
+hostname and logical CPU, pins itself before warmup, and verifies its own
+affinity after every arm; every timed descendant inherits that affinity. The
+manifest's `config.order` begins with at least two same-module null controls at
+distinct cheap and expensive build magnitudes, followed by substantive pairs.
+The preregistered sample count is even and at least six. Physical-core and SMT
+topology are recorded once; host load, frequency, CPU-pressure state, affinity,
+and concurrent Lake/Lean counts are retained around every measured arm.
+Scheduler counters on the pinned CPU and every SMT sibling are differenced
+across each arm and combined with child user/system time. Foreign work on the
+pinned CPU or excessive sibling utilisation above the preregistered ceiling
+invalidates release quality. Global load and unrelated Lake/Lean presence are
+context rather than automatic failures in this mode.
+
+The artifact selects a magnitude-comparable control for every substantive
+pair and records `resolved`, `unresolved`, or `no-comparable-control`. A fixed
+tactic budget is release-quality only when its median passes and remains below
+the budget after the comparable null spread is applied as a conservative
+resolution check; the reported timing itself is never corrected. Artifact
+`release_quality` is derived from pristine provenance, complete scheduler
+accounting, the scoped interference ceiling, and every required budget
+conclusion. A diagnostic `--allow-busy` run remains non-release evidence and
+is not this protocol.
 
 A proof-track sweep may precede its substantive pairs with one or more marked
 same-module null controls at representative build magnitudes. Each control uses

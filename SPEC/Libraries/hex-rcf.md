@@ -725,8 +725,9 @@ state, raw samples, artifact sizes, timeout cleanup, and the theorem's axiom
 set, and refuses release claims from a dirty or uncontrolled host. On the
 named shared release machine it uses the designated-shared-host protocol from
 `SPEC/benchmarking.md`: a preregistered hostname and logical CPU, runner-enforced
-affinity, six balanced rounds, both null controls, per-arm contention metadata,
-and the ordinary load ceiling.
+affinity inherited by timed children, six balanced rounds, both null controls,
+and per-arm pinned-core/SMT scheduler accounting. Global load is recorded
+context; the scoped core-interference ceiling is the release gate.
 
 The committed implementation lives under `bench/HexRCF/ProofProbe/`.
 `Support.lean` owns the fixed source and reflected cases plus the precompiled
@@ -762,7 +763,7 @@ clock. The complete external sweep is:
 
 ```bash
 python3 scripts/bench/hexrcf_proof_sweep.py --samples 6 \
-  --shared-host --expected-host chungus2 --cpu 47
+  --timeout 300 --shared-host --expected-host chungus2 --cpu 47
 ```
 
 Only `Replay` and `Tactic` print an axiom report, fixed to
@@ -912,9 +913,8 @@ pipeline is dominated by elaboration overhead, not arithmetic.
 
 These are fixed whole-tactic acceptance cases, measured as the preregistered
 paired `Tactic − Baseline` fresh-module delta on a clean named host, using
-either the quiescent-host or designated-shared-host protocol from
-`SPEC/benchmarking.md`. Raw total wall times and every pair remain in the
-artifact. They are not
+the designated-shared-host protocol from `SPEC/benchmarking.md`. Raw total wall
+times and every pair remain in the artifact. They are not
 one-parameter ladders, complexity verdicts, or substitutes for the compiled
 LeanBench cases above.
 
