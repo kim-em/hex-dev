@@ -167,11 +167,6 @@ private theorem prime_five : Hex.Nat.Prime 5 := by
 private def coeffNats (f : FpPoly 5) : List Nat :=
   f.toArray.toList.map ZMod64.toNat
 
-private def sfFactorFive
-    (factor : FpPoly 5) (multiplicity : Nat) :
-    SquareFreeFactor 5 :=
-  { factor, multiplicity }
-
 private def sfSummary
     (d : SquareFreeDecomposition 5) :
     Nat × List (List Nat × Nat) :=
@@ -223,13 +218,14 @@ private theorem linearModulus_monic :
 -- Compose (3 + 2x + x²) with (1 + x) mod (x² + 2).
 #guard
   coeffNats
-    (composeModMonic #p[3, 2, 1]
-      #p[1, 1] quadModulus quadModulus_monic)
+    (composeModMonic #p[3, 2, 1] #p[1, 1]
+      quadModulus quadModulus_monic)
       = [4, 4]
 -- The weighted product of (x + 1)² is x² + 2x + 1.
 #guard
   coeffNats
-    (weightedProduct [sfFactorFive #p[1, 1] 2])
+    (weightedProduct
+      [{ factor := #p[1, 1], multiplicity := 2 }])
       = [1, 2, 1]
 -- The empty product is the constant 1.
 #guard

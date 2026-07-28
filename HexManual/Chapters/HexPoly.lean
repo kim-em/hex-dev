@@ -76,10 +76,12 @@ primitive normalizer drops trailing zeros from a raw array, and
 
 {docstring Hex.DensePoly.ofList}
 
-For a coefficient literal, `#p[a₀, a₁, ...]` is the concise form of
-`ofCoeffs #[a₀, a₁, ...]`. Coefficients are listed in ascending degree
-order, so `aᵢ` is the coefficient of `xⁱ`. The literal uses the same
-normalization as `ofCoeffs`, including removal of trailing zeros.
+For a coefficient literal, `#p[a₀, a₁, ...]` constructs the same value
+as {name}`Hex.DensePoly.ofCoeffs` applied to `#[a₀, a₁, ...]`. The
+expected dense-polynomial type determines the coefficient type.
+Coefficients are listed in ascending degree order, so `aᵢ` is the
+coefficient of `xⁱ`. The literal uses the same normalization as
+`ofCoeffs`, including removal of trailing zeros.
 
 The remaining constructors build the common shapes directly. The zero
 polynomial is the empty array; a constant collapses to zero when its
@@ -187,7 +189,7 @@ namespace HexPolyChapterArith
 -- a = 1 + 2x + 3x²
 private def a : DensePoly Int := #p[1, 2, 3]
 -- b = x
-private def b : DensePoly Int := .monomial 1 1
+private def b : DensePoly Int := monomial 1 1
 
 -- The constructors normalize: trailing zeros are
 -- dropped, and a monomial stores its one nonzero
@@ -198,7 +200,7 @@ private def b : DensePoly Int := .monomial 1 1
 #guard a.support = [0, 1, 2]
 #guard a.coeff 2 = 3
 
--- A padded array collapses to the trimmed value.
+-- A literal with padding collapses to the trimmed value.
 #guard #p[1, 2, 3, 0, 0] = a
 -- The zero constant is the zero polynomial.
 #guard C (0 : Int) = (0 : DensePoly Int)

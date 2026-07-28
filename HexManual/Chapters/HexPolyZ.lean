@@ -274,11 +274,11 @@ integer-factorization libraries:
 
 * {ref "hex-poly"}[HexPoly] is the generic dense-polynomial library
   this one specializes. The constructors, arithmetic, and Euclidean
-  operations used throughout this chapter, including the `#p[...]`
-  literal and the rational division underlying the square-free
-  decomposition, are documented there. `HexPolyZ` only fixes the
-  coefficient type to `Int` and adds the content, congruence, and
-  Mignotte operations.
+  operations used throughout this chapter (the `#p[...]` literal,
+  {name}`Hex.DensePoly.scale`, and the rational division underlying
+  {name}`Hex.ZPoly.primitiveSquareFreeDecomposition`) are documented
+  there. `HexPolyZ` only fixes the coefficient type to `Int` and adds
+  the content, congruence, and Mignotte operations.
 * `HexPolyZMathlib` is the correspondence library: it identifies
   {name}`Hex.ZPoly` with Mathlib's `Polynomial ℤ` and proves the
   Mignotte bound as a theorem about the Mahler measure of the

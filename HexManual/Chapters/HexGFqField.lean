@@ -181,12 +181,17 @@ private def cert :
     Berlekamp.IrreducibilityCertificate where
   p := 5
   n := 4
-  powChain :=
-    #[#p[0, 1], #p[0, 3], #p[0, 4], #p[0, 2],
-      #p[0, 1]]
-  bezout :=
-    #[{ left := #p[3]
-        right := #p[0, 0, 0, 4] }]
+  powChain := #[
+    #p[0, 1],
+    #p[0, 3],
+    #p[0, 4],
+    #p[0, 2],
+    #p[0, 1]
+  ]
+  bezout := #[
+    { left := #p[3]
+      right := #p[0, 0, 0, 4] }
+  ]
 
 set_option maxRecDepth 131072 in
 set_option maxHeartbeats 8000000 in
