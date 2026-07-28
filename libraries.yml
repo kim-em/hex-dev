@@ -552,7 +552,7 @@ libraries:
   HexRCF:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
     proof_probes: [bench/HexRCF/ProofProbe]
     phase4:

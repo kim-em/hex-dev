@@ -807,7 +807,12 @@ compiled carrier-degree decision family. The paired fixed registrations are
 same warmed `rcf/decide` path and supplies a conservative steady-state
 per-call floor. At each substantive rung both sides consume the same
 precomputed `Sentence`; the FLINT side also consumes its precomputed exact
-version-1 fixture encoding. The persistent-driver request and response are
+version-1 fixture encoding. The comparator is deliberately not assigned the
+Lean target's `n^4` class: it factors the atom product over `ZZ` and asks
+FLINT/Arb for certified real-root balls, a different algorithmic class from
+the Lean carrier/certificate pipeline. Ratio divergence is therefore expected
+and informational; the headline report must quantify the observed trend. The
+persistent-driver request and response are
 
 ```text
 {"family":"rcf","op":"decide","sentence":<v1 sentence>}
@@ -845,10 +850,12 @@ therefore `no-comparable-surface-in-named-comparator` rather than assigned a
 fake ratio. The Phase-3 `local` emitter exercises related compiled workloads
 but is neither an elaboration benchmark nor Phase-4 asymptotic evidence.
 
-This contract and the pure-module extraction do not advance the phase marker.
-`HexRCF.done_through` remains `3` until every dependency, including
-HexRealRootsMathlib, has completed Phase 4 and both evidence tracks have their
-required structural wiring and scientific artifacts.
+This contract and the pure-module extraction did not by themselves advance the
+phase marker. `HexRCF.done_through` could advance from `3` to `4` only after
+every dependency, including HexRealRootsMathlib, completed Phase 4 and both
+evidence tracks had their required structural wiring and scientific artifacts.
+The committed HexRCF Phase-4 headline report records satisfaction of those
+gates and licenses the current marker value `4`.
 
 ## Conformance fixtures
 
