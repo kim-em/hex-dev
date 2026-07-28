@@ -287,11 +287,6 @@ def State.suggestionKey? (state : State Fact) (suggestionId : SuggestionId) : Op
           state.engine.limits.splitEndpointLimit then none else pure ()
       some (.split source { node := request.node, version } request.point request.reason)
 
-/-- Whether losing a retained suggestion can leave propagation unfinished. -/
-def affectsClosure : Suggestion -> Bool
-  | .retry _ | .instantiate _ => true
-  | .split _ => false
-
 /-- Permanently tombstone suggestions whose freshness guard has failed.
 Dropping a retry or instantiation also records that fixed-point completeness
 is no longer available; a stale split affects search only. -/
@@ -305,7 +300,7 @@ private def pruneSuggestions (state : State Fact) : State Fact := Id.run do
           clocks := clocks.set! index { clock with active := false }
           match state.engine.suggestions[index]? with
           | some retained =>
-              if affectsClosure retained.suggestion then incomplete := true
+              if retained.suggestion.affectsClosure then incomplete := true
           | none => pure ()
     | none => pure ()
   return { state with suggestions := clocks, incomplete }
@@ -801,8 +796,7 @@ prefix will discard.  This must run against the pre-reply engine because the
 dropped suffix is intentionally absent from the accepted snapshot. -/
 def droppedAffectsClosure (state : Engine Fact) : Outcome Fact -> Bool
   | .success _ suggestions _ =>
-      let room := state.limits.maxRetainedSuggestions - state.suggestions.size
-      (suggestions.drop room).any affectsClosure
+      (state.droppedSuggestions suggestions).any Suggestion.affectsClosure
   | .noChange _ | .inapplicable | .resourceLimit _ | .failed _ => false
 
 inductive SubmitResult (Fact : Type) where
