@@ -11,6 +11,7 @@ public import HexResultant.ExactDiv
 public import HexResultant.PseudoDivMod
 public import HexResultant.FractionPoly
 public import HexResultant.SubresultantMinor
+public import HexResultant.DeterminantAlgebra
 public import HexResultant.Subresultant
 public import HexResultant.Discriminant
 

@@ -217,6 +217,9 @@ locally from the Laplace recursion rather than importing the matrix or
 determinant libraries. The theorems `coeffMinor_map`, `poly_map`, and
 `exists_coeff` prove that coefficient embedding commutes with the construction
 and that every mapped minor coefficient has a base-ring image witness.
+The theorems `poly_scale_left` and `poly_scale_right` establish the first
+Brown--Traub transformation law: scaling an input contributes one scalar for
+each column in that input's generalized Sylvester block.
 
 The injective coefficient map extends to dense polynomials and preserves
 normalized size, leading coefficients, constants, addition, subtraction,
@@ -364,6 +367,10 @@ quotient is exact over every stated exact-division domain.
 - `HexResultant/SubresultantMinor.lean`: the local coefficient-indexed
   Sylvester determinant, generalized subresultant polynomials, and their
   fraction-embedding image certificates.
+- `HexResultant/DeterminantAlgebra.lean`: local column multilinearity,
+  adjacent-column alternation and update laws, consecutive-block scaling,
+  and the resulting left/right homogeneity laws for generalized
+  subresultants.
 - `HexResultant/Subresultant.lean`: the Brown worker,
   `subresultantChain`, `resultant`, chain termination, and degree bounds.
 - `HexResultant/Discriminant.lean`: `disc` and the algebraic
@@ -404,10 +411,10 @@ Per [SPEC/testing.md](../../SPEC/testing.md), fixtures are tiered into
     nonunit exact divisions and has resultant `-1`.
   - Small generalized-minor pins cover both Sylvester blocks, a repeated-row
     zero above index `J`, degree reversal, equal degrees, regular and defective
-    Brown-chain terms, and a bivariate `ZPoly` coefficient ring. The local
-    Laplace determinant is factorial proof infrastructure, so these checks stay
-    deliberately small rather than joining the random degree-10 resultant
-    sweep.
+    Brown-chain terms, left/right homogeneity, and a bivariate `ZPoly`
+    coefficient ring. The local Laplace determinant is factorial proof
+    infrastructure, so these checks stay deliberately small rather than
+    joining the random degree-10 resultant sweep.
   - A bivariate case over `R = ZPoly`, exercising the
     `hex-number-field` instantiation: for example
     `resultant_y (y² − t) (y − t) = t² − t`.

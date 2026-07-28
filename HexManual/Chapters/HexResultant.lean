@@ -116,6 +116,22 @@ then have base-ring image witnesses.
 
 {docstring Hex.DensePoly.Subresultant.poly_size_le}
 
+The local Laplace determinant supplies column multilinearity and
+adjacent-column alternation without importing `hex-matrix` or
+`hex-determinant`. In particular, scaling either input polynomial scales the
+generalized subresultant by one scalar for each column in that input's
+Sylvester block.
+
+{docstring Hex.SubresultantMinor.det_setCol_add}
+
+{docstring Hex.SubresultantMinor.det_eq_zero_of_adjacent_col_eq}
+
+{docstring Hex.SubresultantMinor.det_scaleRange}
+
+{docstring Hex.DensePoly.Subresultant.poly_scale_left}
+
+{docstring Hex.DensePoly.Subresultant.poly_scale_right}
+
 {docstring Hex.DensePoly.Subresultant.Fraction.poly_map}
 
 {docstring Hex.DensePoly.Subresultant.Fraction.exists_coeff}

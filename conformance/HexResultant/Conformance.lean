@@ -27,7 +27,8 @@ Covered properties:
   and leaves a remainder smaller than the divisor; reconstruction plus that
   bound is unique, and nonzero input scaling obeys the two homogeneity laws;
 - coefficient-indexed Sylvester minors reproduce pinned scalar resultants and
-  the expected first nontrivial subresultant;
+  the expected first nontrivial subresultant, and obey left/right
+  homogeneity;
 - Brown chains omit zero terms, order unequal-degree inputs, strictly decrease
   after their first two entries, obey the sharp length bound, and are stable
   under extra fuel;
@@ -254,6 +255,34 @@ example (f g : DensePoly Int) {a : Int} (ha : a ≠ 0)
   let ySqSubT : DensePoly (DensePoly Int) := ofList [0 - t, 0, one]
   let ySubT : DensePoly (DensePoly Int) := ofList [0 - t, one]
   DensePoly.Subresultant.coeffMinor 0 0 ySqSubT ySubT = t * t - t
+
+example {c : Int} (hc : c ≠ 0) (J : Nat) (f g : DensePoly Int) :
+    DensePoly.Subresultant.poly J (scale c f) g =
+      scale (c ^ (DensePoly.Subresultant.formalDegree g - J))
+        (DensePoly.Subresultant.poly J f g) :=
+  DensePoly.Subresultant.poly_scale_left hc J f g
+
+example {c : Int} (hc : c ≠ 0) (J : Nat) (f g : DensePoly Int) :
+    DensePoly.Subresultant.poly J f (scale c g) =
+      scale (c ^ (DensePoly.Subresultant.formalDegree f - J))
+        (DensePoly.Subresultant.poly J f g) :=
+  DensePoly.Subresultant.poly_scale_right hc J f g
+
+-- Each input contributes one scalar for every column in its Sylvester block.
+#guard
+  let cubic := poly [1, 1, 0, 1]
+  let quadratic := poly [-1, 0, 1]
+  let base := DensePoly.Subresultant.poly 1 cubic quadratic
+  let resultantBase := DensePoly.Subresultant.poly 0 cubic quadratic
+  let topBase := DensePoly.Subresultant.poly 2 cubic quadratic
+  DensePoly.Subresultant.poly 1 (scale (-2) cubic) quadratic = scale (-2) base &&
+    DensePoly.Subresultant.poly 1 cubic (scale 3 quadratic) = scale 9 base &&
+    DensePoly.Subresultant.poly 0 (scale (-2) cubic) quadratic =
+      scale 4 resultantBase &&
+    DensePoly.Subresultant.poly 0 cubic (scale 3 quadratic) =
+      scale 27 resultantBase &&
+    DensePoly.Subresultant.poly 2 (scale (-2) cubic) quadratic = topBase &&
+    DensePoly.Subresultant.poly 2 cubic (scale 3 quadratic) = scale 3 topBase
 
 /-! # Brown chain -/
 
