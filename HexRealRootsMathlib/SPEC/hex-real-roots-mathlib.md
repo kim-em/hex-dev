@@ -407,6 +407,17 @@ unmeasured); per-field certificates remain acceptable only below
 degree ~6. The
 elaborator caps refinement with a diagnostic for pathological widths.
 
+**Phase-4 proof evidence.** `isolate_roots` is an elaboration/proof surface,
+not a LeanBench executable. Build-only modules below
+`bench/HexRealRootsMathlib/ProofProbe/` measure natural-width Wilkinson
+products at degrees 6, 8, and 10 and width-`2^(-20)` products at degrees 2, 4,
+and 6. Each case is adjacent to the same import-only baseline, and degree 6
+also has a direct natural-to-refined pair. Baseline and natural-degree-10
+same-module controls precede the substantive pairs, and the sweep requires six
+balanced rounds. `HexRealRootsMathlibReplayProbe` supplies the reduced CI
+coverage; `HexRealRootsMathlibReplayProbeScientific` owns the larger release
+arms and remains outside routine CI.
+
 A Mathlib-free variant (same meta core, emitting a
 `RealRootIsolations` value whose conclusions are the executable
 Sturm certificates) is a possible follow-up for consumers who cannot
