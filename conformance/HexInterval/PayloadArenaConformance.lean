@@ -31,24 +31,28 @@ def action (serial : Nat) : Action :=
     inputs := [] }
 
 def generous : PayloadArena.Limits :=
-  { maxEntries := 16, maxBodyCells := 32, maxAtom := 100, maxUses := 16 }
+  { maxEntries := 16
+    maxBodyCells := 32
+    maxAtom := 100
+    maxSchema := 10
+    maxUses := 16 }
 
-def factDraft (label : Nat) (body : List Nat := [10]) : Draft :=
-  { label := payload label, role := .fact, body }
+def factDraft (label : Nat) (body : List Nat := [10]) (schema : Nat := 1) : Draft :=
+  { label := payload label, role := .fact, schema, body }
 
-def instanceDraft (label : Nat) (body : List Nat := [20]) : Draft :=
-  { label := payload label, role := .instance, body }
+def instanceDraft (label : Nat) (body : List Nat := [20]) (schema : Nat := 2) : Draft :=
+  { label := payload label, role := .instance, schema, body }
 
-def equalityDraft (label : Nat) (body : List Nat := [30]) : Draft :=
-  { label := payload label, role := .equality, body }
+def equalityDraft (label : Nat) (body : List Nat := [30]) (schema : Nat := 3) : Draft :=
+  { label := payload label, role := .equality, schema, body }
 
 def factOutcome (label : Nat) : Outcome Nat :=
   .success [{ node := node 0, fact := 7, payload := payload label }] [] {}
 
 def retainedSeed : Entry :=
-  { owner := rule
-    origin := action 9
+  { origin := action 9
     role := .fact
+    schema := 4
     body := [3] }
 
 def seeded : Arena :=
@@ -56,10 +60,10 @@ def seeded : Arena :=
 
 def seedPreserved (arena : Arena) : Bool :=
   arena.entries.size == 1 && arena.bodyCells == 1 &&
-    match arena.entry? (payload 0) with
+    match arena.entry? (payload 0) .fact with
     | some entry =>
-        entry.owner == rule && entry.origin.serial == 9 &&
-          entry.role == .fact && entry.body == [3]
+        entry.origin.key == rule && entry.origin.serial == 9 &&
+          entry.schema == 4 && entry.body == [3]
     | none => false
 
 -- Identical local labels in separate replies relocate to distinct global IDs.
@@ -70,9 +74,9 @@ def seedPreserved (arena : Arena) : Bool :=
       | .ready secondArena (.success [second] [] _) =>
           first.payload.index == 0 && second.payload.index == 1 &&
             secondArena.entries.size == 2 &&
-            (secondArena.entry? second.payload).any fun entry =>
-              entry.owner == rule && entry.origin.serial == 1 &&
-                entry.role == .fact && entry.body == [10]
+            (secondArena.entry? second.payload .fact).any fun entry =>
+              entry.origin.key == rule && entry.origin.serial == 1 &&
+                entry.schema == 1 && entry.body == [10]
       | _ => false
   | _ => false
 
@@ -113,8 +117,23 @@ def mixedRequest : InstantiationRequest :=
       | [equality] =>
           arena.entries.size == 3 && arena.bodyCells == 3 &&
             candidate.payload.index == 1 && request.payload.index == 2 &&
-            equality.payload.index == 0
+            equality.payload.index == 0 &&
+            (arena.entry? equality.payload .equality).any (fun entry =>
+              entry.schema == 3 && entry.body == [30]) &&
+            (arena.entry? candidate.payload .fact).any (fun entry =>
+              entry.schema == 1 && entry.body == [10]) &&
+            (arena.entry? request.payload .instance).any (fun entry =>
+              entry.schema == 2 && entry.body == [20])
       | _ => false
+  | _ => false
+
+-- Role-checked replay lookup cannot reinterpret a well-formed entry.
+#guard
+  match freeze generous .empty (action 0) (factOutcome 0) [factDraft 0] with
+  | .ready arena (.success [candidate] [] _) =>
+      (arena.entry? candidate.payload .fact).isSome &&
+        (arena.entry? candidate.payload .equality).isNone &&
+        (arena.rawEntry? candidate.payload).isSome
   | _ => false
 
 #guard
@@ -164,12 +183,44 @@ def mixedRequest : InstantiationRequest :=
   | _ => false
 
 #guard
+  match freeze { generous with maxSchema := 4 } seeded (action 0)
+      (factOutcome 0) [factDraft 0 [4] 5] with
+  | .resourceLimit .schema arena => seedPreserved arena
+  | _ => false
+
+#guard
   match freeze { generous with maxUses := 1 } seeded (action 0)
       (.success
         [{ node := node 0, fact := 4, payload := payload 0 },
           { node := node 1, fact := 5, payload := payload 0 }]
         [] {})
       [factDraft 0] with
+  | .resourceLimit .uses arena => seedPreserved arena
+  | _ => false
+
+-- Every suggestion constructor consumes the total-proposal budget, including
+-- retry and split suggestions which carry no proof payload.
+#guard
+  match freeze { generous with maxUses := 1 } seeded (action 0)
+      (.success [] [.retry 1, .retry 2] {} : Outcome Nat) [] with
+  | .resourceLimit .uses arena => seedPreserved arena
+  | _ => false
+
+#guard
+  match freeze { generous with maxUses := 1 } seeded (action 0)
+      (.success []
+        [.split { node := node 0, point := 0, reason := .midpoint },
+          .split { node := node 0, point := 1, reason := .midpoint }]
+        {} : Outcome Nat)
+      [] with
+  | .resourceLimit .uses arena => seedPreserved arena
+  | _ => false
+
+-- Drafts are independently bounded by `maxUses` before exact-coverage scans,
+-- even when the arena has ample entry room.
+#guard
+  match freeze { generous with maxUses := 1 } seeded (action 0)
+      (factOutcome 0) [factDraft 0, factDraft 1] with
   | .resourceLimit .uses arena => seedPreserved arena
   | _ => false
 

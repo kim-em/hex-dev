@@ -1015,18 +1015,19 @@ entering the callback, then replaces only the selected package's cache. The
 engine still authenticates the pending serial, application, fact values, and
 versions; direct registry invocation is not an authentication boundary.
 
-The current package type does not yet carry replay schemas. A production
-checked assembly API should return operation metadata, registrations, callback
-routes, configuration validation, and payload-freezing/replay schemas as one
-coherent snapshot. Whether that snapshot retains existential packages,
-compiles one dispatch function, supports hot replacement, or uses another
-lookup structure remains experimental. The present experiment exposes its
-constructors and returns a separable engine/registry pair, so its checked start
-is a conformance canary rather than the final encapsulation boundary. A
-production session should prevent accidentally pairing an engine with an
-unrelated registry; a different callback implementation under the same
-versioned rule schema remains valid only when its retained payloads replay
-under that schema.
+The current package type does not yet carry replay decoders or a schema
+registry. Arena drafts do carry an explicit numeric payload schema, but a
+production checked assembly API should return operation metadata,
+registrations, callback routes, configuration validation, and the
+payload-freezing/replay schema implementations as one coherent snapshot.
+Whether that snapshot retains existential packages, compiles one dispatch
+function, supports hot replacement, or uses another lookup structure remains
+experimental. The present experiment exposes its constructors and returns a
+separable engine/registry pair, so its checked start is a conformance canary
+rather than the final encapsulation boundary. A production session should
+prevent accidentally pairing an engine with an unrelated registry; a
+different callback implementation under the same versioned rule schema
+remains valid only when its retained payloads replay under that schema.
 
 The explicit registration and validation boundary is fixed. Discovery and
 scheduling above it remain empirical: one arm uses an incremental registry
@@ -1099,18 +1100,45 @@ alternatives to compare once the behavior is established.
    program and caller-supplied version-zero fact array rather than attempting
    to recover either from the extended program or narrowed current slots.
 
+The executable `Engine.factAt?` is the replay lookup invariant. Version zero
+of a base-program node resolves from the caller's immutable `initialFacts`;
+version zero of an appended node resolves to `FactDomain.top` at that node's
+domain; every positive version resolves only through the exact `(node,
+version)` event in `history`. It never substitutes the mutable current fact
+slot. For every valid engine state, each event's `previous`, every
+action-input version used by a rule event, and every equality-transport source
+must resolve this way; the event's own identifier resolves to its installed
+fact. The current `(node, versions[node])` lookup likewise agrees with
+`facts[node]`. These properties become checker invariants when engine fields
+are made opaque.
+
 Whether freezing is an explicit second request after the solver identifies
 the improving subset, or eager allocation before the `Outcome`, remains an
 experiment. Eager freezing has a simpler protocol but may retain payloads for
 weaker candidates; two-phase freezing adds a failure transition which must
-remain atomic. The first executable arena uses an eager but prospective
-transaction: package-local labels in the outcome are matched exactly against
-package-local drafts, checked for duplicate, missing, extra, and wrong-role
-entries, preflighted against whole-arena entry, body-cell, atom, and
-payload-use limits, relocated to fresh global identifiers, and appended to a
-new arena value. Repeated references count as work even when they share one
-draft. Candidate, instantiation, and equality roles are distinct. Failure
-returns the old arena.
+remain atomic. In an eager design, a successfully submitted reply can leave
+an unused entry when a candidate does not improve the current intersection,
+when a suggestion is dropped or later dismissed, stale, invalid, or
+structurally duplicate, or when an instantiation's proposed equality reuses an
+older edge whose payload remains authoritative. These are permitted arena
+waste, not proof dependencies. They must be measured and bounded; compacting
+only the backwards proof slice, freezing only the improving/admitted subset,
+and accepting this monotone waste are all still viable designs.
+
+The first executable arena uses an eager but prospective transaction:
+package-local labels in the outcome are matched exactly against package-local
+drafts, checked for duplicate, missing, extra, and wrong-role entries,
+preflighted against whole-arena entry, body-cell, atom, schema, and
+total-proposal limits, relocated to fresh global identifiers, and appended to
+a new arena value. The total-proposal budget charges every candidate, every
+suggestion constructor (including retry and split), and every equality nested
+under an instantiation. Repeated references count as work even when they share
+one draft. Before any quadratic label/coverage scan, the draft list is bounded
+both by the remaining arena-entry capacity and by the same trusted proposal
+limit. Entry construction and identifier assignment are one traversal, so a
+relocated identifier denotes exactly the entry appended for its local draft.
+Candidate, instantiation, and equality roles are distinct, and ordinary replay
+lookup checks the expected role. Failure returns the old arena.
 The surrounding session must commit that returned arena only if submission of
 the relocated outcome also succeeds, so this experiment does not prejudge the
 one-phase versus two-phase production choice.
@@ -1142,14 +1170,17 @@ must label its successful cost model as a versioned declared estimate rather
 than present placeholder weights as exact operation counts.
 
 The standalone arena experiment gives fact, instantiation, and equality
-`PayloadId`s checked array-index meaning and bounds both entry count and opaque
-recipe-body cells before allocation. Its body is intentionally
-schema-independent `List Nat`: package-owned decoding, schema/version lookup,
-atom encodings, byte limits, and replay are still missing. Instantiation family
-labels and custom split-reason numbers also remain untyped representation
-gaps. The next session experiment must ensure that no unrelocated package-local
-identifier can enter retained provenance and that an arena from one registry
-snapshot cannot be paired with another.
+`PayloadId`s checked array-index meaning and bounds entry count, opaque
+recipe-body cells, schemas, atoms, and total proposal work before allocation.
+Each frozen entry stores its originating action, semantic role, numeric
+payload schema, and uninterpreted `List Nat` body. It derives the rule owner
+only from `origin.key`, avoiding two stored identities which could disagree.
+Package-owned decoding and schema lookup, typed atom encodings, byte limits,
+and semantic replay are still missing. Instantiation family labels and custom
+split-reason numbers also remain untyped representation gaps. The next session
+experiment must ensure that no unrelocated package-local identifier can enter
+retained provenance and that an arena from one registry snapshot cannot be
+paired with another.
 
 ### Action kinds
 

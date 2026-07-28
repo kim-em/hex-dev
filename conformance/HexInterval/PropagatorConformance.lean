@@ -395,12 +395,28 @@ def dynamicFinal? : Option (RunResult Rank (List String) × SuggestionId) := do
         | none => false
   | none => false
 
+-- Immutable version lookup uses caller facts for base version zero, domain
+-- top for a generated node's version zero, and exact history thereafter.
+#guard
+  match dynamicAdmitted? with
+  | some (state, _, _) =>
+      state.factAt? { node := node 0, version := 0 } == some 4 &&
+        state.factAt? { node := node 1, version := 0 } == some 0 &&
+        state.factAt? { node := node 1, version := 1 } == some 4 &&
+        state.factAt? { node := node 2, version := 0 } == some 0 &&
+        state.factAt? { node := node 2, version := 1 } == none &&
+        state.factAt? { node := node 3, version := 0 } == none
+  | none => false
+
 #guard
   match dynamicFinal? with
   | some (result, _) =>
       result.stop == .saturated && result.state.facts.toList == [4, 4, 4] &&
         result.state.metrics.requests == 3 && result.state.metrics.improvements == 2 &&
-        result.state.history.size == 2
+        result.state.history.size == 2 &&
+        result.state.factAt? { node := node 2, version := 0 } == some 0 &&
+        result.state.factAt? { node := node 2, version := 1 } == some 4 &&
+        result.state.factAt? { node := node 2, version := 2 } == none
   | none => false
 
 -- Selecting the same structural extension twice allocates nothing.
@@ -959,11 +975,19 @@ def pairReuseAdmitted? : Option (Engine PairRank) := do
             edge.origin.key == pairEqualityKey && edge.origin.node == node 2 &&
               left.node == node 0 && left.previous == { node := node 0, version := 0 } &&
               right.node == node 1 && right.previous == { node := node 1, version := 0 } &&
+              result.state.factAt? left.previous == some (pair 4 0) &&
+              result.state.factAt? right.previous == some (pair 0 5) &&
+              result.state.factAt? { node := left.node, version := left.version } ==
+                some (pair 4 5) &&
+              result.state.factAt? { node := right.node, version := right.version } ==
+                some (pair 4 5) &&
               match left.cause, right.cause with
               | .transport leftEquality leftSource, .transport rightEquality rightSource =>
                   leftEquality == { index := 0 } && rightEquality == { index := 0 } &&
                     leftSource == { node := node 1, version := 0 } &&
-                    rightSource == { node := node 0, version := 0 }
+                    rightSource == { node := node 0, version := 0 } &&
+                    result.state.factAt? leftSource == some (pair 0 5) &&
+                    result.state.factAt? rightSource == some (pair 4 0)
               | _, _ => false
         | _, _, _ => false
   | none => false

@@ -963,6 +963,22 @@ def snapshot (state : Engine Fact) : Snapshot Fact :=
     versions := state.versions
     contradictory := state.contradictory }
 
+/-- Resolve one immutable fact version for replay.  Version zero comes from
+the caller's initial fact array for base nodes and from the domain top for
+search-generated nodes.  Every later version must name an exact history
+event, never the mutable current fact slot. -/
+def factAt? (state : Engine Fact) (seen : SeenVersion) : Option Fact :=
+  if seen.version == 0 then
+    if seen.node.index < state.baseProgram.nodes.size then
+      state.initialFacts[seen.node.index]?
+    else do
+      let node ← state.program.node? seen.node
+      pure (state.factDomain.top node.domain)
+  else
+    (state.history.toList.find? fun event =>
+      event.node == seen.node && event.version == seen.version).map
+        (fun event => event.fact)
+
 /-- Freeze the current bounded expression structure for one registry request. -/
 def programView (state : Engine Fact) : ProgramView :=
   { programVersion := state.programVersion

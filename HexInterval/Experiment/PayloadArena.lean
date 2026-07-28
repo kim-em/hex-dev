@@ -35,19 +35,21 @@ inductive Role where
   | equality
   deriving DecidableEq, Repr
 
-/-- One package-produced recipe.  `label` is local to this reply. -/
+/-- One package-produced recipe.  `label` is local to this reply, while
+`schema` selects the package-owned decoder for the opaque body. -/
 structure Draft where
   label : PayloadId
   role : Role
+  schema : Nat
   body : List Nat
   deriving Repr
 
-/-- One immutable replay entry.  The rule owner is copied from the originating
-action rather than trusted as a second package-supplied identity. -/
+/-- One immutable replay entry.  Its rule owner is always `origin.key`; it is
+not stored as a second field which could disagree with the action. -/
 structure Entry where
-  owner : RuleKey
   origin : Action
   role : Role
+  schema : Nat
   body : List Nat
   deriving Repr
 
@@ -64,9 +66,17 @@ namespace Arena
 def empty : Arena :=
   { entries := #[], bodyCells := 0 }
 
-/-- Exact optional lookup of a frozen recipe. -/
-def entry? (arena : Arena) (payload : PayloadId) : Option Entry :=
+/-- Exact optional lookup without checking the recipe's semantic role.  Replay
+code should ordinarily use `entry?`; this raw operation is useful to inspect
+malformed untrusted certificates. -/
+def rawEntry? (arena : Arena) (payload : PayloadId) : Option Entry :=
   arena.entries[payload.index]?
+
+/-- Exact optional lookup which rejects a payload used in the wrong semantic
+position. -/
+def entry? (arena : Arena) (payload : PayloadId) (expected : Role) : Option Entry := do
+  let entry ← arena.rawEntry? payload
+  if entry.role == expected then some entry else none
 
 end Arena
 
@@ -75,6 +85,7 @@ structure Limits where
   maxEntries : Nat
   maxBodyCells : Nat
   maxAtom : Nat
+  maxSchema : Nat
   maxUses : Nat
   deriving DecidableEq, Repr
 
@@ -91,6 +102,7 @@ inductive Resource where
   | entries
   | bodyCells
   | atom
+  | schema
   | uses
   deriving DecidableEq, Repr
 
@@ -122,8 +134,9 @@ def outcomeUses : Outcome Fact -> List Use
         suggestions.flatMap suggestionUses
   | .noChange _ | .inapplicable | .resourceLimit _ | .failed _ => []
 
-/-- Bound payload-bearing output structure before `outcomeUses` allocates its
-flat list. Repeated references are work even when they share one draft. -/
+/-- Bound the complete top-level proposal structure before `outcomeUses`
+allocates its flat payload-use list.  Repeated references are work even when
+they share one draft, and suggestions count even when they carry no payload. -/
 def consumeCandidates : Nat -> List (Candidate Fact) -> Except Resource Nat
   | remaining, [] => pure remaining
   | 0, _ :: _ => throw .uses
@@ -138,12 +151,12 @@ def consumeEqualities : Nat -> List ProposedEquality -> Except Resource Nat
 
 def consumeSuggestions : Nat -> List Suggestion -> Except Resource Nat
   | remaining, [] => pure remaining
-  | remaining, .retry _ :: suggestions
-  | remaining, .split _ :: suggestions =>
-      consumeSuggestions remaining suggestions
-  | 0, .instantiate _ :: _ => throw .uses
-  | remaining + 1, .instantiate request :: suggestions => do
-      let remaining ← consumeEqualities remaining request.equalities
+  | 0, _ :: _ => throw .uses
+  | remaining + 1, suggestion :: suggestions => do
+      let remaining ←
+        match suggestion with
+        | .retry _ | .split _ => pure remaining
+        | .instantiate request => consumeEqualities remaining request.equalities
       consumeSuggestions remaining suggestions
 
 def preflightUses (limit : Nat) : Outcome Fact -> Except Resource Unit
@@ -202,7 +215,10 @@ def consumeDrafts (maxAtom : Nat) :
       let remaining ← consumeBody maxAtom remaining draft.body
       consumeDrafts maxAtom remaining drafts
 
-/-- Check aggregate entry and cell limits before constructing any new entry. -/
+/-- Check aggregate entry, draft-work, schema, and cell limits before
+constructing any new entry.  In particular the draft list is bounded by both
+remaining arena room and `maxUses` before the quadratic exact-coverage checks
+run. -/
 def preflight (limits : Limits) (arena : Arena) (drafts : List Draft) :
     Except Resource Nat := do
   if limits.maxEntries < arena.entries.size then
@@ -210,6 +226,10 @@ def preflight (limits : Limits) (arena : Arena) (drafts : List Draft) :
   let entryRoom := limits.maxEntries - arena.entries.size
   if !listWithin entryRoom drafts then
     throw .entries
+  if !listWithin limits.maxUses drafts then
+    throw .uses
+  if drafts.any (fun draft => limits.maxSchema < draft.schema) then
+    throw .schema
   if limits.maxBodyCells < arena.bodyCells then
     throw .bodyCells
   let cellRoom := limits.maxBodyCells - arena.bodyCells
@@ -219,12 +239,6 @@ def preflight (limits : Limits) (arena : Arena) (drafts : List Draft) :
 structure Relocation where
   source : PayloadId
   global : PayloadId
-
-def relocationsFrom : Nat -> List Draft -> List Relocation
-  | _, [] => []
-  | next, draft :: drafts =>
-      { source := draft.label, global := { index := next } } ::
-        relocationsFrom (next + 1) drafts
 
 def relocateId (relocations : List Relocation) (source : PayloadId) :
     Except Invalid PayloadId :=
@@ -265,16 +279,26 @@ def relocateOutcome (relocations : List Relocation) :
   | .resourceLimit budget => pure (.resourceLimit budget)
   | .failed code => pure (.failed code)
 
-def appendEntries (arena : Arena) (origin : Action)
-    (drafts : List Draft) (addedCells : Nat) : Arena :=
-  { entries := drafts.foldl
-      (fun entries draft => entries.push
-        { owner := origin.key
-          origin
+/-- Append entries and assign their relocation identifiers in the same
+traversal, so the identifier recorded for a draft is definitionally the index
+at which that draft's entry is pushed. -/
+def appendDrafts (origin : Action) :
+    Array Entry -> List Draft -> Array Entry × List Relocation
+  | entries, [] => (entries, [])
+  | entries, draft :: drafts =>
+      let global : PayloadId := { index := entries.size }
+      let entry : Entry :=
+        { origin
           role := draft.role
-          body := draft.body })
-      arena.entries
-    bodyCells := arena.bodyCells + addedCells }
+          schema := draft.schema
+          body := draft.body }
+      let (entries, relocations) := appendDrafts origin (entries.push entry) drafts
+      (entries, { source := draft.label, global } :: relocations)
+
+def freezeDrafts (arena : Arena) (origin : Action)
+    (drafts : List Draft) (addedCells : Nat) : Arena × List Relocation :=
+  let (entries, relocations) := appendDrafts origin arena.entries drafts
+  ({ entries, bodyCells := arena.bodyCells + addedCells }, relocations)
 
 /-- Validate and freeze every reply-local payload reference in an outcome.
 
@@ -292,10 +316,11 @@ def freeze (limits : Limits) (arena : Arena) (origin : Action)
           match validate uses drafts with
           | some error => .invalid error arena
           | none =>
-              let relocations := relocationsFrom arena.entries.size drafts
+              let (prospective, relocations) :=
+                freezeDrafts arena origin drafts addedCells
               match relocateOutcome relocations outcome with
               | .error error => .invalid error arena
               | .ok outcome =>
-                  .ready (appendEntries arena origin drafts addedCells) outcome
+                  .ready prospective outcome
 
 end Hex.Interval.Experiment.PayloadArena
