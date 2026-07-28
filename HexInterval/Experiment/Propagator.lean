@@ -747,10 +747,12 @@ structure Metrics where
   equalityImprovements : Nat := 0
   deriving DecidableEq, Repr
 
-/-- Why one narrowed fact was admitted.  Equality transport is an engine
-operation and therefore does not invent a registry rule or payload. -/
-inductive FactCause where
-  | rule (action : Action) (payload : PayloadId)
+/-- Why one narrowed fact was admitted.  Rule provenance retains the proposed
+fact separately from the narrowed fact installed in the event.  Equality
+transport is an engine operation and therefore does not invent a registry rule
+or payload. -/
+inductive FactCause (Fact : Type) where
+  | rule (action : Action) (proposed : Fact) (payload : PayloadId)
   | transport (equality : EqualityId) (source : SeenVersion)
   deriving Repr
 
@@ -761,7 +763,7 @@ structure FactEvent (Fact : Type) where
   previous : SeenVersion
   fact : Fact
   version : Nat
-  cause : FactCause
+  cause : FactCause Fact
 
 /-- Canonical unordered endpoint pair for one generated equality. -/
 structure EqualityPair where
@@ -822,6 +824,11 @@ structure InstanceEvent where
 structure Engine (Fact : Type) where
   programVersion : Nat
   factDomain : FactDomain Fact
+  /-- Validated caller program before any search-time instantiation. -/
+  baseProgram : Program
+  /-- Caller-supplied version-zero facts. Replay never recovers these from the
+  mutable current fact slots. -/
+  initialFacts : Array Fact
   program : Program
   rules : Array Registration
   applications : Array Application
@@ -921,6 +928,8 @@ def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Arr
     | throw .invalidRegistrations
   pure
     { factDomain
+      baseProgram := program
+      initialFacts := facts
       program
       programVersion := 0
       rules
@@ -1378,7 +1387,7 @@ def installImprovement (action : Action) (candidate : Candidate Fact)
             previous
             fact
             version
-            cause := .rule action candidate.payload }
+            cause := .rule action candidate.fact candidate.payload }
         contradictory := state.contradictory || contradiction
         metrics :=
           { state.metrics with

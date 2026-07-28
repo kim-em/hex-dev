@@ -386,7 +386,8 @@ def dynamicFinal? : Option (RunResult Rank (List String) × SuggestionId) := do
 #guard
   match dynamicAdmitted? with
   | some (state, _, _) =>
-      state.program.nodes.size == 3 && state.programVersion == 1 &&
+      state.baseProgram.nodes.size == 2 && state.initialFacts.toList == [4, 0] &&
+        state.program.nodes.size == 3 && state.programVersion == 1 &&
         state.generations.toList == [0, 0, 1] && state.applications.size == 3 &&
         state.metrics.admittedInstances == 1 && state.metrics.generatedNodes == 1 &&
         match state.instanceHistory[0]? with
@@ -825,6 +826,25 @@ def pairFinal? (limits : Limits := generous) : Option (RunResult PairRank Nat) :
   let state <- pairAdmitted? limits
   pure (drive pairEqualityInvoke 8 state 1)
 
+/-- Submit a proposal whose intersection differs from both the old fact and
+the proposal, exposing the distinction needed by proof replay. -/
+def intersectedProposal? : Option (Engine PairRank) := do
+  let program : Program :=
+    { operations, nodes := #[sourceNode, unaryNode 0] }
+  let state <- match Engine.start pairDomain program #[copyRule]
+      #[pair 0 0, pair 4 0] generous with
+    | .ok state => some state
+    | .error _ => none
+  match state.poll with
+  | .request request awaiting =>
+      let proposed := pair 0 5
+      let candidate : Candidate PairRank :=
+        { node := node 1, fact := proposed, payload := { index := 149 } }
+      match awaiting.submit (request.action.reply (.success [candidate] [] {})) with
+      | .accepted state => some state
+      | _ => none
+  | _ => none
+
 /-- A second instance adds one node while explicitly reusing the equality
 created by the first instance. -/
 def pairReuseAdmitted? : Option (Engine PairRank) := do
@@ -948,6 +968,25 @@ def pairReuseAdmitted? : Option (Engine PairRank) := do
         | _, _, _ => false
   | none => false
 
+-- Replay retains the callback's proposal, not merely the fact produced by
+-- intersecting that proposal with the previously installed fact.
+#guard
+  match intersectedProposal? with
+  | some state =>
+      state.baseProgram.nodes.size == 2 &&
+        state.initialFacts.toList == [pair 0 0, pair 4 0] &&
+        state.facts.toList == [pair 0 0, pair 4 5] &&
+        match state.history[0]? with
+        | some event =>
+            event.fact == pair 4 5 &&
+              match event.cause with
+              | .rule action proposed payload =>
+                  action.key == copyKey && proposed == pair 0 5 &&
+                    payload == { index := 149 }
+              | _ => false
+        | none => false
+  | none => false
+
 -- Both endpoint updates roll back when their combined history budget is short.
 #guard
   match pairFinal? { generous with maxAcceptedFacts := 1 } with
@@ -1051,7 +1090,7 @@ def alternateEqualityFinal? : Option (RunResult Rank (List String)) := do
         | some transported, some propagated =>
             transported.node == node 2 && propagated.node == node 3 &&
               match transported.cause, propagated.cause with
-              | .transport equality source, .rule action _ =>
+              | .transport equality source, .rule action _ _ =>
                   equality == { index := 0 } && source == { node := node 1, version := 0 } &&
                     action.key == nextCopyKey &&
                       action.inputs == [{ node := node 2, version := 1 }]

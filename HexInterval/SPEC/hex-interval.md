@@ -828,13 +828,16 @@ structure FactRef where
   node    : NodeId
   version : Nat
 
-inductive FactCause
-  | rule (action : Action) (previous : FactRef) (payload : PayloadId)
-  | transport (equality : EqualityId) (source previous : FactRef)
+inductive FactCause (Fact : Type)
+  | rule      (action : Action) (proposed : Fact) (payload : PayloadId)
+  | transport (equality : EqualityId) (source : FactRef)
 ```
 
-The preceding target fact is required in both cases because the recorded
-result may be the intersection of that fact with a newly justified candidate.
+The surrounding fact event retains the preceding target fact and the installed
+result. A rule cause additionally retains the candidate exactly as proposed:
+the installed result may be the intersection of that candidate with the
+preceding fact, and neither value determines the other in a general partial
+fact domain.
 For transport, replay resolves the source fact, checks equality direction and
 scope, reconstructs the equality proof, transports the exact source fact, and
 then validates its intersection with the preceding target fact.
@@ -1084,19 +1087,33 @@ alternatives to compare once the behavior is established.
    Only companion replay of the retained payload can do that.
 6. In the production replay protocol, every value needed to justify an
    accepted fact is frozen into an immutable per-run payload arena, and the
-   retained `PayloadId` points there rather than into a mutable cache. The
-   current canary has only stable recipe identifiers; it does not yet implement
-   this arena, so it is not evidence that payload freezing is solved.
+   retained `PayloadId` points there rather than into a mutable cache. A
+   separate arena experiment now validates and relocates a complete reply
+   prospectively; it is not yet joined to package invocation and engine
+   admission in one opaque session.
 7. The solver records the snapshot, concrete application, anchor, action kind,
-   effort, input versions, target's preceding fact version, target, and frozen
-   payload in provenance. The preceding target fact is an explicit dependency
-   of intersection even when the rule did not declare that target as an input.
+   effort, input versions, target's preceding fact version, proposed fact,
+   installed fact, and frozen payload in provenance. The preceding target fact
+   is an explicit dependency of intersection even when the rule did not
+   declare that target as an input. The engine also retains the immutable base
+   program and caller-supplied version-zero fact array rather than attempting
+   to recover either from the extended program or narrowed current slots.
 
 Whether freezing is an explicit second request after the solver identifies
 the improving subset, or eager allocation before the `Outcome`, remains an
 experiment. Eager freezing has a simpler protocol but may retain payloads for
 weaker candidates; two-phase freezing adds a failure transition which must
-remain atomic.
+remain atomic. The first executable arena uses an eager but prospective
+transaction: package-local labels in the outcome are matched exactly against
+package-local drafts, checked for duplicate, missing, extra, and wrong-role
+entries, preflighted against whole-arena entry, body-cell, atom, and
+payload-use limits, relocated to fresh global identifiers, and appended to a
+new arena value. Repeated references count as work even when they share one
+draft. Candidate, instantiation, and equality roles are distinct. Failure
+returns the old arena.
+The surrounding session must commit that returned arena only if submission of
+the relocated outcome also succeeds, so this experiment does not prejudge the
+one-phase versus two-phase production choice.
 
 An invalid rule outcome may mislead search, but it cannot produce a theorem.
 The companion reconstructs every retained fact from the rule's soundness
@@ -1124,12 +1141,15 @@ policy learning account for unsuccessful probes. Until measured, a registry
 must label its successful cost model as a versioned declared estimate rather
 than present placeholder weights as exact operation counts.
 
-The current recipe and family identifiers are not yet arena indices with a
-checked cardinality bound. `PayloadId.index`, instantiation family labels,
-equality payloads, and custom split-reason numbers therefore remain an explicit
-representation gap. The production payload arena must bound allocation and
-identifier encoding before any of these values enter retained provenance; the
-presence of small named constants in the canary does not solve that problem.
+The standalone arena experiment gives fact, instantiation, and equality
+`PayloadId`s checked array-index meaning and bounds both entry count and opaque
+recipe-body cells before allocation. Its body is intentionally
+schema-independent `List Nat`: package-owned decoding, schema/version lookup,
+atom encodings, byte limits, and replay are still missing. Instantiation family
+labels and custom split-reason numbers also remain untyped representation
+gaps. The next session experiment must ensure that no unrelocated package-local
+identifier can enter retained provenance and that an arena from one registry
+snapshot cannot be paired with another.
 
 ### Action kinds
 
