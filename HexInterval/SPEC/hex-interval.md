@@ -1253,8 +1253,13 @@ One `balancedV1` candidate uses a versioned priority queue over these offers.
 Changed facts insert or invalidate only affected offers; stale entries are
 discarded lazily when popped. Policies intended for diagnostics may use a
 simpler complete scan, but their complexity is reported honestly. An empty
-frontier means saturation. A `PolicyStep.stop` for a nonempty frontier is
-reported as `unknown`, not saturation.
+frontier means saturation only when no narrowing-capable work was dismissed.
+Declining an invocation, equality contractor, retry, or instantiation makes
+the run incomplete; declining a split does not, because it changes proof
+search rather than the propagation closure of the current scope. An empty
+frontier after an incomplete dismissal is reported as `unknown`. A
+`PolicyStep.stop` for a nonempty frontier is likewise reported as `unknown`,
+not saturation.
 
 The shown first interface supplies the authoritative bounded scan frontier in
 each `PolicyView`; transition events let the policy update historical state

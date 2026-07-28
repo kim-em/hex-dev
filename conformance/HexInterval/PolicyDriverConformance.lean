@@ -86,6 +86,24 @@ def run? (fuel : Nat) (commands : List Command)
   let state <- state?
   some (drive controller invokeLogged fuel state [] commands)
 
+def contradictionDomain : FactDomain Rank where
+  top _ := 0
+  narrow _ current candidate :=
+    if current < candidate then .contradiction candidate else .noChange
+
+def contradictionInitial? : Option (State Rank) := do
+  let engine <- match Engine.start contradictionDomain program #[fRule, gRule] #[0, 0]
+      engineLimits with
+    | .ok engine => some engine
+    | .error _ => none
+  some (State.start engine policyLimits)
+
+def invokeUndeclared (calls : Calls) (request : RuleRequest Rank) :
+    Outcome Rank × Calls :=
+  (.success
+      [{ node := node 0, fact := 1, payload := { index := request.action.serial } }]
+      [] {}, calls ++ [(request.action.key.name, request.action.effort)])
+
 /-! ## Exact event predicates -/
 
 def exactSelection (selection : Selection) (serial programVersion : Nat)
@@ -210,7 +228,8 @@ def instantiationFirstCommands : List Command :=
 #guard
   match run? 7 retryFirstCommands with
   | some result =>
-      exactRetryFirstEvents result.events && result.state.engine.facts.toList == [0, 4, 4] &&
+      result.policy == controller.key &&
+        exactRetryFirstEvents result.events && result.state.engine.facts.toList == [0, 4, 4] &&
         result.cache == [(fKey.name, 0), (fKey.name, 1), (gKey.name, 0)] &&
         result.policyState.isEmpty && result.state.metrics.decisions == 7 &&
         match result.stop with
@@ -234,6 +253,11 @@ def instantiationFirstCommands : List Command :=
 
 def saturationCommands : List Command :=
   retryFirstCommands.dropLast ++ [.dismiss (.suggestion (suggestion 2))]
+
+def declineNarrowingCommands : List Command :=
+  [.dismiss (.suggestion (suggestion 0)),
+    .dismiss (.suggestion (suggestion 1)),
+    .dismiss (.suggestion (suggestion 2))]
 
 def exactSaturationPrefix (events : Array (Event Rank)) : Bool :=
   match events.toList with
@@ -270,6 +294,56 @@ def exactSaturationPrefix (events : Array (Event Rank)) : Bool :=
         | some .driverFuel, .driverFuel => true
         | _, _ => false
   | none => false
+
+-- A split is optional, but retries and instantiations can still improve the
+-- current scope. Declining all three empties the frontier without proving a
+-- propagation fixed point.
+#guard
+  match run? 3 declineNarrowingCommands afterInitial? with
+  | some result =>
+      result.state.incomplete && result.policyState.isEmpty &&
+        result.state.metrics.decisions == 4 &&
+        match result.events.toList, result.stop with
+        | [.dismissal retry false, .dismissal instanceSelection false,
+            .dismissal split false, .incomplete],
+            .unknown .incomplete =>
+              exactSelection retry 1 0 (.suggestion (suggestion 0)) &&
+                exactSelection instanceSelection 2 0 (.suggestion (suggestion 1)) &&
+                exactSelection split 3 0 (.suggestion (suggestion 2))
+        | _, _ => false
+  | none => false
+
+-- Contradiction reached on the final permitted transition is the answer, not
+-- driver-fuel exhaustion.
+#guard
+  match run? 1 [.select (.application (application 0))] contradictionInitial? with
+  | some result =>
+      result.state.engine.contradictory && result.state.engine.facts.toList == [0, 1] &&
+        match result.events.toList, result.stop with
+        | [.rule selection observation, .contradiction], .contradiction =>
+            exactInvokeSelection selection 0 0 (.application (application 0))
+                observation.invocation &&
+              observation.outcome == .success && observation.contradiction &&
+              oneChange observation.changes (node 1) 0 1 0 1
+        | _, _ => false
+  | none => false
+
+-- An arbitrary registry cannot write outside the selected registration. The
+-- rejection retains the exact invocation identity derived by the engine.
+#guard
+  match initial? with
+  | none => false
+  | some state =>
+      let result := drive controller invokeUndeclared 1 state []
+        [.select (.application (application 0))]
+      result.cache == [(fKey.name, 0)] && result.state.engine.pending.isNone &&
+        match result.events.toList, result.stop with
+        | [.replyRejected selection invocation (.undeclaredWrite target)],
+            .invalidReply (.undeclaredWrite stoppedTarget) =>
+              target == node 0 && stoppedTarget == node 0 &&
+                exactInvokeSelection selection 0 0 (.application (application 0))
+                  invocation
+        | _, _ => false
 
 #guard
   match run? 1 [.stop] with

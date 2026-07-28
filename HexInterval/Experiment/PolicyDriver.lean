@@ -104,6 +104,7 @@ inductive Stop (Fact : Type)
 event stream delivered to the policy. -/
 structure Result (Fact Cache PolicyState : Type) where
   state : State Fact
+  policy : PolicyKey
   cache : Cache
   policyState : PolicyState
   events : Array (Event Fact)
@@ -119,7 +120,7 @@ def finish (controller : Controller Fact PolicyState) (event : Event Fact)
     (policyState : PolicyState) (events : Array (Event Fact)) :
     Result Fact Cache PolicyState :=
   let (policyState, events) := emit controller event policyState events
-  { state, cache, policyState, events, stop }
+  { state, policy := controller.key, cache, policyState, events, stop }
 
 def requiredOffer : OfferId -> Bool
   | .application _ | .equality _ => true
@@ -273,6 +274,7 @@ def driveFrom (controller : Controller Fact PolicyState)
                             (.dismissal selection required) next events
                           if required then
                             { state := afterDismissal
+                              policy := controller.key
                               cache
                               policyState := next
                               events

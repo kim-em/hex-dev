@@ -717,12 +717,14 @@ opaque State.select (state : State Fact) (selection : Selection) : SelectResult 
       | .suggestion suggestion, key => selectSuggestion state suggestion key
       | _, _ => reject state .wrongKey
 
-/-- Dismissing ordinary propagation work makes the run incomplete; dismissing
-a suggestion merely declines one optional search action. -/
+/-- Dismissing ordinary propagation work, a retry, or an instantiation makes
+the run incomplete. A split is the only suggestion whose dismissal preserves
+fixed-point completeness: it changes proof search, not the propagation
+closure of the current scope. -/
 opaque State.dismiss (state : State Fact) (selection : Selection) : SelectResult Fact :=
   match state.validate selection with
   | .error reason => reject state reason
-  | .ok _ =>
+  | .ok offer =>
       let next := match selection.id with
         | .application application =>
             let engine :=
@@ -734,7 +736,10 @@ opaque State.dismiss (state : State Fact) (selection : Selection) : SelectResult
                 equalityQueued := state.engine.equalityQueued.set! equality.index false }
             { advanceState (chargeDecision state .dismissal) engine with incomplete := true }
         | .suggestion suggestion =>
-            chargeDecision (consumeSuggestion state suggestion) .dismissal
+            let next := chargeDecision (consumeSuggestion state suggestion) .dismissal
+            match offer.key with
+            | .retry _ _ | .instantiate _ _ => { next with incomplete := true }
+            | .split _ _ _ _ | .invoke _ | .equality _ => next
       .completed .dismissed next
 
 /-! ## Exact rule observations -/
