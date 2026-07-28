@@ -430,7 +430,9 @@ python3 scripts/bench/real_roots_mathlib_sweep.py --samples 6 \
 ```
 
 The runner enforces the designated-shared-host contract in
-`SPEC/benchmarking.md`; `--allow-busy` remains diagnostic-only. Executable
+`SPEC/benchmarking.md`, including bounded retries of complete rejected pairs
+after a bounded quiet-core preflight and a single aggregate pinned-core/SMT
+interference ceiling; `--allow-busy` remains diagnostic-only. Executable
 isolation arithmetic belongs to the existing Mathlib-free `HexRealRoots`
 benchmark. The bridge declarations have no separable compiled runtime kernel.
 For the proof-emitting elaborator there is

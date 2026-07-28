@@ -304,14 +304,34 @@ time-weighted mean frequency; idle snapshots before and after the build are
 context only.
 Scheduler counters on the pinned CPU and every SMT sibling are differenced
 across each arm and combined with child user/system time and the harness's own
-CPU time inside that counter window. Foreign work on the
-pinned CPU or excessive sibling utilisation above the preregistered ratio or
-three scheduler ticks invalidates release quality. The effective quantized
-ceiling is recorded rather than represented as the nominal ratio. Child CPU
-time materially above the pinned CPU's busy time is an affinity/accounting
-failure. Missing frequency residency or a spread of arm means above the
-preregistered band also invalidates release quality. Global load and unrelated
-Lake/Lean presence are context rather than automatic failures in this mode.
+CPU time inside that counter window. The pinned CPU's separately reported
+IRQ/softirq ticks are retained but excluded from the residual attributed to a
+foreign process; otherwise ordinary interrupt handling is systematically
+misclassified as another workload. The raw residual, interrupt time, and
+signed non-interrupt residual are all retained; child CPU time materially above
+the pinned CPU's non-interrupt busy time is an affinity/accounting failure.
+The positive foreign residual on the pinned CPU plus busy time on every SMT
+sibling forms one aggregate interference quantity. Exceeding the
+preregistered ratio or three scheduler ticks rejects the complete pair
+attempt.
+
+A rejected pair attempt is retained with both arms, their fixed orientation,
+and all counters. The runner then rebuilds both arms in the same order, up to
+eight retries; it never retry-warms one arm in isolation. Before each attempt,
+the runner waits up to five minutes for a two-second physical-core observation
+with at most two non-interrupt busy ticks on the pinned CPU and two busy ticks
+on each sibling. This preflight avoids spending the finite build-retry budget
+inside a sustained burst; every rejected preflight window and its counters are
+retained, and the unchanged per-arm admission gate remains authoritative.
+Only a wholly clean, adjacent pair attempt enters the timing sample. Exhausting
+the build-retry bound or the preflight wait emits an explicit partial artifact,
+records every rejected attempt or window, and never places a contaminated arm
+in results, medians, or budget conclusions. The effective quantized ceiling,
+retry count, and preflight wait are recorded rather than represented as the
+nominal ratio. Missing frequency residency or a spread of admitted arm means
+above the preregistered band also invalidates release quality. Global load and
+unrelated Lake/Lean presence are context rather than automatic failures in this
+mode.
 
 The artifact selects a magnitude-comparable control for every substantive
 pair and records `resolved`, `unresolved`, or `no-comparable-control`. It
