@@ -16,6 +16,7 @@ public import HexRCF.SturmBuilderTests
 public import HexRCF.CarrierCheck
 public import HexRCF.Carrier
 public import HexRCF.CarrierTests
+public import HexRCF.IsolationCheck
 public import HexRCF.Isolations
 public import HexRCF.IsolationsTests
 public import HexRCF.Separation
