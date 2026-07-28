@@ -226,7 +226,7 @@ tag := "hex-rcf-reflected-api"
 Most users only need the `rcf` tactic. Programs that construct or inspect
 sentences directly use the reflected language below. A comparison applies to
 one integer polynomial, formulas combine comparisons, and a sentence adds the
-single supported quantifier.
+one quantifier supported by the decision procedure.
 
 {docstring Hex.RCF.Cmp}
 
@@ -235,6 +235,8 @@ single supported quantifier.
 {docstring Hex.RCF.Formula}
 
 {docstring Hex.RCF.Sentence}
+
+{docstring Hex.RCF.Sentence.toProp}
 
 Coefficient arrays use ascending order. This direct construction represents
 `∀ x : ℝ, x² + 1 > 0` and sends it through the same compiled decision
@@ -252,31 +254,51 @@ private def positiveQuadratic : Sentence :=
 #guard Hex.RCF.decide positiveQuadratic == some true
 ```
 
-For clients that need the evidence as well as the verdict, `build?` returns a
-certificate retained with its replay result:
+Bounded sentences use Lean's core `Dyadic` endpoints and the half-open
+interval `(a, b]`. This sentence represents
+`∀ x ∈ Set.Ioc (0 : ℝ) 1, x ≥ 0`:
+
+```lean
+open Hex.RCF
+
+private def nonnegativeOnUnit : Sentence :=
+  .forallIoc (Dyadic.ofInt 0) (Dyadic.ofInt 1)
+    (.atom {
+      p := Hex.DensePoly.ofCoeffs #[0, 1]
+      cmp := .ge
+    })
+
+#guard Hex.RCF.decide nonnegativeOnUnit == some true
+```
+
+For clients that need the evidence as well as the verdict, `build?` returns
+the certificate together with its replay verdict:
+
+{docstring Hex.RCF.build?}
 
 {docstring Hex.RCF.BuildResult}
 
 ```lean
 open Hex.RCF
 
-example (result : BuildResult)
-    (h : build? positiveQuadratic = some result) :
-    result.certificate.replay? positiveQuadratic =
+example (s : Sentence) (result : BuildResult)
+    (h : build? s = some result) :
+    result.certificate.replay? s =
       some result.verdict :=
   replay_build h
 ```
 
-`none` means certificate construction or replay failed. It is distinct from a
-successful result whose `verdict` is `false`.
+`build? s = none` means certificate construction or replay failed. It is
+distinct from a successful result whose `verdict` is `false`.
 
 # Certificates and the trust boundary
 %%%
 tag := "hex-rcf-trust"
 %%%
 
-The four certificate shapes correspond to empty bounded domains, constant
-formulas, root-free carriers, and positive-root cell decompositions:
+The four certificate shapes correspond to empty bounded domains, formulas
+with no nonconstant atom polynomial, root-free carriers, and positive-root
+cell decompositions:
 
 {docstring Hex.RCF.Certificate}
 
@@ -317,6 +339,9 @@ certificate. Advanced clients can use {name}`Hex.RCF.build?` to retain the
 certificate and its diagnostic or proof-producing verdict. A successfully
 checked false sentence produces `some false`. Neither `check_sound` nor the
 tactic turns `some false` into a proof of a negation.
+
+A `none` from {name}`Hex.RCF.decide` means the compiled path did not produce a
+checker-accepted certificate. It does not mean that the sentence is false.
 
 The kernel replays polynomial identities, signs, root counts, endpoint
 comparisons, and Boolean folds on literal data. It does not repeat root
