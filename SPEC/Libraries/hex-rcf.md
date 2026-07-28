@@ -646,7 +646,8 @@ free to change.
 - `HexRCF/Soundness.lean`: strict-fold reflection, quantified cell lifting,
   the four replay factors, and `check_sound`.
 - `HexRCF/Reify.lean`: `Qq`/`MetaM` reification, normalisation,
-  fall-through messages.
+  fall-through messages; `HexRCF/ReifyTests.lean`: checked tactic examples,
+  false-sentence diagnostics, and out-of-fragment rejection tests.
 - `HexRCF/Tactic.lean`: the `rcf` front end.
 - `conformance/HexRCF/{Conformance,EmitFixtures}.lean`: conformance
   in the shared sub-project.

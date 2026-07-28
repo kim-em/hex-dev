@@ -7,7 +7,8 @@
 - Removed all twelve regression-test imports from the public `HexRCF` umbrella.
 - Added the twelve regression modules to the dedicated `HexReleaseTests` Lake
   target so they remain build-checked without being re-exported to consumers.
-- Documented the public/test boundary in the HexRCF SPEC.
+- Documented the public/test boundary and the previously omitted
+  `ReifyTests.lean` module in the HexRCF SPEC.
 - Built `HexRCF` and the complete `HexReleaseTests` target successfully.
 
 ## Current frontier
