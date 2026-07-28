@@ -16,8 +16,11 @@ This module is the Lean-side companion to
 §"Process call", FLINT comparators with non-negligible per-call
 overhead are wired as a persistent subprocess: the driver loops on
 stdin (one JSON request per line, see the driver's docstring for the
-framing protocol), and the bench harness reuses one driver process
-across every measured call inside a single
+framing protocol). LeanBench starts a fresh child for every outer
+fixed-benchmark warmup or repeat. Inside that child, a
+`warmupFirstIter` call starts one driver before timing and the
+auto-tuned inner-repeat batch reuses it. The process is therefore
+persistent within a child batch, not across the whole
 `lake exe hexfoo_bench run` invocation.
 
 This module owns:
@@ -26,7 +29,7 @@ This module owns:
   `IO.Process.Child` plus its persistent stdin handle (so the
   process is not reaped while the bench process holds a reference).
 * `flintDriverRef` — module-level `IO.Ref` caching the running
-  driver across calls inside one bench process.
+  driver across calls inside one fixed-benchmark child process.
 * `runRequest`, `runOp` — high-level helpers that build a JSON
   request, send it through the driver, parse the reply, and surface
   driver-side errors as `IO.userError`. On stream errors the cached
@@ -36,7 +39,7 @@ This module owns:
 ## Per-library wiring
 
 Each consuming library (HexPoly, HexPolyZ, HexHensel, HexMatrix,
-HexBerlekamp, HexGFqRing) calls `Hex.BenchOracle.Flint.runOp` from
+HexBerlekamp, HexGFqRing, HexRCF) calls `Hex.BenchOracle.Flint.runOp` from
 its `Bench.lean` and parses the returned `Json` per its family's
 result schema. Example (sketch — actual wiring lands in the
 per-library HOs, HO-21..HO-26)::

@@ -382,11 +382,14 @@ Two integration patterns:
   - **Persistent-subprocess is the preferred shape when overhead is
     non-negligible.** Wrap the comparator in a driver that loops on
     stdin (one problem per request, length- or delimiter-framed)
-    and emits answers on stdout. The bench harness spawns the
-    driver once per `lake exe hexfoo_bench run` invocation and
-    reuses the file descriptors across calls, amortising one process
-    startup across all comparator calls in that registration.
-    Document the protocol in the bench module docstring.
+    and emits answers on stdout. For a fixed benchmark, the harness
+    spawns one Lean child per outer warmup or repeat. Configure
+    `warmupFirstIter` so that each child starts its driver before the
+    timed region, then reuses the file descriptors across the
+    auto-tuned inner-repeat batch. This amortises one driver startup
+    across the measured calls in that child; driver state is not
+    shared across outer repeats. Document the protocol and lifetime
+    in the bench module docstring.
   - **Per-call process spawn is acceptable only as a last resort.**
     FFI is preferred when feasible; persistent-subprocess is the
     fallback when FFI isn't viable. Per-call process spawn (the

@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexRCF.BenchHash
+import Hex.BenchOracle.Flint
 import LeanBench
 
 /-!
@@ -14,6 +15,24 @@ certificate-replay pipeline.
 All fixture construction is hoisted through `with prep := ...`. In particular,
 the replay targets time only `Certificate.replay?` on already accepted `.cells`
 certificates; they never rebuild witnesses in the timed region.
+
+The informational python-flint comparator covers only the compiled
+carrier-degree decision family at `n = 16, 20, 24, 28, 32`. Both sides consume
+the same precomputed reflected sentence; FLINT receives its precomputed
+version-1 JSON encoding through the shared persistent driver protocol:
+
+```text
+{"family":"rcf","op":"decide","sentence":<v1 sentence>}
+  -> {"ok":true,"result":<bool>}
+```
+
+Every outer fixed-benchmark warmup or repeat runs in a fresh Lean child. The
+FLINT registration uses `warmupFirstIter`, so that child starts one Python
+process before timing and reuses it for its auto-tuned inner-repeat batch.
+Scientific execution and ratio reporting are scheduled-only and require
+`python3` with `python-flint`; routine `verify` still exercises one semantic
+smoke call for every fixed registration. This comparator is not
+proof-producing and supplies no tactic/elaboration or kernel-replay ratio.
 -/
 
 namespace Hex.RCFBench
@@ -46,6 +65,115 @@ def prepDecisionCarrierDegree (n : Nat) : Sentence :=
 
 def runDecisionCarrierDegree (sentence : Sentence) : Option Bool :=
   Hex.RCF.decide sentence
+
+/-! ## Informational python-flint decision comparator -/
+
+private def cmpJson : Cmp → Lean.Json
+  | .lt => .str "lt"
+  | .le => .str "le"
+  | .eq => .str "eq"
+  | .ge => .str "ge"
+  | .gt => .str "gt"
+  | .ne => .str "ne"
+
+private def formulaJson : Formula → Lean.Json
+  | .atom atom => .mkObj [
+      ("tag", .str "atom"),
+      ("coeffs", Hex.BenchOracle.Flint.intsToJson atom.p.toArray.toList),
+      ("cmp", cmpJson atom.cmp)]
+  | .tt => .mkObj [("tag", .str "tt")]
+  | .ff => .mkObj [("tag", .str "ff")]
+  | .not formula => .mkObj [
+      ("tag", .str "not"),
+      ("arg", formulaJson formula)]
+  | .and left right => .mkObj [
+      ("tag", .str "and"),
+      ("left", formulaJson left),
+      ("right", formulaJson right)]
+  | .or left right => .mkObj [
+      ("tag", .str "or"),
+      ("left", formulaJson left),
+      ("right", formulaJson right)]
+  | .imp left right => .mkObj [
+      ("tag", .str "imp"),
+      ("left", formulaJson left),
+      ("right", formulaJson right)]
+
+private def dyadicJson : Dyadic → Lean.Json
+  | .zero => Hex.BenchOracle.Flint.intsToJson [0, 0]
+  | .ofOdd numerator exponent _ =>
+      Hex.BenchOracle.Flint.intsToJson [numerator, exponent]
+
+private def boundsJson (lower upper : Dyadic) : Lean.Json :=
+  .mkObj [("lower", dyadicJson lower), ("upper", dyadicJson upper)]
+
+private def sentenceJson : Sentence → Lean.Json
+  | .forallReal formula => .mkObj [
+      ("quantifier", .str "forall_real"),
+      ("bounds", .null),
+      ("formula", formulaJson formula)]
+  | .existsReal formula => .mkObj [
+      ("quantifier", .str "exists_real"),
+      ("bounds", .null),
+      ("formula", formulaJson formula)]
+  | .forallIoc lower upper formula => .mkObj [
+      ("quantifier", .str "forall_ioc"),
+      ("bounds", boundsJson lower upper),
+      ("formula", formulaJson formula)]
+  | .existsIoc lower upper formula => .mkObj [
+      ("quantifier", .str "exists_ioc"),
+      ("bounds", boundsJson lower upper),
+      ("formula", formulaJson formula)]
+
+private structure DecisionInput where
+  sentence : Sentence
+  json : Lean.Json
+
+private def prepDecisionInput (n : Nat) : DecisionInput :=
+  let sentence := prepDecisionCarrierDegree n
+  { sentence, json := sentenceJson sentence }
+
+/-- The five Sentence/JSON pairs are allocated once at module initialization.
+The timed wrappers perform only the same indexed reference read before entering
+their respective decision engines. -/
+private initialize decisionInputs : IO.Ref (Array DecisionInput) ←
+  IO.mkRef <| #[16, 20, 24, 28, 32].map prepDecisionInput
+
+private def decisionInput (index : Nat) : IO DecisionInput := do
+  let inputs ← decisionInputs.get
+  match inputs[index]? with
+  | some input => return input
+  | none => throw <| IO.userError s!"HexRCF decision comparator: missing input {index}"
+
+private def runLeanDecision (input : DecisionInput) : IO Bool :=
+  match runDecisionCarrierDegree input.sentence with
+  | some value => return value
+  | none => throw <| IO.userError "HexRCF decision comparator: Lean builder failed"
+
+private def runFlintDecision (input : DecisionInput) : IO Bool := do
+  let result ← Hex.BenchOracle.Flint.runOp "rcf" "decide"
+    #[("sentence", input.json)]
+  match result.getBool? with
+  | Except.ok value => return value
+  | Except.error message =>
+      throw <| IO.userError s!"HexRCF decision comparator: FLINT result was not Boolean: {message}"
+
+private def runLeanDecisionAt (index : Nat) : Unit → IO Bool := fun _ => do
+  runLeanDecision (← decisionInput index)
+
+private def runFlintDecisionAt (index : Nat) : Unit → IO Bool := fun _ => do
+  runFlintDecision (← decisionInput index)
+
+def runLeanDecision16 : Unit → IO Bool := runLeanDecisionAt 0
+def runFlintDecision16 : Unit → IO Bool := runFlintDecisionAt 0
+def runLeanDecision20 : Unit → IO Bool := runLeanDecisionAt 1
+def runFlintDecision20 : Unit → IO Bool := runFlintDecisionAt 1
+def runLeanDecision24 : Unit → IO Bool := runLeanDecisionAt 2
+def runFlintDecision24 : Unit → IO Bool := runFlintDecisionAt 2
+def runLeanDecision28 : Unit → IO Bool := runLeanDecisionAt 3
+def runFlintDecision28 : Unit → IO Bool := runFlintDecisionAt 3
+def runLeanDecision32 : Unit → IO Bool := runLeanDecisionAt 4
+def runFlintDecision32 : Unit → IO Bool := runFlintDecisionAt 4
 
 def prepDedupRepeated (n : Nat) : List ZPoly :=
   List.replicate (positiveParam n) x
@@ -193,6 +321,33 @@ setup_benchmark runDecisionCarrierDegree n => n ^ 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
+
+/-- Matching steady-state timing floor for the in-process Lean decisions. -/
+def leanDecisionConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5
+    maxSecondsPerCall := 8.0
+    minTotalSeconds := 0.2
+    expectedHash := some (Hashable.hash true) }
+
+/-- The same shape for FLINT, with its persistent driver started before the
+timed auto-tuner batch in each outer child. -/
+def flintDecisionConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5
+    maxSecondsPerCall := 8.0
+    minTotalSeconds := 0.2
+    warmupFirstIter := true
+    expectedHash := some (Hashable.hash true) }
+
+setup_fixed_benchmark runLeanDecision16 where leanDecisionConfig
+setup_fixed_benchmark runFlintDecision16 where flintDecisionConfig
+setup_fixed_benchmark runLeanDecision20 where leanDecisionConfig
+setup_fixed_benchmark runFlintDecision20 where flintDecisionConfig
+setup_fixed_benchmark runLeanDecision24 where leanDecisionConfig
+setup_fixed_benchmark runFlintDecision24 where flintDecisionConfig
+setup_fixed_benchmark runLeanDecision28 where leanDecisionConfig
+setup_fixed_benchmark runFlintDecision28 where flintDecisionConfig
+setup_fixed_benchmark runLeanDecision32 where leanDecisionConfig
+setup_fixed_benchmark runFlintDecision32 where flintDecisionConfig
 
 /-
 After the first occurrence the seen prefix has size one, so each of the `u`

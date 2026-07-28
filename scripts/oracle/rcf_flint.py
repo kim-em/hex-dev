@@ -294,7 +294,13 @@ def _bounded_values(
     return relevant
 
 
-def _decide(sentence: dict[str, Any]) -> bool:
+def decide_sentence(sentence: dict[str, Any]) -> bool:
+    """Decide one version-1 RCF sentence with the independent FLINT engine.
+
+    This is the shared algorithmic entry point for both JSONL conformance and
+    the persistent benchmark driver. Keeping the two callers here prevents
+    the timing comparator from drifting onto a second implementation.
+    """
     formula = sentence["formula"]
     bounds = sentence["bounds"]
     quantifier = sentence["quantifier"]
@@ -371,7 +377,7 @@ def check(
             lean_value = emitted[0]["value"]
             if type(lean_value) is not bool:
                 raise OracleMismatch(f"decide result must be bool, got {lean_value!r}")
-            oracle_value = _decide(record["sentence"])
+            oracle_value = decide_sentence(record["sentence"])
             if lean_value != oracle_value:
                 raise OracleMismatch(
                     f"Lean verdict {lean_value!r} != python-flint verdict {oracle_value!r}"

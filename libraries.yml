@@ -549,7 +549,7 @@ libraries:
       comparators:
         - tool: "python-flint univariate RCF verdict oracle"
           class: informational
-          rationale: "python-flint supplies an independent exact/ball-arithmetic verdict on the committed shared sentence families, but it does not emit a proof term or exercise Lean certificate replay. Ratios orient the Mathlib-free compiled DecisionCheck track and are scheduled-only; they do not gate the proof-producing tactic surface. No comparable proof-producing univariate RCF tactic is named, so the tactic track is declared no-comparable-surface-in-named-comparator in the HexRCF SPEC."
+          rationale: "python-flint supplies an independent exact/ball-arithmetic verdict on the carrier-degree family at n = 16, 20, 24, 28, 32, but it does not emit a proof term or exercise Lean certificate replay. Ratios orient the Mathlib-free compiled DecisionCheck track and are scheduled-only; they do not gate the proof-producing tactic surface. No comparable proof-producing univariate RCF tactic is named, so the tactic track is declared no-comparable-surface-in-named-comparator in the HexRCF SPEC."
       input_families:
         - name: carrier-degree-roots
           description: One-atom square-free families varying carrier degree and real-root count while holding atom multiplicity, coefficient-height regime, and Boolean shape fixed.

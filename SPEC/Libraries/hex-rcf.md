@@ -743,13 +743,36 @@ structural sentence and certificate hashes, so a successful build forces the
 compiled result instead of merely invoking the builder and discarding its
 output.
 
-python-flint is an **informational** comparator for the compiled decision
-verdict on committed shared sentence families. It is not proof-producing, and
-no comparable proof-producing univariate RCF tactic is currently named; the
-tactic/elaboration track is therefore
-`no-comparable-surface-in-named-comparator` rather than assigned a fake ratio.
-The Phase-3 `local` emitter exercises related compiled workloads but is neither
-an elaboration benchmark nor Phase-4 asymptotic evidence.
+python-flint is an **informational**, scheduled-only comparator for the
+compiled carrier-degree decision family. The paired fixed registrations are
+`runLeanDecision{16,20,24,28,32}` and
+`runFlintDecision{16,20,24,28,32}`. At each rung both sides consume the same
+precomputed `Sentence`; the FLINT side also consumes its precomputed exact
+version-1 fixture encoding. The persistent-driver request and response are
+
+```text
+{"family":"rcf","op":"decide","sentence":<v1 sentence>}
+  -> {"ok":true,"result":<bool>}
+```
+
+Both sides return `Bool`, pin `Hashable.hash true`, use five repeats and a
+0.2-second minimum total, and differ only in the FLINT registration's
+`warmupFirstIter`. LeanBench starts one fresh child per outer warmup or repeat.
+That discarded first call starts one `python3` process in the child, and the
+timed auto-tuned inner-repeat batch reuses its streams; no driver process is
+shared between outer children. Routine `hexrcf_bench verify` performs one
+semantic call through every fixed registration. Scientific runs and ratio
+reporting require `python3` with `python-flint` and remain on the scheduled
+benchmark host.
+
+This comparison covers carrier degree and real-root count only. It does not
+measure atom multiplicity, common-root preparation, separation, certificate
+replay, reification, literal elaboration, or end-to-end tactic cost.
+python-flint is not proof-producing, and no comparable proof-producing
+univariate RCF tactic is currently named; the tactic/elaboration track is
+therefore `no-comparable-surface-in-named-comparator` rather than assigned a
+fake ratio. The Phase-3 `local` emitter exercises related compiled workloads
+but is neither an elaboration benchmark nor Phase-4 asymptotic evidence.
 
 This contract and the pure-module extraction do not advance the phase marker.
 `HexRCF.done_through` remains `3` until every dependency, including
