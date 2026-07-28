@@ -109,20 +109,13 @@ All three are fixed by
 
 ## Audit: existing `Array.ofFn` / `Vector.ofFn` call sites
 
-Done 2026-07-28, to decide whether the tree should adopt `ofFn'` ahead of the
-upstream fix. **Conclusion: no, apart from any site with a demonstrated kernel
-need.** Recorded so it is not re-litigated from scratch.
+Done 2026-07-28 against `cf303a47`, to decide whether the tree should migrate
+to `ofFn'` ahead of the upstream fix. **Conclusion: no, but because a
+consumer-side remedy is cheaper, not because migration is expensive.**
 
-**Scale.** 297 raw occurrences across 48 files, but only about 100 sit in
-`def` / `abbrev` / `instance` bodies, which is the only position where kernel
-reduction is affected; the other ~200 are theorem statements. Of the ~100, 93
-are in libraries that already reach `hex-basic` and could adopt `ofFn'` with no
-dependency change. `hex-poly` accounts for 13 and cannot, having no
-dependencies.
-
-**The defect is real, not hypothetical.** `Hex.Vector.unit` in `HexMatrix.Basic`
-is `@[expose]`, is built with core `Vector.ofFn`, and does not reduce from a
-downstream module:
+**The defect is real.** `Vector.unit` in `HexMatrix.Basic` is exposed, is built
+with core `Vector.ofFn`, and does not reduce from a downstream module.
+`hex-matrix` is released, so this ships:
 
 ```lean
 module
@@ -130,35 +123,64 @@ public import HexMatrix.Basic
 public import HexBasic.ArrayDecEq
 open scoped Hex
 example : (Vector.unit Nat (n := 3) 1) = #v[0, 1, 0] := by decide +kernel
--- reduction gets stuck; passes after switching that one definition to `ofFn'`
+-- stuck
 ```
 
-`hex-matrix` is a released library, so this ships.
+**The cheapest fix is in the consumer, not the definition.** Adding
 
-**Why a blanket migration still fails.** Rewriting all 62 mechanically
-reachable sites produced 29 build errors in three distinct classes:
+```lean
+import all Init.Data.Array.Basic
+```
 
-1. **Not every file is a module file.** `HexGF2Mathlib/Basic.lean` uses plain
-   `import`, so `public import` is a syntax error there and the exposure
-   question does not arise at all.
-2. **`ofFn'` is not definitionally equal to `ofFn`.** `HexMatrix/Basic.lean`
-   proofs that closed by `rfl` after `simp only [..., Vector.getElem_ofFn, ...]`
-   stop working, because the core simp lemma no longer matches.
-3. **The shim has no lemma ecosystem.** Core's `Vector.getElem_ofFn`,
-   `size_ofFn`, and friends are stated about `ofFn`; `ofFn'` has only
-   `ofFn'_eq_ofFn`. Anything reasoning about a migrated definition needs that
-   rewrite inserted by hand, which is the type-mismatch class in
-   `HexRealRootsMathlib/IsolateRoots.lean`.
+to the *consuming* module makes the example above pass with no change to
+`Vector.unit` or to anything else in the tree. Equivalently, a proof can bridge
+locally with `rw [Vector.unit, ← Hex.Vector.ofFn'_eq_ofFn]` before
+`decide +kernel`. Both are one line, per-consumer, and cost nothing anywhere
+else. This is the recommended remedy.
 
-So each migrated site costs local proof churn proportional to how much its
-callers reason about the array's contents. That is affordable for a definition
-with a real kernel consumer and pure waste otherwise.
+**Counts**, from stripping comments and matching the exact core identifiers
+(a plain grep over-counts badly: it picks up prose and the primed shim names):
 
-**Recommendation.** Fix it upstream and leave the tree alone. Migrate an
-individual definition only when something concretely needs it to reduce, and
-expect to repair its lemma uses at the same time. Do not migrate `*Impl`
-definitions, which are runtime implementations behind `@[csimp]` where core
-`ofFn` is correct.
+- 255 references in code;
+- **66** inside `def` / `abbrev` / `instance` bodies, which is the only
+  position where kernel reduction is affected. The remainder are in theorem
+  statements and proof bodies, where they do not matter;
+- of those 66, **9** are inside `*Impl` definitions, which are runtime
+  implementations behind `@[csimp]` where core `ofFn` is correct and must stay;
+- by library: HexGramSchmidt 19, HexMatrix 10, HexDeterminant 9,
+  HexNumberFieldTower 7, HexLLL 4, HexBerlekamp 3, HexPoly 3 (all three
+  `*Impl`), then single figures elsewhere.
+
+**A blanket migration was attempted and rejected**, but the experiment was
+weaker than it first appeared and should not be cited as proof that migration
+is costly. It rewrote 62 sites indiscriminately, including `*Impl` definitions
+that the recommendation says to leave alone, non-exposed definitions where
+reduction already stops earlier, and `HexGF2Mathlib/Basic.lean`, which is not a
+module file at all so the exposure question does not arise there. It produced
+15 primary diagnostics (the rest of the build output was cascading bad imports).
+The genuinely interesting population, the exposed non-`*Impl` sites, was never
+tested on its own.
+
+**Most of the observed churn was a missing shim API, since fixed.** The failures
+in `HexMatrix` and `HexRealRootsMathlib` came from core lemmas
+(`Vector.getElem_ofFn`, `Array.size_ofFn`) not applying to `ofFn'`.
+`HexBasic.OfFn` now provides `Array.size_ofFn'`, `Array.getElem_ofFn'`,
+`Vector.getElem_ofFn'`, and `Vector.toArray_ofFn'`. Note also that
+`ofFn'_eq_ofFn` is `@[simp]`, so ordinary `simp` already bridges; only
+`simp only` and `rfl`-closing steps needed the extra lemmas.
+
+**What cannot be done.** `@[expose]` cannot be applied retrospectively, so
+core `Array.ofFn` cannot be fixed from here. A shim defined as core `ofFn`
+would be definitionally equal but would inherit its non-reduction, so
+"defeq and reducing" is not available. Scoped simp sets affect proof
+elaboration, not kernel reduction.
+
+**Recommendation.** Use the consumer-side `import all` when a downstream module
+needs one of these definitions to reduce. Migrate an individual definition only
+if that is impossible for its consumer; the compatibility lemmas make it cheap
+when needed. Never migrate `*Impl` definitions. If #14270 stalls long enough
+that consumers accumulate, revisit migrating the exposed non-`*Impl` sites as a
+batch, which remains untested.
 
 ## Cleanup once #14270 lands
 

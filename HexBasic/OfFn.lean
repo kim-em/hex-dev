@@ -49,6 +49,30 @@ namespace Hex
     Vector.ofFn' f = Vector.ofFn f := by
   simp [Vector.ofFn', _root_.Vector.ofFn]
 
+/-! ## Compatibility lemmas
+
+Core's lemmas (`Array.size_ofFn`, `Vector.getElem_ofFn`, …) are stated about
+`ofFn` and do not apply to `ofFn'`. `ofFn'_eq_ofFn` is `@[simp]`, so ordinary
+`simp` bridges the gap on its own; these exist so that `simp only` proofs and
+`rfl`-closing steps keep working after a definition is migrated, without having
+to thread the equality in by hand. -/
+
+@[simp] theorem Array.size_ofFn' {α : Type u} {n : Nat} (f : Fin n → α) :
+    (Array.ofFn' f).size = n := by
+  simp [Array.ofFn']
+
+@[simp] theorem Array.getElem_ofFn' {α : Type u} {n : Nat} (f : Fin n → α) (i : Nat)
+    (h : i < (Array.ofFn' f).size) :
+    (Array.ofFn' f)[i] = f ⟨i, by simpa using h⟩ := by
+  simp [Array.ofFn']
+
+@[simp] theorem Vector.toArray_ofFn' {n : Nat} {α : Type u} (f : Fin n → α) :
+    (Vector.ofFn' f).toArray = Array.ofFn' f := rfl
+
+@[simp] theorem Vector.getElem_ofFn' {n : Nat} {α : Type u} (f : Fin n → α) (i : Nat)
+    (h : i < n) : (Vector.ofFn' f)[i] = f ⟨i, h⟩ := by
+  simp [Vector.ofFn']
+
 /-- Compiled code uses the core `Array.ofFn`, which fills an array of known
 capacity instead of building a `List` first. The `List` route exists only so
 that the kernel can reduce it. -/
