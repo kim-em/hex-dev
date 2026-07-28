@@ -18,15 +18,23 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 class RcfFlintBenchTests(unittest.TestCase):
     def test_public_decider_handles_constant_sentence(self) -> None:
         sentence = {
-            "quantifier": "exists_real",
+            "quantifier": "forall_real",
             "bounds": None,
             "formula": {"tag": "tt"},
         }
         with (
-            mock.patch.object(rcf_flint, "_carrier_factors", return_value=[]),
-            mock.patch.object(rcf_flint, "_certified_roots", return_value=[]),
+            mock.patch.object(
+                rcf_flint,
+                "_carrier_factors",
+                return_value=[],
+            ) as carrier,
+            mock.patch.object(
+                rcf_flint, "_certified_roots", return_value=[]
+            ) as roots,
         ):
             self.assertTrue(rcf_flint.decide_sentence(sentence))
+        carrier.assert_called_once_with(sentence["formula"])
+        roots.assert_called_once_with([], ())
 
     def test_driver_delegates_to_shared_decider(self) -> None:
         sentence = {
@@ -91,6 +99,13 @@ class RcfFlintBenchTests(unittest.TestCase):
             for engine in ("Lean", "Flint")
         ]
         self.assertCountEqual(names, expected)
+        self.assertEqual(
+            source.count(
+                "setup_fixed_benchmark runFlintDecisionOverhead where "
+                "decisionOverheadConfig"
+            ),
+            1,
+        )
 
 
 if __name__ == "__main__":

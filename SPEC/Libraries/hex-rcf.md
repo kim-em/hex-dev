@@ -754,7 +754,10 @@ output.
 python-flint is an **informational**, scheduled-only comparator for the
 compiled carrier-degree decision family. The paired fixed registrations are
 `runLeanDecision{16,20,24,28,32}` and
-`runFlintDecision{16,20,24,28,32}`. At each rung both sides consume the same
+`runFlintDecision{16,20,24,28,32}`. The additional fixed registration
+`runFlintDecisionOverhead` sends the atom-free sentence `∀ x, True` through the
+same warmed `rcf/decide` path and supplies a conservative steady-state
+per-call floor. At each substantive rung both sides consume the same
 precomputed `Sentence`; the FLINT side also consumes its precomputed exact
 version-1 fixture encoding. The persistent-driver request and response are
 
@@ -771,10 +774,15 @@ it also starts one `python3` process in the child. The timed auto-tuned
 inner-repeat batch reuses that process's streams, and no driver is shared
 between outer children. The complete FLINT request line, including the exact
 version-1 sentence encoding, is precomputed; pipe transport and Python JSON
-decoding remain measured comparator overhead. Routine `hexrcf_bench verify`
-performs one semantic call through every fixed registration. Scientific runs
-and ratio reporting require `python3` with `python-flint` on the named release
-benchmark host.
+decoding remain measured comparator overhead. The floor includes the complete
+request/reply path and minimal formula evaluation, but excludes process startup
+and understates the parsing cost of the longer degree-rung requests. The
+headline report retains raw times and ratios at every rung, then subtracts the
+floor median from the FLINT median only when positive to produce the adjusted
+ratio; a floor-dominated rung is identified rather than assigned a negative
+adjusted time. Routine `hexrcf_bench verify` performs one semantic call through
+every fixed registration. Scientific runs and ratio reporting require
+`python3` with `python-flint` on the named release benchmark host.
 
 This comparison covers carrier degree and real-root count only. It does not
 measure atom multiplicity, common-root preparation, separation, certificate

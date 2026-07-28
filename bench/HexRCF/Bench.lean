@@ -19,7 +19,10 @@ certificates; they never rebuild witnesses in the timed region.
 The informational python-flint comparator covers only the compiled
 carrier-degree decision family at `n = 16, 20, 24, 28, 32`. Both sides consume
 the same precomputed reflected sentence; FLINT receives its precomputed
-version-1 JSON encoding through the shared persistent driver protocol:
+version-1 JSON encoding through the shared persistent driver protocol. A
+separate `runFlintDecisionOverhead` registration sends `∀ x, True` through the
+same path to measure the steady-state protocol floor used by the eventual
+raw/overhead-adjusted ratio report:
 
 ```text
 {"family":"rcf","op":"decide","sentence":<v1 sentence>}
@@ -126,6 +129,12 @@ private def sentenceJson : Sentence → Lean.Json
       ("bounds", boundsJson lower upper),
       ("formula", formulaJson formula)]
 
+private def decisionRequest (sentence : Sentence) : Lean.Json :=
+  .mkObj [
+    ("family", .str "rcf"),
+    ("op", .str "decide"),
+    ("sentence", sentenceJson sentence)]
+
 private def jsonMatches (actual : Lean.Json) (expected : String) : Bool :=
   match Lean.Json.parse expected with
   | .ok value => actual == value
@@ -159,6 +168,10 @@ therefore a build failure rather than a scheduled-host surprise. -/
 #guard jsonMatches (dyadicJson ((Dyadic.ofInt (-1)) >>> (1 : Int))) "[-1,1]"
 #guard jsonMatches (sentenceJson (.forallReal .tt))
   "{\"quantifier\":\"forall_real\",\"bounds\":null,\"formula\":{\"tag\":\"tt\"}}"
+#guard jsonMatches (decisionRequest (.forallReal .tt))
+  "{\"family\":\"rcf\",\"op\":\"decide\",\"sentence\":{\"quantifier\":\"forall_real\",\"bounds\":null,\"formula\":{\"tag\":\"tt\"}}}"
+#guard (decisionRequest (.forallReal .tt)).compress ==
+  "{\"family\":\"rcf\",\"op\":\"decide\",\"sentence\":{\"bounds\":null,\"formula\":{\"tag\":\"tt\"},\"quantifier\":\"forall_real\"}}"
 #guard jsonMatches (sentenceJson (.existsReal .ff))
   "{\"quantifier\":\"exists_real\",\"bounds\":null,\"formula\":{\"tag\":\"ff\"}}"
 #guard jsonMatches (sentenceJson (.forallIoc 0 1 .tt))
@@ -174,10 +187,7 @@ private structure DecisionInput where
 
 private def prepDecisionInput (n : Nat) : DecisionInput :=
   let sentence := prepDecisionCarrierDegree n
-  let request := Lean.Json.mkObj [
-    ("family", .str "rcf"),
-    ("op", .str "decide"),
-    ("sentence", sentenceJson sentence)]
+  let request := decisionRequest sentence
   { degree := n, sentence, request := request.compress }
 
 /-- The five Sentence/request-line pairs are allocated once at module
@@ -186,6 +196,12 @@ FLINT timing includes pipe transport and Python JSON decoding, but not Lean
 request construction or serialization. -/
 private initialize decisionInputs : IO.Ref (Array DecisionInput) ←
   IO.mkRef <| #[16, 20, 24, 28, 32].map prepDecisionInput
+
+/-- The protocol-floor request is compressed once at module initialization, so
+its timed body measures only the same persistent-driver path as the substantive
+FLINT rungs. -/
+private initialize decisionOverheadRequest : IO.Ref String ←
+  IO.mkRef (decisionRequest (.forallReal .tt)).compress
 
 private def decisionInput (degree : Nat) : IO DecisionInput := do
   let inputs ← decisionInputs.get
@@ -198,18 +214,28 @@ private def runLeanDecision (input : DecisionInput) : IO Bool :=
   | some value => return value
   | none => throw <| IO.userError "HexRCF decision comparator: Lean builder failed"
 
-private def runFlintDecision (input : DecisionInput) : IO Bool := do
-  let result ← Hex.BenchOracle.Flint.runLine "rcf" "decide" input.request
+private def runFlintRequest (request : String) : IO Bool := do
+  let result ← Hex.BenchOracle.Flint.runLine "rcf" "decide" request
   match result.getBool? with
   | Except.ok value => return value
   | Except.error message =>
       throw <| IO.userError s!"HexRCF decision comparator: FLINT result was not Boolean: {message}"
+
+private def runFlintDecision (input : DecisionInput) : IO Bool :=
+  runFlintRequest input.request
 
 private def runLeanDecisionAt (degree : Nat) : Unit → IO Bool := fun _ => do
   runLeanDecision (← decisionInput degree)
 
 private def runFlintDecisionAt (degree : Nat) : Unit → IO Bool := fun _ => do
   runFlintDecision (← decisionInput degree)
+
+/-- Minimal valid RCF decision request for the steady-state JSON/pipe/dispatch
+floor. The request still runs the public `rcf/decide` path, but has no atom or
+root work. Reports retain the raw FLINT medians and subtract this floor only
+when the difference is positive. -/
+def runFlintDecisionOverhead : Unit → IO Bool := fun _ => do
+  runFlintRequest (← decisionOverheadRequest.get)
 
 def runLeanDecision16 : Unit → IO Bool := runLeanDecisionAt 16
 def runFlintDecision16 : Unit → IO Bool := runFlintDecisionAt 16
@@ -383,6 +409,17 @@ def decisionConfig : LeanBench.FixedBenchmarkConfig :=
 #guard decisionConfig.warmupFirstIter
 #guard decisionConfig.expectedHash == some (Hashable.hash true)
 
+/-- The protocol floor uses more outer children than a substantive rung so the
+release report gets a stable median without changing the timed inner batch. -/
+def decisionOverheadConfig : LeanBench.FixedBenchmarkConfig :=
+  { decisionConfig with repeats := 11 }
+
+#guard decisionOverheadConfig.repeats == 11
+#guard decisionOverheadConfig.minTotalSeconds == 0.2
+#guard decisionOverheadConfig.warmupFirstIter
+#guard decisionOverheadConfig.expectedHash == some (Hashable.hash true)
+
+setup_fixed_benchmark runFlintDecisionOverhead where decisionOverheadConfig
 setup_fixed_benchmark runLeanDecision16 where decisionConfig
 setup_fixed_benchmark runFlintDecision16 where decisionConfig
 setup_fixed_benchmark runLeanDecision20 where decisionConfig
