@@ -9,6 +9,7 @@ module
 public import HexResultant.Basic
 public import HexResultant.ExactDiv
 public import HexResultant.PseudoDivMod
+public import HexResultant.FractionPoly
 public import HexResultant.Subresultant
 public import HexResultant.Discriminant
 

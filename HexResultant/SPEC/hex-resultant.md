@@ -161,6 +161,33 @@ separate Brown--Traub subresultant theorem recorded by `BrownLaw`.
 In particular, reversing `divScalar` by scaling requires the coefficientwise
 exactness certified by that law; the homogeneity API does not assume it.
 
+## Fraction-field proof bridge
+
+The Brown--Traub integrality proof works first in a Mathlib-free fraction
+field constructed locally from cross-multiplication classes. This is proof
+infrastructure only: the executable recurrence never constructs a fraction,
+and `hex-resultant` still has no matrix or Mathlib dependency. A nonzero Brown
+input supplies the local `1 ≠ 0` witness needed by the coefficient embedding;
+`ExactDivLaws` supplies cancellation and rules out zero products.
+
+The generalized Sylvester constructions in this proof are local,
+coefficient-indexed proof objects with their finite-sum identities developed
+inside `hex-resultant`; they are not matrices from `hex-matrix` or
+`hex-determinant`. Consequently the released dependency graph remains the one
+stated at the top of this SPEC.
+
+The injective coefficient map extends to dense polynomials and preserves
+normalized size, leading coefficients, constants, addition, subtraction,
+scaling, multiplication, and ordered pseudo-division. Generalized Sylvester
+subresultants can therefore establish the Brown scale identities in the
+fraction field. Once a scalar or coefficientwise quotient is shown to lie in
+the embedding image, `Fraction.divExp_exact` and
+`DensePoly.Fraction.divScalar_exact` prove exactly the two reconstruction
+equalities recorded by `BrownLaw`; the corresponding pullback lemmas identify
+the quotient returned by the original coefficient ring. Thus the
+fraction-field argument proves integrality instead of changing the executable
+algorithm's coefficient type.
+
 ## Ordered Brown run
 
 For nonzero `G₁, G₂` with `deg G₁ ≥ deg G₂`, write `nᵢ = deg Gᵢ`,
@@ -287,6 +314,11 @@ quotient is exact over every stated exact-division domain.
 - `HexResultant/Basic.lean`: `pseudoDivMod` and its computational properties.
 - `HexResultant/PseudoDivMod.lean`: uniqueness, nonzero scaling, and the
   left/right pseudo-division homogeneity laws.
+- `HexResultant/Fraction.lean`: the proof-only Mathlib-free fraction field,
+  injective coefficient embedding, and exact scalar quotient pullback.
+- `HexResultant/FractionPoly.lean`: the injective dense-polynomial embedding,
+  its algebraic and pseudo-division transport laws, and coefficientwise
+  quotient pullback.
 - `HexResultant/Subresultant.lean`: the Brown worker,
   `subresultantChain`, `resultant`, chain termination, and degree bounds.
 - `HexResultant/Discriminant.lean`: `disc` and the algebraic

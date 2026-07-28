@@ -78,6 +78,31 @@ quotients remains its own subresultant theorem.
 
 {docstring Hex.DensePoly.PseudoDivMod.resultant_step_degree}
 
+# Fraction-field proof bridge
+
+Brown--Traub exactness is proved first after embedding coefficients in a
+Mathlib-free fraction field. The embedding is injective, commutes with ordered
+pseudo-division, and turns an embedding-image certificate into the scalar and
+coefficientwise reconstruction equations required by the Brown recurrence.
+This bridge is proof-only; the executable chain continues to operate entirely
+in its input coefficient ring.
+
+{docstring Hex.Fraction.ofCoeff}
+
+{docstring Hex.Fraction.ofCoeff_injective}
+
+{docstring Hex.DensePoly.Fraction.map}
+
+{docstring Hex.Fraction.div_pullback}
+
+{docstring Hex.Fraction.divExp_exact}
+
+{docstring Hex.DensePoly.Fraction.map_pseudoDivMod}
+
+{docstring Hex.DensePoly.Fraction.divScalar_pullback}
+
+{docstring Hex.DensePoly.Fraction.divScalar_exact}
+
 # Certified chain structure
 %%%
 tag := "hex-resultant-chain-structure"
