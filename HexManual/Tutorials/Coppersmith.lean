@@ -247,7 +247,7 @@ private def rows : Array Poly := Id.run do
   return rs
 
 private def B : Matrix Int 9 9 :=
-  Matrix.ofFn fun i j => (rows.getD i.val #[]).getD j.val 0
+  .ofFn fun i j => (rows.getD i.val #[]).getD j.val 0
 
 private def reduced : Matrix Int 9 9 :=
   lllNative B (3 / 4) (by grind) (by grind) (by decide)
@@ -274,7 +274,7 @@ private def g : Poly := Id.run do
 -- the root of its linear factor x - x0. Scanning x below
 -- X ~ 2^400 is hopeless; factoring degree-8 g is instant.
 private def recovered : Option Int := Id.run do
-  let gz : ZPoly := DensePoly.ofCoeffs g
+  let gz : ZPoly := .ofCoeffs g
   for (fac, _) in gz.factors do
     -- Linear factor `p·x + q` has root `-q/p` when `p ∣ q`.
     match fac.toArray with

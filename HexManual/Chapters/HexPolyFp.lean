@@ -146,13 +146,6 @@ namespace HexPolyFpChapterExample
 private instance : ZMod64.Bounds 5 :=
   ⟨by decide, by decide⟩
 
-private theorem one_ne_zero_five :
-    (1 : ZMod64 5) ≠ 0 := by
-  intro h
-  have hm :=
-    (ZMod64.natCast_eq_natCast_iff (p := 5) 1 0).mp h
-  simp at hm
-
 private theorem prime_five : Hex.Nat.Prime 5 := by
   constructor
   · decide
@@ -171,16 +164,8 @@ private theorem prime_five : Hex.Nat.Prime 5 := by
     · simp at hm
     · exact Or.inr rfl
 
-private def polyFive (coeffs : Array Nat) : FpPoly 5 :=
-  ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 5 n))
-
 private def coeffNats (f : FpPoly 5) : List Nat :=
   f.toArray.toList.map ZMod64.toNat
-
-private def sfFactorFive
-    (coeffs : Array Nat) (multiplicity : Nat) :
-    SquareFreeFactor 5 :=
-  { factor := polyFive coeffs, multiplicity }
 
 private def sfSummary
     (d : SquareFreeDecomposition 5) :
@@ -191,26 +176,16 @@ private def sfSummary
 
 private def sfReconstruction
     (d : SquareFreeDecomposition 5) : FpPoly 5 :=
-  DensePoly.C d.unit * weightedProduct d.factors
+  .C d.unit * weightedProduct d.factors
 
 -- Monic modulus x² + 2 over F₅, with x² ≡ 3.
-private def quadModulus : FpPoly 5 :=
-  { coeffs := #[(2 : ZMod64 5), 0, 1]
-    normalized := by
-      right
-      show some (1 : ZMod64 5) ≠ some 0
-      exact fun h => one_ne_zero_five (Option.some.inj h) }
+private def quadModulus : FpPoly 5 := #p[2, 0, 1]
 
 private theorem quadModulus_monic :
     DensePoly.Monic quadModulus := by rfl
 
 -- Monic linear modulus x + 3 over F₅.
-private def linearModulus : FpPoly 5 :=
-  { coeffs := #[(3 : ZMod64 5), 1]
-    normalized := by
-      right
-      show some (1 : ZMod64 5) ≠ some 0
-      exact fun h => one_ne_zero_five (Option.some.inj h) }
+private def linearModulus : FpPoly 5 := #p[3, 1]
 
 private theorem linearModulus_monic :
     DensePoly.Monic linearModulus := by rfl
@@ -218,12 +193,12 @@ private theorem linearModulus_monic :
 -- (x + 1)³ mod (x² + 2) ≡ x.
 #guard
   coeffNats
-    (powModMonic (polyFive #[1, 1]) quadModulus
+    (powModMonic #p[1, 1] quadModulus
       quadModulus_monic 3) = [0, 1]
 -- Exponent zero is the quotient-ring identity 1.
 #guard
   coeffNats
-    (powModMonic (polyFive #[0, 0, 1]) quadModulus
+    (powModMonic #p[0, 0, 1] quadModulus
       quadModulus_monic 0) = [1]
 -- Frobenius generator X⁵ mod (x² + 2) ≡ 4x.
 #guard
@@ -243,13 +218,14 @@ private theorem linearModulus_monic :
 -- Compose (3 + 2x + x²) with (1 + x) mod (x² + 2).
 #guard
   coeffNats
-    (composeModMonic (polyFive #[3, 2, 1])
-      (polyFive #[1, 1]) quadModulus quadModulus_monic)
+    (composeModMonic #p[3, 2, 1] #p[1, 1]
+      quadModulus quadModulus_monic)
       = [4, 4]
 -- The weighted product of (x + 1)² is x² + 2x + 1.
 #guard
   coeffNats
-    (weightedProduct [sfFactorFive #[1, 1] 2])
+    (weightedProduct
+      [{ factor := #p[1, 1], multiplicity := 2 }])
       = [1, 2, 1]
 -- The empty product is the constant 1.
 #guard
@@ -261,11 +237,11 @@ private theorem linearModulus_monic :
 #guard
   sfSummary
     (squareFreeDecomposition prime_five
-      (polyFive #[1, 2, 1]))
+      #p[1, 2, 1])
       = (1, [([1, 1], 2)])
 -- The decomposition reconstructs its input.
 #guard
-  let f := polyFive #[1, 2, 1]
+  let f : FpPoly 5 := #p[1, 2, 1]
   coeffNats
     (sfReconstruction
       (squareFreeDecomposition prime_five f))

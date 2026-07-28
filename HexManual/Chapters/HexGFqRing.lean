@@ -143,28 +143,15 @@ private theorem prime_five : Hex.Nat.Prime 5 := by
 
 private instance : ZMod64.PrimeModulus 5 := ⟨prime_five⟩
 
-private theorem one_ne_zero_five : (1 : ZMod64 5) ≠ 0 := by
-  intro h
-  have :=
-    (ZMod64.natCast_eq_natCast_iff (p := 5) 1 0).mp h
-  simp at this
-
 /-- Monic degree-4 polynomial x⁴ + 2 over F₅. -/
-private def modulus : FpPoly 5 :=
-  { coeffs := #[(2 : ZMod64 5), 0, 0, 0, 1]
-    normalized := by
-      right
-      show some (1 : ZMod64 5) ≠ some 0
-      exact fun h => one_ne_zero_five (Option.some.inj h) }
+private def modulus : FpPoly 5 := #p[2, 0, 0, 0, 1]
 
 private theorem modulus_pos_degree :
     0 < FpPoly.degree modulus := by decide
 
-private def q (coeffs : Array Nat) :
+private def q (f : FpPoly 5) :
     PolyQuotient modulus modulus_pos_degree :=
-  ofPoly modulus modulus_pos_degree
-    (FpPoly.ofCoeffs
-      (coeffs.map (fun n => ZMod64.ofNat 5 n)))
+  ofPoly modulus modulus_pos_degree f
 
 private def reprNats
     (x : PolyQuotient modulus modulus_pos_degree) :
@@ -172,11 +159,11 @@ private def reprNats
   (repr x).toArray.toList.map ZMod64.toNat
 
 private def a : PolyQuotient modulus modulus_pos_degree :=
-  q #[2, 3]
+  q #p[2, 3]
 private def b : PolyQuotient modulus modulus_pos_degree :=
-  q #[4, 1, 0, 1]
+  q #p[4, 1, 0, 1]
 private def x : PolyQuotient modulus modulus_pos_degree :=
-  q #[0, 1]
+  q #p[0, 1]
 
 -- (2 + 3x) + (4 + x + x³) ≡ 1 + 4x + x³ (mod 5)
 #guard reprNats (a + b) = [1, 4, 0, 1]

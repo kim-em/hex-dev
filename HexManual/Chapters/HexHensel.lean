@@ -79,7 +79,7 @@ open Hex Hex.DensePoly Hex.QuadraticLiftResult
 
 namespace HexHenselChapterReduce
 
-private def f : ZPoly := ofCoeffs #[100, -3, 50]
+private def f : ZPoly := #p[100, -3, 50]
 
 -- 100 ≡ 2, -3 ≡ 46, 50 ≡ 1  (mod 7² = 49)
 private def a : ZPoly := ZPoly.reduceModPow f 7 2

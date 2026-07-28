@@ -238,7 +238,8 @@ one quantifier supported by the decision procedure.
 
 {docstring Hex.RCF.Sentence.toProp}
 
-Coefficient arrays use ascending order. This direct construction represents
+The `#p[...]` literal lists coefficients in ascending degree order and
+normalizes away trailing zeros. This direct construction represents
 `∀ x : ℝ, x² + 1 > 0` and sends it through the same compiled decision
 procedure used by the tactic:
 
@@ -247,7 +248,7 @@ open Hex.RCF
 
 private def positiveQuadratic : Sentence :=
   .forallReal (.atom {
-    p := Hex.DensePoly.ofCoeffs #[1, 0, 1]
+    p := #p[1, 0, 1]
     cmp := .gt
   })
 
@@ -264,7 +265,7 @@ open Hex.RCF
 private def nonnegativeOnUnit : Sentence :=
   .forallIoc (Dyadic.ofInt 0) (Dyadic.ofInt 1)
     (.atom {
-      p := Hex.DensePoly.ofCoeffs #[0, 1]
+      p := #p[0, 1]
       cmp := .ge
     })
 
