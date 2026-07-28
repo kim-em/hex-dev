@@ -94,17 +94,14 @@ meta def searchModPWitness (q : Hex.ZPoly) : Option Hex.ZPoly.ModPWitness := Id.
 meta def eisensteinShifts : List Int :=
   [0, 1, -1, 2, -2, 3, -3]
 
-/-- Ceiling on Eisenstein witness primes. The emitted certificate
-kernel-replays `Hex.Nat.isPrimeTrial q`, whose `List.range q` reduction is
-recursion-depth linear in `q` and hits the default `maxRecDepth` a little
-above 150, so a larger witness prime would elaborate to a proof the kernel
-cannot check. `128` leaves margin below that boundary (the boundary replay
-`checkIrredWitness (X² − 127) (.eisenstein 127 0)` is locked by a test). -/
+/-- Ceiling on Eisenstein witness primes. This keeps the auxiliary divisor
+search bounded; the boundary witness
+`checkIrredWitness (X² − 127) (.eisenstein 127 0)` is locked by a test. -/
 meta def eisensteinPrimeCap : Nat := 128
 
 /-- Prime divisors of `n` up to `eisensteinPrimeCap`, by trial division. Any
-cofactor above the cap is dropped: its `isPrimeTrial` replay would blow the
-kernel recursion depth. -/
+cofactor above the cap is dropped because the Eisenstein witness search is
+deliberately bounded. -/
 meta def smallPrimeDivisors (n : Nat) : List Nat := Id.run do
   let mut n := n
   let mut acc : List Nat := []

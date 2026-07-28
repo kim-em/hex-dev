@@ -216,12 +216,12 @@ stay canonical.
 tag := "hex-arith-prime"
 %%%
 
-`HexArith` supplies a self-contained primality test. It checks that no
-integer in `[2, n)` divides `n`, and its soundness theorem lifts a
-`true` result to the project-local {name}`Hex.Nat.Prime` predicate: a
-primality witness produced without `native_decide` or a fixed prime
-table, so downstream prime searches can certify candidates beyond any
-precomputed list.
+`HexArith` supplies a self-contained primality test. It checks candidate
+divisors from `2` through `⌊√n⌋`, stopping before the first candidate
+whose square exceeds `n`. Its soundness theorem lifts a `true` result to
+the project-local {name}`Hex.Nat.Prime` predicate: a primality witness
+produced without `native_decide` or a fixed prime table, so downstream
+prime searches can certify candidates beyond any precomputed list.
 
 {docstring Hex.Nat.Prime}
 

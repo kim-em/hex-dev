@@ -158,6 +158,25 @@ replay. Inputs over budget fail at elaboration time with a clear message
 instead of emitting a proof the kernel cannot afford to check. -/
 meta def replayBudget : Nat := 1 <<< 26
 
+/-- Ceiling on candidate remainder tests in one kernel primality replay.
+`2^16` covers the full `ZMod64` modulus range, whose largest square-root scan
+tests fewer than `2^16` candidates. -/
+meta def primeReplayBudget : Nat := 1 <<< 16
+
+/--
+Worst-case number of remainder tests in `Hex.Nat.isPrimeTrial n`. This mirrors
+the checker's square stopping convention without performing any divisions, and
+is used only at elaboration time to budget the proof that the kernel will
+replay.
+-/
+meta def primeReplayCost (n : Nat) : Nat := Id.run do
+  let mut k := 2
+  let mut cost := 0
+  while k * k ≤ n do
+    cost := cost + 1
+    k := k + 1
+  return cost
+
 /-- Fail fast when a Rabin replay for a degree-`deg` factor at modulus `p`
 would exceed `replayBudget`. -/
 meta def checkReplayBudget (tactic : String) (p deg : Nat) : MetaM Unit := do

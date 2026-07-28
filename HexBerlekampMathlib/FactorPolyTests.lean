@@ -90,6 +90,16 @@ is a nonzero constant, hence a unit over F_5, not irreducible
 #guard_msgs in
 example := irreducibility (3 : Polynomial (ZMod 5))
 
+/-! ## Bounded primality replay -/
+
+/--
+error: irreducibility: the polynomial
+  3
+is a nonzero constant, hence a unit over F_67108879, not irreducible
+-/
+#guard_msgs in
+example := irreducibility (3 : Polynomial (ZMod 67108879))
+
 /-! ## Composite modulus: the provider declines, the driver reports -/
 
 /--

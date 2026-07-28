@@ -529,37 +529,111 @@ theorem pow_prime_mod {p : Nat} (hp : Prime p) (a : Nat) :
   exact pow_prime_mod_from_add_pow hp a (fun a b => add_pow_prime_mod hp a b)
 
 /--
-Executable trial-division primality test. Returns `true` only when `2 ≤ n`
-and no integer in `[2, n)` divides `n`. Used by downstream prime-search
-extensions to produce primality witnesses for candidates beyond any fixed
-list, without depending on `Mathlib` or `native_decide`.
+Balanced trial division over the `2 ^ fuel` candidates starting at `k`.
+The square guard is checked before descending into an interval, so no
+candidate with `n < k * k` is tested. Splitting the interval in half keeps
+kernel reduction depth logarithmic in the number of candidate divisors.
+-/
+@[expose] def isPrimeTrialAux (n : Nat) : Nat → Nat → Bool
+  | 0, k =>
+      if n < k * k then
+        true
+      else
+        decide (n % k ≠ 0)
+  | fuel + 1, k =>
+      if n < k * k then
+        true
+      else
+        isPrimeTrialAux n fuel k &&
+          isPrimeTrialAux n fuel (k + 2 ^ fuel)
+
+/--
+Executable bounded trial-division primality test. Returns `true` exactly when
+`n` is prime. Candidate divisors start at `2`, and the loop stops before
+testing the first `k` whose square exceeds `n`; thus it performs at most
+`⌊√n⌋ - 1` remainder tests. It remains pure Lean so emitted primality
+certificates can be replayed by the kernel without `Mathlib`, `native_decide`,
+or a fixed prime table.
 -/
 @[expose]
 def isPrimeTrial (n : Nat) : Bool :=
-  decide (2 ≤ n) &&
-    (List.range n).all (fun k => decide (k < 2) || decide (n % k ≠ 0))
-
-private theorem range_all_eq_true_of_isPrimeTrial {n : Nat}
-    (h : isPrimeTrial n = true) :
-    ∀ k, k < n → 2 ≤ k → n % k ≠ 0 := by
-  unfold isPrimeTrial at h
-  rw [Bool.and_eq_true] at h
-  obtain ⟨_, hall⟩ := h
-  rw [List.all_eq_true] at hall
-  intro k hk hk2
-  have hmem : k ∈ List.range n := List.mem_range.mpr hk
-  have := hall k hmem
-  rw [Bool.or_eq_true] at this
-  rcases this with hlt | hmod
-  · have : k < 2 := of_decide_eq_true hlt
-    omega
-  · exact of_decide_eq_true hmod
+  decide (2 ≤ n) && isPrimeTrialAux n (n.log2 + 1) 2
 
 private theorem two_le_of_isPrimeTrial {n : Nat} (h : isPrimeTrial n = true) :
     2 ≤ n := by
   unfold isPrimeTrial at h
   rw [Bool.and_eq_true] at h
   exact of_decide_eq_true h.1
+
+private theorem no_divisor_of_isPrimeTrialAux {n fuel k : Nat}
+    (h : isPrimeTrialAux n fuel k = true) :
+    ∀ d, k ≤ d → d < k + 2 ^ fuel → d * d ≤ n → n % d ≠ 0 := by
+  induction fuel generalizing k with
+  | zero =>
+      rw [isPrimeTrialAux] at h
+      by_cases hstop : n < k * k
+      · rw [if_pos hstop] at h
+        intro d hkd hd hsq
+        have hdk : d = k := by
+          simp only [Nat.pow_zero] at hd
+          omega
+        subst d
+        omega
+      · rw [if_neg hstop] at h
+        intro d hkd hd _
+        have hdk : d = k := by
+          simp only [Nat.pow_zero] at hd
+          omega
+        subst d
+        exact of_decide_eq_true h
+  | succ fuel ih =>
+      rw [isPrimeTrialAux] at h
+      by_cases hstop : n < k * k
+      · rw [if_pos hstop] at h
+        intro d hkd _ hsq
+        have hkk : k * k ≤ d * d := Nat.mul_le_mul hkd hkd
+        omega
+      · rw [if_neg hstop, Bool.and_eq_true] at h
+        intro d hkd hd hsq
+        have hpow : 2 ^ (fuel + 1) = 2 ^ fuel + 2 ^ fuel := by
+          rw [Nat.pow_succ]
+          omega
+        by_cases hleft : d < k + 2 ^ fuel
+        · exact ih h.1 d hkd hleft hsq
+        · apply ih h.2 d (by omega) ?_ hsq
+          rw [hpow] at hd
+          omega
+
+private theorem exists_trial_divisor {n m : Nat} (hn : 0 < n) (hm : m ∣ n)
+    (hm1 : m ≠ 1) (hmn : m ≠ n) :
+    ∃ d, 2 ≤ d ∧ d * d ≤ n ∧ d ∣ n := by
+  rcases hm with ⟨c, hc⟩
+  have hm0 : m ≠ 0 := by
+    intro h
+    subst m
+    simp at hc
+    omega
+  have hm2 : 2 ≤ m := by omega
+  have hc0 : c ≠ 0 := by
+    intro h
+    subst c
+    simp at hc
+    omega
+  have hc1 : c ≠ 1 := by
+    intro h
+    subst c
+    simp at hc
+    exact hmn hc.symm
+  have hc2 : 2 ≤ c := by omega
+  by_cases hmc : m ≤ c
+  · refine ⟨m, hm2, ?_, ⟨c, hc⟩⟩
+    rw [hc]
+    exact Nat.mul_le_mul_left m hmc
+  · have hcm : c ≤ m := Nat.le_of_not_ge hmc
+    refine ⟨c, hc2, ?_, ⟨m, ?_⟩⟩
+    · rw [hc]
+      simpa [Nat.mul_comm] using Nat.mul_le_mul_left c hcm
+    · simpa [Nat.mul_comm] using hc
 
 /--
 Soundness of the trial-division primality test against the project-local
@@ -572,30 +646,77 @@ theorem isPrimeTrial_isPrime {n : Nat} (h : isPrimeTrial n = true) :
   refine ⟨two_le_of_isPrimeTrial h, ?_⟩
   intro m hm
   have h2n : 2 ≤ n := two_le_of_isPrimeTrial h
-  have hno : ∀ k, k < n → 2 ≤ k → n % k ≠ 0 :=
-    range_all_eq_true_of_isPrimeTrial h
   have hn_pos : 0 < n := by omega
-  have hm_le_n : m ≤ n := Nat.le_of_dvd hn_pos hm
-  by_cases hm0 : m = 0
-  · subst hm0
-    have : n = 0 := Nat.eq_zero_of_zero_dvd hm
-    omega
   by_cases hm1 : m = 1
   · exact Or.inl hm1
   by_cases hmn : m = n
   · exact Or.inr hmn
   exfalso
-  have hm2 : 2 ≤ m := by
-    rcases m with _ | _ | m
-    · exact absurd rfl hm0
-    · exact absurd rfl hm1
-    · omega
-  have hmlt : m < n := Nat.lt_of_le_of_ne hm_le_n hmn
-  have hmod : n % m = 0 := by
-    rcases hm with ⟨k, hk⟩
-    rw [hk]
-    exact Nat.mul_mod_right m k
-  exact hno m hmlt hm2 hmod
+  obtain ⟨d, hd2, hdsq, hdvd⟩ :=
+    exists_trial_divisor hn_pos hm hm1 hmn
+  have hd_le_sq : d ≤ d * d := Nat.le_mul_of_pos_right d (by omega)
+  have hd_le_n : d ≤ n := Nat.le_trans hd_le_sq hdsq
+  have haux : isPrimeTrialAux n (n.log2 + 1) 2 = true := by
+    unfold isPrimeTrial at h
+    rw [Bool.and_eq_true] at h
+    exact h.2
+  have hn_lt_pow : n < 2 ^ (n.log2 + 1) := Nat.lt_log2_self
+  have hno : n % d ≠ 0 :=
+    no_divisor_of_isPrimeTrialAux haux d hd2 (by omega) hdsq
+  exact hno (Nat.mod_eq_zero_of_dvd hdvd)
+
+private theorem isPrimeTrialAux_of_prime {n : Nat} (hn : Prime n) :
+    ∀ fuel k, 2 ≤ k → isPrimeTrialAux n fuel k = true := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro k hk2
+      rw [isPrimeTrialAux]
+      by_cases hstop : n < k * k
+      · rw [if_pos hstop]
+      · rw [if_neg hstop]
+        apply decide_eq_true
+        intro hmod
+        have hdvd : k ∣ n := Nat.dvd_of_mod_eq_zero hmod
+        rcases hn.2 k hdvd with hk1 | hkn
+        · omega
+        · subst k
+          have hnn : n * n ≤ n := Nat.le_of_not_gt hstop
+          have hn_lt_mul : n < n * n := by
+            simpa using (Nat.mul_lt_mul_left hn.pos).2 hn.one_lt
+          omega
+  | succ fuel ih =>
+      intro k hk2
+      rw [isPrimeTrialAux]
+      by_cases hstop : n < k * k
+      · rw [if_pos hstop]
+      · rw [if_neg hstop, Bool.and_eq_true]
+        exact ⟨ih k hk2,
+          ih (k + 2 ^ fuel) (Nat.le_trans hk2 (Nat.le_add_right k _))⟩
+
+/--
+Completeness of the executable trial-division test: every project-local prime
+witness makes the Boolean checker return `true`.
+-/
+theorem isPrimeTrial_of_prime {n : Nat} (h : Prime n) :
+    isPrimeTrial n = true := by
+  unfold isPrimeTrial
+  rw [Bool.and_eq_true]
+  exact ⟨decide_eq_true h.two_le,
+    isPrimeTrialAux_of_prime h (n.log2 + 1) 2 (by decide)⟩
+
+/-! Regression coverage for the bounded checker: small inputs, primes, perfect
+squares, and semiprimes whose least factor is close to the square root. -/
+
+#guard isPrimeTrial 0 = false
+#guard isPrimeTrial 1 = false
+#guard isPrimeTrial 2 = true
+#guard isPrimeTrial 3 = true
+#guard isPrimeTrial 4 = false
+#guard isPrimeTrial 97 = true
+#guard isPrimeTrial 49 = false
+#guard isPrimeTrial 121 = false
+#guard isPrimeTrial 899 = false
 
 end Nat
 
