@@ -651,6 +651,10 @@ free to change.
 - `conformance/HexRCF/{Conformance,EmitFixtures}.lean`: conformance
   in the shared sub-project.
 
+The public `HexRCF` umbrella imports only the supported implementation and
+proof API. The `*Tests.lean` regression modules above are compiled through the
+separate `HexReleaseTests` Lake target and are not re-exported to consumers.
+
 ## Phase-4 evidence tracks
 
 HexRCF is a mixed library. `HexRCF.DecisionCheck` contains the complete

@@ -279,6 +279,18 @@ lean_lib HexReleaseTests where
     `HexRealRoots.ReplayTest,
     `HexRealRootsMathlib.IsolateRootsTests,
     `HexRealRootsMathlib.IsolateRootsElabTests,
+    `HexRCF.LanguageTests,
+    `HexRCF.SturmBuilderTests,
+    `HexRCF.CarrierTests,
+    `HexRCF.IsolationsTests,
+    `HexRCF.SeparationTests,
+    `HexRCF.CellsTests,
+    `HexRCF.CommonRootTests,
+    `HexRCF.SignMatrixTests,
+    `HexRCF.BuilderTests,
+    `HexRCF.CertificateTests,
+    `HexRCF.DecisionTests,
+    `HexRCF.ReifyTests,
     `HexRootsMathlib.Examples]
 
 -- Canonical end-to-end examples are release artifacts rather than public API.
