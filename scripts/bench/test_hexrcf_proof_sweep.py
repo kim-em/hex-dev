@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import re
 import unittest
-from pathlib import Path
 
 from scripts.bench import fresh_module_sweep as sweep
 from scripts.bench import hexrcf_proof_sweep as rcf
@@ -92,15 +91,19 @@ class ManifestTests(unittest.TestCase):
 
     def test_only_whole_tactic_pairs_have_acceptance_budgets(self) -> None:
         budgets = {}
+        budget_kinds = {}
         for pair in rcf.SPEC.pairs:
             has_budget = "tactic_budget_ms" in pair.metadata
+            has_kind = "budget_kind" in pair.metadata
             self.assertEqual(
                 has_budget,
                 not pair.null_control and pair.name.endswith("-tactic"),
                 pair.name,
             )
+            self.assertEqual(has_kind, has_budget, pair.name)
             if has_budget:
                 budgets[pair.name] = pair.metadata["tactic_budget_ms"]
+                budget_kinds[pair.name] = pair.metadata["budget_kind"]
         self.assertEqual(
             budgets,
             {
@@ -109,11 +112,51 @@ class ManifestTests(unittest.TestCase):
                 "degree50-tactic": 30_000,
             },
         )
+        self.assertEqual(
+            budget_kinds,
+            {
+                "quadratic-tactic": "regression-bound",
+                "degree10-tactic": "regression-bound",
+                "degree50-tactic": "adversarial-ceiling",
+            },
+        )
+
+    def test_spec_budgets_match_manifest(self) -> None:
+        source = (sweep.ROOT / "SPEC/Libraries/hex-rcf.md").read_text(
+            encoding="utf-8"
+        )
+        labels = {
+            "quadratic-tactic": "Quadratic goals, one atom",
+            "degree10-tactic": "Degree ≤ 10, up to 3 atoms",
+            "degree50-tactic": "Adversarial degree-50, one atom",
+        }
+        pairs = {pair.name: pair for pair in rcf.SPEC.pairs}
+        for name, label in labels.items():
+            match = re.search(
+                rf"^- {re.escape(label)}: under ([0-9]+) seconds\.$",
+                source,
+                re.MULTILINE,
+            )
+            self.assertIsNotNone(match, name)
+            assert match is not None
+            self.assertEqual(
+                int(match.group(1)) * 1_000,
+                pairs[name].metadata["tactic_budget_ms"],
+                name,
+            )
 
     def test_axiom_reports_match_probe_roles(self) -> None:
         for pair in rcf.SPEC.pairs:
             if pair.null_control:
                 self.assertEqual(pair.reference, pair.candidate, pair.name)
+                expected = (
+                    None
+                    if pair.name == "fresh-build-null"
+                    else rcf.ALLOWED_AXIOMS
+                )
+                self.assertEqual(
+                    pair.reference.expected_axioms, expected, pair.name
+                )
                 continue
             self.assertIsNone(pair.reference.expected_axioms, pair.name)
             expected = (
@@ -127,9 +170,31 @@ class ManifestTests(unittest.TestCase):
         sweep.validate_spec(rcf.SPEC)
 
     def test_every_measured_module_is_wired_into_lake(self) -> None:
-        lakefile = Path("lakefile.lean").read_text(encoding="utf-8")
+        lakefile = (sweep.ROOT / "lakefile.lean").read_text(encoding="utf-8")
+
+        def target_modules(target: str) -> set[str]:
+            header = re.search(
+                rf"^lean_lib {re.escape(target)} where$", lakefile, re.MULTILINE
+            )
+            self.assertIsNotNone(header, target)
+            assert header is not None
+            tail = lakefile[header.end():]
+            end = re.search(r"\n(?=\S)", tail)
+            body = tail if end is None else tail[:end.start()]
+            return set(re.findall(r"`([A-Za-z0-9_.]+)", body))
+
+        reduced = target_modules("HexRCFProofProbe")
+        scientific = target_modules("HexRCFProofProbeScientific")
         for module in sweep.probe_modules(rcf.SPEC):
-            self.assertIn(f"`{module}", lakefile, module)
+            is_scientific = (
+                ".Degree10." in module
+                or ".Degree50." in module
+                or module.endswith(".DoubleDegree50")
+            )
+            expected = scientific if is_scientific else reduced
+            unexpected = reduced if is_scientific else scientific
+            self.assertIn(module, expected, module)
+            self.assertNotIn(module, unexpected, module)
 
     def test_every_measured_module_has_identical_imports(self) -> None:
         imports = {

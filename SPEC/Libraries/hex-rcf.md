@@ -713,16 +713,20 @@ fresh-module variants for each fixed case:
 compiled certificate construction, emitting no proof), `Literal` (input plus
 the pre-generated certificate), `Replay` (literal plus its kernel-checked
 theorem), and `Tactic` (the source goal closed by `rcf`). An external runner
-rotates fresh builds and reports all four null calibrations followed by raw paired
-deltas for reification, search, literal elaboration, replay, and the full
+rotates fresh builds and reports all four null calibrations followed by raw
+paired deltas for reification, search, literal elaboration, replay, and the full
 tactic. Six rounds balance which role builds first. Each null's signed deltas,
 absolute and relative ranges, and median describe fresh-build noise only: they
 are reported before the substantive pairs in artifact `config.order` and are
 never subtracted, promoted to a significance test, or used to alter the fixed
-tactic budgets. A substantive delta is noise-sized only against the selected
+tactic budgets of the run that produced them. A substantive delta is
+noise-sized only against the selected
 null's zero-centred maximum-absolute envelope at a comparable total build
 magnitude; a cheaper selected envelope is scaled up by the magnitude ratio and
-is never scaled down. Otherwise the sweep leaves it unresolved. `Search − Input` is
+is never scaled down. The double-degree-50 null exists only to span the generic
+control-magnitude gate; exact single-tactic nulls remain available for every
+tactic pair and are expected to be selected instead. Otherwise the sweep leaves
+the delta unresolved. `Search − Input` is
 phase-attribution evidence only; the matching LeanBench target supplies the
 scientific asymptotic verdict, and the report neither substitutes nor adds the
 two. The headline report records source hashes, commit/toolchain/host/load
@@ -767,9 +771,9 @@ matrix. Each Search module repeats its Input module's reflected declaration
 before running the search command, so `Search - Input` does not subtract work
 absent from the candidate. `HexRCFProofProbeScientific` owns the degree-10 and
 degree-50 measured modules and the double-degree-50 control without adding
-them to routine CI. Both are
-build-only Lake libraries; there is no proof-probe executable or in-process
-clock. The complete external sweep is:
+them to routine CI. `HexRCFProofProbe` and `HexRCFProofProbeScientific` are
+both build-only Lake libraries; there is no proof-probe executable or
+in-process clock. The complete external sweep is:
 
 ```bash
 python3 scripts/bench/hexrcf_proof_sweep.py --samples 6 \
@@ -919,9 +923,9 @@ For a sentence with `u` atom occurrences of degrees summing to `n`, of which
 
 For the fixed tactic probes, fresh-module cost is dominated by kernel
 certificate replay. Nominal atom degree alone does not order the cases: the
-three-atom degree-10 goal builds a degree-30 carrier and replays more
-primitive-PRS evidence than the sparse one-atom degree-50 goal. The relevant
-drivers are carrier degree, distinct-atom count, and coefficient growth.
+three-atom degree-10 goal builds a degree-30 carrier and is comparable in
+measured cost to the sparse one-atom degree-50 goal. The relevant drivers are
+carrier degree, distinct-atom count, and coefficient growth.
 
 ## Time budgets (Phase 4 validation)
 
@@ -930,12 +934,19 @@ paired `Tactic − Baseline` fresh-module delta on a clean named host, using
 the designated-shared-host protocol from `SPEC/benchmarking.md`. Raw total wall
 times and every pair remain in the artifact. They are not
 one-parameter ladders, complexity verdicts, or substitutes for the compiled
-LeanBench cases above. For the first two cases, the measured robust upper
-bounds (paired median plus selected scaled null envelope) were 1.092 s and
-7.913 s; multiplying by 1.5 and rounding upward gives 2 s and 12 s. The
-degree-50 robust upper bound was 7.890 s, but its original 30 s adversarial
-ceiling is retained as a separate acceptance goal. These are fresh-module
-regression bounds, not interactive-latency claims.
+LeanBench cases above. Budgets are preregistered offline from a completed
+archived sweep and frozen for the run they govern; no null quantity can move a
+budget within a run. The failed-v5 [calibration record](https://github.com/kim-em/hex-dev/issues/9025#issuecomment-5104783847)
+gives the components and derivation:
+
+| Case | Tactic median | Scaled null envelope | Robust upper | Rule |
+| --- | ---: | ---: | ---: | --- |
+| quadratic | 0.259 s | 0.833 s | 1.092 s | multiply by 1.5, then round upward |
+| degree 10 | 4.353 s | 3.560 s | 7.913 s | multiply by 1.5, then round upward |
+| degree 50 | 4.330 s | 3.560 s | 7.890 s | retain the separate 30 s adversarial ceiling |
+
+These are fresh-module regression bounds or adversarial ceilings, not
+interactive-latency claims. Artifact metadata distinguishes the two kinds.
 
 - Quadratic goals, one atom: under 2 seconds.
 - Degree ≤ 10, up to 3 atoms: under 12 seconds.
