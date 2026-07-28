@@ -102,6 +102,23 @@ private meta def evalSentence (expr : Expr) : MetaM Sentence := do
   | .error msg =>
       throwError "rcf proof probe: failed to evaluate the reflected sentence\n{msg}"
 
+private meta unsafe def evalCertificateUnsafe (expr : Expr) :
+    MetaM (Except String Certificate) :=
+  try
+    return .ok (← evalExpr Certificate (mkConst ``Certificate) expr)
+  catch ex =>
+    return .error (← ex.toMessageData.toString)
+
+@[implemented_by evalCertificateUnsafe]
+private meta opaque evalCertificateCore (expr : Expr) :
+    MetaM (Except String Certificate)
+
+private meta def evalCertificate (expr : Expr) : MetaM Certificate := do
+  match ← evalCertificateCore expr with
+  | .ok certificate => return certificate
+  | .error msg =>
+      throwError "rcf proof probe: failed to evaluate the literal certificate\n{msg}"
+
 private meta def expectedSentence : Case → MetaM Sentence
   | .quadratic => evalSentence (mkConst ``quadraticSentence)
   | .degree10 => evalSentence (mkConst ``degree10Sentence)
@@ -117,11 +134,16 @@ private meta def Case.certificateHash : Case → UInt64
   | .degree10 => 2309428790428157609
   | .degree50 => 14503462794369963085
 
-private meta def requireExpected (case : Case) (actual : Sentence) : MetaM Unit := do
-  unless actual = (← expectedSentence case) do
-    throwError "rcf proof probe: reflected sentence does not match the fixed case"
+private meta def requireSentenceHash (case : Case) (actual : Sentence) :
+    MetaM Unit := do
   unless hash actual = case.sentenceHash do
     throwError "rcf proof probe: reflected sentence checksum changed"
+
+private meta def requireExpected (case : Case) (expected actual : Sentence) :
+    MetaM Unit := do
+  unless actual = expected do
+    throwError "rcf proof probe: reflected sentence does not match the fixed case"
+  requireSentenceHash case actual
 
 /-- Reify a source proposition and check that it produced the fixed reflected case. -/
 syntax "rcf_reify_probe " ident " : " term : command
@@ -134,9 +156,10 @@ elab_rules : command
         synthesizeSyntheticMVarsNoPostponing
         let target ← instantiateMVars target
         let reflected ← Reify.reifySentence target
-        requireExpected case reflected.sentence
-        let expected ← Reify.sentenceExpr (← expectedSentence case)
-        unless ← isDefEq reflected.expr expected do
+        let expectedSentence ← expectedSentence case
+        requireExpected case expectedSentence reflected.sentence
+        let expectedExpr ← Reify.sentenceExpr expectedSentence
+        unless ← isDefEq reflected.expr expectedExpr do
           throwError "rcf proof probe: reflected expression does not match the literal"
 
 /-- Elaborate a reflected input, build its certificate, and validate its true verdict. -/
@@ -148,16 +171,32 @@ elab_rules : command
       liftTermElabM do
         let sentenceExpr ← elabTermEnsuringType sentenceStx (some (mkConst ``Sentence))
         synthesizeSyntheticMVarsNoPostponing
-        let sentence ← evalSentence (← instantiateMVars sentenceExpr)
-        requireExpected case sentence
+        let sentenceExpr ← instantiateMVars sentenceExpr
+        let sentence ← expectedSentence case
+        let expectedExpr ← Reify.sentenceExpr sentence
+        unless ← isDefEq sentenceExpr expectedExpr do
+          throwError "rcf proof probe: search input does not match the fixed case"
+        requireSentenceHash case sentence
         let some result := build? sentence
           | throwError "rcf proof probe: certificate construction failed"
         unless result.verdict do
           throwError "rcf proof probe: the fixed sentence unexpectedly evaluated to false"
-        unless result.certificate.check sentence do
-          throwError "rcf proof probe: the built certificate failed replay"
         unless hash result.certificate = case.certificateHash do
           throwError "rcf proof probe: certificate checksum changed"
+
+/-- Check that a generated literal is the certificate pinned for this case. -/
+syntax "rcf_literal_probe " ident " : " term : command
+
+elab_rules : command
+  | `(rcf_literal_probe $caseStx:ident : $certificateStx:term) => do
+      let case ← caseOfIdent caseStx
+      liftTermElabM do
+        let certificateExpr ← elabTermEnsuringType certificateStx
+          (some (mkConst ``Certificate))
+        synthesizeSyntheticMVarsNoPostponing
+        let certificate ← evalCertificate (← instantiateMVars certificateExpr)
+        unless hash certificate = case.certificateHash do
+          throwError "rcf proof probe: generated certificate is stale"
 
 /-- Replay a literal certificate through the public checker and soundness theorem. -/
 syntax "rcf_replay% " term " with " term : term

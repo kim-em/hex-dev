@@ -27,17 +27,24 @@
   observed axiom output only from Replay and Tactic, exactly
   `[propext, Classical.choice, Quot.sound]`; it is not a timing artifact or
   Phase-4 evidence.
+- Addressed independent review findings by moving all three source-to-literal
+  reification checks into the reduced CI target, tying each committed literal
+  to the builder-output hash, and making every Search candidate declare the
+  same reflected input as its Input reference. The probe commands now evaluate
+  each expected sentence once, and the Search command no longer repeats the
+  certificate checker already covered by the unmeasured validation module.
 
 ## Current frontier
 
-- Directive #9017 is implementation-complete and ready for the stacked draft
-  PR and independent review.
+- Directive #9017 is implementation-complete in draft PR #9018. Its first CI
+  run passed, and the substantive independent-review findings are addressed in
+  the follow-up commit.
 - No release timing artifact or `done_through` update is included.
 
 ## Next step
 
-- Publish the draft on the compiled-benchmark branch, obtain and address an
-  independent Claude review, then restack as the extraction parents merge.
+- Push the review follow-up, let CI re-run, then restack as the extraction
+  parents merge.
 - Continue the remaining HexRCF SPEC/manual completion audit while CI and
   review run.
 
