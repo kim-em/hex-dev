@@ -49,6 +49,36 @@ nonzero polynomial.
 
 {docstring Hex.DensePoly.subresultantChain}
 
+# Certified chain structure
+%%%
+tag := "hex-resultant-chain-structure"
+%%%
+
+The chain representation comes with structural guarantees, not only
+executable checks. Every stored term is nonzero; after the two ordered inputs,
+each stored polynomial is strictly smaller than its predecessor; and a
+nonzero input pair produces at most `min(deg f, deg g) + 2` terms.
+
+{docstring Hex.DensePoly.subresultantChain_ne_zero}
+
+{docstring Hex.DensePoly.subresultantChain_size_strict}
+
+{docstring Hex.DensePoly.subresultantChain_size_le}
+
+## Fuel control
+
+The implementation bounds its recursion with an explicit fuel parameter.
+`subresultantOrdered` selects the public `g.size + 1` budget;
+`subresultantOrderedFuel` exposes the same recurrence with an explicit budget
+for proof auditing. Adding fuel beyond the public budget leaves the result
+unchanged.
+
+{docstring Hex.DensePoly.subresultantOrdered}
+
+{docstring Hex.DensePoly.subresultantOrderedFuel}
+
+{docstring Hex.DensePoly.subresultantOrderedFuel_eq}
+
 Most callers need only the scalar resultant:
 
 {docstring Hex.DensePoly.resultant}

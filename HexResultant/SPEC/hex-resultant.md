@@ -176,12 +176,23 @@ The executable recurrence calls the proved runtime twins `scaleImpl` and
 list-facing specifications above. Its two fuel/junk exits are deterministic:
 fuel exhaustion returns the current `(chain, hPrev)`, while an unexpectedly
 zero `next` returns `(chain, hCurr)` without storing that zero. Neither branch
-is reachable from a valid ordered nonzero state over an exact-division domain.
+is reachable from a valid ordered nonzero state over an exact-division domain;
+`subresultantOrdered_brownLaw` is the proof boundary for that algebraic claim.
+The structural guarantees below do not depend on it.
 
 The public chain stores exactly Brown's nonzero `G₁, …, Gₖ`. It does not
 store the generated terminal zero, gap zeros from defective subresultants, the
 auxiliary `Hᵢ`, or the scalars `hᵢ`. Termination means
 `prem Gₖ₋₁ Gₖ = 0`.
+
+The structural API certifies this representation independently of the value
+correspondence: every stored term is nonzero, adjacent sizes strictly decrease
+after the first two entries, and the chain length is at most
+`min(deg f, deg g) + 2` for nonzero inputs. The worker's public
+`g.size + 1` budget is stable: adding arbitrary extra fuel does not change an
+ordered run. These facts follow from the explicit zero guards together with the
+pseudo-remainder bound and the fact that coefficientwise scaling and division
+cannot increase dense size.
 
 ### Defective degree drops
 

@@ -53,6 +53,12 @@ theorem scale_eq_scaleImpl [Mul R] (c : R) (p : DensePoly R) :
   show ((p.toArray.toList).map (fun a => c * a)).toArray = _
   rw [← Array.toList_map, Array.toArray_toList]
 
+/-- Coefficientwise scaling cannot increase the stored polynomial size. -/
+theorem size_scaleImpl_le [Mul R] (c : R) (p : DensePoly R) :
+    (scaleImpl c p).size ≤ p.size := by
+  unfold scaleImpl
+  exact Nat.le_trans (size_ofCoeffs_le _) (by simp)
+
 /-- Register the `Array.map` pass as the compiled implementation of {name}`scale`. -/
 @[csimp]
 theorem scale_eq_impl : @scale = @scaleImpl := by
