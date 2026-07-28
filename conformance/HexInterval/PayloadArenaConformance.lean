@@ -66,6 +66,9 @@ def seedPreserved (arena : Arena) : Bool :=
           entry.schema == 4 && entry.body == [3]
     | none => false
 
+#guard seeded.wellFormed
+#guard !({ seeded with bodyCells := 0 }).wellFormed
+
 -- Identical local labels in separate replies relocate to distinct global IDs.
 #guard
   match freeze generous .empty (action 0) (factOutcome 0) [factDraft 0] with
@@ -73,7 +76,8 @@ def seedPreserved (arena : Arena) : Bool :=
       match freeze generous firstArena (action 1) (factOutcome 0) [factDraft 0] with
       | .ready secondArena (.success [second] [] _) =>
           first.payload.index == 0 && second.payload.index == 1 &&
-            secondArena.entries.size == 2 &&
+            secondArena.entries.size == 2 && secondArena.bodyCells == 2 &&
+            secondArena.wellFormed &&
             (secondArena.entry? second.payload .fact).any fun entry =>
               entry.origin.key == rule && entry.origin.serial == 1 &&
                 entry.schema == 1 && entry.body == [10]
@@ -115,7 +119,7 @@ def mixedRequest : InstantiationRequest :=
       (.success [candidate] [.instantiate request] _) =>
       match request.equalities with
       | [equality] =>
-          arena.entries.size == 3 && arena.bodyCells == 3 &&
+          arena.entries.size == 3 && arena.bodyCells == 3 && arena.wellFormed &&
             candidate.payload.index == 1 && request.payload.index == 2 &&
             equality.payload.index == 0 &&
             (arena.entry? equality.payload .equality).any (fun entry =>
@@ -164,6 +168,18 @@ def mixedRequest : InstantiationRequest :=
   | _ => false
 
 -- Each resource limit is exactly one below the required prospective value.
+#guard
+  match freeze { generous with maxEntries := 0 } seeded (action 0)
+      (.noChange {} : Outcome Nat) [] with
+  | .resourceLimit .entries arena => seedPreserved arena
+  | _ => false
+
+#guard
+  match freeze { generous with maxBodyCells := 0 } seeded (action 0)
+      (.noChange {} : Outcome Nat) [] with
+  | .resourceLimit .bodyCells arena => seedPreserved arena
+  | _ => false
+
 #guard
   match freeze { generous with maxEntries := 1 } seeded (action 0)
       (factOutcome 0) [factDraft 0] with

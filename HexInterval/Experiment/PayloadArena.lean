@@ -78,6 +78,13 @@ def entry? (arena : Arena) (payload : PayloadId) (expected : Role) : Option Entr
   let entry ← arena.rawEntry? payload
   if entry.role == expected then some entry else none
 
+/-- Check the cached aggregate used by the body-cell resource bound.  Session
+ownership will eventually make malformed arenas unconstructible; the
+standalone experiment keeps this executable structural check in the meantime. -/
+def wellFormed (arena : Arena) : Bool :=
+  arena.bodyCells ==
+    arena.entries.foldl (fun total entry => total + entry.body.length) 0
+
 end Arena
 
 /-- Trusted bounds for the prospective whole arena. -/
@@ -117,22 +124,60 @@ structure Use where
   label : PayloadId
   role : Role
 
-def equalityUses (equality : ProposedEquality) : List Use :=
-  [{ label := equality.payload, role := .equality }]
+/-- Traverse every payload-bearing position in one candidate.  The explicit
+constructor is intentional: adding another payload field makes this code fail
+to compile instead of silently leaving that field unchecked. -/
+def traverseCandidate [Monad m] (visit : Role -> PayloadId -> m PayloadId)
+    (candidate : Candidate Fact) : m (Candidate Fact) := do
+  let payload ← visit .fact candidate.payload
+  pure { node := candidate.node, fact := candidate.fact, payload }
 
-def requestUses (request : InstantiationRequest) : List Use :=
-  { label := request.payload, role := .instance } ::
-    request.equalities.flatMap equalityUses
+def traverseEquality [Monad m] (visit : Role -> PayloadId -> m PayloadId)
+    (equality : ProposedEquality) : m ProposedEquality := do
+  let payload ← visit .equality equality.payload
+  pure { left := equality.left, right := equality.right, payload }
 
-def suggestionUses : Suggestion -> List Use
-  | .retry _ | .split _ => []
-  | .instantiate request => requestUses request
+def traverseRequest [Monad m] (visit : Role -> PayloadId -> m PayloadId)
+    (request : InstantiationRequest) : m InstantiationRequest := do
+  let payload ← visit .instance request.payload
+  let equalities ← request.equalities.mapM (traverseEquality visit)
+  pure
+    { key := request.key
+      triggers := request.triggers
+      claimedGeneration := request.claimedGeneration
+      nodes := request.nodes
+      equalities
+      payload }
 
-def outcomeUses : Outcome Fact -> List Use
-  | .success candidates suggestions _ =>
-      candidates.map (fun candidate => { label := candidate.payload, role := .fact }) ++
-        suggestions.flatMap suggestionUses
-  | .noChange _ | .inapplicable | .resourceLimit _ | .failed _ => []
+def traverseSuggestion [Monad m] (visit : Role -> PayloadId -> m PayloadId) :
+    Suggestion -> m Suggestion
+  | .retry effort => pure (.retry effort)
+  | .instantiate request => return .instantiate (← traverseRequest visit request)
+  | .split request =>
+      pure (.split
+        { node := request.node, point := request.point, reason := request.reason })
+
+/-- The single structural traversal for collecting and relocating payloads.
+Explicit reconstruction makes additions to existing payload-bearing records a
+compile-time obligation here. -/
+def traverseOutcome [Monad m] (visit : Role -> PayloadId -> m PayloadId) :
+    Outcome Fact -> m (Outcome Fact)
+  | .success candidates suggestions cost => do
+      let candidates ← candidates.mapM (traverseCandidate visit)
+      let suggestions ← suggestions.mapM (traverseSuggestion visit)
+      pure (.success candidates suggestions cost)
+  | .noChange cost => pure (.noChange cost)
+  | .inapplicable => pure .inapplicable
+  | .resourceLimit budget => pure (.resourceLimit budget)
+  | .failed code => pure (.failed code)
+
+def recordUse (role : Role) (label : PayloadId) :
+    StateM (List Use) PayloadId :=
+  fun uses => (label, { label, role } :: uses)
+
+def outcomeUses (outcome : Outcome Fact) : List Use :=
+  let (_, reversed) := traverseOutcome recordUse outcome []
+  reversed.reverse
 
 /-- Bound the complete top-level proposal structure before `outcomeUses`
 allocates its flat payload-use list.  Repeated references are work even when
@@ -224,10 +269,10 @@ def preflight (limits : Limits) (arena : Arena) (drafts : List Draft) :
   if limits.maxEntries < arena.entries.size then
     throw .entries
   let entryRoom := limits.maxEntries - arena.entries.size
-  if !listWithin entryRoom drafts then
-    throw .entries
   if !listWithin limits.maxUses drafts then
     throw .uses
+  if !listWithin entryRoom drafts then
+    throw .entries
   if drafts.any (fun draft => limits.maxSchema < draft.schema) then
     throw .schema
   if limits.maxBodyCells < arena.bodyCells then
@@ -246,38 +291,9 @@ def relocateId (relocations : List Relocation) (source : PayloadId) :
   | some relocation => pure relocation.global
   | none => throw (.danglingReference source)
 
-def relocateCandidate (relocations : List Relocation)
-    (candidate : Candidate Fact) : Except Invalid (Candidate Fact) := do
-  let payload ← relocateId relocations candidate.payload
-  pure { candidate with payload }
-
-def relocateEquality (relocations : List Relocation)
-    (equality : ProposedEquality) : Except Invalid ProposedEquality := do
-  let payload ← relocateId relocations equality.payload
-  pure { equality with payload }
-
-def relocateRequest (relocations : List Relocation)
-    (request : InstantiationRequest) : Except Invalid InstantiationRequest := do
-  let payload ← relocateId relocations request.payload
-  let equalities ← request.equalities.mapM (relocateEquality relocations)
-  pure { request with payload, equalities }
-
-def relocateSuggestion (relocations : List Relocation) :
-    Suggestion -> Except Invalid Suggestion
-  | .retry effort => pure (.retry effort)
-  | .split request => pure (.split request)
-  | .instantiate request => return .instantiate (← relocateRequest relocations request)
-
 def relocateOutcome (relocations : List Relocation) :
-    Outcome Fact -> Except Invalid (Outcome Fact)
-  | .success candidates suggestions cost => do
-      let candidates ← candidates.mapM (relocateCandidate relocations)
-      let suggestions ← suggestions.mapM (relocateSuggestion relocations)
-      pure (.success candidates suggestions cost)
-  | .noChange cost => pure (.noChange cost)
-  | .inapplicable => pure .inapplicable
-  | .resourceLimit budget => pure (.resourceLimit budget)
-  | .failed code => pure (.failed code)
+    Outcome Fact -> Except Invalid (Outcome Fact) :=
+  traverseOutcome fun _ source => relocateId relocations source
 
 /-- Append entries and assign their relocation identifiers in the same
 traversal, so the identifier recorded for a draft is definitionally the index

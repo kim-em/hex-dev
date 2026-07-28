@@ -1109,8 +1109,10 @@ slot. For every valid engine state, each event's `previous`, every
 action-input version used by a rule event, and every equality-transport source
 must resolve this way; the event's own identifier resolves to its installed
 fact. The current `(node, versions[node])` lookup likewise agrees with
-`facts[node]`. These properties become checker invariants when engine fields
-are made opaque.
+`facts[node]`. The initial-fact array has exactly the base-program node count,
+and every later program retains the complete base program as an unchanged
+prefix. These properties become checker invariants when engine fields are
+made opaque.
 
 `Engine.factAt?` is an observation over an already-valid engine, not the
 checker for an untrusted trace: it searches the complete retained history.
@@ -1131,6 +1133,11 @@ older edge whose payload remains authoritative. These are permitted arena
 waste, not proof dependencies. They must be measured and bounded; compacting
 only the backwards proof slice, freezing only the improving/admitted subset,
 and accepting this monotone waste are all still viable designs.
+The first protocol also freezes a fresh entry whenever a later reply uses the
+same recipe again: reply-local exact coverage does not yet provide an explicit
+way to cite an older global entry. Interning immutable entries, adding a
+checked global-reference draft, and accepting bounded cross-reply duplication
+are alternatives to measure rather than assumptions of the final format.
 
 The first executable arena uses an eager but prospective transaction:
 package-local labels in the outcome are matched exactly against package-local

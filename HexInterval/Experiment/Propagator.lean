@@ -975,7 +975,7 @@ def factAt? (state : Engine Fact) (seen : SeenVersion) : Option Fact :=
       let node ← state.program.node? seen.node
       pure (state.factDomain.top node.domain)
   else
-    (state.history.toList.find? fun event =>
+    (state.history.find? fun event =>
       event.node == seen.node && event.version == seen.version).map
         (fun event => event.fact)
 
