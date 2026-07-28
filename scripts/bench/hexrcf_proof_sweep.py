@@ -131,6 +131,7 @@ SPEC = SweepSpec(
         Path("SPEC/Libraries/hex-rcf.md"),
     ),
     required_samples=6,
+    max_pair_retries=32,
 )
 
 

@@ -778,8 +778,20 @@ in-process clock. The complete external sweep is:
 ```bash
 python3 scripts/bench/hexrcf_proof_sweep.py --samples 6 \
   --timeout 300 --warm-timeout 600 \
-  --shared-host --expected-host chungus2 --cpu 22
+  --shared-host --expected-host chungus2 --cpu 22 \
+  --max-pair-retries 32
 ```
+
+`DoubleDegree50` takes roughly 15 seconds per arm on the designated host, so
+this suite explicitly requests the 32-retry hard cap: at most 33 complete
+adjacent attempts for a pair. Every rejected attempt remains in the artifact,
+and the extra opportunities do not relax the per-arm interference gate. At
+the observed arm cost with immediate preflights, exhausting all 33 attempts is
+about 17 minutes for one required sample; the independent preflight and arm
+timeouts remain authoritative. Allowing every preflight and both arms to reach
+their configured limits gives a nominal per-sample envelope of 8 hours 15
+minutes, excluding bounded observation and process overhead, although an
+actual arm timeout aborts the run earlier.
 
 Only `Replay`, `Tactic`, and `DoubleDegree50` print an axiom report, fixed to
 `[propext, Classical.choice, Quot.sound]`. `Search` also checks stable
