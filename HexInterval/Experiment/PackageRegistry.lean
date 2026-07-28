@@ -40,9 +40,11 @@ structure Plan (Fact : Type) where
   outcome : Outcome Fact
   drafts : List PayloadArena.Draft
 
-/-- One cache-independent, rule-local replay representation.  The validator is
-called only after generic arena preflight has bounded the draft and its body.
-It checks representation shape, not mathematical soundness. -/
+/-- One cache-independent replay representation local to the owning handler's
+exact `RuleKey` compatibility epoch.  Its numeric schema is a recipe variant
+inside that epoch.  The validator is called only after generic arena preflight
+has bounded the draft and its body. It checks representation shape, not
+mathematical soundness. -/
 structure ReplayFormat where
   role : PayloadArena.Role
   schema : Nat

@@ -36,7 +36,8 @@ inductive Role where
   deriving DecidableEq, Repr
 
 /-- One package-produced recipe.  `label` is local to this reply, while
-`schema` selects the package-owned decoder for the opaque body. -/
+`schema` selects a package-owned body variant within the originating
+`RuleKey.schema` compatibility epoch. -/
 structure Draft where
   label : PayloadId
   role : Role
@@ -53,8 +54,10 @@ structure Entry where
   body : List Nat
   deriving Repr
 
-/-- The immutable dispatch address for semantic replay.  The numeric schema
-is local to one rule and role; unrelated handlers may deliberately reuse it. -/
+/-- The immutable dispatch address for semantic replay.  `rule.schema` is the
+handler/theorem compatibility epoch; this structure's numeric `schema` is a
+recipe variant local to that exact rule and role.  Dispatch is exact on all
+three fields, with no newest-version or schema-only fallback. -/
 structure ReplayKey where
   rule : RuleKey
   role : Role

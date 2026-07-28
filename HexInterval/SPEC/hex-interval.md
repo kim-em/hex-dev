@@ -1029,6 +1029,13 @@ reuse the same role and local schema number without sharing a validator.
 Registry assembly rejects duplicate `(role, schema)` declarations within a
 handler, and counts declarations against its metadata bound.
 
+There are two independent version axes. `RuleKey.schema` is the compatibility
+epoch for the complete handler and companion theorem contract. The payload
+`schema` in a draft or arena entry is a recipe variant within that exact rule
+epoch and semantic role. Replay requires an exact match on the whole
+`(RuleKey, role, payload schema)` address. It never selects the newest
+`RuleKey.schema`, and it never dispatches from a payload schema alone.
+
 `PayloadSession.Session` has a private constructor and its checked start owns
 the matching engine, registry, arena, and arena limits; the bounded `Run`
 result also has a private constructor, so its stop classification can only
@@ -1278,6 +1285,10 @@ only from `origin.key`, avoiding two stored identities which could disagree.
 The session now performs package-owned format lookup and bounded body-shape
 validation under the full `(RuleKey, role, schema)` key. Typed decoding, typed
 atom encodings, byte limits, and semantic replay are still missing.
+The first real dyadic packages declare payload schema `0` separately for each
+fact, instance, or equality handler. Each body validator accepts exactly the
+empty list and rejects every trailing cell; the rule key still distinguishes
+the theorem epoch and owner.
 Instantiation family labels and custom split-reason numbers also remain
 untyped representation gaps. The FIFO session turns any positive
 compatibility callback whose local identifier lacks a draft, or whose draft
@@ -2351,6 +2362,9 @@ typical, boundary, and adversarial inputs. In particular it includes:
   format failure after a previously committed invocation leave no partial
   current transaction, while generic body-resource refusal precedes package
   validation;
+- real dyadic fact and instantiation packages running through the private
+  proof session with exact empty-body schema `0` declarations, including
+  rejection of a trailing body cell and distinct rule-epoch ownership;
 - an anchor-local opaque shape rule which distinguishes `x * (one - x)` from
   products with a reversed difference or a different repeated input, proposes
   the exact existing node identifiers while receiving no fact inputs, repeats

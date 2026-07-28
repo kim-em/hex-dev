@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexInterval.Experiment.DyadicRules
+import HexInterval.Experiment.PayloadSession
 import HexInterval.Experiment.PolicyDriver
 
 /-!
@@ -37,7 +38,7 @@ def config : Config :=
 abbrev ConcreteRegistry := Propagator.Registry Fact
 
 def limits : Experiment.Propagator.Limits :=
-  { maxOperations := 16
+  { maxOperations := 24
     maxNodes := 32
     maxRules := 16
     maxArity := 4
@@ -330,6 +331,51 @@ def payloadLimits : PayloadArena.Limits :=
     maxSchema := 0
     maxUses := 3 }
 
+def trailingPayloadLimits : PayloadArena.Limits :=
+  { payloadLimits with maxBodyCells := 1 }
+
+def proofPayloadLimits : PayloadArena.Limits :=
+  { maxEntries := 8
+    maxBodyCells := 0
+    maxAtom := 0
+    maxSchema := 0
+    maxUses := PayloadSession.requiredUses limits }
+
+def proofProgram : Program :=
+  { operations := allOperations
+    nodes := #[instruction 0] }
+
+def proofSession? : Option (PayloadSession.Session Fact) :=
+  match PayloadSession.Session.start
+      (DyadicInterval.factDomain endpointLimit) proofProgram
+      #[arithmeticPackage config real, centeredPackage config real]
+      #[DyadicInterval.Fact.whole] limits proofPayloadLimits with
+  | .ok session => some session
+  | .error _ => none
+
+def proofRun? : Option (PayloadSession.Run Fact) := do
+  let session <- proofSession?
+  pure (session.drive 8)
+
+-- A real dyadic function package crosses the private proof-session boundary;
+-- its empty payload-schema-zero body is checked under the exact rule epoch and then
+-- retained in provenance.
+#guard
+  match proofRun? with
+  | some run =>
+      run.stop == .saturated && run.session.complete &&
+        run.session.engine.history.size == 1 &&
+        run.session.arena.entries.size == 1 &&
+        run.session.arena.bodyCells == 0 &&
+        exactFact run.session.engine 0 (finite 1 false 1 false) &&
+        match run.session.arena.entry? { index := 0 } .fact with
+        | some entry =>
+            entry.replayKey ==
+                { rule := oneForwardKey, role := .fact, schema := 0 } &&
+              oneForwardKey.schema == 1 && entry.body.isEmpty
+        | none => false
+  | none => false
+
 def ruleIdFrom? (key : RuleKey) : Nat -> List Registration -> Option RuleId
   | _, [] => none
   | index, registration :: registrations =>
@@ -393,17 +439,26 @@ def ownsV0 (arena : PayloadArena.Arena) (payload : PayloadId)
           plannedRequest? registry 7 oneForwardKey (node 1) .forward [node 1],
           plannedRequest? registry 8 centeredInstantiateKey (node 3) .instantiate [] with
       | some factRequest, some instanceRequest =>
-          let (factPlan, registry) := registry.invokePlanned factRequest
-          match PayloadArena.freeze payloadLimits .empty factRequest.action
+          let (factInvocation, registry) := registry.invokePlanned factRequest
+          let factReplay := factInvocation.replay
+          let factPlan := factInvocation.plan
+          match PayloadArena.freezeChecked payloadLimits .empty factRequest.action
+              factReplay.rule factReplay.validateDraft
               factPlan.outcome factPlan.drafts with
           | .ready factArena (.success [candidate] [] _) =>
-              let (instancePlan, _) := registry.invokePlanned instanceRequest
-              match PayloadArena.freeze payloadLimits factArena instanceRequest.action
+              let (instanceInvocation, _) := registry.invokePlanned instanceRequest
+              let instanceReplay := instanceInvocation.replay
+              let instancePlan := instanceInvocation.plan
+              match PayloadArena.freezeChecked payloadLimits factArena
+                  instanceRequest.action instanceReplay.rule
+                  instanceReplay.validateDraft
                   instancePlan.outcome instancePlan.drafts with
               | .ready arena (.success [] [.instantiate request] _) =>
                   match request.equalities with
                   | [equality] =>
-                      candidate.payload.index == 0 &&
+                      factReplay.rule == oneForwardKey &&
+                        instanceReplay.rule == centeredInstantiateKey &&
+                        candidate.payload.index == 0 &&
                         request.payload.index == 1 &&
                         equality.payload.index == 2 &&
                         arena.entries.size == 3 && arena.bodyCells == 0 &&
@@ -414,6 +469,26 @@ def ownsV0 (arena : PayloadArena.Arena) (payload : PayloadId)
               | _ => false
           | _ => false
       | _, _ => false
+
+-- The real payload-schema-zero fact format rejects a trailing cell after generic
+-- body and atom preflight has accepted the bounded draft.
+#guard
+  match registry? with
+  | some registry =>
+      match plannedRequest? registry 9 oneForwardKey (node 1) .forward [node 1] with
+      | some request =>
+          let (invocation, _) := registry.invokePlanned request
+          match PayloadArena.freezeChecked trailingPayloadLimits .empty request.action
+              invocation.replay.rule invocation.replay.validateDraft
+              invocation.plan.outcome
+              [{ label := factLabel, role := .fact, schema := 0, body := [0] }] with
+          | .invalid (.invalidBody key) arena =>
+              key ==
+                  { rule := oneForwardKey, role := .fact, schema := 0 } &&
+                arena.entries.isEmpty
+          | _ => false
+      | none => false
+  | none => false
 
 -- The anchor-local match remains fresh after its own append-only extension.
 -- Selecting it again is a structural duplicate, and the matcher is not

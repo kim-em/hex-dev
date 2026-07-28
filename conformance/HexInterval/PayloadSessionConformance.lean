@@ -318,7 +318,19 @@ def nestedPackage : Package Nat :=
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.statelessPlanned (registration nestedKey) nestedPlan] }
+      #[Handler.statelessPlanned (registration nestedKey) nestedPlan
+          #[{ role := .instance
+              schema := 2
+              validateBody := fun body =>
+                match body with
+                | [_] => true
+                | _ => false },
+            { role := .equality
+              schema := 3
+              validateBody := fun body =>
+                match body with
+                | [_] => true
+                | _ => false }]] }
 
 def nestedUsesPlan (request : RuleRequest Nat) : Plan Nat :=
   { outcome :=
@@ -432,7 +444,7 @@ def arenaAwarePackage : Package Nat :=
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.statelessPlanned (registration goodKey) goodPlan]
+      #[Handler.statelessPlanned (registration goodKey) goodPlan #[pairFormat]]
     acceptsLimits := fun _ _ payloadLimits =>
       4 ≤ payloadLimits.maxEntries && 8 ≤ payloadLimits.maxUses &&
         8 ≤ payloadLimits.maxDraftCells }
@@ -653,7 +665,8 @@ def opaqueRun? : Option (PayloadSession.Run Nat) :=
               key ==
                   { rule := rightKey, role := .fact, schema := 7 } &&
                 stopped.arena.entries.size == 1 &&
-                stopped.engine.history.size == 1 && !stopped.live
+                stopped.engine.history.size == 1 && stopped.live &&
+                stopped.droppedWork && !stopped.complete
           | _ => false
       | _ => false
   | .error _ => false
@@ -674,7 +687,8 @@ def opaqueRun? : Option (PayloadSession.Run Nat) :=
       | .invalidPayload (.undeclaredFormat key) stopped =>
           key == { rule := goodKey, role := .fact, schema := 1 } &&
             stopped.arena.entries.isEmpty &&
-            stopped.engine.history.isEmpty && !stopped.live
+            stopped.engine.history.isEmpty && stopped.live &&
+            stopped.droppedWork && !stopped.complete
       | _ => false
   | .error _ => false
 
@@ -685,7 +699,8 @@ def opaqueRun? : Option (PayloadSession.Run Nat) :=
       | .invalidPayload (.invalidBody key) stopped =>
           key == { rule := goodKey, role := .fact, schema := 1 } &&
             stopped.arena.entries.isEmpty &&
-            stopped.engine.history.isEmpty && !stopped.live
+            stopped.engine.history.isEmpty && stopped.live &&
+            stopped.droppedWork && !stopped.complete
       | _ => false
   | .error _ => false
 
