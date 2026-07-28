@@ -651,12 +651,68 @@ free to change.
 - `conformance/HexRCF/{Conformance,EmitFixtures}.lean`: conformance
   in the shared sub-project.
 
-No bench target: bench targets must not import Mathlib
-([SPEC/benchmarking.md](../benchmarking.md)), and this library
-cannot avoid it. The time budgets below are validated through the
-Phase-4 timing harness. The Phase-3 `local` emitter exercises the same
-compiled decision workloads but is not an elaboration benchmark and does not
-run on each PR.
+## Phase-4 evidence tracks
+
+HexRCF is a mixed library. `HexRCF.DecisionCheck` contains the complete
+compiled search, certificate construction, replay, and `decide` path in a
+mechanically checked import closure containing neither `Mathlib.*` nor
+`HexRealRootsMathlib.*`. That track uses the ordinary Mathlib-free
+`bench/HexRCF/Bench.lean` LeanBench executable. `by rcf` reification, proof
+emission, and kernel checking remain Mathlib-facing and use build-only modules
+below the explicit `libraries.yml` root `bench/HexRCF/ProofProbe/`.
+
+The compiled track requires these stable parametric cases. Every ladder varies
+only the named parameter, and fixture generation stays outside the timed
+region. LeanBench's mandatory conformance hash is computed before its timer
+stops; each target therefore returns a result whose structural hash has no
+higher asymptotic order than the named operation, and each nonconstant hash
+walk is included in the adjacent derivation. The adjacent comments in the
+eventual registrations must repeat these derivations.
+
+| Case | Timed operation and controlled ladder | Declared textbook model |
+| --- | --- | --- |
+| `runDecisionCarrierDegree` | `decide` on one square-free product of `n` unit-separated linear factors; one atom and one Boolean node | `O(n⁴)` integer operations: `O(n)` active intervals over `O(n)` levels, each dominated by an `O(n²)` Möbius transform; other fixed-shape RCF phases are no worse on this family. |
+| `runDedupRepeated` | `dedupPolys` on `u` repetitions of one fixed-degree polynomial | `O(u)`: after the first entry the seen set has fixed size one. |
+| `runDedupDistinct` | `dedupPolys` on the first `u` entries of a committed fixed-degree, fixed-bit-width distinct-polynomial corpus | `O(u²)`: first-occurrence insertion scans a seen prefix of lengths `0 … u-1`; coefficient comparison cost is bounded by the corpus contract. |
+| `runCommonRoots` | a strict batch of public `buildCommonRoot?` calls on the first `m` atoms of each committed fixed-degree, fixed-bit-width case corpus against one fixed-degree carrier; coprime, shared-factor, and repeated-polynomial cases are separate subladders | `O(m)`: one bounded-size gcd, identity package, and checker call per atom; distinct-order deduplication is excluded here and measured by `runDedupDistinct`. |
+| `runSeparationDepth` | `Separation.separate?` at fixed carrier degree while coefficient height forces a dyadic close pair to depth `b` | There are `O(b)` exact-arithmetic operations, but their operands have `O(b)` bits. The wall-cost contract is `O(b M(b))`; the registration uses the quasi-linear multiplication proxy `b² ceilLog₂(b+1)` on a homogeneous multiprecision schedule, avoiding the immediate-`Int`/GMP seam. |
+| `runReplayCells` | `Certificate.replay?` on prebuilt accepted `.cells` certificates for a unit-separated degree-`k` carrier with one atom, varying its `k` roots and `2k+1` cells | Isolation validation and `k` root-cell `hasRoot` checks take `O(k³)` exact operations. For `Pₖ = ∏_{j≤k}(x-j)`, primitive-PRS operand height is `B(k) = O(k² log k)`, so the wall-cost contract is `O(k³ M(B(k)))`; the registration uses the quasi-linear proxy `k⁵ ceilLog₂(k+1)²` on one multiprecision regime. |
+| `runReplaySigns` | `Certificate.replay?` on prebuilt accepted `.cells` certificates with a fixed one-root carrier and `u` distinct fixed-width scalar multiples of its linear atom | `O(u²)` exact-arithmetic/list operations: sentence-product construction and the repeated-factor witness grow at most quadratically, while deduplication, aligned common-root lookup, sign-row construction, and formula lookup each scan prefixes of the `u` entries. |
+| `runReplayFormula` | `Certificate.replay?` on prebuilt accepted `.cells` certificates with carrier, cell count, and atom multiset fixed while appending `s` literal `.tt`/`.ff` nodes by one fixed tree recipe | `O(s)`: the arithmetic payload is fixed, while the formula/polynomial discovery traversals and the strict option-valued fold visit each added literal/connective node a bounded number of times. |
+
+The five manifest input-family dimensions map respectively to carrier
+degree/root count, distinct versus repeated occurrences, common-root package
+count, separation depth, and the three independent replay subladders (cells,
+distinct sign entries, and formula occurrences). The fixed
+quadratic/degree-10/degree-50 cases below do not participate in those
+complexity verdicts.
+
+The tactic track uses matched fresh-module variants for each fixed case:
+`Baseline` (identical imports), `Reify` (reify-only checksum), `Input`
+(reflected sentence literal), `Search` (the same input plus a meta checksum of
+compiled certificate construction, emitting no proof), `Literal` (input plus
+the pre-generated certificate), `Replay` (literal plus its kernel-checked
+theorem), and `Tactic` (the source goal closed by `rcf`). An external runner
+rotates fresh builds and reports raw paired deltas for reification, search,
+literal elaboration, replay, and the full tactic. `Search − Input` is
+phase-attribution evidence only; the matching LeanBench target supplies the
+scientific asymptotic verdict, and the report neither substitutes nor adds the
+two. The headline report records source hashes, commit/toolchain/host/load
+state, raw samples, artifact sizes, timeout cleanup, and the theorem's axiom
+set, and refuses release claims from a dirty or busy host.
+
+python-flint is an **informational** comparator for the compiled decision
+verdict on committed shared sentence families. It is not proof-producing, and
+no comparable proof-producing univariate RCF tactic is currently named; the
+tactic/elaboration track is therefore
+`no-comparable-surface-in-named-comparator` rather than assigned a fake ratio.
+The Phase-3 `local` emitter exercises related compiled workloads but is neither
+an elaboration benchmark nor Phase-4 asymptotic evidence.
+
+This contract and the pure-module extraction do not advance the phase marker.
+`HexRCF.done_through` remains `3` until every dependency, including
+HexRealRootsMathlib, has completed Phase 4 and both evidence tracks have their
+required structural wiring and scientific artifacts.
 
 ## Conformance fixtures
 
@@ -745,6 +801,12 @@ For typical goals (`m ≤ 5`, `deg ≤ 10`, small coefficients) the whole
 pipeline is dominated by elaboration overhead, not arithmetic.
 
 ## Time budgets (Phase 4 validation)
+
+These are fixed whole-tactic acceptance cases, measured as the preregistered
+paired `Tactic − Baseline` fresh-module delta on a clean, quiescent named host.
+Raw total wall times and every pair remain in the artifact. They are not
+one-parameter ladders, complexity verdicts, or substitutes for the compiled
+LeanBench cases above.
 
 - Quadratic goals, one atom: under 100 ms.
 - Degree ≤ 10, up to 3 atoms: under 1 second.

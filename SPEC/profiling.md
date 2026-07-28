@@ -6,6 +6,16 @@ benchmarking checks declared asymptotic complexity against observed
 scaling; profiling attributes the constant factor and surfaces
 dominant costs that the registered bench targets do not measure.
 
+This contract applies only to the Mathlib-free compiled evidence track.
+Fresh-module elaboration, tactic, emitted-proof, and kernel-checking probes have
+no LeanBench timed region and therefore no sampling-profile obligation. Their
+replacement is the raw rotated build evidence, compiler/proof artefacts, and
+provenance record in
+[benchmarking.md §Fresh-module proof evidence](benchmarking.md#fresh-module-proof-evidence).
+A mixed library profiles its compiled track and reports its proof track
+separately; it never samples the whole compiler process and labels that a
+timed-region profile.
+
 A bench verdict of "consistent with declared complexity" is
 asymptotic-only. A profile is what tells you whether the cost is
 landing where the algorithm says it should — or whether 90% of the
@@ -66,9 +76,11 @@ filtering postprocessor emits a diagnostics block per run; see
 
 ## Coverage requirement
 
-Profile **at least one representative case per
+Profile **at least one representative compiled case per
 `phase4.input_families` entry** in `libraries.yml` for the library
-being audited. Within the case-per-family minimum:
+being audited. Proof-track fixed build cases are declared separately in the
+per-library SPEC and do not create synthetic profile families. Within the
+case-per-family minimum:
 
 - Always profile the family that the per-library SPEC names as
   the downstream hot path. For HexLLL, that is the BZ
