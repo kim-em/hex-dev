@@ -304,25 +304,50 @@ the public precision cap. These are
 {name}`HexBerlekampZassenhausMathlib.factorClassicalFactorsWithBound_factor_irreducible`
 and
 {name}`HexBerlekampZassenhausMathlib.factorLatticeFactorsWithBound_factor_irreducible`.
-The library does not yet expose the complementary packed-product implications
-`factorClassical f = some φ → φ.product = f` and
-`factorLattice f = some φ → φ.product = f`. Consequently, the reconstruction
-check in {name}`Hex.factorTraced` is not yet redundant: an optional answer is
-accepted only if its product is `f`; otherwise the proved
-{name}`Hex.factorTrial_product` backstop supplies the result. This case split
-is what the current {name}`Hex.factorize_product` theorem uses.
+The complementary packed-product contracts are
+{name}`HexBerlekampZassenhausMathlib.factorClassicalFactorsWithBound_product`
+and
+{name}`HexBerlekampZassenhausMathlib.factorLatticeFactorsWithBound_product`,
+with
+{name}`HexBerlekampZassenhausMathlib.factorClassicalWithBound_product_of_some`
+and
+{name}`HexBerlekampZassenhausMathlib.factorLatticeWithBound_product_of_some`
+as their
+{name}`Hex.Factorization`-level wrappers. Thus either modular tier's
+reconstruction guard accepts every successful answer. The guards remain as
+defensive executable checks. The Mathlib-free {name}`Hex.factorize_product`
+proof cannot appeal to these bridge contracts, so it case-splits on the guards
+and uses {name}`Hex.factorTrial_product` for a rejected optional answer or when
+both modular tiers decline.
 
 On the second question, classical recombination is deliberately allowed to
-decline when its resource budget is exhausted. The stronger theorem intended
-for the lattice tier says that it cannot decline once the monic-core prime
-selector has succeeded and the public precision cap is used. That conditional
-completeness theorem has not yet been proved. It would not say that
-{name}`Hex.factorLattice` succeeds on every input: the fixed admissible-prime
-search can itself fail. A further selector theorem will give checkable
-sufficient conditions for prime selection and, together with lattice
-completeness and the two packed-product implications, show that the hybrid
-never reaches trial division on those inputs. The trial tier remains the
-unconditional backstop for arbitrary inputs.
+decline when its resource budget is exhausted. For the lattice tier,
+{name}`HexBerlekampZassenhausMathlib.factorLatticeFactorsWithBound_ne_none_of_toMonicPrimeData`
+proves that
+the raw public-cap computation cannot decline once the monic-core prime
+selector has succeeded;
+{name}`HexBerlekampZassenhausMathlib.factorLattice_ne_none_of_toMonicPrimeData`
+is
+the corresponding {name}`Hex.Factorization`-level theorem. The hot-path
+selector theorems give two sufficient conditions for that hypothesis: a good
+prime among the fixed candidates, which is a decidable
+{name}`Hex.isGoodPrime` check, or a strict leading-coefficient/discriminant
+bound below {name}`Hex.hotPathPrimorial` for the normalized square-free core.
+The latter is stated over Mathlib's {name}`Polynomial.discr` and is established
+by proof rather than by computation. The good-prime and strict-bound wrappers
+both require the normalized square-free core to have positive degree; the
+strict-bound wrapper also requires a nonzero input.
+The
+{name}`HexBerlekampZassenhausMathlib.factorFactors_modular_of_toMonicPrimeData`,
+{name}`HexBerlekampZassenhausMathlib.factorFactors_modular_of_normalizedCore_good`,
+and
+{name}`HexBerlekampZassenhausMathlib.factorFactors_modular_of_normalizedCore_lt_primorial`
+theorems compose
+these facts with the two packed-product contracts. Their conclusions record
+whether the classical or lattice branch supplied the raw hybrid result, so the
+hybrid never reaches trial division under their hypotheses. This is conditional
+rather than global: the fixed admissible-prime search can itself fail, so the
+trial tier remains the unconditional backstop for arbitrary inputs.
 
 Other formal precedents are the Isabelle/HOL developments
 [Polynomial Factorization](https://www.isa-afp.org/entries/Polynomial_Factorization.html),
@@ -334,21 +359,9 @@ The accompanying
 verified van Hoeij algorithm as future work. We have not found a later
 formalization in the current AFP or published prover literature, so, to the
 best of our knowledge, Hex is the first implementation of van Hoeij's CLD
-method inside an interactive theorem prover. This is a cautious claim about
-the implementation, not a claim that the outstanding completeness theorem
-above has already been proved.
-
-Successful modular answers have direct packed-product contracts:
-{name}`HexBerlekampZassenhausMathlib.factorClassicalFactorsWithBound_product`
-and
-{name}`HexBerlekampZassenhausMathlib.factorLatticeFactorsWithBound_product`
-prove that packing either raw factor array reconstructs the input. Thus the
-two executable product guards in the hybrid are mathematically redundant;
-they remain as cheap defensive checks in the Mathlib-free implementation.
-The public {name}`HexBerlekampZassenhausMathlib.factorize_product` theorem can
-therefore be understood branch-by-branch through these modular contracts and
-the exact trial contract, rather than relying on an unproved property of a
-successful modular result.
+method inside an interactive theorem prover. This is a claim about the
+implementation, not about global completeness: the lattice-tier totality
+theorem above is conditional on successful prime selection.
 
 The fixed prime selector checks all 94 odd primes at most 500, in two
 increasing fixed folds. The selector bridge proves both that any good listed
@@ -356,20 +369,6 @@ prime forces success and that selector failure forces their primorial to
 divide the leading-coefficient/discriminant product; the dispatcher-facing
 strict-bound theorem is
 {name}`HexBerlekampZassenhausMathlib.HotPath.normalizedCore_toMonic_ne_none_of_lt_primorial`.
-Finally,
-{name}`HexBerlekampZassenhausMathlib.factorLatticeFactorsWithBound_ne_none_of_toMonicPrimeData`
-and
-{name}`HexBerlekampZassenhausMathlib.factorLattice_ne_none_of_toMonicPrimeData`
-prove that the lattice tier cannot decline once its actual monic-core selector
-has succeeded. Composing this with the product contracts gives
-{name}`HexBerlekampZassenhausMathlib.factorFactors_modular_of_toMonicPrimeData`,
-whose conclusion records whether the classical or lattice branch supplied the
-raw hybrid result. The good-prime and strict-primorial wrappers
-{name}`HexBerlekampZassenhausMathlib.factorFactors_modular_of_normalizedCore_good`
-and
-{name}`HexBerlekampZassenhausMathlib.factorFactors_modular_of_normalizedCore_lt_primorial`
-therefore exclude every route to the trial branch under their stated
-hypotheses.
 
 For proof clients,
 {name}`HexBerlekampZassenhausMathlib.factorize_normalized` gives the full
