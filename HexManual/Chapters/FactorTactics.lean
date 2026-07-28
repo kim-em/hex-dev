@@ -256,6 +256,26 @@ coefficient vectors. LLL reduction then isolates the short indicator vectors
 that can describe integer factors. Building and reducing the lattice costs
 more for small examples, but avoids the exponential dependence on `r`.
 
+This use of LLL should not be confused with the older *LLL factorization
+algorithm*. The
+[1982 Lenstra–Lenstra–Lovász paper](https://eudml.org/doc/182903) uses lattice
+reduction to recover an integer factor itself from sufficiently accurate
+modular information. Its historical significance is that it gave the first
+polynomial-time algorithm for factoring univariate polynomials over `ℚ`.
+That algorithm was not competitive with Berlekamp–Zassenhaus in practice: its
+lattices had large dimensions and coefficients. Van Hoeij retains the
+practical modular factorization and Hensel-lifting pipeline, and gives lattice
+reduction the narrower job of determining which lifted factors belong
+together.
+
+The Isabelle/HOL development
+[LLL Factorization](https://www.isa-afp.org/entries/LLL_Factorization.html)
+formalizes the 1982 algorithm for square-free integer polynomials, including
+its polynomial complexity. Hex does not implement that factorization
+algorithm. {name}`Hex.lll` provides the lattice-basis reduction used by the
+van Hoeij recombination tier, but factor recovery follows van Hoeij's CLD
+method rather than the older LLL factorizer.
+
 There is also a direct search for exact divisors over `ℤ`. It does not require
 a suitable modular prime and therefore provides a slower but unconditional
 last resort. These complementary costs explain the three tiers:
@@ -277,12 +297,11 @@ theorem would show that the lattice method cannot decline when a suitable
 prime and sufficient precision are available; that completeness theorem has
 not yet been proved.
 
-The closest formal precedents are the Isabelle/HOL developments
+Other formal precedents are the Isabelle/HOL developments
 [Polynomial Factorization](https://www.isa-afp.org/entries/Polynomial_Factorization.html),
 [The Factorization Algorithm of Berlekamp and Zassenhaus](https://www.isa-afp.org/entries/Berlekamp_Zassenhaus.html),
-and [LLL Factorization](https://www.isa-afp.org/entries/LLL_Factorization.html).
-They verify, respectively, the surrounding polynomial algorithms, classical
-Berlekamp–Zassenhaus recombination, and the older LLL factorization algorithm.
+which verify the surrounding polynomial algorithms and classical
+Berlekamp–Zassenhaus recombination.
 The accompanying
 [Isabelle LLL paper](https://doi.org/10.1007/s10817-020-09552-1) identifies a
 verified van Hoeij algorithm as future work. We have not found a later

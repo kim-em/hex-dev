@@ -13,6 +13,10 @@
   name-link requirements to the writing specification, and clarified that the
   current primality replay is linear only because it scans all divisors below
   the modulus.
+- Distinguished the 1982 LLL polynomial-factorization algorithm from van
+  Hoeij recombination, recorded its polynomial-time significance and Isabelle
+  formalization, and made explicit that Hex uses LLL reduction but does not
+  implement the older factorizer.
 - Opened follow-up issues #9022, #9023, #9029, and #9030 for the library-wide
   documentation, naming, primality-check, and manual-notation reviews.
 - Verified the complete repository with `lake build` (9502 jobs).
