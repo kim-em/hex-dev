@@ -712,7 +712,7 @@ def emptyInstance (request : RuleRequest Rank) : Outcome Rank :=
             next.engine.metrics.duplicateInstances == 1
       | _ => false
 
-def wrongGeneration (request : RuleRequest Rank) : Outcome Rank :=
+def falseHint (request : RuleRequest Rank) : Outcome Rank :=
   let proposal := { instantiateAt 113 (node 0) with claimedGeneration := 99 }
   .success [candidate request 1] [.instantiate proposal] {}
 
@@ -757,8 +757,8 @@ def startWithWeakRetry? : Option (State Rank) := do
       | _ => none
   | _ => none
 
--- The policy key exposes the engine-computed generation, and a proposal whose
--- untrusted claim disagrees is never advertised as selectable work.
+-- The policy key exposes the engine-computed generation.  A disagreeing
+-- package hint cannot hide otherwise valid work or control admission.
 #guard
   match afterInitial? with
   | some state =>
@@ -768,12 +768,16 @@ def startWithWeakRetry? : Option (State Rank) := do
   | none => false
 
 #guard
-  match afterReplyWith? engineLimits wrongGeneration with
+  match afterReplyWith? engineLimits falseHint with
   | some state =>
-      state.engine.suggestions.size == 1 && state.incomplete &&
-        (state.offer? (.suggestion (suggestion 0))).isNone &&
-        (state.view).toOption.any fun pair =>
-          pair.1.offers.isEmpty && pair.1.incomplete
+      match state.offer? (.suggestion (suggestion 0)) with
+      | some { key := .instantiate _ semantic, .. } =>
+          semantic.generation == 1 &&
+            match selectOffer state (.suggestion (suggestion 0)) with
+            | .completed (.instanceAdmitted [fresh]) next =>
+                fresh == node 2 && next.engine.generations[2]? == some 1
+            | _ => false
+      | _ => false
   | none => false
 
 -- A structurally advertised instantiation may still fail a later admission

@@ -467,6 +467,8 @@ recomputes generations and assigns concrete node identifiers. -/
 structure InstantiationRequest where
   key : Nat
   triggers : List NodeId
+  /-- Legacy package-side estimate retained for diagnostics.  Admission never
+  trusts this value: generation is recomputed from engine-owned dependencies. -/
   claimedGeneration : Nat
   nodes : List ProposedNode
   equalities : List ProposedEquality
@@ -1451,7 +1453,6 @@ inductive AdmissionError where
   | staleSuggestion (proposed current : Nat)
   | oversizedProposal
   | badReferenceOrShape
-  | generationMismatch (claimed actual : Nat)
   | invalidEquality
   | invalidCompiledProgram
   deriving DecidableEq, Repr
@@ -1541,12 +1542,13 @@ weaken either generation accounting or structural duplicate detection. -/
 def actionSubstitution (action : Action) : List NodeId :=
   dedupList (action.node :: action.inputs.map (fun input => input.node))
 
-/-- Recompute instantiation depth from the authoritative invocation, every old
-node named by the proposal, and every old node reached through a CSE hit. -/
-def inferredGeneration? (generations : Array Nat) (baseSize : Nat)
-    (action : Action) (request : InstantiationRequest) (resolved : List NodeId) : Option Nat := do
-  let references := actionSubstitution action ++ requestExistingRefs request ++
-    resolved.filter (fun node => node.index < baseSize)
+/-- Recompute logical instantiation depth from the authoritative invocation and
+every explicitly existing node named by the proposal.  Proposed nodes are
+outputs of this instance, so whether one happens to CSE-hit an already
+materialized node cannot turn it into a new proof dependency. -/
+def inferredGeneration? (generations : Array Nat)
+    (action : Action) (request : InstantiationRequest) : Option Nat := do
+  let references := actionSubstitution action ++ requestExistingRefs request
   let mut greatest := 0
   for node in references do
     let generation <- generations[node.index]?
@@ -1554,14 +1556,14 @@ def inferredGeneration? (generations : Array Nat) (baseSize : Nat)
   some (greatest + 1)
 
 /-- Recompute the generation advertised to policy from current engine-owned
-structure.  The rule's claimed generation is deliberately not trusted. -/
+structure.  The package's legacy hint is deliberately not trusted. -/
 def Engine.instantiationGeneration? (state : Engine Fact)
     (retained : RetainedSuggestion) : Option Nat := do
   if !state.actionFresh retained.action then none else pure ()
   let .instantiate request := retained.suggestion | none
   let baseSize := state.program.nodes.size
-  let (_, resolved) <- resolveDrafts baseSize state.program [] request.nodes
-  inferredGeneration? state.generations baseSize retained.action request resolved
+  let _ <- resolveDrafts baseSize state.program [] request.nodes
+  inferredGeneration? state.generations retained.action request
 
 /-- Treat equality endpoints as unordered for structural deduplication. -/
 def EqualityEdge.sameEndpoints (edge : EqualityEdge) (left right : NodeId) : Bool :=
@@ -1692,14 +1694,11 @@ def admitRetained (state : Engine Fact)
               if state.instances.contains instanceKey then
                 duplicateInstance state
               else
-                match inferredGeneration? state.generations baseSize retained.action request resolved with
+                match inferredGeneration? state.generations retained.action request with
                 | none => .invalid .badReferenceOrShape state
                 | some generation =>
-                    if request.claimedGeneration != generation then
-                      .invalid (.generationMismatch request.claimedGeneration generation) state
-                    else
-                      match resolveEqualities baseSize generation retained.action program resolved
-                          state.equalities request.equalities with
+                    match resolveEqualities baseSize generation retained.action program resolved
+                        state.equalities request.equalities with
                       | none => .invalid .invalidEquality state
                       | some (equalityIds, equalities) =>
                           let addedNodes := program.nodes.size - baseSize

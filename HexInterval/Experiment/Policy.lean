@@ -277,8 +277,7 @@ def State.suggestionKey? (state : State Fact) (suggestionId : SuggestionId) : Op
       else none
   | .instantiate request =>
       let generation <- state.engine.instantiationGeneration? retained
-      if request.claimedGeneration != generation then none
-      else some (.instantiate source (.ofRequest request generation))
+      some (.instantiate source (.ofRequest request generation))
   | .split request => do
       let version <- clock.splitVersion
       let current <- state.engine.versions[request.node.index]?

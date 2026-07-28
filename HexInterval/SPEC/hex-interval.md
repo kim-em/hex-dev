@@ -556,9 +556,10 @@ SSA node table, and per-node instantiation generations. It contains no facts.
 The engine constructs it only from a validated state already covered by the
 operation, node, arity, and generation limits. Thus an external shape rule can
 follow a product argument to a nested difference, compare opaque operation
-keys, recover the repeated `NodeId`, and compute the claimed generation for a
-proposal. It still receives facts only for its registration's declared watch
-slots. Structural inspection does not become a hidden fact dependency.
+keys, recover the repeated `NodeId`, and construct a proposal without
+duplicating the engine's generation calculation. It still receives facts only
+for its registration's declared watch slots. Structural inspection does not
+become a hidden fact dependency.
 Anchor-local inspection adds no wakeup beyond the declared fact slots; a rule
 which reads the whole view declares `watchesProgram`, making program extension
 an explicit dependency.
@@ -636,38 +637,41 @@ An instantiation proposal is retained under the selected action's versioned
 `RuleKey`; its own `key : Nat` is only an untrusted family label for replay and
 is not canonical authority. The proposal also contains replay-facing trigger
 data, new SSA instructions, equality or derived-fact recipes, and an untrusted
-claimed generation. The engine derives the canonical substitution from the
-selected action's anchor and declared input facts; a registry-provided trigger
-list cannot weaken generation accounting or change structural identity.
+legacy generation hint. The engine derives the canonical substitution from
+the selected action's anchor and declared input facts; a registry-provided
+trigger list or generation hint cannot weaken generation accounting or change
+structural identity.
 Acceptance validates operation arities and domains, topological order, scope
 visibility, and every referenced input; recomputes generation from the
-engine-owned action provenance and generated dependencies,
-rejecting a mismatch or over-budget descendant; deduplicates expressions by
-the same canonical CSE key as the base program; updates consumer and rule
-indexes; and retains an opaque recipe identifier. Production must freeze every
-referenced recipe value before replay. Base nodes have generation zero. The
-production representation may record generation per theorem
+engine-owned action provenance and genuine input dependencies, using that
+value—not the package hint—for the generation cap; deduplicates expressions
+by the same canonical CSE key as the base program; updates consumer and rule
+indexes; and retains an opaque recipe identifier. Production must freeze
+every referenced recipe value before replay. Base nodes have generation zero.
+The production representation may record generation per theorem
 instance or per generated product; that choice remains open below. In either
 case, a new expression is not trusted merely because a trigger matched or
 labeled itself generation zero.
 
-The role of `claimedGeneration` remains an explicit experiment. The current
-canary requires the registry's exact prediction to equal the engine's
-recomputation, which catches stale or incomplete proposal logic but forces
-each shape rule to mirror part of admission. Alternatives are an advisory
-claim retained only for replay diagnostics, a checked lower/upper bound, or an
-engine-exported computation over `ProgramView` shared by proposal and
-admission. The production interface must choose one after CSE-hit and
-post-extension tests; exact prediction by every package is not frozen merely
-because the first centered rule can compute it.
+The CSE-order experiment resolves the role of `claimedGeneration`: it is not
+an admission field. Requiring equality makes a valid retained proposal depend
+on whether another policy choice materialized one of its outputs first; a
+lower-bound comparison catches no safety-relevant lie, because the engine must
+recompute the value anyway. The production request should omit the field. The
+current canary retains it only as legacy diagnostic data and deliberately
+ignores it in both policy offer construction and admission. Policy sees the
+engine-computed generation in the semantic offer key, and the accepted
+instance records that same value for replay.
 
-In the current centered canary, `centeredGeneration?` deliberately mirrors the
-engine's `inferredGeneration?`: the authoritative references are the action
-substitution, old nodes referenced by proposed drafts or equalities, and old
-nodes reached by CSE. The proposal's `triggers` list is replay-facing data and
-does not contribute to generation. Both policy offer construction and
-admission recompute the value against the current append-only program, so a
-package's exact claim remains a checked canary rather than authority.
+The authoritative references are the action substitution and old nodes named
+explicitly as existing inputs by proposed drafts or equalities. The proposal's
+`triggers` list remains replay-facing data and does not contribute. A proposed
+node remains an output of the theorem instance when it CSE-hits an already
+materialized node: storage reuse cannot manufacture a proof dependency. Thus
+the same append-stable proposal has the same logical generation before and
+after an unrelated CSE-producing extension. The centered package no longer
+mirrors the admission algorithm; its retained legacy hint is ignored while
+policy and admission independently recompute the authoritative value.
 
 The current centered-product D2 vertical is deliberately narrower than this
 general recurrence. Its `Center.inferredGeneration` only recognizes one
@@ -700,11 +704,14 @@ encapsulation and would obstruct ordinary-kernel theorems about admission.
 
 One atomic theorem instantiation initially assigns a single instantiation
 generation to all helper nodes it introduces: one plus the maximum generation
-of every old node referenced by the authoritative action substitution, draft,
-equality output, or CSE result. This measures theorem-instantiation depth
-rather than expression-tree depth. Per-product generation remains a possible
-refinement, but neither a false trigger list nor a draft's ordering may let a
-deeper theorem instance pass a shallower limit.
+of every node in the authoritative action substitution or explicitly named as
+an existing input by a draft or equality. Proposed products are outputs, even
+when CSE reuses their storage, so selection order cannot raise their logical
+generation or change success at an exact generation cap. This measures
+theorem-instantiation depth rather than expression-tree depth. Per-product or
+multiple-provenance generation remains a possible refinement, but neither a
+false trigger list nor a package hint may let a deeper action pass a shallower
+limit.
 
 The general experiment activates proposed equality edges as indexed,
 replayable search contractors: improving either endpoint wakes transport in
@@ -991,9 +998,10 @@ A registration whose matcher depends on the whole `ProgramView` sets
 requeues all existing applications of that registration. This coarse trigger
 is the first grind-like instantiation mechanism: a matcher that was previously
 inapplicable can observe expressions introduced by another package. Ordinary
-anchor-local registrations remain append-stable. Compiled structural patterns
-or more selective operation-key triggers remain alternatives to compare once
-the behavior is established.
+anchor-local registrations remain append-stable; they do not acquire a global
+dependency merely because engine-owned admission may CSE one of their outputs.
+Compiled structural patterns or more selective operation-key triggers remain
+alternatives to compare once the behavior is established.
 
 1. The solver produces an `Action` naming a program snapshot, concrete rule
    application, anchor, declared input fact versions, effort, and action kind.
@@ -2082,6 +2090,11 @@ typical, boundary, and adversarial inputs. In particular it includes:
   the match on a newly appended DAG suffix, and admits both the append-stable
   pre-extension proposal and the new proposal after revalidation with their
   exact assigned node identifiers and generations;
+- two append-stable rules which propose the same absent product and distinct
+  equality outputs in either selection order: the first materializes the
+  product, the second CSE-hits it, both remain generation one under an exact
+  generation-one cap, and deliberately wrong package hints affect neither the
+  policy offer nor admission;
 - an end-to-end concrete registry run in which `x * (1 - x)` first receives
   the dependency-losing hull `[0,1]`, structural instantiation adds the
   centered node and an opaque-payload equality, the alternate callback returns

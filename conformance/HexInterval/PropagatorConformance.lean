@@ -410,7 +410,92 @@ def dynamicFinal? : Option (RunResult Rank (List String) × SuggestionId) := do
       | _ => false
   | none => false
 
-/-! # Two successive shape triggers exercise general generation recurrence -/
+/-! ## CSE does not create a proof dependency -/
+
+def cseAnchorKey : RuleKey := { name := "shape.cse-anchor" }
+def cseSourceKey : RuleKey := { name := "shape.cse-source" }
+
+def cseRule (key : RuleKey) : Registration :=
+  { key
+    head := unaryOp
+    kind := .instantiate
+    watches := [.argument 0]
+    writes := [] }
+
+def cseProposal (request : RuleRequest Rank) (left : NodeId) :
+    InstantiationRequest :=
+  { key := left.index
+    triggers := [request.action.node, left]
+    /- Deliberately wrong: this package hint is not admission authority. -/
+    claimedGeneration := 0
+    nodes := [proposedGenerated request.action.node]
+    equalities :=
+      [{ left := .existing left
+         right := .proposed 0
+         payload := { index := left.index } }]
+    payload := { index := left.index } }
+
+def cseInvoke (calls : Nat) (request : RuleRequest Rank) :
+    Outcome Rank × Nat :=
+  if request.action.key == cseAnchorKey then
+    (.success [] [.instantiate (cseProposal request request.action.node)] {}, calls + 1)
+  else if request.action.key == cseSourceKey then
+    (.success [] [.instantiate (cseProposal request (node 0))] {}, calls + 1)
+  else
+    (.failed 10, calls + 1)
+
+def cseInitial? : Option (RunResult Rank Nat) := do
+  let program : Program :=
+    { operations := dynamicOperations, nodes := #[sourceNode, unaryNode 0] }
+  let state <- start? program #[cseRule cseAnchorKey, cseRule cseSourceKey]
+    #[4, 0] { generous with maxGeneration := 1 }
+  pure (drive cseInvoke 8 state 0)
+
+def cseOrder? (first second : SuggestionId) : Option (Engine Rank) := do
+  let initial <- cseInitial?
+  let firstRetained <- initial.state.suggestions[first.index]?
+  let secondRetained <- initial.state.suggestions[second.index]?
+  if initial.state.instantiationGeneration? firstRetained != some 1 ||
+      initial.state.instantiationGeneration? secondRetained != some 1 then
+    none
+  else
+    match initial.state.admitInstantiation first with
+    | .admitted [fresh] state =>
+        if fresh != node 2 then none else
+        let retained := state.suggestions[second.index]?
+        match retained with
+        | none => none
+        | some retained =>
+            if !state.actionFresh retained.action ||
+                state.instantiationGeneration? retained != some 1 then
+              none
+            else
+              match state.admitInstantiation second with
+              | .admitted [] final => some final
+              | _ => none
+    | _ => none
+
+def exactCseState (state : Engine Rank) : Bool :=
+  state.programVersion == 2 && state.program.nodes.size == 3 &&
+    state.generations.toList == [0, 0, 1] &&
+    state.equalities.size == 2 && state.instances.length == 2 &&
+    state.instanceHistory.size == 2 &&
+    state.instanceHistory.toList.all (fun event => event.generation == 1) &&
+    state.equalities.toList.all (fun edge => edge.generation == 1) &&
+    state.equalities.toList.any (fun edge => edge.sameEndpoints (node 0) (node 2)) &&
+    state.equalities.toList.any (fun edge => edge.sameEndpoints (node 1) (node 2))
+
+-- Either proposal may materialize `generated(anchor)` first.  The second
+-- append-stable proposal then CSE-hits that output but remains generation one,
+-- so both equalities are admitted under the exact generation-one cap.
+#guard
+  match cseOrder? (suggestion 0) (suggestion 1),
+      cseOrder? (suggestion 1) (suggestion 0) with
+  | some anchorFirst, some sourceFirst =>
+      exactCseState anchorFirst && exactCseState sourceFirst
+  | _, _ => false
+
+/-! ## Two successive shape triggers exercise general generation recurrence -/
 
 def nextOp : OpKey := { name := "opaque.next-generation" }
 def nextCopyKey : RuleKey := { name := "opaque.next.copy" }
@@ -511,9 +596,10 @@ def ladderFinal? : Option (RunResult Rank (List String)) := do
       | _ => false
   | none => false
 
--- A registry cannot launder a generation-one invocation back to generation
--- one by omitting its anchor from the untrusted trigger list and mentioning
--- only a shallow node in the draft.
+-- A registry claim cannot launder a generation-one invocation back to
+-- generation one.  The engine ignores the claim and derives generation two
+-- from the action anchor even when the trigger list and draft mention only a
+-- shallow node.
 #guard
   match ladderAfterFirst? with
   | some first =>
@@ -530,9 +616,12 @@ def ladderFinal? : Option (RunResult Rank (List String)) := do
               { action := retained.action
                 suggestion := .instantiate proposal
                 splitVersion := none } with
-          | .invalid (.generationMismatch 1 2) state =>
-              state.programVersion == 1 && state.program.nodes.size == 3 &&
-                state.generations.toList == [0, 0, 1]
+          | .admitted [fresh] state =>
+              fresh == node 3 && state.programVersion == 2 &&
+                state.generations.toList == [0, 0, 1, 2] &&
+                match state.instanceHistory[1]? with
+                | some event => event.generation == 2
+                | none => false
           | _ => false
       | none => false
   | none => false

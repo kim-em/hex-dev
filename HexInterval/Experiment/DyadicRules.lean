@@ -406,9 +406,6 @@ def operationWithKey? (view : ProgramView) (key : OpKey) : Option OpId := do
     if operation.key == key then return { index }
   none
 
-def findProgramNode? (view : ProgramView) (target : Node) : Option NodeId :=
-  Propagator.findNodeFrom 0 view.nodes.toList target
-
 def centeredBinding? (request : RuleRequest Fact) : Option CenteredBinding := do
   if request.program.programVersion != request.action.programVersion then none else pure ()
   let product <- request.program.node? request.action.node
@@ -421,30 +418,17 @@ def centeredBinding? (request : RuleRequest Fact) : Option CenteredBinding := do
   if request.program.operationKey? one != some oneOp then none else pure ()
   pure { anchor := request.action.node, input, complement, one }
 
-/-- Match the engine's authoritative generation calculation for this concrete
-proposal: invocation substitution, existing proposal references, and a CSE hit
-if the centered node already exists. -/
-def centeredGeneration? (request : RuleRequest Fact) (binding : CenteredBinding)
-    (centered : Node) : Option Nat := do
-  let cse := findProgramNode? request.program centered
-  let references := dedupList
-    (request.action.node :: request.action.inputs.map (fun input => input.node) ++
-      [binding.input] ++ cse.toList)
-  let generations <- references.mapM request.program.generation?
-  pure (generations.foldl Nat.max 0 + 1)
-
 def centeredProposal? (request : RuleRequest Fact)
     (binding : CenteredBinding) : Option InstantiationRequest := do
   let input <- request.program.node? binding.input
   let operation <- operationWithKey? request.program centeredOp
   let signature <- request.program.operation? operation
   if input.domain != signature.output then none else pure ()
-  let centered : Node := { domain := signature.output, op := operation, args := [binding.input] }
-  let generation <- centeredGeneration? request binding centered
   pure
     { key := centeredFamilyKey
       triggers := [binding.anchor, binding.input, binding.complement, binding.one]
-      claimedGeneration := generation
+      /- This legacy package hint is deliberately not an admission input. -/
+      claimedGeneration := 1
       nodes :=
         [{ domain := signature.output
            op := operation
