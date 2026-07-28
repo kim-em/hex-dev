@@ -703,16 +703,17 @@ complexity verdicts.
 
 The tactic track begins with same-module `Baseline − Baseline`,
 `Degree10.Tactic − Degree10.Tactic`, and
-`Control − Control` null controls, where `Control` checks two independent
-degree-50 `by rcf` theorems to supply a genuinely higher build-magnitude
-calibration. It then uses matched
+`Degree50.Tactic − Degree50.Tactic` null controls, plus
+`DoubleDegree50 − DoubleDegree50`, where `DoubleDegree50` checks two
+independent degree-50 `by rcf` theorems to supply a genuinely higher
+build-magnitude calibration. It then uses matched
 fresh-module variants for each fixed case:
 `Baseline` (identical imports), `Reify` (reify-only checksum), `Input`
 (reflected sentence literal), `Search` (the same input plus a meta checksum of
 compiled certificate construction, emitting no proof), `Literal` (input plus
 the pre-generated certificate), `Replay` (literal plus its kernel-checked
 theorem), and `Tactic` (the source goal closed by `rcf`). An external runner
-rotates fresh builds and reports all three null calibrations followed by raw paired
+rotates fresh builds and reports all four null calibrations followed by raw paired
 deltas for reification, search, literal elaboration, replay, and the full
 tactic. Six rounds balance which role builds first. Each null's signed deltas,
 absolute and relative ranges, and median describe fresh-build noise only: they
@@ -745,10 +746,11 @@ rejects any other pretty-printer omission, so the committed macro source is
 independently rebuildable. All measured modules import the same generated
 support module and no measured module imports another measured module.
 
-There is one shared `Baseline`, one expensive `Control`, and six measured
+There is one shared `Baseline`, one `DoubleDegree50`, and six measured
 modules under each of `Quadratic/`, `Degree10/`, and `Degree50/`. The report
-contains eighteen pairs: baseline, degree-10-tactic, and double-tactic null
-controls first, then these five pairs for each of the three cases:
+contains nineteen pairs: baseline, degree-10-tactic, degree-50-tactic, and
+double-degree-50 null controls first, then these five pairs for each of the
+three cases:
 
 | Report component | Reference | Candidate |
 | --- | --- | --- |
@@ -764,7 +766,8 @@ the accepted checker and the builder-output hash, and builds the quadratic
 matrix. Each Search module repeats its Input module's reflected declaration
 before running the search command, so `Search - Input` does not subtract work
 absent from the candidate. `HexRCFProofProbeScientific` owns the degree-10 and
-degree-50 measured modules without adding them to routine CI. Both are
+degree-50 measured modules and the double-degree-50 control without adding
+them to routine CI. Both are
 build-only Lake libraries; there is no proof-probe executable or in-process
 clock. The complete external sweep is:
 
@@ -774,8 +777,8 @@ python3 scripts/bench/hexrcf_proof_sweep.py --samples 6 \
   --shared-host --expected-host chungus2 --cpu 22
 ```
 
-Only `Replay`, `Tactic`, and the expensive `Control` print an axiom report,
-fixed to `[propext, Classical.choice, Quot.sound]`. `Search` also checks stable
+Only `Replay`, `Tactic`, and `DoubleDegree50` print an axiom report, fixed to
+`[propext, Classical.choice, Quot.sound]`. `Search` also checks stable
 structural sentence and certificate hashes, so a successful build forces the
 compiled result instead of merely invoking the builder and discarding its
 output.
@@ -927,8 +930,12 @@ paired `Tactic − Baseline` fresh-module delta on a clean named host, using
 the designated-shared-host protocol from `SPEC/benchmarking.md`. Raw total wall
 times and every pair remain in the artifact. They are not
 one-parameter ladders, complexity verdicts, or substitutes for the compiled
-LeanBench cases above. The thresholds are measured-plus-headroom regression
-bounds for this fresh-module delta; they are not interactive-latency claims.
+LeanBench cases above. For the first two cases, the measured robust upper
+bounds (paired median plus selected scaled null envelope) were 1.092 s and
+7.913 s; multiplying by 1.5 and rounding upward gives 2 s and 12 s. The
+degree-50 robust upper bound was 7.890 s, but its original 30 s adversarial
+ceiling is retained as a separate acceptance goal. These are fresh-module
+regression bounds, not interactive-latency claims.
 
 - Quadratic goals, one atom: under 2 seconds.
 - Degree ≤ 10, up to 3 atoms: under 12 seconds.

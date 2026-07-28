@@ -282,7 +282,8 @@ lean_lib HexRCFProofProbeScientific where
     `HexRCF.ProofProbe.Degree10.Tactic, `HexRCF.ProofProbe.Degree50.Reify,
     `HexRCF.ProofProbe.Degree50.Input, `HexRCF.ProofProbe.Degree50.Search,
     `HexRCF.ProofProbe.Degree50.Literal, `HexRCF.ProofProbe.Degree50.Replay,
-    `HexRCF.ProofProbe.Degree50.Tactic, `HexRCF.ProofProbe.Control]
+    `HexRCF.ProofProbe.Degree50.Tactic,
+    `HexRCF.ProofProbe.DoubleDegree50]
 
 -- Conformance #guard drivers live under `conformance/` and are built by this
 -- library (mirroring the released conformance sub-projects). Alongside each

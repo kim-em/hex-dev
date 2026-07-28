@@ -3,21 +3,24 @@
 
 from __future__ import annotations
 
+import re
 import unittest
+from pathlib import Path
 
 from scripts.bench import fresh_module_sweep as sweep
 from scripts.bench import hexrcf_proof_sweep as rcf
 
 
 class ManifestTests(unittest.TestCase):
-    def test_manifest_is_three_nulls_plus_five_pairs_per_case(self) -> None:
-        self.assertEqual(len(rcf.SPEC.pairs), 18)
+    def test_manifest_is_four_nulls_plus_five_pairs_per_case(self) -> None:
+        self.assertEqual(len(rcf.SPEC.pairs), 19)
         self.assertEqual(
             [pair.name for pair in rcf.SPEC.pairs],
             [
                 "fresh-build-null",
                 "degree10-tactic-null",
-                "double-tactic-null",
+                "degree50-tactic-null",
+                "double-degree50-null",
                 *[
                 f"{case}-{component}"
                 for case in ("quadratic", "degree10", "degree50")
@@ -27,7 +30,7 @@ class ManifestTests(unittest.TestCase):
         )
 
     def test_null_controls_are_first_and_use_exact_module_identity(self) -> None:
-        baseline, intermediate, expensive = rcf.SPEC.pairs[:3]
+        baseline, intermediate, matched, expensive = rcf.SPEC.pairs[:4]
         self.assertTrue(baseline.null_control)
         self.assertIs(baseline.reference, rcf.BASELINE)
         self.assertIs(baseline.candidate, rcf.BASELINE)
@@ -40,21 +43,32 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(
             intermediate.metadata["magnitude"], "degree10-tactic"
         )
+        self.assertTrue(matched.null_control)
+        self.assertEqual(matched.reference, matched.candidate)
+        self.assertEqual(
+            matched.reference.module, "HexRCF.ProofProbe.Degree50.Tactic"
+        )
+        self.assertEqual(matched.reference.expected_axioms, rcf.ALLOWED_AXIOMS)
+        self.assertEqual(matched.metadata["magnitude"], "degree50-tactic")
         self.assertTrue(expensive.null_control)
         self.assertEqual(expensive.reference, expensive.candidate)
         self.assertEqual(
-            expensive.reference.module, "HexRCF.ProofProbe.Control"
+            expensive.reference.module, "HexRCF.ProofProbe.DoubleDegree50"
         )
         self.assertEqual(expensive.reference.expected_axioms, rcf.ALLOWED_AXIOMS)
         self.assertEqual(
             expensive.metadata["magnitude"], "double-degree50-tactic"
         )
 
-    def test_expensive_control_runs_two_independent_tactics(self) -> None:
+    def test_double_degree50_runs_two_tactics(self) -> None:
         source = sweep.probe_source(
-            "HexRCF.ProofProbe.Control", rcf.SPEC.src_dir
+            "HexRCF.ProofProbe.DoubleDegree50", rcf.SPEC.src_dir
         ).read_text(encoding="utf-8")
-        self.assertEqual(source.count(":= by\n  rcf\n"), 2)
+        tactics = re.findall(
+            r"theorem (left|right) : rcfDegree50Goal :=\s*by\s+rcf\b",
+            source,
+        )
+        self.assertEqual(tactics, ["left", "right"])
         self.assertIn(
             "theorem result : rcfDegree50Goal ∧ rcfDegree50Goal := "
             "⟨left, right⟩",
@@ -63,6 +77,8 @@ class ManifestTests(unittest.TestCase):
 
     def test_sample_count_is_preregistered_and_balanced(self) -> None:
         self.assertEqual(rcf.SPEC.required_samples, 6)
+
+    def test_schema_tracks_contract_change(self) -> None:
         self.assertEqual(rcf.SPEC.schema, "hexrcf-proof-probes-v6")
 
     def test_substantive_pairs_remain_five_per_case(self) -> None:
@@ -109,6 +125,11 @@ class ManifestTests(unittest.TestCase):
 
     def test_no_measured_import_path(self) -> None:
         sweep.validate_spec(rcf.SPEC)
+
+    def test_every_measured_module_is_wired_into_lake(self) -> None:
+        lakefile = Path("lakefile.lean").read_text(encoding="utf-8")
+        for module in sweep.probe_modules(rcf.SPEC):
+            self.assertIn(f"`{module}", lakefile, module)
 
     def test_every_measured_module_has_identical_imports(self) -> None:
         imports = {

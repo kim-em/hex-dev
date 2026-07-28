@@ -10,9 +10,9 @@ public import HexRCF.ProofProbe.Generated
 public meta import HexRCF.ProofProbe.Generated
 
 public section
-/-! An expensive same-module null control for fresh-build calibration. -/
+/-! A double degree-50 same-module null for fresh-build calibration. -/
 
-namespace Hex.RCF.ProofProbe.Control
+namespace Hex.RCF.ProofProbe.DoubleDegree50
 
 theorem left : rcfDegree50Goal := by
   rcf
@@ -22,11 +22,11 @@ theorem right : rcfDegree50Goal := by
 
 theorem result : rcfDegree50Goal ∧ rcfDegree50Goal := ⟨left, right⟩
 
-/-- info: 'Hex.RCF.ProofProbe.Control.result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RCF.ProofProbe.DoubleDegree50.result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms result
 
 -- The sweep harness parses this unguarded copy from Lake's captured output.
 #print axioms result
 
-end Hex.RCF.ProofProbe.Control
+end Hex.RCF.ProofProbe.DoubleDegree50

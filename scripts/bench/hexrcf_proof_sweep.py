@@ -92,9 +92,20 @@ SPEC = SweepSpec(
             null_control=True,
         ),
         ProbePair(
-            "double-tactic-null",
-            ProbeModule("HexRCF.ProofProbe.Control", ALLOWED_AXIOMS),
-            ProbeModule("HexRCF.ProofProbe.Control", ALLOWED_AXIOMS),
+            "degree50-tactic-null",
+            ProbeModule("HexRCF.ProofProbe.Degree50.Tactic", ALLOWED_AXIOMS),
+            ProbeModule("HexRCF.ProofProbe.Degree50.Tactic", ALLOWED_AXIOMS),
+            {
+                "component": "fresh-build-noise",
+                "interpretation": "calibration-only",
+                "magnitude": "degree50-tactic",
+            },
+            null_control=True,
+        ),
+        ProbePair(
+            "double-degree50-null",
+            ProbeModule("HexRCF.ProofProbe.DoubleDegree50", ALLOWED_AXIOMS),
+            ProbeModule("HexRCF.ProofProbe.DoubleDegree50", ALLOWED_AXIOMS),
             {
                 "component": "fresh-build-noise",
                 "interpretation": "calibration-only",
