@@ -1,0 +1,4 @@
+name = "mvbench"
+defaultTargets = ["MV"]
+[[lean_lib]]
+name = "MV"

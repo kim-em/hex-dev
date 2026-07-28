@@ -8,12 +8,9 @@ module
 
 public import HexRealRoots.Refine
 public import HexRealRoots.Prec
--- `import all` on the source modules so `decide` reduces the sanity checks
--- below in the kernel: the non-`@[expose]` bodies (`sturmChain`, `evalDyadic`,
--- `sturmVarAt`, `sepPrec`, `twoPow`, and the dyadic comparison behind
--- `Overlaps`) are opaque across the module boundary otherwise. Same workaround
--- as Var.lean and Refine.lean.
-import all Init.Data.Array.DecidableEq
+-- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
+-- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
+public import HexBasic.ArrayDecEq
 import all HexRealRoots.Basic
 import all HexRealRoots.Chain
 import all HexRealRoots.Var

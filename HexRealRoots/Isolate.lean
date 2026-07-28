@@ -8,12 +8,9 @@ module
 
 public import HexRealRoots.IsolateSturm
 public import HexRealRoots.IsolateDescartes
--- `import all` on the engine modules so `decide` reduces the sanity checks
--- below in the kernel: the non-`@[expose]` engine bodies (`isolateSturm?`,
--- `isolateDescartes?`, the chain/evaluation helpers they call) are opaque
--- across the module boundary otherwise, so a `decide` unfolding them would
--- get stuck. Same workaround as Var.lean and Refine.lean.
-import all Init.Data.Array.DecidableEq
+-- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
+-- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
+public import HexBasic.ArrayDecEq
 import all HexRealRoots.Basic
 import all HexRealRoots.Chain
 import all HexRealRoots.Var

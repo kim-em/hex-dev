@@ -49,19 +49,80 @@ system a public non-`@[expose]` `def` exports only its signature, so `instDecida
 body is unavailable to the kernel downstream — `#print Array.instDecidableEqImpl` reports
 `<not imported>` — and reduction stalls for every pair of nonempty arrays.
 
-## Proposed fix
+## Two further instances of the same defect
 
-Add `@[expose]` to `Array.instDecidableEqImpl` (and verify its reduction closure,
-`Array.isEqv` / `Array.isEqvAux`, is likewise exposed). That restores kernel reduction of
-`decide`/`rfl` over `Array` equality under `module`.
+Chasing the `Vector` case turned up two more, both with the same shape and neither
+fixable from the consumer side.
+
+**Every `deriving DecidableEq` instance.** `Lean.Elab.Deriving.DecEq.mkAuxFunction`
+emits the generated `decEq` as a plain `def`, so its body is opaque across a module
+boundary. This is not specific to any type:
+
+```lean
+-- A.lean
+module
+public section
+structure P where
+  x : Nat
+deriving DecidableEq
+
+-- B.lean
+module
+public import A
+example : (⟨1⟩ : P) ≠ ⟨2⟩ := by decide   -- stuck at instDecidableEqP.decEq
+```
+
+`Vector`'s instance is derived, which is why `Vector` equality stalls even once
+`Array` is fixed. There is no workaround: `@[expose]` cannot be attached to a
+structure, and `attribute [expose] …` after the fact is rejected ("can only be
+added when declaring a `def`").
+
+**`Array.ofFn`.** Delegates to its `ofFn.go` auxiliary, so
+`(Array.ofFn f).size = n` does not reduce. `Vector.ofFn` is already `@[expose]`
+but calls `Array.ofFn`, so it inherits the stall. Marking `Array.ofFn` itself
+`@[expose]` is sufficient, because exposure extends to a definition's `where`
+bindings; `@[expose]` directly on the `where` binding is rejected.
+
+## Fix
+
+All three are fixed by
+[leanprover/lean4#14270](https://github.com/leanprover/lean4/pull/14270):
+`@[expose]` on `Array.instDecidableEqImpl` (plus `isEqv` / `isEqvAux`), on the
+`decEq` emitted by the deriving handler, and on `Array.ofFn`.
 
 ## Consumer-side workarounds (no toolchain change)
 
-- `import all Init.Data.Array.DecidableEq` in the module performing the `decide` — pulls the
-  impl body in and reduces (verified).
+- `HexBasic.ArrayDecEq` provides higher-priority `DecidableEq` instances for
+  `Array` and `Vector` that route through the fully exposed `List` equality.
+  This is what the tree uses now; `public import HexBasic.ArrayDecEq` in any
+  module that needs to `decide` such an equality.
+- `import all Init.Data.Array.DecidableEq` also works for the `Array` case, and
+  was what the tree used previously.
 - Route a wrapper type's `DecidableEq` through `List` instead of `Array`, e.g.
-  `decidable_of_iff (a.toList = b.toList) …`; `List.instDecidableEq` is fully exposed.
-  (This is what `HexPoly.Dense`'s `DecidableEq (DensePoly R)` now does.)
+  `decidable_of_iff (a.toList = b.toList) …`. This is what `HexPoly.Dense`'s
+  `DecidableEq (DensePoly R)` does, and it has to stay local there because
+  `hex-poly` has no dependencies and therefore cannot import `HexBasic`.
+- `HexBasic.OfFn` provides `Hex.Array.ofFn'` and `Hex.Vector.ofFn'`, which go
+  through the fully exposed `List.ofFn` and do reduce. They are proved equal to
+  the core versions (`ofFn'_eq_ofFn`), so the swap back is a rewrite.
+
+## Cleanup once #14270 lands
+
+After the toolchain is bumped past the fix:
+
+1. Delete `HexBasic/ArrayDecEq.lean` and `HexBasic/OfFn.lean`, and their entries
+   in `HexBasic.lean`.
+2. Remove the `public import HexBasic.ArrayDecEq` line and its two-line comment
+   from every module that carries it (`grep -rl HexBasic.ArrayDecEq`), and
+   replace every `Array.ofFn'` / `Vector.ofFn'` use with the core version
+   (`grep -rl "ofFn'"`); `ofFn'_eq_ofFn` makes that a rewrite.
+3. Replace `HexPoly.Dense`'s hand-written `DecidableEq (DensePoly R)` with the
+   ordinary `Array`-based comparison, and drop the explanatory comment.
+4. Reconsider `HexPoly.Euclid.leadingCoeff`, which avoids `Array.back?` for the
+   related reason below, and any code that avoids `Array.ofFn` for kernel
+   reasons.
+5. Re-run the kernel-facing conformance and bench targets, since the point of
+   all of this is reduction behaviour rather than elaboration.
 
 ## Related
 

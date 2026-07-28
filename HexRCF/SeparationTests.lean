@@ -20,7 +20,9 @@ public meta import HexPolyZ.Mignotte
 import all HexRCF.Separation
 import all HexRCF.SeparationCheck
 import all HexRCF.SturmBuilder
-import all Init.Data.Array.DecidableEq
+-- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
+-- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
+public import HexBasic.ArrayDecEq
 import all HexRealRoots.Basic
 import all HexRealRoots.Chain
 import all HexRealRoots.Var
