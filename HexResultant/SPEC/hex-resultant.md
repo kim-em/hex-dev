@@ -212,7 +212,8 @@ formal degrees explicit in the matrix core avoids dependent casts when the
 coefficient ring changes.  The construction is total through truncated
 natural subtraction; Brown identities use the meaningful range
 `J ≤ min (formalDegree f) (formalDegree g)`. The proof route derives the
-needed alternation, multilinearity, column-update, and block identities
+needed multilinearity, adjacent swaps, arbitrary duplicate-column vanishing,
+adjacent-transposition sequence parity, column updates, and block identities
 locally from the Laplace recursion rather than importing the matrix or
 determinant libraries. The theorems `coeffMinor_map`, `poly_map`, and
 `exists_coeff` prove that coefficient embedding commutes with the construction
@@ -368,9 +369,9 @@ quotient is exact over every stated exact-division domain.
   Sylvester determinant, generalized subresultant polynomials, and their
   fraction-embedding image certificates.
 - `HexResultant/DeterminantAlgebra.lean`: local column multilinearity,
-  adjacent-column alternation and update laws, consecutive-block scaling,
-  and the resulting left/right homogeneity laws for generalized
-  subresultants.
+  adjacent swaps and swap-sequence parity, arbitrary alternation and update
+  laws, consecutive-block scaling, and the resulting left/right homogeneity
+  laws for generalized subresultants.
 - `HexResultant/Subresultant.lean`: the Brown worker,
   `subresultantChain`, `resultant`, chain termination, and degree bounds.
 - `HexResultant/Discriminant.lean`: `disc` and the algebraic
@@ -412,7 +413,9 @@ Per [SPEC/testing.md](../../SPEC/testing.md), fixtures are tiered into
   - Small generalized-minor pins cover both Sylvester blocks, a repeated-row
     zero above index `J`, degree reversal, equal degrees, regular and defective
     Brown-chain terms, left/right homogeneity, and a bivariate `ZPoly`
-    coefficient ring. The local Laplace determinant is factorial proof
+    coefficient ring. Direct local-determinant checks cover adjacent swaps,
+    swap-sequence parity and action, arbitrary duplicate columns, and arbitrary
+    column updates. The local Laplace determinant is factorial proof
     infrastructure, so these checks stay deliberately small rather than
     joining the random degree-10 resultant sweep.
   - A bivariate case over `R = ZPoly`, exercising the

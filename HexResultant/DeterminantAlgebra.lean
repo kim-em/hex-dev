@@ -16,9 +16,9 @@ Local determinant algebra for generalized Sylvester minors.
 
 The proof-only determinant in `SubresultantMinor` deliberately avoids a
 dependency on `hex-matrix` or `hex-determinant`.  This module develops the
-column multilinearity, adjacent-column alternation, and block-scaling
-identities that begin the Brown--Traub proof directly from its first-row
-Laplace recursion.
+column multilinearity, arbitrary alternation and column-update, permutation,
+and block-scaling identities that begin the Brown--Traub proof directly from
+its first-row Laplace recursion.
 -/
 
 namespace Hex
@@ -47,6 +47,64 @@ theorem setCol_self {R : Type u} {n : Nat} (M : Square R n) (dst : Fin n) :
   · subst j
     simp [setCol]
   · simp [setCol, h]
+
+/-- Swap two adjacent columns of a proof-only square coefficient family. -/
+@[expose]
+def swapAdjacent {R : Type u} {n : Nat} (M : Square R (n + 1))
+    (left : Fin n) : Square R (n + 1) :=
+  fun i j =>
+    if j = left.castSucc then M i left.succ
+    else if j = left.succ then M i left.castSucc
+    else M i j
+
+@[simp, grind =]
+theorem swapAdjacent_apply {R : Type u} {n : Nat}
+    (M : Square R (n + 1)) (left : Fin n) (i j : Fin (n + 1)) :
+    swapAdjacent M left i j =
+      if j = left.castSucc then M i left.succ
+      else if j = left.succ then M i left.castSucc
+      else M i j := by
+  rfl
+
+@[simp, grind =]
+theorem swapAdjacent_left {R : Type u} {n : Nat}
+    (M : Square R (n + 1)) (left : Fin n) (i : Fin (n + 1)) :
+    swapAdjacent M left i left.castSucc = M i left.succ := by
+  simp [swapAdjacent]
+
+@[simp, grind =]
+theorem swapAdjacent_right {R : Type u} {n : Nat}
+    (M : Square R (n + 1)) (left : Fin n) (i : Fin (n + 1)) :
+    swapAdjacent M left i left.succ = M i left.castSucc := by
+  have hne : left.succ ≠ left.castSucc := by
+    intro h
+    have hval := congrArg Fin.val h
+    simp at hval
+  simp [swapAdjacent, hne]
+
+@[simp, grind =]
+theorem swapAdjacent_of_ne {R : Type u} {n : Nat}
+    (M : Square R (n + 1)) (left : Fin n) (i j : Fin (n + 1))
+    (hl : j ≠ left.castSucc) (hr : j ≠ left.succ) :
+    swapAdjacent M left i j = M i j := by
+  simp [swapAdjacent, hl, hr]
+
+@[simp, grind =]
+theorem swapAdjacent_swapAdjacent {R : Type u} {n : Nat}
+    (M : Square R (n + 1)) (left : Fin n) :
+    swapAdjacent (swapAdjacent M left) left = M := by
+  have hne : left.castSucc ≠ left.succ := by
+    intro h
+    have hval := congrArg Fin.val h
+    simp at hval
+  funext i j
+  by_cases hl : j = left.castSucc
+  · subst j
+    simp [swapAdjacent, hne.symm]
+  · by_cases hr : j = left.succ
+    · subst j
+      simp [swapAdjacent, hne.symm]
+    · simp [swapAdjacent, hl, hr]
 
 @[simp, grind =]
 theorem skipIndex_val_of_lt {n : Nat} (skip : Fin (n + 1)) (i : Fin n)
@@ -621,31 +679,224 @@ theorem det_eq_zero_of_adjacent_col_eq {R : Type u} [Lean.Grind.CommRing R]
       rw [foldl_finRange_adjacent left term hzero]
       exact hcancel
 
+/-- Swapping two adjacent columns negates the local determinant. -/
+theorem det_swapAdjacent {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Square R (n + 1)) (left : Fin n) :
+    det (swapAdjacent M left) = 0 - det M := by
+  let a : Fin (n + 1) := left.castSucc
+  let b : Fin (n + 1) := left.succ
+  let va : Fin (n + 1) → R := fun i => M i a
+  let vb : Fin (n + 1) → R := fun i => M i b
+  let vsum : Fin (n + 1) → R := fun i => va i + vb i
+  have hab : a ≠ b := by
+    intro h
+    have hval := congrArg Fin.val h
+    simp [a, b] at hval
+  have hboth :
+      det (setCol (setCol M a vsum) b vsum) = 0 := by
+    apply det_eq_zero_of_adjacent_col_eq (left := left)
+    intro i
+    simp [setCol, a, b, hab, vsum]
+  have hcomm :
+      setCol (setCol M a vsum) b va =
+        setCol (setCol M b va) a vsum := by
+    funext i j
+    by_cases hja : j = a
+    · subst j
+      simp [setCol, hab]
+    · by_cases hjb : j = b
+      · subst j
+        simp [setCol, hja]
+      · simp [setCol, hja, hjb]
+  have hrestore :
+      setCol (setCol M a vsum) b vb = setCol M a vsum := by
+    funext i j
+    by_cases hjb : j = b
+    · subst j
+      simp [setCol, vb, hab.symm]
+    · simp [setCol, hjb]
+  have hswap :
+      setCol (setCol M b va) a vb = swapAdjacent M left := by
+    funext i j
+    by_cases hja : j = a
+    · subst j
+      simp [setCol, swapAdjacent, a, b, vb]
+    · by_cases hjb : j = b
+      · subst j
+        simp [setCol, swapAdjacent, a, b, va, vb, hja]
+      · simp [setCol, swapAdjacent, a, b, va, vb, hja, hjb]
+  have hdupA : det (setCol (setCol M b va) a va) = 0 := by
+    apply det_eq_zero_of_adjacent_col_eq (left := left)
+    intro i
+    simp [setCol, a, b, va]
+  have hdupB : det (setCol M a vb) = 0 := by
+    apply det_eq_zero_of_adjacent_col_eq (left := left)
+    intro i
+    simp [setCol, a, b, vb]
+  have houter := det_setCol_add (setCol M a vsum) b va vb
+  have hleft := det_setCol_add (setCol M b va) a va vb
+  have hright := det_setCol_add M a va vb
+  have hself : setCol M a va = M := setCol_self M a
+  rw [show (fun i => va i + vb i) = vsum by rfl] at houter hleft hright
+  rw [hboth, hcomm, hrestore, hleft, hright, hdupA, hdupB, hswap,
+    hself] at houter
+  grind
+
+/-- Apply a sequence of adjacent column transpositions. -/
+@[expose]
+def applySwaps {R : Type u} {n : Nat} (M : Square R (n + 1))
+    (swaps : List (Fin n)) : Square R (n + 1) :=
+  swaps.foldl swapAdjacent M
+
+@[simp, grind =]
+theorem applySwaps_nil {R : Type u} {n : Nat} (M : Square R (n + 1)) :
+    applySwaps M [] = M := by
+  rfl
+
+@[simp, grind =]
+theorem applySwaps_cons {R : Type u} {n : Nat} (M : Square R (n + 1))
+    (left : Fin n) (swaps : List (Fin n)) :
+    applySwaps M (left :: swaps) = applySwaps (swapAdjacent M left) swaps := by
+  rfl
+
+/-- Concatenating swap sequences composes their column actions. -/
+@[simp, grind =]
+theorem applySwaps_append {R : Type u} {n : Nat} (M : Square R (n + 1))
+    (xs ys : List (Fin n)) :
+    applySwaps M (xs ++ ys) = applySwaps (applySwaps M xs) ys := by
+  simp [applySwaps, List.foldl_append]
+
+/-- A sequence of adjacent column transpositions multiplies the local
+determinant by its parity sign. -/
+theorem det_applySwaps {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Square R (n + 1)) (swaps : List (Fin n)) :
+    det (applySwaps M swaps) = sign (R := R) swaps.length * det M := by
+  induction swaps generalizing M with
+  | nil =>
+      simp [applySwaps, sign]
+      grind
+  | cons left swaps ih =>
+      rw [applySwaps_cons, ih, det_swapAdjacent]
+      have hsign := sign_succ (R := R) swaps.length
+      simp only [List.length_cons]
+      rw [hsign]
+      grind
+
+private theorem det_eq_zero_of_col_eq_of_lt {R : Type u}
+    [Lean.Grind.CommRing R] {n : Nat} (M : Square R (n + 1))
+    (a b : Fin (n + 1)) (hab : a.val < b.val)
+    (hcol : ∀ i, M i a = M i b) :
+    det M = 0 := by
+  by_cases hadj : b.val = a.val + 1
+  · let left : Fin n := ⟨a.val, by omega⟩
+    have ha : left.castSucc = a := by
+      apply Fin.ext
+      rfl
+    have hb : left.succ = b := by
+      apply Fin.ext
+      simp [left]
+      omega
+    apply det_eq_zero_of_adjacent_col_eq M left
+    intro i
+    rw [ha, hb]
+    exact hcol i
+  · let left : Fin n := ⟨b.val - 1, by omega⟩
+    have hbefore : a.val < left.val := by
+      simp [left]
+      omega
+    have haLeft : a ≠ left.castSucc := by
+      intro h
+      have hval := congrArg Fin.val h
+      simp at hval
+      omega
+    have haRight : a ≠ left.succ := by
+      intro h
+      have hval := congrArg Fin.val h
+      simp [left] at hval
+      omega
+    have hright : left.succ = b := by
+      apply Fin.ext
+      simp [left]
+      omega
+    let N := swapAdjacent M left
+    have hcolN (i : Fin (n + 1)) :
+        N i a = N i left.castSucc := by
+      rw [show N i a = M i a by
+        exact swapAdjacent_of_ne M left i a haLeft haRight]
+      rw [show N i left.castSucc = M i left.succ by
+        exact swapAdjacent_left M left i]
+      rw [hright]
+      exact hcol i
+    have hzero := det_eq_zero_of_col_eq_of_lt N a left.castSucc hbefore hcolN
+    have hswap := det_swapAdjacent M left
+    change det N = 0 at hzero
+    change det N = 0 - det M at hswap
+    rw [hzero] at hswap
+    grind
+termination_by b.val - a.val
+decreasing_by
+  simp_wf
+  omega
+
+/-- The local determinant vanishes when any two distinct columns agree. -/
+theorem det_eq_zero_of_col_eq {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Square R n) (a b : Fin n)
+    (hab : a ≠ b) (hcol : ∀ i, M i a = M i b) :
+    det M = 0 := by
+  cases n with
+  | zero => exact Fin.elim0 a
+  | succ n =>
+      by_cases hlt : a.val < b.val
+      · exact det_eq_zero_of_col_eq_of_lt M a b hlt hcol
+      · have hgt : b.val < a.val := by
+          have hval : a.val ≠ b.val := by
+            intro h
+            exact hab (Fin.ext h)
+          omega
+        exact det_eq_zero_of_col_eq_of_lt M b a hgt (fun i => (hcol i).symm)
+
+/-- Add a scalar multiple of one column to another. -/
+@[expose]
+def addCol {R : Type u} [Add R] [Mul R] {n : Nat}
+    (M : Square R n) (src dst : Fin n) (c : R) : Square R n :=
+  setCol M dst (fun i => M i dst + c * M i src)
+
+@[simp, grind =]
+theorem addCol_apply {R : Type u} [Add R] [Mul R] {n : Nat}
+    (M : Square R n) (src dst : Fin n) (c : R) (i j : Fin n) :
+    addCol M src dst c i j =
+      if j = dst then M i dst + c * M i src else M i j := by
+  rfl
+
+/-- Adding a scalar multiple of one column to a distinct column preserves the
+local determinant. -/
+theorem det_addCol {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Square R n) (src dst : Fin n)
+    (c : R) (h : src ≠ dst) :
+    det (addCol M src dst c) = det M := by
+  cases n with
+  | zero => exact Fin.elim0 src
+  | succ n =>
+      unfold addCol
+      rw [det_setCol_add, det_setCol_smul]
+      have hdup : det (setCol M dst (fun i => M i src)) = 0 := by
+        apply det_eq_zero_of_col_eq (a := src) (b := dst) (hab := h)
+        intro i
+        simp [setCol, h]
+      rw [hdup, setCol_self]
+      grind
+
 /-- Adding a scalar multiple of an adjacent column to its right neighbor
 preserves the local determinant. -/
 theorem det_setCol_add_adjacent {R : Type u} [Lean.Grind.CommRing R]
     {n : Nat} (M : Square R (n + 1)) (left : Fin n) (c : R) :
     det (setCol M left.succ
       (fun i => M i left.succ + c * M i left.castSucc)) = det M := by
-  rw [det_setCol_add]
-  rw [det_setCol_smul]
-  have hdup : det (setCol M left.succ (fun i => M i left.castSucc)) = 0 := by
-    apply det_eq_zero_of_adjacent_col_eq (left := left)
-    intro i
-    have hne : left.castSucc ≠ left.succ := by
-      intro h
-      have hval := congrArg Fin.val h
-      simp at hval
-    simp [setCol, hne]
-  rw [hdup]
-  have hself : setCol M left.succ (fun i => M i left.succ) = M := by
-    funext i j
-    by_cases h : j = left.succ
-    · subst j
-      simp [setCol]
-    · simp [setCol, h]
-  rw [hself]
-  grind
+  have hne : left.castSucc ≠ left.succ := by
+    intro h
+    have hval := congrArg Fin.val h
+    simp at hval
+  exact det_addCol M left.castSucc left.succ c hne
 
 end SubresultantMinor
 
