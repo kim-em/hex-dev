@@ -46,6 +46,7 @@ jobs:
       - name: Lint benches are Mathlib-free (SPEC/benchmarking.md §Mathlib-free benches)
         run: |
           python3 -m unittest scripts/ci/test_check_benches_mathlib_free.py
+          python3 -m unittest scripts/bench/test_fresh_module_sweep.py
           python3 -m unittest scripts/bench/test_real_roots_mathlib_sweep.py
           python3 scripts/ci/check_benches_mathlib_free.py
       - name: Verify conformance matrix invariant
