@@ -10,3 +10,6 @@ conformance-failures/*.json
 .pod/
 sessions/
 _out/
+
+# Scratch experiments kept out of the tree.
+scratch-*/
