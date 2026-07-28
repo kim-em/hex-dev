@@ -689,14 +689,23 @@ distinct sign entries, and formula occurrences). The fixed
 quadratic/degree-10/degree-50 cases below do not participate in those
 complexity verdicts.
 
-The tactic track uses matched fresh-module variants for each fixed case:
+The tactic track begins with same-module `Baseline − Baseline` and
+`Degree50.Tactic − Degree50.Tactic` null controls, then uses matched
+fresh-module variants for each fixed case:
 `Baseline` (identical imports), `Reify` (reify-only checksum), `Input`
 (reflected sentence literal), `Search` (the same input plus a meta checksum of
 compiled certificate construction, emitting no proof), `Literal` (input plus
 the pre-generated certificate), `Replay` (literal plus its kernel-checked
 theorem), and `Tactic` (the source goal closed by `rcf`). An external runner
-rotates fresh builds and reports raw paired deltas for reification, search,
-literal elaboration, replay, and the full tactic. `Search − Input` is
+rotates fresh builds and reports both null calibrations followed by raw paired
+deltas for reification, search, literal elaboration, replay, and the full
+tactic. Six rounds balance which role builds first. Each null's signed deltas,
+absolute and relative ranges, and median describe fresh-build noise only: they
+are reported before the substantive pairs in artifact `config.order` and are
+never subtracted, promoted to a significance test, or used to alter the fixed
+tactic budgets. A substantive delta is noise-sized only against a null with a
+comparable total build magnitude, or when its relative spread agrees with both
+controls; otherwise the sweep leaves it unresolved. `Search − Input` is
 phase-attribution evidence only; the matching LeanBench target supplies the
 scientific asymptotic verdict, and the report neither substitutes nor adds the
 two. The headline report records source hashes, commit/toolchain/host/load
@@ -713,7 +722,9 @@ independently rebuildable. All measured modules import the same generated
 support module and no measured module imports another measured module.
 
 There is one shared `Baseline` and six measured modules under each of
-`Quadratic/`, `Degree10/`, and `Degree50/`. The five report pairs are exactly:
+`Quadratic/`, `Degree10/`, and `Degree50/`. The report contains seventeen
+pairs: the baseline and degree-50-tactic null controls first, then these five
+pairs for each of the three cases:
 
 | Report component | Reference | Candidate |
 | --- | --- | --- |
@@ -734,7 +745,7 @@ build-only Lake libraries; there is no proof-probe executable or in-process
 clock. The complete external sweep is:
 
 ```bash
-python3 scripts/bench/hexrcf_proof_sweep.py --samples 5
+python3 scripts/bench/hexrcf_proof_sweep.py --samples 6
 ```
 
 Only `Replay` and `Tactic` print an axiom report, fixed to
@@ -746,7 +757,10 @@ output.
 python-flint is an **informational**, scheduled-only comparator for the
 compiled carrier-degree decision family. The paired fixed registrations are
 `runLeanDecision{16,20,24,28,32}` and
-`runFlintDecision{16,20,24,28,32}`. At each rung both sides consume the same
+`runFlintDecision{16,20,24,28,32}`. The additional fixed registration
+`runFlintDecisionOverhead` sends the atom-free sentence `∀ x, True` through the
+same warmed `rcf/decide` path and supplies a conservative steady-state
+per-call floor. At each substantive rung both sides consume the same
 precomputed `Sentence`; the FLINT side also consumes its precomputed exact
 version-1 fixture encoding. The persistent-driver request and response are
 
@@ -757,16 +771,25 @@ version-1 fixture encoding. The persistent-driver request and response are
 
 Both sides return `Bool` and share one config that pins `Hashable.hash true`,
 uses five repeats and a 0.2-second minimum total, and enables
-`warmupFirstIter`. LeanBench starts one fresh child per outer warmup or repeat.
+`warmupFirstIter`. `runFlintDecisionOverhead` shares it except for eleven outer
+repeats, which stabilize the floor median without changing the timed inner
+batch. LeanBench starts one fresh child per outer warmup or repeat.
 The discarded first call warms the Lean decision path on both sides; for FLINT
 it also starts one `python3` process in the child. The timed auto-tuned
 inner-repeat batch reuses that process's streams, and no driver is shared
 between outer children. The complete FLINT request line, including the exact
 version-1 sentence encoding, is precomputed; pipe transport and Python JSON
-decoding remain measured comparator overhead. Routine `hexrcf_bench verify`
-performs one semantic call through every fixed registration. Scientific runs
-and ratio reporting require `python3` with `python-flint` on the named release
-benchmark host.
+decoding remain measured comparator overhead. The floor includes the complete
+request/reply path and minimal formula evaluation, but excludes process startup
+and understates the parsing cost of the longer degree-rung requests. The
+headline report retains raw times and ratios at every rung, then subtracts the
+floor median from the FLINT median only on rungs where the floor is at most 50%
+of the FLINT median. A rung above that threshold is floor-dominated, ineligible,
+and reported raw-only. On an eligible rung where the floor exceeds 5%, both raw
+and adjusted ratios are mandatory; below 5%, the raw ratio suffices. Routine
+`hexrcf_bench verify` performs one semantic call through every fixed
+registration. Scientific runs and ratio reporting require `python3` with
+`python-flint` on the named release benchmark host.
 
 This comparison covers carrier degree and real-root count only. It does not
 measure atom multiplicity, common-root preparation, separation, certificate

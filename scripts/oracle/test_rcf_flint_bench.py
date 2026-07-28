@@ -18,15 +18,23 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 class RcfFlintBenchTests(unittest.TestCase):
     def test_public_decider_handles_constant_sentence(self) -> None:
         sentence = {
-            "quantifier": "exists_real",
+            "quantifier": "forall_real",
             "bounds": None,
             "formula": {"tag": "tt"},
         }
         with (
-            mock.patch.object(rcf_flint, "_carrier_factors", return_value=[]),
-            mock.patch.object(rcf_flint, "_certified_roots", return_value=[]),
+            mock.patch.object(
+                rcf_flint,
+                "_carrier_factors",
+                return_value=[],
+            ) as carrier,
+            mock.patch.object(
+                rcf_flint, "_certified_roots", return_value=[]
+            ) as roots,
         ):
             self.assertTrue(rcf_flint.decide_sentence(sentence))
+        carrier.assert_called_once_with(sentence["formula"])
+        roots.assert_called_once_with([], ())
 
     def test_driver_delegates_to_shared_decider(self) -> None:
         sentence = {
@@ -76,21 +84,21 @@ class RcfFlintBenchTests(unittest.TestCase):
         self.assertIn("missing object 'sentence'", replies[1]["error"])
         self.assertEqual(replies[2], {"ok": True, "result": True})
 
-    def test_exact_five_paired_registrations(self) -> None:
+    def test_exact_fixed_registration_mapping(self) -> None:
         source = (REPO_ROOT / "bench" / "HexRCF" / "Bench.lean").read_text(
             encoding="utf-8"
         )
-        names = re.findall(
-            r"^setup_fixed_benchmark (run(?:Lean|Flint)Decision\d+) where",
-            source,
-            re.MULTILINE,
+        registrations = re.findall(
+            r"^setup_fixed_benchmark (\w+) where (\w+)$", source, re.MULTILINE
         )
-        expected = [
-            f"run{engine}Decision{degree}"
+        expected = {
+            (f"run{engine}Decision{degree}", "decisionConfig")
             for degree in (16, 20, 24, 28, 32)
             for engine in ("Lean", "Flint")
-        ]
-        self.assertCountEqual(names, expected)
+        }
+        expected.add(("runFlintDecisionOverhead", "decisionOverheadConfig"))
+        self.assertEqual(set(registrations), expected)
+        self.assertEqual(len(registrations), len(expected))
 
 
 if __name__ == "__main__":

@@ -65,12 +65,34 @@ def case_pairs(case: str, module_case: str, budget_ms: int) -> tuple[ProbePair, 
 SPEC = SweepSpec(
     description=__doc__ or "HexRCF fresh-module proof probes",
     pairs=(
+        ProbePair(
+            "fresh-build-null",
+            BASELINE,
+            BASELINE,
+            {
+                "component": "fresh-build-noise",
+                "interpretation": "calibration-only",
+                "magnitude": "baseline",
+            },
+            null_control=True,
+        ),
+        ProbePair(
+            "degree50-tactic-null",
+            ProbeModule("HexRCF.ProofProbe.Degree50.Tactic", ALLOWED_AXIOMS),
+            ProbeModule("HexRCF.ProofProbe.Degree50.Tactic", ALLOWED_AXIOMS),
+            {
+                "component": "fresh-build-noise",
+                "interpretation": "calibration-only",
+                "magnitude": "degree50-tactic",
+            },
+            null_control=True,
+        ),
         *case_pairs("quadratic", "Quadratic", 100),
         *case_pairs("degree10", "Degree10", 1_000),
         *case_pairs("degree50", "Degree50", 30_000),
     ),
     probe_target="HexRCFProofProbe",
-    schema="hexrcf-proof-probes-v1",
+    schema="hexrcf-proof-probes-v2",
     measurement="paired-fresh-module-olean-wall-v1",
     output_stem="hexrcf-proof-probes",
     extra_sources=(
@@ -79,6 +101,7 @@ SPEC = SweepSpec(
         Path("SPEC/benchmarking.md"),
         Path("SPEC/Libraries/hex-rcf.md"),
     ),
+    required_samples=6,
 )
 
 

@@ -287,6 +287,20 @@ in-process clock, or contain a timing loop. A probe also cannot root any
 - refuse a release-quality verdict on a dirty tree, a busy shared host, a
   timed-out build, or a provenance mismatch.
 
+A proof-track sweep may precede its substantive pairs with one or more marked
+same-module null controls at representative build magnitudes. Each control uses
+the exact same module and axiom policy in both roles, independently rebuilds it
+under the ordinary alternating orientation, and requires an even preregistered
+sample count so each role is built first equally often. Its raw signed deltas
+describe fresh-build noise under that run's host conditions. The report follows
+the manifest's `config.order`, records each control's absolute and relative
+range and median before interpreting a magnitude-comparable proof delta, but
+does not subtract a null median, widen a budget by a null range, assign
+significance, or use a control as scientific evidence. With the small
+preregistered sample counts used here, a substantive delta inside a comparable
+null spread is described only as noise-sized or unresolved; a cheap control
+does not resolve noise for a much more expensive build.
+
 Phase attribution uses matched module variants, not clocks embedded in the
 probe. A tactic library may use a baseline; a reify-only module; an input module
 containing the reflected sentence literal; a search module that runs compiled
@@ -849,7 +863,9 @@ The report contains five subsections:
    "inconclusive", with the verdict text). Each fixed registration's
    median per-call time and observed-hash agreement. Proof-track entries report
    all raw rotated fresh-build samples and paired deltas, never a complexity
-   verdict.
+   verdict. When the sweep has null controls, their raw deltas, absolute and
+   relative ranges, and medians precede the substantive proof deltas in
+   `config.order` and remain descriptive only.
 3. **Comparator ratios.** Each comparator named in the per-library
    SPEC ([§Comparator naming](#comparator-naming)) — `gating` and
    `informational` alike — with measured ratios across the full
