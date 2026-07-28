@@ -310,9 +310,10 @@ private def pruneSuggestions (state : State Fact) : State Fact := Id.run do
     | none => pure ()
   return { state with suggestions := clocks, incomplete }
 
-/-- Begin policy control over an existing engine snapshot.  Invalid retained
-retry and instantiation suggestions are accounted for before the first view,
-so adopting a snapshot cannot manufacture a false fixed point. -/
+/-- Begin policy control over an existing engine snapshot. Invalid retained
+retry and instantiation suggestions and an already-open reply latch are
+accounted for before the first view, so adopting a snapshot cannot manufacture
+a false fixed point. A pending action is not reconstructed as a new offer. -/
 opaque State.start (engine : Engine Fact) (limits : Limits)
     (scope : ScopeId := { index := 0 }) : State Fact :=
   pruneSuggestions
@@ -323,6 +324,7 @@ opaque State.start (engine : Engine Fact) (limits : Limits)
       applications := clockArray engine.queued 0
       equalities := clockArray engine.equalityQueued 0
       suggestions := suggestionClocksFrom engine 0
+      incomplete := engine.pending.isSome
       limits }
 
 /-- Install a new engine snapshot, refresh live work clocks, and tombstone
@@ -810,6 +812,14 @@ inductive SubmitResult (Fact : Type) where
   | factResource (budget : Nat) (state : State Fact)
   | malformedState (state : State Fact)
 
+/-- Synchronize an unsuccessful reply snapshot and remember loss exactly when
+the engine cleared its pending action. This common discriminator also remains
+correct if a future resource failure becomes resubmittable. -/
+private def afterReplyFailure (state : State Fact) (engine : Engine Fact) :
+    State Fact :=
+  let next := advanceState state engine
+  if engine.pending.isNone then { next with incomplete := true } else next
+
 /-- Admit a reply through the underlying engine, then expose actual admitted
 fact deltas and newly engine-indexed suggestions.  Claimed candidate strength
 is never used as an observation.  A rejected or resource-limited reply which
@@ -843,15 +853,10 @@ opaque State.submit (state : State Fact) (reply : Reply Fact) : SubmitResult Fac
               let next := if incomplete then { next with incomplete := true } else next
               .accepted observation next
           | .invalid error engine =>
-              let next := advanceState state engine
-              let next :=
-                if engine.pending.isNone then { next with incomplete := true } else next
-              .invalid error next
+              .invalid error (afterReplyFailure state engine)
           | .resourceLimit resource engine =>
-              let next := advanceState state engine
-              .engineResource resource { next with incomplete := true }
+              .engineResource resource (afterReplyFailure state engine)
           | .factResourceLimit budget engine =>
-              let next := advanceState state engine
-              .factResource budget { next with incomplete := true }
+              .factResource budget (afterReplyFailure state engine)
 
 end Hex.Interval.Experiment.Propagator.Policy

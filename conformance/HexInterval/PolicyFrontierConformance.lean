@@ -31,6 +31,9 @@ def incomplete? : Option Comparison := do
   | .completed .dismissed next => some (comparePrepared fanoutCanary next)
   | _ => none
 
+def pendingComparison? : Option Comparison :=
+  PolicyConformance.pendingAdoption?.map (comparePrepared fanoutCanary)
+
 def instanceStep? : Option Step := do
   let state <- PolicyConformance.afterInitial?
   let offer <- state.offer? (.suggestion (PolicyConformance.suggestion 1))
@@ -46,6 +49,18 @@ def instanceStep? : Option Step := do
 -- completeness loss. Neither loop may call this state saturated.
 #guard
   match incomplete? with
+  | some comparison =>
+      semanticEqual comparison.scan comparison.indexed &&
+        comparison.scan.stop == .incomplete &&
+        comparison.indexed.stop == .incomplete &&
+        comparison.scan.incomplete && comparison.indexed.incomplete &&
+        comparison.scan.liveOffers == 0 && comparison.indexed.liveOffers == 0
+  | none => false
+
+-- Neither frontier representation may call an adopted open reply latch a
+-- fixed point merely because that pending application has no visible offer.
+#guard
+  match pendingComparison? with
   | some comparison =>
       semanticEqual comparison.scan comparison.indexed &&
         comparison.scan.stop == .incomplete &&

@@ -107,6 +107,16 @@ def initialWith? (limits : Experiment.Propagator.Policy.Limits) : Option (State 
 
 def initial? : Option (State Rank) := initialWith? policyLimits
 
+def pendingAdoption? : Option (State Rank) := do
+  let engine <- match Engine.start rankDomain program #[fRule, gRule] #[0, 0]
+      engineLimits with
+    | .ok engine => some engine
+    | .error _ => none
+  match engine.poll with
+  | .request _ awaiting => some (State.start awaiting policyLimits)
+  | .equality _ _ | .awaitingReply _ | .saturated _ | .contradiction _
+  | .resourceLimit _ _ | .invalidState _ => none
+
 def selectOffer (state : State Rank) (id : OfferId) : SelectResult Rank :=
   match state.offer? id with
   | none => .rejected .missingOffer state
@@ -383,6 +393,17 @@ def observedWith? (engineLimit : Experiment.Propagator.Limits)
 def afterInitialWith? (engineLimit : Experiment.Propagator.Limits) : Option (State Rank) :=
   afterReplyWith? engineLimit invoke
 
+-- Adopting a snapshot with an open reply latch cannot reconstruct the selected
+-- application as a fresh offer. It therefore records incompleteness before an
+-- empty frontier could be mistaken for a fixed point.
+#guard
+  match pendingAdoption? with
+  | some state =>
+      state.incomplete && state.engine.pending.isSome &&
+        (state.view).toOption.any fun pair =>
+          pair.1.offers.isEmpty && pair.1.incomplete
+  | none => false
+
 -- A structurally invalid reply clears the pending latch and consumes the
 -- selected application.  The wrapper must remember that the resulting empty
 -- frontier is incomplete.
@@ -399,6 +420,22 @@ def afterInitialWith? (engineLimit : Experiment.Propagator.Limits) : Option (Sta
               next.incomplete && next.engine.pending.isNone &&
                 (next.view).toOption.any fun pair =>
                   pair.1.offers.isEmpty && pair.1.incomplete
+          | _ => false
+
+-- Retry selection follows a different dirty-bit path from an initial
+-- invocation. A rejected retry reply still clears its pending latch and is
+-- therefore completeness-relevant.
+#guard
+  match afterInitial? with
+  | none => false
+  | some state =>
+      match request? state (.suggestion (suggestion 0)) with
+      | none => false
+      | some (request, awaiting) =>
+          match awaiting.submit (request.action.reply
+              (.success [] [.retry (engineLimits.maxEffort + 1)] {})) with
+          | .invalid .oversizedEffort next =>
+              next.incomplete && next.engine.pending.isNone
           | _ => false
 
 -- A mismatched action leaves the exact pending request intact.  Correcting

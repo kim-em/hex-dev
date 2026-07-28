@@ -1336,7 +1336,10 @@ variant-specific freshness guard tombstones them permanently. A rejected
 instantiation, or automatic tombstoning of a retry or instantiation, marks the
 scope incomplete; a discarded stale split remains optional. This accounting
 also applies when policy control adopts an engine snapshot containing an
-already-invalid retained suggestion. The prototype conservatively treats
+already-invalid retained suggestion. Adopting a snapshot with an open reply
+latch also marks the scope incomplete: the selected application is not exposed
+as a second offer, so an empty visible frontier is not a fixed point. The
+prototype conservatively treats
 every automatically tombstoned retry as completeness-relevant, including a
 weak or stale retry. Whether some failure reasons can be proved redundant and
 discarded without that penalty remains an open policy question.
