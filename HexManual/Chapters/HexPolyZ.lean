@@ -98,7 +98,7 @@ open Hex Hex.DensePoly
 namespace HexPolyZChapterContent
 
 -- f = 2 + 4x + 6x²
-private def f : ZPoly := ofCoeffs #[2, 4, 6]
+private def f : ZPoly := #p[2, 4, 6]
 
 -- The content is the nonnegative gcd of the
 -- coefficients; the primitive part divides it out.
@@ -111,10 +111,10 @@ private def f : ZPoly := ofCoeffs #[2, 4, 6]
 
 -- A polynomial whose coefficients are coprime is
 -- already primitive: its content is 1.
-#guard ZPoly.content (ofCoeffs #[1, 2, 3]) = 1
+#guard ZPoly.content #p[1, 2, 3] = 1
 
 -- Dilation X ↦ 2·X scales coefficient i by 2ⁱ.
-private def g : ZPoly := ofCoeffs #[1, 1, 1]
+private def g : ZPoly := #p[1, 1, 1]
 #guard (ZPoly.dilate 2 g).toArray.toList = [1, 2, 4]
 
 end HexPolyZChapterContent
@@ -216,7 +216,7 @@ open Hex Hex.DensePoly
 namespace HexPolyZChapterMignotte
 
 -- g = 1 + x + x² + x³ + x⁴
-private def g : ZPoly := ofCoeffs #[1, 1, 1, 1, 1]
+private def g : ZPoly := #p[1, 1, 1, 1, 1]
 
 -- Squared L2 norm of the coefficient vector is 5, and
 -- its conservative integer bound is ceilSqrt 5 = 3.
@@ -274,10 +274,11 @@ integer-factorization libraries:
 
 * {ref "hex-poly"}[HexPoly] is the generic dense-polynomial library
   this one specializes. The constructors, arithmetic, and Euclidean
-  operations used throughout this chapter (`ofCoeffs`, `scale`, the
-  rational division underlying `primitiveSquareFreeDecomposition`) are
-  documented there. `HexPolyZ` only fixes the coefficient type to
-  `Int` and adds the content, congruence, and Mignotte operations.
+  operations used throughout this chapter, including the `#p[...]`
+  literal and the rational division underlying the square-free
+  decomposition, are documented there. `HexPolyZ` only fixes the
+  coefficient type to `Int` and adds the content, congruence, and
+  Mignotte operations.
 * `HexPolyZMathlib` is the correspondence library: it identifies
   {name}`Hex.ZPoly` with Mathlib's `Polynomial ℤ` and proves the
   Mignotte bound as a theorem about the Mahler measure of the

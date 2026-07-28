@@ -142,13 +142,6 @@ namespace HexGFqFieldChapterExample
 private instance : ZMod64.Bounds 5 :=
   ⟨by decide, by decide⟩
 
-private theorem one_ne_zero_five :
-    (1 : ZMod64 5) ≠ 0 := by
-  intro h
-  have hm :=
-    (ZMod64.natCast_eq_natCast_iff (p := 5) 1 0).mp h
-  simp at hm
-
 private theorem prime_five : Hex.Nat.Prime 5 := by
   constructor
   · decide
@@ -170,16 +163,8 @@ private theorem prime_five : Hex.Nat.Prime 5 := by
 private instance : ZMod64.PrimeModulus 5 :=
   ZMod64.primeModulusOfPrime prime_five
 
-private def polyFive (coeffs : Array Nat) : FpPoly 5 :=
-  FpPoly.ofCoeffs
-    (coeffs.map (fun n => ZMod64.ofNat 5 n))
-
 /-- Monic degree-4 modulus x⁴ + 2 over F₅. -/
-private def modulus : FpPoly 5 :=
-  { coeffs := #[(2 : ZMod64 5), 0, 0, 0, 1]
-    normalized := by
-      right
-      decide }
+private def modulus : FpPoly 5 := #p[2, 0, 0, 0, 1]
 
 private theorem modulus_pos_degree :
     0 < FpPoly.degree modulus := by decide
@@ -197,12 +182,11 @@ private def cert :
   p := 5
   n := 4
   powChain :=
-    #[polyFive #[0, 1], polyFive #[0, 3],
-      polyFive #[0, 4], polyFive #[0, 2],
-      polyFive #[0, 1]]
+    #[#p[0, 1], #p[0, 3], #p[0, 4], #p[0, 2],
+      #p[0, 1]]
   bezout :=
-    #[{ left := polyFive #[3]
-        right := polyFive #[0, 0, 0, 4] }]
+    #[{ left := #p[3]
+        right := #p[0, 0, 0, 4] }]
 
 set_option maxRecDepth 131072 in
 set_option maxHeartbeats 8000000 in
@@ -215,7 +199,7 @@ private theorem cert_check :
     Berlekamp.checkRabinBezoutWitnesses,
     Berlekamp.checkRabinBezoutWitness,
     Berlekamp.certifiedFrobeniusDiffMod,
-    maxProperDiv_4, modulus, polyFive]
+    maxProperDiv_4, modulus]
   constructor
   · constructor
     · constructor
@@ -241,16 +225,16 @@ private abbrev F :=
   FiniteField modulus modulus_pos_degree
     prime_five modulus_irreducible
 
-private def ff (coeffs : Array Nat) : F :=
+private def ff (f : FpPoly 5) : F :=
   ofPoly modulus modulus_pos_degree
-    prime_five modulus_irreducible (polyFive coeffs)
+    prime_five modulus_irreducible f
 
 private def reprNats (x : F) : List Nat :=
   (repr x).toArray.toList.map ZMod64.toNat
 
-private def a : F := ff #[2, 3]
-private def b : F := ff #[4, 1, 0, 1]
-private def x : F := ff #[0, 1]
+private def a : F := ff #p[2, 3]
+private def b : F := ff #p[4, 1, 0, 1]
+private def x : F := ff #p[0, 1]
 
 -- (2 + 3x) + (4 + x + x³) ≡ 1 + 4x + x³
 #guard reprNats (a + b) = [1, 4, 0, 1]

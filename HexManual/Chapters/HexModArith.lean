@@ -217,11 +217,11 @@ def b : ZMod64 7 := ofNat 7 5
 
 -- Barrett context for the small prime 7.
 def bar : Hex.BarrettCtx 7 :=
-  Hex.BarrettCtx.ofModulus (p := 7) (by decide) (by decide)
+  .ofModulus (p := 7) (by decide) (by decide)
 
 -- Montgomery context (7 is odd).
 def mon : Hex.MontCtx 7 :=
-  Hex.MontCtx.ofOddModulus (by decide) (by decide)
+  .ofOddModulus (by decide) (by decide)
 
 -- Barrett multiplication matches the ordinary product.
 #guard (bar.mulMod a b).toNat = (a * b).toNat
