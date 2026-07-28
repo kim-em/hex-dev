@@ -17,6 +17,10 @@
   Hoeij recombination, recorded its polynomial-time significance and Isabelle
   formalization, and made explicit that Hex uses LLL reduction but does not
   implement the older factorizer.
+- Separated optional-tier partial correctness from non-decline in the manual,
+  documenting the proved irreducibility results, the still-guarded product
+  obligations, and the good-prime hypothesis of the planned lattice-totality
+  theorem.
 - Opened follow-up issues #9022, #9023, #9029, and #9030 for the library-wide
   documentation, naming, primality-check, and manual-notation reviews.
 - Verified the complete repository with `lake build` (9502 jobs).

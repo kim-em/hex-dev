@@ -281,7 +281,8 @@ a suitable modular prime and therefore provides a slower but unconditional
 last resort. These complementary costs explain the three tiers:
 
 * {name}`Hex.factorClassical` runs subset recombination under a fixed search
-  budget and returns `none` if that budget is exhausted.
+  budget and returns `none` if that budget is exhausted or no admissible prime
+  is found.
 * {name}`Hex.factorLattice` runs van Hoeij recombination and returns `none` if
   the available prime or precision does not produce a verified answer.
 * {name}`Hex.factorTrial` performs the direct exact search.
@@ -291,11 +292,36 @@ last resort. These complementary costs explain the three tiers:
 * {name}`Hex.factorTraced` returns the same result together with a
   {name}`Hex.FactorTrace` recording which route was taken.
 
-The product check and the final direct search make
-{name}`Hex.ZPoly.factorize` unconditionally correct. A stronger, separate
-theorem would show that the lattice method cannot decline when a suitable
-prime and sufficient precision are available; that completeness theorem has
-not yet been proved.
+For each optional tier there are two separate proof questions: whether a
+successful answer is correct, and whether the tier is guaranteed to return an
+answer. These should not be conflated.
+
+On the first question, the Mathlib bridge already proves that every factor
+which would be recorded from a successful default-bound classical run is
+irreducible; the corresponding result holds for a successful lattice run at
+the public precision cap. These are
+{name}`HexBerlekampZassenhausMathlib.factorClassicalFactorsWithBound_factor_irreducible`
+and
+{name}`HexBerlekampZassenhausMathlib.factorLatticeFactorsWithBound_factor_irreducible`.
+The library does not yet expose the complementary packed-product implications
+`factorClassical f = some φ → φ.product = f` and
+`factorLattice f = some φ → φ.product = f`. Consequently, the reconstruction
+check in {name}`Hex.factorTraced` is not yet redundant: an optional answer is
+accepted only if its product is `f`; otherwise the proved
+{name}`Hex.factorTrial_product` backstop supplies the result. This case split
+is what the current {name}`Hex.factorize_product` theorem uses.
+
+On the second question, classical recombination is deliberately allowed to
+decline when its resource budget is exhausted. The stronger theorem intended
+for the lattice tier says that it cannot decline once the monic-core prime
+selector has succeeded and the public precision cap is used. That conditional
+completeness theorem has not yet been proved. It would not say that
+{name}`Hex.factorLattice` succeeds on every input: the fixed admissible-prime
+search can itself fail. A further selector theorem will give checkable
+sufficient conditions for prime selection and, together with lattice
+completeness and the two packed-product implications, show that the hybrid
+never reaches trial division on those inputs. The trial tier remains the
+unconditional backstop for arbitrary inputs.
 
 Other formal precedents are the Isabelle/HOL developments
 [Polynomial Factorization](https://www.isa-afp.org/entries/Polynomial_Factorization.html),
