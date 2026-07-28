@@ -63,154 +63,22 @@ theorem factorize_entries_leadingCoeff_pos (f : Hex.ZPoly) :
   exact Hex.factorize_entry_leadingCoeff_pos f entry (Array.mem_toList_iff.mpr hentry)
 
 /--
-Bundled public contract currently available for the default executable
-factorization surface.
+The normalized irreducible factorization produced for a nonzero polynomial.
 
-This packages the clauses that are already exposed by the Mathlib-free and
-Mathlib bridge layers: product preservation, Mathlib irreducibility of each
-recorded polynomial factor, positive multiplicities, syntactic absence of
-duplicate polynomial keys, and the signed-content scalar convention. Stronger
-siblings below add primitivity, positive leading coefficients, and
-non-association without making this smaller bundle harder to reuse.
+The product reconstructs the input. Every recorded factor is primitive, has
+positive leading coefficient, and is irreducible after transport to
+`Polynomial ℤ`; multiplicities are positive; distinct entries are not
+associates; and the scalar is the signed content of the input.
+
+The hypothesis `f ≠ 0` is necessary because the factorization of zero is
+degenerate: its scalar and product are zero, while zero is not primitive.
 -/
-theorem factorize_headline_contract_core (f : Hex.ZPoly) :
-    Hex.Factorization.product (Hex.ZPoly.factorize f) = f ∧
-      (∀ entry ∈ (Hex.ZPoly.factorize f).factors,
-        Irreducible (HexPolyZMathlib.toPolynomial entry.1)) ∧
-      (∀ entry ∈ (Hex.ZPoly.factorize f).factors, 0 < entry.2) ∧
-      List.Pairwise (fun a b : Hex.ZPoly × Nat => a.1 ≠ b.1)
-        (Hex.ZPoly.factorize f).factors.toList ∧
-      (Hex.ZPoly.factorize f).scalar =
-        if f = 0 then
-          0
-        else if Hex.DensePoly.leadingCoeff f < 0 then
-          -Hex.ZPoly.content f
-        else
-          Hex.ZPoly.content f := by
-  refine ⟨factorize_product f, ?_, ?_, Hex.factorize_pairwise_first f, Hex.factorize_scalar f⟩
-  · intro entry hentry
-    exact factorize_polynomialIrreducible_of_nonUnit f entry hentry
-  · intro entry hentry
-    exact Hex.factorize_entry_multiplicity_pos f entry (Array.mem_toList_iff.mpr hentry)
-
-/--
-Positive-leading-coefficient sibling of `factorize_headline_contract_core`.
-
-This keeps the existing default public factorization clauses and additionally
-packages the canonical positive-leading convention for every recorded
-polynomial factor.
--/
-theorem factorize_headline_contract_core_with_posLeading (f : Hex.ZPoly) :
-    Hex.Factorization.product (Hex.ZPoly.factorize f) = f ∧
-      (∀ entry ∈ (Hex.ZPoly.factorize f).factors,
-        Irreducible (HexPolyZMathlib.toPolynomial entry.1)) ∧
-      (∀ entry ∈ (Hex.ZPoly.factorize f).factors,
-        0 < Hex.DensePoly.leadingCoeff entry.1) ∧
-      (∀ entry ∈ (Hex.ZPoly.factorize f).factors, 0 < entry.2) ∧
-      List.Pairwise (fun a b : Hex.ZPoly × Nat => a.1 ≠ b.1)
-        (Hex.ZPoly.factorize f).factors.toList ∧
-      (Hex.ZPoly.factorize f).scalar =
-        if f = 0 then
-          0
-        else if Hex.DensePoly.leadingCoeff f < 0 then
-          -Hex.ZPoly.content f
-        else
-          Hex.ZPoly.content f := by
-  rcases factorize_headline_contract_core f with
-    ⟨hproduct, hirreducible, hmultiplicity, hpairwise, hscalar⟩
-  exact
-    ⟨hproduct, hirreducible, factorize_entries_leadingCoeff_pos f, hmultiplicity,
-      hpairwise, hscalar⟩
-
-/--
-Primitive-strengthened sibling of `factorize_headline_contract_core`.
-
-This is the same default public factorization contract, but packages the
-headline primitive-irreducibility clause as a single per-entry conjunction under
-the raw-branch primitive hypothesis supplied by the executable layer.
--/
-theorem factorize_headline_contract_core_with_primitive
-    (f : Hex.ZPoly) (hf : f ≠ 0) :
+theorem factorize_normalized (f : Hex.ZPoly) (hf : f ≠ 0) :
     Hex.Factorization.product (Hex.ZPoly.factorize f) = f ∧
       (∀ entry ∈ (Hex.ZPoly.factorize f).factors,
         Hex.ZPoly.Primitive entry.1 ∧
-          Irreducible (HexPolyZMathlib.toPolynomial entry.1)) ∧
-      (∀ entry ∈ (Hex.ZPoly.factorize f).factors, 0 < entry.2) ∧
-      List.Pairwise (fun a b : Hex.ZPoly × Nat => a.1 ≠ b.1)
-        (Hex.ZPoly.factorize f).factors.toList ∧
-      (Hex.ZPoly.factorize f).scalar =
-        if f = 0 then
-          0
-        else if Hex.DensePoly.leadingCoeff f < 0 then
-          -Hex.ZPoly.content f
-        else
-          Hex.ZPoly.content f := by
-  refine ⟨factorize_product f, ?_, ?_, Hex.factorize_pairwise_first f, Hex.factorize_scalar f⟩
-  · intro entry hentry
-    exact
-      ⟨factorize_entries_primitive_of_chosen_raw_primitive f hf entry hentry,
-        factorize_polynomialIrreducible_of_nonUnit f entry hentry⟩
-  · intro entry hentry
-    exact Hex.factorize_entry_multiplicity_pos f entry (Array.mem_toList_iff.mpr hentry)
-
-/--
-Closed primitive-strengthened headline for the default executable factorization
-of a nonzero input.
-
-This is the same bundle as `factorize_headline_contract_core_with_primitive` but
-with the raw-source primitivity hypothesis `h_raw` discharged internally via
-`Hex.factor_chosen_raw_primitive_of_ne_zero`, so callers no longer supply it:
-product preservation, primitive plus Mathlib irreducibility per recorded factor,
-positive multiplicities, the syntactic distinct-key clause, and the
-signed-content scalar convention.
-
-The `f ≠ 0` side condition is essential rather than incidental. For `f = 0` the
-square-free core is `0` (content `0`, hence not primitive), so the raw-source
-primitivity statement quantified over the dispatch is literally false; the
-factorization of `0` is itself degenerate (`scalar = 0`, product `0`).
--/
-theorem factorize_headline_primitive (f : Hex.ZPoly) (hf : f ≠ 0) :
-    Hex.Factorization.product (Hex.ZPoly.factorize f) = f ∧
-      (∀ entry ∈ (Hex.ZPoly.factorize f).factors,
-        Hex.ZPoly.Primitive entry.1 ∧
-          Irreducible (HexPolyZMathlib.toPolynomial entry.1)) ∧
-      (∀ entry ∈ (Hex.ZPoly.factorize f).factors, 0 < entry.2) ∧
-      List.Pairwise (fun a b : Hex.ZPoly × Nat => a.1 ≠ b.1)
-        (Hex.ZPoly.factorize f).factors.toList ∧
-      (Hex.ZPoly.factorize f).scalar =
-        if f = 0 then
-          0
-        else if Hex.DensePoly.leadingCoeff f < 0 then
-          -Hex.ZPoly.content f
-        else
-          Hex.ZPoly.content f :=
-  factorize_headline_contract_core_with_primitive f hf
-
-/--
-The HO-1 headline contract for the default executable factorization of a nonzero
-input.
-
-This is the strengthened public surface required by directive #2564: it is the
-same bundle as `factorize_headline_primitive` but replaces the syntactic
-distinct-key clause `a.1 ≠ b.1` with genuine pairwise non-association after
-transport to `Polynomial ℤ`. The clauses are product preservation, primitive
-plus Mathlib irreducibility per recorded factor, positive multiplicities,
-pairwise non-association of the recorded polynomial factors, and the
-signed-content scalar convention.
-
-Non-association is the headline strengthening: distinct `ZPoly` keys could in
-principle be associated in `Polynomial ℤ` (differ by a unit); this rules that
-out, so the recorded factors are genuinely distinct irreducibles up to
-association. The clause is discharged via `factorize_entries_not_associated` with
-the raw-source primitivity hypothesis supplied internally by
-`Hex.factor_chosen_raw_primitive_of_ne_zero`, which is why `f ≠ 0` is required
-(see `factorize_headline_primitive` for why the `f = 0` case is degenerate).
--/
-theorem factorize_headline (f : Hex.ZPoly) (hf : f ≠ 0) :
-    Hex.Factorization.product (Hex.ZPoly.factorize f) = f ∧
-      (∀ entry ∈ (Hex.ZPoly.factorize f).factors,
-        Hex.ZPoly.Primitive entry.1 ∧
-          Irreducible (HexPolyZMathlib.toPolynomial entry.1)) ∧
+          Irreducible (HexPolyZMathlib.toPolynomial entry.1) ∧
+          0 < Hex.DensePoly.leadingCoeff entry.1) ∧
       (∀ entry ∈ (Hex.ZPoly.factorize f).factors, 0 < entry.2) ∧
       List.Pairwise
         (fun a b : Hex.ZPoly × Nat =>
@@ -224,12 +92,16 @@ theorem factorize_headline (f : Hex.ZPoly) (hf : f ≠ 0) :
           -Hex.ZPoly.content f
         else
           Hex.ZPoly.content f := by
-  rcases factorize_headline_primitive f hf with
-    ⟨hproduct, hentries, hmultiplicity, _, hscalar⟩
-  exact
-    ⟨hproduct, hentries, hmultiplicity,
-      factorize_entries_not_associated f hf,
-      hscalar⟩
+  refine
+    ⟨factorize_product f, ?_, ?_, factorize_entries_not_associated f hf,
+      Hex.factorize_scalar f⟩
+  · intro entry hentry
+    exact
+      ⟨factorize_entries_primitive_of_chosen_raw_primitive f hf entry hentry,
+        factorize_polynomialIrreducible_of_nonUnit f entry hentry,
+        factorize_entries_leadingCoeff_pos f entry hentry⟩
+  · intro entry hentry
+    exact Hex.factorize_entry_multiplicity_pos f entry (Array.mem_toList_iff.mpr hentry)
 
 /--
 The sign-normalization side condition for the default executable factorization:

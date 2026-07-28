@@ -211,52 +211,53 @@ syntax (name := factorPolyTerm) "factor_poly" term:max : term
         Term.ensureHasType expectedType? e
     | _ => Elab.throwUnsupportedSyntax
 
-/-- Destructure an emitted `Factored.mk` application into `scalar`/`factors`
-`let` bindings plus `factors_mul`/`factors_irred` hypotheses (the FpPoly
-shape carries the modulus and instance; providers may emit other
-`*.Factored.mk` shapes with the same final four fields, e.g.
-`Hex.ZPoly.Factored.mk`). Unrecognized shapes land as a single `factored`
-hypothesis. Shared by the `factor_poly` and `factor_poly!` tactic forms. -/
+/-- Introduce the four fields of a recognized factorization result as
+`scalar`/`factors` `let` bindings plus `factors_mul`/`factors_irred`
+hypotheses. Inspecting the result type rather than the emitted constructor
+lets provider assemblers return opaque `Hex.FactoredPoly` terms while exposing
+the same tactic interface as the executable `FpPoly` and `ZPoly` providers.
+Unrecognized provider result types land as a single `factored` hypothesis.
+Shared by the `factor_poly` and `factor_poly!` tactic forms. -/
 meta def introFactored (e : Expr) : Tactic.TacticM Unit := do
-  let args := e.getAppArgs
-  let fields? :
-      Option (Name × Expr × Expr × Expr × Expr × Expr × Expr) :=
-    if e.getAppFn.isConstOf ``Hex.FpPoly.Factored.mk && args.size == 7 then
-      some (``Hex.FpPoly.Irreducible,
-        Hex.CertReify.zmodType args[0]! args[1]!,
-        Hex.CertReify.fpPolyType args[0]! args[1]!,
-        args[3]!, args[4]!, args[5]!, args[6]!)
-    else if e.getAppFn.isConstOf `Hex.ZPoly.Factored.mk &&
-        args.size == 5 then
-      some (`Hex.ZPoly.Irreducible, mkConst ``Int, mkConst `Hex.ZPoly,
-        args[1]!, args[2]!, args[3]!, args[4]!)
+  let ty ← whnf (← inferType e)
+  let args := ty.getAppArgs
+  let shape? : Option (Name × Name × Name × Name) :=
+    if ty.getAppFn.isConstOf ``Hex.FpPoly.Factored && args.size == 3 then
+      some (``Hex.FpPoly.Factored.scalar, ``Hex.FpPoly.Factored.factors,
+        ``Hex.FpPoly.Factored.factors_mul, ``Hex.FpPoly.Factored.factors_irred)
+    else if ty.getAppFn.isConstOf `Hex.ZPoly.Factored && args.size == 1 then
+      some (`Hex.ZPoly.Factored.scalar, `Hex.ZPoly.Factored.factors,
+        `Hex.ZPoly.Factored.factors_mul, `Hex.ZPoly.Factored.factors_irred)
+    else if ty.getAppFn.isConstOf `Hex.FactoredPoly && args.size == 3 then
+      some (`Hex.FactoredPoly.scalar, `Hex.FactoredPoly.factors,
+        `Hex.FactoredPoly.factors_mul, `Hex.FactoredPoly.factors_irred)
     else
       none
-  let some (predName, scalarTy, polyTy, scalarE, factorsE, hmulE, hirredE) :=
-      fields? |
+  let some (scalarName, factorsName, mulName, irredName) := shape? |
     -- Unrecognized provider result: fall back to a plain `have`.
     Tactic.liftMetaTactic fun g => do
-      let ty ← inferType e
       let (_, g) ← (← g.assert `factored ty e).intro1P
       return [g]
-  let fE := args[if args.size == 7 then 2 else 0]!
+  let scalarE ← mkAppM scalarName #[e]
+  let factorsE ← mkAppM factorsName #[e]
+  let hmulE ← mkAppM mulName #[e]
+  let hirredE ← mkAppM irredName #[e]
+  let scalarTy ← inferType scalarE
+  let factorsTy ← inferType factorsE
   Tactic.liftMetaTactic fun g => do
-    let listTy := mkApp (mkConst ``List [Level.zero]) polyTy
     let (fvS, g) ← (← g.define `scalar scalarTy scalarE).intro1P
-    let (fvF, g) ← (← g.define `factors listTy factorsE).intro1P
+    let (fvF, g) ← (← g.define `factors factorsTy factorsE).intro1P
     g.withContext do
       let sE := mkFVar fvS
       let fsE := mkFVar fvF
-      let lhs ← mkAppM ``HMul.hMul
-        #[← mkAppM ``Hex.DensePoly.C #[sE], ← mkAppM ``List.prod #[fsE]]
-      let hmulTy ← mkAppM ``Eq #[lhs, fE]
+      let replaceFields (x : Expr) : Option Expr :=
+        if x == scalarE then some sE
+        else if x == factorsE then some fsE
+        else none
+      let hmulTy := (← inferType hmulE).replace replaceFields
       let (_, g) ← (← g.assert `factors_mul hmulTy hmulE).intro1P
       g.withContext do
-        let hirredTy ←
-          withLocalDeclD `q polyTy fun q => do
-            let mem ← mkAppM ``Membership.mem #[fsE, q]
-            let irred ← mkAppM predName #[q]
-            mkForallFVars #[q] (← mkArrow mem irred)
+        let hirredTy := (← inferType hirredE).replace replaceFields
         let (_, g) ← (← g.assert `factors_irred hirredTy hirredE).intro1P
         return [g]
 

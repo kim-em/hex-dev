@@ -346,12 +346,12 @@ theorem factorTrialWithBound_product (f : ZPoly) (B : Nat) :
           exact factorTrialWithBound_product_of_trial_branch
             f B hf hdeg hquad
 
-/-- Product contract for the public trial-division slow-path entry point. -/
+/-- The public trial-division entry point reconstructs its input. -/
 theorem factorTrial_product (f : ZPoly) :
     Factorization.product (factorTrial f) = f := by
   exact factorTrialWithBound_product f (ZPoly.defaultFactorCoeffBound f)
 
-/-- Product contract for the public total factorization entry point. Holds
+/-- The public total factorization reconstructs its input. This holds
 unconditionally: each non-backstop tier's result is accepted only when it
 reconstructs `f` (the self-certifying guard in `factorTraced`), and every
 fallback is the proven `factorTrial` backstop. -/

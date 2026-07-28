@@ -447,7 +447,7 @@ private theorem eq_of_dvd_of_size_eq_of_monic
   rw [show (DensePoly.C (1 : ZMod64 p) : FpPoly p) = 1 from rfl, FpPoly.mul_one]
 
 /-- The variable prime-field product identity: the canonical product over field
-constants equals `xPowSubX 1`. This is the headline deliverable for #4085. -/
+constants equals `xPowSubX 1`. -/
 theorem primeFieldProduct_X_eq_xPowSubX :
     (ZMod64.values p).foldl
       (fun acc c => acc * (FpPoly.X - FpPoly.C c)) 1 =

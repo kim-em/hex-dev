@@ -136,7 +136,9 @@ private def buildCandidate? (s : Sentence) : Option Certificate :=
 /-- A compiled build result retains the certificate that produced its
 diagnostic or proof-producing verdict. -/
 structure BuildResult where
+  /-- The certificate accepted by three-valued replay. -/
   certificate : Certificate
+  /-- The replay verdict. `false` remains diagnostic only. -/
   verdict : Bool
 
 /-- Assemble a certificate and reject it if replay finds malformed evidence. -/

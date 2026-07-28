@@ -12,6 +12,11 @@ structure DensePoly (R : Type*) [Zero R] [DecidableEq R] where
 The normalization invariant (no trailing zeros) ensures structural equality
 = semantic equality. Every operation maintains this invariant.
 
+The polynomial literal `#p[a₀, a₁, ...]` abbreviates
+`DensePoly.ofCoeffs #[a₀, a₁, ...]`. Coefficients are listed in ascending
+degree order, and the expected polynomial type determines the coefficient
+type. As with `ofCoeffs`, trailing zero coefficients are removed.
+
 - Index = degree, `coeffs[i]` is coefficient of `x^i`
 - Normalization invariant: no trailing zeros
 - Structural equality = semantic equality
