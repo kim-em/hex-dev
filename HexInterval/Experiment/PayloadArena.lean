@@ -388,8 +388,9 @@ def freezeDrafts (arena : Arena) (origin : Action)
     appendDrafts origin arena.entries bounded.drafts
   ({ entries, bodyCells := arena.bodyCells + bounded.cells }, relocations)
 
-/-- Validate and freeze every reply-local payload reference using the exact
-replay-format snapshot selected for the invocation.
+/-- Low-level validation and freezing with an explicitly supplied rule owner
+and draft validator. The package layer pairs those values in one immutable
+snapshot before a proof-producing session calls this operation.
 
 Reply-local body and draft bounds and exact coverage are checked before
 `validateDraft` runs, so a package validator only receives locally bounded,
@@ -433,8 +434,8 @@ def freezeChecked (limits : Limits) (arena : Arena) (origin : Action)
                             .ready prospective outcome
 
 /-- Standalone structural freezing with no package format validation.
-Proof-producing sessions use `freezeChecked` with the selected handler's
-immutable replay snapshot. -/
+Proof-producing sessions instead use the package layer's snapshot-paired
+wrapper. -/
 def freeze (limits : Limits) (arena : Arena) (origin : Action)
     (outcome : Outcome Fact) (drafts : List Draft) : Result Fact :=
   freezeChecked limits arena origin origin.key (fun _ => none) outcome drafts

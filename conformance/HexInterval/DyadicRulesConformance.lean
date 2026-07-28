@@ -38,9 +38,11 @@ def config : Config :=
 abbrev ConcreteRegistry := Propagator.Registry Fact
 
 def limits : Experiment.Propagator.Limits :=
-  { maxOperations := 24
+  { maxOperations := 16
     maxNodes := 32
     maxRules := 16
+    maxRegistryEntries := 64
+    maxReplayFormats := 16
     maxArity := 4
     maxApplications := 64
     maxQueueEntries := 256
@@ -442,17 +444,14 @@ def ownsV0 (arena : PayloadArena.Arena) (payload : PayloadId)
           let (factInvocation, registry) := registry.invokePlanned factRequest
           let factReplay := factInvocation.replay
           let factPlan := factInvocation.plan
-          match PayloadArena.freezeChecked payloadLimits .empty factRequest.action
-              factReplay.rule factReplay.validateDraft
+          match factReplay.freeze payloadLimits .empty factRequest.action
               factPlan.outcome factPlan.drafts with
           | .ready factArena (.success [candidate] [] _) =>
               let (instanceInvocation, _) := registry.invokePlanned instanceRequest
               let instanceReplay := instanceInvocation.replay
               let instancePlan := instanceInvocation.plan
-              match PayloadArena.freezeChecked payloadLimits factArena
-                  instanceRequest.action instanceReplay.rule
-                  instanceReplay.validateDraft
-                  instancePlan.outcome instancePlan.drafts with
+              match instanceReplay.freeze payloadLimits factArena
+                  instanceRequest.action instancePlan.outcome instancePlan.drafts with
               | .ready arena (.success [] [.instantiate request] _) =>
                   match request.equalities with
                   | [equality] =>
@@ -478,8 +477,7 @@ def ownsV0 (arena : PayloadArena.Arena) (payload : PayloadId)
       match plannedRequest? registry 9 oneForwardKey (node 1) .forward [node 1] with
       | some request =>
           let (invocation, _) := registry.invokePlanned request
-          match PayloadArena.freezeChecked trailingPayloadLimits .empty request.action
-              invocation.replay.rule invocation.replay.validateDraft
+          match invocation.replay.freeze trailingPayloadLimits .empty request.action
               invocation.plan.outcome
               [{ label := factLabel, role := .fact, schema := 0, body := [0] }] with
           | .invalid (.invalidBody key) arena =>

@@ -78,6 +78,8 @@ def limits : Propagator.Limits :=
   { maxOperations := 4
     maxNodes := 4
     maxRules := 2
+    maxRegistryEntries := 16
+    maxReplayFormats := 8
     maxArity := 2
     maxApplications := 4
     maxQueueEntries := 8
@@ -676,6 +678,14 @@ def opaqueRun? : Option (PayloadSession.Run Nat) :=
   match start duplicateFormatPackage with
   | .error (.registry (.duplicateFormat key)) =>
       key == { rule := goodKey, role := .fact, schema := 1 }
+  | _ => false
+
+-- Replay declarations have their own cap and cannot borrow operation
+-- headroom.
+#guard
+  match PayloadSession.Session.start factDomain program #[goodPackage] #[3, 0, 0]
+      { limits with maxReplayFormats := 0 } arenaLimits with
+  | .error (.registry (.resourceLimit .replayFormats)) => true
   | _ => false
 
 -- A used draft must name a declared role/schema pair and satisfy that

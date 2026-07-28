@@ -242,8 +242,7 @@ opaque Session.advance (session : Session Fact) : Step Fact :=
         | .factResourceLimit budget next =>
             .factResource budget (haltRegistry session next registry)
       else
-        match PayloadArena.freezeChecked session.arenaLimits session.arena
-            request.action replay.rule replay.validateDraft
+        match replay.freeze session.arenaLimits session.arena request.action
             plan.outcome plan.drafts with
         | .invalid error _ =>
             failPayload session engine registry request.action error

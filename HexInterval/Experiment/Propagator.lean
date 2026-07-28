@@ -686,6 +686,7 @@ inductive Resource where
   | actions
   | effort
   | registryEntries
+  | replayFormats
   | acceptedFacts
   | retainedSuggestions
   | outcomeCandidates
@@ -701,6 +702,10 @@ structure Limits where
   maxOperations : Nat
   maxNodes : Nat
   maxRules : Nat
+  /-- Total package metadata cells, independent of executable program size. -/
+  maxRegistryEntries : Nat
+  /-- Total cache-independent proof-replay format declarations. -/
+  maxReplayFormats : Nat
   maxArity : Nat
   maxApplications : Nat
   maxQueueEntries : Nat

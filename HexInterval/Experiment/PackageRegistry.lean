@@ -64,27 +64,47 @@ end ReplayFormat
 /-- Immutable replay metadata selected together with one handler invocation.
 `rule` plus a format's role and numeric schema is the complete dispatch key. -/
 structure ReplaySnapshot where
+  private mk ::
   rule : RuleKey
   formats : Array ReplayFormat
+
+private def makeReplay (rule : RuleKey)
+    (formats : Array ReplayFormat) : ReplaySnapshot :=
+  { rule, formats }
 
 namespace ReplaySnapshot
 
 def validateDraft (snapshot : ReplaySnapshot) (draft : PayloadArena.Draft) :
     Option PayloadArena.Invalid :=
   let key := draft.replayKey snapshot.rule
-  match snapshot.formats.toList.find?
+  match snapshot.formats.find?
       (fun format => format.role == draft.role && format.schema == draft.schema) with
   | none => some (.undeclaredFormat key)
   | some format =>
       if format.validateBody draft.body then none else some (.invalidBody key)
+
+/-- Freeze one plan through the rule owner and body validators carried by this
+single immutable snapshot. Proof-producing sessions use this paired operation
+instead of independently supplying an owner and validator. -/
+def freeze (snapshot : ReplaySnapshot) (limits : PayloadArena.Limits)
+    (arena : PayloadArena.Arena) (origin : Action)
+    (outcome : Outcome Fact) (drafts : List PayloadArena.Draft) :
+    PayloadArena.Result Fact :=
+  PayloadArena.freezeChecked limits arena origin snapshot.rule
+    snapshot.validateDraft outcome drafts
 
 end ReplaySnapshot
 
 /-- A package plan paired with the immutable replay metadata of the exact
 handler that produced it. -/
 structure Invocation (Fact : Type) where
+  private mk ::
   plan : Plan Fact
   replay : ReplaySnapshot
+
+private def makeInvocation (plan : Plan Fact)
+    (replay : ReplaySnapshot) : Invocation Fact :=
+  { plan, replay }
 
 /-- The callback shape shared by direct and session-owned drivers. -/
 abbrev Invoke (Fact Cache : Type) :=
@@ -101,9 +121,9 @@ abbrev BareInvoke (Fact Cache : Type) :=
 /-- One registration and the only callback allowed to interpret its key. -/
 structure Handler (Fact Cache : Type) where
   registration : Registration
+  invoke : Invoke Fact Cache
   /-- Immutable cache-independent replay representations owned by this rule. -/
   replayFormats : Array ReplayFormat := #[]
-  invoke : Invoke Fact Cache
 
 namespace Handler
 
@@ -176,6 +196,7 @@ structure Route where
 immutable after assembly; invocation updates only one existential package's
 cache and non-semantic invocation counter. -/
 structure Registry (Fact : Type) where
+  private mk ::
   packages : Array (Package Fact)
   operations : Array Operation
   registrations : Array Registration
@@ -193,6 +214,15 @@ def registryMismatch : Nat := 244
 def requestMismatch : Nat := 245
 
 end DispatchCode
+
+private def makeRegistry (packages : Array (Package Fact))
+    (operations : Array Operation) (registrations : Array Registration)
+    (routes : Array Route) : Registry Fact :=
+  { packages, operations, registrations, routes }
+
+private def replacePackage (registry : Registry Fact) (index : Nat)
+    (package : Package Fact) : Registry Fact :=
+  { registry with packages := registry.packages.set! index package }
 
 /-- Failure while flattening independently supplied packages. -/
 inductive RegistryError where
@@ -267,10 +297,11 @@ def flatten : Nat -> List (Package Fact) -> Array Operation ->
 
 def preflight (limits : Limits) (packages : Array (Package Fact)) :
     Except RegistryError Unit := do
-  if limits.maxOperations + limits.maxRules < packages.size then
+  if limits.maxRegistryEntries < packages.size then
     throw (.resourceLimit .registryEntries)
   let mut operationCount := 0
   let mut ruleCount := 0
+  let mut replayFormatCount := 0
   let mut metadataCount := 0
   for package in packages do
     operationCount := operationCount + package.operations.size
@@ -279,12 +310,15 @@ def preflight (limits : Limits) (packages : Array (Package Fact)) :
       throw (.resourceLimit .operations)
     if limits.maxRules < ruleCount then
       throw (.resourceLimit .rules)
-    let replayFormatCount :=
+    let packageFormatCount :=
       package.handlers.foldl
         (fun count handler => count + handler.replayFormats.size) 0
+    replayFormatCount := replayFormatCount + packageFormatCount
+    if limits.maxReplayFormats < replayFormatCount then
+      throw (.resourceLimit .replayFormats)
     metadataCount := metadataCount + package.operations.size +
-      package.requiredOperations.size + package.handlers.size + replayFormatCount
-    if limits.maxOperations + limits.maxRules < metadataCount then
+      package.requiredOperations.size + package.handlers.size + packageFormatCount
+    if limits.maxRegistryEntries < metadataCount then
       throw (.resourceLimit .registryEntries)
     if package.operations.any
         (fun operation => !listWithin limits.maxArity operation.inputs) ||
@@ -296,11 +330,11 @@ def preflight (limits : Limits) (packages : Array (Package Fact)) :
       throw (.resourceLimit .arity)
 
 /-- Resource-preflight package metadata before duplicate scans or flattened
-array allocation.  The aggregate metadata cap also bounds external signature
-requirements, replay formats, and empty-package churn.  Assembly order is
-package-major and then handler-major; exact operation and rule keys are unique
-in the snapshot. -/
-def buildWithin (limits : Limits) (packages : Array (Package Fact)) :
+array allocation. Dedicated caps bound total metadata and replay-format
+declarations without borrowing executable operation headroom. Assembly order
+is package-major and then handler-major; exact operation and rule keys are
+unique in the snapshot. -/
+opaque buildWithin (limits : Limits) (packages : Array (Package Fact)) :
     Except RegistryError (Registry Fact) :=
   match preflight limits packages with
   | .error error => .error error
@@ -308,7 +342,7 @@ def buildWithin (limits : Limits) (packages : Array (Package Fact)) :
       match flatten 0 packages.toList #[] #[] #[] with
       | .error error => .error error
       | .ok (operations, registrations, routes) =>
-          .ok { packages, operations, registrations, routes }
+          .ok (makeRegistry packages operations registrations routes)
 
 /-- Resolve a contributed signature by stable key.  The returned value carries
 no `OpId`: compact identifiers belong to the final frontend program, whose
@@ -375,15 +409,16 @@ namespace Registry
 
 /-- A negative plan for a dispatch failure before any callback or replay
 format can be selected. -/
-def failedInvocation (rule : RuleKey) (code : Nat) : Invocation Fact :=
-  { plan := { outcome := .failed code, drafts := [] }
-    replay := { rule, formats := #[] } }
+private def failedInvocation (rule : RuleKey) (code : Nat) : Invocation Fact :=
+  makeInvocation
+    { outcome := .failed code, drafts := [] }
+    (makeReplay rule #[])
 
 /-- Route one engine-owned rule identifier to its package callback and retain
 its reply-local proof drafts together with that handler's replay formats.
 Dispatch uses compact validated indices; it never branches on the semantic
 operation or rule key. Only the selected package cache is replaced. -/
-def invokePlanned (registry : Registry Fact) (request : RuleRequest Fact) :
+opaque invokePlanned (registry : Registry Fact) (request : RuleRequest Fact) :
     Invocation Fact × Registry Fact :=
   match registry.routes[request.action.rule.index]? with
   | none =>
@@ -411,12 +446,9 @@ def invokePlanned (registry : Registry Fact) (request : RuleRequest Fact) :
                       { package with
                         cache := cache
                         invocations := package.invocations + 1 }
-                    ({ plan
-                       replay :=
-                         { rule := handler.registration.key
-                           formats := handler.replayFormats } },
-                      { registry with
-                        packages := registry.packages.set! route.package package })
+                    (makeInvocation plan
+                        (makeReplay handler.registration.key handler.replayFormats),
+                      replacePackage registry route.package package)
 
 /-- Explicitly evidence-discarding adapter for search experiments. A
 proof-producing session must use `invokePlanned` and freeze its drafts before

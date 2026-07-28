@@ -999,6 +999,11 @@ be declared as owned or required.
 `Registry.buildWithin` bounds package and metadata counts plus arities before
 flattening, builds a `Route` from each compact `RuleId` back to its package and
 handler, and rejects undeclared heads and duplicate `OpKey`s or `RuleKey`s.
+The registry constructor is private: callers can inspect a checked snapshot
+but cannot forge inconsistent flattened routes. Executable operations,
+aggregate registry metadata, and replay-format declarations have independent
+limits; adding a proof recipe cannot buy space by relaxing the frontend's
+operation cap.
 Program size and arity are bounded before exact signature lookup. The checked
 session start validates every owned and required signature against the final
 frontend program, runs each package's configuration preflight, and starts the
@@ -1019,7 +1024,9 @@ planned route is proof-producing, but neither it nor
 `Registry.invokeDroppingDrafts` is an authentication boundary: the engine
 still authenticates the pending serial, application, fact values, and
 versions. The explicitly named dropping-drafts adapter discards drafts and
-replay metadata only for search experiments.
+replay metadata only for search experiments. Registry, replay-snapshot, and
+invocation constructors are private; the checked builder and routed invocation
+are their only producers.
 
 Each handler now carries cache-independent replay-format declarations beside
 its registration and callback. A declaration consists of a payload role, a
@@ -1027,7 +1034,8 @@ rule-local numeric schema variant, and a body-shape validator. The immutable
 dispatch key is `(RuleKey, role, schema)`: two unrelated function packages may
 reuse the same role and local schema number without sharing a validator.
 Registry assembly rejects duplicate `(role, schema)` declarations within a
-handler, and counts declarations against its metadata bound.
+handler, and counts declarations against a dedicated replay-format bound as
+well as the aggregate metadata bound.
 
 There are two independent version axes. `RuleKey.schema` is the compatibility
 epoch for the complete handler and companion theorem contract. The payload
@@ -1042,21 +1050,26 @@ result also has a private constructor, so its stop classification can only
 come from session execution. During an invocation, generic arena preflight
 first bounds the number of drafts, body cells, atoms, schemas, and payload
 uses. Only then does the session run the selected package's body validators.
-It rejects an undeclared role/schema pair, a malformed body, or a mismatched
-rule owner without committing the prospective arena or engine outcome.
+The selected immutable `ReplaySnapshot` supplies its rule owner and validator
+to one paired freeze operation, so the proof-producing path cannot mix an
+owner from one package with a validator from another. It rejects an undeclared
+role/schema pair or malformed body without committing the prospective arena or
+engine outcome.
 Package caches may record the failed attempt because they remain non-semantic.
 
 This first format API validates representation shape only. It does not attest
 that a body proves the proposed interval fact, instance, or equality. The
 Mathlib companion must dispatch on the same immutable key, decode the frozen
 entry independently of package cache state, and recheck the corresponding
-rule theorem during semantic replay. A different callback implementation
-under an existing versioned rule schema is compatible only when every retained
-payload still passes that semantic replay. Whether production retains these
-existential snapshots, compiles a dispatch table, adds typed decoders, supports
-hot replacement, or uses another lookup structure remains experimental. The
-older direct registry and engine interfaces remain available for search
-experiments, but proof-producing execution goes through the session.
+rule theorem during semantic replay. Until that companion layer exists, it is
+an explicit compatibility obligation—not a property enforced by this format
+API—that a different callback implementation under an existing versioned rule
+schema leave every retained payload semantically replayable. Whether production
+retains these existential snapshots, compiles a dispatch table, adds typed
+decoders, supports hot replacement, or uses another lookup structure remains
+experimental. The older direct registry and engine interfaces remain available
+for search experiments, but proof-producing execution goes through the
+session.
 
 The explicit registration and validation boundary is fixed. Discovery and
 scheduling above it remain empirical: one arm uses an incremental registry
