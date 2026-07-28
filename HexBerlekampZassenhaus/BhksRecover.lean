@@ -193,7 +193,7 @@ single-all-ones partition flag.
 The lattice tier's `.degenerate` arm needs the all-ones flag to certify
 irreducibility, but recomputing it through `bhksSingleAllOnesPartition` rebuilds
 the whole Hensel-lift/CLD-lattice/LLL/indicator pipeline that the classifier
-already ran (~1.5–2× on the step that dominates irreducible inputs, #8543).  This
+already ran (#8543). This
 def shares that pass: `bhksRecoverClassifiedWithAllOnes_fst` pins `.1` to
 `bhksRecoverClassified` and `bhksRecoverClassifiedWithAllOnes_snd` (in
 `FactorEntryPoints`) pins `.2` to `bhksSingleAllOnesPartition`, so the loop reads

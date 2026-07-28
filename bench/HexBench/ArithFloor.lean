@@ -11,7 +11,7 @@ Throwaway arithmetic-floor microbench (feasibility spike for the fast classical
 Berlekamp-Zassenhaus rewrite). Compares the proven `DensePoly.mul` (functional
 `List.range` + `Option`-indexing inner loop) against a tight `Array`-loop
 `mulFast`, over `Int`, at several degrees. Measures marginal ns/op so we can see
-the achievable per-op floor versus Isabelle's ~8 µs whole-factorization.
+the achievable per-op floor versus the external whole-factorization comparator.
 
 Not imported by the library; proves nothing. `mulFast` is a probe, not a
 replacement for the proven `mul`.

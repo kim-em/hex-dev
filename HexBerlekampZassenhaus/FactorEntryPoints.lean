@@ -1445,7 +1445,7 @@ def factorLattice (f : ZPoly) : Option Factorization :=
 
 **Policy: classical-first.** The size-ordered classical tier handles every input
 within its subset budget — fast for reducibles (it peels factors) and bounded for
-irreducibles (it exhausts subsets up to the budget, ~0.26s worst case, then
+irreducibles (it exhausts subsets up to the budget, then
 declines). The lattice tier is *correct but slow* (it grinds to the precision cap),
 so we never run it speculatively: we run classical first and fall back to the
 lattice only when classical declines (budget exhausted, i.e. `r` too large), then
