@@ -613,6 +613,22 @@ theorem sign_succ {R : Type u} [Lean.Grind.CommRing R] (j : Nat) :
     rw [if_neg hj, if_pos hnext]
     grind
 
+/-- Alternating signs turn addition of exponents into multiplication. -/
+theorem sign_add {R : Type u} [Lean.Grind.CommRing R] (a b : Nat) :
+    sign (R := R) (a + b) = sign (R := R) a * sign (R := R) b := by
+  induction b with
+  | zero =>
+      simp [sign] <;> grind
+  | succ b ih =>
+      rw [Nat.add_succ, sign_succ, ih, sign_succ]
+      grind
+
+/-- Every alternating sign is its own multiplicative inverse. -/
+theorem sign_mul_self {R : Type u} [Lean.Grind.CommRing R] (n : Nat) :
+    sign (R := R) n * sign (R := R) n = 1 := by
+  unfold sign
+  split <;> grind
+
 /-- Deleting either member of an equal adjacent column pair gives the same
 minor. -/
 theorem deleteFirst_adjacent_eq {R : Type u} {n : Nat}
