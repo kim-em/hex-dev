@@ -124,7 +124,7 @@ theorem replay_of_check {atom carrier : ZPoly} {cert : CommonRootCert}
   exact hvalid.2
 
 /-- Decide whether the cached common-root polynomial has a root in an
-interval. The constant branch is root-free; the nonconstant branch reads its
+interval. The constant branch is root-free. The nonconstant branch reads its
 shared generalized Sturm replay. -/
 @[expose]
 def hasRoot (cert : CommonRootCert) (I : DyadicInterval) : Bool :=

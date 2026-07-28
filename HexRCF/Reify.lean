@@ -101,7 +101,7 @@ end Sentence
 /-- Close evaluation identities for literal `ZPoly` coefficients and accepted
 ring syntax. The parser remains untrusted: unsupported or misparsed syntax
 merely makes this proof fail during elaboration. -/
-macro "rcf_ring" : tactic =>
+macro (name := rcfRing) "rcf_ring" : tactic =>
   `(tactic|
     (simp only [HexRealRootsMathlib.aeval_toPolynomial_ofCoeffs] <;>
      simp [Hex.DensePoly.coeff_ofCoeffs, Finset.sum_range_succ,
@@ -115,8 +115,8 @@ namespace Reify
 
 open Lean Meta Qq
 
-/-- Runtime and literal forms of a reflected formula, plus its checked bridge
-to the source proposition at the current bound variable. -/
+/-- Runtime and literal forms of a reflected formula, together with its checked
+equivalence to the source proposition at the current bound variable. -/
 private meta structure FormulaResult where
   formula : Formula
   expr : Expr
@@ -362,7 +362,7 @@ meta def certificateExpr : Certificate → MetaM Expr
             cmps]
       mkAppM ``Certificate.cells #[cells]
 
-/-- Discharge one proposed polynomial evaluation bridge with the kernel ring
+/-- Discharge one proposed polynomial evaluation identity with the kernel ring
 normalizer. -/
 private meta def proveRing (type : Expr) : MetaM Expr := do
   let goal ← mkFreshExprMVar type
@@ -400,7 +400,7 @@ private meta def reifyAtom (x source : Expr) (cmp : Cmp)
     #[polynomialE, cmpExpr cmp, x, lhs, rhs, mkNatLit scale, positive, heval]
   unless ← isDefEq (← inferType proof)
       (← mkAppM ``Iff #[← mkAppM ``Formula.toProp #[formulaE, x], source]) do
-    throwError "rcf: internal comparison bridge mismatch"
+    throwError "rcf: internal comparison equivalence mismatch"
   return { formula := .atom atom, expr := formulaE, proof := proof }
 
 /-- Reify a Boolean formula under one real bound variable. -/
@@ -451,11 +451,14 @@ private meta partial def reifyFormula (x source : Expr) : MetaM FormulaResult :=
           return { formula := formula, expr := expr, proof := proof }
       | _ => throwError "rcf: unsupported proposition in the quantifier body{indentExpr source}"
 
-/-- Runtime and literal forms of a reflected sentence, plus its checked bridge
-to the source goal. -/
+/-- Runtime and literal forms of a reflected sentence, together with its
+checked equivalence to the source goal. -/
 meta structure SentenceResult where
+  /-- The reflected sentence used by compiled certificate construction. -/
   sentence : Sentence
+  /-- The literal expression representing `sentence` in the generated proof. -/
   expr : Expr
+  /-- A proof that `sentence` is equivalent to the source goal. -/
   proof : Expr
 
 /-- Recognize membership in a standard two-ended interval without unfolding it
@@ -522,13 +525,13 @@ private meta def proveEndpoint (dyadicExpr source : Expr) : MetaM Expr := do
     throwError "rcf: failed to certify a dyadic endpoint{indentExpr source}"
   instantiateMVars goal
 
-/-- Check the final sentence bridge before returning it to the tactic. -/
+/-- Check the final sentence equivalence before returning it to the tactic. -/
 private meta def finishSentence (source : Expr) (sentence : Sentence)
     (expr proof : Expr) : MetaM SentenceResult := do
   let reflected ← mkAppM ``Sentence.toProp #[expr]
   let expected ← mkAppM ``Iff #[reflected, source]
   unless ← isDefEq (← inferType proof) expected do
-    throwError "rcf: internal quantified-sentence bridge mismatch"
+    throwError "rcf: internal quantified-sentence equivalence mismatch"
   return { sentence, expr, proof }
 
 /-- Reify a universal sentence, preferring the exact `Set.Ioc` shape before
@@ -552,19 +555,19 @@ private meta def reifyForall (source domain body : Expr) : MetaM SentenceResult 
           let expr ← mkAppM ``Sentence.forallIoc #[aExpr, bExpr, formula.expr]
           let ha ← proveEndpoint aExpr aSource
           let hb ← proveEndpoint bExpr bSource
-          let bridge ← mkLambdaFVars #[x] formula.proof
+          let formulaProof ← mkLambdaFVars #[x] formula.proof
           let predicate ← mkLambdaFVars #[x] consequent
           let proof := mkAppN (mkConst ``Sentence.forallIoc_iff)
             #[aExpr, bExpr, aSource, bSource, formula.expr, predicate,
-              ha, hb, bridge]
+              ha, hb, formulaProof]
           return ← finishSentence source sentence expr proof
     let formula ← reifyFormula x instantiated
     let sentence := Sentence.forallReal formula.formula
     let expr ← mkAppM ``Sentence.forallReal #[formula.expr]
-    let bridge ← mkLambdaFVars #[x] formula.proof
+    let formulaProof ← mkLambdaFVars #[x] formula.proof
     let predicate ← mkLambdaFVars #[x] instantiated
     let proof := mkAppN (mkConst ``Sentence.forallReal_iff)
-      #[formula.expr, predicate, bridge]
+      #[formula.expr, predicate, formulaProof]
     finishSentence source sentence expr proof
 
 /-- Reify an existential sentence, recognizing an `Ioc` membership conjunct
@@ -592,19 +595,19 @@ private meta def reifyExists (source domain predicate : Expr) : MetaM SentenceRe
         let expr ← mkAppM ``Sentence.existsIoc #[aExpr, bExpr, formula.expr]
         let ha ← proveEndpoint aExpr aSource
         let hb ← proveEndpoint bExpr bSource
-        let bridge ← mkLambdaFVars #[x] formula.proof
+        let formulaProof ← mkLambdaFVars #[x] formula.proof
         let predicate ← mkLambdaFVars #[x] consequent
         let proof := mkAppN (mkConst ``Sentence.existsIoc_iff)
           #[aExpr, bExpr, aSource, bSource, formula.expr, predicate,
-            ha, hb, bridge]
+            ha, hb, formulaProof]
         return ← finishSentence source sentence expr proof
     let formula ← reifyFormula x instantiated
     let sentence := Sentence.existsReal formula.formula
     let expr ← mkAppM ``Sentence.existsReal #[formula.expr]
-    let bridge ← mkLambdaFVars #[x] formula.proof
+    let formulaProof ← mkLambdaFVars #[x] formula.proof
     let predicateExpr ← mkLambdaFVars #[x] instantiated
     let proof := mkAppN (mkConst ``Sentence.existsReal_iff)
-      #[formula.expr, predicateExpr, bridge]
+      #[formula.expr, predicateExpr, formulaProof]
     finishSentence source sentence expr proof
 
 /-- Reify one supported, singly quantified real sentence. -/

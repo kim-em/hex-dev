@@ -159,7 +159,7 @@ theorem replay_build {s : Sentence} {result : BuildResult}
   · cases Option.some.inj h
     exact hreplay
 
-/-- Compiled convenience decision. False is diagnostic; true is returned only
+/-- Compiled convenience decision. False is diagnostic. True is returned only
 after the kernel-facing Boolean checker accepts the retained certificate. -/
 def decide (s : Sentence) : Option Bool :=
   match build? s with

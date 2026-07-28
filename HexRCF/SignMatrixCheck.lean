@@ -27,8 +27,11 @@ namespace Hex.RCF
 
 /-- The three possible signs stored by an RCF sign matrix. -/
 inductive Sign where
+  /-- A negative value. -/
   | neg
+  /-- A zero value. -/
   | zero
+  /-- A positive value. -/
   | pos
   deriving DecidableEq, Repr
 
@@ -60,6 +63,7 @@ def containsPoly (p : ZPoly) : List ZPoly → Bool
   | [] => false
   | q :: qs => DensePoly.beqCoeffs p q || containsPoly p qs
 
+/-- Coefficient-based polynomial membership agrees with list membership. -/
 theorem containsPoly_iff {p : ZPoly} {ps : List ZPoly} :
     containsPoly p ps = true ↔ p ∈ ps := by
   induction ps with
@@ -87,6 +91,8 @@ coefficient equality. -/
 @[expose]
 def dedupPolys (ps : List ZPoly) : List ZPoly := dedupPolysAux [] ps
 
+/-- A polynomial survives duplicate removal exactly when it occurs in the
+input and has not already occurred in `seen`. -/
 theorem mem_dedupPolysAux {p : ZPoly} {seen ps : List ZPoly} :
     p ∈ dedupPolysAux seen ps ↔ p ∈ ps ∧ p ∉ seen := by
   classical
@@ -110,10 +116,12 @@ theorem mem_dedupPolysAux {p : ZPoly} {seen ps : List ZPoly} :
           simp [hqmem]
         · simp [hpq]
 
+/-- Duplicate removal preserves polynomial membership. -/
 theorem mem_dedupPolys {p : ZPoly} {ps : List ZPoly} :
     p ∈ dedupPolys ps ↔ p ∈ ps := by
   simp [dedupPolys, mem_dedupPolysAux]
 
+/-- Duplicate removal with an initial seen list produces no duplicate entries. -/
 theorem dedupPolysAux_nodup (seen ps : List ZPoly) :
     (dedupPolysAux seen ps).Nodup := by
   induction ps generalizing seen with
@@ -125,6 +133,7 @@ theorem dedupPolysAux_nodup (seen ps : List ZPoly) :
       · apply List.nodup_cons.mpr
         exact ⟨by simp [mem_dedupPolysAux], ih (p :: seen)⟩
 
+/-- Duplicate removal produces no duplicate entries. -/
 theorem dedupPolys_nodup (ps : List ZPoly) : (dedupPolys ps).Nodup :=
   dedupPolysAux_nodup [] ps
 
@@ -174,6 +183,8 @@ theorem findCommon?_of_check {carrier p : ZPoly} {ps : List ZPoly}
 /-- Common-root data carried by the sign-matrix layer. No signs or formula
 truth values are trusted fields: both are recomputed exactly. -/
 structure SignMatrixCert where
+  /-- Proposed common-root certificates. The checker aligns them with the
+  distinct nonconstant atom polynomials in their recomputed order. -/
   commonRoots : List CommonRootCert
 
 /-- Exact sign on an open cell, rejecting zero for a nonconstant atom of a
@@ -195,6 +206,7 @@ def rootSign? (p : ZPoly) (common : CommonRootCert)
   | true => some .zero
   | false => openSign? p isolations i.castSucc
 
+/-- A nonzero open-cell evaluation is returned unchanged by `openSign?`. -/
 theorem openSign?_eq_some {p : ZPoly} {isolations : IsolationCert}
     {cut : Fin (isolations.intervals.size + 1)}
     (hnonzero : evalSign p (isolations.openPoint cut) ≠ .zero) :
@@ -213,7 +225,9 @@ def openCellSign? (p : ZPoly) (isolations : IsolationCert)
 
 /-- One cached sign associated with its literal polynomial. -/
 structure SignEntry where
+  /-- The polynomial whose sign is cached. -/
   poly : ZPoly
+  /-- The cached sign of the polynomial. -/
   sign : Sign
 
 /-- Coefficient-equality lookup in a cached sign row. -/

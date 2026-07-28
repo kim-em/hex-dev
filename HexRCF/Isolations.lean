@@ -45,11 +45,13 @@ def toLiteral (replay : SturmReplay) (cert : IsolationCert)
   complete := by
     simpa using complete_of_check h
 
+/-- Converting an isolation certificate preserves the number of intervals. -/
 @[simp] theorem size_toLiteral (replay : SturmReplay) (cert : IsolationCert)
     (h : cert.check replay = true) :
     (cert.toLiteral replay h).isolations.size = cert.intervals.size := by
   simp [toLiteral]
 
+/-- The interval at each index is unchanged by conversion to literal isolations. -/
 theorem interval_toLiteral (replay : SturmReplay) (cert : IsolationCert)
     (h : cert.check replay = true)
     (i : Nat) (hi : i < (cert.toLiteral replay h).isolations.size) :

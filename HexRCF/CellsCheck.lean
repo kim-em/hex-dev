@@ -52,6 +52,7 @@ def all (n : Nat) : Array (Cell n) :=
       [Cell.open i.castSucc, Cell.root i]) ++
     [Cell.open (Fin.last n)]).toArray
 
+/-- The enumeration for `n` roots contains `2 * n + 1` cells. -/
 @[simp] theorem size_all (n : Nat) : (all n).size = 2 * n + 1 := by
   simp [all, List.map_const']
   omega
@@ -89,13 +90,14 @@ def openPoint (cert : IsolationCert) :
         ((cert.intervals[cut.val - 1]'(by omega)).upper +
           (cert.intervals[cut.val]'(by omega)).lower) >>> (1 : Int)
 
-/-- Open cells carry exact dyadic samples; root cells are represented by their
+/-- Open cells carry exact dyadic samples. Root cells are represented by their
 certified isolation instead. -/
 @[expose]
 def sample? (cert : IsolationCert) : Cell cert.intervals.size → Option Dyadic
   | .open cut => some (cert.openPoint cut)
   | .root _ => none
 
+/-- Sampling an open cell returns its exact dyadic sample point. -/
 @[simp] theorem sample?_open (cert : IsolationCert)
     (cut : Fin (cert.intervals.size + 1)) :
     cert.sample? (.open cut) = some (cert.openPoint cut) := rfl
@@ -114,7 +116,7 @@ structure IocCmps (n : Nat) where
 namespace IocCmps
 
 /-- Recompute every claimed endpoint comparison. This validates comparison
-data only; the bounded-domain layer separately checks `a < b`. -/
+data only. The bounded-domain layer separately checks `a < b`. -/
 @[expose]
 def check (f : ZPoly) (replay : SturmReplay) (cert : IsolationCert)
     (a b : Dyadic) (cmps : IocCmps cert.intervals.size) : Bool :=
@@ -129,8 +131,8 @@ end IocCmps
 namespace Cell
 
 /-- Executable bounded-domain relevance test for a cell. The surrounding
-certificate first checks `a < b`; this core assumes that nonempty-domain
-hypothesis. -/
+certificate first checks `a < b`. This definition assumes that the domain is
+nonempty. -/
 @[expose]
 def meetsIoc (cmps : IocCmps n) : Cell n → Bool
   | .root i => cmps.lower[i] == .gt && cmps.upper[i] != .gt

@@ -96,6 +96,7 @@ private meta def proveRCFGoal (target : Expr) : MetaM Expr := do
 building and replaying a literal certificate. -/
 syntax (name := rcfTac) "rcf" : tactic
 
+/-- Elaborate `rcf` by constructing and replaying a checked certificate. -/
 @[tactic rcfTac] meta def evalRCFTac : Tactic := fun stx => do
   match stx with
   | `(tactic| rcf) =>

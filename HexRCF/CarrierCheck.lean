@@ -53,8 +53,8 @@ sentence and is never supplied by the certificate. -/
 @[expose]
 def check (s : Sentence) (cert : CarrierCert) : Bool :=
   let q := s.product
-  -- `Sentence.polys` filters by this predicate; retaining the explicit walk
-  -- makes the certificate contract visible at its trust boundary.
+  -- `Sentence.polys` filters by this predicate. Retaining the explicit walk
+  -- states the certificate condition at the point where it is checked.
   checkPosDegrees s.polys &&
   decide (0 < q.degree?.getD 0) &&
   !cert.repeated.isZero &&
