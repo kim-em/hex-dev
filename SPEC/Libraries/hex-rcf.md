@@ -701,7 +701,8 @@ distinct sign entries, and formula occurrences). The fixed
 quadratic/degree-10/degree-50 cases below do not participate in those
 complexity verdicts.
 
-The tactic track begins with same-module `Baseline − Baseline` and
+The tactic track begins with same-module `Baseline − Baseline`,
+`Degree10.Tactic − Degree10.Tactic`, and
 `Degree50.Tactic − Degree50.Tactic` null controls, then uses matched
 fresh-module variants for each fixed case:
 `Baseline` (identical imports), `Reify` (reify-only checksum), `Input`
@@ -709,15 +710,16 @@ fresh-module variants for each fixed case:
 compiled certificate construction, emitting no proof), `Literal` (input plus
 the pre-generated certificate), `Replay` (literal plus its kernel-checked
 theorem), and `Tactic` (the source goal closed by `rcf`). An external runner
-rotates fresh builds and reports both null calibrations followed by raw paired
+rotates fresh builds and reports all three null calibrations followed by raw paired
 deltas for reification, search, literal elaboration, replay, and the full
 tactic. Six rounds balance which role builds first. Each null's signed deltas,
 absolute and relative ranges, and median describe fresh-build noise only: they
 are reported before the substantive pairs in artifact `config.order` and are
 never subtracted, promoted to a significance test, or used to alter the fixed
-tactic budgets. A substantive delta is noise-sized only against a null with a
-comparable total build magnitude, or when its relative spread agrees with both
-controls; otherwise the sweep leaves it unresolved. `Search − Input` is
+tactic budgets. A substantive delta is noise-sized only against the selected
+null's zero-centred maximum-absolute envelope at a comparable total build
+magnitude; a cheaper selected envelope is scaled up by the magnitude ratio and
+is never scaled down. Otherwise the sweep leaves it unresolved. `Search − Input` is
 phase-attribution evidence only; the matching LeanBench target supplies the
 scientific asymptotic verdict, and the report neither substitutes nor adds the
 two. The headline report records source hashes, commit/toolchain/host/load
@@ -725,7 +727,7 @@ state, raw samples, artifact sizes, timeout cleanup, and the theorem's axiom
 set, and refuses release claims from a dirty or uncontrolled host. On the
 named shared release machine it uses the designated-shared-host protocol from
 `SPEC/benchmarking.md`: a preregistered hostname and logical CPU, runner-enforced
-affinity inherited by timed children, six balanced rounds, both null controls,
+affinity inherited by timed children, six balanced rounds, all null controls,
 and per-arm pinned-core/SMT scheduler accounting. Global load is recorded
 context; the scoped core-interference ceiling is the release gate.
 
@@ -739,9 +741,9 @@ independently rebuildable. All measured modules import the same generated
 support module and no measured module imports another measured module.
 
 There is one shared `Baseline` and six measured modules under each of
-`Quadratic/`, `Degree10/`, and `Degree50/`. The report contains seventeen
-pairs: the baseline and degree-50-tactic null controls first, then these five
-pairs for each of the three cases:
+`Quadratic/`, `Degree10/`, and `Degree50/`. The report contains eighteen
+pairs: baseline, degree-10-tactic, and degree-50-tactic null controls first,
+then these five pairs for each of the three cases:
 
 | Report component | Reference | Candidate |
 | --- | --- | --- |
@@ -763,7 +765,8 @@ clock. The complete external sweep is:
 
 ```bash
 python3 scripts/bench/hexrcf_proof_sweep.py --samples 6 \
-  --timeout 300 --shared-host --expected-host chungus2 --cpu 47
+  --timeout 300 --warm-timeout 600 \
+  --shared-host --expected-host chungus2 --cpu 22
 ```
 
 Only `Replay` and `Tactic` print an axiom report, fixed to

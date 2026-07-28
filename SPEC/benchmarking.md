@@ -292,24 +292,37 @@ The default release protocol uses a quiescent host and rejects concurrent
 Lake/Lean processes. A named shared machine is also admissible through the
 explicit designated-shared-host protocol: the command preregisters the expected
 hostname and logical CPU, pins itself before warmup, and verifies its own
-affinity after every arm; every timed descendant inherits that affinity. The
+affinity after every arm; every timed descendant inherits that affinity, and
+the timed Lean processes use one worker thread. The
 manifest's `config.order` begins with at least two same-module null controls at
 distinct cheap and expensive build magnitudes, followed by substantive pairs.
 The preregistered sample count is even and at least six. Physical-core and SMT
-topology are recorded once; host load, frequency, CPU-pressure state, affinity,
-and concurrent Lake/Lean counts are retained around every measured arm.
+topology are recorded once; host load, CPU-pressure state, affinity, and
+concurrent Lake/Lean counts are retained around every measured arm. Cumulative
+CPU-frequency residency is differenced across the arm to retain its
+time-weighted mean frequency; idle snapshots before and after the build are
+context only.
 Scheduler counters on the pinned CPU and every SMT sibling are differenced
-across each arm and combined with child user/system time. Foreign work on the
-pinned CPU or excessive sibling utilisation above the preregistered ceiling
-invalidates release quality, as does a pinned-CPU frequency spread above its
-preregistered band. Global load and unrelated Lake/Lean presence are context
-rather than automatic failures in this mode.
+across each arm and combined with child user/system time and the harness's own
+CPU time inside that counter window. Foreign work on the
+pinned CPU or excessive sibling utilisation above the preregistered ratio or
+three scheduler ticks invalidates release quality. The effective quantized
+ceiling is recorded rather than represented as the nominal ratio. Child CPU
+time materially above the pinned CPU's busy time is an affinity/accounting
+failure. Missing frequency residency or a spread of arm means above the
+preregistered band also invalidates release quality. Global load and unrelated
+Lake/Lean presence are context rather than automatic failures in this mode.
 
 The artifact selects a magnitude-comparable control for every substantive
-pair and records `resolved`, `unresolved`, or `no-comparable-control`. A fixed
-tactic budget is release-quality only when its median passes and remains below
-the budget after the comparable null spread is applied as a conservative
-resolution check; the reported timing itself is never corrected. Artifact
+pair and records `resolved`, `unresolved`, or `no-comparable-control`. It
+retains both the null range and the zero-centred envelope given by the largest
+observed absolute signed null delta. A fixed tactic budget is release-quality
+only when its median passes and remains below the budget after that comparable
+null envelope is applied as a conservative resolution check. When the selected
+control is cheaper, its range and envelope are first scaled by the build-time
+magnitude ratio; they are never scaled down. The accepted worst-case
+core-interference allowance across both arms must also be smaller than the
+budget. The reported timing itself is never corrected. Artifact
 `release_quality` is derived from pristine provenance, complete scheduler
 accounting, the scoped interference ceiling, and every required budget
 conclusion. A diagnostic `--allow-busy` run remains non-release evidence and
@@ -326,8 +339,8 @@ range and median before interpreting a magnitude-comparable proof delta, but
 does not subtract a null median, widen a budget by a null range, assign
 significance, or use a control as scientific evidence. With the small
 preregistered sample counts used here, a substantive delta inside a comparable
-null spread is described only as noise-sized or unresolved; a cheap control
-does not resolve noise for a much more expensive build.
+zero-centred null envelope is described only as noise-sized or unresolved; a
+cheap control does not resolve noise for a much more expensive build.
 
 Phase attribution uses matched module variants, not clocks embedded in the
 probe. A tactic library may use a baseline; a reify-only module; an input module

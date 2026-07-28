@@ -148,6 +148,8 @@ class ProcessGroupTests(unittest.TestCase):
             self.assertIsNotNone(metrics["user_seconds"])
             self.assertIsNotNone(metrics["system_seconds"])
             self.assertIsNotNone(metrics["cpu_percent"])
+        self.assertIsNotNone(metrics["precise_child_user_seconds"])
+        self.assertIsNotNone(metrics["precise_child_system_seconds"])
 
     @unittest.skipUnless(Path("/proc").is_dir(), "requires procfs")
     def test_run_timed_invokes_group_cleanup(self) -> None:
@@ -210,6 +212,16 @@ class ProcessGroupTests(unittest.TestCase):
 
 
 class PairingTests(unittest.TestCase):
+    def test_frequency_residency_uses_arm_weighted_mean(self) -> None:
+        delta = sweep.frequency_residency_delta(
+            {1_500_000: 10, 3_000_000: 20},
+            {1_500_000: 11, 3_000_000: 23},
+        )
+        self.assertEqual(delta, {1_500_000: 1, 3_000_000: 3})
+        self.assertEqual(
+            sweep.mean_residency_frequency(delta), 2_625_000
+        )
+
     def test_summary_uses_each_pairs_adjacent_measurements(self) -> None:
         rows: dict[str, list[dict[str, object]]] = {
             PAIR.name: [{
@@ -400,6 +412,44 @@ class PairingTests(unittest.TestCase):
         self.assertEqual(summary["tactic"]["resolution"], "resolved")
         self.assertEqual(summary["tactic"]["budget_status"], "unresolved")
 
+    def test_one_sided_null_uses_zero_centred_envelope(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        candidate = sweep.ProbeModule("Probe.Candidate")
+        pairs = (
+            sweep.ProbePair(
+                "null", module, module, {}, null_control=True
+            ),
+            sweep.ProbePair("effect", module, candidate, {}),
+        )
+        spec = sweep.SweepSpec(
+            description="one-sided null",
+            pairs=pairs,
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+
+        def rows(deltas: list[int]) -> list[dict[str, object]]:
+            return [{
+                "reference": {"wall_nanos": 1_000, "peak_rss_kb": None},
+                "candidate": {
+                    "wall_nanos": 1_000 + delta,
+                    "peak_rss_kb": None,
+                },
+                "signed_wall_delta_nanos": delta,
+            } for delta in deltas]
+
+        with mock.patch.object(sweep, "artifact_sizes", return_value={}):
+            summary = sweep.summarize(
+                spec, {"null": rows([90, 100]), "effect": rows([50, 50])}
+            )
+        self.assertEqual(summary["null"]["null_spread_nanos"], 10)
+        self.assertEqual(
+            summary["effect"]["comparable_null_envelope_nanos"], 100
+        )
+        self.assertEqual(summary["effect"]["resolution"], "unresolved")
+
     def test_shared_host_observations_reject_sibling_contention(self) -> None:
         def arm(sibling_busy: float) -> dict[str, object]:
             host = {
@@ -412,7 +462,9 @@ class PairingTests(unittest.TestCase):
                 "host_before": host,
                 "host_after": host,
                 "cpu_accounting": {
+                    "measurement_cpu_residual_seconds": 0.01,
                     "measurement_cpu_foreign_seconds": 0.01,
+                    "mean_frequency_khz": 2_500_000,
                     "pressure_some_delta_us": 5,
                     "per_cpu": {
                         "95": {"busy_seconds": sibling_busy},
@@ -433,6 +485,221 @@ class PairingTests(unittest.TestCase):
         self.assertEqual(observed["max_smt_sibling_busy_ratio"], 0.10)
         self.assertRegex(
             "; ".join(observed["violations"]), "SMT sibling CPU 95"
+        )
+
+    def test_shared_host_observations_reject_missing_frequency(self) -> None:
+        host = {
+            "concurrent_lake_lean_count": 0,
+            "load_1m_per_cpu": 0.0,
+            "affinity_cpu_frequency_khz": None,
+        }
+        arm = {
+            "wall_nanos": 1_000_000_000,
+            "host_before": host,
+            "host_after": host,
+            "cpu_accounting": {
+                "measurement_cpu_residual_seconds": 0.0,
+                "measurement_cpu_foreign_seconds": 0.0,
+                "mean_frequency_khz": None,
+                "pressure_some_delta_us": 0,
+                "per_cpu": {"95": {"busy_seconds": 0.0}},
+            },
+        }
+        rows = {
+            "pair": [{
+                "round": 1,
+                "reference": arm,
+                "candidate": arm,
+            }]
+        }
+        observed = sweep.shared_host_observations(
+            rows, 47, [95], 0.02, 0.15
+        )
+        self.assertEqual(observed["expected_frequency_observations"], 2)
+        self.assertEqual(observed["observed_frequency_observations"], 0)
+        self.assertRegex(
+            "; ".join(observed["violations"]),
+            "frequency accounting is incomplete",
+        )
+
+    def test_shared_host_observations_reject_impossible_cpu_total(self) -> None:
+        host = {
+            "concurrent_lake_lean_count": 0,
+            "load_1m_per_cpu": 0.0,
+            "affinity_cpu_frequency_khz": "2500000",
+        }
+        arm = {
+            "wall_nanos": 1_000_000_000,
+            "host_before": host,
+            "host_after": host,
+            "cpu_accounting": {
+                "measurement_cpu_residual_seconds": -0.5,
+                "measurement_cpu_foreign_seconds": 0.0,
+                "mean_frequency_khz": 2_500_000,
+                "pressure_some_delta_us": 0,
+                "per_cpu": {"95": {"busy_seconds": 0.0}},
+            },
+        }
+        rows = {
+            "pair": [{
+                "round": 1,
+                "reference": arm,
+                "candidate": arm,
+            }]
+        }
+        observed = sweep.shared_host_observations(
+            rows, 47, [95], 0.02, 0.15
+        )
+        self.assertRegex(
+            "; ".join(observed["violations"]),
+            "child CPU time exceeds pinned-CPU busy time",
+        )
+
+    def test_shared_host_observations_gate_arm_mean_frequency(self) -> None:
+        host = {
+            "concurrent_lake_lean_count": 0,
+            "load_1m_per_cpu": 0.0,
+            "affinity_cpu_frequency_khz": "1500000",
+        }
+
+        def arm(mean_frequency: int) -> dict[str, object]:
+            return {
+                "wall_nanos": 1_000_000_000,
+                "cpu_percent": 100.0,
+                "host_before": host,
+                "host_after": host,
+                "cpu_accounting": {
+                    "measurement_cpu_residual_seconds": 0.0,
+                    "measurement_cpu_foreign_seconds": 0.0,
+                    "mean_frequency_khz": mean_frequency,
+                    "pressure_some_delta_us": 0,
+                    "per_cpu": {"95": {"busy_seconds": 0.0}},
+                },
+            }
+
+        rows = {
+            "pair": [{
+                "round": 1,
+                "reference": arm(2_000_000),
+                "candidate": arm(2_500_000),
+            }]
+        }
+        observed = sweep.shared_host_observations(
+            rows, 47, [95], 0.002, 0.15
+        )
+        self.assertAlmostEqual(observed["frequency_spread_ratio"], 0.25)
+        self.assertRegex(
+            "; ".join(observed["violations"]),
+            "pinned-CPU frequency spread",
+        )
+
+    def test_nonshared_sweep_does_not_require_null_controls(self) -> None:
+        args = sweep.parse_args("validity", [])
+        quality, issues = sweep.validity_summary(
+            SPEC,
+            args,
+            {"center-direct": {"resolution": "no-comparable-control"}},
+            None,
+            [],
+        )
+        self.assertTrue(quality)
+        self.assertEqual(issues, [])
+
+    def test_shared_sweep_requires_measured_control_separation(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        pairs = (
+            sweep.ProbePair("cheap", module, module, {}, null_control=True),
+            sweep.ProbePair(
+                "expensive", module, module, {}, null_control=True
+            ),
+            sweep.ProbePair("effect", module, module, {}),
+        )
+        spec = sweep.SweepSpec(
+            description="control magnitudes",
+            pairs=pairs,
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        args = sweep.parse_args(
+            "validity",
+            [
+                "--shared-host", "--expected-host", "bench",
+                "--cpu", "22", "--samples", "6",
+            ],
+        )
+        results = {
+            "cheap": {"build_magnitude_wall_nanos": 1_000},
+            "expensive": {"build_magnitude_wall_nanos": 1_500},
+            "effect": {
+                "build_magnitude_wall_nanos": 1_250,
+                "resolution": "resolved",
+            },
+        }
+        quality, issues = sweep.validity_summary(
+            spec, args, results, {"violations": []}, []
+        )
+        self.assertFalse(quality)
+        self.assertIn(
+            "null-control build magnitudes are not sufficiently distinct",
+            issues,
+        )
+
+    def test_shared_budget_must_exceed_interference_ceiling(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        pairs = (
+            sweep.ProbePair("cheap", module, module, {}, null_control=True),
+            sweep.ProbePair(
+                "expensive", module, module, {}, null_control=True
+            ),
+            sweep.ProbePair(
+                "tactic",
+                module,
+                module,
+                {"tactic_budget_ms": 100},
+            ),
+        )
+        spec = sweep.SweepSpec(
+            description="budget resolution",
+            pairs=pairs,
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        args = sweep.parse_args(
+            "validity",
+            [
+                "--shared-host", "--expected-host", "bench",
+                "--cpu", "22", "--samples", "6",
+            ],
+        )
+        arm = {"wall_nanos": 30_000_000_000}
+        results = {
+            "cheap": {"build_magnitude_wall_nanos": 10_000_000_000},
+            "expensive": {"build_magnitude_wall_nanos": 30_000_000_000},
+            "tactic": {
+                "build_magnitude_wall_nanos": 30_000_000_000,
+                "resolution": "resolved",
+                "budget_nanos": 100_000_000,
+                "budget_status": "passed",
+                "samples": [
+                    {"reference": arm, "candidate": arm}
+                ],
+            },
+        }
+        quality, issues = sweep.validity_summary(
+            spec, args, results, {"violations": []}, []
+        )
+        self.assertFalse(quality)
+        self.assertGreater(
+            results["tactic"]["budget_interference_ceiling_nanos"],
+            results["tactic"]["budget_nanos"],
+        )
+        self.assertRegex(
+            "; ".join(issues),
+            "not resolvable under the admitted core-interference ceiling",
         )
 
     def test_contention_violation_makes_release_quality_false(self) -> None:
@@ -564,6 +831,45 @@ class HarnessValidationTests(unittest.TestCase):
         )
         with mock.patch.object(sweep, "cpu_affinity", return_value=[3]):
             self.assertEqual(sweep.shared_host_protocol_issues(spec, args), [])
+
+    def test_shared_host_requires_controls_before_substantive_pairs(self) -> None:
+        cheap = sweep.ProbeModule("Probe.Cheap")
+        expensive = sweep.ProbeModule("Probe.Expensive")
+        pairs = (
+            sweep.ProbePair("cheap", cheap, cheap, {}, null_control=True),
+            sweep.ProbePair(
+                "substantive",
+                cheap,
+                sweep.ProbeModule("Probe.Candidate"),
+                {},
+            ),
+            sweep.ProbePair(
+                "expensive", expensive, expensive, {}, null_control=True
+            ),
+        )
+        spec = sweep.SweepSpec(
+            description="misordered controls",
+            pairs=pairs,
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+            required_samples=6,
+        )
+        args = sweep.parse_args(
+            spec.description,
+            [
+                "--shared-host", "--expected-host", "bench-host",
+                "--cpu", "3", "--samples", "6",
+            ],
+        )
+        with mock.patch.object(sweep, "cpu_affinity", return_value=[3]):
+            self.assertRegex(
+                "; ".join(
+                    sweep.shared_host_protocol_issues(spec, args)
+                ),
+                "all null controls must precede substantive pairs",
+            )
 
     def test_shared_host_records_global_activity_without_rejecting_it(self) -> None:
         state = {

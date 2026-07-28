@@ -18,6 +18,7 @@ import json
 import os
 import platform
 import re
+import resource
 import signal
 import shutil
 import socket
@@ -39,9 +40,11 @@ CPU_PERCENT_MARKER = "__HEX_CPU_PERCENT__="
 INVOLUNTARY_CONTEXT_MARKER = "__HEX_INVOLUNTARY_CONTEXT__="
 VOLUNTARY_CONTEXT_MARKER = "__HEX_VOLUNTARY_CONTEXT__="
 DEFAULT_MAX_LOAD_PER_CPU = 0.5
-DEFAULT_MAX_CORE_INTERFERENCE_RATIO = 0.02
+DEFAULT_MAX_CORE_INTERFERENCE_RATIO = 0.002
 DEFAULT_MAX_FREQUENCY_SPREAD_RATIO = 0.15
 NULL_MAGNITUDE_FACTOR = 3.0
+MIN_CONTROL_MAGNITUDE_RATIO = 2.0
+ACCOUNTING_QUANTIZATION_TICKS = 3
 T = TypeVar("T")
 
 sys.path.insert(0, str(ROOT))
@@ -309,6 +312,7 @@ def configure_shared_host(args: argparse.Namespace) -> None:
         set_affinity(0, {args.cpu})
     except OSError as exc:
         raise RuntimeError(f"cannot pin runner to CPU {args.cpu}: {exc}") from exc
+    os.environ["LEAN_NUM_THREADS"] = "1"
 
 
 def parse_cpu_list(text: str | None) -> list[int]:
@@ -346,6 +350,67 @@ def cpu_ticks(cpus: Sequence[int]) -> dict[int, dict[str, int]]:
         values = [int(value) for value in columns[1:]]
         result[int(suffix)] = dict(zip(fields, values, strict=False))
     return result
+
+
+def frequency_residency(cpu: int | None) -> dict[int, int] | None:
+    """Read cumulative cpufreq residency counters for one logical CPU."""
+    if cpu is None:
+        return None
+    text = _read_optional(
+        Path(
+            f"/sys/devices/system/cpu/cpu{cpu}/cpufreq/stats/time_in_state"
+        )
+    )
+    if text is None:
+        return None
+    result: dict[int, int] = {}
+    try:
+        for line in text.splitlines():
+            frequency, ticks = line.split()
+            result[int(frequency)] = int(ticks)
+    except (TypeError, ValueError):
+        return None
+    return result or None
+
+
+def frequency_residency_delta(
+    before: dict[int, int] | None,
+    after: dict[int, int] | None,
+) -> dict[int, int] | None:
+    """Difference compatible cpufreq residency snapshots fail-closed."""
+    if before is None or after is None or set(before) != set(after):
+        return None
+    delta = {
+        frequency: after[frequency] - ticks
+        for frequency, ticks in before.items()
+    }
+    if any(ticks < 0 for ticks in delta.values()):
+        return None
+    return delta
+
+
+def mean_residency_frequency(
+    delta: dict[int, int] | None,
+) -> float | None:
+    """Time-weighted mean kHz from a cpufreq residency delta."""
+    if delta is None:
+        return None
+    total = sum(delta.values())
+    if total <= 0:
+        return None
+    return sum(frequency * ticks for frequency, ticks in delta.items()) / total
+
+
+def runner_cpu_seconds() -> float:
+    """CPU consumed by this harness process itself."""
+    usage = resource.getrusage(resource.RUSAGE_SELF)
+    return float(usage.ru_utime + usage.ru_stime)
+
+
+def reaped_children_cpu_seconds() -> tuple[float, float]:
+    """Cumulative CPU of child processes already reaped by this runner."""
+    usage = resource.getrusage(resource.RUSAGE_CHILDREN)
+    return float(usage.ru_utime), float(usage.ru_stime)
 
 
 def cpu_tick_delta(
@@ -390,10 +455,17 @@ def host_state() -> dict[str, object]:
         fields = loadavg.split()
         runnable = fields[3] if len(fields) > 3 else None
     pressure = _read_optional(Path("/proc/pressure/cpu"))
+    available_cpus = len(affinity) if affinity is not None else None
     return {
         "logical_cpus": cpus,
+        "available_logical_cpus": available_cpus,
         "load_average": load,
         "load_1m_per_cpu": load[0] / cpus if load else None,
+        "load_1m_per_available_cpu": (
+            load[0] / available_cpus
+            if load and available_cpus is not None and available_cpus > 0
+            else None
+        ),
         "runnable_tasks": runnable,
         "cpu_affinity": affinity,
         "cpu_pressure": pressure,
@@ -450,10 +522,17 @@ def shared_host_protocol_issues(
         issues.append(
             "shared-host evidence requires at least two same-module null controls"
         )
-    elif not all(pair.null_control for pair in spec.pairs[:2]):
-        issues.append("the first two manifest pairs must be null controls")
-    elif controls[0].reference.module == controls[1].reference.module:
-        issues.append("the first two null controls must use distinct magnitudes")
+    elif len({pair.reference.module for pair in controls}) < 2:
+        issues.append("null controls must use at least two distinct magnitudes")
+    first_substantive = next(
+        (
+            index for index, pair in enumerate(spec.pairs)
+            if not pair.null_control
+        ),
+        len(spec.pairs),
+    )
+    if any(pair.null_control for pair in spec.pairs[first_substantive:]):
+        issues.append("all null controls must precede substantive pairs")
     if not any(not pair.null_control for pair in spec.pairs):
         issues.append("shared-host evidence requires a substantive pair")
     if args.samples < 6 or args.samples % 2 != 0:
@@ -465,12 +544,14 @@ def shared_host_protocol_issues(
 
 
 def sampled_host_state(state: dict[str, object]) -> dict[str, object]:
-    """Compact host metadata retained immediately before each measured pair."""
+    """Compact host metadata retained around measured pairs and arms."""
     processes = list(state["concurrent_lake_lean"])
     return {
         "logical_cpus": state["logical_cpus"],
+        "available_logical_cpus": state["available_logical_cpus"],
         "load_average": state["load_average"],
         "load_1m_per_cpu": state["load_1m_per_cpu"],
+        "load_1m_per_available_cpu": state["load_1m_per_available_cpu"],
         "runnable_tasks": state["runnable_tasks"],
         "cpu_affinity": state["cpu_affinity"],
         "cpu_pressure": state["cpu_pressure"],
@@ -704,6 +785,7 @@ def run_timed(
     wrapped = command if timer is None else [
         timer, "-f", timer_format, *command
     ]
+    children_cpu_before = reaped_children_cpu_seconds()
     start = time.perf_counter_ns()
     child = subprocess.Popen(
         wrapped,
@@ -719,6 +801,7 @@ def run_timed(
         terminate_process_group(child)
         raise
     elapsed = time.perf_counter_ns() - start
+    children_cpu_after = reaped_children_cpu_seconds()
     proc = subprocess.CompletedProcess(
         wrapped, child.returncode, stdout=stdout, stderr=stderr
     )
@@ -726,6 +809,12 @@ def run_timed(
         "peak_rss_kb": None,
         "user_seconds": None,
         "system_seconds": None,
+        "precise_child_user_seconds": (
+            children_cpu_after[0] - children_cpu_before[0]
+        ),
+        "precise_child_system_seconds": (
+            children_cpu_after[1] - children_cpu_before[1]
+        ),
         "cpu_percent": None,
         "involuntary_context_switches": None,
         "voluntary_context_switches": None,
@@ -790,6 +879,8 @@ def build_sample(
     remove_module_outputs(module)
     host_before = sampled_host_state(host_state())
     ticks_before = cpu_ticks(monitored_cpus)
+    runner_cpu_before = runner_cpu_seconds()
+    frequency_before = frequency_residency(measurement_cpu)
     command = ["lake", "build", f"+{module}:olean"]
     try:
         proc, elapsed, metrics = run_timed(command, timeout)
@@ -803,6 +894,8 @@ def build_sample(
         raise RuntimeError(
             f"probe failed ({proc.returncode}): {' '.join(command)}"
         )
+    frequency_after = frequency_residency(measurement_cpu)
+    runner_cpu_after = runner_cpu_seconds()
     ticks_after = cpu_ticks(monitored_cpus)
     host_after = sampled_host_state(host_state())
     tick_hz = int(os.sysconf("SC_CLK_TCK"))
@@ -818,22 +911,28 @@ def build_sample(
         }
     child_cpu_seconds = None
     if (
-        metrics["user_seconds"] is not None
-        and metrics["system_seconds"] is not None
+        metrics["precise_child_user_seconds"] is not None
+        and metrics["precise_child_system_seconds"] is not None
     ):
         child_cpu_seconds = (
-            float(metrics["user_seconds"])
-            + float(metrics["system_seconds"])
+            float(metrics["precise_child_user_seconds"])
+            + float(metrics["precise_child_system_seconds"])
         )
+    runner_seconds = runner_cpu_after - runner_cpu_before
     foreign_seconds = None
+    residual_seconds = None
     if measurement_cpu is not None and str(measurement_cpu) in per_cpu:
         target_busy = per_cpu[str(measurement_cpu)]["busy_seconds"]
         if target_busy is not None and child_cpu_seconds is not None:
-            foreign_seconds = max(
-                0.0, float(target_busy) - child_cpu_seconds
+            residual_seconds = (
+                float(target_busy) - child_cpu_seconds - runner_seconds
             )
+            foreign_seconds = max(0.0, residual_seconds)
     pressure_before = host_before["cpu_pressure_some_total_us"]
     pressure_after = host_after["cpu_pressure_some_total_us"]
+    frequency_delta = frequency_residency_delta(
+        frequency_before, frequency_after
+    )
     result = {
         "wall_nanos": elapsed,
         **metrics,
@@ -844,7 +943,14 @@ def build_sample(
             "clock_ticks_per_second": tick_hz,
             "per_cpu": per_cpu,
             "child_cpu_seconds": child_cpu_seconds,
+            "child_cpu_source": "getrusage-reaped-children",
+            "runner_cpu_seconds": runner_seconds,
+            "measurement_cpu_residual_seconds": residual_seconds,
             "measurement_cpu_foreign_seconds": foreign_seconds,
+            "frequency_time_in_state_ticks": frequency_delta,
+            "mean_frequency_khz": mean_residency_frequency(
+                frequency_delta
+            ),
             "pressure_some_delta_us": (
                 int(pressure_after) - int(pressure_before)
                 if pressure_before is not None and pressure_after is not None
@@ -952,40 +1058,45 @@ def summarize(
             "signed_wall_delta_nanos": deltas,
             "median_signed_wall_delta_nanos": int(statistics.median(deltas)),
         }
+        result["build_magnitude_wall_nanos"] = max(
+            int(result["median_reference_wall_nanos"]),
+            int(result["median_candidate_wall_nanos"]),
+        )
         summary[pair.name] = result
-    controls: list[tuple[str, int, int]] = []
+    controls: list[tuple[str, int, int, int]] = []
     for pair in spec.pairs:
         result = summary[pair.name]
         if not pair.null_control:
             continue
         deltas = list(result["signed_wall_delta_nanos"])
-        magnitude = max(
-            int(result["median_reference_wall_nanos"]),
-            int(result["median_candidate_wall_nanos"]),
-        )
+        magnitude = int(result["build_magnitude_wall_nanos"])
         spread = max(deltas) - min(deltas)
         result["null_spread_nanos"] = spread
         result["null_max_absolute_delta_nanos"] = max(
             abs(int(delta)) for delta in deltas
         )
-        controls.append((pair.name, magnitude, spread))
+        controls.append(
+            (
+                pair.name,
+                magnitude,
+                spread,
+                int(result["null_max_absolute_delta_nanos"]),
+            )
+        )
     for pair in spec.pairs:
         if pair.null_control:
             continue
         result = summary[pair.name]
-        magnitude = max(
-            int(result["median_reference_wall_nanos"]),
-            int(result["median_candidate_wall_nanos"]),
-        )
+        magnitude = int(result["build_magnitude_wall_nanos"])
         comparable = [
-            (name, control_magnitude, spread)
-            for name, control_magnitude, spread in controls
+            (name, control_magnitude, spread, envelope)
+            for name, control_magnitude, spread, envelope in controls
             if min(magnitude, control_magnitude) > 0
             and max(magnitude, control_magnitude)
             / min(magnitude, control_magnitude) <= NULL_MAGNITUDE_FACTOR
         ]
         if comparable:
-            name, control_magnitude, spread = min(
+            name, control_magnitude, spread, envelope = min(
                 comparable,
                 key=lambda item: abs(
                     magnitude - item[1]
@@ -996,27 +1107,46 @@ def summarize(
                 max(magnitude, control_magnitude)
                 / min(magnitude, control_magnitude)
             )
-            result["comparable_null_spread_nanos"] = spread
+            scale_numerator = max(magnitude, control_magnitude)
+            scale_denominator = control_magnitude
+            applied_spread = (
+                spread * scale_numerator + scale_denominator - 1
+            ) // scale_denominator
+            applied_envelope = (
+                envelope * scale_numerator + scale_denominator - 1
+            ) // scale_denominator
+            result["control_scale_factor"] = (
+                scale_numerator / scale_denominator
+            )
+            result["comparable_null_raw_spread_nanos"] = spread
+            result["comparable_null_raw_envelope_nanos"] = envelope
+            result["comparable_null_spread_nanos"] = applied_spread
+            result["comparable_null_envelope_nanos"] = applied_envelope
             result["resolution"] = (
                 "unresolved"
-                if abs(int(result["median_signed_wall_delta_nanos"])) <= spread
+                if abs(int(result["median_signed_wall_delta_nanos"]))
+                <= applied_envelope
                 else "resolved"
             )
         else:
             result["comparable_control"] = None
             result["control_magnitude_ratio"] = None
+            result["control_scale_factor"] = None
+            result["comparable_null_raw_spread_nanos"] = None
+            result["comparable_null_raw_envelope_nanos"] = None
             result["comparable_null_spread_nanos"] = None
+            result["comparable_null_envelope_nanos"] = None
             result["resolution"] = "no-comparable-control"
         budget_ms = pair.metadata.get("tactic_budget_ms")
         if budget_ms is not None:
             budget_nanos = int(budget_ms) * 1_000_000
             median_delta = int(result["median_signed_wall_delta_nanos"])
-            spread_value = result["comparable_null_spread_nanos"]
+            envelope_value = result["comparable_null_envelope_nanos"]
             if median_delta >= budget_nanos:
                 budget_status = "failed"
-            elif spread_value is None:
+            elif envelope_value is None:
                 budget_status = "no-comparable-control"
-            elif median_delta + int(spread_value) >= budget_nanos:
+            elif median_delta + int(envelope_value) >= budget_nanos:
                 budget_status = "unresolved"
             else:
                 budget_status = "passed"
@@ -1038,7 +1168,10 @@ def shared_host_observations(
     max_pressure_delta = 0
     max_concurrent = 0
     max_load = 0.0
-    frequencies: list[int] = []
+    frequencies: list[float] = []
+    expected_frequency_observations = 0
+    max_effective_interference_ratio = 0.0
+    max_interference_allowance_seconds = 0.0
     violations: list[str] = []
     missing_accounting = False
     tick_hz = int(os.sysconf("SC_CLK_TCK"))
@@ -1049,25 +1182,82 @@ def shared_host_observations(
                 arm = dict(sample[role])
                 wall_seconds = int(arm["wall_nanos"]) / 1_000_000_000
                 accounting = dict(arm["cpu_accounting"])
-                foreign = accounting["measurement_cpu_foreign_seconds"]
-                per_cpu = dict(accounting["per_cpu"])
-                if foreign is None or wall_seconds <= 0:
-                    missing_accounting = True
-                    continue
-                foreign_ratio = float(foreign) / wall_seconds
-                max_foreign_ratio = max(max_foreign_ratio, foreign_ratio)
-                allowance = max(2 / tick_hz, max_ratio * wall_seconds)
-                if float(foreign) > allowance:
-                    violations.append(
-                        f"{pair_name} round {round_index} {role}: "
-                        f"measurement CPU foreign time {float(foreign):.3f}s "
-                        f"exceeds {allowance:.3f}s"
+                expected_frequency_observations += 1
+                mean_frequency = accounting.get("mean_frequency_khz")
+                if (
+                    mean_frequency is not None
+                    and float(mean_frequency) > 0
+                ):
+                    frequencies.append(float(mean_frequency))
+                for state_key in ("host_before", "host_after"):
+                    state = dict(arm[state_key])
+                    max_concurrent = max(
+                        max_concurrent,
+                        int(state["concurrent_lake_lean_count"]),
                     )
+                    load = state.get("load_1m_per_cpu")
+                    if load is not None:
+                        max_load = max(max_load, float(load))
+                foreign = accounting["measurement_cpu_foreign_seconds"]
+                residual = accounting.get(
+                    "measurement_cpu_residual_seconds"
+                )
+                per_cpu = dict(accounting["per_cpu"])
+                quantization_allowance = (
+                    ACCOUNTING_QUANTIZATION_TICKS / tick_hz
+                )
+                allowance = max(
+                    quantization_allowance,
+                    max_ratio * wall_seconds,
+                )
+                if wall_seconds > 0:
+                    max_interference_allowance_seconds = max(
+                        max_interference_allowance_seconds, allowance
+                    )
+                    max_effective_interference_ratio = max(
+                        max_effective_interference_ratio,
+                        allowance / wall_seconds,
+                    )
+                if (
+                    foreign is None
+                    or residual is None
+                    or wall_seconds <= 0
+                ):
+                    missing_accounting = True
+                else:
+                    foreign_ratio = float(foreign) / wall_seconds
+                    max_foreign_ratio = max(
+                        max_foreign_ratio, foreign_ratio
+                    )
+                    if float(residual) < -quantization_allowance:
+                        violations.append(
+                            f"{pair_name} round {round_index} {role}: "
+                            "child CPU time exceeds pinned-CPU busy time by "
+                            f"{-float(residual):.3f}s (allowance "
+                            f"{quantization_allowance:.3f}s)"
+                        )
+                    if float(foreign) > allowance:
+                        violations.append(
+                            f"{pair_name} round {round_index} {role}: "
+                            "measurement CPU foreign time "
+                            f"{float(foreign):.3f}s exceeds "
+                            f"{allowance:.3f}s"
+                        )
+                    cpu_percent = arm.get("cpu_percent")
+                    if (
+                        cpu_percent is not None
+                        and float(cpu_percent) > 100 * (1 + max_ratio)
+                    ):
+                        violations.append(
+                            f"{pair_name} round {round_index} {role}: "
+                            f"child CPU utilisation {float(cpu_percent):.1f}% "
+                            "exceeds the single-CPU affinity ceiling"
+                        )
                 for sibling in sibling_cpus:
                     busy = dict(per_cpu.get(str(sibling), {})).get(
                         "busy_seconds"
                     )
-                    if busy is None:
+                    if busy is None or wall_seconds <= 0:
                         missing_accounting = True
                         continue
                     sibling_ratio = float(busy) / wall_seconds
@@ -1085,22 +1275,16 @@ def shared_host_observations(
                     max_pressure_delta = max(
                         max_pressure_delta, int(pressure)
                     )
-                for state_key in ("host_before", "host_after"):
-                    state = dict(arm[state_key])
-                    max_concurrent = max(
-                        max_concurrent,
-                        int(state["concurrent_lake_lean_count"]),
-                    )
-                    load = state.get("load_1m_per_cpu")
-                    if load is not None:
-                        max_load = max(max_load, float(load))
-                    frequency = state.get("affinity_cpu_frequency_khz")
-                    if frequency is not None:
-                        frequencies.append(int(frequency))
     if missing_accounting:
         violations.append("per-arm CPU accounting is incomplete")
+    if len(frequencies) != expected_frequency_observations:
+        violations.append(
+            "pinned-CPU frequency accounting is incomplete "
+            f"({len(frequencies)}/{expected_frequency_observations} "
+            "positive readings)"
+        )
     frequency_spread_ratio = None
-    if frequencies and min(frequencies) > 0:
+    if frequencies:
         frequency_spread_ratio = (
             max(frequencies) / min(frequencies) - 1
         )
@@ -1114,14 +1298,23 @@ def shared_host_observations(
         "measurement_cpu": measurement_cpu,
         "smt_sibling_cpus": list(sibling_cpus),
         "max_core_interference_ratio": max_ratio,
+        "accounting_quantization_ticks": ACCOUNTING_QUANTIZATION_TICKS,
+        "max_effective_core_interference_ratio":
+            max_effective_interference_ratio,
+        "max_interference_allowance_seconds":
+            max_interference_allowance_seconds,
         "max_frequency_spread_ratio": max_frequency_spread_ratio,
         "max_measurement_cpu_foreign_ratio": max_foreign_ratio,
         "max_smt_sibling_busy_ratio": max_sibling_ratio,
         "max_cpu_pressure_some_delta_us": max_pressure_delta,
         "max_concurrent_lake_lean_count": max_concurrent,
         "max_load_1m_per_cpu": max_load,
-        "min_frequency_khz": min(frequencies) if frequencies else None,
-        "max_frequency_khz": max(frequencies) if frequencies else None,
+        "min_arm_mean_frequency_khz":
+            min(frequencies) if frequencies else None,
+        "max_arm_mean_frequency_khz":
+            max(frequencies) if frequencies else None,
+        "expected_frequency_observations": expected_frequency_observations,
+        "observed_frequency_observations": len(frequencies),
         "frequency_spread_ratio": frequency_spread_ratio,
         "violations": violations,
     }
@@ -1141,15 +1334,63 @@ def validity_summary(
             issue for issue in observations["violations"]
             if issue not in issues
         )
+    if args.shared_host:
+        control_magnitudes = [
+            int(results[pair.name]["build_magnitude_wall_nanos"])
+            for pair in spec.pairs
+            if pair.null_control
+        ]
+        if (
+            control_magnitudes
+            and min(control_magnitudes) > 0
+            and max(control_magnitudes) / min(control_magnitudes)
+            < MIN_CONTROL_MAGNITUDE_RATIO
+        ):
+            issues.append(
+                "null-control build magnitudes are not sufficiently distinct"
+            )
     for pair in spec.pairs:
         if pair.null_control:
             continue
-        if results[pair.name].get("resolution") == "no-comparable-control":
+        if (
+            args.shared_host
+            and results[pair.name].get("resolution")
+            == "no-comparable-control"
+        ):
             issue = f"{pair.name}: no magnitude-comparable null control"
             if issue not in issues:
                 issues.append(issue)
         if "tactic_budget_ms" not in pair.metadata:
             continue
+        if args.shared_host:
+            tick_hz = int(os.sysconf("SC_CLK_TCK"))
+            quantization = ACCOUNTING_QUANTIZATION_TICKS / tick_hz
+            pair_allowances = [
+                sum(
+                    max(
+                        quantization,
+                        args.max_core_interference_ratio
+                        * int(sample[role]["wall_nanos"])
+                        / 1_000_000_000,
+                    )
+                    for role in ("reference", "candidate")
+                )
+                for sample in results[pair.name]["samples"]
+            ]
+            interference_ceiling_nanos = int(
+                max(pair_allowances, default=0.0) * 1_000_000_000
+            )
+            results[pair.name][
+                "budget_interference_ceiling_nanos"
+            ] = interference_ceiling_nanos
+            budget_nanos = int(results[pair.name]["budget_nanos"])
+            if interference_ceiling_nanos >= budget_nanos:
+                issue = (
+                    f"{pair.name}: tactic budget is not resolvable under "
+                    "the admitted core-interference ceiling"
+                )
+                if issue not in issues:
+                    issues.append(issue)
         status = results[pair.name].get("budget_status")
         if status != "passed":
             issue = f"{pair.name}: tactic budget {status}"
@@ -1382,8 +1623,16 @@ def run_cli(
             "max_load_per_cpu": args.max_load_per_cpu,
             "max_core_interference_ratio":
                 args.max_core_interference_ratio,
+            "accounting_quantization_ticks":
+                ACCOUNTING_QUANTIZATION_TICKS,
             "max_frequency_spread_ratio":
                 args.max_frequency_spread_ratio,
+            "minimum_control_magnitude_ratio":
+                MIN_CONTROL_MAGNITUDE_RATIO,
+            "null_magnitude_factor": NULL_MAGNITUDE_FACTOR,
+            "frequency_measurement":
+                "cpufreq-time-in-state-arm-mean",
+            "lean_num_threads": os.environ.get("LEAN_NUM_THREADS"),
             "allow_dirty": args.allow_dirty,
             "allow_busy": args.allow_busy,
             "shared_host": args.shared_host,

@@ -10,23 +10,36 @@ from scripts.bench import hexrcf_proof_sweep as rcf
 
 
 class ManifestTests(unittest.TestCase):
-    def test_manifest_is_two_nulls_plus_five_pairs_per_case(self) -> None:
-        self.assertEqual(len(rcf.SPEC.pairs), 17)
+    def test_manifest_is_three_nulls_plus_five_pairs_per_case(self) -> None:
+        self.assertEqual(len(rcf.SPEC.pairs), 18)
         self.assertEqual(
             [pair.name for pair in rcf.SPEC.pairs],
-            ["fresh-build-null", "degree50-tactic-null", *[
+            [
+                "fresh-build-null",
+                "degree10-tactic-null",
+                "degree50-tactic-null",
+                *[
                 f"{case}-{component}"
                 for case in ("quadratic", "degree10", "degree50")
                 for component in ("reify", "search", "literal", "replay", "tactic")
-            ]],
+                ],
+            ],
         )
 
     def test_null_controls_are_first_and_use_exact_module_identity(self) -> None:
-        baseline, expensive = rcf.SPEC.pairs[:2]
+        baseline, intermediate, expensive = rcf.SPEC.pairs[:3]
         self.assertTrue(baseline.null_control)
         self.assertIs(baseline.reference, rcf.BASELINE)
         self.assertIs(baseline.candidate, rcf.BASELINE)
         self.assertEqual(baseline.metadata["interpretation"], "calibration-only")
+        self.assertTrue(intermediate.null_control)
+        self.assertEqual(intermediate.reference, intermediate.candidate)
+        self.assertEqual(
+            intermediate.reference.expected_axioms, rcf.ALLOWED_AXIOMS
+        )
+        self.assertEqual(
+            intermediate.metadata["magnitude"], "degree10-tactic"
+        )
         self.assertTrue(expensive.null_control)
         self.assertEqual(expensive.reference, expensive.candidate)
         self.assertEqual(expensive.reference.expected_axioms, rcf.ALLOWED_AXIOMS)
@@ -42,6 +55,15 @@ class ManifestTests(unittest.TestCase):
             self.assertEqual(
                 len([pair for pair in substantive if pair.name.startswith(case)]),
                 5,
+            )
+
+    def test_only_whole_tactic_pairs_have_acceptance_budgets(self) -> None:
+        for pair in rcf.SPEC.pairs:
+            has_budget = "tactic_budget_ms" in pair.metadata
+            self.assertEqual(
+                has_budget,
+                not pair.null_control and pair.name.endswith("-tactic"),
+                pair.name,
             )
 
     def test_only_replay_and_tactic_report_axioms(self) -> None:
