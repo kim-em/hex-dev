@@ -22,9 +22,12 @@ all reply-local proof labels prospectively, and submits the relocated outcome.
 The new arena commits only when engine submission succeeds. Package caches may
 still record a failed invocation because they are explicitly non-semantic;
 engine facts, expression nodes, provenance, and the arena remain atomic.
-Malformed or resource-failed transitions return a non-live session snapshot
-which cannot later be resumed and mislabeled saturated. Package failure and
-unprocessed narrowing suggestions likewise make the final status incomplete.
+Malformed package evidence is submitted to the engine as a failed rule reply:
+the request latch is cleared, the session remains usable, and completeness is
+permanently lost. Resource-failed or engine-invalid transitions return a
+non-live session snapshot which cannot later be resumed and mislabeled
+saturated. Package failure and unprocessed narrowing suggestions likewise
+make the final status incomplete.
 -/
 
 namespace Hex.Interval.Experiment.PayloadSession
@@ -35,6 +38,7 @@ open Propagator
 inductive StartError where
   | registry (error : RegistryError)
   | programRejected
+  | incoherentLimits
   | limitsRejected
   | engine (error : Propagator.StartError)
   deriving DecidableEq, Repr
@@ -48,7 +52,8 @@ structure Session (Fact : Type) where
   registry : Registry Fact
   arena : PayloadArena.Arena
   arenaLimits : PayloadArena.Limits
-  incomplete : Bool
+  /-- Some rule or narrowing work was dropped rather than retained. -/
+  droppedWork : Bool
   live : Bool
 
 private def make (engine : Engine Fact) (registry : Registry Fact)
@@ -57,8 +62,21 @@ private def make (engine : Engine Fact) (registry : Registry Fact)
     registry
     arena := .empty
     arenaLimits
-    incomplete := false
+    droppedWork := false
     live := true }
+
+/-- A sound upper bound on payload-arena work in any engine-valid reply:
+every candidate, every suggestion constructor, and at most
+`maxProposalItems` nested equalities for each suggestion. -/
+def requiredUses (limits : Propagator.Limits) : Nat :=
+  limits.maxOutcomeCandidates +
+    limits.maxOutcomeSuggestions * (limits.maxProposalItems + 1)
+
+/-- The arena must be able to inspect every proposal in an otherwise
+engine-valid reply. Whole-run entry and byte budgets remain independent. -/
+def limitsCoherent (limits : Propagator.Limits)
+    (arenaLimits : PayloadArena.Limits) : Bool :=
+  requiredUses limits ≤ arenaLimits.maxUses
 
 /-- Validate package metadata and signatures before compiling the engine, then
 start with an empty proof arena. -/
@@ -71,7 +89,9 @@ opaque Session.start (factDomain : FactDomain Fact) (program : Program)
   | .ok registry =>
       if !registry.acceptsProgram program then
         .error .programRejected
-      else if !registry.acceptsLimits program limits then
+      else if !limitsCoherent limits arenaLimits then
+        .error .incoherentLimits
+      else if !registry.acceptsLimits program limits arenaLimits then
         .error .limitsRejected
       else
         match Engine.start factDomain program registry.registrations facts limits with
@@ -95,10 +115,6 @@ private def withEngine (session : Session Fact) (engine : Engine Fact) :
     Session Fact :=
   { session with engine }
 
-private def withRegistry (session : Session Fact) (engine : Engine Fact)
-    (registry : Registry Fact) : Session Fact :=
-  { session with engine, registry }
-
 private def haltEngine (session : Session Fact) (engine : Engine Fact) :
     Session Fact :=
   { session with engine, live := false }
@@ -109,22 +125,65 @@ private def haltRegistry (session : Session Fact) (engine : Engine Fact)
 
 private def commit (session : Session Fact) (engine : Engine Fact)
     (registry : Registry Fact) (arena : PayloadArena.Arena)
-    (incomplete : Bool) : Session Fact :=
-  { session with engine, registry, arena, incomplete }
+    (droppedWork : Bool) : Session Fact :=
+  { session with engine, registry, arena, droppedWork }
 
 private def narrows : Suggestion -> Bool
   | .retry _ | .instantiate _ => true
   | .split _ => false
 
-private def retainedNarrowing (engine : Engine Fact) : Bool :=
-  engine.suggestions.any fun retained => narrows retained.suggestion
+/-- Whether the session still has all work required for a propagation fixed
+point. This deliberately covers fatal snapshots, previously dropped work, and
+retained narrowing suggestions; callers need not reconstruct those conditions
+from public projections. -/
+def Session.complete (session : Session Fact) : Bool :=
+  session.live && !session.droppedWork &&
+    !session.engine.suggestions.any fun retained =>
+      match retained.suggestion with
+      | .retry _ | .instantiate _ => true
+      | .split _ => false
 
-private def outcomeIncomplete (engine : Engine Fact) : Outcome Fact -> Bool
+private def outcomeDropsWork (engine : Engine Fact) : Outcome Fact -> Bool
   | .resourceLimit _ | .failed _ => true
   | .success _ suggestions _ =>
       let room := engine.limits.maxRetainedSuggestions - engine.suggestions.size
       (suggestions.drop room).any narrows
   | .noChange _ | .inapplicable => false
+
+/-- Check the two outer reply lists using the engine's own trusted bounds
+before the arena traverses payload uses or drafts. Nested instantiation lists
+remain bounded by the arena cap here and by `maxProposalItems` during engine
+admission. -/
+private def outcomeListsBounded (limits : Propagator.Limits) : Outcome Fact -> Bool
+  | .success candidates suggestions _ =>
+      listWithin limits.maxOutcomeCandidates candidates &&
+        listWithin limits.maxOutcomeSuggestions suggestions
+  | .noChange _ | .inapplicable | .resourceLimit _ | .failed _ => true
+
+namespace PayloadFailureCode
+
+/-- Stable engine diagnostic for a package plan whose proof drafts do not
+match its outcome. Zero is valid under every diagnostic limit. -/
+def malformed : Nat := 0
+
+end PayloadFailureCode
+
+/-- Clear a malformed package reply through the ordinary engine protocol.
+The typed payload error remains visible in the one-step result, while bounded
+drivers continue the live session and ultimately report incompleteness. -/
+private def failPayload (session : Session Fact) (engine : Engine Fact)
+    (registry : Registry Fact) (action : Action)
+    (error : PayloadArena.Invalid) : Step Fact :=
+  match engine.submit (action.reply (.failed PayloadFailureCode.malformed)) with
+  | .accepted next =>
+      .invalidPayload error
+        (commit session next registry session.arena true)
+  | .invalid replyError next =>
+      .invalidReply replyError (haltRegistry session next registry)
+  | .resourceLimit resource next =>
+      .engineResource resource (haltRegistry session next registry)
+  | .factResourceLimit budget next =>
+      .factResource budget (haltRegistry session next registry)
 
 /-- Run one checked transition. A prospective arena is discarded for every
 engine rejection or resource refusal. -/
@@ -134,26 +193,38 @@ opaque Session.advance (session : Session Fact) : Step Fact :=
   else match session.engine.poll with
   | .request request engine =>
       let (plan, registry) := session.registry.invokePlanned request
-      match PayloadArena.freeze session.arenaLimits session.arena request.action
-          plan.outcome plan.drafts with
-      | .invalid error _ =>
-          .invalidPayload error
-            (haltRegistry session engine.finishReply registry)
-      | .resourceLimit resource _ =>
-          .payloadResource resource
-            (haltRegistry session engine.finishReply registry)
-      | .ready arena outcome =>
-          match engine.submit (request.action.reply outcome) with
-          | .accepted next =>
-              .advanced
-                (commit session next registry arena
-                  (session.incomplete || outcomeIncomplete engine outcome))
-          | .invalid error next =>
-              .invalidReply error (haltRegistry session next registry)
-          | .resourceLimit resource next =>
-              .engineResource resource (haltRegistry session next registry)
-          | .factResourceLimit budget next =>
-              .factResource budget (haltRegistry session next registry)
+      if !outcomeListsBounded engine.limits plan.outcome then
+        match engine.submit (request.action.reply plan.outcome) with
+        | .accepted _ =>
+            -- Defensive against validation drift: never retain an unfrozen
+            -- accepted outcome from this pre-screen rejection path.
+            .invalidEngine (haltRegistry session engine.finishReply registry)
+        | .invalid error next =>
+            .invalidReply error (haltRegistry session next registry)
+        | .resourceLimit resource next =>
+            .engineResource resource (haltRegistry session next registry)
+        | .factResourceLimit budget next =>
+            .factResource budget (haltRegistry session next registry)
+      else
+        match PayloadArena.freeze session.arenaLimits session.arena request.action
+            plan.outcome plan.drafts with
+        | .invalid error _ =>
+            failPayload session engine registry request.action error
+        | .resourceLimit resource _ =>
+            .payloadResource resource
+              (haltRegistry session engine.finishReply registry)
+        | .ready arena outcome =>
+            match engine.submit (request.action.reply outcome) with
+            | .accepted next =>
+                .advanced
+                  (commit session next registry arena
+                    (session.droppedWork || outcomeDropsWork engine outcome))
+            | .invalid error next =>
+                .invalidReply error (haltRegistry session next registry)
+            | .resourceLimit resource next =>
+                .engineResource resource (haltRegistry session next registry)
+            | .factResourceLimit budget next =>
+                .factResource budget (haltRegistry session next registry)
   | .equality equality engine =>
       match engine.contractEquality equality with
       | .advanced _ next => .advanced (withEngine session next)
@@ -164,10 +235,10 @@ opaque Session.advance (session : Session Fact) : Step Fact :=
           .factResource budget (haltEngine session next)
   | .saturated engine =>
       let session := withEngine session engine
-      if session.incomplete || retainedNarrowing engine then
-        .incomplete session
-      else
+      if session.complete then
         .saturated session
+      else
+        .incomplete session
   | .contradiction engine => .contradiction (withEngine session engine)
   | .resourceLimit resource engine =>
       .engineResource resource (haltEngine session engine)
@@ -182,22 +253,21 @@ inductive Stop where
   | engineResource (resource : Propagator.Resource)
   | factResource (budget : Nat)
   | invalidReply (error : ReplyError)
-  | invalidPayload (error : PayloadArena.Invalid)
   | payloadResource (resource : PayloadArena.Resource)
   | invalidEngine
   | driverFuel
   deriving DecidableEq, Repr
 
 structure Run (Fact : Type) where
+  private mk ::
   session : Session Fact
   stop : Stop
 
-/-- Bounded FIFO execution through the session-owned evidence transaction. -/
-def Session.drive : Nat -> Session Fact -> Run Fact
+private def runSteps : Nat -> Session Fact -> Run Fact
   | 0, session => { session, stop := .driverFuel }
   | fuel + 1, session =>
       match session.advance with
-      | .advanced next => next.drive fuel
+      | .advanced next => runSteps fuel next
       | .saturated next => { session := next, stop := .saturated }
       | .incomplete next => { session := next, stop := .incomplete }
       | .contradiction next => { session := next, stop := .contradiction }
@@ -207,10 +277,13 @@ def Session.drive : Nat -> Session Fact -> Run Fact
           { session := next, stop := .factResource budget }
       | .invalidReply error next =>
           { session := next, stop := .invalidReply error }
-      | .invalidPayload error next =>
-          { session := next, stop := .invalidPayload error }
+      | .invalidPayload _ next => runSteps fuel next
       | .payloadResource resource next =>
           { session := next, stop := .payloadResource resource }
       | .invalidEngine next => { session := next, stop := .invalidEngine }
+
+/-- Bounded FIFO execution through the session-owned evidence transaction. -/
+opaque Session.drive (fuel : Nat) (session : Session Fact) : Run Fact :=
+  runSteps fuel session
 
 end Hex.Interval.Experiment.PayloadSession

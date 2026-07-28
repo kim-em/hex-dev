@@ -994,7 +994,8 @@ packages. The current canary chooses an ordered `Array (Package Fact)`. Each
 package existentially owns one private `Cache` shared by its handlers and
 contributes owned operation signatures, exact external signatures required by
 its matchers, `(Registration, callback)` pairs, and a package-owned limit
-preflight. A handler head must be declared as owned or required.
+preflight over both the engine and proof-arena envelopes. A handler head must
+be declared as owned or required.
 `Registry.buildWithin` bounds package and metadata counts plus arities before
 flattening, builds a `Route` from each compact `RuleId` back to its package and
 handler, and rejects undeclared heads and duplicate `OpKey`s or `RuleKey`s.
@@ -1028,10 +1029,12 @@ Whether that snapshot retains existential packages, compiles one dispatch
 function, supports hot replacement, or uses another lookup structure remains
 experimental. `PayloadSession.Session` now has a
 private constructor and its checked start owns the matching engine, registry,
-arena, and arena limits. The older direct registry and engine interfaces remain
-available for search experiments, but proof-producing execution goes through
-the session. A different callback implementation under the same versioned rule
-schema remains valid only when its retained payloads replay under that schema.
+arena, and arena limits; the bounded `Run` result also has a private
+constructor, so its stop classification can only come from session execution.
+The older direct registry and engine interfaces remain available for search
+experiments, but proof-producing execution goes through the session. A
+different callback implementation under the same versioned rule schema
+remains valid only when its retained payloads replay under that schema.
 
 The explicit registration and validation boundary is fixed. Discovery and
 scheduling above it remain empirical: one arm uses an incremental registry
@@ -1158,12 +1161,28 @@ relocated identifier denotes exactly the entry appended for its local draft.
 Candidate, instantiation, and equality roles are distinct, and ordinary replay
 lookup checks the expected role. Failure returns the old arena.
 The session commits that returned arena only if submission of the relocated
-outcome also succeeds. Engine rejection, fact-domain or engine resource
-refusal, malformed payloads, and arena resource refusal retain the preceding
-arena, facts, program, and proof history. Their returned session snapshot is
-non-live, so a caller cannot resume after the error and later relabel the
-partial run saturated. The selected package's cache may record the attempt
-because caches and invocation telemetry are explicitly non-semantic.
+outcome also succeeds. Before freezing, it checks the candidate and suggestion
+list lengths against the engine's own trusted limits. Session start also
+requires
+`maxOutcomeCandidates + maxOutcomeSuggestions * (maxProposalItems + 1) ≤
+arena.maxUses`: every candidate and suggestion costs one arena use, and every
+suggestion may be an instantiation with at most `maxProposalItems` nested
+equalities. This is a sound per-reply traversal bound, not a whole-run entry
+bound. Packages see the complete engine and arena envelopes and may impose
+stronger method-specific requirements.
+
+Engine rejection, fact-domain or engine resource refusal, and arena resource
+refusal retain the preceding arena, facts, program, and proof history and make
+the returned session non-live. A caller cannot resume that snapshot and later
+relabel the partial run saturated. Malformed package evidence is different:
+the prospective arena is discarded, but the session submits a bounded
+synthetic `failed` outcome through the ordinary engine reply path. This clears
+the request latch, retains non-semantic cache telemetry, leaves facts and
+history unchanged, keeps the session live, and records that required work was
+dropped. The FIFO driver may therefore continue other independent rules but
+must eventually report incomplete. The selected package's cache may record
+either kind of attempt because caches and invocation telemetry are explicitly
+non-semantic.
 This executable eager protocol does not foreclose measuring a two-phase
 production protocol.
 
@@ -1202,14 +1221,23 @@ only from `origin.key`, avoiding two stored identities which could disagree.
 Package-owned decoding and schema lookup, typed atom encodings, byte limits,
 and semantic replay are still missing. Instantiation family labels and custom
 split-reason numbers also remain untyped representation gaps. The FIFO session
-rejects any positive compatibility callback whose local
-identifier lacks a draft, so no unrelocated package-local identifier reaches
-its retained provenance. It reports an incomplete rather than saturated run
-after a package `failed`/`resourceLimit` result or while a retry or
-instantiation suggestion remains unprocessed. The next policy experiment must
-preserve this same session transaction while allowing an external policy to
-choose invocations, instantiations, equalities, retries, and splits; it must not
-regain access to separable engine, registry, and arena values.
+turns any positive compatibility callback whose local identifier lacks a
+draft into a failed rule transition, so no unrelocated package-local
+identifier reaches its retained provenance. Its monotone `droppedWork` flag
+means exactly that required work was lost; it is not itself a terminal-state
+claim. The exported `Session.complete` predicate additionally requires a live
+session and no retained retry or instantiation. At a FIFO fixed point this
+predicate is the sole gate between saturated and incomplete. Package
+`failed`/`resourceLimit` results, malformed evidence, dropped narrowing
+suggestions, and unprocessed retained narrowing therefore cannot be laundered
+into saturation. The next policy experiment must preserve this same session
+transaction while allowing an external policy to choose invocations,
+instantiations, equalities, retries, and splits; it must not regain access to
+separable engine, registry, and arena values. The FIFO session can already
+freeze an instantiation and its nested equality payloads, but it deliberately
+has no public admission escape hatch. Honest session-level execution coverage
+for the resulting equality contractor therefore belongs to that private
+policy-session layer, not to a test-only constructor or engine replacement.
 
 ### Action kinds
 

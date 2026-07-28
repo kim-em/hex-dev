@@ -473,7 +473,7 @@ def arithmeticPackage (config : Config) (real : DomainId) : Package Fact :=
         Handler.statelessPlanned squareForward (invokeSquareForward config),
         Handler.statelessPlanned reciprocalForward (invokeReciprocalForward config),
         Handler.statelessPlanned reciprocalBackward (invokeReciprocalBackward config)]
-    acceptsLimits := fun _ limits =>
+    acceptsLimits := fun _ limits _ =>
       config.maxReciprocalEffort ≤ limits.maxEffort &&
         config.reciprocalPrecisionsAllowed &&
         2 ≤ limits.maxObservationValue && 60 ≤ limits.maxDiagnosticValue &&
@@ -491,7 +491,7 @@ def centeredPackage (config : Config) (real : DomainId) : Package Fact :=
       #[Handler.statelessPlanned centeredForward (invokeCenteredForward config),
         Handler.statelessDroppingDrafts centeredSplit invokeCenteredSplit,
         Handler.statelessPlanned centeredInstantiate invokeCenteredInstantiate]
-    acceptsLimits := fun _ limits =>
+    acceptsLimits := fun _ limits _ =>
       4 ≤ limits.maxObservationValue &&
         71 ≤ limits.maxDiagnosticValue &&
         1 ≤ limits.maxOutcomeCandidates && 1 ≤ limits.maxOutcomeSuggestions &&
@@ -504,6 +504,17 @@ def buildRegistry (config : Config) (real : DomainId) (limits : Limits) :
     Except RegistryError (Propagator.Registry Fact) :=
   Propagator.Registry.buildWithin limits
     #[arithmeticPackage config real, centeredPackage config real]
+
+/-- The legacy search-only driver allocates no proof payloads. Packages used
+through it must therefore accept the empty arena envelope as well as the
+engine limits. Proof-producing execution supplies its real envelope through
+`PayloadSession`. -/
+def searchArenaLimits : PayloadArena.Limits :=
+  { maxEntries := 0
+    maxBodyCells := 0
+    maxAtom := 0
+    maxSchema := 0
+    maxUses := 0 }
 
 inductive StartError where
   | incompatibleLimits
@@ -524,7 +535,8 @@ def start (config : Config) (real : DomainId) (program : Program)
       | .error error => .error (.engine (.engine error))
       | .ok () =>
           if !registry.acceptsProgram program then .error .operationMismatch
-          else if !registry.acceptsLimits program limits then .error .incompatibleLimits
+          else if !registry.acceptsLimits program limits searchArenaLimits then
+            .error .incompatibleLimits
           else
             match DyadicInterval.start config.endpointLimit program registry.registrations
                 rawFacts limits with

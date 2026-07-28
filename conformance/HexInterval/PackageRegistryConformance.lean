@@ -118,8 +118,9 @@ def limitedPackage : Package Nat :=
     cache := false
     operations := #[limitedOperation]
     handlers := #[Handler.bareDroppingDrafts limitedRegistration limitedInvoke]
-    acceptsLimits := fun _ limits =>
-      8 ≤ limits.maxObservationValue && 1000000 ≤ limits.maxDiagnosticValue }
+    acceptsLimits := fun _ limits arenaLimits =>
+      8 ≤ limits.maxObservationValue && 1000000 ≤ limits.maxDiagnosticValue &&
+        4 ≤ arenaLimits.maxEntries && 8 ≤ arenaLimits.maxUses }
 
 /-- A package may attach a handler to a signature supplied only by the final
 frontend program, but it must declare the exact dependency. -/
@@ -257,6 +258,13 @@ def limits : Limits :=
       { maxEndpointHeight := 16
         maxAlignmentShift := 8 } }
 
+def arenaLimits : Experiment.PayloadArena.Limits :=
+  { maxEntries := 4
+    maxBodyCells := 8
+    maxAtom := 100
+    maxSchema := 10
+    maxUses := 8 }
+
 def registry? : Option (Registry Nat) :=
   match Registry.buildWithin limits #[sharedPackage, thirdPackage, limitedPackage] with
   | .ok registry => some registry
@@ -269,6 +277,9 @@ def externalRegistry? : Option (Registry Nat) :=
 
 def lowDiagnosticLimits : Limits :=
   { limits with maxDiagnosticValue := 999999 }
+
+def shortArenaLimits : Experiment.PayloadArena.Limits :=
+  { arenaLimits with maxEntries := 3 }
 
 def shortRuleLimits : Limits :=
   { limits with maxRules := 3 }
@@ -286,7 +297,8 @@ def run? : Option (RunResult Nat (Registry Nat)) :=
   match registry? with
   | none => none
   | some registry =>
-      if !registry.acceptsProgram program || !registry.acceptsLimits program limits then none
+      if !registry.acceptsProgram program ||
+          !registry.acceptsLimits program limits arenaLimits then none
       else
         match Engine.start factDomain program registry.registrations #[0, 0, 0, 0] limits with
         | .error _ => none
@@ -310,7 +322,9 @@ def policyDriverTypecheck {PolicyState : Type}
 
 #guard
   match registry? with
-  | some registry => !registry.acceptsLimits program lowDiagnosticLimits
+  | some registry =>
+      !registry.acceptsLimits program lowDiagnosticLimits arenaLimits &&
+        !registry.acceptsLimits program limits shortArenaLimits
   | none => false
 
 -- Registry-owned dispatch failures have a diagnostic floor independent of
@@ -355,7 +369,8 @@ def policyDriverTypecheck {PolicyState : Type}
   | none => false
   | some registry =>
       registry.operations.size == 4 && registry.registrations.size == 4 &&
-        registry.acceptsProgram program && registry.acceptsLimits program limits &&
+        registry.acceptsProgram program &&
+        registry.acceptsLimits program limits arenaLimits &&
         registry.acceptsProgram reorderedProgram &&
         !registry.acceptsProgram mismatchedProgram &&
         registry.routes ==

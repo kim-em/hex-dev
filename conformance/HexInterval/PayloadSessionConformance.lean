@@ -26,6 +26,9 @@ def bareKey : RuleKey := { name := "payload-session.mystery.bare" }
 def negativeKey : RuleKey := { name := "payload-session.mystery.negative" }
 def failedKey : RuleKey := { name := "payload-session.mystery.failed" }
 def retryKey : RuleKey := { name := "payload-session.mystery.retry" }
+def longCandidatesKey : RuleKey := { name := "payload-session.mystery.long-candidates" }
+def longSuggestionsKey : RuleKey := { name := "payload-session.mystery.long-suggestions" }
+def nestedKey : RuleKey := { name := "payload-session.mystery.nested-instance" }
 
 def sourceOperation : Operation :=
   { key := sourceOp, inputs := [], output := real }
@@ -59,6 +62,10 @@ def factDomain : FactDomain Nat where
   narrow _ current proposed :=
     if current < proposed then .improved proposed else .noChange
 
+def contradictionDomain : FactDomain Nat where
+  top _ := 0
+  narrow _ _ proposed := .contradiction proposed
+
 def limits : Propagator.Limits :=
   { maxOperations := 4
     maxNodes := 4
@@ -87,7 +94,7 @@ def arenaLimits : PayloadArena.Limits :=
     maxBodyCells := 8
     maxAtom := 100
     maxSchema := 10
-    maxUses := 4 }
+    maxUses := 8 }
 
 def goodPlan (request : RuleRequest Nat) : Plan Nat :=
   match request.writes with
@@ -146,7 +153,7 @@ def barePackage : Package Nat :=
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.stateless (registration bareKey) fun request =>
+      #[Handler.statelessDroppingDrafts (registration bareKey) fun request =>
           match request.writes with
           | [target] =>
               .success
@@ -159,22 +166,89 @@ def negativePackage : Package Nat :=
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.stateless (registration negativeKey) fun _ => .noChange {}] }
+      #[Handler.statelessDroppingDrafts (registration negativeKey) fun _ => .noChange {}] }
 
 def failedPackage : Package Nat :=
   { Cache := Unit
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.stateless (registration failedKey) fun _ => .failed 4] }
+      #[Handler.statelessDroppingDrafts (registration failedKey) fun _ => .failed 4] }
 
 def retryPackage : Package Nat :=
   { Cache := Unit
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.stateless (registration retryKey) fun _ =>
+      #[Handler.statelessDroppingDrafts (registration retryKey) fun _ =>
           .success [] [.retry 1] {}] }
+
+def longCandidatesPlan (request : RuleRequest Nat) : Plan Nat :=
+  match request.writes with
+  | [target] =>
+      { outcome :=
+          .success
+            [{ node := target, fact := 4, payload := payload 1 },
+              { node := target, fact := 5, payload := payload 1 },
+              { node := target, fact := 6, payload := payload 1 }]
+            [] {}
+        -- This deliberately malformed evidence must never be traversed:
+        -- engine list pre-screening rejects the outcome first.
+        drafts := [] }
+  | _ => { outcome := .failed 5, drafts := [] }
+
+def longCandidatesPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned (registration longCandidatesKey) longCandidatesPlan] }
+
+def longSuggestionsPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned (registration longSuggestionsKey) fun _ =>
+          { outcome := .success [] [.retry 0, .retry 1, .retry 2] {}
+            drafts := [] }] }
+
+def nestedPlan (request : RuleRequest Nat) : Plan Nat :=
+  { outcome :=
+      .success []
+        [.instantiate
+          { key := 44
+            triggers := [request.action.node]
+            claimedGeneration := 1
+            nodes :=
+              [{ domain := real
+                 op := { index := 1 }
+                 args := [.existing request.action.node] }]
+            equalities :=
+              [{ left := .existing (node 0)
+                 right := .proposed 0
+                 payload := payload 702 }]
+            payload := payload 701 }]
+        {}
+    drafts :=
+      [{ label := payload 702, role := .equality, schema := 3, body := [12] },
+        { label := payload 701, role := .instance, schema := 2, body := [11] }] }
+
+def nestedPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned (registration nestedKey) nestedPlan] }
+
+def arenaAwarePackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned (registration goodKey) goodPlan]
+    acceptsLimits := fun _ _ payloadLimits =>
+      4 ≤ payloadLimits.maxEntries && 8 ≤ payloadLimits.maxUses }
 
 def start (package : Package Nat)
     (payloadLimits : PayloadArena.Limits := arenaLimits) :
@@ -193,7 +267,7 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
   match goodRun? with
   | some run =>
       run.stop == .saturated &&
-        run.session.live && !run.session.incomplete &&
+        run.session.live && !run.session.droppedWork && run.session.complete &&
         run.session.arena.entries.size == 2 &&
         run.session.arena.bodyCells == 4 &&
         run.session.engine.history.size == 2 &&
@@ -233,7 +307,8 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
   | .error _ => false
 
 -- Malformed reply-local evidence clears the request latch but changes no
--- semantic state.
+-- semantic state. It becomes an ordinary failed rule transition: the session
+-- remains live, remembers dropped work, and the bounded driver continues.
 #guard
   match start badPayloadPackage with
   | .ok session =>
@@ -241,9 +316,14 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
       | .invalidPayload (.danglingReference label) next =>
           label == payload 700 && next.arena.entries.isEmpty &&
             next.engine.history.isEmpty && next.engine.pending.isNone &&
-            !next.live &&
+            next.live && next.droppedWork && !next.complete &&
+            next.engine.metrics.ruleFailures == 1 &&
             (next.registry.packages[0]?).any fun package =>
-              package.invocations == 1
+              package.invocations == 1 &&
+                let run := next.drive 8
+                run.stop == .incomplete && run.session.live &&
+                  run.session.droppedWork && !run.session.complete &&
+                  run.session.engine.metrics.ruleFailures == 2
       | _ => false
   | .error _ => false
 
@@ -265,7 +345,8 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
   | .ok session =>
       let run := session.drive 8
       run.stop == .saturated && run.session.arena.entries.isEmpty &&
-        run.session.engine.history.isEmpty && !run.session.incomplete
+        run.session.engine.history.isEmpty && !run.session.droppedWork &&
+        run.session.complete
   | .error _ => false
 
 #guard
@@ -274,7 +355,8 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
       match session.advance with
       | .invalidPayload (.danglingReference label) next =>
           label == payload 700 && next.arena.entries.isEmpty &&
-            next.engine.history.isEmpty
+            next.engine.history.isEmpty && next.live && next.droppedWork &&
+            !next.complete && next.engine.metrics.ruleFailures == 1
       | _ => false
   | .error _ => false
 
@@ -284,16 +366,111 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
   match start failedPackage with
   | .ok session =>
       let run := session.drive 8
-      run.stop == .incomplete && run.session.incomplete &&
-        run.session.arena.entries.isEmpty
+      run.stop == .incomplete && run.session.droppedWork &&
+        !run.session.complete && run.session.arena.entries.isEmpty
   | .error _ => false
 
 #guard
   match start retryPackage with
   | .ok session =>
       let run := session.drive 8
-      run.stop == .incomplete && !run.session.incomplete &&
-        run.session.engine.suggestions.size == 2
+      run.stop == .incomplete && !run.session.droppedWork &&
+        !run.session.complete && run.session.engine.suggestions.size == 2
+  | .error _ => false
+
+-- Session start proves that every engine-valid reply fits the arena's
+-- per-reply proposal traversal. The package can independently inspect all
+-- arena limits.
+#guard
+  PayloadSession.requiredUses limits == 8 &&
+    PayloadSession.limitsCoherent limits arenaLimits
+
+#guard
+  match start goodPackage { arenaLimits with maxUses := 7 } with
+  | .error .incoherentLimits => true
+  | _ => false
+
+#guard
+  match start arenaAwarePackage { arenaLimits with maxEntries := 3 } with
+  | .error .limitsRejected => true
+  | _ => false
+
+-- Oversized outer lists are rejected by the engine before malformed or
+-- absent drafts can make the arena traverse the package plan.
+#guard
+  match start longCandidatesPackage with
+  | .ok session =>
+      match session.advance with
+      | .invalidReply .tooManyCandidates next =>
+          next.arena.entries.isEmpty && next.engine.pending.isNone && !next.live &&
+            !next.complete &&
+            (next.registry.packages[0]?).any fun package => package.invocations == 1
+      | _ => false
+  | .error _ => false
+
+#guard
+  match start longSuggestionsPackage with
+  | .ok session =>
+      match session.advance with
+      | .invalidReply .tooManySuggestions next =>
+          next.arena.entries.isEmpty && next.engine.pending.isNone && !next.live &&
+            !next.complete
+      | _ => false
+  | .error _ => false
+
+-- A fuel stop preserves the live, paired session and can be resumed without
+-- reusing local labels or losing the first committed proof entry.
+#guard
+  match start goodPackage with
+  | .ok session =>
+      let first := session.drive 1
+      first.stop == .driverFuel && first.session.live &&
+        first.session.arena.entries.size == 1 &&
+        first.session.engine.history.size == 1 &&
+        let resumed := first.session.drive 8
+        resumed.stop == .saturated && resumed.session.complete &&
+          resumed.session.arena.entries.size == 2 &&
+          resumed.session.engine.history.size == 2
+  | .error _ => false
+
+-- Contradiction is preserved as an ordinary accepted fact with frozen
+-- evidence, rather than confused with an incomplete or resource stop.
+#guard
+  match PayloadSession.Session.start contradictionDomain program #[goodPackage]
+      #[3, 0, 0] limits arenaLimits with
+  | .ok session =>
+      let run := session.drive 8
+      run.stop == .contradiction && run.session.live &&
+        run.session.complete && run.session.arena.entries.size == 1 &&
+        run.session.engine.history.size == 1 &&
+        run.session.engine.contradictory
+  | .error _ => false
+
+-- Nested instantiation and equality labels are both relocated before the
+-- narrowing suggestion enters retained engine state.
+#guard
+  match start nestedPackage with
+  | .ok session =>
+      match session.advance with
+      | .advanced next =>
+          next.live && !next.droppedWork && !next.complete &&
+            next.arena.entries.size == 2 && next.engine.suggestions.size == 1 &&
+            match next.engine.suggestions[0]? with
+            | some retained =>
+                match retained.suggestion with
+                | .instantiate request =>
+                    request.payload == payload 1 &&
+                      (next.arena.entry? request.payload .instance).any
+                        (fun entry => entry.schema == 2 && entry.body == [11]) &&
+                      match request.equalities with
+                      | [equality] =>
+                          equality.payload == payload 0 &&
+                            (next.arena.entry? equality.payload .equality).any
+                              (fun entry => entry.schema == 3 && entry.body == [12])
+                      | _ => false
+                | _ => false
+            | none => false
+      | _ => false
   | .error _ => false
 
 end Hex.Interval.PayloadSessionConformance
