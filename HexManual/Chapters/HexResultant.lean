@@ -124,6 +124,17 @@ scalar for each column in that input's Sylvester block. A consecutive-block
 rotation then exchanges those blocks, contributing one sign for every crossed
 pair of columns and yielding the generalized-subresultant input-swap law.
 
+The column-operation form of Brown--Traub equation (18) is the next
+transformation. Starting from the swapped `G, F` matrix, the specialized unit
+upper-triangular update adds multiplier-weighted `G` columns into the later
+`F` columns. When `H = F + B * G` and the formal degrees satisfy
+`deg F = deg B + deg G`, the coefficient convolution replaces every `F`
+column by the matching `H` column. The target is the ordinary generalized
+Sylvester matrix for `G, H`, with `F`'s formal degree retained explicitly even
+when `H` drops in degree. The determinant is unchanged by these additions, so
+the only factor is the block-swap sign. The following degree-collapse step is
+what introduces the leading-coefficient power in the full Brown--Traub law.
+
 {docstring Hex.SubresultantMinor.det_setCol_add}
 
 {docstring Hex.SubresultantMinor.det_swapAdjacent}
@@ -145,6 +156,14 @@ pair of columns and yielding the generalized-subresultant input-swap law.
 {docstring Hex.DensePoly.Subresultant.poly_scale_right}
 
 {docstring Hex.DensePoly.Subresultant.poly_swap}
+
+{docstring Hex.DensePoly.Subresultant.coeffFold_eq_mul}
+
+{docstring Hex.DensePoly.Subresultant.productCols_addMul}
+
+{docstring Hex.DensePoly.Subresultant.det_addMul}
+
+{docstring Hex.DensePoly.Subresultant.coeffMinorAt_addMul}
 
 {docstring Hex.DensePoly.Subresultant.Fraction.poly_map}
 
