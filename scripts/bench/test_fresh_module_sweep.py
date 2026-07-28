@@ -316,6 +316,98 @@ class PairingTests(unittest.TestCase):
 
 
 class HarnessValidationTests(unittest.TestCase):
+    def test_shared_host_pins_named_machine(self) -> None:
+        args = sweep.parse_args(
+            SPEC.description,
+            [
+                "--shared-host",
+                "--expected-host", "bench-host",
+                "--cpu", "3",
+                "--samples", "6",
+            ],
+        )
+        with mock.patch.object(
+            sweep.socket, "gethostname", return_value="bench-host"
+        ), mock.patch.object(
+            sweep.os, "sched_setaffinity", create=True
+        ) as set_affinity:
+            sweep.configure_shared_host(args)
+        set_affinity.assert_called_once_with(0, {3})
+
+    def test_shared_host_rejects_wrong_machine(self) -> None:
+        args = sweep.parse_args(
+            SPEC.description,
+            [
+                "--shared-host",
+                "--expected-host", "bench-host",
+                "--cpu", "3",
+                "--samples", "6",
+            ],
+        )
+        with mock.patch.object(
+            sweep.socket, "gethostname", return_value="other-host"
+        ):
+            with self.assertRaisesRegex(RuntimeError, "expected host"):
+                sweep.configure_shared_host(args)
+
+    def test_shared_host_requires_single_cpu_affinity(self) -> None:
+        args = sweep.parse_args(SPEC.description, ["--shared-host", "--samples", "6"])
+        with mock.patch.object(
+            sweep, "cpu_affinity", return_value=[3, 4]
+        ):
+            self.assertRegex(
+                "; ".join(sweep.shared_host_protocol_issues(SPEC, args)),
+                "exactly one affinity CPU",
+            )
+
+    def test_shared_host_requires_two_controls(self) -> None:
+        args = sweep.parse_args(SPEC.description, ["--shared-host", "--samples", "6"])
+        with mock.patch.object(sweep, "cpu_affinity", return_value=[3]):
+            self.assertRegex(
+                "; ".join(sweep.shared_host_protocol_issues(SPEC, args)),
+                "at least two same-module null controls",
+            )
+
+    def test_shared_host_accepts_balanced_controlled_spec(self) -> None:
+        module = sweep.ProbeModule("Probe.Same")
+        controls = (
+            sweep.ProbePair("cheap", module, module, {}, null_control=True),
+            sweep.ProbePair("expensive", module, module, {}, null_control=True),
+        )
+        spec = sweep.SweepSpec(
+            description="shared",
+            pairs=controls,
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+            required_samples=6,
+        )
+        args = sweep.parse_args(
+            spec.description, ["--shared-host", "--samples", "6"]
+        )
+        with mock.patch.object(sweep, "cpu_affinity", return_value=[3]):
+            self.assertEqual(sweep.shared_host_protocol_issues(spec, args), [])
+
+    def test_shared_host_ignores_process_presence_but_not_saturation(self) -> None:
+        state = {
+            "concurrent_lake_lean": [{"pid": 1, "command": "lake build"}],
+            "load_1m_per_cpu": 0.25,
+        }
+        self.assertEqual(
+            sweep.host_issues(
+                state, 0.5, concurrent_is_issue=False
+            ),
+            [],
+        )
+        state["load_1m_per_cpu"] = 0.75
+        self.assertRegex(
+            "; ".join(sweep.host_issues(
+                state, 0.5, concurrent_is_issue=False
+            )),
+            "exceeds",
+        )
+
     def test_warmup_builds_every_unique_import_closure(self) -> None:
         completed = subprocess.CompletedProcess(
             ["lake", "build"], 0, stdout="", stderr=""
@@ -458,11 +550,16 @@ class HarnessValidationTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "requires --samples 6"):
                 sweep.run_cli(spec, CALLER, ["--samples", "4"])
 
-    def test_null_control_requires_even_sample_count(self) -> None:
+    def test_every_sweep_requires_even_sample_count(self) -> None:
         module = sweep.ProbeModule("Probe.Same")
-        pair = sweep.ProbePair("null", module, module, {}, null_control=True)
+        pair = sweep.ProbePair(
+            "ordinary",
+            module,
+            sweep.ProbeModule("Probe.Other"),
+            {},
+        )
         spec = sweep.SweepSpec(
-            description="balanced null",
+            description="balanced",
             pairs=(pair,),
             probe_target="Probe",
             schema="test",

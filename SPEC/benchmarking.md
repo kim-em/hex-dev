@@ -279,13 +279,29 @@ in-process clock, or contain a timing loop. A probe also cannot root any
 - before each sample, remove only the measured module's generated artefacts
   and run `lake build +<module>:olean`, keeping imported dependency artefacts
   warm; build each matched reference/candidate pair adjacently, rotate pair
-  order, and alternate pair orientation between rounds;
+  order, and alternate pair orientation over an even preregistered number of
+  rounds;
 - retain every raw wall-time sample and paired delta, and identify the exact
   source hashes, repository commit, dirty-state decision, toolchain, command,
   host/CPU/OS, load state, and timeout/cleanup policy;
 - record emitted artefact sizes and the axiom set of the accepted theorem;
-- refuse a release-quality verdict on a dirty tree, a busy shared host, a
-  timed-out build, or a provenance mismatch.
+- refuse a release-quality verdict on a dirty tree, an uncontrolled or
+  saturated host, a timed-out build, or a provenance mismatch.
+
+The default release protocol uses a quiescent host and rejects concurrent
+Lake/Lean processes. A named shared machine is also admissible through the
+explicit designated-shared-host protocol: the command preregisters the expected
+hostname and logical CPU, and the runner itself pins and verifies its complete
+process tree before warmup; the manifest begins with at
+least two same-module null controls spanning cheap and expensive build
+magnitudes; the preregistered sample count is even and at least six; and host
+load, CPU-pressure state, physical-core topology, affinity, and
+concurrent-process counts are retained around every measured arm.
+Background Lake/Lean process presence is metadata rather than an automatic
+failure in this mode, but the ordinary load-per-CPU ceiling remains binding.
+The report must leave any required conclusion unresolved when a
+magnitude-comparable null spread could change it. A diagnostic `--allow-busy`
+run remains non-release evidence and is not this protocol.
 
 A proof-track sweep may precede its substantive pairs with one or more marked
 same-module null controls at representative build magnitudes. Each control uses

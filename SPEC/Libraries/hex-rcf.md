@@ -722,7 +722,11 @@ phase-attribution evidence only; the matching LeanBench target supplies the
 scientific asymptotic verdict, and the report neither substitutes nor adds the
 two. The headline report records source hashes, commit/toolchain/host/load
 state, raw samples, artifact sizes, timeout cleanup, and the theorem's axiom
-set, and refuses release claims from a dirty or busy host.
+set, and refuses release claims from a dirty or uncontrolled host. On the
+named shared release machine it uses the designated-shared-host protocol from
+`SPEC/benchmarking.md`: a preregistered hostname and logical CPU, runner-enforced
+affinity, six balanced rounds, both null controls, per-arm contention metadata,
+and the ordinary load ceiling.
 
 The committed implementation lives under `bench/HexRCF/ProofProbe/`.
 `Support.lean` owns the fixed source and reflected cases plus the precompiled
@@ -757,7 +761,8 @@ build-only Lake libraries; there is no proof-probe executable or in-process
 clock. The complete external sweep is:
 
 ```bash
-python3 scripts/bench/hexrcf_proof_sweep.py --samples 6
+python3 scripts/bench/hexrcf_proof_sweep.py --samples 6 \
+  --shared-host --expected-host chungus2 --cpu 47
 ```
 
 Only `Replay` and `Tactic` print an axiom report, fixed to
@@ -906,8 +911,10 @@ pipeline is dominated by elaboration overhead, not arithmetic.
 ## Time budgets (Phase 4 validation)
 
 These are fixed whole-tactic acceptance cases, measured as the preregistered
-paired `Tactic − Baseline` fresh-module delta on a clean, quiescent named host.
-Raw total wall times and every pair remain in the artifact. They are not
+paired `Tactic − Baseline` fresh-module delta on a clean named host, using
+either the quiescent-host or designated-shared-host protocol from
+`SPEC/benchmarking.md`. Raw total wall times and every pair remain in the
+artifact. They are not
 one-parameter ladders, complexity verdicts, or substitutes for the compiled
 LeanBench cases above.
 

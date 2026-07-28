@@ -82,7 +82,7 @@ def parse_args(
     description: str, argv: Sequence[str] | None = None
 ) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("--samples", type=int, default=3)
+    parser.add_argument("--samples", type=int, default=4)
     parser.add_argument("--timeout", type=float, default=60.0)
     parser.add_argument("--warm-timeout", type=float, default=600.0)
     parser.add_argument("--output", type=Path)
@@ -95,6 +95,24 @@ def parse_args(
         "--allow-busy",
         action="store_true",
         help="permit concurrent Lake/Lean work or a saturated host for diagnostics",
+    )
+    parser.add_argument(
+        "--shared-host",
+        action="store_true",
+        help=(
+            "use the release-quality designated-shared-host protocol; requires "
+            "single-CPU affinity, two null controls, and at least six balanced "
+            "samples"
+        ),
+    )
+    parser.add_argument(
+        "--expected-host",
+        help="required hostname for the designated-shared-host protocol",
+    )
+    parser.add_argument(
+        "--cpu",
+        type=int,
+        help="logical CPU to which the shared-host runner and children are pinned",
     )
     parser.add_argument(
         "--max-load-per-cpu",
@@ -111,6 +129,10 @@ def parse_args(
         parser.error("--warm-timeout must be positive")
     if args.max_load_per_cpu <= 0:
         parser.error("--max-load-per-cpu must be positive")
+    if args.allow_busy and args.shared_host:
+        parser.error("--allow-busy and --shared-host are mutually exclusive")
+    if args.cpu is not None and args.cpu < 0:
+        parser.error("--cpu must be nonnegative")
     return args
 
 
@@ -194,6 +216,64 @@ def lean_processes() -> list[dict[str, object]]:
     return processes
 
 
+def cpu_affinity() -> list[int] | None:
+    """Return the logical CPUs available to this runner, when supported."""
+    get_affinity = getattr(os, "sched_getaffinity", None)
+    if get_affinity is None:
+        return None
+    return sorted(get_affinity(0))
+
+
+def _read_optional(path: Path) -> str | None:
+    try:
+        return path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+
+
+def cpu_topology(cpu: int) -> dict[str, object]:
+    """Describe the physical-core unit containing one logical CPU."""
+    root = Path(f"/sys/devices/system/cpu/cpu{cpu}")
+    topology = root / "topology"
+    return {
+        "logical_cpu": cpu,
+        "core_id": _read_optional(topology / "core_id"),
+        "physical_package_id": _read_optional(
+            topology / "physical_package_id"
+        ),
+        "thread_siblings_list": _read_optional(
+            topology / "thread_siblings_list"
+        ),
+        "scaling_governor": _read_optional(
+            root / "cpufreq" / "scaling_governor"
+        ),
+    }
+
+
+def configure_shared_host(args: argparse.Namespace) -> None:
+    """Pin this runner before warmup and verify the named release machine."""
+    if not args.shared_host:
+        if args.expected_host is not None or args.cpu is not None:
+            raise RuntimeError("--expected-host/--cpu require --shared-host")
+        return
+    if args.expected_host is None or args.cpu is None:
+        raise RuntimeError(
+            "--shared-host requires both --expected-host and --cpu"
+        )
+    actual_host = socket.gethostname()
+    if actual_host != args.expected_host:
+        raise RuntimeError(
+            f"expected host {args.expected_host!r}, got {actual_host!r}"
+        )
+    set_affinity = getattr(os, "sched_setaffinity", None)
+    if set_affinity is None:
+        raise RuntimeError("CPU affinity is unavailable")
+    try:
+        set_affinity(0, {args.cpu})
+    except OSError as exc:
+        raise RuntimeError(f"cannot pin runner to CPU {args.cpu}: {exc}") from exc
+
+
 def host_state() -> dict[str, object]:
     cpus = os.cpu_count() or 1
     try:
@@ -204,14 +284,21 @@ def host_state() -> dict[str, object]:
         "logical_cpus": cpus,
         "load_average": load,
         "load_1m_per_cpu": load[0] / cpus if load else None,
+        "cpu_affinity": cpu_affinity(),
+        "cpu_pressure": _read_optional(Path("/proc/pressure/cpu")),
         "concurrent_lake_lean": lean_processes(),
     }
 
 
-def host_issues(state: dict[str, object], max_load_per_cpu: float) -> list[str]:
+def host_issues(
+    state: dict[str, object],
+    max_load_per_cpu: float,
+    *,
+    concurrent_is_issue: bool = True,
+) -> list[str]:
     issues: list[str] = []
     processes = state["concurrent_lake_lean"]
-    if processes:
+    if concurrent_is_issue and processes:
         issues.append(f"{len(processes)} concurrent Lake/Lean process(es)")
     load = state["load_1m_per_cpu"]
     if load is not None and float(load) > max_load_per_cpu:
@@ -219,6 +306,51 @@ def host_issues(state: dict[str, object], max_load_per_cpu: float) -> list[str]:
             f"one-minute load/CPU {float(load):.3f} exceeds {max_load_per_cpu:.3f}"
         )
     return issues
+
+
+def shared_host_protocol_issues(
+    spec: SweepSpec, args: argparse.Namespace
+) -> list[str]:
+    """Check the preregistered controls for shared-host release evidence."""
+    if not args.shared_host:
+        return []
+    issues: list[str] = []
+    affinity = cpu_affinity()
+    if affinity is None:
+        issues.append("CPU affinity is unavailable")
+    elif len(affinity) != 1:
+        issues.append(
+            "shared-host evidence requires exactly one affinity CPU, "
+            f"got {affinity}"
+        )
+    elif args.cpu is not None and affinity != [args.cpu]:
+        issues.append(
+            f"observed affinity {affinity} does not match requested CPU {args.cpu}"
+        )
+    controls = [pair for pair in spec.pairs if pair.null_control]
+    if len(controls) < 2:
+        issues.append(
+            "shared-host evidence requires at least two same-module null controls"
+        )
+    if args.samples < 6 or args.samples % 2 != 0:
+        issues.append(
+            "shared-host evidence requires at least six and an even number "
+            "of samples"
+        )
+    return issues
+
+
+def sampled_host_state(state: dict[str, object]) -> dict[str, object]:
+    """Compact host metadata retained immediately before each measured pair."""
+    processes = list(state["concurrent_lake_lean"])
+    return {
+        "logical_cpus": state["logical_cpus"],
+        "load_average": state["load_average"],
+        "load_1m_per_cpu": state["load_1m_per_cpu"],
+        "cpu_affinity": state["cpu_affinity"],
+        "cpu_pressure": state["cpu_pressure"],
+        "concurrent_lake_lean_count": len(processes),
+    }
 
 
 def dirty_issues(repository: dict[str, object],
@@ -483,6 +615,7 @@ def parse_axioms(output: str) -> list[str] | None:
 
 
 def build_sample(module: str, timeout: float) -> dict[str, object]:
+    host_before = sampled_host_state(host_state())
     remove_module_outputs(module)
     command = ["lake", "build", f"+{module}:olean"]
     try:
@@ -497,11 +630,14 @@ def build_sample(module: str, timeout: float) -> dict[str, object]:
         raise RuntimeError(
             f"probe failed ({proc.returncode}): {' '.join(command)}"
         )
-    return {
+    result = {
         "wall_nanos": elapsed,
         "peak_rss_kb": rss,
         "axioms": parse_axioms(output),
+        "host_before": host_before,
+        "host_after": sampled_host_state(host_state()),
     }
+    return result
 
 
 def warm_imports(spec: SweepSpec, timeout: float) -> None:
@@ -621,15 +757,21 @@ def run_cli(
 ) -> int:
     validate_spec(spec)
     args = parse_args(spec.description, argv)
+    configure_shared_host(args)
     if spec.required_samples is not None and args.samples != spec.required_samples:
         raise RuntimeError(
             f"this sweep requires --samples {spec.required_samples}, "
             f"got {args.samples}"
         )
-    if any(pair.null_control for pair in spec.pairs) and args.samples % 2 != 0:
+    if args.samples % 2 != 0:
         raise RuntimeError(
-            "null-control sweeps require an even --samples so pair "
+            "fresh-module sweeps require an even --samples so pair "
             "orientation is balanced"
+        )
+    protocol_issues = shared_host_protocol_issues(spec, args)
+    if protocol_issues:
+        raise RuntimeError(
+            "invalid shared-host protocol: " + "; ".join(protocol_issues)
         )
     warm_imports(spec, args.warm_timeout)
     env = environment()
@@ -641,7 +783,11 @@ def run_cli(
         raise RuntimeError("dirty measurement environment: " + "; ".join(dirt))
     if dirt:
         validity_exceptions.extend(dirt)
-    busy = host_issues(dict(env["host_before"]), args.max_load_per_cpu)
+    busy = host_issues(
+        dict(env["host_before"]),
+        args.max_load_per_cpu,
+        concurrent_is_issue=not args.shared_host,
+    )
     if busy and not args.allow_busy:
         raise RuntimeError("busy measurement environment: " + "; ".join(busy))
     if busy:
@@ -655,7 +801,11 @@ def run_cli(
     for round_index in range(args.samples):
         for pair in rotate(pairs, round_index):
             state = host_state()
-            issues = host_issues(state, args.max_load_per_cpu)
+            issues = host_issues(
+                state,
+                args.max_load_per_cpu,
+                concurrent_is_issue=not args.shared_host,
+            )
             if issues and not args.allow_busy:
                 raise RuntimeError("host became busy: " + "; ".join(issues))
             validity_exceptions.extend(issue for issue in issues
@@ -670,12 +820,34 @@ def run_cli(
                 )
                 sample = build_sample(module.module, args.timeout)
                 validate_axioms(pair.name, role, module, sample)
+                arm_issues = host_issues(
+                    host_state(),
+                    args.max_load_per_cpu,
+                    concurrent_is_issue=not args.shared_host,
+                )
+                if arm_issues and not args.allow_busy:
+                    raise RuntimeError(
+                        "host became busy: " + "; ".join(arm_issues)
+                    )
+                validity_exceptions.extend(
+                    issue for issue in arm_issues
+                    if issue not in validity_exceptions
+                )
+                expected_affinity = [args.cpu] if args.shared_host else None
+                if (
+                    expected_affinity is not None
+                    and cpu_affinity() != expected_affinity
+                ):
+                    raise RuntimeError(
+                        "shared-host CPU affinity changed during the sweep"
+                    )
                 built[role] = sample
             reference = built["reference"]
             candidate = built["candidate"]
             rows[pair.name].append({
                 "round": round_index + 1,
                 "build_order": [role for role, _module in modules],
+                "host_before_pair": sampled_host_state(state),
                 "reference": reference,
                 "candidate": candidate,
                 "signed_wall_delta_nanos": (
@@ -697,7 +869,11 @@ def run_cli(
     if dependencies_after != env["dependency_checkouts"]:
         raise RuntimeError("dependency checkout changed during the sweep")
     host_after = host_state()
-    final_busy = host_issues(host_after, args.max_load_per_cpu)
+    final_busy = host_issues(
+        host_after,
+        args.max_load_per_cpu,
+        concurrent_is_issue=not args.shared_host,
+    )
     if final_busy and not args.allow_busy:
         raise RuntimeError("host became busy: " + "; ".join(final_busy))
     validity_exceptions.extend(issue for issue in final_busy
@@ -711,6 +887,11 @@ def run_cli(
         "validity": {
             "release_quality": not validity_exceptions,
             "exceptions": validity_exceptions,
+            "host_protocol": (
+                "designated-shared-host-v1"
+                if args.shared_host
+                else "quiescent-host-v1"
+            ),
         },
         "config": {
             "samples": args.samples,
@@ -724,6 +905,15 @@ def run_cli(
             "max_load_per_cpu": args.max_load_per_cpu,
             "allow_dirty": args.allow_dirty,
             "allow_busy": args.allow_busy,
+            "shared_host": args.shared_host,
+            "expected_host": args.expected_host,
+            "requested_cpu": args.cpu,
+            "cpu_affinity": cpu_affinity(),
+            "cpu_topology": (
+                cpu_topology(args.cpu)
+                if args.shared_host and args.cpu is not None
+                else None
+            ),
         },
         "results": summarize(spec, rows),
         "source_sha256": before,

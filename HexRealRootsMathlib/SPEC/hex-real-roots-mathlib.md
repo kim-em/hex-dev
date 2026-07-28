@@ -413,10 +413,25 @@ not a LeanBench executable. Build-only modules below
 products at degrees 6, 8, and 10 and width-`2^(-20)` products at degrees 2, 4,
 and 6. Each case is adjacent to the same import-only baseline, and degree 6
 also has a direct natural-to-refined pair. Baseline and natural-degree-10
-same-module controls precede the substantive pairs, and the sweep requires six
-balanced rounds. `HexRealRootsMathlibReplayProbe` supplies the reduced CI
-coverage; `HexRealRootsMathlibReplayProbeScientific` owns the larger release
-arms and remains outside routine CI.
+same-module controls precede the substantive pairs, and the external runner
+uses six balanced rounds, exact generated-artifact invalidation, ordinary
+kernel checking, exact axiom validation, and complete source provenance.
+`HexRealRootsMathlibReplayProbe` supplies the reduced CI coverage;
+`HexRealRootsMathlibReplayProbeScientific` owns the larger release arms and
+remains outside routine CI.
+
+On the named shared release machine the command is:
+
+```bash
+python3 scripts/bench/real_roots_mathlib_sweep.py --samples 6 \
+  --timeout 180 --warm-timeout 600 \
+  --shared-host --expected-host chungus2 --cpu 22
+```
+
+The runner enforces the designated-shared-host contract in
+`SPEC/benchmarking.md`; `--allow-busy` remains diagnostic-only. Executable
+isolation arithmetic belongs to the existing Mathlib-free `HexRealRoots`
+benchmark. The bridge declarations have no separable compiled runtime kernel.
 
 A Mathlib-free variant (same meta core, emitting a
 `RealRootIsolations` value whose conclusions are the executable
