@@ -636,14 +636,14 @@ B8. **Verification certifies `L' = W` (BHKS Lemma 3.4) — the load-bearing obli
     *Sketch:* The classes refine (or equal) the irreducible-factor partition because every class union must be an integer-factor support (else its product wouldn't lift to a true integer divisor). Pathway: import `Polynomial.UniqueFactorizationMonoid` over `Int` from Mathlib for uniqueness-of-factorisation; use `Polynomial.Gauss` infrastructure for content/primitivity; the verified divisibility witnesses + uniqueness give the irreducibility conclusion. This is the theorem that *justifies the algorithm's stopping criterion*; B7 alone is too weak. **Read BHKS Lemma 3.4 in §3 before attempting.**
 
 B9. **Conditional correctness of `factorLattice`.** `factorLattice f = some gs ⟹ gs is the irreducible factorisation of f` (up to associates and ordering).
-    *Sketch:* the tier has two `some` exits. Recombination exit: `some gs` is returned only when (i) every candidate verified via exact division and (ii) `∏ gs = f`; by B8, (i) + (ii) together imply `L' = W` and `gs = irreducible factors of f`. Certificate exit: at cap precision the single all-ones equivalence class certifies the core irreducible (the forward count bound B6-side plus the class partition give exactly one factor), so `some #[core]` is correct. This is the tier's headline theorem; the proof is one application of B8 per exit.
+    *Sketch:* the tier has two `some` exits. Recombination exit: `some gs` is returned only when (i) every candidate verified via exact division and (ii) `∏ gs = f`; by B8, (i) + (ii) together imply `L' = W` and `gs = irreducible factors of f`. Certificate exit: at cap precision the single all-ones equivalence class certifies the core irreducible (the forward count bound B6-side plus the class partition give exactly one factor), so `some #[core]` is correct. This is the tier's correctness theorem; the proof is one application of B8 per exit.
 
 ### Group C — combined `factorize` correctness (drives the public API)
 
 C1. **`factorize` unconditional correctness.** `factorize f = irreducibleFactorisationOf f`.
-    *Sketch:* `factorize` dispatches classical-first: try `factorClassical` at the default Mignotte bound; on its decline try `factorLattice` at the lattice precision cap; otherwise the `factorTrial` backstop. Case analysis on the three branches, using each tier's correctness from *Recombination tiers* above — a product-checked `some` from `factorClassical` (Group A) or `factorLattice` (Group B) is the irreducible factorisation, and the `factorTrial` branch is unconditionally the irreducible factorisation (Group A, via A4/A5). Each tier is entered at its own precision, so no single bound drives the whole combinator. This is the headline correctness theorem, assembled over the hybrid's three branches.
+    *Sketch:* `factorize` dispatches classical-first: try `factorClassical` at the default Mignotte bound; on its decline try `factorLattice` at the lattice precision cap; otherwise the `factorTrial` backstop. Case analysis on the three branches, using each tier's correctness from *Recombination tiers* above — a product-checked `some` from `factorClassical` (Group A) or `factorLattice` (Group B) is the irreducible factorisation, and the `factorTrial` branch is unconditionally the irreducible factorisation (Group A, via A4/A5). Each tier is entered at its own precision, so no single bound drives the whole combinator. This is the combined correctness theorem for the three branches.
 
-C2. **Public-API contracts** (`checkIrreducibleCert_sound`, `Hex.ZPoly.isIrreducible_iff`, and the `Decidable (Hex.ZPoly.Irreducible f)` instance it backs) follow from C1. Like C1 itself, these are bridge-side and are stated in `hex-berlekamp-zassenhaus-mathlib` (the Mathlib-free library provides only the `Irreducible` class and the `isIrreducible` checker — see the §`Mathlib-free Hex.ZPoly.Irreducible class`). Product preservation needs no separate bound-aware contract: it is clause 1 of the headline theorem, and the dispatch's acceptance guard makes it self-certifying per tier.
+C2. **Public-API consequences** (`checkIrreducibleCert_sound`, `Hex.ZPoly.isIrreducible_iff`, and the `Decidable (Hex.ZPoly.Irreducible f)` instance it backs) follow from C1. Like C1 itself, these are bridge-side and are stated in `hex-berlekamp-zassenhaus-mathlib` (the Mathlib-free library provides only the `Irreducible` class and the `isIrreducible` checker — see the §`Mathlib-free Hex.ZPoly.Irreducible class`). Product preservation needs no separate bound-aware theorem: it is clause 1 of C1, and the dispatch's acceptance guard makes it self-certifying per tier.
 
 ### Group D — leaf performance theorem (BHKS Theorem 5.2; not on the correctness critical path)
 
@@ -688,32 +688,32 @@ D2. **Tight characterisation of trial-backstop inputs.** Statement shape:
 
     **Executable precondition.** D2 is about the `none` case only: `choosePrimeData? f = none` must mean *no* element of `HotPathCandidates` is suitable, so the `none` path MUST test every one of the 95 primes in `[3, 500]` before concluding `none`. First-suitable selection short-circuits on *success* (returning at the first suitable prime, which is correct and required for performance), but it must **not** short-circuit the `none` conclusion: a curated subset that skips primes, or an input-dependent fuel cap on the `none`-case walk, is a SPEC violation that would weaken D2.
 
-## Headline correctness theorem
+## Normalized factorization theorem
 
 `HexBerlekampZassenhausMathlib` must carry, and the `done_through ≥ 4` bump is blocked on, an end-to-end theorem with the following **semantic shape**:
 
 > For every nonzero `f : Hex.ZPoly`, the public-API output `φ := Hex.factorize f : Hex.Factorization` satisfies all five clauses:
 >
 > 1. **Product preservation.** `Hex.Factorization.product φ = f`.
-> 2. **Primitive irreducibility.** Every `entry ∈ φ.factors` is primitive and `Polynomial.Irreducible (HexPolyZMathlib.toPolynomial entry.1)` holds in the Mathlib sense.
+> 2. **Normalized primitive irreducibility.** Every `entry ∈ φ.factors` is primitive, has positive leading coefficient, and `Polynomial.Irreducible (HexPolyZMathlib.toPolynomial entry.1)` holds in the Mathlib sense.
 > 3. **Positive multiplicities.** Every `entry ∈ φ.factors` has `entry.2 > 0`.
 > 4. **No factor associates.** For any two distinct positions in `φ.factors`, the underlying polynomials are not associates of each other.
 > 5. **Scalar carries sign and content.** `φ.scalar` equals the signed integer content of `f` (sign × content per `ZPoly.content` and `ZPoly.leadingCoeff` conventions).
 
-The final Lean name (e.g. `factor_correct`, `factor_irreducible_factorisation`) may differ from this prose, and intermediate predicates such as `IsIrreducibleFactorization` may abbreviate the conjunction, but the five-clause shape is binding.
+The theorem is `HexBerlekampZassenhausMathlib.factorize_normalized`. Intermediate predicates such as `IsIrreducibleFactorization` may abbreviate the conjunction, but the five-clause shape is binding.
 
-This is the post-condition of the public API and the contract the combinator advertises in its docstring. **The headline theorem is the critical-path artefact for `done_through ≥ 4`.** Intermediate lemmas are admissible when they are either
+This is the post-condition of the public API. **This theorem is required for `done_through ≥ 4`.** Intermediate lemmas are admissible when they are either
 
-- (a) load-bearing for some proof of the headline theorem, or
+- (a) needed to prove the normalized factorization theorem, or
 - (b) independently justified as public API, executable checker, or regression guard with stated rationale.
 
 Lemmas that satisfy neither are dead weight and should be removed or refactored until they earn their place.
 
-A bridge file that proves an arbitrary collection of intermediate lemmas but does not prove the headline correctness theorem is incomplete by SPEC: the orchestrator must not bump `done_through` to 4 in that state. The local realisation of this clause for the open BZ architectural directive is rewritten in the dispatched rollback issue.
+A bridge file that proves an arbitrary collection of intermediate lemmas but does not prove the normalized factorization theorem is incomplete by SPEC: the orchestrator must not bump `done_through` to 4 in that state. The local realisation of this clause for the open BZ architectural directive is rewritten in the dispatched rollback issue.
 
-### Invariant contracts and dispatch soundness
+### Factorization invariants and dispatch soundness
 
-Beyond the five-clause headline, the cost-based dispatch adds contracts
+Beyond the five clauses above, the cost-based dispatch adds properties
 that the implementation must satisfy and that **conformance checks from
 the start, even though the formal proofs land last** (freezing the
 proof-shaped surface early so the migration does not discover, late,

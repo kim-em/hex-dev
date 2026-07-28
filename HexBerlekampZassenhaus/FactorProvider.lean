@@ -189,8 +189,8 @@ meta def balancedDecline (tactic : String) (q : Hex.ZPoly) : MetaM MessageData :
       bridge's multi-prime degree-obstruction certificates may certify it \
       — import HexBerlekampZassenhausMathlib."
 
-/-- The opaque-input contract check: the user's term must be definitionally
-transparent down to its evaluated literal. -/
+/-- Checks that the user's term is definitionally transparent down to its
+evaluated literal. -/
 meta def checkTransparent (tactic : String) (f : Hex.ZPoly) (fE : Expr) :
     MetaM Expr := do
   let fLit ← Hex.CertReify.reifyZPoly f

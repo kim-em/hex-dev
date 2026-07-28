@@ -109,6 +109,30 @@ If the fact matters, put it in its own note.
   `mul_identity`, not `identity_mulVec` (which is the left unit on
   vectors).
 
+## Make Lean names navigable in rendered prose
+
+Docstrings are part of the reference manual when a chapter includes them with
+Verso's `{docstring}` command. When prose in a docstring or manual chapter names
+a Lean declaration, use the Verso name role:
+
+```text
+{name}`Hex.ZPoly.factorize`
+```
+
+Use a fully qualified name whenever that makes the target unambiguous. The
+rendered name must link to the declaration and provide its hover information.
+
+Plain code spans remain appropriate for local variables, expressions, syntax,
+shell commands, filenames, and terms that do not denote a linkable Lean
+declaration. Do not leave a declaration name in a plain code span merely
+because the prose was first written outside the manual. Build the relevant
+`HexManual` module so unresolved name roles fail during elaboration, and inspect
+the rendered documentation when changing how docstrings are presented.
+
+Public docstrings describe the API in ordinary language. Do not refer to issue
+numbers, planning labels, SPEC section nicknames, or other internal project
+shorthand in place of explaining the behavior.
+
 ## Manual examples that cross into Mathlib
 
 A recipe that shows how to prove a *Mathlib* fact by running the

@@ -18,7 +18,7 @@ Non-modular composition laws for `DensePoly` over `FpPoly p`.
 These narrowly scoped homomorphism-style laws are exactly what is needed
 to substitute an arbitrary witness polynomial `w` into the prime-field
 product identity `(∏_{c ∈ F_p} (X - C c)) = linearPow X p - X` proved in
-`HexBerlekamp.RabinSoundness`. The headline result here is
+`HexBerlekamp.RabinSoundness`. The main identity here is
 
 ```
 compose ((values p).foldl (fun acc c => acc * (X - C c)) 1) w =
@@ -514,7 +514,7 @@ theorem compose_sub_X [ZMod64.PrimeModulus p] (a w : FpPoly p) :
     DensePoly.compose (a - FpPoly.X) w = DensePoly.compose a w - w := by
   rw [compose_sub, compose_X]
 
-/-- The headline `linearPow X k - X` substitution: substituting `w`
+/-- The `linearPow X k - X` substitution: substituting `w`
 for `X` in `linearPow X k - X` yields `linearPow w k - w`. -/
 theorem compose_linearPow_X_sub_X
     [ZMod64.PrimeModulus p] (w : FpPoly p) (k : Nat) :

@@ -29,22 +29,20 @@ import HexBerlekampZassenhausMathlib
 # Functionality
 
 For nonzero `f : Hex.ZPoly`,
-`HexBerlekampZassenhausMathlib.factorize_headline f hf` packages the
-release-facing result:
+`HexBerlekampZassenhausMathlib.factorize_normalized f hf` states:
 
 - the factorization product is exactly `f`;
 - its scalar is the signed content prescribed by the normalization convention;
 - every entry has positive multiplicity;
-- every entry is primitive and irreducible; and
+- every entry is primitive and irreducible, with positive leading
+  coefficient; and
 - distinct entries are not associates.
 
-The sibling theorem
-`HexBerlekampZassenhausMathlib.factorize_headline_contract_core_with_posLeading`
-adds the positive-leading convention. Lower-level theorems such as
+Lower-level theorems such as
 `HexBerlekampZassenhausMathlib.factorize_product`,
 `HexBerlekampZassenhausMathlib.factorize_irreducible_of_nonUnit`, and
 `HexBerlekampZassenhausMathlib.factorize_unique` are available when a client
-wants only one part of the contract.
+wants only one of these conclusions.
 
 # Tactics for `Polynomial ℤ`
 
@@ -74,7 +72,7 @@ The computational package is Mathlib-free. This bridge owns all statements in
 terms of Mathlib's `Polynomial`, unique factorization, Gauss's lemma, and
 correspondence with modular/Hensel data. Keeping that boundary explicit lets
 runtime-only users avoid the Mathlib dependency while proof clients get the
-full semantic contract.
+full mathematical specification.
 
 See the [SPEC](SPEC/hex-berlekamp-zassenhaus-mathlib.md) and the Hex manual's
 factor-tactics chapter for theorem maps, certificate coverage, examples, and
