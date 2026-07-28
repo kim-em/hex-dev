@@ -327,6 +327,10 @@ lean_exe hexrealroots_bench where
   srcDir := "bench"
   root := `HexRealRoots.Bench
 
+lean_exe hexrcf_bench where
+  srcDir := "bench"
+  root := `HexRCF.Bench
+
 lean_exe hexlll_bench where
   srcDir := "bench"
   supportInterpreter := true
