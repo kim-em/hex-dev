@@ -130,7 +130,7 @@ SPEC = SweepSpec(
         ),
     ),
     probe_target="HexRealRootsMathlibReplayProbe",
-    schema="hex-real-roots-mathlib-proof-probe-v2",
+    schema="hex-real-roots-mathlib-proof-probe-v3",
     measurement="paired-fresh-module-olean-wall-v1",
     extra_sources=(
         Path("libraries.yml"),

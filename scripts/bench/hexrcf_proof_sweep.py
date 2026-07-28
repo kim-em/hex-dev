@@ -27,7 +27,7 @@ def case_pairs(case: str, module_case: str, budget_ms: int) -> tuple[ProbePair, 
     prefix = f"HexRCF.ProofProbe.{module_case}"
     input_module = ProbeModule(f"{prefix}.Input")
     literal_module = ProbeModule(f"{prefix}.Literal")
-    common = {"case": case, "tactic_budget_ms": budget_ms}
+    common = {"case": case}
     return (
         ProbePair(
             f"{case}-reify",
@@ -57,7 +57,11 @@ def case_pairs(case: str, module_case: str, budget_ms: int) -> tuple[ProbePair, 
             f"{case}-tactic",
             BASELINE,
             ProbeModule(f"{prefix}.Tactic", ALLOWED_AXIOMS),
-            {**common, "component": "end-to-end-tactic"},
+            {
+                **common,
+                "component": "end-to-end-tactic",
+                "tactic_budget_ms": budget_ms,
+            },
         ),
     )
 
@@ -77,6 +81,17 @@ SPEC = SweepSpec(
             null_control=True,
         ),
         ProbePair(
+            "degree10-tactic-null",
+            ProbeModule("HexRCF.ProofProbe.Degree10.Tactic", ALLOWED_AXIOMS),
+            ProbeModule("HexRCF.ProofProbe.Degree10.Tactic", ALLOWED_AXIOMS),
+            {
+                "component": "fresh-build-noise",
+                "interpretation": "calibration-only",
+                "magnitude": "degree10-tactic",
+            },
+            null_control=True,
+        ),
+        ProbePair(
             "degree50-tactic-null",
             ProbeModule("HexRCF.ProofProbe.Degree50.Tactic", ALLOWED_AXIOMS),
             ProbeModule("HexRCF.ProofProbe.Degree50.Tactic", ALLOWED_AXIOMS),
@@ -92,7 +107,7 @@ SPEC = SweepSpec(
         *case_pairs("degree50", "Degree50", 30_000),
     ),
     probe_target="HexRCFProofProbe",
-    schema="hexrcf-proof-probes-v2",
+    schema="hexrcf-proof-probes-v4",
     measurement="paired-fresh-module-olean-wall-v1",
     output_stem="hexrcf-proof-probes",
     extra_sources=(
