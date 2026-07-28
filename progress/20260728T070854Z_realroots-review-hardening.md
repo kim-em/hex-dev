@@ -15,6 +15,10 @@
   measurement identifier, and governing SPEC/manifest provenance hashes.
 - Built both RealRootsMathlib probe targets successfully; every measured
   theorem reported exactly `[propext, Classical.choice, Quot.sound]`.
+- Narrowed the manifest exception to the exact `ProofProbe/` subtree, made
+  width/source metadata checks non-vacuous for future widths, and documented
+  the proof-track target split in the owning SPEC after the corrected-head
+  Claude review returned GO.
 
 ## Current frontier
 

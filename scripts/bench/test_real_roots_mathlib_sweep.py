@@ -75,10 +75,13 @@ class ManifestTests(unittest.TestCase):
                     type_source.count("(X - "),
                     pair.metadata["degree"],
                 )
-                width = "width := 2 ^ (-20 : ℤ)" in source
-                self.assertEqual(
-                    width, pair.metadata["width_bits"] == 20
-                )
+                bits = pair.metadata["width_bits"]
+                if bits is None:
+                    self.assertNotIn("width :=", source)
+                else:
+                    self.assertIn(
+                        f"width := 2 ^ (-{bits} : ℤ)", source
+                    )
 
     def test_manifest_is_structurally_valid(self) -> None:
         sweep.validate_spec(real_roots.SPEC)

@@ -548,7 +548,7 @@ libraries:
     mathlib: true
     done_through: 3
     status: active
-    proof_probes: [bench/HexRealRootsMathlib]
+    proof_probes: [bench/HexRealRootsMathlib/ProofProbe]
   HexRCF:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
     mathlib: true
