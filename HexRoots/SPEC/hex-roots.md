@@ -86,6 +86,17 @@ is a single dyadic comparison: with radii `rᵢ = √2·2^{−pᵢ}`,
 is exact, and so is the squared distance between the two
 Gaussian-dyadic centres.
 
+Membership of a Gaussian-dyadic point in one closed circumscribed disc is
+likewise exact:
+
+```lean
+def DyadicSquare.discContains (s : DyadicSquare) (z : GaussDyadic) : Bool
+```
+
+It compares the squared centre distance with `2·4⁻ᵖ`, including boundary
+contact. Downstream exact-number libraries use this primitive rather than
+reimplementing the geometry.
+
 ## Pellet witnesses
 
 ```lean
@@ -311,6 +322,11 @@ structure DyadicComplexBall where
   im     : Dyadic
   radius : Dyadic
 
+def DyadicComplexBall.zero : DyadicComplexBall
+def DyadicComplexBall.add (a b : DyadicComplexBall) : DyadicComplexBall
+def DyadicComplexBall.mul (a b : DyadicComplexBall) : DyadicComplexBall
+def DyadicComplexBall.ofRat (q : Rat) (prec : Int) : DyadicComplexBall
+
 /-- `p` has only simple complex roots. Decided by casting `p` and `p'`
     to `DensePoly Rat` and testing whether HexPoly's Euclidean gcd is
     constant. The Mathlib companion proves equivalence with
@@ -320,6 +336,13 @@ instance : Decidable (HasOnlySimpleRoots p) := …
 ```
 
 ## Operations
+
+The generic ball algebra is owned here for reuse by numerical consumers.
+`add` is the Minkowski sum. For centres `aₜ`, `bₜ` and radii `rₐ`, `rᵇ`,
+`mul` uses the exact centre product and radius
+`hi(aₜ) * rᵇ + hi(bₜ) * rₐ + rₐ * rᵇ`. `ofRat q prec` rounds downward
+to `q.toDyadic prec`, with radius zero when that dyadic is exact and otherwise
+one ulp `2^(-prec)`.
 
 ```lean
 namespace Component
@@ -648,6 +671,11 @@ def SimpleRoot (p : ZPoly) := Quot (Intersects (p := p))
 
 def SimpleRoot.mk (iso : RefinedIsolation p) : SimpleRoot p := Quot.mk _ iso
 
+/-- A represented simple root forces its defining polynomial to have positive
+    degree. -/
+theorem SimpleRoot.posDegree (x : SimpleRoot p) :
+    0 < p.degree?.getD 0
+
 /-- Boolean form of `Intersects`, used for equality tests on data
     containing roots (see hex-number-field). -/
 def RefinedIsolation.sameRoot (i₁ i₂ : RefinedIsolation p) : Bool := …
@@ -757,8 +785,9 @@ inherit the precision.
   `√2` constants with their `decide`-checked defining inequalities,
   the `witness` predicate and its `Decidable` instance,
   `DyadicRootCluster` (whose field mentions `witness`), and the ball
-  view: `DyadicSquare.toBall`, the sound enclosure `evalBall`, and the
-  ball tests `excludesZero`/`meets`/`meetsBall` that consumers
+  view: `DyadicSquare.toBall`, the generic exact ball algebra, rational
+  enclosure, the sound polynomial enclosure `evalBall`, and the ball tests
+  `excludesZero`/`meets`/`meetsBall` that consumers
   (hex-number-field's disambiguation loops) use instead of re-deriving
   the `√2` radius bookkeeping.
 - `HexRoots/Kantorovich.lean`: `nkWitness` with its `Decidable`

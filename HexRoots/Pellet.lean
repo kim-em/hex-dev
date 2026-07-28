@@ -144,6 +144,18 @@ end TaylorShift
       TaylorShift.softWitnessCheck_eq s shift k,
       TaylorShift.softWitnessCheck_eq s (TaylorShift.compute p s.center) k]
 
+/-- A root-count witness cannot select a coefficient outside the polynomial. -/
+theorem witnessCheck_false {p : ZPoly} {s : DyadicSquare} {k : Nat}
+    (h : p.size ≤ k) : witnessCheck p s k = false := by
+  have hexact :
+      TaylorShift.witnessCheck s (TaylorShift.compute p s.center) k = false := by
+    simp [TaylorShift.witnessCheck, pelletAt, TaylorShift.compute, taylor_size,
+      Nat.not_lt.mpr h]
+  have hsoft :
+      (TaylorShift.compute p s.center).softWitnessCheck s k = false := by
+    simpa [softWitnessCheck] using softWitnessCheck_false (p := p) (s := s) h
+  simp [witnessCheck, TaylorShift.combinedWitnessCheck, hexact, hsoft]
+
 /-- A successful exact centre-indexed check implies the public disjunctive
     witness check. -/
 theorem TaylorShift.witnessCheck_implies {p : ZPoly} (s : DyadicSquare)
@@ -211,6 +223,45 @@ never re-derive the `√2` bookkeeping. -/
     radius `radiusHi` (`≥` the true radius `2^{−prec}·√2`). -/
 @[expose] def DyadicSquare.toBall (s : DyadicSquare) : DyadicComplexBall :=
   ⟨s.re, s.im, s.radiusHi⟩
+
+namespace DyadicComplexBall
+
+/-- The exact zero complex ball. -/
+@[expose]
+def zero : DyadicComplexBall := ⟨0, 0, 0⟩
+
+/-- Minkowski sum of two closed dyadic complex balls. -/
+@[expose]
+def add (a b : DyadicComplexBall) : DyadicComplexBall :=
+  ⟨a.re + b.re, a.im + b.im, a.radius + b.radius⟩
+
+/-- Product enclosure for two closed dyadic complex balls. -/
+@[expose]
+def mul (a b : DyadicComplexBall) : DyadicComplexBall :=
+  let ac : GaussDyadic := (a.re, a.im)
+  let bc : GaussDyadic := (b.re, b.im)
+  let center := GaussDyadic.mul ac bc
+  let radius :=
+    GaussDyadic.hi ac * b.radius + GaussDyadic.hi bc * a.radius +
+      a.radius * b.radius
+  ⟨center.1, center.2, radius⟩
+
+/-- Enclose a rational number by a real-centred dyadic complex ball. Exact
+dyadic rationals receive radius zero; otherwise one ulp encloses the downward
+rounding error. At nonnegative precision the denominator test avoids
+materializing and normalizing a large intermediate rational. -/
+@[expose]
+def ofRat (q : Rat) (prec : Int) : DyadicComplexBall :=
+  let lo := q.toDyadic prec
+  let exact :=
+    if 0 ≤ prec then
+      decide (q.den.isPowerOfTwo ∧ q.den.log2 ≤ prec.toNat)
+    else
+      lo.toRat = q
+  let radius := if exact then 0 else Dyadic.ofIntWithPrec 1 prec
+  ⟨lo, 0, radius⟩
+
+end DyadicComplexBall
 
 /-- A ball containing `p(z)` for every `z` in the circumscribed disc of
     `s`: centred at the exact value `p(centre) = c₀`, with radius

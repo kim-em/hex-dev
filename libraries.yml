@@ -508,12 +508,22 @@ libraries:
     deps: [HexPolyZ, HexRoots, HexResultant, HexBerlekampZassenhaus, HexMatrix, HexRowReduce]
     mathlib: false
     done_through: 0
-    status: planned
+    status: active
   HexNumberFieldMathlib:
     deps: [HexNumberField, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRootsMathlib, HexPolyZMathlib]
     mathlib: true
     done_through: 0
-    status: planned
+    status: active
+  HexNumberFieldTower:
+    deps: [HexNumberField, HexResultant, HexBerlekampZassenhaus]
+    mathlib: false
+    done_through: 0
+    status: active
+  HexNumberFieldTowerMathlib:
+    deps: [HexNumberFieldTower, HexNumberFieldMathlib, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRowReduceMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
   HexRealRoots:
     deps: [HexPolyZ]
     mathlib: false

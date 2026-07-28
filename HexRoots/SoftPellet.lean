@@ -178,6 +178,10 @@ out-of-range convolution terms are exact zero balls. -/
     if k = 0 then graeffeEven bits cs 0
     else CoeffBall.sub bits (graeffeEven bits cs k) (graeffeOdd bits cs (k - 1))
 
+@[simp] theorem graeffe_size (bits : Nat) (cs : Array CoeffBall) :
+    (graeffe bits cs).size = cs.size := by
+  simp [graeffe]
+
 /-- One Pellet comparison on coefficient balls.  The lower bound of the
 selected coefficient is compared with upper bounds for every other
 coefficient. -/
@@ -232,6 +236,10 @@ structure SoftRadii where
     softPelletAt cs k rs.twoLo rs.twoHi &&
     softPelletAt cs k rs.fourLo rs.fourHi
 
+private theorem softPelletThree_false {cs : Array CoeffBall} {k : Nat}
+    (rs : SoftRadii) (h : cs.size ≤ k) : softPelletThree cs k rs = false := by
+  simp [softPelletThree, softPelletAt, Nat.not_lt.mpr h]
+
 /-- Try the initial locally scaled Taylor polynomial and every Graeffe level
 through `rounds`.  Squaring the radius bounds in lockstep matches the root
 squaring transformation. -/
@@ -241,6 +249,16 @@ squaring transformation. -/
   | rounds + 1, cs, rs =>
       softPelletThree cs k rs ||
         softGraeffeLoop bits k rounds (graeffe bits cs) rs.square
+
+private theorem softGraeffeLoop_false {bits k rounds : Nat}
+    {cs : Array CoeffBall} {rs : SoftRadii} (h : cs.size ≤ k) :
+    softGraeffeLoop bits k rounds cs rs = false := by
+  induction rounds generalizing cs rs with
+  | zero => exact softPelletThree_false rs h
+  | succ rounds ih =>
+      rw [softGraeffeLoop, softPelletThree_false rs h, Bool.false_or]
+      apply ih
+      simpa using h
 
 /-- One working-precision attempt at the three-radius soft Graeffe witness. -/
 @[expose] def softWitnessAt (p : ZPoly) (s : DyadicSquare)
@@ -289,6 +307,19 @@ shallow seeded route. -/
 exact seed once; cached certifiers use `TaylorShift.softWitnessCheck`. -/
 @[expose] def softWitnessCheck (p : ZPoly) (s : DyadicSquare) (k : Nat) : Bool :=
   (TaylorShift.compute p s.center).softWitnessCheck s k
+
+/-- No soft root-count witness can select a coefficient outside the
+    polynomial's coefficient array. -/
+theorem softWitnessCheck_false {p : ZPoly} {s : DyadicSquare} {k : Nat}
+    (h : p.size ≤ k) : softWitnessCheck p s k = false := by
+  have hAt (bits : Nat) : softWitnessAt p s k bits = false := by
+    apply softGraeffeLoop_false
+    simpa [taylorBalls] using h
+  have hSeed (bits : Nat) :
+      (TaylorShift.compute p s.center).softSeededWitness s k bits = false := by
+    apply softGraeffeLoop_false
+    simpa [seededTaylorBalls, TaylorShift.compute, taylor_size] using h
+  simp [softWitnessCheck, TaylorShift.softWitnessCheck, softPrecisions, hAt, hSeed]
 
 /-- Any valid cached shift gives the same adaptive soft witness as the public
 standalone wrapper. -/

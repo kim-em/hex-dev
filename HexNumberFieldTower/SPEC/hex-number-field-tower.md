@@ -1,4 +1,4 @@
-# hex-number-field-tower (depends on hex-number-field + hex-resultant + hex-berlekamp-zassenhaus + hex-row-reduce)
+# hex-number-field-tower (depends on hex-number-field + hex-resultant + hex-berlekamp-zassenhaus)
 
 Executable successive algebraic extensions of `ℚ`. The library supports
 canonical arithmetic within a fixed tower, Trager factorization, adjoining a
@@ -261,27 +261,39 @@ the first candidate whose irreducible factor has degree equal to the combined
 dimension at that generator-adjoining step. This degree test is the executable
 primitive-element certificate.
 
-For a tower of dimension `D`, at most `choose(D, 2)` shifts collide two complex
-embeddings. `flattenShiftCount(D) = choose(D, 2) + 1`; test exactly the first
-that many values in the signed enumeration. Candidate factor selection uses
+At a generator-adjoining step, write `n = deg θ`, `M = deg α`, and let the
+combined dimension be `d`. Both a degree collision and a non-linear recovery
+gcd require a conjugate pair satisfying
+`θᵢ - θ₁ = c * (α₁ - αⱼ)` with `αⱼ ≠ α₁`. Thus both failure modes form one set
+of at most `n * (M - 1)` bad shifts. A proper relative level has degree at
+least two, so `n ≤ d / 2`; the absolute field `ℚ(α)` is a subfield of the
+combined field, so `M ≤ d`. Hence the shared bad set has size at most
+`choose(d, 2)`.
+
+Set `flattenShiftCount(d) = choose(d, 2) + 1` and test exactly that many
+nonzero values in signed order, continuing past failed canonicalization and
+past candidates whose recovery gcd is not linear. The Mathlib companion's
+totality proof discharges the checked canonicalization failures on valid
+algebraic inputs; they are not a second algebraic collision class. Candidate factor selection uses
 `evalDisambiguationPrec`, so both the shift search and the root selection have
 input-computable finite bounds.
 
-Recover every old generator as a polynomial in `γ` by gcd and rational row
-reduction. These coordinate expressions define `fromPrimitive`; evaluation of
-mixed-radix basis elements defines `toPrimitive`. Verify both coordinate
-composites on basis vectors before returning. Exactify `γ` to the canonical
+For an accepted `γ = θ + cα`, lift the minimal polynomials of `θ` and `α` into
+`ℚ(γ)[Y]` and take the gcd of `mα(Y)` with `mθ(γ - cY)`. Accept the shift only
+when this gcd is linear, recovering `α`; then recover `θ = γ - cα` and
+substitute the prior generator coordinates through `θ`. These coordinate
+expressions define `toPrimitive`; evaluation at the corresponding tower
+element defines `fromPrimitive`. Verify their composite on a rational basis of
+the tower and verify that the tower element representing `γ` zeros its claimed
+minimal polynomial before returning. The accepted `γ` is already the canonical
 `AlgebraicNumber` stored by `Flattening`.
-
-The direct dependency on `hex-row-reduce` is intentional: flattening uses exact
-rational linear algebra even though tower arithmetic itself does not.
 
 ## Conformance
 
 - *core*: rational tower identity; `ℚ(√2)` arithmetic; the two-level tower
   `ℚ(√2, √3)`; adjoining a root already present; factorization of a polynomial
   with repeated factors; splitting a quadratic and a quartic; flattening both
-  one-level and two-level towers; both flattening coordinate round trips.
+  one-level and two-level towers; flattening coordinate recovery and round trips.
 - Every public operation has typical, edge, and adversarial cases. Adversarial
   cases include a bad first Trager shift, conjugate factor impostors, and a
   reducible absolute polynomial whose selected relative factor is irreducible.
@@ -307,8 +319,11 @@ Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
   one rational factorization. This recurrence, rather than one absolute-norm
   factorization cost, is the implementation budget.
 - `split?` repeats factorization after genuine degree-reducing extensions.
-- `flatten?` computes primitive-element eliminants of degree at most `D` and
-  solves rational systems of dimension `D`.
+- `flatten?` computes primitive-element eliminants of degree at most `D`, then
+  performs linear-factor gcd recovery over each full-degree candidate. The
+  exact Euclidean gcd over `ℚ(γ)` includes repeated quotient-field inversions
+  and is expected to dominate before the bounded shift enumeration does on
+  taller towers.
 
 No standalone wall-clock ceiling is pinned before the first complete compiled
 implementation. Phase 4 records component timings, then sets each ceiling from

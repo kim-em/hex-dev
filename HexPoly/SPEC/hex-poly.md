@@ -37,6 +37,9 @@ type. As with `ofCoeffs`, trailing zero coefficients are removed.
   *separate* function for the genuine Bezout use-sites (CRT, Hensel, Berlekamp
   correctness). `gcd` agrees with `xgcd`'s gcd component (`gcd_eq_xgcd_gcd`), so
   the gcd-value lemmas transfer.
+- One-sided extended GCD (`xgcdLeft`, gcd plus the coefficient of the left
+  input) for inverse computations that need only one Bezout coefficient. It
+  skips the second growing polynomial multiplication at every Euclidean step.
 - Evaluation (Horner's method)
 - Composition, derivative
 - Content and primitive part (for `DensePoly Int`)

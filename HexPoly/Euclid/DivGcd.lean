@@ -1108,6 +1108,72 @@ def xgcd [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : XGCDResult R :=
   xgcdAux p 1 0 q 0 1 (p.size + q.size + 1)
 
+/-- Result package for the one-sided extended Euclidean algorithm. -/
+structure XGCDLeftResult (R : Type u) [Zero R] [DecidableEq R] where
+  /-- Greatest common divisor returned by the Euclidean algorithm. -/
+  gcd : DensePoly R
+  /-- Bezout coefficient multiplying the left input. -/
+  left : DensePoly R
+
+/-- Tail-recursive extended Euclidean algorithm tracking only the coefficient
+of the left input. This avoids the second polynomial multiplication at every
+step when a consumer needs one inverse coefficient rather than both. -/
+@[expose]
+def xgcdLeftAux [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (r₀ s₀ r₁ s₁ : DensePoly R) (fuel : Nat) : XGCDLeftResult R :=
+  match fuel with
+  | 0 => { gcd := r₀, left := s₀ }
+  | fuel + 1 =>
+      if _hr : r₁.isZero then
+        { gcd := r₀, left := s₀ }
+      else
+        let qr := divMod r₀ r₁
+        xgcdLeftAux r₁ s₁ qr.2 (s₀ - qr.1 * s₁) fuel
+
+/-- One-sided extended gcd, returning the gcd and only the Bezout coefficient
+multiplying the left input. -/
+@[expose]
+def xgcdLeft [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (p q : DensePoly R) : XGCDLeftResult R :=
+  xgcdLeftAux p 1 q 0 (p.size + q.size + 1)
+
+/-- The one-sided and full extended algorithms return the same gcd. -/
+theorem xgcdLeftAux_gcd_eq [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly R) (fuel : Nat) :
+    (xgcdLeftAux r₀ s₀ r₁ s₁ fuel).gcd =
+      (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd := by
+  induction fuel generalizing r₀ s₀ t₀ r₁ s₁ t₁ with
+  | zero => rfl
+  | succ fuel ih =>
+      unfold xgcdLeftAux xgcdAux
+      split
+      · rfl
+      · exact ih _ _ _ _ _ _
+
+/-- The one-sided algorithm returns the same left Bezout coefficient as the
+full extended algorithm. -/
+theorem xgcdLeftAux_left_eq [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly R) (fuel : Nat) :
+    (xgcdLeftAux r₀ s₀ r₁ s₁ fuel).left =
+      (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).left := by
+  induction fuel generalizing r₀ s₀ t₀ r₁ s₁ t₁ with
+  | zero => rfl
+  | succ fuel ih =>
+      unfold xgcdLeftAux xgcdAux
+      split
+      · rfl
+      · exact ih _ _ _ _ _ _
+
+/-- `xgcdLeft` returns the same gcd as `xgcd`. -/
+theorem xgcdLeft_gcd_eq_xgcd [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (p q : DensePoly R) : (xgcdLeft p q).gcd = (xgcd p q).gcd :=
+  xgcdLeftAux_gcd_eq p 1 0 q 0 1 _
+
+/-- `xgcdLeft` returns the same left Bezout coefficient as `xgcd`. -/
+theorem xgcdLeft_left_eq_xgcd [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (p q : DensePoly R) : (xgcdLeft p q).left = (xgcd p q).left :=
+  xgcdLeftAux_left_eq p 1 0 q 0 1 _
+
 /-- Tail-recursive Euclidean gcd tracking only the remainder sequence, **without**
 the Bezout coefficients. `xgcd`/`xgcdAux` carry the Bezout accumulators `s`, `t`
 and update them with a polynomial multiplication (`q * s₁`, `q * t₁`) at every
