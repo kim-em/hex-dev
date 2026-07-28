@@ -103,6 +103,23 @@ in its input coefficient ring.
 
 {docstring Hex.DensePoly.Fraction.divScalar_exact}
 
+The generalized subresultants are coefficient-indexed scalar determinants
+local to `HexResultant`; they do not introduce a dependency on the matrix
+libraries. Their explicit-degree core makes preservation under the fraction
+embedding type-stable. The Brown--Traub identities identify the later scalar
+and polynomial quotients with these mapped subresultants, whose coefficients
+then have base-ring image witnesses.
+
+{docstring Hex.DensePoly.Subresultant.coeffMinor}
+
+{docstring Hex.DensePoly.Subresultant.poly}
+
+{docstring Hex.DensePoly.Subresultant.poly_size_le}
+
+{docstring Hex.DensePoly.Subresultant.Fraction.poly_map}
+
+{docstring Hex.DensePoly.Subresultant.Fraction.exists_coeff}
+
 # Certified chain structure
 %%%
 tag := "hex-resultant-chain-structure"

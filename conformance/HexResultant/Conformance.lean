@@ -26,6 +26,8 @@ Covered properties:
 - pseudo-division reconstructs the prescribed leading-coefficient multiple
   and leaves a remainder smaller than the divisor; reconstruction plus that
   bound is unique, and nonzero input scaling obeys the two homogeneity laws;
+- coefficient-indexed Sylvester minors reproduce pinned scalar resultants and
+  the expected first nontrivial subresultant;
 - Brown chains omit zero terms, order unequal-degree inputs, strictly decrease
   after their first two entries, obey the sharp length bound, and are stable
   under extra fuel;
@@ -181,6 +183,77 @@ example (f g : DensePoly Int) {a : Int} (ha : a ≠ 0)
   let p := poly [1, 0, -2]
   let q := scale (-3) p
   q.size = p.size && q.leadingCoeff = 6
+
+/-! # Generalized Sylvester minors -/
+
+#guard
+  let quadratic := poly [1, 0, 1]
+  let linear := poly [-1, 1]
+  DensePoly.Subresultant.coeffMinor 0 0 quadratic linear =
+      resultant quadratic linear &&
+    DensePoly.Subresultant.coeffMinor 1 0 quadratic linear = -1 &&
+    DensePoly.Subresultant.coeffMinor 1 1 quadratic linear = 1
+
+#guard
+  let cubic := poly [-1, 0, 0, 1]
+  let linear := poly [-2, 1]
+  let quadratic := poly [1, 0, 1]
+  DensePoly.Subresultant.coeffMinor 0 0 cubic linear =
+      resultant cubic linear &&
+    DensePoly.Subresultant.coeffMinor 0 0 cubic quadratic =
+      resultant cubic quadratic
+
+-- Both Sylvester blocks are nonempty and the determinant is genuinely 3×3.
+#guard
+  let cubic := poly [1, 1, 0, 1]
+  let quadratic := poly [-1, 0, 1]
+  DensePoly.Subresultant.coeffMinor 1 0 cubic quadratic = 1 &&
+    DensePoly.Subresultant.coeffMinor 1 1 cubic quadratic = 2 &&
+    DensePoly.Subresultant.coeffMinor 1 2 cubic quadratic = 0 &&
+    DensePoly.Subresultant.poly 1 cubic quadratic = poly [1, 2]
+
+-- Degree reversal and equal-degree inputs pin the caller-order convention.
+#guard
+  let linear := poly [-2, 1]
+  let cubic := poly [-1, 0, 0, 1]
+  let quadratic1 := poly [1, 0, 1]
+  let quadratic2 := poly [2, 1, 1]
+  DensePoly.Subresultant.coeffMinor 0 0 linear cubic =
+      resultant linear cubic &&
+    DensePoly.Subresultant.coeffMinor 0 0 quadratic1 quadratic2 =
+      resultant quadratic1 quadratic2
+
+-- The SPEC's two defective Brown examples also pin the scalar minor sign.
+#guard
+  let f1 := poly [2, 1, 0, 2, 2]
+  let g1 := poly [1, 0, 0, 2]
+  let f2 := poly [0, 0, 0, 0, -1]
+  let g2 := poly [-1, 0, 0, 2]
+  DensePoly.Subresultant.coeffMinor 0 0 f1 g1 = 16 &&
+    DensePoly.Subresultant.coeffMinor 0 0 f2 g2 = -1
+
+-- Standard subresultants agree with Brown's stored terms at the first regular
+-- and defective drops used by the executable regression suite.
+#guard
+  let quadratic := poly [1, 0, 1]
+  let linear := poly [-1, 1]
+  let regular := subresultantChain quadratic linear
+  let defectiveF := poly [0, 0, 0, 0, -1]
+  let defectiveG := poly [-1, 0, 0, 2]
+  let defective := subresultantChain defectiveF defectiveG
+  DensePoly.Subresultant.poly 0 quadratic linear = regular.getD 2 0 &&
+    DensePoly.Subresultant.poly 2 defectiveF defectiveG =
+      defective.getD 2 0 &&
+    DensePoly.Subresultant.poly 0 defectiveF defectiveG =
+      defective.getD 3 0
+
+-- The recursive dense-polynomial coefficient ring exercises bivariate minors.
+#guard
+  let t : DensePoly Int := poly [0, 1]
+  let one : DensePoly Int := 1
+  let ySqSubT : DensePoly (DensePoly Int) := ofList [0 - t, 0, one]
+  let ySubT : DensePoly (DensePoly Int) := ofList [0 - t, one]
+  DensePoly.Subresultant.coeffMinor 0 0 ySqSubT ySubT = t * t - t
 
 /-! # Brown chain -/
 

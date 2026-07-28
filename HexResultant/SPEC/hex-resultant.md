@@ -60,12 +60,39 @@ def divExp [Zero R] [DecidableEq R] [One R] [Mul R] [Div R]
     (x y : R) (n : Nat) : R :=
   exactDiv (powNat x n) (powNat y (n - 1))
 
+namespace SubresultantMinor
+
+/-- Proof-only square coefficient family. -/
+abbrev Square (R : Type u) (n : Nat) := Fin n → Fin n → R
+
+/-- Local first-row Laplace determinant. -/
+def det [Zero R] [One R] [Add R] [Sub R] [Mul R] :
+    {n : Nat} → Square R n → R := ...
+
+end SubresultantMinor
+
 namespace DensePoly
 
 /-- Divide every coefficient by the same scalar through `exactDiv`. -/
 noncomputable def divScalar [Zero R] [DecidableEq R] [Div R]
     (p : DensePoly R) (b : R) : DensePoly R :=
   if b = 0 then 0 else ofCoeffs (p.toList.map (fun a => a / b)).toArray
+
+namespace Subresultant
+
+/-- Default formal degree, with zero and constants both at degree zero. -/
+def formalDegree [Zero R] [DecidableEq R] (p : DensePoly R) : Nat :=
+  p.size - 1
+
+/-- Scalar determinant giving coefficient `l` of subresultant index `J`. -/
+def coeffMinor [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul R]
+    (J l : Nat) (f g : DensePoly R) : R := ...
+
+/-- Generalized Sylvester subresultant of index `J`. -/
+def poly [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul R]
+    (J : Nat) (f g : DensePoly R) : DensePoly R := ...
+
+end Subresultant
 
 /-- Polynomial pseudo-division: for `f, g : DensePoly R` with `g ≠ 0`
     and `g.degree? ≤ f.degree?`, returns `(quotient, pseudoRemainder)`
@@ -175,6 +202,21 @@ coefficient-indexed proof objects with their finite-sum identities developed
 inside `hex-resultant`; they are not matrices from `hex-matrix` or
 `hex-determinant`. Consequently the released dependency graph remains the one
 stated at the top of this SPEC.
+
+Concretely, `DensePoly.Subresultant.coeffMatrixAt` is a finite scalar
+coefficient family at explicit formal degrees, and
+`DensePoly.Subresultant.coeffMinor` takes its local first-row Laplace
+determinant. `DensePoly.Subresultant.poly J f g` assembles the coefficient
+minors for indices `0, …, J`, so its dense degree is at most `J`.  Keeping the
+formal degrees explicit in the matrix core avoids dependent casts when the
+coefficient ring changes.  The construction is total through truncated
+natural subtraction; Brown identities use the meaningful range
+`J ≤ min (formalDegree f) (formalDegree g)`. The proof route derives the
+needed alternation, multilinearity, column-update, and block identities
+locally from the Laplace recursion rather than importing the matrix or
+determinant libraries. The theorems `coeffMinor_map`, `poly_map`, and
+`exists_coeff` prove that coefficient embedding commutes with the construction
+and that every mapped minor coefficient has a base-ring image witness.
 
 The injective coefficient map extends to dense polynomials and preserves
 normalized size, leading coefficients, constants, addition, subtraction,
@@ -319,6 +361,9 @@ quotient is exact over every stated exact-division domain.
 - `HexResultant/FractionPoly.lean`: the injective dense-polynomial embedding,
   its algebraic and pseudo-division transport laws, and coefficientwise
   quotient pullback.
+- `HexResultant/SubresultantMinor.lean`: the local coefficient-indexed
+  Sylvester determinant, generalized subresultant polynomials, and their
+  fraction-embedding image certificates.
 - `HexResultant/Subresultant.lean`: the Brown worker,
   `subresultantChain`, `resultant`, chain termination, and degree bounds.
 - `HexResultant/Discriminant.lean`: `disc` and the algebraic
@@ -357,6 +402,12 @@ Per [SPEC/testing.md](../../SPEC/testing.md), fixtures are tiered into
     `G₂ = 2X³+1`, whose final chain constant is `4` but resultant is
     `16`, and `G₁ = -X⁴`, `G₂ = 2X³-1`, which exercises both
     nonunit exact divisions and has resultant `-1`.
+  - Small generalized-minor pins cover both Sylvester blocks, a repeated-row
+    zero above index `J`, degree reversal, equal degrees, regular and defective
+    Brown-chain terms, and a bivariate `ZPoly` coefficient ring. The local
+    Laplace determinant is factorial proof infrastructure, so these checks stay
+    deliberately small rather than joining the random degree-10 resultant
+    sweep.
   - A bivariate case over `R = ZPoly`, exercising the
     `hex-number-field` instantiation: for example
     `resultant_y (y² − t) (y − t) = t² − t`.
