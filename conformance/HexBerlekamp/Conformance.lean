@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexBerlekamp.DistinctDegree
+import HexBerlekamp.DelayedKernel
 
 /-!
 Core conformance checks for the `HexBerlekamp` Berlekamp, Rabin
@@ -23,6 +24,7 @@ Covered operations:
 - `splitFactorAt` and `kernelWitnessSplit?`
 - `distinctDegreeCandidate`, `distinctDegreeStep`, and `distinctDegreeFactor`
 - `squareFreeDecomposition`
+- periodic-reduction `strassenBarrett` matrix multiplication
 Covered properties:
 - Berlekamp fixed-space matrices subtract the identity from the Frobenius matrix
 - Rabin witnesses agree with the per-divisor coprimality checks
@@ -31,6 +33,7 @@ Covered properties:
 - successful split witnesses multiply back to the split input
 - distinct-degree factorization products reconstruct the committed input
 - square-free decomposition products reconstruct the committed input
+- periodic and default Strassen configs agree
 Covered edge cases:
 - constant, linear, irreducible quadratic, and reducible quadratic inputs over
   `F_5`
@@ -40,6 +43,7 @@ Covered edge cases:
   reducible quadratic adversarial input
 - distinct-degree runs with a unit residual and a degree-8 product of linear,
   quadratic, and quintic irreducibles (Artin-Schreier `x^5 - x - 1` over `F_5`)
+- empty, square, rectangular, and multi-window `ZMod64` products
 -/
 
 namespace Hex
@@ -161,6 +165,26 @@ private def bigPoly : FpPoly 5 :=
 
 private theorem bigPoly_monic : DensePoly.Monic bigPoly := by
   rfl
+
+/-- Reachable equal-size witness case where replacing the original GCD input
+by its remainder changes the unnormalised factor by a unit.  The cached fast
+path must fall back here to preserve these exact coefficients and their order. -/
+private def unitDriftPoly : FpPoly 5 :=
+  { coeffs := #[(2 : ZMod64 5), 2, 0, 1, 1]
+    normalized := by
+      right
+      decide }
+
+private theorem unitDriftPoly_monic : DensePoly.Monic unitDriftPoly := by
+  rfl
+
+private def unitDriftFactor : FpPoly 5 := polyFive #[3, 4, 1]
+
+private def unitDriftWitness : FpPoly 5 := polyFive #[0, 2, 1]
+
+/-- `x³ % (x² + 4) = x`, with a strictly larger original witness, so this
+pins the cached executable-suffix branch rather than its equal-size fallback. -/
+private def cachedWitness : FpPoly 5 := polyFive #[0, 0, 0, 1]
 
 set_option maxRecDepth 2048 in
 #guard bigPoly == linearPoly * irreducibleQuad * irreducibleQuint
@@ -296,6 +320,22 @@ example : Berlekamp.rabinTest irreducibleQuad irreducibleQuad_monic = true :=
   some (1, [4, 1], [1, 1])
 #guard splitSummary (Berlekamp.kernelWitnessSplit? linearPoly FpPoly.X) = none
 #guard splitSummary (Berlekamp.kernelWitnessSplit? irreducibleQuad FpPoly.X) = none
+#guard splitSummary (Berlekamp.kernelWitnessSplit? unitDriftFactor unitDriftWitness) =
+  some (3, [1, 2], [3, 3])
+#guard splitSummary (Berlekamp.kernelWitnessSplit? reducibleQuad cachedWitness) =
+  some (1, [4, 1], [1, 1])
+#guard (Berlekamp.berlekampFactor linearPoly linearPoly_monic).factors.map coeffNats =
+  [[1, 1]]
+#guard (Berlekamp.berlekampFactor reducibleQuad reducibleQuad_monic).factors.map coeffNats =
+  [[4, 1], [1, 1]]
+#guard (Berlekamp.berlekampFactor unitDriftPoly unitDriftPoly_monic).factors.map coeffNats =
+  [[4, 2, 1], [1, 2], [3, 3]]
+#guard
+  let result := Berlekamp.berlekampFactor bigPoly bigPoly_monic
+  result.factors.map (fun factor => factor.degree?.getD 0) = [1, 5, 2]
+#guard
+  let result := Berlekamp.berlekampFactor bigPoly bigPoly_monic
+  result.product == bigPoly
 #guard
   match Berlekamp.kernelWitnessSplit? reducibleQuad FpPoly.X with
   | some split => split.factor * split.cofactor == reducibleQuad
@@ -343,6 +383,40 @@ example : Berlekamp.rabinTest irreducibleQuad irreducibleQuad_monic = true :=
   ([(2, [2, 0, 1])], [1])
 #guard ddfSummary (Berlekamp.distinctDegreeFactor unitPoly unitPoly_monic) =
   ([], [1])
+
+/-!
+Periodic-reduction Strassen-base conformance. The near-upper-bound residues make
+the low accumulator word carry into the high word. Inner dimensions around
+`4096` cover both implementations at the window dispatch and the exact flush;
+`12289` crosses three windows and leaves a genuine partial tail. Empty
+contraction, output-row, and output-column axes cover the generic shape contract.
+-/
+
+private instance boundsKernelPrime : ZMod64.Bounds 2147483647 := ⟨by decide, by decide⟩
+
+private def kernelCtx : Hex.BarrettCtx 2147483647 :=
+  Hex.BarrettCtx.ofModulus (by decide) (by decide)
+
+private def kernelMat (seed n m : Nat) : Matrix (ZMod64 2147483647) n m :=
+  Matrix.ofFn fun i j =>
+    let offset := (i.val * 257 + j.val * 17 + seed * 11) % 1024
+    ZMod64.ofNat 2147483647 (2147483646 - offset)
+
+private def kernelCheck (n m k : Nat) : Bool :=
+  let A := kernelMat 0 n m
+  let B := kernelMat 1 m k
+  Matrix.mulStrassen (strassenBarrett kernelCtx) A B ==
+    Matrix.mulStrassen (Matrix.strassenDefault (R := ZMod64 2147483647)) A B
+
+#guard kernelCheck 17 17 17
+#guard kernelCheck 1 1 1
+#guard kernelCheck 1 4095 1
+#guard kernelCheck 1 4096 1
+#guard kernelCheck 1 4097 1
+#guard kernelCheck 1 12289 1
+#guard kernelCheck 3 0 4
+#guard kernelCheck 0 7 4
+#guard kernelCheck 3 7 0
 
 end BerlekampConformance
 end Hex

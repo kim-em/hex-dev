@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Sequential oracle runner used by `.github/workflows/conformance.yml`.
+# Sequential oracle runner used by `.github/workflows/ci.yml`.
 #
 # Replaces the per-oracle matrix that previously fanned out into 11
-# ubuntu jobs. All oracle dependencies (FLINT, PARI, fpLLL, Conway
+# ubuntu jobs. All oracle dependencies (FLINT, PARI, Conway
 # tables) are installed once at the top of the workflow; this script
 # loops over every (lib, emit, oracle, fixture) tuple, cross-checks
 # the committed fixture against fresh emission, and pipes the
@@ -17,6 +17,22 @@
 # identifying which library failed.
 
 set -uo pipefail
+
+# Local development may intentionally run only the installed comparators, but
+# release CI must never turn a missing oracle dependency into a green `SKIP`.
+# Preflight the three dependency families before emitting any fixtures so a
+# broken installation fails early and unambiguously.
+if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
+  if ! python3 - <<'PY'
+import flint
+import cypari2
+import conway_polynomials
+PY
+  then
+    echo "FAIL: required oracle dependencies are unavailable" >&2
+    exit 1
+  fi
+fi
 
 # Tuples are encoded as `lib|emit_exe|oracle_script|fixture_path`.
 ORACLES=(
@@ -35,6 +51,7 @@ ORACLES=(
   "HexBareiss|hexbareiss_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexBareiss/bareiss.jsonl"
   "HexGramSchmidt|hexgramschmidt_emit_fixtures|scripts/oracle/gs_flint.py|conformance-fixtures/HexGramSchmidt/gram_schmidt.jsonl"
   "HexRealRoots|hexrealroots_emit_fixtures|scripts/oracle/realroots_flint.py|conformance-fixtures/HexRealRoots/realroots.jsonl"
+  "HexRCF|hexrcf_emit_fixtures|scripts/oracle/rcf_flint.py|conformance-fixtures/HexRCF/rcf.jsonl"
   "HexRoots|hexroots_emit_fixtures|scripts/oracle/roots_flint.py|conformance-fixtures/HexRoots/roots.jsonl"
   # python-flint + PARI backed
   "HexResultant|hexresultant_emit_fixtures|scripts/oracle/resultant_flint_pari.py|conformance-fixtures/HexResultant/resultant.jsonl"
@@ -71,7 +88,13 @@ for entry in "${ORACLES[@]}"; do
   oracle_args=()
   case "$oracle" in
     *conway_luebeck.py)
-      oracle_args=(--require-conway-polynomials)
+      if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
+        oracle_args=(--require-conway-polynomials)
+      else
+        # The committed Lübeck cache is always checked. Locally, add the
+        # package-backed leg when available and report a clean SKIP otherwise.
+        oracle_args=(--check-conway-polynomials)
+      fi
       ;;
   esac
 

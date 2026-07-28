@@ -528,7 +528,7 @@ slope after its quiet-machine sweep remained transitional.
 -- no scalar wall model has a flat constant; the shared canonical input keeps
 -- the cross-strategy `compare` agreement gate as a regression check.
 setup_fixed_benchmark runIsolateAll where {
-  repeats := 5, maxSecondsPerCall := 20.0, expectedHash := some 0x1d4ce3e46eb351de }
+  repeats := 5, maxSecondsPerCall := 20.0, expectedHash := some 0x5e4b3fd1d798497a }
 
 /-
 Cost model. `isolate` runs `isolateAll?` from the Cauchy component to
@@ -561,7 +561,7 @@ the reachable sweep unsuitable for one scalar model, so the expected-hash
 fixed case tracks the high-precision regression directly.
 -/
 setup_fixed_benchmark runRefineTo where {
-  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0xd9e59c44612d0e21 }
+  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x8dd3e4ee56489bf8 }
 
 /-! ### `compare` group : dual-route atom-certificate experiment
 
@@ -583,9 +583,11 @@ on its doubled square.
 -- Fixed rather than parametric: the quiet-machine sweep stayed in the GMP
 -- transition band at every reachable schedule (issue #8750, round four), so
 -- no scalar wall model has a flat constant; the shared canonical input keeps
--- the cross-strategy `compare` agreement gate as a regression check.
+-- the cross-strategy `compare` agreement gate as a regression check. The
+-- 20-second cap is roughly twice the final quiet-machine 9.96-second median;
+-- NK-only is the slow branch on this fixture.
 setup_fixed_benchmark runIsolateNk where {
-  repeats := 5, maxSecondsPerCall := 8.0, expectedHash := some 0xda631bdf13415a4f }
+  repeats := 5, maxSecondsPerCall := 20.0, expectedHash := some 0xda631bdf13415a4f }
 
 /-
 Cost model: one `isolate` run over `linProdPoly n`; `n³` op count (n

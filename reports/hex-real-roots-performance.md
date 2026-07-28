@@ -107,7 +107,7 @@ is why `isolate?` runs Descartes first.
 
 ### SPEC time budgets
 
-`SPEC/Libraries/hex-real-roots.md` §"Time budgets" states rough targets for
+`HexRealRoots/SPEC/hex-real-roots.md` §"Time budgets" states rough targets for
 well-separated roots. Single-rung measurements of `runIsolateWellSep`
 (`--param-floor N --param-ceiling N`), same host and commit:
 
@@ -135,7 +135,7 @@ commit, comfortably under the per-library 30 s soft warning and the repo-wide
 
 ## Comparator Ratios
 
-`SPEC/Libraries/hex-real-roots.md` names SageMath (`real_roots`), python-flint
+`HexRealRoots/SPEC/hex-real-roots.md` names SageMath (`real_roots`), python-flint
 (`fmpz_poly` real-root API), and FLINT/Arb in an oracle role. These are
 classified `informational` in `libraries.yml: HexRealRoots.phase4.comparators`
 under the single comparator entry

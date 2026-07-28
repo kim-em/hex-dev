@@ -6,13 +6,13 @@ Authors: Kim Morrison
 
 module
 
-public meta import HexBerlekamp.TacticCore
+public meta import HexBerlekamp.FactorPolyElab
 public meta import HexBerlekampZassenhaus.FactorProvider
 public meta import HexBerlekampZassenhaus.ChoosePrimeData
 public meta import HexBerlekampZassenhaus.CertReify
 public meta import HexPolyZMathlib.PolyParse
 public meta import HexBerlekampZassenhausMathlib.FactorTransport
-public import HexBerlekamp.TacticCore
+public import HexBerlekamp.FactorPolyElab
 public import HexBerlekampZassenhaus.FactorProvider
 public import HexBerlekampZassenhaus.ChoosePrimeData
 public import HexBerlekampZassenhaus.CertReify

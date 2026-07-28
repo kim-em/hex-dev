@@ -103,18 +103,15 @@ theorem DyadicRootIsolation.posDegree {p : ZPoly} (i : DyadicRootIsolation p) :
     rcases i.witness with hnk | hpellet
     · by_cases h : 1 < p.size
       · exact h
-      · have htaylor : ¬ 2 ≤ (taylor p i.square.center).size := by
-          rw [taylor_size]
-          omega
-        simp [nkWitness, nkWitnessCheck, htaylor] at hnk
+      · have hle : p.size ≤ 1 := by omega
+        rw [nkWitness, nkWitnessCheck_false hle] at hnk
+        contradiction
     · by_cases h : 1 < p.size
       · exact h
-      · have htaylor : ¬ 1 < (taylor p i.square.center).size := by
-          rw [taylor_size]
-          omega
+      · have hle : p.size ≤ 1 := by omega
         change witnessCheck p i.square 1 = true at hpellet
-        unfold witnessCheck at hpellet
-        simp [pelletAt, htaylor] at hpellet
+        rw [witnessCheck_false hle] at hpellet
+        contradiction
   have hpos : 0 < p.size := by omega
   rw [DensePoly.degree?_eq_some_of_pos_size p hpos]
   simp

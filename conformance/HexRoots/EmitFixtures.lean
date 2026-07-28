@@ -22,43 +22,14 @@ Per the SPEC design decision the operation is `isolateAll?` at target
 `32` rather than `isolate`: the oracle needs root *locations*, not the
 separation precision `isolate` forces.
 
-**Fixture set (deviation from the SPEC ci-tier, flagged deliberately).**
-`HexRoots/SPEC/hex-roots.md` § Conformance fixtures pins the ci-tier at
-"50 degree-20 polynomials with deterministic seed `0xC0FFEE`" and this
-record format at "centre as exact rational from `.toRat`". Neither is
-reachable, for two intrinsic reasons measured on this toolchain
-(v4.32.0-rc1), not tuning knobs:
-
-* *Runtime.* `isolateAll?` at target 32 costs ≈1 ms at degree 3,
-  ≈115 ms at degree 4, ≈1 s at degree 6, ≈16 s at degree 8 — roughly a
-  15× factor per two degrees, extrapolating to hours by degree 12 and
-  far past that at degree 20 (already over the library's own SPEC time
-  budget of "degree 10, prec 32: under 1 second"). Random draws are
-  *unreliable at every degree*, not merely slow at high degree: one
-  near-collision of two distinct roots forces refinement to the Mahler
-  separation depth. Among 50 degree-6 LCG draws one case ran >140 s;
-  among 50 degree-4 draws one ran >90 s, so a random tier cannot be
-  wallclock-capped without nondeterministically dropping cases.
-
-* *Centre size.* The exact Gaussian-dyadic Newton recentring does not
-  round the certified centre to the square's precision, so its
-  bit-length grows without bound during refinement. For a degree-4
-  cyclotomic (`Φ₅`) the certified atoms have `prec` 51/67 but centres
-  whose exact `.toRat` numerators run to 5 472 and 31 987 decimal
-  digits — a single case serialises to ≈300 KB and `Φ₇` (degree 6)
-  does not finish serialising. Emitting the SPEC's exact-rational centre
-  is therefore impractical for any irrational-root polynomial.
-
-The committed fixture instead uses a small **curated** set of
-polynomials with Gaussian-*rational* roots (drawn from the SPEC's
-core/local families). Newton reaches such roots exactly, so the
-certified centres stay compact (each case's `value` is ≈100–200 bytes)
-and the total emit runs in well under one second. The set still
-exercises the paths the oracle checks: real and complex simple roots
-(atoms) and real and complex `k = 2` multiple roots (clusters).
-Restoring the SPEC's degree-20 random tier needs an `isolateAll?`
-performance fix, a bound on the recentred centre bit-length, and a
-per-case cost cap first; see the PR discussion.
+**Fixture set.** The ci tier contains the SPEC's 50 degree-20 dense
+polynomials from the seed-`0xC0FFEE` LCG, plus the small curated rational and
+Gaussian-rational cases that exercise simple atoms and real/complex
+multiple-root clusters. The all-atoms local finisher makes fresh degree-20
+emission practical (the soft front end is deliberately size-gated above this
+tier); rounded Newton recentring keeps the exact rational centre representation compact.
+Every run regenerates the full deterministic set before python-flint checks the
+committed JSONL, so a kernel change cannot leave stale certificates unnoticed.
 
 Each `result.value` serialises the isolation outcome. On success it is
 a JSON array with one object per certification result, canonically sorted by
@@ -93,12 +64,27 @@ private structure Case where
   id     : String
   coeffs : List Int
 
-/-- The curated ci-tier fixtures. Every polynomial has Gaussian-rational
-    roots, which the exact Newton recentring reaches exactly, so the
-    certified centres stay compact (see the module docstring for why the
-    SPEC's irrational-root and degree-20 random tiers are not usable).
-    The set covers real and complex simple roots (atoms) and `k = 2`
-    multiple roots (clusters), real and complex. -/
+/-- One step of the deterministic seed-`0xC0FFEE` coefficient stream. -/
+private def lcgNext (s : UInt64) : UInt64 :=
+  6364136223846793005 * s + 1442695040888963407
+
+/-- Generate `count` consecutive dense degree-`degree` cases from one LCG
+state, forcing a zero leading draw to one. -/
+private def randomCases (degree count : Nat) (seed : UInt64) : List Case := Id.run do
+  let mut s := seed
+  let mut out : Array Case := #[]
+  for i in [0:count] do
+    let mut coeffs : Array Int := #[]
+    for _ in [0:degree + 1] do
+      s := lcgNext s
+      coeffs := coeffs.push (Int.ofNat (s.toNat % 21) - 10)
+    if coeffs[degree]! = 0 then
+      coeffs := coeffs.set! degree 1
+    out := out.push { id := s!"random/deg{degree}_{i}", coeffs := coeffs.toList }
+  return out.toList
+
+/-- Curated atom/cluster cases followed by the SPEC's full seeded degree-20
+ci tier. -/
 private def cases : List Case := [
   -- Real simple roots.
   { id := "rational/deg3", coeffs := [6, -7, 0, 1] },            -- (x−1)(x−2)(x+3)
@@ -110,23 +96,8 @@ private def cases : List Case := [
   -- Real multiple root: the k = 2 cluster around 1 must not atomize.
   { id := "cluster/xm1sq_xm4", coeffs := [-4, 9, -6, 1] },        -- (x−1)²(x−4)
   -- Complex multiple roots: two k = 2 clusters at ±i.
-  { id := "cluster/x2p1sq", coeffs := [1, 0, 2, 0, 1] },          -- (x²+1)²
-  -- Seeded pseudo-random cases (LCG 6364136223846793005·s + 1442695040888963407
-  -- mod 2^64 from seed 0xC0FFEE, coefficients (s mod 21) − 10, leading
-  -- coefficient forced nonzero), materialised as literals so the driver
-  -- stays deterministic and reviewable. Degrees 6-12 keep the fresh
-  -- emission that CI performs within budget (~6 s total measured); the
-  -- SPEC's full 50-case degree-20 tier at ~15 s per case is tracked as a
-  -- follow-up.
-  { id := "random/deg6_0", coeffs := [-7, -2, -3, -5, 3, 1, -7] },
-  { id := "random/deg6_1", coeffs := [-3, -4, 0, 9, 4, -4, -8] },
-  { id := "random/deg8_0", coeffs := [6, -9, 7, 2, 0, 4, -9, 4, 7] },
-  { id := "random/deg8_1", coeffs := [9, 7, 9, -5, 7, -10, 10, 9, -1] },
-  { id := "random/deg10_0", coeffs := [-7, 8, -2, 9, 8, 3, -8, 6, 5, -9, -5] },
-  { id := "random/deg10_1", coeffs := [8, -10, -9, 5, 2, -3, -1, 6, 10, 8, -3] },
-  { id := "random/deg12_0", coeffs := [9, 8, 0, 8, 4, -7, 10, -9, -2, 0, -10, -5, -2] },
-  { id := "random/deg12_1", coeffs := [-7, 4, -4, 4, -6, 1, 6, 3, 3, -3, -10, -9, -3] }
-]
+  { id := "cluster/x2p1sq", coeffs := [1, 0, 2, 0, 1] }           -- (x²+1)²
+] ++ randomCases 20 50 0xC0FFEE
 
 /-! ## Result serialisation. -/
 

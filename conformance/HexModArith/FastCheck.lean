@@ -12,21 +12,23 @@ public import HexModArith.Basic
 public section
 
 /-!
-Executable `#guard` / `#eval` checks for the default `ZMod64` multiplication path.
+Executable `#guard` / `#eval` checks for the default `ZMod64` extern paths.
 
-Because `Hex.ZMod64.mul` is extern-backed, these checks live in a separate
-module so `#eval` runs against the compiled native implementation from
-`HexModArith.Basic`.
+Because `Hex.ZMod64.mul`, `pow`, and `inv` are extern-backed, these checks live
+in a separate module so `#eval` runs against the compiled native
+implementations from `HexModArith.Basic`.
 -/
 namespace Hex
 namespace ZMod64
 
 instance : Bounds (2 ^ 31 - 1) := ⟨by decide, by decide⟩
 instance : Bounds 7 := ⟨by decide, by decide⟩
+instance : Bounds 15 := ⟨by decide, by decide⟩
 
 private def mersenneA : ZMod64 (2 ^ 31 - 1) := ofNat _ (2 ^ 31 - 2)
 private def mersenneB : ZMod64 (2 ^ 31 - 1) := ofNat _ (2 ^ 31 - 3)
 private def smallA : ZMod64 7 := ofNat _ 3
+private def nonCoprimeA : ZMod64 15 := ofNat _ 6
 
 /-- info: 2 -/
 #guard_msgs in #eval (mul mersenneA mersenneB).toNat
@@ -40,10 +42,14 @@ private def smallA : ZMod64 7 := ofNat _ 3
 /-- info: 1 -/
 #guard_msgs in #eval (mul (inv smallA) smallA).toNat
 
+/-- info: 13 -/
+#guard_msgs in #eval (inv nonCoprimeA).toNat
+
 #guard (mul mersenneA mersenneB).toNat = 2
 #guard (pow smallA 5).toNat = 5
 #guard (inv smallA).toNat = 5
 #guard (mul (inv smallA) smallA).toNat = 1
+#guard (inv nonCoprimeA).toNat = 13
 
 end ZMod64
 end Hex

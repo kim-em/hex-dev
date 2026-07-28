@@ -156,6 +156,11 @@ toolchain `leanprover/lean4:v4.32.0-rc1` and AFP release
 `afp-2026-05-29`. The corpus was
 `bench/corpus/hexbz-factor-corpus.jsonl`, SHA-256
 `0ef7574769d9161d8e3bda3b8c193b05191d75b4b473279520db4513e533b2df`.
+That artifact pins the historical 391-row corpus.  The current corpus has 392
+rows and SHA-256
+`619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`
+after appending the certificate-boundary `quartic_a4` case; the historical
+timings were not recomputed for that added row.
 The declared cap was `--cutoff 10` seconds per system/instance; the sweep used
 median-of-5 for first calls under 1s and a single call otherwise. Its
 `cross_check` block has `ok: true` and an empty `mismatches` list, so all
@@ -1324,9 +1329,10 @@ record on each adversarial polynomial.
 - Phase 4 is not complete: every scientific verdict recorded in this
   report remains inconclusive, including the precision/local-factor
   setup surface added by the issue #3527 targeted run.
-- The Phase 4 dependency gate is still closed:
-  `python3 scripts/status.py HexBerlekampZassenhaus` reports blockers
-  `HexBerlekamp.done_through >= 4` and `HexLLL.done_through >= 4`.
+- The upstream Phase 4 dependency gate is open, but this library has not yet
+  completed its Phase 1--3 API, independent-review, and conformance audits; its
+  phase counter therefore remains at zero while the performance evidence is
+  refreshed against the current public cascade.
 - The public and fast split-family schedules now expose verdict-eligible
   rows beyond the previous `n = 1..4` smoke ladder, but they still do
   not yield a consistent BHKS scaling verdict. An exploratory run with

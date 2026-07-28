@@ -178,6 +178,29 @@ theorem sign_dyadicSign (d : Dyadic) :
         rw [show ((1 : Int) : ℝ) = 1 by norm_num,
           sign_pos (mul_pos (by exact_mod_cast hpos) h2), sign_pos (by norm_num)]
 
+/-- Exact dyadic Horner evaluation has zero sign exactly at a real root. -/
+theorem evalSign_zero_iff (p : Hex.ZPoly) (x : Dyadic) :
+    Hex.dyadicSign (p.evalDyadic x) = 0 ↔
+      (toPolyℝ p).IsRoot (Dyadic.toReal x) := by
+  have hs : SignType.sign ((Hex.dyadicSign (p.evalDyadic x) : ℝ)) =
+      SignType.sign (Dyadic.toReal (p.evalDyadic x)) := sign_dyadicSign _
+  constructor
+  · intro h
+    rw [h] at hs
+    simp only [Int.cast_zero, sign_zero] at hs
+    have h0 : Dyadic.toReal (p.evalDyadic x) = 0 := sign_eq_zero_iff.mp hs.symm
+    rw [toReal_evalDyadic] at h0
+    exact h0
+  · intro h
+    have h0 : Dyadic.toReal (p.evalDyadic x) = 0 := by
+      rw [toReal_evalDyadic]
+      exact h
+    rw [h0] at hs
+    simp only [sign_zero] at hs
+    have hz : ((Hex.dyadicSign (p.evalDyadic x) : Int) : ℝ) = 0 :=
+      sign_eq_zero_iff.mp hs
+    exact_mod_cast hz
+
 /-- Filtering the real casts by nonzero commutes with filtering the integers by
 nonzero: casting to `ℝ` neither creates nor destroys zero entries. -/
 private theorem filter_map_ne_zero (l : List Int) :
@@ -298,6 +321,12 @@ theorem toPolyℝ_scale (c : Int) (p : Hex.ZPoly) :
     Polynomial.coeff_C_mul, coeff_toPolyℝ]
   push_cast; ring
 
+/-- The real cast is additive. -/
+theorem toPolyℝ_add (p q : Hex.ZPoly) :
+    toPolyℝ (p + q) = toPolyℝ p + toPolyℝ q := by
+  show (HexPolyMathlib.toPolynomial (p + q)).map (Int.castRingHom ℝ) = _
+  rw [HexPolyMathlib.toPolynomial_add, Polynomial.map_add]
+
 /-- The real cast of an `x^k` shift. -/
 theorem toPolyℝ_shift (k : Nat) (p : Hex.ZPoly) :
     toPolyℝ (Hex.DensePoly.shift k p) = Polynomial.X ^ k * toPolyℝ p := by
@@ -408,6 +437,12 @@ theorem toPolyℝ_spem (f g : Hex.ZPoly) (hg : g.leadingCoeff ≠ 0)
 theorem toPolyℝ_neg (p : Hex.ZPoly) : toPolyℝ (-p) = -(toPolyℝ p) := by
   show (HexPolyMathlib.toPolynomial (-p)).map (Int.castRingHom ℝ) = _
   rw [HexPolyMathlib.toPolynomial_neg, Polynomial.map_neg]
+
+/-- The real cast is multiplicative. -/
+theorem toPolyℝ_mul (p q : Hex.ZPoly) :
+    toPolyℝ (p * q) = toPolyℝ p * toPolyℝ q := by
+  show (HexPolyZMathlib.toPolynomial (p * q)).map (Int.castRingHom ℝ) = _
+  rw [HexPolyZMathlib.toPolynomial_mul, Polynomial.map_mul]
 
 /-- The real cast of the zero polynomial. -/
 @[simp] theorem toPolyℝ_zero : toPolyℝ 0 = 0 := by
@@ -954,7 +989,7 @@ private theorem chainList_last_unit :
 `C c₀ · a = Q · b − C k · c'` (with `k ≠ 0`) transports `IsCoprime b c'` *back* to
 `IsCoprime a b`: solving the relation for `c'` and substituting into a Bezout
 combination for `(b, c')` yields one for `(a, b)`. -/
-private theorem coprime_step_rev {a b c' : Polynomial ℝ} {c₀ k : ℝ} {Q : Polynomial ℝ}
+theorem coprime_step_rev {a b c' : Polynomial ℝ} {c₀ k : ℝ} {Q : Polynomial ℝ}
     (hk : k ≠ 0)
     (hrel : Polynomial.C c₀ * a = Q * b - Polynomial.C k * c')
     (h : IsCoprime b c') : IsCoprime a b := by
@@ -1075,7 +1110,7 @@ private theorem eventually_flank_of_deriv_pos {f : Polynomial ℝ} {r : ℝ}
 `s₀' = C γ · s₁` with `γ > 0` (the executable seeds: the primitive parts of
 `p` and `p'`), then `s₀ · s₁` is negative just left of `r` and positive just
 right: its derivative at `r` is `γ · s₁(r)² > 0`. -/
-private theorem flank_of_key {s₀ s₁ : Polynomial ℝ} {γ : ℝ} (hγ : 0 < γ)
+theorem flank_of_key {s₀ s₁ : Polynomial ℝ} {γ : ℝ} (hγ : 0 < γ)
     (hkey : Polynomial.derivative s₀ = Polynomial.C γ * s₁)
     {r : ℝ} (h0 : s₀.eval r = 0) (h1 : s₁.eval r ≠ 0) :
     (∀ᶠ x in nhdsWithin r (Set.Iio r), (s₀ * s₁).eval x < 0) ∧
@@ -1090,7 +1125,7 @@ private theorem flank_of_key {s₀ s₁ : Polynomial ℝ} {γ : ℝ} (hγ : 0 < 
 /-! ### Assembly: the executable chain is a Sturm chain -/
 
 /-- Coprime polynomials never vanish together. -/
-private theorem eval_ne_zero_of_isCoprime {a b : Polynomial ℝ} (h : IsCoprime a b)
+theorem eval_ne_zero_of_isCoprime {a b : Polynomial ℝ} (h : IsCoprime a b)
     {x : ℝ} (ha : a.eval x = 0) : b.eval x ≠ 0 := by
   obtain ⟨u, v, huv⟩ := h
   intro hb
@@ -1365,11 +1400,45 @@ private theorem squarefree_toPolyℝ_primitivePart (p : Hex.ZPoly) (hp0 : p ≠ 
       by rw [toPolyℝ_eq_C_content_mul_primitivePart p]; ring⟩ hsep.squarefree
 
 /-- Dyadic order transfers to the real values. -/
-private theorem toReal_lt_toReal {a b : Dyadic} (h : a < b) :
+theorem toReal_lt_toReal {a b : Dyadic} (h : a < b) :
     Dyadic.toReal a < Dyadic.toReal b := by
   have h2 : a.toRat < b.toRat := Dyadic.toRat_lt_toRat_iff.mpr h
   unfold Dyadic.toReal
   exact_mod_cast h2
+
+/-- Nonstrict dyadic order transfers to the real values. -/
+theorem toReal_le_toReal {a b : Dyadic} (h : a ≤ b) :
+    Dyadic.toReal a ≤ Dyadic.toReal b := by
+  have h2 : a.toRat ≤ b.toRat := Dyadic.toRat_le_toRat_iff.mpr h
+  unfold Dyadic.toReal
+  exact_mod_cast h2
+
+/-- Dyadic order coincides with the order of the real values. -/
+theorem toReal_lt_toReal_iff {a b : Dyadic} :
+    Dyadic.toReal a < Dyadic.toReal b ↔ a < b := by
+  unfold Dyadic.toReal
+  rw [Rat.cast_lt, Dyadic.toRat_lt_toRat_iff]
+
+/-- The real value of an interval's exact dyadic midpoint. -/
+theorem toReal_midpoint (I : Hex.DyadicInterval) :
+    Dyadic.toReal I.midpoint =
+      (Dyadic.toReal I.lower + Dyadic.toReal I.upper) / 2 := by
+  unfold Hex.DyadicInterval.midpoint
+  rw [toReal_shiftRight, toReal_add]
+  norm_num
+  ring
+
+/-- The midpoint is strictly above the lower endpoint. -/
+theorem lower_lt_midpoint (I : Hex.DyadicInterval) : I.lower < I.midpoint := by
+  rw [← toReal_lt_toReal_iff, toReal_midpoint]
+  have := toReal_lt_toReal I.lt
+  linarith
+
+/-- The midpoint is strictly below the upper endpoint. -/
+theorem midpoint_lt_upper (I : Hex.DyadicInterval) : I.midpoint < I.upper := by
+  rw [← toReal_lt_toReal_iff, toReal_midpoint]
+  have := toReal_lt_toReal I.lt
+  linarith
 
 /-- **Sturm count correspondence.** For positive-degree, rationally squarefree
 `p`, the executable `Hex.sturmCount p I` equals the number of real roots of
@@ -1408,7 +1477,7 @@ private theorem sign_intCast_sign (n : Int) :
 
 /-- The executable `+∞` variation count matches the abstract one: both read
 the signs of the leading coefficients. -/
-private theorem sturmVarPosInf_eq (chain : Array Hex.ZPoly) :
+theorem sturmVarPosInf_eq (chain : Array Hex.ZPoly) :
     Hex.sturmVarPosInf chain = Sturm.sturmVarPosInf (chain.toList.map toPolyℝ) := by
   rw [Hex.sturmVarPosInf, signVar_eq, Sturm.sturmVarPosInf]
   apply Sturm.signVariations_congr
@@ -1421,7 +1490,7 @@ private theorem sturmVarPosInf_eq (chain : Array Hex.ZPoly) :
 
 /-- The executable `−∞` variation count matches the abstract one: both read
 `sign(lc) · (−1)^degree`. -/
-private theorem sturmVarNegInf_eq (chain : Array Hex.ZPoly) :
+theorem sturmVarNegInf_eq (chain : Array Hex.ZPoly) :
     Hex.sturmVarNegInf chain = Sturm.sturmVarNegInf (chain.toList.map toPolyℝ) := by
   rw [Hex.sturmVarNegInf, signVar_eq, Sturm.sturmVarNegInf]
   apply Sturm.signVariations_congr

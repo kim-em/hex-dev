@@ -697,8 +697,8 @@ theorem exists_mem_hotPathCandidates_of_prime
 /--
 Coerce an admissible nonzero modular image to its monic representative by
 dividing by its leading coefficient.  `monicModularImage f = scale c⁻¹ f`
-where `c = leadingCoeff f`; the zero branch is a placeholder used to keep
-the function total.
+where `c = leadingCoeff f`; the zero image maps to zero so the operation is
+total.
 -/
 @[expose]
 def monicModularImage {p : Nat} [ZMod64.Bounds p] (f : FpPoly p) : FpPoly p :=

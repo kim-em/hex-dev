@@ -821,11 +821,11 @@ no admissible prime is available or the subset budget is exceeded. -/
 def factorClassical (f : ZPoly) : Option Factorization :=
   factorClassicalWithBound f (ZPoly.defaultFactorCoeffBound f)
 
-/-- Per-`factorize` diagnostic trace, consumed by the merge-blocking performance gate.
-`tier` records which path produced the answer (`constant` / `quadratic` /
-`classical` / `noPrime`); `declined = true` marks an untrustworthy result (no
-admissible prime, or subset-budget exhaustion) that the dispatcher routes onward.
-As the lattice tier and dispatcher land, `tier`/`latticeDim` gain those cases. -/
+/-- Per-`factorize` diagnostic trace, consumed by conformance and performance
+gates. `tier` records the path that produced the accepted answer (`constant`,
+`quadratic`, `classical`, `lattice`, or `trial`). `declined = true` records that
+the classical tier did not answer before dispatch continued; the final result
+is still product-checked, and the trial tier is the total backstop. -/
 structure FactorTrace where
   tier : String
   prime : Nat

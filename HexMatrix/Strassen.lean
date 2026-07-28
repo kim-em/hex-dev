@@ -8,6 +8,7 @@ module
 
 public import HexMatrix.Block
 public import HexMatrix.Pad
+public import HexMatrix.Region
 public import HexMatrix.Winograd
 
 public section
@@ -221,6 +222,427 @@ def mulStrassenView {R : Type u} [Mul R] [Add R] [Sub R] [OfNat R 0]
   termination_by n + m + k
   decreasing_by all_goals (simp_wf; omega)
 
+/-! ### Two-buffer square schedule -/
+
+/-- Transport both matrix dimensions along equalities. -/
+@[expose]
+def castDims {R : Type u} {n m n' m' : Nat} (hn : n = n') (hm : m = m')
+    (A : Matrix R n m) : Matrix R n' m' :=
+  hn ▸ hm ▸ A
+
+/-- `castDims hn hm` is injective. -/
+private theorem castDims_inj {R : Type u} {n m n' m' : Nat} (hn : n = n') (hm : m = m')
+    {A B : Matrix R n m} (h : castDims hn hm A = castDims hn hm B) : A = B := by
+  subst n'
+  subst m'
+  exact h
+
+/-- Transporting a materialized region changes only its index types. -/
+private theorem castDims_toMatrix {R : Type u} {n m n' m' N M : Nat}
+    (hn : n = n') (hm : m = m') (D : Region N M n m) (D' : Region N M n' m')
+    (hr : D.r0 = D'.r0) (hc : D.c0 = D'.c0) (A : Matrix R N M) :
+    castDims hn hm (D.toMatrix A) = D'.toMatrix A := by
+  subst n'
+  subst m'
+  have hD : D = D' := by
+    cases D with
+    | mk dr dc drl dcl =>
+      cases D' with
+      | mk er ec erl ecl =>
+        simp only at hr hc
+        subst er
+        subst ec
+        rfl
+  subst D'
+  rfl
+
+/-- Cropping a matrix to its full dimensions and transporting the result is the
+original matrix. -/
+private theorem castDims_crop {R : Type u} {n h : Nat} (hn : n = h + h)
+    (A : Matrix R (h + h) (h + h)) :
+    castDims hn hn
+      (takeCols (takeRows A n (by omega)) n (by omega)) = A := by
+  subst n
+  apply Matrix.ext_getElem
+  intro i j
+  simp only [castDims, getElem_takeCols, getElem_takeRows]
+
+/-- Write a square Strassen result into a backing-free region of one owned output
+matrix.  Even recursive nodes use the Boyer–Dumas–Pernet–Zhou schedule: `X` and
+`Y` are the only half-size matrix buffers, while products and `Uᵢ` values are
+written directly into the four output quadrants.  Base and odd nodes retain the
+reference view recursion as a shape-safe fallback. -/
+@[expose]
+def mulStrassenInto {R : Type u} [Mul R] [Add R] [Sub R] [OfNat R 0]
+    (cfg : StrassenConfig R) {n N M : Nat} (A B : Submatrix R n n)
+    (C : Matrix R N M) (D : Region N M n n) : Matrix R N M :=
+  -- Keep the six repeated disjuncts: this is syntactically `mulStrassenView`'s
+  -- `n = m = k` guard, which makes the equality proof reduce without algebra.
+  if n ≤ 1 ∨ n ≤ 1 ∨ n ≤ 1 ∨ n < cfg.cutoff ∨ n < cfg.cutoff ∨ n < cfg.cutoff then
+    let P := cfg.baseMul A.toMatrix B.toMatrix
+    D.overwrite C fun i j => P[(i, j)]
+  else
+    let h := (n + 1) / 2
+    if heven : n = h + h then
+      let Ap := A.pad (h + h) (h + h) (by omega) (by omega)
+      let Bp := B.pad (h + h) (h + h) (by omega) (by omega)
+      let A₁₁ := Ap.toBlocks₁₁
+      let A₁₂ := Ap.toBlocks₁₂
+      let A₂₁ := Ap.toBlocks₂₁
+      let A₂₂ := Ap.toBlocks₂₂
+      let B₁₁ := Bp.toBlocks₁₁
+      let B₁₂ := Bp.toBlocks₁₂
+      let B₂₁ := Bp.toBlocks₂₁
+      let B₂₂ := Bp.toBlocks₂₂
+      let Dp : Region N M (h + h) (h + h) :=
+        { r0 := D.r0, c0 := D.c0
+          rows_le := by have := D.rows_le; omega
+          cols_le := by have := D.cols_le; omega }
+      let C₁₁ := Dp.toBlocks₁₁
+      let C₁₂ := Dp.toBlocks₁₂
+      let C₂₁ := Dp.toBlocks₂₁
+      let C₂₂ := Dp.toBlocks₂₂
+      have h₁₁₁₂ : Region.Disjoint C₁₁ C₁₂ := Region.disjoint₁₁₁₂ Dp
+      have h₁₁₂₁ : Region.Disjoint C₁₁ C₂₁ := Region.disjoint₁₁₂₁ Dp
+      have h₁₁₂₂ : Region.Disjoint C₁₁ C₂₂ := Region.disjoint₁₁₂₂ Dp
+      have h₁₂₂₁ : Region.Disjoint C₁₂ C₂₁ := Region.disjoint₁₂₂₁ Dp
+      have h₁₂₂₂ : Region.Disjoint C₁₂ C₂₂ := Region.disjoint₁₂₂₂ Dp
+      have h₂₁₂₂ : Region.Disjoint C₂₁ C₂₂ := Region.disjoint₂₁₂₂ Dp
+      -- Table 1 of BDPZ (ISSAC 2009), with products accumulated in `C`.
+      let X : Matrix R h h := Matrix.ofFn fun i j => A₁₁.entry i j - A₂₁.entry i j
+      let Y : Matrix R h h := Matrix.ofFn fun i j => B₂₂.entry i j - B₁₂.entry i j
+      let C := mulStrassenInto cfg (Submatrix.ofMatrix X) (Submatrix.ofMatrix Y) C C₂₁
+      let X := Matrix.ofFn fun i j => A₂₁.entry i j + A₂₂.entry i j
+      let Y := Matrix.ofFn fun i j => B₁₂.entry i j - B₁₁.entry i j
+      let C := mulStrassenInto cfg (Submatrix.ofMatrix X) (Submatrix.ofMatrix Y) C C₂₂
+      let X := (Region.full h h).accumulateWith X (fun i j => A₁₁.entry i j)
+        (fun x a => x - a)
+      let Y := (Region.full h h).accumulateWith Y (fun i j => B₂₂.entry i j)
+        (fun y b => b - y)
+      let C := mulStrassenInto cfg (Submatrix.ofMatrix X) (Submatrix.ofMatrix Y) C C₁₂
+      let X := (Region.full h h).accumulateWith X (fun i j => A₁₂.entry i j)
+        (fun x a => a - x)
+      let C := mulStrassenInto cfg (Submatrix.ofMatrix X) B₂₂ C C₁₁
+      let X := mulStrassenInto cfg A₁₁ B₁₁ X (Region.full h h)
+      let C := C₁₂.accumulateExternal C X (fun p₆ p₁ => p₁ + p₆)
+      let C := C₂₁.accumulate C₁₂ (Region.disjoint_comm.mp h₁₂₂₁) C
+        (fun p₇ u₂ => u₂ + p₇)
+      let C := C₁₂.accumulate C₂₂ h₁₂₂₂ C (fun u₂ p₅ => u₂ + p₅)
+      let C := C₂₂.accumulate C₂₁ (Region.disjoint_comm.mp h₂₁₂₂) C
+        (fun p₅ u₃ => u₃ + p₅)
+      let C := C₁₂.accumulate C₁₁ (Region.disjoint_comm.mp h₁₁₁₂) C
+        (fun u₄ p₃ => u₄ + p₃)
+      let Y := (Region.full h h).accumulateWith Y (fun i j => B₂₁.entry i j)
+        (fun y b => y - b)
+      let C := mulStrassenInto cfg A₂₂ (Submatrix.ofMatrix Y) C C₁₁
+      let C := C₂₁.accumulate C₁₁ (Region.disjoint_comm.mp h₁₁₂₁) C
+        (fun u₃ p₄ => u₃ - p₄)
+      let C := mulStrassenInto cfg A₁₂ B₂₁ C C₁₁
+      C₁₁.accumulateExternal C X (fun p₂ p₁ => p₁ + p₂)
+    else
+      let P := mulStrassenView cfg A B
+      D.overwrite C fun i j => P[(i, j)]
+  termination_by n
+  decreasing_by all_goals (simp_wf; omega)
+
+set_option maxHeartbeats 1000000 in
+/-- The region writer returns the reference result in its destination and
+preserves every disjoint region. -/
+theorem mulStrassenInto_spec {R : Type u} [Mul R] [Add R] [Sub R] [OfNat R 0]
+    (cfg : StrassenConfig R) {n N M : Nat} (A B : Submatrix R n n)
+    (C : Matrix R N M) (D : Region N M n n) :
+    Region.toMatrix D (mulStrassenInto cfg A B C D) = mulStrassenView cfg A B ∧
+      ∀ {rows cols} (E : Region N M rows cols), Region.Disjoint D E →
+        Region.toMatrix E (mulStrassenInto cfg A B C D) = Region.toMatrix E C := by
+  fun_induction mulStrassenInto cfg A B C D with
+  | case1 n N M A B C D hbase P =>
+    constructor
+    · apply Matrix.ext_getElem
+      intro i j
+      rw [Region.getElem_toMatrix, Region.get_overwrite]
+      rw [mulStrassenView]
+      simp only [hbase, ↓reduceIte]
+      rw [getElem_pair_eq_nested]
+    · intro rows cols E hDE
+      apply Matrix.ext_getElem
+      intro i j
+      rw [Region.getElem_toMatrix, Region.getElem_toMatrix,
+        Region.get_overwrite_disjoint D E hDE]
+  | case2 n N M A B C0 D hbase h heven Ap Bp
+      A₁₁ A₁₂ A₂₁ A₂₂ B₁₁ B₁₂ B₂₁ B₂₂ Dp C₁₁ C₁₂ C₂₁ C₂₂
+      h₁₁₁₂ h₁₁₂₁ h₁₁₂₂ h₁₂₂₁ h₁₂₂₂ h₂₁₂₂
+      X4 Y3 C11 X3 Y2 C10 X2 Y1 C9 X1 C8 X C7 C6 C5 C4 C3 Y C2 C1 C
+      hP7 _ hP5 _ hP6 _ hP3 hP1 _ _ hP4 _ hP2 =>
+    have eS2 : Submatrix.ofMatrix X2 = (A₂₁.add A₂₂).sub A₁₁ := by
+      rw [Submatrix.sub]
+      congr 1
+      apply Matrix.ext_getElem
+      intro i j
+      rw [← getElem_pair_eq_nested]
+      rw [← Region.get_full X2 i j]
+      rw [Region.get_accumulateWith, Region.get_full, Matrix.getElem_ofFn]
+      simp only [X3, Matrix.getElem_ofFn, Submatrix.entry_ofMatrix, Submatrix.add]
+      rw [getElem_pair_eq_nested, Matrix.getElem_ofFn]
+    have eT2 : Submatrix.ofMatrix Y1 = B₂₂.sub (B₁₂.sub B₁₁) := by
+      rw [Submatrix.sub]
+      congr 1
+      apply Matrix.ext_getElem
+      intro i j
+      rw [← getElem_pair_eq_nested]
+      rw [← Region.get_full Y1 i j]
+      rw [Region.get_accumulateWith, Region.get_full, Matrix.getElem_ofFn]
+      simp only [Y2, Matrix.getElem_ofFn, Submatrix.entry_ofMatrix, Submatrix.sub]
+      rw [getElem_pair_eq_nested, Matrix.getElem_ofFn]
+    have eS4 : Submatrix.ofMatrix X1 = A₁₂.sub ((A₂₁.add A₂₂).sub A₁₁) := by
+      rw [Submatrix.sub]
+      congr 1
+      apply Matrix.ext_getElem
+      intro i j
+      rw [← getElem_pair_eq_nested]
+      rw [← Region.get_full X1 i j]
+      rw [Region.get_accumulateWith, Matrix.getElem_ofFn]
+      rw [Region.get_of_toMatrix_eq (Region.full h h) X2
+        (Matrix.ofFn fun i j => (A₂₁.entry i j + A₂₂.entry i j) - A₁₁.entry i j)]
+      · simp only [Matrix.getElem_ofFn, Submatrix.entry_ofMatrix, Submatrix.sub,
+          Submatrix.add]
+        rw [getElem_pair_eq_nested, Matrix.getElem_ofFn]
+      · apply Matrix.ext_getElem
+        intro i j
+        rw [Region.getElem_toMatrix, Region.get_accumulateWith, Region.get_full]
+        simp only [X3]
+        rw [getElem_pair_eq_nested, Matrix.getElem_ofFn]
+        rw [Matrix.getElem_ofFn]
+    have eT4 : Submatrix.ofMatrix Y =
+        (B₂₂.sub (B₁₂.sub B₁₁)).sub B₂₁ := by
+      rw [Submatrix.sub]
+      congr 1
+      apply Matrix.ext_getElem
+      intro i j
+      rw [← getElem_pair_eq_nested]
+      rw [← Region.get_full Y i j]
+      rw [Region.get_accumulateWith, Matrix.getElem_ofFn]
+      rw [Region.get_of_toMatrix_eq (Region.full h h) Y1
+        (Matrix.ofFn fun i j => B₂₂.entry i j -
+          (B₁₂.entry i j - B₁₁.entry i j))]
+      · simp only [Matrix.getElem_ofFn, Submatrix.entry_ofMatrix, Submatrix.sub]
+        rw [getElem_pair_eq_nested, Matrix.getElem_ofFn]
+      · apply Matrix.ext_getElem
+        intro i j
+        rw [Region.getElem_toMatrix, Region.get_accumulateWith, Region.get_full]
+        simp only [Y2]
+        rw [getElem_pair_eq_nested, Matrix.getElem_ofFn]
+        rw [Matrix.getElem_ofFn]
+    have eS3 : Submatrix.ofMatrix X4 = A₁₁.sub A₂₁ := by rfl
+    have eT3 : Submatrix.ofMatrix Y3 = B₂₂.sub B₁₂ := by rfl
+    have eS1 : Submatrix.ofMatrix X3 = A₂₁.add A₂₂ := by rfl
+    have eT1 : Submatrix.ofMatrix Y2 = B₁₂.sub B₁₁ := by rfl
+    let P1 := mulStrassenView cfg A₁₁ B₁₁
+    let P2 := mulStrassenView cfg A₁₂ B₂₁
+    let P3 := mulStrassenView cfg (A₁₂.sub ((A₂₁.add A₂₂).sub A₁₁)) B₂₂
+    let P4 := mulStrassenView cfg A₂₂
+      ((B₂₂.sub (B₁₂.sub B₁₁)).sub B₂₁)
+    let P5 := mulStrassenView cfg (A₂₁.add A₂₂) (B₁₂.sub B₁₁)
+    let P6 := mulStrassenView cfg ((A₂₁.add A₂₂).sub A₁₁)
+      (B₂₂.sub (B₁₂.sub B₁₁))
+    let P7 := mulStrassenView cfg (A₁₁.sub A₂₁) (B₂₂.sub B₁₂)
+    have gP7 (i j : Fin h) : C₂₁.get C11 i j = P7[(i, j)] :=
+      Region.get_of_toMatrix_eq C₂₁ C11 _ (by simpa only [eS3, eT3, C11] using hP7.1) i j
+    have gP5 (i j : Fin h) : C₂₂.get C10 i j = P5[(i, j)] :=
+      Region.get_of_toMatrix_eq C₂₂ C10 _ (by simpa only [eS1, eT1, C10] using hP5.1) i j
+    have gP6 (i j : Fin h) : C₁₂.get C9 i j = P6[(i, j)] :=
+      Region.get_of_toMatrix_eq C₁₂ C9 _ (by simpa only [eS2, eT2, C9] using hP6.1) i j
+    have gP3 (i j : Fin h) : C₁₁.get C8 i j = P3[(i, j)] :=
+      Region.get_of_toMatrix_eq C₁₁ C8 _ (by simpa only [eS4, C8] using hP3.1) i j
+    have gP1 (i j : Fin h) : X[(i, j)] = P1[(i, j)] := by
+      rw [← Region.get_full X i j]
+      exact Region.get_of_toMatrix_eq (Region.full h h) X _ hP1.1 i j
+    have gP4 (i j : Fin h) : C₁₁.get C2 i j = P4[(i, j)] :=
+      Region.get_of_toMatrix_eq C₁₁ C2 _ (by simpa only [eT4, C2] using hP4.1) i j
+    have gP2 (i j : Fin h) : C₁₁.get C i j = P2[(i, j)] :=
+      Region.get_of_toMatrix_eq C₁₁ C _ (by simpa only [C] using hP2.1) i j
+    have gU2 (i j : Fin h) : C₁₂.get C7 i j = P1[(i, j)] + P6[(i, j)] := by
+      rw [Region.get_accumulateExternal, gP1]
+      rw [Region.get_eq_of_toMatrix_eq C₁₂ C8 C9
+        (by simpa only [C8] using hP3.2 C₁₂ h₁₁₁₂)]
+      rw [gP6]
+    have gP7C7 (i j : Fin h) : C₂₁.get C7 i j = P7[(i, j)] := by
+      rw [Region.get_accumulateExternal_disjoint C₁₂ C₂₁ h₁₂₂₁]
+      rw [Region.get_eq_of_toMatrix_eq C₂₁ C8 C9
+        (by simpa only [C8] using hP3.2 C₂₁ h₁₁₂₁)]
+      rw [Region.get_eq_of_toMatrix_eq C₂₁ C9 C10
+        (by simpa only [C9] using hP6.2 C₂₁ h₁₂₂₁)]
+      rw [Region.get_eq_of_toMatrix_eq C₂₁ C10 C11
+        (by simpa only [C10] using hP5.2 C₂₁ (Region.disjoint_comm.mp h₂₁₂₂))]
+      exact gP7 i j
+    have gU3 (i j : Fin h) : C₂₁.get C6 i j =
+        (P1[(i, j)] + P6[(i, j)]) + P7[(i, j)] := by
+      rw [Region.get_accumulate, gU2, gP7C7]
+    have gP5C6 (i j : Fin h) : C₂₂.get C6 i j = P5[(i, j)] := by
+      rw [Region.get_accumulate_disjoint C₂₁ C₁₂ _ C₂₂ h₂₁₂₂]
+      rw [Region.get_accumulateExternal_disjoint C₁₂ C₂₂ h₁₂₂₂]
+      rw [Region.get_eq_of_toMatrix_eq C₂₂ C8 C9
+        (by simpa only [C8] using hP3.2 C₂₂ h₁₁₂₂)]
+      rw [Region.get_eq_of_toMatrix_eq C₂₂ C9 C10
+        (by simpa only [C9] using hP6.2 C₂₂ h₁₂₂₂)]
+      exact gP5 i j
+    have gU4 (i j : Fin h) : C₁₂.get C5 i j =
+        (P1[(i, j)] + P6[(i, j)]) + P5[(i, j)] := by
+      rw [Region.get_accumulate]
+      rw [Region.get_accumulate_disjoint C₂₁ C₁₂ _ C₁₂
+        (Region.disjoint_comm.mp h₁₂₂₁), gU2, gP5C6]
+    have gU7 (i j : Fin h) : C₂₂.get C4 i j =
+        ((P1[(i, j)] + P6[(i, j)]) + P7[(i, j)]) + P5[(i, j)] := by
+      rw [Region.get_accumulate]
+      rw [Region.get_accumulate_disjoint C₁₂ C₂₂ _ C₂₂ h₁₂₂₂,
+        gP5C6]
+      rw [Region.get_accumulate_disjoint C₁₂ C₂₂ _ C₂₁ h₁₂₂₁,
+        gU3]
+    have gP3C4 (i j : Fin h) : C₁₁.get C4 i j = P3[(i, j)] := by
+      rw [Region.get_accumulate_disjoint C₂₂ C₂₁ _ C₁₁
+        (Region.disjoint_comm.mp h₁₁₂₂)]
+      rw [Region.get_accumulate_disjoint C₁₂ C₂₂ _ C₁₁
+        (Region.disjoint_comm.mp h₁₁₁₂)]
+      rw [Region.get_accumulate_disjoint C₂₁ C₁₂ _ C₁₁
+        (Region.disjoint_comm.mp h₁₁₂₁)]
+      rw [Region.get_accumulateExternal_disjoint C₁₂ C₁₁
+        (Region.disjoint_comm.mp h₁₁₁₂)]
+      exact gP3 i j
+    have gU5 (i j : Fin h) : C₁₂.get C3 i j =
+        ((P1[(i, j)] + P6[(i, j)]) + P5[(i, j)]) + P3[(i, j)] := by
+      rw [Region.get_accumulate, gP3C4]
+      rw [Region.get_accumulate_disjoint C₂₂ C₂₁ _ C₁₂
+        (Region.disjoint_comm.mp h₁₂₂₂), gU4]
+    have e11 : C₁₁.toMatrix (C₁₁.accumulateExternal C X fun p2 p1 => p1 + p2) =
+        P1 + P2 := by
+      apply Matrix.ext_getElem
+      intro i j
+      rw [Region.getElem_toMatrix, Region.get_accumulateExternal, Matrix.getElem_add,
+        gP1, gP2]
+      simp only [getElem_pair_eq_nested]
+    have e21 : C₂₁.toMatrix (C₁₁.accumulateExternal C X fun p2 p1 => p1 + p2) =
+        (P1 + P6 + P7) - P4 := by
+      apply Matrix.ext_getElem
+      intro i j
+      rw [Region.getElem_toMatrix, Matrix.getElem_sub, Matrix.getElem_add, Matrix.getElem_add]
+      rw [Region.get_accumulateExternal_disjoint C₁₁ C₂₁ h₁₁₂₁]
+      rw [Region.get_eq_of_toMatrix_eq C₂₁ C C1
+        (by simpa only [C] using hP2.2 C₂₁ h₁₁₂₁)]
+      rw [Region.get_accumulate, gP4]
+      rw [Region.get_eq_of_toMatrix_eq C₂₁ C2 C3
+        (by simpa only [C2] using hP4.2 C₂₁ h₁₁₂₁)]
+      rw [Region.get_accumulate_disjoint C₁₂ C₁₁ _ C₂₁ h₁₂₂₁]
+      rw [Region.get_accumulate_disjoint C₂₂ C₂₁ _ C₂₁
+        (Region.disjoint_comm.mp h₂₁₂₂)]
+      rw [Region.get_accumulate_disjoint C₁₂ C₂₂ _ C₂₁ h₁₂₂₁]
+      rw [gU3]
+      simp only [getElem_pair_eq_nested]
+    have e12 : C₁₂.toMatrix (C₁₁.accumulateExternal C X fun p2 p1 => p1 + p2) =
+        (P1 + P6 + P5) + P3 := by
+      apply Matrix.ext_getElem
+      intro i j
+      rw [Region.getElem_toMatrix, Matrix.getElem_add, Matrix.getElem_add, Matrix.getElem_add]
+      rw [Region.get_accumulateExternal_disjoint C₁₁ C₁₂ h₁₁₁₂]
+      rw [Region.get_eq_of_toMatrix_eq C₁₂ C C1
+        (by simpa only [C] using hP2.2 C₁₂ h₁₁₁₂)]
+      rw [Region.get_accumulate_disjoint C₂₁ C₁₁ _ C₁₂
+        (Region.disjoint_comm.mp h₁₂₂₁)]
+      rw [Region.get_eq_of_toMatrix_eq C₁₂ C2 C3
+        (by simpa only [C2] using hP4.2 C₁₂ h₁₁₁₂)]
+      rw [gU5]
+      simp only [getElem_pair_eq_nested]
+    have e22 : C₂₂.toMatrix (C₁₁.accumulateExternal C X fun p2 p1 => p1 + p2) =
+        (P1 + P6 + P7) + P5 := by
+      apply Matrix.ext_getElem
+      intro i j
+      rw [Region.getElem_toMatrix, Matrix.getElem_add, Matrix.getElem_add, Matrix.getElem_add]
+      rw [Region.get_accumulateExternal_disjoint C₁₁ C₂₂ h₁₁₂₂]
+      rw [Region.get_eq_of_toMatrix_eq C₂₂ C C1
+        (by simpa only [C] using hP2.2 C₂₂ h₁₁₂₂)]
+      rw [Region.get_accumulate_disjoint C₂₁ C₁₁ _ C₂₂ h₂₁₂₂]
+      rw [Region.get_eq_of_toMatrix_eq C₂₂ C2 C3
+        (by simpa only [C2] using hP4.2 C₂₂ h₁₁₂₂)]
+      rw [Region.get_accumulate_disjoint C₁₂ C₁₁ _ C₂₂ h₁₂₂₂]
+      rw [gU7]
+      simp only [getElem_pair_eq_nested]
+    let Cout := C₁₁.accumulateExternal C X fun p2 p1 => p1 + p2
+    have assembled : Dp.toMatrix Cout =
+        fromBlocks (P1 + P2) ((P1 + P6 + P5) + P3)
+          ((P1 + P6 + P7) - P4) ((P1 + P6 + P7) + P5) := by
+      rw [← Matrix.fromBlocks_toBlocks (Dp.toMatrix Cout)]
+      rw [← Region.toMatrix_toBlocks₁₁ Dp Cout,
+        ← Region.toMatrix_toBlocks₁₂ Dp Cout,
+        ← Region.toMatrix_toBlocks₂₁ Dp Cout,
+        ← Region.toMatrix_toBlocks₂₂ Dp Cout]
+      simp only [Cout]
+      rw [e11, e12, e21, e22]
+    have reference : castDims heven heven (mulStrassenView cfg A B) =
+        fromBlocks (P1 + P2) ((P1 + P6 + P5) + P3)
+          ((P1 + P6 + P7) - P4) ((P1 + P6 + P7) + P5) := by
+      rw [mulStrassenView]
+      simp only [hbase, ↓reduceIte]
+      rw [castDims_crop]
+    constructor
+    · apply castDims_inj heven heven
+      rw [castDims_toMatrix heven heven D Dp rfl rfl, assembled, reference]
+    · intro rows cols E hDE
+      have hDpE : Region.Disjoint Dp E := by
+        simp only [Region.Disjoint, Dp] at hDE ⊢
+        omega
+      have h11E : Region.Disjoint C₁₁ E := by
+        simpa only [C₁₁] using Region.disjoint_toBlocks₁₁ Dp E hDpE
+      have h12E : Region.Disjoint C₁₂ E := by
+        simpa only [C₁₂] using Region.disjoint_toBlocks₁₂ Dp E hDpE
+      have h21E : Region.Disjoint C₂₁ E := by
+        simpa only [C₂₁] using Region.disjoint_toBlocks₂₁ Dp E hDpE
+      have h22E : Region.Disjoint C₂₂ E := by
+        simpa only [C₂₂] using Region.disjoint_toBlocks₂₂ Dp E hDpE
+      calc
+        E.toMatrix Cout = E.toMatrix C := by
+          simpa only [Cout] using
+            Region.toMatrix_accumulateExternal_disjoint C₁₁ E h11E C X
+              (fun p2 p1 => p1 + p2)
+        _ = E.toMatrix C1 := by simpa only [C] using hP2.2 E h11E
+        _ = E.toMatrix C2 := by
+          simpa only [C1] using
+            Region.toMatrix_accumulate_disjoint C₂₁ C₁₁
+              (Region.disjoint_comm.mp h₁₁₂₁) E h21E C2 (fun u3 p4 => u3 - p4)
+        _ = E.toMatrix C3 := by simpa only [C2] using hP4.2 E h11E
+        _ = E.toMatrix C4 := by
+          simpa only [C3] using
+            Region.toMatrix_accumulate_disjoint C₁₂ C₁₁
+              (Region.disjoint_comm.mp h₁₁₁₂) E h12E C4 (fun u4 p3 => u4 + p3)
+        _ = E.toMatrix C5 := by
+          simpa only [C4] using
+            Region.toMatrix_accumulate_disjoint C₂₂ C₂₁
+              (Region.disjoint_comm.mp h₂₁₂₂) E h22E C5 (fun p5 u3 => u3 + p5)
+        _ = E.toMatrix C6 := by
+          simpa only [C5] using
+            Region.toMatrix_accumulate_disjoint C₁₂ C₂₂ h₁₂₂₂ E h12E C6
+              (fun u2 p5 => u2 + p5)
+        _ = E.toMatrix C7 := by
+          simpa only [C6] using
+            Region.toMatrix_accumulate_disjoint C₂₁ C₁₂
+              (Region.disjoint_comm.mp h₁₂₂₁) E h21E C7 (fun p7 u2 => u2 + p7)
+        _ = E.toMatrix C8 := by
+          simpa only [C7] using
+            Region.toMatrix_accumulateExternal_disjoint C₁₂ E h12E C8 X
+              (fun p6 p1 => p1 + p6)
+        _ = E.toMatrix C9 := by simpa only [C8] using hP3.2 E h11E
+        _ = E.toMatrix C10 := by simpa only [C9] using hP6.2 E h12E
+        _ = E.toMatrix C11 := by simpa only [C10] using hP5.2 E h22E
+        _ = E.toMatrix C0 := by simpa only [C11] using hP7.2 E h21E
+  | case3 n N M A B C D hbase h hOdd P =>
+    constructor
+    · apply Matrix.ext_getElem
+      intro i j
+      rw [Region.getElem_toMatrix, Region.get_overwrite]
+      rw [getElem_pair_eq_nested]
+    · intro rows cols E hDE
+      apply Matrix.ext_getElem
+      intro i j
+      rw [Region.getElem_toMatrix, Region.getElem_toMatrix,
+        Region.get_overwrite_disjoint D E hDE]
+
 /-- **Strassen-Winograd multiplication.** The public entry point wraps the operands
 as full-matrix `Submatrix` views and runs the view recursion `mulStrassenView`;
 the quadrant splitting inside never materializes or copies a quadrant buffer —
@@ -231,6 +653,49 @@ def mulStrassen {R : Type u} [Mul R] [Add R] [Sub R] [OfNat R 0]
     (cfg : StrassenConfig R) {n m k : Nat} (M : Matrix R n m) (N : Matrix R m k) :
     Matrix R n k :=
   mulStrassenView cfg (Submatrix.ofMatrix M) (Submatrix.ofMatrix N)
+
+/-- Storage-scheduled implementation of `mulStrassen`.  Square inputs run the
+two-buffer writer; all other shapes retain the reference view recursion. -/
+@[expose]
+def mulStrassenImpl {R : Type u} [Mul R] [Add R] [Sub R] [OfNat R 0]
+    (cfg : StrassenConfig R) {n m k : Nat} (A : Matrix R n m) (B : Matrix R m k) :
+    Matrix R n k :=
+  if hnm : n = m then
+    if hmk : m = k then
+      if n ≤ 1 ∨ n < cfg.cutoff then
+        mulStrassenView cfg (Submatrix.ofMatrix A) (Submatrix.ofMatrix B)
+      else
+        let A' : Matrix R n n := castDims rfl hnm.symm A
+        let B' : Matrix R n n := castDims hnm.symm (hmk.symm.trans hnm.symm) B
+        let C : Matrix R n n := Matrix.ofFn fun _ _ => 0
+        castDims rfl (hnm.trans hmk)
+          (mulStrassenInto cfg (Submatrix.ofMatrix A') (Submatrix.ofMatrix B') C
+            (Region.full n n))
+    else
+      mulStrassenView cfg (Submatrix.ofMatrix A) (Submatrix.ofMatrix B)
+  else
+    mulStrassenView cfg (Submatrix.ofMatrix A) (Submatrix.ofMatrix B)
+
+/-- The storage-scheduled implementation is extensionally equal to the reference
+entry point.  This transfers the implementation without changing
+`mulStrassen`'s statement or its ring-level correctness theorem. -/
+@[csimp] theorem mulStrassen_eq_impl : @mulStrassen = @mulStrassenImpl := by
+  funext R _ _ _ _ cfg n m k A B
+  simp only [mulStrassenImpl]
+  split
+  · rename_i hnm
+    split
+    · rename_i hmk
+      subst m
+      subst k
+      split
+      · rfl
+      · simp only [castDims, mulStrassen]
+        simpa only [Region.toMatrix_full] using
+          (mulStrassenInto_spec cfg (Submatrix.ofMatrix A) (Submatrix.ofMatrix B)
+            (Matrix.ofFn fun _ _ => 0) (Region.full n n)).1.symm
+    · rfl
+  · rfl
 
 /-- The view recursion computes the same matrix as the reference `mul` of the
 materialized operands, for every valid configuration. Proved by functional

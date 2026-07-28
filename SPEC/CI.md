@@ -30,7 +30,7 @@ agent/feature branch even before a PR exists. Restricting `push:` to
 PR commit fire each workflow exactly once.
 
 `workflow_dispatch:` is allowed wherever an ad-hoc manual run is
-useful (currently `conformance.yml`).
+useful (currently the consolidated `ci.yml`).
 
 Other triggers (`schedule:`, `repository_dispatch:`, `release:`,
 `merge_group:`) are case-by-case; they must be documented in the
@@ -81,7 +81,9 @@ Concretely:
   [SPEC/benchmarking.md §CI integration](benchmarking.md), and the
   conformance/oracle suite (FLINT, PARI, Conway) with the BZ gates. A
   `wait-all:` joins them and a fail-closed sentinel step fails the job
-  unless both tails signalled success.
+  unless both tails signalled success. The oracle tail sets
+  `HEX_REQUIRE_ORACLES=1`, so a missing FLINT, PARI, or Conway Python package
+  is a hard failure rather than a successful `SKIP`.
   **Bench verify runs on ubuntu**: per
   [SPEC/benchmarking.md §CI integration](benchmarking.md), `verify` is a
   smoke gate (does the bench module compile and run?), not a timing

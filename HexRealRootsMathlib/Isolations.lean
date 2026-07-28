@@ -88,13 +88,6 @@ theorem degree?_ne_none (hp0 : p ≠ 0) : p.degree? ≠ none := by
   rw [Hex.DensePoly.coeff_zero]
   exact Hex.DensePoly.coeff_eq_zero_of_size_le p (by omega)
 
-/-- Dyadic order transfers to the real values. -/
-private theorem toReal_le_toReal {a b : Dyadic} (h : a ≤ b) :
-    Dyadic.toReal a ≤ Dyadic.toReal b := by
-  have h2 : a.toRat ≤ b.toRat := Dyadic.toRat_le_toRat_iff.mpr h
-  unfold Dyadic.toReal
-  exact_mod_cast h2
-
 /-- **Isolation soundness.** A certified isolation of `p` names exactly one real
 root of `toPolyℝ p` in its half-open interval `(lower, upper]`. -/
 theorem RealRootIsolation.exists_unique_root (hp : Hex.ZPoly.SquareFreeRat p)

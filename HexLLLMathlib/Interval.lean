@@ -843,27 +843,6 @@ private theorem pass_spec (b : Hex.Matrix Int n m) {S : Int} (hS : 0 < S)
       · rw [if_neg hpos] at hres'
         cases hres'
 
-/-! ### Glue: the Gram array fed to the pass -/
-
-private theorem g_entries (b : Hex.Matrix Int n m) (i : Nat) (hi : i < n)
-    (j : Nat) (hj : j < n) :
-    ((((Matrix.gramMatrix b).rows.toArray.map Vector.toArray))[i]!)[j]! =
-      (b.row ⟨i, hi⟩).dotProduct (b.row ⟨j, hj⟩) := by
-  have hi1 : i < ((Matrix.gramMatrix b).rows.toArray.map Vector.toArray).size := by
-    rw [Array.size_map, Vector.size_toArray]
-    exact hi
-  have hi2 : i < (Matrix.gramMatrix b).rows.toArray.size := by
-    rw [Vector.size_toArray]
-    exact hi
-  rw [getElem!_pos ((Matrix.gramMatrix b).rows.toArray.map Vector.toArray) i hi1,
-    Array.getElem_map]
-  have hj1 : j < ((Matrix.gramMatrix b).rows.toArray[i]'hi2).toArray.size := by
-    rw [Vector.size_toArray]
-    exact hj
-  rw [getElem!_pos (((Matrix.gramMatrix b).rows.toArray[i]'hi2).toArray) j hj1]
-  simp only [Vector.getElem_toArray]
-  simpa [Hex.Matrix.getRow, Fin.getElem_fin] using Hex.Matrix.getElem_gramMatrix b ⟨i, hi⟩ ⟨j, hj⟩
-
 /-! ### Positivity of the Gram-determinant product -/
 
 private theorem normProduct_pos (b : Hex.Matrix Int n m)
@@ -905,8 +884,7 @@ theorem lllReducedInterval_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
     exact_mod_cast hS
   simp only [Hex.lllReducedInterval] at h
   set S : Int := (2 : Int) ^ Hex.Internal.intervalPrec with hSdef
-  set g : Array (Array Int) := (Matrix.gramMatrix b).rows.toArray.map Vector.toArray
-    with hgdef
+  set g : Array (Array Int) := GramSchmidt.Int.gramRows b with hgdef
   rcases hpass : IntervalGS.pass S g n with _ | ⟨mus, bstars⟩
   · rw [hpass] at h
     cases h
@@ -915,8 +893,9 @@ theorem lllReducedInterval_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
   obtain ⟨hsizeOK, hlovOK⟩ := h
   have hg : ∀ i (hi : i < n) j (hj : j ≤ i),
       (g[i]!)[j]! = (b.row ⟨i, hi⟩).dotProduct
-        (b.row ⟨j, Nat.lt_of_le_of_lt hj hi⟩) :=
-    fun i hi j hj => g_entries b i hi j (Nat.lt_of_le_of_lt hj hi)
+        (b.row ⟨j, Nat.lt_of_le_of_lt hj hi⟩) := by
+    intro i hi j hj
+    simp [g, GramSchmidt.Int.gramRows, hi, Nat.lt_of_le_of_lt hj hi]
   have hinv : Inv b S n (Nat.le_refl n) mus bstars :=
     pass_spec b hS g hg n (Nat.le_refl n) (mus, bstars) hpass
   obtain ⟨hszm, hszb, hrows⟩ := hinv

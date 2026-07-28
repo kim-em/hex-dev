@@ -16,8 +16,11 @@ This module is the Lean-side companion to
 §"Process call", FLINT comparators with non-negligible per-call
 overhead are wired as a persistent subprocess: the driver loops on
 stdin (one JSON request per line, see the driver's docstring for the
-framing protocol), and the bench harness reuses one driver process
-across every measured call inside a single
+framing protocol). LeanBench starts a fresh child for every outer
+fixed-benchmark warmup or repeat. Inside that child, a
+`warmupFirstIter` call starts one driver before timing and the
+auto-tuned inner-repeat batch reuses it. The process is therefore
+persistent within a child batch, not across the whole
 `lake exe hexfoo_bench run` invocation.
 
 This module owns:
@@ -26,17 +29,16 @@ This module owns:
   `IO.Process.Child` plus its persistent stdin handle (so the
   process is not reaped while the bench process holds a reference).
 * `flintDriverRef` — module-level `IO.Ref` caching the running
-  driver across calls inside one bench process.
-* `runRequest`, `runOp` — high-level helpers that build a JSON
-  request, send it through the driver, parse the reply, and surface
-  driver-side errors as `IO.userError`. On stream errors the cached
-  child is dropped, a fresh driver is spawned, and the request is
-  retried once.
+  driver across calls inside one fixed-benchmark child process.
+* `sendRequestLine`, `sendRequest`, `runLine`, `runOp` — helpers for
+  precompressed or structured JSON requests. They parse replies and surface
+  driver-side errors as `IO.userError`. On stream errors the cached child is
+  dropped, a fresh driver is spawned, and the request is retried once.
 
 ## Per-library wiring
 
 Each consuming library (HexPoly, HexPolyZ, HexHensel, HexMatrix,
-HexBerlekamp, HexGFqRing) calls `Hex.BenchOracle.Flint.runOp` from
+HexBerlekamp, HexGFqRing, HexRCF) calls `Hex.BenchOracle.Flint.runOp` from
 its `Bench.lean` and parses the returned `Json` per its family's
 result schema. Example (sketch — actual wiring lands in the
 per-library HOs, HO-21..HO-26)::
@@ -130,13 +132,12 @@ def resolveDriver : IO PersistentComparator := do
   flintDriverRef.set (some ch)
   return ch
 
-/-- Send a single JSON request line and return the parsed JSON
+/-- Send one already-compressed JSON request line and return the parsed JSON
 reply. On any `IO` error from the stream (driver crash, pipe close)
 the cached child handle is dropped, a fresh driver is spawned, and
 the request is retried once. Persistent failure surfaces as an
 `IO.userError` from the retry path. -/
-def sendRequest (request : Json) : IO Json := do
-  let line := request.compress
+def sendRequestLine (line : String) : IO Json := do
   let reply ←
     try
       (← resolveDriver).requestLine line
@@ -148,17 +149,13 @@ def sendRequest (request : Json) : IO Json := do
   | .error err =>
     throw <| IO.userError s!"flint_bench_driver reply not valid JSON: {err}; reply: {reply}"
 
-/-- Build the request JSON object from `family`, `op`, and a list of
-extra fields, send it through the driver, and return the unwrapped
-`result` field on success. Raises `IO.userError` on a driver-side
-error frame (`{"ok": false, "error": ...}`) or on a reply that does
-not match either the success or failure shape. -/
-def runOp (family : String) (op : String) (fields : Array (String × Json))
-    : IO Json := do
-  let mut obj : Array (String × Json) := #[("family", Json.str family), ("op", Json.str op)]
-  for kv in fields do
-    obj := obj.push kv
-  let reply ← sendRequest (Json.mkObj obj.toList)
+/-- Compress and send one structured JSON request. Consumers whose timing
+contract excludes Lean-side request serialization can precompress once and
+call `sendRequestLine` or `runLine` instead. -/
+def sendRequest (request : Json) : IO Json :=
+  sendRequestLine request.compress
+
+private def resultOf (family op : String) (reply : Json) : IO Json := do
   match reply.getObjValAs? Bool "ok" with
   | Except.ok true =>
     match reply.getObjVal? "result" with
@@ -172,6 +169,23 @@ def runOp (family : String) (op : String) (fields : Array (String × Json))
   | Except.error msg =>
     throw (IO.userError
       s!"flint_bench_driver: reply missing/non-bool 'ok' field: {msg}; reply: {reply.compress}")
+
+/-- Send an already-compressed request and unwrap its successful `result`.
+`family` and `op` provide error context and must match the fields in `line`. -/
+def runLine (family op line : String) : IO Json := do
+  resultOf family op (← sendRequestLine line)
+
+/-- Build the request JSON object from `family`, `op`, and a list of
+extra fields, send it through the driver, and return the unwrapped
+`result` field on success. Raises `IO.userError` on a driver-side
+error frame (`{"ok": false, "error": ...}`) or on a reply that does
+not match either the success or failure shape. -/
+def runOp (family : String) (op : String) (fields : Array (String × Json))
+    : IO Json := do
+  let mut obj : Array (String × Json) := #[("family", Json.str family), ("op", Json.str op)]
+  for kv in fields do
+    obj := obj.push kv
+  runLine family op (Json.mkObj obj.toList).compress
 
 /-- Helper: encode an `Int` list (e.g. polynomial coefficient list,
 ascending degree) as a JSON array suitable for a `runOp` field. -/

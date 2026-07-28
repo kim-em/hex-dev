@@ -49,6 +49,15 @@
 #                                 # per-library SPEC's narrative
 #       See SPEC/benchmarking.md §"Anti-patterns" entry on best-case
 #       inputs and SPEC/profiling.md §"Coverage requirement".
+# - proof_probes (optional): explicit repository-relative paths below
+#   bench/<Library>/ containing build-only Mathlib proof-elaboration or
+#   kernel-replay probes. Only mathlib: true libraries may declare these.
+#   Files elsewhere in the same bench/<Library>/ tree remain ordinary
+#   computational-bench sources and receive no proof-probe exception. A path
+#   may reserve a not-yet-created directory for a later stacked change; once
+#   present it must be a directory resolving physically inside bench/ and its
+#   subtree must contain no symlinks. A done_through: 4 library may not retain
+#   a missing or empty reservation.
 #
 # This file is the single source of truth for the library graph.
 # lakefile.lean entries are cross-checked against active libraries.yml
@@ -351,15 +360,15 @@ libraries:
           goal: "Lean BZ must stay within a small constant of the verified Isabelle BZ on small/medium-r inputs handled by the classical tier, and must strictly beat the verified classical Isabelle BZ on the large-r lattice-backed tail before the Phase-4 external-comparator goal is considered met. The Phase-4 report must record scheduled-hardware evidence across the seam, including the last classical Swinnerton-Dyer rung and the first lattice-backed Swinnerton-Dyer rung; if the verified classical reference times out at the declared cap, record solved-under-cap versus timeout rather than a finite ratio. Algorithm-class caveat per HexBerlekampZassenhaus/SPEC/hex-berlekamp-zassenhaus.md §External comparators: Isabelle's classical exhaustive recombination is weaker asymptotically than hex's BHKS van Hoeij CLD, so the large-r goal is to demonstrate that asymptotic advantage in wall-clock, not merely match the reference."
       input_families:
         - name: public-factor-combinator
-          description: Public `factor` combinator on deterministic split integer-polynomial smoke inputs, covering the fast-with-slow-fallback API surface.
+          description: Public `ZPoly.factorize` cascade on deterministic split integer-polynomial inputs, including traced classical, lattice, and exact trial-backstop dispatch.
         - name: cld-fast-path
-          description: Proof-facing CLD `factorFast` path on deterministic split inputs, preserving `none` outcomes and the fast-path setup surfaces for smoke-intractable adversarial cases.
+          description: Option-valued CLD `factorLattice` path and its precision/local-factor setup surfaces on deterministic adversarial inputs.
         - name: exhaustive-slow-backstop
-          description: Unconditional `factorSlow` exhaustive recombination backstop on deterministic split inputs, including the bounded degree/height diagnostic subset.
+          description: Unconditional exact `factorTrial` backstop on deterministic split inputs, including the bounded degree/height diagnostic subset.
         - name: degree-height-matrix
-          description: Encoded degree/root-height split integer-polynomial matrix for public, fast-path, and slow-path BZ factorization registrations.
+          description: Encoded degree/root-height split integer-polynomial matrix for the public cascade, lattice setup, and exact trial-backstop registrations.
         - name: fallback-probe
-          description: Explicit split-degree cascade-trigger inputs `(X-1)...(X-n)` for public BZ factorization, covering the prime-search fallback and BHKS recombination shape together.
+          description: Explicit split-degree cascade-trigger inputs `(X-1)...(X-n)` for `ZPoly.factorize`, covering prime selection and BHKS recombination together.
         - name: ho2-adversarial-recombination
           description: HO-2 adversarial recombination shapes `X^4 + 1`, `(X^2 - 2)(X^2 - 3)`, Swinnerton-Dyer SD3, and `Phi_15`, including pinned modular split profiles.
 
@@ -453,7 +462,7 @@ libraries:
   HexRoots:
     deps: [HexPolyZ]
     mathlib: false
-    done_through: 4
+    done_through: 5
     status: active
     phase4:
       comparators:
@@ -479,6 +488,17 @@ libraries:
     mathlib: false
     done_through: 1
     status: active
+  HexInterval:
+    deps: []
+    mathlib: false
+    done_through: 0
+    status: active
+  HexIntervalMathlib:
+    deps: [HexInterval]
+    mathlib: true
+    done_through: 0
+    status: planned
+    proof_probes: [bench/HexIntervalMathlib]
   HexResultantMathlib:
     deps: [HexResultant, HexPolyMathlib]
     mathlib: true
@@ -507,7 +527,7 @@ libraries:
   HexRealRoots:
     deps: [HexPolyZ]
     mathlib: false
-    done_through: 4
+    done_through: 5
     status: active
     phase4:
       comparators:
@@ -528,8 +548,26 @@ libraries:
     mathlib: true
     done_through: 3
     status: active
+    proof_probes: [bench/HexRealRootsMathlib]
   HexRCF:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 3
     status: active
+    proof_probes: [bench/HexRCF/ProofProbe]
+    phase4:
+      comparators:
+        - tool: "python-flint univariate RCF verdict oracle"
+          class: informational
+          rationale: "python-flint supplies an independent exact/ball-arithmetic verdict on the carrier-degree family at n = 16, 20, 24, 28, 32, but it does not emit a proof term or exercise Lean certificate replay. Ratios orient the Mathlib-free compiled DecisionCheck track and are scheduled-only; they do not gate the proof-producing tactic surface. No comparable proof-producing univariate RCF tactic is named, so the tactic track is declared no-comparable-surface-in-named-comparator in the HexRCF SPEC."
+      input_families:
+        - name: carrier-degree-roots
+          description: One-atom square-free families varying carrier degree and real-root count while holding atom multiplicity, coefficient-height regime, and Boolean shape fixed.
+        - name: atom-multiplicity
+          description: Fixed-degree, fixed-bit-width committed-corpus families varying distinct nonconstant polynomials independently from repeated atom occurrences, with each ladder capped by the corpus and holding root geometry fixed.
+        - name: common-root-work
+          description: Fixed-carrier, fixed-degree, fixed-bit-width subladders varying only the number of public common-root builder calls, with separate committed corpora for coprime, shared-factor, and repeated-polynomial cases.
+        - name: separation-refinement
+          description: Fixed-degree isolation families varying adjacent-root gap and required dyadic refinement depth from already-strict to Mignotte-style clustered roots.
+        - name: certificate-replay-size
+          description: Three prebuilt accepted .cells-certificate subladders independently vary carrier cells, distinct scalar-multiple sign entries, and literal .tt/.ff formula occurrences under a fixed tree recipe while excluding compiled witness construction from every timed replay target.

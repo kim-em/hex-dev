@@ -454,9 +454,11 @@ Compute a modular inverse candidate via the integer extended-GCD helper from
 
 When `a` is coprime to `p`, this is the canonical inverse mod `p`; otherwise it
 still exposes the executable Bezout-derived residue needed by later algebraic
-layers.
+layers. The trusted runtime contract is `lean_hex_zmod64_inv`, which runs the
+same Euclidean remainder and cofactor recurrence directly in bounded word
+arithmetic and returns the cofactor modulo `p`.
 -/
-@[expose]
+@[expose, extern "lean_hex_zmod64_inv"]
 def inv (a : ZMod64 p) : ZMod64 p :=
   let (_, s, _) := HexArith.Int.extGcd (Int.ofNat a.toNat) (Int.ofNat p)
   ofNat p (Int.toNat (s % Int.ofNat p))

@@ -13,6 +13,7 @@
 - **hex-poly-z**: polynomials over `Z`, content/primitive part, Mignotte bound
 - **hex-roots**: certified complex root isolation for `Z[x]` via dyadic squares, Pellet tests, and speculative Newton iteration
 - **hex-real-roots**: certified real root isolation for `Z[x]`: Sturm-count witnesses, a Descartes bisection search with a proven-complete Sturm fallback
+- **hex-interval**: exact open, closed, empty, and unbounded dyadic intervals; a shared expression program; and a budgeted scheduler for propagation, refinement, and subdivision
 - **hex-rcf**: the `rcf` tactic, a complete decision procedure for univariate real-closed-field sentences (Boolean combinations of polynomial inequalities under one `∀`/`∃` over `ℝ`); `mathlib: true`, soundness theorem in the same library
 - **hex-resultant**: polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
 - **hex-number-field**: fixed fields `QAdjoin p x`, factorization-lazy `AlgebraicRoot`, canonical `AlgebraicNumber`, and roots of polynomials with algebraic coefficients
@@ -26,9 +27,8 @@
 - **hex-gfq-field**: field structure on top of `hex-gfq-ring` when `f` is irreducible
 - **hex-gfq**: convenience wrapper, canonical `GFq p n` plus optimized `GF2q n` using Conway polynomials
 
-**Mathlib companion libraries** (each depends on a computational
-library and Mathlib, and proves that the executable definitions agree
-with Mathlib's):
+**Mathlib companion libraries** (each depends on a computational library and
+Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 
 - **hex-mod-arith-mathlib**: `ZMod64 p ≃+* ZMod p`
 - **hex-poly-mathlib**: `DensePoly R ≃+* Polynomial R`
@@ -40,6 +40,7 @@ with Mathlib's):
 - **hex-poly-z-mathlib**: `DensePoly Int ≃+* Polynomial ℤ`, Mignotte bound (via Mathlib's Mahler measure)
 - **hex-roots-mathlib**: Pellet's test on circles (built from `circleIntegral`), the Mahler separation bound, soundness of refinement and `isolate`
 - **hex-real-roots-mathlib**: Sturm's theorem (counting form over `Polynomial ℝ`), chain correspondence, soundness and completeness of `isolate?`
+- **hex-interval-mathlib**: real semantics, verified arithmetic and elementary-function propagators, certificate replay, and the `interval` tactic
 - **hex-resultant-mathlib**: executable resultant agreement with `Polynomial.resultant`, specialization, root-product, and discriminant theorems
 - **hex-number-field-mathlib**: fixed-field correspondence, exactification, lazy arithmetic, and algebraic-coefficient root completeness
 - **hex-number-field-tower-mathlib**: tower embeddings, Trager correctness, splitting fields, and primitive-element equivalence
@@ -67,6 +68,7 @@ Each library with its immediate dependencies:
 - **hex-poly-z**: hex-poly
 - **hex-roots**: hex-poly-z
 - **hex-real-roots**: hex-poly-z
+- **hex-interval**: (none)
 - **hex-rcf**: hex-real-roots, hex-real-roots-mathlib, hex-poly-z, hex-poly-z-mathlib (mathlib: true)
 - **hex-resultant**: hex-poly
 - **hex-number-field**: hex-poly-z, hex-roots, hex-resultant, hex-berlekamp-zassenhaus, hex-matrix, hex-row-reduce
@@ -87,6 +89,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-poly-z-mathlib**: hex-poly-z, hex-poly-mathlib
 - **hex-roots-mathlib**: hex-roots, hex-poly-z-mathlib
 - **hex-real-roots-mathlib**: hex-real-roots, hex-poly-z-mathlib
+- **hex-interval-mathlib**: hex-interval
 - **hex-resultant-mathlib**: hex-resultant, hex-poly-mathlib
 - **hex-number-field-mathlib**: hex-number-field, hex-resultant-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-roots-mathlib, hex-poly-z-mathlib
 - **hex-number-field-tower-mathlib**: hex-number-field-tower, hex-number-field-mathlib, hex-resultant-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-row-reduce-mathlib
@@ -157,6 +160,12 @@ hex-berlekamp-zassenhaus ────┤
 hex-row-reduce ──────────────┘
 ```
 
+Interval arithmetic is an independent library pair:
+
+```text
+hex-interval ── hex-interval-mathlib
+```
+
 ## Index
 
 Libraries marked **(released)** are published as standalone
@@ -185,10 +194,12 @@ for developments whose source-local move has not happened yet.
 - [hex-gf2-mathlib](../../HexGF2Mathlib/SPEC/hex-gf2-mathlib.md): `GF2Poly ≃+* FpPoly 2`, `GF2n`/`GF2nPoly ≃+* FiniteField 2 f hf hirr`, packed-field finiteness/cardinality
 - [hex-poly-z](../../HexPolyZ/SPEC/hex-poly-z.md): polynomials over `Z`, content/primitive part, Mignotte bound
 - [hex-poly-z-mathlib](../../HexPolyZMathlib/SPEC/hex-poly-z-mathlib.md): Mignotte bound proof via Mathlib's Mahler measure
-- [hex-roots.md](hex-roots.md): certified complex root isolation for `Z[x]`
+- [hex-roots.md](../../HexRoots/SPEC/hex-roots.md): certified complex root isolation for `Z[x]`
 - [hex-roots-mathlib](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md): Pellet's test on circles, the Mahler separation bound, soundness of refinement and `isolate`
-- [hex-real-roots.md](hex-real-roots.md): certified real root isolation for `Z[x]`, Sturm-count witnesses, Descartes search with Sturm fallback
-- [hex-real-roots-mathlib.md](hex-real-roots-mathlib.md): Sturm's theorem, chain correspondence, soundness and completeness of `isolate?`
+- [hex-real-roots.md](../../HexRealRoots/SPEC/hex-real-roots.md): certified real root isolation for `Z[x]`, Sturm-count witnesses, Descartes search with Sturm fallback
+- [hex-real-roots-mathlib.md](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md): Sturm's theorem, chain correspondence, soundness and completeness of `isolate?`
+- [hex-interval.md](../../HexInterval/SPEC/hex-interval.md): exact interval data, shared programs, and budgeted propagation search
+- [hex-interval-mathlib.md](hex-interval-mathlib.md): real semantics, verified propagators, proof replay, and the `interval` tactic
 - [hex-rcf.md](hex-rcf.md): the `rcf` tactic for univariate real-closed-field sentences
 - [hex-resultant](../../HexResultant/SPEC/hex-resultant.md): polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
 - [hex-resultant-mathlib](../../HexResultantMathlib/SPEC/hex-resultant-mathlib.md): executable resultant agreement, specialization, root-product, and discriminant theorems

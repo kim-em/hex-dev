@@ -8,6 +8,7 @@ module
 
 public import HexRootsMathlib.Rouche
 public import HexRootsMathlib.RootFree
+public import HexRootsMathlib.SoftPellet
 
 public section
 
@@ -133,6 +134,152 @@ theorem pellet_ne_zero {p : ℂ[X]} {n k : ℕ} {r : ℝ}
   have hlt := pellet_norm_sub_lt hn hk hdom hz
   rw [hpz, zero_sub, norm_neg] at hlt
   exact hlt.false
+
+/-! ### Graeffe coefficient-ball witnesses -/
+
+/-- The three original radii transported through the Graeffe loop. -/
+private inductive SoftRadiusChoice
+  | base
+  | two
+  | four
+
+private def SoftRadiusChoice.lo : SoftRadiusChoice → Hex.SoftRadii → _root_.Dyadic
+  | .base, rs => rs.baseLo
+  | .two, rs => rs.twoLo
+  | .four, rs => rs.fourLo
+
+private def SoftRadiusChoice.hi : SoftRadiusChoice → Hex.SoftRadii → _root_.Dyadic
+  | .base, rs => rs.baseHi
+  | .two, rs => rs.twoHi
+  | .four, rs => rs.fourHi
+
+@[simp] private theorem SoftRadiusChoice.lo_square (choice : SoftRadiusChoice)
+    (rs : Hex.SoftRadii) :
+    choice.lo rs.square = choice.lo rs * choice.lo rs := by
+  cases choice <;> rfl
+
+@[simp] private theorem SoftRadiusChoice.hi_square (choice : SoftRadiusChoice)
+    (rs : Hex.SoftRadii) :
+    choice.hi rs.square = choice.hi rs * choice.hi rs := by
+  cases choice <;> rfl
+
+private theorem softPelletThree_at {cs : Array Hex.CoeffBall} {k : Nat}
+    {rs : Hex.SoftRadii} (choice : SoftRadiusChoice)
+    (h : Hex.softPelletThree cs k rs = true) :
+    Hex.softPelletAt cs k (choice.lo rs) (choice.hi rs) = true := by
+  cases choice <;> simp_all [Hex.softPelletThree, SoftRadiusChoice.lo,
+    SoftRadiusChoice.hi]
+
+/-- One successful coefficient-ball check gives a nonzero exact polynomial
+and its Pellet root count. -/
+private theorem softPelletAt_rootsInDisc {cs : Array Hex.CoeffBall}
+    {q : ℂ[X]} {k : Nat} {rlo rhi : _root_.Dyadic} {r : ℝ}
+    (henclose : BallsEnclose cs q)
+    (h : Hex.softPelletAt cs k rlo rhi = true)
+    (hrlo : 0 ≤ Dyadic.toReal rlo)
+    (hlo : Dyadic.toReal rlo ≤ r)
+    (hhi : r ≤ Dyadic.toReal rhi) :
+    q ≠ 0 ∧ rootsInDisc q 0 r = k := by
+  have hdom := softPelletAt_dominates henclose h hrlo hlo hhi
+  have hq : q ≠ 0 := by
+    intro hzero
+    subst q
+    simp at hdom
+  have hk := softPelletAt_size h
+  exact ⟨hq, pellet henclose.degree_lt hk (hrlo.trans hlo) hdom⟩
+
+/-- A successful transported Graeffe loop is sound at any one of its three
+original radius intervals. -/
+private theorem softGraeffeLoop_rootsInDisc {cs : Array Hex.CoeffBall}
+    {q : ℂ[X]} {bits k rounds : Nat} {rs : Hex.SoftRadii}
+    (choice : SoftRadiusChoice) {r : ℝ}
+    (henclose : BallsEnclose cs q)
+    (h : Hex.softGraeffeLoop bits k rounds cs rs = true)
+    (hrlo : 0 ≤ Dyadic.toReal (choice.lo rs))
+    (hlo : Dyadic.toReal (choice.lo rs) ≤ r)
+    (hhi : r ≤ Dyadic.toReal (choice.hi rs)) :
+    q ≠ 0 ∧ rootsInDisc q 0 r = k := by
+  induction rounds generalizing cs q rs r with
+  | zero =>
+      exact softPelletAt_rootsInDisc henclose
+        (softPelletThree_at choice h) hrlo hlo hhi
+  | succ rounds ih =>
+      simp only [Hex.softGraeffeLoop, Bool.or_eq_true] at h
+      rcases h with hnow | hlater
+      · exact softPelletAt_rootsInDisc henclose
+          (softPelletThree_at choice hnow) hrlo hlo hhi
+      · have hr : 0 ≤ r := hrlo.trans hlo
+        have hhi0 : 0 ≤ Dyadic.toReal (choice.hi rs) := hr.trans hhi
+        have hsquareLo :
+            0 ≤ Dyadic.toReal (choice.lo rs.square) := by
+          simp only [SoftRadiusChoice.lo_square, Dyadic.toReal_mul]
+          positivity
+        have hsquareLo_le :
+            Dyadic.toReal (choice.lo rs.square) ≤ r ^ 2 := by
+          simp only [SoftRadiusChoice.lo_square, Dyadic.toReal_mul, pow_two]
+          nlinarith
+        have hsquare_le_hi :
+            r ^ 2 ≤ Dyadic.toReal (choice.hi rs.square) := by
+          simp only [SoftRadiusChoice.hi_square, Dyadic.toReal_mul, pow_two]
+          nlinarith
+        have hrec := ih (graeffe_enclosePoly henclose bits) hlater
+          hsquareLo hsquareLo_le hsquare_le_hi
+        have hq : q ≠ 0 := by
+          intro hzero
+          subst q
+          exact hrec.1 graeffePoly_zero
+        refine ⟨hq, ?_⟩
+        rw [← rootsInDisc_graeffePoly hq r hr]
+        exact hrec.2
+
+/-- Strict soft Pellet dominance also excludes roots from the transported
+boundary circle, and this property pulls back through every Graeffe step. -/
+private theorem softGraeffeLoop_boundary {cs : Array Hex.CoeffBall}
+    {q : ℂ[X]} {bits k rounds : Nat} {rs : Hex.SoftRadii}
+    (choice : SoftRadiusChoice) {r : ℝ}
+    (henclose : BallsEnclose cs q)
+    (h : Hex.softGraeffeLoop bits k rounds cs rs = true)
+    (hrlo : 0 ≤ Dyadic.toReal (choice.lo rs))
+    (hlo : Dyadic.toReal (choice.lo rs) ≤ r)
+    (hhi : r ≤ Dyadic.toReal (choice.hi rs))
+    {z : ℂ} (hz : z ∈ sphere 0 r) : q.eval z ≠ 0 := by
+  induction rounds generalizing cs q rs r z with
+  | zero =>
+      have hcheck := softPelletThree_at choice h
+      exact pellet_ne_zero henclose.degree_lt (softPelletAt_size hcheck)
+        (softPelletAt_dominates henclose hcheck hrlo hlo hhi) hz
+  | succ rounds ih =>
+      simp only [Hex.softGraeffeLoop, Bool.or_eq_true] at h
+      rcases h with hnow | hlater
+      · have hcheck := softPelletThree_at choice hnow
+        exact pellet_ne_zero henclose.degree_lt (softPelletAt_size hcheck)
+          (softPelletAt_dominates henclose hcheck hrlo hlo hhi) hz
+      · have hr : 0 ≤ r := hrlo.trans hlo
+        have hhi0 : 0 ≤ Dyadic.toReal (choice.hi rs) := hr.trans hhi
+        have hsquareLo :
+            0 ≤ Dyadic.toReal (choice.lo rs.square) := by
+          simp only [SoftRadiusChoice.lo_square, Dyadic.toReal_mul]
+          positivity
+        have hsquareLo_le :
+            Dyadic.toReal (choice.lo rs.square) ≤ r ^ 2 := by
+          simp only [SoftRadiusChoice.lo_square, Dyadic.toReal_mul, pow_two]
+          nlinarith
+        have hsquare_le_hi :
+            r ^ 2 ≤ Dyadic.toReal (choice.hi rs.square) := by
+          simp only [SoftRadiusChoice.hi_square, Dyadic.toReal_mul, pow_two]
+          nlinarith
+        have hzsq : z ^ 2 ∈ sphere 0 (r ^ 2) := by
+          simp only [mem_sphere, dist_zero_right, norm_pow]
+          have hzNorm : ‖z‖ = r := by
+            simpa only [mem_sphere, dist_zero_right] using hz
+          rw [hzNorm]
+        have hnext := ih (graeffe_enclosePoly henclose bits) hlater
+          hsquareLo hsquareLo_le hsquare_le_hi hzsq
+        intro hzq
+        apply hnext
+        have hid := congrArg (fun p : ℂ[X] => p.eval z) (expand_graeffePoly q)
+        simpa only [expand_eval, eval_mul, eval_comp, eval_neg, eval_X, hzq,
+          zero_mul] using hid
 
 /-! ### Executable dyadic inequalities -/
 
@@ -283,6 +430,51 @@ theorem rootsInDisc_comp_X_add_C (p : ℂ[X]) (c : ℂ) (r : ℝ) :
       congr 1
       simp only [Metric.mem_ball, Complex.dist_eq, sub_zero]
 
+/-- Scaling to square-local coordinates scales the counted disc radius by
+the square half-width. -/
+theorem rootsInDisc_localPoly (p : Hex.ZPoly) (s : Hex.DyadicSquare) (r : ℝ) :
+    rootsInDisc (localPoly p s) 0 r =
+      rootsInDisc (toPolyℂ p) (DyadicSquare.center s)
+        (Dyadic.toReal (.ofIntWithPrec 1 s.prec) * r) := by
+  classical
+  let h : ℝ := Dyadic.toReal (.ofIntWithPrec 1 s.prec)
+  let c : ℂ := DyadicSquare.center s
+  have hh : 0 < h := by
+    simp only [h, Dyadic.toReal_ofIntWithPrec]
+    positivity
+  have hunit : IsUnit (h : ℂ) := by
+    rw [isUnit_iff_ne_zero]
+    exact_mod_cast hh.ne'
+  have hroots := roots_comp_C_mul_X_add_C (toPolyℂ p) (h : ℂ) c hunit
+  have hlocal : localPoly p s =
+      (toPolyℂ p).comp (C (h : ℂ) * X + C c) := by
+    simp only [localPoly, h, c, DyadicSquare.center_eq]
+  rw [hlocal]
+  unfold rootsInDisc
+  rw [hroots]
+  change Multiset.countP (fun z : ℂ => z ∈ ball 0 r)
+      ((toPolyℂ p).roots.map fun x => Ring.inverse (h : ℂ) * (x - c)) =
+    Multiset.countP (fun z : ℂ => z ∈ ball c (h * r)) (toPolyℂ p).roots
+  generalize (toPolyℂ p).roots = roots
+  induction roots using Multiset.induction_on with
+  | empty => simp
+  | @cons z roots ih =>
+      rw [Multiset.map_cons, Multiset.countP_cons, Multiset.countP_cons, ih]
+      congr 1
+      simp only [Metric.mem_ball, Complex.dist_eq, sub_zero, norm_mul]
+      have hinvnorm : ‖Ring.inverse (h : ℂ)‖ = h⁻¹ := by
+        rw [Ring.inverse_eq_inv, norm_inv, Complex.norm_real, Real.norm_eq_abs,
+          abs_of_pos hh]
+      rw [hinvnorm]
+      have hsub : ‖z - c‖ = dist z c := by rw [Complex.dist_eq]
+      rw [hsub]
+      have hequiv : h⁻¹ * dist z c < r ↔ dist z c < h * r :=
+        inv_mul_lt_iff₀ hh
+      by_cases hz : dist z c < h * r
+      · simp [hz, hequiv.mpr hz]
+      · have hz' : ¬h⁻¹ * dist z c < r := fun h' => hz (hequiv.mp h')
+        rw [if_neg hz', if_neg hz]
+
 /-- The executable check excludes roots from the corresponding circle about
 the original Taylor centre. -/
 theorem pelletAt_ne_zero_center {p : Hex.ZPoly} {c : Hex.GaussDyadic}
@@ -301,17 +493,475 @@ theorem pelletAt_ne_zero_center {p : Hex.ZPoly} {c : Hex.GaussDyadic}
   rw [eval_comp, eval_add, eval_X, eval_C]
   simpa only [sub_add_cancel] using hpz
 
+private theorem softWitnessAt_local {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    {k bits : Nat} (choice : SoftRadiusChoice) {r : ℝ}
+    (h : Hex.softWitnessAt p s k bits = true)
+    (hrlo : 0 ≤ Dyadic.toReal (choice.lo Hex.SoftRadii.initial))
+    (hlo : Dyadic.toReal (choice.lo Hex.SoftRadii.initial) ≤ r)
+    (hhi : r ≤ Dyadic.toReal (choice.hi Hex.SoftRadii.initial)) :
+    rootsInDisc (localPoly p s) 0 r = k := by
+  have hloop : Hex.softGraeffeLoop bits k
+      (Hex.graeffeRounds (p.degree?.getD 0))
+      (Hex.taylorBalls p s bits) Hex.SoftRadii.initial = true := by
+    simpa [Hex.softWitnessAt] using h
+  have hk := softGraeffeLoop_size hloop
+  have hp : 0 < p.size := by
+    have hsize : (Hex.taylorBalls p s bits).size = p.size := by
+      simp [Hex.taylorBalls]
+    rw [hsize] at hk
+    omega
+  exact (softGraeffeLoop_rootsInDisc choice
+    (taylorBalls_enclosePoly p s bits hp) hloop hrlo hlo hhi).2
+
+private theorem softSeededWitness_local {p : Hex.ZPoly}
+    {s : Hex.DyadicSquare} {k bits : Nat} (choice : SoftRadiusChoice) {r : ℝ}
+    (h : Hex.softSeededWitness p s k bits = true)
+    (hrlo : 0 ≤ Dyadic.toReal (choice.lo Hex.SoftRadii.initial))
+    (hlo : Dyadic.toReal (choice.lo Hex.SoftRadii.initial) ≤ r)
+    (hhi : r ≤ Dyadic.toReal (choice.hi Hex.SoftRadii.initial)) :
+    rootsInDisc (localPoly p s) 0 r = k := by
+  have hloop : Hex.softGraeffeLoop bits k
+      (Hex.graeffeRounds (p.degree?.getD 0))
+      (Hex.exactTaylorBalls p s bits) Hex.SoftRadii.initial = true := by
+    simpa [Hex.softSeededWitness] using h
+  have hk := softGraeffeLoop_size hloop
+  have hp : 0 < p.size := by
+    have hsize : (Hex.exactTaylorBalls p s bits).size = p.size := by
+      simp [Hex.exactTaylorBalls, Hex.seededTaylorBalls, Hex.taylor_size]
+    rw [hsize] at hk
+    omega
+  exact (softGraeffeLoop_rootsInDisc choice
+    (exactTaylorBalls_enclosePoly p s bits hp) hloop hrlo hlo hhi).2
+
+private theorem softWitnessAt_local_base {p : Hex.ZPoly}
+    {s : Hex.DyadicSquare} {k bits : Nat}
+    (h : Hex.softWitnessAt p s k bits = true) :
+    rootsInDisc (localPoly p s) 0 √2 = k := by
+  apply softWitnessAt_local SoftRadiusChoice.base h
+  · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
+      Dyadic.toReal_ofIntWithPrec]
+    positivity
+  · change Dyadic.toReal Hex.sqrt2Lo ≤ √2
+    exact sqrt2Lo_lt_sqrt_two.le
+  · change √2 ≤ Dyadic.toReal Hex.sqrt2Hi
+    exact sqrt_two_lt_sqrt2Hi.le
+
+private theorem softWitnessAt_local_two {p : Hex.ZPoly}
+    {s : Hex.DyadicSquare} {k bits : Nat}
+    (h : Hex.softWitnessAt p s k bits = true) :
+    rootsInDisc (localPoly p s) 0 (2 * √2) = k := by
+  apply softWitnessAt_local SoftRadiusChoice.two h
+  · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
+      Dyadic.toReal_shiftLeft, Dyadic.toReal_ofIntWithPrec]
+    positivity
+  · change Dyadic.toReal (Hex.sqrt2Lo <<< (1 : Int)) ≤ 2 * √2
+    rw [Dyadic.toReal_shiftLeft]
+    norm_num
+    nlinarith [sqrt2Lo_lt_sqrt_two]
+  · change 2 * √2 ≤ Dyadic.toReal (Hex.sqrt2Hi <<< (1 : Int))
+    rw [Dyadic.toReal_shiftLeft]
+    norm_num
+    nlinarith [sqrt_two_lt_sqrt2Hi]
+
+private theorem softWitnessAt_local_four {p : Hex.ZPoly}
+    {s : Hex.DyadicSquare} {k bits : Nat}
+    (h : Hex.softWitnessAt p s k bits = true) :
+    rootsInDisc (localPoly p s) 0 (4 * √2) = k := by
+  apply softWitnessAt_local SoftRadiusChoice.four h
+  · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
+      Dyadic.toReal_shiftLeft, Dyadic.toReal_ofIntWithPrec]
+    positivity
+  · change Dyadic.toReal (Hex.sqrt2Lo <<< (2 : Int)) ≤ 4 * √2
+    rw [Dyadic.toReal_shiftLeft]
+    norm_num
+    nlinarith [sqrt2Lo_lt_sqrt_two]
+  · change 4 * √2 ≤ Dyadic.toReal (Hex.sqrt2Hi <<< (2 : Int))
+    rw [Dyadic.toReal_shiftLeft]
+    norm_num
+    nlinarith [sqrt_two_lt_sqrt2Hi]
+
+private theorem softSeededWitness_local_base {p : Hex.ZPoly}
+    {s : Hex.DyadicSquare} {k bits : Nat}
+    (h : Hex.softSeededWitness p s k bits = true) :
+    rootsInDisc (localPoly p s) 0 √2 = k := by
+  apply softSeededWitness_local SoftRadiusChoice.base h
+  · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
+      Dyadic.toReal_ofIntWithPrec]
+    positivity
+  · change Dyadic.toReal Hex.sqrt2Lo ≤ √2
+    exact sqrt2Lo_lt_sqrt_two.le
+  · change √2 ≤ Dyadic.toReal Hex.sqrt2Hi
+    exact sqrt_two_lt_sqrt2Hi.le
+
+private theorem softSeededWitness_local_two {p : Hex.ZPoly}
+    {s : Hex.DyadicSquare} {k bits : Nat}
+    (h : Hex.softSeededWitness p s k bits = true) :
+    rootsInDisc (localPoly p s) 0 (2 * √2) = k := by
+  apply softSeededWitness_local SoftRadiusChoice.two h
+  · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
+      Dyadic.toReal_shiftLeft, Dyadic.toReal_ofIntWithPrec]
+    positivity
+  · change Dyadic.toReal (Hex.sqrt2Lo <<< (1 : Int)) ≤ 2 * √2
+    rw [Dyadic.toReal_shiftLeft]
+    norm_num
+    nlinarith [sqrt2Lo_lt_sqrt_two]
+  · change 2 * √2 ≤ Dyadic.toReal (Hex.sqrt2Hi <<< (1 : Int))
+    rw [Dyadic.toReal_shiftLeft]
+    norm_num
+    nlinarith [sqrt_two_lt_sqrt2Hi]
+
+private theorem softSeededWitness_local_four {p : Hex.ZPoly}
+    {s : Hex.DyadicSquare} {k bits : Nat}
+    (h : Hex.softSeededWitness p s k bits = true) :
+    rootsInDisc (localPoly p s) 0 (4 * √2) = k := by
+  apply softSeededWitness_local SoftRadiusChoice.four h
+  · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
+      Dyadic.toReal_shiftLeft, Dyadic.toReal_ofIntWithPrec]
+    positivity
+  · change Dyadic.toReal (Hex.sqrt2Lo <<< (2 : Int)) ≤ 4 * √2
+    rw [Dyadic.toReal_shiftLeft]
+    norm_num
+    nlinarith [sqrt2Lo_lt_sqrt_two]
+  · change 4 * √2 ≤ Dyadic.toReal (Hex.sqrt2Hi <<< (2 : Int))
+    rw [Dyadic.toReal_shiftLeft]
+    norm_num
+    nlinarith [sqrt_two_lt_sqrt2Hi]
+
+private theorem softWitnessAt_local_boundary {p : Hex.ZPoly}
+    {s : Hex.DyadicSquare} {k bits : Nat} (choice : SoftRadiusChoice) {r : ℝ}
+    (h : Hex.softWitnessAt p s k bits = true)
+    (hrlo : 0 ≤ Dyadic.toReal (choice.lo Hex.SoftRadii.initial))
+    (hlo : Dyadic.toReal (choice.lo Hex.SoftRadii.initial) ≤ r)
+    (hhi : r ≤ Dyadic.toReal (choice.hi Hex.SoftRadii.initial))
+    {z : ℂ} (hz : z ∈ sphere 0 r) : (localPoly p s).eval z ≠ 0 := by
+  have hloop : Hex.softGraeffeLoop bits k
+      (Hex.graeffeRounds (p.degree?.getD 0))
+      (Hex.taylorBalls p s bits) Hex.SoftRadii.initial = true := by
+    simpa [Hex.softWitnessAt] using h
+  have hk := softGraeffeLoop_size hloop
+  have hp : 0 < p.size := by
+    have hsize : (Hex.taylorBalls p s bits).size = p.size := by
+      simp [Hex.taylorBalls]
+    rw [hsize] at hk
+    omega
+  exact softGraeffeLoop_boundary choice
+    (taylorBalls_enclosePoly p s bits hp) hloop hrlo hlo hhi hz
+
+private theorem softSeededWitness_local_boundary {p : Hex.ZPoly}
+    {s : Hex.DyadicSquare} {k bits : Nat} (choice : SoftRadiusChoice) {r : ℝ}
+    (h : Hex.softSeededWitness p s k bits = true)
+    (hrlo : 0 ≤ Dyadic.toReal (choice.lo Hex.SoftRadii.initial))
+    (hlo : Dyadic.toReal (choice.lo Hex.SoftRadii.initial) ≤ r)
+    (hhi : r ≤ Dyadic.toReal (choice.hi Hex.SoftRadii.initial))
+    {z : ℂ} (hz : z ∈ sphere 0 r) : (localPoly p s).eval z ≠ 0 := by
+  have hloop : Hex.softGraeffeLoop bits k
+      (Hex.graeffeRounds (p.degree?.getD 0))
+      (Hex.exactTaylorBalls p s bits) Hex.SoftRadii.initial = true := by
+    simpa [Hex.softSeededWitness] using h
+  have hk := softGraeffeLoop_size hloop
+  have hp : 0 < p.size := by
+    have hsize : (Hex.exactTaylorBalls p s bits).size = p.size := by
+      simp [Hex.exactTaylorBalls, Hex.seededTaylorBalls, Hex.taylor_size]
+    rw [hsize] at hk
+    omega
+  exact softGraeffeLoop_boundary choice
+    (exactTaylorBalls_enclosePoly p s bits hp) hloop hrlo hlo hhi hz
+
+private theorem softWitnessAt_boundary_base {p : Hex.ZPoly}
+    {s : Hex.DyadicSquare} {k bits : Nat}
+    (h : Hex.softWitnessAt p s k bits = true)
+    {z : ℂ} (hz : z ∈ sphere 0 √2) : (localPoly p s).eval z ≠ 0 := by
+  apply softWitnessAt_local_boundary SoftRadiusChoice.base h _ _ _ hz
+  · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
+      Dyadic.toReal_ofIntWithPrec]
+    positivity
+  · change Dyadic.toReal Hex.sqrt2Lo ≤ √2
+    exact sqrt2Lo_lt_sqrt_two.le
+  · change √2 ≤ Dyadic.toReal Hex.sqrt2Hi
+    exact sqrt_two_lt_sqrt2Hi.le
+
+private theorem softWitnessAt_boundary_two {p : Hex.ZPoly}
+    {s : Hex.DyadicSquare} {k bits : Nat}
+    (h : Hex.softWitnessAt p s k bits = true)
+    {z : ℂ} (hz : z ∈ sphere 0 (2 * √2)) : (localPoly p s).eval z ≠ 0 := by
+  apply softWitnessAt_local_boundary SoftRadiusChoice.two h _ _ _ hz
+  · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
+      Dyadic.toReal_shiftLeft, Dyadic.toReal_ofIntWithPrec]
+    positivity
+  · change Dyadic.toReal (Hex.sqrt2Lo <<< (1 : Int)) ≤ 2 * √2
+    rw [Dyadic.toReal_shiftLeft]
+    norm_num
+    nlinarith [sqrt2Lo_lt_sqrt_two]
+  · change 2 * √2 ≤ Dyadic.toReal (Hex.sqrt2Hi <<< (1 : Int))
+    rw [Dyadic.toReal_shiftLeft]
+    norm_num
+    nlinarith [sqrt_two_lt_sqrt2Hi]
+
+private theorem softWitnessAt_boundary_four {p : Hex.ZPoly}
+    {s : Hex.DyadicSquare} {k bits : Nat}
+    (h : Hex.softWitnessAt p s k bits = true)
+    {z : ℂ} (hz : z ∈ sphere 0 (4 * √2)) : (localPoly p s).eval z ≠ 0 := by
+  apply softWitnessAt_local_boundary SoftRadiusChoice.four h _ _ _ hz
+  · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
+      Dyadic.toReal_shiftLeft, Dyadic.toReal_ofIntWithPrec]
+    positivity
+  · change Dyadic.toReal (Hex.sqrt2Lo <<< (2 : Int)) ≤ 4 * √2
+    rw [Dyadic.toReal_shiftLeft]
+    norm_num
+    nlinarith [sqrt2Lo_lt_sqrt_two]
+  · change 4 * √2 ≤ Dyadic.toReal (Hex.sqrt2Hi <<< (2 : Int))
+    rw [Dyadic.toReal_shiftLeft]
+    norm_num
+    nlinarith [sqrt_two_lt_sqrt2Hi]
+
+private theorem softSeededWitness_boundary_base {p : Hex.ZPoly}
+    {s : Hex.DyadicSquare} {k bits : Nat}
+    (h : Hex.softSeededWitness p s k bits = true)
+    {z : ℂ} (hz : z ∈ sphere 0 √2) : (localPoly p s).eval z ≠ 0 := by
+  apply softSeededWitness_local_boundary SoftRadiusChoice.base h _ _ _ hz
+  · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
+      Dyadic.toReal_ofIntWithPrec]
+    positivity
+  · change Dyadic.toReal Hex.sqrt2Lo ≤ √2
+    exact sqrt2Lo_lt_sqrt_two.le
+  · change √2 ≤ Dyadic.toReal Hex.sqrt2Hi
+    exact sqrt_two_lt_sqrt2Hi.le
+
+private theorem softSeededWitness_boundary_two {p : Hex.ZPoly}
+    {s : Hex.DyadicSquare} {k bits : Nat}
+    (h : Hex.softSeededWitness p s k bits = true)
+    {z : ℂ} (hz : z ∈ sphere 0 (2 * √2)) : (localPoly p s).eval z ≠ 0 := by
+  apply softSeededWitness_local_boundary SoftRadiusChoice.two h _ _ _ hz
+  · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
+      Dyadic.toReal_shiftLeft, Dyadic.toReal_ofIntWithPrec]
+    positivity
+  · change Dyadic.toReal (Hex.sqrt2Lo <<< (1 : Int)) ≤ 2 * √2
+    rw [Dyadic.toReal_shiftLeft]
+    norm_num
+    nlinarith [sqrt2Lo_lt_sqrt_two]
+  · change 2 * √2 ≤ Dyadic.toReal (Hex.sqrt2Hi <<< (1 : Int))
+    rw [Dyadic.toReal_shiftLeft]
+    norm_num
+    nlinarith [sqrt_two_lt_sqrt2Hi]
+
+private theorem softSeededWitness_boundary_four {p : Hex.ZPoly}
+    {s : Hex.DyadicSquare} {k bits : Nat}
+    (h : Hex.softSeededWitness p s k bits = true)
+    {z : ℂ} (hz : z ∈ sphere 0 (4 * √2)) : (localPoly p s).eval z ≠ 0 := by
+  apply softSeededWitness_local_boundary SoftRadiusChoice.four h _ _ _ hz
+  · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
+      Dyadic.toReal_shiftLeft, Dyadic.toReal_ofIntWithPrec]
+    positivity
+  · change Dyadic.toReal (Hex.sqrt2Lo <<< (2 : Int)) ≤ 4 * √2
+    rw [Dyadic.toReal_shiftLeft]
+    norm_num
+    nlinarith [sqrt2Lo_lt_sqrt_two]
+  · change 4 * √2 ≤ Dyadic.toReal (Hex.sqrt2Hi <<< (2 : Int))
+    rw [Dyadic.toReal_shiftLeft]
+    norm_num
+    nlinarith [sqrt_two_lt_sqrt2Hi]
+
+/-- Boundary nonvanishing in local coordinates pulls back through the affine
+square normalization. -/
+private theorem localPoly_boundary_center {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    {r : ℝ} (hlocal : ∀ {w : ℂ}, w ∈ sphere 0 r → (localPoly p s).eval w ≠ 0)
+    {z : ℂ}
+    (hz : z ∈ sphere (DyadicSquare.center s)
+      (Dyadic.toReal (.ofIntWithPrec 1 s.prec) * r)) :
+    (toPolyℂ p).eval z ≠ 0 := by
+  let h : ℝ := Dyadic.toReal (.ofIntWithPrec 1 s.prec)
+  let c : ℂ := DyadicSquare.center s
+  have hh : 0 < h := by
+    simp only [h, Dyadic.toReal_ofIntWithPrec]
+    positivity
+  have hhℂ : (h : ℂ) ≠ 0 := by exact_mod_cast hh.ne'
+  let w : ℂ := (h : ℂ)⁻¹ * (z - c)
+  have hw : w ∈ sphere 0 r := by
+    simp only [mem_sphere, dist_zero_right, w, norm_mul, norm_inv,
+      Complex.norm_real, Real.norm_eq_abs, abs_of_pos hh]
+    have hzdist : dist z c = h * r := by
+      simpa only [mem_sphere, c, h] using hz
+    rw [show ‖z - c‖ = dist z c by rw [Complex.dist_eq], hzdist]
+    field_simp
+  have hwarg : (h : ℂ) * w + c = z := by
+    dsimp only [w]
+    rw [← mul_assoc, mul_inv_cancel₀ hhℂ, one_mul]
+    ring
+  have heval : (localPoly p s).eval w = (toPolyℂ p).eval z := by
+    unfold localPoly
+    rw [eval_comp, eval_add, eval_mul, eval_C, eval_X, eval_C]
+    simpa only [h, c, DyadicSquare.center_eq] using
+      congrArg (toPolyℂ p).eval hwarg
+  intro hpz
+  exact hlocal hw (heval.trans hpz)
+
 namespace PelletWitness
+
+/-- The public witness is either the bounded-precision Graeffe path or the
+exact Taylor fallback. -/
+theorem witness_cases {p : Hex.ZPoly} {s : Hex.DyadicSquare} {k : Nat}
+    (h : Hex.witness p s k) :
+    Hex.softWitnessCheck p s k = true ∨
+      Hex.TaylorShift.witnessCheck s
+        (Hex.TaylorShift.compute p s.center) k = true := by
+  unfold Hex.witness Hex.witnessCheck Hex.TaylorShift.combinedWitnessCheck at h
+  by_cases hprec : s.prec < 32
+  · rw [if_pos hprec] at h
+    rw [Hex.TaylorShift.softWitnessCheck_eq] at h
+    have hor : Hex.TaylorShift.witnessCheck s
+        (Hex.TaylorShift.compute p s.center) k = true ∨
+        Hex.softWitnessCheck p s k = true := by
+      simpa only [Bool.or_eq_true] using h
+    rcases hor with hexact | hsoft
+    · exact Or.inr hexact
+    · exact Or.inl hsoft
+  · rw [if_neg hprec] at h
+    rw [Hex.TaylorShift.softWitnessCheck_eq] at h
+    simpa only [Bool.or_eq_true] using h
+
+private theorem softWitnessCheck_cases {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    {k : Nat} (h : Hex.softWitnessCheck p s k = true) :
+    (Hex.softWitnessAt p s k 64 = true ∨
+      Hex.softWitnessAt p s k 128 = true ∨
+      Hex.softWitnessAt p s k 256 = true) ∨
+      Hex.softSeededWitness p s k 64 = true := by
+  by_cases hprec : s.prec < 32
+  · have hor : Hex.softSeededWitness p s k 64 = true ∨
+        Hex.softWitnessAt p s k 64 = true ∨
+        Hex.softWitnessAt p s k 128 = true ∨
+        Hex.softWitnessAt p s k 256 = true := by
+      simpa [Hex.softWitnessCheck, Hex.TaylorShift.softWitnessCheck,
+        Hex.TaylorShift.softSeededWitness_eq, Hex.softPrecisions, hprec] using h
+    rcases hor with hseeded | hsoft
+    · exact Or.inr hseeded
+    · exact Or.inl hsoft
+  · simpa [Hex.softWitnessCheck, Hex.TaylorShift.softWitnessCheck,
+      Hex.TaylorShift.softSeededWitness_eq, Hex.softPrecisions, hprec] using h
+
+private theorem soft_local_base {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    {k : Nat} (h : Hex.softWitnessCheck p s k = true) :
+    rootsInDisc (localPoly p s) 0 √2 = k := by
+  rcases softWitnessCheck_cases h with (h | h | h) | h
+  · exact softWitnessAt_local_base h
+  · exact softWitnessAt_local_base h
+  · exact softWitnessAt_local_base h
+  · exact softSeededWitness_local_base h
+
+private theorem soft_local_two {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    {k : Nat} (h : Hex.softWitnessCheck p s k = true) :
+    rootsInDisc (localPoly p s) 0 (2 * √2) = k := by
+  rcases softWitnessCheck_cases h with (h | h | h) | h
+  · exact softWitnessAt_local_two h
+  · exact softWitnessAt_local_two h
+  · exact softWitnessAt_local_two h
+  · exact softSeededWitness_local_two h
+
+private theorem soft_local_four {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    {k : Nat} (h : Hex.softWitnessCheck p s k = true) :
+    rootsInDisc (localPoly p s) 0 (4 * √2) = k := by
+  rcases softWitnessCheck_cases h with (h | h | h) | h
+  · exact softWitnessAt_local_four h
+  · exact softWitnessAt_local_four h
+  · exact softWitnessAt_local_four h
+  · exact softSeededWitness_local_four h
+
+private theorem soft_local_boundary_base {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    {k : Nat} (h : Hex.softWitnessCheck p s k = true)
+    {z : ℂ} (hz : z ∈ sphere 0 √2) : (localPoly p s).eval z ≠ 0 := by
+  rcases softWitnessCheck_cases h with (h | h | h) | h
+  · exact softWitnessAt_boundary_base h hz
+  · exact softWitnessAt_boundary_base h hz
+  · exact softWitnessAt_boundary_base h hz
+  · exact softSeededWitness_boundary_base h hz
+
+private theorem soft_local_boundary_two {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    {k : Nat} (h : Hex.softWitnessCheck p s k = true)
+    {z : ℂ} (hz : z ∈ sphere 0 (2 * √2)) : (localPoly p s).eval z ≠ 0 := by
+  rcases softWitnessCheck_cases h with (h | h | h) | h
+  · exact softWitnessAt_boundary_two h hz
+  · exact softWitnessAt_boundary_two h hz
+  · exact softWitnessAt_boundary_two h hz
+  · exact softSeededWitness_boundary_two h hz
+
+private theorem soft_local_boundary_four {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    {k : Nat} (h : Hex.softWitnessCheck p s k = true)
+    {z : ℂ} (hz : z ∈ sphere 0 (4 * √2)) : (localPoly p s).eval z ≠ 0 := by
+  rcases softWitnessCheck_cases h with (h | h | h) | h
+  · exact softWitnessAt_boundary_four h hz
+  · exact softWitnessAt_boundary_four h hz
+  · exact softWitnessAt_boundary_four h hz
+  · exact softSeededWitness_boundary_four h hz
+
+/-- A successful soft Graeffe check certifies the base circumscribed disc. -/
+theorem soft_roots {p : Hex.ZPoly} {s : Hex.DyadicSquare} {k : Nat}
+    (h : Hex.softWitnessCheck p s k = true) :
+    rootsInDisc (toPolyℂ p) (DyadicSquare.center s)
+      (DyadicSquare.radius s) = k := by
+  have hlocal := soft_local_base h
+  rw [rootsInDisc_localPoly] at hlocal
+  convert hlocal using 1
+  simp only [DyadicSquare.radius_eq, Dyadic.toReal_ofIntWithPrec]
+  ring_nf
+
+/-- A successful soft Graeffe check certifies the doubled disc. -/
+theorem soft_roots_two {p : Hex.ZPoly} {s : Hex.DyadicSquare} {k : Nat}
+    (h : Hex.softWitnessCheck p s k = true) :
+    rootsInDisc (toPolyℂ p) (DyadicSquare.center s)
+      (2 * DyadicSquare.radius s) = k := by
+  have hlocal := soft_local_two h
+  rw [rootsInDisc_localPoly] at hlocal
+  convert hlocal using 1
+  simp only [DyadicSquare.radius_eq, Dyadic.toReal_ofIntWithPrec]
+  ring_nf
+
+/-- A successful soft Graeffe check certifies the quadrupled disc. -/
+theorem soft_roots_four {p : Hex.ZPoly} {s : Hex.DyadicSquare} {k : Nat}
+    (h : Hex.softWitnessCheck p s k = true) :
+    rootsInDisc (toPolyℂ p) (DyadicSquare.center s)
+      (4 * DyadicSquare.radius s) = k := by
+  have hlocal := soft_local_four h
+  rw [rootsInDisc_localPoly] at hlocal
+  convert hlocal using 1
+  simp only [DyadicSquare.radius_eq, Dyadic.toReal_ofIntWithPrec]
+  ring_nf
+
+private theorem soft_boundary {p : Hex.ZPoly} {s : Hex.DyadicSquare} {k : Nat}
+    (h : Hex.softWitnessCheck p s k = true) {z : ℂ}
+    (hz : z ∈ sphere (DyadicSquare.center s) (DyadicSquare.radius s)) :
+    (toPolyℂ p).eval z ≠ 0 := by
+  apply localPoly_boundary_center (fun hz' => soft_local_boundary_base h hz')
+  convert hz using 1
+  simp only [DyadicSquare.radius_eq, Dyadic.toReal_ofIntWithPrec]
+  ring_nf
+
+private theorem soft_boundary_two {p : Hex.ZPoly} {s : Hex.DyadicSquare} {k : Nat}
+    (h : Hex.softWitnessCheck p s k = true) {z : ℂ}
+    (hz : z ∈ sphere (DyadicSquare.center s) (2 * DyadicSquare.radius s)) :
+    (toPolyℂ p).eval z ≠ 0 := by
+  apply localPoly_boundary_center (fun hz' => soft_local_boundary_two h hz')
+  convert hz using 1
+  simp only [DyadicSquare.radius_eq, Dyadic.toReal_ofIntWithPrec]
+  ring_nf
+
+private theorem soft_boundary_four {p : Hex.ZPoly} {s : Hex.DyadicSquare} {k : Nat}
+    (h : Hex.softWitnessCheck p s k = true) {z : ℂ}
+    (hz : z ∈ sphere (DyadicSquare.center s) (4 * DyadicSquare.radius s)) :
+    (toPolyℂ p).eval z ≠ 0 := by
+  apply localPoly_boundary_center (fun hz' => soft_local_boundary_four h hz')
+  convert hz using 1
+  simp only [DyadicSquare.radius_eq, Dyadic.toReal_ofIntWithPrec]
+  ring_nf
 
 /-- The three Boolean checks contained in an executable witness. -/
 theorem checks {p : Hex.ZPoly} {s : Hex.DyadicSquare} {k : ℕ}
-    (h : Hex.witness p s k) :
+    (h : Hex.TaylorShift.witnessCheck s
+      (Hex.TaylorShift.compute p s.center) k = true) :
     (Hex.pelletAt (Hex.taylor p s.center) k s.radiusLo s.radiusHi = true ∧
       Hex.pelletAt (Hex.taylor p s.center) k
         (s.radiusLo <<< (1 : Int)) (s.radiusHi <<< (1 : Int)) = true) ∧
       Hex.pelletAt (Hex.taylor p s.center) k
         (s.radiusLo <<< (2 : Int)) (s.radiusHi <<< (2 : Int)) = true := by
-  unfold Hex.witness Hex.witnessCheck at h
+  unfold Hex.TaylorShift.witnessCheck Hex.TaylorShift.compute at h
   simpa only [Bool.and_eq_true] using h
 
 private theorem radiusLo_nonneg (s : Hex.DyadicSquare) :
@@ -372,56 +1022,68 @@ circumscribed open disc. -/
 theorem roots {p : Hex.ZPoly} {s : Hex.DyadicSquare} {k : ℕ}
     (h : Hex.witness p s k) :
     rootsInDisc (toPolyℂ p) (DyadicSquare.center s) (DyadicSquare.radius s) = k := by
-  have hs := pelletAt_rootsInDisc (checks h).1.1 (radiusLo_nonneg s)
-    (DyadicSquare.radiusLo_lt_radius s).le
-    (DyadicSquare.radius_lt_radiusHi s).le
-  simpa only [DyadicSquare.center_eq, rootsInDisc_comp_X_add_C] using hs
+  rcases witness_cases h with hsoft | hexact
+  · exact soft_roots hsoft
+  · have hs := pelletAt_rootsInDisc (checks hexact).1.1 (radiusLo_nonneg s)
+      (DyadicSquare.radiusLo_lt_radius s).le
+      (DyadicSquare.radius_lt_radiusHi s).le
+    simpa only [DyadicSquare.center_eq, rootsInDisc_comp_X_add_C] using hs
 
 /-- The second check certifies the same root count in the doubled disc. -/
 theorem roots_two {p : Hex.ZPoly} {s : Hex.DyadicSquare} {k : ℕ}
     (h : Hex.witness p s k) :
     rootsInDisc (toPolyℂ p) (DyadicSquare.center s)
       (2 * DyadicSquare.radius s) = k := by
-  have hs := pelletAt_rootsInDisc (checks h).1.2 (radiusLo_two_nonneg s)
-    (radiusLo_two_le s) (radius_two_le_hi s)
-  simpa only [DyadicSquare.center_eq, rootsInDisc_comp_X_add_C] using hs
+  rcases witness_cases h with hsoft | hexact
+  · exact soft_roots_two hsoft
+  · have hs := pelletAt_rootsInDisc (checks hexact).1.2 (radiusLo_two_nonneg s)
+      (radiusLo_two_le s) (radius_two_le_hi s)
+    simpa only [DyadicSquare.center_eq, rootsInDisc_comp_X_add_C] using hs
 
 /-- The third check certifies the same root count in the quadrupled disc. -/
 theorem roots_four {p : Hex.ZPoly} {s : Hex.DyadicSquare} {k : ℕ}
     (h : Hex.witness p s k) :
     rootsInDisc (toPolyℂ p) (DyadicSquare.center s)
       (4 * DyadicSquare.radius s) = k := by
-  have hs := pelletAt_rootsInDisc (checks h).2 (radiusLo_four_nonneg s)
-    (radiusLo_four_le s) (radius_four_le_hi s)
-  simpa only [DyadicSquare.center_eq, rootsInDisc_comp_X_add_C] using hs
+  rcases witness_cases h with hsoft | hexact
+  · exact soft_roots_four hsoft
+  · have hs := pelletAt_rootsInDisc (checks hexact).2 (radiusLo_four_nonneg s)
+      (radiusLo_four_le s) (radius_four_le_hi s)
+    simpa only [DyadicSquare.center_eq, rootsInDisc_comp_X_add_C] using hs
 
 /-- The strict base-radius inequality excludes boundary roots. -/
 theorem boundary {p : Hex.ZPoly} {s : Hex.DyadicSquare} {k : ℕ}
     (h : Hex.witness p s k) {z : ℂ}
     (hz : z ∈ sphere (DyadicSquare.center s) (DyadicSquare.radius s)) :
     (toPolyℂ p).eval z ≠ 0 := by
-  apply pelletAt_ne_zero_center (checks h).1.1 (radiusLo_nonneg s)
-    (DyadicSquare.radiusLo_lt_radius s).le
-    (DyadicSquare.radius_lt_radiusHi s).le
-  simpa only [DyadicSquare.center_eq] using hz
+  rcases witness_cases h with hsoft | hexact
+  · exact soft_boundary hsoft hz
+  · apply pelletAt_ne_zero_center (checks hexact).1.1 (radiusLo_nonneg s)
+      (DyadicSquare.radiusLo_lt_radius s).le
+      (DyadicSquare.radius_lt_radiusHi s).le
+    simpa only [DyadicSquare.center_eq] using hz
 
 /-- The doubled-radius inequality excludes boundary roots. -/
 theorem boundary_two {p : Hex.ZPoly} {s : Hex.DyadicSquare} {k : ℕ}
     (h : Hex.witness p s k) {z : ℂ}
     (hz : z ∈ sphere (DyadicSquare.center s) (2 * DyadicSquare.radius s)) :
     (toPolyℂ p).eval z ≠ 0 := by
-  apply pelletAt_ne_zero_center (checks h).1.2 (radiusLo_two_nonneg s)
-    (radiusLo_two_le s) (radius_two_le_hi s)
-  simpa only [DyadicSquare.center_eq] using hz
+  rcases witness_cases h with hsoft | hexact
+  · exact soft_boundary_two hsoft hz
+  · apply pelletAt_ne_zero_center (checks hexact).1.2 (radiusLo_two_nonneg s)
+      (radiusLo_two_le s) (radius_two_le_hi s)
+    simpa only [DyadicSquare.center_eq] using hz
 
 /-- The quadrupled-radius inequality excludes boundary roots. -/
 theorem boundary_four {p : Hex.ZPoly} {s : Hex.DyadicSquare} {k : ℕ}
     (h : Hex.witness p s k) {z : ℂ}
     (hz : z ∈ sphere (DyadicSquare.center s) (4 * DyadicSquare.radius s)) :
     (toPolyℂ p).eval z ≠ 0 := by
-  apply pelletAt_ne_zero_center (checks h).2 (radiusLo_four_nonneg s)
-    (radiusLo_four_le s) (radius_four_le_hi s)
-  simpa only [DyadicSquare.center_eq] using hz
+  rcases witness_cases h with hsoft | hexact
+  · exact soft_boundary_four hsoft hz
+  · apply pelletAt_ne_zero_center (checks hexact).2 (radiusLo_four_nonneg s)
+      (radiusLo_four_le s) (radius_four_le_hi s)
+    simpa only [DyadicSquare.center_eq] using hz
 
 /-- The `k = 1` Pellet disjunct certifies one interior simple root, unique in
 the closed circumscribed disc. -/

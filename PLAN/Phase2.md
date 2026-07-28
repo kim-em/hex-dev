@@ -95,7 +95,7 @@ GitHub issues flagging gaps. This may take multiple sessions per library.
 
 For library `hex-foo`, Phase 2 is done when a reviewer *agent* (not
 the author of the scaffolding) has read the scaffolded code against
-`SPEC/Libraries/hex-foo.md`, opened follow-up issues for any gaps it
+`HexFoo/SPEC/hex-foo.md`, opened follow-up issues for any gaps it
 identifies, and committed a machine-checkable token file
 `status/hex-foo.scaffolding-reviewed` recording that the review has
 been performed.

@@ -794,9 +794,9 @@ theorem modPFactorSubset_disjoint_of_modPFactorization
 
 The two lemmas below feed `squareFreeCore_irreducible_of_small_mod_singleton`
 its `hprim` and `hlc_map_ne` side-conditions from the executable invariants
-that `normalizeForFactor` and `choosePrimeData?` already maintain. They
-form the base lemmas for the small-mod singleton arm of the HO-1 capstone
-`factorize_irreducible_of_nonUnit` (issue #4170, decomposed in #4544).
+that `normalizeForFactor` and `choosePrimeData?` already maintain. They are the
+base lemmas for the small-mod singleton arm of
+`factorize_irreducible_of_nonUnit`.
 -/
 
 /--
@@ -1288,7 +1288,6 @@ discharges the saturating case by combining char-0 with separability
 The coprime case uses the `GCDMonoid` lemma `dvd_gcd_mul_of_dvd_mul`
 applied twice to factor divisibility through component gcds, then chains
 each component to the inductive hypothesis via `IsCoprime.dvd_of_dvd_mul_right`.
-No new `axiom`, `native_decide`, `sorry`, `TODO`, or `FIXME`.
 -/
 theorem Polynomial.gcd_derivative_associated_divRadical_of_charZero
     {K : Type*} [Field K] [DecidableEq K] [CharZero K]

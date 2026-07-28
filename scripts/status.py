@@ -5,7 +5,15 @@ from pathlib import Path
 import subprocess
 import sys
 
-from libgraph import RELEASE_LIBRARIES, check_lakefile_alignment, load_lakefile_libs, load_libraries, pascal_to_spec_path
+from libgraph import (
+    RELEASE_LIBRARIES,
+    check_lakefile_alignment,
+    load_lakefile_libs,
+    load_libraries,
+    pascal_to_spec_path,
+    reachable_dependencies,
+    topological_order,
+)
 
 
 PHASE_NAMES = {
@@ -69,10 +77,16 @@ def check_release(root: Path, release: int, libraries) -> int:
     if release not in RELEASE_LIBRARIES:
         print(f"unknown release: {release}", file=sys.stderr)
         return 1
-    required = RELEASE_LIBRARIES[release]
+    roots = RELEASE_LIBRARIES[release]
+    closure = reachable_dependencies(libraries)
+    required_names = set(roots)
+    for name in roots:
+        required_names.update(closure[name])
+    required = [name for name in topological_order(libraries) if name in required_names]
     missing = [name for name in required if not libraries[name].is_active or libraries[name].done_through < 7]
     example = root / "Examples" / f"Release{release}.lean"
     print(f"Release {release}")
+    print(f"libraries (including transitive dependencies): {len(required)}")
     if missing:
         print("missing libraries:")
         for name in missing:
@@ -85,6 +99,7 @@ def check_release(root: Path, release: int, libraries) -> int:
         print("missing libraries: none")
     print(f"integration example: {example.relative_to(root)}")
     print(f"exists: {'yes' if example.exists() else 'no'}")
+    example_builds = False
     if example.exists():
         result = subprocess.run(
             ["lake", "build", f"+Examples.Release{release}"],
@@ -94,12 +109,13 @@ def check_release(root: Path, release: int, libraries) -> int:
             text=True,
             check=False,
         )
-        print(f"builds: {'yes' if result.returncode == 0 else 'no'}")
+        example_builds = result.returncode == 0
+        print(f"builds: {'yes' if example_builds else 'no'}")
         if result.returncode != 0:
             print(result.stdout.rstrip())
     else:
         print("builds: no")
-    ready = not missing and example.exists()
+    ready = not missing and example_builds
     print(f"ready: {'yes' if ready else 'no'}")
     return 0
 

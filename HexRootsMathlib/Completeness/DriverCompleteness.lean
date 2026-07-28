@@ -41,6 +41,22 @@ namespace Worklist
 
 end Worklist
 
+private theorem worklist_covers_iff_region {p : Hex.ZPoly}
+    {work : Array Hex.Component} :
+    Worklist.Covers p work ↔
+      ∀ z, (toPolyℂ p).IsRoot z → z ∈ Worklist.region work := by
+  constructor
+  · intro hcover z hzroot
+    obtain ⟨s, hs, hzs⟩ := hcover z hzroot
+    rw [Worklist.squares, Array.toList_flatMap, List.mem_flatMap] at hs
+    obtain ⟨c, hc, hsc⟩ := hs
+    exact ⟨c, hc, s, hsc, hzs⟩
+  · intro hregion z hzroot
+    obtain ⟨c, hc, s, hs, hzs⟩ := hregion z hzroot
+    refine ⟨s, ?_, hzs⟩
+    rw [Worklist.squares, Array.toList_flatMap, List.mem_flatMap]
+    exact ⟨c, hc, hs⟩
+
 @[simp] private theorem encSquare_singleton (s : Hex.DyadicSquare) :
     Hex.encSquare #[s] = s := by
   cases s with
@@ -80,15 +96,38 @@ private theorem discInside_prec {inner outer : Hex.DyadicSquare}
     simpa [Hex.DyadicSquare.discInside] using of_decide_eq_true h
   exact hdata.1
 
-/-- A checked `k = 1` Pellet base makes the first individual attempt return
-an atom, and speculative recentring cannot reduce its stored precision. -/
-private theorem certifyPelletAt_one {p : Hex.ZPoly} {c : Hex.Component}
-    (hbase : Hex.witness p (Hex.encSquare c.squares) 1) :
+/-- A checked exact `k = 1` Pellet base makes the first individual attempt
+return an atom, and speculative recentring cannot reduce its stored precision. -/
+private theorem exactPellet_one {p : Hex.ZPoly} {c : Hex.Component}
+    (hbase : Hex.TaylorShift.witnessCheck (Hex.encSquare c.squares)
+      (Hex.TaylorShift.compute p (Hex.encSquare c.squares).center) 1 = true) :
     ∃ iso : Hex.DyadicRootIsolation p,
-      Hex.Component.certifyPelletAt? p c 1 = some (.atom iso) ∧
+      Hex.Component.certifyPelletExactAt? p c
+        (Hex.TaylorShift.compute p (Hex.encSquare c.squares).center) 1 =
+          some (.atom iso) ∧
         (Hex.encSquare c.squares).prec ≤ iso.square.prec := by
-  simp only [Hex.witness] at hbase
-  simp only [Hex.Component.certifyPelletAt?, Nat.zero_lt_one, ↓reduceDIte, hbase]
+  unfold Hex.Component.certifyPelletExactAt?
+  simp only [Nat.zero_lt_one, ↓reduceDIte, hbase]
+  split <;> rename_i hins
+  · split <;> rename_i hcand
+    · refine ⟨_, rfl, ?_⟩
+      exact discInside_prec hins
+    · exact ⟨_, rfl, le_rfl⟩
+  · exact ⟨_, rfl, le_rfl⟩
+
+/-- A checked combined `k = 1` Pellet base makes the fast cached-shift
+certifier return an atom, and speculative recentring cannot reduce its stored
+precision. -/
+private theorem certifyPelletAt_one {p : Hex.ZPoly} {c : Hex.Component}
+    (hbase : Hex.TaylorShift.combinedWitnessCheck (Hex.encSquare c.squares)
+      (Hex.TaylorShift.compute p (Hex.encSquare c.squares).center) 1 = true) :
+    ∃ iso : Hex.DyadicRootIsolation p,
+      Hex.Component.certifyPelletAtShift? p c
+        (Hex.TaylorShift.compute p (Hex.encSquare c.squares).center) 1 =
+          some (.atom iso) ∧
+        (Hex.encSquare c.squares).prec ≤ iso.square.prec := by
+  unfold Hex.Component.certifyPelletAtShift?
+  simp only [Nat.zero_lt_one, ↓reduceDIte, hbase]
   split <;> rename_i hins
   · split <;> rename_i hcand
     · refine ⟨_, rfl, ?_⟩
@@ -99,7 +138,8 @@ private theorem certifyPelletAt_one {p : Hex.ZPoly} {c : Hex.Component}
 private theorem newtonCandidate_prec {p : Hex.ZPoly} {s : Hex.DyadicSquare}
     (hsize : 1 < p.size) :
     s.prec ≤ (Hex.newtonSquare p s 1).doubled.prec := by
-  simp [Hex.newtonSquare, Hex.taylor_size, show ¬p.size < 2 by omega]
+  simp [Hex.newtonSquare, Hex.TaylorShift.newtonSquare,
+    Hex.TaylorShift.compute, Hex.taylor_size, show ¬p.size < 2 by omega]
 
 /-- A checked NK base makes the NK-only prefix return an atom without losing
 stored precision. -/
@@ -300,7 +340,7 @@ theorem refineAll_component_root {p : Hex.ZPoly}
   · exact hcomponent
 
 /-- A root-bearing maximal survivor component has enough uniform recentring
-margin on its quadrupled enclosing square for the executable Pellet witness.
+margin on its quadrupled enclosing square for the exact Taylor Pellet witness.
 Five leaf levels pay for the enclosing-square loss and quadrupling while the
 implemented separation slack controls the remote-root tail. -/
 theorem witness_quadrupled_of_glueCovered {p : Hex.ZPoly}
@@ -313,7 +353,9 @@ theorem witness_quadrupled_of_glueCovered {p : Hex.ZPoly}
     (hc : component ∈ (Hex.glueCovered squares).toList)
     (hzroot : (toPolyℂ p).IsRoot z)
     (hzcomponent : z ∈ Component.region ⟨component, 1⟩) :
-    Hex.witness p (Hex.encSquare component).doubled.doubled 1 := by
+    Hex.TaylorShift.witnessCheck (Hex.encSquare component).doubled.doubled
+      (Hex.TaylorShift.compute p
+        (Hex.encSquare component).doubled.doubled.center) 1 = true := by
   let f := toPolyℂ p
   let enc := Hex.encSquare component
   let wide := enc.doubled.doubled
@@ -407,7 +449,7 @@ theorem witness_quadrupled_of_glueCovered {p : Hex.ZPoly}
         _ = f.natDegree := (IsAlgClosed.splits f).natDegree_eq_card_roots.symm
         _ = p.degree?.getD 0 := by simpa [f] using natDegree_toPolyℂ p
     exact (by omega : roots.card ≤ p.degree?.getD 0).trans (Nat.le_max_right _ _)
-  apply witness_one_of_roots hp hsize hrootsEq hd hremote
+  apply exactWitness_one_of_roots hp hsize hrootsEq hd hremote
   intro j hj
   let L := (2 : ℝ) ^ (j : Int)
   have hLpos : 0 < L := by dsimp [L]; positivity
@@ -467,6 +509,48 @@ theorem witness_quadrupled_of_glueCovered {p : Hex.ZPoly}
     ((13 / 4 : ℝ) * rhi) * (1 / 96) at hprod
   nlinarith
 
+private theorem softPellet_atom_of_one {p : Hex.ZPoly}
+    {c : Hex.Component}
+    {shift : Hex.TaylorShift p (Hex.encSquare c.squares).center}
+    {ks : List Nat} {r : Hex.Certified p}
+    (hone : Hex.witness p (Hex.encSquare c.squares) 1)
+    (hcert : Hex.Component.certifyPelletSoft? p c shift ks = some r) :
+    ∃ iso : Hex.DyadicRootIsolation p,
+      r = .atom iso ∧ iso.square = Hex.encSquare c.squares := by
+  let enc := Hex.encSquare c.squares
+  unfold Hex.Component.certifyPelletSoft? at hcert
+  dsimp only at hcert
+  split at hcert
+  · split at hcert <;> rename_i hcand
+    · simp at hcert
+    · rename_i k
+      have hpublic : Hex.softRefinementCandidate? p enc ks = some k := by
+        rw [← shift.softRefinementCandidate?_eq enc ks]
+        exact hcand
+      have hs := Hex.softRefinementCandidate?_sound hpublic
+      have hw : Hex.witness p enc k := by
+        unfold Hex.witness Hex.witnessCheck
+        have hs' : Hex.softWitnessCheck p enc k = true := by
+          simpa only [enc] using hs.2
+        have hsCached :
+            (Hex.TaylorShift.compute p enc.center).softWitnessCheck enc k = true := by
+          rw [Hex.TaylorShift.softWitnessCheck_eq]
+          exact hs'
+        by_cases hprec : enc.prec < 32 <;>
+          simp [Hex.TaylorShift.combinedWitnessCheck, hprec, hsCached]
+      have hk : k = 1 := by
+        have hroots := PelletWitness.roots hw
+        have hrootsOne := PelletWitness.roots hone
+        simpa only [enc] using hroots.symm.trans hrootsOne
+      subst k
+      let cl : Hex.DyadicRootCluster p := ⟨c.squares, 1, by omega, hw⟩
+      simp at hcert
+      have hr : r = .atom (cl.atomize rfl) := by
+        simpa only [cl] using hcert.symm
+      subst r
+      exact ⟨cl.atomize rfl, rfl, rfl⟩
+  · simp at hcert
+
 /-- At the globally normalized completeness depth, the Pellet-only strategy's
 first candidate is the root-bearing `k = 1` witness.  It therefore returns a
 target-ready atom, whether or not the guarded speculative step is adopted. -/
@@ -487,18 +571,41 @@ theorem certify_pellet_of_glueCovered {p : Hex.ZPoly}
   let enc := Hex.encSquare component
   let wide := enc.doubled.doubled
   let wc : Hex.Component := ⟨#[wide], 1⟩
-  have hwitness : Hex.witness p wide 1 := by
+  have hexactWitness : Hex.TaylorShift.witnessCheck wide
+      (Hex.TaylorShift.compute p wide.center) 1 = true := by
     simpa [enc, wide] using witness_quadrupled_of_glueCovered hp hsize hsep
       hdepth hprec hkeep hc hzroot hzcomponent
+  have hwitness : Hex.witness p wide 1 := by
+    unfold Hex.witness Hex.witnessCheck Hex.TaylorShift.combinedWitnessCheck
+    simp [hexactWitness]
+  have hexactWitness' : Hex.TaylorShift.witnessCheck (Hex.encSquare wc.squares)
+      (Hex.TaylorShift.compute p (Hex.encSquare wc.squares).center) 1 = true := by
+    change Hex.TaylorShift.witnessCheck (Hex.encSquare #[wide])
+      (Hex.TaylorShift.compute p (Hex.encSquare #[wide]).center) 1 = true
+    rw [encSquare_singleton]
+    exact hexactWitness
   have hwitness' : Hex.witness p (Hex.encSquare wc.squares) 1 := by
     simpa [wc] using hwitness
-  obtain ⟨iso, hat, hisoPrec⟩ := certifyPelletAt_one hwitness'
-  have hsearch : Hex.Component.certifyPellet? p wc = some (.atom iso) := by
-    unfold Hex.Component.certifyPellet?
-    simp [wc, Hex.Component.certifyPelletList?, hat]
-  have hcert : Hex.Component.certify? p .pellet ⟨component, 1⟩ =
-      some (.atom iso) := by
-    simpa [Hex.Component.certify?, enc, wide, wc] using hsearch
+  let rest :=
+    ((Array.range (p.degree?.getD 0 + 1)).filter (· != wc.candidateK)).toList
+  let ks := 1 :: rest
+  have liftCert {iso : Hex.DyadicRootIsolation p}
+      (hlist : Hex.Component.certifyPelletListShift? p wc
+        (Hex.TaylorShift.compute p (Hex.encSquare wc.squares).center) ks =
+          some (.atom iso)) :
+      Hex.Component.certify? p .pellet ⟨component, 1⟩ = some (.atom iso) := by
+    let shift := Hex.TaylorShift.compute p enc.center
+    let wideCenter := (Hex.encSquare wc.squares).center
+    let wideShift : Hex.TaylorShift p wideCenter :=
+      if hcenter : enc.center = wideCenter then shift.cast hcenter
+      else Hex.TaylorShift.compute p wideCenter
+    have hwideShift : wideShift =
+        Hex.TaylorShift.compute p (Hex.encSquare wc.squares).center :=
+      Subsingleton.elim _ _
+    have hlist' : Hex.Component.certifyPelletListShift? p wc wideShift ks =
+        some (.atom iso) := by simpa [hwideShift] using hlist
+    simpa [Hex.Component.certify?, enc, wide, wc, shift, wideCenter, wideShift,
+      ks, rest] using hlist'
   have hleaf : (Hex.separationDepth p : Int) ≤ prec := by omega
   have henc := encSquare_prec_of_glueCovered hp hsize hsep hleaf hprec hkeep hc
   have hwideTarget : target ≤ wide.prec := by
@@ -508,11 +615,44 @@ theorem certify_pellet_of_glueCovered {p : Hex.ZPoly}
     rw [hwidePrec]
     dsimp [enc]
     omega
-  have hisoTarget : target ≤ iso.square.prec := by
-    apply hwideTarget.trans
-    simpa [wc] using hisoPrec
-  exact ⟨iso, hcert, hisoTarget,
-    certifier_preserves_pellet p _ _ hcert z hzroot hzcomponent⟩
+  cases hsoft : Hex.Component.certifyPelletSoft? p wc
+      (Hex.TaylorShift.compute p (Hex.encSquare wc.squares).center) ks with
+  | some r =>
+      obtain ⟨baseIso, hr, _hbaseSquare⟩ :=
+        softPellet_atom_of_one hwitness' hsoft
+      subst r
+      have hcombined : Hex.TaylorShift.combinedWitnessCheck
+          (Hex.encSquare wc.squares)
+          (Hex.TaylorShift.compute p (Hex.encSquare wc.squares).center) 1 = true := by
+        simp [Hex.TaylorShift.combinedWitnessCheck, hexactWitness']
+      obtain ⟨iso, hat', hisoPrec⟩ := certifyPelletAt_one hcombined
+      have hlist : Hex.Component.certifyPelletListShift? p wc
+          (Hex.TaylorShift.compute p (Hex.encSquare wc.squares).center) ks =
+            some (.atom iso) := by
+        simp [Hex.Component.certifyPelletListShift?, hsoft, hat']
+      have hcert := liftCert hlist
+      have hisoTarget : target ≤ iso.square.prec := by
+        apply hwideTarget.trans
+        simpa [wc] using hisoPrec
+      exact ⟨iso, hcert, hisoTarget,
+        certifier_preserves_pellet p _ _ hcert z hzroot hzcomponent⟩
+  | none =>
+      obtain ⟨iso, hat', hisoPrec⟩ :=
+        exactPellet_one hexactWitness'
+      have hexact : Hex.Component.certifyPelletExactList? p wc
+          (Hex.TaylorShift.compute p (Hex.encSquare wc.squares).center) ks =
+            some (.atom iso) := by
+        simp [ks, Hex.Component.certifyPelletExactList?, hat']
+      have hlist : Hex.Component.certifyPelletListShift? p wc
+          (Hex.TaylorShift.compute p (Hex.encSquare wc.squares).center) ks =
+            some (.atom iso) := by
+        simp [Hex.Component.certifyPelletListShift?, hsoft, hexact]
+      have hcert := liftCert hlist
+      have hisoTarget : target ≤ iso.square.prec := by
+        apply hwideTarget.trans
+        simpa [wc] using hisoPrec
+      exact ⟨iso, hcert, hisoTarget,
+        certifier_preserves_pellet p _ _ hcert z hzroot hzcomponent⟩
 
 private theorem nkWitness_doubled_of_glueCovered {p : Hex.ZPoly}
     {squares component : Array Hex.DyadicSquare} {prec : Int} {z : ℂ}
@@ -937,8 +1077,8 @@ theorem refineAll_outputs_atoms {p : Hex.ZPoly}
   rw [hocert, hcert] at htr
   exact ⟨iso, Option.some.inj htr |>.symm⟩
 
-/-- The executable early-emission guard exposes precisely the fact needed by
-the all-atoms driver: every successful result is an atom. -/
+/-- The all-atoms guard exposes precisely the fact needed by the NK-only
+early-emission branch. -/
 private theorem allAtoms_outputs {p : Hex.ZPoly}
     {tried : Array (Hex.Component × Option (Hex.Certified p))}
     (h : Hex.IsolationLoop.allAtoms tried = true) :
@@ -947,10 +1087,31 @@ private theorem allAtoms_outputs {p : Hex.ZPoly}
   rw [Hex.IsolationLoop.allAtoms,
     Array.all_eq_true_iff_forall_mem] at h
   intro r hr
-  specialize h r (Array.mem_toList_iff.mp hr)
-  cases r with
-  | atom iso => exact ⟨iso, rfl⟩
-  | cluster c => simp at h
+  obtain ⟨t, ht, htr⟩ := Array.mem_filterMap.mp (Array.mem_toList_iff.mp hr)
+  specialize h t ht
+  rcases t with ⟨c, o⟩
+  cases o with
+  | none => simp at h
+  | some result =>
+      cases result with
+      | atom iso =>
+          simp only at htr
+          exact ⟨iso, (Option.some.inj htr).symm⟩
+      | cluster cl => simp at h
+
+private theorem emitReady_atoms_of_not_normalized {p : Hex.ZPoly}
+    {target : Int} {strategy : Hex.AtomStrategy}
+    {tried : Array (Hex.Component × Option (Hex.Certified p))}
+    (hnorm : Hex.IsolationLoop.normalized p target tried = false)
+    (hemit : Hex.IsolationLoop.emitReady target strategy tried = true) :
+    Hex.IsolationLoop.allAtoms tried = true := by
+  cases strategy with
+  | nk =>
+      simp only [Hex.IsolationLoop.emitReady, hnorm, Bool.false_or,
+        Bool.and_eq_true] at hemit
+      exact hemit.1
+  | pellet => simp [Hex.IsolationLoop.emitReady, hnorm] at hemit
+  | nkThenPellet => simp [Hex.IsolationLoop.emitReady, hnorm] at hemit
 
 /-- Once the last global round has been formed, one positive fuel step emits
 its target-ready, pairwise-disjoint atom certificates. -/
@@ -980,11 +1141,18 @@ theorem isolateLoop_refineAll_success {p : Hex.ZPoly}
   · refine ⟨#[], ?_, by simp⟩
     rw [Hex.isolateLoop]
     simp [final, hempty]
-  · refine ⟨Hex.IsolationLoop.outputs tried, ?_, ?_⟩
-    · rw [Hex.isolateLoop]
-      simp [final, hempty, tried, hnorm, hready, hdisjoint]
-    · simpa only [tried, final] using refineAll_outputs_atoms hp hsize hsep
-        hdepth htarget hprec hcover strategy
+  · cases hfinish : Hex.IsolationLoop.finishAtoms? p target strategy tried with
+    | some rs =>
+        refine ⟨rs, ?_, finishAtoms_atoms hfinish⟩
+        rw [Hex.isolateLoop]
+        simp [final, hempty, tried, hfinish]
+    | none =>
+        refine ⟨Hex.IsolationLoop.outputs tried, ?_, ?_⟩
+        · rw [Hex.isolateLoop]
+          simp [Hex.IsolationLoop.emitReady, final, hempty, tried, hfinish,
+            hnorm, hready, hdisjoint]
+        · simpa only [tried, final] using refineAll_outputs_atoms hp hsize hsep
+            hdepth htarget hprec hcover strategy
 
 /-- Sufficient fuel carries any globally normalized worklist to the fixed
 completeness depth and then emits atoms. -/
@@ -1011,54 +1179,56 @@ theorem isolateLoop_complete_of_fuel {p : Hex.ZPoly}
       have hempty : work.isEmpty = false :=
         Array.isEmpty_eq_false_iff_exists_mem.mpr
           ⟨c, Array.mem_toList_iff.mp hc⟩
+      have hmap : tried.map (·.1) = work := by
+        simp [tried, Hex.IsolationLoop.attempts, Function.comp_def]
       have hnext : Hex.IsolationLoop.next p target tried =
           Hex.Component.refineAll p work := by
-        change (if Hex.IsolationLoop.normalized p target tried then
-          (Array.range tried.size).flatMap
-            (Hex.IsolationLoop.step p target tried)
-        else Hex.Component.refineAll p (tried.map (·.1))) = _
-        rw [hnormFalse]
-        simp [tried, Hex.IsolationLoop.attempts, Function.comp_def]
+        simp [Hex.IsolationLoop.next, hnormFalse, hmap]
       have hprec' : Worklist.AtPrec (Hex.Component.refineAll p work) (prec + 1) := by
         intro d hd s hs
         exact refineAll_mem_prec hprec hd hs
       have hcover' : Worklist.Covers p (Hex.Component.refineAll p work) :=
         refineAll_covers hcover
-      by_cases hearly : (Hex.IsolationLoop.allAtoms tried &&
-          (Hex.IsolationLoop.allReady target tried &&
-            Hex.IsolationLoop.disjoint tried)) = true
-      · have hearly' := hearly
-        simp only [Bool.and_eq_true] at hearly'
-        refine ⟨Hex.IsolationLoop.outputs tried, ?_,
-          allAtoms_outputs hearly'.1⟩
-        rw [Hex.isolateLoop]
-        simp [hempty, tried, hnormFalse, hearly]
-      · by_cases hlast : Hex.completenessDepth p target ≤ prec + 1
-        · have heq : Hex.completenessDepth p target = prec + 1 := by omega
-          have hdepth : (Hex.separationDepth p : Int) + 5 ≤ prec + 1 := by
-            rw [← heq]
-            simp [Hex.completenessDepth]
-          have htarget : target + 5 ≤ prec + 1 := by
-            rw [← heq]
-            simp [Hex.completenessDepth]
-          cases fuel with
-          | zero =>
-              rw [heq] at hfuel
-              norm_num at hfuel
-          | succ fuel' =>
-              obtain ⟨rs, hrec, hatoms⟩ := isolateLoop_refineAll_success
-                hp hsize hsep hdepth htarget hsepTarget (by omega) hprec hcover
-                strategy fuel'
-              refine ⟨rs, ?_, hatoms⟩
-              rw [Hex.isolateLoop]
-              simp [hempty, tried, hnormFalse, hearly, hnext, hrec]
-        · have hlt' : prec + 1 < Hex.completenessDepth p target := by omega
-          have hfuel' : (Hex.completenessDepth p target - (prec + 1)).toNat < fuel := by
-            omega
-          obtain ⟨rs, hrec, hatoms⟩ := ih hprec' hcover' hlt' hfuel'
-          refine ⟨rs, ?_, hatoms⟩
+      cases hfinish : Hex.IsolationLoop.finishAtoms? p target strategy tried with
+      | some rs =>
+          refine ⟨rs, ?_, finishAtoms_atoms hfinish⟩
           rw [Hex.isolateLoop]
-          simp [hempty, tried, hnormFalse, hearly, hnext, hrec]
+          simp [hempty, tried, hfinish]
+      | none =>
+        by_cases hemit : Hex.IsolationLoop.emitReady target strategy tried = true
+        · refine ⟨Hex.IsolationLoop.outputs tried, ?_, ?_⟩
+          · rw [Hex.isolateLoop]
+            simp [hempty, tried, hfinish, hemit]
+          · exact allAtoms_outputs
+              (emitReady_atoms_of_not_normalized hnormFalse hemit)
+        · by_cases hlast : Hex.completenessDepth p target ≤ prec + 1
+          · have heq : Hex.completenessDepth p target = prec + 1 := by omega
+            have hdepth : (Hex.separationDepth p : Int) + 5 ≤ prec + 1 := by
+              rw [← heq]
+              simp [Hex.completenessDepth]
+            have htarget : target + 5 ≤ prec + 1 := by
+              rw [← heq]
+              simp [Hex.completenessDepth]
+            cases fuel with
+            | zero =>
+                rw [heq] at hfuel
+                norm_num at hfuel
+            | succ fuel' =>
+                obtain ⟨rs, hrec, hatoms⟩ := isolateLoop_refineAll_success
+                  hp hsize hsep hdepth htarget hsepTarget (by omega)
+                  hprec hcover
+                  strategy fuel'
+                refine ⟨rs, ?_, hatoms⟩
+                rw [Hex.isolateLoop]
+                simp [hempty, tried, hfinish, hemit, hnext, hrec]
+          · have hlt' : prec + 1 < Hex.completenessDepth p target := by omega
+            have hfuel' :
+                (Hex.completenessDepth p target - (prec + 1)).toNat < fuel := by
+              omega
+            obtain ⟨rs, hrec, hatoms⟩ := ih hprec' hcover' hlt' hfuel'
+            refine ⟨rs, ?_, hatoms⟩
+            rw [Hex.isolateLoop]
+            simp [hempty, tried, hfinish, hemit, hnext, hrec]
 
 /-- The executable `fuelFor` budget is sufficient for a Cauchy-started run,
 for every atom strategy. -/

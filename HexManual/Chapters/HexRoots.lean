@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 
 import HexRootsMathlib
+import HexRootsMathlib.Examples
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -73,6 +74,24 @@ It casts the polynomial and its derivative to rationals and checks that their
 gcd is constant:
 
 {docstring Hex.HasOnlySimpleRoots}
+
+Proof-facing clients can avoid `Option` entirely. The companion's total
+wrapper requires the missing nonzero hypothesis and uses the driver
+completeness theorem to return the array directly:
+
+{docstring HexRootsMathlib.isolate!}
+
+Completeness selects the wrapper's value from a successful executable run, and
+its principal theorems expose that run equation, the exact root count, the
+complete root set, and the requested precision:
+
+{docstring HexRootsMathlib.isolate!_eq}
+
+{docstring HexRootsMathlib.isolate!_count}
+
+{docstring HexRootsMathlib.isolate!_roots}
+
+{docstring HexRootsMathlib.isolate!_prec}
 
 The strategy argument, a {name}`Hex.AtomStrategy`, selects which certificate
 form the driver attempts, and in which order: `.nk` for the

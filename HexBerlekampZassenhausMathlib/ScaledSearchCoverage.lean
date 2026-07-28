@@ -1459,14 +1459,10 @@ theorem RecoveredScaledSearch.prefixNone_of_bound
   · rw [if_neg hrec]
 
 
-/-- Algorithm-side packaging for the BHKS fast-core success branch in
-the form needed by UFD arguments over `Polynomial ℤ`.  Combines the
-existing product, divisibility, and `shouldRecord` invariants exposed
-in `HexBerlekampZassenhaus` with the `toPolynomial` map.
-The remaining count-equality hypothesis is the open obligation of
-#4022 — once supplied, this lemma feeds directly into
-`HexBerlekampZassenhausMathlib.UFDPartition.irreducible_of_partition_card_eq_normalizedFactors_card`. -/
-theorem bhksRecoveryCoreWithBound_some_factor_irreducible_of_count
+/-- Package the BHKS fast-core product, divisibility, and recording invariants
+for UFD arguments over `Polynomial ℤ`. If the emitted factor count matches the
+normalized-factor count, every emitted factor is irreducible. -/
+theorem bhksFactors_irreducible_of_count
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
     (hcore_ne : core ≠ 0)
@@ -1617,9 +1613,9 @@ theorem bhksRecoveryCoreWithBound_some_factor_count_ge_of_irreducible
     HexBerlekampZassenhausMathlib.UFDPartition.normalizedFactors_card_le_length_of_irreducible_partition
       gs hirr_gs hprod
 
-/-- Cardinality equality for a successful BHKS fast-core branch once the
-BHKS/B8 proof has certified every emitted candidate irreducible. -/
-theorem bhksRecoveryCoreWithBound_some_factor_count_eq_of_irreducible
+/-- A successful BHKS fast-core branch emits exactly the normalized-factor
+count once every emitted candidate is known irreducible. -/
+theorem bhksFactors_count_eq_of_irreducible
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
     (hcore_ne : core ≠ 0)
@@ -1634,17 +1630,9 @@ theorem bhksRecoveryCoreWithBound_some_factor_count_eq_of_irreducible
   · exact bhksRecoveryCoreWithBound_some_factor_count_le hcore_ne h
   · exact bhksRecoveryCoreWithBound_some_factor_count_ge_of_irreducible h hirr
 
-/-- Branch-local fast-core success irreducibility, expressed in the Mathlib-free
-`Hex.ZPoly.Irreducible` predicate. This is the `Hex.ZPoly` transport of
-`bhksRecoveryCoreWithBound_some_factor_irreducible_of_count`, obtained by
-composing that scaffold with the existing
-`Hex.ZPoly.Irreducible_iff_polynomialIrreducible` equivalence.
-
-The remaining count-equality hypothesis is the residual #4030 obligation; once
-supplied, this lemma yields fast-core branch irreducibility directly in the
-executable `Hex.ZPoly` form needed by callers that do not import Mathlib's
-`Polynomial` model. -/
-theorem bhksRecoveryCoreWithBound_some_factor_zpolyIrreducible_of_count
+/-- Transport `bhksFactors_irreducible_of_count` to the executable
+`Hex.ZPoly.Irreducible` predicate. -/
+theorem bhksFactors_zpolyIrreducible_of_count
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
     (hcore_ne : core ≠ 0)
@@ -1657,7 +1645,7 @@ theorem bhksRecoveryCoreWithBound_some_factor_zpolyIrreducible_of_count
   intro factor hfactor_mem
   exact
     (Hex.ZPoly.Irreducible_iff_polynomialIrreducible factor).mpr
-      (bhksRecoveryCoreWithBound_some_factor_irreducible_of_count
+      (bhksFactors_irreducible_of_count
         hcore_ne h hcount factor hfactor_mem)
 
 /--

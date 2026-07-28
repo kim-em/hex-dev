@@ -1364,6 +1364,33 @@ theorem divMod_eq_zero_self_of_degree_lt [One R] [Add R] [Sub R] [Mul R] [Div R]
   intro hdeg
   simp [divMod, hdeg]
 
+/-- When the nonzero left input is strictly smaller than the right input,
+resume `gcd` after its first two Euclidean steps.  The explicit fuel is the
+fuel of the original execution after those steps, so this preserves its exact
+unnormalised remainder representative rather than merely an associate. -/
+theorem gcd_eq_aux_mod [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (f g : DensePoly R) (hf : f.isZero = false) (hsize : f.size < g.size) :
+    gcd f g = gcdAux f (g % f) (f.size + g.size - 1) := by
+  have hfpos : 0 < f.size := (isZero_eq_false_iff f).mp hf
+  have hgpos : 0 < g.size := by omega
+  have hg : g.isZero = false := (isZero_eq_false_iff g).mpr hgpos
+  have hdegree : f.degree?.getD 0 < g.degree?.getD 0 := by
+    rw [degree?_eq_some_of_pos_size f hfpos, degree?_eq_some_of_pos_size g hgpos]
+    simp only [Option.getD_some]
+    omega
+  have hdiv : divMod f g = (0, f) :=
+    divMod_eq_zero_self_of_degree_lt f g hdegree
+  calc
+    gcd f g = gcdAux g f (f.size + g.size) := by
+      unfold gcd
+      rw [show f.size + g.size + 1 = (f.size + g.size) + 1 by omega]
+      rw [gcdAux]
+      simp [hg, hdiv]
+    _ = gcdAux f (g % f) (f.size + g.size - 1) := by
+      rw [show f.size + g.size = (f.size + g.size - 1) + 1 by omega]
+      rw [gcdAux]
+      simp [hf, mod_eq_divMod]
+
 private theorem ofCoeffs_set!_eq_add_monomial {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (coeffs : Array S) (shift : Nat) (coeff : S)

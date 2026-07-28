@@ -53,7 +53,7 @@ lake exe hexberlekamp_bench verify
 
 ## Comparator Ratios
 
-`SPEC/Libraries/hex-berlekamp.md` names two `gating` FLINT comparators:
+`HexBerlekamp/SPEC/hex-berlekamp.md` names two `gating` FLINT comparators:
 `nmod_poly.is_irreducible` for `runRabinTestChecksum` and
 `nmod_poly.factor_distinct_deg` for `runDistinctDegreeChecksum`. Both
 are wired through `Hex.BenchOracle.Flint.runOp` and registered as fixed

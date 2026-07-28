@@ -479,6 +479,22 @@ def family_conway():
     return out
 
 
+def family_certificate_boundary():
+    """Small tactic-provider boundary cases not supplied by classical families."""
+    coeffs = [12, 8, 0, 0, 1]
+    return [(
+        "quartic_a4",
+        4,
+        coeffs,
+        (
+            "x^4 + 8*x + 12, irreducible with Galois group A4; the factor "
+            "tactic regression case whose {1,3} and {2,2} modular splittings "
+            "require a multi-prime degree obstruction"
+        ),
+        [4],
+    )]
+
+
 FAMILIES = [
     ("cyclotomic", family_cyclotomic),
     ("cyclotomic-products", family_cyclotomic_products),
@@ -491,6 +507,7 @@ FAMILIES = [
     ("random-products", family_random_products),
     ("hoeij-zimmermann", family_hoeij_zimmermann),
     ("conway", family_conway),
+    ("certificate-boundary", family_certificate_boundary),
 ]
 
 

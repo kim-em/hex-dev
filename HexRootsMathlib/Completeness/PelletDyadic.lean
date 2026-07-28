@@ -308,9 +308,9 @@ theorem pellet_one_comp_slack {p : ℂ[X]} {c z : ℂ} {s : Multiset ℂ}
     _ = (‖K‖ * ‖h.coeff 1‖) * r := by ring
 
 /-- A wide one-root isolation satisfying the explicit enclosure margin at
-the base, doubled, and quadrupled radii makes the actual executable Pellet
-witness succeed. The remote multiset retains root multiplicity. -/
-theorem witness_one_of_roots {p : Hex.ZPoly} {sq : Hex.DyadicSquare}
+the base, doubled, and quadrupled radii makes the exact Taylor Pellet witness
+succeed. The remote multiset retains root multiplicity. -/
+theorem exactWitness_one_of_roots {p : Hex.ZPoly} {sq : Hex.DyadicSquare}
     {z : ℂ} {roots : Multiset ℂ} {d : ℝ}
     (hp : toPolyℂ p ≠ 0) (hsize : 1 < p.size)
     (hroots : (toPolyℂ p).roots = z ::ₘ roots) (hd : 0 < d)
@@ -322,7 +322,8 @@ theorem witness_one_of_roots {p : Hex.ZPoly} {sq : Hex.DyadicSquare}
       2 * ‖z - GaussDyadic.toComplex sq.center‖ +
           (2 * rhi + 5 * ‖z - GaussDyadic.toComplex sq.center‖) *
             ((1 + rhi / d) ^ roots.card - 1) < rlo) :
-    Hex.witness p sq 1 := by
+    Hex.TaylorShift.witnessCheck sq
+      (Hex.TaylorShift.compute p sq.center) 1 = true := by
   have hsize_eq : p.size = roots.card + 2 := by
     have hnat := natDegree_eq_of_roots hroots
     rw [natDegree_toPolyℂ] at hnat
@@ -370,9 +371,29 @@ theorem witness_one_of_roots {p : Hex.ZPoly} {sq : Hex.DyadicSquare}
   have hcheck0 :
       Hex.pelletAt (Hex.taylor p sq.center) 1 sq.radiusLo sq.radiusHi = true := by
     simpa only [Int.ofNat_zero, shift_zero] using hcheck 0 (by omega)
-  unfold Hex.witness Hex.witnessCheck
+  unfold Hex.TaylorShift.witnessCheck Hex.TaylorShift.compute
   simpa [Bool.and_eq_true] using
     ⟨⟨hcheck0, hcheck 1 (by omega)⟩, hcheck 2 (by omega)⟩
+
+/-- The exact completeness witness is accepted by the public soft-or-exact
+Pellet predicate. -/
+theorem witness_one_of_roots {p : Hex.ZPoly} {sq : Hex.DyadicSquare}
+    {z : ℂ} {roots : Multiset ℂ} {d : ℝ}
+    (hp : toPolyℂ p ≠ 0) (hsize : 1 < p.size)
+    (hroots : (toPolyℂ p).roots = z ::ₘ roots) (hd : 0 < d)
+    (hremote : ∀ w ∈ roots,
+      d ≤ ‖w - GaussDyadic.toComplex sq.center‖)
+    (hmargin : ∀ j : ℕ, j < 3 →
+      let rlo := Dyadic.toReal (sq.radiusLo <<< (j : Int))
+      let rhi := Dyadic.toReal (sq.radiusHi <<< (j : Int))
+      2 * ‖z - GaussDyadic.toComplex sq.center‖ +
+          (2 * rhi + 5 * ‖z - GaussDyadic.toComplex sq.center‖) *
+            ((1 + rhi / d) ^ roots.card - 1) < rlo) :
+    Hex.witness p sq 1 := by
+  have hexact := exactWitness_one_of_roots hp hsize hroots hd hremote hmargin
+  unfold Hex.witness Hex.witnessCheck
+  by_cases hprec : sq.prec < 32 <;>
+    simp [Hex.TaylorShift.combinedWitnessCheck, hprec, hexact]
 
 end
 
