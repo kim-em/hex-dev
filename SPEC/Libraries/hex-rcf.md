@@ -617,8 +617,9 @@ free to change.
   `HexRCF/DecisionTests.lean`: all four certificate branches and quantifiers,
   half-open endpoint ownership, multiple/repeated/shared roots, helper failure,
   and output-check regressions.
-- `HexRCF/Separation.lean`: replay-based strict-separation refinement,
-  strict-gap checking, and endpoint classification for bounded sentences;
+- `HexRCF/SeparationCheck.lean`: Mathlib-free strict-gap checks, endpoint
+  classification, and replay-based separation refinement;
+  `HexRCF/Separation.lean`: real-root ordering and classifier semantics;
   `HexRCF/SeparationTests.lean`: midpoint ownership, close-root, scan,
   malformed-input, and endpoint regressions.
 - `HexRCF/Cells.lean`: size-indexed executable cells, checked root models,
