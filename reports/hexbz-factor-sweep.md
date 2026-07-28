@@ -20,6 +20,10 @@ pinned to CPU 0.
 The external toolchains came from transient nixpkgs environments. Isabelle
 session and Haskell-export builds completed before the timed sweeps.
 
+The exports record `5c371a5-dirty` because the benchmark registrations and
+reports were being repaired in the same worktree; the measured library revision
+is the full hash above.
+
 ## Methodology
 
 - Corpus: `bench/corpus/hexbz-factor-corpus.jsonl`
@@ -31,7 +35,9 @@ session and Haskell-export builds completed before the timed sweeps.
   call
 - Early termination: disabled
 - Warm line-protocol services; per-system protocol overhead recorded in JSON
-- Cross-check: factor-degree multisets for every pair of answering systems
+- Cross-check: against committed `expectedFactorDegrees` for 385 oracle-backed
+  rows; pairwise factor counts for the seven no-oracle Hoeij rows. The
+  historical combined sweep retained degree-multiset agreement.
 
 ## Recorded Sweep
 
@@ -46,6 +52,10 @@ session and Haskell-export builds completed before the timed sweeps.
 | Verified Isabelle BZ | 371 | 21 | 441.134 µs | 5.128 ms | 8.363 s | 17.777 µs |
 | Verified Isabelle LLL | 314 | 78 | 6.109 ms | 1.219 s | 9.528 s | 17.136 µs |
 
+These are service wall-clock values; protocol overhead is not subtracted.
+Consequently, the lowest external medians include a material protocol share,
+and per-row ratios near the overhead floor need a signal filter.
+
 Every returned factor-degree multiset with a committed corpus oracle matched
 it. The seven Hoeij-Zimmermann rows without a committed degree oracle retain
 their previous combined cross-system agreement; current FLINT, PARI/GP, and
@@ -58,6 +68,21 @@ from 309 to 314. PARI/GP and NTL now both solve 391 rows, with `hoeij_S9` the
 only timeout. Because the corpus gained one row and the host changed, exact
 timeout sets and per-row JSON should be preferred to raw percentage or
 cross-host timing comparisons.
+
+## Charts
+
+- [Combined cactus plot](figures/hexbz-cactus-combined.svg)
+- [Swinnerton-Dyer cactus plot](figures/hexbz-cactus-swinnerton-dyer.svg)
+- [Swinnerton-Dyer runtime by degree](figures/hexbz-runtime-degree-swinnerton-dyer.svg)
+- [Hoeij-Zimmermann cactus plot](figures/hexbz-cactus-hoeij-zimmermann.svg)
+- [Cyclotomic cactus plot](figures/hexbz-cactus-cyclotomic.svg)
+
+All 25 current family charts are under `reports/figures/hexbz-*`. Regenerate
+them from the committed current-corpus records with:
+
+```sh
+uv run --with matplotlib python3 scripts/plots/hexbz-cactus.py
+```
 
 Current exports:
 

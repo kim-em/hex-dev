@@ -1,7 +1,7 @@
 # Polynomial Factorization Performance
 
 This is the current performance snapshot for the polynomial-factorization
-stack. It supersedes the previously current claims in the individual headline
+stack. It aggregates the current claims in the individual headline
 reports.
 
 ## Measurement environment
@@ -25,6 +25,15 @@ reports.
 The benchmark exports say `5c371a5-dirty` because this refresh changes the
 benchmark registrations and reports in the same worktree. The measured library
 revision is the full hash above.
+
+The evidence was rebased for integration onto `980aa6cb`. Audited intervening
+factorization changes were naming/proof refactors plus a faster
+square-root-bounded `isPrimeTrial`. That speedup affects constant-polynomial
+checks and the extended prime-selection walk that nonconstant inputs can reach;
+the committed measurements are therefore conservative for that path. The
+later Array/Vector module-boundary shims redirect compiled equality and `ofFn`
+back to the core implementations. The dispatcher shape, corpus, and benchmark
+protocol were unchanged.
 
 ## Headline results
 
@@ -136,11 +145,14 @@ Hoeij-Zimmermann rows without a committed degree oracle retain their earlier
 combined cross-system agreement; in the current records, FLINT, PARI/GP, and
 NTL also agree on their factor counts.
 
-On the 369 rows solved by both Hex public factorization and verified Isabelle
-BZ, the per-row `Hex/Isabelle` ratio has median `2.73x` (10th–90th percentile
-`0.55x–11.81x`); Hex is faster on 95 rows and Isabelle on 274. This is a
-common-solved-row comparison, not a claim about rows where either system hit
-the cutoff. See `bz-vs-isabelle-investigation.md` for the corresponding
+The corpus values are service wall-clock times; protocol overhead is recorded
+but not subtracted. For ratios, a row is eligible only when both medians are at
+least ten times the larger measured overhead of the pair. On the 247 eligible
+rows solved by both Hex public factorization and verified Isabelle BZ, the
+per-row `Hex/Isabelle` ratio has median `3.95x` (10th–90th percentile
+`0.64x–12.76x`); Hex is faster on 46 rows and Isabelle on 201. There are 369
+common solved rows before that signal filter. See
+`bz-vs-isabelle-investigation.md` for the corresponding
 lattice/verified-LLL comparison and caveats.
 
 ## Kernel and tactic sample
@@ -158,7 +170,8 @@ entry points and 4.624 s for the certificate umbrella.
 These are end-to-end fresh Lake module times, not kernel-only timings. The
 signed baseline deltas are in the raw artifact. The multi-prime
 `quartic_a4` replay completed for both linear and incremental Rabin checkers;
-the incremental checker was faster on the two degree-two cases.
+the incremental checker was faster on three of four cases, including both
+degree-two cases.
 
 ## Current diagnostic profiles
 
@@ -179,10 +192,12 @@ balanced Mignotte schedules were 8.834 ms and 8.807 ms; at the fixed
 The hybrid seam completed `SD_5` in 134.197 ms through the classical tier.
 `SD_6` took 9.858 s, reached the lattice tier, declined, and returned the
 irreducible fallback. The lattice core itself took 9.158 s on `SD_6`.
+In the corpus service, public factorization timed out on `SD_6` while the
+isolated lattice entry point completed in 8.855 s.
 
 ## Artifacts
 
-Current machine-readable exports:
+Current durable exports:
 
 - `hex-berlekamp-5c371a5a-chungus2.json`
 - `hex-berlekamp-rabin-compare-5c371a5a-chungus2.json`
@@ -199,6 +214,10 @@ Current machine-readable exports:
 - `hexbz-factor-sweep-isabelle-bz-5c371a5a-chungus2.json`
 - `hexbz-factor-sweep-isabelle-lll-5c371a5a-chungus2.json`
 - `hexbz-kernel-factor-5c371a5a-chungus2.json`
+- `berlekamp-diagnostic-5c371a5a-chungus2.txt` (SHA-256
+  `c79c0167c402c714fbd664e3157236fc5aa1f426a67f83b9f1250a5e5135c364`)
+- `bz-spikes-5c371a5a-chungus2.txt` (SHA-256
+  `fe2c873c73ba29bb7f5193aac976691483505880803cdc0429cb09f1d7b21f1b`)
 
 All paths are relative to `reports/bench-results/`. Commit-named exports from
 older revisions are retained for historical comparisons, but only the files

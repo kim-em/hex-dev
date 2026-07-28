@@ -4,6 +4,10 @@ Current diagnostic run at revision
 `5c371a5abb85ca6ef6510ec60888f3048db71719`, 2026-07-28, on
 `chungus2`, pinned to CPU 0.
 
+The capture records a dirty worktree because the benchmark registrations and
+reports were being repaired together; the measured library revision is the
+full hash above.
+
 ## Product Construction
 
 Sixteen shifted-linear inputs were measured per degree.
@@ -34,6 +38,15 @@ schedule matters much more than the product-tree shape.
 The production dispatcher handles `SD_2` through `SD_5` in the classical
 tier. `SD_6` reaches the lattice tier, declines, and returns the irreducible
 fallback.
+
+This seam table is single-shot process output. It is not directly comparable
+with the warm auto-tuned fixed benchmarks (`SD_3` 2.596 ms and `SD_4`
+34.266 ms): the single-shot path includes startup and measurement noise, so a
+narrower core can still show a larger absolute time.
+
+Raw stdout: `reports/bench-results/bz-spikes-5c371a5a-chungus2.txt`
+(SHA-256
+`fe2c873c73ba29bb7f5193aac976691483505880803cdc0429cb09f1d7b21f1b`).
 
 ## Reproducing
 

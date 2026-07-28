@@ -4,6 +4,10 @@ Current at revision `5c371a5abb85ca6ef6510ec60888f3048db71719`,
 measured 2026-07-28 on `chungus2` (AMD EPYC 9455, Linux x86-64),
 pinned to CPU 0.
 
+The exports record `5c371a5-dirty` because the benchmark registrations and
+reports were being repaired in the same worktree; the measured library revision
+is the full hash above.
+
 ## Bench Targets
 
 Eight parametric targets cover public factorization, the exhaustive backstop,
@@ -31,7 +35,7 @@ fixtures, so the current verdicts are inconclusive rather than failed.
 | Public compare domain | 4 | 140.490 µs |
 | Slow compare domain | 4 | 26.528 µs |
 
-| Fixed fixture | Median | Min–max |
+| Warm auto-tuned fixed fixture | Median | Min–max |
 |---|---:|---:|
 | `X⁴ + 1`, public | 98.628 µs | 97.007–99.922 µs |
 | `X⁴ + 1`, fast setup | 18.227 µs | 18.040–18.350 µs |
@@ -70,10 +74,16 @@ frontier, and provenance details.
 
 The external toolchains were provided by transient Nix environments. Setup and
 AFP export builds were completed before timing; the sweep uses persistent
-line-protocol services and records roughly 11–24 µs of protocol overhead.
-On 369 common solved rows, public Hex has a median `2.73x` wall-clock ratio
-against verified Isabelle BZ. That corpus-conditioned result supersedes the
-retired startup-contaminated ratios; see `bz-vs-isabelle-investigation.md`.
+line-protocol services and records roughly 11–24 µs of protocol overhead. The
+corpus table reports service wall clock without subtracting that overhead;
+FLINT's and PARI's low solved-row medians therefore include approximately 29%
+and 24% protocol cost.
+
+For ratios, a row is eligible only when both medians are at least ten times the
+larger measured overhead of the pair. On 247 eligible common solved rows,
+public Hex has a median `3.95x` wall-clock ratio against verified Isabelle BZ
+(p10–p90 `0.64x–12.76x`). There are 369 common solved rows before that signal
+filter. See `bz-vs-isabelle-investigation.md`.
 
 ## Profile
 
@@ -90,13 +100,36 @@ Current compiled diagnostics:
 The classical product spike showed no material balanced-product win at degree
 24: 8.834 ms sequential versus 8.807 ms balanced on the Mignotte schedule.
 
+Raw diagnostic stdout is preserved in
+`reports/bench-results/berlekamp-diagnostic-5c371a5a-chungus2.txt`
+(SHA-256
+`c79c0167c402c714fbd664e3157236fc5aa1f426a67f83b9f1250a5e5135c364`)
+and `reports/bench-results/bz-spikes-5c371a5a-chungus2.txt` (SHA-256
+`fe2c873c73ba29bb7f5193aac976691483505880803cdc0429cb09f1d7b21f1b`).
+
+### Swinnerton-Dyer seam
+
+| Fixture | Hex public | Verified Isabelle BZ | Hex / Isabelle |
+|---|---:|---:|---:|
+| `SD_5` | 121.164 ms | 22.827 ms | `5.31x` |
+| `SD_5` shifted by 1 | 182.981 ms | 14.875 ms | `12.30x` |
+| `SD_5` shifted by 2 | 183.930 ms | 14.907 ms | `12.34x` |
+| `SD_6` | timeout | timeout | — |
+
+The isolated `hex-lattice` service solves `SD_6` in 8.855 s, while the public
+service times out at 10 s. The single-shot hybrid spike takes 9.858 s before
+declining, so this is a marginal threshold seam rather than evidence of a
+large isolated-lattice regression.
+
 ## Concerns
 
 - Twenty-one corpus cases still hit the public 10-second cutoff.
 - The lattice route solves fewer corpus rows and has a much heavier tail than
   the classical/public routes.
+- Public `SD_6` times out even though the isolated lattice entry point solves it
+  in 8.855 s; the dispatcher seam consumes the remaining cutoff budget.
 - The registered BHKS models are useful upper bounds but do not describe the
   observed small-fixture scaling.
-- The public/Isabelle-BZ common-row median is above the SPEC's aspirational
+- The public/Isabelle-BZ eligible-row median is above the SPEC's aspirational
   `1x` comparator goal, though the corpus frontier is not the SPEC's
   largest-eligible-rung gate.

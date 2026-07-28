@@ -1,0 +1,55 @@
+# Raw stdout: classical product and lattice-seam spikes
+# Revision: 5c371a5abb85ca6ef6510ec60888f3048db71719
+# Worktree: dirty (benchmark registrations and reports were being repaired)
+# Date: 2026-07-28
+# Host: chungus2, AMD EPYC 9455, Linux x86-64
+# CPU placement: taskset -c 0
+#
+# Command: taskset -c 0 .lake/build/bin/hex_classical_spike
+=== classical BZ spike: per-phase breakdown (Int) ===
+    16 distinct shifted (x-a)..(x-a-(n-1)) inputs per degree
+--- degree 8 ---  (balanced k=4 size=8, balanced Mignotte size=8, want 8)
+  seq      Mignotte: 649.502440 us/call (sink=12833638329268420244)
+  balanced Mignotte: 653.319710 us/call (sink=12833638329268420244)
+  seq      k=4     : 377.155000 us/call (sink=12833638329268420244)
+  balanced k=4     : 384.496200 us/call (sink=12833638329268420244)
+--- degree 12 ---  (balanced k=4 size=12, balanced Mignotte size=12, want 12)
+  seq      Mignotte: 1582.817130 us/call (sink=9893462369674057444)
+  balanced Mignotte: 1556.372570 us/call (sink=9893462369674057444)
+  seq      k=4     : 749.313180 us/call (sink=9893462369674057444)
+  balanced k=4     : 745.874980 us/call (sink=9893462369674057444)
+--- degree 16 ---  (balanced k=4 size=16, balanced Mignotte size=16, want 16)
+  seq      Mignotte: 3778.921920 us/call (sink=17690097090999870004)
+  balanced Mignotte: 3793.390190 us/call (sink=17690097090999870004)
+  seq      k=4     : 1272.123570 us/call (sink=17690097090999870004)
+  balanced k=4     : 1267.582430 us/call (sink=17690097090999870004)
+--- degree 20 ---  (balanced k=4 size=20, balanced Mignotte size=20, want 20)
+  seq      Mignotte: 6133.066980 us/call (sink=6682610095357522596)
+  balanced Mignotte: 6130.997500 us/call (sink=6682610095357522596)
+  seq      k=4     : 1954.088770 us/call (sink=6682610095357522596)
+  balanced k=4     : 1934.912110 us/call (sink=6682610095357522596)
+--- degree 24 ---  (balanced k=4 size=24, balanced Mignotte size=24, want 24)
+  seq      Mignotte: 8834.351270 us/call (sink=12343536985062083412)
+  balanced Mignotte: 8806.617180 us/call (sink=12343536985062083412)
+  seq      k=4     : 2839.838640 us/call (sink=12343536985062083412)
+  balanced k=4     : 2818.371990 us/call (sink=12343536985062083412)
+#
+# Command: taskset -c 0 .lake/build/bin/hex_lattice_spike hybrid
+=== factorLattice wall-clock (#8395 early-termination spike) ===
+hybrid reducible deg 4: 0.085747 ms (tier=classical, declined=false, prime=5, r=2, subsetCandidates=0, factors=2)
+hybrid SD2   deg  4: 0.102412 ms (tier=classical, declined=false, prime=5, r=2, subsetCandidates=0, factors=1)
+hybrid Phi15 deg  8: 0.217693 ms (tier=classical, declined=false, prime=7, r=2, subsetCandidates=0, factors=1)
+hybrid SD3   deg  8: 0.752557 ms (tier=classical, declined=false, prime=7, r=4, subsetCandidates=0, factors=1)
+hybrid SD4   deg 16: 4.540389 ms (tier=classical, declined=false, prime=11, r=8, subsetCandidates=0, factors=1)
+hybrid SD5   deg 32: 134.197035 ms (tier=classical, declined=false, prime=19, r=16, subsetCandidates=0, factors=1)
+hybrid SD6   deg 64: 9857.796504 ms (tier=lattice, declined=true, prime=19, r=32, subsetCandidates=0, factors=1)
+#
+# Command: taskset -c 0 .lake/build/bin/hex_lattice_spike core
+=== factorLattice wall-clock (#8395 early-termination spike) ===
+after  reducible deg 4: 0.204093 ms (coreFactors=2, sink=14137321081195240780)
+after  SD2   deg  4: 0.459813 ms (coreFactors=1, sink=4495854109012413457)
+after  Phi15 deg  8: 0.583516 ms (coreFactors=1, sink=13946368074614375556)
+after  SD3   deg  8: 4.032836 ms (coreFactors=1, sink=12339489461881267390)
+after  SD4   deg 16: 52.535912 ms (coreFactors=1, sink=10635310798412723221)
+after  SD5   deg 32: 399.583000 ms (coreFactors=1, sink=9047904015630793366)
+after  SD6   deg 64: 9158.241974 ms (coreFactors=1, sink=7773109907390136533)

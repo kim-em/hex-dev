@@ -5,6 +5,10 @@ measured 2026-07-28 on `chungus2` (AMD EPYC 9455, Linux x86-64),
 pinned to CPU 0. See `polynomial-factorization-performance.md` for the
 cross-library snapshot.
 
+The exports record `5c371a5-dirty` because the benchmark registrations and
+reports were being repaired in the same worktree; the measured library revision
+is the full hash above.
+
 ## Bench Targets
 
 - `runBerlekampMatrixChecksum`: `n²`
@@ -55,6 +59,11 @@ kernel per basis vector took 16.077 ms, sharing the kernel reduced the
 baseline to 1.280 ms, and the fixed path took 577.347 µs. The fixed-path
 attribution was 18.18% matrix construction, 2.84% nullspace, and 78.99%
 witness splitting.
+
+Raw diagnostic stdout:
+`reports/bench-results/berlekamp-diagnostic-5c371a5a-chungus2.txt`
+(SHA-256
+`c79c0167c402c714fbd664e3157236fc5aa1f426a67f83b9f1250a5e5135c364`).
 
 ## Concerns
 

@@ -4,6 +4,10 @@ Current compiled diagnostic at revision
 `5c371a5abb85ca6ef6510ec60888f3048db71719`, 2026-07-28, on
 `chungus2`, pinned to CPU 0.
 
+The capture records a dirty worktree because the benchmark registrations and
+reports were being repaired together; the measured library revision is the
+full hash above.
+
 Shares below are within the current fixed Berlekamp factorization path.
 
 | Fixture | Matrix | Nullspace | Witness split | Fixed total |
@@ -19,6 +23,11 @@ Shares below are within the current fixed Berlekamp factorization path.
 The nullspace is not the dominant cost on the fully split ladder; its share
 falls below 3% by degree 24. Witness splitting dominates there. On `Phi_15`,
 matrix plus nullspace accounts for most of the much smaller fixed total.
+
+Raw stdout:
+`reports/bench-results/berlekamp-diagnostic-5c371a5a-chungus2.txt`
+(SHA-256
+`c79c0167c402c714fbd664e3157236fc5aa1f426a67f83b9f1250a5e5135c364`).
 
 Reproduce with:
 

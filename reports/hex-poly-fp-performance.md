@@ -4,6 +4,10 @@ Current at revision `5c371a5abb85ca6ef6510ec60888f3048db71719`,
 measured 2026-07-28 on `chungus2` (AMD EPYC 9455, Linux x86-64),
 pinned to CPU 0.
 
+The export records `5c371a5-dirty` because the benchmark registrations and
+reports were being repaired in the same worktree; the measured library revision
+is the full hash above.
+
 ## Bench Targets
 
 The suite covers Frobenius remainder computation, GCD, weighted product,

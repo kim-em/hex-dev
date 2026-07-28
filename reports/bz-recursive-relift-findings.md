@@ -12,7 +12,12 @@ production performance evidence is:
 - fixed `SD_4` lattice factorization: 34.266 ms.
 
 All values are at revision `5c371a5abb85ca6ef6510ec60888f3048db71719`,
-measured on `chungus2` with CPU 0 pinned. The raw data is in:
+measured on `chungus2` with CPU 0 pinned.
+The exports record `5c371a5-dirty` because the benchmark registrations and
+reports were being repaired in the same worktree; the measured library revision
+is the full hash above.
+
+The raw data is in:
 
 - `reports/bench-results/hex-berlekamp-zassenhaus-parametric-5c371a5a-chungus2.json`;
 - `reports/bench-results/hex-berlekamp-zassenhaus-fixed-5c371a5a-chungus2.json`.

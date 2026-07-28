@@ -12,6 +12,10 @@ The AFP sessions and standalone Haskell exports were built before timing.
 Both extracted comparators then ran as warm persistent line-protocol services;
 measured protocol overhead was 17.777 µs for BZ and 17.136 µs for LLL.
 
+The exports record `5c371a5-dirty` because the benchmark registrations and
+reports were being repaired in the same worktree; the measured library revision
+is the full hash above.
+
 ## Corpus frontiers
 
 | System | Solved / 392 | Solved-row median | p90 | Slowest solved |
@@ -28,21 +32,24 @@ solves `cyclo_phi121` and `cyclo_phi1031`, where Hex public times out.
 
 ## Common-row ratios
 
-Ratios below divide the per-row median Hex time by the corresponding Isabelle
-time and include only rows where both systems answered before the cutoff.
-They therefore describe common solved work, not the missing timeout tails.
+Ratios divide the per-row median Hex service wall clock by the corresponding
+Isabelle time. Protocol overhead is recorded but not subtracted because several
+fast rows fluctuate below the overhead estimate. To keep overhead from
+dominating, a row is eligible only when both medians are at least ten times the
+larger measured overhead of the pair.
 
-| Pair | Common rows | Median ratio | p10–p90 | Hex faster | Isabelle faster |
-|---|---:|---:|---:|---:|---:|
-| Hex public / verified BZ | 369 | 2.73x | 0.55x–11.81x | 95 | 274 |
-| Hex classical / verified BZ | 369 | 1.88x | 0.60x–5.86x | 79 | 290 |
-| Hex lattice / verified LLL | 313 | 0.39x | 0.008x–3.85x | 222 | 91 |
+| Pair | Common solved | Eligible | Median ratio | p10–p90 | Hex faster | Isabelle faster |
+|---|---:|---:|---:|---:|---:|---:|
+| Hex public / verified BZ | 369 | 247 | 3.95x | 0.64x–12.76x | 46 | 201 |
+| Hex classical / verified BZ | 369 | 244 | 2.40x | 0.97x–6.84x | 27 | 217 |
+| Hex lattice / verified LLL | 313 | 234 | 0.20x | 0.006x–2.93x | 173 | 61 |
 
 Thus the public path is slower than verified BZ on the median common corpus
-row, while the Hex lattice entry point is faster than verified Isabelle LLL
-on its median common row. The broad percentile ranges and differing timeout
-frontiers make a single aggregate ratio insufficient for a gating decision.
-In particular, this corpus comparison is not the SPEC's
+row with adequate signal, while the Hex lattice entry point is faster than
+verified Isabelle LLL on its median eligible row. These filtered comparisons
+exclude 122, 125, and 79 common rows respectively. The broad percentile ranges
+and differing timeout frontiers make a single aggregate ratio insufficient for
+a gating decision. In particular, this corpus comparison is not the SPEC's
 largest-eligible-scaling-rung test.
 
 Every current factor-degree check against a committed corpus oracle passed.

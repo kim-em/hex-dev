@@ -4,7 +4,9 @@
 Spawns each measured system as a warm persistent process speaking the suite line
 protocol, sweeps the committed corpus at a fixed per-call cutoff, cross-checks
 factor degree multisets across every system that answered, and writes one durable
-JSON record per sweep (deliverable 5).
+JSON record per sweep (deliverable 5). Each successful result retains its
+sorted ``factor_degrees`` so separately recorded system sweeps can also be
+cross-checked post hoc.
 
 This is a comparator sweep, run manually on dedicated hardware (carica) -- NOT a
 CI job and NOT a hex-internal benchmark harness, so the one-harness rule stays
@@ -399,7 +401,8 @@ def _record(system, inst, status, median, lo, hi, factor_count, degrees,
         "min_nanos": lo,
         "max_nanos": hi,
         "factor_count": factor_count,
-        # kept for the cross-check pass; dropped before serialization
+        # Private during collection so the current cross-check can consume it;
+        # renamed to factor_degrees before durable serialization.
         "_degrees": degrees,
     }
     if early_terminated:
@@ -544,7 +547,7 @@ def main():
     mismatches = cross_check(all_records, instances)
 
     for rec in all_records:
-        rec.pop("_degrees", None)
+        rec["factor_degrees"] = rec.pop("_degrees", None)
 
     report = {
         "env": env_block("factor_sweep"),

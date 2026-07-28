@@ -4,6 +4,10 @@ Current compiled diagnostic at revision
 `5c371a5abb85ca6ef6510ec60888f3048db71719`, 2026-07-28, on
 `chungus2`, pinned to CPU 0.
 
+The capture records a dirty worktree because the benchmark registrations and
+reports were being repaired together; the measured library revision is the
+full hash above.
+
 This compares the baseline witness split with the reduced-witness cached
 variant. Output checksums agreed in every row.
 
@@ -19,6 +23,11 @@ variant. Output checksums agreed in every row.
 
 Caching is neutral on the fully split family and gives only a modest win on
 `SD_4`; it is not the primary optimization lever.
+
+Raw stdout:
+`reports/bench-results/berlekamp-diagnostic-5c371a5a-chungus2.txt`
+(SHA-256
+`c79c0167c402c714fbd664e3157236fc5aa1f426a67f83b9f1250a5e5135c364`).
 
 Reproduce with:
 

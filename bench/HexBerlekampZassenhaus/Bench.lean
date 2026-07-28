@@ -972,6 +972,7 @@ setup_fixed_benchmark runFactorAdvX4Plus1Checksum where {
     repeats := 5
     minTotalSeconds := 0.2
     maxSecondsPerCall := 4.0
+    expectedHash := some 0xdbadaf53f188eac1
   }
 
 /-
@@ -999,6 +1000,7 @@ setup_fixed_benchmark runFactorFastSetupAdvX4Plus1Checksum where {
     repeats := 5
     minTotalSeconds := 0.2
     maxSecondsPerCall := 4.0
+    expectedHash := some 0xf2fde7ff68ef63ab
   }
 
 /-
@@ -1043,6 +1045,7 @@ setup_fixed_benchmark runFactorAdvQuadSqrt2Sqrt3Checksum where {
     repeats := 5
     minTotalSeconds := 0.2
     maxSecondsPerCall := 4.0
+    expectedHash := some 0x2939937eff41b345
   }
 
 /- Fixed HO-2 adversarial target: `Phi_15`. This degree-eight cyclotomic case
@@ -1051,6 +1054,7 @@ setup_fixed_benchmark runFactorAdvPhi15Checksum where {
     repeats := 5
     minTotalSeconds := 0.2
     maxSecondsPerCall := 6.0
+    expectedHash := some 0x0f794f386e54863f
   }
 
 /- Fixed HO-2 adversarial fast-path setup target for `Phi_15`. This keeps the
@@ -1060,6 +1064,7 @@ setup_fixed_benchmark runFactorFastSetupAdvPhi15Checksum where {
     repeats := 5
     minTotalSeconds := 0.2
     maxSecondsPerCall := 6.0
+    expectedHash := some 0xf58fd4dcfb9a609a
   }
 
 /-
@@ -1073,6 +1078,7 @@ setup_fixed_benchmark runAdvSwinnertonDyerSD3ModularSplitChecksum where {
     repeats := 5
     minTotalSeconds := 0.2
     maxSecondsPerCall := 4.0
+    expectedHash := some 0xe2da56484730f726
   }
 
 /- Fixed lattice-tier target: full `factorLattice` on Swinnerton-Dyer `SD_3`,
@@ -1081,6 +1087,7 @@ setup_fixed_benchmark runFactorLatticeAdvSwinnertonDyerSD3Checksum where {
     repeats := 5
     minTotalSeconds := 0.2
     maxSecondsPerCall := 4.0
+    expectedHash := some 0xd91e58bd22915e00
   }
 
 /- Fixed lattice-tier target: full `factorLattice` on Swinnerton-Dyer
@@ -1089,6 +1096,7 @@ setup_fixed_benchmark runFactorLatticeAdvSwinnertonDyerSD4Checksum where {
     repeats := 5
     minTotalSeconds := 0.2
     maxSecondsPerCall := 6.0
+    expectedHash := some 0x687e925fbe11193b
   }
 
 /- Fixed bottom-rung verified-Isabelle comparator pair. Both targets return the
