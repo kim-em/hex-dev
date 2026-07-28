@@ -20,13 +20,14 @@ the policy state, the exact heterogeneous package registry which compiled its
 engine, the immutable proof-payload arena, every configured resource envelope,
 and the monotone liveness and completeness state.
 
-The policy can only echo a checked offer through `Session.choose`.  A selected
-rule or retry is routed through `Registry.invokePlanned`; its reply-local proof
-drafts are frozen and relocated prospectively, and the new arena is committed
-only after `Policy.State.submit` accepts the relocated reply.  Instantiation,
-equality contraction, dismissal, and split preparation stay inside the same
-session boundary.  No public operation accepts a separately assembled engine,
-registry, or arena.
+The policy can only echo a checked offer through `Session.choose`. A selected
+rule or retry is routed through `Registry.invokePlanned`; the resulting plan
+and exact handler replay snapshot stay paired through bounded format checking,
+prospective freezing, and relocation. The new arena is committed only after
+`Policy.State.submit` accepts the relocated reply. Instantiation, equality
+contraction, dismissal, and split preparation stay inside the same session
+boundary. No public operation accepts a separately assembled engine, registry,
+or arena.
 -/
 
 namespace Hex.Interval.Experiment.PolicySession
@@ -257,10 +258,12 @@ private def finishEquality (session : Session Fact)
   | .noChange | .improved | .contradiction =>
       .equality selection observation (withState session state)
 
-private def submitPlan (session : Session Fact)
+private def submitInvocation (session : Session Fact)
     (selection : Propagator.Policy.Selection)
     (request : RuleRequest Fact) (state : Propagator.Policy.State Fact)
-    (plan : Plan Fact) (registry : Registry Fact) : Step Fact :=
+    (invocation : Invocation Fact) (registry : Registry Fact) : Step Fact :=
+  let plan := invocation.plan
+  let replay := invocation.replay
   if !outcomeListsBounded session.limits.engine plan.outcome then
     match state.submit (request.action.reply plan.outcome) with
     | .accepted _ next =>
@@ -274,8 +277,8 @@ private def submitPlan (session : Session Fact)
     | .malformedState next =>
         .invalidSession (halt session next registry)
   else
-    match PayloadArena.freeze session.limits.arena session.arena request.action
-        plan.outcome plan.drafts with
+    match PayloadArena.freezeChecked session.limits.arena session.arena
+        request.action replay.rule replay.validateDraft plan.outcome plan.drafts with
     | .invalid error _ =>
         failPayload session state registry request.action error
     | .resourceLimit resource _ =>
@@ -297,8 +300,8 @@ private def select (session : Session Fact)
     (selection : Propagator.Policy.Selection) : Step Fact :=
   match session.state.select selection with
   | .request request state =>
-      let (plan, registry) := session.registry.invokePlanned request
-      submitPlan session selection request state plan registry
+      let (invocation, registry) := session.registry.invokePlanned request
+      submitInvocation session selection request state invocation registry
   | .equality observation state =>
       finishEquality session selection observation state
   | .completed completion state =>

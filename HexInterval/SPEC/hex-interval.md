@@ -1328,11 +1328,16 @@ into saturation.
 The policy session now preserves the same transaction while allowing an
 external policy to select invocations and retries, instantiations, equality
 contractors, and splits, or to dismiss any live offer. A selected invocation
-or retry routes through `Registry.invokePlanned`, freezes its complete draft
-set prospectively, submits the relocated reply through `Policy.State`, and
-commits the new arena only for an accepted reply. The policy can observe a
-bounded view and echo a semantic selection, but cannot extract and later
-recombine the engine, registry, arena, or policy bookkeeping. Its
+or retry routes through `Registry.invokePlanned`, which returns the plan paired
+with the exact selected handler's replay snapshot. The session validates every
+draft under that immutable format set, freezes the complete draft set
+prospectively, submits the relocated reply through `Policy.State`, and commits
+the new arena only for an accepted reply. A missing or malformed format follows
+the same live-but-incomplete failed-reply path as other malformed evidence:
+the cache may record the attempt, but the arena, facts, and history do not
+commit. The policy can observe a bounded view and echo a semantic selection,
+but cannot extract and later recombine the engine, registry, arena, or policy
+bookkeeping. Its
 `Session.complete` predicate additionally scans for live invocation and
 equality work and treats retries and instantiations, but not optional splits,
 as closure obligations. The policy state's monotone incompleteness bit covers
@@ -2438,6 +2443,11 @@ typical, boundary, and adversarial inputs. In particular it includes:
   and a function-owned split in a checked event order; it returns an
   endpoint-resource-checked plan at `1/2`, leaves the next retry offer live,
   and performs no branch/interiority step;
+- the proof-producing policy session over those same packages, selecting every
+  offer class through one private owner, retaining exact fact, instance, and
+  equality replay formats, rolling back a prospectively frozen rejected write,
+  and treating an undeclared format as live but permanently incomplete with no
+  arena or fact-history commit;
 - undirected equality transport, including incomparable endpoint facts that
   improve both sides atomically, equality chains, reactivation after a later
   function improvement, and an original expression transferring its bound to

@@ -36,7 +36,7 @@ def config : Config :=
     maxReciprocalEffort := 4 }
 
 def engineLimits : Propagator.Limits :=
-  { maxOperations := 16
+  { maxOperations := 24
     maxNodes := 32
     maxRules := 16
     maxArity := 4
@@ -256,6 +256,13 @@ def badPackage : Package Fact :=
   { Cache := Unit
     cache := ()
     operations := centeredOperations real
+    handlers :=
+      #[Handler.statelessPlanned centeredForward badPlan #[emptyFormat .fact]] }
+
+def missingFormatPackage : Package Fact :=
+  { Cache := Unit
+    cache := ()
+    operations := centeredOperations real
     handlers := #[Handler.statelessPlanned centeredForward badPlan] }
 
 def badFacts? : Option (Array Fact) :=
@@ -263,14 +270,21 @@ def badFacts? : Option (Array Fact) :=
   | .ok facts => some facts.toArray
   | .error _ => none
 
-def badStart? : Option (PolicySession.Session Fact) :=
+def badStartWith? (package : Package Fact) :
+    Option (PolicySession.Session Fact) :=
   match badFacts? with
   | none => none
   | some facts =>
       match PolicySession.Session.start (DyadicInterval.factDomain endpointLimit)
-          badProgram #[badPackage] facts limits with
+          badProgram #[package] facts limits with
       | .ok session => some session
       | .error _ => none
+
+def badStart? : Option (PolicySession.Session Fact) :=
+  badStartWith? badPackage
+
+def missingFormatStart? : Option (PolicySession.Session Fact) :=
+  badStartWith? missingFormatPackage
 
 #guard program.check
 #guard PolicySession.limitsCoherent limits
@@ -338,6 +352,28 @@ def badStart? : Option (PolicySession.Session Fact) :=
                 stopped.arena.bodyCells == 0 &&
                 stopped.state.engine.history.isEmpty &&
                 stopped.state.engine.pending.isNone
+          | _ => false
+
+-- The same plan without its handler-owned fact format fails before arena or
+-- engine admission. The synthetic failed reply clears the latch and keeps the
+-- session usable, while permanently preventing a completeness claim.
+#guard
+  match missingFormatStart? with
+  | none => false
+  | some session =>
+      match selection? session (.invoke centeredForwardKey) with
+      | none => false
+      | some (selection, viewed) =>
+          match viewed.choose (.select selection) with
+          | .invalidPayload (.undeclaredFormat key) next =>
+              key.rule == centeredForwardKey && key.role == .fact &&
+                key.schema == 0 && next.live && next.droppedWork &&
+                next.state.incomplete && !next.complete &&
+                next.arena.entries.isEmpty && next.arena.bodyCells == 0 &&
+                next.state.engine.history.isEmpty &&
+                next.state.engine.pending.isNone &&
+                (next.registry.packages[0]?).any fun package =>
+                  package.invocations == 1
           | _ => false
 
 end Hex.Interval.PolicySessionConformance
