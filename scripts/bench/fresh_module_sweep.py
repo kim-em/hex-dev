@@ -40,6 +40,7 @@ INVOLUNTARY_CONTEXT_MARKER = "__HEX_INVOLUNTARY_CONTEXT__="
 VOLUNTARY_CONTEXT_MARKER = "__HEX_VOLUNTARY_CONTEXT__="
 DEFAULT_MAX_LOAD_PER_CPU = 0.5
 DEFAULT_MAX_CORE_INTERFERENCE_RATIO = 0.02
+DEFAULT_MAX_FREQUENCY_SPREAD_RATIO = 0.15
 NULL_MAGNITUDE_FACTOR = 3.0
 T = TypeVar("T")
 
@@ -139,6 +140,12 @@ def parse_args(
             "busy-time fraction on its SMT sibling"
         ),
     )
+    parser.add_argument(
+        "--max-frequency-spread-ratio",
+        type=float,
+        default=DEFAULT_MAX_FREQUENCY_SPREAD_RATIO,
+        help="maximum observed pinned-CPU frequency spread for shared-host evidence",
+    )
     args = parser.parse_args(argv)
     if args.samples < 1:
         parser.error("--samples must be positive")
@@ -150,6 +157,8 @@ def parse_args(
         parser.error("--max-load-per-cpu must be positive")
     if not 0 < args.max_core_interference_ratio < 1:
         parser.error("--max-core-interference-ratio must be between 0 and 1")
+    if not 0 < args.max_frequency_spread_ratio < 1:
+        parser.error("--max-frequency-spread-ratio must be between 0 and 1")
     if args.allow_busy and args.shared_host:
         parser.error("--allow-busy and --shared-host are mutually exclusive")
     if args.cpu is not None and args.cpu < 0:
@@ -1021,6 +1030,7 @@ def shared_host_observations(
     measurement_cpu: int,
     sibling_cpus: Sequence[int],
     max_ratio: float,
+    max_frequency_spread_ratio: float,
 ) -> dict[str, object]:
     """Aggregate auditable per-arm contention measurements."""
     max_foreign_ratio = 0.0
@@ -1089,10 +1099,22 @@ def shared_host_observations(
                         frequencies.append(int(frequency))
     if missing_accounting:
         violations.append("per-arm CPU accounting is incomplete")
+    frequency_spread_ratio = None
+    if frequencies and min(frequencies) > 0:
+        frequency_spread_ratio = (
+            max(frequencies) / min(frequencies) - 1
+        )
+        if frequency_spread_ratio > max_frequency_spread_ratio:
+            violations.append(
+                "pinned-CPU frequency spread "
+                f"{frequency_spread_ratio:.3f} exceeds "
+                f"{max_frequency_spread_ratio:.3f}"
+            )
     return {
         "measurement_cpu": measurement_cpu,
         "smt_sibling_cpus": list(sibling_cpus),
         "max_core_interference_ratio": max_ratio,
+        "max_frequency_spread_ratio": max_frequency_spread_ratio,
         "max_measurement_cpu_foreign_ratio": max_foreign_ratio,
         "max_smt_sibling_busy_ratio": max_sibling_ratio,
         "max_cpu_pressure_some_delta_us": max_pressure_delta,
@@ -1100,6 +1122,7 @@ def shared_host_observations(
         "max_load_1m_per_cpu": max_load,
         "min_frequency_khz": min(frequencies) if frequencies else None,
         "max_frequency_khz": max(frequencies) if frequencies else None,
+        "frequency_spread_ratio": frequency_spread_ratio,
         "violations": violations,
     }
 
@@ -1119,7 +1142,13 @@ def validity_summary(
             if issue not in issues
         )
     for pair in spec.pairs:
-        if pair.null_control or "tactic_budget_ms" not in pair.metadata:
+        if pair.null_control:
+            continue
+        if results[pair.name].get("resolution") == "no-comparable-control":
+            issue = f"{pair.name}: no magnitude-comparable null control"
+            if issue not in issues:
+                issues.append(issue)
+        if "tactic_budget_ms" not in pair.metadata:
             continue
         status = results[pair.name].get("budget_status")
         if status != "passed":
@@ -1317,6 +1346,7 @@ def run_cli(
             args.cpu,
             sibling_cpus,
             args.max_core_interference_ratio,
+            args.max_frequency_spread_ratio,
         )
     release_quality, validity_exceptions = validity_summary(
         spec,
@@ -1352,6 +1382,8 @@ def run_cli(
             "max_load_per_cpu": args.max_load_per_cpu,
             "max_core_interference_ratio":
                 args.max_core_interference_ratio,
+            "max_frequency_spread_ratio":
+                args.max_frequency_spread_ratio,
             "allow_dirty": args.allow_dirty,
             "allow_busy": args.allow_busy,
             "shared_host": args.shared_host,

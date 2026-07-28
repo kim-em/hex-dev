@@ -301,8 +301,9 @@ and concurrent Lake/Lean counts are retained around every measured arm.
 Scheduler counters on the pinned CPU and every SMT sibling are differenced
 across each arm and combined with child user/system time. Foreign work on the
 pinned CPU or excessive sibling utilisation above the preregistered ceiling
-invalidates release quality. Global load and unrelated Lake/Lean presence are
-context rather than automatic failures in this mode.
+invalidates release quality, as does a pinned-CPU frequency spread above its
+preregistered band. Global load and unrelated Lake/Lean presence are context
+rather than automatic failures in this mode.
 
 The artifact selects a magnitude-comparable control for every substantive
 pair and records `resolved`, `unresolved`, or `no-comparable-control`. A fixed

@@ -428,7 +428,7 @@ class PairingTests(unittest.TestCase):
             }]
         }
         observed = sweep.shared_host_observations(
-            rows, 47, [95], 0.02
+            rows, 47, [95], 0.02, 0.15
         )
         self.assertEqual(observed["max_smt_sibling_busy_ratio"], 0.10)
         self.assertRegex(
