@@ -595,7 +595,12 @@ private def prepareApplication (state : State Fact) (applicationId : Application
                     queuePops := state.engine.metrics.queuePops + 1
                     requests := state.engine.metrics.requests + 1 } }
             let state := advanceState (chargeDecision state decision) engine
-            .request { action, inputs := views, writes := application.writes } state
+            .request
+              { action
+                program := state.engine.programView
+                inputs := views
+                writes := application.writes }
+              state
         | _, _, _ => reject state .malformedState
 
 private def consumeSuggestion (state : State Fact) (suggestion : SuggestionId) : State Fact :=
