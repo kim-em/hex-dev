@@ -125,7 +125,7 @@ theorem count_eq_one_iff {carrier : ZPoly} {carrierReplay : SturmReplay}
       (Polynomial.mem_roots'.mp hrootMem.1).2
     have hboth := (common.isRoot_iff hcommon y).mp hgRoot
     have hrootEq : y = root :=
-      (IsolationCert.exists_unique_root_of_check hcarrier hcert i).unique
+      (IsolationCert.existsUnique_root hcarrier hcert i).unique
         ⟨hboth.2, hrootMem.2⟩ ⟨hroot, hmem⟩
     simpa only [hrootEq] using hboth.1
   · intro hatomRoot

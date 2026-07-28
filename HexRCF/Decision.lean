@@ -23,7 +23,7 @@ namespace Hex.RCF
 
 /-- Every true compiled verdict proves the reflected sentence. -/
 theorem decide_sound (s : Sentence) (h : decide s = some true) : s.toProp := by
-  obtain ⟨cert, hcert⟩ := decide_eq_some_true_imp_exists_cert h
+  obtain ⟨cert, hcert⟩ := exists_cert_of_decide h
   exact check_sound s cert hcert
 
 end Hex.RCF

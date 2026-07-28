@@ -52,7 +52,7 @@ end Sign
 
 /-- The sign of a continuous polynomial evaluation is constant on a
 preconnected set containing no root of the polynomial. -/
-theorem sign_eval_eq_of_noRoot {p : Polynomial ℝ} {s : Set ℝ}
+theorem Polynomial.sign_eq_of_noRoot {p : Polynomial ℝ} {s : Set ℝ}
     (hs : IsPreconnected s) (hnz : ∀ z ∈ s, ¬p.IsRoot z)
     {x y : ℝ} (hx : x ∈ s) (hy : y ∈ s) :
     SignType.sign (p.eval x) = SignType.sign (p.eval y) := by
@@ -74,7 +74,7 @@ theorem evalSign_spec (p : ZPoly) (x : Dyadic) :
 
 /-- A polynomial whose executable degree is not positive is constant after
 casting, including the zero polynomial. -/
-theorem eval_eq_eval_zero_of_degree_nonpos (p : ZPoly)
+theorem eval_eq_at_zero (p : ZPoly)
     (hdegree : ¬0 < p.degree?.getD 0) (x : ℝ) :
     (toPolyℝ p).eval x = (toPolyℝ p).eval 0 := by
   have hnat : (toPolyℝ p).natDegree = 0 := by
@@ -95,7 +95,7 @@ theorem sign_eval_eq_open {carrier : ZPoly} {replay : SturmReplay}
       (Dyadic.toReal (isolations.openPoint cut))) =
       SignType.sign ((toPolyℝ atom).eval x) := by
   let model := isolations.rootModel hreplay hstrict
-  apply sign_eval_eq_of_noRoot (Cell.isPreconnected_open model cut)
+  apply Polynomial.sign_eq_of_noRoot (Cell.isPreconnected_open model cut)
   · intro z hz hatom
     exact Cell.open_not_root model hz (hroot z hatom)
   · exact Cell.openPoint_mem isolations hreplay hstrict cut
@@ -143,11 +143,11 @@ theorem sign_eval_eq_leftRoot {carrier atom : ZPoly} {cert : IsolationCert}
     {sample : ℝ} (hsample : Cell.Sem model (.open i.castSucc) sample) :
     SignType.sign ((toPolyℝ atom).eval sample) =
       SignType.sign ((toPolyℝ atom).eval (model.root i)) := by
-  apply sign_eval_eq_of_noRoot (model.isPreconnected_leftSpan i) _
+  apply Polynomial.sign_eq_of_noRoot (model.isPreconnected_leftSpan i) _
       (model.leftOpen_mem_leftSpan i hsample) (model.root_mem_leftSpan i)
   intro z hz hzroot
   exact hnonzero (by
-    rw [← model.root_eq_of_mem_leftSpan i (hroot z hzroot) hz]
+    rw [← model.root_unique_leftSpan i (hroot z hzroot) hz]
     exact hzroot)
 
 /-- Exact left-open sample sign at a carrier root where the atom does not
@@ -200,7 +200,7 @@ theorem evalSign_commonLeft
   exact evalSign_leftRoot hreplay hstrict hroot i hnonzero
 
 /-- Exact evaluation cannot report zero at a certified nonroot. -/
-theorem evalSign_ne_zero_of_not_root (p : ZPoly) (x : Dyadic)
+theorem evalSign_ne_zero (p : ZPoly) (x : Dyadic)
     (hroot : ¬(toPolyℝ p).IsRoot (Dyadic.toReal x)) :
     evalSign p x ≠ .zero := by
   intro hzero
@@ -243,12 +243,12 @@ theorem openCellSign_spec {sentence : Sentence} {carrier : CarrierCert}
       intro hpRoot
       exact Cell.open_not_root model hsample (hroot _ hpRoot)
     have hnonzero : evalSign p (isolations.openPoint cut) ≠ .zero :=
-      evalSign_ne_zero_of_not_root p _ hnotroot
+      evalSign_ne_zero p _ hnotroot
     refine ⟨evalSign p (isolations.openPoint cut), ?_, ?_⟩
     · simp [openCellSign?, hdegree, openSign?_eq_some hnonzero]
     · exact evalSign_open_of_atom hcarrier hstrict hpmem cut hx
   · refine ⟨evalSign p 0, by simp [openCellSign?, hdegree], ?_⟩
-    rw [eval_eq_eval_zero_of_degree_nonpos p hdegree x]
+    rw [eval_eq_at_zero p hdegree x]
     simpa using evalSign_spec p 0
 
 namespace SignMatrixCert
@@ -330,7 +330,7 @@ theorem signWith?_spec {sentence : Sentence} {carrier : CarrierCert}
             intro hpRoot
             exact Cell.open_not_root model hsample (hroot _ hpRoot)
           have hnonzero : evalSign p (isolations.openPoint i.castSucc) ≠ .zero :=
-            evalSign_ne_zero_of_not_root p _ hnotroot
+            evalSign_ne_zero p _ hnotroot
           refine ⟨evalSign p (isolations.openPoint i.castSucc), ?_, ?_⟩
           · simp only [signWith?, if_pos hdegree]
             rw [hfind']
@@ -347,12 +347,12 @@ theorem signWith?_spec {sentence : Sentence} {carrier : CarrierCert}
     | «open» cut =>
         refine ⟨evalSign p 0, by simp [signWith?, openCellSign?, hdegree], ?_⟩
         intro x _hx
-        rw [eval_eq_eval_zero_of_degree_nonpos p hdegree x]
+        rw [eval_eq_at_zero p hdegree x]
         simpa using evalSign_spec p 0
     | root i =>
         refine ⟨evalSign p 0, by simp [signWith?, hdegree], ?_⟩
         intro x _hx
-        rw [eval_eq_eval_zero_of_degree_nonpos p hdegree x]
+        rw [eval_eq_at_zero p hdegree x]
         simpa using evalSign_spec p 0
 
 /-- Public atom-sign lookup is total and exact under the combined checker. -/
@@ -501,7 +501,7 @@ theorem evalConstants_eq_true_iff {formula : Formula}
   apply evalSigns_eq_true_iff
   intro p hp
   refine ⟨Hex.RCF.evalSign p 0, rfl, ?_⟩
-  rw [eval_eq_eval_zero_of_degree_nonpos p (hconstant p hp) x]
+  rw [eval_eq_at_zero p (hconstant p hp) x]
   simpa using Hex.RCF.evalSign_spec p 0
 
 end Formula

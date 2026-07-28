@@ -257,7 +257,7 @@ proved equivalences.
    For root-cell transfer, `RootModel.leftSpan` is the interval from the open
    cell immediately left of root `i` through that root. Its preconnectedness,
    open-sample and root membership lemmas, together with
-   `RootModel.root_eq_of_mem_leftSpan`, show that the only carrier root in the
+   `RootModel.root_unique_leftSpan`, show that the only carrier root in the
    span is root `i` itself.
 
 7. **Prepare common-root packages.** Do the expensive work once per
@@ -519,7 +519,7 @@ cannot pass a fixture expecting either verdict. The required one-way
 connections are
 
 ```lean
-theorem decide_eq_some_true_imp_exists_cert :
+theorem exists_cert_of_decide :
     decide s = some true → ∃ cert, Certificate.check s cert = true
 
 theorem decide_sound (s : Sentence) :

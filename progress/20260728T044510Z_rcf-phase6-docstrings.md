@@ -16,6 +16,23 @@
 - Rephrased tactic diagnostics as separate sentences and updated their exact
   regression, conformance, and manual outputs without changing refusal or
   false-verdict behavior.
+- Shortened the public builder-characterisation names to
+  `check_buildSturmReplay`, `Separation.check_separate`, and
+  `exists_cert_of_decide`.
+- Removed the unused `IsolationCert.sample?` wrapper and its theorem. The
+  implemented pipeline and SPEC use `IsolationCert.openPoint` directly.
+- Replaced the checker-local positive-degree recursion with `List.all`. Kept
+  endpoint-vector, duplicate-removal, and separation helpers public because
+  exposed definitions depend on them or the SPEC and tests exercise them.
+- Shortened five overqualified semantic theorem names, including
+  `IsolationCert.existsUnique_root`, `RootModel.root_unique_leftSpan`, and
+  `Polynomial.sign_eq_of_noRoot`.
+- Moved the decision-builder meta import from `Reify` to its actual consumer,
+  `Tactic`, and made tactic-only Mathlib and Lean imports meta-only. Added the
+  direct Syntax meta dependency required to compile reifier constructors.
+- Confirmed by downstream tactic tests that the direct public
+  `HexRealRootsMathlib.IsolateRoots` import is required for expansion of the
+  public `rcf_ring` macro, so retained it.
 - Verified that every private HexRCF declaration has at least one textual use,
   then built all changed modules and the complete `HexRCF` target.
 

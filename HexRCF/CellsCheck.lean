@@ -90,18 +90,6 @@ def openPoint (cert : IsolationCert) :
         ((cert.intervals[cut.val - 1]'(by omega)).upper +
           (cert.intervals[cut.val]'(by omega)).lower) >>> (1 : Int)
 
-/-- Open cells carry exact dyadic samples. Root cells are represented by their
-certified isolation instead. -/
-@[expose]
-def sample? (cert : IsolationCert) : Cell cert.intervals.size → Option Dyadic
-  | .open cut => some (cert.openPoint cut)
-  | .root _ => none
-
-/-- Sampling an open cell returns its exact dyadic sample point. -/
-@[simp] theorem sample?_open (cert : IsolationCert)
-    (cut : Fin (cert.intervals.size + 1)) :
-    cert.sample? (.open cut) = some (cert.openPoint cut) := rfl
-
 end IsolationCert
 
 /-- Claimed carrier-root comparisons against the lower and upper endpoints of

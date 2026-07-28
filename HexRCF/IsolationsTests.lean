@@ -63,7 +63,7 @@ example : empty.check replay = false := by decide
 
 example : ∃! r : ℝ, (HexRealRootsMathlib.toPolyℝ quad).IsRoot r ∧
     HexRealRootsMathlib.Literal.InInterval (valid.intervals[0]'(by decide)) r :=
-  IsolationCert.exists_unique_root_of_check
+  IsolationCert.existsUnique_root
     (f := quad) (replay := replay) (cert := valid) (by decide) (by decide)
       ⟨0, by decide⟩
 

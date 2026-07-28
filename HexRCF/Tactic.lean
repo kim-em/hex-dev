@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.Reify
+public meta import HexRCF.DecisionCheck
 
 public section
 

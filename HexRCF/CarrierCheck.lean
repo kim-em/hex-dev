@@ -24,12 +24,6 @@ checker. Real-polynomial consequences live in `HexRCF.Carrier`.
 
 namespace Hex.RCF
 
-/-- Check that every polynomial in a literal list has positive degree. -/
-@[expose]
-def checkPosDegrees : List ZPoly → Bool
-  | [] => true
-  | p :: ps => decide (0 < p.degree?.getD 0) && checkPosDegrees ps
-
 /-- Multiplication-checkable witnesses that a polynomial is a square-free
 carrier for the atom product of a sentence. -/
 structure CarrierCert where
@@ -55,7 +49,7 @@ def check (s : Sentence) (cert : CarrierCert) : Bool :=
   let q := s.product
   -- `Sentence.polys` filters by this predicate. Retaining the explicit walk
   -- states the certificate condition at the point where it is checked.
-  checkPosDegrees s.polys &&
+  s.polys.all (fun p => decide (0 < p.degree?.getD 0)) &&
   decide (0 < q.degree?.getD 0) &&
   !cert.repeated.isZero &&
   decide (cert.factorScale ≠ 0) &&
@@ -80,26 +74,15 @@ def Valid (s : Sentence) (cert : CarrierCert) : Prop :=
     cert.repeated * cert.derivPart ∧
   cert.replay.check cert.carrier = true
 
-/-- A successful positive-degree walk proves its proposition-level form. -/
-theorem checkPosDegrees_sound {ps : List ZPoly} (h : checkPosDegrees ps = true) :
-    ∀ p ∈ ps, 0 < p.degree?.getD 0 := by
-  induction ps with
-  | nil => simp
-  | cons p ps ih =>
-      simp only [checkPosDegrees, Bool.and_eq_true, decide_eq_true_eq] at h
-      intro q hq
-      simp only [List.mem_cons] at hq
-      rcases hq with rfl | hq
-      · exact h.1
-      · exact ih h.2 q hq
-
 /-- Soundness of the executable carrier checker. -/
 theorem check_sound {s : Sentence} {cert : CarrierCert}
     (h : cert.check s = true) : cert.Valid s := by
   simp only [check, Bool.and_eq_true, decide_eq_true_eq] at h
   obtain ⟨⟨⟨⟨⟨⟨⟨hdegrees, hqdeg⟩, hr0⟩, hk0⟩, hd0⟩, hfactor⟩,
     hderiv⟩, hreplay⟩ := h
-  refine ⟨checkPosDegrees_sound hdegrees, hqdeg, ?_, hk0, hd0, ?_, ?_, hreplay⟩
+  have hdegrees' : ∀ p ∈ s.polys, 0 < p.degree?.getD 0 := by
+    simpa only [List.all_eq_true, decide_eq_true_eq] using hdegrees
+  refine ⟨hdegrees', hqdeg, ?_, hk0, hd0, ?_, ?_, hreplay⟩
   · simp only [Bool.not_eq_true'] at hr0
     have hr := (DensePoly.isZero_eq_false_iff cert.repeated).mp hr0
     intro hzero

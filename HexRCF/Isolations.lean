@@ -60,7 +60,7 @@ theorem interval_toLiteral (replay : SturmReplay) (cert : IsolationCert)
   simp [toLiteral]
 
 /-- Every accepted interval contains exactly one real root of the replay head. -/
-theorem exists_unique_root_of_check {f : ZPoly} {replay : SturmReplay}
+theorem existsUnique_root {f : ZPoly} {replay : SturmReplay}
     {cert : IsolationCert} (hreplay : replay.check f = true)
     (hcert : cert.check replay = true) (i : Fin cert.intervals.size) :
     ∃! r : ℝ, (toPolyℝ f).IsRoot r ∧

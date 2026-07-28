@@ -204,7 +204,7 @@ def separate? (p : ZPoly) (replay : SturmReplay)
       if out.checkStrict replay then some out else none
 
 /-- The public builder never returns an unchecked strict isolation array. -/
-theorem check_of_separate_eq_some {p : ZPoly} {replay : SturmReplay}
+theorem check_separate {p : ZPoly} {replay : SturmReplay}
     {input output : IsolationCert} (h : separate? p replay input = some output) :
     output.checkStrict replay = true := by
   unfold separate? at h

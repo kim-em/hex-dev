@@ -119,7 +119,7 @@ def buildSturmReplay? (f : ZPoly) : Option SturmReplay :=
 
 /-- Every certificate returned by the builder has passed the kernel-facing
 Boolean checker. -/
-theorem check_of_build_eq_some {f : ZPoly} {replay : SturmReplay}
+theorem check_buildSturmReplay {f : ZPoly} {replay : SturmReplay}
     (h : buildSturmReplay? f = some replay) : replay.check f = true := by
   unfold buildSturmReplay? at h
   split at h
