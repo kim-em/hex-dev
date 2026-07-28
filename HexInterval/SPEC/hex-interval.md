@@ -999,7 +999,7 @@ preflight. A handler head must be declared as owned or required.
 flattening, builds a `Route` from each compact `RuleId` back to its package and
 handler, and rejects undeclared heads and duplicate `OpKey`s or `RuleKey`s.
 Program size and arity are bounded before exact signature lookup. The checked
-start then validates every owned and required signature against the final
+session start validates every owned and required signature against the final
 frontend program, runs each package's configuration preflight, and starts the
 engine with the registry's exact flattened registration array. Registry-owned
 dispatch diagnostics impose their own `maxDiagnosticValue` floor even when
@@ -1026,12 +1026,12 @@ registrations, callback routes, configuration validation, and the
 payload-freezing/replay schema implementations as one coherent snapshot.
 Whether that snapshot retains existential packages, compiles one dispatch
 function, supports hot replacement, or uses another lookup structure remains
-experimental. The present experiment exposes its constructors and returns a
-separable engine/registry pair, so its checked start is a conformance canary
-rather than the final encapsulation boundary. A production session should
-prevent accidentally pairing an engine with an unrelated registry; a
-different callback implementation under the same versioned rule schema
-remains valid only when its retained payloads replay under that schema.
+experimental. `PayloadSession.Session` now has a
+private constructor and its checked start owns the matching engine, registry,
+arena, and arena limits. The older direct registry and engine interfaces remain
+available for search experiments, but proof-producing execution goes through
+the session. A different callback implementation under the same versioned rule
+schema remains valid only when its retained payloads replay under that schema.
 
 The explicit registration and validation boundary is fixed. Discovery and
 scheduling above it remain empirical: one arm uses an incremental registry
@@ -1078,8 +1078,9 @@ alternatives to compare once the behavior is established.
 2. The external function-package registry executes the routed callback and
    owns its private cache; the Mathlib companion is responsible for semantic
    replay, not hot-loop dispatch.
-3. The registry returns an `Outcome` containing candidate facts, alternatives,
-   suggestions, cost observations, and an opaque proof recipe identifier.
+3. The registry returns a `Plan` containing an `Outcome` plus exactly the
+   reply-local recipe drafts referenced by its fact, instantiation, and
+   equality payload identifiers.
 4. A reply echoes the request serial, snapshot, and application. A delayed or
    transplanted reply is rejected without clearing the current request.
 5. The solver validates every candidate target against the application's
@@ -1092,10 +1093,9 @@ alternatives to compare once the behavior is established.
    Only companion replay of the retained payload can do that.
 6. In the production replay protocol, every value needed to justify an
    accepted fact is frozen into an immutable per-run payload arena, and the
-   retained `PayloadId` points there rather than into a mutable cache. A
-   separate arena experiment now validates and relocates a complete reply
-   prospectively; it is not yet joined to package invocation and engine
-   admission in one opaque session.
+   retained `PayloadId` points there rather than into a mutable cache. Session
+   execution validates and relocates the complete reply prospectively before
+   engine admission.
 7. The solver records the snapshot, concrete application, anchor, action kind,
    effort, input versions, target's preceding fact version, proposed fact,
    installed fact, and frozen payload in provenance. The preceding target fact
@@ -1157,9 +1157,15 @@ limit. Entry construction and identifier assignment are one traversal, so a
 relocated identifier denotes exactly the entry appended for its local draft.
 Candidate, instantiation, and equality roles are distinct, and ordinary replay
 lookup checks the expected role. Failure returns the old arena.
-The surrounding session must commit that returned arena only if submission of
-the relocated outcome also succeeds, so this experiment does not prejudge the
-one-phase versus two-phase production choice.
+The session commits that returned arena only if submission of the relocated
+outcome also succeeds. Engine rejection, fact-domain or engine resource
+refusal, malformed payloads, and arena resource refusal retain the preceding
+arena, facts, program, and proof history. Their returned session snapshot is
+non-live, so a caller cannot resume after the error and later relabel the
+partial run saturated. The selected package's cache may record the attempt
+because caches and invocation telemetry are explicitly non-semantic.
+This executable eager protocol does not foreclose measuring a two-phase
+production protocol.
 
 An invalid rule outcome may mislead search, but it cannot produce a theorem.
 The companion reconstructs every retained fact from the rule's soundness
@@ -1195,10 +1201,15 @@ payload schema, and uninterpreted `List Nat` body. It derives the rule owner
 only from `origin.key`, avoiding two stored identities which could disagree.
 Package-owned decoding and schema lookup, typed atom encodings, byte limits,
 and semantic replay are still missing. Instantiation family labels and custom
-split-reason numbers also remain untyped representation gaps. The next session
-experiment must ensure that no unrelocated package-local identifier can enter
-retained provenance and that an arena from one registry snapshot cannot be
-paired with another.
+split-reason numbers also remain untyped representation gaps. The FIFO session
+rejects any positive compatibility callback whose local
+identifier lacks a draft, so no unrelocated package-local identifier reaches
+its retained provenance. It reports an incomplete rather than saturated run
+after a package `failed`/`resourceLimit` result or while a retry or
+instantiation suggestion remains unprocessed. The next policy experiment must
+preserve this same session transaction while allowing an external policy to
+choose invocations, instantiations, equalities, retries, and splits; it must not
+regain access to separable engine, registry, and arena values.
 
 ### Action kinds
 
