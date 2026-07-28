@@ -29,10 +29,10 @@ namespace Hex.FactorTactic
 
 open Lean Meta Elab
 
-/-- Instance-carrying core of the `irreducibility` elaboration for
+/-- Constructs the proof emitted by `irreducibility` for
 `f : FpPoly p`: returns the proof of `Hex.FpPoly.Irreducible f` as a raw
 `Expr` over reified literal data. -/
-meta def elabFpIrredCore (tactic : String) (p : Nat)
+meta def proveFpIrreducible (tactic : String) (p : Nat)
     [Hex.ZMod64.Bounds p] (hpt : Hex.Nat.isPrimeTrial p = true)
     (pE boundsE fE : Expr) : MetaM Expr := do
       let hp : Hex.Nat.Prime p := Hex.Nat.isPrimeTrial_isPrime hpt
@@ -85,7 +85,7 @@ meta def elabIrreducibilityFp (tactic : String) (p : Nat)
   if hpt : Hex.Nat.isPrimeTrial p = true then
     if h1 : 0 < p then
       if h2 : p < 2 ^ 31 then
-        @elabFpIrredCore tactic p ⟨h1, h2⟩ hpt pE boundsE fE
+        @proveFpIrreducible tactic p ⟨h1, h2⟩ hpt pE boundsE fE
       else
         throwError "{tactic}: internal error: modulus over the ZMod64 bound \
             despite a Bounds instance"
@@ -98,7 +98,7 @@ meta def elabIrreducibilityFp (tactic : String) (p : Nat)
 
 /-- Elaborate an `irreducibility` argument and produce the proof, dispatching
 to providers for non-`FpPoly` input types. -/
-meta def elabIrreducibilityCore (stx : Syntax) (t : Syntax)
+meta def elabIrreducibilityArgument (stx : Syntax) (t : Syntax)
     (expectedType? : Option Expr) : Term.TermElabM Expr := do
   let pE ← Term.elabTerm t none
   Term.synthesizeSyntheticMVarsNoPostponing
@@ -122,7 +122,7 @@ syntax (name := irreducibilityTerm) "irreducibility" term:max : term
   fun stx expectedType? => do
     match stx with
     | `(irreducibility $t) => do
-        let e ← elabIrreducibilityCore stx t expectedType?
+        let e ← elabIrreducibilityArgument stx t expectedType?
         Term.ensureHasType expectedType? e
     | _ => Elab.throwUnsupportedSyntax
 
@@ -179,14 +179,14 @@ syntax (name := irreducibilityTac)
             `… .Irreducible e`.")
     | `(tactic| irreducibility $t:term) => do
         let proof ← Tactic.withMainContext do
-          elabIrreducibilityCore stx t none
+          elabIrreducibilityArgument stx t none
         Tactic.liftMetaTactic fun g => do
           let ty ← inferType proof
           let (_, g) ← (← g.assert `this ty proof).intro1P
           return [g]
     | `(tactic| irreducibility $h:ident : $t:term) => do
         let proof ← Tactic.withMainContext do
-          elabIrreducibilityCore stx t none
+          elabIrreducibilityArgument stx t none
         Tactic.liftMetaTactic fun g => do
           let ty ← inferType proof
           let (_, g) ← (← g.assert h.getId ty proof).intro1P

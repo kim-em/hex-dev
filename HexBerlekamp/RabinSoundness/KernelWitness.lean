@@ -82,7 +82,7 @@ theorem dvd_one_of_isUnitPolynomial
     omega
   have hmod : (1 : FpPoly p) % u = 0 := by
     show (DensePoly.divMod (1 : FpPoly p) u).2 = 0
-    apply DensePoly.divMod_remainder_eq_zero_of_degree_zero_core
+    apply DensePoly.divMod_remainder_eq_zero_of_degree_zero_of_cancel
     · exact hu_size
     · intro a
       have hpos : 0 < u.size := by omega

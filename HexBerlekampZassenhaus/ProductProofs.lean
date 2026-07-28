@@ -249,7 +249,7 @@ private theorem factorTrialWithBound_product_of_all_recorded_normalized
       f (factorTrialFactorsWithBound f B)
       (factorTrialFactorsWithBound_polyProduct f B) hnormalized hrecorded
 
-private theorem factorTrialWithBound_product_of_constant_branch
+private theorem factorTrialWithBound_product_of_constant
     (f : ZPoly) (B : Nat)
     (hf : f ≠ 0)
     (hbranch : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) :
@@ -273,7 +273,7 @@ private theorem factorTrialWithBound_product_of_constant_branch
       exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
         f hf factor hmem
 
-private theorem factorTrialWithBound_product_of_quadratic_branch
+private theorem factorTrialWithBound_product_of_quadratic
     (f : ZPoly) (B : Nat)
     (hf : f ≠ 0)
     (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
@@ -299,7 +299,7 @@ private theorem factorTrialWithBound_product_of_quadratic_branch
     exact quadraticIntegerRootFactors?_shouldRecord
       (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad c hc
 
-private theorem factorTrialWithBound_product_of_trial_branch
+private theorem factorTrialWithBound_product_of_trial
     (f : ZPoly) (B : Nat)
     (hf : f ≠ 0)
     (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
@@ -336,14 +336,14 @@ theorem factorTrialWithBound_product (f : ZPoly) (B : Nat) :
     unfold factorTrialWithBound
     exact factorizationOfFactors_product_of_zero (factorTrialFactorsWithBound 0 B)
   · by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-    · exact factorTrialWithBound_product_of_constant_branch f B hf hdeg
+    · exact factorTrialWithBound_product_of_constant f B hf hdeg
     · cases hquad :
         quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
       | some coreFactors =>
-          exact factorTrialWithBound_product_of_quadratic_branch
+          exact factorTrialWithBound_product_of_quadratic
             f B hf hdeg coreFactors hquad
       | none =>
-          exact factorTrialWithBound_product_of_trial_branch
+          exact factorTrialWithBound_product_of_trial
             f B hf hdeg hquad
 
 /-- The public trial-division entry point reconstructs its input. -/

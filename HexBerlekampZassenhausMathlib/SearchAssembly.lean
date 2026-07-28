@@ -51,7 +51,7 @@ recorded `result` multiplies back to a square-free `core` and every irreducible
 factor of `core` is an associate of some emitted factor, the emitted list has
 exactly `normalizedFactors.card` entries (coverage gives `≥`, the product gives
 `≤`), so each entry is irreducible by the UFD partition lemma. -/
-theorem smartCore_factor_irreducible_of_covers_of_squarefree
+theorem factor_irreducible_of_covers
     {core : Hex.ZPoly} {result : List Hex.ZPoly}
     (hcore_ne : core ≠ 0)
     (hsqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
@@ -648,7 +648,7 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
 Parallel to `liftedFactorSubsetPartition_of_choosePrimeData` but consumes
 the `Hex.ZPoly.toMonicPrimeData? core = some primeData` witness directly.
 Used by the non-monic-friendly substrate constructor
-`slowPathHenselSubstrate_of_toMonicChoosePrimeData` below, which feeds the
+`HenselFactorData.ofToMonicChoosePrime` below, which feeds the
 slow-path arm of #4170 from `(Hex.normalizeForFactor f).squareFreeCore`.
 The embedded Hensel correspondence is supplied explicitly as `hcorr`. -/
 theorem liftedFactorSubsetPartition_of_toMonicPrimeData

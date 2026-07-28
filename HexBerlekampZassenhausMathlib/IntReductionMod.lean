@@ -81,16 +81,12 @@ theorem liftedFactorSubsetPartition_of_toMonicPrimeData_complete
     (IntReductionMod.initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData
       core B primeData hval hcore_lc_pos hcore_pos hcore_prim hB_ne_zero hbound)
 
-/-- **#7584 core-facts producer (slow-path Hensel substrate).**
-
-`SlowPathHenselSubstrate core B primeData` from the `toMonicPrimeData?` selection
-witness and standard core side conditions alone -- the slow-modular / fast-BHKS
-substrate package with no `MonicDescentHypotheses` carrier and no
-`InitialLiftedFactorSubsetPartitionEvidence` input.  The `corr` and `partition`
-fields are the carrier-free / complete `toMonicPrimeData?` producers above; the
-remaining lifted-factor monic / positive-degree / injectivity and modulus /
-precision facts discharge directly from the selection witness. -/
-theorem slowPathHenselSubstrate_of_toMonicPrimeData
+/-- Constructs `HenselFactorData core B primeData` from a
+`toMonicPrimeData?` factorization and the standard square-free-core
+hypotheses.  The correspondence and partition follow from the preceding
+theorems; the remaining fields follow directly from the factorization and
+precision bound. -/
+theorem HenselFactorData.ofToMonicPrime
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
     (hval : ModPFactorization (Hex.ZPoly.toMonic core).monic primeData)
@@ -102,7 +98,7 @@ theorem slowPathHenselSubstrate_of_toMonicPrimeData
     (hbound :
       2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
         primeData.p ^ Hex.precisionForCoeffBound B primeData.p) :
-    SlowPathHenselSubstrate core B primeData := by
+    HenselFactorData core B primeData := by
   have hp_prime : Hex.Nat.Prime primeData.p :=
     hval.prime
   have hp2 : 2 ≤ primeData.p := hp_prime.two_le
@@ -253,12 +249,10 @@ theorem zpolyIrreducible_of_toMonicMonic_irreducible
   exact (irreducible_toPolynomial_dilate_iff
     (ne_of_gt hcore_lc_pos) hM_monic hcore_prim hrecover).mpr hm_irr
 
-/-- Small-mod singleton arm, keyed on the monic-transform prime selection
-`toMonicPrimeData?` (the selector shared by the fast, lattice, and slow modular
-tiers; #8519, #8533): a singleton mod-`p` factorisation of
+/-- A singleton mod-`p` factorization selected for the monic transform
 `(toMonic core).monic` certifies its irreducibility over `ℤ`, which descends to
 the primitive core along the dilation transform. -/
-theorem squareFreeCore_irreducible_of_toMonicSmallModSingletonBranch
+theorem squareFreeCore_irreducible_of_small_mod_singleton
     (f : Hex.ZPoly) (hf_ne : f ≠ 0) (primeData : Hex.PrimeChoiceData)
     (hcore_pos : 0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0)
     (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
@@ -627,19 +621,12 @@ theorem reassemblyExpansionComplete_exhaustiveIntegerTrial_of_ne_zero
     Hex.ZPoly.size_le_of_dvd_nonzero hfp_ne_zero hrp_ne_zero hfp_dvd_rp
   omega
 
-/--
-Reassembly expansion-completeness for the fast BHKS core-success branch from loop
-success plus core-factor irreducibility, with **no** forward-cut hypothesis.
+/-- Reassembly expansion-completeness for successful BHKS recovery from the
+recovery result and irreducibility of its factors.
 
-This factors the cut-free part of `fastCoreComplete_of_cut`
-(`PartitionRefinement.lean`): the product, sign-normalisation, degree, leading-
-coefficient, and fuel facts are all unconditional consequences of the loop
-success `hcore`; only the per-factor irreducibility `hirr` (there derived from
-the forward cut) is taken as a hypothesis here, isolating the cut dependence.
-Consumed by the capstone assembly `fastCoreRawGuarded_of_coreIrreducible`
-(`FactorSoundness.lean`).
--/
-theorem fastCoreReassemblyComplete_of_coreIrreducible
+The product, sign normalization, degree, leading-coefficient, and fuel facts
+follow from `hcore`; only per-factor irreducibility is assumed separately. -/
+theorem reassemblyComplete_of_bhksRecovery_irreducible
     (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
     {expectedFactors : Array Hex.ZPoly}
     (hcore :
@@ -740,7 +727,7 @@ factor of a *larger* polynomial `f` (with `core ∣ f`) be handled at
 Every other input is discharged from `toMonicPrimeData?` and the core side
 conditions.  Coverage (`RecoveredSmartSearch.covers_of_bound`) + product
 reconstruction + the `shouldRecord` gate + the square-free counting
-(`smartCore_factor_irreducible_of_covers_of_squarefree`) give irreducibility;
+(`factor_irreducible_of_covers`) give irreducibility;
 `trustworthyNone_of_bound` rules out the accepted-`none` branch. -/
 theorem classicalCoreFactorsWithBound_factor_irreducible_of_validBound
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
@@ -859,7 +846,7 @@ theorem classicalCoreFactorsWithBound_factor_irreducible_of_validBound
         hcore_dvd hpartition hmatches hfuel_adeq haux
       have hprod := Hex.scaledRecombinationSmartAux_product _ _ _ _ _ _ _ _ haux
       have hrecord := Hex.scaledRecombinationSmartAux_shouldRecord _ _ _ _ _ _ _ _ haux
-      have hirr := smartCore_factor_irreducible_of_covers_of_squarefree hcore_ne hcore_sqfree
+      have hirr := factor_irreducible_of_covers hcore_ne hcore_sqfree
         hprod hrecord hcover
       have hne : factors.isEmpty = false := by
         by_contra hc

@@ -868,8 +868,8 @@ theorem henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
       hcore_lc_pos hcore_pos
       (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos) hprecision hbound hirr hdvd hS hT
 
-/--
-Carrier-free `toMonicPrimeData?` Hensel subset correspondence surface.
+/-- Hensel subset correspondence obtained directly from a
+`toMonicPrimeData?` factorization.
 
 Same conclusion as
 `henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent`, but
@@ -877,8 +877,7 @@ without the `MonicDescentHypotheses` carrier: at the `True True` instantiation t
 only descent fields that constructor consumed (`lift_eq`, `successful_lift`) are
 `rfl`/`trivial`, and the existence/uniqueness fields come directly from the core
 facts via `toMonicLiftData_represents_lifted_of_modP` and
-`toMonicLiftData_unique_subset`.  This is the core-facts producer that the
-partition and slow-path substrate packages route through. -/
+`toMonicLiftData_unique_subset`. -/
 theorem henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
@@ -916,7 +915,7 @@ theorem henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData
 
 /-- Initial lifted subset partition for `toMonicPrimeData?` success.
 
-This composes the core-fact correspondence producer
+This composes the correspondence theorem
 `henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent` with
 the existing partition constructor. The recovered-coordinate partition fields
 come from `InitialLiftedFactorSubsetPartitionEvidence`; the monic-only unscaled
@@ -951,17 +950,15 @@ theorem liftedFactorSubsetPartition_of_toMonicPrimeData_success_descent
       hprecision hbound hB_ne_zero)
     hcore_sqfree hinitial
 
-/-- **#6682 supporting lemma (HO-1 slow-path substrate constructor).**
-
-Successful-descent variant of
-`slowPathHenselSubstrate_of_toMonicChoosePrimeData`.  The `corr` field is
+/-- Successful-descent variant of
+`HenselFactorData.ofToMonicChoosePrime`.  The `corr` field is
 sourced from the non-circular `toMonicPrimeData?` correspondence constructor
 above, using the monic-correspondent reverse descent carrier.  The partition
-field uses the narrowed `liftedFactorSubsetPartition` wrapper with that same
-correspondence; recovered partition evidence is supplied by
+field uses `liftedFactorSubsetPartition` with that same correspondence;
+recovered partition evidence is supplied by
 `InitialLiftedFactorSubsetPartitionEvidence`.
 -/
-theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData_success_descent
+theorem HenselFactorData.ofToMonicChoosePrimeDescent
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
     (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
@@ -979,7 +976,7 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData_success_descent
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
         (Hex.ZPoly.toMonicLiftData core B primeData)) :
-    SlowPathHenselSubstrate core B primeData := by
+    HenselFactorData core B primeData := by
   have hp_prime : Hex.Nat.Prime primeData.p :=
     Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
   have hp2 : 2 ≤ primeData.p := hp_prime.two_le

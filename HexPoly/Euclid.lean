@@ -67,7 +67,7 @@ private theorem mod_sub_self_eq_mul_neg_div {S : Type _}
 
 /-- Packages `mod_sub_self_eq_mul_neg_div` as the divisibility `m ∣ (p % m - p)`, the core
 fact behind the public `congr_mod`. -/
-private theorem congr_mod_core {S : Type _}
+private theorem dvd_mod_sub {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (p m : DensePoly S) :
     m ∣ (p % m - p) := by
@@ -79,7 +79,7 @@ theorem congr_mod {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
     [DivModLaws S]
     (p m : DensePoly S) :
     Congr (p % m) p m := by
-  exact congr_mod_core p m
+  exact dvd_mod_sub p m
 
 /-- Rearranges a difference-as-multiple `p - q = m * r` into the additive form
 `p = q + m * r`. -/
@@ -127,7 +127,7 @@ private theorem mod_self_eq_zero {S : Type _}
   exact DivModLaws.mod_self_eq_zero m
 
 /-- The zero polynomial reduces to `0` modulo any `m`, `0 % m = 0`. -/
-private theorem zero_mod_eq_zero {S : Type _}
+private theorem zero_mod_eq_zero_of_laws {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (m : DensePoly S) :
     (0 : DensePoly S) % m = 0 := by
@@ -228,7 +228,7 @@ private theorem mod_mul_self_left {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (m r : DensePoly S) :
     (m * r) % m = 0 := by
-  rw [mod_mul_mod, mod_self_eq_zero, zero_mul_left, zero_mod_eq_zero]
+  rw [mod_mul_mod, mod_self_eq_zero, zero_mul_left, zero_mod_eq_zero_of_laws]
 
 /-- Adding a multiple of `m` leaves the canonical remainder unchanged,
 `(q + m * r) % m = q % m`. -/

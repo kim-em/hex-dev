@@ -430,7 +430,7 @@ theorem noPivotLoop_augmentedGram_invariant
         -- contradicting `h_no_sing`.
         have h_sing_branch : Matrix.noPivotLoop 1 stateG
             = { stateG with singularStep := some stateG.step } :=
-          Matrix.noPivotLoop_singular_branch 0 stateG hDone_G hzero
+          Matrix.noPivotLoop_of_singular 0 stateG hDone_G hzero
         have h_succ_eq :
             Matrix.noPivotLoop (fuel + 1)
               (Matrix.noPivotInitialState (Matrix.gramMatrix b)) =
@@ -481,7 +481,7 @@ theorem noPivotLoop_augmentedGram_invariant
                 rowSwaps := stateG.rowSwaps
                 singularStep := none } := by
         rw [Matrix.noPivotLoop_add fuel 1]
-        exact Matrix.noPivotLoop_regular_branch 0 stateG hDone_G h_pivot_G_ne
+        exact Matrix.noPivotLoop_of_regular 0 stateG hDone_G h_pivot_G_ne
       have h_A_succ :
           Matrix.noPivotLoop (fuel + 1)
               (Matrix.noPivotInitialState (augmentedGram b a)) =
@@ -495,7 +495,7 @@ theorem noPivotLoop_augmentedGram_invariant
                 rowSwaps := stateA.rowSwaps
                 singularStep := none } := by
         rw [Matrix.noPivotLoop_add fuel 1]
-        exact Matrix.noPivotLoop_regular_branch 0 stateA hDone_A h_pivot_A_ne
+        exact Matrix.noPivotLoop_of_regular 0 stateA hDone_A h_pivot_A_ne
       -- Both peeled states are zero-fuel, so the loop returns them unchanged.
       rw [h_G_succ, h_A_succ, Matrix.noPivotLoop_zero_fuel, Matrix.noPivotLoop_zero_fuel]
       -- Now project each component of the invariant.
@@ -825,13 +825,13 @@ theorem noPivotLoop_initial_step_eq_and_fuel_succ_le
     · by_cases hp : state'.matrix[state'.step][state'.step] = 0
       · exfalso
         rw [Matrix.noPivotLoop_add fuel 1, ← hstate',
-            Matrix.noPivotLoop_singular_branch 0 state' hDone hp] at h_no_sing
+            Matrix.noPivotLoop_of_singular 0 state' hDone hp] at h_no_sing
         simp at h_no_sing
       · -- Regular branch: peel the last iteration.
         obtain ⟨h_step_prev, h_fuel_prev⟩ := ih h_no_sing_prev hDone
         refine ⟨?_, by omega⟩
         rw [Matrix.noPivotLoop_add fuel 1, ← hstate',
-            Matrix.noPivotLoop_regular_branch 0 state' hDone hp,
+            Matrix.noPivotLoop_of_regular 0 state' hDone hp,
             Matrix.noPivotLoop_zero_fuel]
         show state'.step + 1 = fuel + 1
         rw [h_step_prev]
@@ -881,7 +881,7 @@ def StepWitness.ofGram (b : Matrix Int n m) :
       (Matrix.noPivotLoop (fuel + 1)
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none := by
     rw [Matrix.noPivotLoop_add fuel 1, ← hstate,
-        Matrix.noPivotLoop_regular_branch 0 state hnext hp,
+        Matrix.noPivotLoop_of_regular 0 state hnext hp,
         Matrix.noPivotLoop_zero_fuel]
   have h_fuel_succ_le_i : fuel + 1 ≤ i.val := by rw [← h_step_eq_fuel]; exact hi
   refine ⟨fun a => (Hex.GramSchmidt.Int.bareissGramCanonicalCoeff b (fuel + 1) i)[a], ?_⟩

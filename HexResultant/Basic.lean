@@ -742,7 +742,7 @@ private theorem pseudoActive_spec {S : Type u} [Lean.Grind.CommRing S]
 This theorem deliberately uses a fresh coefficient type: an ambient `Zero`
 instance is not necessarily coherent with the zero supplied by
 `Lean.Grind.CommRing`. -/
-theorem pseudoDivMod_reconstruct_core {S : Type u}
+theorem pseudoDivMod_reconstruct {S : Type u}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (f g : DensePoly S) (hg : g ≠ 0) (hfg : g.size ≤ f.size) :
     scale (g.leadingCoeff ^ (f.size - g.size + 1)) f =

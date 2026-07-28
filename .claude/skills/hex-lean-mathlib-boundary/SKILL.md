@@ -877,7 +877,7 @@ fast-BHKS-monic-lift migration issue.
 
 ### "Final integration" issues: confirm the substrate *producer* exists, not just that the feeder issue closed
 
-A `feature` issue that says "instantiate `SlowPathHenselSubstrate` / `…Evidence`
+A `feature` issue that says "instantiate `HenselFactorData` / `…Evidence`
 constructed by the prerequisite issues" is only a token-swap if a theorem
 *concludes* that structure. A closed feeder issue does **not** prove its
 producer landed: these substrate issues are sometimes closed COMPLETED on a
@@ -923,14 +923,14 @@ Wiring it back up into the upstream slow-path substrate is a separate follow-up
 `IntReductionMod.lean` now carries carrier-free toMonic producers that need only a
 `toMonicPrimeData?` selection witness plus core facts (lc>0, deg>0, primitive,
 squarefree, B≠0, the monic-correspondent bound) — `liftedFactorSubsetPartition_of_toMonicPrimeData_complete`
-and `slowPathHenselSubstrate_of_toMonicPrimeData`, both discharging `hinitial` via
+and `HenselFactorData.ofToMonicPrime`, both discharging `hinitial` via
 the #7362 producer above and `hcorr` via the new Basic.lean
 `henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData` (the carrier-free
 correspondence: at `True True`, `MonicDescentHypotheses`' only consumed fields
 `lift_eq`/`successful_lift` are `rfl`/`trivial`, so no descent carrier is needed —
 there is still no `MonicDescentHypotheses` *producer*, but the partition/substrate
 chain no longer needs one). So when wiring #6771/#7561, **do not re-derive these** —
-consume `slowPathHenselSubstrate_of_toMonicPrimeData` / `…_complete` directly. They
+consume `HenselFactorData.ofToMonicPrime` / `…_complete` directly. They
 have no in-tree consumer yet; the slow-exhaustive branch
 (`liftedFactorSubsetPartition_outerBound_of_choosePrimeData`) is keyed on the
 different `choosePrimeData? squareFreeCore` selection, not `toMonicPrimeData?`.

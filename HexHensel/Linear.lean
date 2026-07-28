@@ -1041,7 +1041,7 @@ private theorem add_cross_congr
 
 /-- The product of the corrected factors is congruent modulo `p ^ (k + 1)` to
 `g * h` plus the `p ^ k`-scaled first-order term `r * h + g * hCorrection`. -/
-private theorem linearHenselStep_product_expansion_identity_congr_core
+private theorem linearHenselStep_product_expansion_firstOrder_congr
     (p k : Nat) [ZMod64.Bounds p]
     (g h : ZPoly) (r hCorrection : FpPoly p)
     (_hk : 1 ≤ k) :
@@ -1081,8 +1081,8 @@ private theorem linearHenselStep_product_expansion_identity_congr_core
       (DensePoly.scale (Int.ofNat (p ^ k)) (g * FpPoly.liftToZ hCorrection))
       cross hcross
 
-/-- The same product expansion as the `_core` lemma, stated for the `let`-bound
-corrected factors `g'` and `h'`. -/
+/-- The first-order product expansion, stated for the `let`-bound corrected
+factors `g'` and `h'`. -/
 private theorem linearHenselStep_product_expansion_identity_congr
     (p k : Nat) [ZMod64.Bounds p]
     (g h : ZPoly) (r hCorrection : FpPoly p)
@@ -1097,7 +1097,7 @@ private theorem linearHenselStep_product_expansion_identity_congr
       (p ^ (k + 1)) := by
   intro g' h'
   simpa [g', h'] using
-    linearHenselStep_product_expansion_identity_congr_core p k g h r hCorrection _hk
+    linearHenselStep_product_expansion_firstOrder_congr p k g h r hCorrection _hk
 
 /-- The recombination `g * h + (f - g * h)` is congruent to `f` modulo
 `p ^ (k + 1)`. -/

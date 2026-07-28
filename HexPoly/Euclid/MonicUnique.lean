@@ -104,7 +104,7 @@ theorem divMod_eq_of_reconstruction {S : Type _}
     have h := divMod_reconstruction num g hcancel
     rw [hqr] at h; exact h
   have hr'deg : r'.degree?.getD 0 < g.degree?.getD 0 := by
-    have h := divMod_remainder_degree_lt_of_pos_degree_core num g hg hcancel
+    have h := divMod_remainder_degree_lt_of_pos_degree_of_cancel num g hg hcancel
     rw [hqr] at h; exact h
   -- Difference identity: `(q - q') * g = r' - r`.
   have hmul : (q - q') * g = r' - r := by

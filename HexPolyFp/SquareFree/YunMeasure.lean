@@ -1086,7 +1086,7 @@ private theorem yunFactorsContributionWithLevel_normalized_pow_invariant
       yunFactorsNormalizedLevelCompletes_of_derivative_active_initial_split
         hp f multiplicity fuel hmultiplicity hfuel hzero hdf hnormalizedState
   simpa [contribution] using
-    yunFactorsContributionWithLevel_normalized_tail_product_bridge
+    yunFactorsContributionWithLevel_normalized_tail_product
       hp f c g multiplicity 1 fuel multiplicity (by
         simpa [g, c, contribution] using hrawProduct)
 

@@ -920,7 +920,7 @@ private theorem trialDivisionPeelAux_no_emitted_residual_divisor_of_squareFreeRa
 
 /-- If `candidate` does not divide `target`, the executable exact-quotient check
 must return `none`. -/
-private theorem exactQuotient?_eq_none_of_not_dvd_core
+private theorem exactQuotient?_eq_none_of_not_dvd_trial
     {target candidate : ZPoly} (hnot_dvd : ¬ candidate ∣ target) :
     exactQuotient? target candidate = none := by
   cases hcase : exactQuotient? target candidate with
@@ -951,7 +951,7 @@ private theorem trialDivisionPeelAux_no_residual_candidate_of_squareFreeRat
       trialDivisionPeelAux_no_emitted_residual_divisor_of_squareFreeRat
         target candidates htarget_ne hsq
         (fun c hc => (hcand c hc).1) factors residual hsplit c hc hemitted
-    exact exactQuotient?_eq_none_of_not_dvd_core hnot_dvd
+    exact exactQuotient?_eq_none_of_not_dvd_trial hnot_dvd
   · exact trialDivisionPeelAux_no_missed_unemitted
       target candidates hcand factors residual hsplit c hc hemitted
 

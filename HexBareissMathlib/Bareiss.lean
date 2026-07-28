@@ -729,24 +729,24 @@ theorem pivotLoop_invariant_of_singularStep_eq_none
               Hex.Matrix.findPivot? state.matrix kFin (state.step + 1) with
           | none =>
               have hloop :=
-                Hex.Matrix.pivotLoop_singular_branch_no_pivot fuel state hDone hp0
+                Hex.Matrix.pivotLoop_of_singular_no_pivot fuel state hDone hp0
                   (by simpa [kFin] using hfind)
               rw [hloop] at hregular
               simp at hregular
           | some pivot =>
               have hp :=
                 pivotLoop_swap_pivot_ne_zero state hDone (by simpa [kFin] using hfind)
-              rw [Hex.Matrix.pivotLoop_regular_branch_swap fuel state hDone hp0
+              rw [Hex.Matrix.pivotLoop_of_regular_swap fuel state hDone hp0
                 (by simpa [kFin] using hfind) hp]
               apply ih
               · exact bareissPivotInvariant_regular_swap_step source state hinv hDone
                   (by simpa [kFin] using hfind)
-              · simpa [Hex.Matrix.pivotLoop_regular_branch_swap fuel state hDone hp0
+              · simpa [Hex.Matrix.pivotLoop_of_regular_swap fuel state hDone hp0
                   (by simpa [kFin] using hfind) hp] using hregular
-        · rw [Hex.Matrix.pivotLoop_regular_branch_no_swap fuel state hDone hp0]
+        · rw [Hex.Matrix.pivotLoop_of_regular_no_swap fuel state hDone hp0]
           apply ih
           · exact bareissPivotInvariant_regular_no_swap_step source state hinv hDone hp0
-          · simpa [Hex.Matrix.pivotLoop_regular_branch_no_swap fuel state hDone hp0]
+          · simpa [Hex.Matrix.pivotLoop_of_regular_no_swap fuel state hDone hp0]
               using hregular
       · simpa [Hex.Matrix.pivotLoop_done fuel state hDone] using hinv
 
@@ -785,7 +785,7 @@ theorem noPivotLoop_invariant
               (⟨state.step, hk⟩ : Fin n)] ≠ 0 := by
           rw [hpivot_idx]
           exact hpivots ⟨state.step, hk⟩ (Nat.le_refl _)
-        rw [Hex.Matrix.noPivotLoop_regular_branch fuel state hDone hp_ne]
+        rw [Hex.Matrix.noPivotLoop_of_regular fuel state hDone hp_ne]
         -- Apply IH on the next state.
         apply ih
         · exact bareissNoPivotInvariant_step source state hinv hDone hp_ne
@@ -844,12 +844,12 @@ theorem noPivotLoop_invariant_of_singularStep_eq_none
       · by_cases hp0 :
             state.matrix[(⟨state.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][
               (⟨state.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] = 0
-        · rw [Hex.Matrix.noPivotLoop_singular_branch fuel state hDone hp0] at hregular
+        · rw [Hex.Matrix.noPivotLoop_of_singular fuel state hDone hp0] at hregular
           simp at hregular
-        · rw [Hex.Matrix.noPivotLoop_regular_branch fuel state hDone hp0]
+        · rw [Hex.Matrix.noPivotLoop_of_regular fuel state hDone hp0]
           apply ih
           · exact bareissNoPivotInvariant_step source state hinv hDone hp0
-          · simpa [Hex.Matrix.noPivotLoop_regular_branch fuel state hDone hp0]
+          · simpa [Hex.Matrix.noPivotLoop_of_regular fuel state hDone hp0]
               using hregular
       · simpa [Hex.Matrix.noPivotLoop_done fuel state hDone] using hinv
 
@@ -866,9 +866,9 @@ private theorem noPivotLoop_step_succ_le
       · by_cases hp :
             state.matrix[(⟨state.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][
               (⟨state.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] = 0
-        · rw [Hex.Matrix.noPivotLoop_singular_branch fuel state hDone hp]
+        · rw [Hex.Matrix.noPivotLoop_of_singular fuel state hDone hp]
           exact h
-        · rw [Hex.Matrix.noPivotLoop_regular_branch fuel state hDone hp]
+        · rw [Hex.Matrix.noPivotLoop_of_regular fuel state hDone hp]
           apply ih
           show state.step + 1 + 1 ≤ n
           omega
@@ -906,7 +906,7 @@ private theorem noPivotLoop_step_succ_ge
             state.matrix[(⟨state.step, hk⟩ : Fin n)][(⟨state.step, hk⟩ : Fin n)] ≠ 0 := by
           rw [hpivot_idx]
           exact hpivots ⟨state.step, hk⟩ (Nat.le_refl _)
-        rw [Hex.Matrix.noPivotLoop_regular_branch fuel state hDone hp_ne]
+        rw [Hex.Matrix.noPivotLoop_of_regular fuel state hDone hp_ne]
         apply ih
         · exact bareissNoPivotInvariant_step source state hinv hDone hp_ne
         · intro k' hk'
@@ -1420,11 +1420,11 @@ theorem pivotLoop_singularStep_ne_none_det_eq_zero
               apply ih
               · exact bareissPivotInvariant_regular_swap_step source state hinv hDone
                   (by simpa [kFin] using hfind)
-              · simpa [Hex.Matrix.pivotLoop_regular_branch_swap fuel state hDone hp0
+              · simpa [Hex.Matrix.pivotLoop_of_regular_swap fuel state hDone hp0
                   (by simpa [kFin] using hfind) hp] using hsing
         · apply ih
           · exact bareissPivotInvariant_regular_no_swap_step source state hinv hDone hp0
-          · simpa [Hex.Matrix.pivotLoop_regular_branch_no_swap fuel state hDone hp0]
+          · simpa [Hex.Matrix.pivotLoop_of_regular_no_swap fuel state hDone hp0]
               using hsing
       · rcases hinv with ⟨_, _, hnopiv⟩
         simp [Hex.Matrix.pivotLoop_done fuel state hDone, hnopiv.singular_none] at hsing
@@ -1477,18 +1477,18 @@ private theorem pivotLoop_step_succ_le
           cases hfind :
               Hex.Matrix.findPivot? state.matrix kFin (state.step + 1) with
           | none =>
-              rw [Hex.Matrix.pivotLoop_singular_branch_no_pivot fuel state hDone hp0
+              rw [Hex.Matrix.pivotLoop_of_singular_no_pivot fuel state hDone hp0
                 (by simpa [kFin] using hfind)]
               exact h
           | some pivot =>
               have hp :=
                 pivotLoop_swap_pivot_ne_zero state hDone (by simpa [kFin] using hfind)
-              rw [Hex.Matrix.pivotLoop_regular_branch_swap fuel state hDone hp0
+              rw [Hex.Matrix.pivotLoop_of_regular_swap fuel state hDone hp0
                 (by simpa [kFin] using hfind) hp]
               apply ih
               show state.step + 1 + 1 ≤ n
               omega
-        · rw [Hex.Matrix.pivotLoop_regular_branch_no_swap fuel state hDone hp0]
+        · rw [Hex.Matrix.pivotLoop_of_regular_no_swap fuel state hDone hp0]
           apply ih
           show state.step + 1 + 1 ≤ n
           omega
@@ -1513,23 +1513,23 @@ private theorem pivotLoop_step_succ_ge_of_regular
               Hex.Matrix.findPivot? state.matrix kFin (state.step + 1) with
           | none =>
               have hloop :=
-                Hex.Matrix.pivotLoop_singular_branch_no_pivot fuel state hDone hp0
+                Hex.Matrix.pivotLoop_of_singular_no_pivot fuel state hDone hp0
                   (by simpa [kFin] using hfind)
               rw [hloop] at hregular
               simp at hregular
           | some pivot =>
               have hp :=
                 pivotLoop_swap_pivot_ne_zero state hDone (by simpa [kFin] using hfind)
-              rw [Hex.Matrix.pivotLoop_regular_branch_swap fuel state hDone hp0
+              rw [Hex.Matrix.pivotLoop_of_regular_swap fuel state hDone hp0
                 (by simpa [kFin] using hfind) hp]
               apply ih
-              · simpa [Hex.Matrix.pivotLoop_regular_branch_swap fuel state hDone hp0
+              · simpa [Hex.Matrix.pivotLoop_of_regular_swap fuel state hDone hp0
                   (by simpa [kFin] using hfind) hp] using hregular
               · show n ≤ state.step + 1 + fuel + 1
                 omega
-        · rw [Hex.Matrix.pivotLoop_regular_branch_no_swap fuel state hDone hp0]
+        · rw [Hex.Matrix.pivotLoop_of_regular_no_swap fuel state hDone hp0]
           apply ih
-          · simpa [Hex.Matrix.pivotLoop_regular_branch_no_swap fuel state hDone hp0]
+          · simpa [Hex.Matrix.pivotLoop_of_regular_no_swap fuel state hDone hp0]
               using hregular
           · show n ≤ state.step + 1 + fuel + 1
             omega

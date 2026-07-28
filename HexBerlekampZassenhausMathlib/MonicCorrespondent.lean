@@ -45,16 +45,9 @@ noncomputable section
 
 open Polynomial
 
-/-- **#5214 supporting bundle (HO-1 slow-path substrate).**
-
-Bundled substrate package for the slow-path arm of the HO-1 capstone
-`factorize_irreducible_of_nonUnit` (#4170).  The seven fields are exactly the
-hypothesis set on the lifted-Hensel side consumed by the slow-path
-exhaustive-branch irreducibility reasoning,
-packaged so the capstone can obtain all of them from a single
-`Hex.choosePrimeData? core = some primeData` witness together with monic /
-positive-degree / square-free hypotheses on the core, without rediscovering
-each fact independently.
+/-- Data connecting a square-free integer polynomial with its Hensel-lifted
+modular factors.  The seven fields collect the correspondence and partition
+properties used to recover integer factors from a chosen prime.
 
 * `corr` — `HenselSubsetCorrespondenceHypotheses` value (sourced from
   explicit successful correspondence evidence).
@@ -68,11 +61,9 @@ each fact independently.
 * `modulus`, `precision` — the Mignotte modulus and precision bounds
   `2 ≤ d.p ^ d.k` and `2 * B < d.p ^ d.k`.
 
-The constructor below threads the witnesses through the existing
-non-circular primitives in this file; no new analytic obligation is
-introduced.  The recovered lifted-partition analytic content is exposed as the
-`InitialLiftedFactorSubsetPartitionEvidence` argument. -/
-structure SlowPathHenselSubstrate
+The partition evidence is supplied explicitly through
+`InitialLiftedFactorSubsetPartitionEvidence`. -/
+structure HenselFactorData
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData) : Prop where
   corr :
     HenselSubsetCorrespondenceHypotheses core B primeData
@@ -97,9 +88,7 @@ structure SlowPathHenselSubstrate
     2 * B < (Hex.ZPoly.toMonicLiftData core B primeData).p ^
       (Hex.ZPoly.toMonicLiftData core B primeData).k
 
-/-- **#5214 supporting lemma (HO-1 slow-path substrate constructor).**
-
-Constructor for `SlowPathHenselSubstrate` from a `Hex.choosePrimeData?
+/-- Constructs `HenselFactorData` from a `Hex.choosePrimeData?
 core = some primeData` witness together with monic, positive-degree, and
 square-free hypotheses on the core, plus `B ≠ 0` and an explicit successful
 Hensel subset correspondence package.
@@ -119,7 +108,7 @@ Composes (no new analytic obligation):
   on monic input (`Hex.ZPoly.toMonic_monic_eq_core_of_leadingCoeff_eq_one`);
 * `Hex.precisionForCoeffBound_spec` for `precision`, refined to `modulus`
   via `B ≠ 0`. -/
-theorem slowPathHenselSubstrate_of_choosePrimeData
+theorem HenselFactorData.ofChoosePrime
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
     (hchoose : Hex.choosePrimeData? core = some primeData)
@@ -133,7 +122,7 @@ theorem slowPathHenselSubstrate_of_choosePrimeData
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
         (Hex.ZPoly.toMonicLiftData core B primeData)) :
-    SlowPathHenselSubstrate core B primeData := by
+    HenselFactorData core B primeData := by
   have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core :=
     zpoly_lc_pos_of_monic hcore_monic
   have htoMonic_eq : (Hex.ZPoly.toMonic core).monic = core :=
@@ -180,17 +169,15 @@ theorem slowPathHenselSubstrate_of_choosePrimeData
   · exact hmodulus
   · exact hprec_spec
 
-/-- **#6354 supporting lemma (HO-1 slow-path substrate constructor).**
-
-Successful-branch variant of `slowPathHenselSubstrate_of_choosePrimeData`.
+/-- Successful-descent variant of `HenselFactorData.ofChoosePrime`.
 When callers supply primitive lifted-side descent plus forward Hensel transport,
 the `corr` field and the partition's embedded correspondence are built through
 `henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent`
 instead of assuming a correspondence for arbitrary prime data.
 
-The older substrate constructor now consumes explicit correspondence evidence;
-this wrapper builds that evidence from the descent/forward-transport package. -/
-theorem slowPathHenselSubstrate_of_choosePrimeData_success_descent
+This theorem derives the correspondence evidence from the descent and
+forward-transport hypotheses. -/
+theorem HenselFactorData.ofChoosePrimeDescent
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
     (hchoose : Hex.choosePrimeData? core = some primeData)
@@ -214,7 +201,7 @@ theorem slowPathHenselSubstrate_of_choosePrimeData_success_descent
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
         (Hex.ZPoly.toMonicLiftData core B primeData)) :
-    SlowPathHenselSubstrate core B primeData := by
+    HenselFactorData core B primeData := by
   have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core :=
     zpoly_lc_pos_of_monic hcore_monic
   have htoMonic_eq : (Hex.ZPoly.toMonic core).monic = core :=
@@ -265,18 +252,16 @@ theorem slowPathHenselSubstrate_of_choosePrimeData_success_descent
   · exact hmodulus
   · exact hprec_spec
 
-/-- **#6172 (HO-1 slow-path substrate constructor, non-monic-core sibling).**
-
-Constructor for `SlowPathHenselSubstrate` from a
+/-- Constructs `HenselFactorData` from a
 `Hex.ZPoly.toMonicPrimeData? core = some primeData` witness together with
 positive-leading-coefficient, positive-degree, and square-free hypotheses
 on the core, plus `B ≠ 0` and an explicit successful Hensel subset
 correspondence package.  In contrast to
-`slowPathHenselSubstrate_of_choosePrimeData`, this sibling does not
+`HenselFactorData.ofChoosePrime`, this sibling does not
 require `core` to be monic — the prime-data witness operates on the
 integral-normalisation `(Hex.ZPoly.toMonic core).monic`, so non-monic
 square-free cores (e.g. `(Hex.normalizeForFactor f).squareFreeCore`) can
-feed the slow-path arm of #4170 directly.
+be used directly.
 
 Composes (no new analytic obligation; the recovered initial partition fields
 come from the explicit `InitialLiftedFactorSubsetPartitionEvidence` argument):
@@ -291,7 +276,7 @@ come from the explicit `InitialLiftedFactorSubsetPartitionEvidence` argument):
   natDegree positivity / injectivity facts;
 * `Hex.precisionForCoeffBound_spec` for `precision`, refined to `modulus`
   via `B ≠ 0`. -/
-theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData
+theorem HenselFactorData.ofToMonicChoosePrime
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
     (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
@@ -305,7 +290,7 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
         (Hex.ZPoly.toMonicLiftData core B primeData)) :
-    SlowPathHenselSubstrate core B primeData := by
+    HenselFactorData core B primeData := by
   have hp_prime : Hex.Nat.Prime primeData.p :=
     Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
   have hp2 : 2 ≤ primeData.p := hp_prime.two_le

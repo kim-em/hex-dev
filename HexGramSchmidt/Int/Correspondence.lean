@@ -60,9 +60,9 @@ private theorem getArrayEntry_scaledCoeffRows_col_zero
           = getArrayEntry (gramRows b) 0 0
       by_cases hNext : (0 : Nat) + 1 < fuel + 1
       · by_cases hp : getArrayEntry (gramRows b) 0 0 = 0
-        · rw [scaledCoeffArrayLoop_singular_branch (n := fuel + 1) fuel initState hn hNext hp]
+        · rw [scaledCoeffArrayLoop_of_singular (n := fuel + 1) fuel initState hn hNext hp]
           exact getArrayEntry_writeScaledColumn_diag _ _ _ _ hrow hcol
-        · rw [scaledCoeffArrayLoop_regular_branch (n := fuel + 1) fuel initState hn hNext hp]
+        · rw [scaledCoeffArrayLoop_of_regular (n := fuel + 1) fuel initState hn hNext hp]
           rw [getArrayEntry_scaledCoeffArrayLoop_preserve_col_before_step
                 (n := fuel + 1) fuel _ 0 0 (show (0 : Nat) < 0 + 1 by omega)]
           exact getArrayEntry_writeScaledColumn_diag _ _ _ _ hrow hcol
@@ -151,13 +151,13 @@ private theorem scaledCoeffArrayLoop_lower_matches_target_column
         · have hdist :
               j.val - state_matrix.step = (j.val - (state_matrix.step + 1)) + 1 := by
             omega
-          rw [hdist, Matrix.noPivotLoop_singular_branch _ state_matrix hDone hp] at h_target_nonsing
+          rw [hdist, Matrix.noPivotLoop_of_singular _ state_matrix hDone hp] at h_target_nonsing
           simp at h_target_nonsing
         · have hp_array :
               getArrayEntry state_array.matrix state_array.step state_array.step ≠ 0 := by
             rw [h_pivot_array_eq_matrix]
             exact hp
-          rw [scaledCoeffArrayLoop_regular_branch fuel' state_array hArrayStep hArrayNext hp_array]
+          rw [scaledCoeffArrayLoop_of_regular fuel' state_array hArrayStep hArrayNext hp_array]
           let new_array : ScaledCoeffArrayState :=
             { step := state_array.step + 1
               matrix := stepScaledRows state_array.matrix n state_array.step
@@ -213,7 +213,7 @@ private theorem scaledCoeffArrayLoop_lower_matches_target_column
             have hdist :
                 j.val - state_matrix.step = (j.val - (state_matrix.step + 1)) + 1 := by
               omega
-            rw [hdist, Matrix.noPivotLoop_regular_branch _ state_matrix hDone hp] at h_target_nonsing
+            rw [hdist, Matrix.noPivotLoop_of_regular _ state_matrix hDone hp] at h_target_nonsing
             simpa [new_matrix] using h_target_nonsing
           have h_capture := ih h_step_new h_matrix_new h_prev_new h_array_size_new
             h_array_rows_size_new h_coeffs_size_new h_coeffs_rows_size_new
@@ -221,7 +221,7 @@ private theorem scaledCoeffArrayLoop_lower_matches_target_column
           have hdist :
               j.val - state_matrix.step = (j.val - (state_matrix.step + 1)) + 1 := by
             omega
-          rw [h_capture, hdist, Matrix.noPivotLoop_regular_branch _ state_matrix hDone hp]
+          rw [h_capture, hdist, Matrix.noPivotLoop_of_regular _ state_matrix hDone hp]
           rfl
 
 /-- Early-singular zero tail after the singular column: if the lower entries
@@ -250,7 +250,7 @@ private theorem scaledCoeffArrayLoop_lower_singular_after_step
     have := getArrayEntry_eq_rowsToMatrix (n := n) state_array.matrix kFin kFin
     rw [this, h_matrix_eq]
     exact hp
-  rw [scaledCoeffArrayLoop_singular_branch fuel state_array hArrayStep hArrayNext hp_array,
+  rw [scaledCoeffArrayLoop_of_singular fuel state_array hArrayStep hArrayNext hp_array,
     getArrayEntry_writeScaledColumn]
   · exact h_coeffs_unwritten i j hsj hji
   · rw [h_step_eq]
@@ -312,7 +312,7 @@ private theorem scaledCoeffArrayLoop_lower_zero
               getArrayEntry state_array.matrix state_array.step state_array.step ≠ 0 := by
             rw [h_pivot_array_eq_matrix]
             exact hp
-          rw [scaledCoeffArrayLoop_regular_branch fuel' state_array hArrayStep
+          rw [scaledCoeffArrayLoop_of_regular fuel' state_array hArrayStep
             hArrayNext hp_array]
           let new_array : ScaledCoeffArrayState :=
             { step := state_array.step + 1
@@ -386,7 +386,7 @@ private theorem scaledCoeffArrayLoop_lower_zero
             have hdist :
                 j.val - state_matrix.step = (j.val - (state_matrix.step + 1)) + 1 := by
               omega
-            rw [hdist, Matrix.noPivotLoop_regular_branch _ state_matrix hDone hp] at h_sing
+            rw [hdist, Matrix.noPivotLoop_of_regular _ state_matrix hDone hp] at h_sing
             simpa [new_matrix] using h_sing
           exact ih h_step_new h_matrix_new h_prev_new h_array_size_new
             h_array_rows_size_new h_coeffs_size_new h_coeffs_rows_size_new
@@ -459,8 +459,8 @@ private theorem scaledCoeffArrayLoop_diag_matches
         · -- A1: singular branch.
           have hp_array : getArrayEntry state_array.matrix state_array.step state_array.step = 0 := by
             rw [h_pivot_array_eq_matrix]; exact hp
-          rw [scaledCoeffArrayLoop_singular_branch fuel' state_array hArrayStep hArrayNext hp_array,
-            Matrix.noPivotLoop_singular_branch fuel' state_matrix hDone hp]
+          rw [scaledCoeffArrayLoop_of_singular fuel' state_array hArrayStep hArrayNext hp_array,
+            Matrix.noPivotLoop_of_singular fuel' state_matrix hDone hp]
           right
           refine ⟨state_matrix.step, rfl, ?_⟩
           by_cases h_ilt : i.val < state_matrix.step
@@ -503,8 +503,8 @@ private theorem scaledCoeffArrayLoop_diag_matches
         · -- A2: regular branch.
           have hp_array : getArrayEntry state_array.matrix state_array.step state_array.step ≠ 0 := by
             rw [h_pivot_array_eq_matrix]; exact hp
-          rw [scaledCoeffArrayLoop_regular_branch fuel' state_array hArrayStep hArrayNext hp_array,
-            Matrix.noPivotLoop_regular_branch fuel' state_matrix hDone hp]
+          rw [scaledCoeffArrayLoop_of_regular fuel' state_array hArrayStep hArrayNext hp_array,
+            Matrix.noPivotLoop_of_regular fuel' state_matrix hDone hp]
           -- Build new compatible states.
           let new_array : ScaledCoeffArrayState :=
             { step := state_array.step + 1

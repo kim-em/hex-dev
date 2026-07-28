@@ -243,21 +243,6 @@ theorem coeff_toMathlibPolynomial_equiv (f : Hex.FpPoly p) (n : Nat) :
     (toMathlibPolynomial f).coeff n = HexModArithMathlib.ZMod64.equiv (f.coeff n) := by
   rw [coeff_toMathlibPolynomial, HexModArithMathlib.ZMod64.equiv_apply]
 
-/-- Coefficient view supplied by `HexPolyMathlib.toPolynomial`. -/
-theorem hexPolyMathlib_coeff_bridge
-    {R : Type u} [Semiring R] [DecidableEq R] (f : Hex.DensePoly R) (n : Nat) :
-    (HexPolyMathlib.toPolynomial f).coeff n = f.coeff n := by
-  simp
-
-/--
-The direct finite-field transport is the coefficientwise lift along
-`ZMod64.equiv`, matching the coefficient view supplied by the generic
-`HexPolyMathlib.toPolynomial`.
--/
-theorem toMathlibPolynomial_coeff_bridge (f : Hex.FpPoly p) (n : Nat) :
-    (toMathlibPolynomial f).coeff n = HexModArithMathlib.ZMod64.equiv (f.coeff n) :=
-  coeff_toMathlibPolynomial_equiv f n
-
 /-- Monicity of executable finite-field polynomials transfers to Mathlib.
 
 No nontriviality hypothesis is required: when `ZMod p` is trivial every

@@ -67,7 +67,9 @@ theorem leadingGramMatrixInt_det_nonneg
   rw [hgram]
   exact Matrix.det_gramMatrix_nonneg rowPrefix
 
-private theorem gramDet_pos_core (b : Matrix Int n m)
+/-- Every nonempty leading Gram determinant of an independent integer matrix
+is strictly positive. -/
+theorem gramDet_pos (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
     0 < gramDet b k hk := by
   cases k with
@@ -77,7 +79,7 @@ private theorem gramDet_pos_core (b : Matrix Int n m)
       have hrn : r < n := Nat.lt_of_succ_le hk
       exact hli ⟨r, hrn⟩
 
-/-! ### Helpers for `gramDet_eq_prod_normSq_core`
+/-! ### Gram determinant as a squared-norm product
 
 The remaining theorems below build the rational column-operation reduction
 from the leading Gram matrix to the diagonal Gram-Schmidt norm-squared
@@ -1003,36 +1005,18 @@ private theorem gramDet_rat_eq_progressMatrix_zero_det (b : Matrix Int n m)
     push_cast; rfl
   rw [hcast_chain, hstep1, hstep2, hstep3]
 
-/-- Core proof of the Gram-determinant / squared-norm product identity.
-
-Chain: `(gramDet b k hk : Rat) = det (progressMatrix b k hk 0) =
+/-- The leading Gram determinant is the product of the corresponding squared
+Gram-Schmidt norms.  The proof follows the chain
+`(gramDet b k hk : Rat) = det (progressMatrix b k hk 0) =
 det (progressMatrix b k hk k) = det (auxMatrix b k hk) = gramSchmidtNormProduct`.
 Note: the proof does not use the independence hypothesis since both sides are
-computed purely from `b`. The hypothesis is kept for parity with the public
-theorem and downstream callers. -/
-private theorem gramDet_eq_prod_normSq_core (b : Matrix Int n m)
+computed purely from `b`; the hypothesis matches the surrounding API. -/
+theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
     (_hli : independent b) (k : Nat) (hk : k ≤ n) :
     (gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk := by
   rw [gramDet_rat_eq_progressMatrix_zero_det b k hk,
     ← progressMatrix_det_invariant b k hk k (Nat.le_refl k), progressMatrix_full_eq_auxMatrix]
   exact auxMatrix_det_eq_prod_normSq b k hk
-
-/-- The `k`-leading Gram determinant equals, as a rational, the product of the
-squared Gram-Schmidt norms of the first `k` basis vectors
-(`gramSchmidtNormProduct b k`). Public wrapper over
-`gramDet_eq_prod_normSq_core`. -/
-theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
-    (hli : independent b) (k : Nat) (hk : k ≤ n) :
-    (gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk :=
-  gramDet_eq_prod_normSq_core b hli k hk
-
-/-- For an independent integer matrix `b`, every nonempty leading Gram
-determinant is strictly positive (`0 < k ≤ n`). Public wrapper over
-`gramDet_pos_core`. -/
-theorem gramDet_pos (b : Matrix Int n m)
-    (hli : independent b) (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
-    0 < gramDet b k hk := by
-  exact gramDet_pos_core b hli k hk hk'
 
 /-- One-step extension of `gramSchmidtNormProduct`: appending the `k`-th
 factor multiplies the `k`-fold product by `((basis b).row ⟨k, _⟩)`..normSq
@@ -1049,7 +1033,9 @@ theorem gramSchmidtNormProduct_succ (b : Matrix Int n m)
   simp only [List.foldl_cons, List.foldl_nil]
   rfl
 
-private theorem basis_normSq_core (b : Matrix Int n m)
+/-- The squared norm of the `k`-th Gram-Schmidt vector is the ratio of
+consecutive leading Gram determinants. -/
+theorem basis_normSq (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k < n) :
     ((basis b).row ⟨k, hk⟩).normSq =
       (gramDet b (k + 1) (Nat.succ_le_of_lt hk) : Rat) /
@@ -1067,16 +1053,6 @@ private theorem basis_normSq_core (b : Matrix Int n m)
     gramDet_eq_prod_normSq b hli k hk_le, gramSchmidtNormProduct_succ b k (Nat.succ_le_of_lt hk),
     Rat.mul_comm]
   exact (Rat.mul_div_cancel hprod_ne).symm
-
-/-- The squared norm of the `k`-th Gram-Schmidt basis vector is the ratio of
-consecutive leading Gram determinants `d_{k+1} / d_k`, the standard telescoping
-identity. Public wrapper over `basis_normSq_core`. -/
-theorem basis_normSq (b : Matrix Int n m)
-    (hli : independent b) (k : Nat) (hk : k < n) :
-    ((basis b).row ⟨k, hk⟩).normSq =
-      (gramDet b (k + 1) (Nat.succ_le_of_lt hk) : Rat) /
-        (gramDet b k (Nat.le_of_lt hk) : Rat) := by
-  exact basis_normSq_core b hli k hk
 
 /-- Original-row dot products vanish against orthogonal basis vectors of higher
 index. For `p < r`, `castIntRow b p` lies in the basis-vector span of indices

@@ -173,7 +173,7 @@ private theorem squareFreeAuxRevContribution_derivative_active_pow_obligation
         hmultiplicity_tail htail_normalized_valid.2.2 htail_normalized_valid.2.1
         htail_normalized_valid.1 htail_normalized_residual
     exact
-      derivative_active_raw_tail_weighted_product_bridge_via_normalized
+      derivativeActive_rawTail_product
         hp f contribution.2 contribution.1 multiplicity fuel hmultiplicity
         htail_nonzero htail_derivative htail_valid.1 htail_valid.2.1
         htail_valid.2.2 htail_residual ih htail_normalized_correct hpow_contribution
@@ -1005,7 +1005,7 @@ private theorem squareFreeAuxRev_eq_nil_of_size_le_one
         rw [hsize_one, Nat.sub_self, Nat.zero_div] at h
         omega
 
-private theorem squareFreeAuxRev_pairwise_coprime_nil_core_of_yun_invariant
+private theorem squareFreeAuxRev_pairwise_coprime_nil_of_yun_invariant
     (hp : Hex.Nat.Prime p)
     (yunInvariant :
       ∀ f : FpPoly p, ∀ base fuel : Nat,
@@ -1143,14 +1143,14 @@ private theorem squareFreeAuxRev_pairwise_coprime_nil_core_of_yun_invariant
                 exact squareFreeAuxRev_reverse_append (pthRoot loop.2) (multiplicity * p) fuel loop.1
               simpa [g, c, loop, hrepeated, hrev] using hcombined
 
-private theorem squareFreeAuxRev_pairwise_coprime_nil_core
+private theorem squareFreeAuxRev_pairwise_coprime_nil_of_reachable
     (hp : Hex.Nat.Prime p)
     (f : FpPoly p) (multiplicity fuel : Nat)
     (hfuel : f.size < fuel)
     (_hreachable : squareFreeContributionReachable f) :
     (squareFreeAuxRev f multiplicity fuel []).reverse.Pairwise
       squareFreeFactorCoprimeRel := by
-  exact squareFreeAuxRev_pairwise_coprime_nil_core_of_yun_invariant
+  exact squareFreeAuxRev_pairwise_coprime_nil_of_yun_invariant
     hp
     (fun f' base fuel' hdf =>
       yunFactorsPairwiseInvariant_of_derivative_split_reachable
@@ -1158,7 +1158,7 @@ private theorem squareFreeAuxRev_pairwise_coprime_nil_core
         (by intro htrue; rw [htrue] at hdf; cases hdf))
     f multiplicity fuel hfuel
 
-private theorem squareFreeAuxRev_pairwise_coprime_core
+private theorem squareFreeAuxRev_pairwise_coprime_append
     (hp : Hex.Nat.Prime p)
     (f : FpPoly p) (multiplicity fuel : Nat)
     (hfuel : f.size < fuel)
@@ -1174,7 +1174,7 @@ private theorem squareFreeAuxRev_pairwise_coprime_core
   rw [squareFreeAuxRev_reverse_append f multiplicity fuel accRev]
   apply pairwise_append_of_cross
   · exact hacc
-  · exact squareFreeAuxRev_pairwise_coprime_nil_core hp
+  · exact squareFreeAuxRev_pairwise_coprime_nil_of_reachable hp
       f multiplicity fuel hfuel hreachable
   · exact hcross
 
@@ -1190,7 +1190,7 @@ private theorem squareFreeAuxRev_pairwise_coprime_of_acc
         squareFreeFactorCoprimeRel a b) →
     (squareFreeAuxRev f multiplicity fuel accRev).reverse.Pairwise
       squareFreeFactorCoprimeRel := by
-  exact squareFreeAuxRev_pairwise_coprime_core hp
+  exact squareFreeAuxRev_pairwise_coprime_append hp
     f multiplicity fuel hfuel hreachable accRev
 
 private theorem squareFreeAuxRev_pairwise_coprime_nil

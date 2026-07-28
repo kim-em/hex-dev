@@ -106,7 +106,7 @@ private theorem sqrtStep_upper_succ
 
 /-- Inductive core: the iterate `sqrtAux n fuel x` stays in the upper envelope
 `n ≤ (sqrtAux n fuel x + 1) ^ 2` for any starting `x` already in it. -/
-private theorem sqrtAux_upper_succ_core
+private theorem sqrtAux_upper_succ_from_bound
     (n fuel x : Nat) (h : n ≤ (x + 1) ^ 2) :
     n ≤ (sqrtAux n fuel x + 1) ^ 2 := by
   induction fuel generalizing x with
@@ -131,7 +131,7 @@ private theorem sqrtAux_upper_succ_core
 private theorem sqrtAux_upper_succ
     (n fuel x : Nat) (_hx : 0 < x) (h : n ≤ (x + 1) ^ 2) :
     n ≤ (sqrtAux n fuel x + 1) ^ 2 :=
-  sqrtAux_upper_succ_core n fuel x h
+  sqrtAux_upper_succ_from_bound n fuel x h
 
 /--
 Stop-condition lemma for the Newton iteration: when `sqrtStep n x ≥ x`
@@ -251,7 +251,7 @@ private theorem sqrtStep_gap_halves
 /-- While the iterate has not yet undershot, `fuel` Newton steps shrink the gap
 by a factor `2 ^ fuel`: `2 ^ fuel * sqrtGap n (sqrtAux n fuel x) ≤ sqrtGap n x`.
 This geometric gap contraction drives phase-one convergence. -/
-private theorem sqrtAux_gap_le_of_not_done
+private theorem sqrtAux_gap_bound
     (n fuel x : Nat) (hx : 0 < x)
     (hnot_sq :
       ¬ (sqrtAux n fuel x) * (sqrtAux n fuel x) ≤ n) :
@@ -300,7 +300,7 @@ private theorem sqrtAux_gap_le_of_not_done
 /-- After `n.log2 + 1` Newton steps from `x = n`, the iterate undershoots
 (`(sqrtAux n (n.log2 + 1) n) ^ 2 ≤ n`), since the gap cannot survive that many
 halvings while staying below `2 ^ (n.log2 + 1)`. -/
-private theorem sqrtAux_phase_one_sq_le
+private theorem sqrtAux_sq_le_after_log
     (n : Nat) (hn : 0 < n) :
     (sqrtAux n (n.log2 + 1) n) * (sqrtAux n (n.log2 + 1) n) ≤ n := by
   by_cases hsq :
@@ -308,7 +308,7 @@ private theorem sqrtAux_phase_one_sq_le
   · exact hsq
   · have hgap_le :
         2 ^ (n.log2 + 1) * sqrtGap n (sqrtAux n (n.log2 + 1) n) ≤ sqrtGap n n :=
-      sqrtAux_gap_le_of_not_done n (n.log2 + 1) n hn hsq
+      sqrtAux_gap_bound n (n.log2 + 1) n hn hsq
     have hgap_pos :
         0 < sqrtGap n (sqrtAux n (n.log2 + 1) n) := by
       have hpos : 0 < sqrtAux n (n.log2 + 1) n := by
@@ -383,7 +383,7 @@ private theorem sqrtAux_full_fuel_sq_le
   rw [hfuel, sqrtAux_append]
   have hsq : (sqrtAux n (n.log2 + 1) n) *
       (sqrtAux n (n.log2 + 1) n) ≤ n :=
-    sqrtAux_phase_one_sq_le n hn
+    sqrtAux_sq_le_after_log n hn
   have hself :
       sqrtAux n n.log2 (sqrtAux n (n.log2 + 1) n) =
         sqrtAux n (n.log2 + 1) n :=
