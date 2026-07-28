@@ -54,7 +54,7 @@ private meta def falseMessage (sentence : Sentence)
     (certificate : Certificate) : MessageData :=
   match sentence with
   | .existsReal _ | .existsIoc _ _ _ =>
-      "rcf: the existential sentence is false; every relevant decomposition\n\
+      "rcf: the existential sentence is false. Every relevant decomposition\n\
         cell was checked and found false, so there is no witness"
   | .forallReal _ | .forallIoc _ _ _ =>
       match certificate with

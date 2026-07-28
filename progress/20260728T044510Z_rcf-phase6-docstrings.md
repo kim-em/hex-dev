@@ -13,6 +13,9 @@
   declaration follows Lean naming conventions without changing tactic syntax.
 - Removed prohibited terminology and semicolon run-ons from the HexRCF source
   prose touched by this audit.
+- Rephrased tactic diagnostics as separate sentences and updated their exact
+  regression, conformance, and manual outputs without changing refusal or
+  false-verdict behavior.
 - Verified that every private HexRCF declaration has at least one textual use,
   then built all changed modules and the complete `HexRCF` target.
 

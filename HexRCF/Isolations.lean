@@ -17,7 +17,7 @@ public section
 
 The Mathlib-free certificate and checker live in `HexRCF.IsolationCheck`.
 Soundness packages accepted raw intervals into `LiteralIsolations` and applies
-the generic semantic isolation theorem; it never identifies the replay with
+the generic semantic isolation theorem. It never identifies the replay with
 the executable pseudo-remainder chain.
 -/
 

@@ -162,15 +162,15 @@ private meta partial def parsePoly (x : Expr) (fuel : Nat)
       return powRatPoly (← parsePoly x fuel base) n
   | (``HDiv.hDiv, #[_, _, _, _, numerator, denominator]) =>
       if denominator.containsFVar x.fvarId! then
-        throwError "rcf: division by an expression containing the variable is not polynomial; \
-          clear denominators by hand"
+        throwError "rcf: division by an expression containing the variable is not polynomial. \
+          Clear denominators by hand"
       let q ← scalarRat denominator
       if q = 0 then throwError "rcf: division by zero in a polynomial coefficient"
       return DensePoly.scale q⁻¹ (← parsePoly x fuel numerator)
   | (``Inv.inv, #[_, _, value]) =>
       if value.containsFVar x.fvarId! then
-        throwError "rcf: inversion of an expression containing the variable is not polynomial; \
-          clear denominators by hand"
+        throwError "rcf: inversion of an expression containing the variable is not polynomial. \
+          Clear denominators by hand"
       return DensePoly.C (← scalarRat input)
   | _ =>
       let (fn, _) := input.getAppFnArgs
@@ -479,23 +479,23 @@ private meta def rejectInterval (kind : Name) (universal : Bool) :
     MetaM SentenceResult := do
   if kind == ``Set.Icc then
     if universal then
-      throwError "rcf: Set.Icc quantifiers are unsupported; rewrite
+      throwError "rcf: Set.Icc quantifiers are unsupported. Rewrite
   ∀ x ∈ Set.Icc a b, φ x
 as
   (a ≤ b → φ a) ∧ ∀ x ∈ Set.Ioc a b, φ x"
     else
-      throwError "rcf: Set.Icc quantifiers are unsupported; rewrite
+      throwError "rcf: Set.Icc quantifiers are unsupported. Rewrite
   ∃ x ∈ Set.Icc a b, φ x
 as
   a ≤ b ∧ (φ a ∨ ∃ x ∈ Set.Ioc a b, φ x)"
   else if kind == ``Set.Ioo then
     if universal then
-      throwError "rcf: Set.Ioo quantifiers are unsupported; rewrite
+      throwError "rcf: Set.Ioo quantifiers are unsupported. Rewrite
   ∀ x ∈ Set.Ioo a b, φ x
 as
   ∀ x ∈ Set.Ioc a b, x ≠ b → φ x"
     else
-      throwError "rcf: Set.Ioo quantifiers are unsupported; rewrite
+      throwError "rcf: Set.Ioo quantifiers are unsupported. Rewrite
   ∃ x ∈ Set.Ioo a b, φ x
 as
   ∃ x ∈ Set.Ioc a b, φ x ∧ x ≠ b"
@@ -507,7 +507,7 @@ denominator instead of approximating it. -/
 private meta def ratDyadic (q : Rat) : MetaM Dyadic := do
   let shift := q.den.log2
   unless q.den = 2 ^ shift do
-    throwError "rcf: bounded endpoints must be dyadic rationals; got {q}"
+    throwError "rcf: bounded endpoints must be dyadic rationals. Got {q}"
   return Dyadic.ofInt q.num >>> (Int.ofNat shift)
 
 /-- Certify that a literal dyadic denotes the source rational real endpoint. -/
