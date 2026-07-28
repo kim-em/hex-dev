@@ -1478,17 +1478,17 @@ def factorTraced (f : ZPoly) : Factorization × FactorTrace :=
       | none => (factorTrial f, { trace with tier := "trial" })  -- totality backstop
 
 /--
-The public factorisation (SPEC *Hybrid dispatch*). There is no up-front tier
-selection: the classical tier runs first under a level-aware subset budget and
-its answer is accepted only when the packed product reconstructs `f`; on decline
-(budget exhaustion or no admissible prime) the CLD lattice tier runs at the
-lattice precision cap under the same self-certifying acceptance check; and any
-residual falls through to the `factorTrial` totality backstop, which is
-`choosePrimeData?`-independent and so makes `factorize` unconditionally correct
-on every `ZPoly`. Total.
+The public total factorisation of a {name}`Hex.ZPoly`.
 
-Lives in the `ZPoly` namespace so the public surface is dot-notation on a
-polynomial: `f.factorize`.
+{name}`Hex.factorClassical` first tries a bounded subset search. If it declines,
+{name}`Hex.factorLattice` tries CLD lattice recombination. An answer from either
+optional tier is accepted only when {name}`Hex.Factorization.product`
+reconstructs `f`. If both tiers decline, {name}`Hex.factorTrial` supplies the
+total backstop. The trial tier does not depend on {name}`Hex.choosePrimeData?`,
+so this function still returns a factorisation when prime selection fails.
+
+This definition lives in the {name}`Hex.ZPoly` namespace, so it can be called
+with dot notation as `f.factorize`.
 -/
 @[expose]
 def ZPoly.factorize (f : ZPoly) : Factorization :=
@@ -1553,7 +1553,7 @@ of `factorFactors`-consuming structural lemmas.
 Each non-backstop tier (`factorClassicalFactorsWithBound` / lattice) is accepted
 only when its `factorizationOfFactors`-packed answer reconstructs `f` (the
 self-certifying guard mirrored here), and every fallback is the proven
-`factorTrial` backstop's raw array. The headline contract
+`factorTrial` backstop's raw array. The identity
 `ZPoly.factorize f = factorizationOfFactors f (factorFactors f)` is
 `factorize_eq_factorizationOfFactors`. -/
 def factorFactors (f : ZPoly) : Array ZPoly :=
@@ -1571,8 +1571,8 @@ def factorFactors (f : ZPoly) : Array ZPoly :=
 /-- The cost-based hybrid factorisation is the `factorizationOfFactors`-packed
 form of its raw factor array `factorFactors`. Every tier (classical /
 lattice / trial) assembles via `factorizationOfFactors f`, so this bridge lets
-the structural `factorizationOfFactors_entry_*` lemmas re-point every
-`factorize`-level entry contract onto the hybrid. -/
+the structural `factorizationOfFactors_entry_*` lemmas apply to every entry
+of the hybrid result. -/
 theorem factorize_eq_factorizationOfFactors (f : ZPoly) :
     ZPoly.factorize f = factorizationOfFactors f (factorFactors f) := by
   have htrial : factorTrial f =
@@ -1719,7 +1719,7 @@ private theorem content_ne_zero_of_zpoly_ne_zero (f : ZPoly) (hf : f ≠ 0) :
   rw [hzero] at hreconstruct
   exact hreconstruct.symm
 
-private theorem signedContentScalarContract_eq_zero_iff (f : ZPoly) :
+private theorem signedContentScalar_eq_zero_iff (f : ZPoly) :
     (if f = 0 then
         0
       else if DensePoly.leadingCoeff f < 0 then
@@ -1774,7 +1774,7 @@ theorem factorizationOfFactors_scalar_eq_zero_iff
     (f : ZPoly) (rawFactors : Array ZPoly) :
     (factorizationOfFactors f rawFactors).scalar = 0 ↔ f = 0 := by
   rw [factorizationOfFactors_scalar]
-  exact signedContentScalarContract_eq_zero_iff f
+  exact signedContentScalar_eq_zero_iff f
 
 /-- Scalar contract for the default public factorization entry point. -/
 theorem factorize_scalar (f : ZPoly) :

@@ -6,10 +6,10 @@ with the Mignotte bound from hex-poly-z-mathlib, giving unconditional
 results. All statements use the `Factorization` record from
 `hex-berlekamp-zassenhaus.md`'s output-convention section.
 
-The headline theorems below hold over the **cost-based hybrid `factorize`**
+The factorization theorems below hold over the **cost-based hybrid `factorize`**
 (the `factorClassical` / `factorLattice` / `factorTrial` tiers). By the
-tier-result-equivalence and dispatch-soundness contracts (main spec
-§*Invariant contracts and dispatch soundness*), `factorize`'s output is
+tier-result-equivalence and dispatch-soundness properties (main spec
+§*Factorization invariants and dispatch soundness*), `factorize`'s output is
 independent of which tier the dispatcher selects, so these theorems
 reduce to the per-tier correctness — Group A for the classical tier,
 Group B for the lattice tier, Group C for the combinator. Per the

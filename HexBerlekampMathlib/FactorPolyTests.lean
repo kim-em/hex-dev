@@ -33,10 +33,13 @@ example : True := by
     factor_poly ((X + 1) * (X + 1) * (X ^ 2 + 2) * 3 : Polynomial (ZMod 5))
   trivial
 
--- Tactic form: providers emitting `FactoredPoly.ofFp` land as a single
--- `factored` hypothesis.
+-- Tactic form: Mathlib providers expose the same four local names as the
+-- executable providers.
 example : True := by
   factor_poly ((X + 1) * (X + 1) * (X ^ 2 + 2) * 3 : Polynomial (ZMod 5))
+  have : factors.length = 3 := rfl
+  have := factors_mul
+  have := factors_irred
   exact True.intro
 
 -- Negation and subtraction arms; `Polynomial.C` coefficients.
