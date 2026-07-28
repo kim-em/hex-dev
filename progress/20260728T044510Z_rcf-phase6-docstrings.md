@@ -55,12 +55,17 @@
   and the strict module-mode tactic/replay axiom guards.
 - Repository DAG, release-manifest, trust-surface, Phase 4, copyright, and diff
   checks pass.
+- PR #9036 has passed independent review with no blockers, and every actionable
+  documentation, import, namespace, and public-surface finding is addressed.
+  Auto-merge is enabled pending CI.
 
 ## Next step
 
-- Publish the Phase 6 quality milestone, obtain an independent Claude Opus
-  review, address any actionable findings, and merge after CI.
+- Confirm PR #9036 merges green, then audit the merged main tree. Complete the
+  external Phase 4 evidence only after its dependency and dedicated-host gates
+  are available.
 
 ## Blockers
 
-- None for this milestone.
+- None for PR #9036. Phase 4 remains dependency-gated by HexRealRootsMathlib
+  issue #8972 and requires scientific evidence from the named quiescent host.
