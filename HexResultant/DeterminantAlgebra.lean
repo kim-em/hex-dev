@@ -1,0 +1,787 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexResultant.SubresultantMinor
+import all HexResultant.SubresultantMinor
+
+public section
+
+/-!
+Local determinant algebra for generalized Sylvester minors.
+
+The proof-only determinant in `SubresultantMinor` deliberately avoids a
+dependency on `hex-matrix` or `hex-determinant`.  This module develops the
+column multilinearity, adjacent-column alternation, and block-scaling
+identities that begin the Brown--Traub proof directly from its first-row
+Laplace recursion.
+-/
+
+namespace Hex
+
+universe u
+
+namespace SubresultantMinor
+
+/-- Replace one column of a proof-only square coefficient family. -/
+@[expose]
+def setCol {R : Type u} {n : Nat} (M : Square R n) (dst : Fin n)
+    (v : Fin n → R) : Square R n :=
+  fun i j => if j = dst then v i else M i j
+
+@[simp, grind =]
+theorem setCol_apply {R : Type u} {n : Nat} (M : Square R n)
+    (dst : Fin n) (v : Fin n → R) (i j : Fin n) :
+    setCol M dst v i j = if j = dst then v i else M i j := by
+  rfl
+
+@[simp, grind =]
+theorem setCol_self {R : Type u} {n : Nat} (M : Square R n) (dst : Fin n) :
+    setCol M dst (fun i => M i dst) = M := by
+  funext i j
+  by_cases h : j = dst
+  · subst j
+    simp [setCol]
+  · simp [setCol, h]
+
+@[simp, grind =]
+theorem skipIndex_val_of_lt {n : Nat} (skip : Fin (n + 1)) (i : Fin n)
+    (h : i.val < skip.val) :
+    (skipIndex skip i).val = i.val := by
+  simp [skipIndex, h]
+
+@[simp, grind =]
+theorem skipIndex_val_of_not_lt {n : Nat} (skip : Fin (n + 1)) (i : Fin n)
+    (h : ¬i.val < skip.val) :
+    (skipIndex skip i).val = i.val + 1 := by
+  simp [skipIndex, h]
+
+/-- A skipped-index embedding never returns the deleted position. -/
+theorem skipIndex_ne {n : Nat} (skip : Fin (n + 1)) (i : Fin n) :
+    skipIndex skip i ≠ skip := by
+  intro hsame
+  have hval := congrArg Fin.val hsame
+  by_cases hlt : i.val < skip.val
+  · rw [skipIndex_val_of_lt skip i hlt] at hval
+    omega
+  · rw [skipIndex_val_of_not_lt skip i hlt] at hval
+    omega
+
+/-- The skipped-index embedding is injective. -/
+theorem skipIndex_injective {n : Nat} (skip : Fin (n + 1)) :
+    Function.Injective (skipIndex skip) := by
+  intro i j hsame
+  apply Fin.ext
+  have hval := congrArg Fin.val hsame
+  by_cases hi : i.val < skip.val
+  · rw [skipIndex_val_of_lt skip i hi] at hval
+    by_cases hj : j.val < skip.val
+    · simpa [skipIndex_val_of_lt skip j hj] using hval
+    · rw [skipIndex_val_of_not_lt skip j hj] at hval
+      omega
+  · rw [skipIndex_val_of_not_lt skip i hi] at hval
+    by_cases hj : j.val < skip.val
+    · rw [skipIndex_val_of_lt skip j hj] at hval
+      omega
+    · rw [skipIndex_val_of_not_lt skip j hj] at hval
+      omega
+
+/-- Contract an index after deleting a distinct position. -/
+@[expose]
+def eraseIndex {n : Nat} (skip target : Fin (n + 1))
+    (h : target ≠ skip) : Fin n :=
+  if hlt : target.val < skip.val then
+    ⟨target.val, by omega⟩
+  else
+    ⟨target.val - 1, by
+      have hgt : skip.val < target.val := by
+        omega
+      omega⟩
+
+@[simp, grind =]
+theorem skipIndex_eraseIndex {n : Nat} (skip target : Fin (n + 1))
+    (h : target ≠ skip) :
+    skipIndex skip (eraseIndex skip target h) = target := by
+  apply Fin.ext
+  by_cases hlt : target.val < skip.val
+  · simp [eraseIndex, hlt, skipIndex]
+  · have hgt : skip.val < target.val := by
+      omega
+    have hnot : ¬target.val - 1 < skip.val := by
+      omega
+    simp [eraseIndex, hlt, skipIndex, hnot]
+    omega
+
+/-- The left position of an adjacent column pair after deleting a third
+column. -/
+@[expose]
+def eraseAdjacent {n : Nat} (removed : Fin (n + 2)) (left : Fin (n + 1))
+    (hleft : removed ≠ left.castSucc) (hright : removed ≠ left.succ) : Fin n :=
+  if hlt : removed.val < left.val then
+    ⟨left.val - 1, by
+      have hpos : 0 < left.val := by
+        omega
+      omega⟩
+  else
+    ⟨left.val, by
+      have hgt : left.val + 1 < removed.val := by
+        have hneLeft : removed.val ≠ left.val := by
+          intro h
+          exact hleft (Fin.ext h)
+        have hneRight : removed.val ≠ left.val + 1 := by
+          intro h
+          exact hright (Fin.ext h)
+        omega
+      omega⟩
+
+@[simp, grind =]
+theorem skipIndex_eraseAdjacent_left {n : Nat} (removed : Fin (n + 2))
+    (left : Fin (n + 1)) (hleft : removed ≠ left.castSucc)
+    (hright : removed ≠ left.succ) :
+    skipIndex removed (eraseAdjacent removed left hleft hright).castSucc =
+      left.castSucc := by
+  apply Fin.ext
+  by_cases hlt : removed.val < left.val
+  · have hnot : ¬left.val - 1 < removed.val := by
+      omega
+    simp [eraseAdjacent, hlt, skipIndex, hnot]
+    omega
+  · have hneLeft : removed.val ≠ left.val := by
+      intro h
+      exact hleft (Fin.ext h)
+    have hneRight : removed.val ≠ left.val + 1 := by
+      intro h
+      exact hright (Fin.ext h)
+    have hkeep : left.val < removed.val := by
+      omega
+    simp [eraseAdjacent, hlt, skipIndex, hkeep]
+
+@[simp, grind =]
+theorem skipIndex_eraseAdjacent_right {n : Nat} (removed : Fin (n + 2))
+    (left : Fin (n + 1)) (hleft : removed ≠ left.castSucc)
+    (hright : removed ≠ left.succ) :
+    skipIndex removed (eraseAdjacent removed left hleft hright).succ =
+      left.succ := by
+  apply Fin.ext
+  by_cases hlt : removed.val < left.val
+  · have hpos : 0 < left.val := by
+      omega
+    have hval : left.val - 1 + 1 = left.val := by
+      omega
+    have hkeep : ¬left.val < removed.val := by
+      omega
+    simp [eraseAdjacent, hlt, skipIndex, hkeep, hval]
+  · have hneLeft : removed.val ≠ left.val := by
+      intro h
+      exact hleft (Fin.ext h)
+    have hneRight : removed.val ≠ left.val + 1 := by
+      intro h
+      exact hright (Fin.ext h)
+    have hkeep : left.val + 1 < removed.val := by
+      omega
+    simp [eraseAdjacent, hlt, skipIndex, hkeep]
+
+/-- Deleting the replaced column removes the replacement. -/
+theorem deleteFirst_setCol_same {R : Type u} {n : Nat}
+    (M : Square R (n + 1)) (dst : Fin (n + 1)) (v : Fin (n + 1) → R) :
+    deleteFirst (setCol M dst v) dst = deleteFirst M dst := by
+  funext i j
+  simp [deleteFirst, setCol, skipIndex_ne]
+
+/-- Deleting another column preserves a replacement at the contracted index. -/
+theorem deleteFirst_setCol_ne {R : Type u} {n : Nat}
+    (M : Square R (n + 1)) (removed dst : Fin (n + 1))
+    (v : Fin (n + 1) → R) (h : dst ≠ removed) :
+    deleteFirst (setCol M dst v) removed =
+      setCol (deleteFirst M removed) (eraseIndex removed dst h) (fun i => v i.succ) := by
+  funext i j
+  by_cases hj : j = eraseIndex removed dst h
+  · subst j
+    simp [deleteFirst, setCol, skipIndex_eraseIndex]
+  · have hskip : skipIndex removed j ≠ dst := by
+      intro heq
+      apply hj
+      apply skipIndex_injective removed
+      exact heq.trans (skipIndex_eraseIndex removed dst h).symm
+    simp [deleteFirst, setCol, hj, hskip]
+
+-- These small fold lemmas stay local deliberately: importing `HexBasic.Fold`
+-- would add a released dependency solely for proof infrastructure, while
+-- `hex-resultant` is specified to depend only on `hex-poly`.
+private theorem foldl_add_add {R : Type u} [Lean.Grind.CommRing R]
+    {α : Type v} (xs : List α) (f g : α → R) (a b : R) :
+    xs.foldl (fun acc x => acc + (f x + g x)) (a + b) =
+      xs.foldl (fun acc x => acc + f x) a +
+        xs.foldl (fun acc x => acc + g x) b := by
+  induction xs generalizing a b with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hstart : (a + b) + (f x + g x) =
+          (a + f x) + (b + g x) := by
+        grind
+      rw [hstart]
+      exact ih (a + f x) (b + g x)
+
+private theorem foldl_add_mul_left {R : Type u} [Lean.Grind.CommRing R]
+    {α : Type v} (xs : List α) (c : R) (f : α → R) (a : R) :
+    xs.foldl (fun acc x => acc + c * f x) (c * a) =
+      c * xs.foldl (fun acc x => acc + f x) a := by
+  induction xs generalizing a with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hstart : c * a + c * f x = c * (a + f x) := by
+        grind
+      rw [hstart]
+      exact ih (a + f x)
+
+private theorem foldl_congr {α : Type u} {β : Type v} (xs : List α)
+    (f g : β → α → β) (a b : β) (hab : a = b)
+    (hstep : ∀ acc x, x ∈ xs → f acc x = g acc x) :
+    xs.foldl f a = xs.foldl g b := by
+  induction xs generalizing a b with
+  | nil => exact hab
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      apply ih
+      · subst b
+        exact hstep a x List.mem_cons_self
+      · intro acc y hy
+        exact hstep acc y (List.mem_cons_of_mem x hy)
+
+private theorem foldl_add_zero {R : Type u} [Lean.Grind.CommRing R]
+    {α : Type v} (xs : List α) (f : α → R) (a : R)
+    (hzero : ∀ x, x ∈ xs → f x = 0) :
+    xs.foldl (fun acc x => acc + f x) a = a := by
+  induction xs generalizing a with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [hzero x List.mem_cons_self]
+      have htail : ∀ y, y ∈ xs → f y = 0 := by
+        intro y hy
+        exact hzero y (List.mem_cons_of_mem x hy)
+      have hrec := ih a htail
+      rw [show a + 0 = a by grind]
+      exact hrec
+
+private theorem foldl_add_single {R : Type u} [Lean.Grind.CommRing R]
+    {α : Type v} [DecidableEq α] (xs : List α) (x : α) (f : α → R)
+    (a : R) (hnodup : xs.Nodup) (hmem : x ∈ xs)
+    (hzero : ∀ y, y ∈ xs → y ≠ x → f y = 0) :
+    xs.foldl (fun acc y => acc + f y) a = a + f x := by
+  induction xs generalizing a with
+  | nil => simp at hmem
+  | cons y ys ih =>
+      simp only [List.nodup_cons] at hnodup
+      simp only [List.mem_cons] at hmem
+      simp only [List.foldl_cons]
+      by_cases hyx : y = x
+      · subst y
+        have htail : ∀ z, z ∈ ys → f z = 0 := by
+          intro z hz
+          exact hzero z (List.mem_cons_of_mem x hz) (by
+            intro hzx
+            exact hnodup.1 (hzx ▸ hz))
+        exact foldl_add_zero ys f (a + f x) htail
+      · have hxmem : x ∈ ys := by
+          exact hmem.resolve_left (fun h => hyx h.symm)
+        have hyzero : f y = 0 := hzero y List.mem_cons_self hyx
+        rw [hyzero]
+        have htail : ∀ z, z ∈ ys → z ≠ x → f z = 0 := by
+          intro z hz hzx
+          exact hzero z (List.mem_cons_of_mem y hz) hzx
+        have hrec := ih a hnodup.2 hxmem htail
+        rw [show a + 0 = a by grind]
+        exact hrec
+
+private theorem nodup_finRange (n : Nat) : (List.finRange n).Nodup := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+      rw [List.finRange_succ, List.nodup_cons]
+      exact ⟨by simp [Fin.ext_iff],
+        List.Pairwise.map _ (fun _ _ hne h => hne (Fin.succ_inj.mp h)) ih⟩
+
+private theorem foldl_finRange_adjacent {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (left : Fin (n + 1)) (f : Fin (n + 2) → R)
+    (hzero : ∀ j, j ≠ left.castSucc → j ≠ left.succ → f j = 0) :
+    (List.finRange (n + 2)).foldl (fun acc j => acc + f j) 0 =
+      f left.castSucc + f left.succ := by
+  let leftTerm := fun j : Fin (n + 2) => if j = left.castSucc then f j else 0
+  let rightTerm := fun j : Fin (n + 2) => if j = left.succ then f j else 0
+  have hlr : left.castSucc ≠ left.succ := by
+    intro h
+    have hval := congrArg Fin.val h
+    simp at hval
+  have hrl : left.succ ≠ left.castSucc := fun h => hlr h.symm
+  have hsplit (j : Fin (n + 2)) : f j = leftTerm j + rightTerm j := by
+    by_cases hjl : j = left.castSucc
+    · subst j
+      simp [leftTerm, rightTerm, hlr]
+      grind
+    · by_cases hjr : j = left.succ
+      · subst j
+        simp [leftTerm, rightTerm, hrl]
+        grind
+      · simp [leftTerm, rightTerm, hjl, hjr, hzero j hjl hjr]
+        grind
+  calc
+    (List.finRange (n + 2)).foldl (fun acc j => acc + f j) 0 =
+        (List.finRange (n + 2)).foldl
+          (fun acc j => acc + (leftTerm j + rightTerm j)) (0 + 0) := by
+            apply foldl_congr
+            · grind
+            · intro acc j _hmem
+              rw [← hsplit]
+    _ =
+        (List.finRange (n + 2)).foldl (fun acc j => acc + leftTerm j) 0 +
+          (List.finRange (n + 2)).foldl (fun acc j => acc + rightTerm j) 0 :=
+      foldl_add_add (List.finRange (n + 2)) leftTerm rightTerm 0 0
+    _ = leftTerm left.castSucc + rightTerm left.succ := by
+      have hleftSingle :
+          (List.finRange (n + 2)).foldl (fun acc j => acc + leftTerm j) 0 =
+            0 + leftTerm left.castSucc := by
+        apply foldl_add_single (List.finRange (n + 2)) left.castSucc leftTerm 0
+          (nodup_finRange (n + 2)) (List.mem_finRange left.castSucc)
+        intro j _hj hne
+        simp [leftTerm, hne]
+      have hrightSingle :
+          (List.finRange (n + 2)).foldl (fun acc j => acc + rightTerm j) 0 =
+            0 + rightTerm left.succ := by
+        apply foldl_add_single (List.finRange (n + 2)) left.succ rightTerm 0
+          (nodup_finRange (n + 2)) (List.mem_finRange left.succ)
+        intro j _hj hne
+        simp [rightTerm, hne]
+      rw [hleftSingle, hrightSingle]
+      grind
+    _ = f left.castSucc + f left.succ := by
+      simp [leftTerm, rightTerm]
+
+/-- The local Laplace determinant is additive in any replaced column. -/
+theorem det_setCol_add {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Square R n) (dst : Fin n) (v w : Fin n → R) :
+    det (setCol M dst (fun i => v i + w i)) =
+      det (setCol M dst v) + det (setCol M dst w) := by
+  induction n with
+  | zero => exact Fin.elim0 dst
+  | succ n ih =>
+      let row : Fin (n + 1) := ⟨0, by omega⟩
+      let combined := setCol M dst (fun i => v i + w i)
+      let left := setCol M dst v
+      let right := setCol M dst w
+      let term := fun (N : Square R (n + 1)) (j : Fin (n + 1)) =>
+        sign j.val * N row j * det (deleteFirst N j)
+      have hterm (j : Fin (n + 1)) :
+          term combined j = term left j + term right j := by
+        by_cases hj : j = dst
+        · subst j
+          have hc := deleteFirst_setCol_same M dst (fun i => v i + w i)
+          have hl := deleteFirst_setCol_same M dst v
+          have hr := deleteFirst_setCol_same M dst w
+          simp only [term, combined, left, right]
+          rw [hc, hl, hr]
+          simp [setCol]
+          grind
+        · have hdst : dst ≠ j := by
+            exact fun h => hj h.symm
+          have hc := deleteFirst_setCol_ne M j dst (fun i => v i + w i) hdst
+          have hl := deleteFirst_setCol_ne M j dst v hdst
+          have hr := deleteFirst_setCol_ne M j dst w hdst
+          have hminor := ih (deleteFirst M j) (eraseIndex j dst hdst)
+            (fun i => v i.succ) (fun i => w i.succ)
+          simp only [term, combined, left, right]
+          rw [hc, hl, hr]
+          have hfun : (fun i : Fin n => v i.succ + w i.succ) =
+              fun i => (fun k => v k.succ) i + (fun k => w k.succ) i := rfl
+          rw [hfun, hminor]
+          simp [setCol, hj]
+          grind
+      simp only [det]
+      change (List.finRange (n + 1)).foldl
+          (fun acc j => acc + term combined j) 0 =
+        (List.finRange (n + 1)).foldl
+            (fun acc j => acc + term left j) 0 +
+          (List.finRange (n + 1)).foldl
+            (fun acc j => acc + term right j) 0
+      calc
+        (List.finRange (n + 1)).foldl
+            (fun acc j => acc + term combined j) 0 =
+          (List.finRange (n + 1)).foldl
+            (fun acc j => acc + (term left j + term right j)) (0 + 0) := by
+              apply foldl_congr
+              · grind
+              · intro acc j _hmem
+                rw [hterm]
+        _ = _ := foldl_add_add (List.finRange (n + 1))
+          (fun j => term left j) (fun j => term right j) 0 0
+
+/-- The local Laplace determinant is homogeneous in any replaced column. -/
+theorem det_setCol_smul {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Square R n) (dst : Fin n) (c : R) (v : Fin n → R) :
+    det (setCol M dst (fun i => c * v i)) =
+      c * det (setCol M dst v) := by
+  induction n with
+  | zero => exact Fin.elim0 dst
+  | succ n ih =>
+      let row : Fin (n + 1) := ⟨0, by omega⟩
+      let scaled := setCol M dst (fun i => c * v i)
+      let base := setCol M dst v
+      let term := fun (N : Square R (n + 1)) (j : Fin (n + 1)) =>
+        sign j.val * N row j * det (deleteFirst N j)
+      have hterm (j : Fin (n + 1)) :
+          term scaled j = c * term base j := by
+        by_cases hj : j = dst
+        · subst j
+          have hs := deleteFirst_setCol_same M dst (fun i => c * v i)
+          have hb := deleteFirst_setCol_same M dst v
+          simp only [term, scaled, base]
+          rw [hs, hb]
+          simp [setCol]
+          grind
+        · have hdst : dst ≠ j := by
+            exact fun h => hj h.symm
+          have hs := deleteFirst_setCol_ne M j dst (fun i => c * v i) hdst
+          have hb := deleteFirst_setCol_ne M j dst v hdst
+          have hminor := ih (deleteFirst M j) (eraseIndex j dst hdst)
+            (fun i => v i.succ)
+          simp only [term, scaled, base]
+          rw [hs, hb]
+          have hfun : (fun i : Fin n => c * v i.succ) =
+              fun i => c * (fun k => v k.succ) i := rfl
+          rw [hfun, hminor]
+          simp [setCol, hj]
+          grind
+      simp only [det]
+      change (List.finRange (n + 1)).foldl
+          (fun acc j => acc + term scaled j) 0 =
+        c * (List.finRange (n + 1)).foldl
+          (fun acc j => acc + term base j) 0
+      calc
+        (List.finRange (n + 1)).foldl
+            (fun acc j => acc + term scaled j) 0 =
+          (List.finRange (n + 1)).foldl
+            (fun acc j => acc + c * term base j) (c * 0) := by
+              apply foldl_congr
+              · grind
+              · intro acc j _hmem
+                rw [hterm]
+        _ = _ := foldl_add_mul_left (List.finRange (n + 1)) c
+          (fun j => term base j) 0
+
+/-- Replacing a column by zero makes the local determinant vanish. -/
+theorem det_setCol_zero {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Square R n) (dst : Fin n) :
+    det (setCol M dst (fun _ => 0)) = 0 := by
+  have h := det_setCol_smul M dst (0 : R) (fun _ => 1)
+  have hcol : (fun _ : Fin n => (0 : R)) = fun i => 0 * (1 : R) := by
+    funext i
+    grind
+  rw [hcol]
+  exact h.trans (by grind)
+
+/-- Scale a consecutive range of columns. -/
+@[expose]
+def scaleRange {R : Type u} [Mul R] {n : Nat} (M : Square R n)
+    (start count : Nat) (c : R) : Square R n :=
+  fun i j => if start ≤ j.val ∧ j.val < start + count then c * M i j else M i j
+
+/-- Scaling `count` consecutive columns scales the determinant by
+`c ^ count`. -/
+theorem det_scaleRange {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Square R n) (start count : Nat) (c : R)
+    (hbound : start + count ≤ n) :
+    det (scaleRange M start count c) = c ^ count * det M := by
+  induction count with
+  | zero =>
+      have hmatrix : scaleRange M start 0 c = M := by
+        funext i j
+        unfold scaleRange
+        rw [if_neg (by omega)]
+      rw [hmatrix]
+      rw [Lean.Grind.Semiring.pow_zero]
+      grind
+  | succ count ih =>
+      have hdst : start + count < n := by
+        omega
+      let dst : Fin n := ⟨start + count, hdst⟩
+      have hmatrix : scaleRange M start (count + 1) c =
+          setCol (scaleRange M start count c) dst
+            (fun i => c * scaleRange M start count c i dst) := by
+        funext i j
+        by_cases hj : j = dst
+        · subst j
+          have hold : ¬(start ≤ dst.val ∧ dst.val < start + count) := by
+            simp [dst]
+          have hnew : start ≤ dst.val ∧ dst.val < start + (count + 1) := by
+            simp [dst]
+          simp only [setCol]
+          simp only [if_true]
+          unfold scaleRange
+          rw [if_pos hnew, if_neg hold]
+        · have hvalne : j.val ≠ start + count := by
+            intro h
+            exact hj (Fin.ext h)
+          by_cases hold : start ≤ j.val ∧ j.val < start + count
+          · have hnew : start ≤ j.val ∧ j.val < start + (count + 1) := by
+              omega
+            simp [setCol, scaleRange, hj, hold, hnew]
+          · have hnew : ¬(start ≤ j.val ∧ j.val < start + (count + 1)) := by
+              omega
+            simp [setCol, scaleRange, hj, hold, hnew]
+      rw [hmatrix, det_setCol_smul]
+      rw [setCol_self]
+      rw [ih (by omega)]
+      rw [Lean.Grind.Semiring.pow_succ]
+      grind
+
+/-- Consecutive Laplace signs are negatives. -/
+theorem sign_succ {R : Type u} [Lean.Grind.CommRing R] (j : Nat) :
+    sign (R := R) (j + 1) = 0 - sign (R := R) j := by
+  unfold sign
+  by_cases hj : j % 2 = 0
+  · have hnext : (j + 1) % 2 ≠ 0 := by
+      omega
+    rw [if_pos hj, if_neg hnext]
+  · have hjone : j % 2 = 1 := by
+      omega
+    have hnext : (j + 1) % 2 = 0 := by
+      omega
+    rw [if_neg hj, if_pos hnext]
+    grind
+
+/-- Deleting either member of an equal adjacent column pair gives the same
+minor. -/
+theorem deleteFirst_adjacent_eq {R : Type u} {n : Nat}
+    (M : Square R (n + 2)) (left : Fin (n + 1))
+    (hcol : ∀ i, M i left.castSucc = M i left.succ) :
+    deleteFirst M left.castSucc = deleteFirst M left.succ := by
+  funext i j
+  unfold deleteFirst
+  by_cases hlt : j.val < left.val
+  · have hltRight : j.val < left.val + 1 := by
+      omega
+    simp [skipIndex, hlt, hltRight]
+  · by_cases heq : j.val = left.val
+    · have hj : j = left := Fin.ext heq
+      subst j
+      have hnotLeft : ¬left.val < left.val := by omega
+      have hltRight : left.val < left.val + 1 := by omega
+      simp [skipIndex, hnotLeft, hltRight]
+      exact (hcol i.succ).symm
+    · have hgt : left.val < j.val := by
+        omega
+      have hnotLeft : ¬j.val < left.val := by omega
+      have hnotRight : ¬j.val < left.val + 1 := by omega
+      simp [skipIndex, hnotLeft, hnotRight]
+
+/-- The local determinant vanishes when two adjacent columns agree. -/
+theorem det_eq_zero_of_adjacent_col_eq {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Square R (n + 1)) (left : Fin n)
+    (hcol : ∀ i, M i left.castSucc = M i left.succ) :
+    det M = 0 := by
+  induction n with
+  | zero => exact Fin.elim0 left
+  | succ n ih =>
+      let row : Fin (n + 2) := ⟨0, by omega⟩
+      let term := fun j : Fin (n + 2) =>
+        sign j.val * M row j * det (deleteFirst M j)
+      have hzero (j : Fin (n + 2)) (hjleft : j ≠ left.castSucc)
+          (hjright : j ≠ left.succ) : term j = 0 := by
+        let left' := eraseAdjacent j left hjleft hjright
+        have hminorCol (i : Fin (n + 1)) :
+            deleteFirst M j i left'.castSucc =
+              deleteFirst M j i left'.succ := by
+          change M i.succ (skipIndex j left'.castSucc) =
+            M i.succ (skipIndex j left'.succ)
+          rw [skipIndex_eraseAdjacent_left j left hjleft hjright,
+            skipIndex_eraseAdjacent_right j left hjleft hjright]
+          exact hcol i.succ
+        have hminor := ih (deleteFirst M j) left' hminorCol
+        simp [term, hminor]
+        grind
+      have hcancel : term left.castSucc + term left.succ = 0 := by
+        have hdelete := deleteFirst_adjacent_eq M left hcol
+        have hentry := hcol row
+        have hsign := sign_succ (R := R) left.val
+        simp only [term]
+        rw [hdelete, hentry]
+        have hleftVal : left.castSucc.val = left.val := rfl
+        have hrightVal : left.succ.val = left.val + 1 := rfl
+        rw [hleftVal, hrightVal, hsign]
+        grind
+      simp only [det]
+      change (List.finRange (n + 2)).foldl
+        (fun acc j => acc + term j) 0 = 0
+      rw [foldl_finRange_adjacent left term hzero]
+      exact hcancel
+
+/-- Adding a scalar multiple of an adjacent column to its right neighbor
+preserves the local determinant. -/
+theorem det_setCol_add_adjacent {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Square R (n + 1)) (left : Fin n) (c : R) :
+    det (setCol M left.succ
+      (fun i => M i left.succ + c * M i left.castSucc)) = det M := by
+  rw [det_setCol_add]
+  rw [det_setCol_smul]
+  have hdup : det (setCol M left.succ (fun i => M i left.castSucc)) = 0 := by
+    apply det_eq_zero_of_adjacent_col_eq (left := left)
+    intro i
+    have hne : left.castSucc ≠ left.succ := by
+      intro h
+      have hval := congrArg Fin.val h
+      simp at hval
+    simp [setCol, hne]
+  rw [hdup]
+  have hself : setCol M left.succ (fun i => M i left.succ) = M := by
+    funext i j
+    by_cases h : j = left.succ
+    · subst j
+      simp [setCol]
+    · simp [setCol, h]
+  rw [hself]
+  grind
+
+end SubresultantMinor
+
+namespace DensePoly
+namespace Subresultant
+
+section Scale
+
+variable {R : Type u} [Lean.Grind.CommRing R] [DecidableEq R]
+
+@[simp]
+theorem coeffInt_scale (c : R) (p : DensePoly R) (i : Int) :
+    coeffInt (scale c p) i = c * coeffInt p i := by
+  unfold coeffInt
+  by_cases h : i < 0
+  · rw [if_pos h, if_pos h]
+    grind
+  · rw [if_neg h, if_neg h]
+    exact coeff_scale_semiring c p i.toNat
+
+/-- Scaling the left polynomial scales exactly the left Sylvester block. -/
+theorem coeffMatrixAt_scale_left (df dg J l : Nat) (c : R)
+    (f g : DensePoly R) :
+    coeffMatrixAt df dg J l (scale c f) g =
+      SubresultantMinor.scaleRange (coeffMatrixAt df dg J l f g)
+        0 (dg - J) c := by
+  funext i j
+  simp only [coeffMatrixAt, SubresultantMinor.scaleRange]
+  by_cases hj : j.val < dg - J
+  · have hscaled : 0 ≤ j.val ∧ j.val < 0 + (dg - J) := by
+      omega
+    simp only [if_pos hj, if_pos hscaled]
+    by_cases hi : i.val = (df - J) + (dg - J) - 1
+    · simp only [if_pos hi, coeffInt_scale]
+    · simp only [if_neg hi, coeffInt_scale]
+  · have hscaled : ¬(0 ≤ j.val ∧ j.val < 0 + (dg - J)) := by
+      omega
+    simp only [if_neg hj, if_neg hscaled]
+
+/-- Scaling the right polynomial scales exactly the right Sylvester block. -/
+theorem coeffMatrixAt_scale_right (df dg J l : Nat) (c : R)
+    (f g : DensePoly R) :
+    coeffMatrixAt df dg J l f (scale c g) =
+      SubresultantMinor.scaleRange (coeffMatrixAt df dg J l f g)
+        (dg - J) (df - J) c := by
+  funext i j
+  simp only [coeffMatrixAt, SubresultantMinor.scaleRange]
+  by_cases hj : j.val < dg - J
+  · have hscaled : ¬(dg - J ≤ j.val ∧ j.val < dg - J + (df - J)) := by
+      omega
+    simp only [if_pos hj, if_neg hscaled]
+  · have hlower : dg - J ≤ j.val := by omega
+    have hupper : j.val < dg - J + (df - J) := by
+      have hjbound := j.isLt
+      omega
+    have hscaled : dg - J ≤ j.val ∧ j.val < dg - J + (df - J) :=
+      ⟨hlower, hupper⟩
+    simp only [if_neg hj, if_pos hscaled]
+    by_cases hi : i.val = (df - J) + (dg - J) - 1
+    · simp only [if_pos hi, coeffInt_scale]
+    · simp only [if_neg hi, coeffInt_scale]
+
+/-- Fixed-degree coefficient minors are homogeneous in the left polynomial. -/
+theorem coeffMinorAt_scale_left (df dg J l : Nat) (c : R)
+    (f g : DensePoly R) :
+    coeffMinorAt df dg J l (scale c f) g =
+      c ^ (dg - J) * coeffMinorAt df dg J l f g := by
+  unfold coeffMinorAt
+  rw [coeffMatrixAt_scale_left]
+  apply SubresultantMinor.det_scaleRange
+  omega
+
+/-- Fixed-degree coefficient minors are homogeneous in the right polynomial. -/
+theorem coeffMinorAt_scale_right (df dg J l : Nat) (c : R)
+    (f g : DensePoly R) :
+    coeffMinorAt df dg J l f (scale c g) =
+      c ^ (df - J) * coeffMinorAt df dg J l f g := by
+  unfold coeffMinorAt
+  rw [coeffMatrixAt_scale_right]
+  apply SubresultantMinor.det_scaleRange
+  omega
+
+variable [Div R] [ExactDivLaws R]
+
+private theorem formalDegree_scale {c : R} (hc : c ≠ 0) (p : DensePoly R) :
+    formalDegree (scale c p) = formalDegree p := by
+  unfold formalDegree
+  rw [DensePoly.size_scale hc]
+
+/-- Generalized coefficient minors are homogeneous in the left polynomial. -/
+theorem coeffMinor_scale_left {c : R} (hc : c ≠ 0) (J l : Nat)
+    (f g : DensePoly R) :
+    coeffMinor J l (scale c f) g =
+      c ^ (formalDegree g - J) * coeffMinor J l f g := by
+  unfold coeffMinor
+  rw [formalDegree_scale hc]
+  exact coeffMinorAt_scale_left (formalDegree f) (formalDegree g) J l c f g
+
+/-- Generalized coefficient minors are homogeneous in the right polynomial. -/
+theorem coeffMinor_scale_right {c : R} (hc : c ≠ 0) (J l : Nat)
+    (f g : DensePoly R) :
+    coeffMinor J l f (scale c g) =
+      c ^ (formalDegree f - J) * coeffMinor J l f g := by
+  unfold coeffMinor
+  rw [formalDegree_scale hc]
+  exact coeffMinorAt_scale_right (formalDegree f) (formalDegree g) J l c f g
+
+/-- Generalized subresultants are homogeneous in the left polynomial. -/
+theorem poly_scale_left {c : R} (hc : c ≠ 0) (J : Nat)
+    (f g : DensePoly R) :
+    poly J (scale c f) g =
+      scale (c ^ (formalDegree g - J)) (poly J f g) := by
+  apply ext_coeff
+  intro l
+  rw [coeff_scale_semiring]
+  simp only [coeff_poly]
+  by_cases hl : l < J + 1
+  · rw [if_pos hl, if_pos hl, coeffMinor_scale_left hc]
+  · rw [if_neg hl, if_neg hl]
+    exact (Lean.Grind.Semiring.mul_zero _).symm
+
+/-- Generalized subresultants are homogeneous in the right polynomial. -/
+theorem poly_scale_right {c : R} (hc : c ≠ 0) (J : Nat)
+    (f g : DensePoly R) :
+    poly J f (scale c g) =
+      scale (c ^ (formalDegree f - J)) (poly J f g) := by
+  apply ext_coeff
+  intro l
+  rw [coeff_scale_semiring]
+  simp only [coeff_poly]
+  by_cases hl : l < J + 1
+  · rw [if_pos hl, if_pos hl, coeffMinor_scale_right hc]
+  · rw [if_neg hl, if_neg hl]
+    exact (Lean.Grind.Semiring.mul_zero _).symm
+
+end Scale
+end Subresultant
+end DensePoly
+end Hex
