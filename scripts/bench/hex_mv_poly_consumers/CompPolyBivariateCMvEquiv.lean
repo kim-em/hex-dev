@@ -16,11 +16,12 @@ polynomials and folded with `HexMvPolyMathlib.finSuccEquiv`.
 
 namespace CompPoly.CBivariate
 
+open scoped HexMvPolyMathlib
+
 open Hex
 
 variable {R : Type*}
-variable [CommRing R] [BEq R] [LawfulBEq R] [Nontrivial R]
-  [DecidableEq R]
+variable [CommRing R] [Nontrivial R] [DecidableEq R]
 
 /-- Ring equivalence between computable bivariate polynomials and
 two-variable executable multivariate polynomials. -/

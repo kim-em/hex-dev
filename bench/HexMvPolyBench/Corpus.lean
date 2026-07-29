@@ -46,14 +46,21 @@ def patternedMono (_size i salt : Nat) : Mono 4 :=
     else if j.val = 2 then (i + 1) * (salt + 2)
     else (i * i + i + 1) * (salt + 3)
 
-/-- A duplicate-free source monomial designed to collide after even variables
-are erased or the four variables are paired into two targets. -/
+/-- A duplicate-free source monomial in increasing graded-lexicographic order,
+designed to collide after the four variables are paired into two targets.
+
+The first and third coordinates sum to a fixed chunk size, while the second
+and fourth encode one of at most eight groups. Pairing even and odd variables
+therefore yields at most eight destination keys. -/
 def collisionMono (size i : Nat) : Mono 4 :=
+  let chunk := (size + 7) / 8
+  let group := i / chunk
+  let offset := i % chunk
   Hex.Vector.ofFn' fun j =>
-    if j.val = 0 then i
-    else if j.val = 1 then i % 8
-    else if j.val = 2 then size - i
-    else i % 8
+    if j.val = 0 then offset
+    else if j.val = 1 then group
+    else if j.val = 2 then chunk - offset
+    else group
 
 /-- A duplicate-free source monomial for partial evaluation. The two evaluated
 coordinates encode `i < 1024` in base 32, so their exponents stay bounded while

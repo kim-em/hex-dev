@@ -87,6 +87,13 @@ propositionally equal and the canonical form condition reduces to "no
 zero values". The Phase 4 proof probes described below determine
 whether this representation also meets the kernel-reduction budget.
 
+Reusable map algorithms belong in `HexBasic/ExtTreeMap.lean`, in the
+`Std.ExtTreeMap` namespace, with no Hex-specific types or polynomial
+policy. That file is the designated upstream candidate. In particular,
+joint ordered traversal and deletion-capable merge are map operations;
+the coefficient-combination and zero-deletion policy passed to them
+belongs in `HexMvPoly`.
+
 The `nonzero` field makes the representation canonical: every
 polynomial has exactly one representation. Operations restore it by
 construction, using `ExtTreeMap.alter` to delete a key whose
@@ -376,24 +383,31 @@ def bind₁ (f : Fin n → MvPoly k R cmp')
 
 The signatures above elide their typeclass bounds, and the elision
 hides a real requirement: `[Zero R]` alone is not enough for any
-operation that has to drop a cancelled term. `C`, `monomial`,
-`ofTerms`, addition, multiplication, subtraction, and collision-producing
-transformations need to decide whether a coefficient is zero, so each
-carries `[DecidableEq R]` alongside the algebraic class it needs.
-Coefficientwise negation is the exception: its nonzero-preservation
-proof lets it map the tree without an equality test. The equality
-instance uses the same explicit path. Canonical arithmetic and semantic
-transformations use the Mathlib-free `Lean.Grind.Semiring` /
-`Lean.Grind.Ring` classes; representation helpers keep narrower
-`Zero`/`Add`/`Mul` bounds where those suffice. Write the real bounds per
-declaration rather than a single blanket variable block. Direct evaluation
-keeps the order `c * x₀^a₀ * x₁^a₁ * ⋯` and therefore needs only a
-`Lean.Grind.Semiring`; fixed-order Horner nesting can move an outer variable
-factor past inner-variable factors, so `evalHorner` and `eval₂Horner` require a
-`Lean.Grind.CommSemiring`. `subst` keeps
-the target comparator implicit because the codomain of `f` determines
-it; that codomain carries the same `TransCmp` and `LawfulEqCmp`
-obligations as every `MvPoly`.
+operation that has to drop a cancelled term. The primitive canonical
+layer (`C`, `monomial`, `ofTerms`, addition, negation, multiplication,
+subtraction, and powers) carries `[BEq R] [LawfulBEq R]` alongside only
+the operational classes it needs. It derives a local `DecidableEq` for
+proof-relevant branches, so the executable operation does not depend on
+which larger algebraic law bundle happened to supply equality. Negation
+uses one deletion-capable `ExtTreeMap.filterMap` pass rather than assuming
+that an arbitrary `Neg` operation preserves nonzero coefficients.
+The polynomial equality instance remains the explicit
+`[DecidableEq R]` ordered-term-list path described above.
+
+Canonical arithmetic laws and semantic transformations use the
+Mathlib-free `Lean.Grind.Semiring` / `Lean.Grind.Ring` classes;
+representation helpers keep narrower `Zero`/`Add`/`Mul` bounds where
+those suffice. Higher collision-producing structural transformations
+currently state `[DecidableEq R]`, which coherently supplies the
+primitive layer's lawful boolean equality. Write the real bounds per
+declaration rather than a single blanket variable block. Direct
+evaluation keeps the order `c * x₀^a₀ * x₁^a₁ * ⋯` and therefore needs
+only a `Lean.Grind.Semiring`; fixed-order Horner nesting can move an
+outer variable factor past inner-variable factors, so `evalHorner` and
+`eval₂Horner` require a `Lean.Grind.CommSemiring`. `subst` keeps the
+target comparator implicit because the codomain of `f` determines it;
+that codomain carries the same `TransCmp` and `LawfulEqCmp` obligations
+as every `MvPoly`.
 In particular, the computational `derivative` states the narrower
 `[Zero R] [NatCast R] [Add R] [Mul R] [DecidableEq R]` bounds directly,
 matching the shape of `Hex.DensePoly.derivative` while retaining
@@ -743,8 +757,26 @@ families, where the representation decision is made.
 **The threshold, written down in advance.** A second, kernel-specialised
 representation is justified only if the kernel suite shows the sorted
 form beating `ExtTreeMap` by more than 2× on at least two workload
-families at the largest size that fits the bench time budget. Anything
-less and the single representation stands.
+families at the largest size that fits the bench time budget. The ratio
+is the median production workload time divided by the median sorted
+workload time after subtracting the same round's matched import-only
+module build from each arm. Raw fresh-module wall times are still
+reported, together with the maximum raw ratio attainable if the sorted
+workload itself took zero time; an import-dominated raw ratio is not
+used for this decision.
+
+Both baseline-subtracted medians must exceed the robust variability
+envelope of the round-matched import baseline. The record separately
+calibrates pair-order noise with same-module controls at two build
+magnitudes, interpolates a robust median/IQR/Tukey envelope at each
+substantive build magnitude, and is invalid when a control's IQR exceeds
+10% of its build magnitude. A baseline-limited ratio or a comparison
+whose arm delta is unresolved against the interpolated null envelope
+does not count toward the threshold. Reference and candidate arms use
+the same coefficient type, arity, comparator, support stream, and
+identity; the report records those axes for every pair. Anything short
+of two resolved greater-than-2× workload ratios leaves the single
+representation standing.
 
 The native driver lives at `bench/HexMvPoly/Bench.lean`. Kernel probes
 live below `bench/HexMvPolyMathlib/ProofProbe/`, contain no `main`,

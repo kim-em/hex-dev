@@ -205,6 +205,7 @@ setup_benchmark runSparseAdditionLex n => n * Nat.log2 (n + 1)
     maxSecondsPerCall := 3.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- The same disjoint/interleaved addition under graded lexicographic order. -/
@@ -215,6 +216,7 @@ setup_benchmark runSparseAdditionGrlex n => n * Nat.log2 (n + 1)
     maxSecondsPerCall := 3.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- Cost model: graded reverse lexicographic addition performs the same `n`
@@ -227,6 +229,7 @@ setup_benchmark runSparseAdditionGrevlex n => n * Nat.log2 (n + 1)
     maxSecondsPerCall := 3.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- The low-collision output has `n²` terms and every Gustavson accumulator
@@ -238,6 +241,7 @@ setup_benchmark runSparseMultiplicationLow n => n * n * Nat.log2 (n * n + 1)
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- Cost model: the high-collision rational product visits `n²` source pairs but
@@ -251,6 +255,7 @@ setup_benchmark runSparseMultiplicationHigh n => n * n * Nat.log2 (n + 1)
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- Expanding the integer identity `(a + b)² - (a² + b²)` performs three
@@ -264,6 +269,7 @@ setup_benchmark runCancellationInt n => n * n * Nat.log2 (n * n + 1)
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- Cost model: the same cancellation identity over bounded genuine fractions
@@ -277,6 +283,7 @@ setup_benchmark runCancellationRat n => n * n * Nat.log2 (n * n + 1)
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- Cost model: rename maps `n` fixed-arity source monomials into eight
@@ -289,6 +296,7 @@ setup_benchmark runRenameCollisions n => n
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- Cost model: partial evaluation also combines `n` source terms into eight
@@ -302,6 +310,7 @@ setup_benchmark runPartialEvalCollisions n => n
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- Substitution maps every source variable to a single target monomial and
@@ -314,6 +323,7 @@ setup_benchmark runSubstCollisions n => n * Nat.log2 (n + 1)
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- The target sums three squares of genuinely multivariate `n`-term
@@ -326,6 +336,7 @@ setup_benchmark runSumOfSquaresArithmetic n => n * n * Nat.log2 (n * n + 1)
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 end Hex.MvPolyBench

@@ -26,6 +26,7 @@ transport Mathlib's algebraic structures back to the executable type.
 namespace HexMvPolyMathlib
 
 open scoped BigOperators
+open scoped HexMvPolyMathlib
 
 open Hex
 open Hex.MvPoly
@@ -35,24 +36,20 @@ universe u
 variable {n : Nat} {R : Type u}
   {cmp : Mono n → Mono n → Ordering}
   [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
+  [BEq R] [LawfulBEq R]
 
 noncomputable section
 
 /-!
-Mathlib's algebraic structures are the canonical source of the executable
-`Lean.Grind` operations in this bridge. The elevated priority is important for
-coefficient types such as `Int` and `Rat`, which also have native Grind
-instances: without normalization, an ambient `p * q` can select a different
-`Mul (MvPoly ..)` from the one transported below.
+Executable operations and Mathlib structures must use the same coefficient
+operations. The `HexMvPolyMathlib` scope raises Mathlib's existing
+`CommSemiring`/`CommRing` adapters above native Grind instances while the
+bridge is in use. The scope is active throughout these implementation files,
+but importing the bridge alone does not change global instance search.
 -/
 
-@[implicit_reducible]
-instance (priority := 2000) [CommSemiring R] : Lean.Grind.CommSemiring R :=
-  CommSemiring.toGrindCommSemiring R
-
-@[implicit_reducible]
-instance (priority := 2000) [CommRing R] : Lean.Grind.CommRing R :=
-  CommRing.toGrindCommRing R
+scoped[HexMvPolyMathlib] attribute [instance 2000]
+  CommSemiring.toGrindCommSemiring CommRing.toGrindCommRing
 
 /-- A fixed-arity exponent vector is equivalent to a finitely supported
 function on the finite variable type. -/
@@ -125,6 +122,7 @@ def toMvPolynomial [CommSemiring R] [DecidableEq R]
   p.monomials.toFinset.sum fun m =>
     MvPolynomial.monomial (monoEquiv m) (coeff m p)
 
+omit [BEq R] [LawfulBEq R] in
 /-- The canonical-support sum used by the forward conversion. -/
 theorem toMvPolynomial_eq_sum [CommSemiring R] [DecidableEq R]
     (p : MvPoly n R cmp) :
@@ -133,6 +131,7 @@ theorem toMvPolynomial_eq_sum [CommSemiring R] [DecidableEq R]
         MvPolynomial.monomial (monoEquiv m) (coeff m p) := by
   rfl
 
+omit [BEq R] [LawfulBEq R] in
 /-- Forward conversion preserves every coefficient. -/
 @[simp] theorem coeff_toMvPolynomial [CommSemiring R] [DecidableEq R]
     (m : Mono n) (p : MvPoly n R cmp) :
@@ -158,6 +157,64 @@ theorem toMvPolynomial_eq_sum [CommSemiring R] [DecidableEq R]
   · have h' : monoEquiv m ≠ monoEquiv k := fun heq =>
       h (monoEquiv.injective heq).symm
     simp [h, h']
+
+/-- Adding one executable term is addition by the corresponding Mathlib
+monomial, including coefficient cancellation. -/
+@[simp] theorem toMvPolynomial_addMonomial
+    [CommSemiring R] [DecidableEq R]
+    (p : MvPoly n R cmp) (m : Mono n) (c : R) :
+    toMvPolynomial (addMonomial p m c) =
+      toMvPolynomial p + MvPolynomial.monomial (monoEquiv m) c := by
+  apply MvPolynomial.ext
+  intro d
+  rcases monoEquiv.surjective d with ⟨k, rfl⟩
+  rw [coeff_toMvPolynomial, coeff_addMonomial,
+    MvPolynomial.coeff_add, coeff_toMvPolynomial,
+    MvPolynomial.coeff_monomial]
+  by_cases h : k = m
+  · subst k
+    simp
+  · have h' : monoEquiv m ≠ monoEquiv k := fun heq =>
+      h (monoEquiv.injective heq).symm
+    simp [h, h']
+
+/-- Constructing from a term stream agrees with folding the corresponding
+Mathlib monomials. Duplicate monomials sum and cancellations disappear on
+both sides. -/
+theorem toMvPolynomial_ofTerms
+    [CommSemiring R] [DecidableEq R]
+    (terms : List (Mono n × R)) :
+    toMvPolynomial (ofTerms terms : MvPoly n R cmp) =
+      terms.foldl
+        (fun p term =>
+          p + MvPolynomial.monomial (monoEquiv term.1) term.2)
+        0 := by
+  have fold_eq : ∀ (rest : List (Mono n × R)) (init : MvPoly n R cmp),
+      toMvPolynomial
+          (rest.foldl
+            (fun p term => addMonomial p term.1 term.2)
+            init) =
+        rest.foldl
+          (fun p term =>
+            p + MvPolynomial.monomial (monoEquiv term.1) term.2)
+          (toMvPolynomial init) := by
+    intro rest
+    induction rest with
+    | nil =>
+        intro init
+        rfl
+    | cons term rest ih =>
+        intro init
+        rw [List.foldl_cons, List.foldl_cons, ih,
+          toMvPolynomial_addMonomial]
+  have zero_eq :
+      toMvPolynomial (0 : MvPoly n R cmp) = 0 := by
+    apply MvPolynomial.ext
+    intro d
+    rcases monoEquiv.surjective d with ⟨m, rfl⟩
+    simp
+  simpa [ofTerms, zero_eq] using
+    fold_eq terms (0 : MvPoly n R cmp)
 
 /-- Rebuild an executable sparse polynomial from a Mathlib multivariate
 polynomial's finite support. -/
@@ -224,6 +281,7 @@ canonical executable polynomial. -/
   intro m
   simp
 
+omit [BEq R] [LawfulBEq R] in
 /-- Forward conversion sends the executable zero to Mathlib zero. -/
 @[simp] theorem toMvPolynomial_zero [CommSemiring R] [DecidableEq R] :
     toMvPolynomial (0 : MvPoly n R cmp) = 0 := by

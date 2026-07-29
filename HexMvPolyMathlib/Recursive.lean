@@ -23,6 +23,8 @@ square with Mathlib's `MvPolynomial.finSuccEquiv`.
 
 namespace HexMvPolyMathlib
 
+open scoped HexMvPolyMathlib
+
 open Hex
 open Hex.MvPoly
 

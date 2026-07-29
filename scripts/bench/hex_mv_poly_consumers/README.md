@@ -1,9 +1,13 @@
 # HexMvPoly consumer acceptance
 
 `setup_hex_mv_poly_consumers.py` clones the audited revisions of
-`leanprover/sos` and `Verified-zkEVM/CompPoly`, replaces only their
+`leanprover/sos` and `Verified-zkEVM/CompPoly`, replaces their
 multivariate-polynomial integration surfaces, pins their Lake dependency to
-the requested Hex source tree, and builds the acceptance targets.
+the requested Hex source tree, and builds the acceptance targets. CompPoly
+also receives one theorem-preserving toolchain compatibility edit:
+`ofPoly_zero` is reproved through its public ring equivalence because the
+pinned proof unfolds support internals that do not elaborate with Hex's Lean
+toolchain.
 
 ```sh
 python3 scripts/bench/setup_hex_mv_poly_consumers.py /tmp/hex-mvpoly-consumers

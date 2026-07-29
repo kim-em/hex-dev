@@ -21,52 +21,58 @@ open Hex
 open Hex.MvPolyBench.Corpus
 open HexMvPolyMathlib.ProofProbe
 
-abbrev P4 (R : Type) := Sorted.Poly 4 R
-abbrev P8 (R : Type) := Sorted.Poly 8 R
+abbrev LexP4 (R : Type) := Sorted.Poly 4 R Mono.lex
+abbrev GrlexP4 (R : Type) := Sorted.Poly 4 R Mono.grlex
+abbrev GrlexP8 (R : Type) := Sorted.Poly 8 R Mono.grlex
+abbrev GrevlexP4 (R : Type) := Sorted.Poly 4 R Mono.grevlex
 
-def checksum [Hashable R] (p : Sorted.Poly n R) : UInt64 :=
+def checksum [Hashable R] {cmp : Mono n → Mono n → Ordering}
+    (p : Sorted.Poly n R cmp) : UInt64 :=
   p.terms.foldl
     (fun acc term => mixHash (mixHash acc (hash term.1.toList)) (hash term.2))
     0
 
 structure AdditionInput where
-  left : P4 Int
-  right : P4 Int
+  left : LexP4 Int
+  right : LexP4 Int
 
 instance : Hashable AdditionInput where
   hash input := mixHash (checksum input.left) (checksum input.right)
 
 def prepSparseAddition (n : Nat) : AdditionInput :=
-  { left := Sorted.ofTerms (intTerms n 3 (fun i => axisMono 0 i))
-    right := Sorted.ofTerms (intTerms n 5 (fun i => axisMono 0 (n + i))) }
+  { left := Sorted.ofSortedTerms (intTerms n 3 (fun i => axisMono 0 i))
+    right :=
+      Sorted.ofSortedTerms (intTerms n 5 (fun i => axisMono 0 (n + i))) }
 
 def runSparseAddition (input : AdditionInput) : UInt64 :=
   checksum (input.left + input.right)
 
 structure MultiplicationInput where
-  left : P8 Int
-  right : P8 Int
+  left : GrlexP8 Int
+  right : GrlexP8 Int
 
 instance : Hashable MultiplicationInput where
   hash input := mixHash (checksum input.left) (checksum input.right)
 
 def prepSparseMultiplication (n : Nat) : MultiplicationInput :=
-  { left := Sorted.ofTerms (intTerms n 19 (axisMono 6))
-    right := Sorted.ofTerms (intTerms n 23 (axisMono 7)) }
+  { left := Sorted.ofSortedTerms (intTerms n 19 (axisMono 6)) Mono.grlex
+    right := Sorted.ofSortedTerms (intTerms n 23 (axisMono 7)) Mono.grlex }
 
 def runSparseMultiplication (input : MultiplicationInput) : UInt64 :=
   checksum (input.left * input.right)
 
 structure CancellationInput where
-  left : P4 Int
-  right : P4 Int
+  left : LexP4 Int
+  right : LexP4 Int
 
 instance : Hashable CancellationInput where
   hash input := mixHash (checksum input.left) (checksum input.right)
 
 def prepCancellationArithmetic (n : Nat) : CancellationInput :=
-  { left := Sorted.ofTerms (intTerms n 37 (fun i => axisMono 0 (i + 1)))
-    right := Sorted.ofTerms (intTerms n 41 (fun i => axisMono 1 (i + 1))) }
+  { left :=
+      Sorted.ofSortedTerms (intTerms n 37 (fun i => axisMono 0 (i + 1)))
+    right :=
+      Sorted.ofSortedTerms (intTerms n 41 (fun i => axisMono 1 (i + 1))) }
 
 def runCancellationArithmetic (input : CancellationInput) : UInt64 :=
   checksum <|
@@ -74,25 +80,27 @@ def runCancellationArithmetic (input : CancellationInput) : UInt64 :=
       (input.left * input.left + input.right * input.right)
 
 structure StructuralInput where
-  polynomial : P4 Int
+  polynomial : GrlexP4 Int
 
 instance : Hashable StructuralInput where
   hash input := checksum input.polynomial
 
 def prepStructuralCollisions (n : Nat) : StructuralInput :=
-  { polynomial := Sorted.ofTerms (intTerms n 53 (collisionMono n)) }
+  { polynomial :=
+      Sorted.ofSortedTerms
+        (intTerms n 53 (collisionMono n)) Mono.grlex }
 
 def runStructuralCollisions (input : StructuralInput) : UInt64 :=
   checksum <|
     Sorted.rename
       (fun i : Fin 4 =>
         if i.val % 2 = 0 then (0 : Fin 2) else (1 : Fin 2))
-      input.polynomial
+      input.polynomial Mono.grevlex
 
 structure SumOfSquaresInput where
-  first : P4 Int
-  second : P4 Int
-  third : P4 Int
+  first : GrevlexP4 Int
+  second : GrevlexP4 Int
+  third : GrevlexP4 Int
 
 instance : Hashable SumOfSquaresInput where
   hash input :=
@@ -100,9 +108,15 @@ instance : Hashable SumOfSquaresInput where
       (mixHash (checksum input.second) (checksum input.third))
 
 def prepSumOfSquares (n : Nat) : SumOfSquaresInput :=
-  { first := Sorted.ofTerms (intTerms n 59 (patternedMono n · 3))
-    second := Sorted.ofTerms (intTerms n 61 (patternedMono n · 7))
-    third := Sorted.ofTerms (intTerms n 67 (patternedMono n · 11)) }
+  { first :=
+      Sorted.ofSortedTerms
+        (intTerms n 59 (patternedMono n · 3)) Mono.grevlex
+    second :=
+      Sorted.ofSortedTerms
+        (intTerms n 61 (patternedMono n · 7)) Mono.grevlex
+    third :=
+      Sorted.ofSortedTerms
+        (intTerms n 67 (patternedMono n · 11)) Mono.grevlex }
 
 def runSumOfSquaresArithmetic (input : SumOfSquaresInput) : UInt64 :=
   checksum <|
@@ -118,6 +132,7 @@ setup_benchmark runSparseAddition n => (n)
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- Multiplication creates `n` sorted rows of length `n` and combines them in
@@ -129,6 +144,7 @@ setup_benchmark runSparseMultiplication n => (n * n * Nat.log2 (n + 1))
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- The identity performs three sorted sparse products and linear merges, each
@@ -140,6 +156,7 @@ setup_benchmark runCancellationArithmetic n => (n * n * Nat.log2 (n + 1))
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- Rename visits `n` source terms and inserts into a target support bounded by
@@ -151,6 +168,7 @@ setup_benchmark runStructuralCollisions n => (n)
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- Three sorted sparse squares visit `3n²` pairs and use balanced row merges,
@@ -162,6 +180,7 @@ setup_benchmark runSumOfSquaresArithmetic n => (n * n * Nat.log2 (n + 1))
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 end MvSparsePolyProxy.MvPolyBench

@@ -30,6 +30,7 @@ parameter or polynomial-valued filtering operation.
 namespace HexMvPolyMathlib
 
 open scoped BigOperators
+open scoped HexMvPolyMathlib
 
 open Hex
 open Hex.MvPoly

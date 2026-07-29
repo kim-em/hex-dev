@@ -17,6 +17,8 @@ uses only the public dense-polynomial and recursive-view equivalences.
 
 namespace CompPoly.CPolynomial
 
+open scoped HexMvPolyMathlib
+
 open Hex
 
 variable {R : Type*}
@@ -24,8 +26,7 @@ variable {R : Type*}
 /-- Ring equivalence between computable univariate polynomials and
 single-variable executable multivariate polynomials. -/
 noncomputable def cmvEquiv
-    [CommSemiring R] [BEq R] [LawfulBEq R] [Nontrivial R]
-    [DecidableEq R] :
+    [CommSemiring R] [Nontrivial R] [DecidableEq R] :
     CPolynomial R ≃+* MvPoly 1 R Mono.lex :=
   (ringEquiv (R := R)).trans <|
     (Polynomial.mapEquiv
@@ -39,15 +40,15 @@ noncomputable def cmvEquiv
 
 /-- `cmvEquiv` preserves addition. -/
 theorem cmvEquiv_add
-    [CommSemiring R] [BEq R] [LawfulBEq R] [Nontrivial R]
-    [DecidableEq R] (p q : CPolynomial R) :
+    [CommSemiring R] [Nontrivial R] [DecidableEq R]
+    (p q : CPolynomial R) :
     cmvEquiv (p + q) = cmvEquiv p + cmvEquiv q :=
   (cmvEquiv (R := R)).map_add p q
 
 /-- `cmvEquiv` preserves multiplication. -/
 theorem cmvEquiv_mul
-    [CommSemiring R] [BEq R] [LawfulBEq R] [Nontrivial R]
-    [DecidableEq R] (p q : CPolynomial R) :
+    [CommSemiring R] [Nontrivial R] [DecidableEq R]
+    (p q : CPolynomial R) :
     cmvEquiv (p * q) = cmvEquiv p * cmvEquiv q :=
   (cmvEquiv (R := R)).map_mul p q
 

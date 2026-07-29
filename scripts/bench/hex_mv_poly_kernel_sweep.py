@@ -31,7 +31,12 @@ def module(name: str) -> ProbeModule:
 
 
 def comparison(
-    name: str, hex_module: str, sorted_module: str, family: str, size: int
+    name: str,
+    hex_module: str,
+    sorted_module: str,
+    family: str,
+    size: int,
+    **axes: object,
 ) -> ProbePair:
     """One matched production-versus-sorted representation comparison."""
     return ProbePair(
@@ -43,6 +48,7 @@ def comparison(
             "size": size,
             "reference_representation": "Hex ExtTreeMap",
             "candidate_representation": "sorted-list adapter",
+            **axes,
         },
     )
 
@@ -78,6 +84,10 @@ SPEC = SweepSpec(
             "SortedAddition32",
             "kernel-sparse-addition",
             32,
+            coefficient="Int",
+            arity=[4, 8],
+            comparator=["lex", "grevlex"],
+            support="separated, interleaved, and scattered",
         ),
         comparison(
             "multiplication-sparse-6",
@@ -85,6 +95,10 @@ SPEC = SweepSpec(
             "SortedMulSparse6",
             "kernel-sparse-multiplication",
             6,
+            coefficient="Int",
+            arity=8,
+            comparator="grlex",
+            support="low-collision patterned multivariate",
         ),
         comparison(
             "multiplication-collide-8",
@@ -92,6 +106,10 @@ SPEC = SweepSpec(
             "SortedMulCollide8",
             "kernel-sparse-multiplication",
             8,
+            coefficient="Rat",
+            arity=8,
+            comparator="grevlex",
+            support="high-collision single-axis",
         ),
         comparison(
             "cancellation-4",
@@ -99,6 +117,10 @@ SPEC = SweepSpec(
             "SortedCancellation4",
             "kernel-cancellation-identities",
             4,
+            coefficient=["Int", "Rat"],
+            arity=4,
+            comparator="lex",
+            support="two-axis cancellation",
         ),
         comparison(
             "cancellation-6",
@@ -106,6 +128,10 @@ SPEC = SweepSpec(
             "SortedCancellation6",
             "kernel-cancellation-identities",
             6,
+            coefficient=["Int", "Rat"],
+            arity=4,
+            comparator="lex",
+            support="two-axis cancellation",
         ),
         comparison(
             "sos-3",
@@ -113,6 +139,10 @@ SPEC = SweepSpec(
             "SortedSos3",
             "kernel-sos-certificates",
             3,
+            coefficient="Int",
+            arity=4,
+            comparator="grevlex",
+            support="three patterned polynomials",
         ),
         comparison(
             "sos-4",
@@ -120,6 +150,10 @@ SPEC = SweepSpec(
             "SortedSos4",
             "kernel-sos-certificates",
             4,
+            coefficient="Int",
+            arity=4,
+            comparator="grevlex",
+            support="three patterned polynomials",
         ),
         comparison(
             "structural-8",
@@ -127,11 +161,15 @@ SPEC = SweepSpec(
             "SortedStructural8",
             "kernel-structural-collisions",
             8,
+            coefficient="Int",
+            arity={"source": 4, "target": 2},
+            comparator={"source": "grlex", "target": "grevlex"},
+            support="rename/substitution collisions",
         ),
     ),
     probe_target="HexMvPolyMathlibProofProbe",
-    schema="hex-mv-poly-kernel-proof-probes-v1",
-    measurement="paired-fresh-module-olean-wall-v1",
+    schema="hex-mv-poly-kernel-proof-probes-v2",
+    measurement="paired-fresh-module-olean-wall-import-subtracted-v2",
     output_stem="hex-mv-poly-kernel",
     extra_sources=(
         Path("libraries.yml"),
@@ -140,6 +178,7 @@ SPEC = SweepSpec(
     ),
     required_samples=6,
     max_pair_retries=32,
+    import_baseline_control="fresh-build-null",
 )
 
 

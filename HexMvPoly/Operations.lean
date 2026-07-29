@@ -25,62 +25,77 @@ universe u
 
 variable {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
   [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
+  [BEq R] [LawfulBEq R]
 
 /-- Polynomial addition, combining equal monomials and deleting cancellations. -/
-def add [Lean.Grind.Semiring R] [DecidableEq R]
-    (p q : MvPoly n R cmp) : MvPoly n R cmp where
-  termsInternal :=
-    p.termsInternal.mergeWith?
-      (fun _ a b =>
-        let c := a + b
-        if c = 0 then none else some c)
-      q.termsInternal
-  nonzeroInternal := by
-    intro m
-    rw [Std.ExtTreeMap.getElem?_mergeWith?]
-    cases hp : p.termsInternal[m]? with
-    | none =>
-        cases hq : q.termsInternal[m]? with
-        | none => simp [Std.ExtTreeMap.mergeValue?]
-        | some b =>
-            simpa [Std.ExtTreeMap.mergeValue?, hq] using q.nonzeroInternal m
-    | some a =>
-        cases hq : q.termsInternal[m]? with
-        | none =>
-            simpa [Std.ExtTreeMap.mergeValue?, hp] using p.nonzeroInternal m
-        | some b =>
-            simp only [Std.ExtTreeMap.mergeValue?]
-            split <;> simp_all
+def add [Add R] [Zero R] [BEq R] [LawfulBEq R]
+    (p q : MvPoly n R cmp) : MvPoly n R cmp :=
+  letI : DecidableEq R := instDecidableEqOfLawfulBEq
+  { termsInternal :=
+      p.termsInternal.mergeWith?
+        (fun _ a b =>
+          let c := a + b
+          if c = 0 then none else some c)
+        q.termsInternal
+    nonzeroInternal := by
+      intro m
+      rw [Std.ExtTreeMap.getElem?_mergeWith?]
+      cases hp : p.termsInternal[m]? with
+      | none =>
+          cases hq : q.termsInternal[m]? with
+          | none => simp [Std.ExtTreeMap.mergeValue?]
+          | some b =>
+              simpa [Std.ExtTreeMap.mergeValue?, hq] using q.nonzeroInternal m
+      | some a =>
+          cases hq : q.termsInternal[m]? with
+          | none =>
+              simpa [Std.ExtTreeMap.mergeValue?, hp] using p.nonzeroInternal m
+          | some b =>
+              simp only [Std.ExtTreeMap.mergeValue?]
+              split <;> simp_all }
 
-instance [Lean.Grind.Semiring R] [DecidableEq R] :
+instance [Add R] [Zero R] [BEq R] [LawfulBEq R] :
     Add (MvPoly n R cmp) where
   add := add
 
+omit [BEq R] [LawfulBEq R] in
 theorem negCoeff_ne_zero [Lean.Grind.Ring R] (c : R) (hc : c ≠ 0) :
     -c ≠ 0 := by
   grind
 
-/-- Coefficientwise negation. Since negation preserves nonzeroness, this
-maps values in place without rebuilding the search tree. -/
-def neg [Lean.Grind.Ring R] (p : MvPoly n R cmp) : MvPoly n R cmp :=
-  p.mapCoeffs (fun c => -c) negCoeff_ne_zero
+/-- Coefficientwise negation, filtering any zero result in one tree pass. -/
+def neg [Neg R] [Zero R] [BEq R] [LawfulBEq R]
+    (p : MvPoly n R cmp) : MvPoly n R cmp :=
+  letI : DecidableEq R := instDecidableEqOfLawfulBEq
+  { termsInternal := p.termsInternal.filterMap fun _ c =>
+      let c' := -c
+      if c' = 0 then none else some c'
+    nonzeroInternal := by
+      intro m
+      rw [Std.ExtTreeMap.getElem?_filterMap']
+      cases hcoeff : p.termsInternal[m]? with
+      | none => simp
+      | some c =>
+          simp only [Option.bind_some]
+          split <;> simp_all }
 
-instance [Lean.Grind.Ring R] : Neg (MvPoly n R cmp) where
+instance [Neg R] [Zero R] [BEq R] [LawfulBEq R] :
+    Neg (MvPoly n R cmp) where
   neg := neg
 
 /-- Polynomial subtraction. -/
-def sub [Lean.Grind.Ring R] [DecidableEq R]
+def sub [Add R] [Neg R] [Zero R] [BEq R] [LawfulBEq R]
     (p q : MvPoly n R cmp) : MvPoly n R cmp :=
   add p (neg q)
 
-instance [Lean.Grind.Ring R] [DecidableEq R] :
+instance [Add R] [Neg R] [Zero R] [BEq R] [LawfulBEq R] :
     Sub (MvPoly n R cmp) where
   sub := sub
 
 /-- Polynomial multiplication. Every translated product term is accumulated
 directly into one output map, so collisions and cancellations are normalized
 as they arise. -/
-def mul [Lean.Grind.Semiring R] [DecidableEq R]
+def mul [Add R] [Mul R] [Zero R] [BEq R] [LawfulBEq R]
     (p q : MvPoly n R cmp) : MvPoly n R cmp :=
   p.foldTerms
     (fun acc mp cp =>
@@ -89,20 +104,20 @@ def mul [Lean.Grind.Semiring R] [DecidableEq R]
         acc)
     0
 
-instance [Lean.Grind.Semiring R] [DecidableEq R] :
+instance [Add R] [Mul R] [Zero R] [BEq R] [LawfulBEq R] :
     Mul (MvPoly n R cmp) where
   mul := mul
 
 /-- Multiplicative identity. -/
-def one [Lean.Grind.Semiring R] [DecidableEq R] : MvPoly n R cmp :=
+def one [Zero R] [One R] [BEq R] [LawfulBEq R] : MvPoly n R cmp :=
   C 1
 
-instance [Lean.Grind.Semiring R] [DecidableEq R] :
+instance [Zero R] [One R] [BEq R] [LawfulBEq R] :
     One (MvPoly n R cmp) where
   one := one
 
 /-- Exponentiation by repeated squaring. -/
-def npowBySq [Lean.Grind.Semiring R] [DecidableEq R]
+def npowBySq [Add R] [Mul R] [Zero R] [One R] [BEq R] [LawfulBEq R]
     (p : MvPoly n R cmp) : Nat → MvPoly n R cmp
   | 0 => 1
   | k + 1 =>
@@ -112,7 +127,7 @@ def npowBySq [Lean.Grind.Semiring R] [DecidableEq R]
 termination_by k => k
 decreasing_by omega
 
-instance [Lean.Grind.Semiring R] [DecidableEq R] :
+instance [Add R] [Mul R] [Zero R] [One R] [BEq R] [LawfulBEq R] :
     Pow (MvPoly n R cmp) Nat where
   pow := npowBySq
 
@@ -170,14 +185,20 @@ theorem addMonomial_eq [Lean.Grind.Semiring R] [DecidableEq R]
   · rw [if_pos hkm, if_pos hkm]
   · rw [if_neg hkm, if_neg hkm, Lean.Grind.Semiring.add_zero]
 
-theorem coeff_neg [Lean.Grind.Ring R] (m : Mono n) (p : MvPoly n R cmp) :
+theorem coeff_neg [Lean.Grind.Ring R] [DecidableEq R]
+    (m : Mono n) (p : MvPoly n R cmp) :
     coeff m (-p) = -coeff m p := by
   change coeff m (neg p) = -coeff m p
-  unfold neg mapCoeffs coeff coeff?
-  rw [Std.ExtTreeMap.getElem?_map]
-  cases p.termsInternal[m]?
-  · exact Lean.Grind.AddCommGroup.neg_zero.symm
-  · rfl
+  unfold neg coeff coeff?
+  rw [Std.ExtTreeMap.getElem?_filterMap']
+  cases hcoeff : p.termsInternal[m]? with
+  | none => exact Lean.Grind.AddCommGroup.neg_zero.symm
+  | some c =>
+      have hc : c ≠ 0 := by
+        intro hzero
+        apply p.nonzeroInternal m
+        simpa [hzero] using hcoeff
+      simp [negCoeff_ne_zero c hc]
 
 theorem coeff_sub [Lean.Grind.Ring R] [DecidableEq R]
     (m : Mono n) (p q : MvPoly n R cmp) :

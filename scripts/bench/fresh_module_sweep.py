@@ -15,6 +15,7 @@ import argparse
 import functools
 import hashlib
 import json
+import math
 import os
 import platform
 import re
@@ -49,6 +50,7 @@ DEFAULT_PREFLIGHT_TIMEOUT_SECONDS = 300.0
 PREFLIGHT_MAX_BUSY_TICKS = 2
 NULL_MAGNITUDE_FACTOR = 3.0
 MIN_CONTROL_MAGNITUDE_RATIO = 2.0
+MAX_NULL_ROBUST_SPREAD_RATIO = 0.10
 ACCOUNTING_QUANTIZATION_TICKS = 3
 T = TypeVar("T")
 
@@ -93,6 +95,7 @@ class SweepSpec:
     extra_sources: tuple[Path, ...] = ()
     required_samples: int | None = None
     max_pair_retries: int = DEFAULT_MAX_PAIR_RETRIES
+    import_baseline_control: str | None = None
 
 
 def parse_args(
@@ -745,6 +748,23 @@ def validate_spec(spec: SweepSpec) -> None:
             )
         if not pair.null_control and pair.reference.module == pair.candidate.module:
             raise RuntimeError(f"{pair.name}: reference and candidate are identical")
+    if spec.import_baseline_control is not None:
+        baseline = next(
+            (
+                pair
+                for pair in spec.pairs
+                if pair.name == spec.import_baseline_control
+            ),
+            None,
+        )
+        if baseline is None:
+            raise RuntimeError(
+                "fresh-module sweep import baseline control is not a pair"
+            )
+        if not baseline.null_control:
+            raise RuntimeError(
+                "fresh-module sweep import baseline must be a null control"
+            )
     if spec.required_samples is not None and spec.required_samples < 1:
         raise RuntimeError("fresh-module sweep required_samples must be positive")
     target = _ExeTarget(spec.probe_target, "", spec.src_dir)
@@ -1367,6 +1387,123 @@ def nested_median(
     return int(statistics.median(values)) if values else None
 
 
+def robust_null_statistics(deltas: Sequence[int]) -> dict[str, int]:
+    """Summarize a zero-effect control without letting one outlier dominate."""
+    values = [int(delta) for delta in deltas]
+    median = float(statistics.median(values))
+    deviations = [abs(value - median) for value in values]
+    mad = float(statistics.median(deviations))
+    if len(values) >= 2:
+        q1, _q2, q3 = statistics.quantiles(
+            values, n=4, method="inclusive"
+        )
+    else:
+        q1 = q3 = median
+    iqr = float(q3 - q1)
+    lower_fence = q1 - 1.5 * iqr
+    upper_fence = q3 + 1.5 * iqr
+    return {
+        "median_nanos": int(median),
+        "mad_nanos": math.ceil(mad),
+        "iqr_nanos": math.ceil(iqr),
+        "lower_fence_nanos": math.floor(lower_fence),
+        "upper_fence_nanos": math.ceil(upper_fence),
+        "envelope_nanos": math.ceil(
+            max(abs(lower_fence), abs(upper_fence))
+        ),
+        "range_nanos": max(values) - min(values),
+        "max_absolute_delta_nanos": max(abs(value) for value in values),
+        "outlier_count": sum(
+            value < lower_fence or value > upper_fence
+            for value in values
+        ),
+    }
+
+
+def interpolated_null_control(
+    magnitude: int,
+    controls: Sequence[dict[str, object]],
+) -> dict[str, object] | None:
+    """Interpolate robust null noise at one measured build magnitude."""
+    if not controls:
+        return None
+    ordered = sorted(
+        controls, key=lambda control: int(control["magnitude"])
+    )
+    nearest = min(
+        ordered,
+        key=lambda control: abs(magnitude - int(control["magnitude"]))
+        / max(magnitude, int(control["magnitude"])),
+    )
+    nearest_magnitude = int(nearest["magnitude"])
+    magnitude_ratio = (
+        max(magnitude, nearest_magnitude)
+        / min(magnitude, nearest_magnitude)
+        if min(magnitude, nearest_magnitude) > 0
+        else math.inf
+    )
+    if magnitude_ratio > NULL_MAGNITUDE_FACTOR:
+        return None
+
+    exact = next(
+        (
+            control
+            for control in ordered
+            if int(control["magnitude"]) == magnitude
+        ),
+        None,
+    )
+    if exact is not None:
+        low = high = exact
+        weight = 0.0
+    elif magnitude < int(ordered[0]["magnitude"]):
+        low = high = ordered[0]
+        weight = 0.0
+    elif magnitude > int(ordered[-1]["magnitude"]):
+        low = high = ordered[-1]
+        weight = 0.0
+    else:
+        low = ordered[0]
+        high = ordered[-1]
+        for lower, upper in zip(ordered, ordered[1:]):
+            lower_magnitude = int(lower["magnitude"])
+            upper_magnitude = int(upper["magnitude"])
+            if lower_magnitude <= magnitude <= upper_magnitude:
+                low, high = lower, upper
+                weight = (
+                    (magnitude - lower_magnitude)
+                    / (upper_magnitude - lower_magnitude)
+                )
+                break
+
+    def interpolate(key: str) -> int:
+        low_value = int(low[key])
+        high_value = int(high[key])
+        return math.ceil(low_value + weight * (high_value - low_value))
+
+    base_envelope = interpolate("envelope")
+    base_spread = interpolate("spread")
+    high_magnitude = int(high["magnitude"])
+    scale = (
+        magnitude / high_magnitude
+        if magnitude > high_magnitude
+        else 1.0
+    )
+    names = [str(low["name"])]
+    if high["name"] != low["name"]:
+        names.append(str(high["name"]))
+    return {
+        "controls": names,
+        "nearest_magnitude_ratio": magnitude_ratio,
+        "interpolation_weight": weight,
+        "scale_factor": scale,
+        "raw_envelope": base_envelope,
+        "raw_spread": base_spread,
+        "envelope": math.ceil(base_envelope * scale),
+        "spread": math.ceil(base_spread * scale),
+    }
+
+
 def summarize(
     spec: SweepSpec, rows: dict[str, list[dict[str, object]]]
 ) -> dict[str, dict[str, object]]:
@@ -1412,80 +1549,181 @@ def summarize(
             int(result["median_candidate_wall_nanos"]),
         )
         summary[pair.name] = result
-    controls: list[tuple[str, int, int, int]] = []
+
+    if spec.import_baseline_control is not None:
+        baseline_samples = rows[spec.import_baseline_control]
+        baseline_by_round = {
+            int(sample["round"]): (
+                int(sample["reference"]["wall_nanos"])
+                + int(sample["candidate"]["wall_nanos"])
+            ) // 2
+            for sample in baseline_samples
+        }
+        baseline_estimates = list(baseline_by_round.values())
+        median_baseline = int(statistics.median(baseline_estimates))
+        centered_baselines = [
+            estimate - median_baseline for estimate in baseline_estimates
+        ]
+        baseline_variability = robust_null_statistics(centered_baselines)
+        baseline_envelope = int(baseline_variability["envelope_nanos"])
+        baseline_result = summary[spec.import_baseline_control]
+        baseline_result["import_baseline_wall_nanos_by_round"] = [
+            {"round": round_index, "wall_nanos": wall_nanos}
+            for round_index, wall_nanos in sorted(baseline_by_round.items())
+        ]
+        baseline_result["median_import_baseline_wall_nanos"] = median_baseline
+        baseline_result["import_baseline_mad_nanos"] = baseline_variability[
+            "mad_nanos"
+        ]
+        baseline_result["import_baseline_iqr_nanos"] = baseline_variability[
+            "iqr_nanos"
+        ]
+        baseline_result[
+            "import_baseline_robust_envelope_nanos"
+        ] = baseline_envelope
+        baseline_result[
+            "import_baseline_outlier_count"
+        ] = baseline_variability["outlier_count"]
+        for pair in spec.pairs:
+            if pair.name == spec.import_baseline_control:
+                continue
+            result = summary[pair.name]
+            reference_workloads: list[int] = []
+            candidate_workloads: list[int] = []
+            for sample in rows[pair.name]:
+                round_index = int(sample["round"])
+                if round_index not in baseline_by_round:
+                    raise RuntimeError(
+                        f"{pair.name}: no import baseline for round "
+                        f"{round_index}"
+                    )
+                baseline = baseline_by_round[round_index]
+                reference_workload = (
+                    int(sample["reference"]["wall_nanos"]) - baseline
+                )
+                candidate_workload = (
+                    int(sample["candidate"]["wall_nanos"]) - baseline
+                )
+                sample["import_baseline_wall_nanos"] = baseline
+                sample["reference_workload_wall_nanos"] = reference_workload
+                sample["candidate_workload_wall_nanos"] = candidate_workload
+                reference_workloads.append(reference_workload)
+                candidate_workloads.append(candidate_workload)
+            median_reference_workload = int(
+                statistics.median(reference_workloads)
+            )
+            median_candidate_workload = int(
+                statistics.median(candidate_workloads)
+            )
+            result["median_import_baseline_wall_nanos"] = median_baseline
+            result[
+                "import_baseline_robust_envelope_nanos"
+            ] = baseline_envelope
+            result[
+                "median_reference_workload_wall_nanos"
+            ] = median_reference_workload
+            result[
+                "median_candidate_workload_wall_nanos"
+            ] = median_candidate_workload
+            result["reference_over_candidate_workload_ratio"] = (
+                median_reference_workload / median_candidate_workload
+                if median_reference_workload > 0
+                and median_candidate_workload > 0
+                else None
+            )
+            result[
+                "maximum_raw_reference_over_zero_workload_candidate_ratio"
+            ] = (
+                int(result["median_reference_wall_nanos"]) / median_baseline
+                if median_baseline > 0
+                else None
+            )
+
+    controls: list[dict[str, object]] = []
     for pair in spec.pairs:
         result = summary[pair.name]
         if not pair.null_control:
             continue
-        deltas = list(result["signed_wall_delta_nanos"])
+        deltas = [int(delta) for delta in result["signed_wall_delta_nanos"]]
         magnitude = int(result["build_magnitude_wall_nanos"])
-        spread = max(deltas) - min(deltas)
-        result["null_spread_nanos"] = spread
-        result["null_max_absolute_delta_nanos"] = max(
-            abs(int(delta)) for delta in deltas
+        robust = robust_null_statistics(deltas)
+        result["null_spread_nanos"] = robust["range_nanos"]
+        result["null_max_absolute_delta_nanos"] = robust[
+            "max_absolute_delta_nanos"
+        ]
+        result["null_median_nanos"] = robust["median_nanos"]
+        result["null_mad_nanos"] = robust["mad_nanos"]
+        result["null_iqr_nanos"] = robust["iqr_nanos"]
+        result["null_lower_fence_nanos"] = robust["lower_fence_nanos"]
+        result["null_upper_fence_nanos"] = robust["upper_fence_nanos"]
+        result["null_robust_envelope_nanos"] = robust["envelope_nanos"]
+        result["null_outlier_count"] = robust["outlier_count"]
+        result["null_robust_spread_ratio"] = (
+            int(robust["iqr_nanos"]) / magnitude if magnitude > 0 else None
         )
-        controls.append(
-            (
-                pair.name,
-                magnitude,
-                spread,
-                int(result["null_max_absolute_delta_nanos"]),
-            )
-        )
+        controls.append({
+            "name": pair.name,
+            "magnitude": magnitude,
+            "spread": robust["iqr_nanos"],
+            "envelope": robust["envelope_nanos"],
+        })
     for pair in spec.pairs:
         if pair.null_control:
             continue
         result = summary[pair.name]
         magnitude = int(result["build_magnitude_wall_nanos"])
-        comparable = [
-            (name, control_magnitude, spread, envelope)
-            for name, control_magnitude, spread, envelope in controls
-            if min(magnitude, control_magnitude) > 0
-            and max(magnitude, control_magnitude)
-            / min(magnitude, control_magnitude) <= NULL_MAGNITUDE_FACTOR
-        ]
-        if comparable:
-            name, control_magnitude, spread, envelope = min(
-                comparable,
-                key=lambda item: abs(
-                    magnitude - item[1]
-                ) / max(magnitude, item[1]),
+        calibration = interpolated_null_control(magnitude, controls)
+        if calibration is not None:
+            names = list(calibration["controls"])
+            result["comparable_control"] = (
+                names[0] if len(names) == 1 else names
             )
-            result["comparable_control"] = name
-            result["control_magnitude_ratio"] = (
-                max(magnitude, control_magnitude)
-                / min(magnitude, control_magnitude)
-            )
-            scale_numerator = max(magnitude, control_magnitude)
-            scale_denominator = control_magnitude
-            applied_spread = (
-                spread * scale_numerator + scale_denominator - 1
-            ) // scale_denominator
-            applied_envelope = (
-                envelope * scale_numerator + scale_denominator - 1
-            ) // scale_denominator
-            result["control_scale_factor"] = (
-                scale_numerator / scale_denominator
-            )
-            result["comparable_null_raw_spread_nanos"] = spread
-            result["comparable_null_raw_envelope_nanos"] = envelope
-            result["comparable_null_spread_nanos"] = applied_spread
-            result["comparable_null_envelope_nanos"] = applied_envelope
+            result["control_magnitude_ratio"] = calibration[
+                "nearest_magnitude_ratio"
+            ]
+            result["control_interpolation_weight"] = calibration[
+                "interpolation_weight"
+            ]
+            result["control_scale_factor"] = calibration["scale_factor"]
+            result["comparable_null_raw_spread_nanos"] = calibration[
+                "raw_spread"
+            ]
+            result["comparable_null_raw_envelope_nanos"] = calibration[
+                "raw_envelope"
+            ]
+            result["comparable_null_spread_nanos"] = calibration["spread"]
+            result["comparable_null_envelope_nanos"] = calibration["envelope"]
             result["resolution"] = (
                 "unresolved"
                 if abs(int(result["median_signed_wall_delta_nanos"]))
-                <= applied_envelope
+                <= int(calibration["envelope"])
                 else "resolved"
             )
         else:
             result["comparable_control"] = None
             result["control_magnitude_ratio"] = None
+            result["control_interpolation_weight"] = None
             result["control_scale_factor"] = None
             result["comparable_null_raw_spread_nanos"] = None
             result["comparable_null_raw_envelope_nanos"] = None
             result["comparable_null_spread_nanos"] = None
             result["comparable_null_envelope_nanos"] = None
             result["resolution"] = "no-comparable-control"
+        if "median_reference_workload_wall_nanos" in result:
+            baseline_envelope = int(
+                result["import_baseline_robust_envelope_nanos"]
+            )
+            if (
+                int(result["median_reference_workload_wall_nanos"])
+                <= baseline_envelope
+                or int(result["median_candidate_workload_wall_nanos"])
+                <= baseline_envelope
+            ):
+                result["workload_ratio_resolution"] = "baseline-limited"
+            elif result["resolution"] != "resolved":
+                result["workload_ratio_resolution"] = "noise-limited"
+            else:
+                result["workload_ratio_resolution"] = "resolved"
         budget_ms = pair.metadata.get("tactic_budget_ms")
         if budget_ms is not None:
             budget_nanos = int(budget_ms) * 1_000_000
@@ -1803,6 +2041,19 @@ def validity_summary(
         ):
             issues.append(
                 "null-control build magnitudes are not sufficiently distinct"
+            )
+    for pair in spec.pairs:
+        if not pair.null_control:
+            continue
+        spread_ratio = results[pair.name].get("null_robust_spread_ratio")
+        if (
+            spread_ratio is None
+            or float(spread_ratio) > MAX_NULL_ROBUST_SPREAD_RATIO
+        ):
+            issues.append(
+                f"{pair.name}: robust null IQR/build ratio "
+                f"{spread_ratio!r} exceeds "
+                f"{MAX_NULL_ROBUST_SPREAD_RATIO:.3f}"
             )
     for pair in spec.pairs:
         if pair.null_control:
@@ -2158,6 +2409,9 @@ def run_cli(
             "minimum_control_magnitude_ratio":
                 MIN_CONTROL_MAGNITUDE_RATIO,
             "null_magnitude_factor": NULL_MAGNITUDE_FACTOR,
+            "max_null_robust_spread_ratio":
+                MAX_NULL_ROBUST_SPREAD_RATIO,
+            "import_baseline_control": spec.import_baseline_control,
             "frequency_measurement":
                 "cpufreq-time-in-state-arm-mean",
             "lean_num_threads": os.environ.get("LEAN_NUM_THREADS"),

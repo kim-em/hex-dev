@@ -743,9 +743,175 @@ class PairingTests(unittest.TestCase):
             )
         self.assertEqual(summary["null"]["null_spread_nanos"], 10)
         self.assertEqual(
-            summary["effect"]["comparable_null_envelope_nanos"], 100
+            summary["effect"]["comparable_null_envelope_nanos"], 105
         )
         self.assertEqual(summary["effect"]["resolution"], "unresolved")
+
+    def test_import_baseline_is_subtracted_by_round(self) -> None:
+        baseline = sweep.ProbeModule("Probe.Baseline")
+        reference = sweep.ProbeModule("Probe.Reference")
+        candidate = sweep.ProbeModule("Probe.Candidate")
+        pairs = (
+            sweep.ProbePair(
+                "baseline", baseline, baseline, {}, null_control=True
+            ),
+            sweep.ProbePair("effect", reference, candidate, {}),
+        )
+        spec = sweep.SweepSpec(
+            description="baseline subtraction",
+            pairs=pairs,
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+            import_baseline_control="baseline",
+        )
+
+        def row(
+            round_index: int, reference_wall: int, candidate_wall: int
+        ) -> dict[str, object]:
+            return {
+                "round": round_index,
+                "reference": {
+                    "wall_nanos": reference_wall,
+                    "peak_rss_kb": None,
+                },
+                "candidate": {
+                    "wall_nanos": candidate_wall,
+                    "peak_rss_kb": None,
+                },
+                "signed_wall_delta_nanos":
+                    candidate_wall - reference_wall,
+            }
+
+        rows = {
+            "baseline": [row(1, 1_000, 1_000), row(2, 1_100, 1_100)],
+            "effect": [row(1, 1_400, 1_200), row(2, 1_600, 1_300)],
+        }
+        with mock.patch.object(sweep, "artifact_sizes", return_value={}):
+            summary = sweep.summarize(spec, rows)
+        effect = summary["effect"]
+        self.assertEqual(
+            effect["median_reference_workload_wall_nanos"], 450
+        )
+        self.assertEqual(
+            effect["median_candidate_workload_wall_nanos"], 200
+        )
+        self.assertEqual(
+            effect["reference_over_candidate_workload_ratio"], 2.25
+        )
+        self.assertEqual(
+            effect["import_baseline_robust_envelope_nanos"], 100
+        )
+        self.assertEqual(effect["workload_ratio_resolution"], "resolved")
+        self.assertAlmostEqual(
+            effect[
+                "maximum_raw_reference_over_zero_workload_candidate_ratio"
+            ],
+            1_500 / 1_050,
+        )
+
+    def test_import_baseline_noise_limits_workload_ratio(self) -> None:
+        baseline = sweep.ProbeModule("Probe.Baseline")
+        reference = sweep.ProbeModule("Probe.Reference")
+        candidate = sweep.ProbeModule("Probe.Candidate")
+        pairs = (
+            sweep.ProbePair(
+                "baseline", baseline, baseline, {}, null_control=True
+            ),
+            sweep.ProbePair("effect", reference, candidate, {}),
+        )
+        spec = sweep.SweepSpec(
+            description="baseline noise",
+            pairs=pairs,
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+            import_baseline_control="baseline",
+        )
+
+        def row(
+            round_index: int, reference_wall: int, candidate_wall: int
+        ) -> dict[str, object]:
+            return {
+                "round": round_index,
+                "reference": {
+                    "wall_nanos": reference_wall,
+                    "peak_rss_kb": None,
+                },
+                "candidate": {
+                    "wall_nanos": candidate_wall,
+                    "peak_rss_kb": None,
+                },
+                "signed_wall_delta_nanos":
+                    candidate_wall - reference_wall,
+            }
+
+        rows = {
+            "baseline": [row(1, 1_000, 1_000), row(2, 1_200, 1_200)],
+            "effect": [row(1, 1_150, 1_100), row(2, 1_350, 1_300)],
+        }
+        with mock.patch.object(sweep, "artifact_sizes", return_value={}):
+            summary = sweep.summarize(spec, rows)
+        effect = summary["effect"]
+        self.assertEqual(
+            effect["import_baseline_robust_envelope_nanos"], 200
+        )
+        self.assertEqual(
+            effect["median_reference_workload_wall_nanos"], 150
+        )
+        self.assertEqual(
+            effect["workload_ratio_resolution"], "baseline-limited"
+        )
+
+    def test_null_controls_are_interpolated_by_build_magnitude(self) -> None:
+        cheap = sweep.ProbeModule("Probe.Cheap")
+        expensive = sweep.ProbeModule("Probe.Expensive")
+        effect = sweep.ProbeModule("Probe.Effect")
+        pairs = (
+            sweep.ProbePair("cheap", cheap, cheap, {}, null_control=True),
+            sweep.ProbePair(
+                "expensive", expensive, expensive, {}, null_control=True
+            ),
+            sweep.ProbePair("effect", cheap, effect, {}),
+        )
+        spec = sweep.SweepSpec(
+            description="interpolation",
+            pairs=pairs,
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+
+        def rows(wall: int, deltas: list[int]) -> list[dict[str, object]]:
+            return [{
+                "reference": {"wall_nanos": wall, "peak_rss_kb": None},
+                "candidate": {
+                    "wall_nanos": wall + delta,
+                    "peak_rss_kb": None,
+                },
+                "signed_wall_delta_nanos": delta,
+            } for delta in deltas]
+
+        samples = {
+            "cheap": rows(100, [-10, 10]),
+            "expensive": rows(300, [-30, 30]),
+            "effect": rows(200, [0, 0]),
+        }
+        with mock.patch.object(sweep, "artifact_sizes", return_value={}):
+            summary = sweep.summarize(spec, samples)
+        self.assertEqual(
+            summary["effect"]["comparable_control"],
+            ["cheap", "expensive"],
+        )
+        self.assertEqual(
+            summary["effect"]["control_interpolation_weight"], 0.5
+        )
+        self.assertEqual(
+            summary["effect"]["comparable_null_envelope_nanos"], 40
+        )
 
     def test_shared_host_observations_reject_sibling_contention(self) -> None:
         def arm(sibling_busy: float) -> dict[str, object]:
@@ -1022,6 +1188,36 @@ class PairingTests(unittest.TestCase):
         )
         self.assertFalse(quality)
         self.assertEqual(issues, ["sibling contention"])
+
+    def test_excessive_robust_null_spread_invalidates_record(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        candidate = sweep.ProbeModule("Probe.Candidate")
+        pairs = (
+            sweep.ProbePair(
+                "null", module, module, {}, null_control=True
+            ),
+            sweep.ProbePair("effect", module, candidate, {}),
+        )
+        spec = sweep.SweepSpec(
+            description="null spread",
+            pairs=pairs,
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        results = {
+            "null": {
+                "build_magnitude_wall_nanos": 1_000,
+                "null_robust_spread_ratio": 0.11,
+            },
+            "effect": {"resolution": "resolved"},
+        }
+        quality, issues = sweep.validity_summary(
+            spec, sweep.parse_args("validity", []), results, None, []
+        )
+        self.assertFalse(quality)
+        self.assertRegex("; ".join(issues), "robust null IQR/build ratio")
 
 
 class HarnessValidationTests(unittest.TestCase):

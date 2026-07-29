@@ -40,21 +40,30 @@ structure Poly (n : Nat) (R : Type)
 variable {cmp : Mono n → Mono n → Ordering}
   {targetCmp : Mono k → Mono k → Ordering}
 
-/-- Merge two increasing canonical term lists, combining equal monomials. -/
+/-- Merge two increasing canonical term lists, combining equal monomials.
+
+The worker is structurally recursive on fuel rather than using a generated
+well-founded recursion theorem. The public entry point supplies exactly the
+sum of the input lengths, so the exhausted-fuel branch is unreachable for
+canonical calls. This keeps kernel reduction focused on the list merge itself.
+-/
 def merge [Zero R] [Add R] [DecidableEq R]
-    (cmp : Mono n → Mono n → Ordering := Mono.lex) :
-    List (Mono n × R) → List (Mono n × R) → List (Mono n × R)
-  | [], ys => ys
-  | xs, [] => xs
-  | x :: xs, y :: ys =>
-      match cmp x.1 y.1 with
-      | .lt => x :: merge cmp xs (y :: ys)
-      | .gt => y :: merge cmp (x :: xs) ys
-      | .eq =>
-          let coefficient := x.2 + y.2
-          if coefficient = 0 then merge cmp xs ys
-          else (x.1, coefficient) :: merge cmp xs ys
-termination_by xs ys => xs.length + ys.length
+    (cmp : Mono n → Mono n → Ordering := Mono.lex)
+    (left right : List (Mono n × R)) : List (Mono n × R) :=
+  go (left.length + right.length) left right
+where
+  go : Nat → List (Mono n × R) → List (Mono n × R) → List (Mono n × R)
+    | _, [], ys => ys
+    | _, xs, [] => xs
+    | 0, xs, ys => xs ++ ys
+    | fuel + 1, x :: xs, y :: ys =>
+        match cmp x.1 y.1 with
+        | .lt => x :: go fuel xs (y :: ys)
+        | .gt => y :: go fuel (x :: xs) ys
+        | .eq =>
+            let coefficient := x.2 + y.2
+            if coefficient = 0 then go fuel xs ys
+            else (x.1, coefficient) :: go fuel xs ys
 
 /-- Insert one term through the same merge path used by addition. -/
 def insert [Zero R] [Add R] [DecidableEq R]
@@ -63,12 +72,21 @@ def insert [Zero R] [Add R] [DecidableEq R]
     List (Mono n × R) :=
   if term.2 = 0 then terms else merge cmp terms [term]
 
-/-- Canonicalize an arbitrary term stream. Input construction is deliberately
-outside the timed representation operations in the fresh-module probes. -/
+/-- Canonicalize an arbitrary term stream by repeated insertion. -/
 def ofTerms [Zero R] [Add R] [DecidableEq R]
     (terms : List (Mono n × R))
     (cmp : Mono n → Mono n → Ordering := Mono.lex) : Poly n R cmp :=
   ⟨terms.foldl (insert cmp) []⟩
+
+/-- Wrap a term stream already sorted by `cmp` with distinct keys.
+
+The controlled proof and native benchmark corpora satisfy that precondition;
+zero coefficients are still discarded defensively in one linear pass. This
+constructor is intentionally not for arbitrary user input. -/
+def ofSortedTerms [Zero R] [DecidableEq R]
+    (terms : List (Mono n × R))
+    (cmp : Mono n → Mono n → Ordering := Mono.lex) : Poly n R cmp :=
+  ⟨terms.filter fun term => term.2 != 0⟩
 
 instance [Zero R] : Zero (Poly n R cmp) where
   zero := ⟨[]⟩
@@ -135,7 +153,12 @@ instance [Zero R] [Add R] [Mul R] [DecidableEq R] : Mul (Poly n R cmp) where
 def pow [Zero R] [One R] [Add R] [Mul R] [DecidableEq R]
     (p : Poly n R cmp) : Nat → Poly n R cmp
   | 0 => 1
-  | exponent + 1 => p * pow p exponent
+  | exponent + 1 =>
+      let q := pow p ((exponent + 1) / 2)
+      let q2 := q * q
+      if (exponent + 1) % 2 = 0 then q2 else q2 * p
+termination_by exponent => exponent
+decreasing_by omega
 
 /-- Constant polynomial. -/
 def C [Zero R] [DecidableEq R] (coefficient : R)
@@ -145,7 +168,7 @@ def C [Zero R] [DecidableEq R] (coefficient : R)
 /-- Variable polynomial. -/
 def X [Zero R] [One R] [DecidableEq R] (i : Fin n)
     (cmp : Mono n → Mono n → Ordering := Mono.lex) : Poly n R cmp :=
-  ⟨[(Mono.unit i, 1)]⟩
+  if (1 : R) = 0 then 0 else ⟨[(Mono.unit i, 1)]⟩
 
 /-- Rename variables, canonicalizing collisions. -/
 def rename [Zero R] [Add R] [DecidableEq R]
@@ -177,6 +200,34 @@ abbrev HexRat := MvPoly 4 Rat Mono.lex
 abbrev SortedInt := Sorted.Poly 4 Int Mono.lex
 abbrev SortedRat := Sorted.Poly 4 Rat Mono.lex
 
+namespace Grlex4
+
+abbrev HexInt := MvPoly 4 Int Mono.grlex
+abbrev SortedInt := Sorted.Poly 4 Int Mono.grlex
+
+end Grlex4
+
+namespace Grlex8
+
+abbrev HexInt := MvPoly 8 Int Mono.grlex
+abbrev SortedInt := Sorted.Poly 8 Int Mono.grlex
+
+end Grlex8
+
+namespace Grevlex2
+
+abbrev HexInt := MvPoly 2 Int Mono.grevlex
+abbrev SortedInt := Sorted.Poly 2 Int Mono.grevlex
+
+end Grevlex2
+
+namespace Grevlex4
+
+abbrev HexInt := MvPoly 4 Int Mono.grevlex
+abbrev SortedInt := Sorted.Poly 4 Int Mono.grevlex
+
+end Grevlex4
+
 namespace Grevlex8
 
 abbrev HexInt := MvPoly 8 Int Mono.grevlex
@@ -191,9 +242,17 @@ source duplicate-free; the remaining exponents exercise genuinely
 multivariate comparisons in a pseudo-random-looking but reproducible order. -/
 def scatteredMono8 (i : Nat) : Mono 8 :=
   Hex.Vector.ofFn' fun j =>
-    if j.val = 0 then i
+    if j.val = 0 then 256 * i
     else ((i + 3 * j.val + 1) * (i + 5 * j.val + 7)) %
       (11 + 2 * j.val)
+
+/-- Embed the shared four-variable patterned support in arity eight. -/
+def patternedMono8 (size i salt : Nat) : Mono 8 :=
+  Hex.Vector.ofFn' fun j =>
+    if h : j.val < 4 then
+      let j4 : Fin 4 := ⟨j.val, h⟩
+      (patternedMono size i salt)[j4]
+    else 0
 
 /-- Shared integer axis-support input in the production representation. -/
 def hexAxisInt (size : Nat) (axis : Fin 4) (salt : Nat) : HexInt :=
@@ -205,11 +264,11 @@ def hexAxisRat (size : Nat) (axis : Fin 4) (salt : Nat) : HexRat :=
 
 /-- The same integer axis-support input in the sorted comparator. -/
 def sortedAxisInt (size : Nat) (axis : Fin 4) (salt : Nat) : SortedInt :=
-  Sorted.ofTerms (intTerms size salt (axisMono axis))
+  Sorted.ofSortedTerms (intTerms size salt (axisMono axis))
 
 /-- The same rational axis-support input in the sorted comparator. -/
 def sortedAxisRat (size : Nat) (axis : Fin 4) (salt : Nat) : SortedRat :=
-  Sorted.ofTerms (fracTerms size salt (axisMono axis))
+  Sorted.ofSortedTerms (fracTerms size salt (axisMono axis))
 
 /-- A lexicographic addition workload covering separated and interleaved
 supports in the production representation. -/
@@ -229,13 +288,13 @@ def hexAdditionLex (size : Nat) : Prop :=
 /-- The matching lexicographic addition workload in the sorted comparator. -/
 def sortedAdditionLex (size : Nat) : Prop :=
   let separatedLeft : SortedInt :=
-    Sorted.ofTerms (intTerms size 73 fun i => axisMono 0 i)
+    Sorted.ofSortedTerms (intTerms size 73 fun i => axisMono 0 i)
   let separatedRight : SortedInt :=
-    Sorted.ofTerms (intTerms size 79 fun i => axisMono 0 (size + i))
+    Sorted.ofSortedTerms (intTerms size 79 fun i => axisMono 0 (size + i))
   let interleavedLeft : SortedInt :=
-    Sorted.ofTerms (intTerms size 83 fun i => axisMono 1 (2 * i))
+    Sorted.ofSortedTerms (intTerms size 83 fun i => axisMono 1 (2 * i))
   let interleavedRight : SortedInt :=
-    Sorted.ofTerms (intTerms size 89 fun i => axisMono 1 (2 * i + 1))
+    Sorted.ofSortedTerms (intTerms size 89 fun i => axisMono 1 (2 * i + 1))
   separatedLeft + separatedRight = separatedRight + separatedLeft ∧
     interleavedLeft + interleavedRight =
       interleavedRight + interleavedLeft
@@ -253,25 +312,31 @@ def hexAdditionGrevlex (size : Nat) : Prop :=
 comparator. -/
 def sortedAdditionGrevlex (size : Nat) : Prop :=
   let p : Grevlex8.SortedInt :=
-    Sorted.ofTerms (intTerms size 97 scatteredMono8) Mono.grevlex
+    Sorted.ofSortedTerms (intTerms size 97 scatteredMono8) Mono.grevlex
   let q : Grevlex8.SortedInt :=
-    Sorted.ofTerms
+    Sorted.ofSortedTerms
       (intTerms size 101 fun i => scatteredMono8 (size + i)) Mono.grevlex
   p + q = q + p
 
 /-- Low-collision genuinely multivariate multiplication in the production
 representation. -/
 def hexMulSparse (size : Nat) : Prop :=
-  let p : HexInt := ofTerms (intTerms size 103 (patternedMono size · 3))
-  let q : HexInt := ofTerms (intTerms size 107 (patternedMono size · 5))
+  let p : Grlex8.HexInt :=
+    ofTerms (intTerms size 103 (patternedMono8 size · 3))
+  let q : Grlex8.HexInt :=
+    ofTerms (intTerms size 107 (patternedMono8 size · 5))
   p * q = q * p
 
 /-- The matching low-collision multiplication in the sorted comparator. -/
 def sortedMulSparse (size : Nat) : Prop :=
-  let p : SortedInt :=
-    Sorted.ofTerms (intTerms size 103 (patternedMono size · 3))
-  let q : SortedInt :=
-    Sorted.ofTerms (intTerms size 107 (patternedMono size · 5))
+  let p : Grlex8.SortedInt :=
+    Sorted.ofSortedTerms
+      (intTerms size 103 (patternedMono8 size · 3))
+      Mono.grlex
+  let q : Grlex8.SortedInt :=
+    Sorted.ofSortedTerms
+      (intTerms size 107 (patternedMono8 size · 5))
+      Mono.grlex
   p * q = q * p
 
 /-- High-collision rational multiplication at arity eight under grevlex in the
@@ -287,10 +352,10 @@ def hexMulCollide (size : Nat) : Prop :=
 comparator. -/
 def sortedMulCollide (size : Nat) : Prop :=
   let p : Grevlex8.SortedRat :=
-    Sorted.ofTerms
+    Sorted.ofSortedTerms
       (fracTerms size 109 (axisMono (0 : Fin 8))) Mono.grevlex
   let q : Grevlex8.SortedRat :=
-    Sorted.ofTerms
+    Sorted.ofSortedTerms
       (fracTerms size 113 (axisMono (0 : Fin 8))) Mono.grevlex
   p * q = q * p
 
@@ -321,9 +386,12 @@ def sortedCancellationRat (size : Nat) : Prop :=
 /-- Three-polynomial square expansion used as a representative SOS
 certificate identity in the production representation. -/
 def hexSos (size : Nat) : Prop :=
-  let p := hexAxisInt size 0 59
-  let q := hexAxisInt size 1 61
-  let r := hexAxisInt size 2 67
+  let p : Grevlex4.HexInt :=
+    ofTerms (intTerms size 59 (patternedMono size · 3))
+  let q : Grevlex4.HexInt :=
+    ofTerms (intTerms size 61 (patternedMono size · 7))
+  let r : Grevlex4.HexInt :=
+    ofTerms (intTerms size 67 (patternedMono size · 11))
   (p + q + r) * (p + q + r) =
     p * p + p * q + p * r +
     (q * p + q * q + q * r) +
@@ -331,33 +399,44 @@ def hexSos (size : Nat) : Prop :=
 
 /-- The same representative SOS identity in the sorted comparator. -/
 def sortedSos (size : Nat) : Prop :=
-  let p := sortedAxisInt size 0 59
-  let q := sortedAxisInt size 1 61
-  let r := sortedAxisInt size 2 67
+  let p : Grevlex4.SortedInt :=
+    Sorted.ofSortedTerms
+      (intTerms size 59 (patternedMono size · 3)) Mono.grevlex
+  let q : Grevlex4.SortedInt :=
+    Sorted.ofSortedTerms
+      (intTerms size 61 (patternedMono size · 7)) Mono.grevlex
+  let r : Grevlex4.SortedInt :=
+    Sorted.ofSortedTerms
+      (intTerms size 67 (patternedMono size · 11)) Mono.grevlex
   (p + q + r) * (p + q + r) =
     p * p + p * q + p * r +
     (q * p + q * q + q * r) +
     (r * p + r * q + r * r)
 
 /-- Collision-heavy four-variable input in the production representation. -/
-def hexStructuralInput (size : Nat) : HexInt :=
+def hexStructuralInput (size : Nat) : Grlex4.HexInt :=
   ofTerms (intTerms size 53 (collisionMono size))
 
 /-- The same collision-heavy input in the sorted comparator. -/
-def sortedStructuralInput (size : Nat) : SortedInt :=
-  Sorted.ofTerms (intTerms size 53 (collisionMono size))
+def sortedStructuralInput (size : Nat) : Grlex4.SortedInt :=
+  Sorted.ofSortedTerms
+    (intTerms size 53 (collisionMono size)) Mono.grlex
 
 /-- Renaming to variables agrees with substitution by those variables in the
 production representation. -/
 def hexStructural (size : Nat) : Prop :=
   let f : Fin 4 → Fin 2 := fun i => if i.val % 2 = 0 then 0 else 1
-  rename Mono.lex f (hexStructuralInput size) =
-    subst (targetCmp := Mono.lex) (fun i => X (f i)) (hexStructuralInput size)
+  rename Mono.grevlex f (hexStructuralInput size) =
+    subst (targetCmp := Mono.grevlex)
+      (fun i => X (cmp := Mono.grevlex) (f i))
+      (hexStructuralInput size)
 
 /-- The matching collision identity in the sorted comparator. -/
 def sortedStructural (size : Nat) : Prop :=
   let f : Fin 4 → Fin 2 := fun i => if i.val % 2 = 0 then 0 else 1
-  Sorted.rename f (sortedStructuralInput size) =
-    Sorted.subst (fun i => Sorted.X (f i)) (sortedStructuralInput size)
+  Sorted.rename f (sortedStructuralInput size) Mono.grevlex =
+    Sorted.subst
+      (fun i => Sorted.X (cmp := Mono.grevlex) (f i))
+      (sortedStructuralInput size)
 
 end HexMvPolyMathlib.ProofProbe

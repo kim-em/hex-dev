@@ -64,15 +64,6 @@ def prepare_sos(destination: Path, hex_root: Path, toolchain: str) -> None:
         "import CompPoly.Multivariate.Operations",
         "import SOS.HexMvPolyCompat",
     )
-    verifier = destination / "SOS" / "Verifier.lean"
-    text = verifier.read_text(encoding="utf-8")
-    start_marker = "/-! ### CompPoly aeval helpers"
-    end_marker = "/-! ### Reflection:"
-    start = text.find(start_marker)
-    end = text.find(end_marker)
-    if start < 0 or end < 0 or start >= end:
-        raise RuntimeError("pinned SOS verifier does not match expected input")
-    verifier.write_text(text[:start] + text[end:], encoding="utf-8")
 
 
 def prepare_comp_poly(
@@ -85,6 +76,24 @@ def prepare_comp_poly(
         f'require Hex from "{hex_root.as_posix()}"',
     )
     (destination / "lean-toolchain").write_text(toolchain, encoding="utf-8")
+    # CompPoly's pinned `ofPoly_zero` proof unfolds support internals that
+    # changed between its v4.32.0 toolchain and Hex's v4.32.0-rc1 toolchain.
+    # Reprove the same statement through CompPoly's public ring equivalence.
+    replace_exact(
+        destination / "CompPoly" / "Bivariate" / "ToPoly.lean",
+        "lemma ofPoly_zero {R : Type*} [BEq R] [LawfulBEq R] "
+        "[Nontrivial R] [Semiring R] [DecidableEq R] :\n"
+        "    ofPoly (0 : R[X][Y]) = 0 := by\n"
+        "      unfold CBivariate.ofPoly\n"
+        "      simp +decide [ Polynomial.support ]",
+        "lemma ofPoly_zero {R : Type*} [BEq R] [LawfulBEq R] "
+        "[Nontrivial R] [Semiring R] [DecidableEq R] :\n"
+        "    ofPoly (0 : R[X][Y]) = 0 := by\n"
+        "  apply (ringEquiv (R := R)).injective\n"
+        "  change toPoly (ofPoly (0 : R[X][Y])) = "
+        "toPoly (0 : CBivariate R)\n"
+        "  rw [ofPoly_toPoly, toPoly_zero]",
+    )
     shutil.copyfile(
         ADAPTERS / "CompPolyBivariateCMvEquiv.lean",
         destination / "CompPoly" / "Bivariate" / "CMvEquiv.lean",
@@ -92,15 +101,6 @@ def prepare_comp_poly(
     shutil.copyfile(
         ADAPTERS / "CompPolyUnivariateCMvEquiv.lean",
         destination / "CompPoly" / "Univariate" / "CMvEquiv.lean",
-    )
-    replace_exact(
-        destination / "CompPoly" / "Bivariate" / "ToPoly.lean",
-        "    ofPoly (0 : R[X][Y]) = 0 := by\n"
-        "      unfold CBivariate.ofPoly\n"
-        "      simp +decide [ Polynomial.support ]",
-        "    ofPoly (0 : R[X][Y]) = 0 := by\n"
-        "  simpa [ringEquiv] using\n"
-        "    (map_zero (ringEquiv (R := R)).symm)",
     )
 
 
@@ -153,9 +153,9 @@ def main() -> int:
             [
                 "lake",
                 "build",
-                "SOS.Certificate",
-                "SOS.EqElim",
-                "SOS.Symmetry",
+                "+SOS.Certificate:olean",
+                "+SOS.EqElim:olean",
+                "+SOS.Symmetry:olean",
                 "+SOS.Verifier:olean",
             ],
             sos,

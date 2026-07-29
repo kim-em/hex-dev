@@ -133,6 +133,7 @@ setup_benchmark runSparseAddition n => (n)
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- CompPoly's nested fold computes `{term} + growingMap`, so every inner step
@@ -145,6 +146,7 @@ setup_benchmark runSparseMultiplication n => (n * n * n * Nat.log2 (n + 1))
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- The identity performs three CompPoly nested-fold products. Each inherits the
@@ -156,6 +158,7 @@ setup_benchmark runCancellationArithmetic n => (n * n * n * Nat.log2 (n + 1))
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- Collision-heavy rename visits `n` source terms and merges them into a
@@ -167,6 +170,7 @@ setup_benchmark runStructuralCollisions n => (n)
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- Three sparse squares use CompPoly's nested-fold multiplication and therefore
@@ -178,6 +182,7 @@ setup_benchmark runSumOfSquaresArithmetic n => (n * n * n * Nat.log2 (n + 1))
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 end CompPoly.MvPolyBench

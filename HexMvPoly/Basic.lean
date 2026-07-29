@@ -221,7 +221,8 @@ instance [DecidableEq R] : DecidableEq (MvPoly n R cmp) := fun p q =>
       isFalse fun hpq => hl (congrArg termsList hpq)
 
 /-- A single term, dropping it when its coefficient is zero. -/
-def monomial [DecidableEq R] (m : Mono n) (c : R) : MvPoly n R cmp :=
+def monomial [BEq R] [LawfulBEq R] (m : Mono n) (c : R) : MvPoly n R cmp :=
+  letI : DecidableEq R := instDecidableEqOfLawfulBEq
   if hc : c = 0 then
     0
   else
@@ -234,27 +235,28 @@ def monomial [DecidableEq R] (m : Mono n) (c : R) : MvPoly n R cmp :=
         · simp }
 
 /-- A constant polynomial. -/
-def C [DecidableEq R] (c : R) : MvPoly n R cmp :=
+def C [BEq R] [LawfulBEq R] (c : R) : MvPoly n R cmp :=
   monomial Mono.zero c
 
 /-- The variable `xᵢ`. -/
-def X [One R] [DecidableEq R] (i : Fin n) : MvPoly n R cmp :=
+def X [One R] [BEq R] [LawfulBEq R] (i : Fin n) : MvPoly n R cmp :=
   monomial (Mono.unit i) 1
 
 /-- Add `c` to the coefficient at `m`, deleting the term if the new
 coefficient is zero. -/
-def addMonomial [Add R] [DecidableEq R]
-    (p : MvPoly n R cmp) (m : Mono n) (c : R) : MvPoly n R cmp where
-  termsInternal := p.termsInternal.alter m fun old =>
-    let c' := old.getD 0 + c
-    if c' = 0 then none else some c'
-  nonzeroInternal := by
-    intro k
-    rw [Std.ExtTreeMap.getElem?_alter]
-    split
-    · simp only
-      split <;> simp_all
-    · exact p.nonzeroInternal k
+def addMonomial [Add R] [BEq R] [LawfulBEq R]
+    (p : MvPoly n R cmp) (m : Mono n) (c : R) : MvPoly n R cmp :=
+  letI : DecidableEq R := instDecidableEqOfLawfulBEq
+  { termsInternal := p.termsInternal.alter m fun old =>
+      let c' := old.getD 0 + c
+      if c' = 0 then none else some c'
+    nonzeroInternal := by
+      intro k
+      rw [Std.ExtTreeMap.getElem?_alter]
+      split
+      · simp only
+        split <;> simp_all
+      · exact p.nonzeroInternal k }
 
 /-- Map stored coefficients without changing the support. The proof
 argument records that nonzero values remain nonzero. -/
@@ -277,7 +279,7 @@ end Representation
 
 /-- Build a polynomial by summing duplicate monomials and dropping all
 zero coefficients. -/
-def ofTerms [Lean.Grind.Semiring R] [DecidableEq R]
+def ofTerms [Lean.Grind.Semiring R] [BEq R] [LawfulBEq R]
     (ts : List (Mono n × R)) : MvPoly n R cmp :=
   ts.foldl (fun p t => addMonomial p t.1 t.2) 0
 
@@ -286,7 +288,8 @@ def ofTerms [Lean.Grind.Semiring R] [DecidableEq R]
   change ((∅ : Std.ExtTreeMap (Mono n) R cmp)[m]?).getD 0 = 0
   simp
 
-theorem coeff_monomial [Zero R] [DecidableEq R] (m m' : Mono n) (c : R) :
+theorem coeff_monomial [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R]
+    (m m' : Mono n) (c : R) :
     coeff m (monomial m' c : MvPoly n R cmp) =
       if m = m' then c else 0 := by
   by_cases hc : c = 0
@@ -302,17 +305,20 @@ theorem coeff_monomial [Zero R] [DecidableEq R] (m m' : Mono n) (c : R) :
     · have hm' : m' ≠ m := fun h => hm h.symm
       simp [hm, hm']
 
-theorem coeff_C [Zero R] [DecidableEq R] (m : Mono n) (c : R) :
+theorem coeff_C [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R]
+    (m : Mono n) (c : R) :
     coeff m (C c : MvPoly n R cmp) =
       if m = Mono.zero then c else 0 := by
   simp [C, coeff_monomial]
 
-theorem coeff_X [Zero R] [One R] [DecidableEq R] (m : Mono n) (i : Fin n) :
+theorem coeff_X [Zero R] [One R] [BEq R] [LawfulBEq R] [DecidableEq R]
+    (m : Mono n) (i : Fin n) :
     coeff m (X i : MvPoly n R cmp) =
       if m = Mono.unit i then 1 else 0 := by
   simp [X, coeff_monomial]
 
-theorem coeff_addMonomial [Zero R] [Add R] [DecidableEq R]
+theorem coeff_addMonomial [Zero R] [Add R] [BEq R] [LawfulBEq R]
+    [DecidableEq R]
     (p : MvPoly n R cmp) (m k : Mono n) (c : R) :
     coeff k (addMonomial p m c) =
       if k = m then coeff k p + c else coeff k p := by
@@ -325,7 +331,8 @@ theorem coeff_addMonomial [Zero R] [Add R] [DecidableEq R]
   · have hmk : m ≠ k := fun h => hkm h.symm
     simp [hkm, hmk]
 
-theorem coeff_ofTerms [Lean.Grind.Semiring R] [DecidableEq R]
+theorem coeff_ofTerms [Lean.Grind.Semiring R] [BEq R] [LawfulBEq R]
+    [DecidableEq R]
     (m : Mono n) (ts : List (Mono n × R)) :
     coeff m (ofTerms ts : MvPoly n R cmp) =
       (ts.filter (fun t => t.1 = m)).foldl (fun acc t => acc + t.2) 0 := by
@@ -349,7 +356,8 @@ theorem coeff_ofTerms [Lean.Grind.Semiring R] [DecidableEq R]
 
 /-- Filtering the canonical term list at one monomial recovers its
 coefficient. -/
-theorem coeff_terms [Lean.Grind.Semiring R] [DecidableEq R]
+theorem coeff_terms [Lean.Grind.Semiring R] [BEq R] [LawfulBEq R]
+    [DecidableEq R]
     (m : Mono n) (p : MvPoly n R cmp) :
     (p.termsList.filter (fun t => t.1 = m)).foldl
         (fun acc t => acc + t.2) 0 =

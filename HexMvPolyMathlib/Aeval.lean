@@ -19,6 +19,7 @@ Mathlib-free evaluator.
 namespace HexMvPolyMathlib
 
 open scoped BigOperators
+open scoped HexMvPolyMathlib
 
 open Hex
 open Hex.MvPoly
@@ -28,6 +29,7 @@ universe u v
 variable {n : Nat} {R : Type u} {S : Type v}
   {cmp : Mono n → Mono n → Ordering}
   [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
+  [BEq R] [LawfulBEq R]
 
 noncomputable section
 
@@ -54,6 +56,69 @@ theorem monoProd_eq_prod [CommSemiring S] (x : Fin n → S) (m : Mono n) :
     ← List.prod_toFinset _ (List.nodup_finRange n),
     List.toFinset_finRange]
   simp
+
+/-- Evaluation transported through the Mathlib equivalence.
+
+This auxiliary homomorphism supplies the laws for the public direct
+evaluator. -/
+def eval₂MathlibHom [CommSemiring R] [DecidableEq R]
+    [CommSemiring S] (f : R →+* S) (x : Fin n → S) :
+    MvPoly n R cmp →+* S :=
+  (MvPolynomial.eval₂Hom f x).comp (equiv (cmp := cmp)).toRingHom
+
+theorem eval₂MathlibHom_apply [CommSemiring R] [DecidableEq R]
+    [CommSemiring S] (f : R →+* S) (x : Fin n → S)
+    (p : MvPoly n R cmp) :
+    eval₂MathlibHom f x p = eval₂ f x p := by
+  rw [eval₂MathlibHom, RingHom.comp_apply]
+  change MvPolynomial.eval₂Hom f x (equiv p) = eval₂ f x p
+  rw [equiv_apply]
+  rw [toMvPolynomial_eq_sum]
+  rw [map_sum (MvPolynomial.eval₂Hom f x), eval₂_eq]
+  have eval_monomial (m : Mono n) (c : R) :
+      (MvPolynomial.eval₂Hom f x)
+          (MvPolynomial.monomial (monoEquiv m) c) =
+        f c * Mono.prod x m := by
+    change
+      MvPolynomial.eval₂ f x
+          (MvPolynomial.monomial (monoEquiv m) c) =
+        f c * Mono.prod x m
+    rw [MvPolynomial.eval₂_monomial, Finsupp.prod_pow,
+      ← monoProd_eq_prod]
+  simp_rw [eval_monomial]
+  rw [List.sum_toFinset _ (monomials_nodup p),
+    List.sum_eq_foldl, monomials, List.foldl_map, List.foldl_map]
+  apply List.foldl_congr
+  intro acc term hterm
+  rw [coeff_eq_of_mem_terms p hterm]
+
+/-- Evaluation along an arbitrary coefficient ring homomorphism, packaged as
+a ring homomorphism on executable polynomials. Its function field is
+definitionally the direct Mathlib-free evaluator. -/
+@[expose] def eval₂Hom [CommSemiring R] [DecidableEq R]
+    [CommSemiring S] (f : R →+* S) (x : Fin n → S) :
+    MvPoly n R cmp →+* S where
+  toFun := eval₂ f x
+  map_zero' := by
+    rw [← eval₂MathlibHom_apply f x]
+    exact map_zero (eval₂MathlibHom f x)
+  map_one' := by
+    rw [← eval₂MathlibHom_apply f x]
+    exact map_one (eval₂MathlibHom f x)
+  map_add' p q := by
+    rw [← eval₂MathlibHom_apply f x, ← eval₂MathlibHom_apply f x,
+      ← eval₂MathlibHom_apply f x]
+    exact map_add (eval₂MathlibHom f x) p q
+  map_mul' p q := by
+    rw [← eval₂MathlibHom_apply f x, ← eval₂MathlibHom_apply f x,
+      ← eval₂MathlibHom_apply f x]
+    exact map_mul (eval₂MathlibHom f x) p q
+
+/-- The packaged ring homomorphism is the Mathlib-free direct evaluator. -/
+@[simp] theorem eval₂Hom_apply [CommSemiring R] [DecidableEq R]
+    [CommSemiring S] (f : R →+* S) (x : Fin n → S)
+    (p : MvPoly n R cmp) :
+    eval₂Hom f x p = eval₂ f x p := rfl
 
 /-- Algebra-hom evaluation is exactly the Mathlib-free direct evaluator with
 the coefficient algebra map. -/
