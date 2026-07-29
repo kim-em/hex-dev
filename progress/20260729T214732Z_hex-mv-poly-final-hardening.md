@@ -24,6 +24,9 @@
 - Passed 66 sweep-harness tests and the combined `HexMvPolyTests`,
   `HexMvPolyMathlib.Correspondence`, and `HexMvPolyMathlibProofProbe` build
   (1,562 jobs).
+- Exercised the v5 validity gate on the enlarged corpus, found that SOS-8
+  exceeded the allowed 2× distance from the medium null control, and added a
+  same-module SOS-8 null pair before accepting any final evidence.
 
 ## Current frontier
 

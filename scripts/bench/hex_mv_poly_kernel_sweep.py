@@ -78,6 +78,17 @@ SPEC = SweepSpec(
             },
             null_control=True,
         ),
+        ProbePair(
+            "sos-8-null",
+            module("HexSos8"),
+            module("HexSos8"),
+            {
+                "family": "fresh-build-noise",
+                "magnitude": "sos-8",
+                "interpretation": "calibration-only",
+            },
+            null_control=True,
+        ),
         comparison(
             "addition-inputs-64",
             "HexAdditionInputs64",
