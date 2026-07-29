@@ -175,7 +175,8 @@ private theorem invCenter_eq (a : DyadicComplexBall) :
   exact HexRootsMathlib.GaussDyadic.toComplex_add
     (a.re, a.im) (b.re, b.im)
 
-@[simp] private theorem realRadius_add (a b : DyadicComplexBall) :
+/-- Ball addition adds the represented radii. -/
+@[simp] theorem realRadius_add (a b : DyadicComplexBall) :
     (a.add b).realRadius = a.realRadius + b.realRadius := by
   exact HexRootsMathlib.Dyadic.toReal_add a.radius b.radius
 
@@ -335,7 +336,9 @@ private theorem realRadius_toBall_nonneg (s : DyadicSquare) :
     0 ≤ s.toBall.realRadius := by
   simpa [DyadicSquare.toBall, realRadius] using (radiusHi_pos s).le
 
-private theorem realRadius_toBall_le {s : DyadicSquare} {prec : Int}
+/-- A square refined to `prec` has a dyadic-ball radius bounded by two ulps at
+that precision. -/
+theorem realRadius_toBall_le {s : DyadicSquare} {prec : Int}
     (hprec : prec ≤ s.prec) :
     s.toBall.realRadius ≤ 2 * (2 : ℝ) ^ (-prec) := by
   have hpow : (2 : ℝ) ^ (-s.prec) ≤ (2 : ℝ) ^ (-prec) :=
@@ -794,6 +797,34 @@ theorem add_mem {a b : DyadicComplexBall} {z w : ℂ}
     _ ≤ ‖z - a.center‖ + ‖w - b.center‖ := norm_add_le _ _
     _ = dist z a.center + dist w b.center := by rw [dist_eq_norm, dist_eq_norm]
     _ ≤ a.realRadius + b.realRadius := add_le_add hz hw
+
+/-- Two certified balls containing the same point meet. -/
+theorem meets_of_mem {a b : DyadicComplexBall} {z : ℂ}
+    (ha : z ∈ a.set) (hb : z ∈ b.set) : a.meets b = true := by
+  have ha' : dist a.center z ≤ a.realRadius := by
+    rw [dist_comm]
+    exact Metric.mem_closedBall.mp ha
+  have hb' : dist z b.center ≤ b.realRadius :=
+    Metric.mem_closedBall.mp hb
+  have hra : 0 ≤ a.realRadius := dist_nonneg.trans ha'
+  have hrb : 0 ≤ b.realRadius := dist_nonneg.trans hb'
+  have hdist : dist a.center b.center ≤ a.realRadius + b.realRadius :=
+    (dist_triangle a.center z b.center).trans (add_le_add ha' hb')
+  have hsq : dist a.center b.center ^ 2 ≤
+      (a.realRadius + b.realRadius) ^ 2 :=
+    (sq_le_sq₀ dist_nonneg (add_nonneg hra hrb)).mpr hdist
+  have hreal :
+      HexRootsMathlib.Dyadic.toReal
+          (GaussDyadic.distSq (a.re, a.im) (b.re, b.im)) ≤
+        HexRootsMathlib.Dyadic.toReal
+          ((a.radius + b.radius) * (a.radius + b.radius)) := by
+    simpa only [HexRootsMathlib.Dyadic.toReal_mul,
+      HexRootsMathlib.Dyadic.toReal_add,
+      HexRootsMathlib.DyadicSquare.toReal_distSq,
+      DyadicComplexBall.center, DyadicComplexBall.realRadius,
+      pow_two] using hsq
+  have hdy := HexRootsMathlib.Dyadic.toReal_le_toReal_iff.mp hreal
+  simpa [DyadicComplexBall.meets] using decide_eq_true hdy
 
 /-- A rational coefficient lies in its executable rounded enclosure. -/
 theorem ofRat_mem (q : Rat) (prec : Int) :

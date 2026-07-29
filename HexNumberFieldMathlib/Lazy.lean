@@ -23,6 +23,8 @@ namespace Hex
 
 noncomputable section
 
+section
+
 @[implicit_reducible] local instance : CommRing ZPoly :=
   let s := (inferInstance : Lean.Grind.CommRing ZPoly)
   { s with
@@ -62,6 +64,35 @@ private theorem ZPoly.map_liftOuter (p : ZPoly) (t : ℂ) :
     (p.coeff n : ℂ)
   rw [HexPolyMathlib.toPolynomial_C, Polynomial.eval₂_C]
   rfl
+
+private theorem ZPoly.natDegree_liftOuter (p : ZPoly) :
+    (HexPolyMathlib.toPolynomial p.liftOuter).natDegree =
+      p.degree?.getD 0 := by
+  rw [HexPolyMathlib.natDegree_toPolynomial]
+  by_cases hp : p.size = 0
+  · have hlift : p.liftOuter.size = 0 := by
+      apply Nat.eq_zero_of_le_zero
+      unfold ZPoly.liftOuter
+      exact (DensePoly.size_ofCoeffs_le _).trans (by simp [hp])
+    rw [(DensePoly.degree?_eq_none_iff p.liftOuter).2 hlift,
+      (DensePoly.degree?_eq_none_iff p).2 hp]
+  · have hppos : 0 < p.size := Nat.pos_of_ne_zero hp
+    have hliftLe : p.liftOuter.size ≤ p.size := by
+      unfold ZPoly.liftOuter
+      exact (DensePoly.size_ofCoeffs_le _).trans (by simp)
+    have hcoeff : p.liftOuter.coeff (p.size - 1) ≠ 0 := by
+      rw [ZPoly.coeff_liftOuter]
+      intro hzero
+      have hconst := congrArg (fun q : ZPoly => q.coeff 0) hzero
+      simp at hconst
+      exact DensePoly.coeff_last_ne_zero_of_pos_size p hppos hconst
+    have hliftGe : p.size ≤ p.liftOuter.size := by
+      by_contra h
+      exact hcoeff (DensePoly.coeff_eq_zero_of_size_le _ (by omega))
+    have hsize : p.liftOuter.size = p.size := Nat.le_antisymm hliftLe hliftGe
+    rw [DensePoly.degree?_eq_some_of_pos_size p hppos,
+      DensePoly.degree?_eq_some_of_pos_size p.liftOuter (by omega),
+      Option.getD_some, Option.getD_some, hsize]
 
 private theorem evalZPoly_X (t : ℂ) : evalZPoly t ZPoly.X = t := by
   simp [evalZPoly, ZPoly.X, HexPolyMathlib.equiv_apply,
@@ -139,6 +170,102 @@ private theorem resultant_eval_eq_zero_of_common_root
   rw [hcorrespondence]
   exact hresultant
 
+private theorem ZPoly.addEliminant_ne_zero (a b : AlgebraicRoot) :
+    ZPoly.addEliminant a.p b.p ≠ 0 := by
+  let P := HexRootsMathlib.toPolyℂ a.p
+  let Q := HexRootsMathlib.toPolyℂ b.p
+  have haPoly : a.p ≠ 0 :=
+    HexRootsMathlib.RefinedIsolation.poly_ne_zero a.rep
+  have hbPoly : b.p ≠ 0 :=
+    HexRootsMathlib.RefinedIsolation.poly_ne_zero b.rep
+  have hPne : P ≠ 0 := by
+    exact HexRootsMathlib.toPolyℂ_ne_zero a.p fun hsize =>
+      haPoly ((DensePoly.size_eq_zero_iff a.p).mp hsize)
+  have hQne : Q ≠ 0 := by
+    exact HexRootsMathlib.toPolyℂ_ne_zero b.p fun hsize =>
+      hbPoly ((DensePoly.size_eq_zero_iff b.p).mp hsize)
+  let sums : Set ℂ :=
+    (fun xy : ℂ × ℂ => xy.1 + xy.2) ''
+      (P.rootSet ℂ ×ˢ Q.rootSet ℂ)
+  have hsums : sums.Finite := by
+    exact ((Polynomial.rootSet_finite P ℂ).prod
+      (Polynomial.rootSet_finite Q ℂ)).image _
+  obtain ⟨t, ht⟩ := hsums.exists_notMem
+  let G := Q.comp (Polynomial.C t - Polynomial.X)
+  have hcoprime : IsCoprime P G := by
+    apply (Polynomial.isCoprime_iff_aeval_ne_zero_of_isAlgClosed
+      (k := ℂ) ℂ P G).2
+    intro y
+    by_contra hboth
+    push Not at hboth
+    apply ht
+    refine ⟨(y, t - y), ⟨?_, ?_⟩, by simp⟩
+    · exact (Polynomial.mem_rootSet_of_ne hPne).2 (by
+        simpa [Polynomial.aeval_def] using hboth.1)
+    · apply (Polynomial.mem_rootSet_of_ne hQne).2
+      simpa [G, Polynomial.aeval_def, Polynomial.eval_comp] using hboth.2
+  have hresultant : Polynomial.resultant P G ≠ 0 :=
+    Polynomial.resultant_ne_zero P G hcoprime
+  let y : DensePoly ZPoly := DensePoly.monomial 1 1
+  let x : DensePoly ZPoly := DensePoly.C ZPoly.X
+  let f : DensePoly ZPoly := a.p.liftOuter
+  let g : DensePoly ZPoly := DensePoly.compose b.p.liftOuter (x - y)
+  have hfmap :
+      (HexPolyMathlib.toPolynomial f).map (evalZPoly t) = P := by
+    simpa [f, P] using ZPoly.map_liftOuter a.p t
+  have hgmap :
+      (HexPolyMathlib.toPolynomial g).map (evalZPoly t) = G := by
+    dsimp only [g, G, x, y]
+    rw [HexPolyMathlib.toPolynomial_compose, Polynomial.map_comp,
+      ZPoly.map_liftOuter]
+    simp [Q, HexPolyMathlib.toPolynomial_monomial,
+      Polynomial.monomial_one_one_eq_X, evalZPoly_X]
+  have hfnat :
+      (HexPolyMathlib.toPolynomial f).natDegree = P.natDegree := by
+    calc
+      (HexPolyMathlib.toPolynomial f).natDegree =
+          a.p.degree?.getD 0 := by
+        simpa [f] using ZPoly.natDegree_liftOuter a.p
+      _ = P.natDegree := by
+        simp [P]
+  have hinnerNat :
+      (HexPolyMathlib.toPolynomial (x - y)).natDegree = 1 := by
+    dsimp only [x, y]
+    rw [HexPolyMathlib.toPolynomial_sub,
+      HexPolyMathlib.toPolynomial_C,
+      HexPolyMathlib.toPolynomial_monomial,
+      Polynomial.monomial_one_one_eq_X,
+      show Polynomial.C ZPoly.X - Polynomial.X =
+          -(Polynomial.X - Polynomial.C ZPoly.X) by ring,
+      Polynomial.natDegree_neg, Polynomial.natDegree_X_sub_C]
+  have hcomplexInnerNat :
+      (Polynomial.C t - Polynomial.X).natDegree = 1 := by
+    rw [show Polynomial.C t - Polynomial.X =
+        -(Polynomial.X - Polynomial.C t) by ring,
+      Polynomial.natDegree_neg, Polynomial.natDegree_X_sub_C]
+  have hgnat :
+      (HexPolyMathlib.toPolynomial g).natDegree = G.natDegree := by
+    rw [show HexPolyMathlib.toPolynomial g =
+        (HexPolyMathlib.toPolynomial b.p.liftOuter).comp
+          (HexPolyMathlib.toPolynomial (x - y)) by
+        simp [g]]
+    rw [Polynomial.natDegree_comp, hinnerNat, mul_one,
+      ZPoly.natDegree_liftOuter]
+    rw [show G.natDegree = Q.natDegree *
+        (Polynomial.C t - Polynomial.X).natDegree by
+      exact Polynomial.natDegree_comp]
+    rw [hcomplexInnerNat, mul_one]
+    simp [Q]
+  intro hzero
+  have hcorrespondence := congrArg (evalZPoly t)
+    (DensePoly.toPolynomial_resultant f g)
+  rw [← Polynomial.resultant_map_map] at hcorrespondence
+  have hraw : DensePoly.resultant f g = 0 := by
+    simpa [ZPoly.addEliminant, f, g, x, y] using hzero
+  rw [hraw, map_zero, hfmap, hgmap] at hcorrespondence
+  apply hresultant
+  simpa [← hfnat, ← hgnat] using hcorrespondence.symm
+
 private theorem ZPoly.addEliminant_isRoot (a b : AlgebraicRoot) :
     (HexRootsMathlib.toPolyℂ (ZPoly.addEliminant a.p b.p)).IsRoot
       (a.toComplex + b.toComplex) := by
@@ -182,6 +309,255 @@ private theorem ZPoly.addEliminant_isRoot (a b : AlgebraicRoot) :
     simp [HexPolyMathlib.toPolynomial_monomial,
       Polynomial.monomial_one_one_eq_X, evalZPoly_X,
       Polynomial.eval_comp, AlgebraicRoot.toComplex_isRoot]
+
+end
+
+
+/-- A successful eliminant search selects the supplied semantic root whenever
+the operation ball contains it. -/
+private theorem AlgebraicRoot.ofEliminant?_sound
+    (raw : ZPoly) (ballAt : Int → Option DyadicComplexBall)
+    {c : AlgebraicRoot} {z : ℂ}
+    (h : AlgebraicRoot.ofEliminant? raw ballAt = some c)
+    (hroot : (HexRootsMathlib.toPolyℂ raw).IsRoot z)
+    (hball : ∀ (ball : DyadicComplexBall),
+      ballAt (separationDepth (ZPoly.squareFreeCore raw)) = some ball →
+        z ∈ ball.set) :
+    c.toComplex = z := by
+  unfold AlgebraicRoot.ofEliminant? at h
+  dsimp only at h
+  split at h
+  · rename_i hprim
+    split at h
+    · rename_i hpos
+      split at h
+      · rename_i hdegree
+        split at h
+        · rename_i hsimple
+          obtain ⟨ball, hballAt, h⟩ := Option.bind_eq_some_iff.mp h
+          obtain ⟨isolations, hisolate, h⟩ :=
+            Option.bind_eq_some_iff.mp h
+          obtain ⟨refined, hrefined, h⟩ :=
+            Option.bind_eq_some_iff.mp h
+          cases hselected : refined.toList.filter fun r =>
+              r.1.square.meetsBall ball with
+          | nil => simp [hselected] at h
+          | cons matching rest =>
+              cases rest with
+              | cons second rest => simp [hselected] at h
+              | nil =>
+                  rw [hselected] at h
+                  have hc := Option.some.inj h
+                  subst c
+                  let p := ZPoly.squareFreeCore raw
+                  have hpne : p ≠ 0 := by
+                    intro hp
+                    have hdegree' := hdegree
+                    change ZPoly.squareFreeCore raw = 0 at hp
+                    rw [hp] at hdegree'
+                    simp at hdegree'
+                  have hrawne : raw ≠ 0 := by
+                    intro hraw
+                    apply hpne
+                    subst raw
+                    rfl
+                  have hpRoot : (HexRootsMathlib.toPolyℂ p).IsRoot z := by
+                    simpa [p] using
+                      HexPolyZMathlib.isRoot_squareFreeCore hrawne hroot
+                  obtain ⟨iso, hiso, hisoRoot⟩ :=
+                    HexRootsMathlib.isolate_root_mem_of_pos p hsimple
+                      (separationDepth p : Int) .nkThenPellet hdegree
+                      hisolate hpRoot
+                  obtain ⟨i, hiList, hidx⟩ := List.getElem_of_mem hiso
+                  have hi : i < isolations.size := by simpa using hiList
+                  obtain ⟨hmapSize, hmapGet⟩ :=
+                    HexRootsMathlib.array_mapM_some_get hrefined
+                  have hj : i < refined.size := by
+                    simpa [← hmapSize] using hi
+                  have hto := hmapGet i hi hj
+                  have hrawIso : refined[i].1 = isolations[i] := by
+                    rw [DyadicRootIsolation.toRefined?] at hto
+                    split at hto
+                    · exact (congrArg Subtype.val (Option.some.inj hto)).symm
+                    · simp at hto
+                  have harrIso : isolations[i] = iso := by
+                    rw [← hidx]
+                    exact (Array.getElem_toList hi).symm
+                  have hrefinedRoot :
+                      HexRootsMathlib.RefinedIsolation.root refined[i] = z := by
+                    change HexRootsMathlib.DyadicRootIsolation.root refined[i].1 = z
+                    rw [hrawIso, harrIso]
+                    exact hisoRoot
+                  have hzCandidate :
+                      z ∈ refined[i].1.square.toBall.set := by
+                    rw [← hrefinedRoot]
+                    exact DyadicComplexBall.mem_toBall
+                      (HexRootsMathlib.RefinedIsolation.root_mem_closedDisc
+                        refined[i])
+                  have hzBall : z ∈ ball.set := by
+                    exact hball ball (by simpa [p] using hballAt)
+                  have hmeet :
+                      refined[i].1.square.meetsBall ball = true := by
+                    simpa [DyadicSquare.meetsBall] using
+                      DyadicComplexBall.meets_of_mem hzCandidate hzBall
+                  have hmem : refined[i] ∈
+                      refined.toList.filter fun r =>
+                        r.1.square.meetsBall ball := by
+                    simp [hmeet]
+                  rw [hselected] at hmem
+                  have heq : refined[i] = matching := by simpa using hmem
+                  change matching.root = z
+                  rw [← heq]
+                  exact hrefinedRoot
+        · simp at h
+      · simp at h
+    · simp at h
+  · simp at h
+
+/-- A nonzero eliminant root enclosed by a sufficiently small operation ball
+survives normalization, isolation, and the singleton selection filter. -/
+private theorem AlgebraicRoot.ofEliminant?_isSome
+    (raw : ZPoly) (ballAt : Int → Option DyadicComplexBall)
+    {z : ℂ} (hraw : raw ≠ 0)
+    (hroot : (HexRootsMathlib.toPolyℂ raw).IsRoot z)
+    (ball : DyadicComplexBall)
+    (hballAt : ballAt (separationDepth (ZPoly.squareFreeCore raw)) =
+      some ball)
+    (hzball : z ∈ ball.set)
+    (hballRadius : ball.realRadius ≤
+      (2 : ℝ) ^ (-(mahlerPrec (ZPoly.squareFreeCore raw) : ℤ))) :
+    (AlgebraicRoot.ofEliminant? raw ballAt).isSome := by
+  have hpne : ZPoly.squareFreeCore raw ≠ 0 :=
+    ZPoly.squareFreeCore_ne_zero raw hraw
+  have hpRoot :
+      (HexRootsMathlib.toPolyℂ (ZPoly.squareFreeCore raw)).IsRoot z := by
+    exact HexPolyZMathlib.isRoot_squareFreeCore hraw hroot
+  have hprim : ZPoly.content (ZPoly.squareFreeCore raw) = 1 := by
+    simpa [ZPoly.Primitive] using ZPoly.squareFreeCore_primitive raw hraw
+  have hpos : 0 < (ZPoly.squareFreeCore raw).leadingCoeff :=
+    ZPoly.leadingCoeff_squareFreeCore_pos raw hraw
+  have hsimple : HasOnlySimpleRoots (ZPoly.squareFreeCore raw) := by
+    simpa [HasOnlySimpleRoots] using
+      ZPoly.squareFreeRat_squareFreeCore raw hraw
+  have hdegree : 0 < (ZPoly.squareFreeCore raw).degree?.getD 0 := by
+    by_contra hn
+    have hsize : (ZPoly.squareFreeCore raw).size ≠ 0 := by
+      intro hsize
+      exact hpne ((DensePoly.size_eq_zero_iff _).mp hsize)
+    exact HexRootsMathlib.not_isRoot_of_degree_not_pos
+      (ZPoly.squareFreeCore raw) hsize hn z hpRoot
+  unfold AlgebraicRoot.ofEliminant?
+  dsimp only
+  rw [dif_pos hprim, dif_pos hpos, dif_pos hdegree, dif_pos hsimple]
+  rw [hballAt]
+  have hisolateSome := HexRootsMathlib.isolate_isSome
+    (ZPoly.squareFreeCore raw) hsimple hpne
+    (separationDepth (ZPoly.squareFreeCore raw) : Int) .nkThenPellet
+  cases hisolate : isolate (ZPoly.squareFreeCore raw) hsimple
+      (separationDepth (ZPoly.squareFreeCore raw) : Int) with
+  | none => simp [hisolate] at hisolateSome
+  | some isolations =>
+      simp only [Option.bind_eq_bind, Option.bind_some]
+      have hmapSome := HexRootsMathlib.array_mapM_isSome
+        (xs := isolations) (f := DyadicRootIsolation.toRefined?)
+        (fun iso hiso => by
+          simp [DyadicRootIsolation.toRefined?,
+            HexRootsMathlib.isolate_refined (ZPoly.squareFreeCore raw) hsimple
+              (separationDepth (ZPoly.squareFreeCore raw) : Int)
+              .nkThenPellet hisolate iso hiso])
+      cases hrefined : isolations.mapM DyadicRootIsolation.toRefined? with
+      | none => simp [hrefined] at hmapSome
+      | some refined =>
+          simp only [Option.bind_some]
+          obtain ⟨hmapSize, hmapGet⟩ :=
+            HexRootsMathlib.array_mapM_some_get hrefined
+          have hrefinedPairwise : refined.toList.Pairwise fun r s =>
+              HexRootsMathlib.RefinedIsolation.root r ≠
+                HexRootsMathlib.RefinedIsolation.root s := by
+            rw [List.pairwise_iff_getElem]
+            intro i j hi hj hij
+            have hi' : i < isolations.size := by
+              simpa [hmapSize] using hi
+            have hj' : j < isolations.size := by
+              simpa [hmapSize] using hj
+            have htoI := hmapGet i hi' hi
+            have htoJ := hmapGet j hj' hj
+            have hrawI : refined[i].1 = isolations[i] := by
+              rw [DyadicRootIsolation.toRefined?] at htoI
+              split at htoI
+              · exact (congrArg Subtype.val (Option.some.inj htoI)).symm
+              · simp at htoI
+            have hrawJ : refined[j].1 = isolations[j] := by
+              rw [DyadicRootIsolation.toRefined?] at htoJ
+              split at htoJ
+              · exact (congrArg Subtype.val (Option.some.inj htoJ)).symm
+              · simp at htoJ
+            intro hroots
+            apply HexRootsMathlib.isolate_roots_ne
+              (ZPoly.squareFreeCore raw) hsimple
+              (separationDepth (ZPoly.squareFreeCore raw) : Int)
+              .nkThenPellet hisolate
+              hi' hj' (Nat.ne_of_lt hij)
+            change HexRootsMathlib.DyadicRootIsolation.root refined[i].1 =
+              HexRootsMathlib.DyadicRootIsolation.root refined[j].1 at hroots
+            simpa [hrawI, hrawJ] using hroots
+          obtain ⟨iso, hiso, hisoRoot⟩ :=
+            HexRootsMathlib.isolate_root_mem_of_pos
+              (ZPoly.squareFreeCore raw) hsimple
+              (separationDepth (ZPoly.squareFreeCore raw) : Int)
+              .nkThenPellet hdegree hisolate hpRoot
+          obtain ⟨i, hiList, hidx⟩ := List.getElem_of_mem hiso
+          have hi : i < isolations.size := by simpa using hiList
+          have hj : i < refined.size := by simpa [← hmapSize] using hi
+          have hto := hmapGet i hi hj
+          have hrawIso : refined[i].1 = isolations[i] := by
+            rw [DyadicRootIsolation.toRefined?] at hto
+            split at hto
+            · exact (congrArg Subtype.val (Option.some.inj hto)).symm
+            · simp at hto
+          have harrIso : isolations[i] = iso := by
+            rw [← hidx]
+            exact (Array.getElem_toList hi).symm
+          have hrefinedRoot :
+              HexRootsMathlib.RefinedIsolation.root refined[i] = z := by
+            change HexRootsMathlib.DyadicRootIsolation.root refined[i].1 = z
+            rw [hrawIso, harrIso]
+            exact hisoRoot
+          have hzCandidate : z ∈ refined[i].1.square.toBall.set := by
+            rw [← hrefinedRoot]
+            exact DyadicComplexBall.mem_toBall
+              (HexRootsMathlib.RefinedIsolation.root_mem_closedDisc refined[i])
+          have hmeet : refined[i].1.square.meetsBall ball = true := by
+            simpa [DyadicSquare.meetsBall] using
+              DyadicComplexBall.meets_of_mem hzCandidate hzball
+          have hmem : refined[i] ∈ refined.toList.filter fun r =>
+              r.1.square.meetsBall ball := by
+            simp [hmeet]
+          cases hselected : refined.toList.filter fun r =>
+              r.1.square.meetsBall ball with
+          | nil => simp [hselected] at hmem
+          | cons matching rest =>
+              cases rest with
+              | nil => simp
+              | cons second tail =>
+                  have hfilteredPairwise := hrefinedPairwise.filter fun r =>
+                    r.1.square.meetsBall ball
+                  rw [hselected] at hfilteredPairwise
+                  have hneRoots : matching.root ≠ second.root :=
+                    List.rel_of_pairwise_cons hfilteredPairwise (by simp)
+                  have hmatching := List.mem_filter.mp (show matching ∈
+                      refined.toList.filter fun r =>
+                        r.1.square.meetsBall ball by simp [hselected])
+                  have hsecond := List.mem_filter.mp (show second ∈
+                      refined.toList.filter fun r =>
+                        r.1.square.meetsBall ball by simp [hselected])
+                  have hmatchingRoot : matching.root = z :=
+                    QAdjoin.root_eq_of_meetsBall hpne matching hpRoot
+                      hzball hballRadius hmatching.2
+                  have hsecondRoot : second.root = z :=
+                    QAdjoin.root_eq_of_meetsBall hpne second hpRoot
+                      hzball hballRadius hsecond.2
+                  exact (hneRoots (hmatchingRoot.trans hsecondRoot.symm)).elim
 
 private theorem ZPoly.negRoots_isRoot_of_isRoot {p : ZPoly} {z : ℂ}
     (hp : p ≠ 0) (hz : (HexRootsMathlib.toPolyℂ p).IsRoot z) :
@@ -282,12 +658,141 @@ theorem neg_toComplex (a : AlgebraicRoot) :
 theorem add?_sound (a b : AlgebraicRoot) {c : AlgebraicRoot}
     (h : a.add? b = some c) :
     c.toComplex = a.toComplex + b.toComplex := by
-  sorry
+  unfold AlgebraicRoot.add? at h
+  apply AlgebraicRoot.ofEliminant?_sound
+    (raw := ZPoly.addEliminant a.p b.p)
+    (ballAt := fun prec => do
+      let target := prec + 4
+      let ar ← a.rep.refineTo? target
+      let br ← b.rep.refineTo? target
+      some (ar.1.1.square.toBall.add br.1.1.square.toBall))
+    h (ZPoly.addEliminant_isRoot a b)
+  intro ball hball
+  dsimp only at hball
+  obtain ⟨ar, har, hball⟩ := Option.bind_eq_some_iff.mp hball
+  obtain ⟨br, hbr, hball⟩ := Option.bind_eq_some_iff.mp hball
+  have hballEq := Option.some.inj hball
+  subst ball
+  apply DyadicComplexBall.add_mem
+  · have harRoot :
+        HexRootsMathlib.RefinedIsolation.root ar.1 = a.toComplex := by
+      exact (HexRootsMathlib.RefinedIsolation.refineTo_root
+        a.rep _ .nkThenPellet har).trans rfl
+    rw [← harRoot]
+    exact DyadicComplexBall.mem_toBall
+      (HexRootsMathlib.RefinedIsolation.root_mem_closedDisc ar.1)
+  · have hbrRoot :
+        HexRootsMathlib.RefinedIsolation.root br.1 = b.toComplex := by
+      exact (HexRootsMathlib.RefinedIsolation.refineTo_root
+        b.rep _ .nkThenPellet hbr).trans rfl
+    rw [← hbrRoot]
+    exact DyadicComplexBall.mem_toBall
+      (HexRootsMathlib.RefinedIsolation.root_mem_closedDisc br.1)
 
 /-- The bounded lazy addition search always finds its certificate. -/
 theorem add?_isSome (a b : AlgebraicRoot) :
     (a.add? b).isSome := by
-  sorry
+  unfold AlgebraicRoot.add?
+  have harSome := RefinedIsolation.refineTo?_isSome a.rep
+    ((separationDepth (ZPoly.squareFreeCore
+      (ZPoly.addEliminant a.p b.p)) : Int) + 4)
+  cases har : a.rep.refineTo?
+      ((separationDepth (ZPoly.squareFreeCore
+        (ZPoly.addEliminant a.p b.p)) : Int) + 4) .nkThenPellet with
+  | none => simp [har] at harSome
+  | some ar =>
+      have hbrSome := RefinedIsolation.refineTo?_isSome b.rep
+        ((separationDepth (ZPoly.squareFreeCore
+          (ZPoly.addEliminant a.p b.p)) : Int) + 4)
+      cases hbr : b.rep.refineTo?
+          ((separationDepth (ZPoly.squareFreeCore
+            (ZPoly.addEliminant a.p b.p)) : Int) + 4) .nkThenPellet with
+      | none => simp [hbr] at hbrSome
+      | some br =>
+          apply AlgebraicRoot.ofEliminant?_isSome
+            (raw := ZPoly.addEliminant a.p b.p)
+            (ballAt := fun prec => do
+              let target := prec + 4
+              let ar ← a.rep.refineTo? target
+              let br ← b.rep.refineTo? target
+              some (ar.1.1.square.toBall.add br.1.1.square.toBall))
+            (z := a.toComplex + b.toComplex)
+            (ZPoly.addEliminant_ne_zero a b)
+            (ZPoly.addEliminant_isRoot a b)
+            (ar.1.1.square.toBall.add br.1.1.square.toBall)
+          · dsimp only
+            rw [har, hbr]
+            rfl
+          · apply DyadicComplexBall.add_mem
+            · have harRoot :
+                  HexRootsMathlib.RefinedIsolation.root ar.1 = a.toComplex := by
+                exact (HexRootsMathlib.RefinedIsolation.refineTo_root
+                  a.rep _ .nkThenPellet har).trans rfl
+              rw [← harRoot]
+              exact DyadicComplexBall.mem_toBall
+                (HexRootsMathlib.RefinedIsolation.root_mem_closedDisc ar.1)
+            · have hbrRoot :
+                  HexRootsMathlib.RefinedIsolation.root br.1 = b.toComplex := by
+                exact (HexRootsMathlib.RefinedIsolation.refineTo_root
+                  b.rep _ .nkThenPellet hbr).trans rfl
+              rw [← hbrRoot]
+              exact DyadicComplexBall.mem_toBall
+                (HexRootsMathlib.RefinedIsolation.root_mem_closedDisc br.1)
+          · rw [DyadicComplexBall.realRadius_add]
+            have harPrec := RefinedIsolation.refineTo?_precision a.rep
+              ((separationDepth (ZPoly.squareFreeCore
+                (ZPoly.addEliminant a.p b.p)) : Int) + 4)
+              .nkThenPellet har
+            have hbrPrec := RefinedIsolation.refineTo?_precision b.rep
+              ((separationDepth (ZPoly.squareFreeCore
+                (ZPoly.addEliminant a.p b.p)) : Int) + 4)
+              .nkThenPellet hbr
+            have hsepNat :
+                mahlerPrec (ZPoly.squareFreeCore (ZPoly.addEliminant a.p b.p)) ≤
+                  separationDepth
+                    (ZPoly.squareFreeCore (ZPoly.addEliminant a.p b.p)) := by
+              rw [separationDepth]
+              omega
+            have hsepInt :
+                (mahlerPrec
+                    (ZPoly.squareFreeCore (ZPoly.addEliminant a.p b.p)) : Int) ≤
+                  (separationDepth
+                    (ZPoly.squareFreeCore (ZPoly.addEliminant a.p b.p)) : Int) := by
+              exact_mod_cast hsepNat
+            have hpow :
+                (2 : ℝ) ^ (-(separationDepth
+                    (ZPoly.squareFreeCore (ZPoly.addEliminant a.p b.p)) : Int)) ≤
+                  (2 : ℝ) ^ (-(mahlerPrec
+                    (ZPoly.squareFreeCore (ZPoly.addEliminant a.p b.p)) : Int)) :=
+              zpow_le_zpow_right₀ (by norm_num) (by omega)
+            calc
+              ar.1.1.square.toBall.realRadius +
+                    br.1.1.square.toBall.realRadius ≤
+                  2 * (2 : ℝ) ^ (-((separationDepth
+                      (ZPoly.squareFreeCore (ZPoly.addEliminant a.p b.p)) : Int) + 4)) +
+                    2 * (2 : ℝ) ^ (-((separationDepth
+                      (ZPoly.squareFreeCore (ZPoly.addEliminant a.p b.p)) : Int) + 4)) :=
+                add_le_add
+                  (DyadicComplexBall.realRadius_toBall_le harPrec)
+                  (DyadicComplexBall.realRadius_toBall_le hbrPrec)
+              _ = (1 / 4 : ℝ) * (2 : ℝ) ^ (-(separationDepth
+                    (ZPoly.squareFreeCore (ZPoly.addEliminant a.p b.p)) : Int)) := by
+                rw [show -((separationDepth
+                    (ZPoly.squareFreeCore (ZPoly.addEliminant a.p b.p)) : Int) + 4) =
+                    -(separationDepth
+                      (ZPoly.squareFreeCore (ZPoly.addEliminant a.p b.p)) : Int) - 4 by
+                  omega]
+                rw [zpow_sub₀ (by norm_num : (2 : ℝ) ≠ 0)]
+                norm_num
+                ring
+              _ ≤ (2 : ℝ) ^ (-(separationDepth
+                    (ZPoly.squareFreeCore (ZPoly.addEliminant a.p b.p)) : Int)) := by
+                have hnonneg : 0 ≤ (2 : ℝ) ^ (-(separationDepth
+                    (ZPoly.squareFreeCore (ZPoly.addEliminant a.p b.p)) : Int)) := by
+                  positivity
+                nlinarith
+              _ ≤ (2 : ℝ) ^ (-(mahlerPrec
+                    (ZPoly.squareFreeCore (ZPoly.addEliminant a.p b.p)) : Int)) := hpow
 
 /-- Total lazy addition computes complex addition. -/
 theorem add_toComplex (a b : AlgebraicRoot) :

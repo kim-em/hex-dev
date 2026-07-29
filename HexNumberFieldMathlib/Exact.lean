@@ -1065,7 +1065,9 @@ private theorem toBall_radius_lt_rootDist {q : ZPoly} (hq : q ≠ 0)
     _ < ‖z - w‖ / 4 :=
       HexRootsMathlib.mahlerPrec_separates q hq z w hz hw hne
 
-private theorem root_eq_of_meetsBall {q : ZPoly} (hq : q ≠ 0)
+/-- A sufficiently small certified ball can meet a refined isolation only at
+the root it contains. -/
+theorem root_eq_of_meetsBall {q : ZPoly} (hq : q ≠ 0)
     (r : RefinedIsolation q) {z : ℂ}
     (hz : (HexRootsMathlib.toPolyℂ q).IsRoot z)
     {b : DyadicComplexBall} (hzmem : z ∈ b.set)
