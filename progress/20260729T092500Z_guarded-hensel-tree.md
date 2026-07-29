@@ -18,14 +18,16 @@
 
 Targeted measurements retain the large Chebyshev U24, Legendre P30/P38, and
 Conway improvements while restoring the regressing P16, P24, P26, P28, and
-Phi_385 cases to their prior performance. The final full-corpus Hex-only sweep
-has not yet been recorded.
+Phi_385 cases to their prior performance. The clean full-corpus Hex-only sweep
+solves 373/392 with a 432.972 microsecond median and 5.437 millisecond p90. On
+238 overhead-eligible pairs its median Hex/Isabelle ratio is 0.927x, with Hex
+winning 126 rows and Isabelle 112.
 
 ## Next step
 
-Commit the exact implementation revision, run one replacement Hex-only corpus
-sweep on CPU 0, then regenerate the affected reports and figures without
-rerunning the current PARI, NTL, FLINT, or Isabelle comparators.
+Refresh the affected Hensel/BZ registrations, then regenerate the reports and
+figures without rerunning the current PARI, NTL, FLINT, or Isabelle
+comparators. Obtain a second opinion before publishing the intermediate PR.
 
 ## Blockers
 
