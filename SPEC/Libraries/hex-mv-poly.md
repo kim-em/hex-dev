@@ -150,7 +150,7 @@ strictly more than a faithful total order:
 class IsMonomialOrder {n : Nat} (cmp : Mono n → Mono n → Ordering) : Prop
     extends Std.TransCmp cmp, Std.LawfulEqCmp cmp where
   zero_le  : ∀ m, cmp Mono.zero m ≠ .gt
-  add_mono : ∀ a b c,
+  mul_mono : ∀ a b c,
     cmp a b = cmp (Mono.mul a c) (Mono.mul b c)
   wf       : WellFounded (fun a b => cmp a b = .lt)
 ```
@@ -180,6 +180,7 @@ namespace Hex.Mono
 def zero : Mono n                                   -- the constant monomial
 def unit (i : Fin n) : Mono n                       -- xᵢ
 def mul (a b : Mono n) : Mono n                     -- pointwise addition
+def scale (k : Nat) (m : Mono n) : Mono n           -- pointwise scaling
 def dvd (a b : Mono n) : Bool                       -- pointwise ≤
 def div (a b : Mono n) : Option (Mono n)            -- exact quotient, none if ¬ dvd
 def lcm (a b : Mono n) : Mono n                     -- pointwise max
@@ -193,13 +194,14 @@ def splits (m : Mono n) : List (Mono n × Mono n)    -- pairs whose product is m
 def prod [One R] [Mul R] (x : Fin n → R) (m : Mono n) : R
 ```
 
-`mul` is the monoid operation the `add_mono` field of `IsMonomialOrder`
+`mul` is the monoid operation the `mul_mono` field of `IsMonomialOrder`
 refers to, so the class and this API have to agree on it. State
 `IsMonomialOrder` in terms of `Mono.mul` rather than a bare `+`. The
 laws worth naming are that `dvd` agrees with the existence of an exact
 quotient, that `div` is a left inverse of `mul` on the divisible case,
-`degree_mul`, `rename_mul`, `splits_mem_iff`, `splits_nodup`, and the `lcm`/`gcd`
-lattice laws, all of which the S-polynomial construction uses.
+`mul_assoc`, `mul_comm`, the scale/unit decomposition, `degree_mul`,
+`rename_mul`, `splits_mem_iff`, `splits_nodup`, and the `lcm`/`gcd` lattice
+laws, all of which the S-polynomial construction uses.
 
 ## Kernel reduction
 
@@ -477,6 +479,7 @@ theorem coeff_sub       : coeff m (p - q) = coeff m p - coeff m q
 theorem coeff_neg       : coeff m (-p) = -coeff m p
 theorem coeff_mul       : coeff m (p * q)
     = (m.splits.map fun ab => coeff ab.1 p * coeff ab.2 q).sum
+theorem pow_succ        : p ^ (k + 1) = p ^ k * p
 theorem coeff_pow_succ  : coeff m (p ^ (k + 1)) = coeff m (p ^ k * p)
 theorem coeff_reorder   : coeff m (reorder cmp' p) = coeff m p
 theorem coeff_rename    : coeff m (rename cmp' f p)

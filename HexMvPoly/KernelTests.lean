@@ -72,6 +72,28 @@ example :
     Mono.gcd (Mono.unit 0 : Mono 2) (Mono.unit 1 : Mono 2) = Mono.zero := by
   decide +kernel
 
+example : Mono.lex #v[1, 5] #v[2, 0] = .lt := by
+  decide +kernel
+
+example : Mono.grlex #v[2, 0] #v[1, 2] = .lt := by
+  decide +kernel
+
+example : Mono.grevlex #v[1, 1] #v[2, 0] = .lt := by
+  decide +kernel
+
+example : Mono.grlex #v[2, 0, 1] #v[1, 2, 0] = .gt := by
+  decide +kernel
+
+example : Mono.grevlex #v[2, 0, 1] #v[1, 2, 0] = .lt := by
+  decide +kernel
+
+example :
+    Mono.grevlex #v[1, 1] #v[2, 0] =
+      Mono.grevlex
+        (Mono.mul #v[1, 1] #v[3, 4])
+        (Mono.mul #v[2, 0] #v[3, 4]) := by
+  decide +kernel
+
 abbrev GP := MvPoly 2 Int Mono.grlex
 
 @[expose] def gx : GP := X 0
@@ -104,6 +126,18 @@ example :
 example :
     evalHorner (fun i => if i = 0 then 2 else 3) sparse =
       eval (fun i => if i = 0 then 2 else 3) sparse := by
+  decide +kernel
+
+example :
+    partialEval (fun i => if i = 0 then some 2 else none) sparse =
+      ofTerms
+        [(Mono.zero, 37), (#v[0, 2], 6), (#v[0, 3], -1)] := by
+  decide +kernel
+
+example :
+    partialEval (fun i => if i = 0 then some 2 else none)
+        (ofTerms [(#v[1, 0], 1), (Mono.zero, -2)] : P) =
+      0 := by
   decide +kernel
 
 @[expose] def outerGap : P :=
@@ -192,5 +226,41 @@ example : (X 0 : P1) * X 0 = monomial
 /-- info: 'Hex.MvPoly.KernelTests.oneVar_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms oneVar_roundtrip
+
+/-- info: 'Hex.Mono.instLexOrder' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.Mono.instLexOrder
+
+/-- info: 'Hex.Mono.instGrlexOrder' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.Mono.instGrlexOrder
+
+/-- info: 'Hex.Mono.instGrevlexOrder' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.Mono.instGrevlexOrder
+
+/-- info: 'Hex.MvPoly.coeff_pow_succ' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.MvPoly.coeff_pow_succ
+
+/-- info: 'Hex.MvPoly.pow_succ' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.MvPoly.pow_succ
+
+/-- info: 'Hex.MvPoly.mul_assoc' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.MvPoly.mul_assoc
+
+/-- info: 'Hex.MvPoly.mul_comm' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.MvPoly.mul_comm
+
+/-- info: 'Hex.MvPoly.mul_add' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.MvPoly.mul_add
+
+/-- info: 'Hex.MvPoly.partialEval_eq_subst' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.MvPoly.partialEval_eq_subst
 
 end Hex.MvPoly.KernelTests
