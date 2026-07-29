@@ -405,7 +405,7 @@ def recoverPackage : Package Nat :=
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.statelessPlanned (registration recoverKey) recoverPlan] }
+      #[Handler.statelessPlanned (registration recoverKey) recoverPlan #[pairFormat]] }
 
 def excessDrafts : List PayloadArena.Draft :=
   [{ label := payload 0, role := .fact, schema := 1, body := [] },
@@ -714,14 +714,16 @@ def opaqueRun? : Option (PayloadSession.Run Nat) :=
       | _ => false
   | .error _ => false
 
--- Generic body bounds run before a package-owned validator.
+-- A generic reply-local body bound runs before a package-owned validator and
+-- rejects only that reply.
 #guard
-  match start malformedPackage { arenaLimits with maxBodyCells := 1 } with
+  match start malformedPackage { arenaLimits with maxDraftCells := 1 } with
   | .ok session =>
       match session.advance with
-      | .payloadResource .bodyCells stopped =>
+      | .rejectedPayload .draftCells stopped =>
           stopped.arena.entries.isEmpty &&
-            stopped.engine.history.isEmpty && !stopped.live
+            stopped.engine.history.isEmpty && stopped.live &&
+            stopped.droppedWork && !stopped.complete
       | _ => false
   | .error _ => false
 

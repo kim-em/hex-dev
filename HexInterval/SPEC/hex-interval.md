@@ -2373,8 +2373,8 @@ typical, boundary, and adversarial inputs. In particular it includes:
   but retain distinct `(RuleKey, role, schema)` addresses and validate
   incompatible bounded body shapes; undeclared formats, malformed bodies, and
   format failure after a previously committed invocation leave no partial
-  current transaction, while generic body-resource refusal precedes package
-  validation;
+  current transaction, while recoverable reply-local draft-cell refusal
+  precedes package validation;
 - real dyadic fact and instantiation packages running through the private
   proof session with exact empty-body schema `0` declarations, including
   rejection of a trailing body cell and distinct rule-epoch ownership;

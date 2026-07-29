@@ -334,11 +334,13 @@ def payloadLimits : PayloadArena.Limits :=
     maxUses := 3 }
 
 def trailingPayloadLimits : PayloadArena.Limits :=
-  { payloadLimits with maxBodyCells := 1 }
+  { payloadLimits with maxBodyCells := 1, maxDraftCells := 1 }
 
 def proofPayloadLimits : PayloadArena.Limits :=
-  { maxEntries := 8
+  { maxEntries := PayloadSession.requiredUses limits
     maxBodyCells := 0
+    maxDrafts := PayloadSession.requiredUses limits
+    maxDraftCells := 0
     maxAtom := 0
     maxSchema := 0
     maxUses := PayloadSession.requiredUses limits }
