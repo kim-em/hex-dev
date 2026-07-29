@@ -6,12 +6,14 @@ stack.
 ## Measurement environment
 
 - Hex public, classical, and lattice implementation: exact-exponent/factor-only
-  Hensel lift and guarded dominant-degree tree at
-  `53bb12e21c5107e9da5d837c207eb3254238967f`
+  Hensel lift, guarded dominant-degree tree, remainder-only GCD,
+  inverse-cached finite-field GCD, direct prime-power coefficient reduction,
+  and monomial quadratic-division kernel at
+  `0b95505b7c926911a9f487bac56676a8c7da48f6`
 - Kernel diagnostic revision: `8c4acebc5fc04bd52b7ec2f6fa15c4f2eb4c6ece`
-- Unchanged fixed and lower-layer Hex revision:
-  `a1fdbd81ef038faa41765fb39a79cd083109c8ed`; changed BZ/Hensel targets use
-  the guarded-tree overlays recorded below
+- Finite-field lower-layer revision:
+  `f1ab9696cee5fac0cb8ea17bfdfd19caf63bd7c3`; Hensel and BZ use the final
+  `0b95505b` revision above
 - Hex date: 2026-07-29
 - External-comparator date/revision: 2026-07-28 / `5c371a5a`
 - Host: `chungus2`, AMD EPYC 9455, Linux x86-64
@@ -28,45 +30,40 @@ were not rerun because this revision changes only Hex. Their exports use the
 same host, corpus, CPU, and persistent-line protocol as the fresh Hex sweep.
 Exact paired ratios are reported only where those conditions match.
 
-The classical/lattice, kernel, and fresh public-factor exports record clean
-worktrees. The finite-field and unchanged BZ
-exports from `a1fdbd81` remain current; affected BZ registrations have focused
-overlays from the new implementation. Rejected
-broad-probe sweeps and a CPU-frequency-contaminated public sweep are not
-retained.
-
-The `a1fdbd81` exports themselves record a dirty worktree: they executed with
-the native-kernel borrow annotations that were pending at measurement time and
-then merged unchanged in `f38614c1`. They are the measured pre-prime-policy
-runtime, not a checkout missing that ownership fix.
+Every current Hex export records a clean worktree. All affected lower-layer
+ladders were refreshed in full rather than overlaid onto earlier rows. Rejected
+broad-probe sweeps, a CPU-frequency-contaminated public sweep, and a measured
+slower direct-array `modP` replacement are not used as current evidence.
 
 ## Headline outcome
 
-The combined verified hot-path work makes the public dispatcher 2.96× faster
-at the solved-row median (1.244 ms to 420.153 µs). Exact-exponent lifting,
-omitting the unused final Bezout update, and the guarded tree preserve 373 of
-392 solves while cutting p90 from 8.408 ms to 5.302 ms.
+The combined verified hot-path work makes the public dispatcher 3.11× faster
+at the solved-row median (1.244 ms to 400.334 µs). Exact-exponent lifting,
+omitting the unused final Bezout update, guarded tree, and shared GCD/Hensel
+kernels preserve 373 of 392 solves while cutting p90 from 8.408 ms to
+4.082 ms.
 
 Against verified Isabelle BZ, the overhead-filtered eligible-row median falls
-from 3.95× to 0.909× Hex/Isabelle. Hex wins 127 eligible rows and Isabelle
-111. This is a real aggregate Hex lead but not yet a decisive margin; FLINT,
+from 3.95× to 0.887× Hex/Isabelle. Hex wins 135 eligible rows and Isabelle
+99. This is a real aggregate Hex lead but not yet a decisive margin; FLINT,
 PARI/GP, and NTL remain much faster overall.
 
 Eligibility uses each run's own measured protocol floor. The new public
-service's floor is 16.905 µs, so the 238-row headline is stricter than the
-preceding 13.650 µs export's 244-row comparison. Reapplying the lower old Hex
-floor gives a 0.892× median over 244 rows; requiring both sides to clear the
-larger of the two current floors gives 0.916× over 236 rows. The direction of
+service's floor is 16.975 µs, so the 234-row headline is stricter than the
+preceding 13.650 µs export. Reapplying the lower old Hex floor gives a 0.836×
+median over 243 rows; requiring both sides to clear the larger of the two
+current floors gives 0.889× over 233 rows. On the preceding fixed 238-row
+eligibility set, the current median is 0.870×. The direction of
 the lead is therefore not an overhead-floor artifact, although its broad
-0.47×–2.64× p10–p90 band still rules out a claim of uniform superiority.
+0.454×–2.513× p10–p90 band still rules out a claim of uniform superiority.
 
 ## Integer-factorization corpus
 
 | System | OK | Timeout | Median | p90 | Slowest solved |
 |---|---:|---:|---:|---:|---:|
-| Hex public factor | 373 | 19 | 420.153 µs | 5.302 ms | 9.077 s |
-| Hex lattice | 369 | 23 | 1.838 ms | 87.386 ms | 9.901 s |
-| Hex classical, no decline | 372 | 20 | 401.736 µs | 7.184 ms | 3.818 s |
+| Hex public factor | 373 | 19 | 400.334 µs | 4.082 ms | 9.047 s |
+| Hex lattice | 369 | 23 | 1.812 ms | 87.886 ms | 9.590 s |
+| Hex classical, no decline | 372 | 20 | 389.203 µs | 5.561 ms | 3.724 s |
 | FLINT | 391 | 1 | 66.850 µs | 1.184 ms | 1.228 s |
 | PARI/GP | 391 | 1 | 99.958 µs | 1.254 ms | 823.201 ms |
 | NTL | 391 | 1 | 135.631 µs | 2.714 ms | 1.919 s |
@@ -82,17 +79,17 @@ With both sides at least 10× above protocol overhead:
 
 | Pair | Eligible | Median | p10–p90 | First faster | Second faster |
 |---|---:|---:|---:|---:|---:|
-| Hex public / Isabelle BZ | 238 | 0.909× | 0.47×–2.64× | 127 | 111 |
-| Hex classical / Isabelle BZ | 231 | 1.04× | 0.48×–2.78× | 110 | 121 |
-| Hex lattice / Isabelle LLL | 229 | 0.14× | 0.005×–2.29× | 178 | 51 |
-| Hex public / Hex classical | 238 | 1.009× | 0.80×–1.12× | 99 | 139 |
+| Hex public / Isabelle BZ | 234 | 0.887× | 0.454×–2.513× | 135 | 99 |
+| Hex classical / Isabelle BZ | 229 | 0.913× | 0.464×–2.568× | 128 | 101 |
+| Hex lattice / Isabelle LLL | 230 | 0.137× | 0.004×–2.437× | 182 | 48 |
+| Hex public / Hex classical | 237 | 1.006× | 0.807×–1.128× | 109 | 128 |
 
 The refreshed comparison resolves the apparent public/classical anomaly.
-No-decline classical retains a small paired-median advantage: public/classical
-is 1.009×, and public wins 99 of 238 eligible rows. That is a dispatch and
-fallback tradeoff rather than a different lifting core; public improves
-selected hard rows and alone solves `sd6`, while isolated classical is the
-better ordinary-row baseline.
+No-decline classical retains a 0.6% paired-median advantage: public/classical
+is 1.006×, with a 109–128 win split. That is expected diagnostic overhead, not
+a different lifting core: the no-decline entry omits bounded decline/fallback
+behavior and the public final product check. Public improves selected hard rows
+and alone solves `sd6`.
 
 ## Bounded prime-width selection and cumulative gains
 
@@ -106,15 +103,15 @@ and the exact/factor-only Hensel improvement isolated in the following section.
 
 | Corpus row | Previous Hex | Current Hex | Change |
 |---|---:|---:|---:|
-| `sd5_x_phi45` | 9.747 s | 132.013 ms | 73.83× faster |
-| `xpow105_minus1` | 1.341 s | 47.148 ms | 28.44× faster |
-| `cyclo_phi151` | 237.558 ms | 31.459 ms | 7.55× faster |
-| `cyclo_phi179` | 317.151 ms | 44.316 ms | 7.16× faster |
-| `cyclo_phi61` | 26.198 ms | 4.783 ms | 5.48× faster |
-| `legendre_P30` | 173.071 ms | 32.486 ms | 5.33× faster |
+| `sd5_x_phi45` | 9.747 s | 129.024 ms | 75.54× faster |
+| `xpow105_minus1` | 1.341 s | 46.196 ms | 29.03× faster |
+| `cyclo_phi151` | 237.558 ms | 32.021 ms | 7.42× faster |
+| `cyclo_phi179` | 317.151 ms | 44.752 ms | 7.09× faster |
+| `cyclo_phi61` | 26.198 ms | 4.682 ms | 5.60× faster |
+| `legendre_P30` | 173.071 ms | 13.970 ms | 12.39× faster |
 
 `xpow120_minus1`, the principal downside sentinel, remains solved at
-159.898 ms versus 173.545 ms previously. Every former false-probe regression
+153.698 ms versus 173.545 ms previously. Every former false-probe regression
 on composite/sparse cyclotomics returned to baseline.
 
 ## Exact production Hensel lift
@@ -161,60 +158,81 @@ Targeted A/B measurements led to the two guards above. The retained clean
 corpus sweep is 0.989× at the paired median versus the preceding public export
 over 247 overhead-eligible rows, while preserving the large structured wins.
 
+## Shared GCD and Hensel kernels
+
+The latest stage removes quotient construction when Euclidean GCD only needs a
+remainder, caches finite-field divisor inverses, maps prime-power reduction
+over the stored coefficient array with the modulus hoisted, and replaces
+quadratic-Hensel multiplication by a monomial with an exact shift-and-scale
+kernel. Every replacement is tied to a theorem equating it to the transparent
+reference definition.
+
+Against the immediately preceding `53bb12e2` public export, the all-row paired
+median is 0.964× and current Hex wins 306 of 373 rows. With both runs above
+their protocol floors, the ratio is 0.960× over 243 rows with a 205–38 win
+split. The eligible family ratios are 0.815× for Chebyshev, 0.816× for
+Legendre, 0.847× for random products, 0.949× for Laguerre, and at most 0.988×
+for every other populated family. The gain is therefore broad rather than a
+single-fixture dispatch effect.
+
 ## Hensel lifting
 
 | Target | Largest rung | Median | Previous | Change |
 |---|---:|---:|---:|---:|
-| Linear step | 512 | 15.089 ms | 15.077 ms | 1.00× |
-| Quadratic step | 512 | 8.681 ms | 128.731 ms | 14.8× faster |
-| Iterated linear | `(192,64)` | 142.543 ms | 145.228 ms | 1.02× faster |
-| Linear multifactor | `(192,64)` | 143.939 ms | 141.179 ms | 0.98× |
-| Quadratic multifactor | `(192,64)` | 67.229 ms | 89.522 ms | 1.33× faster |
+| Linear step | 512 | 15.568 ms | 15.077 ms | 0.97× |
+| Quadratic step | 512 | 8.481 ms | 128.731 ms | 15.2× faster |
+| Iterated linear | `(192,64)` | 145.374 ms | 145.228 ms | 1.00× |
+| Linear multifactor | `(192,64)` | 147.330 ms | 141.179 ms | 0.96× |
+| Quadratic multifactor | `(192,64)` | 48.711 ms | 89.522 ms | 1.84× faster |
 
 The packed UInt64/Montgomery polynomial kernels provide the large quadratic
 step gain while transparent Lean definitions retain the proof surface. The
-exact/factor-only schedule supplies the quadratic-multifactor gain; the guarded
-tree is neutral on this equal-degree registration. Required borrow annotations keep the refreshed quadratic-multifactor
-target flat at 61–66 MiB RSS. See `hex-hensel-performance.md` for the complete
-nine-target table.
+new prime-power reduction and monomial shift-and-scale kernel supply the later
+quadratic-multifactor gain; the guarded tree is neutral on this equal-degree
+registration. See `hex-hensel-performance.md` for the complete nine-target
+table and the rejected `modP` A/B.
 
 ## Finite-field layers
 
 | Target | Largest rung | Median | Verdict |
 |---|---:|---:|---|
-| Berlekamp matrix | 192 | 10.791 ms | consistent |
-| Rabin irreducibility | 64 | 43.606 ms | consistent |
-| Berlekamp factorization | 256 | 3.271 ms | consistent |
-| Distinct-degree factorization | 96 | 187.058 ms | consistent |
+| Berlekamp matrix | 192 | 10.785 ms | consistent |
+| Rabin irreducibility | 64 | 45.082 ms | consistent |
+| Berlekamp factorization | 256 | 3.493 ms | consistent |
+| Distinct-degree factorization | 96 | 190.362 ms | consistent |
 
-The finite-field factorization headlines are within 2% of the preceding
-record. The retained Rabin/DDF FLINT exports include Hex timings from
+Matrix construction is flat versus the preceding record, Rabin and DDF move by
+3.4% and 1.8%, and the degree-256 Berlekamp-factor rung is 6.8% slower. The
+retained Rabin/DDF FLINT exports include Hex timings from
 `5c371a5a`; they show the external gap historically but are not relabelled as
 exact current-Hex pairs. The same caveat applies to retained Hensel/FLINT
 exports: current Hex values above are paired only with their prior Hex record.
 
-The refreshed `HexPolyFp` upper rungs are 297.714 ms for Frobenius `X`,
-45.104 µs for GCD, 659.711 ms for weighted product, 6.569 ms for square-free
-decomposition, 339.451 ms for Frobenius power, 148.786 ms for power mod,
-960.070 µs for division, and 372.371 ms for modular composition. An A/B/A
-control rejected an initially contaminated sample before this export.
+The refreshed `HexPolyFp` upper rungs are 297.287 ms for Frobenius `X`,
+43.570 µs for GCD, 668.277 ms for weighted product, 6.492 ms for square-free
+decomposition, 337.743 ms for Frobenius power, 147.076 ms for power mod,
+998.410 µs for division, and 376.752 ms for modular composition.
 
 ## Fixed integer fixtures
 
 | Fixture / operation | Median | Previous |
 |---|---:|---:|
-| `X⁴ + 1`, public | 31.525 µs | 98.628 µs |
-| `(X²-2)(X²-3)`, public | 29.363 µs | 27.154 µs |
-| `Phi_15`, public | 91.796 µs | 205.705 µs |
-| `SD_3`, modular split | 8.420 µs | 8.122 µs |
-| `SD_3`, lattice | 1.583 ms | 2.596 ms |
-| `SD_4`, lattice | 29.299 ms | 34.266 ms |
+| `X⁴ + 1`, public | 28.916 µs | 98.628 µs |
+| `(X²-2)(X²-3)`, public | 27.071 µs | 27.154 µs |
+| `Phi_15`, public | 86.801 µs | 205.705 µs |
+| `SD_3`, modular split | 8.478 µs | 8.122 µs |
+| `SD_3`, lattice | 1.593 ms | 2.596 ms |
+| `SD_4`, lattice | 29.294 ms | 34.266 ms |
 
-The parametric public degree-24 rung is 1.786 ms. All eight parametric BZ
+The parametric public degree-24 rung is 1.719 ms. All eight parametric BZ
 ladders complete, though their deliberately conservative BHKS models remain
 inconclusive on these small fixtures.
 
-## Kernel and diagnostic evidence
+## Retained kernel and diagnostic evidence
+
+The one-shot import and phase-attribution measurements below belong to the
+revisions encoded in their artifact names. They remain useful localization
+evidence but are not relabelled as current timings.
 
 Fresh-module factorization import baseline is 897.900 ms and the certificate
 baseline is 6.407 s. Direct kernel factorization takes 1.343 s on `quartic_a4`,
@@ -229,11 +247,10 @@ kernel-rebuilding baseline, 1.245 ms with the kernel shared, and 569.224 µs for
 the fixed path. The fixed path is 18.89% matrix, 2.95% nullspace, and 78.17%
 witness split. Balanced product construction remains neutral.
 
-The current single-shot hybrid seam reaches `SD_5` in 100.706 ms through the
-classical tier and `SD_6` in 9.132 s after a lattice decline; the lattice core
-alone takes 8.257 s. In the current persistent corpus service, public `sd5`
-takes 91.491 ms and `sd6` completes in 9.077 s—only 9.2% below the cutoff, so
-that frontier result has little margin.
+In the current persistent corpus service, public `sd5` takes 89.008 ms and
+`sd6` completes in 9.047 s; the current isolated lattice entry takes 8.583 s
+on `sd6`, while no-decline classical times out. The frontier result is only
+9.5% below the cutoff and therefore has little margin.
 
 ## Six presentation graphs
 
@@ -248,34 +265,25 @@ that frontier result has little margin.
 
 Fresh Hex exports under `reports/bench-results/`:
 
-- `hex-poly-fp-a1fdbd81-chungus2.json`
-- `hex-berlekamp-a1fdbd81-chungus2.json`
-- `hex-hensel-a1fdbd81-chungus2.json`
-- `hex-berlekamp-zassenhaus-parametric-a1fdbd81-chungus2.json`
-- `hex-berlekamp-zassenhaus-fixed-a1fdbd81-chungus2.json`
-- `hex-berlekamp-zassenhaus-parametric-a484ef54-guarded-tree-overlay-chungus2.json`
-  (five changed targets; SHA-256
-  `c6a0db5c4f091ef43eda515e08c1ad1c7a68af136bcf97c93df932a1f38d4ea3`)
-- `hex-berlekamp-zassenhaus-fixed-daf361c6-guarded-tree-overlay-chungus2.json`
-  (five changed targets; SHA-256
-  `216a6ed79e7c10802d9ad7e55687cc27ef6b929c5b30994f7872b373034acede`)
-- `hexbz-factor-sweep-hex-53bb12e2-guarded-tree-all-chungus2.json`
+- `hex-poly-fp-f1ab9696-gcd-hensel-chungus2.json` (SHA-256
+  `fcb72f342a3edb09cce09214101182765b9037e4ba12f46ea14e32360e8265c3`)
+- `hex-berlekamp-f1ab9696-gcd-hensel-chungus2.json` (SHA-256
+  `f26d75d214e6d107ee3e374891efcdc53faa7bad8e87bc71facce6867ab8fd18`)
+- `hex-hensel-0b95505b-gcd-hensel-chungus2.json` (SHA-256
+  `1ef93fd4fbf93109dcc19e9450935e90bc2d68affbe3d7ccc7902bd637a93f65`)
+- `hex-berlekamp-zassenhaus-parametric-0b95505b-gcd-hensel-chungus2.json`
+  (SHA-256
+  `b915b2f27be36251cc8be6603858dbe29f5311502d00a030235351a9a1b1dd70`)
+- `hex-berlekamp-zassenhaus-fixed-0b95505b-gcd-hensel-chungus2.json`
+  (SHA-256
+  `82ddd9e54cfafcfefc936ffeb1f1c8bb7e926e7545cd2b992ecfbc508e1ee78d`)
+- `hexbz-factor-sweep-hex-0b95505b-gcd-hensel-final-chungus2.json`
   (current public, lattice, and no-decline classical; SHA-256
-  `926e91245e45523a40e8b915004bf4e0e17f01ed3547feca94589760d3e55e27`)
-- `hexbz-factor-sweep-hex-a087b28f-guarded-tree-chungus2.json`
-  (preceding public-only diagnostic; SHA-256
-  `1f03e479ca0d14bedb11a68960da865760072a66b7299d33ee3acd19138bf1e7`)
-- `hexbz-factor-sweep-hex-b4b36754-exact-factor-only-chungus2.json`
-  (preceding A/B reference; SHA-256
-  `090b594a14b12af8332fef091d2bd8ca5652c3e7566e6bd452a984eb473a058a`)
-- `hexbz-factor-sweep-hex-b4b36754-exact-only-chungus2.json` (same-day A/B
-  reference; SHA-256
-  `4ceadcbb1dd54f7e49d77efdd3ed199cb84633fb54c733a6041afa2118ddf9b2`)
-- `hex-hensel-quadratic-multifactor-478c3ccc-guarded-tree-chungus2.json`
-  (changed target only; SHA-256
-  `753540d532379ec5f32932d0ce17830a4bae135edd8ec9276e544b3a35b27b15`)
-- `hexbz-factor-sweep-hex-aaabcf15-chungus2.json` (preceding Hex reference; SHA-256
-  `30e56da9aa3c6f4f50faca4ef19e5c4d4f6523362542f2d8967ca7665f62f747`)
+  `9f9f63ac9f35b3af6d35e530b085a1a1e47e7d03d958179d7597d7850e59c583`)
+
+Historical stage-isolation artifacts remain in the same directory and are
+linked from the corresponding exact-lift and guarded-tree sections above.
+
 - `hexbz-kernel-factor-8c4acebc-chungus2.json` (SHA-256
   `0b2105264881c692ac5c91a8febf6d9f5d9a5a23170b01e525af6eadc27ebb97`)
 - `berlekamp-diagnostic-a1fdbd81-chungus2.txt`

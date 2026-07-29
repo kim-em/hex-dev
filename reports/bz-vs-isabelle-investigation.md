@@ -1,26 +1,27 @@
 # BZ Versus Isabelle Investigation
 
-This comparison pairs the exact-exponent/factor-only Hex implementation and
-guarded dominant-degree tree at
-`53bb12e21c5107e9da5d837c207eb3254238967f` (2026-07-29) with
+This comparison pairs the exact-exponent/factor-only Hex implementation,
+guarded dominant-degree tree, remainder-only GCD, cached finite-field inverses,
+and linear monomial Hensel kernel at
+`0b95505b7c926911a9f487bac56676a8c7da48f6` (2026-07-29) with
 the already-current Isabelle2025-2 / AFP 2026-05-29 exports (2026-07-28).
 All three Hex rows come from that revision. All were measured on `chungus2`,
 pinned to CPU 0, against the same 392-row corpus and warm persistent-service
 protocol. The external export was not rerun because the implementation change
 is confined to Hex.
 
-The Hex artifact records a clean worktree. Measured protocol overhead was
-16.905 µs for Hex public,
-19.039 µs for Hex lattice, 18.287 µs for Hex classical, 17.777 µs for
+The Hex artifacts record clean worktrees. Measured protocol overhead was
+16.975 µs for Hex public,
+18.848 µs for Hex lattice, 18.448 µs for Hex classical, 17.777 µs for
 Isabelle BZ, and 17.136 µs for Isabelle LLL.
 
 ## Corpus frontiers
 
 | System | Solved / 392 | Solved-row median | p90 | Slowest solved |
 |---|---:|---:|---:|---:|
-| Hex public factor | 373 | 420.153 µs | 5.302 ms | 9.077 s |
-| Hex lattice | 369 | 1.838 ms | 87.386 ms | 9.901 s |
-| Hex classical, no decline | 372 | 401.736 µs | 7.184 ms | 3.818 s |
+| Hex public factor | 373 | 400.334 µs | 4.082 ms | 9.047 s |
+| Hex lattice | 369 | 1.812 ms | 87.886 ms | 9.590 s |
+| Hex classical, no decline | 372 | 389.203 µs | 5.561 ms | 3.724 s |
 | Verified Isabelle BZ | 371 | 441.134 µs | 5.128 ms | 8.363 s |
 | Verified Isabelle LLL | 314 | 6.109 ms | 1.219 s | 9.528 s |
 
@@ -37,25 +38,25 @@ protocol overhead.
 
 | Pair | Common solved | Eligible | Median ratio | p10–p90 | Hex faster | Isabelle faster |
 |---|---:|---:|---:|---:|---:|---:|
-| Hex public / verified BZ | 369 | 238 | 0.909x | 0.47x–2.64x | 127 | 111 |
-| Hex classical / verified BZ | 369 | 231 | 1.04x | 0.48x–2.78x | 110 | 121 |
-| Hex lattice / verified LLL | 313 | 229 | 0.14x | 0.005x–2.29x | 178 | 51 |
+| Hex public / verified BZ | 369 | 234 | 0.887x | 0.454x–2.513x | 135 | 99 |
+| Hex classical / verified BZ | 369 | 229 | 0.913x | 0.464x–2.568x | 128 | 101 |
+| Hex lattice / verified LLL | 313 | 230 | 0.137x | 0.004x–2.437x | 182 | 48 |
 
-The former 3.95× public/BZ median gap is now a 9.1% aggregate Hex lead.
-This is stronger than parity but not uniform superiority: the family medians
-are 2.05× on Chebyshev and 1.85× on Legendre, while Hex leads on Conway
-(0.76×), cyclotomic products (0.58×), Laguerre (0.80×), signed-digit products
-(0.82×), Swinnerton-Dyer (0.86×), and Wilkinson (0.62×). Isabelle also leads
-on cyclotomic (1.10×) and random products (1.17×). FLINT, PARI/GP, and NTL
-remain substantially faster overall.
+The former 3.95× public/BZ median gap is now an 11.3% aggregate Hex lead.
+This is clear aggregate superiority but not uniform superiority: the family
+medians are 1.64× on Chebyshev and 1.49× on Legendre, while Hex leads on Conway
+(0.75×), cyclotomic products (0.57×), Laguerre (0.79×), signed-digit products
+(0.78×), Swinnerton-Dyer (0.82×), and Wilkinson (0.60×). Cyclotomic is near
+parity (1.04×), and random products slightly favour Hex (0.98×). FLINT,
+PARI/GP, and NTL remain substantially faster overall.
 
 The conclusion does not depend on the new overhead boundary. Reapplying the
-preceding, lower 13.650 µs Hex floor gives a 0.892× median over 244 rows;
-requiring both systems to clear the larger current pair floor gives 0.916×
-over 236 rows. The remaining concern is instead the broad per-family and
-per-row spread: the four largest ratios are `sd5_shift2` at 5.31×,
-`sd5_shift1` at 5.25×, `cyclo_phi24_x_phi35` at 4.52×, and
-`conway_p2_n38` at 4.28× Hex/Isabelle.
+preceding, lower 13.650 µs Hex floor gives a 0.836× median over 243 rows;
+requiring both systems to clear the larger current pair floor gives 0.889×
+over 233 rows. On the preceding fixed 238-row eligibility set the current
+median is 0.870×. The remaining concern is instead the broad per-family and
+per-row spread: the largest ratios still include `sd5_shift2` at 5.16× and
+`sd5_shift1` at 5.12× Hex/Isabelle.
 
 The lattice entry point remains substantially faster than verified Isabelle
 LLL on its median eligible row, but it solves fewer rows and has a heavy tail.
@@ -66,8 +67,8 @@ Every factor-degree check against a committed corpus oracle passed. See
 `hexbz-factor-sweep.md` for all eight systems, plots, and artifact provenance.
 The current Hex input is:
 
-- `hexbz-factor-sweep-hex-53bb12e2-guarded-tree-all-chungus2.json`
-  (SHA-256
-  `926e91245e45523a40e8b915004bf4e0e17f01ed3547feca94589760d3e55e27`).
+- `hexbz-factor-sweep-hex-0b95505b-gcd-hensel-final-chungus2.json`
+  (public, lattice, and no-decline classical; SHA-256
+  `9f9f63ac9f35b3af6d35e530b085a1a1e47e7d03d958179d7597d7850e59c583`).
 
 The path is relative to `reports/bench-results/`.
