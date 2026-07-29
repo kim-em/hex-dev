@@ -238,6 +238,12 @@ lean_lib HexMvPolyMathlibProofProbe where
   srcDir := "bench"
   globs := #[`HexMvPolyMathlib.ProofProbe.Support,
     `HexMvPolyMathlib.ProofProbe.Baseline,
+    `HexMvPolyMathlib.ProofProbe.HexAddition32,
+    `HexMvPolyMathlib.ProofProbe.SortedAddition32,
+    `HexMvPolyMathlib.ProofProbe.HexMulSparse6,
+    `HexMvPolyMathlib.ProofProbe.SortedMulSparse6,
+    `HexMvPolyMathlib.ProofProbe.HexMulCollide8,
+    `HexMvPolyMathlib.ProofProbe.SortedMulCollide8,
     `HexMvPolyMathlib.ProofProbe.HexCancellation4,
     `HexMvPolyMathlib.ProofProbe.SortedCancellation4,
     `HexMvPolyMathlib.ProofProbe.HexCancellation6,

@@ -8,6 +8,7 @@ module
 
 public import Mathlib.Algebra.MvPolynomial.Monad
 public import Mathlib.Algebra.MvPolynomial.PDeriv
+public import Mathlib.RingTheory.MvPolynomial.Homogeneous
 public import HexBasic.Fold
 public import HexMvPolyMathlib.Aeval
 public import HexMvPolyMathlib.Recursive
@@ -15,7 +16,15 @@ public import HexMvPolyMathlib.Recursive
 public section
 
 /-!
-Correspondence lemmas for every public semantic operation of `Hex.MvPoly`.
+Correspondence lemmas for the public semantic operations of `Hex.MvPoly`:
+support and degree, direct and Horner evaluation, differentiation,
+homogeneous components, substitution and partial evaluation, renaming, and
+the recursive view.
+
+Storage-order queries such as `leadingTerm` and representation filters such as
+`restrictBy` intentionally remain characterized by their core coefficient
+laws: Mathlib's `MvPolynomial` has no corresponding explicit monomial-order
+parameter or polynomial-valued filtering operation.
 -/
 
 namespace HexMvPolyMathlib
@@ -120,6 +129,14 @@ theorem monoDegree_eq_sum (m : Mono n) :
   intro m _
   exact monoDegree_eq_sum m
 
+/-- Fixed-order Horner evaluation has the same Mathlib interpretation as
+direct algebra-hom evaluation. -/
+theorem evalHorner_eq_aeval
+    [CommSemiring R] [DecidableEq R]
+    (x : Fin n → R) (p : MvPoly n R cmp) :
+    evalHorner x p = MvPolynomial.aeval x (toMvPolynomial p) := by
+  rw [evalHorner_eq, ← aeval_eq_eval, aeval_apply]
+
 /-- Increasing one executable exponent corresponds to adding the Mathlib
 single-variable exponent. -/
 @[simp] theorem monoEquiv_succAt (i : Fin n) (m : Mono n) :
@@ -141,6 +158,22 @@ derivative. -/
     MvPolynomial.coeff_pderiv, ← monoEquiv_succAt,
     coeff_toMvPolynomial]
   simp [Mono.degreeOf, _root_.mul_comm]
+
+/-- Executable homogeneous projection agrees with Mathlib's homogeneous
+component. -/
+@[simp] theorem toMvPolynomial_homogeneousComponent
+    [CommSemiring R] [DecidableEq R]
+    (d : Nat) (p : MvPoly n R cmp) :
+    toMvPolynomial (homogeneousComponent d p) =
+      MvPolynomial.homogeneousComponent d (toMvPolynomial p) := by
+  apply MvPolynomial.ext
+  intro exponent
+  rcases monoEquiv.surjective exponent with ⟨m, rfl⟩
+  rw [coeff_toMvPolynomial, coeff_homogeneousComponent,
+    MvPolynomial.coeff_homogeneousComponent, coeff_toMvPolynomial]
+  congr 2
+  rw [Finsupp.degree_eq_sum]
+  rw [monoDegree_eq_sum, Finsupp.sum_fintype _ _ (fun _ => rfl)]
 
 /-- Executable substitution is its algebra-hom evaluation specialization. -/
 theorem subst_eq_aeval [CommSemiring R] [DecidableEq R]
@@ -167,6 +200,23 @@ theorem subst_eq_aeval [CommSemiring R] [DecidableEq R]
         (toMvPolynomial p)
   rw [MvPolynomial.comp_aeval_apply]
   simp
+
+/-- Executable partial evaluation agrees with binding assigned variables to
+constants and leaving the other variables unchanged. -/
+@[simp] theorem toMvPolynomial_partialEval
+    [CommSemiring R] [DecidableEq R]
+    (s : Fin n → Option R) (p : MvPoly n R cmp) :
+    toMvPolynomial (partialEval s p) =
+      MvPolynomial.bind₁
+        (fun i =>
+          match s i with
+          | some x => MvPolynomial.C x
+          | none => MvPolynomial.X i)
+        (toMvPolynomial p) := by
+  rw [partialEval_eq_subst, toMvPolynomial_subst]
+  congr 2
+  funext i
+  cases s i <;> simp
 
 /-- The compatibility spelling `bind₁` has the same Mathlib correspondence
 as substitution. -/

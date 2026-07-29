@@ -3,7 +3,7 @@
 ## Bench Targets
 
 The Mathlib-free compiled suite is registered in
-`bench/HexMvPolyBench/Bench.lean`. Inputs come from the shared deterministic
+`bench/HexMvPoly/Bench.lean`. Inputs come from the shared deterministic
 corpus in `bench/HexMvPolyBench/Corpus.lean`; no random seed is involved.
 
 | target | input family | declared model |
@@ -43,23 +43,25 @@ operation.
 
 ### Consumer acceptance
 
-The public surface was compiled against both named consumers:
+The public surface was compiled against both named consumers. The exact
+migrations and builds are reproducible with
+`scripts/bench/setup_hex_mv_poly_consumers.py`.
 
 - `leanprover/sos` at `4e52845513a5a7f70927c96e094592db1bf124d1`
   was migrated through a compatibility module aliasing its old canonical
   multivariate types to `Hex.MvPoly`. `SOS.Certificate`, `SOS.Symmetry`,
-  `SOS.EqElim`, `SOS.Verifier`, `SOS.Reify`, `SOS.Lift`, and `SOS.LDL` built,
-  and `lake build +SOS.Verifier:olean` passed. A full executable link reaches
-  the host's missing BLAS/LAPACK static dependency only after all affected
-  Lean modules elaborate.
+  `SOS.EqElim`, and `SOS.Verifier` built in a fresh clone (1,523 jobs), and
+  `lake build +SOS.Verifier:olean` passed without consumer-local Grind
+  instances. A full executable link reaches the host's missing BLAS/LAPACK
+  static dependency only after all affected Lean modules elaborate.
 - `Verified-zkEVM/CompPoly` at
   `f4c59f9e6a00b4e73f3e43ca362480468a508011` was migrated to the public
   `isEmptyRingEquiv`, `finSuccEquiv`, and dense-polynomial bridges.
   `lake build CompPoly.Univariate.CMvEquiv CompPoly.Bivariate.CMvEquiv`
-  passed all 1,891 jobs under Lean `4.32.0-rc1`.
+  passed all 1,902 jobs under Lean `4.32.0-rc1` in a fresh clone.
 
-These are compile-acceptance overlays in temporary pinned clones, not edits to
-the upstream consumer repositories.
+The setup script applies compile-acceptance overlays in temporary pinned
+clones; it does not edit the upstream consumer repositories.
 
 ## Verdicts
 

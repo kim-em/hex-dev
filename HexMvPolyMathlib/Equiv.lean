@@ -38,6 +38,22 @@ variable {n : Nat} {R : Type u}
 
 noncomputable section
 
+/-!
+Mathlib's algebraic structures are the canonical source of the executable
+`Lean.Grind` operations in this bridge. The elevated priority is important for
+coefficient types such as `Int` and `Rat`, which also have native Grind
+instances: without normalization, an ambient `p * q` can select a different
+`Mul (MvPoly ..)` from the one transported below.
+-/
+
+@[implicit_reducible]
+instance (priority := 2000) [CommSemiring R] : Lean.Grind.CommSemiring R :=
+  CommSemiring.toGrindCommSemiring R
+
+@[implicit_reducible]
+instance (priority := 2000) [CommRing R] : Lean.Grind.CommRing R :=
+  CommRing.toGrindCommRing R
+
 /-- A fixed-arity exponent vector is equivalent to a finitely supported
 function on the finite variable type. -/
 def monoEquiv : Mono n ≃ (Fin n →₀ Nat) where
@@ -505,6 +521,18 @@ def algEquiv [CommSemiring R] [DecidableEq R] :
     (p : MvPolynomial (Fin n) R) :
     (algEquiv (cmp := cmp)).symm p = ofMvPolynomial (cmp := cmp) p := by
   rfl
+
+section InstanceCoherence
+
+example (p q : MvPoly n Int Mono.lex) :
+    toMvPolynomial (p * q) = toMvPolynomial p * toMvPolynomial q := by
+  simp
+
+example (p q : MvPoly n Rat Mono.lex) :
+    toMvPolynomial (p * q) = toMvPolynomial p * toMvPolynomial q := by
+  simp
+
+end InstanceCoherence
 
 end
 

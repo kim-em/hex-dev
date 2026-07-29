@@ -418,10 +418,16 @@ libraries:
       comparators:
         - tool: "Mathlib MvSparsePoly"
           class: informational
-          rationale: "The Mathlib sorted-list representation is the kernel-reflection comparator used to decide whether HexMvPoly needs a second representation."
+          rationale: "Mathlib MvSparsePoly is not yet available in the pinned Mathlib revision, so a local canonical sorted-list proxy with linear merge addition and balanced translated-row multiplication is used to decide whether HexMvPoly needs a second representation."
       input_families:
+        - name: kernel-sparse-addition
+          description: Disjoint, interleaved, and scattered supports checked under lex and grevlex, including an arity-eight case.
+        - name: kernel-sparse-multiplication
+          description: Low-collision integer and high-collision rational products checked across lex and arity-eight grevlex representations.
         - name: kernel-cancellation-identities
           description: Cancellation-heavy integer and rational identities checked from a downstream module with decide +kernel.
+        - name: kernel-structural-collisions
+          description: Rename and substitution identities whose distinct source terms collide in the destination support.
         - name: kernel-sos-certificates
           description: Representative sum-of-squares certificate identities checked from a downstream module with decide +kernel.
   HexMatrixMathlib:
