@@ -1170,7 +1170,9 @@ operation key, establish `sin x ∈ [0,1]` from `x ∈ [0,2]`, and propagate thi
 to `-(sin x) ∈ [-1,0]`; generic equality transport then contracts the original
 node. The package semantics is structural over arbitrary programs rather than
 a literal lookup table for the two test programs, and the concrete source
-model has an explicit non-vacuity witness.
+model has an explicit non-vacuity witness. The generic composed-extension
+checker returns the `sin (-x) ∈ [-1,0]` theorem directly over the caller's base
+program; no sine-specific post-replay lift is used.
 
 This remains an experiment rather than the production checker. Its complete
 program snapshot per instance and repeated prefix scans are a correctness

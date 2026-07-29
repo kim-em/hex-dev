@@ -867,6 +867,11 @@ def meetEvidence (previous proposed installed : Fact) :
 
 def proofDomain : FactDomainSchema semantics :=
   { top := fun _ => .top
+    holdsPrefix := by
+      intro _ _ valuation extended fact _ agreement
+      change fact.fact.Allows (valuation fact.node) ↔
+        fact.fact.Allows (extended fact.node)
+      rw [agreement]
     topSound := by
       intro _ _ _ _ _ _
       trivial
@@ -904,7 +909,7 @@ def acceptsTrace (trace : Trace Fact) : Bool :=
 
 def checked? :
     Option (Evidence
-      (semantics.Entails extendedProgram
+      (semantics.Entails baseProgram
         (initialContext checkerInput) checkerInput.target)) :=
   match SemanticReplay.Registry.buildPackages runtimePackages semanticPackages with
   | .error _ => none
@@ -922,53 +927,16 @@ theorem rejects_wrong_sin_identity_method :
     acceptsTrace wrongSinIdentityMethodTrace = false := by
   decide +kernel
 
-/-- Transparent replay proves the requested interval for the original
-`sin (-x)` node in the checked extended expression program. -/
-theorem extended_sin_neg_mem :
-    semantics.Entails extendedProgram
+/-- The generic checker composes the package-owned extension proof and returns
+the requested interval directly over the caller's original program. -/
+theorem checkedSinNegMem :
+    semantics.Entails baseProgram
       (initialContext checkerInput) checkerInput.target := by
   match result : checked? with
   | some evidence => exact evidence.proof
   | none =>
       have accepted := checked_isSome
       simp [result] at accepted
-
-/-- Temporary vertical lift to the caller's original program.
-
-The instance schema checks the same structural `sinNegExtends` theorem, but
-the current generic replay API discards that evidence after validation and
-has no cross-program stability law for `Semantics.holds`. This theorem is
-therefore a canary to delete once replay returns a composed extension witness
-and the fact semantics exposes that stability law. -/
-theorem temporaryBaseSinNegMem :
-    semantics.Entails baseProgram
-      (initialContext checkerInput) checkerInput.target := by
-  intro valuation model initial
-  obtain ⟨extended, extendedModel, agreement⟩ :=
-    sinNegExtends valuation model
-  have extendedInitial :
-      ∀ assumption, assumption ∈ initialContext checkerInput ->
-        semantics.holds extendedProgram extended assumption := by
-    intro assumption member
-    have before : assumption.node.index < baseProgram.nodes.size := by
-      have listed := member
-      simp [initialContext, initialContextFrom, checkerInput] at listed
-      rcases listed with equal | equal | equal
-      all_goals subst assumption
-      all_goals decide
-    have holds := initial assumption member
-    have equal := agreement assumption.node before
-    change assumption.fact.Allows (valuation assumption.node) at holds
-    change assumption.fact.Allows (extended assumption.node)
-    rw [equal]
-    exact holds
-  have result :=
-    extended_sin_neg_mem extended extendedModel extendedInitial
-  have equal := agreement (node 2) (by decide)
-  change Fact.negOneZero.Allows (extended (node 2)) at result
-  change Fact.negOneZero.Allows (valuation (node 2))
-  rw [equal] at result
-  exact result
 
 def concreteValuation (x : ℝ) : NodeId -> ℝ :=
     fun current =>
@@ -998,7 +966,7 @@ theorem baseModelsNonempty (x : ℝ) :
   ⟨concreteValuation x, concreteModels x, by simp [concreteValuation, node]⟩
 
 /-- The concrete Mathlib-facing theorem discharged by the arbitrary
-propagator trace, modulo the explicitly temporary base-program lift above. -/
+propagator trace and the generic base-program lift. -/
 theorem realSinNegBounds :
     ∀ x : ℝ, 0 ≤ x -> x ≤ 2 ->
       -1 ≤ Real.sin (-x) ∧ Real.sin (-x) ≤ 0 := by
@@ -1017,7 +985,7 @@ theorem realSinNegBounds :
     · subst assumption
       trivial
   have result :=
-    temporaryBaseSinNegMem (concreteValuation x) (concreteModels x) initial
+    checkedSinNegMem (concreteValuation x) (concreteModels x) initial
   change Fact.negOneZero.Allows (concreteValuation x (node 2)) at result
   simpa [Fact.Allows, concreteValuation, node] using result
 
