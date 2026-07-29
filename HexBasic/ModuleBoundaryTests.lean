@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBasic.ArrayDecEq
+public import HexBasic.ExtTreeMap
 public import HexBasic.OfFn
 
 open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
@@ -23,6 +24,10 @@ a same-module test passes whether or not the workaround is present and proves
 nothing. Without the workarounds, the examples fail against core's
 {name}`Array.instDecidableEq`, {name}`Vector`'s derived instance, or
 {name}`Array.ofFn`.
+
+The final section also checks that the exposed `ExtTreeMap` merge/traversal
+closure remains kernel-reducible after crossing a module boundary; retain it
+when the array/vector workarounds are eventually removed.
 -/
 
 namespace Hex.ModuleBoundaryTests
@@ -59,6 +64,43 @@ An exponent vector built with `ofFn'` and compared for equality. -/
 example :
     (Vector.ofFn' (n := 3) (fun j => if j = 1 then 1 else 0) : Vector Nat 3)
       ≠ Vector.ofFn' (fun j => if j = 2 then 1 else 0) := by
+  decide +kernel
+
+/-! # `ExtTreeMap` joint traversal and size-biased merge -/
+
+example :
+    Std.ExtTreeMap.foldl₂
+        (fun acc key left right => acc ++ [(key, left, right)])
+        []
+        (Std.ExtTreeMap.ofList [(0, 10), (2, 12)] compare)
+        (Std.ExtTreeMap.ofList [(1, 21), (2, 22), (3, 23)] compare) =
+      [(0, some 10, none), (1, none, some 21), (2, some 12, some 22),
+        (3, none, some 23)] := by
+  decide +kernel
+
+/-- Joint traversal also drains a nonempty left tail after the right side is
+exhausted. -/
+example :
+    Std.ExtTreeMap.foldl₂
+        (fun acc key left right => acc ++ [(key, left, right)])
+        []
+        (Std.ExtTreeMap.ofList [(0, 10), (5, 15)] compare)
+        (Std.ExtTreeMap.ofList [(1, 21)] compare) =
+      [(0, some 10, none), (1, none, some 21), (5, some 15, none)] := by
+  decide +kernel
+
+/-- The left value stays first when the left map is smaller. -/
+example :
+    (Std.ExtTreeMap.mergeWith? (fun _ left _ => some left)
+      (Std.ExtTreeMap.ofList [(1, 10)] compare)
+      (Std.ExtTreeMap.ofList [(1, 20), (2, 20)] compare))[1]? = some 10 := by
+  decide +kernel
+
+/-- The left value stays first when the right map is smaller. -/
+example :
+    (Std.ExtTreeMap.mergeWith? (fun _ left _ => some left)
+      (Std.ExtTreeMap.ofList [(0, 10), (1, 10)] compare)
+      (Std.ExtTreeMap.ofList [(1, 20)] compare))[1]? = some 10 := by
   decide +kernel
 
 end Hex.ModuleBoundaryTests

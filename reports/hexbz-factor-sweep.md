@@ -1,10 +1,13 @@
 # HexBZ Cross-System Factorization Sweep
 
-The current public-factor measurement is revision
-`567b5aea0c22d13fcf43541b5371717823870999`; the current lattice and
+The current public-factor measurement covers the exact-exponent/factor-only
+Hensel implementation over base revision
+`b4b3675472f58958c9c2f9b2ab2f7aae16c3dc62`; the current lattice and
 no-decline classical measurements are revision
-`aaabcf1520121b4acaa793811c8567dddcf39f1f`. Both clean exports were measured
-2026-07-29 on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0. The
+`aaabcf1520121b4acaa793811c8567dddcf39f1f`. Both were measured 2026-07-29
+on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0. The public
+artifact records `git_dirty = true` because that measured runtime patch was
+pending over its stated base; the classical/lattice artifact is clean. The
 FLINT, PARI/GP, NTL, and Isabelle measurements are the already-current
 2026-07-28 exports from the same host, corpus, CPU placement, and timing
 protocol. They were not rerun because this change only modifies Hex.
@@ -36,6 +39,8 @@ session and Haskell-export builds completed before the timed sweeps.
   call
 - Early termination: disabled
 - Warm line-protocol services; per-system protocol overhead recorded in JSON
+- Solved-runtime p90 uses nearest rank; paired-ratio p10–p90 uses inclusive
+  linearly interpolated deciles
 - Cross-check: committed `expectedFactorDegrees` for 385 oracle-backed rows;
   pairwise factor counts for the seven no-oracle Hoeij rows
 
@@ -43,7 +48,7 @@ session and Haskell-export builds completed before the timed sweeps.
 
 | System | OK | Timeout | p50 solved | p90 solved | Slowest solved | Protocol overhead |
 |---|---:|---:|---:|---:|---:|---:|
-| Hex public factor | 373 | 19 | 443.618 µs | 8.408 ms | 9.161 s | 13.650 µs |
+| Hex public factor | 373 | 19 | 424.039 µs | 5.577 ms | 8.986 s | 17.196 µs |
 | Hex lattice | 369 | 23 | 1.957 ms | 91.186 ms | 10.000 s | 19.118 µs |
 | Hex classical, no decline | 372 | 20 | 423.939 µs | 9.029 ms | 3.845 s | 18.527 µs |
 | FLINT | 391 | 1 | 66.850 µs | 1.184 ms | 1.228 s | 19.219 µs |
@@ -61,16 +66,18 @@ factor-count result on the seven rows without a committed degree oracle;
 FLINT, PARI/GP, and NTL factor counts agree on all seven.
 
 Relative to the pre-hot-path Hex record, the public median fell from 1.244 ms
-to 443.618 µs and retained two additional solves, `sd5_x_phi45` and `sd6`.
+to 424.039 µs and retained two additional solves, `sd5_x_phi45` and `sd6`.
 The current no-decline classical entry now also solves `sd5_x_phi45`, leaving
 `sd6` as the public dispatcher's one additional frontier success.
 
-On 240 common rows for which both current Hex measurements are at least 10×
-their own protocol overhead, public/classical has median 1.015× and
-p10–p90 0.77×–1.10×. Public is faster on 69 and classical on 171. Thus the
-production dispatcher still pays a small ordinary-row cost—about 1.5% at the
-paired median—while its bounded classical tier and fallbacks substantially
-improve the hard tail and add the `sd6` solve.
+On 238 common rows for which both current Hex measurements are at least 10×
+their own protocol overhead, public/classical has median 0.996× and
+p10–p90 0.49×–1.08×. Public is faster on 126 and classical on 112. The
+production dispatcher is therefore tied with the isolated classical route in
+the middle while its bounded classical tier and fallbacks substantially
+improve the hard tail and add the `sd6` solve. The preceding 1.5% classical
+lead was real but small dispatch overhead before the production lifting work,
+not evidence of a fundamentally faster classical algorithm.
 
 The improvement is broad but not universal. Family medians below compare the
 fresh public service with the preceding Hex public record; values below 1 are
@@ -78,22 +85,22 @@ faster.
 
 | Family | Common rows | Median new/old | Rows slower |
 |---|---:|---:|---:|
-| Certificate boundary | 1 | 0.379× | 0 |
-| Chebyshev | 28 | 0.334× | 2 |
-| Conway | 186 | 0.298× | 0 |
-| Cyclotomic | 32 | 0.627× | 0 |
-| Cyclotomic products | 19 | 0.633× | 0 |
-| Laguerre | 20 | 0.366× | 0 |
-| Legendre | 20 | 0.307× | 0 |
-| Random products | 30 | 0.363× | 0 |
-| Signed-digit products | 9 | 0.477× | 0 |
-| Swinnerton-Dyer | 11 | 0.240× | 0 |
-| Wilkinson | 15 | 1.149× | 9 |
+| Certificate boundary | 1 | 0.373× | 0 |
+| Chebyshev | 28 | 0.307× | 2 |
+| Conway | 186 | 0.326× | 2 |
+| Cyclotomic | 32 | 0.641× | 1 |
+| Cyclotomic products | 19 | 0.634× | 0 |
+| Laguerre | 20 | 0.254× | 0 |
+| Legendre | 20 | 0.242× | 0 |
+| Random products | 30 | 0.263× | 0 |
+| Signed-digit products | 9 | 0.455× | 0 |
+| Swinnerton-Dyer | 11 | 0.264× | 0 |
+| Wilkinson | 15 | 0.920× | 5 |
 
-Wilkinson remains the one family slower than the pre-hot-path record, by a
-1.149× median. The latest bounded prime policy improves that family to a
-0.935× median relative to the immediately preceding Hex export, although
-`wilkinson_56` alone regresses by 1.30×.
+Every family median now improves over the pre-hot-path record. Wilkinson,
+previously the lone slower family, is 0.920×; `wilkinson_56` remains 1.26×
+slower than its pre-policy value but is 0.97× relative to the immediately
+preceding public export.
 
 ## Charts
 
@@ -117,9 +124,12 @@ uv run --with matplotlib python3 scripts/plots/hexbz-cactus.py
 
 Fresh Hex exports:
 
-- `reports/bench-results/hexbz-factor-sweep-hex-567b5aea-chungus2.json`
+- `reports/bench-results/hexbz-factor-sweep-hex-b4b36754-exact-factor-only-chungus2.json`
   (public factor; SHA-256
-  `f3bf572df064788203da76fcb5ede2a20e376bb2fa2ff448c4bc2d244157bd63`)
+  `090b594a14b12af8332fef091d2bd8ca5652c3e7566e6bd452a984eb473a058a`)
+- `reports/bench-results/hexbz-factor-sweep-hex-b4b36754-exact-only-chungus2.json`
+  (same-day factor-only A/B reference; SHA-256
+  `4ceadcbb1dd54f7e49d77efdd3ed199cb84633fb54c733a6041afa2118ddf9b2`)
 - `reports/bench-results/hexbz-factor-sweep-hex-aaabcf15-chungus2.json`
   (lattice and no-decline classical; SHA-256
   `30e56da9aa3c6f4f50faca4ef19e5c4d4f6523362542f2d8967ca7665f62f747`)
