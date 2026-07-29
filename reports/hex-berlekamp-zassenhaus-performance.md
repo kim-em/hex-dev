@@ -97,9 +97,9 @@ sequential versus 6.541 ms balanced on the Mignotte schedule.
 Raw diagnostic artifacts:
 
 - `berlekamp-diagnostic-a1fdbd81-chungus2.txt` (SHA-256
-  `76f28eb9e779f4672a3138c8167de2d6849b28a899609bff19227a378151af52`)
+  `03e59491ed588ca377ece2ef387450ba699ef9e63d323db50e6c36fa17f265b5`)
 - `bz-spikes-a1fdbd81-chungus2.txt` (SHA-256
-  `cd0cd2c0ecc5c6a3fc6bdd2b08a5f4b114403aa7510fab75048fba4db9c17477`)
+  `cc3fcb6457177d72378130e0bad077e5beea1cea49b7bc9b492fb1b0ec580223`)
 
 Both paths are relative to `reports/bench-results/`.
 

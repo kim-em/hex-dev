@@ -53,4 +53,3 @@ after  SD3   deg  8: 1.577549 ms (coreFactors=1, sink=12339489461881267390)
 after  SD4   deg 16: 28.556777 ms (coreFactors=1, sink=10635310798412723221)
 after  SD5   deg 32: 238.245467 ms (coreFactors=1, sink=9047904015630793366)
 after  SD6   deg 64: 8491.754447 ms (coreFactors=1, sink=7773109907390136533)
-

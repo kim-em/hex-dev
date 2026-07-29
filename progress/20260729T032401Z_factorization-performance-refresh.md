@@ -18,19 +18,21 @@
   record, 373/392 solved rows, and a 1.09× eligible-row median against verified
   Isabelle BZ, together with the Wilkinson, cutoff-margin, external-system,
   and tactic-import regressions.
-- Passed the Phase 4 report checks, DAG check, diff whitespace check, focused
-  native cross-checks, and the Mathlib factorization build.
+- Passed the 9,629-job full build, Phase 4 report checks, DAG check, focused
+  native cross-checks, conformance/release-test targets, the BZ trace gate, and
+  the relevant bench smoke gates (including FLINT fixtures in a transient
+  `python-flint` environment).
 
 ## Current frontier
 
 The implementation, ownership correction, benchmark artifacts, and reports
-are rebased onto `61a78096` and ready for final full-tree validation and
-publication. The intervening mainline change is confined to resultant proofs.
+are fully validated on `61a78096` and ready for publication. The intervening
+mainline change is confined to resultant proofs.
 
 ## Next step
 
-Run `lake build`, open the PR, monitor all GitHub Actions jobs to completion,
-and merge when green.
+Open the PR, monitor all GitHub Actions jobs to completion, and merge when
+green.
 
 ## Blockers
 

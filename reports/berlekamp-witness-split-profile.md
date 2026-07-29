@@ -31,7 +31,7 @@ the instrumented total.
 Raw stdout:
 `reports/bench-results/berlekamp-diagnostic-a1fdbd81-chungus2.txt`
 (SHA-256
-`76f28eb9e779f4672a3138c8167de2d6849b28a899609bff19227a378151af52`).
+`03e59491ed588ca377ece2ef387450ba699ef9e63d323db50e6c36fa17f265b5`).
 
 Reproduce with:
 
