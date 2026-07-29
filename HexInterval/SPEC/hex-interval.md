@@ -596,6 +596,45 @@ Anchor-local inspection adds no wakeup beyond the declared fact slots; a rule
 which reads the whole view declares `watchesProgram`, making program extension
 an explicit dependency.
 
+The transparent structural-cursor module is the reference semantics for
+bounded whole-network matching. It enumerates the append-only node, equality,
+and concrete-application identifier spaces in that fixed order. Each epoch
+freezes its three size ceilings; growth cannot move the unseen suffix, and
+renewal after exhaustion exposes exactly the appended delta. A batch consumes
+the minimum of its yield quantum, the epoch remainder, and the remaining
+cumulative visit budget, so a final partial allowance is not stranded.
+
+Live ownership is stricter than the transparent model. A whole-network matcher
+uses one `global` application per registration, anchored at the first node
+whose operation has the declared head. Later nodes with that head do not
+compile duplicate global scans. The engine stores its cursor in an array
+aligned with concrete applications and keeps a prepared next cursor outside
+the registry request. The package receives only the exact bounded list of
+structural identifiers and engine-owned creation generations. It supplies no
+cursor and no completion claim. A valid reply commits the prepared cursor and
+visit charge; a mismatched or malformed reply does not. An unexhausted epoch
+requeues the same application, while append-only program growth wakes an
+exhausted matcher and renewal exposes only the new delta.
+
+The FIFO and replaceable-policy schedulers use the same matcher preparation.
+Policy invocation keys include the batch and epoch. Exhausted matcher-visit
+capacity remains a visible blocked offer whose selection reports the exact
+engine resource; it cannot disappear and manufacture a false fixed point.
+Policy traversal charges the configured batch bound before constructing these
+semantic keys. The present implementation conservatively treats every item in
+an issued batch as a causal input for theorem-instantiation generation. A
+future engine-compiled matcher may return a smaller engine-validated match
+certificate, but an external package may not under-report causal reads merely
+to evade generation limits.
+
+The experimental `Engine` record and transparent cursor constructors remain
+public for mutation and representation comparisons. Production obtains the
+authority boundary by hiding the engine constructor, not by claiming that the
+reference cursor type itself is unforgeable. Selective operation-key indexes,
+compiled patterns, and richer equality/application projections remain
+compatible replacements for the reference enumerator; they must preserve its
+batch, generation, replay, resource, and completion semantics.
+
 `ProgramView.programVersion` equals the engine-owned version in the action for
 that invocation. An append-only extension creates subsequent requests with
 the new arrays and version. An anchor-local proposal may remain fresh when its
@@ -1055,15 +1094,17 @@ registry request exposes exactly the declared read facts and write targets. It
 provides no unrestricted fact getter: a hidden fact read would be absent from
 the dependency index and could miss a required wakeup.
 
-A registration whose matcher depends on the whole `ProgramView` sets
-`watchesProgram`. Every append-only extension then stales its old action and
-requeues all existing applications of that registration. This coarse trigger
-is the first grind-like instantiation mechanism: a matcher that was previously
-inapplicable can observe expressions introduced by another package. Ordinary
-anchor-local registrations remain append-stable; they do not acquire a global
-dependency merely because engine-owned admission may CSE one of their outputs.
-Compiled structural patterns or more selective operation-key triggers remain
-alternatives to compare once the behavior is established.
+A registration whose matcher depends on the whole `ProgramView` uses the
+`global` binding, the `network` structural watch, and `watchesProgram`. Every
+append-only extension then stales its old action and requeues that
+registration's single global application. This coarse trigger is the first
+grind-like instantiation mechanism: a matcher that was previously inapplicable
+can observe expressions introduced by another package without compiling one
+whole-network scan per matching expression. Ordinary anchor-local and scoped
+registrations remain append-stable; they do not acquire a global dependency
+merely because engine-owned admission may CSE one of their outputs. Compiled
+structural patterns or more selective operation-key triggers remain
+alternatives to compare against the same reference stream.
 
 1. The solver produces an `Action` naming a program snapshot, concrete rule
    application, anchor, declared input fact versions, effort, and action kind.

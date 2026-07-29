@@ -13,17 +13,17 @@ public import HexInterval.Experiment.Propagator
 /-!
 # Bounded structural matcher cursor
 
-This reference experiment gives the engine, rather than a function package, an
-append-stable cursor over the structural objects in one propagation network.
-It deliberately uses three linear identifier streams and freezes a snapshot
-ceiling for each cursor epoch.  Indexed and compiled matchers can later be
-compared against this exact stream without changing its completion or replay
-contract.
+This transparent reference API exposes the append-stable cursor model used by
+the propagation scheduler.  The pure constructors and stepping functions stay
+public so indexed and compiled matchers can be compared against the exact
+reference stream.  Authority does not come from this module: live cursors,
+prepared progress, and cumulative work accounting are stored by `Engine`, and
+a function package receives only the resulting bounded input batch.
 
 The package may filter the returned structural inputs and propose arbitrary
-expressions, equalities, or scoped propagators.  It cannot claim that
-enumeration is complete: exhaustion is derived solely from the engine-owned
-cursor.  Network growth during an epoch does not change its frozen suffix;
+expressions, equalities, or scoped propagators.  In the intended integration it
+will not supply a completion bit: the scheduler will derive exhaustion from
+its cursor.  Network growth during an epoch does not change the frozen suffix;
 after exhaustion, renewal exposes exactly the appended delta.
 -/
 
