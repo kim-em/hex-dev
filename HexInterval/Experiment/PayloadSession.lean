@@ -158,13 +158,11 @@ def Session.complete (session : Session Fact) : Bool :=
     !session.engine.suggestions.any fun retained =>
       retained.suggestion.affectsClosure
 
-private def outcomeDropsWork (engine : Engine Fact) : Outcome Fact -> Bool
+/-- Negative package outcomes which explicitly abandon required rule work.
+Suggestion loss is taken from the engine-returned admission plan instead. -/
+private def outcomeDropsWork : Outcome Fact -> Bool
   | .resourceLimit _ | .failed _ => true
-  | .success _ suggestions _ =>
-      match engine.suggestionPlan suggestions with
-      | .ready plan => plan.dropped.any Suggestion.affectsClosure
-      | .malformed => false
-  | .noChange _ | .inapplicable => false
+  | .success _ _ _ | .noChange _ | .inapplicable => false
 
 /-- Check the two outer reply lists using the engine's own trusted bounds
 before the arena traverses payload uses or drafts. Nested instantiation lists
@@ -192,7 +190,7 @@ private def failPayload (session : Session Fact) (engine : Engine Fact)
     (registry : Registry Fact) (action : Action)
     (error : PayloadArena.Invalid) : Step Fact :=
   match engine.submit (action.reply (.failed PayloadFailureCode.rejected)) with
-  | .accepted next =>
+  | .accepted _ next =>
       .invalidPayload error
         (commit session next registry session.arena true)
   | .invalid replyError next =>
@@ -209,7 +207,7 @@ private def rejectPayload (session : Session Fact) (engine : Engine Fact)
     (registry : Registry Fact) (action : Action)
     (resource : PayloadArena.Resource) : Step Fact :=
   match engine.submit (action.reply (.failed PayloadFailureCode.rejected)) with
-  | .accepted next =>
+  | .accepted _ next =>
       .rejectedPayload resource
         (commit session next registry session.arena true)
   | .invalid replyError next =>
@@ -229,7 +227,7 @@ opaque Session.advance (session : Session Fact) : Step Fact :=
       let (plan, registry) := session.registry.invokePlanned request
       if !outcomeListsBounded engine.limits plan.outcome then
         match engine.submit (request.action.reply plan.outcome) with
-        | .accepted _ =>
+        | .accepted _ _ =>
             -- Defensive against validation drift: never retain an unfrozen
             -- accepted outcome from this pre-screen rejection path.
             .invalidEngine (haltRegistry session engine.finishReply registry)
@@ -253,10 +251,11 @@ opaque Session.advance (session : Session Fact) : Step Fact :=
                   (haltRegistry session engine.finishReply registry)
         | .ready arena outcome =>
             match engine.submit (request.action.reply outcome) with
-            | .accepted next =>
+            | .accepted admission next =>
                 .advanced
                   (commit session next registry arena
-                    (session.droppedWork || outcomeDropsWork engine outcome))
+                    (session.droppedWork || outcomeDropsWork outcome ||
+                      admission.affectsClosure))
             | .invalid error next =>
                 .invalidReply error (haltRegistry session next registry)
             | .resourceLimit resource next =>

@@ -687,9 +687,9 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
       | _ => false
   | .error _ => false
 
--- Completeness uses the engine's exact retained-prefix calculation. Here the
--- two harmless splits fit, while a closure-relevant retry is the one item
--- dropped by the cap.
+-- Completeness consumes the engine's exact admission plan. Here the two
+-- harmless splits fit, while a closure-relevant retry is the sole capacity
+-- drop (not a structural-depth drop).
 #guard
   match PayloadSession.Session.start factDomain program #[overflowPackage]
       #[3, 0, 0] overflowLimits overflowArenaLimits with
@@ -698,6 +698,8 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
       | .advanced next =>
           next.engine.suggestions.size == 2 &&
             next.engine.metrics.droppedSuggestions == 1 &&
+            next.engine.metrics.capacityDrops == 1 &&
+            next.engine.metrics.depthDrops == 0 &&
             next.droppedWork && !next.complete
       | _ => false
   | .error _ => false
