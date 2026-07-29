@@ -297,7 +297,7 @@ private def pruneSuggestions (state : State Fact) : State Fact := Id.run do
           clocks := clocks.set! index { clock with active := false }
           match state.engine.suggestions[index]? with
           | some retained =>
-              if retained.suggestion.affectsClosure then incomplete := true
+              if Suggestion.affectsClosure retained.suggestion then incomplete := true
           | none => pure ()
     | none => pure ()
   return { state with suggestions := clocks, incomplete }
@@ -734,7 +734,7 @@ closure of the current scope. -/
 opaque State.dismiss (state : State Fact) (selection : Selection) : SelectResult Fact :=
   match state.validate selection with
   | .error reason => reject state reason
-  | .ok offer =>
+  | .ok _ =>
       let next := match selection.id with
         | .application application =>
             let engine :=
@@ -747,10 +747,13 @@ opaque State.dismiss (state : State Fact) (selection : Selection) : SelectResult
             { advanceState (chargeDecision state .dismissal) engine with incomplete := true }
         | .suggestion suggestion =>
             let next := chargeDecision (consumeSuggestion state suggestion) .dismissal
-            match offer.key with
-            | .split _ _ _ _ => next
-            | .retry _ _ | .instantiate _ _ | .invoke _ | .equality _ =>
-                { next with incomplete := true }
+            match state.engine.suggestions[suggestion.index]? with
+            | some retained =>
+                if Suggestion.affectsClosure retained.suggestion then
+                  { next with incomplete := true }
+                else
+                  next
+            | none => { next with incomplete := true }
       .completed .dismissed next
 
 /-! # Exact rule observations -/
