@@ -67,6 +67,13 @@ def _poly(record: dict[str, Any]):
     return Poly(expr, *gens, domain="ZZ")
 
 
+def _monomial_order(name: str):
+    """Resolve an order name to the object expected by all supported SymPy versions."""
+    from sympy.polys.orderings import monomial_key
+
+    return monomial_key(name)
+
+
 def _canonical_terms(record: dict[str, Any], order: str | None = None) -> list[Any]:
     """Return ascending Hex-order ``[[exponents], coefficient]`` terms."""
     arity = record["arity"]
@@ -79,7 +86,9 @@ def _canonical_terms(record: dict[str, Any], order: str | None = None) -> list[A
     # increasing, hence the reversal.
     return [
         [list(monomial), int(coefficient)]
-        for monomial, coefficient in reversed(polynomial.terms(order=chosen_order))
+        for monomial, coefficient in reversed(
+            polynomial.terms(order=_monomial_order(chosen_order))
+        )
         if coefficient != 0
     ]
 
@@ -96,7 +105,9 @@ def _record_from_expr(
         poly = Poly(expr, *gens, domain="ZZ")
         terms = [
             [list(monomial), int(coefficient)]
-            for monomial, coefficient in reversed(poly.terms(order=order))
+            for monomial, coefficient in reversed(
+                poly.terms(order=_monomial_order(order))
+            )
             if coefficient != 0
         ]
     return {
