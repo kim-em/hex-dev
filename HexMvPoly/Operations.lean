@@ -103,16 +103,60 @@ instance [Lean.Grind.Semiring R] [DecidableEq R] :
 theorem coeff_add [Lean.Grind.Semiring R] [DecidableEq R]
     (m : Mono n) (p q : MvPoly n R cmp) :
     coeff m (p + q) = coeff m p + coeff m q := by
-  sorry
+  have aux : ∀ (ts : List (Mono n × R)) (init : MvPoly n R cmp),
+      coeff m (ts.foldl (fun acc t => acc.addMonomial t.1 t.2) init) =
+        (ts.filter (fun t => t.1 = m)).foldl
+          (fun acc t => acc + t.2) (coeff m init) := by
+    intro ts
+    induction ts with
+    | nil =>
+      intro init
+      rfl
+    | cons t ts ih =>
+      intro init
+      rw [List.foldl_cons, ih]
+      by_cases ht : t.1 = m
+      · simp [ht, coeff_addMonomial]
+      · have hmt : m ≠ t.1 := fun h => ht h.symm
+        simp [ht, hmt, coeff_addMonomial]
+  have fold_start : ∀ (ts : List (Mono n × R)) (a : R),
+      ts.foldl (fun acc t => acc + t.2) a =
+        a + ts.foldl (fun acc t => acc + t.2) 0 := by
+    intro ts
+    induction ts with
+    | nil =>
+      intro a
+      exact (Lean.Grind.AddCommMonoid.add_zero a).symm
+    | cons t ts ih =>
+      intro a
+      rw [List.foldl_cons, ih (a + t.2), List.foldl_cons,
+        ih (0 + t.2)]
+      rw [Lean.Grind.AddCommMonoid.zero_add,
+        Lean.Grind.AddCommMonoid.add_assoc]
+  change coeff m (add p q) = coeff m p + coeff m q
+  unfold add foldTerms
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList, aux, fold_start]
+  have hq :
+      (q.termsInternal.toList.filter (fun t => t.1 = m)).foldl
+          (fun acc t => acc + t.2) 0 =
+        coeff m q := by
+    simpa [termsList] using coeff_terms m q
+  rw [hq]
 
 theorem coeff_neg [Lean.Grind.Ring R] (m : Mono n) (p : MvPoly n R cmp) :
     coeff m (-p) = -coeff m p := by
-  sorry
+  change coeff m (neg p) = -coeff m p
+  unfold neg mapCoeffs coeff coeff?
+  rw [Std.ExtTreeMap.getElem?_map]
+  cases p.termsInternal[m]?
+  · exact Lean.Grind.AddCommGroup.neg_zero.symm
+  · rfl
 
 theorem coeff_sub [Lean.Grind.Ring R] [DecidableEq R]
     (m : Mono n) (p q : MvPoly n R cmp) :
     coeff m (p - q) = coeff m p - coeff m q := by
-  sorry
+  change coeff m (p + (-q)) = coeff m p - coeff m q
+  rw [coeff_add, coeff_neg, Lean.Grind.Ring.sub_eq_add_neg]
 
 theorem coeff_mul [Lean.Grind.Semiring R] [DecidableEq R]
     (m : Mono n) (p q : MvPoly n R cmp) :

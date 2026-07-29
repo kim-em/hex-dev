@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import Batteries.Data.List.Perm
 public import HexMvPoly.Mono
 
 @[expose] public section
@@ -36,7 +37,11 @@ structure MvPoly (n : Nat) (R : Type u) [Zero R]
 namespace MvPoly
 
 variable {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
-  [Zero R] [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
+  [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
+
+section Representation
+
+variable [Zero R]
 
 /-- The absent coefficient of a monomial. -/
 @[inline] def coeff? (m : Mono n) (p : MvPoly n R cmp) : Option R :=
@@ -216,18 +221,20 @@ def mapCoeffs (p : MvPoly n R cmp) (f : R → R)
         simpa [hzero] using hcoeff
       simpa using hf c hc
 
+end Representation
+
 /-- Build a polynomial by summing duplicate monomials and dropping all
 zero coefficients. -/
 def ofTerms [Lean.Grind.Semiring R] [DecidableEq R]
     (ts : List (Mono n × R)) : MvPoly n R cmp :=
   ts.foldl (fun p t => addMonomial p t.1 t.2) 0
 
-@[simp] theorem coeff_zero (m : Mono n) :
+@[simp] theorem coeff_zero [Zero R] (m : Mono n) :
     coeff m (0 : MvPoly n R cmp) = 0 := by
   change ((∅ : Std.ExtTreeMap (Mono n) R cmp)[m]?).getD 0 = 0
   simp
 
-theorem coeff_monomial [DecidableEq R] (m m' : Mono n) (c : R) :
+theorem coeff_monomial [Zero R] [DecidableEq R] (m m' : Mono n) (c : R) :
     coeff m (monomial m' c : MvPoly n R cmp) =
       if m = m' then c else 0 := by
   by_cases hc : c = 0
@@ -243,17 +250,17 @@ theorem coeff_monomial [DecidableEq R] (m m' : Mono n) (c : R) :
     · have hm' : m' ≠ m := fun h => hm h.symm
       simp [hm, hm']
 
-theorem coeff_C [DecidableEq R] (m : Mono n) (c : R) :
+theorem coeff_C [Zero R] [DecidableEq R] (m : Mono n) (c : R) :
     coeff m (C c : MvPoly n R cmp) =
       if m = Mono.zero then c else 0 := by
   simp [C, coeff_monomial]
 
-theorem coeff_X [One R] [DecidableEq R] (m : Mono n) (i : Fin n) :
+theorem coeff_X [Zero R] [One R] [DecidableEq R] (m : Mono n) (i : Fin n) :
     coeff m (X i : MvPoly n R cmp) =
       if m = Mono.unit i then 1 else 0 := by
   simp [X, coeff_monomial]
 
-theorem coeff_addMonomial [Add R] [DecidableEq R]
+theorem coeff_addMonomial [Zero R] [Add R] [DecidableEq R]
     (p : MvPoly n R cmp) (m k : Mono n) (c : R) :
     coeff k (addMonomial p m c) =
       if k = m then coeff k p + c else coeff k p := by
@@ -287,6 +294,56 @@ theorem coeff_ofTerms [Lean.Grind.Semiring R] [DecidableEq R]
       · have hmt : m ≠ t.1 := fun h => ht h.symm
         simp [ht, hmt, coeff_addMonomial]
   simpa [ofTerms] using aux ts (0 : MvPoly n R cmp)
+
+/-- Filtering the canonical term list at one monomial recovers its
+coefficient. -/
+theorem coeff_terms [Lean.Grind.Semiring R] [DecidableEq R]
+    (m : Mono n) (p : MvPoly n R cmp) :
+    (p.termsList.filter (fun t => t.1 = m)).foldl
+        (fun acc t => acc + t.2) 0 =
+      coeff m p := by
+  have hnodup : p.termsList.Nodup := by
+    have hkeys :=
+      Std.ExtTreeMap.distinct_keys_toList (t := p.termsInternal)
+    exact hkeys.imp fun hcmp hab => by
+      cases hab
+      simp at hcmp
+  cases hcoeff : p.termsInternal[m]? with
+  | none =>
+    have hfilter : p.termsList.filter (fun t => t.1 = m) = [] := by
+      rw [List.eq_nil_iff_forall_not_mem]
+      intro t ht
+      rcases List.mem_filter.mp ht with ⟨ht, htm⟩
+      have htcoeff :=
+        (Std.ExtTreeMap.mem_toList_iff_getElem?_eq_some).mp ht
+      have htm' := of_decide_eq_true htm
+      subst m
+      simp_all
+    simp [hfilter, coeff, coeff?, hcoeff]
+  | some c =>
+    have hfilter : p.termsList.filter (fun t => t.1 = m) = [(m, c)] := by
+      apply List.Perm.eq_singleton
+      rw [List.perm_ext_iff_of_nodup (hnodup.filter _) (by simp)]
+      intro t
+      constructor
+      · intro ht
+        rcases List.mem_filter.mp ht with ⟨ht, htm⟩
+        have htcoeff :=
+          (Std.ExtTreeMap.mem_toList_iff_getElem?_eq_some).mp ht
+        have htm' := of_decide_eq_true htm
+        subst m
+        simp_all
+      · intro ht
+        simp only [List.mem_singleton] at ht
+        subst t
+        exact List.mem_filter.mpr
+          ⟨(Std.ExtTreeMap.mem_toList_iff_getElem?_eq_some).mpr hcoeff, by simp⟩
+    rw [hfilter]
+    simp only [List.foldl_cons, List.foldl_nil]
+    unfold coeff coeff?
+    rw [hcoeff]
+    change 0 + c = c
+    exact Lean.Grind.AddCommMonoid.zero_add c
 
 end MvPoly
 

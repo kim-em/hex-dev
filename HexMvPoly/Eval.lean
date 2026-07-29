@@ -156,6 +156,7 @@ theorem eval₂Horner_eq [Zero R] [Lean.Grind.Semiring S]
 theorem evalHorner_eq [Lean.Grind.Semiring R]
     (x : Fin n → R) (p : MvPoly n R cmp) :
     evalHorner x p = eval x p := by
-  sorry
+  unfold evalHorner eval
+  exact eval₂Horner_eq id x p
 
 end Hex.MvPoly

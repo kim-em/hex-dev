@@ -178,7 +178,49 @@ theorem dvd_eq_true_iff (a b : Mono n) :
 
 theorem div_eq_some_iff (a b q : Mono n) :
     div a b = some q ↔ Mono.mul a q = b := by
-  sorry
+  have get_ofFn (f : Fin n → Nat) (j : Fin n) :
+      (Hex.Vector.ofFn' f).get j = f j := by
+    change (Hex.Vector.ofFn' f)[j.val] = f j
+    rw [Hex.Vector.getElem_ofFn' f j.val j.isLt]
+  constructor
+  · intro hdiv
+    unfold div at hdiv
+    split at hdiv
+    next hle =>
+      simp only [Option.some.injEq] at hdiv
+      subst q
+      apply Vector.ext
+      intro i hi
+      unfold mul
+      rw [Hex.Vector.getElem_ofFn' _ i hi]
+      let j : Fin n := ⟨i, hi⟩
+      change a.get j + (Hex.Vector.ofFn' fun i => b[i] - a[i]).get j = b.get j
+      rw [get_ofFn]
+      change a.get j + (b.get j - a.get j) = b.get j
+      have hj := hle j
+      change a.get j ≤ b.get j at hj
+      omega
+    next =>
+      contradiction
+  · intro hmul
+    have hle : ∀ i : Fin n, a[i] ≤ b[i] := by
+      intro i
+      have hi := congrArg (fun m : Mono n => m[i]) hmul
+      rw [getElem_mul] at hi
+      omega
+    rw [div, dif_pos hle]
+    congr 1
+    apply Vector.ext
+    intro i hi
+    let j : Fin n := ⟨i, hi⟩
+    have hi' := congrArg (fun m : Mono n => m.get j) hmul
+    unfold mul at hi'
+    rw [get_ofFn] at hi'
+    change a.get j + q.get j = b.get j at hi'
+    change (Hex.Vector.ofFn' fun i => b[i] - a[i]).get j = q.get j
+    rw [get_ofFn]
+    change b.get j - a.get j = q.get j
+    omega
 
 theorem div_eq_none_iff (a b : Mono n) :
     div a b = none ↔ ¬ ∀ i : Fin n, a[i] ≤ b[i] := by

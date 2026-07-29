@@ -47,10 +47,10 @@ unchanged. -/
 def predAt (i : Fin n) (m : Mono n) : Mono n :=
   Hex.Vector.ofFn' fun j => if j = i then m[j] - 1 else m[j]
 
-attribute [local instance 1100] Lean.Grind.Semiring.natCast
+attribute [local instance] Lean.Grind.Semiring.natCast
 
 /-- Formal derivative with respect to variable `i`. -/
-def derivative [Lean.Grind.Semiring R] [DecidableEq R]
+def derivative [Zero R] [NatCast R] [Add R] [Mul R] [DecidableEq R]
     (i : Fin n) (p : MvPoly n R cmp) : MvPoly n R cmp :=
   p.foldTerms
     (fun acc m c =>
@@ -96,7 +96,8 @@ theorem coeff_reorder [Lean.Grind.Semiring R] [DecidableEq R]
     [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
     (m : Mono n) (p : MvPoly n R cmp) :
     coeff m (reorder cmp' p) = coeff m p := by
-  sorry
+  unfold reorder
+  rw [coeff_ofTerms, coeff_terms]
 
 theorem coeff_rename [Lean.Grind.Semiring R] [DecidableEq R]
     (cmp' : Mono k → Mono k → Ordering)
@@ -105,7 +106,30 @@ theorem coeff_rename [Lean.Grind.Semiring R] [DecidableEq R]
     coeff m (rename cmp' f p) =
       p.termsList.foldl
         (fun acc term => if Mono.rename f term.1 = m then acc + term.2 else acc) 0 := by
-  sorry
+  have aux : ∀ (ts : List (Mono n × R)) (init : MvPoly k R cmp'),
+      coeff m
+          (ts.foldl
+            (fun acc t => acc.addMonomial (Mono.rename f t.1) t.2)
+            init) =
+        ts.foldl
+          (fun acc t =>
+            if Mono.rename f t.1 = m then acc + t.2 else acc)
+          (coeff m init) := by
+    intro ts
+    induction ts with
+    | nil =>
+      intro init
+      rfl
+    | cons t ts ih =>
+      intro init
+      rw [List.foldl_cons, ih]
+      by_cases ht : Mono.rename f t.1 = m
+      · simp [ht, coeff_addMonomial]
+      · have hmt : m ≠ Mono.rename f t.1 := fun h => ht h.symm
+        simp [ht, hmt, coeff_addMonomial]
+  unfold rename foldTerms
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList, aux, coeff_zero]
+  rfl
 
 theorem coeff_derivative [Lean.Grind.Semiring R] [DecidableEq R]
     (i : Fin n) (m : Mono n) (p : MvPoly n R cmp) :
@@ -126,7 +150,10 @@ theorem subst_eq [Lean.Grind.Semiring R] [DecidableEq R]
     subst f p =
       p.termsList.foldl
         (fun acc term => acc + C term.2 * Mono.prod f term.1) 0 := by
-  sorry
+  unfold subst bind foldTerms
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList]
+  unfold termsList
+  rfl
 
 theorem partialEval_eq_subst [Lean.Grind.Semiring R] [DecidableEq R]
     (s : Fin n → Option R) (p : MvPoly n R cmp) :
