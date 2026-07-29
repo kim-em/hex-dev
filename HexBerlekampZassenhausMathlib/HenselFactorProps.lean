@@ -1504,10 +1504,10 @@ theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
   induction xs using Hex.ZPoly.QuadraticMultifactorCoprimeSplits.induct (p := p) with
   | case1 => intro _; simp only [Hex.ZPoly.QuadraticMultifactorCoprimeSplits]
   | case2 _g => intro _; simp only [Hex.ZPoly.QuadraticMultifactorCoprimeSplits]
-  | case3 g₀ g₁ rest gs half L R ihL ihR =>
+  | case3 g₀ g₁ rest gs split L R ihL ihR =>
       intro h_dvd
       -- Balanced split of `g₀ :: g₁ :: rest` into `L ++ R` (the induct binders).
-      have happend : L ++ R = g₀ :: g₁ :: rest := List.take_append_drop half gs
+      have happend : L ++ R = g₀ :: g₁ :: rest := List.take_append_drop split gs
       have hfp_split :
           Hex.Berlekamp.factorProduct (g₀ :: g₁ :: rest) =
             Hex.Berlekamp.factorProduct L * Hex.Berlekamp.factorProduct R := by

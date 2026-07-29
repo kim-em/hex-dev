@@ -84,7 +84,8 @@ aggregate lead is real but still too narrow and family-dependent to claim
 uniform superiority.
 
 The improvement is broad but not universal. Family medians below compare the
-fresh public service with the preceding Hex public record; values below 1 are
+fresh public service with the pre-hot-path
+`hexbz-factor-sweep-hex-5c371a5a-chungus2.json` record; values below 1 are
 faster.
 
 | Family | Common rows | Median new/old | Rows slower |
@@ -102,8 +103,10 @@ faster.
 | Wilkinson | 15 | 0.926× | 5 |
 
 Every family median now improves over the pre-hot-path record. Wilkinson,
-previously the lone slower family, is 0.926×. The noisier per-row Conway count
-does not change its 0.338× family median or the broad cumulative gain.
+previously the lone slower family, is 0.926×. Against the immediately preceding
+exact/factor-only export, Conway is 1.029× at the 99-row overhead-eligible
+median and is slower on 81 of those rows. That small broad regression remains
+visible despite the 0.338× cumulative family median.
 
 ## Charts
 

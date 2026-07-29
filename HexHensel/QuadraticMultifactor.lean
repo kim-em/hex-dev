@@ -138,23 +138,35 @@ def factorDegreeSum (factors : List ZPoly) : Nat :=
 def factorMaxDegree (factors : List ZPoly) : Nat :=
   factors.foldl (fun largest g => max largest (g.degree?.getD 0)) 0
 
+/-- Total and largest degree in one traversal. -/
+def factorDegreeStats (factors : List ZPoly) : Nat × Nat :=
+  factors.foldl (fun (total, largest) g =>
+    let degree := g.degree?.getD 0
+    (total + degree, max largest degree)) (0, 0)
+
 /-- Degree imbalance produced by splitting `factors` at `i`. -/
 def splitImbalance (factors : List ZPoly) (i : Nat) : Nat :=
   let left := factorDegreeSum (factors.take i)
   let right := factorDegreeSum (factors.drop i)
   if left ≤ right then right - left else left - right
 
-/-- Choose a nontrivial prefix split for a multifactor Hensel node. When one
+/-- Choose a nontrivial prefix split of the factor order supplied to a
+multifactor Hensel node. When one
 modular factor has more than half the total degree, choose the prefix split
 whose two total degrees are closest; this avoids recursively pairing that
-dominant factor with a much smaller neighbour. Otherwise keep the count-halving
-tree, whose deliberately unbalanced degree splits can make the root XGCD much
-cheaper. The final clamp makes the result valid for every list of length at
-least two, independently of the degree data. -/
+dominant factor with a much smaller neighbour when the incoming order permits
+it. Otherwise keep the count-halving tree, whose deliberately unbalanced degree
+splits can make the root XGCD much cheaper. The final clamp makes the result
+valid for every list of length at least two, independently of the degree data.
+
+This definition is deliberately opaque across module boundaries: downstream
+proofs should use `balancedSplitIndex_pos` and
+`balancedSplitIndex_lt_length`, rather than unfold the runtime heuristic. -/
 def balancedSplitIndex (factors : List ZPoly) : Nat :=
   let candidates := (List.range (factors.length - 1)).map (fun i => i + 1)
+  let stats := factorDegreeStats factors
   let raw :=
-    if factorDegreeSum factors < 2 * factorMaxDegree factors then
+    if stats.1 < 2 * stats.2 then
       candidates.foldl (init := 1) fun best i =>
         if splitImbalance factors i < splitImbalance factors best then i else best
     else

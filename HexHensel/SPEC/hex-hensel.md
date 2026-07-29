@@ -93,8 +93,9 @@ footing with `multifactorLift`.
 
 The production lifter normally halves a node by factor count. If one modular
 factor has more than half the node's total degree, it instead chooses the
-nontrivial prefix split with the smallest total-degree imbalance. This keeps a
-dominant factor from being recursively paired with much smaller neighbours,
+nontrivial prefix split of the supplied factor order with the smallest
+total-degree imbalance. This can keep a dominant factor from being recursively
+paired with much smaller neighbours when the incoming order permits it,
 while retaining the cheaper, deliberately degree-unbalanced root XGCDs of the
 count tree when no factor dominates. The executable tree, its recursive
 invariant, and the Mathlib coprimality bridge must use the same split function.

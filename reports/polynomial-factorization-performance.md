@@ -158,9 +158,9 @@ above precision 300; other wide nodes retain the single cheap probe.
 | `legendre_P30` | 32.486 ms | 16.483 ms | 1.97× |
 | `legendre_P38` | 37.858 ms | 15.842 ms | 2.39× |
 
-The unrestricted experiment was rejected because it doubled `legendre_P16`,
-`legendre_P28`, and `cyclo_phi385`. Targeted A/B measurements led to the two
-guards above; the retained clean corpus sweep is neutral at the paired median
+Uncommitted diagnostic runs of the unrestricted policy were rejected after
+large regressions on `legendre_P16`, `legendre_P28`, and `cyclo_phi385`.
+Targeted A/B measurements led to the two guards above; the retained clean corpus sweep is neutral at the paired median
 versus the preceding public export (1.001× over 247 overhead-eligible rows),
 while preserving the large structured wins.
 

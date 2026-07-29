@@ -34,12 +34,21 @@ All current performance reports now point at the clean guarded-tree sweep and
 affected overlays. All 25 cross-system figures were regenerated; their
 provenance output selects the new Hex artifact and the unchanged current
 PARI, NTL, FLINT, and Isabelle artifacts.
+- An independent second opinion found no blocking correctness or soundness
+  issue. Follow-up cleanup makes prefix-order dependence and deliberate
+  opacity explicit, computes relift split data only on eligible nodes, folds
+  degree statistics once, hardens the diagnostic's fuel/path handling, and
+  documents the relift guard in the BZ SPEC.
+- Fresh BZ fixture emission matches the committed fixture; the FLINT oracle
+  checks all 102 cases and the trace gate checks all 52 traces with zero
+  failures.
 
 ## Next step
 
-Run the focused verification/lint suite, obtain an independent second opinion,
-then publish and merge this intermediate PR. Continue from the remaining
-Chebyshev/Legendre and Swinnerton-Dyer gaps afterward.
+Refresh the now-stale isolated Hex lattice and classical corpus services (but
+not the unchanged external comparators), regenerate merged figures and paired
+statistics, then publish and merge this intermediate PR. Continue from the
+remaining Chebyshev/Legendre and Swinnerton-Dyer gaps afterward.
 
 ## Blockers
 

@@ -408,6 +408,11 @@ and the CLD lattice tier does the work.
   re-multiplication guard), then goes directly to the certified full-precision
   scan if that probe does not split. At three modular factors or fewer the
   full subset scan is already tiny, so the speculative lift is skipped.
+  One narrow exception uses eight doubling-ladder probes: exactly four
+  modular factors, a certified floor above exponent 300, and a chosen Hensel
+  split index equal to the count split. This retains useful intermediate
+  recovery at extreme precision without repeating the ladder on lower-floor
+  four-factor nodes or on degree-unbalanced split trees.
   Repeating from-scratch rungs before the full scan costs more in the common
   unsplit case than the occasional extra peel recovers. Peeled pieces recurse with tracked mod-p
   seed factors undilated through the peel's monic-transform identity

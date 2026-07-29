@@ -22,7 +22,7 @@ def multifactorLiftCountList
     (p k : Nat) [ZMod64.Bounds p] (f : ZPoly) : Nat → List ZPoly → Array ZPoly
   | _, [] => #[]
   | _, [_g] => #[ZPoly.reduceModPow f p k]
-  | 0, gs => gs.toArray.map (fun g => ZPoly.reduceModPow g p k)
+  | 0, _gs => panic! "count-balanced diagnostic exhausted unreachable fuel"
   | fuel + 1, g₀ :: g₁ :: rest =>
       let gs := g₀ :: g₁ :: rest
       let half := gs.length / 2
@@ -57,6 +57,8 @@ def timeLiftArm (iters : Nat) (run : Unit → Array ZPoly) : IO (Float × Array 
 
 def compareLiftTrees
     (label : String) (f core monic : ZPoly) (pd : PrimeChoiceData) : IO Unit := do
+  -- This isolates the lift tree at the exhaustive coefficient bound; it is not
+  -- a reproduction of every bound override used by the recursive tier.
   let bound := ZPoly.exhaustiveLiftBound core (ZPoly.defaultFactorCoeffBound f)
   let k := precisionForCoeffBound bound pd.p
   let factors := pd.factorsModP.map (fun factor =>
@@ -107,8 +109,8 @@ def timePrimeChoice (label : String) (f : ZPoly) : IO Unit := do
 /-- Read selected named cases from the checked-in comparison corpus. Keeping
 the larger diagnostic inputs in the corpus avoids duplicating their coefficient
 arrays here. -/
-def timeCorpusCases (wanted : List String) : IO Unit := do
-  let corpus ← IO.FS.readFile "bench/corpus/hexbz-factor-corpus.jsonl"
+def timeCorpusCases (corpusPath : String) (wanted : List String) : IO Unit := do
+  let corpus ← IO.FS.readFile corpusPath
   for line in corpus.splitOn "\n" do
     if !line.isEmpty then
       let parsed : Except String (String × List Int) := do
@@ -123,7 +125,11 @@ def timeCorpusCases (wanted : List String) : IO Unit := do
           if wanted.contains name then
             timePrimeChoice name (DensePoly.ofCoeffs coeffs.toArray)
 
-def main : IO Unit := do
+def main (args : List String) : IO Unit := do
+  let corpusPath ← match args with
+    | [] => pure "bench/corpus/hexbz-factor-corpus.jsonl"
+    | [path] => pure path
+    | _ => throw <| IO.userError "usage: hex_prime_policy_spike [corpus.jsonl]"
   let phi61 : ZPoly := DensePoly.ofCoeffs (Array.replicate 61 (1 : Int))
   let phi179 : ZPoly := DensePoly.ofCoeffs (Array.replicate 179 (1 : Int))
   let xpow105 : ZPoly := DensePoly.ofCoeffs
@@ -155,7 +161,7 @@ def main : IO Unit := do
   timePrimeChoice "Chebyshev U24" chebyshevU24
   timePrimeChoice "Legendre P30" legendreP30
   timePrimeChoice "SD5" sd5
-  timeCorpusCases
+  timeCorpusCases corpusPath
     ["chebyshev_T10", "chebyshev_T15", "chebyshev_U12", "legendre_P16",
       "legendre_P24", "legendre_P26", "legendre_P28", "legendre_P38",
       "cyclo_phi385"]
