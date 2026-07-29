@@ -24,6 +24,8 @@ solves 373/392 with a 432.972 microsecond median and 5.437 millisecond p90. On
 winning 126 rows and Isabelle 112.
 The affected quadratic-multifactor benchmark remains flat at the largest rung:
 67.229 ms versus the preceding 67.862 ms.
+The five affected parametric BZ registrations were also refreshed; the public
+degree-24 rung is 1.786 ms.
 
 ## Next step
 
