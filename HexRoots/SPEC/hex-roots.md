@@ -380,11 +380,11 @@ end Component
 def DyadicRootCluster.atomize (c : DyadicRootCluster p) (h : c.k = 1) :
     DyadicRootIsolation p
 
-/-- Refine to `target` precision: speculative Newton steps, falling
-    back to subdivision of the atom's square as a one-square
-    component. This local loop does not pay the full driver's global
-    halo-normalization prefix. `none` only if certification has not
-    reappeared by `stopDepth p target` (see below). -/
+/-- Refine to `target` precision. First try a bounded lineage-local
+    speculative pass; if it does not produce exactly one target-ready
+    atom, restart from the input under the globally reglued complete
+    loop. `none` only if the fallback has not emitted by
+    `stopDepth p target` (see below). -/
 def DyadicRootIsolation.refineTo? (iso : DyadicRootIsolation p)
     (target : Int) (strategy : AtomStrategy := .nkThenPellet) :
     Option (DyadicRootIsolation p)
@@ -528,12 +528,17 @@ emission condition was not reached within the fixed fuel bound; it does
 not mean that no individual certificate appeared. Soundness remains
 conditional on a `some` result for arbitrary inputs.
 
-The one-atom `DyadicRootIsolation.refineTo?` wrapper uses the same local
-hold/adopt/subdivide transition and fuel bound, but deliberately skips this
-global prefix. Its input already denotes one isolated root, so there are no
-sibling survivor lineages or rootless halo components to normalize and reglue.
-This keeps refinement proportional to the requested precision instead of
-forcing every call through the whole-polynomial separation depth.
+The one-atom `DyadicRootIsolation.refineTo?` wrapper first spends a fixed small
+budget on the lineage-local transition, preserving the logarithmic precision
+doubling of successful speculative Newton steps. That result is accepted only
+when it is exactly one target-ready atom. If the pass exhausts its budget or
+splits into an unsuitable worklist, refinement restarts from the original atom
+under the globally reglued loop. Even a one-square start can subdivide into
+sibling survivor lineages, including rootless halos, so this global fallback
+is the completeness boundary. The Mathlib companion proves that the default
+mixed strategy reaches the emission condition for every already refined
+isolation, using local simplicity of the represented root; repeated roots
+elsewhere in the ambient polynomial are permitted.
 
 **Separation of the output.** Certification alone does not prevent
 double-counting. A component whose squares contain no root (its
@@ -591,17 +596,18 @@ multiple root), so it appears in the output as a cluster with its
 def mahlerPrec (p : ZPoly) : Nat
 ```
 
-For squarefree `p ∈ ℤ[x]` of degree `n`, the Mahler separation bound
-gives
+For the squarefree part of a nonzero `p ∈ ℤ[x]` of degree `n`, the Mahler
+separation bound gives
 
 ```
 sep(p) := min_{i ≠ j} |αᵢ − αⱼ| ≥ √3 · n^{−(n+2)/2} · |disc p|^{1/2} · M(p)^{−(n−1)}
 ```
 
-Combined with `|disc p| ≥ 1` (the discriminant of a squarefree integer
-polynomial is a nonzero integer) and Landau's
-`M(p) ≤ √(n+1) · ‖p‖∞`, this bounds `sep(p)` from below in terms of
-`n` and `‖p‖∞` alone. `mahlerPrec p` is a `Nat` such that the
+The integral radical has nonzero integer discriminant, hence absolute value at
+least one; its Mahler measure is at most that of `p`. Combined with Landau's
+`M(p) ≤ √(n+1) · ‖p‖∞`, this bounds the distance between distinct roots of
+`p` from below in terms of `n` and `‖p‖∞` alone. `mahlerPrec p` is a `Nat`
+such that the
 circumscribed-disc radius at that precision is strictly below
 `sep(p)/4`:
 
@@ -612,11 +618,11 @@ circumscribed-disc radius at that precision is strictly below
 The `/4` margin is what the `SimpleRoot` intersection test below
 needs. The computation is pure integer arithmetic on the closed-form
 bound (logarithms by repeated squaring). No discriminant is computed
-at runtime; only the constant lower bound `|disc p| ≥ 1` is used. The
-Mahler bound concerns *distinct* roots, so `mahlerPrec` is meaningful
-even for non-squarefree `p`: if `p_sf` is the squarefree part then
-`M(p_sf) ≤ M(p)` and `|disc p_sf| ≥ 1`, so the same closed form
-applies. The Mathlib companion proves correctness; see
+at runtime; only the constant lower bound for the radical's discriminant is
+used. Thus `mahlerPrec` is meaningful for every nonzero polynomial, including
+a polynomial with repeated roots: multiplicities disappear in the integral
+radical while its distinct roots are unchanged. The Mathlib companion proves
+correctness; see
 [hex-roots-mathlib.md](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md).
 
 ```lean
@@ -737,7 +743,9 @@ callers can substitute the refined representative wherever the
 original was used. Structures that contain
 a representative (such as `AlgebraicNumber` in `hex-number-field`)
 should store the refined value on return, so downstream consumers
-inherit the precision.
+inherit the precision. For the default `.nkThenPellet` strategy the companion
+also proves that this option is always `some`; no corresponding totality claim
+is made here for pure Pellet refinement of a non-squarefree ambient polynomial.
 
 ## Differences from BSSY
 

@@ -125,7 +125,11 @@ root-separation development live here once for both roots companions:
   inequality `Matrix.norm_det_le_prod_norm_column` over an `RCLike` field.
 - `HexPolyZMathlib/MahlerSeparation.lean` proves the generic complex
   Vandermonde column bounds and identifies the discriminant root product with
-  the squared Vandermonde norm.
+  the squared Vandermonde norm. Its separable theorem supplies the sharp
+  discriminant argument; `one_le_mahlerDist` extends the public separation
+  inequality to every nonzero integral polynomial by applying that theorem to
+  the integral radical. The radical preserves the distinct roots while having
+  no larger degree or Mahler measure.
 
 Both modules are stated at ordinary Mathlib generality and import no executable
 root-isolation library. Companion-specific precision arithmetic remains in the

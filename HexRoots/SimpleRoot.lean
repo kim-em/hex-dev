@@ -93,25 +93,29 @@ instance {p : ZPoly} {i₁ i₂ : RefinedIsolation p} : Decidable (Intersects i�
 @[expose] def RefinedIsolation.sameRoot {p : ZPoly} (i₁ i₂ : RefinedIsolation p) : Bool :=
   DyadicSquare.discsMeet i₁.1.square i₂.1.square
 
-/-- A certified atom can only exist for a positive-degree polynomial. Both
+/-- A certified atom needs at least two stored coefficients. Both
 witness checkers inspect the full Taylor array: Newton--Kantorovich requires at
 least two coefficients, while the `k = 1` Pellet branch requires coefficient
 index one to exist. -/
+theorem DyadicRootIsolation.size_gt_one {p : ZPoly} (i : DyadicRootIsolation p) :
+    1 < p.size := by
+  rcases i.witness with hnk | hpellet
+  · by_cases h : 1 < p.size
+    · exact h
+    · have hle : p.size ≤ 1 := by omega
+      rw [nkWitness, nkWitnessCheck_false hle] at hnk
+      contradiction
+  · by_cases h : 1 < p.size
+    · exact h
+    · have hle : p.size ≤ 1 := by omega
+      change witnessCheck p i.square 1 = true at hpellet
+      rw [witnessCheck_false hle] at hpellet
+      contradiction
+
+/-- A certified atom can only exist for a positive-degree polynomial. -/
 theorem DyadicRootIsolation.posDegree {p : ZPoly} (i : DyadicRootIsolation p) :
     0 < p.degree?.getD 0 := by
-  have hsize : 1 < p.size := by
-    rcases i.witness with hnk | hpellet
-    · by_cases h : 1 < p.size
-      · exact h
-      · have hle : p.size ≤ 1 := by omega
-        rw [nkWitness, nkWitnessCheck_false hle] at hnk
-        contradiction
-    · by_cases h : 1 < p.size
-      · exact h
-      · have hle : p.size ≤ 1 := by omega
-        change witnessCheck p i.square 1 = true at hpellet
-        rw [witnessCheck_false hle] at hpellet
-        contradiction
+  have hsize := i.size_gt_one
   have hpos : 0 < p.size := by omega
   rw [DensePoly.degree?_eq_some_of_pos_size p hpos]
   simp

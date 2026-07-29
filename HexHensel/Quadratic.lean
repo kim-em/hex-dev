@@ -1906,6 +1906,88 @@ def quadraticHenselStep
   | some result => result
   | none => quadraticHenselStepBignum m f g h s t
 
+/-- Word-sized factor-only quadratic step. This is the factor-update prefix of
+`quadraticHenselStepWord?`, omitting the unused final Bezout correction. -/
+private def quadraticHenselFactorsWord?
+    (m : Nat) (f g h s t : ZPoly) : Option (ZPoly × ZPoly) :=
+  if _h2 : m * m < UInt64.word then
+    if hodd : (UInt64.ofNat (m * m)) % 2 = 1 then
+      if _h1 : 1 < m * m then
+        if _hm : DensePoly.leadingCoeff g = 1 then
+          if _hd : 0 < g.degree?.getD 0 then
+            let ctx := _root_.MontCtx.mk (UInt64.ofNat (m * m)) hodd
+            let fW := ZPoly.toWP ctx f
+            let gW := ZPoly.toWP ctx g
+            let hW := ZPoly.toWP ctx h
+            let sW := ZPoly.toWP ctx s
+            let tW := ZPoly.toWP ctx t
+            let eW := WordPoly.sub ctx fW (WordPoly.mul ctx gW hW)
+            let factorQR := DensePoly.divMod (WordPoly.mul ctx tW eW) gW
+            let gW' := WordPoly.add ctx gW factorQR.2
+            let hW' := WordPoly.add ctx hW
+              (WordPoly.mulAdd ctx sW eW factorQR.1 hW)
+            some (ZPoly.ofWP ctx gW', ZPoly.ofWP ctx hW')
+          else none
+        else none
+      else none
+    else none
+  else none
+
+/-- Bignum factor-only quadratic step, omitting the final Bezout correction. -/
+private def quadraticHenselFactorsBignum
+    (m : Nat) (f g h s t : ZPoly) : ZPoly × ZPoly :=
+  let e := QuadraticLiftResult.factorError f g h
+  let te := mulModSquare t e m
+  let factorQR := divModMonicModSquare te g m
+  let g' := addModSquare g factorQR.2 m
+  let h' := addModSquare h
+    (addModSquare (mulModSquare s e m) (mulModSquare factorQR.1 h m) m) m
+  (g', h')
+
+/-- Update only the two factors in one quadratic Hensel step. The result is
+byte-identical to the `g` and `h` fields of `quadraticHenselStep`, while the
+final Bezout update is skipped. -/
+def quadraticHenselFactors
+    (m : Nat) (f g h s t : ZPoly) : ZPoly × ZPoly :=
+  match quadraticHenselFactorsWord? m f g h s t with
+  | some factors => factors
+  | none => quadraticHenselFactorsBignum m f g h s t
+
+/-- The factor-only word path is the projection of the full word step. -/
+private theorem quadraticHenselFactorsWord?_eq
+    (m : Nat) (f g h s t : ZPoly) :
+    quadraticHenselFactorsWord? m f g h s t =
+      (quadraticHenselStepWord? m f g h s t).map fun r => (r.g, r.h) := by
+  unfold quadraticHenselFactorsWord? quadraticHenselStepWord?
+  by_cases h2 : m * m < UInt64.word
+  · simp only [dif_pos h2]
+    by_cases hodd : (UInt64.ofNat (m * m)) % 2 = 1
+    · simp only [dif_pos hodd]
+      by_cases h1 : 1 < m * m
+      · simp only [dif_pos h1]
+        by_cases hm : DensePoly.leadingCoeff g = 1
+        · simp only [dif_pos hm]
+          by_cases hd : 0 < g.degree?.getD 0
+          · simp only [dif_pos hd, Option.map_some]
+          · simp only [dif_neg hd, Option.map_none]
+        · simp only [dif_neg hm, Option.map_none]
+      · simp only [dif_neg h1, Option.map_none]
+    · simp only [dif_neg hodd, Option.map_none]
+  · simp only [dif_neg h2, Option.map_none]
+
+/-- The factor-only step agrees exactly with the factor fields of the full
+quadratic step. -/
+theorem quadraticHenselFactors_eq
+    (m : Nat) (f g h s t : ZPoly) :
+    quadraticHenselFactors m f g h s t =
+      ((quadraticHenselStep m f g h s t).g,
+        (quadraticHenselStep m f g h s t).h) := by
+  unfold quadraticHenselFactors quadraticHenselStep
+  rw [quadraticHenselFactorsWord?_eq]
+  cases hword : quadraticHenselStepWord? m f g h s t with
+  | none => simp [quadraticHenselFactorsBignum, quadraticHenselStepBignum]
+  | some result => simp
+
 set_option maxHeartbeats 2000000 in
 private theorem quadraticHenselStep_raw_factor_congr
     (m : Nat)

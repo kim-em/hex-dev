@@ -17,9 +17,9 @@ public section
 /-!
 # Semantic identity of isolated simple roots
 
-Every refined atom has a canonical complex root. Under the rational-cast
-separability hypothesis used by the Mahler bound, the executable disc
-intersection relation is exactly equality of these roots.
+Every refined atom has a canonical complex root.  The executable disc
+intersection relation is exactly equality of these roots, even when the
+ambient polynomial has repeated factors away from the represented roots.
 -/
 
 open Complex Metric Polynomial Set
@@ -48,6 +48,13 @@ theorem isRoot {p : Hex.ZPoly} (i : Hex.RefinedIsolation p) :
     (toPolyℂ p).IsRoot (root i) :=
   (root_spec i).1
 
+/-- A polynomial carrying a refined isolation is nonzero. -/
+theorem poly_ne_zero {p : Hex.ZPoly} (i : Hex.RefinedIsolation p) : p ≠ 0 := by
+  intro hp
+  subst p
+  have hsimple := (root_spec i).2.2.1
+  simp [toPolyℂ, HexPolyZMathlib.toPolynomial] at hsimple
+
 /-- The semantic root lies in its atom's selected closed region. -/
 theorem root_mem_region {p : Hex.ZPoly} (i : Hex.RefinedIsolation p) :
     root i ∈ DyadicRootIsolation.region i.1 :=
@@ -61,7 +68,6 @@ theorem root_mem_closedDisc {p : Hex.ZPoly} (i : Hex.RefinedIsolation p) :
   exact root_mem_region i
 
 private theorem radius_lt_quarter {p : Hex.ZPoly}
-    (hsep : (HexPolyZMathlib.toPolyℚ p).Separable)
     (i : Hex.RefinedIsolation p) {z : ℂ}
     (hz : (toPolyℂ p).IsRoot z) (hne : root i ≠ z) :
     DyadicSquare.radius i.1.square < ‖root i - z‖ / 4 := by
@@ -81,19 +87,19 @@ private theorem radius_lt_quarter {p : Hex.ZPoly}
     _ ≤ (2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) * (1449 / 1024 : ℝ) :=
       mul_le_mul_of_nonneg_right hpow (by norm_num)
     _ < ‖root i - z‖ / 4 :=
-      mahlerPrec_separates p hsep (root i) z (isRoot i) hz hne
+      mahlerPrec_separates p (poly_ne_zero i)
+        (root i) z (isRoot i) hz hne
 
 /-- A polynomial root in the closed circumscribed disc of a refined isolation
 is the isolation's selected root. -/
 theorem eq_root_of_mem_closedDisc {p : Hex.ZPoly}
-    (hsep : (HexPolyZMathlib.toPolyℚ p).Separable)
     (i : Hex.RefinedIsolation p) {z : ℂ}
     (hzroot : (toPolyℂ p).IsRoot z)
     (hzmem : z ∈ DyadicSquare.closedDisc i.1.square) :
     z = root i := by
   by_contra hne
   have hne' : root i ≠ z := Ne.symm hne
-  have hradius := radius_lt_quarter hsep i hzroot hne'
+  have hradius := radius_lt_quarter i hzroot hne'
   have hrootmem :
       dist (root i) (DyadicSquare.center i.1.square) ≤
         DyadicSquare.radius i.1.square := by
@@ -117,17 +123,16 @@ theorem eq_root_of_mem_closedDisc {p : Hex.ZPoly}
   linarith
 
 /-- At separation precision, executable disc intersection is exactly semantic
-root equality. Global separability is explicit because a local atom witness
-does not imply that every root of the polynomial is simple. -/
+root equality.  Only nonzeroness of the ambient polynomial is needed; each
+refined isolation supplies it locally. -/
 theorem intersects_iff_root_eq {p : Hex.ZPoly}
-    (hsep : (HexPolyZMathlib.toPolyℚ p).Separable)
     (i₁ i₂ : Hex.RefinedIsolation p) :
     Hex.Intersects i₁ i₂ ↔ root i₁ = root i₂ := by
   constructor
   · intro hmeet
     by_contra hne
-    have hr₁ := radius_lt_quarter hsep i₁ (isRoot i₂) hne
-    have hr₂ := radius_lt_quarter hsep i₂ (isRoot i₁) (Ne.symm hne)
+    have hr₁ := radius_lt_quarter i₁ (isRoot i₂) hne
+    have hr₂ := radius_lt_quarter i₂ (isRoot i₁) (Ne.symm hne)
     rw [norm_sub_rev] at hr₂
     have hc : dist (DyadicSquare.center i₁.1.square)
         (DyadicSquare.center i₂.1.square) ≤
@@ -182,45 +187,39 @@ theorem intersects_iff_root_eq {p : Hex.ZPoly}
     exact (Set.disjoint_left.mp hdisj) (root_mem_closedDisc i₁)
       (hroot ▸ root_mem_closedDisc i₂)
 
-/-- Under separability, `Intersects` is an equivalence relation on refined
-isolations. -/
-theorem intersects_equivalence {p : Hex.ZPoly}
-    (hsep : (HexPolyZMathlib.toPolyℚ p).Separable) :
+/-- `Intersects` is an equivalence relation on refined isolations. -/
+theorem intersects_equivalence {p : Hex.ZPoly} :
     Equivalence (@Hex.Intersects p) := by
   refine ⟨?_, ?_, ?_⟩
   · intro i
-    exact (intersects_iff_root_eq hsep i i).mpr rfl
+    exact (intersects_iff_root_eq i i).mpr rfl
   · intro i j hij
-    have hroot := (intersects_iff_root_eq hsep i j).mp hij
-    exact (intersects_iff_root_eq hsep j i).mpr hroot.symm
+    have hroot := (intersects_iff_root_eq i j).mp hij
+    exact (intersects_iff_root_eq j i).mpr hroot.symm
   · intro i j k hij hjk
-    exact (intersects_iff_root_eq hsep i k).mpr <|
-      (intersects_iff_root_eq hsep i j).mp hij |>.trans
-        ((intersects_iff_root_eq hsep j k).mp hjk)
+    exact (intersects_iff_root_eq i k).mpr <|
+      (intersects_iff_root_eq i j).mp hij |>.trans
+        ((intersects_iff_root_eq j k).mp hjk)
 
 /-- Executable simple-root input supplies the separation hypothesis needed by
 the intersection semantics. -/
 theorem intersects_iff_root_eq_of_simple {p : Hex.ZPoly}
-    (h : Hex.HasOnlySimpleRoots p) (hp : p ≠ 0)
+    (_h : Hex.HasOnlySimpleRoots p) (_hp : p ≠ 0)
     (i₁ i₂ : Hex.RefinedIsolation p) :
     Hex.Intersects i₁ i₂ ↔ root i₁ = root i₂ :=
-  intersects_iff_root_eq (HasOnlySimpleRoots.separable h hp) i₁ i₂
+  intersects_iff_root_eq i₁ i₂
 
 end RefinedIsolation
 
 namespace SimpleRoot
 
-/-- Interpret a quotient root as its complex value. Separability makes the
-stored intersection relation respect semantic root equality. -/
-@[expose] noncomputable def rootOf {p : Hex.ZPoly}
-    (hsep : (HexPolyZMathlib.toPolyℚ p).Separable) : Hex.SimpleRoot p → ℂ :=
+/-- Interpret a quotient root as its complex value. -/
+@[expose] noncomputable def rootOf {p : Hex.ZPoly} : Hex.SimpleRoot p → ℂ :=
   Quot.lift RefinedIsolation.root fun i j hij =>
-    (RefinedIsolation.intersects_iff_root_eq hsep i j).mp hij
+    (RefinedIsolation.intersects_iff_root_eq i j).mp hij
 
-@[simp] theorem rootOf_mk {p : Hex.ZPoly}
-    (hsep : (HexPolyZMathlib.toPolyℚ p).Separable)
-    (i : Hex.RefinedIsolation p) :
-    rootOf hsep (Hex.SimpleRoot.mk i) = RefinedIsolation.root i := rfl
+@[simp] theorem rootOf_mk {p : Hex.ZPoly} (i : Hex.RefinedIsolation p) :
+    rootOf (Hex.SimpleRoot.mk i) = RefinedIsolation.root i := rfl
 
 end SimpleRoot
 
@@ -230,19 +229,17 @@ namespace RefinedIsolation
 theorem sameRoot_eq_true_iff {p : Hex.ZPoly} (i₁ i₂ : Hex.RefinedIsolation p) :
     i₁.sameRoot i₂ = true ↔ Hex.Intersects i₁ i₂ := Iff.rfl
 
-/-- Under separability, the executable test decides equality in the quotient
-of refined isolations. -/
-theorem sameRoot_iff_mk_eq {p : Hex.ZPoly}
-    (hsep : (HexPolyZMathlib.toPolyℚ p).Separable)
-    (i₁ i₂ : Hex.RefinedIsolation p) :
+/-- The executable test decides equality in the quotient of refined
+isolations. -/
+theorem sameRoot_iff_mk_eq {p : Hex.ZPoly} (i₁ i₂ : Hex.RefinedIsolation p) :
     i₁.sameRoot i₂ = true ↔ Hex.SimpleRoot.mk i₁ = Hex.SimpleRoot.mk i₂ := by
   rw [sameRoot_eq_true_iff]
   constructor
   · exact Quot.sound
   · intro heq
-    apply (intersects_iff_root_eq hsep i₁ i₂).mpr
+    apply (intersects_iff_root_eq i₁ i₂).mpr
     simpa only [SimpleRoot.rootOf_mk] using
-      congrArg (SimpleRoot.rootOf hsep) heq
+      congrArg SimpleRoot.rootOf heq
 
 end RefinedIsolation
 
@@ -262,7 +259,7 @@ namespace Hex
 
 /-- Mathlib interpretation of a quotient simple root. -/
 noncomputable abbrev rootOf {p : Hex.ZPoly}
-    (hsep : (HexPolyZMathlib.toPolyℚ p).Separable) : Hex.SimpleRoot p → ℂ :=
-  HexRootsMathlib.SimpleRoot.rootOf hsep
+    : Hex.SimpleRoot p → ℂ :=
+  HexRootsMathlib.SimpleRoot.rootOf
 
 end Hex

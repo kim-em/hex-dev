@@ -68,6 +68,12 @@ def linearHenselStep
 def quadraticHenselStep
     (m : Nat) (f g h s t : ZPoly) : QuadraticLiftResult
 
+def henselLiftQuadratic
+    (p k : Nat) (f g h s t : ZPoly) : QuadraticLiftResult
+
+def henselLiftFactors
+    (p k : Nat) (f g h s t : ZPoly) : ZPoly × ZPoly
+
 def henselLift
     (p k : Nat) (f g h : ZPoly) (s t : FpPoly p) : LinearLiftResult
 
@@ -158,8 +164,11 @@ Correctness: `s**g* + t**h* = 1 - b²`. Since `b ≡ 0 mod m`, we get
 `b² ≡ 0 mod m²`, so `s**g* + t**h* ≡ 1 mod m²`.
 
 Note: divmod by `g*` (not `h*`) because `g*` is monic; `h` may not be.
-Both factor and Bezout coefficients must be lifted together at each
-doubling step (unlike linear lifting which reuses `s, t` mod `p`).
+Both factor and Bezout coefficients are lifted together at every correction
+whose witnesses are consumed by a later correction (unlike linear lifting,
+which reuses `s, t` mod `p`). When the caller ultimately needs only the two
+factors, `quadraticHenselFactors` may omit the final witness update; its result
+is proved equal to the factor projection of `quadraticHenselStep`.
 
 When `m² < 2^64`, the quadratic step caches the word-polynomial forms of
 `f`, `g`, `h`, `s`, and `t` and performs coefficientwise add, subtract,
@@ -225,16 +234,25 @@ linear-vs-quadratic agreement statement), `coprime_mod_p_lifts`, and
 transfer theorems phrased in terms of Mathlib polynomials.
 
 **Iteration count for the quadratic wrapper.** `multifactorLiftQuadratic
-p k` and `henselLiftQuadratic p k` produce data valid modulo `p^k`
-using `⌈log₂ k⌉` doubling steps from modulus `p`, then reducing modulo
-`p^k`. The iteration count is `O(log k)` — never `O(k)`. In the
+p k`, `henselLiftQuadratic p k`, and `henselLiftFactors p k` produce data
+valid modulo `p^k` using `⌈log₂ k⌉` quadratic corrections. To reach exponent
+`k`, the wrapper first recursively reaches `⌈k/2⌉`, performs one correction,
+and immediately reduces every retained component modulo `p^k`. An even target
+has no transient overshoot; an odd target computes at exponent `k + 1` before
+that reduction. Thus the working exponent exceeds the requested one by at
+most one, rather than climbing to the next power of two and reducing only at
+the end. `henselLiftFactors` performs full factor-and-Bezout corrections while
+a later correction still consumes the witnesses, then uses the proved
+factor-only primitive for the last correction.
+
+The iteration count is `O(log k)` — never `O(k)`. In the
 Berlekamp–Zassenhaus pipeline `k` is a Mignotte bound, polynomial in
-the input size; `O(log k)` doublings is what keeps the lifter
+the input size; `O(log k)` corrections are what keep the lifter
 polynomial. Note that `hex-berlekamp-zassenhaus` calls this wrapper
 *adaptively* (see that library's "Precision selection" subsection):
 typically multiple times with successively larger `k`, not once at
 the Mignotte upper bound. Each individual call still uses
-`⌈log₂ k⌉` doublings for its given target.
+`⌈log₂ k⌉` corrections for its given target.
 
 **Phase 4 bench coverage.** Bench registrations for `multifactorLift`,
 `multifactorLiftQuadratic`, `henselLift`, and `henselLiftQuadratic`

@@ -421,7 +421,8 @@ theorem witness_quadrupled_of_glueCovered {p : Hex.ZPoly}
     have hwroot : f.IsRoot w := (Polynomial.mem_roots hp).1 (by
       rw [hrootsEq]
       exact Multiset.mem_cons_of_mem hw)
-    have hsepzw := mahlerPrec_separates p hsep z w hzroot hwroot (hne w hw).symm
+    have hsepzw := mahlerPrec_separates p (ne_zero_of_separable hsep)
+      z w hzroot hwroot (hne w hw).symm
     have htri : ‖z - w‖ ≤ ‖z - DyadicSquare.center wide‖ +
         ‖w - DyadicSquare.center wide‖ := by
       calc
@@ -877,7 +878,8 @@ theorem refineAll_certificates_disjoint {p : Hex.ZPoly}
             gcongr
             exact norm_add_le _ _
           _ ≤ _ := by nlinarith
-      have hsepzw := mahlerPrec_separates p hsep z w hzroot hwroot hzw
+      have hsepzw := mahlerPrec_separates p (ne_zero_of_separable hsep)
+        z w hzroot hwroot hzw
       change (2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) * (1449 / 1024 : ℝ) <
           ‖z - w‖ / 4 at hsepzw
       have hMpos : 0 < (2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) *

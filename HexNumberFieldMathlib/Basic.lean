@@ -297,7 +297,7 @@ theorem AlgebraicNumber.beq_iff (a b : AlgebraicNumber) :
       exact hmeet
     have hroot :=
       (HexRootsMathlib.RefinedIsolation.intersects_iff_root_eq
-        (ZPoly.CheckedIrreducible.separable a.p) a.rep brep).mp hinter
+        a.rep brep).mp hinter
     change a.rep.root = b.rep.root
     rw [← RefinedIsolation.castPoly_root hp b.rep]
     exact hroot
@@ -312,7 +312,7 @@ theorem AlgebraicNumber.beq_iff (a b : AlgebraicNumber) :
       exact hroot
     have hinter : Intersects a.rep brep :=
       (HexRootsMathlib.RefinedIsolation.intersects_iff_root_eq
-        (ZPoly.CheckedIrreducible.separable a.p) a.rep brep).mpr hroot'
+        a.rep brep).mpr hroot'
     change a.rep.1.square.discsMeet b.rep.1.square = true
     change a.rep.1.square.discsMeet brep.1.square = true at hinter
     rw [show brep.1.square = b.rep.1.square by
@@ -337,14 +337,8 @@ theorem AlgebraicRoot.isZero_iff (a : AlgebraicRoot) :
           a.rep.1.square (0, 0)).mp hcontains
       simp at hmem
       exact hmem
-    have hpne : a.p ≠ 0 := by
-      intro hp
-      have hpos := a.pos_degree
-      rw [hp] at hpos
-      simp at hpos
     have hroot :=
       HexRootsMathlib.RefinedIsolation.eq_root_of_mem_closedDisc
-        (HexRootsMathlib.HasOnlySimpleRoots.separable a.squarefree hpne)
         a.rep hzeroRoot hzeroMem
     exact hroot.symm
   · intro hroot
