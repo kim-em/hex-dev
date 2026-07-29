@@ -22,6 +22,8 @@ Phi_385 cases to their prior performance. The clean full-corpus Hex-only sweep
 solves 373/392 with a 432.972 microsecond median and 5.437 millisecond p90. On
 238 overhead-eligible pairs its median Hex/Isabelle ratio is 0.927x, with Hex
 winning 126 rows and Isabelle 112.
+The affected quadratic-multifactor benchmark remains flat at the largest rung:
+67.229 ms versus the preceding 67.862 ms.
 
 ## Next step
 
