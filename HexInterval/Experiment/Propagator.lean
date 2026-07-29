@@ -913,7 +913,8 @@ structure RetainedSuggestion where
   suggestion : Suggestion
   splitVersion : Option Nat
   /-- Cached semantic items inspected when policy constructs the suggestion
-  key.  Reply validation derives this under the proposal limits. -/
+  key, including the source action's structural matcher inputs.  Reply
+  validation derives this under the proposal and matcher-batch limits. -/
   policyItems : Nat := 0
 
 /-- Engine-owned index of one retained policy suggestion. -/
@@ -1895,8 +1896,10 @@ def finishReply (state : Engine Fact) : Engine Fact :=
     metrics := { state.metrics with replies := state.metrics.replies + 1 } }
 
 /-- Commit engine-owned matcher progress after, and only after, a valid reply.
-If the frozen epoch still has unseen inputs, requeue the same global matcher
-through the ordinary bounded worklist. -/
+The charged visit count is the cursor delta, so replaying a retained retry does
+not pay again for an already committed batch.  If the frozen epoch still has
+unseen inputs, or became exhausted while the network grew past its frozen
+limit, requeue the same global matcher through the ordinary bounded worklist. -/
 def commitMatcher (state : Engine Fact) (action : Action)
     (matcherNext : Option MatcherCursor) :
     Except Resource (Engine Fact) := do
@@ -1907,9 +1910,27 @@ def commitMatcher (state : Engine Fact) (action : Action)
       else
         throw .matcherVisits
   | some next =>
-      let some (some _) := state.matcherCursors[action.application.index]?
+      let some (some stored) := state.matcherCursors[action.application.index]?
         | throw .applications
-      let visits := action.structuralInputs.length
+      let view := state.matcherView
+      let start <-
+        if stored.exhausted then
+          match StructuralCursor.renew view stored with
+          | .ok renewed => pure renewed
+          | .error _ => throw .matcherVisits
+        else
+          pure stored
+      let some epoch := action.matcherEpoch | throw .matcherVisits
+      if !start.validFor view || !next.validFor view ||
+          epoch != start.epoch || next.epoch != start.epoch ||
+          next.programVersion != start.programVersion ||
+          next.base != start.base || next.limit != start.limit ||
+          next.offset < start.offset || next.visits < start.visits then
+        throw .matcherVisits
+      let visits := next.visits - start.visits
+      if next.offset - start.offset != visits ||
+          (visits != 0 && visits != action.structuralInputs.length) then
+        throw .matcherVisits
       if state.limits.maxMatcherVisits < state.metrics.matcherVisits + visits then
         throw .matcherVisits
       let state :=
@@ -1919,10 +1940,17 @@ def commitMatcher (state : Engine Fact) (action : Action)
           metrics :=
             { state.metrics with
               matcherVisits := state.metrics.matcherVisits + visits } }
-      if next.exhausted then
-        pure state
-      else
+      let hasUnseen <-
+        if next.exhausted then
+          match StructuralCursor.renew view next with
+          | .ok renewed => pure (!renewed.exhausted)
+          | .error _ => throw .matcherVisits
+        else
+          pure true
+      if hasUnseen then
         state.enqueue (.application action.application)
+      else
+        pure state
 
 def outcomeNegative (state : Engine Fact) (outcome : Outcome Fact) : Engine Fact :=
   let state := state.finishReply
@@ -1953,7 +1981,8 @@ def retainSuggestion (state : Engine Fact) (action : Action)
     splitVersion := match suggestion with
       | .split request => state.versions[request.node.index]?
       | .retry _ | .instantiate _ => none
-    policyItems := match suggestion with
+    policyItems := action.structuralInputs.length +
+      match suggestion with
       | .instantiate request => request.policyItems
       | .retry _ | .split _ => 0 }
 
