@@ -39,6 +39,11 @@ abbrev Invoke (Fact Cache : Type) :=
 structure Handler (Fact Cache : Type) where
   registration : Registration
   invoke : Invoke Fact Cache
+  /-- Package-owned semantic preflight for one concrete scoped application.
+  Local registrations never call this hook.  The default is fail-closed.  A
+  checked session passes `Registry.acceptsBinding registry` to `Engine.start`,
+  preserving the same package veto for dynamically proposed scopes. -/
+  acceptsScope : Program -> ScopeBinding -> Bool := fun _ _ => false
 
 namespace Handler
 
@@ -278,6 +283,36 @@ end Registration
 
 namespace Registry
 
+/-- Route a structurally valid start-time scope back to the package which owns
+its rule and ask that package to accept the semantic binding. -/
+def acceptsBinding (registry : Registry Fact) (program : Program)
+    (binding : ScopeBinding) : Bool :=
+  match ruleEntry? registry.registrations binding.rule with
+  | none => false
+  | some (ruleId, registration) =>
+      match registry.routes[ruleId.index]? with
+      | none => false
+      | some route =>
+          match registry.packages[route.package]? with
+          | none => false
+          | some package =>
+              match package.handlers[route.handler]? with
+              | none => false
+              | some handler =>
+                  registration.binding == .scoped &&
+                    registration.same handler.registration &&
+                    binding.valid program registry.registrations &&
+                    handler.acceptsScope program binding
+
+/-- Check a complete start-time binding table after assembling the final
+package registry and program.  Passing `Registry.acceptsBinding registry` to
+`Engine.start` also installs this check for dynamic admission; the engine still
+repeats its independent structural validation at its own boundary. -/
+def acceptsBindings (registry : Registry Fact) (program : Program)
+    (bindings : Array ScopeBinding) : Bool :=
+  scopeBindingsCheck program registry.registrations bindings &&
+    bindings.all (registry.acceptsBinding program)
+
 /-- Route one engine-owned rule identifier to its package callback.  Dispatch
 uses compact validated indices; it never branches on the semantic operation
 or rule key.  Only the selected package cache is replaced. -/
@@ -300,14 +335,29 @@ def invoke (registry : Registry Fact) (request : RuleRequest Fact) :
                   else if !handler.registration.accepts request then
                     (.failed DispatchCode.requestMismatch, registry)
                   else
-                    let (outcome, cache) := handler.invoke package.cache request
-                    let package :=
-                      { package with
-                        cache := cache
-                        invocations := package.invocations + 1 }
-                    (outcome,
-                      { registry with
-                        packages := registry.packages.set! route.package package })
+                    let program : Program :=
+                      { operations := request.program.operations
+                        nodes := request.program.nodes }
+                    let scopeAccepted :=
+                      match registration.binding with
+                      | .local => true
+                      | .scoped =>
+                          registry.acceptsBinding program
+                            { rule := request.action.key
+                              anchor := request.action.node
+                              watches := request.inputs.map (fun input => input.node)
+                              writes := request.writes }
+                    if !scopeAccepted then
+                      (.failed DispatchCode.requestMismatch, registry)
+                    else
+                      let (outcome, cache) := handler.invoke package.cache request
+                      let package :=
+                        { package with
+                          cache := cache
+                          invocations := package.invocations + 1 }
+                      (outcome,
+                        { registry with
+                          packages := registry.packages.set! route.package package })
 
 end Registry
 

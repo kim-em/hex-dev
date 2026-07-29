@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexInterval.Experiment.PackageRegistry
+import HexInterval.Experiment.Policy
 
 /-!
 # Arbitrary-scope propagator conformance
@@ -94,6 +95,7 @@ def limits : Limits :=
     maxNodes := 16
     maxRules := 8
     maxArity := 4
+    maxScopeNodes := 16
     maxApplications := 16
     maxQueueEntries := 16
     maxActions := 16
@@ -149,22 +151,64 @@ def scopedPackage : Package Rank :=
   { Cache := Nat
     cache := 0
     operations
-    handlers := #[{ registration := scopedRule, invoke := scopedInvoke }] }
+    handlers :=
+      #[{ registration := scopedRule
+          invoke := scopedInvoke
+          acceptsScope := fun actualProgram binding =>
+            actualProgram.check && binding.same scope }] }
 
 def run? : Option (RunResult Rank (Registry Rank)) :=
   match Registry.buildWithin limits #[scopedPackage] with
   | .error _ => none
   | .ok registry =>
-      if !registry.acceptsProgram program || !registry.acceptsLimits program limits then
+      if !registry.acceptsProgram program || !registry.acceptsLimits program limits ||
+          !registry.acceptsBindings program #[scope] then
         none
       else
         match Engine.start rankDomain program registry.registrations
-            #[4, 6, 0, 0, 0, 9] limits #[scope] with
+            #[4, 6, 0, 0, 0, 9] limits #[scope]
+              (Registry.acceptsBinding registry) with
         | .error _ => none
         | .ok state => some (drive Registry.invoke 4 state registry)
 
 #guard program.check
 #guard extendedProgram.check
+
+-- The generic engine regards port order as opaque semantic data.  The owning
+-- package accepts its matcher-produced order and vetoes a structurally valid
+-- but semantically different projection.
+#guard
+  match Registry.buildWithin limits #[scopedPackage] with
+  | .error _ => false
+  | .ok registry =>
+      registry.acceptsBindings program #[scope] &&
+        !registry.acceptsBindings program
+          #[{ scope with watches := scope.watches.reverse }] &&
+        (match Engine.start rankDomain program registry.registrations
+            #[4, 6, 0, 0, 0, 9] limits
+              #[{ scope with watches := scope.watches.reverse }]
+              (Registry.acceptsBinding registry) with
+          | .error .invalidBindings => true
+          | _ => false)
+
+-- Dispatch repeats the package-owned scope check before entering the callback.
+-- Thus even a raw engine composed with a deliberately permissive start hook
+-- cannot make the package execute against a reordered semantic projection.
+#guard
+  match Registry.buildWithin limits #[scopedPackage] with
+  | .error _ => false
+  | .ok registry =>
+      match Engine.start rankDomain program registry.registrations
+          #[4, 6, 0, 0, 0, 9] limits
+            #[{ scope with watches := scope.watches.reverse }] (fun _ _ => true) with
+      | .error _ => false
+      | .ok state =>
+          match state.poll with
+          | .request request _ =>
+              match (registry.invoke request).1 with
+              | .failed code => code == DispatchCode.requestMismatch
+              | _ => false
+          | _ => false
 
 -- The package callback receives four nonlocal reads, owns two nonlocal writes,
 -- and revisits exactly once after the atomic pair improves.
@@ -301,6 +345,27 @@ def appendProposal : InstantiationRequest :=
     equalities := []
     payload := { index := 6 } }
 
+def acceptsSixNodeScope (actualProgram : Program) (_ : ScopeBinding) : Bool :=
+  actualProgram.nodes.size == 6
+
+-- Installed package scopes are revalidated against a proposed final program.
+-- A non-append-monotone package predicate therefore vetoes the whole extension
+-- before it can enter retained state.
+#guard
+  match Engine.start rankDomain program #[localRule, scopedRule]
+      #[4, 6, 0, 0, 0, 9] limits #[scope] acceptsSixNodeScope with
+  | .error _ => false
+  | .ok state =>
+      match state.poll with
+      | .request request awaiting =>
+          match awaiting.submit
+              (request.action.reply (.success [] [.instantiate appendProposal] {})) with
+          | .invalid .malformedProposal next =>
+              next.program.nodes.size == 6 && next.bindings.size == 1 &&
+                next.suggestions.isEmpty && next.instanceHistory.isEmpty
+          | _ => false
+      | _ => false
+
 def admittedAppend? : Option (Engine Rank) := do
   let state <- match Engine.start rankDomain program #[localRule, scopedRule]
       #[4, 6, 0, 0, 0, 9] limits #[scope] with
@@ -330,6 +395,618 @@ def admittedAppend? : Option (Engine Rank) := do
             application.watches == scope.watches && application.writes == scope.writes) &&
         state.applications[3]?.any (fun application =>
           application.rule.index == 0 && application.node == node 6)
+  | none => false
+
+/-! # Dynamically instantiated scopes -/
+
+def dynamicKey : RuleKey := { name := "scope.dynamic" }
+
+def dynamicRule : Registration :=
+  { key := dynamicKey
+    head := unaryKey
+    kind := .improve
+    watches := []
+    writes := []
+    binding := .scoped }
+
+def proposedDynamicScope : ProposedScope :=
+  { rule := dynamicKey
+    anchor := .proposed 0
+    watches := [.existing (node 0), .existing (node 1), .proposed 0]
+    writes := [.proposed 0] }
+
+/-- The same scope occurs twice deliberately.  Admission preserves both
+output references while appending only one concrete application. -/
+def dynamicRequest : InstantiationRequest :=
+  { key := 23
+    nodes :=
+      [{ domain := real
+         op := { index := 1 }
+         args := [.existing (node 5)] }]
+    equalities := []
+    scopes := [proposedDynamicScope, proposedDynamicScope]
+    payload := { index := 7 } }
+
+def retainedDynamic? (customLimits : Limits := limits) : Option (Engine Rank) := do
+  let state <- match Engine.start rankDomain program
+      #[localRule, scopedRule, dynamicRule] #[4, 6, 0, 0, 0, 9]
+      customLimits #[scope] with
+    | .ok state => some state
+    | .error _ => none
+  let (request, awaiting) <- match state.poll with
+    | .request request awaiting => some (request, awaiting)
+    | _ => none
+  match awaiting.submit
+      (request.action.reply (.success [] [.instantiate dynamicRequest] {})) with
+  | .accepted _ state => some state
+  | _ => none
+
+def admittedDynamic? (customLimits : Limits := limits) : Option (Engine Rank) := do
+  let state <- retainedDynamic? customLimits
+  match state.admitInstantiation { index := 0 } with
+  | .admitted [fresh] state => if fresh == node 6 then some state else none
+  | _ => none
+
+-- New scopes append before the local applications generated by the same
+-- event.  All older applications and dirty bits retain their exact indices.
+#guard
+  match admittedDynamic? with
+  | some state =>
+      state.program.nodes.size == 7 && state.programVersion == 1 &&
+        state.applications.size == 5 && state.bindings.size == 2 &&
+        state.queued.toList == [false, true, true, true, true] &&
+        state.metrics.generatedNodes == 1 && state.metrics.generatedScopes == 1 &&
+        state.instanceHistory[0]?.any (fun event =>
+          event.products == [node 6] && event.newNodes == [node 6] &&
+            event.bindings.length == 2 && event.newBindings.length == 1 &&
+            event.applications == [{ index := 3 }, { index := 3 }] &&
+            event.newApplications == [{ index := 3 }]) &&
+        state.applications[3]?.any (fun application =>
+          application.rule.index == 2 && application.node == node 6 &&
+            application.watches == [node 0, node 1, node 6] &&
+            application.writes == [node 6]) &&
+        state.applications[4]?.any (fun application =>
+          application.rule.index == 0 && application.node == node 6)
+  | none => false
+
+def dynamicOutcome (request : RuleRequest Rank) : Outcome Rank :=
+  if request.inputs.map (fun input => input.node) != [node 0, node 1, node 6] ||
+      request.writes != [node 6] then
+    .failed 11
+  else
+    match request.inputs, request.writes with
+    | left :: right :: _, [target] =>
+        .success
+          [{ node := target
+             fact := Nat.min left.fact right.fact
+             payload := { index := 8 } }]
+          [] { visitedEntries := 3 }
+    | _, _ => .failed 12
+
+def dynamicInvoke (calls : List String) (request : RuleRequest Rank) :
+    Outcome Rank × List String :=
+  let calls := request.action.key.name :: calls
+  if request.action.key == dynamicKey then (dynamicOutcome request, calls)
+  else (.noChange {}, calls)
+
+def dynamicFinal? : Option (RunResult Rank (List String)) := do
+  let state <- admittedDynamic?
+  pure (drive dynamicInvoke 12 state [])
+
+-- The newly installed arbitrary-scope application is live immediately and
+-- participates in ordinary self-revisit closure.
+#guard
+  match dynamicFinal? with
+  | some result =>
+      result.stop == .saturated && result.state.facts[6]? == some 4 &&
+        result.cache.count dynamicKey.name == 2
+  | none => false
+
+def existingDynamicScope : ProposedScope :=
+  { rule := dynamicKey
+    anchor := .existing (node 2)
+    watches := [.existing (node 0), .existing (node 1), .existing (node 2)]
+    writes := [.existing (node 2)] }
+
+def scopeOnlyRequest : InstantiationRequest :=
+  { key := 29
+    nodes := []
+    equalities := []
+    scopes := [existingDynamicScope, existingDynamicScope]
+    payload := { index := 9 } }
+
+def scopeOnlyInitial? (customLimits : Limits := limits) : Option (Engine Rank) := do
+  let state <- match Engine.start rankDomain program
+      #[localRule, scopedRule, dynamicRule] #[4, 6, 0, 0, 0, 9]
+      customLimits #[scope] with
+    | .ok state => some state
+    | .error _ => none
+  let (request, awaiting) <- match state.poll with
+    | .request request awaiting => some (request, awaiting)
+    | _ => none
+  match awaiting.submit
+      (request.action.reply (.success [] [.instantiate scopeOnlyRequest] {})) with
+  | .accepted _ state => some state
+  | _ => none
+
+def scopeOnlyAdmitted? (customLimits : Limits := limits) :
+    Option (Engine Rank × SuggestionId) := do
+  let state <- scopeOnlyInitial? customLimits
+  let selected : SuggestionId := { index := 0 }
+  match state.admitInstantiation selected with
+  | .admitted [] state => some (state, selected)
+  | _ => none
+
+-- Adding only a contractor application is a real network extension, despite
+-- adding no expression node or equality.
+#guard
+  match scopeOnlyAdmitted? with
+  | some (state, _) =>
+      state.program.nodes.size == 6 && state.programVersion == 1 &&
+        state.applications.size == 4 && state.bindings.size == 2 &&
+        state.applications.map (fun application => application.policyItems) ==
+          #[6, 2, 2, 4] &&
+        state.metrics.admittedInstances == 1 && state.metrics.generatedNodes == 0 &&
+        state.metrics.generatedScopes == 1 &&
+        (state.applications.toList.take 3).all (fun application =>
+          application.generation == 0) &&
+        state.applications[3]?.any (fun application => application.generation == 1) &&
+        state.instanceHistory[0]?.any (fun event =>
+          event.newNodes.isEmpty && event.bindings.length == 2 &&
+            event.newBindings.length == 1 &&
+            event.applications == [{ index := 3 }, { index := 3 }] &&
+            event.newApplications == [{ index := 3 }])
+  | none => false
+
+def scopePolicyLimits : Policy.Limits :=
+  { maxDecisions := 4
+    maxTraversal := 64
+    maxLiveOffers := 16 }
+
+-- Scope-only admission consumes theorem-instantiation generation even though
+-- it appends no node.  The policy budget view must report that consumption.
+#guard
+  match scopeOnlyAdmitted? with
+  | some (engine, _) =>
+      match (Policy.State.start engine scopePolicyLimits).view with
+      | .ok (view, _) => view.remaining.generation == 1
+      | .error _ => false
+  | none => false
+
+-- Traversal accounting includes variable scoped reads and retained scope
+-- proposals.  The bounded scan fails as soon as its remaining allowance is
+-- exhausted; the exact complete view costs 25 semantic items here.
+#guard
+  match scopeOnlyAdmitted? with
+  | some (engine, _) =>
+      match (Policy.State.start engine
+          { scopePolicyLimits with maxTraversal := 5 }).view with
+      | .error .traversalLimit => true
+      | _ => false
+  | none => false
+
+#guard
+  match scopeOnlyAdmitted? with
+  | some (engine, _) =>
+      match (Policy.State.start engine
+          { scopePolicyLimits with maxTraversal := 24 }).view with
+      | .error .traversalLimit => true
+      | _ => false
+  | none => false
+
+#guard
+  match scopeOnlyAdmitted? with
+  | some (engine, _) =>
+      match (Policy.State.start engine
+          { scopePolicyLimits with maxTraversal := 25 }).view with
+      | .ok (_, next) => next.metrics.traversal == 25
+      | .error _ => false
+  | none => false
+
+-- Selecting the same scope-only proposal again allocates no second binding.
+#guard
+  match scopeOnlyAdmitted? with
+  | some (state, selected) =>
+      match state.admitInstantiation selected with
+      | .duplicate next =>
+          next.applications.size == 4 && next.bindings.size == 2 &&
+            next.metrics.duplicateInstances == 1
+      | _ => false
+  | none => false
+
+-- Application and queue limits roll back the node and scope together.
+#guard
+  match retainedDynamic? { limits with maxApplications := 3 } with
+  | some state =>
+      match state.admitInstantiation { index := 0 } with
+      | .resourceLimit .applications next =>
+          next.program.nodes.size == 6 && next.applications.size == 3 &&
+            next.bindings.size == 1 && next.instanceHistory.isEmpty
+      | _ => false
+  | none => false
+
+-- The fresh scope can fit while the local application induced by its new node
+-- is the one which crosses the application cap.
+#guard
+  match retainedDynamic? { limits with maxApplications := 4 } with
+  | some state =>
+      match state.admitInstantiation { index := 0 } with
+      | .resourceLimit .applications next =>
+          next.program.nodes.size == 6 && next.applications.size == 3 &&
+            next.bindings.size == 1 && next.instanceHistory.isEmpty
+      | _ => false
+  | none => false
+
+#guard
+  match admittedDynamic? { limits with maxApplications := 5 } with
+  | some state => state.applications.size == 5 && state.program.nodes.size == 7
+  | none => false
+
+#guard
+  match retainedDynamic? { limits with maxQueueEntries := 3 } with
+  | some state =>
+      match state.admitInstantiation { index := 0 } with
+      | .resourceLimit .queueEntries next =>
+          next.program.nodes.size == 6 && next.applications.size == 3 &&
+            next.bindings.size == 1 && next.instanceHistory.isEmpty
+      | _ => false
+  | none => false
+
+#guard
+  match retainedDynamic? { limits with maxQueueEntries := 4 } with
+  | some state =>
+      match state.admitInstantiation { index := 0 } with
+      | .resourceLimit .queueEntries next =>
+          next.queue.size == 3 && next.applications.size == 3 &&
+            next.instanceHistory.isEmpty
+      | _ => false
+  | none => false
+
+#guard
+  match admittedDynamic? { limits with maxQueueEntries := 5 } with
+  | some state => state.queue.size == 5 && state.applications.size == 5
+  | none => false
+
+def scopeBoundaryRequest (watches : List NodeRef) : InstantiationRequest :=
+  { key := 47
+    nodes := []
+    equalities := []
+    scopes :=
+      [{ rule := dynamicKey
+         anchor := .existing (node 2)
+         watches
+         writes := [] }]
+    payload := { index := 14 } }
+
+def scopeBoundaryReply (watches : List NodeRef) : Option (ReplyResult Rank) := do
+  let state <- match Engine.start rankDomain program
+      #[localRule, scopedRule, dynamicRule] #[4, 6, 0, 0, 0, 9]
+      { limits with maxScopeNodes := 4 } #[scope] with
+    | .ok state => some state
+    | .error _ => none
+  let (request, awaiting) <- match state.poll with
+    | .request request awaiting => some (request, awaiting)
+    | _ => none
+  pure <| awaiting.submit
+    (request.action.reply (.success [] [.instantiate (scopeBoundaryRequest watches)] {}))
+
+-- Arbitrary ports have their own exact per-scope bound, independent of local
+-- operation arity.
+#guard
+  match scopeBoundaryReply
+      [.existing (node 0), .existing (node 1), .existing (node 2), .existing (node 3)] with
+  | some (.accepted plan state) => plan.kept.length == 1 && state.suggestions.size == 1
+  | _ => false
+
+#guard
+  match scopeBoundaryReply
+      [.existing (node 0), .existing (node 1), .existing (node 2),
+        .existing (node 3), .existing (node 5)] with
+  | some (.invalid .oversizedProposal state) => state.suggestions.isEmpty
+  | _ => false
+
+def malformedScopeRequest : InstantiationRequest :=
+  { scopeOnlyRequest with
+    scopes := [{ existingDynamicScope with watches := [.existing (node 0), .existing (node 0)] }] }
+
+def rejectDynamicScope (_ : Program) (binding : ScopeBinding) : Bool :=
+  binding.rule != dynamicKey
+
+-- A malformed dynamic scope is rejected before it can enter retained policy
+-- state, not deferred until selection.
+#guard
+  match Engine.start rankDomain program #[localRule, scopedRule, dynamicRule]
+      #[4, 6, 0, 0, 0, 9] limits #[scope] with
+  | .error _ => false
+  | .ok state =>
+      match state.poll with
+      | .request request awaiting =>
+          match awaiting.submit
+              (request.action.reply
+                (.success [] [.instantiate malformedScopeRequest] {})) with
+          | .invalid .malformedProposal next =>
+              next.suggestions.isEmpty && next.bindings.size == 1
+          | _ => false
+      | _ => false
+
+-- Session-supplied package validation runs before retention as well as before
+-- commit.  Thus one package cannot use a structurally valid proposal to install
+-- an arbitrary port projection for a rule whose owner vetoes that scope.
+#guard
+  match Engine.start rankDomain program #[localRule, scopedRule, dynamicRule]
+      #[4, 6, 0, 0, 0, 9] limits #[scope] rejectDynamicScope with
+  | .error _ => false
+  | .ok state =>
+      match state.poll with
+      | .request request awaiting =>
+          match awaiting.submit
+              (request.action.reply (.success [] [.instantiate scopeOnlyRequest] {})) with
+          | .invalid .malformedProposal next =>
+              next.suggestions.isEmpty && next.bindings.size == 1
+          | _ => false
+      | _ => false
+
+/-- Consume ordinary queued work until the dynamically installed scope is
+invoked.  Returning the post-reply state lets the test below retain that exact
+generation-one action as causal provenance for another proposal. -/
+def nextDynamicAction? : Nat -> Engine Rank -> Option (Engine Rank × Action)
+  | 0, _ => none
+  | fuel + 1, state =>
+      match state.poll with
+      | .request request awaiting =>
+          match awaiting.submit (request.action.reply (.noChange {})) with
+          | .accepted _ next =>
+              if request.action.key == dynamicKey then
+                some (next, request.action)
+              else
+                nextDynamicAction? fuel next
+          | _ => none
+      | _ => none
+
+def generationChain? : Option (Engine Rank × Action) := do
+  let (state, _) <- scopeOnlyAdmitted? { limits with maxGeneration := 1 }
+  nextDynamicAction? 4 state
+
+def chainedScopeRequest : InstantiationRequest :=
+  { key := 41
+    nodes := []
+    equalities := []
+    scopes :=
+      [{ rule := dynamicKey
+         anchor := .existing (node 3)
+         watches := [.existing (node 0)]
+         writes := [] }]
+    payload := { index := 12 } }
+
+-- Causality follows the application which emitted a proposal, even when its
+-- new scope mentions only generation-zero nodes.  Otherwise a chain of
+-- scope-only instantiations could evade `maxGeneration` forever.
+#guard
+  match generationChain? with
+  | some (state, action) =>
+      let retained : RetainedSuggestion :=
+        { action
+          suggestion := .instantiate chainedScopeRequest
+          splitVersion := none }
+      action.generation == 1 &&
+        !state.actionFresh { action with generation := 0 } &&
+        state.instantiationGeneration? retained == some 2 &&
+        match state.admitRetained retained with
+        | .resourceLimit .generation next =>
+            next.programVersion == state.programVersion &&
+              next.applications.size == state.applications.size &&
+              next.bindings.size == state.bindings.size &&
+              next.instanceHistory.size == state.instanceHistory.size
+        | _ => false
+  | none => false
+
+def secondDynamicRequest : InstantiationRequest :=
+  { key := 43
+    nodes :=
+      [{ domain := real
+         op := { index := 1 }
+         args := [.existing (node 2)] }]
+    equalities := []
+    scopes :=
+      [{ rule := dynamicKey
+         anchor := .existing (node 6)
+         watches := [.existing (node 0), .existing (node 1), .existing (node 6)]
+         writes := [.existing (node 6)] },
+        { rule := dynamicKey
+          anchor := .proposed 0
+          watches := [.existing (node 0), .proposed 0]
+          writes := [.proposed 0] },
+        { rule := dynamicKey
+          anchor := .proposed 0
+          watches := [.existing (node 0), .proposed 0]
+          writes := [.proposed 0] }]
+    payload := { index := 13 } }
+
+def admittedDynamicTwice? : Option (Engine Rank × Engine Rank) := do
+  let first <- admittedDynamic?
+  let (ready, action) <- nextDynamicAction? 4 first
+  let retained : RetainedSuggestion :=
+    { action
+      suggestion := .instantiate secondDynamicRequest
+      splitVersion := none }
+  match ready.admitRetained retained with
+  | .admitted [fresh] next =>
+      if fresh == node 7 then some (ready, next) else none
+  | _ => none
+
+def listSubsequence [DecidableEq alpha] (old new : List alpha) : Bool :=
+  match old, new with
+  | [], _ => true
+  | _ :: _, [] => false
+  | previous :: old, current :: new =>
+      if previous == current then listSubsequence old new
+      else listSubsequence (previous :: old) new
+termination_by old.length + new.length
+
+def watcherSubsequences (old new : Array (List WorkItem)) : Bool := Id.run do
+  if new.size < old.size then return false
+  for index in [0:old.size] do
+    match old[index]?, new[index]? with
+    | some previous, some current =>
+        if !listSubsequence previous current then return false
+    | _, _ => return false
+  return true
+
+-- A second admission interleaves another arbitrary scope with the local rule
+-- generated for its new expression.  Old application IDs, dirty bits, and the
+-- relative order of old watcher entries remain stable; mixed CSE outputs
+-- preserve proposal order.
+#guard
+  match admittedDynamicTwice? with
+  | some (before, state) =>
+      state.programVersion == 2 && state.program.nodes.size == 8 &&
+        state.applications.size == 7 && state.bindings.size == 3 &&
+        applicationsPrefix before.applications state.applications &&
+        state.queued.toList.take before.queued.size == before.queued.toList &&
+        watcherSubsequences before.watchers state.watchers &&
+        state.applications[5]?.any (fun application =>
+          application.rule.index == 2 && application.node == node 7 &&
+            application.generation == 2) &&
+        state.applications[6]?.any (fun application =>
+          application.rule.index == 0 && application.node == node 7 &&
+            application.generation == 2) &&
+        state.instanceHistory[1]?.any (fun event =>
+          event.applications == [{ index := 3 }, { index := 5 }, { index := 5 }] &&
+            event.newApplications == [{ index := 5 }] &&
+            event.bindings.length == 3 && event.newBindings.length == 1)
+  | none => false
+
+def dynamicEqualityRequest : InstantiationRequest :=
+  { dynamicRequest with
+    equalities :=
+      [{ left := .existing (node 0)
+         right := .existing (node 1)
+         payload := { index := 15 } }] }
+
+def dynamicEqualityThenScope? : Option (Engine Rank × Engine Rank) := do
+  let retained <- retainedDynamic?
+  let origin <- retained.suggestions[0]?
+  let first : RetainedSuggestion :=
+    { origin with suggestion := .instantiate dynamicEqualityRequest }
+  let before <- match retained.admitRetained first with
+    | .admitted [fresh] state => if fresh == node 6 then some state else none
+    | _ => none
+  let secondRequest : InstantiationRequest :=
+    { key := 53
+      nodes := []
+      equalities := []
+      scopes := [existingDynamicScope]
+      payload := { index := 16 } }
+  let second : RetainedSuggestion :=
+    { origin with suggestion := .instantiate secondRequest }
+  match before.admitRetained second with
+  | .admitted [] after => some (before, after)
+  | _ => none
+
+-- Applications and equalities use one dependency list.  A new application is
+-- inserted before an older equality, so prefix stability would be false; the
+-- required deterministic invariant is preservation of every old entry in its
+-- old relative order.
+#guard
+  match dynamicEqualityThenScope? with
+  | some (before, after) =>
+      match before.watchers[0]?, after.watchers[0]? with
+      | some old, some new =>
+          old.length == 4 && new.length == 5 &&
+            new.take old.length != old && listSubsequence old new &&
+            watcherSubsequences before.watchers after.watchers
+      | _, _ => false
+  | none => false
+
+/-- First create a generation-one node without a scope.  A later independent
+proposal reconstructs the same logical output through `.proposed 0`; whether
+that output is fresh or CSE-reuses the old node must not change the second
+theorem instance's generation. -/
+def generationSeed? : Option (Engine Rank × RetainedSuggestion) := do
+  let state <- match Engine.start rankDomain program #[scopedRule, dynamicRule]
+      #[4, 6, 0, 0, 0, 9] limits #[scope] with
+    | .ok state => some state
+    | .error _ => none
+  let (request, awaiting) <- match state.poll with
+    | .request request awaiting => some (request, awaiting)
+    | _ => none
+  let seed : InstantiationRequest :=
+    { key := 31
+      nodes :=
+        [{ domain := real
+           op := { index := 1 }
+           args := [.existing (node 2)] }]
+      equalities := []
+      payload := { index := 10 } }
+  let retained <- match awaiting.submit
+      (request.action.reply (.success [] [.instantiate seed] {})) with
+    | .accepted _ state => some state
+    | _ => none
+  let origin <- retained.suggestions[0]?
+  match retained.admitInstantiation { index := 0 } with
+  | .admitted [fresh] state =>
+      if fresh == node 6 then some (state, origin) else none
+  | _ => none
+
+def cseScopeRetained? : Option (Engine Rank × RetainedSuggestion) := do
+  let (state, origin) <- generationSeed?
+  let request : InstantiationRequest :=
+    { key := 37
+      nodes :=
+        [{ domain := real
+           op := { index := 1 }
+           args := [.existing (node 2)] }]
+      equalities := []
+      scopes :=
+        [{ rule := dynamicKey
+           anchor := .proposed 0
+           watches := [.proposed 0]
+           writes := [] }]
+      payload := { index := 11 } }
+  some (state, { origin with suggestion := .instantiate request })
+
+#guard
+  match cseScopeRetained? with
+  | some (state, retained) =>
+      state.instantiationGeneration? retained == some 1 &&
+        match state.admitRetained retained with
+        | .admitted [] next =>
+            next.program.nodes.size == 7 && next.metrics.generatedScopes == 1 &&
+              next.applications[1]?.any (fun application =>
+                application.generation == 1) &&
+              next.instanceHistory[1]?.any (fun event => event.generation == 1)
+        | _ => false
+  | none => false
+
+/-- Equality endpoints obey the same order-independence rule as scoped ports.
+The proposed output is a conclusion of this theorem instance even when CSE
+reuses a generation-one node which happened to be materialized earlier. -/
+def cseEqualityRetained? : Option (Engine Rank × RetainedSuggestion) := do
+  let (state, origin) <- generationSeed?
+  let request : InstantiationRequest :=
+    { key := 39
+      nodes :=
+        [{ domain := real
+           op := { index := 1 }
+           args := [.existing (node 2)] }]
+      equalities :=
+        [{ left := .proposed 0
+           right := .existing (node 0)
+           payload := { index := 13 } }]
+      scopes := []
+      payload := { index := 14 } }
+  some (state, { origin with suggestion := .instantiate request })
+
+#guard
+  match cseEqualityRetained? with
+  | some (state, retained) =>
+      state.instantiationGeneration? retained == some 1 &&
+        match state.admitRetained retained with
+        | .admitted [] next =>
+            next.program.nodes.size == 7 && next.equalities.size == 1 &&
+              next.equalities[0]?.any (fun edge => edge.generation == 1) &&
+              next.instanceHistory[1]?.any (fun event => event.generation == 1)
+        | _ => false
   | none => false
 
 -- A scoped registration is dormant when no package matcher emitted a binding;
@@ -375,7 +1052,7 @@ def startError (rules : Array Registration) (bindings : Array ScopeBinding)
   startError #[scopedRule]
       #[{ scope with
           watches := [node 0, node 1, node 2, node 3, node 4, node 5, node 0] }]
-      { limits with maxNodes := 6 } == some (.resourceLimit .nodes)
+      { limits with maxScopeNodes := 6 } == some (.resourceLimit .scopes)
 
 #guard
   startError #[scopedRule] #[scope] { limits with maxApplications := 0 } ==

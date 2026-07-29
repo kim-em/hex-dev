@@ -58,6 +58,7 @@ structure InvocationKey where
   anchor : NodeId
   kind : ActionKind
   effort : Nat
+  generation : Nat := 0
   inputs : List SeenVersion
   deriving DecidableEq, Repr
 
@@ -84,12 +85,21 @@ structure ProposedEqualityKey where
   right : NodeRef
   deriving DecidableEq, Repr
 
+/-- Payload-erased proposed scoped application. -/
+structure ProposedScopeKey where
+  rule : RuleKey
+  anchor : NodeRef
+  watches : List NodeRef
+  writes : List NodeRef
+  deriving DecidableEq, Repr
+
 /-- Payload-erased structural identity of an instantiation request. -/
 structure InstantiationSemanticKey where
   family : Nat
   generation : Nat
   nodes : List ProposedNodeKey
   equalities : List ProposedEqualityKey
+  scopes : List ProposedScopeKey
   deriving DecidableEq, Repr
 
 def InstantiationSemanticKey.ofRequest
@@ -99,7 +109,12 @@ def InstantiationSemanticKey.ofRequest
     nodes := request.nodes.map fun node =>
       { domain := node.domain, op := node.op, args := node.args }
     equalities := request.equalities.map fun equality =>
-      { left := equality.left, right := equality.right } }
+      { left := equality.left, right := equality.right }
+    scopes := request.scopes.map fun scope =>
+      { rule := scope.rule
+        anchor := scope.anchor
+        watches := scope.watches
+        writes := scope.writes } }
 
 inductive OfferClass where
   | invoke
@@ -231,6 +246,7 @@ def invocationOfAction (scope : ScopeId) (action : Action) : InvocationKey :=
     anchor := action.node
     kind := action.kind
     effort := action.effort
+    generation := action.generation
     inputs := action.inputs }
 
 def State.invocationKey? (state : State Fact) (applicationId : ApplicationId)
@@ -246,6 +262,7 @@ def State.invocationKey? (state : State Fact) (applicationId : ApplicationId)
       anchor := application.node
       kind := application.kind
       effort := effort.getD application.effort
+      generation := application.generation
       inputs }
 
 def State.equalityKey? (state : State Fact) (equalityId : EqualityId) : Option EqualityWorkKey := do
@@ -370,11 +387,40 @@ inductive ViewError where
   | liveOfferLimit
   deriving DecidableEq, Repr
 
+/-- Extra semantic-key surface beyond the one backing-slot charge.  Application
+and retained-suggestion costs are cached when the engine validates them, so a
+small policy limit never forces a preflight walk of large scopes.  This is a
+logical semantic-item budget, not a claim about compiler-level list visits or
+package callback work. -/
+private def offerItemsWithin (budget : Nat) (state : State Fact) :
+    Except ViewError Nat := do
+  let mut remaining := budget
+  if state.engine.pending.isNone && !state.engine.contradictory then
+    for index in [0:state.engine.applications.size] do
+      match state.engine.applications[index]?, state.applications[index]?,
+          state.engine.queued[index]? with
+      | some application, some clock, some true =>
+          if clock.active then
+            if remaining < application.policyItems then throw .traversalLimit
+            remaining := remaining - application.policyItems
+      | _, _, _ => pure ()
+    for index in [0:state.engine.suggestions.size] do
+      match state.engine.suggestions[index]?, state.suggestions[index]? with
+      | some retained, some clock =>
+          if clock.active then
+            if remaining < retained.policyItems then throw .traversalLimit
+            remaining := remaining - retained.policyItems
+      | _, _ => pure ()
+  return budget - remaining
+
 /-- Authoritative bounded scan of every live semantic offer. -/
 private def stateOffers (state : State Fact) : Except ViewError (Array OfferView × Nat) := do
-  let traversal := state.applications.size + state.equalities.size + state.suggestions.size
-  if state.limits.maxTraversal < state.metrics.traversal + traversal then
+  let backing := state.applications.size + state.equalities.size + state.suggestions.size
+  if state.limits.maxTraversal < state.metrics.traversal + backing then
     throw .traversalLimit
+  let room := state.limits.maxTraversal - state.metrics.traversal - backing
+  let extra <- offerItemsWithin room state
+  let traversal := backing + extra
   let mut offers := #[]
   for index in [0:state.applications.size] do
     if let some offer := state.offer? (.application { index }) then
@@ -411,6 +457,12 @@ structure View (Fact : Type) where
 
 def remaining (limit used : Nat) : Nat := limit - used
 
+/-- Highest theorem-instantiation generation already committed in this
+branch.  Instance events cover node-, equality-, and scope-only extensions. -/
+private def usedGeneration (state : State Fact) : Nat :=
+  state.engine.instanceHistory.foldl
+    (fun greatest event => Nat.max greatest event.generation) 0
+
 opaque State.view (state : State Fact) : Except ViewError (View Fact × State Fact) := do
   let (offers, traversal) <- stateOffers state
   pure
@@ -434,7 +486,7 @@ opaque State.view (state : State Fact) : Except ViewError (View Fact × State Fa
             remaining state.engine.limits.maxQueueEntries state.engine.queue.size
           generation :=
             remaining state.engine.limits.maxGeneration
-              (state.engine.generations.foldl Nat.max 0) } },
+              (usedGeneration state) } },
      { state with
        metrics := { state.metrics with traversal := state.metrics.traversal + traversal } })
 
@@ -591,6 +643,7 @@ private def prepareApplication (state : State Fact) (applicationId : Application
                 node := application.node
                 kind := application.kind
                 effort := effort.getD application.effort
+                generation := application.generation
                 inputs }
             let queued :=
               if clearDirty then state.engine.queued.set! applicationId.index false
