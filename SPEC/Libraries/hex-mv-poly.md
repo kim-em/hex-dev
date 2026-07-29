@@ -427,12 +427,14 @@ The recursive view is a separate face on the same data:
 /-- Coefficients of `p` as a univariate polynomial in variable `i`,
 with coefficients in the remaining `n` variables. -/
 def toUnivariate (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
-    [IsMonomialOrder cmp'] (p : MvPoly (n+1) R cmp) :
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+    (p : MvPoly (n+1) R cmp) :
     DensePoly (MvPoly n R cmp')
 
 /-- Inverse of `toUnivariate`, reinserting variable `i`. -/
 def ofUnivariate (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
-    [IsMonomialOrder cmp'] (q : DensePoly (MvPoly n R cmp')) :
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+    (q : DensePoly (MvPoly n R cmp')) :
     MvPoly (n+1) R cmp
 ```
 
@@ -442,7 +444,9 @@ excludes the last one and makes the one-variable case `n = 0` have no
 admissible index at all. The reindexing between the remaining `n`
 variables and the original `n+1` is `Fin.succAbove i` and its partial
 inverse, and the comparator on the remaining variables is an explicit
-argument since nothing determines it from `cmp`.
+argument since nothing determines it from `cmp`. These conversions only
+store and traverse terms, so they require the map comparator laws rather
+than the stronger `IsMonomialOrder` laws used by leading-term algorithms.
 
 Required theorems: coefficient characterisations in both directions,
 both round trips (`ofUnivariate i cmp' (toUnivariate i cmp' p) = p` and
@@ -528,7 +532,7 @@ def isEmptyRingEquiv [CommSemiring R] [DecidableEq R] :
 /-- The recursive view as a ring equivalence, at the first variable. -/
 def finSuccEquiv [CommSemiring R] [DecidableEq R]
     (cmp' : Mono n → Mono n → Ordering)
-    [IsMonomialOrder cmp'] :
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp'] :
     MvPoly (n+1) R cmp ≃+* DensePoly (MvPoly n R cmp')
 
 def oneVarEquiv [CommSemiring R] [DecidableEq R] :
