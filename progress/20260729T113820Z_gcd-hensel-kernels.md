@@ -13,7 +13,7 @@
   it as the compiled implementation after the A/B below.
 - Replaced generic schoolbook multiplication by a monomial in quadratic
   Hensel division with an exactly equal shift-and-scale kernel.
-- Completed the final 9,632-job full build and the polynomial (103), finite-field
+- Completed the post-merge 9,634-job full build and the polynomial (103), finite-field
   (8), Berlekamp (47), Hensel (69), and BZ (16) executable verification suites.
 - Recorded a definitive clean, CPU-pinned 392-row artifact from commit
   `0b95505b` covering public, lattice, and classical-no-decline together.
