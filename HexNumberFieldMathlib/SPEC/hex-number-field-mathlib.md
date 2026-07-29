@@ -111,12 +111,30 @@ theorem AlgebraicRoot.exact_toComplex (a : AlgebraicRoot) :
 theorem QAdjoin.toAlgebraicNumber?_sound
     [ZPoly.CheckedIrreducible p] (...) {b} (h : ... = some b) :
     b.toComplex = QAdjoin.toComplex a rep hrep
+
+theorem QAdjoin.toAlgebraicNumber?_isSome
+    [ZPoly.CheckedIrreducible p] (...) :
+    (a.toAlgebraicNumber? rep hrep).isSome
+
+theorem QAdjoin.toAlgebraicNumber_toComplex
+    [ZPoly.CheckedIrreducible p] (...) :
+    (a.toAlgebraicNumber rep hrep).toComplex =
+      QAdjoin.toComplex a rep hrep
 ```
 
 Exactification completeness follows because the squarefree enclosing polynomial
 factors into distinct irreducibles and exactly one factor contains the selected
 root. Factor soundness supplies the product identity; resultant common-root facts
 and disjoint refined isolations supply uniqueness.
+
+Fixed-presentation completeness instead uses the first Krylov dependence of the
+represented element. Finite dimensionality supplies a dependence at the Mathlib
+minimal-polynomial degree, first-success minimality proves that the executable
+relation has exactly that degree, and Gauss normalization supplies its primitive,
+positive-leading, irreducible, and simple-root certificates. Isolation completeness
+finds its represented complex root; the guarded approximation ball and the
+candidate disc share that root, so the executable intersection test succeeds and
+canonical normalization is total.
 
 ## Lazy arithmetic
 

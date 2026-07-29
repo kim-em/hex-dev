@@ -709,6 +709,37 @@ theorem refineTo?_isSome_mixed {p : Hex.ZPoly}
 
 end DyadicRootIsolation
 
+namespace RefinedIsolation
+
+/-- Refined-level refinement is total for the default mixed strategy. -/
+theorem refineTo?_isSome_mixed {p : Hex.ZPoly}
+    (rep : Hex.RefinedIsolation p) (target : Int) :
+    (rep.refineTo? target .nkThenPellet).isSome := by
+  have hsome := DyadicRootIsolation.refineTo?_isSome_mixed rep
+    (max target (Hex.mahlerPrec p : Int))
+  cases hraw : rep.1.refineTo? (max target (Hex.mahlerPrec p : Int))
+      .nkThenPellet with
+  | none => simp [hraw] at hsome
+  | some iso =>
+      have hready := DyadicRootIsolation.refineTo_ready hraw
+      have hprec : (Hex.mahlerPrec p : Int) ≤ iso.square.prec :=
+        (le_max_right target (Hex.mahlerPrec p : Int)).trans hready
+      let out : Hex.RefinedIsolation p := ⟨iso, hprec⟩
+      have hroot : RefinedIsolation.root out = RefinedIsolation.root rep := by
+        exact DyadicRootIsolation.refineTo_root rep.1
+          (max target (Hex.mahlerPrec p : Int)) .nkThenPellet hraw
+      have hinter : Hex.Intersects out rep :=
+        (RefinedIsolation.intersects_iff_root_eq out rep).mpr hroot
+      rw [Hex.RefinedIsolation.refineTo?]
+      simp only [hraw, Option.bind_eq_bind, Option.bind_some]
+      split
+      · rename_i hprec'
+        simp
+      · rename_i hnot
+        exact (hnot hprec).elim
+
+end RefinedIsolation
+
 end
 
 end HexRootsMathlib

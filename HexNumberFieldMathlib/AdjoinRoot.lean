@@ -522,6 +522,20 @@ executable code should use the unscoped operations instead. -/
 noncomputable scoped instance (p : ZPoly) (x : SimpleRoot p)
     [ZPoly.CheckedIrreducible p] : Field (QAdjoin p x) := field p x
 
+/-- A checked rational presentation has characteristic zero. -/
+noncomputable scoped instance (p : ZPoly) (x : SimpleRoot p)
+    [ZPoly.CheckedIrreducible p] : CharZero (QAdjoin p x) := by
+  letI : Field (QAdjoin p x) := field p x
+  let rep : RefinedIsolation p := Quot.out x
+  have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
+  constructor
+  intro m n hmn
+  have hvalue := congrArg (fun a : QAdjoin p x => toComplex a rep hrep) hmn
+  change toComplex ((m : Rat) • (1 : QAdjoin p x)) rep hrep =
+    toComplex ((n : Rat) • (1 : QAdjoin p x)) rep hrep at hvalue
+  simp only [map_smul, map_one, mul_one] at hvalue
+  exact_mod_cast hvalue
+
 end QAdjoinField
 
 open scoped QAdjoinField
@@ -595,6 +609,22 @@ theorem toAdjoinRoot_mul [ZPoly.CheckedIrreducible p]
   rw [rootHom_toAdjoinRoot, (rootHom rep).map_mul,
     rootHom_toAdjoinRoot, rootHom_toAdjoinRoot]
   exact map_mul a b rep hrep
+
+/-- The quotient comparison preserves executable rational scalar
+multiplication. -/
+theorem toAdjoinRoot_smul [ZPoly.CheckedIrreducible p]
+    (q : Rat) (a : QAdjoin p x) :
+    toAdjoinRoot (q • a) = q • toAdjoinRoot a := by
+  let rep : RefinedIsolation p := Quot.out x
+  have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
+  letI : Fact (_root_.Irreducible (definingPolynomial p)) :=
+    ⟨definingPolynomial_irreducible p⟩
+  apply (rootHom rep).injective
+  rw [rootHom_toAdjoinRoot]
+  conv_rhs => rw [Algebra.smul_def]
+  rw [(rootHom rep).map_mul, RingHom.map_rat_algebraMap,
+    rootHom_toAdjoinRoot]
+  exact map_smul q a rep hrep
 
 /-- The reduced-coordinate comparison as a ring homomorphism. -/
 @[expose]
