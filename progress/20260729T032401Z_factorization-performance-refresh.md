@@ -22,17 +22,20 @@
   native cross-checks, conformance/release-test targets, the BZ trace gate, and
   the relevant bench smoke gates (including FLINT fixtures in a transient
   `python-flint` environment).
+- Refreshed the BZ conformance fixture and trace baseline after the first PR CI
+  run exposed the expected canonical factor reordering and newly successful
+  non-monic case; the regenerated 102-case fixture passes the FLINT oracle with
+  zero failures and the 52-case trace gate passes.
 
 ## Current frontier
 
-The implementation, ownership correction, benchmark artifacts, and reports
-are fully validated on `61a78096` and ready for publication. The intervening
-mainline change is confined to resultant proofs.
+PR #9068 is open. Its first CI run passed every compilation and benchmark
+gate, and identified only the now-refreshed BZ conformance fixture.
 
 ## Next step
 
-Open the PR, monitor all GitHub Actions jobs to completion, and merge when
-green.
+Push the fixture refresh, monitor the replacement GitHub Actions run to
+completion, and merge when green.
 
 ## Blockers
 
