@@ -661,13 +661,13 @@ private def prepareMatchForPolicy (state : State Fact) (applicationId : Applicat
       else if action.application != applicationId ||
           !state.engine.actionFresh action || action.structuralInputs.isEmpty then
         .invalid
-      else if state.engine.limits.maxMatcherVisits <
-          state.engine.metrics.matcherVisits + action.structuralInputs.length then
-        .resourceLimit
       else
         match action.matcherEpoch, state.engine.matcherCursors[applicationId.index]? with
         | some epoch, some (some cursor) =>
-            .batch action.structuralInputs epoch cursor
+            if epoch == cursor.epoch then
+              .batch action.structuralInputs epoch cursor
+            else
+              .invalid
         | _, _ => .invalid
 
 private def prepareApplication (state : State Fact) (applicationId : ApplicationId)
