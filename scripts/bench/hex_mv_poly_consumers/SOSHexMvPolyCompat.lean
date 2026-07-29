@@ -6,17 +6,6 @@ namespace CPoly
 
 open Hex
 
-/-- Compatibility-only recovery of proposition-level equality from the lawful
-boolean equality used by the pinned CompPoly API.
-
-The Hex Mathlib bridge transports its semiring instances with
-`[DecidableEq R]`. Generic SOS declarations expose only `[BEq R] [LawfulBEq R]`,
-so this low-priority adapter instance is load-bearing for selecting those
-transported structures. It is deliberately confined to the consumer adapter
-and is not part of the Hex library API. -/
-instance (priority := 50) {R : Type*} [BEq R] [LawfulBEq R] : DecidableEq R :=
-  instDecidableEqOfLawfulBEq
-
 abbrev CMvMonomial (n : Nat) := Mono n
 
 abbrev CMvPolynomial (n : Nat) (R : Type*) [CommSemiring R] :=
@@ -27,19 +16,17 @@ namespace CMvPolynomial
 export Hex.MvPoly
   (C X monomial eval eval₂ bind bind₁)
 
-/-- Direct algebra evaluation with the exact argument shape of CompPoly's
-`CMvPolynomial.aeval`; no coefficient equality is needed to traverse an
-already-canonical polynomial. -/
+/-- Executable algebra evaluation with the argument shape of CompPoly's
+`CMvPolynomial.aeval`. -/
 def aeval {n : Nat} {R σ : Type*}
     [CommSemiring R] [CommSemiring σ] [Algebra R σ]
     (x : Fin n → σ) (p : CMvPolynomial n R) : σ :=
   Hex.MvPoly.eval₂ (algebraMap R σ) x p
 
 /-- Direct evaluation packaged as the ring homomorphism expected by SOS. -/
-noncomputable abbrev eval₂Hom {n : Nat} {R σ : Type*}
+abbrev eval₂Hom {n : Nat} {R σ : Type*}
     [CommSemiring R] [BEq R] [LawfulBEq R]
     [CommSemiring σ] (f : R →+* σ) (x : Fin n → σ) :=
-  letI : DecidableEq R := instDecidableEqOfLawfulBEq
   HexMvPolyMathlib.eval₂Hom
     (n := n) (R := R) (S := σ) (cmp := Mono.lex) f x
 
@@ -48,7 +35,6 @@ noncomputable abbrev eval₂Hom {n : Nat} {R σ : Type*}
     [CommSemiring σ] (f : R →+* σ) (x : Fin n → σ)
     (p : CMvPolynomial n R) :
     eval₂Hom f x p = eval₂ f x p := by
-  letI : DecidableEq R := instDecidableEqOfLawfulBEq
   exact HexMvPolyMathlib.eval₂Hom_apply (cmp := Mono.lex) f x p
 
 /-- Algebra evaluation is direct evaluation through the coefficient algebra

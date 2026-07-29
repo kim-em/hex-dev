@@ -48,6 +48,7 @@ override is opened, for two ordinary coefficient types. -/
 #guard coeff Mono.zero (p + q) = 12
 #guard p ^ 2 == p * p
 #guard eval point (p * q) = eval point p * eval point q
+#guard HexMvPolyMathlib.aeval point p = eval point p
 #guard derivative 0 p = ofTerms [(#v[1, 0], 6)]
 #guard homogeneousComponent 2 p = ofTerms [(#v[2, 0], 3)]
 #guard (rp + rq).termCount = 3

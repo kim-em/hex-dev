@@ -447,13 +447,13 @@ variable [BEq R] [LawfulBEq R]
 
 /-- Natural casts are executable constant polynomials. -/
 @[implicit_reducible, nolint unusedArguments]
-instance instNatCastMvPoly [CommSemiring R] [DecidableEq R] :
+instance instNatCastMvPoly [CommSemiring R] :
     NatCast (MvPoly n R cmp) where
   natCast k := C (k : R)
 
 /-- Natural scalar multiplication uses one executable constant product. -/
 @[implicit_reducible, nolint unusedArguments]
-instance instSMulNatMvPoly [CommSemiring R] [DecidableEq R] :
+instance instSMulNatMvPoly [CommSemiring R] :
     SMul Nat (MvPoly n R cmp) where
   smul k p := C (k : R) * p
 
@@ -491,46 +491,48 @@ theorem toMvPolynomial_nsmul [CommSemiring R] [DecidableEq R]
 
 /-- Mathlib's commutative-semiring structure, transported along the exact
 representation equivalence while retaining every executable operation. -/
-instance instCommSemiringMvPoly [CommSemiring R] [DecidableEq R] :
-    CommSemiring (MvPoly n R cmp) where
-  add := fun p q => p + q
-  add_assoc := Hex.MvPoly.add_assoc
-  zero := 0
-  zero_add := Hex.MvPoly.zero_add
-  add_zero := Hex.MvPoly.add_zero
-  nsmul := fun k p => C (k : R) * p
-  nsmul_zero p := by
-    apply toMvPolynomial_injective
-    rw [toMvPolynomial_nsmul, toMvPolynomial_zero]
-    simp
-  nsmul_succ k p := by
-    apply toMvPolynomial_injective
-    rw [toMvPolynomial_nsmul, toMvPolynomial_add,
-      toMvPolynomial_nsmul]
-    simp [_root_.add_mul]
-  add_comm := Hex.MvPoly.add_comm
-  mul := fun p q => p * q
-  mul_assoc := Hex.MvPoly.mul_assoc
-  one := 1
-  one_mul := Hex.MvPoly.one_mul
-  mul_one := Hex.MvPoly.mul_one
-  npow := fun k p => Hex.MvPoly.npowBySq p k
-  npow_zero p := by
-    change Hex.MvPoly.npowBySq p 0 = 1
-    rw [Hex.MvPoly.npowBySq]
-  npow_succ k p := Hex.MvPoly.pow_succ p k
-  zero_mul := Hex.MvPoly.zero_mul
-  mul_zero := Hex.MvPoly.mul_zero
-  left_distrib := Hex.MvPoly.mul_add
-  right_distrib := Hex.MvPoly.add_mul
-  natCast := fun k => C (k : R)
-  natCast_zero := by
-    apply toMvPolynomial_injective
-    simp [toMvPolynomial_C, toMvPolynomial_zero]
-  natCast_succ k := by
-    apply toMvPolynomial_injective
-    simp [toMvPolynomial_C, toMvPolynomial_add, Nat.cast_succ]
-  mul_comm := Hex.MvPoly.mul_comm
+instance instCommSemiringMvPoly [CommSemiring R] :
+    CommSemiring (MvPoly n R cmp) := by
+  letI : DecidableEq R := instDecidableEqOfLawfulBEq
+  exact {
+    add := fun p q => p + q
+    add_assoc := Hex.MvPoly.add_assoc
+    zero := 0
+    zero_add := Hex.MvPoly.zero_add
+    add_zero := Hex.MvPoly.add_zero
+    nsmul := fun k p => C (k : R) * p
+    nsmul_zero := fun p => by
+      apply toMvPolynomial_injective
+      rw [toMvPolynomial_nsmul, toMvPolynomial_zero]
+      simp
+    nsmul_succ := fun k p => by
+      apply toMvPolynomial_injective
+      rw [toMvPolynomial_nsmul, toMvPolynomial_add,
+        toMvPolynomial_nsmul]
+      simp [_root_.add_mul]
+    add_comm := Hex.MvPoly.add_comm
+    mul := fun p q => p * q
+    mul_assoc := Hex.MvPoly.mul_assoc
+    one := 1
+    one_mul := Hex.MvPoly.one_mul
+    mul_one := Hex.MvPoly.mul_one
+    npow := fun k p => Hex.MvPoly.npowBySq p k
+    npow_zero := fun p => by
+      change Hex.MvPoly.npowBySq p 0 = 1
+      rw [Hex.MvPoly.npowBySq]
+    npow_succ := fun k p => Hex.MvPoly.pow_succ p k
+    zero_mul := Hex.MvPoly.zero_mul
+    mul_zero := Hex.MvPoly.mul_zero
+    left_distrib := Hex.MvPoly.mul_add
+    right_distrib := Hex.MvPoly.add_mul
+    natCast := fun k => C (k : R)
+    natCast_zero := by
+      apply toMvPolynomial_injective
+      simp [toMvPolynomial_C, toMvPolynomial_zero]
+    natCast_succ := fun k => by
+      apply toMvPolynomial_injective
+      simp [toMvPolynomial_C, toMvPolynomial_add, Nat.cast_succ]
+    mul_comm := Hex.MvPoly.mul_comm }
 
 /-- Forward conversion preserves coefficientwise negation. -/
 @[simp] theorem toMvPolynomial_neg [CommRing R] [DecidableEq R]
@@ -552,13 +554,13 @@ instance instCommSemiringMvPoly [CommSemiring R] [DecidableEq R] :
 
 /-- Integer casts are executable constant polynomials. -/
 @[implicit_reducible, nolint unusedArguments]
-instance instIntCastMvPoly [CommRing R] [DecidableEq R] :
+instance instIntCastMvPoly [CommRing R] :
     IntCast (MvPoly n R cmp) where
   intCast z := C (z : R)
 
 /-- Integer scalar multiplication uses one executable constant product. -/
 @[implicit_reducible, nolint unusedArguments]
-instance instSMulIntMvPoly [CommRing R] [DecidableEq R] :
+instance instSMulIntMvPoly [CommRing R] :
     SMul Int (MvPoly n R cmp) where
   smul z p := C (z : R) * p
 
@@ -580,87 +582,93 @@ theorem toMvPolynomial_zsmul [CommRing R] [DecidableEq R]
 
 /-- Mathlib's commutative-ring structure, transported along the exact
 representation equivalence while retaining every executable operation. -/
-instance instCommRingMvPoly [CommRing R] [DecidableEq R] :
-    CommRing (MvPoly n R cmp) where
-  __ := instCommSemiringMvPoly
-  neg := fun p => -p
-  sub := fun p q => p - q
-  zsmul := fun z p => C (z : R) * p
-  sub_eq_add_neg p q := by
-    apply toMvPolynomial_injective
-    rw [toMvPolynomial_sub, toMvPolynomial_add, toMvPolynomial_neg]
-    exact sub_eq_add_neg _ _
-  zsmul_zero' p := by
-    apply toMvPolynomial_injective
-    rw [toMvPolynomial_zsmul, toMvPolynomial_zero]
-    simp
-  zsmul_succ' k p := by
-    apply toMvPolynomial_injective
-    rw [toMvPolynomial_zsmul, toMvPolynomial_add,
-      toMvPolynomial_zsmul]
-    simp [_root_.add_mul]
-  zsmul_neg' k p := by
-    apply toMvPolynomial_injective
-    rw [toMvPolynomial_zsmul, toMvPolynomial_neg,
-      toMvPolynomial_zsmul]
-    simp [_root_.add_mul, neg_mul, neg_add_rev, _root_.add_comm]
-  neg_add_cancel p := by
-    apply toMvPolynomial_injective
-    rw [toMvPolynomial_add, toMvPolynomial_neg, toMvPolynomial_zero]
-    simp
-  intCast := fun z => C (z : R)
-  intCast_ofNat k := by
-    apply toMvPolynomial_injective
-    rw [toMvPolynomial_C, toMvPolynomial_natCast]
-    simp
-  intCast_negSucc k := by
-    apply toMvPolynomial_injective
-    rw [toMvPolynomial_C, toMvPolynomial_neg,
-      toMvPolynomial_natCast]
-    simp
+instance instCommRingMvPoly [CommRing R] :
+    CommRing (MvPoly n R cmp) := by
+  letI : DecidableEq R := instDecidableEqOfLawfulBEq
+  exact {
+    __ := instCommSemiringMvPoly
+    neg := fun p => -p
+    sub := fun p q => p - q
+    zsmul := fun z p => C (z : R) * p
+    sub_eq_add_neg := fun p q => by
+      apply toMvPolynomial_injective
+      rw [toMvPolynomial_sub, toMvPolynomial_add, toMvPolynomial_neg]
+      exact sub_eq_add_neg _ _
+    zsmul_zero' := fun p => by
+      apply toMvPolynomial_injective
+      rw [toMvPolynomial_zsmul, toMvPolynomial_zero]
+      simp
+    zsmul_succ' := fun k p => by
+      apply toMvPolynomial_injective
+      rw [toMvPolynomial_zsmul, toMvPolynomial_add,
+        toMvPolynomial_zsmul]
+      simp [_root_.add_mul]
+    zsmul_neg' := fun k p => by
+      apply toMvPolynomial_injective
+      rw [toMvPolynomial_zsmul, toMvPolynomial_neg,
+        toMvPolynomial_zsmul]
+      simp [_root_.add_mul, neg_mul, neg_add_rev, _root_.add_comm]
+    neg_add_cancel := fun p => by
+      apply toMvPolynomial_injective
+      rw [toMvPolynomial_add, toMvPolynomial_neg, toMvPolynomial_zero]
+      simp
+    intCast := fun z => C (z : R)
+    intCast_ofNat := fun k => by
+      apply toMvPolynomial_injective
+      rw [toMvPolynomial_C, toMvPolynomial_natCast]
+      simp
+    intCast_negSucc := fun k => by
+      apply toMvPolynomial_injective
+      rw [toMvPolynomial_C, toMvPolynomial_neg,
+        toMvPolynomial_natCast]
+      simp }
 
 /-- Executable constant polynomials packaged as a ring homomorphism. -/
-def constantHom [CommSemiring R] [DecidableEq R] :
-    R →+* MvPoly n R cmp where
-  toFun := C
-  map_one' := by
-    apply toMvPolynomial_injective
-    rw [toMvPolynomial_C, toMvPolynomial_one, MvPolynomial.C_1]
-  map_mul' a b := by
-    apply toMvPolynomial_injective
-    rw [toMvPolynomial_C, toMvPolynomial_mul, toMvPolynomial_C,
-      toMvPolynomial_C, MvPolynomial.C_mul]
-  map_zero' := by
-    apply toMvPolynomial_injective
-    rw [toMvPolynomial_C, toMvPolynomial_zero, MvPolynomial.C_0]
-  map_add' a b := by
-    apply toMvPolynomial_injective
-    rw [toMvPolynomial_C, toMvPolynomial_add, toMvPolynomial_C,
-      toMvPolynomial_C, MvPolynomial.C_add]
+def constantHom [CommSemiring R] :
+    R →+* MvPoly n R cmp := by
+  letI : DecidableEq R := instDecidableEqOfLawfulBEq
+  exact {
+    toFun := C
+    map_one' := by
+      apply toMvPolynomial_injective
+      rw [toMvPolynomial_C, toMvPolynomial_one, MvPolynomial.C_1]
+    map_mul' := fun a b => by
+      apply toMvPolynomial_injective
+      rw [toMvPolynomial_C, toMvPolynomial_mul, toMvPolynomial_C,
+        toMvPolynomial_C, MvPolynomial.C_mul]
+    map_zero' := by
+      apply toMvPolynomial_injective
+      rw [toMvPolynomial_C, toMvPolynomial_zero, MvPolynomial.C_0]
+    map_add' := fun a b => by
+      apply toMvPolynomial_injective
+      rw [toMvPolynomial_C, toMvPolynomial_add, toMvPolynomial_C,
+        toMvPolynomial_C, MvPolynomial.C_add] }
 
 /-- The constant homomorphism builds the executable constant polynomial. -/
-@[simp] theorem constantHom_apply [CommSemiring R] [DecidableEq R]
+@[simp] theorem constantHom_apply [CommSemiring R]
     (r : R) :
     constantHom (n := n) (cmp := cmp) r = C r := by
   rfl
 
 /-- The coefficient ring acts through executable constant polynomials. -/
 @[implicit_reducible]
-instance instAlgebraMvPoly [CommSemiring R] [DecidableEq R] :
-    Algebra R (MvPoly n R cmp) where
-  smul r p := C r * p
-  algebraMap := constantHom
-  commutes' r p := by
-    rw [constantHom_apply]
-    exact Hex.MvPoly.mul_comm (C r) p
-  smul_def' r p := by
-    rw [constantHom_apply]
-    change C r * p = C r * p
-    rfl
+instance instAlgebraMvPoly [CommSemiring R] :
+    Algebra R (MvPoly n R cmp) := by
+  letI : DecidableEq R := instDecidableEqOfLawfulBEq
+  exact {
+    smul := fun r p => C r * p
+    algebraMap := constantHom
+    commutes' := fun r p => by
+      rw [constantHom_apply]
+      exact Hex.MvPoly.mul_comm (C r) p
+    smul_def' := fun r p => by
+      rw [constantHom_apply]
+      change C r * p = C r * p
+      rfl }
 
 /-- The transported algebra map is executable constant-polynomial
 construction. -/
-@[simp] theorem algebraMap_apply [CommSemiring R] [DecidableEq R]
+@[simp] theorem algebraMap_apply [CommSemiring R]
     (r : R) :
     algebraMap R (MvPoly n R cmp) r = C r := by
   change constantHom (n := n) (cmp := cmp) r = C r

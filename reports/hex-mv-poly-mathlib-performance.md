@@ -123,6 +123,17 @@ threshold. The predeclared two-family gate is therefore not met, and the
 single production `ExtTreeMap` representation stands. The sorted proxy
 remains comparison evidence rather than a proposed public implementation.
 
+The final v5 rule was fixed before this capture, but it evolved after a
+superseded clean v4 capture at `77b76dd3`. That earlier run put SOS-6 at a
+2.699× point ratio with interval [1.987×, 3.857×], a near miss. The null
+envelope was subsequently floored by the maximum observed absolute null
+delta because a Tukey fence over six samples does not bound the observed
+tail. The larger SOS-8 arm then exceeded the permitted 2× magnitude distance
+from the medium null, so a third SOS-scale same-module control was registered
+before the v5 capture. Both changes make the decision rule more conservative.
+Consequently the evidence supports “a pass was not demonstrated”; it does
+not support the stronger claim that the sorted form is slower.
+
 The baseline, medium, and large same-module nulls respectively have
 3.702 ms, 15.290 ms, and 539.040 ms IQRs and 20.885 ms, 37.984 ms, and
 1,294.121 ms conservative envelopes. Their IQR/build ratios are 0.272%,
@@ -188,6 +199,11 @@ families pass and the production library therefore remains a single
 The unavailable upstream `Mathlib MvSparsePoly` remains an explicit comparator
 limitation. The current sorted proof-probe adapter is evidence, not production
 API, and the measured result does not justify promoting it. The terminal
-construction-controlled rungs still finish well below the 300-second
-per-module budget; future evidence may extend them, but that is a new
-performance investigation rather than an unfinished acceptance obligation.
+construction-controlled rungs are the largest registered rungs, but they
+finish well below the 300-second per-module budget and therefore are not the
+largest sizes that fit that budget. This capture does not exercise the
+strongest clause of the positive gate and cannot justify a second
+representation. Under the standing rule that anything short of two
+conservative passes leaves the single representation in place, the default
+remains `ExtTreeMap`. A future positive decision needs preregistered larger
+rungs, more samples, and preferably a quiescent host.

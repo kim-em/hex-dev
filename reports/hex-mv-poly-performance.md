@@ -55,11 +55,12 @@ migrations and builds are reproducible with
   `.olean` targets in a fresh clone. `SOSTest.Examples` also elaborated as an
   explicit `.olean` target, replaying its `by sos`, `by sos?`, and pinned
   `sos_witness` examples through the kernel verifier; the complete acceptance
-  build passed all 1,545 jobs. The compatibility
-  module supplies a low-priority `DecidableEq` from `LawfulBEq`, matching the
-  implication that the former CompPoly representation supplied; it adds no
-  Grind instances. Its exact legacy-arity `aeval` remains direct evaluation,
-  which avoids adding equality bounds to the consumer signature, while its
+  build passed all 1,545 jobs. The compatibility module requires the
+  consumer's existing lawful Boolean equality where executable coefficient
+  operations need it, but introduces no blanket `DecidableEq` or Grind
+  instance. Its legacy-shaped `aeval` retains CompPoly's exact
+  equality-free implicit-argument order as direct `eval₂`; its `eval₂Hom`
+  uses the public direct `HexMvPolyMathlib` implementation. Its
   zero/one/add/mul/pow/C/X/neg/sub compatibility lemmas compile against the
   corresponding `HexMvPolyMathlib.aeval_*` theorems.
 - `Verified-zkEVM/CompPoly` at
@@ -341,11 +342,13 @@ All five filters passed confidence and ±5 ms sensitivity checks:
 No dominant inclusive cost is outside its registered benchmark target.
 
 The native and comparator captures predate the final query, bridge,
-proof-probe, and measurement-harness hardening. Those later changes do not
-alter a registered native rung or a timed implementation path; the
-size-eight collision correction is confined to the smaller kernel probe,
-while the native structural ladder starts at size 64. The captures therefore
-remain applicable to the final implementation.
+proof-probe, and measurement-harness hardening. They also predate the shared
+`collisionMono` correction: that generator changed at every structural rung,
+although at `n = 1024` both versions collapse to eight destination keys with
+the same eight total degrees. The timed implementations did not change, so
+the captures remain useful historical evidence, but they are not
+byte-reproducible from the current source. An exact recapture must use the
+corrected shared corpus.
 
 ## Concerns
 

@@ -115,6 +115,28 @@ example : q * (qx - qy) + q * (qy - qx) = 0 := by
 example : eval (fun i => if i = 0 then 2 else 3) q = 11 / 2 := by
   decide +kernel
 
+example :
+    eval₂ (fun c : Int => 2 * c) (fun i => if i = 0 then 2 else 3) p = 12 := by
+  decide +kernel
+
+example :
+    reorder Mono.grevlex p =
+      (ofTerms
+        [(Mono.zero, 1), (Mono.unit 0, 1), (Mono.unit 1, 1)] :
+        MvPoly 2 Int Mono.grevlex) := by
+  decide +kernel
+
+example :
+    rename Mono.lex (fun _ => (0 : Fin 1)) p =
+      (C 1 + C 2 * X 0 : MvPoly 1 Int Mono.lex) := by
+  decide +kernel
+
+example :
+    subst (targetCmp := Mono.lex)
+        (fun i => if i = 0 then (X 0 : P) + C 1 else C 2) p =
+      X 0 + C 4 := by
+  decide +kernel
+
 @[expose] def sparse : P :=
   ofTerms
     [(#v[4, 0], 2), (#v[1, 2], 3), (#v[0, 3], -1), (Mono.zero, 5)]

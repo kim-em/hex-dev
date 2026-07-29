@@ -260,11 +260,16 @@ multiplication was a resolved 0.971× failure. No family had a lower bound
 above 2×, let alone two families. The exact record is
 `reports/bench-results/hex-mv-poly-kernel-45f01eb6-chungus2.json`.
 
-No kernel-specialized second `MvPoly` form is therefore planned.
-`Hex.MvPoly` remains the single `ExtTreeMap` representation. The proof-probe
-sorted adapter is comparison evidence only and must not be exposed as
-production API. Revisit a second form only if future consumer workloads clear
-the same conservative two-family gate.
+The current evidence therefore does not demonstrate the gate.
+`Hex.MvPoly` remains the single `ExtTreeMap` representation by default. The
+proof-probe sorted adapter is comparison evidence only and must not be exposed
+as production API. Four terminal comparisons are unresolved, and the measured
+rungs finish well below the per-module budget rather than establishing the
+largest budget-fitting cases required for a positive decision. A future
+decision needs a preregistered larger ladder, more samples, and preferably a
+quiescent host. In particular, the SOS-scale null has a 1.294 s conservative
+envelope, a 5.692% IQR/build ratio, and yields a 3.249× SOS point estimate
+with only a 1.772× conservative lower bound.
 
 Typeclass interface:
 ```lean

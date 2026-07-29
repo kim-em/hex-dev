@@ -835,7 +835,7 @@ HexMvPolyMathlib.lean
   HexMvPoly:
     deps: [HexPoly, HexBasic]
     mathlib: false
-    done_through: 0
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -859,7 +859,7 @@ HexMvPolyMathlib.lean
   HexMvPolyMathlib:
     deps: [HexMvPoly, HexPolyMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 7
     status: active
     proof_probes: [bench/HexMvPolyMathlib/ProofProbe]
     phase4:
