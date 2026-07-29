@@ -53,6 +53,8 @@ def generous : Limits :=
   { maxOperations := 16
     maxNodes := 64
     maxRules := 16
+    maxRegistryEntries := 32
+    maxReplayFormats := 0
     maxArity := 8
     maxApplications := 128
     maxQueueEntries := 256
@@ -386,7 +388,8 @@ def dynamicFinal? : Option (RunResult Rank (List String) × SuggestionId) := do
 #guard
   match dynamicAdmitted? with
   | some (state, _, _) =>
-      state.program.nodes.size == 3 && state.programVersion == 1 &&
+      state.baseProgram.nodes.size == 2 && state.initialFacts.toList == [4, 0] &&
+        state.program.nodes.size == 3 && state.programVersion == 1 &&
         state.generations.toList == [0, 0, 1] && state.applications.size == 3 &&
         state.metrics.admittedInstances == 1 && state.metrics.generatedNodes == 1 &&
         match state.instanceHistory[0]? with
@@ -394,12 +397,28 @@ def dynamicFinal? : Option (RunResult Rank (List String) × SuggestionId) := do
         | none => false
   | none => false
 
+-- Immutable version lookup uses caller facts for base version zero, domain
+-- top for a generated node's version zero, and exact history thereafter.
+#guard
+  match dynamicAdmitted? with
+  | some (state, _, _) =>
+      state.factAt? { node := node 0, version := 0 } == some 4 &&
+        state.factAt? { node := node 1, version := 0 } == some 0 &&
+        state.factAt? { node := node 1, version := 1 } == some 4 &&
+        state.factAt? { node := node 2, version := 0 } == some 0 &&
+        state.factAt? { node := node 2, version := 1 } == none &&
+        state.factAt? { node := node 3, version := 0 } == none
+  | none => false
+
 #guard
   match dynamicFinal? with
   | some (result, _) =>
       result.stop == .saturated && result.state.facts.toList == [4, 4, 4] &&
         result.state.metrics.requests == 3 && result.state.metrics.improvements == 2 &&
-        result.state.history.size == 2
+        result.state.history.size == 2 &&
+        result.state.factAt? { node := node 2, version := 0 } == some 0 &&
+        result.state.factAt? { node := node 2, version := 1 } == some 4 &&
+        result.state.factAt? { node := node 2, version := 2 } == none
   | none => false
 
 -- Selecting the same structural extension twice allocates nothing.
@@ -827,6 +846,25 @@ def pairFinal? (limits : Limits := generous) : Option (RunResult PairRank Nat) :
   let state <- pairAdmitted? limits
   pure (drive pairEqualityInvoke 8 state 1)
 
+/-- Submit a proposal whose intersection differs from both the old fact and
+the proposal, exposing the distinction needed by proof replay. -/
+def intersectedProposal? : Option (Engine PairRank) := do
+  let program : Program :=
+    { operations, nodes := #[sourceNode, unaryNode 0] }
+  let state <- match Engine.start pairDomain program #[copyRule]
+      #[pair 0 0, pair 4 0] generous with
+    | .ok state => some state
+    | .error _ => none
+  match state.poll with
+  | .request request awaiting =>
+      let proposed := pair 0 5
+      let candidate : Candidate PairRank :=
+        { node := node 1, fact := proposed, payload := { index := 149 } }
+      match awaiting.submit (request.action.reply (.success [candidate] [] {})) with
+      | .accepted _ state => some state
+      | _ => none
+  | _ => none
+
 /-- A second instance adds one node while explicitly reusing the equality
 created by the first instance. -/
 def pairReuseAdmitted? : Option (Engine PairRank) := do
@@ -941,13 +979,40 @@ def pairReuseAdmitted? : Option (Engine PairRank) := do
             edge.origin.key == pairEqualityKey && edge.origin.node == node 2 &&
               left.node == node 0 && left.previous == { node := node 0, version := 0 } &&
               right.node == node 1 && right.previous == { node := node 1, version := 0 } &&
+              result.state.factAt? left.previous == some (pair 4 0) &&
+              result.state.factAt? right.previous == some (pair 0 5) &&
+              result.state.factAt? { node := left.node, version := left.version } ==
+                some (pair 4 5) &&
+              result.state.factAt? { node := right.node, version := right.version } ==
+                some (pair 4 5) &&
               match left.cause, right.cause with
               | .transport leftEquality leftSource, .transport rightEquality rightSource =>
                   leftEquality == { index := 0 } && rightEquality == { index := 0 } &&
                     leftSource == { node := node 1, version := 0 } &&
-                    rightSource == { node := node 0, version := 0 }
+                    rightSource == { node := node 0, version := 0 } &&
+                    result.state.factAt? leftSource == some (pair 0 5) &&
+                    result.state.factAt? rightSource == some (pair 4 0)
               | _, _ => false
         | _, _, _ => false
+  | none => false
+
+-- Replay retains the callback's proposal, not merely the fact produced by
+-- intersecting that proposal with the previously installed fact.
+#guard
+  match intersectedProposal? with
+  | some state =>
+      state.baseProgram.nodes.size == 2 &&
+        state.initialFacts.toList == [pair 0 0, pair 4 0] &&
+        state.facts.toList == [pair 0 0, pair 4 5] &&
+        match state.history[0]? with
+        | some event =>
+            event.fact == pair 4 5 &&
+              match event.cause with
+              | .rule action proposed payload =>
+                  action.key == copyKey && proposed == pair 0 5 &&
+                    payload == { index := 149 }
+              | _ => false
+        | none => false
   | none => false
 
 -- Both endpoint updates roll back when their combined history budget is short.
@@ -1053,7 +1118,7 @@ def alternateEqualityFinal? : Option (RunResult Rank (List String)) := do
         | some transported, some propagated =>
             transported.node == node 2 && propagated.node == node 3 &&
               match transported.cause, propagated.cause with
-              | .transport equality source, .rule action _ =>
+              | .transport equality source, .rule action _ _ =>
                   equality == { index := 0 } && source == { node := node 1, version := 0 } &&
                     action.key == nextCopyKey &&
                       action.inputs == [{ node := node 2, version := 1 }]

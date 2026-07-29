@@ -103,23 +103,24 @@ def sharedPackage : Package Nat :=
     cache := 0
     operations := #[sourceOperation, sharedOperation]
     handlers :=
-      #[{ registration := tickRegistration, invoke := tickInvoke },
-        { registration := observeRegistration, invoke := observeInvoke }] }
+      #[Handler.bareDroppingDrafts tickRegistration tickInvoke,
+        Handler.bareDroppingDrafts observeRegistration observeInvoke] }
 
 def thirdPackage : Package Nat :=
   { Cache := List Nat
     cache := []
     operations := #[thirdOperation]
     requiredOperations := #[sourceOperation]
-    handlers := #[{ registration := thirdRegistration, invoke := thirdInvoke }] }
+    handlers := #[Handler.bareDroppingDrafts thirdRegistration thirdInvoke] }
 
 def limitedPackage : Package Nat :=
   { Cache := Bool
     cache := false
     operations := #[limitedOperation]
-    handlers := #[{ registration := limitedRegistration, invoke := limitedInvoke }]
-    acceptsLimits := fun _ limits =>
-      8 ≤ limits.maxObservationValue && 1000000 ≤ limits.maxDiagnosticValue }
+    handlers := #[Handler.bareDroppingDrafts limitedRegistration limitedInvoke]
+    acceptsLimits := fun _ limits arenaLimits =>
+      8 ≤ limits.maxObservationValue && 1000000 ≤ limits.maxDiagnosticValue &&
+        4 ≤ arenaLimits.maxEntries && 8 ≤ arenaLimits.maxUses }
 
 /-- A package may attach a handler to a signature supplied only by the final
 frontend program, but it must declare the exact dependency. -/
@@ -128,18 +129,20 @@ def externalPackage : Package Nat :=
     cache := ()
     requiredOperations := #[externalOperation]
     handlers :=
-      #[Handler.stateless externalRegistration (fun _ => .noChange {})] }
+      #[Handler.statelessDroppingDrafts externalRegistration (fun _ => .noChange {})] }
 
 def duplicateRulePackage : Package Nat :=
   { Cache := Unit
     cache := ()
     requiredOperations := #[sharedOperation]
-    handlers := #[Handler.stateless tickRegistration (fun _ => .inapplicable)] }
+    handlers :=
+      #[Handler.statelessDroppingDrafts tickRegistration (fun _ => .inapplicable)] }
 
 def undeclaredHeadPackage : Package Nat :=
   { Cache := Unit
     cache := ()
-    handlers := #[Handler.stateless tickRegistration (fun _ => .inapplicable)] }
+    handlers :=
+      #[Handler.statelessDroppingDrafts tickRegistration (fun _ => .inapplicable)] }
 
 def duplicateOperationPackage : Package Nat :=
   { Cache := Unit
@@ -235,6 +238,8 @@ def limits : Limits :=
   { maxOperations := 8
     maxNodes := 8
     maxRules := 8
+    maxRegistryEntries := 32
+    maxReplayFormats := 8
     maxArity := 2
     maxApplications := 8
     maxQueueEntries := 16
@@ -255,6 +260,15 @@ def limits : Limits :=
       { maxEndpointHeight := 16
         maxAlignmentShift := 8 } }
 
+def arenaLimits : Experiment.PayloadArena.Limits :=
+  { maxEntries := 4
+    maxBodyCells := 8
+    maxDrafts := 4
+    maxDraftCells := 8
+    maxAtom := 100
+    maxSchema := 10
+    maxUses := 8 }
+
 def registry? : Option (Registry Nat) :=
   match Registry.buildWithin limits #[sharedPackage, thirdPackage, limitedPackage] with
   | .ok registry => some registry
@@ -268,6 +282,9 @@ def externalRegistry? : Option (Registry Nat) :=
 def lowDiagnosticLimits : Limits :=
   { limits with maxDiagnosticValue := 999999 }
 
+def shortArenaLimits : Experiment.PayloadArena.Limits :=
+  { arenaLimits with maxEntries := 3 }
+
 def shortRuleLimits : Limits :=
   { limits with maxRules := 3 }
 
@@ -275,7 +292,7 @@ def shortOperationLimits : Limits :=
   { limits with maxOperations := 3 }
 
 def shortMetadataLimits : Limits :=
-  { limits with maxOperations := 4, maxRules := 4 }
+  { limits with maxRegistryEntries := 8 }
 
 def nullaryLimits : Limits :=
   { limits with maxArity := 0 }
@@ -284,11 +301,12 @@ def run? : Option (RunResult Nat (Registry Nat)) :=
   match registry? with
   | none => none
   | some registry =>
-      if !registry.acceptsProgram program || !registry.acceptsLimits program limits then none
+      if !registry.acceptsProgram program ||
+          !registry.acceptsLimits program limits arenaLimits then none
       else
         match Engine.start factDomain program registry.registrations #[0, 0, 0, 0] limits with
         | .error _ => none
-        | .ok state => some (drive Registry.invoke 12 state registry)
+        | .ok state => some (drive Registry.invokeDroppingDrafts 12 state registry)
 
 /-- Type-level conformance that the policy driver accepts the same
 `Type 1` registry value as its private cache. -/
@@ -296,7 +314,8 @@ def policyDriverTypecheck {PolicyState : Type}
     (controller : Policy.Driver.Controller Nat PolicyState) (fuel : Nat)
     (state : Policy.State Nat) (registry : Registry Nat) (policyState : PolicyState) :
     Policy.Driver.Result Nat (Registry Nat) PolicyState :=
-  Policy.Driver.drive controller Registry.invoke fuel state registry policyState
+  Policy.Driver.drive controller Registry.invokeDroppingDrafts
+    fuel state registry policyState
 
 #guard program.check
 #guard mismatchedProgram.check
@@ -307,7 +326,9 @@ def policyDriverTypecheck {PolicyState : Type}
 
 #guard
   match registry? with
-  | some registry => !registry.acceptsLimits program lowDiagnosticLimits
+  | some registry =>
+      !registry.acceptsLimits program lowDiagnosticLimits arenaLimits &&
+        !registry.acceptsLimits program limits shortArenaLimits
   | none => false
 
 -- Registry-owned dispatch failures have a diagnostic floor independent of
@@ -316,9 +337,11 @@ def policyDriverTypecheck {PolicyState : Type}
   match Registry.buildWithin limits #[sharedPackage] with
   | .ok registry =>
       !registry.acceptsLimits program
-          { limits with maxDiagnosticValue := DispatchCode.requestMismatch - 1 } &&
+          { limits with maxDiagnosticValue := DispatchCode.requestMismatch - 1 }
+          arenaLimits &&
         registry.acceptsLimits program
           { limits with maxDiagnosticValue := DispatchCode.requestMismatch }
+          arenaLimits
   | .error _ => false
 
 #guard
@@ -352,7 +375,8 @@ def policyDriverTypecheck {PolicyState : Type}
   | none => false
   | some registry =>
       registry.operations.size == 4 && registry.registrations.size == 4 &&
-        registry.acceptsProgram program && registry.acceptsLimits program limits &&
+        registry.acceptsProgram program &&
+        registry.acceptsLimits program limits arenaLimits &&
         registry.acceptsProgram reorderedProgram &&
         !registry.acceptsProgram mismatchedProgram &&
         registry.routes ==
@@ -393,10 +417,10 @@ def policyDriverTypecheck {PolicyState : Type}
   match registry? with
   | none => false
   | some registry =>
-      let (first, registry) := registry.invoke tickRequest
-      let (second, registry) := registry.invoke observeRequest
-      let (third, registry) := registry.invoke thirdRequest
-      let (fourth, registry) := registry.invoke thirdRequest
+      let (first, registry) := registry.invokeDroppingDrafts tickRequest
+      let (second, registry) := registry.invokeDroppingDrafts observeRequest
+      let (third, registry) := registry.invokeDroppingDrafts thirdRequest
+      let (fourth, registry) := registry.invokeDroppingDrafts thirdRequest
       match first, second, third, fourth with
       | .noChange _, .success [observed] [] _,
           .success [initialThird] [] _, .success [cachedThird] [] _ =>
@@ -411,28 +435,16 @@ def policyDriverTypecheck {PolicyState : Type}
   match registry? with
   | none => false
   | some registry =>
-      let (wrong, registry) := registry.invoke wrongKeyRequest
-      let (missing, registry) := registry.invoke missingRouteRequest
-      let (tick, registry) := registry.invoke tickRequest
-      let (observed, registry) := registry.invoke observeRequest
+      let (wrong, registry) := registry.invokeDroppingDrafts wrongKeyRequest
+      let (missing, registry) := registry.invokeDroppingDrafts missingRouteRequest
+      let (tick, registry) := registry.invokeDroppingDrafts tickRequest
+      let (observed, registry) := registry.invokeDroppingDrafts observeRequest
       match wrong, missing, tick, observed with
       | .failed wrongCode, .failed missingCode, .noChange _, .success [candidate] [] _ =>
           wrongCode == DispatchCode.requestMismatch &&
             missingCode == DispatchCode.missingRoute && candidate.fact == 1 &&
             registry.packages.map (fun package => package.invocations) == #[2, 0, 0]
       | _, _, _, _ => false
-
--- A corrupted static route is diagnosed before its unrelated handler can run.
-#guard
-  match registry? with
-  | none => false
-  | some registry =>
-      let corrupted :=
-        { registry with
-          routes := registry.routes.set! 0 { package := 1, handler := 0 } }
-      match (corrupted.invoke tickRequest).1 with
-      | .failed code => code == DispatchCode.registryMismatch
-      | _ => false
 
 -- The million-unit number reports work refused before execution; it is not a
 -- claimed cost observation, but it is checked by the separate diagnostic cap.

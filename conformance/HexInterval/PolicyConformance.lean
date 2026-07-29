@@ -73,6 +73,8 @@ def engineLimits : Experiment.Propagator.Limits :=
   { maxOperations := 8
     maxNodes := 8
     maxRules := 8
+    maxRegistryEntries := 24
+    maxReplayFormats := 0
     maxArity := 4
     maxApplications := 16
     maxQueueEntries := 64
@@ -129,6 +131,17 @@ def selectOffer (state : State Rank) (id : OfferId) : SelectResult Rank :=
           programVersion := state.engine.programVersion
           id
           expected := offer.key }
+
+def dismissOffer (state : State Rank) (id : OfferId) : Option (State Rank) := do
+  let offer <- state.offer? id
+  match state.dismiss
+      { scope := state.scope
+        serial := state.serial
+        programVersion := state.engine.programVersion
+        id
+        expected := offer.key } with
+  | .completed .dismissed next => some next
+  | _ => none
 
 def candidate (request : RuleRequest Rank) (rank : Rank) : Candidate Rank :=
   { node := request.action.node
@@ -970,6 +983,39 @@ def startWithWeakRetry? : Option (State Rank) := do
         (state.view).toOption.any fun pair =>
           pair.1.offers.isEmpty && !pair.1.incomplete
   | none => false
+
+-- Dismissal uses the same closure classification as tombstoning and bounded
+-- retention. Removing the retry and instantiation makes an eventually empty
+-- frontier incomplete; removing the split does not erase or invent that fact.
+#guard
+  match afterInitial? with
+  | none => false
+  | some state =>
+      match dismissOffer state (.suggestion (suggestion 0)) with
+      | none => false
+      | some state =>
+          match dismissOffer state (.suggestion (suggestion 1)) with
+          | none => false
+          | some state =>
+              match dismissOffer state (.suggestion (suggestion 2)) with
+              | some state =>
+                  state.incomplete && state.metrics.dismissals == 3 &&
+                    (state.view).toOption.any fun pair =>
+                      pair.1.offers.isEmpty && pair.1.incomplete
+              | none => false
+
+-- A split-only frontier remains propagation-complete when its optional search
+-- advice is dismissed.
+#guard
+  match afterReplyWith? engineLimits overflowSplit with
+  | none => false
+  | some state =>
+      match dismissOffer state (.suggestion (suggestion 0)) with
+      | some next =>
+          !next.incomplete &&
+            (next.view).toOption.any fun pair =>
+              pair.1.offers.isEmpty && !pair.1.incomplete
+      | none => false
 
 def splitChangedTarget (request : RuleRequest Rank) : Outcome Rank :=
   .success [candidate request 1]

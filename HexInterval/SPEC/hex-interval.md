@@ -897,13 +897,16 @@ structure FactRef where
   node    : NodeId
   version : Nat
 
-inductive FactCause
-  | rule (action : Action) (previous : FactRef) (payload : PayloadId)
-  | transport (equality : EqualityId) (source previous : FactRef)
+inductive FactCause (Fact : Type)
+  | rule      (action : Action) (proposed : Fact) (payload : PayloadId)
+  | transport (equality : EqualityId) (source : FactRef)
 ```
 
-The preceding target fact is required in both cases because the recorded
-result may be the intersection of that fact with a newly justified candidate.
+The surrounding fact event retains the preceding target fact and the installed
+result. A rule cause additionally retains the candidate exactly as proposed:
+the installed result may be the intersection of that candidate with the
+preceding fact, and neither value determines the other in a general partial
+fact domain.
 For transport, replay resolves the source fact, checks equality direction and
 scope, reconstructs the equality proof, transports the exact source fact, and
 then validates its intersection with the preceding target fact.
@@ -1060,12 +1063,18 @@ packages. The current canary chooses an ordered `Array (Package Fact)`. Each
 package existentially owns one private `Cache` shared by its handlers and
 contributes owned operation signatures, exact external signatures required by
 its matchers, `(Registration, callback)` pairs, and a package-owned limit
-preflight. A handler head must be declared as owned or required.
+preflight over both the engine and proof-arena envelopes. A handler head must
+be declared as owned or required.
 `Registry.buildWithin` bounds package and metadata counts plus arities before
 flattening, builds a `Route` from each compact `RuleId` back to its package and
 handler, and rejects undeclared heads and duplicate `OpKey`s or `RuleKey`s.
+The registry constructor is private: callers can inspect a checked snapshot
+but cannot forge inconsistent flattened routes. Executable operations,
+aggregate registry metadata, and replay-format declarations have independent
+limits; adding a proof recipe cannot buy space by relaxing the frontend's
+operation cap.
 Program size and arity are bounded before exact signature lookup. The checked
-start then validates every owned and required signature against the final
+session start validates every owned and required signature against the final
 frontend program, runs each package's configuration preflight, and starts the
 engine with the registry's exact flattened registration array. Registry-owned
 dispatch diagnostics impose their own `maxDiagnosticValue` floor even when
@@ -1075,24 +1084,73 @@ precision ladder against its arithmetic endpoint-height limit; otherwise a
 configuration known in advance to exceed the backend limit is rejected at
 start rather than advertised as compatible.
 
-`Registry.invoke` cross-checks the flattened registration, routed handler
-metadata, and structural projection of an engine-produced request before
-entering the callback, then replaces only the selected package's cache. The
-engine still authenticates the pending serial, application, fact values, and
-versions; direct registry invocation is not an authentication boundary.
+Each scoped handler also owns a fail-closed semantic validator for concrete
+bindings of its registration. The registry first repeats the generic
+structural checks, then routes the binding to that exact handler. A checked
+session installs the same routed validator in the engine, so retained matcher
+proposals, dynamic admission, and later scoped dispatch cannot disagree about
+package acceptance. The proof replay layer must still justify the resulting
+contractor theorem; this validator controls which package contract may be
+invoked, not whether that contract is sound.
+The registry exposes a whole-table check for direct-engine callers which
+supply start-time bindings; the current checked session starts with an empty
+binding table and exercises dynamically proposed scopes.
 
-The current package type does not yet carry replay schemas. A production
-checked assembly API should return operation metadata, registrations, callback
-routes, configuration validation, and payload-freezing/replay schemas as one
-coherent snapshot. Whether that snapshot retains existential packages,
-compiles one dispatch function, supports hot replacement, or uses another
-lookup structure remains experimental. The present experiment exposes its
-constructors and returns a separable engine/registry pair, so its checked start
-is a conformance canary rather than the final encapsulation boundary. A
-production session should prevent accidentally pairing an engine with an
-unrelated registry; a different callback implementation under the same
-versioned rule schema remains valid only when its retained payloads replay
-under that schema.
+`Registry.invokePlanned` cross-checks the flattened registration, routed handler
+metadata, and structural projection of an engine-produced request before
+entering the callback, then replaces only the selected package's cache. It
+returns a plan containing the outcome and all reply-local payload drafts,
+paired with the exact selected handler's immutable replay snapshot. The
+planned route is proof-producing, but neither it nor
+`Registry.invokeDroppingDrafts` is an authentication boundary: the engine
+still authenticates the pending serial, application, fact values, and
+versions. The explicitly named dropping-drafts adapter discards drafts and
+replay metadata only for search experiments. Registry, replay-snapshot, and
+invocation constructors are private; the checked builder and routed invocation
+are their only producers.
+
+Each handler now carries cache-independent replay-format declarations beside
+its registration and callback. A declaration consists of a payload role, a
+rule-local numeric schema variant, and a body-shape validator. The immutable
+dispatch key is `(RuleKey, role, schema)`: two unrelated function packages may
+reuse the same role and local schema number without sharing a validator.
+Registry assembly rejects duplicate `(role, schema)` declarations within a
+handler, and counts declarations against a dedicated replay-format bound as
+well as the aggregate metadata bound.
+
+There are two independent version axes. `RuleKey.schema` is the compatibility
+epoch for the complete handler and companion theorem contract. The payload
+`schema` in a draft or arena entry is a recipe variant within that exact rule
+epoch and semantic role. Replay requires an exact match on the whole
+`(RuleKey, role, payload schema)` address. It never selects the newest
+`RuleKey.schema`, and it never dispatches from a payload schema alone.
+
+`PayloadSession.Session` has a private constructor and its checked start owns
+the matching engine, registry, arena, and arena limits; the bounded `Run`
+result also has a private constructor, so its stop classification can only
+come from session execution. During an invocation, generic arena preflight
+first bounds the number of drafts, body cells, atoms, schemas, and payload
+uses. Only then does the session run the selected package's body validators.
+The selected immutable `ReplaySnapshot` supplies its rule owner and validator
+to one paired freeze operation, so the proof-producing path cannot mix an
+owner from one package with a validator from another. It rejects an undeclared
+role/schema pair or malformed body without committing the prospective arena or
+engine outcome.
+Package caches may record the failed attempt because they remain non-semantic.
+
+This first format API validates representation shape only. It does not attest
+that a body proves the proposed interval fact, instance, or equality. The
+Mathlib companion must dispatch on the same immutable key, decode the frozen
+entry independently of package cache state, and recheck the corresponding
+rule theorem during semantic replay. Until that companion layer exists, it is
+an explicit compatibility obligation—not a property enforced by this format
+API—that a different callback implementation under an existing versioned rule
+schema leave every retained payload semantically replayable. Whether production
+retains these existential snapshots, compiles a dispatch table, adds typed
+decoders, supports hot replacement, or uses another lookup structure remains
+experimental. The older direct registry and engine interfaces remain available
+for search experiments, but proof-producing execution goes through the
+session.
 
 The explicit registration and validation boundary is fixed. Discovery and
 scheduling above it remain empirical: one arm uses an incremental registry
@@ -1108,7 +1166,7 @@ inside the registry's `Array (Package Fact)`, and the resulting
 `Registry Fact : Type 1` is threaded as the single external cache through
 either the FIFO or policy driver. Handlers in one package share that package's
 cache; handlers in different packages may use unrelated types. This first
-scope-free run has one registry cache for the whole run. Before branching is
+single-branch run has one registry cache for the whole run. Before branching is
 implemented, production must choose branch ownership or explicit
 `ScopeId`/semantic cache keys and test cross-branch reuse separately.
 
@@ -1141,8 +1199,9 @@ alternatives to compare against the same reference stream.
 2. The external function-package registry executes the routed callback and
    owns its private cache; the Mathlib companion is responsible for semantic
    replay, not hot-loop dispatch.
-3. The registry returns an `Outcome` containing candidate facts, alternatives,
-   suggestions, cost observations, and an opaque proof recipe identifier.
+3. The registry returns a `Plan` containing an `Outcome` plus exactly the
+   reply-local recipe drafts referenced by its fact, instantiation, and
+   equality payload identifiers.
 4. A reply echoes the request serial, snapshot, and application. A delayed or
    transplanted reply is rejected without clearing the current request.
 5. The solver validates every candidate target against the application's
@@ -1155,19 +1214,156 @@ alternatives to compare against the same reference stream.
    Only companion replay of the retained payload can do that.
 6. In the production replay protocol, every value needed to justify an
    accepted fact is frozen into an immutable per-run payload arena, and the
-   retained `PayloadId` points there rather than into a mutable cache. The
-   current canary has only stable recipe identifiers; it does not yet implement
-   this arena, so it is not evidence that payload freezing is solved.
+   retained `PayloadId` points there rather than into a mutable cache. Session
+   execution validates and relocates the complete reply prospectively before
+   engine admission.
 7. The solver records the snapshot, concrete application, anchor, action kind,
-   effort, input versions, target's preceding fact version, target, and frozen
-   payload in provenance. The preceding target fact is an explicit dependency
-   of intersection even when the rule did not declare that target as an input.
+   effort, input versions, target's preceding fact version, proposed fact,
+   installed fact, and frozen payload in provenance. The preceding target fact
+   is an explicit dependency of intersection even when the rule did not
+   declare that target as an input. The engine also retains the immutable base
+   program and caller-supplied version-zero fact array rather than attempting
+   to recover either from the extended program or narrowed current slots.
+
+The executable `Engine.factAt?` is the replay lookup invariant. Version zero
+of a base-program node resolves from the caller's immutable `initialFacts`;
+version zero of an appended node resolves to `FactDomain.top` at that node's
+domain; every positive version resolves only through the exact `(node,
+version)` event in `history`. It never substitutes the mutable current fact
+slot. For every valid engine state, each event's `previous`, every
+action-input version used by a rule event, and every equality-transport source
+must resolve this way; the event's own identifier resolves to its installed
+fact. The current `(node, versions[node])` lookup likewise agrees with
+`facts[node]`. The initial-fact array has exactly the base-program node count,
+and every later program retains the complete base program as an unchanged
+prefix. These properties become checker invariants when engine fields are
+made opaque.
+
+`Engine.factAt?` is an observation over an already-valid engine, not the
+checker for an untrusted trace: it searches the complete retained history.
+Certificate replay must instead fold events in chronological order and
+resolve every positive-version dependency only from the already-validated
+prefix. This rejects future references and cyclic provenance even if a forged
+final history contains an entry with the requested `(node, version)`.
 
 Whether freezing is an explicit second request after the solver identifies
 the improving subset, or eager allocation before the `Outcome`, remains an
 experiment. Eager freezing has a simpler protocol but may retain payloads for
 weaker candidates; two-phase freezing adds a failure transition which must
-remain atomic.
+remain atomic. In an eager design, a successfully submitted reply can leave
+an unused entry when a candidate does not improve the current intersection,
+when a suggestion is dropped or later dismissed, stale, invalid, or
+structurally duplicate, or when an instantiation's proposed equality reuses an
+older edge whose payload remains authoritative. These are permitted arena
+waste, not proof dependencies. They must be measured and bounded; compacting
+only the backwards proof slice, freezing only the improving/admitted subset,
+and accepting this monotone waste are all still viable designs.
+The first protocol also freezes a fresh entry whenever a later reply uses the
+same recipe again: reply-local exact coverage does not yet provide an explicit
+way to cite an older global entry. Interning immutable entries, adding a
+checked global-reference draft, and accepting bounded cross-reply duplication
+are alternatives to measure rather than assumptions of the final format.
+
+The first executable arena uses an eager but prospective transaction:
+it preflights total-proposal work and the per-reply draft, draft-cell, atom,
+and schema limits, then matches package-local labels exactly against
+package-local drafts and checks duplicate, missing, extra, and wrong-role
+entries. The package-owned path next checks body representation with the
+immutable replay snapshot selected by the exact invocation. Only a locally
+bounded, exactly covered, format-valid reply is compared with remaining
+whole-arena entry and body-cell capacity, relocated to fresh global
+identifiers, and appended to a new arena value. Thus malformed local evidence
+cannot be classified as cumulative exhaustion merely because earlier valid
+replies filled part of the arena. Local preflight returns an opaque
+bounded-draft transaction whose constructor is private; it carries the exact
+draft list together with its derived cell count, and both cumulative preflight
+and append consume that same value. No public caller can supply a separate
+cell count for unrelated drafts. The total-proposal budget charges every
+candidate, every suggestion constructor (including retry and split), and
+every equality nested under an instantiation. Repeated references count as
+work even when they share one draft. Before any quadratic label/coverage scan,
+`maxDrafts` bounds the draft list independently of proposal traversal. Every
+atom reached by the bounded body traversal is range-checked before its cell is
+charged. The traversal stops at the first in-range cell beyond
+`maxDraftCells`; later atoms are deliberately not inspected. Entry
+construction and identifier assignment are one traversal, so a relocated
+identifier denotes exactly the entry appended for its local draft.
+Candidate, instantiation, and equality roles are distinct, and ordinary replay
+lookup checks the expected role. Reconstructing an instantiation during this
+traversal preserves its complete node, equality, and arbitrary-scope proposal;
+default-valued fields are not permission to discard nonempty structure.
+Each entry also retains the complete engine-issued action, including the exact
+matcher structural-input batch and epoch which caused the reply. The
+engine-private matcher cursor is deliberately absent from `Action`, is neither
+stored nor reconstructed by payload freezing, and remains scheduler state
+only. This verbatim action copy is sound only while `Action` contains no
+package-produced reply-local payload labels; any future payload-bearing action
+field must join the checked relocation traversal rather than being copied as
+though it were already a frozen arena identifier. Failure returns the old
+arena.
+
+The surrounding session commits that returned arena only if submission of the
+relocated outcome also succeeds. For a structural matcher, this makes proof
+payloads and engine-owned cursor progress one transaction: an accepted reply
+commits both, while semantic rejection, engine or fact-domain resource
+refusal, and cumulative arena exhaustion commit neither. Before freezing, the
+session checks the candidate and suggestion list lengths against the engine's
+own trusted limits. Let
+`requiredUses = maxOutcomeCandidates + maxOutcomeSuggestions *
+(maxProposalItems + 1)`: every candidate and suggestion costs one payload use,
+and every suggestion may be an instantiation with at most
+`maxProposalItems` nested equalities. Session start requires
+`requiredUses ≤ maxDrafts`, `maxDrafts ≤ maxUses`,
+`maxDrafts ≤ maxEntries`, and `maxDraftCells ≤ maxBodyCells`. The first
+inequality permits one distinct draft for every engine-valid payload use.
+The second both implies that the use traversal can inspect every such position
+and bounds even malformed pre-coverage draft lists by the same envelope.
+The remaining inequalities ensure that any reply inside the local draft/cell
+envelope fits a fresh arena. `maxEntries` and `maxBodyCells` remain cumulative
+whole-run bounds: only capacity spent by an earlier committed reply can make a
+later locally valid reply exhaust them.
+Packages see the complete engine and arena envelopes and may impose stronger
+method-specific requirements.
+Before any package-specific program check traverses nodes, session start runs
+the generic engine preflight and compilation, so the engine's operation, node,
+rule, arity, application, and queue bounds already hold.
+
+The eager protocol's `maxEntries` and `maxBodyCells` are separate whole-run
+waste bounds. They must cover drafts frozen for every invoked action up to the
+action limit, including entries later unused because a candidate was not
+improving or a suggestion was dropped, dismissed, stale, invalid, or
+duplicate. Sizing either from `maxAcceptedFacts` is therefore unsound. A coarse
+safe envelope multiplies the corresponding per-reply cap by the action limit;
+tighter package-declared envelopes and two-phase freezing remain experiments
+to compare.
+
+Engine rejection, fact-domain or engine resource refusal, and exhaustion of
+the remaining whole-run arena entry or body-cell capacity retain the preceding
+arena, facts, program, and proof history and make the returned session
+non-live. Start-time coherence means these arena stops occur only after an
+earlier commit has consumed capacity. A caller cannot resume that snapshot and
+later relabel the partial run saturated. Treating cumulative arena exhaustion
+as fatal is an intentional conservative liveness policy, aligned with global
+engine-resource exhaustion: the selected reply is otherwise valid, but its
+required proof data cannot be retained. Proof soundness could also permit a
+recoverable session which permanently records dropped work and remains
+incomplete, but that would broaden scheduling behavior; the eager prototype
+does not do so. Malformed package evidence and
+package-local payload-use, draft-count, draft-cell, atom, or schema excess are
+different: the prospective arena is discarded, but the session submits a
+bounded synthetic `failed` outcome through the ordinary engine reply path.
+This clears the request latch, retains non-semantic cache telemetry, leaves
+facts and history unchanged, keeps the session live, and records that required
+work was dropped. For a matcher, that synthetic failed reply deliberately
+consumes the issued structural batch without retaining its malformed payload;
+otherwise repeatedly presenting the same broken reply could prevent all other
+work from running. The FIFO driver may therefore continue other independent
+rules, including later successful arena and fact commits, but the monotone
+`droppedWork` flag survives and the run must eventually report incomplete.
+The selected package's cache may record either kind of attempt because caches
+and invocation telemetry are explicitly non-semantic.
+This executable eager protocol does not foreclose measuring a two-phase
+production protocol.
 
 An invalid rule outcome may mislead search, but it cannot produce a theorem.
 The companion reconstructs every retained fact from the rule's soundness
@@ -1195,12 +1391,40 @@ policy learning account for unsuccessful probes. Until measured, a registry
 must label its successful cost model as a versioned declared estimate rather
 than present placeholder weights as exact operation counts.
 
-The current recipe and family identifiers are not yet arena indices with a
-checked cardinality bound. `PayloadId.index`, instantiation family labels,
-equality payloads, and custom split-reason numbers therefore remain an explicit
-representation gap. The production payload arena must bound allocation and
-identifier encoding before any of these values enter retained provenance; the
-presence of small named constants in the canary does not solve that problem.
+The standalone arena experiment gives fact, instantiation, and equality
+`PayloadId`s checked array-index meaning and bounds entry count, opaque
+recipe-body cells, schemas, atoms, draft count, and total proposal work before
+allocation. Reply-local draft and cell caps are distinguished from cumulative
+entry and cell capacity.
+Each frozen entry stores its originating action, semantic role, numeric
+payload schema, and uninterpreted `List Nat` body. It derives the rule owner
+only from `origin.key`, avoiding two stored identities which could disagree.
+The session now performs package-owned format lookup and bounded body-shape
+validation under the full `(RuleKey, role, schema)` key. Typed decoding, typed
+atom encodings, byte limits, and semantic replay are still missing.
+The first real dyadic packages declare payload schema `0` separately for each
+fact, instance, or equality handler. Each body validator accepts exactly the
+empty list and rejects every trailing cell; the rule key still distinguishes
+the theorem epoch and owner.
+Instantiation family labels and custom split-reason numbers also remain
+untyped representation gaps. The FIFO session turns any positive
+compatibility callback whose local identifier lacks a draft, or whose draft
+fails format validation, into a failed rule transition, so no unvalidated
+package-local identifier reaches its retained provenance. Its monotone
+`droppedWork` flag means exactly that required work was lost; it is not itself
+a terminal-state claim. The exported `Session.complete` predicate additionally
+requires a live session and no retained retry or instantiation. At a FIFO
+fixed point this predicate is the sole gate between saturated and incomplete.
+Package `failed`/`resourceLimit` results, malformed evidence, dropped narrowing
+suggestions, and unprocessed retained narrowing therefore cannot be laundered
+into saturation. The next policy experiment must preserve this same session
+transaction while allowing an external policy to choose invocations,
+instantiations, equalities, retries, and splits; it must not regain access to
+separable engine, registry, and arena values. The FIFO session can already
+freeze an instantiation and its nested equality payloads, but it deliberately
+has no public admission escape hatch. Honest session-level execution coverage
+for the resulting equality contractor therefore belongs to that private
+policy-session layer, not to a test-only constructor or engine replacement.
 
 ### Action kinds
 
@@ -1574,7 +1798,11 @@ One `balancedV1` candidate uses a versioned priority queue over these offers.
 Changed facts insert or invalidate only affected offers; stale entries are
 discarded lazily when popped. Policies intended for diagnostics may use a
 simpler complete scan, but their complexity is reported honestly. An empty
-frontier means saturation only when no narrowing-capable work was dismissed.
+frontier means saturation only when no narrowing-capable work was dismissed,
+dropped from the engine's bounded retained prefix, or tombstoned by a failed
+freshness guard. `Suggestion.affectsClosure` is the single classification used
+for all three paths, while `Engine.keptSuggestions` and
+`Engine.droppedSuggestions` define the exact shared retention boundary.
 Declining an invocation, equality contractor, retry, or instantiation makes
 the run incomplete; declining a split does not, because it changes proof
 search rather than the propagation closure of the current scope. An empty
@@ -2241,8 +2469,23 @@ typical, boundary, and adversarial inputs. In particular it includes:
   independently appended packages using `List Nat` and `Bool` caches, exact
   route and final-program signature checks, external required signatures,
   duplicate operation/rule-key and undeclared-head rejection, cache-preserving
-  rejection of wrong routes, and a `Type 1` registry threaded through both
-  drivers;
+  rejection of wrong routes, duplicate replay-format rejection, and a `Type 1`
+  registry threaded through both drivers;
+- a private package session which freezes and relocates reply-local evidence,
+  continues independent work after malformed or locally oversized drafts,
+  retains incompleteness across a later successful reply, charges nested
+  equality payload uses, keeps derived draft-cell accounting tied to the exact
+  bounded transaction, and intentionally reserves fatal entry/body-cell stops
+  for genuine remaining-capacity exhaustion after an earlier arena commit;
+- two unrelated opaque function packages which both use local fact schema `7`
+  but retain distinct `(RuleKey, role, schema)` addresses and validate
+  incompatible bounded body shapes; undeclared formats, malformed bodies, and
+  format failure after a previously committed invocation leave no partial
+  current transaction, while recoverable reply-local draft-cell refusal
+  precedes package validation;
+- real dyadic fact and instantiation packages running through the private
+  proof session with exact empty-body schema `0` declarations, including
+  rejection of a trailing body cell and distinct rule-epoch ownership;
 - an anchor-local opaque shape rule which distinguishes `x * (one - x)` from
   products with a reversed difference or a different repeated input, proposes
   the exact existing node identifiers while receiving no fact inputs, repeats

@@ -147,8 +147,10 @@ end Program
 
 /-! # Rule registration -/
 
-/-- Stable rule name.  `schema` versions the proof payload understood by the
-companion checker. -/
+/-- Stable rule name and compatibility epoch.  `schema` versions the complete
+handler/theorem contract; replay requires this exact key and never falls back
+to a newer epoch.  A payload's own schema is a separate recipe variant within
+this epoch. -/
 structure RuleKey where
   name : String
   schema : Nat := 1
@@ -1006,6 +1008,7 @@ inductive Resource where
   | matcherVisits
   | effort
   | registryEntries
+  | replayFormats
   | acceptedFacts
   | retainedSuggestions
   | outcomeCandidates
@@ -1021,6 +1024,10 @@ structure Limits where
   maxOperations : Nat
   maxNodes : Nat
   maxRules : Nat
+  /-- Total package metadata cells, independent of executable program size. -/
+  maxRegistryEntries : Nat
+  /-- Total cache-independent proof-replay format declarations. -/
+  maxReplayFormats : Nat
   maxArity : Nat
   /-- Maximum ordered read or write ports of one arbitrary-scope application.
   Local operation slots remain governed by `maxArity`. -/
@@ -1078,10 +1085,12 @@ structure Metrics where
   equalityImprovements : Nat := 0
   deriving DecidableEq, Repr
 
-/-- Why one narrowed fact was admitted.  Equality transport is an engine
-operation and therefore does not invent a registry rule or payload. -/
-inductive FactCause where
-  | rule (action : Action) (payload : PayloadId)
+/-- Why one narrowed fact was admitted.  Rule provenance retains the proposed
+fact separately from the narrowed fact installed in the event.  Equality
+transport is an engine operation and therefore does not invent a registry rule
+or payload. -/
+inductive FactCause (Fact : Type) where
+  | rule (action : Action) (proposed : Fact) (payload : PayloadId)
   | transport (equality : EqualityId) (source : SeenVersion)
   deriving Repr
 
@@ -1092,7 +1101,7 @@ structure FactEvent (Fact : Type) where
   previous : SeenVersion
   fact : Fact
   version : Nat
-  cause : FactCause
+  cause : FactCause Fact
 
 /-- Canonical unordered endpoint pair for one generated equality. -/
 structure EqualityPair where
@@ -1163,6 +1172,11 @@ structure InstanceEvent where
 structure Engine (Fact : Type) where
   programVersion : Nat
   factDomain : FactDomain Fact
+  /-- Validated caller program before any search-time instantiation. -/
+  baseProgram : Program
+  /-- Caller-supplied version-zero facts. Replay never recovers these from the
+  mutable current fact slots. -/
+  initialFacts : Array Fact
   program : Program
   rules : Array Registration
   /-- Concrete scoped bindings in admission order.  Start-time bindings form
@@ -1327,6 +1341,8 @@ def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Arr
     | throw .invalidRegistrations
   pure
     { factDomain
+      baseProgram := program
+      initialFacts := facts
       program
       programVersion := 0
       rules
@@ -1363,6 +1379,22 @@ def snapshot (state : Engine Fact) : Snapshot Fact :=
   { facts := state.facts
     versions := state.versions
     contradictory := state.contradictory }
+
+/-- Resolve one immutable fact version for replay.  Version zero comes from
+the caller's initial fact array for base nodes and from the domain top for
+search-generated nodes.  Every later version must name an exact history
+event, never the mutable current fact slot. -/
+def factAt? (state : Engine Fact) (seen : SeenVersion) : Option Fact :=
+  if seen.version == 0 then
+    if seen.node.index < state.baseProgram.nodes.size then
+      state.initialFacts[seen.node.index]?
+    else do
+      let node ← state.program.node? seen.node
+      pure (state.factDomain.top node.domain)
+  else
+    (state.history.find? fun event =>
+      event.node == seen.node && event.version == seen.version).map
+        (fun event => event.fact)
 
 /-- Freeze the current bounded expression structure for one registry request. -/
 def programView (state : Engine Fact) : ProgramView :=
@@ -1989,7 +2021,7 @@ def installImprovement (action : Action) (candidate : Candidate Fact)
             previous
             fact
             version
-            cause := .rule action candidate.payload }
+            cause := .rule action candidate.fact candidate.payload }
         contradictory := state.contradictory || contradiction
         metrics :=
           { state.metrics with

@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+import HexBasic.Fold
 public import HexMvPoly.Eval
 
 @[expose] public section
@@ -342,11 +343,104 @@ theorem subst_eq [Lean.Grind.Semiring R] [DecidableEq R]
   unfold termsList
   rfl
 
+private theorem prod_subst [Lean.Grind.Semiring R] [DecidableEq R]
+    (s : Fin n → Option R) (m : Mono n) :
+    Mono.prod
+        (fun i => match s i with | some x => C x | none => X i)
+        m =
+      (monomial (eraseAssigned s m)
+        (Mono.prod (fun i => (s i).getD 1) m) : MvPoly n R cmp) := by
+  let g : Fin n → MvPoly n R cmp :=
+    fun i => match s i with | some x => C x | none => X i
+  let mono : Fin n → Mono n :=
+    fun i =>
+      if (s i).isSome then Mono.zero
+      else Mono.scale m[i] (Mono.unit i)
+  let value : Fin n → R :=
+    fun i => Mono.powBySq ((s i).getD 1) m[i]
+  have factor (i : Fin n) :
+      Mono.powBySq (g i) m[i] =
+        monomial (mono i) (value i) := by
+    cases hsi : s i with
+    | none =>
+        simpa [g, mono, value, hsi, X] using
+          (powBySq_monomial (cmp := cmp) (Mono.unit i) (1 : R) m[i])
+    | some x =>
+        simpa [g, mono, value, hsi, C] using
+          (powBySq_monomial (cmp := cmp) (Mono.zero : Mono n) x m[i])
+  have fold : ∀ (xs : List (Fin n)) (a : Mono n) (c : R),
+      xs.foldl
+          (fun acc i => acc * Mono.powBySq (g i) m[i])
+          (monomial a c) =
+        monomial
+          (xs.foldl (fun acc i => Mono.mul acc (mono i)) a)
+          (xs.foldl (fun acc i => acc * value i) c) := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro a c
+        rfl
+    | cons i xs ih =>
+        intro a c
+        simp only [List.foldl_cons]
+        rw [factor, monomial_mul_monomial, ih]
+  unfold Mono.prod
+  change
+    (List.finRange n).foldl
+        (fun acc i => acc * Mono.powBySq (g i) m[i])
+        (monomial Mono.zero 1) =
+      monomial (eraseAssigned s m)
+        ((List.finRange n).foldl
+          (fun acc i => acc * value i) 1)
+  rw [fold]
+  congr 1
+  calc
+    (List.finRange n).foldl
+        (fun acc i => Mono.mul acc (mono i)) Mono.zero =
+        (List.finRange n).foldl
+          (fun acc i =>
+            Mono.mul acc
+              (Mono.scale (eraseAssigned s m)[i] (Mono.unit i)))
+          Mono.zero := by
+            apply List.foldl_congr
+            intro acc i _
+            unfold mono eraseAssigned
+            cases hsi : s i <;> simp [hsi]
+    _ = eraseAssigned s m := Mono.mul_units _
+
 theorem partialEval_eq_subst [Lean.Grind.Semiring R] [DecidableEq R]
     (s : Fin n → Option R) (p : MvPoly n R cmp) :
     partialEval s p =
       subst (targetCmp := cmp)
         (fun i => match s i with | some x => C x | none => X i) p := by
-  sorry
+  unfold partialEval subst bind foldTerms
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList,
+    Std.ExtTreeMap.foldl_eq_foldl_toList]
+  apply List.foldl_congr
+  intro acc term _
+  rcases term with ⟨m, c⟩
+  simp only [id_eq]
+  let g : Fin n → MvPoly n R cmp :=
+    fun i => match s i with | some x => C x | none => X i
+  let assigned := Mono.prod (fun i => (s i).getD 1) m
+  have hprod :
+      Mono.prod g m =
+        (monomial (eraseAssigned s m) assigned : MvPoly n R cmp) := by
+    exact prod_subst (cmp := cmp) s m
+  change
+    acc.addMonomial (eraseAssigned s m) (c * assigned) =
+      acc + (monomial Mono.zero c : MvPoly n R cmp) * Mono.prod g m
+  calc
+    acc.addMonomial (eraseAssigned s m) (c * assigned) =
+        acc + monomial (eraseAssigned s m) (c * assigned) :=
+      addMonomial_eq ..
+    _ = acc + (monomial Mono.zero c : MvPoly n R cmp) *
+        monomial (eraseAssigned s m) assigned := by
+      rw [monomial_mul_monomial, Mono.zero_mul]
+    _ = acc + (monomial Mono.zero c : MvPoly n R cmp) *
+        Mono.prod g m :=
+      congrArg
+        (fun q => acc + (monomial Mono.zero c : MvPoly n R cmp) * q)
+        hprod.symm
 
 end Hex.MvPoly

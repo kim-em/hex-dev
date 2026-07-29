@@ -76,6 +76,8 @@ def limits : Limits :=
   { maxOperations := 4
     maxNodes := 8
     maxRules := 2
+    maxRegistryEntries := 8
+    maxReplayFormats := 4
     maxArity := 2
     maxScopeNodes := 2
     maxApplications := 4
@@ -506,13 +508,21 @@ def package : Package Rank :=
     cache := 0
     operations
     handlers :=
-      #[{ registration := matcherRule, invoke := packageMatcher },
-        { registration := contractRule
-          invoke := packageContract
+      #[Handler.bareDroppingDrafts matcherRule packageMatcher,
+        { Handler.bareDroppingDrafts contractRule packageContract with
           acceptsScope := fun _ binding => binding.rule == contractKey }] }
 
 def packageLimits : Limits :=
   { limits with maxDiagnosticValue := 300 }
+
+def payloadLimits : Experiment.PayloadArena.Limits :=
+  { maxEntries := 0
+    maxBodyCells := 0
+    maxDrafts := 0
+    maxDraftCells := 0
+    maxAtom := 0
+    maxSchema := 0
+    maxUses := 0 }
 
 def registry? : Option (Registry Rank) :=
   match Registry.buildWithin packageLimits #[package] with
@@ -522,7 +532,7 @@ def registry? : Option (Registry Rank) :=
 def registryStarted? : Option (Registry Rank × Engine Rank) := do
   let registry <- registry?
   if !registry.acceptsProgram program ||
-      !registry.acceptsLimits program packageLimits then
+      !registry.acceptsLimits program packageLimits payloadLimits then
     none
   else
     match Engine.start rankDomain program registry.registrations #[0, 0, 0]
@@ -533,12 +543,14 @@ def registryStarted? : Option (Registry Rank × Engine Rank) := do
 def registryAdmitted? : Option (Registry Rank × Engine Rank) := do
   let (registry, state) <- registryStarted?
   let .request first awaiting := state.poll | none
-  let (firstOutcome, registry) := registry.invoke first
+  let (firstInvocation, registry) := registry.invokePlanned first
+  let firstOutcome := firstInvocation.plan.outcome
   let .noChange _ := firstOutcome | none
   let .accepted _ state :=
     awaiting.submit (first.action.reply firstOutcome) | none
   let .request second awaiting := state.poll | none
-  let (secondOutcome, registry) := registry.invoke second
+  let (secondInvocation, registry) := registry.invokePlanned second
+  let secondOutcome := secondInvocation.plan.outcome
   let .success [] [.instantiate emitted] _ := secondOutcome | none
   if emitted.nodes.length != 2 || emitted.equalities.length != 1 ||
       emitted.scopes.length != 1 then

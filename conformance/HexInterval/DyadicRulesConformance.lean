@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexInterval.Experiment.DyadicRules
+import HexInterval.Experiment.PayloadSession
 import HexInterval.Experiment.PolicyDriver
 
 /-!
@@ -40,6 +41,8 @@ def limits : Experiment.Propagator.Limits :=
   { maxOperations := 16
     maxNodes := 32
     maxRules := 16
+    maxRegistryEntries := 64
+    maxReplayFormats := 16
     maxArity := 4
     maxApplications := 64
     maxQueueEntries := 256
@@ -111,7 +114,7 @@ def scaleStart? : Option (Engine Fact × ConcreteRegistry) :=
 
 def scaleFinal? : Option (RunResult Fact ConcreteRegistry) := do
   let (state, registry) <- scaleStart?
-  pure (drive Propagator.Registry.invoke 32 state registry)
+  pure (drive Propagator.Registry.invokeDroppingDrafts 32 state registry)
 
 #guard scaleProgram.check
 #guard registryChecks scaleProgram
@@ -160,7 +163,7 @@ def cycleStart? : Option (Engine Fact × ConcreteRegistry) :=
 
 def cycleFinal? : Option (RunResult Fact ConcreteRegistry) := do
   let (state, registry) <- cycleStart?
-  pure (drive Propagator.Registry.invoke 48 state registry)
+  pure (drive Propagator.Registry.invokeDroppingDrafts 48 state registry)
 
 #guard cycleProgram.check
 #guard registryChecks cycleProgram
@@ -285,7 +288,7 @@ def centeredAt (input expected : Dyadic) : Bool :=
 
 def centeredInitial? : Option (RunResult Fact ConcreteRegistry) := do
   let (state, registry) <- centeredStart?
-  pure (drive Propagator.Registry.invoke 32 state registry)
+  pure (drive Propagator.Registry.invokeDroppingDrafts 32 state registry)
 
 def centeredAdmitted? : Option (Engine Fact × ConcreteRegistry) := do
   let initial <- centeredInitial?
@@ -299,7 +302,7 @@ def centeredAdmitted? : Option (Engine Fact × ConcreteRegistry) := do
 
 def centeredFinal? : Option (RunResult Fact ConcreteRegistry) := do
   let (state, registry) <- centeredAdmitted?
-  pure (drive Propagator.Registry.invoke 32 state registry)
+  pure (drive Propagator.Registry.invokeDroppingDrafts 32 state registry)
 
 def falseOneRun? : Option (RunResult Fact ConcreteRegistry) := do
   let (state, registry) <-
@@ -311,13 +314,181 @@ def falseOneRun? : Option (RunResult Fact ConcreteRegistry) := do
         limits with
     | .ok state => some state
     | .error _ => none
-  pure (drive Propagator.Registry.invoke 8 state registry)
+  pure (drive Propagator.Registry.invokeDroppingDrafts 8 state registry)
 
 #guard centeredProgram.check
 #guard registryChecks centeredProgram
 #guard centeredAt 0 0
 #guard centeredAt half quarter
 #guard centeredAt 1 0
+
+/-! ## Real package payload plans -/
+
+def payloadLimits : PayloadArena.Limits :=
+  { maxEntries := 3
+    maxBodyCells := 0
+    maxDrafts := 3
+    maxDraftCells := 0
+    maxAtom := 0
+    maxSchema := 0
+    maxUses := 3 }
+
+def trailingPayloadLimits : PayloadArena.Limits :=
+  { payloadLimits with maxBodyCells := 1, maxDraftCells := 1 }
+
+def proofPayloadLimits : PayloadArena.Limits :=
+  { maxEntries := PayloadSession.requiredUses limits
+    maxBodyCells := 0
+    maxDrafts := PayloadSession.requiredUses limits
+    maxDraftCells := 0
+    maxAtom := 0
+    maxSchema := 0
+    maxUses := PayloadSession.requiredUses limits }
+
+def proofProgram : Program :=
+  { operations := allOperations
+    nodes := #[instruction 0] }
+
+def proofSession? : Option (PayloadSession.Session Fact) :=
+  match PayloadSession.Session.start
+      (DyadicInterval.factDomain endpointLimit) proofProgram
+      #[arithmeticPackage config real, centeredPackage config real]
+      #[DyadicInterval.Fact.whole] limits proofPayloadLimits with
+  | .ok session => some session
+  | .error _ => none
+
+def proofRun? : Option (PayloadSession.Run Fact) := do
+  let session <- proofSession?
+  pure (session.drive 8)
+
+-- A real dyadic function package crosses the private proof-session boundary;
+-- its empty payload-schema-zero body is checked under the exact rule epoch and then
+-- retained in provenance.
+#guard
+  match proofRun? with
+  | some run =>
+      run.stop == .saturated && run.session.complete &&
+        run.session.engine.history.size == 1 &&
+        run.session.arena.entries.size == 1 &&
+        run.session.arena.bodyCells == 0 &&
+        exactFact run.session.engine 0 (finite 1 false 1 false) &&
+        match run.session.arena.entry? { index := 0 } .fact with
+        | some entry =>
+            entry.replayKey ==
+                { rule := oneForwardKey, role := .fact, schema := 0 } &&
+              oneForwardKey.schema == 1 && entry.body.isEmpty
+        | none => false
+  | none => false
+
+def ruleIdFrom? (key : RuleKey) : Nat -> List Registration -> Option RuleId
+  | _, [] => none
+  | index, registration :: registrations =>
+      if registration.key == key then some { index }
+      else ruleIdFrom? key (index + 1) registrations
+
+def ruleId? (registry : ConcreteRegistry) (key : RuleKey) : Option RuleId :=
+  ruleIdFrom? key 0 registry.registrations.toList
+
+def payloadView : ProgramView :=
+  { programVersion := 0
+    operations := centeredProgram.operations
+    nodes := centeredProgram.nodes
+    generations := #[0, 0, 0, 0]
+    depths := #[0, 0, 1, 2] }
+
+def plannedRequest? (registry : ConcreteRegistry) (serial : Nat)
+    (key : RuleKey) (anchor : NodeId) (kind : ActionKind)
+    (writes : List NodeId) : Option (RuleRequest Fact) := do
+  let rule <- ruleId? registry key
+  pure
+    { action :=
+        { serial
+          programVersion := 0
+          application := { index := rule.index }
+          rule
+          key
+          node := anchor
+          kind
+          effort := 0
+          inputs := [] }
+      program := payloadView
+      inputs := []
+      writes }
+
+def sameAction (left right : Action) : Bool :=
+  left.serial == right.serial &&
+    left.programVersion == right.programVersion &&
+    left.application == right.application &&
+    left.rule == right.rule &&
+    left.key == right.key &&
+    left.node == right.node &&
+    left.kind == right.kind &&
+    left.effort == right.effort &&
+    left.inputs == right.inputs
+
+def ownsV0 (arena : PayloadArena.Arena) (payload : PayloadId)
+    (role : PayloadArena.Role) (origin : Action) : Bool :=
+  (arena.entry? payload role).any fun entry =>
+    sameAction entry.origin origin && entry.schema == 0 && entry.body.isEmpty
+
+-- The real nullary fact handler and structural instantiator both use the
+-- planned registry route.  Their fact, instantiation, and equality labels are
+-- frozen into distinct global entries.  Replay needs no central recipe number:
+-- the frozen action key, role, and schema identify each v0 checker.
+#guard
+  match registry? with
+  | none => false
+  | some registry =>
+      match
+          plannedRequest? registry 7 oneForwardKey (node 1) .forward [node 1],
+          plannedRequest? registry 8 centeredInstantiateKey (node 3) .instantiate [] with
+      | some factRequest, some instanceRequest =>
+          let (factInvocation, registry) := registry.invokePlanned factRequest
+          let factReplay := factInvocation.replay
+          let factPlan := factInvocation.plan
+          match factReplay.freeze payloadLimits .empty factRequest.action
+              factPlan.outcome factPlan.drafts with
+          | .ready factArena (.success [candidate] [] _) =>
+              let (instanceInvocation, _) := registry.invokePlanned instanceRequest
+              let instanceReplay := instanceInvocation.replay
+              let instancePlan := instanceInvocation.plan
+              match instanceReplay.freeze payloadLimits factArena
+                  instanceRequest.action instancePlan.outcome instancePlan.drafts with
+              | .ready arena (.success [] [.instantiate request] _) =>
+                  match request.equalities with
+                  | [equality] =>
+                      factReplay.rule == oneForwardKey &&
+                        instanceReplay.rule == centeredInstantiateKey &&
+                        candidate.payload.index == 0 &&
+                        request.payload.index == 1 &&
+                        equality.payload.index == 2 &&
+                        arena.entries.size == 3 && arena.bodyCells == 0 &&
+                        ownsV0 arena candidate.payload .fact factRequest.action &&
+                        ownsV0 arena request.payload .instance instanceRequest.action &&
+                        ownsV0 arena equality.payload .equality instanceRequest.action
+                  | _ => false
+              | _ => false
+          | _ => false
+      | _, _ => false
+
+-- The real payload-schema-zero fact format rejects a trailing cell after generic
+-- body and atom preflight has accepted the bounded draft.
+#guard
+  match registry? with
+  | some registry =>
+      match plannedRequest? registry 9 oneForwardKey (node 1) .forward [node 1] with
+      | some request =>
+          let (invocation, _) := registry.invokePlanned request
+          match invocation.replay.freeze trailingPayloadLimits .empty request.action
+              invocation.plan.outcome
+              [{ label := factLabel, role := .fact, schema := 0, body := [0] }] with
+          | .invalid (.invalidBody key) arena =>
+              key ==
+                  { rule := oneForwardKey, role := .fact, schema := 0 } &&
+                arena.entries.isEmpty
+          | _ => false
+      | none => false
+  | none => false
 
 -- The anchor-local match remains fresh after its own append-only extension.
 -- Selecting it again is a structural duplicate, and the matcher is not
@@ -529,8 +700,8 @@ def combinedPolicyRun? : Option
       (List ConcreteCommand)) := do
   let (engine, registry) <- combinedStart?
   let state := Propagator.Policy.State.start engine policyLimits
-  pure (Propagator.Policy.Driver.drive concreteController Propagator.Registry.invoke
-    32 state registry concreteCommands)
+  pure (Propagator.Policy.Driver.drive concreteController
+    Propagator.Registry.invokeDroppingDrafts 32 state registry concreteCommands)
 
 def exactConcreteEvents
     (events : Array (Propagator.Policy.Driver.Event Fact)) : Bool :=
@@ -647,7 +818,7 @@ def reciprocalFirstRequest? : Option (RuleRequest Fact × ConcreteRegistry) := d
 #guard
   match reciprocalFirstRequest? with
   | some (request, registry) =>
-      match (registry.invoke request).1 with
+      match (registry.invokeDroppingDrafts request).1 with
       | .success [candidate] [.retry 1] _ =>
           candidate.node == node 1 &&
             candidate.fact.view ==
@@ -669,7 +840,7 @@ def reciprocalAcrossZeroRequest? : Option (RuleRequest Fact × ConcreteRegistry)
 #guard
   match reciprocalAcrossZeroRequest? with
   | some (request, registry) =>
-      match (registry.invoke request).1 with
+      match (registry.invokeDroppingDrafts request).1 with
       | .inapplicable => true
       | _ => false
   | none => false
@@ -699,7 +870,7 @@ def bogusRequest : RuleRequest Fact :=
 #guard
   match registry? with
   | some registry =>
-      match (registry.invoke bogusRequest).1 with
+      match (registry.invokeDroppingDrafts bogusRequest).1 with
       | .failed code => code == DispatchCode.requestMismatch
       | _ => false
   | none => false
