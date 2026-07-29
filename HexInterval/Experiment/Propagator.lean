@@ -195,6 +195,15 @@ inductive Slot where
   | argument (index : Nat)
   deriving DecidableEq, Repr
 
+/-- How concrete applications of a registration enter the scheduler.  Local
+registrations are resolved at every node with the matching head operation.
+Scoped registrations are bound explicitly to an arbitrary finite set of
+program nodes by the frontend or a package matcher. -/
+inductive BindingKind where
+  | local
+  | scoped
+  deriving DecidableEq, Repr
+
 /-- One explicit propagator registration.  Several registrations may have the
 same `head`; they remain independent methods with independent rule keys. -/
 structure Registration where
@@ -203,11 +212,28 @@ structure Registration where
   kind : ActionKind
   watches : List Slot
   writes : List Slot
+  binding : BindingKind := .local
   /-- Re-run existing applications after any append-only program extension.
   This is the coarse first trigger for rules whose result depends on shape
   outside their anchor's immutable argument subgraph. -/
   watchesProgram : Bool := false
   initialEffort : Nat := 0
+  deriving Repr
+
+/-- One start-time application of a scoped registration, produced by the
+frontend or by a package matcher before `Engine.start`.  The stable rule key is
+resolved against the engine's registry snapshot.  The anchor identifies the
+structural occurrence which justifies the application; `watches` and `writes`
+may name any nodes in the validated program.
+
+This first experiment keeps the binding table immutable.  A later dynamic
+proposal must resolve node references and append new applications atomically;
+it cannot insert new scoped applications ahead of existing local ones. -/
+structure ScopeBinding where
+  rule : RuleKey
+  anchor : NodeId
+  watches : List NodeId
+  writes : List NodeId
   deriving Repr
 
 /-- A registration resolved against one concrete program node. -/
@@ -240,6 +266,15 @@ def uniqueRuleKeys : List Registration -> Bool
   | rule :: rules =>
       !(rules.any fun other => other.key == rule.key) && uniqueRuleKeys rules
 
+/-- Resolve a stable rule key to its compact identifier and immutable
+registration in this registry snapshot. -/
+def ruleEntry? (rules : Array Registration) (key : RuleKey) :
+    Option (RuleId × Registration) := do
+  for index in [0:rules.size] do
+    let rule <- rules[index]?
+    if rule.key == key then return ({ index }, rule)
+  none
+
 def opKeyExists (program : Program) (key : OpKey) : Bool :=
   program.operations.any fun operation => operation.key == key
 
@@ -268,31 +303,72 @@ def resolveSlots? (output : NodeId) (node : Node)
     (slots : List Slot) : Option (List NodeId) :=
   slots.mapM (resolveSlot? output node)
 
-/-- Reject duplicate keys, unknown heads, duplicate watch/write slots, and
-out-of-range slots.  Empty writes are valid for discovery and split rules. -/
+/-- Reject duplicate keys and unknown heads.  Local registrations additionally
+require unique in-range slots; scoped registrations leave their concrete ports
+to `ScopeBinding`.  Empty writes are valid for discovery and split rules. -/
 def registrationsCheck (program : Program) (rules : Array Registration) : Bool :=
   uniqueRuleKeys rules.toList && rules.all fun rule =>
     match program.operationWithKey? rule.head with
     | none => false
     | some operation =>
-        uniqueList rule.watches && uniqueList rule.writes &&
-          rule.watches.all (Slot.validFor operation) &&
-            rule.writes.all (Slot.validFor operation)
+        match rule.binding with
+        | .local =>
+            uniqueList rule.watches && uniqueList rule.writes &&
+              rule.watches.all (Slot.validFor operation) &&
+                rule.writes.all (Slot.validFor operation)
+        | .scoped => rule.watches.isEmpty && rule.writes.isEmpty
 
-/-- Resolve every matching `(registration, node)` pair in node-major,
-registration-minor order.  Operation keys are opaque to this compiler. -/
-def compileApplications (program : Program) (rules : Array Registration) :
+def ScopeBinding.same (left right : ScopeBinding) : Bool :=
+  left.rule == right.rule && left.anchor == right.anchor &&
+    left.watches == right.watches && left.writes == right.writes
+
+def uniqueScopeBindings : List ScopeBinding -> Bool
+  | [] => true
+  | binding :: bindings =>
+      !(bindings.any fun other => binding.same other) && uniqueScopeBindings bindings
+
+/-- Validate explicit scoped applications without interpreting their operation
+or rule keys.  Package-owned semantic checkers remain responsible for proving
+that the chosen scope is an instance of their contractor schema. -/
+def scopeBindingsCheck (program : Program) (rules : Array Registration)
+    (bindings : Array ScopeBinding) : Bool :=
+  uniqueScopeBindings bindings.toList && bindings.all fun binding =>
+    match ruleEntry? rules binding.rule, program.node? binding.anchor with
+    | some (_, rule), some anchor =>
+        rule.binding == .scoped &&
+          (program.operation? anchor.op).any (fun operation => operation.key == rule.head) &&
+          uniqueList binding.watches && uniqueList binding.writes &&
+          binding.watches.all (fun node => (program.node? node).isSome) &&
+          binding.writes.all (fun node => (program.node? node).isSome)
+    | _, _ => false
+
+/-- Resolve immutable scoped bindings in their declared order, followed by
+every local `(registration, node)` match in node-major, registration-minor
+order.  This layout makes local applications append-stable when new nodes are
+instantiated.  Operation keys are opaque to this compiler. -/
+def compileApplications (program : Program) (rules : Array Registration)
+    (bindings : Array ScopeBinding := #[]) :
     Option (Array Application) := do
-  if !program.check || !registrationsCheck program rules then
+  if !program.check || !registrationsCheck program rules ||
+      !scopeBindingsCheck program rules bindings then
     none
   else
     let mut applications := #[]
+    for binding in bindings do
+      let (ruleId, rule) <- ruleEntry? rules binding.rule
+      applications := applications.push
+        { rule := ruleId
+          node := binding.anchor
+          kind := rule.kind
+          watches := binding.watches
+          writes := binding.writes
+          effort := rule.initialEffort }
     for nodeIndex in [0:program.nodes.size] do
       let node <- program.nodes[nodeIndex]?
       let operation <- program.operation? node.op
       for ruleIndex in [0:rules.size] do
         let rule <- rules[ruleIndex]?
-        if rule.head == operation.key then
+        if rule.binding == .local && rule.head == operation.key then
           let watches <- resolveSlots? { index := nodeIndex } node rule.watches
           let writes <- resolveSlots? { index := nodeIndex } node rule.writes
           applications := applications.push
@@ -307,16 +383,29 @@ def compileApplications (program : Program) (rules : Array Registration) :
 /-- Bounded application compiler.  Error `false` denotes an invalid program or
 registry; error `true` denotes the exact application cap. -/
 def compileApplicationsWithin (limit : Nat) (program : Program)
-    (rules : Array Registration) : Except Bool (Array Application) := do
-  if !program.check || !registrationsCheck program rules then
+    (rules : Array Registration) (bindings : Array ScopeBinding := #[]) :
+    Except Bool (Array Application) := do
+  if !program.check || !registrationsCheck program rules ||
+      !scopeBindingsCheck program rules bindings then
     throw false
   let mut applications := #[]
+  for binding in bindings do
+    if limit <= applications.size then
+      throw true
+    let some (ruleId, rule) := ruleEntry? rules binding.rule | throw false
+    applications := applications.push
+      { rule := ruleId
+        node := binding.anchor
+        kind := rule.kind
+        watches := binding.watches
+        writes := binding.writes
+        effort := rule.initialEffort }
   for nodeIndex in [0:program.nodes.size] do
     let some node := program.nodes[nodeIndex]? | throw false
     let some operation := program.operation? node.op | throw false
     for ruleIndex in [0:rules.size] do
       let some rule := rules[ruleIndex]? | throw false
-      if rule.head == operation.key then
+      if rule.binding == .local && rule.head == operation.key then
         if limit <= applications.size then
           throw true
         let some watches := resolveSlots? { index := nodeIndex } node rule.watches
@@ -770,7 +859,7 @@ structure EqualityPair where
   deriving DecidableEq, Repr
 
 /-- Engine-derived structural identity for one shape-rule application in this
-scope-free first experiment.  A rule's untrusted family label is deliberately
+single-branch experiment.  A rule's untrusted family label is deliberately
 absent: the originating rule, authoritative action substitution, resolved
 products, and equality products determine whether the network changes. -/
 structure InstanceKey where
@@ -824,6 +913,10 @@ structure Engine (Fact : Type) where
   factDomain : FactDomain Fact
   program : Program
   rules : Array Registration
+  /-- Immutable start-time bindings for arbitrary-scope applications.  They
+  remain fixed across append-only expression instantiation, so their compiled
+  applications retain stable identifiers. -/
+  bindings : Array ScopeBinding
   applications : Array Application
   watchers : Array (List WorkItem)
   facts : Array Fact
@@ -848,6 +941,7 @@ structure Engine (Fact : Type) where
 inductive StartError where
   | invalidProgram
   | invalidRegistrations
+  | invalidBindings
   | wrongFactCount
   | resourceLimit (resource : Resource)
   deriving DecidableEq, Repr
@@ -880,13 +974,16 @@ def initialQueue (applicationCount : Nat) : Array WorkItem := Id.run do
 /-- Resource-first validation shared by checked frontends and `Engine.start`.
 Size caps precede every traversal of untrusted program or registry metadata. -/
 def preflightStart (program : Program) (rules : Array Registration)
-    (factCount : Nat) (limits : Limits) : Except StartError Unit := do
+    (factCount : Nat) (limits : Limits) (bindings : Array ScopeBinding := #[]) :
+    Except StartError Unit := do
   if limits.maxOperations < program.operations.size then
     throw (.resourceLimit .operations)
   if limits.maxNodes < program.nodes.size then
     throw (.resourceLimit .nodes)
   if limits.maxRules < rules.size then
     throw (.resourceLimit .rules)
+  if limits.maxApplications < bindings.size then
+    throw (.resourceLimit .applications)
   if rules.any (fun rule => limits.maxEffort < rule.initialEffort) then
     throw (.resourceLimit .effort)
   if program.operations.any (fun operation => !listWithin limits.maxArity operation.inputs) ||
@@ -894,6 +991,9 @@ def preflightStart (program : Program) (rules : Array Registration)
       rules.any (fun rule => !listWithin (limits.maxArity + 1) rule.watches ||
         !listWithin (limits.maxArity + 1) rule.writes) then
     throw (.resourceLimit .arity)
+  if bindings.any (fun binding => !listWithin limits.maxNodes binding.watches ||
+      !listWithin limits.maxNodes binding.writes) then
+    throw (.resourceLimit .nodes)
   if factCount != program.nodes.size then
     throw .wrongFactCount
   if !program.check then
@@ -903,15 +1003,18 @@ def preflightStart (program : Program) (rules : Array Registration)
     throw (.resourceLimit .nodeDepth)
   if !registrationsCheck program rules then
     throw .invalidRegistrations
+  if !scopeBindingsCheck program rules bindings then
+    throw .invalidBindings
 
 /-- Validate and compile an engine.  The caller supplies one initial fact per
 node, ordinarily the domain top refined by source hypotheses. -/
 def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Array Registration)
-    (facts : Array Fact) (limits : Limits) : Except StartError (Engine Fact) := do
-  preflightStart program rules facts.size limits
+    (facts : Array Fact) (limits : Limits) (bindings : Array ScopeBinding := #[]) :
+    Except StartError (Engine Fact) := do
+  preflightStart program rules facts.size limits bindings
   let some depths := program.depths? | throw .invalidProgram
   let applications <-
-    match compileApplicationsWithin limits.maxApplications program rules with
+    match compileApplicationsWithin limits.maxApplications program rules bindings with
     | .ok applications => pure applications
     | .error false => throw .invalidRegistrations
     | .error true => throw (.resourceLimit .applications)
@@ -924,6 +1027,7 @@ def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Arr
       program
       programVersion := 0
       rules
+      bindings
       applications
       watchers
       facts
@@ -1898,7 +2002,7 @@ def admitRetained (state : Engine Fact)
                             .resourceLimit .equalities state
                           else
                             match compileApplicationsWithin state.limits.maxApplications
-                                program state.rules with
+                                program state.rules state.bindings with
                             | .error false => .invalid .invalidCompiledProgram state
                             | .error true => .resourceLimit .applications state
                             | .ok applications =>
