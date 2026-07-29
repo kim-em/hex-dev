@@ -17,11 +17,28 @@ commutative integral domain with decidable equality, a quotient operation, and
 more general and need only `[CommRing R] [DecidableEq R]`.
 
 ```lean
-namespace Hex.DensePoly
-
 universe u
 
 variable {R : Type u}
+
+namespace Hex.SubresultantMinor
+
+/-- The local alternating sign is the usual power of `-1`. -/
+theorem sign_eq_pow [CommRing R] (j : Nat) :
+    sign (R := R) j = (-1 : R) ^ j
+
+/-- The dependency-free Laplace determinant agrees with Mathlib's determinant. -/
+theorem det_eq_matrixDet [CommRing R] {n : Nat} (M : Square R n) :
+    det M = Matrix.det (Matrix.of M)
+
+end Hex.SubresultantMinor
+
+namespace Hex.DensePoly
+
+/-- Horner evaluation agrees with evaluation after conversion to Mathlib. -/
+theorem eval_toPolynomial [CommSemiring R] [DecidableEq R]
+    (p : DensePoly R) (x : R) :
+    eval p x = (HexPolyMathlib.toPolynomial p).eval x
 
 /-- Specialize the coefficient variable of a dense bivariate polynomial while
     retaining the outer polynomial variable. -/
@@ -30,10 +47,40 @@ noncomputable def specialize [CommRing R] [DecidableEq R]
   Finset.sum (Finset.range f.size) fun i =>
     Polynomial.monomial i (eval (f.coeff i) a)
 
+@[simp]
+theorem coeff_specialize [CommRing R] [DecidableEq R]
+    (f : DensePoly (DensePoly R)) (a : R) (n : Nat) :
+    (specialize f a).coeff n = eval (f.coeff n) a
+
+@[simp]
+theorem specialize_zero [CommRing R] [DecidableEq R] (a : R) :
+    specialize (0 : DensePoly (DensePoly R)) a = 0
+
 /-- Evaluate a dense bivariate polynomial at `(a, b)`. -/
 noncomputable def evalBivariate [CommRing R] [DecidableEq R]
     (f : DensePoly (DensePoly R)) (a b : R) : R :=
   (specialize f a).eval b
+
+namespace Subresultant
+
+/-- The zeroth generalized coefficient minor at explicit degree bounds is
+    Mathlib's Sylvester determinant at those bounds. -/
+theorem coeffMinorAt_zero_eq_resultant [CommRing R] [DecidableEq R]
+    (df dg : Nat) (f g : DensePoly R)
+    (hf : f.size ≤ df + 1) (hg : g.size ≤ dg + 1) :
+    coeffMinorAt df dg 0 0 f g =
+      Polynomial.resultant (HexPolyMathlib.toPolynomial f)
+        (HexPolyMathlib.toPolynomial g) (m := df) (n := dg)
+
+/-- The default-formal-degree zeroth minor is the corresponding resultant. -/
+theorem coeffMinor_zero_eq_resultant [CommRing R] [DecidableEq R]
+    (f g : DensePoly R) :
+    coeffMinor 0 0 f g =
+      Polynomial.resultant (HexPolyMathlib.toPolynomial f)
+        (HexPolyMathlib.toPolynomial g)
+        (m := formalDegree f) (n := formalDegree g)
+
+end Subresultant
 
 namespace PseudoDivMod
 
@@ -107,7 +154,7 @@ theorem toPolynomial_resultant [CommRing R] [IsDomain R] [DecidableEq R]
 
 /-- Vanishing criterion over an algebraically closed extension. -/
 theorem resultant_eq_zero_iff_common_root
-    (f g : DensePoly Int) (hf : f ≠ 0) (hg : g ≠ 0) :
+    (f g : DensePoly Int) (hf : f ≠ 0) :
     resultant f g = 0 ↔
       ∃ z : ℂ,
         Polynomial.aeval z (HexPolyMathlib.toPolynomial f) = 0 ∧
@@ -162,82 +209,66 @@ equivalence without installing that global instance.
 
 Consequently the bivariate specialization theorems are **not** obtained by
 instantiating `toPolynomial_resultant` with coefficient type `DensePoly R`.
-Their proofs transfer the Brown recurrence directly through coefficient
-evaluation: prove that `specialize` preserves each executable coefficientwise
-operation and exact quotient used by the chain, then identify the specialized
-recurrence with the Mathlib resultant at the original formal degrees. This
-direct map argument keeps the deliberate no-global-`CommRing (DensePoly R)`
-boundary intact.
+Instead, the proof gives `DensePoly R` a proof-local Mathlib ring structure,
+identifies coefficient evaluation with a ring hom through
+`HexPolyMathlib.toPolynomial`, and maps the explicit-degree zeroth coefficient
+minor through that hom. `coeffMinorAt_zero_eq_resultant` then identifies the
+mapped determinant with the resultant of the specialized inputs. The local
+instance never escapes the proof, and the executable correspondence theorem is
+not recursively instantiated over `DensePoly R`.
 
 The formal degrees on `eval_resultant` are essential: specialization can erase
 a leading coefficient. For example, specializing `t` to zero in `t*y + 1` and
 `t*y - 1` drops both degrees; the default-degree resultant of the specialized
 constants is not the specialization of the original resultant. Also provide a
 default-degree corollary under hypotheses that both leading coefficients remain
-nonzero. The Stage 1 one-way vanishing theorem only needs to exclude the case
+nonzero. The one-way vanishing theorem only needs to exclude the case
 where both outer formal degrees are zero: under the project convention the
 formal-degree `(0, 0)` resultant is `1`, even when both specialized constants
-vanish.
+vanish. The vanishing proof maps the default-degree common-root criterion
+injectively to the fraction field, promotes the resulting zero back to the
+original formal degrees, and uses the positive-formal-degree hypothesis in the
+case where both specialized polynomials are zero.
 
 The displayed root-product formula fixes intent rather than Mathlib's final
 multiset notation. The implementation uses the pinned revision's existing
 `roots` and splitting-field APIs and states the theorem with their actual
 multiplicity representation.
 
-## Proof staging
+## Proof architecture
 
-### Stage 1: chain and vanishing
-
-Stage 1 is sufficient for `AlgebraicRoot` operation soundness and can land before
-the determinant correspondence.
-
-1. Transport the executable pseudo-division reconstruction and degree bounds to
-   Mathlib polynomials. `PseudoDivMod.resultant_step` and
-   `resultant_step_degree` already
-   package the resulting Sylvester row operation, scalar power, swap sign, and
-   formal-degree promotion.
-2. Transfer the executable pseudo-remainder sequence through `toPolynomial`.
-3. Prove forward and backward preservation of common roots along the chain.
-4. Relate a positive-degree final gcd to executable resultant zero.
-5. Prove `resultant_eq_zero_iff_common_root` and the one-way bivariate
-   specialization-vanishing theorem.
-
-This stage justifies claims such as: if `p(α) = 0` and `q(β) = 0`, then the
-addition or product eliminant vanishes at the proposed result.
-
-### Stage 2: full value correspondence
-
-Stage 2 is required before `hex-number-field-tower-mathlib` can prove
-factorization, splitting, or flattening.
-
-1. Relate every subresultant recurrence term to the corresponding Sylvester
-   minor, including the exact scale factors and degree-drop signs.
-2. Identify the corrected final constant with the Sylvester determinant.
-3. Compose with Mathlib's determinant definition of `Polynomial.resultant` to
-   prove `toPolynomial_resultant` generically.
-4. Prove `eval_resultant` by the direct coefficient-evaluation transfer above;
-   do not instantiate the generic theorem at `DensePoly R`.
-5. Specialize Mathlib's existing `Polynomial.resultant_eq_prod_eval` for the
-   root-product formula, then derive norm identities and discriminant
-   agreement.
-
-The prior scope estimate of about 600 lines covered only Stage 1. Stage 2 is a
-substantial computer-algebra development and must be estimated from the actual
-Sylvester-minor proof rather than retaining that obsolete total.
+1. `PseudoDivMod` transports pseudo-division reconstruction, degree bounds, and
+   the one-step resultant identity to Mathlib polynomials.
+2. The generalized coefficient matrix is identified with Mathlib's Sylvester
+   matrix after reversing both axes; the local Laplace determinant is identified
+   with `Matrix.det`.
+3. The recursive Brown invariant identifies the worker's corrected terminal
+   value with the zeroth generalized coefficient minor, including defective
+   drops and terminal zero pseudo-remainders.
+4. These facts compose to prove `toPolynomial_resultant` for all inputs,
+   including zero polynomials, constants, and caller-order swaps.
+5. The integer common-root criterion is a corollary of full value
+   correspondence and the complex root-product formula.
+6. Bivariate specialization maps the explicit-degree coefficient minor through
+   coefficient evaluation. This preserves formal degrees even when leading
+   coefficients specialize to zero; the default-degree and common-zero results
+   follow as corollaries.
+7. Mathlib's root-product and discriminant identities then transfer to the
+   executable API.
 
 ## Downstream contracts
 
-- `hex-number-field-mathlib` lazy arithmetic `_sound` theorems use Stage 1
+- `hex-number-field-mathlib` lazy arithmetic `_sound` theorems use
   specialization-vanishing.
-- Exactification and root completeness use Stage 1 plus the factorization and
-  isolation companions.
+- Exactification and root completeness use common-root correspondence plus the
+  factorization and isolation companions.
 - `resultIsolationPrec` for lazy binary arithmetic uses only HexRoots separation
   between roots of one squarefree eliminant.
-- `evalDisambiguationPrec` uses the Stage 2 root-product formula to certify a
+- `evalDisambiguationPrec` uses the root-product formula to certify a
   nonzero lower bound for wrong root/factor evaluations.
-- Tower norms and Trager factor recovery use Stage 2 full agreement and
+- Tower norms and Trager factor recovery use full agreement and
   specialization.
-- Discriminant and squarefree corollaries use Stage 2 discriminant agreement.
+- Discriminant and squarefree corollaries use discriminant agreement.
 
 ## File organisation
 
@@ -245,7 +276,7 @@ Sylvester-minor proof rather than retaining that obsolete total.
 HexResultantMathlib/
   Basic.lean           : public theorem statements
   PseudoDivMod.lean    : reconstruction and one-step resultant transport
-  Chain.lean           : pseudo-division transfer and Stage 1
+  Chain.lean           : common-root consequences of full agreement
   Sylvester.lean       : subresultant minors and full agreement
   Specialize.lean      : bivariate specialization and norm corollaries
   Roots.lean           : root-product formula
