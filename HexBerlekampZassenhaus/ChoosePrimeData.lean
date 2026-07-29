@@ -103,9 +103,12 @@ private def primeChoiceDataScore (f : ZPoly) (c : SmallPrimeCandidate) :
   else
     none
 
+/-- Prefer a probed prime only when it removes at least one quarter of the
+current modular factors. Tiny `r` reductions do not reliably predict cheaper
+recombination and are not worth abandoning the deterministic first choice. -/
 private def betterPrimeChoiceDataScore
     (old new : PrimeChoiceDataScore) : PrimeChoiceDataScore :=
-  if new.factorCount < old.factorCount then
+  if 4 * new.factorCount ≤ 3 * old.factorCount then
     new
   else
     old
@@ -386,8 +389,9 @@ and disproportionately valuable. -/
 private def probeEarlyFactorFloor : Nat := 8
 
 /-- Continue from a first good prime for at most `extra` further good primes,
-retaining the choice with the fewest modular factors. Stop on an irreducible
-image, or on a halving improvement that still leaves substantial Hensel width. -/
+retaining a choice only after a material modular-width reduction. Stop on an
+irreducible image, or on a halving improvement that still leaves substantial
+Hensel width. -/
 private def improvePrimeData? (f : ZPoly) (first : PrimeChoiceDataScore) :
     Nat → List SmallPrimeCandidate → PrimeChoiceDataScore
   | _, [] => first
@@ -408,13 +412,25 @@ private def probeMinFactors : Nat := 24
 private def probeSwollenFactors : Nat := 9
 
 /-- Degree above which a very wide modular image justifies a bounded probe. -/
-private def probeMinDegree : Nat := 100
+private def probeMinDegree : Nat := 50
 
 /-- Degree above which a prime cyclotomic's uniform coefficients justify a probe. -/
 private def probeCyclotomicDegree : Nat := 50
 
 /-- Minimum coefficient `log2` that marks a swollen monic transform. -/
 private def probeCoeffLog : Nat := 512
+
+/-- Recognize `x^n - 1` with even `n`. Recursive classical splitting already
+peels the explicit difference-of-squares structure cheaply, so a large modular
+factor count is not evidence that prime look-ahead will pay for itself. -/
+private def isEvenPowerDifference (f : ZPoly) : Bool :=
+  decide (f.degree?.getD 0 % 2 = 0) &&
+    match f.toArray.toList with
+    | -1 :: coeffs =>
+        match coeffs.reverse with
+        | 1 :: middle => middle.all (fun coeff => coeff == 0)
+        | _ => false
+    | _ => false
 
 /-- Whether the first modular factorization predicts enough downstream work to
 justify bounded prime look-ahead. -/
@@ -424,7 +440,7 @@ private def shouldProbePrime (f : ZPoly) (score : PrimeChoiceDataScore) : Bool :
   (decide (probeSwollenFactors ≤ score.factorCount) &&
       coeffs.any (fun coeff => probeCoeffLog ≤ coeff.natAbs.log2)) ||
     (decide (probeMinDegree ≤ degree) &&
-      decide (probeMinFactors ≤ score.factorCount)) ||
+      decide (probeMinFactors ≤ score.factorCount) && !isEvenPowerDifference f) ||
     (decide (probeCyclotomicDegree ≤ degree) &&
       Hex.Nat.isPrimeTrial coeffs.size && coeffs.all (fun coeff => coeff == 1))
 

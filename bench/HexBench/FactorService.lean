@@ -91,6 +91,15 @@ def factorTraceToJson (trace : FactorTrace) : Json :=
         Json.num (JsonNumber.fromInt (Int.ofNat trace.liftedFactorCount))),
       ("declined", Json.bool trace.declined) ]
 
+/-- Encode an optional prime choice as the compact width diagnostic. -/
+def primeChoiceToJson : Option PrimeChoiceData → Json
+  | none => Json.null
+  | some choice =>
+      Json.mkObj
+        [ ("prime", Json.num (JsonNumber.fromInt (Int.ofNat choice.p))),
+          ("factorCount",
+            Json.num (JsonNumber.fromInt (Int.ofNat choice.factorsModP.size))) ]
+
 def replyOk (result : Json) : Json :=
   Json.mkObj [("ok", Json.bool true), ("result", result)]
 
@@ -108,9 +117,12 @@ def handleLine (entry : Entry) (line : String) : Json :=
   | .ok coeffs =>
       let f := DensePoly.ofCoeffs coeffs.toArray
       if entry == .factorTrace then
+        let core := (normalizeForFactor f).squareFreeCore
+        let first := choosePrimeData? (ZPoly.toMonic core).monic
         let (result, trace) := Hex.factorClassicalTraced f
         replyOk <| Json.mkObj
           [ ("factorization", result.map factorizationToJson |>.getD Json.null),
+            ("firstChoice", primeChoiceToJson first),
             ("trace", factorTraceToJson trace) ]
       else
         match entry.run f with
