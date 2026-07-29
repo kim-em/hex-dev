@@ -242,9 +242,9 @@ structure Application where
   /-- Immutable registration baseline.  A retry prepares a new `Action` with
   an override; it never mutates this compiled application field. -/
   effort : Nat
-  /-- Cached semantic items inspected when policy constructs this invocation's
-  key.  It is derived from the validated ordered read and write lists at
-  compilation time. -/
+  /-- Cached conservative semantic-surface charge for policy construction.
+  It counts the validated ordered read and write projections even when one
+  implementation can reuse part of that data without inspecting it again. -/
   policyItems : Nat := 0
   /-- Generation of the event which created this application.  Initial
   applications have generation zero. -/
@@ -327,12 +327,6 @@ def ScopeBinding.same (left right : ScopeBinding) : Bool :=
 
 def ScopeBinding.nodes (binding : ScopeBinding) : List NodeId :=
   binding.anchor :: binding.watches ++ binding.writes
-
-/-- Old nodes reached through resolved scope references.  This includes a
-`proposed` reference which CSE-resolved to an older expression. -/
-def existingScopeNodes (baseSize : Nat) (bindings : List ScopeBinding) : List NodeId :=
-  bindings.flatMap fun binding =>
-    binding.nodes.filter (fun node => node.index < baseSize)
 
 def uniqueScopeBindings : List ScopeBinding -> Bool
   | [] => true
@@ -1034,13 +1028,6 @@ structure EqualityEdge where
 def equalityPair (left right : NodeId) : EqualityPair :=
   if left.index <= right.index then { first := left, second := right }
   else { first := right, second := left }
-
-/-- Old nodes reached through resolved equality endpoints.  As with scope
-ports, this includes a `proposed` reference which CSE-resolved to an older
-expression. -/
-def existingEqualityNodes (baseSize : Nat) (pairs : List EqualityPair) : List NodeId :=
-  pairs.flatMap fun pair =>
-    [pair.first, pair.second].filter (fun node => node.index < baseSize)
 
 def EqualityPair.before (left right : EqualityPair) : Bool :=
   left.first.index < right.first.index ||
@@ -2042,16 +2029,15 @@ by every declared fact dependency, with the first occurrence retained. -/
 def actionSubstitution (action : Action) : List NodeId :=
   dedupList (action.node :: action.inputs.map (fun input => input.node))
 
-/-- Recompute logical instantiation depth from the authoritative invocation,
-every explicitly existing node named by the proposal, and every proposed
-reference which CSE-resolves to an old node and is then used as a scope port or
-equality endpoint.  A proposed node used only as an output remains an output of
-this instance; storage reuse alone does not make it a proof dependency. -/
+/-- Recompute logical instantiation depth from the emitting application's
+creation generation, the authoritative invocation, and every explicitly
+existing node named by the proposal.  A proposed node remains an output of
+this theorem instance when CSE reuses older storage, including when the output
+is also an equality endpoint or scope port; storage order cannot manufacture a
+proof dependency. -/
 def inferredGeneration? (generations : Array Nat)
-    (action : Action) (request : InstantiationRequest)
-    (resolvedDependencyNodes : List NodeId := []) : Option Nat := do
-  let references := actionSubstitution action ++ requestExistingRefs request ++
-    resolvedDependencyNodes
+    (action : Action) (request : InstantiationRequest) : Option Nat := do
+  let references := actionSubstitution action ++ requestExistingRefs request
   let mut greatest := action.generation
   for node in references do
     let generation <- generations[node.index]?
@@ -2068,12 +2054,11 @@ def Engine.instantiationGeneration? (state : Engine Fact)
   let baseSize := state.program.nodes.size
   let .ok (program, _, resolved) :=
     resolveDrafts baseSize state.program state.depths [] request.nodes | none
-  let pairs <- resolveRequestedPairs baseSize resolved program request.equalities
+  let _ <- resolveRequestedPairs baseSize resolved program request.equalities
   let scopes <- resolveRequestedScopes baseSize resolved program state.rules request.scopes
   if !state.bindings.all (state.acceptsScope program) ||
       !scopes.all (state.acceptsScope program) then none else pure ()
   inferredGeneration? state.generations retained.action request
-    (existingEqualityNodes baseSize pairs ++ existingScopeNodes baseSize scopes)
 
 /-- Treat equality endpoints as unordered for structural deduplication. -/
 def EqualityEdge.sameEndpoints (edge : EqualityEdge) (left right : NodeId) : Bool :=
@@ -2220,9 +2205,7 @@ def admitRetained (state : Engine Fact)
                           if state.instances.contains instanceKey then
                             duplicateInstance state
                           else
-                            match inferredGeneration? state.generations retained.action request
-                                (existingEqualityNodes baseSize (equalityPairs?.getD []) ++
-                                  existingScopeNodes baseSize requestedScopes) with
+                            match inferredGeneration? state.generations retained.action request with
                             | none => .invalid .badReferenceOrShape state
                             | some generation =>
                                 match resolveEqualities baseSize generation retained.action program
