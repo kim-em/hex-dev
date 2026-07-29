@@ -298,6 +298,7 @@ def limits : Propagator.Limits :=
     maxProposalItems := 1
     maxInstances := 0
     maxGeneration := 0
+    maxNodeDepth := 1
     maxEqualities := 0
     splitEndpointLimit :=
       { maxEndpointHeight := 0
@@ -306,6 +307,8 @@ def limits : Propagator.Limits :=
 def arenaLimits : PayloadArena.Limits :=
   { maxEntries := 2
     maxBodyCells := 3
+    maxDrafts := 1
+    maxDraftCells := 3
     maxAtom := 303
     maxSchema := 8
     maxUses := 1 }
@@ -319,7 +322,8 @@ def view : ProgramView :=
   { programVersion := 0
     operations := program.operations
     nodes := program.nodes
-    generations := #[0, 0, 0] }
+    generations := #[0, 0, 0]
+    depths := #[0, 1, 1] }
 
 def request (action : Action) (target : NodeId) : RuleRequest Fact :=
   { action
