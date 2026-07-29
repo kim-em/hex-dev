@@ -92,8 +92,11 @@ theorem modP_eq_impl_value (p : Nat) [ZMod64.Bounds p] (f : ZPoly) :
   unfold DensePoly.toList
   rw [← Array.toList_map, Array.toArray_toList]
 
-/-- Proof-backed compiled implementation of reduction modulo `p`. -/
-@[csimp]
+/-- Exact direct-array implementation of reduction modulo `p`.
+
+This equality is intentionally not a `csimp` rule: on the large reduction
+ladder the compiler's implementation of the list/range specification is
+materially faster than `Array.map`. -/
 theorem modP_eq_impl : @modP = @modPImpl := by
   funext p bounds f
   exact modP_eq_impl_value p f

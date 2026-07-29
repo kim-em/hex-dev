@@ -27,6 +27,12 @@
   without rerunning the current FLINT, PARI, NTL, or Isabelle measurements.
 - Refreshed the eight non-scheduled parametric BZ benchmark series on CPU 0;
   every row passed its checksum and the export records a clean tree.
+- The complete lower-layer refresh exposed a 1.63x `modP` regression from the
+  direct `Array.map` implementation. A same-code A/B measured 15.194 ms with
+  the replacement and 9.677 ms through the reference compiled path, so the
+  `csimp` rule was removed while retaining its equality theorem. The separate
+  `reduceModPow` array kernel remains enabled and improves its largest rung
+  from 10.276 ms to 0.726 ms.
 
 ## Current frontier
 
