@@ -127,10 +127,9 @@ theorem HenselFactorData.ofChoosePrime
     zpoly_lc_pos_of_monic hcore_monic
   have htoMonic_eq : (Hex.ZPoly.toMonic core).monic = core :=
     Hex.ZPoly.toMonic_monic_eq_core_of_leadingCoeff_eq_one core hcore_monic
-  have hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData := by
-    show Hex.choosePrimeData? (Hex.ZPoly.toMonic core).monic = some primeData
+  have hvalue : ModPFactorization (Hex.ZPoly.toMonic core).monic primeData := by
     rw [htoMonic_eq]
-    exact hchoose
+    exact modPFactorization_of_choosePrimeData_of_monic hchoose hcore_monic hcore_pos
   have hp_prime : Hex.Nat.Prime primeData.p :=
     Hex.choosePrimeData?_prime core primeData hchoose
   have hp2 : 2 ≤ primeData.p := hp_prime.two_le
@@ -159,13 +158,13 @@ theorem HenselFactorData.ofChoosePrime
       core B primeData hchoose hcorr hcore_sqfree hinitial
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos
-      (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos) hprec_pos
+      hvalue hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos
-      (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos) hprec_pos
+      hvalue hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_injective_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos
-      (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos) hprec_pos
+      hvalue hprec_pos
   · exact hmodulus
   · exact hprec_spec
 
@@ -206,10 +205,9 @@ theorem HenselFactorData.ofChoosePrimeDescent
     zpoly_lc_pos_of_monic hcore_monic
   have htoMonic_eq : (Hex.ZPoly.toMonic core).monic = core :=
     Hex.ZPoly.toMonic_monic_eq_core_of_leadingCoeff_eq_one core hcore_monic
-  have hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData := by
-    show Hex.choosePrimeData? (Hex.ZPoly.toMonic core).monic = some primeData
+  have hvalue : ModPFactorization (Hex.ZPoly.toMonic core).monic primeData := by
     rw [htoMonic_eq]
-    exact hchoose
+    exact modPFactorization_of_choosePrimeData_of_monic hchoose hcore_monic hcore_pos
   have hp_prime : Hex.Nat.Prime primeData.p :=
     Hex.choosePrimeData?_prime core primeData hchoose
   have hp2 : 2 ≤ primeData.p := hp_prime.two_le
@@ -242,13 +240,13 @@ theorem HenselFactorData.ofChoosePrimeDescent
       hlifted_of_modP hinitial
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos
-      (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos) hprec_pos
+      hvalue hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos
-      (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos) hprec_pos
+      hvalue hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_injective_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos
-      (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos) hprec_pos
+      hvalue hprec_pos
   · exact hmodulus
   · exact hprec_spec
 

@@ -97,23 +97,19 @@ theorem modP_polyProduct_map_liftToZ {p : Nat} [Hex.ZMod64.Bounds p]
           simp only [List.map_cons, List.foldl_cons]
           rw [ih, modP_mul, Hex.FpPoly.modP_liftToZ]
 
-/-- The selection witness yields the semantic bundle: assemble the fields
-from the `choosePrimeData?` extraction lemmas and the
-`…_of_factorsModPBerlekampForm` family. The lift target must be monic of
-positive degree (which `(toMonic core).monic` always is at the use sites). -/
-theorem modPFactorization_of_choosePrimeData
+/-- Assemble the semantic bundle from a proved Berlekamp-form factorization.
+The lift target must be primitive with positive leading coefficient and
+positive degree. -/
+theorem modPFactorization_of_form
     {f : Hex.ZPoly} {data : Hex.PrimeChoiceData}
-    (hchoose : Hex.choosePrimeData? f = some data)
+    (hprime : Hex.Nat.Prime data.p)
+    (hgood : @Hex.isGoodPrime f data.p data.bounds = true)
+    (hfmod : data.fModP = @Hex.ZPoly.modP data.p data.bounds f)
+    (hform : Hex.factorsModPBerlekampForm f data)
     (hprim : Hex.ZPoly.Primitive f)
     (hlc_pos : 0 < Hex.DensePoly.leadingCoeff f)
     (hpos : 0 < f.degree?.getD 0) :
     ModPFactorization f data := by
-  have hprime := Hex.choosePrimeData?_prime f data hchoose
-  have hgood := Hex.choosePrimeData?_isGoodPrime f data hchoose
-  have hform : Hex.factorsModPBerlekampForm f data := by
-    obtain ⟨hzero, heq⟩ :=
-      Hex.choosePrimeData?_factorsModP_berlekamp_form f data hchoose
-    exact ⟨hprime, hzero, heq⟩
   refine
     { prime := hprime
       good := hgood
@@ -128,10 +124,28 @@ theorem modPFactorization_of_choosePrimeData
       natDegree_pos :=
         factorsModP_natDegree_pos_of_factorsModPBerlekampForm f data hform
           hgood hpos }
-  · exact Hex.choosePrimeData?_fModP_eq f data hchoose
+  · exact hfmod
   · exact
       factorsModP_polyProduct_congr_of_factorsModPBerlekampForm_of_primitive_pos_lc_core
         f data hprim hlc_pos hform hgood
+
+/-- The selection witness yields the semantic bundle through the
+`choosePrimeData?` extraction lemmas. -/
+theorem modPFactorization_of_choosePrimeData
+    {f : Hex.ZPoly} {data : Hex.PrimeChoiceData}
+    (hchoose : Hex.choosePrimeData? f = some data)
+    (hprim : Hex.ZPoly.Primitive f)
+    (hlc_pos : 0 < Hex.DensePoly.leadingCoeff f)
+    (hpos : 0 < f.degree?.getD 0) :
+    ModPFactorization f data := by
+  have hprime := Hex.choosePrimeData?_prime f data hchoose
+  have hgood := Hex.choosePrimeData?_isGoodPrime f data hchoose
+  have hform : Hex.factorsModPBerlekampForm f data := by
+    obtain ⟨hzero, heq⟩ :=
+      Hex.choosePrimeData?_factorsModP_berlekamp_form f data hchoose
+    exact ⟨hprime, hzero, heq⟩
+  exact modPFactorization_of_form hprime hgood
+    (Hex.choosePrimeData?_fModP_eq f data hchoose) hform hprim hlc_pos hpos
 
 /-- Monic-target form of the bundle producer: primitivity and the positive
 leading coefficient come from monicity. -/
@@ -183,7 +197,15 @@ theorem modPFactorization_of_toMonicPrimeData
     exact hcore_pos
   have hmonic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
     Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
-  exact modPFactorization_of_choosePrimeData_of_monic hselected hmonic hpos
+  exact modPFactorization_of_form
+    (Hex.ZPoly.toMonicPrimeData?_prime core data hselected)
+    (Hex.ZPoly.toMonicPrimeData?_isGoodPrime core data hselected)
+    (Hex.ZPoly.toMonicPrimeData?_fModP_eq core data hselected)
+    (Hex.ZPoly.toMonicPrimeData?_factorsModP_berlekamp_form core data hselected)
+    (zpoly_primitive_of_monic hmonic)
+    (by rw [show Hex.DensePoly.leadingCoeff (Hex.ZPoly.toMonic core).monic = 1
+      from hmonic]; exact Int.one_pos)
+    hpos
 
 /--
 A modular factorization into positive-degree factors has no more factors than

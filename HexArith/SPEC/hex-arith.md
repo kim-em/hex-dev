@@ -353,6 +353,13 @@ theorem toNat_montgomeryReduce (ctx : MontCtx p) (Thi Tlo : UInt64)
       montgomeryReduceNat p.toNat ctx.p'.toNat (Tlo.toNat + Thi.toNat * 2^64)
 ```
 
+`montgomeryReduce` has this transparent word-arithmetic body as its proof
+contract and the mandatory runtime extern `lean_hex_montgomery_reduce`. The
+extern performs the same carry-aware REDC with unboxed machine words. Likewise,
+`MontCtx.toMont`, `MontCtx.fromMont`, and `MontCtx.mulMont` retain their logical
+bodies but use scalar C externs in compiled code, avoiding intermediate Lean
+tuple allocation in coefficient-level hot loops.
+
 *Layer 6 — `HexArith/Montgomery/Context.lean` (user-facing API).*
 Definitions of `toMont`, `fromMont`, `mulMont` in terms of `montgomeryReduce`,
 plus derived Nat-level projections (`p_pos`, `p_lt_R`, `p_odd_nat`)

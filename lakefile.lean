@@ -113,6 +113,9 @@ lean_lib HexGFqField where
 lean_lib HexBerlekamp where
 
 lean_lib HexHensel where
+  -- `WordPoly.mul` has a native convolution extern used by downstream
+  -- interpreter-time guards, so its module dynlib must export the stub.
+  precompileModules := true
 
 lean_lib HexConway where
 

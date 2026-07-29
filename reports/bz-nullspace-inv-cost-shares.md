@@ -1,7 +1,7 @@
 # Berlekamp Matrix, Nullspace, and Split Cost Shares
 
 Current compiled diagnostic at revision
-`5c371a5abb85ca6ef6510ec60888f3048db71719`, 2026-07-28, on
+`a1fdbd81ef038faa41765fb39a79cd083109c8ed`, 2026-07-29, on
 `chungus2`, pinned to CPU 0.
 
 The capture records a dirty worktree because the benchmark registrations and
@@ -12,22 +12,22 @@ Shares below are within the current fixed Berlekamp factorization path.
 
 | Fixture | Matrix | Nullspace | Witness split | Fixed total |
 |---|---:|---:|---:|---:|
-| split degree 6 | 34.37% | 6.68% | 58.95% | 30.766 µs |
-| split degree 12 | 24.47% | 4.96% | 70.57% | 118.636 µs |
-| split degree 18 | 21.20% | 4.04% | 74.76% | 289.440 µs |
-| split degree 24 | 18.18% | 2.84% | 78.99% | 577.347 µs |
-| `Phi_15` | 53.79% | 30.00% | 16.21% | 55.112 µs |
-| `SD_3` | 38.81% | 10.28% | 50.91% | 71.587 µs |
-| `SD_4` | 32.60% | 10.38% | 57.02% | 414.275 µs |
+| split degree 6 | 34.61% | 6.62% | 58.77% | 30.415 µs |
+| split degree 12 | 25.23% | 4.90% | 69.87% | 116.122 µs |
+| split degree 18 | 21.99% | 3.82% | 74.19% | 285.233 µs |
+| split degree 24 | 18.89% | 2.95% | 78.17% | 569.224 µs |
+| `Phi_15` | 54.89% | 29.61% | 15.50% | 55.632 µs |
+| `SD_3` | 40.54% | 9.80% | 49.66% | 71.226 µs |
+| `SD_4` | 33.68% | 10.46% | 55.86% | 420.854 µs |
 
 The nullspace is not the dominant cost on the fully split ladder; its share
-falls below 3% by degree 24. Witness splitting dominates there. On `Phi_15`,
+is about 3% by degree 24. Witness splitting dominates there. On `Phi_15`,
 matrix plus nullspace accounts for most of the much smaller fixed total.
 
 Raw stdout:
-`reports/bench-results/berlekamp-diagnostic-5c371a5a-chungus2.txt`
+`reports/bench-results/berlekamp-diagnostic-a1fdbd81-chungus2.txt`
 (SHA-256
-`c79c0167c402c714fbd664e3157236fc5aa1f426a67f83b9f1250a5e5135c364`).
+`03e59491ed588ca377ece2ef387450ba699ef9e63d323db50e6c36fa17f265b5`).
 
 Reproduce with:
 

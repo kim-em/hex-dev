@@ -267,6 +267,19 @@ lattice tier — polynomial in `r` — takes over. On inputs comfortably
 inside the small-`r` regime, first-suitable factors `f mod p` exactly
 once.
 
+The shared lifting entry `toMonicPrimeData?` preserves this first-suitable
+choice in the ordinary case. It performs a bounded irreducibility look-ahead
+only when the first good image has at least nine modular factors *and* the
+monic transform contains a coefficient whose `log2` is at least 512. It then
+examines at most eight further good primes and switches only if one gives a
+single modular factor; otherwise it returns the original choice. A singleton
+modular factor is already a checked Berlekamp irreducibility certificate, so
+this avoids Hensel lifting and recombination on the coefficient-swell cases
+where that downstream work is most expensive. This is not general `r`
+minimisation and does not alter the exhaustive `none` semantics: the same
+fixed candidate set is searched, and all returned prime data carries the same
+primality, good-prime, modular-image, and Berlekamp-form proofs.
+
 **Explicit pipeline records:**
 ```lean
 structure PrimeChoiceData where
@@ -382,10 +395,14 @@ and the CLD lattice tier does the work.
 - **`factorClassical` internals: the recursive per-remainder re-lift
   (#8625).** The classical tier certifies sub-floor: instead of one
   Hensel lift of the whole core at the monic-core Mignotte floor, each
-  node runs an escalation ladder (`k = 1, 2, 4, ...` strictly below its
-  own floor) of cheap word-sized lifts with a greedy capped peel
+  node with more than three tracked modular factors tries one cheap word-sized
+  lift at `k = 1` below its own floor, with a greedy capped peel
   (`reliftSubFloorCap = 2`; peels are self-certifying via a
-  re-multiplication guard). Peeled pieces recurse with tracked mod-p
+  re-multiplication guard), then goes directly to the certified full-precision
+  scan if that probe does not split. At three modular factors or fewer the
+  full subset scan is already tiny, so the speculative lift is skipped.
+  Repeating from-scratch rungs before the full scan costs more in the common
+  unsplit case than the occasional extra peel recovers. Peeled pieces recurse with tracked mod-p
   seed factors undilated through the peel's monic-transform identity
   `M(gh) = D_{lc h}(M g) · D_{lc g}(M h)`; the per-piece prime data
   (`piecePrimeData?`) is self-verifying (unit, monic, degree, product,

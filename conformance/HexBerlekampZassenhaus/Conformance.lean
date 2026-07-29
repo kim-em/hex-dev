@@ -168,6 +168,19 @@ private def negativeRepeatedRootWithContent : ZPoly :=
 private def leadingCoeffDivisibleByFive : ZPoly :=
   zpoly #[1, 1, 5]
 
+/-- A non-monic Legendre input whose monic transform has large coefficients
+and ten factors at the first good prime. The adaptive selector finds an inert
+prime within its bounded look-ahead. -/
+private def legendreP20 : ZPoly :=
+  zpoly #[184756, 0, -38798760, 0, 1338557220, 0, -17847429600, 0,
+    120470149800, 0, -465817912560, 0, 1093966309800, 0, -1586852229600, 0,
+    1388495700900, 0, -671560012200, 0, 137846528820]
+
+/-- Large signed coefficients exercise the compiled one-pass content and
+primitive-part implementation, including its zero/trailing normalization. -/
+private def largeContentPoly : ZPoly :=
+  zpoly #[0, -(12 * (2 : Int) ^ 130), 18 * (2 : Int) ^ 130, 0]
+
 /-! # Adversarial modular split cases
 
 These named polynomials cover an input whose integer factors require a
@@ -400,6 +413,13 @@ private def hotPathNoPrimeCubic : ZPoly :=
   | none => false
   | some data => 3 <= data.p
 
+#guard
+  let monic := (ZPoly.toMonic legendreP20).monic
+  match choosePrimeData? monic, ZPoly.toMonicPrimeData? legendreP20 with
+  | some first, some adaptive =>
+      first.factorsModP.size = 10 && adaptive.factorsModP.size = 1
+  | _, _ => false
+
 /-! # Extended prime search
 
 The `(x-1)(x-2)…(x-n)` cascade has colliding residue pairs at many small
@@ -434,6 +454,10 @@ private def extendedCascade2 : ZPoly :=
 #guard bhksBound ZPoly.X = 2250000000001
 #guard bhksBound (DensePoly.ofCoeffs #[1, 0, 1]) =
   792401927702564082548736000000000001
+
+#guard
+  ZPoly.contentPrimitive largeContentPoly =
+    (6 * (2 : Int) ^ 130, zpoly #[0, -2, 3])
 
 #guard
   let data := normalizeForFactor monomialWithContent

@@ -55,7 +55,7 @@
     "tier": "quadratic"
   },
   "adv/non_monic": {
-    "declined": true,
+    "declined": false,
     "subsetCandidates": 0,
     "tier": "classical"
   },

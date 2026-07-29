@@ -249,19 +249,19 @@ theorem mk_p_lt_R (p : UInt64) (hp : p % 2 = 1) :
   (mk p hp).p_lt_R
 
 /-- Convert a standard residue into Montgomery form. -/
-@[expose]
-def toMont (ctx : MontCtx p) (a : UInt64) : UInt64 :=
+@[expose, extern "lean_hex_mont_to"]
+def toMont (ctx : @& MontCtx p) (a : UInt64) : UInt64 :=
   let (hi, lo) := UInt64.mulFull a ctx.r2
   montgomeryReduce ctx hi lo
 
 /-- Convert a Montgomery residue back to the standard representation. -/
-@[expose]
-def fromMont (ctx : MontCtx p) (a : UInt64) : UInt64 :=
+@[expose, extern "lean_hex_mont_from"]
+def fromMont (ctx : @& MontCtx p) (a : UInt64) : UInt64 :=
   montgomeryReduce ctx 0 a
 
 /-- Multiply two Montgomery residues, staying inside the Montgomery domain. -/
-@[expose]
-def mulMont (ctx : MontCtx p) (a b : UInt64) : UInt64 :=
+@[expose, extern "lean_hex_mont_mul"]
+def mulMont (ctx : @& MontCtx p) (a b : UInt64) : UInt64 :=
   let (hi, lo) := UInt64.mulFull a b
   montgomeryReduce ctx hi lo
 

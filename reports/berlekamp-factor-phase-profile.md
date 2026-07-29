@@ -1,7 +1,7 @@
 # Berlekamp Factor Phase Profile
 
 Current compiled diagnostic at revision
-`5c371a5abb85ca6ef6510ec60888f3048db71719`, 2026-07-28, on
+`a1fdbd81ef038faa41765fb39a79cd083109c8ed`, 2026-07-29, on
 `chungus2`, pinned to CPU 0.
 
 The capture records a dirty worktree because the benchmark registrations and
@@ -14,22 +14,22 @@ implementation.
 
 | Fixture | Rebuilding baseline | Shared baseline | Fixed path | Rebuild/fixed |
 |---|---:|---:|---:|---:|
-| split degree 6 | 165.135 µs | 44.235 µs | 30.766 µs | `5.37x` |
-| split degree 12 | 1.367 ms | 215.309 µs | 118.636 µs | `11.53x` |
-| split degree 18 | 5.672 ms | 598.949 µs | 289.440 µs | `19.60x` |
-| split degree 24 | 16.077 ms | 1.280 ms | 577.347 µs | `27.85x` |
-| `Phi_15` | 215.019 µs | 55.031 µs | 55.112 µs | `3.90x` |
-| `SD_3` | 325.994 µs | 73.509 µs | 71.587 µs | `4.55x` |
-| `SD_4` | 4.879 ms | 439.953 µs | 414.275 µs | `11.78x` |
+| split degree 6 | 166.246 µs | 43.685 µs | 30.415 µs | `5.47x` |
+| split degree 12 | 1.374 ms | 206.766 µs | 116.122 µs | `11.83x` |
+| split degree 18 | 5.736 ms | 579.529 µs | 285.233 µs | `20.11x` |
+| split degree 24 | 16.387 ms | 1.245 ms | 569.224 µs | `28.79x` |
+| `Phi_15` | 217.122 µs | 55.643 µs | 55.632 µs | `3.90x` |
+| `SD_3` | 328.687 µs | 73.179 µs | 71.226 µs | `4.61x` |
+| `SD_4` | 4.963 ms | 445.701 µs | 420.854 µs | `11.79x` |
 
 The dominant avoided work is repeated kernel reconstruction. The optimized
 path is close to the shared baseline on low-split fixtures and substantially
 better on fully split families.
 
 Raw stdout:
-`reports/bench-results/berlekamp-diagnostic-5c371a5a-chungus2.txt`
+`reports/bench-results/berlekamp-diagnostic-a1fdbd81-chungus2.txt`
 (SHA-256
-`c79c0167c402c714fbd664e3157236fc5aa1f426a67f83b9f1250a5e5135c364`).
+`03e59491ed588ca377ece2ef387450ba699ef9e63d323db50e6c36fa17f265b5`).
 
 Reproduce with:
 

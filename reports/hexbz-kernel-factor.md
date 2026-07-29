@@ -1,66 +1,59 @@
 # HexBZ Kernel and Tactic Factorization Diagnostic
 
-Current at revision `5c371a5abb85ca6ef6510ec60888f3048db71719`,
-measured 2026-07-28 on `chungus2` (AMD EPYC 9455, Linux x86-64),
-pinned to CPU 0.
+Current at revision `a1fdbd81ef038faa41765fb39a79cd083109c8ed`,
+measured 2026-07-29 on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to
+CPU 0.
 
-The export records `5c371a5-dirty` because the benchmark registrations and
-reports were being repaired in the same worktree; the measured library revision
-is the full hash above.
+Each case builds a fresh Lake module for direct kernel evaluation of
+`Hex.ZPoly.factorize`, `factor_poly`, applicable `irreducibility` calls, and
+linear/incremental replay of identical literal Rabin certificates. These are
+end-to-end fresh-module wall times, including import, elaboration, search, and
+kernel checking—not kernel-only times.
 
-## Method and Timing Labels
-
-Each case builds a fresh Lake module for:
-
-- direct kernel evaluation of `Hex.ZPoly.factorize` against the compiled
-  factorization;
-- `factor_poly` on the full integer polynomial;
-- `irreducibility` for cases marked irreducible;
-- identical literal Rabin certificates replayed through the linear and
-  incremental checkers when multi-prime witness data exists.
-
-Times are end-to-end fresh-module wall times, not kernel-only times. They
-include imports, elaboration, certificate search where applicable, and kernel
-checking. The median import baselines were:
-
-- factorization entry points: 1.212 s;
-- certificate umbrella: 4.624 s.
+Median import baselines were 877.587 ms for factorization entry points and
+6.243 s for the certificate umbrella.
 
 ## Validation Sample
 
 | Case | Degree | Direct kernel | `factor_poly` | `irreducibility` | Witness class |
 |---|---:|---:|---:|---:|---|
-| `quartic_a4` | 4 | 2.347 s | 4.912 s | 4.513 s | multi-prime |
-| `cyclo_phi5` | 4 | 1.422 s | 3.712 s | 3.690 s | free mod `p` |
-| `xpow6_minus1` | 6 | 2.342 s | 3.654 s | not applicable | mixed free |
-| `sd2` | 4 | 1.929 s | provider decline | provider decline | provider decline |
+| `quartic_a4` | 4 | 1.316 s | 6.652 s | 6.695 s | multi-prime |
+| `cyclo_phi5` | 4 | 1.058 s | 6.273 s | 6.294 s | free mod `p` |
+| `xpow6_minus1` | 6 | 1.614 s | 6.270 s | not applicable | mixed free |
+| `sd2` | 4 | 1.195 s | provider decline | provider decline | provider decline |
 
-All expected successes completed inside the 30-second module cutoff.
-`factor_poly` and `irreducibility` declining `sd2` is a provider-boundary
-result, not a timeout or unexpected error.
+All expected successes completed inside the 30-second module cutoff and the
+artifact reports zero unexpected errors. The `sd2` declines are explicit
+provider-boundary results, not timeouts.
+
+The preceding record had 1.212 s and 4.624 s import baselines. The direct
+Mathlib-free path therefore improves substantially, while the certificate
+umbrella and tactic totals regress by roughly 35%. This refresh does not hide
+that regression: the runtime factorizer optimization and the tactic import
+cone move in opposite directions and need separate interpretation.
 
 ## Linear Versus Incremental Rabin Replay
 
-`quartic_a4` produced four literal certificate cases. Median fresh-module
-times:
-
 | Prime | Degree | Linear | Incremental |
 |---:|---:|---:|---:|
-| 17 | 2 | 4.861 s | 3.572 s |
-| 17 | 2 | 5.033 s | 3.760 s |
-| 5 | 1 | 3.608 s | 3.659 s |
-| 5 | 3 | 4.465 s | 3.942 s |
+| 17 | 2 | 7.234 s | 6.302 s |
+| 17 | 2 | 7.260 s | 6.332 s |
+| 5 | 1 | 6.254 s | 6.263 s |
+| 5 | 3 | 6.737 s | 6.314 s |
 
-The signed import-baseline deltas and all three samples per checker are in the
-raw artifact. Negative deltas are valid measurement noise around the large
-certificate-import baseline.
+The incremental checker is faster in three of four medians. The degree-one
+difference is below the noise implied by the large import baseline. Signed
+baseline deltas and all samples are in the raw artifact.
 
 ## Artifact
 
-`reports/bench-results/hexbz-kernel-factor-5c371a5a-chungus2.json`
+`reports/bench-results/hexbz-kernel-factor-a1fdbd81-chungus2.json`
 (SHA-256
-`57f86afaaafefbff1e74b131375cd3784f5d31f3bef6db87084947eab038d04d`).
-The artifact reports zero unexpected errors.
+`3da0b31b102609fbb2ed6a16deb9bdb0ecb17da2ab73c4cc9fb1b8a4d5b5acc3`).
+
+The export records a dirty worktree because the borrowed-argument ownership
+fix and refreshed evidence were pending commit. Its full hash identifies the
+implementation base; direct execution includes that ownership fix.
 
 ## Reproducing
 
@@ -69,5 +62,5 @@ taskset -c 0 python3 scripts/bench/kernel_factor_sweep.py \
   --name cyclo_phi5 --name xpow6_minus1 \
   --name quartic_a4 --name sd2 \
   --timeout 30 --rabin-repeats 3 \
-  --output reports/bench-results/hexbz-kernel-factor-5c371a5a-chungus2.json
+  --output reports/bench-results/hexbz-kernel-factor-a1fdbd81-chungus2.json
 ```

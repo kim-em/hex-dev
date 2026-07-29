@@ -2222,8 +2222,8 @@ theorem bhksProjectedSpan_eq_trueSupportSpan
     exact hval.factorCount_le_degree hm_monic
   have hp500 : (Hex.ZPoly.toMonicLiftData core B primeData).p ≤ 500 := by
     rw [hp_eq]
-    exact Hex.choosePrimeData?_p_le_500
-      (Hex.ZPoly.toMonic core).monic primeData hselected
+    exact Hex.choosePrimeDataAdaptive?_p_le_500
+      (Hex.ZPoly.toMonic core).monic Hex.ZPoly.primeProbeFuel primeData hselected
   letI : Fact (1 <
       (Hex.ZPoly.toMonicLiftData core B primeData).p ^
         (Hex.ZPoly.toMonicLiftData core B primeData).k) := ⟨hk1⟩

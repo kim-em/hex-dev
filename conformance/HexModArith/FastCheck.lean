@@ -7,7 +7,9 @@ Authors: Kim Morrison
 module
 
 public meta import HexModArith.Basic
+public meta import HexModArith.WordMod
 public import HexModArith.Basic
+public import HexModArith.WordMod
 
 public section
 
@@ -52,4 +54,28 @@ private def nonCoprimeA : ZMod64 15 := ofNat _ 6
 #guard (inv nonCoprimeA).toNat = 13
 
 end ZMod64
+
+/-! # Full-word Montgomery and modular add/sub externs -/
+
+private def wordPrime : UInt64 := UInt64.ofNat 18446744073709551557
+private def wordCtx : _root_.MontCtx wordPrime :=
+  _root_.MontCtx.mk wordPrime (by decide)
+
+private def wordA : UInt64 := wordPrime - 1
+private def wordB : UInt64 := wordPrime - 2
+
+-- Carry across `2^64`, followed by the modular correction.
+#guard Hex.addModWord wordPrime wordA wordB = wordPrime - 3
+-- Reduction without a machine-word carry.
+#guard Hex.addModWord 17 11 9 = 3
+-- Borrow and non-borrow subtraction branches.
+#guard Hex.subModWord 17 3 5 = 15
+#guard Hex.subModWord 17 11 9 = 2
+#guard Hex.subModWord wordPrime 1 (wordPrime - 1) = 2
+
+-- Boundary-size Montgomery round-trip and product through the native externs.
+#guard wordCtx.fromMont (wordCtx.toMont wordA) = wordA
+#guard (wordCtx.fromMont
+    (wordCtx.mulMont (wordCtx.toMont wordA) (wordCtx.toMont wordB))).toNat = 2
+
 end Hex

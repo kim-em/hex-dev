@@ -28,14 +28,14 @@ an odd prime power `p^a < 2^64` is a valid modulus here.
 namespace Hex
 
 /-- Full-range modular addition of two residues below `m`. -/
-@[inline] def addModWord (m a b : UInt64) : UInt64 :=
+@[inline, extern "lean_hex_word_mod_add"] def addModWord (m a b : UInt64) : UInt64 :=
   if (UInt64.addCarry a b false).2 || m ≤ (UInt64.addCarry a b false).1 then
     (UInt64.subBorrow (UInt64.addCarry a b false).1 m false).1
   else
     (UInt64.addCarry a b false).1
 
 /-- Full-range modular subtraction of two residues below `m`. -/
-@[inline] def subModWord (m a b : UInt64) : UInt64 :=
+@[inline, extern "lean_hex_word_mod_sub"] def subModWord (m a b : UInt64) : UInt64 :=
   if (UInt64.subBorrow a b false).2 then
     (UInt64.addCarry (UInt64.subBorrow a b false).1 m false).1
   else
@@ -177,7 +177,11 @@ private theorem sub_mul_word_mod (M w X : Nat) (hM : 0 < M) (hXM : X ≤ M) :
     exact (Nat.mod_eq_of_lt (by rw [← hAB]; exact hylt)).symm
 
 /-- Residues modulo an odd `m < 2^64`, stored in Montgomery form. `val` is the
-Montgomery representative; the represented residue is `ctx.fromMont val`. -/
+Montgomery representative; the represented residue is `ctx.fromMont val`.
+
+The packed native polynomial kernels rely on proof erasure leaving `val` as
+the sole runtime constructor field. Any new data-bearing field requires a
+matching FFI update and native cross-check. -/
 structure WordMod {m : UInt64} (ctx : _root_.MontCtx m) where
   /-- Montgomery-form representative. -/
   val : UInt64
