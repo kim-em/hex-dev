@@ -312,11 +312,15 @@ lean_lib HexReleaseTests where
     `HexBerlekampMathlib.FactorPolyTests,
     `HexBerlekampZassenhaus.FactorTacticTests,
     `HexBerlekampZassenhausMathlib.FactorPolyTests,
-    `HexMvPoly.KernelTests,
     `HexRealRoots.ReplayTest,
     `HexRealRootsMathlib.IsolateRootsTests,
     `HexRealRootsMathlib.IsolateRootsElabTests,
     `HexRootsMathlib.Examples]
+
+-- HexMvPoly is not yet a published split repository, so its downstream
+-- kernel-reduction checks stay separate from release-manifest-backed tests.
+lean_lib HexMvPolyTests where
+  globs := #[`HexMvPoly.KernelTests]
 
 -- HexRCF is not yet a published split repository, so its verification-only
 -- modules stay separate from the release-manifest-backed target above.

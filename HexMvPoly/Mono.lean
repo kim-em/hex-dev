@@ -224,13 +224,13 @@ class IsMonomialOrder {n : Nat} (cmp : Mono n → Mono n → Ordering) : Prop
 
 namespace Mono
 
-instance instLexOrder : IsMonomialOrder (@lex n) := by
+instance (priority := 100) instLexOrder : IsMonomialOrder (@lex n) := by
   sorry
 
-instance instGrlexOrder : IsMonomialOrder (@grlex n) := by
+instance (priority := 100) instGrlexOrder : IsMonomialOrder (@grlex n) := by
   sorry
 
-instance instGrevlexOrder : IsMonomialOrder (@grevlex n) := by
+instance (priority := 100) instGrevlexOrder : IsMonomialOrder (@grevlex n) := by
   sorry
 
 @[simp] theorem getElem_zero (i : Fin n) : (zero : Mono n)[i] = 0 := by
