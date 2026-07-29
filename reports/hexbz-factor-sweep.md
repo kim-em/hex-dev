@@ -1,12 +1,10 @@
 # HexBZ Cross-System Factorization Sweep
 
-The current public-factor measurement covers the exact-exponent/factor-only
-Hensel implementation plus its guarded dominant-degree tree at revision
-`a087b28f6ce4adb8c109542abb7a050633e8ca3b`; the current lattice and
-no-decline classical measurements are revision
-`aaabcf1520121b4acaa793811c8567dddcf39f1f`. Both were measured 2026-07-29
-on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0. Both Hex
-artifacts record clean worktrees. The
+The current public-factor, lattice, and no-decline classical measurements cover
+the exact-exponent/factor-only Hensel implementation plus its guarded
+dominant-degree tree at clean revision
+`53bb12e21c5107e9da5d837c207eb3254238967f`. They were measured 2026-07-29
+on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0. The
 FLINT, PARI/GP, NTL, and Isabelle measurements are the already-current
 2026-07-28 exports from the same host, corpus, CPU placement, and timing
 protocol. They were not rerun because this change only modifies Hex.
@@ -47,9 +45,9 @@ session and Haskell-export builds completed before the timed sweeps.
 
 | System | OK | Timeout | p50 solved | p90 solved | Slowest solved | Protocol overhead |
 |---|---:|---:|---:|---:|---:|---:|
-| Hex public factor | 373 | 19 | 432.972 µs | 5.437 ms | 8.895 s | 16.945 µs |
-| Hex lattice | 369 | 23 | 1.957 ms | 91.186 ms | 10.000 s | 19.118 µs |
-| Hex classical, no decline | 372 | 20 | 423.939 µs | 9.029 ms | 3.845 s | 18.527 µs |
+| Hex public factor | 373 | 19 | 420.153 µs | 5.302 ms | 9.077 s | 16.905 µs |
+| Hex lattice | 369 | 23 | 1.838 ms | 87.386 ms | 9.901 s | 19.039 µs |
+| Hex classical, no decline | 372 | 20 | 401.736 µs | 7.184 ms | 3.818 s | 18.287 µs |
 | FLINT | 391 | 1 | 66.850 µs | 1.184 ms | 1.228 s | 19.219 µs |
 | PARI/GP | 391 | 1 | 99.958 µs | 1.254 ms | 823.201 ms | 23.755 µs |
 | NTL | 391 | 1 | 135.631 µs | 2.714 ms | 1.919 s | 11.487 µs |
@@ -65,21 +63,19 @@ factor-count result on the seven rows without a committed degree oracle;
 FLINT, PARI/GP, and NTL factor counts agree on all seven.
 
 Relative to the pre-hot-path Hex record, the public median fell from 1.244 ms
-to 432.972 µs and retained two additional solves, `sd5_x_phi45` and `sd6`.
+to 420.153 µs and retained two additional solves, `sd5_x_phi45` and `sd6`.
 The current no-decline classical entry now also solves `sd5_x_phi45`, leaving
 `sd6` as the public dispatcher's one additional frontier success.
 
 On 238 common rows for which both current Hex measurements are at least 10×
-their own protocol overhead, public/classical has median 0.992× and
-p10–p90 0.45×–1.10×. Public is faster on 125 and classical on 113. The
-production dispatcher is therefore tied with the isolated classical route in
-the middle while its bounded classical tier and fallbacks substantially
-improve the hard tail and add the `sd6` solve. The preceding 1.5% classical
-lead was real but small dispatch overhead before the production lifting work,
-not evidence of a fundamentally faster classical algorithm.
+their own protocol overhead, public/classical has median 1.009× and
+p10–p90 0.80×–1.12×. Public is faster on 99 and classical on 139. The isolated
+classical route therefore retains a 0.9% paired-median lead, while the
+production dispatcher's bounded tier and fallbacks improve selected hard rows
+and add the `sd6` solve.
 
 On the corresponding 238 public/verified-Isabelle BZ rows, Hex has median
-0.927× and p10–p90 0.48×–2.77×; Hex is faster on 126 and Isabelle on 112. The
+0.909× and p10–p90 0.47×–2.64×; Hex is faster on 127 and Isabelle on 111. The
 aggregate lead is real but still too narrow and family-dependent to claim
 uniform superiority.
 
@@ -90,23 +86,22 @@ faster.
 
 | Family | Common rows | Median new/old | Rows slower |
 |---|---:|---:|---:|
-| Certificate boundary | 1 | 0.390× | 0 |
-| Chebyshev | 28 | 0.296× | 0 |
-| Conway | 186 | 0.338× | 32 |
-| Cyclotomic | 32 | 0.625× | 1 |
-| Cyclotomic products | 19 | 0.653× | 0 |
-| Laguerre | 20 | 0.254× | 0 |
+| Certificate boundary | 1 | 0.377× | 0 |
+| Chebyshev | 28 | 0.290× | 1 |
+| Conway | 186 | 0.319× | 0 |
+| Cyclotomic | 32 | 0.623× | 1 |
+| Cyclotomic products | 19 | 0.642× | 0 |
+| Laguerre | 20 | 0.250× | 0 |
 | Legendre | 20 | 0.220× | 0 |
-| Random products | 30 | 0.259× | 0 |
-| Signed-digit products | 9 | 0.452× | 0 |
-| Swinnerton-Dyer | 11 | 0.266× | 0 |
+| Random products | 30 | 0.261× | 0 |
+| Signed-digit products | 9 | 0.453× | 0 |
+| Swinnerton-Dyer | 11 | 0.247× | 0 |
 | Wilkinson | 15 | 0.926× | 5 |
 
 Every family median now improves over the pre-hot-path record. Wilkinson,
 previously the lone slower family, is 0.926×. Against the immediately preceding
-exact/factor-only export, Conway is 1.029× at the 99-row overhead-eligible
-median and is slower on 81 of those rows. That small broad regression remains
-visible despite the 0.338× cumulative family median.
+exact/factor-only export, Conway is 0.989× at the 99-row overhead-eligible
+median and is faster on 81 of those rows.
 
 ## Charts
 
@@ -130,8 +125,11 @@ uv run --with matplotlib python3 scripts/plots/hexbz-cactus.py
 
 Fresh Hex exports:
 
+- `reports/bench-results/hexbz-factor-sweep-hex-53bb12e2-guarded-tree-all-chungus2.json`
+  (current public, lattice, and no-decline classical; SHA-256
+  `926e91245e45523a40e8b915004bf4e0e17f01ed3547feca94589760d3e55e27`)
 - `reports/bench-results/hexbz-factor-sweep-hex-a087b28f-guarded-tree-chungus2.json`
-  (current public factor; SHA-256
+  (preceding public-only diagnostic; SHA-256
   `1f03e479ca0d14bedb11a68960da865760072a66b7299d33ee3acd19138bf1e7`)
 - `reports/bench-results/hexbz-factor-sweep-hex-b4b36754-exact-factor-only-chungus2.json`
   (preceding public A/B reference; SHA-256
@@ -140,7 +138,7 @@ Fresh Hex exports:
   (same-day factor-only A/B reference; SHA-256
   `4ceadcbb1dd54f7e49d77efdd3ed199cb84633fb54c733a6041afa2118ddf9b2`)
 - `reports/bench-results/hexbz-factor-sweep-hex-aaabcf15-chungus2.json`
-  (lattice and no-decline classical; SHA-256
+  (preceding lattice and no-decline classical reference; SHA-256
   `30e56da9aa3c6f4f50faca4ef19e5c4d4f6523362542f2d8967ca7665f62f747`)
 
 Unchanged current external exports:
@@ -166,7 +164,7 @@ fresh Hex sweep.
 ```sh
 lake build hexbz_factor_service
 taskset -c 0 python3 scripts/bench/factor_sweep.py \
-  --systems hex-factor \
+  --systems hex-factor,hex-lattice,hex-classical-nodecline \
   --cutoff 10 --no-early-terminate \
   --output /tmp/hexbz-factor-sweep-hex.json
 ```

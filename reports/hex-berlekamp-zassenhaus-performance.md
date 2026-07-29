@@ -1,9 +1,8 @@
 # HexBerlekampZassenhaus Performance Report
 
-The current public-factor corpus measurement covers the exact-exponent,
-factor-only Hensel implementation and guarded dominant-degree tree at
-`a087b28f6ce4adb8c109542abb7a050633e8ca3b`; the current classical and lattice
-rows are from `aaabcf1520121b4acaa793811c8567dddcf39f1f`. The five affected
+The current public-factor, classical, and lattice corpus measurements cover the
+exact-exponent, factor-only Hensel implementation and guarded dominant-degree
+tree at `53bb12e21c5107e9da5d837c207eb3254238967f`. The five affected
 parametric and five affected fixed registrations were refreshed on the same
 runtime; the three unchanged registrations in each table and unchanged
 lower-layer measurements remain from
@@ -71,9 +70,9 @@ exactly.
 
 | System | OK | Timeout | Solved-row median |
 |---|---:|---:|---:|
-| Hex public factor | 373 | 19 | 432.972 µs |
-| Hex lattice | 369 | 23 | 1.957 ms |
-| Hex classical, no decline | 372 | 20 | 423.939 µs |
+| Hex public factor | 373 | 19 | 420.153 µs |
+| Hex lattice | 369 | 23 | 1.838 ms |
+| Hex classical, no decline | 372 | 20 | 401.736 µs |
 | FLINT 0.9.0 | 391 | 1 | 66.850 µs |
 | PARI/GP 2.17.3 | 391 | 1 | 99.958 µs |
 | NTL 11.6.0 | 391 | 1 | 135.631 µs |
@@ -83,30 +82,27 @@ exactly.
 The external rows are the unchanged current 2026-07-28 measurements from the
 same host, corpus, CPU, and protocol. On 238 common rows above each service's
 10× protocol-overhead threshold, public Hex / verified Isabelle BZ has median
-0.927× and p10–p90 0.48×–2.77×; Hex wins 126 rows and Isabelle 112. This is a
+0.909× and p10–p90 0.47×–2.64×; Hex wins 127 rows and Isabelle 111. This is a
 real aggregate Hex lead, but the wide family-dependent range is not yet a
 decisive margin. The old eligible-row median was 3.95×.
 
-The public protocol floor is 16.945 µs. Reapplying the preceding, lower
-13.650 µs Hex floor gives 0.899× over 244 rows; applying the larger current
-pair floor to both sides gives 0.942× over 236 rows. The lead is therefore not
+The public protocol floor is 16.905 µs. Reapplying the preceding, lower
+13.650 µs Hex floor gives 0.892× over 244 rows; applying the larger current
+pair floor to both sides gives 0.916× over 236 rows. The lead is therefore not
 created by the eligibility boundary.
 
 The public row is recorded in
-`reports/bench-results/hexbz-factor-sweep-hex-a087b28f-guarded-tree-chungus2.json`
-(SHA-256 `1f03e479ca0d14bedb11a68960da865760072a66b7299d33ee3acd19138bf1e7`).
+`reports/bench-results/hexbz-factor-sweep-hex-53bb12e2-guarded-tree-all-chungus2.json`
+(SHA-256 `926e91245e45523a40e8b915004bf4e0e17f01ed3547feca94589760d3e55e27`).
 It records a clean worktree.
 
-The current public/classical comparison has 238 eligible rows and a 0.992×
-median ratio; public wins 125 and classical 113. The earlier result—classical
-winning 171 of 240 ordinary rows at a 1.5% median margin—was a small tiering
-cost before the production lifting work landed, not an intrinsic advantage of
-classical factorization. The two are now tied in the middle while public is
-substantially better on selected hard rows and uniquely solves `sd6`.
+The current public/classical comparison has 238 eligible rows and a 1.009×
+median ratio; public wins 99 and classical 139. Isolated classical retains a
+small ordinary-row advantage, while public is better on selected hard rows and
+uniquely solves `sd6`.
 
-The classical/lattice rows are recorded in
-`reports/bench-results/hexbz-factor-sweep-hex-aaabcf15-chungus2.json`
-(SHA-256 `30e56da9aa3c6f4f50faca4ef19e5c4d4f6523362542f2d8967ca7665f62f747`).
+The current classical/lattice rows are in the same `53bb12e2` artifact. The
+older `aaabcf15` record remains a historical A/B reference.
 
 The bounded prime-width policy drives the large selector wins. It looks ahead by
 at most two good primes only on predicted high-cost transforms, requires at
@@ -118,9 +114,9 @@ on `cyclo_phi179`, 5.48× on `cyclo_phi61`, and 5.33× on `legendre_P30`.
 The latest movement guards a degree-aware Hensel product tree behind the
 presence of one modular factor larger than half the node degree, and permits a
 deeper relift ladder only for extreme-precision four-factor nodes. Against the
-preceding public export, `chebyshev_U24` falls from 7.664 ms to 3.099 ms,
-`legendre_P30` from 32.486 ms to 16.483 ms, and `legendre_P38` from 37.858 ms
-to 15.842 ms. The changed quadratic-multifactor microbenchmark remains flat at
+preceding public export, `chebyshev_U24` falls from 7.664 ms to 3.049 ms,
+`legendre_P30` from 32.486 ms to 16.237 ms, and `legendre_P38` from 37.858 ms
+to 15.528 ms. The changed quadratic-multifactor microbenchmark remains flat at
 67.229 ms; its focused export is
 `reports/bench-results/hex-hensel-quadratic-multifactor-478c3ccc-guarded-tree-chungus2.json`.
 
@@ -151,15 +147,15 @@ Both paths are relative to `reports/bench-results/`.
 
 | Fixture | Hex public | Verified Isabelle BZ | Hex / Isabelle |
 |---|---:|---:|---:|
-| `SD_5` | 90.052 ms | 22.827 ms | 3.95x |
-| `SD_5` shifted by 1 | 77.509 ms | 14.875 ms | 5.21x |
-| `SD_5` shifted by 2 | 79.033 ms | 14.907 ms | 5.30x |
-| `SD_6` | 8.895 s | timeout | — |
+| `SD_5` | 91.491 ms | 22.827 ms | 4.01x |
+| `SD_5` shifted by 1 | 78.123 ms | 14.875 ms | 5.25x |
+| `SD_5` shifted by 2 | 79.193 ms | 14.907 ms | 5.31x |
+| `SD_6` | 9.077 s | timeout | — |
 
 The fresh public service now solves `SD_6`; the no-decline classical service
-still times out. The public result and the isolated lattice result (8.573 s)
+still times out. The public result and the isolated lattice result (8.285 s)
 show that the dispatcher is adding useful reach here. The public measurement
-is a single cutoff-limited shot only 11.1% below ten seconds, so this frontier
+is a single cutoff-limited shot only 9.2% below ten seconds, so this frontier
 success has a narrow margin.
 
 ## Concerns
@@ -167,9 +163,9 @@ success has a narrow margin.
 - Nineteen public corpus cases still hit the 10-second cutoff.
 - FLINT, PARI/GP, and NTL remain much faster in aggregate.
 - Hex has a modest aggregate lead over Isabelle BZ, but Chebyshev still favours
-  Isabelle by 2.10× and Legendre by 1.89× at their family medians.
-- Public and no-decline classical are tied at their paired median; this means
-  further gains must come from the factorization core rather than dispatch.
+  Isabelle by 2.05× and Legendre by 1.85× at their family medians.
+- No-decline classical has a 0.9% paired-median lead over public; further broad
+  gains must come from the factorization core rather than dispatch alone.
 - The lattice route has a much heavier tail than the classical route.
 - `wilkinson_56` remains a slower outlier despite the 0.93× cumulative
   Wilkinson-family median.
