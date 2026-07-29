@@ -612,18 +612,25 @@ aligned with concrete applications and keeps a prepared next cursor outside
 the registry request. The package receives only the exact bounded list of
 structural identifiers and engine-owned creation generations. It supplies no
 cursor and no completion claim. A valid reply commits the prepared cursor and
-visit charge; a mismatched or malformed reply does not. An unexhausted epoch
-requeues the same application, while append-only program growth wakes an
-exhausted matcher and renewal exposes only the new delta.
+the exact cursor-delta visit charge; a retained retry which replays an already
+committed batch has zero cursor delta and does not pay for those visits again.
+Cursor progress is monotone within an authenticated epoch; backwards or
+cross-epoch progress is rejected. A mismatched or malformed reply commits
+nothing. An unexhausted epoch requeues the same application. If append-only
+growth occurs while that application is already queued, exhausting its old
+frozen ceiling still requeues it when the live view is larger; queue
+suppression therefore cannot lose the appended delta. Renewal exposes only
+that delta.
 
 The FIFO and replaceable-policy schedulers use the same matcher preparation.
 Policy invocation keys include the batch and epoch. Exhausted matcher-visit
 capacity remains a visible blocked offer whose selection reports the exact
 engine resource; it cannot disappear and manufacture a false fixed point.
-Policy traversal charges the configured batch bound before constructing these
-semantic keys. The present implementation conservatively treats every item in
-an issued batch as a causal input for theorem-instantiation generation. A
-future engine-compiled matcher may return a smaller engine-validated match
+Policy traversal charges the configured batch bound before constructing live
+invocation keys, and charges the exact retained structural-input list as part
+of a suggestion key. The present implementation conservatively treats every
+item in an issued batch as a causal input for theorem-instantiation generation.
+A future engine-compiled matcher may return a smaller engine-validated match
 certificate, but an external package may not under-report causal reads merely
 to evade generation limits.
 
@@ -1080,11 +1087,14 @@ start rather than advertised as compatible.
 Each scoped handler also owns a fail-closed semantic validator for concrete
 bindings of its registration. The registry first repeats the generic
 structural checks, then routes the binding to that exact handler. A checked
-session installs the same routed validator in the engine, so start-time
-bindings, retained matcher proposals, dynamic admission, and later scoped
-dispatch cannot disagree about package acceptance. The proof replay layer
-must still justify the resulting contractor theorem; this validator controls
-which package contract may be invoked, not whether that contract is sound.
+session installs the same routed validator in the engine, so retained matcher
+proposals, dynamic admission, and later scoped dispatch cannot disagree about
+package acceptance. The proof replay layer must still justify the resulting
+contractor theorem; this validator controls which package contract may be
+invoked, not whether that contract is sound.
+The registry exposes a whole-table check for direct-engine callers which
+supply start-time bindings; the current checked session starts with an empty
+binding table and exercises dynamically proposed scopes.
 
 `Registry.invokePlanned` cross-checks the flattened registration, routed handler
 metadata, and structural projection of an engine-produced request before
@@ -1156,7 +1166,7 @@ inside the registry's `Array (Package Fact)`, and the resulting
 `Registry Fact : Type 1` is threaded as the single external cache through
 either the FIFO or policy driver. Handlers in one package share that package's
 cache; handlers in different packages may use unrelated types. This first
-scope-free run has one registry cache for the whole run. Before branching is
+single-branch run has one registry cache for the whole run. Before branching is
 implemented, production must choose branch ownership or explicit
 `ScopeId`/semantic cache keys and test cross-branch reuse separately.
 
@@ -1734,6 +1744,10 @@ for new applications and equality jobs atomically with the extension.
 A selected retry prepares a fresh action carrying the bounded effort override;
 it does not mutate the compiled application's registration baseline, so later
 append-only program validation still compares an immutable application prefix.
+When its source was a structural matcher, the retry replays the source batch
+and epoch but carries the current engine-owned cursor unchanged. Admission
+therefore authenticates the epoch while charging only new cursor movement,
+which is normally zero for a replay.
 
 Each completed rule selection produces an engine-owned observation containing
 the outcome class, actual admitted fact deltas, contradiction status, emitted
