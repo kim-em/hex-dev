@@ -113,9 +113,38 @@ example :
     evalHorner (fun i => if i = 0 then 2 else 3) outerGap = 68 := by
   decide +kernel
 
-example :
+theorem splitFirst_roundtrip :
     ofUnivariate (cmp := Mono.grevlex) 0 Mono.lex
       (toUnivariate 0 Mono.lex q) = q := by
+  decide +kernel
+
+theorem splitLast_roundtrip :
+    ofUnivariate (cmp := Mono.grevlex) 1 Mono.lex
+      (toUnivariate 1 Mono.lex q) = q := by
+  decide +kernel
+
+@[expose] def gapCoeffs : DensePoly (MvPoly 1 Rat Mono.lex) :=
+  DensePoly.ofList [C 2 + X 0, 0, C 3]
+
+theorem gapCoeffs_roundtrip :
+    toUnivariate 1 Mono.lex
+        (ofUnivariate (cmp := Mono.grevlex) 1 Mono.lex gapCoeffs) =
+      gapCoeffs := by
+  decide +kernel
+
+abbrev P3 := MvPoly 3 Int Mono.lex
+
+@[expose] def middleSplit : P3 :=
+  ofTerms [(#v[2, 3, 4], 5), (#v[0, 1, 2], -7), (Mono.zero, 11)]
+
+theorem middleSplit_roundtrip :
+    ofUnivariate (cmp := Mono.lex) 1 Mono.grevlex
+      (toUnivariate 1 Mono.grevlex middleSplit) = middleSplit := by
+  decide +kernel
+
+theorem zero_roundtrip :
+    ofUnivariate (cmp := Mono.grevlex) 1 Mono.lex
+      (toUnivariate 1 Mono.lex (0 : QP)) = 0 := by
   decide +kernel
 
 abbrev P0 := MvPoly 0 Int Mono.lex
@@ -128,8 +157,40 @@ example : evalHorner (fun i => nomatch i) (C 7 : P0) = 7 := by
 
 abbrev P1 := MvPoly 1 Int Mono.lex
 
+theorem oneVar_roundtrip :
+    ofUnivariate (cmp := Mono.lex) 0 Mono.lex
+      (toUnivariate 0 Mono.lex ((X 0 : P1) * X 0 + C 7)) =
+        (X 0 : P1) * X 0 + C 7 := by
+  decide +kernel
+
 example : (X 0 : P1) * X 0 = monomial
     (Mono.succAt 0 (Mono.unit 0)) 1 := by
   decide +kernel
+
+/-! # Axiom hygiene -/
+
+/-- info: 'Hex.MvPoly.KernelTests.splitFirst_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms splitFirst_roundtrip
+
+/-- info: 'Hex.MvPoly.KernelTests.splitLast_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms splitLast_roundtrip
+
+/-- info: 'Hex.MvPoly.KernelTests.gapCoeffs_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms gapCoeffs_roundtrip
+
+/-- info: 'Hex.MvPoly.KernelTests.middleSplit_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms middleSplit_roundtrip
+
+/-- info: 'Hex.MvPoly.KernelTests.zero_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms zero_roundtrip
+
+/-- info: 'Hex.MvPoly.KernelTests.oneVar_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms oneVar_roundtrip
 
 end Hex.MvPoly.KernelTests
