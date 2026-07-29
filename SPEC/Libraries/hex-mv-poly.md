@@ -787,6 +787,12 @@ identity; the report records those axes for every pair. Anything short
 of two resolved greater-than-2× workload ratios leaves the single
 representation standing.
 
+When a workload includes materially different input construction, a matched
+construction-only pair is subtracted round by round after import subtraction.
+The resulting net ratio counts only when both net arms exceed the sum of the
+full-workload and construction-control null envelopes. This prevents a faster
+constructor from being reported as a faster arithmetic operation.
+
 The native driver lives at `bench/HexMvPoly/Bench.lean`. Kernel probes
 live below `bench/HexMvPolyMathlib/ProofProbe/`, contain no `main`,
 import no `LeanBench`, and are registered through

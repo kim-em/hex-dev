@@ -250,11 +250,17 @@ representations alongside `DensePoly`. For now, all libraries use
 
 The same abstraction problem is now concrete for multivariate polynomials.
 The release-quality HexMvPoly kernel sweep at clean commit
-`7acdff89b67d7b4fdfbb2b1b5b77a182097331d3` met its predeclared gate: the
+`12cc25590c2eead26613704e2421822306faa943` met its predeclared gate: the
 canonical sorted-list proxy beat the production `ExtTreeMap` form by more than
-2× at the largest sparse-addition and sum-of-squares proof-probe rungs after
-round-matched import subtraction. The exact record is
-`reports/bench-results/hex-mv-poly-kernel-7acdff89-chungus2.json`.
+2× at the largest cancellation-identity and sum-of-squares proof-probe rungs
+after round-matched import subtraction. The exact record is
+`reports/bench-results/hex-mv-poly-kernel-12cc2559-chungus2.json`.
+
+The sparse-addition point ratio is larger, but it does not count: after
+subtracting a matched construction-only pair, the candidate arithmetic signal
+is inside the combined null envelope. The cancellation ratio is only 2.001×,
+so it clears the written rule narrowly rather than establishing a wide
+performance margin.
 
 A kernel-specialized `MvPoly` representation is therefore justified as an
 opt-in second form, not as a replacement for the compiled `ExtTreeMap` API.

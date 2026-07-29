@@ -118,8 +118,9 @@ also passed all registrations.
 
 ## Comparator Ratios
 
-The two informational comparators are **CompPoly CMvPolynomial** and a
-**canonical sorted-list proxy** for the unavailable Mathlib `MvSparsePoly`.
+The two informational comparators are **CompPoly CMvPolynomial** and the
+**canonical sorted-list MvSparsePoly proxy** used in place of the unavailable
+Mathlib `MvSparsePoly`.
 Times below are per-call medians in milliseconds. The ratio is
 `Hex time / comparator time`; values above 1 mean the comparator is faster.
 These are in-process Lean executables, so no process-call overhead is present.
@@ -240,11 +241,14 @@ The five visualizations are:
 - [sum of squares](figures/hex-mv-poly-comparator-sum-of-squares-arithmetic.svg)
 
 Native ratios are informational rather than the representation gate. The
-release-quality, import-subtracted kernel sweep found the sorted proxy 4.697×
-faster on sparse addition and 2.411× faster on sum-of-squares at the largest
-family rungs. Those two independently classified families meet the
-predeclared two-family gate. The decision and its robust null-envelope checks
-are recorded in
+release-quality kernel sweep found resolved sorted-proxy wins of 2.001× on the
+largest cancellation identity and 2.579× on the largest sum-of-squares case.
+Sparse addition's construction-subtracted point ratio was 4.528×, but its net
+candidate arithmetic signal was inside the combined null envelope and
+therefore did not count. Cancellation and sum-of-squares are two independently
+classified families, so the predeclared gate is met, albeit narrowly on the
+cancellation family. The decision and its robust null-envelope checks are
+recorded in
 [`hex-mv-poly-mathlib-performance.md`](hex-mv-poly-mathlib-performance.md):
 keep the ExtTreeMap implementation as the current production representation,
 and record an opt-in kernel-specialized second representation behind a future
