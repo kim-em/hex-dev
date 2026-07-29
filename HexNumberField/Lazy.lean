@@ -31,6 +31,27 @@ coefficients are constant polynomials in a second variable `t`. -/
 def liftOuter (p : ZPoly) : DensePoly ZPoly :=
   DensePoly.ofCoeffs (p.toArray.map DensePoly.C)
 
+/-- Coefficients of the outer lift are the corresponding constant
+polynomials. -/
+@[simp] theorem coeff_liftOuter (p : ZPoly) (n : Nat) :
+    p.liftOuter.coeff n = DensePoly.C (p.coeff n) := by
+  unfold liftOuter
+  rw [DensePoly.coeff_ofCoeffs, Array.getD_eq_getD_getElem?,
+    Array.getElem?_map]
+  by_cases hn : n < p.size
+  · have hnArray : n < p.toArray.size := by simpa using hn
+    rw [Array.getElem?_eq_getElem hnArray]
+    simp only [Option.map_some, Option.getD_some]
+    congr 1
+    rw [Array.getElem_eq_getD (Zero.zero : Int), DensePoly.toArray_getD]
+  · have hnArray : p.toArray.size ≤ n := by simpa using Nat.le_of_not_gt hn
+    rw [Array.getElem?_eq_none hnArray]
+    simp only [Option.map_none, Option.getD_none]
+    have hpcoeff : p.coeff n = 0 :=
+      DensePoly.coeff_eq_zero_of_size_le p (Nat.le_of_not_gt hn)
+    rw [hpcoeff]
+    rfl
+
 /-- The eliminant whose roots are pairwise sums of roots of `p` and `q`. -/
 @[expose]
 def addEliminant (p q : ZPoly) : ZPoly :=
