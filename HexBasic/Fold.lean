@@ -124,7 +124,7 @@ theorem foldl_const_step (xs : List α) (z : β) :
 /-! # Permutation invariance -/
 
 /-- An additive fold-sum is invariant under permuting the list. -/
-theorem foldl_add_perm [Lean.Grind.Ring R] (f : α → R) {xs ys : List α}
+theorem foldl_add_perm [Lean.Grind.Semiring R] (f : α → R) {xs ys : List α}
     (h : xs.Perm ys) (z : R) :
     xs.foldl (fun acc x => acc + f x) z = ys.foldl (fun acc x => acc + f x) z := by
   induction h generalizing z with
@@ -143,9 +143,9 @@ theorem foldl_mul_perm [Lean.Grind.CommRing R] (f : α → R) {xs ys : List α}
   | swap x y xs => simp only [List.foldl_cons]; congr 1; grind
   | trans _ _ ih₁ ih₂ => exact (ih₁ z).trans (ih₂ z)
 
-section Ring
+section Semiring
 
-variable [Lean.Grind.Ring R]
+variable [Lean.Grind.Semiring R]
 
 /-! # Accumulator extraction -/
 
@@ -210,7 +210,13 @@ theorem foldl_add_mul_right (xs : List α) (f : α → R) (c z : R) :
     simp only [List.foldl_cons]
     rw [ih (z := z + f x), show (z + f x) * c = z * c + f x * c by grind]
 
-/-! # Negation and subtraction -/
+end Semiring
+
+section Ring
+
+variable [Lean.Grind.Ring R]
+
+/-! # Negation -/
 
 /-- Negation distributes through an additive fold-sum. -/
 theorem foldl_add_neg (xs : List α) (f : α → R) (z : R) :
@@ -222,6 +228,12 @@ theorem foldl_add_neg (xs : List α) (f : α → R) (z : R) :
     simp only [List.foldl_cons]
     rw [show -z + -f x = -(z + f x) by grind]
     exact ih (z + f x)
+
+end Ring
+
+section Semiring
+
+variable [Lean.Grind.Semiring R]
 
 /-! # Additivity -/
 
@@ -259,6 +271,14 @@ theorem foldl_add_add (xs : List α) (f g : α → R) :
     _ = xs.foldl (fun acc x => acc + f x) 0 + xs.foldl (fun acc x => acc + g x) 0 :=
         foldl_add_add_start xs f g 0 0
 
+end Semiring
+
+section Ring
+
+variable [Lean.Grind.Ring R]
+
+/-! # Subtraction -/
+
 /-- An additive fold-sum of a pointwise difference splits into the difference
 of the two fold-sums, distributing the starting accumulator. -/
 theorem foldl_add_sub (xs : List α) (f g : α → R) (a b : R) :
@@ -279,6 +299,12 @@ theorem foldl_add_sub_zero (xs : List α) (f g : α → R) :
       xs.foldl (fun acc x => acc + f x) 0 - xs.foldl (fun acc x => acc + g x) 0 := by
   have h := foldl_add_sub xs f g 0 0
   rwa [show (0 : R) - 0 = 0 by grind] at h
+
+end Ring
+
+section Semiring
+
+variable [Lean.Grind.Semiring R]
 
 /-! # Fubini -/
 
@@ -325,7 +351,7 @@ theorem foldl_add_comm {γ : Type w} (xs : List α) (ys : List γ) (f : α → �
         (fun y => xs.foldl (fun acc' x' => acc' + f x' y) 0)
     rw [hLHS, hRHS, ih]
 
-end Ring
+end Semiring
 
 section CommRing
 
@@ -361,7 +387,7 @@ theorem foldl_add_flatMap [Add R] {γ : Type w}
 
 /-- An additive fold-sum over a `Nodup` list whose summand is supported at a
 single matching element collects exactly that summand. -/
-theorem foldl_add_single [Lean.Grind.CommRing R] [DecidableEq α]
+theorem foldl_add_single [Lean.Grind.Semiring R] [DecidableEq α]
     (xs : List α) (z : R) (q : α) (f : α → R)
     (hmem : q ∈ xs) (hnodup : xs.Nodup) :
     xs.foldl (fun acc x => acc + (if x = q then f x else 0)) z = z + f q := by
