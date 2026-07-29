@@ -596,6 +596,46 @@ Anchor-local inspection adds no wakeup beyond the declared fact slots; a rule
 which reads the whole view declares `watchesProgram`, making program extension
 an explicit dependency.
 
+The transparent structural-cursor module is the reference semantics for
+bounded whole-network matching. Within each epoch it enumerates the
+append-only node, equality, and concrete-application identifier spaces in that
+fixed order. Each epoch freezes its three size ceilings; growth cannot move
+the unseen suffix, and renewal after exhaustion exposes exactly the appended
+delta. A batch consumes the minimum of its yield quantum, the epoch remainder,
+and the remaining cumulative visit budget, so a final partial allowance is not
+stranded.
+
+Live ownership is stricter than the transparent model. A whole-network matcher
+uses one `global` application per registration, anchored at the first node
+whose operation has the declared head. Later nodes with that head do not
+compile duplicate global scans. The engine stores its cursor in an array
+aligned with concrete applications and keeps a prepared next cursor outside
+the registry request. The package receives only the exact bounded list of
+structural identifiers and engine-owned creation generations. It supplies no
+cursor and no completion claim. A valid reply commits the prepared cursor and
+visit charge; a mismatched or malformed reply does not. An unexhausted epoch
+requeues the same application, while append-only program growth wakes an
+exhausted matcher and renewal exposes only the new delta.
+
+The FIFO and replaceable-policy schedulers use the same matcher preparation.
+Policy invocation keys include the batch and epoch. Exhausted matcher-visit
+capacity remains a visible blocked offer whose selection reports the exact
+engine resource; it cannot disappear and manufacture a false fixed point.
+Policy traversal charges the configured batch bound before constructing these
+semantic keys. The present implementation conservatively treats every item in
+an issued batch as a causal input for theorem-instantiation generation. A
+future engine-compiled matcher may return a smaller engine-validated match
+certificate, but an external package may not under-report causal reads merely
+to evade generation limits.
+
+The experimental `Engine` record and transparent cursor constructors remain
+public for mutation and representation comparisons. Production obtains the
+authority boundary by hiding the engine constructor, not by claiming that the
+reference cursor type itself is unforgeable. Selective operation-key indexes,
+compiled patterns, and richer equality/application projections remain
+compatible replacements for the reference enumerator; they must preserve its
+batch, generation, replay, resource, and completion semantics.
+
 `ProgramView.programVersion` equals the engine-owned version in the action for
 that invocation. An append-only extension creates subsequent requests with
 the new arrays and version. An anchor-local proposal may remain fresh when its
@@ -704,12 +744,36 @@ generation zero. The production representation may record generation per
 theorem instance or per generated product; that choice remains open below. In
 either case, a new expression is not trusted merely because a trigger matched.
 
-The authoritative references are the action substitution and old nodes named
-explicitly as existing inputs by proposed drafts or equalities. A proposed node
-remains an output of the theorem instance when it CSE-hits an already
-materialized node: storage reuse cannot manufacture a proof dependency. Thus
-the same append-stable proposal has the same logical generation before and
-after an unrelated CSE-producing extension.
+The authoritative recurrence for a retained instantiation is
+
+```text
+1 + max (
+  the emitting application's action-creation generation,
+  generations of every node in the action substitution,
+  generations of every engine-issued structural matcher input,
+  generations of every `.existing` reference in node drafts,
+  generations of every `.existing` equality endpoint,
+  generations of every `.existing` scope anchor, watch, or write
+)
+```
+
+The action substitution is the action anchor followed by its declared fact
+inputs, with duplicate node identifiers removed. In the reference matcher
+every member of the bounded issued batch is conservative causal evidence,
+including equality and concrete-application identifiers whose creation
+generation is not otherwise a node reference. Proposed references are outputs
+of this theorem instance, even when CSE reuses already materialized storage
+for them; storage reuse cannot manufacture a proof dependency. Thus the same
+append-stable proposal has the same logical generation before and after an
+unrelated CSE-producing extension.
+
+A successful equality-only or scope-only instantiation still consumes this
+generation: its instance-history event records it, each newly admitted
+equality edge is stamped with it, and each newly created scoped application is
+stamped with it. Such an admission cannot reset a later chain merely because
+it allocated no expression node. An instance which adds no node, equality, or
+scoped application is instead a duplicate and does not consume an instance
+event.
 
 The current centered-product D2 vertical is deliberately narrower than this
 general recurrence. Its `Center.inferredGeneration` only recognizes one
@@ -740,14 +804,13 @@ production engine must hide its constructor and expose checked observations
 and transitions; making one transition opaque would not provide that
 encapsulation and would obstruct ordinary-kernel theorems about admission.
 
-One atomic theorem instantiation initially assigns a single instantiation
-generation to all helper nodes it introduces: one plus the maximum generation
-of every node in the authoritative action substitution or explicitly named as
-an existing input by a draft or equality. Proposed products are outputs, even
-when CSE reuses their storage, so selection order cannot raise their logical
-generation or change success at an exact generation cap. This measures
-theorem-instantiation depth rather than expression-tree depth. Per-product or
-multiple-provenance generation remains a possible refinement.
+One atomic theorem instantiation initially assigns the recurrence above to all
+helper nodes, equality edges, scoped applications, and the instance-history
+event it introduces. Proposed products are outputs, even when CSE reuses their
+storage, so selection order cannot raise their logical generation or change
+success at an exact generation cap. This measures theorem-instantiation depth
+rather than expression-tree depth. Per-product or multiple-provenance
+generation remains a possible refinement.
 
 Structural expression depth is a separate engine invariant: nullary nodes have
 depth zero; every fresh non-nullary node has one plus the maximum depth of its
@@ -1015,6 +1078,15 @@ precision ladder against its arithmetic endpoint-height limit; otherwise a
 configuration known in advance to exceed the backend limit is rejected at
 start rather than advertised as compatible.
 
+Each scoped handler also owns a fail-closed semantic validator for concrete
+bindings of its registration. The registry first repeats the generic
+structural checks, then routes the binding to that exact handler. A checked
+session installs the same routed validator in the engine, so start-time
+bindings, retained matcher proposals, dynamic admission, and later scoped
+dispatch cannot disagree about package acceptance. The proof replay layer
+must still justify the resulting contractor theorem; this validator controls
+which package contract may be invoked, not whether that contract is sound.
+
 `Registry.invokePlanned` cross-checks the flattened registration, routed handler
 metadata, and structural projection of an engine-produced request before
 entering the callback, then replaces only the selected package's cache. It
@@ -1080,6 +1152,14 @@ experimental. The older direct registry and engine interfaces remain
 available for search experiments, but proof-producing execution goes through
 the session.
 
+`PolicySession.Session` is the corresponding proof-producing policy canary.
+Its checked start stores one bundle containing the engine, policy, and arena
+limits and owns the resulting `Policy.State`, exact registry, and arena.
+`Session.view` returns the same owned session with traversal accounting
+committed, while `Session.choose` accepts only a checked selection or
+dismissal and returns the next coherent session. No public transition accepts
+separately assembled engine, registry, policy state, or arena values.
+
 The explicit registration and validation boundary is fixed. Discovery and
 scheduling above it remain empirical: one arm uses an incremental registry
 worklist to share facts and retain state, while a second traverses the same
@@ -1093,10 +1173,11 @@ them. In the current canary, heterogeneous caches are existentially hidden
 inside the registry's `Array (Package Fact)`, and the resulting
 `Registry Fact : Type 1` is threaded as the single external cache through
 either the FIFO or policy driver. Handlers in one package share that package's
-cache; handlers in different packages may use unrelated types. This first
-scope-free run has one registry cache for the whole run. Before branching is
-implemented, production must choose branch ownership or explicit
-`ScopeId`/semantic cache keys and test cross-branch reuse separately.
+cache; handlers in different packages may use unrelated types. Each package
+currently has one cache for the whole run. Dynamically scoped contractor
+bindings are already installed and validated; what remains open is whether
+package cache state is branch-owned or explicitly keyed by
+`ScopeId`/semantic cache keys once proof branching is implemented.
 
 Cache contents are a performance optimization, not a hidden mathematical
 dependency. For the same request and logical budget, a memoization hit and
@@ -1110,15 +1191,17 @@ registry request exposes exactly the declared read facts and write targets. It
 provides no unrestricted fact getter: a hidden fact read would be absent from
 the dependency index and could miss a required wakeup.
 
-A registration whose matcher depends on the whole `ProgramView` sets
-`watchesProgram`. Every append-only extension then stales its old action and
-requeues all existing applications of that registration. This coarse trigger
-is the first grind-like instantiation mechanism: a matcher that was previously
-inapplicable can observe expressions introduced by another package. Ordinary
-anchor-local registrations remain append-stable; they do not acquire a global
-dependency merely because engine-owned admission may CSE one of their outputs.
-Compiled structural patterns or more selective operation-key triggers remain
-alternatives to compare once the behavior is established.
+A registration whose matcher depends on the whole `ProgramView` uses the
+`global` binding, the `network` structural watch, and `watchesProgram`. Every
+append-only extension then stales its old action and requeues that
+registration's single global application. This coarse trigger is the first
+grind-like instantiation mechanism: a matcher that was previously inapplicable
+can observe expressions introduced by another package without compiling one
+whole-network scan per matching expression. Ordinary anchor-local and scoped
+registrations remain append-stable; they do not acquire a global dependency
+merely because engine-owned admission may CSE one of their outputs. Compiled
+structural patterns or more selective operation-key triggers remain
+alternatives to compare against the same reference stream.
 
 1. The solver produces an `Action` naming a program snapshot, concrete rule
    application, anchor, declared input fact versions, effort, and action kind.
@@ -1215,10 +1298,27 @@ charged. The traversal stops at the first in-range cell beyond
 construction and identifier assignment are one traversal, so a relocated
 identifier denotes exactly the entry appended for its local draft.
 Candidate, instantiation, and equality roles are distinct, and ordinary replay
-lookup checks the expected role. Failure returns the old arena.
-The session commits that returned arena only if submission of the relocated
-outcome also succeeds. Before freezing, it checks the candidate and suggestion
-list lengths against the engine's own trusted limits. Let
+lookup checks the expected role. Reconstructing an instantiation during this
+traversal preserves its complete node, equality, and arbitrary-scope proposal;
+default-valued fields are not permission to discard nonempty structure.
+Each entry also retains the complete engine-issued action, including the exact
+matcher structural-input batch and epoch which caused the reply. The
+engine-private matcher cursor is deliberately absent from `Action`, is neither
+stored nor reconstructed by payload freezing, and remains scheduler state
+only. This verbatim action copy is sound only while `Action` contains no
+package-produced reply-local payload labels; any future payload-bearing action
+field must join the checked relocation traversal rather than being copied as
+though it were already a frozen arena identifier. Failure returns the old
+arena.
+
+Both private FIFO and policy sessions commit that returned arena only if
+submission of the relocated outcome also succeeds. For a structural matcher,
+this makes proof payloads and engine-owned cursor progress one transaction: an
+accepted reply
+commits both, while semantic rejection, engine or fact-domain resource
+refusal, and cumulative arena exhaustion commit neither. Before freezing, the
+sessions check the candidate and suggestion list lengths against the engine's
+own trusted limits. Let
 `requiredUses = maxOutcomeCandidates + maxOutcomeSuggestions *
 (maxProposalItems + 1)`: every candidate and suggestion costs one payload use,
 and every suggestion may be an instantiation with at most
@@ -1264,7 +1364,10 @@ different: the prospective arena is discarded, but the session submits a
 bounded synthetic `failed` outcome through the ordinary engine reply path.
 This clears the request latch, retains non-semantic cache telemetry, leaves
 facts and history unchanged, keeps the session live, and records that required
-work was dropped. The FIFO driver may therefore continue other independent
+work was dropped. For a matcher, that synthetic failed reply deliberately
+consumes the issued structural batch without retaining its malformed payload;
+otherwise repeatedly presenting the same broken reply could prevent all other
+work from running. The FIFO driver may therefore continue other independent
 rules, including later successful arena and fact commits, but the monotone
 `droppedWork` flag survives and the run must eventually report incomplete.
 The selected package's cache may record either kind of attempt because caches
@@ -1324,14 +1427,45 @@ requires a live session and no retained retry or instantiation. At a FIFO
 fixed point this predicate is the sole gate between saturated and incomplete.
 Package `failed`/`resourceLimit` results, malformed evidence, dropped narrowing
 suggestions, and unprocessed retained narrowing therefore cannot be laundered
-into saturation. The next policy experiment must preserve this same session
-transaction while allowing an external policy to choose invocations,
-instantiations, equalities, retries, and splits; it must not regain access to
-separable engine, registry, and arena values. The FIFO session can already
-freeze an instantiation and its nested equality payloads, but it deliberately
-has no public admission escape hatch. Honest session-level execution coverage
-for the resulting equality contractor therefore belongs to that private
-policy-session layer, not to a test-only constructor or engine replacement.
+into saturation.
+
+The policy session now preserves the same transaction while allowing an
+external policy to select invocations and retries, instantiations, equality
+contractors, and splits, or to dismiss any live offer. A selected invocation
+or retry routes through `Registry.invokePlanned`, which returns the plan paired
+with the exact selected handler's replay snapshot. The session calls that
+sealed snapshot's paired freeze operation, submits the relocated reply through
+`Policy.State`, and commits the new arena only for an accepted reply. A missing
+or malformed format and package-local payload-use, draft-count, draft-cell,
+atom, or schema excess consume a bounded synthetic failed reply: the cache may
+record the attempt, the arena, facts, and history do not commit, and the
+private session remains live but permanently incomplete. Exhausting remaining
+whole-run entry or body-cell capacity after an earlier commit instead returns
+a non-live session after clearing the selected request while preserving the
+preceding arena and history.
+The policy can observe a bounded view and echo a semantic selection, but
+cannot extract and later recombine the engine, registry, arena, or policy
+bookkeeping. Its `Session.complete` predicate additionally scans for live
+invocation and equality work and treats retries and instantiations, but not
+optional splits, as closure obligations. The policy state's monotone
+incompleteness bit covers failed replies, rejected or stale narrowing
+suggestions, and required dismissals; the session bit covers evidence lost
+outside those policy transitions. Engine-resource or structurally invalid
+snapshots also become non-live.
+
+The representation-free policy-session canary is an architectural gate, not a
+dyadic or rational example. It uses an opaque `Nat` fact domain and imports no
+interval representation or rational arithmetic. An opaque sine package
+recognizes `sin (-x)` from an engine-issued structural batch, introduces
+`sin x` and `-(sin x)`, proposes their equality, and installs a dynamically
+scoped sine contractor. Policy then selects both the theorem instance and that
+new contractor; the contractor improves an otherwise opaque fact while the
+session freezes the instance, equality, and fact recipes under their
+respective handlers. A companion proposal changes the contractor's semantic
+watch while remaining generically well-formed; package veto must roll back its
+prospective arena, retained proposal, and matcher cursor together. This canary
+establishes no sine theorem by itself. Semantic replay in the Mathlib companion
+remains the proof-producing completion gate described above.
 
 ### Action kinds
 
@@ -1749,12 +1883,12 @@ and heap moves. These logical units are shown separately: their machine costs
 are not assumed equal. On the small merge-gated fixtures:
 
 - one root fanning out to six sinks gives scan/index aggregate touch counts
-  `267/242`, while both arms already share `112` clock synchronizations and
+  `294/260`, while both arms already share `112` clock synchronizations and
   `14` suggestion-pruning visits;
 - four roots densely waking five sinks records all `20` watcher visits—five
-  insertions and fifteen suppressed duplicates—and gives `277/250`;
+  insertions and fifteen suppressed duplicates—and gives `297/265`;
 - five sinks each emitting three disposable split suggestions gives
-  `1267/754`; the scan inspects `424` historical backing slots, while the
+  `1287/769`; the scan inspects `424` historical backing slots, while the
   index consumes five work plus fifteen suggestion events from a single
   seven-slot seed view.
 
@@ -1853,15 +1987,21 @@ The policy experiment proceeds in replaceable increments:
    retryable enclosure, a structure-triggered alternate form, equality
    contraction, and a function-owned split landmark.
 
-The concrete package canary reaches step 6 with the unchanged external driver.
-One deterministic schedule selects subtraction and multiplication propagation,
-the structure matcher, instantiation admission, the centered function's split
-handler and forward propagator, equality contraction, reciprocal propagation,
-a precision retry, and finally the centered function's split suggestion. It
-adds the centered node at generation one, narrows both representations to
-`[0,1/4]`, improves the enclosure of `1/3` at effort one, and returns a prepared
-plan at `x = 1/2` while the effort-two retry remains live. No branch is
-executed, so this is evidence for policy routing and freshness, not for scope
+The centered-product/reciprocal package canary reaches step 6 in both
+search-only and proof-producing modes. One deterministic schedule selects
+subtraction and multiplication propagation, the structure matcher,
+instantiation admission, the centered function's split handler and forward
+propagator, equality contraction, reciprocal propagation, a precision retry,
+and finally the centered function's split suggestion. It adds the centered
+node at generation one, narrows both representations to `[0,1/4]`, improves
+the enclosure of `1/3` at effort one, and returns a prepared plan at
+`x = 1/2`. The
+proof-producing schedule also dismisses the effort-two retry and therefore
+retains an honest incomplete marker. Its arena contains the exact sequence of
+fact, instance, and equality roles; the admitted instance event, equality
+edge, and centered fact provenance resolve to entries owned by their
+originating package actions. No branch is executed, so this is evidence for
+policy routing, ownership, evidence freezing, and freshness, not for scope
 creation or split interiority.
 
 Once policy control begins, the wrapper is the sole scheduling authority for
@@ -2426,6 +2566,18 @@ typical, boundary, and adversarial inputs. In particular it includes:
   and a function-owned split in a checked event order; it returns an
   endpoint-resource-checked plan at `1/2`, leaves the next retry offer live,
   and performs no branch/interiority step;
+- the proof-producing policy session over those same packages, selecting every
+  offer class through one private owner, retaining exact fact, instance, and
+  equality replay formats, rolling back a prospectively frozen rejected write
+  and both malformed and undeclared formats, keeping package-local payload
+  use, draft-count, draft-cell, atom, and schema bounds live but incomplete,
+  making genuine mid-run whole-arena exhaustion fatal, and exposing an empty
+  failed frontier as incomplete rather than saturated;
+- an interval-representation-free sine package whose matcher recognizes
+  `sin (-x)`, atomically introduces `sin x`, `-(sin x)`, their equality, and a
+  dynamically scoped contractor, then runs that contractor through policy and
+  freezes its fact recipe; changing only the scope's semantic watch must
+  trigger package veto with no arena, proposal, or matcher-cursor commit;
 - undirected equality transport, including incomparable endpoint facts that
   improve both sides atomically, equality chains, reactivation after a later
   function improvement, and an original expression transferring its bound to

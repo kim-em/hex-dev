@@ -3,8 +3,8 @@
 Conformance testing cross-checks Lean implementations against either
 (a) independently stated algebraic properties, or (b) an external
 oracle (an independent Python `fractions.Fraction` reference,
-`python-flint`, `fpylll`, `cypari2`, or the committed Frank Lübeck Conway
-cache). The goal is to catch implementation bugs
+`python-flint`, SymPy, `fpylll`, `cypari2`, or the committed Frank Lübeck
+Conway cache). The goal is to catch implementation bugs
 *before* proof work starts. No point proving theorems about wrong
 implementations.
 
@@ -390,6 +390,11 @@ subsection. Default oracle assignments:
   oracle.
 - `hex-poly`, `hex-poly-z`, `hex-poly-fp` — `python-flint` primary
   for univariate polynomial arithmetic.
+- `hex-mv-poly` — SymPy, mode `if_available`, reconstructing sparse
+  multivariate polynomials from the original serialized terms and
+  cross-checking construction, arithmetic, evaluation, derivative,
+  rename, and substitution. Ordering-only behavior and the recursive
+  view remain independent Lean property checks.
 - `hex-matrix` (released — conformance runs in its own repo) — no
   external oracle; the dense base (arithmetic, row/column ops, transpose,
   slicing) is checked by property `#guard`s (structural layer).
@@ -595,13 +600,13 @@ The initial `core` profile does not require JSONL; a library's
 
 ## Sage strategy
 
-Sage is not used as an oracle in this project. Every operation we
-want to cross-check has a lighter pip-installable wrapper that
-reaches the same FLINT / fpLLL / PARI internals as Sage would:
-`python-flint`, `fpylll`, and `cypari2`. Together they cover the
-entire oracle surface without a Sage runtime in CI. Local developers
-who already have Sage are free to use it ad-hoc, but no CI job
-depends on it.
+Sage is not used as an oracle in this project. Number-theoretic and
+lattice operations use lighter pip-installable wrappers that reach the
+same FLINT / fpLLL / PARI internals as Sage would: `python-flint`,
+`fpylll`, and `cypari2`. Symbolic polynomial identities use SymPy.
+Together these cover the oracle surface without a Sage runtime in CI.
+Local developers who already have Sage are free to use it ad-hoc, but
+no CI job depends on it.
 
 ---
 

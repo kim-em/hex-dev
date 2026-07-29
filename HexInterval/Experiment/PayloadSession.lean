@@ -106,7 +106,8 @@ opaque Session.start (factDomain : FactDomain Fact) (program : Program)
       if !limitsCoherent limits arenaLimits then
         .error .incoherentLimits
       else
-        match Engine.start factDomain program registry.registrations facts limits with
+        match Engine.start factDomain program registry.registrations facts limits
+            #[] registry.acceptsBinding with
         | .error error => .error (.engine error)
         | .ok engine =>
             if !registry.acceptsProgram program then

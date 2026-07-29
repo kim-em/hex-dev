@@ -46,7 +46,14 @@ structure Draft where
   deriving Repr
 
 /-- One immutable replay entry.  Its rule owner is always `origin.key`; it is
-not stored as a second field which could disagree with the action. -/
+not stored as a second field which could disagree with the action.
+
+`origin` is safe to copy verbatim because an `Action` contains only
+engine-issued identifiers and frozen observations, never a package-produced
+reply-local `PayloadId`.  In particular matcher structural inputs and their
+epoch are retained here, while the engine-private matcher cursor is not part of
+`Action` and cannot enter replay data.  A future payload-bearing action field
+must instead be added to the relocation traversal below. -/
 structure Entry where
   origin : Action
   role : Role
@@ -188,6 +195,7 @@ def traverseRequest [Monad m] (visit : Role -> PayloadId -> m PayloadId)
     { key := request.key
       nodes := request.nodes
       equalities
+      scopes := request.scopes
       payload }
 
 def traverseSuggestion [Monad m] (visit : Role -> PayloadId -> m PayloadId) :

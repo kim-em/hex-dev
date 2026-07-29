@@ -31,6 +31,16 @@ def action (serial : Nat) : Action :=
     effort := 0
     inputs := [] }
 
+def matcherInputs : List StructuralInput :=
+  [{ key := .node (node 4), generation := 2 },
+    { key := .equality { index := 3 }, generation := 5 },
+    { key := .application { index := 6 }, generation := 7 }]
+
+def matcherAction : Action :=
+  { action 12 with
+    structuralInputs := matcherInputs
+    matcherEpoch := some 9 }
+
 def generous : PayloadArena.Limits :=
   { maxEntries := 16
     maxBodyCells := 32
@@ -114,6 +124,11 @@ def mixedRequest : InstantiationRequest :=
       [{ left := .existing (node 0)
          right := .existing (node 1)
          payload := payload 9 }]
+    scopes :=
+      [{ rule
+         anchor := .existing (node 1)
+         watches := [.existing (node 0)]
+         writes := [.existing (node 1)] }]
     payload := payload 4 }
 
 #guard
@@ -124,18 +139,32 @@ def mixedRequest : InstantiationRequest :=
       [equalityDraft 9, factDraft 7, instanceDraft 4] with
   | .ready arena
       (.success [candidate] [.instantiate request] _) =>
-      match request.equalities with
-      | [equality] =>
+      match request.equalities, request.scopes with
+      | [equality], [scope] =>
           arena.entries.size == 3 && arena.bodyCells == 3 && arena.wellFormed &&
             candidate.payload.index == 1 && request.payload.index == 2 &&
             equality.payload.index == 0 &&
+            scope.rule == rule && scope.anchor == .existing (node 1) &&
+            scope.watches == [.existing (node 0)] &&
+            scope.writes == [.existing (node 1)] &&
             (arena.entry? equality.payload .equality).any (fun entry =>
               entry.schema == 3 && entry.body == [30]) &&
             (arena.entry? candidate.payload .fact).any (fun entry =>
               entry.schema == 1 && entry.body == [10]) &&
             (arena.entry? request.payload .instance).any (fun entry =>
               entry.schema == 2 && entry.body == [20])
-      | _ => false
+      | _, _ => false
+  | _ => false
+
+-- Replay retains exactly the public matcher evidence which caused the reply.
+-- Cursor progress remains engine-private because it is absent from `Action`.
+#guard
+  match freeze generous .empty matcherAction (factOutcome 0) [factDraft 0] with
+  | .ready arena (.success [candidate] [] _) =>
+      (arena.entry? candidate.payload .fact).any fun entry =>
+        entry.origin.structuralInputs == matcherInputs &&
+          entry.origin.matcherEpoch == some 9 &&
+          entry.origin.serial == 12
   | _ => false
 
 -- Role-checked replay lookup cannot reinterpret a well-formed entry.

@@ -88,9 +88,9 @@ def instanceStep? : Option Step := do
 
 -- The SPEC's small-fixture numbers are exact deterministic counts, not
 -- remembered console output.
-#guard fanout.scan.work.total == 267
+#guard fanout.scan.work.total == 294
 
-#guard fanout.indexed.work.total == 242
+#guard fanout.indexed.work.total == 260
 
 #guard fanout.scan.work.clockSyncSlots == 112
 
@@ -107,17 +107,17 @@ def instanceStep? : Option Step := do
 
 #guard dense.indexed.suppressedInsertions == 15
 
-#guard dense.scan.work.total == 277
+#guard dense.scan.work.total == 297
 
-#guard dense.indexed.work.total == 250
+#guard dense.indexed.work.total == 265
 
 -- Five sink events and fifteen newly retained split-suggestion events are the
 -- exact suffix consumed by the maintained index in the churn fixture.
 #guard churn.indexed.work.eventVisits == 20
 
-#guard churn.scan.work.total == 1267
+#guard churn.scan.work.total == 1287
 
-#guard churn.indexed.work.total == 754
+#guard churn.indexed.work.total == 769
 
 #guard churn.scan.work.frontierSlots == 424
 

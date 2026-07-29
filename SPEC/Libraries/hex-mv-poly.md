@@ -58,7 +58,7 @@ abbrev Mono (n : Nat) := Vector Nat n
 
 /-- A multivariate polynomial in `n` variables over `R`, as a map from
 exponent vectors to nonzero coefficients, ordered by `cmp`. -/
-structure MvPoly (n : Nat) (R : Type*) [Zero R]
+structure MvPoly (n : Nat) (R : Type u) [Zero R]
     (cmp : Mono n → Mono n → Ordering)
     [TransCmp cmp] [LawfulEqCmp cmp] where
   terms : Std.ExtTreeMap (Mono n) R cmp
@@ -68,8 +68,10 @@ structure MvPoly (n : Nat) (R : Type*) [Zero R]
 The binder types on `nonzero` are load-bearing: written as `∀ m c,
 terms[m]? = ...` the `GetElem?` instance is stuck on a metavariable and
 the declaration does not elaborate. `Vector Nat n` has a `TransCmp`
-instance for `compare`, so the default lexicographic order is available
-without extra work.
+instance for `compare`, so that comparator remains available for
+ordinary compiled use. The named `lex` order below deliberately uses
+the exposed list route instead, because direct `Vector.compare` does not
+reduce in downstream kernel replay.
 
 Fixed arity `n : Nat` with `Fin n`-indexed variables, matching what
 every identified consumer uses. The Mathlib equivalence is therefore
@@ -137,8 +139,9 @@ identify distinct exponent vectors, silently merging `coeff a p` and
 `coeff b p` and falsifying the equivalence with
 `MvPolynomial (Fin n) R`. Every comparator appearing anywhere in this
 library, including the target comparators of `reorder`, `rename`, and
-`toUnivariate`, carries it. `Std` supplies both classes for `compare`
-on `Vector Nat n`, so plain lexicographic order costs nothing.
+`toUnivariate`, carries it. `Std` supplies both classes for
+`List.compareLex compare`; the named vector comparators still need
+instances, proved by transporting those laws through `Vector.toList`.
 
 `IsMonomialOrder cmp` is what leading-term algorithms need, and it is
 strictly more than a faithful total order:
@@ -157,10 +160,13 @@ multivariate division terminate and normal forms unique, so Gröbner
 work and `leadingTerm` require this class while storage-only operations
 require only the first two. Supply named `lex`, `grlex`, and `grevlex`
 comparators with their orientation documented, each with an
-`IsMonomialOrder` instance. The well-foundedness field is mathematically
-derivable from the other order laws by Dickson's lemma, but keeping it
-in the class makes termination available without making the
-Mathlib-free library prove that result.
+`IsMonomialOrder` instance. The Mathlib-free layer must prove the three
+named instances: lex is a finite lexicographic product of the
+well-founded order on `Nat`, and the graded orders use the degree order
+followed by their tie-breaker. The well-foundedness field is
+mathematically derivable in greater generality from Dickson's lemma, but
+keeping it in the class makes termination available to algorithms
+without reproving it at each use.
 
 ## The monomial API
 
@@ -250,14 +256,19 @@ does not reduce. Use `Hex.Vector.ofFn'` from `HexBasic.OfFn` instead.
 This is exactly the trap CompPoly's `X` falls into, since it is defined
 with `Vector.ofFn`.
 
-**Comparison.** `Vector.compare` delegates to `Array.compareLex`, whose
-body is likewise unavailable downstream under the module system. Define
-the named lexicographic comparator through the exposed
-`List.compareLex compare a.toList b.toList`; graded lex and graded
-reverse lex use that comparator and the same exposed list machinery.
+**Comparison.** `Vector.compareLex compare` has the relevant Std laws,
+but direct `Vector.compare` is not the chosen kernel path because it
+delegates to `Array.compareLex`, whose body is unavailable downstream
+under the module system. Define the named lexicographic comparator
+through the exposed `List.compareLex compare a.toList b.toList`.
+Transport the Std laws with `Vector.compareLex_eq_compareLex_toList`;
+graded lex and graded reverse lex use that comparator and the same
+exposed list machinery.
 
-Both are shims for [leanprover/lean4#14270](https://github.com/leanprover/lean4/pull/14270)
-and disappear when it lands.
+The equality and construction constraints are shims for
+[leanprover/lean4#14270](https://github.com/leanprover/lean4/pull/14270)
+and disappear when it lands. The comparison shim remains until
+`Array.compareLex` itself is exposed upstream.
 
 The kernel replay closure is everything a certificate check touches:
 `Mono` operations, the comparator, `ExtTreeMap` lookup and `alter`,
@@ -284,7 +295,7 @@ constant and shows up in every tree operation.
 | `coeff` | `ExtTreeMap.get?` | `O(n log s)` |
 | `monomial`, `C`, `X` | single insert | `O(n)` |
 | `add` | fold `alter` of the smaller into the larger | `O(n · t log (s+t))` |
-| `neg`, scalar multiple | map over values | `O(s)` |
+| `neg` | map over values | `O(s)` |
 | `mul` | Gustavson-style: for each term of `p`, translate every term of `q` and accumulate into one output map | `O(n · s · t · log (s·t))` |
 | `leadingTerm` | max entry in `cmp` order | `O(log s)` |
 | `reorder` | rebuild under the new comparator | `O(n · s log s)` |
@@ -341,21 +352,47 @@ def eval₂Horner (f : R → S) (x : Fin n → S) (p : MvPoly n R cmp) : S
 def partialEval (s : Fin n → Option R) (p : MvPoly n R cmp) : MvPoly n R cmp
 
 -- Structural
-def derivative (i : Fin n) (p : MvPoly n R cmp) : MvPoly n R cmp
+def derivative [Zero R] [NatCast R] [Add R] [Mul R] [DecidableEq R]
+    (i : Fin n) (p : MvPoly n R cmp) : MvPoly n R cmp
 def homogeneousComponent (d : Nat) (p : MvPoly n R cmp) : MvPoly n R cmp
-def rename (f : Fin n → Fin k) (p : MvPoly n R cmp) : MvPoly k R cmp'
-def reorder (p : MvPoly n R cmp) : MvPoly n R cmp'
+def rename (cmp' : Mono k → Mono k → Ordering)
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+    (f : Fin n → Fin k) (p : MvPoly n R cmp) : MvPoly k R cmp'
+def reorder (cmp' : Mono n → Mono n → Ordering)
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+    (p : MvPoly n R cmp) : MvPoly n R cmp'
 def subst (f : Fin n → MvPoly k R cmp') (p : MvPoly n R cmp) : MvPoly k R cmp'
+def bind (f : R → S) (g : Fin n → MvPoly k S cmp')
+    (p : MvPoly n R cmp) : MvPoly k S cmp'
+def bind₁ (f : Fin n → MvPoly k R cmp')
+    (p : MvPoly n R cmp) : MvPoly k R cmp'
 ```
 
 The signatures above elide their typeclass bounds, and the elision
 hides a real requirement: `[Zero R]` alone is not enough for any
 operation that has to drop a cancelled term. `C`, `monomial`,
-`ofTerms`, addition, multiplication, and negation all need to decide
-whether a coefficient is zero, so each carries `[DecidableEq R]`
-alongside the algebraic class it needs. The equality instance uses the
-same explicit path. Write the real bounds per declaration rather than a
-single blanket variable block.
+`ofTerms`, addition, multiplication, subtraction, and collision-producing
+transformations need to decide whether a coefficient is zero, so each
+carries `[DecidableEq R]` alongside the algebraic class it needs.
+Coefficientwise negation is the exception: its nonzero-preservation
+proof lets it map the tree without an equality test. The equality
+instance uses the same explicit path. Canonical arithmetic and semantic
+transformations use the Mathlib-free `Lean.Grind.Semiring` /
+`Lean.Grind.Ring` classes; representation helpers keep narrower
+`Zero`/`Add`/`Mul` bounds where those suffice. Write the real bounds per
+declaration rather than a single blanket variable block. `subst` keeps
+the target comparator implicit because the codomain of `f` determines
+it; that codomain carries the same `TransCmp` and `LawfulEqCmp`
+obligations as every `MvPoly`.
+In particular, the computational `derivative` states the narrower
+`[Zero R] [NatCast R] [Add R] [Mul R] [DecidableEq R]` bounds directly,
+matching the shape of `Hex.DensePoly.derivative` while retaining
+canonical zero deletion. Its coefficient law uses
+`[Lean.Grind.Semiring R] [DecidableEq R]`; the theorem module may expose
+`Lean.Grind.Semiring.natCast` as a default-priority local instance.
+Mathlib's `CommSemiring` already supplies `Zero`, `NatCast`, `Add`, and
+`Mul`, so the companion needs no Mathlib-to-Grind adapter merely to call
+the definition.
 
 Constructor and query contracts are explicit. `ofTerms` sums duplicate
 monomials and drops zeros. `support` and every term iteration is ordered
@@ -429,12 +466,12 @@ theorem coeff_neg       : coeff m (-p) = -coeff m p
 theorem coeff_mul       : coeff m (p * q)
     = (m.splits.map fun ab => coeff ab.1 p * coeff ab.2 q).sum
 theorem coeff_pow_succ  : coeff m (p ^ (k + 1)) = coeff m (p ^ k * p)
-theorem coeff_reorder   : coeff m (reorder p) = coeff m p
-theorem coeff_rename    : coeff m (rename f p)
+theorem coeff_reorder   : coeff m (reorder cmp' p) = coeff m p
+theorem coeff_rename    : coeff m (rename cmp' f p)
     = ((p.termsList.filter fun t => Mono.rename f t.1 == m).map
         fun t => t.2).sum
 theorem coeff_derivative : coeff m (derivative i p)
-    = (m.degreeOf i + 1) • coeff (m.succAt i) p
+    = (((m.degreeOf i + 1 : Nat) : R) * coeff (m.succAt i) p)
 theorem coeff_homogeneousComponent :
     coeff m (homogeneousComponent d p) =
       if m.degree == d then coeff m p else 0
@@ -473,19 +510,24 @@ outside the stored support.
 `hex-mv-poly-mathlib` proves:
 
 ```lean
-def equiv [CommSemiring R] :
+def equiv [CommSemiring R] [DecidableEq R] :
     MvPoly n R cmp ≃+* MvPolynomial (Fin n) R
 
 /-- Arity zero: the only monomial is `Mono.zero`. -/
-def isEmptyRingEquiv [CommSemiring R] : MvPoly 0 R cmp ≃+* R
+def isEmptyRingEquiv [CommSemiring R] [DecidableEq R] :
+    MvPoly 0 R cmp ≃+* R
 
 /-- The recursive view as a ring equivalence, at the first variable. -/
-def finSuccEquiv [CommSemiring R] :
+def finSuccEquiv [CommSemiring R] [DecidableEq R]
+    (cmp' : Mono n → Mono n → Ordering)
+    [IsMonomialOrder cmp'] :
     MvPoly (n+1) R cmp ≃+* DensePoly (MvPoly n R cmp')
 
-def oneVarEquiv [CommSemiring R] : MvPoly 1 R cmp ≃+* DensePoly R
+def oneVarEquiv [CommSemiring R] [DecidableEq R] :
+    MvPoly 1 R cmp ≃+* DensePoly R
 
-def aeval [CommSemiring R] [CommSemiring S] [Algebra R S]
+def aeval [CommSemiring R] [DecidableEq R]
+    [CommSemiring S] [Algebra R S]
     (x : Fin n → S) :
     MvPoly n R cmp →ₐ[R] S
 ```
@@ -495,11 +537,18 @@ plus the homomorphism lemmas `aeval_add`, `aeval_mul`, `aeval_sub`,
 `aeval_X`. That list is what `sos`'s verifier uses today.
 
 The `neg` and `sub` lemmas require ring assumptions, so the lemma set
-splits by its real hypotheses. `aeval_eq_eval₂` states the case `sos`
-needs, evaluating a polynomial over `ℚ` into `ℝ`. Core `eval` only
-evaluates into the coefficient type itself. The companion also owns the
+splits by its real hypotheses. `aeval_eq_eval₂` states the general
+coefficient-map correspondence, while `aeval_eq_eval` is the
+compatibility specialization used by `sos`. Core `eval` only evaluates
+into the coefficient type itself. The companion also owns the
 transported `CommSemiring`, `CommRing`, and `Algebra R` instances on
 `MvPoly`.
+
+Those transported instances are parameterized by the ambient explicit
+`[DecidableEq R]`; they do not bake in `Classical.decEq`. Results are
+independent of that choice because equality decisions are subsingleton
+and the canonical operations branch only on the proposition they
+decide.
 
 Following the project split, no *mathematical* theorems about `MvPoly`
 belong in the Mathlib layer. What does belong, beyond the bare ring
@@ -535,12 +584,12 @@ knowing when weighing that: ArkLib, CompPoly's principal downstream,
 does not use the multivariate module at all (zero imports of
 `CompPoly.Multivariate` and zero occurrences of `CMvPolynomial`). Its
 dependency runs through univariate `CPolynomial`, the multilinear `MLE`,
-and the finite-field modules), and within CompPoly the module has
+and the finite-field modules. Within CompPoly the multivariate module has
 exactly two consumers, `Bivariate/CMvEquiv.lean` and
 `Univariate/CMvEquiv.lean`, both reaching it only through
 `finSuccEquiv` and `isEmptyRingEquiv`. So the capability bar is real but
 the downstream footprint is small, and nothing here is on ArkLib's path.
-anything aimed at ArkLib would target univariate and multilinear
+Anything aimed at ArkLib would target univariate and multilinear
 polynomials, which is a different library.
 
 **`MvSparsePoly R nvars`** (Michail Karatarakis, Mathlib PRs
@@ -588,6 +637,15 @@ conformance job. It requires all three of:
   in `scripts/ci/run_oracles.sh`, so a missing oracle dependency fails
   rather than producing a green skip.
 
+It also requires the two Lean target registrations that make the
+drivers build:
+
+- append `HexMvPoly.Conformance` to the existing `HexConformance` globs
+  in `lakefile.lean`.
+- declare `lean_lib HexMvPolyMathlibProofProbe` with `srcDir := "bench"`
+  and explicit `HexMvPolyMathlib.ProofProbe.*` globs, then append that
+  target to `HEX_LIB_TARGETS` in the existing CI job.
+
 The oracle tuple is:
 
 ```
@@ -602,7 +660,10 @@ self-describing and records at different arities share one stream.
 substitution, and content over `ℚ` and `ℤ`, and is the right default
 because its term enumeration is order-explicit. SymPy is a new CI
 dependency for this project, which is why both the install step and
-oracle preflight must change. Singular becomes the oracle when the
+oracle preflight must change. Its mode is `if_available`; release CI
+sets `HEX_REQUIRE_ORACLES=1`, making the preflight the hard gate without
+misclassifying a third-party pip dependency as an `always` oracle.
+Singular becomes the oracle when the
 Gröbner layer arrives. It is not needed for this library. python-flint
 covers multivariate polynomials only partially, so it is not the choice
 here even though the rest of the polynomial libraries use it.
@@ -660,6 +721,9 @@ decide a design question rather than to hold a ratio. SymPy is not a
 performance comparator. Since both Lean comparators import Mathlib,
 their adapters run as external comparator drivers over the shared input
 corpus rather than as imports of the Mathlib-free LeanBench target.
+The core registration owns the five native-family comparisons. The
+Mathlib companion separately registers `MvSparsePoly` for the kernel
+families, where the representation decision is made.
 
 **The threshold, written down in advance.** A second, kernel-specialised
 representation is justified only if the kernel suite shows the sorted
@@ -671,6 +735,11 @@ The native driver lives at `bench/HexMvPoly/Bench.lean`. Kernel probes
 live below `bench/HexMvPolyMathlib/ProofProbe/`, contain no `main`,
 import no `LeanBench`, and are registered through
 `HexMvPolyMathlib.proof_probes`.
+
+Because the native registration names two comparators, Phase 4 also
+commits the five required comparator plots under
+`reports/figures/hex-mv-poly-comparator-<family>.svg`, generated by
+`scripts/plots/hex-mv-poly-comparator.py --family <family>`.
 
 ## File organisation
 
@@ -699,19 +768,49 @@ HexMvPolyMathlib.lean
     deps: [HexPoly, HexBasic]
     mathlib: false
     done_through: 0
-    status: draft
+    status: active
+    phase4:
+      comparators:
+        - tool: "CompPoly CMvPolynomial"
+          class: informational
+          rationale: "CompPoly uses the same ExtTreeMap representation behind a Mathlib-dependent API; the comparison records integration and implementation overhead rather than gating release."
+        - tool: "Mathlib MvSparsePoly"
+          class: informational
+          rationale: "MvSparsePoly uses a structurally different sorted-list representation aimed at kernel reflection; the comparison decides whether a second kernel-specialized representation is justified."
+      input_families:
+        - name: sparse-addition
+          description: Disjoint and interleaved sparse supports across lexicographic, graded lexicographic, and graded reverse lexicographic order.
+        - name: sparse-multiplication
+          description: Low-collision and high-collision products varying arity, degree, term count, coefficient type, and comparator.
+        - name: cancellation-arithmetic
+          description: Cancellation-heavy integer and rational arithmetic measured as compiled Mathlib-free computation.
+        - name: structural-collisions
+          description: Sparse rename, partial-evaluation, and substitution cases where distinct source terms collide.
+        - name: sum-of-squares-arithmetic
+          description: Representative sum-of-squares-shaped identities measured as compiled Mathlib-free arithmetic.
   HexMvPolyMathlib:
     deps: [HexMvPoly, HexPolyMathlib]
     mathlib: true
     done_through: 0
-    status: draft
-    proof_probes:
-      - bench/HexMvPolyMathlib/ProofProbe
+    status: active
+    proof_probes: [bench/HexMvPolyMathlib/ProofProbe]
+    phase4:
+      comparators:
+        - tool: "Mathlib MvSparsePoly"
+          class: informational
+          rationale: "The Mathlib sorted-list representation is the kernel-reflection comparator used to decide whether HexMvPoly needs a second representation."
+      input_families:
+        - name: kernel-cancellation-identities
+          description: Cancellation-heavy integer and rational identities checked from a downstream module with decide +kernel.
+        - name: kernel-sos-certificates
+          description: Representative sum-of-squares certificate identities checked from a downstream module with decide +kernel.
 ```
 
 `HexBasic` is a dependency for the reasons under "Kernel exposure", and
 drops out when the upstream fix lands. `HexPoly` is needed for
-`DensePoly` in the recursive view.
+`DensePoly` in the recursive view. The `HexMvPolyMathlib` root and this
+active registry entry land atomically; the active status is required
+because the consumer-compile acceptance milestone depends on that root.
 
 ## Consumer surfaces
 
@@ -731,6 +830,11 @@ this library should provide `Inhabited (Mono n)` itself.
 iteration and query surface, and they are used in `for` loops rather
 than incidentally, which is why term iteration needs a documented order
 and complexity rather than being an afterthought.
+
+Core `bind` is CompPoly's coefficient-and-variable mapping operation;
+`bind₁` is the same-coefficient compatibility name for `subst`. Both
+are present in the API block above rather than left as unstated consumer
+renames.
 
 **CompPoly's public multivariate surface**, taken as the capability
 checklist: `C`, `X`, `monomial`, `coeff`, `ext`, `eval`,
@@ -758,7 +862,11 @@ check, because it is the acceptance test for the surface listed here.
 ## Implementation order
 
 1. Define `Mono`, the comparator classes, `MvPoly`, canonical
-   construction, and the exact consumer-facing signatures.
+   construction, and the exact consumer-facing signatures. At this
+   point add a minimal downstream `decide +kernel` probe for production
+   monomial comparison, polynomial equality, addition, and
+   multiplication over both `Int` and `Rat`; do not defer representation
+   viability until after the semantic layers are built.
 2. Compile `sos` and the two CompPoly recursive-view consumers against
    the API stub.
 3. Implement arithmetic, structural operations, coefficient laws, and

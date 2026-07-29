@@ -1,15 +1,13 @@
 # HexBZ Cross-System Factorization Sweep
 
-The current Hex measurement is revision
-`a1fdbd81ef038faa41765fb39a79cd083109c8ed`, measured 2026-07-29 on
-`chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0. The FLINT,
-PARI/GP, NTL, and Isabelle measurements are the already-current 2026-07-28
-exports from the same host, corpus, CPU placement, and timing protocol. They
-were not rerun because this change only modifies Hex.
-
-The fresh Hex export records a dirty worktree because the borrowed-argument
-ownership fix and refreshed evidence were pending commit. Its full hash
-identifies the implementation base; the service executed with that fix.
+The current public-factor measurement is revision
+`567b5aea0c22d13fcf43541b5371717823870999`; the current lattice and
+no-decline classical measurements are revision
+`aaabcf1520121b4acaa793811c8567dddcf39f1f`. Both clean exports were measured
+2026-07-29 on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0. The
+FLINT, PARI/GP, NTL, and Isabelle measurements are the already-current
+2026-07-28 exports from the same host, corpus, CPU placement, and timing
+protocol. They were not rerun because this change only modifies Hex.
 
 ## Systems
 
@@ -45,9 +43,9 @@ session and Haskell-export builds completed before the timed sweeps.
 
 | System | OK | Timeout | p50 solved | p90 solved | Slowest solved | Protocol overhead |
 |---|---:|---:|---:|---:|---:|---:|
-| Hex public factor | 373 | 19 | 460.392 µs | 9.191 ms | 9.747 s | 16.905 µs |
-| Hex lattice | 366 | 26 | 1.864 ms | 89.351 ms | 9.612 s | 19.219 µs |
-| Hex classical, no decline | 371 | 21 | 424.409 µs | 9.484 ms | 3.918 s | 18.347 µs |
+| Hex public factor | 373 | 19 | 443.618 µs | 8.408 ms | 9.161 s | 13.650 µs |
+| Hex lattice | 369 | 23 | 1.957 ms | 91.186 ms | 10.000 s | 19.118 µs |
+| Hex classical, no decline | 372 | 20 | 423.939 µs | 9.029 ms | 3.845 s | 18.527 µs |
 | FLINT | 391 | 1 | 66.850 µs | 1.184 ms | 1.228 s | 19.219 µs |
 | PARI/GP | 391 | 1 | 99.958 µs | 1.254 ms | 823.201 ms | 23.755 µs |
 | NTL | 391 | 1 | 135.631 µs | 2.714 ms | 1.919 s | 11.487 µs |
@@ -62,13 +60,17 @@ it. Hex times out on every Hoeij-Zimmermann row, so it contributes no new
 factor-count result on the seven rows without a committed degree oracle;
 FLINT, PARI/GP, and NTL factor counts agree on all seven.
 
-Relative to the preceding Hex record, the public median fell from 1.244 ms to
-460.392 µs, with 359 of 371 common solved rows faster. The public frontier
-also gained `sd5_x_phi45` and `sd6`, so it now solves two more rows than the
-no-decline classical entry point. Classical is faster on 132 of the 237 common
-rows above the signal threshold, while public is faster on 105; their
-eligible-row median ratio is 1.008. The public dispatcher is therefore
-near-neutral on ordinary common rows while buying two real frontier cases.
+Relative to the pre-hot-path Hex record, the public median fell from 1.244 ms
+to 443.618 µs and retained two additional solves, `sd5_x_phi45` and `sd6`.
+The current no-decline classical entry now also solves `sd5_x_phi45`, leaving
+`sd6` as the public dispatcher's one additional frontier success.
+
+On 240 common rows for which both current Hex measurements are at least 10×
+their own protocol overhead, public/classical has median 1.015× and
+p10–p90 0.77×–1.10×. Public is faster on 69 and classical on 171. Thus the
+production dispatcher still pays a small ordinary-row cost—about 1.5% at the
+paired median—while its bounded classical tier and fallbacks substantially
+improve the hard tail and add the `sd6` solve.
 
 The improvement is broad but not universal. Family medians below compare the
 fresh public service with the preceding Hex public record; values below 1 are
@@ -76,22 +78,22 @@ faster.
 
 | Family | Common rows | Median new/old | Rows slower |
 |---|---:|---:|---:|
-| Certificate boundary | 1 | 0.405× | 0 |
-| Chebyshev | 28 | 0.352× | 1 |
-| Conway | 186 | 0.314× | 1 |
-| Cyclotomic | 32 | 0.633× | 1 |
-| Cyclotomic products | 19 | 0.652× | 0 |
-| Laguerre | 20 | 0.399× | 0 |
-| Legendre | 20 | 0.323× | 0 |
-| Random products | 30 | 0.383× | 0 |
-| Signed-digit products | 9 | 0.455× | 0 |
-| Swinnerton-Dyer | 11 | 0.255× | 0 |
-| Wilkinson | 15 | 1.221× | 9 |
+| Certificate boundary | 1 | 0.379× | 0 |
+| Chebyshev | 28 | 0.334× | 2 |
+| Conway | 186 | 0.298× | 0 |
+| Cyclotomic | 32 | 0.627× | 0 |
+| Cyclotomic products | 19 | 0.633× | 0 |
+| Laguerre | 20 | 0.366× | 0 |
+| Legendre | 20 | 0.307× | 0 |
+| Random products | 30 | 0.363× | 0 |
+| Signed-digit products | 9 | 0.477× | 0 |
+| Swinnerton-Dyer | 11 | 0.240× | 0 |
+| Wilkinson | 15 | 1.149× | 9 |
 
-The Wilkinson regression is deliberate fallout from reducing the sub-floor
-relift probe budget: those many-small-factor rows can benefit from the longer
-ladder. It is retained because the same policy sharply improves most families
-and helps the dispatcher reach the two new frontier rows.
+Wilkinson remains the one family slower than the pre-hot-path record, by a
+1.149× median. The latest bounded prime policy improves that family to a
+0.935× median relative to the immediately preceding Hex export, although
+`wilkinson_56` alone regresses by 1.30×.
 
 ## Charts
 
@@ -113,11 +115,14 @@ uv run --with matplotlib python3 scripts/plots/hexbz-cactus.py
 
 ## Artifacts
 
-Fresh Hex export:
+Fresh Hex exports:
 
-- `reports/bench-results/hexbz-factor-sweep-hex-a1fdbd81-chungus2.json`
-  (SHA-256
-  `5bed7814f4bb06a297f5b5aeb5777a5759636fc7107f188b9906545136243f8e`)
+- `reports/bench-results/hexbz-factor-sweep-hex-567b5aea-chungus2.json`
+  (public factor; SHA-256
+  `f3bf572df064788203da76fcb5ede2a20e376bb2fa2ff448c4bc2d244157bd63`)
+- `reports/bench-results/hexbz-factor-sweep-hex-aaabcf15-chungus2.json`
+  (lattice and no-decline classical; SHA-256
+  `30e56da9aa3c6f4f50faca4ef19e5c4d4f6523362542f2d8967ca7665f62f747`)
 
 Unchanged current external exports:
 
@@ -144,7 +149,7 @@ lake build hexbz_factor_service
 taskset -c 0 python3 scripts/bench/factor_sweep.py \
   --systems hex-factor,hex-lattice,hex-classical-nodecline \
   --cutoff 10 --no-early-terminate \
-  --output reports/bench-results/hexbz-factor-sweep-hex-a1fdbd81-chungus2.json
+  --output /tmp/hexbz-factor-sweep-hex.json
 ```
 
 The unchanged external services can be regenerated with the same command and

@@ -176,9 +176,10 @@ def engineLimits (workload : Workload) : Experiment.Propagator.Limits :=
 
 def policyLimits (workload : Workload) : Policy.Limits :=
   let backing := applicationCount workload + retainedCount workload
+  let applicationItems := workload.roots + workload.sinks * sinkArity workload
   let decisions := expectedDecisions workload
   { maxDecisions := decisions + 1
-    maxTraversal := backing * (decisions + 3)
+    maxTraversal := (backing + applicationItems) * (decisions + 3)
     maxLiveOffers := backing }
 
 def candidate (node : NodeId) (fact : Rank) : Candidate Rank :=
@@ -400,17 +401,12 @@ def Work.total (work : Work) : Nat :=
     work.priorityComparisons + work.priorityMoves
 
 def retainedSemanticItems (retained : RetainedSuggestion) : Nat :=
-  retained.action.inputs.length +
-    match retained.suggestion with
-    | .retry _ | .split _ => 0
-    | .instantiate request =>
-        request.nodes.length + request.equalities.length +
-          (request.nodes.foldl (fun count node => count + node.args.length) 0)
+  retained.action.inputs.length + retained.policyItems
 
 def offerSemanticItems (state : Policy.State Fact) : OfferId -> Nat
   | .application application =>
       (state.engine.applications[application.index]?).map
-        (fun value => value.watches.length) |>.getD 0
+        (fun value => value.policyItems) |>.getD 0
   | .equality _ => 2
   | .suggestion suggestion =>
       (state.engine.suggestions[suggestion.index]?).map retainedSemanticItems |>.getD 0

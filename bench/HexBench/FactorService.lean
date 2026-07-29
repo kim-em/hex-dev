@@ -29,6 +29,8 @@ The `--entry` flag selects which library entry answers each request:
 * `factorClassicalNoDecline` — classical recombination run to completion or
   cutoff (`Hex.factorClassicalNoDecline`), exposing the classical exponential
   wall.
+* `factorTrace` — the bounded classical tier plus its prime/factor-count trace;
+  a diagnostic response rather than the cross-system factorization protocol.
 
 This is a comparator driver, not a hex-internal benchmark harness: it emits raw
 timings for the external orchestrator, keeping the one-harness rule intact.
@@ -45,12 +47,14 @@ inductive Entry where
   | factor
   | factorLattice
   | factorClassicalNoDecline
+  | factorTrace
 deriving Repr, DecidableEq
 
 def Entry.ofString? : String → Option Entry
   | "factor" => some .factor
   | "factorLattice" => some .factorLattice
   | "factorClassicalNoDecline" => some .factorClassicalNoDecline
+  | "factorTrace" => some .factorTrace
   | _ => none
 
 /-- Dispatch to the selected entry. `none` means the entry declined; the
@@ -59,6 +63,7 @@ def Entry.run : Entry → ZPoly → Option Factorization
   | .factor, f => some (Hex.ZPoly.factorize f)
   | .factorLattice, f => Hex.factorLattice f
   | .factorClassicalNoDecline, f => Hex.factorClassicalNoDecline f
+  | .factorTrace, f => (Hex.factorClassicalTraced f).1
 
 /-- Parse a request line into its ascending coefficient list. -/
 def parseCoeffs (line : String) : Except String (List Int) := do
@@ -77,6 +82,26 @@ def factorizationToJson (φ : Factorization) : Json :=
             [ ("coeffs", intsToJson p.toArray.toList),
               ("multiplicity", Json.num (JsonNumber.fromInt (Int.ofNat m))) ])) ]
 
+/-- Encode the bounded classical tier's selected-prime diagnostics. -/
+def factorTraceToJson (trace : FactorTrace) : Json :=
+  Json.mkObj
+    [ ("tier", Json.str trace.tier),
+      ("prime", Json.num (JsonNumber.fromInt (Int.ofNat trace.prime))),
+      ("liftedFactorCount",
+        Json.num (JsonNumber.fromInt (Int.ofNat trace.liftedFactorCount))),
+      ("subsetCandidates",
+        Json.num (JsonNumber.fromInt (Int.ofNat trace.subsetCandidates))),
+      ("declined", Json.bool trace.declined) ]
+
+/-- Encode an optional prime choice as the compact width diagnostic. -/
+def primeChoiceToJson : Option PrimeChoiceData → Json
+  | none => Json.null
+  | some choice =>
+      Json.mkObj
+        [ ("prime", Json.num (JsonNumber.fromInt (Int.ofNat choice.p))),
+          ("factorCount",
+            Json.num (JsonNumber.fromInt (Int.ofNat choice.factorsModP.size))) ]
+
 def replyOk (result : Json) : Json :=
   Json.mkObj [("ok", Json.bool true), ("result", result)]
 
@@ -93,9 +118,18 @@ def handleLine (entry : Entry) (line : String) : Json :=
       replyError s!"expected JSON object with integer array field coeffs: {msg}"
   | .ok coeffs =>
       let f := DensePoly.ofCoeffs coeffs.toArray
-      match entry.run f with
-      | some φ => replyOk (factorizationToJson φ)
-      | none => replyDecline
+      if entry == .factorTrace then
+        let core := (normalizeForFactor f).squareFreeCore
+        let first := choosePrimeData? (ZPoly.toMonic core).monic
+        let (result, trace) := Hex.factorClassicalTraced f
+        replyOk <| Json.mkObj
+          [ ("factorization", result.map factorizationToJson |>.getD Json.null),
+            ("firstChoice", primeChoiceToJson first),
+            ("trace", factorTraceToJson trace) ]
+      else
+        match entry.run f with
+        | some φ => replyOk (factorizationToJson φ)
+        | none => replyDecline
 
 partial def runLoop (entry : Entry) : IO Unit := do
   let stdin ← IO.getStdin
@@ -125,7 +159,8 @@ def main (args : List String) : IO Unit := do
   match Entry.ofString? entryName with
   | none =>
       throw <| IO.userError
-        s!"unknown --entry {entryName}; expected factor|factorLattice|factorClassicalNoDecline"
+        s!"unknown --entry {entryName}; expected \
+          factor|factorLattice|factorClassicalNoDecline|factorTrace"
   | some entry => runLoop entry
 
 end HexBench.FactorService

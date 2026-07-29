@@ -58,7 +58,13 @@ structure InvocationKey where
   anchor : NodeId
   kind : ActionKind
   effort : Nat
+  generation : Nat := 0
   inputs : List SeenVersion
+  structuralInputs : List StructuralInput := []
+  matcherEpoch : Option Nat := none
+  /-- The application is live, but its next engine-owned structural batch
+  cannot be prepared within the matcher-visit resource. -/
+  matcherBlocked : Bool := false
   deriving DecidableEq, Repr
 
 /-- Complete identity of an equality contraction against two fact versions. -/
@@ -84,12 +90,21 @@ structure ProposedEqualityKey where
   right : NodeRef
   deriving DecidableEq, Repr
 
+/-- Payload-erased proposed scoped application. -/
+structure ProposedScopeKey where
+  rule : RuleKey
+  anchor : NodeRef
+  watches : List NodeRef
+  writes : List NodeRef
+  deriving DecidableEq, Repr
+
 /-- Payload-erased structural identity of an instantiation request. -/
 structure InstantiationSemanticKey where
   family : Nat
   generation : Nat
   nodes : List ProposedNodeKey
   equalities : List ProposedEqualityKey
+  scopes : List ProposedScopeKey
   deriving DecidableEq, Repr
 
 def InstantiationSemanticKey.ofRequest
@@ -99,7 +114,12 @@ def InstantiationSemanticKey.ofRequest
     nodes := request.nodes.map fun node =>
       { domain := node.domain, op := node.op, args := node.args }
     equalities := request.equalities.map fun equality =>
-      { left := equality.left, right := equality.right } }
+      { left := equality.left, right := equality.right }
+    scopes := request.scopes.map fun scope =>
+      { rule := scope.rule
+        anchor := scope.anchor
+        watches := scope.watches
+        writes := scope.writes } }
 
 inductive OfferClass where
   | invoke
@@ -231,13 +251,22 @@ def invocationOfAction (scope : ScopeId) (action : Action) : InvocationKey :=
     anchor := action.node
     kind := action.kind
     effort := action.effort
-    inputs := action.inputs }
+    generation := action.generation
+    inputs := action.inputs
+    structuralInputs := action.structuralInputs
+    matcherEpoch := action.matcherEpoch }
 
 def State.invocationKey? (state : State Fact) (applicationId : ApplicationId)
     (effort : Option Nat := none) : Option InvocationKey := do
   let application <- state.engine.applications[applicationId.index]?
   let rule <- state.engine.rules[application.rule.index]?
   let inputs <- state.engine.seenVersions? application.watches
+  let (structuralInputs, matcherEpoch, matcherBlocked) <-
+    match state.engine.prepareMatch applicationId rule with
+    | .ordinary => some ([], none, false)
+    | .batch inputs epoch _ => some (inputs, some epoch, false)
+    | .resourceLimit => some ([], none, true)
+    | .invalid => none
   some
     { scope := state.scope
       programVersion := state.engine.programVersion
@@ -246,7 +275,11 @@ def State.invocationKey? (state : State Fact) (applicationId : ApplicationId)
       anchor := application.node
       kind := application.kind
       effort := effort.getD application.effort
-      inputs }
+      generation := application.generation
+      inputs
+      structuralInputs
+      matcherEpoch
+      matcherBlocked }
 
 def State.equalityKey? (state : State Fact) (equalityId : EqualityId) : Option EqualityWorkKey := do
   let equality <- state.engine.equalities[equalityId.index]?
@@ -370,11 +403,49 @@ inductive ViewError where
   | liveOfferLimit
   deriving DecidableEq, Repr
 
+/-- Extra semantic-key surface beyond the one backing-slot charge.  Application
+and retained-suggestion costs are cached when the engine validates them, so a
+small policy limit never forces a preflight walk of large scopes.  This is a
+logical semantic-item budget, not a claim about compiler-level list visits or
+package callback work. -/
+private def offerItemsWithin (budget : Nat) (state : State Fact) :
+    Except ViewError Nat := do
+  let mut remaining := budget
+  if state.engine.pending.isNone && !state.engine.contradictory then
+    for index in [0:state.engine.applications.size] do
+      match state.engine.applications[index]?, state.applications[index]?,
+          state.engine.queued[index]? with
+      | some application, some clock, some true =>
+          if clock.active then
+            let matcherItems :=
+              match state.engine.rules[application.rule.index]? with
+              | some rule =>
+                  if rule.matchWatch == .network then
+                    state.engine.limits.matcherBatchSize
+                  else
+                    0
+              | none => 0
+            let items := application.policyItems + matcherItems
+            if remaining < items then throw .traversalLimit
+            remaining := remaining - items
+      | _, _, _ => pure ()
+    for index in [0:state.engine.suggestions.size] do
+      match state.engine.suggestions[index]?, state.suggestions[index]? with
+      | some retained, some clock =>
+          if clock.active then
+            if remaining < retained.policyItems then throw .traversalLimit
+            remaining := remaining - retained.policyItems
+      | _, _ => pure ()
+  return budget - remaining
+
 /-- Authoritative bounded scan of every live semantic offer. -/
 private def stateOffers (state : State Fact) : Except ViewError (Array OfferView × Nat) := do
-  let traversal := state.applications.size + state.equalities.size + state.suggestions.size
-  if state.limits.maxTraversal < state.metrics.traversal + traversal then
+  let backing := state.applications.size + state.equalities.size + state.suggestions.size
+  if state.limits.maxTraversal < state.metrics.traversal + backing then
     throw .traversalLimit
+  let room := state.limits.maxTraversal - state.metrics.traversal - backing
+  let extra <- offerItemsWithin room state
+  let traversal := backing + extra
   let mut offers := #[]
   for index in [0:state.applications.size] do
     if let some offer := state.offer? (.application { index }) then
@@ -390,6 +461,7 @@ private def stateOffers (state : State Fact) : Except ViewError (Array OfferView
 
 structure EngineBudgetView where
   actions : Nat
+  matcherVisits : Nat
   acceptedFacts : Nat
   nodes : Nat
   applications : Nat
@@ -411,6 +483,12 @@ structure View (Fact : Type) where
 
 def remaining (limit used : Nat) : Nat := limit - used
 
+/-- Highest theorem-instantiation generation already committed in this
+branch.  Instance events cover node-, equality-, and scope-only extensions. -/
+private def usedGeneration (state : State Fact) : Nat :=
+  state.engine.instanceHistory.foldl
+    (fun greatest event => Nat.max greatest event.generation) 0
+
 opaque State.view (state : State Fact) : Except ViewError (View Fact × State Fact) := do
   let (offers, traversal) <- stateOffers state
   pure
@@ -422,6 +500,9 @@ opaque State.view (state : State Fact) : Except ViewError (View Fact × State Fa
        incomplete := state.incomplete
        remaining :=
         { actions := remaining state.engine.limits.maxActions state.engine.metrics.queuePops
+          matcherVisits :=
+            remaining state.engine.limits.maxMatcherVisits
+              state.engine.metrics.matcherVisits
           acceptedFacts := remaining state.engine.limits.maxAcceptedFacts state.engine.history.size
           nodes := remaining state.engine.limits.maxNodes state.engine.program.nodes.size
           applications :=
@@ -434,7 +515,7 @@ opaque State.view (state : State Fact) : Except ViewError (View Fact × State Fa
             remaining state.engine.limits.maxQueueEntries state.engine.queue.size
           generation :=
             remaining state.engine.limits.maxGeneration
-              (state.engine.generations.foldl Nat.max 0) } },
+              (usedGeneration state) } },
      { state with
        metrics := { state.metrics with traversal := state.metrics.traversal + traversal } })
 
@@ -570,8 +651,28 @@ def deltasFor (before after : Engine Fact) (nodes : List NodeId) : Array (FactDe
 
 /-- Freeze an application only after validating the selected semantic offer.
 The optional effort is supplied only by an engine-retained retry offer. -/
+private def prepareMatchForPolicy (state : State Fact) (applicationId : ApplicationId)
+    (rule : Registration) (source : Option Action) : Engine.PreparedMatch :=
+  match source with
+  | none => state.engine.prepareMatch applicationId rule
+  | some action =>
+      if rule.matchWatch == .none then
+        .ordinary
+      else if action.application != applicationId ||
+          !state.engine.actionFresh action || action.structuralInputs.isEmpty then
+        .invalid
+      else if state.engine.limits.maxMatcherVisits <
+          state.engine.metrics.matcherVisits + action.structuralInputs.length then
+        .resourceLimit
+      else
+        match action.matcherEpoch, state.engine.matcherCursors[applicationId.index]? with
+        | some epoch, some (some cursor) =>
+            .batch action.structuralInputs epoch cursor
+        | _, _ => .invalid
+
 private def prepareApplication (state : State Fact) (applicationId : ApplicationId)
-    (effort : Option Nat) (clearDirty : Bool) (decision : DecisionClass) : SelectResult Fact :=
+    (effort : Option Nat) (clearDirty : Bool) (decision : DecisionClass)
+    (source : Option Action := none) : SelectResult Fact :=
   if state.engine.limits.maxActions <= state.engine.metrics.queuePops then
     reject state .actionLimit
   else
@@ -582,6 +683,16 @@ private def prepareApplication (state : State Fact) (applicationId : Application
             state.engine.seenVersions? application.watches,
             state.engine.factViews? application.watches with
         | some rule, some inputs, some views =>
+          match prepareMatchForPolicy state applicationId rule source with
+          | .resourceLimit =>
+              .engineResource .matcherVisits (chargeDecision state decision)
+          | .invalid => reject state .malformedState
+          | prepared =>
+            let (structuralInputs, matcherEpoch, pendingMatcher) :=
+              match prepared with
+              | .ordinary => ([], none, none)
+              | .batch inputs epoch next => (inputs, some epoch, some next)
+              | .resourceLimit | .invalid => ([], none, none)
             let action : Action :=
               { serial := state.engine.metrics.requests
                 programVersion := state.engine.programVersion
@@ -591,7 +702,10 @@ private def prepareApplication (state : State Fact) (applicationId : Application
                 node := application.node
                 kind := application.kind
                 effort := effort.getD application.effort
-                inputs }
+                generation := application.generation
+                inputs
+                structuralInputs
+                matcherEpoch }
             let queued :=
               if clearDirty then state.engine.queued.set! applicationId.index false
               else state.engine.queued
@@ -599,6 +713,7 @@ private def prepareApplication (state : State Fact) (applicationId : Application
               { state.engine with
                 queued
                 pending := some action
+                pendingMatcher
                 metrics :=
                   { state.engine.metrics with
                     queuePops := state.engine.metrics.queuePops + 1
@@ -673,7 +788,7 @@ private def selectSuggestion (state : State Fact) (suggestionId : SuggestionId)
           if effort != retainedEffort then reject state .wrongKey
           else
             match prepareApplication state retained.action.application (some effort) false
-                .retry with
+                .retry (some retained.action) with
             | .request request next =>
                 .request request (consumeSuggestion next suggestionId)
             | result => result

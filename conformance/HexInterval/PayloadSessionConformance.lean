@@ -37,6 +37,13 @@ def bodyKey : RuleKey := { name := "payload-session.mystery.body" }
 def overflowKey : RuleKey := { name := "payload-session.mystery.overflow" }
 def recoverKey : RuleKey := { name := "payload-session.mystery.recover" }
 def lateExtraKey : RuleKey := { name := "payload-session.mystery.late-extra" }
+def matcherKey : RuleKey := { name := "payload-session.mystery.matcher" }
+def matcherContractKey : RuleKey :=
+  { name := "payload-session.mystery.matcher-contract" }
+def invalidMatcherReplyKey : RuleKey :=
+  { name := "payload-session.mystery.matcher-invalid-reply" }
+def invalidMatcherPayloadKey : RuleKey :=
+  { name := "payload-session.mystery.matcher-invalid-payload" }
 def lateMalformedKey : RuleKey := { name := "payload-session.mystery.late-malformed" }
 
 def sourceOperation : Operation :=
@@ -66,6 +73,24 @@ def registration (key : RuleKey) : Registration :=
     watches := [.argument 0]
     writes := [.result] }
 
+def matcherRegistration (key : RuleKey) : Registration :=
+  { key
+    head := mysteryOp
+    kind := .instantiate
+    watches := []
+    writes := []
+    binding := .global
+    watchesProgram := true
+    matchWatch := .network }
+
+def matcherContractRegistration : Registration :=
+  { key := matcherContractKey
+    head := mysteryOp
+    kind := .improve
+    watches := []
+    writes := []
+    binding := .scoped }
+
 def factDomain : FactDomain Nat where
   top _ := 0
   narrow _ current proposed :=
@@ -74,6 +99,10 @@ def factDomain : FactDomain Nat where
 def contradictionDomain : FactDomain Nat where
   top _ := 0
   narrow _ _ proposed := .contradiction proposed
+
+def resourceDomain : FactDomain Nat where
+  top _ := 0
+  narrow _ _ _ := .resourceLimit 6
 
 def limits : Propagator.Limits :=
   { maxOperations := 4
@@ -477,6 +506,192 @@ def arenaAwarePackage : Package Nat :=
       4 ≤ payloadLimits.maxEntries && 8 ≤ payloadLimits.maxUses &&
         8 ≤ payloadLimits.maxDraftCells }
 
+def batchContainsMystery (request : RuleRequest Nat) : Bool :=
+  request.action.structuralInputs.any fun input =>
+    match input.key with
+    | .node candidate =>
+        match request.program.node? candidate with
+        | some instruction =>
+            (request.program.operation? instruction.op).any fun operation =>
+              operation.key == mysteryOp
+        | none => false
+    | .equality _ | .application _ => false
+
+def matcherRequest : InstantiationRequest :=
+  { key := 91
+    nodes :=
+      [{ domain := real
+         op := { index := 1 }
+         args := [.existing (node 1)] }]
+    equalities := []
+    scopes :=
+      [{ rule := matcherContractKey
+         anchor := .proposed 0
+         watches := [.existing (node 0)]
+         writes := [.proposed 0] }]
+    payload := payload 900 }
+
+def matcherFormat : ReplayFormat :=
+  { role := .instance
+    schema := 4
+    validateBody := fun body =>
+      match body with
+      | [_, 91] => true
+      | _ => false }
+
+def matcherPlan (request : RuleRequest Nat) : Plan Nat :=
+  if batchContainsMystery request then
+    { outcome := .success [] [.instantiate matcherRequest] {}
+      drafts :=
+        [{ label := payload 900
+           role := .instance
+           schema := 4
+           body := [request.action.structuralInputs.length, 91] }] }
+  else
+    { outcome := .noChange {}, drafts := [] }
+
+def matcherContractPlan (_request : RuleRequest Nat) : Plan Nat :=
+  { outcome := .noChange {}, drafts := [] }
+
+def acceptsMatcherScope (actualProgram : Program)
+    (binding : ScopeBinding) : Bool :=
+  actualProgram.check && binding.rule == matcherContractKey &&
+    ((actualProgram.node? binding.anchor).any fun instruction =>
+      (actualProgram.operation? instruction.op).any fun operation =>
+        operation.key == mysteryOp) &&
+    binding.watches == [node 0] && binding.writes == [binding.anchor]
+
+def matcherPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned
+          (matcherRegistration matcherKey) matcherPlan #[matcherFormat],
+        { Handler.statelessPlanned
+            matcherContractRegistration matcherContractPlan with
+          acceptsScope := acceptsMatcherScope }] }
+
+def rejectedScopeRequest : InstantiationRequest :=
+  { matcherRequest with
+    scopes :=
+      [{ rule := matcherContractKey
+         anchor := .proposed 0
+         watches := [.existing (node 2)]
+         writes := [.proposed 0] }] }
+
+def rejectedScopePlan (request : RuleRequest Nat) : Plan Nat :=
+  if batchContainsMystery request then
+    { outcome := .success [] [.instantiate rejectedScopeRequest] {}
+      drafts :=
+        [{ label := payload 900
+           role := .instance
+           schema := 4
+           body := [request.action.structuralInputs.length, 91] }] }
+  else
+    { outcome := .noChange {}, drafts := [] }
+
+def rejectedScopePackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned
+          (matcherRegistration matcherKey) rejectedScopePlan #[matcherFormat],
+        { Handler.statelessPlanned
+            matcherContractRegistration matcherContractPlan with
+          acceptsScope := acceptsMatcherScope }] }
+
+def smallMatcherRequest : InstantiationRequest :=
+  { key := 95
+    nodes := []
+    equalities := []
+    payload := payload 900 }
+
+def smallMatcherFormat : ReplayFormat :=
+  { role := .instance
+    schema := 4
+    validateBody := fun body => body == [95] }
+
+def smallMatcherPlan (request : RuleRequest Nat) : Plan Nat :=
+  if batchContainsMystery request then
+    { outcome := .success [] [.instantiate smallMatcherRequest] {}
+      drafts :=
+        [{ label := payload 900
+           role := .instance
+           schema := 4
+           body := [95] }] }
+  else
+    { outcome := .noChange {}, drafts := [] }
+
+def smallMatcherPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned
+          (matcherRegistration matcherKey) smallMatcherPlan
+          #[smallMatcherFormat]] }
+
+def invalidMatcherReplyFormat : ReplayFormat :=
+  { role := .fact
+    schema := 4
+    validateBody := fun body =>
+      match body with
+      | [_, 92] => true
+      | _ => false }
+
+def invalidMatcherReplyPlan (request : RuleRequest Nat) : Plan Nat :=
+  if batchContainsMystery request then
+    { outcome :=
+        .success
+          [{ node := request.action.node, fact := 7, payload := payload 900 }]
+          [] {}
+      drafts :=
+        [{ label := payload 900
+           role := .fact
+           schema := 4
+           body := [request.action.structuralInputs.length, 92] }] }
+  else
+    { outcome := .noChange {}, drafts := [] }
+
+def invalidMatcherReplyPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned
+          (matcherRegistration invalidMatcherReplyKey) invalidMatcherReplyPlan
+          #[invalidMatcherReplyFormat]] }
+
+def invalidMatcherPayloadFormat : ReplayFormat :=
+  { role := .instance
+    schema := 4
+    validateBody := fun body =>
+      match body with
+      | [_, 93] => true
+      | _ => false }
+
+def invalidMatcherPayloadPlan (request : RuleRequest Nat) : Plan Nat :=
+  if batchContainsMystery request then
+    { outcome := .success [] [.instantiate matcherRequest] {}
+      drafts :=
+        [{ label := payload 901
+           role := .instance
+           schema := 4
+           body := [request.action.structuralInputs.length, 93] }] }
+  else
+    { outcome := .noChange {}, drafts := [] }
+
+def invalidMatcherPayloadPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned
+          (matcherRegistration invalidMatcherPayloadKey) invalidMatcherPayloadPlan
+          #[invalidMatcherPayloadFormat]] }
+
 /-- Two unrelated opaque function packages deliberately assign different
 formats to the same role-local schema number. -/
 def leftOp : OpKey := { name := "payload-session.opaque-left" }
@@ -575,6 +790,30 @@ def startWithin (package : Package Nat) (engineLimits : Propagator.Limits)
   PayloadSession.Session.start factDomain program #[package] #[3, 0, 0]
     engineLimits payloadLimits
 
+def matcherLimits : Propagator.Limits :=
+  { limits with
+    maxScopeNodes := 2
+    maxMatcherVisits := 8
+    matcherBatchSize := 2 }
+
+def oneMatcherUseLimits : Propagator.Limits :=
+  { matcherLimits with
+    maxOutcomeCandidates := 0
+    maxOutcomeSuggestions := 1
+    maxProposalItems := 0 }
+
+def oneMatcherEntryArena : PayloadArena.Limits :=
+  { arenaLimits with
+    maxEntries := 1
+    maxDrafts := 1
+    maxUses := 1 }
+
+def startMatcher (package : Package Nat)
+    (engineLimits : Propagator.Limits := matcherLimits)
+    (payloadLimits : PayloadArena.Limits := arenaLimits) :
+    Except PayloadSession.StartError (PayloadSession.Session Nat) :=
+  startWithin package engineLimits payloadLimits
+
 def oneReplyLimits : Propagator.Limits :=
   { limits with
     maxOutcomeCandidates := 1
@@ -624,6 +863,176 @@ def overflowArenaLimits : PayloadArena.Limits :=
 def oversizedProgram : Program :=
   { program with
     nodes := program.nodes.push (instruction 1 [node 0]) |>.push (instruction 1 [node 0]) }
+
+-- A real package callback recognizes its own operation in the
+-- engine-enumerated structural batch.  Its proof entry, retained proposal,
+-- and engine-owned cursor commit together, while only the batch and epoch
+-- cross the package boundary.
+#guard
+  match startMatcher matcherPackage with
+  | .ok session =>
+      match session.advance with
+      | .advanced next =>
+          next.live && !next.droppedWork &&
+            next.arena.entries.size == 1 &&
+            next.engine.suggestions.size == 1 &&
+            next.engine.metrics.matcherVisits == 2 &&
+            next.engine.pending.isNone && next.engine.pendingMatcher.isNone &&
+            match next.engine.matcherCursors[0]?,
+                next.arena.entry? (payload 0) .instance,
+                next.engine.suggestions[0]? with
+            | some (some cursor), some entry, some retained =>
+                cursor.offset == 2 && !cursor.exhausted &&
+                  entry.origin.key == matcherKey &&
+                  entry.replayKey ==
+                    { rule := matcherKey, role := .instance, schema := 4 } &&
+                  entry.origin.structuralInputs ==
+                    [{ key := .node (node 0), generation := 0 },
+                     { key := .node (node 1), generation := 0 }] &&
+                  entry.origin.matcherEpoch == some 0 &&
+                  retained.action.structuralInputs ==
+                    entry.origin.structuralInputs &&
+                  retained.action.matcherEpoch == entry.origin.matcherEpoch &&
+                  match retained.suggestion with
+                  | .instantiate request =>
+                      request.payload == payload 0 &&
+                        (next.arena.entry? request.payload .instance).isSome &&
+                        request.scopes.length == 1 &&
+                        match next.engine.admitInstantiation { index := 0 } with
+                        | .admitted [fresh] after =>
+                            fresh == node 3 && after.bindings.size == 1 &&
+                              after.applications.size == 2 &&
+                              after.matcherCursors.size == 2 &&
+                              match after.bindings[0]?,
+                                  after.matcherCursors[1]? with
+                              | some binding, some none =>
+                                  binding.rule == matcherContractKey &&
+                                    binding.anchor == fresh &&
+                                    binding.watches == [node 0] &&
+                                    binding.writes == [fresh]
+                              | _, _ => false
+                        | _ => false
+                  | _ => false
+            | _, _, _ => false
+      | _ => false
+  | .error _ => false
+
+-- The session installs the registry's package-owned scope validator in the
+-- engine.  A structurally valid but package-rejected dynamic contractor is
+-- refused after prospective replay freezing, with no arena or cursor commit.
+#guard
+  match startMatcher rejectedScopePackage with
+  | .ok session =>
+      match session.advance with
+      | .invalidReply .malformedProposal next =>
+          !next.live && next.arena.entries.isEmpty &&
+            next.engine.suggestions.isEmpty &&
+            next.engine.bindings.isEmpty &&
+            next.engine.metrics.matcherVisits == 0 &&
+            next.engine.pending.isNone && next.engine.pendingMatcher.isNone &&
+            match next.engine.matcherCursors[0]? with
+            | some (some cursor) => cursor.offset == 0
+            | _ => false
+      | _ => false
+  | .error _ => false
+
+-- Payload freezing may succeed before semantic proposal validation.  If the
+-- engine rejects that proposal, neither the prospective arena nor prepared
+-- matcher progress is retained.
+#guard
+  match startMatcher invalidMatcherReplyPackage with
+  | .ok session =>
+      match session.advance with
+      | .invalidReply (.undeclaredWrite target) next =>
+          target == node 1 && !next.live && next.arena.entries.isEmpty &&
+            next.engine.suggestions.isEmpty &&
+            next.engine.metrics.matcherVisits == 0 &&
+            next.engine.pending.isNone && next.engine.pendingMatcher.isNone &&
+            match next.engine.matcherCursors[0]? with
+            | some (some cursor) => cursor.offset == 0
+            | _ => false
+      | _ => false
+  | .error _ => false
+
+-- Matcher requeue is part of the same engine transaction.  A queue-capacity
+-- refusal after successful freezing discards the new arena entry, retained
+-- proposal, visit charge, and cursor advance together.
+#guard
+  match startMatcher matcherPackage
+      { matcherLimits with maxQueueEntries := 1 } with
+  | .ok session =>
+      match session.advance with
+      | .engineResource .queueEntries next =>
+          !next.live && next.arena.entries.isEmpty &&
+            next.engine.suggestions.isEmpty &&
+            next.engine.metrics.matcherVisits == 0 &&
+            next.engine.pending.isNone && next.engine.pendingMatcher.isNone &&
+            match next.engine.matcherCursors[0]? with
+            | some (some cursor) => cursor.offset == 0
+            | _ => false
+      | _ => false
+  | .error _ => false
+
+-- Malformed package-local evidence is the deliberate exception to rollback:
+-- the arena remains unchanged, but a bounded synthetic failed reply consumes
+-- the matcher batch and permanently records incomplete work.
+#guard
+  match startMatcher invalidMatcherPayloadPackage with
+  | .ok session =>
+      match session.advance with
+      | .invalidPayload (.danglingReference label) next =>
+          label == payload 900 && next.live && next.droppedWork &&
+            !next.complete && next.arena.entries.isEmpty &&
+            next.engine.suggestions.isEmpty &&
+            next.engine.metrics.ruleFailures == 1 &&
+            next.engine.metrics.matcherVisits == 2 &&
+            next.engine.pending.isNone && next.engine.pendingMatcher.isNone &&
+            match next.engine.matcherCursors[0]? with
+            | some (some cursor) => cursor.offset == 2 && !cursor.exhausted
+            | _ => false
+      | _ => false
+  | .error _ => false
+
+-- Cumulative arena exhaustion clears the pending second reply but preserves
+-- exactly the first committed arena and first-batch cursor position.
+#guard
+  match startMatcher smallMatcherPackage oneMatcherUseLimits
+      oneMatcherEntryArena with
+  | .ok session =>
+      match session.advance with
+      | .advanced first =>
+          first.arena.entries.size == 1 &&
+            first.engine.metrics.matcherVisits == 2 &&
+            match first.advance with
+            | .payloadResource .entries stopped =>
+                !stopped.live && !stopped.complete &&
+                  stopped.arena.entries.size == 1 &&
+                  stopped.engine.suggestions.size == 1 &&
+                  stopped.engine.metrics.matcherVisits == 2 &&
+                  stopped.engine.pending.isNone &&
+                  stopped.engine.pendingMatcher.isNone &&
+                  match stopped.engine.matcherCursors[0]? with
+                  | some (some cursor) =>
+                      cursor.offset == 2 && !cursor.exhausted
+                  | _ => false
+            | _ => false
+      | _ => false
+  | .error _ => false
+
+-- Fact-domain resource refusal is also later than successful payload
+-- freezing.  The ordinary contractor path rolls its prospective proof entry
+-- and fact change back together.
+#guard
+  match PayloadSession.Session.start resourceDomain program #[goodPackage]
+      #[3, 0, 0] limits arenaLimits with
+  | .ok session =>
+      match session.advance with
+      | .factResource 6 next =>
+          !next.live && next.arena.entries.isEmpty &&
+            next.engine.facts == #[3, 0, 0] &&
+            next.engine.history.isEmpty && next.engine.pending.isNone
+      | _ => false
+  | .error _ => false
 
 def startOpaque (right : Package Nat) :
     Except PayloadSession.StartError (PayloadSession.Session Nat) :=
