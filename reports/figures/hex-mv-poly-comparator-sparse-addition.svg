@@ -31,31 +31,31 @@ text { font-family: sans-serif; fill: #202124; }
 <line class="axis" x1="90" y1="62" x2="90" y2="482"/>
 <text x="480.0" y="538" text-anchor="middle" font-size="14">source terms n</text>
 <text x="22" y="272.0" text-anchor="middle" font-size="14" transform="rotate(-90 22 272.0)">wall time per call (s)</text>
-<polyline class="series" stroke="#2468b4" points="90.00,342.15 246.00,293.56 402.00,244.97 558.00,195.56 714.00,148.12 870.00,99.37"/>
-<circle cx="90.00" cy="342.15" r="4" fill="#2468b4"/>
-<circle cx="246.00" cy="293.56" r="4" fill="#2468b4"/>
-<circle cx="402.00" cy="244.97" r="4" fill="#2468b4"/>
-<circle cx="558.00" cy="195.56" r="4" fill="#2468b4"/>
-<circle cx="714.00" cy="148.12" r="4" fill="#2468b4"/>
-<circle cx="870.00" cy="99.37" r="4" fill="#2468b4"/>
+<polyline class="series" stroke="#2468b4" points="90.00,341.81 246.00,290.96 402.00,240.38 558.00,191.82 714.00,146.10 870.00,95.95"/>
+<circle cx="90.00" cy="341.81" r="4" fill="#2468b4"/>
+<circle cx="246.00" cy="290.96" r="4" fill="#2468b4"/>
+<circle cx="402.00" cy="240.38" r="4" fill="#2468b4"/>
+<circle cx="558.00" cy="191.82" r="4" fill="#2468b4"/>
+<circle cx="714.00" cy="146.10" r="4" fill="#2468b4"/>
+<circle cx="870.00" cy="95.95" r="4" fill="#2468b4"/>
 <line x1="108" y1="82" x2="136" y2="82" stroke="#2468b4" stroke-width="2.5"/>
 <text x="146" y="86" font-size="12">Hex ExtTreeMap</text>
-<polyline class="series" stroke="#d95f02" points="90.00,401.84 246.00,354.25 402.00,305.76 558.00,259.64 714.00,213.04 870.00,166.54"/>
-<rect x="86.00" y="397.84" width="8" height="8" fill="#d95f02"/>
-<rect x="242.00" y="350.25" width="8" height="8" fill="#d95f02"/>
-<rect x="398.00" y="301.76" width="8" height="8" fill="#d95f02"/>
-<rect x="554.00" y="255.64" width="8" height="8" fill="#d95f02"/>
-<rect x="710.00" y="209.04" width="8" height="8" fill="#d95f02"/>
-<rect x="866.00" y="162.54" width="8" height="8" fill="#d95f02"/>
+<polyline class="series" stroke="#d95f02" points="90.00,403.32 246.00,355.69 402.00,306.09 558.00,260.03 714.00,214.54 870.00,168.19"/>
+<rect x="86.00" y="399.32" width="8" height="8" fill="#d95f02"/>
+<rect x="242.00" y="351.69" width="8" height="8" fill="#d95f02"/>
+<rect x="398.00" y="302.09" width="8" height="8" fill="#d95f02"/>
+<rect x="554.00" y="256.03" width="8" height="8" fill="#d95f02"/>
+<rect x="710.00" y="210.54" width="8" height="8" fill="#d95f02"/>
+<rect x="866.00" y="164.19" width="8" height="8" fill="#d95f02"/>
 <line x1="108" y1="106" x2="136" y2="106" stroke="#d95f02" stroke-width="2.5"/>
 <text x="146" y="110" font-size="12">CompPoly CMvPolynomial</text>
-<polyline class="series" stroke="#249148" points="90.00,458.70 246.00,416.25 402.00,373.97 558.00,331.71 714.00,286.95 870.00,246.11"/>
-<polygon points="90.00,453.70 85.00,462.70 95.00,462.70" fill="#249148"/>
-<polygon points="246.00,411.25 241.00,420.25 251.00,420.25" fill="#249148"/>
-<polygon points="402.00,368.97 397.00,377.97 407.00,377.97" fill="#249148"/>
-<polygon points="558.00,326.71 553.00,335.71 563.00,335.71" fill="#249148"/>
-<polygon points="714.00,281.95 709.00,290.95 719.00,290.95" fill="#249148"/>
-<polygon points="870.00,241.11 865.00,250.11 875.00,250.11" fill="#249148"/>
+<polyline class="series" stroke="#249148" points="90.00,460.47 246.00,416.77 402.00,373.74 558.00,331.95 714.00,287.94 870.00,246.14"/>
+<polygon points="90.00,455.47 85.00,464.47 95.00,464.47" fill="#249148"/>
+<polygon points="246.00,411.77 241.00,420.77 251.00,420.77" fill="#249148"/>
+<polygon points="402.00,368.74 397.00,377.74 407.00,377.74" fill="#249148"/>
+<polygon points="558.00,326.95 553.00,335.95 563.00,335.95" fill="#249148"/>
+<polygon points="714.00,282.94 709.00,291.94 719.00,291.94" fill="#249148"/>
+<polygon points="870.00,241.14 865.00,250.14 875.00,250.14" fill="#249148"/>
 <line x1="108" y1="130" x2="136" y2="130" stroke="#249148" stroke-width="2.5"/>
 <text x="146" y="134" font-size="12">sorted-list MvSparsePoly proxy</text>
 </svg>

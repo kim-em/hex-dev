@@ -35,7 +35,7 @@ The companion surface also passes the pinned consumer acceptance described in
 compile and replay their kernel-checked certificates, and CompPoly's
 univariate and bivariate recursive-view adapters compile after the disclosed
 toolchain proof rewrite. The machine-readable record is
-`reports/bench-results/hex-mv-poly-consumers-d05d0635.json`.
+`reports/bench-results/hex-mv-poly-consumers-b9ce25d6.json`.
 
 ## Verdicts
 

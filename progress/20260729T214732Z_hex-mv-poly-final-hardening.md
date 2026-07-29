@@ -61,19 +61,31 @@
   focused conformance and fixture emission, all 11 native verification
   targets, 119 combined harness tests, Phase-4, DAG, release, Mathlib-free
   bench/probe, and conformance-registration checks successfully.
+- Captured fresh pinned-consumer acceptance from clean commit `b9ce25d6`;
+  SOS passed 1,545 jobs and CompPoly passed 1,902 jobs with no dirty Hex
+  source state.
+- Recaptured all eleven native targets and both five-family informational
+  comparators from the corrected shared corpus at `b9ce25d6`. Every completed
+  registration retained its declared-complexity verdict; the expected
+  CompPoly call caps truncated only its larger cubic-logarithmic rungs.
+- Regenerated all five comparator SVGs from the new artifacts and replaced
+  the superseded native, comparator, and consumer JSON records.
+- Rejected one complete kernel sweep because the baseline null IQR/build ratio
+  was 10.53%, above the registered 10% ceiling. Stopped a second attempt
+  during sustained near-100% activity on CPU 22 and its sibling rather than
+  admitting a marginal run; neither attempt is committed.
 
 ## Current frontier
 
-The implementation, reusable map layer, final review fixes, reports, and local
-verification are complete. Exact evidence recaptures are still needed because
-the public bridge and shared collision corpus changed after the existing
-clean-source artifacts.
+The implementation, reusable map layer, final review fixes, local
+verification, pinned-consumer evidence, and native/comparator evidence are
+complete. Only a valid final kernel recapture remains.
 
 ## Next step
 
-Commit the review fixes, recapture pinned-consumer, kernel, native, and
-comparator evidence from that clean source state, refresh their reports and
-plots, then open the completion PR and monitor CI to merge.
+Commit the accepted evidence refresh, wait for a quiet CPU-22 window, recapture
+the kernel sweep from that clean source state, refresh its report, then open
+the completion PR and monitor CI to merge.
 
 ## Blockers
 

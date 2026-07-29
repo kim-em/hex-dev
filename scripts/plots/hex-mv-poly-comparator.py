@@ -13,14 +13,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 HEX_EXPORT = (
-    ROOT / "reports/bench-results/hex-mv-poly-native-163e100c-chungus2.json"
+    ROOT / "reports/bench-results/hex-mv-poly-native-b9ce25d6-chungus2.json"
 )
 COMPPOLY_EXPORT = (
-    ROOT / "reports/bench-results/hex-mv-poly-comppoly-a7430482-chungus2.json"
+    ROOT / "reports/bench-results/hex-mv-poly-comppoly-b9ce25d6-chungus2.json"
 )
 SORTED_EXPORT = (
     ROOT
-    / "reports/bench-results/hex-mv-poly-sorted-proxy-a7430482-chungus2.json"
+    / "reports/bench-results/hex-mv-poly-sorted-proxy-b9ce25d6-chungus2.json"
 )
 
 

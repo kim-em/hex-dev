@@ -37,35 +37,35 @@ text { font-family: sans-serif; fill: #202124; }
 <line class="axis" x1="90" y1="62" x2="90" y2="482"/>
 <text x="480.0" y="538" text-anchor="middle" font-size="14">source terms n</text>
 <text x="22" y="272.0" text-anchor="middle" font-size="14" transform="rotate(-90 22 272.0)">wall time per call (s)</text>
-<polyline class="series" stroke="#2468b4" points="90.00,394.39 246.00,346.90 402.00,299.41 558.00,252.25 649.25,224.62 714.00,205.66 805.25,179.28 870.00,159.91"/>
-<circle cx="90.00" cy="394.39" r="4" fill="#2468b4"/>
-<circle cx="246.00" cy="346.90" r="4" fill="#2468b4"/>
-<circle cx="402.00" cy="299.41" r="4" fill="#2468b4"/>
-<circle cx="558.00" cy="252.25" r="4" fill="#2468b4"/>
-<circle cx="649.25" cy="224.62" r="4" fill="#2468b4"/>
-<circle cx="714.00" cy="205.66" r="4" fill="#2468b4"/>
-<circle cx="805.25" cy="179.28" r="4" fill="#2468b4"/>
-<circle cx="870.00" cy="159.91" r="4" fill="#2468b4"/>
+<polyline class="series" stroke="#2468b4" points="90.00,394.74 246.00,347.29 402.00,298.23 558.00,251.94 649.25,224.72 714.00,205.71 805.25,179.30 870.00,160.20"/>
+<circle cx="90.00" cy="394.74" r="4" fill="#2468b4"/>
+<circle cx="246.00" cy="347.29" r="4" fill="#2468b4"/>
+<circle cx="402.00" cy="298.23" r="4" fill="#2468b4"/>
+<circle cx="558.00" cy="251.94" r="4" fill="#2468b4"/>
+<circle cx="649.25" cy="224.72" r="4" fill="#2468b4"/>
+<circle cx="714.00" cy="205.71" r="4" fill="#2468b4"/>
+<circle cx="805.25" cy="179.30" r="4" fill="#2468b4"/>
+<circle cx="870.00" cy="160.20" r="4" fill="#2468b4"/>
 <line x1="108" y1="82" x2="136" y2="82" stroke="#2468b4" stroke-width="2.5"/>
 <text x="146" y="86" font-size="12">Hex ExtTreeMap</text>
-<polyline class="series" stroke="#d95f02" points="90.00,374.00 246.00,306.00 402.00,235.98 558.00,167.12 649.25,127.34 714.00,97.31"/>
-<rect x="86.00" y="370.00" width="8" height="8" fill="#d95f02"/>
-<rect x="242.00" y="302.00" width="8" height="8" fill="#d95f02"/>
-<rect x="398.00" y="231.98" width="8" height="8" fill="#d95f02"/>
-<rect x="554.00" y="163.12" width="8" height="8" fill="#d95f02"/>
-<rect x="645.25" y="123.34" width="8" height="8" fill="#d95f02"/>
-<rect x="710.00" y="93.31" width="8" height="8" fill="#d95f02"/>
+<polyline class="series" stroke="#d95f02" points="90.00,374.58 246.00,306.37 402.00,236.56 558.00,168.13 649.25,127.74 714.00,98.26"/>
+<rect x="86.00" y="370.58" width="8" height="8" fill="#d95f02"/>
+<rect x="242.00" y="302.37" width="8" height="8" fill="#d95f02"/>
+<rect x="398.00" y="232.56" width="8" height="8" fill="#d95f02"/>
+<rect x="554.00" y="164.13" width="8" height="8" fill="#d95f02"/>
+<rect x="645.25" y="123.74" width="8" height="8" fill="#d95f02"/>
+<rect x="710.00" y="94.26" width="8" height="8" fill="#d95f02"/>
 <line x1="108" y1="106" x2="136" y2="106" stroke="#d95f02" stroke-width="2.5"/>
 <text x="146" y="110" font-size="12">CompPoly CMvPolynomial</text>
-<polyline class="series" stroke="#249148" points="90.00,424.10 246.00,377.04 402.00,331.51 558.00,285.65 649.25,260.12 714.00,241.47 805.25,215.72 870.00,194.14"/>
-<polygon points="90.00,419.10 85.00,428.10 95.00,428.10" fill="#249148"/>
-<polygon points="246.00,372.04 241.00,381.04 251.00,381.04" fill="#249148"/>
+<polyline class="series" stroke="#249148" points="90.00,424.02 246.00,378.03 402.00,331.51 558.00,286.05 649.25,260.36 714.00,241.36 805.25,215.94 870.00,195.42"/>
+<polygon points="90.00,419.02 85.00,428.02 95.00,428.02" fill="#249148"/>
+<polygon points="246.00,373.03 241.00,382.03 251.00,382.03" fill="#249148"/>
 <polygon points="402.00,326.51 397.00,335.51 407.00,335.51" fill="#249148"/>
-<polygon points="558.00,280.65 553.00,289.65 563.00,289.65" fill="#249148"/>
-<polygon points="649.25,255.12 644.25,264.12 654.25,264.12" fill="#249148"/>
-<polygon points="714.00,236.47 709.00,245.47 719.00,245.47" fill="#249148"/>
-<polygon points="805.25,210.72 800.25,219.72 810.25,219.72" fill="#249148"/>
-<polygon points="870.00,189.14 865.00,198.14 875.00,198.14" fill="#249148"/>
+<polygon points="558.00,281.05 553.00,290.05 563.00,290.05" fill="#249148"/>
+<polygon points="649.25,255.36 644.25,264.36 654.25,264.36" fill="#249148"/>
+<polygon points="714.00,236.36 709.00,245.36 719.00,245.36" fill="#249148"/>
+<polygon points="805.25,210.94 800.25,219.94 810.25,219.94" fill="#249148"/>
+<polygon points="870.00,190.42 865.00,199.42 875.00,199.42" fill="#249148"/>
 <line x1="108" y1="130" x2="136" y2="130" stroke="#249148" stroke-width="2.5"/>
 <text x="146" y="134" font-size="12">sorted-list MvSparsePoly proxy</text>
 </svg>

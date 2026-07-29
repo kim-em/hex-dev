@@ -74,15 +74,15 @@ migrations and builds are reproducible with
 
 The setup script applies these compile-acceptance overlays only in temporary
 pinned clones. The machine-readable acceptance record is
-`reports/bench-results/hex-mv-poly-consumers-d05d0635.json` (SHA-256
-`6bcd144c785dc64f305d9b82851b7811302e755e4cafc245ef5a62cfcea78e17`);
-it records clean Hex source commit `d05d0635`, the pinned revisions, manifest
+`reports/bench-results/hex-mv-poly-consumers-b9ce25d6.json` (SHA-256
+`9b8744b96e1a8ff08ef0a0a4dedd54c85c9ac1ad13eba5cf16d58e4adc9da3a7`);
+it records clean Hex source commit `b9ce25d6`, the pinned revisions, manifest
 and adapter hashes, exact build targets, job counts, and hashed Lake output.
 
 ## Verdicts
 
 The three-trial scientific run used clean commit
-`163e100c9eaefe35389e2cb2f2b04a17103d3490` on `chungus2` (AMD EPYC 9455,
+`b9ce25d60e0bad7d65e87b93424a3e2a12074e4f` on `chungus2` (AMD EPYC 9455,
 x86-64 Linux), Lean `4.32.0-rc1`, and lean-bench `0.1.0`. Command:
 
 ```sh
@@ -99,27 +99,27 @@ lake exe hexmvpoly_bench run \
   Hex.MvPolyBench.runSubstCollisions \
   Hex.MvPolyBench.runSumOfSquaresArithmetic \
   --outer-trials 3 \
-  --export-file /tmp/hex-mv-poly-native-163e100c-chungus2.json
+  --export-file /tmp/hex-mv-poly-native-b9ce25d6-chungus2.json
 ```
 
 The committed export is
-`reports/bench-results/hex-mv-poly-native-163e100c-chungus2.json`
+`reports/bench-results/hex-mv-poly-native-b9ce25d6-chungus2.json`
 (SHA-256
-`9e2a2f086134a99361a75322baef08a7aaa66ed6eb3b9b62ad07bdfa3c8e89d4`).
+`29d48692154f57378509582b83744330aa58f3b13c3f71ad61ad497f265b9526`).
 
 | target | rungs | median at first → last rung | fitted residual slope β | verdict |
 |---|---:|---:|---:|---|
-| `runSparseAdditionLex` | 128…4096 | 0.100 → 5.408 ms | +0.005 | consistent |
-| `runSparseAdditionGrlex` | 128…4096 | 0.110 → 5.831 ms | −0.010 | consistent |
-| `runSparseAdditionGrevlex` | 128…4096 | 0.119 → 6.329 ms | −0.004 | consistent |
-| `runSparseMultiplicationLow` | 8…128 | 0.084 → 59.302 ms | +0.069 | consistent |
-| `runSparseMultiplicationHigh` | 8…512 | 0.033 → 254.524 ms | −0.084 | consistent |
-| `runCancellationInt` | 8…256 | 0.178 → 399.234 ms | −0.028 | consistent |
-| `runCancellationRat` | 8…256 | 0.409 → 873.109 ms | −0.036 | consistent |
-| `runRenameCollisions` | 64…1024 | 0.023 → 0.360 ms | −0.009 | consistent |
-| `runPartialEvalCollisions` | 64…1024 | 0.035 → 0.727 ms | +0.112 | consistent |
-| `runSubstCollisions` | 64…1024 | 0.130 → 2.555 ms | −0.060 | consistent |
-| `runSumOfSquaresArithmetic` | 8…512 | 0.151 → 2,157.113 ms | +0.038 | consistent |
+| `runSparseAdditionLex` | 128…4096 | 0.100 → 5.721 ms | +0.003 | consistent |
+| `runSparseAdditionGrlex` | 128…4096 | 0.109 → 5.896 ms | +0.001 | consistent |
+| `runSparseAdditionGrevlex` | 128…4096 | 0.118 → 6.310 ms | −0.010 | consistent |
+| `runSparseMultiplicationLow` | 8…128 | 0.082 → 57.981 ms | +0.067 | consistent |
+| `runSparseMultiplicationHigh` | 8…512 | 0.033 → 252.729 ms | −0.084 | consistent |
+| `runCancellationInt` | 8…256 | 0.176 → 395.510 ms | −0.033 | consistent |
+| `runCancellationRat` | 8…256 | 0.413 → 872.146 ms | −0.033 | consistent |
+| `runRenameCollisions` | 64…1024 | 0.022 → 0.351 ms | −0.004 | consistent |
+| `runPartialEvalCollisions` | 64…1024 | 0.035 → 0.734 ms | +0.118 | consistent |
+| `runSubstCollisions` | 64…1024 | 0.129 → 2.542 ms | −0.064 | consistent |
+| `runSumOfSquaresArithmetic` | 8…512 | 0.150 → 2,187.538 ms | +0.055 | consistent |
 
 All eleven targets returned `consistent_with_declared_complexity` in all three
 outer trials; none was budget-truncated. `lake exe hexmvpoly_bench verify`
@@ -142,32 +142,32 @@ dependency, and adapter modules. The measured type remains CompPoly's
 including when the shared family generator requests grlex or grevlex.
 Consequently these are matched workload-shape comparisons, but not
 comparator-identical measurements for every family. Export:
-`reports/bench-results/hex-mv-poly-comppoly-a7430482-chungus2.json`
+`reports/bench-results/hex-mv-poly-comppoly-b9ce25d6-chungus2.json`
 (SHA-256
-`485ab0442431381ad652755a3f0672ad5f17305db6d174b229b29d081e2f80e3`).
+`2eff063eef8abfe49666c67e12528a6a03ff6d252107447b8fc095c7790ceccf`).
 
 The pinned Mathlib revision does not contain `MvSparsePoly`, so the second
 adapter is a canonical sorted-list proxy with linear addition and balanced
 translated-row multiplication. It matches the intended comparator for each
 family and implements the specified representation shape, but it is not an
 upstream Mathlib measurement. Export:
-`reports/bench-results/hex-mv-poly-sorted-proxy-a7430482-chungus2.json`
+`reports/bench-results/hex-mv-poly-sorted-proxy-b9ce25d6-chungus2.json`
 (SHA-256
-`90a657282e183f603acf336a097b0b760592ab2eac6ef73e260941c1e9ec0be9`).
+`78d7ad7ff205d7990752d65ebf694af3c935aece12854b848d8fcbf93b34cb39`).
 
 Both exports used clean Hex commit
-`a7430482`, three outer trials per rung, and consistent verdicts throughout.
+`b9ce25d6`, three outer trials per rung, and consistent verdicts throughout.
 
 ### `sparse-addition`
 
 | n | Hex | CompPoly | Hex / CompPoly | sorted proxy | Hex / sorted |
 |---:|---:|---:|---:|---:|---:|
-| 128 | 0.100 | 0.037 | 2.669× | 0.015 | 6.800× |
-| 256 | 0.222 | 0.082 | 2.713× | 0.029 | 7.522× |
-| 512 | 0.493 | 0.181 | 2.718× | 0.059 | 8.345× |
-| 1024 | 1.112 | 0.388 | 2.869× | 0.118 | 9.385× |
-| 2048 | 2.426 | 0.834 | 2.908× | 0.247 | 9.809× |
-| 4096 | 5.408 | 1.792 | 3.019× | 0.484 | 11.173× |
+| 128 | 0.100 | 0.036 | 2.750× | 0.014 | 7.039× |
+| 256 | 0.231 | 0.080 | 2.900× | 0.029 | 7.919× |
+| 512 | 0.532 | 0.181 | 2.947× | 0.059 | 8.965× |
+| 1024 | 1.182 | 0.385 | 3.071× | 0.118 | 10.022× |
+| 2048 | 2.508 | 0.814 | 3.082× | 0.243 | 10.308× |
+| 4096 | 5.721 | 1.744 | 3.281× | 0.484 | 11.824× |
 
 Both comparators have linear addition, while the current reusable
 `mergeWith?` implementation folds the smaller tree through `alter` on the
@@ -178,67 +178,67 @@ plus linear tree builder.
 
 | n | Hex | CompPoly | Hex / CompPoly | sorted proxy | Hex / sorted |
 |---:|---:|---:|---:|---:|---:|
-| 8 | 0.084 | 0.102 | 0.824× | 0.042 | 2.007× |
-| 12 | 0.224 | 0.427 | 0.524× | 0.120 | 1.858× |
-| 16 | 0.464 | 1.162 | 0.399× | 0.235 | 1.973× |
-| 24 | 1.218 | 4.631 | 0.263× | 0.626 | 1.946× |
-| 32 | 2.463 | 12.242 | 0.201× | 1.211 | 2.033× |
-| 48 | 6.378 | 47.110 | 0.135× | 3.127 | 2.040× |
-| 64 | 12.539 | 121.918 | 0.103× | 5.830 | 2.151× |
-| 96 | 30.864 | 476.219 | 0.065× | 15.114 | 2.042× |
-| 128 | 59.302 | 1,210.563 | 0.049× | 27.793 | 2.134× |
+| 8 | 0.082 | 0.098 | 0.828× | 0.041 | 1.976× |
+| 12 | 0.221 | 0.420 | 0.526× | 0.121 | 1.819× |
+| 16 | 0.453 | 1.091 | 0.415× | 0.236 | 1.916× |
+| 24 | 1.186 | 4.458 | 0.266× | 0.611 | 1.943× |
+| 32 | 2.454 | 11.620 | 0.211× | 1.202 | 2.041× |
+| 48 | 6.232 | 45.634 | 0.137× | 3.142 | 1.984× |
+| 64 | 11.976 | 117.604 | 0.102× | 5.822 | 2.057× |
+| 96 | 30.607 | 449.722 | 0.068× | 15.237 | 2.009× |
+| 128 | 57.981 | 1,154.740 | 0.050× | 27.554 | 2.104× |
 
 Hex remains within its `n² log n` declaration. CompPoly's nested singleton
-merge follows its derived cubic-logarithmic model and is 20.4× slower at the
-largest shared rung. The sorted proxy is 2.13× faster than Hex at `n=128`.
+merge follows its derived cubic-logarithmic model and is 19.9× slower at the
+largest shared rung. The sorted proxy is 2.10× faster than Hex at `n=128`.
 
 ### `cancellation-arithmetic`
 
 | n | Hex `Int` | CompPoly | Hex / CompPoly | sorted proxy | Hex / sorted |
 |---:|---:|---:|---:|---:|---:|
-| 8 | 0.178 | 0.349 | 0.511× | 0.067 | 2.657× |
-| 16 | 0.851 | 3.268 | 0.260× | 0.316 | 2.695× |
-| 32 | 4.059 | 32.702 | 0.124× | 1.412 | 2.874× |
-| 64 | 19.152 | 314.984 | 0.061× | 6.383 | 3.000× |
-| 96 | 47.523 | 1,165.727 | 0.041× | 14.782 | 3.215× |
-| 128 | 88.671 | 3,130.162 | 0.028× | 27.302 | 3.248× |
-| 192 | 211.122 | — | — | 63.686 | 3.315× |
-| 256 | 399.234 | — | — | 129.512 | 3.083× |
+| 8 | 0.176 | 0.342 | 0.515× | 0.067 | 2.620× |
+| 16 | 0.840 | 3.228 | 0.260× | 0.306 | 2.749× |
+| 32 | 4.219 | 32.081 | 0.132× | 1.412 | 2.988× |
+| 64 | 19.344 | 304.734 | 0.063× | 6.300 | 3.070× |
+| 96 | 47.356 | 1,150.565 | 0.041× | 14.666 | 3.229× |
+| 128 | 88.525 | 3,033.764 | 0.029× | 27.394 | 3.232× |
+| 192 | 211.009 | — | — | 63.213 | 3.338× |
+| 256 | 395.510 | — | — | 124.155 | 3.186× |
 
-CompPoly reaches its four-second call cap after `n=128`; Hex is 35.3× faster
+CompPoly reaches its four-second call cap after `n=128`; Hex is 34.3× faster
 at that shared rung. The sorted proxy stays within its declared model and is
-3.08× faster than Hex at `n=256`.
+3.19× faster than Hex at `n=256`.
 
 ### `structural-collisions`
 
 | n | Hex rename | CompPoly | Hex / CompPoly | sorted proxy | Hex / sorted |
 |---:|---:|---:|---:|---:|---:|
-| 64 | 0.023 | 0.040 | 0.576× | 0.026 | 0.890× |
-| 128 | 0.046 | 0.082 | 0.561× | 0.052 | 0.874× |
-| 256 | 0.091 | 0.162 | 0.559× | 0.106 | 0.855× |
-| 512 | 0.180 | 0.323 | 0.555× | 0.214 | 0.841× |
-| 768 | 0.270 | 0.490 | 0.551× | 0.323 | 0.836× |
-| 1024 | 0.360 | 0.664 | 0.541× | 0.434 | 0.829× |
+| 64 | 0.022 | 0.040 | 0.552× | 0.027 | 0.833× |
+| 128 | 0.045 | 0.084 | 0.533× | 0.054 | 0.831× |
+| 256 | 0.087 | 0.162 | 0.539× | 0.107 | 0.815× |
+| 512 | 0.178 | 0.321 | 0.553× | 0.218 | 0.815× |
+| 768 | 0.264 | 0.483 | 0.547× | 0.325 | 0.811× |
+| 1024 | 0.351 | 0.670 | 0.524× | 0.436 | 0.804× |
 
-All three curves are linear. Hex is 1.85× faster than CompPoly and about
-17–20% faster than the sorted proxy across the ladder.
+All three curves are linear. Hex is 1.91× faster than CompPoly and 20–23%
+faster than the sorted proxy across the ladder.
 
 ### `sum-of-squares-arithmetic`
 
 | n | Hex | CompPoly | Hex / CompPoly | sorted proxy | Hex / sorted |
 |---:|---:|---:|---:|---:|---:|
-| 8 | 0.151 | 0.103 | 1.458× | 0.069 | 2.175× |
-| 16 | 0.803 | 1.099 | 0.731× | 0.348 | 2.310× |
-| 32 | 4.152 | 11.415 | 0.364× | 1.743 | 2.382× |
-| 64 | 20.331 | 114.114 | 0.178× | 8.442 | 2.408× |
-| 128 | 95.737 | 1,103.494 | 0.087× | 38.991 | 2.455× |
-| 192 | 233.468 | — | — | 95.188 | 2.453× |
-| 256 | 441.906 | — | — | 182.773 | 2.418× |
-| 384 | 1,119.376 | — | — | 489.180 | 2.288× |
-| 512 | 2,157.113 | — | — | 1,047.070 | 2.060× |
+| 8 | 0.150 | 0.102 | 1.473× | 0.069 | 2.157× |
+| 16 | 0.802 | 1.083 | 0.741× | 0.345 | 2.323× |
+| 32 | 4.202 | 11.336 | 0.371× | 1.726 | 2.434× |
+| 64 | 20.411 | 112.441 | 0.182× | 8.443 | 2.418× |
+| 128 | 101.317 | 1,083.262 | 0.094× | 38.500 | 2.632× |
+| 192 | 240.299 | — | — | 92.501 | 2.598× |
+| 256 | 474.828 | — | — | 179.550 | 2.645× |
+| 384 | 1,222.322 | — | — | 497.916 | 2.455× |
+| 512 | 2,187.538 | — | — | 1,081.698 | 2.022× |
 
-CompPoly reaches its call cap after `n=128`, where Hex is 11.5× faster.
-Hex and the sorted proxy both retain `n² log n` scaling; the proxy is 2.06×
+CompPoly reaches its call cap after `n=128`, where Hex is 10.7× faster.
+Hex and the sorted proxy both retain `n² log n` scaling; the proxy is 2.02×
 faster at the largest rung.
 
 The five visualizations are:
@@ -341,14 +341,10 @@ All five filters passed confidence and ±5 ms sensitivity checks:
 
 No dominant inclusive cost is outside its registered benchmark target.
 
-The native and comparator captures predate the final query, bridge,
-proof-probe, and measurement-harness hardening. They also predate the shared
-`collisionMono` correction: that generator changed at every structural rung,
-although at `n = 1024` both versions collapse to eight destination keys with
-the same eight total degrees. The timed implementations did not change, so
-the captures remain useful historical evidence, but they are not
-byte-reproducible from the current source. An exact recapture must use the
-corrected shared corpus.
+The native and comparator captures use the final clean source commit and the
+corrected shared `collisionMono` generator at every structural rung. The
+committed JSON exports, report tables, and five SVGs are therefore generated
+from the same corpus and are byte-identifiable by the hashes above.
 
 ## Concerns
 
