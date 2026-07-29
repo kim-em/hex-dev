@@ -73,11 +73,17 @@ def runAll : Option (Array Input × Cursor) := do
         cursor.visits == 7 && cursor.exhausted
   | none => false
 
--- A one-short cumulative visit limit leaves the cursor unchanged and cannot
--- report exhaustion.
+-- A one-short cumulative limit consumes the six permitted visits rather than
+-- stranding them because the nominal batch is seven.  The following step has
+-- no visit room and therefore leaves that cursor unchanged.
 #guard
   match take generation0 (limits 6 7) view0 cursor0 with
-  | .resourceLimit cursor => cursor == cursor0
+  | .yielded inputs cursor =>
+      inputs == exactInputs.extract 0 6 && cursor.offset == 6 &&
+        cursor.visits == 6 && !cursor.exhausted &&
+        match take generation0 (limits 6 7) view0 cursor with
+        | .resourceLimit stopped => stopped == cursor
+        | _ => false
   | _ => false
 
 #guard
@@ -321,7 +327,8 @@ def matcherRule : Registration :=
     head := sinKey
     kind := .instantiate
     watches := []
-    writes := [] }
+    writes := []
+    watchesProgram := true }
 
 def sinContractRule : Registration :=
   { key := sinContractKey
@@ -360,6 +367,14 @@ def started? : Option (Engine Rank) :=
       #[matcherRule, sinContractRule] #[0, 0, 0] engineLimits with
   | .ok state => some state
   | .error _ => none
+
+def initialEngineCursor? : Option Cursor := do
+  let state <- started?
+  let view := Experiment.Propagator.StructuralMatcher.Engine.matcherView state
+  let .yielded _ cursor :=
+    Experiment.Propagator.StructuralMatcher.Engine.takeMatches
+      state (limits 4 4) (Cursor.start view) | none
+  if cursor.exhausted then some cursor else none
 
 -- The engine wrapper reads creation generations directly from the three
 -- structural arenas; freezing the size view does not copy those arenas.
@@ -444,37 +459,87 @@ def refusedUnchanged (resource : Resource) (limits : Experiment.Propagator.Limit
 #guard refusedUnchanged .applications { engineLimits with maxApplications := 2 }
 #guard refusedUnchanged .queueEntries { engineLimits with maxQueueEntries := 3 }
 
+def admitted? : Option (List NodeId × Engine Rank) := do
+  let retained <- retained?
+  match retained.admitInstantiation { index := 0 } with
+  | .admitted generated state => some (generated, state)
+  | _ => none
+
 -- The affordable transition atomically adds the function expressions,
 -- oddness equality, arbitrary-scope propagator, local matcher application,
--- generations, and queue work.
+-- generations, and queue work.  Since the matcher reads the whole program,
+-- the same transition also requeues its now-dormant original application.
 #guard
-  match retained? with
-  | some retained =>
-      match retained.admitInstantiation { index := 0 } with
-      | .admitted [sinX, negSinX] state =>
-          sinX == node 3 && negSinX == node 4 &&
-            state.programVersion == 1 && state.program.nodes.size == 5 &&
-            state.bindings.size == 1 && state.applications.size == 3 &&
-            state.equalities.size == 1 && state.queueHead == 1 &&
-            state.queue.size == 4 && state.instanceHistory.size == 1 &&
-            state.generations[3]? == some 1 && state.generations[4]? == some 1 &&
-            match state.bindings[0]?, state.applications[1]?,
-                state.applications[2]?, state.equalities[0]?,
-                state.instanceHistory[0]? with
-            | some binding, some scopedApp, some localApp, some equality, some event =>
-                binding.rule == sinContractKey && binding.anchor == sinX &&
-                  binding.watches == [node 0] && binding.writes == [sinX] &&
-                  scopedApp.node == sinX && scopedApp.watches == [node 0] &&
-                  scopedApp.writes == [sinX] && scopedApp.generation == 1 &&
-                  localApp.node == sinX && localApp.rule.index == 0 &&
-                  localApp.generation == 1 &&
-                  equality.left == node 2 && equality.right == negSinX &&
-                  equality.generation == 1 &&
-                  event.newNodes == [sinX, negSinX] &&
-                  event.newApplications == [{ index := 1 }] &&
-                  event.equalities == [{ index := 0 }]
-            | _, _, _, _, _ => false
-      | _ => false
+  match admitted? with
+  | some ([sinX, negSinX], state) =>
+      sinX == node 3 && negSinX == node 4 &&
+        state.programVersion == 1 && state.program.nodes.size == 5 &&
+        state.bindings.size == 1 && state.applications.size == 3 &&
+        state.equalities.size == 1 && state.queueHead == 1 &&
+        state.queue.size == 5 && state.queue[4]? == some (.application { index := 0 }) &&
+        state.queued[0]? == some true && state.instanceHistory.size == 1 &&
+        state.generations[3]? == some 1 && state.generations[4]? == some 1 &&
+        match state.bindings[0]?, state.applications[1]?,
+            state.applications[2]?, state.equalities[0]?,
+            state.instanceHistory[0]? with
+        | some binding, some scopedApp, some localApp, some equality, some event =>
+            binding.rule == sinContractKey && binding.anchor == sinX &&
+              binding.watches == [node 0] && binding.writes == [sinX] &&
+              scopedApp.node == sinX && scopedApp.watches == [node 0] &&
+              scopedApp.writes == [sinX] && scopedApp.generation == 1 &&
+              localApp.node == sinX && localApp.rule.index == 0 &&
+              localApp.generation == 1 &&
+              equality.left == node 2 && equality.right == negSinX &&
+              equality.generation == 1 &&
+              event.newNodes == [sinX, negSinX] &&
+              event.newApplications == [{ index := 1 }] &&
+              event.equalities == [{ index := 0 }]
+        | _, _, _, _, _ => false
+  | none => false
+  | some _ => false
+
+def grownEngineInputs : Array Input :=
+  #[{ key := .node (node 3), generation := 1 },
+    { key := .node (node 4), generation := 1 },
+    { key := .equality { index := 0 }, generation := 1 },
+    { key := .application { index := 1 }, generation := 1 },
+    { key := .application { index := 2 }, generation := 1 }]
+
+-- This uses an actual checked engine extension, not a fabricated size view.
+-- The reference cursor keeps its old ceiling during admission, then renewal
+-- exposes exactly the nodes, equality, and applications admitted atomically.
+-- Cursor storage is not yet wired into `Engine.poll`; that scheduler boundary
+-- remains the next experiment.
+#guard
+  match initialEngineCursor?, admitted? with
+  | some cursor, some (_, state) =>
+      match renew
+          (Experiment.Propagator.StructuralMatcher.Engine.matcherView state) cursor with
+      | .ok cursor =>
+          match Experiment.Propagator.StructuralMatcher.Engine.takeMatches
+              state (limits 9 5) cursor with
+          | .yielded inputs next =>
+              inputs == grownEngineInputs && next.exhausted &&
+                next.epoch == 1 && next.visits == 9
+          | _ => false
+      | .error _ => false
+  | _, _ => false
+
+def recordCalls (calls : List RuleKey) (request : RuleRequest Rank) :
+    Outcome Rank × List RuleKey :=
+  (.inapplicable, calls ++ [request.action.key])
+
+-- The checked admission path requeues the original `watchesProgram`
+-- application in addition to compiling a matcher for the new `sin x` node.
+-- Draining the real engine therefore invokes the scoped contractor once and
+-- the matcher twice, with the equality step remaining internal.
+#guard
+  match admitted? with
+  | some (_, state) =>
+      let result := drive recordCalls 8 state []
+      result.stop == .saturated &&
+        result.cache == [sinContractKey, matcherKey, matcherKey] &&
+        result.state.queueHead == 5 && result.state.queue.size == 5
   | none => false
 
 end Hex.Interval.StructuralMatcherConformance

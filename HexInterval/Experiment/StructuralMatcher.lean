@@ -13,17 +13,17 @@ public import HexInterval.Experiment.Propagator
 /-!
 # Bounded structural matcher cursor
 
-This reference experiment gives the engine, rather than a function package, an
-append-stable cursor over the structural objects in one propagation network.
-It deliberately uses three linear identifier streams and freezes a snapshot
-ceiling for each cursor epoch.  Indexed and compiled matchers can later be
-compared against this exact stream without changing its completion or replay
-contract.
+This transparent reference experiment models an append-stable cursor over the
+structural objects in one propagation network.  The eventual scheduler should
+own such a cursor rather than trusting a function package to report completion.
+This module does not yet enforce that authority boundary: its constructors and
+pure stepping functions remain public so indexed and compiled matchers can be
+compared against the exact reference stream before scheduler integration.
 
 The package may filter the returned structural inputs and propose arbitrary
-expressions, equalities, or scoped propagators.  It cannot claim that
-enumeration is complete: exhaustion is derived solely from the engine-owned
-cursor.  Network growth during an epoch does not change its frozen suffix;
+expressions, equalities, or scoped propagators.  In the intended integration it
+will not supply a completion bit: the scheduler will derive exhaustion from
+its cursor.  Network growth during an epoch does not change the frozen suffix;
 after exhaustion, renewal exposes exactly the appended delta.
 -/
 
@@ -37,9 +37,9 @@ inductive Key where
   | application (application : ApplicationId)
   deriving DecidableEq, Repr
 
-/-- Engine-derived matcher input.  Creation generation participates in causal
-generation accounting when the scheduler integration consumes this reference
-model. -/
+/-- Matcher input whose generation is engine-derived when produced by
+`Engine.takeMatches`.  Creation generation participates in causal generation
+accounting when the scheduler integration consumes this reference model. -/
 structure Input where
   key : Key
   generation : Nat
@@ -86,10 +86,10 @@ def Engine.structuralGeneration? (state : Engine Fact) : Key -> Option Nat
   | .application application =>
       state.applications[application.index]?.map (fun entry => entry.generation)
 
-/-- Engine-owned continuation for one concrete matcher application.  `base`
-is the prefix exhausted by earlier epochs, `limit` is this epoch's frozen
-ceiling, and `offset` is a position in the concatenated
-node/equality/application delta stream. -/
+/-- Reference continuation intended to be owned by the scheduler for one
+concrete matcher application.  `base` is the prefix exhausted by earlier
+epochs, `limit` is this epoch's frozen ceiling, and `offset` is a position in
+the concatenated node/equality/application delta stream. -/
 structure Cursor where
   programVersion : Nat
   base : Size
@@ -126,8 +126,9 @@ inductive Error where
   | cursorNotExhausted
   deriving DecidableEq, Repr
 
-/-- Result of one reference matcher step.  Only the engine constructs
-`exhausted`; packages receive no completion field to echo. -/
+/-- Result of one transparent reference matcher step.  Scheduler integration
+must construct it internally and expose no package-provided completion field;
+this experiment keeps the constructors public for conformance comparison. -/
 inductive Step where
   | yielded (inputs : Array Input) (cursor : Cursor)
   | exhausted (cursor : Cursor)
@@ -173,8 +174,10 @@ def inputsFrom? (generation? : Key -> Option Nat) (cursor : Cursor)
     (offset count : Nat) : Option (Array Input) :=
   inputsFromLoop? generation? cursor offset count #[]
 
-/-- Take one deterministic batch from a frozen epoch.  Visit exhaustion is
-checked before traversal and leaves the cursor unchanged. -/
+/-- Take one deterministic batch from a frozen epoch.  A final partial batch
+uses the remaining cumulative visit allowance.  Once no visit remains,
+resource exhaustion is reported before traversal and leaves the cursor
+unchanged. -/
 def take (generation? : Key -> Option Nat)
     (limits : Limits) (view : View) (cursor : Cursor) : Step :=
   if limits.batchSize == 0 then
@@ -186,10 +189,12 @@ def take (generation? : Key -> Option Nat)
     if total == cursor.offset then
       .exhausted cursor
     else
-      let count := Nat.min limits.batchSize (total - cursor.offset)
-      if limits.maxVisits < cursor.visits + count then
+      let visitRoom := limits.maxVisits - cursor.visits
+      if visitRoom == 0 then
         .resourceLimit cursor
       else
+        let count :=
+          Nat.min limits.batchSize (Nat.min (total - cursor.offset) visitRoom)
         match inputsFrom? generation? cursor cursor.offset count with
         | none => .invalidCursor
         | some inputs =>

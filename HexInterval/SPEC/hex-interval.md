@@ -596,6 +596,19 @@ Anchor-local inspection adds no wakeup beyond the declared fact slots; a rule
 which reads the whole view declares `watchesProgram`, making program extension
 an explicit dependency.
 
+The transparent structural-cursor experiment is a reference model for bounded
+whole-network matching, not yet an authority boundary. It enumerates the
+append-only node, equality, and concrete-application identifier spaces in that
+fixed order. Each epoch freezes its three size ceilings; growth cannot move the
+unseen suffix, and renewal after exhaustion exposes exactly the appended
+delta. A batch consumes the minimum of its yield quantum, the epoch remainder,
+and the remaining cumulative visit budget, so a final partial allowance is not
+stranded. The engine wrapper derives creation generations from live arenas,
+but the public cursor and step constructors remain forgeable until scheduler
+integration hides them. Production must keep one cursor per concrete matcher
+application, commit cursor progress only with an accepted reply, and derive
+exhaustion itself rather than accepting a package completion claim.
+
 `ProgramView.programVersion` equals the engine-owned version in the action for
 that invocation. An append-only extension creates subsequent requests with
 the new arrays and version. An anchor-local proposal may remain fresh when its

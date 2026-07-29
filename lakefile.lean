@@ -233,7 +233,8 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.PolicyDriver,
     `HexInterval.Experiment.PackageRegistry,
     `HexInterval.Experiment.DyadicInterval,
-    `HexInterval.Experiment.DyadicRules]
+    `HexInterval.Experiment.DyadicRules,
+    `HexInterval.Experiment.StructuralMatcher]
 
 lean_lib HexIntervalMathlibExperiment where
   globs := #[`HexIntervalMathlib.Experiment.Center]
