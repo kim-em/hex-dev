@@ -857,7 +857,7 @@ def intersectedProposal? : Option (Engine PairRank) := do
       let candidate : Candidate PairRank :=
         { node := node 1, fact := proposed, payload := { index := 149 } }
       match awaiting.submit (request.action.reply (.success [candidate] [] {})) with
-      | .accepted state => some state
+      | .accepted _ state => some state
       | _ => none
   | _ => none
 
