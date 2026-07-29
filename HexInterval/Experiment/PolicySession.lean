@@ -26,8 +26,9 @@ and exact handler replay snapshot stay paired through bounded format checking,
 prospective freezing, and relocation through the snapshot's sealed `freeze`
 operation. The new arena is committed only after `Policy.State.submit` accepts
 the relocated reply. Malformed evidence and package-local use, atom, or schema
-excess consume a failed reply and preserve a live incomplete session; whole-run
-entry or body-cell exhaustion is fatal. Instantiation, equality contraction,
+excess, including draft-count and draft-cell excess, consume a failed reply and
+preserve a live incomplete session; remaining whole-run entry or body-cell
+exhaustion after earlier commits is fatal. Instantiation, equality contraction,
 dismissal, and split preparation stay inside the same session boundary. No
 public operation accepts a separately assembled engine, registry, or arena.
 -/
@@ -82,8 +83,15 @@ def requiredUses (limits : Propagator.Limits) : Nat :=
   limits.maxOutcomeCandidates +
     limits.maxOutcomeSuggestions * (limits.maxProposalItems + 1)
 
+/-- Every engine-valid payload position may carry a distinct draft, exact
+coverage bounds valid draft count by use count, and any locally valid reply
+must fit an empty arena. -/
 def limitsCoherent (limits : Limits) : Bool :=
-  requiredUses limits.engine ≤ limits.arena.maxUses
+  requiredUses limits.engine ≤ limits.arena.maxUses &&
+    requiredUses limits.engine ≤ limits.arena.maxDrafts &&
+    limits.arena.maxDrafts ≤ limits.arena.maxUses &&
+    limits.arena.maxDrafts ≤ limits.arena.maxEntries &&
+    limits.arena.maxDraftCells ≤ limits.arena.maxBodyCells
 
 /-- Assemble the exact registry first, validate its signatures and package
 configuration, then compile the engine and put it under policy control. -/
@@ -238,9 +246,9 @@ private def failPayload (session : Session Fact)
   | .malformedState next =>
       .invalidSession (halt session next registry)
 
-/-- A use, atom, or schema excess is local to one package reply. Consume that
-reply as a bounded failure, discard its prospective arena, and preserve the
-live session while permanently withholding completeness. -/
+/-- A use, draft, draft-cell, atom, or schema excess is local to one package
+reply. Consume that reply as a bounded failure, discard its prospective arena,
+and preserve the live session while permanently withholding completeness. -/
 private def rejectPayload (session : Session Fact)
     (state : Propagator.Policy.State Fact) (registry : Registry Fact)
     (action : Action) (resource : PayloadArena.Resource) : Step Fact :=
@@ -323,7 +331,7 @@ private def submitInvocation (session : Session Fact)
         failPayload session state registry request.action error
     | .resourceLimit resource _ =>
         match resource with
-        | .uses | .atom | .schema =>
+        | .uses | .drafts | .draftCells | .atom | .schema =>
             rejectPayload session state registry request.action resource
         | .entries | .bodyCells =>
             exhaustPayload session state registry request.action resource

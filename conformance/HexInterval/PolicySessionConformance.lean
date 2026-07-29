@@ -64,8 +64,10 @@ def policyLimits : Propagator.Policy.Limits :=
     maxLiveOffers := 512 }
 
 def arenaLimits : PayloadArena.Limits :=
-  { maxEntries := 32
+  { maxEntries := 72
     maxBodyCells := 0
+    maxDrafts := 72
+    maxDraftCells := 0
     maxAtom := 0
     maxSchema := 0
     maxUses := 72 }
@@ -236,7 +238,7 @@ def ownsV0 (session : PolicySession.Session Fact) (payload : PayloadId)
   (session.arena.entry? payload role).any fun entry =>
     entry.origin.key == key && entry.schema == 0 && entry.body.isEmpty
 
-/-! ## Prospective arena rejection -/
+/-! # Prospective arena rejection -/
 
 def badProgram : Program :=
   { operations :=
@@ -336,15 +338,21 @@ def schemaPackage : Package Fact :=
       #[Handler.statelessPlanned centeredForward schemaPlan #[schemaFormat]] }
 
 def usesPlan (request : RuleRequest Fact) : Plan Fact :=
-  match request.inputs with
-  | [input] =>
-      { outcome :=
-          .success
-            [{ node := node 0, fact := input.fact, payload := factLabel }]
-            [] {}
-        drafts :=
-          List.replicate (arenaLimits.maxUses + 1) (emptyDraft factLabel .fact) }
-  | _ => withoutPayloads (.failed 70)
+  let equality : ProposedEquality :=
+    { left := .existing request.action.node
+      right := .existing request.action.node
+      payload := equalityLabel }
+  { outcome :=
+      .success []
+        [.instantiate
+          { key := 91
+            triggers := [request.action.node]
+            claimedGeneration := 0
+            nodes := []
+            equalities := List.replicate arenaLimits.maxUses equality
+            payload := instanceLabel }]
+        {}
+    drafts := [] }
 
 def usesPackage : Package Fact :=
   { Cache := Unit
@@ -352,6 +360,18 @@ def usesPackage : Package Fact :=
     operations := centeredOperations real
     handlers :=
       #[Handler.statelessPlanned centeredForward usesPlan #[emptyFormat .fact]] }
+
+def draftsPlan (_request : RuleRequest Fact) : Plan Fact :=
+  { outcome := .noChange {}
+    drafts :=
+      List.replicate (arenaLimits.maxDrafts + 1) (emptyDraft factLabel .fact) }
+
+def draftsPackage : Package Fact :=
+  { Cache := Unit
+    cache := ()
+    operations := centeredOperations real
+    handlers :=
+      #[Handler.statelessPlanned centeredForward draftsPlan #[emptyFormat .fact]] }
 
 def badFacts? : Option (Array Fact) :=
   match DyadicInterval.importInitialFacts endpointLimit 0 [finite 0 1, whole] with
@@ -375,6 +395,82 @@ def badStart? : Option (PolicySession.Session Fact) :=
 def missingFormatStart? : Option (PolicySession.Session Fact) :=
   badStartWith? missingFormatPackage
 
+def capacityProgram : Program :=
+  { badProgram with
+    nodes :=
+      #[instruction 1,
+        instruction 0 [node 0],
+        instruction 0 [node 0]] }
+
+def capacityPlan (body : List Nat) (request : RuleRequest Fact) : Plan Fact :=
+  match request.inputs, request.writes with
+  | [input], [target] =>
+      { outcome :=
+          .success
+            [{ node := target, fact := input.fact, payload := factLabel }]
+            [] {}
+        drafts :=
+          [{ label := factLabel, role := .fact, schema := 0, body }] }
+  | _, _ => withoutPayloads (.failed 70)
+
+def entryPackage : Package Fact :=
+  { Cache := Unit
+    cache := ()
+    operations := centeredOperations real
+    handlers :=
+      #[Handler.statelessPlanned centeredForward (capacityPlan []) #[emptyFormat .fact]] }
+
+def cellPackage : Package Fact :=
+  { Cache := Unit
+    cache := ()
+    operations := centeredOperations real
+    handlers :=
+      #[Handler.statelessPlanned centeredForward (capacityPlan [0]) #[oneCellFormat]] }
+
+def capacityFacts? : Option (Array Fact) :=
+  match
+      DyadicInterval.importInitialFacts endpointLimit 0
+        [finite 0 1, whole, whole] with
+  | .ok facts => some facts.toArray
+  | .error _ => none
+
+def capacityEngineLimits : Propagator.Limits :=
+  { engineLimits with
+    maxOutcomeCandidates := 1
+    maxOutcomeSuggestions := 0
+    maxProposalItems := 0 }
+
+def entryArena : PayloadArena.Limits :=
+  { maxEntries := 1
+    maxBodyCells := 0
+    maxDrafts := 1
+    maxDraftCells := 0
+    maxAtom := 0
+    maxSchema := 0
+    maxUses := 1 }
+
+def cellArena : PayloadArena.Limits :=
+  { maxEntries := 2
+    maxBodyCells := 1
+    maxDrafts := 1
+    maxDraftCells := 1
+    maxAtom := 0
+    maxSchema := 0
+    maxUses := 1 }
+
+def capacityLimits (arena : PayloadArena.Limits) : PolicySession.Limits :=
+  { engine := capacityEngineLimits, policy := policyLimits, arena }
+
+def capacityStartWith? (package : Package Fact)
+    (arena : PayloadArena.Limits) : Option (PolicySession.Session Fact) :=
+  match capacityFacts? with
+  | none => none
+  | some facts =>
+      match PolicySession.Session.start (DyadicInterval.factDomain endpointLimit)
+          capacityProgram #[package] facts (capacityLimits arena) with
+      | .ok session => some session
+      | .error _ => none
+
 def incompleteView (session : PolicySession.Session Fact) : Bool :=
   match session.view with
   | .ready view next =>
@@ -382,7 +478,20 @@ def incompleteView (session : PolicySession.Session Fact) : Bool :=
   | .resource _ _ | .contradiction _ | .invalidSession _ => false
 
 #guard program.check
-#guard PolicySession.limitsCoherent limits
+#guard capacityProgram.check
+#guard
+  PolicySession.requiredUses engineLimits == 72 &&
+    PolicySession.limitsCoherent limits
+#guard
+  !PolicySession.limitsCoherent
+    { limits with
+      arena :=
+        { arenaLimits with
+          maxEntries := 73
+          maxDrafts := 73
+          maxUses := 72 } }
+#guard PolicySession.limitsCoherent (capacityLimits entryArena)
+#guard PolicySession.limitsCoherent (capacityLimits cellArena)
 
 -- The policy never obtains a free-standing engine, registry, or arena.  The
 -- single session route freezes all seven fact/instance/equality recipes,
@@ -496,10 +605,11 @@ def incompleteView (session : PolicySession.Session Fact) : Bool :=
                   package.invocations == 1
           | _ => false
 
--- Payload-use, atom, and schema bounds are package-local encoding failures.
--- Each rejected plan consumes a bounded failed reply, keeps the private owner
--- live for later choices, rolls back the prospective arena, and makes the
--- now-empty policy frontier explicitly incomplete.
+-- Payload-use, draft-count, draft-cell, atom, and schema bounds are
+-- package-local encoding failures. Each rejected plan consumes a bounded
+-- failed reply, keeps the private owner live for later choices, rolls back the
+-- prospective arena, and makes the now-empty policy frontier explicitly
+-- incomplete.
 #guard
   match badStartWith? usesPackage with
   | none => false
@@ -509,6 +619,22 @@ def incompleteView (session : PolicySession.Session Fact) : Bool :=
       | some (selection, viewed) =>
           match viewed.choose (.select selection) with
           | .rejectedPayload .uses next =>
+              next.live && next.droppedWork && next.state.incomplete &&
+                next.state.engine.pending.isNone &&
+                next.state.engine.metrics.ruleFailures == 1 &&
+                next.arena.entries.isEmpty &&
+                next.state.engine.history.isEmpty && incompleteView next
+          | _ => false
+
+#guard
+  match badStartWith? draftsPackage with
+  | none => false
+  | some session =>
+      match selection? session (.invoke centeredForwardKey) with
+      | none => false
+      | some (selection, viewed) =>
+          match viewed.choose (.select selection) with
+          | .rejectedPayload .drafts next =>
               next.live && next.droppedWork && next.state.incomplete &&
                 next.state.engine.pending.isNone &&
                 next.state.engine.metrics.ruleFailures == 1 &&
@@ -534,6 +660,22 @@ def incompleteView (session : PolicySession.Session Fact) : Bool :=
           | _ => false
 
 #guard
+  match badStartWith? bodyPackage with
+  | none => false
+  | some session =>
+      match selection? session (.invoke centeredForwardKey) with
+      | none => false
+      | some (selection, viewed) =>
+          match viewed.choose (.select selection) with
+          | .rejectedPayload .draftCells next =>
+              next.live && next.droppedWork && next.state.incomplete &&
+                next.state.engine.pending.isNone &&
+                next.state.engine.metrics.ruleFailures == 1 &&
+                next.arena.entries.isEmpty &&
+                next.state.engine.history.isEmpty && incompleteView next
+          | _ => false
+
+#guard
   match badStartWith? schemaPackage with
   | none => false
   | some session =>
@@ -549,40 +691,57 @@ def incompleteView (session : PolicySession.Session Fact) : Bool :=
                 next.state.engine.history.isEmpty && incompleteView next
           | _ => false
 
--- Entry and body-cell budgets are whole-run arena resources. They still roll
--- back the prospective transaction and clear the request, but the returned
--- private snapshot is fatal and cannot be resumed or labeled complete.
+-- Entry and body-cell budgets become fatal only when an otherwise valid reply
+-- no longer fits after a prior policy-selected commit. The earlier arena and
+-- fact history remain intact, but the returned private snapshot cannot resume
+-- or claim completeness.
 #guard
-  match badStartWith? badPackage
-      { limits with arena := { arenaLimits with maxEntries := 0 } } with
+  match capacityStartWith? entryPackage entryArena with
   | none => false
   | some session =>
       match selection? session (.invoke centeredForwardKey) with
       | none => false
       | some (selection, viewed) =>
           match viewed.choose (.select selection) with
-          | .payloadResource .entries stopped =>
-              !stopped.live && !stopped.complete &&
-                stopped.state.incomplete &&
-                stopped.state.engine.pending.isNone &&
-                stopped.arena.entries.isEmpty &&
-                stopped.state.engine.history.isEmpty
+          | .rule _ _ first =>
+              first.arena.entries.size == 1 &&
+                first.state.engine.history.size == 1 &&
+                match selection? first (.invoke centeredForwardKey) with
+                | none => false
+                | some (nextSelection, nextViewed) =>
+                    match nextViewed.choose (.select nextSelection) with
+                    | .payloadResource .entries stopped =>
+                        !stopped.live && !stopped.complete &&
+                          stopped.state.incomplete &&
+                          stopped.state.engine.pending.isNone &&
+                          stopped.arena.entries.size == 1 &&
+                          stopped.state.engine.history.size == 1
+                    | _ => false
           | _ => false
 
 #guard
-  match badStartWith? bodyPackage with
+  match capacityStartWith? cellPackage cellArena with
   | none => false
   | some session =>
       match selection? session (.invoke centeredForwardKey) with
       | none => false
       | some (selection, viewed) =>
           match viewed.choose (.select selection) with
-          | .payloadResource .bodyCells stopped =>
-              !stopped.live && !stopped.complete &&
-                stopped.state.incomplete &&
-                stopped.state.engine.pending.isNone &&
-                stopped.arena.entries.isEmpty &&
-                stopped.state.engine.history.isEmpty
+          | .rule _ _ first =>
+              first.arena.entries.size == 1 && first.arena.bodyCells == 1 &&
+                first.state.engine.history.size == 1 &&
+                match selection? first (.invoke centeredForwardKey) with
+                | none => false
+                | some (nextSelection, nextViewed) =>
+                    match nextViewed.choose (.select nextSelection) with
+                    | .payloadResource .bodyCells stopped =>
+                        !stopped.live && !stopped.complete &&
+                          stopped.state.incomplete &&
+                          stopped.state.engine.pending.isNone &&
+                          stopped.arena.entries.size == 1 &&
+                          stopped.arena.bodyCells == 1 &&
+                          stopped.state.engine.history.size == 1
+                    | _ => false
           | _ => false
 
 end Hex.Interval.PolicySessionConformance

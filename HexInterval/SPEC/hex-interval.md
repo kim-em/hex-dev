@@ -1332,11 +1332,13 @@ or retry routes through `Registry.invokePlanned`, which returns the plan paired
 with the exact selected handler's replay snapshot. The session calls that
 sealed snapshot's paired freeze operation, submits the relocated reply through
 `Policy.State`, and commits the new arena only for an accepted reply. A missing
-or malformed format and package-local payload-use, atom, or schema excess
-consume a bounded synthetic failed reply: the cache may record the attempt,
-the arena, facts, and history do not commit, and the private session remains
-live but permanently incomplete. Exhausting the whole-run entry or body-cell
-budget instead returns a non-live session after clearing the selected request.
+or malformed format and package-local payload-use, draft-count, draft-cell,
+atom, or schema excess consume a bounded synthetic failed reply: the cache may
+record the attempt, the arena, facts, and history do not commit, and the
+private session remains live but permanently incomplete. Exhausting remaining
+whole-run entry or body-cell capacity after an earlier commit instead returns
+a non-live session after clearing the selected request while preserving the
+preceding arena and history.
 The policy can observe a bounded view and echo a semantic selection, but
 cannot extract and later recombine the engine, registry, arena, or policy
 bookkeeping. Its `Session.complete` predicate additionally scans for live
@@ -2449,8 +2451,9 @@ typical, boundary, and adversarial inputs. In particular it includes:
   offer class through one private owner, retaining exact fact, instance, and
   equality replay formats, rolling back a prospectively frozen rejected write
   and both malformed and undeclared formats, keeping package-local payload
-  bounds live but incomplete, making whole-run arena exhaustion fatal, and
-  exposing an empty failed frontier as incomplete rather than saturated;
+  use, draft-count, draft-cell, atom, and schema bounds live but incomplete,
+  making genuine mid-run whole-arena exhaustion fatal, and exposing an empty
+  failed frontier as incomplete rather than saturated;
 - undirected equality transport, including incomparable endpoint facts that
   improve both sides atomically, equality chains, reactivation after a later
   function improvement, and an original expression transferring its bound to
