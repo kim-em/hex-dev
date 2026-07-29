@@ -23,11 +23,13 @@ and the monotone liveness and completeness state.
 The policy can only echo a checked offer through `Session.choose`. A selected
 rule or retry is routed through `Registry.invokePlanned`; the resulting plan
 and exact handler replay snapshot stay paired through bounded format checking,
-prospective freezing, and relocation. The new arena is committed only after
-`Policy.State.submit` accepts the relocated reply. Instantiation, equality
-contraction, dismissal, and split preparation stay inside the same session
-boundary. No public operation accepts a separately assembled engine, registry,
-or arena.
+prospective freezing, and relocation through the snapshot's sealed `freeze`
+operation. The new arena is committed only after `Policy.State.submit` accepts
+the relocated reply. Malformed evidence and package-local use, atom, or schema
+excess consume a failed reply and preserve a live incomplete session; whole-run
+entry or body-cell exhaustion is fatal. Instantiation, equality contraction,
+dismissal, and split preparation stay inside the same session boundary. No
+public operation accepts a separately assembled engine, registry, or arena.
 -/
 
 namespace Hex.Interval.Experiment.PolicySession
@@ -50,9 +52,10 @@ inductive StartError where
   | engine (error : Propagator.StartError)
   deriving DecidableEq, Repr
 
-/-- A proof-producing policy state.  Public projections support inspection,
-while the private constructor prevents a caller from replacing one owned
-component with a value from another run. -/
+/-- A proof-producing policy state. `state` privately owns the engine together
+with its policy frontier. Public projections support inspection, while the
+private constructor prevents a caller from replacing that engine, the exact
+registry, or the arena with a component from another run. -/
 structure Session (Fact : Type) where
   private mk ::
   state : Propagator.Policy.State Fact
@@ -136,13 +139,9 @@ private def hasNarrowingSuggestion
     (state : Propagator.Policy.State Fact) : Nat -> Bool
   | 0 => false
   | count + 1 =>
-      (match state.offer? (.suggestion { index := count }) with
-       | some { offerClass := .retry, .. }
-       | some { offerClass := .instantiate, .. } => true
-       | some { offerClass := .invoke, .. }
-       | some { offerClass := .equality, .. }
-       | some { offerClass := .split, .. }
-       | none => false) ||
+      ((state.offer? (.suggestion { index := count })).isSome &&
+        (state.engine.suggestions[count]?).any fun retained =>
+          Suggestion.affectsClosure retained.suggestion) ||
         hasNarrowingSuggestion state count
 
 /-- Whether this live snapshot has reached propagation closure.  Optional
@@ -202,6 +201,10 @@ inductive Step (Fact : Type) where
   | factResource (budget : Nat) (session : Session Fact)
   | invalidReply (error : ReplyError) (session : Session Fact)
   | invalidPayload (error : PayloadArena.Invalid) (session : Session Fact)
+  /-- A package exceeded a per-reply payload encoding bound. The failed reply
+  is consumed and other independent policy choices remain available. -/
+  | rejectedPayload (resource : PayloadArena.Resource) (session : Session Fact)
+  /-- A whole-run payload arena bound was exhausted. -/
   | payloadResource (resource : PayloadArena.Resource) (session : Session Fact)
   | invalidSession (session : Session Fact)
 
@@ -214,15 +217,15 @@ private def outcomeListsBounded (limits : Propagator.Limits) : Outcome Fact -> B
 namespace PayloadFailureCode
 
 /-- Stable bounded diagnostic used to clear a request whose package evidence
-was malformed. -/
-def malformed : Nat := 0
+was malformed or exceeded a package-local encoding bound. -/
+def rejected : Nat := 0
 
 end PayloadFailureCode
 
 private def failPayload (session : Session Fact)
     (state : Propagator.Policy.State Fact) (registry : Registry Fact)
     (action : Action) (error : PayloadArena.Invalid) : Step Fact :=
-  match state.submit (action.reply (.failed PayloadFailureCode.malformed)) with
+  match state.submit (action.reply (.failed PayloadFailureCode.rejected)) with
   | .accepted _ next =>
       .invalidPayload error
         (commit session next registry session.arena true)
@@ -230,6 +233,43 @@ private def failPayload (session : Session Fact)
       .invalidReply replyError (halt session next registry)
   | .engineResource resource next =>
       .engineResource resource (halt session next registry)
+  | .factResource budget next =>
+      .factResource budget (halt session next registry)
+  | .malformedState next =>
+      .invalidSession (halt session next registry)
+
+/-- A use, atom, or schema excess is local to one package reply. Consume that
+reply as a bounded failure, discard its prospective arena, and preserve the
+live session while permanently withholding completeness. -/
+private def rejectPayload (session : Session Fact)
+    (state : Propagator.Policy.State Fact) (registry : Registry Fact)
+    (action : Action) (resource : PayloadArena.Resource) : Step Fact :=
+  match state.submit (action.reply (.failed PayloadFailureCode.rejected)) with
+  | .accepted _ next =>
+      .rejectedPayload resource
+        (commit session next registry session.arena true)
+  | .invalid replyError next =>
+      .invalidReply replyError (halt session next registry)
+  | .engineResource engineResource next =>
+      .engineResource engineResource (halt session next registry)
+  | .factResource budget next =>
+      .factResource budget (halt session next registry)
+  | .malformedState next =>
+      .invalidSession (halt session next registry)
+
+/-- A whole-run arena limit is fatal. Clear the selected request through the
+ordinary policy reply boundary, retain no prospective arena state, and return
+a non-live session which cannot later claim saturation. -/
+private def exhaustPayload (session : Session Fact)
+    (state : Propagator.Policy.State Fact) (registry : Registry Fact)
+    (action : Action) (resource : PayloadArena.Resource) : Step Fact :=
+  match state.submit (action.reply (.failed PayloadFailureCode.rejected)) with
+  | .accepted _ next =>
+      .payloadResource resource (halt session next registry)
+  | .invalid replyError next =>
+      .invalidReply replyError (halt session next registry)
+  | .engineResource engineResource next =>
+      .engineResource engineResource (halt session next registry)
   | .factResource budget next =>
       .factResource budget (halt session next registry)
   | .malformedState next =>
@@ -277,12 +317,16 @@ private def submitInvocation (session : Session Fact)
     | .malformedState next =>
         .invalidSession (halt session next registry)
   else
-    match PayloadArena.freezeChecked session.limits.arena session.arena
-        request.action replay.rule replay.validateDraft plan.outcome plan.drafts with
+    match replay.freeze session.limits.arena session.arena request.action
+        plan.outcome plan.drafts with
     | .invalid error _ =>
         failPayload session state registry request.action error
     | .resourceLimit resource _ =>
-        .payloadResource resource (halt session state registry)
+        match resource with
+        | .uses | .atom | .schema =>
+            rejectPayload session state registry request.action resource
+        | .entries | .bodyCells =>
+            exhaustPayload session state registry request.action resource
     | .ready arena outcome =>
         match state.submit (request.action.reply outcome) with
         | .accepted observation next =>

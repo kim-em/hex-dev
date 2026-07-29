@@ -1329,21 +1329,23 @@ The policy session now preserves the same transaction while allowing an
 external policy to select invocations and retries, instantiations, equality
 contractors, and splits, or to dismiss any live offer. A selected invocation
 or retry routes through `Registry.invokePlanned`, which returns the plan paired
-with the exact selected handler's replay snapshot. The session validates every
-draft under that immutable format set, freezes the complete draft set
-prospectively, submits the relocated reply through `Policy.State`, and commits
-the new arena only for an accepted reply. A missing or malformed format follows
-the same live-but-incomplete failed-reply path as other malformed evidence:
-the cache may record the attempt, but the arena, facts, and history do not
-commit. The policy can observe a bounded view and echo a semantic selection,
-but cannot extract and later recombine the engine, registry, arena, or policy
-bookkeeping. Its
-`Session.complete` predicate additionally scans for live invocation and
-equality work and treats retries and instantiations, but not optional splits,
-as closure obligations. The policy state's monotone incompleteness bit covers
-failed replies, rejected or stale narrowing suggestions, and required
-dismissals; the session bit covers malformed proof drafts. Resource-failed or
-structurally invalid snapshots become non-live.
+with the exact selected handler's replay snapshot. The session calls that
+sealed snapshot's paired freeze operation, submits the relocated reply through
+`Policy.State`, and commits the new arena only for an accepted reply. A missing
+or malformed format and package-local payload-use, atom, or schema excess
+consume a bounded synthetic failed reply: the cache may record the attempt,
+the arena, facts, and history do not commit, and the private session remains
+live but permanently incomplete. Exhausting the whole-run entry or body-cell
+budget instead returns a non-live session after clearing the selected request.
+The policy can observe a bounded view and echo a semantic selection, but
+cannot extract and later recombine the engine, registry, arena, or policy
+bookkeeping. Its `Session.complete` predicate additionally scans for live
+invocation and equality work and treats retries and instantiations, but not
+optional splits, as closure obligations. The policy state's monotone
+incompleteness bit covers failed replies, rejected or stale narrowing
+suggestions, and required dismissals; the session bit covers evidence lost
+outside those policy transitions. Engine-resource or structurally invalid
+snapshots also become non-live.
 
 ### Action kinds
 
@@ -2445,9 +2447,10 @@ typical, boundary, and adversarial inputs. In particular it includes:
   and performs no branch/interiority step;
 - the proof-producing policy session over those same packages, selecting every
   offer class through one private owner, retaining exact fact, instance, and
-  equality replay formats, rolling back a prospectively frozen rejected write,
-  and treating an undeclared format as live but permanently incomplete with no
-  arena or fact-history commit;
+  equality replay formats, rolling back a prospectively frozen rejected write
+  and both malformed and undeclared formats, keeping package-local payload
+  bounds live but incomplete, making whole-run arena exhaustion fatal, and
+  exposing an empty failed frontier as incomplete rather than saturated;
 - undirected equality transport, including incomparable endpoint facts that
   improve both sides atomically, equality chains, reactivation after a later
   function improvement, and an original expression transferring its bound to
