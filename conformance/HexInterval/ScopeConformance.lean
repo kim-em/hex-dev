@@ -918,10 +918,10 @@ def dynamicEqualityThenScope? : Option (Engine Rank × Engine Rank) := do
       | _, _ => false
   | none => false
 
-/-- First create a generation-one node without a scope.  A later proposal
-refers to an identical draft through `.proposed 0`; CSE resolves it to that old
-node, so using it as a new scope input must raise the next event to generation
-two. -/
+/-- First create a generation-one node without a scope.  A later independent
+proposal reconstructs the same logical output through `.proposed 0`; whether
+that output is fresh or CSE-reuses the old node must not change the second
+theorem instance's generation. -/
 def generationSeed? : Option (Engine Rank × RetainedSuggestion) := do
   let state <- match Engine.start rankDomain program #[scopedRule, dynamicRule]
       #[4, 6, 0, 0, 0, 9] limits #[scope] with
@@ -968,17 +968,19 @@ def cseScopeRetained? : Option (Engine Rank × RetainedSuggestion) := do
 #guard
   match cseScopeRetained? with
   | some (state, retained) =>
-      state.instantiationGeneration? retained == some 2 &&
+      state.instantiationGeneration? retained == some 1 &&
         match state.admitRetained retained with
         | .admitted [] next =>
             next.program.nodes.size == 7 && next.metrics.generatedScopes == 1 &&
-              next.instanceHistory[1]?.any (fun event => event.generation == 2)
+              next.applications[1]?.any (fun application =>
+                application.generation == 1) &&
+              next.instanceHistory[1]?.any (fun event => event.generation == 1)
         | _ => false
   | none => false
 
-/-- Equality endpoints have the same causal rule as scoped ports.  A proposed
-node which CSE-resolves to an old generation-one node cannot launder that node
-back to generation zero merely by appearing as an equality endpoint. -/
+/-- Equality endpoints obey the same order-independence rule as scoped ports.
+The proposed output is a conclusion of this theorem instance even when CSE
+reuses a generation-one node which happened to be materialized earlier. -/
 def cseEqualityRetained? : Option (Engine Rank × RetainedSuggestion) := do
   let (state, origin) <- generationSeed?
   let request : InstantiationRequest :=
@@ -998,12 +1000,12 @@ def cseEqualityRetained? : Option (Engine Rank × RetainedSuggestion) := do
 #guard
   match cseEqualityRetained? with
   | some (state, retained) =>
-      state.instantiationGeneration? retained == some 2 &&
+      state.instantiationGeneration? retained == some 1 &&
         match state.admitRetained retained with
         | .admitted [] next =>
             next.program.nodes.size == 7 && next.equalities.size == 1 &&
-              next.equalities[0]?.any (fun edge => edge.generation == 2) &&
-              next.instanceHistory[1]?.any (fun event => event.generation == 2)
+              next.equalities[0]?.any (fun edge => edge.generation == 1) &&
+              next.instanceHistory[1]?.any (fun event => event.generation == 1)
         | _ => false
   | none => false
 

@@ -504,8 +504,8 @@ def exactCseState (state : Engine Rank) : Bool :=
 -- Either proposal may materialize a depth-three tower first. The second
 -- append-stable proposal CSE-hits the entire node prefix: its stored depths
 -- remain unchanged while its explicitly old equality endpoints keep theorem-
--- instantiation generation one.  A separate equality canary covers the causal
--- case where a proposed equality endpoint itself CSE-resolves to an old node.
+-- instantiation generation one.  Separate scope and equality canaries cover
+-- proposed endpoints which CSE-resolve to old storage.
 #guard
   match cseOrder? (suggestion 0) (suggestion 1),
       cseOrder? (suggestion 1) (suggestion 0) with
