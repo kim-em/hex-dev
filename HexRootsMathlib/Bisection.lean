@@ -24,6 +24,31 @@ noncomputable section
 
 namespace DyadicSquare
 
+/-- Every closed child square returned by subdivision is contained in its
+parent closed square. -/
+theorem closedSquare_subset_of_mem_subdivide {s t : Hex.DyadicSquare}
+    (ht : t ∈ (Hex.DyadicSquare.subdivide s).toList) :
+    closedSquare t ⊆ closedSquare s := by
+  let h : ℝ := (2 : ℝ) ^ (-(s.prec + 1))
+  have hh : 0 < h := by dsimp [h]; positivity
+  have hparent : (2 : ℝ) ^ (-s.prec) = 2 * h := by
+    dsimp [h]
+    rw [show -s.prec = -(s.prec + 1) + 1 by ring,
+      zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+    norm_num
+    ring
+  simp [Hex.DyadicSquare.subdivide] at ht
+  rcases ht with rfl | rfl | rfl | rfl <;>
+    intro z hz <;>
+    rw [mem_closedSquare_iff_re_im] at hz ⊢ <;>
+    simp only [halfWidth_eq, Dyadic.toReal_sub, Dyadic.toReal_add,
+      Dyadic.toReal_ofIntWithPrec, Int.cast_one, one_mul] at hz ⊢ <;>
+    dsimp [h] at hh hparent <;>
+    simp only [abs_le] at hz ⊢ <;>
+    rcases hz with ⟨⟨hr₀, hr₁⟩, ⟨hi₀, hi₁⟩⟩ <;>
+    exact ⟨⟨by linarith [hparent], by linarith [hparent]⟩,
+      ⟨by linarith [hparent], by linarith [hparent]⟩⟩
+
 /-- The four closed children returned by executable subdivision cover their
 parent square. -/
 theorem exists_mem_subdivide {s : Hex.DyadicSquare} {z : ℂ}
