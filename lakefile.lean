@@ -227,6 +227,10 @@ lean_lib HexGF2BenchSupport where
   srcDir := "bench"
   globs := #[`HexGF2.Bench]
 
+lean_lib HexMvPolyBenchSupport where
+  srcDir := "bench"
+  globs := #[`HexMvPolyBench.Corpus]
+
 lean_lib HexIntervalExperiment where
   globs := #[`HexInterval.Experiment.Representation,
     `HexInterval.Experiment.Rational, `HexInterval.Experiment.Center,
@@ -499,6 +503,10 @@ lean_exe hexarith_bench where
 lean_exe hexpoly_bench where
   srcDir := "bench"
   root := `HexPoly.Bench
+
+lean_exe hexmvpoly_bench where
+  srcDir := "bench"
+  root := `HexMvPoly.Bench
 
 lean_exe hexpoly_emit_fixtures where
   srcDir := "conformance"
