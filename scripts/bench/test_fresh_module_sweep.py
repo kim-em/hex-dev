@@ -630,6 +630,13 @@ class PairingTests(unittest.TestCase):
         self.assertEqual(summary["signed_wall_delta_nanos"], [-20])
         self.assertEqual(summary["median_signed_wall_delta_nanos"], -20)
 
+    def test_robust_null_envelope_is_floored_by_observed_outlier(self) -> None:
+        statistics = sweep.robust_null_statistics([0, 0, 0, 0, 0, 100])
+        self.assertEqual(statistics["tukey_envelope_nanos"], 0)
+        self.assertEqual(statistics["max_absolute_delta_nanos"], 100)
+        self.assertEqual(statistics["envelope_nanos"], 100)
+        self.assertEqual(statistics["outlier_count"], 1)
+
     def test_summary_metadata_cannot_spoof_null_control(self) -> None:
         module = sweep.ProbeModule("Probe.Baseline")
         pair = sweep.ProbePair(
@@ -960,6 +967,18 @@ class PairingTests(unittest.TestCase):
                 candidate,
                 {"ratio_threshold": 2.0},
             ),
+            sweep.ProbePair(
+                "failed",
+                reference,
+                candidate,
+                {"ratio_threshold": 2.0},
+            ),
+            sweep.ProbePair(
+                "noise-limited",
+                reference,
+                candidate,
+                {"ratio_threshold": 2.0},
+            ),
         )
         spec = sweep.SweepSpec(
             description="ratio threshold",
@@ -992,6 +1011,11 @@ class PairingTests(unittest.TestCase):
             "baseline": [row(1, 100, 100), row(2, 100, 100)],
             "large-null": [row(1, 600, 599), row(2, 599, 600)],
             "ratio": [row(1, 301, 200), row(2, 301, 200)],
+            "failed": [row(1, 250, 200), row(2, 250, 200)],
+            "noise-limited": [
+                row(1, 201, 200),
+                row(2, 201, 200),
+            ],
         }
         with mock.patch.object(sweep, "artifact_sizes", return_value={}):
             summary = sweep.summarize(spec, rows)
@@ -1003,6 +1027,169 @@ class PairingTests(unittest.TestCase):
         self.assertLess(ratio["ratio_lower_bound"], 2.0)
         self.assertGreater(ratio["ratio_upper_bound"], 2.0)
         self.assertEqual(ratio["ratio_threshold_status"], "unresolved")
+        failed = summary["failed"]
+        self.assertLessEqual(failed["ratio_upper_bound"], 2.0)
+        self.assertEqual(failed["ratio_threshold_status"], "failed")
+        noise_limited = summary["noise-limited"]
+        self.assertEqual(
+            noise_limited["workload_ratio_resolution"], "noise-limited"
+        )
+        self.assertEqual(
+            noise_limited["ratio_threshold_status"], "unresolved"
+        )
+
+    def test_ratio_threshold_handles_unbounded_upper_and_missing_control(
+        self,
+    ) -> None:
+        baseline = sweep.ProbeModule("Probe.Baseline")
+        reference = sweep.ProbeModule("Probe.Reference")
+        candidate = sweep.ProbeModule("Probe.Candidate")
+        pairs = (
+            sweep.ProbePair(
+                "baseline", baseline, baseline, {}, null_control=True
+            ),
+            sweep.ProbePair(
+                "large-null", reference, reference, {}, null_control=True
+            ),
+            sweep.ProbePair(
+                "unbounded-upper",
+                reference,
+                candidate,
+                {"ratio_threshold": 2.0},
+            ),
+            sweep.ProbePair(
+                "missing-control",
+                reference,
+                candidate,
+                {"ratio_threshold": 2.0},
+            ),
+        )
+        spec = sweep.SweepSpec(
+            description="ratio threshold edge cases",
+            pairs=pairs,
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+            import_baseline_control="baseline",
+        )
+
+        def row(
+            round_index: int, reference_wall: int, candidate_wall: int
+        ) -> dict[str, object]:
+            return {
+                "round": round_index,
+                "reference": {
+                    "wall_nanos": reference_wall,
+                    "peak_rss_kb": None,
+                },
+                "candidate": {
+                    "wall_nanos": candidate_wall,
+                    "peak_rss_kb": None,
+                },
+                "signed_wall_delta_nanos":
+                    candidate_wall - reference_wall,
+            }
+
+        rows = {
+            "baseline": [row(1, 100, 100), row(2, 100, 100)],
+            "large-null": [row(1, 600, 599), row(2, 599, 600)],
+            "unbounded-upper": [
+                row(1, 110, 101),
+                row(2, 110, 101),
+            ],
+            "missing-control": [
+                row(1, 5_000, 2_000),
+                row(2, 5_000, 2_000),
+            ],
+        }
+        with mock.patch.object(sweep, "artifact_sizes", return_value={}):
+            summary = sweep.summarize(spec, rows)
+
+        unbounded = summary["unbounded-upper"]
+        self.assertEqual(unbounded["ratio_lower_bound"], 4.5)
+        self.assertIsNone(unbounded["ratio_upper_bound"])
+        self.assertEqual(unbounded["ratio_threshold_status"], "passed")
+
+        missing = summary["missing-control"]
+        self.assertEqual(missing["resolution"], "no-comparable-control")
+        self.assertIsNone(missing["ratio_lower_bound"])
+        self.assertIsNone(missing["ratio_upper_bound"])
+        self.assertEqual(
+            missing["ratio_threshold_status"], "no-comparable-control"
+        )
+
+    def test_net_workload_threshold_is_noise_limited(self) -> None:
+        baseline = sweep.ProbeModule("Probe.Baseline")
+        reference = sweep.ProbeModule("Probe.Reference")
+        candidate = sweep.ProbeModule("Probe.Candidate")
+        pairs = (
+            sweep.ProbePair(
+                "baseline", baseline, baseline, {}, null_control=True
+            ),
+            sweep.ProbePair(
+                "large-null", reference, reference, {}, null_control=True
+            ),
+            sweep.ProbePair("construction", reference, candidate, {}),
+            sweep.ProbePair(
+                "full",
+                reference,
+                candidate,
+                {
+                    "workload_control": "construction",
+                    "ratio_threshold": 2.0,
+                },
+            ),
+        )
+        spec = sweep.SweepSpec(
+            description="net workload resolution",
+            pairs=pairs,
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+            import_baseline_control="baseline",
+        )
+
+        def row(
+            round_index: int, reference_wall: int, candidate_wall: int
+        ) -> dict[str, object]:
+            return {
+                "round": round_index,
+                "reference": {
+                    "wall_nanos": reference_wall,
+                    "peak_rss_kb": None,
+                },
+                "candidate": {
+                    "wall_nanos": candidate_wall,
+                    "peak_rss_kb": None,
+                },
+                "signed_wall_delta_nanos":
+                    candidate_wall - reference_wall,
+            }
+
+        rows = {
+            "baseline": [row(1, 100, 100), row(2, 100, 100)],
+            "large-null": [row(1, 600, 590), row(2, 590, 600)],
+            "construction": [
+                row(1, 400, 300),
+                row(2, 400, 300),
+            ],
+            "full": [row(1, 440, 320), row(2, 440, 320)],
+        }
+        with mock.patch.object(sweep, "artifact_sizes", return_value={}):
+            full = sweep.summarize(spec, rows)["full"]
+
+        self.assertEqual(
+            full["median_reference_net_workload_wall_nanos"], 40
+        )
+        self.assertEqual(
+            full["median_candidate_net_workload_wall_nanos"], 20
+        )
+        self.assertEqual(
+            full["net_workload_ratio_resolution"], "noise-limited"
+        )
+        self.assertEqual(full["ratio_threshold_status"], "unresolved")
 
     def test_null_controls_are_interpolated_by_build_magnitude(self) -> None:
         cheap = sweep.ProbeModule("Probe.Cheap")

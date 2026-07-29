@@ -53,6 +53,31 @@ theorem degrees_eq [Zero R] (p : MvPoly n R cmp) :
       p.foldTerms (fun d m _ => Mono.lcm d m) Mono.zero := by
   rfl
 
+/-- Each coordinate of `degrees` is the corresponding per-variable degree. -/
+@[simp] theorem getElem_degrees [Zero R]
+    (p : MvPoly n R cmp) (i : Fin n) :
+    p.degrees[i] = degreeOf i p := by
+  have fold_get :
+      ∀ (ts : List (Mono n × R)) (d : Mono n) (e : Nat),
+        d[i] = e →
+          (ts.foldl (fun d term => Mono.lcm d term.1) d)[i] =
+            ts.foldl (fun e term => max e (Mono.degreeOf i term.1)) e := by
+    intro ts
+    induction ts with
+    | nil =>
+        intro d e h
+        exact h
+    | cons term ts ih =>
+        intro d e h
+        simp only [List.foldl_cons]
+        apply ih
+        rw [Mono.getElem_lcm, h]
+        rfl
+  unfold degrees degreeOf foldTerms
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList,
+    Std.ExtTreeMap.foldl_eq_foldl_toList]
+  exact fold_get p.termsInternal.toList Mono.zero 0 (Mono.getElem_zero i)
+
 /-- Variables occurring in at least one supported monomial, in increasing
 index order. -/
 def vars [Zero R] (p : MvPoly n R cmp) : List (Fin n) :=
@@ -62,6 +87,17 @@ def vars [Zero R] (p : MvPoly n R cmp) : List (Fin n) :=
 theorem vars_eq [Zero R] (p : MvPoly n R cmp) :
     vars p = Mono.support p.degrees := by
   rfl
+
+/-- A variable occurs exactly when its maximum exponent is nonzero. -/
+@[simp] theorem mem_vars_iff [Zero R] (i : Fin n) (p : MvPoly n R cmp) :
+    i ∈ p.vars ↔ degreeOf i p ≠ 0 := by
+  rw [vars_eq]
+  unfold Mono.support
+  rw [List.mem_filter]
+  simp only [List.mem_finRange, true_and]
+  change (p.degrees[i] != 0) = true ↔ degreeOf i p ≠ 0
+  rw [getElem_degrees]
+  simp
 
 /-- Greatest supported term in the polynomial's monomial order. -/
 def leadingTerm [Zero R] [IsMonomialOrder cmp]
@@ -73,6 +109,33 @@ theorem leadingTerm_eq [Zero R] [IsMonomialOrder cmp]
     (p : MvPoly n R cmp) :
     leadingTerm p = p.maxTerm? := by
   rfl
+
+/-- A leading term is exactly a stored coefficient whose monomial bounds
+every monomial in the canonical support. -/
+theorem leadingTerm_eq_some_iff [Zero R] [IsMonomialOrder cmp]
+    (p : MvPoly n R cmp) (m : Mono n) (c : R) :
+    p.leadingTerm = some (m, c) ↔
+      p.coeff? m = some c ∧
+        ∀ k ∈ p.monomials, (cmp k m).isLE :=
+  maxTerm?_eq_some_iff p m c
+
+/-- The coefficient recorded by a leading term is the public coefficient at
+its monomial. -/
+theorem coeff_eq_of_leadingTerm [Zero R] [IsMonomialOrder cmp]
+    {p : MvPoly n R cmp} {m : Mono n} {c : R}
+    (h : p.leadingTerm = some (m, c)) :
+    p.coeff m = c := by
+  have hcoeff := (leadingTerm_eq_some_iff p m c).mp h |>.1
+  unfold coeff
+  rw [hcoeff]
+  rfl
+
+/-- Every supported monomial is at most the leading monomial. -/
+theorem le_leadingTerm [Zero R] [IsMonomialOrder cmp]
+    {p : MvPoly n R cmp} {m : Mono n} {c : R}
+    (h : p.leadingTerm = some (m, c)) :
+    ∀ k ∈ p.monomials, (cmp k m).isLE :=
+  (leadingTerm_eq_some_iff p m c).mp h |>.2
 
 /-- Greatest supported monomial in the polynomial's monomial order. -/
 def leadingMono [Zero R] [IsMonomialOrder cmp]
@@ -113,7 +176,7 @@ theorem leadingCoeff_eq [Zero R] [IsMonomialOrder cmp]
   cases p.leadingTerm <;> rfl
 
 /-- Retain exactly the terms whose monomials satisfy `keep`. -/
-def restrictBy [Zero R]
+@[expose] def restrictBy [Zero R]
     (keep : Mono n → Bool) (p : MvPoly n R cmp) : MvPoly n R cmp where
   termsInternal := p.termsInternal.filter fun m _ => keep m
   nonzeroInternal := by
@@ -131,7 +194,7 @@ def restrictBy [Zero R]
         simpa [Option.filter] using hc
 
 /-- Retain the terms whose exponent of `i` is at most `bound`. -/
-def restrictDegree [Zero R]
+@[expose] def restrictDegree [Zero R]
     (i : Fin n) (bound : Nat) (p : MvPoly n R cmp) : MvPoly n R cmp :=
   p.restrictBy fun m => decide (Mono.degreeOf i m ≤ bound)
 
@@ -144,7 +207,7 @@ theorem restrictDegree_eq [Zero R]
   rfl
 
 /-- Retain the terms whose total degree is at most `bound`. -/
-def restrictTotalDegree [Zero R]
+@[expose] def restrictTotalDegree [Zero R]
     (bound : Nat) (p : MvPoly n R cmp) : MvPoly n R cmp :=
   p.restrictBy fun m => decide (Mono.degree m ≤ bound)
 
@@ -190,8 +253,11 @@ theorem coeff_restrictBy [Zero R]
 @[simp] theorem leadingTerm_zero [Zero R] [IsMonomialOrder cmp] :
     leadingTerm (0 : MvPoly n R cmp) = none := by
   unfold leadingTerm maxTerm?
-  change (∅ : Std.ExtTreeMap (Mono n) R cmp).maxEntry? = none
-  exact Std.ExtTreeMap.maxEntry?_empty
+  change
+    ((∅ : Std.ExtTreeMap (Mono n) R cmp).maxKey?.bind fun m =>
+      (∅ : Std.ExtTreeMap (Mono n) R cmp)[m]?.map fun c => (m, c)) = none
+  rw [Std.ExtTreeMap.maxKey?_empty]
+  rfl
 
 /-- The zero polynomial has no leading monomial. -/
 @[simp] theorem leadingMono_zero [Zero R] [IsMonomialOrder cmp] :

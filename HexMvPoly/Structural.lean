@@ -170,6 +170,17 @@ def bind [Zero R] [Lean.Grind.Semiring S] [DecidableEq S]
     (fun acc m c => acc + C (f c) * Mono.prod g m)
     0
 
+/-- General substitution is the ordered sum of mapped coefficient-monomial
+terms. -/
+theorem bind_eq [Zero R] [Lean.Grind.Semiring S] [DecidableEq S]
+    (f : R → S) (g : Fin n → MvPoly k S targetCmp)
+    (p : MvPoly n R cmp) :
+    bind f g p =
+      p.termsList.foldl
+        (fun acc term => acc + C (f term.2) * Mono.prod g term.1) 0 := by
+  unfold bind foldTerms termsList
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList]
+
 /-- Substitute polynomials for variables without changing the coefficient
 type. -/
 def subst [Lean.Grind.Semiring R] [DecidableEq R]

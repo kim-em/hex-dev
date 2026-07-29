@@ -121,8 +121,8 @@ SPEC = SweepSpec(
         *case_pairs("degree50", "Degree50", 30_000, "adversarial-ceiling"),
     ),
     probe_target="HexRCFProofProbe",
-    schema="hexrcf-proof-probes-v6",
-    measurement="paired-fresh-module-olean-wall-v1",
+    schema="hexrcf-proof-probes-v7",
+    measurement="paired-fresh-module-olean-wall-robust-null-v2",
     output_stem="hexrcf-proof-probes",
     extra_sources=(
         Path("libraries.yml"),

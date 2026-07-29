@@ -6,8 +6,14 @@ namespace CPoly
 
 open Hex
 
-/-- Recover the proposition-level equality decision required by the Mathlib
-bridge when a CompPoly-style caller supplies only lawful boolean equality. -/
+/-- Compatibility-only recovery of proposition-level equality from the lawful
+boolean equality used by the pinned CompPoly API.
+
+The Hex Mathlib bridge transports its semiring instances with
+`[DecidableEq R]`. Generic SOS declarations expose only `[BEq R] [LawfulBEq R]`,
+so this low-priority adapter instance is load-bearing for selecting those
+transported structures. It is deliberately confined to the consumer adapter
+and is not part of the Hex library API. -/
 instance (priority := 50) {R : Type*} [BEq R] [LawfulBEq R] : DecidableEq R :=
   instDecidableEqOfLawfulBEq
 

@@ -98,6 +98,22 @@ private theorem foldl_max_eq_sup {α : Type*} [DecidableEq α]
   change m[i] = monoEquiv m i
   exact (monoEquiv_apply m i).symm
 
+/-- Each executable coordinate degree is Mathlib's corresponding
+per-variable degree. -/
+@[simp] theorem get_degrees_eq_degreeOf
+    [CommSemiring R] [DecidableEq R]
+    (i : Fin n) (p : MvPoly n R cmp) :
+    p.degrees[i] = MvPolynomial.degreeOf i (toMvPolynomial p) := by
+  rw [getElem_degrees, degreeOf_toMvPolynomial]
+
+/-- The executable variable list contains exactly the variables of nonzero
+Mathlib degree. -/
+@[simp] theorem mem_vars_iff_degreeOf
+    [CommSemiring R] [DecidableEq R]
+    (i : Fin n) (p : MvPoly n R cmp) :
+    i ∈ p.vars ↔ MvPolynomial.degreeOf i (toMvPolynomial p) ≠ 0 := by
+  rw [mem_vars_iff, degreeOf_toMvPolynomial]
+
 /-- Total exponent in an executable monomial is the corresponding Finsupp
 sum. -/
 theorem monoDegree_eq_sum (m : Mono n) :

@@ -134,9 +134,63 @@ theorem coeff_eq_of_mem_terms (p : MvPoly n R cmp) {m : Mono n} {c : R}
 @[inline] def termCount (p : MvPoly n R cmp) : Nat :=
   p.termsInternal.size
 
-/-- Greatest term in `cmp` order. -/
+/-- Greatest term in `cmp` order.
+
+This uses the tree's logarithmic maximum-key query followed by one logarithmic
+lookup. Keeping the definition in terms of the public key and lookup API gives
+downstream proofs access to the complete maximum-entry specification even
+though `Std.ExtTreeMap.maxEntry?` currently lacks corresponding lemmas. -/
 @[inline] def maxTerm? (p : MvPoly n R cmp) : Option (Mono n × R) :=
-  p.termsInternal.maxEntry?
+  p.termsInternal.maxKey?.bind fun m =>
+    p.termsInternal[m]?.map fun c => (m, c)
+
+/-- A maximum term is exactly a stored coefficient whose monomial bounds
+every supported monomial in `cmp` order. -/
+theorem maxTerm?_eq_some_iff (p : MvPoly n R cmp)
+    (m : Mono n) (c : R) :
+    p.maxTerm? = some (m, c) ↔
+      p.coeff? m = some c ∧
+        ∀ k ∈ p.monomials, (cmp k m).isLE := by
+  constructor
+  · intro hterm
+    unfold maxTerm? at hterm
+    cases hmax : p.termsInternal.maxKey? with
+    | none =>
+        simp [hmax] at hterm
+    | some k =>
+        cases hcoeff : p.termsInternal[k]? with
+        | none =>
+            simp [hmax, hcoeff] at hterm
+        | some value =>
+            simp only [hmax, Option.bind_some, hcoeff, Option.map_some,
+              Option.some.injEq, Prod.mk.injEq] at hterm
+            rcases hterm with ⟨rfl, rfl⟩
+            constructor
+            · exact hcoeff
+            · intro k hk
+              have hbound :=
+                (Std.ExtTreeMap.maxKey?_eq_some_iff_mem_and_forall.mp hmax).2
+                  k
+              apply hbound
+              rw [Std.ExtTreeMap.mem_iff_isSome_getElem?]
+              exact (mem_monomials_iff_isSome k p).mp hk
+  · rintro ⟨hcoeff, hbound⟩
+    change p.termsInternal[m]? = some c at hcoeff
+    have hmem : m ∈ p.termsInternal := by
+      rw [Std.ExtTreeMap.mem_iff_isSome_getElem?]
+      simp [hcoeff]
+    have hmax : p.termsInternal.maxKey? = some m := by
+      apply Std.ExtTreeMap.maxKey?_eq_some_iff_mem_and_forall.mpr
+      refine ⟨hmem, ?_⟩
+      intro k hk
+      apply hbound k
+      rw [mem_monomials_iff_isSome]
+      unfold coeff?
+      rw [← Std.ExtTreeMap.mem_iff_isSome_getElem?]
+      exact hk
+    unfold maxTerm?
+    rw [hmax]
+    simp [hcoeff]
 
 /-- The zero polynomial. -/
 def zero : MvPoly n R cmp where
@@ -267,8 +321,8 @@ def addMonomial [Add R] [BEq R] [LawfulBEq R]
 end Representation
 
 /-- Build a polynomial by summing duplicate monomials and dropping all
-zero coefficients. -/
-def ofTerms [Lean.Grind.Semiring R] [BEq R] [LawfulBEq R]
+zero coefficients. Only additive structure is needed by the constructor. -/
+def ofTerms [Zero R] [Add R] [BEq R] [LawfulBEq R]
     (ts : List (Mono n × R)) : MvPoly n R cmp :=
   ts.foldl (fun p t => addMonomial p t.1 t.2) 0
 

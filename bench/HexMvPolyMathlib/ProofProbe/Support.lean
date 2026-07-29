@@ -499,6 +499,25 @@ def sortedMulCollide (size : Nat) : Prop :=
       (fracTerms size 113 (axisMono (0 : Fin 8))) Mono.grevlex
   p * q = q * p
 
+/-- Construction-only production workload matched to high-collision
+multiplication. -/
+def hexMulCollideInputs (size : Nat) : Prop :=
+  let p : Grevlex8.HexRat :=
+    ofTerms (fracTerms size 109 (axisMono (0 : Fin 8)))
+  let q : Grevlex8.HexRat :=
+    ofTerms (fracTerms size 113 (axisMono (0 : Fin 8)))
+  p.termCount = size ∧ q.termCount = size
+
+/-- Matching construction-only sorted-list multiplication workload. -/
+def sortedMulCollideInputs (size : Nat) : Prop :=
+  let p : Grevlex8.SortedRat :=
+    Sorted.ofSortedTerms
+      (fracTerms size 109 (axisMono (0 : Fin 8))) Mono.grevlex
+  let q : Grevlex8.SortedRat :=
+    Sorted.ofSortedTerms
+      (fracTerms size 113 (axisMono (0 : Fin 8))) Mono.grevlex
+  p.terms.length = size ∧ q.terms.length = size
+
 /-- Cancellation-heavy integer identity in the production representation. -/
 def hexCancellationInt (size : Nat) : Prop :=
   let p := hexAxisInt size 0 37
@@ -609,6 +628,15 @@ def hexStructuralInput (size : Nat) : Grlex4.HexInt :=
 def sortedStructuralInput (size : Nat) : Grlex4.SortedInt :=
   Sorted.ofSortedTerms
     (intTerms size 53 (collisionMono size)) Mono.grlex
+
+/-- Construction-only production workload matched to the structural
+collision identity. -/
+def hexStructuralInputs (size : Nat) : Prop :=
+  (hexStructuralInput size).termCount = size
+
+/-- Matching construction-only sorted-list structural workload. -/
+def sortedStructuralInputs (size : Nat) : Prop :=
+  (sortedStructuralInput size).terms.length = size
 
 /-- Renaming to variables agrees with substitution by those variables in the
 production representation. -/

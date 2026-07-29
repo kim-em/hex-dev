@@ -1388,7 +1388,7 @@ def nested_median(
 
 
 def robust_null_statistics(deltas: Sequence[int]) -> dict[str, int]:
-    """Summarize a zero-effect control without letting one outlier dominate."""
+    """Summarize a zero-effect control with a conservative outlier floor."""
     values = [int(delta) for delta in deltas]
     median = float(statistics.median(values))
     deviations = [abs(value - median) for value in values]
@@ -1402,17 +1402,20 @@ def robust_null_statistics(deltas: Sequence[int]) -> dict[str, int]:
     iqr = float(q3 - q1)
     lower_fence = q1 - 1.5 * iqr
     upper_fence = q3 + 1.5 * iqr
+    tukey_envelope = math.ceil(
+        max(abs(lower_fence), abs(upper_fence))
+    )
+    max_absolute_delta = max(abs(value) for value in values)
     return {
         "median_nanos": int(median),
         "mad_nanos": math.ceil(mad),
         "iqr_nanos": math.ceil(iqr),
         "lower_fence_nanos": math.floor(lower_fence),
         "upper_fence_nanos": math.ceil(upper_fence),
-        "envelope_nanos": math.ceil(
-            max(abs(lower_fence), abs(upper_fence))
-        ),
+        "tukey_envelope_nanos": tukey_envelope,
+        "envelope_nanos": max(tukey_envelope, max_absolute_delta),
         "range_nanos": max(values) - min(values),
-        "max_absolute_delta_nanos": max(abs(value) for value in values),
+        "max_absolute_delta_nanos": max_absolute_delta,
         "outlier_count": sum(
             value < lower_fence or value > upper_fence
             for value in values
@@ -1453,15 +1456,13 @@ def interpolated_null_control(
         ),
         None,
     )
+    weight = 0.0
     if exact is not None:
         low = high = exact
-        weight = 0.0
     elif magnitude < int(ordered[0]["magnitude"]):
         low = high = ordered[0]
-        weight = 0.0
     elif magnitude > int(ordered[-1]["magnitude"]):
         low = high = ordered[-1]
-        weight = 0.0
     else:
         low = ordered[0]
         high = ordered[-1]
@@ -1707,6 +1708,9 @@ def summarize(
         result["null_iqr_nanos"] = robust["iqr_nanos"]
         result["null_lower_fence_nanos"] = robust["lower_fence_nanos"]
         result["null_upper_fence_nanos"] = robust["upper_fence_nanos"]
+        result["null_tukey_envelope_nanos"] = robust[
+            "tukey_envelope_nanos"
+        ]
         result["null_robust_envelope_nanos"] = robust["envelope_nanos"]
         result["null_outlier_count"] = robust["outlier_count"]
         result["null_robust_spread_ratio"] = (

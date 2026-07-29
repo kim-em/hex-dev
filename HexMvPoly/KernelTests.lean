@@ -120,6 +120,11 @@ example : eval (fun i => if i = 0 then 2 else 3) q = 11 / 2 := by
     [(#v[4, 0], 2), (#v[1, 2], 3), (#v[0, 3], -1), (Mono.zero, 5)]
 
 example :
+    homogeneousComponent 3 sparse =
+      ofTerms [(#v[1, 2], 3), (#v[0, 3], -1)] := by
+  decide +kernel
+
+example :
     evalHorner (fun i => if i = 0 then 2 else 3) sparse = 64 := by
   decide +kernel
 

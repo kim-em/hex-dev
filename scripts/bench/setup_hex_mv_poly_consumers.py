@@ -4,8 +4,12 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -17,10 +21,77 @@ SOS_URL = "https://github.com/leanprover/sos.git"
 SOS_REV = "4e52845513a5a7f70927c96e094592db1bf124d1"
 COMPPOLY_URL = "https://github.com/Verified-zkEVM/CompPoly.git"
 COMPPOLY_REV = "f4c59f9e6a00b4e73f3e43ca362480468a508011"
+SOS_TARGETS = [
+    "+SOS.Certificate:olean",
+    "+SOS.EqElim:olean",
+    "+SOS.Symmetry:olean",
+    "+SOS.Verifier:olean",
+    "+SOS.Tactic:olean",
+    "+SOSTest.Examples:olean",
+]
+COMPPOLY_TARGETS = [
+    "CompPoly.Univariate.CMvEquiv",
+    "CompPoly.Bivariate.CMvEquiv",
+]
 
 
 def run(command: list[str], cwd: Path | None = None) -> None:
     subprocess.run(command, cwd=cwd, check=True)
+
+
+def run_output(command: list[str], cwd: Path) -> str:
+    return subprocess.run(
+        command,
+        cwd=cwd,
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+    ).stdout.strip()
+
+
+def run_build(command: list[str], cwd: Path) -> dict[str, object]:
+    process = subprocess.Popen(
+        command,
+        cwd=cwd,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+    assert process.stdout is not None
+    lines: list[str] = []
+    for line in process.stdout:
+        print(line, end="", flush=True)
+        lines.append(line)
+    return_code = process.wait()
+    output = "".join(lines)
+    if return_code != 0:
+        raise subprocess.CalledProcessError(
+            return_code, command, output=output
+        )
+    match = re.search(
+        r"Build completed successfully \((\d+) jobs\)\.", output
+    )
+    if match is None:
+        raise RuntimeError("could not find Lake's successful-build summary")
+    return {
+        "status": "passed",
+        "jobs": int(match.group(1)),
+        "output_sha256": hashlib.sha256(output.encode()).hexdigest(),
+    }
+
+
+def sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def git_source_state(source: Path) -> dict[str, object]:
+    status = run_output(["git", "status", "--porcelain"], source)
+    return {
+        "commit": run_output(["git", "rev-parse", "HEAD"], source),
+        "tree": run_output(["git", "rev-parse", "HEAD^{tree}"], source),
+        "dirty": bool(status),
+        "status": status.splitlines(),
+    }
 
 
 def replace_exact(path: Path, old: str, new: str) -> None:
@@ -189,6 +260,11 @@ def main() -> int:
         action="store_true",
         help="prepare and update the clones without building acceptance targets",
     )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="write machine-readable acceptance evidence after successful builds",
+    )
     args = parser.parse_args()
 
     destination = args.destination.resolve()
@@ -204,37 +280,81 @@ def main() -> int:
     comp_poly = destination / "CompPoly"
     prepare_sos(sos, hex_root, toolchain)
     prepare_comp_poly(comp_poly, hex_root, toolchain)
+    source_state = git_source_state(hex_root)
 
     if not args.skip_update:
         run(["lake", "update"], sos)
         run(["lake", "update"], comp_poly)
         configure_nix_sos_native_libs(sos)
+    build_results: dict[str, dict[str, object]] = {}
     if not args.skip_build:
         if args.skip_update:
             raise RuntimeError("--skip-build is required together with --skip-update")
-        run(
-            [
-                "lake",
-                "build",
-                "+SOS.Certificate:olean",
-                "+SOS.EqElim:olean",
-                "+SOS.Symmetry:olean",
-                "+SOS.Verifier:olean",
-                "+SOS.Tactic:olean",
-                "+SOSTest.Examples:olean",
-            ],
-            sos,
+        build_results["sos"] = run_build(
+            ["lake", "build", *SOS_TARGETS], sos
         )
-        run(
-            [
-                "lake",
-                "build",
-                "CompPoly.Univariate.CMvEquiv",
-                "CompPoly.Bivariate.CMvEquiv",
-            ],
-            comp_poly,
+        build_results["comp_poly"] = run_build(
+            ["lake", "build", *COMPPOLY_TARGETS], comp_poly
         )
 
+    if args.output is not None:
+        if args.skip_update or args.skip_build:
+            raise RuntimeError("--output requires both update and build")
+        evidence = {
+            "schema": "hex-mv-poly-consumer-acceptance-v1",
+            "generated_at_utc": datetime.now(timezone.utc).isoformat().replace(
+                "+00:00", "Z"
+            ),
+            "toolchain": toolchain.strip(),
+            "hex_source": source_state,
+            "consumers": [
+                {
+                    "name": "SOS",
+                    "url": SOS_URL,
+                    "revision": SOS_REV,
+                    "lake_manifest_sha256": sha256_file(
+                        sos / "lake-manifest.json"
+                    ),
+                    "adapter_sha256": sha256_file(
+                        sos / "SOS" / "HexMvPolyCompat.lean"
+                    ),
+                    "targets": SOS_TARGETS,
+                    "build": build_results["sos"],
+                },
+                {
+                    "name": "CompPoly",
+                    "url": COMPPOLY_URL,
+                    "revision": COMPPOLY_REV,
+                    "lake_manifest_sha256": sha256_file(
+                        comp_poly / "lake-manifest.json"
+                    ),
+                    "adapter_sha256": {
+                        "univariate": sha256_file(
+                            comp_poly
+                            / "CompPoly"
+                            / "Univariate"
+                            / "CMvEquiv.lean"
+                        ),
+                        "bivariate": sha256_file(
+                            comp_poly
+                            / "CompPoly"
+                            / "Bivariate"
+                            / "CMvEquiv.lean"
+                        ),
+                    },
+                    "targets": COMPPOLY_TARGETS,
+                    "build": build_results["comp_poly"],
+                },
+            ],
+            "acceptance_passed": True,
+        }
+        output = args.output.resolve()
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(
+            json.dumps(evidence, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        print(output)
     print(destination)
     return 0
 
