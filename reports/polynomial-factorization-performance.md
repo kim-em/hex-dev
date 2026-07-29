@@ -5,15 +5,17 @@ stack.
 
 ## Measurement environment
 
-- Hex public, classical, and lattice implementation: exact-exponent/factor-only
-  Hensel lift, guarded dominant-degree tree, remainder-only GCD,
-  inverse-cached finite-field GCD, direct prime-power coefficient reduction,
-  and monomial quadratic-division kernel at
+- Hex public and classical implementation: exact-exponent/factor-only Hensel
+  lift, guarded dominant-degree tree, remainder-only GCD, inverse-cached
+  finite-field GCD, direct prime-power coefficient reduction, monomial
+  quadratic-division kernel, and cached classical recombination search at
+  `b0150d2b4a6154d7b9ed3c7cace4fee0ace64165`
+- Hex lattice implementation: unchanged clean revision
   `0b95505b7c926911a9f487bac56676a8c7da48f6`
 - Kernel diagnostic revision: `8c4acebc5fc04bd52b7ec2f6fa15c4f2eb4c6ece`
 - Finite-field lower-layer revision:
   `f1ab9696cee5fac0cb8ea17bfdfd19caf63bd7c3`; Hensel and BZ use the final
-  `0b95505b` revision above
+  lower-layer `0b95505b` revision above
 - Hex date: 2026-07-29
 - External-comparator date/revision: 2026-07-28 / `5c371a5a`
 - Host: `chungus2`, AMD EPYC 9455, Linux x86-64
@@ -37,33 +39,31 @@ slower direct-array `modP` replacement are not used as current evidence.
 
 ## Headline outcome
 
-The combined verified hot-path work makes the public dispatcher 3.11× faster
-at the solved-row median (1.244 ms to 400.334 µs). Exact-exponent lifting,
+The combined verified hot-path work makes the public dispatcher 3.15× faster
+at the solved-row median (1.244 ms to 395.506 µs). Exact-exponent lifting,
 omitting the unused final Bezout update, guarded tree, and shared GCD/Hensel
-kernels preserve 373 of 392 solves while cutting p90 from 8.408 ms to
-4.082 ms.
+kernels, plus cached recombination, preserve 373 of 392 solves while cutting
+p90 from 8.408 ms to 4.074 ms.
 
 Against verified Isabelle BZ, the overhead-filtered eligible-row median falls
-from 3.95× to 0.887× Hex/Isabelle. Hex wins 135 eligible rows and Isabelle
-99. This is a real aggregate Hex lead but not yet a decisive margin; FLINT,
+from 3.95× to 0.866× Hex/Isabelle. Hex wins 136 eligible rows and Isabelle
+99. This is a clear aggregate Hex lead but not uniform superiority; FLINT,
 PARI/GP, and NTL remain much faster overall.
 
 Eligibility uses each run's own measured protocol floor. The new public
-service's floor is 16.975 µs, so the 234-row headline is stricter than the
-preceding 13.650 µs export. Reapplying the lower old Hex floor gives a 0.836×
-median over 243 rows; requiring both sides to clear the larger of the two
-current floors gives 0.889× over 233 rows. On the preceding fixed 238-row
-eligibility set, the current median is 0.870×. The direction of
-the lead is therefore not an overhead-floor artifact, although its broad
-0.454×–2.513× p10–p90 band still rules out a claim of uniform superiority.
+service's floor is 17.015 µs. Reapplying the preceding 16.975 µs Hex floor
+leaves the same 235 rows and 0.866× median; requiring both sides to clear the
+larger current pair floor gives 0.869× over 234 rows. The direction of the lead
+is therefore not an overhead-floor artifact, although its broad
+0.453×–2.274× p10–p90 band still rules out a claim of uniform superiority.
 
 ## Integer-factorization corpus
 
 | System | OK | Timeout | Median | p90 | Slowest solved |
 |---|---:|---:|---:|---:|---:|
-| Hex public factor | 373 | 19 | 400.334 µs | 4.082 ms | 9.047 s |
+| Hex public factor | 373 | 19 | 395.506 µs | 4.074 ms | 9.137 s |
 | Hex lattice | 369 | 23 | 1.812 ms | 87.886 ms | 9.590 s |
-| Hex classical, no decline | 372 | 20 | 389.203 µs | 5.561 ms | 3.724 s |
+| Hex classical, no decline | 372 | 20 | 386.358 µs | 5.556 ms | 3.717 s |
 | FLINT | 391 | 1 | 66.850 µs | 1.184 ms | 1.228 s |
 | PARI/GP | 391 | 1 | 99.958 µs | 1.254 ms | 823.201 ms |
 | NTL | 391 | 1 | 135.631 µs | 2.714 ms | 1.919 s |
@@ -79,14 +79,14 @@ With both sides at least 10× above protocol overhead:
 
 | Pair | Eligible | Median | p10–p90 | First faster | Second faster |
 |---|---:|---:|---:|---:|---:|
-| Hex public / Isabelle BZ | 234 | 0.887× | 0.454×–2.513× | 135 | 99 |
-| Hex classical / Isabelle BZ | 229 | 0.913× | 0.464×–2.568× | 128 | 101 |
+| Hex public / Isabelle BZ | 235 | 0.866× | 0.453×–2.274× | 136 | 99 |
+| Hex classical / Isabelle BZ | 229 | 0.901× | 0.466×–2.490× | 127 | 102 |
 | Hex lattice / Isabelle LLL | 230 | 0.137× | 0.004×–2.437× | 182 | 48 |
-| Hex public / Hex classical | 237 | 1.006× | 0.807×–1.128× | 109 | 128 |
+| Hex public / Hex classical | 237 | 1.003× | 0.796×–1.145× | 117 | 120 |
 
 The refreshed comparison resolves the apparent public/classical anomaly.
-No-decline classical retains a 0.6% paired-median advantage: public/classical
-is 1.006×, with a 109–128 win split. That is expected diagnostic overhead, not
+No-decline classical retains a 0.3% paired-median advantage: public/classical
+is 1.003×, with a 117–120 win split. That is expected diagnostic overhead, not
 a different lifting core: the no-decline entry omits bounded decline/fallback
 behavior and the public final product check. Public improves selected hard rows
 and alone solves `sd6`.
@@ -158,9 +158,25 @@ Targeted A/B measurements led to the two guards above. The retained clean
 corpus sweep is 0.989× at the paired median versus the preceding public export
 over 247 overhead-eligible rows, while preserving the large structured wins.
 
+## Cached classical recombination
+
+The current stage carries degree and leading/trailing coefficient residues
+through a compiled subset search, rejects impossible candidates before
+constructing full polynomial products, and counts the bounded search without
+materializing its subset list. Its transparent reference definitions and
+compiled implementations are joined by proved equalities.
+
+Against the immediately preceding `0b95505b` sweep, the eligible-row paired
+median is 0.988× and current Hex wins 171 of 243 rows. The aggregate change is
+small because most easy rows never make recombination dominant, but the target
+seam moves sharply: `sd5` falls from 89.008 ms to 39.730 ms,
+`sd5_shift1` from 76.152 ms to 28.073 ms, and `sd5_shift2` from 76.981 ms to
+29.903 ms. Their Hex/Isabelle ratios fall from 3.90×, 5.12×, and 5.16× to
+1.74×, 1.89×, and 2.01× respectively.
+
 ## Shared GCD and Hensel kernels
 
-The latest stage removes quotient construction when Euclidean GCD only needs a
+The preceding stage removes quotient construction when Euclidean GCD only needs a
 remainder, caches finite-field divisor inverses, maps prime-power reduction
 over the stored coefficient array with the modulus hoisted, and replaces
 quadratic-Hensel multiplication by a monomial with an exact shift-and-scale
@@ -247,10 +263,10 @@ kernel-rebuilding baseline, 1.245 ms with the kernel shared, and 569.224 µs for
 the fixed path. The fixed path is 18.89% matrix, 2.95% nullspace, and 78.17%
 witness split. Balanced product construction remains neutral.
 
-In the current persistent corpus service, public `sd5` takes 89.008 ms and
-`sd6` completes in 9.047 s; the current isolated lattice entry takes 8.583 s
+In the current persistent corpus service, public `sd5` takes 39.730 ms and
+`sd6` completes in 9.137 s; the current isolated lattice entry takes 8.583 s
 on `sd6`, while no-decline classical times out. The frontier result is only
-9.5% below the cutoff and therefore has little margin.
+8.6% below the cutoff and therefore has little margin.
 
 ## Six presentation graphs
 
@@ -278,8 +294,11 @@ Fresh Hex exports under `reports/bench-results/`:
   (SHA-256
   `82ddd9e54cfafcfefc936ffeb1f1c8bb7e926e7545cd2b992ecfbc508e1ee78d`)
 - `hexbz-factor-sweep-hex-0b95505b-gcd-hensel-final-chungus2.json`
-  (current public, lattice, and no-decline classical; SHA-256
+  (preceding public/classical and current lattice; SHA-256
   `9f9f63ac9f35b3af6d35e530b085a1a1e47e7d03d958179d7597d7850e59c583`)
+- `hexbz-factor-sweep-hex-b0150d2b-recombine-cache-chungus2.json`
+  (current public and no-decline classical; SHA-256
+  `7222c12c206d9fdb3489d98595c72f9eb254f31108e5136722242784eb086be3`)
 
 Historical stage-isolation artifacts remain in the same directory and are
 linked from the corresponding exact-lift and guarded-tree sections above.
