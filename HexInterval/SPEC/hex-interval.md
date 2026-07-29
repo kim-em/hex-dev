@@ -1169,6 +1169,78 @@ checker remains responsible for reconstructing the exact program step,
 fact-prefix assumptions, instance event, and equality edge before invoking
 these package-owned theorem builders.
 
+The first chronological transition composes a retained rule theorem into a
+theorem about the fact actually installed by the engine. Given a previous fact
+and ordered action-input facts resolved from the already-checked prefix, it
+checks the event/action program version, previous-node pointer, and declared
+input-node order; replays the package-owned proposed fact; independently asks
+the fact-domain schema to prove `installed ↔ previous ∧ proposed`; and returns
+that the installed fact follows from the caller's base assumptions. Supplying
+the resolution evidence explicitly is intentional at this stage: this
+transition cannot inspect a future event or the engine's final mutable fact
+slots. The arbitrary-function contractor event exercises this composition
+against the actual policy-session history.
+
+The prefix resolver returns an exact fact together with its theorem for a
+requested `(node, version)`, and builds the rule's ordered input list by
+traversing the immutable `Action.inputs`. The rule transition consumes this
+resolver directly. A request for a positive version absent from the checked
+prefix therefore fails before recipe dispatch; the conformance test mutates
+the previous pointer to the event's own version and observes this rejection.
+The fixed-program prefix has a private constructor. Its checked start exposes
+the seed resolver only at version zero, and a successful rule event appends
+exactly its proved positive version. Replaying the same `(node, version)` is
+rejected as a duplicate. The stable-step transition described below lifts this
+prefix across an instance transition. Driving the complete interleaved event
+histories remains the next fold-state step.
+
+The corresponding equality-transport transition checks that the retained
+source is the opposite endpoint of the exact edge, replays the package-owned
+equality theorem under its resolved conditional assumptions, transports the
+source fact through a fact-domain law saying equal semantic values satisfy the
+same fact, and validates the target meet before returning the installed-fact
+theorem. Before using that law, replay checks that both endpoints exist in the
+current program and have the same domain. A canary drives this route with the
+equality produced by the arbitrary-function matcher; the generic engine still
+has no sine case.
+
+The instance transition checks that the retained event advances exactly one
+program version from its originating action, replays the package-owned
+conservative-extension theorem, and composes it with the already-checked
+extension from the caller's base program. This composition admits reflexive
+semantic steps because a pure-equality or pure-scope instance may change
+scheduler structure without appending a node.
+
+Chronological replay also needs the opposite, prefix-facing semantic
+direction. For each append-only program step, the semantics adapter supplies
+that a model of the enlarged program is a model of the old prefix and that a
+fact on an old node has the same meaning in old and new models whenever those
+models assign that node the same value. This is separate from, and
+complementary to, the package theorem that every old model can be extended.
+The checker uses these laws to lift all previously proved fact versions into
+the enlarged program. It then seeds every genuinely new node at version zero
+with the fact-domain top theorem. The old resolver is consulted first, so an
+initial fact supplied by the caller is never silently replaced with top. A
+conformance fold starts from the original graph, replays the actual
+arbitrary-function instantiator, lifts the fact prefix, seeds its two new
+expressions, and only then replays the dynamically installed propagator. This
+path depends on no rational representation and contains no generic function
+case.
+
+The private chronological cursor is indexed by its exact program version and
+program value. Its instance transition requires the originating action to
+name the cursor's current version, the event to advance it by exactly one, and
+`newNodes` to be exactly the appended node-index range—not merely a
+self-consistent list supplied by the event. It then composes the structural
+prefix, package-owned conservative-extension theorem, and stable fact prefix
+into the next cursor. Its rule transition similarly requires the event's
+program version to equal the cursor's. The arbitrary-function canary verifies
+that a future generated node has no version-zero fact before instantiation,
+that it receives top afterwards, that an old base fact remains available, and
+that the dynamically installed contractor's positive fact version appears
+only after its rule event. Mutually consistent but cursor-stale versions and a
+mutated `newNodes` list fail closed.
+
 A Mathlib companion must instantiate those abstract schemas, decode each
 frozen entry independently of package cache state, and recheck the
 corresponding rule theorem. It remains an explicit compatibility
@@ -1283,17 +1355,23 @@ Certificate replay must instead fold events in chronological order and
 resolve every positive-version dependency only from the already-validated
 prefix. This rejects future references and cyclic provenance even if a forged
 final history contains an entry with the requested `(node, version)`.
+The checked rule, equality-transport, and instance transitions above are the
+semantic bodies of that fold. The private prefix resolver now supplies their
+exact historical inputs and lifts them across one checked program extension;
+the remaining implementation work is the driver which validates and
+interleaves the complete retained event arrays.
 
 Because `Semantics.holds` may inspect the complete program as well as the
-valuation, conservative model extension alone does not yet transport old
-facts or the caller's target across a program extension. The complete checker
-must either require a prefix-locality law for `holds` on old nodes under
-agreeing valuations, or use a fact interpretation which does not depend on
-the surrounding program. Conditional equality assumptions also require an
-unambiguous position in the fact-event chronology; before completing forward
-replay we must either unify structural and fact events or retain an exact fact
-cursor on each instance and equality event. These are proof obligations, not
-policy choices.
+valuation, conservative model extension alone cannot transport old facts or
+the caller's target across a program extension. The checked `StableStep`
+boundary therefore requires both model restriction and fact stability on old
+nodes. A production semantics adapter may derive this once from a global
+prefix-locality theorem; keeping it as evidence for the exact step leaves that
+choice open during experimentation. Conditional equality assumptions still
+require an unambiguous position in the fact-event chronology; before
+completing forward replay we must either unify structural and fact events or
+retain an exact fact cursor on each instance and equality event. These are
+proof obligations, not policy choices.
 
 Whether freezing is an explicit second request after the solver identifies
 the improving subset, or eager allocation before the `Outcome`, remains an
