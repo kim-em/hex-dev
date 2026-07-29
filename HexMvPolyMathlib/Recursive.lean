@@ -38,6 +38,8 @@ variable {n : Nat} {R : Type u}
 
 noncomputable section
 
+/-- Inserting the main-variable exponent corresponds to adding its Mathlib
+single term to the shifted remaining exponents. -/
 @[simp] theorem monoEquiv_insertZero (e : Nat) (m : Mono n) :
     monoEquiv (insertVar (0 : Fin (n + 1)) e m) =
       (monoEquiv m).cons e := by
@@ -155,11 +157,14 @@ def finSuccEquiv [CommSemiring R] [DecidableEq R]
   map_mul' := toUnivariate_mul
   map_add' := toUnivariate_add
 
+/-- The finite-successor ring equivalence applies as the recursive view. -/
 @[simp] theorem finSuccEquiv_apply [CommSemiring R] [DecidableEq R]
     (p : MvPoly (n + 1) R cmp) :
     finSuccEquiv (cmp := cmp) cmp' p = toUnivariate 0 cmp' p := by
   rfl
 
+/-- The inverse finite-successor ring equivalence applies as recursive-view
+reassembly. -/
 @[simp] theorem finSuccEquiv_symm_apply
     [CommSemiring R] [DecidableEq R]
     (q : DensePoly (MvPoly n R cmp')) :
@@ -178,6 +183,7 @@ def isEmptyRingEquiv [CommSemiring R] [DecidableEq R] :
   (equiv (cmp := cmp0)).trans
     (MvPolynomial.isEmptyRingEquiv R (Fin 0))
 
+/-- The zero-variable equivalence reads the constant coefficient. -/
 @[simp] theorem isEmptyRingEquiv_apply
     [CommSemiring R] [DecidableEq R] (p : MvPoly 0 R cmp0) :
     isEmptyRingEquiv p = coeff Mono.zero p := by
@@ -185,6 +191,7 @@ def isEmptyRingEquiv [CommSemiring R] [DecidableEq R] :
   rw [MvPolynomial.isEmptyRingEquiv_eq_coeff_zero]
   simpa using coeff_toMvPolynomial (Mono.zero : Mono 0) p
 
+/-- The inverse zero-variable equivalence builds a constant polynomial. -/
 @[simp] theorem isEmptyRingEquiv_symm_apply
     [CommSemiring R] [DecidableEq R] (r : R) :
     (isEmptyRingEquiv (cmp0 := cmp0)).symm r = C r := by
@@ -207,6 +214,8 @@ def oneVarEquiv [CommSemiring R] [DecidableEq R] :
       (isEmptyRingEquiv (R := R)
         (cmp0 := (Mono.lex : Mono 0 → Mono 0 → Ordering))))
 
+/-- The one-variable equivalence applies as the recursive view with constant
+coefficient polynomials identified with coefficients. -/
 @[simp] theorem oneVarEquiv_apply
     [CommSemiring R] [DecidableEq R] (p : MvPoly 1 R cmp1) :
     oneVarEquiv p =
@@ -216,6 +225,7 @@ def oneVarEquiv [CommSemiring R] [DecidableEq R] :
         (toUnivariate 0 Mono.lex p) := by
   rfl
 
+/-- The inverse one-variable equivalence reassembles a dense polynomial. -/
 @[simp] theorem oneVarEquiv_symm_apply
     [CommSemiring R] [DecidableEq R] (q : DensePoly R) :
     (oneVarEquiv (cmp1 := cmp1)).symm q =

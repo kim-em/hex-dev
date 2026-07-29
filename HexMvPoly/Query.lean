@@ -91,6 +91,8 @@ def restrictTotalDegree [Zero R]
     (bound : Nat) (p : MvPoly n R cmp) : MvPoly n R cmp :=
   p.restrictBy fun m => decide (Mono.degree m ≤ bound)
 
+/-- Restriction keeps exactly the coefficients whose monomials satisfy the
+predicate. -/
 theorem coeff_restrictBy [Zero R]
     (keep : Mono n → Bool) (m : Mono n) (p : MvPoly n R cmp) :
     coeff m (restrictBy keep p) = if keep m then coeff m p else 0 := by

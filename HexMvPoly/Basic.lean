@@ -78,12 +78,16 @@ theorem monomials_nodup (p : MvPoly n R cmp) : p.monomials.Nodup := by
   rw [Std.ExtTreeMap.map_fst_toList_eq_keys]
   exact p.termsInternal.nodup_keys
 
+/-- A monomial occurs in the ordered monomial list exactly when coefficient
+lookup succeeds. -/
 theorem mem_monomials_iff_isSome (m : Mono n) (p : MvPoly n R cmp) :
     m ∈ p.monomials ↔ (p.coeff? m).isSome := by
   unfold monomials termsList coeff?
   rw [Std.ExtTreeMap.map_fst_toList_eq_keys, Std.ExtTreeMap.mem_keys,
     Std.ExtTreeMap.mem_iff_isSome_getElem?]
 
+/-- A monomial occurs in the ordered monomial list exactly when its
+coefficient is nonzero. -/
 @[simp] theorem mem_monomials_iff (m : Mono n) (p : MvPoly n R cmp) :
     m ∈ p.monomials ↔ coeff m p ≠ 0 := by
   rw [mem_monomials_iff_isSome]
@@ -98,6 +102,8 @@ theorem mem_monomials_iff_isSome (m : Mono n) (p : MvPoly n R cmp) :
         simpa [hzero] using hcoeff
       simp [hc]
 
+/-- Membership in the support is equivalent to having a nonzero
+coefficient. -/
 @[simp] theorem mem_support_iff (m : Mono n) (p : MvPoly n R cmp) :
     m ∈ p.support ↔ coeff m p ≠ 0 := by
   unfold support
@@ -283,11 +289,14 @@ def ofTerms [Lean.Grind.Semiring R] [BEq R] [LawfulBEq R]
     (ts : List (Mono n × R)) : MvPoly n R cmp :=
   ts.foldl (fun p t => addMonomial p t.1 t.2) 0
 
+/-- Every coefficient of the zero polynomial is zero. -/
 @[simp] theorem coeff_zero [Zero R] (m : Mono n) :
     coeff m (0 : MvPoly n R cmp) = 0 := by
   change ((∅ : Std.ExtTreeMap (Mono n) R cmp)[m]?).getD 0 = 0
   simp
 
+/-- A monomial polynomial has its supplied coefficient at the selected
+monomial and zero elsewhere. -/
 theorem coeff_monomial [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R]
     (m m' : Mono n) (c : R) :
     coeff m (monomial m' c : MvPoly n R cmp) =
@@ -305,18 +314,21 @@ theorem coeff_monomial [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R]
     · have hm' : m' ≠ m := fun h => hm h.symm
       simp [hm, hm']
 
+/-- A constant polynomial is supported at the zero monomial. -/
 theorem coeff_C [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R]
     (m : Mono n) (c : R) :
     coeff m (C c : MvPoly n R cmp) =
       if m = Mono.zero then c else 0 := by
   simp [C, coeff_monomial]
 
+/-- A variable polynomial is supported at its unit monomial. -/
 theorem coeff_X [Zero R] [One R] [BEq R] [LawfulBEq R] [DecidableEq R]
     (m : Mono n) (i : Fin n) :
     coeff m (X i : MvPoly n R cmp) =
       if m = Mono.unit i then 1 else 0 := by
   simp [X, coeff_monomial]
 
+/-- Adding a monomial changes only the selected coefficient. -/
 theorem coeff_addMonomial [Zero R] [Add R] [BEq R] [LawfulBEq R]
     [DecidableEq R]
     (p : MvPoly n R cmp) (m k : Mono n) (c : R) :
@@ -331,6 +343,7 @@ theorem coeff_addMonomial [Zero R] [Add R] [BEq R] [LawfulBEq R]
   · have hmk : m ≠ k := fun h => hkm h.symm
     simp [hkm, hmk]
 
+/-- `ofTerms` sums the coefficients of duplicate monomials. -/
 theorem coeff_ofTerms [Lean.Grind.Semiring R] [BEq R] [LawfulBEq R]
     [DecidableEq R]
     (m : Mono n) (ts : List (Mono n × R)) :

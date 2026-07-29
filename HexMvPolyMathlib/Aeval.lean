@@ -41,6 +41,8 @@ def aeval [CommSemiring R] [DecidableEq R]
   (MvPolynomial.aeval x).comp
     (algEquiv (cmp := cmp)).toAlgHom
 
+/-- Applying the bundled algebra evaluation uses Mathlib's multivariate
+evaluation after conversion. -/
 theorem aeval_apply [CommSemiring R] [DecidableEq R]
     [CommSemiring S] [Algebra R S]
     (x : Fin n → S) (p : MvPoly n R cmp) :
@@ -66,6 +68,8 @@ def eval₂MathlibHom [CommSemiring R] [DecidableEq R]
     MvPoly n R cmp →+* S :=
   (MvPolynomial.eval₂Hom f x).comp (equiv (cmp := cmp)).toRingHom
 
+/-- The Mathlib-transported evaluation homomorphism applies as direct
+`eval₂`. -/
 theorem eval₂MathlibHom_apply [CommSemiring R] [DecidableEq R]
     [CommSemiring S] (f : R →+* S) (x : Fin n → S)
     (p : MvPoly n R cmp) :
@@ -146,50 +150,60 @@ theorem aeval_eq_eval [CommSemiring R] [DecidableEq R]
   unfold eval
   congr 1
 
+/-- Algebra evaluation sends zero to zero. -/
 @[simp] theorem aeval_zero [CommSemiring R] [DecidableEq R]
     [CommSemiring S] [Algebra R S] (x : Fin n → S) :
     aeval x (0 : MvPoly n R cmp) = 0 :=
   map_zero (aeval x)
 
+/-- Algebra evaluation sends one to one. -/
 @[simp] theorem aeval_one [CommSemiring R] [DecidableEq R]
     [CommSemiring S] [Algebra R S] (x : Fin n → S) :
     aeval x (1 : MvPoly n R cmp) = 1 :=
   map_one (aeval x)
 
+/-- Algebra evaluation preserves addition. -/
 @[simp] theorem aeval_add [CommSemiring R] [DecidableEq R]
     [CommSemiring S] [Algebra R S] (x : Fin n → S)
     (p q : MvPoly n R cmp) :
     aeval x (p + q) = aeval x p + aeval x q :=
   map_add (aeval x) p q
 
+/-- Algebra evaluation preserves multiplication. -/
 @[simp] theorem aeval_mul [CommSemiring R] [DecidableEq R]
     [CommSemiring S] [Algebra R S] (x : Fin n → S)
     (p q : MvPoly n R cmp) :
     aeval x (p * q) = aeval x p * aeval x q :=
   map_mul (aeval x) p q
 
+/-- Algebra evaluation preserves natural powers. -/
 @[simp] theorem aeval_pow [CommSemiring R] [DecidableEq R]
     [CommSemiring S] [Algebra R S] (x : Fin n → S)
     (p : MvPoly n R cmp) (k : Nat) :
     aeval x (p ^ k) = aeval x p ^ k :=
   map_pow (aeval x) p k
 
+/-- Algebra evaluation sends a constant polynomial through the algebra
+map. -/
 @[simp] theorem aeval_C [CommSemiring R] [DecidableEq R]
     [CommSemiring S] [Algebra R S] (x : Fin n → S) (r : R) :
     aeval x (C r : MvPoly n R cmp) = algebraMap R S r := by
   simp [aeval]
 
+/-- Algebra evaluation sends a variable polynomial to its assigned value. -/
 @[simp] theorem aeval_X [CommSemiring R] [DecidableEq R]
     [CommSemiring S] [Algebra R S] (x : Fin n → S) (i : Fin n) :
     aeval x (X i : MvPoly n R cmp) = x i := by
   simp [aeval]
 
+/-- Algebra evaluation preserves negation. -/
 @[simp] theorem aeval_neg [CommRing R] [DecidableEq R]
     [CommRing S] [Algebra R S] (x : Fin n → S)
     (p : MvPoly n R cmp) :
     aeval x (-p) = -aeval x p :=
   map_neg (aeval x) p
 
+/-- Algebra evaluation preserves subtraction. -/
 @[simp] theorem aeval_sub [CommRing R] [DecidableEq R]
     [CommRing S] [Algebra R S] (x : Fin n → S)
     (p q : MvPoly n R cmp) :

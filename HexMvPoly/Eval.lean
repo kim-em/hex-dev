@@ -85,10 +85,13 @@ def hornerGroups (k : Nat) (terms : List (HornerTerm n S)) :
 
 /-! # Horner grouping invariants -/
 
+/-- Flatten Horner groups back to their exponent-tagged terms. -/
 private def groupTerms (groups : List (HornerGroup n S)) :
     List (HornerTerm n S) :=
   groups.flatMap fun group => group.2
 
+/-- Inserting a term into its exponent group preserves the flattened
+multiset. -/
 private theorem insertHornerTerm_perm (exponent : Nat)
     (term : HornerTerm n S) (groups : List (HornerGroup n S)) :
     (groupTerms (insertHornerTerm exponent term groups)).Perm
@@ -105,6 +108,8 @@ private theorem insertHornerTerm_perm (exponent : Nat)
             (term :: (group.2 ++ groupTerms groups))
         exact (ih.append_left group.2).trans List.perm_middle
 
+/-- The accumulator form of group collection preserves the flattened
+multiset. -/
 private theorem collectHornerGroups_perm_aux (k : Nat)
     (terms : List (HornerTerm n S)) (groups : List (HornerGroup n S)) :
     (groupTerms
@@ -133,12 +138,14 @@ private theorem collectHornerGroups_perm_aux (k : Nat)
           (insertHornerTerm (hornerExponent k term.1) term groups)).trans
           (hins.trans hfront)
 
+/-- Collecting terms into Horner groups preserves the flattened multiset. -/
 private theorem collectHornerGroups_perm (k : Nat)
     (terms : List (HornerTerm n S)) :
     (groupTerms (collectHornerGroups k terms)).Perm terms := by
   simpa [collectHornerGroups, groupTerms] using
     collectHornerGroups_perm_aux k terms []
 
+/-- Inserting a group into descending order preserves all groups. -/
 private theorem insertHornerGroupDesc_perm (group : HornerGroup n S)
     (groups : List (HornerGroup n S)) :
     (groupTerms (insertHornerGroupDesc group groups)).Perm
@@ -159,6 +166,7 @@ private theorem insertHornerGroupDesc_perm (group : HornerGroup n S)
               simpa [List.append_assoc] using
                 List.perm_append_comm_assoc group'.2 group.2 (groupTerms groups))
 
+/-- The accumulator form of group sorting preserves all groups. -/
 private theorem sortHornerGroups_perm_aux (groups sorted : List (HornerGroup n S)) :
     (groupTerms
         (groups.foldl
@@ -185,17 +193,21 @@ private theorem sortHornerGroups_perm_aux (groups sorted : List (HornerGroup n S
         (ih (insertHornerGroupDesc group sorted)).trans
           (by simpa [groupTerms] using hins.trans hfront)
 
+/-- Sorting Horner groups preserves all groups. -/
 private theorem sortHornerGroups_perm (groups : List (HornerGroup n S)) :
     (groupTerms (sortHornerGroups groups)).Perm (groupTerms groups) := by
   simpa [sortHornerGroups, groupTerms] using
     sortHornerGroups_perm_aux groups []
 
+/-- The complete grouping pass preserves the original term multiset. -/
 private theorem hornerGroups_perm (k : Nat) (terms : List (HornerTerm n S)) :
     (groupTerms (hornerGroups k terms)).Perm terms := by
   exact
     (sortHornerGroups_perm (collectHornerGroups k terms)).trans
       (collectHornerGroups_perm k terms)
 
+/-- Membership after descending insertion is membership in the inserted group
+or the original list. -/
 private theorem mem_insertHornerGroupDesc
     (target group : HornerGroup n S) (groups : List (HornerGroup n S)) :
     target ∈ insertHornerGroupDesc group groups ↔
@@ -218,6 +230,7 @@ private theorem mem_insertHornerGroupDesc
           · exact Or.inl heq
           · exact Or.inr (Or.inr hmem)
 
+/-- Descending insertion preserves descending exponent order. -/
 private theorem insertHornerGroupDesc_desc (group : HornerGroup n S)
     (groups : List (HornerGroup n S))
     (hdesc : groups.Pairwise fun left right => right.1 ≤ left.1) :
@@ -246,6 +259,7 @@ private theorem insertHornerGroupDesc_desc (group : HornerGroup n S)
           · exact hdesc.1 target htarget
         · exact ih hdesc.2
 
+/-- The accumulator sorting pass preserves descending exponent order. -/
 private theorem sortHornerGroups_desc_aux
     (groups sorted : List (HornerGroup n S))
     (hdesc : sorted.Pairwise fun left right => right.1 ≤ left.1) :
@@ -258,20 +272,25 @@ private theorem sortHornerGroups_desc_aux
       simp only [List.foldl_cons]
       exact ih _ (insertHornerGroupDesc_desc group sorted hdesc)
 
+/-- Sorting groups puts their exponents in descending order. -/
 private theorem sortHornerGroups_desc (groups : List (HornerGroup n S)) :
     (sortHornerGroups groups).Pairwise
       fun left right => right.1 ≤ left.1 := by
   exact sortHornerGroups_desc_aux groups [] List.Pairwise.nil
 
+/-- The complete grouping pass returns groups in descending exponent order. -/
 private theorem hornerGroups_desc (k : Nat) (terms : List (HornerTerm n S)) :
     (hornerGroups k terms).Pairwise
       fun left right => right.1 ≤ left.1 :=
   sortHornerGroups_desc (collectHornerGroups k terms)
 
+/-- Every term in a group has the exponent recorded by that group. -/
 private def groupsKeyed (k : Nat) (groups : List (HornerGroup n S)) : Prop :=
   ∀ group ∈ groups, ∀ term ∈ group.2,
     hornerExponent k term.1 = group.1
 
+/-- Inserting a term preserves the correspondence between group keys and term
+exponents. -/
 private theorem insertHornerTerm_at (k exponent : Nat)
     (term : HornerTerm n S) (groups : List (HornerGroup n S))
     (hterm : hornerExponent k term.1 = exponent)
@@ -313,6 +332,7 @@ private theorem insertHornerTerm_at (k exponent : Nat)
           exact hgroups group (List.mem_cons_self ..) candidate hcand
         · exact ih htail target htarget candidate hcand
 
+/-- The accumulator collection pass preserves the group-key invariant. -/
 private theorem collectHornerGroups_at_aux (k : Nat)
     (terms : List (HornerTerm n S)) (groups : List (HornerGroup n S))
     (hgroups : groupsKeyed k groups) :
@@ -327,6 +347,7 @@ private theorem collectHornerGroups_at_aux (k : Nat)
       simp only [List.foldl_cons]
       exact ih _ (insertHornerTerm_at k _ term groups rfl hgroups)
 
+/-- Collected groups satisfy the group-key invariant. -/
 private theorem collectHornerGroups_at (k : Nat)
     (terms : List (HornerTerm n S)) :
     groupsKeyed k (collectHornerGroups k terms) := by
@@ -334,6 +355,7 @@ private theorem collectHornerGroups_at (k : Nat)
   intro group hgroup
   simp at hgroup
 
+/-- Descending insertion preserves the group-key invariant. -/
 private theorem insertHornerGroupDesc_at (k : Nat)
     (group : HornerGroup n S) (groups : List (HornerGroup n S))
     (hgroup : ∀ term ∈ group.2, hornerExponent k term.1 = group.1)
@@ -345,6 +367,7 @@ private theorem insertHornerGroupDesc_at (k : Nat)
   · exact hgroup term hterm
   · exact hgroups target htarget term hterm
 
+/-- The accumulator sorting pass preserves the group-key invariant. -/
 private theorem sortHornerGroups_at_aux (k : Nat)
     (groups sorted : List (HornerGroup n S))
     (hgroups : groupsKeyed k groups) (hsorted : groupsKeyed k sorted) :
@@ -364,6 +387,7 @@ private theorem sortHornerGroups_at_aux (k : Nat)
         exact hgroups target (List.mem_cons_of_mem group htarget) term hterm
       exact ih _ htail (insertHornerGroupDesc_at k group sorted hgroup hsorted)
 
+/-- Sorting preserves the group-key invariant. -/
 private theorem sortHornerGroups_at (k : Nat)
     (groups : List (HornerGroup n S)) (hgroups : groupsKeyed k groups) :
     groupsKeyed k (sortHornerGroups groups) := by
@@ -371,6 +395,7 @@ private theorem sortHornerGroups_at (k : Nat)
   intro group hgroup
   simp at hgroup
 
+/-- The complete grouping pass records the selected exponent on every term. -/
 private theorem hornerGroups_at (k : Nat)
     (terms : List (HornerTerm n S)) :
     groupsKeyed k (hornerGroups k terms) :=
@@ -394,11 +419,13 @@ def evalSparseHornerGroups [Lean.Grind.Semiring S]
 
 /-! # Sparse Horner algebra -/
 
+/-- Evaluate a list of descending exponent groups as a weighted sum. -/
 private def weightedSum [Lean.Grind.Semiring S]
     (x : S) (groups : List (Nat × S)) : S :=
   groups.foldl
     (fun acc group => acc + group.2 * Mono.powBySq x group.1) 0
 
+/-- Split a weighted sum at its leading exponent group. -/
 private theorem weightedSum_cons [Lean.Grind.Semiring S]
     (x : S) (group : Nat × S) (groups : List (Nat × S)) :
     weightedSum x (group :: groups) =
@@ -407,6 +434,7 @@ private theorem weightedSum_cons [Lean.Grind.Semiring S]
   simp only [List.foldl_cons]
   rw [Lean.Grind.AddCommMonoid.zero_add, List.foldl_add_eq_add_foldl]
 
+/-- The sparse Horner fold equals the corresponding weighted sum. -/
 private theorem sparseFold_eq [Lean.Grind.Semiring S]
     (x : S) (groups : List (Nat × S)) (previous : Nat) (acc : S)
     (hbound : ∀ group ∈ groups, group.1 ≤ previous)
@@ -460,6 +488,7 @@ private theorem sparseFold_eq [Lean.Grind.Semiring S]
       rw [hrec, hstep]
       rw [weightedSum_cons, Lean.Grind.Semiring.add_assoc]
 
+/-- Sparse Horner evaluation of valid groups equals their weighted sum. -/
 private theorem evalSparseHornerGroups_eq [Lean.Grind.Semiring S]
     (x : S) (groups : List (Nat × S))
     (hdesc : groups.Pairwise fun left right => right.1 ≤ left.1) :
@@ -494,6 +523,7 @@ def eval₂HornerTerms [Lean.Grind.Semiring S]
 
 /-! # Recursive term semantics -/
 
+/-- Evaluate one monomial term with the first `k` variables already folded. -/
 private def termValue [Lean.Grind.Semiring S]
     (xs : Nat → S) : Nat → Nat → HornerTerm n S → S
   | 0, _, term => term.2
@@ -501,6 +531,7 @@ private def termValue [Lean.Grind.Semiring S]
       termValue xs fuel (k + 1) term *
         Mono.powBySq (xs k) (hornerExponent k term.1)
 
+/-- The weighted grouped sum equals the sum of the individual term values. -/
 private theorem weightedGroups_eq [Lean.Grind.Semiring S]
     (xs : Nat → S) (fuel k : Nat) (groups : List (HornerGroup n S))
     (hat : groupsKeyed k groups)
@@ -545,6 +576,7 @@ private theorem weightedGroups_eq [Lean.Grind.Semiring S]
       (List.foldl_add_eq_add_foldl group.2
         (termValue xs (fuel + 1) k) acc).symm
 
+/-- Recursive sparse Horner evaluation equals the sum of its term values. -/
 private theorem eval₂HornerTerms_eq [Lean.Grind.Semiring S]
     (xs : Nat → S) (fuel k : Nat) (terms : List (HornerTerm n S)) :
     eval₂HornerTerms xs fuel k terms =
@@ -569,6 +601,7 @@ private theorem eval₂HornerTerms_eq [Lean.Grind.Semiring S]
         (termValue xs (fuel + 1) k)
         (hornerGroups_perm k terms) 0
 
+/-- Evaluate the suffix of a monomial beginning at variable `k`. -/
 private def termProd [Lean.Grind.Semiring S]
     (xs : Nat → S) : Nat → Nat → Mono n → S
   | 0, _, _ => 1
@@ -576,6 +609,8 @@ private def termProd [Lean.Grind.Semiring S]
       Mono.powBySq (xs k) (hornerExponent k m) *
         termProd xs fuel (k + 1) m
 
+/-- A term value factors as its coefficient times its monomial suffix
+product. -/
 private theorem termValue_eq_mul_prod [Lean.Grind.CommSemiring S]
     (xs : Nat → S) (fuel k : Nat) (term : HornerTerm n S) :
     termValue xs fuel k term =
@@ -598,6 +633,7 @@ private theorem termValue_eq_mul_prod [Lean.Grind.CommSemiring S]
           rw [Lean.Grind.CommSemiring.mul_comm
             (termProd xs fuel (k + 1) term.1)]
 
+/-- Dropping the head shifts every later Horner exponent index down one. -/
 private theorem hornerExponent_dropHead (k : Nat) (m : Mono (n + 1)) :
     hornerExponent (k + 1) m =
       hornerExponent k (Mono.dropHead m) := by
@@ -610,6 +646,8 @@ private theorem hornerExponent_dropHead (k : Nat) (m : Mono (n + 1)) :
   · have hk' : ¬ k + 1 < n + 1 := by omega
     simp [hk, hk']
 
+/-- A suffix product after the head agrees with the product on the dropped
+monomial. -/
 private theorem termProd_dropHead [Lean.Grind.Semiring S]
     (xs : Nat → S) (fuel k : Nat) (m : Mono (n + 1)) :
     termProd xs fuel (k + 1) m =
@@ -619,6 +657,7 @@ private theorem termProd_dropHead [Lean.Grind.Semiring S]
   | succ fuel ih =>
       rw [termProd, termProd, hornerExponent_dropHead, ih]
 
+/-- The full suffix product is ordinary monomial evaluation. -/
 private theorem termProd_full [Lean.Grind.Semiring S]
     (xs : Nat → S) (m : Mono n) :
     termProd xs n 0 m =
@@ -671,6 +710,8 @@ private theorem termProd_full [Lean.Grind.Semiring S]
             (fun i => Mono.powBySq (xs i.succ.val) m[i.succ])
             (Mono.powBySq (xs 0) m[0])).symm
 
+/-- A full term value is its coefficient times ordinary monomial
+evaluation. -/
 private theorem termValue_full [Lean.Grind.CommSemiring S]
     (xs : Nat → S) (term : HornerTerm n S) :
     termValue xs n 0 term =
@@ -704,6 +745,8 @@ def partialEval [Lean.Grind.Semiring R] [DecidableEq R]
       acc.addMonomial (eraseAssigned s m) (c * assigned))
     0
 
+/-- Evaluation is the ordered term fold of mapped coefficients times
+monomial values. -/
 theorem eval₂_eq [Zero R] [Lean.Grind.Semiring S]
     (f : R → S) (x : Fin n → S) (p : MvPoly n R cmp) :
     eval₂ f x p =
@@ -711,6 +754,8 @@ theorem eval₂_eq [Zero R] [Lean.Grind.Semiring S]
   unfold eval₂ foldTerms termsList
   rw [Std.ExtTreeMap.foldl_eq_foldl_toList]
 
+/-- Same-ring evaluation is the ordered term fold with unchanged
+coefficients. -/
 theorem eval_eq [Lean.Grind.Semiring R]
     (x : Fin n → R) (p : MvPoly n R cmp) :
     eval x p =
@@ -718,6 +763,7 @@ theorem eval_eq [Lean.Grind.Semiring R]
   unfold eval
   simpa using eval₂_eq id x p
 
+/-- Sparse Horner evaluation agrees with direct term evaluation. -/
 theorem eval₂Horner_eq [Zero R] [Lean.Grind.CommSemiring S]
     (f : R → S) (x : Fin n → S) (p : MvPoly n R cmp) :
     eval₂Horner f x p = eval₂ f x p := by
@@ -734,6 +780,7 @@ theorem eval₂Horner_eq [Zero R] [Lean.Grind.CommSemiring S]
   intro acc term _
   rw [termValue_full, hxs]
 
+/-- Same-ring sparse Horner evaluation agrees with ordinary evaluation. -/
 theorem evalHorner_eq [Lean.Grind.CommSemiring R]
     (x : Fin n → R) (p : MvPoly n R cmp) :
     evalHorner x p = eval x p := by

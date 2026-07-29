@@ -25,7 +25,13 @@ universe u
 
 variable {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
   [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
-  [BEq R] [LawfulBEq R]
+
+/-- Negation preserves nonzero coefficients in a ring. -/
+theorem negCoeff_ne_zero [Lean.Grind.Ring R] (c : R) (hc : c ≠ 0) :
+    -c ≠ 0 := by
+  grind
+
+variable [BEq R] [LawfulBEq R]
 
 /-- Polynomial addition, combining equal monomials and deleting cancellations. -/
 def add [Add R] [Zero R] [BEq R] [LawfulBEq R]
@@ -57,11 +63,6 @@ def add [Add R] [Zero R] [BEq R] [LawfulBEq R]
 instance [Add R] [Zero R] [BEq R] [LawfulBEq R] :
     Add (MvPoly n R cmp) where
   add := add
-
-omit [BEq R] [LawfulBEq R] in
-theorem negCoeff_ne_zero [Lean.Grind.Ring R] (c : R) (hc : c ≠ 0) :
-    -c ≠ 0 := by
-  grind
 
 /-- Coefficientwise negation, filtering any zero result in one tree pass. -/
 def neg [Neg R] [Zero R] [BEq R] [LawfulBEq R]
@@ -131,6 +132,7 @@ instance [Add R] [Mul R] [Zero R] [One R] [BEq R] [LawfulBEq R] :
     Pow (MvPoly n R cmp) Nat where
   pow := npowBySq
 
+/-- The coefficient of one is one at the zero monomial and zero elsewhere. -/
 @[simp] theorem coeff_one [Lean.Grind.Semiring R] [DecidableEq R]
     (m : Mono n) :
     coeff m (1 : MvPoly n R cmp) =
@@ -138,6 +140,7 @@ instance [Add R] [Mul R] [Zero R] [One R] [BEq R] [LawfulBEq R] :
   change coeff m (C 1) = _
   exact coeff_C m 1
 
+/-- Coefficients distribute over polynomial addition. -/
 theorem coeff_add [Lean.Grind.Semiring R] [DecidableEq R]
     (m : Mono n) (p q : MvPoly n R cmp) :
     coeff m (p + q) = coeff m p + coeff m q := by
@@ -150,24 +153,28 @@ theorem coeff_add [Lean.Grind.Semiring R] [DecidableEq R]
       Lean.Grind.AddCommMonoid.add_zero] <;>
     split <;> simp_all
 
+/-- Zero is a right identity for polynomial addition. -/
 theorem add_zero [Lean.Grind.Semiring R] [DecidableEq R]
     (p : MvPoly n R cmp) : p + 0 = p := by
   apply ext
   intro m
   rw [coeff_add, coeff_zero, Lean.Grind.Semiring.add_zero]
 
+/-- Zero is a left identity for polynomial addition. -/
 theorem zero_add [Lean.Grind.Semiring R] [DecidableEq R]
     (p : MvPoly n R cmp) : 0 + p = p := by
   apply ext
   intro m
   rw [coeff_add, coeff_zero, Lean.Grind.AddCommMonoid.zero_add]
 
+/-- Polynomial addition is commutative. -/
 theorem add_comm [Lean.Grind.Semiring R] [DecidableEq R]
     (p q : MvPoly n R cmp) : p + q = q + p := by
   apply ext
   intro m
   rw [coeff_add, coeff_add, Lean.Grind.Semiring.add_comm]
 
+/-- Polynomial addition is associative. -/
 theorem add_assoc [Lean.Grind.Semiring R] [DecidableEq R]
     (p q r : MvPoly n R cmp) : (p + q) + r = p + (q + r) := by
   apply ext
@@ -175,6 +182,7 @@ theorem add_assoc [Lean.Grind.Semiring R] [DecidableEq R]
   simp only [coeff_add]
   rw [Lean.Grind.Semiring.add_assoc]
 
+/-- Adding a monomial is ordinary addition by a monomial polynomial. -/
 theorem addMonomial_eq [Lean.Grind.Semiring R] [DecidableEq R]
     (p : MvPoly n R cmp) (m : Mono n) (c : R) :
     p.addMonomial m c = p + monomial m c := by
@@ -185,6 +193,7 @@ theorem addMonomial_eq [Lean.Grind.Semiring R] [DecidableEq R]
   · rw [if_pos hkm, if_pos hkm]
   · rw [if_neg hkm, if_neg hkm, Lean.Grind.Semiring.add_zero]
 
+/-- Coefficients commute with polynomial negation. -/
 theorem coeff_neg [Lean.Grind.Ring R] [DecidableEq R]
     (m : Mono n) (p : MvPoly n R cmp) :
     coeff m (-p) = -coeff m p := by
@@ -200,12 +209,14 @@ theorem coeff_neg [Lean.Grind.Ring R] [DecidableEq R]
         simpa [hzero] using hcoeff
       simp [negCoeff_ne_zero c hc]
 
+/-- Coefficients distribute over polynomial subtraction. -/
 theorem coeff_sub [Lean.Grind.Ring R] [DecidableEq R]
     (m : Mono n) (p q : MvPoly n R cmp) :
     coeff m (p - q) = coeff m p - coeff m q := by
   change coeff m (p + (-q)) = coeff m p - coeff m q
   rw [coeff_add, coeff_neg, Lean.Grind.Ring.sub_eq_add_neg]
 
+/-- A product coefficient is the convolution over monomial splittings. -/
 theorem coeff_mul [Lean.Grind.Semiring R] [DecidableEq R]
     (m : Mono n) (p q : MvPoly n R cmp) :
     coeff m (p * q) =
@@ -343,6 +354,7 @@ theorem coeff_mul [Lean.Grind.Semiring R] [DecidableEq R]
       (Mono.splits m).foldl (fun acc ab => acc + value ab) 0
   rw [hkeyFilter, List.foldl_add_perm value hactivePerm 0, hsplitFilter]
 
+/-- Zero is absorbing on the right for polynomial multiplication. -/
 theorem mul_zero [Lean.Grind.Semiring R] [DecidableEq R]
     (p : MvPoly n R cmp) : p * 0 = 0 := by
   apply ext
@@ -352,6 +364,7 @@ theorem mul_zero [Lean.Grind.Semiring R] [DecidableEq R]
   simp only [Lean.Grind.Semiring.mul_zero]
   exact List.foldl_add_zero _ _
 
+/-- Zero is absorbing on the left for polynomial multiplication. -/
 theorem zero_mul [Lean.Grind.Semiring R] [DecidableEq R]
     (p : MvPoly n R cmp) : 0 * p = 0 := by
   apply ext
@@ -361,6 +374,7 @@ theorem zero_mul [Lean.Grind.Semiring R] [DecidableEq R]
   simp only [Lean.Grind.Semiring.zero_mul]
   exact List.foldl_add_zero _ _
 
+/-- Polynomial multiplication distributes over addition on the right. -/
 theorem mul_add [Lean.Grind.Semiring R] [DecidableEq R]
     (p q r : MvPoly n R cmp) : p * (q + r) = p * q + p * r := by
   apply ext
@@ -385,6 +399,7 @@ theorem mul_add [Lean.Grind.Semiring R] [DecidableEq R]
             (fun acc ab => acc + coeff ab.1 p * coeff ab.2 r) 0 :=
       List.foldl_add_add _ _ _
 
+/-- Polynomial multiplication distributes over addition on the left. -/
 theorem add_mul [Lean.Grind.Semiring R] [DecidableEq R]
     (p q r : MvPoly n R cmp) : (p + q) * r = p * r + q * r := by
   apply ext
@@ -409,6 +424,8 @@ theorem add_mul [Lean.Grind.Semiring R] [DecidableEq R]
             (fun acc ab => acc + coeff ab.1 q * coeff ab.2 r) 0 :=
       List.foldl_add_add _ _ _
 
+/-- Multiplying monomial polynomials multiplies their coefficients and
+monomials. -/
 theorem monomial_mul_monomial [Lean.Grind.Semiring R] [DecidableEq R]
     (a b : Mono n) (ca cb : R) :
     (monomial a ca : MvPoly n R cmp) * monomial b cb =
@@ -458,6 +475,7 @@ theorem monomial_mul_monomial [Lean.Grind.Semiring R] [DecidableEq R]
       · rw [if_pos ha, if_neg hb, Lean.Grind.Semiring.mul_zero]
     · rw [if_neg ha, Lean.Grind.Semiring.zero_mul]
 
+/-- Binary powering of a monomial polynomial scales its exponent vector. -/
 theorem powBySq_monomial [Lean.Grind.Semiring R] [DecidableEq R]
     (m : Mono n) (c : R) (k : Nat) :
     Mono.powBySq (monomial m c : MvPoly n R cmp) k =
@@ -502,6 +520,7 @@ theorem powBySq_monomial [Lean.Grind.Semiring R] [DecidableEq R]
             simp [Mono.mul, Mono.scale, hcount, Nat.add_mul,
               Nat.succ_mul]
 
+/-- One is a right identity for polynomial multiplication. -/
 theorem mul_one [Lean.Grind.Semiring R] [DecidableEq R]
     (p : MvPoly n R cmp) : p * 1 = p := by
   apply ext
@@ -538,6 +557,7 @@ theorem mul_one [Lean.Grind.Semiring R] [DecidableEq R]
       List.foldl_add_single _ _ _ _ hmem (Mono.splits_nodup _)
     _ = coeff m p := by grind
 
+/-- One is a left identity for polynomial multiplication. -/
 theorem one_mul [Lean.Grind.Semiring R] [DecidableEq R]
     (p : MvPoly n R cmp) : 1 * p = p := by
   apply ext
@@ -572,17 +592,22 @@ theorem one_mul [Lean.Grind.Semiring R] [DecidableEq R]
       List.foldl_add_single _ _ _ _ hmem (Mono.splits_nodup _)
     _ = coeff m p := by grind
 
+/-- A three-factor monomial split. -/
 private abbrev MonoTriple (n : Nat) :=
   Mono n × (Mono n × Mono n)
 
+/-- Three-factor splittings associated from the left. -/
 private def splitsLeft (m : Mono n) : List (MonoTriple n) :=
   (Mono.splits m).flatMap fun az =>
     (Mono.splits az.1).map fun xy => (xy.1, (xy.2, az.2))
 
+/-- Three-factor splittings associated from the right. -/
 private def splitsRight (m : Mono n) : List (MonoTriple n) :=
   (Mono.splits m).flatMap fun xb =>
     (Mono.splits xb.2).map fun yz => (xb.1, (yz.1, yz.2))
 
+/-- Membership in the left-associated split list is characterized by the
+recombined product. -/
 private theorem mem_splitsLeft (m : Mono n) (t : MonoTriple n) :
     t ∈ splitsLeft m ↔
       Mono.mul (Mono.mul t.1 t.2.1) t.2.2 = m := by
@@ -604,6 +629,8 @@ private theorem mem_splitsLeft (m : Mono n) (t : MonoTriple n) :
     refine ⟨(t.1, t.2.1), ?_, rfl⟩
     exact (Mono.splits_mem_iff ..).mpr rfl
 
+/-- Membership in the right-associated split list is characterized by the
+recombined product. -/
 private theorem mem_splitsRight (m : Mono n) (t : MonoTriple n) :
     t ∈ splitsRight m ↔
       Mono.mul t.1 (Mono.mul t.2.1 t.2.2) = m := by
@@ -625,6 +652,7 @@ private theorem mem_splitsRight (m : Mono n) (t : MonoTriple n) :
     refine ⟨(t.2.1, t.2.2), ?_, rfl⟩
     exact (Mono.splits_mem_iff ..).mpr rfl
 
+/-- The left-associated splitting list has no duplicate triples. -/
 private theorem splitsLeft_nodup (m : Mono n) :
     (splitsLeft m).Nodup := by
   unfold splitsLeft
@@ -648,6 +676,7 @@ private theorem splitsLeft_nodup (m : Mono n) :
       · rfl
     exact hab ((recover az hta).trans (recover bz htb).symm)
 
+/-- The right-associated splitting list has no duplicate triples. -/
 private theorem splitsRight_nodup (m : Mono n) :
     (splitsRight m).Nodup := by
   unfold splitsRight
@@ -671,6 +700,7 @@ private theorem splitsRight_nodup (m : Mono n) :
       · exact ((Mono.splits_mem_iff ..).mp hyz).symm
     exact hxb ((recover xb htx).trans (recover yb hty).symm)
 
+/-- Polynomial multiplication is associative. -/
 theorem mul_assoc [Lean.Grind.Semiring R] [DecidableEq R]
     (p q r : MvPoly n R cmp) :
     (p * q) * r = p * (q * r) := by
@@ -743,6 +773,8 @@ theorem mul_assoc [Lean.Grind.Semiring R] [DecidableEq R]
     _ = (splitsRight m).foldl (fun acc t => acc + rightValue t) 0 :=
       List.foldl_add_perm rightValue hperm 0
 
+/-- Polynomial multiplication is commutative over a commutative
+coefficient semiring. -/
 theorem mul_comm [Lean.Grind.CommSemiring R] [DecidableEq R]
     (p q : MvPoly n R cmp) : p * q = q * p := by
   apply ext
@@ -793,11 +825,13 @@ theorem mul_comm [Lean.Grind.CommSemiring R] [DecidableEq R]
       unfold value swap
       rw [Lean.Grind.CommSemiring.mul_comm]
 
+/-- Reference linear recursion for polynomial powers. -/
 private def linearPow [Lean.Grind.Semiring R] [DecidableEq R]
     (p : MvPoly n R cmp) : Nat → MvPoly n R cmp
   | 0 => 1
   | k + 1 => linearPow p k * p
 
+/-- Linear powers turn addition of exponents into multiplication. -/
 private theorem linearPow_add [Lean.Grind.Semiring R] [DecidableEq R]
     (p : MvPoly n R cmp) (a b : Nat) :
     linearPow p (a + b) = linearPow p a * linearPow p b := by
@@ -807,6 +841,7 @@ private theorem linearPow_add [Lean.Grind.Semiring R] [DecidableEq R]
   | succ b ih =>
       rw [Nat.add_succ, linearPow, ih, linearPow, mul_assoc]
 
+/-- Binary powering agrees with the reference linear recursion. -/
 private theorem npowBySq_eq_linearPow
     [Lean.Grind.Semiring R] [DecidableEq R]
     (p : MvPoly n R cmp) (k : Nat) :
@@ -846,6 +881,7 @@ private theorem npowBySq_eq_linearPow
               _ = linearPow p ((half + half) + 1) := rfl
               _ = linearPow p (k + 1) := by rw [hcount]
 
+/-- Polynomial exponentiation satisfies the successor recurrence. -/
 theorem pow_succ [Lean.Grind.Semiring R] [DecidableEq R]
     (p : MvPoly n R cmp) (k : Nat) :
     p ^ (k + 1) = p ^ k * p := by
@@ -854,11 +890,14 @@ theorem pow_succ [Lean.Grind.Semiring R] [DecidableEq R]
   rw [npowBySq_eq_linearPow, npowBySq_eq_linearPow]
   rfl
 
+/-- Coefficients of a successor power are given by multiplication with the
+preceding power. -/
 theorem coeff_pow_succ [Lean.Grind.Semiring R] [DecidableEq R]
     (m : Mono n) (p : MvPoly n R cmp) (k : Nat) :
     coeff m (p ^ (k + 1)) = coeff m (p ^ k * p) :=
   congrArg (coeff m) (pow_succ p k)
 
+/-- Binary polynomial powering agrees with the public power operation. -/
 theorem npowBySq_eq_pow [Lean.Grind.Semiring R] [DecidableEq R]
     (p : MvPoly n R cmp) (k : Nat) :
     npowBySq p k = p ^ k := by

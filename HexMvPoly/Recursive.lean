@@ -43,11 +43,13 @@ def insertVar (i : Fin (n + 1)) (e : Nat) (m : Mono n) : Mono (n + 1) :=
     else
       m[(⟨j.val - 1, by omega⟩ : Fin n)]
 
+/-- The inserted variable has the supplied exponent. -/
 @[simp] theorem degreeOf_insertVar
     (i : Fin (n + 1)) (e : Nat) (m : Mono n) :
     Mono.degreeOf i (insertVar i e m) = e := by
   simp [Mono.degreeOf, insertVar]
 
+/-- Removing a freshly inserted variable recovers the original monomial. -/
 @[simp] theorem removeVar_insertVar
     (i : Fin (n + 1)) (e : Nat) (m : Mono n) :
     removeVar i (insertVar i e m) = m := by
@@ -61,6 +63,8 @@ def insertVar (i : Fin (n + 1)) (e : Nat) (m : Mono n) : Mono (n + 1) :=
     have hnlt : ¬ j + 1 < i.val := by omega
     simp [removeVar, insertVar, hlt, hne, hnlt]
 
+/-- Re-inserting a removed variable with its old exponent recovers the
+original monomial. -/
 @[simp] theorem insertVar_removeVar
     (i : Fin (n + 1)) (m : Mono (n + 1)) :
     insertVar i (Mono.degreeOf i m) (removeVar i m) = m := by
@@ -75,6 +79,8 @@ def insertVar (i : Fin (n + 1)) (e : Nat) (m : Mono n) : Mono (n + 1) :=
       have hsucc : j - 1 + 1 = j := by omega
       simp [insertVar, removeVar, heq, hlt, hnlt, hsucc]
 
+/-- Inserting a variable is jointly injective in the new exponent and the
+remaining monomial. -/
 theorem insertVar_inj (i : Fin (n + 1)) (e d : Nat) (m k : Mono n) :
     insertVar i e m = insertVar i d k ↔ e = d ∧ m = k := by
   constructor
@@ -112,6 +118,8 @@ def toUnivariateCoeffs [Lean.Grind.Semiring R] [DecidableEq R]
     (fun coeffs term => toUnivariateStep (cmp' := cmp') i coeffs term)
     (Array.replicate (toUnivariateSize i terms) 0)
 
+/-- Every encountered main-variable exponent fits in the allocated recursive
+coefficient array. -/
 private theorem degreeOf_lt_size (i : Fin (n + 1))
     (terms : List (Mono (n + 1) × R)) {term : Mono (n + 1) × R}
     (hterm : term ∈ terms) :
@@ -122,6 +130,7 @@ private theorem degreeOf_lt_size (i : Fin (n + 1))
   unfold toUnivariateSize
   omega
 
+/-- Updating one recursive coefficient bucket preserves the array size. -/
 @[simp] private theorem size_toUnivariateStep
     [Lean.Grind.Semiring R] [DecidableEq R]
     [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
@@ -130,6 +139,8 @@ private theorem degreeOf_lt_size (i : Fin (n + 1))
     (toUnivariateStep (cmp' := cmp') i coeffs term).size = coeffs.size := by
   simp [toUnivariateStep]
 
+/-- Reading an updated bucket yields the inserted term at its exponent and
+the previous bucket elsewhere. -/
 private theorem getD_toUnivariateStep
     [Lean.Grind.Semiring R] [DecidableEq R]
     [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
@@ -150,6 +161,8 @@ private theorem getD_toUnivariateStep
     · unfold Array.getD
       simp [toUnivariateStep, Array.set!_eq_setIfInBounds, hbound, he, heq]
 
+/-- Folding source terms into recursive buckets accumulates exactly the
+matching coefficients. -/
 private theorem coeff_foldSteps
     [Lean.Grind.Semiring R] [DecidableEq R]
     [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
@@ -206,6 +219,8 @@ def ofUnivariate [Lean.Grind.Semiring R] [DecidableEq R]
         acc)
     0
 
+/-- A recursive-view coefficient is the source coefficient indexed by the
+inserted main-variable exponent. -/
 theorem toUnivariate_coeff [Lean.Grind.Semiring R] [DecidableEq R]
     (i : Fin (n + 1)) [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
     (p : MvPoly (n + 1) R cmp) (e : Nat) (m : Mono n) :
@@ -253,6 +268,8 @@ theorem toUnivariate_coeff [Lean.Grind.Semiring R] [DecidableEq R]
       · rw [if_pos hdegree, if_neg hremove, if_neg hkey]
     · rw [if_neg hdegree, if_neg hkey]
 
+/-- Folding one recursive coefficient into the multivariate result changes
+exactly its inserted monomials. -/
 private theorem coeff_foldInsert [Lean.Grind.Semiring R] [DecidableEq R]
     (i : Fin (n + 1)) [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
     (p : MvPoly n R cmp') (d e : Nat) (m : Mono n)
@@ -350,6 +367,8 @@ private theorem coeff_foldInsert [Lean.Grind.Semiring R] [DecidableEq R]
       _ = coeff (insertVar i e m) init :=
         List.foldl_const_step _ _
 
+/-- Reassembly sends a recursive coefficient back to its inserted
+multivariate monomial. -/
 theorem ofUnivariate_coeff [Lean.Grind.Semiring R] [DecidableEq R]
     (i : Fin (n + 1)) [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
     (q : DensePoly (MvPoly n R cmp')) (e : Nat) (m : Mono n) :
@@ -392,6 +411,7 @@ theorem ofUnivariate_coeff [Lean.Grind.Semiring R] [DecidableEq R]
     have hde : d ≠ e := by omega
     rw [if_neg hde]
 
+/-- Converting to the recursive view and back is the identity. -/
 theorem ofUnivariate_toUnivariate [Lean.Grind.Semiring R] [DecidableEq R]
     (i : Fin (n + 1)) [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
     (p : MvPoly (n + 1) R cmp) :
@@ -401,6 +421,8 @@ theorem ofUnivariate_toUnivariate [Lean.Grind.Semiring R] [DecidableEq R]
   rw [← insertVar_removeVar i m, ofUnivariate_coeff,
     toUnivariate_coeff, insertVar_removeVar]
 
+/-- Converting a recursive polynomial to multivariate form and back is the
+identity. -/
 theorem toUnivariate_ofUnivariate [Lean.Grind.Semiring R] [DecidableEq R]
     (i : Fin (n + 1)) [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
     (q : DensePoly (MvPoly n R cmp')) :

@@ -55,6 +55,8 @@ support. -/
   rcases monoEquiv.surjective d with ⟨m, rfl⟩
   simp [MvPolynomial.mem_support_iff]
 
+/-- Folding by maximum agrees with the supremum over the corresponding
+finite set. -/
 private theorem foldl_max_eq_sup {α : Type*} [DecidableEq α]
     (xs : List α) (f : α → Nat) (init : Nat) :
     xs.foldl (fun acc x => max acc (f x)) init =
