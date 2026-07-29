@@ -401,11 +401,17 @@ private def improvePrimeData? (f : ZPoly) (first : PrimeChoiceDataScore) :
           else improvePrimeData? f (betterPrimeChoiceDataScore first score) extra candidates
       | none => improvePrimeData? f first (extra + 1) candidates
 
-/-- Minimum modular factor count that can justify probing another prime. -/
-private def probeMinFactors : Nat := 9
+/-- Minimum modular width that justifies probing a high-degree transform. -/
+private def probeMinFactors : Nat := 24
 
-/-- Degree above which reducing Hensel width justifies a bounded prime probe. -/
-private def probeMinDegree : Nat := 50
+/-- Minimum modular width that justifies probing a coefficient-swollen transform. -/
+private def probeSwollenFactors : Nat := 9
+
+/-- Degree above which a very wide modular image justifies a bounded probe. -/
+private def probeMinDegree : Nat := 100
+
+/-- Degree above which a prime cyclotomic's uniform coefficients justify a probe. -/
+private def probeCyclotomicDegree : Nat := 50
 
 /-- Minimum coefficient `log2` that marks a swollen monic transform. -/
 private def probeCoeffLog : Nat := 512
@@ -413,9 +419,14 @@ private def probeCoeffLog : Nat := 512
 /-- Whether the first modular factorization predicts enough downstream work to
 justify bounded prime look-ahead. -/
 private def shouldProbePrime (f : ZPoly) (score : PrimeChoiceDataScore) : Bool :=
-  decide (probeMinDegree ≤ f.degree?.getD 0) ||
-    (decide (probeMinFactors ≤ score.factorCount) &&
-      f.toArray.any (fun coeff => probeCoeffLog ≤ coeff.natAbs.log2))
+  let coeffs := f.toArray
+  let degree := f.degree?.getD 0
+  (decide (probeSwollenFactors ≤ score.factorCount) &&
+      coeffs.any (fun coeff => probeCoeffLog ≤ coeff.natAbs.log2)) ||
+    (decide (probeMinDegree ≤ degree) &&
+      decide (probeMinFactors ≤ score.factorCount)) ||
+    (decide (probeCyclotomicDegree ≤ degree) &&
+      Hex.Nat.isPrimeTrial coeffs.size && coeffs.all (fun coeff => coeff == 1))
 
 /-- First-good selection with bounded modular-factor-width look-ahead. -/
 private def chooseAdaptiveFrom? (f : ZPoly) (extra : Nat) :

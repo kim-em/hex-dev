@@ -269,9 +269,11 @@ once.
 
 The shared lifting entry `toMonicPrimeData?` preserves this first-suitable
 choice in the ordinary case. It performs a bounded factor-count look-ahead
-when the monic transform has degree at least 50, or when the first good image
-has at least nine modular factors and the transform contains a coefficient
-whose `log2` is at least 512. It examines at most eight further good primes,
+when the monic transform has degree at least 100 with at least 24 modular
+factors, when the first good image has at least nine modular factors and the
+transform contains a coefficient whose `log2` is at least 512, or when a
+degree-at-least-50 transform is the uniform all-one form of a prime
+cyclotomic. It examines at most eight further good primes,
 retains the smallest modular factor count seen, and stops early on a singleton
 or on a halving improvement that still leaves at least eight factors. A
 singleton modular factor is already a checked Berlekamp irreducibility
