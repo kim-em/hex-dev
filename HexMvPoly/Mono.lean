@@ -6,6 +6,8 @@ Authors: Kim Morrison
 
 module
 
+import HexBasic.Fold
+import HexBasic.List
 public import HexBasic.ArrayDecEq
 public import HexBasic.ExtTreeMap
 public import HexBasic.OfFn
@@ -40,6 +42,10 @@ def unit (i : Fin n) : Mono n :=
 /-- Monomial multiplication, represented by pointwise exponent addition. -/
 def mul (a b : Mono n) : Mono n :=
   Hex.Vector.ofFn' fun i => a[i] + b[i]
+
+/-- Multiply every exponent by `k`. -/
+def scale (k : Nat) (m : Mono n) : Mono n :=
+  Hex.Vector.ofFn' fun i => k * m[i]
 
 /-- Whether `a` divides `b`, i.e. whether every exponent of `a` is at
 most the corresponding exponent of `b`. -/
@@ -248,15 +254,6 @@ class IsMonomialOrder {n : Nat} (cmp : Mono n → Mono n → Ordering) : Prop
 
 namespace Mono
 
-instance (priority := 100) instLexOrder : IsMonomialOrder (@lex n) := by
-  sorry
-
-instance (priority := 100) instGrlexOrder : IsMonomialOrder (@grlex n) := by
-  sorry
-
-instance (priority := 100) instGrevlexOrder : IsMonomialOrder (@grevlex n) := by
-  sorry
-
 @[simp] theorem getElem_zero (i : Fin n) : (zero : Mono n)[i] = 0 := by
   simp [zero]
 
@@ -267,6 +264,96 @@ instance (priority := 100) instGrevlexOrder : IsMonomialOrder (@grevlex n) := by
 @[simp] theorem getElem_mul (a b : Mono n) (i : Fin n) :
     (mul a b)[i] = a[i] + b[i] := by
   simp [mul]
+
+@[simp] theorem zero_mul (m : Mono n) : mul zero m = m := by
+  apply Vector.ext
+  intro i hi
+  simp [mul, zero]
+
+@[simp] theorem mul_zero (m : Mono n) : mul m zero = m := by
+  apply Vector.ext
+  intro i hi
+  simp [mul, zero]
+
+theorem mul_assoc (a b c : Mono n) :
+    mul (mul a b) c = mul a (mul b c) := by
+  apply Vector.ext
+  intro i hi
+  simp [mul, Nat.add_assoc]
+
+theorem mul_comm (a b : Mono n) : mul a b = mul b a := by
+  apply Vector.ext
+  intro i hi
+  simp [mul, Nat.add_comm]
+
+@[simp] theorem getElem_scale (k : Nat) (m : Mono n) (i : Fin n) :
+    (scale k m)[i] = k * m[i] := by
+  simp [scale]
+
+@[simp] theorem zero_scale (m : Mono n) : scale 0 m = zero := by
+  apply Vector.ext
+  intro i hi
+  simp [scale, zero]
+
+@[simp] theorem scale_zero (k : Nat) : scale k (zero : Mono n) = zero := by
+  apply Vector.ext
+  intro i hi
+  simp [scale, zero]
+
+@[simp] theorem one_scale (m : Mono n) : scale 1 m = m := by
+  apply Vector.ext
+  intro i hi
+  simp [scale]
+
+theorem add_scale (a b : Nat) (m : Mono n) :
+    scale (a + b) m = mul (scale a m) (scale b m) := by
+  apply Vector.ext
+  intro i hi
+  simp [scale, mul, Nat.add_mul]
+
+theorem mul_units (m : Mono n) :
+    (List.finRange n).foldl
+        (fun acc i => mul acc (scale m[i] (unit i)))
+        zero =
+      m := by
+  apply Vector.ext
+  intro j hj
+  let r : Fin n := ⟨j, hj⟩
+  have get_fold : ∀ (xs : List (Fin n)) (acc : Mono n),
+      (xs.foldl
+        (fun acc i => mul acc (scale m[i] (unit i))) acc)[r] =
+      xs.foldl
+        (fun acc i => acc + (scale m[i] (unit i))[r])
+        acc[r] := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro acc
+        rfl
+    | cons i xs ih =>
+        intro acc
+        simp only [List.foldl_cons]
+        rw [ih, getElem_mul]
+  change
+    ((List.finRange n).foldl
+      (fun acc i => mul acc (scale m[i] (unit i))) zero)[r] = m[r]
+  rw [get_fold, getElem_zero]
+  calc
+    (List.finRange n).foldl
+        (fun acc i => acc + (scale m[i] (unit i))[r]) 0 =
+        (List.finRange n).foldl
+          (fun acc i => acc + if i = r then m[i] else 0) 0 := by
+            apply List.foldl_congr
+            intro acc i _
+            rw [getElem_scale, getElem_unit]
+            by_cases hir : i = r
+            · subst i
+              simp
+            · simp [hir, Ne.symm hir]
+    _ = 0 + m[r] :=
+      List.foldl_add_single _ _ _ _
+        (List.mem_finRange r) (List.nodup_finRange n)
+    _ = m[r] := by omega
 
 @[simp] theorem getElem_lcm (a b : Mono n) (i : Fin n) :
     (lcm a b)[i] = max a[i] b[i] := by
@@ -459,6 +546,342 @@ theorem degree_mul (a b : Mono n) :
   simp only [getElem_mul]
   exact fold_add (List.finRange n)
 
+@[simp] theorem toList_prepend (e : Nat) (m : Mono n) :
+    (prepend e m).toList = e :: m.toList := by
+  apply List.ext_getElem
+  · simp
+  · intro i hi hj
+    cases i with
+    | zero =>
+        simp
+    | succ i =>
+        have hi' : i < n := by simpa using hi
+        let j : Fin n := ⟨i, hi'⟩
+        change (prepend e m)[i + 1] = m[i]
+        exact getElem_prepend_succ e m j
+
+theorem toList_mul (a b : Mono n) :
+    (mul a b).toList = List.zipWith (· + ·) a.toList b.toList := by
+  apply List.ext_getElem
+  · simp
+  · intro i hi hj
+    rw [List.getElem_zipWith]
+    simp [mul]
+
+theorem lex_prepend (ea eb : Nat) (a b : Mono n) :
+    lex (prepend ea a) (prepend eb b) =
+      (compare ea eb).then (lex a b) := by
+  simp [lex, List.compareLex_cons_cons]
+
+private theorem zero_eq_prepend :
+    (zero : Mono (n + 1)) = prepend 0 (zero : Mono n) := by
+  apply Vector.ext
+  intro i hi
+  simp [zero, prepend]
+
+private theorem compare_add_right (a b c : Nat) :
+    compare a b = compare (a + c) (b + c) := by
+  cases h : compare a b with
+  | lt =>
+      rw [Nat.compare_eq_lt] at h
+      apply Eq.symm
+      rw [Nat.compare_eq_lt]
+      omega
+  | eq =>
+      rw [Nat.compare_eq_eq] at h
+      apply Eq.symm
+      rw [Nat.compare_eq_eq]
+      omega
+  | gt =>
+      rw [Nat.compare_eq_gt] at h
+      apply Eq.symm
+      rw [Nat.compare_eq_gt]
+      omega
+
+private theorem lex_zero_le : ∀ {n} (m : Mono n), lex zero m ≠ .gt
+  | 0, m => by
+      have hm : m = zero := by
+        apply Vector.ext
+        intro i hi
+        omega
+      subst m
+      intro h
+      have hself : lex (zero : Mono 0) zero = .eq :=
+        Std.ReflCmp.compare_self
+      rw [hself] at h
+      contradiction
+  | n + 1, m => by
+      rw [zero_eq_prepend, ← prepend_head_dropHead m, lex_prepend]
+      cases h : compare 0 m.head with
+      | lt => simp
+      | eq =>
+          simp only [Ordering.eq_then]
+          exact lex_zero_le (dropHead m)
+      | gt =>
+          rw [Nat.compare_eq_gt] at h
+          omega
+
+private theorem lex_mul_mono : ∀ {n} (a b c : Mono n),
+    lex a b = lex (mul a c) (mul b c)
+  | 0, a, b, c => by
+      have hz (m : Mono 0) : m = zero := by
+        apply Vector.ext
+        intro i hi
+        omega
+      simp [hz a, hz b, hz c]
+  | n + 1, a, b, c => by
+      rw [← prepend_head_dropHead a, ← prepend_head_dropHead b,
+        ← prepend_head_dropHead c, mul_prepend, mul_prepend,
+        lex_prepend, lex_prepend, ← compare_add_right,
+        lex_mul_mono (dropHead a) (dropHead b) (dropHead c)]
+
+private theorem lex_wf : ∀ n, WellFounded fun a b : Mono n => lex a b = .lt
+  | 0 => by
+      apply WellFounded.intro
+      intro a
+      apply Acc.intro
+      intro b h
+      have hz (m : Mono 0) : m = zero := by
+        apply Vector.ext
+        intro i hi
+        omega
+      have hself : lex (zero : Mono 0) zero = .eq :=
+        Std.ReflCmp.compare_self
+      rw [hz a, hz b, hself] at h
+      contradiction
+  | n + 1 => by
+      let tailOrder : WellFoundedRelation (Mono n) :=
+        ⟨fun a b => lex a b = .lt, lex_wf n⟩
+      apply Subrelation.wf
+        (r := InvImage
+          (Prod.Lex Nat.lt tailOrder.rel)
+          (fun m : Mono (n + 1) => (m.head, dropHead m)))
+      · intro a b h
+        rw [← prepend_head_dropHead a, ← prepend_head_dropHead b,
+          lex_prepend] at h
+        simp only [Ordering.then_eq_lt] at h
+        rcases h with hhead | ⟨hhead, htail⟩
+        · exact Prod.Lex.left _ _ (Nat.compare_eq_lt.mp hhead)
+        · exact Prod.lex_def.mpr
+            (Or.inr ⟨Nat.compare_eq_eq.mp hhead, htail⟩)
+      · exact InvImage.wf _
+          (Prod.lex Nat.lt_wfRel tailOrder).wf
+
+instance instLexOrder : IsMonomialOrder (@lex n) where
+  zero_le := lex_zero_le
+  mul_mono := lex_mul_mono
+  wf := lex_wf n
+
+@[simp] theorem degree_zero : degree (zero : Mono n) = 0 := by
+  unfold degree
+  apply List.foldl_add_eq_self
+  intro i _
+  exact getElem_zero i
+
+private theorem grlex_zero_le (m : Mono n) : grlex zero m ≠ .gt := by
+  unfold grlex compareLex
+  change
+    (compare (degree zero) (degree m)).then (lex zero m) ≠ .gt
+  rw [degree_zero]
+  cases h : compare 0 (degree m) with
+  | lt => simp
+  | eq =>
+      simp only [Ordering.eq_then]
+      exact lex_zero_le m
+  | gt =>
+      rw [Nat.compare_eq_gt] at h
+      omega
+
+private theorem grlex_mul_mono (a b c : Mono n) :
+    grlex a b = grlex (mul a c) (mul b c) := by
+  unfold grlex compareLex
+  change
+    (compare (degree a) (degree b)).then (lex a b) =
+      (compare (degree (mul a c)) (degree (mul b c))).then
+        (lex (mul a c) (mul b c))
+  rw [degree_mul, degree_mul, ← compare_add_right,
+    lex_mul_mono a b c]
+
+private theorem grlex_wf :
+    WellFounded fun a b : Mono n => grlex a b = .lt := by
+  let lexOrder : WellFoundedRelation (Mono n) :=
+    ⟨fun a b => lex a b = .lt, lex_wf n⟩
+  apply Subrelation.wf
+    (r := InvImage
+      (Prod.Lex Nat.lt lexOrder.rel)
+      (fun m : Mono n => (degree m, m)))
+  · intro a b h
+    unfold grlex compareLex at h
+    simp only [Ordering.then_eq_lt] at h
+    rcases h with hdegree | ⟨hdegree, hlex⟩
+    · exact Prod.Lex.left _ _ (Nat.compare_eq_lt.mp hdegree)
+    · exact Prod.lex_def.mpr
+        (Or.inr ⟨Nat.compare_eq_eq.mp hdegree, hlex⟩)
+  · exact InvImage.wf _
+      (Prod.lex Nat.lt_wfRel lexOrder).wf
+
+instance instGrlexOrder :
+    IsMonomialOrder (@grlex n) where
+  zero_le := grlex_zero_le
+  mul_mono := grlex_mul_mono
+  wf := grlex_wf
+
+private theorem revlex_mul_mono (a b c : Mono n) :
+    revlex a b = revlex (mul a c) (mul b c) := by
+  have hac : a.toList.length = c.toList.length := by simp
+  have hbc : b.toList.length = c.toList.length := by simp
+  unfold revlex
+  rw [toList_mul, toList_mul,
+    List.reverse_zipWith (f := (· + ·)) hac,
+    List.reverse_zipWith (f := (· + ·)) hbc]
+  apply List.compareLex_zipWith
+  · intro x y z
+    exact compare_add_right y x z
+  · simp
+  · simp
+
+theorem degreeOf_le_degree (i : Fin n) (m : Mono n) :
+    degreeOf i m ≤ degree m := by
+  unfold degreeOf degree
+  exact List.le_foldl_add_of_mem
+    (List.finRange n) (fun j => m[j]) (List.mem_finRange i)
+
+/-- Lexicographic key for the reverse-lexicographic tie breaker at one
+fixed total degree. Its coordinate subtractions are exact because every
+exponent is bounded by the total degree. -/
+private def revDegreeKey (m : Mono n) : Mono n :=
+  Hex.Vector.ofFn' fun i => degree m - m[i.rev]
+
+private theorem toList_revDegreeKey (m : Mono n) :
+    (revDegreeKey m).toList =
+      m.toList.reverse.map (fun e => degree m - e) := by
+  apply List.ext_getElem
+  · simp [revDegreeKey]
+  · intro i hi hj
+    simp [revDegreeKey, Fin.rev]
+    congr 2 <;> omega
+
+private theorem compare_sub (d x y : Nat) (hx : x ≤ d) (hy : y ≤ d) :
+    compare y x = compare (d - x) (d - y) := by
+  cases h : compare y x with
+  | lt =>
+      rw [Nat.compare_eq_lt] at h
+      apply Eq.symm
+      rw [Nat.compare_eq_lt]
+      omega
+  | eq =>
+      rw [Nat.compare_eq_eq] at h
+      apply Eq.symm
+      rw [Nat.compare_eq_eq]
+      omega
+  | gt =>
+      rw [Nat.compare_eq_gt] at h
+      apply Eq.symm
+      rw [Nat.compare_eq_gt]
+      omega
+
+private theorem compareLex_complement (d : Nat) :
+    ∀ (xs ys : List Nat),
+      (∀ x, x ∈ xs → x ≤ d) →
+      (∀ y, y ∈ ys → y ≤ d) →
+      List.compareLex (fun x y => compare y x) xs ys =
+        List.compareLex compare
+          (xs.map (fun x => d - x))
+          (ys.map (fun y => d - y))
+  | [], [], _, _ => rfl
+  | [], _ :: _, _, _ => rfl
+  | _ :: _, [], _, _ => rfl
+  | x :: xs, y :: ys, hxs, hys => by
+      simp only [List.map, List.compareLex_cons_cons]
+      rw [compare_sub d x y (hxs x (by simp)) (hys y (by simp)),
+        compareLex_complement d xs ys
+          (fun z hz => hxs z (by simp [hz]))
+          (fun z hz => hys z (by simp [hz]))]
+
+/-- At equal total degree, reverse lexicographic comparison is ordinary
+lexicographic comparison of the reversed degree-complement keys. -/
+private theorem revlex_eq_key_lex {a b : Mono n}
+    (hdegree : degree a = degree b) :
+    revlex a b = lex (revDegreeKey a) (revDegreeKey b) := by
+  unfold revlex lex
+  rw [toList_revDegreeKey, toList_revDegreeKey, ← hdegree]
+  apply compareLex_complement
+  · intro x hx
+    rw [List.mem_reverse] at hx
+    rcases List.mem_iff_getElem.mp hx with ⟨i, hi, rfl⟩
+    let j : Fin n := ⟨i, by simpa using hi⟩
+    exact degreeOf_le_degree j a
+  · intro x hx
+    rw [List.mem_reverse] at hx
+    rcases List.mem_iff_getElem.mp hx with ⟨i, hi, rfl⟩
+    let j : Fin n := ⟨i, by simpa using hi⟩
+    rw [hdegree]
+    exact degreeOf_le_degree j b
+
+private theorem grevlex_zero_le (m : Mono n) : grevlex zero m ≠ .gt := by
+  unfold grevlex compareLex
+  change
+    (compare (degree zero) (degree m)).then (revlex zero m) ≠ .gt
+  rw [degree_zero]
+  cases h : compare 0 (degree m) with
+  | lt => simp
+  | eq =>
+      have hdegree : degree m = 0 := Nat.compare_eq_eq.mp h |>.symm
+      have hm : m = zero := by
+        apply Vector.ext
+        intro i hi
+        let j : Fin n := ⟨i, hi⟩
+        have hj := degreeOf_le_degree j m
+        change m[j] ≤ degree m at hj
+        have : m[j] = 0 := by omega
+        change m[j] = (zero : Mono n)[j]
+        rw [getElem_zero]
+        exact this
+      subst m
+      intro hgt
+      simp [Std.ReflCmp.compare_self] at hgt
+  | gt =>
+      rw [Nat.compare_eq_gt] at h
+      omega
+
+private theorem grevlex_mul_mono (a b c : Mono n) :
+    grevlex a b = grevlex (mul a c) (mul b c) := by
+  unfold grevlex compareLex
+  change
+    (compare (degree a) (degree b)).then (revlex a b) =
+      (compare (degree (mul a c)) (degree (mul b c))).then
+        (revlex (mul a c) (mul b c))
+  rw [degree_mul, degree_mul, ← compare_add_right,
+    revlex_mul_mono a b c]
+
+private theorem grevlex_wf :
+    WellFounded fun a b : Mono n => grevlex a b = .lt := by
+  let lexOrder : WellFoundedRelation (Mono n) :=
+    ⟨fun a b => lex a b = .lt, lex_wf n⟩
+  apply Subrelation.wf
+    (r := InvImage
+      (Prod.Lex Nat.lt lexOrder.rel)
+      (fun m : Mono n => (degree m, revDegreeKey m)))
+  · intro a b h
+    unfold grevlex compareLex at h
+    simp only [Ordering.then_eq_lt] at h
+    rcases h with hdegree | ⟨hdegree, hrevlex⟩
+    · exact Prod.Lex.left _ _ (Nat.compare_eq_lt.mp hdegree)
+    · have heq := Nat.compare_eq_eq.mp hdegree
+      have hlex : lex (revDegreeKey a) (revDegreeKey b) = .lt := by
+        rw [← revlex_eq_key_lex heq]
+        exact hrevlex
+      apply Prod.lex_def.mpr
+      exact Or.inr ⟨heq, hlex⟩
+  · exact InvImage.wf _
+      (Prod.lex Nat.lt_wfRel lexOrder).wf
+
+instance instGrevlexOrder :
+    IsMonomialOrder (@grevlex n) where
+  zero_le := grevlex_zero_le
+  mul_mono := grevlex_mul_mono
+  wf := grevlex_wf
+
 theorem rename_mul {k : Nat} (f : Fin n → Fin k) (a b : Mono n) :
     rename f (mul a b) = mul (rename f a) (rename f b) := by
   have get_ofFn {r : Nat} (g : Fin r → Nat) (j : Fin r) :
@@ -612,6 +1035,14 @@ theorem dvd_lcm_right (a b : Mono n) : dvd b (lcm a b) = true := by
   rw [getElem_lcm]
   exact Nat.le_max_right _ _
 
+theorem lcm_dvd (a b c : Mono n)
+    (ha : dvd a c = true) (hb : dvd b c = true) :
+    dvd (lcm a b) c = true := by
+  rw [dvd_eq_true_iff] at ha hb ⊢
+  intro i
+  rw [getElem_lcm]
+  exact Nat.max_le.mpr ⟨ha i, hb i⟩
+
 theorem gcd_dvd_left (a b : Mono n) : dvd (gcd a b) a = true := by
   simp only [dvd, decide_eq_true_eq]
   intro i
@@ -623,6 +1054,14 @@ theorem gcd_dvd_right (a b : Mono n) : dvd (gcd a b) b = true := by
   intro i
   rw [getElem_gcd]
   exact Nat.min_le_right _ _
+
+theorem dvd_gcd (a b c : Mono n)
+    (ha : dvd c a = true) (hb : dvd c b = true) :
+    dvd c (gcd a b) = true := by
+  rw [dvd_eq_true_iff] at ha hb ⊢
+  intro i
+  rw [getElem_gcd]
+  exact Nat.le_min.mpr ⟨ha i, hb i⟩
 
 end Mono
 
