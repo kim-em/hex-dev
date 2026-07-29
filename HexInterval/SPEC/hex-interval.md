@@ -860,15 +860,16 @@ case, a new expression is not trusted merely because a trigger matched.
 The authoritative recurrence starts from the generation frozen into the
 application which emitted the action. It then takes the maximum with the
 action substitution, old nodes named explicitly by proposed drafts,
-equalities, or scopes, and old nodes reached when a proposed equality endpoint
-or scope port CSE-resolves to existing storage. Explicit structural equality
-and application inputs contribute the creation generation of their own
-network events. A proposed expression used
-only as an output remains an output of the theorem instance when it CSE-hits
-an already materialized node: storage reuse alone cannot manufacture a proof
-dependency. Once that resolved expression becomes an equality endpoint or
-scope port, however, later propagation may consume the old fact, so its
-generation is causal. Freezing the application's creation generation is also
+equalities, or scopes. Explicit structural equality and application inputs
+contribute the creation generation of their own network events. A proposed
+expression remains an output of the theorem instance when it CSE-hits an
+already materialized node, including when that proposed output is also an
+equality endpoint or scope port: storage reuse cannot manufacture a proof
+dependency or make the cap depend on admission order. A package which means
+to depend on an already available node names it as `existing`, rather than
+reconstructing it as a proposed output. Later fact propagation through an
+equality or scoped application retains its own fact and application
+provenance. Freezing the emitting application's creation generation is
 essential for a scope-only causal chain whose next scope mentions only
 generation-zero nodes; the second event still has generation two and is
 rejected by an exact generation-one cap.
@@ -974,6 +975,17 @@ must not loop forever on the first CSE duplicate. Restart versus incremental
 advance remains an experiment, but losing the unseen suffix is recorded as
 incomplete.
 
+The first reference-cursor arm freezes three append-only ceilings per epoch:
+nodes, then equality edges, then concrete applications, each in ascending
+stable-identifier order. Its constant-size cursor stores the exhausted prefix,
+frozen ceiling, offset, epoch, and cumulative visits. A batch never scans past
+that ceiling even if its first match causes network growth; after exhaustion,
+renewal exposes exactly the appended suffix. Every enumerated input carries
+its engine-owned creation generation, a one-short visit limit leaves the
+cursor unchanged, and no package-facing field can assert exhaustion. This
+transparent linear arm is a conformance oracle for later indexes, not a
+commitment to scanning three full arrays in production.
+
 For a fixed snapshot, delta, engine cursor, and budget, certified enumeration
 is deterministic. The engine may index watches by operation key or compiled
 pattern, but it must preserve the same match stream and exact accounting as a
@@ -997,14 +1009,14 @@ encapsulation and would obstruct ordinary-kernel theorems about admission.
 One atomic theorem instantiation initially has one event generation: one plus
 the maximum of the emitting application's creation generation and every node
 in the authoritative action substitution or explicitly named as an existing
-input by a draft, equality, or scope after resolution, together with every
+input by a draft, equality, or scope, together with every
 explicit structural input's creation generation. The event records that
 generation, and every newly created node and application receives it. Proposed
-products are outputs even when CSE reuses their storage, so selection order
-cannot raise their logical generation or change success at an exact generation
-cap. This measures theorem-instantiation depth rather than expression-tree
-depth. Per-product or multiple-provenance generation remains a possible
-refinement.
+products are outputs even when CSE reuses their storage, including proposed
+equality endpoints and scope ports, so selection order cannot raise their
+logical generation or change success at an exact generation cap. This
+measures theorem-instantiation depth rather than expression-tree depth.
+Per-product or multiple-provenance generation remains a possible refinement.
 
 Structural expression depth is a separate engine invariant: nullary nodes have
 depth zero; every fresh non-nullary node has one plus the maximum depth of its
