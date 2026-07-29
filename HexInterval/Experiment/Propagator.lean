@@ -242,6 +242,9 @@ structure Application where
   /-- Immutable registration baseline.  A retry prepares a new `Action` with
   an override; it never mutates this compiled application field. -/
   effort : Nat
+  /-- Cached semantic items inspected when policy constructs this invocation's
+  key.  It is derived from the validated watch list at compilation time. -/
+  policyItems : Nat := 0
   /-- Generation of the event which created this application.  Initial
   applications have generation zero. -/
   generation : Nat := 0
@@ -376,7 +379,8 @@ def compileApplications (program : Program) (rules : Array Registration)
           kind := rule.kind
           watches := binding.watches
           writes := binding.writes
-          effort := rule.initialEffort }
+          effort := rule.initialEffort
+          policyItems := binding.watches.length }
     for nodeIndex in [0:program.nodes.size] do
       let node <- program.nodes[nodeIndex]?
       let operation <- program.operation? node.op
@@ -391,7 +395,8 @@ def compileApplications (program : Program) (rules : Array Registration)
               kind := rule.kind
               watches
               writes
-              effort := rule.initialEffort }
+              effort := rule.initialEffort
+              policyItems := watches.length }
     some applications
 
 /-- Bounded application compiler.  Error `false` denotes an invalid program or
@@ -413,7 +418,8 @@ def compileApplicationsWithin (limit : Nat) (program : Program)
         kind := rule.kind
         watches := binding.watches
         writes := binding.writes
-        effort := rule.initialEffort }
+        effort := rule.initialEffort
+        policyItems := binding.watches.length }
   for nodeIndex in [0:program.nodes.size] do
     let some node := program.nodes[nodeIndex]? | throw false
     let some operation := program.operation? node.op | throw false
@@ -432,21 +438,23 @@ def compileApplicationsWithin (limit : Nat) (program : Program)
             kind := rule.kind
             watches
             writes
-            effort := rule.initialEffort }
+            effort := rule.initialEffort
+            policyItems := watches.length }
   pure applications
 
 /-- Exact application identity used to validate append-only extension. -/
 def Application.same (left right : Application) : Bool :=
   left.rule == right.rule && left.node == right.node && left.kind == right.kind &&
     left.watches == right.watches && left.writes == right.writes &&
-      left.effort == right.effort && left.generation == right.generation
+      left.effort == right.effort && left.policyItems == right.policyItems &&
+        left.generation == right.generation
 
 /-- Scope-binding identity deliberately ignores creation generation so a later
 proposal CSE-reuses an older identical application. -/
 def Application.sameBinding (left right : Application) : Bool :=
   left.rule == right.rule && left.node == right.node && left.kind == right.kind &&
     left.watches == right.watches && left.writes == right.writes &&
-      left.effort == right.effort
+      left.effort == right.effort && left.policyItems == right.policyItems
 
 /-- Every old application, including its immutable baseline effort and
 creation generation, must remain an exact prefix after program extension.
@@ -473,7 +481,8 @@ def applicationForBinding? (rules : Array Registration)
       kind := rule.kind
       watches := binding.watches
       writes := binding.writes
-      effort := rule.initialEffort }
+      effort := rule.initialEffort
+      policyItems := binding.watches.length }
 
 def findApplicationFrom (target : Application) : Nat -> List Application ->
     Option ApplicationId
@@ -548,6 +557,7 @@ def compileLocalApplicationsWithin (limit start : Nat) (program : Program)
             watches
             writes
             effort := rule.initialEffort
+            policyItems := watches.length
             generation }
   pure applications
 
@@ -731,6 +741,13 @@ structure InstantiationRequest where
   payload : PayloadId
   deriving Repr
 
+/-- Cached policy-key surface for one validated instantiation proposal. -/
+def InstantiationRequest.policyItems (request : InstantiationRequest) : Nat :=
+  request.nodes.length + request.equalities.length + request.scopes.length +
+    request.nodes.foldl (fun count node => count + node.args.length) 0 +
+    request.scopes.foldl (fun count scope =>
+      count + 1 + scope.watches.length + scope.writes.length) 0
+
 /-- Why a propagator recommends a proof-state split. -/
 inductive SplitReason where
   | singularity
@@ -811,6 +828,9 @@ structure RetainedSuggestion where
   action : Action
   suggestion : Suggestion
   splitVersion : Option Nat
+  /-- Cached semantic items inspected when policy constructs the suggestion
+  key.  Reply validation derives this under the proposal limits. -/
+  policyItems : Nat := 0
 
 /-- Engine-owned index of one retained policy suggestion. -/
 structure SuggestionId where
@@ -1581,6 +1601,7 @@ a malformed proposal cannot disguise itself as a recoverable depth loss. -/
 def checkInstantiationProposal (program : Program) (depths : Array Nat)
     (maxNodeDepth : Nat) (request : InstantiationRequest)
     (rules : Array Registration := #[])
+    (bindings : Array ScopeBinding := #[])
     (acceptsScope : Program -> ScopeBinding -> Bool := fun _ _ => true) : ProposalCheck :=
   let baseSize := program.nodes.size
   match resolveDrafts baseSize program depths [] request.nodes with
@@ -1589,7 +1610,8 @@ def checkInstantiationProposal (program : Program) (depths : Array Nat)
       match resolveRequestedPairs baseSize resolved program request.equalities,
           resolveRequestedScopes baseSize resolved program rules request.scopes with
       | some _, some scopes =>
-          if !scopes.all (acceptsScope program) then .malformed
+          if !bindings.all (acceptsScope program) ||
+              !scopes.all (acceptsScope program) then .malformed
           else if !appendedDepthsWithin baseSize maxNodeDepth depths then .tooDeep
           else .valid
       | _, _ => .malformed
@@ -1630,7 +1652,10 @@ def retainSuggestion (state : Engine Fact) (action : Action)
     suggestion
     splitVersion := match suggestion with
       | .split request => state.versions[request.node.index]?
-      | .retry _ | .instantiate _ => none }
+      | .retry _ | .instantiate _ => none
+    policyItems := match suggestion with
+      | .instantiate request => request.policyItems
+      | .retry _ | .split _ => 0 }
 
 def candidateNodesUnique (candidates : List (Candidate Fact)) : Bool :=
   uniqueList (candidates.map (fun candidate => candidate.node))
@@ -1729,7 +1754,7 @@ def classifySuggestions (state : Engine Fact) :
         | .retry _ | .split _ => ProposalCheck.valid
         | .instantiate request =>
             checkInstantiationProposal state.program state.depths
-              state.limits.maxNodeDepth request state.rules state.acceptsScope
+              state.limits.maxNodeDepth request state.rules state.bindings state.acceptsScope
       match checked with
       | .malformed => .malformed
       | .valid =>
@@ -2035,6 +2060,8 @@ def Engine.instantiationGeneration? (state : Engine Fact)
   let .ok (program, _, resolved) :=
     resolveDrafts baseSize state.program state.depths [] request.nodes | none
   let scopes <- resolveRequestedScopes baseSize resolved program state.rules request.scopes
+  if !state.bindings.all (state.acceptsScope program) ||
+      !scopes.all (state.acceptsScope program) then none else pure ()
   inferredGeneration? state.generations retained.action request
     (existingScopeNodes baseSize scopes)
 
@@ -2163,7 +2190,8 @@ def admitRetained (state : Engine Fact)
                     request.scopes with
                 | none => .invalid .invalidScope state
                 | some requestedScopes =>
-                    if !requestedScopes.all (state.acceptsScope program) then
+                    if !state.bindings.all (state.acceptsScope program) ||
+                        !requestedScopes.all (state.acceptsScope program) then
                       .invalid .invalidScope state
                     else if !appendedDepthsWithin baseSize state.limits.maxNodeDepth depths then
                       .resourceLimit .nodeDepth state

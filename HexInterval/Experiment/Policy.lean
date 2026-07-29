@@ -387,32 +387,40 @@ inductive ViewError where
   | liveOfferLimit
   deriving DecidableEq, Repr
 
-/-- Extra semantic items traversed beyond the one backing-slot charge.  Local
-applications retain the historical constant charge because their ports are
-independently bounded by operation arity.  Arbitrary scopes and dynamically
-proposed scopes charge their variable-length node-reference lists. -/
-private def scopedTraversal (state : State Fact) : Nat := Id.run do
-  let mut cost := 0
-  for application in state.engine.applications do
-    match state.engine.rules[application.rule.index]? with
-    | some rule =>
-        if rule.binding == .scoped then
-          cost := cost + application.watches.length
-    | none => pure ()
-  for retained in state.engine.suggestions do
-    match retained.suggestion with
-    | .instantiate request =>
-        for scope in request.scopes do
-          cost := cost + 1 + scope.watches.length + scope.writes.length
-    | .retry _ | .split _ => pure ()
-  return cost
+/-- Extra semantic-key surface beyond the one backing-slot charge.  Application
+and retained-suggestion costs are cached when the engine validates them, so a
+small policy limit never forces a preflight walk of large scopes.  This is a
+logical semantic-item budget, not a claim about compiler-level list visits or
+package callback work. -/
+private def offerItemsWithin (budget : Nat) (state : State Fact) :
+    Except ViewError Nat := do
+  let mut remaining := budget
+  if state.engine.pending.isNone && !state.engine.contradictory then
+    for index in [0:state.engine.applications.size] do
+      match state.engine.applications[index]?, state.applications[index]?,
+          state.engine.queued[index]? with
+      | some application, some clock, some true =>
+          if clock.active then
+            if remaining < application.policyItems then throw .traversalLimit
+            remaining := remaining - application.policyItems
+      | _, _, _ => pure ()
+    for index in [0:state.engine.suggestions.size] do
+      match state.engine.suggestions[index]?, state.suggestions[index]? with
+      | some retained, some clock =>
+          if clock.active then
+            if remaining < retained.policyItems then throw .traversalLimit
+            remaining := remaining - retained.policyItems
+      | _, _ => pure ()
+  return budget - remaining
 
 /-- Authoritative bounded scan of every live semantic offer. -/
 private def stateOffers (state : State Fact) : Except ViewError (Array OfferView × Nat) := do
-  let traversal := state.applications.size + state.equalities.size + state.suggestions.size +
-    scopedTraversal state
-  if state.limits.maxTraversal < state.metrics.traversal + traversal then
+  let backing := state.applications.size + state.equalities.size + state.suggestions.size
+  if state.limits.maxTraversal < state.metrics.traversal + backing then
     throw .traversalLimit
+  let room := state.limits.maxTraversal - state.metrics.traversal - backing
+  let extra <- offerItemsWithin room state
+  let traversal := backing + extra
   let mut offers := #[]
   for index in [0:state.applications.size] do
     if let some offer := state.offer? (.application { index }) then
@@ -449,6 +457,12 @@ structure View (Fact : Type) where
 
 def remaining (limit used : Nat) : Nat := limit - used
 
+/-- Highest theorem-instantiation generation already committed in this
+branch.  Instance events cover node-, equality-, and scope-only extensions. -/
+private def usedGeneration (state : State Fact) : Nat :=
+  state.engine.instanceHistory.foldl
+    (fun greatest event => Nat.max greatest event.generation) 0
+
 opaque State.view (state : State Fact) : Except ViewError (View Fact × State Fact) := do
   let (offers, traversal) <- stateOffers state
   pure
@@ -472,7 +486,7 @@ opaque State.view (state : State Fact) : Except ViewError (View Fact × State Fa
             remaining state.engine.limits.maxQueueEntries state.engine.queue.size
           generation :=
             remaining state.engine.limits.maxGeneration
-              (state.engine.generations.foldl Nat.max 0) } },
+              (usedGeneration state) } },
      { state with
        metrics := { state.metrics with traversal := state.metrics.traversal + traversal } })
 
