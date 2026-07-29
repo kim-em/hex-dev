@@ -637,13 +637,13 @@ theorem inv_of_ZCoprimeSplits (p k : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus
       refine ⟨hstart, ?_, ?_⟩
       · refine ihL _ hLmonic
           (ZPoly.congr_symm _ _ _
-            (henselLiftQuadratic_g_congr_mod_base p k f _ _ _ _ hk hp hstart)) hcopL ?_
+            (henselLiftFactors_fst_congr_mod_base p k f _ _ _ _ hk hp hstart)) hcopL ?_
         show List.take ((g₀ :: g₁ :: rest).length / 2) (g₀ :: g₁ :: rest) ≠ []
         apply List.ne_nil_of_length_pos
         simp only [List.length_take, List.length_cons]; omega
       · refine ihR _ hRmonic
           (ZPoly.congr_symm _ _ _
-            (henselLiftQuadratic_h_congr_mod_base p k f _ _ _ _ hk hp hstart)) hcopR ?_
+            (henselLiftFactors_snd_congr_mod_base p k f _ _ _ _ hk hp hstart)) hcopR ?_
         show List.drop ((g₀ :: g₁ :: rest).length / 2) (g₀ :: g₁ :: rest) ≠ []
         apply List.ne_nil_of_length_pos
         simp only [List.length_drop, List.length_cons]; omega
@@ -976,11 +976,11 @@ private theorem quad_each_congr_mod_base (p k : Nat) [ZMod64.Bounds p]
   | case3 f g₀ g₁ rest gs half L R gg hh xg ss tt lifted ihL ihR =>
       simp only [ZPoly.QuadraticMultifactorLiftInvariant] at hinv
       obtain ⟨hstart, hinvL, hinvR⟩ := hinv
-      have hgc := ZPoly.henselLiftQuadratic_g_congr_mod_base p k f _ _ _ _ hk hp hstart
-      have hhc := ZPoly.henselLiftQuadratic_h_congr_mod_base p k f _ _ _ _ hk hp hstart
+      have hgc := ZPoly.henselLiftFactors_fst_congr_mod_base p k f _ _ _ _ hk hp hstart
+      have hhc := ZPoly.henselLiftFactors_snd_congr_mod_base p k f _ _ _ _ hk hp hstart
       have ihL' := ihL hinvL (ZPoly.congr_symm _ _ _ hgc)
       have ihR' := ihR hinvR (ZPoly.congr_symm _ _ _ hhc)
-      have hlen := quad_toList_length p k lifted.g L
+      have hlen := quad_toList_length p k lifted.1 L
       have key := congr_getD_append p _ _ L R hlen ihL' ihR'
       rw [List.take_append_drop] at key
       intro i
@@ -1008,8 +1008,8 @@ private theorem quad_list_each_monic (p k : Nat) [ZMod64.Bounds p]
       rename_i ihL ihR
       simp only [ZPoly.QuadraticMultifactorLiftInvariant] at hinv
       obtain ⟨hstart, hinvL, hinvR⟩ := hinv
-      have ihL' := ihL (ZPoly.henselLiftQuadratic_g_monic p k f _ _ _ _ hk hp hstart) hinvL
-      have ihR' := ihR (ZPoly.henselLiftQuadratic_h_monic p k f _ _ _ _ hk hp hf_monic hstart) hinvR
+      have ihL' := ihL (ZPoly.henselLiftFactors_fst_monic p k f _ _ _ _ hk hp hstart) hinvL
+      have ihR' := ihR (ZPoly.henselLiftFactors_snd_monic p k f _ _ _ _ hk hp hf_monic hstart) hinvR
       rw [ZPoly.multifactorLiftQuadraticList]
       intro entry hmem
       rw [Array.toList_append, List.mem_append] at hmem
@@ -1018,8 +1018,8 @@ private theorem quad_list_each_monic (p k : Nat) [ZMod64.Bounds p]
       · exact ihR' entry h
 
 /-- Every balanced quadratic output *except the last* is monic, with no
-monic-target hypothesis. Each split's left factor `lifted.g` is monic by
-`henselLiftQuadratic_g_monic` alone, so the whole left subtree is monic; only
+monic-target hypothesis. Each split's left factor `lifted.1` is monic by
+`henselLiftFactors_fst_monic` alone, so the whole left subtree is monic; only
 the global-rightmost leaf (a right-spine `reduceModPow` of the cofactor) needs a
 monic target, and it is excluded here. -/
 private theorem quad_all_but_last_monic (p k : Nat) [ZMod64.Bounds p]
@@ -1033,14 +1033,14 @@ private theorem quad_all_but_last_monic (p k : Nat) [ZMod64.Bounds p]
   | case3 f g₀ g₁ rest gs half L R gg hh xg ss tt lifted ihL ihR =>
       simp only [ZPoly.QuadraticMultifactorLiftInvariant] at hinv
       obtain ⟨hstart, hinvL, hinvR⟩ := hinv
-      have hg_monic := ZPoly.henselLiftQuadratic_g_monic p k f _ _ _ _ hk hp hstart
-      have hLmonic := quad_list_each_monic p k lifted.g L hk hp hg_monic hinvL
+      have hg_monic := ZPoly.henselLiftFactors_fst_monic p k f _ _ _ _ hk hp hstart
+      have hLmonic := quad_list_each_monic p k lifted.1 L hk hp hg_monic hinvL
       have ihR' := ihR hinvR
-      have hlenL := quad_toList_length p k lifted.g L
+      have hlenL := quad_toList_length p k lifted.1 L
       intro i hi
       rw [ZPoly.multifactorLiftQuadraticList, Array.toList_append] at hi ⊢
-      set oL := (ZPoly.multifactorLiftQuadraticList p k lifted.g L).toList with hoL
-      set oR := (ZPoly.multifactorLiftQuadraticList p k lifted.h R).toList with hoR
+      set oL := (ZPoly.multifactorLiftQuadraticList p k lifted.1 L).toList with hoL
+      set oR := (ZPoly.multifactorLiftQuadraticList p k lifted.2 R).toList with hoR
       rw [List.length_append] at hi
       by_cases hiL : i < oL.length
       · rw [List.getElem?_append_left hiL, List.getElem?_eq_getElem hiL, Option.getD_some]
