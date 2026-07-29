@@ -46,7 +46,12 @@ def Models (meanings : List UnaryMeaning) (program : Program)
 def semantics (meanings : List UnaryMeaning) : Semantics Fact :=
   { Value := Nat
     models := Models meanings
-    holds := fun _ valuation fact => fact.fact.Allows (valuation fact.node) }
+    holds := fun _ valuation fact => fact.fact.Allows (valuation fact.node)
+    transport := by
+      intro _ valuation left right fact equal holds
+      change fact.Allows (valuation right)
+      rw [← equal]
+      exact holds }
 
 def real : DomainId := { index := 0 }
 def sourceKey : OpKey := { name := "semantic-replay.source" }
@@ -156,12 +161,19 @@ inductive LeftCertificate where
 inductive RightCertificate where
   | pair
 
+inductive EqualityCertificate where
+  | unit
+
 def decodeLeft : List Nat -> Option LeftCertificate
   | [101] => some .unit
   | _ => none
 
 def decodeRight : List Nat -> Option RightCertificate
   | [202, 203] => some .pair
+  | _ => none
+
+def decodeEquality : List Nat -> Option EqualityCertificate
+  | [303] => some .unit
   | _ => none
 
 def leftSchema : PackedFactSchema (semantics meanings) :=
@@ -180,14 +192,32 @@ def rightSchema : PackedFactSchema (semantics meanings) :=
     replay := fun input action context _ =>
       replayUnary rightMeaning rightMeaning_mem input action context }
 
+def rightEqualitySchema : PackedEqualitySchema (semantics meanings) :=
+  { rule := rightRuleKey
+    schema := 8
+    Certificate := EqualityCertificate
+    decode := decodeEquality
+    replay := fun _ _ context _ =>
+      if endpointProof : context.edge.left = context.edge.right then
+        some
+          { proof := by
+              intro valuation _
+              exact congrArg valuation endpointProof }
+      else
+        none }
+
 def leftProofs : SemanticReplay.Package (semantics meanings) :=
   { factSchemas := #[leftSchema] }
 
 def rightProofs : SemanticReplay.Package (semantics meanings) :=
-  { factSchemas := #[rightSchema] }
+  { factSchemas := #[rightSchema]
+    equalitySchemas := #[rightEqualitySchema] }
 
 def noProofs : SemanticReplay.Package (semantics meanings) :=
   { factSchemas := #[] }
+
+def rightFactOnlyProofs : SemanticReplay.Package (semantics meanings) :=
+  { factSchemas := #[rightSchema] }
 
 def duplicateLeftProofs : SemanticReplay.Package (semantics meanings) :=
   { factSchemas := #[leftSchema, leftSchema] }
@@ -393,7 +423,8 @@ def rightContext (entry : Entry) : RuleFactContext checkerInput entry.origin :=
           (rightContext fixture.rightEntry)).isSome &&
         fixture.registry.coverage.factFormats ==
           #[leftSchema.key, rightSchema.key] &&
-        fixture.registry.coverage.deferredFormats ==
+        fixture.registry.coverage.instanceFormats.isEmpty &&
+        fixture.registry.coverage.equalityFormats ==
           #[rightEqualityFormat.replayKey rightRuleKey]
   | none => false
 
@@ -418,14 +449,28 @@ def rightContext (entry : Entry) : RuleFactContext checkerInput entry.origin :=
       | _ => false
   | none => false
 
--- Fact coverage is bidirectional: omitting a checker is a precise assembly
--- error, while the equality format remains explicitly deferred.
+-- Coverage is bidirectional in every role: omitting the right package loses
+-- both its fact and equality checker, with the first missing exact key
+-- reported deterministically.
 #guard
   match executable? with
   | some executable =>
       match SemanticReplay.Registry.build executable #[leftProofs, noProofs] with
       | .error (.missingSchema package key) =>
           package == 1 && key == rightSchema.key
+      | _ => false
+  | none => false
+
+-- Non-fact coverage is equally exact: supplying the right fact theorem but
+-- omitting its declared equality theorem reports that equality replay key.
+#guard
+  match executable? with
+  | some executable =>
+      match SemanticReplay.Registry.build executable
+          #[leftProofs, rightFactOnlyProofs] with
+      | .error (.missingSchema package key) =>
+          package == 1 &&
+            key == rightEqualityFormat.replayKey rightRuleKey
       | _ => false
   | none => false
 
@@ -451,8 +496,8 @@ def rightContext (entry : Entry) : RuleFactContext checkerInput entry.origin :=
         (rightContext wrong)).isNone
   | none => false
 
--- Exact dispatch includes the role.  The currently deferred equality address
--- cannot reach the fact theorem at the same rule.
+-- Exact dispatch includes the role.  The checked equality address cannot
+-- reach the fact theorem at the same rule.
 #guard
   match fixture? with
   | some fixture =>
@@ -502,7 +547,29 @@ def factDomain : FactDomainSchema (semantics meanings) :=
           some
             { proof := by
                 intro valuation _
-                exact evidence.proof (valuation node) } }
+                exact evidence.proof (valuation node) }
+    proveImplies := fun _ node stronger requested =>
+      match stronger, requested with
+      | _, .top =>
+          some
+            { proof := by
+                intro
+                intro
+                intro
+                trivial }
+      | .top, .exact _ => none
+      | .exact actual, .exact expected =>
+          if equal : actual = expected then
+            some
+              { proof := by
+                  intro valuation
+                  intro
+                  intro holds
+                  change valuation node = expected
+                  change valuation node = actual at holds
+                  simpa [equal] using holds }
+          else
+            none }
 
 example : (factDomain.proveMeet program (node 1) .top (.exact 4) (.exact 4)).isSome =
     true := by

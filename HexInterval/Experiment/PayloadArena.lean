@@ -52,7 +52,7 @@ structure Entry where
   role : Role
   schema : Nat
   body : List Nat
-  deriving Repr
+  deriving DecidableEq, Repr
 
 /-- The immutable dispatch address for semantic replay.  `rule.schema` is the
 handler/theorem compatibility epoch; this structure's numeric `schema` is a
@@ -85,7 +85,7 @@ the aggregate body bound independent of later arena size. -/
 structure Arena where
   entries : Array Entry
   bodyCells : Nat
-  deriving Repr
+  deriving DecidableEq, Repr
 
 namespace Arena
 

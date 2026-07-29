@@ -1060,25 +1060,51 @@ Package caches may record the failed attempt because they remain non-semantic.
 The format API validates representation shape only; it does not itself attest
 that a body proves the proposed interval fact, instance, or equality. The
 cache-free semantic replay protocol separately assembles theorem schemas
-package-for-package against one sealed executable registry. Its constructor is
-private, and its checked builder requires exact bidirectional coverage between
-fact schemas and executable fact formats on the complete
+package-for-package. Its sealed search-paired registry requires exact
+bidirectional coverage for all three roles on the complete
 `(RuleKey, role, schema)` key. Thus a checker from another package cannot be
-selected merely because two rules reuse a numeric schema. Instance and
-equality formats are reported explicitly as deferred rather than silently
-treated as checked.
+selected merely because two rules reuse a numeric schema. Fact schemas prove
+the proposed fact from the exact watched versions; instance schemas prove that
+the admitted program extension is semantically conservative; equality schemas
+prove semantic equality of the exact admitted endpoints.
 
-A Mathlib companion must instantiate those abstract schemas, decode each
-frozen entry independently of package cache state, and recheck the
-corresponding rule theorem. It remains an explicit compatibility
-obligation—not a property enforced by the representation validator—that a
-different callback implementation under an existing versioned rule schema
-leave every retained payload semantically replayable. Whether production
-retains these existential snapshots, compiles a dispatch table, adds typed
-decoders, supports hot replacement, or uses another lookup structure remains
-experimental. The older direct registry and engine interfaces remain
-available for search experiments, but proof-producing execution goes through
-the session.
+Kernel replay does not trust or unfold the opaque compiled search session.
+The tactic must quote an explicit trace containing chronological program
+snapshots, instance events, equality edges, fact events, and the frozen arena.
+A transparent `KernelRegistry` is checked directly against the immutable
+executable package declarations. Its constructor is intentionally not a
+soundness boundary: even a forged table cannot manufacture `Evidence`, because
+each existential schema must return a proof whose dependent type contains the
+exact decoded context. The transparent forward checker verifies base/final
+program binding, prefix extensions, every instance and equality payload,
+fact-version and previous-link chronology, action inputs from the already
+proved prefix, package rule entailment, fact-domain meet evidence, equality
+transport, and a domain-owned implication from the strongest installed fact
+to the possibly weaker requested target.
+
+The implemented Mathlib conformance vertical recognizes `x * (1 - x)`,
+instantiates the package-local auxiliary function
+`x ↦ 1/4 - (x - 1/2)^2`, admits a package-owned equality, propagates
+`[0, 1/4]`, transports it to the original product, and kernel-checks the final
+upper bound. A separate compiled guard checks that the private policy session
+currently emits the quoted trace; this reachability test is not used as the
+mathematical proof. The instance schema's conservative-extension witness then
+lifts the result from the checked extended program back to every valuation of
+the caller's original four-node program.
+
+This remains an experiment rather than the production checker. Trace-size and
+decoder-work envelopes, exact generic reconstruction of instance
+substitutions/products and per-event program-snapshot linkage, contradiction
+certificates, split-tree composition, and the tactic quotation format are
+still open. It is also an explicit
+compatibility obligation—not a property enforced by the representation
+validator—that a different callback implementation under an existing
+versioned rule schema leave every retained payload semantically replayable.
+Whether production retains existential snapshots, compiles a dispatch table,
+adds typed decoders, supports hot replacement, or uses another lookup
+structure remains experimental. The older direct registry and engine
+interfaces remain available for search experiments, but proof-producing
+execution goes through a session and transparent replay.
 
 `PolicySession.Session` is the corresponding proof-producing policy canary.
 Its checked start stores one bundle containing the engine, policy, and arena
@@ -1315,8 +1341,10 @@ Each frozen entry stores its originating action, semantic role, numeric
 payload schema, and uninterpreted `List Nat` body. It derives the rule owner
 only from `origin.key`, avoiding two stored identities which could disagree.
 The session now performs package-owned format lookup and bounded body-shape
-validation under the full `(RuleKey, role, schema)` key. Typed decoding, typed
-atom encodings, byte limits, and semantic replay are still missing.
+validation under the full `(RuleKey, role, schema)` key. The transparent
+semantic-replay experiment decodes all three roles and returns kernel proof
+terms, but production typed atom encodings, byte limits, trace resource
+envelopes, and tactic quotation are still missing.
 The first real dyadic packages declare payload schema `0` separately for each
 fact, instance, or equality handler. Each body validator accepts exactly the
 empty list and rejects every trailing cell; the rule key still distinguishes

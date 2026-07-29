@@ -65,20 +65,20 @@ structure Operation where
   key : OpKey
   inputs : List DomainId
   output : DomainId
-  deriving Repr
+  deriving DecidableEq, Repr
 
 /-- One instruction in a typed single-assignment expression DAG. -/
 structure Node where
   domain : DomainId
   op : OpId
   args : List NodeId
-  deriving Repr
+  deriving DecidableEq, Repr
 
 /-- Immutable base expression program. -/
 structure Program where
   operations : Array Operation
   nodes : Array Node
-  deriving Repr
+  deriving DecidableEq, Repr
 
 namespace Program
 
@@ -370,7 +370,7 @@ structure Action where
   kind : ActionKind
   effort : Nat
   inputs : List SeenVersion
-  deriving Repr
+  deriving DecidableEq, Repr
 
 /-- Immutable fact view supplied with an action. -/
 structure Snapshot (Fact : Type) where
@@ -761,7 +761,7 @@ or payload. -/
 inductive FactCause (Fact : Type) where
   | rule (action : Action) (proposed : Fact) (payload : PayloadId)
   | transport (equality : EqualityId) (source : SeenVersion)
-  deriving Repr
+  deriving DecidableEq, Repr
 
 /-- One retained fact provenance record. -/
 structure FactEvent (Fact : Type) where
@@ -771,6 +771,7 @@ structure FactEvent (Fact : Type) where
   fact : Fact
   version : Nat
   cause : FactCause Fact
+  deriving DecidableEq, Repr
 
 /-- Canonical unordered endpoint pair for one generated equality. -/
 structure EqualityPair where
@@ -797,6 +798,7 @@ structure EqualityEdge where
   generation : Nat
   origin : Action
   payload : PayloadId
+  deriving DecidableEq, Repr
 
 def equalityPair (left right : NodeId) : EqualityPair :=
   if left.index <= right.index then { first := left, second := right }
@@ -826,6 +828,7 @@ structure InstanceEvent where
   instance and repeated references to the same canonical link. -/
   equalities : List EqualityId
   payload : PayloadId
+  deriving DecidableEq, Repr
 
 /-- Live state of the function-agnostic scheduler. -/
 structure Engine (Fact : Type) where
