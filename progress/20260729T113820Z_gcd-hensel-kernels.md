@@ -25,6 +25,8 @@
   `sd6` solve and its bounded-decline, fallback, and result-checking behavior.
 - Regenerated the complete factor-sweep figure set from the new Hex artifacts
   without rerunning the current FLINT, PARI, NTL, or Isabelle measurements.
+- Refreshed the eight non-scheduled parametric BZ benchmark series on CPU 0;
+  every row passed its checksum and the export records a clean tree.
 
 ## Current frontier
 
