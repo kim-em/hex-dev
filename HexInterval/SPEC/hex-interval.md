@@ -749,6 +749,7 @@ The authoritative recurrence for a retained instantiation is
 1 + max (
   the emitting application's action-creation generation,
   generations of every node in the action substitution,
+  generations of every engine-issued structural matcher input,
   generations of every `.existing` reference in node drafts,
   generations of every `.existing` equality endpoint,
   generations of every `.existing` scope anchor, watch, or write
@@ -756,11 +757,14 @@ The authoritative recurrence for a retained instantiation is
 ```
 
 The action substitution is the action anchor followed by its declared fact
-inputs, with duplicate node identifiers removed. Proposed references are
-outputs of this theorem instance, even when CSE reuses already materialized
-storage for them; storage reuse cannot manufacture a proof dependency. Thus
-the same append-stable proposal has the same logical generation before and
-after an unrelated CSE-producing extension.
+inputs, with duplicate node identifiers removed. In the reference matcher
+every member of the bounded issued batch is conservative causal evidence,
+including equality and concrete-application identifiers whose creation
+generation is not otherwise a node reference. Proposed references are outputs
+of this theorem instance, even when CSE reuses already materialized storage
+for them; storage reuse cannot manufacture a proof dependency. Thus the same
+append-stable proposal has the same logical generation before and after an
+unrelated CSE-producing extension.
 
 A successful equality-only or scope-only instantiation still consumes this
 generation: its instance-history event records it, each newly admitted
