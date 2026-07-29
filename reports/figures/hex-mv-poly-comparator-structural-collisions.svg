@@ -36,13 +36,13 @@ text { font-family: sans-serif; fill: #202124; }
 <circle cx="870.00" cy="156.25" r="4" fill="#2468b4"/>
 <line x1="108" y1="82" x2="136" y2="82" stroke="#2468b4" stroke-width="2.5"/>
 <text x="146" y="86" font-size="12">Hex ExtTreeMap</text>
-<polyline class="series" stroke="#d95f02" points="90.00,357.56 285.00,293.21 480.00,230.65 675.00,165.61 789.07,129.92 870.00,102.81"/>
-<rect x="86.00" y="353.56" width="8" height="8" fill="#d95f02"/>
-<rect x="281.00" y="289.21" width="8" height="8" fill="#d95f02"/>
-<rect x="476.00" y="226.65" width="8" height="8" fill="#d95f02"/>
-<rect x="671.00" y="161.61" width="8" height="8" fill="#d95f02"/>
-<rect x="785.07" y="125.92" width="8" height="8" fill="#d95f02"/>
-<rect x="866.00" y="98.81" width="8" height="8" fill="#d95f02"/>
+<polyline class="series" stroke="#d95f02" points="90.00,356.62 285.00,292.43 480.00,228.20 675.00,168.07 789.07,127.38 870.00,102.45"/>
+<rect x="86.00" y="352.62" width="8" height="8" fill="#d95f02"/>
+<rect x="281.00" y="288.43" width="8" height="8" fill="#d95f02"/>
+<rect x="476.00" y="224.20" width="8" height="8" fill="#d95f02"/>
+<rect x="671.00" y="164.07" width="8" height="8" fill="#d95f02"/>
+<rect x="785.07" y="123.38" width="8" height="8" fill="#d95f02"/>
+<rect x="866.00" y="98.45" width="8" height="8" fill="#d95f02"/>
 <line x1="108" y1="106" x2="136" y2="106" stroke="#d95f02" stroke-width="2.5"/>
 <text x="146" y="110" font-size="12">CompPoly CMvPolynomial</text>
 <polyline class="series" stroke="#249148" points="90.00,421.87 285.00,360.72 480.00,299.20 675.00,232.50 789.07,195.86 870.00,170.10"/>

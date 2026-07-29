@@ -47,16 +47,16 @@ text { font-family: sans-serif; fill: #202124; }
 <circle cx="870.00" cy="219.59" r="4" fill="#2468b4"/>
 <line x1="108" y1="82" x2="136" y2="82" stroke="#2468b4" stroke-width="2.5"/>
 <text x="146" y="86" font-size="12">Hex ExtTreeMap</text>
-<polyline class="series" stroke="#d95f02" points="90.00,411.51 204.07,367.59 285.00,337.67 399.07,295.93 480.00,265.83 594.07,224.91 675.00,196.02 789.07,155.41 870.00,127.42"/>
-<rect x="86.00" y="407.51" width="8" height="8" fill="#d95f02"/>
-<rect x="200.07" y="363.59" width="8" height="8" fill="#d95f02"/>
-<rect x="281.00" y="333.67" width="8" height="8" fill="#d95f02"/>
-<rect x="395.07" y="291.93" width="8" height="8" fill="#d95f02"/>
-<rect x="476.00" y="261.83" width="8" height="8" fill="#d95f02"/>
-<rect x="590.07" y="220.91" width="8" height="8" fill="#d95f02"/>
-<rect x="671.00" y="192.02" width="8" height="8" fill="#d95f02"/>
-<rect x="785.07" y="151.41" width="8" height="8" fill="#d95f02"/>
-<rect x="866.00" y="123.42" width="8" height="8" fill="#d95f02"/>
+<polyline class="series" stroke="#d95f02" points="90.00,412.23 204.07,369.07 285.00,339.64 399.07,297.48 480.00,267.80 594.07,226.68 675.00,195.88 789.07,156.61 870.00,129.14"/>
+<rect x="86.00" y="408.23" width="8" height="8" fill="#d95f02"/>
+<rect x="200.07" y="365.07" width="8" height="8" fill="#d95f02"/>
+<rect x="281.00" y="335.64" width="8" height="8" fill="#d95f02"/>
+<rect x="395.07" y="293.48" width="8" height="8" fill="#d95f02"/>
+<rect x="476.00" y="263.80" width="8" height="8" fill="#d95f02"/>
+<rect x="590.07" y="222.68" width="8" height="8" fill="#d95f02"/>
+<rect x="671.00" y="191.88" width="8" height="8" fill="#d95f02"/>
+<rect x="785.07" y="152.61" width="8" height="8" fill="#d95f02"/>
+<rect x="866.00" y="125.14" width="8" height="8" fill="#d95f02"/>
 <line x1="108" y1="106" x2="136" y2="106" stroke="#d95f02" stroke-width="2.5"/>
 <text x="146" y="110" font-size="12">CompPoly CMvPolynomial</text>
 <polyline class="series" stroke="#249148" points="90.00,465.22 204.07,436.34 285.00,418.31 399.07,389.81 480.00,371.33 594.07,342.52 675.00,323.71 789.07,296.85 870.00,279.16"/>

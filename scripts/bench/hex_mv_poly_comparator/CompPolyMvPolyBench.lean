@@ -126,7 +126,7 @@ def runSumOfSquaresArithmetic (input : SumOfSquaresInput) : UInt64 :=
 
 /- CompPoly addition uses one ExtTreeMap merge plus an output filter, both
 linear in the two canonical `n`-term inputs. -/
-setup_benchmark runSparseAddition n => n
+setup_benchmark runSparseAddition n => (n)
   with prep := prepSparseAddition
   where {
     paramSchedule := .custom #[128, 256, 512, 1024, 2048, 4096]
@@ -135,9 +135,10 @@ setup_benchmark runSparseAddition n => n
     signalFloorMultiplier := 1.0
   }
 
-/- CompPoly multiplication translates and inserts `n²` source pairs into its
-ExtTreeMap accumulator; hashing walks the quadratic output. -/
-setup_benchmark runSparseMultiplication n => n * n * Nat.log2 (n * n + 1)
+/- CompPoly's nested fold computes `{term} + growingMap`, so every inner step
+re-folds the growing right tree into a singleton. Summing those tree merges
+over both input supports gives `O(n³ log n)` work. -/
+setup_benchmark runSparseMultiplication n => (n * n * n * Nat.log2 (n + 1))
   with prep := prepSparseMultiplication
   where {
     paramSchedule := .custom #[8, 12, 16, 24, 32, 48, 64, 96, 128]
@@ -146,9 +147,9 @@ setup_benchmark runSparseMultiplication n => n * n * Nat.log2 (n * n + 1)
     signalFloorMultiplier := 1.0
   }
 
-/- The cancellation identity performs three quadratic sparse products and
-canonical merges; tree updates contribute the logarithmic factor. -/
-setup_benchmark runCancellationArithmetic n => n * n * Nat.log2 (n * n + 1)
+/- The identity performs three CompPoly nested-fold products. Each inherits the
+`O(n³ log n)` growing-right-tree merge cost derived above. -/
+setup_benchmark runCancellationArithmetic n => (n * n * n * Nat.log2 (n + 1))
   with prep := prepCancellationArithmetic
   where {
     paramSchedule := .custom #[8, 16, 32, 64, 96, 128, 192, 256]
@@ -159,7 +160,7 @@ setup_benchmark runCancellationArithmetic n => n * n * Nat.log2 (n * n + 1)
 
 /- Collision-heavy rename visits `n` source terms and merges them into a
 bounded eight-key target map, so the work is linear. -/
-setup_benchmark runStructuralCollisions n => n
+setup_benchmark runStructuralCollisions n => (n)
   with prep := prepStructuralCollisions
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 768, 1024]
@@ -168,9 +169,9 @@ setup_benchmark runStructuralCollisions n => n
     signalFloorMultiplier := 1.0
   }
 
-/- Three sparse squares visit `3n²` pairs and update canonical output trees;
-the output hash is also quadratic. -/
-setup_benchmark runSumOfSquaresArithmetic n => n * n * Nat.log2 (n * n + 1)
+/- Three sparse squares use CompPoly's nested-fold multiplication and therefore
+perform `O(n³ log n)` growing-right-tree merge work. -/
+setup_benchmark runSumOfSquaresArithmetic n => (n * n * n * Nat.log2 (n + 1))
   with prep := prepSumOfSquares
   where {
     paramSchedule := .custom #[8, 16, 32, 64, 128, 192, 256, 384, 512]

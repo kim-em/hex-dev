@@ -111,7 +111,7 @@ def runSumOfSquaresArithmetic (input : SumOfSquaresInput) : UInt64 :=
       input.third * input.third
 
 /- Sorted addition is one linear merge over two canonical `n`-term lists. -/
-setup_benchmark runSparseAddition n => n
+setup_benchmark runSparseAddition n => (n)
   with prep := prepSparseAddition
   where {
     paramSchedule := .custom #[128, 256, 512, 1024, 2048, 4096]
@@ -122,7 +122,7 @@ setup_benchmark runSparseAddition n => n
 
 /- Multiplication creates `n` sorted rows of length `n` and combines them in
 balanced merge rounds, for `O(n² log n)` work including output hashing. -/
-setup_benchmark runSparseMultiplication n => n * n * Nat.log2 (n + 1)
+setup_benchmark runSparseMultiplication n => (n * n * Nat.log2 (n + 1))
   with prep := prepSparseMultiplication
   where {
     paramSchedule := .custom #[8, 12, 16, 24, 32, 48, 64, 96, 128]
@@ -133,7 +133,7 @@ setup_benchmark runSparseMultiplication n => n * n * Nat.log2 (n + 1)
 
 /- The identity performs three sorted sparse products and linear merges, each
 bounded by `O(n² log n)`. -/
-setup_benchmark runCancellationArithmetic n => n * n * Nat.log2 (n + 1)
+setup_benchmark runCancellationArithmetic n => (n * n * Nat.log2 (n + 1))
   with prep := prepCancellationArithmetic
   where {
     paramSchedule := .custom #[8, 16, 32, 64, 96, 128, 192, 256]
@@ -144,7 +144,7 @@ setup_benchmark runCancellationArithmetic n => n * n * Nat.log2 (n + 1)
 
 /- Rename visits `n` source terms and inserts into a target support bounded by
 eight keys, giving linear work. -/
-setup_benchmark runStructuralCollisions n => n
+setup_benchmark runStructuralCollisions n => (n)
   with prep := prepStructuralCollisions
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 768, 1024]
@@ -155,7 +155,7 @@ setup_benchmark runStructuralCollisions n => n
 
 /- Three sorted sparse squares visit `3n²` pairs and use balanced row merges,
 for `O(n² log n)` work including the output hash. -/
-setup_benchmark runSumOfSquaresArithmetic n => n * n * Nat.log2 (n + 1)
+setup_benchmark runSumOfSquaresArithmetic n => (n * n * Nat.log2 (n + 1))
   with prep := prepSumOfSquares
   where {
     paramSchedule := .custom #[8, 16, 32, 64, 128, 192, 256, 384, 512]

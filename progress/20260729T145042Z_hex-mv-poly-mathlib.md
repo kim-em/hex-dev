@@ -34,18 +34,28 @@
 - Kept the reusable tree-algorithm boundary explicit: generic joint traversal
   and merge operations live in `HexBasic/ExtTreeMap.lean`; the comparator and
   polynomial layers add only representation adapters and monomial policy.
+- Captured one filtered samply profile per native input family; all five
+  profiles passed calibration, sample-count, and sensitivity gates, and every
+  dominant inclusive cost maps to a registered target.
+- Wrote the core and Mathlib-companion Phase 4 reports, including full native
+  comparator ladders, the paired proof-build decision, consumer compile
+  acceptance, and the explicit `MvSparsePoly` proxy limitation.
+- Corrected the CompPoly comparator's multiplication-family cost model after
+  inspecting its nested `{term} + growingMap` folds: the implementation is
+  cubic-logarithmic, and all five comparator verdicts now pass their derived
+  models.
+- Advanced both library registry entries through Phase 4.
 
 ## Current frontier
 
-The companion and proof-probe targets build locally, and the release-quality
-paired kernel sweep is committed. Native comparator exports, adapters, and
-plots are ready to commit. Five representative compiled profiles and the two
-Phase 4 reports remain.
+The companion, proof probes, native suite, comparators, profiles, and Phase 4
+reports are complete locally. Repository-wide Phase 4/DAG/lint/build
+validation and the companion PR review remain.
 
 ## Next step
 
-Commit the native comparator evidence, capture one filtered profile per input
-family, then write and validate the Phase 4 reports.
+Run all repository validation, obtain the required independent Claude review,
+then land the companion/report PR.
 
 ## Blockers
 
