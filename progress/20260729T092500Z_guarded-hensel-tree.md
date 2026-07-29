@@ -30,12 +30,16 @@ The five affected fixed BZ registrations pass their expected-hash checks; their
 medians are 31.525 microseconds (`X^4 + 1`), 29.363 microseconds (paired
 quadratics), 91.796 microseconds (`Phi_15`), 1.583 ms (`SD_3` lattice), and
 29.299 ms (`SD_4` lattice).
+All current performance reports now point at the clean guarded-tree sweep and
+affected overlays. All 25 cross-system figures were regenerated; their
+provenance output selects the new Hex artifact and the unchanged current
+PARI, NTL, FLINT, and Isabelle artifacts.
 
 ## Next step
 
-Refresh the affected Hensel/BZ registrations, then regenerate the reports and
-figures without rerunning the current PARI, NTL, FLINT, or Isabelle
-comparators. Obtain a second opinion before publishing the intermediate PR.
+Run the focused verification/lint suite, obtain an independent second opinion,
+then publish and merge this intermediate PR. Continue from the remaining
+Chebyshev/Legendre and Swinnerton-Dyer gaps afterward.
 
 ## Blockers
 

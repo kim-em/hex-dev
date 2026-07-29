@@ -19,7 +19,7 @@ Hensel lifter named on equal footing with `multifactorLift` in
 `hex-hensel`. The implementation reuses the full per-step primitive
 `quadraticHenselStep` while a later correction still needs Bezout witnesses,
 then uses `quadraticHenselFactors` for the final factor-only correction inside
-a balanced product tree that mirrors `multifactorLift`. Iteration returns the
+a count-balanced product tree with a guarded dominant-degree split. Iteration returns the
 exact requested precision `p^k`, with at most one exponent of transient
 overshoot rather than the old next-power-of-two schedule.
 
@@ -215,7 +215,7 @@ Quadratic multifactor Hensel lift.
 Lifts an ordered array of factors of `f` from congruence modulo `p` to
 congruence modulo `p^k` using the doubling step
 {name}`Hex.ZPoly.quadraticHenselStep`
-inside a balanced product tree.
+inside the guarded multifactor product tree.
 -/
 @[expose]
 def multifactorLiftQuadratic

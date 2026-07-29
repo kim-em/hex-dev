@@ -91,6 +91,14 @@ oracle against which the production lifter is cross-checked.
 `hex-berlekamp-zassenhaus` and is a Phase 1 deliverable on equal
 footing with `multifactorLift`.
 
+The production lifter normally halves a node by factor count. If one modular
+factor has more than half the node's total degree, it instead chooses the
+nontrivial prefix split with the smallest total-degree imbalance. This keeps a
+dominant factor from being recursively paired with much smaller neighbours,
+while retaining the cheaper, deliberately degree-unbalanced root XGCDs of the
+count tree when no factor dominates. The executable tree, its recursive
+invariant, and the Mathlib coprimality bridge must use the same split function.
+
 For the multifactor API, the public product convention is the left fold
 of multiplication with identity `1`:
 ```lean
