@@ -30,7 +30,7 @@ soundness.
 This experimental module is separate from the supported `HexInterval` API.
 Selecting a
 retained expression proposal runs a separate atomic validator before extending
-the live program and rebuilding its concrete rule applications.
+the live program and appending its new concrete rule applications.
 -/
 
 namespace Hex.Interval.Experiment.Propagator
@@ -220,21 +220,17 @@ structure Registration where
   initialEffort : Nat := 0
   deriving Repr
 
-/-- One start-time application of a scoped registration, produced by the
-frontend or by a package matcher before `Engine.start`.  The stable rule key is
-resolved against the engine's registry snapshot.  The anchor identifies the
-structural occurrence which justifies the application; `watches` and `writes`
-may name any nodes in the validated program.
-
-This first experiment keeps the binding table immutable.  A later dynamic
-proposal must resolve node references and append new applications atomically;
-it cannot insert new scoped applications ahead of existing local ones. -/
+/-- One concrete application of a scoped registration.  Start-time bindings
+come from the frontend or a package matcher; later bindings may be resolved
+from an atomic instantiation proposal.  The anchor identifies the structural
+occurrence which justifies the application; ordered `watches` and `writes` may
+name any nodes in the validated program. -/
 structure ScopeBinding where
   rule : RuleKey
   anchor : NodeId
   watches : List NodeId
   writes : List NodeId
-  deriving Repr
+  deriving DecidableEq, Repr
 
 /-- A registration resolved against one concrete program node. -/
 structure Application where
@@ -246,6 +242,9 @@ structure Application where
   /-- Immutable registration baseline.  A retry prepares a new `Action` with
   an override; it never mutates this compiled application field. -/
   effort : Nat
+  /-- Generation of the event which created this application.  Initial
+  applications have generation zero. -/
+  generation : Nat := 0
   deriving Repr
 
 def uniqueList [DecidableEq alpha] : List alpha -> Bool
@@ -322,25 +321,40 @@ def ScopeBinding.same (left right : ScopeBinding) : Bool :=
   left.rule == right.rule && left.anchor == right.anchor &&
     left.watches == right.watches && left.writes == right.writes
 
+def ScopeBinding.nodes (binding : ScopeBinding) : List NodeId :=
+  binding.anchor :: binding.watches ++ binding.writes
+
+/-- Old nodes reached through resolved scope references.  This includes a
+`proposed` reference which CSE-resolved to an older expression. -/
+def existingScopeNodes (baseSize : Nat) (bindings : List ScopeBinding) : List NodeId :=
+  bindings.flatMap fun binding =>
+    binding.nodes.filter (fun node => node.index < baseSize)
+
 def uniqueScopeBindings : List ScopeBinding -> Bool
   | [] => true
   | binding :: bindings =>
       !(bindings.any fun other => binding.same other) && uniqueScopeBindings bindings
 
-/-- Validate explicit scoped applications without interpreting their operation
-or rule keys.  Package-owned semantic checkers remain responsible for proving
-that the chosen scope is an instance of their contractor schema. -/
+/-- Validate one concrete scoped application without interpreting its
+operation or rule key. -/
+def ScopeBinding.valid (program : Program) (rules : Array Registration)
+    (binding : ScopeBinding) : Bool :=
+  match ruleEntry? rules binding.rule, program.node? binding.anchor with
+  | some (_, rule), some anchor =>
+      rule.binding == .scoped &&
+        (program.operation? anchor.op).any (fun operation => operation.key == rule.head) &&
+        uniqueList binding.watches && uniqueList binding.writes &&
+        binding.watches.all (fun node => (program.node? node).isSome) &&
+        binding.writes.all (fun node => (program.node? node).isSome)
+  | _, _ => false
+
+/-- Validate explicit scoped applications.  Package-owned semantic checkers
+remain responsible for proving that each chosen scope is an instance of their
+contractor schema. -/
 def scopeBindingsCheck (program : Program) (rules : Array Registration)
     (bindings : Array ScopeBinding) : Bool :=
-  uniqueScopeBindings bindings.toList && bindings.all fun binding =>
-    match ruleEntry? rules binding.rule, program.node? binding.anchor with
-    | some (_, rule), some anchor =>
-        rule.binding == .scoped &&
-          (program.operation? anchor.op).any (fun operation => operation.key == rule.head) &&
-          uniqueList binding.watches && uniqueList binding.writes &&
-          binding.watches.all (fun node => (program.node? node).isSome) &&
-          binding.writes.all (fun node => (program.node? node).isSome)
-    | _, _ => false
+  uniqueScopeBindings bindings.toList &&
+    bindings.all (ScopeBinding.valid program rules)
 
 /-- Resolve immutable scoped bindings in their declared order, followed by
 every local `(registration, node)` match in node-major, registration-minor
@@ -421,14 +435,23 @@ def compileApplicationsWithin (limit : Nat) (program : Program)
             effort := rule.initialEffort }
   pure applications
 
-/-- Exact application identity used to validate append-only recompilation. -/
+/-- Exact application identity used to validate append-only extension. -/
 def Application.same (left right : Application) : Bool :=
   left.rule == right.rule && left.node == right.node && left.kind == right.kind &&
-    left.watches == right.watches && left.writes == right.writes && left.effort == right.effort
+    left.watches == right.watches && left.writes == right.writes &&
+      left.effort == right.effort && left.generation == right.generation
 
-/-- Every old application, including its immutable baseline effort, must
-remain an exact prefix after program extension.  Retry escalation lives only
-in a selected `Action`, so it cannot invalidate this structural prefix. -/
+/-- Scope-binding identity deliberately ignores creation generation so a later
+proposal CSE-reuses an older identical application. -/
+def Application.sameBinding (left right : Application) : Bool :=
+  left.rule == right.rule && left.node == right.node && left.kind == right.kind &&
+    left.watches == right.watches && left.writes == right.writes &&
+      left.effort == right.effort
+
+/-- Every old application, including its immutable baseline effort and
+creation generation, must remain an exact prefix after program extension.
+Retry escalation lives only in a selected `Action`, so it cannot invalidate
+this structural prefix. -/
 def applicationsPrefix (old new : Array Application) : Bool := Id.run do
   if new.size < old.size then return false
   for index in [0:old.size] do
@@ -436,6 +459,97 @@ def applicationsPrefix (old new : Array Application) : Bool := Id.run do
     | some left, some right => if !left.same right then return false
     | _, _ => return false
   return true
+
+/-- Compile the application described by one already validated concrete
+scope.  The registration snapshot, rather than proposal metadata, supplies
+the action kind and baseline effort. -/
+def applicationForBinding? (rules : Array Registration)
+    (binding : ScopeBinding) : Option Application := do
+  let (ruleId, rule) <- ruleEntry? rules binding.rule
+  if rule.binding != .scoped then none else pure ()
+  pure
+    { rule := ruleId
+      node := binding.anchor
+      kind := rule.kind
+      watches := binding.watches
+      writes := binding.writes
+      effort := rule.initialEffort }
+
+def findApplicationFrom (target : Application) : Nat -> List Application ->
+    Option ApplicationId
+  | _, [] => none
+  | index, application :: applications =>
+      if application.sameBinding target then some { index }
+      else findApplicationFrom target (index + 1) applications
+
+def findApplication? (applications : Array Application) (target : Application)
+    (offset : Nat := 0) : Option ApplicationId :=
+  findApplicationFrom target offset applications.toList
+
+/-- Resolution of proposed scopes in proposal order.  `outputs` includes CSE
+hits and repetitions; the other fields contain only new bindings and their
+append-ready applications. -/
+structure ScopeResolution where
+  outputs : List ApplicationId
+  freshBindings : List ScopeBinding
+  freshApplications : Array Application
+  deriving Repr
+
+def resolveScopeApplicationsFrom (rules : Array Registration)
+    (existing : Array Application) :
+    List ApplicationId -> List ScopeBinding -> Array Application ->
+      List ScopeBinding -> Option ScopeResolution
+  | outputs, freshBindings, freshApplications, [] =>
+      some { outputs, freshBindings, freshApplications }
+  | outputs, freshBindings, freshApplications, binding :: bindings => do
+      let application <- applicationForBinding? rules binding
+      let existingId := findApplication? existing application
+      let freshId :=
+        findApplication? freshApplications application existing.size
+      match existingId.orElse (fun _ => freshId) with
+      | some identifier =>
+          resolveScopeApplicationsFrom rules existing
+            (outputs ++ [identifier]) freshBindings freshApplications bindings
+      | none =>
+          let identifier : ApplicationId :=
+            { index := existing.size + freshApplications.size }
+          resolveScopeApplicationsFrom rules existing
+            (outputs ++ [identifier]) (freshBindings ++ [binding])
+            (freshApplications.push application) bindings
+
+def resolveScopeApplications (rules : Array Registration)
+    (existing : Array Application) (bindings : List ScopeBinding) :
+    Option ScopeResolution :=
+  resolveScopeApplicationsFrom rules existing [] [] #[] bindings
+
+/-- Compile local applications anchored only in an appended node suffix.
+`limit` bounds the returned suffix, not the final application array. -/
+def compileLocalApplicationsWithin (limit start : Nat) (program : Program)
+    (rules : Array Registration) (generation : Nat := 0) :
+    Except Bool (Array Application) := do
+  if program.nodes.size < start || !program.check || !registrationsCheck program rules then
+    throw false
+  let mut applications := #[]
+  for nodeIndex in [start:program.nodes.size] do
+    let some node := program.nodes[nodeIndex]? | throw false
+    let some operation := program.operation? node.op | throw false
+    for ruleIndex in [0:rules.size] do
+      let some rule := rules[ruleIndex]? | throw false
+      if rule.binding == .local && rule.head == operation.key then
+        if limit <= applications.size then throw true
+        let some watches := resolveSlots? { index := nodeIndex } node rule.watches
+          | throw false
+        let some writes := resolveSlots? { index := nodeIndex } node rule.writes
+          | throw false
+        applications := applications.push
+          { rule := { index := ruleIndex }
+            node := { index := nodeIndex }
+            kind := rule.kind
+            watches
+            writes
+            effort := rule.initialEffort
+            generation }
+  pure applications
 
 /-! # Request/reply protocol -/
 
@@ -456,6 +570,7 @@ structure Action where
   node : NodeId
   kind : ActionKind
   effort : Nat
+  generation : Nat := 0
   inputs : List SeenVersion
   deriving Repr
 
@@ -596,12 +711,23 @@ structure ProposedEquality where
   payload : PayloadId
   deriving Repr
 
+/-- One scoped application proposed against the program produced by the same
+atomic instantiation.  References may name old nodes or any resolved node
+draft; concrete application identifiers remain engine-owned. -/
+structure ProposedScope where
+  rule : RuleKey
+  anchor : NodeRef
+  watches : List NodeRef
+  writes : List NodeRef
+  deriving Repr
+
 /-- Untrusted atomic expression-extension request.  The engine, not the rule,
 recomputes generations and assigns concrete node identifiers. -/
 structure InstantiationRequest where
   key : Nat
   nodes : List ProposedNode
   equalities : List ProposedEquality
+  scopes : List ProposedScope := []
   payload : PayloadId
   deriving Repr
 
@@ -768,6 +894,7 @@ inductive Resource where
   | nodes
   | rules
   | arity
+  | scopes
   | applications
   | queueEntries
   | actions
@@ -789,6 +916,9 @@ structure Limits where
   maxNodes : Nat
   maxRules : Nat
   maxArity : Nat
+  /-- Maximum ordered read or write ports of one arbitrary-scope application.
+  Local operation slots remain governed by `maxArity`. -/
+  maxScopeNodes : Nat := 0
   maxApplications : Nat
   maxQueueEntries : Nat
   maxActions : Nat
@@ -831,6 +961,7 @@ structure Metrics where
   /-- Structurally valid instantiations omitted by `maxNodeDepth`. -/
   depthDrops : Nat := 0
   generatedNodes : Nat := 0
+  generatedScopes : Nat := 0
   generatedEqualities : Nat := 0
   equalityRuns : Nat := 0
   equalityImprovements : Nat := 0
@@ -866,6 +997,7 @@ structure InstanceKey where
   rule : RuleKey
   substitution : List NodeId
   products : List NodeId
+  scopes : List ScopeBinding := []
   equalities : List EqualityPair
   deriving DecidableEq, Repr
 
@@ -901,6 +1033,14 @@ structure InstanceEvent where
   substitution : List NodeId
   products : List NodeId
   newNodes : List NodeId
+  /-- Resolved scope bindings in proposal order, including repetitions. -/
+  bindings : List ScopeBinding := []
+  /-- The fresh binding subset appended by this event. -/
+  newBindings : List ScopeBinding := []
+  /-- Scoped application outputs in proposal order, including CSE hits. -/
+  applications : List ApplicationId := []
+  /-- The fresh application subset appended by this event. -/
+  newApplications : List ApplicationId := []
   generation : Nat
   /-- Equality outputs in proposal order, including links reused from an older
   instance and repeated references to the same canonical link. -/
@@ -913,10 +1053,16 @@ structure Engine (Fact : Type) where
   factDomain : FactDomain Fact
   program : Program
   rules : Array Registration
-  /-- Immutable start-time bindings for arbitrary-scope applications.  They
-  remain fixed across append-only expression instantiation, so their compiled
-  applications retain stable identifiers. -/
+  /-- Concrete scoped bindings in admission order.  Start-time bindings form
+  the initial prefix; dynamically proposed bindings append without moving any
+  existing application identifier.  This is an audit log, not a recipe for
+  recompiling `applications`: dynamic scopes and local applications interleave,
+  and creation generations live in the canonical append-only arena below. -/
   bindings : Array ScopeBinding
+  /-- Package/session-owned semantic preflight for a concrete scoped binding.
+  The engine also performs all structural checks.  This veto protects package
+  callback contracts; proof replay remains the soundness boundary. -/
+  acceptsScope : Program -> ScopeBinding -> Bool := fun _ _ => true
   applications : Array Application
   watchers : Array (List WorkItem)
   facts : Array Fact
@@ -991,9 +1137,9 @@ def preflightStart (program : Program) (rules : Array Registration)
       rules.any (fun rule => !listWithin (limits.maxArity + 1) rule.watches ||
         !listWithin (limits.maxArity + 1) rule.writes) then
     throw (.resourceLimit .arity)
-  if bindings.any (fun binding => !listWithin limits.maxNodes binding.watches ||
-      !listWithin limits.maxNodes binding.writes) then
-    throw (.resourceLimit .nodes)
+  if bindings.any (fun binding => !listWithin limits.maxScopeNodes binding.watches ||
+      !listWithin limits.maxScopeNodes binding.writes) then
+    throw (.resourceLimit .scopes)
   if factCount != program.nodes.size then
     throw .wrongFactCount
   if !program.check then
@@ -1009,9 +1155,12 @@ def preflightStart (program : Program) (rules : Array Registration)
 /-- Validate and compile an engine.  The caller supplies one initial fact per
 node, ordinarily the domain top refined by source hypotheses. -/
 def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Array Registration)
-    (facts : Array Fact) (limits : Limits) (bindings : Array ScopeBinding := #[]) :
+    (facts : Array Fact) (limits : Limits) (bindings : Array ScopeBinding := #[])
+    (acceptsScope : Program -> ScopeBinding -> Bool := fun _ _ => true) :
     Except StartError (Engine Fact) := do
   preflightStart program rules facts.size limits bindings
+  if !bindings.all (acceptsScope program) then
+    throw .invalidBindings
   let some depths := program.depths? | throw .invalidProgram
   let applications <-
     match compileApplicationsWithin limits.maxApplications program rules bindings with
@@ -1028,6 +1177,7 @@ def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Arr
       programVersion := 0
       rules
       bindings
+      acceptsScope
       applications
       watchers
       facts
@@ -1092,7 +1242,8 @@ def actionFresh (state : Engine Fact) (action : Action) : Bool :=
       state.seenVersions? (action.inputs.map fun input => input.node) with
   | some application, some rule, some current =>
       application.rule == action.rule && application.node == action.node &&
-        application.kind == action.kind && rule.key == action.key &&
+        application.kind == action.kind && application.generation == action.generation &&
+        rule.key == action.key &&
         (!rule.watchesProgram || action.programVersion == state.programVersion) &&
         action.inputs.map (fun input => input.node) == application.watches &&
         current == action.inputs
@@ -1200,6 +1351,7 @@ def poll (state : Engine Fact) : Poll Fact :=
                     node := application.node
                     kind := application.kind
                     effort := application.effort
+                    generation := application.generation
                     inputs }
                 let next : Engine Fact :=
                   { state with
@@ -1281,12 +1433,19 @@ def existingRefBounded (nodeCount : Nat) : NodeRef -> Bool
   | .existing node => node.index < nodeCount
   | .proposed _ => true
 
-def proposalBounded (nodeCount limit : Nat) (request : InstantiationRequest) : Bool :=
-  listWithin limit request.nodes && listWithin limit request.equalities &&
-    request.nodes.all (fun node => listWithin limit node.args &&
+def proposalBounded (nodeCount itemLimit scopeLimit : Nat)
+    (request : InstantiationRequest) : Bool :=
+  listWithin itemLimit request.nodes && listWithin itemLimit request.equalities &&
+    listWithin itemLimit request.scopes &&
+    request.nodes.all (fun node => listWithin itemLimit node.args &&
       node.args.all (existingRefBounded nodeCount)) &&
     request.equalities.all (fun edge =>
-      existingRefBounded nodeCount edge.left && existingRefBounded nodeCount edge.right)
+      existingRefBounded nodeCount edge.left && existingRefBounded nodeCount edge.right) &&
+    request.scopes.all (fun scope =>
+      existingRefBounded nodeCount scope.anchor &&
+        listWithin scopeLimit scope.watches && listWithin scopeLimit scope.writes &&
+        scope.watches.all (existingRefBounded nodeCount) &&
+        scope.writes.all (existingRefBounded nodeCount))
 
 def suggestionBounded (limits : Limits) (nodeCount : Nat) : Suggestion -> Bool
   | .retry effort => effort <= limits.maxEffort
@@ -1294,7 +1453,7 @@ def suggestionBounded (limits : Limits) (nodeCount : Nat) : Suggestion -> Bool
       request.node.index < nodeCount &&
         (EndpointCost.ofDyadic request.point).allowed limits.splitEndpointLimit
   | .instantiate request =>
-      proposalBounded nodeCount limits.maxProposalItems request
+      proposalBounded nodeCount limits.maxProposalItems limits.maxScopeNodes request
 
 def suggestionsBounded (limits : Limits) (nodeCount : Nat)
     (suggestions : List Suggestion) : Bool :=
@@ -1393,6 +1552,22 @@ def resolveRequestedPairs (baseSize : Nat) (resolved : List NodeId) (program : P
       let pair := equalityPair left right
       some (if rest.contains pair then rest else insertEqualityPair pair rest)
 
+/-- Resolve dynamic contractor scopes in proposal order against the final
+program snapshot.  Repeated scopes remain repeated here; application CSE is a
+separate engine-owned step analogous to equality-edge CSE. -/
+def resolveRequestedScopes (baseSize : Nat) (resolved : List NodeId)
+    (program : Program) (rules : Array Registration) :
+    List ProposedScope -> Option (List ScopeBinding)
+  | [] => some []
+  | proposal :: proposals => do
+      let anchor <- resolveRef? baseSize resolved proposal.anchor
+      let watches <- resolveRefs? baseSize resolved proposal.watches
+      let writes <- resolveRefs? baseSize resolved proposal.writes
+      let binding : ScopeBinding := { rule := proposal.rule, anchor, watches, writes }
+      if !binding.valid program rules then none else pure ()
+      let rest <- resolveRequestedScopes baseSize resolved program rules proposals
+      some (binding :: rest)
+
 /-- Result of validating a proposal before it can enter retained policy state. -/
 inductive ProposalCheck where
   | valid
@@ -1404,17 +1579,20 @@ checks used by admission, without mutating the live engine. Structural
 validation deliberately runs to completion before the depth classification:
 a malformed proposal cannot disguise itself as a recoverable depth loss. -/
 def checkInstantiationProposal (program : Program) (depths : Array Nat)
-    (maxNodeDepth : Nat) (request : InstantiationRequest) : ProposalCheck :=
+    (maxNodeDepth : Nat) (request : InstantiationRequest)
+    (rules : Array Registration := #[])
+    (acceptsScope : Program -> ScopeBinding -> Bool := fun _ _ => true) : ProposalCheck :=
   let baseSize := program.nodes.size
   match resolveDrafts baseSize program depths [] request.nodes with
   | .error .badReferenceOrShape => .malformed
   | .ok (program, depths, resolved) =>
-      if (resolveRequestedPairs baseSize resolved program request.equalities).isNone then
-        .malformed
-      else if !appendedDepthsWithin baseSize maxNodeDepth depths then
-        .tooDeep
-      else
-        .valid
+      match resolveRequestedPairs baseSize resolved program request.equalities,
+          resolveRequestedScopes baseSize resolved program rules request.scopes with
+      | some _, some scopes =>
+          if !scopes.all (acceptsScope program) then .malformed
+          else if !appendedDepthsWithin baseSize maxNodeDepth depths then .tooDeep
+          else .valid
+      | _, _ => .malformed
 
 namespace Engine
 
@@ -1551,7 +1729,7 @@ def classifySuggestions (state : Engine Fact) :
         | .retry _ | .split _ => ProposalCheck.valid
         | .instantiate request =>
             checkInstantiationProposal state.program state.depths
-              state.limits.maxNodeDepth request
+              state.limits.maxNodeDepth request state.rules state.acceptsScope
       match checked with
       | .malformed => .malformed
       | .valid =>
@@ -1803,6 +1981,7 @@ inductive AdmissionError where
   | oversizedProposal
   | badReferenceOrShape
   | invalidEquality
+  | invalidScope
   | invalidCompiledProgram
   deriving DecidableEq, Repr
 
@@ -1821,7 +2000,9 @@ def existingRefs (refs : List NodeRef) : List NodeId :=
 
 def requestExistingRefs (request : InstantiationRequest) : List NodeId :=
   request.nodes.flatMap (fun node => existingRefs node.args) ++
-    request.equalities.flatMap (fun edge => existingRefs [edge.left, edge.right])
+    request.equalities.flatMap (fun edge => existingRefs [edge.left, edge.right]) ++
+    request.scopes.flatMap (fun scope =>
+      existingRefs (scope.anchor :: scope.watches ++ scope.writes))
 
 /-- Canonical engine-owned substitution of an invocation: its anchor followed
 by every declared fact dependency, with the first occurrence retained. -/
@@ -1833,9 +2014,11 @@ every explicitly existing node named by the proposal.  Proposed nodes are
 outputs of this instance, so whether one happens to CSE-hit an already
 materialized node cannot turn it into a new proof dependency. -/
 def inferredGeneration? (generations : Array Nat)
-    (action : Action) (request : InstantiationRequest) : Option Nat := do
-  let references := actionSubstitution action ++ requestExistingRefs request
-  let mut greatest := 0
+    (action : Action) (request : InstantiationRequest)
+    (resolvedScopeNodes : List NodeId := []) : Option Nat := do
+  let references := actionSubstitution action ++ requestExistingRefs request ++
+    resolvedScopeNodes
+  let mut greatest := action.generation
   for node in references do
     let generation <- generations[node.index]?
     greatest := Nat.max greatest generation
@@ -1848,7 +2031,12 @@ def Engine.instantiationGeneration? (state : Engine Fact)
     (retained : RetainedSuggestion) : Option Nat := do
   if !state.actionFresh retained.action then none else pure ()
   let .instantiate request := retained.suggestion | none
+  let baseSize := state.program.nodes.size
+  let .ok (program, _, resolved) :=
+    resolveDrafts baseSize state.program state.depths [] request.nodes | none
+  let scopes <- resolveRequestedScopes baseSize resolved program state.rules request.scopes
   inferredGeneration? state.generations retained.action request
+    (existingScopeNodes baseSize scopes)
 
 /-- Treat equality endpoints as unordered for structural deduplication. -/
 def EqualityEdge.sameEndpoints (edge : EqualityEdge) (left right : NodeId) : Bool :=
@@ -1956,7 +2144,8 @@ def admitRetained (state : Engine Fact)
     match retained.suggestion with
     | .retry _ | .split _ => .invalid .notInstantiation state
     | .instantiate request =>
-        if !proposalBounded state.program.nodes.size state.limits.maxProposalItems request then
+        if !proposalBounded state.program.nodes.size state.limits.maxProposalItems
+            state.limits.maxScopeNodes request then
           .invalid .oversizedProposal state
         else if !state.actionFresh retained.action then
           .invalid (.staleSuggestion retained.action.programVersion state.programVersion) state
@@ -1969,113 +2158,172 @@ def admitRetained (state : Engine Fact)
                 resolveRequestedPairs baseSize resolved program request.equalities
               if equalityPairs?.isNone then
                 .invalid .invalidEquality state
-              else if !appendedDepthsWithin baseSize state.limits.maxNodeDepth depths then
-                .resourceLimit .nodeDepth state
               else
-              let substitution := actionSubstitution retained.action
-              let instanceKey : InstanceKey :=
-                { rule := retained.action.key
-                  substitution
-                  products := resolved
-                  equalities := equalityPairs?.getD [] }
-              if state.instances.contains instanceKey then
-                duplicateInstance state
-              else
-                match inferredGeneration? state.generations retained.action request with
-                | none => .invalid .badReferenceOrShape state
-                | some generation =>
-                    match resolveEqualities baseSize generation retained.action program resolved
-                        state.equalities request.equalities with
-                      | none => .invalid .invalidEquality state
-                      | some (equalityIds, equalities) =>
-                          let addedNodes := program.nodes.size - baseSize
-                          if addedNodes == 0 && equalities.isEmpty then
+                match resolveRequestedScopes baseSize resolved program state.rules
+                    request.scopes with
+                | none => .invalid .invalidScope state
+                | some requestedScopes =>
+                    if !requestedScopes.all (state.acceptsScope program) then
+                      .invalid .invalidScope state
+                    else if !appendedDepthsWithin baseSize state.limits.maxNodeDepth depths then
+                      .resourceLimit .nodeDepth state
+                    else
+                      match resolveScopeApplications state.rules state.applications
+                          requestedScopes with
+                      | none => .invalid .invalidScope state
+                      | some scopeResolution =>
+                          let substitution := actionSubstitution retained.action
+                          let instanceKey : InstanceKey :=
+                            { rule := retained.action.key
+                              substitution
+                              products := resolved
+                              scopes := requestedScopes
+                              equalities := equalityPairs?.getD [] }
+                          if state.instances.contains instanceKey then
                             duplicateInstance state
-                          else if state.limits.maxInstances <= state.instances.length then
-                            .resourceLimit .instances state
-                          else if state.limits.maxGeneration < generation then
-                            .resourceLimit .generation state
-                          else if state.limits.maxNodes < program.nodes.size then
-                            .resourceLimit .nodes state
-                          else if state.limits.maxEqualities <
-                              state.equalities.size + equalities.length then
-                            .resourceLimit .equalities state
                           else
-                            match compileApplicationsWithin state.limits.maxApplications
-                                program state.rules state.bindings with
-                            | .error false => .invalid .invalidCompiledProgram state
-                            | .error true => .resourceLimit .applications state
-                            | .ok applications =>
-                                if !applicationsPrefix state.applications applications then
-                                  .invalid .invalidCompiledProgram state
-                                else
-                                  match dormantProgramWatchers? state with
-                                  | none => .invalid .invalidCompiledProgram state
-                                  | some programWatchers =>
-                                    let addedApplications :=
-                                      applications.size - state.applications.size
-                                    if state.limits.maxQueueEntries <
-                                        state.queue.size + addedApplications + equalities.length +
-                                          programWatchers.length then
-                                      .resourceLimit .queueEntries state
+                            match inferredGeneration? state.generations retained.action request
+                                (existingScopeNodes baseSize requestedScopes) with
+                            | none => .invalid .badReferenceOrShape state
+                            | some generation =>
+                                match resolveEqualities baseSize generation retained.action program
+                                    resolved state.equalities request.equalities with
+                                | none => .invalid .invalidEquality state
+                                | some (equalityIds, equalities) =>
+                                    let addedNodes := program.nodes.size - baseSize
+                                    let addedScopes :=
+                                      scopeResolution.freshApplications.size
+                                    if addedNodes == 0 && equalities.isEmpty && addedScopes == 0 then
+                                      duplicateInstance state
+                                    else if state.limits.maxInstances <=
+                                        state.instances.length then
+                                      .resourceLimit .instances state
+                                    else if state.limits.maxGeneration < generation then
+                                      .resourceLimit .generation state
+                                    else if state.limits.maxNodes < program.nodes.size then
+                                      .resourceLimit .nodes state
+                                    else if state.limits.maxEqualities <
+                                        state.equalities.size + equalities.length then
+                                      .resourceLimit .equalities state
+                                    else if state.limits.maxApplications <
+                                        state.applications.size + addedScopes then
+                                      .resourceLimit .applications state
                                     else
-                                    let allEqualities := state.equalities ++ equalities.toArray
-                                    match buildWatchers program.nodes.size applications
-                                        allEqualities with
-                                    | none => .invalid .invalidCompiledProgram state
-                                    | some watchers =>
-                                        let generated := newNodeIds baseSize program.nodes.size
-                                        let queued := state.queued ++
-                                          Array.replicate addedApplications false
-                                        let equalityQueued := state.equalityQueued ++
-                                          Array.replicate equalities.length false
-                                        let prospective : Engine Fact :=
-                                          { state with
-                                            programVersion := state.programVersion + 1
-                                            program
-                                            applications
-                                            watchers
-                                            facts := state.facts ++
-                                              newTopFacts state.factDomain baseSize program.nodes
-                                            versions := state.versions ++
-                                              Array.replicate addedNodes 0
-                                            generations := state.generations ++
-                                              Array.replicate addedNodes generation
-                                            depths
-                                            queued
-                                            equalityQueued
-                                            instances := instanceKey :: state.instances
-                                            instanceHistory := state.instanceHistory.push
-                                              { programVersion := state.programVersion + 1
-                                                origin := retained.action
-                                                family := request.key
-                                                substitution
-                                                products := resolved
-                                                newNodes := generated
-                                                generation
-                                                equalities := equalityIds
-                                                payload := request.payload }
-                                            equalities := allEqualities
-                                            metrics :=
-                                              { state.metrics with
-                                                admittedInstances :=
-                                                  state.metrics.admittedInstances + 1
-                                                generatedNodes :=
-                                                  state.metrics.generatedNodes + addedNodes
-                                                generatedEqualities :=
-                                                  state.metrics.generatedEqualities +
-                                                    equalities.length } }
-                                        match enqueueNewEqualities state.equalities.size
-                                            equalities.length prospective with
-                                        | .error resource => .resourceLimit resource state
-                                        | .ok prospective =>
-                                            match enqueueNewApplications state.applications.size
-                                                addedApplications prospective with
-                                            | .error resource => .resourceLimit resource state
-                                            | .ok prospective =>
-                                                match enqueueApplications programWatchers prospective with
-                                                | .error resource => .resourceLimit resource state
-                                                | .ok next => .admitted generated next
+                                      let room := state.limits.maxApplications -
+                                        state.applications.size - addedScopes
+                                      match compileLocalApplicationsWithin room baseSize program
+                                          state.rules generation with
+                                      | .error false =>
+                                          .invalid .invalidCompiledProgram state
+                                      | .error true => .resourceLimit .applications state
+                                      | .ok localApplications =>
+                                          let freshScopeApplications :=
+                                            scopeResolution.freshApplications.map fun application =>
+                                              { application with generation }
+                                          let applications := state.applications ++
+                                            freshScopeApplications ++ localApplications
+                                          if !applicationsPrefix state.applications applications then
+                                            .invalid .invalidCompiledProgram state
+                                          else
+                                            match dormantProgramWatchers? state with
+                                            | none =>
+                                                .invalid .invalidCompiledProgram state
+                                            | some programWatchers =>
+                                                let addedApplications := addedScopes +
+                                                  localApplications.size
+                                                if state.limits.maxQueueEntries <
+                                                    state.queue.size + addedApplications +
+                                                      equalities.length +
+                                                        programWatchers.length then
+                                                  .resourceLimit .queueEntries state
+                                                else
+                                                  let allEqualities := state.equalities ++
+                                                    equalities.toArray
+                                                  match buildWatchers program.nodes.size applications
+                                                      allEqualities with
+                                                  | none =>
+                                                      .invalid .invalidCompiledProgram state
+                                                  | some watchers =>
+                                                      let generated :=
+                                                        newNodeIds baseSize program.nodes.size
+                                                      let freshScopeIds : List ApplicationId :=
+                                                        (List.range addedScopes).map fun offset =>
+                                                          { index :=
+                                                              state.applications.size + offset }
+                                                      let queued := state.queued ++
+                                                        Array.replicate addedApplications false
+                                                      let equalityQueued := state.equalityQueued ++
+                                                        Array.replicate equalities.length false
+                                                      let prospective : Engine Fact :=
+                                                        { state with
+                                                          programVersion :=
+                                                            state.programVersion + 1
+                                                          program
+                                                          bindings := state.bindings ++
+                                                            scopeResolution.freshBindings.toArray
+                                                          applications
+                                                          watchers
+                                                          facts := state.facts ++ newTopFacts
+                                                            state.factDomain baseSize program.nodes
+                                                          versions := state.versions ++
+                                                            Array.replicate addedNodes 0
+                                                          generations := state.generations ++
+                                                            Array.replicate addedNodes generation
+                                                          depths
+                                                          queued
+                                                          equalityQueued
+                                                          instances :=
+                                                            instanceKey :: state.instances
+                                                          instanceHistory :=
+                                                            state.instanceHistory.push
+                                                              { programVersion :=
+                                                                  state.programVersion + 1
+                                                                origin := retained.action
+                                                                family := request.key
+                                                                substitution
+                                                                products := resolved
+                                                                newNodes := generated
+                                                                bindings := requestedScopes
+                                                                newBindings :=
+                                                                  scopeResolution.freshBindings
+                                                                applications :=
+                                                                  scopeResolution.outputs
+                                                                newApplications := freshScopeIds
+                                                                generation
+                                                                equalities := equalityIds
+                                                                payload := request.payload }
+                                                          equalities := allEqualities
+                                                          metrics :=
+                                                            { state.metrics with
+                                                              admittedInstances :=
+                                                                state.metrics.admittedInstances + 1
+                                                              generatedNodes :=
+                                                                state.metrics.generatedNodes +
+                                                                  addedNodes
+                                                              generatedScopes :=
+                                                                state.metrics.generatedScopes +
+                                                                  addedScopes
+                                                              generatedEqualities :=
+                                                                state.metrics.generatedEqualities +
+                                                                  equalities.length } }
+                                                      match enqueueNewEqualities
+                                                          state.equalities.size equalities.length
+                                                          prospective with
+                                                      | .error resource =>
+                                                          .resourceLimit resource state
+                                                      | .ok prospective =>
+                                                          match enqueueNewApplications
+                                                              state.applications.size
+                                                              addedApplications prospective with
+                                                          | .error resource =>
+                                                              .resourceLimit resource state
+                                                          | .ok prospective =>
+                                                              match enqueueApplications
+                                                                  programWatchers prospective with
+                                                              | .error resource =>
+                                                                  .resourceLimit resource state
+                                                              | .ok next =>
+                                                                  .admitted generated next
 
 /-- Select one proposal retained in this concrete engine snapshot.  This
 experiment keeps `Engine` inspectable for benchmarks, so callers can still

@@ -58,6 +58,7 @@ structure InvocationKey where
   anchor : NodeId
   kind : ActionKind
   effort : Nat
+  generation : Nat := 0
   inputs : List SeenVersion
   deriving DecidableEq, Repr
 
@@ -84,12 +85,21 @@ structure ProposedEqualityKey where
   right : NodeRef
   deriving DecidableEq, Repr
 
+/-- Payload-erased proposed scoped application. -/
+structure ProposedScopeKey where
+  rule : RuleKey
+  anchor : NodeRef
+  watches : List NodeRef
+  writes : List NodeRef
+  deriving DecidableEq, Repr
+
 /-- Payload-erased structural identity of an instantiation request. -/
 structure InstantiationSemanticKey where
   family : Nat
   generation : Nat
   nodes : List ProposedNodeKey
   equalities : List ProposedEqualityKey
+  scopes : List ProposedScopeKey
   deriving DecidableEq, Repr
 
 def InstantiationSemanticKey.ofRequest
@@ -99,7 +109,12 @@ def InstantiationSemanticKey.ofRequest
     nodes := request.nodes.map fun node =>
       { domain := node.domain, op := node.op, args := node.args }
     equalities := request.equalities.map fun equality =>
-      { left := equality.left, right := equality.right } }
+      { left := equality.left, right := equality.right }
+    scopes := request.scopes.map fun scope =>
+      { rule := scope.rule
+        anchor := scope.anchor
+        watches := scope.watches
+        writes := scope.writes } }
 
 inductive OfferClass where
   | invoke
@@ -231,6 +246,7 @@ def invocationOfAction (scope : ScopeId) (action : Action) : InvocationKey :=
     anchor := action.node
     kind := action.kind
     effort := action.effort
+    generation := action.generation
     inputs := action.inputs }
 
 def State.invocationKey? (state : State Fact) (applicationId : ApplicationId)
@@ -246,6 +262,7 @@ def State.invocationKey? (state : State Fact) (applicationId : ApplicationId)
       anchor := application.node
       kind := application.kind
       effort := effort.getD application.effort
+      generation := application.generation
       inputs }
 
 def State.equalityKey? (state : State Fact) (equalityId : EqualityId) : Option EqualityWorkKey := do
@@ -370,9 +387,30 @@ inductive ViewError where
   | liveOfferLimit
   deriving DecidableEq, Repr
 
+/-- Extra semantic items traversed beyond the one backing-slot charge.  Local
+applications retain the historical constant charge because their ports are
+independently bounded by operation arity.  Arbitrary scopes and dynamically
+proposed scopes charge their variable-length node-reference lists. -/
+private def scopedTraversal (state : State Fact) : Nat := Id.run do
+  let mut cost := 0
+  for application in state.engine.applications do
+    match state.engine.rules[application.rule.index]? with
+    | some rule =>
+        if rule.binding == .scoped then
+          cost := cost + application.watches.length
+    | none => pure ()
+  for retained in state.engine.suggestions do
+    match retained.suggestion with
+    | .instantiate request =>
+        for scope in request.scopes do
+          cost := cost + 1 + scope.watches.length + scope.writes.length
+    | .retry _ | .split _ => pure ()
+  return cost
+
 /-- Authoritative bounded scan of every live semantic offer. -/
 private def stateOffers (state : State Fact) : Except ViewError (Array OfferView × Nat) := do
-  let traversal := state.applications.size + state.equalities.size + state.suggestions.size
+  let traversal := state.applications.size + state.equalities.size + state.suggestions.size +
+    scopedTraversal state
   if state.limits.maxTraversal < state.metrics.traversal + traversal then
     throw .traversalLimit
   let mut offers := #[]
@@ -591,6 +629,7 @@ private def prepareApplication (state : State Fact) (applicationId : Application
                 node := application.node
                 kind := application.kind
                 effort := effort.getD application.effort
+                generation := application.generation
                 inputs }
             let queued :=
               if clearDirty then state.engine.queued.set! applicationId.index false
