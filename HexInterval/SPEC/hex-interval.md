@@ -564,8 +564,29 @@ ordered read list, and an ordered write list. The dependency index maps each
 read node to the concrete applications that must wake when its fact changes.
 The scheduler sees only these concrete identifiers; it does not inspect an
 operation key to infer that, for example, addition reads two arguments or a
-contractor writes one of them. Later shape rules may propose validated
-cross-node applications without changing the scheduler protocol.
+contractor writes one of them.
+
+Head-local slots are the compact fast path, not the complete contractor model.
+The production application table also admits a compiled arbitrary-scope
+contractor application. Such an application has a stable versioned contractor
+key, an optional structural anchor, a validated semantic scope, and explicit
+ordered read and write node lists. Its scope may cover several constraints or
+otherwise unrelated parts of the expression DAG; it need not be encoded as the
+arguments of an artificial operation node. Every fact on which its answer
+depends occurs in its read list, and every candidate target occurs in its write
+list. A bounded matcher or frontend declaration supplies the initial binding;
+the engine checks node visibility, domains, duplicate ports, scope, and all
+structural limits before compiling the ordinary dependency entries.
+
+Head-local and arbitrary-scope applications use the same `Action`,
+request/reply, freshness, atomic update, observation, and replay protocol.
+This lets a package expose elementary forward and backward projections through
+relative slots while also exposing a whole-constraint HC4 traversal, an
+interval-Newton system contractor, or another coordinated box contractor.
+Instantiation may propose a validated arbitrary-scope application or derived
+constraint as well as new expression nodes and equality edges. The exact
+proposal representation remains open, but cross-node contractors are a
+first-class application form rather than a future exception to the scheduler.
 
 The current arbitrary-propagator experiment gives each request a bounded,
 immutable `ProgramView` containing the exact program version, operation table,
@@ -1068,6 +1089,18 @@ the proposed fact from the exact watched versions; instance schemas prove that
 the admitted program extension is semantically conservative; equality schemas
 prove semantic equality of the exact admitted endpoints.
 
+The production assembly boundary is one coherent checked package snapshot.
+For every versioned rule which can execute, that snapshot contains or
+atomically pairs its operation signatures, registration or contractor matcher,
+callback route, cache policy, payload formats, freezing limits, and semantic
+replay schemas. A runtime-only handler cannot enter a proof-producing session,
+and a semantic schema with no executable owner cannot be selected by search.
+Whether package authors fill one record or a builder seals separately compiled
+runtime and companion halves remains open; the public result and its
+bidirectional coverage check are one authority boundary. Hot replacement is
+valid only when every retained payload remains covered by the exact old
+versioned schema.
+
 Kernel replay does not trust or unfold the opaque compiled search session.
 The tactic must quote an explicit trace containing chronological program
 snapshots, instance events, equality edges, fact events, and the frozen arena.
@@ -1180,6 +1213,18 @@ dependency merely because engine-owned admission may CSE one of their outputs.
 Compiled structural patterns or more selective operation-key triggers remain
 alternatives to compare once the behavior is established.
 
+The upgrade path is an indexed structural-watch declaration rather than a
+larger collection of booleans. Candidate watch classes include exact operation
+keys, bounded compiled patterns, equality or constraint additions, and a
+whole-program fallback. Program extension records the bounded classes of its
+new structure and wakes only matching registrations; fact-dependent triggers
+still use their ordinary explicit fact reads. A compiled-pattern arm returns
+validated bindings and a bounded match certificate, while the full
+`ProgramView` arm remains the reference oracle. The representation, pattern
+language, and index are experiments, but selective extension wakeup,
+deterministic bounded enumeration, and the unrestricted fallback are required
+capabilities.
+
 1. The solver produces an `Action` naming a program snapshot, concrete rule
    application, anchor, declared input fact versions, effort, and action kind.
 2. The external function-package registry executes the routed callback and
@@ -1210,6 +1255,24 @@ alternatives to compare once the behavior is established.
    declare that target as an input. The engine also retains the immutable base
    program and caller-supplied version-zero fact array rather than attempting
    to recover either from the extended program or narrowed current slots.
+
+Atomic multi-output replies have one exact proof contract. Every candidate in
+the batch is interpreted against the same pre-reply program snapshot and exact
+watched fact versions. Its replay schema proves the proposed fact from those
+facts and the program model independently of every other candidate in the
+batch. The engine then derives the installed fact by meeting that proposal with
+the target's exact preceding fact. Therefore accepting, rejecting, or finding
+one sibling candidate redundant cannot invalidate another sibling's proof.
+The engine preflights and commits all improving installed facts before issuing
+the deduplicated union of wakeups, so no callback can observe a half-installed
+batch.
+
+This first contract deliberately forbids an implicit dependency on an earlier
+candidate in reply order. A future contractor which benefits from sequential
+intermediate facts must return an explicit bounded micro-trace whose internal
+references and order are replayed, rather than relying on list position or the
+engine's transaction order. Comparing independent candidates with such
+micro-traces is an open proof-size experiment.
 
 The executable `Engine.factAt?` is the replay lookup invariant. Version zero
 of a base-program node resolves from the caller's immutable `initialFacts`;
@@ -1384,6 +1447,9 @@ package-local identifier reaches its retained provenance. Its monotone
 a terminal-state claim. The exported `Session.complete` predicate additionally
 requires a live session and no retained retry or instantiation. At a FIFO
 fixed point this predicate is the sole gate between saturated and incomplete.
+For the canary's current head-local registry this is the `configured` closure
+profile described below; production completion also records the selected
+profile and includes every compiled arbitrary-scope application it names.
 Package `failed`/`resourceLimit` results, malformed evidence, dropped narrowing
 suggestions, and unprocessed retained narrowing therefore cannot be laundered
 into saturation.
@@ -1446,6 +1512,52 @@ targeted shaving, interval Newton, and a global split. Which strength to apply
 is empirical and may depend on occurrence counts, derivative influence,
 observed contraction, and proof cost.
 
+### Contractor families and transferable RealPaver design
+
+RealPaver supplies concrete algorithms to translate and compare, not an API to
+copy wholesale. Its base contractor declares an arbitrary variable scope,
+contracts an interval box, and reports `Empty`, `Feasible`, `Inner`, or
+`Maybe` ([source](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/src/realpaver/Contractor.hpp#L30-L64)).
+Its dependency pool indexes contractors by every variable in their scope, and
+the propagator requeues affected contractors after a sufficient box reduction
+([pool](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/src/realpaver/ContractorPool.hpp#L29-L82),
+[worklist](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/src/realpaver/IntervalPropagator.cpp#L83-L145)).
+Hex's arbitrary-scope application and dependency index are the proof-producing
+counterpart, while its claims and exact fact deltas replace an unverified
+status code and floating-point width test.
+
+The following remain competing registered methods and policy actions:
+
+- HC4 performs one upward interval evaluation through a constraint expression
+  followed by backward projection to its leaves
+  ([interface](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/src/realpaver/ContractorHC4Revise.hpp#L29-L56),
+  [implementation](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/src/realpaver/FlatFunction.cpp#L807-L835)).
+  Hex can express this either as elementary head-local rules reaching a
+  worklist fixed point or as one composite contractor with an atomic box
+  reply.
+- BC4 first applies HC4 and then uses BC3 only for variables with multiple
+  occurrences in the constraint
+  ([source](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/src/realpaver/ContractorBC4Revise.hpp#L30-L67)).
+  Occurrence counts and repeated-node structure are therefore useful bounded
+  matcher outputs or policy features, not semantics embedded in the scheduler.
+- CID slices one variable, runs the complete underlying contractor on every
+  slice, discards inconsistent slices, and hulls every variable over the
+  survivors
+  ([source](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/src/realpaver/ContractorVarCID.cpp#L66-L99)).
+  Its Hex analogue is a local branch certificate inside `shave`, not a global
+  solver split.
+- ACID orders variable-level 3B/CID work using derivative influence and adapts
+  how many contractors it invokes across learning and exploitation phases
+  ([source](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/src/realpaver/ContractorACID.hpp#L30-L50)).
+  This is an explicit policy-state experiment below, never mutable
+  memoization hidden inside a callback.
+
+RealPaver's floating relative-width tolerances are scheduling heuristics, not
+logical closure criteria for Hex. Every accepted logical strengthening,
+including a strictness change at an unchanged endpoint, enters the fact state
+and wakes its declared dependencies. Exact bounded scores may still decide
+whether a small improvement justifies another expensive contractor call.
+
 Whether `ActionKind` is only a policy/provenance label or also constrains the
 constructors a callback may return remains open. The current experiment allows,
 for example, an instantiation suggestion from any successfully routed handler;
@@ -1469,6 +1581,24 @@ later affordable advice to survive. The exact plan accompanies the accepted
 reply into the policy observation. Dropping a retry or instantiation marks
 propagation incomplete, while dropping only split advice preserves
 fixed-point completeness.
+
+These outcome tags are control observations, never mathematical
+classifications. A contractor report may separately carry theorem-backed
+claims with their own role-specific payloads. The first required claims are:
+
+- `contradiction`: no valuation satisfies the exact program relation and
+  request facts in this scope; and
+- `inner`: every valuation in the exact current input box satisfies the
+  registered constraint or goal relation named by the application.
+
+A contradiction may alternatively be reconstructed from incompatible proved
+facts after ordinary intersection. `noChange` is not `inner`, `inapplicable`
+is not contradiction, and `resourceLimit` proves nothing about the box.
+RealPaver's additional `Feasible` classification motivates a possible future
+existence claim, but Hex accepts one only with an explicit replayed witness or
+existence certificate; a nonempty contracted box is not such a proof. Claims,
+fact candidates, and suggestions may share an atomic report, but each has
+independent payload coverage and resource accounting.
 
 The base `Program` is static after validation. Generic cheap alternates may be
 present before search, and `rewrite` only changes which form in the current
@@ -1499,6 +1629,23 @@ Shrinking an input does not require a rule to discard all earlier work. Cache
 reuse is a performance feature only. Every returned fact still receives a new
 or reused sound justification.
 
+Adaptive strategy state is separate from this memo cache. Learning that a
+contractor, variable, effort, or subdivision pattern has recently been useful
+may change which eligible action runs next; it must not silently change the
+candidate returned by an otherwise identical request. The first candidate
+places RealPaver-ACID-style learning and exploitation in `Policy.State`, using
+engine-owned observations of actual fact deltas and declared work. A more
+modular package-owned advisor remains an experiment, but any state which
+changes applicability or facts has an explicit version included in action
+freshness and an explicit wakeup rule.
+
+Strategy state also has declared branch ownership. A child either receives a
+documented persistent policy snapshot, starts from a documented reset state,
+or uses observations keyed by the complete semantic scope; it never inherits
+history accidentally through a shared cache. Its decisions use bounded exact
+features and are replayable as search choices, while proof replay remains
+independent of them.
+
 ## Propagation state
 
 Each live branch contains:
@@ -1526,12 +1673,46 @@ suppressed work, and peak live queue before selecting a default. Multi-output
 outcomes install every accepted fact before waking this union, so they do not
 manufacture stale work against their own half-installed state.
 
+Self-revisitation is explicit. Once an application is selected it is no longer
+marked queued; if its atomic reply strengthens a node that the same application
+reads, the ordinary dependency wakeup may enqueue it again. This is the safe
+default for one-step elementary propagation and for contractors such as a
+single HC4 revision which need not be idempotent. The scheduler never excludes
+the current application merely because it caused the change.
+
+A composite contractor may instead report that its output box is locally
+closed under a named method and effort. That report is bound to the exact
+post-reply facts and closure profile; it is not inferred from `ActionKind`,
+from absence of a large width reduction, or from `noChange`. Whether a checked
+local-closure certificate can safely suppress the immediate self-wakeup, or
+whether it should remain only a policy hint followed by one confirming call,
+is an experiment. An unverified hint may affect priority but cannot justify a
+saturation result.
+
 The initial `balancedV1` candidate runs all cheap forward rules once in program
 order and then drains the dependency worklist. It also runs zero-cost
 contradiction checks after every accepted fact. More expensive improvement and
 split actions start only after this cheap fixed point, unless a rule marks a
 singularity that requires an immediate split. This staging is policy behavior,
 not an engine soundness condition.
+
+Saturation is always relative to a named closure profile carried by the result.
+The first profiles to compare are:
+
+- `cheap`: equality transport and every enabled head-local forward/backward
+  application at its initial effort are quiescent;
+- `contractor`: `cheap` plus a named, versioned set of arbitrary-scope
+  contractor methods and effort levels is quiescent; and
+- `configured`: no invocation, equality, retry, instantiation, or other
+  narrowing action admitted by the run configuration remains live.
+
+These are statements about a finite registry and configuration, not
+mathematical completeness of interval reasoning. Optional global splits do not
+prevent propagation saturation in the current scope. A dropped, dismissed,
+failed, resource-limited, stale, or unprocessed action required by the selected
+profile yields `unknown` or a weaker recorded profile; an empty queue alone
+does not upgrade the claim. The exact profile encoding and whether arbitrary
+profiles are data or a small versioned enumeration remain open.
 
 Backward propagation uses the same worklist. A contractor is valid only when
 its soundness theorem says that it preserves every assignment satisfying the
@@ -1545,6 +1726,27 @@ does not close by contradiction, its intervals are reported only as
 counterexample-box diagnostics. A public best-bound theorem is replayed from
 pre-assumption facts or from a separate bound search, never by leaking a
 conditional fact into the parent scope.
+
+### Immediate contractor-granularity experiment
+
+The next framework experiment uses the same validated expression program,
+initial facts, fact domain, function-package theorems, and resource envelopes
+in two arms:
+
+1. compile elementary head-local forward and backward applications and drain
+   the incremental dependency worklist to the selected closure profile; and
+2. compile one arbitrary-scope HC4-style application per constraint, perform
+   an upward evaluation and backward projection inside the callback, and
+   return the resulting box as one atomic multi-output report.
+
+Both arms replay ordinary kernel proofs and are tested first on the named HC4
+and loop fixtures below. They compare final facts or a documented containment
+relation, contradictions and inner claims, callback invocations, fact meets,
+watcher visits, self-revisits, accepted deltas, frozen payload entries and
+bytes, backwards-sliced proof nodes, and checker work. Mixed and policy-selected
+hybrids remain possible outcomes. The experiment chooses contractor
+granularity; it neither selects nor depends on a rational working-endpoint
+representation.
 
 ## Search policy
 
@@ -2187,6 +2389,17 @@ structure FactId where
   scope : ScopeId
   index : Nat
 
+structure ClaimId where
+  scope : ScopeId
+  index : Nat
+
+structure ConstraintId where
+  index : Nat
+
+inductive ClaimKind
+  | contradiction
+  | inner (constraint : ConstraintId)
+
 inductive EqualityRef
   | edge   (edge : EqEdgeId)
   | source (source : SourceId)
@@ -2199,9 +2412,16 @@ inductive Derivation
   | splitAssumption (parent : ScopeId) (side : SplitSide)
       (node : NodeId) (cut : Dyadic)
 
+structure ClaimDerivation where
+  rule    : RuleKey
+  inputs  : Array FactId
+  kind    : ClaimKind
+  payload : PayloadId
+
 inductive Close
   | goal          (facts : Array FactId)
   | contradiction (lower upper : FactId)
+  | claim         (claim : ClaimId)
 
 inductive BranchTree
   | leaf  (scope : ScopeId) (close : Close)
@@ -2220,6 +2440,12 @@ and neither may refer to the other's facts. The left child receives the closed
 upper cut `node <= cut`; the right child receives the strict lower cut
 `cut < node`. The branch-tree validator checks these relationships, unique
 parentage, acyclicity, and that every leaf has a closing witness.
+
+Claim identifiers are scope-qualified in the same way and index a separate
+bounded claim-derivation table. Closing from one replays its exact rule,
+request facts, relation identity, and payload. A contradiction claim closes
+the scope; an inner claim closes only the exact registered constraint or goal
+relation named in that leaf. A control outcome never creates a `ClaimId`.
 
 `transportEq` preserves side, value, and strictness while moving a fact across
 a proved equality. Validation checks that the equality is visible in the
@@ -2297,6 +2523,10 @@ marked pixels are explicitly `unknown`. No finite algorithm can always decide
 intersection with every pixel boundary, so unresolved pixels are part of the
 honest interface rather than rendered as proved occupancy.
 
+An arbitrary-scope contractor may classify a whole tile or connected group of
+columns at once. An `inner` claim can discharge a universal region test, while
+a `present` pixel still requires the separate existence evidence above.
+
 Pixel rectangles use an exact, documented boundary convention, preferably
 half-open cells with a separately closed outer viewport. Open cuts matter:
 they decide whether a graph lying exactly on a pixel boundary belongs to one
@@ -2345,6 +2575,11 @@ existence, uniqueness when claimed, enclosure of the solution tube, and
 composition of consecutive steps. The interval engine contributes checked
 facts and replayable dependencies to those theorems; successful numerical
 search alone never asserts that a solution exists.
+
+This application is one reason arbitrary-scope contractors are part of the
+base framework: a Picard, Jacobian, invariant, or event contractor may update a
+coordinated time/state/parameter box atomically rather than masquerading as a
+unary scalar operation.
 
 This downstream use argues for keeping the present abstractions:
 
@@ -2417,6 +2652,61 @@ their declared cost inside a scheduler bound.
 
 The required Lean-only profile covers every interval shape and operation with
 typical, boundary, and adversarial inputs. In particular it includes:
+
+### Named contractor challenge fixtures
+
+The contractor-granularity experiment and later policy experiments use a
+stable named corpus translated from RealPaver's primary sources. RealPaver's
+binary floating-point intervals are not oracle values for Hex: the translations
+use exact endpoints, preserve Hex open/unbounded semantics, and prove their
+own expected facts.
+
+- `hc4-quadratic` translates `(x + y)^2 - 2*z + 2 = 0`. From
+  `x ∈ [-10,15]`, `y ∈ [-20,5]`, and `z ∈ [-10,11/2]`, the composite reference
+  revision returns exactly `x ∈ [-8,15]`, `y ∈ [-18,5]`,
+  `z ∈ [1,11/2]`; the elementary closure arm must establish at least those
+  bounds and may soundly be tighter under its named profile. With `x`
+  initially whole, the reference result is exactly `x ∈ [-8,23]`,
+  `y ∈ [-20,5]`, and `z ∈ [1,11/2]`. The `z ∈ [-10,0]` variant proves
+  contradiction. For `(x + y)^2 - 2*z + 2 ≥ 0` with `x ∈ [2,4]`,
+  `y ∈ [3,10]`, and `z ∈ [0,6]`, the result is a theorem-backed inner-box
+  claim, not merely `noChange`. These are the cases in RealPaver's
+  [`ctc_hc4_test.cpp`](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/test/ctc_hc4_test.cpp).
+- `hc4-loop` uses `x^2 - x = 0` from `x ∈ [0,10]`, whose hull-consistent
+  closure approaches the exact solution hull `[0,1]`. Coarse, medium, and fine
+  exact Hex profiles must respectively return sound enclosures no wider than
+  `[0,43/40]`, `[0,2019/2000]`, and `[0,5003/5000]`, matching or improving the
+  source test's documented outer targets without adopting its relative-width
+  stopping rule. The `x ∈ [3/2,10]` variant is not allowed to stop after an
+  inconclusive first revision: self-revisitation must eventually prove
+  contradiction under its configured exact closure profile. A coupled variant
+  uses `y = x^2` and `x^2 + y^2 = 2` from `x,y ∈ [0,10]` to test reactivation
+  between two arbitrary-scope contractors and increasingly tight enclosures
+  of the unique nonnegative solution `(1,1)`: its coarse exact target puts both
+  variables inside `[0,707107/500000]`, and its fine target puts both inside
+  `[99999999/100000000,1000000001/1000000000]`. RealPaver's tolerance ladder
+  supplies these challenge targets, not Hex's stopping rule
+  ([source](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/test/ctc_loop_test.cpp)).
+- `robot-2r` translates the inverse-kinematics system with
+  `q1,q2 ∈ [-π,π]`, link lengths `9/2` and `3`, and target
+  `(x,y) = (23/4,17/4)`. It tests sine and cosine packages, shared
+  `q1 + q2`, periodic backward projection, disconnected solution regions,
+  semantic split landmarks, and multi-solution branch coverage
+  ([source](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/examples/2r-robot.rp)).
+- `trigexp-10` translates the sparse ten-variable cubic, sine, and exponential
+  chain from RealPaver. It is primarily a dependency, arbitrary-scope
+  contractor, cache, and policy stress test: changing one variable should not
+  rescan unrelated graph structure
+  ([source](https://github.com/realpaver/realpaver/blob/f9d422354c67daf9fcc292ff599acbe8d66cceec/benchmarks/csp/Trigexp1-10.rp)).
+
+Hex-specific companions require `sin x = 0` on `(0,π)` to prove
+contradiction, while the same equation on `[0,π]` must preserve its endpoint
+solutions. The equation `x⁻¹ = 0` at `x = 0` must remain satisfiable under
+Lean's total inverse. These cases prevent a contractor translated from a
+conventional numeric library from erasing strict endpoints or silently
+replacing Lean's total inverse with a partial reciprocal.
+
+### General conformance matrix
 
 - all four finite endpoint closure combinations;
 - equal endpoints in all closure combinations;
@@ -2567,9 +2857,10 @@ The Mathlib-free benchmark target measures:
 - bounded-instantiation saturation over useful, duplicate, and deliberately
   explosive trigger families, recording generated nodes, equality edges,
   suppressed instances, and proof-slice retention;
-- HC4-style propagation and local-shaving traces over translated small
-  RealPaver-shaped dependency graphs, without importing their floating-point
-  semantics;
+- the elementary-worklist and composite-HC4 arms over `hc4-quadratic`,
+  `hc4-loop`, and the coupled system, followed by local-shaving traces and the
+  larger `robot-2r` and `trigexp-10` dependency graphs, without importing
+  RealPaver's floating-point semantics or stopping tolerances;
 - branch creation and isolated updates for `Array` copy-on-write, persistent
   paged-trie, chunked-vector, and trail/rollback candidates, crossing program
   sizes 20, 50, and 500 with 8, 100, and 1,000 leaves;
@@ -2618,6 +2909,10 @@ local test profile. They do not enter this Mathlib-free benchmark target.
   [Arb: efficient arbitrary-precision midpoint-radius interval arithmetic](https://arxiv.org/abs/1611.02831).
 - Oliver Flatt and Pavel Panchekha,
   [An interval arithmetic for robust error estimation](https://arxiv.org/abs/2107.05784).
+- Raphaël Chenouard and Laurent Granvilliers,
+  [RealPaver 1.1](https://joss.theoj.org/papers/10.21105/joss.09331),
+  with the [versioned source](https://github.com/realpaver/realpaver/tree/f9d422354c67daf9fcc292ff599acbe8d66cceec)
+  used for contractor and challenge-fixture references above.
 - [IBEX contractor documentation](https://ibex-team.github.io/ibex-lib/contractor.html)
   and [strategy documentation](https://ibex-team.github.io/ibex-lib/strategy.html).
 - [IntervalArithmetic.jl construction and exact input guidance](https://juliaintervals.github.io/IntervalArithmetic.jl/stable/manual/construction/).
