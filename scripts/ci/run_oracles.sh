@@ -2,7 +2,7 @@
 # Sequential oracle runner used by `.github/workflows/ci.yml`.
 #
 # Replaces the per-oracle matrix that previously fanned out into 11
-# ubuntu jobs. All oracle dependencies (FLINT, PARI, Conway
+# ubuntu jobs. All oracle dependencies (FLINT, PARI, SymPy, Conway
 # tables) are installed once at the top of the workflow; this script
 # loops over every (lib, emit, oracle, fixture) tuple, cross-checks
 # the committed fixture against fresh emission, and pipes the
@@ -20,7 +20,7 @@ set -uo pipefail
 
 # Local development may intentionally run only the installed comparators, but
 # release CI must never turn a missing oracle dependency into a green `SKIP`.
-# Preflight the three dependency families before emitting any fixtures so a
+# Preflight the required oracle dependency families before emitting any fixtures so a
 # broken installation fails early and unambiguously.
 if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
   if ! python3 - <<'PY'
