@@ -596,18 +596,51 @@ Anchor-local inspection adds no wakeup beyond the declared fact slots; a rule
 which reads the whole view declares `watchesProgram`, making program extension
 an explicit dependency.
 
-The transparent structural-cursor experiment is a reference model for bounded
-whole-network matching, not yet an authority boundary. It enumerates the
-append-only node, equality, and concrete-application identifier spaces in that
-fixed order. Each epoch freezes its three size ceilings; growth cannot move the
-unseen suffix, and renewal after exhaustion exposes exactly the appended
-delta. A batch consumes the minimum of its yield quantum, the epoch remainder,
-and the remaining cumulative visit budget, so a final partial allowance is not
-stranded. The engine wrapper derives creation generations from live arenas,
-but the public cursor and step constructors remain forgeable until scheduler
-integration hides them. Production must keep one cursor per concrete matcher
-application, commit cursor progress only with an accepted reply, and derive
-exhaustion itself rather than accepting a package completion claim.
+The transparent structural-cursor module is the reference semantics for
+bounded whole-network matching. It enumerates the append-only node, equality,
+and concrete-application identifier spaces in that fixed order. Each epoch
+freezes its three size ceilings; growth cannot move the unseen suffix, and
+renewal after exhaustion exposes exactly the appended delta. A batch consumes
+the minimum of its yield quantum, the epoch remainder, and the remaining
+cumulative visit budget, so a final partial allowance is not stranded.
+
+Live ownership is stricter than the transparent model. A whole-network matcher
+uses one `global` application per registration, anchored at the first node
+whose operation has the declared head. Later nodes with that head do not
+compile duplicate global scans. The engine stores its cursor in an array
+aligned with concrete applications and keeps a prepared next cursor outside
+the registry request. The package receives only the exact bounded list of
+structural identifiers and engine-owned creation generations. It supplies no
+cursor and no completion claim. A valid reply commits the prepared cursor and
+the exact cursor-delta visit charge; a retained retry which replays an already
+committed batch has zero cursor delta and does not pay for those visits again.
+Cursor progress is monotone within an authenticated epoch; backwards or
+cross-epoch progress is rejected. A mismatched or malformed reply commits
+nothing. An unexhausted epoch requeues the same application. If append-only
+growth occurs while that application is already queued, exhausting its old
+frozen ceiling still requeues it when the live view is larger; queue
+suppression therefore cannot lose the appended delta. Renewal exposes only
+that delta.
+
+The FIFO and replaceable-policy schedulers use the same matcher preparation.
+Policy invocation keys include the batch and epoch. Exhausted matcher-visit
+capacity remains a visible blocked offer whose selection reports the exact
+engine resource; it cannot disappear and manufacture a false fixed point.
+Policy traversal charges the configured batch bound before constructing live
+invocation keys, and charges the exact retained structural-input list as part
+of a suggestion key. The present implementation conservatively treats every
+item in an issued batch as a causal input for theorem-instantiation generation.
+A future engine-compiled matcher may return a smaller engine-validated match
+certificate, but an external package may not under-report causal reads merely
+to evade generation limits.
+
+The experimental `Engine` record and transparent cursor constructors remain
+public for mutation and representation comparisons. Production obtains the
+authority boundary by hiding the engine constructor, not by claiming that the
+reference cursor type itself is unforgeable. Selective operation-key indexes,
+compiled patterns, and richer equality/application projections remain
+compatible replacements for the reference enumerator; they must preserve its
+batch, generation, replay, resource, and completion semantics.
 
 `ProgramView.programVersion` equals the engine-owned version in the action for
 that invocation. An append-only extension creates subsequent requests with
@@ -723,6 +756,7 @@ The authoritative recurrence for a retained instantiation is
 1 + max (
   the emitting application's action-creation generation,
   generations of every node in the action substitution,
+  generations of every engine-issued structural matcher input,
   generations of every `.existing` reference in node drafts,
   generations of every `.existing` equality endpoint,
   generations of every `.existing` scope anchor, watch, or write
@@ -730,11 +764,14 @@ The authoritative recurrence for a retained instantiation is
 ```
 
 The action substitution is the action anchor followed by its declared fact
-inputs, with duplicate node identifiers removed. Proposed references are
-outputs of this theorem instance, even when CSE reuses already materialized
-storage for them; storage reuse cannot manufacture a proof dependency. Thus
-the same append-stable proposal has the same logical generation before and
-after an unrelated CSE-producing extension.
+inputs, with duplicate node identifiers removed. In the reference matcher
+every member of the bounded issued batch is conservative causal evidence,
+including equality and concrete-application identifiers whose creation
+generation is not otherwise a node reference. Proposed references are outputs
+of this theorem instance, even when CSE reuses already materialized storage
+for them; storage reuse cannot manufacture a proof dependency. Thus the same
+append-stable proposal has the same logical generation before and after an
+unrelated CSE-producing extension.
 
 A successful equality-only or scope-only instantiation still consumes this
 generation: its instance-history event records it, each newly admitted
@@ -1087,15 +1124,17 @@ registry request exposes exactly the declared read facts and write targets. It
 provides no unrestricted fact getter: a hidden fact read would be absent from
 the dependency index and could miss a required wakeup.
 
-A registration whose matcher depends on the whole `ProgramView` sets
-`watchesProgram`. Every append-only extension then stales its old action and
-requeues all existing applications of that registration. This coarse trigger
-is the first grind-like instantiation mechanism: a matcher that was previously
-inapplicable can observe expressions introduced by another package. Ordinary
-anchor-local registrations remain append-stable; they do not acquire a global
-dependency merely because engine-owned admission may CSE one of their outputs.
-Compiled structural patterns or more selective operation-key triggers remain
-alternatives to compare once the behavior is established.
+A registration whose matcher depends on the whole `ProgramView` uses the
+`global` binding, the `network` structural watch, and `watchesProgram`. Every
+append-only extension then stales its old action and requeues that
+registration's single global application. This coarse trigger is the first
+grind-like instantiation mechanism: a matcher that was previously inapplicable
+can observe expressions introduced by another package without compiling one
+whole-network scan per matching expression. Ordinary anchor-local and scoped
+registrations remain append-stable; they do not acquire a global dependency
+merely because engine-owned admission may CSE one of their outputs. Compiled
+structural patterns or more selective operation-key triggers remain
+alternatives to compare against the same reference stream.
 
 1. The solver produces an `Action` naming a program snapshot, concrete rule
    application, anchor, declared input fact versions, effort, and action kind.
@@ -1481,6 +1520,10 @@ for new applications and equality jobs atomically with the extension.
 A selected retry prepares a fresh action carrying the bounded effort override;
 it does not mutate the compiled application's registration baseline, so later
 append-only program validation still compares an immutable application prefix.
+When its source was a structural matcher, the retry replays the source batch
+and epoch but carries the current engine-owned cursor unchanged. Admission
+therefore authenticates the epoch while charging only new cursor movement,
+which is normally zero for a replay.
 
 Each completed rule selection produces an engine-owned observation containing
 the outcome class, actual admitted fact deltas, contradiction status, emitted

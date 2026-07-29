@@ -508,8 +508,8 @@ def grownEngineInputs : Array Input :=
 -- This uses an actual checked engine extension, not a fabricated size view.
 -- The reference cursor keeps its old ceiling during admission, then renewal
 -- exposes exactly the nodes, equality, and applications admitted atomically.
--- Cursor storage is not yet wired into `Engine.poll`; that scheduler boundary
--- remains the next experiment.
+-- The scheduler now stores the same cursor semantics in `Engine.poll`; this
+-- lower-level canary remains an independent check of its structural stream.
 #guard
   match initialEngineCursor?, admitted? with
   | some cursor, some (_, state) =>

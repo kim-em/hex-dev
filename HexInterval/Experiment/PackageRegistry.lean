@@ -243,7 +243,8 @@ def same (left right : Registration) : Bool :=
   left.key == right.key && left.head == right.head && left.kind == right.kind &&
     left.watches == right.watches && left.writes == right.writes &&
       left.binding == right.binding && left.watchesProgram == right.watchesProgram &&
-        left.initialEffort == right.initialEffort
+        left.matchWatch == right.matchWatch &&
+          left.initialEffort == right.initialEffort
 
 /-- Check that a routed handler sees the structural request projection
 described by its immutable registration.  Engine-produced requests satisfy
@@ -267,7 +268,14 @@ def accepts (registration : Registration) (request : RuleRequest Fact) : Bool :=
         let common := registration.key == request.action.key &&
           registration.kind == request.action.kind &&
           request.program.operationKey? request.action.node == some registration.head &&
-          request.action.inputs == seen
+          request.action.inputs == seen &&
+          match registration.matchWatch with
+          | .none =>
+              request.action.structuralInputs.isEmpty &&
+                request.action.matcherEpoch.isNone
+          | .network =>
+              !request.action.structuralInputs.isEmpty &&
+                request.action.matcherEpoch.isSome
         common && match registration.binding with
           | .local =>
               resolveSlots? request.action.node anchor registration.watches == some inputNodes &&
@@ -278,6 +286,9 @@ def accepts (registration : Registration) (request : RuleRequest Fact) : Bool :=
                 uniqueList inputNodes && uniqueList request.writes &&
                 inputNodes.all (fun node => (request.program.node? node).isSome) &&
                 request.writes.all (fun node => (request.program.node? node).isSome)
+          | .global =>
+              registration.watches.isEmpty && registration.writes.isEmpty &&
+                inputNodes.isEmpty && request.writes.isEmpty
 
 end Registration
 
@@ -340,7 +351,7 @@ def invoke (registry : Registry Fact) (request : RuleRequest Fact) :
                         nodes := request.program.nodes }
                     let scopeAccepted :=
                       match registration.binding with
-                      | .local => true
+                      | .local | .global => true
                       | .scoped =>
                           registry.acceptsBinding program
                             { rule := request.action.key
