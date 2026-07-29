@@ -57,6 +57,26 @@ end ExactDivLaws
 
 variable {R : Type u}
 
+/-- A nonzero element witnesses that a lightweight ring is nontrivial. -/
+theorem one_ne_zero_of_nonzero {S : Type u} [Lean.Grind.CommRing S]
+    {a : S} (ha : a ≠ 0) : (1 : S) ≠ 0 := by
+  intro hone
+  apply ha
+  calc
+    a = a * 1 := (Lean.Grind.Semiring.mul_one _).symm
+    _ = a * 0 := by rw [hone]
+    _ = 0 := Lean.Grind.Semiring.mul_zero _
+
+/-- The additive inverse of one is nonzero in a nontrivial lightweight ring. -/
+theorem negOne_ne_zero_of_one {S : Type u} [Lean.Grind.CommRing S]
+    (h1 : (1 : S) ≠ 0) : (0 - 1 : S) ≠ 0 := by
+  intro hzero
+  apply h1
+  calc
+    1 = 0 - (0 - (1 : S)) := by grind
+    _ = 0 - 0 := by rw [hzero]
+    _ = 0 := by grind
+
 /-- Total exact quotient wrapper. The zero denominator is a documented junk
 input and returns zero. -/
 @[expose]
@@ -96,8 +116,20 @@ def powNat [One R] [Mul R] (x : R) (n : Nat) : R :=
 termination_by n
 decreasing_by omega
 
+/-- Powers distribute over multiplication in a lightweight commutative ring. -/
+theorem mul_pow {S : Type u} [Lean.Grind.CommRing S]
+    (a b : S) : ∀ n : Nat, (a * b) ^ n = a ^ n * b ^ n
+  | 0 => by
+      rw [Lean.Grind.Semiring.pow_zero, Lean.Grind.Semiring.pow_zero,
+        Lean.Grind.Semiring.pow_zero]
+      exact (Lean.Grind.Semiring.mul_one 1).symm
+  | n + 1 => by
+      rw [Lean.Grind.Semiring.pow_succ, Lean.Grind.Semiring.pow_succ,
+        Lean.Grind.Semiring.pow_succ, mul_pow a b n]
+      grind
+
 /-- Raising a power to another power multiplies the two exponents. -/
-private theorem pow_mul {S : Type u} [Lean.Grind.Semiring S]
+theorem pow_mul {S : Type u} [Lean.Grind.Semiring S]
     (x : S) (m n : Nat) : x ^ (m * n) = (x ^ m) ^ n := by
   symm
   induction n with
@@ -106,6 +138,17 @@ private theorem pow_mul {S : Type u} [Lean.Grind.Semiring S]
       rw [Lean.Grind.Semiring.pow_succ, ih,
         ← Lean.Grind.Semiring.pow_add]
       congr 1
+
+/-- Natural powers of a nonzero element stay nonzero in every nontrivial
+exact-division ring. -/
+theorem pow_ne_zero {S : Type u} [Lean.Grind.CommRing S] [Div S]
+    [ExactDivLaws S] (h1 : (1 : S) ≠ 0) {a : S} (ha : a ≠ 0) :
+    ∀ n : Nat, a ^ n ≠ 0
+  | 0 => by
+      simpa only [Lean.Grind.Semiring.pow_zero] using h1
+  | n + 1 => by
+      rw [Lean.Grind.Semiring.pow_succ]
+      exact ExactDivLaws.mul_ne_zero (pow_ne_zero h1 ha n) ha
 
 /-- The executable binary power agrees with the lightweight semiring power. -/
 theorem powNat_eq_pow {S : Type u} [Lean.Grind.Semiring S]
@@ -130,6 +173,13 @@ theorem powNat_eq_pow {S : Type u} [Lean.Grind.Semiring S]
           congr 1
           have hmod := Nat.mod_lt n (by decide : 0 < 2)
           omega
+
+/-- The executable natural power of a nonzero element stays nonzero. -/
+theorem powNat_ne_zero {S : Type u} [Lean.Grind.CommRing S] [Div S]
+    [ExactDivLaws S] (h1 : (1 : S) ≠ 0) {a : S} (ha : a ≠ 0) (n : Nat) :
+    powNat a n ≠ 0 := by
+  rw [powNat_eq_pow]
+  exact pow_ne_zero h1 ha n
 
 /-- Brown's scalar update `x^n / y^(n-1)`, with the same total zero behavior
 as `exactDiv`. -/
@@ -158,6 +208,15 @@ theorem size_scale [Lean.Grind.CommRing R] [DecidableEq R] [Div R]
   apply Nat.le_of_not_gt
   intro hlt
   exact hcoeff (coeff_eq_zero_of_size_le (scale a p) (by omega))
+
+/-- Scaling a nonzero polynomial by a nonzero coefficient remains nonzero. -/
+theorem scale_ne_zero [Lean.Grind.CommRing R] [DecidableEq R] [Div R]
+    [ExactDivLaws R] {a : R} (ha : a ≠ 0) {p : DensePoly R} (hp : p ≠ 0) :
+    scale a p ≠ 0 := by
+  intro hzero
+  have hsize := congrArg DensePoly.size hzero
+  rw [size_scale ha, size_zero] at hsize
+  exact hp ((size_eq_zero_iff p).mp hsize)
 
 /-- The leading coefficient scales with a nonzero coefficient scalar. -/
 theorem leadingCoeff_scale [Lean.Grind.CommRing R] [DecidableEq R] [Div R]
@@ -250,6 +309,13 @@ theorem divScalar_scale [Lean.Grind.CommRing R] [DecidableEq R] [Div R]
   rw [coeff_divScalar _ hb, coeff_scale_semiring,
     Lean.Grind.CommSemiring.mul_comm]
   exact ExactDivLaws.mul_div_cancel_right (p.coeff n) b hb
+
+/-- Scaling by a nonzero coefficient is cancellable. -/
+theorem scale_cancel [Lean.Grind.CommRing R] [DecidableEq R] [Div R]
+    [ExactDivLaws R] {b : R} (hb : b ≠ 0) {p q : DensePoly R}
+    (h : scale b p = scale b q) : p = q := by
+  have hdiv := congrArg (fun r : DensePoly R => divScalar r b) h
+  simpa only [divScalar_scale _ hb] using hdiv
 
 end DensePoly
 

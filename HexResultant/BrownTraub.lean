@@ -641,6 +641,115 @@ private theorem coeffMinorAt_unitRight {R : Type u}
   rw [hentry, SubresultantMinor.det_zero]
   grind
 
+/-- When the right formal degree is one below the left and the subresultant
+index equals it, the one-entry coefficient minor selects the right input. -/
+theorem coeffMinorAt_leftSucc {R : Type u}
+    [Lean.Grind.CommRing R] [DecidableEq R]
+    (dh l : Nat) (g h : DensePoly R) :
+    coeffMinorAt (dh + 1) dh dh l g h = h.coeff l := by
+  rw [coeffMinorAt_swap]
+  simp only [Nat.sub_self, Nat.mul_zero, SubresultantMinor.sign]
+  rw [if_pos (by decide), Lean.Grind.Semiring.one_mul,
+    coeffMinorAt_rightDegree_ignore, coeffMinorAt_unitRight]
+
+/-- The subresultant immediately below the divisor degree is the signed
+pseudo-remainder. This includes defective remainders: no exact degree is
+assumed for the remainder. -/
+theorem poly_prem {R : Type u}
+    [Lean.Grind.CommRing R] [DecidableEq R] [Div R] [ExactDivLaws R]
+    (f g : DensePoly R) (hgsize : 2 ≤ g.size) (hgf : g.size ≤ f.size) :
+    poly (g.size - 2) f g =
+      scale
+        (SubresultantMinor.sign (R := R) (f.size - g.size + 1))
+        (pseudoDivMod f g).2 := by
+  let df := f.size - 1
+  let dg := g.size - 1
+  let db := f.size - g.size
+  let J := g.size - 2
+  let a := g.leadingCoeff ^ (db + 1)
+  let q := (pseudoDivMod f g).1
+  let r := (pseudoDivMod f g).2
+  let b := scale (0 - 1) q
+  have hg : g ≠ 0 := by
+    intro hzero
+    subst g
+    simp at hgsize
+  have hglc : g.leadingCoeff ≠ 0 :=
+    leadingCoeff_ne_zero_of_pos_size g (by omega)
+  have h1 : (1 : R) ≠ 0 := one_ne_zero_of_nonzero hglc
+  have hneg : (0 - 1 : R) ≠ 0 := negOne_ne_zero_of_one h1
+  have ha : a ≠ 0 := pow_ne_zero h1 hglc (db + 1)
+  have hqsize : q.size ≤ db + 1 := by
+    simpa only [q, db] using pseudoDivMod_quotient_size_le f g
+  have hbsize : b.size ≤ db + 1 := by
+    rw [size_scale hneg]
+    exact hqsize
+  have hrsize : r.size ≤ J + 1 := by
+    have hrlt : r.size < g.size := by
+      simpa only [r] using pseudoDivMod_remainder_lt f g hg
+    dsimp only [J]
+    omega
+  have hrec : scale a f = q * g + r := by
+    simpa only [a, db, q, r] using pseudoDivMod_reconstruct f g hg hgf
+  have hbneg : b = -q := by
+    apply ext_coeff
+    intro i
+    simp only [b, coeff_scale_semiring, coeff_neg_ring]
+    grind
+  have hr : r = scale a f + b * g := by
+    rw [hbneg]
+    grind
+  have hdf : df = db + dg := by
+    dsimp only [df, db, dg]
+    omega
+  have hfg : g.size = dg + 1 := by
+    dsimp only [dg]
+    omega
+  have hff : formalDegree f = df := by
+    simp [formalDegree, df]
+  have hgg : formalDegree g = dg := by
+    simp [formalDegree, dg]
+  apply ext_coeff
+  intro l
+  rw [coeff_scale_semiring]
+  simp only [coeff_poly]
+  by_cases hl : l < J + 1
+  · rw [if_pos hl]
+    unfold coeffMinor
+    rw [hff, hgg]
+    have hscale := coeffMinorAt_scale_left df dg J l a f g
+    have hadd := coeffMinorAt_addMul df dg db J l (scale a f) g b r
+      (by dsimp only [dg, J]; omega) hdf hbsize hr
+    have hraise := coeffMinorAt_raiseRight dg J J l (df - J) g r
+      (by dsimp only [dg, J]; omega) (Nat.le_refl _) hfg hrsize
+    rw [show J + (df - J) = df by dsimp only [df, J]; omega] at hraise
+    have hedge : coeffMinorAt dg J J l g r = r.coeff l := by
+      rw [show dg = J + 1 by dsimp only [dg, J]; omega]
+      exact coeffMinorAt_leftSucc J l g r
+    rw [hadd, hraise, hedge] at hscale
+    have hdfJ : df - J = db + 1 := by
+      dsimp only [df, J, db]
+      omega
+    have hdgJ : dg - J = 1 := by
+      dsimp only [dg, J]
+      omega
+    have hpow : g.leadingCoeff ^ (df - J) = a := by
+      rw [hdfJ]
+    have hunit : a ^ (dg - J) = a := by
+      rw [hdgJ, Lean.Grind.Semiring.pow_one]
+    have hsign :
+        SubresultantMinor.sign (R := R) ((df - J) * (dg - J)) =
+          SubresultantMinor.sign (db + 1) := by
+      rw [hdfJ, hdgJ, Nat.mul_one]
+    rw [hpow, hunit, hsign] at hscale
+    apply ExactDivLaws.mul_right_cancel ha
+    grind
+  · rw [if_neg hl]
+    have hrzero : r.coeff l = 0 :=
+      coeff_eq_zero_of_size_le r (by omega)
+    rw [hrzero, Lean.Grind.Semiring.mul_zero]
+    rfl
+
 /-- The subresultant at the right input's degree is that input multiplied by
 the expected power of its leading coefficient. -/
 theorem coeffMinorAt_rightDegree {R : Type u}
@@ -739,6 +848,97 @@ theorem poly_brownTraub {R : Type u}
         g.leadingCoeff ^ (df - dh)) * (0 : R)
     rw [Lean.Grind.Semiring.mul_zero]
 
+/-- Transport a generalized subresultant family across one scaled
+pseudo-remainder step. The identity stays cross-multiplied, so every scalar
+remains in the base ring even across defective degree drops. -/
+theorem poly_descent {R : Type u}
+    [Lean.Grind.CommRing R] [DecidableEq R] [Div R] [ExactDivLaws R]
+    (f g h : DensePoly R) {c : R} (hc : c ≠ 0)
+    (hg : g ≠ 0) (hh : h ≠ 0) (hgf : g.size ≤ f.size)
+    (hp : (pseudoDivMod f g).2 = scale c h)
+    (J : Nat) (hJ : J < h.size) :
+    scale
+        (g.leadingCoeff ^
+          ((f.size - g.size + 1) * (g.size - 1 - J)))
+        (poly J f g) =
+      scale
+        (SubresultantMinor.sign (R := R)
+            ((f.size - 1 - J) * (g.size - 1 - J)) *
+          g.leadingCoeff ^ (f.size - h.size) *
+          c ^ (g.size - 1 - J))
+        (poly J g h) := by
+  let df := f.size - 1
+  let dg := g.size - 1
+  let db := f.size - g.size
+  let dh := h.size - 1
+  let a := g.leadingCoeff ^ (db + 1)
+  let q := (pseudoDivMod f g).1
+  let b := scale (0 - 1) q
+  have hgpos : 0 < g.size := Nat.pos_of_ne_zero fun hzero =>
+    hg ((size_eq_zero_iff g).mp hzero)
+  have hhpos : 0 < h.size := Nat.pos_of_ne_zero fun hzero =>
+    hh ((size_eq_zero_iff h).mp hzero)
+  have hglc : g.leadingCoeff ≠ 0 :=
+    leadingCoeff_ne_zero_of_pos_size g hgpos
+  have h1 : (1 : R) ≠ 0 := one_ne_zero_of_nonzero hglc
+  have hneg : (0 - 1 : R) ≠ 0 := negOne_ne_zero_of_one h1
+  have ha : a ≠ 0 := pow_ne_zero h1 hglc (db + 1)
+  have hbsize : b.size ≤ db + 1 := by
+    rw [size_scale hneg]
+    simpa only [q, db] using pseudoDivMod_quotient_size_le f g
+  have hrec := pseudoDivMod_reconstruct f g hg hgf
+  have hbneg : b = -q := by
+    apply ext_coeff
+    intro i
+    simp only [b, coeff_scale_semiring, coeff_neg_ring]
+    grind
+  have hrem : scale c h = scale a f + b * g := by
+    rw [hbneg, ← hp]
+    simpa only [a, db, q] using (show
+      (pseudoDivMod f g).2 =
+        scale (g.leadingCoeff ^ (f.size - g.size + 1)) f +
+          -(pseudoDivMod f g).1 * g by
+      grind)
+  have hdf : df = db + dg := by
+    dsimp only [df, db, dg]
+    omega
+  have hdhg : dh < dg := by
+    have hremSize : (pseudoDivMod f g).2.size < g.size :=
+      pseudoDivMod_remainder_lt f g hg
+    rw [hp, size_scale hc] at hremSize
+    dsimp only [dh, dg]
+    omega
+  have hJh : J ≤ dh := by
+    dsimp only [dh]
+    omega
+  have hfsize : (scale a f).size = df + 1 := by
+    rw [size_scale ha]
+    dsimp only [df]
+    omega
+  have hgsize : g.size = dg + 1 := by
+    dsimp only [dg]
+    omega
+  have hhsize : (scale c h).size = dh + 1 := by
+    rw [size_scale hc]
+    dsimp only [dh]
+    omega
+  have hBT := poly_brownTraub df dg db dh J (scale a f) g b (scale c h)
+    hJh hdhg hdf hfsize hgsize hbsize hhsize hrem
+  have hleft := poly_scale_left ha J f g
+  have hright := poly_scale_right hc J g h
+  have hfgdeg : formalDegree g = dg := by simp [formalDegree, dg]
+  rw [hleft, hright, scale_scale] at hBT
+  rw [hfgdeg] at hBT
+  have haPow : a ^ (dg - J) =
+      g.leadingCoeff ^ ((db + 1) * (dg - J)) := by
+    exact (pow_mul g.leadingCoeff (db + 1) (dg - J)).symm
+  rw [haPow] at hBT
+  have hdiff : df - dh = f.size - h.size := by
+    dsimp only [df, dh]
+    omega
+  rw [hdiff] at hBT
+  simpa only [df, dg, db, dh, Nat.add_comm] using hBT
+
 /-- Endpoint form of Brown--Traub equation (12), including both leading
 coefficient powers. -/
 theorem poly_brownTraub_rightDegree {R : Type u}
@@ -769,25 +969,9 @@ theorem divScalar_brownTraub {R : Type u}
     divScalar (poly dh f g)
         (SubresultantMinor.sign (R := R) ((df - dh) * (dg - dh)) *
           g.leadingCoeff ^ (df - dh) * h.leadingCoeff ^ (dg - dh - 1)) = h := by
-  have hpow (a : R) (ha : a ≠ 0) : ∀ n : Nat, a ^ n ≠ 0 := by
-    intro n
-    induction n with
-    | zero =>
-        simpa only [Lean.Grind.Semiring.pow_zero] using h1
-    | succ n ih =>
-        rw [Lean.Grind.Semiring.pow_succ]
-        exact ExactDivLaws.mul_ne_zero ih ha
   have hsign :
-      SubresultantMinor.sign (R := R) ((df - dh) * (dg - dh)) ≠ 0 := by
-    unfold SubresultantMinor.sign
-    split
-    · exact h1
-    · intro hzero
-      apply h1
-      calc
-        1 = 0 - (0 - (1 : R)) := by grind
-        _ = 0 - 0 := by rw [hzero]
-        _ = 0 := by grind
+      SubresultantMinor.sign (R := R) ((df - dh) * (dg - dh)) ≠ 0 :=
+    SubresultantMinor.sign_ne_zero h1 _
   have hglc : g.leadingCoeff ≠ 0 :=
     leadingCoeff_ne_zero_of_pos_size g (by omega)
   have hhlc : h.leadingCoeff ≠ 0 :=
@@ -795,7 +979,8 @@ theorem divScalar_brownTraub {R : Type u}
   have hc : SubresultantMinor.sign (R := R) ((df - dh) * (dg - dh)) *
       g.leadingCoeff ^ (df - dh) * h.leadingCoeff ^ (dg - dh - 1) ≠ 0 :=
     ExactDivLaws.mul_ne_zero
-      (ExactDivLaws.mul_ne_zero hsign (hpow _ hglc _)) (hpow _ hhlc _)
+      (ExactDivLaws.mul_ne_zero hsign (pow_ne_zero h1 hglc _))
+      (pow_ne_zero h1 hhlc _)
   rw [poly_brownTraub_rightDegree df dg db dh f g b h hdh hdeg hf hg hb
     hhsize hh]
   exact divScalar_scale h hc

@@ -6,8 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexResultant.ExactDiv
-public import HexResultant.PseudoDivMod
+public import HexResultant.BrownTraub
 public meta import HexResultant.ExactDiv
 public meta import HexPoly.Dense
 public meta import HexPoly.Euclid.DivGcd
@@ -49,6 +48,19 @@ variable {R : Type u} [Zero R] [DecidableEq R]
 def negOnePow [One R] [Sub R] (n : Nat) : R :=
   if n % 2 = 0 then 1 else 0 - 1
 
+omit [Zero R] [DecidableEq R] in
+/-- The executable Brown sign is the local determinant's alternating sign. -/
+theorem negOnePow_eq_sign {S : Type u} [Zero S] [One S] [Sub S] (n : Nat) :
+    negOnePow (R := S) n = SubresultantMinor.sign (R := S) n := by
+  rfl
+
+omit [Zero R] [DecidableEq R] in
+/-- Brown signs are nonzero in every nontrivial commutative ring. -/
+theorem negOnePow_ne_zero {S : Type u} [Lean.Grind.CommRing S]
+    (h1 : (1 : S) ≠ 0) (n : Nat) : negOnePow (R := S) n ≠ 0 := by
+  rw [negOnePow_eq_sign]
+  exact SubresultantMinor.sign_ne_zero h1 n
+
 /-- The exactness and nonzero obligations for every reachable Brown worker
 state. A valid state must terminate naturally before its fuel reaches zero;
 the adjacent polynomials have strictly decreasing size, the current and
@@ -74,6 +86,518 @@ def BrownLaw [One R] [Add R] [Sub R] [Mul R] [Div R]
           let next := divScalar p divisor
           divisor ≠ 0 ∧ p = scale divisor next ∧ next ≠ 0 ∧
             BrownLaw curr next hCurr fuel
+
+/-- Integral subresultant-family invariant for one recursive Brown state. It
+keeps all accumulated factors cross-multiplied in the coefficient ring. -/
+private def BrownInv [Lean.Grind.CommRing R] [DecidableEq R]
+    (f g prev curr : DensePoly R) (hPrev : R) : Prop :=
+  prev ≠ 0 ∧ curr ≠ 0 ∧ curr.size < prev.size ∧ hPrev ≠ 0 ∧
+    ∀ J, J < curr.size →
+      Subresultant.poly J prev curr =
+        scale
+          (prev.leadingCoeff ^ (curr.size - 1 - J) *
+            hPrev ^ (prev.size - 2 - J))
+          (Subresultant.poly J f g)
+
+/-- The block-swap sign cancels the repeated signed-pseudo-remainder factor
+at every index below the divisor degree. -/
+private theorem sign_prem_cancel {S : Type u} [Lean.Grind.CommRing S]
+    (m n J : Nat) (hnm : n ≤ m) (hJ : J < n) :
+    SubresultantMinor.sign (R := S) ((m - 1 - J) * (n - 1 - J)) *
+        SubresultantMinor.sign (R := S) (m - n + 1) ^ (n - 1 - J) = 1 := by
+  let t := n - 1 - J
+  let delta := m - n
+  have hmJ : m - 1 - J = t + delta := by
+    dsimp only [t, delta]
+    omega
+  rw [hmJ]
+  rw [← SubresultantMinor.sign_mul (R := S) (delta + 1) t,
+    ← SubresultantMinor.sign_add]
+  have hexp :
+      (t + delta) * t + (delta + 1) * t =
+        (t + delta + (delta + 1)) * t := by
+    simp only [Nat.add_mul]
+  rw [hexp]
+  have hmod : ((t + delta + (delta + 1)) * t) % 2 = 0 := by
+    by_cases ht : t % 2 = 0
+    · rw [Nat.mul_mod, ht]
+      omega
+    · have ht1 : t % 2 = 1 := by
+        have := Nat.mod_lt t (by decide : 0 < 2)
+        omega
+      have hu : (t + delta + (delta + 1)) % 2 = 0 := by
+        omega
+      rw [Nat.mul_mod, hu]
+      omega
+  unfold SubresultantMinor.sign
+  rw [if_pos hmod]
+
+/-- The invariant identifies the next Brown scale with the leading principal
+coefficient of the original-pair subresultant and proves its exact quotient
+law inside the base ring. -/
+private theorem BrownInv.nextScale {S : Type u}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
+    (f g prev curr : DensePoly S) (hPrev : S)
+    (hinv : BrownInv f g prev curr hPrev) :
+    let delta := prev.size - curr.size
+    let hCurr := divExp curr.leadingCoeff hPrev delta
+    hCurr = (Subresultant.poly (curr.size - 1) f g).coeff (curr.size - 1) ∧
+      hCurr ≠ 0 ∧
+      powNat curr.leadingCoeff delta =
+        powNat hPrev (delta - 1) * hCurr := by
+  rcases hinv with ⟨hprev, hcurr, hlt, hhPrev, hfamily⟩
+  let delta := prev.size - curr.size
+  let J := curr.size - 1
+  let root := Subresultant.poly J f g
+  let w := root.coeff J
+  have hprevPos : 0 < prev.size := Nat.pos_of_ne_zero fun hzero =>
+    hprev ((size_eq_zero_iff prev).mp hzero)
+  have hcurrPos : 0 < curr.size := Nat.pos_of_ne_zero fun hzero =>
+    hcurr ((size_eq_zero_iff curr).mp hzero)
+  have hdelta : 0 < delta := by
+    dsimp only [delta]
+    omega
+  have hJ : J < curr.size := by
+    dsimp only [J]
+    omega
+  have hInvJ : Subresultant.poly J prev curr =
+      scale (hPrev ^ (delta - 1)) root := by
+    have h := hfamily J hJ
+    have hexp₁ : curr.size - 1 - J = 0 := by
+      dsimp only [J]
+      omega
+    have hexp₂ : prev.size - 2 - J = delta - 1 := by
+      dsimp only [J, delta]
+      omega
+    rw [hexp₁, hexp₂, Lean.Grind.Semiring.pow_zero,
+      Lean.Grind.Semiring.one_mul] at h
+    exact h
+  have hEdge : Subresultant.poly J prev curr =
+      scale (curr.leadingCoeff ^ (delta - 1)) curr := by
+    have h := Subresultant.poly_rightDegree (prev.size - 1)
+      (curr.size - 1) prev curr (by omega) (by omega) (by omega)
+    have hexp : (prev.size - 1) - (curr.size - 1) - 1 = delta - 1 := by
+      dsimp only [delta]
+      omega
+    simpa only [J, hexp] using h
+  have hcoeff := congrArg (fun p : DensePoly S => p.coeff J)
+    (hEdge.symm.trans hInvJ)
+  rw [coeff_scale_semiring, coeff_scale_semiring] at hcoeff
+  have hcurrCoeff : curr.coeff J = curr.leadingCoeff := by
+    exact (leadingCoeff_eq_coeff_last curr hcurrPos).symm
+  have hnum : curr.leadingCoeff ^ delta = hPrev ^ (delta - 1) * w := by
+    rw [hcurrCoeff] at hcoeff
+    change curr.leadingCoeff ^ (delta - 1) * curr.leadingCoeff =
+      hPrev ^ (delta - 1) * w at hcoeff
+    rw [← Lean.Grind.Semiring.pow_succ] at hcoeff
+    simpa only [show delta - 1 + 1 = delta by omega] using hcoeff
+  have hcurrLc : curr.leadingCoeff ≠ 0 :=
+    leadingCoeff_ne_zero_of_pos_size curr hcurrPos
+  have h1 : (1 : S) ≠ 0 := one_ne_zero_of_nonzero hcurrLc
+  have hden : hPrev ^ (delta - 1) ≠ 0 :=
+    pow_ne_zero h1 hhPrev (delta - 1)
+  have hnumNe : curr.leadingCoeff ^ delta ≠ 0 :=
+    pow_ne_zero h1 hcurrLc delta
+  have hw : w ≠ 0 := by
+    intro hwzero
+    apply hnumNe
+    rw [hnum, hwzero, Lean.Grind.Semiring.mul_zero]
+  have hdiv : divExp curr.leadingCoeff hPrev delta = w := by
+    unfold divExp
+    rw [powNat_eq_pow, powNat_eq_pow, hnum]
+    rw [show hPrev ^ (delta - 1) * w = w * hPrev ^ (delta - 1) by grind]
+    exact exactDiv_mul_right w hden
+  dsimp only
+  refine ⟨?_, hdiv ▸ hw, ?_⟩
+  · simpa only [J, root, w] using hdiv
+  · rw [hdiv, powNat_eq_pow, powNat_eq_pow]
+    exact hnum
+
+/-- The signed first pseudo-remainder establishes the integral invariant for
+the first recursive Brown state. -/
+private theorem brownInv_init {S : Type u}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
+    (f g : DensePoly S) (hg : g ≠ 0) (hgf : g.size ≤ f.size)
+    (hp : (pseudoDivMod f g).2 ≠ 0) :
+    let delta := f.size - g.size
+    let h₂ := powNat g.leadingCoeff delta
+    let g₃ := scale (negOnePow (R := S) (delta + 1)) (pseudoDivMod f g).2
+    BrownInv f g g g₃ h₂ := by
+  let delta := f.size - g.size
+  let p := (pseudoDivMod f g).2
+  let s := negOnePow (R := S) (delta + 1)
+  let h₂ := powNat g.leadingCoeff delta
+  let g₃ := scale s p
+  have hgpos : 0 < g.size := Nat.pos_of_ne_zero fun hzero =>
+    hg ((size_eq_zero_iff g).mp hzero)
+  have hglc : g.leadingCoeff ≠ 0 :=
+    leadingCoeff_ne_zero_of_pos_size g hgpos
+  have h1 : (1 : S) ≠ 0 := one_ne_zero_of_nonzero hglc
+  have hs : s ≠ 0 := negOnePow_ne_zero h1 (delta + 1)
+  have hg₃ : g₃ ≠ 0 := scale_ne_zero hs hp
+  have hg₃size : g₃.size = p.size := size_scale hs p
+  have hg₃lt : g₃.size < g.size := by
+    rw [hg₃size]
+    simpa only [p] using pseudoDivMod_remainder_lt f g hg
+  have hh₂ : h₂ ≠ 0 := powNat_ne_zero h1 hglc delta
+  have hsquare : s * s = 1 := by
+    simpa only [s, negOnePow_eq_sign] using
+      (SubresultantMinor.sign_mul_self (R := S) (delta + 1))
+  have hpback : p = scale s g₃ := by
+    apply ext_coeff
+    intro i
+    simp only [g₃, coeff_scale_semiring]
+    change p.coeff i = s * (s * p.coeff i)
+    grind
+  refine ⟨hg, hg₃, hg₃lt, hh₂, ?_⟩
+  intro J hJ
+  have hdes := Subresultant.poly_descent f g g₃ hs hg hg₃ hgf
+    (by simpa only [p] using hpback) J hJ
+  have hJg : J < g.size := Nat.lt_trans hJ hg₃lt
+  have hsign := sign_prem_cancel (S := S) f.size g.size J hgf hJg
+  have hscalar :
+      SubresultantMinor.sign (R := S)
+          ((f.size - 1 - J) * (g.size - 1 - J)) *
+        g.leadingCoeff ^ (f.size - g₃.size) *
+        s ^ (g.size - 1 - J) =
+      g.leadingCoeff ^ (f.size - g₃.size) := by
+    rw [show s = SubresultantMinor.sign (R := S) (f.size - g.size + 1) by
+      simp only [s, delta, negOnePow_eq_sign]]
+    grind
+  rw [hscalar] at hdes
+  let common := f.size - g₃.size
+  let targetExp := (g₃.size - 1 - J) + delta * (g.size - 2 - J)
+  let leftExp := (delta + 1) * (g.size - 1 - J)
+  have hexp : leftExp = common + targetExp := by
+    have hJle₃ : J + 1 ≤ g₃.size := Nat.succ_le_of_lt hJ
+    have hJstrong : J + 1 < g.size :=
+      Nat.lt_of_le_of_lt hJle₃ hg₃lt
+    have hJleg : J + 1 ≤ g.size := Nat.le_of_lt hJstrong
+    have hg₃f : g₃.size ≤ f.size :=
+      Nat.le_trans (Nat.le_of_lt hg₃lt) hgf
+    have hn : g.size - 1 - J = (g.size - 2 - J) + 1 := by omega
+    have hleft :
+        (f.size - g₃.size) + (g₃.size - 1 - J) =
+          f.size - (J + 1) := by
+      rw [show g₃.size - 1 - J = g₃.size - (J + 1) by omega]
+      exact Nat.sub_add_sub_cancel hg₃f hJle₃
+    have hright :
+        (f.size - g.size) + (g.size - 1 - J) =
+          f.size - (J + 1) := by
+      rw [show g.size - 1 - J = g.size - (J + 1) by omega]
+      exact Nat.sub_add_sub_cancel hgf hJleg
+    have hlin :
+        (f.size - g₃.size) + (g₃.size - 1 - J) =
+          (f.size - g.size) + (g.size - 1 - J) := by
+      exact hleft.trans hright.symm
+    dsimp only [leftExp, common, targetExp, delta]
+    calc
+      (f.size - g.size + 1) * (g.size - 1 - J) =
+          (f.size - g.size) * (g.size - 1 - J) +
+            (g.size - 1 - J) := by
+        rw [Nat.add_mul, Nat.one_mul]
+      _ = (f.size - g.size) * ((g.size - 2 - J) + 1) +
+            (g.size - 1 - J) := by rw [hn]
+      _ = (f.size - g.size) * (g.size - 2 - J) +
+            (f.size - g.size) + (g.size - 1 - J) := by
+        rw [Nat.mul_add, Nat.mul_one]
+      _ = ((f.size - g₃.size) + (g₃.size - 1 - J)) +
+            (f.size - g.size) * (g.size - 2 - J) := by
+        rw [hlin]
+        omega
+      _ = (f.size - g₃.size) +
+            ((g₃.size - 1 - J) +
+              (f.size - g.size) * (g.size - 2 - J)) := by omega
+  have htarget :
+      g.leadingCoeff ^ (g₃.size - 1 - J) * h₂ ^ (g.size - 2 - J) =
+        g.leadingCoeff ^ targetExp := by
+    rw [show h₂ = g.leadingCoeff ^ delta by
+      simp only [h₂, powNat_eq_pow], ← pow_mul,
+      ← Lean.Grind.Semiring.pow_add]
+  apply scale_cancel (pow_ne_zero h1 hglc common)
+  rw [scale_scale]
+  rw [htarget]
+  rw [← Lean.Grind.Semiring.pow_add, ← hexp]
+  simpa only [common, leftExp, delta, s, g₃, p] using hdes.symm
+
+/-- At a nonterminal invariant state, the pseudo-remainder has the exact Brown
+factor and its quotient is the adjacent original-pair subresultant. -/
+private theorem BrownInv.factor {S : Type u}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
+    (f g prev curr : DensePoly S) (hPrev : S)
+    (hinv : BrownInv f g prev curr hPrev)
+    (hp : (pseudoDivMod prev curr).2 ≠ 0) :
+    let delta := prev.size - curr.size
+    let p := (pseudoDivMod prev curr).2
+    let divisor :=
+      negOnePow (R := S) (delta + 1) * prev.leadingCoeff * powNat hPrev delta
+    let next := divScalar p divisor
+    divisor ≠ 0 ∧ p = scale divisor next ∧ next ≠ 0 ∧
+      next = Subresultant.poly (curr.size - 2) f g := by
+  rcases hinv with ⟨hprev, hcurr, hlt, hhPrev, hfamily⟩
+  let delta := prev.size - curr.size
+  let p := (pseudoDivMod prev curr).2
+  let s := negOnePow (R := S) (delta + 1)
+  let divisor := s * prev.leadingCoeff * powNat hPrev delta
+  let next := divScalar p divisor
+  let J := curr.size - 2
+  let root := Subresultant.poly J f g
+  have hprevPos : 0 < prev.size := Nat.pos_of_ne_zero fun hzero =>
+    hprev ((size_eq_zero_iff prev).mp hzero)
+  have hcurrPos : 0 < curr.size := Nat.pos_of_ne_zero fun hzero =>
+    hcurr ((size_eq_zero_iff curr).mp hzero)
+  have hprevLc : prev.leadingCoeff ≠ 0 :=
+    leadingCoeff_ne_zero_of_pos_size prev hprevPos
+  have h1 : (1 : S) ≠ 0 := one_ne_zero_of_nonzero hprevLc
+  have hs : s ≠ 0 := negOnePow_ne_zero h1 (delta + 1)
+  have hpow : powNat hPrev delta ≠ 0 :=
+    powNat_ne_zero h1 hhPrev delta
+  have hdivisor : divisor ≠ 0 :=
+    ExactDivLaws.mul_ne_zero
+      (ExactDivLaws.mul_ne_zero hs hprevLc) hpow
+  have hcurrBig : 2 ≤ curr.size := by
+    by_cases hbig : 2 ≤ curr.size
+    · exact hbig
+    · have hpsize : p.size < curr.size := by
+        simpa only [p] using pseudoDivMod_remainder_lt prev curr hcurr
+      have hpzero : p = 0 := (size_eq_zero_iff p).mp (by omega)
+      exact (hp hpzero).elim
+  have hJ : J < curr.size := by
+    dsimp only [J]
+    omega
+  have hInvJ : Subresultant.poly J prev curr =
+      scale (prev.leadingCoeff * hPrev ^ delta) root := by
+    have h := hfamily J hJ
+    have hexp₁ : curr.size - 1 - J = 1 := by
+      dsimp only [J]
+      omega
+    have hexp₂ : prev.size - 2 - J = delta := by
+      dsimp only [J, delta]
+      omega
+    rw [hexp₁, hexp₂, Lean.Grind.Semiring.pow_one] at h
+    exact h
+  have hPrem : Subresultant.poly J prev curr = scale s p := by
+    have h := Subresultant.poly_prem prev curr hcurrBig (Nat.le_of_lt hlt)
+    simpa only [J, s, delta, p, negOnePow_eq_sign] using h
+  have hsquare : s * s = 1 := by
+    simpa only [s, negOnePow_eq_sign] using
+      (SubresultantMinor.sign_mul_self (R := S) (delta + 1))
+  have hfactor : p = scale divisor root := by
+    apply scale_cancel hs
+    rw [scale_scale]
+    have heq : scale s p = scale (prev.leadingCoeff * hPrev ^ delta) root :=
+      hPrem.symm.trans hInvJ
+    have hscalar :
+        s * divisor = prev.leadingCoeff * hPrev ^ delta := by
+      dsimp only [divisor]
+      rw [powNat_eq_pow]
+      grind
+    rw [hscalar]
+    exact heq
+  have hnext : next = root := by
+    dsimp only [next]
+    rw [hfactor]
+    exact divScalar_scale root hdivisor
+  have hroot : root ≠ 0 := by
+    intro hzero
+    apply hp
+    change p = 0
+    rw [hfactor, hzero]
+    apply ext_coeff
+    intro i
+    rw [coeff_scale_semiring, coeff_zero]
+    grind
+  have hscaled : p = scale divisor next := by
+    rw [hnext]
+    exact hfactor
+  have hnextNonzero : next ≠ 0 := by
+    rw [hnext]
+    exact hroot
+  exact ⟨hdivisor, hscaled, hnextNonzero, hnext⟩
+
+/-- One nonterminal Brown step preserves the integral original-pair
+subresultant invariant. -/
+private theorem BrownInv.step {S : Type u}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
+    (f g prev curr : DensePoly S) (hPrev : S)
+    (hinv : BrownInv f g prev curr hPrev)
+    (hp : (pseudoDivMod prev curr).2 ≠ 0) :
+    let delta := prev.size - curr.size
+    let hCurr := divExp curr.leadingCoeff hPrev delta
+    let p := (pseudoDivMod prev curr).2
+    let divisor :=
+      negOnePow (R := S) (delta + 1) * prev.leadingCoeff * powNat hPrev delta
+    let next := divScalar p divisor
+    BrownInv f g curr next hCurr := by
+  rcases hinv with ⟨hprev, hcurr, hlt, hhPrev, hfamily⟩
+  let delta := prev.size - curr.size
+  let hCurr := divExp curr.leadingCoeff hPrev delta
+  let p := (pseudoDivMod prev curr).2
+  let s := negOnePow (R := S) (delta + 1)
+  let divisor := s * prev.leadingCoeff * powNat hPrev delta
+  let next := divScalar p divisor
+  have hinv : BrownInv f g prev curr hPrev :=
+    ⟨hprev, hcurr, hlt, hhPrev, hfamily⟩
+  have hscale := BrownInv.nextScale f g prev curr hPrev hinv
+  rcases hscale with ⟨_, hhCurrRaw, hscaleExactRaw⟩
+  have hhCurr : hCurr ≠ 0 := by
+    simpa only [hCurr, delta] using hhCurrRaw
+  have hscaleExact :
+      powNat curr.leadingCoeff delta =
+        powNat hPrev (delta - 1) * hCurr := by
+    simpa only [hCurr, delta] using hscaleExactRaw
+  have hfactor := BrownInv.factor f g prev curr hPrev hinv hp
+  rcases hfactor with
+    ⟨hdivisorRaw, hscaledRaw, hnextRaw, hnextEqRaw⟩
+  have hdivisor : divisor ≠ 0 := by
+    simpa only [divisor, s, delta] using hdivisorRaw
+  have hscaled : p = scale divisor next := by
+    simpa only [p, divisor, next, s, delta] using hscaledRaw
+  have hnext : next ≠ 0 := by
+    simpa only [p, divisor, next, s, delta] using hnextRaw
+  have hnextEq :
+      next = Subresultant.poly (curr.size - 2) f g := by
+    simpa only [p, divisor, next, s, delta] using hnextEqRaw
+  have hprevPos : 0 < prev.size := Nat.pos_of_ne_zero fun hzero =>
+    hprev ((size_eq_zero_iff prev).mp hzero)
+  have hcurrPos : 0 < curr.size := Nat.pos_of_ne_zero fun hzero =>
+    hcurr ((size_eq_zero_iff curr).mp hzero)
+  have hprevLc : prev.leadingCoeff ≠ 0 :=
+    leadingCoeff_ne_zero_of_pos_size prev hprevPos
+  have hcurrLc : curr.leadingCoeff ≠ 0 :=
+    leadingCoeff_ne_zero_of_pos_size curr hcurrPos
+  have h1 : (1 : S) ≠ 0 := one_ne_zero_of_nonzero hcurrLc
+  have hcurrBig : 2 ≤ curr.size := by
+    by_cases hbig : 2 ≤ curr.size
+    · exact hbig
+    · have hpsize : p.size < curr.size := by
+        simpa only [p] using pseudoDivMod_remainder_lt prev curr hcurr
+      have hpzero : p = 0 := (size_eq_zero_iff p).mp (by omega)
+      exact (hp hpzero).elim
+  have hnextSize : next.size ≤ curr.size - 1 := by
+    rw [hnextEq]
+    exact Nat.le_trans
+      (Subresultant.poly_size_le (curr.size - 2) f g) (by omega)
+  have hnextLt : next.size < curr.size := by omega
+  refine ⟨hcurr, hnext, hnextLt, hhCurr, ?_⟩
+  intro J hJ
+  have hJnext : J < next.size := by
+    simpa only [next, p, divisor, s, delta] using hJ
+  have hJcurr : J < curr.size := Nat.lt_trans hJnext hnextLt
+  have hdes := Subresultant.poly_descent prev curr next hdivisor
+    hcurr hnext (Nat.le_of_lt hlt) hscaled J hJnext
+  have hfamilyJ := hfamily J hJcurr
+  let t := curr.size - 1 - J
+  let b := curr.size - 2 - J
+  let a := next.size - 1 - J
+  let common :=
+    curr.leadingCoeff ^ (prev.size - next.size) *
+      prev.leadingCoeff ^ t * hPrev ^ (delta * t)
+  let target := curr.leadingCoeff ^ a * hCurr ^ b
+  have ht : t = b + 1 := by
+    dsimp only [t, b]
+    omega
+  have hdelta : 0 < delta := by
+    dsimp only [delta]
+    omega
+  have hrecPow :
+      curr.leadingCoeff ^ delta = hPrev ^ (delta - 1) * hCurr := by
+    simpa only [powNat_eq_pow] using hscaleExact
+  have hrecPowB :
+      curr.leadingCoeff ^ (delta * b) =
+        hPrev ^ ((delta - 1) * b) * hCurr ^ b := by
+    rw [pow_mul, hrecPow, mul_pow, ← pow_mul]
+  have hlcExp :
+      (delta + 1) * t =
+        ((prev.size - next.size) + a) + delta * b := by
+    have hgap : (prev.size - next.size) + a = delta + t := by
+      dsimp only [delta, t, a]
+      omega
+    rw [hgap, ht, Nat.add_mul, Nat.one_mul, Nat.mul_add, Nat.mul_one]
+    omega
+  have hprevExp :
+      prev.size - 2 - J = delta + b := by
+    dsimp only [delta, b]
+    omega
+  have hhExp :
+      (delta - 1) * b + (prev.size - 2 - J) = delta * t := by
+    rw [hprevExp, ht]
+    have hd : delta = (delta - 1) + 1 := by omega
+    calc
+      (delta - 1) * b + (delta + b) =
+          ((delta - 1) * b + b) + delta := by omega
+      _ = ((delta - 1) + 1) * b + delta := by
+        rw [Nat.add_mul, Nat.one_mul]
+      _ = delta * b + delta := by rw [← hd]
+      _ = delta * (b + 1) := by rw [Nat.mul_add, Nat.mul_one]
+  have hhCombine :
+      hPrev ^ ((delta - 1) * b) * hPrev ^ (prev.size - 2 - J) =
+        hPrev ^ (delta * t) := by
+    rw [← Lean.Grind.Semiring.pow_add, hhExp]
+  have hleftScalar :
+      curr.leadingCoeff ^ ((delta + 1) * t) *
+          (prev.leadingCoeff ^ t * hPrev ^ (prev.size - 2 - J)) =
+        common * target := by
+    rw [hlcExp, Lean.Grind.Semiring.pow_add,
+      Lean.Grind.Semiring.pow_add, hrecPowB]
+    dsimp only [common, target]
+    calc
+      curr.leadingCoeff ^ (prev.size - next.size) *
+            curr.leadingCoeff ^ a *
+            (hPrev ^ ((delta - 1) * b) * hCurr ^ b) *
+            (prev.leadingCoeff ^ t * hPrev ^ (prev.size - 2 - J)) =
+          curr.leadingCoeff ^ (prev.size - next.size) *
+            prev.leadingCoeff ^ t *
+            (hPrev ^ ((delta - 1) * b) *
+              hPrev ^ (prev.size - 2 - J)) *
+            (curr.leadingCoeff ^ a * hCurr ^ b) := by grind
+      _ = curr.leadingCoeff ^ (prev.size - next.size) *
+            prev.leadingCoeff ^ t * hPrev ^ (delta * t) *
+            (curr.leadingCoeff ^ a * hCurr ^ b) := by rw [hhCombine]
+  have hsign := sign_prem_cancel (S := S) prev.size curr.size J
+    (Nat.le_of_lt hlt) hJcurr
+  have hrightScalar :
+      SubresultantMinor.sign (R := S)
+          ((prev.size - 1 - J) * (curr.size - 1 - J)) *
+          curr.leadingCoeff ^ (prev.size - next.size) *
+          divisor ^ (curr.size - 1 - J) = common := by
+    have hsEq : s =
+        SubresultantMinor.sign (R := S) (prev.size - curr.size + 1) := by
+      simp only [s, delta, negOnePow_eq_sign]
+    dsimp only [divisor]
+    rw [mul_pow, mul_pow, powNat_eq_pow, ← pow_mul, hsEq]
+    dsimp only [common, t, delta]
+    grind
+  rw [hfamilyJ, scale_scale] at hdes
+  change
+    scale
+        (curr.leadingCoeff ^ ((delta + 1) * t) *
+          (prev.leadingCoeff ^ t * hPrev ^ (prev.size - 2 - J)))
+        (Subresultant.poly J f g) = _ at hdes
+  rw [hleftScalar] at hdes
+  change
+    scale (common * target) (Subresultant.poly J f g) =
+      scale
+        (SubresultantMinor.sign (R := S)
+            ((prev.size - 1 - J) * (curr.size - 1 - J)) *
+          curr.leadingCoeff ^ (prev.size - next.size) *
+          divisor ^ (curr.size - 1 - J))
+        (Subresultant.poly J curr next) at hdes
+  rw [hrightScalar] at hdes
+  have hcommon : common ≠ 0 := by
+    dsimp only [common]
+    exact ExactDivLaws.mul_ne_zero
+      (ExactDivLaws.mul_ne_zero
+        (pow_ne_zero h1 hcurrLc (prev.size - next.size))
+        (pow_ne_zero h1 hprevLc t))
+      (pow_ne_zero h1 hhPrev (delta * t))
+  have heq :
+      scale common (scale target (Subresultant.poly J f g)) =
+        scale common (Subresultant.poly J curr next) := by
+    rw [scale_scale]
+    exact hdes
+  have hcancel := scale_cancel hcommon heq
+  simpa only [target, a, b] using hcancel.symm
 
 /-- Fuel-bounded Brown recurrence after the initial pseudo-division.
 
@@ -174,6 +698,76 @@ coefficient. -/
 private theorem size_pos_of_ne_zero (p : DensePoly R) (hp : p ≠ 0) :
     0 < p.size :=
   (isZero_eq_false_iff p).1 (isZero_false_of_ne_zero p hp)
+
+/-- The integral subresultant invariant supplies every obligation in the
+fuel-bounded executable Brown law. -/
+private theorem brownLaw_of_inv {S : Type u}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
+    (f g : DensePoly S) (fuel : Nat) (prev curr : DensePoly S) (hPrev : S)
+    (hinv : BrownInv f g prev curr hPrev) (hfuel : curr.size ≤ fuel) :
+    BrownLaw prev curr hPrev fuel := by
+  induction fuel generalizing prev curr hPrev with
+  | zero =>
+      rcases hinv with ⟨_, hcurr, _, _, _⟩
+      have hpos := size_pos_of_ne_zero curr hcurr
+      omega
+  | succ fuel ih =>
+      rcases hinv with ⟨hprev, hcurr, hlt, hhPrev, hfamily⟩
+      let delta := prev.size - curr.size
+      let hCurr := divExp curr.leadingCoeff hPrev delta
+      let p := (pseudoDivMod prev curr).2
+      have hinv : BrownInv f g prev curr hPrev :=
+        ⟨hprev, hcurr, hlt, hhPrev, hfamily⟩
+      have hscale := BrownInv.nextScale f g prev curr hPrev hinv
+      rcases hscale with ⟨_, hhCurrRaw, hscaleExactRaw⟩
+      have hhCurr : hCurr ≠ 0 := by
+        simpa only [hCurr, delta] using hhCurrRaw
+      have hscaleExact :
+          powNat curr.leadingCoeff delta =
+            powNat hPrev (delta - 1) * hCurr := by
+        simpa only [hCurr, delta] using hscaleExactRaw
+      have hresult :
+          prev ≠ 0 ∧ curr ≠ 0 ∧ curr.size < prev.size ∧
+            hPrev ≠ 0 ∧ hCurr ≠ 0 ∧
+            powNat curr.leadingCoeff delta =
+              powNat hPrev (delta - 1) * hCurr ∧
+            if p.isZero then
+              True
+            else
+              let divisor :=
+                negOnePow (R := S) (delta + 1) * prev.leadingCoeff *
+                  powNat hPrev delta
+              let next := divScalar p divisor
+              divisor ≠ 0 ∧ p = scale divisor next ∧ next ≠ 0 ∧
+                BrownLaw curr next hCurr fuel := by
+        refine ⟨hprev, hcurr, hlt, hhPrev, hhCurr, hscaleExact, ?_⟩
+        cases hpzero : p.isZero with
+        | true => simp only [↓reduceIte]
+        | false =>
+            have hp : p ≠ 0 := ne_zero_of_isZero_false p hpzero
+            let divisor :=
+              negOnePow (R := S) (delta + 1) * prev.leadingCoeff *
+                powNat hPrev delta
+            let next := divScalar p divisor
+            have hpRaw : (pseudoDivMod prev curr).2 ≠ 0 := by
+              simpa only [p] using hp
+            have hfactor := BrownInv.factor f g prev curr hPrev hinv hpRaw
+            rcases hfactor with
+              ⟨hdivisorRaw, hscaledRaw, hnextRaw, _⟩
+            have hdivisor : divisor ≠ 0 := by
+              simpa only [divisor, delta] using hdivisorRaw
+            have hscaled : p = scale divisor next := by
+              simpa only [p, divisor, next, delta] using hscaledRaw
+            have hnext : next ≠ 0 := by
+              simpa only [p, divisor, next, delta] using hnextRaw
+            have hstepRaw := BrownInv.step f g prev curr hPrev hinv hpRaw
+            have hstep : BrownInv f g curr next hCurr := by
+              simpa only [p, divisor, next, hCurr, delta] using hstepRaw
+            have hnextLt : next.size < curr.size := hstep.2.2.1
+            have hrec := ih curr next hCurr hstep (by omega)
+            simp only [Bool.false_eq_true, ↓reduceIte]
+            exact ⟨hdivisor, hscaled, hnext, hrec⟩
+      simpa only [BrownLaw, delta, hCurr, p] using hresult
 
 /-- Once the worker has more fuel than the current polynomial has stored
 coefficients, its result is independent of the exact fuel value. Every
@@ -549,7 +1143,7 @@ obligation recorded by `BrownLaw`, including the unreachability of the junk
 zero-quotient branch. -/
 theorem subresultantOrdered_brownLaw {S : Type u}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
-    (f g : DensePoly S) (hf : f ≠ 0) (hg : g ≠ 0) (hgf : g.size ≤ f.size) :
+    (f g : DensePoly S) (hg : g ≠ 0) (hgf : g.size ≤ f.size) :
     let delta := f.size - g.size
     let h₂ := powNat g.leadingCoeff delta
     let p := (pseudoDivMod f g).2
@@ -558,7 +1152,48 @@ theorem subresultantOrdered_brownLaw {S : Type u}
     else
       let g₃ := scaleImpl (negOnePow (delta + 1)) p
       g₃ ≠ 0 ∧ BrownLaw g g₃ h₂ (g.size + 1) := by
-  sorry
+  let delta := f.size - g.size
+  let h₂ := powNat g.leadingCoeff delta
+  let p := (pseudoDivMod f g).2
+  have hgpos := size_pos_of_ne_zero g hg
+  have hglc : g.leadingCoeff ≠ 0 :=
+    leadingCoeff_ne_zero_of_pos_size g hgpos
+  have h1 : (1 : S) ≠ 0 := one_ne_zero_of_nonzero hglc
+  have hh₂ : h₂ ≠ 0 := powNat_ne_zero h1 hglc delta
+  change
+    if p.isZero then
+      h₂ ≠ 0
+    else
+      let g₃ := scaleImpl (negOnePow (R := S) (delta + 1)) p
+      g₃ ≠ 0 ∧ BrownLaw g g₃ h₂ (g.size + 1)
+  cases hpzero : p.isZero with
+  | true =>
+      simp only [↓reduceIte]
+      exact hh₂
+  | false =>
+      let s := negOnePow (R := S) (delta + 1)
+      let g₃ := scaleImpl s p
+      have hp : p ≠ 0 := ne_zero_of_isZero_false p hpzero
+      have hs : s ≠ 0 := negOnePow_ne_zero h1 (delta + 1)
+      have hg₃Eq : g₃ = scale s p := by
+        dsimp only [g₃]
+        exact (scale_eq_scaleImpl s p).symm
+      have hg₃ : g₃ ≠ 0 := by
+        rw [hg₃Eq]
+        exact scale_ne_zero hs hp
+      have hpRaw : (pseudoDivMod f g).2 ≠ 0 := by
+        simpa only [p] using hp
+      have hinvRaw := brownInv_init f g hg hgf hpRaw
+      have hinvScale : BrownInv f g g (scale s p) h₂ := by
+        simpa only [delta, h₂, p, s] using hinvRaw
+      have hinv : BrownInv f g g g₃ h₂ := by
+        rw [hg₃Eq]
+        exact hinvScale
+      have hg₃lt : g₃.size < g.size := hinv.2.2.1
+      have hlaw := brownLaw_of_inv f g (g.size + 1) g g₃ h₂ hinv
+        (by omega)
+      simp only [Bool.false_eq_true, ↓reduceIte]
+      simpa only [g₃, s] using ⟨hg₃, hlaw⟩
 
 /-- Adding fuel beyond the public ordered-run budget leaves the result
 unchanged. This is a structural consequence of strict remainder-size descent

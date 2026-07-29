@@ -188,14 +188,14 @@ separate Brown--Traub subresultant theorem recorded by `BrownLaw`.
 In particular, reversing `divScalar` by scaling requires the coefficientwise
 exactness certified by that law; the homogeneity API does not assume it.
 
-## Fraction-field proof bridge
+## Integral Brown--Traub proof bridge
 
-The Brown--Traub integrality proof works first in a Mathlib-free fraction
-field constructed locally from cross-multiplication classes. This is proof
-infrastructure only: the executable recurrence never constructs a fraction,
-and `hex-resultant` still has no matrix or Mathlib dependency. A nonzero Brown
-input supplies the local `1 ≠ 0` witness needed by the coefficient embedding;
-`ExactDivLaws` supplies cancellation and rules out zero products.
+The Brown--Traub correctness proof stays in the coefficient ring. Its state
+invariant keeps every accumulated leading-coefficient and Brown-scale factor
+cross-multiplied, so no fraction representative and no divisibility hypothesis
+beyond `ExactDivLaws` is needed. A nonzero Brown input supplies `1 ≠ 0`;
+`ExactDivLaws` supplies cancellation, rules out zero products, and reverses an
+exact scalar multiple after its factorization has been proved.
 
 The generalized Sylvester constructions in this proof are local,
 coefficient-indexed proof objects with their finite-sum identities developed
@@ -260,23 +260,26 @@ factorization gives the scalar and polynomial forms of Brown--Traub Lemma 1:
 `lc(G)^(deg F - deg H)`, and
 `lc(H)^(deg G - deg H - 1)`. In a lawful exact-division domain,
 `divScalar_brownTraub` immediately turns this factorization into an exact
-coefficientwise quotient. The remaining Brown correctness step specializes
-these identities to pseudo-remainders, composes their nonunit multiple of `F`
-with `poly_scale_left`, treats the defective range
-`deg(H) < J < deg(G)`, aligns accumulated scalar factors across recursive
-states, and discharges `subresultantOrdered_brownLaw`.
+coefficientwise quotient.
 
-The injective coefficient map extends to dense polynomials and preserves
-normalized size, leading coefficients, constants, addition, subtraction,
-scaling, multiplication, and ordered pseudo-division. Generalized Sylvester
-subresultants can therefore establish the Brown scale identities in the
-fraction field. Once a scalar or coefficientwise quotient is shown to lie in
-the embedding image, `Fraction.divExp_exact` and
-`DensePoly.Fraction.divScalar_exact` prove exactly the two reconstruction
-equalities recorded by `BrownLaw`; the corresponding pullback lemmas identify
-the quotient returned by the original coefficient ring. Thus the
-fraction-field argument proves integrality instead of changing the executable
-algorithm's coefficient type.
+The executable specialization is split into two further polynomial identities.
+`poly_prem` identifies `S_(deg G - 1)(F,G)` with the signed
+pseudo-remainder, including defective degree drops. `poly_descent` transports
+the entire lower subresultant family across any nonzero scaled
+pseudo-remainder while leaving all factors cross-multiplied. In
+`Subresultant.lean`, the private `BrownInv` states that every generalized
+subresultant of the current adjacent pair is an explicit scalar multiple of
+the corresponding original-pair subresultant. Its initialization, scale,
+factor, and step lemmas identify each `hCurr`, prove both exact Brown
+divisions, cancel the alternating signs, and preserve the family through the
+recursive call. Fuel induction then proves `subresultantOrdered_brownLaw`, so
+the valid run cannot take either executable junk exit.
+
+The Mathlib-free fraction field and its dense-polynomial embedding remain
+available as general proof infrastructure. Their map and pullback theorems
+preserve normalized size, leading coefficients, ring operations,
+pseudo-division, and generalized subresultants, but the Brown recurrence proof
+does not depend on that detour.
 
 ## Ordered Brown run
 
@@ -324,9 +327,11 @@ The executable recurrence calls the proved runtime twins `scaleImpl` and
 list-facing specifications above. Its two fuel/junk exits are deterministic:
 fuel exhaustion returns the current `(chain, hPrev)`, while an unexpectedly
 zero `next` returns `(chain, hCurr)` without storing that zero. Neither branch
-is reachable from a valid ordered nonzero state over an exact-division domain;
-`subresultantOrdered_brownLaw` is the proof boundary for that algebraic claim.
-The structural guarantees below do not depend on it.
+is compatible with the exactness and nonzero obligations recorded by
+`BrownLaw`; `subresultantOrdered_brownLaw` establishes that law for the initial
+ordered state. The reference `divScalar` in the law is identified with the
+worker's `divScalarImpl` by its correspondence theorem. The structural
+guarantees below remain independently useful and do not depend on `BrownLaw`.
 
 The public chain stores exactly Brown's nonzero `G₁, …, Gₖ`. It does not
 store the generated terminal zero, gap zeros from defective subresultants, the
@@ -423,8 +428,9 @@ quotient is exact over every stated exact-division domain.
   resulting `G, H` coefficient matrix, formal-degree collapse,
   leading-coefficient and endpoint factorizations, and the exact
   coefficientwise Brown--Traub quotient.
-- `HexResultant/Subresultant.lean`: the Brown worker,
-  `subresultantChain`, `resultant`, chain termination, and degree bounds.
+- `HexResultant/Subresultant.lean`: the integral recursive subresultant
+  invariant, `BrownLaw`, the Brown worker, `subresultantChain`, `resultant`,
+  chain termination, and degree bounds.
 - `HexResultant/Discriminant.lean`: `disc` and the algebraic
   identities we need downstream (for example
   `disc (f * g) = disc f · disc g · (resultant f g)²`).
