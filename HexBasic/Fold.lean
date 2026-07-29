@@ -40,13 +40,14 @@ universe u v w
 variable {α : Type v} {β : Type w} {R : Type u}
 
 /-!
-The `Std.Associative` / `Std.LawfulIdentity` instances that {name}`List.foldl_assoc`
-and friends need are kept **file-local**: they are used only to prove the
-lemmas below, which state their conclusions over `Lean.Grind.Ring` / `CommRing`
-without exposing the instances. Keeping them local avoids adding a second
-global `Std.Associative` resolution path for every `Grind.Semiring` (e.g.
-`Nat`/`Int` in the Mathlib bridge layers, where Mathlib already supplies its
-own). Promote / upstream them separately if a consumer ever needs them.
+The `Std.Associative` / `Std.LawfulIdentity` instances that
+{name}`List.foldl_assoc` and friends need are kept **file-local**: they are used
+only to prove the lemmas below, whose conclusions use `Lean.Grind.Semiring`,
+with `Ring` or `CommRing` required only where negation or commutative
+multiplication is genuinely involved. Keeping them local avoids adding a
+second global `Std.Associative` resolution path for every `Grind.Semiring`
+(e.g. `Nat`/`Int` in the Mathlib bridge layers, where Mathlib already supplies
+its own). Promote / upstream them separately if a consumer ever needs them.
 -/
 
 /-- Addition in a `Grind.Semiring` is an associative operation. -/
@@ -124,7 +125,7 @@ theorem foldl_const_step (xs : List α) (z : β) :
 /-! # Permutation invariance -/
 
 /-- An additive fold-sum is invariant under permuting the list. -/
-theorem foldl_add_perm [Lean.Grind.Ring R] (f : α → R) {xs ys : List α}
+theorem foldl_add_perm [Lean.Grind.Semiring R] (f : α → R) {xs ys : List α}
     (h : xs.Perm ys) (z : R) :
     xs.foldl (fun acc x => acc + f x) z = ys.foldl (fun acc x => acc + f x) z := by
   induction h generalizing z with
@@ -134,7 +135,7 @@ theorem foldl_add_perm [Lean.Grind.Ring R] (f : α → R) {xs ys : List α}
   | trans _ _ ih₁ ih₂ => exact (ih₁ z).trans (ih₂ z)
 
 /-- A multiplicative fold-product is invariant under permuting the list. -/
-theorem foldl_mul_perm [Lean.Grind.CommRing R] (f : α → R) {xs ys : List α}
+theorem foldl_mul_perm [Lean.Grind.CommSemiring R] (f : α → R) {xs ys : List α}
     (h : xs.Perm ys) (z : R) :
     xs.foldl (fun acc x => acc * f x) z = ys.foldl (fun acc x => acc * f x) z := by
   induction h generalizing z with
@@ -143,9 +144,9 @@ theorem foldl_mul_perm [Lean.Grind.CommRing R] (f : α → R) {xs ys : List α}
   | swap x y xs => simp only [List.foldl_cons]; congr 1; grind
   | trans _ _ ih₁ ih₂ => exact (ih₁ z).trans (ih₂ z)
 
-section Ring
+section Semiring
 
-variable [Lean.Grind.Ring R]
+variable [Lean.Grind.Semiring R]
 
 /-! # Accumulator extraction -/
 
@@ -210,7 +211,13 @@ theorem foldl_add_mul_right (xs : List α) (f : α → R) (c z : R) :
     simp only [List.foldl_cons]
     rw [ih (z := z + f x), show (z + f x) * c = z * c + f x * c by grind]
 
-/-! # Negation and subtraction -/
+end Semiring
+
+section Ring
+
+variable [Lean.Grind.Ring R]
+
+/-! # Negation -/
 
 /-- Negation distributes through an additive fold-sum. -/
 theorem foldl_add_neg (xs : List α) (f : α → R) (z : R) :
@@ -222,6 +229,12 @@ theorem foldl_add_neg (xs : List α) (f : α → R) (z : R) :
     simp only [List.foldl_cons]
     rw [show -z + -f x = -(z + f x) by grind]
     exact ih (z + f x)
+
+end Ring
+
+section Semiring
+
+variable [Lean.Grind.Semiring R]
 
 /-! # Additivity -/
 
@@ -259,6 +272,14 @@ theorem foldl_add_add (xs : List α) (f g : α → R) :
     _ = xs.foldl (fun acc x => acc + f x) 0 + xs.foldl (fun acc x => acc + g x) 0 :=
         foldl_add_add_start xs f g 0 0
 
+end Semiring
+
+section Ring
+
+variable [Lean.Grind.Ring R]
+
+/-! # Subtraction -/
+
 /-- An additive fold-sum of a pointwise difference splits into the difference
 of the two fold-sums, distributing the starting accumulator. -/
 theorem foldl_add_sub (xs : List α) (f g : α → R) (a b : R) :
@@ -279,6 +300,12 @@ theorem foldl_add_sub_zero (xs : List α) (f g : α → R) :
       xs.foldl (fun acc x => acc + f x) 0 - xs.foldl (fun acc x => acc + g x) 0 := by
   have h := foldl_add_sub xs f g 0 0
   rwa [show (0 : R) - 0 = 0 by grind] at h
+
+end Ring
+
+section Semiring
+
+variable [Lean.Grind.Semiring R]
 
 /-! # Fubini -/
 
@@ -325,23 +352,20 @@ theorem foldl_add_comm {γ : Type w} (xs : List α) (ys : List γ) (f : α → �
         (fun y => xs.foldl (fun acc' x' => acc' + f x' y) 0)
     rw [hLHS, hRHS, ih]
 
-end Ring
+end Semiring
 
-section CommRing
+section Semiring
 
-variable [Lean.Grind.CommRing R]
+variable [Lean.Grind.Semiring R]
 
 /-- Factor a right scalar out of an additive fold-sum started from `0`. -/
 theorem foldl_add_mul_right_zero (xs : List α) (f : α → R) (c : R) :
     xs.foldl (fun acc x => acc + f x * c) 0 =
       xs.foldl (fun acc x => acc + f x) 0 * c := by
-  calc xs.foldl (fun acc x => acc + f x * c) 0
-      = xs.foldl (fun acc x => acc + c * f x) 0 := by
-        apply foldl_add_congr; intro x _; grind
-    _ = c * xs.foldl (fun acc x => acc + f x) 0 := foldl_add_mul_left_zero xs c f
-    _ = xs.foldl (fun acc x => acc + f x) 0 * c := by grind
+  simpa [Lean.Grind.Semiring.zero_mul] using
+    (foldl_add_mul_right xs f c 0).symm
 
-end CommRing
+end Semiring
 
 /-! # flatMap -/
 
@@ -361,7 +385,7 @@ theorem foldl_add_flatMap [Add R] {γ : Type w}
 
 /-- An additive fold-sum over a `Nodup` list whose summand is supported at a
 single matching element collects exactly that summand. -/
-theorem foldl_add_single [Lean.Grind.CommRing R] [DecidableEq α]
+theorem foldl_add_single [Lean.Grind.Semiring R] [DecidableEq α]
     (xs : List α) (z : R) (q : α) (f : α → R)
     (hmem : q ∈ xs) (hnodup : xs.Nodup) :
     xs.foldl (fun acc x => acc + (if x = q then f x else 0)) z = z + f q := by

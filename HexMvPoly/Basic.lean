@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import Batteries.Data.List.Perm
+public import HexBasic.ListShim
 public import HexMvPoly.Mono
 
 @[expose] public section
@@ -71,6 +71,58 @@ def monomials (p : MvPoly n R cmp) : List (Mono n) :=
 /-- Monomials in the support, in increasing `cmp` order. -/
 def support (p : MvPoly n R cmp) : List (Mono n) :=
   monomials p
+
+/-- The canonical support enumeration contains no duplicate monomials. -/
+theorem monomials_nodup (p : MvPoly n R cmp) : p.monomials.Nodup := by
+  unfold monomials termsList
+  rw [Std.ExtTreeMap.map_fst_toList_eq_keys]
+  exact p.termsInternal.nodup_keys
+
+theorem mem_monomials_iff_isSome (m : Mono n) (p : MvPoly n R cmp) :
+    m ∈ p.monomials ↔ (p.coeff? m).isSome := by
+  unfold monomials termsList coeff?
+  rw [Std.ExtTreeMap.map_fst_toList_eq_keys, Std.ExtTreeMap.mem_keys,
+    Std.ExtTreeMap.mem_iff_isSome_getElem?]
+
+@[simp] theorem mem_monomials_iff (m : Mono n) (p : MvPoly n R cmp) :
+    m ∈ p.monomials ↔ coeff m p ≠ 0 := by
+  rw [mem_monomials_iff_isSome]
+  unfold coeff
+  cases hcoeff : coeff? m p with
+  | none => simp
+  | some c =>
+      have hc : c ≠ 0 := by
+        intro hzero
+        apply p.nonzeroInternal m
+        unfold coeff? at hcoeff
+        simpa [hzero] using hcoeff
+      simp [hc]
+
+@[simp] theorem mem_support_iff (m : Mono n) (p : MvPoly n R cmp) :
+    m ∈ p.support ↔ coeff m p ≠ 0 := by
+  unfold support
+  exact mem_monomials_iff m p
+
+/-- A monomial outside the canonical support has coefficient zero. -/
+theorem coeff_eq_zero_of_not_mem (m : Mono n) (p : MvPoly n R cmp)
+    (h : m ∉ p.monomials) :
+    coeff m p = 0 := by
+  unfold coeff
+  cases hcoeff : coeff? m p with
+  | none => rfl
+  | some c =>
+      exfalso
+      exact h ((mem_monomials_iff_isSome m p).mpr (by simp [hcoeff]))
+
+/-- A stored term carries exactly the coefficient returned by lookup. -/
+theorem coeff_eq_of_mem_terms (p : MvPoly n R cmp) {m : Mono n} {c : R}
+    (h : (m, c) ∈ p.termsList) :
+    coeff m p = c := by
+  unfold termsList at h
+  have hcoeff := Std.ExtTreeMap.mem_toList_iff_getElem?_eq_some.mp h
+  unfold coeff coeff?
+  rw [hcoeff]
+  rfl
 
 /-- Number of nonzero terms. -/
 @[inline] def termCount (p : MvPoly n R cmp) : Nat :=

@@ -198,7 +198,7 @@ refers to, so the class and this API have to agree on it. State
 `IsMonomialOrder` in terms of `Mono.mul` rather than a bare `+`. The
 laws worth naming are that `dvd` agrees with the existence of an exact
 quotient, that `div` is a left inverse of `mul` on the divisible case,
-`degree_mul`, `rename_mul`, `splits_mem_iff`, and the `lcm`/`gcd`
+`degree_mul`, `rename_mul`, `splits_mem_iff`, `splits_nodup`, and the `lcm`/`gcd`
 lattice laws, all of which the S-polynomial construction uses.
 
 ## Kernel reduction
