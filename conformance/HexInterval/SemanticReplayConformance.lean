@@ -180,14 +180,43 @@ def rightSchema : PackedFactSchema (semantics meanings) :=
     replay := fun input action context _ =>
       replayUnary rightMeaning rightMeaning_mem input action context }
 
+inductive RightEqualityCertificate where
+  | reflexive
+
+def decodeRightEquality : List Nat -> Option RightEqualityCertificate
+  | [303] => some .reflexive
+  | _ => none
+
+/-- A small role-separation canary.  The schema accepts only a reflexive edge;
+the engine would not admit such an edge, but the semantic dispatcher must
+still inspect the exact endpoints supplied by structural replay rather than
+trusting a recipe body in isolation. -/
+def rightEqualitySchema : PackedEqualitySchema (semantics meanings) :=
+  { rule := rightRuleKey
+    schema := 8
+    Certificate := RightEqualityCertificate
+    decode := decodeRightEquality
+    replay := fun _ _ context _ =>
+      if endpointProof : context.edge.left = context.edge.right then
+        some
+          { proof := by
+              intro valuation _ _
+              rw [endpointProof] }
+      else
+        none }
+
 def leftProofs : SemanticReplay.Package (semantics meanings) :=
   { factSchemas := #[leftSchema] }
 
 def rightProofs : SemanticReplay.Package (semantics meanings) :=
-  { factSchemas := #[rightSchema] }
+  { factSchemas := #[rightSchema]
+    equalitySchemas := #[rightEqualitySchema] }
 
 def noProofs : SemanticReplay.Package (semantics meanings) :=
   { factSchemas := #[] }
+
+def rightFactOnlyProofs : SemanticReplay.Package (semantics meanings) :=
+  { factSchemas := #[rightSchema] }
 
 def duplicateLeftProofs : SemanticReplay.Package (semantics meanings) :=
   { factSchemas := #[leftSchema, leftSchema] }
@@ -393,8 +422,9 @@ def rightContext (entry : Entry) : RuleFactContext checkerInput entry.origin :=
           (rightContext fixture.rightEntry)).isSome &&
         fixture.registry.coverage.factFormats ==
           #[leftSchema.key, rightSchema.key] &&
-        fixture.registry.coverage.deferredFormats ==
-          #[rightEqualityFormat.replayKey rightRuleKey]
+        fixture.registry.coverage.instanceFormats.isEmpty &&
+        fixture.registry.coverage.equalityFormats ==
+          #[rightEqualitySchema.key]
   | none => false
 
 -- The semantic package table is paired positionally with the sealed
@@ -418,14 +448,26 @@ def rightContext (entry : Entry) : RuleFactContext checkerInput entry.origin :=
       | _ => false
   | none => false
 
--- Fact coverage is bidirectional: omitting a checker is a precise assembly
--- error, while the equality format remains explicitly deferred.
+-- Coverage is bidirectional in every role: omitting the right package's fact
+-- checker is a precise assembly error even though its equality checker exists.
 #guard
   match executable? with
   | some executable =>
       match SemanticReplay.Registry.build executable #[leftProofs, noProofs] with
       | .error (.missingSchema package key) =>
           package == 1 && key == rightSchema.key
+      | _ => false
+  | none => false
+
+-- Non-fact formats are no longer deferred: omitting an equality theorem is
+-- an exact coverage error at semantic-registry construction.
+#guard
+  match executable? with
+  | some executable =>
+      match SemanticReplay.Registry.build executable
+          #[leftProofs, rightFactOnlyProofs] with
+      | .error (.missingSchema package key) =>
+          package == 1 && key == rightEqualitySchema.key
       | _ => false
   | none => false
 
@@ -451,8 +493,8 @@ def rightContext (entry : Entry) : RuleFactContext checkerInput entry.origin :=
         (rightContext wrong)).isNone
   | none => false
 
--- Exact dispatch includes the role.  The currently deferred equality address
--- cannot reach the fact theorem at the same rule.
+-- Exact dispatch includes the role.  A covered equality address cannot reach
+-- the fact theorem at the same rule.
 #guard
   match fixture? with
   | some fixture =>
@@ -460,6 +502,55 @@ def rightContext (entry : Entry) : RuleFactContext checkerInput entry.origin :=
         { fixture.rightEntry with role := .equality, schema := 8, body := [303] }
       (fixture.registry.dispatchFact checkerInput equality
         (rightContext equality)).isNone
+  | none => false
+
+def rightEqualityEntry : Entry :=
+  { origin := rightAction
+    role := .equality
+    schema := 8
+    body := [303] }
+
+def rightEqualityEdge : EqualityEdge :=
+  { left := node 2
+    right := node 2
+    generation := 0
+    origin := rightAction
+    payload := { index := 2 } }
+
+def withRightEquality (arena : Arena) (entry : Entry := rightEqualityEntry) : Arena :=
+  { entries := arena.entries.push entry
+    bodyCells := arena.bodyCells + entry.body.length }
+
+-- Public replay follows the retained edge's payload into the arena, checks
+-- the complete originating action, and dispatches the exact equality schema.
+#guard
+  match fixture? with
+  | some fixture =>
+      (fixture.registry.replayEquality checkerInput
+        (withRightEquality fixture.arena) { index := 0 } rightEqualityEdge
+        program (ProgramPrefix.refl program) []).isSome
+  | none => false
+
+-- A transplanted entry with the right role/schema/body is rejected before
+-- package theorem dispatch because its complete originating action differs.
+#guard
+  match fixture? with
+  | some fixture =>
+      let transplanted := { rightEqualityEntry with origin := leftAction }
+      (fixture.registry.replayEquality checkerInput
+        (withRightEquality fixture.arena transplanted) { index := 0 }
+        rightEqualityEdge program (ProgramPrefix.refl program) []).isNone
+  | none => false
+
+-- The package theorem checks the exact endpoints rather than accepting a
+-- valid-looking body for an unrelated edge.
+#guard
+  match fixture? with
+  | some fixture =>
+      let edge := { rightEqualityEdge with left := node 1 }
+      (fixture.registry.replayEquality checkerInput
+        (withRightEquality fixture.arena) { index := 0 } edge
+        program (ProgramPrefix.refl program) []).isNone
   | none => false
 
 def meetEvidence (previous proposed installed : Fact) :

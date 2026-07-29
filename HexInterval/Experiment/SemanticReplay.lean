@@ -16,9 +16,9 @@ public import HexInterval.Experiment.PackageRegistry
 This module is a proof-side extensibility canary above the immutable payload
 format layer.  It deliberately contains no arithmetic expression language and
 no enumeration of supported functions.  A semantic package owns the private
-certificate type, decoder, and theorem builder for each fact schema.  The
-generic registry dispatches only on the exact `(RuleKey, role, schema)` stored
-in an immutable payload entry.
+certificate type, decoder, and theorem builder for each fact, instantiation,
+and equality schema.  The generic registry dispatches only on the exact
+`(RuleKey, role, schema)` stored in an immutable payload entry.
 
 This is not yet a complete trace checker.  It fixes the interfaces needed by
 that checker without pretending that format validation establishes semantic
@@ -35,6 +35,7 @@ open Propagator PayloadArena
 structure NodeFact (Fact : Type) where
   node : NodeId
   fact : Fact
+  deriving DecidableEq
 
 /-- Inputs owned by the caller, rather than reconstructed from an untrusted
 trace.  Making this value an explicit parameter of every replay context binds
@@ -65,6 +66,32 @@ def Entails (semantics : Semantics Fact) (program : Program)
     (∀ assumption, assumption ∈ assumptions ->
       semantics.holds program valuation assumption) ->
     semantics.holds program valuation conclusion
+
+/-- Two valuations agree on every node of an exact program prefix. -/
+def AgreeOn (semantics : Semantics Fact) (program : Program)
+    (left right : NodeId -> semantics.Value) : Prop :=
+  ∀ node, node.index < program.nodes.size -> left node = right node
+
+/-- Semantic conservativity of one append-only expression-program extension.
+Every model of the old program must extend to a model of the new program
+without changing any old node.  This is the proof obligation attached to a
+retained instantiation recipe; structural SSA validation alone cannot
+establish totality of package-defined operations. -/
+def Extends (semantics : Semantics Fact) (before after : Program) : Prop :=
+  ∀ valuation, semantics.models before valuation ->
+    ∃ extended,
+      semantics.models after extended ∧
+        semantics.AgreeOn before valuation extended
+
+/-- Semantic equality derived from an exact finite fact context.  Conditional
+identities such as square-root cancellation may depend on facts which
+chronological replay has already established. -/
+def EntailsEq (semantics : Semantics Fact) (program : Program)
+    (assumptions : List (NodeFact Fact)) (left right : NodeId) : Prop :=
+  ∀ valuation, semantics.models program valuation ->
+    (∀ assumption, assumption ∈ assumptions ->
+      semantics.holds program valuation assumption) ->
+    valuation left = valuation right
 
 end Semantics
 
@@ -104,6 +131,29 @@ structure RuleFactContext (input : CheckerInput Fact) (action : Action) where
   basePrefix : ProgramPrefix input.baseProgram program
   assumptions : List (NodeFact Fact)
   proposed : NodeFact Fact
+
+/-- Exact chronological context for one retained expression-program
+extension.  `origin` binds the retained event to the immutable action stored
+in the selected replay entry. -/
+structure InstanceContext (input : CheckerInput Fact) (action : Action) where
+  before : Program
+  after : Program
+  basePrefix : ProgramPrefix input.baseProgram before
+  stepPrefix : ProgramPrefix before after
+  sameOperations : before.operations = after.operations
+  event : InstanceEvent
+  origin : event.origin = action
+
+/-- Exact context for one retained equality edge.  The identifier and edge are
+supplied by chronological structural replay; `origin` prevents an edge from
+being paired with a recipe produced by another invocation. -/
+structure EqualityContext (input : CheckerInput Fact) (action : Action) where
+  program : Program
+  basePrefix : ProgramPrefix input.baseProgram program
+  assumptions : List (NodeFact Fact)
+  equality : EqualityId
+  edge : EqualityEdge
+  origin : edge.origin = action
 
 /-- The fact-domain proof boundary is intentionally independent of all
 function-rule schemas.  `proveMeet` must establish semantic intersection for
@@ -146,6 +196,34 @@ structure PackedFactSchema (semantics : Semantics Fact) where
       Option (Evidence
         (semantics.Entails context.program context.assumptions context.proposed))
 
+/-- An immutable package-owned decoder and theorem builder for one
+instantiation recipe.  Its theorem proves semantic conservativity of the
+exact before/after programs supplied by chronological structural replay. -/
+structure PackedInstanceSchema (semantics : Semantics Fact) where
+  rule : RuleKey
+  schema : Nat
+  Certificate : Type
+  decode : List Nat -> Option Certificate
+  replay :
+    (input : CheckerInput Fact) -> (action : Action) ->
+      (context : InstanceContext input action) -> Certificate ->
+      Option (Evidence
+        (semantics.Extends context.before context.after))
+
+/-- An immutable package-owned decoder and theorem builder for one equality
+recipe.  Its theorem is tied to the exact endpoints in the retained edge. -/
+structure PackedEqualitySchema (semantics : Semantics Fact) where
+  rule : RuleKey
+  schema : Nat
+  Certificate : Type
+  decode : List Nat -> Option Certificate
+  replay :
+    (input : CheckerInput Fact) -> (action : Action) ->
+      (context : EqualityContext input action) -> Certificate ->
+      Option (Evidence
+        (semantics.EntailsEq context.program context.assumptions
+          context.edge.left context.edge.right))
+
 namespace PackedFactSchema
 
 /-- The complete semantic dispatch address. -/
@@ -154,20 +232,37 @@ def key (packed : PackedFactSchema semantics) : ReplayKey :=
 
 end PackedFactSchema
 
+namespace PackedInstanceSchema
+
+/-- The complete semantic dispatch address. -/
+def key (packed : PackedInstanceSchema semantics) : ReplayKey :=
+  { rule := packed.rule, role := .instance, schema := packed.schema }
+
+end PackedInstanceSchema
+
+namespace PackedEqualitySchema
+
+/-- The complete semantic dispatch address. -/
+def key (packed : PackedEqualitySchema semantics) : ReplayKey :=
+  { rule := packed.rule, role := .equality, schema := packed.schema }
+
+end PackedEqualitySchema
+
 /-- Cache-free semantic declarations contributed by one function package.
 Package order is the same as in the checked executable registry supplied to
 `Registry.build`; this lets assembly reject a theorem schema attributed to a
 different package even when both packages reuse the same numeric schema. -/
 structure Package (semantics : Semantics Fact) where
   factSchemas : Array (PackedFactSchema semantics)
+  instanceSchemas : Array (PackedInstanceSchema semantics) := #[]
+  equalitySchemas : Array (PackedEqualitySchema semantics) := #[]
 
-/-- Exact executable replay declarations covered or deliberately deferred by
-the current semantic protocol.  Fact formats have bidirectional coverage:
-every key here has exactly one checker.  Instance and equality formats remain
-visible rather than being silently treated as checked. -/
+/-- Exact executable replay declarations with bidirectional semantic coverage:
+every format in each role has exactly one package-owned checker. -/
 structure Coverage where
   factFormats : Array ReplayKey
-  deferredFormats : Array ReplayKey
+  instanceFormats : Array ReplayKey
+  equalityFormats : Array ReplayKey
   deriving Repr
 
 /-- Semantic assembly failures retain the exact replay address and package
@@ -183,97 +278,137 @@ inductive BuildError where
 structure Registry (semantics : Semantics Fact) where
   private mk ::
   factSchemas : Array (PackedFactSchema semantics)
+  instanceSchemas : Array (PackedInstanceSchema semantics)
+  equalitySchemas : Array (PackedEqualitySchema semantics)
   coverage : Coverage
 
 namespace Registry
 
 private def make (factSchemas : Array (PackedFactSchema semantics))
+    (instanceSchemas : Array (PackedInstanceSchema semantics))
+    (equalitySchemas : Array (PackedEqualitySchema semantics))
     (coverage : Coverage) : Registry semantics :=
-  { factSchemas, coverage }
+  { factSchemas, instanceSchemas, equalitySchemas, coverage }
 
-private def containsKey (schemas : Array (PackedFactSchema semantics))
-    (key : ReplayKey) : Bool :=
-  schemas.any fun schema => schema.key == key
+private def containsKey (keys : Array ReplayKey) (key : ReplayKey) : Bool :=
+  keys.any fun candidate => candidate == key
 
-private def addSchemas (schemas : Array (PackedFactSchema semantics)) :
-    List (PackedFactSchema semantics) ->
-      Except BuildError (Array (PackedFactSchema semantics))
-  | [] => pure schemas
-  | schema :: rest =>
-      if containsKey schemas schema.key then
-        throw (BuildError.duplicateSchema schema.key)
+private def addKeys (keys : Array ReplayKey) :
+    List ReplayKey -> Except BuildError (Array ReplayKey)
+  | [] => pure keys
+  | key :: rest =>
+      if containsKey keys key then
+        throw (BuildError.duplicateSchema key)
       else
-        addSchemas (schemas.push schema) rest
+        addKeys (keys.push key) rest
+
+private def packageKeys (package : Package semantics) : Array ReplayKey :=
+  package.factSchemas.map PackedFactSchema.key ++
+    package.instanceSchemas.map PackedInstanceSchema.key ++
+      package.equalitySchemas.map PackedEqualitySchema.key
+
+private def coverageKeys (coverage : Coverage) : Array ReplayKey :=
+  coverage.factFormats ++ coverage.instanceFormats ++ coverage.equalityFormats
+
+private def pushFormat (coverage : Coverage) (key : ReplayKey) : Coverage :=
+  match key.role with
+  | .fact =>
+      { coverage with factFormats := coverage.factFormats.push key }
+  | .instance =>
+      { coverage with instanceFormats := coverage.instanceFormats.push key }
+  | .equality =>
+      { coverage with equalityFormats := coverage.equalityFormats.push key }
 
 private def packageCoverage (package : Propagator.Package Fact) : Coverage :=
   package.handlers.foldl
     (fun coverage handler =>
       handler.replayFormats.foldl
         (fun coverage format =>
-          let key := format.replayKey handler.registration.key
-          if format.role == .fact then
-            { coverage with factFormats := coverage.factFormats.push key }
-          else
-            { coverage with
-                deferredFormats := coverage.deferredFormats.push key })
+          pushFormat coverage (format.replayKey handler.registration.key))
         coverage)
-    { factFormats := #[], deferredFormats := #[] }
+    { factFormats := #[], instanceFormats := #[], equalityFormats := #[] }
 
 private def checkOwners (package : Nat) (formats : Array ReplayKey) :
-    List (PackedFactSchema semantics) -> Except BuildError PUnit
-  | [] => pure ⟨⟩
-  | schema :: schemas =>
-      if formats.any (fun key => key == schema.key) then
-        checkOwners package formats schemas
+    List ReplayKey -> Except BuildError Unit
+  | [] => pure ()
+  | key :: keys =>
+      if containsKey formats key then
+        checkOwners package formats keys
       else
-        throw (.unownedSchema package schema.key)
+        throw (.unownedSchema package key)
 
-private def checkCoverage (package : Nat)
-    (schemas : Array (PackedFactSchema semantics)) :
-    List ReplayKey -> Except BuildError PUnit
-  | [] => pure ⟨⟩
+private def checkCoverage (package : Nat) (schemas : Array ReplayKey) :
+    List ReplayKey -> Except BuildError Unit
+  | [] => pure ()
   | key :: keys =>
       if containsKey schemas key then
         checkCoverage package schemas keys
       else
         throw (.missingSchema package key)
 
+private abbrev BuildState (semantics : Semantics Fact) :=
+  Array (PackedFactSchema semantics) ×
+    Array (PackedInstanceSchema semantics) ×
+      Array (PackedEqualitySchema semantics) × Array ReplayKey × Coverage
+
 private def addPackages (index : Nat)
-    (schemas : Array (PackedFactSchema semantics)) (coverage : Coverage) :
+    (state : BuildState semantics) :
     List (Propagator.Package Fact) -> List (Package semantics) ->
-      Except BuildError (Array (PackedFactSchema semantics) × Coverage)
-  | [], [] => pure (schemas, coverage)
-  | executable :: executables, package :: packages => do
+      Except BuildError (BuildState semantics)
+  | [], [] => pure state
+  | executable :: executables, package :: packages =>
       let owned := packageCoverage executable
-      checkOwners index owned.factFormats package.factSchemas.toList
-      checkCoverage index package.factSchemas owned.factFormats.toList
-      let schemas ← addSchemas schemas package.factSchemas.toList
-      let coverage :=
-        { factFormats := coverage.factFormats ++ owned.factFormats
-          deferredFormats :=
-            coverage.deferredFormats ++ owned.deferredFormats }
-      addPackages (index + 1) schemas coverage executables packages
+      let semanticKeys := packageKeys package
+      match checkOwners index (coverageKeys owned) semanticKeys.toList with
+      | .error error => .error error
+      | .ok _ =>
+          match checkCoverage index semanticKeys (coverageKeys owned).toList with
+          | .error error => .error error
+          | .ok _ =>
+              let (factSchemas, instanceSchemas, equalitySchemas, keys, coverage) := state
+              match addKeys keys semanticKeys.toList with
+              | .error error => .error error
+              | .ok keys =>
+                  let next :=
+                    (factSchemas ++ package.factSchemas,
+                      instanceSchemas ++ package.instanceSchemas,
+                      equalitySchemas ++ package.equalitySchemas,
+                      keys,
+                      { factFormats := coverage.factFormats ++ owned.factFormats
+                        instanceFormats := coverage.instanceFormats ++ owned.instanceFormats
+                        equalityFormats := coverage.equalityFormats ++
+                          owned.equalityFormats })
+                  addPackages (index + 1) next executables packages
   | executables, packages =>
       throw (.packageCount executables.length packages.length)
 
 /-- Assemble schemas against one checked executable registry without retaining
 its mutable package caches.  Package positions establish ownership, exact
-`ReplayKey`s establish dispatch, and every executable fact format must have
-exactly one checker.  Unsupported instance and equality formats are returned
-in `Registry.coverage.deferredFormats`. -/
+`ReplayKey`s establish dispatch, and every executable fact, instance, and
+equality format must have exactly one checker. -/
 opaque build (executable : Propagator.Registry Fact)
     (packages : Array (Package semantics)) :
     Except BuildError (Registry semantics) := do
   if executable.packages.size != packages.size then
     throw (.packageCount executable.packages.size packages.size)
-  let (factSchemas, coverage) ←
-    addPackages 0 #[] { factFormats := #[], deferredFormats := #[] }
-      executable.packages.toList packages.toList
-  pure (make factSchemas coverage)
+  let initial : BuildState semantics :=
+    (#[], #[], #[], #[],
+      { factFormats := #[], instanceFormats := #[], equalityFormats := #[] })
+  let (factSchemas, instanceSchemas, equalitySchemas, _, coverage) ←
+    addPackages 0 initial executable.packages.toList packages.toList
+  pure (make factSchemas instanceSchemas equalitySchemas coverage)
 
 def findFact? (registry : Registry semantics) (key : ReplayKey) :
     Option (PackedFactSchema semantics) :=
   registry.factSchemas.toList.find? fun schema => schema.key == key
+
+def findInstance? (registry : Registry semantics) (key : ReplayKey) :
+    Option (PackedInstanceSchema semantics) :=
+  registry.instanceSchemas.toList.find? fun schema => schema.key == key
+
+def findEquality? (registry : Registry semantics) (key : ReplayKey) :
+    Option (PackedEqualitySchema semantics) :=
+  registry.equalitySchemas.toList.find? fun schema => schema.key == key
 
 /-- Decode and replay one immutable fact entry under the exact selected
 schema.  Equality and instantiation roles cannot accidentally reach a fact
@@ -293,6 +428,105 @@ def dispatchFact {Fact : Type} {semantics : Semantics Fact}
       | none => none
       | some certificate =>
           packed.replay input entry.origin context certificate
+
+/-- Decode and replay one immutable program-extension entry under the exact
+selected schema. -/
+def dispatchInstance {Fact : Type} {semantics : Semantics Fact}
+    (registry : Registry semantics) (input : CheckerInput Fact)
+    (entry : Entry) (context : InstanceContext input entry.origin) :
+    Option (Evidence
+      (semantics.Extends context.before context.after)) :=
+  match registry.findInstance? entry.replayKey with
+  | none => none
+  | some packed =>
+      match packed.decode entry.body with
+      | none => none
+      | some certificate =>
+          packed.replay input entry.origin context certificate
+
+/-- Decode and replay one immutable equality entry under the exact selected
+schema. -/
+def dispatchEquality {Fact : Type} {semantics : Semantics Fact}
+    (registry : Registry semantics) (input : CheckerInput Fact)
+    (entry : Entry) (context : EqualityContext input entry.origin) :
+    Option (Evidence
+      (semantics.EntailsEq context.program context.assumptions
+        context.edge.left context.edge.right)) :=
+  match registry.findEquality? entry.replayKey with
+  | none => none
+  | some packed =>
+      match packed.decode entry.body with
+      | none => none
+      | some certificate =>
+          packed.replay input entry.origin context certificate
+
+/-- Fetch the exact fact recipe named by a retained rule cause, reject a
+transplanted origin, and only then enter the typed schema dispatcher.  A
+chronological event checker supplies the exact event node and resolved
+assumption prefix. -/
+def replayRule {Fact : Type} {semantics : Semantics Fact}
+    (registry : Registry semantics) (input : CheckerInput Fact)
+    (arena : Arena) (action : Action) (proposed : Fact)
+    (payload : PayloadId) (program : Program)
+    (basePrefix : ProgramPrefix input.baseProgram program)
+    (assumptions : List (NodeFact Fact)) (node : NodeId) :
+    Option (Evidence
+      (semantics.Entails program assumptions { node, fact := proposed })) := do
+  let entry ← arena.entry? payload .fact
+  if _origin : action = entry.origin then
+    registry.dispatchFact input entry
+      { program
+        basePrefix
+        assumptions
+        proposed := { node, fact := proposed } }
+  else
+    none
+
+/-- Fetch the exact instance recipe named by a retained event, reject a
+transplanted origin, and only then enter the typed schema dispatcher.  The
+remaining context fields are supplied by chronological structural replay. -/
+def replayInstance {Fact : Type} {semantics : Semantics Fact}
+    (registry : Registry semantics) (input : CheckerInput Fact)
+    (arena : Arena) (event : InstanceEvent)
+    (before after : Program)
+    (basePrefix : ProgramPrefix input.baseProgram before)
+    (stepPrefix : ProgramPrefix before after)
+    (sameOperations : before.operations = after.operations) :
+    Option (Evidence (semantics.Extends before after)) := do
+  let entry ← arena.entry? event.payload .instance
+  if origin : event.origin = entry.origin then
+    registry.dispatchInstance input entry
+      { before
+        after
+        basePrefix
+        stepPrefix
+        sameOperations
+        event
+        origin }
+  else
+    none
+
+/-- Fetch the exact equality recipe named by a retained edge, reject a
+transplanted origin, and only then enter the typed schema dispatcher. -/
+def replayEquality {Fact : Type} {semantics : Semantics Fact}
+    (registry : Registry semantics) (input : CheckerInput Fact)
+    (arena : Arena) (equality : EqualityId) (edge : EqualityEdge)
+    (program : Program)
+    (basePrefix : ProgramPrefix input.baseProgram program)
+    (assumptions : List (NodeFact Fact)) :
+    Option (Evidence
+      (semantics.EntailsEq program assumptions edge.left edge.right)) := do
+  let entry ← arena.entry? edge.payload .equality
+  if origin : edge.origin = entry.origin then
+    registry.dispatchEquality input entry
+      { program
+        basePrefix
+        assumptions
+        equality
+        edge
+        origin }
+  else
+    none
 
 end Registry
 
@@ -356,9 +590,8 @@ A complete checker still has to validate, in one forward pass:
 * exact base-prefix preservation and initial-fact length;
 * chronological versions, `previous` links, and action-input resolution using
   only the already-checked event prefix;
-* package-owned instance and equality schemas for the explicitly deferred
-  non-fact `ReplayFormat` declarations, including proof of every appended
-  instruction and admitted equality;
+* structural reconstruction of every retained instance and equality context
+  before dispatch to the now-covered package-owned semantic schemas;
 * composition of the rule entailment and fact-domain meet evidence into an
   installed-fact theorem; and
 * final closure of `CheckerInput.target`.
