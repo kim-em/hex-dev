@@ -1162,6 +1162,18 @@ session start. Packages resolve its snapshot-local `OpId` from the stable
 authoritative. Dynamic operation-table growth remains an open design rather
 than an implemented capability.
 
+A second non-polynomial vertical recognizes the opaque shape `sin (-x)`,
+instantiates both `sin x` and `-(sin x)`, and proves their equality with a
+package-owned `Real.sin_neg` schema. Its sine and negation fact schemas decode
+nonempty node/method certificates, check unary node structure by opaque
+operation key, establish `sin x ∈ [0,1]` from `x ∈ [0,2]`, and propagate this
+to `-(sin x) ∈ [-1,0]`; generic equality transport then contracts the original
+node. The package semantics is structural over arbitrary programs rather than
+a literal lookup table for the two test programs, and the concrete source
+model has an explicit non-vacuity witness. The generic composed-extension
+checker returns the `sin (-x) ∈ [-1,0]` theorem directly over the caller's base
+program; no sine-specific post-replay lift is used.
+
 This remains an experiment rather than the production checker. Its complete
 program snapshot per instance and repeated prefix scans are a correctness
 canary, not a scalable trace format; a delta-encoded, indexed replay experiment
@@ -2816,6 +2828,12 @@ replacing Lean's total inverse with a partial reciprocal.
   fact; its anchor-local proposal remains append-stable and does not consume
   closure budget by rerunning after its own extension, while `z = 2*y` shows a
   backward contraction waking an initially inapplicable forward rule;
+- an end-to-end non-polynomial run in which a shape rule over opaque operation
+  keys recognizes `sin (-x)`, instantiates `sin x` and `-(sin x)`, replays
+  nonempty sine, negation, instance, and `Real.sin_neg` certificates through
+  structural node semantics, rejects a wrong identity schema, transports
+  `[-1,0]` back to the original node, and proves the corresponding concrete
+  real theorem from an inhabited source model;
 - the same concrete registry under the external policy driver, selecting
   propagation, structural matching, instantiation, equality, reciprocal retry,
   and a function-owned split in a checked event order; it returns an
