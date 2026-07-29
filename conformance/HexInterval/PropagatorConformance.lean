@@ -298,7 +298,6 @@ def instantiateInvoke (calls : Nat) (request : RuleRequest Rank) :
     Outcome Rank × Nat :=
   let proposal : InstantiationRequest :=
     { key := 7
-      triggers := [request.action.node]
       nodes := [proposedUnary request.action.node]
       equalities := []
       payload := { index := 11 } }
@@ -339,7 +338,6 @@ def proposedGenerated (input : NodeId) : ProposedNode :=
 
 def dynamicProposal (request : RuleRequest Rank) : InstantiationRequest :=
   { key := 19
-    triggers := [request.action.node]
     nodes := [proposedGenerated request.action.node]
     equalities := []
     payload := { index := 23 } }
@@ -431,7 +429,6 @@ def cseRule (key : RuleKey) : Registration :=
 def cseProposal (request : RuleRequest Rank) (left : NodeId) :
     InstantiationRequest :=
   { key := left.index
-    triggers := [request.action.node, left]
     nodes :=
       [proposedGenerated request.action.node,
         { domain := real
@@ -526,7 +523,6 @@ def towerDrafts (anchor : NodeId) (count : Nat) : List ProposedNode :=
 def towerInvoke (calls : Nat) (request : RuleRequest Rank) : Outcome Rank × Nat :=
   let proposal : InstantiationRequest :=
     { key := 43
-      triggers := [request.action.node]
       nodes := towerDrafts request.action.node (request.program.nodes.size - 1)
       equalities := []
       payload := { index := 47 } }
@@ -551,16 +547,18 @@ def towerFinal? : Option (RunResult Rank Nat) := do
 
 -- Each fresh request CSE-hits the materialized prefix and asks for one more
 -- node. All instances remain theorem-generation one, but the third reply is
--- rejected before retention because its last node would have depth four.
+-- accepted with its individually unaffordable proposal dropped because its
+-- last node would have depth four. Unrelated rule processing can continue.
 #guard
   match towerFinal? with
   | some result =>
-      result.stop == .engineResource .nodeDepth &&
+      result.stop == .saturated &&
         result.state.program.nodes.size == 4 &&
         result.state.generations.toList == [0, 0, 1, 1] &&
         result.state.depths.toList == [0, 1, 2, 3] &&
         result.state.instances.length == 2 &&
         result.state.suggestions.size == 2 &&
+        result.state.metrics.droppedSuggestions == 1 &&
         result.state.metrics.requests == 3 &&
         result.state.metrics.generatedNodes == 2
   | none => false
@@ -598,7 +596,6 @@ def ladderProposal (request : RuleRequest Rank) : InstantiationRequest :=
     dynamicProposal request
   else
     { key := 29
-      triggers := [request.action.node]
       nodes := [proposedNext request.action.node]
       equalities := []
       payload := { index := 31 } }
@@ -665,10 +662,9 @@ def ladderFinal? : Option (RunResult Rank (List String)) := do
       | _ => false
   | none => false
 
--- A registry claim cannot launder a generation-one invocation back to
--- generation one.  The engine ignores the claim and derives generation two
--- from the action anchor even when the trigger list and draft mention only a
--- shallow node.
+-- Replacing a retained proposal with a shallow draft cannot launder a
+-- generation-one invocation back to generation one. The engine derives
+-- generation two from the authoritative action anchor.
 #guard
   match ladderAfterFirst? with
   | some first =>
@@ -676,7 +672,6 @@ def ladderFinal? : Option (RunResult Rank (List String)) := do
       | some retained =>
           let proposal : InstantiationRequest :=
             { key := 97
-              triggers := []
               nodes := [proposedNext (node 0)]
               equalities := []
               payload := { index := 101 } }
@@ -723,7 +718,6 @@ def batchEquality (anchor : NodeId) : ProposedEquality :=
 def batchInvoke (calls : Nat) (request : RuleRequest Rank) : Outcome Rank × Nat :=
   let proposal : InstantiationRequest :=
     { key := 37
-      triggers := [request.action.node]
       nodes :=
         [proposedGeneratedRef (.existing request.action.node),
           proposedGeneratedRef (.existing request.action.node),
@@ -785,11 +779,10 @@ def pairEqualityRule : Registration :=
     watches := [.result]
     writes := [] }
 
-def pairEqualityInvoke (calls : Nat) (request : RuleRequest PairRank) :
+def pairEqualityInvoke (calls : Nat) (_request : RuleRequest PairRank) :
     Outcome PairRank × Nat :=
   let proposal : InstantiationRequest :=
     { key := 47
-      triggers := [request.action.node]
       nodes := []
       equalities :=
         [{ left := .existing (node 0)
@@ -825,7 +818,6 @@ def pairReuseAdmitted? : Option (Engine PairRank) := do
   let retained <- state.suggestions[0]?
   let proposal : InstantiationRequest :=
     { key := 103
-      triggers := []
       nodes := [proposedUnary (node 1)]
       equalities :=
         [{ left := .existing (node 1)
@@ -884,7 +876,6 @@ def pairReuseAdmitted? : Option (Engine PairRank) := do
       | some retained =>
           let proposal : InstantiationRequest :=
             { key := 113
-              triggers := []
               nodes := []
               equalities :=
                 [{ left := .existing (node 0)
@@ -994,7 +985,6 @@ def alternateEqualityRule : Registration :=
 
 def alternateEqualityProposal (request : RuleRequest Rank) : InstantiationRequest :=
   { key := 61
-    triggers := [request.action.node]
     nodes :=
       [proposedGeneratedRef (.existing request.action.node),
         proposedNextRef (.proposed 0)]
@@ -1207,15 +1197,16 @@ def firstRequestWith? (domain : FactDomain Rank) :
       | _ => false
   | none => false
 
--- Trigger cardinality and every trigger reference are part of the proposal's
--- own boundedness predicate, including callers which invoke it directly.
+-- Proposed-node cardinality is part of the proposal's own boundedness
+-- predicate, including callers which invoke it directly.
 #guard
   match firstChainRequest? with
   | some (request, awaiting) =>
       let proposal : InstantiationRequest :=
         { key := 73
-          triggers := List.replicate (generous.maxProposalItems + 1) (node 0)
-          nodes := []
+          nodes :=
+            List.replicate (generous.maxProposalItems + 1)
+              { domain := real, op := { index := 1 }, args := [.existing (node 0)] }
           equalities := []
           payload := { index := 79 } }
       match awaiting.submit (request.action.reply

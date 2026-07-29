@@ -409,8 +409,6 @@ def invokeCenteredSplit (request : RuleRequest Fact) : Outcome Fact :=
 structure CenteredBinding where
   anchor : NodeId
   input : NodeId
-  complement : NodeId
-  one : NodeId
 
 def centeredBinding? (request : RuleRequest Fact) : Option CenteredBinding := do
   if request.program.programVersion != request.action.programVersion then none else pure ()
@@ -422,7 +420,7 @@ def centeredBinding? (request : RuleRequest Fact) : Option CenteredBinding := do
   let [one, repeated] := difference.args | none
   if repeated != input then none else pure ()
   if request.program.operationKey? one != some oneOp then none else pure ()
-  pure { anchor := request.action.node, input, complement, one }
+  pure { anchor := request.action.node, input }
 
 def centeredProposal? (request : RuleRequest Fact)
     (binding : CenteredBinding) : Option InstantiationRequest := do
@@ -431,7 +429,6 @@ def centeredProposal? (request : RuleRequest Fact)
   if input.domain != signature.output then none else pure ()
   pure
     { key := centeredFamilyKey
-      triggers := [binding.anchor, binding.input, binding.complement, binding.one]
       nodes :=
         [{ domain := signature.output
            op := operation

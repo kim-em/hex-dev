@@ -402,7 +402,7 @@ def retainedSemanticItems (retained : RetainedSuggestion) : Nat :=
     match retained.suggestion with
     | .retry _ | .split _ => 0
     | .instantiate request =>
-        request.triggers.length + request.nodes.length + request.equalities.length +
+        request.nodes.length + request.equalities.length +
           (request.nodes.foldl (fun count node => count + node.args.length) 0)
 
 def offerSemanticItems (state : Policy.State Fact) : OfferId -> Nat

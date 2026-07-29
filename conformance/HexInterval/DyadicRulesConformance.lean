@@ -407,8 +407,7 @@ def badSignatureProgram : Program :=
               retained.action.inputs.isEmpty &&
               match retained.suggestion with
               | .instantiate request =>
-                  request.triggers == [node 3, node 0, node 2, node 1] &&
-                    request.nodes.length == 1 && request.equalities.length == 1
+                  request.nodes.length == 1 && request.equalities.length == 1
               | _ => false
         | none => false
   | none => false

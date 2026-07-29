@@ -506,9 +506,6 @@ structure ProposedEquality where
 recomputes generations and assigns concrete node identifiers. -/
 structure InstantiationRequest where
   key : Nat
-  /-- Replay-facing matcher metadata. It is bounded but is not authoritative
-  theorem dependency data and does not partition engine or policy identity. -/
-  triggers : List NodeId
   nodes : List ProposedNode
   equalities : List ProposedEquality
   payload : PayloadId
@@ -1130,9 +1127,7 @@ def existingRefBounded (nodeCount : Nat) : NodeRef -> Bool
   | .proposed _ => true
 
 def proposalBounded (nodeCount limit : Nat) (request : InstantiationRequest) : Bool :=
-  listWithin limit request.triggers && listWithin limit request.nodes &&
-    listWithin limit request.equalities &&
-    request.triggers.all (fun node => node.index < nodeCount) &&
+  listWithin limit request.nodes && listWithin limit request.equalities &&
     request.nodes.all (fun node => listWithin limit node.args &&
       node.args.all (existingRefBounded nodeCount)) &&
     request.equalities.all (fun edge =>
@@ -1245,18 +1240,23 @@ inductive ProposalCheck where
   | resourceLimit (resource : Resource)
 
 /-- Perform the same shape, typed-reference, equality, and structural-depth
-checks used by admission, without mutating the live engine. -/
+checks used by admission, without mutating the live engine. Structural
+validation deliberately runs to completion before the depth classification:
+a malformed proposal cannot disguise itself as a recoverable depth loss. -/
 def checkInstantiationProposal (program : Program) (depths : Array Nat)
     (maxNodeDepth : Nat) (request : InstantiationRequest) : ProposalCheck :=
   let baseSize := program.nodes.size
-  match resolveDrafts baseSize maxNodeDepth program depths [] request.nodes with
+  let validationDepth := depths.foldl Nat.max 0 + request.nodes.length
+  match resolveDrafts baseSize validationDepth program depths [] request.nodes with
   | .error .badReferenceOrShape => .malformed
-  | .error .nodeDepth => .resourceLimit .nodeDepth
-  | .ok (program, _, resolved) =>
-      if (resolveRequestedPairs baseSize resolved program request.equalities).isSome then
-        .valid
-      else
+  | .error .nodeDepth => .malformed
+  | .ok (program, depths, resolved) =>
+      if (resolveRequestedPairs baseSize resolved program request.equalities).isNone then
         .malformed
+      else if depths.any (fun depth => maxNodeDepth < depth) then
+        .resourceLimit .nodeDepth
+      else
+        .valid
 
 namespace Engine
 
@@ -1366,36 +1366,57 @@ def installCandidates (action : Action) :
           candidate.node :: changed
       pure (next, changed)
 
-/-- Remaining capacity in the engine-owned retained-suggestion prefix. -/
+/-- Remaining capacity in the engine-owned retained-suggestion array. -/
 def suggestionRoom (state : Engine Fact) : Nat :=
   state.limits.maxRetainedSuggestions - state.suggestions.size
 
-/-- The exact suggestion prefix which `submit` will retain. Policy layers use
-this helper rather than duplicating the retention arithmetic when deciding
-whether discarded work affects completeness. -/
-def keptSuggestions (state : Engine Fact)
-    (suggestions : List Suggestion) : List Suggestion :=
-  suggestions.take state.suggestionRoom
+/-- Exact result of validating and capacity-filtering one reply's suggestions.
+`kept` retains source order. `dropped` contains both capacity overflow and
+individually unaffordable structural proposals, also in source order. -/
+structure SuggestionPlan where
+  kept : List Suggestion := []
+  dropped : List Suggestion := []
 
-/-- The exact suggestion suffix which `submit` will discard. -/
-def droppedSuggestions (state : Engine Fact)
-    (suggestions : List Suggestion) : List Suggestion :=
-  suggestions.drop state.suggestionRoom
+/-- A malformed suggestion which had room to enter policy state invalidates
+the whole reply. Resource-limited structural suggestions are instead
+recoverable losses recorded in `SuggestionPlan.dropped`. -/
+inductive SuggestionCheck where
+  | ready (plan : SuggestionPlan)
+  | malformed
 
-/-- Validate every instantiation in the exact prefix about to be retained.
-Malformed structural work must not enter policy state and later disappear as
-if it had merely become stale. -/
-def checkRetainedProposals (state : Engine Fact) :
-    List Suggestion -> ProposalCheck
-  | [] => .valid
-  | .retry _ :: suggestions | .split _ :: suggestions =>
-      checkRetainedProposals state suggestions
-  | .instantiate request :: suggestions =>
-      match checkInstantiationProposal state.program state.depths
-          state.limits.maxNodeDepth request with
-      | .valid => checkRetainedProposals state suggestions
+/-- Classify the exact suggestions which `submit` can retain. An unaffordable
+instantiation does not consume retained capacity, so later affordable advice
+from the same atomic reply can survive. Once capacity is exhausted, the
+remaining suffix is dropped without structural validation, preserving the
+existing rule that only work selected for retention can invalidate a reply. -/
+def classifySuggestions (state : Engine Fact) :
+    Nat -> List Suggestion -> SuggestionCheck
+  | _, [] => .ready {}
+  | 0, suggestions => .ready { dropped := suggestions }
+  | room + 1, suggestion :: suggestions =>
+      let checked :=
+        match suggestion with
+        | .retry _ | .split _ => ProposalCheck.valid
+        | .instantiate request =>
+            checkInstantiationProposal state.program state.depths
+              state.limits.maxNodeDepth request
+      match checked with
       | .malformed => .malformed
-      | .resourceLimit resource => .resourceLimit resource
+      | .valid =>
+          match classifySuggestions state room suggestions with
+          | .malformed => .malformed
+          | .ready plan => .ready { plan with kept := suggestion :: plan.kept }
+      | .resourceLimit _ =>
+          match classifySuggestions state (room + 1) suggestions with
+          | .malformed => .malformed
+          | .ready plan => .ready { plan with dropped := suggestion :: plan.dropped }
+
+/-- Apply the live retained-suggestion capacity to one already surface-bounded
+reply. Engine admission and policy completeness accounting both use this exact
+classification. -/
+def suggestionPlan (state : Engine Fact)
+    (suggestions : List Suggestion) : SuggestionCheck :=
+  classifySuggestions state state.suggestionRoom suggestions
 
 /-- Validate and atomically admit one rule reply.  Candidate facts are all
 installed before the union of affected dependencies is woken. -/
@@ -1432,15 +1453,12 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
                 match candidatesAuthorized application.writes candidates with
                 | some error => .invalid error base
                 | none =>
-                    let retainedSuggestions := state.keptSuggestions suggestions
-                    let droppedSuggestions := (state.droppedSuggestions suggestions).length
-                    match state.checkRetainedProposals retainedSuggestions with
+                    match state.suggestionPlan suggestions with
                     | .malformed => .invalid .malformedProposal base
-                    | .resourceLimit resource => .resourceLimit resource base
-                    | .valid =>
+                    | .ready plan =>
                         let working : Engine Fact :=
                           { base with
-                            suggestions := retainedSuggestions.foldl
+                            suggestions := plan.kept.foldl
                               (fun retained suggestion => retained.push
                                 (state.retainSuggestion action suggestion))
                               base.suggestions
@@ -1448,7 +1466,7 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
                               { base.metrics with
                                 candidates := base.metrics.candidates + candidates.length
                                 droppedSuggestions :=
-                                  base.metrics.droppedSuggestions + droppedSuggestions } }
+                                  base.metrics.droppedSuggestions + plan.dropped.length } }
                         match installCandidates action working candidates with
                         | .error (_, some budget, _) =>
                             .factResourceLimit budget base
@@ -1646,9 +1664,7 @@ def requestExistingRefs (request : InstantiationRequest) : List NodeId :=
     request.equalities.flatMap (fun edge => existingRefs [edge.left, edge.right])
 
 /-- Canonical engine-owned substitution of an invocation: its anchor followed
-by every declared fact dependency, with the first occurrence retained.  The
-registry's `InstantiationRequest.triggers` field is replay data and cannot
-weaken either generation accounting or structural duplicate detection. -/
+by every declared fact dependency, with the first occurrence retained. -/
 def actionSubstitution (action : Action) : List NodeId :=
   dedupList (action.node :: action.inputs.map (fun input => input.node))
 

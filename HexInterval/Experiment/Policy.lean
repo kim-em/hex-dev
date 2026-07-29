@@ -788,12 +788,14 @@ def emittedSuggestions (before after : Nat) : Array OfferId := Id.run do
     emitted := emitted.push (.suggestion { index := before + offset })
   return emitted
 
-/-- Detect narrowing-capable suggestions which the engine's bounded retained
-prefix will discard.  This must run against the pre-reply engine because the
-dropped suffix is intentionally absent from the accepted snapshot. -/
+/-- Detect narrowing-capable suggestions which exact engine classification
+will discard. This must run against the pre-reply engine because dropped work
+is intentionally absent from the accepted snapshot. -/
 def droppedAffectsClosure (state : Engine Fact) : Outcome Fact -> Bool
   | .success _ suggestions _ =>
-      (state.droppedSuggestions suggestions).any Suggestion.affectsClosure
+      match state.suggestionPlan suggestions with
+      | .ready plan => plan.dropped.any Suggestion.affectsClosure
+      | .malformed => false
   | .noChange _ | .inapplicable | .resourceLimit _ | .failed _ => false
 
 inductive SubmitResult (Fact : Type) where

@@ -140,7 +140,6 @@ def proposedG : ProposedNode :=
 
 def instantiateG (request : RuleRequest Rank) : InstantiationRequest :=
   { key := 31
-    triggers := [request.action.node]
     nodes := [proposedG]
     equalities :=
       [{ left := .existing request.action.node
@@ -650,18 +649,9 @@ def proposedGAt (input : NodeId) : ProposedNode :=
 
 def instantiateAt (family : Nat) (input : NodeId) : InstantiationRequest :=
   { key := family
-    triggers := [input]
     nodes := [proposedGAt input]
     equalities := []
     payload := { index := family } }
-
--- Replay-facing trigger metadata cannot partition payload-erased policy
--- identity for the same source invocation and structural proposal.
-#guard
-  let first := instantiateAt 101 (node 0)
-  let second := { first with triggers := [node 1, node 0] }
-  InstantiationSemanticKey.ofRequest first 1 ==
-    InstantiationSemanticKey.ofRequest second 1
 
 def twoInstances (request : RuleRequest Rank) : Outcome Rank :=
   .success [candidate request 1]
@@ -698,7 +688,6 @@ def emptyInstance (request : RuleRequest Rank) : Outcome Rank :=
   .success [candidate request 1]
     [.instantiate
       { key := 107
-        triggers := [request.action.node]
         nodes := []
         equalities := []
         payload := { index := 109 } }]
@@ -719,10 +708,9 @@ def emptyInstance (request : RuleRequest Rank) : Outcome Rank :=
       | _ => false
 
 def selfEqualityInstance (request : RuleRequest Rank) : Outcome Rank :=
-  .success []
+  .success [candidate request 3]
     [.instantiate
       { key := 127
-        triggers := [request.action.node]
         nodes := []
         equalities :=
           [{ left := .existing (node 0)
@@ -752,6 +740,37 @@ def overflowSplit (_ : RuleRequest Rank) : Outcome Rank :=
   .success []
     [.split { node := node 0, point := 0, reason := .midpoint }] {}
 
+def overdepthG (request : RuleRequest Rank) : InstantiationRequest :=
+  { key := 139
+    nodes :=
+      [{ domain := real
+         op := { index := 2 }
+         args := [.existing request.action.node] }]
+    equalities := []
+    payload := { index := 149 } }
+
+def mixedDepth (request : RuleRequest Rank) : Outcome Rank :=
+  .success [candidate request 2]
+    [.instantiate (instantiateG request),
+      .instantiate (overdepthG request),
+      .retry 1] {}
+
+def overdepthMalformed (request : RuleRequest Rank) : Outcome Rank :=
+  .success [candidate request 3]
+    [.instantiate
+      { overdepthG request with
+        equalities :=
+          [{ left := .existing (node 0)
+             right := .existing (node 0)
+             payload := { index := 151 } }] }]
+    {}
+
+def overdepthMalformedResult? : Option (SubmitResult Rank) := do
+  let limits := { engineLimits with maxNodeDepth := 1 }
+  let state <- initialWithLimits? limits policyLimits
+  let (request, state) <- request? state (.application (application 0))
+  some (state.submit (request.action.reply (overdepthMalformed request)))
+
 def startWithWeakRetry? : Option (State Rank) := do
   let engine <- match Engine.start rankDomain program #[fRule, gRule] #[0, 0] engineLimits with
     | .ok engine => some engine
@@ -777,8 +796,43 @@ def startWithWeakRetry? : Option (State Rank) := do
 #guard
   match selfEqualityResult? with
   | some (.invalid .malformedProposal state) =>
-      state.incomplete && state.engine.suggestions.isEmpty
+      state.incomplete && state.engine.facts.toList == [0, 0] &&
+        state.engine.history.isEmpty && state.engine.suggestions.isEmpty
   | _ => false
+
+-- Structural validation outranks recoverable depth filtering: a bad equality
+-- after an over-depth draft still invalidates the whole reply atomically.
+#guard
+  match overdepthMalformedResult? with
+  | some (.invalid .malformedProposal state) =>
+      state.incomplete && state.engine.facts.toList == [0, 0] &&
+        state.engine.history.isEmpty && state.engine.suggestions.isEmpty &&
+        state.engine.metrics.droppedSuggestions == 0
+  | _ => false
+
+-- A depth-limited instantiation is a recoverable loss local to that
+-- suggestion. The useful candidate commits, the valid instantiation and later
+-- retry keep their source order, the dropped proposal is counted, and policy
+-- cannot report a false fixed point.
+#guard
+  match observedWith? { engineLimits with maxNodeDepth := 1 } mixedDepth with
+  | some (observation, state) =>
+      observation.outcome == .success &&
+        oneChange observation.changes (node 1) 0 2 0 1 &&
+        observation.emittedSuggestions.toList ==
+          [.suggestion (suggestion 0), .suggestion (suggestion 1)] &&
+        state.engine.facts.toList == [0, 2] &&
+        state.engine.history.size == 1 &&
+        state.engine.metrics.candidates == 1 &&
+        state.engine.metrics.droppedSuggestions == 1 &&
+        state.engine.suggestions.size == 2 && state.incomplete &&
+        match state.engine.suggestions[0]?, state.engine.suggestions[1]? with
+        | some first, some second =>
+            match first.suggestion, second.suggestion with
+            | .instantiate request, .retry effort => request.key == 31 && effort == 1
+            | _, _ => false
+        | _, _ => false
+  | none => false
 
 -- A retry which fails its variant-specific freshness guard is tombstoned, but
 -- its disappearance cannot be mistaken for successful propagation.

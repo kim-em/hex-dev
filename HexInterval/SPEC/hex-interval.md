@@ -581,6 +581,10 @@ inspection does not become a hidden fact dependency.
 `ProgramView.findOp?` resolves a stable `OpKey` to this snapshot's local
 `OpId` and exact signature; package assembly order is never authoritative for
 frontend node identifiers.
+`ProgramView.depth?` exposes the engine-owned structural depth as advisory
+matcher data, so a package may avoid proposing an alternate which is already
+obviously too deep. It is not admission authority: the engine recomputes the
+complete proposed suffix against its current depth table.
 Anchor-local inspection adds no wakeup beyond the declared fact slots; a rule
 which reads the whole view declares `watchesProgram`, making program extension
 an explicit dependency.
@@ -656,19 +660,26 @@ ordinary interval facts. Typical uses include:
 
 An instantiation proposal is retained under the selected action's versioned
 `RuleKey`; its own `key : Nat` is only an untrusted family label for replay and
-is not canonical authority. The proposal also contains replay-facing trigger
-data, new SSA instructions, and equality or derived-fact recipes. The engine
-derives the canonical substitution from the selected action's anchor and
-declared input facts; a registry-provided trigger list cannot weaken resource
-accounting or change structural instance identity.
+is not canonical authority. The proposal contains new SSA instructions,
+equality or derived-fact recipes, and their opaque replay payloads. The engine
+derives the canonical substitution from the selected action's anchor,
+declared input facts, and existing nodes explicitly referenced by those
+instructions and recipes.
 
-Before any instantiation enters retained policy state, reply admission resolves
-its references, checks operation arities and domains, topological order, scope
-visibility, equality endpoints, and structural depth, and applies the same CSE
-rule used by final admission. A malformed request returns the named
-`ReplyError.malformedProposal`; a depth overrun returns the engine-owned
-`Resource.nodeDepth`. Neither is retained and neither may later disappear as a
-false “stale” policy event. Full admission revalidates against the current
+For every suggestion which still has retained capacity, reply admission
+resolves its references, checks operation arities and domains, topological
+order, scope visibility, equality endpoints, and structural depth, and applies
+the same CSE rule used by final admission. A malformed request returns the
+named `ReplyError.malformedProposal` and invalidates the whole reply before
+candidate facts or suggestions commit. A structurally valid request whose new
+nodes exceed `maxNodeDepth` is instead an individually recoverable loss: it is
+dropped and counted, does not consume retained capacity, and later affordable
+suggestions in the same reply remain eligible. The engine and policy wrapper
+use one exact classification of the kept and dropped lists; losing an
+instantiation marks policy completeness false, so the filtered reply cannot
+manufacture saturation. Once retained capacity is exhausted, the remaining
+suffix is dropped without structural validation, as it cannot enter live
+state. Full admission revalidates a selected proposal against the current
 append-only program before atomically updating consumer and rule indexes and
 retaining opaque recipe identifiers. Policy view construction consequently
 checks freshness and engine-owned generation without repeating draft
@@ -683,11 +694,7 @@ theorem instance or per generated product; that choice remains open below. In
 either case, a new expression is not trusted merely because a trigger matched.
 
 The authoritative references are the action substitution and old nodes named
-explicitly as existing inputs by proposed drafts or equalities. The proposal's
-`triggers` list remains replay-facing data and contributes neither to the
-engine `InstanceKey` nor to payload-erased policy identity. Allowing an
-untrusted trigger ordering or superset to partition otherwise identical offers
-would make scheduling depend on non-semantic package metadata. A proposed node
+explicitly as existing inputs by proposed drafts or equalities. A proposed node
 remains an output of the theorem instance when it CSE-hits an already
 materialized node: storage reuse cannot manufacture a proof dependency. Thus
 the same append-stable proposal has the same logical generation before and
@@ -738,7 +745,9 @@ caps this measure independently of `maxGeneration`. This distinction is
 essential for whole-program matchers: a matcher can repeatedly propose
 `g(anchor)`, `g(previous)`, and an ever longer CSE-hit prefix while every
 theorem instance remains generation one. The growing-tower canary admits the
-prefix through depth three and rejects the depth-four reply before retention.
+prefix through depth three, then drops the depth-four proposal without
+aborting the rest of its reply; policy accounting records that lost
+instantiation as incomplete.
 
 The general experiment activates proposed equality edges as indexed,
 replayable search contractors: improving either endpoint wakes transport in
@@ -1149,12 +1158,14 @@ not cached as mathematical inapplicability; a `failed` code is an opaque
 diagnostic identifier rather than a cost magnitude. Rules do not promise that
 greater effort always gives a tighter answer. The solver intersects every
 result with existing facts, measures the actual improvement, and learns from
-that observation. Retained suggestions are advisory: when their cumulative
-storage cap is full, the engine retains the bounded prefix, records how many
-were dropped, and still commits independently valid candidate facts. Before
-that suffix disappears, the policy wrapper checks its variants: dropping a
-retry or instantiation marks propagation incomplete, while dropping only
-split advice preserves fixed-point completeness.
+that observation. Retained suggestions are advisory: the engine computes one
+bounded kept/dropped classification, records how many were dropped, and still
+commits independently valid candidate facts. Capacity overflow drops the
+remaining suffix; an individually depth-limited instantiation is filtered
+without consuming capacity, allowing later affordable advice to survive.
+Before dropped work disappears, the policy wrapper checks its variants:
+dropping a retry or instantiation marks propagation incomplete, while dropping
+only split advice preserves fixed-point completeness.
 
 The base `Program` is static after validation. Generic cheap alternates may be
 present before search, and `rewrite` only changes which form in the current
@@ -2146,8 +2157,11 @@ typical, boundary, and adversarial inputs. In particular it includes:
   structural depths are identical in either order;
 - a genuine `watchesProgram` matcher which proposes an increasingly long
   generation-one tower: two extensions CSE-hit their old prefixes, while the
-  depth-four reply is rejected before retention by an exact
-  `maxNodeDepth = 3` cap;
+  depth-four proposal is dropped under an exact `maxNodeDepth = 3` cap without
+  aborting unrelated rule processing;
+- one mixed reply in which a candidate fact, an affordable instantiation, and
+  a later retry survive an over-depth instantiation between them; the loss is
+  counted and policy completeness becomes false;
 - reply-boundary rejection of malformed structural/equality proposals, with no
   retained offer that can later be silently tombstoned;
 - an end-to-end concrete registry run in which `x * (1 - x)` first receives
@@ -2182,8 +2196,8 @@ typical, boundary, and adversarial inputs. In particular it includes:
 - program-extension validation that rejects bad topology, duplicate canonical
   keys, invisible branch-local nodes, invalid equality endpoints, and an
   instantiation beyond each generation budget;
-- deterministic deduplication of two triggers proposing the same expression
-  and equality edge in different orders;
+- deterministic deduplication of two rules proposing the same expression and
+  equality edge in different orders;
 - two successive opaque instantiations which add absent expressions, activate
   their registered propagators, recompute generations one and two, and leave
   the previous snapshot intact at each one-step-short limit;
