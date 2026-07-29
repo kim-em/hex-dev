@@ -254,8 +254,8 @@ def keyedProposal? : Option InstantiationRequest :=
       match proposal.nodes with
       | [draft] =>
           draft.op.index == 7 &&
-            match resolveDrafts keyedProgram.nodes.size limits.maxNodeDepth
-                keyedProgram keyedView.depths [] proposal.nodes with
+            match resolveDrafts keyedProgram.nodes.size keyedProgram
+                keyedView.depths [] proposal.nodes with
             | .ok (resolvedProgram, depths, resolved) =>
                 resolvedProgram.nodes.size == keyedProgram.nodes.size &&
                   depths == keyedView.depths && resolved == [node 4]

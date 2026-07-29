@@ -780,6 +780,7 @@ structure RuleObservation (Fact : Type) where
   changes : Array (FactDelta Fact)
   contradiction : Bool
   cost : CostObservation
+  suggestionPlan : SuggestionPlan
   emittedSuggestions : Array OfferId
 
 def emittedSuggestions (before after : Nat) : Array OfferId := Id.run do
@@ -787,16 +788,6 @@ def emittedSuggestions (before after : Nat) : Array OfferId := Id.run do
   for offset in [0:after - before] do
     emitted := emitted.push (.suggestion { index := before + offset })
   return emitted
-
-/-- Detect narrowing-capable suggestions which exact engine classification
-will discard. This must run against the pre-reply engine because dropped work
-is intentionally absent from the accepted snapshot. -/
-def droppedAffectsClosure (state : Engine Fact) : Outcome Fact -> Bool
-  | .success _ suggestions _ =>
-      match state.suggestionPlan suggestions with
-      | .ready plan => plan.dropped.any Suggestion.affectsClosure
-      | .malformed => false
-  | .noChange _ | .inapplicable | .resourceLimit _ | .failed _ => false
 
 inductive SubmitResult (Fact : Type) where
   | accepted (observation : RuleObservation Fact) (state : State Fact)
@@ -828,18 +819,19 @@ opaque State.submit (state : State Fact) (reply : Reply Fact) : SubmitResult Fac
       | some application =>
           let before := state.engine
           match before.submit reply with
-          | .accepted engine =>
+          | .accepted plan engine =>
               let observation : RuleObservation Fact :=
                 { invocation := invocationOfAction state.scope action
                   outcome := outcomeTag reply.outcome
                   changes := deltasFor before engine application.writes
                   contradiction := engine.contradictory && !before.contradictory
                   cost := outcomeCost reply.outcome
+                  suggestionPlan := plan
                   emittedSuggestions :=
                     emittedSuggestions before.suggestions.size engine.suggestions.size }
               let next := advanceState state engine
               let incomplete :=
-                droppedAffectsClosure before reply.outcome ||
+                plan.affectsClosure ||
                   match reply.outcome with
                   | .resourceLimit _ | .failed _ => true
                   | .success _ _ _ | .noChange _ | .inapplicable => false

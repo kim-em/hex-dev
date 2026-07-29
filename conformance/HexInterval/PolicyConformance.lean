@@ -218,6 +218,8 @@ def exactInitialObservation (observation : RuleObservation Rank) : Bool :=
     observation.invocation.inputs == [{ node := node 0, version := 0 }] &&
     observation.outcome == .success && oneChange observation.changes (node 1) 0 1 0 1 &&
     !observation.contradiction && exactCost observation.cost 3 5 7 &&
+    observation.suggestionPlan.kept.length == 3 &&
+    observation.suggestionPlan.dropped.isEmpty &&
     observation.emittedSuggestions.toList ==
       [.suggestion (suggestion 0), .suggestion (suggestion 1), .suggestion (suggestion 2)]
 
@@ -227,6 +229,8 @@ def exactRetryObservation (observation : RuleObservation Rank) (changed : Bool) 
     (if changed then oneChange observation.changes (node 1) 1 4 1 2
       else noChanges observation.changes) &&
     !observation.contradiction && exactCost observation.cost 11 13 17 &&
+    observation.suggestionPlan.kept.isEmpty &&
+    observation.suggestionPlan.dropped.isEmpty &&
     observation.emittedSuggestions.isEmpty
 
 def exactGObservation (observation : RuleObservation Rank) (before : Nat) : Bool :=
@@ -236,6 +240,8 @@ def exactGObservation (observation : RuleObservation Rank) (before : Nat) : Bool
         (if before == 0 then 0 else 1) (if before == 0 then 1 else 2)
       else noChanges observation.changes) &&
     !observation.contradiction && exactCost observation.cost 19 23 29 &&
+    observation.suggestionPlan.kept.isEmpty &&
+    observation.suggestionPlan.dropped.isEmpty &&
     observation.emittedSuggestions.isEmpty
 
 def exactEqualityObservation (observation : EqualityObservation Rank)
@@ -541,7 +547,7 @@ def retainedEngineWith? (limits : Experiment.Propagator.Limits) : Option (Engine
   match engine.poll with
   | .request request awaiting =>
       match awaiting.submit (request.action.reply (invoke request)) with
-      | .accepted next => some next
+      | .accepted _ next => some next
       | _ => none
   | _ => none
 
@@ -707,17 +713,18 @@ def emptyInstance (request : RuleRequest Rank) : Outcome Rank :=
             next.engine.metrics.duplicateInstances == 1
       | _ => false
 
+def selfEqualityRequest (_request : RuleRequest Rank) : InstantiationRequest :=
+  { key := 127
+    nodes := []
+    equalities :=
+      [{ left := .existing (node 0)
+         right := .existing (node 0)
+         payload := { index := 131 } }]
+    payload := { index := 137 } }
+
 def selfEqualityInstance (request : RuleRequest Rank) : Outcome Rank :=
   .success [candidate request 3]
-    [.instantiate
-      { key := 127
-        nodes := []
-        equalities :=
-          [{ left := .existing (node 0)
-             right := .existing (node 0)
-             payload := { index := 131 } }]
-        payload := { index := 137 } }]
-    {}
+    [.instantiate (selfEqualityRequest request)] {}
 
 def selfEqualityResult? : Option (SubmitResult Rank) := do
   let state <- initialWithLimits? engineLimits policyLimits
@@ -755,6 +762,15 @@ def mixedDepth (request : RuleRequest Rank) : Outcome Rank :=
       .instantiate (overdepthG request),
       .retry 1] {}
 
+def depthThenRetry (request : RuleRequest Rank) : Outcome Rank :=
+  .success [candidate request 2]
+    [.instantiate (overdepthG request), .retry 1] {}
+
+def malformedSuffix (request : RuleRequest Rank) : Outcome Rank :=
+  .success [candidate request 2]
+    [.split { node := node 0, point := 0, reason := .midpoint },
+      .instantiate (selfEqualityRequest request)] {}
+
 def overdepthMalformed (request : RuleRequest Rank) : Outcome Rank :=
   .success [candidate request 3]
     [.instantiate
@@ -778,7 +794,7 @@ def startWithWeakRetry? : Option (State Rank) := do
   match engine.poll with
   | .request request awaiting =>
       match awaiting.submit (request.action.reply (weakRetry request)) with
-      | .accepted next => some (State.start next policyLimits)
+      | .accepted _ next => some (State.start next policyLimits)
       | _ => none
   | _ => none
 
@@ -807,7 +823,8 @@ def startWithWeakRetry? : Option (State Rank) := do
   | some (.invalid .malformedProposal state) =>
       state.incomplete && state.engine.facts.toList == [0, 0] &&
         state.engine.history.isEmpty && state.engine.suggestions.isEmpty &&
-        state.engine.metrics.droppedSuggestions == 0
+        state.engine.metrics.droppedSuggestions == 0 &&
+        state.engine.metrics.capacityDrops == 0 && state.engine.metrics.depthDrops == 0
   | _ => false
 
 -- A depth-limited instantiation is a recoverable loss local to that
@@ -825,12 +842,61 @@ def startWithWeakRetry? : Option (State Rank) := do
         state.engine.history.size == 1 &&
         state.engine.metrics.candidates == 1 &&
         state.engine.metrics.droppedSuggestions == 1 &&
+        state.engine.metrics.capacityDrops == 0 &&
+        state.engine.metrics.depthDrops == 1 &&
         state.engine.suggestions.size == 2 && state.incomplete &&
+        (match observation.suggestionPlan.kept, observation.suggestionPlan.dropped with
+        | [.instantiate kept, .retry effort], [.depth (.instantiate dropped)] =>
+            kept.key == 31 && dropped.key == 139 && effort == 1
+        | _, _ => false) &&
         match state.engine.suggestions[0]?, state.engine.suggestions[1]? with
         | some first, some second =>
             match first.suggestion, second.suggestion with
             | .instantiate request, .retry effort => request.key == 31 && effort == 1
             | _, _ => false
+        | _, _ => false
+  | none => false
+
+-- Depth filtering does not consume the sole retained-suggestion slot. The
+-- later retry is kept, and the exact engine plan reaches the policy
+-- observation without structural revalidation.
+#guard
+  match observedWith?
+      { engineLimits with maxNodeDepth := 1, maxRetainedSuggestions := 1 }
+      depthThenRetry with
+  | some (observation, state) =>
+      observation.outcome == .success &&
+        oneChange observation.changes (node 1) 0 2 0 1 &&
+        observation.emittedSuggestions.toList == [.suggestion (suggestion 0)] &&
+        state.engine.facts.toList == [0, 2] &&
+        state.engine.metrics.droppedSuggestions == 1 &&
+        state.engine.metrics.capacityDrops == 0 &&
+        state.engine.metrics.depthDrops == 1 &&
+        state.engine.suggestions.size == 1 && state.incomplete &&
+        match observation.suggestionPlan.kept, observation.suggestionPlan.dropped with
+        | [.retry effort], [.depth (.instantiate dropped)] =>
+            effort == 1 && dropped.key == 139
+        | _, _ => false
+  | none => false
+
+-- Suggestions beyond exact capacity never become retained work and therefore
+-- are not structurally validated. This malformed suffix is classified as a
+-- capacity loss, its useful sibling candidate commits, and losing the
+-- instantiation marks policy incomplete instead of invalidating the reply.
+#guard
+  match observedWith?
+      { engineLimits with maxRetainedSuggestions := 1 } malformedSuffix with
+  | some (observation, state) =>
+      observation.outcome == .success &&
+        oneChange observation.changes (node 1) 0 2 0 1 &&
+        observation.emittedSuggestions.toList == [.suggestion (suggestion 0)] &&
+        state.engine.facts.toList == [0, 2] &&
+        state.engine.metrics.droppedSuggestions == 1 &&
+        state.engine.metrics.capacityDrops == 1 &&
+        state.engine.metrics.depthDrops == 0 &&
+        state.engine.suggestions.size == 1 && state.incomplete &&
+        match observation.suggestionPlan.kept, observation.suggestionPlan.dropped with
+        | [.split _], [.capacity (.instantiate dropped)] => dropped.key == 127
         | _, _ => false
   | none => false
 
@@ -866,7 +932,9 @@ def startWithWeakRetry? : Option (State Rank) := do
       observation.outcome == .success &&
         observation.emittedSuggestions.toList == [.suggestion (suggestion 0)] &&
         state.engine.suggestions.size == 1 &&
-        state.engine.metrics.droppedSuggestions == 1 && state.incomplete &&
+        state.engine.metrics.droppedSuggestions == 1 &&
+        state.engine.metrics.capacityDrops == 1 &&
+        state.engine.metrics.depthDrops == 0 && state.incomplete &&
         match state.engine.suggestions[0]? with
         | some retained =>
             match retained.suggestion with
@@ -884,7 +952,9 @@ def startWithWeakRetry? : Option (State Rank) := do
       observation.outcome == .success &&
         observation.emittedSuggestions.toList == [.suggestion (suggestion 0)] &&
         state.engine.suggestions.size == 1 &&
-        state.engine.metrics.droppedSuggestions == 1 && state.incomplete
+        state.engine.metrics.droppedSuggestions == 1 &&
+        state.engine.metrics.capacityDrops == 1 &&
+        state.engine.metrics.depthDrops == 0 && state.incomplete
   | none => false
 
 -- Dropping only optional split advice does not make propagation incomplete.
@@ -894,7 +964,9 @@ def startWithWeakRetry? : Option (State Rank) := do
   | some (observation, state) =>
       observation.outcome == .success && observation.emittedSuggestions.isEmpty &&
         state.engine.suggestions.isEmpty &&
-        state.engine.metrics.droppedSuggestions == 1 && !state.incomplete &&
+        state.engine.metrics.droppedSuggestions == 1 &&
+        state.engine.metrics.capacityDrops == 1 &&
+        state.engine.metrics.depthDrops == 0 && !state.incomplete &&
         (state.view).toOption.any fun pair =>
           pair.1.offers.isEmpty && !pair.1.incomplete
   | none => false

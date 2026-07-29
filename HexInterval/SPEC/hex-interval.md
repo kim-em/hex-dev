@@ -585,6 +585,13 @@ frontend node identifiers.
 matcher data, so a package may avoid proposing an alternate which is already
 obviously too deep. It is not admission authority: the engine recomputes the
 complete proposed suffix against its current depth table.
+Structural inspection is restricted by a provenance contract. A matcher may
+follow nodes determined by its action anchor. Every additional side node which
+affects the theorem instance must be present either as a declared fact input
+or as an explicit `existing` reference in the proposal. Those are the two
+places engine-owned generation accounting can see it; merely calling
+`ProgramView.node?` on an arbitrary identifier does not make that node a
+generation dependency.
 Anchor-local inspection adds no wakeup beyond the declared fact slots; a rule
 which reads the whole view declares `watchesProgram`, making program extension
 an explicit dependency.
@@ -666,20 +673,24 @@ derives the canonical substitution from the selected action's anchor,
 declared input facts, and existing nodes explicitly referenced by those
 instructions and recipes.
 
-For every suggestion which still has retained capacity, reply admission
-resolves its references, checks operation arities and domains, topological
-order, scope visibility, equality endpoints, and structural depth, and applies
-the same CSE rule used by final admission. A malformed request returns the
-named `ReplyError.malformedProposal` and invalidates the whole reply before
-candidate facts or suggestions commit. A structurally valid request whose new
-nodes exceed `maxNodeDepth` is instead an individually recoverable loss: it is
-dropped and counted, does not consume retained capacity, and later affordable
-suggestions in the same reply remain eligible. The engine and policy wrapper
-use one exact classification of the kept and dropped lists; losing an
-instantiation marks policy completeness false, so the filtered reply cannot
-manufacture saturation. Once retained capacity is exhausted, the remaining
-suffix is dropped without structural validation, as it cannot enter live
-state. Full admission revalidates a selected proposal against the current
+For every suggestion which still has retained capacity, reply admission first
+resolves its complete uncapped draft, checks operation arities and domains,
+topological order, scope visibility and equality endpoints, and applies the
+same CSE rule used by final admission. Only after that full structural check
+does it compare `maxNodeDepth` with the freshly appended depth suffix; existing
+program depths were validated when their snapshot was created. A malformed
+request returns the named `ReplyError.malformedProposal` and invalidates the
+whole reply before candidate facts or suggestions commit. A structurally valid
+request whose new nodes exceed `maxNodeDepth` is instead an individually
+recoverable loss: it is dropped and counted, does not consume retained
+capacity, and later affordable suggestions in the same reply remain eligible.
+The engine returns one exact kept/drop-reason plan with the accepted state.
+`RuleObservation` preserves that same plan, and policy reads it directly
+rather than rerunning structural validation. Losing an instantiation marks
+policy completeness false, so the filtered reply cannot manufacture
+saturation. Once retained capacity is exhausted, the remaining suffix is
+dropped without structural validation, as it cannot enter live state. Full
+admission revalidates a selected proposal against the current
 append-only program before atomically updating consumer and rule indexes and
 retaining opaque recipe identifiers. Policy view construction consequently
 checks freshness and engine-owned generation without repeating draft
@@ -746,8 +757,10 @@ essential for whole-program matchers: a matcher can repeatedly propose
 `g(anchor)`, `g(previous)`, and an ever longer CSE-hit prefix while every
 theorem instance remains generation one. The growing-tower canary admits the
 prefix through depth three, then drops the depth-four proposal without
-aborting the rest of its reply; policy accounting records that lost
-instantiation as incomplete.
+aborting the rest of its reply. Its raw `drive` result is queue-saturated,
+which deliberately says nothing about retained suggestions or propagation
+completeness. A separate policy canary consumes the exact engine-issued drop
+plan and records the lost instantiation as incomplete.
 
 The general experiment activates proposed equality edges as indexed,
 replayable search contractors: improving either endpoint wakes transport in
@@ -760,6 +773,13 @@ retry, instantiation selection, and subdivision explicit state transitions
 over the same generic application protocol. Neither limitation is a reason to
 specialize the scheduler to rational operations or to bake function semantics
 into it.
+
+The raw `Propagator.drive` helper is only a bounded request/reply and equality
+worklist harness. Its `RunStop.saturated` constructor means that this queue is
+empty; the helper neither selects retained suggestions nor carries the policy
+incomplete bit. Only `Policy.State` and its driver may turn an empty frontier
+into proof-search saturation, and they return `unknown` when any
+closure-affecting suggestion was dropped or dismissed.
 
 ### Equality activation
 
@@ -1159,13 +1179,15 @@ diagnostic identifier rather than a cost magnitude. Rules do not promise that
 greater effort always gives a tighter answer. The solver intersects every
 result with existing facts, measures the actual improvement, and learns from
 that observation. Retained suggestions are advisory: the engine computes one
-bounded kept/dropped classification, records how many were dropped, and still
-commits independently valid candidate facts. Capacity overflow drops the
-remaining suffix; an individually depth-limited instantiation is filtered
-without consuming capacity, allowing later affordable advice to survive.
-Before dropped work disappears, the policy wrapper checks its variants:
-dropping a retry or instantiation marks propagation incomplete, while dropping
-only split advice preserves fixed-point completeness.
+bounded kept/drop-reason classification and still commits independently valid
+candidate facts. Metrics record the total omitted suggestions and separate
+capacity and structural-depth counts; the two category counts sum to the
+total. Capacity overflow drops the remaining suffix; an individually
+depth-limited instantiation is filtered without consuming capacity, allowing
+later affordable advice to survive. The exact plan accompanies the accepted
+reply into the policy observation. Dropping a retry or instantiation marks
+propagation incomplete, while dropping only split advice preserves
+fixed-point completeness.
 
 The base `Program` is static after validation. Generic cheap alternates may be
 present before search, and `rewrite` only changes which form in the current
@@ -1335,6 +1357,8 @@ structure RuleObservation (Fact : Type) where
   changes       : Array (FactDelta Fact)
   contradiction : Bool
   cost          : CostObservation
+  suggestionPlan      : SuggestionPlan
+  emittedSuggestions : Array OfferId
 
 inductive EqualityOutcome
   | noChange
@@ -2158,10 +2182,15 @@ typical, boundary, and adversarial inputs. In particular it includes:
 - a genuine `watchesProgram` matcher which proposes an increasingly long
   generation-one tower: two extensions CSE-hit their old prefixes, while the
   depth-four proposal is dropped under an exact `maxNodeDepth = 3` cap without
-  aborting unrelated rule processing;
+  aborting unrelated rule processing; the raw driver reports queue saturation,
+  not policy completeness;
 - one mixed reply in which a candidate fact, an affordable instantiation, and
   a later retry survive an over-depth instantiation between them; the loss is
   counted and policy completeness becomes false;
+- exact-capacity replies showing that an over-depth proposal does not consume
+  the sole retained slot, while a malformed instantiation already in the
+  capacity suffix is intentionally dropped without validation and marks
+  policy incomplete rather than invalidating the useful prefix;
 - reply-boundary rejection of malformed structural/equality proposals, with no
   retained offer that can later be silently tombstoned;
 - an end-to-end concrete registry run in which `x * (1 - x)` first receives

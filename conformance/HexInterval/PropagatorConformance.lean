@@ -116,6 +116,16 @@ def chainProgram : Program :=
   | .error (.resourceLimit .nodeDepth) => true
   | _ => false
 
+def emptyProposal : InstantiationRequest :=
+  { key := 3, nodes := [], equalities := [], payload := { index := 5 } }
+
+-- Proposal depth classification examines only nodes appended by that
+-- proposal. Existing depths belong to the already validated snapshot.
+#guard
+  match checkInstantiationProposal chainProgram #[0, 1, 2, 3, 4] 0 emptyProposal with
+  | .valid => true
+  | .malformed | .tooDeep => false
+
 def chainResult? : Option (RunResult Rank (List Nat)) := do
   let state <- start? chainProgram #[copyRule] #[4, 0, 0, 0, 0]
   pure (drive copyInvoke 16 state [])
@@ -548,7 +558,9 @@ def towerFinal? : Option (RunResult Rank Nat) := do
 -- Each fresh request CSE-hits the materialized prefix and asks for one more
 -- node. All instances remain theorem-generation one, but the third reply is
 -- accepted with its individually unaffordable proposal dropped because its
--- last node would have depth four. Unrelated rule processing can continue.
+-- last node would have depth four. The raw driver then reports only queue
+-- saturation; retained or dropped suggestions make no policy-completeness
+-- claim here.
 #guard
   match towerFinal? with
   | some result =>
@@ -559,6 +571,8 @@ def towerFinal? : Option (RunResult Rank Nat) := do
         result.state.instances.length == 2 &&
         result.state.suggestions.size == 2 &&
         result.state.metrics.droppedSuggestions == 1 &&
+        result.state.metrics.capacityDrops == 0 &&
+        result.state.metrics.depthDrops == 1 &&
         result.state.metrics.requests == 3 &&
         result.state.metrics.generatedNodes == 2
   | none => false
@@ -1140,9 +1154,10 @@ def firstRequestWith? (domain : FactDomain Rank) :
       | .request request awaiting =>
           match awaiting.submit (request.action.reply
               (.success [candidate request 4] [.retry 1] {})) with
-          | .accepted state =>
+          | .accepted _ state =>
               state.facts.toList == [4, 4, 0, 0, 0] && state.history.size == 1 &&
                 state.suggestions.isEmpty && state.metrics.droppedSuggestions == 1 &&
+                state.metrics.capacityDrops == 1 && state.metrics.depthDrops == 0 &&
                 state.metrics.candidates == 1
           | _ => false
       | _ => false
@@ -1155,7 +1170,7 @@ def firstRequestWith? (domain : FactDomain Rank) :
   | some (request, awaiting) =>
       match awaiting.submit (request.action.reply
           (.failed (generous.maxObservationValue + 1))) with
-      | .accepted state =>
+      | .accepted _ state =>
           state.pending.isNone && state.metrics.ruleFailures == 1 && state.history.isEmpty
       | _ => false
   | none => false

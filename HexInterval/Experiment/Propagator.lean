@@ -405,7 +405,12 @@ The explicit version lets registries key structural caches by the exact
 append-only snapshot.  Reply validation remains bound to the engine-owned
 `Action`, while retained instantiations recheck action freshness and resolve
 their complete structural effect against the current program.  Observing this
-view grants no mutation authority. -/
+view grants no mutation authority.
+
+A matcher may follow structure determined by its action anchor. Any additional
+side node which affects a proposed theorem instance must be named either by a
+declared fact input or by an explicit `existing` proposal reference.
+Generation accounting does not track arbitrary calls to `ProgramView.node?`. -/
 structure ProgramView where
   programVersion : Nat
   operations : Array Operation
@@ -542,6 +547,47 @@ contraction in the current branch. -/
 def Suggestion.affectsClosure : Suggestion -> Bool
   | .retry _ | .instantiate _ => true
   | .split _ => false
+
+/-- Why a bounded reply suggestion did not enter retained policy state. -/
+inductive SuggestionDrop where
+  | capacity (suggestion : Suggestion)
+  | depth (suggestion : Suggestion)
+
+namespace SuggestionDrop
+
+def suggestion : SuggestionDrop -> Suggestion
+  | .capacity suggestion | .depth suggestion => suggestion
+
+def affectsClosure (drop : SuggestionDrop) : Bool :=
+  drop.suggestion.affectsClosure
+
+end SuggestionDrop
+
+/-- Exact result of validating and capacity-filtering one reply's suggestions.
+Both lists retain source order. Every dropped suggestion records whether
+retained capacity or structural depth excluded it. -/
+structure SuggestionPlan where
+  kept : List Suggestion := []
+  dropped : List SuggestionDrop := []
+
+namespace SuggestionPlan
+
+def capacityDrops (plan : SuggestionPlan) : Nat :=
+  plan.dropped.foldl (fun count drop =>
+    match drop with
+    | .capacity _ => count + 1
+    | .depth _ => count) 0
+
+def depthDrops (plan : SuggestionPlan) : Nat :=
+  plan.dropped.foldl (fun count drop =>
+    match drop with
+    | .capacity _ => count
+    | .depth _ => count + 1) 0
+
+def affectsClosure (plan : SuggestionPlan) : Bool :=
+  plan.dropped.any SuggestionDrop.affectsClosure
+
+end SuggestionPlan
 
 /-- A policy candidate paired with engine-owned invocation provenance.  Split
 proposals retain the target version at proposal time; later policy adoption
@@ -689,7 +735,12 @@ structure Metrics where
   ruleFailures : Nat := 0
   admittedInstances : Nat := 0
   duplicateInstances : Nat := 0
+  /-- Total suggestions omitted from retained policy state. -/
   droppedSuggestions : Nat := 0
+  /-- Suggestions omitted because the retained array was full. -/
+  capacityDrops : Nat := 0
+  /-- Structurally valid instantiations omitted by `maxNodeDepth`. -/
+  depthDrops : Nat := 0
   generatedNodes : Nat := 0
   generatedEqualities : Nat := 0
   equalityRuns : Nat := 0
@@ -1087,7 +1138,7 @@ inductive ReplyError where
 
 /-- Result of atomically admitting one reply. -/
 inductive ReplyResult (Fact : Type) where
-  | accepted (state : Engine Fact)
+  | accepted (plan : SuggestionPlan) (state : Engine Fact)
   | invalid (error : ReplyError) (state : Engine Fact)
   | resourceLimit (resource : Resource) (state : Engine Fact)
   | factResourceLimit (budget : Nat) (state : Engine Fact)
@@ -1185,14 +1236,15 @@ def resolveRefs? (baseSize : Nat) (resolved : List NodeId)
 /-- Failure while resolving the structural part of an untrusted proposal. -/
 inductive DraftFault where
   | badReferenceOrShape
-  | nodeDepth
   deriving DecidableEq, Repr
 
 /-- Resolve draft nodes in order, validate each typed SSA instruction, and CSE
 against both old nodes and earlier new nodes.  Fresh nodes receive
 `1 + max(argument depths)` (nullaries have depth zero); a CSE hit preserves
-the engine-owned depth already stored for that node. -/
-def resolveDrafts (baseSize maxNodeDepth : Nat) :
+the engine-owned depth already stored for that node. This resolver is
+deliberately uncapped: callers first validate the complete untrusted shape,
+then separately classify only freshly appended depths. -/
+def resolveDrafts (baseSize : Nat) :
     Program -> Array Nat -> List NodeId -> List ProposedNode ->
       Except DraftFault (Program × Array Nat × List NodeId)
   | program, depths, resolved, [] => pure (program, depths, resolved)
@@ -1204,18 +1256,22 @@ def resolveDrafts (baseSize maxNodeDepth : Nat) :
         throw .badReferenceOrShape
       let some candidateDepth := Program.nodeDepth? depths args
         | throw .badReferenceOrShape
-      if maxNodeDepth < candidateDepth then
-        throw .nodeDepth
       match program.findNode? candidate with
       | some id =>
           let some storedDepth := depths[id.index]? | throw .badReferenceOrShape
           if storedDepth != candidateDepth then throw .badReferenceOrShape
-          resolveDrafts baseSize maxNodeDepth program depths (resolved ++ [id]) drafts
+          resolveDrafts baseSize program depths (resolved ++ [id]) drafts
       | none =>
           let id : NodeId := { index := program.nodes.size }
-          resolveDrafts baseSize maxNodeDepth
+          resolveDrafts baseSize
             { program with nodes := program.nodes.push candidate }
             (depths.push candidateDepth) (resolved ++ [id]) drafts
+
+/-- Whether every freshly appended node respects the structural-depth cap.
+Existing nodes were checked when their program snapshot was created and are
+not reclassified as losses of the current proposal. -/
+def appendedDepthsWithin (baseSize maxNodeDepth : Nat) (depths : Array Nat) : Bool :=
+  (depths.toList.drop baseSize).all fun depth => depth <= maxNodeDepth
 
 /-- Canonical endpoint set requested by an instantiation, before existing-edge
 deduplication.  This makes repeat selection detect the same instance even
@@ -1237,7 +1293,7 @@ def resolveRequestedPairs (baseSize : Nat) (resolved : List NodeId) (program : P
 inductive ProposalCheck where
   | valid
   | malformed
-  | resourceLimit (resource : Resource)
+  | tooDeep
 
 /-- Perform the same shape, typed-reference, equality, and structural-depth
 checks used by admission, without mutating the live engine. Structural
@@ -1246,15 +1302,13 @@ a malformed proposal cannot disguise itself as a recoverable depth loss. -/
 def checkInstantiationProposal (program : Program) (depths : Array Nat)
     (maxNodeDepth : Nat) (request : InstantiationRequest) : ProposalCheck :=
   let baseSize := program.nodes.size
-  let validationDepth := depths.foldl Nat.max 0 + request.nodes.length
-  match resolveDrafts baseSize validationDepth program depths [] request.nodes with
+  match resolveDrafts baseSize program depths [] request.nodes with
   | .error .badReferenceOrShape => .malformed
-  | .error .nodeDepth => .malformed
   | .ok (program, depths, resolved) =>
       if (resolveRequestedPairs baseSize resolved program request.equalities).isNone then
         .malformed
-      else if depths.any (fun depth => maxNodeDepth < depth) then
-        .resourceLimit .nodeDepth
+      else if !appendedDepthsWithin baseSize maxNodeDepth depths then
+        .tooDeep
       else
         .valid
 
@@ -1370,16 +1424,9 @@ def installCandidates (action : Action) :
 def suggestionRoom (state : Engine Fact) : Nat :=
   state.limits.maxRetainedSuggestions - state.suggestions.size
 
-/-- Exact result of validating and capacity-filtering one reply's suggestions.
-`kept` retains source order. `dropped` contains both capacity overflow and
-individually unaffordable structural proposals, also in source order. -/
-structure SuggestionPlan where
-  kept : List Suggestion := []
-  dropped : List Suggestion := []
-
 /-- A malformed suggestion which had room to enter policy state invalidates
-the whole reply. Resource-limited structural suggestions are instead
-recoverable losses recorded in `SuggestionPlan.dropped`. -/
+the whole reply. Depth-limited structural suggestions are instead recoverable
+losses recorded in `SuggestionPlan.dropped`. -/
 inductive SuggestionCheck where
   | ready (plan : SuggestionPlan)
   | malformed
@@ -1392,7 +1439,8 @@ existing rule that only work selected for retention can invalidate a reply. -/
 def classifySuggestions (state : Engine Fact) :
     Nat -> List Suggestion -> SuggestionCheck
   | _, [] => .ready {}
-  | 0, suggestions => .ready { dropped := suggestions }
+  | 0, suggestions =>
+      .ready { dropped := suggestions.map SuggestionDrop.capacity }
   | room + 1, suggestion :: suggestions =>
       let checked :=
         match suggestion with
@@ -1406,10 +1454,11 @@ def classifySuggestions (state : Engine Fact) :
           match classifySuggestions state room suggestions with
           | .malformed => .malformed
           | .ready plan => .ready { plan with kept := suggestion :: plan.kept }
-      | .resourceLimit _ =>
+      | .tooDeep =>
           match classifySuggestions state (room + 1) suggestions with
           | .malformed => .malformed
-          | .ready plan => .ready { plan with dropped := suggestion :: plan.dropped }
+          | .ready plan =>
+              .ready { plan with dropped := .depth suggestion :: plan.dropped }
 
 /-- Apply the live retained-suggestion capacity to one already surface-bounded
 reply. Engine admission and policy completeness accounting both use this exact
@@ -1433,7 +1482,7 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
       else
       match reply.outcome with
       | .noChange _ | .inapplicable | .resourceLimit _ | .failed _ =>
-          .accepted (state.outcomeNegative reply.outcome)
+          .accepted {} (state.outcomeNegative reply.outcome)
       | .success candidates suggestions _ =>
           let base := state.finishReply
           if !listWithin state.limits.maxOutcomeCandidates candidates then
@@ -1466,7 +1515,11 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
                               { base.metrics with
                                 candidates := base.metrics.candidates + candidates.length
                                 droppedSuggestions :=
-                                  base.metrics.droppedSuggestions + plan.dropped.length } }
+                                  base.metrics.droppedSuggestions + plan.dropped.length
+                                capacityDrops :=
+                                  base.metrics.capacityDrops + plan.capacityDrops
+                                depthDrops :=
+                                  base.metrics.depthDrops + plan.depthDrops } }
                         match installCandidates action working candidates with
                         | .error (_, some budget, _) =>
                             .factResourceLimit budget base
@@ -1475,7 +1528,7 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
                         | .ok (working, changed) =>
                             match working.wakeNodes changed with
                             | .error resource => .resourceLimit resource base
-                            | .ok next => .accepted next
+                            | .ok next => .accepted plan next
 
 def transportUpdate (target source : NodeId) (targetVersion sourceVersion : Nat) :
     NarrowResult Fact -> Except EqualityFactError (Option (TransportUpdate Fact))
@@ -1580,7 +1633,10 @@ end Engine
 
 universe u
 
-/-- Why a bounded request/reply run stopped. -/
+/-- Why a bounded request/reply run stopped. `saturated` means only that the
+raw engine queue is empty: this driver neither selects retained suggestions
+nor carries policy completeness, so it cannot certify a proof-search fixed
+point. -/
 inductive RunStop where
   | saturated
   | contradiction
@@ -1611,7 +1667,7 @@ def drive {Cache : Type u}
       | .request request awaiting =>
           let (outcome, cache) := invoke cache request
           match awaiting.submit (request.action.reply outcome) with
-          | .accepted next => drive invoke fuel next cache
+          | .accepted _ next => drive invoke fuel next cache
           | .invalid error next => { state := next, cache, stop := .invalidReply error }
           | .resourceLimit resource next =>
               { state := next, cache, stop := .engineResource resource }
@@ -1802,15 +1858,15 @@ def admitRetained (state : Engine Fact)
           .invalid (.staleSuggestion retained.action.programVersion state.programVersion) state
         else
           let baseSize := state.program.nodes.size
-          match resolveDrafts baseSize state.limits.maxNodeDepth state.program state.depths
-              [] request.nodes with
+          match resolveDrafts baseSize state.program state.depths [] request.nodes with
           | .error .badReferenceOrShape => .invalid .badReferenceOrShape state
-          | .error .nodeDepth => .resourceLimit .nodeDepth state
           | .ok (program, depths, resolved) =>
               let equalityPairs? :=
                 resolveRequestedPairs baseSize resolved program request.equalities
               if equalityPairs?.isNone then
                 .invalid .invalidEquality state
+              else if !appendedDepthsWithin baseSize state.limits.maxNodeDepth depths then
+                .resourceLimit .nodeDepth state
               else
               let substitution := actionSubstitution retained.action
               let instanceKey : InstanceKey :=
