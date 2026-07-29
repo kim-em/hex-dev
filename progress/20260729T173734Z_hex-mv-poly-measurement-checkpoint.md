@@ -24,22 +24,24 @@
 - Regenerated all eleven native ladders from clean commit `163e100c` with
   three outer trials per rung; every target remains consistent with its
   declared complexity and no ladder was budget-truncated.
+- Regenerated the five-family CompPoly and sorted-proxy exports from a pristine
+  pinned CompPoly checkout against clean Hex commit `a7430482`, again with
+  three outer trials, and rebuilt all five comparator figures.
 - Passed the full 9,649-job monorepo build, all registered conformance and
   proof-probe targets, all 11 native benchmark verifications, exact fixture
   regeneration, and 59 independent SymPy oracle cases.
 
 ## Current frontier
 
-The corrected kernel artifact/report and native export are recorded. Existing
-external comparator artifacts and their report tables predate the changed
-corpus and outer-trial schedule, so they are not valid evidence for this
-source state.
+The corrected kernel, native, and external comparator artifacts are recorded.
+The performance report and source-profile account still need to be aligned
+with the new artifacts.
 
 ## Next step
 
-Commit the native export, regenerate the two external comparator exports from
-the resulting clean commit, and replace the performance report tables and
-figures from those new artifacts.
+Commit the comparator exports and figures, refresh the five source profiles
+from the resulting clean commit, and replace the performance report tables
+and profile account.
 
 ## Blockers
 
