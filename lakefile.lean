@@ -250,10 +250,18 @@ lean_lib HexMvPolyMathlibProofProbe where
     `HexMvPolyMathlib.ProofProbe.SortedCancellation4,
     `HexMvPolyMathlib.ProofProbe.HexCancellation6,
     `HexMvPolyMathlib.ProofProbe.SortedCancellation6,
+    `HexMvPolyMathlib.ProofProbe.HexCancellationInputs8,
+    `HexMvPolyMathlib.ProofProbe.SortedCancellationInputs8,
+    `HexMvPolyMathlib.ProofProbe.HexCancellation8,
+    `HexMvPolyMathlib.ProofProbe.SortedCancellation8,
     `HexMvPolyMathlib.ProofProbe.HexSos3,
     `HexMvPolyMathlib.ProofProbe.SortedSos3,
     `HexMvPolyMathlib.ProofProbe.HexSos4,
     `HexMvPolyMathlib.ProofProbe.SortedSos4,
+    `HexMvPolyMathlib.ProofProbe.HexSosInputs6,
+    `HexMvPolyMathlib.ProofProbe.SortedSosInputs6,
+    `HexMvPolyMathlib.ProofProbe.HexSos6,
+    `HexMvPolyMathlib.ProofProbe.SortedSos6,
     `HexMvPolyMathlib.ProofProbe.HexStructural8,
     `HexMvPolyMathlib.ProofProbe.SortedStructural8]
 

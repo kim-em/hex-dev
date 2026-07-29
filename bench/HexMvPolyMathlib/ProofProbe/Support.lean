@@ -331,6 +331,18 @@ example : Sorted.strictlyOrdered Mono.grevlex
 example : Sorted.strictlyOrdered Mono.grlex
     (intTerms 8 53 (collisionMono 8)) := by
   decide +kernel
+example :
+    let f : Fin 4 → Fin 2 :=
+      fun j => if j.val % 2 = 0 then 0 else 1
+    Mono.rename f (collisionMono 8 0) =
+        Mono.rename f (collisionMono 8 1) ∧
+      Mono.rename f (collisionMono 8 2) =
+        Mono.rename f (collisionMono 8 3) ∧
+      Mono.rename f (collisionMono 8 4) =
+        Mono.rename f (collisionMono 8 5) ∧
+      Mono.rename f (collisionMono 8 6) =
+        Mono.rename f (collisionMono 8 7) := by
+  decide +kernel
 
 /-- Shared integer axis-support input in the production representation. -/
 def hexAxisInt (size : Nat) (axis : Fin 4) (salt : Nat) : HexInt :=
@@ -511,6 +523,29 @@ def sortedCancellationRat (size : Nat) : Prop :=
   let q := sortedAxisRat size 1 47
   (p + q) * (p + q) - (p * p + q * q) = p * q + q * p
 
+/-- Construction-only production workload matched to the integer and rational
+cancellation identities. -/
+def hexCancellationInputs (size : Nat) : Prop :=
+  let intLeft := hexAxisInt size 0 37
+  let intRight := hexAxisInt size 1 41
+  let ratLeft := hexAxisRat size 0 43
+  let ratRight := hexAxisRat size 1 47
+  intLeft.termCount = size ∧
+    intRight.termCount = size ∧
+    ratLeft.termCount = size ∧
+    ratRight.termCount = size
+
+/-- Matching construction-only sorted-list cancellation workload. -/
+def sortedCancellationInputs (size : Nat) : Prop :=
+  let intLeft := sortedAxisInt size 0 37
+  let intRight := sortedAxisInt size 1 41
+  let ratLeft := sortedAxisRat size 0 43
+  let ratRight := sortedAxisRat size 1 47
+  intLeft.terms.length = size ∧
+    intRight.terms.length = size ∧
+    ratLeft.terms.length = size ∧
+    ratRight.terms.length = size
+
 /-- Three-polynomial square expansion used as a representative SOS
 certificate identity in the production representation. -/
 def hexSos (size : Nat) : Prop :=
@@ -540,6 +575,31 @@ def sortedSos (size : Nat) : Prop :=
     p * p + p * q + p * r +
     (q * p + q * q + q * r) +
     (r * p + r * q + r * r)
+
+/-- Construction-only production workload matched to the SOS identity. -/
+def hexSosInputs (size : Nat) : Prop :=
+  let p : Grevlex4.HexInt :=
+    ofTerms (intTerms size 59 (patternedMono size · 3))
+  let q : Grevlex4.HexInt :=
+    ofTerms (intTerms size 61 (patternedMono size · 7))
+  let r : Grevlex4.HexInt :=
+    ofTerms (intTerms size 67 (patternedMono size · 11))
+  p.termCount = size ∧ q.termCount = size ∧ r.termCount = size
+
+/-- Matching construction-only sorted-list SOS workload. -/
+def sortedSosInputs (size : Nat) : Prop :=
+  let p : Grevlex4.SortedInt :=
+    Sorted.ofSortedTerms
+      (intTerms size 59 (patternedMono size · 3)) Mono.grevlex
+  let q : Grevlex4.SortedInt :=
+    Sorted.ofSortedTerms
+      (intTerms size 61 (patternedMono size · 7)) Mono.grevlex
+  let r : Grevlex4.SortedInt :=
+    Sorted.ofSortedTerms
+      (intTerms size 67 (patternedMono size · 11)) Mono.grevlex
+  p.terms.length = size ∧
+    q.terms.length = size ∧
+    r.terms.length = size
 
 /-- Collision-heavy four-variable input in the production representation. -/
 def hexStructuralInput (size : Nat) : Grlex4.HexInt :=

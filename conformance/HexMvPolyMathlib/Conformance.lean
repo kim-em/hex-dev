@@ -19,12 +19,11 @@ conformance stream and its SymPy oracle.
 
 namespace HexMvPolyMathlib.Conformance
 
-open scoped HexMvPolyMathlib
-
 open Hex
 open Hex.MvPoly
 
 private abbrev P := MvPoly 2 Int Mono.lex
+private abbrev Q := MvPoly 2 Rat Mono.lex
 
 private def p : P :=
   ofTerms [(#v[2, 0], 3), (#v[0, 1], -2), (Mono.zero, 5)]
@@ -32,8 +31,17 @@ private def p : P :=
 private def q : P :=
   ofTerms [(#v[2, 0], -3), (#v[1, 1], 4), (Mono.zero, 7)]
 
+private def rp : Q :=
+  ofTerms [(#v[2, 0], 3), (#v[0, 1], -2), (Mono.zero, 5)]
+
+private def rq : Q :=
+  ofTerms [(#v[2, 0], -3), (#v[1, 1], 4), (Mono.zero, 7)]
+
 private def point : Fin 2 → Int := fun i => if i = 0 then 2 else -1
 
+/- Importing the companion alone must leave the native executable instances
+selected. These guards elaborate before the bridge's scoped instance priority
+override is opened, for two ordinary coefficient types. -/
 #guard (p + q).termCount = 3
 #guard coeff #v[2, 0] (p + q) = 0
 #guard coeff #v[1, 1] (p + q) = 4
@@ -42,6 +50,19 @@ private def point : Fin 2 → Int := fun i => if i = 0 then 2 else -1
 #guard eval point (p * q) = eval point p * eval point q
 #guard derivative 0 p = ofTerms [(#v[1, 0], 6)]
 #guard homogeneousComponent 2 p = ofTerms [(#v[2, 0], 3)]
+#guard (rp + rq).termCount = 3
+#guard coeff #v[2, 0] (rp + rq) = 0
+#guard coeff #v[1, 1] (rp + rq) = 4
+#guard coeff Mono.zero (rp + rq) = 12
+#guard rp ^ 2 == rp * rp
+
+example (a b c : P) : a + (b + c) = a + b + c := by
+  exact (_root_.add_assoc a b c).symm
+
+example (a b c : Q) : a * (b + c) = a * b + a * c := by
+  exact _root_.mul_add a b c
+
+open scoped HexMvPolyMathlib
 
 private theorem transportSurface
     (cmp : Mono 3 → Mono 3 → Ordering)

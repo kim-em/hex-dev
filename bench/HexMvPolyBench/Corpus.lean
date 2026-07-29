@@ -53,7 +53,7 @@ The first and third coordinates sum to a fixed chunk size, while the second
 and fourth encode one of at most eight groups. Pairing even and odd variables
 therefore yields at most eight destination keys. -/
 def collisionMono (size i : Nat) : Mono 4 :=
-  let chunk := (size + 7) / 8
+  let chunk := max 2 ((size + 7) / 8)
   let group := i / chunk
   let offset := i % chunk
   Hex.Vector.ofFn' fun j =>

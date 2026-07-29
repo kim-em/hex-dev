@@ -1801,6 +1801,60 @@ def summarize(
                     result["net_workload_ratio_resolution"] = "noise-limited"
                 else:
                     result["net_workload_ratio_resolution"] = "resolved"
+        ratio_threshold = pair.metadata.get("ratio_threshold")
+        if ratio_threshold is not None:
+            threshold = float(ratio_threshold)
+            if "median_reference_net_workload_wall_nanos" in result:
+                reference_workload = int(
+                    result["median_reference_net_workload_wall_nanos"]
+                )
+                candidate_workload = int(
+                    result["median_candidate_net_workload_wall_nanos"]
+                )
+                envelope_value = result["net_workload_noise_envelope_nanos"]
+                resolution = result["net_workload_ratio_resolution"]
+                basis = "import-and-workload-control-subtracted"
+            else:
+                reference_workload = int(
+                    result["median_reference_workload_wall_nanos"]
+                )
+                candidate_workload = int(
+                    result["median_candidate_workload_wall_nanos"]
+                )
+                envelope_value = result["comparable_null_envelope_nanos"]
+                resolution = result["workload_ratio_resolution"]
+                basis = "import-subtracted"
+            result["ratio_threshold"] = threshold
+            result["ratio_threshold_basis"] = basis
+            if envelope_value is None:
+                result["ratio_lower_bound"] = None
+                result["ratio_upper_bound"] = None
+                result["ratio_threshold_status"] = "no-comparable-control"
+            else:
+                envelope = int(envelope_value)
+                lower_numerator = reference_workload - envelope
+                lower_denominator = candidate_workload + envelope
+                lower = (
+                    lower_numerator / lower_denominator
+                    if lower_numerator > 0 and lower_denominator > 0
+                    else None
+                )
+                upper_denominator = candidate_workload - envelope
+                upper = (
+                    (reference_workload + envelope) / upper_denominator
+                    if upper_denominator > 0
+                    else None
+                )
+                result["ratio_lower_bound"] = lower
+                result["ratio_upper_bound"] = upper
+                if resolution != "resolved":
+                    result["ratio_threshold_status"] = "unresolved"
+                elif lower is not None and lower > threshold:
+                    result["ratio_threshold_status"] = "passed"
+                elif upper is not None and upper <= threshold:
+                    result["ratio_threshold_status"] = "failed"
+                else:
+                    result["ratio_threshold_status"] = "unresolved"
         budget_ms = pair.metadata.get("tactic_budget_ms")
         if budget_ms is not None:
             budget_nanos = int(budget_ms) * 1_000_000

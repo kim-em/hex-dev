@@ -881,7 +881,10 @@ class PairingTests(unittest.TestCase):
                 "full",
                 reference,
                 candidate,
-                {"workload_control": "construction"},
+                {
+                    "workload_control": "construction",
+                    "ratio_threshold": 1.5,
+                },
             ),
         )
         spec = sweep.SweepSpec(
@@ -932,6 +935,74 @@ class PairingTests(unittest.TestCase):
             210 / 110,
         )
         self.assertEqual(full["net_workload_ratio_resolution"], "resolved")
+        self.assertEqual(
+            full["ratio_threshold_basis"],
+            "import-and-workload-control-subtracted",
+        )
+        self.assertAlmostEqual(full["ratio_lower_bound"], 210 / 110)
+        self.assertAlmostEqual(full["ratio_upper_bound"], 210 / 110)
+        self.assertEqual(full["ratio_threshold_status"], "passed")
+
+    def test_ratio_threshold_requires_noise_separation(self) -> None:
+        baseline = sweep.ProbeModule("Probe.Baseline")
+        reference = sweep.ProbeModule("Probe.Reference")
+        candidate = sweep.ProbeModule("Probe.Candidate")
+        pairs = (
+            sweep.ProbePair(
+                "baseline", baseline, baseline, {}, null_control=True
+            ),
+            sweep.ProbePair(
+                "large-null", reference, reference, {}, null_control=True
+            ),
+            sweep.ProbePair(
+                "ratio",
+                reference,
+                candidate,
+                {"ratio_threshold": 2.0},
+            ),
+        )
+        spec = sweep.SweepSpec(
+            description="ratio threshold",
+            pairs=pairs,
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+            import_baseline_control="baseline",
+        )
+
+        def row(
+            round_index: int, reference_wall: int, candidate_wall: int
+        ) -> dict[str, object]:
+            return {
+                "round": round_index,
+                "reference": {
+                    "wall_nanos": reference_wall,
+                    "peak_rss_kb": None,
+                },
+                "candidate": {
+                    "wall_nanos": candidate_wall,
+                    "peak_rss_kb": None,
+                },
+                "signed_wall_delta_nanos":
+                    candidate_wall - reference_wall,
+            }
+
+        rows = {
+            "baseline": [row(1, 100, 100), row(2, 100, 100)],
+            "large-null": [row(1, 600, 599), row(2, 599, 600)],
+            "ratio": [row(1, 301, 200), row(2, 301, 200)],
+        }
+        with mock.patch.object(sweep, "artifact_sizes", return_value={}):
+            summary = sweep.summarize(spec, rows)
+        ratio = summary["ratio"]
+        self.assertAlmostEqual(
+            ratio["reference_over_candidate_workload_ratio"], 201 / 100
+        )
+        self.assertEqual(ratio["workload_ratio_resolution"], "resolved")
+        self.assertLess(ratio["ratio_lower_bound"], 2.0)
+        self.assertGreater(ratio["ratio_upper_bound"], 2.0)
+        self.assertEqual(ratio["ratio_threshold_status"], "unresolved")
 
     def test_null_controls_are_interpolated_by_build_magnitude(self) -> None:
         cheap = sweep.ProbeModule("Probe.Cheap")
