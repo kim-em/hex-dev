@@ -47,6 +47,98 @@ unchanged. -/
 def predAt (i : Fin n) (m : Mono n) : Mono n :=
   Hex.Vector.ofFn' fun j => if j = i then m[j] - 1 else m[j]
 
+@[simp] theorem degreeOf_succAt (i : Fin n) (m : Mono n) :
+    Mono.degreeOf i (Mono.succAt i m) = Mono.degreeOf i m + 1 := by
+  have get_ofFn {r : Nat} (g : Fin r → Nat) (j : Fin r) :
+      (Hex.Vector.ofFn' g).get j = g j := by
+    change (Hex.Vector.ofFn' g)[j.val] = g j
+    rw [Hex.Vector.getElem_ofFn' g j.val j.isLt]
+  have get_mul (a b : Mono n) (j : Fin n) :
+      (Mono.mul a b).get j = a.get j + b.get j := by
+    unfold Mono.mul
+    rw [get_ofFn]
+    rfl
+  have get_unit (j : Fin n) :
+      (Mono.unit i).get j = if j = i then 1 else 0 := by
+    unfold Mono.unit
+    rw [get_ofFn]
+  unfold Mono.degreeOf Mono.succAt
+  change (Mono.mul m (Mono.unit i)).get i = m.get i + 1
+  rw [get_mul, get_unit]
+  simp
+
+@[simp] theorem predAt_succAt (i : Fin n) (m : Mono n) :
+    predAt i (Mono.succAt i m) = m := by
+  have get_ofFn {r : Nat} (g : Fin r → Nat) (j : Fin r) :
+      (Hex.Vector.ofFn' g).get j = g j := by
+    change (Hex.Vector.ofFn' g)[j.val] = g j
+    rw [Hex.Vector.getElem_ofFn' g j.val j.isLt]
+  have get_mul (a b : Mono n) (j : Fin n) :
+      (Mono.mul a b).get j = a.get j + b.get j := by
+    unfold Mono.mul
+    rw [get_ofFn]
+    rfl
+  have get_unit (j : Fin n) :
+      (Mono.unit i).get j = if j = i then 1 else 0 := by
+    unfold Mono.unit
+    rw [get_ofFn]
+  apply Vector.ext
+  intro j hj
+  let k : Fin n := ⟨j, hj⟩
+  change (predAt i (Mono.succAt i m)).get k = m.get k
+  unfold predAt Mono.succAt
+  rw [get_ofFn]
+  change
+    (if k = i then
+      (Mono.mul m (Mono.unit i)).get k - 1
+    else (Mono.mul m (Mono.unit i)).get k) = m.get k
+  rw [get_mul, get_unit]
+  by_cases hki : k = i
+  · simp [hki]
+  · simp [hki]
+
+theorem predAt_eq_iff (i : Fin n) (m t : Mono n)
+    (ht : Mono.degreeOf i t ≠ 0) :
+    predAt i t = m ↔ t = Mono.succAt i m := by
+  have get_ofFn {r : Nat} (g : Fin r → Nat) (j : Fin r) :
+      (Hex.Vector.ofFn' g).get j = g j := by
+    change (Hex.Vector.ofFn' g)[j.val] = g j
+    rw [Hex.Vector.getElem_ofFn' g j.val j.isLt]
+  have get_mul (a b : Mono n) (j : Fin n) :
+      (Mono.mul a b).get j = a.get j + b.get j := by
+    unfold Mono.mul
+    rw [get_ofFn]
+    rfl
+  have get_unit (j : Fin n) :
+      (Mono.unit i).get j = if j = i then 1 else 0 := by
+    unfold Mono.unit
+    rw [get_ofFn]
+  constructor
+  · intro h
+    apply Vector.ext
+    intro j hj
+    let k : Fin n := ⟨j, hj⟩
+    have hk := congrArg (fun a : Mono n => a.get k) h
+    change (predAt i t).get k = m.get k at hk
+    unfold predAt at hk
+    rw [get_ofFn] at hk
+    change (if k = i then t.get k - 1 else t.get k) = m.get k at hk
+    change t.get k = (Mono.succAt i m).get k
+    unfold Mono.succAt
+    change t.get k = (Mono.mul m (Mono.unit i)).get k
+    rw [get_mul, get_unit]
+    by_cases hki : k = i
+    · rw [hki] at hk ⊢
+      simp only [if_pos] at hk ⊢
+      have ht' : t.get i ≠ 0 := by
+        exact ht
+      omega
+    · simp only [if_neg hki]
+      simp only [if_neg hki] at hk
+      exact hk
+  · rintro rfl
+    exact predAt_succAt i m
+
 attribute [local instance] Lean.Grind.Semiring.natCast
 
 /-- Formal derivative with respect to variable `i`. -/
@@ -135,7 +227,94 @@ theorem coeff_derivative [Lean.Grind.Semiring R] [DecidableEq R]
     (i : Fin n) (m : Mono n) (p : MvPoly n R cmp) :
     coeff m (derivative i p) =
       ((Mono.degreeOf i m + 1 : Nat) : R) * coeff (Mono.succAt i m) p := by
-  sorry
+  let scale : R := ((Mono.degreeOf i m + 1 : Nat) : R)
+  have aux : ∀ (ts : List (Mono n × R)) (init : MvPoly n R cmp),
+      coeff m
+          (ts.foldl
+            (fun acc t =>
+              let e := Mono.degreeOf i t.1
+              if e = 0 then acc
+              else acc.addMonomial (predAt i t.1) ((e : R) * t.2))
+            init) =
+        ts.foldl
+          (fun acc t =>
+            let e := Mono.degreeOf i t.1
+            if e = 0 then acc
+            else if m = predAt i t.1 then acc + (e : R) * t.2 else acc)
+          (coeff m init) := by
+    intro ts
+    induction ts with
+    | nil =>
+      intro init
+      rfl
+    | cons t ts ih =>
+      intro init
+      rw [List.foldl_cons, ih]
+      by_cases he : Mono.degreeOf i t.1 = 0
+      · simp [he]
+      · by_cases hm : m = predAt i t.1
+        · simp [he, hm, coeff_addMonomial]
+        · have hmp : m ≠ predAt i t.1 := hm
+          simp [he, hmp, coeff_addMonomial]
+  have step (acc : R) (t : Mono n × R) :
+      (let e := Mono.degreeOf i t.1
+        if e = 0 then acc
+        else if m = predAt i t.1 then acc + (e : R) * t.2 else acc) =
+      if t.1 = Mono.succAt i m then acc + scale * t.2 else acc := by
+    rcases t with ⟨t, c⟩
+    by_cases ht : t = Mono.succAt i m
+    · subst t
+      simp [scale]
+    · by_cases he : Mono.degreeOf i t = 0
+      · simp [he, ht]
+      · have hpred : m ≠ predAt i t := by
+          intro h
+          have : t = Mono.succAt i m :=
+            (predAt_eq_iff i m t he).mp h.symm
+          exact ht this
+        simp [he, hpred, ht]
+  have filter_fold : ∀ (ts : List (Mono n × R)) (init : R),
+      ts.foldl
+          (fun acc t =>
+            if t.1 = Mono.succAt i m then acc + scale * t.2 else acc)
+          init =
+        (ts.filter fun t => t.1 = Mono.succAt i m).foldl
+          (fun acc t => acc + scale * t.2) init := by
+    intro ts
+    induction ts with
+    | nil =>
+      intro init
+      rfl
+    | cons t ts ih =>
+      intro init
+      rw [List.foldl_cons]
+      by_cases ht : t.1 = Mono.succAt i m
+      · simp [ht, ih]
+      · simp [ht, ih]
+  have scale_fold : ∀ (ts : List (Mono n × R)) (init : R),
+      ts.foldl (fun acc t => acc + scale * t.2) (scale * init) =
+        scale * ts.foldl (fun acc t => acc + t.2) init := by
+    intro ts
+    induction ts with
+    | nil =>
+      intro init
+      rfl
+    | cons t ts ih =>
+      intro init
+      rw [List.foldl_cons, ← Lean.Grind.Semiring.left_distrib, ih,
+        List.foldl_cons]
+  unfold derivative foldTerms
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList, aux]
+  rw [coeff_zero]
+  simp only [step]
+  rw [filter_fold]
+  change
+    (p.termsInternal.toList.filter fun t => t.1 = Mono.succAt i m).foldl
+        (fun acc t => acc + scale * t.2) 0 =
+      scale * coeff (Mono.succAt i m) p
+  rw [← Lean.Grind.Semiring.mul_zero scale, scale_fold]
+  congr 1
+  simpa [termsList] using coeff_terms (Mono.succAt i m) p
 
 theorem coeff_homogeneousComponent [Lean.Grind.Semiring R] [DecidableEq R]
     (d : Nat) (m : Mono n) (p : MvPoly n R cmp) :
