@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexHensel.Basic
-public import HexHensel.WordTransport
+public import HexHensel.WordMul
 public import HexPoly.Euclid.MonicUnique
 
 public section
@@ -1845,15 +1845,26 @@ def quadraticHenselStepWord? (m : Nat) (f g h s t : ZPoly) : Option QuadraticLif
         if _hm : DensePoly.leadingCoeff g = 1 then
           if _hd : 0 < g.degree?.getD 0 then
             let ctx := _root_.MontCtx.mk (UInt64.ofNat (m * m)) hodd
-            let eW := ZPoly.toWP ctx f - ZPoly.toWP ctx g * ZPoly.toWP ctx h
-            let factorQR := DensePoly.divMod (ZPoly.toWP ctx t * eW) (ZPoly.toWP ctx g)
-            let gW' := ZPoly.toWP ctx g + factorQR.2
-            let hW' := ZPoly.toWP ctx h +
-              (ZPoly.toWP ctx s * eW + factorQR.1 * ZPoly.toWP ctx h)
-            let bW := (ZPoly.toWP ctx s * gW' + ZPoly.toWP ctx t * hW') - 1
-            let bezoutQR := DensePoly.divMod (ZPoly.toWP ctx t * bW) gW'
-            let tW' := ZPoly.toWP ctx t - bezoutQR.2
-            let sW' := (ZPoly.toWP ctx s - ZPoly.toWP ctx s * bW) - bezoutQR.1 * hW'
+            -- Convert each integer polynomial once.  Sharing these packed
+            -- Montgomery arrays avoids repeating coefficient `Int.emod` and
+            -- `toMont` work throughout the correction formulas.
+            let fW := ZPoly.toWP ctx f
+            let gW := ZPoly.toWP ctx g
+            let hW := ZPoly.toWP ctx h
+            let sW := ZPoly.toWP ctx s
+            let tW := ZPoly.toWP ctx t
+            let eW := WordPoly.sub ctx fW (WordPoly.mul ctx gW hW)
+            let factorQR := DensePoly.divMod (WordPoly.mul ctx tW eW) gW
+            let gW' := WordPoly.add ctx gW factorQR.2
+            let hW' := WordPoly.add ctx hW
+              (WordPoly.mulAdd ctx sW eW factorQR.1 hW)
+            let bW := WordPoly.sub ctx
+              (WordPoly.mulAdd ctx sW gW' tW hW') 1
+            let bezoutQR := DensePoly.divMod (WordPoly.mul ctx tW bW) gW'
+            let tW' := WordPoly.sub ctx tW bezoutQR.2
+            let sW' := WordPoly.sub ctx
+              (WordPoly.sub ctx sW (WordPoly.mul ctx sW bW))
+              (WordPoly.mul ctx bezoutQR.1 hW')
             some { g := ZPoly.ofWP ctx gW', h := ZPoly.ofWP ctx hW',
                    s := ZPoly.ofWP ctx sW', t := ZPoly.ofWP ctx tW' }
           else none
@@ -1891,7 +1902,9 @@ def quadraticHenselStepBignum
 /-- Guarded dispatch: the word-sized step when its guard holds, else the bignum step. -/
 def quadraticHenselStep
     (m : Nat) (f g h s t : ZPoly) : QuadraticLiftResult :=
-  (quadraticHenselStepWord? m f g h s t).getD (quadraticHenselStepBignum m f g h s t)
+  match quadraticHenselStepWord? m f g h s t with
+  | some result => result
+  | none => quadraticHenselStepBignum m f g h s t
 
 set_option maxHeartbeats 2000000 in
 private theorem quadraticHenselStep_raw_factor_congr
@@ -2405,6 +2418,7 @@ theorem quadraticHenselStepWord?_eq (m : Nat) (f g h s t : ZPoly)
   unfold quadraticHenselStepWord?
   simp only [dif_pos h2, dif_pos hodd, dif_pos h1, dif_pos hmlc, dif_pos hd]
   generalize hctx : _root_.MontCtx.mk (UInt64.ofNat (m * m)) hodd = ctx
+  simp only [WordPoly.mul_eq, WordPoly.mulAdd_eq, WordPoly.add_eq, WordPoly.sub_eq]
   refine congrArg some ?_
   generalize heW : ZPoly.toWP ctx f - ZPoly.toWP ctx g * ZPoly.toWP ctx h = eW
   generalize hfqW : DensePoly.divMod (ZPoly.toWP ctx t * eW) (ZPoly.toWP ctx g) = fqW
@@ -2524,7 +2538,7 @@ theorem quadraticHenselStep_eq_bignum
   by_cases hguard : (m * m < UInt64.word) ∧ ((UInt64.ofNat (m * m)) % 2 = 1) ∧
       (1 < m * m) ∧ (DensePoly.leadingCoeff g = 1) ∧ (0 < g.degree?.getD 0)
   · obtain ⟨h2, hodd, h1, hmlc, hd⟩ := hguard
-    rw [quadraticHenselStepWord?_eq m f g h s t h2 hodd h1 hmlc hd, Option.getD_some]
+    rw [quadraticHenselStepWord?_eq m f g h s t h2 hodd h1 hmlc hd]
   · have hnone : quadraticHenselStepWord? m f g h s t = none := by
       unfold quadraticHenselStepWord?
       by_cases a : m * m < UInt64.word
@@ -2542,7 +2556,7 @@ theorem quadraticHenselStep_eq_bignum
           · rw [dif_neg c]
         · rw [dif_neg b]
       · rw [dif_neg a]
-    rw [hnone, Option.getD_none]
+    rw [hnone]
 
 /-- The updated factors multiply to `f` modulo `m^2`. -/
 @[grind =>]

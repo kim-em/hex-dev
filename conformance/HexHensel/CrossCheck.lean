@@ -46,6 +46,47 @@ Tier-G fast-vs-fast.
 namespace Hex
 namespace HenselCrossCheck
 
+/-! # Native `WordPoly` boundary checks
+
+These guards execute the packed add/subtract/multiply externs through their
+ordinary `DensePoly` specifications.  The first modulus exercises values near
+the full `UInt64` boundary; the composite modulus makes a nonzero pair of
+leading coefficients multiply to zero and therefore checks native trailing-zero
+normalisation.
+-/
+
+private def wordPrime : UInt64 := UInt64.ofNat 18446744073709551557
+private def wordCtx : _root_.MontCtx wordPrime :=
+  _root_.MontCtx.mk wordPrime (by decide)
+
+private def wordPolyA : DensePoly (WordMod wordCtx) :=
+  ZPoly.toWP wordCtx (DensePoly.ofCoeffs #[-1, 2, -3, 4])
+
+private def wordPolyB : DensePoly (WordMod wordCtx) :=
+  ZPoly.toWP wordCtx (DensePoly.ofCoeffs #[5, -6, 7])
+
+#guard WordPoly.add wordCtx wordPolyA wordPolyB = wordPolyA + wordPolyB
+#guard WordPoly.sub wordCtx wordPolyA wordPolyB = wordPolyA - wordPolyB
+#guard WordPoly.mul wordCtx wordPolyA wordPolyB = wordPolyA * wordPolyB
+#guard WordPoly.mulAdd wordCtx wordPolyA wordPolyB wordPolyB wordPolyA =
+  wordPolyA * wordPolyB + wordPolyB * wordPolyA
+
+private def compositeModulus : UInt64 := 15
+private def compositeCtx : _root_.MontCtx compositeModulus :=
+  _root_.MontCtx.mk compositeModulus (by decide)
+
+private def zeroDivisorA : DensePoly (WordMod compositeCtx) :=
+  ZPoly.toWP compositeCtx (DensePoly.ofCoeffs #[1, 3])
+
+private def zeroDivisorB : DensePoly (WordMod compositeCtx) :=
+  ZPoly.toWP compositeCtx (DensePoly.ofCoeffs #[1, 5])
+
+#guard WordPoly.mul compositeCtx zeroDivisorA zeroDivisorB =
+  zeroDivisorA * zeroDivisorB
+#guard WordPoly.mulAdd compositeCtx zeroDivisorA zeroDivisorB
+    zeroDivisorB zeroDivisorA =
+  zeroDivisorA * zeroDivisorB + zeroDivisorB * zeroDivisorA
+
 private instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
 private instance boundsSeven : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
 private instance boundsEleven : ZMod64.Bounds 11 := ⟨by decide, by decide⟩

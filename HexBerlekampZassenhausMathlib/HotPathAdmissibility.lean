@@ -325,6 +325,47 @@ theorem primorial_dvd_of_none
   rw [← hprod]
   exact hall
 
+/-- Failure of the adaptive selector has the same complete hot-path failure
+certificate as the fixed selector: every candidate is bad. -/
+theorem adaptive_primorial_dvd_of_none
+    {g : Hex.ZPoly} (extra : Nat)
+    (hdeg : 0 < (HexPolyZMathlib.toPolynomial g).degree)
+    (hnone : Hex.choosePrimeDataAdaptive? g extra = none) :
+    Hex.hotPathPrimorial ∣
+      Int.natAbs
+        ((HexPolyZMathlib.toPolynomial g).leadingCoeff *
+          (HexPolyZMathlib.toPolynomial g).discr) := by
+  let values : List Nat := Hex.hotPathCandidates.map fun c => c.p
+  let primes : Finset Nat := values.toFinset
+  let M : ℤ :=
+    (HexPolyZMathlib.toPolynomial g).leadingCoeff *
+      (HexPolyZMathlib.toPolynomial g).discr
+  have hprime : ∀ p ∈ primes, Prime p := by
+    intro p hp
+    have hp_values : p ∈ values := List.mem_toFinset.mp hp
+    obtain ⟨c, hc, rfl⟩ := List.mem_map.mp hp_values
+    exact (natPrime_of_hexNatPrime c.prime).prime
+  have hdiv : ∀ p ∈ primes, p ∣ M.natAbs := by
+    intro p hp
+    have hp_values : p ∈ values := List.mem_toFinset.mp hp
+    obtain ⟨c, hc, rfl⟩ := List.mem_map.mp hp_values
+    have hbad : @Hex.isGoodPrime g c.p c.bounds = false := by
+      cases hgood : @Hex.isGoodPrime g c.p c.bounds with
+      | false => rfl
+      | true =>
+          exact False.elim
+            ((Hex.choosePrimeDataAdaptive?_ne_none_of_good
+              (extra := extra) hc hgood) hnone)
+    exact Int.natCast_dvd.mp (dvd_discr_of_bad hc hdeg hbad)
+  have hall : (∏ p ∈ primes, p) ∣ M.natAbs :=
+    Finset.prod_primes_dvd M.natAbs hprime hdiv
+  have hnodup : values.Nodup := Hex.hotPathPrimeValues_nodup
+  have hprod : primes.prod id = values.prod := by
+    simpa [primes] using List.prod_toFinset id hnodup
+  change values.prod ∣ M.natAbs
+  rw [← hprod]
+  exact hall
+
 /-- Failure of the selector on the monic transform forces the 94-prime
 primorial to divide the absolute leading-coefficient/discriminant product of
 the original core. -/
@@ -341,8 +382,6 @@ theorem toMonic_primorial_dvd_of_none
   let M : ℤ :=
     (HexPolyZMathlib.toPolynomial core).leadingCoeff *
       (HexPolyZMathlib.toPolynomial core).discr
-  have hnone' :
-      Hex.choosePrimeData? (Hex.ZPoly.toMonic core).monic = none := hnone
   have hprime : ∀ p ∈ primes, Prime p := by
     intro p hp
     have hp_values : p ∈ values := List.mem_toFinset.mp hp
@@ -352,9 +391,14 @@ theorem toMonic_primorial_dvd_of_none
     intro p hp
     have hp_values : p ∈ values := List.mem_toFinset.mp hp
     obtain ⟨c, hc, rfl⟩ := List.mem_map.mp hp_values
-    have hbad :=
-      Hex.mem_hotPathCandidates_isGoodPrime_false_of_choosePrimeData?_none
-        hnone' hc
+    have hbad :
+        @Hex.isGoodPrime (Hex.ZPoly.toMonic core).monic c.p c.bounds = false := by
+      cases hgood :
+          @Hex.isGoodPrime (Hex.ZPoly.toMonic core).monic c.p c.bounds with
+      | false => rfl
+      | true =>
+          exact False.elim
+            ((Hex.ZPoly.toMonicPrimeData?_ne_none_of_good hc hgood) hnone)
     exact Int.natCast_dvd.mp (dvd_core_discr_of_toMonic_bad hc hdeg hbad)
   have hall : (∏ p ∈ primes, p) ∣ M.natAbs :=
     Finset.prod_primes_dvd M.natAbs hprime hdiv
@@ -489,7 +533,25 @@ theorem toMonic_ne_none_of_lt_primorial
         (HexPolyZMathlib.toPolynomial (Hex.ZPoly.toMonic core).monic).discr) <
           Hex.hotPathPrimorial) :
     Hex.ZPoly.toMonicPrimeData? core ≠ none := by
-  exact choose_ne_none_of_lt_primorial hdeg hdisc hlt
+  intro hnone
+  have hpoly :
+      HexPolyZMathlib.toPolynomial (Hex.ZPoly.toMonic core).monic ≠ 0 := by
+    intro hzero
+    rw [hzero] at hdeg
+    simp at hdeg
+  have hlc :
+      (HexPolyZMathlib.toPolynomial (Hex.ZPoly.toMonic core).monic).leadingCoeff ≠ 0 :=
+    leadingCoeff_ne_zero.mpr hpoly
+  have hM :
+      (HexPolyZMathlib.toPolynomial (Hex.ZPoly.toMonic core).monic).leadingCoeff *
+        (HexPolyZMathlib.toPolynomial (Hex.ZPoly.toMonic core).monic).discr ≠ 0 :=
+    mul_ne_zero hlc hdisc
+  have hnone' :
+      Hex.choosePrimeDataAdaptive? (Hex.ZPoly.toMonic core).monic
+        Hex.ZPoly.primeProbeFuel = none := hnone
+  have hle := Nat.le_of_dvd (Int.natAbs_pos.mpr hM)
+    (adaptive_primorial_dvd_of_none Hex.ZPoly.primeProbeFuel hdeg hnone')
+  omega
 
 end HotPath
 

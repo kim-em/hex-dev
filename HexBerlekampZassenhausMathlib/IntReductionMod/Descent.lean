@@ -528,9 +528,11 @@ explicitly. Use
 `squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP`
 when the selected prime's executable `squareFreeModP` check should provide it.
 -/
-theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
+theorem irreducible_of_smallMod_form
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
-    (hselected : Hex.choosePrimeData? core = some primeData)
+    (hprime_hex : Hex.Nat.Prime primeData.p)
+    (hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true)
+    (hform : Hex.factorsModPBerlekampForm core primeData)
     (hcore_pos : 0 < core.degree?.getD 0)
     (hsmall : primeData.factorsModP.size ≤ 1)
     (hprim :
@@ -548,8 +550,6 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
             (@Hex.ZPoly.modP primeData.p primeData.bounds core)))) = true) :
     Hex.ZPoly.Irreducible core := by
   letI := primeData.bounds
-  have hprime_hex : Hex.Nat.Prime primeData.p :=
-    Hex.choosePrimeData?_prime core primeData hselected
   have hprime : _root_.Nat.Prime primeData.p := by
     refine _root_.Nat.prime_def_lt.mpr ⟨hprime_hex.two_le, ?_⟩
     intro m hmlt hmdvd
@@ -558,8 +558,8 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
     · exact absurd h (Nat.ne_of_lt hmlt)
   haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
   letI : Hex.ZMod64.PrimeModulus primeData.p := Hex.ZMod64.primeModulusOfPrime hprime_hex
-  obtain ⟨hzero, hfactors_eq⟩ :=
-    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected
+  have hformCopy := hform
+  obtain ⟨_, hzero, hfactors_eq⟩ := hformCopy
   let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
     (Hex.ZMod64.primeModulusOfPrime hprime_hex)
   letI := hfield
@@ -579,10 +579,6 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
       simp [List.length_map]
     omega
   -- Positivity of the monic modular image from the positive-degree input.
-  have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
-    Hex.choosePrimeData?_isGoodPrime core primeData hselected
-  have hform : Hex.factorsModPBerlekampForm core primeData :=
-    ⟨hprime_hex, hzero, hfactors_eq⟩
   have hmonicImg_pos :
       0 < (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)).degree?.getD 0 :=
     monicModularImage_modP_degree?_pos_of_factorsModPBerlekampForm
@@ -670,6 +666,32 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
     (p := primeData.p) (core := core)
     hprim hlc_map_ne hirr_fModP
 
+/-- Compatibility wrapper for the ordinary first-good selector. -/
+theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.choosePrimeData? core = some primeData)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hsmall : primeData.factorsModP.size ≤ 1)
+    (hprim : (HexPolyZMathlib.toPolynomial core).IsPrimitive)
+    (hlc_map_ne :
+      (Int.castRingHom (ZMod primeData.p))
+        (HexPolyZMathlib.toPolynomial core).leadingCoeff ≠ 0)
+    (hsquareFree_monic :
+      Hex.gcdIsUnit
+        (Hex.DensePoly.gcd
+          (@Hex.monicModularImage primeData.p primeData.bounds
+            (@Hex.ZPoly.modP primeData.p primeData.bounds core))
+          (Hex.DensePoly.derivative
+            (@Hex.monicModularImage primeData.p primeData.bounds
+              (@Hex.ZPoly.modP primeData.p primeData.bounds core)))) = true) :
+    Hex.ZPoly.Irreducible core := by
+  have hprime := Hex.choosePrimeData?_prime core primeData hselected
+  have hgood := Hex.choosePrimeData?_isGoodPrime core primeData hselected
+  obtain ⟨hzero, heq⟩ :=
+    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected
+  exact irreducible_of_smallMod_form core primeData hprime hgood
+    ⟨hprime, hzero, heq⟩ hcore_pos hsmall hprim hlc_map_ne hsquareFree_monic
+
 set_option maxHeartbeats 4000000
 
 /--
@@ -677,20 +699,19 @@ Small-mod singleton irreducibility for a selected good-prime record, deriving
 the Berlekamp square-free precondition for the monic modular image from the
 selected prime's executable `squareFreeModP` check.
 -/
-theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP
+theorem irreducible_of_smallMod
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
-    (hselected : Hex.choosePrimeData? core = some primeData)
+    (hprime_hex : Hex.Nat.Prime primeData.p)
+    (hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true)
+    (hform : Hex.factorsModPBerlekampForm core primeData)
     (hcore_pos : 0 < core.degree?.getD 0)
     (hsmall : primeData.factorsModP.size ≤ 1)
-    (hprim :
-      (HexPolyZMathlib.toPolynomial core).IsPrimitive)
+    (hprim : (HexPolyZMathlib.toPolynomial core).IsPrimitive)
     (hlc_map_ne :
       (Int.castRingHom (ZMod primeData.p))
         (HexPolyZMathlib.toPolynomial core).leadingCoeff ≠ 0) :
     Hex.ZPoly.Irreducible core := by
   letI := primeData.bounds
-  have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
-    Hex.choosePrimeData?_isGoodPrime core primeData hselected
   have hsquareFree : Hex.squareFreeModP core primeData.p :=
     Hex.isGoodPrime_squareFreeModP core primeData.p hgood
   have hsquareFree_modP :
@@ -699,10 +720,8 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squ
           (Hex.DensePoly.derivative
             (@Hex.ZPoly.modP primeData.p primeData.bounds core))) = true := by
     simpa [Hex.squareFreeModP] using hsquareFree
-  obtain ⟨hzero, _hfactors_eq⟩ :=
-    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected
-  have hprime_hex : Hex.Nat.Prime primeData.p :=
-    Hex.choosePrimeData?_prime core primeData hselected
+  have hformCopy := hform
+  obtain ⟨_, hzero, _⟩ := hformCopy
   have hprime : _root_.Nat.Prime primeData.p := by
     refine _root_.Nat.prime_def_lt.mpr ⟨hprime_hex.two_le, ?_⟩
     intro m hmlt hmdvd
@@ -720,8 +739,28 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squ
             (@Hex.ZPoly.modP primeData.p primeData.bounds core)))) = true :=
     gcd_monicModularImage_derivative_isUnit
       (p := primeData.p) (Hex.ZPoly.modP primeData.p core) hzero hsquareFree_modP
-  exact squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
-    core primeData hselected hcore_pos hsmall hprim hlc_map_ne hsquareFree_monic
+  exact irreducible_of_smallMod_form core primeData hprime_hex hgood hform
+    hcore_pos hsmall hprim hlc_map_ne hsquareFree_monic
+
+/-- Compatibility wrapper for the ordinary first-good selector. -/
+theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.choosePrimeData? core = some primeData)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hsmall : primeData.factorsModP.size ≤ 1)
+    (hprim :
+      (HexPolyZMathlib.toPolynomial core).IsPrimitive)
+    (hlc_map_ne :
+      (Int.castRingHom (ZMod primeData.p))
+        (HexPolyZMathlib.toPolynomial core).leadingCoeff ≠ 0) :
+    Hex.ZPoly.Irreducible core := by
+  have hprime := Hex.choosePrimeData?_prime core primeData hselected
+  have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
+    Hex.choosePrimeData?_isGoodPrime core primeData hselected
+  obtain ⟨hzero, heq⟩ :=
+    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected
+  exact irreducible_of_smallMod core primeData hprime hgood
+    ⟨hprime, hzero, heq⟩ hcore_pos hsmall hprim hlc_map_ne
 
 /-- The Mathlib image over `ZMod p` of the monic modular reduction selected by a
 successful `choosePrimeData?` run is squarefree.

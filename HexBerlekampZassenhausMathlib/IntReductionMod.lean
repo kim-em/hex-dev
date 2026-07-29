@@ -257,12 +257,15 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton
     (hsmall : primeData.factorsModP.size ≤ 1) :
     Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore := by
   set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
+  letI := primeData.bounds
   have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core :=
     Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
   have hcore_prim : Hex.ZPoly.Primitive core :=
     IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
-  have hchoose : Hex.choosePrimeData? (Hex.ZPoly.toMonic core).monic = some primeData :=
-    hselected
+  have hprime := Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
+  have hgood := Hex.ZPoly.toMonicPrimeData?_isGoodPrime core primeData hselected
+  have hform :=
+    Hex.ZPoly.toMonicPrimeData?_factorsModP_berlekamp_form core primeData hselected
   have hM_monic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
     Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos (by simp only [Hex.ZPoly.toMonic_degree]; omega)
   have hm_deg : 0 < (Hex.ZPoly.toMonic core).monic.degree?.getD 0 := by
@@ -270,11 +273,11 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton
       (by simp only [Hex.ZPoly.toMonic_degree]; omega)]
     simpa using hcore_pos
   have hm_irr : Hex.ZPoly.Irreducible (Hex.ZPoly.toMonic core).monic :=
-    IntReductionMod.squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP
-      (Hex.ZPoly.toMonic core).monic primeData hchoose hm_deg hsmall
+    IntReductionMod.irreducible_of_smallMod
+      (Hex.ZPoly.toMonic core).monic primeData hprime hgood hform hm_deg hsmall
       (HexHenselMathlib.toPolynomial_monic_of_dense_monic _ hM_monic).isPrimitive
-      (IntReductionMod.choosePrimeData?_leadingCoeff_castRingHom_ne_zero
-        (Hex.ZPoly.toMonic core).monic primeData hchoose)
+      (IntReductionMod.leadingCoeff_castRingHom_ne_zero_of_isGoodPrime
+        (Hex.ZPoly.toMonic core).monic hgood)
   exact zpolyIrreducible_of_toMonicMonic_irreducible core hcore_lc_pos hcore_pos
     hcore_prim hm_irr
 

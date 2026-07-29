@@ -161,6 +161,15 @@ Note: divmod by `g*` (not `h*`) because `g*` is monic; `h` may not be.
 Both factor and Bezout coefficients must be lifted together at each
 doubling step (unlike linear lifting which reuses `s, t` mod `p`).
 
+When `m² < 2^64`, the quadratic step caches the word-polynomial forms of
+`f`, `g`, `h`, `s`, and `t` and performs coefficientwise add, subtract,
+convolution, and fused multiply-add through packed-array C externs. Each
+`WordPoly` operation has a transparent generic body and a proved equality to
+its extern-backed implementation; the algebraic proof of the quadratic step
+therefore continues to reduce to the generic polynomial operations. The
+bignum branch and every modulus outside the word guard retain the ordinary
+`ZPoly` implementation.
+
 Suggested companion theorem shape (in `hex-hensel`):
 ```lean
 theorem quadraticHenselStep_spec

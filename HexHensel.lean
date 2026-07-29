@@ -9,6 +9,7 @@ module
 public import HexHensel.Basic
 public import HexHensel.Linear
 public import HexHensel.Multifactor
+public import HexHensel.WordMul
 public import HexHensel.Quadratic
 public import HexHensel.QuadraticMultifactor
 

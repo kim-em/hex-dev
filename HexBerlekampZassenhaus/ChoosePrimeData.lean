@@ -380,6 +380,225 @@ def choosePrimeData? (f : ZPoly) : Option PrimeChoiceData :=
       (extendedSmallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none)
       |>.map (fun score => score.data)
 
+/-- Continue from a first good prime for at most `extra` further good primes,
+stopping early when a modularly irreducible image is found. -/
+private def improvePrimeData? (f : ZPoly) (first : PrimeChoiceDataScore) :
+    Nat → List SmallPrimeCandidate → PrimeChoiceDataScore
+  | _, [] => first
+  | 0, _ => first
+  | extra + 1, c :: candidates =>
+      match primeChoiceDataScore f c with
+      | some score =>
+          if score.factorCount = 1 then score
+          else improvePrimeData? f first extra candidates
+      | none => improvePrimeData? f first (extra + 1) candidates
+
+/-- Minimum modular factor count that can justify probing another prime. -/
+private def probeMinFactors : Nat := 9
+
+/-- Minimum coefficient `log2` that marks a swollen monic transform. -/
+private def probeCoeffLog : Nat := 512
+
+/-- First-good selection with a bounded irreducibility look-ahead. -/
+private def chooseAdaptiveFrom? (f : ZPoly) (extra : Nat) :
+    List SmallPrimeCandidate → Option PrimeChoiceDataScore
+  | [] => none
+  | c :: candidates =>
+      match primeChoiceDataScore f c with
+      | some score =>
+          if score.factorCount = 1 then some score
+          else if probeMinFactors ≤ score.factorCount &&
+              f.toArray.any (fun coeff => probeCoeffLog ≤ coeff.natAbs.log2) then
+            some (improvePrimeData? f score extra candidates)
+          else
+            some score
+      | none => chooseAdaptiveFrom? f extra candidates
+
+/-- Select the first good prime, except that costly inputs with both a swollen
+monic transform and many modular factors receive a bounded search for a good
+prime at which the image is irreducible. If no such prime appears within
+`extra` further good candidates, preserve the original first-good choice. -/
+def choosePrimeDataAdaptive? (f : ZPoly) (extra : Nat) : Option PrimeChoiceData :=
+  (chooseAdaptiveFrom? f extra
+    (smallPrimeCandidates ++ extendedSmallPrimeCandidates)).map (·.data)
+
+private theorem improvePrimeData?_property
+    (f : ZPoly) (P : PrimeChoiceDataScore → Prop) (first : PrimeChoiceDataScore)
+    (hfirst : P first)
+    (hcandidate : ∀ c score, primeChoiceDataScore f c = some score → P score) :
+    ∀ extra candidates, P (improvePrimeData? f first extra candidates) := by
+  intro extra candidates
+  induction candidates generalizing extra with
+  | nil => simp [improvePrimeData?, hfirst]
+  | cons c candidates ih =>
+      cases extra with
+      | zero => simp [improvePrimeData?, hfirst]
+      | succ extra =>
+          simp only [improvePrimeData?]
+          cases hscore : primeChoiceDataScore f c with
+          | none =>
+              simp only
+              exact ih (extra + 1)
+          | some score =>
+              simp only
+              by_cases hone : score.factorCount = 1
+              · simp only [hone, if_true]
+                exact hcandidate c score hscore
+              · simp only [hone, if_false]
+                exact ih extra
+
+private theorem improvePrimeData?_p_le
+    (f : ZPoly) (first : PrimeChoiceDataScore)
+    (hfirst : first.data.p ≤ 500) :
+    ∀ extra candidates,
+      (∀ c ∈ candidates, c.p ≤ 500) →
+      (improvePrimeData? f first extra candidates).data.p ≤ 500 := by
+  intro extra candidates hall
+  induction candidates generalizing extra with
+  | nil => simp [improvePrimeData?, hfirst]
+  | cons c candidates ih =>
+      have htail : ∀ d ∈ candidates, d.p ≤ 500 := by
+        intro d hd
+        exact hall d (List.mem_cons_of_mem c hd)
+      cases extra with
+      | zero => simp [improvePrimeData?, hfirst]
+      | succ extra =>
+          simp only [improvePrimeData?]
+          cases hscore : primeChoiceDataScore f c with
+          | none =>
+              simp only
+              exact ih (extra + 1) htail
+          | some score =>
+              simp only
+              by_cases hone : score.factorCount = 1
+              · simp only [hone, if_true]
+                exact primeChoiceDataScore_p_le f c score
+                  (hall c (by simp)) hscore
+              · simp only [hone, if_false]
+                exact ih extra htail
+
+private theorem chooseAdaptiveFrom?_property
+    (f : ZPoly) (extra : Nat) (P : PrimeChoiceDataScore → Prop)
+    (hcandidate : ∀ c score, primeChoiceDataScore f c = some score → P score) :
+    ∀ candidates score,
+      chooseAdaptiveFrom? f extra candidates = some score → P score := by
+  intro candidates score h
+  induction candidates generalizing score with
+  | nil => simp [chooseAdaptiveFrom?] at h
+  | cons c candidates ih =>
+      simp only [chooseAdaptiveFrom?] at h
+      cases hcurrent : primeChoiceDataScore f c with
+      | none =>
+          simp only [hcurrent] at h
+          exact ih score h
+      | some current =>
+          simp only [hcurrent] at h
+          have hproperty : P current := hcandidate c current hcurrent
+          by_cases hone : current.factorCount = 1
+          · simp only [hone, if_true, Option.some.injEq] at h
+            rw [← h]
+            exact hproperty
+          · simp only [hone, if_false] at h
+            by_cases hprobe : probeMinFactors ≤ current.factorCount &&
+                f.toArray.any (fun coeff => probeCoeffLog ≤ coeff.natAbs.log2)
+            · simp only [hprobe, if_true, Option.some.injEq] at h
+              rw [← h]
+              exact improvePrimeData?_property f P current hproperty hcandidate extra candidates
+            · simp only [hprobe, Bool.false_eq_true, if_false, Option.some.injEq] at h
+              rw [← h]
+              exact hproperty
+
+private theorem chooseAdaptiveFrom?_p_le
+    (f : ZPoly) (extra : Nat) :
+    ∀ candidates score,
+      (∀ c ∈ candidates, c.p ≤ 500) →
+      chooseAdaptiveFrom? f extra candidates = some score →
+      score.data.p ≤ 500 := by
+  intro candidates score hall h
+  induction candidates generalizing score with
+  | nil => simp [chooseAdaptiveFrom?] at h
+  | cons c candidates ih =>
+      have htail : ∀ d ∈ candidates, d.p ≤ 500 := by
+        intro d hd
+        exact hall d (List.mem_cons_of_mem c hd)
+      simp only [chooseAdaptiveFrom?] at h
+      cases hcurrent : primeChoiceDataScore f c with
+      | none =>
+          simp only [hcurrent] at h
+          exact ih score htail h
+      | some current =>
+          simp only [hcurrent] at h
+          have hcurrent_le : current.data.p ≤ 500 :=
+            primeChoiceDataScore_p_le f c current (hall c (by simp)) hcurrent
+          by_cases hone : current.factorCount = 1
+          · simp only [hone, if_true, Option.some.injEq] at h
+            rw [← h]
+            exact hcurrent_le
+          · simp only [hone, if_false] at h
+            split at h
+            · simp only [Option.some.injEq] at h
+              rw [← h]
+              exact improvePrimeData?_p_le f current hcurrent_le extra candidates htail
+            · simp only [Option.some.injEq] at h
+              rw [← h]
+              exact hcurrent_le
+
+private theorem choosePrimeDataAdaptive?_property
+    (f : ZPoly) (extra : Nat) (data : PrimeChoiceData)
+    (P : PrimeChoiceDataScore → Prop)
+    (hcandidate : ∀ c score, primeChoiceDataScore f c = some score → P score)
+    (hdata : choosePrimeDataAdaptive? f extra = some data) :
+    ∃ score, score.data = data ∧ P score := by
+  unfold choosePrimeDataAdaptive? at hdata
+  cases hscore : chooseAdaptiveFrom? f extra
+      (smallPrimeCandidates ++ extendedSmallPrimeCandidates) with
+  | none => simp [hscore] at hdata
+  | some score =>
+      simp [hscore] at hdata
+      exact ⟨score, hdata, chooseAdaptiveFrom?_property f extra P hcandidate _ _ hscore⟩
+
+theorem choosePrimeDataAdaptive?_prime
+    (f : ZPoly) (extra : Nat) (data : PrimeChoiceData)
+    (hdata : choosePrimeDataAdaptive? f extra = some data) :
+    Nat.Prime data.p := by
+  obtain ⟨score, rfl, hprime⟩ := choosePrimeDataAdaptive?_property f extra data
+    (fun score => Nat.Prime score.data.p)
+    (fun c score hscore => primeChoiceDataScore_prime f c score hscore) hdata
+  exact hprime
+
+theorem choosePrimeDataAdaptive?_p_le_500
+    (f : ZPoly) (extra : Nat) (data : PrimeChoiceData)
+    (hdata : choosePrimeDataAdaptive? f extra = some data) :
+    data.p ≤ 500 := by
+  unfold choosePrimeDataAdaptive? at hdata
+  cases hscore : chooseAdaptiveFrom? f extra
+      (smallPrimeCandidates ++ extendedSmallPrimeCandidates) with
+  | none => simp [hscore] at hdata
+  | some score =>
+      simp [hscore] at hdata
+      rw [← hdata]
+      exact chooseAdaptiveFrom?_p_le f extra _ score
+        (fun c hc => (mem_hotPathCandidates_prime hc).2.2) hscore
+
+theorem choosePrimeDataAdaptive?_fModP_eq
+    (f : ZPoly) (extra : Nat) (data : PrimeChoiceData)
+    (hdata : choosePrimeDataAdaptive? f extra = some data) :
+    data.fModP = @ZPoly.modP data.p data.bounds f := by
+  obtain ⟨score, rfl, heq⟩ := choosePrimeDataAdaptive?_property f extra data
+    (fun score => score.data.fModP =
+      @ZPoly.modP score.data.p score.data.bounds f)
+    (fun c score hscore => primeChoiceDataScore_fModP_eq f c score hscore) hdata
+  exact heq
+
+theorem choosePrimeDataAdaptive?_isGoodPrime
+    (f : ZPoly) (extra : Nat) (data : PrimeChoiceData)
+    (hdata : choosePrimeDataAdaptive? f extra = some data) :
+    @isGoodPrime f data.p data.bounds = true := by
+  obtain ⟨score, rfl, hgood⟩ := choosePrimeDataAdaptive?_property f extra data
+    (fun score => @isGoodPrime f score.data.p score.data.bounds = true)
+    (fun c score hscore => primeChoiceDataScore_isGoodPrime f c score hscore) hdata
+  exact hgood
+
 /--
 Choose an admissible small prime and package the modular image together with
 its Berlekamp irreducible factor data for the rest of the pipeline.
@@ -616,6 +835,47 @@ theorem choosePrimeData?_ne_none_of_good
   rw [hgood] at hbad
   simp at hbad
 
+private theorem chooseAdaptiveFrom?_ne_none_of_good
+    (f : ZPoly) (extra : Nat) {c : SmallPrimeCandidate}
+    (hgood : @isGoodPrime f c.p c.bounds = true) :
+    ∀ candidates, c ∈ candidates → chooseAdaptiveFrom? f extra candidates ≠ none := by
+  intro candidates hc
+  induction candidates with
+  | nil => simp at hc
+  | cons head tail ih =>
+      unfold chooseAdaptiveFrom?
+      cases hscore : primeChoiceDataScore f head with
+      | some score =>
+          by_cases hone : score.factorCount = 1
+          · simp [hone]
+          · simp only [hone, if_false]
+            split <;> simp
+      | none =>
+          simp only
+          have hne : c ≠ head := by
+            intro heq
+            subst head
+            have hbad := (primeChoiceDataScore_eq_none_iff f c).mp hscore
+            rw [hgood] at hbad
+            simp at hbad
+          exact ih ((List.mem_cons.mp hc).resolve_left hne)
+
+/-- A good member of the fixed hot-path list also forces the adaptive selector
+to succeed; its look-ahead changes only which successful record is returned. -/
+theorem choosePrimeDataAdaptive?_ne_none_of_good
+    {f : ZPoly} {c : SmallPrimeCandidate} {extra : Nat}
+    (hc : c ∈ hotPathCandidates)
+    (hgood : @isGoodPrime f c.p c.bounds = true) :
+    choosePrimeDataAdaptive? f extra ≠ none := by
+  unfold choosePrimeDataAdaptive?
+  unfold hotPathCandidates at hc
+  have hselected := chooseAdaptiveFrom?_ne_none_of_good f extra hgood _ hc
+  intro hmap
+  cases hscore : chooseAdaptiveFrom? f extra
+      (smallPrimeCandidates ++ extendedSmallPrimeCandidates) with
+  | none => exact hselected hscore
+  | some score => simp [hscore] at hmap
+
 /--
 Invariant capturing that `data.factorsModP` is exactly the Berlekamp factor
 output for the monic modular image used by prime selection.  Phrased as an
@@ -701,6 +961,28 @@ private theorem choosePrimeDataScore_fold_factorsModPBerlekampForm
         (fun old hold =>
           choosePrimeDataScoreStep_factorsModPBerlekampForm f best c old hbest hold)
         hscore
+
+theorem choosePrimeDataAdaptive?_form
+    (f : ZPoly) (extra : Nat) (data : PrimeChoiceData)
+    (hdata : choosePrimeDataAdaptive? f extra = some data) :
+    letI := data.bounds
+    ∃ (hzero : (ZPoly.modP data.p f).isZero = false),
+      data.factorsModP =
+        ((@Berlekamp.berlekampFactor data.p data.bounds
+          (monicModularImage (ZPoly.modP data.p f))
+          (monicModularImage_monic
+            (choosePrimeDataAdaptive?_prime f extra data hdata)
+            (ZPoly.modP data.p f) hzero)
+          (@zmod64FieldOfPrime data.p data.bounds
+            (ZMod64.primeModulusOfPrime
+              (choosePrimeDataAdaptive?_prime f extra data hdata)))).factors.map
+                monicModularImage).toArray := by
+  obtain ⟨score, rfl, hform⟩ := choosePrimeDataAdaptive?_property f extra data
+    (fun score => factorsModPBerlekampForm f score.data)
+    (fun c score hscore =>
+      primeChoiceDataScore_factorsModPBerlekampForm f c score hscore) hdata
+  obtain ⟨_, hzero, heq⟩ := hform
+  exact ⟨hzero, heq⟩
 
 /--
 When `choosePrimeData? f` succeeds, the stored modular factor array is exactly

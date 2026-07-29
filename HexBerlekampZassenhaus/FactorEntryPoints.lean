@@ -91,6 +91,10 @@ private def bhksRecoveryGuardPrimeData : PrimeChoiceData :=
 
 namespace ZPoly
 
+/-- Maximum number of further good primes inspected for a modular
+irreducibility shortcut on a high-cost monic transform. -/
+def primeProbeFuel : Nat := 8
+
 /--
 Optional prime-choice data for the monic polynomial sent to Hensel lifting.
 
@@ -102,7 +106,7 @@ modular factor data is the Berlekamp-form mod-`p` factorisation of
 -/
 @[expose]
 def toMonicPrimeData? (core : ZPoly) : Option PrimeChoiceData :=
-  choosePrimeData? (toMonic core).monic
+  choosePrimeDataAdaptive? (toMonic core).monic primeProbeFuel
 
 /-- A good hot-path candidate for the transformed monic polynomial forces the
 selector used by every Hensel-lifting tier to succeed. -/
@@ -111,7 +115,7 @@ theorem toMonicPrimeData?_ne_none_of_good
     (hc : c ∈ hotPathCandidates)
     (hgood : @isGoodPrime (toMonic core).monic c.p c.bounds = true) :
     toMonicPrimeData? core ≠ none := by
-  exact choosePrimeData?_ne_none_of_good hc hgood
+  exact choosePrimeDataAdaptive?_ne_none_of_good (extra := primeProbeFuel) hc hgood
 
 /-- Internal Hensel precision bound for the slow exhaustive branch.
 
@@ -132,21 +136,29 @@ theorem toMonicPrimeData?_prime
     (core : ZPoly) (data : PrimeChoiceData)
     (hdata : toMonicPrimeData? core = some data) :
     Nat.Prime data.p := by
-  exact choosePrimeData?_prime (toMonic core).monic data hdata
+  exact choosePrimeDataAdaptive?_prime (toMonic core).monic primeProbeFuel data hdata
 
 theorem toMonicPrimeData?_isGoodPrime
     (core : ZPoly) (data : PrimeChoiceData)
     (hdata : toMonicPrimeData? core = some data) :
     @isGoodPrime (toMonic core).monic data.p data.bounds = true := by
-  exact choosePrimeData?_isGoodPrime (toMonic core).monic data hdata
+  exact choosePrimeDataAdaptive?_isGoodPrime
+    (toMonic core).monic primeProbeFuel data hdata
+
+theorem toMonicPrimeData?_fModP_eq
+    (core : ZPoly) (data : PrimeChoiceData)
+    (hdata : toMonicPrimeData? core = some data) :
+    data.fModP = @ZPoly.modP data.p data.bounds (toMonic core).monic := by
+  exact choosePrimeDataAdaptive?_fModP_eq
+    (toMonic core).monic primeProbeFuel data hdata
 
 theorem toMonicPrimeData?_factorsModP_berlekamp_form
     (core : ZPoly) (data : PrimeChoiceData)
     (hdata : toMonicPrimeData? core = some data) :
     factorsModPBerlekampForm (toMonic core).monic data := by
   obtain ⟨hzero, heq⟩ :=
-    choosePrimeData?_factorsModP_berlekamp_form
-      (toMonic core).monic data hdata
+    choosePrimeDataAdaptive?_form
+      (toMonic core).monic primeProbeFuel data hdata
   exact ⟨toMonicPrimeData?_prime core data hdata, hzero, heq⟩
 
 end ZPoly
@@ -193,9 +205,9 @@ remainder's own monic floor, reusing the parent's prime and per-remainder
 tracked mod-p factors. Re-running the prime walk or Berlekamp factorization for
 each remainder is deliberately avoided.
 
-Structure: an escalation ladder lifts each node's tracked factors to
-`k = 1, 2, 4, ...` strictly below the node's floor exponent, scanning
-subsets of size at most `reliftSubFloorCap` for an early split (peels are
+Structure: a bounded escalation ladder lifts each node's tracked factors at
+small exponents strictly below the node's floor exponent, scanning subsets of
+size at most `reliftSubFloorCap` for an early split (peels are
 self-certifying via `exactQuotient?`, so the sub-floor scan carries no
 coverage obligation); peeled pieces recurse with tracked data derived by
 monic-dilation transport plus a mod-p divisibility filter. A node that
@@ -751,6 +763,15 @@ pair splits of the Mignotte-swell family, and
 larger caps grow the failed sub-floor scan tails combinatorially. -/
 def reliftSubFloorCap : Nat := 2
 
+/-- Number of speculative sub-floor lift/scan attempts made at a recursive
+node before going directly to its certified full-precision scan. With at most
+three modular factors the full scan is already tiny, so probing merely repeats
+Hensel work. Otherwise the first rung (`k = 1`) cheaply finds the small factors
+that make recursive relifting pay off. Additional from-scratch rungs make the
+common unsplit case repeat the same work before the full-floor scan. -/
+def reliftProbeFuel (factorCount : Nat) : Nat :=
+  if factorCount ≤ 3 then 0 else 1
+
 /-- Recursive per-remainder classical certification: sub-floor ladder
 plus recursion on peels, falling back to today's full floor scan
 (`classicalCoreFactorsWithBound`) for nodes that never split early. Pieces
@@ -777,7 +798,8 @@ def classicalCoreFactorsRecursiveAux (cap : Nat) :
         let monicBound := ZPoly.defaultFactorCoeffBound (ZPoly.toMonic g).monic
         let floorK := precisionForCoeffBound
           (match B? with | some B => max B monicBound | none => monicBound) pd.p
-        match reliftLadder pd cap g floorK monicBound 1 (floorK + 1) with
+        match reliftLadder pd cap g floorK monicBound 1
+            (reliftProbeFuel pd.factorsModP.size) with
         | some pieces =>
             letI := pd.bounds
             let lcg := DensePoly.leadingCoeff g
