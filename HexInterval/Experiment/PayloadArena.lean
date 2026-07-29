@@ -36,7 +36,8 @@ inductive Role where
   deriving DecidableEq, Repr
 
 /-- One package-produced recipe.  `label` is local to this reply, while
-`schema` selects the package-owned decoder for the opaque body. -/
+`schema` selects a package-owned body variant within the originating
+`RuleKey.schema` compatibility epoch. -/
 structure Draft where
   label : PayloadId
   role : Role
@@ -52,6 +53,32 @@ structure Entry where
   schema : Nat
   body : List Nat
   deriving Repr
+
+/-- The immutable dispatch address for semantic replay.  `rule.schema` is the
+handler/theorem compatibility epoch; this structure's numeric `schema` is a
+recipe variant local to that exact rule and role.  Dispatch is exact on all
+three fields, with no newest-version or schema-only fallback. -/
+structure ReplayKey where
+  rule : RuleKey
+  role : Role
+  schema : Nat
+  deriving DecidableEq, Repr
+
+namespace Draft
+
+/-- Resolve a reply-local draft's full replay address under its handler. -/
+def replayKey (rule : RuleKey) (draft : Draft) : ReplayKey :=
+  { rule, role := draft.role, schema := draft.schema }
+
+end Draft
+
+namespace Entry
+
+/-- The full replay address retained by a frozen arena entry. -/
+def replayKey (entry : Entry) : ReplayKey :=
+  { rule := entry.origin.key, role := entry.role, schema := entry.schema }
+
+end Entry
 
 /-- Append-only replay storage.  `bodyCells` is maintained by `freeze`, making
 the aggregate body bound independent of later arena size. -/
@@ -109,6 +136,9 @@ inductive Invalid where
   | danglingReference (label : PayloadId)
   | wrongRole (label : PayloadId) (expected actual : Role)
   | extraDraft (label : PayloadId)
+  | wrongOwner (expected actual : RuleKey)
+  | undeclaredFormat (key : ReplayKey)
+  | invalidBody (key : ReplayKey)
   deriving DecidableEq, Repr
 
 /-- A trusted arena limit exhausted before allocation. -/
@@ -264,6 +294,14 @@ structure BoundedDrafts where
   drafts : List Draft
   cells : Nat
 
+def validateDrafts (validateDraft : Draft -> Option Invalid) :
+    List Draft -> Option Invalid
+  | [] => none
+  | draft :: drafts =>
+      match validateDraft draft with
+      | some error => some error
+      | none => validateDrafts validateDraft drafts
+
 /-- Traverse a reply body through the first cell beyond its local budget.
 Every visited atom is checked before its cell is charged, so an oversized
 boundary atom reports `.atom`. Cells after a `.draftCells` stop are
@@ -350,33 +388,56 @@ def freezeDrafts (arena : Arena) (origin : Action)
     appendDrafts origin arena.entries bounded.drafts
   ({ entries, bodyCells := arena.bodyCells + bounded.cells }, relocations)
 
-/-- Validate and freeze every reply-local payload reference in an outcome.
+/-- Low-level validation and freezing with an explicitly supplied rule owner
+and draft validator. The package layer pairs those values in one immutable
+snapshot before a proof-producing session calls this operation.
 
-This function does not mutate the supplied arena.  A caller should retain the
+Reply-local body and draft bounds and exact coverage are checked before
+`validateDraft` runs, so a package validator only receives locally bounded,
+structurally relevant inputs. Only structurally and format-valid evidence is
+then compared with remaining whole-run capacity. The validator establishes
+representation shape only. Semantic replay must decode the same immutable
+entry and recheck the rule-specific mathematics.
+
+This function does not mutate the supplied arena. A caller should retain the
 returned arena only if the surrounding reply transaction also commits.
 Starting from `arena.wellFormed`, every ready result remains well formed.
-Callers must supply that precondition until a later session abstraction owns
-the arena by construction. -/
+Direct callers must supply that precondition; the checked session owns a
+well-formed arena by construction. -/
+def freezeChecked (limits : Limits) (arena : Arena) (origin : Action)
+    (owner : RuleKey) (validateDraft : Draft -> Option Invalid)
+    (outcome : Outcome Fact) (drafts : List Draft) : Result Fact :=
+  if owner != origin.key then
+    .invalid (.wrongOwner origin.key owner) arena
+  else
+    match preflightUses limits.maxUses outcome with
+    | .error resource => .resourceLimit resource arena
+    | .ok _ =>
+        let uses := outcomeUses outcome
+        match preflightLocal limits drafts with
+        | .error resource => .resourceLimit resource arena
+        | .ok bounded =>
+            match validate uses bounded.drafts with
+            | some error => .invalid error arena
+            | none =>
+                match validateDrafts validateDraft bounded.drafts with
+                | some error => .invalid error arena
+                | none =>
+                    match preflightWhole limits arena bounded with
+                    | .error resource => .resourceLimit resource arena
+                    | .ok _ =>
+                        let (prospective, relocations) :=
+                          freezeDrafts arena origin bounded
+                        match relocateOutcome relocations outcome with
+                        | .error error => .invalid error arena
+                        | .ok outcome =>
+                            .ready prospective outcome
+
+/-- Standalone structural freezing with no package format validation.
+Proof-producing sessions instead use the package layer's snapshot-paired
+wrapper. -/
 def freeze (limits : Limits) (arena : Arena) (origin : Action)
     (outcome : Outcome Fact) (drafts : List Draft) : Result Fact :=
-  match preflightUses limits.maxUses outcome with
-  | .error resource => .resourceLimit resource arena
-  | .ok _ =>
-      let uses := outcomeUses outcome
-      match preflightLocal limits drafts with
-      | .error resource => .resourceLimit resource arena
-      | .ok bounded =>
-          match validate uses bounded.drafts with
-          | some error => .invalid error arena
-          | none =>
-              match preflightWhole limits arena bounded with
-              | .error resource => .resourceLimit resource arena
-              | .ok _ =>
-                  let (prospective, relocations) :=
-                    freezeDrafts arena origin bounded
-                  match relocateOutcome relocations outcome with
-                  | .error error => .invalid error arena
-                  | .ok outcome =>
-                      .ready prospective outcome
+  freezeChecked limits arena origin origin.key (fun _ => none) outcome drafts
 
 end Hex.Interval.Experiment.PayloadArena

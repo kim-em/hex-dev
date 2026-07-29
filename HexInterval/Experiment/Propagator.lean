@@ -147,8 +147,10 @@ end Program
 
 /-! # Rule registration -/
 
-/-- Stable rule name.  `schema` versions the proof payload understood by the
-companion checker. -/
+/-- Stable rule name and compatibility epoch.  `schema` versions the complete
+handler/theorem contract; replay requires this exact key and never falls back
+to a newer epoch.  A payload's own schema is a separate recipe variant within
+this epoch. -/
 structure RuleKey where
   name : String
   schema : Nat := 1
@@ -684,6 +686,7 @@ inductive Resource where
   | actions
   | effort
   | registryEntries
+  | replayFormats
   | acceptedFacts
   | retainedSuggestions
   | outcomeCandidates
@@ -699,6 +702,10 @@ structure Limits where
   maxOperations : Nat
   maxNodes : Nat
   maxRules : Nat
+  /-- Total package metadata cells, independent of executable program size. -/
+  maxRegistryEntries : Nat
+  /-- Total cache-independent proof-replay format declarations. -/
+  maxReplayFormats : Nat
   maxArity : Nat
   maxApplications : Nat
   maxQueueEntries : Nat

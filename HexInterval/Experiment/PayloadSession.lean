@@ -18,22 +18,24 @@ compiled it, and one immutable proof-payload arena. Its private constructor
 prevents callers from pairing independently assembled values.
 
 For a rule action, `advance` invokes the routed package, freezes and relocates
-all reply-local proof labels prospectively, and submits the relocated outcome.
-The new arena commits only when engine submission succeeds. Package caches may
-still record a failed invocation because they are explicitly non-semantic;
-engine facts, expression nodes, provenance, and the arena remain atomic.
-Malformed package evidence is submitted to the engine as a failed rule reply:
-the request latch is cleared, the session remains usable, and completeness is
-permanently lost. Exceeding a package-local payload-use, draft, draft-cell,
-atom, or schema bound has the same recoverable behavior. Exhausting remaining
-whole-run arena entry or body capacity after earlier commits, or encountering
-an engine-invalid transition, instead returns a non-live session snapshot
-which cannot later be resumed and mislabeled saturated. This cumulative stop
-is an intentional conservative policy for the eager prototype: an otherwise
-valid selected transition could not be retained, so the session treats it like
-global engine-resource exhaustion rather than skipping required work. Package
-failure and unprocessed narrowing suggestions likewise make the final status
-incomplete.
+all reply-local proof labels prospectively, checks their bounded bodies with
+the exact invoked handler's immutable replay formats, and submits the relocated
+outcome. The new arena commits only when both format checking and engine
+submission succeed. Package caches may still record a failed invocation
+because they are explicitly non-semantic; engine facts, expression nodes,
+provenance, and the arena remain atomic. Malformed package evidence, including
+an undeclared or invalid replay format, is submitted to the engine as a failed
+rule reply: the request latch is cleared, the session remains usable, and
+completeness is permanently lost. Exceeding a package-local payload-use,
+draft, draft-cell, atom, or schema bound has the same recoverable behavior.
+Exhausting remaining whole-run arena entry or body capacity after earlier
+commits, or encountering an engine-invalid transition, instead returns a
+non-live session snapshot which cannot later be resumed and mislabeled
+saturated. This cumulative stop is an intentional conservative policy for the
+eager prototype: an otherwise valid selected transition could not be retained,
+so the session treats it like global engine-resource exhaustion rather than
+skipping required work. Package failure and unprocessed narrowing suggestions
+likewise make the final status incomplete.
 -/
 
 namespace Hex.Interval.Experiment.PayloadSession
@@ -224,7 +226,9 @@ opaque Session.advance (session : Session Fact) : Step Fact :=
     .invalidEngine session
   else match session.engine.poll with
   | .request request engine =>
-      let (plan, registry) := session.registry.invokePlanned request
+      let (invocation, registry) := session.registry.invokePlanned request
+      let replay := invocation.replay
+      let plan := invocation.plan
       if !outcomeListsBounded engine.limits plan.outcome then
         match engine.submit (request.action.reply plan.outcome) with
         | .accepted _ _ =>
@@ -238,7 +242,7 @@ opaque Session.advance (session : Session Fact) : Step Fact :=
         | .factResourceLimit budget next =>
             .factResource budget (haltRegistry session next registry)
       else
-        match PayloadArena.freeze session.arenaLimits session.arena request.action
+        match replay.freeze session.arenaLimits session.arena request.action
             plan.outcome plan.drafts with
         | .invalid error _ =>
             failPayload session engine registry request.action error

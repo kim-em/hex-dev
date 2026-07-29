@@ -203,10 +203,11 @@ structure Config where
 
 /-! ## Reply-local proof payloads
 
-Labels distinguish uses only within one callback reply.  Version-zero recipes
-have empty bodies: after freezing, replay dispatch is determined by the
-engine-owned origin rule, semantic role, and schema.  This deliberately avoids
-a second central recipe tag alongside `PayloadArena.Entry.origin`.
+Labels distinguish uses only within one callback reply. Payload-schema-zero
+recipes have empty bodies: after freezing, replay dispatch is determined by
+the engine-owned origin rule compatibility epoch, semantic role, and payload
+schema. This deliberately avoids a second central recipe tag alongside
+`PayloadArena.Entry.origin`.
 -/
 
 def factLabel : PayloadId := { index := 0 }
@@ -216,6 +217,21 @@ def equalityLabel : PayloadId := { index := 2 }
 def emptyDraft (label : PayloadId) (role : PayloadArena.Role) :
     PayloadArena.Draft :=
   { label, role, schema := 0, body := [] }
+
+/-- Payload-schema-zero dyadic recipes have no body cells. Exact empty-list
+matching rejects trailing data instead of silently accepting a future recipe
+variant. -/
+def emptyFormat (role : PayloadArena.Role) : ReplayFormat :=
+  { role
+    schema := 0
+    validateBody := fun body =>
+      match body with
+      | [] => true
+      | _ :: _ => false }
+
+def factHandler (registration : Registration)
+    (invoke : RuleRequest Fact -> Plan Fact) : Handler Fact Unit :=
+  Handler.statelessPlanned registration invoke #[emptyFormat .fact]
 
 def withoutPayloads (outcome : Outcome Fact) : Plan Fact :=
   { outcome, drafts := [] }
@@ -461,18 +477,18 @@ def arithmeticPackage (config : Config) (real : DomainId) : Package Fact :=
     cache := ()
     operations := arithmeticOperations real
     handlers :=
-      #[Handler.statelessPlanned oneForward (invokeOneForward config),
-        Handler.statelessPlanned negForward (invokeNegForward config),
-        Handler.statelessPlanned negBackward (invokeNegBackward config),
-        Handler.statelessPlanned subForward (invokeSubForward config),
-        Handler.statelessPlanned subLeft (invokeSubLeft config),
-        Handler.statelessPlanned subRight (invokeSubRight config),
-        Handler.statelessPlanned mulForward (invokeMulForward config),
-        Handler.statelessPlanned mulLeft (invokeMulLeft config),
-        Handler.statelessPlanned mulRight (invokeMulRight config),
-        Handler.statelessPlanned squareForward (invokeSquareForward config),
-        Handler.statelessPlanned reciprocalForward (invokeReciprocalForward config),
-        Handler.statelessPlanned reciprocalBackward (invokeReciprocalBackward config)]
+      #[factHandler oneForward (invokeOneForward config),
+        factHandler negForward (invokeNegForward config),
+        factHandler negBackward (invokeNegBackward config),
+        factHandler subForward (invokeSubForward config),
+        factHandler subLeft (invokeSubLeft config),
+        factHandler subRight (invokeSubRight config),
+        factHandler mulForward (invokeMulForward config),
+        factHandler mulLeft (invokeMulLeft config),
+        factHandler mulRight (invokeMulRight config),
+        factHandler squareForward (invokeSquareForward config),
+        factHandler reciprocalForward (invokeReciprocalForward config),
+        factHandler reciprocalBackward (invokeReciprocalBackward config)]
     acceptsLimits := fun _ limits _ =>
       config.maxReciprocalEffort ≤ limits.maxEffort &&
         config.reciprocalPrecisionsAllowed &&
@@ -488,9 +504,10 @@ def centeredPackage (config : Config) (real : DomainId) : Package Fact :=
     operations := centeredOperations real
     requiredOperations := centeredRequirements real
     handlers :=
-      #[Handler.statelessPlanned centeredForward (invokeCenteredForward config),
+      #[factHandler centeredForward (invokeCenteredForward config),
         Handler.statelessDroppingDrafts centeredSplit invokeCenteredSplit,
-        Handler.statelessPlanned centeredInstantiate invokeCenteredInstantiate]
+        Handler.statelessPlanned centeredInstantiate invokeCenteredInstantiate
+          #[emptyFormat .instance, emptyFormat .equality]]
     acceptsLimits := fun _ limits _ =>
       4 ≤ limits.maxObservationValue &&
         71 ≤ limits.maxDiagnosticValue &&

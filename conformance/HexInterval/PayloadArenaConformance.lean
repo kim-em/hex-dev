@@ -18,6 +18,7 @@ def node (index : Nat) : NodeId := { index }
 def payload (index : Nat) : PayloadId := { index }
 
 def rule : RuleKey := { name := "payload-arena.test" }
+def otherRule : RuleKey := { name := "payload-arena.other" }
 
 def action (serial : Nat) : Action :=
   { serial
@@ -157,6 +158,14 @@ def mixedRequest : InstantiationRequest :=
       [equalityDraft 0] with
   | .invalid (.wrongRole label .fact .equality) arena =>
       label.index == 0 && seedPreserved arena
+  | _ => false
+
+-- A replay-format snapshot cannot be paired with another rule's action.
+#guard
+  match freezeChecked generous seeded (action 0) otherRule (fun _ => none)
+      (factOutcome 0) [factDraft 0] with
+  | .invalid (.wrongOwner expected actual) arena =>
+      expected == rule && actual == otherRule && seedPreserved arena
   | _ => false
 
 #guard
