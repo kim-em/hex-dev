@@ -194,6 +194,22 @@ Returning a proof in `Option` permits a computational companion checker to
 reject malformed facts.  It does not trust the scheduler's `narrow` result. -/
 structure FactDomainSchema (semantics : Semantics Fact) where
   top : DomainId -> Fact
+  /-- A fact about a modeled old expression node has the same meaning after a
+  conservative program extension when the extended model agrees at that node.
+  Function packages may add arbitrary new nodes over the program's declared
+  operation table; this is the sole generic locality law needed to transport
+  caller assumptions and the requested result across those additions. -/
+  holdsPrefix :
+    ∀ (before after : Program)
+      (valuation extended : NodeId -> semantics.Value)
+      (fact : NodeFact Fact),
+      ProgramPrefix before after ->
+      semantics.models before valuation ->
+      semantics.models after extended ->
+      fact.node.index < before.nodes.size ->
+      extended fact.node = valuation fact.node ->
+      (semantics.holds before valuation fact ↔
+        semantics.holds after extended fact)
   topSound :
     ∀ (program : Program) (valuation : NodeId -> semantics.Value)
       (node : NodeId) (instruction : Node),
@@ -646,50 +662,6 @@ structure Trace (Fact : Type) where
   events : Array (FactEvent Fact)
   arena : Arena
 
-namespace Trace
-
-/-- Read an event only when its index is strictly before the replay cursor.
-Even if the untrusted array contains a future entry, it is inaccessible. -/
-def eventAt? (trace : Trace Fact) (cursor index : Nat) : Option (FactEvent Fact) :=
-  if index < cursor then trace.events[index]? else none
-
-def findVersionPrefix? (events : Array (FactEvent Fact)) (seen : SeenVersion) :
-    Nat -> Nat -> Option Fact
-  | 0, _ => none
-  | cursor + 1, index =>
-      match events[index]? with
-      | none => none
-      | some event =>
-          if event.node == seen.node && event.version == seen.version then
-            some event.fact
-          else
-            findVersionPrefix? events seen cursor (index + 1)
-
-/-- Resolve a positive fact version from a bounded event prefix.  This helper
-never falls back to the engine's mutable current fact slot. -/
-def eventFactAt? (trace : Trace Fact) (cursor : Nat)
-    (seen : SeenVersion) : Option Fact :=
-  if seen.version == 0 then none
-  else findVersionPrefix? trace.events seen cursor 0
-
-/-- Resolve a fact exactly as replay will: base version zero comes from the
-caller's immutable initial facts, generated version zero is semantic top, and
-positive versions can inspect only the already-checked event prefix. -/
-def factAt? {Fact : Type} {semantics : Semantics Fact}
-    (domain : FactDomainSchema semantics)
-    (input : CheckerInput Fact) (trace : Trace Fact)
-    (cursor : Nat) (seen : SeenVersion) : Option Fact :=
-  if seen.version == 0 then
-    if seen.node.index < input.baseProgram.nodes.size then
-      input.initialFacts[seen.node.index]?
-    else do
-      let instruction ← trace.program.node? seen.node
-      pure (domain.top instruction.domain)
-  else
-    trace.eventFactAt? cursor seen
-
-end Trace
-
 /-! ## Transparent chronological trace checker -/
 
 /-- Caller-owned version-zero assumptions, in exact base-node order. -/
@@ -700,6 +672,20 @@ def initialContextFrom (index : Nat) : List Fact -> List (NodeFact Fact)
 
 def initialContext (input : CheckerInput Fact) : List (NodeFact Fact) :=
   initialContextFrom 0 input.initialFacts.toList
+
+theorem initialContextFrom_node_lt (facts : List Fact) (index : Nat)
+    (nodeFact : NodeFact Fact)
+    (member : nodeFact ∈ initialContextFrom index facts) :
+    nodeFact.node.index < index + facts.length := by
+  induction facts generalizing index with
+  | nil => simp [initialContextFrom] at member
+  | cons fact facts induction =>
+      simp only [initialContextFrom, List.mem_cons] at member
+      rcases member with equal | member
+      · subst nodeFact
+        simp
+      · have later := induction (index := index + 1) member
+        simpa [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using later
 
 /-- A list member carrying its membership proof in `Type`. -/
 structure Member (items : List α) where
@@ -766,6 +752,53 @@ structure ProvenEquality (semantics : Semantics Fact) (program : Program) where
   evidence :
     Evidence (semantics.Equivalent program edge.left edge.right)
 
+/-- One package-checked conservative extension step.  Keeping the semantic
+evidence is essential: structural prefix checks alone do not show that a
+valuation of the caller's expression graph extends to the added nodes. -/
+structure ProvenExtension (semantics : Semantics Fact) where
+  before : Program
+  after : Program
+  programPrefix : ProgramPrefix before after
+  evidence : Evidence (semantics.Extends before after)
+
+namespace ProgramPrefix
+
+theorem nodeSize_le (programPrefix : ProgramPrefix before after) :
+    before.nodes.size ≤ after.nodes.size := by
+  rcases programPrefix.nodeSuffix with ⟨suffix, equal⟩
+  have lengths := congrArg List.length equal
+  simp only [Array.length_toList, List.length_append] at lengths
+  rw [lengths]
+  exact Nat.le_add_right _ _
+
+end ProgramPrefix
+
+namespace Semantics
+
+theorem extendsRefl (semantics : Semantics Fact) (program : Program) :
+    semantics.Extends program program := by
+  intro valuation model
+  exact ⟨valuation, model, fun _ _ => rfl⟩
+
+theorem extendsTrans (semantics : Semantics Fact)
+    (programPrefix : ProgramPrefix before middle)
+    (first : Evidence (semantics.Extends before middle))
+    (second : Evidence (semantics.Extends middle after)) :
+    semantics.Extends before after := by
+  intro valuation model
+  obtain ⟨middleValuation, middleModel, agreesFirst⟩ :=
+    first.proof valuation model
+  obtain ⟨extended, extendedModel, agreesSecond⟩ :=
+    second.proof middleValuation middleModel
+  refine ⟨extended, extendedModel, ?_⟩
+  intro node oldNode
+  calc
+    extended node = middleValuation node :=
+      agreesSecond node (Nat.lt_of_lt_of_le oldNode programPrefix.nodeSize_le)
+    _ = valuation node := agreesFirst node oldNode
+
+end Semantics
+
 def expectedNewNodes (before after : Program) : List NodeId :=
   (List.range (after.nodes.size - before.nodes.size)).map
     (fun offset => { index := before.nodes.size + offset })
@@ -778,8 +811,8 @@ def instanceEqualitiesValid (equalities : Array EqualityEdge)
 def replayInstances {Fact : Type} {semantics : Semantics Fact}
     (registry : KernelRegistry semantics) (input : CheckerInput Fact)
     (trace : Trace Fact) (index : Nat) :
-    List InstanceEvent -> Option PUnit
-  | [] => some ⟨⟩
+    List InstanceEvent -> Option (List (ProvenExtension semantics))
+  | [] => some []
   | event :: events => do
       let before ← trace.programs[index]?
       let after ← trace.programs[index + 1]?
@@ -799,9 +832,45 @@ def replayInstances {Fact : Type} {semantics : Semantics Fact}
               after
               basePrefix := basePrefix.proof
               event }
-          let _ ← registry.dispatchInstance input entry context
-          let _ := stepPrefix
-          replayInstances registry input trace (index + 1) events
+          let evidence ← registry.dispatchInstance input entry context
+          let rest ← replayInstances registry input trace (index + 1) events
+          pure
+            ({ before
+               after
+               programPrefix := stepPrefix.proof
+               evidence } :: rest)
+
+/-- Compose a checked chronological list of package-owned extension steps.
+The endpoint comparisons are transparent checks over untrusted trace data;
+the semantic result is built only from the proofs returned by the packages. -/
+def composeExtensions {Fact : Type} {semantics : Semantics Fact}
+    (base final : Program) :
+    List (ProvenExtension semantics) ->
+      Option (Evidence (semantics.Extends base final))
+  | [] =>
+      if equal : base = final then
+        some
+          { proof := by
+              subst final
+              exact semantics.extendsRefl base }
+      else
+        none
+  | step :: steps =>
+      if starts : step.before = base then
+        match composeExtensions step.after final steps with
+        | none => none
+        | some rest =>
+            let programPrefix : ProgramPrefix base step.after := by
+              rw [← starts]
+              exact step.programPrefix
+            let first : Evidence (semantics.Extends base step.after) :=
+              { proof := by
+                  rw [← starts]
+                  exact step.evidence.proof }
+            some
+              { proof := semantics.extendsTrans programPrefix first rest }
+      else
+        none
 
 def equalityOwned (instances : Array InstanceEvent)
     (id : EqualityId) (edge : EqualityEdge) : Bool :=
@@ -832,7 +901,8 @@ def replayStructure {Fact : Type} {semantics : Semantics Fact}
     (registry : KernelRegistry semantics) (input : CheckerInput Fact)
     (trace : Trace Fact) :
     Option
-      (Evidence (ProgramPrefix input.baseProgram trace.program) ×
+      (Evidence (semantics.Extends input.baseProgram trace.program) ×
+        Evidence (ProgramPrefix input.baseProgram trace.program) ×
         Array (ProvenEquality semantics trace.program)) := do
   if trace.programs.size != trace.instances.size + 1 ||
       trace.programs[0]? != some input.baseProgram ||
@@ -840,10 +910,11 @@ def replayStructure {Fact : Type} {semantics : Semantics Fact}
     none
   else
     let finalPrefix ← ProgramPrefix.check? input.baseProgram trace.program
-    let _ ← replayInstances registry input trace 0 trace.instances.toList
+    let steps ← replayInstances registry input trace 0 trace.instances.toList
+    let extension ← composeExtensions input.baseProgram trace.program steps
     let equalities ← replayEqualities registry input trace finalPrefix.proof
       0 trace.equalities.toList
-    pure (finalPrefix, equalities)
+    pure (extension, finalPrefix, equalities)
 
 def resolveFact {Fact : Type} {semantics : Semantics Fact}
     (domain : FactDomainSchema semantics) (input : CheckerInput Fact)
@@ -1034,62 +1105,109 @@ def replayEvents {Fact : Type} {semantics : Semantics Fact}
         replayEvents registry domain input trace basePrefix assumptions equalities
           events (installed :: proven)
 
+/-- Replay fact and equality events after the structural pass has established
+the final program prefix and all package-owned equality theorems. -/
+def replayFinal {Fact : Type} {semantics : Semantics Fact}
+    (registry : KernelRegistry semantics) (domain : FactDomainSchema semantics)
+    (input : CheckerInput Fact) (trace : Trace Fact)
+    (basePrefix : ProgramPrefix input.baseProgram trace.program)
+    (equalities : Array (ProvenEquality semantics trace.program)) :
+    Option (Evidence
+      (semantics.Entails trace.program (initialContext input) input.target)) := do
+  let assumptions := initialContext input
+  let proven ← replayEvents registry domain input trace basePrefix assumptions
+      equalities trace.events.toList []
+  match proven.find? (fun fact => fact.nodeFact.node == input.target.node) with
+  | none =>
+      match findNodeMember? input.target.node assumptions with
+      | some member =>
+          if targetNode : member.value.node = input.target.node then
+            let implication ← domain.proveImplies trace.program input.target.node
+              member.value.fact input.target.fact
+            some
+              { proof := by
+                  intro valuation model initial
+                  have stronger :
+                      semantics.holds trace.program valuation
+                        { node := input.target.node, fact := member.value.fact } := by
+                    have factEq : member.value =
+                        { node := input.target.node, fact := member.value.fact } := by
+                      exact NodeFact.extensionality _ _ targetNode rfl
+                    rw [← factEq]
+                    exact initial member.value member.proof
+                  exact implication.proof valuation model stronger }
+          else
+            none
+      | none => none
+  | some target =>
+      if targetNode : target.nodeFact.node = input.target.node then
+        let implication ← domain.proveImplies trace.program input.target.node
+          target.nodeFact.fact input.target.fact
+        some
+          { proof := by
+              intro valuation model initial
+              have stronger :
+                  semantics.holds trace.program valuation
+                    { node := input.target.node, fact := target.nodeFact.fact } := by
+                have factEq : target.nodeFact =
+                    { node := input.target.node, fact := target.nodeFact.fact } := by
+                  exact NodeFact.extensionality _ _ targetNode rfl
+                rw [← factEq]
+                exact target.evidence.proof valuation model initial
+              exact implication.proof valuation model stronger }
+      else
+        none
+
 /-- Transparently replay an explicit, untrusted trace.  Search may run through
 opaque compiled session operations, but soundness depends only on this
 kernel-reducible pass and the proof terms returned by package-owned schemas.
 
-The result certifies the requested bound under the complete checked program
-from the caller's exact version-zero assumptions. -/
-def check {Fact : Type} [DecidableEq Fact] {semantics : Semantics Fact}
+Unlike an extended-program-only checker, the result is a theorem about the
+caller's original expression graph.  The checker composes every package-owned
+`Extends` proof, transports the caller's initial facts to the final graph,
+replays the trace there, and transports the requested old-node fact back. -/
+def check {Fact : Type} {semantics : Semantics Fact}
     (registry : KernelRegistry semantics) (domain : FactDomainSchema semantics)
     (input : CheckerInput Fact) (trace : Trace Fact) :
     Option (Evidence
-      (semantics.Entails trace.program (initialContext input) input.target)) := do
-  if input.initialFacts.size != input.baseProgram.nodes.size then none else
-    let (basePrefix, equalities) ← replayStructure registry input trace
-    let assumptions := initialContext input
-    let proven ← replayEvents registry domain input trace basePrefix.proof assumptions
-      equalities trace.events.toList []
-    match proven.find? (fun fact => fact.nodeFact.node == input.target.node) with
-    | none =>
-        match findNodeMember? input.target.node assumptions with
-        | some member =>
-            if targetNode : member.value.node = input.target.node then
-              let implication ← domain.proveImplies trace.program input.target.node
-                member.value.fact input.target.fact
-              some
-                { proof := by
-                    intro valuation model initial
-                    have stronger :
-                        semantics.holds trace.program valuation
-                          { node := input.target.node, fact := member.value.fact } := by
-                      have factEq : member.value =
-                          { node := input.target.node, fact := member.value.fact } := by
-                        exact NodeFact.extensionality _ _ targetNode rfl
-                      rw [← factEq]
-                      exact initial member.value member.proof
-                    exact implication.proof valuation model stronger }
-            else
-              none
-        | none => none
-    | some target =>
-        if targetNode : target.nodeFact.node = input.target.node then
-          let implication ← domain.proveImplies trace.program input.target.node
-            target.nodeFact.fact input.target.fact
-          some
-            { proof := by
-                intro valuation model initial
-                have stronger :
-                    semantics.holds trace.program valuation
-                      { node := input.target.node, fact := target.nodeFact.fact } := by
-                  have factEq : target.nodeFact =
-                      { node := input.target.node, fact := target.nodeFact.fact } := by
-                    exact NodeFact.extensionality _ _ targetNode rfl
-                  rw [← factEq]
-                  exact target.evidence.proof valuation model initial
-                exact implication.proof valuation model stronger }
-        else
-          none
+      (semantics.Entails input.baseProgram (initialContext input) input.target)) := do
+  if sizeEqual : input.initialFacts.size = input.baseProgram.nodes.size then
+    if targetOld : input.target.node.index < input.baseProgram.nodes.size then
+      let (extension, basePrefix, equalities) ← replayStructure registry input trace
+      let final ← replayFinal registry domain input trace basePrefix.proof equalities
+      some
+        { proof := by
+            intro valuation model initial
+            obtain ⟨extended, extendedModel, agreement⟩ :=
+              extension.proof valuation model
+            have extendedInitial :
+                ∀ assumption, assumption ∈ initialContext input ->
+                  semantics.holds trace.program extended assumption := by
+              intro assumption member
+              have inFacts :
+                  assumption.node.index < input.initialFacts.toList.length := by
+                simpa using
+                  initialContextFrom_node_lt input.initialFacts.toList 0
+                    assumption member
+              have inBase :
+                  assumption.node.index < input.baseProgram.nodes.size := by
+                simpa [sizeEqual] using inFacts
+              exact
+                (domain.holdsPrefix input.baseProgram trace.program
+                  valuation extended assumption basePrefix.proof
+                  model extendedModel inBase
+                  (agreement assumption.node inBase)).mp
+                  (initial assumption member)
+            have result := final.proof extended extendedModel extendedInitial
+            exact
+              (domain.holdsPrefix input.baseProgram trace.program
+                valuation extended input.target basePrefix.proof
+                model extendedModel targetOld
+                (agreement input.target.node targetOld)).mpr result }
+    else
+      none
+  else
+    none
 
 /-! ## Remaining production work
 

@@ -30,8 +30,6 @@ namespace Hex.Interval.PropagatorE2EConformance
 
 open Experiment Propagator PayloadArena PolicySession SemanticReplay
 
-noncomputable section
-
 /-! ## Package-local expression language and fact domain -/
 
 def real : DomainId := { index := 0 }
@@ -123,10 +121,10 @@ def factLabel : PayloadId := { index := 0 }
 def instanceLabel : PayloadId := { index := 0 }
 def equalityLabel : PayloadId := { index := 1 }
 
-def emptyFormat (role : Role) : ReplayFormat :=
+def taggedFormat (role : Role) (tag : Nat) : ReplayFormat :=
   { role
     schema := 0
-    validateBody := fun body => body.isEmpty }
+    validateBody := fun body => body == [tag] }
 
 def recognizesCentered (request : RuleRequest Fact) : Bool :=
   request.program.programVersion == request.action.programVersion &&
@@ -161,8 +159,8 @@ def invokeInstantiate (request : RuleRequest Fact) : Plan Fact :=
               payload := instanceLabel }]
           { visitedEntries := 9, estimatedProofNodes := 1 }
       drafts :=
-        [{ label := instanceLabel, role := .instance, schema := 0, body := [] },
-          { label := equalityLabel, role := .equality, schema := 0, body := [] }] }
+        [{ label := instanceLabel, role := .instance, schema := 0, body := [1] },
+          { label := equalityLabel, role := .equality, schema := 0, body := [2] }] }
   else
     { outcome := .inapplicable, drafts := [] }
 
@@ -175,7 +173,7 @@ def invokeForward (request : RuleRequest Fact) : Plan Fact :=
               [{ node := target, fact := .quarter, payload := factLabel }]
               [] { arithmeticWork := 1, estimatedProofNodes := 1 }
           drafts :=
-            [{ label := factLabel, role := .fact, schema := 0, body := [] }] }
+            [{ label := factLabel, role := .fact, schema := 0, body := [3] }] }
       else
         { outcome := .failed 2, drafts := [] }
   | _, _ => { outcome := .inapplicable, drafts := [] }
@@ -186,9 +184,9 @@ def runtimePackage : Propagator.Package Fact :=
     operations
     handlers :=
       #[Handler.statelessPlanned centeredForward invokeForward
-          #[emptyFormat .fact],
+          #[taggedFormat .fact 3],
         Handler.statelessPlanned centeredInstantiate invokeInstantiate
-          #[emptyFormat .instance, emptyFormat .equality]] }
+          #[taggedFormat .instance 1, taggedFormat .equality 2]] }
 
 def runtimePackages : Array (Propagator.Package Fact) := #[runtimePackage]
 
@@ -227,8 +225,8 @@ def policyLimits : Propagator.Policy.Limits :=
 
 def arenaLimits : PayloadArena.Limits :=
   { maxEntries := 3
-    maxBodyCells := 0
-    maxAtom := 0
+    maxBodyCells := 3
+    maxAtom := 3
     maxSchema := 0
     maxUses := 7 }
 
@@ -344,17 +342,17 @@ def transportEvent : FactEvent Fact :=
     cause := .transport { index := 0 } { node := node 4, version := 1 } }
 
 def instanceEntry : Entry :=
-  { origin := instantiateAction, role := .instance, schema := 0, body := [] }
+  { origin := instantiateAction, role := .instance, schema := 0, body := [1] }
 
 def equalityEntry : Entry :=
-  { origin := instantiateAction, role := .equality, schema := 0, body := [] }
+  { origin := instantiateAction, role := .equality, schema := 0, body := [2] }
 
 def factEntry : Entry :=
-  { origin := forwardAction, role := .fact, schema := 0, body := [] }
+  { origin := forwardAction, role := .fact, schema := 0, body := [3] }
 
 def quotedArena : Arena :=
   { entries := #[instanceEntry, equalityEntry, factEntry]
-    bodyCells := 0 }
+    bodyCells := 3 }
 
 def quotedTrace : Trace Fact :=
   { program := extendedProgram
@@ -369,14 +367,28 @@ def wrongRoleTrace : Trace Fact :=
     arena :=
       { entries :=
           #[instanceEntry, { equalityEntry with role := .fact }, factEntry]
-        bodyCells := 0 } }
+        bodyCells := 3 } }
 
 def wrongKeyTrace : Trace Fact :=
   { quotedTrace with
     arena :=
       { entries :=
           #[instanceEntry, { equalityEntry with schema := 1 }, factEntry]
-        bodyCells := 0 } }
+        bodyCells := 3 } }
+
+def wrongBodyTrace : Trace Fact :=
+  { quotedTrace with
+    arena :=
+      { entries :=
+          #[instanceEntry, equalityEntry, { factEntry with body := [2] }]
+        bodyCells := 3 } }
+
+def wrongInstanceBodyTrace : Trace Fact :=
+  { quotedTrace with
+    arena :=
+      { entries :=
+          #[{ instanceEntry with body := [2] }, equalityEntry, factEntry]
+        bodyCells := 3 } }
 
 def futureAction : Action :=
   { forwardAction with
@@ -413,6 +425,8 @@ def forgedMeetTrace : Trace Fact :=
         session.arena == quotedTrace.arena
 
 /-! ## Package-owned mathematical semantics -/
+
+noncomputable section
 
 def centeredValue (x : ℝ) : ℝ :=
   (1 : ℝ) / 4 - (x - (1 : ℝ) / 2) ^ 2
@@ -515,18 +529,18 @@ theorem forwardEntails :
   rw [(modelsExtended valuation model).2]
   exact centeredBounds _ input
 
-inductive UnitCertificate where
-  | unit
+inductive TaggedCertificate where
+  | tagged
 
-def decodeUnit : List Nat -> Option UnitCertificate
-  | [] => some .unit
-  | _ :: _ => none
+def decodeTag (expected : Nat) : List Nat -> Option TaggedCertificate
+  | [actual] => if actual == expected then some .tagged else none
+  | _ => none
 
 def factSchema : PackedFactSchema semantics :=
   { rule := centeredForwardKey
     schema := 0
-    Certificate := UnitCertificate
-    decode := decodeUnit
+    Certificate := TaggedCertificate
+    decode := decodeTag 3
     replay := fun _ action context _ =>
       if actionProof : action = forwardAction then
         if programProof : context.program = extendedProgram then
@@ -546,8 +560,8 @@ def factSchema : PackedFactSchema semantics :=
 def instanceSchema : PackedInstanceSchema semantics :=
   { rule := centeredInstantiateKey
     schema := 0
-    Certificate := UnitCertificate
-    decode := decodeUnit
+    Certificate := TaggedCertificate
+    decode := decodeTag 1
     replay := fun _ action context _ =>
       if actionProof : action = instantiateAction then
         if beforeProof : context.before = baseProgram then
@@ -565,8 +579,8 @@ def instanceSchema : PackedInstanceSchema semantics :=
 def equalitySchema : PackedEqualitySchema semantics :=
   { rule := centeredInstantiateKey
     schema := 0
-    Certificate := UnitCertificate
-    decode := decodeUnit
+    Certificate := TaggedCertificate
+    decode := decodeTag 2
     replay := fun _ action context _ =>
       if actionProof : action = instantiateAction then
         if programProof : context.program = extendedProgram then
@@ -640,6 +654,11 @@ def meetEvidence (previous proposed installed : Fact) :
 
 def proofDomain : FactDomainSchema semantics :=
   { top := fun _ => .top
+    holdsPrefix := by
+      intro _ _ valuation extended fact _ _ _ _ agreement
+      change fact.fact.Allows (valuation fact.node) ↔
+        fact.fact.Allows (extended fact.node)
+      rw [agreement]
     topSound := by
       intro _ _ _ _ _ _
       trivial
@@ -675,15 +694,21 @@ def checkerInput : CheckerInput Fact :=
     initialFacts := #[.unit, .top, .top, .top]
     target := { node := node 3, fact := .upperQuarter } }
 
-def acceptsTrace (trace : Trace Fact) : Bool :=
+def acceptsInputTrace (input : CheckerInput Fact) (trace : Trace Fact) : Bool :=
   match SemanticReplay.Registry.buildPackages runtimePackages semanticPackages with
   | .error _ => false
   | .ok registry =>
-      (SemanticReplay.check registry proofDomain checkerInput trace).isSome
+      (SemanticReplay.check registry proofDomain input trace).isSome
+
+def acceptsTrace (trace : Trace Fact) : Bool :=
+  acceptsInputTrace checkerInput trace
+
+def generatedTargetInput : CheckerInput Fact :=
+  { checkerInput with target := { node := node 4, fact := .quarter } }
 
 def checked? :
     Option (Evidence
-      (semantics.Entails extendedProgram
+      (semantics.Entails baseProgram
         (initialContext checkerInput) checkerInput.target)) :=
   match SemanticReplay.Registry.buildPackages runtimePackages semanticPackages with
   | .error _ => none
@@ -699,16 +724,27 @@ theorem rejects_wrong_role : acceptsTrace wrongRoleTrace = false := by
 theorem rejects_wrong_key : acceptsTrace wrongKeyTrace = false := by
   decide +kernel
 
+theorem rejects_wrong_body : acceptsTrace wrongBodyTrace = false := by
+  decide +kernel
+
+theorem rejects_wrong_instance_body :
+    acceptsTrace wrongInstanceBodyTrace = false := by
+  decide +kernel
+
 theorem rejects_future_reference : acceptsTrace futureTrace = false := by
   decide +kernel
 
 theorem rejects_forged_meet : acceptsTrace forgedMeetTrace = false := by
   decide +kernel
 
-/-- The kernel-checked result: for every real valuation satisfying the quoted
-expression program, `0 ≤ x ≤ 1` implies `x * (1 - x) ≤ 1/4`. -/
+theorem rejects_generated_target :
+    acceptsInputTrace generatedTargetInput quotedTrace = false := by
+  decide +kernel
+
+/-- The kernel checker itself composes the package-owned conservative
+extension proof and returns a theorem about the caller's original graph. -/
 theorem product_le_quarter :
-    semantics.Entails extendedProgram
+    semantics.Entails baseProgram
       (initialContext checkerInput) checkerInput.target := by
   match result : checked? with
   | some evidence => exact evidence.proof
@@ -716,37 +752,49 @@ theorem product_le_quarter :
       have accepted := checked_isSome
       simp [result] at accepted
 
-/-- The checked extension is conservative, so the result also applies to
-every valuation of the original four-node program. -/
+/-- Compatibility name emphasizing that no generated node occurs in the
+theorem returned by the generic checker. -/
 theorem base_product_le_quarter :
     semantics.Entails baseProgram
-      (initialContext checkerInput) checkerInput.target := by
-  intro valuation model initial
-  obtain ⟨extended, extendedModel, agreement⟩ :=
-    centeredExtends valuation model
-  have extendedInitial :
+      (initialContext checkerInput) checkerInput.target :=
+  product_le_quarter
+
+/-- A concrete valuation of the caller's four-node expression graph.  This
+turns the structural replay theorem into the ordinary inequality a tactic user
+would see and demonstrates that the checked model context is inhabited. -/
+def baseValuation (x : ℝ) : NodeId -> ℝ :=
+  fun current =>
+    if current = node 0 then x
+    else if current = node 1 then 1
+    else if current = node 2 then 1 - x
+    else if current = node 3 then x * (1 - x)
+    else 0
+
+theorem baseValuation_models (x : ℝ) :
+    Models baseProgram (baseValuation x) := by
+  left
+  refine ⟨rfl, ?_⟩
+  simp [BaseEquations, baseValuation, node]
+
+/-- Human-facing consequence of the arbitrary-propagator trace.  The proof
+calls the theorem returned by the generic checker; it does not invoke a
+separate arithmetic tactic to establish the upper bound. -/
+theorem product_le_quarter_raw (x : ℝ) (lower : 0 ≤ x) (upper : x ≤ 1) :
+    x * (1 - x) ≤ (1 : ℝ) / 4 := by
+  have initial :
       ∀ assumption, assumption ∈ initialContext checkerInput ->
-        semantics.holds extendedProgram extended assumption := by
+        semantics.holds baseProgram (baseValuation x) assumption := by
     intro assumption member
-    have before : assumption.node.index < baseProgram.nodes.size := by
-      have listed := member
-      simp [initialContext, initialContextFrom, checkerInput] at listed
-      rcases listed with equal | equal | equal | equal
-      all_goals subst assumption
-      all_goals decide
-    have holds := initial assumption member
-    have equal := agreement assumption.node before
-    change assumption.fact.Allows (valuation assumption.node) at holds
-    change assumption.fact.Allows (extended assumption.node)
-    rw [equal]
-    exact holds
+    simp [initialContext, initialContextFrom, checkerInput] at member
+    rcases member with equal | equal | equal | equal
+    · subst assumption
+      exact ⟨lower, upper⟩
+    all_goals subst assumption
+    all_goals trivial
   have result :=
-    product_le_quarter extended extendedModel extendedInitial
-  have equal := agreement (node 3) (by decide)
-  change Fact.upperQuarter.Allows (extended (node 3)) at result
-  change Fact.upperQuarter.Allows (valuation (node 3))
-  rw [equal] at result
-  exact result
+    product_le_quarter (baseValuation x) (baseValuation_models x) initial
+  change Fact.upperQuarter.Allows (baseValuation x (node 3)) at result
+  simpa [Fact.Allows, baseValuation, node] using result
 
 end
 

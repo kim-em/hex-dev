@@ -537,6 +537,11 @@ def meetEvidence (previous proposed installed : Fact) :
 
 def factDomain : FactDomainSchema (semantics meanings) :=
   { top := fun _ => .top
+    holdsPrefix := by
+      intro _ _ valuation extended fact _ _ _ _ agreement
+      change fact.fact.Allows (valuation fact.node) ↔
+        fact.fact.Allows (extended fact.node)
+      rw [agreement]
     topSound := by
       intro _ _ _ _ _ _
       trivial
@@ -575,34 +580,72 @@ example : (factDomain.proveMeet program (node 1) .top (.exact 4) (.exact 4)).isS
     true := by
   decide
 
-def event (version value : Nat) : FactEvent Fact :=
-  { programVersion := 0
-    node := node 1
-    previous := { node := node 1, version := version - 1 }
-    fact := .exact value
-    version
-    cause := .rule leftAction (.exact value) { index := 0 } }
+/-! ## Conservative-extension chain composition -/
 
-def trace (arena : Arena) : Trace Fact :=
-  { program
-    events := #[event 1 4, event 2 5]
-    arena }
+namespace ExtensionChain
 
-/-- A future event is physically present but inaccessible before its cursor. -/
-example (arena : Arena) :
-    (trace arena).eventFactAt? 1 { node := node 1, version := 2 } = none := by
-  rfl
+def base : Program :=
+  { operations := program.operations
+    nodes := #[instruction 0] }
 
-example (arena : Arena) :
-    (trace arena).eventFactAt? 2 { node := node 1, version := 2 } =
-      some (.exact 5) := by
-  rfl
+def middle : Program :=
+  { operations := program.operations
+    nodes := #[instruction 0, instruction 1 [node 0]] }
 
-/-- Version zero for a base node comes from the caller-owned initial facts,
-not from the untrusted trace. -/
-example (arena : Arena) :
-    (trace arena).factAt? factDomain checkerInput 0
-      { node := node 0, version := 0 } = some (.exact 3) := by
-  rfl
+def final : Program := program
+
+def trivialSemantics : Semantics Fact :=
+  { Value := Unit
+    models := fun _ _ => True
+    holds := fun _ _ _ => True
+    transport := by intros; trivial }
+
+theorem basePrefix : ProgramPrefix base middle :=
+  { operationSuffix := ⟨[], rfl⟩
+    nodeSuffix := ⟨[instruction 1 [node 0]], rfl⟩ }
+
+theorem middlePrefix : ProgramPrefix middle final :=
+  { operationSuffix := ⟨[], rfl⟩
+    nodeSuffix := ⟨[instruction 2 [node 0]], rfl⟩ }
+
+theorem extendsAny (before after : Program) :
+    trivialSemantics.Extends before after := by
+  intro valuation _
+  exact ⟨valuation, trivial, fun _ _ => rfl⟩
+
+def first : ProvenExtension trivialSemantics :=
+  { before := base
+    after := middle
+    programPrefix := basePrefix
+    evidence := { proof := extendsAny base middle } }
+
+def second : ProvenExtension trivialSemantics :=
+  { before := middle
+    after := final
+    programPrefix := middlePrefix
+    evidence := { proof := extendsAny middle final } }
+
+def composed? :
+    Option (Evidence (trivialSemantics.Extends base final)) :=
+  composeExtensions base final [first, second]
+
+theorem composed_isSome : composed?.isSome = true := by
+  decide +kernel
+
+theorem rejects_reversed_chain :
+    (composeExtensions base final [second, first]).isSome = false := by
+  decide +kernel
+
+theorem accepts_empty_identity :
+    (composeExtensions base base
+      ([] : List (ProvenExtension trivialSemantics))).isSome = true := by
+  decide +kernel
+
+theorem rejects_empty_gap :
+    (composeExtensions base final
+      ([] : List (ProvenExtension trivialSemantics))).isSome = false := by
+  decide +kernel
+
+end ExtensionChain
 
 end Hex.Interval.SemanticReplayConformance

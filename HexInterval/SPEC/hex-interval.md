@@ -1082,6 +1082,18 @@ proved prefix, package rule entailment, fact-domain meet evidence, equality
 transport, and a domain-owned implication from the strongest installed fact
 to the possibly weaker requested target.
 
+Replay retains every instance schema's `Extends before after` theorem and
+composes the chronological chain rather than treating those proofs as
+validation-only acknowledgements. The fact-domain interface supplies the one
+locality law needed at this boundary: for valuations which model the old and
+extended programs, a fact about an in-bounds old node has the same meaning when
+the two valuations agree at that node.
+The checker uses the composed extension to transport the caller's exact
+version-zero assumptions into the final graph, proves the target there, and
+transports the target back. Its result type is consequently an entailment over
+the caller's `baseProgram`, and it rejects a target outside that base prefix;
+no companion-specific post-processing theorem is needed to close the gap.
+
 The implemented Mathlib conformance vertical recognizes `x * (1 - x)`,
 instantiates the package-local auxiliary function
 `x ↦ 1/4 - (x - 1/2)^2`, admits a package-owned equality, propagates
@@ -1089,11 +1101,25 @@ instantiates the package-local auxiliary function
 upper bound. A separate compiled guard checks that the private policy session
 currently emits the quoted trace; this reachability test is not used as the
 mathematical proof. The instance schema's conservative-extension witness then
-lifts the result from the checked extended program back to every valuation of
-the caller's original four-node program.
+participates in the generic composed lift back to every valuation of the
+caller's original four-node program. The conformance file also instantiates a
+concrete base valuation and derives the ordinary inequality
+`x * (1 - x) ≤ 1/4`, preventing a vacuous model encoding from passing as an
+end-to-end theorem.
 
-This remains an experiment rather than the production checker. Trace-size and
-decoder-work envelopes, exact generic reconstruction of instance
+Program extension currently appends nodes only. Every operation signature a
+package may instantiate, including an auxiliary operation unused by the base
+node array, is declared in the frontend program's immutable operation table at
+session start. Packages resolve its snapshot-local `OpId` from the stable
+`OpKey`; neither package assembly order nor a hardcoded compact identifier is
+authoritative. Dynamic operation-table growth remains an open design rather
+than an implemented capability.
+
+This remains an experiment rather than the production checker. Its complete
+program snapshot per instance and repeated prefix scans are a correctness
+canary, not a scalable trace format; a delta-encoded, indexed replay experiment
+must measure and replace that representation. Trace-size and decoder-work
+envelopes, exact generic reconstruction of instance
 substitutions/products and per-event program-snapshot linkage, contradiction
 certificates, split-tree composition, and the tactic quotation format are
 still open. It is also an explicit
