@@ -152,8 +152,7 @@ def scopedPackage : Package Rank :=
     cache := 0
     operations
     handlers :=
-      #[{ registration := scopedRule
-          invoke := scopedInvoke
+      #[{ Handler.bareDroppingDrafts scopedRule scopedInvoke with
           acceptsScope := fun actualProgram binding =>
             actualProgram.check && binding.same scope }] }
 
@@ -169,7 +168,7 @@ def run? : Option (RunResult Rank (Registry Rank)) :=
             #[4, 6, 0, 0, 0, 9] limits #[scope]
               (Registry.acceptsBinding registry) with
         | .error _ => none
-        | .ok state => some (drive Registry.invoke 4 state registry)
+        | .ok state => some (drive Registry.invokeDroppingDrafts 4 state registry)
 
 #guard program.check
 #guard extendedProgram.check
@@ -205,7 +204,7 @@ def run? : Option (RunResult Rank (Registry Rank)) :=
       | .ok state =>
           match state.poll with
           | .request request _ =>
-              match (registry.invoke request).1 with
+              match (registry.invokePlanned request).1.outcome with
               | .failed code => code == DispatchCode.requestMismatch
               | _ => false
           | _ => false

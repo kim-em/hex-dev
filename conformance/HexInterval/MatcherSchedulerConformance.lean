@@ -335,9 +335,8 @@ def package : Package Rank :=
     cache := 0
     operations
     handlers :=
-      #[{ registration := matcherRule, invoke := packageMatcher },
-        { registration := contractRule
-          invoke := packageContract
+      #[Handler.bareDroppingDrafts matcherRule packageMatcher,
+        { Handler.bareDroppingDrafts contractRule packageContract with
           acceptsScope := fun _ binding => binding.rule == contractKey }] }
 
 def packageLimits : Limits :=
@@ -364,8 +363,8 @@ def registryStarted? : Option (Registry Rank × Engine Rank) := do
   | some (registry, state) =>
       match state.poll with
       | .request request awaiting =>
-          let (outcome, registry) := registry.invoke request
-          match awaiting.submit (request.action.reply outcome) with
+          let (plan, registry) := registry.invokePlanned request
+          match awaiting.submit (request.action.reply plan.outcome) with
           | .accepted _ next =>
               next.metrics.matcherVisits == 2 &&
                 registry.packages[0]?.any (fun package => package.invocations == 1)
