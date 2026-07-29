@@ -1480,13 +1480,14 @@ For any list of factors in `FpPoly p` whose `factorProduct` divides a
 nonzero polynomial `X` with no positive-degree squared divisor, the
 recursive predicate `Hex.ZPoly.QuadraticMultifactorCoprimeSplits` holds.
 
-The recursion follows the balanced product tree: at each non-singleton node the
-list splits into `L := take half` and `R := drop half`, and
+The recursion follows the guarded product tree: at each non-singleton node the
+list splits into `L := take split` and `R := drop split`, using the same
+`balancedSplitIndex` as the executable, and
 * `xgcd.gcd = 1` follows from the coprime view of `factorProduct L` against
   `factorProduct R`, identified via `modP_polyProduct_liftToZ_eq_factorProduct`:
   their `DensePoly.gcd` squares into `factorProduct (L ++ R) = factorProduct xs`,
   hence into `X`, so the no-squared invariant forces it constant;
-* each half satisfies the same divisibility-into-`X` invariant via
+* each side satisfies the same divisibility-into-`X` invariant via
   `factorProduct L ∣ factorProduct xs ∣ X` (and symmetrically for `R`),
   using `factorProduct_append`. -/
 theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
@@ -1503,10 +1504,10 @@ theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
   induction xs using Hex.ZPoly.QuadraticMultifactorCoprimeSplits.induct (p := p) with
   | case1 => intro _; simp only [Hex.ZPoly.QuadraticMultifactorCoprimeSplits]
   | case2 _g => intro _; simp only [Hex.ZPoly.QuadraticMultifactorCoprimeSplits]
-  | case3 g₀ g₁ rest gs half L R ihL ihR =>
+  | case3 g₀ g₁ rest gs split L R ihL ihR =>
       intro h_dvd
       -- Balanced split of `g₀ :: g₁ :: rest` into `L ++ R` (the induct binders).
-      have happend : L ++ R = g₀ :: g₁ :: rest := List.take_append_drop half gs
+      have happend : L ++ R = g₀ :: g₁ :: rest := List.take_append_drop split gs
       have hfp_split :
           Hex.Berlekamp.factorProduct (g₀ :: g₁ :: rest) =
             Hex.Berlekamp.factorProduct L * Hex.Berlekamp.factorProduct R := by

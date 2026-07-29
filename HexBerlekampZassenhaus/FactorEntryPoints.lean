@@ -765,12 +765,15 @@ def reliftSubFloorCap : Nat := 2
 
 /-- Number of speculative sub-floor lift/scan attempts made at a recursive
 node before going directly to its certified full-precision scan. With at most
-three modular factors the full scan is already tiny, so probing merely repeats
-Hensel work. Otherwise the first rung (`k = 1`) cheaply finds the small factors
-that make recursive relifting pay off. Additional from-scratch rungs make the
-common unsplit case repeat the same work before the full-floor scan. -/
-def reliftProbeFuel (factorCount : Nat) : Nat :=
-  if factorCount ≤ 3 then 0 else 1
+three modular factors the full scan is already tiny. The usual wider node gets
+one cheap `k = 1` probe. A four-factor node above precision 300 whose chosen
+split index coincides with the count split gets the full doubling ladder. This
+retains the `chebyshev_U24` recovery while excluding the lower-precision
+`legendre_P16`, `legendre_P28`, and `cyclo_phi385` regression sentinels. -/
+def reliftProbeFuel (floorK factorCount splitIndex : Nat) : Nat :=
+  if factorCount ≤ 3 then 0
+  else if factorCount = 4 ∧ 300 < floorK ∧ splitIndex = factorCount / 2 then 8
+  else 1
 
 /-- Recursive per-remainder classical certification: sub-floor ladder
 plus recursion on peels, falling back to today's full floor scan
@@ -798,8 +801,16 @@ def classicalCoreFactorsRecursiveAux (cap : Nat) :
         let monicBound := ZPoly.defaultFactorCoeffBound (ZPoly.toMonic g).monic
         let floorK := precisionForCoeffBound
           (match B? with | some B => max B monicBound | none => monicBound) pd.p
+        let probeFuel :=
+          if pd.factorsModP.size = 4 ∧ 300 < floorK then
+            letI := pd.bounds
+            let splitIndex :=
+              ZPoly.balancedSplitIndex (pd.factorsModP.map FpPoly.liftToZ).toList
+            reliftProbeFuel floorK pd.factorsModP.size splitIndex
+          else
+            reliftProbeFuel floorK pd.factorsModP.size 0
         match reliftLadder pd cap g floorK monicBound 1
-            (reliftProbeFuel pd.factorsModP.size) with
+            probeFuel with
         | some pieces =>
             letI := pd.bounds
             let lcg := DensePoly.leadingCoeff g

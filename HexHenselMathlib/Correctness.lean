@@ -580,7 +580,7 @@ private theorem normalizedXGCD_gcd_eq_one_of_common_dvd_one
     obtain ⟨q2, hq2⟩ := hr_dvd_one
     exact ⟨q1 * q2, by rw [← FpPoly.mul_assoc, ← hq1, ← hq2]⟩
 
-/-- Balanced split coprimality over `ZPoly`, stated directly on the integer
+/-- Guarded-tree split coprimality over `ZPoly`, stated directly on the integer
 polynomials (via their `modP` images) rather than on the `FpPoly` factors. This
 is the `ZPoly`-level analogue of `QuadraticMultifactorCoprimeSplits` used to
 transport arbitrary monic factor lists (as arise in the linear/quadratic
@@ -590,15 +590,21 @@ def ZCoprimeSplits (p : Nat) [ZMod64.Bounds p] : List ZPoly → Prop
   | [_g] => True
   | g₀ :: g₁ :: rest =>
       let gs := g₀ :: g₁ :: rest
-      let half := gs.length / 2
-      let L := gs.take half
-      let R := gs.drop half
+      let split := balancedSplitIndex gs
+      let L := gs.take split
+      let R := gs.drop split
       (normalizedXGCD p (Array.polyProduct L.toArray) (Array.polyProduct R.toArray)).gcd
           = (1 : FpPoly p) ∧ ZCoprimeSplits p L ∧ ZCoprimeSplits p R
   termination_by factors => factors.length
-  decreasing_by all_goals (simp only [List.length_take, List.length_drop, List.length_cons]; omega)
+  decreasing_by
+    all_goals
+      simp only [List.length_take, List.length_drop, List.length_cons]
+      have hpos := balancedSplitIndex_pos (g₀ :: g₁ :: rest)
+      have hlt := balancedSplitIndex_lt_length (g₀ :: g₁ :: rest) (by simp)
+      simp only [List.length_cons] at hlt
+      omega
 
-/-- Build the balanced quadratic multifactor lift invariant from `ZPoly`-level
+/-- Build the guarded quadratic multifactor lift invariant from `ZPoly`-level
 boundary facts: monic factors, split coprimality (`ZCoprimeSplits`), and the
 lifted product congruence modulo `p`. No monic-target hypothesis is required —
 the balanced invariant constrains only the leading factor of each split, which
@@ -612,23 +618,31 @@ theorem inv_of_ZCoprimeSplits (p k : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus
   induction factors using ZCoprimeSplits.induct generalizing f with
   | case1 => exact absurd rfl hne
   | case2 g => simp [QuadraticMultifactorLiftInvariant]
-  | case3 g₀ g₁ rest gs half L R ihL ihR =>
+  | case3 g₀ g₁ rest gs split L R ihL ihR =>
       simp only [ZCoprimeSplits] at hcop
       obtain ⟨hgcd, hcopL, hcopR⟩ := hcop
       rw [QuadraticMultifactorLiftInvariant]
-      have hLmonic : ∀ x ∈ (List.take ((g₀ :: g₁ :: rest).length / 2) (g₀ :: g₁ :: rest)),
+      have hLmonic : ∀ x ∈ (List.take (balancedSplitIndex (g₀ :: g₁ :: rest))
+          (g₀ :: g₁ :: rest)),
           DensePoly.Monic x := fun x hx => hfactors_monic x (List.mem_of_mem_take hx)
-      have hRmonic : ∀ x ∈ (List.drop ((g₀ :: g₁ :: rest).length / 2) (g₀ :: g₁ :: rest)),
+      have hRmonic : ∀ x ∈ (List.drop (balancedSplitIndex (g₀ :: g₁ :: rest))
+          (g₀ :: g₁ :: rest)),
           DensePoly.Monic x := fun x hx => hfactors_monic x (List.mem_of_mem_drop hx)
       have hprod : ZPoly.congr
-          (Array.polyProduct (List.take ((g₀ :: g₁ :: rest).length / 2) (g₀ :: g₁ :: rest)).toArray *
-            Array.polyProduct (List.drop ((g₀ :: g₁ :: rest).length / 2) (g₀ :: g₁ :: rest)).toArray)
+          (Array.polyProduct (List.take (balancedSplitIndex (g₀ :: g₁ :: rest))
+              (g₀ :: g₁ :: rest)).toArray *
+            Array.polyProduct (List.drop (balancedSplitIndex (g₀ :: g₁ :: rest))
+              (g₀ :: g₁ :: rest)).toArray)
           f p := by
         rw [← polyProduct_append,
-          show ((List.take ((g₀ :: g₁ :: rest).length / 2) (g₀ :: g₁ :: rest)).toArray ++
-                (List.drop ((g₀ :: g₁ :: rest).length / 2) (g₀ :: g₁ :: rest)).toArray)
-              = ((List.take ((g₀ :: g₁ :: rest).length / 2) (g₀ :: g₁ :: rest) ++
-                 List.drop ((g₀ :: g₁ :: rest).length / 2) (g₀ :: g₁ :: rest)).toArray) from by simp,
+          show ((List.take (balancedSplitIndex (g₀ :: g₁ :: rest))
+                  (g₀ :: g₁ :: rest)).toArray ++
+                (List.drop (balancedSplitIndex (g₀ :: g₁ :: rest))
+                  (g₀ :: g₁ :: rest)).toArray)
+              = ((List.take (balancedSplitIndex (g₀ :: g₁ :: rest))
+                    (g₀ :: g₁ :: rest) ++
+                 List.drop (balancedSplitIndex (g₀ :: g₁ :: rest))
+                    (g₀ :: g₁ :: rest)).toArray) from by simp,
           List.take_append_drop]
         exact hproduct
       have hbez := normalizedXGCD_liftToZ_bezout_congr_of_gcd_eq_one p _ _ hgcd
@@ -638,15 +652,22 @@ theorem inv_of_ZCoprimeSplits (p k : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus
       · refine ihL _ hLmonic
           (ZPoly.congr_symm _ _ _
             (henselLiftFactors_fst_congr_mod_base p k f _ _ _ _ hk hp hstart)) hcopL ?_
-        show List.take ((g₀ :: g₁ :: rest).length / 2) (g₀ :: g₁ :: rest) ≠ []
+        show List.take (balancedSplitIndex (g₀ :: g₁ :: rest))
+          (g₀ :: g₁ :: rest) ≠ []
         apply List.ne_nil_of_length_pos
-        simp only [List.length_take, List.length_cons]; omega
+        simp only [List.length_take]
+        have hpos := balancedSplitIndex_pos (g₀ :: g₁ :: rest)
+        have hlen : 0 < (g₀ :: g₁ :: rest).length := by simp
+        omega
       · refine ihR _ hRmonic
           (ZPoly.congr_symm _ _ _
             (henselLiftFactors_snd_congr_mod_base p k f _ _ _ _ hk hp hstart)) hcopR ?_
-        show List.drop ((g₀ :: g₁ :: rest).length / 2) (g₀ :: g₁ :: rest) ≠ []
+        show List.drop (balancedSplitIndex (g₀ :: g₁ :: rest))
+          (g₀ :: g₁ :: rest) ≠ []
         apply List.ne_nil_of_length_pos
-        simp only [List.length_drop, List.length_cons]; omega
+        simp only [List.length_drop]
+        have hlt := balancedSplitIndex_lt_length (g₀ :: g₁ :: rest) (by simp)
+        omega
 
 end BalancedBridgeHelpers
 
