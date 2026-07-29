@@ -985,6 +985,92 @@ theorem divScalar_brownTraub {R : Type u}
     hhsize hh]
   exact divScalar_scale h hc
 
+/-- A positive-size all-zero right block makes the zeroth coefficient minor
+vanish. -/
+private theorem coeffMinorAt_zero_right {R : Type u}
+    [Lean.Grind.CommRing R] [DecidableEq R]
+    (d : Nat) (hd : 0 < d) (g : DensePoly R) :
+    coeffMinorAt d 0 0 0 g 0 = 0 := by
+  unfold coeffMinorAt
+  let M := coeffMatrixAt d 0 0 0 g (0 : DensePoly R)
+  change SubresultantMinor.det M = 0
+  let dst : Fin d := ⟨0, hd⟩
+  have hcol (i : Fin d) : M i dst = 0 := by
+    simp [M, dst, coeffMatrixAt, coeffInt]
+  have hset :
+      SubresultantMinor.setCol M dst (fun _ => 0) = M := by
+    funext i j
+    by_cases hj : j = dst
+    · subst j
+      simp [SubresultantMinor.setCol, hcol]
+    · simp [SubresultantMinor.setCol, hj]
+  rw [← hset]
+  exact SubresultantMinor.det_setCol_zero M dst
+
+/-- If an ordered pseudo-division terminates at a nonconstant divisor, the
+zeroth generalized subresultant vanishes. -/
+theorem coeffMinor_zero_of_prem_zero {R : Type u}
+    [Lean.Grind.CommRing R] [DecidableEq R] [Div R] [ExactDivLaws R]
+    (f g : DensePoly R) (hg : g ≠ 0) (hgf : g.size ≤ f.size)
+    (hgBig : 2 ≤ g.size) (hp : (pseudoDivMod f g).2 = 0) :
+    coeffMinor 0 0 f g = 0 := by
+  let df := f.size - 1
+  let dg := g.size - 1
+  let db := f.size - g.size
+  let a := g.leadingCoeff ^ (db + 1)
+  let q := (pseudoDivMod f g).1
+  let b := scale (0 - 1) q
+  have hgpos : 0 < g.size := by omega
+  have hglc : g.leadingCoeff ≠ 0 :=
+    leadingCoeff_ne_zero_of_pos_size g hgpos
+  have h1 : (1 : R) ≠ 0 := one_ne_zero_of_nonzero hglc
+  have ha : a ≠ 0 := pow_ne_zero h1 hglc (db + 1)
+  have hbsize : b.size ≤ db + 1 := by
+    have hneg : (0 - 1 : R) ≠ 0 := negOne_ne_zero_of_one h1
+    rw [size_scale hneg]
+    simpa only [q, db] using pseudoDivMod_quotient_size_le f g
+  have hbneg : b = -q := by
+    apply ext_coeff
+    intro i
+    simp only [b, coeff_scale_semiring, coeff_neg_ring]
+    grind
+  have hzero : (0 : DensePoly R) = scale a f + b * g := by
+    rw [hbneg]
+    have hrec := pseudoDivMod_reconstruct f g hg hgf
+    rw [hp] at hrec
+    simpa only [a, db, q] using (show
+      (0 : DensePoly R) =
+        scale (g.leadingCoeff ^ (f.size - g.size + 1)) f +
+          -(pseudoDivMod f g).1 * g by grind)
+  have hdf : df = db + dg := by
+    dsimp only [df, db, dg]
+    omega
+  have hfg : g.size = dg + 1 := by
+    dsimp only [dg]
+    omega
+  have hdg : 0 < dg := by
+    dsimp only [dg]
+    omega
+  have hbt := coeffMinorAt_brownTraub df dg db 0 0 0
+    (scale a f) g b (0 : DensePoly R) (Nat.le_refl 0) hdg hdf hfg
+    hbsize (by simp) hzero
+  have hright : coeffMinorAt dg 0 0 0 g 0 = 0 :=
+    coeffMinorAt_zero_right dg hdg g
+  rw [hright, Lean.Grind.Semiring.mul_zero, Lean.Grind.Semiring.mul_zero] at hbt
+  have hscale := coeffMinorAt_scale_left df dg 0 0 a f g
+  rw [hbt] at hscale
+  have hapow : a ^ (dg - 0) ≠ 0 := pow_ne_zero h1 ha (dg - 0)
+  have hminor : coeffMinorAt df dg 0 0 f g = 0 := by
+    apply ExactDivLaws.mul_right_cancel hapow
+    grind
+  unfold coeffMinor
+  have hff : formalDegree f = df := by
+    simp [formalDegree, df]
+  have hgg : formalDegree g = dg := by
+    simp [formalDegree, dg]
+  rw [hff, hgg]
+  exact hminor
+
 end Subresultant
 end DensePoly
 end Hex

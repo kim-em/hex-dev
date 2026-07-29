@@ -92,6 +92,14 @@ def coeffMinor [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul R]
 def poly [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul R]
     (J : Nat) (f g : DensePoly R) : DensePoly R := ...
 
+/-- A terminating zero pseudo-remainder at a nonconstant ordered divisor makes
+    the zeroth coefficient minor vanish. -/
+theorem coeffMinor_zero_of_prem_zero
+    [Lean.Grind.CommRing R] [DecidableEq R] [Div R] [ExactDivLaws R]
+    (f g : DensePoly R) (hg : g ≠ 0) (hgf : g.size ≤ f.size)
+    (hgBig : 2 ≤ g.size) (hp : (pseudoDivMod f g).2 = 0) :
+    coeffMinor 0 0 f g = 0
+
 end Subresultant
 
 /-- Polynomial pseudo-division: for `f, g : DensePoly R` with `g ≠ 0`
@@ -120,6 +128,14 @@ def subresultantChain [Zero R] [DecidableEq R] [One R] [Add R] [Sub R]
     otherwise. Reversed inputs receive the standard degree-product sign. -/
 def resultant [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul R]
     [Div R] (f g : DensePoly R) : R := ...
+
+/-- Brown's corrected ordered terminal value is the zeroth generalized
+    coefficient minor. -/
+theorem resultantOrdered_eq_coeffMinor
+    [Lean.Grind.CommRing R] [DecidableEq R] [Div R] [ExactDivLaws R]
+    (f g : DensePoly R) (hf : f ≠ 0) (hg : g ≠ 0)
+    (hgf : g.size ≤ f.size) :
+    resultantOrdered f g = Subresultant.coeffMinor 0 0 f g
 
 /-- Standard discriminant. It is `1` for zero and constant polynomials. For
     positive degree `n`, let `d = f.derivative` and
@@ -361,8 +377,11 @@ next exact divisor and the final resultant.
 
 For an ordered nonzero run ending in `(#[G₁, …, Gₖ], hₖ)`, the resultant
 is `hₖ` if `Gₖ` has degree zero and `0` otherwise. In particular, a final
-constant `Gₖ` need not itself equal the resultant. For reversed nonzero
-inputs,
+constant `Gₖ` need not itself equal the resultant. The theorem
+`resultantOrdered_eq_coeffMinor` identifies this corrected terminal value
+with `Subresultant.coeffMinor 0 0 f g`; a terminal zero pseudo-remainder at a
+nonconstant divisor is handled by `coeffMinor_zero_of_prem_zero`. For reversed
+nonzero inputs,
 
 ```text
 resultant f g = (-1)^(deg f * deg g) * resultantOrdered g f.

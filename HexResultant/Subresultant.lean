@@ -921,6 +921,105 @@ private theorem getD_push_last {A : Type u} (xs : Array A) (x fallback : A) :
     omega
   rw [← Array.getElem_eq_getD fallback (h := hi), Array.getElem_push_eq]
 
+/-- Extract the corrected terminal scalar when the final stored polynomial is
+a constant. -/
+private def terminalValue {S : Type u} [Zero S] [DecidableEq S]
+    (run : PRSResult S) : S :=
+  let last := run.chain.getD (run.chain.size - 1) 0
+  if last.size = 1 then run.scale else 0
+
+/-- A worker launched from an integral Brown invariant returns the zeroth
+subresultant coefficient of the original pair. -/
+private theorem subresultantAux_terminal {S : Type u}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
+    (f g prev curr : DensePoly S) (hPrev : S)
+    (chain : Array (DensePoly S)) (fuel : Nat)
+    (hinv : BrownInv f g prev curr hPrev) (hfuel : curr.size ≤ fuel)
+    (hlast : chain.getD (chain.size - 1) 0 = curr) :
+    terminalValue (subresultantAux prev curr hPrev chain fuel) =
+      Subresultant.coeffMinor 0 0 f g := by
+  induction fuel generalizing prev curr hPrev chain with
+  | zero =>
+      have hcurr : curr ≠ 0 := hinv.2.1
+      have hpos := size_pos_of_ne_zero curr hcurr
+      omega
+  | succ fuel ih =>
+      rcases hinv with ⟨hprev, hcurr, hlt, hhPrev, hfamily⟩
+      let delta := prev.size - curr.size
+      let hCurr := divExp curr.leadingCoeff hPrev delta
+      let p := (pseudoDivMod prev curr).2
+      have hinv : BrownInv f g prev curr hPrev :=
+        ⟨hprev, hcurr, hlt, hhPrev, hfamily⟩
+      have hscaleRaw := BrownInv.nextScale f g prev curr hPrev hinv
+      have hscale :
+          hCurr =
+            (Subresultant.poly (curr.size - 1) f g).coeff (curr.size - 1) := by
+        simpa only [hCurr, delta] using hscaleRaw.1
+      cases hpzero : p.isZero with
+      | true =>
+          have hp : (pseudoDivMod prev curr).2 = 0 := by
+            have : p = 0 := eq_zero_of_isZero_true p hpzero
+            simpa only [p] using this
+          unfold terminalValue
+          simp only [subresultantAux, p, hpzero, ↓reduceIte]
+          rw [hlast]
+          by_cases hconst : curr.size = 1
+          · rw [if_pos hconst]
+            have hscale0 :
+                hCurr = Subresultant.coeffMinor 0 0 f g := by
+              simpa [hconst, Subresultant.coeff_poly] using hscale
+            simpa only [hCurr, delta, hconst] using hscale0
+          · rw [if_neg hconst]
+            have hcurrPos := size_pos_of_ne_zero curr hcurr
+            have hcurrBig : 2 ≤ curr.size := by omega
+            have hlocal := Subresultant.coeffMinor_zero_of_prem_zero
+              prev curr hcurr (Nat.le_of_lt hlt) hcurrBig hp
+            have hinv0 := hfamily 0 hcurrPos
+            have hcoeff := congrArg (fun q : DensePoly S => q.coeff 0) hinv0
+            simp only [Subresultant.coeff_poly, coeff_scale_semiring] at hcoeff
+            rw [hlocal] at hcoeff
+            have hprevPos := size_pos_of_ne_zero prev hprev
+            have hprevLc := leadingCoeff_ne_zero_of_pos_size prev hprevPos
+            have h1 : (1 : S) ≠ 0 := one_ne_zero_of_nonzero hprevLc
+            have hscalar :
+                prev.leadingCoeff ^ (curr.size - 1) *
+                    hPrev ^ (prev.size - 2) ≠ 0 :=
+              ExactDivLaws.mul_ne_zero
+                (pow_ne_zero h1 hprevLc (curr.size - 1))
+                (pow_ne_zero h1 hhPrev (prev.size - 2))
+            have horig : Subresultant.coeffMinor 0 0 f g = 0 := by
+              apply ExactDivLaws.mul_right_cancel hscalar
+              grind
+            exact horig.symm
+      | false =>
+          have hp : p ≠ 0 := ne_zero_of_isZero_false p hpzero
+          let divisor :=
+            negOnePow (R := S) (delta + 1) * prev.leadingCoeff *
+              powNat hPrev delta
+          let next := divScalar p divisor
+          let nextImpl := divScalarImpl p divisor
+          have hnextEq : next = nextImpl := divScalar_eq_divScalarImpl p divisor
+          have hpRaw : (pseudoDivMod prev curr).2 ≠ 0 := by
+            simpa only [p] using hp
+          have hstepRaw := BrownInv.step f g prev curr hPrev hinv hpRaw
+          have hstep : BrownInv f g curr next hCurr := by
+            simpa only [p, divisor, next, hCurr, delta] using hstepRaw
+          have hnext : next ≠ 0 := hstep.2.1
+          have hnextImpl : nextImpl ≠ 0 := by
+            rw [← hnextEq]
+            exact hnext
+          have hnextZero : nextImpl.isZero = false :=
+            isZero_false_of_ne_zero nextImpl hnextImpl
+          have hlast' :
+              (chain.push next).getD ((chain.push next).size - 1) 0 = next := by
+            rw [Array.size_push, show chain.size + 1 - 1 = chain.size by omega,
+              getD_push_last]
+          have hrec := ih curr next hCurr (chain.push next) hstep
+            (by have := hstep.2.2.1; omega) hlast'
+          simpa only [subresultantAux, delta, hCurr, p, hpzero,
+            Bool.false_eq_true, ↓reduceIte, divisor, nextImpl, hnextZero,
+            hnextEq] using hrec
+
 /-- Appending a smaller successor preserves strict tail descent. -/
 private theorem ChainStrict.push
     (chain : Array (DensePoly R)) (curr next : DensePoly R)
@@ -1237,6 +1336,94 @@ def resultantOrdered [One R] [Add R] [Sub R] [Mul R] [Div R]
   let run := subresultantOrdered f g
   let last := run.chain.getD (run.chain.size - 1) 0
   if last.size = 1 then run.scale else 0
+
+/-- For ordered nonzero inputs, Brown's corrected terminal value is the
+zeroth generalized subresultant coefficient. -/
+theorem resultantOrdered_eq_coeffMinor {S : Type u}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
+    (f g : DensePoly S) (hf : f ≠ 0) (hg : g ≠ 0)
+    (hgf : g.size ≤ f.size) :
+    resultantOrdered f g = Subresultant.coeffMinor 0 0 f g := by
+  let delta := f.size - g.size
+  let h₂ := powNat g.leadingCoeff delta
+  let p := (pseudoDivMod f g).2
+  have hfpos := size_pos_of_ne_zero f hf
+  have hgpos := size_pos_of_ne_zero g hg
+  have hglc := leadingCoeff_ne_zero_of_pos_size g hgpos
+  have h1 : (1 : S) ≠ 0 := one_ne_zero_of_nonzero hglc
+  cases hpzero : p.isZero with
+  | true =>
+      have hp : (pseudoDivMod f g).2 = 0 := by
+        have : p = 0 := eq_zero_of_isZero_true p hpzero
+        simpa only [p] using this
+      have hlast :
+          (#[f, g] : Array (DensePoly S)).getD
+              ((#[f, g] : Array (DensePoly S)).size - 1) 0 = g := by
+        rfl
+      unfold resultantOrdered subresultantOrdered
+        subresultantOrderedFuel
+      simp only [p, hpzero, ↓reduceIte]
+      rw [hlast]
+      by_cases hconst : g.size = 1
+      · rw [if_pos hconst]
+        by_cases hfconst : f.size = 1
+        · rw [show powNat g.leadingCoeff (f.size - g.size) = 1 by
+            simp [hfconst, hconst, powNat]]
+          unfold Subresultant.coeffMinor
+          rw [show Subresultant.formalDegree f = 0 by
+            simp [Subresultant.formalDegree, hfconst]]
+          rw [show Subresultant.formalDegree g = 0 by
+            simp [Subresultant.formalDegree, hconst]]
+          rfl
+        · have hminor := Subresultant.coeffMinorAt_rightDegree
+            (f.size - 1) 0 0 f g (by omega) hconst
+          have hff : Subresultant.formalDegree f = f.size - 1 := by
+            simp [Subresultant.formalDegree]
+          have hgg : Subresultant.formalDegree g = 0 := by
+            simp [Subresultant.formalDegree, hconst]
+          have hgc : g.coeff 0 = g.leadingCoeff := by
+            simpa [hconst] using (leadingCoeff_eq_coeff_last g hgpos).symm
+          unfold Subresultant.coeffMinor
+          rw [hff, hgg, hminor, hgc]
+          rw [powNat_eq_pow]
+          rw [← Lean.Grind.Semiring.pow_succ]
+          congr 1
+          omega
+      · rw [if_neg hconst]
+        have hgBig : 2 ≤ g.size := by omega
+        have hzero := Subresultant.coeffMinor_zero_of_prem_zero
+          f g hg hgf hgBig hp
+        exact hzero.symm
+  | false =>
+      have hp : p ≠ 0 := ne_zero_of_isZero_false p hpzero
+      let s := negOnePow (R := S) (delta + 1)
+      let g₃ := scaleImpl s p
+      have hs : s ≠ 0 := negOnePow_ne_zero h1 (delta + 1)
+      have hg₃Eq : g₃ = scale s p := by
+        rw [scale_eq_scaleImpl]
+      have hg₃ : g₃ ≠ 0 := by
+        rw [hg₃Eq]
+        exact scale_ne_zero hs hp
+      have hg₃Zero : g₃.isZero = false := isZero_false_of_ne_zero g₃ hg₃
+      have hpRaw : (pseudoDivMod f g).2 ≠ 0 := by
+        simpa only [p] using hp
+      have hinvRaw := brownInv_init f g hg hgf hpRaw
+      have hinv : BrownInv f g g g₃ h₂ := by
+        rw [hg₃Eq]
+        simpa only [delta, h₂, p, s] using hinvRaw
+      have hlast :
+          (#[f, g, g₃] : Array (DensePoly S)).getD
+              ((#[f, g, g₃] : Array (DensePoly S)).size - 1) 0 = g₃ := by
+        rfl
+      have hterminal := subresultantAux_terminal f g g g₃ h₂
+        #[f, g, g₃] (g.size + 1) hinv (by
+          have := hinv.2.2.1
+          omega) hlast
+      unfold terminalValue at hterminal
+      unfold resultantOrdered subresultantOrdered subresultantOrderedFuel
+      simp only [delta, p, hpzero, Bool.false_eq_true, ↓reduceIte,
+        s, g₃, hg₃Zero]
+      exact hterminal
 
 /-- Executable polynomial resultant with default formal-degree conventions.
 
