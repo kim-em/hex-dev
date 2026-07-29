@@ -87,7 +87,6 @@ structure ProposedEqualityKey where
 /-- Payload-erased structural identity of an instantiation request. -/
 structure InstantiationSemanticKey where
   family : Nat
-  triggers : List NodeId
   generation : Nat
   nodes : List ProposedNodeKey
   equalities : List ProposedEqualityKey
@@ -96,7 +95,6 @@ structure InstantiationSemanticKey where
 def InstantiationSemanticKey.ofRequest
     (request : InstantiationRequest) (generation : Nat) : InstantiationSemanticKey :=
   { family := request.key
-    triggers := request.triggers
     generation
     nodes := request.nodes.map fun node =>
       { domain := node.domain, op := node.op, args := node.args }
@@ -277,8 +275,7 @@ def State.suggestionKey? (state : State Fact) (suggestionId : SuggestionId) : Op
       else none
   | .instantiate request =>
       let generation <- state.engine.instantiationGeneration? retained
-      if request.claimedGeneration != generation then none
-      else some (.instantiate source (.ofRequest request generation))
+      some (.instantiate source (.ofRequest request generation))
   | .split request => do
       let version <- clock.splitVersion
       let current <- state.engine.versions[request.node.index]?
@@ -783,6 +780,7 @@ structure RuleObservation (Fact : Type) where
   changes : Array (FactDelta Fact)
   contradiction : Bool
   cost : CostObservation
+  suggestionPlan : SuggestionPlan
   emittedSuggestions : Array OfferId
 
 def emittedSuggestions (before after : Nat) : Array OfferId := Id.run do
@@ -790,14 +788,6 @@ def emittedSuggestions (before after : Nat) : Array OfferId := Id.run do
   for offset in [0:after - before] do
     emitted := emitted.push (.suggestion { index := before + offset })
   return emitted
-
-/-- Detect narrowing-capable suggestions which the engine's bounded retained
-prefix will discard.  This must run against the pre-reply engine because the
-dropped suffix is intentionally absent from the accepted snapshot. -/
-def droppedAffectsClosure (state : Engine Fact) : Outcome Fact -> Bool
-  | .success _ suggestions _ =>
-      (state.droppedSuggestions suggestions).any Suggestion.affectsClosure
-  | .noChange _ | .inapplicable | .resourceLimit _ | .failed _ => false
 
 inductive SubmitResult (Fact : Type) where
   | accepted (observation : RuleObservation Fact) (state : State Fact)
@@ -829,18 +819,19 @@ opaque State.submit (state : State Fact) (reply : Reply Fact) : SubmitResult Fac
       | some application =>
           let before := state.engine
           match before.submit reply with
-          | .accepted engine =>
+          | .accepted plan engine =>
               let observation : RuleObservation Fact :=
                 { invocation := invocationOfAction state.scope action
                   outcome := outcomeTag reply.outcome
                   changes := deltasFor before engine application.writes
                   contradiction := engine.contradictory && !before.contradictory
                   cost := outcomeCost reply.outcome
+                  suggestionPlan := plan
                   emittedSuggestions :=
                     emittedSuggestions before.suggestions.size engine.suggestions.size }
               let next := advanceState state engine
               let incomplete :=
-                droppedAffectsClosure before reply.outcome ||
+                plan.affectsClosure ||
                   match reply.outcome with
                   | .resourceLimit _ | .failed _ => true
                   | .success _ _ _ | .noChange _ | .inapplicable => false

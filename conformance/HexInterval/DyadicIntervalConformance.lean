@@ -502,11 +502,13 @@ private def engineLimits : Limits :=
     maxRetainedSuggestions := 0
     maxEffort := 4
     maxObservationValue := 16
+    maxDiagnosticValue := 16
     maxOutcomeCandidates := 2
     maxOutcomeSuggestions := 0
     maxProposalItems := 2
     maxInstances := 0
     maxGeneration := 0
+    maxNodeDepth := 16
     maxEqualities := 0
     splitEndpointLimit := endpointLimit }
 

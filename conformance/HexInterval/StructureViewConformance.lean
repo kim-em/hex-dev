@@ -82,11 +82,13 @@ def limits : Limits :=
     maxRetainedSuggestions := 16
     maxEffort := 8
     maxObservationValue := 128
+    maxDiagnosticValue := 128
     maxOutcomeCandidates := 4
     maxOutcomeSuggestions := 4
     maxProposalItems := 8
     maxInstances := 8
     maxGeneration := 4
+    maxNodeDepth := 16
     maxEqualities := 8
     splitEndpointLimit :=
       { maxEndpointHeight := 32, maxAlignmentShift := 16 } }
@@ -108,8 +110,6 @@ def centeredRule : Registration :=
 structure Binding where
   anchor : NodeId
   input : NodeId
-  complement : NodeId
-  one : NodeId
   deriving DecidableEq, Repr
 
 /-- Registry-owned interpretation of the opaque nested shape. -/
@@ -126,20 +126,12 @@ def centeredBinding? (request : RuleRequest Fact) : Option Binding := do
   if repeated != input then none else pure ()
   let oneKey <- request.program.operationKey? one
   if oneKey != oneOp then none else pure ()
-  pure { anchor := request.action.node, input, complement, one }
+  pure { anchor := request.action.node, input }
 
-def nextGeneration? (view : ProgramView) (nodes : List NodeId) : Option Nat := do
-  let generations <- nodes.mapM view.generation?
-  pure (generations.foldl Nat.max 0 + 1)
-
-def centeredProposal? (request : RuleRequest Fact) (binding : Binding) :
+def centeredProposal? (_request : RuleRequest Fact) (binding : Binding) :
     Option InstantiationRequest := do
-  let triggers := [binding.anchor, binding.input, binding.complement, binding.one]
-  let generation <- nextGeneration? request.program triggers
   pure
     { key := 101
-      triggers
-      claimedGeneration := generation
       nodes :=
         [{ domain
            op := { index := 6 }
@@ -161,8 +153,6 @@ def appendProposal? (request : RuleRequest Fact) : Option InstantiationRequest :
   if request.program.operationKey? one != some oneOp then none else pure ()
   pure
     { key := 109
-      triggers := [request.action.node, input, one]
-      claimedGeneration := 1
       nodes :=
         [{ domain
            op := { index := 4 }
@@ -225,14 +215,12 @@ def afterAppend? : Option (RunResult Fact (List Visit)) := do
   | _ => none
 
 def exactCenteredSuggestion (state : Engine Fact) (index version : Nat)
-    (anchor input complement one : NodeId) (generation : Nat) : Bool :=
+    (anchor input : NodeId) : Bool :=
   match state.suggestions[index]? with
   | some { action, suggestion := .instantiate request, .. } =>
       action.key == centeredKey && action.programVersion == version &&
         action.node == anchor && action.inputs.isEmpty &&
         request.key == 101 &&
-        request.triggers == [anchor, input, complement, one] &&
-        request.claimedGeneration == generation &&
         match request.nodes, request.equalities with
         | [product], [equality] =>
             product.domain == domain && product.op == { index := 6 } &&
@@ -258,7 +246,7 @@ def exactCenteredSuggestion (state : Engine Fact) (index version : Nat)
              declaredFacts := 0, input := none, anchorGeneration := some 0 },
            { programVersion := 0, actionVersion := 0, anchor := node 8,
              declaredFacts := 0, input := none, anchorGeneration := some 0 }] &&
-        exactCenteredSuggestion result.state 1 0 (node 5) (node 0) (node 4) (node 2) 1
+        exactCenteredSuggestion result.state 1 0 (node 5) (node 0)
   | none => false
 
 -- Appending two nodes recompiles one new `mul` application.  Its request sees
@@ -273,7 +261,7 @@ def exactCenteredSuggestion (state : Engine Fact) (index version : Nat)
           some
             { programVersion := 1, actionVersion := 1, anchor := node 10,
               declaredFacts := 0, input := some (node 1), anchorGeneration := some 1 } &&
-        exactCenteredSuggestion result.state 2 1 (node 10) (node 1) (node 9) (node 2) 2
+        exactCenteredSuggestion result.state 2 1 (node 10) (node 1)
   | none => false
 
 -- Append-only growth does not stale an otherwise fresh action.  Both the old

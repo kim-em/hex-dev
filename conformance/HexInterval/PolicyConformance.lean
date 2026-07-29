@@ -81,11 +81,13 @@ def engineLimits : Experiment.Propagator.Limits :=
     maxRetainedSuggestions := 16
     maxEffort := 4
     maxObservationValue := 64
+    maxDiagnosticValue := 128
     maxOutcomeCandidates := 8
     maxOutcomeSuggestions := 8
     maxProposalItems := 8
     maxInstances := 8
     maxGeneration := 4
+    maxNodeDepth := 16
     maxEqualities := 8
     splitEndpointLimit :=
       { maxEndpointHeight := 32, maxAlignmentShift := 16 } }
@@ -138,8 +140,6 @@ def proposedG : ProposedNode :=
 
 def instantiateG (request : RuleRequest Rank) : InstantiationRequest :=
   { key := 31
-    triggers := [request.action.node]
-    claimedGeneration := 1
     nodes := [proposedG]
     equalities :=
       [{ left := .existing request.action.node
@@ -218,6 +218,8 @@ def exactInitialObservation (observation : RuleObservation Rank) : Bool :=
     observation.invocation.inputs == [{ node := node 0, version := 0 }] &&
     observation.outcome == .success && oneChange observation.changes (node 1) 0 1 0 1 &&
     !observation.contradiction && exactCost observation.cost 3 5 7 &&
+    observation.suggestionPlan.kept.length == 3 &&
+    observation.suggestionPlan.dropped.isEmpty &&
     observation.emittedSuggestions.toList ==
       [.suggestion (suggestion 0), .suggestion (suggestion 1), .suggestion (suggestion 2)]
 
@@ -227,6 +229,8 @@ def exactRetryObservation (observation : RuleObservation Rank) (changed : Bool) 
     (if changed then oneChange observation.changes (node 1) 1 4 1 2
       else noChanges observation.changes) &&
     !observation.contradiction && exactCost observation.cost 11 13 17 &&
+    observation.suggestionPlan.kept.isEmpty &&
+    observation.suggestionPlan.dropped.isEmpty &&
     observation.emittedSuggestions.isEmpty
 
 def exactGObservation (observation : RuleObservation Rank) (before : Nat) : Bool :=
@@ -236,6 +240,8 @@ def exactGObservation (observation : RuleObservation Rank) (before : Nat) : Bool
         (if before == 0 then 0 else 1) (if before == 0 then 1 else 2)
       else noChanges observation.changes) &&
     !observation.contradiction && exactCost observation.cost 19 23 29 &&
+    observation.suggestionPlan.kept.isEmpty &&
+    observation.suggestionPlan.dropped.isEmpty &&
     observation.emittedSuggestions.isEmpty
 
 def exactEqualityObservation (observation : EqualityObservation Rank)
@@ -541,7 +547,7 @@ def retainedEngineWith? (limits : Experiment.Propagator.Limits) : Option (Engine
   match engine.poll with
   | .request request awaiting =>
       match awaiting.submit (request.action.reply (invoke request)) with
-      | .accepted next => some next
+      | .accepted _ next => some next
       | _ => none
   | _ => none
 
@@ -649,8 +655,6 @@ def proposedGAt (input : NodeId) : ProposedNode :=
 
 def instantiateAt (family : Nat) (input : NodeId) : InstantiationRequest :=
   { key := family
-    triggers := [input]
-    claimedGeneration := 1
     nodes := [proposedGAt input]
     equalities := []
     payload := { index := family } }
@@ -690,8 +694,6 @@ def emptyInstance (request : RuleRequest Rank) : Outcome Rank :=
   .success [candidate request 1]
     [.instantiate
       { key := 107
-        triggers := [request.action.node]
-        claimedGeneration := 1
         nodes := []
         equalities := []
         payload := { index := 109 } }]
@@ -711,23 +713,23 @@ def emptyInstance (request : RuleRequest Rank) : Outcome Rank :=
             next.engine.metrics.duplicateInstances == 1
       | _ => false
 
-def wrongGeneration (request : RuleRequest Rank) : Outcome Rank :=
-  let proposal := { instantiateAt 113 (node 0) with claimedGeneration := 99 }
-  .success [candidate request 1] [.instantiate proposal] {}
+def selfEqualityRequest (_request : RuleRequest Rank) : InstantiationRequest :=
+  { key := 127
+    nodes := []
+    equalities :=
+      [{ left := .existing (node 0)
+         right := .existing (node 0)
+         payload := { index := 131 } }]
+    payload := { index := 137 } }
 
 def selfEqualityInstance (request : RuleRequest Rank) : Outcome Rank :=
-  .success []
-    [.instantiate
-      { key := 127
-        triggers := [request.action.node]
-        claimedGeneration := 1
-        nodes := []
-        equalities :=
-          [{ left := .existing (node 0)
-             right := .existing (node 0)
-             payload := { index := 131 } }]
-        payload := { index := 137 } }]
-    {}
+  .success [candidate request 3]
+    [.instantiate (selfEqualityRequest request)] {}
+
+def selfEqualityResult? : Option (SubmitResult Rank) := do
+  let state <- initialWithLimits? engineLimits policyLimits
+  let (request, state) <- request? state (.application (application 0))
+  some (state.submit (request.action.reply (selfEqualityInstance request)))
 
 def weakRetry (_ : RuleRequest Rank) : Outcome Rank :=
   .success [] [.retry 0] {}
@@ -745,6 +747,46 @@ def overflowSplit (_ : RuleRequest Rank) : Outcome Rank :=
   .success []
     [.split { node := node 0, point := 0, reason := .midpoint }] {}
 
+def overdepthG (request : RuleRequest Rank) : InstantiationRequest :=
+  { key := 139
+    nodes :=
+      [{ domain := real
+         op := { index := 2 }
+         args := [.existing request.action.node] }]
+    equalities := []
+    payload := { index := 149 } }
+
+def mixedDepth (request : RuleRequest Rank) : Outcome Rank :=
+  .success [candidate request 2]
+    [.instantiate (instantiateG request),
+      .instantiate (overdepthG request),
+      .retry 1] {}
+
+def depthThenRetry (request : RuleRequest Rank) : Outcome Rank :=
+  .success [candidate request 2]
+    [.instantiate (overdepthG request), .retry 1] {}
+
+def malformedSuffix (request : RuleRequest Rank) : Outcome Rank :=
+  .success [candidate request 2]
+    [.split { node := node 0, point := 0, reason := .midpoint },
+      .instantiate (selfEqualityRequest request)] {}
+
+def overdepthMalformed (request : RuleRequest Rank) : Outcome Rank :=
+  .success [candidate request 3]
+    [.instantiate
+      { overdepthG request with
+        equalities :=
+          [{ left := .existing (node 0)
+             right := .existing (node 0)
+             payload := { index := 151 } }] }]
+    {}
+
+def overdepthMalformedResult? : Option (SubmitResult Rank) := do
+  let limits := { engineLimits with maxNodeDepth := 1 }
+  let state <- initialWithLimits? limits policyLimits
+  let (request, state) <- request? state (.application (application 0))
+  some (state.submit (request.action.reply (overdepthMalformed request)))
+
 def startWithWeakRetry? : Option (State Rank) := do
   let engine <- match Engine.start rankDomain program #[fRule, gRule] #[0, 0] engineLimits with
     | .ok engine => some engine
@@ -752,12 +794,11 @@ def startWithWeakRetry? : Option (State Rank) := do
   match engine.poll with
   | .request request awaiting =>
       match awaiting.submit (request.action.reply (weakRetry request)) with
-      | .accepted next => some (State.start next policyLimits)
+      | .accepted _ next => some (State.start next policyLimits)
       | _ => none
   | _ => none
 
--- The policy key exposes the engine-computed generation, and a proposal whose
--- untrusted claim disagrees is never advertised as selectable work.
+-- The policy key exposes the engine-computed theorem-instantiation generation.
 #guard
   match afterInitial? with
   | some state =>
@@ -766,29 +807,98 @@ def startWithWeakRetry? : Option (State Rank) := do
       | _ => false
   | none => false
 
+-- Malformed structural work is rejected by reply admission and never enters
+-- retained policy state.
 #guard
-  match afterReplyWith? engineLimits wrongGeneration with
-  | some state =>
-      state.engine.suggestions.size == 1 && state.incomplete &&
-        (state.offer? (.suggestion (suggestion 0))).isNone &&
-        (state.view).toOption.any fun pair =>
-          pair.1.offers.isEmpty && pair.1.incomplete
+  match selfEqualityResult? with
+  | some (.invalid .malformedProposal state) =>
+      state.incomplete && state.engine.facts.toList == [0, 0] &&
+        state.engine.history.isEmpty && state.engine.suggestions.isEmpty
+  | _ => false
+
+-- Structural validation outranks recoverable depth filtering: a bad equality
+-- after an over-depth draft still invalidates the whole reply atomically.
+#guard
+  match overdepthMalformedResult? with
+  | some (.invalid .malformedProposal state) =>
+      state.incomplete && state.engine.facts.toList == [0, 0] &&
+        state.engine.history.isEmpty && state.engine.suggestions.isEmpty &&
+        state.engine.metrics.droppedSuggestions == 0 &&
+        state.engine.metrics.capacityDrops == 0 && state.engine.metrics.depthDrops == 0
+  | _ => false
+
+-- A depth-limited instantiation is a recoverable loss local to that
+-- suggestion. The useful candidate commits, the valid instantiation and later
+-- retry keep their source order, the dropped proposal is counted, and policy
+-- cannot report a false fixed point.
+#guard
+  match observedWith? { engineLimits with maxNodeDepth := 1 } mixedDepth with
+  | some (observation, state) =>
+      observation.outcome == .success &&
+        oneChange observation.changes (node 1) 0 2 0 1 &&
+        observation.emittedSuggestions.toList ==
+          [.suggestion (suggestion 0), .suggestion (suggestion 1)] &&
+        state.engine.facts.toList == [0, 2] &&
+        state.engine.history.size == 1 &&
+        state.engine.metrics.candidates == 1 &&
+        state.engine.metrics.droppedSuggestions == 1 &&
+        state.engine.metrics.capacityDrops == 0 &&
+        state.engine.metrics.depthDrops == 1 &&
+        state.engine.suggestions.size == 2 && state.incomplete &&
+        (match observation.suggestionPlan.kept, observation.suggestionPlan.dropped with
+        | [.instantiate kept, .retry effort], [.depth (.instantiate dropped)] =>
+            kept.key == 31 && dropped.key == 139 && effort == 1
+        | _, _ => false) &&
+        match state.engine.suggestions[0]?, state.engine.suggestions[1]? with
+        | some first, some second =>
+            match first.suggestion, second.suggestion with
+            | .instantiate request, .retry effort => request.key == 31 && effort == 1
+            | _, _ => false
+        | _, _ => false
   | none => false
 
--- A structurally advertised instantiation may still fail a later admission
--- check. Consuming that rejected proposal leaves the current propagation
--- closure incomplete.
+-- Depth filtering does not consume the sole retained-suggestion slot. The
+-- later retry is kept, and the exact engine plan reaches the policy
+-- observation without structural revalidation.
 #guard
-  match afterReplyWith? engineLimits selfEqualityInstance with
+  match observedWith?
+      { engineLimits with maxNodeDepth := 1, maxRetainedSuggestions := 1 }
+      depthThenRetry with
+  | some (observation, state) =>
+      observation.outcome == .success &&
+        oneChange observation.changes (node 1) 0 2 0 1 &&
+        observation.emittedSuggestions.toList == [.suggestion (suggestion 0)] &&
+        state.engine.facts.toList == [0, 2] &&
+        state.engine.metrics.droppedSuggestions == 1 &&
+        state.engine.metrics.capacityDrops == 0 &&
+        state.engine.metrics.depthDrops == 1 &&
+        state.engine.suggestions.size == 1 && state.incomplete &&
+        match observation.suggestionPlan.kept, observation.suggestionPlan.dropped with
+        | [.retry effort], [.depth (.instantiate dropped)] =>
+            effort == 1 && dropped.key == 139
+        | _, _ => false
   | none => false
-  | some state =>
-      !state.incomplete &&
-        match selectOffer state (.suggestion (suggestion 0)) with
-        | .completed (.instanceRejected .invalidEquality) next =>
-            next.incomplete &&
-              (next.view).toOption.any fun pair =>
-                pair.1.offers.isEmpty && pair.1.incomplete
-        | _ => false
+
+-- Suggestions beyond exact capacity never become retained work and therefore
+-- are not structurally validated. This malformed suffix is classified as a
+-- capacity loss, its useful sibling candidate commits, and losing the
+-- instantiation marks policy incomplete instead of invalidating the reply.
+#guard
+  match observedWith?
+      { engineLimits with maxRetainedSuggestions := 1 } malformedSuffix with
+  | some (observation, state) =>
+      observation.outcome == .success &&
+        oneChange observation.changes (node 1) 0 2 0 1 &&
+        observation.emittedSuggestions.toList == [.suggestion (suggestion 0)] &&
+        state.engine.facts.toList == [0, 2] &&
+        state.engine.metrics.droppedSuggestions == 1 &&
+        state.engine.metrics.capacityDrops == 1 &&
+        state.engine.metrics.depthDrops == 0 &&
+        state.engine.suggestions.size == 1 && state.incomplete &&
+        match observation.suggestionPlan.kept, observation.suggestionPlan.dropped with
+        | [.split _], [.capacity (.instantiate dropped)] => dropped.key == 127
+        | _, _ => false
+  | none => false
 
 -- A retry which fails its variant-specific freshness guard is tombstoned, but
 -- its disappearance cannot be mistaken for successful propagation.
@@ -822,7 +932,9 @@ def startWithWeakRetry? : Option (State Rank) := do
       observation.outcome == .success &&
         observation.emittedSuggestions.toList == [.suggestion (suggestion 0)] &&
         state.engine.suggestions.size == 1 &&
-        state.engine.metrics.droppedSuggestions == 1 && state.incomplete &&
+        state.engine.metrics.droppedSuggestions == 1 &&
+        state.engine.metrics.capacityDrops == 1 &&
+        state.engine.metrics.depthDrops == 0 && state.incomplete &&
         match state.engine.suggestions[0]? with
         | some retained =>
             match retained.suggestion with
@@ -840,7 +952,9 @@ def startWithWeakRetry? : Option (State Rank) := do
       observation.outcome == .success &&
         observation.emittedSuggestions.toList == [.suggestion (suggestion 0)] &&
         state.engine.suggestions.size == 1 &&
-        state.engine.metrics.droppedSuggestions == 1 && state.incomplete
+        state.engine.metrics.droppedSuggestions == 1 &&
+        state.engine.metrics.capacityDrops == 1 &&
+        state.engine.metrics.depthDrops == 0 && state.incomplete
   | none => false
 
 -- Dropping only optional split advice does not make propagation incomplete.
@@ -850,7 +964,9 @@ def startWithWeakRetry? : Option (State Rank) := do
   | some (observation, state) =>
       observation.outcome == .success && observation.emittedSuggestions.isEmpty &&
         state.engine.suggestions.isEmpty &&
-        state.engine.metrics.droppedSuggestions == 1 && !state.incomplete &&
+        state.engine.metrics.droppedSuggestions == 1 &&
+        state.engine.metrics.capacityDrops == 1 &&
+        state.engine.metrics.depthDrops == 0 && !state.incomplete &&
         (state.view).toOption.any fun pair =>
           pair.1.offers.isEmpty && !pair.1.incomplete
   | none => false

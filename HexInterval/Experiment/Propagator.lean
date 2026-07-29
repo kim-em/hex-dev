@@ -22,7 +22,10 @@ A companion registry may keep caches of any Lean type.  It receives a
 `RuleRequest` containing a bounded immutable structural view and exactly the
 declared fact reads and writes, then replies with an `Outcome` bound to that
 action.  Candidate facts are intersected by an engine-owned `FactDomain`;
-function-specific code never enters the scheduler.
+function-specific code never enters the scheduler. Candidates remain
+semantically untrusted: intersection can preserve consistency and monotonicity,
+but only successful replay of their opaque proof payloads establishes
+soundness.
 
 This experimental module is separate from the supported `HexInterval` API.
 Selecting a
@@ -119,6 +122,27 @@ and SSA topology. -/
 def check (program : Program) : Bool :=
   uniqueOpKeys program.operations.toList && nodesCheckFrom program 0 program.nodes.toList
 
+/-- Structural expression depth, with nullary nodes at depth zero. -/
+def nodeDepth? (depths : Array Nat) (arguments : List NodeId) : Option Nat := do
+  if arguments.isEmpty then
+    pure 0
+  else
+    let mut greatest := 0
+    for argument in arguments do
+      let depth <- depths[argument.index]?
+      greatest := Nat.max greatest depth
+    pure (greatest + 1)
+
+/-- Reconstruct the structural depth of every node in a validated SSA
+program.  This measure is independent of theorem-instantiation generation. -/
+def depths? (program : Program) : Option (Array Nat) := do
+  let mut depths := #[]
+  for index in [0:program.nodes.size] do
+    let node <- program.nodes[index]?
+    let depth <- nodeDepth? depths node.args
+    depths := depths.push depth
+  pure depths
+
 end Program
 
 /-! # Rule registration -/
@@ -179,6 +203,10 @@ structure Registration where
   kind : ActionKind
   watches : List Slot
   writes : List Slot
+  /-- Re-run existing applications after any append-only program extension.
+  This is the coarse first trigger for rules whose result depends on shape
+  outside their anchor's immutable argument subgraph. -/
+  watchesProgram : Bool := false
   initialEffort : Nat := 0
   deriving Repr
 
@@ -217,6 +245,16 @@ def opKeyExists (program : Program) (key : OpKey) : Bool :=
 
 def Program.operationWithKey? (program : Program) (key : OpKey) : Option Operation :=
   program.operations.toList.find? fun operation => operation.key == key
+
+/-- Resolve both the signature and the compact identifier assigned by this
+particular final program.  Package-local operation order is not authoritative
+for frontend nodes. -/
+def Program.operationEntry? (program : Program) (key : OpKey) :
+    Option (OpId × Operation) := do
+  for index in [0:program.operations.size] do
+    let operation <- program.operations[index]?
+    if operation.key == key then return ({ index }, operation)
+  none
 
 def Slot.validFor (operation : Operation) : Slot -> Bool
   | .result => true
@@ -367,18 +405,33 @@ The explicit version lets registries key structural caches by the exact
 append-only snapshot.  Reply validation remains bound to the engine-owned
 `Action`, while retained instantiations recheck action freshness and resolve
 their complete structural effect against the current program.  Observing this
-view grants no mutation authority. -/
+view grants no mutation authority.
+
+A matcher may follow structure determined by its action anchor. Any additional
+side node which affects a proposed theorem instance must be named either by a
+declared fact input or by an explicit `existing` proposal reference.
+Generation accounting does not track arbitrary calls to `ProgramView.node?`. -/
 structure ProgramView where
   programVersion : Nat
   operations : Array Operation
   nodes : Array Node
   generations : Array Nat
+  depths : Array Nat
 
 namespace ProgramView
 
 /-- Exact optional operation lookup in this immutable snapshot. -/
 def operation? (view : ProgramView) (operation : OpId) : Option Operation :=
   view.operations[operation.index]?
+
+/-- Resolve a stable operation key to this snapshot's compact identifier and
+exact signature. Package callbacks must not assume a particular operation-table
+order. -/
+def findOp? (view : ProgramView) (key : OpKey) : Option (OpId × Operation) := do
+  for index in [0:view.operations.size] do
+    let operation <- view.operations[index]?
+    if operation.key == key then return ({ index }, operation)
+  none
 
 /-- Exact optional node lookup in this immutable snapshot. -/
 def node? (view : ProgramView) (node : NodeId) : Option Node :=
@@ -387,6 +440,10 @@ def node? (view : ProgramView) (node : NodeId) : Option Node :=
 /-- Exact optional instantiation-generation lookup. -/
 def generation? (view : ProgramView) (node : NodeId) : Option Nat :=
   view.generations[node.index]?
+
+/-- Exact optional structural-depth lookup. -/
+def depth? (view : ProgramView) (node : NodeId) : Option Nat :=
+  view.depths[node.index]?
 
 /-- Resolve a node's opaque semantic operation key without interpreting it. -/
 def operationKey? (view : ProgramView) (node : NodeId) : Option OpKey := do
@@ -418,7 +475,9 @@ structure PayloadId where
   index : Nat
   deriving DecidableEq, Repr
 
-/-- One proposed fact about an existing expression node. -/
+/-- One semantically untrusted proposed fact about an existing expression
+node. Its payload must later replay to a checked theorem; merely intersecting
+the fact into engine state does not prove it sound. -/
 structure Candidate (Fact : Type) where
   node : NodeId
   fact : Fact
@@ -452,8 +511,6 @@ structure ProposedEquality where
 recomputes generations and assigns concrete node identifiers. -/
 structure InstantiationRequest where
   key : Nat
-  triggers : List NodeId
-  claimedGeneration : Nat
   nodes : List ProposedNode
   equalities : List ProposedEquality
   payload : PayloadId
@@ -491,6 +548,47 @@ def Suggestion.affectsClosure : Suggestion -> Bool
   | .retry _ | .instantiate _ => true
   | .split _ => false
 
+/-- Why a bounded reply suggestion did not enter retained policy state. -/
+inductive SuggestionDrop where
+  | capacity (suggestion : Suggestion)
+  | depth (suggestion : Suggestion)
+
+namespace SuggestionDrop
+
+def suggestion : SuggestionDrop -> Suggestion
+  | .capacity suggestion | .depth suggestion => suggestion
+
+def affectsClosure (drop : SuggestionDrop) : Bool :=
+  drop.suggestion.affectsClosure
+
+end SuggestionDrop
+
+/-- Exact result of validating and capacity-filtering one reply's suggestions.
+Both lists retain source order. Every dropped suggestion records whether
+retained capacity or structural depth excluded it. -/
+structure SuggestionPlan where
+  kept : List Suggestion := []
+  dropped : List SuggestionDrop := []
+
+namespace SuggestionPlan
+
+def capacityDrops (plan : SuggestionPlan) : Nat :=
+  plan.dropped.foldl (fun count drop =>
+    match drop with
+    | .capacity _ => count + 1
+    | .depth _ => count) 0
+
+def depthDrops (plan : SuggestionPlan) : Nat :=
+  plan.dropped.foldl (fun count drop =>
+    match drop with
+    | .capacity _ => count
+    | .depth _ => count + 1) 0
+
+def affectsClosure (plan : SuggestionPlan) : Bool :=
+  plan.dropped.any SuggestionDrop.affectsClosure
+
+end SuggestionPlan
+
 /-- A policy candidate paired with engine-owned invocation provenance.  Split
 proposals retain the target version at proposal time; later policy adoption
 must not re-arm a guard from the then-current fact. -/
@@ -526,11 +624,13 @@ inductive Outcome (Fact : Type) where
   | resourceLimit (budget : Nat)
   | failed (code : Nat)
 
-def Outcome.observationBounded (limit : Nat) : Outcome Fact -> Bool
-  | .success _ _ cost | .noChange cost => cost.bounded limit
+/-- Bound performed-work observations separately from negative diagnostic
+encodings.  A `resourceLimit` number is not charged as work, but it still needs
+an independent representation cap before entering retained policy events. -/
+def Outcome.observationBounded (costLimit diagnosticLimit : Nat) : Outcome Fact -> Bool
+  | .success _ _ cost | .noChange cost => cost.bounded costLimit
+  | .resourceLimit diagnostic | .failed diagnostic => diagnostic <= diagnosticLimit
   | .inapplicable => true
-  | .resourceLimit budget => budget <= limit
-  | .failed _ => true
 
 /-- Registry response bound to the exact outstanding invocation. -/
 structure Reply (Fact : Type) where
@@ -557,7 +657,9 @@ inductive NarrowResult (Fact : Type) where
   | malformed (code : Nat)
   | resourceLimit (budget : Nat)
 
-/-- The only fact-domain behavior needed by propagation scheduling. -/
+/-- The only fact-domain behavior needed by propagation scheduling.
+`narrow` enforces the fact representation's intersection discipline; it does
+not authenticate the semantic claim carried by a candidate. -/
 structure FactDomain (Fact : Type) where
   top : DomainId -> Fact
   narrow : DomainId -> Fact -> Fact -> NarrowResult Fact
@@ -580,12 +682,15 @@ inductive Resource where
   | applications
   | queueEntries
   | actions
+  | effort
+  | registryEntries
   | acceptedFacts
   | retainedSuggestions
   | outcomeCandidates
   | outcomeSuggestions
   | instances
   | generation
+  | nodeDepth
   | equalities
   deriving DecidableEq, Repr
 
@@ -602,11 +707,13 @@ structure Limits where
   maxRetainedSuggestions : Nat
   maxEffort : Nat
   maxObservationValue : Nat
+  maxDiagnosticValue : Nat
   maxOutcomeCandidates : Nat
   maxOutcomeSuggestions : Nat
   maxProposalItems : Nat
   maxInstances : Nat
   maxGeneration : Nat
+  maxNodeDepth : Nat
   maxEqualities : Nat
   splitEndpointLimit : EndpointLimit
   deriving DecidableEq, Repr
@@ -628,7 +735,12 @@ structure Metrics where
   ruleFailures : Nat := 0
   admittedInstances : Nat := 0
   duplicateInstances : Nat := 0
+  /-- Total suggestions omitted from retained policy state. -/
   droppedSuggestions : Nat := 0
+  /-- Suggestions omitted because the retained array was full. -/
+  capacityDrops : Nat := 0
+  /-- Structurally valid instantiations omitted by `maxNodeDepth`. -/
+  depthDrops : Nat := 0
   generatedNodes : Nat := 0
   generatedEqualities : Nat := 0
   equalityRuns : Nat := 0
@@ -717,6 +829,7 @@ structure Engine (Fact : Type) where
   facts : Array Fact
   versions : Array Nat
   generations : Array Nat
+  depths : Array Nat
   queue : Array WorkItem
   queueHead : Nat
   queued : Array Bool
@@ -764,27 +877,39 @@ def initialQueue (applicationCount : Nat) : Array WorkItem := Id.run do
     queue := queue.push (.application { index })
   queue
 
-/-- Validate and compile an engine.  The caller supplies one initial fact per
-node, ordinarily the domain top refined by source hypotheses. -/
-def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Array Registration)
-    (facts : Array Fact) (limits : Limits) : Except StartError (Engine Fact) := do
+/-- Resource-first validation shared by checked frontends and `Engine.start`.
+Size caps precede every traversal of untrusted program or registry metadata. -/
+def preflightStart (program : Program) (rules : Array Registration)
+    (factCount : Nat) (limits : Limits) : Except StartError Unit := do
   if limits.maxOperations < program.operations.size then
     throw (.resourceLimit .operations)
   if limits.maxNodes < program.nodes.size then
     throw (.resourceLimit .nodes)
   if limits.maxRules < rules.size then
     throw (.resourceLimit .rules)
+  if rules.any (fun rule => limits.maxEffort < rule.initialEffort) then
+    throw (.resourceLimit .effort)
   if program.operations.any (fun operation => !listWithin limits.maxArity operation.inputs) ||
       program.nodes.any (fun node => !listWithin limits.maxArity node.args) ||
       rules.any (fun rule => !listWithin (limits.maxArity + 1) rule.watches ||
         !listWithin (limits.maxArity + 1) rule.writes) then
     throw (.resourceLimit .arity)
-  if facts.size != program.nodes.size then
+  if factCount != program.nodes.size then
     throw .wrongFactCount
   if !program.check then
     throw .invalidProgram
+  let some depths := program.depths? | throw .invalidProgram
+  if depths.any (fun depth => limits.maxNodeDepth < depth) then
+    throw (.resourceLimit .nodeDepth)
   if !registrationsCheck program rules then
     throw .invalidRegistrations
+
+/-- Validate and compile an engine.  The caller supplies one initial fact per
+node, ordinarily the domain top refined by source hypotheses. -/
+def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Array Registration)
+    (facts : Array Fact) (limits : Limits) : Except StartError (Engine Fact) := do
+  preflightStart program rules facts.size limits
+  let some depths := program.depths? | throw .invalidProgram
   let applications <-
     match compileApplicationsWithin limits.maxApplications program rules with
     | .ok applications => pure applications
@@ -804,6 +929,7 @@ def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Arr
       facts
       versions := Array.replicate facts.size 0
       generations := Array.replicate facts.size 0
+      depths
       queue := initialQueue applications.size
       queueHead := 0
       queued := Array.replicate applications.size true
@@ -833,7 +959,8 @@ def programView (state : Engine Fact) : ProgramView :=
   { programVersion := state.programVersion
     operations := state.program.operations
     nodes := state.program.nodes
-    generations := state.generations }
+    generations := state.generations
+    depths := state.depths }
 
 /-- Read the versions of exactly the watched nodes in registration order. -/
 def seenVersions? (state : Engine Fact) : List NodeId -> Option (List SeenVersion)
@@ -862,6 +989,7 @@ def actionFresh (state : Engine Fact) (action : Action) : Bool :=
   | some application, some rule, some current =>
       application.rule == action.rule && application.node == action.node &&
         application.kind == action.kind && rule.key == action.key &&
+        (!rule.watchesProgram || action.programVersion == state.programVersion) &&
         action.inputs.map (fun input => input.node) == application.watches &&
         current == action.inputs
   | _, _, _ => false
@@ -1004,12 +1132,13 @@ inductive ReplyError where
   | duplicateWrite
   | undeclaredWrite (node : NodeId)
   | missingFact (node : NodeId)
+  | malformedProposal
   | malformedFact (code : Nat)
   deriving DecidableEq, Repr
 
 /-- Result of atomically admitting one reply. -/
 inductive ReplyResult (Fact : Type) where
-  | accepted (state : Engine Fact)
+  | accepted (plan : SuggestionPlan) (state : Engine Fact)
   | invalid (error : ReplyError) (state : Engine Fact)
   | resourceLimit (resource : Resource) (state : Engine Fact)
   | factResourceLimit (budget : Nat) (state : Engine Fact)
@@ -1033,6 +1162,7 @@ inductive EqualityFault where
   | missingEquality
   | domainMismatch
   | missingState
+  | oversizedDiagnostic
   | malformedFact (code : Nat)
   deriving DecidableEq, Repr
 
@@ -1048,9 +1178,7 @@ def existingRefBounded (nodeCount : Nat) : NodeRef -> Bool
   | .proposed _ => true
 
 def proposalBounded (nodeCount limit : Nat) (request : InstantiationRequest) : Bool :=
-  listWithin limit request.triggers && listWithin limit request.nodes &&
-    listWithin limit request.equalities &&
-    request.triggers.all (fun node => node.index < nodeCount) &&
+  listWithin limit request.nodes && listWithin limit request.equalities &&
     request.nodes.all (fun node => listWithin limit node.args &&
       node.args.all (existingRefBounded nodeCount)) &&
     request.equalities.all (fun edge =>
@@ -1074,6 +1202,115 @@ def suggestionEffortBounded (limit : Nat) : Suggestion -> Bool
 
 def suggestionsEffortBounded (limit : Nat) (suggestions : List Suggestion) : Bool :=
   suggestions.all (suggestionEffortBounded limit)
+
+/-! # Structural proposal validation -/
+
+namespace Node
+
+/-- Exact syntactic node equality used by the experiment's linear CSE table. -/
+def same (left right : Node) : Bool :=
+  left.domain == right.domain && left.op == right.op && left.args == right.args
+
+end Node
+
+/-- Linear reference CSE lookup.  The experiment measures this against indexed
+tables before selecting a production representation. -/
+def findNodeFrom : Nat -> List Node -> Node -> Option NodeId
+  | _, [], _ => none
+  | index, node :: nodes, target =>
+      if node.same target then some { index } else findNodeFrom (index + 1) nodes target
+
+def Program.findNode? (program : Program) (target : Node) : Option NodeId :=
+  findNodeFrom 0 program.nodes.toList target
+
+/-- Resolve a draft reference.  `existing` IDs are restricted to the immutable
+pre-proposal boundary; generated references use prior draft positions. -/
+def resolveRef? (baseSize : Nat) (resolved : List NodeId) : NodeRef -> Option NodeId
+  | .existing node => if node.index < baseSize then some node else none
+  | .proposed index => resolved[index]?
+
+def resolveRefs? (baseSize : Nat) (resolved : List NodeId)
+    (refs : List NodeRef) : Option (List NodeId) :=
+  refs.mapM (resolveRef? baseSize resolved)
+
+/-- Failure while resolving the structural part of an untrusted proposal. -/
+inductive DraftFault where
+  | badReferenceOrShape
+  deriving DecidableEq, Repr
+
+/-- Resolve draft nodes in order, validate each typed SSA instruction, and CSE
+against both old nodes and earlier new nodes.  Fresh nodes receive
+`1 + max(argument depths)` (nullaries have depth zero); a CSE hit preserves
+the engine-owned depth already stored for that node. This resolver is
+deliberately uncapped: callers first validate the complete untrusted shape,
+then separately classify only freshly appended depths. -/
+def resolveDrafts (baseSize : Nat) :
+    Program -> Array Nat -> List NodeId -> List ProposedNode ->
+      Except DraftFault (Program × Array Nat × List NodeId)
+  | program, depths, resolved, [] => pure (program, depths, resolved)
+  | program, depths, resolved, draft :: drafts => do
+      let some args := resolveRefs? baseSize resolved draft.args
+        | throw .badReferenceOrShape
+      let candidate : Node := { domain := draft.domain, op := draft.op, args }
+      if !Program.nodeCheck program program.nodes.size candidate then
+        throw .badReferenceOrShape
+      let some candidateDepth := Program.nodeDepth? depths args
+        | throw .badReferenceOrShape
+      match program.findNode? candidate with
+      | some id =>
+          let some storedDepth := depths[id.index]? | throw .badReferenceOrShape
+          if storedDepth != candidateDepth then throw .badReferenceOrShape
+          resolveDrafts baseSize program depths (resolved ++ [id]) drafts
+      | none =>
+          let id : NodeId := { index := program.nodes.size }
+          resolveDrafts baseSize
+            { program with nodes := program.nodes.push candidate }
+            (depths.push candidateDepth) (resolved ++ [id]) drafts
+
+/-- Whether every freshly appended node respects the structural-depth cap.
+Existing nodes were checked when their program snapshot was created and are
+not reclassified as losses of the current proposal. -/
+def appendedDepthsWithin (baseSize maxNodeDepth : Nat) (depths : Array Nat) : Bool :=
+  (depths.toList.drop baseSize).all fun depth => depth <= maxNodeDepth
+
+/-- Canonical endpoint set requested by an instantiation, before existing-edge
+deduplication.  This makes repeat selection detect the same instance even
+after its equality has entered the live edge table. -/
+def resolveRequestedPairs (baseSize : Nat) (resolved : List NodeId) (program : Program) :
+    List ProposedEquality -> Option (List EqualityPair)
+  | [] => some []
+  | proposal :: proposals => do
+      let left <- resolveRef? baseSize resolved proposal.left
+      let right <- resolveRef? baseSize resolved proposal.right
+      let leftNode <- program.node? left
+      let rightNode <- program.node? right
+      if left == right || leftNode.domain != rightNode.domain then none else pure ()
+      let rest <- resolveRequestedPairs baseSize resolved program proposals
+      let pair := equalityPair left right
+      some (if rest.contains pair then rest else insertEqualityPair pair rest)
+
+/-- Result of validating a proposal before it can enter retained policy state. -/
+inductive ProposalCheck where
+  | valid
+  | malformed
+  | tooDeep
+
+/-- Perform the same shape, typed-reference, equality, and structural-depth
+checks used by admission, without mutating the live engine. Structural
+validation deliberately runs to completion before the depth classification:
+a malformed proposal cannot disguise itself as a recoverable depth loss. -/
+def checkInstantiationProposal (program : Program) (depths : Array Nat)
+    (maxNodeDepth : Nat) (request : InstantiationRequest) : ProposalCheck :=
+  let baseSize := program.nodes.size
+  match resolveDrafts baseSize program depths [] request.nodes with
+  | .error .badReferenceOrShape => .malformed
+  | .ok (program, depths, resolved) =>
+      if (resolveRequestedPairs baseSize resolved program request.equalities).isNone then
+        .malformed
+      else if !appendedDepthsWithin baseSize maxNodeDepth depths then
+        .tooDeep
+      else
+        .valid
 
 namespace Engine
 
@@ -1163,8 +1400,16 @@ def installCandidates (action : Action) :
       let next <-
         match state.factDomain.narrow target.domain current candidate.fact with
         | .noChange => pure state
-        | .malformed code => throw (.malformedFact code, none, none)
-        | .resourceLimit budget => throw (.malformedFact 0, some budget, none)
+        | .malformed code =>
+            if code <= state.limits.maxDiagnosticValue then
+              throw (.malformedFact code, none, none)
+            else
+              throw (.oversizedObservation, none, none)
+        | .resourceLimit budget =>
+            if budget <= state.limits.maxDiagnosticValue then
+              throw (.malformedFact 0, some budget, none)
+            else
+              throw (.oversizedObservation, none, none)
         | .improved fact => installImprovement action candidate fact false state
         | .contradiction fact => installImprovement action candidate fact true state
       let (next, changed) <- installCandidates action next candidates
@@ -1175,21 +1420,52 @@ def installCandidates (action : Action) :
           candidate.node :: changed
       pure (next, changed)
 
-/-- Remaining capacity in the engine-owned retained-suggestion prefix. -/
+/-- Remaining capacity in the engine-owned retained-suggestion array. -/
 def suggestionRoom (state : Engine Fact) : Nat :=
   state.limits.maxRetainedSuggestions - state.suggestions.size
 
-/-- The exact suggestion prefix which `submit` will retain. Policy layers use
-this helper rather than duplicating the retention arithmetic when deciding
-whether discarded work affects completeness. -/
-def keptSuggestions (state : Engine Fact)
-    (suggestions : List Suggestion) : List Suggestion :=
-  suggestions.take state.suggestionRoom
+/-- A malformed suggestion which had room to enter policy state invalidates
+the whole reply. Depth-limited structural suggestions are instead recoverable
+losses recorded in `SuggestionPlan.dropped`. -/
+inductive SuggestionCheck where
+  | ready (plan : SuggestionPlan)
+  | malformed
 
-/-- The exact suggestion suffix which `submit` will discard. -/
-def droppedSuggestions (state : Engine Fact)
-    (suggestions : List Suggestion) : List Suggestion :=
-  suggestions.drop state.suggestionRoom
+/-- Classify the exact suggestions which `submit` can retain. An unaffordable
+instantiation does not consume retained capacity, so later affordable advice
+from the same atomic reply can survive. Once capacity is exhausted, the
+remaining suffix is dropped without structural validation, preserving the
+existing rule that only work selected for retention can invalidate a reply. -/
+def classifySuggestions (state : Engine Fact) :
+    Nat -> List Suggestion -> SuggestionCheck
+  | _, [] => .ready {}
+  | 0, suggestions =>
+      .ready { dropped := suggestions.map SuggestionDrop.capacity }
+  | room + 1, suggestion :: suggestions =>
+      let checked :=
+        match suggestion with
+        | .retry _ | .split _ => ProposalCheck.valid
+        | .instantiate request =>
+            checkInstantiationProposal state.program state.depths
+              state.limits.maxNodeDepth request
+      match checked with
+      | .malformed => .malformed
+      | .valid =>
+          match classifySuggestions state room suggestions with
+          | .malformed => .malformed
+          | .ready plan => .ready { plan with kept := suggestion :: plan.kept }
+      | .tooDeep =>
+          match classifySuggestions state (room + 1) suggestions with
+          | .malformed => .malformed
+          | .ready plan =>
+              .ready { plan with dropped := .depth suggestion :: plan.dropped }
+
+/-- Apply the live retained-suggestion capacity to one already surface-bounded
+reply. Engine admission and policy completeness accounting both use this exact
+classification. -/
+def suggestionPlan (state : Engine Fact)
+    (suggestions : List Suggestion) : SuggestionCheck :=
+  classifySuggestions state state.suggestionRoom suggestions
 
 /-- Validate and atomically admit one rule reply.  Candidate facts are all
 installed before the union of affected dependencies is woken. -/
@@ -1200,12 +1476,13 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
       if reply.serial != action.serial || reply.programVersion != action.programVersion ||
           reply.application != action.application then
         .invalid .mismatchedAction state
-      else if !reply.outcome.observationBounded state.limits.maxObservationValue then
+      else if !reply.outcome.observationBounded state.limits.maxObservationValue
+          state.limits.maxDiagnosticValue then
         .invalid .oversizedObservation state.finishReply
       else
       match reply.outcome with
       | .noChange _ | .inapplicable | .resourceLimit _ | .failed _ =>
-          .accepted (state.outcomeNegative reply.outcome)
+          .accepted {} (state.outcomeNegative reply.outcome)
       | .success candidates suggestions _ =>
           let base := state.finishReply
           if !listWithin state.limits.maxOutcomeCandidates candidates then
@@ -1225,28 +1502,33 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
                 match candidatesAuthorized application.writes candidates with
                 | some error => .invalid error base
                 | none =>
-                    let retainedSuggestions := state.keptSuggestions suggestions
-                    let droppedSuggestions := (state.droppedSuggestions suggestions).length
-                    let working : Engine Fact :=
-                      { base with
-                        suggestions := retainedSuggestions.foldl
-                          (fun retained suggestion => retained.push
-                            (state.retainSuggestion action suggestion))
-                          base.suggestions
-                        metrics :=
-                          { base.metrics with
-                            candidates := base.metrics.candidates + candidates.length
-                            droppedSuggestions :=
-                              base.metrics.droppedSuggestions + droppedSuggestions } }
-                    match installCandidates action working candidates with
-                    | .error (_, some budget, _) =>
-                        .factResourceLimit budget base
-                    | .error (_, _, some resource) => .resourceLimit resource base
-                    | .error (error, _, _) => .invalid error base
-                    | .ok (working, changed) =>
-                        match working.wakeNodes changed with
-                        | .error resource => .resourceLimit resource base
-                        | .ok next => .accepted next
+                    match state.suggestionPlan suggestions with
+                    | .malformed => .invalid .malformedProposal base
+                    | .ready plan =>
+                        let working : Engine Fact :=
+                          { base with
+                            suggestions := plan.kept.foldl
+                              (fun retained suggestion => retained.push
+                                (state.retainSuggestion action suggestion))
+                              base.suggestions
+                            metrics :=
+                              { base.metrics with
+                                candidates := base.metrics.candidates + candidates.length
+                                droppedSuggestions :=
+                                  base.metrics.droppedSuggestions + plan.dropped.length
+                                capacityDrops :=
+                                  base.metrics.capacityDrops + plan.capacityDrops
+                                depthDrops :=
+                                  base.metrics.depthDrops + plan.depthDrops } }
+                        match installCandidates action working candidates with
+                        | .error (_, some budget, _) =>
+                            .factResourceLimit budget base
+                        | .error (_, _, some resource) => .resourceLimit resource base
+                        | .error (error, _, _) => .invalid error base
+                        | .ok (working, changed) =>
+                            match working.wakeNodes changed with
+                            | .error resource => .resourceLimit resource base
+                            | .ok next => .accepted plan next
 
 def transportUpdate (target source : NodeId) (targetVersion sourceVersion : Nat) :
     NarrowResult Fact -> Except EqualityFactError (Option (TransportUpdate Fact))
@@ -1309,13 +1591,29 @@ def contractEquality (state : Engine Fact) (equalityId : EqualityId) :
           else
             match transportUpdate equality.left equality.right leftVersion rightVersion
                 (state.factDomain.narrow leftNode.domain leftFact rightFact) with
-            | .error (.malformed code) => .invalid (.malformedFact code) 1 state
-            | .error (.resourceLimit budget) => .factResourceLimit budget 1 state
+            | .error (.malformed code) =>
+                if code <= state.limits.maxDiagnosticValue then
+                  .invalid (.malformedFact code) 1 state
+                else
+                  .invalid .oversizedDiagnostic 1 state
+            | .error (.resourceLimit budget) =>
+                if budget <= state.limits.maxDiagnosticValue then
+                  .factResourceLimit budget 1 state
+                else
+                  .invalid .oversizedDiagnostic 1 state
             | .ok left =>
                 match transportUpdate equality.right equality.left rightVersion leftVersion
                     (state.factDomain.narrow leftNode.domain rightFact leftFact) with
-                | .error (.malformed code) => .invalid (.malformedFact code) 2 state
-                | .error (.resourceLimit budget) => .factResourceLimit budget 2 state
+                | .error (.malformed code) =>
+                    if code <= state.limits.maxDiagnosticValue then
+                      .invalid (.malformedFact code) 2 state
+                    else
+                      .invalid .oversizedDiagnostic 2 state
+                | .error (.resourceLimit budget) =>
+                    if budget <= state.limits.maxDiagnosticValue then
+                      .factResourceLimit budget 2 state
+                    else
+                      .invalid .oversizedDiagnostic 2 state
                 | .ok right =>
                     let updates := [left, right].filterMap id
                     if state.limits.maxAcceptedFacts < state.history.size + updates.length then
@@ -1333,7 +1631,12 @@ end Engine
 
 /-! # External registry driver -/
 
-/-- Why a bounded request/reply run stopped. -/
+universe u
+
+/-- Why a bounded request/reply run stopped. `saturated` means only that the
+raw engine queue is empty: this driver neither selects retained suggestions
+nor carries policy completeness, so it cannot certify a proof-search fixed
+point. -/
 inductive RunStop where
   | saturated
   | contradiction
@@ -1344,8 +1647,10 @@ inductive RunStop where
   | driverFuel
   deriving DecidableEq, Repr
 
-/-- A run returns both solver state and the registry's arbitrary private cache. -/
-structure RunResult (Fact Cache : Type) where
+/-- A run returns both solver state and the registry's arbitrary private cache.
+The cache may itself existentially package `Type`-valued rule caches, so its
+universe is independent of the engine's fact universe. -/
+structure RunResult (Fact : Type) (Cache : Type u) where
   state : Engine Fact
   cache : Cache
   stop : RunStop
@@ -1353,7 +1658,8 @@ structure RunResult (Fact Cache : Type) where
 /-- Execute the request/reply protocol with a registry-owned cache.  `invoke`
 is the only place where operation or rule keys acquire function-specific
 meaning. -/
-def drive (invoke : Cache -> RuleRequest Fact -> Outcome Fact × Cache) :
+def drive {Cache : Type u}
+    (invoke : Cache -> RuleRequest Fact -> Outcome Fact × Cache) :
     Nat -> Engine Fact -> Cache -> RunResult Fact Cache
   | 0, state, cache => { state, cache, stop := .driverFuel }
   | fuel + 1, state, cache =>
@@ -1361,7 +1667,7 @@ def drive (invoke : Cache -> RuleRequest Fact -> Outcome Fact × Cache) :
       | .request request awaiting =>
           let (outcome, cache) := invoke cache request
           match awaiting.submit (request.action.reply outcome) with
-          | .accepted next => drive invoke fuel next cache
+          | .accepted _ next => drive invoke fuel next cache
           | .invalid error next => { state := next, cache, stop := .invalidReply error }
           | .resourceLimit resource next =>
               { state := next, cache, stop := .engineResource resource }
@@ -1392,7 +1698,6 @@ inductive AdmissionError where
   | staleSuggestion (proposed current : Nat)
   | oversizedProposal
   | badReferenceOrShape
-  | generationMismatch (claimed actual : Nat)
   | invalidEquality
   | invalidCompiledProgram
   deriving DecidableEq, Repr
@@ -1403,67 +1708,6 @@ inductive AdmissionResult (Fact : Type) where
   | duplicate (state : Engine Fact)
   | invalid (error : AdmissionError) (state : Engine Fact)
   | resourceLimit (resource : Resource) (state : Engine Fact)
-
-namespace Node
-
-/-- Exact syntactic node equality used by the experiment's linear CSE table. -/
-def same (left right : Node) : Bool :=
-  left.domain == right.domain && left.op == right.op && left.args == right.args
-
-end Node
-
-/-- Linear reference CSE lookup.  The experiment measures this against indexed
-tables before selecting a production representation. -/
-def findNodeFrom : Nat -> List Node -> Node -> Option NodeId
-  | _, [], _ => none
-  | index, node :: nodes, target =>
-      if node.same target then some { index } else findNodeFrom (index + 1) nodes target
-
-def Program.findNode? (program : Program) (target : Node) : Option NodeId :=
-  findNodeFrom 0 program.nodes.toList target
-
-/-- Resolve a draft reference.  `existing` IDs are restricted to the immutable
-pre-proposal boundary; generated references use prior draft positions. -/
-def resolveRef? (baseSize : Nat) (resolved : List NodeId) : NodeRef -> Option NodeId
-  | .existing node => if node.index < baseSize then some node else none
-  | .proposed index => resolved[index]?
-
-def resolveRefs? (baseSize : Nat) (resolved : List NodeId)
-    (refs : List NodeRef) : Option (List NodeId) :=
-  refs.mapM (resolveRef? baseSize resolved)
-
-/-- Canonical endpoint set requested by an instantiation, before existing-edge
-deduplication.  This makes repeat selection detect the same instance even
-after its equality has entered the live edge table. -/
-def resolveRequestedPairs (baseSize : Nat) (resolved : List NodeId) (program : Program) :
-    List ProposedEquality -> Option (List EqualityPair)
-  | [] => some []
-  | proposal :: proposals => do
-      let left <- resolveRef? baseSize resolved proposal.left
-      let right <- resolveRef? baseSize resolved proposal.right
-      let leftNode <- program.node? left
-      let rightNode <- program.node? right
-      if left == right || leftNode.domain != rightNode.domain then none else pure ()
-      let rest <- resolveRequestedPairs baseSize resolved program proposals
-      let pair := equalityPair left right
-      some (if rest.contains pair then rest else insertEqualityPair pair rest)
-
-/-- Resolve draft nodes in order, validate each typed SSA instruction, and CSE
-against both old nodes and earlier new nodes. -/
-def resolveDrafts (baseSize : Nat) :
-    Program -> List NodeId -> List ProposedNode -> Option (Program × List NodeId)
-  | program, resolved, [] => some (program, resolved)
-  | program, resolved, draft :: drafts => do
-      let args <- resolveRefs? baseSize resolved draft.args
-      let candidate : Node := { domain := draft.domain, op := draft.op, args }
-      if !Program.nodeCheck program program.nodes.size candidate then
-        none
-      else
-        let id := program.findNode? candidate |>.getD { index := program.nodes.size }
-        let program :=
-          if id.index < program.nodes.size then program
-          else { program with nodes := program.nodes.push candidate }
-        resolveDrafts baseSize program (resolved ++ [id]) drafts
 
 /-- Existing references named directly by one draft reference list. -/
 def existingRefs (refs : List NodeRef) : List NodeId :=
@@ -1476,33 +1720,31 @@ def requestExistingRefs (request : InstantiationRequest) : List NodeId :=
     request.equalities.flatMap (fun edge => existingRefs [edge.left, edge.right])
 
 /-- Canonical engine-owned substitution of an invocation: its anchor followed
-by every declared fact dependency, with the first occurrence retained.  The
-registry's `InstantiationRequest.triggers` field is replay data and cannot
-weaken either generation accounting or structural duplicate detection. -/
+by every declared fact dependency, with the first occurrence retained. -/
 def actionSubstitution (action : Action) : List NodeId :=
   dedupList (action.node :: action.inputs.map (fun input => input.node))
 
-/-- Recompute instantiation depth from the authoritative invocation, every old
-node named by the proposal, and every old node reached through a CSE hit. -/
-def inferredGeneration? (generations : Array Nat) (baseSize : Nat)
-    (action : Action) (request : InstantiationRequest) (resolved : List NodeId) : Option Nat := do
-  let references := actionSubstitution action ++ requestExistingRefs request ++
-    resolved.filter (fun node => node.index < baseSize)
+/-- Recompute logical instantiation depth from the authoritative invocation and
+every explicitly existing node named by the proposal.  Proposed nodes are
+outputs of this instance, so whether one happens to CSE-hit an already
+materialized node cannot turn it into a new proof dependency. -/
+def inferredGeneration? (generations : Array Nat)
+    (action : Action) (request : InstantiationRequest) : Option Nat := do
+  let references := actionSubstitution action ++ requestExistingRefs request
   let mut greatest := 0
   for node in references do
     let generation <- generations[node.index]?
     greatest := Nat.max greatest generation
   some (greatest + 1)
 
-/-- Recompute the generation advertised to policy from current engine-owned
-structure.  The rule's claimed generation is deliberately not trusted. -/
+/-- Recompute theorem-instantiation generation for a structurally validated
+retained proposal.  Reply admission already checked the full draft shape, so
+policy view construction need only recheck freshness and provenance. -/
 def Engine.instantiationGeneration? (state : Engine Fact)
     (retained : RetainedSuggestion) : Option Nat := do
   if !state.actionFresh retained.action then none else pure ()
   let .instantiate request := retained.suggestion | none
-  let baseSize := state.program.nodes.size
-  let (_, resolved) <- resolveDrafts baseSize state.program [] request.nodes
-  inferredGeneration? state.generations baseSize retained.action request resolved
+  inferredGeneration? state.generations retained.action request
 
 /-- Treat equality endpoints as unordered for structural deduplication. -/
 def EqualityEdge.sameEndpoints (edge : EqualityEdge) (left right : NodeId) : Bool :=
@@ -1563,6 +1805,24 @@ def enqueueNewApplications (oldCount newCount : Nat) (state : Engine Fact) :
   (List.range newCount).foldlM
     (fun state offset => state.enqueue (.application { index := oldCount + offset })) state
 
+/-- Existing applications which explicitly declared a dependency on the whole
+program and are not already dirty.  Program extension is their versioned
+wakeup source, analogous to a changed watched fact for ordinary rules. -/
+def dormantProgramWatchers? (state : Engine Fact) : Option (List ApplicationId) := do
+  let mut watchers := []
+  for index in [0:state.applications.size] do
+    let application <- state.applications[index]?
+    let registration <- state.rules[application.rule.index]?
+    let queued <- state.queued[index]?
+    if registration.watchesProgram && !queued then
+      watchers := { index } :: watchers
+  pure watchers.reverse
+
+def enqueueApplications (applications : List ApplicationId) (state : Engine Fact) :
+    Except Resource (Engine Fact) :=
+  applications.foldlM
+    (fun state application => state.enqueue (.application application)) state
+
 /-- Queue every newly admitted equality contractor. -/
 def enqueueNewEqualities (oldCount newCount : Nat) (state : Engine Fact) :
     Except Resource (Engine Fact) :=
@@ -1598,13 +1858,15 @@ def admitRetained (state : Engine Fact)
           .invalid (.staleSuggestion retained.action.programVersion state.programVersion) state
         else
           let baseSize := state.program.nodes.size
-          match resolveDrafts baseSize state.program [] request.nodes with
-          | none => .invalid .badReferenceOrShape state
-          | some (program, resolved) =>
+          match resolveDrafts baseSize state.program state.depths [] request.nodes with
+          | .error .badReferenceOrShape => .invalid .badReferenceOrShape state
+          | .ok (program, depths, resolved) =>
               let equalityPairs? :=
                 resolveRequestedPairs baseSize resolved program request.equalities
               if equalityPairs?.isNone then
                 .invalid .invalidEquality state
+              else if !appendedDepthsWithin baseSize state.limits.maxNodeDepth depths then
+                .resourceLimit .nodeDepth state
               else
               let substitution := actionSubstitution retained.action
               let instanceKey : InstanceKey :=
@@ -1615,14 +1877,11 @@ def admitRetained (state : Engine Fact)
               if state.instances.contains instanceKey then
                 duplicateInstance state
               else
-                match inferredGeneration? state.generations baseSize retained.action request resolved with
+                match inferredGeneration? state.generations retained.action request with
                 | none => .invalid .badReferenceOrShape state
                 | some generation =>
-                    if request.claimedGeneration != generation then
-                      .invalid (.generationMismatch request.claimedGeneration generation) state
-                    else
-                      match resolveEqualities baseSize generation retained.action program resolved
-                          state.equalities request.equalities with
+                    match resolveEqualities baseSize generation retained.action program resolved
+                        state.equalities request.equalities with
                       | none => .invalid .invalidEquality state
                       | some (equalityIds, equalities) =>
                           let addedNodes := program.nodes.size - baseSize
@@ -1646,12 +1905,16 @@ def admitRetained (state : Engine Fact)
                                 if !applicationsPrefix state.applications applications then
                                   .invalid .invalidCompiledProgram state
                                 else
-                                  let addedApplications :=
-                                    applications.size - state.applications.size
-                                  if state.limits.maxQueueEntries <
-                                      state.queue.size + addedApplications + equalities.length then
-                                    .resourceLimit .queueEntries state
-                                  else
+                                  match dormantProgramWatchers? state with
+                                  | none => .invalid .invalidCompiledProgram state
+                                  | some programWatchers =>
+                                    let addedApplications :=
+                                      applications.size - state.applications.size
+                                    if state.limits.maxQueueEntries <
+                                        state.queue.size + addedApplications + equalities.length +
+                                          programWatchers.length then
+                                      .resourceLimit .queueEntries state
+                                    else
                                     let allEqualities := state.equalities ++ equalities.toArray
                                     match buildWatchers program.nodes.size applications
                                         allEqualities with
@@ -1674,6 +1937,7 @@ def admitRetained (state : Engine Fact)
                                               Array.replicate addedNodes 0
                                             generations := state.generations ++
                                               Array.replicate addedNodes generation
+                                            depths
                                             queued
                                             equalityQueued
                                             instances := instanceKey :: state.instances
@@ -1704,7 +1968,10 @@ def admitRetained (state : Engine Fact)
                                             match enqueueNewApplications state.applications.size
                                                 addedApplications prospective with
                                             | .error resource => .resourceLimit resource state
-                                            | .ok next => .admitted generated next
+                                            | .ok prospective =>
+                                                match enqueueApplications programWatchers prospective with
+                                                | .error resource => .resourceLimit resource state
+                                                | .ok next => .admitted generated next
 
 /-- Select one proposal retained in this concrete engine snapshot.  This
 experiment keeps `Engine` inspectable for benchmarks, so callers can still

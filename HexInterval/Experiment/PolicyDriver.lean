@@ -28,7 +28,9 @@ creation.
 
 namespace Hex.Interval.Experiment.Propagator.Policy.Driver
 
-/-! # External policy protocol -/
+universe u
+
+/-! ## External policy protocol -/
 
 /-- One external policy decision.  Policy-private state has an arbitrary Lean
 type and remains outside the trusted engine. -/
@@ -79,7 +81,7 @@ structure Controller (Fact PolicyState : Type) where
   update : PolicyState -> Event Fact -> PolicyState
   choose : PolicyState -> View Fact -> Step PolicyState
 
-/-! # Driver result -/
+/-! ## Driver result -/
 
 inductive UnknownReason
   | policyStop (liveOffers : Nat)
@@ -102,8 +104,9 @@ inductive Stop (Fact : Type)
   | driverFuel
 
 /-- A run returns both kinds of arbitrary external state and the exact ordered
-event stream delivered to the policy. -/
-structure Result (Fact Cache PolicyState : Type) where
+event stream delivered to the policy.  The registry cache may live above
+`Type` when it existentially packages independently typed rule caches. -/
+structure Result (Fact : Type) (Cache : Type u) (PolicyState : Type) where
   state : State Fact
   policy : PolicyKey
   cache : Cache
@@ -116,7 +119,8 @@ def emit (controller : Controller Fact PolicyState) (event : Event Fact)
     PolicyState × Array (Event Fact) :=
   (controller.update policyState event, events.push event)
 
-def finish (controller : Controller Fact PolicyState) (event : Event Fact)
+def finish {Cache : Type u}
+    (controller : Controller Fact PolicyState) (event : Event Fact)
     (stop : Stop Fact) (state : State Fact) (cache : Cache)
     (policyState : PolicyState) (events : Array (Event Fact)) :
     Result Fact Cache PolicyState :=
@@ -142,13 +146,13 @@ def dismissalCauses (before : State Fact) (selection : Selection)
 def invocationOfRequest (scope : ScopeId) (request : RuleRequest Fact) : InvocationKey :=
   invocationOfAction scope request.action
 
-/-! # Ordered execution -/
+/-! ## Ordered execution -/
 
 /-- Internal fuelled loop.  The only action passed to the registry comes from
 {name}`Hex.Interval.Experiment.Propagator.Policy.State.select`; the driver
 merely echoes it through
 {name}`Hex.Interval.Experiment.Propagator.Action.reply`. -/
-def driveFrom (controller : Controller Fact PolicyState)
+def driveFrom {Cache : Type u} (controller : Controller Fact PolicyState)
     (invoke : Cache -> RuleRequest Fact -> Outcome Fact × Cache) :
     Nat -> State Fact -> Cache -> PolicyState -> Array (Event Fact) ->
       Result Fact Cache PolicyState
@@ -326,7 +330,7 @@ def driveFrom (controller : Controller Fact PolicyState)
 
 /-- Run an external policy and registry from one policy-controlled engine
 snapshot. -/
-def drive (controller : Controller Fact PolicyState)
+def drive {Cache : Type u} (controller : Controller Fact PolicyState)
     (invoke : Cache -> RuleRequest Fact -> Outcome Fact × Cache)
     (fuel : Nat) (state : State Fact) (cache : Cache)
     (policyState : PolicyState) : Result Fact Cache PolicyState :=

@@ -61,11 +61,13 @@ def generous : Limits :=
     maxRetainedSuggestions := 16
     maxEffort := 16
     maxObservationValue := 1024
+    maxDiagnosticValue := 2048
     maxOutcomeCandidates := 8
     maxOutcomeSuggestions := 8
     maxProposalItems := 16
     maxInstances := 16
     maxGeneration := 4
+    maxNodeDepth := 32
     maxEqualities := 16
     splitEndpointLimit :=
       { maxEndpointHeight := 128, maxAlignmentShift := 64 } }
@@ -106,11 +108,37 @@ def chainProgram : Program :=
   { operations
     nodes := #[sourceNode, unaryNode 0, unaryNode 1, unaryNode 2, unaryNode 3] }
 
+-- Initial SSA structure is covered by the same structural-depth invariant as
+-- later instantiation products.
+#guard
+  match Engine.start rankDomain chainProgram #[copyRule]
+      #[4, 0, 0, 0, 0] { generous with maxNodeDepth := 3 } with
+  | .error (.resourceLimit .nodeDepth) => true
+  | _ => false
+
+def emptyProposal : InstantiationRequest :=
+  { key := 3, nodes := [], equalities := [], payload := { index := 5 } }
+
+-- Proposal depth classification examines only nodes appended by that
+-- proposal. Existing depths belong to the already validated snapshot.
+#guard
+  match checkInstantiationProposal chainProgram #[0, 1, 2, 3, 4] 0 emptyProposal with
+  | .valid => true
+  | .malformed | .tooDeep => false
+
 def chainResult? : Option (RunResult Rank (List Nat)) := do
   let state <- start? chainProgram #[copyRule] #[4, 0, 0, 0, 0]
   pure (drive copyInvoke 16 state [])
 
 #guard chainProgram.check
+
+-- A registration cannot begin above the engine's effort envelope.
+#guard
+  match Engine.start rankDomain chainProgram
+      #[{ copyRule with initialEffort := generous.maxEffort + 1 }]
+      #[4, 0, 0, 0, 0] generous with
+  | .error (.resourceLimit .effort) => true
+  | _ => false
 
 #guard
   match chainResult? with
@@ -280,8 +308,6 @@ def instantiateInvoke (calls : Nat) (request : RuleRequest Rank) :
     Outcome Rank × Nat :=
   let proposal : InstantiationRequest :=
     { key := 7
-      triggers := [request.action.node]
-      claimedGeneration := 1
       nodes := [proposedUnary request.action.node]
       equalities := []
       payload := { index := 11 } }
@@ -320,11 +346,8 @@ def proposedGenerated (input : NodeId) : ProposedNode :=
     op := { index := 2 }
     args := [.existing input] }
 
-def dynamicProposal (request : RuleRequest Rank) (generation : Nat := 1) :
-    InstantiationRequest :=
+def dynamicProposal (request : RuleRequest Rank) : InstantiationRequest :=
   { key := 19
-    triggers := [request.action.node]
-    claimedGeneration := generation
     nodes := [proposedGenerated request.action.node]
     equalities := []
     payload := { index := 23 } }
@@ -401,7 +424,160 @@ def dynamicFinal? : Option (RunResult Rank (List String) × SuggestionId) := do
       | _ => false
   | none => false
 
-/-! # Two successive shape triggers exercise general generation recurrence -/
+/-! ## CSE does not create a proof dependency -/
+
+def cseAnchorKey : RuleKey := { name := "shape.cse-anchor" }
+def cseSourceKey : RuleKey := { name := "shape.cse-source" }
+
+def cseRule (key : RuleKey) : Registration :=
+  { key
+    head := unaryOp
+    kind := .instantiate
+    watches := [.argument 0]
+    writes := [] }
+
+def cseProposal (request : RuleRequest Rank) (left : NodeId) :
+    InstantiationRequest :=
+  { key := left.index
+    nodes :=
+      [proposedGenerated request.action.node,
+        { domain := real
+          op := { index := 2 }
+          args := [.proposed 0] }]
+    equalities :=
+      [{ left := .existing left
+         right := .proposed 1
+         payload := { index := left.index } }]
+    payload := { index := left.index } }
+
+def cseInvoke (calls : Nat) (request : RuleRequest Rank) :
+    Outcome Rank × Nat :=
+  if request.action.key == cseAnchorKey then
+    (.success [] [.instantiate (cseProposal request request.action.node)] {}, calls + 1)
+  else if request.action.key == cseSourceKey then
+    (.success [] [.instantiate (cseProposal request (node 0))] {}, calls + 1)
+  else
+    (.failed 10, calls + 1)
+
+def cseInitial? : Option (RunResult Rank Nat) := do
+  let program : Program :=
+    { operations := dynamicOperations, nodes := #[sourceNode, unaryNode 0] }
+  let state <- start? program #[cseRule cseAnchorKey, cseRule cseSourceKey]
+    #[4, 0] { generous with maxGeneration := 1, maxNodeDepth := 3 }
+  pure (drive cseInvoke 8 state 0)
+
+def cseOrder? (first second : SuggestionId) : Option (Engine Rank) := do
+  let initial <- cseInitial?
+  let firstRetained <- initial.state.suggestions[first.index]?
+  let secondRetained <- initial.state.suggestions[second.index]?
+  if initial.state.instantiationGeneration? firstRetained != some 1 ||
+      initial.state.instantiationGeneration? secondRetained != some 1 then
+    none
+  else
+    match initial.state.admitInstantiation first with
+    | .admitted [firstFresh, secondFresh] state =>
+        if firstFresh != node 2 || secondFresh != node 3 then none else
+        let retained := state.suggestions[second.index]?
+        match retained with
+        | none => none
+        | some retained =>
+            if !state.actionFresh retained.action ||
+                state.instantiationGeneration? retained != some 1 then
+              none
+            else
+              match state.admitInstantiation second with
+              | .admitted [] final => some final
+              | _ => none
+    | _ => none
+
+def exactCseState (state : Engine Rank) : Bool :=
+  state.programVersion == 2 && state.program.nodes.size == 4 &&
+    state.generations.toList == [0, 0, 1, 1] &&
+    state.depths.toList == [0, 1, 2, 3] &&
+    state.equalities.size == 2 && state.instances.length == 2 &&
+    state.instanceHistory.size == 2 &&
+    state.instanceHistory.toList.all (fun event => event.generation == 1) &&
+    state.equalities.toList.all (fun edge => edge.generation == 1) &&
+    state.equalities.toList.any (fun edge => edge.sameEndpoints (node 0) (node 3)) &&
+    state.equalities.toList.any (fun edge => edge.sameEndpoints (node 1) (node 3))
+
+-- Either proposal may materialize a depth-three tower first. The second
+-- append-stable proposal CSE-hits the entire prefix: its stored depths remain
+-- unchanged while theorem-instantiation generation remains one.
+#guard
+  match cseOrder? (suggestion 0) (suggestion 1),
+      cseOrder? (suggestion 1) (suggestion 0) with
+  | some anchorFirst, some sourceFirst =>
+      exactCseState anchorFirst && exactCseState sourceFirst
+  | _, _ => false
+
+/-! ## A program watcher cannot grow an unbounded generation-one tower -/
+
+def towerKey : RuleKey := { name := "shape.program-tower" }
+
+def towerRule : Registration :=
+  { key := towerKey
+    head := unaryOp
+    kind := .instantiate
+    watches := []
+    writes := []
+    watchesProgram := true }
+
+def towerDrafts (anchor : NodeId) (count : Nat) : List ProposedNode :=
+  (List.range count).map fun index =>
+    { domain := real
+      op := { index := 2 }
+      args :=
+        [if index == 0 then .existing anchor else .proposed (index - 1)] }
+
+def towerInvoke (calls : Nat) (request : RuleRequest Rank) : Outcome Rank × Nat :=
+  let proposal : InstantiationRequest :=
+    { key := 43
+      nodes := towerDrafts request.action.node (request.program.nodes.size - 1)
+      equalities := []
+      payload := { index := 47 } }
+  (.success [] [.instantiate proposal] {}, calls + 1)
+
+def towerFinal? : Option (RunResult Rank Nat) := do
+  let program : Program :=
+    { operations := dynamicOperations, nodes := #[sourceNode, unaryNode 0] }
+  let state <- start? program #[towerRule] #[4, 0]
+    { generous with maxGeneration := 1, maxNodeDepth := 3 }
+  let first := drive towerInvoke 4 state 0
+  if first.stop != .saturated then none else pure ()
+  let state <- match first.state.admitInstantiation (suggestion 0) with
+    | .admitted [fresh] state => if fresh == node 2 then some state else none
+    | _ => none
+  let second := drive towerInvoke 4 state first.cache
+  if second.stop != .saturated then none else pure ()
+  let state <- match second.state.admitInstantiation (suggestion 1) with
+    | .admitted [fresh] state => if fresh == node 3 then some state else none
+    | _ => none
+  pure (drive towerInvoke 4 state second.cache)
+
+-- Each fresh request CSE-hits the materialized prefix and asks for one more
+-- node. All instances remain theorem-generation one, but the third reply is
+-- accepted with its individually unaffordable proposal dropped because its
+-- last node would have depth four. The raw driver then reports only queue
+-- saturation; retained or dropped suggestions make no policy-completeness
+-- claim here.
+#guard
+  match towerFinal? with
+  | some result =>
+      result.stop == .saturated &&
+        result.state.program.nodes.size == 4 &&
+        result.state.generations.toList == [0, 0, 1, 1] &&
+        result.state.depths.toList == [0, 1, 2, 3] &&
+        result.state.instances.length == 2 &&
+        result.state.suggestions.size == 2 &&
+        result.state.metrics.droppedSuggestions == 1 &&
+        result.state.metrics.capacityDrops == 0 &&
+        result.state.metrics.depthDrops == 1 &&
+        result.state.metrics.requests == 3 &&
+        result.state.metrics.generatedNodes == 2
+  | none => false
+
+/-! ## Two successive shape triggers exercise general generation recurrence -/
 
 def nextOp : OpKey := { name := "opaque.next-generation" }
 def nextCopyKey : RuleKey := { name := "opaque.next.copy" }
@@ -431,11 +607,9 @@ def proposedNext (input : NodeId) : ProposedNode :=
 
 def ladderProposal (request : RuleRequest Rank) : InstantiationRequest :=
   if request.action.key == instantiateKey then
-    dynamicProposal request 1
+    dynamicProposal request
   else
     { key := 29
-      triggers := [request.action.node]
-      claimedGeneration := 2
       nodes := [proposedNext request.action.node]
       equalities := []
       payload := { index := 31 } }
@@ -502,9 +676,9 @@ def ladderFinal? : Option (RunResult Rank (List String)) := do
       | _ => false
   | none => false
 
--- A registry cannot launder a generation-one invocation back to generation
--- one by omitting its anchor from the untrusted trigger list and mentioning
--- only a shallow node in the draft.
+-- Replacing a retained proposal with a shallow draft cannot launder a
+-- generation-one invocation back to generation one. The engine derives
+-- generation two from the authoritative action anchor.
 #guard
   match ladderAfterFirst? with
   | some first =>
@@ -512,8 +686,6 @@ def ladderFinal? : Option (RunResult Rank (List String)) := do
       | some retained =>
           let proposal : InstantiationRequest :=
             { key := 97
-              triggers := []
-              claimedGeneration := 1
               nodes := [proposedNext (node 0)]
               equalities := []
               payload := { index := 101 } }
@@ -521,9 +693,12 @@ def ladderFinal? : Option (RunResult Rank (List String)) := do
               { action := retained.action
                 suggestion := .instantiate proposal
                 splitVersion := none } with
-          | .invalid (.generationMismatch 1 2) state =>
-              state.programVersion == 1 && state.program.nodes.size == 3 &&
-                state.generations.toList == [0, 0, 1]
+          | .admitted [fresh] state =>
+              fresh == node 3 && state.programVersion == 2 &&
+                state.generations.toList == [0, 0, 1, 2] &&
+                match state.instanceHistory[1]? with
+                | some event => event.generation == 2
+                | none => false
           | _ => false
       | none => false
   | none => false
@@ -557,8 +732,6 @@ def batchEquality (anchor : NodeId) : ProposedEquality :=
 def batchInvoke (calls : Nat) (request : RuleRequest Rank) : Outcome Rank × Nat :=
   let proposal : InstantiationRequest :=
     { key := 37
-      triggers := [request.action.node]
-      claimedGeneration := 1
       nodes :=
         [proposedGeneratedRef (.existing request.action.node),
           proposedGeneratedRef (.existing request.action.node),
@@ -620,12 +793,10 @@ def pairEqualityRule : Registration :=
     watches := [.result]
     writes := [] }
 
-def pairEqualityInvoke (calls : Nat) (request : RuleRequest PairRank) :
+def pairEqualityInvoke (calls : Nat) (_request : RuleRequest PairRank) :
     Outcome PairRank × Nat :=
   let proposal : InstantiationRequest :=
     { key := 47
-      triggers := [request.action.node]
-      claimedGeneration := 1
       nodes := []
       equalities :=
         [{ left := .existing (node 0)
@@ -661,8 +832,6 @@ def pairReuseAdmitted? : Option (Engine PairRank) := do
   let retained <- state.suggestions[0]?
   let proposal : InstantiationRequest :=
     { key := 103
-      triggers := []
-      claimedGeneration := 1
       nodes := [proposedUnary (node 1)]
       equalities :=
         [{ left := .existing (node 1)
@@ -721,8 +890,6 @@ def pairReuseAdmitted? : Option (Engine PairRank) := do
       | some retained =>
           let proposal : InstantiationRequest :=
             { key := 113
-              triggers := []
-              claimedGeneration := 1
               nodes := []
               equalities :=
                 [{ left := .existing (node 0)
@@ -832,8 +999,6 @@ def alternateEqualityRule : Registration :=
 
 def alternateEqualityProposal (request : RuleRequest Rank) : InstantiationRequest :=
   { key := 61
-    triggers := [request.action.node]
-    claimedGeneration := 1
     nodes :=
       [proposedGeneratedRef (.existing request.action.node),
         proposedNextRef (.proposed 0)]
@@ -913,6 +1078,24 @@ def firstChainRequest? : Option (RuleRequest Rank × Engine Rank) := do
   | .request request awaiting => some (request, awaiting)
   | _ => none
 
+def oversizedMalformedDomain : FactDomain Rank where
+  top _ := 0
+  narrow _ _ _ := .malformed (generous.maxDiagnosticValue + 1)
+
+def oversizedResourceDomain : FactDomain Rank where
+  top _ := 0
+  narrow _ _ _ := .resourceLimit (generous.maxDiagnosticValue + 1)
+
+def firstRequestWith? (domain : FactDomain Rank) :
+    Option (RuleRequest Rank × Engine Rank) := do
+  let initial <-
+    match Engine.start domain chainProgram #[copyRule] #[4, 0, 0, 0, 0] generous with
+    | .ok state => some state
+    | .error _ => none
+  match initial.poll with
+  | .request request awaiting => some (request, awaiting)
+  | _ => none
+
 -- Append-only recompilation must preserve every existing concrete
 -- application exactly, not merely preserve the old array length.
 #guard
@@ -924,6 +1107,28 @@ def firstChainRequest? : Option (RuleRequest Rank × Engine Rank) := do
             !applicationsPrefix state.applications
               (state.applications.set! 0 { first with effort := first.effort + 1 })
       | none => false
+  | none => false
+
+-- Fact-domain diagnostics cross the same independent representation cap as
+-- callback diagnostics before they can enter driver or policy events.
+#guard
+  match firstRequestWith? oversizedMalformedDomain with
+  | some (request, awaiting) =>
+      match awaiting.submit (request.action.reply
+          (.success [candidate request 4] [] {})) with
+      | .invalid .oversizedObservation state =>
+          state.pending.isNone && state.history.isEmpty
+      | _ => false
+  | none => false
+
+#guard
+  match firstRequestWith? oversizedResourceDomain with
+  | some (request, awaiting) =>
+      match awaiting.submit (request.action.reply
+          (.success [candidate request 4] [] {})) with
+      | .invalid .oversizedObservation state =>
+          state.pending.isNone && state.history.isEmpty
+      | _ => false
   | none => false
 
 -- Reply-provided policy telemetry is checked before it can enter retained
@@ -949,23 +1154,34 @@ def firstChainRequest? : Option (RuleRequest Rank × Engine Rank) := do
       | .request request awaiting =>
           match awaiting.submit (request.action.reply
               (.success [candidate request 4] [.retry 1] {})) with
-          | .accepted state =>
+          | .accepted _ state =>
               state.facts.toList == [4, 4, 0, 0, 0] && state.history.size == 1 &&
                 state.suggestions.isEmpty && state.metrics.droppedSuggestions == 1 &&
+                state.metrics.capacityDrops == 1 && state.metrics.depthDrops == 0 &&
                 state.metrics.candidates == 1
           | _ => false
       | _ => false
   | none => false
 
 -- A failure code is an opaque diagnostic identifier, not a logical cost
--- magnitude governed by the observation-value budget.
+-- magnitude governed by the performed-work budget.  It has its own cap.
 #guard
   match firstChainRequest? with
   | some (request, awaiting) =>
       match awaiting.submit (request.action.reply
           (.failed (generous.maxObservationValue + 1))) with
-      | .accepted state =>
+      | .accepted _ state =>
           state.pending.isNone && state.metrics.ruleFailures == 1 && state.history.isEmpty
+      | _ => false
+  | none => false
+
+#guard
+  match firstChainRequest? with
+  | some (request, awaiting) =>
+      match awaiting.submit (request.action.reply
+          (.failed (generous.maxDiagnosticValue + 1))) with
+      | .invalid .oversizedObservation state =>
+          state.pending.isNone && state.metrics.ruleFailures == 0 && state.history.isEmpty
       | _ => false
   | none => false
 
@@ -996,16 +1212,16 @@ def firstChainRequest? : Option (RuleRequest Rank × Engine Rank) := do
       | _ => false
   | none => false
 
--- Trigger cardinality and every trigger reference are part of the proposal's
--- own boundedness predicate, including callers which invoke it directly.
+-- Proposed-node cardinality is part of the proposal's own boundedness
+-- predicate, including callers which invoke it directly.
 #guard
   match firstChainRequest? with
   | some (request, awaiting) =>
       let proposal : InstantiationRequest :=
         { key := 73
-          triggers := List.replicate (generous.maxProposalItems + 1) (node 0)
-          claimedGeneration := 1
-          nodes := []
+          nodes :=
+            List.replicate (generous.maxProposalItems + 1)
+              { domain := real, op := { index := 1 }, args := [.existing (node 0)] }
           equalities := []
           payload := { index := 79 } }
       match awaiting.submit (request.action.reply

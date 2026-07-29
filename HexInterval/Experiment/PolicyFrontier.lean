@@ -161,11 +161,13 @@ def engineLimits (workload : Workload) : Experiment.Propagator.Limits :=
     maxRetainedSuggestions := retainedCount workload
     maxEffort := 1
     maxObservationValue := 1
+    maxDiagnosticValue := 1
     maxOutcomeCandidates := Nat.max workload.roots 1
     maxOutcomeSuggestions := Nat.max workload.churn 1
     maxProposalItems := 0
     maxInstances := 0
     maxGeneration := 0
+    maxNodeDepth := nodeCount workload
     maxEqualities := 0
     splitEndpointLimit :=
       { maxEndpointHeight := 1, maxAlignmentShift := 0 } }
@@ -400,7 +402,7 @@ def retainedSemanticItems (retained : RetainedSuggestion) : Nat :=
     match retained.suggestion with
     | .retry _ | .split _ => 0
     | .instantiate request =>
-        request.triggers.length + request.nodes.length + request.equalities.length +
+        request.nodes.length + request.equalities.length +
           (request.nodes.foldl (fun count node => count + node.args.length) 0)
 
 def offerSemanticItems (state : Policy.State Fact) : OfferId -> Nat
