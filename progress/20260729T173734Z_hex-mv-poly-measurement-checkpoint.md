@@ -21,20 +21,23 @@
   `7acdff89`; its artifact is release-quality with no validity exceptions.
   Sparse addition (4.697×) and sum-of-squares (2.411×) meet the predeclared
   two-family gate for a future kernel-specialized sorted representation.
+- Regenerated all eleven native ladders from clean commit `163e100c` with
+  three outer trials per rung; every target remains consistent with its
+  declared complexity and no ladder was budget-truncated.
 - Passed the full 9,649-job monorepo build, all registered conformance and
   proof-probe targets, all 11 native benchmark verifications, exact fixture
   regeneration, and 59 independent SymPy oracle cases.
 
 ## Current frontier
 
-The corrected kernel artifact and report are ready to commit. Existing
-native/comparator artifacts and their report tables predate the changed corpus
-and outer-trial schedule, so they are not valid evidence for this source
-state.
+The corrected kernel artifact/report and native export are recorded. Existing
+external comparator artifacts and their report tables predate the changed
+corpus and outer-trial schedule, so they are not valid evidence for this
+source state.
 
 ## Next step
 
-Commit the kernel evidence, regenerate the native and comparator exports from
+Commit the native export, regenerate the two external comparator exports from
 the resulting clean commit, and replace the performance report tables and
 figures from those new artifacts.
 
