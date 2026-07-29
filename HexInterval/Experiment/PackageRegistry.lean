@@ -24,10 +24,12 @@ the external policy driver.  Updating a package cache cannot alter its stable
 operations, registrations, callbacks, routes, or start checks.  Package caches
 are performance state only: for the same request and logical budget, cache
 contents must not change the callback's observable outcome.  Semantic state
-instead needs an explicit versioned dependency and wakeup protocol.  Immutable
+instead needs an explicit versioned dependency and wakeup protocol. Immutable
 proof-payload drafts travel beside the outcome; a session layer must freeze
 them in a separate per-run arena before their identifiers enter engine
-provenance.
+provenance. Each handler also owns cache-independent replay formats. Their
+validators check bounded representation shape without adding any arithmetic
+or function case split to the generic registry.
 -/
 
 namespace Hex.Interval.Experiment.Propagator
@@ -37,6 +39,72 @@ into the run's immutable arena. -/
 structure Plan (Fact : Type) where
   outcome : Outcome Fact
   drafts : List PayloadArena.Draft
+
+/-- One cache-independent replay representation local to the owning handler's
+exact `RuleKey` compatibility epoch.  Its numeric schema is a recipe variant
+inside that epoch.  The validator is called only after generic arena preflight
+has bounded the draft and its body. It checks representation shape, not
+mathematical soundness. -/
+structure ReplayFormat where
+  role : PayloadArena.Role
+  schema : Nat
+  validateBody : List Nat -> Bool
+
+namespace ReplayFormat
+
+def sameAddress (left right : ReplayFormat) : Bool :=
+  left.role == right.role && left.schema == right.schema
+
+def replayKey (rule : RuleKey) (format : ReplayFormat) :
+    PayloadArena.ReplayKey :=
+  { rule, role := format.role, schema := format.schema }
+
+end ReplayFormat
+
+/-- Immutable replay metadata selected together with one handler invocation.
+`rule` plus a format's role and numeric schema is the complete dispatch key. -/
+structure ReplaySnapshot where
+  private mk ::
+  rule : RuleKey
+  formats : Array ReplayFormat
+
+private def makeReplay (rule : RuleKey)
+    (formats : Array ReplayFormat) : ReplaySnapshot :=
+  { rule, formats }
+
+namespace ReplaySnapshot
+
+def validateDraft (snapshot : ReplaySnapshot) (draft : PayloadArena.Draft) :
+    Option PayloadArena.Invalid :=
+  let key := draft.replayKey snapshot.rule
+  match snapshot.formats.find?
+      (fun format => format.role == draft.role && format.schema == draft.schema) with
+  | none => some (.undeclaredFormat key)
+  | some format =>
+      if format.validateBody draft.body then none else some (.invalidBody key)
+
+/-- Freeze one plan through the rule owner and body validators carried by this
+single immutable snapshot. Proof-producing sessions use this paired operation
+instead of independently supplying an owner and validator. -/
+def freeze (snapshot : ReplaySnapshot) (limits : PayloadArena.Limits)
+    (arena : PayloadArena.Arena) (origin : Action)
+    (outcome : Outcome Fact) (drafts : List PayloadArena.Draft) :
+    PayloadArena.Result Fact :=
+  PayloadArena.freezeChecked limits arena origin snapshot.rule
+    snapshot.validateDraft outcome drafts
+
+end ReplaySnapshot
+
+/-- A package plan paired with the immutable replay metadata of the exact
+handler that produced it. -/
+structure Invocation (Fact : Type) where
+  private mk ::
+  plan : Plan Fact
+  replay : ReplaySnapshot
+
+private def makeInvocation (plan : Plan Fact)
+    (replay : ReplaySnapshot) : Invocation Fact :=
+  { plan, replay }
 
 /-- The callback shape shared by direct and session-owned drivers. -/
 abbrev Invoke (Fact Cache : Type) :=
@@ -59,6 +127,8 @@ structure Handler (Fact Cache : Type) where
   checked session passes `Registry.acceptsBinding registry` to `Engine.start`,
   preserving the same package veto for dynamically proposed scopes. -/
   acceptsScope : Program -> ScopeBinding -> Bool := fun _ _ => false
+  /-- Immutable cache-independent replay representations owned by this rule. -/
+  replayFormats : Array ReplayFormat := #[]
 
 namespace Handler
 
@@ -84,13 +154,16 @@ def statelessDroppingDrafts (registration : Registration)
 
 /-- A cache-independent callback that returns complete reply-local evidence. -/
 def readOnlyPlanned (registration : Registration)
-    (invoke : RuleRequest Fact -> Plan Fact) : Handler Fact Cache :=
-  { registration, invoke := fun cache request => (invoke request, cache) }
+    (invoke : RuleRequest Fact -> Plan Fact)
+    (replayFormats : Array ReplayFormat := #[]) : Handler Fact Cache :=
+  { registration, replayFormats
+    invoke := fun cache request => (invoke request, cache) }
 
 /-- A stateless callback that returns complete reply-local evidence. -/
 def statelessPlanned (registration : Registration)
-    (invoke : RuleRequest Fact -> Plan Fact) : Handler Fact Unit :=
-  readOnlyPlanned registration invoke
+    (invoke : RuleRequest Fact -> Plan Fact)
+    (replayFormats : Array ReplayFormat := #[]) : Handler Fact Unit :=
+  readOnlyPlanned registration invoke replayFormats
 
 end Handler
 
@@ -128,6 +201,7 @@ structure Route where
 immutable after assembly; invocation updates only one existential package's
 cache and non-semantic invocation counter. -/
 structure Registry (Fact : Type) where
+  private mk ::
   packages : Array (Package Fact)
   operations : Array Operation
   registrations : Array Registration
@@ -146,10 +220,20 @@ def requestMismatch : Nat := 245
 
 end DispatchCode
 
+private def makeRegistry (packages : Array (Package Fact))
+    (operations : Array Operation) (registrations : Array Registration)
+    (routes : Array Route) : Registry Fact :=
+  { packages, operations, registrations, routes }
+
+private def replacePackage (registry : Registry Fact) (index : Nat)
+    (package : Package Fact) : Registry Fact :=
+  { registry with packages := registry.packages.set! index package }
+
 /-- Failure while flattening independently supplied packages. -/
 inductive RegistryError where
   | duplicateOperation (key : OpKey)
   | duplicateRule (key : RuleKey)
+  | duplicateFormat (key : PayloadArena.ReplayKey)
   | undeclaredHead (rule : RuleKey) (head : OpKey)
   | resourceLimit (resource : Resource)
   deriving DecidableEq, Repr
@@ -169,14 +253,26 @@ def declaresOperation (operations required : Array Operation) (key : OpKey) : Bo
   operations.any (fun operation => operation.key == key) ||
     required.any (fun operation => operation.key == key)
 
-def validateHandlerHeads (operations required : Array Operation) :
+def duplicateFormat? (rule : RuleKey) :
+    List ReplayFormat -> Option PayloadArena.ReplayKey
+  | [] => none
+  | format :: formats =>
+      if formats.any (fun other => format.sameAddress other) then
+        some (format.replayKey rule)
+      else
+        duplicateFormat? rule formats
+
+def validateHandlers (operations required : Array Operation) :
     List (Handler Fact Cache) -> Except RegistryError Unit
   | [] => pure ()
   | handler :: handlers =>
-      if declaresOperation operations required handler.registration.head then
-        validateHandlerHeads operations required handlers
-      else
+      if !declaresOperation operations required handler.registration.head then
         throw (.undeclaredHead handler.registration.key handler.registration.head)
+      else
+        match duplicateFormat? handler.registration.key
+            handler.replayFormats.toList with
+        | some key => throw (.duplicateFormat key)
+        | none => validateHandlers operations required handlers
 
 def addHandlers (packageIndex : Nat) : Nat -> List (Handler Fact Cache) ->
     Array Registration -> Array Route ->
@@ -197,7 +293,7 @@ def flatten : Nat -> List (Package Fact) -> Array Operation ->
   | _, [], operations, registrations, routes =>
       pure (operations, registrations, routes)
   | packageIndex, package :: rest, operations, registrations, routes => do
-      validateHandlerHeads package.operations package.requiredOperations
+      validateHandlers package.operations package.requiredOperations
         package.handlers.toList
       let operations <- addOperations package.operations.toList operations
       let (registrations, routes) <-
@@ -206,21 +302,28 @@ def flatten : Nat -> List (Package Fact) -> Array Operation ->
 
 def preflight (limits : Limits) (packages : Array (Package Fact)) :
     Except RegistryError Unit := do
-  if limits.maxOperations + limits.maxRules < packages.size then
+  if limits.maxRegistryEntries < packages.size then
     throw (.resourceLimit .registryEntries)
   let mut operationCount := 0
   let mut ruleCount := 0
+  let mut replayFormatCount := 0
   let mut metadataCount := 0
   for package in packages do
     operationCount := operationCount + package.operations.size
     ruleCount := ruleCount + package.handlers.size
-    metadataCount := metadataCount + package.operations.size +
-      package.requiredOperations.size + package.handlers.size
     if limits.maxOperations < operationCount then
       throw (.resourceLimit .operations)
     if limits.maxRules < ruleCount then
       throw (.resourceLimit .rules)
-    if limits.maxOperations + limits.maxRules < metadataCount then
+    let packageFormatCount :=
+      package.handlers.foldl
+        (fun count handler => count + handler.replayFormats.size) 0
+    replayFormatCount := replayFormatCount + packageFormatCount
+    if limits.maxReplayFormats < replayFormatCount then
+      throw (.resourceLimit .replayFormats)
+    metadataCount := metadataCount + package.operations.size +
+      package.requiredOperations.size + package.handlers.size + packageFormatCount
+    if limits.maxRegistryEntries < metadataCount then
       throw (.resourceLimit .registryEntries)
     if package.operations.any
         (fun operation => !listWithin limits.maxArity operation.inputs) ||
@@ -232,10 +335,11 @@ def preflight (limits : Limits) (packages : Array (Package Fact)) :
       throw (.resourceLimit .arity)
 
 /-- Resource-preflight package metadata before duplicate scans or flattened
-array allocation.  The aggregate metadata cap also bounds external signature
-requirements and empty-package churn.  Assembly order is package-major and
-then handler-major; exact operation and rule keys are unique in the snapshot. -/
-def buildWithin (limits : Limits) (packages : Array (Package Fact)) :
+array allocation. Dedicated caps bound total metadata and replay-format
+declarations without borrowing executable operation headroom. Assembly order
+is package-major and then handler-major; exact operation and rule keys are
+unique in the snapshot. -/
+opaque buildWithin (limits : Limits) (packages : Array (Package Fact)) :
     Except RegistryError (Registry Fact) :=
   match preflight limits packages with
   | .error error => .error error
@@ -243,7 +347,7 @@ def buildWithin (limits : Limits) (packages : Array (Package Fact)) :
       match flatten 0 packages.toList #[] #[] #[] with
       | .error error => .error error
       | .ok (operations, registrations, routes) =>
-          .ok { packages, operations, registrations, routes }
+          .ok (makeRegistry packages operations registrations routes)
 
 /-- Resolve a contributed signature by stable key.  The returned value carries
 no `OpId`: compact identifiers belong to the final frontend program, whose
@@ -361,30 +465,39 @@ def acceptsBindings (registry : Registry Fact) (program : Program)
   scopeBindingsCheck program registry.registrations bindings &&
     bindings.all (registry.acceptsBinding program)
 
+/-- A negative plan for a dispatch failure before any callback or replay
+format can be selected. -/
+private def failedInvocation (rule : RuleKey) (code : Nat) : Invocation Fact :=
+  makeInvocation
+    { outcome := .failed code, drafts := [] }
+    (makeReplay rule #[])
+
 /-- Route one engine-owned rule identifier to its package callback and retain
-its reply-local proof drafts. Dispatch uses compact validated indices; it never
-branches on the semantic operation or rule key. Only the selected package
-cache is replaced. -/
-def invokePlanned (registry : Registry Fact) (request : RuleRequest Fact) :
-    Plan Fact × Registry Fact :=
+its reply-local proof drafts together with that handler's replay formats.
+Dispatch uses compact validated indices; it never branches on the semantic
+operation or rule key. Only the selected package cache is replaced. -/
+opaque invokePlanned (registry : Registry Fact) (request : RuleRequest Fact) :
+    Invocation Fact × Registry Fact :=
   match registry.routes[request.action.rule.index]? with
-  | none => ({ outcome := .failed DispatchCode.missingRoute, drafts := [] }, registry)
+  | none =>
+      (failedInvocation request.action.key DispatchCode.missingRoute, registry)
   | some route =>
       match registry.registrations[request.action.rule.index]? with
       | none =>
-          ({ outcome := .failed DispatchCode.missingRegistration, drafts := [] }, registry)
+          (failedInvocation request.action.key DispatchCode.missingRegistration, registry)
       | some registration =>
           match registry.packages[route.package]? with
-          | none => ({ outcome := .failed DispatchCode.missingPackage, drafts := [] }, registry)
+          | none =>
+              (failedInvocation request.action.key DispatchCode.missingPackage, registry)
           | some package =>
               match package.handlers[route.handler]? with
               | none =>
-                  ({ outcome := .failed DispatchCode.missingHandler, drafts := [] }, registry)
+                  (failedInvocation request.action.key DispatchCode.missingHandler, registry)
               | some handler =>
                   if !registration.same handler.registration then
-                    ({ outcome := .failed DispatchCode.registryMismatch, drafts := [] }, registry)
+                    (failedInvocation request.action.key DispatchCode.registryMismatch, registry)
                   else if !handler.registration.accepts request then
-                    ({ outcome := .failed DispatchCode.requestMismatch, drafts := [] }, registry)
+                    (failedInvocation request.action.key DispatchCode.requestMismatch, registry)
                   else
                     let program : Program :=
                       { operations := request.program.operations
@@ -399,24 +512,25 @@ def invokePlanned (registry : Registry Fact) (request : RuleRequest Fact) :
                               watches := request.inputs.map (fun input => input.node)
                               writes := request.writes }
                     if !scopeAccepted then
-                      ({ outcome := .failed DispatchCode.requestMismatch, drafts := [] }, registry)
+                      (failedInvocation request.action.key
+                          DispatchCode.requestMismatch, registry)
                     else
                       let (plan, cache) := handler.invoke package.cache request
                       let package :=
                         { package with
                           cache := cache
                           invocations := package.invocations + 1 }
-                      (plan,
-                        { registry with
-                          packages := registry.packages.set! route.package package })
+                      (makeInvocation plan
+                          (makeReplay handler.registration.key handler.replayFormats),
+                        replacePackage registry route.package package)
 
 /-- Explicitly evidence-discarding adapter for search experiments. A
 proof-producing session must use `invokePlanned` and freeze its drafts before
 submission. -/
 def invokeDroppingDrafts (registry : Registry Fact) (request : RuleRequest Fact) :
     Outcome Fact × Registry Fact :=
-  let (plan, registry) := registry.invokePlanned request
-  (plan.outcome, registry)
+  let (invocation, registry) := registry.invokePlanned request
+  (invocation.plan.outcome, registry)
 
 end Registry
 

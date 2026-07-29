@@ -94,6 +94,8 @@ def limits : Limits :=
   { maxOperations := 8
     maxNodes := 16
     maxRules := 8
+    maxRegistryEntries := 16
+    maxReplayFormats := 8
     maxArity := 4
     maxScopeNodes := 16
     maxApplications := 16
@@ -214,7 +216,7 @@ def run? : Option (RunResult Rank (Registry Rank)) :=
       | .ok state =>
           match state.poll with
           | .request request _ =>
-              match (registry.invokePlanned request).1.outcome with
+              match (registry.invokePlanned request).1.plan.outcome with
               | .failed code => code == DispatchCode.requestMismatch
               | _ => false
           | _ => false

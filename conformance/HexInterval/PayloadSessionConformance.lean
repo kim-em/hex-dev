@@ -44,6 +44,7 @@ def invalidMatcherReplyKey : RuleKey :=
   { name := "payload-session.mystery.matcher-invalid-reply" }
 def invalidMatcherPayloadKey : RuleKey :=
   { name := "payload-session.mystery.matcher-invalid-payload" }
+def lateMalformedKey : RuleKey := { name := "payload-session.mystery.late-malformed" }
 
 def sourceOperation : Operation :=
   { key := sourceOp, inputs := [], output := real }
@@ -107,6 +108,8 @@ def limits : Propagator.Limits :=
   { maxOperations := 4
     maxNodes := 4
     maxRules := 2
+    maxRegistryEntries := 16
+    maxReplayFormats := 8
     maxArity := 2
     maxApplications := 4
     maxQueueEntries := 8
@@ -136,6 +139,22 @@ def arenaLimits : PayloadArena.Limits :=
     maxSchema := 10
     maxUses := 8 }
 
+def pairFormat : ReplayFormat :=
+  { role := .fact
+    schema := 1
+    validateBody := fun body =>
+      match body with
+      | [_, 99] => true
+      | _ => false }
+
+def oneCellFormat : ReplayFormat :=
+  { role := .fact
+    schema := 1
+    validateBody := fun body =>
+      match body with
+      | [_] => true
+      | _ => false }
+
 def goodPlan (request : RuleRequest Nat) : Plan Nat :=
   match request.writes with
   | [target] =>
@@ -155,7 +174,31 @@ def goodPackage : Package Nat :=
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.statelessPlanned (registration goodKey) goodPlan] }
+      #[Handler.statelessPlanned (registration goodKey) goodPlan #[pairFormat]] }
+
+def undeclaredPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers := #[Handler.statelessPlanned (registration goodKey) goodPlan] }
+
+def malformedPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned (registration goodKey) goodPlan #[oneCellFormat]] }
+
+def duplicateFormatPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned (registration goodKey) goodPlan
+          #[pairFormat,
+            { role := .fact
+              schema := 1
+              validateBody := fun _ => true }]] }
 
 def lateExtraPlan (request : RuleRequest Nat) : Plan Nat :=
   if request.action.node == node 1 then
@@ -183,7 +226,32 @@ def lateExtraPackage : Package Nat :=
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.statelessPlanned (registration lateExtraKey) lateExtraPlan] }
+      #[Handler.statelessPlanned (registration lateExtraKey) lateExtraPlan #[pairFormat]] }
+
+def lateMalformedPlan (request : RuleRequest Nat) : Plan Nat :=
+  if request.action.node == node 1 then
+    goodPlan request
+  else
+    match request.writes with
+    | [target] =>
+        { outcome :=
+            .success
+              [{ node := target, fact := 7, payload := payload 700 }]
+              [] {}
+          drafts :=
+            [{ label := payload 700
+               role := .fact
+               schema := 1
+               body := [4] }] }
+    | _ => { outcome := .failed 1, drafts := [] }
+
+def lateMalformedPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned (registration lateMalformedKey)
+          lateMalformedPlan #[pairFormat]] }
 
 def badReplyPlan (_request : RuleRequest Nat) : Plan Nat :=
   { outcome :=
@@ -197,7 +265,8 @@ def badReplyPackage : Package Nat :=
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.statelessPlanned (registration badReplyKey) badReplyPlan] }
+      #[Handler.statelessPlanned (registration badReplyKey) badReplyPlan
+          #[oneCellFormat]] }
 
 def badPayloadPlan (request : RuleRequest Nat) : Plan Nat :=
   match request.writes with
@@ -214,7 +283,8 @@ def badPayloadPackage : Package Nat :=
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.statelessPlanned (registration badPayloadKey) badPayloadPlan] }
+      #[Handler.statelessPlanned (registration badPayloadKey) badPayloadPlan
+          #[oneCellFormat]] }
 
 def barePackage : Package Nat :=
   { Cache := Unit
@@ -305,7 +375,19 @@ def nestedPackage : Package Nat :=
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.statelessPlanned (registration nestedKey) nestedPlan] }
+      #[Handler.statelessPlanned (registration nestedKey) nestedPlan
+          #[{ role := .instance
+              schema := 2
+              validateBody := fun body =>
+                match body with
+                | [_] => true
+                | _ => false },
+            { role := .equality
+              schema := 3
+              validateBody := fun body =>
+                match body with
+                | [_] => true
+                | _ => false }]] }
 
 def nestedUsesPlan (request : RuleRequest Nat) : Plan Nat :=
   { outcome :=
@@ -378,7 +460,7 @@ def recoverPackage : Package Nat :=
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.statelessPlanned (registration recoverKey) recoverPlan] }
+      #[Handler.statelessPlanned (registration recoverKey) recoverPlan #[pairFormat]] }
 
 def excessDrafts : List PayloadArena.Draft :=
   [{ label := payload 0, role := .fact, schema := 1, body := [] },
@@ -419,7 +501,7 @@ def arenaAwarePackage : Package Nat :=
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.statelessPlanned (registration goodKey) goodPlan]
+      #[Handler.statelessPlanned (registration goodKey) goodPlan #[pairFormat]]
     acceptsLimits := fun _ _ payloadLimits =>
       4 ≤ payloadLimits.maxEntries && 8 ≤ payloadLimits.maxUses &&
         8 ≤ payloadLimits.maxDraftCells }
@@ -449,6 +531,14 @@ def matcherRequest : InstantiationRequest :=
          writes := [.proposed 0] }]
     payload := payload 900 }
 
+def matcherFormat : ReplayFormat :=
+  { role := .instance
+    schema := 4
+    validateBody := fun body =>
+      match body with
+      | [_, 91] => true
+      | _ => false }
+
 def matcherPlan (request : RuleRequest Nat) : Plan Nat :=
   if batchContainsMystery request then
     { outcome := .success [] [.instantiate matcherRequest] {}
@@ -476,7 +566,8 @@ def matcherPackage : Package Nat :=
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.statelessPlanned (matcherRegistration matcherKey) matcherPlan,
+      #[Handler.statelessPlanned
+          (matcherRegistration matcherKey) matcherPlan #[matcherFormat],
         { Handler.statelessPlanned
             matcherContractRegistration matcherContractPlan with
           acceptsScope := acceptsMatcherScope }] }
@@ -506,7 +597,7 @@ def rejectedScopePackage : Package Nat :=
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
       #[Handler.statelessPlanned
-          (matcherRegistration matcherKey) rejectedScopePlan,
+          (matcherRegistration matcherKey) rejectedScopePlan #[matcherFormat],
         { Handler.statelessPlanned
             matcherContractRegistration matcherContractPlan with
           acceptsScope := acceptsMatcherScope }] }
@@ -516,6 +607,11 @@ def smallMatcherRequest : InstantiationRequest :=
     nodes := []
     equalities := []
     payload := payload 900 }
+
+def smallMatcherFormat : ReplayFormat :=
+  { role := .instance
+    schema := 4
+    validateBody := fun body => body == [95] }
 
 def smallMatcherPlan (request : RuleRequest Nat) : Plan Nat :=
   if batchContainsMystery request then
@@ -534,7 +630,16 @@ def smallMatcherPackage : Package Nat :=
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
       #[Handler.statelessPlanned
-          (matcherRegistration matcherKey) smallMatcherPlan] }
+          (matcherRegistration matcherKey) smallMatcherPlan
+          #[smallMatcherFormat]] }
+
+def invalidMatcherReplyFormat : ReplayFormat :=
+  { role := .fact
+    schema := 4
+    validateBody := fun body =>
+      match body with
+      | [_, 92] => true
+      | _ => false }
 
 def invalidMatcherReplyPlan (request : RuleRequest Nat) : Plan Nat :=
   if batchContainsMystery request then
@@ -556,7 +661,16 @@ def invalidMatcherReplyPackage : Package Nat :=
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
       #[Handler.statelessPlanned
-          (matcherRegistration invalidMatcherReplyKey) invalidMatcherReplyPlan] }
+          (matcherRegistration invalidMatcherReplyKey) invalidMatcherReplyPlan
+          #[invalidMatcherReplyFormat]] }
+
+def invalidMatcherPayloadFormat : ReplayFormat :=
+  { role := .instance
+    schema := 4
+    validateBody := fun body =>
+      match body with
+      | [_, 93] => true
+      | _ => false }
 
 def invalidMatcherPayloadPlan (request : RuleRequest Nat) : Plan Nat :=
   if batchContainsMystery request then
@@ -575,7 +689,94 @@ def invalidMatcherPayloadPackage : Package Nat :=
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
       #[Handler.statelessPlanned
-          (matcherRegistration invalidMatcherPayloadKey) invalidMatcherPayloadPlan] }
+          (matcherRegistration invalidMatcherPayloadKey) invalidMatcherPayloadPlan
+          #[invalidMatcherPayloadFormat]] }
+
+/-- Two unrelated opaque function packages deliberately assign different
+formats to the same role-local schema number. -/
+def leftOp : OpKey := { name := "payload-session.opaque-left" }
+def rightOp : OpKey := { name := "payload-session.opaque-right" }
+def leftKey : RuleKey := { name := "payload-session.opaque-left.forward" }
+def rightKey : RuleKey := { name := "payload-session.opaque-right.forward" }
+
+def leftOperation : Operation :=
+  { key := leftOp, inputs := [real], output := real }
+
+def rightOperation : Operation :=
+  { key := rightOp, inputs := [real], output := real }
+
+def opaqueRegistration (key : RuleKey) (head : OpKey) : Registration :=
+  { key
+    head
+    kind := .forward
+    watches := [.argument 0]
+    writes := [.result] }
+
+def leftFormat : ReplayFormat :=
+  { role := .fact
+    schema := 7
+    validateBody := fun body =>
+      match body with
+      | [11] => true
+      | _ => false }
+
+def rightFormat : ReplayFormat :=
+  { role := .fact
+    schema := 7
+    validateBody := fun body =>
+      match body with
+      | [22, 23] => true
+      | _ => false }
+
+def opaquePlan (fact label : Nat) (body : List Nat)
+    (request : RuleRequest Nat) : Plan Nat :=
+  match request.writes with
+  | [target] =>
+      { outcome :=
+          .success [{ node := target, fact, payload := payload label }] [] {}
+        drafts :=
+          [{ label := payload label, role := .fact, schema := 7, body }] }
+  | _ => { outcome := .failed 5, drafts := [] }
+
+def leftPackage : Package Nat :=
+  { Cache := Nat
+    cache := 0
+    operations := #[sourceOperation, leftOperation]
+    handlers :=
+      #[{ registration := opaqueRegistration leftKey leftOp
+          replayFormats := #[leftFormat]
+          invoke := fun cache request => (opaquePlan 11 711 [11] request, cache + 1) }] }
+
+def rightPackage : Package Nat :=
+  { Cache := List Nat
+    cache := []
+    operations := #[rightOperation]
+    requiredOperations := #[sourceOperation]
+    handlers :=
+      #[{ registration := opaqueRegistration rightKey rightOp
+          replayFormats := #[rightFormat]
+          invoke := fun cache request =>
+            (opaquePlan 22 722 [22, 23] request,
+              request.action.node.index :: cache) }] }
+
+def wrongRightPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[rightOperation]
+    requiredOperations := #[sourceOperation]
+    handlers :=
+      #[Handler.statelessPlanned (opaqueRegistration rightKey rightOp)
+          (opaquePlan 22 722 [11]) #[rightFormat]] }
+
+def opaqueProgram : Program :=
+  { operations := #[sourceOperation, leftOperation, rightOperation]
+    nodes :=
+      #[instruction 0,
+        instruction 1 [node 0],
+        instruction 2 [node 0]] }
+
+def opaqueLimits : Propagator.Limits :=
+  { limits with maxOperations := 6, maxRules := 4 }
 
 def start (package : Package Nat)
     (payloadLimits : PayloadArena.Limits := arenaLimits) :
@@ -630,6 +831,14 @@ def lateExtraArena : PayloadArena.Limits :=
     maxDraftCells := 4
     maxUses := 2 }
 
+def lateMalformedArena : PayloadArena.Limits :=
+  { arenaLimits with
+    maxEntries := 1
+    maxBodyCells := 2
+    maxDrafts := 1
+    maxDraftCells := 2
+    maxUses := 1 }
+
 def nestedUsesLimits : Propagator.Limits :=
   { limits with
     maxOutcomeCandidates := 0
@@ -675,6 +884,8 @@ def oversizedProgram : Program :=
             | some (some cursor), some entry, some retained =>
                 cursor.offset == 2 && !cursor.exhausted &&
                   entry.origin.key == matcherKey &&
+                  entry.replayKey ==
+                    { rule := matcherKey, role := .instance, schema := 4 } &&
                   entry.origin.structuralInputs ==
                     [{ key := .node (node 0), generation := 0 },
                      { key := .node (node 1), generation := 0 }] &&
@@ -708,7 +919,7 @@ def oversizedProgram : Program :=
 
 -- The session installs the registry's package-owned scope validator in the
 -- engine.  A structurally valid but package-rejected dynamic contractor is
--- refused after prospective payload freezing, with no arena or cursor commit.
+-- refused after prospective replay freezing, with no arena or cursor commit.
 #guard
   match startMatcher rejectedScopePackage with
   | .ok session =>
@@ -823,8 +1034,18 @@ def oversizedProgram : Program :=
       | _ => false
   | .error _ => false
 
+def startOpaque (right : Package Nat) :
+    Except PayloadSession.StartError (PayloadSession.Session Nat) :=
+  PayloadSession.Session.start factDomain opaqueProgram #[leftPackage, right]
+    #[3, 0, 0] opaqueLimits arenaLimits
+
 def goodRun? : Option (PayloadSession.Run Nat) :=
   match start goodPackage with
+  | .ok session => some (session.drive 8)
+  | .error _ => none
+
+def opaqueRun? : Option (PayloadSession.Run Nat) :=
+  match startOpaque rightPackage with
   | .ok session => some (session.drive 8)
   | .error _ => none
 
@@ -854,6 +1075,100 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
               | _, _ => false
         | _, _, _, _ => false
   | none => false
+
+-- A replay format is local to its rule.  These unrelated packages reuse
+-- `(fact, 7)` but validate different bodies and retain distinct full keys.
+#guard
+  match opaqueRun? with
+  | some run =>
+      run.stop == .saturated && run.session.engine.history.size == 2 &&
+        run.session.arena.entries.size == 2 &&
+        match run.session.arena.entry? (payload 0) .fact,
+            run.session.arena.entry? (payload 1) .fact with
+        | some left, some right =>
+            left.replayKey ==
+                { rule := leftKey, role := .fact, schema := 7 } &&
+              right.replayKey ==
+                { rule := rightKey, role := .fact, schema := 7 } &&
+              left.body == [11] && right.body == [22, 23] &&
+              (run.session.registry.packages[0]?).any
+                (fun package => package.invocations == 1) &&
+              (run.session.registry.packages[1]?).any
+                (fun package => package.invocations == 1)
+        | _, _ => false
+  | none => false
+
+-- The right package cannot borrow the left package's validator merely because
+-- both use the same local schema number.
+#guard
+  match startOpaque wrongRightPackage with
+  | .ok session =>
+      match session.advance with
+      | .advanced afterLeft =>
+          match afterLeft.advance with
+          | .invalidPayload (.invalidBody key) stopped =>
+              key ==
+                  { rule := rightKey, role := .fact, schema := 7 } &&
+                stopped.arena.entries.size == 1 &&
+                stopped.engine.history.size == 1 && stopped.live &&
+                stopped.droppedWork && !stopped.complete
+          | _ => false
+      | _ => false
+  | .error _ => false
+
+-- Duplicate local declarations are rejected during registry assembly.
+#guard
+  match start duplicateFormatPackage with
+  | .error (.registry (.duplicateFormat key)) =>
+      key == { rule := goodKey, role := .fact, schema := 1 }
+  | _ => false
+
+-- Replay declarations have their own cap and cannot borrow operation
+-- headroom.
+#guard
+  match PayloadSession.Session.start factDomain program #[goodPackage] #[3, 0, 0]
+      { limits with maxReplayFormats := 0 } arenaLimits with
+  | .error (.registry (.resourceLimit .replayFormats)) => true
+  | _ => false
+
+-- A used draft must name a declared role/schema pair and satisfy that
+-- format's bounded structural validator.
+#guard
+  match start undeclaredPackage with
+  | .ok session =>
+      match session.advance with
+      | .invalidPayload (.undeclaredFormat key) stopped =>
+          key == { rule := goodKey, role := .fact, schema := 1 } &&
+            stopped.arena.entries.isEmpty &&
+            stopped.engine.history.isEmpty && stopped.live &&
+            stopped.droppedWork && !stopped.complete
+      | _ => false
+  | .error _ => false
+
+#guard
+  match start malformedPackage with
+  | .ok session =>
+      match session.advance with
+      | .invalidPayload (.invalidBody key) stopped =>
+          key == { rule := goodKey, role := .fact, schema := 1 } &&
+            stopped.arena.entries.isEmpty &&
+            stopped.engine.history.isEmpty && stopped.live &&
+            stopped.droppedWork && !stopped.complete
+      | _ => false
+  | .error _ => false
+
+-- A generic reply-local body bound runs before a package-owned validator and
+-- rejects only that reply.
+#guard
+  match start malformedPackage { arenaLimits with maxDraftCells := 1 } with
+  | .ok session =>
+      match session.advance with
+      | .rejectedPayload .draftCells stopped =>
+          stopped.arena.entries.isEmpty &&
+            stopped.engine.history.isEmpty && stopped.live &&
+            stopped.droppedWork && !stopped.complete
+      | _ => false
+  | .error _ => false
 
 -- A fully frozen prospective arena is discarded when engine admission rejects
 -- an undeclared write.
@@ -1060,6 +1375,30 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
             | _ => false
       | _ => false
   | .error _ => false
+
+-- Package-owned representation validation has the same precedence. After the
+-- first exact body fills the arena, the next locally bounded but malformed
+-- body is rejected by the selected replay snapshot rather than reported as
+-- fatal remaining-capacity exhaustion.
+#guard
+  match startWithin lateMalformedPackage oneReplyLimits lateMalformedArena with
+  | .ok session =>
+      match session.advance with
+      | .advanced first =>
+          first.arena.entries.size == 1 && first.arena.bodyCells == 2 &&
+            first.engine.history.size == 1 &&
+            match first.advance with
+            | .invalidPayload (.invalidBody key) rejected =>
+                key ==
+                    { rule := lateMalformedKey, role := .fact, schema := 1 } &&
+                  rejected.live && rejected.droppedWork && !rejected.complete &&
+                  rejected.arena.entries.size == 1 &&
+                  rejected.arena.bodyCells == 2 &&
+                  rejected.engine.history.size == 1 &&
+                  rejected.engine.metrics.ruleFailures == 1
+            | _ => false
+       | _ => false
+   | .error _ => false
 
 -- Completeness consumes the engine's exact admission plan. Here the two
 -- harmless splits fit, while a closure-relevant retry is the sole capacity

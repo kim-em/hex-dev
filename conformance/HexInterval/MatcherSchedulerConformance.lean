@@ -76,6 +76,8 @@ def limits : Limits :=
   { maxOperations := 4
     maxNodes := 8
     maxRules := 2
+    maxRegistryEntries := 8
+    maxReplayFormats := 4
     maxArity := 2
     maxScopeNodes := 2
     maxApplications := 4
@@ -541,14 +543,14 @@ def registryStarted? : Option (Registry Rank × Engine Rank) := do
 def registryAdmitted? : Option (Registry Rank × Engine Rank) := do
   let (registry, state) <- registryStarted?
   let .request first awaiting := state.poll | none
-  let (firstPlan, registry) := registry.invokePlanned first
-  let firstOutcome := firstPlan.outcome
+  let (firstInvocation, registry) := registry.invokePlanned first
+  let firstOutcome := firstInvocation.plan.outcome
   let .noChange _ := firstOutcome | none
   let .accepted _ state :=
     awaiting.submit (first.action.reply firstOutcome) | none
   let .request second awaiting := state.poll | none
-  let (secondPlan, registry) := registry.invokePlanned second
-  let secondOutcome := secondPlan.outcome
+  let (secondInvocation, registry) := registry.invokePlanned second
+  let secondOutcome := secondInvocation.plan.outcome
   let .success [] [.instantiate emitted] _ := secondOutcome | none
   if emitted.nodes.length != 2 || emitted.equalities.length != 1 ||
       emitted.scopes.length != 1 then
