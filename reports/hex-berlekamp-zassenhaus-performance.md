@@ -1,10 +1,11 @@
 # HexBerlekampZassenhaus Performance Report
 
 The current public-factor corpus measurement is from revision
-`567b5aea0c22d13fcf43541b5371717823870999`; fixed, parametric, and lower-layer
-measurements remain from `a1fdbd81ef038faa41765fb39a79cd083109c8ed`. Both
-were measured 2026-07-29 on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to
-CPU 0.
+`567b5aea0c22d13fcf43541b5371717823870999`; the current classical and lattice
+rows are from `aaabcf1520121b4acaa793811c8567dddcf39f1f`; fixed, parametric,
+and lower-layer measurements remain from
+`a1fdbd81ef038faa41765fb39a79cd083109c8ed`. All were measured 2026-07-29 on
+`chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0.
 
 ## Bench Targets
 
@@ -64,8 +65,8 @@ without bound.
 | System | OK | Timeout | Solved-row median |
 |---|---:|---:|---:|
 | Hex public factor | 373 | 19 | 443.618 µs |
-| Hex lattice | 366 | 26 | 1.864 ms |
-| Hex classical, no decline | 371 | 21 | 424.409 µs |
+| Hex lattice | 369 | 23 | 1.957 ms |
+| Hex classical, no decline | 372 | 20 | 423.939 µs |
 | FLINT 0.9.0 | 391 | 1 | 66.850 µs |
 | PARI/GP 2.17.3 | 391 | 1 | 99.958 µs |
 | NTL 11.6.0 | 391 | 1 | 135.631 µs |
@@ -79,14 +80,23 @@ p10–p90 0.47×–3.04×; Hex wins 123 rows and Isabelle 121. This is a narrow
 aggregate Hex win, not yet a decisive margin. The old eligible-row median was
 3.95×.
 
+The public protocol floor fell from 16.905 µs to 13.650 µs, admitting seven
+additional paired rows. Reapplying the older floor gives 237 rows and a 1.082×
+median, so the headline should be read as parity rather than a robust lead.
+
 The public row is recorded in
 `reports/bench-results/hexbz-factor-sweep-hex-567b5aea-chungus2.json`
 (SHA-256 `f3bf572df064788203da76fcb5ede2a20e376bb2fa2ff448c4bc2d244157bd63`).
 
-Public and classical now have a 0.989× eligible-row median ratio. Public wins
-141 rows, classical 98, and public additionally solves `sd5_x_phi45` and
-`sd6`. The dispatcher overhead is therefore almost neutral on the common
-corpus while its fallback adds two genuine frontier successes.
+The current public/classical comparison has 240 eligible rows and a 1.015×
+median ratio; public wins 69 and classical 171. The ordinary-row dispatcher
+cost is therefore small but real. Public is substantially better on selected
+hard rows and uniquely solves `sd6`; the refreshed no-decline classical entry
+now also solves `sd5_x_phi45`.
+
+The classical/lattice rows are recorded in
+`reports/bench-results/hexbz-factor-sweep-hex-aaabcf15-chungus2.json`
+(SHA-256 `30e56da9aa3c6f4f50faca4ef19e5c4d4f6523362542f2d8967ca7665f62f747`).
 
 The bounded prime-width policy drives the latest movement. It looks ahead by
 at most two good primes only on predicted high-cost transforms, requires at
@@ -127,7 +137,7 @@ Both paths are relative to `reports/bench-results/`.
 | `SD_6` | 9.161 s | timeout | — |
 
 The fresh public service now solves `SD_6`; the no-decline classical service
-still times out. The public result and the isolated lattice result (8.187 s)
+still times out. The public result and the isolated lattice result (8.573 s)
 show that the dispatcher is adding useful reach here. The public measurement
 is a single cutoff-limited shot only 8.4% below ten seconds, so this frontier
 success has a narrow margin.
@@ -138,6 +148,8 @@ success has a narrow margin.
 - FLINT, PARI/GP, and NTL remain much faster in aggregate.
 - Hex and Isabelle BZ remain essentially tied despite Hex's narrow aggregate
   lead; several structured families still favour Isabelle heavily.
+- No-decline classical wins 171 of 240 ordinary eligible rows against public,
+  although the paired median gap is only 1.5%.
 - The lattice route has a much heavier tail than the classical route.
 - `wilkinson_56` regresses by 1.30×, although the eligible Wilkinson-family
   median improves to 0.94× current/previous.

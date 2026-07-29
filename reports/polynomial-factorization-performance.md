@@ -6,7 +6,9 @@ stack.
 ## Measurement environment
 
 - Hex public-factor revision: `567b5aea0c22d13fcf43541b5371717823870999`
-- Lower-layer Hex revision: `a1fdbd81ef038faa41765fb39a79cd083109c8ed`
+- Hex classical/lattice revision: `aaabcf1520121b4acaa793811c8567dddcf39f1f`
+- Kernel diagnostic revision: `8c4acebc5fc04bd52b7ec2f6fa15c4f2eb4c6ece`
+- Fixed and lower-layer Hex revision: `a1fdbd81ef038faa41765fb39a79cd083109c8ed`
 - Hex date: 2026-07-29
 - External-comparator date/revision: 2026-07-28 / `5c371a5a`
 - Host: `chungus2`, AMD EPYC 9455, Linux x86-64
@@ -23,10 +25,15 @@ were not rerun because this revision changes only Hex. Their exports use the
 same host, corpus, CPU, and persistent-line protocol as the fresh Hex sweep.
 Exact paired ratios are reported only where those conditions match.
 
-The fresh public-factor export records a clean worktree at `567b5aea`. This
-revision changes prime selection only, so the finite-field, Hensel, fixed BZ,
-and kernel exports from `a1fdbd81` remain current lower-layer evidence. Rejected
-broad-probe sweeps are not retained.
+The public-factor, classical/lattice, and kernel exports all record clean
+worktrees. The finite-field, Hensel, and fixed BZ exports from `a1fdbd81`
+remain current because the later revision changes only the shared integer
+prime selector. Rejected broad-probe sweeps are not retained.
+
+The `a1fdbd81` exports themselves record a dirty worktree: they executed with
+the native-kernel borrow annotations that were pending at measurement time and
+then merged unchanged in `f38614c1`. They are the measured pre-prime-policy
+runtime, not a checkout missing that ownership fix.
 
 ## Headline outcome
 
@@ -40,13 +47,19 @@ from 3.95× to 0.996× Hex/Isabelle. Hex wins 123 eligible rows and Isabelle
 121. This is a narrow aggregate Hex victory, not a decisive margin; FLINT,
 PARI/GP, and NTL remain much faster overall.
 
+Eligibility uses each run's own measured protocol floor. The new public
+service's floor is 13.650 µs versus 16.905 µs in the preceding export, which
+admits seven additional paired rows. Reapplying the older floor gives 237 rows
+and a 1.082× median. The 0.996× headline therefore establishes parity, not a
+robust lead.
+
 ## Integer-factorization corpus
 
 | System | OK | Timeout | Median | p90 | Slowest solved |
 |---|---:|---:|---:|---:|---:|
 | Hex public factor | 373 | 19 | 443.618 µs | 8.408 ms | 9.161 s |
-| Hex lattice | 366 | 26 | 1.864 ms | 89.351 ms | 9.612 s |
-| Hex classical, no decline | 371 | 21 | 424.409 µs | 9.484 ms | 3.918 s |
+| Hex lattice | 369 | 23 | 1.957 ms | 91.186 ms | 10.000 s |
+| Hex classical, no decline | 372 | 20 | 423.939 µs | 9.029 ms | 3.845 s |
 | FLINT | 391 | 1 | 66.850 µs | 1.184 ms | 1.228 s |
 | PARI/GP | 391 | 1 | 99.958 µs | 1.254 ms | 823.201 ms |
 | NTL | 391 | 1 | 135.631 µs | 2.714 ms | 1.919 s |
@@ -63,14 +76,17 @@ With both sides at least 10× above protocol overhead:
 | Pair | Eligible | Median | p10–p90 | First faster | Second faster |
 |---|---:|---:|---:|---:|---:|
 | Hex public / Isabelle BZ | 244 | 0.996× | 0.47×–3.04× | 123 | 121 |
-| Hex classical / Isabelle BZ | 231 | 1.26× | 0.50×–3.39× | 92 | 139 |
-| Hex lattice / Isabelle LLL | 228 | 0.15× | 0.004×–2.55× | 175 | 53 |
-| Hex public / Hex classical | 239 | 0.989× | 0.68×–1.08× | 141 | 98 |
+| Hex classical / Isabelle BZ | 231 | 1.21× | 0.48×–3.22× | 93 | 138 |
+| Hex lattice / Isabelle LLL | 230 | 0.15× | 0.004×–2.25× | 176 | 54 |
+| Hex public / Hex classical | 240 | 1.015× | 0.77×–1.10× | 69 | 171 |
 
-Public dispatch now wins most common eligible rows while adding
-`sd5_x_phi45` and `sd6`. The old pattern—classical nearly always winning—was
-repeated setup and avoidable hot-path work, not the intrinsic price of the
-verified public API.
+The refreshed same-policy comparison shows the remaining distinction clearly:
+no-decline classical wins 171 of 240 ordinary eligible rows, but only by a
+1.5% paired median. Public dispatch is materially faster on enough hard rows to
+reach parity with Isabelle, and it alone solves `sd6`; classical remains 1.21×
+slower than Isabelle at its paired median. The earlier large public/classical
+gap was repeated setup and avoidable hot-path work, while this small residual
+is the real cost of tier selection and fallback reach.
 
 ## Bounded prime-width selection
 
@@ -146,12 +162,13 @@ inconclusive on these small fixtures.
 
 ## Kernel and diagnostic evidence
 
-Fresh-module factorization import baseline is 877.587 ms and certificate
-baseline is 6.243 s. Direct kernel factorization takes 1.316 s on `quartic_a4`,
-1.058 s on `cyclo_phi5`, and 1.614 s on `xpow6_minus1`; all expected checks
-complete within 30 seconds with zero unexpected errors. Direct kernel times
-improve over the preceding record, but the certificate umbrella and tactic
-totals regress by about 35%; `hexbz-kernel-factor.md` records both sides.
+Fresh-module factorization import baseline is 897.900 ms and the certificate
+baseline is 6.407 s. Direct kernel factorization takes 1.343 s on `quartic_a4`,
+1.078 s on `cyclo_phi5`, and 1.694 s on `xpow6_minus1`; all expected checks
+complete within 30 seconds with zero unexpected errors. These one-shot totals
+and both import baselines are within 2–5% of the preceding export, so the cheap
+selector guard adds no visible kernel-level discontinuity;
+`hexbz-kernel-factor.md` records every sample.
 
 At split degree 24, the compiled Berlekamp diagnostic records 16.387 ms for a
 kernel-rebuilding baseline, 1.245 ms with the kernel shared, and 569.224 µs for
@@ -184,7 +201,10 @@ Fresh Hex exports under `reports/bench-results/`:
 - `hex-berlekamp-zassenhaus-fixed-a1fdbd81-chungus2.json`
 - `hexbz-factor-sweep-hex-567b5aea-chungus2.json` (SHA-256
   `f3bf572df064788203da76fcb5ede2a20e376bb2fa2ff448c4bc2d244157bd63`)
-- `hexbz-kernel-factor-a1fdbd81-chungus2.json`
+- `hexbz-factor-sweep-hex-aaabcf15-chungus2.json` (SHA-256
+  `30e56da9aa3c6f4f50faca4ef19e5c4d4f6523362542f2d8967ca7665f62f747`)
+- `hexbz-kernel-factor-8c4acebc-chungus2.json` (SHA-256
+  `0b2105264881c692ac5c91a8febf6d9f5d9a5a23170b01e525af6eadc27ebb97`)
 - `berlekamp-diagnostic-a1fdbd81-chungus2.txt`
 - `bz-spikes-a1fdbd81-chungus2.txt`
 

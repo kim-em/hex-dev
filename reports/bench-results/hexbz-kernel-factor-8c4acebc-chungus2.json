@@ -1,0 +1,501 @@
+{
+  "schema_version": 2,
+  "env": {
+    "lean_toolchain": "leanprover/lean4:v4.32.0-rc1",
+    "os": "linux",
+    "arch": "x86_64",
+    "cpu_cores": 96,
+    "hostname": "chungus2",
+    "exe_name": "kernel_factor_sweep",
+    "git_commit": "8c4acebc5fc04bd52b7ec2f6fa15c4f2eb4c6ece",
+    "git_dirty": false,
+    "timestamp_unix_ms": 1785306168464,
+    "timestamp_iso": "2026-07-29T06:22:48Z"
+  },
+  "config": {
+    "mode": "kernel-factor-vs-certificates",
+    "propositions": {
+      "kernel_factor": "Hex.ZPoly.factorize f = <compiled Factorization> by decide +kernel",
+      "factor_poly": "Hex.ZPoly.Factored f := factor_poly f",
+      "irreducibility": "Hex.ZPoly.Irreducible f := by irreducibility",
+      "rabin": "identical reified literal factor/certificate checked by Linear and LinearIncremental"
+    },
+    "timing_labels": {
+      "total_nanos": "end-to-end fresh Lake module wall time",
+      "baseline_delta_nanos": "signed total minus the matching median import baseline; includes elaboration and kernel checking"
+    },
+    "imports": {
+      "kernel_factor": "HexBerlekampZassenhaus.FactorEntryPoints",
+      "certificate": "HexBerlekampZassenhausMathlib"
+    },
+    "lake_built_modules": true,
+    "timeout_seconds": 30.0,
+    "max_rec_depth": 100000,
+    "max_heartbeats": 0,
+    "import_baseline_nanos": {
+      "kernel_factor": 897899577,
+      "certificate": 6406549046
+    },
+    "baseline_repeats": 3,
+    "rabin_max_cases_per_factor": 8,
+    "rabin_repeats": 3,
+    "selection": {
+      "family": null,
+      "names": [
+        "cyclo_phi5",
+        "xpow6_minus1",
+        "quartic_a4",
+        "sd2"
+      ],
+      "combined_only": false,
+      "max_degree": null
+    },
+    "corpus_path": "bench/corpus/hexbz-factor-corpus.jsonl",
+    "corpus_sha256": "619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d"
+  },
+  "results": [
+    {
+      "family": "certificate-boundary",
+      "name": "quartic_a4",
+      "degree": 4,
+      "known_irreducible": true,
+      "compiled_factorization": {
+        "scalar": 1,
+        "factor_count_with_multiplicity": 1,
+        "distinct_factor_count": 1
+      },
+      "rabin_replay": [
+        {
+          "factor_index": 0,
+          "block_index": 0,
+          "certificate_index": 0,
+          "prime": 17,
+          "degree": 2,
+          "literal_sha256": "60c699051e961a68247b5c12a6a686a4870d5b671ed5af7144306d26af42114d",
+          "execution_order": [
+            [
+              "linear",
+              "incremental"
+            ],
+            [
+              "incremental",
+              "linear"
+            ],
+            [
+              "linear",
+              "incremental"
+            ]
+          ],
+          "linear": {
+            "status": "ok",
+            "total_nanos": 8756169952,
+            "baseline_nanos": 6406549046,
+            "baseline_delta_nanos": 2349620906,
+            "repeats": 3,
+            "sample_statuses": [
+              "ok",
+              "ok",
+              "ok"
+            ],
+            "sample_total_nanos": [
+              7507081976,
+              8756169952,
+              12344050051
+            ],
+            "min_total_nanos": 7507081976,
+            "max_total_nanos": 12344050051
+          },
+          "incremental": {
+            "status": "ok",
+            "total_nanos": 6560016808,
+            "baseline_nanos": 6406549046,
+            "baseline_delta_nanos": 153467762,
+            "repeats": 3,
+            "sample_statuses": [
+              "ok",
+              "ok",
+              "ok"
+            ],
+            "sample_total_nanos": [
+              6552959620,
+              6560016808,
+              7246745298
+            ],
+            "min_total_nanos": 6552959620,
+            "max_total_nanos": 7246745298
+          }
+        },
+        {
+          "factor_index": 0,
+          "block_index": 0,
+          "certificate_index": 1,
+          "prime": 17,
+          "degree": 2,
+          "literal_sha256": "31d52885ad46b7483f1f6b19755916d61df6b259fd1ea60662cc491e02865fea",
+          "execution_order": [
+            [
+              "incremental",
+              "linear"
+            ],
+            [
+              "linear",
+              "incremental"
+            ],
+            [
+              "incremental",
+              "linear"
+            ]
+          ],
+          "linear": {
+            "status": "ok",
+            "total_nanos": 10192648610,
+            "baseline_nanos": 6406549046,
+            "baseline_delta_nanos": 3786099564,
+            "repeats": 3,
+            "sample_statuses": [
+              "ok",
+              "ok",
+              "ok"
+            ],
+            "sample_total_nanos": [
+              10192648610,
+              10507187313,
+              8588466474
+            ],
+            "min_total_nanos": 8588466474,
+            "max_total_nanos": 10507187313
+          },
+          "incremental": {
+            "status": "ok",
+            "total_nanos": 7844218418,
+            "baseline_nanos": 6406549046,
+            "baseline_delta_nanos": 1437669372,
+            "repeats": 3,
+            "sample_statuses": [
+              "ok",
+              "ok",
+              "ok"
+            ],
+            "sample_total_nanos": [
+              7844218418,
+              7703082686,
+              8138832701
+            ],
+            "min_total_nanos": 7703082686,
+            "max_total_nanos": 8138832701
+          }
+        },
+        {
+          "factor_index": 0,
+          "block_index": 1,
+          "certificate_index": 0,
+          "prime": 5,
+          "degree": 1,
+          "literal_sha256": "5c19226a25b8f3641d740cd2f554f39366d401e30abc2c988264e211422164aa",
+          "execution_order": [
+            [
+              "linear",
+              "incremental"
+            ],
+            [
+              "incremental",
+              "linear"
+            ],
+            [
+              "linear",
+              "incremental"
+            ]
+          ],
+          "linear": {
+            "status": "ok",
+            "total_nanos": 6916961429,
+            "baseline_nanos": 6406549046,
+            "baseline_delta_nanos": 510412383,
+            "repeats": 3,
+            "sample_statuses": [
+              "ok",
+              "ok",
+              "ok"
+            ],
+            "sample_total_nanos": [
+              6916961429,
+              6972675843,
+              6605013136
+            ],
+            "min_total_nanos": 6605013136,
+            "max_total_nanos": 6972675843
+          },
+          "incremental": {
+            "status": "ok",
+            "total_nanos": 6754839322,
+            "baseline_nanos": 6406549046,
+            "baseline_delta_nanos": 348290276,
+            "repeats": 3,
+            "sample_statuses": [
+              "ok",
+              "ok",
+              "ok"
+            ],
+            "sample_total_nanos": [
+              6754839322,
+              6954737831,
+              6495166886
+            ],
+            "min_total_nanos": 6495166886,
+            "max_total_nanos": 6954737831
+          }
+        },
+        {
+          "factor_index": 0,
+          "block_index": 1,
+          "certificate_index": 1,
+          "prime": 5,
+          "degree": 3,
+          "literal_sha256": "5332755c84411876a50171c10fa0640e6edc9252dfe6c93750814cedcc55ab4c",
+          "execution_order": [
+            [
+              "incremental",
+              "linear"
+            ],
+            [
+              "linear",
+              "incremental"
+            ],
+            [
+              "incremental",
+              "linear"
+            ]
+          ],
+          "linear": {
+            "status": "ok",
+            "total_nanos": 7015990866,
+            "baseline_nanos": 6406549046,
+            "baseline_delta_nanos": 609441820,
+            "repeats": 3,
+            "sample_statuses": [
+              "ok",
+              "ok",
+              "ok"
+            ],
+            "sample_total_nanos": [
+              7005708377,
+              7095906408,
+              7015990866
+            ],
+            "min_total_nanos": 7005708377,
+            "max_total_nanos": 7095906408
+          },
+          "incremental": {
+            "status": "ok",
+            "total_nanos": 6580155801,
+            "baseline_nanos": 6406549046,
+            "baseline_delta_nanos": 173606755,
+            "repeats": 3,
+            "sample_statuses": [
+              "ok",
+              "ok",
+              "ok"
+            ],
+            "sample_total_nanos": [
+              6644945464,
+              6580155801,
+              6494004786
+            ],
+            "min_total_nanos": 6494004786,
+            "max_total_nanos": 6644945464
+          }
+        }
+      ],
+      "kernel_factor": {
+        "status": "ok",
+        "total_nanos": 1342990237,
+        "baseline_nanos": 897899577,
+        "baseline_delta_nanos": 445090660
+      },
+      "witness_search": {
+        "status": "ok",
+        "factors": [
+          {
+            "class": "multi-prime",
+            "obstruction_count": 2,
+            "primes": [
+              17,
+              5
+            ],
+            "factor_index": 0,
+            "degree": 4,
+            "multiplicity": 1,
+            "coeffs_sha256": "707a52809dd5e027eb46ca5bcbd1432bcd5ebb82f41d78df8a472b37e974c284",
+            "rabin_case_count": 4
+          }
+        ]
+      },
+      "factor_poly": {
+        "status": "ok",
+        "total_nanos": 6916299915,
+        "baseline_nanos": 6406549046,
+        "baseline_delta_nanos": 509750869
+      },
+      "irreducibility": {
+        "status": "ok",
+        "total_nanos": 6892237118,
+        "baseline_nanos": 6406549046,
+        "baseline_delta_nanos": 485688072
+      },
+      "rabin_cases_dropped": 0
+    },
+    {
+      "family": "cyclotomic",
+      "name": "cyclo_phi5",
+      "degree": 4,
+      "known_irreducible": true,
+      "compiled_factorization": {
+        "scalar": 1,
+        "factor_count_with_multiplicity": 1,
+        "distinct_factor_count": 1
+      },
+      "rabin_replay": [],
+      "kernel_factor": {
+        "status": "ok",
+        "total_nanos": 1077545638,
+        "baseline_nanos": 897899577,
+        "baseline_delta_nanos": 179646061
+      },
+      "witness_search": {
+        "status": "ok",
+        "factors": [
+          {
+            "class": "free-mod-p",
+            "prime": 2,
+            "factor_index": 0,
+            "degree": 4,
+            "multiplicity": 1,
+            "coeffs_sha256": "cc4da5498be93ad25b8e364e679352ce9e067127c2afb1adf21702b42f2f8794"
+          }
+        ]
+      },
+      "factor_poly": {
+        "status": "ok",
+        "total_nanos": 6570565010,
+        "baseline_nanos": 6406549046,
+        "baseline_delta_nanos": 164015964
+      },
+      "irreducibility": {
+        "status": "ok",
+        "total_nanos": 6595595769,
+        "baseline_nanos": 6406549046,
+        "baseline_delta_nanos": 189046723
+      },
+      "rabin_cases_dropped": 0
+    },
+    {
+      "family": "cyclotomic-products",
+      "name": "xpow6_minus1",
+      "degree": 6,
+      "known_irreducible": false,
+      "compiled_factorization": {
+        "scalar": 1,
+        "factor_count_with_multiplicity": 4,
+        "distinct_factor_count": 4
+      },
+      "rabin_replay": [],
+      "kernel_factor": {
+        "status": "ok",
+        "total_nanos": 1693666253,
+        "baseline_nanos": 897899577,
+        "baseline_delta_nanos": 795766676
+      },
+      "witness_search": {
+        "status": "ok",
+        "factors": [
+          {
+            "class": "free-mod-p",
+            "prime": 2,
+            "factor_index": 0,
+            "degree": 2,
+            "multiplicity": 1,
+            "coeffs_sha256": "2429bb86ce8b99f4e2e6b2a6835c38b797144b47d4082c7bd7390935c0fc56f7"
+          },
+          {
+            "class": "free-linear",
+            "factor_index": 1,
+            "degree": 1,
+            "multiplicity": 1,
+            "coeffs_sha256": "e61b9f584dbe27741cef6e9ee440831d7d94470c0871b0871541f0308916efea"
+          },
+          {
+            "class": "free-mod-p",
+            "prime": 2,
+            "factor_index": 2,
+            "degree": 2,
+            "multiplicity": 1,
+            "coeffs_sha256": "9e07ab64261fb6803c6572f7b5c3098ea68fb45873128af820d42a2262eb900b"
+          },
+          {
+            "class": "free-linear",
+            "factor_index": 3,
+            "degree": 1,
+            "multiplicity": 1,
+            "coeffs_sha256": "471610700dbccc74bb026d74039c6117d45755b356953dd303b840c7d308fafb"
+          }
+        ]
+      },
+      "factor_poly": {
+        "status": "ok",
+        "total_nanos": 6487268423,
+        "baseline_nanos": 6406549046,
+        "baseline_delta_nanos": 80719377
+      },
+      "irreducibility": {
+        "status": "not-applicable"
+      },
+      "rabin_cases_dropped": 0
+    },
+    {
+      "family": "swinnerton-dyer",
+      "name": "sd2",
+      "degree": 4,
+      "known_irreducible": true,
+      "compiled_factorization": {
+        "scalar": 1,
+        "factor_count_with_multiplicity": 1,
+        "distinct_factor_count": 1
+      },
+      "rabin_replay": [],
+      "kernel_factor": {
+        "status": "ok",
+        "total_nanos": 1246421024,
+        "baseline_nanos": 897899577,
+        "baseline_delta_nanos": 348521447
+      },
+      "witness_search": {
+        "status": "ok",
+        "factors": [
+          {
+            "class": "provider-decline",
+            "factor_index": 0,
+            "degree": 4,
+            "multiplicity": 1,
+            "coeffs_sha256": "0731432d5cb16aeeea679b8c0ddf48aaee05130d7318ed93b5990615c30b32b4"
+          }
+        ]
+      },
+      "factor_poly": {
+        "status": "provider-decline",
+        "total_nanos": 6497636323,
+        "baseline_nanos": 6406549046,
+        "baseline_delta_nanos": 91087277,
+        "message": "Supported without further imports: Hex.FpPoly p (prime p). Importing HexBerlekampZassenhaus adds Hex.ZPoly; the Mathlib bridge libraries add Polynomial (ZMod q) and Polynomial \u2124.\n\nfactor_poly: the irreducible factor\n  DensePoly.ofCoeffs #[1, 0, -10, 0, 1]\nhas no single-prime modular witness among the candidate primes (its modular factorizations are balanced, e.g. Swinnerton-Dyer polynomials) and is not Eisenstein at any small shift; the Mathlib bridge's multi-prime degree-obstruction certificates may certify it \u2014 import HexBerlekampZassenhausMathlib.\n\nfactor_poly: the irreducible factor\n  DensePoly.ofCoeffs #[1, 0, -10, 0, 1]\nhas no single-prime modular witness, is not Eisenstein at any small shift, and its balanced modular factorizations fall outside the multi-prime per-prime degree-sum obstruction language (e.g. Swinnerton-Dyer polynomials); no certificate-backed proof is available, but the kernel-decide fallbacks `irreducibility!` / `factor_poly!` can still certify small inputs by re-running the factorizer in the kernel\n"
+      },
+      "irreducibility": {
+        "status": "provider-decline",
+        "total_nanos": 6496766905,
+        "baseline_nanos": 6406549046,
+        "baseline_delta_nanos": 90217859,
+        "message": "Supported without further imports: Hex.FpPoly p (prime p). Importing HexBerlekampZassenhaus adds Hex.ZPoly; the Mathlib bridge libraries add Polynomial (ZMod q) and Polynomial \u2124.\n\nirreducibility: the irreducible factor\n  DensePoly.ofCoeffs #[1, 0, -10, 0, 1]\nhas no single-prime modular witness among the candidate primes (its modular factorizations are balanced, e.g. Swinnerton-Dyer polynomials) and is not Eisenstein at any small shift; the Mathlib bridge's multi-prime degree-obstruction certificates may certify it \u2014 import HexBerlekampZassenhausMathlib.\n\nirreducibility: the irreducible factor\n  DensePoly.ofCoeffs #[1, 0, -10, 0, 1]\nhas no single-prime modular witness, is not Eisenstein at any small shift, and its balanced modular factorizations fall outside the multi-prime per-prime degree-sum obstruction language (e.g. Swinnerton-Dyer polynomials); no certificate-backed proof is available, but the kernel-decide fallbacks `irreducibility!` / `factor_poly!` can still certify small inputs by re-running the factorizer in the kernel\n\nGoal-mode `irreducibility` expects a goal of the form `\u2026 .Irreducible e`.\n"
+      },
+      "rabin_cases_dropped": 0
+    }
+  ],
+  "unexpected_errors": []
+}

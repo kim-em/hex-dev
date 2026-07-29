@@ -458,6 +458,29 @@ private def shouldProbePrime (f : ZPoly) (score : PrimeChoiceDataScore) : Bool :
     (decide (probeCyclotomicDegree ≤ degree) &&
       Hex.Nat.isPrimeTrial coeffs.size && coeffs.all (fun coeff => coeff == 1))
 
+private def probeGuardScore (factorCount : Nat) : PrimeChoiceDataScore :=
+  { data := default, factorCount }
+
+private def probeGuardPowerSum : ZPoly :=
+  DensePoly.ofCoeffs <|
+    ((Array.replicate 51 (0 : Int)).set! 0 1).set! 50 1
+
+private def probeGuardPowerDifference : ZPoly :=
+  DensePoly.ofCoeffs <|
+    ((Array.replicate 51 (0 : Int)).set! 0 (-1)).set! 50 1
+
+private def probeGuardLowDegree : ZPoly :=
+  DensePoly.ofCoeffs <|
+    ((Array.replicate 50 (0 : Int)).set! 0 1).set! 49 1
+
+#guard shouldProbePrime probeGuardPowerSum (probeGuardScore 24) = true
+#guard shouldProbePrime probeGuardPowerDifference (probeGuardScore 24) = false
+#guard shouldProbePrime probeGuardLowDegree (probeGuardScore 24) = false
+#guard shouldProbePrime
+    (DensePoly.ofCoeffs (Array.replicate 61 (1 : Int))) (probeGuardScore 2) = true
+#guard shouldProbePrime
+    (DensePoly.ofCoeffs #[(Int.ofNat (2 ^ 512)), 0, 1]) (probeGuardScore 9) = true
+
 /-- First-good selection with bounded modular-factor-width look-ahead. -/
 private def chooseAdaptiveFrom? (f : ZPoly) (extra : Nat) :
     List SmallPrimeCandidate → Option PrimeChoiceDataScore
