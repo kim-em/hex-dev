@@ -162,18 +162,21 @@ def invokeInstantiate (request : RuleRequest Fact) : Plan Fact :=
   match sinNegBinding? request with
   | none => { outcome := .inapplicable, drafts := [] }
   | some binding =>
+    match request.program.findOp? sinKey, request.program.findOp? negKey with
+    | some (sinId, sinSignature), some (negId, negSignature) =>
+      if sinSignature != sinOperation || negSignature != negOperation then
+        { outcome := .inapplicable, drafts := [] }
+      else
       { outcome :=
           .success []
             [.instantiate
               { key := 1
-                triggers := [request.action.node, binding.negative, binding.input]
-                claimedGeneration := 1
                 nodes :=
                   [{ domain := real
-                     op := { index := 2 }
+                     op := sinId
                      args := [.existing binding.input] },
                    { domain := real
-                     op := { index := 1 }
+                     op := negId
                      args := [.proposed 0] }]
                 equalities :=
                   [{ left := .existing request.action.node
@@ -184,6 +187,7 @@ def invokeInstantiate (request : RuleRequest Fact) : Plan Fact :=
         drafts :=
           [{ label := instanceLabel, role := .instance, schema := 0, body := [0] },
             { label := equalityLabel, role := .equality, schema := 0, body := [1] }] }
+    | _, _ => { outcome := .inapplicable, drafts := [] }
 
 def invokeSinForward (request : RuleRequest Fact) : Plan Fact :=
   match request.inputs, request.writes with
@@ -246,12 +250,13 @@ def engineLimits : Propagator.Limits :=
     maxRetainedSuggestions := 2
     maxEffort := 0
     maxObservationValue := 16
-    maxDiagnosticValue := 16
+    maxDiagnosticValue := 256
     maxOutcomeCandidates := 1
     maxOutcomeSuggestions := 1
     maxProposalItems := 5
     maxInstances := 1
     maxGeneration := 1
+    maxNodeDepth := 8
     maxEqualities := 1
     splitEndpointLimit := endpointLimit }
 
@@ -261,8 +266,10 @@ def policyLimits : Propagator.Policy.Limits :=
     maxLiveOffers := 24 }
 
 def arenaLimits : PayloadArena.Limits :=
-  { maxEntries := 4
+  { maxEntries := 7
     maxBodyCells := 8
+    maxDrafts := 7
+    maxDraftCells := 8
     maxAtom := 4
     maxSchema := 0
     maxUses := 7 }
