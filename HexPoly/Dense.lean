@@ -26,7 +26,11 @@ def DensePolyNormalized {R : Type u} [Zero R] [DecidableEq R] (coeffs : Array R)
   coeffs.size = 0 ∨ coeffs.back? ≠ some (Zero.zero : R)
 
 /-- Dense polynomials store coefficients in ascending degree order, with index `i` holding the
-coefficient of `x^i`. -/
+coefficient of `x^i`.
+
+The packed native polynomial kernels rely on proof erasure leaving `coeffs` as
+the sole runtime constructor field. Any new data-bearing field requires a
+matching FFI update and native cross-check. -/
 structure DensePoly (R : Type u) [Zero R] [DecidableEq R] where
   /-- The stored coefficients in ascending degree order. -/
   coeffs : Array R

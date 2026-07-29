@@ -1,75 +1,57 @@
 # HexBerlekamp Performance Report
 
-Current at revision `5c371a5abb85ca6ef6510ec60888f3048db71719`,
-measured 2026-07-28 on `chungus2` (AMD EPYC 9455, Linux x86-64),
-pinned to CPU 0. See `polynomial-factorization-performance.md` for the
-cross-library snapshot.
-
-The exports record `5c371a5-dirty` because the benchmark registrations and
-reports were being repaired in the same worktree; the measured library revision
-is the full hash above.
-
-## Bench Targets
-
-- `runBerlekampMatrixChecksum`: `n²`
-- `runRabinTestChecksum`: `n³`
-- `runBerlekampFactorChecksum`: `n²`
-- `runDistinctDegreeChecksum`: `n³`
+Current at revision `a1fdbd81ef038faa41765fb39a79cd083109c8ed`,
+measured 2026-07-29 on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to
+CPU 0.
 
 ## Verdicts
 
-Three independent outer trials were run for every rung.
-
 | Target | Largest rung | Median | β | Verdict |
 |---|---:|---:|---:|---|
-| Berlekamp matrix | 192 | 10.776 ms | -0.061 | consistent |
-| Rabin irreducibility | 64 | 44.256 ms | -0.105 | consistent |
-| Berlekamp factorization | 256 | 3.388 ms | -0.262 | consistent |
-| Distinct-degree factorization | 96 | 186.132 ms | -0.272 | consistent |
+| Berlekamp matrix | 192 | 10.791 ms | -0.057 | consistent |
+| Rabin irreducibility | 64 | 43.606 ms | -0.094 | consistent |
+| Berlekamp factorization | 256 | 3.271 ms | -0.272 | consistent |
+| Distinct-degree factorization | 96 | 187.058 ms | -0.270 | consistent |
 
 Raw export:
-`reports/bench-results/hex-berlekamp-5c371a5a-chungus2.json`
-(SHA-256
-`70e05346f363596bceb5dbdd9838ef43ba499cfcd77b04e7161e18e437992bcc`).
+`reports/bench-results/hex-berlekamp-a1fdbd81-chungus2.json` (SHA-256
+`81ff7d318fb80c4c492848dfc9860f25c67a71f060813b2f73ad38d2ba6a71ed`).
 `list` and `verify` passed.
 
-## Comparator Ratios
+The JSON records a dirty worktree because the borrowed-argument ownership fix
+and refreshed evidence were pending commit; the full hash identifies the
+implementation base. The current headline values differ by less than 2% from
+the preceding record;
+the large end-to-end gain is in Hensel lifting, normalization, and dispatcher
+selection rather than this finite-field layer.
 
-python-flint 0.9.0 was run through the persistent driver. Every fixed target
-used five repeats and a 0.2 s inner-repeat floor, so process startup is outside
-the steady-state per-call medians.
+## External Comparator Status
 
-| Comparator | Smallest matched rung | Lean / FLINT | Largest matched rung | Lean / FLINT |
-|---|---:|---:|---:|---:|
-| Rabin / `nmod_poly.is_irreducible` | 8 | 0.253 / 0.020 ms (`12.5x`) | 64 | 87.445 / 0.211 ms (`413.8x`) |
-| DDF / `nmod_poly.factor_distinct_deg` | 12 | 1.487 / 0.036 ms (`41.1x`) | 96 | 380.479 / 0.533 ms (`714.5x`) |
-
-The trend still diverges in FLINT's favour. Raw exports:
+The persistent python-flint 0.9.0 Rabin and DDF exports remain current records
+of the external service, but their paired Hex measurements are from revision
+`5c371a5a`. They continue to show a large FLINT advantage—hundreds of times at
+the upper rungs—but are retained as historical paired measurements rather than
+relabelled as exact `a1fdbd81` ratios:
 
 - `hex-berlekamp-rabin-compare-5c371a5a-chungus2.json`
 - `hex-berlekamp-ddf-compare-5c371a5a-chungus2.json`
 
-Both are under `reports/bench-results/`.
-
 ## Profile
 
-The current compiled Berlekamp diagnostic was rerun with
-`RELIFT_PROFILE=berlekamp`. On the split degree-24 fixture, rebuilding the
-kernel per basis vector took 16.077 ms, sharing the kernel reduced the
-baseline to 1.280 ms, and the fixed path took 577.347 µs. The fixed-path
-attribution was 18.18% matrix construction, 2.84% nullspace, and 78.99%
-witness splitting.
+On the split degree-24 diagnostic, rebuilding the kernel per basis vector took
+16.387 ms, sharing it took 1.245 ms, and the fixed path took 569.224 µs. The
+fixed-path attribution was 18.89% matrix construction, 2.95% nullspace, and
+78.17% witness splitting.
 
-Raw diagnostic stdout:
-`reports/bench-results/berlekamp-diagnostic-5c371a5a-chungus2.txt`
+Raw stdout:
+`reports/bench-results/berlekamp-diagnostic-a1fdbd81-chungus2.txt`
 (SHA-256
-`c79c0167c402c714fbd664e3157236fc5aa1f426a67f83b9f1250a5e5135c364`).
+`76f28eb9e779f4672a3138c8167de2d6849b28a899609bff19227a378151af52`).
 
 ## Concerns
 
-- Rabin and DDF remain hundreds of times slower than FLINT at the upper
-  comparator rungs.
-- The profile is a targeted compiled diagnostic, not a fresh sampling-profiler
+- Rabin and DDF remain the largest finite-field gaps to FLINT.
+- The profile is a targeted compiled diagnostic, not a sampling-profiler
   trace.
-- The benchmark models fit these deterministic fixed-prime fixtures; they are
-  not claims about every polynomial distribution.
+- The benchmark fixtures establish these ladders, not every polynomial
+  distribution.

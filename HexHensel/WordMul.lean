@@ -27,30 +27,30 @@ variable {m : UInt64}
 /-- Dense addition over a full-word Montgomery ring, with a native array
 kernel behind the exact Lean contract. -/
 @[expose, extern "lean_hex_word_poly_add"]
-def add (ctx : _root_.MontCtx m)
-    (a b : DensePoly (WordMod ctx)) : DensePoly (WordMod ctx) :=
+def add (ctx : @& _root_.MontCtx m)
+    (a b : @& DensePoly (WordMod ctx)) : DensePoly (WordMod ctx) :=
   a + b
 
 /-- Dense subtraction over a full-word Montgomery ring, with a native array
 kernel behind the exact Lean contract. -/
 @[expose, extern "lean_hex_word_poly_sub"]
-def sub (ctx : _root_.MontCtx m)
-    (a b : DensePoly (WordMod ctx)) : DensePoly (WordMod ctx) :=
+def sub (ctx : @& _root_.MontCtx m)
+    (a b : @& DensePoly (WordMod ctx)) : DensePoly (WordMod ctx) :=
   a - b
 
 /-- Dense multiplication over a full-word Montgomery ring.  The Lean body is
 the exact logical contract; `lean_hex_word_poly_mul` is its allocation-light
 runtime implementation. -/
 @[expose, extern "lean_hex_word_poly_mul"]
-def mul (ctx : _root_.MontCtx m)
-    (a b : DensePoly (WordMod ctx)) : DensePoly (WordMod ctx) :=
+def mul (ctx : @& _root_.MontCtx m)
+    (a b : @& DensePoly (WordMod ctx)) : DensePoly (WordMod ctx) :=
   a * b
 
 /-- Sum of two dense products over a full-word Montgomery ring.  The native
 kernel fuses both convolutions and the final addition into one output pass. -/
 @[expose, extern "lean_hex_word_poly_mul_add"]
-def mulAdd (ctx : _root_.MontCtx m)
-    (a b c d : DensePoly (WordMod ctx)) : DensePoly (WordMod ctx) :=
+def mulAdd (ctx : @& _root_.MontCtx m)
+    (a b c d : @& DensePoly (WordMod ctx)) : DensePoly (WordMod ctx) :=
   a * b + c * d
 
 /-- The packed runtime kernel has the ordinary dense product as its logical

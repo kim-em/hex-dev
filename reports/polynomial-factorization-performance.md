@@ -1,224 +1,170 @@
 # Polynomial Factorization Performance
 
 This is the current performance snapshot for the polynomial-factorization
-stack. It aggregates the current claims in the individual headline
-reports.
+stack.
 
 ## Measurement environment
 
-- Revision: `5c371a5abb85ca6ef6510ec60888f3048db71719`
-- Date: 2026-07-28
-- Host: `chungus2`, AMD EPYC 9455, 48 physical cores / 96 CPUs, Linux x86-64
+- Hex revision: `a1fdbd81ef038faa41765fb39a79cd083109c8ed`
+- Hex date: 2026-07-29
+- External-comparator date/revision: 2026-07-28 / `5c371a5a`
+- Host: `chungus2`, AMD EPYC 9455, Linux x86-64
 - Lean: `leanprover/lean4:v4.32.0-rc1`
 - External libraries: python-flint 0.9.0; PARI/GP 2.17.3 through
-  cypari2 2.2.4; NTL 11.6.0; Isabelle2025-2 with AFP 2026-05-29;
-  GHC 9.10.3
-- External toolchains: transient nixpkgs environments; setup and AFP export
-  builds are excluded from the timed service calls
-- CPU placement: every timing command was pinned with `taskset -c 0`
-- Parametric method: three independent outer trials; reported values are
-  per-rung medians
-- Fixed method: five repeats with a 0.2 s inner-repeat floor
-- Corpus method: 10 s per-call cutoff, median of five when the first call was
-  below one second, otherwise one call; no family was terminated early
+  cypari2 2.2.4; NTL 11.6.0; Isabelle2025-2 with AFP 2026-05-29
+- CPU placement: all timing commands pinned with `taskset -c 0`
+- Corpus: 392 instances, SHA-256
+  `619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`,
+  10-second cutoff, no early termination
 
-The benchmark exports say `5c371a5-dirty` because this refresh changes the
-benchmark registrations and reports in the same worktree. The measured library
-revision is the full hash above.
+The FLINT, PARI/GP, NTL, and Isabelle corpus services were already current and
+were not rerun because this revision changes only Hex. Their exports use the
+same host, corpus, CPU, and persistent-line protocol as the fresh Hex sweep.
+Exact paired ratios are reported only where those conditions match.
 
-The evidence was rebased for integration onto `980aa6cb`. Audited intervening
-factorization changes were naming/proof refactors plus a faster
-square-root-bounded `isPrimeTrial`. That speedup affects constant-polynomial
-checks and the extended prime-selection walk that nonconstant inputs can reach;
-the committed measurements are therefore conservative for that path. The
-later Array/Vector module-boundary shims redirect compiled equality and `ofFn`
-back to the core implementations. The dispatcher shape, corpus, and benchmark
-protocol were unchanged.
+Fresh lean-bench exports record a dirty worktree because the borrowed-argument
+ownership fix and refreshed evidence were pending commit. The full recorded
+hash identifies the implementation base; direct execution includes the
+borrowed-argument fix. The rejected pre-fix Hensel run is not retained.
 
-## Headline results
+## Headline outcome
 
-### Finite-field factorization
+The verified hot-path work makes the public dispatcher 2.70× faster at the
+solved-row median (1.244 ms to 460.392 µs) and faster on 359 of 371 rows shared
+with the preceding Hex record. Public Hex now solves 373 of 392 rows, two more
+than the no-decline classical entry point.
 
-| Target | Declared model | Largest rung | Median | Verdict |
-|---|---|---:|---:|---|
-| Berlekamp matrix | `n²` | 192 | 10.776 ms | consistent |
-| Rabin irreducibility | `n³` | 64 | 44.256 ms | consistent |
-| Berlekamp factorization | `n²` | 256 | 3.388 ms | consistent |
-| Distinct-degree factorization | `n³` | 96 | 186.132 ms | consistent |
+Against verified Isabelle BZ, the overhead-filtered eligible-row median falls
+from 3.95× to 1.09× Hex/Isabelle. Hex wins 108 eligible rows and Isabelle 126,
+so this is near parity rather than an aggregate Hex victory. FLINT, PARI/GP,
+and NTL remain much faster overall.
 
-At the largest matched comparator rungs, Rabin took 87.445 ms in Lean
-versus 0.211 ms in FLINT (`413.8x` Lean/FLINT), and distinct-degree
-factorization took 380.479 ms versus 0.533 ms (`714.5x` Lean/FLINT).
-These fixed-rung values differ from the parametric headline because the fixed
-fixtures and timing wrappers are deliberately paired with FLINT.
+## Integer-factorization corpus
 
-### Finite-field polynomial substrate
-
-| Target | Declared model | Largest rung | Median | Verdict |
-|---|---|---:|---:|---|
-| Frobenius `X` mod | `n³` | 80 | 295.793 ms | inconclusive |
-| GCD | `n²` | 256 | 44.938 µs | inconclusive; observed faster |
-| Weighted product | `n²` | 4096 | 664.360 ms | consistent |
-| Square-free decomposition | `n²` | 768 | 6.638 ms | consistent |
-| Frobenius power mod | `n³` | 64 | 338.979 ms | consistent |
-| Power mod monic | `n² log n` | 512 | 149.547 ms | consistent |
-| Division mod | `n²` | 256 | 975.082 µs | consistent |
-| Modular composition | `n³` | 192 | 368.882 ms | consistent |
-
-### Hensel lifting
-
-| Target | Declared model | Largest rung | Median | Verdict |
-|---|---|---:|---:|---|
-| Reduce mod `p` | `n` | 131072 | 10.073 ms | consistent |
-| Lift to `Z` | `n` | 131072 | 2.661 ms | consistent |
-| Reduce mod `p^k` | `n` | 131072 | 10.431 ms | consistent |
-| Linear Hensel step | `n²` | 512 | 15.077 ms | consistent |
-| Iterated linear lift | `n²k` | `(192,64)` | 145.228 ms | inconclusive |
-| Quadratic Hensel step | `n²` | 512 | 128.731 ms | consistent |
-| Polynomial product | `n²` | 1024 | 159.670 ms | consistent |
-| Linear multifactor lift | `n²k` | `(192,64)` | 141.179 ms | inconclusive |
-| Quadratic multifactor lift | `n² log k` | `(192,64)` | 145.140 ms | consistent |
-
-The persistent python-flint driver is no longer dominated by process startup.
-At `n=512`, a single linear step was 27.256 ms in Hex and 11.445 ms in
-FLINT (`0.42x` FLINT/Hex); a quadratic step was 225.867 ms versus
-5.168 ms (`0.02x`). The iterated comparator is an `fmpz_poly` emulation
-because python-flint does not bind the native `nmod_poly_hensel_lift_*`
-entry points. At `(n=256,k=8)` that emulation was slower than Hex:
-1.067 s versus 53.016 ms for the iterated linear surface, 695.342 ms
-versus 28.382 ms for linear multifactor lifting, and 648.198 ms versus
-80.566 ms for quadratic multifactor lifting. Those ratios describe the
-emulation, not native FLINT Hensel performance.
-
-### Integer factorization
-
-The eight scaling ladders all complete, but their current classical BHKS
-upper-bound models are too loose for the measured fixtures, so their verdicts
-are inconclusive rather than failed.
-
-| Target | Largest rung | Median |
-|---|---:|---:|
-| Public factorization | 24 | 2.254 ms |
-| Fallback probe | 24 | 3.042 ms |
-| Degree/height | `(6,32)` | 527.560 µs |
-| Fast-path precision/local factors | `(8,32,128,8)` | 3.284 ms |
-| Slow factorization | 4 | 14.116 µs |
-| Slow degree/height | `(3,8)` | 62.709 µs |
-| Public compare domain | 4 | 140.490 µs |
-| Slow compare domain | 4 | 26.528 µs |
-
-Canonical fixtures are fixed benchmarks, not singleton scaling ladders:
-
-| Fixture / operation | Median | Min–max |
-|---|---:|---:|
-| `X⁴ + 1`, public factorization | 98.628 µs | 97.007–99.922 µs |
-| `X⁴ + 1`, fast setup | 18.227 µs | 18.040–18.350 µs |
-| `(X²-2)(X²-3)`, public factorization | 27.154 µs | 27.086–27.546 µs |
-| `Phi_15`, public factorization | 205.705 µs | 201.817–326.834 µs |
-| `Phi_15`, fast setup | 18.315 µs | 18.076–18.758 µs |
-| `SD_3`, modular split | 8.122 µs | 7.840–8.545 µs |
-| `SD_3`, lattice factorization | 2.596 ms | 2.569–2.617 ms |
-| `SD_4`, lattice factorization | 34.266 ms | 34.025–37.491 ms |
-
-The registration shape matters: the previous one-point parametric form could
-be constant-folded to nanoseconds and could not produce a scaling verdict.
-The current fixed registrations call opaque IO wrappers and passed `verify`.
-
-## Corpus frontier
-
-The committed corpus now contains 392 instances with SHA-256
-`619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`.
-
-| System | OK | Timeout | Median of solved rows | 90th percentile | Slowest solved |
+| System | OK | Timeout | Median | p90 | Slowest solved |
 |---|---:|---:|---:|---:|---:|
-| Hex public factor | 371 | 21 | 1.244 ms | 24.831 ms | 5.016 s |
-| Hex lattice | 365 | 27 | 2.258 ms | 99.293 ms | 9.540 s |
-| Hex classical, no decline | 371 | 21 | 1.008 ms | 12.708 ms | 4.032 s |
+| Hex public factor | 373 | 19 | 460.392 µs | 9.191 ms | 9.747 s |
+| Hex lattice | 366 | 26 | 1.864 ms | 89.351 ms | 9.612 s |
+| Hex classical, no decline | 371 | 21 | 424.409 µs | 9.484 ms | 3.918 s |
 | FLINT | 391 | 1 | 66.850 µs | 1.184 ms | 1.228 s |
 | PARI/GP | 391 | 1 | 99.958 µs | 1.254 ms | 823.201 ms |
 | NTL | 391 | 1 | 135.631 µs | 2.714 ms | 1.919 s |
 | Verified Isabelle BZ | 371 | 21 | 441.134 µs | 5.128 ms | 8.363 s |
 | Verified Isabelle LLL | 314 | 78 | 6.109 ms | 1.219 s | 9.528 s |
 
-Every current factor-degree check against the corpus oracle passed. The seven
-Hoeij-Zimmermann rows without a committed degree oracle retain their earlier
-combined cross-system agreement; in the current records, FLINT, PARI/GP, and
-NTL also agree on their factor counts.
+Every returned Hex factor-degree multiset with a committed corpus oracle
+matched it. Hex times out on every Hoeij-Zimmermann row, so it contributes no
+new factor-count result on the seven rows without a committed oracle; the
+retained FLINT, PARI/GP, and NTL results agree there.
 
-The corpus values are service wall-clock times; protocol overhead is recorded
-but not subtracted. For ratios, a row is eligible only when both medians are at
-least ten times the larger measured overhead of the pair. On the 247 eligible
-rows solved by both Hex public factorization and verified Isabelle BZ, the
-per-row `Hex/Isabelle` ratio has median `3.95x` (10th–90th percentile
-`0.64x–12.76x`); Hex is faster on 46 rows and Isabelle on 201. There are 369
-common solved rows before that signal filter. See
-`bz-vs-isabelle-investigation.md` for the corresponding
-lattice/verified-LLL comparison and caveats.
+With both sides at least 10× above protocol overhead:
 
-## Kernel and tactic sample
+| Pair | Eligible | Median | p10–p90 | First faster | Second faster |
+|---|---:|---:|---:|---:|---:|
+| Hex public / Isabelle BZ | 234 | 1.09× | 0.48×–3.60× | 108 | 126 |
+| Hex classical / Isabelle BZ | 231 | 1.26× | 0.50×–3.39× | 92 | 139 |
+| Hex lattice / Isabelle LLL | 228 | 0.15× | 0.004×–2.55× | 175 | 53 |
+| Hex public / Hex classical | 237 | 1.008× | — | 105 | 132 |
 
-Fresh-module import baselines were 1.212 s for the Mathlib-free factorization
-entry points and 4.624 s for the certificate umbrella.
+Public dispatch is almost neutral on common eligible rows while adding
+`sd5_x_phi45` and `sd6`. The old pattern—classical nearly always winning—was
+mostly repeated setup and avoidable hot-path work, not the intrinsic price of
+the verified public API.
 
-| Case | Direct kernel factorization | `factor_poly` | `irreducibility` |
-|---|---:|---:|---:|
-| `quartic_a4` | 2.347 s | 4.912 s | 4.513 s |
-| `cyclo_phi5` | 1.422 s | 3.712 s | 3.690 s |
-| `xpow6_minus1` | 2.342 s | 3.654 s | not applicable |
-| `sd2` | 1.929 s | provider decline | provider decline |
+## Hensel lifting
 
-These are end-to-end fresh Lake module times, not kernel-only timings. The
-signed baseline deltas are in the raw artifact. The multi-prime
-`quartic_a4` replay completed for both linear and incremental Rabin checkers;
-the incremental checker was faster on three of four cases, including both
-degree-two cases.
+| Target | Largest rung | Median | Previous | Change |
+|---|---:|---:|---:|---:|
+| Linear step | 512 | 15.089 ms | 15.077 ms | 1.00× |
+| Quadratic step | 512 | 8.681 ms | 128.731 ms | 14.8× faster |
+| Iterated linear | `(192,64)` | 142.543 ms | 145.228 ms | 1.02× faster |
+| Linear multifactor | `(192,64)` | 143.939 ms | 141.179 ms | 0.98× |
+| Quadratic multifactor | `(192,64)` | 89.522 ms | 145.140 ms | 1.62× faster |
 
-## Current diagnostic profiles
+The packed UInt64/Montgomery polynomial kernels provide the large quadratic
+gain while transparent Lean definitions retain the proof surface. Required
+borrow annotations keep repeated quadratic runs flat at 65–69 MiB RSS. See
+`hex-hensel-performance.md` for the complete nine-target table.
 
-The compiled Berlekamp diagnostic shows that rebuilding the kernel per basis
-vector remains the avoidable cost on split families. At degree 24, the
-rebuilding baseline was 16.077 ms, the shared-kernel baseline was 1.280 ms,
-and the fixed shared-kernel path was 577.347 µs. The fixed-path attribution
-was 18.18% matrix construction, 2.84% nullspace, and 78.99% witness splitting.
-Caching reduced witnesses gave essentially no benefit on the split degree-24
-case (465.380 versus 465.231 µs) and only a modest benefit on `SD_4`
-(262.950 versus 237.623 µs).
+## Finite-field layers
 
-The classical product spike found no meaningful advantage from balanced
-product construction on its current fixtures. At degree 24, sequential and
-balanced Mignotte schedules were 8.834 ms and 8.807 ms; at the fixed
-`k=4` schedule they were 2.840 ms and 2.818 ms.
+| Target | Largest rung | Median | Verdict |
+|---|---:|---:|---|
+| Berlekamp matrix | 192 | 10.791 ms | consistent |
+| Rabin irreducibility | 64 | 43.606 ms | consistent |
+| Berlekamp factorization | 256 | 3.271 ms | consistent |
+| Distinct-degree factorization | 96 | 187.058 ms | consistent |
 
-The hybrid seam completed `SD_5` in 134.197 ms through the classical tier.
-`SD_6` took 9.858 s, reached the lattice tier, declined, and returned the
-irreducible fallback. The lattice core itself took 9.158 s on `SD_6`.
-In the corpus service, public factorization timed out on `SD_6` while the
-isolated lattice entry point completed in 8.855 s.
+The finite-field factorization headlines are within 2% of the preceding
+record. The retained Rabin/DDF FLINT exports include Hex timings from
+`5c371a5a`; they show the external gap historically but are not relabelled as
+exact current-Hex pairs. The same caveat applies to retained Hensel/FLINT
+exports: current Hex values above are paired only with their prior Hex record.
 
-## Artifacts
+The refreshed `HexPolyFp` upper rungs are 297.714 ms for Frobenius `X`,
+45.104 µs for GCD, 659.711 ms for weighted product, 6.569 ms for square-free
+decomposition, 339.451 ms for Frobenius power, 148.786 ms for power mod,
+960.070 µs for division, and 372.371 ms for modular composition. An A/B/A
+control rejected an initially contaminated sample before this export.
 
-Current durable exports:
+## Fixed integer fixtures
 
-- `hex-berlekamp-5c371a5a-chungus2.json`
-- `hex-berlekamp-rabin-compare-5c371a5a-chungus2.json`
-- `hex-berlekamp-ddf-compare-5c371a5a-chungus2.json`
-- `hex-poly-fp-5c371a5a-chungus2.json`
-- `hex-hensel-5c371a5a-chungus2.json`
-- five `hex-hensel-*-flint-5c371a5a-chungus2.json` comparator exports
-- `hex-berlekamp-zassenhaus-parametric-5c371a5a-chungus2.json`
-- `hex-berlekamp-zassenhaus-fixed-5c371a5a-chungus2.json`
-- `hexbz-factor-sweep-hex-5c371a5a-chungus2.json`
-- `hexbz-factor-sweep-flint-5c371a5a-chungus2.json`
-- `hexbz-factor-sweep-pari-5c371a5a-chungus2.json`
-- `hexbz-factor-sweep-ntl-5c371a5a-chungus2.json`
-- `hexbz-factor-sweep-isabelle-bz-5c371a5a-chungus2.json`
-- `hexbz-factor-sweep-isabelle-lll-5c371a5a-chungus2.json`
-- `hexbz-kernel-factor-5c371a5a-chungus2.json`
-- `berlekamp-diagnostic-5c371a5a-chungus2.txt` (SHA-256
-  `c79c0167c402c714fbd664e3157236fc5aa1f426a67f83b9f1250a5e5135c364`)
-- `bz-spikes-5c371a5a-chungus2.txt` (SHA-256
-  `fe2c873c73ba29bb7f5193aac976691483505880803cdc0429cb09f1d7b21f1b`)
+| Fixture / operation | Median | Previous |
+|---|---:|---:|
+| `X⁴ + 1`, public | 30.569 µs | 98.628 µs |
+| `(X²-2)(X²-3)`, public | 28.735 µs | 27.154 µs |
+| `Phi_15`, public | 90.301 µs | 205.705 µs |
+| `SD_3`, modular split | 8.420 µs | 8.122 µs |
+| `SD_3`, lattice | 1.613 ms | 2.596 ms |
+| `SD_4`, lattice | 29.580 ms | 34.266 ms |
 
-All paths are relative to `reports/bench-results/`. Commit-named exports from
-older revisions are retained for historical comparisons, but only the files
-listed above support this current snapshot.
+The parametric public degree-24 rung is 2.261 ms. All eight parametric BZ
+ladders complete, though their deliberately conservative BHKS models remain
+inconclusive on these small fixtures.
+
+## Kernel and diagnostic evidence
+
+Fresh-module factorization import baseline is 877.587 ms and certificate
+baseline is 6.243 s. Direct kernel factorization takes 1.316 s on `quartic_a4`,
+1.058 s on `cyclo_phi5`, and 1.614 s on `xpow6_minus1`; all expected checks
+complete within 30 seconds with zero unexpected errors. Direct kernel times
+improve over the preceding record, but the certificate umbrella and tactic
+totals regress by about 35%; `hexbz-kernel-factor.md` records both sides.
+
+At split degree 24, the compiled Berlekamp diagnostic records 16.387 ms for a
+kernel-rebuilding baseline, 1.245 ms with the kernel shared, and 569.224 µs for
+the fixed path. The fixed path is 18.89% matrix, 2.95% nullspace, and 78.17%
+witness split. Balanced product construction remains neutral.
+
+The single-shot hybrid seam reaches `SD_5` in 96.895 ms through the classical
+tier and `SD_6` in 9.087 s after a lattice decline; the lattice core alone
+takes 8.492 s. In the persistent corpus service, public `sd6` completes in
+9.163 s—only 8.4% below the cutoff, so that frontier result has little margin.
+
+## Six presentation graphs
+
+- [Combined cactus](figures/hexbz-cactus-combined.svg)
+- [Cyclotomic-products cactus](figures/hexbz-cactus-cyclotomic-products.svg)
+- [Random-products runtime by degree](figures/hexbz-runtime-degree-random-products.svg)
+- [Swinnerton-Dyer cactus](figures/hexbz-cactus-swinnerton-dyer.svg)
+- [Swinnerton-Dyer runtime by degree](figures/hexbz-runtime-degree-swinnerton-dyer.svg)
+- [Hoeij-Zimmermann cactus](figures/hexbz-cactus-hoeij-zimmermann.svg)
+
+## Current artifacts
+
+Fresh Hex exports under `reports/bench-results/`:
+
+- `hex-poly-fp-a1fdbd81-chungus2.json`
+- `hex-berlekamp-a1fdbd81-chungus2.json`
+- `hex-hensel-a1fdbd81-chungus2.json`
+- `hex-berlekamp-zassenhaus-parametric-a1fdbd81-chungus2.json`
+- `hex-berlekamp-zassenhaus-fixed-a1fdbd81-chungus2.json`
+- `hexbz-factor-sweep-hex-a1fdbd81-chungus2.json`
+- `hexbz-kernel-factor-a1fdbd81-chungus2.json`
+- `berlekamp-diagnostic-a1fdbd81-chungus2.txt`
+- `bz-spikes-a1fdbd81-chungus2.txt`
+
+Unchanged external corpus exports retain their `5c371a5a` filenames: FLINT,
+PARI, NTL, and Isabelle BZ/LLL. The two Berlekamp/FLINT and five Hensel/FLINT
+exports also remain available, but their Hex half belongs to `5c371a5a` and is
+used only as historical paired evidence.

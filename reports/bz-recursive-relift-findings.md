@@ -1,26 +1,24 @@
 # Recursive Relift Findings
 
 The prior prototype timings in this report were retired during the
-2026-07-28 refresh because they described older code paths. The current
+2026-07-29 refresh because they described older code paths. The current
 production performance evidence is:
 
-- public factorization at split-family rung 24: 2.254 ms;
-- fallback probe at rung 24: 3.042 ms;
+- public factorization at split-family rung 24: 2.261 ms;
+- fallback probe at rung 24: 1.950 ms;
 - fast-path `(degree,height,precision,local factors)=(8,32,128,8)`:
-  3.284 ms;
-- fixed `SD_3` lattice factorization: 2.596 ms;
-- fixed `SD_4` lattice factorization: 34.266 ms.
+  1.669 ms;
+- fixed `SD_3` lattice factorization: 1.613 ms;
+- fixed `SD_4` lattice factorization: 29.580 ms.
 
-All values are at revision `5c371a5abb85ca6ef6510ec60888f3048db71719`,
+All values are at revision `a1fdbd81ef038faa41765fb39a79cd083109c8ed`,
 measured on `chungus2` with CPU 0 pinned.
-The exports record `5c371a5-dirty` because the benchmark registrations and
-reports were being repaired in the same worktree; the measured library revision
-is the full hash above.
+The exports identify the full measured implementation revision above.
 
 The raw data is in:
 
-- `reports/bench-results/hex-berlekamp-zassenhaus-parametric-5c371a5a-chungus2.json`;
-- `reports/bench-results/hex-berlekamp-zassenhaus-fixed-5c371a5a-chungus2.json`.
+- `reports/bench-results/hex-berlekamp-zassenhaus-parametric-a1fdbd81-chungus2.json`;
+- `reports/bench-results/hex-berlekamp-zassenhaus-fixed-a1fdbd81-chungus2.json`.
 
 The active dispatcher and lattice seam are summarized in
 `bz-classical-spike-findings.md`. Historical recursive-relift prototype

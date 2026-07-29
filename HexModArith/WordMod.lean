@@ -177,7 +177,11 @@ private theorem sub_mul_word_mod (M w X : Nat) (hM : 0 < M) (hXM : X ≤ M) :
     exact (Nat.mod_eq_of_lt (by rw [← hAB]; exact hylt)).symm
 
 /-- Residues modulo an odd `m < 2^64`, stored in Montgomery form. `val` is the
-Montgomery representative; the represented residue is `ctx.fromMont val`. -/
+Montgomery representative; the represented residue is `ctx.fromMont val`.
+
+The packed native polynomial kernels rely on proof erasure leaving `val` as
+the sole runtime constructor field. Any new data-bearing field requires a
+matching FFI update and native cross-check. -/
 structure WordMod {m : UInt64} (ctx : _root_.MontCtx m) where
   /-- Montgomery-form representative. -/
   val : UInt64

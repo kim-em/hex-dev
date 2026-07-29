@@ -203,11 +203,14 @@ runtime model is a `Nat` paired with a proof — every operation
 routes through GMP arbitrary-precision arithmetic. `ZMod64 p`
 exists to put the value in a `UInt64` and route every operation
 through native machine arithmetic, with `mul`, `pow`, and `inv` going through
-the mandatory C externs above. `add` and `sub` also retain transparent logical
-bodies while compiled calls use scalar C externs; these implement conditional
-word addition/subtraction directly and avoid allocating Lean carry pairs in
-polynomial coefficient loops. The runtime and logical bodies agree for the
-full bounded-modulus range, including operands near `UInt64`'s upper limit.
+the mandatory C externs above.
+
+The separate full-word `WordMod` surface retains transparent logical bodies
+for `addModWord` and `subModWord` while compiled calls use scalar C externs.
+These implement conditional word addition/subtraction directly and avoid
+allocating Lean carry pairs in polynomial coefficient loops. The runtime and
+logical bodies agree for the full word-modulus range, including operands near
+`UInt64`'s upper limit.
 
 ## External comparators
 
