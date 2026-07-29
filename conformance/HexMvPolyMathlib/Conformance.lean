@@ -7,14 +7,14 @@ Authors: Kim Morrison
 import HexMvPolyMathlib
 
 /-!
-Deterministic randomized cross-checks between `Hex.MvPoly` and Mathlib's
-`MvPolynomial`.
+Bridge-import regression checks for `Hex.MvPoly`.
 
-The generator deliberately includes duplicate monomials, zero coefficients,
-and mixed signs. Each seeded case constructs the two representations
-independently from the same term streams, then compares arithmetic,
-evaluation, differentiation, homogeneous projection, and renaming under lex,
-grlex, and grevlex storage orders.
+The executable guards ensure that importing the Mathlib companion does not
+change the production arithmetic selected by notation. The theorem-level
+checks exercise the public transport surface under lex, grlex, and grevlex.
+They are API and instance-coherence checks, not an independent randomized
+oracle: the independently computed randomized coverage lives in the core
+conformance stream and its SymPy oracle.
 -/
 
 namespace HexMvPolyMathlib.Conformance
@@ -24,129 +24,74 @@ open scoped HexMvPolyMathlib
 open Hex
 open Hex.MvPoly
 
-private def word (seed i : Nat) : Nat :=
-  (1664525 * (seed + 1013904223) + 22695477 * (i + 1)) % 4294967291
+private abbrev P := MvPoly 2 Int Mono.lex
 
-private def randomMono (seed i : Nat) : Mono 3 :=
-  let source := if i % 5 = 0 then 0 else i
-  Hex.Vector.ofFn' fun j => word (seed + 17 * source) j.val % 6
+private def p : P :=
+  ofTerms [(#v[2, 0], 3), (#v[0, 1], -2), (Mono.zero, 5)]
 
-private def randomCoeff (seed i : Nat) : Int :=
-  (Int.ofNat (word (seed + 31) i % 13)) - 6
+private def q : P :=
+  ofTerms [(#v[2, 0], -3), (#v[1, 1], 4), (Mono.zero, 7)]
 
-private def randomTerms (seed count : Nat) : List (Mono 3 × Int) :=
-  (List.range count).map fun i =>
-    (randomMono seed i, randomCoeff seed i)
+private def point : Fin 2 → Int := fun i => if i = 0 then 2 else -1
 
-private noncomputable def mathOfTerms
-    (terms : List (Mono 3 × Int)) : MvPolynomial (Fin 3) Int :=
-  terms.foldl
-    (fun p term =>
-      p + MvPolynomial.monomial (monoEquiv term.1) term.2)
-    0
+#guard (p + q).termCount = 3
+#guard coeff #v[2, 0] (p + q) = 0
+#guard coeff #v[1, 1] (p + q) = 4
+#guard coeff Mono.zero (p + q) = 12
+#guard p ^ 2 == p * p
+#guard eval point (p * q) = eval point p * eval point q
+#guard derivative 0 p = ofTerms [(#v[1, 0], 6)]
+#guard homogeneousComponent 2 p = ofTerms [(#v[2, 0], 3)]
 
-private def hexLeft
+private theorem transportSurface
     (cmp : Mono 3 → Mono 3 → Ordering)
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
-    (seed : Nat) : MvPoly 3 Int cmp :=
-  ofTerms (randomTerms (7 * seed + 3) 9)
+    (a b : MvPoly 3 Int cmp) :
+    toMvPolynomial (a + b) =
+        toMvPolynomial a + toMvPolynomial b ∧
+      toMvPolynomial (a * b) =
+        toMvPolynomial a * toMvPolynomial b ∧
+      toMvPolynomial (a - b) =
+        toMvPolynomial a - toMvPolynomial b ∧
+      toMvPolynomial (a ^ 3) = toMvPolynomial a ^ 3 ∧
+      eval (fun i => #[2, -1, 3][i]) a =
+        MvPolynomial.aeval (fun i => #[2, -1, 3][i])
+          (toMvPolynomial a) ∧
+      toMvPolynomial (derivative 1 a) =
+        MvPolynomial.pderiv 1 (toMvPolynomial a) ∧
+      toMvPolynomial (homogeneousComponent 5 a) =
+        MvPolynomial.homogeneousComponent 5
+          (toMvPolynomial a) ∧
+      toMvPolynomial
+          (rename (cmp := cmp) Mono.grevlex
+            (fun i : Fin 3 =>
+              if i = 1 then (1 : Fin 2) else 0) a) =
+        MvPolynomial.rename
+          (fun i : Fin 3 =>
+            if i = 1 then (1 : Fin 2) else 0)
+          (toMvPolynomial a) := by
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · exact toMvPolynomial_add a b
+  · exact toMvPolynomial_mul a b
+  · exact toMvPolynomial_sub a b
+  · exact toMvPolynomial_pow a 3
+  · rw [← aeval_eq_eval, aeval_apply]
+  · exact toMvPolynomial_derivative 1 a
+  · exact toMvPolynomial_homogeneousComponent 5 a
+  · exact toMvPolynomial_rename
+      (fun i : Fin 3 =>
+        if i = 1 then (1 : Fin 2) else 0) a
 
-private def hexRight
-    (cmp : Mono 3 → Mono 3 → Ordering)
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
-    (seed : Nat) : MvPoly 3 Int cmp :=
-  ofTerms (randomTerms (11 * seed + 5) 8)
+example (a b : MvPoly 3 Int Mono.lex) : True := by
+  have _ := transportSurface Mono.lex a b
+  trivial
 
-private noncomputable def mathLeft (seed : Nat) :
-    MvPolynomial (Fin 3) Int :=
-  mathOfTerms (randomTerms (7 * seed + 3) 9)
+example (a b : MvPoly 3 Int Mono.grlex) : True := by
+  have _ := transportSurface Mono.grlex a b
+  trivial
 
-private noncomputable def mathRight (seed : Nat) :
-    MvPolynomial (Fin 3) Int :=
-  mathOfTerms (randomTerms (11 * seed + 5) 8)
-
-private def point : Fin 3 → Int := fun i => #[2, -1, 3][i]
-
-private def renameTarget : Fin 3 → Fin 2 := fun i =>
-  if i = 1 then 1 else 0
-
-private noncomputable def Agrees
-    (cmp : Mono 3 → Mono 3 → Ordering)
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
-    (seed : Nat) : Prop :=
-  let p := hexLeft cmp seed
-  let q := hexRight cmp seed
-  let pMath := mathLeft seed
-  let qMath := mathRight seed
-  toMvPolynomial p = pMath ∧
-  toMvPolynomial q = qMath ∧
-  toMvPolynomial (p + q) = pMath + qMath ∧
-  toMvPolynomial (p * q) = pMath * qMath ∧
-  toMvPolynomial (p - q) = pMath - qMath ∧
-  toMvPolynomial (p ^ 3) = pMath ^ 3 ∧
-  eval point p = MvPolynomial.aeval point pMath ∧
-  toMvPolynomial (derivative 1 p) = MvPolynomial.pderiv 1 pMath ∧
-  toMvPolynomial (homogeneousComponent 5 p) =
-    MvPolynomial.homogeneousComponent 5 pMath ∧
-  toMvPolynomial (rename (cmp := cmp) Mono.grevlex renameTarget p) =
-    MvPolynomial.rename renameTarget pMath
-
-private theorem checkCase
-    (cmp : Mono 3 → Mono 3 → Ordering)
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
-    (seed : Nat) : Agrees cmp seed := by
-  let p := hexLeft cmp seed
-  let q := hexRight cmp seed
-  let pMath := mathLeft seed
-  let qMath := mathRight seed
-  have hp : toMvPolynomial p = pMath := by
-    simpa [p, pMath, hexLeft, mathLeft, mathOfTerms] using
-      (toMvPolynomial_ofTerms (cmp := cmp)
-        (randomTerms (7 * seed + 3) 9))
-  have hq : toMvPolynomial q = qMath := by
-    simpa [q, qMath, hexRight, mathRight, mathOfTerms] using
-      (toMvPolynomial_ofTerms (cmp := cmp)
-        (randomTerms (11 * seed + 5) 8))
-  unfold Agrees
-  change
-    toMvPolynomial p = pMath ∧
-    toMvPolynomial q = qMath ∧
-    toMvPolynomial (p + q) = pMath + qMath ∧
-    toMvPolynomial (p * q) = pMath * qMath ∧
-    toMvPolynomial (p - q) = pMath - qMath ∧
-    toMvPolynomial (p ^ 3) = pMath ^ 3 ∧
-    eval point p = MvPolynomial.aeval point pMath ∧
-    toMvPolynomial (derivative 1 p) = MvPolynomial.pderiv 1 pMath ∧
-    toMvPolynomial (homogeneousComponent 5 p) =
-      MvPolynomial.homogeneousComponent 5 pMath ∧
-    toMvPolynomial (rename (cmp := cmp) Mono.grevlex renameTarget p) =
-      MvPolynomial.rename renameTarget pMath
-  refine ⟨hp, hq, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-  · rw [toMvPolynomial_add, hp, hq]
-  · rw [toMvPolynomial_mul, hp, hq]
-  · rw [toMvPolynomial_sub, hp, hq]
-  · rw [toMvPolynomial_pow, hp]
-  · rw [← aeval_eq_eval, aeval_apply, hp]
-  · rw [toMvPolynomial_derivative, hp]
-  · rw [toMvPolynomial_homogeneousComponent, hp]
-  · rw [toMvPolynomial_rename, hp]
-
-private theorem checkSeeds
-    (cmp : Mono 3 → Mono 3 → Ordering)
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :
-    (List.range 24).Forall (Agrees cmp) := by
-  rw [List.forall_iff_forall_mem]
-  intro seed _
-  exact checkCase cmp seed
-
-private theorem lex_agrees : (List.range 24).Forall (Agrees Mono.lex) :=
-  checkSeeds Mono.lex
-
-private theorem grlex_agrees : (List.range 24).Forall (Agrees Mono.grlex) :=
-  checkSeeds Mono.grlex
-
-private theorem grevlex_agrees :
-    (List.range 24).Forall (Agrees Mono.grevlex) :=
-  checkSeeds Mono.grevlex
+example (a b : MvPoly 3 Int Mono.grevlex) : True := by
+  have _ := transportSurface Mono.grevlex a b
+  trivial
 
 end HexMvPolyMathlib.Conformance

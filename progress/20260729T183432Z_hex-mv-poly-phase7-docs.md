@@ -13,8 +13,9 @@
   verification, and contribution sections.
 - Built both README quickstarts exactly as written.
 - Built the new chapter and the full `HexManual` aggregator successfully.
-- Rechecked the released-repository manifest and recorded Phase 7 completion
-  for both libraries.
+- Rechecked that the released-repository manifest remains valid and unchanged;
+  HexMvPoly is still an unreleased monorepo library. Recorded Phase 7
+  completion for both libraries.
 
 ## Current frontier
 

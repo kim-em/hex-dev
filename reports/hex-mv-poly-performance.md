@@ -50,8 +50,14 @@ migrations and builds are reproducible with
 - `leanprover/sos` at `4e52845513a5a7f70927c96e094592db1bf124d1`
   was migrated through a compatibility module aliasing its old canonical
   multivariate types to `Hex.MvPoly`. `SOS.Certificate`, `SOS.EqElim`,
-  `SOS.Symmetry`, and `SOS.Verifier` all built as explicit `.olean` targets in
-  a fresh clone (1,523 jobs), without consumer-local Grind instances.
+  `SOS.Symmetry`, `SOS.Verifier`, and `SOS.Tactic` all built as explicit
+  `.olean` targets in a fresh clone. `SOSTest.Examples` also elaborated as an
+  explicit `.olean` target, replaying its `by sos`, `by sos?`, and pinned
+  `sos_witness` examples through the kernel verifier; the complete acceptance
+  build passed all 1,545 jobs. The compatibility
+  module supplies a low-priority `DecidableEq` from `LawfulBEq`, matching the
+  implication that the former CompPoly representation supplied; it adds no
+  Grind instances.
 - `Verified-zkEVM/CompPoly` at
   `f4c59f9e6a00b4e73f3e43ca362480468a508011` was migrated to the public
   `isEmptyRingEquiv`, `finSuccEquiv`, and dense-polynomial bridges.

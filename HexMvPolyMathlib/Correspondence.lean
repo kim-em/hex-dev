@@ -73,7 +73,8 @@ private theorem foldl_max_eq_sup {α : Type*} [DecidableEq α]
     [CommSemiring R] [DecidableEq R]
     (i : Fin n) (p : MvPoly n R cmp) :
     degreeOf i p = MvPolynomial.degreeOf i (toMvPolynomial p) := by
-  unfold degreeOf foldTerms
+  rw [degreeOf_eq]
+  unfold foldTerms
   rw [Std.ExtTreeMap.foldl_eq_foldl_toList]
   rw [← List.foldl_map]
   change
@@ -113,7 +114,8 @@ theorem monoDegree_eq_sum (m : Mono n) :
     [CommSemiring R] [DecidableEq R]
     (p : MvPoly n R cmp) :
     totalDegree p = MvPolynomial.totalDegree (toMvPolynomial p) := by
-  unfold totalDegree foldTerms
+  rw [totalDegree_eq]
+  unfold foldTerms
   rw [Std.ExtTreeMap.foldl_eq_foldl_toList]
   rw [← List.foldl_map]
   change

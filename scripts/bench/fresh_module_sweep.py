@@ -1639,6 +1639,57 @@ def summarize(
                 else None
             )
 
+        for pair in spec.pairs:
+            workload_control = pair.metadata.get("workload_control")
+            if not isinstance(workload_control, str):
+                continue
+            if workload_control not in rows:
+                raise RuntimeError(
+                    f"{pair.name}: unknown workload control "
+                    f"{workload_control!r}"
+                )
+            control_by_round = {
+                int(sample["round"]): sample
+                for sample in rows[workload_control]
+            }
+            reference_net: list[int] = []
+            candidate_net: list[int] = []
+            for sample in rows[pair.name]:
+                round_index = int(sample["round"])
+                control = control_by_round.get(round_index)
+                if control is None:
+                    raise RuntimeError(
+                        f"{pair.name}: workload control "
+                        f"{workload_control!r} has no round {round_index}"
+                    )
+                reference_value = (
+                    int(sample["reference_workload_wall_nanos"])
+                    - int(control["reference_workload_wall_nanos"])
+                )
+                candidate_value = (
+                    int(sample["candidate_workload_wall_nanos"])
+                    - int(control["candidate_workload_wall_nanos"])
+                )
+                sample["reference_net_workload_wall_nanos"] = reference_value
+                sample["candidate_net_workload_wall_nanos"] = candidate_value
+                reference_net.append(reference_value)
+                candidate_net.append(candidate_value)
+            median_reference_net = int(statistics.median(reference_net))
+            median_candidate_net = int(statistics.median(candidate_net))
+            result = summary[pair.name]
+            result["workload_control"] = workload_control
+            result["median_reference_net_workload_wall_nanos"] = (
+                median_reference_net
+            )
+            result["median_candidate_net_workload_wall_nanos"] = (
+                median_candidate_net
+            )
+            result["reference_over_candidate_net_workload_ratio"] = (
+                median_reference_net / median_candidate_net
+                if median_reference_net > 0 and median_candidate_net > 0
+                else None
+            )
+
     controls: list[dict[str, object]] = []
     for pair in spec.pairs:
         result = summary[pair.name]
@@ -1724,6 +1775,32 @@ def summarize(
                 result["workload_ratio_resolution"] = "noise-limited"
             else:
                 result["workload_ratio_resolution"] = "resolved"
+        if "median_reference_net_workload_wall_nanos" in result:
+            workload_control = str(result["workload_control"])
+            control_result = summary[workload_control]
+            pair_envelope = result["comparable_null_envelope_nanos"]
+            control_envelope = control_result.get(
+                "comparable_null_envelope_nanos"
+            )
+            if pair_envelope is None or control_envelope is None:
+                result["net_workload_noise_envelope_nanos"] = None
+                result["net_workload_ratio_resolution"] = (
+                    "no-comparable-control"
+                )
+            else:
+                net_envelope = int(pair_envelope) + int(control_envelope)
+                result["net_workload_noise_envelope_nanos"] = net_envelope
+                if (
+                    int(result["median_reference_net_workload_wall_nanos"])
+                    <= net_envelope
+                    or int(
+                        result["median_candidate_net_workload_wall_nanos"]
+                    )
+                    <= net_envelope
+                ):
+                    result["net_workload_ratio_resolution"] = "noise-limited"
+                else:
+                    result["net_workload_ratio_resolution"] = "resolved"
         budget_ms = pair.metadata.get("tactic_budget_ms")
         if budget_ms is not None:
             budget_nanos = int(budget_ms) * 1_000_000

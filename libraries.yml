@@ -113,9 +113,9 @@ libraries:
         - tool: "CompPoly CMvPolynomial"
           class: informational
           rationale: "CompPoly uses the same ExtTreeMap representation behind a Mathlib-dependent API; the comparison records integration and implementation overhead rather than gating release."
-        - tool: "Mathlib MvSparsePoly"
+        - tool: "canonical sorted-list MvSparsePoly proxy"
           class: informational
-          rationale: "MvSparsePoly uses a structurally different sorted-list representation aimed at kernel reflection; the comparison decides whether a second kernel-specialized representation is justified."
+          rationale: "The pinned Mathlib revision has no MvSparsePoly, so a local canonical sorted-list proxy records compiled throughput for the alternative algorithmic shape. The native comparison is informational; only the registered kernel proof probes can decide whether a second representation is justified."
       input_families:
         - name: sparse-addition
           description: Disjoint and interleaved sparse supports across lexicographic, graded lexicographic, and graded reverse lexicographic order.
@@ -416,7 +416,7 @@ libraries:
     proof_probes: [bench/HexMvPolyMathlib/ProofProbe]
     phase4:
       comparators:
-        - tool: "Mathlib MvSparsePoly"
+        - tool: "canonical sorted-list MvSparsePoly proxy"
           class: informational
           rationale: "Mathlib MvSparsePoly is not yet available in the pinned Mathlib revision, so a local canonical sorted-list proxy with linear merge addition and balanced translated-row multiplication is used to decide whether HexMvPoly needs a second representation."
       input_families:

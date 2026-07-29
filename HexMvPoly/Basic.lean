@@ -264,23 +264,6 @@ def addMonomial [Add R] [BEq R] [LawfulBEq R]
         split <;> simp_all
       · exact p.nonzeroInternal k }
 
-/-- Map stored coefficients without changing the support. The proof
-argument records that nonzero values remain nonzero. -/
-def mapCoeffs (p : MvPoly n R cmp) (f : R → R)
-    (hf : ∀ c, c ≠ 0 → f c ≠ 0) : MvPoly n R cmp where
-  termsInternal := p.termsInternal.map fun _ c => f c
-  nonzeroInternal := by
-    intro m
-    rw [Std.ExtTreeMap.getElem?_map]
-    cases hcoeff : p.termsInternal[m]? with
-    | none => simp
-    | some c =>
-      have hc : c ≠ 0 := by
-        intro hzero
-        apply p.nonzeroInternal m
-        simpa [hzero] using hcoeff
-      simpa using hf c hc
-
 end Representation
 
 /-- Build a polynomial by summing duplicate monomials and dropping all

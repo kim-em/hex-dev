@@ -435,6 +435,14 @@ def equiv [CommSemiring R] [DecidableEq R] :
     (equiv (cmp := cmp)).symm p = ofMvPolynomial (cmp := cmp) p := by
   rfl
 
+end CoherentEquality
+
+end
+
+section CoherentEquality
+
+variable [BEq R] [LawfulBEq R]
+
 /-! # Transported Mathlib algebraic structures -/
 
 /-- Natural casts are executable constant polynomials. -/
@@ -484,11 +492,45 @@ theorem toMvPolynomial_nsmul [CommSemiring R] [DecidableEq R]
 /-- Mathlib's commutative-semiring structure, transported along the exact
 representation equivalence while retaining every executable operation. -/
 instance instCommSemiringMvPoly [CommSemiring R] [DecidableEq R] :
-    CommSemiring (MvPoly n R cmp) :=
-  Function.Injective.commSemiring toMvPolynomial toMvPolynomial_injective
-    toMvPolynomial_zero toMvPolynomial_one toMvPolynomial_add
-    toMvPolynomial_mul toMvPolynomial_nsmul toMvPolynomial_pow
-    toMvPolynomial_natCast
+    CommSemiring (MvPoly n R cmp) where
+  add := fun p q => p + q
+  add_assoc := Hex.MvPoly.add_assoc
+  zero := 0
+  zero_add := Hex.MvPoly.zero_add
+  add_zero := Hex.MvPoly.add_zero
+  nsmul := fun k p => C (k : R) * p
+  nsmul_zero p := by
+    apply toMvPolynomial_injective
+    rw [toMvPolynomial_nsmul, toMvPolynomial_zero]
+    simp
+  nsmul_succ k p := by
+    apply toMvPolynomial_injective
+    rw [toMvPolynomial_nsmul, toMvPolynomial_add,
+      toMvPolynomial_nsmul]
+    simp [_root_.add_mul]
+  add_comm := Hex.MvPoly.add_comm
+  mul := fun p q => p * q
+  mul_assoc := Hex.MvPoly.mul_assoc
+  one := 1
+  one_mul := Hex.MvPoly.one_mul
+  mul_one := Hex.MvPoly.mul_one
+  npow := fun k p => Hex.MvPoly.npowBySq p k
+  npow_zero p := by
+    change Hex.MvPoly.npowBySq p 0 = 1
+    rw [Hex.MvPoly.npowBySq]
+  npow_succ k p := Hex.MvPoly.pow_succ p k
+  zero_mul := Hex.MvPoly.zero_mul
+  mul_zero := Hex.MvPoly.mul_zero
+  left_distrib := Hex.MvPoly.mul_add
+  right_distrib := Hex.MvPoly.add_mul
+  natCast := fun k => C (k : R)
+  natCast_zero := by
+    apply toMvPolynomial_injective
+    simp [toMvPolynomial_C, toMvPolynomial_zero]
+  natCast_succ k := by
+    apply toMvPolynomial_injective
+    simp [toMvPolynomial_C, toMvPolynomial_add, Nat.cast_succ]
+  mul_comm := Hex.MvPoly.mul_comm
 
 /-- Forward conversion preserves coefficientwise negation. -/
 @[simp] theorem toMvPolynomial_neg [CommRing R] [DecidableEq R]
@@ -539,12 +581,43 @@ theorem toMvPolynomial_zsmul [CommRing R] [DecidableEq R]
 /-- Mathlib's commutative-ring structure, transported along the exact
 representation equivalence while retaining every executable operation. -/
 instance instCommRingMvPoly [CommRing R] [DecidableEq R] :
-    CommRing (MvPoly n R cmp) :=
-  Function.Injective.commRing toMvPolynomial toMvPolynomial_injective
-    toMvPolynomial_zero toMvPolynomial_one toMvPolynomial_add
-    toMvPolynomial_mul toMvPolynomial_neg toMvPolynomial_sub
-    toMvPolynomial_nsmul toMvPolynomial_zsmul toMvPolynomial_pow
-    toMvPolynomial_natCast toMvPolynomial_intCast
+    CommRing (MvPoly n R cmp) where
+  __ := instCommSemiringMvPoly
+  neg := fun p => -p
+  sub := fun p q => p - q
+  zsmul := fun z p => C (z : R) * p
+  sub_eq_add_neg p q := by
+    apply toMvPolynomial_injective
+    rw [toMvPolynomial_sub, toMvPolynomial_add, toMvPolynomial_neg]
+    exact sub_eq_add_neg _ _
+  zsmul_zero' p := by
+    apply toMvPolynomial_injective
+    rw [toMvPolynomial_zsmul, toMvPolynomial_zero]
+    simp
+  zsmul_succ' k p := by
+    apply toMvPolynomial_injective
+    rw [toMvPolynomial_zsmul, toMvPolynomial_add,
+      toMvPolynomial_zsmul]
+    simp [_root_.add_mul]
+  zsmul_neg' k p := by
+    apply toMvPolynomial_injective
+    rw [toMvPolynomial_zsmul, toMvPolynomial_neg,
+      toMvPolynomial_zsmul]
+    simp [_root_.add_mul, neg_mul, neg_add_rev, _root_.add_comm]
+  neg_add_cancel p := by
+    apply toMvPolynomial_injective
+    rw [toMvPolynomial_add, toMvPolynomial_neg, toMvPolynomial_zero]
+    simp
+  intCast := fun z => C (z : R)
+  intCast_ofNat k := by
+    apply toMvPolynomial_injective
+    rw [toMvPolynomial_C, toMvPolynomial_natCast]
+    simp
+  intCast_negSucc k := by
+    apply toMvPolynomial_injective
+    rw [toMvPolynomial_C, toMvPolynomial_neg,
+      toMvPolynomial_natCast]
+    simp
 
 /-- Executable constant polynomials packaged as a ring homomorphism. -/
 def constantHom [CommSemiring R] [DecidableEq R] :
@@ -602,7 +675,7 @@ construction. -/
 
 /-- The exact representation equivalence as an equivalence of
 `R`-algebras. -/
-def algEquiv [CommSemiring R] [DecidableEq R] :
+noncomputable def algEquiv [CommSemiring R] [DecidableEq R] :
     MvPoly n R cmp ≃ₐ[R] MvPolynomial (Fin n) R :=
   AlgEquiv.ofRingEquiv (f := equiv) fun r => by
     rw [algebraMap_apply, MvPolynomial.algebraMap_eq,
@@ -633,7 +706,5 @@ example (p q : MvPoly n Rat Mono.lex) :
   simp
 
 end InstanceCoherence
-
-end
 
 end HexMvPolyMathlib

@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -31,6 +33,66 @@ def replace_exact(path: Path, old: str, new: str) -> None:
 def clone(url: str, revision: str, destination: Path) -> None:
     run(["git", "clone", url, str(destination)])
     run(["git", "checkout", "--detach", revision], destination)
+
+
+def configure_nix_sos_native_libs(destination: Path) -> None:
+    """Teach the pinned SOS/CSDP lakefiles about Nix-store native libraries."""
+    if not sys.platform.startswith("linux"):
+        return
+    standard_dirs = tuple(
+        Path(path)
+        for path in (
+            "/usr/lib/x86_64-linux-gnu",
+            "/usr/lib/aarch64-linux-gnu",
+            "/usr/lib64",
+            "/usr/lib",
+        )
+    )
+    requirements = ("liblapack.so", "libblas.so", "libgfortran.so.5")
+    if all(any((directory / name).exists() for directory in standard_dirs)
+           for name in requirements):
+        return
+
+    store = Path("/nix/store")
+    matches = {
+        name: sorted(store.glob(f"*/lib/{name}")) if store.is_dir() else []
+        for name in requirements
+    }
+    if not all(matches.values()):
+        # Leave the upstream dependency check intact so it reports the normal
+        # apt/dnf instructions rather than hiding a genuinely missing library.
+        return
+    library_dirs = sorted({paths[0].parent for paths in matches.values()})
+    current_library_path = os.environ.get("LD_LIBRARY_PATH")
+    os.environ["LD_LIBRARY_PATH"] = os.pathsep.join(
+        [*(path.as_posix() for path in library_dirs)]
+        + ([current_library_path] if current_library_path else [])
+    )
+    link_entries = "".join(f'      "-L{path.as_posix()}",\n' for path in library_dirs)
+    check_entries = "".join(f'  "{path.as_posix()}",\n' for path in library_dirs)
+
+    replace_exact(
+        destination / "lakefile.lean",
+        '    #["-L/usr/lib/x86_64-linux-gnu",',
+        f"    #[{link_entries}"
+        '      "-L/usr/lib/x86_64-linux-gnu",',
+    )
+    csdp_lakefile = destination / ".lake" / "packages" / "CSDP" / "lakefile.lean"
+    replace_exact(
+        csdp_lakefile,
+        '    #[ "-L/usr/lib/x86_64-linux-gnu",',
+        f"    #[{link_entries}"
+        '      "-L/usr/lib/x86_64-linux-gnu",',
+    )
+    replace_exact(
+        csdp_lakefile,
+        "def linuxLibDirs : Array FilePath := #[\n",
+        "def linuxLibDirs : Array FilePath := #[\n" + check_entries,
+    )
+    print(
+        "configured SOS/CSDP Nix native library directories: "
+        + ", ".join(path.as_posix() for path in library_dirs)
+    )
 
 
 def prepare_sos(destination: Path, hex_root: Path, toolchain: str) -> None:
@@ -146,6 +208,7 @@ def main() -> int:
     if not args.skip_update:
         run(["lake", "update"], sos)
         run(["lake", "update"], comp_poly)
+        configure_nix_sos_native_libs(sos)
     if not args.skip_build:
         if args.skip_update:
             raise RuntimeError("--skip-build is required together with --skip-update")
@@ -157,6 +220,8 @@ def main() -> int:
                 "+SOS.EqElim:olean",
                 "+SOS.Symmetry:olean",
                 "+SOS.Verifier:olean",
+                "+SOS.Tactic:olean",
+                "+SOSTest.Examples:olean",
             ],
             sos,
         )

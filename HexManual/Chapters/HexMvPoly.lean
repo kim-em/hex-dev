@@ -196,8 +196,7 @@ abbrev P := MvPoly 2 Int Mono.lex
 def x : P := X 0
 def y : P := X 1
 def p : P :=
-  add (add (npowBySq x 2) (mul (mul (C 2) x) y))
-    (C 3)
+  x ^ 2 + (C 2 * x) * y + C 3
 
 #guard p.termCount = 3
 #guard p.coeff #v[2, 0] = 1
@@ -205,7 +204,7 @@ def p : P :=
 #guard p.totalDegree = 2
 #guard eval (fun i => if i = 0 then 2 else 5) p = 27
 #guard derivative 0 p =
-  add (mul (C 2) x) (mul (C 2) y)
+  C 2 * x + C 2 * y
 
 end HexMvPolyChapter
 ```

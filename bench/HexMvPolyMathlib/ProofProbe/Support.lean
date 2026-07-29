@@ -78,15 +78,28 @@ def ofTerms [Zero R] [Add R] [DecidableEq R]
     (cmp : Mono n → Mono n → Ordering := Mono.lex) : Poly n R cmp :=
   ⟨terms.foldl (insert cmp) []⟩
 
-/-- Wrap a term stream already sorted by `cmp` with distinct keys.
+/-- Whether a term stream has strictly increasing, hence distinct, keys. -/
+def strictlyOrdered
+    (cmp : Mono n → Mono n → Ordering := Mono.lex) :
+    List (Mono n × R) → Bool
+  | [] | [_] => true
+  | first :: second :: rest =>
+      cmp first.1 second.1 == .lt &&
+        strictlyOrdered cmp (second :: rest)
 
-The controlled proof and native benchmark corpora satisfy that precondition;
-zero coefficients are still discarded defensively in one linear pass. This
-constructor is intentionally not for arbitrary user input. -/
-def ofSortedTerms [Zero R] [DecidableEq R]
+/-- Use the linear construction path for an already sorted term stream.
+
+Zero coefficients are discarded first. A checked fallback through `ofTerms`
+keeps the proxy canonical if a benchmark corpus ever violates its advertised
+strict-order precondition. -/
+def ofSortedTerms [Zero R] [Add R] [DecidableEq R]
     (terms : List (Mono n × R))
     (cmp : Mono n → Mono n → Ordering := Mono.lex) : Poly n R cmp :=
-  ⟨terms.filter fun term => term.2 != 0⟩
+  let filtered := terms.filter fun term => term.2 != 0
+  if strictlyOrdered cmp filtered then
+    ⟨filtered⟩
+  else
+    ofTerms filtered cmp
 
 instance [Zero R] : Zero (Poly n R cmp) where
   zero := ⟨[]⟩
@@ -137,8 +150,9 @@ def mergeRows [Zero R] [Add R] [DecidableEq R]
   | 0, rows => rows.foldl (merge cmp) []
   | fuel + 1, rows => mergeRows cmp fuel (mergeRound cmp rows)
 
-/-- Produce sorted translated rows and combine them in balanced merge rounds. -/
-def mul [Zero R] [Add R] [Mul R] [DecidableEq R]
+/-- Produce sorted translated rows and combine them in balanced merge rounds.
+Translation preserves row order because `cmp` is a monomial order. -/
+def mul [Zero R] [Add R] [Mul R] [DecidableEq R] [IsMonomialOrder cmp]
     (p q : Poly n R cmp) : Poly n R cmp :=
   let rows :=
     p.terms.map fun left =>
@@ -146,11 +160,13 @@ def mul [Zero R] [Add R] [Mul R] [DecidableEq R]
         (Mono.mul left.1 right.1, left.2 * right.2)
   ⟨mergeRows cmp rows.length rows⟩
 
-instance [Zero R] [Add R] [Mul R] [DecidableEq R] : Mul (Poly n R cmp) where
+instance [Zero R] [Add R] [Mul R] [DecidableEq R] [IsMonomialOrder cmp] :
+    Mul (Poly n R cmp) where
   mul := mul
 
 /-- Linear-power helper used only by the structural substitution probe. -/
 def pow [Zero R] [One R] [Add R] [Mul R] [DecidableEq R]
+    [IsMonomialOrder cmp]
     (p : Poly n R cmp) : Nat → Poly n R cmp
   | 0 => 1
   | exponent + 1 =>
@@ -178,6 +194,7 @@ def rename [Zero R] [Add R] [DecidableEq R]
 
 /-- Evaluate one source monomial under a polynomial substitution. -/
 def substMonomial [Zero R] [One R] [Add R] [Mul R] [DecidableEq R]
+    [IsMonomialOrder targetCmp]
     (g : Fin n → Poly k R targetCmp) (m : Mono n) (coefficient : R) :
     Poly k R targetCmp :=
   (List.finRange n).foldl
@@ -187,6 +204,7 @@ def substMonomial [Zero R] [One R] [Add R] [Mul R] [DecidableEq R]
 
 /-- Polynomial substitution for the collision probe. -/
 def subst [Zero R] [One R] [Add R] [Mul R] [DecidableEq R]
+    [IsMonomialOrder targetCmp]
     (g : Fin n → Poly k R targetCmp) (p : Poly n R cmp) : Poly k R targetCmp :=
   p.terms.foldl
     (fun acc term =>
@@ -254,6 +272,66 @@ def patternedMono8 (size i salt : Nat) : Mono 8 :=
       (patternedMono size i salt)[j4]
     else 0
 
+/-! Every proof-probe stream takes the intended linear sorted-input path. -/
+
+example : Sorted.strictlyOrdered Mono.lex
+    (intTerms 32 73 fun i => axisMono (0 : Fin 4) i) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.lex
+    (intTerms 32 79 fun i => axisMono (0 : Fin 4) (32 + i)) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.lex
+    (intTerms 32 83 fun i => axisMono (1 : Fin 4) (2 * i)) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.lex
+    (intTerms 32 89 fun i => axisMono (1 : Fin 4) (2 * i + 1)) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.grevlex
+    (intTerms 32 97 scatteredMono8) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.grevlex
+    (intTerms 32 101 fun i => scatteredMono8 (32 + i)) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.grlex
+    (intTerms 6 103 (patternedMono8 6 · 3)) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.grlex
+    (intTerms 6 107 (patternedMono8 6 · 5)) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.grevlex
+    (fracTerms 8 109 (axisMono (0 : Fin 8))) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.grevlex
+    (fracTerms 8 113 (axisMono (0 : Fin 8))) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.lex
+    (intTerms 6 37 (axisMono (0 : Fin 4))) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.lex
+    (fracTerms 6 43 (axisMono (0 : Fin 4))) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.grevlex
+    (intTerms 4 59 (patternedMono 4 · 3)) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.grevlex
+    (intTerms 4 61 (patternedMono 4 · 7)) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.grevlex
+    (intTerms 4 67 (patternedMono 4 · 11)) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.grevlex
+    (intTerms 3 59 (patternedMono 3 · 3)) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.grevlex
+    (intTerms 3 61 (patternedMono 3 · 7)) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.grevlex
+    (intTerms 3 67 (patternedMono 3 · 11)) := by
+  decide +kernel
+example : Sorted.strictlyOrdered Mono.grlex
+    (intTerms 8 53 (collisionMono 8)) := by
+  decide +kernel
+
 /-- Shared integer axis-support input in the production representation. -/
 def hexAxisInt (size : Nat) (axis : Fin 4) (salt : Nat) : HexInt :=
   ofTerms (intTerms size salt (axisMono axis))
@@ -270,53 +348,103 @@ def sortedAxisInt (size : Nat) (axis : Fin 4) (salt : Nat) : SortedInt :=
 def sortedAxisRat (size : Nat) (axis : Fin 4) (salt : Nat) : SortedRat :=
   Sorted.ofSortedTerms (fracTerms size salt (axisMono axis))
 
+/-- Four inputs for the separated and interleaved addition cases. -/
+structure AdditionInputs (P : Type) where
+  separatedLeft : P
+  separatedRight : P
+  interleavedLeft : P
+  interleavedRight : P
+
+/-- Lexicographic production inputs, shared by construction and arithmetic
+probes so their construction cost can be measured separately. -/
+def hexAdditionLexInputs (size : Nat) : AdditionInputs HexInt where
+  separatedLeft :=
+    ofTerms (intTerms size 73 fun i => axisMono 0 i)
+  separatedRight :=
+    ofTerms (intTerms size 79 fun i => axisMono 0 (size + i))
+  interleavedLeft :=
+    ofTerms (intTerms size 83 fun i => axisMono 1 (2 * i))
+  interleavedRight :=
+    ofTerms (intTerms size 89 fun i => axisMono 1 (2 * i + 1))
+
+/-- Matching lexicographic sorted-list inputs. -/
+def sortedAdditionLexInputs (size : Nat) : AdditionInputs SortedInt where
+  separatedLeft :=
+    Sorted.ofSortedTerms (intTerms size 73 fun i => axisMono 0 i)
+  separatedRight :=
+    Sorted.ofSortedTerms (intTerms size 79 fun i => axisMono 0 (size + i))
+  interleavedLeft :=
+    Sorted.ofSortedTerms (intTerms size 83 fun i => axisMono 1 (2 * i))
+  interleavedRight :=
+    Sorted.ofSortedTerms (intTerms size 89 fun i => axisMono 1 (2 * i + 1))
+
+/-- Greater-arity grevlex production inputs. -/
+def hexAdditionGrevlexInputs (size : Nat) :
+    Grevlex8.HexInt × Grevlex8.HexInt :=
+  (ofTerms (intTerms size 97 scatteredMono8),
+    ofTerms (intTerms size 101 fun i => scatteredMono8 (size + i)))
+
+/-- Matching greater-arity grevlex sorted-list inputs. -/
+def sortedAdditionGrevlexInputs (size : Nat) :
+    Grevlex8.SortedInt × Grevlex8.SortedInt :=
+  (Sorted.ofSortedTerms
+      (intTerms size 97 scatteredMono8) Mono.grevlex,
+    Sorted.ofSortedTerms
+      (intTerms size 101 fun i => scatteredMono8 (size + i))
+      Mono.grevlex)
+
 /-- A lexicographic addition workload covering separated and interleaved
 supports in the production representation. -/
 def hexAdditionLex (size : Nat) : Prop :=
-  let separatedLeft : HexInt :=
-    ofTerms (intTerms size 73 fun i => axisMono 0 i)
-  let separatedRight : HexInt :=
-    ofTerms (intTerms size 79 fun i => axisMono 0 (size + i))
-  let interleavedLeft : HexInt :=
-    ofTerms (intTerms size 83 fun i => axisMono 1 (2 * i))
-  let interleavedRight : HexInt :=
-    ofTerms (intTerms size 89 fun i => axisMono 1 (2 * i + 1))
-  separatedLeft + separatedRight = separatedRight + separatedLeft ∧
-    interleavedLeft + interleavedRight =
-      interleavedRight + interleavedLeft
+  let input := hexAdditionLexInputs size
+  input.separatedLeft + input.separatedRight =
+      input.separatedRight + input.separatedLeft ∧
+    input.interleavedLeft + input.interleavedRight =
+      input.interleavedRight + input.interleavedLeft
 
 /-- The matching lexicographic addition workload in the sorted comparator. -/
 def sortedAdditionLex (size : Nat) : Prop :=
-  let separatedLeft : SortedInt :=
-    Sorted.ofSortedTerms (intTerms size 73 fun i => axisMono 0 i)
-  let separatedRight : SortedInt :=
-    Sorted.ofSortedTerms (intTerms size 79 fun i => axisMono 0 (size + i))
-  let interleavedLeft : SortedInt :=
-    Sorted.ofSortedTerms (intTerms size 83 fun i => axisMono 1 (2 * i))
-  let interleavedRight : SortedInt :=
-    Sorted.ofSortedTerms (intTerms size 89 fun i => axisMono 1 (2 * i + 1))
-  separatedLeft + separatedRight = separatedRight + separatedLeft ∧
-    interleavedLeft + interleavedRight =
-      interleavedRight + interleavedLeft
+  let input := sortedAdditionLexInputs size
+  input.separatedLeft + input.separatedRight =
+      input.separatedRight + input.separatedLeft ∧
+    input.interleavedLeft + input.interleavedRight =
+      input.interleavedRight + input.interleavedLeft
 
 /-- A greater-arity grevlex addition workload on deterministic scattered
 support in the production representation. -/
 def hexAdditionGrevlex (size : Nat) : Prop :=
-  let p : Grevlex8.HexInt :=
-    ofTerms (intTerms size 97 scatteredMono8)
-  let q : Grevlex8.HexInt :=
-    ofTerms (intTerms size 101 fun i => scatteredMono8 (size + i))
-  p + q = q + p
+  let input := hexAdditionGrevlexInputs size
+  input.1 + input.2 = input.2 + input.1
 
 /-- The matching greater-arity grevlex addition workload in the sorted
 comparator. -/
 def sortedAdditionGrevlex (size : Nat) : Prop :=
-  let p : Grevlex8.SortedInt :=
-    Sorted.ofSortedTerms (intTerms size 97 scatteredMono8) Mono.grevlex
-  let q : Grevlex8.SortedInt :=
-    Sorted.ofSortedTerms
-      (intTerms size 101 fun i => scatteredMono8 (size + i)) Mono.grevlex
-  p + q = q + p
+  let input := sortedAdditionGrevlexInputs size
+  input.1 + input.2 = input.2 + input.1
+
+/-- Construction-only production workload matched to `hexAdditionLex` and
+`hexAdditionGrevlex`. -/
+def hexAdditionInputs (size : Nat) : Prop :=
+  let lex := hexAdditionLexInputs size
+  let grevlex := hexAdditionGrevlexInputs size
+  lex.separatedLeft.termCount = size ∧
+    lex.separatedRight.termCount = size ∧
+    lex.interleavedLeft.termCount = size ∧
+    lex.interleavedRight.termCount = size ∧
+    grevlex.1.termCount = size ∧
+    grevlex.2.termCount = size
+
+/-- Construction-only sorted-list workload matched to the addition
+candidate. -/
+def sortedAdditionInputs (size : Nat) : Prop :=
+  let lex := sortedAdditionLexInputs size
+  let grevlex := sortedAdditionGrevlexInputs size
+  lex.separatedLeft.terms.length = size ∧
+    lex.separatedRight.terms.length = size ∧
+    lex.interleavedLeft.terms.length = size ∧
+    lex.interleavedRight.terms.length = size ∧
+    grevlex.1.terms.length = size ∧
+    grevlex.2.terms.length = size
 
 /-- Low-collision genuinely multivariate multiplication in the production
 representation. -/

@@ -281,11 +281,12 @@ and disappear when it lands. The comparison shim remains until
 
 The kernel replay closure is everything a certificate check touches:
 `Mono` operations, the comparator, `ExtTreeMap` lookup and `alter`,
-addition, multiplication, and the equality instance. Each is `@[expose]`,
-and a downstream module must carry a `decide +kernel` test that would
-fail if any of them stopped reducing. Anything outside that closure
-(`totalDegree`, `vars`, pretty-printing, the recursive view) does not
-need exposure and should not pay for it.
+arithmetic and equality, direct and Horner evaluation, substitution and
+partial evaluation, and the recursive view. Each is `@[expose]`, and a
+downstream module carries `decide +kernel` tests that fail if any of them
+stops reducing. Storage-order and reporting queries such as
+`totalDegree`, `vars`, and pretty-printing remain outside that closure
+and expose their behavior through characterizing lemmas instead.
 
 Operations whose kernel-friendly shape differs from the fast shape carry
 a `@[csimp]` pair, as `Hex.Array.ofFn'` does. Multiplication is the
@@ -536,7 +537,10 @@ outside the stored support.
 
 ## The Mathlib layer
 
-`hex-mv-poly-mathlib` proves:
+`hex-mv-poly-mathlib` proves the following. As in the computational API
+block, signatures here show the mathematical bounds and elide the
+primitive `[BEq R] [LawfulBEq R]` arguments that maintain coherent
+executable equality:
 
 ```lean
 def equiv [CommSemiring R] [DecidableEq R] :
@@ -717,9 +721,14 @@ implementation gets wrong:
 - monomial operations: `div` on the non-divisible case, `lcm` and `gcd`
   against pointwise max and min.
 
-The companion adds randomised comparison against Mathlib's
-`MvPolynomial (Fin n) R` through `equiv`, which is the strongest
-available check and needs no external oracle.
+The companion adds theorem-level transport and instance-coherence checks
+against Mathlib's `MvPolynomial (Fin n) R` through `equiv`. These check
+that the public correspondence API applies under lex, grlex, and grevlex
+and that importing the bridge does not replace executable notation with a
+noncomputable path. They are deliberately not described as an independent
+randomized oracle: Mathlib's representation is noncomputable. The core
+fixture stream and SymPy comparison provide the independent randomized
+coverage.
 
 ## Benchmarking
 
@@ -821,9 +830,9 @@ HexMvPolyMathlib.lean
         - tool: "CompPoly CMvPolynomial"
           class: informational
           rationale: "CompPoly uses the same ExtTreeMap representation behind a Mathlib-dependent API; the comparison records integration and implementation overhead rather than gating release."
-        - tool: "Mathlib MvSparsePoly"
+        - tool: "canonical sorted-list MvSparsePoly proxy"
           class: informational
-          rationale: "MvSparsePoly uses a structurally different sorted-list representation aimed at kernel reflection; the comparison decides whether a second kernel-specialized representation is justified."
+          rationale: "The pinned Mathlib revision has no MvSparsePoly, so a local canonical sorted-list proxy records compiled throughput for the alternative algorithmic shape. The native comparison is informational; only the registered kernel proof probes can decide whether a second representation is justified."
       input_families:
         - name: sparse-addition
           description: Disjoint and interleaved sparse supports across lexicographic, graded lexicographic, and graded reverse lexicographic order.
@@ -843,12 +852,18 @@ HexMvPolyMathlib.lean
     proof_probes: [bench/HexMvPolyMathlib/ProofProbe]
     phase4:
       comparators:
-        - tool: "Mathlib MvSparsePoly"
+        - tool: "canonical sorted-list MvSparsePoly proxy"
           class: informational
-          rationale: "The Mathlib sorted-list representation is the kernel-reflection comparator used to decide whether HexMvPoly needs a second representation."
+          rationale: "Mathlib MvSparsePoly is not yet available in the pinned Mathlib revision, so a local canonical sorted-list proxy with linear merge addition and balanced translated-row multiplication is used to decide whether HexMvPoly needs a second representation."
       input_families:
+        - name: kernel-sparse-addition
+          description: Disjoint, interleaved, and scattered supports checked under lex and grevlex, including an arity-eight case.
+        - name: kernel-sparse-multiplication
+          description: Low-collision integer and high-collision rational products checked across lex and arity-eight grevlex representations.
         - name: kernel-cancellation-identities
           description: Cancellation-heavy integer and rational identities checked from a downstream module with decide +kernel.
+        - name: kernel-structural-collisions
+          description: Rename and substitution identities whose distinct source terms collide in the destination support.
         - name: kernel-sos-certificates
           description: Representative sum-of-squares certificate identities checked from a downstream module with decide +kernel.
 ```

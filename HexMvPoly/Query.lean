@@ -8,7 +8,7 @@ module
 
 public import HexMvPoly.Operations
 
-@[expose] public section
+public section
 
 /-!
 Degree, variable, leading-term, and support-restriction queries for
@@ -30,6 +30,18 @@ def totalDegree [Zero R] (p : MvPoly n R cmp) : Nat :=
 /-- Maximum exponent of variable `i`, or zero for the zero polynomial. -/
 def degreeOf [Zero R] (i : Fin n) (p : MvPoly n R cmp) : Nat :=
   p.foldTerms (fun d m _ => max d (Mono.degreeOf i m)) 0
+
+/-- Total degree is the maximum monomial degree in ordered term iteration. -/
+theorem totalDegree_eq [Zero R] (p : MvPoly n R cmp) :
+    totalDegree p =
+      p.foldTerms (fun d m _ => max d (Mono.degree m)) 0 := by
+  rfl
+
+/-- Per-variable degree is the maximum exponent in ordered term iteration. -/
+theorem degreeOf_eq [Zero R] (i : Fin n) (p : MvPoly n R cmp) :
+    degreeOf i p =
+      p.foldTerms (fun d m _ => max d (Mono.degreeOf i m)) 0 := by
+  rfl
 
 /-- Coordinatewise maximum of all supported exponent vectors. -/
 def degrees [Zero R] (p : MvPoly n R cmp) : Mono n :=

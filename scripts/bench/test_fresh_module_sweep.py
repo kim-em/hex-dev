@@ -865,6 +865,74 @@ class PairingTests(unittest.TestCase):
             effect["workload_ratio_resolution"], "baseline-limited"
         )
 
+    def test_workload_control_is_subtracted_by_round(self) -> None:
+        baseline = sweep.ProbeModule("Probe.Baseline")
+        reference = sweep.ProbeModule("Probe.Reference")
+        candidate = sweep.ProbeModule("Probe.Candidate")
+        pairs = (
+            sweep.ProbePair(
+                "baseline", baseline, baseline, {}, null_control=True
+            ),
+            sweep.ProbePair(
+                "large-null", reference, reference, {}, null_control=True
+            ),
+            sweep.ProbePair("construction", reference, candidate, {}),
+            sweep.ProbePair(
+                "full",
+                reference,
+                candidate,
+                {"workload_control": "construction"},
+            ),
+        )
+        spec = sweep.SweepSpec(
+            description="construction subtraction",
+            pairs=pairs,
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+            import_baseline_control="baseline",
+        )
+
+        def row(
+            round_index: int, reference_wall: int, candidate_wall: int
+        ) -> dict[str, object]:
+            return {
+                "round": round_index,
+                "reference": {
+                    "wall_nanos": reference_wall,
+                    "peak_rss_kb": None,
+                },
+                "candidate": {
+                    "wall_nanos": candidate_wall,
+                    "peak_rss_kb": None,
+                },
+                "signed_wall_delta_nanos":
+                    candidate_wall - reference_wall,
+            }
+
+        rows = {
+            "baseline": [row(1, 100, 100), row(2, 120, 120)],
+            "large-null": [row(1, 600, 600), row(2, 620, 620)],
+            "construction": [row(1, 400, 300), row(2, 450, 350)],
+            "full": [row(1, 600, 400), row(2, 670, 470)],
+        }
+        with mock.patch.object(sweep, "artifact_sizes", return_value={}):
+            summary = sweep.summarize(spec, rows)
+        full = summary["full"]
+        self.assertEqual(full["workload_control"], "construction")
+        self.assertEqual(
+            full["median_reference_net_workload_wall_nanos"], 210
+        )
+        self.assertEqual(
+            full["median_candidate_net_workload_wall_nanos"], 110
+        )
+        self.assertAlmostEqual(
+            full["reference_over_candidate_net_workload_ratio"],
+            210 / 110,
+        )
+        self.assertEqual(full["net_workload_ratio_resolution"], "resolved")
+
     def test_null_controls_are_interpolated_by_build_magnitude(self) -> None:
         cheap = sweep.ProbeModule("Probe.Cheap")
         expensive = sweep.ProbeModule("Probe.Expensive")

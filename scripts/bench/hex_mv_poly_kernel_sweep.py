@@ -79,6 +79,18 @@ SPEC = SweepSpec(
             null_control=True,
         ),
         comparison(
+            "addition-inputs-32",
+            "HexAdditionInputs32",
+            "SortedAdditionInputs32",
+            "kernel-sparse-addition-construction",
+            32,
+            coefficient="Int",
+            arity=[4, 8],
+            comparator=["lex", "grevlex"],
+            support="matched construction-only control",
+            interpretation="construction-control",
+        ),
+        comparison(
             "addition-32",
             "HexAddition32",
             "SortedAddition32",
@@ -88,6 +100,7 @@ SPEC = SweepSpec(
             arity=[4, 8],
             comparator=["lex", "grevlex"],
             support="separated, interleaved, and scattered",
+            workload_control="addition-inputs-32",
         ),
         comparison(
             "multiplication-sparse-6",
@@ -168,8 +181,10 @@ SPEC = SweepSpec(
         ),
     ),
     probe_target="HexMvPolyMathlibProofProbe",
-    schema="hex-mv-poly-kernel-proof-probes-v2",
-    measurement="paired-fresh-module-olean-wall-import-subtracted-v2",
+    schema="hex-mv-poly-kernel-proof-probes-v3",
+    measurement=(
+        "paired-fresh-module-olean-wall-import-and-construction-subtracted-v3"
+    ),
     output_stem="hex-mv-poly-kernel",
     extra_sources=(
         Path("libraries.yml"),
