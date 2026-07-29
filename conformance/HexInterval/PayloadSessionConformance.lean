@@ -92,6 +92,7 @@ def limits : Propagator.Limits :=
     maxProposalItems := 2
     maxInstances := 2
     maxGeneration := 2
+    maxNodeDepth := 16
     maxEqualities := 2
     splitEndpointLimit :=
       { maxEndpointHeight := 8
@@ -257,7 +258,6 @@ def nestedPlan (request : RuleRequest Nat) : Plan Nat :=
         [.instantiate
           { key := 44
             triggers := [request.action.node]
-            claimedGeneration := 1
             nodes :=
               [{ domain := real
                  op := { index := 1 }
@@ -285,7 +285,6 @@ def nestedUsesPlan (request : RuleRequest Nat) : Plan Nat :=
         [.instantiate
           { key := 45
             triggers := [request.action.node]
-            claimedGeneration := 1
             nodes := []
             equalities :=
               [{ left := .existing (node 0)

@@ -335,9 +335,11 @@ def policyDriverTypecheck {PolicyState : Type}
   match Registry.buildWithin limits #[sharedPackage] with
   | .ok registry =>
       !registry.acceptsLimits program
-          { limits with maxDiagnosticValue := DispatchCode.requestMismatch - 1 } &&
+          { limits with maxDiagnosticValue := DispatchCode.requestMismatch - 1 }
+          arenaLimits &&
         registry.acceptsLimits program
           { limits with maxDiagnosticValue := DispatchCode.requestMismatch }
+          arenaLimits
   | .error _ => false
 
 #guard
