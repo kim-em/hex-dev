@@ -37,6 +37,7 @@ def bodyKey : RuleKey := { name := "payload-session.mystery.body" }
 def overflowKey : RuleKey := { name := "payload-session.mystery.overflow" }
 def recoverKey : RuleKey := { name := "payload-session.mystery.recover" }
 def lateExtraKey : RuleKey := { name := "payload-session.mystery.late-extra" }
+def lateMalformedKey : RuleKey := { name := "payload-session.mystery.late-malformed" }
 
 def sourceOperation : Operation :=
   { key := sourceOp, inputs := [], output := real }
@@ -196,7 +197,32 @@ def lateExtraPackage : Package Nat :=
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.statelessPlanned (registration lateExtraKey) lateExtraPlan] }
+      #[Handler.statelessPlanned (registration lateExtraKey) lateExtraPlan #[pairFormat]] }
+
+def lateMalformedPlan (request : RuleRequest Nat) : Plan Nat :=
+  if request.action.node == node 1 then
+    goodPlan request
+  else
+    match request.writes with
+    | [target] =>
+        { outcome :=
+            .success
+              [{ node := target, fact := 7, payload := payload 700 }]
+              [] {}
+          drafts :=
+            [{ label := payload 700
+               role := .fact
+               schema := 1
+               body := [4] }] }
+    | _ => { outcome := .failed 1, drafts := [] }
+
+def lateMalformedPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned (registration lateMalformedKey)
+          lateMalformedPlan #[pairFormat]] }
 
 def badReplyPlan (_request : RuleRequest Nat) : Plan Nat :=
   { outcome :=
@@ -566,6 +592,14 @@ def lateExtraArena : PayloadArena.Limits :=
     maxDraftCells := 4
     maxUses := 2 }
 
+def lateMalformedArena : PayloadArena.Limits :=
+  { arenaLimits with
+    maxEntries := 1
+    maxBodyCells := 2
+    maxDrafts := 1
+    maxDraftCells := 2
+    maxUses := 1 }
+
 def nestedUsesLimits : Propagator.Limits :=
   { limits with
     maxOutcomeCandidates := 0
@@ -932,6 +966,30 @@ def opaqueRun? : Option (PayloadSession.Run Nat) :=
             | _ => false
       | _ => false
   | .error _ => false
+
+-- Package-owned representation validation has the same precedence. After the
+-- first exact body fills the arena, the next locally bounded but malformed
+-- body is rejected by the selected replay snapshot rather than reported as
+-- fatal remaining-capacity exhaustion.
+#guard
+  match startWithin lateMalformedPackage oneReplyLimits lateMalformedArena with
+  | .ok session =>
+      match session.advance with
+      | .advanced first =>
+          first.arena.entries.size == 1 && first.arena.bodyCells == 2 &&
+            first.engine.history.size == 1 &&
+            match first.advance with
+            | .invalidPayload (.invalidBody key) rejected =>
+                key ==
+                    { rule := lateMalformedKey, role := .fact, schema := 1 } &&
+                  rejected.live && rejected.droppedWork && !rejected.complete &&
+                  rejected.arena.entries.size == 1 &&
+                  rejected.arena.bodyCells == 2 &&
+                  rejected.engine.history.size == 1 &&
+                  rejected.engine.metrics.ruleFailures == 1
+            | _ => false
+       | _ => false
+   | .error _ => false
 
 -- Completeness consumes the engine's exact admission plan. Here the two
 -- harmless splits fit, while a closure-relevant retry is the sole capacity

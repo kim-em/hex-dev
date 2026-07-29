@@ -1185,8 +1185,10 @@ The first executable arena uses an eager but prospective transaction:
 it preflights total-proposal work and the per-reply draft, draft-cell, atom,
 and schema limits, then matches package-local labels exactly against
 package-local drafts and checks duplicate, missing, extra, and wrong-role
-entries. Only a locally bounded, exactly covered reply is compared with
-remaining whole-arena entry and body-cell capacity, relocated to fresh global
+entries. The package-owned path next checks body representation with the
+immutable replay snapshot selected by the exact invocation. Only a locally
+bounded, exactly covered, format-valid reply is compared with remaining
+whole-arena entry and body-cell capacity, relocated to fresh global
 identifiers, and appended to a new arena value. Thus malformed local evidence
 cannot be classified as cumulative exhaustion merely because earlier valid
 replies filled part of the arena. Local preflight returns an opaque
