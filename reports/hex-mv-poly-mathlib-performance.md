@@ -24,6 +24,12 @@ canonical sorted-list MvSparsePoly proxy from
 `bench/HexMvPolyMathlib/ProofProbe/Support.lean`, with linear merge addition
 and balanced translated-row multiplication.
 
+Addition, cancellation, and SOS have matched construction-only modules. Their
+input-building costs are subtracted round by round after import subtraction,
+so a faster constructor cannot be reported as faster polynomial arithmetic.
+The threshold classifier then applies the interpolated null envelope to both
+arms of the resulting ratio.
+
 The companion surface also passes the pinned consumer acceptance described in
 `reports/hex-mv-poly-performance.md`: the full SOS tactic and example suite
 compile and replay their kernel-checked certificates, and CompPoly's
@@ -33,7 +39,7 @@ toolchain proof rewrite.
 ## Verdicts
 
 The release-quality sweep used clean commit
-`12cc25590c2eead26613704e2421822306faa943` on `chungus2` (AMD EPYC 9455,
+`77b76dd35be098a0bb4c5508306ba7957bb8d4b4` on `chungus2` (AMD EPYC 9455,
 x86-64 Linux), one Lean thread pinned to logical CPU 22, six rotated paired
 samples, and complete fresh-module builds. Command:
 
@@ -46,81 +52,72 @@ python3 scripts/bench/hex_mv_poly_kernel_sweep.py \
   --expected-host chungus2 \
   --cpu 22 \
   --max-pair-retries 32 \
-  --output reports/bench-results/hex-mv-poly-kernel-12cc2559-chungus2.json
+  --output reports/bench-results/hex-mv-poly-kernel-77b76dd3-chungus2.json
 ```
 
 The committed export is
-`reports/bench-results/hex-mv-poly-kernel-12cc2559-chungus2.json`
+`reports/bench-results/hex-mv-poly-kernel-77b76dd3-chungus2.json`
 (SHA-256
-`d55476ad38d668a87e5bd0fc5c55077a481a9f09b1e4ad844972cc63682546ff`).
+`308fa199e10c666a13761a8a3a41ef7096c7a9de5b2bc07834e5836119491897`).
 It is complete, reports `release_quality: true`, has no validity exceptions,
-preflight failures, or exhausted pairs, and records two rejected contaminated
-pair attempts before successful retries.
+preflight failures, rejected pair attempts, or exhausted pairs. Three
+preflight windows were rejected before measurement.
 
-The import-only baseline median is 1.356371 s. Its centred variability has a
-2.806 ms IQR and a 6.570 ms robust Tukey envelope. Both substantive workloads
-must exceed that envelope before their ratio can be classified. The raw-ratio
-cap is `Hex raw / import baseline`: it is the largest raw fresh-build ratio
-possible even if the candidate workload itself took zero time.
+The import-only baseline median is 1.359564 s. Its centred variability has a
+3.356 ms IQR and a 7.387 ms robust Tukey envelope. The raw-ratio cap is
+`Hex raw / import baseline`: it is the largest raw fresh-build ratio possible
+even if the candidate workload itself took zero time.
 
 | case | Hex raw | sorted raw | Hex workload | sorted workload | Hex / sorted workload | raw-ratio cap | ratio status |
 |---|---:|---:|---:|---:|---:|---:|---|
-| `addition-inputs-32` | 2.059 s | 1.572 s | 0.703 s | 0.214 s | 3.290× | 1.518× | resolved construction control |
-| `addition-32` | 2.961 s | 1.769 s | 1.603 s | 0.413 s | 3.885× | 2.183× | resolved before construction subtraction |
-| `addition-32`, net arithmetic | — | — | 0.902 s | 0.199 s | 4.528× | — | noise-limited |
-| `multiplication-sparse-6` | 1.763 s | 2.459 s | 0.408 s | 1.104 s | 0.369× | 1.300× | resolved |
-| `multiplication-collide-8` | 2.160 s | 2.159 s | 0.803 s | 0.802 s | 1.001× | 1.593× | noise-limited |
-| `cancellation-4` | 1.965 s | 1.756 s | 0.610 s | 0.400 s | 1.527× | 1.449× | resolved |
-| `cancellation-6` | 3.360 s | 2.359 s | 2.003 s | 1.001 s | 2.001× | 2.477× | resolved |
-| `sos-3` | 1.959 s | 1.657 s | 0.603 s | 0.300 s | 2.008× | 1.444× | resolved |
-| `sos-4` | 2.659 s | 1.862 s | 1.302 s | 0.505 s | 2.579× | 1.961× | resolved |
-| `structural-8` | 1.460 s | 1.459 s | 0.101 s | 0.101 s | 0.997× | 1.076× | noise-limited |
+| `addition-inputs-32` | 2.061 s | 1.565 s | 0.700 s | 0.204 s | 3.426× | 1.516× | resolved construction control |
+| `addition-32` | 2.818 s | 1.762 s | 1.459 s | 0.402 s | 3.629× | 2.073× | resolved before construction subtraction |
+| `addition-32`, net arithmetic | — | — | 0.757 s | 0.198 s | 3.817× | — | noise-limited |
+| `multiplication-sparse-6` | 1.762 s | 2.463 s | 0.402 s | 1.103 s | 0.364× | 1.296× | resolved |
+| `multiplication-collide-8` | 2.162 s | 2.071 s | 0.803 s | 0.709 s | 1.133× | 1.590× | resolved |
+| `cancellation-4` | 1.960 s | 1.760 s | 0.601 s | 0.399 s | 1.507× | 1.442× | resolved |
+| `cancellation-6` | 3.163 s | 2.360 s | 1.805 s | 1.000 s | 1.805× | 2.327× | resolved |
+| `cancellation-inputs-8` | 1.461 s | 1.368 s | 0.101 s | 0.007 s | 15.083× | 1.075× | baseline-limited construction control |
+| `cancellation-8` | 4.961 s | 3.264 s | 3.601 s | 1.902 s | 1.893× | 3.649× | resolved before construction subtraction |
+| `cancellation-8`, net arithmetic | — | — | 3.499 s | 1.895 s | 1.847× | — | resolved |
+| `sos-3` | 1.960 s | 1.659 s | 0.601 s | 0.299 s | 2.009× | 1.442× | resolved |
+| `sos-4` | 2.560 s | 1.861 s | 1.200 s | 0.500 s | 2.400× | 1.883× | resolved |
+| `sos-inputs-6` | 1.460 s | 1.365 s | 0.102 s | 0.005 s | 21.007× | 1.074× | baseline-limited construction control |
+| `sos-6` | 4.964 s | 2.662 s | 3.604 s | 1.303 s | 2.765× | 3.651× | resolved before construction subtraction |
+| `sos-6`, net arithmetic | — | — | 3.502 s | 1.297 s | 2.699× | — | resolved |
+| `structural-8` | 1.460 s | 1.459 s | 0.101 s | 0.099 s | 1.020× | 1.074× | noise-limited |
 
-The addition result has an additional matched construction control because the
-two representations do not build their input polynomials at the same cost.
-Subtracting that control round by round leaves 0.902 s of median Hex
-arithmetic and 0.199 s of sorted arithmetic. The combined full-pair and
-construction-control null envelope is 302.339 ms, so the sorted net arm lies
-inside the envelope. Its 4.528× point ratio is therefore noise-limited and
-does not count toward the representation threshold.
+Addition's sorted net arm is smaller than the 228.967 ms combined null
+envelope, so its 3.817× point ratio is noise-limited. Cancellation and SOS
+retain resolved net point ratios after their matched construction controls
+are subtracted.
 
-The paired raw wall-time deltas (`sorted - Hex`) were:
-
-- `addition-inputs-32`: −596.4, −497.8, −486.4, −404.2, −496.1, −491.8 ms.
-- `addition-32`: −1089.4, −1196.6, −1001.5, −1202.9, −999.9, −1194.6 ms.
-- `multiplication-sparse-6`: +696.9, +702.7, +395.4, +696.7, +692.1, +801.4 ms.
-- `multiplication-collide-8`: −7.2, +4.3, −7.2, +13.8, −6.4, +403.3 ms.
-- `cancellation-4`: −199.2, −204.0, −208.5, −204.2, −215.8, −304.1 ms.
-- `cancellation-6`: −993.9, −1101.0, −990.6, −1003.3, −998.5, −1004.1 ms.
-- `sos-3`: −302.9, −299.4, −296.9, −299.6, −306.1, −305.8 ms.
-- `sos-4`: −703.7, −801.4, −794.6, −803.5, −787.6, −791.2 ms.
-- `structural-8`: −2.2, −0.0, −4.5, +4.4, +0.2, +0.4 ms.
-
-The cheap null has a 4.010 ms IQR and 9.094 ms robust envelope; the expensive
-null has a 104.408 ms IQR and 255.339 ms robust envelope. Their IQR/build
-ratios are 0.296% and 3.112%, below the 10% invalidation limit. Interpolating
-these envelopes resolves every substantive delta except
-`multiplication-collide-8` and `structural-8`. The additional construction
-subtraction makes `addition-32` noise-limited as described above.
+A point ratio does not by itself pass the 2× gate. For a reference workload
+`r`, candidate workload `c`, and interpolated noise envelope `e`, the sweep
+reports the conservative interval
+`(r - e) / (c + e)` through `(r + e) / (c - e)`. A family passes only when
+the lower bound is greater than 2; an unresolved arm remains unresolved even
+when its point estimate is large.
 
 At the largest measured rung in each registered family:
 
-| family | case | Hex / sorted workload | threshold result |
-|---|---|---:|---|
-| `kernel-sparse-addition` | `addition-32` | 4.528× net | unresolved; does not pass |
-| `kernel-sparse-multiplication` | `multiplication-collide-8` | 1.001× | unresolved |
-| `kernel-cancellation-identities` | `cancellation-6` | 2.001× | passes narrowly |
-| `kernel-structural-collisions` | `structural-8` | 0.997× | unresolved |
-| `kernel-sos-certificates` | `sos-4` | 2.579× | passes |
+| family | case | point ratio | conservative interval | threshold result |
+|---|---|---:|---:|---|
+| `kernel-sparse-addition` | `addition-32` | 3.817× net | [1.235×, unbounded] | unresolved |
+| `kernel-sparse-multiplication` | `multiplication-collide-8` | 1.133× | [0.897×, 1.435×] | failed |
+| `kernel-cancellation-identities` | `cancellation-8` | 1.847× net | [1.447×, 2.402×] | unresolved |
+| `kernel-structural-collisions` | `structural-8` | 1.020× | [0.663×, 1.572×] | unresolved |
+| `kernel-sos-certificates` | `sos-6` | 2.699× net | [1.987×, 3.857×] | unresolved |
 
-Exactly two families have resolved greater-than-2× sorted wins. The
-predeclared threshold is therefore met: a second kernel-specialized sorted
-representation is justified. This does not replace the compiled
-`ExtTreeMap` representation, and the benchmark proxy is not promoted as a
-public implementation. The follow-up representation belongs behind the
-swappable polynomial abstraction recorded in `SPEC/future-work.md`. The
-cancellation family clears 2× by only 0.1%, so the result satisfies the written
-rule without establishing a wide margin.
+No family has a conservative lower bound above 2×. In particular, the SOS
+point estimate is large but its 1.987× lower bound does not clear the
+threshold. The predeclared two-family gate is therefore not met, and the
+single production `ExtTreeMap` representation stands. The sorted proxy
+remains comparison evidence rather than a proposed public implementation.
+
+The cheap same-module null has a 4.302 ms IQR and 11.902 ms robust envelope;
+the expensive null has a 72.612 ms IQR and 183.574 ms robust envelope. Their
+IQR/build ratios are 0.316% and 2.293%, below the 10% invalidation limit.
 
 Every measured reference and candidate theorem reports exactly:
 
@@ -139,17 +136,16 @@ canonical sorted-list proxy implementing the specified algorithmic shape; no
 claim is made about the precise constant factors of unavailable upstream
 code.
 
-The workload ratios in the Verdicts table are the decision ratios. Raw
-fresh-module ratios cannot show the SOS result faithfully: its mathematical
-cap is only 1.961× because import/elaboration overhead dominates the candidate
-arm. Round-matched import subtraction is therefore material, not cosmetic.
-For addition, the additional construction subtraction is equally material:
-the large point ratio remains unresolved once only arithmetic work is
-attributed to the pair.
+The net workload ratios and their conservative intervals in the Verdicts
+table are the decision evidence. Raw fresh-module ratios cannot show the SOS
+result faithfully because import/elaboration overhead dominates the
+candidate arm. Round-matched import and construction subtraction are
+therefore material, not cosmetic. Point estimates are reported for diagnosis,
+but only a conservative lower bound can pass the gate.
 
 The native companion ratios are recorded separately in
-`reports/hex-mv-poly-performance.md`. They help characterize compiled
-throughput but do not override the kernel-specific decision.
+`reports/hex-mv-poly-performance.md`. They characterize compiled throughput
+but do not override the kernel-specific decision.
 
 ## Profile
 
@@ -164,22 +160,18 @@ The export records the clean source commit, toolchain and dependency
 checkouts, CPU topology and affinity, per-pair build order, wall time, peak
 RSS, scheduler/frequency observations, rejected attempts, module artifact
 sizes, exact comparison axes, and source SHA-256 values. The host protocol
-observed a 1.48% frequency spread, at most three concurrent Lake/Lean
-processes, two rejected pair attempts, three rejected quiet-core windows, and
-no validity violation.
+observed a 2.93% frequency spread, no concurrent Lake/Lean processes, no
+rejected pair attempts, three rejected quiet-core windows, and no validity
+violation.
 
 ## Concerns
 
-The Phase-4 artifact itself has no validity exception. It makes a positive
-decision under the preregistered rule, but the cancellation family clears the
-2× boundary by only 0.1%; that is threshold-compliant evidence, not a broad
-performance margin. Sparse addition is explicitly unresolved after matched
-construction subtraction. The production library therefore remains a single
-`ExtTreeMap` representation, while an opt-in kernel-specialized sorted form is
-recorded only as follow-up work behind a representation abstraction.
+The Phase-4 artifact has no validity exception. It makes a negative
+representation decision under the preregistered rule: no family has a
+conservative lower bound greater than 2×, and sparse addition is explicitly
+noise-limited after matched construction subtraction. The production library
+therefore remains a single `ExtTreeMap` representation.
 
 The unavailable upstream `Mathlib MvSparsePoly` remains an explicit comparator
-limitation. Before shipping the second representation, its local proxy
-algorithms need a supported public type, correspondence proofs, and a repeat
-of the SOS kernel-consumer acceptance; the current proof-probe adapter is
-evidence, not production API.
+limitation. The current sorted proof-probe adapter is evidence, not production
+API, and the measured result does not justify promoting it.

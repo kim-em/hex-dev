@@ -250,25 +250,20 @@ representations alongside `DensePoly`. For now, all libraries use
 
 The same abstraction problem is now concrete for multivariate polynomials.
 The release-quality HexMvPoly kernel sweep at clean commit
-`12cc25590c2eead26613704e2421822306faa943` met its predeclared gate: the
-canonical sorted-list proxy beat the production `ExtTreeMap` form by more than
-2× at the largest cancellation-identity and sum-of-squares proof-probe rungs
-after round-matched import subtraction. The exact record is
-`reports/bench-results/hex-mv-poly-kernel-12cc2559-chungus2.json`.
+`77b76dd35be098a0bb4c5508306ba7957bb8d4b4` did not meet its predeclared
+gate. After round-matched import and construction subtraction, the
+canonical sorted-list proxy's largest point ratios were 3.817× for addition,
+1.847× for cancellation, and 2.699× for SOS. Addition was noise-limited;
+cancellation's conservative interval was [1.447×, 2.402×], and SOS's was
+[1.987×, 3.857×]. No family had a lower bound above 2×, let alone two
+families. The exact record is
+`reports/bench-results/hex-mv-poly-kernel-77b76dd3-chungus2.json`.
 
-The sparse-addition point ratio is larger, but it does not count: after
-subtracting a matched construction-only pair, the candidate arithmetic signal
-is inside the combined null envelope. The cancellation ratio is only 2.001×,
-so it clears the written rule narrowly rather than establishing a wide
-performance margin.
-
-A kernel-specialized `MvPoly` representation is therefore justified as an
-opt-in second form, not as a replacement for the compiled `ExtTreeMap` API.
-It should share a lawful coefficient-level abstraction with the production
-form, come with equivalences to both `Hex.MvPoly` and Mathlib
-`MvPolynomial`, and repeat the SOS verifier acceptance on the public type.
-The proof-probe sorted adapter is an algorithmic prototype only; it must not
-be exposed as the production implementation.
+No kernel-specialized second `MvPoly` form is therefore planned.
+`Hex.MvPoly` remains the single `ExtTreeMap` representation. The proof-probe
+sorted adapter is comparison evidence only and must not be exposed as
+production API. Revisit a second form only if future consumer workloads clear
+the same conservative two-family gate.
 
 Typeclass interface:
 ```lean

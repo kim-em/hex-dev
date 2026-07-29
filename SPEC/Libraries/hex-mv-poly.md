@@ -784,8 +784,13 @@ whose arm delta is unresolved against the interpolated null envelope
 does not count toward the threshold. Reference and candidate arms use
 the same coefficient type, arity, comparator, support stream, and
 identity; the report records those axes for every pair. Anything short
-of two resolved greater-than-2× workload ratios leaves the single
-representation standing.
+of two conservative greater-than-2× workload ratios leaves the single
+representation standing. Concretely, if the attributed reference and
+candidate workloads are `r` and `c` and the comparable null envelope is
+`e`, the threshold interval is
+`(r - e) / (c + e)` through `(r + e) / (c - e)`. A family passes only
+when the comparison is resolved and the lower bound exceeds 2; a point
+estimate above 2 is not sufficient.
 
 When a workload includes materially different input construction, a matched
 construction-only pair is subtracted round by round after import subtraction.

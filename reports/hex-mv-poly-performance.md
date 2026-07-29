@@ -37,9 +37,10 @@ Reusable container machinery is isolated in `HexBasic/ExtTreeMap.lean`.
 `Std.ExtTreeMap.foldl₂` is a generic ordered joint traversal, while
 `mergeValue?` and `mergeWith?` are generic deletion-capable merges.
 `HexMvPoly` adds only monomial ordering, coefficient arithmetic, and the
-zero-deletion policy. A linear deletion-capable merge and tree builder is a
-plausible future extension of that reusable file, not an `MvPoly`-specific
-operation.
+zero-deletion policy. A direct tree-cursor implementation of the existing
+joint fold, together with a linear ordered-tree builder, would support a
+linear deletion-capable merge without materializing lists. Those primitives
+belong in that reusable file, not in `MvPoly`.
 
 ### Consumer acceptance
 
@@ -57,7 +58,10 @@ migrations and builds are reproducible with
   build passed all 1,545 jobs. The compatibility
   module supplies a low-priority `DecidableEq` from `LawfulBEq`, matching the
   implication that the former CompPoly representation supplied; it adds no
-  Grind instances.
+  Grind instances. Its exact legacy-arity `aeval` remains direct evaluation,
+  which avoids adding equality bounds to the consumer signature, while its
+  zero/one/add/mul/pow/C/X/neg/sub compatibility lemmas compile against the
+  corresponding `HexMvPolyMathlib.aeval_*` theorems.
 - `Verified-zkEVM/CompPoly` at
   `f4c59f9e6a00b4e73f3e43ca362480468a508011` was migrated to the public
   `isEmptyRingEquiv`, `finSuccEquiv`, and dense-polynomial bridges.
@@ -241,18 +245,14 @@ The five visualizations are:
 - [sum of squares](figures/hex-mv-poly-comparator-sum-of-squares-arithmetic.svg)
 
 Native ratios are informational rather than the representation gate. The
-release-quality kernel sweep found resolved sorted-proxy wins of 2.001× on the
-largest cancellation identity and 2.579× on the largest sum-of-squares case.
-Sparse addition's construction-subtracted point ratio was 4.528×, but its net
-candidate arithmetic signal was inside the combined null envelope and
-therefore did not count. Cancellation and sum-of-squares are two independently
-classified families, so the predeclared gate is met, albeit narrowly on the
-cancellation family. The decision and its robust null-envelope checks are
-recorded in
+release-quality kernel sweep measured construction-subtracted point ratios of
+3.817× for addition, 1.847× for cancellation, and 2.699× for SOS. Addition is
+noise-limited; cancellation's conservative interval is [1.447×, 2.402×], and
+SOS's is [1.987×, 3.857×]. No family has a lower bound above 2×, so the
+predeclared two-family gate is not met. The decision and its robust
+null-envelope checks are recorded in
 [`hex-mv-poly-mathlib-performance.md`](hex-mv-poly-mathlib-performance.md):
-keep the ExtTreeMap implementation as the current production representation,
-and record an opt-in kernel-specialized second representation behind a future
-representation abstraction.
+keep `ExtTreeMap` as the single production representation.
 
 ## Profile
 
@@ -282,7 +282,7 @@ by the registered target (99.96%), the tree fold (92.63%), `alter` (89.16%),
 `Mono.lex` (64.42%), and tree balancing (11.18%). This is the current generic
 `mergeWith?` path: it folds one tree through deletion-capable updates in the
 other. No preparation phase is present, and the shape directly motivates the
-future reusable joint traversal and linear builder.
+future direct tree-cursor fold and linear builder in the reusable map layer.
 
 ### `sparse-multiplication`
 
@@ -334,6 +334,13 @@ All five filters passed confidence and ±5 ms sensitivity checks:
 
 No dominant inclusive cost is outside its registered benchmark target.
 
+The native and comparator captures predate the final query, bridge,
+proof-probe, and measurement-harness hardening. Those later changes do not
+alter a registered native rung or a timed implementation path; the
+size-eight collision correction is confined to the smaller kernel probe,
+while the native structural ladder starts at size 64. The captures therefore
+remain applicable to the final implementation.
+
 ## Concerns
 
 No unresolved Phase-4 concern remains.
@@ -343,10 +350,10 @@ The Mathlib-native curve is explicitly a sorted-list proxy because
 lexicographic comparator prevents exact comparator matching on every family.
 These are disclosed measurement limitations, not Hex implementation defects.
 
-The release-quality kernel gate supports a future opt-in kernel-specialized
-representation; it does not replace the compiled ExtTreeMap implementation in
-this phase. Within that implementation, the addition profile identifies a
-promising optimization: an efficient deletion-capable joint tree traversal
-and linear builder. Such primitives belong in the reusable,
-Std-only `HexBasic/ExtTreeMap.lean` upstream-candidate layer. Coefficient
-combination and removal of zero coefficients remain `HexMvPoly` policy.
+The release-quality kernel gate does not justify a second representation.
+Within the single `ExtTreeMap` implementation, the addition profile identifies
+a promising optimization: a direct tree-cursor version of the existing
+ordered joint fold plus a linear tree builder. Such primitives belong in the
+reusable, Std-only `HexBasic/ExtTreeMap.lean` upstream-candidate layer.
+Coefficient combination and removal of zero coefficients remain `HexMvPoly`
+policy.
