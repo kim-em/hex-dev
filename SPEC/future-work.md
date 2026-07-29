@@ -248,6 +248,22 @@ representation via typeclasses, allowing sparse and hash-backed
 representations alongside `DensePoly`. For now, all libraries use
 `DensePoly` directly.
 
+The same abstraction problem is now concrete for multivariate polynomials.
+The release-quality HexMvPoly kernel sweep at clean commit
+`7acdff89b67d7b4fdfbb2b1b5b77a182097331d3` met its predeclared gate: the
+canonical sorted-list proxy beat the production `ExtTreeMap` form by more than
+2× at the largest sparse-addition and sum-of-squares proof-probe rungs after
+round-matched import subtraction. The exact record is
+`reports/bench-results/hex-mv-poly-kernel-7acdff89-chungus2.json`.
+
+A kernel-specialized `MvPoly` representation is therefore justified as an
+opt-in second form, not as a replacement for the compiled `ExtTreeMap` API.
+It should share a lawful coefficient-level abstraction with the production
+form, come with equivalences to both `Hex.MvPoly` and Mathlib
+`MvPolynomial`, and repeat the SOS verifier acceptance on the public type.
+The proof-probe sorted adapter is an algorithmic prototype only; it must not
+be exposed as the production implementation.
+
 Typeclass interface:
 ```lean
 class PolyOps (P : Type*) (R : outParam Type*) extends

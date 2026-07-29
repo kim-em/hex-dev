@@ -920,7 +920,10 @@ check, because it is the acceptance test for the surface listed here.
    the recursive view.
 4. Add conformance fixtures and the Mathlib correspondence.
 5. Run the module-boundary kernel probes and native benchmarks. Keep
-   `ExtTreeMap` unless the recorded threshold selects the sorted form.
+   `ExtTreeMap` as the compiled representation. If the recorded threshold
+   selects the sorted form, record the justified kernel-specialized second
+   representation under [future-work](../future-work.md), where the
+   representation abstraction belongs.
 
 ## Open questions
 
