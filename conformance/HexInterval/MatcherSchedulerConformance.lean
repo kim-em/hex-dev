@@ -183,6 +183,51 @@ def afterFirst? : Option (Engine Rank) := do
         | _ => false
   | none => false
 
+def secondRequest? : Option (RuleRequest Rank × Engine Rank) := do
+  let state <- afterFirst?
+  let .request request awaiting := state.poll | none
+  pure (request, awaiting)
+
+-- A forged pending cursor cannot move engine-owned matcher progress backwards.
+#guard
+  match secondRequest? with
+  | some (request, awaiting) =>
+      match awaiting.pendingMatcher with
+      | some prepared =>
+          let backwards :=
+            { prepared with
+              offset := prepared.offset - 3
+              visits := prepared.visits - 3 }
+          match { awaiting with pendingMatcher := some backwards }.submit
+              (request.action.reply (.noChange {})) with
+          | .resourceLimit .matcherVisits after =>
+              after.metrics.matcherVisits == 2 &&
+                match after.matcherCursors[0]? with
+                | some (some cursor) => cursor.offset == 2 && cursor.visits == 2
+                | _ => false
+          | _ => false
+      | none => false
+  | none => false
+
+-- A forged epoch cannot transplant a prepared cursor into another matcher
+-- epoch, even when its offsets and visit count otherwise look plausible.
+#guard
+  match secondRequest? with
+  | some (request, awaiting) =>
+      match awaiting.pendingMatcher with
+      | some prepared =>
+          let wrongEpoch := { prepared with epoch := prepared.epoch + 1 }
+          match { awaiting with pendingMatcher := some wrongEpoch }.submit
+              (request.action.reply (.noChange {})) with
+          | .resourceLimit .matcherVisits after =>
+              after.metrics.matcherVisits == 2 &&
+                match after.matcherCursors[0]? with
+                | some (some cursor) => cursor.offset == 2 && cursor.epoch == 0
+                | _ => false
+          | _ => false
+      | none => false
+  | none => false
+
 def oddnessRequest : InstantiationRequest :=
   { key := 41
     nodes :=
@@ -200,8 +245,7 @@ def oddnessRequest : InstantiationRequest :=
     payload := { index := 47 } }
 
 def retainedOddness? : Option (Engine Rank) := do
-  let state <- afterFirst?
-  let .request request awaiting := state.poll | none
+  let (request, awaiting) <- secondRequest?
   if request.action.structuralInputs.map (fun input => input.key) !=
       [.node (node 2), .application { index := 0 }] then
     none
@@ -217,9 +261,12 @@ def retainedOddness? : Option (Engine Rank) := do
   | some state =>
       state.metrics.matcherVisits == 4 && state.queueHead == 2 &&
         state.queue.size == 2 && state.queued[0]? == some false &&
-        match state.matcherCursors[0]? with
-        | some (some cursor) => cursor.exhausted && cursor.visits == 4
-        | _ => false
+        match state.matcherCursors[0]?, state.suggestions[0]? with
+        | some (some cursor), some retained =>
+            cursor.exhausted && cursor.visits == 4 &&
+              retained.action.structuralInputs.length == 2 &&
+              retained.policyItems == 11
+        | _, _ => false
   | none => false
 
 def afterOddness? : Option (Engine Rank) := do
@@ -244,6 +291,104 @@ def afterOddness? : Option (Engine Rank) := do
             old.limit.nodes == 3 && old.limit.equalities == 0 &&
               old.limit.applications == 1
         | _, _ => false
+  | none => false
+
+/-! ## Growth before a frozen matcher epoch is exhausted -/
+
+def earlyLimits : Limits :=
+  { limits with matcherBatchSize := 1 }
+
+def earlyStarted? : Option (Engine Rank) :=
+  match Engine.start rankDomain program #[matcherRule, contractRule]
+      #[0, 0, 0] earlyLimits with
+  | .ok state => some state
+  | .error _ => none
+
+def earlyRetained? : Option (Engine Rank) := do
+  let state <- earlyStarted?
+  let .request first awaiting := state.poll | none
+  if first.action.structuralInputs.map (fun input => input.key) !=
+      [.node (node 0)] then none else pure ()
+  let .accepted _ state :=
+    awaiting.submit (first.action.reply (.noChange {})) | none
+  let .request second awaiting := state.poll | none
+  if second.action.structuralInputs.map (fun input => input.key) !=
+      [.node (node 1)] then none else pure ()
+  let .accepted _ state :=
+    awaiting.submit (second.action.reply (.noChange {})) | none
+  let .request third awaiting := state.poll | none
+  if third.action.structuralInputs.map (fun input => input.key) !=
+      [.node (node 2)] then none else pure ()
+  let .accepted plan state :=
+    awaiting.submit
+      (third.action.reply (.success [] [.instantiate oddnessRequest] {})) | none
+  if plan.kept.length == 1 then some state else none
+
+def earlyGrown? : Option (Engine Rank) := do
+  let state <- earlyRetained?
+  let .admitted [sinX, negSinX] state :=
+    state.admitInstantiation { index := 0 } | none
+  if sinX == node 3 && negSinX == node 4 then some state else none
+
+def earlyOldEpochDone? : Option (Engine Rank) := do
+  let state <- earlyGrown?
+  let .request request awaiting := state.poll | none
+  if request.action.structuralInputs.map (fun input => input.key) !=
+      [.application { index := 0 }] ||
+      request.action.matcherEpoch != some 0 then
+    none
+  else
+    let .accepted _ state :=
+      awaiting.submit (request.action.reply (.noChange {})) | none
+    pure state
+
+-- The instantiation was admitted while the old matcher was already queued.
+-- Finishing that frozen epoch must notice that its ceiling is now behind the
+-- live network and enqueue renewal; the program-growth wakeup alone could not
+-- do so because queue suppression had already observed the dirty matcher.
+#guard
+  match earlyOldEpochDone? with
+  | some state =>
+      state.programVersion == 1 && state.metrics.matcherVisits == 4 &&
+        state.queueHead == 4 && state.queue.size == 7 &&
+        state.queued[0]? == some true &&
+        match state.matcherCursors[0]? with
+        | some (some cursor) =>
+            cursor.exhausted && cursor.epoch == 0 &&
+              cursor.limit.nodes == 3 && cursor.limit.applications == 1
+        | _ => false
+  | none => false
+
+def earlyDeltaScanned? : Option (Engine Rank) := do
+  let state <- earlyOldEpochDone?
+  let .equality equality state := state.poll | none
+  let .advanced _ state := state.contractEquality equality | none
+  let .request scopeRequest awaiting := state.poll | none
+  if scopeRequest.action.key != contractKey then none else pure ()
+  let .accepted _ state :=
+    awaiting.submit (scopeRequest.action.reply (.noChange {})) | none
+  let .request delta awaiting := state.poll | none
+  if delta.action.key != matcherKey ||
+      delta.action.structuralInputs.map (fun input => input.key) !=
+        [.node (node 3)] ||
+      delta.action.matcherEpoch != some 1 then
+    none
+  else
+    let .accepted _ state :=
+      awaiting.submit (delta.action.reply (.noChange {})) | none
+    pure state
+
+-- The first item of the renewed epoch is an expression created by the early
+-- instantiation, proving that no append-only structure was lost mid-epoch.
+#guard
+  match earlyDeltaScanned? with
+  | some state =>
+      state.metrics.matcherVisits == 5 && state.queued[0]? == some true &&
+        match state.matcherCursors[0]? with
+        | some (some cursor) =>
+            cursor.epoch == 1 && cursor.base.nodes == 3 &&
+              cursor.limit.nodes == 5 && cursor.offset == 1
+        | _ => false
   | none => false
 
 def afterInternalWork? : Option (Engine Rank) := do
@@ -319,13 +464,39 @@ def retainedMarker? : Option (Engine Rank) := do
 
 /-! ## An arbitrary function package receives the same bounded batch -/
 
+def packageOddness? (view : ProgramView) (input : StructuralInput) :
+    Option InstantiationRequest := do
+  let .node anchor := input.key | none
+  if view.operationKey? anchor != some sinKey then none else pure ()
+  let expression <- view.node? anchor
+  let [negated] := expression.args | none
+  if view.operationKey? negated != some negKey then none else pure ()
+  let negation <- view.node? negated
+  let [argument] := negation.args | none
+  let (sinId, _) <- view.findOp? sinKey
+  let (negId, _) <- view.findOp? negKey
+  pure
+    { key := 41
+      nodes :=
+        [{ domain := real, op := sinId, args := [.existing argument] },
+          { domain := real, op := negId, args := [.proposed 0] }]
+      equalities :=
+        [{ left := .existing anchor
+           right := .proposed 1
+           payload := { index := 43 } }]
+      scopes :=
+        [{ rule := contractKey
+           anchor := .proposed 0
+           watches := [.existing argument]
+           writes := [.proposed 0] }]
+      payload := { index := 47 } }
+
 def packageMatcher (cache : Nat) (request : RuleRequest Rank) :
     Outcome Rank × Nat :=
-  if request.action.structuralInputs.map (fun input => input.key) ==
-      [.node (node 0), .node (node 1)] then
-    (.noChange {}, cache + request.action.structuralInputs.length)
-  else
-    (.failed 7, cache)
+  let cache := cache + request.action.structuralInputs.length
+  match request.action.structuralInputs.findSome? (packageOddness? request.program) with
+  | none => (.noChange {}, cache)
+  | some oddness => (.success [] [.instantiate oddness] {}, cache)
 
 def packageContract (_ : Rank) (_ : RuleRequest Rank) : Outcome Rank × Rank :=
   (.noChange {}, 0)
@@ -359,18 +530,46 @@ def registryStarted? : Option (Registry Rank × Engine Rank) := do
     | .ok state => some (registry, state)
     | .error _ => none
 
+def registryAdmitted? : Option (Registry Rank × Engine Rank) := do
+  let (registry, state) <- registryStarted?
+  let .request first awaiting := state.poll | none
+  let (firstOutcome, registry) := registry.invoke first
+  let .noChange _ := firstOutcome | none
+  let .accepted _ state :=
+    awaiting.submit (first.action.reply firstOutcome) | none
+  let .request second awaiting := state.poll | none
+  let (secondOutcome, registry) := registry.invoke second
+  let .success [] [.instantiate emitted] _ := secondOutcome | none
+  if emitted.nodes.length != 2 || emitted.equalities.length != 1 ||
+      emitted.scopes.length != 1 then
+    none
+  else
+    let .accepted plan state :=
+      awaiting.submit (second.action.reply secondOutcome) | none
+    if plan.kept.length != 1 then none else some PUnit.unit
+    let .admitted [sinX, negSinX] state :=
+      state.admitInstantiation { index := 0 } | none
+    if sinX == node 3 && negSinX == node 4 then
+      some (registry, state)
+    else
+      none
+
+-- The package callback itself filters the engine-issued inputs through the
+-- immutable program view, emits the full oddness proposal on its second call,
+-- and reaches checked admission without any proposal supplied by this driver.
 #guard
-  match registryStarted? with
+  match registryAdmitted? with
   | some (registry, state) =>
-      match state.poll with
-      | .request request awaiting =>
-          let (outcome, registry) := registry.invoke request
-          match awaiting.submit (request.action.reply outcome) with
-          | .accepted _ next =>
-              next.metrics.matcherVisits == 2 &&
-                registry.packages[0]?.any (fun package => package.invocations == 1)
-          | _ => false
-      | _ => false
+      state.programVersion == 1 && state.program.nodes.size == 5 &&
+        state.equalities.size == 1 && state.bindings.size == 1 &&
+        state.applications.size == 2 &&
+        registry.packages[0]?.any (fun package => package.invocations == 2) &&
+        match state.equalities[0]?, state.bindings[0]? with
+        | some equality, some binding =>
+            equality.left == node 2 && equality.right == node 4 &&
+              binding.rule == contractKey && binding.anchor == node 3 &&
+              binding.watches == [node 0] && binding.writes == [node 3]
+        | _, _ => false
   | none => false
 
 /-! ## The replaceable policy sees and selects the same engine-owned batch -/
@@ -379,6 +578,95 @@ def policyLimits : Policy.Limits :=
   { maxDecisions := 8
     maxTraversal := 32
     maxLiveOffers := 8 }
+
+def retainedTraversal (maxTraversal : Nat) :
+    Option (Except Policy.ViewError (Policy.View Rank × Policy.State Rank)) := do
+  let engine <- retainedOddness?
+  let state :=
+    Policy.State.start engine { policyLimits with maxTraversal }
+  some state.view
+
+-- The retained oddness offer costs two backing slots, nine proposal items,
+-- and the two structural matcher inputs carried by its source action.
+#guard
+  match retainedTraversal 13 with
+  | some (.ok (view, state)) =>
+      view.offers.size == 1 && state.metrics.traversal == 13
+  | _ => false
+
+#guard
+  match retainedTraversal 12 with
+  | some (.error .traversalLimit) => true
+  | _ => false
+
+def retryEngine? : Option (Engine Rank) := do
+  let .ok state :=
+    Engine.start rankDomain program #[matcherRule, contractRule] #[0, 0, 0]
+      { limits with maxMatcherVisits := 2 } | none
+  let .request request awaiting := state.poll | none
+  let .accepted plan state :=
+    awaiting.submit
+      (request.action.reply (.success [] [.retry 1] {})) | none
+  if plan.kept.length == 1 then some state else none
+
+def selectedRetry? : Option (RuleRequest Rank × Policy.State Rank) := do
+  let engine <- retryEngine?
+  let state := Policy.State.start engine policyLimits
+  let offer <- state.offer? (.suggestion { index := 0 })
+  let .request request state :=
+    state.select
+      { scope := state.scope
+        serial := state.serial
+        programVersion := state.engine.programVersion
+        id := offer.id
+        expected := offer.key } | none
+  pure (request, state)
+
+-- A retained retry replays its original structural evidence without claiming
+-- any new cursor movement.  It therefore remains selectable when the exact
+-- matcher-visit budget was consumed by the original batch.
+#guard
+  match selectedRetry? with
+  | some (request, state) =>
+      request.action.effort == 1 &&
+        request.action.structuralInputs.map (fun input => input.key) ==
+          [.node (node 0), .node (node 1)] &&
+        state.engine.metrics.matcherVisits == 2 &&
+        match state.submit (request.action.reply (.noChange {})) with
+        | .accepted _ next =>
+            next.engine.metrics.matcherVisits == 2 &&
+              match next.engine.matcherCursors[0]? with
+              | some (some cursor) => cursor.offset == 2 && cursor.visits == 2
+              | _ => false
+        | _ => false
+  | none => false
+
+-- Retry reconstruction also authenticates the stored matcher epoch before it
+-- can replay structural evidence.
+#guard
+  match retryEngine? with
+  | some engine =>
+      match engine.matcherCursors[0]? with
+      | some (some cursor) =>
+          let engine :=
+            { engine with
+              matcherCursors :=
+                engine.matcherCursors.set! 0 (some { cursor with epoch := cursor.epoch + 1 }) }
+          let state := Policy.State.start engine policyLimits
+          match state.offer? (.suggestion { index := 0 }) with
+          | some offer =>
+              match state.select
+                  { scope := state.scope
+                    serial := state.serial
+                    programVersion := state.engine.programVersion
+                    id := offer.id
+                    expected := offer.key } with
+              | .rejected .malformedState after =>
+                  after.engine.metrics.matcherVisits == 2
+              | _ => false
+          | none => false
+      | _ => false
+  | none => false
 
 def policyView? : Option (Policy.View Rank × Policy.State Rank) := do
   let engine <- started?
