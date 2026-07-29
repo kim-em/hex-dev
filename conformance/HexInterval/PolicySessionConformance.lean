@@ -55,6 +55,7 @@ def engineLimits : Propagator.Limits :=
     maxProposalItems := 16
     maxInstances := 8
     maxGeneration := 4
+    maxNodeDepth := 16
     maxEqualities := 8
     splitEndpointLimit := endpointLimit }
 
@@ -347,7 +348,6 @@ def usesPlan (request : RuleRequest Fact) : Plan Fact :=
         [.instantiate
           { key := 91
             triggers := [request.action.node]
-            claimedGeneration := 0
             nodes := []
             equalities := List.replicate arenaLimits.maxUses equality
             payload := instanceLabel }]
