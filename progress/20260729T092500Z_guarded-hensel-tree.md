@@ -26,6 +26,10 @@ The affected quadratic-multifactor benchmark remains flat at the largest rung:
 67.229 ms versus the preceding 67.862 ms.
 The five affected parametric BZ registrations were also refreshed; the public
 degree-24 rung is 1.786 ms.
+The five affected fixed BZ registrations pass their expected-hash checks; their
+medians are 31.525 microseconds (`X^4 + 1`), 29.363 microseconds (paired
+quadratics), 91.796 microseconds (`Phi_15`), 1.583 ms (`SD_3` lattice), and
+29.299 ms (`SD_4` lattice).
 
 ## Next step
 
