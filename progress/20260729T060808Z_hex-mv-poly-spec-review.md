@@ -10,6 +10,10 @@
   comparator arguments, the Mathlib-free derivative statement, monomial-order
   proof obligations, implementation sequencing, Phase 4 registration metadata,
   library statuses, oracle documentation, and editorial defects.
+- Ran a final independent pass and corrected the literal registry syntax,
+  upstream-cleanup scope, derivative instance priority, oracle mode, Lake/CI
+  target registration, kernel comparator ownership, consumer aliases, and
+  comparator-plot obligations it identified.
 - Rejected no verified finding; the separate implementation note about equality
   is being handled in the implementation branch rather than this documentation
   commit.

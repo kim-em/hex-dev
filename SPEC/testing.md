@@ -390,7 +390,7 @@ subsection. Default oracle assignments:
   oracle.
 - `hex-poly`, `hex-poly-z`, `hex-poly-fp` — `python-flint` primary
   for univariate polynomial arithmetic.
-- `hex-mv-poly` — SymPy, mode `always`, reconstructing sparse
+- `hex-mv-poly` — SymPy, mode `if_available`, reconstructing sparse
   multivariate polynomials from the original serialized terms and
   cross-checking construction, arithmetic, evaluation, derivative,
   rename, and substitution. Ordering-only behavior and the recursive

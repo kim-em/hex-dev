@@ -2,7 +2,7 @@
 # Sequential oracle runner used by `.github/workflows/ci.yml`.
 #
 # Replaces the per-oracle matrix that previously fanned out into 11
-# ubuntu jobs. All oracle dependencies (FLINT, PARI, Conway
+# ubuntu jobs. All oracle dependencies (FLINT, PARI, SymPy, Conway
 # tables) are installed once at the top of the workflow; this script
 # loops over every (lib, emit, oracle, fixture) tuple, cross-checks
 # the committed fixture against fresh emission, and pipes the
