@@ -238,6 +238,8 @@ def limits : Limits :=
   { maxOperations := 8
     maxNodes := 8
     maxRules := 8
+    maxRegistryEntries := 32
+    maxReplayFormats := 8
     maxArity := 2
     maxApplications := 8
     maxQueueEntries := 16
@@ -290,7 +292,7 @@ def shortOperationLimits : Limits :=
   { limits with maxOperations := 3 }
 
 def shortMetadataLimits : Limits :=
-  { limits with maxOperations := 4, maxRules := 4 }
+  { limits with maxRegistryEntries := 8 }
 
 def nullaryLimits : Limits :=
   { limits with maxArity := 0 }
@@ -443,18 +445,6 @@ def policyDriverTypecheck {PolicyState : Type}
             missingCode == DispatchCode.missingRoute && candidate.fact == 1 &&
             registry.packages.map (fun package => package.invocations) == #[2, 0, 0]
       | _, _, _, _ => false
-
--- A corrupted static route is diagnosed before its unrelated handler can run.
-#guard
-  match registry? with
-  | none => false
-  | some registry =>
-      let corrupted :=
-        { registry with
-          routes := registry.routes.set! 0 { package := 1, handler := 0 } }
-      match (corrupted.invokeDroppingDrafts tickRequest).1 with
-      | .failed code => code == DispatchCode.registryMismatch
-      | _ => false
 
 -- The million-unit number reports work refused before execution; it is not a
 -- claimed cost observation, but it is checked by the separate diagnostic cap.

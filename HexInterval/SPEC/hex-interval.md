@@ -1061,6 +1061,11 @@ be declared as owned or required.
 `Registry.buildWithin` bounds package and metadata counts plus arities before
 flattening, builds a `Route` from each compact `RuleId` back to its package and
 handler, and rejects undeclared heads and duplicate `OpKey`s or `RuleKey`s.
+The registry constructor is private: callers can inspect a checked snapshot
+but cannot forge inconsistent flattened routes. Executable operations,
+aggregate registry metadata, and replay-format declarations have independent
+limits; adding a proof recipe cannot buy space by relaxing the frontend's
+operation cap.
 Program size and arity are bounded before exact signature lookup. The checked
 session start validates every owned and required signature against the final
 frontend program, runs each package's configuration preflight, and starts the
@@ -1072,31 +1077,70 @@ precision ladder against its arithmetic endpoint-height limit; otherwise a
 configuration known in advance to exceed the backend limit is rejected at
 start rather than advertised as compatible.
 
+Each scoped handler also owns a fail-closed semantic validator for concrete
+bindings of its registration. The registry first repeats the generic
+structural checks, then routes the binding to that exact handler. A checked
+session installs the same routed validator in the engine, so start-time
+bindings, retained matcher proposals, dynamic admission, and later scoped
+dispatch cannot disagree about package acceptance. The proof replay layer
+must still justify the resulting contractor theorem; this validator controls
+which package contract may be invoked, not whether that contract is sound.
+
 `Registry.invokePlanned` cross-checks the flattened registration, routed handler
 metadata, and structural projection of an engine-produced request before
-entering the callback, then replaces only the selected package's cache. It is
-the proof-producing registry route because it retains the callback's
-reply-local drafts for freezing. Neither it nor
+entering the callback, then replaces only the selected package's cache. It
+returns a plan containing the outcome and all reply-local payload drafts,
+paired with the exact selected handler's immutable replay snapshot. The
+planned route is proof-producing, but neither it nor
 `Registry.invokeDroppingDrafts` is an authentication boundary: the engine
 still authenticates the pending serial, application, fact values, and
-versions. The explicitly named dropping-drafts adapter exists only for search
-experiments.
+versions. The explicitly named dropping-drafts adapter discards drafts and
+replay metadata only for search experiments. Registry, replay-snapshot, and
+invocation constructors are private; the checked builder and routed invocation
+are their only producers.
 
-The current package type does not yet carry replay decoders or a schema
-registry. Arena drafts do carry an explicit numeric payload schema, but a
-production checked assembly API should return operation metadata,
-registrations, callback routes, configuration validation, and the
-payload-freezing/replay schema implementations as one coherent snapshot.
-Whether that snapshot retains existential packages, compiles one dispatch
-function, supports hot replacement, or uses another lookup structure remains
-experimental. `PayloadSession.Session` now has a
-private constructor and its checked start owns the matching engine, registry,
-arena, and arena limits; the bounded `Run` result also has a private
-constructor, so its stop classification can only come from session execution.
-The older direct registry and engine interfaces remain available for search
-experiments, but proof-producing execution goes through the session. A
-different callback implementation under the same versioned rule schema
-remains valid only when its retained payloads replay under that schema.
+Each handler now carries cache-independent replay-format declarations beside
+its registration and callback. A declaration consists of a payload role, a
+rule-local numeric schema variant, and a body-shape validator. The immutable
+dispatch key is `(RuleKey, role, schema)`: two unrelated function packages may
+reuse the same role and local schema number without sharing a validator.
+Registry assembly rejects duplicate `(role, schema)` declarations within a
+handler, and counts declarations against a dedicated replay-format bound as
+well as the aggregate metadata bound.
+
+There are two independent version axes. `RuleKey.schema` is the compatibility
+epoch for the complete handler and companion theorem contract. The payload
+`schema` in a draft or arena entry is a recipe variant within that exact rule
+epoch and semantic role. Replay requires an exact match on the whole
+`(RuleKey, role, payload schema)` address. It never selects the newest
+`RuleKey.schema`, and it never dispatches from a payload schema alone.
+
+`PayloadSession.Session` has a private constructor and its checked start owns
+the matching engine, registry, arena, and arena limits; the bounded `Run`
+result also has a private constructor, so its stop classification can only
+come from session execution. During an invocation, generic arena preflight
+first bounds the number of drafts, body cells, atoms, schemas, and payload
+uses. Only then does the session run the selected package's body validators.
+The selected immutable `ReplaySnapshot` supplies its rule owner and validator
+to one paired freeze operation, so the proof-producing path cannot mix an
+owner from one package with a validator from another. It rejects an undeclared
+role/schema pair or malformed body without committing the prospective arena or
+engine outcome.
+Package caches may record the failed attempt because they remain non-semantic.
+
+This first format API validates representation shape only. It does not attest
+that a body proves the proposed interval fact, instance, or equality. The
+Mathlib companion must dispatch on the same immutable key, decode the frozen
+entry independently of package cache state, and recheck the corresponding
+rule theorem during semantic replay. Until that companion layer exists, it is
+an explicit compatibility obligation—not a property enforced by this format
+API—that a different callback implementation under an existing versioned rule
+schema leave every retained payload semantically replayable. Whether production
+retains these existential snapshots, compiles a dispatch table, adds typed
+decoders, supports hot replacement, or uses another lookup structure remains
+experimental. The older direct registry and engine interfaces remain available
+for search experiments, but proof-producing execution goes through the
+session.
 
 The explicit registration and validation boundary is fixed. Discovery and
 scheduling above it remain empirical: one arm uses an incremental registry
@@ -1214,8 +1258,10 @@ The first executable arena uses an eager but prospective transaction:
 it preflights total-proposal work and the per-reply draft, draft-cell, atom,
 and schema limits, then matches package-local labels exactly against
 package-local drafts and checks duplicate, missing, extra, and wrong-role
-entries. Only a locally bounded, exactly covered reply is compared with
-remaining whole-arena entry and body-cell capacity, relocated to fresh global
+entries. The package-owned path next checks body representation with the
+immutable replay snapshot selected by the exact invocation. Only a locally
+bounded, exactly covered, format-valid reply is compared with remaining
+whole-arena entry and body-cell capacity, relocated to fresh global
 identifiers, and appended to a new arena value. Thus malformed local evidence
 cannot be classified as cumulative exhaustion merely because earlier valid
 replies filled part of the arena. Local preflight returns an opaque
@@ -1343,17 +1389,23 @@ entry and cell capacity.
 Each frozen entry stores its originating action, semantic role, numeric
 payload schema, and uninterpreted `List Nat` body. It derives the rule owner
 only from `origin.key`, avoiding two stored identities which could disagree.
-Package-owned decoding and schema lookup, typed atom encodings, byte limits,
-and semantic replay are still missing. Instantiation family labels and custom
-split-reason numbers also remain untyped representation gaps. The FIFO session
-turns any positive compatibility callback whose local identifier lacks a
-draft into a failed rule transition, so no unrelocated package-local
-identifier reaches its retained provenance. Its monotone `droppedWork` flag
-means exactly that required work was lost; it is not itself a terminal-state
-claim. The exported `Session.complete` predicate additionally requires a live
-session and no retained retry or instantiation. At a FIFO fixed point this
-predicate is the sole gate between saturated and incomplete. Package
-`failed`/`resourceLimit` results, malformed evidence, dropped narrowing
+The session now performs package-owned format lookup and bounded body-shape
+validation under the full `(RuleKey, role, schema)` key. Typed decoding, typed
+atom encodings, byte limits, and semantic replay are still missing.
+The first real dyadic packages declare payload schema `0` separately for each
+fact, instance, or equality handler. Each body validator accepts exactly the
+empty list and rejects every trailing cell; the rule key still distinguishes
+the theorem epoch and owner.
+Instantiation family labels and custom split-reason numbers also remain
+untyped representation gaps. The FIFO session turns any positive
+compatibility callback whose local identifier lacks a draft, or whose draft
+fails format validation, into a failed rule transition, so no unvalidated
+package-local identifier reaches its retained provenance. Its monotone
+`droppedWork` flag means exactly that required work was lost; it is not itself
+a terminal-state claim. The exported `Session.complete` predicate additionally
+requires a live session and no retained retry or instantiation. At a FIFO
+fixed point this predicate is the sole gate between saturated and incomplete.
+Package `failed`/`resourceLimit` results, malformed evidence, dropped narrowing
 suggestions, and unprocessed retained narrowing therefore cannot be laundered
 into saturation. The next policy experiment must preserve this same session
 transaction while allowing an external policy to choose invocations,
@@ -2403,14 +2455,23 @@ typical, boundary, and adversarial inputs. In particular it includes:
   independently appended packages using `List Nat` and `Bool` caches, exact
   route and final-program signature checks, external required signatures,
   duplicate operation/rule-key and undeclared-head rejection, cache-preserving
-  rejection of wrong routes, and a `Type 1` registry threaded through both
-  drivers;
+  rejection of wrong routes, duplicate replay-format rejection, and a `Type 1`
+  registry threaded through both drivers;
 - a private package session which freezes and relocates reply-local evidence,
   continues independent work after malformed or locally oversized drafts,
   retains incompleteness across a later successful reply, charges nested
   equality payload uses, keeps derived draft-cell accounting tied to the exact
   bounded transaction, and intentionally reserves fatal entry/body-cell stops
   for genuine remaining-capacity exhaustion after an earlier arena commit;
+- two unrelated opaque function packages which both use local fact schema `7`
+  but retain distinct `(RuleKey, role, schema)` addresses and validate
+  incompatible bounded body shapes; undeclared formats, malformed bodies, and
+  format failure after a previously committed invocation leave no partial
+  current transaction, while recoverable reply-local draft-cell refusal
+  precedes package validation;
+- real dyadic fact and instantiation packages running through the private
+  proof session with exact empty-body schema `0` declarations, including
+  rejection of a trailing body cell and distinct rule-epoch ownership;
 - an anchor-local opaque shape rule which distinguishes `x * (one - x)` from
   products with a reversed difference or a different repeated input, proposes
   the exact existing node identifiers while receiving no fact inputs, repeats

@@ -76,6 +76,8 @@ def limits : Limits :=
   { maxOperations := 4
     maxNodes := 8
     maxRules := 2
+    maxRegistryEntries := 8
+    maxReplayFormats := 4
     maxArity := 2
     maxScopeNodes := 2
     maxApplications := 4
@@ -372,8 +374,9 @@ def registryStarted? : Option (Registry Rank × Engine Rank) := do
   | some (registry, state) =>
       match state.poll with
       | .request request awaiting =>
-          let (plan, registry) := registry.invokePlanned request
-          match awaiting.submit (request.action.reply plan.outcome) with
+          let (invocation, registry) := registry.invokePlanned request
+          match awaiting.submit
+              (request.action.reply invocation.plan.outcome) with
           | .accepted _ next =>
               next.metrics.matcherVisits == 2 &&
                 registry.packages[0]?.any (fun package => package.invocations == 1)
