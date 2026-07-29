@@ -1,47 +1,36 @@
 # HexHensel Performance Report
 
-The eight unchanged targets remain current at revision
-`a1fdbd81ef038faa41765fb39a79cd083109c8ed`. The quadratic-multifactor target
-was refreshed at `478c3ccc` for the exact-exponent/factor-only lift and guarded
-dominant-degree tree. Both were measured 2026-07-29 on `chungus2` (AMD EPYC
-9455, Linux x86-64), pinned to CPU 0.
-
-The base export records a dirty worktree because the borrowed-extern ownership
-fix, fresh artifacts, and reports were pending together. The changed-target
-overlay records a clean worktree. Generated C confirms that all object
-arguments are borrowed. The base
-quadratic ladders stay near 64–68 MiB RSS, and the refreshed
-quadratic-multifactor target stays within 61–66 MiB instead of growing with the
-inner-repeat count.
+Current at revision `0b95505b7c926911a9f487bac56676a8c7da48f6`, measured
+2026-07-29 on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0.
+All nine parametric targets were refreshed together from a clean worktree.
 
 ## Verdicts
 
 | Target | Model | Largest rung | Median | Verdict |
 |---|---|---:|---:|---|
-| Reduce mod `p` | `n` | 131072 | 9.343 ms | consistent |
-| Lift to `Z` | `n` | 131072 | 2.619 ms | consistent |
-| Reduce mod `p^k` | `n` | 131072 | 10.276 ms | consistent |
-| Linear step | `n²` | 512 | 15.089 ms | consistent |
-| Iterated linear lift | `n²k` | `(192,64)` | 142.543 ms | inconclusive |
-| Quadratic step | `n²` | 512 | 8.681 ms | consistent |
-| Product | `n²` | 1024 | 158.092 ms | consistent |
-| Linear multifactor | `n²k` | `(192,64)` | 143.939 ms | inconclusive |
-| Quadratic multifactor | `n² log k` | `(192,64)` | 67.229 ms | inconclusive |
+| Reduce mod `p` | `n` | 131072 | 9.601 ms | consistent |
+| Lift to `Z` | `n` | 131072 | 2.582 ms | consistent |
+| Reduce mod `p^k` | `n` | 131072 | 733.006 µs | consistent |
+| Linear step | `n²` | 512 | 15.568 ms | consistent |
+| Iterated linear lift | `n²k` | `(192,64)` | 145.374 ms | inconclusive |
+| Quadratic step | `n²` | 512 | 8.481 ms | consistent |
+| Product | `n²` | 1024 | 161.314 ms | consistent |
+| Linear multifactor | `n²k` | `(192,64)` | 147.330 ms | inconclusive |
+| Quadratic multifactor | `n² log k` | `(192,64)` | 48.711 ms | inconclusive |
 
-The packed verified kernels are visible most clearly in the quadratic rows:
-the degree-512 quadratic step fell from 128.731 ms to 8.681 ms (14.8×).
-Exact-exponent recursion and a factor-only final correction then reduce
-quadratic multifactor lifting at `(192,64)` from 89.522 ms to 67.229 ms
-(1.33×). The guarded tree is neutral on this equal-degree registration. Linear
-lifting and product construction are unchanged.
+The packed verified kernels remain visible in the quadratic row: the
+degree-512 step is 15.2× faster than the 128.731 ms pre-kernel record. The new
+coefficient-array prime-power reduction lowers its degree-131072 rung from
+10.276 ms to 733.006 µs (14.0×), while the shift-and-scale monomial division
+kernel lowers quadratic multifactor lifting from 89.522 ms to 48.711 ms
+(1.84×). A direct-array implementation of ordinary `modP` was rejected after
+a same-code A/B measured 15.194 ms versus 9.677 ms for the retained compiled
+path; the clean final measurement is 9.601 ms.
 
 Raw export:
-`reports/bench-results/hex-hensel-a1fdbd81-chungus2.json` (SHA-256
-`0bd78e60348a1ab7c4ffe1e6368ea05d96933411badaa5211ab7a3bf118b706a`).
-Changed-target overlay:
-`reports/bench-results/hex-hensel-quadratic-multifactor-478c3ccc-guarded-tree-chungus2.json`
+`reports/bench-results/hex-hensel-0b95505b-gcd-hensel-chungus2.json`
 (SHA-256
-`753540d532379ec5f32932d0ce17830a4bae135edd8ec9276e544b3a35b27b15`).
+`1ef93fd4fbf93109dcc19e9450935e90bc2d68affbe3d7ccc7902bd637a93f65`).
 `list` and `verify` passed.
 
 The covered input families are `bridge-operations`, `linear-hensel`,

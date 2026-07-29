@@ -1,13 +1,13 @@
 # HexBerlekampZassenhaus Performance Report
 
-The current public-factor, classical, and lattice corpus measurements cover the
-exact-exponent, factor-only Hensel implementation and guarded dominant-degree
-tree at `53bb12e21c5107e9da5d837c207eb3254238967f`. The five affected
-parametric and five affected fixed registrations were refreshed on the same
-runtime; the three unchanged registrations in each table and unchanged
-lower-layer measurements remain from
-`a1fdbd81ef038faa41765fb39a79cd083109c8ed`. All were measured 2026-07-29 on
-`chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0.
+The current public-factor, classical-no-decline, lattice, parametric, and fixed
+measurements cover the exact-exponent/factor-only Hensel implementation,
+guarded dominant-degree tree, remainder-only Euclidean GCD, inverse-cached
+finite-field GCD, coefficient-array prime-power reduction, and monomial
+quadratic-division kernel at
+`0b95505b7c926911a9f487bac56676a8c7da48f6`. All were measured 2026-07-29 on
+`chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0, from clean
+worktrees.
 
 ## Bench Targets
 
@@ -20,59 +20,51 @@ inconclusive rather than failed.
 
 | Target | Largest rung | Median |
 |---|---:|---:|
-| Public factorization | 24 | 1.786 ms |
-| Fallback probe | 24 | 1.558 ms |
-| Degree/height | `(6,32)` | 212.853 µs |
-| Fast-path precision/local | `(8,32,128,8)` | 1.512 ms |
-| Slow factorization | 4 | 12.564 µs |
-| Slow degree/height | `(3,8)` | 30.827 µs |
-| Public compare domain | 4 | 74.800 µs |
-| Slow compare domain | 4 | 12.577 µs |
+| Public factorization | 24 | 1.719 ms |
+| Fallback probe | 24 | 1.475 ms |
+| Degree/height | `(6,32)` | 199.855 µs |
+| Fast-path precision/local | `(8,32,128,8)` | 1.255 ms |
+| Slow factorization | 4 | 12.273 µs |
+| Slow degree/height | `(3,8)` | 30.940 µs |
+| Public compare domain | 4 | 68.589 µs |
+| Slow compare domain | 4 | 12.281 µs |
 
 | Warm fixed fixture | Median | Min–max |
 |---|---:|---:|
-| `X⁴ + 1`, public | 31.525 µs | 31.348–31.960 µs |
-| `X⁴ + 1`, fast setup | 20.751 µs | 20.487–20.800 µs |
-| `(X²-2)(X²-3)`, public | 29.363 µs | 29.239–29.456 µs |
-| `Phi_15`, public | 91.796 µs | 91.466–92.082 µs |
-| `Phi_15`, fast setup | 25.862 µs | 25.718–25.967 µs |
-| `SD_3`, modular split | 8.420 µs | 8.243–8.568 µs |
-| `SD_3`, lattice factorization | 1.583 ms | 1.578–1.615 ms |
-| `SD_4`, lattice factorization | 29.299 ms | 29.128–29.602 ms |
+| `X⁴ + 1`, public | 28.916 µs | 28.671–29.082 µs |
+| `X⁴ + 1`, fast setup | 20.359 µs | 20.285–20.393 µs |
+| `(X²-2)(X²-3)`, public | 27.071 µs | 26.985–27.567 µs |
+| `Phi_15`, public | 86.801 µs | 86.342–88.227 µs |
+| `Phi_15`, fast setup | 25.437 µs | 25.201–25.609 µs |
+| `SD_3`, modular split | 8.478 µs | 8.325–8.802 µs |
+| `SD_3`, lattice factorization | 1.593 ms | 1.575–1.604 ms |
+| `SD_4`, lattice factorization | 29.294 ms | 29.256–30.226 ms |
 
-The public `X⁴+1` fixed fixture falls from 98.628 µs to 31.525 µs and
-`Phi_15` from 205.705 µs to 91.796 µs. Quadratic multifactor Hensel lifting,
+The public `X⁴+1` fixed fixture falls from 98.628 µs to 28.916 µs and
+`Phi_15` from 205.705 µs to 86.801 µs. Quadratic multifactor Hensel lifting,
 reported separately, is the largest lower-layer improvement.
 
 Exports under `reports/bench-results/`:
 
-- `hex-berlekamp-zassenhaus-parametric-a1fdbd81-chungus2.json`
+- `hex-berlekamp-zassenhaus-parametric-0b95505b-gcd-hensel-chungus2.json`
   (SHA-256
-  `6e1c8e966b178f2ebadfbeec1a5283ab044fa0125f99ed9a9a2326b133da79ee`)
-- `hex-berlekamp-zassenhaus-fixed-a1fdbd81-chungus2.json`
+  `b915b2f27be36251cc8be6603858dbe29f5311502d00a030235351a9a1b1dd70`)
+- `hex-berlekamp-zassenhaus-fixed-0b95505b-gcd-hensel-chungus2.json`
   (SHA-256
-  `49acf7761bc6df09e1192761989f85f3f8acb21733de85d8d01383152951141f`)
-- `hex-berlekamp-zassenhaus-parametric-a484ef54-guarded-tree-overlay-chungus2.json`
-  (five changed targets; SHA-256
-  `c6a0db5c4f091ef43eda515e08c1ad1c7a68af136bcf97c93df932a1f38d4ea3`)
-- `hex-berlekamp-zassenhaus-fixed-daf361c6-guarded-tree-overlay-chungus2.json`
-  (five changed targets; SHA-256
-  `216a6ed79e7c10802d9ad7e55687cc27ef6b929c5b30994f7872b373034acede`)
+  `82ddd9e54cfafcfefc936ffeb1f1c8bb7e926e7545cd2b992ecfbc508e1ee78d`)
 
 `list` and every non-scheduled `verify` target passed.
 
-The `a1fdbd81` JSON exports record a dirty worktree because the
-borrowed-argument fix and their reports were pending together. The new overlay
-exports record clean worktrees. The hashes above identify both measured states
-exactly.
+Both exports record clean worktrees and cover all eight non-scheduled targets,
+so no unchanged rows are inherited from an earlier implementation.
 
 ## Cross-System Frontier
 
 | System | OK | Timeout | Solved-row median |
 |---|---:|---:|---:|
-| Hex public factor | 373 | 19 | 420.153 µs |
-| Hex lattice | 369 | 23 | 1.838 ms |
-| Hex classical, no decline | 372 | 20 | 401.736 µs |
+| Hex public factor | 373 | 19 | 400.334 µs |
+| Hex lattice | 369 | 23 | 1.812 ms |
+| Hex classical, no decline | 372 | 20 | 389.203 µs |
 | FLINT 0.9.0 | 391 | 1 | 66.850 µs |
 | PARI/GP 2.17.3 | 391 | 1 | 99.958 µs |
 | NTL 11.6.0 | 391 | 1 | 135.631 µs |
@@ -80,55 +72,60 @@ exactly.
 | Verified Isabelle LLL | 314 | 78 | 6.109 ms |
 
 The external rows are the unchanged current 2026-07-28 measurements from the
-same host, corpus, CPU, and protocol. On 238 common rows above each service's
+same host, corpus, CPU, and protocol. On 234 common rows above each service's
 10× protocol-overhead threshold, public Hex / verified Isabelle BZ has median
-0.909× and p10–p90 0.47×–2.64×; Hex wins 127 rows and Isabelle 111. This is a
+0.887× and p10–p90 0.454×–2.513×; Hex wins 135 rows and Isabelle 99. On the
+preceding fixed 238-row eligibility set, the current ratio is 0.870×. This is a
 real aggregate Hex lead, but the wide family-dependent range is not yet a
-decisive margin. The old eligible-row median was 3.95×.
+uniform or decisive margin. The old eligible-row median was 3.95×.
 
-The public protocol floor is 16.905 µs. Reapplying the preceding, lower
-13.650 µs Hex floor gives 0.892× over 244 rows; applying the larger current
-pair floor to both sides gives 0.916× over 236 rows. The lead is therefore not
+The public protocol floor is 16.975 µs. Reapplying the preceding, lower
+13.650 µs Hex floor gives 0.836× over 243 rows; applying the larger current
+pair floor to both sides gives 0.889× over 233 rows. The lead is therefore not
 created by the eligibility boundary.
 
 The public row is recorded in
-`reports/bench-results/hexbz-factor-sweep-hex-53bb12e2-guarded-tree-all-chungus2.json`
-(SHA-256 `926e91245e45523a40e8b915004bf4e0e17f01ed3547feca94589760d3e55e27`).
+`reports/bench-results/hexbz-factor-sweep-hex-0b95505b-gcd-hensel-final-chungus2.json`
+(SHA-256 `9f9f63ac9f35b3af6d35e530b085a1a1e47e7d03d958179d7597d7850e59c583`).
 It records a clean worktree.
 
-The current public/classical comparison has 238 eligible rows and a 1.009×
-median ratio; public wins 99 and classical 139. Isolated classical retains a
-small ordinary-row advantage, while public is better on selected hard rows and
+The current public/classical comparison has 237 eligible rows and a 1.006×
+median ratio; public wins 109 and classical 128. This is measurement-level
+parity, not evidence for a better classical algorithm: the diagnostic removes
+bounded decline/fallback behavior and the public result check while sharing the
+same lifting and recombination core. Public is better on selected hard rows and
 uniquely solves `sd6`.
 
-The current classical/lattice rows are in the same `53bb12e2` artifact. The
+The current classical/lattice rows are in the same `0b95505b` artifact. The
 older `aaabcf15` record remains a historical A/B reference.
 
 The bounded prime-width policy drives the large selector wins. It looks ahead by
 at most two good primes only on predicted high-cost transforms, requires at
 least a 25% modular-width reduction before changing prime, and preserves cheap
-even `x^n - 1` recursion. The largest current/pre-policy gains are 73.83× on
-`sd5_x_phi45`, 28.44× on `xpow105_minus1`, 7.55× on `cyclo_phi151`, 7.16×
-on `cyclo_phi179`, 5.48× on `cyclo_phi61`, and 5.33× on `legendre_P30`.
+even `x^n - 1` recursion. The largest current/pre-policy gains are 75.54× on
+`sd5_x_phi45`, 29.03× on `xpow105_minus1`, 12.39× on `legendre_P30`, 7.42×
+on `cyclo_phi151`, 7.09× on `cyclo_phi179`, and 5.60× on `cyclo_phi61`.
 
-The latest movement guards a degree-aware Hensel product tree behind the
-presence of one modular factor larger than half the node degree, and permits a
-deeper relift ladder only for extreme-precision four-factor nodes. Against the
-preceding public export, `chebyshev_U24` falls from 7.664 ms to 3.049 ms,
-`legendre_P30` from 32.486 ms to 16.237 ms, and `legendre_P38` from 37.858 ms
-to 15.528 ms. The changed quadratic-multifactor microbenchmark remains flat at
-67.229 ms; its focused export is
-`reports/bench-results/hex-hensel-quadratic-multifactor-478c3ccc-guarded-tree-chungus2.json`.
+The latest movement removes discarded quotient construction from Euclidean
+GCD, caches finite-field divisor inverses, maps prime-power coefficient
+reduction directly over the stored array, and replaces multiplication by a
+monomial in quadratic Hensel division with an exact shift-and-scale kernel.
+Against the immediately preceding public export, the all-row paired median is
+0.964× and current Hex is faster on 306 of 373 rows. `chebyshev_U24` is now
+2.608 ms, `legendre_P30` 13.970 ms, `legendre_P38` 13.771 ms, and
+`cyclo_phi385` 447.061 ms. The quadratic-multifactor microbenchmark falls from
+67.229 ms to 48.711 ms.
 
-## Diagnostics
+## Retained phase diagnostics
+
+The following phase attribution and factor-only A/B belong to their named
+earlier revisions; they remain useful localization evidence but are not
+relabelled as current timings:
 
 - Split degree 24: 16.387 ms rebuilding the kernel, 1.245 ms sharing it,
   569.224 µs on the fixed path.
 - Fixed split-degree-24 attribution: 18.89% matrix, 2.95% nullspace,
   78.17% witness splitting.
-- Hybrid `SD_5`: 100.706 ms through the classical tier.
-- Hybrid `SD_6`: 9.132 s, lattice decline, irreducible fallback.
-- Lattice core `SD_6`: 8.257 s.
 
 At degree 24 on the Mignotte schedule, the production balanced lift takes
 4.506 ms versus 5.837 ms for the same tree with a full-witness final
@@ -147,15 +144,15 @@ Both paths are relative to `reports/bench-results/`.
 
 | Fixture | Hex public | Verified Isabelle BZ | Hex / Isabelle |
 |---|---:|---:|---:|
-| `SD_5` | 91.491 ms | 22.827 ms | 4.01x |
-| `SD_5` shifted by 1 | 78.123 ms | 14.875 ms | 5.25x |
-| `SD_5` shifted by 2 | 79.193 ms | 14.907 ms | 5.31x |
-| `SD_6` | 9.077 s | timeout | — |
+| `SD_5` | 89.008 ms | 22.827 ms | 3.90x |
+| `SD_5` shifted by 1 | 76.152 ms | 14.875 ms | 5.12x |
+| `SD_5` shifted by 2 | 76.981 ms | 14.907 ms | 5.16x |
+| `SD_6` | 9.047 s | timeout | — |
 
 The fresh public service now solves `SD_6`; the no-decline classical service
-still times out. The public result and the isolated lattice result (8.285 s)
+still times out. The public result and the isolated lattice result (8.583 s)
 show that the dispatcher is adding useful reach here. The public measurement
-is a single cutoff-limited shot only 9.2% below ten seconds, so this frontier
+is a single cutoff-limited shot only 9.5% below ten seconds, so this frontier
 success has a narrow margin.
 
 ## Concerns
@@ -163,11 +160,11 @@ success has a narrow margin.
 - Nineteen public corpus cases still hit the 10-second cutoff.
 - FLINT, PARI/GP, and NTL remain much faster in aggregate.
 - Hex has a modest aggregate lead over Isabelle BZ, but Chebyshev still favours
-  Isabelle by 2.05× and Legendre by 1.85× at their family medians.
-- No-decline classical has a 0.9% paired-median lead over public; further broad
+  Isabelle by 1.64× and Legendre by 1.49× at their family medians.
+- No-decline classical has a 0.6% paired-median lead over public; further broad
   gains must come from the factorization core rather than dispatch alone.
 - The lattice route has a much heavier tail than the classical route.
-- `wilkinson_56` remains a slower outlier despite the 0.93× cumulative
+- `wilkinson_56` remains a slower outlier despite the 0.60× current
   Wilkinson-family median.
 - The BHKS registrations are useful upper bounds but do not describe the
   observed small-fixture scaling.

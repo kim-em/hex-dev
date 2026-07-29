@@ -4,7 +4,7 @@ The current public-factor, lattice, and no-decline classical measurements cover
 the exact-exponent/factor-only Hensel implementation, guarded dominant-degree
 tree, remainder-only polynomial GCD, cached finite-field inverses, and linear
 monomial Hensel kernel at clean revision
-`09f7f532338c7be474ac7a696adbc1e43ba77186`. They were measured 2026-07-29
+`0b95505b7c926911a9f487bac56676a8c7da48f6`. They were measured 2026-07-29
 on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0. The
 FLINT, PARI/GP, NTL, and Isabelle measurements are the already-current
 2026-07-28 exports from the same host, corpus, CPU placement, and timing
@@ -46,9 +46,9 @@ session and Haskell-export builds completed before the timed sweeps.
 
 | System | OK | Timeout | p50 solved | p90 solved | Slowest solved | Protocol overhead |
 |---|---:|---:|---:|---:|---:|---:|
-| Hex public factor | 373 | 19 | 398.571 µs | 4.115 ms | 8.984 s | 16.976 µs |
-| Hex lattice | 369 | 23 | 1.884 ms | 87.334 ms | 9.702 s | 19.609 µs |
-| Hex classical, no decline | 372 | 20 | 390.399 µs | 6.589 ms | 4.633 s | 18.417 µs |
+| Hex public factor | 373 | 19 | 400.334 µs | 4.082 ms | 9.047 s | 16.975 µs |
+| Hex lattice | 369 | 23 | 1.812 ms | 87.886 ms | 9.590 s | 18.848 µs |
+| Hex classical, no decline | 372 | 20 | 389.203 µs | 5.561 ms | 3.724 s | 18.448 µs |
 | FLINT | 391 | 1 | 66.850 µs | 1.184 ms | 1.228 s | 19.219 µs |
 | PARI/GP | 391 | 1 | 99.958 µs | 1.254 ms | 823.201 ms | 23.755 µs |
 | NTL | 391 | 1 | 135.631 µs | 2.714 ms | 1.919 s | 11.487 µs |
@@ -64,19 +64,21 @@ factor-count result on the seven rows without a committed degree oracle;
 FLINT, PARI/GP, and NTL factor counts agree on all seven.
 
 Relative to the pre-hot-path Hex record, the public median fell from 1.244 ms
-to 398.571 µs and retained two additional solves, `sd5_x_phi45` and `sd6`.
+to 400.334 µs and retained two additional solves, `sd5_x_phi45` and `sd6`.
 The current no-decline classical entry now also solves `sd5_x_phi45`, leaving
 `sd6` as the public dispatcher's one additional frontier success.
 
-On 241 common rows for which both current Hex measurements are at least 10×
-their own protocol overhead, public/classical has median 1.001× and
-p10–p90 0.62×–1.14×. Public is faster on 119 and classical on 122. The ordinary
-rows are therefore at parity; the production dispatcher's bounded tier and
-fallbacks improve selected hard rows and add the `sd6` solve.
+On 237 common rows for which both current Hex measurements are at least 10×
+their own protocol overhead, public/classical has median 1.006× and
+p10–p90 0.807×–1.128×. Public is faster on 109 and classical on 128. The
+ordinary rows are therefore at parity: no-decline is a diagnostic that omits
+bounded decline/fallback behavior and the public result check, not a distinct
+lifting core. The production path improves selected hard rows and adds the
+`sd6` solve.
 
-On the corresponding 236 public/verified-Isabelle BZ rows, Hex has median
-0.881× and p10–p90 0.46×–2.50×; Hex is faster on 138 and Isabelle on 98. The
-11.9% aggregate lead is clear, though the family spread still rules out a claim
+On the corresponding 234 public/verified-Isabelle BZ rows, Hex has median
+0.887× and p10–p90 0.454×–2.513×; Hex is faster on 135 and Isabelle on 99. The
+11.3% aggregate lead is clear, though the family spread still rules out a claim
 of uniform superiority.
 
 The improvement is broad but not universal. Family medians below compare the
@@ -86,21 +88,21 @@ faster.
 
 | Family | Common rows | Median new/old | Rows slower |
 |---|---:|---:|---:|
-| Certificate boundary | 1 | 0.529× | 0 |
-| Chebyshev | 28 | 0.478× | 0 |
-| Conway | 186 | 0.494× | 0 |
-| Cyclotomic | 32 | 0.719× | 0 |
-| Cyclotomic products | 19 | 0.242× | 0 |
-| Laguerre | 20 | 0.440× | 0 |
-| Legendre | 20 | 0.499× | 0 |
-| Random products | 30 | 0.358× | 0 |
-| Signed-digit products | 9 | 0.482× | 1 |
-| Swinnerton-Dyer | 11 | 0.496× | 0 |
-| Wilkinson | 15 | 0.244× | 0 |
+| Certificate boundary | 1 | 0.397× | 0 |
+| Chebyshev | 28 | 0.230× | 1 |
+| Conway | 186 | 0.310× | 1 |
+| Cyclotomic | 32 | 0.597× | 1 |
+| Cyclotomic products | 19 | 0.621× | 0 |
+| Laguerre | 20 | 0.232× | 0 |
+| Legendre | 20 | 0.189× | 0 |
+| Random products | 30 | 0.220× | 0 |
+| Signed-digit products | 9 | 0.440× | 0 |
+| Swinnerton-Dyer | 11 | 0.237× | 0 |
+| Wilkinson | 15 | 0.888× | 3 |
 
 Every family median improves over the pre-hot-path record. Against the
-immediately preceding guarded-tree export, the all-row paired median is 0.969×
-and the new public service is faster on 303 of 373 common solved rows.
+immediately preceding guarded-tree export, the all-row paired median is 0.964×
+and the new public service is faster on 306 of 373 common solved rows.
 
 ## Charts
 
@@ -124,15 +126,9 @@ uv run --with matplotlib python3 scripts/plots/hexbz-cactus.py
 
 Fresh Hex exports:
 
-- `reports/bench-results/hexbz-factor-sweep-hex-09f7f532-gcd-hensel-public-chungus2.json`
-  (current public; SHA-256
-  `b69ead6e9d194f15413e63f80baf6af91ba827793b180c2117e713a438145a17`)
-- `reports/bench-results/hexbz-factor-sweep-hex-09f7f532-gcd-hensel-lattice-chungus2.json`
-  (current lattice; SHA-256
-  `4ff66a75064ce0171c767a3a175e8581ec1b491d6ba5710297c7fcb7f033f3a3`)
-- `reports/bench-results/hexbz-factor-sweep-hex-09f7f532-gcd-hensel-classical-chungus2.json`
-  (current no-decline classical; SHA-256
-  `6ebff5a43be7d34232dd4c56e9f4463aebd736dc92626cfa7f68858562f224f0`)
+- `reports/bench-results/hexbz-factor-sweep-hex-0b95505b-gcd-hensel-final-chungus2.json`
+  (current public, lattice, and no-decline classical; SHA-256
+  `9f9f63ac9f35b3af6d35e530b085a1a1e47e7d03d958179d7597d7850e59c583`)
 - `reports/bench-results/hexbz-factor-sweep-hex-53bb12e2-guarded-tree-all-chungus2.json`
   (preceding all-Hex reference; SHA-256
   `926e91245e45523a40e8b915004bf4e0e17f01ed3547feca94589760d3e55e27`)
