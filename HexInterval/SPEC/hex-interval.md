@@ -1072,6 +1072,15 @@ precision ladder against its arithmetic endpoint-height limit; otherwise a
 configuration known in advance to exceed the backend limit is rejected at
 start rather than advertised as compatible.
 
+Each scoped handler also owns a fail-closed semantic validator for concrete
+bindings of its registration. The registry first repeats the generic
+structural checks, then routes the binding to that exact handler. A checked
+session installs the same routed validator in the engine, so retained matcher
+proposals, dynamic admission, and later scoped dispatch cannot disagree about
+package acceptance. The proof replay layer must still justify the resulting
+contractor theorem; this validator controls which package contract may be
+invoked, not whether that contract is sound.
+
 `Registry.invokePlanned` cross-checks the flattened registration, routed handler
 metadata, and structural projection of an engine-produced request before
 entering the callback, then replaces only the selected package's cache. It is
@@ -1112,7 +1121,7 @@ inside the registry's `Array (Package Fact)`, and the resulting
 `Registry Fact : Type 1` is threaded as the single external cache through
 either the FIFO or policy driver. Handlers in one package share that package's
 cache; handlers in different packages may use unrelated types. This first
-scope-free run has one registry cache for the whole run. Before branching is
+single-branch run has one registry cache for the whole run. Before branching is
 implemented, production must choose branch ownership or explicit
 `ScopeId`/semantic cache keys and test cross-branch reuse separately.
 

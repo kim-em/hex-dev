@@ -38,6 +38,8 @@ def overflowKey : RuleKey := { name := "payload-session.mystery.overflow" }
 def recoverKey : RuleKey := { name := "payload-session.mystery.recover" }
 def lateExtraKey : RuleKey := { name := "payload-session.mystery.late-extra" }
 def matcherKey : RuleKey := { name := "payload-session.mystery.matcher" }
+def matcherContractKey : RuleKey :=
+  { name := "payload-session.mystery.matcher-contract" }
 def invalidMatcherReplyKey : RuleKey :=
   { name := "payload-session.mystery.matcher-invalid-reply" }
 def invalidMatcherPayloadKey : RuleKey :=
@@ -79,6 +81,14 @@ def matcherRegistration (key : RuleKey) : Registration :=
     binding := .global
     watchesProgram := true
     matchWatch := .network }
+
+def matcherContractRegistration : Registration :=
+  { key := matcherContractKey
+    head := mysteryOp
+    kind := .improve
+    watches := []
+    writes := []
+    binding := .scoped }
 
 def factDomain : FactDomain Nat where
   top _ := 0
@@ -427,8 +437,16 @@ def batchContainsMystery (request : RuleRequest Nat) : Bool :=
 
 def matcherRequest : InstantiationRequest :=
   { key := 91
-    nodes := [{ domain := real, op := { index := 0 }, args := [] }]
+    nodes :=
+      [{ domain := real
+         op := { index := 1 }
+         args := [.existing (node 1)] }]
     equalities := []
+    scopes :=
+      [{ rule := matcherContractKey
+         anchor := .proposed 0
+         watches := [.existing (node 0)]
+         writes := [.proposed 0] }]
     payload := payload 900 }
 
 def matcherPlan (request : RuleRequest Nat) : Plan Nat :=
@@ -442,12 +460,56 @@ def matcherPlan (request : RuleRequest Nat) : Plan Nat :=
   else
     { outcome := .noChange {}, drafts := [] }
 
+def matcherContractPlan (_request : RuleRequest Nat) : Plan Nat :=
+  { outcome := .noChange {}, drafts := [] }
+
+def acceptsMatcherScope (actualProgram : Program)
+    (binding : ScopeBinding) : Bool :=
+  actualProgram.check && binding.rule == matcherContractKey &&
+    ((actualProgram.node? binding.anchor).any fun instruction =>
+      (actualProgram.operation? instruction.op).any fun operation =>
+        operation.key == mysteryOp) &&
+    binding.watches == [node 0] && binding.writes == [binding.anchor]
+
 def matcherPackage : Package Nat :=
   { Cache := Unit
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.statelessPlanned (matcherRegistration matcherKey) matcherPlan] }
+      #[Handler.statelessPlanned (matcherRegistration matcherKey) matcherPlan,
+        { Handler.statelessPlanned
+            matcherContractRegistration matcherContractPlan with
+          acceptsScope := acceptsMatcherScope }] }
+
+def rejectedScopeRequest : InstantiationRequest :=
+  { matcherRequest with
+    scopes :=
+      [{ rule := matcherContractKey
+         anchor := .proposed 0
+         watches := [.existing (node 2)]
+         writes := [.proposed 0] }] }
+
+def rejectedScopePlan (request : RuleRequest Nat) : Plan Nat :=
+  if batchContainsMystery request then
+    { outcome := .success [] [.instantiate rejectedScopeRequest] {}
+      drafts :=
+        [{ label := payload 900
+           role := .instance
+           schema := 4
+           body := [request.action.structuralInputs.length, 91] }] }
+  else
+    { outcome := .noChange {}, drafts := [] }
+
+def rejectedScopePackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned
+          (matcherRegistration matcherKey) rejectedScopePlan,
+        { Handler.statelessPlanned
+            matcherContractRegistration matcherContractPlan with
+          acceptsScope := acceptsMatcherScope }] }
 
 def smallMatcherRequest : InstantiationRequest :=
   { key := 95
@@ -529,6 +591,7 @@ def startWithin (package : Package Nat) (engineLimits : Propagator.Limits)
 
 def matcherLimits : Propagator.Limits :=
   { limits with
+    maxScopeNodes := 2
     maxMatcherVisits := 8
     matcherBatchSize := 2 }
 
@@ -622,9 +685,43 @@ def oversizedProgram : Program :=
                   match retained.suggestion with
                   | .instantiate request =>
                       request.payload == payload 0 &&
-                        (next.arena.entry? request.payload .instance).isSome
+                        (next.arena.entry? request.payload .instance).isSome &&
+                        request.scopes.length == 1 &&
+                        match next.engine.admitInstantiation { index := 0 } with
+                        | .admitted [fresh] after =>
+                            fresh == node 3 && after.bindings.size == 1 &&
+                              after.applications.size == 2 &&
+                              after.matcherCursors.size == 2 &&
+                              match after.bindings[0]?,
+                                  after.matcherCursors[1]? with
+                              | some binding, some none =>
+                                  binding.rule == matcherContractKey &&
+                                    binding.anchor == fresh &&
+                                    binding.watches == [node 0] &&
+                                    binding.writes == [fresh]
+                              | _, _ => false
+                        | _ => false
                   | _ => false
             | _, _, _ => false
+      | _ => false
+  | .error _ => false
+
+-- The session installs the registry's package-owned scope validator in the
+-- engine.  A structurally valid but package-rejected dynamic contractor is
+-- refused after prospective payload freezing, with no arena or cursor commit.
+#guard
+  match startMatcher rejectedScopePackage with
+  | .ok session =>
+      match session.advance with
+      | .invalidReply .malformedProposal next =>
+          !next.live && next.arena.entries.isEmpty &&
+            next.engine.suggestions.isEmpty &&
+            next.engine.bindings.isEmpty &&
+            next.engine.metrics.matcherVisits == 0 &&
+            next.engine.pending.isNone && next.engine.pendingMatcher.isNone &&
+            match next.engine.matcherCursors[0]? with
+            | some (some cursor) => cursor.offset == 0
+            | _ => false
       | _ => false
   | .error _ => false
 
