@@ -85,14 +85,23 @@ def rename {k : Nat} (f : Fin n → Fin k) (m : Mono n) : Mono k :=
 def succAt (i : Fin n) (m : Mono n) : Mono n :=
   mul m (unit i)
 
+/-- Remove the first exponent from a nonempty monomial. -/
+def dropHead (m : Mono (n + 1)) : Mono n :=
+  Hex.Vector.ofFn' fun i => m[i.succ]
+
+/-- Add an exponent at the front of a monomial. -/
+def prepend (e : Nat) (m : Mono n) : Mono (n + 1) :=
+  Hex.Vector.ofFn' fun i =>
+    if h : i.val = 0 then e else m[i.val - 1]'(by omega)
+
 /-- All decompositions `a * b = m`. Each exponent is split independently,
 so the list has `∏ i, (m[i] + 1)` entries. -/
 def splits : {n : Nat} → Mono n → List (Mono n × Mono n)
   | 0, _ => [(zero, zero)]
-  | n + 1, m =>
+  | _ + 1, m =>
       (List.range (m.head + 1)).flatMap fun k =>
-        (splits m.tail).map fun (a, b) =>
-          (a.insertIdx 0 k, b.insertIdx 0 (m.head - k))
+        (splits (dropHead m)).map fun (a, b) =>
+          (prepend k a, prepend (m.head - k) b)
 
 /-- Exponentiation by repeated squaring, used here so monomial evaluation
 does not depend on a coefficient type's choice of `Pow` implementation. -/
@@ -171,6 +180,95 @@ instance instGrevlexOrder : IsMonomialOrder (@grevlex n) := by
 @[simp] theorem getElem_gcd (a b : Mono n) (i : Fin n) :
     (gcd a b)[i] = min a[i] b[i] := by
   simp [gcd]
+
+@[simp] theorem getElem_dropHead (m : Mono (n + 1)) (i : Fin n) :
+    (dropHead m)[i] = m[i.succ] := by
+  simp [dropHead]
+
+@[simp] theorem getElem_prepend_zero (e : Nat) (m : Mono n) :
+    (prepend e m)[0] = e := by
+  simp [prepend]
+
+@[simp] theorem getElem_prepend_succ (e : Nat) (m : Mono n) (i : Fin n) :
+    (prepend e m)[i.succ] = m[i] := by
+  simp [prepend]
+
+theorem prepend_head_dropHead (m : Mono (n + 1)) :
+    prepend m.head (dropHead m) = m := by
+  apply Vector.ext
+  intro i hi
+  by_cases hzero : i = 0
+  · subst i
+    unfold prepend
+    rw [Hex.Vector.getElem_ofFn' _ 0 (by omega)]
+    simp only [↓reduceDIte]
+    change m[0] = m[0]
+    rfl
+  · unfold prepend
+    rw [Hex.Vector.getElem_ofFn' _ i hi]
+    split
+    · contradiction
+    · unfold dropHead
+      rw [Hex.Vector.getElem_ofFn' _ (i - 1) (by omega)]
+      change m[(i - 1) + 1] = m[i]
+      exact getElem_congr_idx (c := m) (by omega)
+
+theorem mul_prepend (ea eb : Nat) (a b : Mono n) :
+    mul (prepend ea a) (prepend eb b) =
+      prepend (ea + eb) (mul a b) := by
+  have get_ofFn {r : Nat} (g : Fin r → Nat) (j : Fin r) :
+      (Hex.Vector.ofFn' g).get j = g j := by
+    change (Hex.Vector.ofFn' g)[j.val] = g j
+    rw [Hex.Vector.getElem_ofFn' g j.val j.isLt]
+  have get_mul {r : Nat} (x y : Mono r) (j : Fin r) :
+      (mul x y).get j = x.get j + y.get j := by
+    unfold mul
+    rw [get_ofFn]
+    change x.get j + y.get j = x.get j + y.get j
+    rfl
+  apply Vector.ext
+  intro i hi
+  let t : Fin (n + 1) := ⟨i, hi⟩
+  change (mul (prepend ea a) (prepend eb b)).get t =
+    (prepend (ea + eb) (mul a b)).get t
+  rw [get_mul]
+  by_cases hzero : t.val = 0
+  · have hi0 : i = 0 := by simpa [t] using hzero
+    subst i
+    unfold prepend
+    rw [get_ofFn, get_ofFn, get_ofFn]
+    have ht : t = 0 := Fin.ext hzero
+    simp [ht]
+  · unfold prepend
+    rw [get_ofFn, get_ofFn, get_ofFn]
+    simp only [hzero, ↓reduceDIte]
+    let j : Fin n := ⟨t.val - 1, by omega⟩
+    change a.get j + b.get j = (mul a b).get j
+    exact (get_mul a b j).symm
+
+theorem dropHead_mul (a b : Mono (n + 1)) :
+    dropHead (mul a b) = mul (dropHead a) (dropHead b) := by
+  have get_ofFn {r : Nat} (g : Fin r → Nat) (j : Fin r) :
+      (Hex.Vector.ofFn' g).get j = g j := by
+    change (Hex.Vector.ofFn' g)[j.val] = g j
+    rw [Hex.Vector.getElem_ofFn' g j.val j.isLt]
+  have get_mul {r : Nat} (x y : Mono r) (j : Fin r) :
+      (mul x y).get j = x.get j + y.get j := by
+    unfold mul
+    rw [get_ofFn]
+    change x.get j + y.get j = x.get j + y.get j
+    rfl
+  have get_drop (x : Mono (n + 1)) (j : Fin n) :
+      (dropHead x).get j = x.get j.succ := by
+    unfold dropHead
+    rw [get_ofFn]
+    rfl
+  apply Vector.ext
+  intro i hi
+  let j : Fin n := ⟨i, hi⟩
+  change (dropHead (mul a b)).get j =
+    (mul (dropHead a) (dropHead b)).get j
+  rw [get_drop, get_mul, get_mul, get_drop, get_drop]
 
 theorem dvd_eq_true_iff (a b : Mono n) :
     dvd a b = true ↔ ∀ i : Fin n, a[i] ≤ b[i] := by
@@ -322,7 +420,48 @@ theorem rename_mul {k : Nat} (f : Fin n → Fin k) (a b : Mono n) :
 
 theorem splits_mem_iff (m a b : Mono n) :
     (a, b) ∈ splits m ↔ mul a b = m := by
-  sorry
+  induction n with
+  | zero =>
+    have hzero (x : Mono 0) : x = zero := by
+      apply Vector.ext
+      intro i hi
+      omega
+    rw [hzero a, hzero b, hzero m]
+    have hm : mul (zero : Mono 0) zero = zero :=
+      hzero (mul zero zero)
+    simp [splits, hm]
+  | succ n ih =>
+    constructor
+    · intro hmem
+      rcases List.mem_flatMap.mp hmem with ⟨e, he, hpairs⟩
+      rcases List.mem_map.mp hpairs with
+        ⟨⟨a', b'⟩, hab, hpairs⟩
+      cases hpairs
+      have htail : mul a' b' = dropHead m :=
+        (ih (dropHead m) a' b').mp hab
+      rw [mul_prepend, htail]
+      have he' := List.mem_range.mp he
+      have hsum : e + (m.head - e) = m.head := by omega
+      rw [hsum, prepend_head_dropHead]
+    · intro hmul
+      have hhead :=
+        congrArg (fun x : Mono (n + 1) => x[0]) hmul
+      simp only [mul, Hex.Vector.getElem_ofFn'] at hhead
+      change a.head + b.head = m.head at hhead
+      have htail :
+          mul (dropHead a) (dropHead b) = dropHead m := by
+        rw [← dropHead_mul, hmul]
+      apply List.mem_flatMap.mpr
+      refine ⟨a.head, List.mem_range.mpr ?_, ?_⟩
+      · omega
+      · apply List.mem_map.mpr
+        refine ⟨(dropHead a, dropHead b),
+          (ih (dropHead m) (dropHead a) (dropHead b)).mpr htail, ?_⟩
+        have hb : m.head - a.head = b.head := by omega
+        change
+          (prepend a.head (dropHead a),
+            prepend (m.head - a.head) (dropHead b)) = (a, b)
+        rw [hb, prepend_head_dropHead, prepend_head_dropHead]
 
 theorem dvd_lcm_left (a b : Mono n) : dvd a (lcm a b) = true := by
   simp only [dvd, decide_eq_true_eq]

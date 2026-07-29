@@ -12,13 +12,16 @@
   `evalHorner` equation.
 - Proved that total degree and variable renaming preserve monomial
   multiplication.
+- Reworked recursive monomial splitting around exact-arity `dropHead` and
+  `prepend` helpers, then proved that `splits` enumerates exactly all
+  multiplicative decompositions.
 - Narrowed `derivative` to its computational `Zero`/`NatCast`/`Add`/`Mul`
   requirements and removed the elevated local-instance priority.
 - Rebuilt all affected modules and the downstream kernel replay target.
 
 ## Current frontier
 
-Thirteen theorem obligations remain: four monomial/order laws, two polynomial
+Twelve theorem obligations remain: three monomial-order laws, two polynomial
 arithmetic laws, one sparse-Horner law, two structural laws, and four
 recursive-view laws.
 
