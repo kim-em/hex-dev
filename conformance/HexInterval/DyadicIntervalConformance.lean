@@ -7,6 +7,8 @@ Authors: Kim Morrison
 import HexInterval.Experiment.DyadicInterval
 
 /-!
+# Concrete dyadic interval conformance
+
 Conformance checks for the first concrete propagator fact domain.  These tests
 exercise exact openness and endpoint attainment rather than merely checking
 coarse numerical hulls.
