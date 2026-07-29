@@ -24,12 +24,13 @@
 ## Current frontier
 
 The implementation, ownership correction, benchmark artifacts, and reports
-are ready for final full-tree validation and publication.
+are rebased onto `61a78096` and ready for final full-tree validation and
+publication. The intervening mainline change is confined to resultant proofs.
 
 ## Next step
 
-Rebase onto current `origin/main`, run `lake build`, open the PR, monitor all
-GitHub Actions jobs to completion, and merge when green.
+Run `lake build`, open the PR, monitor all GitHub Actions jobs to completion,
+and merge when green.
 
 ## Blockers
 

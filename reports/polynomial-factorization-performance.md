@@ -27,6 +27,11 @@ ownership fix and refreshed evidence were pending commit. The full recorded
 hash identifies the implementation base; direct execution includes the
 borrowed-argument fix. The rejected pre-fix Hensel run is not retained.
 
+The evidence was integrated onto `61a78096`. That intervening mainline commit
+changes only resultant proofs, specifications, and conformance; it does not
+touch the factorization runtime, benchmark corpus, or measurement protocol, so
+the `a1fdbd81` measurements remain current for this branch.
+
 ## Headline outcome
 
 The verified hot-path work makes the public dispatcher 2.70× faster at the
