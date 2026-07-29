@@ -94,10 +94,9 @@ def classicalFactorInt (f : ZPoly) : Option (Array ZPoly) :=
       let modulus := pd.p ^ k
       some (recombInt f ld.liftedFactors.toList modulus #[])
 
-/-- Balanced product-tree Hensel lift: split the mod-p factors in half, lift the
-two-way split `target ≡ g·h` once via `henselLiftQuadratic`, recurse into each
-half. O(log r) depth and O(n log r) total split-degree, vs the library's
-sequential O(n·r) `multifactorLiftQuadraticList`. -/
+/-- Full-witness reference for the balanced product-tree Hensel lift. This
+mirrors the production tree shape but uses `henselLiftQuadratic` at every node,
+including the final correction where production uses `henselLiftFactors`. -/
 partial def balancedLift (p k : Nat) [ZMod64.Bounds p]
     (target : ZPoly) (factors : Array ZPoly) : Array ZPoly :=
   if factors.size <= 1 then #[ZPoly.reduceModPow target p k]
@@ -208,7 +207,11 @@ def main : IO Unit := do
     let sB := degreeSignature ((classicalFactorBalancedK inputs[0]! 4).getD #[])
     let sBm := degreeSignature ((classicalFactorBalanced inputs[0]!).getD #[])
     IO.println s!"--- degree {n} ---  (balanced k=4 size={sB.length}, balanced Mignotte size={sBm.length}, want {n})"; out.flush
-    timePhase "seq      Mignotte" 100 inputs (fun f => factorChecksum ((classicalFactorInt f).getD #[]))
-    timePhase "balanced Mignotte" 100 inputs (fun f => factorChecksum ((classicalFactorBalanced f).getD #[]))
-    timePhase "seq      k=4     " 100 inputs (fun f => factorChecksum ((classicalFactorIntK f 4).getD #[]))
-    timePhase "balanced k=4     " 100 inputs (fun f => factorChecksum ((classicalFactorBalancedK f 4).getD #[]))
+    timePhase "production   Mignotte" 100 inputs
+      (fun f => factorChecksum ((classicalFactorInt f).getD #[]))
+    timePhase "full-witness Mignotte" 100 inputs
+      (fun f => factorChecksum ((classicalFactorBalanced f).getD #[]))
+    timePhase "production   k=4     " 100 inputs
+      (fun f => factorChecksum ((classicalFactorIntK f 4).getD #[]))
+    timePhase "full-witness k=4     " 100 inputs
+      (fun f => factorChecksum ((classicalFactorBalancedK f 4).getD #[]))
