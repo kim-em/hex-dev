@@ -241,8 +241,30 @@ includes negative and out-of-range indices, so the special coefficient row and
 every ordinary Sylvester row use the same proof. Consequently
 `coeffMinorAt_addMul` proves the column-operation form of Brown--Traub equation
 (18): the original minor is the `G, H` minor times only the usual block-swap
-sign. Collapsing the retained formal degree of `H` and producing the
-leading-coefficient power is the next transformation.
+sign.
+
+The retained formal degree is then collapsed internally, without changing the
+coefficient-matrix representation. `SubresultantMinor.det_firstRow` expands a
+matrix whose first row is supported only in its first column.
+`coeffMinorAt_succRight` identifies the remaining first minor with the matrix
+whose right formal degree is one lower, so each removed degree contributes one
+copy of `lc(G)`; `coeffMinorAt_raiseRight` iterates this to the full power.
+The edge case has a one-entry special row rather than another leading
+coefficient: `coeffMinorAt_rightDegree` and `poly_rightDegree` prove
+`S_deg(H)(G,H) = lc(H)^(deg G - deg H - 1) H`.
+
+Combining the column operation, formal-degree collapse, and edge
+factorization gives the scalar and polynomial forms of Brown--Traub Lemma 1:
+`coeffMinorAt_brownTraub`, `poly_brownTraub`, and
+`poly_brownTraub_rightDegree`. The final scalar contains the block-swap sign,
+`lc(G)^(deg F - deg H)`, and
+`lc(H)^(deg G - deg H - 1)`. In a lawful exact-division domain,
+`divScalar_brownTraub` immediately turns this factorization into an exact
+coefficientwise quotient. The remaining Brown correctness step specializes
+these identities to pseudo-remainders, composes their nonunit multiple of `F`
+with `poly_scale_left`, treats the defective range
+`deg(H) < J < deg(G)`, aligns accumulated scalar factors across recursive
+states, and discharges `subresultantOrdered_brownLaw`.
 
 The injective coefficient map extends to dense polynomials and preserves
 normalized size, leading coefficients, constants, addition, subtraction,
@@ -398,8 +420,9 @@ quotient is exact over every stated exact-division domain.
   swaps, consecutive-block rotation with its parity law, and the resulting
   generalized-subresultant input-swap law.
 - `HexResultant/BrownTraub.lean`: multiplier-convolution column updates, the
-  resulting `G, H` coefficient matrix, and the signed column-operation identity
-  of Brown--Traub equation (18).
+  resulting `G, H` coefficient matrix, formal-degree collapse,
+  leading-coefficient and endpoint factorizations, and the exact
+  coefficientwise Brown--Traub quotient.
 - `HexResultant/Subresultant.lean`: the Brown worker,
   `subresultantChain`, `resultant`, chain termination, and degree bounds.
 - `HexResultant/Discriminant.lean`: `disc` and the algebraic
@@ -445,9 +468,13 @@ Per [SPEC/testing.md](../../SPEC/testing.md), fixtures are tiered into
     swap-sequence parity and action, arbitrary duplicate columns, and arbitrary
     column updates. An equal-degree `H = F + B * G` pin with `J > 0`, odd swap
     parity, and `deg H < deg G` checks the multiplier transformation entrywise
-    and then checks equation (18). The local Laplace determinant is factorial
-    proof infrastructure, so these checks stay deliberately small rather than
-    joining the random degree-10 resultant sweep.
+    and then checks equation (18). A second pin drops four retained formal
+    degrees, checks the independently distinguishable leading-coefficient
+    factor `48`, and divides the endpoint subresultant back to `H`; a smaller
+    interior-index pin exercises the polynomial law with `J < deg H`. The local
+    Laplace determinant is factorial proof infrastructure, so these checks stay
+    deliberately small rather than joining the random degree-10 resultant
+    sweep.
   - A bivariate case over `R = ZPoly`, exercising the
     `hex-number-field` instantiation: for example
     `resultant_y (y² − t) (y − t) = t² − t`.
@@ -485,6 +512,10 @@ is faster by a factor of roughly `n+m`.
 
 - Collins, G. E. *Subresultants and reduced polynomial remainder
   sequences.* J. ACM 14 (1967), 128-142. The original.
+- Brown, W. S.; Traub, J. F.
+  [*On Euclid's Algorithm and the Theory of Subresultants*](https://iiif.library.cmu.edu/file/Traub_box00027_fld00059_bdl0001_doc0001/Traub_box00027_fld00059_bdl0001_doc0001.pdf).
+  J. ACM 18 (1971), 505-514. Lemma 1 gives the transformation and endpoint
+  factorization formalized here.
 - Brown, W. S. [*The subresultant PRS algorithm*](https://people.eecs.berkeley.edu/~fateman/282/readings/brown.pdf).
   ACM TOMS 4 (1978), 237-249. Algorithm 1 is the recurrence pinned above.
 - Eberl, M. [*Subresultants*](https://isa-afp.org/browser_info/current/AFP/Subresultants/Subresultant.html),

@@ -366,6 +366,37 @@ private theorem nodup_finRange (n : Nat) : (List.finRange n).Nodup := by
       exact ⟨by simp [Fin.ext_iff],
         List.Pairwise.map _ (fun _ _ hne h => hne (Fin.succ_inj.mp h)) ih⟩
 
+/-- If the first row is supported only in its first column, the local
+determinant expands to that entry times the remaining first minor. -/
+theorem det_firstRow {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Square R (n + 1))
+    (hzero : ∀ j : Fin (n + 1), 0 < j.val →
+      M ⟨0, by omega⟩ j = 0) :
+    det M = M ⟨0, by omega⟩ ⟨0, by omega⟩ *
+      det (deleteFirst M ⟨0, by omega⟩) := by
+  let row : Fin (n + 1) := ⟨0, by omega⟩
+  let term := fun j : Fin (n + 1) =>
+    sign j.val * M row j * det (deleteFirst M j)
+  have hterm (j : Fin (n + 1)) (_hjmem : j ∈ List.finRange (n + 1))
+      (hj : j ≠ row) : term j = 0 := by
+    have hjpos : 0 < j.val := by
+      by_cases hjzero : j.val = 0
+      · exfalso
+        apply hj
+        apply Fin.ext
+        simp [row, hjzero]
+      · omega
+    unfold term
+    rw [show M row j = 0 by exact hzero j hjpos]
+    grind
+  simp only [det]
+  change (List.finRange (n + 1)).foldl
+      (fun acc j => acc + term j) 0 = _
+  rw [foldl_add_single (List.finRange (n + 1)) row term 0
+    (nodup_finRange (n + 1)) (List.mem_finRange row) hterm]
+  simp [term, row, sign]
+  grind
+
 private theorem foldl_finRange_adjacent {R : Type u} [Lean.Grind.CommRing R]
     {n : Nat} (left : Fin (n + 1)) (f : Fin (n + 2) → R)
     (hzero : ∀ j, j ≠ left.castSucc → j ≠ left.succ → f j = 0) :
