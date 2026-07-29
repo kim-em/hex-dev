@@ -40,13 +40,14 @@ universe u v w
 variable {α : Type v} {β : Type w} {R : Type u}
 
 /-!
-The `Std.Associative` / `Std.LawfulIdentity` instances that {name}`List.foldl_assoc`
-and friends need are kept **file-local**: they are used only to prove the
-lemmas below, which state their conclusions over `Lean.Grind.Ring` / `CommRing`
-without exposing the instances. Keeping them local avoids adding a second
-global `Std.Associative` resolution path for every `Grind.Semiring` (e.g.
-`Nat`/`Int` in the Mathlib bridge layers, where Mathlib already supplies its
-own). Promote / upstream them separately if a consumer ever needs them.
+The `Std.Associative` / `Std.LawfulIdentity` instances that
+{name}`List.foldl_assoc` and friends need are kept **file-local**: they are used
+only to prove the lemmas below, whose conclusions use `Lean.Grind.Semiring`,
+with `Ring` or `CommRing` required only where negation or commutative
+multiplication is genuinely involved. Keeping them local avoids adding a
+second global `Std.Associative` resolution path for every `Grind.Semiring`
+(e.g. `Nat`/`Int` in the Mathlib bridge layers, where Mathlib already supplies
+its own). Promote / upstream them separately if a consumer ever needs them.
 -/
 
 /-- Addition in a `Grind.Semiring` is an associative operation. -/
@@ -134,7 +135,7 @@ theorem foldl_add_perm [Lean.Grind.Semiring R] (f : α → R) {xs ys : List α}
   | trans _ _ ih₁ ih₂ => exact (ih₁ z).trans (ih₂ z)
 
 /-- A multiplicative fold-product is invariant under permuting the list. -/
-theorem foldl_mul_perm [Lean.Grind.CommRing R] (f : α → R) {xs ys : List α}
+theorem foldl_mul_perm [Lean.Grind.CommSemiring R] (f : α → R) {xs ys : List α}
     (h : xs.Perm ys) (z : R) :
     xs.foldl (fun acc x => acc * f x) z = ys.foldl (fun acc x => acc * f x) z := by
   induction h generalizing z with
@@ -353,21 +354,18 @@ theorem foldl_add_comm {γ : Type w} (xs : List α) (ys : List γ) (f : α → �
 
 end Semiring
 
-section CommRing
+section Semiring
 
-variable [Lean.Grind.CommRing R]
+variable [Lean.Grind.Semiring R]
 
 /-- Factor a right scalar out of an additive fold-sum started from `0`. -/
 theorem foldl_add_mul_right_zero (xs : List α) (f : α → R) (c : R) :
     xs.foldl (fun acc x => acc + f x * c) 0 =
       xs.foldl (fun acc x => acc + f x) 0 * c := by
-  calc xs.foldl (fun acc x => acc + f x * c) 0
-      = xs.foldl (fun acc x => acc + c * f x) 0 := by
-        apply foldl_add_congr; intro x _; grind
-    _ = c * xs.foldl (fun acc x => acc + f x) 0 := foldl_add_mul_left_zero xs c f
-    _ = xs.foldl (fun acc x => acc + f x) 0 * c := by grind
+  simpa [Lean.Grind.Semiring.zero_mul] using
+    (foldl_add_mul_right xs f c 0).symm
 
-end CommRing
+end Semiring
 
 /-! # flatMap -/
 

@@ -15,6 +15,9 @@ Reusable operations missing from `Std.ExtTreeMap`.
 
 The declarations stay in the `Std.ExtTreeMap` namespace and use only standard
 library types so they can be proposed upstream independently of Hex.
+When one lands upstream, delete the copy here in the same commit that updates
+the toolchain: unlike theorem shims, duplicate definitions cannot coexist
+across imported modules even when their signatures agree.
 
 `mergeWith?` is the deletion-capable analogue of `mergeWith`. It folds the
 smaller tree into the larger one, preserving the argument order seen by the
@@ -29,43 +32,45 @@ universe u v w x
 variable {α : Type u} {β : Type v} {γ : Type w} {δ : Type x}
   {cmp : α → α → Ordering}
 
-/-- Fold two sorted entry streams together.
+/-- Joint ordered fold over two maps in increasing comparator order.
 
-At a shared key the left key is passed to `f`; `LawfulEqCmp` ensures that the
-right key is propositionally equal to it. -/
-def mergeFold [LawfulEqCmp cmp]
-    (f : δ → α → Option β → Option γ → δ) :
-    δ → List (α × β) → List (α × γ) → δ
-  | acc, [], right =>
-      right.foldl (fun acc entry => f acc entry.1 none (some entry.2)) acc
-  | acc, left, [] =>
-      left.foldl (fun acc entry => f acc entry.1 (some entry.2) none) acc
-  | acc, leftEntry :: left, rightEntry :: right =>
-      match cmp leftEntry.1 rightEntry.1 with
-      | .lt =>
-          mergeFold f
-            (f acc leftEntry.1 (some leftEntry.2) none)
-            left (rightEntry :: right)
-      | .eq =>
-          mergeFold f
-            (f acc leftEntry.1 (some leftEntry.2) (some rightEntry.2))
-            left right
-      | .gt =>
-          mergeFold f
-            (f acc rightEntry.1 none (some rightEntry.2))
-            (leftEntry :: left) right
-termination_by _ left right => left.length + right.length
-decreasing_by all_goals simp_wf <;> omega
-
-/-- Joint ordered fold over two maps.
-
-The callback sees `some` on the sides that contain the current key. The
-implementation is linear in the combined entry count after materializing the
-two ordered streams. -/
-def foldl₂ [TransCmp cmp] [LawfulEqCmp cmp]
+The callback sees `some` exactly on the sides that contain a
+comparator-equivalent key; at a shared entry it receives the left map's key
+representative. The implementation performs linear merge work after
+materializing the two ordered streams. -/
+def foldl₂ [TransCmp cmp]
     (f : δ → α → Option β → Option γ → δ) (init : δ)
     (left : ExtTreeMap α β cmp) (right : ExtTreeMap α γ cmp) : δ :=
   mergeFold (cmp := cmp) f init left.toList right.toList
+where
+  /-- Joint-fold worker. Nesting keeps it out of the top-level
+  `Std.ExtTreeMap` namespace, but exposure makes it a public constant. Callers
+  must supply sorted, comparator-distinct streams, as `ExtTreeMap.toList`
+  produces; behavior on other lists is unspecified. -/
+  mergeFold {α : Type u} {β : Type v} {γ : Type w} {δ : Type x}
+      {cmp : α → α → Ordering}
+      (f : δ → α → Option β → Option γ → δ) :
+      δ → List (α × β) → List (α × γ) → δ
+    | acc, [], right =>
+        right.foldl (fun acc entry => f acc entry.1 none (some entry.2)) acc
+    | acc, left, [] =>
+        left.foldl (fun acc entry => f acc entry.1 (some entry.2) none) acc
+    | acc, leftEntry :: left, rightEntry :: right =>
+        match cmp leftEntry.1 rightEntry.1 with
+        | .lt =>
+            mergeFold (cmp := cmp) f
+              (f acc leftEntry.1 (some leftEntry.2) none)
+              left (rightEntry :: right)
+        | .eq =>
+            mergeFold (cmp := cmp) f
+              (f acc leftEntry.1 (some leftEntry.2) (some rightEntry.2))
+              left right
+        | .gt =>
+            mergeFold (cmp := cmp) f
+              (f acc rightEntry.1 none (some rightEntry.2))
+              (leftEntry :: left) right
+  termination_by _ left right => left.length + right.length
+  decreasing_by all_goals simp_wf <;> omega
 
 /-- Result for one key in a deletion-capable merge. -/
 def mergeValue? (f : α → β → β → Option β) (key : α) :
@@ -79,7 +84,9 @@ def mergeValue? (f : α → β → β → Option β) (key : α) :
 Left-only and right-only entries are retained unchanged. The smaller map is
 folded into the larger map, so the operation performs
 `O(min(m,n) * log(max(m,n)))` tree work. The collision callback always receives
-the left value before the right value, independent of which map is smaller. -/
+the left value before the right value, independent of which map is smaller.
+`LawfulEqCmp` makes comparator-equivalent keys propositionally equal, so the
+choice of the larger map cannot observably change the stored collision key. -/
 def mergeWith? [TransCmp cmp] [LawfulEqCmp cmp]
     (f : α → β → β → Option β)
     (left right : ExtTreeMap α β cmp) : ExtTreeMap α β cmp :=
@@ -171,7 +178,7 @@ private theorem getElem?_foldl_alter [TransCmp cmp] [LawfulEqCmp cmp]
   · rw [getElem?_foldl_alter]
     cases left[key]? <;> cases right[key]? <;> rfl
 
-@[simp] theorem foldl₂_empty_left [TransCmp cmp] [LawfulEqCmp cmp]
+@[simp] theorem foldl₂_empty_left [TransCmp cmp]
     (f : δ → α → Option β → Option γ → δ) (init : δ)
     (right : ExtTreeMap α γ cmp) :
     foldl₂ f init (∅ : ExtTreeMap α β cmp) right =
@@ -179,9 +186,9 @@ private theorem getElem?_foldl_alter [TransCmp cmp] [LawfulEqCmp cmp]
   unfold foldl₂
   have hempty : (∅ : ExtTreeMap α β cmp).toList = [] :=
     toList_eq_nil_iff.mpr rfl
-  rw [hempty, mergeFold, foldl_eq_foldl_toList]
+  rw [hempty, foldl₂.mergeFold, foldl_eq_foldl_toList]
 
-@[simp] theorem foldl₂_empty_right [TransCmp cmp] [LawfulEqCmp cmp]
+@[simp] theorem foldl₂_empty_right [TransCmp cmp]
     (f : δ → α → Option β → Option γ → δ) (init : δ)
     (left : ExtTreeMap α β cmp) :
     foldl₂ f init left (∅ : ExtTreeMap α γ cmp) =
@@ -190,7 +197,7 @@ private theorem getElem?_foldl_alter [TransCmp cmp] [LawfulEqCmp cmp]
   have hempty : (∅ : ExtTreeMap α γ cmp).toList = [] :=
     toList_eq_nil_iff.mpr rfl
   rw [hempty, foldl_eq_foldl_toList]
-  cases hleft : left.toList <;> simp [mergeFold]
+  cases hleft : left.toList <;> simp [foldl₂.mergeFold]
 
 @[simp] theorem mergeWith?_empty_left [TransCmp cmp] [LawfulEqCmp cmp]
     (f : α → β → β → Option β) (right : ExtTreeMap α β cmp) :

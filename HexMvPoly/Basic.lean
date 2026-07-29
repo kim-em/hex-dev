@@ -78,11 +78,30 @@ theorem monomials_nodup (p : MvPoly n R cmp) : p.monomials.Nodup := by
   rw [Std.ExtTreeMap.map_fst_toList_eq_keys]
   exact p.termsInternal.nodup_keys
 
-@[simp] theorem mem_monomials_iff (m : Mono n) (p : MvPoly n R cmp) :
+theorem mem_monomials_iff_isSome (m : Mono n) (p : MvPoly n R cmp) :
     m ∈ p.monomials ↔ (p.coeff? m).isSome := by
   unfold monomials termsList coeff?
   rw [Std.ExtTreeMap.map_fst_toList_eq_keys, Std.ExtTreeMap.mem_keys,
     Std.ExtTreeMap.mem_iff_isSome_getElem?]
+
+@[simp] theorem mem_monomials_iff (m : Mono n) (p : MvPoly n R cmp) :
+    m ∈ p.monomials ↔ coeff m p ≠ 0 := by
+  rw [mem_monomials_iff_isSome]
+  unfold coeff
+  cases hcoeff : coeff? m p with
+  | none => simp
+  | some c =>
+      have hc : c ≠ 0 := by
+        intro hzero
+        apply p.nonzeroInternal m
+        unfold coeff? at hcoeff
+        simpa [hzero] using hcoeff
+      simp [hc]
+
+@[simp] theorem mem_support_iff (m : Mono n) (p : MvPoly n R cmp) :
+    m ∈ p.support ↔ coeff m p ≠ 0 := by
+  unfold support
+  exact mem_monomials_iff m p
 
 /-- A monomial outside the canonical support has coefficient zero. -/
 theorem coeff_eq_zero_of_not_mem (m : Mono n) (p : MvPoly n R cmp)
@@ -93,7 +112,7 @@ theorem coeff_eq_zero_of_not_mem (m : Mono n) (p : MvPoly n R cmp)
   | none => rfl
   | some c =>
       exfalso
-      exact h ((mem_monomials_iff m p).mpr (by simp [hcoeff]))
+      exact h ((mem_monomials_iff_isSome m p).mpr (by simp [hcoeff]))
 
 /-- A stored term carries exactly the coefficient returned by lookup. -/
 theorem coeff_eq_of_mem_terms (p : MvPoly n R cmp) {m : Mono n} {c : R}

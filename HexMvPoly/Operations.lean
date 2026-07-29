@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexBasic.Fold
+import HexBasic.Fold
 public import HexMvPoly.Basic
 
 @[expose] public section
