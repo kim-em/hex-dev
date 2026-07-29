@@ -1,0 +1,53 @@
+{
+  "acceptance_passed": true,
+  "consumers": [
+    {
+      "adapter_sha256": "efd90dbb30dd472f838584f516c21204ae5a134b9638197614f50a5035179812",
+      "build": {
+        "jobs": 1545,
+        "output_sha256": "cfcfe9ab4e538817f17605d2f45dba4532fc3d8a3c36d29dae01e04759163381",
+        "status": "passed"
+      },
+      "lake_manifest_sha256": "4239ffb059cb8a678c756634e010abac33b4b127f869a5e4108f859af89884c5",
+      "name": "SOS",
+      "revision": "4e52845513a5a7f70927c96e094592db1bf124d1",
+      "targets": [
+        "+SOS.Certificate:olean",
+        "+SOS.EqElim:olean",
+        "+SOS.Symmetry:olean",
+        "+SOS.Verifier:olean",
+        "+SOS.Tactic:olean",
+        "+SOSTest.Examples:olean"
+      ],
+      "url": "https://github.com/leanprover/sos.git"
+    },
+    {
+      "adapter_sha256": {
+        "bivariate": "f224a916846086da90bf56c5dfa8612059a1d2361c753eb3f99da117ddddf0a5",
+        "univariate": "e98d289c334fc924b15eb6ff11a65c2b991a30ac7eb5e7f12e4dfd560f088203"
+      },
+      "build": {
+        "jobs": 1902,
+        "output_sha256": "f01fc15b40d1d1db60186b609e85f1d11a7721af3ec3e33228321844d42c7520",
+        "status": "passed"
+      },
+      "lake_manifest_sha256": "0881f2746ad3a2d133b0329dc65893e4b93a32589dce3d31f53b9da213a170ae",
+      "name": "CompPoly",
+      "revision": "f4c59f9e6a00b4e73f3e43ca362480468a508011",
+      "targets": [
+        "CompPoly.Univariate.CMvEquiv",
+        "CompPoly.Bivariate.CMvEquiv"
+      ],
+      "url": "https://github.com/Verified-zkEVM/CompPoly.git"
+    }
+  ],
+  "generated_at_utc": "2026-07-29T21:50:34.260545Z",
+  "hex_source": {
+    "commit": "d05d06355f31c0f2854a1abdf4f3ef00ff5ca876",
+    "dirty": false,
+    "status": [],
+    "tree": "bc096527095649c908d03c7beb2ecf6833c25aa8"
+  },
+  "schema": "hex-mv-poly-consumer-acceptance-v1",
+  "toolchain": "leanprover/lean4:v4.32.0-rc1"
+}

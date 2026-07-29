@@ -18,20 +18,23 @@
 - Extended the pinned-consumer runner to emit machine-readable evidence with
   exact source state, revisions, hashes, targets, Lake job counts, and build
   output hashes.
+- Rebuilt fresh pinned SOS and CompPoly clones against clean commit `d05d0635`;
+  their acceptance targets passed in 1,545 and 1,902 Lake jobs respectively,
+  and the machine-readable evidence records `dirty: false`.
 - Passed 66 sweep-harness tests and the combined `HexMvPolyTests`,
   `HexMvPolyMathlib.Correspondence`, and `HexMvPolyMathlibProofProbe` build
   (1,562 jobs).
 
 ## Current frontier
 
-The source and harness hardening is complete. Fresh consumer-acceptance and
-proof-sweep artifacts still need to be captured from this clean checkpoint.
+The source, harness hardening, and pinned-consumer acceptance are complete.
+The final proof-sweep artifact still needs to be captured from a clean
+checkpoint.
 
 ## Next step
 
-Run both pinned consumers and the release-quality v5 proof sweep, update the
-current-state reports from those artifacts, then complete final review and PR
-verification.
+Run the release-quality v5 proof sweep, update the current-state reports from
+both evidence artifacts, then complete final review and PR verification.
 
 ## Blockers
 
