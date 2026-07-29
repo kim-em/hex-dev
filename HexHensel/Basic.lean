@@ -73,11 +73,63 @@ def modP (p : Nat) [ZMod64.Bounds p] (f : ZPoly) : FpPoly p :=
   FpPoly.ofCoeffs <|
     (List.range f.size).map (fun i => ZMod64.ofNat p (intModNat (f.coeff i) p)) |>.toArray
 
+/-- Array-map implementation of coefficient reduction modulo `p`. -/
+def modPImpl (p : Nat) [ZMod64.Bounds p] (f : ZPoly) : FpPoly p :=
+  FpPoly.ofCoeffs <|
+    f.toArray.map (fun coeff => ZMod64.ofNat p (intModNat coeff p))
+
+/-- The direct array map computes the reference modular image. -/
+theorem modP_eq_impl_value (p : Nat) [ZMod64.Bounds p] (f : ZPoly) :
+    modP p f = modPImpl p f := by
+  unfold modP modPImpl
+  congr 1
+  rw [show
+      (List.range f.size).map
+          (fun i => ZMod64.ofNat p (intModNat (f.coeff i) p)) =
+        f.toList.map (fun coeff => ZMod64.ofNat p (intModNat coeff p)) by
+      rw [DensePoly.toList_eq_coeff_range, List.map_map]
+      rfl]
+  unfold DensePoly.toList
+  rw [← Array.toList_map, Array.toArray_toList]
+
+/-- Proof-backed compiled implementation of reduction modulo `p`. -/
+@[csimp]
+theorem modP_eq_impl : @modP = @modPImpl := by
+  funext p bounds f
+  exact modP_eq_impl_value p f
+
 /-- Reduce each coefficient to its canonical representative modulo `p^k`. -/
 @[expose]
 def reduceModPow (f : ZPoly) (p k : Nat) : ZPoly :=
   DensePoly.ofCoeffs <|
     (List.range f.size).map (fun i => Int.ofNat (intModNat (f.coeff i) (p ^ k))) |>.toArray
+
+/-- Array-map implementation of coefficient reduction modulo `p^k`. -/
+def reduceModPowImpl (f : ZPoly) (p k : Nat) : ZPoly :=
+  let modulus := p ^ k
+  DensePoly.ofCoeffs <|
+    f.toArray.map (fun coeff => Int.ofNat (intModNat coeff modulus))
+
+/-- The direct array map computes the reference prime-power reduction. -/
+theorem reduceModPow_eq_impl_value (f : ZPoly) (p k : Nat) :
+    reduceModPow f p k = reduceModPowImpl f p k := by
+  unfold reduceModPow reduceModPowImpl
+  congr 1
+  rw [show
+      (List.range f.size).map
+          (fun i => Int.ofNat (intModNat (f.coeff i) (p ^ k))) =
+        f.toList.map (fun coeff => Int.ofNat (intModNat coeff (p ^ k))) by
+      rw [DensePoly.toList_eq_coeff_range, List.map_map]
+      rfl]
+  unfold DensePoly.toList
+  rw [← Array.toList_map, Array.toArray_toList]
+
+/-- Proof-backed compiled implementation of prime-power coefficient
+reduction. -/
+@[csimp]
+theorem reduceModPow_eq_impl : @reduceModPow = @reduceModPowImpl := by
+  funext f p k
+  exact reduceModPow_eq_impl_value f p k
 
 /-- Coefficientwise characterisation of `modP`: the `i`-th coefficient of the reduction
 is the `ZMod64` image of the canonical representative of the original coefficient. -/

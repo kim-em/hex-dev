@@ -110,6 +110,21 @@ def isGoodPrime (f : ZPoly) (p : Nat) [ZMod64.Bounds p] : Bool :=
     ZPoly.leadingCoeffModP f p != 0 &&
     gcdIsUnit (DensePoly.gcd fModP (DensePoly.derivative fModP))
 
+/-- Compiled good-prime predicate using the inverse-cached finite-field GCD. -/
+def isGoodPrimeImpl (f : ZPoly) (p : Nat) [ZMod64.Bounds p] : Bool :=
+  let fModP := ZPoly.modP p f
+  3 <= p &&
+    ZPoly.leadingCoeffModP f p != 0 &&
+    gcdIsUnit (FpPoly.gcdCached fModP (DensePoly.derivative fModP))
+
+/-- Proof-backed compiled implementation of good-prime testing that computes
+one leading-coefficient inverse per polynomial remainder pass. -/
+@[csimp]
+theorem isGoodPrime_eq_impl : @isGoodPrime = @isGoodPrimeImpl := by
+  funext f p bounds
+  unfold isGoodPrime isGoodPrimeImpl
+  simp only [FpPoly.gcdCached_eq]
+
 /-- Assemble the executable good-prime result from its three mathematical
 components. -/
 theorem isGoodPrime_of_admissible

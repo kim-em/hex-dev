@@ -72,6 +72,61 @@ private def subModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
 private def mulModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
   QuadraticLiftResult.reduceModSquare (f * g) m
 
+/-- Modular multiplication by a single monomial. Kept as a separate
+specification so compiled division can avoid sending the monomial's leading
+zero coefficients through the generic schoolbook multiplier. -/
+def mulMonomialModSquare
+    (k : Nat) (coeff : Int) (q : ZPoly) (m : Nat) : ZPoly :=
+  mulModSquare (DensePoly.monomial k coeff) q m
+
+/-- Multiplication by `coeff * X^k` is a scaled coefficient shift. -/
+private theorem monomial_mul_eq_shift_scale
+    (k : Nat) (coeff : Int) (q : ZPoly) :
+    DensePoly.monomial k coeff * q =
+      DensePoly.shift k (DensePoly.scale coeff q) := by
+  have hmono : DensePoly.monomial k coeff =
+      DensePoly.scale coeff (DensePoly.monomial k 1) := by
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_monomial, DensePoly.coeff_scale_semiring,
+      DensePoly.coeff_monomial]
+    by_cases hnk : n = k
+    · simp [hnk]
+    · simp only [hnk, ↓reduceIte]
+      exact (Lean.Grind.Semiring.mul_zero coeff).symm
+  rw [hmono, ← DensePoly.scale_mul,
+    DensePoly.monomial_one_mul_poly_eq_shift]
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_scale_semiring,
+    DensePoly.coeff_shift_scale_semiring, DensePoly.coeff_shift]
+  by_cases hnk : n < k
+  · simp only [hnk, ↓reduceIte]
+    exact Lean.Grind.Semiring.mul_zero coeff
+  · simp [hnk]
+
+/-- Linear-time implementation of modular monomial multiplication. -/
+def mulMonomialModSquareImpl
+    (k : Nat) (coeff : Int) (q : ZPoly) (m : Nat) : ZPoly :=
+  QuadraticLiftResult.reduceModSquare
+    (DensePoly.shift k (DensePoly.scale coeff q)) m
+
+/-- The shift-and-scale monomial kernel is exactly the generic modular
+product. -/
+theorem mulMonomialModSquare_eq
+    (k : Nat) (coeff : Int) (q : ZPoly) (m : Nat) :
+    mulMonomialModSquare k coeff q m =
+      mulMonomialModSquareImpl k coeff q m := by
+  unfold mulMonomialModSquare mulMonomialModSquareImpl mulModSquare
+  rw [monomial_mul_eq_shift_scale]
+
+/-- Proof-backed compiled implementation of modular monomial multiplication. -/
+@[csimp]
+theorem mulMonomialModSquare_eq_impl :
+    @mulMonomialModSquare = @mulMonomialModSquareImpl := by
+  funext k coeff q m
+  exact mulMonomialModSquare_eq k coeff q m
+
 /-- Fuel-driven long-division kernel returning the quotient/remainder of the
 running `rem` by the monic divisor `q`, with all arithmetic reduced modulo `m²`.
 The Hensel theorem surface supplies monic divisors, so this exploits that
@@ -92,7 +147,7 @@ private def divModMonicModSquareAux
               let coeff := reduceCoeffModSquare rem.leadingCoeff m
               let term := DensePoly.monomial k coeff
               let quot := addModSquare quot term m
-              let rem := subModSquare rem (mulModSquare term q m) m
+              let rem := subModSquare rem (mulMonomialModSquare k coeff q m) m
               divModMonicModSquareAux m q fuel quot rem
         | _, _ => (quot, rem)
 

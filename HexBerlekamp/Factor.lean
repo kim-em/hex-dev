@@ -201,7 +201,7 @@ normally use `kernelWitnessSplit?`. -/
 def splitFactorCached
     (f witness reduced : FpPoly p) (c : ZMod64 p) : FpPoly p :=
   if 2 ≤ f.size ∧ f.size < witness.size then
-    DensePoly.gcdAux f (reduced - FpPoly.C c) (f.size + witness.size - 1)
+    FpPoly.gcdAuxCached f (reduced - FpPoly.C c) (f.size + witness.size - 1)
   else
     splitFactorAt f witness c
 
@@ -213,6 +213,7 @@ theorem splitFactorCached_eq
   unfold splitFactorCached
   by_cases hfast : 2 ≤ f.size ∧ f.size < witness.size
   · rw [if_pos hfast]
+    rw [FpPoly.gcdAuxCached_eq]
     have hf : f.isZero = false :=
       (DensePoly.isZero_eq_false_iff f).mpr (by omega)
     have hw : 2 ≤ witness.size := by omega
