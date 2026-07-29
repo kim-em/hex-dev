@@ -449,6 +449,10 @@ lean_exe hex_recursive_relift_spike where
   srcDir := "bench"
   root := `HexBench.RecursiveReliftSpike
 
+lean_exe hex_prime_policy_spike where
+  srcDir := "bench"
+  root := `HexBench.PrimePolicySpike
+
 lean_exe hex_interval_representation_spike where
   srcDir := "bench"
   root := `HexBench.IntervalRepresentationSpike

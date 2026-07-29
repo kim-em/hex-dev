@@ -268,17 +268,24 @@ inside the small-`r` regime, first-suitable factors `f mod p` exactly
 once.
 
 The shared lifting entry `toMonicPrimeData?` preserves this first-suitable
-choice in the ordinary case. It performs a bounded irreducibility look-ahead
-only when the first good image has at least nine modular factors *and* the
-monic transform contains a coefficient whose `log2` is at least 512. It then
-examines at most eight further good primes and switches only if one gives a
-single modular factor; otherwise it returns the original choice. A singleton
-modular factor is already a checked Berlekamp irreducibility certificate, so
-this avoids Hensel lifting and recombination on the coefficient-swell cases
-where that downstream work is most expensive. This is not general `r`
-minimisation and does not alter the exhaustive `none` semantics: the same
-fixed candidate set is searched, and all returned prime data carries the same
-primality, good-prime, modular-image, and Berlekamp-form proofs.
+choice in the ordinary case. It performs a bounded factor-count look-ahead
+when the monic transform reaches `probeMinDegree = 50` with at least
+`probeMinFactors = 24` modular factors (excluding even `x^n - 1`, whose
+difference-of-squares recursion is already cheap), when the first good image
+has at least `probeSwollenFactors = 9` modular factors and the transform
+contains a coefficient whose `log2` reaches `probeCoeffLog = 512`, or when a
+transform reaching `probeCyclotomicDegree = 50` is the uniform all-one form of
+a prime cyclotomic. It examines at most `primeProbeFuel = 2` further good primes,
+retains a choice only when it reduces the current modular factor count by at
+least one quarter, and stops early on a singleton or on a halving improvement
+that still leaves at least `probeEarlyFactorFloor = 8` factors. A
+singleton modular factor is already a checked Berlekamp irreducibility
+certificate; more generally, reducing the factor count narrows both Hensel
+lifting and recombination enough to repay the bounded probe on these high-cost
+inputs. This is not exhaustive `r` minimisation and does not alter the
+exhaustive `none` semantics: the same fixed candidate set is searched, and all
+returned prime data carries the same primality, good-prime, modular-image, and
+Berlekamp-form proofs.
 
 **Explicit pipeline records:**
 ```lean
