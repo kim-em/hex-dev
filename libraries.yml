@@ -121,12 +121,12 @@ libraries:
           description: Disjoint and interleaved sparse supports across lexicographic, graded lexicographic, and graded reverse lexicographic order.
         - name: sparse-multiplication
           description: Low-collision and high-collision products varying arity, degree, term count, coefficient type, and comparator.
-        - name: cancellation-identities
-          description: Cancellation-heavy ring identities replayed in the kernel over integer and rational coefficients.
+        - name: cancellation-arithmetic
+          description: Cancellation-heavy integer and rational arithmetic measured as compiled Mathlib-free computation.
         - name: structural-collisions
           description: Sparse rename, partial-evaluation, and substitution cases where distinct source terms collide.
-        - name: sos-certificates
-          description: Representative sum-of-squares certificate identities checked from a downstream module with decide +kernel.
+        - name: sum-of-squares-arithmetic
+          description: Representative sum-of-squares-shaped identities measured as compiled Mathlib-free arithmetic.
   HexMatrix:
     deps: [HexBasic]
     mathlib: false

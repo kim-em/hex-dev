@@ -183,6 +183,14 @@ def sumToIter [Lean.Grind.Semiring R] [DecidableEq R]
     (p : MvPoly n R cmp) : MvPoly n R cmp :=
   ofTerms p.termsList
 
+@[simp] theorem sumToIter_eq [Lean.Grind.Semiring R] [DecidableEq R]
+    (p : MvPoly n R cmp) :
+    sumToIter p = p := by
+  apply ext
+  intro m
+  unfold sumToIter
+  rw [coeff_ofTerms, coeff_terms]
+
 theorem coeff_reorder [Lean.Grind.Semiring R] [DecidableEq R]
     (cmp' : Mono n → Mono n → Ordering)
     [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']

@@ -138,6 +138,77 @@ differing variable compares smaller. -/
 def grevlex (a b : Mono n) : Ordering :=
   compareLex (fun x y => compare (degree x) (degree y)) revlex a b
 
+instance instLexTransCmp : Std.TransCmp (@lex n) where
+  eq_swap {a b} := by
+    unfold lex
+    exact Std.OrientedCmp.eq_swap
+      (cmp := List.compareLex (compare (α := Nat)))
+  isLE_trans {a b c} := by
+    unfold lex
+    exact Std.TransCmp.isLE_trans
+      (cmp := List.compareLex (compare (α := Nat)))
+
+instance instLexLawfulEqCmp : Std.LawfulEqCmp (@lex n) where
+  compare_self {a} := by
+    unfold lex
+    exact Std.ReflCmp.compare_self
+      (cmp := List.compareLex (compare (α := Nat)))
+  eq_of_compare {a b} h := by
+    have hlist : a.toList = b.toList :=
+      Std.LawfulEqCmp.eq_of_compare
+        (cmp := List.compareLex (compare (α := Nat))) h
+    exact Vector.toList_inj.mp hlist
+
+instance instRevlexTransCmp : Std.TransCmp (@revlex n) where
+  eq_swap {a b} := by
+    unfold revlex
+    exact Std.OrientedCmp.eq_swap
+      (cmp := List.compareLex (fun x y : Nat => compare y x))
+  isLE_trans {a b c} := by
+    unfold revlex
+    exact Std.TransCmp.isLE_trans
+      (cmp := List.compareLex (fun x y : Nat => compare y x))
+
+instance instRevlexLawfulEqCmp : Std.LawfulEqCmp (@revlex n) where
+  compare_self {a} := by
+    unfold revlex
+    exact Std.ReflCmp.compare_self
+      (cmp := List.compareLex (fun x y : Nat => compare y x))
+  eq_of_compare {a b} h := by
+    have hrev : a.toList.reverse = b.toList.reverse :=
+      Std.LawfulEqCmp.eq_of_compare
+        (cmp := List.compareLex (fun x y : Nat => compare y x)) h
+    exact Vector.toList_inj.mp (List.reverse_inj.mp hrev)
+
+private instance instDegreeTransCmp :
+    Std.TransCmp (fun a b : Mono n => compare (degree a) (degree b)) := by
+  change Std.TransCmp (compareOn degree)
+  infer_instance
+
+instance instGrlexTransCmp : Std.TransCmp (@grlex n) := by
+  unfold grlex
+  infer_instance
+
+instance instGrlexLawfulEqCmp : Std.LawfulEqCmp (@grlex n) where
+  compare_self {a} := by
+    simp [grlex, Std.ReflCmp.compare_self]
+  eq_of_compare {a b} h := by
+    have hp : degree a = degree b ∧ a = b := by
+      simpa [grlex, compareLex, Ordering.then_eq_eq] using h
+    exact hp.2
+
+instance instGrevlexTransCmp : Std.TransCmp (@grevlex n) := by
+  unfold grevlex
+  infer_instance
+
+instance instGrevlexLawfulEqCmp : Std.LawfulEqCmp (@grevlex n) where
+  compare_self {a} := by
+    simp [grevlex, Std.ReflCmp.compare_self]
+  eq_of_compare {a b} h := by
+    have hp : degree a = degree b ∧ a = b := by
+      simpa [grevlex, compareLex, Ordering.then_eq_eq] using h
+    exact hp.2
+
 end Mono
 
 /-- Laws needed of a comparator by leading-term and reduction algorithms.

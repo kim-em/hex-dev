@@ -29,6 +29,12 @@ abbrev P := MvPoly 2 Int Mono.lex
 example : p + -p = 0 := by
   decide +kernel
 
+example : (p == p) = true := by
+  decide +kernel
+
+example : coeff (Mono.unit 0) p = 1 := by
+  decide +kernel
+
 example :
     p * p =
       ofTerms
@@ -38,6 +44,38 @@ example :
          (Mono.mul (Mono.unit 0) (Mono.unit 0), 1),
          (Mono.mul (Mono.unit 0) (Mono.unit 1), 2),
          (Mono.mul (Mono.unit 1) (Mono.unit 1), 1)] := by
+  decide +kernel
+
+example : p ^ 3 = p * p * p := by
+  decide +kernel
+
+example :
+    Mono.dvd (Mono.unit 0 : Mono 2)
+      (Mono.succAt 0 (Mono.unit 0 : Mono 2)) = true := by
+  decide +kernel
+
+example :
+    Mono.div (Mono.unit 0 : Mono 2)
+        (Mono.succAt 0 (Mono.unit 0 : Mono 2)) =
+      some (Mono.unit 0 : Mono 2) := by
+  decide +kernel
+
+example :
+    Mono.lcm (Mono.unit 0 : Mono 2) (Mono.unit 1 : Mono 2) =
+      Mono.mul (Mono.unit 0 : Mono 2) (Mono.unit 1 : Mono 2) := by
+  decide +kernel
+
+example :
+    Mono.gcd (Mono.unit 0 : Mono 2) (Mono.unit 1 : Mono 2) = Mono.zero := by
+  decide +kernel
+
+abbrev GP := MvPoly 2 Int Mono.grlex
+
+@[expose] def gx : GP := X 0
+@[expose] def gy : GP := X 1
+
+example : gx * gy + gy * gx = ofTerms
+    [(Mono.mul (Mono.unit 0) (Mono.unit 1), 2)] := by
   decide +kernel
 
 abbrev QP := MvPoly 2 Rat Mono.grevlex
@@ -55,6 +93,17 @@ example : eval (fun i => if i = 0 then 2 else 3) q = 11 / 2 := by
 example :
     ofUnivariate (cmp := Mono.grevlex) 0 Mono.lex
       (toUnivariate 0 Mono.lex q) = q := by
+  decide +kernel
+
+abbrev P0 := MvPoly 0 Int Mono.lex
+
+example : (C 7 : P0) + C (-7) = 0 := by
+  decide +kernel
+
+abbrev P1 := MvPoly 1 Int Mono.lex
+
+example : (X 0 : P1) * X 0 = monomial
+    (Mono.succAt 0 (Mono.unit 0)) 1 := by
   decide +kernel
 
 end Hex.MvPoly.KernelTests

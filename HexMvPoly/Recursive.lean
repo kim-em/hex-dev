@@ -23,7 +23,6 @@ variable {n : Nat} {R : Type u}
   {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
   {cmp' : Mono n → Mono n → Ordering}
   [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
-  [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
 
 /-- Remove coordinate `i` from an exponent vector. This is the explicit
 Mathlib-free form of precomposition by `Fin.succAbove i`. -/
@@ -47,7 +46,7 @@ def insertVar (i : Fin (n + 1)) (e : Nat) (m : Mono n) : Mono (n + 1) :=
 Each coefficient is a polynomial in the remaining `n` variables. -/
 def toUnivariate [Lean.Grind.Semiring R] [DecidableEq R]
     (i : Fin (n + 1)) (cmp' : Mono n → Mono n → Ordering)
-    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp'] [IsMonomialOrder cmp']
+    [IsMonomialOrder cmp']
     (p : MvPoly (n + 1) R cmp) : DensePoly (MvPoly n R cmp') :=
   let terms := p.termsList
   let size := terms.foldl
@@ -63,7 +62,7 @@ def toUnivariate [Lean.Grind.Semiring R] [DecidableEq R]
 /-- Inverse of `toUnivariate`, reinserting variable `i`. -/
 def ofUnivariate [Lean.Grind.Semiring R] [DecidableEq R]
     (i : Fin (n + 1)) (cmp' : Mono n → Mono n → Ordering)
-    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp'] [IsMonomialOrder cmp']
+    [IsMonomialOrder cmp']
     (q : DensePoly (MvPoly n R cmp')) : MvPoly (n + 1) R cmp :=
   (List.range q.size).foldl
     (fun acc e =>

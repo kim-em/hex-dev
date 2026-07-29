@@ -148,12 +148,12 @@ theorem eval_eq [Lean.Grind.Semiring R]
   unfold eval
   simpa using eval₂_eq id x p
 
-theorem eval₂Horner_eq [Zero R] [Lean.Grind.Semiring S]
+theorem eval₂Horner_eq [Zero R] [Lean.Grind.CommSemiring S]
     (f : R → S) (x : Fin n → S) (p : MvPoly n R cmp) :
     eval₂Horner f x p = eval₂ f x p := by
   sorry
 
-theorem evalHorner_eq [Lean.Grind.Semiring R]
+theorem evalHorner_eq [Lean.Grind.CommSemiring R]
     (x : Fin n → R) (p : MvPoly n R cmp) :
     evalHorner x p = eval x p := by
   unfold evalHorner eval

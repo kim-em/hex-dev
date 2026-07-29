@@ -27,7 +27,10 @@ variable {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
 /-- Polynomial addition, combining equal monomials and deleting cancellations. -/
 def add [Lean.Grind.Semiring R] [DecidableEq R]
     (p q : MvPoly n R cmp) : MvPoly n R cmp :=
-  q.foldTerms (fun acc m c => acc.addMonomial m c) p
+  if p.termCount < q.termCount then
+    p.foldTerms (fun acc m c => acc.addMonomial m c) q
+  else
+    q.foldTerms (fun acc m c => acc.addMonomial m c) p
 
 instance [Lean.Grind.Semiring R] [DecidableEq R] :
     Add (MvPoly n R cmp) where
@@ -133,15 +136,23 @@ theorem coeff_add [Lean.Grind.Semiring R] [DecidableEq R]
         ih (0 + t.2)]
       rw [Lean.Grind.AddCommMonoid.zero_add,
         Lean.Grind.AddCommMonoid.add_assoc]
+  have hfold (source init : MvPoly n R cmp) :
+      coeff m
+          (source.termsInternal.foldl
+            (fun acc key value => acc.addMonomial key value) init) =
+        coeff m init + coeff m source := by
+    rw [Std.ExtTreeMap.foldl_eq_foldl_toList, aux, fold_start]
+    have hs :
+      (source.termsInternal.toList.filter (fun t => t.1 = m)).foldl
+          (fun acc t => acc + t.2) 0 =
+        coeff m source := by
+      simpa [termsList] using coeff_terms m source
+    rw [hs]
   change coeff m (add p q) = coeff m p + coeff m q
   unfold add foldTerms
-  rw [Std.ExtTreeMap.foldl_eq_foldl_toList, aux, fold_start]
-  have hq :
-      (q.termsInternal.toList.filter (fun t => t.1 = m)).foldl
-          (fun acc t => acc + t.2) 0 =
-        coeff m q := by
-    simpa [termsList] using coeff_terms m q
-  rw [hq]
+  split
+  · rw [hfold, Lean.Grind.AddCommMonoid.add_comm]
+  · rw [hfold]
 
 theorem coeff_neg [Lean.Grind.Ring R] (m : Mono n) (p : MvPoly n R cmp) :
     coeff m (-p) = -coeff m p := by
