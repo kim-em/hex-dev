@@ -1063,12 +1063,13 @@ packages. The current canary chooses an ordered `Array (Package Fact)`. Each
 package existentially owns one private `Cache` shared by its handlers and
 contributes owned operation signatures, exact external signatures required by
 its matchers, `(Registration, callback)` pairs, and a package-owned limit
-preflight. A handler head must be declared as owned or required.
+preflight over both the engine and proof-arena envelopes. A handler head must
+be declared as owned or required.
 `Registry.buildWithin` bounds package and metadata counts plus arities before
 flattening, builds a `Route` from each compact `RuleId` back to its package and
 handler, and rejects undeclared heads and duplicate `OpKey`s or `RuleKey`s.
 Program size and arity are bounded before exact signature lookup. The checked
-start then validates every owned and required signature against the final
+session start validates every owned and required signature against the final
 frontend program, runs each package's configuration preflight, and starts the
 engine with the registry's exact flattened registration array. Registry-owned
 dispatch diagnostics impose their own `maxDiagnosticValue` floor even when
@@ -1077,6 +1078,15 @@ package additionally checks both endpoints of its configured effort-to-
 precision ladder against its arithmetic endpoint-height limit; otherwise a
 configuration known in advance to exceed the backend limit is rejected at
 start rather than advertised as compatible.
+
+Each scoped handler also owns a fail-closed semantic validator for concrete
+bindings of its registration. The registry first repeats the generic
+structural checks, then routes the binding to that exact handler. A checked
+session installs the same routed validator in the engine, so retained matcher
+proposals, dynamic admission, and later scoped dispatch cannot disagree about
+package acceptance. The proof replay layer must still justify the resulting
+contractor theorem; this validator controls which package contract may be
+invoked, not whether that contract is sound.
 
 `Registry.invokePlanned` cross-checks the flattened registration, routed handler
 metadata, and structural projection of an engine-produced request before
@@ -1095,10 +1105,12 @@ registrations, callback routes, configuration validation, and the
 payload-freezing/replay schema implementations as one coherent snapshot.
 Whether that snapshot retains existential packages, compiles one dispatch
 function, supports hot replacement, or uses another lookup structure remains
-experimental. The present experiment exposes its constructors and returns a
-separable engine/registry pair, so its checked start is a conformance canary
-rather than the final encapsulation boundary. A production session should
-prevent accidentally pairing an engine with an unrelated registry; a
+experimental. `PayloadSession.Session` now has a
+private constructor and its checked start owns the matching engine, registry,
+arena, and arena limits; the bounded `Run` result also has a private
+constructor, so its stop classification can only come from session execution.
+The older direct registry and engine interfaces remain available for search
+experiments, but proof-producing execution goes through the session. A
 different callback implementation under the same versioned rule schema
 remains valid only when its retained payloads replay under that schema.
 
@@ -1116,7 +1128,7 @@ inside the registry's `Array (Package Fact)`, and the resulting
 `Registry Fact : Type 1` is threaded as the single external cache through
 either the FIFO or policy driver. Handlers in one package share that package's
 cache; handlers in different packages may use unrelated types. This first
-scope-free run has one registry cache for the whole run. Before branching is
+single-branch run has one registry cache for the whole run. Before branching is
 implemented, production must choose branch ownership or explicit
 `ScopeId`/semantic cache keys and test cross-branch reuse separately.
 
@@ -1149,8 +1161,9 @@ alternatives to compare against the same reference stream.
 2. The external function-package registry executes the routed callback and
    owns its private cache; the Mathlib companion is responsible for semantic
    replay, not hot-loop dispatch.
-3. The registry returns an `Outcome` containing candidate facts, alternatives,
-   suggestions, cost observations, and an opaque proof recipe identifier.
+3. The registry returns a `Plan` containing an `Outcome` plus exactly the
+   reply-local recipe drafts referenced by its fact, instantiation, and
+   equality payload identifiers.
 4. A reply echoes the request serial, snapshot, and application. A delayed or
    transplanted reply is rejected without clearing the current request.
 5. The solver validates every candidate target against the application's
@@ -1163,10 +1176,9 @@ alternatives to compare against the same reference stream.
    Only companion replay of the retained payload can do that.
 6. In the production replay protocol, every value needed to justify an
    accepted fact is frozen into an immutable per-run payload arena, and the
-   retained `PayloadId` points there rather than into a mutable cache. A
-   separate arena experiment now validates and relocates a complete reply
-   prospectively; it is not yet joined to package invocation and engine
-   admission in one opaque session.
+   retained `PayloadId` points there rather than into a mutable cache. Session
+   execution validates and relocates the complete reply prospectively before
+   engine admission.
 7. The solver records the snapshot, concrete application, anchor, action kind,
    effort, input versions, target's preceding fact version, proposed fact,
    installed fact, and frozen payload in provenance. The preceding target fact
@@ -1215,17 +1227,27 @@ checked global-reference draft, and accepting bounded cross-reply duplication
 are alternatives to measure rather than assumptions of the final format.
 
 The first executable arena uses an eager but prospective transaction:
-package-local labels in the outcome are matched exactly against package-local
-drafts, checked for duplicate, missing, extra, and wrong-role entries,
-preflighted against whole-arena entry, body-cell, atom, schema, and
-total-proposal limits, relocated to fresh global identifiers, and appended to
-a new arena value. The total-proposal budget charges every candidate, every
-suggestion constructor (including retry and split), and every equality nested
-under an instantiation. Repeated references count as work even when they share
-one draft. Before any quadratic label/coverage scan, the draft list is bounded
-both by the remaining arena-entry capacity and by the same trusted proposal
-limit. Entry construction and identifier assignment are one traversal, so a
-relocated identifier denotes exactly the entry appended for its local draft.
+it preflights total-proposal work and the per-reply draft, draft-cell, atom,
+and schema limits, then matches package-local labels exactly against
+package-local drafts and checks duplicate, missing, extra, and wrong-role
+entries. Only a locally bounded, exactly covered reply is compared with
+remaining whole-arena entry and body-cell capacity, relocated to fresh global
+identifiers, and appended to a new arena value. Thus malformed local evidence
+cannot be classified as cumulative exhaustion merely because earlier valid
+replies filled part of the arena. Local preflight returns an opaque
+bounded-draft transaction whose constructor is private; it carries the exact
+draft list together with its derived cell count, and both cumulative preflight
+and append consume that same value. No public caller can supply a separate
+cell count for unrelated drafts. The total-proposal budget charges every
+candidate, every suggestion constructor (including retry and split), and
+every equality nested under an instantiation. Repeated references count as
+work even when they share one draft. Before any quadratic label/coverage scan,
+`maxDrafts` bounds the draft list independently of proposal traversal. Every
+atom reached by the bounded body traversal is range-checked before its cell is
+charged. The traversal stops at the first in-range cell beyond
+`maxDraftCells`; later atoms are deliberately not inspected. Entry
+construction and identifier assignment are one traversal, so a relocated
+identifier denotes exactly the entry appended for its local draft.
 Candidate, instantiation, and equality roles are distinct, and ordinary replay
 lookup checks the expected role. Reconstructing an instantiation during this
 traversal preserves its complete node, equality, and arbitrary-scope proposal;
@@ -1239,9 +1261,69 @@ package-produced reply-local payload labels; any future payload-bearing action
 field must join the checked relocation traversal rather than being copied as
 though it were already a frozen arena identifier. Failure returns the old
 arena.
-The surrounding session must commit that returned arena only if submission of
-the relocated outcome also succeeds, so this experiment does not prejudge the
-one-phase versus two-phase production choice.
+
+The surrounding session commits that returned arena only if submission of the
+relocated outcome also succeeds. For a structural matcher, this makes proof
+payloads and engine-owned cursor progress one transaction: an accepted reply
+commits both, while semantic rejection, engine or fact-domain resource
+refusal, and cumulative arena exhaustion commit neither. Before freezing, the
+session checks the candidate and suggestion list lengths against the engine's
+own trusted limits. Let
+`requiredUses = maxOutcomeCandidates + maxOutcomeSuggestions *
+(maxProposalItems + 1)`: every candidate and suggestion costs one payload use,
+and every suggestion may be an instantiation with at most
+`maxProposalItems` nested equalities. Session start requires
+`requiredUses ≤ maxDrafts`, `maxDrafts ≤ maxUses`,
+`maxDrafts ≤ maxEntries`, and `maxDraftCells ≤ maxBodyCells`. The first
+inequality permits one distinct draft for every engine-valid payload use.
+The second both implies that the use traversal can inspect every such position
+and bounds even malformed pre-coverage draft lists by the same envelope.
+The remaining inequalities ensure that any reply inside the local draft/cell
+envelope fits a fresh arena. `maxEntries` and `maxBodyCells` remain cumulative
+whole-run bounds: only capacity spent by an earlier committed reply can make a
+later locally valid reply exhaust them.
+Packages see the complete engine and arena envelopes and may impose stronger
+method-specific requirements.
+Before any package-specific program check traverses nodes, session start runs
+the generic engine preflight and compilation, so the engine's operation, node,
+rule, arity, application, and queue bounds already hold.
+
+The eager protocol's `maxEntries` and `maxBodyCells` are separate whole-run
+waste bounds. They must cover drafts frozen for every invoked action up to the
+action limit, including entries later unused because a candidate was not
+improving or a suggestion was dropped, dismissed, stale, invalid, or
+duplicate. Sizing either from `maxAcceptedFacts` is therefore unsound. A coarse
+safe envelope multiplies the corresponding per-reply cap by the action limit;
+tighter package-declared envelopes and two-phase freezing remain experiments
+to compare.
+
+Engine rejection, fact-domain or engine resource refusal, and exhaustion of
+the remaining whole-run arena entry or body-cell capacity retain the preceding
+arena, facts, program, and proof history and make the returned session
+non-live. Start-time coherence means these arena stops occur only after an
+earlier commit has consumed capacity. A caller cannot resume that snapshot and
+later relabel the partial run saturated. Treating cumulative arena exhaustion
+as fatal is an intentional conservative liveness policy, aligned with global
+engine-resource exhaustion: the selected reply is otherwise valid, but its
+required proof data cannot be retained. Proof soundness could also permit a
+recoverable session which permanently records dropped work and remains
+incomplete, but that would broaden scheduling behavior; the eager prototype
+does not do so. Malformed package evidence and
+package-local payload-use, draft-count, draft-cell, atom, or schema excess are
+different: the prospective arena is discarded, but the session submits a
+bounded synthetic `failed` outcome through the ordinary engine reply path.
+This clears the request latch, retains non-semantic cache telemetry, leaves
+facts and history unchanged, keeps the session live, and records that required
+work was dropped. For a matcher, that synthetic failed reply deliberately
+consumes the issued structural batch without retaining its malformed payload;
+otherwise repeatedly presenting the same broken reply could prevent all other
+work from running. The FIFO driver may therefore continue other independent
+rules, including later successful arena and fact commits, but the monotone
+`droppedWork` flag survives and the run must eventually report incomplete.
+The selected package's cache may record either kind of attempt because caches
+and invocation telemetry are explicitly non-semantic.
+This executable eager protocol does not foreclose measuring a two-phase
+production protocol.
 
 An invalid rule outcome may mislead search, but it cannot produce a theorem.
 The companion reconstructs every retained fact from the rule's soundness
@@ -1271,16 +1353,32 @@ than present placeholder weights as exact operation counts.
 
 The standalone arena experiment gives fact, instantiation, and equality
 `PayloadId`s checked array-index meaning and bounds entry count, opaque
-recipe-body cells, schemas, atoms, and total proposal work before allocation.
+recipe-body cells, schemas, atoms, draft count, and total proposal work before
+allocation. Reply-local draft and cell caps are distinguished from cumulative
+entry and cell capacity.
 Each frozen entry stores its originating action, semantic role, numeric
 payload schema, and uninterpreted `List Nat` body. It derives the rule owner
 only from `origin.key`, avoiding two stored identities which could disagree.
 Package-owned decoding and schema lookup, typed atom encodings, byte limits,
 and semantic replay are still missing. Instantiation family labels and custom
-split-reason numbers also remain untyped representation gaps. The next session
-experiment must ensure that no unrelocated package-local identifier can enter
-retained provenance and that an arena from one registry snapshot cannot be
-paired with another.
+split-reason numbers also remain untyped representation gaps. The FIFO session
+turns any positive compatibility callback whose local identifier lacks a
+draft into a failed rule transition, so no unrelocated package-local
+identifier reaches its retained provenance. Its monotone `droppedWork` flag
+means exactly that required work was lost; it is not itself a terminal-state
+claim. The exported `Session.complete` predicate additionally requires a live
+session and no retained retry or instantiation. At a FIFO fixed point this
+predicate is the sole gate between saturated and incomplete. Package
+`failed`/`resourceLimit` results, malformed evidence, dropped narrowing
+suggestions, and unprocessed retained narrowing therefore cannot be laundered
+into saturation. The next policy experiment must preserve this same session
+transaction while allowing an external policy to choose invocations,
+instantiations, equalities, retries, and splits; it must not regain access to
+separable engine, registry, and arena values. The FIFO session can already
+freeze an instantiation and its nested equality payloads, but it deliberately
+has no public admission escape hatch. Honest session-level execution coverage
+for the resulting equality contractor therefore belongs to that private
+policy-session layer, not to a test-only constructor or engine replacement.
 
 ### Action kinds
 
@@ -1654,7 +1752,11 @@ One `balancedV1` candidate uses a versioned priority queue over these offers.
 Changed facts insert or invalidate only affected offers; stale entries are
 discarded lazily when popped. Policies intended for diagnostics may use a
 simpler complete scan, but their complexity is reported honestly. An empty
-frontier means saturation only when no narrowing-capable work was dismissed.
+frontier means saturation only when no narrowing-capable work was dismissed,
+dropped from the engine's bounded retained prefix, or tombstoned by a failed
+freshness guard. `Suggestion.affectsClosure` is the single classification used
+for all three paths, while `Engine.keptSuggestions` and
+`Engine.droppedSuggestions` define the exact shared retention boundary.
 Declining an invocation, equality contractor, retry, or instantiation makes
 the run incomplete; declining a split does not, because it changes proof
 search rather than the propagation closure of the current scope. An empty
@@ -2323,6 +2425,12 @@ typical, boundary, and adversarial inputs. In particular it includes:
   duplicate operation/rule-key and undeclared-head rejection, cache-preserving
   rejection of wrong routes, and a `Type 1` registry threaded through both
   drivers;
+- a private package session which freezes and relocates reply-local evidence,
+  continues independent work after malformed or locally oversized drafts,
+  retains incompleteness across a later successful reply, charges nested
+  equality payload uses, keeps derived draft-cell accounting tied to the exact
+  bounded transaction, and intentionally reserves fatal entry/body-cell stops
+  for genuine remaining-capacity exhaustion after an earlier arena commit;
 - an anchor-local opaque shape rule which distinguishes `x * (one - x)` from
   products with a reversed difference or a different repeated input, proposes
   the exact existing node identifiers while receiving no fact inputs, repeats
