@@ -257,7 +257,6 @@ def nestedPlan (request : RuleRequest Nat) : Plan Nat :=
       .success []
         [.instantiate
           { key := 44
-            triggers := [request.action.node]
             nodes :=
               [{ domain := real
                  op := { index := 1 }
@@ -284,7 +283,6 @@ def nestedUsesPlan (request : RuleRequest Nat) : Plan Nat :=
       .success []
         [.instantiate
           { key := 45
-            triggers := [request.action.node]
             nodes := []
             equalities :=
               [{ left := .existing (node 0)
