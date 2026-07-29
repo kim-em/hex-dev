@@ -10,13 +10,15 @@
 - Proved exact monomial-division correctness, coefficient preservation under
   reordering and renaming, the substitution fold equation, and the derived
   `evalHorner` equation.
+- Proved that total degree and variable renaming preserve monomial
+  multiplication.
 - Narrowed `derivative` to its computational `Zero`/`NatCast`/`Add`/`Mul`
   requirements and removed the elevated local-instance priority.
 - Rebuilt all affected modules and the downstream kernel replay target.
 
 ## Current frontier
 
-Fifteen theorem obligations remain: six monomial/order laws, two polynomial
+Thirteen theorem obligations remain: four monomial/order laws, two polynomial
 arithmetic laws, one sparse-Horner law, two structural laws, and four
 recursive-view laws.
 

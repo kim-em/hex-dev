@@ -64,7 +64,7 @@ def gcd (a b : Mono n) : Mono n :=
 
 /-- Total degree of a monomial. -/
 def degree (m : Mono n) : Nat :=
-  m.toList.foldl (· + ·) 0
+  (List.finRange n).foldl (fun acc i => acc + m[i]) 0
 
 /-- Exponent of variable `i` in a monomial. -/
 def degreeOf (i : Fin n) (m : Mono n) : Nat :=
@@ -79,7 +79,7 @@ to the same target variable. -/
 def rename {k : Nat} (f : Fin n → Fin k) (m : Mono n) : Mono k :=
   Hex.Vector.ofFn' fun j =>
     (List.finRange n).foldl
-      (fun acc i => if f i = j then acc + m[i] else acc) 0
+      (fun acc i => acc + if f i = j then m[i] else 0) 0
 
 /-- Increase the exponent of variable `i` by one. -/
 def succAt (i : Fin n) (m : Mono n) : Mono n :=
@@ -228,11 +228,97 @@ theorem div_eq_none_iff (a b : Mono n) :
 
 theorem degree_mul (a b : Mono n) :
     degree (mul a b) = degree a + degree b := by
-  sorry
+  have fold_start (f : Fin n → Nat) :
+      ∀ (is : List (Fin n)) (init : Nat),
+        is.foldl (fun acc i => acc + f i) init =
+          init + is.foldl (fun acc i => acc + f i) 0 := by
+    intro is
+    induction is with
+    | nil =>
+      intro init
+      simp only [List.foldl_nil, Nat.add_zero]
+    | cons i is ih =>
+      intro init
+      rw [List.foldl_cons, ih (init + f i), List.foldl_cons,
+        ih (0 + f i)]
+      omega
+  have fold_add : ∀ is : List (Fin n),
+      is.foldl (fun acc i => acc + (a[i] + b[i])) 0 =
+        is.foldl (fun acc i => acc + a[i]) 0 +
+          is.foldl (fun acc i => acc + b[i]) 0 := by
+    intro is
+    induction is with
+    | nil => simp only [List.foldl_nil, Nat.add_zero]
+    | cons i is ih =>
+      simp only [List.foldl_cons]
+      rw [fold_start (fun j => a[j] + b[j]),
+        fold_start (fun j => a[j]), fold_start (fun j => b[j]), ih]
+      omega
+  unfold degree
+  simp only [getElem_mul]
+  exact fold_add (List.finRange n)
 
 theorem rename_mul {k : Nat} (f : Fin n → Fin k) (a b : Mono n) :
     rename f (mul a b) = mul (rename f a) (rename f b) := by
-  sorry
+  have get_ofFn {r : Nat} (g : Fin r → Nat) (j : Fin r) :
+      (Hex.Vector.ofFn' g).get j = g j := by
+    change (Hex.Vector.ofFn' g)[j.val] = g j
+    rw [Hex.Vector.getElem_ofFn' g j.val j.isLt]
+  have fold_start (g : Fin n → Nat) :
+      ∀ (is : List (Fin n)) (init : Nat),
+        is.foldl (fun acc i => acc + g i) init =
+          init + is.foldl (fun acc i => acc + g i) 0 := by
+    intro is
+    induction is with
+    | nil =>
+      intro init
+      simp only [List.foldl_nil, Nat.add_zero]
+    | cons i is ih =>
+      intro init
+      rw [List.foldl_cons, ih (init + g i), List.foldl_cons,
+        ih (0 + g i)]
+      omega
+  have fold_add (u v : Fin n → Nat) : ∀ is : List (Fin n),
+      is.foldl (fun acc i => acc + (u i + v i)) 0 =
+        is.foldl (fun acc i => acc + u i) 0 +
+          is.foldl (fun acc i => acc + v i) 0 := by
+    intro is
+    induction is with
+    | nil => simp only [List.foldl_nil, Nat.add_zero]
+    | cons i is ih =>
+      simp only [List.foldl_cons]
+      rw [fold_start (fun j => u j + v j),
+        fold_start u, fold_start v, ih]
+      omega
+  apply Vector.ext
+  intro idx hidx
+  let j : Fin k := ⟨idx, hidx⟩
+  have get_mul {r : Nat} (x y : Mono r) (t : Fin r) :
+      (mul x y).get t = x.get t + y.get t := by
+    unfold mul
+    rw [get_ofFn]
+    change x.get t + y.get t = x.get t + y.get t
+    rfl
+  have get_rename (x : Mono n) :
+      (rename f x).get j =
+        (List.finRange n).foldl
+          (fun acc i => acc + if f i = j then x[i] else 0) 0 := by
+    unfold rename
+    rw [get_ofFn]
+  change (rename f (mul a b)).get j =
+    (mul (rename f a) (rename f b)).get j
+  rw [get_rename, get_mul, get_rename, get_rename]
+  simp only [getElem_mul]
+  have hterm (i : Fin n) :
+      (if f i = j then a[i] + b[i] else 0) =
+        (if f i = j then a[i] else 0) +
+          (if f i = j then b[i] else 0) := by
+    by_cases h : f i = j <;> simp [h]
+  simp only [hterm]
+  exact fold_add
+    (fun i => if f i = j then a[i] else 0)
+    (fun i => if f i = j then b[i] else 0)
+    (List.finRange n)
 
 theorem splits_mem_iff (m a b : Mono n) :
     (a, b) ∈ splits m ↔ mul a b = m := by
