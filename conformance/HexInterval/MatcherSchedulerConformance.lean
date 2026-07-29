@@ -342,6 +342,15 @@ def package : Package Rank :=
 def packageLimits : Limits :=
   { limits with maxDiagnosticValue := 300 }
 
+def payloadLimits : Experiment.PayloadArena.Limits :=
+  { maxEntries := 0
+    maxBodyCells := 0
+    maxDrafts := 0
+    maxDraftCells := 0
+    maxAtom := 0
+    maxSchema := 0
+    maxUses := 0 }
+
 def registry? : Option (Registry Rank) :=
   match Registry.buildWithin packageLimits #[package] with
   | .ok registry => some registry
@@ -350,7 +359,7 @@ def registry? : Option (Registry Rank) :=
 def registryStarted? : Option (Registry Rank × Engine Rank) := do
   let registry <- registry?
   if !registry.acceptsProgram program ||
-      !registry.acceptsLimits program packageLimits then
+      !registry.acceptsLimits program packageLimits payloadLimits then
     none
   else
     match Engine.start rankDomain program registry.registrations #[0, 0, 0]

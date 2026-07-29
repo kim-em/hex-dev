@@ -43,6 +43,8 @@ def matcherAction : Action :=
 def generous : PayloadArena.Limits :=
   { maxEntries := 16
     maxBodyCells := 32
+    maxDrafts := 16
+    maxDraftCells := 32
     maxAtom := 100
     maxSchema := 10
     maxUses := 16 }
@@ -58,6 +60,12 @@ def equalityDraft (label : Nat) (body : List Nat := [30]) (schema : Nat := 3) : 
 
 def factOutcome (label : Nat) : Outcome Nat :=
   .success [{ node := node 0, fact := 7, payload := payload label }] [] {}
+
+def pairOutcome : Outcome Nat :=
+  .success
+    [{ node := node 0, fact := 7, payload := payload 0 },
+      { node := node 1, fact := 8, payload := payload 1 }]
+    [] {}
 
 def retainedSeed : Entry :=
   { origin := action 9
@@ -194,6 +202,59 @@ def mixedRequest : InstantiationRequest :=
       label.index == 1 && seedPreserved arena
   | _ => false
 
+-- Exact draft coverage is checked before remaining whole-run entry capacity:
+-- malformed local evidence cannot masquerade as fatal cumulative exhaustion.
+#guard
+  match freeze { generous with maxEntries := 1 } seeded (action 0)
+      (factOutcome 0) [factDraft 0, equalityDraft 1] with
+  | .invalid (.extraDraft label) arena =>
+      label.index == 1 && seedPreserved arena
+  | _ => false
+
+-- The same ordering holds when an unused draft carries a body which would
+-- exceed the partly filled arena's remaining cell capacity.
+#guard
+  match freeze { generous with maxBodyCells := 1 } seeded (action 0)
+      (factOutcome 0) [factDraft 0, equalityDraft 1 [4, 5]] with
+  | .invalid (.extraDraft label) arena =>
+      label.index == 1 && seedPreserved arena
+  | _ => false
+
+-- Local preflight derives one cell count from the exact bounded draft list.
+-- The same opaque transaction drives both cumulative capacity and the
+-- committed aggregate, so there is no independent cell count to mismatch.
+#guard
+  match
+      freeze
+        { generous with
+          maxEntries := 3
+          maxBodyCells := 4
+          maxDrafts := 2
+          maxDraftCells := 3
+          maxUses := 2 }
+        seeded (action 0) pairOutcome
+        [factDraft 0 [4], factDraft 1 [5, 6]] with
+  | .ready arena (.success [first, second] [] _) =>
+      first.payload.index == 1 && second.payload.index == 2 &&
+        arena.entries.size == 3 && arena.bodyCells == 4 && arena.wellFormed
+  | _ => false
+
+-- Reducing only the remaining cumulative cell capacity rejects that same
+-- locally bounded transaction and preserves the original cached aggregate.
+#guard
+  match
+      freeze
+        { generous with
+          maxEntries := 3
+          maxBodyCells := 3
+          maxDrafts := 2
+          maxDraftCells := 3
+          maxUses := 2 }
+        seeded (action 0) pairOutcome
+        [factDraft 0 [4], factDraft 1 [5, 6]] with
+  | .resourceLimit .bodyCells arena => seedPreserved arena
+  | _ => false
+
 -- Each resource limit is exactly one below the required prospective value.
 #guard
   match freeze { generous with maxEntries := 0 } seeded (action 0)
@@ -219,8 +280,20 @@ def mixedRequest : InstantiationRequest :=
   | .resourceLimit .bodyCells arena => seedPreserved arena
   | _ => false
 
+-- A single oversized recipe is a reply-local failure even though the
+-- cumulative arena has room.
 #guard
-  match freeze { generous with maxAtom := 4 } seeded (action 0)
+  match freeze { generous with maxDraftCells := 1 } seeded (action 0)
+      (factOutcome 0) [factDraft 0 [4, 5]] with
+  | .resourceLimit .draftCells arena => seedPreserved arena
+  | _ => false
+
+-- The first cell beyond the local cap is still atom-checked before local
+-- refusal; whole-run capacity is never consulted for that invalid reply.
+#guard
+  match freeze
+      { generous with maxBodyCells := 1, maxDraftCells := 0, maxAtom := 4 }
+      seeded (action 0)
       (factOutcome 0) [factDraft 0 [5]] with
   | .resourceLimit .atom arena => seedPreserved arena
   | _ => false
@@ -259,14 +332,16 @@ def mixedRequest : InstantiationRequest :=
   | .resourceLimit .uses arena => seedPreserved arena
   | _ => false
 
--- Drafts are independently bounded by `maxUses` before exact-coverage scans,
--- even when the arena has ample entry room.
+-- Draft count has its own reply-local cap before exact-coverage scans, even
+-- when both proposal traversal and the cumulative arena have ample room.
 #guard
-  match freeze { generous with maxUses := 1 } seeded (action 0)
+  match freeze { generous with maxDrafts := 1 } seeded (action 0)
       (factOutcome 0) [factDraft 0, factDraft 1] with
-  | .resourceLimit .uses arena => seedPreserved arena
+  | .resourceLimit .drafts arena => seedPreserved arena
   | _ => false
 
+-- Nested equalities are charged as payload uses in addition to their
+-- containing instantiation suggestion.
 #guard
   match freeze { generous with maxUses := 1 } seeded (action 0)
       (.success [] [.instantiate mixedRequest] {} : Outcome Nat)

@@ -102,15 +102,17 @@ introduced by this package, while `requiredOperations` records exact
 signatures supplied elsewhere but interpreted by its matchers.  A handler may
 target such an external operation; final head validation remains the engine's
 responsibility once the complete program is available.  `acceptsLimits` is a
-package-owned configuration preflight, not a soundness boundary: every reply
-is still checked against the engine limits. -/
+package-owned configuration preflight over the engine and payload-arena
+envelopes, not a soundness boundary: every reply is still checked by both
+owners. -/
 structure Package (Fact : Type) where
   Cache : Type
   cache : Cache
   operations : Array Operation := #[]
   requiredOperations : Array Operation := #[]
   handlers : Array (Handler Fact Cache)
-  acceptsLimits : Program -> Limits -> Bool := fun _ _ => true
+  acceptsLimits : Program -> Limits -> PayloadArena.Limits -> Bool :=
+    fun _ _ _ => true
   /-- Non-semantic routing telemetry used to check that only the selected
   package snapshot changes. -/
   invocations : Nat := 0
@@ -261,12 +263,13 @@ def acceptsProgram (registry : Registry Fact) (program : Program) : Bool :=
     registry.packages.all fun package =>
       package.requiredOperations.all (operationAccepted program)
 
-/-- Run every package-owned configuration preflight over the final program and
-engine resource envelope. -/
+/-- Run every package-owned configuration preflight over the final program,
+engine resource envelope, and proof-payload arena envelope. -/
 def acceptsLimits (registry : Registry Fact) (program : Program)
-    (limits : Limits) : Bool :=
+    (limits : Limits) (arenaLimits : PayloadArena.Limits) : Bool :=
   DispatchCode.requestMismatch ≤ limits.maxDiagnosticValue &&
-    registry.packages.all fun package => package.acceptsLimits program limits
+    registry.packages.all fun package =>
+      package.acceptsLimits program limits arenaLimits
 
 end Registry
 

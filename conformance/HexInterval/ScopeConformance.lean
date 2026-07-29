@@ -156,11 +156,21 @@ def scopedPackage : Package Rank :=
           acceptsScope := fun actualProgram binding =>
             actualProgram.check && binding.same scope }] }
 
+def payloadLimits : Experiment.PayloadArena.Limits :=
+  { maxEntries := 0
+    maxBodyCells := 0
+    maxDrafts := 0
+    maxDraftCells := 0
+    maxAtom := 0
+    maxSchema := 0
+    maxUses := 0 }
+
 def run? : Option (RunResult Rank (Registry Rank)) :=
   match Registry.buildWithin limits #[scopedPackage] with
   | .error _ => none
   | .ok registry =>
-      if !registry.acceptsProgram program || !registry.acceptsLimits program limits ||
+      if !registry.acceptsProgram program ||
+          !registry.acceptsLimits program limits payloadLimits ||
           !registry.acceptsBindings program #[scope] then
         none
       else
