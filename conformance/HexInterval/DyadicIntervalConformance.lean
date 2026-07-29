@@ -508,6 +508,7 @@ private def engineLimits : Limits :=
     maxProposalItems := 2
     maxInstances := 0
     maxGeneration := 0
+    maxNodeDepth := 16
     maxEqualities := 0
     splitEndpointLimit := endpointLimit }
 

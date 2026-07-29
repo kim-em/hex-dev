@@ -87,7 +87,6 @@ structure ProposedEqualityKey where
 /-- Payload-erased structural identity of an instantiation request. -/
 structure InstantiationSemanticKey where
   family : Nat
-  triggers : List NodeId
   generation : Nat
   nodes : List ProposedNodeKey
   equalities : List ProposedEqualityKey
@@ -96,7 +95,6 @@ structure InstantiationSemanticKey where
 def InstantiationSemanticKey.ofRequest
     (request : InstantiationRequest) (generation : Nat) : InstantiationSemanticKey :=
   { family := request.key
-    triggers := request.triggers
     generation
     nodes := request.nodes.map fun node =>
       { domain := node.domain, op := node.op, args := node.args }

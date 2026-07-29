@@ -184,15 +184,15 @@ def centeredSplit : Registration :=
     watches := [.argument 0]
     writes := [] }
 
-/-- A discovery rule for products.  It reads no interval facts: its semantic
-dependency is the immutable nested expression shape. -/
+/-- A discovery rule for products. It reads no interval facts and inspects
+only its anchor's immutable argument sub-DAG plus the operation table, so an
+unrelated program extension is not a dependency. -/
 def centeredInstantiate : Registration :=
   { key := centeredInstantiateKey
     head := mulOp
     kind := .instantiate
     watches := []
-    writes := []
-    watchesProgram := true }
+    writes := [] }
 
 /-! ## Registry configuration and result conversion -/
 
@@ -227,6 +227,18 @@ def centeredFamilyKey : Nat := 1
 
 def Config.precisionAt (config : Config) (effort : Nat) : Precision :=
   config.reciprocalBasePrecision + Int.ofNat effort
+
+def precisionAllowed (limit : EndpointLimit) (precision : Precision) : Bool :=
+  let magnitude := precision.natAbs
+  magnitude ≤ limit.maxEndpointHeight &&
+    EndpointCost.natBits magnitude ≤ limit.maxEndpointHeight
+
+/-- Effort raises precision monotonically, so the greatest absolute precision
+over the configured effort interval occurs at one of its endpoints. -/
+def Config.reciprocalPrecisionsAllowed (config : Config) : Bool :=
+  precisionAllowed config.endpointLimit config.reciprocalBasePrecision &&
+    precisionAllowed config.endpointLimit
+      (config.precisionAt config.maxReciprocalEffort)
 
 def successCost (arithmeticWork proofNodes : Nat) : CostObservation :=
   { arithmeticWork, estimatedProofNodes := proofNodes }
@@ -400,12 +412,6 @@ structure CenteredBinding where
   complement : NodeId
   one : NodeId
 
-def operationWithKey? (view : ProgramView) (key : OpKey) : Option OpId := do
-  for index in [0:view.operations.size] do
-    let operation <- view.operations[index]?
-    if operation.key == key then return { index }
-  none
-
 def centeredBinding? (request : RuleRequest Fact) : Option CenteredBinding := do
   if request.program.programVersion != request.action.programVersion then none else pure ()
   let product <- request.program.node? request.action.node
@@ -421,14 +427,11 @@ def centeredBinding? (request : RuleRequest Fact) : Option CenteredBinding := do
 def centeredProposal? (request : RuleRequest Fact)
     (binding : CenteredBinding) : Option InstantiationRequest := do
   let input <- request.program.node? binding.input
-  let operation <- operationWithKey? request.program centeredOp
-  let signature <- request.program.operation? operation
+  let (operation, signature) <- request.program.findOp? centeredOp
   if input.domain != signature.output then none else pure ()
   pure
     { key := centeredFamilyKey
       triggers := [binding.anchor, binding.input, binding.complement, binding.one]
-      /- This legacy package hint is deliberately not an admission input. -/
-      claimedGeneration := 1
       nodes :=
         [{ domain := signature.output
            op := operation
@@ -468,6 +471,7 @@ def arithmeticPackage (config : Config) (real : DomainId) : Package Fact :=
         Handler.stateless reciprocalBackward (invokeReciprocalBackward config)]
     acceptsLimits := fun _ limits =>
       config.maxReciprocalEffort ≤ limits.maxEffort &&
+        config.reciprocalPrecisionsAllowed &&
         2 ≤ limits.maxObservationValue && 60 ≤ limits.maxDiagnosticValue &&
         1 ≤ limits.maxOutcomeCandidates &&
         (config.maxReciprocalEffort == 0 || 1 ≤ limits.maxOutcomeSuggestions) }

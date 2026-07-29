@@ -87,6 +87,7 @@ def engineLimits : Experiment.Propagator.Limits :=
     maxProposalItems := 8
     maxInstances := 8
     maxGeneration := 4
+    maxNodeDepth := 16
     maxEqualities := 8
     splitEndpointLimit :=
       { maxEndpointHeight := 32, maxAlignmentShift := 16 } }
@@ -140,7 +141,6 @@ def proposedG : ProposedNode :=
 def instantiateG (request : RuleRequest Rank) : InstantiationRequest :=
   { key := 31
     triggers := [request.action.node]
-    claimedGeneration := 1
     nodes := [proposedG]
     equalities :=
       [{ left := .existing request.action.node
@@ -651,10 +651,17 @@ def proposedGAt (input : NodeId) : ProposedNode :=
 def instantiateAt (family : Nat) (input : NodeId) : InstantiationRequest :=
   { key := family
     triggers := [input]
-    claimedGeneration := 1
     nodes := [proposedGAt input]
     equalities := []
     payload := { index := family } }
+
+-- Replay-facing trigger metadata cannot partition payload-erased policy
+-- identity for the same source invocation and structural proposal.
+#guard
+  let first := instantiateAt 101 (node 0)
+  let second := { first with triggers := [node 1, node 0] }
+  InstantiationSemanticKey.ofRequest first 1 ==
+    InstantiationSemanticKey.ofRequest second 1
 
 def twoInstances (request : RuleRequest Rank) : Outcome Rank :=
   .success [candidate request 1]
@@ -692,7 +699,6 @@ def emptyInstance (request : RuleRequest Rank) : Outcome Rank :=
     [.instantiate
       { key := 107
         triggers := [request.action.node]
-        claimedGeneration := 1
         nodes := []
         equalities := []
         payload := { index := 109 } }]
@@ -712,16 +718,11 @@ def emptyInstance (request : RuleRequest Rank) : Outcome Rank :=
             next.engine.metrics.duplicateInstances == 1
       | _ => false
 
-def falseHint (request : RuleRequest Rank) : Outcome Rank :=
-  let proposal := { instantiateAt 113 (node 0) with claimedGeneration := 99 }
-  .success [candidate request 1] [.instantiate proposal] {}
-
 def selfEqualityInstance (request : RuleRequest Rank) : Outcome Rank :=
   .success []
     [.instantiate
       { key := 127
         triggers := [request.action.node]
-        claimedGeneration := 1
         nodes := []
         equalities :=
           [{ left := .existing (node 0)
@@ -729,6 +730,11 @@ def selfEqualityInstance (request : RuleRequest Rank) : Outcome Rank :=
              payload := { index := 131 } }]
         payload := { index := 137 } }]
     {}
+
+def selfEqualityResult? : Option (SubmitResult Rank) := do
+  let state <- initialWithLimits? engineLimits policyLimits
+  let (request, state) <- request? state (.application (application 0))
+  some (state.submit (request.action.reply (selfEqualityInstance request)))
 
 def weakRetry (_ : RuleRequest Rank) : Outcome Rank :=
   .success [] [.retry 0] {}
@@ -757,8 +763,7 @@ def startWithWeakRetry? : Option (State Rank) := do
       | _ => none
   | _ => none
 
--- The policy key exposes the engine-computed generation.  A disagreeing
--- package hint cannot hide otherwise valid work or control admission.
+-- The policy key exposes the engine-computed theorem-instantiation generation.
 #guard
   match afterInitial? with
   | some state =>
@@ -767,33 +772,13 @@ def startWithWeakRetry? : Option (State Rank) := do
       | _ => false
   | none => false
 
+-- Malformed structural work is rejected by reply admission and never enters
+-- retained policy state.
 #guard
-  match afterReplyWith? engineLimits falseHint with
-  | some state =>
-      match state.offer? (.suggestion (suggestion 0)) with
-      | some { key := .instantiate _ semantic, .. } =>
-          semantic.generation == 1 &&
-            match selectOffer state (.suggestion (suggestion 0)) with
-            | .completed (.instanceAdmitted [fresh]) next =>
-                fresh == node 2 && next.engine.generations[2]? == some 1
-            | _ => false
-      | _ => false
-  | none => false
-
--- A structurally advertised instantiation may still fail a later admission
--- check. Consuming that rejected proposal leaves the current propagation
--- closure incomplete.
-#guard
-  match afterReplyWith? engineLimits selfEqualityInstance with
-  | none => false
-  | some state =>
-      !state.incomplete &&
-        match selectOffer state (.suggestion (suggestion 0)) with
-        | .completed (.instanceRejected .invalidEquality) next =>
-            next.incomplete &&
-              (next.view).toOption.any fun pair =>
-                pair.1.offers.isEmpty && pair.1.incomplete
-        | _ => false
+  match selfEqualityResult? with
+  | some (.invalid .malformedProposal state) =>
+      state.incomplete && state.engine.suggestions.isEmpty
+  | _ => false
 
 -- A retry which fails its variant-specific freshness guard is tombstoned, but
 -- its disappearance cannot be mistaken for successful propagation.

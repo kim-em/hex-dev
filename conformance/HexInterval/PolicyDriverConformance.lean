@@ -142,8 +142,7 @@ def exactInstanceSelection (selection : Selection) (serial programVersion : Nat)
     match selection.expected with
     | .instantiate source request =>
         source == expectedSource &&
-          request.family == 31 && request.triggers == [node 1] &&
-          request.generation == 1 &&
+          request.family == 31 && request.generation == 1 &&
           request.nodes ==
             [{ domain := real
                op := { index := 2 }

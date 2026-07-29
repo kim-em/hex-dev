@@ -167,6 +167,7 @@ def engineLimits (workload : Workload) : Experiment.Propagator.Limits :=
     maxProposalItems := 0
     maxInstances := 0
     maxGeneration := 0
+    maxNodeDepth := nodeCount workload
     maxEqualities := 0
     splitEndpointLimit :=
       { maxEndpointHeight := 1, maxAlignmentShift := 0 } }

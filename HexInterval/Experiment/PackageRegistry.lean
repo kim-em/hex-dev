@@ -92,6 +92,19 @@ structure Registry (Fact : Type) where
   registrations : Array Registration
   routes : Array Route
 
+/- Stable opaque diagnostic codes for failures before a package callback is
+entered. -/
+namespace DispatchCode
+
+def missingRoute : Nat := 240
+def missingRegistration : Nat := 241
+def missingPackage : Nat := 242
+def missingHandler : Nat := 243
+def registryMismatch : Nat := 244
+def requestMismatch : Nat := 245
+
+end DispatchCode
+
 /-- Failure while flattening independently supplied packages. -/
 inductive RegistryError where
   | duplicateOperation (key : OpKey)
@@ -213,7 +226,8 @@ def acceptsProgram (registry : Registry Fact) (program : Program) : Bool :=
 engine resource envelope. -/
 def acceptsLimits (registry : Registry Fact) (program : Program)
     (limits : Limits) : Bool :=
-  registry.packages.all fun package => package.acceptsLimits program limits
+  DispatchCode.requestMismatch ≤ limits.maxDiagnosticValue &&
+    registry.packages.all fun package => package.acceptsLimits program limits
 
 end Registry
 
@@ -249,19 +263,6 @@ def accepts (registration : Registration) (request : RuleRequest Fact) : Bool :=
           request.action.inputs == seen
 
 end Registration
-
-/- Stable opaque diagnostic codes for failures before a package callback is
-entered. -/
-namespace DispatchCode
-
-def missingRoute : Nat := 240
-def missingRegistration : Nat := 241
-def missingPackage : Nat := 242
-def missingHandler : Nat := 243
-def registryMismatch : Nat := 244
-def requestMismatch : Nat := 245
-
-end DispatchCode
 
 namespace Registry
 

@@ -192,7 +192,8 @@ def view : ProgramView :=
   { programVersion := 0
     operations := program.operations
     nodes := program.nodes
-    generations := #[0, 0, 0, 0] }
+    generations := #[0, 0, 0, 0]
+    depths := #[0, 1, 1, 1] }
 
 def unaryRequest (rule application : Nat) (key : RuleKey) (anchor : NodeId)
     (kind : ActionKind) (writes : List NodeId) : RuleRequest Nat :=
@@ -248,6 +249,7 @@ def limits : Limits :=
     maxProposalItems := 4
     maxInstances := 2
     maxGeneration := 2
+    maxNodeDepth := 16
     maxEqualities := 2
     splitEndpointLimit :=
       { maxEndpointHeight := 16
@@ -307,6 +309,17 @@ def policyDriverTypecheck {PolicyState : Type}
   match registry? with
   | some registry => !registry.acceptsLimits program lowDiagnosticLimits
   | none => false
+
+-- Registry-owned dispatch failures have a diagnostic floor independent of
+-- every package's callback-specific preflight.
+#guard
+  match Registry.buildWithin limits #[sharedPackage] with
+  | .ok registry =>
+      !registry.acceptsLimits program
+          { limits with maxDiagnosticValue := DispatchCode.requestMismatch - 1 } &&
+        registry.acceptsLimits program
+          { limits with maxDiagnosticValue := DispatchCode.requestMismatch }
+  | .error _ => false
 
 #guard
   match Registry.buildWithin shortRuleLimits

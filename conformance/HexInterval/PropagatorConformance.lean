@@ -67,6 +67,7 @@ def generous : Limits :=
     maxProposalItems := 16
     maxInstances := 16
     maxGeneration := 4
+    maxNodeDepth := 32
     maxEqualities := 16
     splitEndpointLimit :=
       { maxEndpointHeight := 128, maxAlignmentShift := 64 } }
@@ -106,6 +107,14 @@ def start? (program : Program) (rules : Array Registration) (facts : Array Rank)
 def chainProgram : Program :=
   { operations
     nodes := #[sourceNode, unaryNode 0, unaryNode 1, unaryNode 2, unaryNode 3] }
+
+-- Initial SSA structure is covered by the same structural-depth invariant as
+-- later instantiation products.
+#guard
+  match Engine.start rankDomain chainProgram #[copyRule]
+      #[4, 0, 0, 0, 0] { generous with maxNodeDepth := 3 } with
+  | .error (.resourceLimit .nodeDepth) => true
+  | _ => false
 
 def chainResult? : Option (RunResult Rank (List Nat)) := do
   let state <- start? chainProgram #[copyRule] #[4, 0, 0, 0, 0]
@@ -290,7 +299,6 @@ def instantiateInvoke (calls : Nat) (request : RuleRequest Rank) :
   let proposal : InstantiationRequest :=
     { key := 7
       triggers := [request.action.node]
-      claimedGeneration := 1
       nodes := [proposedUnary request.action.node]
       equalities := []
       payload := { index := 11 } }
@@ -329,11 +337,9 @@ def proposedGenerated (input : NodeId) : ProposedNode :=
     op := { index := 2 }
     args := [.existing input] }
 
-def dynamicProposal (request : RuleRequest Rank) (generation : Nat := 1) :
-    InstantiationRequest :=
+def dynamicProposal (request : RuleRequest Rank) : InstantiationRequest :=
   { key := 19
     triggers := [request.action.node]
-    claimedGeneration := generation
     nodes := [proposedGenerated request.action.node]
     equalities := []
     payload := { index := 23 } }
@@ -426,12 +432,14 @@ def cseProposal (request : RuleRequest Rank) (left : NodeId) :
     InstantiationRequest :=
   { key := left.index
     triggers := [request.action.node, left]
-    /- Deliberately wrong: this package hint is not admission authority. -/
-    claimedGeneration := 0
-    nodes := [proposedGenerated request.action.node]
+    nodes :=
+      [proposedGenerated request.action.node,
+        { domain := real
+          op := { index := 2 }
+          args := [.proposed 0] }]
     equalities :=
       [{ left := .existing left
-         right := .proposed 0
+         right := .proposed 1
          payload := { index := left.index } }]
     payload := { index := left.index } }
 
@@ -448,7 +456,7 @@ def cseInitial? : Option (RunResult Rank Nat) := do
   let program : Program :=
     { operations := dynamicOperations, nodes := #[sourceNode, unaryNode 0] }
   let state <- start? program #[cseRule cseAnchorKey, cseRule cseSourceKey]
-    #[4, 0] { generous with maxGeneration := 1 }
+    #[4, 0] { generous with maxGeneration := 1, maxNodeDepth := 3 }
   pure (drive cseInvoke 8 state 0)
 
 def cseOrder? (first second : SuggestionId) : Option (Engine Rank) := do
@@ -460,8 +468,8 @@ def cseOrder? (first second : SuggestionId) : Option (Engine Rank) := do
     none
   else
     match initial.state.admitInstantiation first with
-    | .admitted [fresh] state =>
-        if fresh != node 2 then none else
+    | .admitted [firstFresh, secondFresh] state =>
+        if firstFresh != node 2 || secondFresh != node 3 then none else
         let retained := state.suggestions[second.index]?
         match retained with
         | none => none
@@ -476,24 +484,86 @@ def cseOrder? (first second : SuggestionId) : Option (Engine Rank) := do
     | _ => none
 
 def exactCseState (state : Engine Rank) : Bool :=
-  state.programVersion == 2 && state.program.nodes.size == 3 &&
-    state.generations.toList == [0, 0, 1] &&
+  state.programVersion == 2 && state.program.nodes.size == 4 &&
+    state.generations.toList == [0, 0, 1, 1] &&
+    state.depths.toList == [0, 1, 2, 3] &&
     state.equalities.size == 2 && state.instances.length == 2 &&
     state.instanceHistory.size == 2 &&
     state.instanceHistory.toList.all (fun event => event.generation == 1) &&
     state.equalities.toList.all (fun edge => edge.generation == 1) &&
-    state.equalities.toList.any (fun edge => edge.sameEndpoints (node 0) (node 2)) &&
-    state.equalities.toList.any (fun edge => edge.sameEndpoints (node 1) (node 2))
+    state.equalities.toList.any (fun edge => edge.sameEndpoints (node 0) (node 3)) &&
+    state.equalities.toList.any (fun edge => edge.sameEndpoints (node 1) (node 3))
 
--- Either proposal may materialize `generated(anchor)` first.  The second
--- append-stable proposal then CSE-hits that output but remains generation one,
--- so both equalities are admitted under the exact generation-one cap.
+-- Either proposal may materialize a depth-three tower first. The second
+-- append-stable proposal CSE-hits the entire prefix: its stored depths remain
+-- unchanged while theorem-instantiation generation remains one.
 #guard
   match cseOrder? (suggestion 0) (suggestion 1),
       cseOrder? (suggestion 1) (suggestion 0) with
   | some anchorFirst, some sourceFirst =>
       exactCseState anchorFirst && exactCseState sourceFirst
   | _, _ => false
+
+/-! ## A program watcher cannot grow an unbounded generation-one tower -/
+
+def towerKey : RuleKey := { name := "shape.program-tower" }
+
+def towerRule : Registration :=
+  { key := towerKey
+    head := unaryOp
+    kind := .instantiate
+    watches := []
+    writes := []
+    watchesProgram := true }
+
+def towerDrafts (anchor : NodeId) (count : Nat) : List ProposedNode :=
+  (List.range count).map fun index =>
+    { domain := real
+      op := { index := 2 }
+      args :=
+        [if index == 0 then .existing anchor else .proposed (index - 1)] }
+
+def towerInvoke (calls : Nat) (request : RuleRequest Rank) : Outcome Rank × Nat :=
+  let proposal : InstantiationRequest :=
+    { key := 43
+      triggers := [request.action.node]
+      nodes := towerDrafts request.action.node (request.program.nodes.size - 1)
+      equalities := []
+      payload := { index := 47 } }
+  (.success [] [.instantiate proposal] {}, calls + 1)
+
+def towerFinal? : Option (RunResult Rank Nat) := do
+  let program : Program :=
+    { operations := dynamicOperations, nodes := #[sourceNode, unaryNode 0] }
+  let state <- start? program #[towerRule] #[4, 0]
+    { generous with maxGeneration := 1, maxNodeDepth := 3 }
+  let first := drive towerInvoke 4 state 0
+  if first.stop != .saturated then none else pure ()
+  let state <- match first.state.admitInstantiation (suggestion 0) with
+    | .admitted [fresh] state => if fresh == node 2 then some state else none
+    | _ => none
+  let second := drive towerInvoke 4 state first.cache
+  if second.stop != .saturated then none else pure ()
+  let state <- match second.state.admitInstantiation (suggestion 1) with
+    | .admitted [fresh] state => if fresh == node 3 then some state else none
+    | _ => none
+  pure (drive towerInvoke 4 state second.cache)
+
+-- Each fresh request CSE-hits the materialized prefix and asks for one more
+-- node. All instances remain theorem-generation one, but the third reply is
+-- rejected before retention because its last node would have depth four.
+#guard
+  match towerFinal? with
+  | some result =>
+      result.stop == .engineResource .nodeDepth &&
+        result.state.program.nodes.size == 4 &&
+        result.state.generations.toList == [0, 0, 1, 1] &&
+        result.state.depths.toList == [0, 1, 2, 3] &&
+        result.state.instances.length == 2 &&
+        result.state.suggestions.size == 2 &&
+        result.state.metrics.requests == 3 &&
+        result.state.metrics.generatedNodes == 2
+  | none => false
 
 /-! ## Two successive shape triggers exercise general generation recurrence -/
 
@@ -525,11 +595,10 @@ def proposedNext (input : NodeId) : ProposedNode :=
 
 def ladderProposal (request : RuleRequest Rank) : InstantiationRequest :=
   if request.action.key == instantiateKey then
-    dynamicProposal request 1
+    dynamicProposal request
   else
     { key := 29
       triggers := [request.action.node]
-      claimedGeneration := 2
       nodes := [proposedNext request.action.node]
       equalities := []
       payload := { index := 31 } }
@@ -608,7 +677,6 @@ def ladderFinal? : Option (RunResult Rank (List String)) := do
           let proposal : InstantiationRequest :=
             { key := 97
               triggers := []
-              claimedGeneration := 1
               nodes := [proposedNext (node 0)]
               equalities := []
               payload := { index := 101 } }
@@ -656,7 +724,6 @@ def batchInvoke (calls : Nat) (request : RuleRequest Rank) : Outcome Rank × Nat
   let proposal : InstantiationRequest :=
     { key := 37
       triggers := [request.action.node]
-      claimedGeneration := 1
       nodes :=
         [proposedGeneratedRef (.existing request.action.node),
           proposedGeneratedRef (.existing request.action.node),
@@ -723,7 +790,6 @@ def pairEqualityInvoke (calls : Nat) (request : RuleRequest PairRank) :
   let proposal : InstantiationRequest :=
     { key := 47
       triggers := [request.action.node]
-      claimedGeneration := 1
       nodes := []
       equalities :=
         [{ left := .existing (node 0)
@@ -760,7 +826,6 @@ def pairReuseAdmitted? : Option (Engine PairRank) := do
   let proposal : InstantiationRequest :=
     { key := 103
       triggers := []
-      claimedGeneration := 1
       nodes := [proposedUnary (node 1)]
       equalities :=
         [{ left := .existing (node 1)
@@ -820,7 +885,6 @@ def pairReuseAdmitted? : Option (Engine PairRank) := do
           let proposal : InstantiationRequest :=
             { key := 113
               triggers := []
-              claimedGeneration := 1
               nodes := []
               equalities :=
                 [{ left := .existing (node 0)
@@ -931,7 +995,6 @@ def alternateEqualityRule : Registration :=
 def alternateEqualityProposal (request : RuleRequest Rank) : InstantiationRequest :=
   { key := 61
     triggers := [request.action.node]
-    claimedGeneration := 1
     nodes :=
       [proposedGeneratedRef (.existing request.action.node),
         proposedNextRef (.proposed 0)]
@@ -1152,7 +1215,6 @@ def firstRequestWith? (domain : FactDomain Rank) :
       let proposal : InstantiationRequest :=
         { key := 73
           triggers := List.replicate (generous.maxProposalItems + 1) (node 0)
-          claimedGeneration := 1
           nodes := []
           equalities := []
           payload := { index := 79 } }

@@ -54,6 +54,7 @@ def limits : Experiment.Propagator.Limits :=
     maxProposalItems := 16
     maxInstances := 8
     maxGeneration := 4
+    maxNodeDepth := 16
     maxEqualities := 8
     splitEndpointLimit := endpointLimit }
 
@@ -188,6 +189,80 @@ def centeredProgram : Program :=
         instruction 2 [node 1, node 0],
         instruction 3 [node 0, node 2]] }
 
+/-! The compact operation table is frontend-owned. Put `source` before the
+package-owned centered operation and materialize the centered node already, so
+the matcher must resolve its stable key to index seven and CSE-hit node four. -/
+
+def keyedOperations : Array Operation :=
+  ((arithmeticOperations real).push
+    { key := sourceOp, inputs := [], output := real }).push
+      { key := centeredOp, inputs := [real], output := real }
+
+def keyedProgram : Program :=
+  { operations := keyedOperations
+    nodes :=
+      #[instruction 6,
+        instruction 0,
+        instruction 2 [node 1, node 0],
+        instruction 3 [node 0, node 2],
+        instruction 7 [node 0]] }
+
+def keyedView : ProgramView :=
+  { programVersion := 0
+    operations := keyedProgram.operations
+    nodes := keyedProgram.nodes
+    generations := #[0, 0, 0, 0, 0]
+    depths := #[0, 0, 1, 2, 1] }
+
+def keyedRequest : RuleRequest Fact :=
+  { action :=
+      { serial := 0
+        programVersion := 0
+        application := { index := 0 }
+        rule := { index := 0 }
+        key := centeredInstantiateKey
+        node := node 3
+        kind := .instantiate
+        effort := 0
+        inputs := [] }
+    program := keyedView
+    inputs := []
+    writes := [] }
+
+def keyedProposal? : Option InstantiationRequest :=
+  centeredBinding? keyedRequest >>= centeredProposal? keyedRequest
+
+#guard keyedProgram.check
+
+-- Stable keys resolve to the compact identifier assigned by this particular
+-- frontend snapshot; an absent key does not acquire a fallback meaning.
+#guard
+  match keyedView.findOp? centeredOp with
+  | some (operation, signature) =>
+      operation.index == 7 && signature.key == centeredOp
+  | none => false
+
+#guard
+  (keyedView.findOp? { name := "real.absent-from-keyed-view" }).isNone
+
+-- The package uses the resolved identifier in its draft. Structural admission
+-- therefore recognizes the already materialized centered node instead of
+-- appending a duplicate whose operation index came from package-local order.
+#guard
+  match keyedProposal? with
+  | some proposal =>
+      match proposal.nodes with
+      | [draft] =>
+          draft.op.index == 7 &&
+            match resolveDrafts keyedProgram.nodes.size limits.maxNodeDepth
+                keyedProgram keyedView.depths [] proposal.nodes with
+            | .ok (resolvedProgram, depths, resolved) =>
+                resolvedProgram.nodes.size == keyedProgram.nodes.size &&
+                  depths == keyedView.depths && resolved == [node 4]
+            | .error _ => false
+      | _ => false
+  | none => false
+
 def centeredStart? : Option (Engine Fact × ConcreteRegistry) :=
   match DyadicRules.start config real centeredProgram
       #[finite 0 false 1 false,
@@ -244,22 +319,21 @@ def falseOneRun? : Option (RunResult Fact ConcreteRegistry) := do
 #guard centeredAt half quarter
 #guard centeredAt 1 0
 
--- The old whole-program match is stale after extension, and admission has
--- requeued the structural application so it can observe the new snapshot.
+-- The anchor-local match remains fresh after its own append-only extension.
+-- Selecting it again is a structural duplicate, and the matcher is not
+-- spuriously requeued as a whole-program dependency.
 #guard
   match centeredAdmitted? with
   | some (state, _) =>
       match state.admitInstantiation (suggestion 0) with
-      | .invalid (.staleSuggestion 0 1) unchanged =>
+      | .duplicate unchanged =>
           unchanged.programVersion == 1 &&
-            unchanged.queue.toList.any fun work =>
-              match work with
-              | .application applicationId =>
-                  (unchanged.applications[applicationId.index]?).any fun application =>
-                    (unchanged.rules[application.rule.index]?).any fun registration =>
-                      registration.key == centeredInstantiateKey &&
-                        (unchanged.queued[applicationId.index]?).getD false
-              | .equality _ => false
+            unchanged.applications.toList.zipIdx.all fun (application, index) =>
+              match unchanged.rules[application.rule.index]? with
+              | some registration =>
+                  registration.key != centeredInstantiateKey ||
+                    unchanged.queued[index]? == some false
+              | none => false
       | _ => false
   | none => false
 
@@ -334,16 +408,15 @@ def badSignatureProgram : Program :=
               match retained.suggestion with
               | .instantiate request =>
                   request.triggers == [node 3, node 0, node 2, node 1] &&
-                    request.claimedGeneration == 1 && request.nodes.length == 1 &&
-                    request.equalities.length == 1
+                    request.nodes.length == 1 && request.equalities.length == 1
               | _ => false
         | none => false
   | none => false
 
 -- Admission creates the opaque centered node and equality.  Its arbitrary
 -- callback returns `[0,1/4]`; equality transport then improves the original
--- product to the same fact.  The whole-program matcher also runs on the new
--- snapshot rather than silently remaining dormant.
+-- product to the same fact. The anchor-local matcher emits no duplicate
+-- post-extension suggestion.
 #guard
   match centeredFinal? with
   | some result =>
@@ -354,9 +427,13 @@ def badSignatureProgram : Program :=
           (.bounds (.finite 0 false) (.finite quarter false)) &&
         exactFact result.state 4
           (.bounds (.finite 0 false) (.finite quarter false)) &&
+        result.state.suggestions.size == 2 &&
         result.state.suggestions.toList.any (fun retained =>
           retained.action.key == centeredInstantiateKey &&
-            retained.action.programVersion == 1) &&
+            retained.action.programVersion == 0) &&
+        result.state.suggestions.toList.all (fun retained =>
+          retained.action.key != centeredInstantiateKey ||
+            retained.action.programVersion == 0) &&
         match result.state.program.node? (node 4), result.state.equalities[0]? with
         | some centered, some equality =>
             centered.args == [node 0] &&
@@ -544,6 +621,22 @@ def reciprocalStart? : Option (Engine Fact × ConcreteRegistry) :=
   | .ok state => some state
   | .error _ => none
 
+-- Both endpoints of the configured effort range must fit the arithmetic
+-- endpoint budget before the package is accepted.
+#guard
+  match DyadicRules.start
+      { config with reciprocalBasePrecision := 129 }
+      real reciprocalProgram #[finite 3 false 3 false, whole] limits with
+  | .error .incompatibleLimits => true
+  | _ => false
+
+#guard
+  match DyadicRules.start
+      { config with reciprocalBasePrecision := 126, maxReciprocalEffort := 4 }
+      real reciprocalProgram #[finite 3 false 3 false, whole] limits with
+  | .error .incompatibleLimits => true
+  | _ => false
+
 def reciprocalFirstRequest? : Option (RuleRequest Fact × ConcreteRegistry) := do
   let (state, registry) <- reciprocalStart?
   match state.poll with
@@ -563,6 +656,25 @@ def reciprocalFirstRequest? : Option (RuleRequest Fact × ConcreteRegistry) := d
       | _ => false
   | none => false
 
+def reciprocalAcrossZeroRequest? : Option (RuleRequest Fact × ConcreteRegistry) := do
+  let (state, registry) <- match DyadicRules.start config real reciprocalProgram
+      #[finite (-1) false 1 false, whole] limits with
+    | .ok state => some state
+    | .error _ => none
+  match state.poll with
+  | .request request _ => some (request, registry)
+  | _ => none
+
+-- This first component backend intentionally does not yet implement the
+-- connected hull of Lean's total inverse across zero.
+#guard
+  match reciprocalAcrossZeroRequest? with
+  | some (request, registry) =>
+      match (registry.invoke request).1 with
+      | .inapplicable => true
+      | _ => false
+  | none => false
+
 def bogusRequest : RuleRequest Fact :=
   { action :=
       { serial := 0
@@ -578,7 +690,8 @@ def bogusRequest : RuleRequest Fact :=
       { programVersion := 0
         operations := #[]
         nodes := #[]
-        generations := #[] }
+        generations := #[]
+        depths := #[] }
     inputs := []
     writes := [] }
 

@@ -115,6 +115,7 @@ def generousLimits (trees depth : Nat) : Limits :=
     maxProposalItems := 0
     maxInstances := 0
     maxGeneration := 0
+    maxNodeDepth := nodeCount
     maxEqualities := 0
     splitEndpointLimit := { maxEndpointHeight := 64, maxAlignmentShift := 64 } }
 
