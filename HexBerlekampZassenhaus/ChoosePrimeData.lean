@@ -380,8 +380,14 @@ def choosePrimeData? (f : ZPoly) : Option PrimeChoiceData :=
       (extendedSmallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none)
       |>.map (fun score => score.data)
 
+/-- Do not stop a prime probe on a halving improvement below this factor count;
+at small width, continuing toward a modular irreducibility certificate is cheap
+and disproportionately valuable. -/
+private def probeEarlyFactorFloor : Nat := 8
+
 /-- Continue from a first good prime for at most `extra` further good primes,
-stopping early when a modularly irreducible image is found. -/
+retaining the choice with the fewest modular factors. Stop on an irreducible
+image, or on a halving improvement that still leaves substantial Hensel width. -/
 private def improvePrimeData? (f : ZPoly) (first : PrimeChoiceDataScore) :
     Nat → List SmallPrimeCandidate → PrimeChoiceDataScore
   | _, [] => first
@@ -390,16 +396,28 @@ private def improvePrimeData? (f : ZPoly) (first : PrimeChoiceDataScore) :
       match primeChoiceDataScore f c with
       | some score =>
           if score.factorCount = 1 then score
-          else improvePrimeData? f first extra candidates
+          else if probeEarlyFactorFloor ≤ score.factorCount ∧
+              2 * score.factorCount ≤ first.factorCount then score
+          else improvePrimeData? f (betterPrimeChoiceDataScore first score) extra candidates
       | none => improvePrimeData? f first (extra + 1) candidates
 
 /-- Minimum modular factor count that can justify probing another prime. -/
 private def probeMinFactors : Nat := 9
 
+/-- Degree above which reducing Hensel width justifies a bounded prime probe. -/
+private def probeMinDegree : Nat := 50
+
 /-- Minimum coefficient `log2` that marks a swollen monic transform. -/
 private def probeCoeffLog : Nat := 512
 
-/-- First-good selection with a bounded irreducibility look-ahead. -/
+/-- Whether the first modular factorization predicts enough downstream work to
+justify bounded prime look-ahead. -/
+private def shouldProbePrime (f : ZPoly) (score : PrimeChoiceDataScore) : Bool :=
+  decide (probeMinDegree ≤ f.degree?.getD 0) ||
+    (decide (probeMinFactors ≤ score.factorCount) &&
+      f.toArray.any (fun coeff => probeCoeffLog ≤ coeff.natAbs.log2))
+
+/-- First-good selection with bounded modular-factor-width look-ahead. -/
 private def chooseAdaptiveFrom? (f : ZPoly) (extra : Nat) :
     List SmallPrimeCandidate → Option PrimeChoiceDataScore
   | [] => none
@@ -407,17 +425,15 @@ private def chooseAdaptiveFrom? (f : ZPoly) (extra : Nat) :
       match primeChoiceDataScore f c with
       | some score =>
           if score.factorCount = 1 then some score
-          else if probeMinFactors ≤ score.factorCount &&
-              f.toArray.any (fun coeff => probeCoeffLog ≤ coeff.natAbs.log2) then
+          else if shouldProbePrime f score then
             some (improvePrimeData? f score extra candidates)
           else
             some score
       | none => chooseAdaptiveFrom? f extra candidates
 
-/-- Select the first good prime, except that costly inputs with both a swollen
-monic transform and many modular factors receive a bounded search for a good
-prime at which the image is irreducible. If no such prime appears within
-`extra` further good candidates, preserve the original first-good choice. -/
+/-- Select the first good prime, except that a split modular image receives a
+bounded search for a good prime with fewer modular factors, with the early-stop
+policy implemented by `improvePrimeData?`. -/
 def choosePrimeDataAdaptive? (f : ZPoly) (extra : Nat) : Option PrimeChoiceData :=
   (chooseAdaptiveFrom? f extra
     (smallPrimeCandidates ++ extendedSmallPrimeCandidates)).map (·.data)
@@ -428,7 +444,7 @@ private theorem improvePrimeData?_property
     (hcandidate : ∀ c score, primeChoiceDataScore f c = some score → P score) :
     ∀ extra candidates, P (improvePrimeData? f first extra candidates) := by
   intro extra candidates
-  induction candidates generalizing extra with
+  induction candidates generalizing extra first with
   | nil => simp [improvePrimeData?, hfirst]
   | cons c candidates ih =>
       cases extra with
@@ -438,14 +454,24 @@ private theorem improvePrimeData?_property
           cases hscore : primeChoiceDataScore f c with
           | none =>
               simp only
-              exact ih (extra + 1)
+              exact ih (first := first) (extra := extra + 1) hfirst
           | some score =>
               simp only
               by_cases hone : score.factorCount = 1
               · simp only [hone, if_true]
                 exact hcandidate c score hscore
               · simp only [hone, if_false]
-                exact ih extra
+                by_cases hhalf : probeEarlyFactorFloor ≤ score.factorCount ∧
+                    2 * score.factorCount ≤ first.factorCount
+                · simp only [hhalf]
+                  exact hcandidate c score hscore
+                · simp only [hhalf, if_false]
+                  apply ih (first := betterPrimeChoiceDataScore first score)
+                    (extra := extra)
+                  unfold betterPrimeChoiceDataScore
+                  split
+                  · exact hcandidate c score hscore
+                  · exact hfirst
 
 private theorem improvePrimeData?_p_le
     (f : ZPoly) (first : PrimeChoiceDataScore)
@@ -454,7 +480,7 @@ private theorem improvePrimeData?_p_le
       (∀ c ∈ candidates, c.p ≤ 500) →
       (improvePrimeData? f first extra candidates).data.p ≤ 500 := by
   intro extra candidates hall
-  induction candidates generalizing extra with
+  induction candidates generalizing extra first with
   | nil => simp [improvePrimeData?, hfirst]
   | cons c candidates ih =>
       have htail : ∀ d ∈ candidates, d.p ≤ 500 := by
@@ -467,7 +493,7 @@ private theorem improvePrimeData?_p_le
           cases hscore : primeChoiceDataScore f c with
           | none =>
               simp only
-              exact ih (extra + 1) htail
+              exact ih (first := first) (extra := extra + 1) hfirst htail
           | some score =>
               simp only
               by_cases hone : score.factorCount = 1
@@ -475,7 +501,20 @@ private theorem improvePrimeData?_p_le
                 exact primeChoiceDataScore_p_le f c score
                   (hall c (by simp)) hscore
               · simp only [hone, if_false]
-                exact ih extra htail
+                by_cases hhalf : probeEarlyFactorFloor ≤ score.factorCount ∧
+                    2 * score.factorCount ≤ first.factorCount
+                · simp only [hhalf]
+                  exact primeChoiceDataScore_p_le f c score
+                    (hall c (by simp)) hscore
+                · simp only [hhalf, if_false]
+                  apply ih (first := betterPrimeChoiceDataScore first score)
+                    (extra := extra)
+                  · unfold betterPrimeChoiceDataScore
+                    split
+                    · exact primeChoiceDataScore_p_le f c score
+                        (hall c (by simp)) hscore
+                    · exact hfirst
+                  · exact htail
 
 private theorem chooseAdaptiveFrom?_property
     (f : ZPoly) (extra : Nat) (P : PrimeChoiceDataScore → Prop)
@@ -499,12 +538,13 @@ private theorem chooseAdaptiveFrom?_property
             rw [← h]
             exact hproperty
           · simp only [hone, if_false] at h
-            by_cases hprobe : probeMinFactors ≤ current.factorCount &&
-                f.toArray.any (fun coeff => probeCoeffLog ≤ coeff.natAbs.log2)
+            by_cases hprobe : shouldProbePrime f current = true
             · simp only [hprobe, if_true, Option.some.injEq] at h
               rw [← h]
               exact improvePrimeData?_property f P current hproperty hcandidate extra candidates
-            · simp only [hprobe, Bool.false_eq_true, if_false, Option.some.injEq] at h
+            · have hfalse : shouldProbePrime f current = false :=
+                Bool.eq_false_iff.mpr hprobe
+              simp only [hfalse, Bool.false_eq_true, if_false, Option.some.injEq] at h
               rw [← h]
               exact hproperty
 

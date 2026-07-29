@@ -91,8 +91,8 @@ private def bhksRecoveryGuardPrimeData : PrimeChoiceData :=
 
 namespace ZPoly
 
-/-- Maximum number of further good primes inspected for a modular
-irreducibility shortcut on a high-cost monic transform. -/
+/-- Maximum number of further good primes inspected to reduce modular-factor
+width on a high-cost monic transform. -/
 def primeProbeFuel : Nat := 8
 
 /--

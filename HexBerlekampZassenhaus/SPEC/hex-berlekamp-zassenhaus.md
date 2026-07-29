@@ -268,17 +268,19 @@ inside the small-`r` regime, first-suitable factors `f mod p` exactly
 once.
 
 The shared lifting entry `toMonicPrimeData?` preserves this first-suitable
-choice in the ordinary case. It performs a bounded irreducibility look-ahead
-only when the first good image has at least nine modular factors *and* the
-monic transform contains a coefficient whose `log2` is at least 512. It then
-examines at most eight further good primes and switches only if one gives a
-single modular factor; otherwise it returns the original choice. A singleton
-modular factor is already a checked Berlekamp irreducibility certificate, so
-this avoids Hensel lifting and recombination on the coefficient-swell cases
-where that downstream work is most expensive. This is not general `r`
-minimisation and does not alter the exhaustive `none` semantics: the same
-fixed candidate set is searched, and all returned prime data carries the same
-primality, good-prime, modular-image, and Berlekamp-form proofs.
+choice in the ordinary case. It performs a bounded factor-count look-ahead
+when the monic transform has degree at least 50, or when the first good image
+has at least nine modular factors and the transform contains a coefficient
+whose `log2` is at least 512. It examines at most eight further good primes,
+retains the smallest modular factor count seen, and stops early on a singleton
+or on a halving improvement that still leaves at least eight factors. A
+singleton modular factor is already a checked Berlekamp irreducibility
+certificate; more generally, reducing the factor count narrows both Hensel
+lifting and recombination enough to repay the bounded probe on these high-cost
+inputs. This is not exhaustive `r` minimisation and does not alter the
+exhaustive `none` semantics: the same fixed candidate set is searched, and all
+returned prime data carries the same primality, good-prime, modular-image, and
+Berlekamp-form proofs.
 
 **Explicit pipeline records:**
 ```lean
