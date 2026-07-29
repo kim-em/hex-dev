@@ -51,6 +51,12 @@ def equalityDraft (label : Nat) (body : List Nat := [30]) (schema : Nat := 3) : 
 def factOutcome (label : Nat) : Outcome Nat :=
   .success [{ node := node 0, fact := 7, payload := payload label }] [] {}
 
+def pairOutcome : Outcome Nat :=
+  .success
+    [{ node := node 0, fact := 7, payload := payload 0 },
+      { node := node 1, fact := 8, payload := payload 1 }]
+    [] {}
+
 def retainedSeed : Entry :=
   { origin := action 9
     role := .fact
@@ -183,6 +189,41 @@ def mixedRequest : InstantiationRequest :=
       (factOutcome 0) [factDraft 0, equalityDraft 1 [4, 5]] with
   | .invalid (.extraDraft label) arena =>
       label.index == 1 && seedPreserved arena
+  | _ => false
+
+-- Local preflight derives one cell count from the exact bounded draft list.
+-- The same opaque transaction drives both cumulative capacity and the
+-- committed aggregate, so there is no independent cell count to mismatch.
+#guard
+  match
+      freeze
+        { generous with
+          maxEntries := 3
+          maxBodyCells := 4
+          maxDrafts := 2
+          maxDraftCells := 3
+          maxUses := 2 }
+        seeded (action 0) pairOutcome
+        [factDraft 0 [4], factDraft 1 [5, 6]] with
+  | .ready arena (.success [first, second] [] _) =>
+      first.payload.index == 1 && second.payload.index == 2 &&
+        arena.entries.size == 3 && arena.bodyCells == 4 && arena.wellFormed
+  | _ => false
+
+-- Reducing only the remaining cumulative cell capacity rejects that same
+-- locally bounded transaction and preserves the original cached aggregate.
+#guard
+  match
+      freeze
+        { generous with
+          maxEntries := 3
+          maxBodyCells := 3
+          maxDrafts := 2
+          maxDraftCells := 3
+          maxUses := 2 }
+        seeded (action 0) pairOutcome
+        [factDraft 0 [4], factDraft 1 [5, 6]] with
+  | .resourceLimit .bodyCells arena => seedPreserved arena
   | _ => false
 
 -- Each resource limit is exactly one below the required prospective value.

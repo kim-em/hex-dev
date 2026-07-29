@@ -624,9 +624,16 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
           first.arena.entries.size == 1 && first.engine.history.size == 1 &&
             match first.advance with
             | .payloadResource .entries stopped =>
-                !stopped.live && stopped.engine.pending.isNone &&
+                !stopped.live && !stopped.complete &&
+                  stopped.engine.pending.isNone &&
                   stopped.arena.entries.size == 1 &&
-                  stopped.engine.history.size == 1
+                  stopped.engine.history.size == 1 &&
+                  match stopped.advance with
+                  | .invalidEngine inert =>
+                      !inert.live && !inert.complete &&
+                        inert.arena.entries.size == 1 &&
+                        inert.engine.history.size == 1
+                  | _ => false
             | _ => false
       | _ => false
   | .error _ => false
@@ -645,10 +652,18 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
           first.arena.bodyCells == 2 && first.engine.history.size == 1 &&
             match first.advance with
             | .payloadResource .bodyCells stopped =>
-                !stopped.live && stopped.engine.pending.isNone &&
+                !stopped.live && !stopped.complete &&
+                  stopped.engine.pending.isNone &&
                   stopped.arena.entries.size == 1 &&
                   stopped.arena.bodyCells == 2 &&
-                  stopped.engine.history.size == 1
+                  stopped.engine.history.size == 1 &&
+                  match stopped.advance with
+                  | .invalidEngine inert =>
+                      !inert.live && !inert.complete &&
+                        inert.arena.entries.size == 1 &&
+                        inert.arena.bodyCells == 2 &&
+                        inert.engine.history.size == 1
+                  | _ => false
             | _ => false
       | _ => false
   | .error _ => false
@@ -729,23 +744,21 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
         !run.session.complete && run.session.engine.suggestions.size == 2
   | .error _ => false
 
--- Session start proves that every engine-valid payload position fits both
--- reply-local use/draft traversal and a fresh whole-run arena. Packages may
--- independently impose stronger encoding requirements.
+-- Count coherence lets every engine-valid payload use own a distinct draft,
+-- bounds malformed draft lists by the use envelope, and fits either local cap
+-- in a fresh arena. `requiredUses ≤ maxUses` follows transitively rather than
+-- appearing as a redundant condition. Packages may impose stronger bounds.
 #guard
   PayloadSession.requiredUses limits == 8 &&
     PayloadSession.limitsCoherent limits arenaLimits
-
-#guard
-  match start goodPackage { arenaLimits with maxUses := 7 } with
-  | .error .incoherentLimits => true
-  | _ => false
 
 #guard
   match start goodPackage { arenaLimits with maxDrafts := 7 } with
   | .error .incoherentLimits => true
   | _ => false
 
+-- This isolates `maxDrafts ≤ maxUses`: both still admit all eight required
+-- uses, and the fresh entry budget admits all nine locally allowed drafts.
 #guard
   match start goodPackage
       { arenaLimits with maxEntries := 9, maxDrafts := 9, maxUses := 8 } with

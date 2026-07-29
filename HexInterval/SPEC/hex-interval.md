@@ -1154,10 +1154,14 @@ entries. Only a locally bounded, exactly covered reply is compared with
 remaining whole-arena entry and body-cell capacity, relocated to fresh global
 identifiers, and appended to a new arena value. Thus malformed local evidence
 cannot be classified as cumulative exhaustion merely because earlier valid
-replies filled part of the arena. The total-proposal budget charges every
-candidate, every suggestion constructor (including retry and split), and every
-equality nested under an instantiation. Repeated references count as work even
-when they share one draft. Before any quadratic label/coverage scan,
+replies filled part of the arena. Local preflight returns an opaque
+bounded-draft transaction whose constructor is private; it carries the exact
+draft list together with its derived cell count, and both cumulative preflight
+and append consume that same value. No public caller can supply a separate
+cell count for unrelated drafts. The total-proposal budget charges every
+candidate, every suggestion constructor (including retry and split), and
+every equality nested under an instantiation. Repeated references count as
+work even when they share one draft. Before any quadratic label/coverage scan,
 `maxDrafts` bounds the draft list independently of proposal traversal. Every
 atom reached by the bounded body traversal is range-checked before its cell is
 charged. The traversal stops at the first in-range cell beyond
@@ -1173,15 +1177,15 @@ list lengths against the engine's own trusted limits. Let
 (maxProposalItems + 1)`: every candidate and suggestion costs one payload use,
 and every suggestion may be an instantiation with at most
 `maxProposalItems` nested equalities. Session start requires
-`requiredUses ≤ maxUses`, `requiredUses ≤ maxDrafts`,
-`maxDrafts ≤ maxUses`, `maxDrafts ≤ maxEntries`, and
-`maxDraftCells ≤ maxBodyCells`. Exact coverage means a valid reply cannot
-contain more distinct drafts than payload uses, so the potentially quadratic
-label and coverage checks remain bounded by the per-reply use cap. Every
-engine-valid payload position can have a distinct bounded draft, and any reply
-inside the local draft/cell envelope fits a fresh arena. `maxEntries` and
-`maxBodyCells` remain cumulative whole-run bounds: only capacity spent by an
-earlier committed reply can make a later locally valid reply exhaust them.
+`requiredUses ≤ maxDrafts`, `maxDrafts ≤ maxUses`,
+`maxDrafts ≤ maxEntries`, and `maxDraftCells ≤ maxBodyCells`. The first
+inequality permits one distinct draft for every engine-valid payload use.
+The second both implies that the use traversal can inspect every such position
+and bounds even malformed pre-coverage draft lists by the same envelope.
+The remaining inequalities ensure that any reply inside the local draft/cell
+envelope fits a fresh arena. `maxEntries` and `maxBodyCells` remain cumulative
+whole-run bounds: only capacity spent by an earlier committed reply can make a
+later locally valid reply exhaust them.
 Packages see the complete engine and arena envelopes and may impose stronger
 method-specific requirements.
 Before any package-specific program check traverses nodes, session start runs
@@ -1202,7 +1206,13 @@ the remaining whole-run arena entry or body-cell capacity retain the preceding
 arena, facts, program, and proof history and make the returned session
 non-live. Start-time coherence means these arena stops occur only after an
 earlier commit has consumed capacity. A caller cannot resume that snapshot and
-later relabel the partial run saturated. Malformed package evidence and
+later relabel the partial run saturated. Treating cumulative arena exhaustion
+as fatal is an intentional conservative liveness policy, aligned with global
+engine-resource exhaustion: the selected reply is otherwise valid, but its
+required proof data cannot be retained. Proof soundness could also permit a
+recoverable session which permanently records dropped work and remains
+incomplete, but that would broaden scheduling behavior; the eager prototype
+does not do so. Malformed package evidence and
 package-local payload-use, draft-count, draft-cell, atom, or schema excess are
 different: the prospective arena is discarded, but the session submits a
 bounded synthetic `failed` outcome through the ordinary engine reply path.
@@ -2315,8 +2325,9 @@ typical, boundary, and adversarial inputs. In particular it includes:
 - a private package session which freezes and relocates reply-local evidence,
   continues independent work after malformed or locally oversized drafts,
   retains incompleteness across a later successful reply, charges nested
-  equality payload uses, and reserves fatal entry/body-cell stops for genuine
-  remaining-capacity exhaustion after an earlier arena commit;
+  equality payload uses, keeps derived draft-cell accounting tied to the exact
+  bounded transaction, and intentionally reserves fatal entry/body-cell stops
+  for genuine remaining-capacity exhaustion after an earlier arena commit;
 - an anchor-local opaque shape rule which distinguishes `x * (one - x)` from
   products with a reversed difference or a different repeated input, proposes
   the exact existing node identifiers while receiving no fact inputs, repeats

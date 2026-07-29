@@ -256,6 +256,14 @@ def validate (uses : List Use) (drafts : List Draft) : Option Invalid :=
       | some error => some error
       | none => checkCoverage uses drafts
 
+/-- One exact draft list after reply-local bounds have been checked. Its
+private constructor prevents callers from pairing an invented cell count with
+different drafts before cumulative preflight or freezing. -/
+structure BoundedDrafts where
+  private mk ::
+  drafts : List Draft
+  cells : Nat
+
 /-- Traverse a reply body through the first cell beyond its local budget.
 Every visited atom is checked before its cell is charged, so an oversized
 boundary atom reports `.atom`. Cells after a `.draftCells` stop are
@@ -277,31 +285,32 @@ def consumeDrafts (maxAtom : Nat) :
       consumeDrafts maxAtom remaining drafts
 
 /-- Check only reply-local draft, schema, atom, and cell bounds. The returned
-cell count belongs to a bounded transaction whose exact draft coverage must be
-validated before whole-run capacity is consulted. -/
-def preflightLocal (limits : Limits) (drafts : List Draft) :
-    Except Resource Nat := do
+opaque transaction retains the exact list whose cell count was derived.
+Exact draft coverage must still be validated before whole-run capacity is
+consulted. -/
+opaque preflightLocal (limits : Limits) (drafts : List Draft) :
+    Except Resource BoundedDrafts := do
   if !listWithin limits.maxDrafts drafts then
     throw .drafts
   if drafts.any (fun draft => limits.maxSchema < draft.schema) then
     throw .schema
   let remaining ← consumeDrafts limits.maxAtom limits.maxDraftCells drafts
-  pure (limits.maxDraftCells - remaining)
+  pure { drafts, cells := limits.maxDraftCells - remaining }
 
 /-- Compare an already locally bounded and exactly validated transaction with
 remaining whole-run capacity. Consequently `.entries` and `.bodyCells` mean
 genuine cumulative exhaustion by otherwise valid evidence. -/
 def preflightWhole (limits : Limits) (arena : Arena)
-    (drafts : List Draft) (addedCells : Nat) : Except Resource Unit := do
+    (bounded : BoundedDrafts) : Except Resource Unit := do
   if limits.maxEntries < arena.entries.size then
     throw .entries
   let entryRoom := limits.maxEntries - arena.entries.size
-  if !listWithin entryRoom drafts then
+  if !listWithin entryRoom bounded.drafts then
     throw .entries
   if limits.maxBodyCells < arena.bodyCells then
     throw .bodyCells
   let cellRoom := limits.maxBodyCells - arena.bodyCells
-  if cellRoom < addedCells then
+  if cellRoom < bounded.cells then
     throw .bodyCells
   pure ()
 
@@ -336,9 +345,10 @@ def appendDrafts (origin : Action) :
       (entries, { source := draft.label, global } :: relocations)
 
 def freezeDrafts (arena : Arena) (origin : Action)
-    (drafts : List Draft) (addedCells : Nat) : Arena × List Relocation :=
-  let (entries, relocations) := appendDrafts origin arena.entries drafts
-  ({ entries, bodyCells := arena.bodyCells + addedCells }, relocations)
+    (bounded : BoundedDrafts) : Arena × List Relocation :=
+  let (entries, relocations) :=
+    appendDrafts origin arena.entries bounded.drafts
+  ({ entries, bodyCells := arena.bodyCells + bounded.cells }, relocations)
 
 /-- Validate and freeze every reply-local payload reference in an outcome.
 
@@ -355,15 +365,15 @@ def freeze (limits : Limits) (arena : Arena) (origin : Action)
       let uses := outcomeUses outcome
       match preflightLocal limits drafts with
       | .error resource => .resourceLimit resource arena
-      | .ok addedCells =>
-          match validate uses drafts with
+      | .ok bounded =>
+          match validate uses bounded.drafts with
           | some error => .invalid error arena
           | none =>
-              match preflightWhole limits arena drafts addedCells with
+              match preflightWhole limits arena bounded with
               | .error resource => .resourceLimit resource arena
               | .ok _ =>
                   let (prospective, relocations) :=
-                    freezeDrafts arena origin drafts addedCells
+                    freezeDrafts arena origin bounded
                   match relocateOutcome relocations outcome with
                   | .error error => .invalid error arena
                   | .ok outcome =>

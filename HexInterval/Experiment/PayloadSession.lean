@@ -28,8 +28,12 @@ permanently lost. Exceeding a package-local payload-use, draft, draft-cell,
 atom, or schema bound has the same recoverable behavior. Exhausting remaining
 whole-run arena entry or body capacity after earlier commits, or encountering
 an engine-invalid transition, instead returns a non-live session snapshot
-which cannot later be resumed and mislabeled saturated. Package failure and
-unprocessed narrowing suggestions likewise make the final status incomplete.
+which cannot later be resumed and mislabeled saturated. This cumulative stop
+is an intentional conservative policy for the eager prototype: an otherwise
+valid selected transition could not be retained, so the session treats it like
+global engine-resource exhaustion rather than skipping required work. Package
+failure and unprocessed narrowing suggestions likewise make the final status
+incomplete.
 -/
 
 namespace Hex.Interval.Experiment.PayloadSession
@@ -74,16 +78,14 @@ def requiredUses (limits : Propagator.Limits) : Nat :=
   limits.maxOutcomeCandidates +
     limits.maxOutcomeSuggestions * (limits.maxProposalItems + 1)
 
-/-- The arena must be able to inspect and freeze every payload position in an
-otherwise engine-valid reply. A fresh arena must fit any reply within the
-explicit local draft and body-cell caps. Exact coverage means a valid reply
-cannot contain more drafts than uses, keeping draft validation per-reply
-bounded. Only capacity consumed by earlier commits may produce a fatal
-whole-run exhaustion. -/
+/-- The count envelope admits one distinct draft for every engine-valid
+payload use. `maxDrafts ≤ maxUses` also bounds malformed pre-coverage draft
+lists by the use-traversal envelope, while the local draft and cell caps must
+fit an empty arena. Therefore only capacity consumed by earlier commits can
+produce a whole-run exhaustion. -/
 def limitsCoherent (limits : Propagator.Limits)
     (arenaLimits : PayloadArena.Limits) : Bool :=
-  requiredUses limits ≤ arenaLimits.maxUses &&
-    requiredUses limits ≤ arenaLimits.maxDrafts &&
+  requiredUses limits ≤ arenaLimits.maxDrafts &&
     arenaLimits.maxDrafts ≤ arenaLimits.maxUses &&
     arenaLimits.maxDrafts ≤ arenaLimits.maxEntries &&
     arenaLimits.maxDraftCells ≤ arenaLimits.maxBodyCells
@@ -125,7 +127,8 @@ inductive Step (Fact : Type) where
   /-- A package exceeded a per-reply payload encoding bound. The failed reply
   is consumed and other independent work may continue. -/
   | rejectedPayload (resource : PayloadArena.Resource) (session : Session Fact)
-  /-- A whole-run payload arena bound was exhausted. -/
+  /-- An otherwise valid reply exhausted a cumulative arena bound. The eager
+  session intentionally stops instead of skipping selected required work. -/
   | payloadResource (resource : PayloadArena.Resource) (session : Session Fact)
   | invalidEngine (session : Session Fact)
 
