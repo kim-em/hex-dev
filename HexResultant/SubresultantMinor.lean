@@ -137,6 +137,20 @@ variable {R : Type u} [Zero R] [DecidableEq R]
 def coeffInt (p : DensePoly R) (i : Int) : R :=
   if i < 0 then 0 else p.coeff i.toNat
 
+/-- A nonnegative integer-indexed lookup is the ordinary natural-indexed
+coefficient lookup. This explicit `Int.ofNat` form is useful for rewriting
+matrix indices before coercions have been normalized. -/
+theorem coeffInt_ofNat (p : DensePoly R) (i : Nat) :
+    coeffInt p (Int.ofNat i) = p.coeff i := by
+  cases i <;> rfl
+
+/-- Coercion notation for the nonnegative integer-indexed coefficient law. -/
+@[simp, grind =]
+theorem coeffInt_natCast (p : DensePoly R) (i : Nat) :
+    coeffInt p (i : Int) = p.coeff i := by
+  rw [← Int.ofNat_eq_natCast]
+  exact coeffInt_ofNat p i
+
 /-- Integer-indexed coefficient lookup distributes over polynomial addition. -/
 theorem coeffInt_add {S : Type u} [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (t : Int) :

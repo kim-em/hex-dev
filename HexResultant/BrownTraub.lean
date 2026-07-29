@@ -500,6 +500,306 @@ theorem coeffMinorAt_addMul {R : Type u}
   unfold coeffMinorAt
   rw [det_addMul df dg db J l f g b h hJ hdeg hb hh]
 
+/-- Raising the retained formal degree of the right input by one contributes
+one leading coefficient of the left input, provided the right polynomial has
+no coefficient at the new degree. This is used in the opposite direction to
+collapse an artificially retained formal degree. -/
+theorem coeffMinorAt_succRight {R : Type u}
+    [Lean.Grind.CommRing R] [DecidableEq R]
+    (dg dh J l : Nat) (g h : DensePoly R)
+    (hpos : 0 < (dg - J) + (dh - J)) (hJh : J ≤ dh)
+    (hg : g.size = dg + 1) (hh : h.size ≤ dh + 1) :
+    coeffMinorAt dg (dh + 1) J l g h =
+      g.leadingCoeff * coeffMinorAt dg dh J l g h := by
+  let n := (dg - J) + (dh - J)
+  have hnpos : 0 < n := by
+    simpa [n] using hpos
+  have hdim : ((dg - J) + (dh + 1 - J)) = n + 1 := by
+    simp [n]
+    omega
+  let row : Fin (n + 1) := ⟨0, by omega⟩
+  let M : SubresultantMinor.Square R (n + 1) :=
+    SubresultantMinor.castSquare hdim
+      (coeffMatrixAt dg (dh + 1) J l g h)
+  have hleftPos : 0 < dh + 1 - J := by omega
+  have hnotLast : 0 ≠ (dg - J) + (dh + 1 - J) - 1 := by omega
+  have hfirst : M row row = g.leadingCoeff := by
+    have hcoeff : g.coeff dg = g.leadingCoeff := by
+      rw [leadingCoeff_eq_coeff_last g (by omega), hg]
+      congr
+    simpa [M, row, SubresultantMinor.castSquare, coeffMatrixAt,
+      Fin.cast, hleftPos, hnotLast, n]
+      using hcoeff
+  have hzero (j : Fin (n + 1)) (hj : 0 < j.val) : M row j = 0 := by
+    by_cases hleft : j.val < dh + 1 - J
+    · have hbound : g.size ≤ dg + j.val := by
+        rw [hg]
+        omega
+      simp only [M, row, SubresultantMinor.castSquare, coeffMatrixAt,
+        Fin.cast]
+      rw [if_pos hleft, if_neg hnotLast]
+      rw [show Int.ofNat dg - Int.ofNat 0 + Int.ofNat j.val =
+          ((dg + j.val : Nat) : Int) by
+        simp [Int.ofNat_eq_natCast, Int.natCast_add]]
+      rw [coeffInt_natCast]
+      exact coeff_eq_zero_of_size_le g hbound
+    · let jj := j.val - (dh + 1 - J)
+      have hbound : h.size ≤ dh + 1 + jj := by
+        simp [jj]
+        omega
+      simp only [M, row, SubresultantMinor.castSquare, coeffMatrixAt,
+        Fin.cast]
+      rw [if_neg hleft, if_neg hnotLast]
+      rw [show Int.ofNat (dh + 1) - Int.ofNat 0 + Int.ofNat jj =
+          ((dh + 1 + jj : Nat) : Int) by
+        simp [Int.ofNat_eq_natCast, Int.natCast_add]]
+      rw [coeffInt_natCast]
+      exact coeff_eq_zero_of_size_le h hbound
+  have hdelete : SubresultantMinor.deleteFirst M row =
+      coeffMatrixAt dg dh J l g h := by
+    funext i j
+    change coeffMatrixAt dg (dh + 1) J l g h
+        ⟨i.val + 1, by omega⟩ ⟨j.val + 1, by omega⟩ =
+      coeffMatrixAt dg dh J l g h i j
+    simp only [coeffMatrixAt]
+    by_cases hleft : j.val < dh - J
+    · rw [if_pos (by omega), if_pos hleft]
+      by_cases hlast : i.val = n - 1
+      · rw [if_pos (by omega), if_pos hlast]
+        congr 1
+        simp [n]
+        omega
+      · rw [if_neg (by omega), if_neg hlast]
+        congr 1
+        simp [Int.ofNat_eq_natCast, Int.natCast_add] <;> omega
+    · rw [if_neg (by omega), if_neg hleft]
+      by_cases hlast : i.val = n - 1
+      · rw [if_pos (by omega), if_pos hlast]
+        congr 1
+        simp [Int.ofNat_eq_natCast] <;> omega
+      · rw [if_neg (by omega), if_neg hlast]
+        congr 1
+        simp [Int.ofNat_eq_natCast, Int.natCast_add] <;> omega
+  unfold coeffMinorAt
+  rw [← SubresultantMinor.det_castSquare hdim]
+  change SubresultantMinor.det M = _
+  rw [SubresultantMinor.det_firstRow M hzero, hfirst, hdelete]
+
+/-- Raising the retained formal degree of the right input repeatedly
+contributes the corresponding power of the left leading coefficient. Reading
+the equality right-to-left collapses all retained degrees at once. -/
+theorem coeffMinorAt_raiseRight {R : Type u}
+    [Lean.Grind.CommRing R] [DecidableEq R]
+    (dg dh J l extra : Nat) (g h : DensePoly R)
+    (hpos : 0 < (dg - J) + (dh - J)) (hJh : J ≤ dh)
+    (hg : g.size = dg + 1) (hh : h.size ≤ dh + 1) :
+    coeffMinorAt dg (dh + extra) J l g h =
+      g.leadingCoeff ^ extra * coeffMinorAt dg dh J l g h := by
+  induction extra with
+  | zero =>
+      rw [Nat.add_zero, Lean.Grind.Semiring.pow_zero]
+      grind
+  | succ extra ih =>
+      rw [Nat.add_succ,
+        coeffMinorAt_succRight dg (dh + extra) J l g h (by omega)
+          (by omega) hg (by omega),
+        ih, Lean.Grind.Semiring.pow_succ]
+      grind
+
+/-- At the right input's formal degree, the left polynomial block is empty. -/
+private theorem coeffMinorAt_rightDegree_ignore {R : Type u}
+    [Lean.Grind.CommRing R] [DecidableEq R]
+    (dg dh l : Nat) (h g : DensePoly R) :
+    coeffMinorAt dh dg dh l h g =
+      coeffMinorAt dh dg dh l h 0 := by
+  unfold coeffMinorAt
+  apply congrArg SubresultantMinor.det
+  funext i j
+  have hj : j.val < dg - dh := by
+    have := j.isLt
+    omega
+  simp [coeffMatrixAt, hj]
+
+/-- The first nonempty edge minor is the selected coefficient of the right
+input. -/
+private theorem coeffMinorAt_unitRight {R : Type u}
+    [Lean.Grind.CommRing R] [DecidableEq R]
+    (dh l : Nat) (h : DensePoly R) :
+    coeffMinorAt dh (dh + 1) dh l h 0 = h.coeff l := by
+  unfold coeffMinorAt
+  have hdim : (dh - dh) + (dh + 1 - dh) = 1 := by omega
+  rw [← SubresultantMinor.det_castSquare hdim]
+  let M : SubresultantMinor.Square R 1 :=
+    SubresultantMinor.castSquare hdim
+      (coeffMatrixAt dh (dh + 1) dh l h 0)
+  change SubresultantMinor.det M = _
+  rw [SubresultantMinor.det_firstRow M (by
+    intro j hj
+    omega)]
+  have hentry : M ⟨0, by omega⟩ ⟨0, by omega⟩ = h.coeff l := by
+    simp [M, coeffMatrixAt, Fin.cast]
+  rw [hentry, SubresultantMinor.det_zero]
+  grind
+
+/-- The subresultant at the right input's degree is that input multiplied by
+the expected power of its leading coefficient. -/
+theorem coeffMinorAt_rightDegree {R : Type u}
+    [Lean.Grind.CommRing R] [DecidableEq R]
+    (dg dh l : Nat) (g h : DensePoly R)
+    (hdh : dh < dg) (hh : h.size = dh + 1) :
+    coeffMinorAt dg dh dh l g h =
+      h.leadingCoeff ^ (dg - dh - 1) * h.coeff l := by
+  rw [coeffMinorAt_swap]
+  simp only [Nat.sub_self, Nat.mul_zero, SubresultantMinor.sign]
+  rw [if_pos (by decide)]
+  rw [Lean.Grind.Semiring.one_mul,
+    coeffMinorAt_rightDegree_ignore dg dh l h g]
+  have hsum : dh + 1 + (dg - (dh + 1)) = dg := by omega
+  have hraise := coeffMinorAt_raiseRight dh (dh + 1) dh l
+    (dg - (dh + 1)) h (0 : DensePoly R) (by omega) (by omega) hh (by simp)
+  rw [hsum] at hraise
+  rw [hraise, coeffMinorAt_unitRight]
+  congr 2
+
+/-- Brown--Traub equation (12): if `H = F + B * G`, then the generalized
+Sylvester coefficient minor for `F, G` is the `G, H` minor at any formal degree
+bounding `H`, times the block-swap sign and one `lc(G)` for every collapsed
+formal degree. -/
+theorem coeffMinorAt_brownTraub {R : Type u}
+    [Lean.Grind.CommRing R] [DecidableEq R]
+    (df dg db dh J l : Nat) (f g b h : DensePoly R)
+    (hJh : J ≤ dh) (hdh : dh < dg)
+    (hdeg : df = db + dg) (hg : g.size = dg + 1)
+    (hb : b.size ≤ db + 1) (hhsize : h.size ≤ dh + 1)
+    (hh : h = f + b * g) :
+    coeffMinorAt df dg J l f g =
+      SubresultantMinor.sign (R := R) ((df - J) * (dg - J)) *
+        (g.leadingCoeff ^ (df - dh) * coeffMinorAt dg dh J l g h) := by
+  have hJg : J < dg := by omega
+  have hdhf : dh ≤ df := by omega
+  rw [coeffMinorAt_addMul df dg db J l f g b h hJg hdeg hb hh]
+  rw [← show dh + (df - dh) = df by omega]
+  rw [coeffMinorAt_raiseRight dg dh J l (df - dh) g h (by omega) hJh hg
+    hhsize]
+  simp
+
+/-- The generalized subresultant at the right input's degree is a scalar
+multiple of that input. -/
+theorem poly_rightDegree {R : Type u}
+    [Lean.Grind.CommRing R] [DecidableEq R]
+    (dg dh : Nat) (g h : DensePoly R)
+    (hdh : dh < dg) (hg : g.size = dg + 1) (hh : h.size = dh + 1) :
+    poly dh g h = scale (h.leadingCoeff ^ (dg - dh - 1)) h := by
+  have hfg : formalDegree g = dg := by simp [formalDegree, hg]
+  have hfh : formalDegree h = dh := by simp [formalDegree, hh]
+  apply ext_coeff
+  intro l
+  rw [coeff_scale_semiring]
+  simp only [coeff_poly]
+  by_cases hl : l < dh + 1
+  · rw [if_pos hl]
+    unfold coeffMinor
+    rw [hfg, hfh]
+    exact coeffMinorAt_rightDegree dg dh l g h hdh hh
+  · rw [if_neg hl, coeff_eq_zero_of_size_le h (by omega)]
+    change (0 : R) = h.leadingCoeff ^ (dg - dh - 1) * (0 : R)
+    rw [Lean.Grind.Semiring.mul_zero]
+
+/-- Polynomial form of the Brown--Traub transformation at or below the degree
+of `H`. -/
+theorem poly_brownTraub {R : Type u}
+    [Lean.Grind.CommRing R] [DecidableEq R]
+    (df dg db dh J : Nat) (f g b h : DensePoly R)
+    (hJh : J ≤ dh) (hdh : dh < dg) (hdeg : df = db + dg)
+    (hf : f.size = df + 1) (hg : g.size = dg + 1)
+    (hb : b.size ≤ db + 1) (hhsize : h.size = dh + 1)
+    (hh : h = f + b * g) :
+    poly J f g =
+      scale
+        (SubresultantMinor.sign (R := R) ((df - J) * (dg - J)) *
+          g.leadingCoeff ^ (df - dh))
+        (poly J g h) := by
+  have hff : formalDegree f = df := by simp [formalDegree, hf]
+  have hfg : formalDegree g = dg := by simp [formalDegree, hg]
+  have hfh : formalDegree h = dh := by simp [formalDegree, hhsize]
+  apply ext_coeff
+  intro l
+  rw [coeff_scale_semiring]
+  simp only [coeff_poly]
+  by_cases hl : l < J + 1
+  · rw [if_pos hl, if_pos hl]
+    unfold coeffMinor
+    rw [hff, hfg, hfh]
+    rw [coeffMinorAt_brownTraub df dg db dh J l f g b h hJh hdh hdeg
+      hg hb (by omega) hh]
+    grind
+  · rw [if_neg hl, if_neg hl]
+    change (0 : R) =
+      (SubresultantMinor.sign (R := R) ((df - J) * (dg - J)) *
+        g.leadingCoeff ^ (df - dh)) * (0 : R)
+    rw [Lean.Grind.Semiring.mul_zero]
+
+/-- Endpoint form of Brown--Traub equation (12), including both leading
+coefficient powers. -/
+theorem poly_brownTraub_rightDegree {R : Type u}
+    [Lean.Grind.CommRing R] [DecidableEq R]
+    (df dg db dh : Nat) (f g b h : DensePoly R)
+    (hdh : dh < dg) (hdeg : df = db + dg)
+    (hf : f.size = df + 1) (hg : g.size = dg + 1)
+    (hb : b.size ≤ db + 1) (hhsize : h.size = dh + 1)
+    (hh : h = f + b * g) :
+    poly dh f g =
+      scale
+        (SubresultantMinor.sign (R := R) ((df - dh) * (dg - dh)) *
+          g.leadingCoeff ^ (df - dh) * h.leadingCoeff ^ (dg - dh - 1)) h := by
+  rw [poly_brownTraub df dg db dh dh f g b h (Nat.le_refl _) hdh hdeg hf hg
+    hb hhsize hh]
+  rw [poly_rightDegree dg dh g h hdh hg hhsize, scale_scale]
+
+/-- The endpoint factorization makes its scalar quotient coefficientwise
+exact in every lawful exact-division domain. -/
+theorem divScalar_brownTraub {R : Type u}
+    [Lean.Grind.CommRing R] [DecidableEq R] [Div R] [ExactDivLaws R]
+    (df dg db dh : Nat) (f g b h : DensePoly R)
+    (hdh : dh < dg) (hdeg : df = db + dg)
+    (hf : f.size = df + 1) (hg : g.size = dg + 1)
+    (hb : b.size ≤ db + 1) (hhsize : h.size = dh + 1)
+    (hh : h = f + b * g)
+    (h1 : (1 : R) ≠ 0) :
+    divScalar (poly dh f g)
+        (SubresultantMinor.sign (R := R) ((df - dh) * (dg - dh)) *
+          g.leadingCoeff ^ (df - dh) * h.leadingCoeff ^ (dg - dh - 1)) = h := by
+  have hpow (a : R) (ha : a ≠ 0) : ∀ n : Nat, a ^ n ≠ 0 := by
+    intro n
+    induction n with
+    | zero =>
+        simpa only [Lean.Grind.Semiring.pow_zero] using h1
+    | succ n ih =>
+        rw [Lean.Grind.Semiring.pow_succ]
+        exact ExactDivLaws.mul_ne_zero ih ha
+  have hsign :
+      SubresultantMinor.sign (R := R) ((df - dh) * (dg - dh)) ≠ 0 := by
+    unfold SubresultantMinor.sign
+    split
+    · exact h1
+    · intro hzero
+      apply h1
+      calc
+        1 = 0 - (0 - (1 : R)) := by grind
+        _ = 0 - 0 := by rw [hzero]
+        _ = 0 := by grind
+  have hglc : g.leadingCoeff ≠ 0 :=
+    leadingCoeff_ne_zero_of_pos_size g (by omega)
+  have hhlc : h.leadingCoeff ≠ 0 :=
+    leadingCoeff_ne_zero_of_pos_size h (by omega)
+  have hc : SubresultantMinor.sign (R := R) ((df - dh) * (dg - dh)) *
+      g.leadingCoeff ^ (df - dh) * h.leadingCoeff ^ (dg - dh - 1) ≠ 0 :=
+    ExactDivLaws.mul_ne_zero
+      (ExactDivLaws.mul_ne_zero hsign (hpow _ hglc _)) (hpow _ hhlc _)
+  rw [poly_brownTraub_rightDegree df dg db dh f g b h hdh hdeg hf hg hb
+    hhsize hh]
+  exact divScalar_scale h hc
+
 end Subresultant
 end DensePoly
 end Hex

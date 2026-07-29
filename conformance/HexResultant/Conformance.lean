@@ -31,7 +31,8 @@ Covered properties:
   adjacent-transposition sequence parity, arbitrary alternation and column
   updates, consecutive-block rotation, Brown multiplier updates, and the
   generalized polynomials obey left/right homogeneity, the input-swap sign law,
-  and Brown--Traub equation (18);
+  the Brown--Traub column identity, formal-degree collapse, endpoint
+  factorization, and exact scalar quotient;
 - Brown chains omit zero terms, order unequal-degree inputs, strictly decrease
   after their first two entries, obey the sharp length bound, and are stable
   under extra fuel;
@@ -382,6 +383,34 @@ example (f g b h : DensePoly Int) (hb : b.size ≤ 2)
     DensePoly.Subresultant.coeffMinorAt 2 2 1 0 f g =
       SubresultantMinor.sign (R := Int) 1 *
         DensePoly.Subresultant.coeffMinorAt 2 2 1 0 g h
+
+-- A four-degree formal collapse pins the full leading-coefficient power, the
+-- endpoint factorization, and the resulting exact coefficientwise quotient.
+#guard
+  let g := poly [1, 0, 0, 2]
+  let b := poly [1, 0, 3]
+  let h := poly [5, 3]
+  let f := h - b * g
+  let sub := DensePoly.Subresultant.poly 1 f g
+  f.size = 6 && g.size = 4 && b.size = 3 && h.size = 2 &&
+    h = f + b * g &&
+    sub = scale 48 h &&
+    DensePoly.divScalar (scale 48 h) 48 = h
+
+-- A smaller interior-index pin exercises the polynomial transformation before
+-- the endpoint, where `J < deg H` and the target remains a subresultant.
+#guard
+  let g := poly [1, 0, 1]
+  let b := poly [-1]
+  let h := poly [1, 1]
+  let f := h - b * g
+  f.size = 3 && g.size = 3 && b.size = 1 && h.size = 2 &&
+    h = f + b * g &&
+    DensePoly.Subresultant.poly 0 f g =
+      scale
+        (SubresultantMinor.sign (R := Int) ((2 - 0) * (2 - 0)) *
+          g.leadingCoeff ^ (2 - 1))
+        (DensePoly.Subresultant.poly 0 g h)
 
 /-! # Brown chain -/
 

@@ -132,8 +132,13 @@ upper-triangular update adds multiplier-weighted `G` columns into the later
 column by the matching `H` column. The target is the ordinary generalized
 Sylvester matrix for `G, H`, with `F`'s formal degree retained explicitly even
 when `H` drops in degree. The determinant is unchanged by these additions, so
-the only factor is the block-swap sign. The following degree-collapse step is
-what introduces the leading-coefficient power in the full Brown--Traub law.
+the only factor is the block-swap sign.
+
+Collapsing the retained formal degree then exposes one sparse first row per
+removed degree. Each expansion contributes `lc(G)`, while the final edge
+subresultant is `lc(H)^(deg G - deg H - 1) H`. Together these identities give the full
+Brown--Traub factorization, and a nonzero factor can be divided out
+coefficientwise by the executable exact-division operation.
 
 {docstring Hex.SubresultantMinor.det_setCol_add}
 
@@ -151,6 +156,8 @@ what introduces the leading-coefficient power in the full Brown--Traub law.
 
 {docstring Hex.SubresultantMinor.det_scaleRange}
 
+{docstring Hex.SubresultantMinor.det_firstRow}
+
 {docstring Hex.DensePoly.Subresultant.poly_scale_left}
 
 {docstring Hex.DensePoly.Subresultant.poly_scale_right}
@@ -164,6 +171,22 @@ what introduces the leading-coefficient power in the full Brown--Traub law.
 {docstring Hex.DensePoly.Subresultant.det_addMul}
 
 {docstring Hex.DensePoly.Subresultant.coeffMinorAt_addMul}
+
+{docstring Hex.DensePoly.Subresultant.coeffMinorAt_succRight}
+
+{docstring Hex.DensePoly.Subresultant.coeffMinorAt_raiseRight}
+
+{docstring Hex.DensePoly.Subresultant.coeffMinorAt_rightDegree}
+
+{docstring Hex.DensePoly.Subresultant.coeffMinorAt_brownTraub}
+
+{docstring Hex.DensePoly.Subresultant.poly_rightDegree}
+
+{docstring Hex.DensePoly.Subresultant.poly_brownTraub}
+
+{docstring Hex.DensePoly.Subresultant.poly_brownTraub_rightDegree}
+
+{docstring Hex.DensePoly.Subresultant.divScalar_brownTraub}
 
 {docstring Hex.DensePoly.Subresultant.Fraction.poly_map}
 
