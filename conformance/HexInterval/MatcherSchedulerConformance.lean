@@ -506,9 +506,8 @@ def package : Package Rank :=
     cache := 0
     operations
     handlers :=
-      #[{ registration := matcherRule, invoke := packageMatcher },
-        { registration := contractRule
-          invoke := packageContract
+      #[Handler.bareDroppingDrafts matcherRule packageMatcher,
+        { Handler.bareDroppingDrafts contractRule packageContract with
           acceptsScope := fun _ binding => binding.rule == contractKey }] }
 
 def packageLimits : Limits :=
@@ -533,12 +532,14 @@ def registryStarted? : Option (Registry Rank × Engine Rank) := do
 def registryAdmitted? : Option (Registry Rank × Engine Rank) := do
   let (registry, state) <- registryStarted?
   let .request first awaiting := state.poll | none
-  let (firstOutcome, registry) := registry.invoke first
+  let (firstPlan, registry) := registry.invokePlanned first
+  let firstOutcome := firstPlan.outcome
   let .noChange _ := firstOutcome | none
   let .accepted _ state :=
     awaiting.submit (first.action.reply firstOutcome) | none
   let .request second awaiting := state.poll | none
-  let (secondOutcome, registry) := registry.invoke second
+  let (secondPlan, registry) := registry.invokePlanned second
+  let secondOutcome := secondPlan.outcome
   let .success [] [.instantiate emitted] _ := secondOutcome | none
   if emitted.nodes.length != 2 || emitted.equalities.length != 1 ||
       emitted.scopes.length != 1 then

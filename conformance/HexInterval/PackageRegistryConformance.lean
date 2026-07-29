@@ -103,21 +103,21 @@ def sharedPackage : Package Nat :=
     cache := 0
     operations := #[sourceOperation, sharedOperation]
     handlers :=
-      #[{ registration := tickRegistration, invoke := tickInvoke },
-        { registration := observeRegistration, invoke := observeInvoke }] }
+      #[Handler.bareDroppingDrafts tickRegistration tickInvoke,
+        Handler.bareDroppingDrafts observeRegistration observeInvoke] }
 
 def thirdPackage : Package Nat :=
   { Cache := List Nat
     cache := []
     operations := #[thirdOperation]
     requiredOperations := #[sourceOperation]
-    handlers := #[{ registration := thirdRegistration, invoke := thirdInvoke }] }
+    handlers := #[Handler.bareDroppingDrafts thirdRegistration thirdInvoke] }
 
 def limitedPackage : Package Nat :=
   { Cache := Bool
     cache := false
     operations := #[limitedOperation]
-    handlers := #[{ registration := limitedRegistration, invoke := limitedInvoke }]
+    handlers := #[Handler.bareDroppingDrafts limitedRegistration limitedInvoke]
     acceptsLimits := fun _ limits =>
       8 ≤ limits.maxObservationValue && 1000000 ≤ limits.maxDiagnosticValue }
 
@@ -128,18 +128,20 @@ def externalPackage : Package Nat :=
     cache := ()
     requiredOperations := #[externalOperation]
     handlers :=
-      #[Handler.stateless externalRegistration (fun _ => .noChange {})] }
+      #[Handler.statelessDroppingDrafts externalRegistration (fun _ => .noChange {})] }
 
 def duplicateRulePackage : Package Nat :=
   { Cache := Unit
     cache := ()
     requiredOperations := #[sharedOperation]
-    handlers := #[Handler.stateless tickRegistration (fun _ => .inapplicable)] }
+    handlers :=
+      #[Handler.statelessDroppingDrafts tickRegistration (fun _ => .inapplicable)] }
 
 def undeclaredHeadPackage : Package Nat :=
   { Cache := Unit
     cache := ()
-    handlers := #[Handler.stateless tickRegistration (fun _ => .inapplicable)] }
+    handlers :=
+      #[Handler.statelessDroppingDrafts tickRegistration (fun _ => .inapplicable)] }
 
 def duplicateOperationPackage : Package Nat :=
   { Cache := Unit
@@ -288,7 +290,7 @@ def run? : Option (RunResult Nat (Registry Nat)) :=
       else
         match Engine.start factDomain program registry.registrations #[0, 0, 0, 0] limits with
         | .error _ => none
-        | .ok state => some (drive Registry.invoke 12 state registry)
+        | .ok state => some (drive Registry.invokeDroppingDrafts 12 state registry)
 
 /-- Type-level conformance that the policy driver accepts the same
 `Type 1` registry value as its private cache. -/
@@ -296,7 +298,8 @@ def policyDriverTypecheck {PolicyState : Type}
     (controller : Policy.Driver.Controller Nat PolicyState) (fuel : Nat)
     (state : Policy.State Nat) (registry : Registry Nat) (policyState : PolicyState) :
     Policy.Driver.Result Nat (Registry Nat) PolicyState :=
-  Policy.Driver.drive controller Registry.invoke fuel state registry policyState
+  Policy.Driver.drive controller Registry.invokeDroppingDrafts
+    fuel state registry policyState
 
 #guard program.check
 #guard mismatchedProgram.check
@@ -393,10 +396,10 @@ def policyDriverTypecheck {PolicyState : Type}
   match registry? with
   | none => false
   | some registry =>
-      let (first, registry) := registry.invoke tickRequest
-      let (second, registry) := registry.invoke observeRequest
-      let (third, registry) := registry.invoke thirdRequest
-      let (fourth, registry) := registry.invoke thirdRequest
+      let (first, registry) := registry.invokeDroppingDrafts tickRequest
+      let (second, registry) := registry.invokeDroppingDrafts observeRequest
+      let (third, registry) := registry.invokeDroppingDrafts thirdRequest
+      let (fourth, registry) := registry.invokeDroppingDrafts thirdRequest
       match first, second, third, fourth with
       | .noChange _, .success [observed] [] _,
           .success [initialThird] [] _, .success [cachedThird] [] _ =>
@@ -411,10 +414,10 @@ def policyDriverTypecheck {PolicyState : Type}
   match registry? with
   | none => false
   | some registry =>
-      let (wrong, registry) := registry.invoke wrongKeyRequest
-      let (missing, registry) := registry.invoke missingRouteRequest
-      let (tick, registry) := registry.invoke tickRequest
-      let (observed, registry) := registry.invoke observeRequest
+      let (wrong, registry) := registry.invokeDroppingDrafts wrongKeyRequest
+      let (missing, registry) := registry.invokeDroppingDrafts missingRouteRequest
+      let (tick, registry) := registry.invokeDroppingDrafts tickRequest
+      let (observed, registry) := registry.invokeDroppingDrafts observeRequest
       match wrong, missing, tick, observed with
       | .failed wrongCode, .failed missingCode, .noChange _, .success [candidate] [] _ =>
           wrongCode == DispatchCode.requestMismatch &&
@@ -430,7 +433,7 @@ def policyDriverTypecheck {PolicyState : Type}
       let corrupted :=
         { registry with
           routes := registry.routes.set! 0 { package := 1, handler := 0 } }
-      match (corrupted.invoke tickRequest).1 with
+      match (corrupted.invokeDroppingDrafts tickRequest).1 with
       | .failed code => code == DispatchCode.registryMismatch
       | _ => false
 
