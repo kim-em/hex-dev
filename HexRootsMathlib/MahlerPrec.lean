@@ -127,11 +127,20 @@ theorem mahlerFactor_le_twoPow (n A : Nat) :
   have hright : 0 ≤ (2 : ℝ) ^ E := by positivity
   simpa only [hT, hE] using (sq_le_sq₀ hleft hright).mp hsq
 
-/-- The executable `mahlerPrec` separates any two distinct complex roots of a
-polynomial whose rational cast is separable.  The left side is the rational
-upper bound on the circumscribed-disc radius used by `HexRoots`. -/
-theorem mahlerPrec_separates (p : Hex.ZPoly)
+/-- Separability of the rational cast implies that the executable polynomial
+is nonzero. -/
+theorem ne_zero_of_separable {p : Hex.ZPoly}
     (hsep : ((HexPolyZMathlib.toPolynomial p).map (Int.castRingHom ℚ)).Separable) :
+    p ≠ 0 := by
+  intro hp
+  subst p
+  exact hsep.ne_zero (by simp [HexPolyZMathlib.toPolynomial])
+
+/-- The executable `mahlerPrec` separates any two distinct complex roots of a
+nonzero polynomial, including polynomials with repeated factors.  The left
+side is the rational upper bound on the circumscribed-disc radius used by
+`HexRoots`. -/
+theorem mahlerPrec_separates (p : Hex.ZPoly) (hp : p ≠ 0) :
     ∀ z₁ z₂ : ℂ, (toPolyℂ p).IsRoot z₁ → (toPolyℂ p).IsRoot z₂ → z₁ ≠ z₂ →
       (2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) * (1449 / 1024 : ℝ) <
         ‖z₁ - z₂‖ / 4 := by
@@ -140,7 +149,9 @@ theorem mahlerPrec_separates (p : Hex.ZPoly)
   set p' := HexPolyZMathlib.toPolynomial p with hp'
   set f := toPolyℂ p with hf
   have hfmap : f = p'.map (Int.castRingHom ℂ) := rfl
-  have hp'0 : p' ≠ 0 := fun h => hsep.ne_zero (by rw [h, Polynomial.map_zero])
+  have hp'0 : p' ≠ 0 := fun h => hp (by
+    rw [← HexPolyZMathlib.ofPolynomial_toPolynomial p, ← hp', h,
+      HexPolyZMathlib.ofPolynomial_zero])
   have hf0 : f ≠ 0 := by
     rw [hfmap, ne_eq, Polynomial.map_eq_zero_iff (RingHom.injective_int _)]
     exact hp'0
@@ -187,7 +198,7 @@ theorem mahlerPrec_separates (p : Hex.ZPoly)
       (Real.sqrt (roots.length + 1) * (p.coeffAbsMax : ℝ)) ^
         (roots.length - 1) * ‖z₁ - z₂‖ := by
     have hshared := HexPolyZMathlib.one_le_mahlerDist
-      p' hsep (by simpa only [hfmap] using hr1)
+      p' hp'0 (by simpa only [hfmap] using hr1)
         (by simpa only [hfmap] using hr2) hne
     rw [hnatp', hnatf] at hshared
     calc

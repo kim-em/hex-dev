@@ -312,7 +312,7 @@ separation, one norm eliminant, candidate isolation, zero retention, and final
 deduplication. This fixed end-to-end root case has one root of multiplicity 2. -/
 setup_fixed_benchmark runRoots where {
   repeats := 3, maxSecondsPerCall := 5.0,
-  expectedHash := some 0x235b18400d87a46c
+  expectedHash := some 0x0927e3f02f6eee94
 }
 
 end Hex.NumberFieldBench

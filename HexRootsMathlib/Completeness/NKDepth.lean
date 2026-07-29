@@ -96,12 +96,13 @@ theorem radiusHi_mul_degree_le {p : Hex.ZPoly} {s : Hex.DyadicSquare}
       ring
     _ = _ := rfl
 
-/-- A root lying in the central half of a square at the executable separation
-depth satisfies the actual Newton--Kantorovich witness. -/
-theorem witness_at_separationDepth {p : Hex.ZPoly} {s : Hex.DyadicSquare}
-    {z : ℂ} (hsize : 1 < p.size)
-    (hsep : (HexPolyZMathlib.toPolyℚ p).Separable)
+/-- A simple root lying in the central half of a square at the executable
+separation depth satisfies the actual Newton--Kantorovich witness.  Other
+roots of the polynomial may have multiplicity. -/
+theorem witness_of_simple {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    {z : ℂ} (hsize : 1 < p.size) (hp : p ≠ 0)
     (hz : (toPolyℂ p).IsRoot z)
+    (hsimple : (toPolyℂ p).derivative.eval z ≠ 0)
     (hprec : (Hex.separationDepth p : Int) ≤ s.prec)
     (hcenter : HexRootsMathlib.supNorm (z - DyadicSquare.center s) ≤
       DyadicSquare.halfWidth s / 2) :
@@ -120,22 +121,23 @@ theorem witness_at_separationDepth {p : Hex.ZPoly} {s : Hex.DyadicSquare}
     rw [coeff_toPolyℂ] at hcoeff
     apply Hex.DensePoly.coeff_last_ne_zero_of_pos_size p (by omega)
     exact_mod_cast hcoeff
-  have hsepC : f.Separable := by
-    have hcomp : (algebraMap ℚ ℂ).comp (Int.castRingHom ℚ) =
-        Int.castRingHom ℂ := RingHom.ext_int _ _
-    rw [show f = (HexPolyZMathlib.toPolyℚ p).map (algebraMap ℚ ℂ) by
-      dsimp [f, HexPolyZMathlib.toPolyℚ]
-      rw [Polynomial.map_map, hcomp]]
-    exact hsep.map
   have hzmem : z ∈ f.roots := (mem_roots hf).2 hz
   obtain ⟨roots, hroots⟩ := Multiset.exists_cons_of_mem hzmem
   have hrootsEq : f.roots = z ::ₘ roots := hroots
-  have hnodup : f.roots.Nodup := nodup_roots hsepC
+  have hcountOne : f.roots.count z = 1 := by
+    rw [count_roots]
+    have hpos : 0 < f.rootMultiplicity z :=
+      rootMultiplicity_pos'.mpr ⟨hf, hz⟩
+    have hnot : ¬1 < f.rootMultiplicity z := by
+      rw [one_lt_rootMultiplicity_iff_isRoot hf]
+      exact fun h => hsimple h.2
+    omega
   have hne : ∀ w ∈ roots, w ≠ z := by
     intro w hw heq
     subst w
-    rw [hrootsEq] at hnodup
-    exact (Multiset.nodup_cons.mp hnodup).1 hw
+    have hcountPos : 0 < roots.count z := Multiset.count_pos.mpr hw
+    rw [hrootsEq, Multiset.count_cons_self] at hcountOne
+    omega
   have hM : 0 < M := by
     dsimp [M]
     positivity
@@ -166,7 +168,7 @@ theorem witness_at_separationDepth {p : Hex.ZPoly} {s : Hex.DyadicSquare}
       _ ≤ rho / 2 := by linarith
   have hremote : ∀ w ∈ roots, d ≤ ‖w - c‖ := by
     intro w hw
-    have hsepzw := mahlerPrec_separates p hsep z w hz
+    have hsepzw := mahlerPrec_separates p hp z w hz
       ((mem_roots hf).1 (hrootsEq ▸ Multiset.mem_cons_of_mem hw)) (hne w hw).symm
     change M < ‖z - w‖ / 4 at hsepzw
     rw [norm_sub_rev] at hsepzw
@@ -200,6 +202,29 @@ theorem witness_at_separationDepth {p : Hex.ZPoly} {s : Hex.DyadicSquare}
   apply one_add_pow_sub_one_le
   · positivity
   · simpa [rho, d] using hsmall
+
+/-- Global separability is a convenient sufficient condition for the local
+simple-root premise. -/
+theorem witness_at_separationDepth {p : Hex.ZPoly} {s : Hex.DyadicSquare}
+    {z : ℂ} (hsize : 1 < p.size)
+    (hsep : (HexPolyZMathlib.toPolyℚ p).Separable)
+    (hz : (toPolyℂ p).IsRoot z)
+    (hprec : (Hex.separationDepth p : Int) ≤ s.prec)
+    (hcenter : HexRootsMathlib.supNorm (z - DyadicSquare.center s) ≤
+      DyadicSquare.halfWidth s / 2) :
+    Hex.nkWitness p s := by
+  have hcomp : (algebraMap ℚ ℂ).comp (Int.castRingHom ℚ) =
+      Int.castRingHom ℂ := RingHom.ext_int _ _
+  have hsepC : (toPolyℂ p).Separable := by
+    rw [show toPolyℂ p =
+        (HexPolyZMathlib.toPolyℚ p).map (algebraMap ℚ ℂ) by
+      dsimp [toPolyℂ, HexPolyZMathlib.toPolyℚ]
+      rw [Polynomial.map_map, hcomp]]
+    exact hsep.map
+  have hsimple : (toPolyℂ p).derivative.eval z ≠ 0 :=
+    hsepC.eval₂_derivative_ne_zero (RingHom.id ℂ) hz
+  exact witness_of_simple hsize (ne_zero_of_separable hsep) hz hsimple
+    hprec hcenter
 
 /-- Once the doubled enclosing square has an NK witness, the executable
 NK-only certifier returns either its guarded speculative candidate or the

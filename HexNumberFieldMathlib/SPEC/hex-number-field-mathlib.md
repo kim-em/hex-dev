@@ -16,8 +16,9 @@ Write `pℚ` for `(toPolynomial p).map (algebraMap ℤ ℚ)`.
 - Full resultant correspondence and specialization from
   `hex-resultant-mathlib`.
 - Root interpretation, refinement preservation, and `sameRoot` semantics from
-  `hex-roots-mathlib`; this companion additionally proves local refinement
-  completeness for the fixed finite budget used by `refineTo?`.
+  `hex-roots-mathlib`, including mixed-strategy completeness for the raw local
+  refinement budget. This companion lifts that result through the refined
+  wrapper and uses it to prove the requested approximation radius.
 - Integer factorization soundness from
   `hex-berlekamp-zassenhaus-mathlib`.
 
@@ -67,7 +68,7 @@ theorem AlgebraicNumber.isZero_iff (a : AlgebraicNumber) :
     a.isZero ↔ a.toComplex = 0
 
 theorem RefinedIsolation.refineTo?_isSome (rep) (target) :
-    (rep.refineTo? target).isSome
+    (rep.refineTo? target .nkThenPellet).isSome
 
 theorem QAdjoin.approx_sound (...) :
     QAdjoin.toComplex a rep h ∈ (a.approx rep h prec).2.set
@@ -75,6 +76,11 @@ theorem QAdjoin.approx_sound (...) :
 theorem QAdjoin.approx_radius (...) :
     (a.approx rep h prec).2.realRadius ≤ 2 ^ (-prec)
 ```
+
+The totality theorem is deliberately for the default mixed strategy: its NK
+prefix is complete around the represented locally simple root even when the
+ambient polynomial has repeated roots elsewhere. No pure-Pellet totality
+claim is needed for `QAdjoin.approx`.
 
 `AlgebraicRoot` deliberately exposes no Boolean or structural equality:
 comparison first exactifies to canonical `AlgebraicNumber`. No structural

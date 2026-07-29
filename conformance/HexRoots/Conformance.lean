@@ -46,8 +46,9 @@ Covered properties:
 - a non-squarefree input keeps its multiple root as a `k = 2` cluster rather
   than atomizing it;
 - `refineTo?` reaches the requested precision and preserves the root (the old
-  and new discs still meet), without paying the full driver's global
-  completeness-prefix depth;
+  and new discs still meet), can emit before the full global prefix when its
+  singleton result is already ready, and succeeds for a simple selected root
+  with a repeated root elsewhere in the polynomial;
 - `sameRoot` is `true` within a root's isolation class and `false` across
   distinct roots;
 - both witnesses fire at a simple root and fail off-root or at the wrong count;
@@ -101,6 +102,9 @@ private def mignotte : ZPoly := DensePoly.ofCoeffs #[-1, 200, -10000, 0, 0, 1]
 /-- `(x² + 1)(x − 5)² = x⁴ − 10x³ + 26x² − 10x + 25`; simple roots `±i` and a
     double root at `5`. Not squarefree. -/
 private def multiple : ZPoly := DensePoly.ofCoeffs #[25, -10, 26, -10, 1]
+/-- `(x − 1)(x − 2)² = x³ − 5x² + 8x − 4`; the selected root `1` is simple,
+    while the unrelated root `2` is repeated. -/
+private def repeatedAway : ZPoly := DensePoly.ofCoeffs #[-4, 8, -5, 1]
 /-- A nonzero constant: degenerate degree-0 input with no roots. -/
 private def constant : ZPoly := DensePoly.ofCoeffs #[7]
 /-- The linear polynomial `x`: one simple root at the origin. -/
@@ -315,6 +319,17 @@ private def atom2_20 : DyadicRootIsolation rat1 := rootAtom 2 20 (Or.inl (by dec
 -- 31`, which would make the same jump overshoot to precision 61.
 #guard (atom1_20.refineTo? 24 .nk).map (·.square.prec) == some 35
 #guard (atom1_20.refineTo? 20 .nkThenPellet).map (·.square.prec) == some 20
+
+private def repeatedAwayAtom : DyadicRootIsolation repeatedAway :=
+  ⟨⟨1, 0, 32⟩, Or.inl (by decide)⟩
+
+-- Mixed refinement needs only local simplicity of the selected root; the
+-- repeated root at `2` does not prevent total refinement of the atom at `1`.
+#guard
+  (match repeatedAwayAtom.refineTo? 64 .nkThenPellet with
+    | some r => 64 ≤ r.square.prec &&
+        DyadicSquare.discsMeet repeatedAwayAtom.square r.square
+    | none => false)
 
 private def refined1_20 : RefinedIsolation rat1 := ⟨atom1_20, by decide⟩
 private def refined1_22 : RefinedIsolation rat1 := ⟨atom1_22, by decide⟩

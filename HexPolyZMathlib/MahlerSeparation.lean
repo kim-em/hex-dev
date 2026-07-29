@@ -31,6 +31,78 @@ namespace HexPolyZMathlib
 
 noncomputable section
 
+/-- Squarefreeness of an integral polynomial is preserved after extending
+coefficients to `ℚ`.  Constant prime factors become units; the primitive part
+is handled by Gauss's lemma. -/
+private theorem squarefree_map_rat {p : ℤ[X]} (hp : Squarefree p) :
+    Squarefree (p.map (Int.castRingHom ℚ)) := by
+  let p0 := p.primPart
+  have hp0prim : p0.IsPrimitive := p.isPrimitive_primPart
+  have hp0sq : Squarefree p0 :=
+    hp.squarefree_of_dvd (p.primPart_dvd)
+  have hp0ne : p0 ≠ 0 := p.primPart_ne_zero
+  have hmap0ne : p0.map (Int.castRingHom ℚ) ≠ 0 := by
+    rw [Polynomial.map_ne_zero_iff (RingHom.injective_int _)]
+    exact hp0ne
+  have hmap0sq : Squarefree (p0.map (Int.castRingHom ℚ)) := by
+    rw [squarefree_iff_no_irreducibles hmap0ne]
+    intro r hr hrr
+    let g : ℤ[X] :=
+      IsLocalization.integerNormalization (nonZeroDivisors ℤ) r
+    let h : ℤ[X] := g.primPart
+    obtain ⟨c, hc, hcg⟩ :=
+      IsLocalization.integerNormalization_spec (nonZeroDivisors ℤ) r
+    have hc0 : c ≠ 0 := nonZeroDivisors.ne_zero hc
+    have hg0 : g ≠ 0 := by
+      change IsLocalization.integerNormalization (nonZeroDivisors ℤ) r ≠ 0
+      rw [Ne, IsLocalization.integerNormalization_eq_zero_iff
+        (show nonZeroDivisors ℤ ≤ nonZeroDivisors ℤ from le_rfl)]
+      exact hr.ne_zero
+    have hcontent0 : g.content ≠ 0 :=
+      fun h0 => hg0 (content_eq_zero_iff.mp h0)
+    have hcunit : IsUnit (C (c : ℚ) : ℚ[X]) :=
+      isUnit_C.mpr (isUnit_iff_ne_zero.mpr (by exact_mod_cast hc0))
+    have hcontentUnit : IsUnit (C (g.content : ℚ) : ℚ[X]) :=
+      isUnit_C.mpr (isUnit_iff_ne_zero.mpr (by exact_mod_cast hcontent0))
+    have hgr : Associated (g.map (Int.castRingHom ℚ)) r := by
+      rw [Algebra.smul_def, Polynomial.algebraMap_apply] at hcg
+      exact (Associated.of_eq hcg).trans
+        (associated_unit_mul_left r _ hcunit)
+    have hgh : Associated (g.map (Int.castRingHom ℚ))
+        (h.map (Int.castRingHom ℚ)) := by
+      have heq := congrArg (Polynomial.map (Int.castRingHom ℚ))
+        g.eq_C_content_mul_primPart
+      rw [Polynomial.map_mul, map_C] at heq
+      exact (Associated.of_eq heq).trans
+        (associated_unit_mul_left _ _ hcontentUnit)
+    have hhr : Associated (h.map (Int.castRingHom ℚ)) r :=
+      hgh.symm.trans hgr
+    have hhprim : h.IsPrimitive := g.isPrimitive_primPart
+    have hhmapIrr : Irreducible (h.map (Int.castRingHom ℚ)) :=
+      hhr.symm.irreducible hr
+    have hhIrr : Irreducible h :=
+      hhprim.irreducible_of_irreducible_map_of_injective
+        (RingHom.injective_int _) hhmapIrr
+    have hmapDvd : (h * h).map (Int.castRingHom ℚ) ∣
+        p0.map (Int.castRingHom ℚ) := by
+      rw [Polynomial.map_mul]
+      exact (hhr.mul_mul hhr).dvd_iff_dvd_left.mpr hrr
+    have hDvd : h * h ∣ p0 :=
+      (hhprim.mul hhprim).dvd_of_fraction_map_dvd_fraction_map hp0prim hmapDvd
+    exact hhIrr.not_isUnit (hp0sq h hDvd)
+  have hcontent0 : p.content ≠ 0 :=
+    fun h0 => hp.ne_zero (content_eq_zero_iff.mp h0)
+  have hcontentUnit : IsUnit (C (p.content : ℚ) : ℚ[X]) :=
+    isUnit_C.mpr (isUnit_iff_ne_zero.mpr (by exact_mod_cast hcontent0))
+  have hassoc : Associated (p.map (Int.castRingHom ℚ))
+      (p0.map (Int.castRingHom ℚ)) := by
+    have heq := congrArg (Polynomial.map (Int.castRingHom ℚ))
+      p.eq_C_content_mul_primPart
+    rw [Polynomial.map_mul, map_C] at heq
+    exact (Associated.of_eq heq).trans
+      (associated_unit_mul_left _ _ hcontentUnit)
+  exact hassoc.squarefree_iff.mpr hmap0sq
+
 /-- The divided-difference entry bound: `‖yⁱ − xⁱ‖ ≤ i · Cⁱ⁻¹ · ‖y − x‖` when
 `‖x‖, ‖y‖ ≤ C` and `1 ≤ C`. Follows from the geometric factorisation
 `yⁱ − xⁱ = (∑_{l<i} yˡ xⁱ⁻¹⁻ˡ)(y − x)`. -/
@@ -265,7 +337,7 @@ For two distinct roots of a separable integral polynomial, the product of
 their distance with the Hadamard degree factor and the appropriate power of
 the Mahler measure is at least one. Executable precision specializations need
 only bound the final two factors. -/
-theorem one_le_mahlerDist (p : ℤ[X])
+theorem one_le_mahlerDist_of_separable (p : ℤ[X])
     (hsep : (p.map (Int.castRingHom ℚ)).Separable) {z₁ z₂ : ℂ}
     (hr₁ : (p.map (Int.castRingHom ℂ)).IsRoot z₁)
     (hr₂ : (p.map (Int.castRingHom ℂ)).IsRoot z₂) (hne : z₁ ≠ z₂) :
@@ -421,6 +493,111 @@ theorem one_le_mahlerDist (p : ℤ[X])
           f.mahlerMeasure ^ (roots.length - 1) * ‖w₁ - w₂‖ := by
         rw [hM, hdiff]
         ring
+
+/-- **Mahler separation for arbitrary nonzero integral polynomials.**  Repeated
+factors do not affect the set of roots: applying the separable theorem to the
+integral radical gives the same two roots, no larger degree, and no larger
+Mahler measure. -/
+theorem one_le_mahlerDist (p : ℤ[X]) (hp : p ≠ 0) {z₁ z₂ : ℂ}
+    (hr₁ : (p.map (Int.castRingHom ℂ)).IsRoot z₁)
+    (hr₂ : (p.map (Int.castRingHom ℂ)).IsRoot z₂) (hne : z₁ ≠ z₂) :
+    (1 : ℝ) ≤ Real.sqrt p.natDegree ^ (p.natDegree + 2) *
+      (p.map (Int.castRingHom ℂ)).mahlerMeasure ^ (p.natDegree - 1) *
+        ‖z₁ - z₂‖ := by
+  classical
+  let q : ℤ[X] := UniqueFactorizationMonoid.radical p
+  let f : ℂ[X] := p.map (Int.castRingHom ℂ)
+  let g : ℂ[X] := q.map (Int.castRingHom ℂ)
+  have hq0 : q ≠ 0 := UniqueFactorizationMonoid.radical_ne_zero
+  have hqsep : (q.map (Int.castRingHom ℚ)).Separable :=
+    PerfectField.separable_iff_squarefree.mpr
+      (squarefree_map_rat UniqueFactorizationMonoid.squarefree_radical)
+  obtain ⟨k, hpk⟩ :=
+    UniqueFactorizationMonoid.exists_dvd_radical_self_pow hp
+  have hmapDvd : f ∣ g ^ k := by
+    rcases hpk with ⟨s, hs⟩
+    refine ⟨s.map (Int.castRingHom ℂ), ?_⟩
+    dsimp only [f, g, q]
+    rw [← Polynomial.map_mul, ← hs, Polynomial.map_pow]
+  have hqroot₁ : g.IsRoot z₁ := by
+    have hpow := hr₁.dvd hmapDvd
+    rw [IsRoot.def, eval_pow] at hpow
+    exact eq_zero_of_pow_eq_zero hpow
+  have hqroot₂ : g.IsRoot z₂ := by
+    have hpow := hr₂.dvd hmapDvd
+    rw [IsRoot.def, eval_pow] at hpow
+    exact eq_zero_of_pow_eq_zero hpow
+  have hshared := one_le_mahlerDist_of_separable q hqsep hqroot₁ hqroot₂ hne
+  have hdeg : q.natDegree ≤ p.natDegree :=
+    natDegree_le_of_dvd UniqueFactorizationMonoid.radical_dvd_self hp
+  have hg0 : g ≠ 0 := by
+    dsimp only [g]
+    rw [Polynomial.map_ne_zero_iff (RingHom.injective_int _)]
+    exact hq0
+  have hnatg : g.natDegree = q.natDegree := by
+    dsimp only [g]
+    exact Polynomial.natDegree_map_eq_of_injective
+      (RingHom.injective_int _) q
+  have hqdegPos : 0 < q.natDegree := by
+    have hgdeg : 0 < g.degree := degree_pos_of_root hg0 hqroot₁
+    have : 0 < g.natDegree := natDegree_pos_iff_degree_pos.mpr hgdeg
+    rwa [hnatg] at this
+  have hqdegTwo : 2 ≤ q.natDegree := by
+    by_contra h
+    have hqdegOne : q.natDegree = 1 := by omega
+    have hgdegOne : g.natDegree = 1 := by
+      rw [hnatg]
+      exact hqdegOne
+    exact hne (subsingleton_isRoot_of_natDegree_eq_one hgdegOne hqroot₁ hqroot₂)
+  have hpdegTwo : 2 ≤ p.natDegree := hqdegTwo.trans hdeg
+  have hsqrt : Real.sqrt q.natDegree ≤ Real.sqrt p.natDegree :=
+    Real.sqrt_le_sqrt (by exact_mod_cast hdeg)
+  have hsqrtOne : (1 : ℝ) ≤ Real.sqrt p.natDegree :=
+    Real.one_le_sqrt.mpr (by exact_mod_cast (show 1 ≤ p.natDegree by omega))
+  have hdegreeFactor :
+      Real.sqrt q.natDegree ^ (q.natDegree + 2) ≤
+        Real.sqrt p.natDegree ^ (p.natDegree + 2) := by
+    calc
+      Real.sqrt q.natDegree ^ (q.natDegree + 2)
+          ≤ Real.sqrt p.natDegree ^ (q.natDegree + 2) :=
+        pow_le_pow_left₀ (Real.sqrt_nonneg _) hsqrt _
+      _ ≤ Real.sqrt p.natDegree ^ (p.natDegree + 2) :=
+        pow_le_pow_right₀ hsqrtOne (by omega)
+  obtain ⟨r, hpr⟩ := UniqueFactorizationMonoid.radical_dvd_self (a := p)
+  have hr0 : r ≠ 0 := fun hr => hp (by rw [hpr, hr, mul_zero])
+  have hfEq : f = g * r.map (Int.castRingHom ℂ) := by
+    dsimp only [f, g, q]
+    simpa only [Polynomial.map_mul] using
+      congrArg (Polynomial.map (Int.castRingHom ℂ)) hpr
+  have hmeasure : g.mahlerMeasure ≤ f.mahlerMeasure := by
+    have hrOne : (1 : ℝ) ≤
+        (r.map (Int.castRingHom ℂ)).mahlerMeasure :=
+      Polynomial.one_le_mahlerMeasure_of_ne_zero hr0
+    calc
+      g.mahlerMeasure
+          ≤ g.mahlerMeasure * (r.map (Int.castRingHom ℂ)).mahlerMeasure :=
+        le_mul_of_one_le_right g.mahlerMeasure_nonneg hrOne
+      _ = f.mahlerMeasure := by
+        rw [← Polynomial.mahlerMeasure_mul, ← hfEq]
+  have hfOne : (1 : ℝ) ≤ f.mahlerMeasure :=
+    Polynomial.one_le_mahlerMeasure_of_ne_zero hp
+  have hmeasurePow : g.mahlerMeasure ^ (q.natDegree - 1) ≤
+      f.mahlerMeasure ^ (p.natDegree - 1) := by
+    calc
+      g.mahlerMeasure ^ (q.natDegree - 1)
+          ≤ f.mahlerMeasure ^ (q.natDegree - 1) :=
+        pow_le_pow_left₀ g.mahlerMeasure_nonneg hmeasure _
+      _ ≤ f.mahlerMeasure ^ (p.natDegree - 1) :=
+        pow_le_pow_right₀ hfOne (by omega)
+  calc
+    (1 : ℝ) ≤ Real.sqrt q.natDegree ^ (q.natDegree + 2) *
+        g.mahlerMeasure ^ (q.natDegree - 1) * ‖z₁ - z₂‖ := hshared
+    _ ≤ Real.sqrt p.natDegree ^ (p.natDegree + 2) *
+        f.mahlerMeasure ^ (p.natDegree - 1) * ‖z₁ - z₂‖ := by
+      apply mul_le_mul_of_nonneg_right _ (norm_nonneg _)
+      exact mul_le_mul hdegreeFactor hmeasurePow
+        (pow_nonneg g.mahlerMeasure_nonneg _)
+        (pow_nonneg (Real.sqrt_nonneg _) _)
 
 end
 

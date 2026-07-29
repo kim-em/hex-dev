@@ -170,7 +170,9 @@ theorem QAdjoin.approx_root (a : QAdjoin p x)
 
 Approximation refines once, returns the refined representative for threading,
 and always returns a sound ball. The requested radius is guaranteed by the
-companion's refinement-completeness theorem.
+companion's mixed-strategy refinement-completeness theorem. That proof uses
+the selected atom's local simplicity and permits repeated roots elsewhere in
+its ambient polynomial; it does not rely on a global squarefreeness premise.
 
 For `n := a.coeffs.size`, evaluation uses target precision
 
