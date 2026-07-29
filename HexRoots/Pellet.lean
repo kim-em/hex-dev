@@ -255,7 +255,7 @@ def ofRat (q : Rat) (prec : Int) : DyadicComplexBall :=
   let lo := q.toDyadic prec
   let exact :=
     if 0 ≤ prec then
-      decide (q.den.isPowerOfTwo ∧ q.den.log2 ≤ prec.toNat)
+      decide (q.den = 2 ^ q.den.log2 ∧ q.den.log2 ≤ prec.toNat)
     else
       lo.toRat = q
   let radius := if exact then 0 else Dyadic.ofIntWithPrec 1 prec

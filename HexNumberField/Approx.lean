@@ -80,6 +80,14 @@ def approxGuardBits (s : DyadicSquare) (f : DensePoly Rat) : Nat :=
       b.radius = Dyadic.ofIntWithPrec 1 4
 
 #guard
+    let exact := DyadicComplexBall.ofRat (3 / 8 : Rat) 3
+    let rounded := DyadicComplexBall.ofRat (3 / 8 : Rat) 2
+    exact.re = Dyadic.ofIntWithPrec 3 3 && exact.im = 0 &&
+      exact.radius = 0 &&
+      rounded.re = Dyadic.ofIntWithPrec 1 2 && rounded.im = 0 &&
+      rounded.radius = Dyadic.ofIntWithPrec 1 2
+
+#guard
     let a : DyadicComplexBall :=
       ⟨1, 2, Dyadic.ofIntWithPrec 1 3⟩
     let b : DyadicComplexBall :=
