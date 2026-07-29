@@ -254,11 +254,14 @@ does not reduce. Use `Hex.Vector.ofFn'` from `HexBasic.OfFn` instead.
 This is exactly the trap CompPoly's `X` falls into, since it is defined
 with `Vector.ofFn`.
 
-**Comparison.** `Vector.compare` delegates to `Array.compareLex`, whose
-body is likewise unavailable downstream under the module system. Define
-the named lexicographic comparator through the exposed
-`List.compareLex compare a.toList b.toList`; graded lex and graded
-reverse lex use that comparator and the same exposed list machinery.
+**Comparison.** `Vector.compareLex compare` has the relevant Std laws,
+but direct `Vector.compare` is not the chosen kernel path because it
+delegates to `Array.compareLex`, whose body is unavailable downstream
+under the module system. Define the named lexicographic comparator
+through the exposed `List.compareLex compare a.toList b.toList`.
+Transport the Std laws with `Vector.compareLex_eq_compareLex_toList`;
+graded lex and graded reverse lex use that comparator and the same
+exposed list machinery.
 
 All three constraints above are shims for
 [leanprover/lean4#14270](https://github.com/leanprover/lean4/pull/14270)
@@ -289,7 +292,7 @@ constant and shows up in every tree operation.
 | `coeff` | `ExtTreeMap.get?` | `O(n log s)` |
 | `monomial`, `C`, `X` | single insert | `O(n)` |
 | `add` | fold `alter` of the smaller into the larger | `O(n · t log (s+t))` |
-| `neg`, scalar multiple | map over values | `O(s)` |
+| `neg` | map over values | `O(s)` |
 | `mul` | Gustavson-style: for each term of `p`, translate every term of `q` and accumulate into one output map | `O(n · s · t · log (s·t))` |
 | `leadingTerm` | max entry in `cmp` order | `O(log s)` |
 | `reorder` | rebuild under the new comparator | `O(n · s log s)` |
@@ -369,7 +372,15 @@ instance uses the same explicit path. Canonical arithmetic and semantic
 transformations use the Mathlib-free `Lean.Grind.Semiring` /
 `Lean.Grind.Ring` classes; representation helpers keep narrower
 `Zero`/`Add`/`Mul` bounds where those suffice. Write the real bounds per
-declaration rather than a single blanket variable block.
+declaration rather than a single blanket variable block. `subst` keeps
+the target comparator implicit because the codomain of `f` determines
+it; that codomain carries the same `TransCmp` and `LawfulEqCmp`
+obligations as every `MvPoly`.
+In particular, `derivative` carries
+`[Lean.Grind.Semiring R] [DecidableEq R]`. Its module installs
+`Lean.Grind.Semiring.natCast` as a local instance at priority 1100 so
+the exponent multiplier has the required `NatCast R`; the semiring's
+zero laws discharge the out-of-support coefficient case.
 
 Constructor and query contracts are explicit. `ofTerms` sums duplicate
 monomials and drops zeros. `support` and every term iteration is ordered
@@ -497,7 +508,7 @@ def isEmptyRingEquiv [CommSemiring R] [DecidableEq R] :
 /-- The recursive view as a ring equivalence, at the first variable. -/
 def finSuccEquiv [CommSemiring R] [DecidableEq R]
     (cmp' : Mono n → Mono n → Ordering)
-    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp'] [IsMonomialOrder cmp'] :
+    [IsMonomialOrder cmp'] :
     MvPoly (n+1) R cmp ≃+* DensePoly (MvPoly n R cmp')
 
 def oneVarEquiv [CommSemiring R] [DecidableEq R] :
@@ -732,22 +743,32 @@ HexMvPolyMathlib.lean
           description: Disjoint and interleaved sparse supports across lexicographic, graded lexicographic, and graded reverse lexicographic order.
         - name: sparse-multiplication
           description: Low-collision and high-collision products varying arity, degree, term count, coefficient type, and comparator.
-        - name: cancellation-identities
-          description: Cancellation-heavy ring identities replayed in the kernel over integer and rational coefficients.
+        - name: cancellation-arithmetic
+          description: Cancellation-heavy integer and rational arithmetic measured as compiled Mathlib-free computation.
         - name: structural-collisions
           description: Sparse rename, partial-evaluation, and substitution cases where distinct source terms collide.
-        - name: sos-certificates
-          description: Representative sum-of-squares certificate identities checked from a downstream module with decide +kernel.
+        - name: sum-of-squares-arithmetic
+          description: Representative sum-of-squares-shaped identities measured as compiled Mathlib-free arithmetic.
   HexMvPolyMathlib:
     deps: [HexMvPoly, HexPolyMathlib]
     mathlib: true
     done_through: 0
-    status: planned
+    status: active
+    proof_probes:
+      - bench/HexMvPolyMathlib/ProofProbe
+    phase4:
+      input_families:
+        - name: kernel-cancellation-identities
+          description: Cancellation-heavy integer and rational identities checked from a downstream module with decide +kernel.
+        - name: kernel-sos-certificates
+          description: Representative sum-of-squares certificate identities checked from a downstream module with decide +kernel.
 ```
 
 `HexBasic` is a dependency for the reasons under "Kernel exposure", and
 drops out when the upstream fix lands. `HexPoly` is needed for
-`DensePoly` in the recursive view.
+`DensePoly` in the recursive view. The `HexMvPolyMathlib` root and this
+active registry entry land atomically; the active status is required
+because the consumer-compile acceptance milestone depends on that root.
 
 ## Consumer surfaces
 
