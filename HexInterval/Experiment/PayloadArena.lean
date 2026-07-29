@@ -256,9 +256,10 @@ def validate (uses : List Use) (drafts : List Draft) : Option Invalid :=
       | some error => some error
       | none => checkCoverage uses drafts
 
-/-- Consume one reply's body-cell budget while checking every encoded atom.
-Atom range is checked before cell capacity, so an oversized atom has a stable
-classification even when either cell budget is also exhausted. -/
+/-- Traverse a reply body through the first cell beyond its local budget.
+Every visited atom is checked before its cell is charged, so an oversized
+boundary atom reports `.atom`. Cells after a `.draftCells` stop are
+deliberately not inspected. -/
 def consumeBody (maxAtom : Nat) : Nat -> List Nat -> Except Resource Nat
   | remaining, [] => pure remaining
   | remaining, atom :: atoms =>
@@ -275,18 +276,23 @@ def consumeDrafts (maxAtom : Nat) :
       let remaining ← consumeBody maxAtom remaining draft.body
       consumeDrafts maxAtom remaining drafts
 
-/-- Check reply-local draft, schema, atom, and cell bounds before comparing
-the bounded reply with remaining whole-run entry and body-cell capacity.
-Consequently `.entries` and `.bodyCells` mean genuine cumulative exhaustion,
-while `.drafts` and `.draftCells` identify an oversized package reply. -/
-def preflight (limits : Limits) (arena : Arena) (drafts : List Draft) :
+/-- Check only reply-local draft, schema, atom, and cell bounds. The returned
+cell count belongs to a bounded transaction whose exact draft coverage must be
+validated before whole-run capacity is consulted. -/
+def preflightLocal (limits : Limits) (drafts : List Draft) :
     Except Resource Nat := do
   if !listWithin limits.maxDrafts drafts then
     throw .drafts
   if drafts.any (fun draft => limits.maxSchema < draft.schema) then
     throw .schema
   let remaining ← consumeDrafts limits.maxAtom limits.maxDraftCells drafts
-  let addedCells := limits.maxDraftCells - remaining
+  pure (limits.maxDraftCells - remaining)
+
+/-- Compare an already locally bounded and exactly validated transaction with
+remaining whole-run capacity. Consequently `.entries` and `.bodyCells` mean
+genuine cumulative exhaustion by otherwise valid evidence. -/
+def preflightWhole (limits : Limits) (arena : Arena)
+    (drafts : List Draft) (addedCells : Nat) : Except Resource Unit := do
   if limits.maxEntries < arena.entries.size then
     throw .entries
   let entryRoom := limits.maxEntries - arena.entries.size
@@ -297,7 +303,7 @@ def preflight (limits : Limits) (arena : Arena) (drafts : List Draft) :
   let cellRoom := limits.maxBodyCells - arena.bodyCells
   if cellRoom < addedCells then
     throw .bodyCells
-  pure addedCells
+  pure ()
 
 structure Relocation where
   source : PayloadId
@@ -347,17 +353,20 @@ def freeze (limits : Limits) (arena : Arena) (origin : Action)
   | .error resource => .resourceLimit resource arena
   | .ok _ =>
       let uses := outcomeUses outcome
-      match preflight limits arena drafts with
+      match preflightLocal limits drafts with
       | .error resource => .resourceLimit resource arena
       | .ok addedCells =>
           match validate uses drafts with
           | some error => .invalid error arena
           | none =>
-              let (prospective, relocations) :=
-                freezeDrafts arena origin drafts addedCells
-              match relocateOutcome relocations outcome with
-              | .error error => .invalid error arena
-              | .ok outcome =>
-                  .ready prospective outcome
+              match preflightWhole limits arena drafts addedCells with
+              | .error resource => .resourceLimit resource arena
+              | .ok _ =>
+                  let (prospective, relocations) :=
+                    freezeDrafts arena origin drafts addedCells
+                  match relocateOutcome relocations outcome with
+                  | .error error => .invalid error arena
+                  | .ok outcome =>
+                      .ready prospective outcome
 
 end Hex.Interval.Experiment.PayloadArena

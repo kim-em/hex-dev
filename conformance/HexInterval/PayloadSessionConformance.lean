@@ -36,6 +36,7 @@ def draftsKey : RuleKey := { name := "payload-session.mystery.drafts" }
 def bodyKey : RuleKey := { name := "payload-session.mystery.body" }
 def overflowKey : RuleKey := { name := "payload-session.mystery.overflow" }
 def recoverKey : RuleKey := { name := "payload-session.mystery.recover" }
+def lateExtraKey : RuleKey := { name := "payload-session.mystery.late-extra" }
 
 def sourceOperation : Operation :=
   { key := sourceOp, inputs := [], output := real }
@@ -125,6 +126,34 @@ def goodPackage : Package Nat :=
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
       #[Handler.statelessPlanned (registration goodKey) goodPlan] }
+
+def lateExtraPlan (request : RuleRequest Nat) : Plan Nat :=
+  if request.action.node == node 1 then
+    goodPlan request
+  else
+    match request.writes with
+    | [target] =>
+        { outcome :=
+            .success
+              [{ node := target, fact := 7, payload := payload 700 }]
+              [] {}
+          drafts :=
+            [{ label := payload 700
+               role := .fact
+               schema := 1
+               body := [request.action.node.index, 99] },
+             { label := payload 701
+               role := .fact
+               schema := 1
+               body := [4, 5] }] }
+    | _ => { outcome := .failed 1, drafts := [] }
+
+def lateExtraPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned (registration lateExtraKey) lateExtraPlan] }
 
 def badReplyPlan (_request : RuleRequest Nat) : Plan Nat :=
   { outcome :=
@@ -387,6 +416,17 @@ def oneReplyLimits : Propagator.Limits :=
     maxOutcomeSuggestions := 0
     maxProposalItems := 0 }
 
+def twoUseLimits : Propagator.Limits :=
+  { oneReplyLimits with maxOutcomeCandidates := 2 }
+
+def lateExtraArena : PayloadArena.Limits :=
+  { arenaLimits with
+    maxEntries := 2
+    maxBodyCells := 4
+    maxDrafts := 2
+    maxDraftCells := 4
+    maxUses := 2 }
+
 def nestedUsesLimits : Propagator.Limits :=
   { limits with
     maxOutcomeCandidates := 0
@@ -614,6 +654,27 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
       | _ => false
   | .error _ => false
 
+-- After an earlier valid commit has partly filled both cumulative budgets, an
+-- extra draft with a junk body is still malformed local evidence. Exact
+-- coverage precedes remaining-capacity checks, so only this reply is rejected.
+#guard
+  match startWithin lateExtraPackage twoUseLimits lateExtraArena with
+  | .ok session =>
+      match session.advance with
+      | .advanced first =>
+          first.arena.entries.size == 1 && first.arena.bodyCells == 2 &&
+            first.engine.history.size == 1 &&
+            match first.advance with
+            | .invalidPayload (.extraDraft label) rejected =>
+                label.index == 701 && rejected.live && rejected.droppedWork &&
+                  !rejected.complete && rejected.arena.entries.size == 1 &&
+                  rejected.arena.bodyCells == 2 &&
+                  rejected.engine.history.size == 1 &&
+                  rejected.engine.metrics.ruleFailures == 1
+            | _ => false
+      | _ => false
+  | .error _ => false
+
 -- Completeness uses the engine's exact retained-prefix calculation. Here the
 -- two harmless splits fit, while a closure-relevant retry is the one item
 -- dropped by the cap.
@@ -683,6 +744,12 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
 
 #guard
   match start goodPackage { arenaLimits with maxDrafts := 7 } with
+  | .error .incoherentLimits => true
+  | _ => false
+
+#guard
+  match start goodPackage
+      { arenaLimits with maxEntries := 9, maxDrafts := 9, maxUses := 8 } with
   | .error .incoherentLimits => true
   | _ => false
 

@@ -76,12 +76,15 @@ def requiredUses (limits : Propagator.Limits) : Nat :=
 
 /-- The arena must be able to inspect and freeze every payload position in an
 otherwise engine-valid reply. A fresh arena must fit any reply within the
-explicit local draft and body-cell caps; only capacity consumed by earlier
-commits may produce a fatal whole-run exhaustion. -/
+explicit local draft and body-cell caps. Exact coverage means a valid reply
+cannot contain more drafts than uses, keeping draft validation per-reply
+bounded. Only capacity consumed by earlier commits may produce a fatal
+whole-run exhaustion. -/
 def limitsCoherent (limits : Propagator.Limits)
     (arenaLimits : PayloadArena.Limits) : Bool :=
   requiredUses limits ≤ arenaLimits.maxUses &&
     requiredUses limits ≤ arenaLimits.maxDrafts &&
+    arenaLimits.maxDrafts ≤ arenaLimits.maxUses &&
     arenaLimits.maxDrafts ≤ arenaLimits.maxEntries &&
     arenaLimits.maxDraftCells ≤ arenaLimits.maxBodyCells
 

@@ -167,6 +167,24 @@ def mixedRequest : InstantiationRequest :=
       label.index == 1 && seedPreserved arena
   | _ => false
 
+-- Exact draft coverage is checked before remaining whole-run entry capacity:
+-- malformed local evidence cannot masquerade as fatal cumulative exhaustion.
+#guard
+  match freeze { generous with maxEntries := 1 } seeded (action 0)
+      (factOutcome 0) [factDraft 0, equalityDraft 1] with
+  | .invalid (.extraDraft label) arena =>
+      label.index == 1 && seedPreserved arena
+  | _ => false
+
+-- The same ordering holds when an unused draft carries a body which would
+-- exceed the partly filled arena's remaining cell capacity.
+#guard
+  match freeze { generous with maxBodyCells := 1 } seeded (action 0)
+      (factOutcome 0) [factDraft 0, equalityDraft 1 [4, 5]] with
+  | .invalid (.extraDraft label) arena =>
+      label.index == 1 && seedPreserved arena
+  | _ => false
+
 -- Each resource limit is exactly one below the required prospective value.
 #guard
   match freeze { generous with maxEntries := 0 } seeded (action 0)
@@ -200,8 +218,8 @@ def mixedRequest : InstantiationRequest :=
   | .resourceLimit .draftCells arena => seedPreserved arena
   | _ => false
 
--- Atom range is classified before either the local or remaining whole-run
--- cell budget.
+-- The first cell beyond the local cap is still atom-checked before local
+-- refusal; whole-run capacity is never consulted for that invalid reply.
 #guard
   match freeze
       { generous with maxBodyCells := 1, maxDraftCells := 0, maxAtom := 4 }

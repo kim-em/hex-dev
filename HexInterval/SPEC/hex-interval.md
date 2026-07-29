@@ -1147,19 +1147,21 @@ checked global-reference draft, and accepting bounded cross-reply duplication
 are alternatives to measure rather than assumptions of the final format.
 
 The first executable arena uses an eager but prospective transaction:
-package-local labels in the outcome are matched exactly against package-local
-drafts, checked for duplicate, missing, extra, and wrong-role entries,
-preflighted first against per-reply draft, draft-cell, atom, schema, and
-total-proposal limits, then against remaining whole-arena entry and body-cell
-capacity, relocated to fresh global identifiers, and appended to a new arena
-value. The total-proposal budget charges every candidate, every suggestion
-constructor (including retry and split), and every equality nested under an
-instantiation. Repeated references count as work even when they share one
-draft. Before any quadratic label/coverage scan, `maxDrafts` bounds the draft
-list independently of proposal traversal. Atom range is checked before either
-cell budget, and `maxDraftCells` bounds the complete encoded body of one
-reply. Only after those reply-local checks does the arena compare the bounded
-transaction with its remaining `maxEntries` and `maxBodyCells` capacity. Entry
+it preflights total-proposal work and the per-reply draft, draft-cell, atom,
+and schema limits, then matches package-local labels exactly against
+package-local drafts and checks duplicate, missing, extra, and wrong-role
+entries. Only a locally bounded, exactly covered reply is compared with
+remaining whole-arena entry and body-cell capacity, relocated to fresh global
+identifiers, and appended to a new arena value. Thus malformed local evidence
+cannot be classified as cumulative exhaustion merely because earlier valid
+replies filled part of the arena. The total-proposal budget charges every
+candidate, every suggestion constructor (including retry and split), and every
+equality nested under an instantiation. Repeated references count as work even
+when they share one draft. Before any quadratic label/coverage scan,
+`maxDrafts` bounds the draft list independently of proposal traversal. Every
+atom reached by the bounded body traversal is range-checked before its cell is
+charged. The traversal stops at the first in-range cell beyond
+`maxDraftCells`; later atoms are deliberately not inspected. Entry
 construction and identifier assignment are one traversal, so a relocated
 identifier denotes exactly the entry appended for its local draft.
 Candidate, instantiation, and equality roles are distinct, and ordinary replay
@@ -1172,7 +1174,10 @@ list lengths against the engine's own trusted limits. Let
 and every suggestion may be an instantiation with at most
 `maxProposalItems` nested equalities. Session start requires
 `requiredUses ≤ maxUses`, `requiredUses ≤ maxDrafts`,
-`maxDrafts ≤ maxEntries`, and `maxDraftCells ≤ maxBodyCells`. Thus every
+`maxDrafts ≤ maxUses`, `maxDrafts ≤ maxEntries`, and
+`maxDraftCells ≤ maxBodyCells`. Exact coverage means a valid reply cannot
+contain more distinct drafts than payload uses, so the potentially quadratic
+label and coverage checks remain bounded by the per-reply use cap. Every
 engine-valid payload position can have a distinct bounded draft, and any reply
 inside the local draft/cell envelope fits a fresh arena. `maxEntries` and
 `maxBodyCells` remain cumulative whole-run bounds: only capacity spent by an
