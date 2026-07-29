@@ -237,14 +237,18 @@ namespace Registration
 def same (left right : Registration) : Bool :=
   left.key == right.key && left.head == right.head && left.kind == right.kind &&
     left.watches == right.watches && left.writes == right.writes &&
-      left.watchesProgram == right.watchesProgram &&
-      left.initialEffort == right.initialEffort
+      left.binding == right.binding && left.watchesProgram == right.watchesProgram &&
+        left.initialEffort == right.initialEffort
 
 /-- Check that a routed handler sees the structural request projection
 described by its immutable registration.  Engine-produced requests satisfy
 this by construction; checking it here catches registry drift and malformed
-direct test requests before a cache update.  Authentication of serials, fact
-values, versions, and pending-state ownership remains the engine's job. -/
+direct test requests before a cache update.  A local registration determines
+its exact ports from slots.  A scoped registration can check only internal
+well-formedness here because its concrete binding belongs to the engine; the
+compiled `Application` is the port authority, and the package callback must
+validate the scope's semantic shape.  Authentication of serials, fact values,
+versions, and pending-state ownership remains the engine's job. -/
 def accepts (registration : Registration) (request : RuleRequest Fact) : Bool :=
   if request.program.programVersion != request.action.programVersion then
     false
@@ -255,12 +259,20 @@ def accepts (registration : Registration) (request : RuleRequest Fact) : Bool :=
         let inputNodes := request.inputs.map (fun input => input.node)
         let seen := request.inputs.map fun input =>
           { node := input.node, version := input.version : SeenVersion }
-        registration.key == request.action.key &&
+        let common := registration.key == request.action.key &&
           registration.kind == request.action.kind &&
           request.program.operationKey? request.action.node == some registration.head &&
-          resolveSlots? request.action.node anchor registration.watches == some inputNodes &&
-          resolveSlots? request.action.node anchor registration.writes == some request.writes &&
           request.action.inputs == seen
+        common && match registration.binding with
+          | .local =>
+              resolveSlots? request.action.node anchor registration.watches == some inputNodes &&
+                resolveSlots? request.action.node anchor registration.writes ==
+                  some request.writes
+          | .scoped =>
+              registration.watches.isEmpty && registration.writes.isEmpty &&
+                uniqueList inputNodes && uniqueList request.writes &&
+                inputNodes.all (fun node => (request.program.node? node).isSome) &&
+                request.writes.all (fun node => (request.program.node? node).isSome)
 
 end Registration
 
