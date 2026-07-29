@@ -64,23 +64,40 @@ def leadingCoeff [Zero R] [IsMonomialOrder cmp]
   | some term => term.2
 
 /-- Retain exactly the terms whose monomials satisfy `keep`. -/
-def restrictBy [Lean.Grind.Semiring R] [DecidableEq R]
-    (keep : Mono n → Bool) (p : MvPoly n R cmp) : MvPoly n R cmp :=
-  ofTerms <| p.termsList.filter fun term => keep term.1
+def restrictBy [Zero R]
+    (keep : Mono n → Bool) (p : MvPoly n R cmp) : MvPoly n R cmp where
+  termsInternal := p.termsInternal.filter fun m _ => keep m
+  nonzeroInternal := by
+    intro m
+    rw [Std.ExtTreeMap.getElem?_filter']
+    cases hcoeff : p.termsInternal[m]? with
+    | none => simp [Option.filter]
+    | some c =>
+      cases hkeep : keep m
+      · simp [Option.filter]
+      · have hc : c ≠ 0 := by
+          intro hzero
+          apply p.nonzeroInternal m
+          rw [hcoeff, hzero]
+        simpa [Option.filter] using hc
 
 /-- Retain the terms whose exponent of `i` is at most `bound`. -/
-def restrictDegree [Lean.Grind.Semiring R] [DecidableEq R]
+def restrictDegree [Zero R]
     (i : Fin n) (bound : Nat) (p : MvPoly n R cmp) : MvPoly n R cmp :=
   p.restrictBy fun m => decide (Mono.degreeOf i m ≤ bound)
 
 /-- Retain the terms whose total degree is at most `bound`. -/
-def restrictTotalDegree [Lean.Grind.Semiring R] [DecidableEq R]
+def restrictTotalDegree [Zero R]
     (bound : Nat) (p : MvPoly n R cmp) : MvPoly n R cmp :=
   p.restrictBy fun m => decide (Mono.degree m ≤ bound)
 
-theorem coeff_restrictBy [Lean.Grind.Semiring R] [DecidableEq R]
+theorem coeff_restrictBy [Zero R]
     (keep : Mono n → Bool) (m : Mono n) (p : MvPoly n R cmp) :
     coeff m (restrictBy keep p) = if keep m then coeff m p else 0 := by
-  sorry
+  unfold restrictBy coeff coeff?
+  rw [Std.ExtTreeMap.getElem?_filter']
+  cases hcoeff : p.termsInternal[m]? <;>
+    cases hkeep : keep m <;>
+    simp [Option.filter]
 
 end Hex.MvPoly

@@ -117,7 +117,9 @@ theorem coeff_homogeneousComponent [Lean.Grind.Semiring R] [DecidableEq R]
     (d : Nat) (m : Mono n) (p : MvPoly n R cmp) :
     coeff m (homogeneousComponent d p) =
       if Mono.degree m = d then coeff m p else 0 := by
-  sorry
+  unfold homogeneousComponent
+  rw [coeff_restrictBy]
+  simp
 
 theorem subst_eq [Lean.Grind.Semiring R] [DecidableEq R]
     (f : Fin n → MvPoly k R targetCmp) (p : MvPoly n R cmp) :

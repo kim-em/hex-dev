@@ -197,16 +197,28 @@ theorem splits_mem_iff (m a b : Mono n) :
   sorry
 
 theorem dvd_lcm_left (a b : Mono n) : dvd a (lcm a b) = true := by
-  sorry
+  simp only [dvd, decide_eq_true_eq]
+  intro i
+  rw [getElem_lcm]
+  exact Nat.le_max_left _ _
 
 theorem dvd_lcm_right (a b : Mono n) : dvd b (lcm a b) = true := by
-  sorry
+  simp only [dvd, decide_eq_true_eq]
+  intro i
+  rw [getElem_lcm]
+  exact Nat.le_max_right _ _
 
 theorem gcd_dvd_left (a b : Mono n) : dvd (gcd a b) a = true := by
-  sorry
+  simp only [dvd, decide_eq_true_eq]
+  intro i
+  rw [getElem_gcd]
+  exact Nat.min_le_left _ _
 
 theorem gcd_dvd_right (a b : Mono n) : dvd (gcd a b) b = true := by
-  sorry
+  simp only [dvd, decide_eq_true_eq]
+  intro i
+  rw [getElem_gcd]
+  exact Nat.min_le_right _ _
 
 end Mono
 

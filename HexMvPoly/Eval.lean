@@ -138,13 +138,15 @@ theorem eval₂_eq [Zero R] [Lean.Grind.Semiring S]
     (f : R → S) (x : Fin n → S) (p : MvPoly n R cmp) :
     eval₂ f x p =
       p.termsList.foldl (fun acc term => acc + f term.2 * Mono.prod x term.1) 0 := by
-  sorry
+  unfold eval₂ foldTerms termsList
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList]
 
 theorem eval_eq [Lean.Grind.Semiring R]
     (x : Fin n → R) (p : MvPoly n R cmp) :
     eval x p =
       p.termsList.foldl (fun acc term => acc + term.2 * Mono.prod x term.1) 0 := by
-  sorry
+  unfold eval
+  simpa using eval₂_eq id x p
 
 theorem eval₂Horner_eq [Zero R] [Lean.Grind.Semiring S]
     (f : R → S) (x : Fin n → S) (p : MvPoly n R cmp) :
