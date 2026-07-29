@@ -61,7 +61,7 @@ jobs:
       - name: Install Python dependencies (bench comparator + oracles)
         run: |
           python3 -m pip install --user \
-            python-flint cypari2 conway-polynomials
+            python-flint cypari2 conway-polynomials sympy
       - name: Set up Lean toolchain (no build)
         uses: leanprover/lean-action@v1
         with:
@@ -156,7 +156,7 @@ jobs:
       - name: Build conformance + emit-fixture targets
         run: |
           lake build \
-            HexConformance \
+            HexConformance hexmvpoly_emit_fixtures \
             hexpoly_emit_fixtures hexpolyfp_emit_fixtures \
             hexberlekamp_emit_fixtures \
             hexbz_emit_fixtures hexpolyz_emit_fixtures \

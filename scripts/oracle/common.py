@@ -18,6 +18,9 @@ JSONL fixture record shape (one record per line):
                      modulo the pinned prime.
 * ``matrix``     — ``{"kind": "matrix",     "lib": str, "case": str,
                       "rows": [[int...]...]}``
+* ``mvpoly``     — ``{"kind": "mvpoly",     "lib": str, "case": str,
+                      "arity": int, "order": "lex"|"grlex"|"grevlex",
+                      "terms": [[[exponent...], coefficient]...]}``
 * ``lattice``    — ``{"kind": "lattice",    "lib": str, "case": str,
                       "basis": [[int...]...]}``
 * ``prime``      — ``{"kind": "prime",      "lib": str, "case": str,
@@ -82,6 +85,7 @@ VALID_FIXTURE_KINDS = frozenset(
     {
         "poly",
         "matrix",
+        "mvpoly",
         "lattice",
         "prime",
         "conway",
@@ -234,6 +238,30 @@ def _validate_fixture(record: dict[str, Any]) -> None:
             for row in rows
         ):
             raise FixtureError(f"matrix.rows must be List[List[int]]: {record!r}")
+    elif kind == "mvpoly":
+        arity = record.get("arity")
+        if not _is_int(arity) or arity < 0:
+            raise FixtureError(f"mvpoly.arity must be a nonnegative int: {record!r}")
+        if record.get("order") not in {"lex", "grlex", "grevlex"}:
+            raise FixtureError(
+                f"mvpoly.order must be lex/grlex/grevlex: {record!r}"
+            )
+        terms = record.get("terms")
+        if not isinstance(terms, list):
+            raise FixtureError(f"mvpoly.terms must be a list: {record!r}")
+        for term in terms:
+            if (
+                not isinstance(term, list)
+                or len(term) != 2
+                or not isinstance(term[0], list)
+                or len(term[0]) != arity
+                or not all(_is_int(e) and e >= 0 for e in term[0])
+                or not _is_int(term[1])
+            ):
+                raise FixtureError(
+                    "mvpoly terms must be [[nonnegative exponent...], int] "
+                    f"with exponent length arity: {record!r}"
+                )
     elif kind == "lattice":
         basis = record.get("basis")
         if not isinstance(basis, list) or not all(
