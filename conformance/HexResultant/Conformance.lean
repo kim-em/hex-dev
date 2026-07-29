@@ -32,10 +32,10 @@ Covered properties:
   updates, consecutive-block rotation, Brown multiplier updates, and the
   generalized polynomials obey left/right homogeneity, the input-swap sign law,
   the Brown--Traub column identity, formal-degree collapse, endpoint
-  factorization, and exact scalar quotient;
+  factorization, pseudo-remainder descent, and exact scalar quotient;
 - Brown chains omit zero terms, order unequal-degree inputs, strictly decrease
-  after their first two entries, obey the sharp length bound, and are stable
-  under extra fuel;
+  after their first two entries, obey the sharp length bound, are stable under
+  extra fuel, and satisfy the recursive exactness law on ordered nonzero inputs;
 - resultants obey linear evaluation, the degree-product swap sign, common-root
   vanishing, recursive bivariate elimination, and the corrected defective-drop
   scale;
@@ -366,6 +366,28 @@ example (f g b h : DensePoly Int) (hb : b.size ≤ 2)
   DensePoly.Subresultant.coeffMinorAt_addMul 2 1 1 0 0 f g b h
     (by omega) rfl hb hh
 
+example (f g : DensePoly Int) (hgsize : 2 ≤ g.size)
+    (hgf : g.size ≤ f.size) :
+    DensePoly.Subresultant.poly (g.size - 2) f g =
+      scale
+        (SubresultantMinor.sign (R := Int) (f.size - g.size + 1))
+        (pseudoDivMod f g).2 :=
+  DensePoly.Subresultant.poly_prem f g hgsize hgf
+
+example (f g h : DensePoly Int) {c : Int} (hc : c ≠ 0)
+    (hg : g ≠ 0) (hh : h ≠ 0) (hgf : g.size ≤ f.size)
+    (hp : (pseudoDivMod f g).2 = scale c h) (J : Nat) (hJ : J < h.size) :
+    scale
+        (g.leadingCoeff ^ ((f.size - g.size + 1) * (g.size - 1 - J)))
+        (DensePoly.Subresultant.poly J f g) =
+      scale
+        (SubresultantMinor.sign (R := Int)
+            ((f.size - 1 - J) * (g.size - 1 - J)) *
+          g.leadingCoeff ^ (f.size - h.size) *
+          c ^ (g.size - 1 - J))
+        (DensePoly.Subresultant.poly J g h) :=
+  DensePoly.Subresultant.poly_descent f g h hc hg hh hgf hp J hJ
+
 -- Equal input degrees, odd swap parity, `J > 0`, and a remainder whose degree
 -- drops below `G` pin the nontrivial Brown column-update regime entrywise.
 #guard
@@ -434,6 +456,17 @@ example (f g : DensePoly Int) (hg : g ≠ 0) (extra : Nat) :
     subresultantOrderedFuel f g (g.size + 1 + extra) =
       subresultantOrdered f g :=
   subresultantOrderedFuel_eq f g hg extra
+
+example (f g : DensePoly Int) (hg : g ≠ 0) (hgf : g.size ≤ f.size) :
+    let delta := f.size - g.size
+    let h₂ := powNat g.leadingCoeff delta
+    let p := (pseudoDivMod f g).2
+    if p.isZero then
+      h₂ ≠ 0
+    else
+      let g₃ := scaleImpl (negOnePow (delta + 1)) p
+      g₃ ≠ 0 ∧ BrownLaw g g₃ h₂ (g.size + 1) :=
+  subresultantOrdered_brownLaw f g hg hgf
 
 #guard
   let f := poly [1, 0, 1]

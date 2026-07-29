@@ -78,14 +78,18 @@ quotients remains its own subresultant theorem.
 
 {docstring Hex.DensePoly.PseudoDivMod.resultant_step_degree}
 
-# Fraction-field proof bridge
+# Integral proof and coefficient embeddings
 
-Brown--Traub exactness is proved first after embedding coefficients in a
-Mathlib-free fraction field. The embedding is injective, commutes with ordered
-pseudo-division, and turns an embedding-image certificate into the scalar and
-coefficientwise reconstruction equations required by the Brown recurrence.
-This bridge is proof-only; the executable chain continues to operate entirely
-in its input coefficient ring.
+Brown--Traub exactness is proved directly in the input coefficient ring. The
+recursive invariant keeps every leading-coefficient and Brown-scale factor
+cross-multiplied, then cancels only factors already proved nonzero. This gives
+the scalar and coefficientwise reconstruction equations required by the Brown
+recurrence without changing coefficient types.
+
+The Mathlib-free fraction field remains available as general proof
+infrastructure. Its embedding is injective, commutes with ordered
+pseudo-division, and supports pulling exact quotients back to the coefficient
+ring, but the Brown recurrence does not depend on that detour.
 
 {docstring Hex.Fraction.ofCoeff}
 
@@ -187,6 +191,19 @@ coefficientwise by the executable exact-division operation.
 {docstring Hex.DensePoly.Subresultant.poly_brownTraub_rightDegree}
 
 {docstring Hex.DensePoly.Subresultant.divScalar_brownTraub}
+
+The pseudo-remainder specialization covers defective degree drops as well as
+regular steps. It identifies the subresultant immediately below the divisor
+degree, transports every lower subresultant across the step, and feeds the
+cross-multiplied family invariant used by the recursive proof.
+
+{docstring Hex.DensePoly.Subresultant.poly_prem}
+
+{docstring Hex.DensePoly.Subresultant.poly_descent}
+
+{docstring Hex.DensePoly.BrownLaw}
+
+{docstring Hex.DensePoly.subresultantOrdered_brownLaw}
 
 {docstring Hex.DensePoly.Subresultant.Fraction.poly_map}
 

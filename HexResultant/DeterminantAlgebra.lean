@@ -654,11 +654,29 @@ theorem sign_add {R : Type u} [Lean.Grind.CommRing R] (a b : Nat) :
       rw [Nat.add_succ, sign_succ, ih, sign_succ]
       grind
 
+/-- A multiplied sign exponent is repeated multiplication of the sign. -/
+theorem sign_mul {R : Type u} [Lean.Grind.CommRing R] (a : Nat) :
+    ∀ b : Nat, sign (R := R) (a * b) = sign (R := R) a ^ b
+  | 0 => by
+      rw [Nat.mul_zero, Lean.Grind.Semiring.pow_zero]
+      simp [sign]
+  | b + 1 => by
+      rw [Nat.mul_succ, sign_add, sign_mul a b,
+        Lean.Grind.Semiring.pow_succ]
+
 /-- Every alternating sign is its own multiplicative inverse. -/
 theorem sign_mul_self {R : Type u} [Lean.Grind.CommRing R] (n : Nat) :
     sign (R := R) n * sign (R := R) n = 1 := by
   unfold sign
   split <;> grind
+
+/-- Every alternating sign is nonzero in a nontrivial ring. -/
+theorem sign_ne_zero {R : Type u} [Lean.Grind.CommRing R]
+    (h1 : (1 : R) ≠ 0) (n : Nat) : sign (R := R) n ≠ 0 := by
+  intro hzero
+  have hself := sign_mul_self (R := R) n
+  rw [hzero] at hself
+  grind
 
 /-- Deleting either member of an equal adjacent column pair gives the same
 minor. -/

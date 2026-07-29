@@ -27,18 +27,6 @@ variable {S : Type u} [Lean.Grind.CommRing S] [DecidableEq S]
 
 variable [Div S] [ExactDivLaws S]
 
-/-- Powers distribute over multiplication in the lightweight commutative ring. -/
-private theorem mul_pow {T : Type u} [Lean.Grind.CommRing T]
-    (a b : T) : ∀ n : Nat, (a * b) ^ n = a ^ n * b ^ n
-  | 0 => by
-      rw [Lean.Grind.Semiring.pow_zero, Lean.Grind.Semiring.pow_zero,
-        Lean.Grind.Semiring.pow_zero]
-      exact (Lean.Grind.Semiring.mul_one 1).symm
-  | n + 1 => by
-      rw [Lean.Grind.Semiring.pow_succ, Lean.Grind.Semiring.pow_succ,
-        Lean.Grind.Semiring.pow_succ, mul_pow a b n]
-      grind
-
 /-- Below a positive-degree divisor, a strict dense-size bound gives the
 corresponding default-degree bound. -/
 private theorem degree_lt_of_size_lt {T : Type u} [Lean.Grind.CommRing T]
