@@ -146,8 +146,6 @@ def invokeInstantiate (request : RuleRequest Fact) : Plan Fact :=
         .success []
           [.instantiate
             { key := 1
-              triggers := [node 3, node 0, node 2, node 1]
-              claimedGeneration := 1
               nodes :=
                 [{ domain := real
                    op := { index := 4 }
@@ -209,12 +207,13 @@ def engineLimits : Propagator.Limits :=
     maxRetainedSuggestions := 2
     maxEffort := 0
     maxObservationValue := 16
-    maxDiagnosticValue := 16
+    maxDiagnosticValue := 256
     maxOutcomeCandidates := 1
     maxOutcomeSuggestions := 1
     maxProposalItems := 5
     maxInstances := 1
     maxGeneration := 1
+    maxNodeDepth := 8
     maxEqualities := 1
     splitEndpointLimit := endpointLimit }
 
@@ -224,8 +223,10 @@ def policyLimits : Propagator.Policy.Limits :=
     maxLiveOffers := 16 }
 
 def arenaLimits : PayloadArena.Limits :=
-  { maxEntries := 3
+  { maxEntries := 7
     maxBodyCells := 3
+    maxDrafts := 7
+    maxDraftCells := 3
     maxAtom := 3
     maxSchema := 0
     maxUses := 7 }

@@ -783,6 +783,20 @@ which deliberately says nothing about retained suggestions or propagation
 completeness. A separate policy canary consumes the exact engine-issued drop
 plan and records the lost instantiation as incomplete.
 
+Depth is only the first recoverable per-suggestion refusal. The contractor
+experiment must classify resource limits by ownership: a malformed proposal
+invalidates its reply; a valid proposal which is individually unaffordable
+under a configured local node, equality, application, or queue allowance may
+be dropped with an exact reason while independent candidates commit and the
+scope becomes incomplete; exhaustion of storage already consumed by the live
+branch may remain a hard engine-resource stop. In particular, a multi-node
+function instantiation should not terminate an otherwise useful reply merely
+because it crosses `maxNodes` when the same situation can be identified before
+retention. The exact split among `maxNodes`, `maxInstances`, `maxEqualities`,
+`maxApplications`, and `maxQueueEntries` is an implementation experiment, but
+every limit has one documented disposition and no refused narrowing work may
+be mistaken for saturation.
+
 The general experiment activates proposed equality edges as indexed,
 replayable search contractors: improving either endpoint wakes transport in
 the other direction, and admission of a new edge considers both current
@@ -1987,6 +2001,13 @@ dropped from the engine's bounded retained prefix, or tombstoned by a failed
 freshness guard. `Suggestion.affectsClosure` is the single classification used
 for all three paths, while `Engine.keptSuggestions` and
 `Engine.droppedSuggestions` define the exact shared retention boundary.
+The engine returns this exact admission plan to the policy wrapper so the
+wrapper never repeats structural classification against a possibly different
+snapshot. The policy observation is nevertheless payload-erased: it exposes
+semantic suggestion keys, kept/dropped disposition, and drop reasons such as
+capacity or structural depth, never raw payload identifiers or complete
+`InstantiationRequest`s. Search behavior must not depend on arbitrary
+proof-arena numbering.
 Declining an invocation, equality contractor, retry, or instantiation makes
 the run incomplete; declining a split does not, because it changes proof
 search rather than the propagation closure of the current scope. An empty

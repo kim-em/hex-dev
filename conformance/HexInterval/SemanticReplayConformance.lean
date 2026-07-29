@@ -580,7 +580,7 @@ example : (factDomain.proveMeet program (node 1) .top (.exact 4) (.exact 4)).isS
     true := by
   decide
 
-/-! ## Conservative-extension chain composition -/
+/-! # Conservative-extension chain composition -/
 
 namespace ExtensionChain
 
