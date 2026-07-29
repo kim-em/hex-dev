@@ -345,10 +345,14 @@ def restrictDegree (i : Fin n) (bound : Nat) (p : MvPoly n R cmp) :
 def restrictTotalDegree (bound : Nat) (p : MvPoly n R cmp) : MvPoly n R cmp
 
 -- Evaluation
-def eval (x : Fin n → R) (p : MvPoly n R cmp) : R
-def evalHorner (x : Fin n → R) (p : MvPoly n R cmp) : R
-def eval₂ (f : R → S) (x : Fin n → S) (p : MvPoly n R cmp) : S
-def eval₂Horner (f : R → S) (x : Fin n → S) (p : MvPoly n R cmp) : S
+def eval [Lean.Grind.Semiring R]
+    (x : Fin n → R) (p : MvPoly n R cmp) : R
+def evalHorner [Lean.Grind.CommSemiring R]
+    (x : Fin n → R) (p : MvPoly n R cmp) : R
+def eval₂ [Zero R] [Lean.Grind.Semiring S]
+    (f : R → S) (x : Fin n → S) (p : MvPoly n R cmp) : S
+def eval₂Horner [Zero R] [Lean.Grind.CommSemiring S]
+    (f : R → S) (x : Fin n → S) (p : MvPoly n R cmp) : S
 def partialEval (s : Fin n → Option R) (p : MvPoly n R cmp) : MvPoly n R cmp
 
 -- Structural
@@ -380,7 +384,11 @@ instance uses the same explicit path. Canonical arithmetic and semantic
 transformations use the Mathlib-free `Lean.Grind.Semiring` /
 `Lean.Grind.Ring` classes; representation helpers keep narrower
 `Zero`/`Add`/`Mul` bounds where those suffice. Write the real bounds per
-declaration rather than a single blanket variable block. `subst` keeps
+declaration rather than a single blanket variable block. Direct evaluation
+keeps the order `c * x₀^a₀ * x₁^a₁ * ⋯` and therefore needs only a
+`Lean.Grind.Semiring`; fixed-order Horner nesting can move an outer variable
+factor past inner-variable factors, so `evalHorner` and `eval₂Horner` require a
+`Lean.Grind.CommSemiring`. `subst` keeps
 the target comparator implicit because the codomain of `f` determines
 it; that codomain carries the same `TransCmp` and `LawfulEqCmp`
 obligations as every `MvPoly`.

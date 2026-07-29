@@ -49,6 +49,9 @@ example :
 example : p ^ 3 = p * p * p := by
   decide +kernel
 
+example : Mono.powBySq (3 : Int) 13 = 1594323 := by
+  decide +kernel
+
 example :
     Mono.dvd (Mono.unit 0 : Mono 2)
       (Mono.succAt 0 (Mono.unit 0 : Mono 2)) = true := by
@@ -90,6 +93,26 @@ example : q * (qx - qy) + q * (qy - qx) = 0 := by
 example : eval (fun i => if i = 0 then 2 else 3) q = 11 / 2 := by
   decide +kernel
 
+@[expose] def sparse : P :=
+  ofTerms
+    [(#v[4, 0], 2), (#v[1, 2], 3), (#v[0, 3], -1), (Mono.zero, 5)]
+
+example :
+    evalHorner (fun i => if i = 0 then 2 else 3) sparse = 64 := by
+  decide +kernel
+
+example :
+    evalHorner (fun i => if i = 0 then 2 else 3) sparse =
+      eval (fun i => if i = 0 then 2 else 3) sparse := by
+  decide +kernel
+
+@[expose] def outerGap : P :=
+  ofTerms [(#v[4, 0], 2), (#v[2, 1], 3)]
+
+example :
+    evalHorner (fun i => if i = 0 then 2 else 3) outerGap = 68 := by
+  decide +kernel
+
 example :
     ofUnivariate (cmp := Mono.grevlex) 0 Mono.lex
       (toUnivariate 0 Mono.lex q) = q := by
@@ -98,6 +121,9 @@ example :
 abbrev P0 := MvPoly 0 Int Mono.lex
 
 example : (C 7 : P0) + C (-7) = 0 := by
+  decide +kernel
+
+example : evalHorner (fun i => nomatch i) (C 7 : P0) = 7 := by
   decide +kernel
 
 abbrev P1 := MvPoly 1 Int Mono.lex

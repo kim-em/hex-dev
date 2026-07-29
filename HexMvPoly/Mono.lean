@@ -114,6 +114,30 @@ def powBySq [One R] [Mul R] (a : R) : Nat → R
 termination_by k => k
 decreasing_by omega
 
+/-- Repeated-squaring exponentiation agrees with the semiring power. -/
+theorem powBySq_eq_pow [Lean.Grind.Semiring R] (a : R) (k : Nat) :
+    powBySq a k = a ^ k := by
+  induction k using Nat.strongRecOn with
+  | ind k ih =>
+      cases k with
+      | zero =>
+          rw [powBySq, Lean.Grind.Semiring.pow_zero]
+      | succ k =>
+          have hlt : (k + 1) / 2 < k + 1 :=
+            Nat.div_lt_self (Nat.succ_pos k) (by decide : 1 < 2)
+          rw [powBySq, ih ((k + 1) / 2) hlt]
+          by_cases heven : (k + 1) % 2 = 0
+          · rw [if_pos heven, ← Lean.Grind.Semiring.pow_add]
+            have hdecomp := Nat.mod_add_div (k + 1) 2
+            congr 1
+            omega
+          · rw [if_neg heven, ← Lean.Grind.Semiring.pow_add,
+              ← Lean.Grind.Semiring.pow_succ]
+            have hdecomp := Nat.mod_add_div (k + 1) 2
+            have hmod := Nat.mod_two_eq_zero_or_one (k + 1)
+            congr 1
+            omega
+
 /-- Evaluate a monomial at `x`, using logarithmic exponentiation for each
 variable. -/
 def prod [One R] [Mul R] (x : Fin n → R) (m : Mono n) : R :=
