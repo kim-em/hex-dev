@@ -1,14 +1,15 @@
 # HexBZ Cross-System Factorization Sweep
 
-The current public-factor, lattice, and no-decline classical measurements cover
+The current public-factor and no-decline classical measurements cover
 the exact-exponent/factor-only Hensel implementation, guarded dominant-degree
 tree, remainder-only polynomial GCD, cached finite-field inverses, and linear
-monomial Hensel kernel at clean revision
-`0b95505b7c926911a9f487bac56676a8c7da48f6`. They were measured 2026-07-29
-on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0. The
-FLINT, PARI/GP, NTL, and Isabelle measurements are the already-current
-2026-07-28 exports from the same host, corpus, CPU placement, and timing
-protocol. They were not rerun because this change only modifies Hex.
+monomial Hensel kernel, plus cached classical recombination search, at clean
+revision `b0150d2b4a6154d7b9ed3c7cace4fee0ace64165`. They were measured
+2026-07-29 on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0. The
+unchanged Hex lattice row remains from clean revision `0b95505b`. FLINT,
+PARI/GP, NTL, and Isabelle are the already-current 2026-07-28 exports from the
+same host, corpus, CPU placement, and timing protocol. Those systems were not
+rerun because this change only modifies classical Hex recombination.
 
 ## Systems
 
@@ -46,9 +47,9 @@ session and Haskell-export builds completed before the timed sweeps.
 
 | System | OK | Timeout | p50 solved | p90 solved | Slowest solved | Protocol overhead |
 |---|---:|---:|---:|---:|---:|---:|
-| Hex public factor | 373 | 19 | 400.334 µs | 4.082 ms | 9.047 s | 16.975 µs |
+| Hex public factor | 373 | 19 | 395.506 µs | 4.074 ms | 9.137 s | 17.015 µs |
 | Hex lattice | 369 | 23 | 1.812 ms | 87.886 ms | 9.590 s | 18.848 µs |
-| Hex classical, no decline | 372 | 20 | 389.203 µs | 5.561 ms | 3.724 s | 18.448 µs |
+| Hex classical, no decline | 372 | 20 | 386.358 µs | 5.556 ms | 3.717 s | 18.297 µs |
 | FLINT | 391 | 1 | 66.850 µs | 1.184 ms | 1.228 s | 19.219 µs |
 | PARI/GP | 391 | 1 | 99.958 µs | 1.254 ms | 823.201 ms | 23.755 µs |
 | NTL | 391 | 1 | 135.631 µs | 2.714 ms | 1.919 s | 11.487 µs |
@@ -64,22 +65,28 @@ factor-count result on the seven rows without a committed degree oracle;
 FLINT, PARI/GP, and NTL factor counts agree on all seven.
 
 Relative to the pre-hot-path Hex record, the public median fell from 1.244 ms
-to 400.334 µs and retained two additional solves, `sd5_x_phi45` and `sd6`.
+to 395.506 µs and retained two additional solves, `sd5_x_phi45` and `sd6`.
 The current no-decline classical entry now also solves `sd5_x_phi45`, leaving
 `sd6` as the public dispatcher's one additional frontier success.
 
 On 237 common rows for which both current Hex measurements are at least 10×
-their own protocol overhead, public/classical has median 1.006× and
-p10–p90 0.807×–1.128×. Public is faster on 109 and classical on 128. The
+their own protocol overhead, public/classical has median 1.003× and
+p10–p90 0.796×–1.145×. Public is faster on 117 and classical on 120. The
 ordinary rows are therefore at parity: no-decline is a diagnostic that omits
 bounded decline/fallback behavior and the public result check, not a distinct
 lifting core. The production path improves selected hard rows and adds the
 `sd6` solve.
 
-On the corresponding 234 public/verified-Isabelle BZ rows, Hex has median
-0.887× and p10–p90 0.454×–2.513×; Hex is faster on 135 and Isabelle on 99. The
-11.3% aggregate lead is clear, though the family spread still rules out a claim
+On the corresponding 235 public/verified-Isabelle BZ rows, Hex has median
+0.866× and p10–p90 0.453×–2.274×; Hex is faster on 136 and Isabelle on 99. The
+13.4% aggregate lead is clear, though the family spread still rules out a claim
 of uniform superiority.
+
+Against the immediately preceding `0b95505b` sweep, the cached recombination
+implementation has a 0.988× eligible-row median and a 171–72 win split. Its
+main effect is deliberately concentrated: `sd5` falls from 89.008 ms to
+39.730 ms, while its two shifted variants fall from 76.152–76.981 ms to
+28.073–29.903 ms.
 
 The improvement is broad but not universal. Family medians below compare the
 fresh public service with the pre-hot-path
@@ -88,21 +95,22 @@ faster.
 
 | Family | Common rows | Median new/old | Rows slower |
 |---|---:|---:|---:|
-| Certificate boundary | 1 | 0.397× | 0 |
-| Chebyshev | 28 | 0.230× | 1 |
-| Conway | 186 | 0.310× | 1 |
-| Cyclotomic | 32 | 0.597× | 1 |
-| Cyclotomic products | 19 | 0.621× | 0 |
+| Certificate boundary | 1 | 0.366× | 0 |
+| Chebyshev | 28 | 0.231× | 1 |
+| Conway | 186 | 0.307× | 0 |
+| Cyclotomic | 32 | 0.603× | 1 |
+| Cyclotomic products | 19 | 0.619× | 0 |
 | Laguerre | 20 | 0.232× | 0 |
-| Legendre | 20 | 0.189× | 0 |
-| Random products | 30 | 0.220× | 0 |
-| Signed-digit products | 9 | 0.440× | 0 |
-| Swinnerton-Dyer | 11 | 0.237× | 0 |
-| Wilkinson | 15 | 0.888× | 3 |
+| Legendre | 20 | 0.187× | 0 |
+| Random products | 30 | 0.221× | 0 |
+| Signed-digit products | 9 | 0.499× | 1 |
+| Swinnerton-Dyer | 11 | 0.163× | 0 |
+| Wilkinson | 15 | 0.889× | 4 |
 
-Every family median improves over the pre-hot-path record. Against the
-immediately preceding guarded-tree export, the all-row paired median is 0.964×
-and the new public service is faster on 306 of 373 common solved rows.
+Every family median improves over the pre-hot-path record. The cumulative
+GCD/Hensel stage had an all-row paired median of 0.964× against its immediately
+preceding guarded-tree export; the recombination stage above is its own A/B
+against `0b95505b`.
 
 ## Charts
 
@@ -126,8 +134,11 @@ uv run --with matplotlib python3 scripts/plots/hexbz-cactus.py
 
 Fresh Hex exports:
 
+- `reports/bench-results/hexbz-factor-sweep-hex-b0150d2b-recombine-cache-chungus2.json`
+  (current public and no-decline classical; SHA-256
+  `7222c12c206d9fdb3489d98595c72f9eb254f31108e5136722242784eb086be3`)
 - `reports/bench-results/hexbz-factor-sweep-hex-0b95505b-gcd-hensel-final-chungus2.json`
-  (current public, lattice, and no-decline classical; SHA-256
+  (preceding public/classical and current lattice; SHA-256
   `9f9f63ac9f35b3af6d35e530b085a1a1e47e7d03d958179d7597d7850e59c583`)
 - `reports/bench-results/hexbz-factor-sweep-hex-53bb12e2-guarded-tree-all-chungus2.json`
   (preceding all-Hex reference; SHA-256

@@ -27,6 +27,8 @@ public import HexBasic.ArrayDecEq
 
 public import HexBerlekampZassenhaus.Recombination
 public meta import HexBerlekampZassenhaus.Recombination
+public import HexBerlekampZassenhaus.SmartSearchImpl
+public meta import HexBerlekampZassenhaus.SmartSearchImpl
 import all HexBerlekampZassenhaus.PrimeSelection
 import all HexBerlekampZassenhaus.Records
 import all HexBerlekampZassenhaus.Certificate
@@ -36,6 +38,7 @@ import all HexBerlekampZassenhaus.Lattice
 import all HexBerlekampZassenhaus.BhksCandidates
 import all HexBerlekampZassenhaus.BhksRecover
 import all HexBerlekampZassenhaus.Recombination
+import all HexBerlekampZassenhaus.SmartSearchImpl
 
 open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
 

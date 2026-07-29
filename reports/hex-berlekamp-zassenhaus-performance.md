@@ -1,13 +1,15 @@
 # HexBerlekampZassenhaus Performance Report
 
-The current public-factor, classical-no-decline, lattice, parametric, and fixed
-measurements cover the exact-exponent/factor-only Hensel implementation,
-guarded dominant-degree tree, remainder-only Euclidean GCD, inverse-cached
-finite-field GCD, coefficient-array prime-power reduction, and monomial
-quadratic-division kernel at
-`0b95505b7c926911a9f487bac56676a8c7da48f6`. All were measured 2026-07-29 on
-`chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0, from clean
-worktrees.
+The current public-factor and classical-no-decline measurements add cached
+classical recombination at
+`b0150d2b4a6154d7b9ed3c7cace4fee0ace64165`. The unchanged lattice,
+parametric, and fixed measurements cover the underlying exact-exponent/
+factor-only Hensel implementation, guarded dominant-degree tree,
+remainder-only Euclidean GCD, inverse-cached finite-field GCD,
+coefficient-array prime-power reduction, and monomial quadratic-division
+kernel at `0b95505b7c926911a9f487bac56676a8c7da48f6`. All were measured
+2026-07-29 on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0, from
+clean worktrees.
 
 ## Bench Targets
 
@@ -62,9 +64,9 @@ so no unchanged rows are inherited from an earlier implementation.
 
 | System | OK | Timeout | Solved-row median |
 |---|---:|---:|---:|
-| Hex public factor | 373 | 19 | 400.334 µs |
+| Hex public factor | 373 | 19 | 395.506 µs |
 | Hex lattice | 369 | 23 | 1.812 ms |
-| Hex classical, no decline | 372 | 20 | 389.203 µs |
+| Hex classical, no decline | 372 | 20 | 386.358 µs |
 | FLINT 0.9.0 | 391 | 1 | 66.850 µs |
 | PARI/GP 2.17.3 | 391 | 1 | 99.958 µs |
 | NTL 11.6.0 | 391 | 1 | 135.631 µs |
@@ -72,32 +74,32 @@ so no unchanged rows are inherited from an earlier implementation.
 | Verified Isabelle LLL | 314 | 78 | 6.109 ms |
 
 The external rows are the unchanged current 2026-07-28 measurements from the
-same host, corpus, CPU, and protocol. On 234 common rows above each service's
+same host, corpus, CPU, and protocol. On 235 common rows above each service's
 10× protocol-overhead threshold, public Hex / verified Isabelle BZ has median
-0.887× and p10–p90 0.454×–2.513×; Hex wins 135 rows and Isabelle 99. On the
-preceding fixed 238-row eligibility set, the current ratio is 0.870×. This is a
-real aggregate Hex lead, but the wide family-dependent range is not yet a
-uniform or decisive margin. The old eligible-row median was 3.95×.
+0.866× and p10–p90 0.453×–2.274×; Hex wins 136 rows and Isabelle 99. This is a
+clear aggregate Hex lead, but the wide family-dependent range is not uniform
+superiority. The old eligible-row median was 3.95×.
 
-The public protocol floor is 16.975 µs. Reapplying the preceding, lower
-13.650 µs Hex floor gives 0.836× over 243 rows; applying the larger current
-pair floor to both sides gives 0.889× over 233 rows. The lead is therefore not
-created by the eligibility boundary.
+The public protocol floor is 17.015 µs. Reapplying the preceding 16.975 µs
+Hex floor leaves the same 235 rows and 0.866× median; applying the larger
+current pair floor to both sides gives 0.869× over 234 rows. The lead is
+therefore not created by the eligibility boundary.
 
 The public row is recorded in
-`reports/bench-results/hexbz-factor-sweep-hex-0b95505b-gcd-hensel-final-chungus2.json`
-(SHA-256 `9f9f63ac9f35b3af6d35e530b085a1a1e47e7d03d958179d7597d7850e59c583`).
+`reports/bench-results/hexbz-factor-sweep-hex-b0150d2b-recombine-cache-chungus2.json`
+(SHA-256 `7222c12c206d9fdb3489d98595c72f9eb254f31108e5136722242784eb086be3`).
 It records a clean worktree.
 
-The current public/classical comparison has 237 eligible rows and a 1.006×
-median ratio; public wins 109 and classical 128. This is measurement-level
+The current public/classical comparison has 237 eligible rows and a 1.003×
+median ratio; public wins 117 and classical 120. This is measurement-level
 parity, not evidence for a better classical algorithm: the diagnostic removes
 bounded decline/fallback behavior and the public result check while sharing the
 same lifting and recombination core. Public is better on selected hard rows and
 uniquely solves `sd6`.
 
-The current classical/lattice rows are in the same `0b95505b` artifact. The
-older `aaabcf15` record remains a historical A/B reference.
+The current classical row is in the `b0150d2b` artifact; the unchanged lattice
+row is in `0b95505b`. The older `aaabcf15` record remains a historical A/B
+reference.
 
 The bounded prime-width policy drives the large selector wins. It looks ahead by
 at most two good primes only on predicted high-cost transforms, requires at
@@ -106,7 +108,12 @@ even `x^n - 1` recursion. The largest current/pre-policy gains are 75.54× on
 `sd5_x_phi45`, 29.03× on `xpow105_minus1`, 12.39× on `legendre_P30`, 7.42×
 on `cyclo_phi151`, 7.09× on `cyclo_phi179`, and 5.60× on `cyclo_phi61`.
 
-The latest movement removes discarded quotient construction from Euclidean
+Cached recombination is the latest movement. Against `0b95505b`, the
+eligible-row paired median is 0.988× and current Hex wins 171 of 243 rows. The
+targeted `sd5` family improves by 2.24×–2.73× while the full corpus remains
+stable.
+
+The preceding movement removes discarded quotient construction from Euclidean
 GCD, caches finite-field divisor inverses, maps prime-power coefficient
 reduction directly over the stored array, and replaces multiplication by a
 monomial in quadratic Hensel division with an exact shift-and-scale kernel.
@@ -144,24 +151,24 @@ Both paths are relative to `reports/bench-results/`.
 
 | Fixture | Hex public | Verified Isabelle BZ | Hex / Isabelle |
 |---|---:|---:|---:|
-| `SD_5` | 89.008 ms | 22.827 ms | 3.90x |
-| `SD_5` shifted by 1 | 76.152 ms | 14.875 ms | 5.12x |
-| `SD_5` shifted by 2 | 76.981 ms | 14.907 ms | 5.16x |
-| `SD_6` | 9.047 s | timeout | — |
+| `SD_5` | 39.730 ms | 22.827 ms | 1.74x |
+| `SD_5` shifted by 1 | 28.073 ms | 14.875 ms | 1.89x |
+| `SD_5` shifted by 2 | 29.903 ms | 14.907 ms | 2.01x |
+| `SD_6` | 9.137 s | timeout | — |
 
 The fresh public service now solves `SD_6`; the no-decline classical service
 still times out. The public result and the isolated lattice result (8.583 s)
 show that the dispatcher is adding useful reach here. The public measurement
-is a single cutoff-limited shot only 9.5% below ten seconds, so this frontier
+is a single cutoff-limited shot only 8.6% below ten seconds, so this frontier
 success has a narrow margin.
 
 ## Concerns
 
 - Nineteen public corpus cases still hit the 10-second cutoff.
 - FLINT, PARI/GP, and NTL remain much faster in aggregate.
-- Hex has a modest aggregate lead over Isabelle BZ, but Chebyshev still favours
-  Isabelle by 1.64× and Legendre by 1.49× at their family medians.
-- No-decline classical has a 0.6% paired-median lead over public; further broad
+- Hex has a 13.4% aggregate lead over Isabelle BZ, but Chebyshev still favours
+  Isabelle by 1.62× and Legendre by 1.44× at their family medians.
+- No-decline classical has a 0.3% paired-median lead over public; further broad
   gains must come from the factorization core rather than dispatch alone.
 - The lattice route has a much heavier tail than the classical route.
 - `wilkinson_56` remains a slower outlier despite the 0.60× current

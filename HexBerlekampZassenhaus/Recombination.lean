@@ -275,6 +275,43 @@ the leading coefficient by `scaledCandidatePrefilter`. -/
 def selectedProductResidue (coeffOf : ZPoly → Int) (sel : List ZPoly) (m : Nat) : Int :=
   centeredModNat (sel.foldl (fun acc g => acc * coeffOf g % (m : Int)) 1) m
 
+/-- Multiplication modulo `modulus`, avoiding arbitrary-precision arithmetic in
+the common monic-factor case `1 * 1 mod modulus`. The caller establishes once,
+outside its fold, that `1 < modulus`. -/
+def mulModOneFast (a b modulus : Int) : Int :=
+  if a == 1 && b == 1 then 1 else a * b % modulus
+
+theorem mulModOneFast_eq_of_one_lt (a b modulus : Int) (hm : 1 < modulus) :
+    mulModOneFast a b modulus = a * b % modulus := by
+  unfold mulModOneFast
+  split
+  · rename_i h
+    simp only [Bool.and_eq_true, beq_iff_eq] at h
+    obtain ⟨rfl, rfl⟩ := h
+    rw [Int.one_mul, Int.emod_eq_of_lt (by omega) hm]
+  · rfl
+
+/-- Compiled coefficient-product residue with a generic proof-equal fast path
+for the monic leading-coefficient fold. -/
+def selectedProductResidueImpl
+    (coeffOf : ZPoly → Int) (sel : List ZPoly) (m : Nat) : Int :=
+  let modulus : Int := m
+  let product :=
+    if 1 < m then
+      sel.foldl (fun acc g => mulModOneFast acc (coeffOf g) modulus) 1
+    else
+      sel.foldl (fun acc g => acc * coeffOf g % modulus) 1
+  centeredModNat product m
+
+@[csimp] theorem selectedProductResidue_eq_impl :
+    @selectedProductResidue = @selectedProductResidueImpl := by
+  funext coeffOf sel m
+  unfold selectedProductResidue selectedProductResidueImpl
+  split
+  · rename_i hm
+    simp only [mulModOneFast_eq_of_one_lt _ _ _ (Int.ofNat_lt.mpr hm)]
+  · rfl
+
 /-- Sound `O(subset size)` rejection test run before the classical candidate
 pipeline (`polyProduct` / `centeredLiftPoly` / `dilate` / `primitivePart` /
 `exactQuotient?`) forms the full subset product:
