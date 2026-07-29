@@ -413,23 +413,23 @@ def freezeChecked (limits : Limits) (arena : Arena) (origin : Action)
     match preflightUses limits.maxUses outcome with
     | .error resource => .resourceLimit resource arena
     | .ok _ =>
-         let uses := outcomeUses outcome
-         match preflightLocal limits drafts with
-         | .error resource => .resourceLimit resource arena
-         | .ok bounded =>
-             match validate uses bounded.drafts with
-             | some error => .invalid error arena
-             | none =>
-                 match validateDrafts validateDraft bounded.drafts with
-                 | some error => .invalid error arena
-                 | none =>
-                     match preflightWhole limits arena bounded with
-                     | .error resource => .resourceLimit resource arena
-                     | .ok _ =>
-                         let (prospective, relocations) :=
-                           freezeDrafts arena origin bounded
-                         match relocateOutcome relocations outcome with
-                         | .error error => .invalid error arena
+        let uses := outcomeUses outcome
+        match preflightLocal limits drafts with
+        | .error resource => .resourceLimit resource arena
+        | .ok bounded =>
+            match validate uses bounded.drafts with
+            | some error => .invalid error arena
+            | none =>
+                match validateDrafts validateDraft bounded.drafts with
+                | some error => .invalid error arena
+                | none =>
+                    match preflightWhole limits arena bounded with
+                    | .error resource => .resourceLimit resource arena
+                    | .ok _ =>
+                        let (prospective, relocations) :=
+                          freezeDrafts arena origin bounded
+                        match relocateOutcome relocations outcome with
+                        | .error error => .invalid error arena
                         | .ok outcome =>
                             .ready prospective outcome
 
