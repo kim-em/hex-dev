@@ -8,6 +8,8 @@ import HexInterval.Experiment.DyadicRules
 import HexInterval.Experiment.PolicyDriver
 
 /-!
+# Arbitrary-function package conformance
+
 End-to-end conformance for concrete arbitrary-function propagators.  These
 fixtures run the generic worklist; they do not call interval operations in
 place of the registry when checking the final facts.
