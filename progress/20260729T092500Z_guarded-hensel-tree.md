@@ -18,10 +18,11 @@
 
 Targeted measurements retain the large Chebyshev U24, Legendre P30/P38, and
 Conway improvements while restoring the regressing P16, P24, P26, P28, and
-Phi_385 cases to their prior performance. The clean full-corpus Hex-only sweep
-solves 373/392 with a 432.972 microsecond median and 5.437 millisecond p90. On
-238 overhead-eligible pairs its median Hex/Isabelle ratio is 0.927x, with Hex
-winning 126 rows and Isabelle 112.
+Phi_385 cases to their prior performance. The final clean three-service Hex
+sweep has public solving 373/392 with a 420.153 microsecond median and 5.302 ms
+p90, lattice solving 369/392 with a 1.838 ms median, and no-decline classical
+solving 372/392 with a 401.736 microsecond median. On 238 overhead-eligible
+pairs, public Hex / Isabelle is 0.909x and Hex wins 127/111.
 The affected quadratic-multifactor benchmark remains flat at the largest rung:
 67.229 ms versus the preceding 67.862 ms.
 The five affected parametric BZ registrations were also refreshed; the public
@@ -42,13 +43,16 @@ PARI, NTL, FLINT, and Isabelle artifacts.
 - Fresh BZ fixture emission matches the committed fixture; the FLINT oracle
   checks all 102 cases and the trace gate checks all 52 traces with zero
   failures.
+- The final sweep uses clean revision `53bb12e2`; no external comparator was
+  rerun. The one-pass degree-stat cleanup restores Conway versus the preceding
+  public export to a 0.989x eligible median, faster on 81/99 rows.
 
 ## Next step
 
-Refresh the now-stale isolated Hex lattice and classical corpus services (but
-not the unchanged external comparators), regenerate merged figures and paired
-statistics, then publish and merge this intermediate PR. Continue from the
-remaining Chebyshev/Legendre and Swinnerton-Dyer gaps afterward.
+Regenerate merged figures and paired statistics from the final three-system
+Hex artifact, rerun the focused post-review verification, then publish and
+merge this intermediate PR. Continue from the remaining Chebyshev/Legendre
+and Swinnerton-Dyer gaps afterward.
 
 ## Blockers
 
