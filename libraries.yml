@@ -103,6 +103,30 @@ libraries:
           description: Dense integer polynomials with nontrivial coefficient content for content and primitive-part operations.
         - name: polynomial-crt
           description: Coprime monic rational-polynomial moduli and residues for CRT witness construction.
+  HexMvPoly:
+    deps: [HexPoly, HexBasic]
+    mathlib: false
+    done_through: 0
+    status: active
+    phase4:
+      comparators:
+        - tool: "CompPoly CMvPolynomial"
+          class: informational
+          rationale: "CompPoly uses the same ExtTreeMap representation behind a Mathlib-dependent API; the comparison records integration and implementation overhead rather than gating release."
+        - tool: "Mathlib MvSparsePoly"
+          class: informational
+          rationale: "MvSparsePoly uses a structurally different sorted-list representation aimed at kernel reflection; the comparison decides whether a second kernel-specialized representation is justified."
+      input_families:
+        - name: sparse-addition
+          description: Disjoint and interleaved sparse supports across lexicographic, graded lexicographic, and graded reverse lexicographic order.
+        - name: sparse-multiplication
+          description: Low-collision and high-collision products varying arity, degree, term count, coefficient type, and comparator.
+        - name: cancellation-identities
+          description: Cancellation-heavy ring identities replayed in the kernel over integer and rational coefficients.
+        - name: structural-collisions
+          description: Sparse rename, partial-evaluation, and substitution cases where distinct source terms collide.
+        - name: sos-certificates
+          description: Representative sum-of-squares certificate identities checked from a downstream module with decide +kernel.
   HexMatrix:
     deps: [HexBasic]
     mathlib: false
@@ -384,6 +408,11 @@ libraries:
           description: Deterministic dense integer polynomials transported through `toPolynomial` and `ofPolynomial`, including the paired round-trip checksum.
         - name: euclidean-bridge-transport
           description: Polynomial Fibonacci quotient-chain fixtures over `Rat` carried through the executable `DensePoly.gcd`/`DensePoly.xgcd` plus the dense-to-Mathlib bridge.
+  HexMvPolyMathlib:
+    deps: [HexMvPoly, HexPolyMathlib]
+    mathlib: true
+    done_through: 0
+    status: planned
   HexMatrixMathlib:
     deps: [HexMatrix]
     mathlib: true

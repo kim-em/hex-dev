@@ -1,0 +1,60 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexMvPoly
+
+public section
+
+/-!
+Downstream module-boundary checks for the kernel-reduction closure of
+`Hex.MvPoly`.
+-/
+
+namespace Hex.MvPoly.KernelTests
+
+open Hex
+open scoped Hex
+
+abbrev P := MvPoly 2 Int Mono.lex
+
+@[expose] def x : P := X 0
+@[expose] def y : P := X 1
+@[expose] def p : P := C 1 + x + y
+
+example : p + -p = 0 := by
+  decide +kernel
+
+example :
+    p * p =
+      ofTerms
+        [(Mono.zero, 1),
+         (Mono.unit 0, 2),
+         (Mono.unit 1, 2),
+         (Mono.mul (Mono.unit 0) (Mono.unit 0), 1),
+         (Mono.mul (Mono.unit 0) (Mono.unit 1), 2),
+         (Mono.mul (Mono.unit 1) (Mono.unit 1), 1)] := by
+  decide +kernel
+
+abbrev QP := MvPoly 2 Rat Mono.grevlex
+
+@[expose] def qx : QP := X 0
+@[expose] def qy : QP := X 1
+@[expose] def q : QP := C (1 / 2) + qx + qy
+
+example : q * (qx - qy) + q * (qy - qx) = 0 := by
+  decide +kernel
+
+example : eval (fun i => if i = 0 then 2 else 3) q = 11 / 2 := by
+  decide +kernel
+
+example :
+    ofUnivariate (cmp := Mono.grevlex) 0 Mono.lex
+      (toUnivariate 0 Mono.lex q) = q := by
+  decide +kernel
+
+end Hex.MvPoly.KernelTests

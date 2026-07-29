@@ -85,6 +85,8 @@ lean_lib HexArith where
 
 lean_lib HexPoly where
 
+lean_lib HexMvPoly where
+
 lean_lib HexModArith where
   precompileModules := true
   -- See `HexArith`: the `hexmodarithffi` extern_lib links in automatically, so
@@ -310,6 +312,7 @@ lean_lib HexReleaseTests where
     `HexBerlekampMathlib.FactorPolyTests,
     `HexBerlekampZassenhaus.FactorTacticTests,
     `HexBerlekampZassenhausMathlib.FactorPolyTests,
+    `HexMvPoly.KernelTests,
     `HexRealRoots.ReplayTest,
     `HexRealRootsMathlib.IsolateRootsTests,
     `HexRealRootsMathlib.IsolateRootsElabTests,
