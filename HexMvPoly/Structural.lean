@@ -21,20 +21,22 @@ universe u v
 
 variable {n k : Nat} {R : Type u} {S : Type v}
   {cmp : Mono n → Mono n → Ordering}
-  {cmp₂ : Mono n → Mono n → Ordering}
-  {cmp' : Mono k → Mono k → Ordering}
+  {targetCmp : Mono k → Mono k → Ordering}
   [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
-  [Std.TransCmp cmp₂] [Std.LawfulEqCmp cmp₂]
-  [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+  [Std.TransCmp targetCmp] [Std.LawfulEqCmp targetCmp]
 
 /-- Rebuild a polynomial under a different monomial comparator. -/
-def reorder [Lean.Grind.Semiring R] [DecidableEq R]
-    (p : MvPoly n R cmp) : MvPoly n R cmp₂ :=
+def reorder (cmp' : Mono n → Mono n → Ordering)
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+    [Lean.Grind.Semiring R] [DecidableEq R]
+    (p : MvPoly n R cmp) : MvPoly n R cmp' :=
   ofTerms p.termsList
 
 /-- Rename variables, adding exponents in fibres and combining all resulting
 term collisions. -/
-def rename [Lean.Grind.Semiring R] [DecidableEq R]
+def rename (cmp' : Mono k → Mono k → Ordering)
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+    [Lean.Grind.Semiring R] [DecidableEq R]
     (f : Fin n → Fin k) (p : MvPoly n R cmp) : MvPoly k R cmp' :=
   p.foldTerms
     (fun acc m c => acc.addMonomial (Mono.rename f m) c)
@@ -65,8 +67,8 @@ def homogeneousComponent [Lean.Grind.Semiring R] [DecidableEq R]
 /-- General substitution, mapping coefficients through `f` and variables
 through `g`. -/
 def bind [Zero R] [Lean.Grind.Semiring S] [DecidableEq S]
-    (f : R → S) (g : Fin n → MvPoly k S cmp')
-    (p : MvPoly n R cmp) : MvPoly k S cmp' :=
+    (f : R → S) (g : Fin n → MvPoly k S targetCmp)
+    (p : MvPoly n R cmp) : MvPoly k S targetCmp :=
   p.foldTerms
     (fun acc m c => acc + C (f c) * Mono.prod g m)
     0
@@ -74,12 +76,14 @@ def bind [Zero R] [Lean.Grind.Semiring S] [DecidableEq S]
 /-- Substitute polynomials for variables without changing the coefficient
 type. -/
 def subst [Lean.Grind.Semiring R] [DecidableEq R]
-    (f : Fin n → MvPoly k R cmp') (p : MvPoly n R cmp) : MvPoly k R cmp' :=
+    (f : Fin n → MvPoly k R targetCmp)
+    (p : MvPoly n R cmp) : MvPoly k R targetCmp :=
   bind id f p
 
 /-- Compatibility spelling for same-coefficient substitution. -/
 def bind₁ [Lean.Grind.Semiring R] [DecidableEq R]
-    (f : Fin n → MvPoly k R cmp') (p : MvPoly n R cmp) : MvPoly k R cmp' :=
+    (f : Fin n → MvPoly k R targetCmp)
+    (p : MvPoly n R cmp) : MvPoly k R targetCmp :=
   subst f p
 
 /-- Reconstruct a polynomial by summing its ordered term iteration. -/
@@ -88,13 +92,17 @@ def sumToIter [Lean.Grind.Semiring R] [DecidableEq R]
   ofTerms p.termsList
 
 theorem coeff_reorder [Lean.Grind.Semiring R] [DecidableEq R]
+    (cmp' : Mono n → Mono n → Ordering)
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
     (m : Mono n) (p : MvPoly n R cmp) :
-    coeff m (reorder (cmp₂ := cmp₂) p) = coeff m p := by
+    coeff m (reorder cmp' p) = coeff m p := by
   sorry
 
 theorem coeff_rename [Lean.Grind.Semiring R] [DecidableEq R]
+    (cmp' : Mono k → Mono k → Ordering)
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
     (f : Fin n → Fin k) (m : Mono k) (p : MvPoly n R cmp) :
-    coeff m (rename (cmp' := cmp') f p) =
+    coeff m (rename cmp' f p) =
       p.termsList.foldl
         (fun acc term => if Mono.rename f term.1 = m then acc + term.2 else acc) 0 := by
   sorry
@@ -112,7 +120,7 @@ theorem coeff_homogeneousComponent [Lean.Grind.Semiring R] [DecidableEq R]
   sorry
 
 theorem subst_eq [Lean.Grind.Semiring R] [DecidableEq R]
-    (f : Fin n → MvPoly k R cmp') (p : MvPoly n R cmp) :
+    (f : Fin n → MvPoly k R targetCmp) (p : MvPoly n R cmp) :
     subst f p =
       p.termsList.foldl
         (fun acc term => acc + C term.2 * Mono.prod f term.1) 0 := by
@@ -121,7 +129,7 @@ theorem subst_eq [Lean.Grind.Semiring R] [DecidableEq R]
 theorem partialEval_eq_subst [Lean.Grind.Semiring R] [DecidableEq R]
     (s : Fin n → Option R) (p : MvPoly n R cmp) :
     partialEval s p =
-      subst (cmp' := cmp)
+      subst (targetCmp := cmp)
         (fun i => match s i with | some x => C x | none => X i) p := by
   sorry
 

@@ -94,18 +94,47 @@ theorem coeff?_ne_zero (p : MvPoly n R cmp) (m : Mono n) :
 /-- Coefficients determine a canonical multivariate polynomial. -/
 @[ext] theorem ext {p q : MvPoly n R cmp}
     (h : ∀ m, coeff m p = coeff m q) : p = q := by
-  sorry
+  cases p with
+  | mk pt hp =>
+    cases q with
+    | mk qt hq =>
+      have ht : pt = qt := Std.ExtTreeMap.ext_getElem? fun m => by
+        have hm := h m
+        change pt[m]?.getD 0 = qt[m]?.getD 0 at hm
+        cases hpt : pt[m]? with
+        | none =>
+          cases hqt : qt[m]? with
+          | none => rfl
+          | some c =>
+            simp [hpt, hqt] at hm
+            exfalso
+            apply hq m
+            simp [hqt, ← hm]
+        | some c =>
+          cases hqt : qt[m]? with
+          | none =>
+            simp [hpt, hqt] at hm
+            exfalso
+            apply hp m
+            simp [hpt, hm]
+          | some d =>
+            simp [hpt, hqt] at hm
+            simp [hm]
+      cases ht
+      rfl
 
-/-- Boolean equality delegates to the extensional tree-map implementation
-and ignores the proof field. -/
-instance [BEq R] : BEq (MvPoly n R cmp) where
-  beq p q := p.termsInternal == q.termsInternal
+/-- Boolean equality compares ordered term lists, avoiding the tree map's
+derived equality implementation in the kernel replay path. -/
+instance [DecidableEq R] : BEq (MvPoly n R cmp) where
+  beq p q := decide (p.termsList = q.termsList)
 
-instance [BEq R] [LawfulBEq R] : LawfulBEq (MvPoly n R cmp) where
+instance [DecidableEq R] : LawfulBEq (MvPoly n R cmp) where
   eq_of_beq := by
     intro p q h
-    change p.termsInternal == q.termsInternal at h
-    have ht : p.termsInternal = q.termsInternal := eq_of_beq h
+    change decide (p.termsList = q.termsList) = true at h
+    have hl : p.termsList = q.termsList := of_decide_eq_true h
+    have ht : p.termsInternal = q.termsInternal :=
+      Std.ExtTreeMap.toList_inj.mp hl
     cases p with
     | mk pt hp =>
       cases q with
@@ -115,11 +144,24 @@ instance [BEq R] [LawfulBEq R] : LawfulBEq (MvPoly n R cmp) where
         rfl
   rfl := by
     intro p
-    change p.termsInternal == p.termsInternal
-    exact BEq.rfl
+    change decide (p.termsList = p.termsList) = true
+    simp
 
-instance [BEq R] [LawfulBEq R] : DecidableEq (MvPoly n R cmp) :=
-  _root_.instDecidableEqOfLawfulBEq
+instance [DecidableEq R] : DecidableEq (MvPoly n R cmp) := fun p q =>
+  match decEq p.termsList q.termsList with
+  | isTrue hl =>
+      isTrue <| by
+        have ht : p.termsInternal = q.termsInternal :=
+          Std.ExtTreeMap.toList_inj.mp hl
+        cases p with
+        | mk pt hp =>
+          cases q with
+          | mk qt hq =>
+            simp only at ht
+            subst ht
+            rfl
+  | isFalse hl =>
+      isFalse fun hpq => hl (congrArg termsList hpq)
 
 /-- A single term, dropping it when its coefficient is zero. -/
 def monomial [DecidableEq R] (m : Mono n) (c : R) : MvPoly n R cmp :=
@@ -163,7 +205,16 @@ def mapCoeffs (p : MvPoly n R cmp) (f : R → R)
     (hf : ∀ c, c ≠ 0 → f c ≠ 0) : MvPoly n R cmp where
   termsInternal := p.termsInternal.map fun _ c => f c
   nonzeroInternal := by
-    sorry
+    intro m
+    rw [Std.ExtTreeMap.getElem?_map]
+    cases hcoeff : p.termsInternal[m]? with
+    | none => simp
+    | some c =>
+      have hc : c ≠ 0 := by
+        intro hzero
+        apply p.nonzeroInternal m
+        simpa [hzero] using hcoeff
+      simpa using hf c hc
 
 /-- Build a polynomial by summing duplicate monomials and dropping all
 zero coefficients. -/
@@ -179,7 +230,18 @@ def ofTerms [Lean.Grind.Semiring R] [DecidableEq R]
 theorem coeff_monomial [DecidableEq R] (m m' : Mono n) (c : R) :
     coeff m (monomial m' c : MvPoly n R cmp) =
       if m = m' then c else 0 := by
-  sorry
+  by_cases hc : c = 0
+  · rw [monomial, dif_pos hc]
+    change ((∅ : Std.ExtTreeMap (Mono n) R cmp)[m]?).getD 0 = _
+    simp [hc]
+  · rw [monomial, dif_neg hc]
+    unfold coeff coeff?
+    rw [Std.ExtTreeMap.getElem?_insert]
+    by_cases hm : m = m'
+    · subst m
+      simp
+    · have hm' : m' ≠ m := fun h => hm h.symm
+      simp [hm, hm']
 
 theorem coeff_C [DecidableEq R] (m : Mono n) (c : R) :
     coeff m (C c : MvPoly n R cmp) =
@@ -195,13 +257,36 @@ theorem coeff_addMonomial [Add R] [DecidableEq R]
     (p : MvPoly n R cmp) (m k : Mono n) (c : R) :
     coeff k (addMonomial p m c) =
       if k = m then coeff k p + c else coeff k p := by
-  sorry
+  unfold addMonomial coeff coeff?
+  rw [Std.ExtTreeMap.getElem?_alter]
+  by_cases hkm : k = m
+  · subst k
+    simp
+    split <;> simp_all
+  · have hmk : m ≠ k := fun h => hkm h.symm
+    simp [hkm, hmk]
 
 theorem coeff_ofTerms [Lean.Grind.Semiring R] [DecidableEq R]
     (m : Mono n) (ts : List (Mono n × R)) :
     coeff m (ofTerms ts : MvPoly n R cmp) =
       (ts.filter (fun t => t.1 = m)).foldl (fun acc t => acc + t.2) 0 := by
-  sorry
+  have aux : ∀ (us : List (Mono n × R)) (init : MvPoly n R cmp),
+      coeff m (us.foldl (fun p t => addMonomial p t.1 t.2) init) =
+        (us.filter (fun t => t.1 = m)).foldl
+          (fun acc t => acc + t.2) (coeff m init) := by
+    intro us
+    induction us with
+    | nil =>
+      intro init
+      rfl
+    | cons t us ih =>
+      intro init
+      rw [List.foldl_cons, ih]
+      by_cases ht : t.1 = m
+      · simp [ht, coeff_addMonomial]
+      · have hmt : m ≠ t.1 := fun h => ht h.symm
+        simp [ht, hmt, coeff_addMonomial]
+  simpa [ofTerms] using aux ts (0 : MvPoly n R cmp)
 
 end MvPoly
 

@@ -35,7 +35,7 @@ instance [Lean.Grind.Semiring R] [DecidableEq R] :
 
 theorem negCoeff_ne_zero [Lean.Grind.Ring R] (c : R) (hc : c ≠ 0) :
     -c ≠ 0 := by
-  sorry
+  grind
 
 /-- Coefficientwise negation. Since negation preserves nonzeroness, this
 maps values in place without rebuilding the search tree. -/
