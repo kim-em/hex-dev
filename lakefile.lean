@@ -133,6 +133,9 @@ lean_lib HexInterval where
 lean_lib HexPolyMathlib where
 
 @[default_target]
+lean_lib HexMvPolyMathlib where
+
+@[default_target]
 lean_lib HexModArithMathlib where
 
 @[default_target]
@@ -230,6 +233,21 @@ lean_lib HexGF2BenchSupport where
 lean_lib HexMvPolyBenchSupport where
   srcDir := "bench"
   globs := #[`HexMvPolyBench.Corpus]
+
+lean_lib HexMvPolyMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[`HexMvPolyMathlib.ProofProbe.Support,
+    `HexMvPolyMathlib.ProofProbe.Baseline,
+    `HexMvPolyMathlib.ProofProbe.HexCancellation4,
+    `HexMvPolyMathlib.ProofProbe.SortedCancellation4,
+    `HexMvPolyMathlib.ProofProbe.HexCancellation6,
+    `HexMvPolyMathlib.ProofProbe.SortedCancellation6,
+    `HexMvPolyMathlib.ProofProbe.HexSos3,
+    `HexMvPolyMathlib.ProofProbe.SortedSos3,
+    `HexMvPolyMathlib.ProofProbe.HexSos4,
+    `HexMvPolyMathlib.ProofProbe.SortedSos4,
+    `HexMvPolyMathlib.ProofProbe.HexStructural8,
+    `HexMvPolyMathlib.ProofProbe.SortedStructural8]
 
 lean_lib HexIntervalExperiment where
   globs := #[`HexInterval.Experiment.Representation,

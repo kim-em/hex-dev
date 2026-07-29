@@ -1,0 +1,511 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import Mathlib.Algebra.MvPolynomial.Basic
+public import Mathlib.Algebra.MvPolynomial.CommRing
+public import Mathlib.Algebra.Ring.TransferInstance
+public import HexMvPoly
+
+public section
+
+/-!
+The exact correspondence between `Hex.MvPoly` and Mathlib's
+`MvPolynomial (Fin n)`.
+
+Exponent vectors are first identified with finitely supported functions on the
+finite variable type. The polynomial conversions then enumerate only canonical
+nonzero supports; later declarations package them as a ring equivalence and
+transport Mathlib's algebraic structures back to the executable type.
+-/
+
+namespace HexMvPolyMathlib
+
+open scoped BigOperators
+
+open Hex
+open Hex.MvPoly
+
+universe u
+
+variable {n : Nat} {R : Type u}
+  {cmp : Mono n → Mono n → Ordering}
+  [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
+
+noncomputable section
+
+/-- A fixed-arity exponent vector is equivalent to a finitely supported
+function on the finite variable type. -/
+def monoEquiv : Mono n ≃ (Fin n →₀ Nat) where
+  toFun m := Finsupp.equivFunOnFinite.symm fun i => m[i]
+  invFun d := Hex.Vector.ofFn' fun i => d i
+  left_inv m := by
+    apply Vector.ext
+    intro i
+    simp
+  right_inv d := by
+    apply Finsupp.ext
+    intro i
+    simp
+
+@[simp] theorem monoEquiv_apply (m : Mono n) (i : Fin n) :
+    monoEquiv m i = m[i] := by
+  rfl
+
+@[simp] theorem monoEquiv_symm_apply (d : Fin n →₀ Nat) (i : Fin n) :
+    (monoEquiv.symm d)[i] = d i := by
+  simp [monoEquiv]
+
+@[simp] theorem monoEquiv_zero :
+    monoEquiv (Mono.zero : Mono n) = 0 := by
+  apply Finsupp.ext
+  intro i
+  simp [Mono.zero]
+
+@[simp] theorem monoEquiv_eq_zero (m : Mono n) :
+    monoEquiv m = 0 ↔ m = Mono.zero := by
+  rw [← monoEquiv_zero]
+  exact monoEquiv.injective.eq_iff
+
+@[simp] theorem zero_eq_monoEquiv (m : Mono n) :
+    0 = monoEquiv m ↔ m = Mono.zero := by
+  rw [eq_comm, monoEquiv_eq_zero]
+
+@[simp] theorem monoEquiv_mul (a b : Mono n) :
+    monoEquiv (Mono.mul a b) = monoEquiv a + monoEquiv b := by
+  apply Finsupp.ext
+  intro i
+  simp [Mono.mul]
+
+@[simp] theorem monoEquiv_unit (i : Fin n) :
+    monoEquiv (Mono.unit i) = Finsupp.single i 1 := by
+  apply Finsupp.ext
+  intro j
+  by_cases h : j = i <;> simp [Mono.unit, h]
+
+/-- The componentwise exponent equivalence on pairs of monomials. -/
+def monoPairEquiv :
+    (Mono n × Mono n) ≃
+      ((Fin n →₀ Nat) × (Fin n →₀ Nat)) :=
+  Equiv.prodCongr monoEquiv monoEquiv
+
+@[simp] theorem monoPairEquiv_apply (ab : Mono n × Mono n) :
+    monoPairEquiv ab = (monoEquiv ab.1, monoEquiv ab.2) := by
+  rfl
+
+@[simp] theorem monoPairEmbedding_apply (ab : Mono n × Mono n) :
+    monoPairEquiv.toEmbedding ab =
+      (monoEquiv ab.1, monoEquiv ab.2) := by
+  rfl
+
+/-- Interpret an executable sparse polynomial as a Mathlib multivariate
+polynomial by summing its canonical support. -/
+def toMvPolynomial [CommSemiring R] [DecidableEq R]
+    (p : MvPoly n R cmp) : MvPolynomial (Fin n) R :=
+  p.monomials.toFinset.sum fun m =>
+    MvPolynomial.monomial (monoEquiv m) (coeff m p)
+
+/-- The canonical-support sum used by the forward conversion. -/
+theorem toMvPolynomial_eq_sum [CommSemiring R] [DecidableEq R]
+    (p : MvPoly n R cmp) :
+    toMvPolynomial p =
+      p.monomials.toFinset.sum fun m =>
+        MvPolynomial.monomial (monoEquiv m) (coeff m p) := by
+  rfl
+
+/-- Forward conversion preserves every coefficient. -/
+@[simp] theorem coeff_toMvPolynomial [CommSemiring R] [DecidableEq R]
+    (m : Mono n) (p : MvPoly n R cmp) :
+    MvPolynomial.coeff (monoEquiv m) (toMvPolynomial p) = coeff m p := by
+  rw [toMvPolynomial, MvPolynomial.coeff_sum]
+  simp [MvPolynomial.coeff_monomial, monoEquiv.injective.eq_iff,
+    mem_monomials_iff, eq_comm]
+
+/-- Forward conversion preserves a single executable monomial. -/
+@[simp] theorem toMvPolynomial_monomial
+    [CommSemiring R] [DecidableEq R]
+    (m : Mono n) (c : R) :
+    toMvPolynomial (monomial m c : MvPoly n R cmp) =
+      MvPolynomial.monomial (monoEquiv m) c := by
+  apply MvPolynomial.ext
+  intro d
+  rcases monoEquiv.surjective d with ⟨k, rfl⟩
+  rw [coeff_toMvPolynomial, coeff_monomial,
+    MvPolynomial.coeff_monomial]
+  by_cases h : k = m
+  · subst k
+    simp
+  · have h' : monoEquiv m ≠ monoEquiv k := fun heq =>
+      h (monoEquiv.injective heq).symm
+    simp [h, h']
+
+/-- Rebuild an executable sparse polynomial from a Mathlib multivariate
+polynomial's finite support. -/
+def ofMvPolynomial [CommSemiring R] [DecidableEq R]
+    (p : MvPolynomial (Fin n) R) : MvPoly n R cmp :=
+  ofTerms <| p.support.toList.map fun d =>
+    (monoEquiv.symm d, MvPolynomial.coeff d p)
+
+/-- Backward conversion preserves every coefficient. -/
+@[simp] theorem coeff_ofMvPolynomial [CommSemiring R] [DecidableEq R]
+    (m : Mono n) (p : MvPolynomial (Fin n) R) :
+    coeff m (ofMvPolynomial (cmp := cmp) p) =
+      MvPolynomial.coeff (monoEquiv m) p := by
+  rw [ofMvPolynomial, coeff_ofTerms]
+  rw [List.foldl_filter, List.foldl_map]
+  simp only [Equiv.symm_apply_eq]
+  have fold_pick (q : Fin n →₀ Nat) (f : (Fin n →₀ Nat) → R) :
+      ∀ (xs : List (Fin n →₀ Nat)), xs.Nodup → ∀ z,
+        xs.foldl
+            (fun acc d => if decide (d = q) = true then acc + f d else acc)
+            z =
+          if q ∈ xs then z + f q else z := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro _ z
+        simp
+    | cons d ds ih =>
+        intro hnodup z
+        have hd : d ∉ ds := (List.nodup_cons.mp hnodup).1
+        have hds : ds.Nodup := (List.nodup_cons.mp hnodup).2
+        simp only [List.foldl_cons]
+        by_cases hdq : d = q
+        · subst d
+          rw [if_pos (by simp), ih hds]
+          simp [hd]
+        · have hqd : q ≠ d := Ne.symm hdq
+          rw [if_neg (by simp [hdq]), ih hds]
+          simp [hqd]
+  rw [fold_pick (monoEquiv m) (fun d => MvPolynomial.coeff d p)
+    p.support.toList p.support.nodup_toList]
+  by_cases hcoeff : MvPolynomial.coeff (monoEquiv m) p = 0
+  · simp [hcoeff]
+  · simp [hcoeff]
+
+/-- Converting a Mathlib polynomial to the executable representation and back
+recovers the original polynomial. -/
+@[simp] theorem toMvPolynomial_ofMvPolynomial
+    [CommSemiring R] [DecidableEq R]
+    (p : MvPolynomial (Fin n) R) :
+    toMvPolynomial (ofMvPolynomial (cmp := cmp) p) = p := by
+  apply MvPolynomial.ext
+  intro d
+  rcases monoEquiv.surjective d with ⟨m, rfl⟩
+  simp
+
+/-- Converting an executable polynomial to Mathlib and back recovers the
+canonical executable polynomial. -/
+@[simp] theorem ofMvPolynomial_toMvPolynomial
+    [CommSemiring R] [DecidableEq R]
+    (p : MvPoly n R cmp) :
+    ofMvPolynomial (cmp := cmp) (toMvPolynomial p) = p := by
+  apply Hex.MvPoly.ext
+  intro m
+  simp
+
+/-- Forward conversion sends the executable zero to Mathlib zero. -/
+@[simp] theorem toMvPolynomial_zero [CommSemiring R] [DecidableEq R] :
+    toMvPolynomial (0 : MvPoly n R cmp) = 0 := by
+  apply MvPolynomial.ext
+  intro d
+  rcases monoEquiv.surjective d with ⟨m, rfl⟩
+  simp
+
+/-- Forward conversion preserves addition. -/
+@[simp] theorem toMvPolynomial_add [CommSemiring R] [DecidableEq R]
+    (p q : MvPoly n R cmp) :
+    toMvPolynomial (p + q) = toMvPolynomial p + toMvPolynomial q := by
+  apply MvPolynomial.ext
+  intro d
+  rcases monoEquiv.surjective d with ⟨m, rfl⟩
+  simp [coeff_add]
+
+/-- Forward conversion sends executable constants to Mathlib constants. -/
+@[simp] theorem toMvPolynomial_C [CommSemiring R] [DecidableEq R] (c : R) :
+    toMvPolynomial (C c : MvPoly n R cmp) = MvPolynomial.C c := by
+  apply MvPolynomial.ext
+  intro d
+  rcases monoEquiv.surjective d with ⟨m, rfl⟩
+  simp [MvPolynomial.coeff_C, coeff_C]
+
+/-- Forward conversion sends executable variables to Mathlib variables. -/
+@[simp] theorem toMvPolynomial_X [CommSemiring R] [DecidableEq R]
+    (i : Fin n) :
+    toMvPolynomial (X i : MvPoly n R cmp) = MvPolynomial.X i := by
+  apply MvPolynomial.ext
+  intro d
+  rcases monoEquiv.surjective d with ⟨m, rfl⟩
+  rw [coeff_toMvPolynomial, coeff_X, MvPolynomial.coeff_X,
+    ← monoEquiv_unit]
+  by_cases h : m = Mono.unit i
+  · subst m
+    simp
+  · have h' : monoEquiv (Mono.unit i) ≠ monoEquiv m := by
+      intro heq
+      exact h (monoEquiv.injective heq).symm
+    rw [if_neg h, if_neg h']
+
+/-- Forward conversion preserves the multiplicative identity. -/
+@[simp] theorem toMvPolynomial_one [CommSemiring R] [DecidableEq R] :
+    toMvPolynomial (1 : MvPoly n R cmp) = 1 := by
+  rw [show (1 : MvPoly n R cmp) = C 1 from rfl, toMvPolynomial_C,
+    MvPolynomial.C_1]
+
+/-- Forward conversion preserves multiplication. -/
+@[simp] theorem toMvPolynomial_mul [CommSemiring R] [DecidableEq R]
+    (p q : MvPoly n R cmp) :
+    toMvPolynomial (p * q) = toMvPolynomial p * toMvPolynomial q := by
+  apply MvPolynomial.ext
+  intro d
+  rcases monoEquiv.surjective d with ⟨m, rfl⟩
+  rw [coeff_toMvPolynomial, coeff_mul, MvPolynomial.coeff_mul]
+  have hanti :
+      (Mono.splits m).toFinset.map monoPairEquiv.toEmbedding =
+        Finset.antidiagonal (monoEquiv m) := by
+    ext ab
+    constructor
+    · intro hab
+      rcases Finset.mem_map.mp hab with ⟨xy, hxy, rfl⟩
+      rw [Finset.mem_antidiagonal]
+      rw [monoPairEmbedding_apply]
+      rw [← monoEquiv_mul]
+      exact congrArg monoEquiv ((Mono.splits_mem_iff ..).mp
+        (List.mem_toFinset.mp hxy))
+    · intro hab
+      rw [Finset.mem_antidiagonal] at hab
+      let xy : Mono n × Mono n :=
+        (monoEquiv.symm ab.1, monoEquiv.symm ab.2)
+      apply Finset.mem_map.mpr
+      refine ⟨xy, ?_, ?_⟩
+      · apply List.mem_toFinset.mpr
+        apply (Mono.splits_mem_iff ..).mpr
+        apply monoEquiv.injective
+        simpa [xy] using hab
+      · apply Prod.ext <;> simp [xy]
+  rw [← hanti, Finset.sum_map]
+  simp_rw [monoPairEmbedding_apply, coeff_toMvPolynomial (cmp := cmp)]
+  change
+    (Mono.splits m).foldl
+        (fun acc ab => acc + coeff ab.1 p * coeff ab.2 q) 0 =
+      ∑ ab ∈ (Mono.splits m).toFinset,
+        coeff ab.1 p * coeff ab.2 q
+  rw [List.sum_toFinset _ (Mono.splits_nodup m)]
+  rw [List.sum_eq_foldl, List.foldl_map]
+
+/-- Forward conversion is injective. -/
+theorem toMvPolynomial_injective [CommSemiring R] [DecidableEq R] :
+    Function.Injective
+      (toMvPolynomial : MvPoly n R cmp → MvPolynomial (Fin n) R) := by
+  intro p q h
+  rw [← ofMvPolynomial_toMvPolynomial p,
+    ← ofMvPolynomial_toMvPolynomial q, h]
+
+/-- Forward conversion is surjective. -/
+theorem toMvPolynomial_surjective [CommSemiring R] [DecidableEq R] :
+    Function.Surjective
+      (toMvPolynomial : MvPoly n R cmp → MvPolynomial (Fin n) R) :=
+  fun p => ⟨ofMvPolynomial p, toMvPolynomial_ofMvPolynomial p⟩
+
+/-- The executable sparse representation is ring-equivalent to Mathlib's
+multivariate polynomials. -/
+def equiv [CommSemiring R] [DecidableEq R] :
+    MvPoly n R cmp ≃+* MvPolynomial (Fin n) R where
+  toFun := toMvPolynomial
+  invFun := ofMvPolynomial
+  left_inv := ofMvPolynomial_toMvPolynomial
+  right_inv := toMvPolynomial_ofMvPolynomial
+  map_mul' := toMvPolynomial_mul
+  map_add' := toMvPolynomial_add
+
+@[simp] theorem equiv_apply [CommSemiring R] [DecidableEq R]
+    (p : MvPoly n R cmp) :
+    equiv p = toMvPolynomial p := by
+  rfl
+
+@[simp] theorem equiv_symm_apply [CommSemiring R] [DecidableEq R]
+    (p : MvPolynomial (Fin n) R) :
+    (equiv (cmp := cmp)).symm p = ofMvPolynomial (cmp := cmp) p := by
+  rfl
+
+/-! # Transported Mathlib algebraic structures -/
+
+/-- Natural casts are executable constant polynomials. -/
+@[implicit_reducible]
+instance [CommSemiring R] [DecidableEq R] :
+    NatCast (MvPoly n R cmp) where
+  natCast k := C (k : R)
+
+/-- Natural scalar multiplication uses one executable constant product. -/
+@[implicit_reducible]
+instance [CommSemiring R] [DecidableEq R] :
+    SMul Nat (MvPoly n R cmp) where
+  smul k p := C (k : R) * p
+
+@[simp] theorem toMvPolynomial_nsmul [CommSemiring R] [DecidableEq R]
+    (k : Nat) (p : MvPoly n R cmp) :
+    toMvPolynomial (k • p) = k • toMvPolynomial p := by
+  change toMvPolynomial (C (k : R) * p) = _
+  rw [toMvPolynomial_mul, toMvPolynomial_C]
+  simp [nsmul_eq_mul]
+
+@[simp] theorem toMvPolynomial_pow [CommSemiring R] [DecidableEq R]
+    (p : MvPoly n R cmp) (k : Nat) :
+    toMvPolynomial (p ^ k) = toMvPolynomial p ^ k := by
+  induction k with
+  | zero =>
+      rw [_root_.pow_zero (toMvPolynomial p)]
+      have hp : p ^ 0 = (1 : MvPoly n R cmp) := by
+        change Hex.MvPoly.npowBySq p 0 = 1
+        rw [Hex.MvPoly.npowBySq]
+      rw [hp]
+      exact toMvPolynomial_one (n := n) (R := R) (cmp := cmp)
+  | succ k ih =>
+      rw [Hex.MvPoly.pow_succ p k, toMvPolynomial_mul, ih,
+        _root_.pow_succ]
+
+@[simp] theorem toMvPolynomial_natCast [CommSemiring R] [DecidableEq R]
+    (k : Nat) :
+    toMvPolynomial (k : MvPoly n R cmp) =
+      (k : MvPolynomial (Fin n) R) := by
+  change toMvPolynomial (C (k : R)) = _
+  rw [toMvPolynomial_C, map_natCast]
+
+/-- Mathlib's commutative-semiring structure, transported along the exact
+representation equivalence while retaining every executable operation. -/
+instance [CommSemiring R] [DecidableEq R] :
+    CommSemiring (MvPoly n R cmp) :=
+  Function.Injective.commSemiring toMvPolynomial toMvPolynomial_injective
+    toMvPolynomial_zero toMvPolynomial_one toMvPolynomial_add
+    toMvPolynomial_mul toMvPolynomial_nsmul toMvPolynomial_pow
+    toMvPolynomial_natCast
+
+/-- Forward conversion preserves coefficientwise negation. -/
+@[simp] theorem toMvPolynomial_neg [CommRing R] [DecidableEq R]
+    (p : MvPoly n R cmp) :
+    toMvPolynomial (-p) = -toMvPolynomial p := by
+  apply MvPolynomial.ext
+  intro d
+  rcases monoEquiv.surjective d with ⟨m, rfl⟩
+  simp [coeff_neg]
+
+/-- Forward conversion preserves subtraction. -/
+@[simp] theorem toMvPolynomial_sub [CommRing R] [DecidableEq R]
+    (p q : MvPoly n R cmp) :
+    toMvPolynomial (p - q) = toMvPolynomial p - toMvPolynomial q := by
+  apply MvPolynomial.ext
+  intro d
+  rcases monoEquiv.surjective d with ⟨m, rfl⟩
+  simp [coeff_sub]
+
+/-- Integer casts are executable constant polynomials. -/
+@[implicit_reducible]
+instance [CommRing R] [DecidableEq R] :
+    IntCast (MvPoly n R cmp) where
+  intCast z := C (z : R)
+
+/-- Integer scalar multiplication uses one executable constant product. -/
+@[implicit_reducible]
+instance [CommRing R] [DecidableEq R] :
+    SMul Int (MvPoly n R cmp) where
+  smul z p := C (z : R) * p
+
+@[simp] theorem toMvPolynomial_zsmul [CommRing R] [DecidableEq R]
+    (z : Int) (p : MvPoly n R cmp) :
+    toMvPolynomial (z • p) = z • toMvPolynomial p := by
+  change toMvPolynomial (C (z : R) * p) = _
+  rw [toMvPolynomial_mul, toMvPolynomial_C]
+  simp [zsmul_eq_mul]
+
+@[simp] theorem toMvPolynomial_intCast [CommRing R] [DecidableEq R]
+    (z : Int) :
+    toMvPolynomial (z : MvPoly n R cmp) =
+      (z : MvPolynomial (Fin n) R) := by
+  change toMvPolynomial (C (z : R)) = _
+  rw [toMvPolynomial_C, map_intCast]
+
+/-- Mathlib's commutative-ring structure, transported along the exact
+representation equivalence while retaining every executable operation. -/
+instance [CommRing R] [DecidableEq R] :
+    CommRing (MvPoly n R cmp) :=
+  Function.Injective.commRing toMvPolynomial toMvPolynomial_injective
+    toMvPolynomial_zero toMvPolynomial_one toMvPolynomial_add
+    toMvPolynomial_mul toMvPolynomial_neg toMvPolynomial_sub
+    toMvPolynomial_nsmul toMvPolynomial_zsmul toMvPolynomial_pow
+    toMvPolynomial_natCast toMvPolynomial_intCast
+
+/-- Executable constant polynomials packaged as a ring homomorphism. -/
+def constantHom [CommSemiring R] [DecidableEq R] :
+    R →+* MvPoly n R cmp where
+  toFun := C
+  map_one' := by
+    apply toMvPolynomial_injective
+    rw [toMvPolynomial_C, toMvPolynomial_one, MvPolynomial.C_1]
+  map_mul' a b := by
+    apply toMvPolynomial_injective
+    rw [toMvPolynomial_C, toMvPolynomial_mul, toMvPolynomial_C,
+      toMvPolynomial_C, MvPolynomial.C_mul]
+  map_zero' := by
+    apply toMvPolynomial_injective
+    rw [toMvPolynomial_C, toMvPolynomial_zero, MvPolynomial.C_0]
+  map_add' a b := by
+    apply toMvPolynomial_injective
+    rw [toMvPolynomial_C, toMvPolynomial_add, toMvPolynomial_C,
+      toMvPolynomial_C, MvPolynomial.C_add]
+
+@[simp] theorem constantHom_apply [CommSemiring R] [DecidableEq R]
+    (r : R) :
+    constantHom (n := n) (cmp := cmp) r = C r := by
+  rfl
+
+/-- The coefficient ring acts through executable constant polynomials. -/
+@[implicit_reducible]
+instance [CommSemiring R] [DecidableEq R] :
+    Algebra R (MvPoly n R cmp) where
+  smul r p := C r * p
+  algebraMap := constantHom
+  commutes' r p := by
+    rw [constantHom_apply]
+    exact Hex.MvPoly.mul_comm (C r) p
+  smul_def' r p := by
+    rw [constantHom_apply]
+    change C r * p = C r * p
+    rfl
+
+@[simp] theorem algebraMap_apply [CommSemiring R] [DecidableEq R]
+    (r : R) :
+    algebraMap R (MvPoly n R cmp) r = C r := by
+  change constantHom (n := n) (cmp := cmp) r = C r
+  exact constantHom_apply r
+
+@[simp] theorem toMvPolynomial_smul [CommSemiring R] [DecidableEq R]
+    (r : R) (p : MvPoly n R cmp) :
+    toMvPolynomial (r • p) = r • toMvPolynomial p := by
+  rw [Algebra.smul_def, Algebra.smul_def, algebraMap_apply,
+    MvPolynomial.algebraMap_eq, toMvPolynomial_mul, toMvPolynomial_C]
+
+/-- The exact representation equivalence as an equivalence of
+`R`-algebras. -/
+def algEquiv [CommSemiring R] [DecidableEq R] :
+    MvPoly n R cmp ≃ₐ[R] MvPolynomial (Fin n) R :=
+  AlgEquiv.ofRingEquiv (f := equiv) fun r => by
+    rw [algebraMap_apply, MvPolynomial.algebraMap_eq,
+      equiv_apply, toMvPolynomial_C]
+
+@[simp] theorem algEquiv_apply [CommSemiring R] [DecidableEq R]
+    (p : MvPoly n R cmp) :
+    algEquiv p = toMvPolynomial p := by
+  rfl
+
+@[simp] theorem algEquiv_symm_apply [CommSemiring R] [DecidableEq R]
+    (p : MvPolynomial (Fin n) R) :
+    (algEquiv (cmp := cmp)).symm p = ofMvPolynomial (cmp := cmp) p := by
+  rfl
+
+end
+
+end HexMvPolyMathlib

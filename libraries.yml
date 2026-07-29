@@ -412,7 +412,18 @@ libraries:
     deps: [HexMvPoly, HexPolyMathlib]
     mathlib: true
     done_through: 0
-    status: planned
+    status: active
+    proof_probes: [bench/HexMvPolyMathlib/ProofProbe]
+    phase4:
+      comparators:
+        - tool: "Mathlib MvSparsePoly"
+          class: informational
+          rationale: "The Mathlib sorted-list representation is the kernel-reflection comparator used to decide whether HexMvPoly needs a second representation."
+      input_families:
+        - name: kernel-cancellation-identities
+          description: Cancellation-heavy integer and rational identities checked from a downstream module with decide +kernel.
+        - name: kernel-sos-certificates
+          description: Representative sum-of-squares certificate identities checked from a downstream module with decide +kernel.
   HexMatrixMathlib:
     deps: [HexMatrix]
     mathlib: true
