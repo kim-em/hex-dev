@@ -765,12 +765,15 @@ def reliftSubFloorCap : Nat := 2
 
 /-- Number of speculative sub-floor lift/scan attempts made at a recursive
 node before going directly to its certified full-precision scan. With at most
-three modular factors the full scan is already tiny, so probing merely repeats
-Hensel work. Otherwise the first rung (`k = 1`) cheaply finds the small factors
-that make recursive relifting pay off. Additional from-scratch rungs make the
-common unsplit case repeat the same work before the full-floor scan. -/
-def reliftProbeFuel (factorCount : Nat) : Nat :=
-  if factorCount ≤ 3 then 0 else 1
+three modular factors the full scan is already tiny. The usual wider node gets
+one cheap `k = 1` probe. A four-factor, extreme-precision node whose count split
+is already degree-balanced gets the full doubling ladder: this is the narrow
+shape where intermediate recovery can avoid a very pessimistic root bound,
+without repeating large unbalanced lifts or wide subset scans. -/
+def reliftProbeFuel (floorK factorCount splitIndex : Nat) : Nat :=
+  if factorCount ≤ 3 then 0
+  else if factorCount = 4 ∧ 300 < floorK ∧ splitIndex = factorCount / 2 then 8
+  else 1
 
 /-- Recursive per-remainder classical certification: sub-floor ladder
 plus recursion on peels, falling back to today's full floor scan
@@ -798,8 +801,11 @@ def classicalCoreFactorsRecursiveAux (cap : Nat) :
         let monicBound := ZPoly.defaultFactorCoeffBound (ZPoly.toMonic g).monic
         let floorK := precisionForCoeffBound
           (match B? with | some B => max B monicBound | none => monicBound) pd.p
+        let splitIndex :=
+          letI := pd.bounds
+          ZPoly.balancedSplitIndex (pd.factorsModP.map FpPoly.liftToZ).toList
         match reliftLadder pd cap g floorK monicBound 1
-            (reliftProbeFuel pd.factorsModP.size) with
+            (reliftProbeFuel floorK pd.factorsModP.size splitIndex) with
         | some pieces =>
             letI := pd.bounds
             let lcg := DensePoly.leadingCoeff g

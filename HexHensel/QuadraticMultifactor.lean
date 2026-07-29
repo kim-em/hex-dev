@@ -129,18 +129,58 @@ theorem henselLiftFactors_snd
     (henselLiftFactors p k f g h s t).2 = (henselLiftQuadratic p k f g h s t).h := by
   rw [henselLiftFactors_eq]
 
-/-- Recursive list-shape worker behind `multifactorLiftQuadratic`, shaped as a
-balanced product tree. At each non-singleton step it splits the factor list in
-half, lifts the product of the left half `g` against the product of the right
-half `h` via `henselLiftFactors`, and recurses into each half with the lifted
-sub-products as the new targets. The two recursive outputs are concatenated
-`L`-then-`R`, so the returned array stays in the original factor order. The
-singleton case returns the input reduced modulo `p^k`; the empty case returns
-the empty array.
+/-- Sum of polynomial degrees used to estimate the work on one side of a
+multifactor Hensel split. -/
+def factorDegreeSum (factors : List ZPoly) : Nat :=
+  factors.foldl (fun total g => total + g.degree?.getD 0) 0
 
-This is an `O(log r)`-depth / `O(n log r)`-total-split-degree reshape of the
-sequential `O(n·r)` peel it replaces; every output is the same reduced value
-because the Hensel lift is unique modulo `p^k`. -/
+/-- Largest polynomial degree in a prospective multifactor Hensel node. -/
+def factorMaxDegree (factors : List ZPoly) : Nat :=
+  factors.foldl (fun largest g => max largest (g.degree?.getD 0)) 0
+
+/-- Degree imbalance produced by splitting `factors` at `i`. -/
+def splitImbalance (factors : List ZPoly) (i : Nat) : Nat :=
+  let left := factorDegreeSum (factors.take i)
+  let right := factorDegreeSum (factors.drop i)
+  if left ≤ right then right - left else left - right
+
+/-- Choose a nontrivial prefix split for a multifactor Hensel node. When one
+modular factor has more than half the total degree, choose the prefix split
+whose two total degrees are closest; this avoids recursively pairing that
+dominant factor with a much smaller neighbour. Otherwise keep the count-halving
+tree, whose deliberately unbalanced degree splits can make the root XGCD much
+cheaper. The final clamp makes the result valid for every list of length at
+least two, independently of the degree data. -/
+def balancedSplitIndex (factors : List ZPoly) : Nat :=
+  let candidates := (List.range (factors.length - 1)).map (fun i => i + 1)
+  let raw :=
+    if factorDegreeSum factors < 2 * factorMaxDegree factors then
+      candidates.foldl (init := 1) fun best i =>
+        if splitImbalance factors i < splitImbalance factors best then i else best
+    else
+      factors.length / 2
+  max 1 (min raw (factors.length - 1))
+
+theorem balancedSplitIndex_pos (factors : List ZPoly) :
+    0 < balancedSplitIndex factors := by
+  simp only [balancedSplitIndex]
+  exact Nat.lt_of_lt_of_le Nat.zero_lt_one (Nat.le_max_left 1 _)
+
+theorem balancedSplitIndex_lt_length
+    (factors : List ZPoly) (h : 2 ≤ factors.length) :
+    balancedSplitIndex factors < factors.length := by
+  simp only [balancedSplitIndex]
+  omega
+
+/-- Recursive list-shape worker behind `multifactorLiftQuadratic`, shaped as a
+count-balanced product tree except where a dominant-degree factor calls for a
+degree-aware split. At each non-singleton step it lifts the left product `g`
+against the right product `h` via `henselLiftFactors`, then recurses into both
+sides with the lifted sub-products as the new targets. The two recursive
+outputs are concatenated `L`-then-`R`, so the returned array stays in the
+original factor order. The singleton case returns the input reduced modulo
+`p^k`; the empty case returns the empty array. Every output is the same reduced
+value because the Hensel lift is unique modulo `p^k`. -/
 @[expose]
 def multifactorLiftQuadraticList
     (p k : Nat) [ZMod64.Bounds p]
@@ -149,9 +189,9 @@ def multifactorLiftQuadraticList
   | [_g] => #[ZPoly.reduceModPow f p k]
   | g₀ :: g₁ :: rest =>
       let gs := g₀ :: g₁ :: rest
-      let half := gs.length / 2
-      let L := gs.take half
-      let R := gs.drop half
+      let split := balancedSplitIndex gs
+      let L := gs.take split
+      let R := gs.drop split
       let g := Array.polyProduct L.toArray
       let h := Array.polyProduct R.toArray
       let xgcd := ZPoly.normalizedXGCD p g h
@@ -164,6 +204,9 @@ def multifactorLiftQuadraticList
   decreasing_by
     all_goals
       simp only [List.length_take, List.length_drop, List.length_cons]
+      have hpos := balancedSplitIndex_pos (g₀ :: g₁ :: rest)
+      have hlt := balancedSplitIndex_lt_length (g₀ :: g₁ :: rest) (by simp)
+      simp only [List.length_cons] at hlt
       omega
 
 /--
@@ -524,9 +567,10 @@ theorem henselLiftQuadratic_bezout_spec
   exact (liftExact_invariant p f k { g, h, s, t } hk hp hinv).bezout_congr
 
 /--
-Recursive preconditions required by the balanced quadratic multifactor lift.
+Recursive preconditions required by the guarded quadratic multifactor tree.
 
-In the non-singleton arm the factor list is split in half; the three conjuncts
+In the non-singleton arm the factor list is split at `balancedSplitIndex`; the
+three conjuncts
 are exactly the inputs `henselLiftFactors_spec` consumes for the binary split
 of the left product `g := Array.polyProduct L.toArray` against the right product
 `h := Array.polyProduct R.toArray`, followed by the recursive preconditions for
@@ -550,9 +594,9 @@ def QuadraticMultifactorLiftInvariant
   | [_g] => True
   | g₀ :: g₁ :: rest =>
       let gs := g₀ :: g₁ :: rest
-      let half := gs.length / 2
-      let L := gs.take half
-      let R := gs.drop half
+      let split := balancedSplitIndex gs
+      let L := gs.take split
+      let R := gs.drop split
       let g := Array.polyProduct L.toArray
       let h := Array.polyProduct R.toArray
       let xgcd := normalizedXGCD p g h
@@ -566,13 +610,17 @@ def QuadraticMultifactorLiftInvariant
   decreasing_by
     all_goals
       simp only [List.length_take, List.length_drop, List.length_cons]
+      have hpos := balancedSplitIndex_pos (g₀ :: g₁ :: rest)
+      have hlt := balancedSplitIndex_lt_length (g₀ :: g₁ :: rest) (by simp)
+      simp only [List.length_cons] at hlt
       omega
 
 /--
 The split-coprimality boundary data needed to initialise every quadratic split
 in the balanced multifactor tree from factors modulo `p`.
 
-In the non-singleton arm the factor list is split in half and the requirement is
+In the non-singleton arm the factor list is split at `balancedSplitIndex`, and
+the requirement is
 that the normalised XGCD of the left lifted product
 `Array.polyProduct ((L.map FpPoly.liftToZ).toArray)` against the right lifted
 product `Array.polyProduct ((R.map FpPoly.liftToZ).toArray)` returns `gcd = 1`
@@ -590,9 +638,9 @@ def QuadraticMultifactorCoprimeSplits
   | [_g] => True
   | g₀ :: g₁ :: rest =>
       let gs := g₀ :: g₁ :: rest
-      let half := gs.length / 2
-      let L := gs.take half
-      let R := gs.drop half
+      let split := balancedSplitIndex (gs.map FpPoly.liftToZ)
+      let L := gs.take split
+      let R := gs.drop split
       let g := Array.polyProduct ((L.map FpPoly.liftToZ).toArray)
       let h := Array.polyProduct ((R.map FpPoly.liftToZ).toArray)
       let xgcd := normalizedXGCD p g h
@@ -603,6 +651,11 @@ def QuadraticMultifactorCoprimeSplits
   decreasing_by
     all_goals
       simp only [List.length_take, List.length_drop, List.length_cons]
+      have hpos := balancedSplitIndex_pos
+        ((g₀ :: g₁ :: rest).map FpPoly.liftToZ)
+      have hlt := balancedSplitIndex_lt_length
+        ((g₀ :: g₁ :: rest).map FpPoly.liftToZ) (by simp)
+      simp only [List.length_map, List.length_cons] at hlt
       omega
 
 /-- Induction-on-`factors` correctness statement feeding
@@ -1017,23 +1070,26 @@ theorem quadraticMultifactorLiftInvariant_of_factorsModP
       generalizing f with
   | case1 => exact absurd rfl hnonempty
   | case2 g => simp [QuadraticMultifactorLiftInvariant]
-  | case3 g₀ g₁ rest gs half L R ihL ihR =>
+  | case3 g₀ g₁ rest gs split L R ihL ihR =>
       simp only [QuadraticMultifactorCoprimeSplits] at hcoprime
       obtain ⟨hgcd, hcopL, hcopR⟩ := hcoprime
       simp only [List.map_cons]
       rw [QuadraticMultifactorLiftInvariant]
-      simp only [← List.map_cons, List.length_map, ← List.map_take, ← List.map_drop]
+      simp only [← List.map_cons, ← List.map_take, ← List.map_drop]
       have hLmonic :
-          ∀ x ∈ (List.take ((g₀ :: g₁ :: rest).length / 2)
+          ∀ x ∈ (List.take (balancedSplitIndex
+              ((g₀ :: g₁ :: rest).map FpPoly.liftToZ))
               (g₀ :: g₁ :: rest)).map FpPoly.liftToZ, DensePoly.Monic x := by
         intro x hx; rw [List.mem_map] at hx
         obtain ⟨g, hgL, rfl⟩ := hx
         exact FpPoly.monic_liftToZ_of_monic g hp
           (hfactors_monic g (List.mem_of_mem_take hgL))
       have hprod : ZPoly.congr
-          (Array.polyProduct ((List.take ((g₀ :: g₁ :: rest).length / 2)
+          (Array.polyProduct ((List.take (balancedSplitIndex
+                ((g₀ :: g₁ :: rest).map FpPoly.liftToZ))
                 (g₀ :: g₁ :: rest)).map FpPoly.liftToZ).toArray *
-            Array.polyProduct ((List.drop ((g₀ :: g₁ :: rest).length / 2)
+            Array.polyProduct ((List.drop (balancedSplitIndex
+                ((g₀ :: g₁ :: rest).map FpPoly.liftToZ))
                 (g₀ :: g₁ :: rest)).map FpPoly.liftToZ).toArray) f p := by
         rw [polyProduct_map_liftToZ_append, List.take_append_drop]
         exact hproduct_mod_p
@@ -1046,17 +1102,27 @@ theorem quadraticMultifactorLiftInvariant_of_factorsModP
           (ZPoly.congr_symm _ _ _
             (henselLiftFactors_fst_congr_mod_base p k f _ _ _ _ hk hp hstart))
           hcopL ?_
-        show List.take ((g₀ :: g₁ :: rest).length / 2) (g₀ :: g₁ :: rest) ≠ []
+        show List.take (balancedSplitIndex
+          ((g₀ :: g₁ :: rest).map FpPoly.liftToZ)) (g₀ :: g₁ :: rest) ≠ []
         apply List.ne_nil_of_length_pos
-        simp only [List.length_take, List.length_cons]; omega
+        simp only [List.length_take]
+        have hpos := balancedSplitIndex_pos
+          ((g₀ :: g₁ :: rest).map FpPoly.liftToZ)
+        have hlen : 0 < (g₀ :: g₁ :: rest).length := by simp
+        omega
       · refine ihR _ (henselLiftFactors_snd_monic p k f _ _ _ _ hk hp hf_monic hstart)
           (fun g hg => hfactors_monic g (List.mem_of_mem_drop hg))
           (ZPoly.congr_symm _ _ _
             (henselLiftFactors_snd_congr_mod_base p k f _ _ _ _ hk hp hstart))
           hcopR ?_
-        show List.drop ((g₀ :: g₁ :: rest).length / 2) (g₀ :: g₁ :: rest) ≠ []
+        show List.drop (balancedSplitIndex
+          ((g₀ :: g₁ :: rest).map FpPoly.liftToZ)) (g₀ :: g₁ :: rest) ≠ []
         apply List.ne_nil_of_length_pos
-        simp only [List.length_drop, List.length_cons]; omega
+        simp only [List.length_drop]
+        have hlt := balancedSplitIndex_lt_length
+          ((g₀ :: g₁ :: rest).map FpPoly.liftToZ) (by simp)
+        simp only [List.length_map] at hlt
+        omega
 
 /-- The lengths of a list's `take`/`drop` split sum to the whole length. -/
 private theorem length_take_add_drop {α : Type} (l : List α) (n : Nat) :
