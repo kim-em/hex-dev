@@ -30,7 +30,7 @@ open scoped BigOperators
 
 namespace HexPolyMathlib
 
-universe u
+universe u v
 
 variable {R : Type u}
 
@@ -463,7 +463,7 @@ theorem toPolynomial_derivative [CommSemiring R] [DecidableEq R] (p : Hex.DenseP
 recovers the original: {name}`HexPolyMathlib.toPolynomial` is a left inverse of
 {name}`HexPolyMathlib.ofPolynomial`. -/
 @[simp, grind =]
-theorem toPolynomial_ofPolynomial [CommRing R] [DecidableEq R] (p : Polynomial R) :
+theorem toPolynomial_ofPolynomial [Semiring R] [DecidableEq R] (p : Polynomial R) :
     toPolynomial (ofPolynomial p) = p := by
   ext n
   simp [coeff_toPolynomial, coeff_ofPolynomial]
@@ -472,7 +472,7 @@ theorem toPolynomial_ofPolynomial [CommRing R] [DecidableEq R] (p : Polynomial R
 recovers the original: {name}`HexPolyMathlib.ofPolynomial` is a left inverse of
 {name}`HexPolyMathlib.toPolynomial`. -/
 @[simp, grind =]
-theorem ofPolynomial_toPolynomial [CommRing R] [DecidableEq R] (p : Hex.DensePoly R) :
+theorem ofPolynomial_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) :
     ofPolynomial (toPolynomial p) = p := by
   apply Hex.DensePoly.ext_coeff
   intro n
@@ -480,7 +480,7 @@ theorem ofPolynomial_toPolynomial [CommRing R] [DecidableEq R] (p : Hex.DensePol
 
 /-- The executable dense-polynomial representation is ring-equivalent to Mathlib polynomials. -/
 @[expose]
-def equiv [CommRing R] [DecidableEq R] : Hex.DensePoly R ≃+* Polynomial R where
+def equiv [Semiring R] [DecidableEq R] : Hex.DensePoly R ≃+* Polynomial R where
   toFun := toPolynomial
   invFun := ofPolynomial
   left_inv := ofPolynomial_toPolynomial
@@ -491,19 +491,39 @@ def equiv [CommRing R] [DecidableEq R] : Hex.DensePoly R ≃+* Polynomial R wher
 /-- The ring isomorphism {name}`equiv` is computed by {name}`toPolynomial` in the forward
 direction. -/
 @[simp, grind =]
-theorem equiv_apply [CommRing R] [DecidableEq R] (p : Hex.DensePoly R) :
+theorem equiv_apply [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) :
     equiv p = toPolynomial p := by
   rfl
 
 /-- The inverse of the ring isomorphism {name}`equiv` is computed by {name}`ofPolynomial`. -/
 @[simp, grind =]
-theorem equiv_symm_apply [CommRing R] [DecidableEq R] (p : Polynomial R) :
+theorem equiv_symm_apply [Semiring R] [DecidableEq R] (p : Polynomial R) :
     equiv.symm p = ofPolynomial p := by
+  rfl
+
+/-- Apply a coefficient-ring equivalence to a dense polynomial. -/
+def mapEquiv {S : Type v} [Semiring R] [DecidableEq R]
+    [Semiring S] [DecidableEq S] (e : R ≃+* S) :
+    Hex.DensePoly R ≃+* Hex.DensePoly S :=
+  equiv.trans <| (Polynomial.mapEquiv e).trans equiv.symm
+
+@[simp] theorem mapEquiv_apply {S : Type v}
+    [Semiring R] [DecidableEq R] [Semiring S] [DecidableEq S]
+    (e : R ≃+* S) (p : Hex.DensePoly R) :
+    mapEquiv e p =
+      ofPolynomial (Polynomial.map e.toRingHom (toPolynomial p)) := by
+  rfl
+
+@[simp] theorem mapEquiv_symm_apply {S : Type v}
+    [Semiring R] [DecidableEq R] [Semiring S] [DecidableEq S]
+    (e : R ≃+* S) (p : Hex.DensePoly S) :
+    (mapEquiv e).symm p =
+      ofPolynomial (Polynomial.map e.symm.toRingHom (toPolynomial p)) := by
   rfl
 
 /-- {name}`ofPolynomial` commutes with polynomial multiplication. -/
 @[simp, grind =]
-theorem ofPolynomial_mul [CommRing R] [DecidableEq R] (p q : Polynomial R) :
+theorem ofPolynomial_mul [Semiring R] [DecidableEq R] (p q : Polynomial R) :
     ofPolynomial (p * q) = ofPolynomial p * ofPolynomial q :=
   map_mul (equiv (R := R)).symm p q
 
@@ -557,7 +577,7 @@ theorem leadingCoeff_toPolynomial [Semiring R] [DecidableEq R]
 
 /-- {name}`toPolynomial` preserves divisibility: a divisibility in the executable
 representation transfers to the corresponding Mathlib polynomials. -/
-theorem toPolynomial_dvd [CommRing R] [DecidableEq R] {p q : Hex.DensePoly R}
+theorem toPolynomial_dvd [Semiring R] [DecidableEq R] {p q : Hex.DensePoly R}
     (hdvd : p ∣ q) :
     toPolynomial p ∣ toPolynomial q := by
   rcases hdvd with ⟨r, hr⟩
@@ -566,7 +586,7 @@ theorem toPolynomial_dvd [CommRing R] [DecidableEq R] {p q : Hex.DensePoly R}
 
 /-- {name}`ofPolynomial` preserves divisibility: a divisibility of Mathlib polynomials
 transfers to the corresponding executable representations. -/
-theorem ofPolynomial_dvd [CommRing R] [DecidableEq R] {p q : Polynomial R}
+theorem ofPolynomial_dvd [Semiring R] [DecidableEq R] {p q : Polynomial R}
     (hdvd : p ∣ q) :
     ofPolynomial p ∣ ofPolynomial q := by
   rcases hdvd with ⟨r, hr⟩
@@ -575,7 +595,7 @@ theorem ofPolynomial_dvd [CommRing R] [DecidableEq R] {p q : Polynomial R}
 
 /-- {name}`HexPolyMathlib.toPolynomial` both preserves and reflects divisibility: executable
 polynomials divide one another exactly when their Mathlib images do. -/
-theorem toPolynomial_dvd_iff [CommRing R] [DecidableEq R]
+theorem toPolynomial_dvd_iff [Semiring R] [DecidableEq R]
     {p q : Hex.DensePoly R} :
     toPolynomial p ∣ toPolynomial q ↔ p ∣ q := by
   constructor

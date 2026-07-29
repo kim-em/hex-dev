@@ -343,6 +343,108 @@ theorem subst_eq [Lean.Grind.Semiring R] [DecidableEq R]
   unfold termsList
   rfl
 
+/-- Substituting variables into one monomial produces the renamed
+monomial. -/
+private theorem prod_X_rename [Lean.Grind.Semiring R] [DecidableEq R]
+    (f : Fin n → Fin k) (m : Mono n) :
+    Mono.prod
+        (fun i => X (f i) : Fin n → MvPoly k R targetCmp) m =
+      monomial (Mono.rename f m) 1 := by
+  unfold Mono.prod
+  have one_pow (d : Nat) : Mono.powBySq (1 : R) d = 1 := by
+    rw [Mono.powBySq_eq_pow]
+    induction d with
+    | zero =>
+        rw [Lean.Grind.Semiring.pow_zero]
+    | succ d ih =>
+        rw [Lean.Grind.Semiring.pow_succ, ih,
+          Lean.Grind.Semiring.one_mul]
+  have factor (i : Fin n) :
+      Mono.powBySq (X (f i) : MvPoly k R targetCmp) m[i] =
+        monomial (Mono.scale m[i] (Mono.unit (f i))) 1 := by
+    change
+      Mono.powBySq
+          (monomial (Mono.unit (f i)) 1 : MvPoly k R targetCmp)
+          m[i] =
+        monomial (Mono.scale m[i] (Mono.unit (f i))) 1
+    rw [powBySq_monomial, one_pow]
+  have fold : ∀ (xs : List (Fin n)) (a : Mono k),
+      xs.foldl
+          (fun acc i => acc * Mono.powBySq (X (f i)) m[i])
+          (monomial a 1 : MvPoly k R targetCmp) =
+        monomial
+          (xs.foldl
+            (fun acc i =>
+              Mono.mul acc (Mono.scale m[i] (Mono.unit (f i))))
+            a)
+          1 := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro a
+        rfl
+    | cons i xs ih =>
+        intro a
+        simp only [List.foldl_cons]
+        rw [factor, monomial_mul_monomial,
+          Lean.Grind.Semiring.one_mul]
+        exact ih _
+  have hone :
+      (1 : MvPoly k R targetCmp) = monomial Mono.zero 1 := by
+    rfl
+  rw [hone, fold]
+  congr 1
+  apply Vector.ext
+  intro j hj
+  let r : Fin k := ⟨j, hj⟩
+  have get_fold : ∀ (xs : List (Fin n)) (a : Mono k),
+      (xs.foldl
+          (fun acc i =>
+            Mono.mul acc (Mono.scale m[i] (Mono.unit (f i))))
+          a)[r] =
+        xs.foldl
+          (fun acc i => acc + if f i = r then m[i] else 0)
+          a[r] := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro a
+        rfl
+    | cons i xs ih =>
+        intro a
+        simp only [List.foldl_cons]
+        rw [ih, Mono.getElem_mul, Mono.getElem_scale,
+          Mono.getElem_unit]
+        by_cases h : f i = r
+        · simp [h]
+        · simp [h, Ne.symm h]
+  change
+    ((List.finRange n).foldl
+        (fun acc i =>
+          Mono.mul acc (Mono.scale m[i] (Mono.unit (f i))))
+        Mono.zero)[r] =
+      (Mono.rename f m)[r]
+  rw [get_fold, Mono.getElem_zero]
+  simp [Mono.rename]
+
+/-- Renaming is substitution by the target variables. -/
+theorem rename_eq_subst [Lean.Grind.Semiring R] [DecidableEq R]
+    (f : Fin n → Fin k) (p : MvPoly n R cmp) :
+    rename targetCmp f p =
+      subst (targetCmp := targetCmp) (fun i => X (f i)) p := by
+  unfold rename subst bind foldTerms
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList,
+    Std.ExtTreeMap.foldl_eq_foldl_toList]
+  apply List.foldl_congr
+  intro acc term _
+  rw [addMonomial_eq, prod_X_rename]
+  change
+    acc + monomial (Mono.rename f term.1) term.2 =
+      acc + monomial Mono.zero term.2 *
+        monomial (Mono.rename f term.1) 1
+  rw [monomial_mul_monomial, Mono.zero_mul,
+    Lean.Grind.Semiring.mul_one]
+
 private theorem prod_subst [Lean.Grind.Semiring R] [DecidableEq R]
     (s : Fin n → Option R) (m : Mono n) :
     Mono.prod
