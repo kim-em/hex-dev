@@ -30,34 +30,7 @@ strategy. -/
 theorem refineTo?_isSome {p : ZPoly} (rep : RefinedIsolation p)
     (target : Int) :
     (rep.refineTo? target .nkThenPellet).isSome := by
-  rw [RefinedIsolation.refineTo?]
-  let rawTarget := max target (mahlerPrec p : Int)
-  have hsome :=
-    HexRootsMathlib.DyadicRootIsolation.refineTo?_isSome_mixed rep rawTarget
-  cases hraw : rep.1.refineTo? rawTarget .nkThenPellet with
-  | none => simp [hraw] at hsome
-  | some iso' =>
-      have hready : rawTarget ≤ iso'.square.prec := by
-        exact HexRootsMathlib.DyadicRootIsolation.refineTo_ready hraw
-      have hprec : (mahlerPrec p : Int) ≤ iso'.square.prec :=
-        (le_max_right target (mahlerPrec p : Int)).trans hready
-      let out : RefinedIsolation p := ⟨iso', hprec⟩
-      have hroot : HexRootsMathlib.RefinedIsolation.root out =
-          HexRootsMathlib.RefinedIsolation.root rep := by
-        calc
-          HexRootsMathlib.RefinedIsolation.root out =
-              HexRootsMathlib.DyadicRootIsolation.root iso' :=
-            (HexRootsMathlib.DyadicRootIsolation.root_refined iso' hprec).symm
-          _ = HexRootsMathlib.DyadicRootIsolation.root rep.1 :=
-            HexRootsMathlib.DyadicRootIsolation.refineTo_root rep.1 rawTarget
-              .nkThenPellet hraw
-          _ = HexRootsMathlib.RefinedIsolation.root rep :=
-            HexRootsMathlib.DyadicRootIsolation.root_refined rep.1 rep.property
-      have hI : Intersects out rep :=
-        (HexRootsMathlib.RefinedIsolation.intersects_iff_root_eq out rep).2 hroot
-      simp only [Option.bind_eq_bind, Option.bind_some]
-      rw [dif_pos hprec, dif_pos hI]
-      simp
+  exact HexRootsMathlib.RefinedIsolation.refineTo?_isSome_mixed rep target
 
 /-- Every successful refined result reaches the requested precision. -/
 theorem refineTo?_precision {p : ZPoly} (rep : RefinedIsolation p)

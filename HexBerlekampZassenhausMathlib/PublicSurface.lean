@@ -493,6 +493,95 @@ private theorem mem_factorizationFlattenedFactors_iff
   · rintro ⟨entry, hentry, hne_mul, rfl⟩
     exact ⟨entry, hentry, hne_mul, rfl⟩
 
+/-- Every recorded factor divides the transported input polynomial. -/
+theorem factorize_entry_dvd (f : Hex.ZPoly) {entry : Hex.ZPoly × Nat}
+    (hentry : entry ∈ (Hex.ZPoly.factorize f).factors) :
+    HexPolyZMathlib.toPolynomial entry.1 ∣
+      HexPolyZMathlib.toPolynomial f := by
+  let φ := Hex.ZPoly.factorize f
+  have hmult : entry.2 ≠ 0 := by
+    have hpos := Hex.factorize_entry_multiplicity_pos f entry
+      (Array.mem_toList_iff.mpr hentry)
+    omega
+  have hflat : entry.1 ∈ factorizationFlattenedFactors φ :=
+    mem_factorizationFlattenedFactors_iff.mpr
+      ⟨entry, Array.mem_toList_iff.mpr hentry, hmult, rfl⟩
+  have hmapped : HexPolyZMathlib.toPolynomial entry.1 ∈
+      (factorizationFlattenedFactors φ).map
+        HexPolyZMathlib.toPolynomial :=
+    List.mem_map.mpr ⟨entry.1, hflat, rfl⟩
+  obtain ⟨r, hr⟩ := List.dvd_prod hmapped
+  have hdvd : HexPolyZMathlib.toPolynomial entry.1 ∣
+      Polynomial.C φ.scalar *
+        ((factorizationFlattenedFactors φ).map
+          HexPolyZMathlib.toPolynomial).prod := by
+    refine ⟨Polynomial.C φ.scalar * r, ?_⟩
+    rw [hr]
+    ring
+  have hproduct := congrArg HexPolyZMathlib.toPolynomial
+    (factorize_product f)
+  rw [factorizationProduct_toPolynomial] at hproduct
+  exact hproduct ▸ hdvd
+
+private theorem exists_isRoot_prod {z : ℂ}
+    {polys : List (Polynomial ℂ)} (h : polys.prod.IsRoot z) :
+    ∃ p ∈ polys, p.IsRoot z := by
+  induction polys with
+  | nil => simp [Polynomial.IsRoot] at h
+  | cons p polys ih =>
+      rw [List.prod_cons, Polynomial.IsRoot, Polynomial.eval_mul] at h
+      rcases mul_eq_zero.mp h with hp | htail
+      · exact ⟨p, List.mem_cons_self, hp⟩
+      · obtain ⟨q, hq, hz⟩ := ih htail
+        exact ⟨q, List.mem_cons_of_mem p hq, hz⟩
+
+private theorem map_list_prod (polys : List (Polynomial ℤ)) :
+    polys.prod.map (Int.castRingHom ℂ) =
+      (polys.map fun p => p.map (Int.castRingHom ℂ)).prod := by
+  induction polys with
+  | nil => simp
+  | cons p polys ih => simp [ih]
+
+/-- Every complex root of a nonzero input is a root of one of the recorded
+irreducible factors. -/
+theorem factorize_exists_root (f : Hex.ZPoly) (hf : f ≠ 0) {z : ℂ}
+    (hz : ((HexPolyZMathlib.toPolynomial f).map
+      (Int.castRingHom ℂ)).IsRoot z) :
+    ∃ entry ∈ (Hex.ZPoly.factorize f).factors,
+      ((HexPolyZMathlib.toPolynomial entry.1).map
+        (Int.castRingHom ℂ)).IsRoot z := by
+  let φ := Hex.ZPoly.factorize f
+  have hproduct := congrArg HexPolyZMathlib.toPolynomial
+    (factorize_product f)
+  rw [factorizationProduct_toPolynomial] at hproduct
+  have hscalar : φ.scalar ≠ 0 := by
+    intro hs
+    have hzero : HexPolyZMathlib.toPolynomial f = 0 := by
+      simpa [φ, hs] using hproduct.symm
+    apply hf
+    apply HexPolyZMathlib.equiv.injective
+    simpa [HexPolyZMathlib.equiv_apply] using hzero
+  have hproductℂ := congrArg (Polynomial.map (Int.castRingHom ℂ)) hproduct
+  have hroot :
+      (((factorizationFlattenedFactors φ).map
+        ((fun p : Polynomial ℤ => p.map (Int.castRingHom ℂ)) ∘
+          HexPolyZMathlib.toPolynomial)).prod).IsRoot z := by
+    rw [← hproductℂ] at hz
+    have heval :
+        (φ.scalar : ℂ) *
+        (((factorizationFlattenedFactors φ).map
+          ((fun p : Polynomial ℤ => p.map (Int.castRingHom ℂ)) ∘
+            HexPolyZMathlib.toPolynomial)).prod).eval z = 0 := by
+      simpa [Polynomial.IsRoot, φ, map_list_prod, List.map_map,
+        Function.comp_apply] using hz
+    exact (mul_eq_zero.mp heval).resolve_left (by exact_mod_cast hscalar)
+  obtain ⟨qℂ, hqℂ, hqroot⟩ := exists_isRoot_prod hroot
+  obtain ⟨q, hq, rfl⟩ := List.mem_map.mp hqℂ
+  obtain ⟨entry, hentry, _hmult, rfl⟩ :=
+    mem_factorizationFlattenedFactors_iff.mp hq
+  exact ⟨entry, Array.mem_toList_iff.mp hentry,
+    by simpa [Function.comp_apply] using hqroot⟩
+
 /--
 The transport coercion of `factorizationFlattenedFactors` to a multiset
 equals the multiplicity sum over the original entry list. -/

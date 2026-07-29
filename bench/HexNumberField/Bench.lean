@@ -12,7 +12,7 @@ Benchmark registrations for `HexNumberField`.
 
 The fixed cases separate the costs requested by the library SPEC:
 
-* degree-10 fixed-presentation multiplication and inversion;
+* degree-10 fixed-presentation multiplication, inversion, and minimal relation;
 * lazy addition eliminant construction;
 * isolation and operation-ball disambiguation for a precomputed eliminant;
 * the complete lazy addition driver;
@@ -97,6 +97,16 @@ def runFixedInv : Unit → IO UInt64 :=
   else
     fun _ => throw <| IO.userError "fixed/inv: irreducibility check failed"
 
+def runFixedMinpoly : Unit → IO UInt64 :=
+  if hirred : ZPoly.isIrreducible degreeTenPoly = true then
+    letI : ZPoly.CheckedIrreducible degreeTenPoly :=
+      ⟨hirred, by decide⟩
+    fun _ => do
+      let a ← requireSome "fixed/minpoly" (← fixedFieldRef.get)
+      return polyChecksum (← requireSome "fixed/minpoly" a.minpoly?)
+  else
+    fun _ => throw <| IO.userError "fixed/minpoly: irreducibility check failed"
+
 /- Degree-`n` dense multiplication followed by reduction modulo a degree-`n`
 relation performs `O(n²)` rational coefficient operations. This canonical
 `n = 10` case is fixed because the SPEC supplies an absolute 100 ms budget,
@@ -112,6 +122,14 @@ required degree-10 budget is tested as a fixed regression. -/
 setup_fixed_benchmark runFixedInv where {
   repeats := 5, maxSecondsPerCall := 0.1,
   expectedHash := some 0x1525969728101d06
+}
+
+/- One iterative Krylov orbit is shared across the degree-10 first-dependence
+search. This fixed registration catches accidental recomputation of powers in
+each span matrix entry before that cost reaches exactification callers. -/
+setup_fixed_benchmark runFixedMinpoly where {
+  repeats := 3, maxSecondsPerCall := 5.0,
+  expectedHash := some 0xb1ed00ebc8d039e9
 }
 
 /-! # Lazy arithmetic fixtures -/

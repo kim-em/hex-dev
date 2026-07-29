@@ -159,6 +159,35 @@ def ofNormalized?
     some (.mk p prim pos_lc pos_degree checked squarefree (SimpleRoot.mk canonical)
       canonical rfl)
 
+/-- The success bit of canonicalization is exactly the success bit of its
+isolation, refinement, and representative-selection pipeline. This exposes
+the checked boundary needed by the Mathlib totality proof without exposing the
+sealed `AlgebraicNumber` constructor. -/
+theorem ofNormalized?_isSome_eq
+    (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
+    (pos_degree : 0 < p.degree?.getD 0)
+    (checked : ZPoly.CheckedIrreducible p) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p) :
+    (ofNormalized? p prim pos_lc pos_degree checked squarefree rep).isSome =
+      if _hzero : p = ZPoly.X then true else
+        (do
+          let isolations ← isolate p squarefree (separationDepth p : Int)
+          let refined ← isolations.mapM DyadicRootIsolation.toRefined?
+          refined.toList.find? fun (r : RefinedIsolation p) =>
+            r.sameRoot rep).isSome := by
+  unfold ofNormalized?
+  split
+  · simp
+  · cases hisolate : isolate p squarefree (separationDepth p : Int) with
+    | none => simp
+    | some isolations =>
+        cases hrefine : isolations.mapM DyadicRootIsolation.toRefined? with
+        | none => simp [hrefine]
+        | some refined =>
+            cases hfind : refined.find? fun r => r.sameRoot rep with
+            | none => simp [hrefine, hfind]
+            | some canonical => simp [hrefine, hfind]
+
 /-- Successful canonicalization retains the supplied normalized polynomial. -/
 theorem ofNormalized?_p
     (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)

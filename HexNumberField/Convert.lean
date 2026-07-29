@@ -50,32 +50,25 @@ end AlgebraicNumber
 
 namespace AlgebraicRoot
 
-/-- Factor a lazy root's enclosing polynomial and select the normalized
-irreducible factor containing its chosen root. -/
+/-- Try one normalized factor of a lazy root's enclosing polynomial. Candidate
+isolations are refined to the enclosing polynomial's separation precision
+before their discs are compared. -/
 @[expose]
-def exact? (a : AlgebraicRoot) : Option AlgebraicNumber :=
-  let tryFactor := fun q =>
-    if hprim : ZPoly.content q = 1 then
-      if hpos : 0 < q.leadingCoeff then
-        if hdegree : 0 < q.degree?.getD 0 then
-          if hirred : ZPoly.isIrreducible q = true then
-            if hsquarefree : HasOnlySimpleRoots q then do
-              let isolations ← isolate q hsquarefree (separationDepth q : Int)
-              let refined ← isolations.mapM DyadicRootIsolation.toRefined?
-              -- `a.rep` has the separation precision for `a.p`. A factor can
-              -- have a weaker intrinsic bound, so refine its roots to the
-              -- enclosing polynomial's precision before comparing discs.
-              let comparable ← refined.mapM fun r => do
-                let r' ← r.refineTo? (mahlerPrec a.p : Int)
-                some r'.1
-              -- Separation for `a.p` makes a match unique across all of its
-              -- factors, so selecting the first matching isolation is sound.
-              let matching ← comparable.toList.find? fun r =>
+def exactFactor? (a : AlgebraicRoot) (q : ZPoly) : Option AlgebraicNumber :=
+  if hprim : ZPoly.content q = 1 then
+    if hpos : 0 < q.leadingCoeff then
+      if hdegree : 0 < q.degree?.getD 0 then
+        if hirred : ZPoly.isIrreducible q = true then
+          if hsquarefree : HasOnlySimpleRoots q then do
+            let isolations ← isolate q hsquarefree (separationDepth q : Int)
+            let refined ← isolations.mapM DyadicRootIsolation.toRefined?
+            let comparable ← refined.mapM fun r =>
+              (r.refineTo? (mahlerPrec a.p : Int)).unattach
+            let matching ← comparable.toList.find? fun r =>
+              decide ((mahlerPrec a.p : Int) ≤ r.1.square.prec) &&
                 r.1.square.discsMeet a.rep.1.square
-              AlgebraicNumber.ofNormalized? q hprim hpos hdegree
-                ⟨hirred, hdegree⟩ hsquarefree matching
-            else
-              none
+            AlgebraicNumber.ofNormalized? q hprim hpos hdegree
+              ⟨hirred, hdegree⟩ hsquarefree matching
           else
             none
         else
@@ -84,11 +77,18 @@ def exact? (a : AlgebraicRoot) : Option AlgebraicNumber :=
         none
     else
       none
+  else
+    none
+
+/-- Factor a lazy root's enclosing polynomial and select the normalized
+irreducible factor containing its chosen root. -/
+@[expose]
+def exact? (a : AlgebraicRoot) : Option AlgebraicNumber :=
   (ZPoly.factorize a.p).factors.foldl
     (fun found entry =>
       match found with
       | some b => some b
-      | none => tryFactor entry.1)
+      | none => exactFactor? a entry.1)
     none
 
 /-- Canonicalize a lazy root. Failure is a checked implementation branch whose
@@ -203,24 +203,53 @@ def mulMatrix (a : QAdjoin p x) :
   Matrix.ofFn fun i j =>
     products[j].coeffs.coeff i.val
 
+/-- The first `n + 1` Krylov powers, built with one multiplication per step. -/
+@[expose]
+def krylovPowers (a : QAdjoin p x) :
+    (n : Nat) → Vector (QAdjoin p x) (n + 1)
+  | 0 => #v[1]
+  | n + 1 =>
+      let previous := krylovPowers a n
+      previous.push (previous.get (Fin.last n) * a)
+
+/-- Krylov orbit `1, a, a², ...` through the defining-field dimension. -/
+@[expose]
+def krylovOrbit [ZPoly.CheckedIrreducible p]
+    (a : QAdjoin p x) :
+    Vector (QAdjoin p x) (p.degree?.getD 0 + 1) :=
+  krylovPowers a (p.degree?.getD 0)
+
+/-- The monic polynomial encoded by a Krylov dependence vector. -/
+@[expose]
+def relationPoly {k : Nat} (coeffs : Vector Rat k) : DensePoly Rat :=
+  DensePoly.ofCoeffs ((coeffs.toArray.map fun c => -c).push 1)
+
+/-- The monic relation at one Krylov-orbit index, when the new power is in
+the span of its predecessors. -/
+@[expose]
+def relationAt? [ZPoly.CheckedIrreducible p]
+    (_a : QAdjoin p x)
+    (orbit : Vector (QAdjoin p x) (p.degree?.getD 0 + 1))
+    (k : Nat) : Option ZPoly :=
+  let n := p.degree?.getD 0
+  if hk : k ≤ n then
+    let previous : Matrix Rat k n := Matrix.ofFn fun i j =>
+      (orbit.get ⟨i.val, by omega⟩).coeffs.coeff j
+    let target : Vector Rat n := Vector.ofFn fun j =>
+      (orbit.get ⟨k, Nat.lt_succ_of_le hk⟩).coeffs.coeff j
+    (Matrix.spanCoeffs previous target).map fun coeffs =>
+      ZPoly.ratPolyPrimitivePart (relationPoly coeffs)
+  else
+    none
+
 /-- First monic relation in the Krylov orbit of the multiplication operator,
 normalized as a primitive positive-leading integer polynomial. -/
 @[expose]
 def minpoly? [ZPoly.CheckedIrreducible p]
     (a : QAdjoin p x) : Option ZPoly :=
   let n := p.degree?.getD 0
-  let M := a.mulMatrix
-  let one : Vector Rat n := Vector.unit Rat ⟨0, ZPoly.CheckedIrreducible.pos_degree⟩
-  let orbit := (List.range n).foldl
-    (fun vs _ => vs.push (M * vs[vs.size - 1]!)) #[one]
-  let relation := fun (k : Nat) => do
-    let previous : Matrix Rat k n := Matrix.ofFn fun i j =>
-      orbit[i.val]![j]
-    let target : Vector Rat n := orbit[k]!
-    let coeffs ← Matrix.spanCoeffs previous target
-    let rational := DensePoly.ofCoeffs ((coeffs.toArray.map fun c => -c).push 1)
-    some (ZPoly.ratPolyPrimitivePart rational)
-  (List.range n).findSome? fun i => relation (i + 1)
+  let orbit := a.krylovOrbit
+  (List.range n).findSome? fun i => a.relationAt? orbit (i + 1)
 
 /-- Convert a fixed-presentation value to its canonical irreducible
 representation. Every stored certificate and every precision-sensitive step

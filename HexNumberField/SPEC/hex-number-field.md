@@ -207,9 +207,10 @@ def AlgebraicRoot.exact (a : AlgebraicRoot) : AlgebraicNumber :=
   a.exact?.getD (panicWith 0 "AlgebraicRoot.exact: certification failed")
 ```
 
-`QAdjoin.toAlgebraicNumber?` computes the minimal polynomial of the
-multiplication operator by row reduction, clears denominators, normalizes the
-primitive part, and identifies the matching isolated root.
+`QAdjoin.toAlgebraicNumber?` materializes `1, a, a², ...` once with one
+fixed-field multiplication per new power, finds the first Krylov dependence by
+row reduction, clears denominators, normalizes the primitive part, and
+identifies the matching isolated root.
 
 `AlgebraicRoot.exact?` factors `a.p`, selects the unique irreducible factor whose
 isolated root agrees with `a.rep`, and returns that factor in canonical form.

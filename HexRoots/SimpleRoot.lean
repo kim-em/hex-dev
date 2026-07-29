@@ -132,6 +132,7 @@ theorem SimpleRoot.posDegree {p : ZPoly} (x : SimpleRoot p) :
     precision, deciding the subtype bound. `isolate`'s output always
     qualifies (its target has a `separationDepth ≥ mahlerPrec` floor); this
     is the constructor consumers use to record that fact. -/
+@[expose]
 def DyadicRootIsolation.toRefined? {p : ZPoly} (iso : DyadicRootIsolation p) :
     Option (RefinedIsolation p) :=
   if h : (mahlerPrec p : Int) ≤ iso.square.prec then some ⟨iso, h⟩ else none
