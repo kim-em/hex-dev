@@ -264,6 +264,14 @@ instance (priority := 100) instGrevlexOrder : IsMonomialOrder (@grevlex n) := by
     (prepend e m)[i.succ] = m[i] := by
   simp [prepend]
 
+@[simp] theorem dropHead_prepend (e : Nat) (m : Mono n) :
+    dropHead (prepend e m) = m := by
+  apply Vector.ext
+  intro i hi
+  let j : Fin n := ⟨i, hi⟩
+  change (dropHead (prepend e m))[j] = m[j]
+  rw [getElem_dropHead, getElem_prepend_succ]
+
 theorem prepend_head_dropHead (m : Mono (n + 1)) :
     prepend m.head (dropHead m) = m := by
   apply Vector.ext
@@ -533,6 +541,40 @@ theorem splits_mem_iff (m a b : Mono n) :
           (prepend a.head (dropHead a),
             prepend (m.head - a.head) (dropHead b)) = (a, b)
         rw [hb, prepend_head_dropHead, prepend_head_dropHead]
+
+/-- Every monomial decomposition occurs exactly once in `splits`. -/
+theorem splits_nodup (m : Mono n) : (splits m).Nodup := by
+  induction n with
+  | zero =>
+      simp [splits]
+  | succ n ih =>
+      unfold splits
+      unfold List.Nodup
+      rw [List.pairwise_flatMap]
+      constructor
+      · intro k hk
+        apply (ih (dropHead m)).map
+          (fun ab =>
+            (prepend k ab.1, prepend (m.head - k) ab.2))
+        intro x y hxy h
+        apply hxy
+        apply Prod.ext
+        · have hleft :=
+            congrArg (fun z : Mono (n + 1) × Mono (n + 1) => dropHead z.1) h
+          simpa using hleft
+        · have hright :=
+            congrArg (fun z : Mono (n + 1) × Mono (n + 1) => dropHead z.2) h
+          simpa using hright
+      · apply List.nodup_range.imp
+        intro k l hkl x hx y hy hxy
+        rcases List.mem_map.mp hx with ⟨⟨a, b⟩, hab, rfl⟩
+        rcases List.mem_map.mp hy with ⟨⟨c, d⟩, hcd, rfl⟩
+        apply hkl
+        have hhead :=
+          congrArg
+            (fun z : Mono (n + 1) × Mono (n + 1) => z.1[0])
+            hxy
+        simpa using hhead
 
 theorem dvd_lcm_left (a b : Mono n) : dvd a (lcm a b) = true := by
   simp only [dvd, decide_eq_true_eq]
