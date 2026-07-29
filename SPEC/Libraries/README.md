@@ -1,7 +1,9 @@
 # Libraries
 
+- **hex-basic**: small Mathlib-free standard-library shims, including kernel-reducible array and vector operations
 - **hex-arith**: extended GCD, Barrett/Montgomery reduction, binomial coefficients, Fermat's little theorem
 - **hex-poly**: dense `Array`-backed polynomial representation
+- **hex-mv-poly**: canonical distributed multivariate polynomials at fixed arity with explicit monomial orders
 - **hex-matrix**: dense matrices, matrix/vector arithmetic, elementary row and column operations, submatrix slicing, the Gram matrix
 - **hex-row-reduce**: row reduction (RREF), rank, span, nullspace
 - **hex-determinant**: the Leibniz determinant and its cofactor/Cauchy-Binet/Plücker theory
@@ -32,6 +34,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 
 - **hex-mod-arith-mathlib**: `ZMod64 p ≃+* ZMod p`
 - **hex-poly-mathlib**: `DensePoly R ≃+* Polynomial R`
+- **hex-mv-poly-mathlib**: `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
 - **hex-matrix-mathlib**: matrix equivalence, row operations as transvections, and the Mathlib algebra tower transported onto our matrix type
 - **hex-row-reduce-mathlib**: rank = `Matrix.rank`, nullspace = `LinearMap.ker`, span agreement
 - **hex-determinant-mathlib**: `det` agreement with `Matrix.det`, plus the Plücker / Desnanot-Jacobi assembly
@@ -55,17 +58,19 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 
 Each library with its immediate dependencies:
 
+- **hex-basic**: (none)
 - **hex-arith**: (none)
 - **hex-poly**: (none)
-- **hex-matrix**: (none)
+- **hex-mv-poly**: hex-poly, hex-basic
+- **hex-matrix**: hex-basic
 - **hex-row-reduce**: hex-matrix
 - **hex-determinant**: hex-matrix
 - **hex-bareiss**: hex-determinant, hex-matrix
 - **hex-mod-arith**: hex-arith
 - **hex-gram-schmidt**: hex-row-reduce, hex-determinant, hex-bareiss
-- **hex-lll**: hex-gram-schmidt, hex-matrix
+- **hex-lll**: hex-gram-schmidt, hex-matrix, hex-basic
 - **hex-poly-fp**: hex-poly, hex-mod-arith
-- **hex-poly-z**: hex-poly
+- **hex-poly-z**: hex-poly, hex-arith, hex-basic
 - **hex-roots**: hex-poly-z
 - **hex-real-roots**: hex-poly-z
 - **hex-interval**: (none)
@@ -73,19 +78,20 @@ Each library with its immediate dependencies:
 - **hex-resultant**: hex-poly
 - **hex-number-field**: hex-poly-z, hex-roots, hex-resultant, hex-berlekamp-zassenhaus, hex-matrix, hex-row-reduce
 - **hex-number-field-tower**: hex-number-field, hex-resultant, hex-berlekamp-zassenhaus, hex-row-reduce
-- **hex-berlekamp**: hex-poly-fp, hex-matrix, hex-gfq-ring
-- **hex-hensel**: hex-poly-fp, hex-poly-z
+- **hex-berlekamp**: hex-poly-fp, hex-matrix, hex-row-reduce, hex-gfq-ring, hex-basic
+- **hex-hensel**: hex-poly-fp, hex-poly-z, hex-basic
 - **hex-conway**: hex-berlekamp
 - **hex-gfq-ring**: hex-poly-fp
 - **hex-gfq-field**: hex-gfq-ring
 - **hex-gfq**: hex-gfq-field, hex-conway, hex-gf2
-- **hex-gf2**: hex-poly
+- **hex-gf2**: hex-poly, hex-basic
 - **hex-berlekamp-zassenhaus**: hex-berlekamp, hex-hensel, hex-lll
 
 Mathlib companion libraries (each also depends on Mathlib):
 
 - **hex-mod-arith-mathlib**: hex-mod-arith
 - **hex-poly-mathlib**: hex-poly
+- **hex-mv-poly-mathlib**: hex-mv-poly, hex-poly-mathlib
 - **hex-poly-z-mathlib**: hex-poly-z, hex-poly-mathlib
 - **hex-roots-mathlib**: hex-roots, hex-poly-z-mathlib
 - **hex-real-roots-mathlib**: hex-real-roots, hex-poly-z-mathlib
@@ -122,7 +128,9 @@ three; and `hex-lll` builds on `hex-gram-schmidt`. Each has a matching
 `*-mathlib` companion of the same shape. In the diagram below,
 `hex-matrix` stands for that whole family.
 
-Three independent roots: hex-poly, hex-arith, hex-matrix.
+The algebraic graph has three independent roots: hex-poly, hex-arith,
+and hex-matrix. The module-boundary helpers in hex-basic are an
+additional utility root used across the graph.
 
 ```
       hex-poly     hex-arith      hex-matrix
@@ -166,6 +174,16 @@ Interval arithmetic is an independent library pair:
 hex-interval ── hex-interval-mathlib
 ```
 
+Multivariate polynomials extend the univariate polynomial library and
+use `hex-basic` for the current module-boundary reduction shims:
+
+```text
+hex-basic ─────────────────┐
+                           ├── hex-mv-poly ──────────────┐
+hex-poly ──────────────────┘                             ├── hex-mv-poly-mathlib
+     └──────────────────────── hex-poly-mathlib ─────────┘
+```
+
 ## Index
 
 Libraries marked **(released)** are published as standalone
@@ -176,6 +194,7 @@ library source (`HexFoo/SPEC/hex-foo.md`) when they have moved there. This
 directory also contains centralized specifications for planned libraries and
 for developments whose source-local move has not happened yet.
 
+- [hex-basic](https://github.com/leanprover/hex-basic) (released): small Mathlib-free standard-library shims, including kernel-reducible array and vector operations
 - [hex-arith](../../HexArith/SPEC/hex-arith.md): extended GCD, Barrett/Montgomery reduction, binomial coefficients, Fermat's little theorem
 - [hex-matrix](https://github.com/leanprover/hex-matrix/blob/main/SPEC/hex-matrix.md) (released): dense matrices, arithmetic, elementary row/column operations, submatrix slicing, the Gram matrix
 - [hex-row-reduce](https://github.com/leanprover/hex-row-reduce/blob/main/SPEC/hex-row-reduce.md) (released): row reduction, rank, span, nullspace
@@ -189,6 +208,8 @@ for developments whose source-local move has not happened yet.
 - [hex-mod-arith-mathlib](../../HexModArithMathlib/SPEC/hex-mod-arith-mathlib.md): `ZMod64 p ≃+* ZMod p`
 - [hex-poly](../../HexPoly/SPEC/hex-poly.md): dense polynomial library, operations, GCD, CRT
 - [hex-poly-mathlib](../../HexPolyMathlib/SPEC/hex-poly-mathlib.md): `DensePoly R ≃+* Polynomial R`
+- [hex-mv-poly](hex-mv-poly.md): canonical distributed multivariate polynomials with explicit monomial orders
+- [hex-mv-poly-mathlib](hex-mv-poly.md#the-mathlib-layer): planned companion supplying `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
 - [hex-poly-fp](../../HexPolyFp/SPEC/hex-poly-fp.md): polynomials over `F_p`, Frobenius, square-free decomposition
 - [hex-gf2](../../HexGF2/SPEC/hex-gf2.md): packed bitwise polynomials over `F_2`, `GF(2^n)` elements
 - [hex-gf2-mathlib](../../HexGF2Mathlib/SPEC/hex-gf2-mathlib.md): `GF2Poly ≃+* FpPoly 2`, `GF2n`/`GF2nPoly ≃+* FiniteField 2 f hf hirr`, packed-field finiteness/cardinality

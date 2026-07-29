@@ -420,47 +420,6 @@ natural API is `Φₙ` as a `ZPoly`, the factorization
 `xⁿ − 1 = ∏_{d | n} Φ_d`, irreducibility over `ℚ`, and the degree
 identity `deg Φₙ = φ(n)`.
 
-**Multivariate polynomials.** A `Std.ExtTreeMap Monomial R` distributed
-representation, where `Monomial` is a fixed-length exponent vector over
-`Fin n`, ordered by an explicit monomial order argument
-`cmp : Monomial → Monomial → Ordering` (lex, graded lex, graded reverse
-lex). The order is an argument rather than an instance because
-`Monomial` admits many monomial orders with none canonical, and
-algorithms switch between them on the same type: grevlex for
-Gröbner-basis computation, lex for elimination. `Std.TreeMap` already
-takes its comparator as an explicit argument, so this matches.
-
-A tree map rather than a hash map because ordered iteration gives cheap
-access to the leading term, which every algorithm above the ring
-operations needs; the extensional variant so that equal key-value sets
-give propositional equality. Zero coefficients are never stored, which
-makes the canonical form condition "no zero values".
-
-Since an exponent vector encodes an ordered finite variable set, the
-equivalence in the `-mathlib` companion is
-`MvPoly n R ≃+* MvPolynomial (Fin n) R`. Arbitrary index types would
-need an explicit finite ordered encoding carried alongside, which is a
-different design.
-
-The natural API: ring operations, `eval` at a point, partial evaluation
-of a subset of the variables, `coeff`, `degreeOf i`, `totalDegree`,
-`derivative` in a variable, homogeneous components, and substitution.
-Content and primitive part in a distinguished variable belong here under
-a gcd domain hypothesis on the coefficients, stated rather than folded
-into the generic interface.
-
-Two views are needed, not one. The distributed view above is right for
-Gröbner-basis work and for degree bookkeeping; the recursive view
-`R[x₁, …, xₙ] ≃ (R[x₁, …, xₙ₋₁])[xₙ]` is right for anything that
-recurses on a main variable, which includes multivariate gcd,
-resultants, and factorization. Supply both with the transfer
-isomorphism proved, rather than picking one and forcing the other
-algorithms through it. The one-variable case of the recursive view is
-where multivariate polynomials connect to the existing univariate
-tower: `MvPoly 1 R ≃+* DensePoly R`, and more usefully, the
-coefficient-extraction map into `DensePoly (MvPoly n R)` that lets a
-multivariate algorithm call the univariate code on the main variable.
-
 **Multivariate gcd and squarefree decomposition.** Required by rational
 expression simplification, by the recursive view, and by multivariate
 factorization, so it gets its own entry rather than being assumed. The
@@ -468,6 +427,9 @@ standard routes are modular and sparse-interpolation algorithms (Brown
 for the dense case, Zippel for the sparse), reducing to univariate gcds
 at evaluation points and interpolating back. The certificate is the one
 from the modular gcd item: cofactors plus a coprimality witness.
+Content and primitive part in a distinguished variable belong to this
+library. Their coefficient hypotheses are stated on the individual
+operations rather than folded into the generic polynomial interface.
 
 **Gröbner bases.** Buchberger's algorithm with the Gebauer-Möller pair
 criteria, then F4 if benchmarks call for it. Applications are ideal
