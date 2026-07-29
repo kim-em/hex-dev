@@ -2045,19 +2045,13 @@ def inferredGeneration? (generations : Array Nat)
   some (greatest + 1)
 
 /-- Recompute theorem-instantiation generation for a structurally validated
-retained proposal.  Reply admission already checked the full draft shape, so
-policy view construction need only recheck freshness and provenance. -/
+retained proposal.  Reply admission already checked the full draft shape, and
+program-watching action freshness pins that validated snapshot.  Policy view
+construction therefore rechecks only freshness and engine-owned provenance. -/
 def Engine.instantiationGeneration? (state : Engine Fact)
     (retained : RetainedSuggestion) : Option Nat := do
   if !state.actionFresh retained.action then none else pure ()
   let .instantiate request := retained.suggestion | none
-  let baseSize := state.program.nodes.size
-  let .ok (program, _, resolved) :=
-    resolveDrafts baseSize state.program state.depths [] request.nodes | none
-  let _ <- resolveRequestedPairs baseSize resolved program request.equalities
-  let scopes <- resolveRequestedScopes baseSize resolved program state.rules request.scopes
-  if !state.bindings.all (state.acceptsScope program) ||
-      !scopes.all (state.acceptsScope program) then none else pure ()
   inferredGeneration? state.generations retained.action request
 
 /-- Treat equality endpoints as unordered for structural deduplication. -/
