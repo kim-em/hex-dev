@@ -103,12 +103,20 @@ private def primeChoiceDataScore (f : ZPoly) (c : SmallPrimeCandidate) :
   else
     none
 
-/-- Prefer a probed prime only when it removes at least one quarter of the
-current modular factors. Tiny `r` reductions do not reliably predict cheaper
-recombination and are not worth abandoning the deterministic first choice. -/
+/-- Whether a probed prime removes at least one quarter of the current modular
+factors. -/
+private def isMaterialFactorReduction (oldCount newCount : Nat) : Bool :=
+  decide (4 * newCount ≤ 3 * oldCount)
+
+#guard isMaterialFactorReduction 12 9 = true
+#guard isMaterialFactorReduction 12 10 = false
+
+/-- Prefer a probed prime only after a material modular-width reduction. Tiny
+`r` reductions do not reliably predict cheaper recombination and are not worth
+abandoning the deterministic first choice. -/
 private def betterPrimeChoiceDataScore
     (old new : PrimeChoiceDataScore) : PrimeChoiceDataScore :=
-  if 4 * new.factorCount ≤ 3 * old.factorCount then
+  if isMaterialFactorReduction old.factorCount new.factorCount then
     new
   else
     old
@@ -389,9 +397,10 @@ and disproportionately valuable. -/
 private def probeEarlyFactorFloor : Nat := 8
 
 /-- Continue from a first good prime for at most `extra` further good primes,
-retaining a choice only after a material modular-width reduction. Stop on an
-irreducible image, or on a halving improvement that still leaves substantial
-Hensel width. -/
+retaining a choice only after a material modular-width reduction. Non-good
+candidates do not consume fuel, so the scan is additionally bounded by the
+finite candidate list. Stop on an irreducible image, or on a halving improvement
+that still leaves substantial Hensel width. -/
 private def improvePrimeData? (f : ZPoly) (first : PrimeChoiceDataScore) :
     Nat → List SmallPrimeCandidate → PrimeChoiceDataScore
   | _, [] => first
@@ -431,6 +440,11 @@ private def isEvenPowerDifference (f : ZPoly) : Bool :=
         | 1 :: middle => middle.all (fun coeff => coeff == 0)
         | _ => false
     | _ => false
+
+#guard isEvenPowerDifference (DensePoly.ofCoeffs #[-1, 0, 0, 0, 1]) = true
+#guard isEvenPowerDifference (DensePoly.ofCoeffs #[-1, 0, 0, 1]) = false
+#guard isEvenPowerDifference (DensePoly.ofCoeffs #[-1, 1, 0, 0, 1]) = false
+#guard isEvenPowerDifference (DensePoly.ofCoeffs #[1, 0, 0, 0, 1]) = false
 
 /-- Whether the first modular factorization predicts enough downstream work to
 justify bounded prime look-ahead. -/

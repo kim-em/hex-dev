@@ -89,6 +89,8 @@ def factorTraceToJson (trace : FactorTrace) : Json :=
       ("prime", Json.num (JsonNumber.fromInt (Int.ofNat trace.prime))),
       ("liftedFactorCount",
         Json.num (JsonNumber.fromInt (Int.ofNat trace.liftedFactorCount))),
+      ("subsetCandidates",
+        Json.num (JsonNumber.fromInt (Int.ofNat trace.subsetCandidates))),
       ("declined", Json.bool trace.declined) ]
 
 /-- Encode an optional prime choice as the compact width diagnostic. -/

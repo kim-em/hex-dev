@@ -5,7 +5,8 @@ stack.
 
 ## Measurement environment
 
-- Hex revision: `a1fdbd81ef038faa41765fb39a79cd083109c8ed`
+- Hex public-factor revision: `567b5aea0c22d13fcf43541b5371717823870999`
+- Lower-layer Hex revision: `a1fdbd81ef038faa41765fb39a79cd083109c8ed`
 - Hex date: 2026-07-29
 - External-comparator date/revision: 2026-07-28 / `5c371a5a`
 - Host: `chungus2`, AMD EPYC 9455, Linux x86-64
@@ -22,33 +23,28 @@ were not rerun because this revision changes only Hex. Their exports use the
 same host, corpus, CPU, and persistent-line protocol as the fresh Hex sweep.
 Exact paired ratios are reported only where those conditions match.
 
-Fresh lean-bench exports record a dirty worktree because the borrowed-argument
-ownership fix and refreshed evidence were pending commit. The full recorded
-hash identifies the implementation base; direct execution includes the
-borrowed-argument fix. The rejected pre-fix Hensel run is not retained.
-
-The evidence was integrated onto `61a78096`. That intervening mainline commit
-changes only resultant proofs, specifications, and conformance; it does not
-touch the factorization runtime, benchmark corpus, or measurement protocol, so
-the `a1fdbd81` measurements remain current for this branch.
+The fresh public-factor export records a clean worktree at `567b5aea`. This
+revision changes prime selection only, so the finite-field, Hensel, fixed BZ,
+and kernel exports from `a1fdbd81` remain current lower-layer evidence. Rejected
+broad-probe sweeps are not retained.
 
 ## Headline outcome
 
-The verified hot-path work makes the public dispatcher 2.70× faster at the
-solved-row median (1.244 ms to 460.392 µs) and faster on 359 of 371 rows shared
-with the preceding Hex record. Public Hex now solves 373 of 392 rows, two more
-than the no-decline classical entry point.
+The combined verified hot-path work makes the public dispatcher 2.80× faster
+at the solved-row median (1.244 ms to 443.618 µs). The latest bounded
+prime-width policy preserves 373 of 392 solves while accelerating the hardest
+affected rows by 3.49×–71.43×.
 
 Against verified Isabelle BZ, the overhead-filtered eligible-row median falls
-from 3.95× to 1.09× Hex/Isabelle. Hex wins 108 eligible rows and Isabelle 126,
-so this is near parity rather than an aggregate Hex victory. FLINT, PARI/GP,
-and NTL remain much faster overall.
+from 3.95× to 0.996× Hex/Isabelle. Hex wins 123 eligible rows and Isabelle
+121. This is a narrow aggregate Hex victory, not a decisive margin; FLINT,
+PARI/GP, and NTL remain much faster overall.
 
 ## Integer-factorization corpus
 
 | System | OK | Timeout | Median | p90 | Slowest solved |
 |---|---:|---:|---:|---:|---:|
-| Hex public factor | 373 | 19 | 460.392 µs | 9.191 ms | 9.747 s |
+| Hex public factor | 373 | 19 | 443.618 µs | 8.408 ms | 9.161 s |
 | Hex lattice | 366 | 26 | 1.864 ms | 89.351 ms | 9.612 s |
 | Hex classical, no decline | 371 | 21 | 424.409 µs | 9.484 ms | 3.918 s |
 | FLINT | 391 | 1 | 66.850 µs | 1.184 ms | 1.228 s |
@@ -66,15 +62,36 @@ With both sides at least 10× above protocol overhead:
 
 | Pair | Eligible | Median | p10–p90 | First faster | Second faster |
 |---|---:|---:|---:|---:|---:|
-| Hex public / Isabelle BZ | 234 | 1.09× | 0.48×–3.60× | 108 | 126 |
+| Hex public / Isabelle BZ | 244 | 0.996× | 0.47×–3.04× | 123 | 121 |
 | Hex classical / Isabelle BZ | 231 | 1.26× | 0.50×–3.39× | 92 | 139 |
 | Hex lattice / Isabelle LLL | 228 | 0.15× | 0.004×–2.55× | 175 | 53 |
-| Hex public / Hex classical | 237 | 1.008× | — | 105 | 132 |
+| Hex public / Hex classical | 239 | 0.989× | 0.68×–1.08× | 141 | 98 |
 
-Public dispatch is almost neutral on common eligible rows while adding
+Public dispatch now wins most common eligible rows while adding
 `sd5_x_phi45` and `sd6`. The old pattern—classical nearly always winning—was
-mostly repeated setup and avoidable hot-path work, not the intrinsic price of
-the verified public API.
+repeated setup and avoidable hot-path work, not the intrinsic price of the
+verified public API.
+
+## Bounded prime-width selection
+
+The shared lifting selector now inspects at most two further good primes on
+high-cost transforms and adopts a choice only after at least a 25% modular
+factor-count reduction. It also recognizes prime all-one cyclotomics and avoids
+speculative probes on even `x^n - 1`, whose difference-of-squares recursion is
+already cheap.
+
+| Corpus row | Previous Hex | Current Hex | Change |
+|---|---:|---:|---:|
+| `sd5_x_phi45` | 9.747 s | 136.466 ms | 71.43× faster |
+| `xpow105_minus1` | 1.341 s | 54.357 ms | 24.67× faster |
+| `cyclo_phi151` | 237.558 ms | 31.654 ms | 7.50× faster |
+| `cyclo_phi179` | 317.151 ms | 43.814 ms | 7.24× faster |
+| `cyclo_phi61` | 26.198 ms | 4.762 ms | 5.50× faster |
+| `legendre_P30` | 173.071 ms | 49.550 ms | 3.49× faster |
+
+`xpow120_minus1`, the principal downside sentinel, remains solved at
+164.987 ms versus 173.545 ms previously. Every former false-probe regression
+on composite/sparse cyclotomics returned to baseline.
 
 ## Hensel lifting
 
@@ -141,10 +158,11 @@ kernel-rebuilding baseline, 1.245 ms with the kernel shared, and 569.224 µs for
 the fixed path. The fixed path is 18.89% matrix, 2.95% nullspace, and 78.17%
 witness split. Balanced product construction remains neutral.
 
-The single-shot hybrid seam reaches `SD_5` in 96.895 ms through the classical
-tier and `SD_6` in 9.087 s after a lattice decline; the lattice core alone
-takes 8.492 s. In the persistent corpus service, public `sd6` completes in
-9.163 s—only 8.4% below the cutoff, so that frontier result has little margin.
+The earlier single-shot hybrid seam reaches `SD_5` in 96.895 ms through the
+classical tier and `SD_6` in 9.087 s after a lattice decline; the lattice core
+alone takes 8.492 s. In the current persistent corpus service, public `sd5`
+takes 95.846 ms and `sd6` completes in 9.161 s—only 8.4% below the cutoff, so
+that frontier result has little margin.
 
 ## Six presentation graphs
 
@@ -164,7 +182,8 @@ Fresh Hex exports under `reports/bench-results/`:
 - `hex-hensel-a1fdbd81-chungus2.json`
 - `hex-berlekamp-zassenhaus-parametric-a1fdbd81-chungus2.json`
 - `hex-berlekamp-zassenhaus-fixed-a1fdbd81-chungus2.json`
-- `hexbz-factor-sweep-hex-a1fdbd81-chungus2.json`
+- `hexbz-factor-sweep-hex-567b5aea-chungus2.json` (SHA-256
+  `f3bf572df064788203da76fcb5ede2a20e376bb2fa2ff448c4bc2d244157bd63`)
 - `hexbz-kernel-factor-a1fdbd81-chungus2.json`
 - `berlekamp-diagnostic-a1fdbd81-chungus2.txt`
 - `bz-spikes-a1fdbd81-chungus2.txt`

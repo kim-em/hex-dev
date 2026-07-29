@@ -1,8 +1,10 @@
 # HexBerlekampZassenhaus Performance Report
 
-Current Hex measurements are from revision
-`a1fdbd81ef038faa41765fb39a79cd083109c8ed`, measured 2026-07-29 on
-`chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0.
+The current public-factor corpus measurement is from revision
+`567b5aea0c22d13fcf43541b5371717823870999`; fixed, parametric, and lower-layer
+measurements remain from `a1fdbd81ef038faa41765fb39a79cd083109c8ed`. Both
+were measured 2026-07-29 on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to
+CPU 0.
 
 ## Bench Targets
 
@@ -61,7 +63,7 @@ without bound.
 
 | System | OK | Timeout | Solved-row median |
 |---|---:|---:|---:|
-| Hex public factor | 373 | 19 | 460.392 µs |
+| Hex public factor | 373 | 19 | 443.618 µs |
 | Hex lattice | 366 | 26 | 1.864 ms |
 | Hex classical, no decline | 371 | 21 | 424.409 µs |
 | FLINT 0.9.0 | 391 | 1 | 66.850 µs |
@@ -71,15 +73,27 @@ without bound.
 | Verified Isabelle LLL | 314 | 78 | 6.109 ms |
 
 The external rows are the unchanged current 2026-07-28 measurements from the
-same host, corpus, CPU, and protocol. On 234 common rows above the 10× protocol
-overhead threshold, public Hex / verified Isabelle BZ has median 1.09× and
-p10–p90 0.48×–3.60×; Hex wins 108 rows and Isabelle 126. This is near parity,
-not an overall Hex win. The old eligible-row median was 3.95×.
+same host, corpus, CPU, and protocol. On 244 common rows above the 10× protocol
+overhead threshold, public Hex / verified Isabelle BZ has median 0.996× and
+p10–p90 0.47×–3.04×; Hex wins 123 rows and Isabelle 121. This is a narrow
+aggregate Hex win, not yet a decisive margin. The old eligible-row median was
+3.95×.
 
-Public and classical now have a 1.008× eligible-row median ratio. Public wins
-105 rows, classical 132, and public additionally solves `sd5_x_phi45` and
+The public row is recorded in
+`reports/bench-results/hexbz-factor-sweep-hex-567b5aea-chungus2.json`
+(SHA-256 `f3bf572df064788203da76fcb5ede2a20e376bb2fa2ff448c4bc2d244157bd63`).
+
+Public and classical now have a 0.989× eligible-row median ratio. Public wins
+141 rows, classical 98, and public additionally solves `sd5_x_phi45` and
 `sd6`. The dispatcher overhead is therefore almost neutral on the common
 corpus while its fallback adds two genuine frontier successes.
+
+The bounded prime-width policy drives the latest movement. It looks ahead by
+at most two good primes only on predicted high-cost transforms, requires at
+least a 25% modular-width reduction before changing prime, and preserves cheap
+even `x^n - 1` recursion. The largest current/previous gains are 71.43× on
+`sd5_x_phi45`, 24.67× on `xpow105_minus1`, 7.50× on `cyclo_phi151`, 7.24×
+on `cyclo_phi179`, 5.50× on `cyclo_phi61`, and 3.49× on `legendre_P30`.
 
 ## Diagnostics
 
@@ -107,10 +121,10 @@ Both paths are relative to `reports/bench-results/`.
 
 | Fixture | Hex public | Verified Isabelle BZ | Hex / Isabelle |
 |---|---:|---:|---:|
-| `SD_5` | 103.643 ms | 22.827 ms | 4.54x |
-| `SD_5` shifted by 1 | 89.829 ms | 14.875 ms | 6.04x |
-| `SD_5` shifted by 2 | 90.684 ms | 14.907 ms | 6.08x |
-| `SD_6` | 9.163 s | timeout | — |
+| `SD_5` | 95.846 ms | 22.827 ms | 4.20x |
+| `SD_5` shifted by 1 | 83.845 ms | 14.875 ms | 5.64x |
+| `SD_5` shifted by 2 | 84.912 ms | 14.907 ms | 5.70x |
+| `SD_6` | 9.161 s | timeout | — |
 
 The fresh public service now solves `SD_6`; the no-decline classical service
 still times out. The public result and the isolated lattice result (8.187 s)
@@ -122,10 +136,10 @@ success has a narrow margin.
 
 - Nineteen public corpus cases still hit the 10-second cutoff.
 - FLINT, PARI/GP, and NTL remain much faster in aggregate.
-- Isabelle BZ still wins more eligible common rows than Hex despite the near-
-  parity median.
+- Hex and Isabelle BZ remain essentially tied despite Hex's narrow aggregate
+  lead; several structured families still favour Isabelle heavily.
 - The lattice route has a much heavier tail than the classical route.
-- Wilkinson-family rows regress by a 1.221× median against the preceding Hex
-  record under the shorter relift-probe policy.
+- `wilkinson_56` regresses by 1.30×, although the eligible Wilkinson-family
+  median improves to 0.94× current/previous.
 - The BHKS registrations are useful upper bounds but do not describe the
   observed small-fixture scaling.

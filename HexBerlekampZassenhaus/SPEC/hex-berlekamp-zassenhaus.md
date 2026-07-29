@@ -269,15 +269,16 @@ once.
 
 The shared lifting entry `toMonicPrimeData?` preserves this first-suitable
 choice in the ordinary case. It performs a bounded factor-count look-ahead
-when the monic transform has degree at least 50 with at least 24 modular
-factors (excluding even `x^n - 1`, whose difference-of-squares recursion is
-already cheap), when the first good image has at least nine modular factors and
-the transform contains a coefficient whose `log2` is at least 512, or when a
-degree-at-least-50 transform is the uniform all-one form of a prime
-cyclotomic. It examines at most two further good primes,
+when the monic transform reaches `probeMinDegree = 50` with at least
+`probeMinFactors = 24` modular factors (excluding even `x^n - 1`, whose
+difference-of-squares recursion is already cheap), when the first good image
+has at least `probeSwollenFactors = 9` modular factors and the transform
+contains a coefficient whose `log2` reaches `probeCoeffLog = 512`, or when a
+transform reaching `probeCyclotomicDegree = 50` is the uniform all-one form of
+a prime cyclotomic. It examines at most `primeProbeFuel = 2` further good primes,
 retains a choice only when it reduces the current modular factor count by at
 least one quarter, and stops early on a singleton or on a halving improvement
-that still leaves at least eight factors. A
+that still leaves at least `probeEarlyFactorFloor = 8` factors. A
 singleton modular factor is already a checked Berlekamp irreducibility
 certificate; more generally, reducing the factor count narrows both Hensel
 lifting and recombination enough to repay the bounded probe on these high-cost
