@@ -7,8 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexBasic.ArrayDecEq
+public import HexBasic.ExtTreeMap
 public import HexBasic.OfFn
-public import Std.Data.ExtTreeMap.Lemmas
 
 @[expose] public section
 

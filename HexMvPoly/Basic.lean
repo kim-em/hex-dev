@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import Batteries.Data.List.Perm
+public import HexBasic.ListShim
 public import HexMvPoly.Mono
 
 @[expose] public section
