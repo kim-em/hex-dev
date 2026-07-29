@@ -347,7 +347,6 @@ def usesPlan (request : RuleRequest Fact) : Plan Fact :=
       .success []
         [.instantiate
           { key := 91
-            triggers := [request.action.node]
             nodes := []
             equalities := List.replicate arenaLimits.maxUses equality
             payload := instanceLabel }]
