@@ -24,16 +24,28 @@
 - Compiled CompPoly's univariate and bivariate recursive-view equivalence files
   after migrating their equivalence chains to the public
   `isEmptyRingEquiv`, `finSuccEquiv`, and dense-polynomial bridges.
+- Recorded all eleven native HexMvPoly benchmark ladders, with every declared
+  complexity verdict passing.
+- Added reproducible adapters for the pinned CompPoly `CMvPolynomial` and a
+  canonical sorted-list proxy for the still-unavailable Mathlib
+  `MvSparsePoly`, then recorded all five native comparator families.
+- Added deterministic, dependency-free SVG plots for the five comparator
+  families.
+- Kept the reusable tree-algorithm boundary explicit: generic joint traversal
+  and merge operations live in `HexBasic/ExtTreeMap.lean`; the comparator and
+  polynomial layers add only representation adapters and monomial policy.
 
 ## Current frontier
 
 The companion and proof-probe targets build locally, and the release-quality
-paired kernel sweep is committed. The benchmark report, comparator plots, and
-external native comparator adapters remain to be recorded.
+paired kernel sweep is committed. Native comparator exports, adapters, and
+plots are ready to commit. Five representative compiled profiles and the two
+Phase 4 reports remain.
 
 ## Next step
 
-Finish the native comparator evidence, profiles, plots, and Phase 4 report.
+Commit the native comparator evidence, capture one filtered profile per input
+family, then write and validate the Phase 4 reports.
 
 ## Blockers
 
