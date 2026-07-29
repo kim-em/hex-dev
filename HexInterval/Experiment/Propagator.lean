@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexInterval.Basic
+public import HexInterval.Experiment.StructuralCursor
 
 @[expose] public section
 
@@ -169,6 +169,27 @@ structure EqualityId where
   index : Nat
   deriving DecidableEq, Repr
 
+/-- Stable structural evidence inspected by a matcher. -/
+inductive StructuralKey where
+  | node (node : NodeId)
+  | equality (equality : EqualityId)
+  | application (application : ApplicationId)
+  deriving DecidableEq, Repr
+
+/-- One engine-enumerated structural input with its immutable creation
+generation. -/
+structure StructuralInput where
+  key : StructuralKey
+  generation : Nat
+  deriving DecidableEq, Repr
+
+abbrev MatcherSize := StructuralCursor.Size
+abbrev MatcherView := StructuralCursor.View
+abbrev MatcherCursor := StructuralCursor.Cursor
+abbrev MatcherLimits := StructuralCursor.Limits
+abbrev MatcherError := StructuralCursor.Error
+abbrev MatcherStep := StructuralCursor.Step StructuralInput
+
 /-- A single scheduler queue carries both companion-backed rule applications
 and engine-owned equality contractors. -/
 inductive WorkItem where
@@ -202,6 +223,19 @@ program nodes by the frontend or a package matcher. -/
 inductive BindingKind where
   | local
   | scoped
+  /-- One registration-wide application, anchored at the first node with the
+  declared head.  This is the initial ownership model for whole-network
+  structural matchers: program growth wakes one cursor, not one cursor per
+  matching expression. -/
+  | global
+  deriving DecidableEq, Repr
+
+/-- Structural enumeration attached to one concrete application.  The first
+reference arm scans the whole append-only network; selective operation,
+equality, and compiled-pattern watches remain later variants. -/
+inductive MatchWatch where
+  | none
+  | network
   deriving DecidableEq, Repr
 
 /-- One explicit propagator registration.  Several registrations may have the
@@ -217,6 +251,7 @@ structure Registration where
   This is the coarse first trigger for rules whose result depends on shape
   outside their anchor's immutable argument subgraph. -/
   watchesProgram : Bool := false
+  matchWatch : MatchWatch := .none
   initialEffort : Nat := 0
   deriving Repr
 
@@ -314,12 +349,19 @@ def registrationsCheck (program : Program) (rules : Array Registration) : Bool :
     match program.operationWithKey? rule.head with
     | none => false
     | some operation =>
-        match rule.binding with
-        | .local =>
-            uniqueList rule.watches && uniqueList rule.writes &&
-              rule.watches.all (Slot.validFor operation) &&
-                rule.writes.all (Slot.validFor operation)
-        | .scoped => rule.watches.isEmpty && rule.writes.isEmpty
+        let matchValid :=
+          match rule.matchWatch with
+          | .none => rule.binding != .global
+          | .network =>
+              rule.binding == .global && rule.kind == .instantiate &&
+                rule.watchesProgram && rule.watches.isEmpty && rule.writes.isEmpty
+        matchValid && match rule.binding with
+          | .local =>
+              uniqueList rule.watches && uniqueList rule.writes &&
+                rule.watches.all (Slot.validFor operation) &&
+                  rule.writes.all (Slot.validFor operation)
+          | .scoped => rule.watches.isEmpty && rule.writes.isEmpty
+          | .global => rule.watches.isEmpty && rule.writes.isEmpty
 
 def ScopeBinding.same (left right : ScopeBinding) : Bool :=
   left.rule == right.rule && left.anchor == right.anchor &&
@@ -366,6 +408,7 @@ def compileApplications (program : Program) (rules : Array Registration)
     none
   else
     let mut applications := #[]
+    let mut globalCompiled := Array.replicate rules.size false
     for binding in bindings do
       let (ruleId, rule) <- ruleEntry? rules binding.rule
       applications := applications.push
@@ -392,6 +435,16 @@ def compileApplications (program : Program) (rules : Array Registration)
               writes
               effort := rule.initialEffort
               policyItems := watches.length + writes.length }
+        else if rule.binding == .global && rule.head == operation.key &&
+            !globalCompiled[ruleIndex]! then
+          globalCompiled := globalCompiled.set! ruleIndex true
+          applications := applications.push
+            { rule := { index := ruleIndex }
+              node := { index := nodeIndex }
+              kind := rule.kind
+              watches := []
+              writes := []
+              effort := rule.initialEffort }
     some applications
 
 /-- Bounded application compiler.  Error `false` denotes an invalid program or
@@ -403,6 +456,7 @@ def compileApplicationsWithin (limit : Nat) (program : Program)
       !scopeBindingsCheck program rules bindings then
     throw false
   let mut applications := #[]
+  let mut globalCompiled := Array.replicate rules.size false
   for binding in bindings do
     if limit <= applications.size then
       throw true
@@ -435,6 +489,18 @@ def compileApplicationsWithin (limit : Nat) (program : Program)
             writes
             effort := rule.initialEffort
             policyItems := watches.length + writes.length }
+      else if rule.binding == .global && rule.head == operation.key &&
+          !globalCompiled[ruleIndex]! then
+        if limit <= applications.size then
+          throw true
+        globalCompiled := globalCompiled.set! ruleIndex true
+        applications := applications.push
+          { rule := { index := ruleIndex }
+            node := { index := nodeIndex }
+            kind := rule.kind
+            watches := []
+            writes := []
+            effort := rule.initialEffort }
   pure applications
 
 /-- Exact application identity used to validate append-only extension. -/
@@ -529,11 +595,18 @@ def resolveScopeApplications (rules : Array Registration)
 /-- Compile local applications anchored only in an appended node suffix.
 `limit` bounds the returned suffix, not the final application array. -/
 def compileLocalApplicationsWithin (limit start : Nat) (program : Program)
-    (rules : Array Registration) (generation : Nat := 0) :
+    (rules : Array Registration) (existing : Array Application := #[])
+    (generation : Nat := 0) :
     Except Bool (Array Application) := do
   if program.nodes.size < start || !program.check || !registrationsCheck program rules then
     throw false
   let mut applications := #[]
+  let mut globalCompiled := Array.replicate rules.size false
+  for application in existing do
+    if application.rule.index < rules.size then
+      globalCompiled := globalCompiled.set! application.rule.index true
+    else
+      throw false
   for nodeIndex in [start:program.nodes.size] do
     let some node := program.nodes[nodeIndex]? | throw false
     let some operation := program.operation? node.op | throw false
@@ -553,6 +626,18 @@ def compileLocalApplicationsWithin (limit start : Nat) (program : Program)
             writes
             effort := rule.initialEffort
             policyItems := watches.length + writes.length
+            generation }
+      else if rule.binding == .global && rule.head == operation.key &&
+          !globalCompiled[ruleIndex]! then
+        if limit <= applications.size then throw true
+        globalCompiled := globalCompiled.set! ruleIndex true
+        applications := applications.push
+          { rule := { index := ruleIndex }
+            node := { index := nodeIndex }
+            kind := rule.kind
+            watches := []
+            writes := []
+            effort := rule.initialEffort
             generation }
   pure applications
 
@@ -577,6 +662,10 @@ structure Action where
   effort : Nat
   generation : Nat := 0
   inputs : List SeenVersion
+  /-- Engine-enumerated structural inputs for this exact matcher batch. -/
+  structuralInputs : List StructuralInput := []
+  /-- Frozen matcher epoch which produced `structuralInputs`. -/
+  matcherEpoch : Option Nat := none
   deriving Repr
 
 /-- Immutable fact view supplied with an action. -/
@@ -913,6 +1002,7 @@ inductive Resource where
   | applications
   | queueEntries
   | actions
+  | matcherVisits
   | effort
   | registryEntries
   | acceptedFacts
@@ -937,6 +1027,10 @@ structure Limits where
   maxApplications : Nat
   maxQueueEntries : Nat
   maxActions : Nat
+  /-- Global number of engine-enumerated structural inputs. -/
+  maxMatcherVisits : Nat := 0
+  /-- Maximum structural inputs exposed by one matcher invocation. -/
+  matcherBatchSize : Nat := 0
   maxAcceptedFacts : Nat
   maxRetainedSuggestions : Nat
   maxEffort : Nat
@@ -959,6 +1053,7 @@ structure Metrics where
   suppressedInsertions : Nat := 0
   queuePops : Nat := 0
   requests : Nat := 0
+  matcherVisits : Nat := 0
   replies : Nat := 0
   candidates : Nat := 0
   improvements : Nat := 0
@@ -1011,6 +1106,7 @@ products, and equality products determine whether the network changes. -/
 structure InstanceKey where
   rule : RuleKey
   substitution : List NodeId
+  structural : List StructuralKey := []
   products : List NodeId
   scopes : List ScopeBinding := []
   equalities : List EqualityPair
@@ -1079,6 +1175,10 @@ structure Engine (Fact : Type) where
   callback contracts; proof replay remains the soundness boundary. -/
   acceptsScope : Program -> ScopeBinding -> Bool := fun _ _ => true
   applications : Array Application
+  /-- Engine-owned matcher progress, aligned exactly with `applications`.
+  Ordinary applications carry `none`; matcher applications carry their
+  append-stable cursor. -/
+  matcherCursors : Array (Option MatcherCursor)
   watchers : Array (List WorkItem)
   facts : Array Fact
   versions : Array Nat
@@ -1089,6 +1189,9 @@ structure Engine (Fact : Type) where
   queued : Array Bool
   equalityQueued : Array Bool
   pending : Option Action
+  /-- Prepared matcher progress for the pending action.  This cursor never
+  crosses the registry request boundary and commits only with a valid reply. -/
+  pendingMatcher : Option MatcherCursor
   history : Array (FactEvent Fact)
   suggestions : Array RetainedSuggestion
   instances : List InstanceKey
@@ -1132,6 +1235,34 @@ def initialQueue (applicationCount : Nat) : Array WorkItem := Id.run do
     queue := queue.push (.application { index })
   queue
 
+/-- Freeze the three append-only structural arena sizes without copying their
+contents. -/
+def matcherViewOf (programVersion nodeCount equalityCount applicationCount : Nat) :
+    MatcherView :=
+  { programVersion
+    size :=
+      { nodes := nodeCount
+        equalities := equalityCount
+        applications := applicationCount } }
+
+/-- Allocate engine-owned cursors for one application suffix.  A newly created
+matcher scans the complete current network; existing matcher cursors are never
+reset by this helper. -/
+def matcherCursorSuffix? (rules : Array Registration)
+    (applications : Array Application) (start : Nat) (view : MatcherView) :
+    Option (Array (Option MatcherCursor)) := do
+  if applications.size < start then none else pure ()
+  let mut cursors := #[]
+  for index in [start:applications.size] do
+    let application <- applications[index]?
+    let rule <- rules[application.rule.index]?
+    cursors := cursors.push <|
+      if rule.matchWatch == .network then
+        some (StructuralCursor.Cursor.start view)
+      else
+        none
+  pure cursors
+
 /-- Resource-first validation shared by checked frontends and `Engine.start`.
 Size caps precede every traversal of untrusted program or registry metadata. -/
 def preflightStart (program : Program) (rules : Array Registration)
@@ -1164,6 +1295,9 @@ def preflightStart (program : Program) (rules : Array Registration)
     throw (.resourceLimit .nodeDepth)
   if !registrationsCheck program rules then
     throw .invalidRegistrations
+  if limits.matcherBatchSize == 0 &&
+      rules.any (fun rule => rule.matchWatch == .network) then
+    throw .invalidRegistrations
   if !scopeBindingsCheck program rules bindings then
     throw .invalidBindings
 
@@ -1186,6 +1320,10 @@ def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Arr
     throw (.resourceLimit .queueEntries)
   let some watchers := buildWatchers program.nodes.size applications #[]
     | throw .invalidRegistrations
+  let matcherView :=
+    matcherViewOf 0 program.nodes.size 0 applications.size
+  let some matcherCursors := matcherCursorSuffix? rules applications 0 matcherView
+    | throw .invalidRegistrations
   pure
     { factDomain
       program
@@ -1194,6 +1332,7 @@ def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Arr
       bindings
       acceptsScope
       applications
+      matcherCursors
       watchers
       facts
       versions := Array.replicate facts.size 0
@@ -1204,6 +1343,7 @@ def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Arr
       queued := Array.replicate applications.size true
       equalityQueued := #[]
       pending := none
+      pendingMatcher := none
       history := #[]
       suggestions := #[]
       instances := []
@@ -1230,6 +1370,90 @@ def programView (state : Engine Fact) : ProgramView :=
     nodes := state.program.nodes
     generations := state.generations
     depths := state.depths }
+
+/-- Constant-size structural view used to renew matcher cursors. -/
+def matcherView (state : Engine Fact) : MatcherView :=
+  matcherViewOf state.programVersion state.generations.size
+    state.equalities.size state.applications.size
+
+/-- Read one engine-owned creation generation by stable structural identifier. -/
+def structuralGeneration? (state : Engine Fact) : StructuralKey -> Option Nat
+  | .node node => state.generations[node.index]?
+  | .equality equality =>
+      state.equalities[equality.index]?.map (fun edge => edge.generation)
+  | .application application =>
+      state.applications[application.index]?.map (fun entry => entry.generation)
+
+/-- Resolve one offset in a cursor's frozen canonical delta stream. -/
+def matcherInputAt? (state : Engine Fact) (cursor : MatcherCursor)
+    (offset : Nat) : Option StructuralInput := do
+  let nodeCount := cursor.limit.nodes - cursor.base.nodes
+  if offset < nodeCount then
+    let key := StructuralKey.node { index := cursor.base.nodes + offset }
+    let generation <- state.structuralGeneration? key
+    return { key, generation }
+  let offset := offset - nodeCount
+  let equalityCount := cursor.limit.equalities - cursor.base.equalities
+  if offset < equalityCount then
+    let key := StructuralKey.equality { index := cursor.base.equalities + offset }
+    let generation <- state.structuralGeneration? key
+    return { key, generation }
+  let offset := offset - equalityCount
+  let applicationCount := cursor.limit.applications - cursor.base.applications
+  if offset < applicationCount then
+    let key := StructuralKey.application { index := cursor.base.applications + offset }
+    let generation <- state.structuralGeneration? key
+    return { key, generation }
+  none
+
+/-- Preview one matcher batch without advancing engine-owned progress.  An
+exhausted old epoch is renewed over exactly the current append-only delta. -/
+def previewMatcher (state : Engine Fact) (cursor : MatcherCursor) : MatcherStep :=
+  if state.limits.maxMatcherVisits < state.metrics.matcherVisits then
+    .invalidCursor
+  else
+    let view := state.matcherView
+    let cursor? :=
+      if cursor.exhausted then
+        match StructuralCursor.renew view cursor with
+        | .ok renewed => some renewed
+        | .error _ => none
+      else
+        some cursor
+    match cursor? with
+    | none => .invalidCursor
+    | some cursor =>
+        let remaining :=
+          state.limits.maxMatcherVisits - state.metrics.matcherVisits
+        let limits : MatcherLimits :=
+          { maxVisits := cursor.visits + remaining
+            batchSize := state.limits.matcherBatchSize }
+        StructuralCursor.take (state.matcherInputAt?) limits view cursor
+
+/-- Shared matcher preparation used by both the FIFO and policy schedulers.
+The prepared cursor remains engine-private. -/
+inductive PreparedMatch where
+  | ordinary
+  | batch (inputs : List StructuralInput) (epoch : Nat) (next : MatcherCursor)
+  | resourceLimit
+  | invalid
+  deriving Repr
+
+def prepareMatch (state : Engine Fact) (application : ApplicationId)
+    (rule : Registration) : PreparedMatch :=
+  match rule.matchWatch, state.matcherCursors[application.index]? with
+  | .none, some none => .ordinary
+  | .network, some (some cursor) =>
+      match state.previewMatcher cursor with
+      | .yielded inputs next => .batch inputs.toList next.epoch next
+      | .resourceLimit _ => .resourceLimit
+      | .exhausted _ | .invalidCursor => .invalid
+  | _, _ => .invalid
+
+/-- Verify that every structural input still names the immutable generation
+observed by the engine when it issued the matcher batch. -/
+def structuralInputsFresh (state : Engine Fact) (inputs : List StructuralInput) : Bool :=
+  inputs.all fun input => state.structuralGeneration? input.key == some input.generation
 
 /-- Read the versions of exactly the watched nodes in registration order. -/
 def seenVersions? (state : Engine Fact) : List NodeId -> Option (List SeenVersion)
@@ -1261,7 +1485,12 @@ def actionFresh (state : Engine Fact) (action : Action) : Bool :=
         rule.key == action.key &&
         (!rule.watchesProgram || action.programVersion == state.programVersion) &&
         action.inputs.map (fun input => input.node) == application.watches &&
-        current == action.inputs
+        current == action.inputs &&
+        state.structuralInputsFresh action.structuralInputs &&
+        match rule.matchWatch, action.matcherEpoch with
+        | .none, none => action.structuralInputs.isEmpty
+        | .network, some _ => !action.structuralInputs.isEmpty
+        | _, _ => false
   | _, _, _ => false
 
 /-- Insert work unless it is already dirty.  The queue is an append-only work
@@ -1324,6 +1553,44 @@ inductive Poll (Fact : Type) where
 
 namespace Engine
 
+/-- Issue one already prepared application request.  Matcher progress remains
+only in the pending action until `submit` accepts a valid reply. -/
+def issueApplication (state : Engine Fact) (applicationId : ApplicationId)
+    (application : Application) (rule : Registration)
+    (inputs : List SeenVersion) (views : List (FactView Fact))
+    (structuralInputs : List StructuralInput := [])
+    (matcherEpoch : Option Nat := none)
+    (matcherNext : Option MatcherCursor := none) : Poll Fact :=
+  let action : Action :=
+    { serial := state.metrics.requests
+      programVersion := state.programVersion
+      application := applicationId
+      rule := application.rule
+      key := rule.key
+      node := application.node
+      kind := application.kind
+      effort := application.effort
+      generation := application.generation
+      inputs
+      structuralInputs
+      matcherEpoch }
+  let next : Engine Fact :=
+    { state with
+      queueHead := state.queueHead + 1
+      queued := state.queued.set! applicationId.index false
+      pending := some action
+      pendingMatcher := matcherNext
+      metrics :=
+        { state.metrics with
+          queuePops := state.metrics.queuePops + 1
+          requests := state.metrics.requests + 1 } }
+  .request
+    { action
+      program := state.programView
+      inputs := views
+      writes := application.writes }
+    next
+
 /-- Pop the next dirty work item.  Rule work freezes watched versions in an
 action; equality work remains wholly inside the engine. -/
 def poll (state : Engine Fact) : Poll Fact :=
@@ -1357,32 +1624,14 @@ def poll (state : Engine Fact) : Poll Fact :=
             match state.rules[application.rule.index]?, state.seenVersions? application.watches,
                 state.factViews? application.watches with
             | some rule, some inputs, some views =>
-                let action : Action :=
-                  { serial := state.metrics.requests
-                    programVersion := state.programVersion
-                    application := applicationId
-                    rule := application.rule
-                    key := rule.key
-                    node := application.node
-                    kind := application.kind
-                    effort := application.effort
-                    generation := application.generation
-                    inputs }
-                let next : Engine Fact :=
-                  { state with
-                    queueHead := state.queueHead + 1
-                    queued := state.queued.set! applicationId.index false
-                    pending := some action
-                    metrics :=
-                      { state.metrics with
-                        queuePops := state.metrics.queuePops + 1
-                        requests := state.metrics.requests + 1 } }
-                .request
-                  { action
-                    program := state.programView
-                    inputs := views
-                    writes := application.writes }
-                  next
+                match state.prepareMatch applicationId rule with
+                | .ordinary =>
+                    issueApplication state applicationId application rule inputs views
+                | .batch structuralInputs epoch next =>
+                    issueApplication state applicationId application rule inputs views
+                      structuralInputs (some epoch) (some next)
+                | .resourceLimit => .resourceLimit .matcherVisits state
+                | .invalid => .invalidState state
             | _, _, _ => .invalidState state
         | _, _ => .invalidState state
 
@@ -1617,7 +1866,38 @@ namespace Engine
 def finishReply (state : Engine Fact) : Engine Fact :=
   { state with
     pending := none
+    pendingMatcher := none
     metrics := { state.metrics with replies := state.metrics.replies + 1 } }
+
+/-- Commit engine-owned matcher progress after, and only after, a valid reply.
+If the frozen epoch still has unseen inputs, requeue the same global matcher
+through the ordinary bounded worklist. -/
+def commitMatcher (state : Engine Fact) (action : Action)
+    (matcherNext : Option MatcherCursor) :
+    Except Resource (Engine Fact) := do
+  match matcherNext with
+  | none =>
+      if action.structuralInputs.isEmpty && action.matcherEpoch.isNone then
+        pure state
+      else
+        throw .matcherVisits
+  | some next =>
+      let some (some _) := state.matcherCursors[action.application.index]?
+        | throw .applications
+      let visits := action.structuralInputs.length
+      if state.limits.maxMatcherVisits < state.metrics.matcherVisits + visits then
+        throw .matcherVisits
+      let state :=
+        { state with
+          matcherCursors :=
+            state.matcherCursors.set! action.application.index (some next)
+          metrics :=
+            { state.metrics with
+              matcherVisits := state.metrics.matcherVisits + visits } }
+      if next.exhausted then
+        pure state
+      else
+        state.enqueue (.application action.application)
 
 def outcomeNegative (state : Engine Fact) (outcome : Outcome Fact) : Engine Fact :=
   let state := state.finishReply
@@ -1775,6 +2055,7 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
   match state.pending with
   | none => .invalid .noPendingAction state
   | some action =>
+      let matcherNext := state.pendingMatcher
       if reply.serial != action.serial || reply.programVersion != action.programVersion ||
           reply.application != action.application then
         .invalid .mismatchedAction state
@@ -1784,7 +2065,10 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
       else
       match reply.outcome with
       | .noChange _ | .inapplicable | .resourceLimit _ | .failed _ =>
-          .accepted {} (state.outcomeNegative reply.outcome)
+          let base := state.outcomeNegative reply.outcome
+          match base.commitMatcher action matcherNext with
+          | .ok next => .accepted {} next
+          | .error resource => .resourceLimit resource base
       | .success candidates suggestions _ =>
           let base := state.finishReply
           if !listWithin state.limits.maxOutcomeCandidates candidates then
@@ -1830,7 +2114,10 @@ def submit (state : Engine Fact) (reply : Reply Fact) : ReplyResult Fact :=
                         | .ok (working, changed) =>
                             match working.wakeNodes changed with
                             | .error resource => .resourceLimit resource base
-                            | .ok next => .accepted plan next
+                            | .ok next =>
+                                match next.commitMatcher action matcherNext with
+                                | .ok next => .accepted plan next
+                                | .error resource => .resourceLimit resource base
 
 def transportUpdate (target source : NodeId) (targetVersion sourceVersion : Nat) :
     NarrowResult Fact -> Except EqualityFactError (Option (TransportUpdate Fact))
@@ -2039,6 +2326,8 @@ def inferredGeneration? (generations : Array Nat)
     (action : Action) (request : InstantiationRequest) : Option Nat := do
   let references := actionSubstitution action ++ requestExistingRefs request
   let mut greatest := action.generation
+  for input in action.structuralInputs do
+    greatest := Nat.max greatest input.generation
   for node in references do
     let generation <- generations[node.index]?
     greatest := Nat.max greatest generation
@@ -2199,6 +2488,8 @@ def admitRetained (state : Engine Fact)
                           let instanceKey : InstanceKey :=
                             { rule := retained.action.key
                               substitution
+                              structural :=
+                                retained.action.structuralInputs.map (fun input => input.key)
                               products := resolved
                               scopes := requestedScopes
                               equalities := equalityPairs?.getD [] }
@@ -2234,7 +2525,7 @@ def admitRetained (state : Engine Fact)
                                       let room := state.limits.maxApplications -
                                         state.applications.size - addedScopes
                                       match compileLocalApplicationsWithin room baseSize program
-                                          state.rules generation with
+                                          state.rules state.applications generation with
                                       | .error false =>
                                           .invalid .invalidCompiledProgram state
                                       | .error true => .resourceLimit .applications state
@@ -2261,11 +2552,22 @@ def admitRetained (state : Engine Fact)
                                                 else
                                                   let allEqualities := state.equalities ++
                                                     equalities.toArray
-                                                  match buildWatchers program.nodes.size applications
-                                                      allEqualities with
-                                                  | none =>
+                                                  let matcherView :=
+                                                    matcherViewOf (state.programVersion + 1)
+                                                      program.nodes.size allEqualities.size
+                                                      applications.size
+                                                  match
+                                                      buildWatchers program.nodes.size applications
+                                                        allEqualities,
+                                                      matcherCursorSuffix? state.rules applications
+                                                        state.applications.size matcherView with
+                                                  | none, _ | _, none =>
                                                       .invalid .invalidCompiledProgram state
-                                                  | some watchers =>
+                                                  | some watchers, some matcherSuffix =>
+                                                      if state.matcherCursors.size !=
+                                                          state.applications.size then
+                                                        .invalid .invalidCompiledProgram state
+                                                      else
                                                       let generated :=
                                                         newNodeIds baseSize program.nodes.size
                                                       let freshScopeIds : List ApplicationId :=
@@ -2284,6 +2586,8 @@ def admitRetained (state : Engine Fact)
                                                           bindings := state.bindings ++
                                                             scopeResolution.freshBindings.toArray
                                                           applications
+                                                          matcherCursors :=
+                                                            state.matcherCursors ++ matcherSuffix
                                                           watchers
                                                           facts := state.facts ++ newTopFacts
                                                             state.factDomain baseSize program.nodes

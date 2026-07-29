@@ -73,11 +73,16 @@ def runAll : Option (Array Input × Cursor) := do
         cursor.visits == 7 && cursor.exhausted
   | none => false
 
--- A one-short cumulative visit limit leaves the cursor unchanged and cannot
--- report exhaustion.
+-- A one-short cumulative limit consumes every permitted visit; only the next
+-- step reports exhaustion of the visit resource.
 #guard
   match take generation0 (limits 6 7) view0 cursor0 with
-  | .resourceLimit cursor => cursor == cursor0
+  | .yielded inputs cursor =>
+      inputs == exactInputs.extract 0 6 && cursor.offset == 6 &&
+        cursor.visits == 6 && !cursor.exhausted &&
+        match take generation0 (limits 6 7) view0 cursor with
+        | .resourceLimit stopped => stopped == cursor
+        | _ => false
   | _ => false
 
 #guard
