@@ -1,9 +1,10 @@
 # HexBZ Cross-System Factorization Sweep
 
 The current public-factor, lattice, and no-decline classical measurements cover
-the exact-exponent/factor-only Hensel implementation plus its guarded
-dominant-degree tree at clean revision
-`53bb12e21c5107e9da5d837c207eb3254238967f`. They were measured 2026-07-29
+the exact-exponent/factor-only Hensel implementation, guarded dominant-degree
+tree, remainder-only polynomial GCD, cached finite-field inverses, and linear
+monomial Hensel kernel at clean revision
+`09f7f532338c7be474ac7a696adbc1e43ba77186`. They were measured 2026-07-29
 on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0. The
 FLINT, PARI/GP, NTL, and Isabelle measurements are the already-current
 2026-07-28 exports from the same host, corpus, CPU placement, and timing
@@ -45,9 +46,9 @@ session and Haskell-export builds completed before the timed sweeps.
 
 | System | OK | Timeout | p50 solved | p90 solved | Slowest solved | Protocol overhead |
 |---|---:|---:|---:|---:|---:|---:|
-| Hex public factor | 373 | 19 | 420.153 µs | 5.302 ms | 9.077 s | 16.905 µs |
-| Hex lattice | 369 | 23 | 1.838 ms | 87.386 ms | 9.901 s | 19.039 µs |
-| Hex classical, no decline | 372 | 20 | 401.736 µs | 7.184 ms | 3.818 s | 18.287 µs |
+| Hex public factor | 373 | 19 | 398.571 µs | 4.115 ms | 8.984 s | 16.976 µs |
+| Hex lattice | 369 | 23 | 1.884 ms | 87.334 ms | 9.702 s | 19.609 µs |
+| Hex classical, no decline | 372 | 20 | 390.399 µs | 6.589 ms | 4.633 s | 18.417 µs |
 | FLINT | 391 | 1 | 66.850 µs | 1.184 ms | 1.228 s | 19.219 µs |
 | PARI/GP | 391 | 1 | 99.958 µs | 1.254 ms | 823.201 ms | 23.755 µs |
 | NTL | 391 | 1 | 135.631 µs | 2.714 ms | 1.919 s | 11.487 µs |
@@ -63,21 +64,20 @@ factor-count result on the seven rows without a committed degree oracle;
 FLINT, PARI/GP, and NTL factor counts agree on all seven.
 
 Relative to the pre-hot-path Hex record, the public median fell from 1.244 ms
-to 420.153 µs and retained two additional solves, `sd5_x_phi45` and `sd6`.
+to 398.571 µs and retained two additional solves, `sd5_x_phi45` and `sd6`.
 The current no-decline classical entry now also solves `sd5_x_phi45`, leaving
 `sd6` as the public dispatcher's one additional frontier success.
 
-On 238 common rows for which both current Hex measurements are at least 10×
-their own protocol overhead, public/classical has median 1.009× and
-p10–p90 0.80×–1.12×. Public is faster on 99 and classical on 139. The isolated
-classical route therefore retains a 0.9% paired-median lead, while the
-production dispatcher's bounded tier and fallbacks improve selected hard rows
-and add the `sd6` solve.
+On 241 common rows for which both current Hex measurements are at least 10×
+their own protocol overhead, public/classical has median 1.001× and
+p10–p90 0.62×–1.14×. Public is faster on 119 and classical on 122. The ordinary
+rows are therefore at parity; the production dispatcher's bounded tier and
+fallbacks improve selected hard rows and add the `sd6` solve.
 
-On the corresponding 238 public/verified-Isabelle BZ rows, Hex has median
-0.909× and p10–p90 0.47×–2.64×; Hex is faster on 127 and Isabelle on 111. The
-aggregate lead is real but still too narrow and family-dependent to claim
-uniform superiority.
+On the corresponding 236 public/verified-Isabelle BZ rows, Hex has median
+0.881× and p10–p90 0.46×–2.50×; Hex is faster on 138 and Isabelle on 98. The
+11.9% aggregate lead is clear, though the family spread still rules out a claim
+of uniform superiority.
 
 The improvement is broad but not universal. Family medians below compare the
 fresh public service with the pre-hot-path
@@ -86,22 +86,21 @@ faster.
 
 | Family | Common rows | Median new/old | Rows slower |
 |---|---:|---:|---:|
-| Certificate boundary | 1 | 0.377× | 0 |
-| Chebyshev | 28 | 0.290× | 1 |
-| Conway | 186 | 0.319× | 0 |
-| Cyclotomic | 32 | 0.623× | 1 |
-| Cyclotomic products | 19 | 0.642× | 0 |
-| Laguerre | 20 | 0.250× | 0 |
-| Legendre | 20 | 0.220× | 0 |
-| Random products | 30 | 0.261× | 0 |
-| Signed-digit products | 9 | 0.453× | 0 |
-| Swinnerton-Dyer | 11 | 0.247× | 0 |
-| Wilkinson | 15 | 0.926× | 5 |
+| Certificate boundary | 1 | 0.529× | 0 |
+| Chebyshev | 28 | 0.478× | 0 |
+| Conway | 186 | 0.494× | 0 |
+| Cyclotomic | 32 | 0.719× | 0 |
+| Cyclotomic products | 19 | 0.242× | 0 |
+| Laguerre | 20 | 0.440× | 0 |
+| Legendre | 20 | 0.499× | 0 |
+| Random products | 30 | 0.358× | 0 |
+| Signed-digit products | 9 | 0.482× | 1 |
+| Swinnerton-Dyer | 11 | 0.496× | 0 |
+| Wilkinson | 15 | 0.244× | 0 |
 
-Every family median now improves over the pre-hot-path record. Wilkinson,
-previously the lone slower family, is 0.926×. Against the immediately preceding
-exact/factor-only export, Conway is 0.989× at the 99-row overhead-eligible
-median and is faster on 81 of those rows.
+Every family median improves over the pre-hot-path record. Against the
+immediately preceding guarded-tree export, the all-row paired median is 0.969×
+and the new public service is faster on 303 of 373 common solved rows.
 
 ## Charts
 
@@ -125,8 +124,17 @@ uv run --with matplotlib python3 scripts/plots/hexbz-cactus.py
 
 Fresh Hex exports:
 
+- `reports/bench-results/hexbz-factor-sweep-hex-09f7f532-gcd-hensel-public-chungus2.json`
+  (current public; SHA-256
+  `b69ead6e9d194f15413e63f80baf6af91ba827793b180c2117e713a438145a17`)
+- `reports/bench-results/hexbz-factor-sweep-hex-09f7f532-gcd-hensel-lattice-chungus2.json`
+  (current lattice; SHA-256
+  `4ff66a75064ce0171c767a3a175e8581ec1b491d6ba5710297c7fcb7f033f3a3`)
+- `reports/bench-results/hexbz-factor-sweep-hex-09f7f532-gcd-hensel-classical-chungus2.json`
+  (current no-decline classical; SHA-256
+  `6ebff5a43be7d34232dd4c56e9f4463aebd736dc92626cfa7f68858562f224f0`)
 - `reports/bench-results/hexbz-factor-sweep-hex-53bb12e2-guarded-tree-all-chungus2.json`
-  (current public, lattice, and no-decline classical; SHA-256
+  (preceding all-Hex reference; SHA-256
   `926e91245e45523a40e8b915004bf4e0e17f01ed3547feca94589760d3e55e27`)
 - `reports/bench-results/hexbz-factor-sweep-hex-a087b28f-guarded-tree-chungus2.json`
   (preceding public-only diagnostic; SHA-256

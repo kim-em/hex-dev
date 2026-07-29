@@ -14,29 +14,30 @@
   Hensel division with an exactly equal shift-and-scale kernel.
 - Completed the 9,636-job full build and the polynomial (103), finite-field
   (8), Berlekamp (47), Hensel (69), and BZ (16) executable verification suites.
-- On the 392-row development sweep, public Hex retained 373 solves and moved
-  from 0.909x to 0.887x median Hex/Isabelle BZ over the same 238
-  overhead-eligible rows. The Chebyshev and Legendre family medians moved from
-  2.05x and 1.85x to 1.93x and 1.71x; the degree-240 cyclotomic probe dropped
-  from about 905 ms to 505 ms.
-- After hoisting the modulus, focused clean runs moved the Chebyshev and
-  Legendre family medians further to 1.66x and 1.50x versus Isabelle; their
-  paired medians versus the merged Hex artifact are 0.887x and 0.869x. The
-  degree-240 cyclotomic probe dropped again to about 462 ms.
+- Recorded clean, CPU-pinned 392-row public, lattice, and classical-no-decline
+  artifacts from commit `09f7f532`. Public Hex retains 373 solves and measures
+  0.881x median Hex/Isabelle BZ over the 236 current overhead-eligible rows;
+  it wins 138 of those comparisons. The Chebyshev and Legendre family medians
+  are now 1.68x and 1.55x, and the degree-240 cyclotomic probe is 451 ms.
+- Confirmed that the apparent classical advantage was diagnostic overhead,
+  not an algorithmic lead: public/classical is 1.001x median over 241 eligible
+  rows (119 public wins, 122 classical), while public retains the additional
+  `sd6` solve and its bounded-decline, fallback, and result-checking behavior.
+- Regenerated the complete factor-sweep figure set from the new Hex artifacts
+  without rerunning the current FLINT, PARI, NTL, or Isabelle measurements.
 
 ## Current frontier
 
-The shared GCD and Hensel kernels are fully proof-backed and validated. The
-development sweep was run from the pre-rebase worktree and is evidence for the
-change, not yet the final committed report artifact; the focused family runs
-were taken after the clean rebase. Swinnerton-Dyer degree 32
-remains about 4x slower than Isabelle and is dominated by recombination rather
-than the improved lifting path.
+The shared GCD and Hensel kernels are fully proof-backed and validated, and the
+clean current corpus artifacts are ready to publish. Swinnerton-Dyer degree 32
+remains about 4--5x slower than Isabelle and is dominated by recombination
+rather than the improved lifting path.
 
 ## Next step
 
-Rebase onto merged `main`, take an independent review, publish the intermediate
-PR, and while CI runs profile the remaining SD5 recombination gap.
+Refresh the lower-layer BZ benchmark exports and aggregate reports, publish the
+reviewed intermediate PR, and profile the remaining SD5 recombination gap while
+CI runs.
 
 ## Blockers
 
