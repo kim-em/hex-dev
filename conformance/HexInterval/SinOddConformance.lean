@@ -9,6 +9,7 @@ import HexInterval.Experiment.SemanticReplay
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 import Mathlib.Tactic.IntervalCases
 import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.Order
 
 /-!
 # Non-polynomial arbitrary-propagator proof canary
@@ -26,8 +27,6 @@ package-owned fact, instance, and equality schemas.
 namespace Hex.Interval.SinOddConformance
 
 open Experiment Propagator PayloadArena PolicySession SemanticReplay
-
-noncomputable section
 
 /-! ## Package-local expression language and fact domain -/
 
@@ -457,6 +456,8 @@ def wrongSinIdentityMethodTrace : Trace Fact :=
 
 /-! ## Package-owned mathematical semantics -/
 
+noncomputable section
+
 /-- Structural meaning of one node. The package interprets only its own
 opaque operation keys; nodes owned by other packages remain unconstrained. -/
 def NodeMeaning (program : Program) (valuation : NodeId -> ℝ)
@@ -466,11 +467,19 @@ def NodeMeaning (program : Program) (valuation : NodeId -> ℝ)
   | some operation =>
       if operation.key = negKey then
         match instruction.args with
-        | [input] => valuation output = -valuation input
+        | [input] =>
+            if input.index < output.index then
+              valuation output = -valuation input
+            else
+              True
         | _ => False
       else if operation.key = sinKey then
         match instruction.args with
-        | [input] => valuation output = Real.sin (valuation input)
+        | [input] =>
+            if input.index < output.index then
+              valuation output = Real.sin (valuation input)
+            else
+              True
         | _ => False
       else
         True
@@ -480,6 +489,46 @@ two programs used by the canary. -/
 def Models (program : Program) (valuation : NodeId -> ℝ) : Prop :=
   ∀ output instruction, program.node? output = some instruction ->
     NodeMeaning program valuation output instruction
+
+theorem nodeMeaning_congr (before after : Program)
+    (valuation extended : NodeId -> ℝ) (output : NodeId) (current : Node)
+    (operations : before.operations = after.operations)
+    (outputValue : extended output = valuation output)
+    (argumentValues : ∀ input, input.index < output.index ->
+      extended input = valuation input) :
+    NodeMeaning before valuation output current ↔
+      NodeMeaning after extended output current := by
+  have operationLookup :
+      before.operation? current.op = after.operation? current.op := by
+    simp [Program.operation?, operations]
+  unfold NodeMeaning
+  rw [← operationLookup]
+  cases lookup : before.operation? current.op with
+  | none => rfl
+  | some operation =>
+      by_cases negative : operation.key = negKey
+      · cases current.args with
+        | nil => simp [negative]
+        | cons input rest =>
+            cases rest with
+            | nil =>
+                by_cases inputBefore : input.index < output.index
+                · have inputValue := argumentValues input inputBefore
+                  simp [negative, inputBefore, outputValue, inputValue]
+                · simp [negative, inputBefore]
+            | cons next rest => simp [negative]
+      · by_cases sine : operation.key = sinKey
+        · cases current.args with
+          | nil => simp [sine]
+          | cons input rest =>
+              cases rest with
+              | nil =>
+                  by_cases inputBefore : input.index < output.index
+                  · have inputValue := argumentValues input inputBefore
+                    simp [sine, inputBefore, outputValue, inputValue]
+                  · simp [sine, inputBefore]
+              | cons next rest => simp [sine]
+        · simp [negative, sine]
 
 /-- A checked structural assertion that `output` applies one unary operation
 to `input`. -/
@@ -491,6 +540,7 @@ structure UnaryShape (program : Program) (key : OpKey)
   operationProof : program.operation? instruction.op = some operation
   keyProof : operation.key = key
   argsProof : instruction.args = [input]
+  inputBefore : input.index < output.index
 
 /-- Transparently recover a unary node shape from an untrusted program. -/
 def checkUnary? (program : Program) (key : OpKey)
@@ -504,13 +554,16 @@ def checkUnary? (program : Program) (key : OpKey)
         | none => none
         | some operation =>
             if keyProof : operation.key = key then
-              some
-                { instruction
-                  operation
-                  nodeProof
-                  operationProof
-                  keyProof
-                  argsProof }
+              if inputBefore : input.index < output.index then
+                some
+                  { instruction
+                    operation
+                    nodeProof
+                    operationProof
+                    keyProof
+                    argsProof
+                    inputBefore }
+              else none
             else none
       else none
 
@@ -532,7 +585,7 @@ theorem UnaryShape.negValue
     valuation output = -valuation input := by
   have meaning := model output shape.instruction shape.nodeProof
   simp [NodeMeaning, shape.operationProof, shape.keyProof, shape.argsProof,
-    negKey] at meaning
+    shape.inputBefore, negKey] at meaning
   exact meaning
 
 theorem UnaryShape.sinValue
@@ -541,8 +594,15 @@ theorem UnaryShape.sinValue
     valuation output = Real.sin (valuation input) := by
   have meaning := model output shape.instruction shape.nodeProof
   simp [NodeMeaning, shape.operationProof, shape.keyProof, shape.argsProof,
-    negKey, sinKey] at meaning
+    shape.inputBefore, negKey, sinKey] at meaning
   exact meaning
+
+theorem UnaryShape.outputBefore
+    (shape : UnaryShape program key output input) :
+    output.index < program.nodes.size := by
+  have lookup := shape.nodeProof
+  change program.nodes[output.index]? = some shape.instruction at lookup
+  exact (Array.getElem?_eq_some_iff.mp lookup).1
 
 /-- The four structural unary applications which make a `sin (-x)` node
 equal to the instantiated `-(sin x)` node. -/
@@ -583,94 +643,156 @@ def semantics : Semantics Fact :=
       rw [← equal]
       exact holds }
 
-def baseNegativeShape :
-    UnaryShape baseProgram negKey (node 1) (node 0) :=
-  { instruction := instruction 1 [node 0]
-    operation := negOperation
-    nodeProof := by decide
-    operationProof := by decide
-    keyProof := by decide
-    argsProof := rfl }
+/-- A checked, snapshot-local identifier for one unary real operation.  The
+opaque key selects the package operation; its complete signature is checked
+again before a certificate may use the compact identifier. -/
+structure OperationShape (program : Program) (key : OpKey) where
+  id : OpId
+  operation : Operation
+  lookup : program.operation? id = some operation
+  keyProof : operation.key = key
+  inputsProof : operation.inputs = [real]
+  outputProof : operation.output = real
 
-def baseSinShape :
-    UnaryShape baseProgram sinKey (node 2) (node 1) :=
-  { instruction := instruction 2 [node 1]
-    operation := sinOperation
-    nodeProof := by decide
-    operationProof := by decide
-    keyProof := by decide
-    argsProof := rfl }
+/-- Resolve an opaque operation key without assuming any global `OpId`
+assignment or package-registration order. -/
+def operationShape? (program : Program) (key : OpKey) :
+    Option (OperationShape program key) := do
+  let (id, operation) ← program.operationEntry? key
+  if lookup : program.operation? id = some operation then
+    if keyProof : operation.key = key then
+      if inputsProof : operation.inputs = [real] then
+        if outputProof : operation.output = real then
+          some { id, operation, lookup, keyProof, inputsProof, outputProof }
+        else none
+      else none
+    else none
+  else none
 
-def extendedNegativeShape :
-    UnaryShape extendedProgram negKey (node 1) (node 0) :=
-  { instruction := instruction 1 [node 0]
-    operation := negOperation
-    nodeProof := by decide
-    operationProof := by decide
-    keyProof := by decide
-    argsProof := rfl }
+def appendProgram (before : Program) (input : NodeId)
+    (sinOperation negOperation : OpId) : Program :=
+  { operations := before.operations
+    nodes :=
+      (before.nodes.push
+        { domain := real, op := sinOperation, args := [input] }).push
+        { domain := real
+          op := negOperation
+          args := [node before.nodes.size] } }
 
-def extendedOriginalSinShape :
-    UnaryShape extendedProgram sinKey (node 2) (node 1) :=
-  { instruction := instruction 2 [node 1]
-    operation := sinOperation
-    nodeProof := by decide
-    operationProof := by decide
-    keyProof := by decide
-    argsProof := rfl }
-
-def extendedPositiveSinShape :
-    UnaryShape extendedProgram sinKey (node 3) (node 0) :=
-  { instruction := instruction 2 [node 0]
-    operation := sinOperation
-    nodeProof := by decide
-    operationProof := by decide
-    keyProof := by decide
-    argsProof := rfl }
-
-def extendedAuxNegShape :
-    UnaryShape extendedProgram negKey (node 4) (node 3) :=
-  { instruction := instruction 1 [node 3]
-    operation := negOperation
-    nodeProof := by decide
-    operationProof := by decide
-    keyProof := by decide
-    argsProof := rfl }
-
-theorem sinNegExtends : semantics.Extends baseProgram extendedProgram := by
+/-- The sine-oddness instantiator is conservative over every caller program,
+not just over the small program used by the executable canary. -/
+theorem appendExtends (before : Program) (input : NodeId)
+    (sinOperation : OperationShape before sinKey)
+    (negOperation : OperationShape before negKey)
+    (inputOld : input.index < before.nodes.size) :
+    semantics.Extends before
+      (appendProgram before input sinOperation.id negOperation.id) := by
   intro valuation model
-  have negative := baseNegativeShape.negValue model
-  have original := baseSinShape.sinValue model
-  let extended : NodeId -> ℝ :=
-    fun current =>
-      if current = node 3 then Real.sin (valuation (node 0))
-      else if current = node 4 then -Real.sin (valuation (node 0))
-      else valuation current
+  let positive : NodeId := node before.nodes.size
+  let negative : NodeId := node (before.nodes.size + 1)
+  let extended : NodeId -> ℝ := fun current =>
+    if current.index = positive.index then Real.sin (valuation input)
+    else if current.index = negative.index then -Real.sin (valuation input)
+    else valuation current
   refine ⟨extended, ?_, ?_⟩
   · intro output current lookup
     rcases output with ⟨index⟩
-    change extendedProgram.nodes[index]? = some current at lookup
-    obtain ⟨bound, currentEq⟩ := Array.getElem?_eq_some_iff.mp lookup
-    change index < 5 at bound
-    interval_cases index
-    all_goals
-      simp [extendedProgram, baseProgram, instruction] at currentEq
-      subst current
-      simp [NodeMeaning, Program.operation?, extendedProgram, baseProgram,
-        operations, sourceOperation, negOperation, sinOperation, instruction,
-        extended, node, sourceKey, negKey, sinKey]
-      try simpa [node] using negative
-      try simpa [node] using original
-  · intro current before
-    have notThree : current ≠ node 3 := by
-      intro equal
-      subst current
-      simp [baseProgram, node] at before
-    have notFour : current ≠ node 4 := by
-      intro equal
-      subst current
-      simp [baseProgram, node] at before
-    simp [extended, notThree, notFour]
+    change
+      ((before.nodes.push
+        { domain := real, op := sinOperation.id, args := [input] }).push
+        { domain := real
+          op := negOperation.id
+          args := [node before.nodes.size] })[index]? = some current at lookup
+    by_cases old : index < before.nodes.size
+    · have oldLookup : before.node? { index } = some current := by
+        change before.nodes[index]? = some current
+        have notLast : index ≠ before.nodes.size + 1 := by omega
+        simpa [Array.getElem?_push, Nat.ne_of_lt old, notLast] using lookup
+      apply (nodeMeaning_congr before
+        (appendProgram before input sinOperation.id negOperation.id)
+        valuation extended { index } current rfl ?_ ?_).mp
+        (model { index } current oldLookup)
+      · have notPositive : index ≠ positive.index := by
+          simp [positive, node]
+          omega
+        have notNegative : index ≠ negative.index := by
+          simp [negative, node]
+          omega
+        simp [extended, notPositive, notNegative]
+      · intro argument argumentBefore
+        have argumentOld : argument.index < before.nodes.size :=
+          Nat.lt_trans argumentBefore old
+        have notPositive : argument.index ≠ positive.index := by
+          simp [positive, node]
+          omega
+        have notNegative : argument.index ≠ negative.index := by
+          simp [negative, node]
+          omega
+        simp [extended, notPositive, notNegative]
+    · have bound : index < before.nodes.size + 2 := by
+        obtain ⟨bound, _⟩ := Array.getElem?_eq_some_iff.mp lookup
+        simp only [Array.size_push] at bound
+        omega
+      have fresh : index = before.nodes.size ∨
+          index = before.nodes.size + 1 := by omega
+      rcases fresh with rfl | rfl
+      · have expected :
+            ((before.nodes.push
+              { domain := real, op := sinOperation.id, args := [input] }).push
+              { domain := real
+                op := negOperation.id
+                args := [node before.nodes.size] })[before.nodes.size]? =
+              some { domain := real, op := sinOperation.id, args := [input] } := by
+            rw [Array.getElem?_push]
+            simp only [Array.size_push]
+            have notLast : before.nodes.size ≠ before.nodes.size + 1 := by omega
+            simp only [if_neg notLast]
+            rw [Array.getElem?_push]
+            simp
+        rw [expected] at lookup
+        injection lookup with currentEq
+        symm at currentEq
+        subst current
+        have sinLookup :
+            before.operations[sinOperation.id.index]? =
+              some sinOperation.operation := by
+          simpa [Program.operation?] using sinOperation.lookup
+        have inputNotSize : input.index ≠ before.nodes.size := by omega
+        have inputNotNext : input.index ≠ before.nodes.size + 1 := by omega
+        simp [NodeMeaning, Program.operation?, appendProgram, sinLookup,
+          sinOperation.keyProof, extended, positive, negative, node,
+          inputNotSize, inputNotNext, negKey, sinKey]
+      · have expected :
+            ((before.nodes.push
+              { domain := real, op := sinOperation.id, args := [input] }).push
+              { domain := real
+                op := negOperation.id
+                args := [node before.nodes.size] })[before.nodes.size + 1]? =
+              some
+                { domain := real
+                  op := negOperation.id
+                  args := [node before.nodes.size] } := by
+            rw [Array.getElem?_push]
+            simp
+        rw [expected] at lookup
+        injection lookup with currentEq
+        symm at currentEq
+        subst current
+        have negLookup :
+            before.operations[negOperation.id.index]? =
+              some negOperation.operation := by
+          simpa [Program.operation?] using negOperation.lookup
+        simp [NodeMeaning, Program.operation?, appendProgram, negLookup,
+          negOperation.keyProof, extended, positive, negative, node,
+          negKey, sinKey]
+  · intro current old
+    have notPositive : current.index ≠ positive.index := by
+      simp [positive, node]
+      omega
+    have notNegative : current.index ≠ negative.index := by
+      simp [negative, node]
+      omega
+    simp [extended, notPositive, notNegative]
 
 theorem sinNegIdentity
     (witness : SinNegWitness program left right) :
@@ -798,20 +920,30 @@ def instanceSchema : PackedInstanceSchema semantics :=
     schema := 0
     Certificate := InstanceCertificate
     decode := decodeInstance
-    replay := fun _ action context _ =>
+    replay := fun _ action context _ => do
       if action.key != sinNegInstantiateKey ||
           action.kind != .instantiate then none
-      else if beforeProof : context.before = baseProgram then
-        if afterProof : context.after = extendedProgram then
-          if context.event.products != [node 3, node 4] ||
-              context.event.newNodes != [node 3, node 4] ||
-              context.event.substitution != [node 2] then none
-          else
-            some
-              { proof := by
-                  rw [beforeProof, afterProof]
-                  exact sinNegExtends }
-        else none
+      else pure ()
+      let outer ← unaryWitness? context.before sinKey action.node
+      let inner ← unaryWitness? context.before negKey outer.input
+      let sinOperation ← operationShape? context.before sinKey
+      let negOperation ← operationShape? context.before negKey
+      let positive := node context.before.nodes.size
+      let negative := node (context.before.nodes.size + 1)
+      let expected := appendProgram context.before inner.input
+        sinOperation.id negOperation.id
+      if context.event.substitution != [action.node] ||
+          context.event.products != [positive, negative] ||
+          context.event.newNodes != [positive, negative] then none
+      else pure ()
+      if afterProof : context.after = expected then
+        some
+          { proof := by
+              rw [afterProof]
+              exact appendExtends context.before inner.input
+                sinOperation negOperation
+                (Nat.lt_trans inner.shape.inputBefore
+                  inner.shape.outputBefore) }
       else none }
 
 def equalitySchema : PackedEqualitySchema semantics :=
@@ -834,6 +966,90 @@ def semanticPackage : SemanticReplay.Package semantics :=
 
 def semanticPackages : Array (SemanticReplay.Package semantics) :=
   #[semanticPackage]
+
+/-! ## Arbitrary-caller structural canaries -/
+
+def foreignKey : OpKey := { name := "sin-odd.foreign" }
+
+def foreignOperation : Operation :=
+  { key := foreignKey, inputs := [], output := real }
+
+/-- The same `sin (-x)` shape in a caller program with an unrelated old node
+and a completely different compact operation ordering. -/
+def reorderedProgram : Program :=
+  { operations := #[foreignOperation, sinOperation, sourceOperation, negOperation]
+    nodes :=
+      #[instruction 2,
+        instruction 0,
+        instruction 3 [node 0],
+        instruction 1 [node 2]] }
+
+def reorderedAfter : Program :=
+  appendProgram reorderedProgram (node 0) { index := 1 } { index := 3 }
+
+def reorderedAction : Action :=
+  { instantiateAction with node := node 3 }
+
+def reorderedEvent : InstanceEvent :=
+  { instanceEvent with
+    origin := reorderedAction
+    substitution := [node 3]
+    products := [node 4, node 5]
+    newNodes := [node 4, node 5]
+    equalities := [] }
+
+def reorderedInput : CheckerInput Fact :=
+  { baseProgram := reorderedProgram
+    initialFacts := #[]
+    target := { node := node 3, fact := .top } }
+
+def instanceAcceptedWith (event : InstanceEvent) (after : Program) : Bool :=
+  let context : InstanceContext reorderedInput reorderedAction :=
+    { before := reorderedProgram
+      after
+      basePrefix := ProgramPrefix.refl reorderedProgram
+      event }
+  match instanceSchema.decode [0] with
+  | none => false
+  | some certificate =>
+      (instanceSchema.replay reorderedInput reorderedAction context
+        certificate).isSome
+
+def instanceAccepted (after : Program) : Bool :=
+  instanceAcceptedWith reorderedEvent after
+
+/-- Stable-key resolution and structural replay work independently of both
+operation order and unrelated nodes already present in the caller graph. -/
+theorem accepts_reordered_instance :
+    instanceAccepted reorderedAfter = true := by
+  decide +kernel
+
+def wrongReorderedAfter : Program :=
+  appendProgram reorderedProgram (node 0) { index := 3 } { index := 1 }
+
+/-- The same event metadata cannot certify a different appended expression
+recipe. -/
+theorem rejects_wrong_append :
+    instanceAccepted wrongReorderedAfter = false := by
+  decide +kernel
+
+def wrongProductsEvent : InstanceEvent :=
+  { reorderedEvent with products := [node 5, node 4] }
+
+/-- The extension theorem is tied to the exact fresh-node products recorded by
+the instance event, not merely to an equal-sized program suffix. -/
+theorem rejects_wrong_products :
+    instanceAcceptedWith wrongProductsEvent reorderedAfter = false := by
+  decide +kernel
+
+def wrongSinSignature : Program :=
+  { operations := #[{ key := sinKey, inputs := [], output := real }]
+    nodes := #[] }
+
+/-- An opaque key match does not excuse a mismatched operation signature. -/
+theorem rejects_wrong_signature :
+    (operationShape? wrongSinSignature sinKey).isNone = true := by
+  decide +kernel
 
 def meetEvidence (previous proposed installed : Fact) :
     Option (Evidence
@@ -868,7 +1084,7 @@ def meetEvidence (previous proposed installed : Fact) :
 def proofDomain : FactDomainSchema semantics :=
   { top := fun _ => .top
     holdsPrefix := by
-      intro _ _ valuation extended fact _ agreement
+      intro _ _ valuation extended fact _ _ _ _ agreement
       change fact.fact.Allows (valuation fact.node) ↔
         fact.fact.Allows (extended fact.node)
       rw [agreement]
