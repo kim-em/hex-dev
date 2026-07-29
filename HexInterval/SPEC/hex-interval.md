@@ -743,12 +743,32 @@ generation zero. The production representation may record generation per
 theorem instance or per generated product; that choice remains open below. In
 either case, a new expression is not trusted merely because a trigger matched.
 
-The authoritative references are the action substitution and old nodes named
-explicitly as existing inputs by proposed drafts or equalities. A proposed node
-remains an output of the theorem instance when it CSE-hits an already
-materialized node: storage reuse cannot manufacture a proof dependency. Thus
+The authoritative recurrence for a retained instantiation is
+
+```text
+1 + max (
+  the emitting application's action-creation generation,
+  generations of every node in the action substitution,
+  generations of every `.existing` reference in node drafts,
+  generations of every `.existing` equality endpoint,
+  generations of every `.existing` scope anchor, watch, or write
+)
+```
+
+The action substitution is the action anchor followed by its declared fact
+inputs, with duplicate node identifiers removed. Proposed references are
+outputs of this theorem instance, even when CSE reuses already materialized
+storage for them; storage reuse cannot manufacture a proof dependency. Thus
 the same append-stable proposal has the same logical generation before and
 after an unrelated CSE-producing extension.
+
+A successful equality-only or scope-only instantiation still consumes this
+generation: its instance-history event records it, each newly admitted
+equality edge is stamped with it, and each newly created scoped application is
+stamped with it. Such an admission cannot reset a later chain merely because
+it allocated no expression node. An instance which adds no node, equality, or
+scoped application is instead a duplicate and does not consume an instance
+event.
 
 The current centered-product D2 vertical is deliberately narrower than this
 general recurrence. Its `Center.inferredGeneration` only recognizes one
@@ -779,14 +799,13 @@ production engine must hide its constructor and expose checked observations
 and transitions; making one transition opaque would not provide that
 encapsulation and would obstruct ordinary-kernel theorems about admission.
 
-One atomic theorem instantiation initially assigns a single instantiation
-generation to all helper nodes it introduces: one plus the maximum generation
-of every node in the authoritative action substitution or explicitly named as
-an existing input by a draft or equality. Proposed products are outputs, even
-when CSE reuses their storage, so selection order cannot raise their logical
-generation or change success at an exact generation cap. This measures
-theorem-instantiation depth rather than expression-tree depth. Per-product or
-multiple-provenance generation remains a possible refinement.
+One atomic theorem instantiation initially assigns the recurrence above to all
+helper nodes, equality edges, scoped applications, and the instance-history
+event it introduces. Proposed products are outputs, even when CSE reuses their
+storage, so selection order cannot raise their logical generation or change
+success at an exact generation cap. This measures theorem-instantiation depth
+rather than expression-tree depth. Per-product or multiple-provenance
+generation remains a possible refinement.
 
 Structural expression depth is a separate engine invariant: nullary nodes have
 depth zero; every fresh non-nullary node has one plus the maximum depth of its
@@ -1584,12 +1603,12 @@ and heap moves. These logical units are shown separately: their machine costs
 are not assumed equal. On the small merge-gated fixtures:
 
 - one root fanning out to six sinks gives scan/index aggregate touch counts
-  `267/242`, while both arms already share `112` clock synchronizations and
+  `294/260`, while both arms already share `112` clock synchronizations and
   `14` suggestion-pruning visits;
 - four roots densely waking five sinks records all `20` watcher visits—five
-  insertions and fifteen suppressed duplicates—and gives `277/250`;
+  insertions and fifteen suppressed duplicates—and gives `297/265`;
 - five sinks each emitting three disposable split suggestions gives
-  `1267/754`; the scan inspects `424` historical backing slots, while the
+  `1287/769`; the scan inspects `424` historical backing slots, while the
   index consumes five work plus fifteen suggestion events from a single
   seven-slot seed view.
 
