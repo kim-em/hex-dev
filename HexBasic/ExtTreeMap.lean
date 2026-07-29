@@ -67,6 +67,13 @@ def foldl₂ [TransCmp cmp] [LawfulEqCmp cmp]
     (left : ExtTreeMap α β cmp) (right : ExtTreeMap α γ cmp) : δ :=
   mergeFold (cmp := cmp) f init left.toList right.toList
 
+/-- Result for one key in a deletion-capable merge. -/
+def mergeValue? (f : α → β → β → Option β) (key : α) :
+    Option β → Option β → Option β
+  | none, right => right
+  | left, none => left
+  | some left, some right => f key left right
+
 /-- Merge two maps, allowing a collision to delete its key.
 
 Left-only and right-only entries are retained unchanged. The smaller map is
@@ -79,17 +86,90 @@ def mergeWith? [TransCmp cmp] [LawfulEqCmp cmp]
   if left.size < right.size then
     left.foldl
       (fun out key leftValue =>
-        out.alter key fun
-          | none => some leftValue
-          | some rightValue => f key leftValue rightValue)
+        out.alter key (mergeValue? f key (some leftValue)))
       right
   else
     right.foldl
       (fun out key rightValue =>
-        out.alter key fun
-          | none => some rightValue
-          | some leftValue => f key leftValue rightValue)
+        out.alter key fun leftValue =>
+          mergeValue? f key leftValue (some rightValue))
       left
+
+private theorem getElem?_foldl_alter_of_forall [TransCmp cmp]
+    (entries : List (α × γ)) (out : ExtTreeMap α β cmp)
+    (update : α → γ → Option β → Option β) (key : α)
+    (h : ∀ entry ∈ entries, cmp entry.1 key ≠ .eq) :
+    (entries.foldl
+      (fun out entry => out.alter entry.1 (update entry.1 entry.2))
+      out)[key]? = out[key]? := by
+  induction entries generalizing out with
+  | nil => rfl
+  | cons entry entries ih =>
+      rw [List.foldl_cons, ih]
+      · rw [getElem?_alter, if_neg (h entry (by simp))]
+      · intro later hlater
+        exact h later (by simp [hlater])
+
+private theorem getElem?_foldl_alter_of_mem
+    [TransCmp cmp] [LawfulEqCmp cmp]
+    (entries : List (α × γ)) (out : ExtTreeMap α β cmp)
+    (update : α → γ → Option β → Option β) (key : α) (value : γ)
+    (hpair : entries.Pairwise (fun a b => cmp a.1 b.1 ≠ .eq))
+    (hmem : (key, value) ∈ entries) :
+    (entries.foldl
+      (fun out entry => out.alter entry.1 (update entry.1 entry.2))
+      out)[key]? = update key value out[key]? := by
+  induction entries generalizing out with
+  | nil => simp at hmem
+  | cons entry entries ih =>
+      simp only [List.pairwise_cons] at hpair
+      rcases List.mem_cons.mp hmem with heq | hmem
+      · subst entry
+        rw [List.foldl_cons,
+          getElem?_foldl_alter_of_forall entries
+            (out.alter key (update key value)) update key]
+        · rw [getElem?_alter_self]
+        · intro later hlater heq
+          have hkey : later.1 = key := LawfulEqCmp.eq_of_compare heq
+          apply hpair.1 later hlater
+          simp [hkey]
+      · rw [List.foldl_cons, ih (out := out.alter entry.1 (update entry.1 entry.2))
+          hpair.2 hmem, getElem?_alter, if_neg (hpair.1 (key, value) hmem)]
+
+private theorem getElem?_foldl_alter [TransCmp cmp] [LawfulEqCmp cmp]
+    (source : ExtTreeMap α γ cmp) (out : ExtTreeMap α β cmp)
+    (update : α → γ → Option β → Option β) (key : α) :
+    (source.foldl (fun out key value => out.alter key (update key value)) out)[key]? =
+      match source[key]? with
+      | none => out[key]?
+      | some value => update key value out[key]? := by
+  rw [foldl_eq_foldl_toList]
+  cases hsource : source[key]? with
+  | none =>
+      rw [getElem?_foldl_alter_of_forall]
+      intro entry hentry heq
+      have hkey : entry.1 = key := LawfulEqCmp.eq_of_compare heq
+      have hentryGet : source[entry.1]? = some entry.2 :=
+        mem_toList_iff_getElem?_eq_some.mp hentry
+      rw [hkey, hsource] at hentryGet
+      contradiction
+  | some value =>
+      rw [getElem?_foldl_alter_of_mem source.toList out update key value
+        source.distinct_keys_toList
+        (mem_toList_iff_getElem?_eq_some.mpr hsource)]
+
+/-- Lookup specification for a deletion-capable merge. -/
+@[simp] theorem getElem?_mergeWith? [TransCmp cmp] [LawfulEqCmp cmp]
+    (f : α → β → β → Option β)
+    (left right : ExtTreeMap α β cmp) (key : α) :
+    (mergeWith? f left right)[key]? =
+      mergeValue? f key left[key]? right[key]? := by
+  unfold mergeWith?
+  split
+  · rw [getElem?_foldl_alter]
+    cases left[key]? <;> cases right[key]? <;> rfl
+  · rw [getElem?_foldl_alter]
+    cases left[key]? <;> cases right[key]? <;> rfl
 
 @[simp] theorem foldl₂_empty_left [TransCmp cmp] [LawfulEqCmp cmp]
     (f : δ → α → Option β → Option γ → δ) (init : δ)
