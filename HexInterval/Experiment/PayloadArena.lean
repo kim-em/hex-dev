@@ -143,7 +143,6 @@ def traverseRequest [Monad m] (visit : Role -> PayloadId -> m PayloadId)
   let equalities ← request.equalities.mapM (traverseEquality visit)
   pure
     { key := request.key
-      triggers := request.triggers
       nodes := request.nodes
       equalities
       payload }

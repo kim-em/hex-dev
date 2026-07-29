@@ -100,7 +100,6 @@ def seedPreserved (arena : Arena) : Bool :=
 -- Candidate, instance, and nested equality references are all relocated.
 def mixedRequest : InstantiationRequest :=
   { key := 77
-    triggers := [node 0]
     nodes := []
     equalities :=
       [{ left := .existing (node 0)
