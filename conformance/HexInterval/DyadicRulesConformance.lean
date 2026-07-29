@@ -763,7 +763,7 @@ def reciprocalAcrossZeroRequest? : Option (RuleRequest Fact × ConcreteRegistry)
 #guard
   match reciprocalAcrossZeroRequest? with
   | some (request, registry) =>
-      match (registry.invoke request).1 with
+      match (registry.invokeDroppingDrafts request).1 with
       | .inapplicable => true
       | _ => false
   | none => false

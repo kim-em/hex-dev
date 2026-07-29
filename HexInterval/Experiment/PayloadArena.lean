@@ -144,7 +144,6 @@ def traverseRequest [Monad m] (visit : Role -> PayloadId -> m PayloadId)
   pure
     { key := request.key
       triggers := request.triggers
-      claimedGeneration := request.claimedGeneration
       nodes := request.nodes
       equalities
       payload }
