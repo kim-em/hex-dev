@@ -335,14 +335,29 @@ def invoke (registry : Registry Fact) (request : RuleRequest Fact) :
                   else if !handler.registration.accepts request then
                     (.failed DispatchCode.requestMismatch, registry)
                   else
-                    let (outcome, cache) := handler.invoke package.cache request
-                    let package :=
-                      { package with
-                        cache := cache
-                        invocations := package.invocations + 1 }
-                    (outcome,
-                      { registry with
-                        packages := registry.packages.set! route.package package })
+                    let program : Program :=
+                      { operations := request.program.operations
+                        nodes := request.program.nodes }
+                    let scopeAccepted :=
+                      match registration.binding with
+                      | .local => true
+                      | .scoped =>
+                          registry.acceptsBinding program
+                            { rule := request.action.key
+                              anchor := request.action.node
+                              watches := request.inputs.map (fun input => input.node)
+                              writes := request.writes }
+                    if !scopeAccepted then
+                      (.failed DispatchCode.requestMismatch, registry)
+                    else
+                      let (outcome, cache) := handler.invoke package.cache request
+                      let package :=
+                        { package with
+                          cache := cache
+                          invocations := package.invocations + 1 }
+                      (outcome,
+                        { registry with
+                          packages := registry.packages.set! route.package package })
 
 end Registry
 

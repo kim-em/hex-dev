@@ -446,7 +446,7 @@ def cseProposal (request : RuleRequest Rank) (left : NodeId) :
           args := [.proposed 0] }]
     equalities :=
       [{ left := .existing left
-         right := .proposed 1
+         right := .existing (node 2)
          payload := { index := left.index } }]
     payload := { index := left.index } }
 
@@ -461,9 +461,9 @@ def cseInvoke (calls : Nat) (request : RuleRequest Rank) :
 
 def cseInitial? : Option (RunResult Rank Nat) := do
   let program : Program :=
-    { operations := dynamicOperations, nodes := #[sourceNode, unaryNode 0] }
+    { operations := dynamicOperations, nodes := #[sourceNode, unaryNode 0, sourceNode] }
   let state <- start? program #[cseRule cseAnchorKey, cseRule cseSourceKey]
-    #[4, 0] { generous with maxGeneration := 1, maxNodeDepth := 3 }
+    #[4, 0, 0] { generous with maxGeneration := 1, maxNodeDepth := 3 }
   pure (drive cseInvoke 8 state 0)
 
 def cseOrder? (first second : SuggestionId) : Option (Engine Rank) := do
@@ -476,7 +476,7 @@ def cseOrder? (first second : SuggestionId) : Option (Engine Rank) := do
   else
     match initial.state.admitInstantiation first with
     | .admitted [firstFresh, secondFresh] state =>
-        if firstFresh != node 2 || secondFresh != node 3 then none else
+        if firstFresh != node 3 || secondFresh != node 4 then none else
         let retained := state.suggestions[second.index]?
         match retained with
         | none => none
@@ -491,19 +491,21 @@ def cseOrder? (first second : SuggestionId) : Option (Engine Rank) := do
     | _ => none
 
 def exactCseState (state : Engine Rank) : Bool :=
-  state.programVersion == 2 && state.program.nodes.size == 4 &&
-    state.generations.toList == [0, 0, 1, 1] &&
-    state.depths.toList == [0, 1, 2, 3] &&
+  state.programVersion == 2 && state.program.nodes.size == 5 &&
+    state.generations.toList == [0, 0, 0, 1, 1] &&
+    state.depths.toList == [0, 1, 0, 2, 3] &&
     state.equalities.size == 2 && state.instances.length == 2 &&
     state.instanceHistory.size == 2 &&
     state.instanceHistory.toList.all (fun event => event.generation == 1) &&
     state.equalities.toList.all (fun edge => edge.generation == 1) &&
-    state.equalities.toList.any (fun edge => edge.sameEndpoints (node 0) (node 3)) &&
-    state.equalities.toList.any (fun edge => edge.sameEndpoints (node 1) (node 3))
+    state.equalities.toList.any (fun edge => edge.sameEndpoints (node 0) (node 2)) &&
+    state.equalities.toList.any (fun edge => edge.sameEndpoints (node 1) (node 2))
 
 -- Either proposal may materialize a depth-three tower first. The second
--- append-stable proposal CSE-hits the entire prefix: its stored depths remain
--- unchanged while theorem-instantiation generation remains one.
+-- append-stable proposal CSE-hits the entire node prefix: its stored depths
+-- remain unchanged while its explicitly old equality endpoints keep theorem-
+-- instantiation generation one.  A separate equality canary covers the causal
+-- case where a proposed equality endpoint itself CSE-resolves to an old node.
 #guard
   match cseOrder? (suggestion 0) (suggestion 1),
       cseOrder? (suggestion 1) (suggestion 0) with

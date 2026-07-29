@@ -475,9 +475,9 @@ def initialWithLimits? (limits : Experiment.Propagator.Policy.Limits) : Option (
 
 #guard
   match run? 2 retryFirstCommands
-      (initialWithLimits? { policyLimits with maxTraversal := 2 }) with
+      (initialWithLimits? { policyLimits with maxTraversal := 3 }) with
   | some result =>
-      result.state.metrics.decisions == 1 && result.state.metrics.traversal == 2 &&
+      result.state.metrics.decisions == 1 && result.state.metrics.traversal == 3 &&
         match result.events.toList, result.stop with
         | [.rule selection observation, .viewResource .traversalLimit],
             .viewResource .traversalLimit =>

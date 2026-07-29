@@ -191,6 +191,25 @@ def run? : Option (RunResult Rank (Registry Rank)) :=
           | .error .invalidBindings => true
           | _ => false)
 
+-- Dispatch repeats the package-owned scope check before entering the callback.
+-- Thus even a raw engine composed with a deliberately permissive start hook
+-- cannot make the package execute against a reordered semantic projection.
+#guard
+  match Registry.buildWithin limits #[scopedPackage] with
+  | .error _ => false
+  | .ok registry =>
+      match Engine.start rankDomain program registry.registrations
+          #[4, 6, 0, 0, 0, 9] limits
+            #[{ scope with watches := scope.watches.reverse }] (fun _ _ => true) with
+      | .error _ => false
+      | .ok state =>
+          match state.poll with
+          | .request request _ =>
+              match (registry.invoke request).1 with
+              | .failed code => code == DispatchCode.requestMismatch
+              | _ => false
+          | _ => false
+
 -- The package callback receives four nonlocal reads, owns two nonlocal writes,
 -- and revisits exactly once after the atomic pair improves.
 #guard
@@ -525,6 +544,8 @@ def scopeOnlyAdmitted? (customLimits : Limits := limits) :
   | some (state, _) =>
       state.program.nodes.size == 6 && state.programVersion == 1 &&
         state.applications.size == 4 && state.bindings.size == 2 &&
+        state.applications.map (fun application => application.policyItems) ==
+          #[6, 2, 2, 4] &&
         state.metrics.admittedInstances == 1 && state.metrics.generatedNodes == 0 &&
         state.metrics.generatedScopes == 1 &&
         (state.applications.toList.take 3).all (fun application =>
@@ -554,7 +575,7 @@ def scopePolicyLimits : Policy.Limits :=
 
 -- Traversal accounting includes variable scoped reads and retained scope
 -- proposals.  The bounded scan fails as soon as its remaining allowance is
--- exhausted; the exact complete view costs 22 semantic items here.
+-- exhausted; the exact complete view costs 25 semantic items here.
 #guard
   match scopeOnlyAdmitted? with
   | some (engine, _) =>
@@ -568,7 +589,7 @@ def scopePolicyLimits : Policy.Limits :=
   match scopeOnlyAdmitted? with
   | some (engine, _) =>
       match (Policy.State.start engine
-          { scopePolicyLimits with maxTraversal := 21 }).view with
+          { scopePolicyLimits with maxTraversal := 24 }).view with
       | .error .traversalLimit => true
       | _ => false
   | none => false
@@ -577,8 +598,8 @@ def scopePolicyLimits : Policy.Limits :=
   match scopeOnlyAdmitted? with
   | some (engine, _) =>
       match (Policy.State.start engine
-          { scopePolicyLimits with maxTraversal := 22 }).view with
-      | .ok (_, next) => next.metrics.traversal == 22
+          { scopePolicyLimits with maxTraversal := 25 }).view with
+      | .ok (_, next) => next.metrics.traversal == 25
       | .error _ => false
   | none => false
 
@@ -951,6 +972,37 @@ def cseScopeRetained? : Option (Engine Rank × RetainedSuggestion) := do
         match state.admitRetained retained with
         | .admitted [] next =>
             next.program.nodes.size == 7 && next.metrics.generatedScopes == 1 &&
+              next.instanceHistory[1]?.any (fun event => event.generation == 2)
+        | _ => false
+  | none => false
+
+/-- Equality endpoints have the same causal rule as scoped ports.  A proposed
+node which CSE-resolves to an old generation-one node cannot launder that node
+back to generation zero merely by appearing as an equality endpoint. -/
+def cseEqualityRetained? : Option (Engine Rank × RetainedSuggestion) := do
+  let (state, origin) <- generationSeed?
+  let request : InstantiationRequest :=
+    { key := 39
+      nodes :=
+        [{ domain := real
+           op := { index := 1 }
+           args := [.existing (node 2)] }]
+      equalities :=
+        [{ left := .proposed 0
+           right := .existing (node 0)
+           payload := { index := 13 } }]
+      scopes := []
+      payload := { index := 14 } }
+  some (state, { origin with suggestion := .instantiate request })
+
+#guard
+  match cseEqualityRetained? with
+  | some (state, retained) =>
+      state.instantiationGeneration? retained == some 2 &&
+        match state.admitRetained retained with
+        | .admitted [] next =>
+            next.program.nodes.size == 7 && next.equalities.size == 1 &&
+              next.equalities[0]?.any (fun edge => edge.generation == 2) &&
               next.instanceHistory[1]?.any (fun event => event.generation == 2)
         | _ => false
   | none => false
