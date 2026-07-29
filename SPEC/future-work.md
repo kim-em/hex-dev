@@ -250,14 +250,15 @@ representations alongside `DensePoly`. For now, all libraries use
 
 The same abstraction problem is now concrete for multivariate polynomials.
 The release-quality HexMvPoly kernel sweep at clean commit
-`77b76dd35be098a0bb4c5508306ba7957bb8d4b4` did not meet its predeclared
+`45f01eb6435f0666e60247899cea152b16275d3c` did not meet its predeclared
 gate. After round-matched import and construction subtraction, the
-canonical sorted-list proxy's largest point ratios were 3.817× for addition,
-1.847× for cancellation, and 2.699× for SOS. Addition was noise-limited;
-cancellation's conservative interval was [1.447×, 2.402×], and SOS's was
-[1.987×, 3.857×]. No family had a lower bound above 2×, let alone two
-families. The exact record is
-`reports/bench-results/hex-mv-poly-kernel-77b76dd3-chungus2.json`.
+canonical sorted-list proxy's terminal point ratios were 5.164× for addition,
+2.201× for cancellation, 3.249× for SOS, and 2.068× for structural
+collisions. Their conservative intervals began at 1.903×, 1.377×, 1.772×,
+and 1.459× respectively; addition was also noise-limited. Collision-heavy
+multiplication was a resolved 0.971× failure. No family had a lower bound
+above 2×, let alone two families. The exact record is
+`reports/bench-results/hex-mv-poly-kernel-45f01eb6-chungus2.json`.
 
 No kernel-specialized second `MvPoly` form is therefore planned.
 `Hex.MvPoly` remains the single `ExtTreeMap` representation. The proof-probe

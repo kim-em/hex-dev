@@ -27,17 +27,32 @@
 - Exercised the v5 validity gate on the enlarged corpus, found that SOS-8
   exceeded the allowed 2× distance from the medium null control, and added a
   same-module SOS-8 null pair before accepting any final evidence.
+- Captured the final v5 sweep from clean commit `45f01eb6` with three
+  magnitude-calibrated nulls and six accepted samples for all 18 pairs. The
+  artifact reports `release_quality: true`, no exceptions, violations,
+  preflight failures, or exhausted pairs; 52 busy preflight windows and 10
+  contaminated complete attempts were rejected.
+- Recorded the negative representation decision: addition, cancellation,
+  SOS, and structural terminal comparisons are unresolved at the conservative
+  2× threshold, while collision-heavy multiplication is a resolved failure.
+- Replaced the superseded v4 artifact and updated both performance reports,
+  the library threshold protocol, and the future-work representation decision.
+- Passed the full 9,650-job build, focused conformance and fixture-emitter
+  build, all 11 native benchmark verification targets, Phase-4, DAG, release,
+  Mathlib-free bench/probe and conformance-registration checks, and 93 combined
+  harness/lint tests. The local optional SymPy check skipped because SymPy is
+  unavailable; release CI requires it.
 
 ## Current frontier
 
-The source, harness hardening, and pinned-consumer acceptance are complete.
-The final proof-sweep artifact still needs to be captured from a clean
-checkpoint.
+The implementation, reusable map layer, pinned-consumer acceptance, final
+proof-sweep evidence, reports, and local verification are complete. The final
+diff still needs its independent pre-PR review.
 
 ## Next step
 
-Run the release-quality v5 proof sweep, update the current-state reports from
-both evidence artifacts, then complete final review and PR verification.
+Commit the final evidence and reports, obtain a fresh independent review,
+address any findings, then open the completion PR and monitor CI to merge.
 
 ## Blockers
 

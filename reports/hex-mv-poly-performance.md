@@ -72,7 +72,11 @@ migrations and builds are reproducible with
   toolchain; it does not change the statement or runtime adapter.
 
 The setup script applies these compile-acceptance overlays only in temporary
-pinned clones.
+pinned clones. The machine-readable acceptance record is
+`reports/bench-results/hex-mv-poly-consumers-d05d0635.json` (SHA-256
+`6bcd144c785dc64f305d9b82851b7811302e755e4cafc245ef5a62cfcea78e17`);
+it records clean Hex source commit `d05d0635`, the pinned revisions, manifest
+and adapter hashes, exact build targets, job counts, and hashed Lake output.
 
 ## Verdicts
 
@@ -246,9 +250,11 @@ The five visualizations are:
 
 Native ratios are informational rather than the representation gate. The
 release-quality kernel sweep measured construction-subtracted point ratios of
-3.817× for addition, 1.847× for cancellation, and 2.699× for SOS. Addition is
-noise-limited; cancellation's conservative interval is [1.447×, 2.402×], and
-SOS's is [1.987×, 3.857×]. No family has a lower bound above 2×, so the
+5.164× for addition, 2.201× for cancellation, 3.249× for SOS, and 2.068× for
+structural collisions. Their conservative intervals start at 1.903×, 1.377×,
+1.772×, and 1.459× respectively; addition is also noise-limited.
+Collision-heavy multiplication is a resolved 0.971× failure. No family has a
+lower bound above 2×, so the
 predeclared two-family gate is not met. The decision and its robust
 null-envelope checks are recorded in
 [`hex-mv-poly-mathlib-performance.md`](hex-mv-poly-mathlib-performance.md):
@@ -343,7 +349,10 @@ remain applicable to the final implementation.
 
 ## Concerns
 
-No unresolved Phase-4 concern remains.
+The implementation milestone is complete. The representation experiment is
+not a positive performance result: four terminal comparisons remain
+statistically unresolved and multiplication is a resolved failure. Under the
+predeclared gate, zero families pass.
 
 The Mathlib-native curve is explicitly a sorted-list proxy because
 `MvSparsePoly` is unavailable at the pinned revision, and CompPoly's fixed

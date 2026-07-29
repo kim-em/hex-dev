@@ -776,18 +776,19 @@ used for this decision.
 
 Both baseline-subtracted medians must exceed the robust variability
 envelope of the round-matched import baseline. The record separately
-calibrates pair-order noise with same-module controls at two build
-magnitudes, interpolates a robust median/IQR/Tukey envelope at each
-substantive build magnitude, and is invalid when a control's IQR exceeds
-10% of its build magnitude. A baseline-limited ratio or a comparison
-whose arm delta is unresolved against the interpolated null envelope
-does not count toward the threshold. Reference and candidate arms use
-the same coefficient type, arity, comparator, support stream, and
-identity; the report records those axes for every pair. Anything short
-of two conservative greater-than-2× workload ratios leaves the single
-representation standing. Concretely, if the attributed reference and
-candidate workloads are `r` and `c` and the comparable null envelope is
-`e`, the threshold interval is
+calibrates pair-order noise with same-module controls at three build
+magnitudes, including a large SOS-scale control. At each substantive build
+magnitude it interpolates median/MAD/IQR/Tukey statistics and makes the
+conservative envelope no smaller than the maximum observed absolute null
+delta. The record is invalid when a control's IQR exceeds 10% of its build
+magnitude. A baseline-limited ratio or a comparison whose arm delta is
+unresolved against the interpolated null envelope does not count toward the
+threshold. Reference and candidate arms use the same coefficient type,
+arity, comparator, support stream, and identity; the report records those
+axes for every pair. Anything short of two conservative greater-than-2×
+workload ratios leaves the single representation standing. Concretely, if
+the attributed reference and candidate workloads are `r` and `c` and the
+comparable null envelope is `e`, the threshold interval is
 `(r - e) / (c + e)` through `(r + e) / (c - e)`. A family passes only
 when the comparison is resolved and the lower bound exceeds 2; a point
 estimate above 2 is not sufficient.
