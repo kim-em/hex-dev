@@ -24,12 +24,12 @@ still record a failed invocation because they are explicitly non-semantic;
 engine facts, expression nodes, provenance, and the arena remain atomic.
 Malformed package evidence is submitted to the engine as a failed rule reply:
 the request latch is cleared, the session remains usable, and completeness is
-permanently lost. Exceeding a package-local payload-use, atom, or schema bound
-has the same recoverable behavior. Exhausting a whole-run arena entry or body
-budget, or encountering an engine-invalid transition, instead returns a
-non-live session snapshot which cannot later be resumed and mislabeled
-saturated. Package failure and unprocessed narrowing suggestions likewise make
-the final status incomplete.
+permanently lost. Exceeding a package-local payload-use, draft, draft-cell,
+atom, or schema bound has the same recoverable behavior. Exhausting remaining
+whole-run arena entry or body capacity after earlier commits, or encountering
+an engine-invalid transition, instead returns a non-live session snapshot
+which cannot later be resumed and mislabeled saturated. Package failure and
+unprocessed narrowing suggestions likewise make the final status incomplete.
 -/
 
 namespace Hex.Interval.Experiment.PayloadSession
@@ -74,11 +74,16 @@ def requiredUses (limits : Propagator.Limits) : Nat :=
   limits.maxOutcomeCandidates +
     limits.maxOutcomeSuggestions * (limits.maxProposalItems + 1)
 
-/-- The arena must be able to inspect every proposal in an otherwise
-engine-valid reply. Whole-run entry and byte budgets remain independent. -/
+/-- The arena must be able to inspect and freeze every payload position in an
+otherwise engine-valid reply. A fresh arena must fit any reply within the
+explicit local draft and body-cell caps; only capacity consumed by earlier
+commits may produce a fatal whole-run exhaustion. -/
 def limitsCoherent (limits : Propagator.Limits)
     (arenaLimits : PayloadArena.Limits) : Bool :=
-  requiredUses limits ≤ arenaLimits.maxUses
+  requiredUses limits ≤ arenaLimits.maxUses &&
+    requiredUses limits ≤ arenaLimits.maxDrafts &&
+    arenaLimits.maxDrafts ≤ arenaLimits.maxEntries &&
+    arenaLimits.maxDraftCells ≤ arenaLimits.maxBodyCells
 
 /-- Bound package metadata, compile and validate the engine-owned program,
 then run package-specific program checks and start with an empty proof arena.
@@ -235,7 +240,7 @@ opaque Session.advance (session : Session Fact) : Step Fact :=
             failPayload session engine registry request.action error
         | .resourceLimit resource _ =>
             match resource with
-            | .uses | .atom | .schema =>
+            | .uses | .drafts | .draftCells | .atom | .schema =>
                 rejectPayload session engine registry request.action resource
             | .entries | .bodyCells =>
                 .payloadResource resource

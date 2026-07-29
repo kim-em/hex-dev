@@ -33,6 +33,8 @@ def action (serial : Nat) : Action :=
 def generous : PayloadArena.Limits :=
   { maxEntries := 16
     maxBodyCells := 32
+    maxDrafts := 16
+    maxDraftCells := 32
     maxAtom := 100
     maxSchema := 10
     maxUses := 16 }
@@ -190,8 +192,20 @@ def mixedRequest : InstantiationRequest :=
   | .resourceLimit .bodyCells arena => seedPreserved arena
   | _ => false
 
+-- A single oversized recipe is a reply-local failure even though the
+-- cumulative arena has room.
 #guard
-  match freeze { generous with maxAtom := 4 } seeded (action 0)
+  match freeze { generous with maxDraftCells := 1 } seeded (action 0)
+      (factOutcome 0) [factDraft 0 [4, 5]] with
+  | .resourceLimit .draftCells arena => seedPreserved arena
+  | _ => false
+
+-- Atom range is classified before either the local or remaining whole-run
+-- cell budget.
+#guard
+  match freeze
+      { generous with maxBodyCells := 1, maxDraftCells := 0, maxAtom := 4 }
+      seeded (action 0)
       (factOutcome 0) [factDraft 0 [5]] with
   | .resourceLimit .atom arena => seedPreserved arena
   | _ => false
@@ -230,14 +244,16 @@ def mixedRequest : InstantiationRequest :=
   | .resourceLimit .uses arena => seedPreserved arena
   | _ => false
 
--- Drafts are independently bounded by `maxUses` before exact-coverage scans,
--- even when the arena has ample entry room.
+-- Draft count has its own reply-local cap before exact-coverage scans, even
+-- when both proposal traversal and the cumulative arena have ample room.
 #guard
-  match freeze { generous with maxUses := 1 } seeded (action 0)
+  match freeze { generous with maxDrafts := 1 } seeded (action 0)
       (factOutcome 0) [factDraft 0, factDraft 1] with
-  | .resourceLimit .uses arena => seedPreserved arena
+  | .resourceLimit .drafts arena => seedPreserved arena
   | _ => false
 
+-- Nested equalities are charged as payload uses in addition to their
+-- containing instantiation suggestion.
 #guard
   match freeze { generous with maxUses := 1 } seeded (action 0)
       (.success [] [.instantiate mixedRequest] {} : Outcome Nat)

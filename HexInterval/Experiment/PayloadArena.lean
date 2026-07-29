@@ -87,12 +87,19 @@ def wellFormed (arena : Arena) : Bool :=
 
 end Arena
 
-/-- Trusted bounds for the prospective whole arena. -/
+/-- Trusted per-reply and whole-run bounds for prospective freezing. -/
 structure Limits where
+  /-- Cumulative frozen entries retained by the whole run. -/
   maxEntries : Nat
+  /-- Cumulative encoded body cells retained by the whole run. -/
   maxBodyCells : Nat
+  /-- Drafts supplied by one package reply. -/
+  maxDrafts : Nat
+  /-- Encoded body cells supplied by one package reply. -/
+  maxDraftCells : Nat
   maxAtom : Nat
   maxSchema : Nat
+  /-- Payload-bearing proposal positions traversed in one reply. -/
   maxUses : Nat
   deriving DecidableEq, Repr
 
@@ -106,8 +113,14 @@ inductive Invalid where
 
 /-- A trusted arena limit exhausted before allocation. -/
 inductive Resource where
+  /-- The remaining whole-run entry capacity is exhausted. -/
   | entries
+  /-- The remaining whole-run body-cell capacity is exhausted. -/
   | bodyCells
+  /-- One reply supplied too many drafts. -/
+  | drafts
+  /-- One reply supplied too many encoded body cells. -/
+  | draftCells
   | atom
   | schema
   | uses
@@ -243,13 +256,17 @@ def validate (uses : List Use) (drafts : List Draft) : Option Invalid :=
       | some error => some error
       | none => checkCoverage uses drafts
 
-/-- Consume a body-cell budget while checking every encoded recipe atom. -/
+/-- Consume one reply's body-cell budget while checking every encoded atom.
+Atom range is checked before cell capacity, so an oversized atom has a stable
+classification even when either cell budget is also exhausted. -/
 def consumeBody (maxAtom : Nat) : Nat -> List Nat -> Except Resource Nat
   | remaining, [] => pure remaining
-  | 0, _ :: _ => throw .bodyCells
-  | remaining + 1, atom :: atoms =>
+  | remaining, atom :: atoms =>
       if maxAtom < atom then throw .atom
-      else consumeBody maxAtom remaining atoms
+      else
+        match remaining with
+        | 0 => throw .draftCells
+        | remaining + 1 => consumeBody maxAtom remaining atoms
 
 def consumeDrafts (maxAtom : Nat) :
     Nat -> List Draft -> Except Resource Nat
@@ -258,26 +275,29 @@ def consumeDrafts (maxAtom : Nat) :
       let remaining ← consumeBody maxAtom remaining draft.body
       consumeDrafts maxAtom remaining drafts
 
-/-- Check aggregate entry, draft-work, schema, and cell limits before
-constructing any new entry.  In particular the draft list is bounded by both
-remaining arena room and `maxUses` before the quadratic exact-coverage checks
-run. -/
+/-- Check reply-local draft, schema, atom, and cell bounds before comparing
+the bounded reply with remaining whole-run entry and body-cell capacity.
+Consequently `.entries` and `.bodyCells` mean genuine cumulative exhaustion,
+while `.drafts` and `.draftCells` identify an oversized package reply. -/
 def preflight (limits : Limits) (arena : Arena) (drafts : List Draft) :
     Except Resource Nat := do
+  if !listWithin limits.maxDrafts drafts then
+    throw .drafts
+  if drafts.any (fun draft => limits.maxSchema < draft.schema) then
+    throw .schema
+  let remaining ← consumeDrafts limits.maxAtom limits.maxDraftCells drafts
+  let addedCells := limits.maxDraftCells - remaining
   if limits.maxEntries < arena.entries.size then
     throw .entries
   let entryRoom := limits.maxEntries - arena.entries.size
-  if !listWithin limits.maxUses drafts then
-    throw .uses
   if !listWithin entryRoom drafts then
     throw .entries
-  if drafts.any (fun draft => limits.maxSchema < draft.schema) then
-    throw .schema
   if limits.maxBodyCells < arena.bodyCells then
     throw .bodyCells
   let cellRoom := limits.maxBodyCells - arena.bodyCells
-  let remaining ← consumeDrafts limits.maxAtom cellRoom drafts
-  pure (cellRoom - remaining)
+  if cellRoom < addedCells then
+    throw .bodyCells
+  pure addedCells
 
 structure Relocation where
   source : PayloadId

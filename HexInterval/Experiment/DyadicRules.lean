@@ -512,6 +512,8 @@ engine limits. Proof-producing execution supplies its real envelope through
 def searchArenaLimits : PayloadArena.Limits :=
   { maxEntries := 0
     maxBodyCells := 0
+    maxDrafts := 0
+    maxDraftCells := 0
     maxAtom := 0
     maxSchema := 0
     maxUses := 0 }

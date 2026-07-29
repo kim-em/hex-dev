@@ -29,11 +29,13 @@ def retryKey : RuleKey := { name := "payload-session.mystery.retry" }
 def longCandidatesKey : RuleKey := { name := "payload-session.mystery.long-candidates" }
 def longSuggestionsKey : RuleKey := { name := "payload-session.mystery.long-suggestions" }
 def nestedKey : RuleKey := { name := "payload-session.mystery.nested-instance" }
+def nestedUsesKey : RuleKey := { name := "payload-session.mystery.nested-uses" }
 def atomKey : RuleKey := { name := "payload-session.mystery.atom" }
 def schemaKey : RuleKey := { name := "payload-session.mystery.schema" }
-def usesKey : RuleKey := { name := "payload-session.mystery.uses" }
+def draftsKey : RuleKey := { name := "payload-session.mystery.drafts" }
 def bodyKey : RuleKey := { name := "payload-session.mystery.body" }
 def overflowKey : RuleKey := { name := "payload-session.mystery.overflow" }
+def recoverKey : RuleKey := { name := "payload-session.mystery.recover" }
 
 def sourceOperation : Operation :=
   { key := sourceOp, inputs := [], output := real }
@@ -95,8 +97,10 @@ def limits : Propagator.Limits :=
         maxAlignmentShift := 8 } }
 
 def arenaLimits : PayloadArena.Limits :=
-  { maxEntries := 4
-    maxBodyCells := 8
+  { maxEntries := 8
+    maxBodyCells := 16
+    maxDrafts := 8
+    maxDraftCells := 8
     maxAtom := 100
     maxSchema := 10
     maxUses := 8 }
@@ -246,6 +250,35 @@ def nestedPackage : Package Nat :=
     handlers :=
       #[Handler.statelessPlanned (registration nestedKey) nestedPlan] }
 
+def nestedUsesPlan (request : RuleRequest Nat) : Plan Nat :=
+  { outcome :=
+      .success []
+        [.instantiate
+          { key := 45
+            triggers := [request.action.node]
+            claimedGeneration := 1
+            nodes := []
+            equalities :=
+              [{ left := .existing (node 0)
+                 right := .existing request.action.node
+                 payload := payload 702 },
+               { left := .existing (node 0)
+                 right := .existing request.action.node
+                 payload := payload 703 }]
+            payload := payload 701 }]
+        {}
+    drafts :=
+      [{ label := payload 702, role := .equality, schema := 3, body := [12] },
+       { label := payload 703, role := .equality, schema := 3, body := [13] },
+       { label := payload 701, role := .instance, schema := 2, body := [11] }] }
+
+def nestedUsesPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned (registration nestedUsesKey) nestedUsesPlan] }
+
 def draftPlan (schema : Nat) (body : List Nat)
     (request : RuleRequest Nat) : Plan Nat :=
   match request.writes with
@@ -279,6 +312,19 @@ def bodyPackage : Package Nat :=
       #[Handler.statelessPlanned (registration bodyKey)
           (draftPlan 1 [1, 1, 1, 1, 1, 1, 1, 1, 1])] }
 
+def recoverPlan (request : RuleRequest Nat) : Plan Nat :=
+  if request.action.node == node 1 then
+    draftPlan 11 [1] request
+  else
+    goodPlan request
+
+def recoverPackage : Package Nat :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, mysteryOperation]
+    handlers :=
+      #[Handler.statelessPlanned (registration recoverKey) recoverPlan] }
+
 def excessDrafts : List PayloadArena.Draft :=
   [{ label := payload 0, role := .fact, schema := 1, body := [] },
    { label := payload 1, role := .fact, schema := 1, body := [] },
@@ -290,12 +336,12 @@ def excessDrafts : List PayloadArena.Draft :=
    { label := payload 7, role := .fact, schema := 1, body := [] },
    { label := payload 8, role := .fact, schema := 1, body := [] }]
 
-def usesPackage : Package Nat :=
+def draftsPackage : Package Nat :=
   { Cache := Unit
     cache := ()
     operations := #[sourceOperation, mysteryOperation]
     handlers :=
-      #[Handler.statelessPlanned (registration usesKey) fun _ =>
+      #[Handler.statelessPlanned (registration draftsKey) fun _ =>
           { outcome := .noChange {}, drafts := excessDrafts }] }
 
 def overflowPlan (request : RuleRequest Nat) : Plan Nat :=
@@ -320,7 +366,8 @@ def arenaAwarePackage : Package Nat :=
     handlers :=
       #[Handler.statelessPlanned (registration goodKey) goodPlan]
     acceptsLimits := fun _ _ payloadLimits =>
-      4 ≤ payloadLimits.maxEntries && 8 ≤ payloadLimits.maxUses }
+      4 ≤ payloadLimits.maxEntries && 8 ≤ payloadLimits.maxUses &&
+        8 ≤ payloadLimits.maxDraftCells }
 
 def start (package : Package Nat)
     (payloadLimits : PayloadArena.Limits := arenaLimits) :
@@ -328,11 +375,38 @@ def start (package : Package Nat)
   PayloadSession.Session.start factDomain program #[package] #[3, 0, 0]
     limits payloadLimits
 
+def startWithin (package : Package Nat) (engineLimits : Propagator.Limits)
+    (payloadLimits : PayloadArena.Limits) :
+    Except PayloadSession.StartError (PayloadSession.Session Nat) :=
+  PayloadSession.Session.start factDomain program #[package] #[3, 0, 0]
+    engineLimits payloadLimits
+
+def oneReplyLimits : Propagator.Limits :=
+  { limits with
+    maxOutcomeCandidates := 1
+    maxOutcomeSuggestions := 0
+    maxProposalItems := 0 }
+
+def nestedUsesLimits : Propagator.Limits :=
+  { limits with
+    maxOutcomeCandidates := 0
+    maxOutcomeSuggestions := 1
+    maxProposalItems := 1 }
+
+def nestedUsesArena : PayloadArena.Limits :=
+  { arenaLimits with
+    maxDrafts := PayloadSession.requiredUses nestedUsesLimits
+    maxUses := PayloadSession.requiredUses nestedUsesLimits }
+
 def overflowLimits : Propagator.Limits :=
   { limits with maxOutcomeSuggestions := 3 }
 
 def overflowArenaLimits : PayloadArena.Limits :=
-  { arenaLimits with maxUses := PayloadSession.requiredUses overflowLimits }
+  let required := PayloadSession.requiredUses overflowLimits
+  { arenaLimits with
+    maxEntries := required
+    maxDrafts := required
+    maxUses := required }
 
 def oversizedProgram : Program :=
   { program with
@@ -413,7 +487,8 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
 -- whole run. The prospective arena is discarded, the request is consumed,
 -- and independent work can continue, but completeness is permanently lost.
 #guard
-  match start atomPackage with
+  match start atomPackage
+      { arenaLimits with maxBodyCells := 0, maxDraftCells := 0 } with
   | .ok session =>
       match session.advance with
       | .rejectedPayload .atom next =>
@@ -438,7 +513,20 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
   | .error _ => false
 
 #guard
-  match start usesPackage with
+  match start draftsPackage with
+  | .ok session =>
+      match session.advance with
+      | .rejectedPayload .drafts next =>
+          next.arena.entries.isEmpty && next.engine.history.isEmpty &&
+            next.engine.pending.isNone && next.live && next.droppedWork &&
+            !next.complete && next.engine.metrics.ruleFailures == 1
+      | _ => false
+  | .error _ => false
+
+-- A nested equality beyond the engine-coherent proposal envelope is charged
+-- as a payload use before engine admission. The failed reply is recoverable.
+#guard
+  match startWithin nestedUsesPackage nestedUsesLimits nestedUsesArena with
   | .ok session =>
       match session.advance with
       | .rejectedPayload .uses next =>
@@ -448,24 +536,81 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
       | _ => false
   | .error _ => false
 
--- Arena exhaustion is typed, prospective, and atomic.
-#guard
-  match start goodPackage { arenaLimits with maxEntries := 0 } with
-  | .ok session =>
-      match session.advance with
-      | .payloadResource .entries next =>
-          next.arena.entries.isEmpty && next.engine.history.isEmpty &&
-            next.engine.pending.isNone && !next.live
-      | _ => false
-  | .error _ => false
-
+-- One oversized encoded body is a package-local failure rather than
+-- exhaustion of the cumulative arena.
 #guard
   match start bodyPackage with
   | .ok session =>
       match session.advance with
-      | .payloadResource .bodyCells next =>
+      | .rejectedPayload .draftCells next =>
           next.arena.entries.isEmpty && next.engine.history.isEmpty &&
-            next.engine.pending.isNone && !next.live
+            next.engine.pending.isNone && next.live && next.droppedWork &&
+            !next.complete && next.engine.metrics.ruleFailures == 1
+      | _ => false
+  | .error _ => false
+
+-- Rejection does not stop unrelated queued work, and the monotone
+-- incompleteness flag survives a later successful arena and fact commit.
+#guard
+  match start recoverPackage with
+  | .ok session =>
+      match session.advance with
+      | .rejectedPayload .schema rejected =>
+          match rejected.advance with
+          | .advanced next =>
+              next.live && next.droppedWork && !next.complete &&
+                next.engine.metrics.ruleFailures == 1 &&
+                next.engine.history.size == 1 &&
+                next.arena.entries.size == 1 && next.arena.bodyCells == 2 &&
+                match next.engine.history[0]? with
+                | some event =>
+                    event.node == node 2 &&
+                      let run := next.drive 8
+                      run.stop == .incomplete && run.session.live &&
+                        run.session.droppedWork && !run.session.complete &&
+                        run.session.engine.history.size == 1
+                | none => false
+          | _ => false
+      | _ => false
+  | .error _ => false
+
+-- Whole-run exhaustion is reserved for a bounded reply which would fit an
+-- empty arena but not the capacity remaining after an earlier commit.
+#guard
+  match startWithin goodPackage oneReplyLimits
+      { arenaLimits with maxEntries := 1, maxDrafts := 1, maxUses := 1 } with
+  | .ok session =>
+      match session.advance with
+      | .advanced first =>
+          first.arena.entries.size == 1 && first.engine.history.size == 1 &&
+            match first.advance with
+            | .payloadResource .entries stopped =>
+                !stopped.live && stopped.engine.pending.isNone &&
+                  stopped.arena.entries.size == 1 &&
+                  stopped.engine.history.size == 1
+            | _ => false
+      | _ => false
+  | .error _ => false
+
+#guard
+  match startWithin goodPackage oneReplyLimits
+      { arenaLimits with
+        maxEntries := 2
+        maxBodyCells := 3
+        maxDrafts := 1
+        maxDraftCells := 2
+        maxUses := 1 } with
+  | .ok session =>
+      match session.advance with
+      | .advanced first =>
+          first.arena.bodyCells == 2 && first.engine.history.size == 1 &&
+            match first.advance with
+            | .payloadResource .bodyCells stopped =>
+                !stopped.live && stopped.engine.pending.isNone &&
+                  stopped.arena.entries.size == 1 &&
+                  stopped.arena.bodyCells == 2 &&
+                  stopped.engine.history.size == 1
+            | _ => false
       | _ => false
   | .error _ => false
 
@@ -524,9 +669,9 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
         !run.session.complete && run.session.engine.suggestions.size == 2
   | .error _ => false
 
--- Session start proves that every engine-valid reply fits the arena's
--- per-reply proposal traversal. The package can independently inspect all
--- arena limits.
+-- Session start proves that every engine-valid payload position fits both
+-- reply-local use/draft traversal and a fresh whole-run arena. Packages may
+-- independently impose stronger encoding requirements.
 #guard
   PayloadSession.requiredUses limits == 8 &&
     PayloadSession.limitsCoherent limits arenaLimits
@@ -537,14 +682,29 @@ def goodRun? : Option (PayloadSession.Run Nat) :=
   | _ => false
 
 #guard
-  match start arenaAwarePackage { arenaLimits with maxEntries := 3 } with
+  match start goodPackage { arenaLimits with maxDrafts := 7 } with
+  | .error .incoherentLimits => true
+  | _ => false
+
+#guard
+  match start goodPackage { arenaLimits with maxEntries := 7 } with
+  | .error .incoherentLimits => true
+  | _ => false
+
+#guard
+  match start goodPackage { arenaLimits with maxBodyCells := 7 } with
+  | .error .incoherentLimits => true
+  | _ => false
+
+#guard
+  match start arenaAwarePackage { arenaLimits with maxDraftCells := 7 } with
   | .error .limitsRejected => true
   | _ => false
 
 -- Generic engine bounds precede package-specific scans of the program.
 #guard
   match PayloadSession.Session.start factDomain oversizedProgram #[arenaAwarePackage]
-      #[3, 0, 0, 0, 0] limits { arenaLimits with maxEntries := 3 } with
+      #[3, 0, 0, 0, 0] limits { arenaLimits with maxDraftCells := 7 } with
   | .error (.engine (.resourceLimit .nodes)) => true
   | _ => false
 
