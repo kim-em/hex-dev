@@ -40,7 +40,7 @@ toolchain proof rewrite. The machine-readable record is
 ## Verdicts
 
 The release-quality sweep used clean commit
-`45f01eb6435f0666e60247899cea152b16275d3c` on `chungus2` (AMD EPYC 9455,
+`91adf91b04cd9aa676e7bb08fed176f2038fd0a2` on `chungus2` (AMD EPYC 9455,
 x86-64 Linux), one Lean thread pinned to logical CPU 22, six rotated paired
 samples, and complete fresh-module builds. Command:
 
@@ -53,52 +53,53 @@ python3 scripts/bench/hex_mv_poly_kernel_sweep.py \
   --expected-host chungus2 \
   --cpu 22 \
   --max-pair-retries 32 \
-  --output reports/bench-results/hex-mv-poly-kernel-45f01eb6-chungus2.json
+  --output reports/bench-results/hex-mv-poly-kernel-91adf91b-chungus2.json
 ```
 
 The committed export is
-`reports/bench-results/hex-mv-poly-kernel-45f01eb6-chungus2.json`
+`reports/bench-results/hex-mv-poly-kernel-91adf91b-chungus2.json`
 (SHA-256
-`b1e425c09a79a8c7a6bc92ab3a69ccd0a34f1c7bbd357a01686596ab711c5490`).
+`13882174fe64728fb90bc43c60e32585ffa00e0298b7118fc404f45f3f145c11`).
 It is complete, reports `release_quality: true`, has no validity exceptions,
 preflight failures, or exhausted pairs. The shared host was active during the
-capture, so the protocol rejected 52 preflight windows and 10 complete
+capture, so the protocol rejected 68 preflight windows and 6 complete
 measured pair attempts; all retained pairs have six accepted samples.
 
-The import-only baseline build magnitude is 1.359639 s. Its centred
-variability has a 3.702 ms IQR, a 10.946 ms Tukey envelope, and a
-20.885 ms conservative envelope after including the maximum observed
+The import-only baseline build magnitude is 1.522454 s. Its centred
+variability has an 84.975 ms IQR, a 215.255 ms Tukey envelope, and a
+796.139 ms conservative envelope after including the maximum observed
 absolute delta. The raw-ratio cap is
 `Hex raw / import baseline`: it is the largest raw fresh-build ratio possible
 even if the candidate workload itself took zero time.
 
 | case | Hex raw | sorted raw | Hex workload | sorted workload | Hex / sorted workload | raw-ratio cap | ratio status |
 |---|---:|---:|---:|---:|---:|---:|---|
-| `addition-inputs-64` | 3.016 s | 1.861 s | 1.656 s | 0.503 s | 3.290× | 2.222× | construction control |
-| `addition-64` | 5.015 s | 2.257 s | 3.657 s | 0.900 s | 4.063× | 3.694× | resolved before construction subtraction |
-| `addition-64`, net arithmetic | — | — | 2.038 s | 0.395 s | 5.164× | — | noise-limited |
-| `multiplication-sparse-6` | 1.761 s | 2.458 s | 0.403 s | 1.100 s | 0.366× | 1.297× | resolved |
-| `multiplication-collide-inputs-12` | 1.458 s | 1.460 s | 0.101 s | 0.101 s | 0.991× | 1.074× | construction control |
-| `multiplication-collide-12` | 3.156 s | 3.210 s | 1.799 s | 1.853 s | 0.971× | 2.325× | resolved before construction subtraction |
-| `multiplication-collide-12`, net arithmetic | — | — | 1.698 s | 1.750 s | 0.971× | — | resolved |
-| `cancellation-4` | 1.960 s | 1.758 s | 0.602 s | 0.401 s | 1.501× | 1.444× | resolved |
-| `cancellation-6` | 3.162 s | 2.359 s | 1.805 s | 1.002 s | 1.802× | 2.330× | resolved |
-| `cancellation-inputs-10` | 1.458 s | 1.417 s | 0.099 s | 0.057 s | 1.741× | 1.074× | construction control |
-| `cancellation-10` | 8.164 s | 4.463 s | 6.801 s | 3.104 s | 2.191× | 6.014× | resolved before construction subtraction |
-| `cancellation-10`, net arithmetic | — | — | 6.704 s | 3.046 s | 2.201× | — | resolved |
-| `sos-3` | 1.958 s | 1.659 s | 0.602 s | 0.303 s | 1.984× | 1.442× | resolved |
-| `sos-4` | 2.557 s | 1.860 s | 1.198 s | 0.501 s | 2.390× | 1.883× | resolved |
-| `sos-inputs-8` | 1.460 s | 1.459 s | 0.101 s | 0.097 s | 1.042× | 1.076× | construction control |
-| `sos-8` | 9.570 s | 3.873 s | 8.213 s | 2.516 s | 3.264× | 7.050× | resolved before construction subtraction |
-| `sos-8`, net arithmetic | — | — | 8.109 s | 2.496 s | 3.249× | — | resolved |
-| `structural-inputs-32` | 1.463 s | 1.469 s | 0.103 s | 0.109 s | 0.948× | 1.078× | construction control |
-| `structural-32` | 1.861 s | 1.662 s | 0.502 s | 0.303 s | 1.660× | 1.371× | resolved before construction subtraction |
-| `structural-32`, net operation | — | — | 0.397 s | 0.192 s | 2.068× | — | resolved |
+| `addition-inputs-64` | 3.661 s | 2.258 s | 2.205 s | 0.662 s | 3.331× | 2.420× | construction control |
+| `addition-64` | 7.007 s | 2.853 s | 5.306 s | 1.263 s | 4.201× | 4.632× | resolved before construction subtraction |
+| `addition-64`, net arithmetic | — | — | 3.104 s | 0.595 s | 5.216× | — | noise-limited |
+| `multiplication-sparse-6` | 2.307 s | 3.009 s | 0.566 s | 1.358 s | 0.417× | 1.525× | resolved |
+| `multiplication-collide-inputs-12` | 1.632 s | 1.609 s | 0.059 s | 0.126 s | 0.470× | 1.079× | construction control |
+| `multiplication-collide-12` | 4.255 s | 4.522 s | 2.676 s | 2.912 s | 0.919× | 2.813× | unresolved before construction subtraction |
+| `multiplication-collide-12`, net arithmetic | — | — | 2.514 s | 2.702 s | 0.930× | — | resolved |
+| `cancellation-4` | 2.459 s | 2.153 s | 0.765 s | 0.505 s | 1.513× | 1.625× | unresolved |
+| `cancellation-6` | 4.368 s | 2.908 s | 2.664 s | 1.393 s | 1.912× | 2.887× | resolved |
+| `cancellation-inputs-10` | 1.756 s | 1.717 s | 0.101 s | 0.036 s | 2.803× | 1.161× | construction control |
+| `cancellation-10` | 10.862 s | 5.512 s | 9.350 s | 3.815 s | 2.451× | 7.180× | resolved before construction subtraction |
+| `cancellation-10`, net arithmetic | — | — | 8.999 s | 3.782 s | 2.379× | — | resolved |
+| `sos-3` | 2.471 s | 2.002 s | 0.818 s | 0.412 s | 1.984× | 1.633× | unresolved |
+| `sos-4` | 3.514 s | 2.354 s | 1.916 s | 0.701 s | 2.734× | 2.323× | resolved |
+| `sos-inputs-8` | 1.777 s | 1.555 s | 0.134 s | 0.078 s | 1.729× | 1.175× | construction control |
+| `sos-8` | 11.726 s | 5.078 s | 10.274 s | 3.601 s | 2.853× | 7.750× | resolved before construction subtraction |
+| `sos-8`, net arithmetic | — | — | 9.906 s | 3.428 s | 2.890× | — | resolved |
+| `structural-inputs-32` | 1.457 s | 1.457 s | 0.103 s | 0.029 s | 3.549× | 0.963× | construction control |
+| `structural-32` | 1.911 s | 1.705 s | 0.501 s | 0.302 s | 1.658× | 1.263× | unresolved before construction subtraction |
+| `structural-32`, net operation | — | — | 0.450 s | 0.284 s | 1.586× | — | noise-limited |
 
-Addition's sorted net arm is smaller than its 443.251 ms combined null
-envelope, so its 5.164× point ratio is noise-limited. The other four terminal
-net comparisons are resolved after their matched construction controls are
-subtracted.
+Addition's net arms are smaller than its 1.022 s combined null envelope, so
+its 5.216× point ratio is noise-limited. Structural collisions are likewise
+noise-limited after construction subtraction. The multiplication,
+cancellation, and SOS terminal net comparisons are resolved as workload
+comparisons, but their threshold intervals remain conservative.
 
 A point ratio does not by itself pass the 2× gate. For a reference workload
 `r`, candidate workload `c`, and interpolated noise envelope `e`, the sweep
@@ -111,17 +112,18 @@ At the largest measured rung in each registered family:
 
 | family | case | point ratio | conservative interval | threshold result |
 |---|---|---:|---:|---|
-| `kernel-sparse-addition` | `addition-64` | 5.164× net | [1.903×, unbounded] | unresolved |
-| `kernel-sparse-multiplication` | `multiplication-collide-12` | 0.971× net | [0.896×, 1.052×] | failed |
-| `kernel-cancellation-identities` | `cancellation-10` | 2.201× net | [1.377×, 3.898×] | unresolved |
-| `kernel-structural-collisions` | `structural-32` | 2.068× net | [1.459×, 3.078×] | unresolved |
-| `kernel-sos-certificates` | `sos-8` | 3.249× net | [1.772×, 8.092×] | unresolved |
+| `kernel-sparse-addition` | `addition-64` | 5.216× net | [1.287×, unbounded] | unresolved |
+| `kernel-sparse-multiplication` | `multiplication-collide-12` | 0.930× net | [0.359×, 2.329×] | unresolved |
+| `kernel-cancellation-identities` | `cancellation-10` | 2.379× net | [1.265×, 5.650×] | unresolved |
+| `kernel-structural-collisions` | `structural-32` | 1.586× net | not bounded; noise-limited | unresolved |
+| `kernel-sos-certificates` | `sos-8` | 2.890× net | [1.477×, 8.061×] | unresolved |
 
-No family has a conservative lower bound above 2×. Addition comes closest,
-but its 1.903× lower bound and noise-limited candidate arm do not clear the
-threshold. The predeclared two-family gate is therefore not met, and the
-single production `ExtTreeMap` representation stands. The sorted proxy
-remains comparison evidence rather than a proposed public implementation.
+No family has a conservative lower bound above 2×. SOS comes closest, but
+its 1.477× lower bound does not clear the threshold; addition and structural
+collisions are noise-limited. The predeclared two-family gate is therefore
+not met, and the single production `ExtTreeMap` representation stands. The
+sorted proxy remains comparison evidence rather than a proposed public
+implementation.
 
 The final v5 rule was fixed before this capture, but it evolved after a
 superseded clean v4 capture at `77b76dd3`. That earlier run put SOS-6 at a
@@ -135,9 +137,9 @@ Consequently the evidence supports “a pass was not demonstrated”; it does
 not support the stronger claim that the sorted form is slower.
 
 The baseline, medium, and large same-module nulls respectively have
-3.702 ms, 15.290 ms, and 539.040 ms IQRs and 20.885 ms, 37.984 ms, and
-1,294.121 ms conservative envelopes. Their IQR/build ratios are 0.272%,
-0.483%, and 5.692%, below the 10% invalidation limit. The large null is what
+84.975 ms, 115.462 ms, and 377.683 ms IQRs and 796.139 ms, 299.155 ms, and
+1,199.284 ms conservative envelopes. Their IQR/build ratios are 5.581%,
+2.886%, and 3.252%, below the 10% invalidation limit. The large null is what
 keeps SOS-8 magnitude-comparable while also making its threshold interval
 appropriately broad.
 
@@ -182,19 +184,18 @@ The export records the clean source commit, toolchain and dependency
 checkouts, CPU topology and affinity, per-pair build order, wall time, peak
 RSS, scheduler/frequency observations, rejected attempts, module artifact
 sizes, exact comparison axes, and source SHA-256 values. The host protocol
-observed a 2.02% frequency spread. It saw other Lake/Lean activity elsewhere
-on the shared host, rejected 52 non-quiet core windows and 10 contaminated
+observed a 2.20% frequency spread. It saw other Lake/Lean activity elsewhere
+on the shared host, rejected 68 non-quiet core windows and 6 contaminated
 complete pair attempts, retained six accepted samples for every pair, and
 reported no validity violation.
 
 ## Concerns
 
-The implementation milestone is complete, but four terminal threshold
+The implementation milestone is complete, but all five terminal threshold
 comparisons remain statistically unresolved: their point estimates are not
-evidence that the conservative 2× threshold was crossed. Collision-heavy
-multiplication is a resolved failure. Under the preregistered rule, zero
-families pass and the production library therefore remains a single
-`ExtTreeMap` representation.
+evidence that the conservative 2× threshold was crossed. Under the
+preregistered rule, zero families pass and the production library therefore
+remains a single `ExtTreeMap` representation.
 
 The unavailable upstream `Mathlib MvSparsePoly` remains an explicit comparator
 limitation. The current sorted proof-probe adapter is evidence, not production

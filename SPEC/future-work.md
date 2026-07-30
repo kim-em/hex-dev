@@ -250,26 +250,27 @@ representations alongside `DensePoly`. For now, all libraries use
 
 The same abstraction problem is now concrete for multivariate polynomials.
 The release-quality HexMvPoly kernel sweep at clean commit
-`45f01eb6435f0666e60247899cea152b16275d3c` did not meet its predeclared
+`91adf91b04cd9aa676e7bb08fed176f2038fd0a2` did not meet its predeclared
 gate. After round-matched import and construction subtraction, the
-canonical sorted-list proxy's terminal point ratios were 5.164× for addition,
-2.201× for cancellation, 3.249× for SOS, and 2.068× for structural
-collisions. Their conservative intervals began at 1.903×, 1.377×, 1.772×,
-and 1.459× respectively; addition was also noise-limited. Collision-heavy
-multiplication was a resolved 0.971× failure. No family had a lower bound
+canonical sorted-list proxy's terminal point ratios were 5.216× for addition,
+2.379× for cancellation, 2.890× for SOS, and 1.586× for structural
+collisions. The first three conservative intervals began at 1.287×, 1.265×,
+and 1.477× respectively; addition and structural collisions were
+noise-limited. Collision-heavy multiplication had a 0.930× point estimate
+with an unresolved [0.359×, 2.329×] interval. No family had a lower bound
 above 2×, let alone two families. The exact record is
-`reports/bench-results/hex-mv-poly-kernel-45f01eb6-chungus2.json`.
+`reports/bench-results/hex-mv-poly-kernel-91adf91b-chungus2.json`.
 
 The current evidence therefore does not demonstrate the gate.
 `Hex.MvPoly` remains the single `ExtTreeMap` representation by default. The
 proof-probe sorted adapter is comparison evidence only and must not be exposed
-as production API. Four terminal comparisons are unresolved, and the measured
-rungs finish well below the per-module budget rather than establishing the
-largest budget-fitting cases required for a positive decision. A future
-decision needs a preregistered larger ladder, more samples, and preferably a
-quiescent host. In particular, the SOS-scale null has a 1.294 s conservative
-envelope, a 5.692% IQR/build ratio, and yields a 3.249× SOS point estimate
-with only a 1.772× conservative lower bound.
+as production API. All five terminal comparisons are unresolved, and the
+measured rungs finish well below the per-module budget rather than
+establishing the largest budget-fitting cases required for a positive
+decision. A future decision needs a preregistered larger ladder, more samples,
+and preferably a quiescent host. In particular, the SOS-scale null has a
+1.199 s conservative envelope, a 3.252% IQR/build ratio, and yields a 2.890×
+SOS point estimate with only a 1.477× conservative lower bound.
 
 Typeclass interface:
 ```lean

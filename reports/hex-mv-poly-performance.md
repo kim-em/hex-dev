@@ -251,13 +251,13 @@ The five visualizations are:
 
 Native ratios are informational rather than the representation gate. The
 release-quality kernel sweep measured construction-subtracted point ratios of
-5.164× for addition, 2.201× for cancellation, 3.249× for SOS, and 2.068× for
-structural collisions. Their conservative intervals start at 1.903×, 1.377×,
-1.772×, and 1.459× respectively; addition is also noise-limited.
-Collision-heavy multiplication is a resolved 0.971× failure. No family has a
-lower bound above 2×, so the
-predeclared two-family gate is not met. The decision and its robust
-null-envelope checks are recorded in
+5.216× for addition, 2.379× for cancellation, 2.890× for SOS, and 1.586× for
+structural collisions. The first three conservative intervals start at
+1.287×, 1.265×, and 1.477× respectively; addition and structural collisions
+are noise-limited. Collision-heavy multiplication has a 0.930× point estimate
+but its [0.359×, 2.329×] threshold interval remains unresolved. No family has
+a lower bound above 2×, so the predeclared two-family gate is not met. The
+decision and its robust null-envelope checks are recorded in
 [`hex-mv-poly-mathlib-performance.md`](hex-mv-poly-mathlib-performance.md):
 keep `ExtTreeMap` as the single production representation.
 
@@ -349,9 +349,8 @@ from the same corpus and are byte-identifiable by the hashes above.
 ## Concerns
 
 The implementation milestone is complete. The representation experiment is
-not a positive performance result: four terminal comparisons remain
-statistically unresolved and multiplication is a resolved failure. Under the
-predeclared gate, zero families pass.
+not a positive performance result: all five terminal comparisons remain
+statistically unresolved. Under the predeclared gate, zero families pass.
 
 The Mathlib-native curve is explicitly a sorted-list proxy because
 `MvSparsePoly` is unavailable at the pinned revision, and CompPoly's fixed

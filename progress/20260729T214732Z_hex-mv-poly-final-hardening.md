@@ -27,7 +27,7 @@
 - Exercised the v5 validity gate on the enlarged corpus, found that SOS-8
   exceeded the allowed 2× distance from the medium null control, and added a
   same-module SOS-8 null pair before accepting any final evidence.
-- Captured the final v5 sweep from clean commit `45f01eb6` with three
+- Captured an earlier v5 sweep from clean commit `45f01eb6` with three
   magnitude-calibrated nulls and six accepted samples for all 18 pairs. The
   artifact reports `release_quality: true`, no exceptions, violations,
   preflight failures, or exhausted pairs; 52 busy preflight windows and 10
@@ -74,18 +74,30 @@
   was 10.53%, above the registered 10% ceiling. Stopped a second attempt
   during sustained near-100% activity on CPU 22 and its sibling rather than
   admitting a marginal run; neither attempt is committed.
+- Captured the final v5 sweep from clean commit `91adf91b` after the competing
+  host workload finished. All 18 pairs retained six accepted samples and the
+  artifact reports `release_quality: true`, no exceptions or violations, and
+  no preflight failures, exhausted pairs, or partial samples. The protocol
+  rejected 68 busy preflight windows and 6 contaminated complete attempts.
+- Replaced the superseded kernel artifact and refreshed the reports and
+  future-work decision from the exact final source state. The wider valid
+  null envelopes leave all five terminal threshold comparisons unresolved;
+  zero families pass the preregistered two-family gate.
+- Re-ran Phase-4, release-manifest, dependency-DAG, Mathlib-free bench/probe,
+  diff-hygiene, artifact-completeness, and exact-hash checks successfully on
+  the final evidence refresh.
 
 ## Current frontier
 
 The implementation, reusable map layer, final review fixes, local
 verification, pinned-consumer evidence, and native/comparator evidence are
-complete. Only a valid final kernel recapture remains.
+complete. The exact-source kernel capture and representation decision are
+also complete. The remaining work is final validation, PR CI, and merge.
 
 ## Next step
 
-Commit the accepted evidence refresh, wait for a quiet CPU-22 window, recapture
-the kernel sweep from that clean source state, refresh its report, then open
-the completion PR and monitor CI to merge.
+Validate and commit the final kernel artifact/report refresh, open the
+completion PR, monitor its underlying Actions jobs, and merge when green.
 
 ## Blockers
 
