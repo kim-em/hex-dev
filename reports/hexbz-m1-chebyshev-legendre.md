@@ -2,7 +2,7 @@
 
 This report records the resolution of the six Chebyshev/Legendre performance
 issues #9104–#9109. The production result is clean revision
-`2ee33dc56118b9bd4da5d1800c3807a38158bdb2`, measured on 2026-07-30 on
+`d580b121292be127be33b312fe888b00573379ed`, measured on 2026-07-30 on
 `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0. The comparison
 baseline is clean revision `b0150d2b4a6154d7b9ed3c7cace4fee0ace64165`.
 
@@ -77,29 +77,29 @@ median wall clocks; ratios below one are improvements.
 
 | Row | Previous Hex | M1-gated Hex | New/old | Isabelle BZ | New/Isabelle |
 |---|---:|---:|---:|---:|---:|
-| Chebyshev T18 | 2.795 ms | 1.880 ms | 0.673× | 1.034 ms | 1.818× |
-| Chebyshev T20 | 3.305 ms | 3.004 ms | 0.909× | 1.316 ms | 2.283× |
-| Chebyshev T24 | 2.028 ms | 1.454 ms | 0.717× | 1.253 ms | 1.160× |
-| Chebyshev U18 | 1.655 ms | 0.410 ms | 0.248× | 0.711 ms | 0.577× |
-| Chebyshev U20 | 3.981 ms | 0.983 ms | 0.247× | 1.361 ms | 0.722× |
-| Chebyshev U24 | 2.610 ms | 0.814 ms | 0.312× | 1.472 ms | 0.553× |
-| Legendre P22 | 2.913 ms | 2.116 ms | 0.727× | 2.054 ms | 1.030× |
-| Legendre P24 | 7.190 ms | 7.366 ms | 1.025× | 3.830 ms | 1.924× |
-| Legendre P26 | 12.343 ms | 12.572 ms | 1.019× | 6.394 ms | 1.966× |
-| Legendre P28 | 8.205 ms | 5.074 ms | 0.618× | 5.107 ms | 0.994× |
-| Legendre P30 | 13.807 ms | 11.367 ms | 0.823× | 10.717 ms | 1.061× |
-| Legendre P34 | 11.947 ms | 12.213 ms | 1.022× | 6.349 ms | 1.924× |
-| Legendre P38 | 13.602 ms | 8.701 ms | 0.640× | 6.743 ms | 1.291× |
+| Chebyshev T18 | 2.795 ms | 1.789 ms | 0.640× | 1.034 ms | 1.729× |
+| Chebyshev T20 | 3.305 ms | 2.986 ms | 0.904× | 1.316 ms | 2.270× |
+| Chebyshev T24 | 2.028 ms | 1.443 ms | 0.712× | 1.253 ms | 1.152× |
+| Chebyshev U18 | 1.655 ms | 0.411 ms | 0.248× | 0.711 ms | 0.578× |
+| Chebyshev U20 | 3.981 ms | 0.921 ms | 0.231× | 1.361 ms | 0.676× |
+| Chebyshev U24 | 2.610 ms | 0.816 ms | 0.313× | 1.472 ms | 0.554× |
+| Legendre P22 | 2.913 ms | 2.076 ms | 0.713× | 2.054 ms | 1.011× |
+| Legendre P24 | 7.190 ms | 7.301 ms | 1.016× | 3.830 ms | 1.906× |
+| Legendre P26 | 12.343 ms | 12.504 ms | 1.013× | 6.394 ms | 1.955× |
+| Legendre P28 | 8.205 ms | 4.952 ms | 0.604× | 5.107 ms | 0.970× |
+| Legendre P30 | 13.807 ms | 11.034 ms | 0.799× | 10.717 ms | 1.030× |
+| Legendre P34 | 11.947 ms | 12.086 ms | 1.012× | 6.349 ms | 1.904× |
+| Legendre P38 | 13.602 ms | 8.422 ms | 0.619× | 6.743 ms | 1.249× |
 
-The P24/P26/P34 movements are below 2.5% and those rows remain on the unchanged
+The P24/P26/P34 movements are below 1.6% and those rows remain on the unchanged
 M2 path. The gate deliberately selects the rows where M1 plus its certificate
 is cheaper, while avoiding both low-degree overhead and exponential searches
 at large modular width.
 
 Across overhead-eligible rows, the Chebyshev median falls from 1.619× to
-1.197× Hex/Isabelle and the Legendre median from 1.435× to 1.260×.
-Chebyshev moves from one Hex win to four; Legendre remains two Hex wins, but
-P28 reaches parity and the P30/P38 gaps narrow.
+1.260× Hex/Isabelle and the Legendre median from 1.435× to 1.249×.
+Chebyshev moves from one Hex win to four. P28 now beats Isabelle, while the
+P30/P38 gaps narrow to 1.030× and 1.249×.
 
 ## Modular scan and policy decision
 
@@ -115,14 +115,16 @@ so a large proof-equal native kernel would not clear #9105's gate.
 The bounded degree-pair certificate does clear #9107's end-to-end gate:
 
 - P28 combines `p=59`, degrees `[5,5,2,16]`, with `p=61`, degrees
-  `[14,14]`, and falls from 8.205 ms to 5.074 ms.
+  `[14,14]`, and falls from 8.205 ms to 4.952 ms.
 - P30 reuses `p=71`, degrees `[22,2,3,3]`, then uses `p=73`, degrees
-  `[13,13,4]`, and falls from 13.807 ms to 11.367 ms.
+  `[13,13,4]`, and falls from 13.807 ms to 11.034 ms.
 - P38 reuses `p=79`, degrees `[36,1,1]`, then uses `p=83`, degrees
-  `[18,16,4]`, and falls from 13.602 ms to 8.701 ms.
+  `[18,16,4]`, and falls from 13.602 ms to 8.422 ms.
 
 The scan examines at most four later candidates and only after the M1 cost gate.
-Misses therefore cannot create an unbounded prime walk.
+Each side of the exponential subset-degree comparison is capped at 12 modular
+factors. Misses therefore cannot create an unbounded prime walk or admit an
+unbounded subset computation.
 
 A broader irreducibility scan is a measured no-go. P26 first becomes a
 singleton at its eighth good prime (`p=83`); P30 at its eighteenth
@@ -139,6 +141,7 @@ small deterministic cost model:
 
 - non-monic;
 - degree at least 18;
+- at least two selected modular factors;
 - selected modular width at most 8; and
 - either a small selected prime relative to degree, or a modular factor
   materially larger than half the input degree.
@@ -174,7 +177,7 @@ improvement. #9106 therefore stops at its specified measured no-go.
 ## Relift decision
 
 Eligible rows bypass the speculative M2 sub-floor ladder and go directly to
-the now-cheap full M1 precision. U24 remains 3.21× faster than its pre-M1
+the now-cheap full M1 precision. U24 remains 3.20× faster than its pre-M1
 baseline. Monic inputs, large modular widths, low degrees, and failed
 certificates continue through the existing recursive M2 implementation.
 
@@ -186,27 +189,32 @@ diagnostic was not rerun.
 ## Full-sweep validation
 
 The final public sweep solves 373 of 392 rows with 19 timeouts, a
-400.905 µs solved-row median, 4.079 ms p90, and 8.994 s slowest solve. Every
+401.114 µs solved-row median, 4.052 ms p90, and 8.900 s slowest solve. Every
 returned factor-degree multiset and status agrees with the baseline.
 
 The full `lake build`, all 16 non-scheduled `hexbz_bench verify` targets,
-fresh fixture reproduction, the 102-case FLINT oracle, and the 52-case
+fresh fixture reproduction, the 106-case FLINT oracle, and the 54-case
 anti-regression trace gate pass.
 
-Against the previous Hex record, 243 overhead-eligible pairs have median
-1.015× and p10–p90 0.971×–1.039×. Eight monic cyclotomic rows showed
-implausible 1.47–1.64× readings in that long run even though the M1 predicate
-is false for all of them. A pinned, interleaved old/new control with 21
-measurements per revision on exactly those eight rows gives median ratio
-1.0005×, geometric mean 1.0012×, and range 0.9939×–1.0104×; all outputs are
-identical. The long-run outliers are CPU-frequency drift, not a reachable-path
-regression.
+Against the first M1 record, 243 overhead-eligible pairs have median 0.990×
+and p10–p90 0.965×–1.009×, with 187 rows faster and 56 slower. The review
+identified that modular-factor coordinate transport was bound before the M1
+gate, so strict evaluation paid that cost even on skipped paths. Moving the
+transport into the taken branch corrects the earlier interpretation of eight
+monic cyclotomic slowdowns: those rows now take 0.628×–0.684× of the first M1
+record and return to 1.009×–1.041× of the pre-M1 baseline. The prior
+frequency-drift attribution is withdrawn.
+
+The review also made the route directly observable (`notTried`, `accepted`, or
+`fallback`), pins accepted M1 on U18 and P28, exercises certificate rejection
+followed by exact M2 recovery, and adds a proved degree prefilter before
+building original-coordinate candidates.
 
 The final artifact is:
 
-- `reports/bench-results/hexbz-factor-sweep-hex-2ee33dc5-m1-chungus2.json`
+- `reports/bench-results/hexbz-factor-sweep-hex-d580b121-m1-review-chungus2.json`
   (SHA-256
-  `a604aaaf492dacf726a0ae6315744f14a46dd21d124033b846a73e00f5511e89`)
+  `455b5fc28681707357eda6c60fba25531937128c51f9c3065231adf73dbd959d`)
 
 Reproduce the phase diagnostic with:
 

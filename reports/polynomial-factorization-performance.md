@@ -7,8 +7,8 @@ stack.
 
 - Hex public implementation: the preceding Hensel/GCD/recombination stack plus
   verified original-coordinate M1 lifting, bounded modular degree
-  certificates, and a measured M1 cost gate at
-  `2ee33dc56118b9bd4da5d1800c3807a38158bdb2`
+  certificates, a measured M1 cost gate, and review-hardened route coverage at
+  `d580b121292be127be33b312fe888b00573379ed`
 - Hex classical-no-decline diagnostic: unchanged clean revision
   `b0150d2b4a6154d7b9ed3c7cace4fee0ace64165`
 - Hex lattice implementation: unchanged clean revision
@@ -35,31 +35,31 @@ Exact paired ratios are reported only where those conditions match.
 
 Every current Hex export records a clean worktree. All affected lower-layer
 ladders were refreshed in full rather than overlaid onto earlier rows. Rejected
-broad-probe sweeps, a CPU-frequency-contaminated public sweep, and a measured
-slower direct-array `modP` replacement are not used as current evidence.
+broad-probe and diagnostic sweeps, and a measured slower direct-array `modP`
+replacement are not used as current evidence.
 
 ## Headline outcome
 
 The combined verified hot-path work makes the public dispatcher 3.10× faster
-at the solved-row median (1.244 ms to 400.905 µs). Exact-exponent lifting,
+at the solved-row median (1.244 ms to 401.114 µs). Exact-exponent lifting,
 omitting the unused final Bezout update, guarded tree, shared GCD/Hensel
 kernels, cached recombination, and original-coordinate M1 preserve 373 of 392
-solves while cutting p90 from 8.408 ms to 4.079 ms.
+solves while cutting p90 from 8.408 ms to 4.052 ms.
 
 Against verified Isabelle BZ, the overhead-filtered eligible-row median falls
-from 3.95× to 0.865× Hex/Isabelle. Hex wins 135 eligible rows and Isabelle 99.
+from 3.95× to 0.852× Hex/Isabelle. Hex wins 143 eligible rows and Isabelle 91.
 This is a clear aggregate Hex lead but not uniform superiority; FLINT,
 PARI/GP, and NTL remain much faster overall.
 
 Eligibility uses each run's own measured protocol floor. The new public
-service's floor is 17.466 µs. Its broad 0.466×–2.062× p10–p90 band still rules
+service's floor is 17.215 µs. Its broad 0.450×–2.033× p10–p90 band still rules
 out a claim of uniform superiority.
 
 ## Integer-factorization corpus
 
 | System | OK | Timeout | Median | p90 | Slowest solved |
 |---|---:|---:|---:|---:|---:|
-| Hex public factor | 373 | 19 | 400.905 µs | 4.079 ms | 8.994 s |
+| Hex public factor | 373 | 19 | 401.114 µs | 4.052 ms | 8.900 s |
 | Hex lattice | 369 | 23 | 1.812 ms | 87.886 ms | 9.590 s |
 | Hex classical, no decline | 372 | 20 | 386.358 µs | 5.556 ms | 3.717 s |
 | FLINT | 391 | 1 | 66.850 µs | 1.184 ms | 1.228 s |
@@ -77,13 +77,13 @@ With both sides at least 10× above protocol overhead:
 
 | Pair | Eligible | Median | p10–p90 | First faster | Second faster |
 |---|---:|---:|---:|---:|---:|
-| Hex public / Isabelle BZ | 234 | 0.865× | 0.466×–2.062× | 135 | 99 |
+| Hex public / Isabelle BZ | 234 | 0.852× | 0.450×–2.033× | 143 | 91 |
 | Hex classical / Isabelle BZ | 229 | 0.901× | 0.466×–2.490× | 127 | 102 |
 | Hex lattice / Isabelle LLL | 230 | 0.137× | 0.004×–2.437× | 182 | 48 |
-| Hex public / unchanged Hex classical | 237 | 1.007× | 0.720×–1.187× | 108 | 129 |
+| Hex public / unchanged Hex classical | 237 | 1.003× | 0.710×–1.140× | 116 | 121 |
 
 The no-decline row is intentionally not rerun: it remains the unchanged M2
-diagnostic. Current public/classical is 1.007× at the paired median, but its
+diagnostic. Current public/classical is 1.003× at the paired median, but its
 wider distribution contains the deliberately selective M1 wins. The
 no-decline entry omits bounded decline/fallback behavior and the public final
 product check; public improves selected hard rows and alone solves `sd6`.
@@ -186,15 +186,15 @@ End to end:
 
 | Corpus row | Previous Hex | M1-gated Hex | Change |
 |---|---:|---:|---:|
-| `chebyshev_U18` | 1.655 ms | 0.410 ms | 4.04× faster |
-| `chebyshev_U20` | 3.981 ms | 0.983 ms | 4.05× faster |
-| `chebyshev_U24` | 2.610 ms | 0.814 ms | 3.21× faster |
-| `legendre_P28` | 8.205 ms | 5.074 ms | 1.62× faster |
-| `legendre_P30` | 13.807 ms | 11.367 ms | 1.21× faster |
-| `legendre_P38` | 13.602 ms | 8.701 ms | 1.56× faster |
+| `chebyshev_U18` | 1.655 ms | 0.411 ms | 4.03× faster |
+| `chebyshev_U20` | 3.981 ms | 0.921 ms | 4.32× faster |
+| `chebyshev_U24` | 2.610 ms | 0.816 ms | 3.20× faster |
+| `legendre_P28` | 8.205 ms | 4.952 ms | 1.66× faster |
+| `legendre_P30` | 13.807 ms | 11.034 ms | 1.25× faster |
+| `legendre_P38` | 13.602 ms | 8.422 ms | 1.62× faster |
 
-The overhead-eligible Chebyshev median improves from 1.619× to 1.197×
-Hex/Isabelle; Legendre improves from 1.435× to 1.260×. P28 reaches parity,
+The overhead-eligible Chebyshev median improves from 1.619× to 1.260×
+Hex/Isabelle; Legendre improves from 1.435× to 1.249×. P28 beats Isabelle,
 and Hex now beats Isabelle on U18, U20, and U24.
 
 The follow-up measurements reject three broader changes: the safe
@@ -291,13 +291,20 @@ and both import baselines are within 2–5% of the preceding export, so the chea
 selector guard adds no visible kernel-level discontinuity;
 `hexbz-kernel-factor.md` records every sample.
 
+Review hardening bounds both sides of the exponential degree-subset comparison
+at width 12, keeps one-factor inputs on M2, exposes the M1 route in the trace,
+pins accepted U18/P28 routes, and exercises certificate rejection followed by
+M2 recovery. Moving coordinate transport inside the taken M1 branch also
+restores eight monic cyclotomic rows from 1.47×–1.64× regressions to within
+1.009×–1.041× of their pre-M1 times.
+
 At split degree 24, the compiled Berlekamp diagnostic records 16.387 ms for a
 kernel-rebuilding baseline, 1.245 ms with the kernel shared, and 569.224 µs for
 the fixed path. The fixed path is 18.89% matrix, 2.95% nullspace, and 78.17%
 witness split. Balanced product construction remains neutral.
 
-In the current persistent corpus service, public `sd5` takes 40.120 ms and
-`sd6` completes in 8.994 s; the current isolated lattice entry takes 8.583 s
+In the current persistent corpus service, public `sd5` takes 40.496 ms and
+`sd6` completes in 8.900 s; the current isolated lattice entry takes 8.583 s
 on `sd6`, while no-decline classical times out. The frontier result is only
 10.1% below the cutoff and therefore has little margin.
 
@@ -332,9 +339,9 @@ Fresh Hex exports under `reports/bench-results/`:
 - `hexbz-factor-sweep-hex-b0150d2b-recombine-cache-chungus2.json`
   (preceding public and unchanged no-decline classical; SHA-256
   `7222c12c206d9fdb3489d98595c72f9eb254f31108e5136722242784eb086be3`)
-- `hexbz-factor-sweep-hex-2ee33dc5-m1-chungus2.json`
+- `hexbz-factor-sweep-hex-d580b121-m1-review-chungus2.json`
   (current public; SHA-256
-  `a604aaaf492dacf726a0ae6315744f14a46dd21d124033b846a73e00f5511e89`)
+  `455b5fc28681707357eda6c60fba25531937128c51f9c3065231adf73dbd959d`)
 
 Historical stage-isolation artifacts remain in the same directory and are
 linked from the corresponding exact-lift and guarded-tree sections above.
