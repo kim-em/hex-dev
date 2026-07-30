@@ -498,7 +498,9 @@ theorem scaledCandidatePrefilter_eq_true_of_exactQuotient?_some
 original-coordinate candidate divides a nonzero target cannot have total
 degree larger than that target. The executable's non-monic and vanishing-
 leading-residue escape cases make the statement unconditional for standalone
-callers. -/
+callers. This is a standalone rejection-soundness result: unlike the M2 search,
+M1 acceptance is certificate-gated and does not consume a trustworthy-none
+completeness theorem. -/
 theorem coreCandidatePrefilter_eq_true_of_exactQuotient?_some
     {coreLc : ℤ} {target : Hex.ZPoly} {modulus : ℕ} {sel : List Hex.ZPoly}
     {quotient : Hex.ZPoly}

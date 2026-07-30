@@ -459,9 +459,9 @@ conformance suite (fixtures under
   merge gate**;
 - the size-ordered subset count on small-`r` fixtures must stay under
   the declared bound;
-- designated original-coordinate fixtures must keep their expected M1
-  route, including reducible acceptance, two-prime irreducibility
-  acceptance, and checked M1-to-M2 fallback;
+- designated original-coordinate fixtures must keep reducible and two-prime
+  irreducibility acceptance on M1; a separate emitter sentinel must check
+  certificate rejection followed by exact M1-to-M2 fallback;
 - `factorTrial` MUST never run on any fixture except the dedicated
   `X² − L²`-style regression cases that exercise the
   `choosePrimeData? = none` path; those are tagged `scheduledHardwareTag`

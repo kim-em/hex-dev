@@ -136,6 +136,11 @@ adaptive Berlekamp walk.  This is deliberately not a fresh ordinary
 `factorsModPBerlekampForm core`: the selected prime and modular width are
 unchanged, while the already-selected `toMonic` factors are transported by
 `c⁻ᵈ q(cX)` and the stored image is replaced by the original core's reduction.
+
+Consequently this seed does not satisfy the ordinary
+`factorsModPBerlekampForm core` invariant: its factors multiply to the
+leading-coefficient-normalized core.  M1 consumes only its prime and factor
+fields through `coreLiftData`; general prime-choice consumers must not use it.
 -/
 @[expose]
 def corePrimeDataOfToMonic

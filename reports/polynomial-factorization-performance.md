@@ -306,7 +306,7 @@ witness split. Balanced product construction remains neutral.
 In the current persistent corpus service, public `sd5` takes 40.496 ms and
 `sd6` completes in 8.900 s; the current isolated lattice entry takes 8.583 s
 on `sd6`, while no-decline classical times out. The frontier result is only
-10.1% below the cutoff and therefore has little margin.
+11.0% below the cutoff and therefore has little margin.
 
 ## Six presentation graphs
 

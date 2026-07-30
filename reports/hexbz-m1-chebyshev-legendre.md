@@ -205,6 +205,11 @@ monic cyclotomic slowdowns: those rows now take 0.628×–0.684× of the first M
 record and return to 1.009×–1.041× of the pre-M1 baseline. The prior
 frequency-drift attribution is withdrawn.
 
+The first M1 record is
+`reports/bench-results/hexbz-factor-sweep-hex-2ee33dc5-m1-chungus2.json`
+(SHA-256
+`a604aaaf492dacf726a0ae6315744f14a46dd21d124033b846a73e00f5511e89`).
+
 The review also made the route directly observable (`notTried`, `accepted`, or
 `fallback`), pins accepted M1 on U18 and P28, exercises certificate rejection
 followed by exact M2 recovery, and adds a proved degree prefilter before
