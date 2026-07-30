@@ -1074,8 +1074,11 @@ def maxModularFactorDegree (primeData : PrimeChoiceData) : Nat :=
 /--
 Bounded downstream-cost gate for M1.
 
-Small selected primes make the original-coordinate lift/recombination attempt
-cheap enough to be worthwhile directly.  For larger primes, an attempt is
+Monic inputs have no coordinate swell, and low-degree inputs have too little
+downstream work to repay an independent certificate probe, so both stay on M2.
+For eligible non-monic inputs, small selected primes make the original-coordinate
+lift/recombination attempt cheap enough to be worthwhile directly.  For larger
+primes, an attempt is
 reserved for material-degree inputs whose modular partition contains a factor
 exceeding half the input degree by at least two; that leaves a sparse
 subset-degree set and is the measured regime where one additional
@@ -1088,9 +1091,11 @@ sub-millisecond rows.
 def shouldTryM1 (core : ZPoly) (primeData : PrimeChoiceData) : Bool :=
   let n := core.degree?.getD 0
   let r := primeData.factorsModP.size
-  r ≤ 8 &&
+  DensePoly.leadingCoeff core != 1 &&
+    18 ≤ n &&
+    r ≤ 8 &&
     (primeData.p ≤ n ||
-      (18 ≤ n && n + 4 ≤ 2 * maxModularFactorDegree primeData))
+      n + 4 ≤ 2 * maxModularFactorDegree primeData)
 
 /-- Validate the directly checkable shape of an original-coordinate
 recombination result before any irreducibility/refinement decision. -/
