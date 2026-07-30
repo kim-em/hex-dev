@@ -507,6 +507,114 @@ def scaledRecombinationSmart
     { candidatesTried := levelBudget - remaining,
       budgetExhausted := res.isNone && remaining == 0 })
 
+/--
+Original-coordinate (`M1`) candidate for a selected list of lifted local
+factors.  The Hensel factors multiply to the monic target
+`core / leadingCoeff core` modulo `modulus`, so scaling their product by the
+core leading coefficient recovers the integer-coordinate factor directly.
+-/
+@[expose]
+def coreRecombinationCandidate
+    (coreLc : Int) (modulus : Nat) (selected : List ZPoly) : ZPoly :=
+  normalizeFactorSign <| ZPoly.primitivePart <|
+    centeredLiftPoly
+      (DensePoly.scale coreLc (Array.polyProduct selected.toArray)) modulus
+
+mutual
+
+/--
+Size-ordered recombination in the original (`M1`) coordinate.
+
+This deliberately mirrors `scaledRecombinationSmartAux`, but forms
+`coreRecombinationCandidate` rather than dilating a factor of the coefficient-
+swollen `toMonic` transform.  The executable prefilter is not shared: its
+constant-term formula is specific to the dilation candidate.  The caller
+validates every successful result (product, shape, and irreducibility
+certificates) before exposing it.
+-/
+@[expose]
+def coreRecombinationSmartAux
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (localFactors : List ZPoly) (budget : Nat) (fuel : Nat) :
+    Option (List ZPoly) × Nat :=
+  if target = 1 then (some [], budget)
+  else if budget = 0 then (none, 0)
+  else match fuel with
+    | 0 => (none, budget)
+    | fuel + 1 =>
+        match localFactors with
+        | [] => (none, budget)
+        | head :: tail =>
+            coreRecombinationSmartSizeLoop coreLc target modulus head tail
+              (List.range (tail.length + 1)) budget fuel
+
+@[expose]
+def coreRecombinationSmartSizeLoop
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (head : ZPoly)
+    (tail : List ZPoly) (sizes : List Nat) (budget : Nat) (fuel : Nat) :
+    Option (List ZPoly) × Nat :=
+  match sizes with
+  | [] => (none, budget)
+  | d :: ds =>
+      if budget = 0 then (none, 0)
+      else match fuel with
+        | 0 => (none, budget)
+        | fuel + 1 =>
+            let splits :=
+              (subsetsOfSizeWithComplement tail d).map fun sc =>
+                (head :: sc.1, sc.2)
+            match coreRecombinationSmartCandLoop coreLc target modulus
+                splits budget fuel with
+            | (some res, b) => (some res, b)
+            | (none, b) =>
+                coreRecombinationSmartSizeLoop coreLc target modulus
+                  head tail ds b fuel
+
+@[expose]
+def coreRecombinationSmartCandLoop
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (splits : List (List ZPoly × List ZPoly)) (budget : Nat) (fuel : Nat) :
+    Option (List ZPoly) × Nat :=
+  match splits with
+  | [] => (none, budget)
+  | split :: rest =>
+      if budget = 0 then (none, 0)
+      else match fuel with
+        | 0 => (none, budget)
+        | fuel + 1 =>
+            let budget' := budget - 1
+            let candidate := coreRecombinationCandidate coreLc modulus split.1
+            if shouldRecordPolynomialFactor candidate then
+              match exactQuotient? target candidate with
+              | some quotient =>
+                  match coreRecombinationSmartAux coreLc quotient modulus split.2
+                      budget' fuel with
+                  | (some sub, b) => (some (candidate :: sub), b)
+                  | (none, b) =>
+                      coreRecombinationSmartCandLoop coreLc target modulus
+                        rest b fuel
+              | none =>
+                  coreRecombinationSmartCandLoop coreLc target modulus
+                    rest budget' fuel
+            else
+              coreRecombinationSmartCandLoop coreLc target modulus
+                rest budget' fuel
+end
+
+/-- Budgeted wrapper for original-coordinate size-ordered recombination. -/
+@[expose]
+def coreRecombinationSmart
+    (coreLc : Int) (f : ZPoly) (modulus : Nat) (localFactors : List ZPoly)
+    (budget : Nat := defaultSubsetBudget) : Option (List ZPoly) × RecombStats :=
+  let r := localFactors.length
+  let levelBudget := levelAwareSubsetBudget r budget
+  let (res, remaining) :=
+    coreRecombinationSmartAux coreLc f modulus localFactors levelBudget
+      (levelBudget + (r + 1) * (2 * r + 3))
+  (res,
+    { candidatesTried := levelBudget - remaining,
+      budgetExhausted := res.isNone && remaining == 0 })
+
 /-- A fully-split target recovers all linear factors, in `O(r²)` candidates. -/
 private def smartGuardFactors : List ZPoly :=
   [DensePoly.ofCoeffs #[-1, 1], DensePoly.ofCoeffs #[-2, 1], DensePoly.ofCoeffs #[-3, 1]]

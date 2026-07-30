@@ -111,6 +111,37 @@ modular factor data is the Berlekamp-form mod-`p` factorisation of
 def toMonicPrimeData? (core : ZPoly) : Option PrimeChoiceData :=
   choosePrimeDataAdaptive? (toMonic core).monic primeProbeFuel
 
+/--
+Transport one monic modular factor of the coefficient-swollen `toMonic`
+polynomial back to the original variable coordinate.  If `c` is the leading
+coefficient of `core` and `q` has degree `d`, this computes
+`c⁻ᵈ q(cX)` coefficientwise.
+-/
+@[expose]
+def rescaleToCoreModP
+    (core : ZPoly) (data : PrimeChoiceData)
+    (q : @FpPoly data.p data.bounds) : @FpPoly data.p data.bounds :=
+  letI := data.bounds
+  let cInv := ZMod64.inv (ZPoly.leadingCoeffModP core data.p)
+  let d := q.degree?.getD 0
+  DensePoly.ofCoeffs <|
+    ((List.range q.size).map fun i => q.coeff i * cInv ^ (d - i)).toArray
+
+/--
+Reuse a `toMonicPrimeData?` result for M1 without another adaptive Berlekamp
+walk.  The selected prime and modular width are unchanged; only the modular
+factors are transported by `c⁻ᵈ q(cX)` and the stored image is replaced by the
+original core's reduction.
+-/
+@[expose]
+def corePrimeDataOfToMonic
+    (core : ZPoly) (data : PrimeChoiceData) : PrimeChoiceData :=
+  letI := data.bounds
+  { p := data.p
+    bounds := data.bounds
+    fModP := ZPoly.modP data.p core
+    factorsModP := data.factorsModP.map (rescaleToCoreModP core data) }
+
 /-- A good hot-path candidate for the transformed monic polynomial forces the
 selector used by every Hensel-lifting tier to succeed. -/
 theorem toMonicPrimeData?_ne_none_of_good
@@ -839,6 +870,333 @@ def classicalCoreFactorsRecursive
     classicalCoreFactorsRecursiveAux reliftSubFloorCap
       (core.degree?.getD 0 + 1) core (some B) primeData
 
+/-- Search a short candidate prefix for a modular irreducibility witness. -/
+@[expose]
+def smallModWitnessFrom? (f : ZPoly) :
+    Nat → List SmallPrimeCandidate → Option PrimeChoiceData
+  | _, [] => none
+  | 0, _ => none
+  | fuel + 1, c :: candidates =>
+      match probePrimeData? f c with
+      | some primeData =>
+          if primeData.factorsModP.size ≤ 1 then some primeData
+          else smallModWitnessFrom? f fuel candidates
+      | none => smallModWitnessFrom? f fuel candidates
+
+/--
+Return a proof-producing modular irreducibility witness.  The ordinary first
+good choice is enough for larger candidates.  Candidates of degree at most 12
+additionally receive a six-prime prefix scan, which catches inexpensive
+recombination outputs such as the degree-16 Chebyshev factors without turning
+high-degree irreducibility into another prime walk.
+-/
+@[expose]
+def smallModIrreducibilityWitness? (f : ZPoly) : Option PrimeChoiceData :=
+  if f.degree?.getD 0 ≤ 12 then
+    smallModWitnessFrom? f 6
+      (smallPrimeCandidates ++ extendedSmallPrimeCandidates)
+  else
+    (choosePrimeData? f).bind fun primeData =>
+      if primeData.factorsModP.size ≤ 1 then some primeData else none
+
+/-- Every short-prefix singleton witness retains the explicit probe that
+produced it and the checked singleton factor-count bound. -/
+theorem smallModWitnessFrom?_spec
+    (f : ZPoly) (fuel : Nat) (candidates : List SmallPrimeCandidate)
+    (data : PrimeChoiceData)
+    (h : smallModWitnessFrom? f fuel candidates = some data) :
+    ∃ c ∈ candidates,
+      probePrimeData? f c = some data ∧ data.factorsModP.size ≤ 1 := by
+  induction fuel generalizing candidates with
+  | zero =>
+      cases candidates <;> simp [smallModWitnessFrom?] at h
+  | succ fuel ih =>
+      cases candidates with
+      | nil => simp [smallModWitnessFrom?] at h
+      | cons c candidates =>
+          cases hprobe : probePrimeData? f c with
+          | none =>
+              simp [smallModWitnessFrom?, hprobe] at h
+              obtain ⟨c', hc', hprobe', hsmall⟩ := ih candidates h
+              exact ⟨c', List.mem_cons_of_mem c hc', hprobe', hsmall⟩
+          | some probed =>
+              by_cases hsmall : probed.factorsModP.size ≤ 1
+              · simp [smallModWitnessFrom?, hprobe, hsmall] at h
+                subst data
+                exact ⟨c, List.mem_cons_self, hprobe, hsmall⟩
+              · simp [smallModWitnessFrom?, hprobe, hsmall] at h
+                obtain ⟨c', hc', hprobe', hsmall'⟩ := ih candidates h
+                exact ⟨c', List.mem_cons_of_mem c hc', hprobe', hsmall'⟩
+
+/-- A small-mod witness comes either from the ordinary first-good selector or
+from one explicit short-prefix probe, and always carries a singleton modular
+factorization. -/
+theorem smallModIrreducibilityWitness?_spec
+    (f : ZPoly) (data : PrimeChoiceData)
+    (h : smallModIrreducibilityWitness? f = some data) :
+    (choosePrimeData? f = some data ∧ data.factorsModP.size ≤ 1) ∨
+      ∃ c, probePrimeData? f c = some data ∧ data.factorsModP.size ≤ 1 := by
+  unfold smallModIrreducibilityWitness? at h
+  by_cases hdeg : f.degree?.getD 0 ≤ 12
+  · rw [if_pos hdeg] at h
+    obtain ⟨c, _, hprobe, hsmall⟩ :=
+      smallModWitnessFrom?_spec f 6
+        (smallPrimeCandidates ++ extendedSmallPrimeCandidates) data h
+    exact Or.inr ⟨c, hprobe, hsmall⟩
+  · rw [if_neg hdeg] at h
+    cases hchoose : choosePrimeData? f with
+    | none => simp [hchoose] at h
+    | some chosen =>
+        by_cases hsmall : chosen.factorsModP.size ≤ 1
+        · simp [hchoose, hsmall] at h
+          have hdata : chosen = data := h
+          apply Or.inl
+          constructor
+          · exact congrArg some hdata
+          · exact hdata ▸ hsmall
+        · simp [hchoose, hsmall] at h
+
+/-- Whether `smallModIrreducibilityWitness?` found a witness. -/
+@[expose]
+def hasSmallModIrreducibilityWitness (f : ZPoly) : Bool :=
+  (smallModIrreducibilityWitness? f).isSome
+
+/-- Modular irreducible-factor degrees recorded by a selected/probed prime. -/
+@[expose]
+def modularFactorDegrees (primeData : PrimeChoiceData) : List Nat :=
+  primeData.factorsModP.toList.map (fun g => g.degree?.getD 0)
+
+/-- Whether a subset of one modular factorization has total degree `d`. -/
+@[expose]
+def hasModularSubsetDegree (primeData : PrimeChoiceData) (d : Nat) : Bool :=
+  PrimeFactorData.hasSubsetDegreeAux (modularFactorDegrees primeData) d
+
+/--
+Two modular factorizations certify that `f` has no proper factor degree when
+every candidate degree is absent from at least one of their subset-sum sets.
+-/
+@[expose]
+def modularDegreePairCertifies
+    (f : ZPoly) (first second : PrimeChoiceData) : Bool :=
+  (ZPolyIrreducibilityCertificate.candidateFactorDegrees f).all fun d =>
+    !(hasModularSubsetDegree first d && hasModularSubsetDegree second d)
+
+/--
+Scan a short suffix of explicit small-prime candidates for one factorization
+which, together with the already-selected M1 prime, obstructs every proper
+factor degree.  The returned candidate is retained so the proof layer can
+recover the exact `probePrimeData?` provenance without any trusted metadata.
+-/
+@[expose]
+def modularDegreePairWitnessFrom?
+    (f : ZPoly) (first : PrimeChoiceData) :
+    Nat → List SmallPrimeCandidate →
+      Option (SmallPrimeCandidate × PrimeChoiceData)
+  | _, [] => none
+  | 0, _ => none
+  | fuel + 1, c :: candidates =>
+      if c.p ≤ first.p then
+        modularDegreePairWitnessFrom? f first (fuel + 1) candidates
+      else
+        match probePrimeData? f c with
+        | some second =>
+            if modularDegreePairCertifies f first second then
+              some (c, second)
+            else
+              modularDegreePairWitnessFrom? f first fuel candidates
+        | none =>
+            modularDegreePairWitnessFrom? f first fuel candidates
+
+/-- A successful bounded degree-pair scan exposes both the exact probe that
+produced its second factorization and the checked joint obstruction. -/
+theorem modularDegreePairWitnessFrom?_spec
+    (f : ZPoly) (first : PrimeChoiceData)
+    (fuel : Nat) (candidates : List SmallPrimeCandidate)
+    (candidate : SmallPrimeCandidate) (second : PrimeChoiceData)
+    (h :
+      modularDegreePairWitnessFrom? f first fuel candidates =
+        some (candidate, second)) :
+    probePrimeData? f candidate = some second ∧
+      modularDegreePairCertifies f first second = true := by
+  induction candidates generalizing fuel with
+  | nil => simp [modularDegreePairWitnessFrom?] at h
+  | cons head tail ih =>
+      cases fuel with
+      | zero => simp [modularDegreePairWitnessFrom?] at h
+      | succ fuel =>
+          by_cases hskip : head.p ≤ first.p
+          · simp only [modularDegreePairWitnessFrom?, hskip, if_pos] at h
+            exact ih (fuel + 1) h
+          · simp only [modularDegreePairWitnessFrom?, hskip] at h
+            cases hprobe : probePrimeData? f head with
+            | none =>
+                simp only [hprobe] at h
+                exact ih fuel h
+            | some probed =>
+                simp only [hprobe] at h
+                by_cases hcert :
+                    modularDegreePairCertifies f first probed = true
+                · simp only [hcert, if_true] at h
+                  obtain ⟨rfl, rfl⟩ := h
+                  exact ⟨hprobe, hcert⟩
+                · have hcertFalse :
+                      modularDegreePairCertifies f first probed = false := by
+                    cases hvalue :
+                        modularDegreePairCertifies f first probed <;>
+                      simp_all
+                  simp only [hcertFalse, if_false] at h
+                  exact ih fuel h
+
+/-- A bounded two-prime degree-obstruction witness, reusing the selected M1
+prime and probing at most four later candidates. -/
+@[expose]
+def modularDegreePairWitness?
+    (f : ZPoly) (first : PrimeChoiceData) :
+    Option (SmallPrimeCandidate × PrimeChoiceData) :=
+  modularDegreePairWitnessFrom? f first 4
+    (smallPrimeCandidates ++ extendedSmallPrimeCandidates)
+
+/-- Public provenance wrapper for the fixed four-probe degree-pair scan. -/
+theorem modularDegreePairWitness?_spec
+    (f : ZPoly) (first : PrimeChoiceData)
+    (candidate : SmallPrimeCandidate) (second : PrimeChoiceData)
+    (h : modularDegreePairWitness? f first = some (candidate, second)) :
+    probePrimeData? f candidate = some second ∧
+      modularDegreePairCertifies f first second = true :=
+  modularDegreePairWitnessFrom?_spec f first 4
+    (smallPrimeCandidates ++ extendedSmallPrimeCandidates) candidate second h
+
+/-- Largest degree in a selected modular factorization. -/
+@[expose]
+def maxModularFactorDegree (primeData : PrimeChoiceData) : Nat :=
+  (modularFactorDegrees primeData).foldl max 0
+
+/--
+Bounded downstream-cost gate for M1.
+
+Small selected primes make the original-coordinate lift/recombination attempt
+cheap enough to be worthwhile directly.  For larger primes, an attempt is
+reserved for material-degree inputs whose modular partition contains a factor
+exceeding half the input degree by at least two; that leaves a sparse
+subset-degree set and is the measured regime where one additional
+degree-obstruction probe pays for itself.  The factor-count cap prevents the
+exponential subset search from taxing wide Swinnerton-Dyer and product rows,
+and the degree floor prevents a millisecond-scale probe from taxing already
+sub-millisecond rows.
+-/
+@[expose]
+def shouldTryM1 (core : ZPoly) (primeData : PrimeChoiceData) : Bool :=
+  let n := core.degree?.getD 0
+  let r := primeData.factorsModP.size
+  r ≤ 8 &&
+    (primeData.p ≤ n ||
+      (18 ≤ n && n + 4 ≤ 2 * maxModularFactorDegree primeData))
+
+/-- Validate the directly checkable shape of an original-coordinate
+recombination result before any irreducibility/refinement decision. -/
+@[expose]
+def validateCoreFactors
+    (core : ZPoly) (factors : List ZPoly) : Bool :=
+  !factors.isEmpty &&
+    decide (Array.polyProduct factors.toArray = core) &&
+    factors.all (fun g => decide (ZPoly.content g = 1)) &&
+    factors.all (fun g => decide (normalizeFactorSign g = g)) &&
+    factors.all (fun g => decide (0 < g.degree?.getD 0))
+
+/-- Logical facts exposed by a successful direct-result validator. -/
+theorem validateCoreFactors_spec
+    (core : ZPoly) (factors : List ZPoly)
+    (h : validateCoreFactors core factors = true) :
+    factors ≠ [] ∧
+      Array.polyProduct factors.toArray = core ∧
+      (∀ g ∈ factors, ZPoly.Primitive g) ∧
+      (∀ g ∈ factors, normalizeFactorSign g = g) ∧
+      (∀ g ∈ factors, 0 < g.degree?.getD 0) := by
+  simp [validateCoreFactors, List.all_eq_true] at h
+  obtain ⟨⟨⟨⟨hne, hproduct⟩, hprimitive⟩, hnorm⟩, hdegree⟩ := h
+  exact ⟨hne, hproduct, hprimitive, hnorm, hdegree⟩
+
+/--
+Refine coarse M1 pieces independently through the already verified M2
+classical path.  This avoids paying the coefficient-swollen lift on the whole
+input when M1 has already exposed smaller factors.  Linear pieces need no
+refinement.
+-/
+@[expose]
+def refineCoreFactorsM2 : List ZPoly → Option (Array ZPoly)
+  | [] => some #[]
+  | g :: factors =>
+      let refined? :=
+        if g.degree?.getD 0 ≤ 1 then
+          some #[g]
+        else
+          match smallModIrreducibilityWitness? g with
+          | some _ => some #[g]
+          | none =>
+              (ZPoly.toMonicPrimeData? g).bind fun primeData =>
+                classicalCoreFactorsRecursive g (ZPoly.defaultFactorCoeffBound g) primeData
+      refined?.bind fun refined =>
+        (refineCoreFactorsM2 factors).map fun rest => refined ++ rest
+
+/--
+Run the original-coordinate (`M1`) classical tier and expose its search
+statistics. A search result is returned only through `validateCoreFactors`;
+any budget exhaustion, search failure, product mismatch, or malformed
+candidate is an honest decline.
+-/
+@[expose]
+def classicalCoreFactorsM1Run
+    (core : ZPoly) (B : Nat) (primeData degreeData : PrimeChoiceData) :
+    Option (Array ZPoly) × RecombStats :=
+  if B = 0 then
+    (none, { candidatesTried := 0, budgetExhausted := false })
+  else
+    let liftData := ZPoly.coreLiftData core B primeData
+    let (res, stats) :=
+      coreRecombinationSmart (DensePoly.leadingCoeff core) core
+        (liftModulus liftData) liftData.liftedFactors.toList
+    let checked :=
+      res.bind fun factors =>
+        if validateCoreFactors core factors then
+          if factors.length = 1 then
+            if degreeData.factorsModP.size ≤ 1 then
+              some factors.toArray
+            else
+              (modularDegreePairWitness? (ZPoly.toMonic core).monic degreeData).map
+                fun _ => factors.toArray
+          else
+            refineCoreFactorsM2 factors
+        else
+          none
+    (checked, stats)
+
+/-- Accepted factor array from `classicalCoreFactorsM1Run`. -/
+@[expose]
+def classicalCoreFactorsM1WithBound
+    (core : ZPoly) (B : Nat) (primeData degreeData : PrimeChoiceData) :
+    Option (Array ZPoly) :=
+  (classicalCoreFactorsM1Run core B primeData degreeData).1
+
+/--
+Try the independently certified M1 result first, then preserve the verified M2
+classical path as an exact fallback.  The fallback is important for
+irreducibles whose Galois group has no inert small prime: a small-mod singleton
+certificate can legitimately be unavailable even though M1 found no split.
+-/
+@[expose]
+def classicalCoreFactorsM1OrM2
+    (core : ZPoly) (B : Nat) : Option (Array ZPoly) :=
+  match ZPoly.toMonicPrimeData? core with
+  | none => none
+  | some toMonicData =>
+      let coreData := ZPoly.corePrimeDataOfToMonic core toMonicData
+      if shouldTryM1 core toMonicData then
+        match classicalCoreFactorsM1WithBound core B coreData toMonicData with
+        | some factors => some factors
+        | none => classicalCoreFactorsRecursive core B toMonicData
+      else
+        classicalCoreFactorsRecursive core B toMonicData
+
 /-- Raw factor array for the classical small-`r` tier. Declines (`none`) on no
 admissible prime or subset-budget exhaustion. -/
 @[expose]
@@ -850,9 +1208,8 @@ def factorClassicalFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly)
     match quadraticIntegerRootFactors? normalized.squareFreeCore with
     | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
     | none =>
-        (ZPoly.toMonicPrimeData? normalized.squareFreeCore).bind fun primeData =>
-          (classicalCoreFactorsRecursive normalized.squareFreeCore B primeData).map fun coreFactors =>
-            reassemblePolynomialFactors normalized coreFactors
+        (classicalCoreFactorsM1OrM2 normalized.squareFreeCore B).map fun coreFactors =>
+          reassemblePolynomialFactors normalized coreFactors
 
 @[expose]
 def factorClassicalWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
@@ -896,24 +1253,50 @@ def factorClassicalTracedWithBound (f : ZPoly) (B : Nat) : Option Factorization 
     | none =>
         match ZPoly.toMonicPrimeData? normalized.squareFreeCore with
         | none =>
-            (none, { tier := "noPrime", prime := 0, liftedFactorCount := 0, subsetCandidates := 0, declined := true })
-        | some primeData =>
+            (none,
+              { tier := "noPrime"
+                prime := 0
+                liftedFactorCount := 0
+                subsetCandidates := 0
+                declined := true })
+        | some toMonicData =>
+            let core := normalized.squareFreeCore
+            let coreData := ZPoly.corePrimeDataOfToMonic core toMonicData
             if B = 0 then
-              (some (factorizationOfFactors f (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])),
-                { tier := "classical", prime := primeData.p, liftedFactorCount := 0, subsetCandidates := 0, declined := false })
-            else
-              let core := normalized.squareFreeCore
-              let res := classicalCoreFactorsRecursiveAux reliftSubFloorCap
-                (core.degree?.getD 0 + 1) core (some B) primeData
-              let trace : FactorTrace :=
-                { tier := "classical", prime := primeData.p,
-                  liftedFactorCount := primeData.factorsModP.size,
-                  subsetCandidates := 0, declined := res.isNone }
+              (some (factorizationOfFactors f
+                  (reassemblePolynomialFactors normalized #[core])),
+                { tier := "classical", prime := toMonicData.p,
+                  liftedFactorCount := 0, subsetCandidates := 0,
+                  declined := false })
+            else if shouldTryM1 core toMonicData then
+              let (res, stats) :=
+                classicalCoreFactorsM1Run core B coreData toMonicData
               match res with
-              | none => (none, trace)
               | some coreFactors =>
                   (some (factorizationOfFactors f
-                    (reassemblePolynomialFactors normalized coreFactors)), trace)
+                    (reassemblePolynomialFactors normalized coreFactors)),
+                    { tier := "classical", prime := toMonicData.p,
+                      liftedFactorCount := coreData.factorsModP.size,
+                      subsetCandidates := stats.candidatesTried,
+                      declined := false })
+              | none =>
+                  let fallback := classicalCoreFactorsRecursive core B toMonicData
+                  (fallback.map fun coreFactors =>
+                    factorizationOfFactors f
+                      (reassemblePolynomialFactors normalized coreFactors),
+                    { tier := "classical", prime := toMonicData.p,
+                      liftedFactorCount := toMonicData.factorsModP.size,
+                      subsetCandidates := stats.candidatesTried,
+                      declined := fallback.isNone })
+            else
+              let fallback := classicalCoreFactorsRecursive core B toMonicData
+              (fallback.map fun coreFactors =>
+                factorizationOfFactors f
+                  (reassemblePolynomialFactors normalized coreFactors),
+                { tier := "classical", prime := toMonicData.p,
+                  liftedFactorCount := toMonicData.factorsModP.size,
+                  subsetCandidates := 0,
+                  declined := fallback.isNone })
 
 /-- Classical-tier factorisation with trace, at the default Mignotte bound. -/
 @[expose]
@@ -1687,6 +2070,7 @@ def ZPoly.factors (f : ZPoly) : Array (ZPoly × Nat) :=
 #guard (factorTraced (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).2.tier = "classical"
 #guard (factorTraced (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).2.declined = false
 
+set_option maxHeartbeats 4000000 in
 /-- The classical traced tier's `Factorization` agrees with the raw classical
 factor array packed through `factorizationOfFactors f`. The traced variant only
 adds the diagnostic `FactorTrace` in the `.2` component; its `.1` is the same
@@ -1695,7 +2079,7 @@ theorem factorClassicalTracedWithBound_fst (f : ZPoly) (B : Nat) :
     (factorClassicalTracedWithBound f B).1 =
       (factorClassicalFactorsWithBound f B).map (factorizationOfFactors f) := by
   unfold factorClassicalTracedWithBound factorClassicalFactorsWithBound
-    classicalCoreFactorsRecursive
+    classicalCoreFactorsM1OrM2 classicalCoreFactorsM1WithBound
   by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
   · simp only [hdeg, if_true, Option.map_some]
   · simp only [hdeg, if_false]
@@ -1703,17 +2087,33 @@ theorem factorClassicalTracedWithBound_fst (f : ZPoly) (B : Nat) :
     | some cf => simp only [Option.map_some]
     | none =>
         cases ZPoly.toMonicPrimeData? (normalizeForFactor f).squareFreeCore with
-        | none => simp only [Option.map_none, Option.bind_none]
-        | some primeData =>
-            simp only [Option.bind_some]
+        | none => rfl
+        | some toMonicData =>
+            let coreData :=
+              (normalizeForFactor f).squareFreeCore.corePrimeDataOfToMonic
+                toMonicData
             by_cases hB : B = 0
-            · simp only [hB, if_true, Option.map_some]
-            · simp only [hB, if_false]
-              cases classicalCoreFactorsRecursiveAux reliftSubFloorCap
-                  ((normalizeForFactor f).squareFreeCore.degree?.getD 0 + 1)
-                  (normalizeForFactor f).squareFreeCore (some B) primeData with
-              | none => rfl
-              | some coreFactors => rfl
+            · cases htry :
+                  shouldTryM1 (normalizeForFactor f).squareFreeCore toMonicData <;>
+                dsimp [coreData] at htry ⊢ <;>
+                simp [hB, htry, classicalCoreFactorsM1Run,
+                  classicalCoreFactorsRecursive]
+            · cases htry :
+                  shouldTryM1 (normalizeForFactor f).squareFreeCore toMonicData with
+              | false =>
+                  dsimp [coreData] at htry ⊢
+                  simp [hB, htry, Option.map_map, Function.comp_def]
+              | true =>
+                dsimp [coreData] at htry ⊢
+                simp only [hB, if_false, htry, if_true]
+                cases classicalCoreFactorsM1Run
+                    (normalizeForFactor f).squareFreeCore B coreData toMonicData with
+                | mk res stats =>
+                    cases res with
+                    | none =>
+                        simp only [Option.map_map, Function.comp_def]
+                    | some coreFactors =>
+                        simp only [Option.map_some]
 
 /-- The CLD lattice tier's `Factorization` is the raw lattice factor array packed
 through `factorizationOfFactors f`. -/

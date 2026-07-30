@@ -89,22 +89,18 @@ theorem factorClassicalFactorsWithBound_product
           using Hex.factorTrialWithBound_product f B
     | none =>
         rw [hquad] at hcf
-        cases hprime :
-            Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore with
-        | none => simp [hprime] at hcf
-        | some primeData =>
-            rw [hprime] at hcf
-            simp only [Option.bind_some] at hcf
-            obtain ⟨coreFactors, hcore, rfl⟩ := Option.map_eq_some_iff.mp hcf
-            have hcore_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
-            have hcore_prim :=
-              IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf
-            exact packed_reassembly_product f hf coreFactors
-              (classicalCoreFactorsRecursive_polyProduct _ _ _ hcore)
-              (classicalCoreFactorsRecursive_normalizeFactorSign _ _ _
-                hcore_pos hcore_prim hcore)
-              (classicalCoreFactorsRecursive_degree_pos _ _ _
-                (Nat.pos_of_ne_zero hdeg) hcore_pos hcore_prim hcore)
+        obtain ⟨coreFactors, hcore, rfl⟩ := Option.map_eq_some_iff.mp hcf
+        have hcore_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
+        have hcore_prim :=
+          IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf
+        have hcore_squarefree :=
+          IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree
+            f hf
+        have hshape := classicalCoreFactorsM1OrM2_shape
+          (Hex.normalizeForFactor f).squareFreeCore B hcore_prim hcore_pos
+          (Nat.pos_of_ne_zero hdeg) hcore_squarefree hcore
+        exact packed_reassembly_product f hf coreFactors
+          hshape.1 hshape.2.1 hshape.2.2
 
 /-- Every successful bounded lattice-tier raw result reconstructs the input
 after packing into `Factorization`.  In particular, the dispatcher's lattice

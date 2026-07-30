@@ -103,6 +103,20 @@ private def primeChoiceDataScore (f : ZPoly) (c : SmallPrimeCandidate) :
   else
     none
 
+/--
+Factor `f` at one explicit small-prime candidate, returning the same
+`PrimeChoiceData` payload used by the production selector when the candidate
+is good.
+
+This is a diagnostic surface for attributing adaptive-prime work and inspecting
+the modular degree information already computed by a probe.  It deliberately
+shares `primeChoiceDataScore` with the selector so benchmark instrumentation
+cannot drift to a different modular pipeline.
+-/
+def probePrimeData? (f : ZPoly) (c : SmallPrimeCandidate) :
+    Option PrimeChoiceData :=
+  (primeChoiceDataScore f c).map (·.data)
+
 /-- Whether a probed prime removes at least one quarter of the current modular
 factors. -/
 private def isMaterialFactorReduction (oldCount newCount : Nat) : Bool :=
@@ -1065,6 +1079,58 @@ private theorem choosePrimeDataScore_fold_factorsModPBerlekampForm
         (fun old hold =>
           choosePrimeDataScoreStep_factorsModPBerlekampForm f best c old hbest hold)
         hscore
+
+/-- Primality provenance for one explicit diagnostic/degree-obstruction probe. -/
+theorem probePrimeData?_prime
+    (f : ZPoly) (c : SmallPrimeCandidate) (data : PrimeChoiceData)
+    (hdata : probePrimeData? f c = some data) :
+    Nat.Prime data.p := by
+  unfold probePrimeData? at hdata
+  cases hscore : primeChoiceDataScore f c with
+  | none => simp [hscore] at hdata
+  | some score =>
+      simp [hscore] at hdata
+      subst data
+      exact primeChoiceDataScore_prime f c score hscore
+
+/-- Good-prime provenance for one explicit diagnostic/degree-obstruction probe. -/
+theorem probePrimeData?_isGoodPrime
+    (f : ZPoly) (c : SmallPrimeCandidate) (data : PrimeChoiceData)
+    (hdata : probePrimeData? f c = some data) :
+    @isGoodPrime f data.p data.bounds = true := by
+  unfold probePrimeData? at hdata
+  cases hscore : primeChoiceDataScore f c with
+  | none => simp [hscore] at hdata
+  | some score =>
+      simp [hscore] at hdata
+      subst data
+      exact primeChoiceDataScore_isGoodPrime f c score hscore
+
+/-- Modular-image provenance for one explicit probe. -/
+theorem probePrimeData?_fModP_eq
+    (f : ZPoly) (c : SmallPrimeCandidate) (data : PrimeChoiceData)
+    (hdata : probePrimeData? f c = some data) :
+    data.fModP = @ZPoly.modP data.p data.bounds f := by
+  unfold probePrimeData? at hdata
+  cases hscore : primeChoiceDataScore f c with
+  | none => simp [hscore] at hdata
+  | some score =>
+      simp [hscore] at hdata
+      subst data
+      exact primeChoiceDataScore_fModP_eq f c score hscore
+
+/-- Berlekamp-factor provenance for one explicit probe. -/
+theorem probePrimeData?_form
+    (f : ZPoly) (c : SmallPrimeCandidate) (data : PrimeChoiceData)
+    (hdata : probePrimeData? f c = some data) :
+    factorsModPBerlekampForm f data := by
+  unfold probePrimeData? at hdata
+  cases hscore : primeChoiceDataScore f c with
+  | none => simp [hscore] at hdata
+  | some score =>
+      simp [hscore] at hdata
+      subst data
+      exact primeChoiceDataScore_factorsModPBerlekampForm f c score hscore
 
 theorem choosePrimeDataAdaptive?_form
     (f : ZPoly) (extra : Nat) (data : PrimeChoiceData)

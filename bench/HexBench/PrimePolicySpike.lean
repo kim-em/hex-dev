@@ -106,6 +106,29 @@ def timePrimeChoice (label : String) (f : ZPoly) : IO Unit := do
   | some pd => compareLiftTrees label f core monic pd
   ( ← IO.getStdout).flush
 
+/-- Print the modular degree partitions at the first `limit` good candidates.
+These are the degree-obstruction inputs available to an adaptive selector
+without any Rabin-certificate scan. -/
+def printGoodPrimeDegrees (label : String) (f : ZPoly) (limit : Nat := 6) :
+    IO Unit := do
+  let core := (normalizeForFactor f).squareFreeCore
+  let mut seen := 0
+  let mut lines : List String := []
+  for c in smallPrimeCandidates ++ extendedSmallPrimeCandidates do
+    if seen < limit then
+      let t₀ ← IO.monoNanosNow
+      let pd? ← IO.lazyPure (fun _ => probePrimeData? core c)
+      let t₁ ← IO.monoNanosNow
+      match pd? with
+      | none => pure ()
+      | some pd =>
+          let degrees := pd.factorsModP.toList.map (fun g => g.degree?.getD 0)
+          lines := lines ++
+            [s!"p={pd.p} degrees={degrees} time={(t₁ - t₀).toFloat / 1.0e6}ms"]
+          seen := seen + 1
+  let joined := String.intercalate "; " lines
+  IO.println s!"{label} good-prime degrees: {joined}"
+
 /-- Read selected named cases from the checked-in comparison corpus. Keeping
 the larger diagnostic inputs in the corpus avoids duplicating their coefficient
 arrays here. -/
@@ -123,7 +146,13 @@ def timeCorpusCases (corpusPath : String) (wanted : List String) : IO Unit := do
       | .error error => throw <| IO.userError s!"invalid corpus row: {error}"
       | .ok (name, coeffs) =>
           if wanted.contains name then
-            timePrimeChoice name (DensePoly.ofCoeffs coeffs.toArray)
+            let f := DensePoly.ofCoeffs coeffs.toArray
+            timePrimeChoice name f
+            if name == "legendre_P38" then
+              printGoodPrimeDegrees name f 30
+            else if ["legendre_P24", "legendre_P26", "legendre_P28",
+                "legendre_P34"].contains name then
+              printGoodPrimeDegrees name f 12
 
 def main (args : List String) : IO Unit := do
   let corpusPath ← match args with
@@ -141,6 +170,10 @@ def main (args : List String) : IO Unit := do
     #[1, 0, -312, 0, 16016, 0, -320320, 0, 3294720, 0, -19914752, 0,
       76038144, 0, -190513152, 0, 317521920, 0, -348651520, 0, 242221056,
       0, -96468992, 0, 16777216]
+  let chebyshevT24 : ZPoly := DensePoly.ofCoeffs
+    #[1, 0, -288, 0, 13728, 0, -256256, 0, 2471040, 0, -14057472, 0,
+      50692096, 0, -120324096, 0, 190513152, 0, -199229440, 0, 132120576,
+      0, -50331648, 0, 8388608]
   let legendreP30 : ZPoly := DensePoly.ofCoeffs
     #[-155117520, 0, 72129646800, 0, -5553982803600, 0, 168470811709200, 0,
       -2671465728531600, 0, 25467973278667920, 0, -158210137034149200, 0,
@@ -159,9 +192,13 @@ def main (args : List String) : IO Unit := do
   timePrimeChoice "x^105-1" xpow105
   timePrimeChoice "Conway(2,38)" conway38
   timePrimeChoice "Chebyshev U24" chebyshevU24
+  printGoodPrimeDegrees "Chebyshev U24" chebyshevU24
+  printGoodPrimeDegrees "Chebyshev T24" chebyshevT24
   timePrimeChoice "Legendre P30" legendreP30
+  printGoodPrimeDegrees "Legendre P30" legendreP30 30
   timePrimeChoice "SD5" sd5
   timeCorpusCases corpusPath
     ["chebyshev_T10", "chebyshev_T15", "chebyshev_U12", "legendre_P16",
-      "legendre_P24", "legendre_P26", "legendre_P28", "legendre_P38",
+      "legendre_P24", "legendre_P26", "legendre_P28", "legendre_P34",
+      "legendre_P38",
       "cyclo_phi385"]
