@@ -20,6 +20,7 @@ public import Mathlib.RingTheory.Polynomial.GaussLemma
 public import HexBerlekampZassenhausMathlib.IntReductionMod.Transport
 import all HexBerlekampZassenhausMathlib.IntReductionMod.Descent
 import all HexBerlekampZassenhausMathlib.IntReductionMod.Transport
+import all HexBerlekampZassenhausMathlib.ModPFactor
 
 public section
 set_option backward.proofsInPublic true
@@ -246,6 +247,38 @@ theorem zpolyIrreducible_of_toMonicMonic_irreducible
   exact (irreducible_toPolynomial_dilate_iff
     (ne_of_gt hcore_lc_pos) hM_monic hcore_prim hrecover).mpr hm_irr
 
+/-- A singleton modular factorization of the selected monic transform
+certifies irreducibility of any primitive positive-degree core. -/
+theorem irreducible_of_toMonic_smallMod
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hsmall : primeData.factorsModP.size ≤ 1) :
+    Hex.ZPoly.Irreducible core := by
+  letI := primeData.bounds
+  have hprime := Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
+  have hgood := Hex.ZPoly.toMonicPrimeData?_isGoodPrime core primeData hselected
+  have hform :=
+    Hex.ZPoly.toMonicPrimeData?_factorsModP_berlekamp_form core primeData hselected
+  have hmonic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
+    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
+  have hmonic_pos : 0 < (Hex.ZPoly.toMonic core).monic.degree?.getD 0 := by
+    rw [Hex.ZPoly.toMonic_monic_degree_eq_of_pos_degree core hcore_lc_pos
+      hcore_pos]
+    exact hcore_pos
+  have hmonic_irreducible : Hex.ZPoly.Irreducible
+      (Hex.ZPoly.toMonic core).monic :=
+    IntReductionMod.irreducible_of_smallMod
+      (Hex.ZPoly.toMonic core).monic primeData hprime hgood hform
+      hmonic_pos hsmall
+      (HexHenselMathlib.toPolynomial_monic_of_dense_monic _ hmonic).isPrimitive
+      (IntReductionMod.leadingCoeff_castRingHom_ne_zero_of_isGoodPrime
+        (Hex.ZPoly.toMonic core).monic hgood)
+  exact zpolyIrreducible_of_toMonicMonic_irreducible core hcore_lc_pos
+    hcore_pos hcore_prim hmonic_irreducible
+
 /-- A singleton mod-`p` factorization selected for the monic transform
 `(toMonic core).monic` certifies its irreducibility over `ℤ`, which descends to
 the primitive core along the dilation transform. -/
@@ -257,29 +290,310 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton
     (hsmall : primeData.factorsModP.size ≤ 1) :
     Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore := by
   set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
-  letI := primeData.bounds
   have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core :=
     Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
   have hcore_prim : Hex.ZPoly.Primitive core :=
     IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
-  have hprime := Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
-  have hgood := Hex.ZPoly.toMonicPrimeData?_isGoodPrime core primeData hselected
-  have hform :=
-    Hex.ZPoly.toMonicPrimeData?_factorsModP_berlekamp_form core primeData hselected
-  have hM_monic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
-    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos (by simp only [Hex.ZPoly.toMonic_degree]; omega)
-  have hm_deg : 0 < (Hex.ZPoly.toMonic core).monic.degree?.getD 0 := by
-    rw [Hex.ZPoly.toMonic_monic_degree_eq_of_pos_degree core hcore_lc_pos
-      (by simp only [Hex.ZPoly.toMonic_degree]; omega)]
-    simpa using hcore_pos
-  have hm_irr : Hex.ZPoly.Irreducible (Hex.ZPoly.toMonic core).monic :=
-    IntReductionMod.irreducible_of_smallMod
-      (Hex.ZPoly.toMonic core).monic primeData hprime hgood hform hm_deg hsmall
-      (HexHenselMathlib.toPolynomial_monic_of_dense_monic _ hM_monic).isPrimitive
-      (IntReductionMod.leadingCoeff_castRingHom_ne_zero_of_isGoodPrime
-        (Hex.ZPoly.toMonic core).monic hgood)
-  exact zpolyIrreducible_of_toMonicMonic_irreducible core hcore_lc_pos hcore_pos
-    hcore_prim hm_irr
+  exact irreducible_of_toMonic_smallMod core primeData hselected hcore_lc_pos
+    hcore_pos hcore_prim hsmall
+
+/--
+Any singleton witness returned by the bounded runtime selector certifies
+irreducibility.  The proof recovers either the ordinary selector provenance
+or the exact explicit probe provenance; the runtime witness itself carries no
+trusted proof data.
+-/
+theorem smallModIrreducibilityWitness?_irreducible
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hwitness : Hex.smallModIrreducibilityWitness? f = some primeData)
+    (hpos : 0 < f.degree?.getD 0)
+    (hprim : Hex.ZPoly.Primitive f) :
+    Hex.ZPoly.Irreducible f := by
+  have hpoly_prim : (HexPolyZMathlib.toPolynomial f).IsPrimitive :=
+    HexPolyZMathlib.isPrimitive_toPolynomial_of_primitive f hprim
+  rcases Hex.smallModIrreducibilityWitness?_spec f primeData hwitness with
+    hselected | ⟨candidate, hprobe, hsmall⟩
+  · obtain ⟨hchoose, hsmall⟩ := hselected
+    letI := primeData.bounds
+    have hprime := Hex.choosePrimeData?_prime f primeData hchoose
+    have hgood := Hex.choosePrimeData?_isGoodPrime f primeData hchoose
+    obtain ⟨hzero, heq⟩ :=
+      Hex.choosePrimeData?_factorsModP_berlekamp_form f primeData hchoose
+    exact IntReductionMod.irreducible_of_smallMod f primeData hprime hgood
+      ⟨hprime, hzero, heq⟩ hpos hsmall hpoly_prim
+      (IntReductionMod.leadingCoeff_castRingHom_ne_zero_of_isGoodPrime f hgood)
+  · letI := primeData.bounds
+    have hprime := Hex.probePrimeData?_prime f candidate primeData hprobe
+    have hgood := Hex.probePrimeData?_isGoodPrime f candidate primeData hprobe
+    exact IntReductionMod.irreducible_of_smallMod f primeData hprime hgood
+      (Hex.probePrimeData?_form f candidate primeData hprobe) hpos hsmall
+      hpoly_prim
+      (IntReductionMod.leadingCoeff_castRingHom_ne_zero_of_isGoodPrime f hgood)
+
+/--
+The Mathlib product of a semantic modular factorization is the coefficient
+reduction of its monic integer target.
+-/
+theorem ModPFactorization.factorProduct_eq_map
+    {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    (hval : ModPFactorization f primeData)
+    (hmonic : Hex.DensePoly.Monic f) :
+    letI := primeData.bounds
+    ((primeData.factorsModP.toList : Multiset _).map
+        HexBerlekampMathlib.toMathlibPolynomial).prod =
+      (HexPolyZMathlib.toPolynomial f).map
+        (Int.castRingHom (ZMod primeData.p)) := by
+  letI := primeData.bounds
+  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hval.prime
+  have hmod :
+      Hex.ZPoly.modP primeData.p
+          (Array.polyProduct
+            (primeData.factorsModP.map Hex.FpPoly.liftToZ)) =
+        Hex.ZPoly.modP primeData.p f :=
+    Hex.ZPoly.modP_eq_of_congr primeData.p _ _
+      (hval.product_congr_target hmonic)
+  have hbridge :
+      (primeData.factorsModP.toList.map
+          HexBerlekampMathlib.toMathlibPolynomial).prod =
+        HexBerlekampMathlib.toMathlibPolynomial
+          (Hex.ZPoly.modP primeData.p
+            (Array.polyProduct
+              (primeData.factorsModP.map Hex.FpPoly.liftToZ))) := by
+    rw [modP_polyProduct_map_liftToZ,
+      toMathlibPolynomial_listFoldlMul_one]
+  rw [Multiset.map_coe, Multiset.prod_coe, hbridge, hmod,
+    toMathlibPolynomial_modP_eq_map_intCast_zmod]
+
+/-- A concrete sub-multiset sum is detected by the executable subset-sum
+recursion used by the two-prime degree obstruction. -/
+theorem hasSubsetDegreeAux_eq_true_of_submultiset
+    {degrees : List Nat} {target : Nat} {subset : Multiset Nat}
+    (hsub : subset ≤ (degrees : Multiset Nat))
+    (hsum : subset.sum = target) :
+    Hex.PrimeFactorData.hasSubsetDegreeAux degrees target = true := by
+  induction degrees generalizing target subset with
+  | nil =>
+      have hzero : subset = 0 := by
+        apply Multiset.le_zero.mp
+        simpa using hsub
+      rw [hzero] at hsum
+      simp [Hex.PrimeFactorData.hasSubsetDegreeAux, ← hsum]
+  | cons degree degrees ih =>
+      rw [← Multiset.cons_coe] at hsub
+      by_cases hmem : degree ∈ subset
+      · have hle : degree ≤ target := by
+          rw [← hsum]
+          exact Multiset.single_le_sum (fun _ _ => Nat.zero_le _) degree hmem
+        have heq : subset = degree ::ₘ subset.erase degree :=
+          (Multiset.cons_erase hmem).symm
+        have herase : subset.erase degree ≤ (degrees : Multiset Nat) := by
+          have :=
+            Multiset.erase_le_erase degree hsub
+          rwa [Multiset.erase_cons_head] at this
+        have hsum' : (subset.erase degree).sum = target - degree := by
+          have h := heq ▸ hsum
+          rw [Multiset.sum_cons] at h
+          omega
+        have hrec := ih herase hsum'
+        simp [Hex.PrimeFactorData.hasSubsetDegreeAux, hle, hrec]
+      · have htail : subset ≤ (degrees : Multiset Nat) :=
+          (Multiset.le_cons_of_notMem hmem).mp hsub
+        have hrec := ih htail hsum
+        simp [Hex.PrimeFactorData.hasSubsetDegreeAux, hrec]
+
+/--
+Every nonzero integer factor of a monic target has a degree present in the
+subset-degree set of any semantic modular factorization of that target.
+-/
+theorem ModPFactorization.hasModularSubsetDegree_of_factor
+    {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    (hval : ModPFactorization f primeData)
+    (hmonic : Hex.DensePoly.Monic f)
+    {factor cofactor : Polynomial ℤ}
+    (hfactorization :
+      factor * cofactor = HexPolyZMathlib.toPolynomial f)
+    (_hfactor_ne : factor ≠ 0) :
+    Hex.hasModularSubsetDegree primeData factor.natDegree = true := by
+  letI := primeData.bounds
+  have hprime : _root_.Nat.Prime primeData.p :=
+    natPrime_of_hexNatPrime hval.prime
+  haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
+  haveI : Nontrivial (ZMod primeData.p) := inferInstance
+  let modularFactors : Multiset (Polynomial (ZMod primeData.p)) :=
+    primeData.factorsModP.toList.map
+      HexBerlekampMathlib.toMathlibPolynomial
+  have htarget_monic :
+      (HexPolyZMathlib.toPolynomial f).Monic :=
+    HexHenselMathlib.toPolynomial_monic_of_dense_monic f hmonic
+  have hlc_product :
+      factor.leadingCoeff * cofactor.leadingCoeff = 1 := by
+    rw [← Polynomial.leadingCoeff_mul, hfactorization,
+      htarget_monic.leadingCoeff]
+  have hlc_map_ne :
+      (Int.castRingHom (ZMod primeData.p)) factor.leadingCoeff ≠ 0 := by
+    intro hzero
+    have h := congrArg (Int.castRingHom (ZMod primeData.p)) hlc_product
+    rw [map_mul, map_one, hzero, zero_mul] at h
+    exact one_ne_zero h.symm
+  have hfactor_map_ne :
+      factor.map (Int.castRingHom (ZMod primeData.p)) ≠ 0 := by
+    intro hzero
+    apply hlc_map_ne
+    have hcoeff :
+        (factor.map
+          (Int.castRingHom (ZMod primeData.p))).coeff factor.natDegree = 0 := by
+      rw [hzero]
+      simp
+    simpa [Polynomial.coeff_map] using hcoeff
+  have hdegree_map :
+      (factor.map
+        (Int.castRingHom (ZMod primeData.p))).natDegree =
+          factor.natDegree :=
+    Polynomial.natDegree_map_of_leadingCoeff_ne_zero _ hlc_map_ne
+  have hdvd :
+      factor.map (Int.castRingHom (ZMod primeData.p)) ∣
+        modularFactors.prod := by
+    have hproduct := hval.factorProduct_eq_map hmonic
+    rw [Multiset.map_coe, Multiset.prod_coe] at hproduct
+    rw [show modularFactors.prod =
+        (primeData.factorsModP.toList.map
+          HexBerlekampMathlib.toMathlibPolynomial).prod by
+            simp [modularFactors],
+      hproduct, ← hfactorization,
+      Polynomial.map_mul]
+    exact dvd_mul_right _ _
+  have hirreducible :
+      ∀ q ∈ modularFactors, Irreducible q := by
+    intro q hq
+    simp only [modularFactors, Multiset.mem_coe, List.mem_map] at hq
+    obtain ⟨g, hg, rfl⟩ := hq
+    have hg_array : g ∈ primeData.factorsModP :=
+      Array.mem_toList_iff.mp hg
+    obtain ⟨i, hi, hieq⟩ := Array.mem_iff_getElem.mp hg_array
+    simpa [modPFactor, hieq] using hval.irreducible ⟨i, hi⟩
+  obtain ⟨subset, hsubset, hsum⟩ :=
+    UFDPartition.natDegree_eq_sum_subset_of_dvd_prod_irreducibles
+      hfactor_map_ne hirreducible hdvd
+  have hdegree_list :
+      (primeData.factorsModP.toList.map
+          HexBerlekampMathlib.toMathlibPolynomial).map
+          Polynomial.natDegree =
+        Hex.modularFactorDegrees primeData := by
+    unfold Hex.modularFactorDegrees
+    rw [List.map_map]
+    apply List.map_congr_left
+    intro g hg
+    have hg_monic : Hex.DensePoly.Monic g :=
+      hval.monic g (Array.mem_toList_iff.mp hg)
+    change
+      (HexBerlekampMathlib.toMathlibPolynomial g).natDegree =
+        g.degree?.getD 0
+    rw [HexBerlekampMathlib.natDegree_toMathlibPolynomial_eq_basisSize
+      g hg_monic]
+    rfl
+  have hsubset' :
+      subset ≤ (Hex.modularFactorDegrees primeData : Multiset Nat) := by
+    unfold modularFactors at hsubset
+    rw [Multiset.map_coe, hdegree_list] at hsubset
+    exact hsubset
+  unfold Hex.hasModularSubsetDegree
+  exact hasSubsetDegreeAux_eq_true_of_submultiset hsubset'
+    (by rw [← hdegree_map, hsum])
+
+/--
+If two semantic modular factorizations jointly obstruct every proper factor
+degree of a positive-degree monic integer polynomial, that polynomial is
+irreducible.
+-/
+theorem modularDegreePairCertifies_irreducible
+    (f : Hex.ZPoly) (first second : Hex.PrimeChoiceData)
+    (hfirst : ModPFactorization f first)
+    (hsecond : ModPFactorization f second)
+    (hmonic : Hex.DensePoly.Monic f)
+    (hpos : 0 < f.degree?.getD 0)
+    (hcert : Hex.modularDegreePairCertifies f first second = true) :
+    Hex.ZPoly.Irreducible f := by
+  rw [Hex.ZPoly.Irreducible_iff_polynomialIrreducible]
+  set target := HexPolyZMathlib.toPolynomial f with htarget
+  have htarget_monic : target.Monic := by
+    simpa [htarget] using
+      HexHenselMathlib.toPolynomial_monic_of_dense_monic f hmonic
+  have htarget_pos : 0 < target.natDegree := by
+    rw [htarget, HexPolyMathlib.natDegree_toPolynomial]
+    exact hpos
+  have htarget_ne : target ≠ 0 := htarget_monic.ne_zero
+  refine ⟨?_, ?_⟩
+  · intro hunit
+    have hzero := Polynomial.natDegree_eq_zero_of_isUnit hunit
+    omega
+  intro a b hab
+  by_contra hcontra
+  push Not at hcontra
+  obtain ⟨ha_not_unit, hb_not_unit⟩ := hcontra
+  have ha_ne : a ≠ 0 := fun h => htarget_ne (by rw [hab, h, zero_mul])
+  have hb_ne : b ≠ 0 := fun h => htarget_ne (by rw [hab, h, mul_zero])
+  have htarget_prim : target.IsPrimitive := htarget_monic.isPrimitive
+  have ha_prim : a.IsPrimitive :=
+    Polynomial.isPrimitive_of_dvd htarget_prim ⟨b, hab⟩
+  have hb_prim : b.IsPrimitive :=
+    Polynomial.isPrimitive_of_dvd htarget_prim
+      ⟨a, by simpa [mul_comm] using hab⟩
+  have contradict_small_factor :
+      ∀ (factor cofactor : Polynomial ℤ),
+        factor * cofactor = target →
+        factor ≠ 0 →
+        cofactor ≠ 0 →
+        factor.IsPrimitive →
+        ¬ IsUnit factor →
+        factor.natDegree ≤ cofactor.natDegree →
+        False := by
+    intro factor cofactor hfac hfactor_ne hcofactor_ne hfactor_prim
+      hfactor_not_unit hdegree_le
+    have hfactor_pos : 0 < factor.natDegree := by
+      rcases Nat.eq_zero_or_pos factor.natDegree with hzero | hpositive
+      · have hconstant : factor = Polynomial.C (factor.coeff 0) :=
+          Polynomial.eq_C_of_natDegree_eq_zero hzero
+        have hcoeff_unit : IsUnit (factor.coeff 0) := by
+          apply hfactor_prim
+          rw [← hconstant]
+        exfalso
+        apply hfactor_not_unit
+        rw [hconstant]
+        exact Polynomial.isUnit_C.mpr hcoeff_unit
+      · exact hpositive
+    have hdegree_sum :
+        factor.natDegree + cofactor.natDegree = target.natDegree := by
+      rw [← hfac, Polynomial.natDegree_mul hfactor_ne hcofactor_ne]
+    have hfactor_half : factor.natDegree ≤ target.natDegree / 2 := by
+      omega
+    have htarget_degree :
+        target.natDegree = f.degree?.getD 0 := by
+      rw [htarget, HexPolyMathlib.natDegree_toPolynomial]
+    have hcandidate :
+        factor.natDegree ∈
+          Hex.ZPolyIrreducibilityCertificate.candidateFactorDegrees f := by
+      unfold Hex.ZPolyIrreducibilityCertificate.candidateFactorDegrees
+      rw [List.mem_map]
+      refine ⟨factor.natDegree - 1, ?_, ?_⟩
+      · rw [List.mem_range, ← htarget_degree]
+        omega
+      · omega
+    have hcert_degree :=
+      (List.all_eq_true.mp hcert) factor.natDegree hcandidate
+    have hfirst_degree :=
+      hfirst.hasModularSubsetDegree_of_factor hmonic
+        (by simpa [htarget] using hfac) hfactor_ne
+    have hsecond_degree :=
+      hsecond.hasModularSubsetDegree_of_factor hmonic
+        (by simpa [htarget] using hfac) hfactor_ne
+    simp [hfirst_degree, hsecond_degree] at hcert_degree
+  rcases le_or_gt a.natDegree b.natDegree with hle | hgt
+  · exact contradict_small_factor a b hab.symm ha_ne hb_ne ha_prim
+      ha_not_unit hle
+  · exact contradict_small_factor b a
+      (by simpa [mul_comm] using hab.symm) hb_ne ha_ne
+      hb_prim hb_not_unit (le_of_lt hgt)
 
 set_option maxHeartbeats 8000000
 

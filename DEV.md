@@ -101,8 +101,8 @@ reverse. We have thrashed too often bending the implementation to ease proofs.
   (`f` vs `−f` vs `content·f` vs `f(X+k)`; multiply-then-factor; different-prime →
   same result).
 - **Performance (merge-blocking):** a counter + wall-clock gate. `ZPoly.factorize` exposes
-  a `FactorTrace` (chosen tier, prime, `r`, Hensel precision, subset count,
-  lattice dimension, **fallback-used**). The gate asserts on the *counters*, not
+  a `FactorTrace` (chosen tier, prime, `r`, M1 route, M1 subset count, and
+  **classical-declined**). The gate asserts on the *counters*, not
   just elapsed time — a pure timing gate is gameable (a regression can "pass" by
   silently falling back to a slow tier, or by only timing out off-CI). This is the
   guard that prevents replacing the implementation with something exponentially

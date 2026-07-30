@@ -19,7 +19,7 @@ cases also carry optional pinned modular-factor metadata so the oracle
 checks that the committed input has the intended split over a named
 prime.
 
-Fixtures are integer polynomials at degrees 4, 6, 8, 10, 16, and 20,
+Fixtures are integer polynomials at degrees 4, 6, 8, 10, 16, 18, 20, and 28,
 covering the supported factorization shapes:
 
 * scalar/sign edge cases from the public `Factorization` convention,
@@ -31,6 +31,8 @@ covering the supported factorization shapes:
 * the degree-20 `Φ_11 · Φ_22` reducible product,
 * adversarial cases where mod-p factors split more finely than the integer
   factorisation; see "Adversarial modular-split coverage" below.
+* original-coordinate M1 acceptance on a reducible Chebyshev input and on an
+  irreducible Legendre input requiring the two-prime degree certificate.
 
 # Adversarial modular-split coverage
 
@@ -151,6 +153,7 @@ baseline. -/
 private def traceValue (t : FactorTrace) : String :=
   "{\"tier\":\"" ++ t.tier ++ "\",\"prime\":" ++ toString t.prime ++
     ",\"r\":" ++ toString t.liftedFactorCount ++
+    ",\"m1\":\"" ++ t.m1 ++ "\"" ++
     ",\"subsetCandidates\":" ++ toString t.subsetCandidates ++
     ",\"declined\":" ++ (if t.declined then "true" else "false") ++ "}"
 
@@ -387,6 +390,26 @@ private def cases_adversarial : List Case :=
   , mk "adv/large_plus_distractors" #[-6, 5, -1, 0, 0, 6, -5, 1]
   , mk "adv/mignotte_swell" #[1, 0, -10000, 0, 2, 0, 0, 0, 1] ]          -- (x⁴-100x+1)(x⁴+100x+1)
 
+/-! # Original-coordinate M1 coverage
+
+These are public performance-corpus rows whose production cost gate takes M1.
+The emitter refuses to write them unless the trace reports an accepted M1
+result, so the committed fixture and trace baseline pin the route as well as
+the factorization.
+-/
+
+private def cases_m1 : List Case :=
+  [ mk "m1/chebyshev_u18"
+      #[-1, 0, 180, 0, -5280, 0, 59136, 0, -329472, 0, 1025024, 0,
+        -1863680, 0, 1966080, 0, -1114112, 0, 262144]
+  , mk "m1/legendre_p28"
+      #[40116600, 0, -16287339600, 0, 1093966309800, 0, -28880710578720,
+        0, 397109770457400, 0, -3265124779316400, 0, 17364527235455400,
+        0, -62588625639883200, 0, 156993135980040360, 0,
+        -277046710553012400, 0, 342663036736620600, 0,
+        -290744394806829600, 0, 161173523208133800, 0,
+        -52567364492499024, 0, 7648690600760440] ]
+
 /-! # Lattice-tier dispatch coverage
 
 See the module docstring section "Lattice-tier dispatch coverage". The cases are
@@ -496,6 +519,56 @@ private def metamorphicBase : ZPoly := DensePoly.ofCoeffs #[6, 0, -5, 0, 1]  -- 
 private def emitCase (c : Case) : IO Unit :=
   emitFactorCase c.id (DensePoly.ofCoeffs c.coeffs)
 
+/-- Emit a public case only when the traced dispatcher actually accepted M1. -/
+private def emitM1Case (c : Case) : IO Unit := do
+  let f := DensePoly.ofCoeffs c.coeffs
+  let (_, trace) := factorClassicalTraced f
+  unless trace.m1 == "accepted" do
+    throw <| IO.userError
+      s!"emitM1Case {c.id}: expected accepted M1 route, got {trace.m1}"
+  emitFactorCase c.id f
+
+/--
+Exercise the named M1→M2 composition on a checked certificate failure.
+
+The valid transported factors drive the M1 lift. The deliberately conservative
+degree view exposes every proper degree at the first prime, so no bounded
+two-prime obstruction is accepted; raw M1 must decline. The same production M2
+data must then recover the exact core through `tryM1ThenM2`.
+-/
+private def checkM1CertificateFallback : IO Unit := do
+  let f := DensePoly.ofCoeffs
+    #[40116600, 0, -16287339600, 0, 1093966309800, 0, -28880710578720,
+      0, 397109770457400, 0, -3265124779316400, 0, 17364527235455400,
+      0, -62588625639883200, 0, 156993135980040360, 0,
+      -277046710553012400, 0, 342663036736620600, 0,
+      -290744394806829600, 0, 161173523208133800, 0,
+      -52567364492499024, 0, 7648690600760440]
+  let core := (normalizeForFactor f).squareFreeCore
+  match ZPoly.toMonicPrimeData? core with
+  | none => throw <| IO.userError "M1 fallback sentinel: no selected prime"
+  | some degreeData => do
+      letI := degreeData.bounds
+      let x : @FpPoly degreeData.p degreeData.bounds :=
+        FpPoly.ofCoeffs #[0, 1]
+      let conservativeDegreeData : PrimeChoiceData :=
+        { degreeData with
+          factorsModP := Array.replicate (core.degree?.getD 0) x }
+      let coreData := ZPoly.corePrimeDataOfToMonic core degreeData
+      let B := ZPoly.defaultFactorCoeffBound f
+      match classicalCoreFactorsM1WithBound core B coreData
+          conservativeDegreeData,
+          tryM1ThenM2 core B coreData conservativeDegreeData degreeData with
+      | some _, _ =>
+        throw <| IO.userError
+          "M1 fallback sentinel: conservative certificate unexpectedly accepted"
+      | none, none =>
+          throw <| IO.userError "M1 fallback sentinel: M2 fallback declined"
+      | none, some factors =>
+          unless Array.polyProduct factors = core do
+            throw <| IO.userError
+              "M1 fallback sentinel: M2 fallback changed the core product"
+
 private def emitExpectedCase (c : ExpectedCase) : IO Unit := do
   emitPolyFixture lib c.id c.coeffs.toList none
   emitResult lib c.id "factor" (expectedFactorValue c.scalar c.factors)
@@ -543,6 +616,7 @@ private def emitPinnedExpectedCase (c : PinnedExpectedCase) : IO Unit := do
 end Hex.BZEmit
 
 def main : IO Unit := do
+  Hex.BZEmit.checkM1CertificateFallback
   for c in Hex.BZEmit.cases_edge    do Hex.BZEmit.emitCase c
   for c in Hex.BZEmit.cases_irr     do Hex.BZEmit.emitCase c
   for c in Hex.BZEmit.cases_irr_expected do Hex.BZEmit.emitExpectedCase c
@@ -552,4 +626,5 @@ def main : IO Unit := do
   for c in Hex.BZEmit.cases_content do Hex.BZEmit.emitExpectedCase c
   for c in Hex.BZEmit.cases_good_prime_regression do Hex.BZEmit.emitExpectedCase c
   for c in Hex.BZEmit.cases_adversarial do Hex.BZEmit.emitCase c
+  for c in Hex.BZEmit.cases_m1 do Hex.BZEmit.emitM1Case c
   for c in Hex.BZEmit.cases_lattice do Hex.BZEmit.emitHybridTracedCase c

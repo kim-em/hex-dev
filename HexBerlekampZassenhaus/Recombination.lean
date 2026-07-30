@@ -507,6 +507,134 @@ def scaledRecombinationSmart
     { candidatesTried := levelBudget - remaining,
       budgetExhausted := res.isNone && remaining == 0 })
 
+/--
+Original-coordinate (`M1`) candidate for a selected list of lifted local
+factors.  The Hensel factors multiply to the monic target
+`core / leadingCoeff core` modulo `modulus`, so scaling their product by the
+core leading coefficient recovers the integer-coordinate factor directly.
+-/
+@[expose]
+def coreRecombinationCandidate
+    (coreLc : Int) (modulus : Nat) (selected : List ZPoly) : ZPoly :=
+  normalizeFactorSign <| ZPoly.primitivePart <|
+    centeredLiftPoly
+      (DensePoly.scale coreLc (Array.polyProduct selected.toArray)) modulus
+
+/--
+Sound degree rejection for an original-coordinate candidate, before forming
+its full polynomial product.  The selected modular factors are monic, so when
+the centered residue of `coreLc` is nonzero the candidate has degree exactly
+`selectedDegreeSum selected`; a divisor of a nonzero target cannot have larger
+degree.  The conservative escape cases keep this helper sound for arbitrary
+standalone callers as well as the production good-prime path.
+-/
+@[expose]
+def coreCandidatePrefilter
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (selected : List ZPoly) : Bool :=
+  !(selected.all fun g => DensePoly.leadingCoeff g == 1) ||
+    centeredModNat coreLc modulus == 0 ||
+    decide (target = 0) ||
+    decide (selectedDegreeSum selected ≤ target.degree?.getD 0)
+
+mutual
+
+/--
+Size-ordered recombination in the original (`M1`) coordinate.
+
+This deliberately mirrors `scaledRecombinationSmartAux`, but forms
+`coreRecombinationCandidate` rather than dilating a factor of the coefficient-
+swollen `toMonic` transform.  Its degree prefilter is shared in spirit with the
+scaled path, while the scaled path's constant-term formula is specific to the
+dilation candidate.  The caller validates every successful result (product,
+shape, and irreducibility certificates) before exposing it.
+-/
+@[expose]
+def coreRecombinationSmartAux
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (localFactors : List ZPoly) (budget : Nat) (fuel : Nat) :
+    Option (List ZPoly) × Nat :=
+  if target = 1 then (some [], budget)
+  else if budget = 0 then (none, 0)
+  else match fuel with
+    | 0 => (none, budget)
+    | fuel + 1 =>
+        match localFactors with
+        | [] => (none, budget)
+        | head :: tail =>
+            coreRecombinationSmartSizeLoop coreLc target modulus head tail
+              (List.range (tail.length + 1)) budget fuel
+
+@[expose]
+def coreRecombinationSmartSizeLoop
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (head : ZPoly)
+    (tail : List ZPoly) (sizes : List Nat) (budget : Nat) (fuel : Nat) :
+    Option (List ZPoly) × Nat :=
+  match sizes with
+  | [] => (none, budget)
+  | d :: ds =>
+      if budget = 0 then (none, 0)
+      else match fuel with
+        | 0 => (none, budget)
+        | fuel + 1 =>
+            let splits :=
+              (subsetsOfSizeWithComplement tail d).map fun sc =>
+                (head :: sc.1, sc.2)
+            match coreRecombinationSmartCandLoop coreLc target modulus
+                splits budget fuel with
+            | (some res, b) => (some res, b)
+            | (none, b) =>
+                coreRecombinationSmartSizeLoop coreLc target modulus
+                  head tail ds b fuel
+
+@[expose]
+def coreRecombinationSmartCandLoop
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (splits : List (List ZPoly × List ZPoly)) (budget : Nat) (fuel : Nat) :
+    Option (List ZPoly) × Nat :=
+  match splits with
+  | [] => (none, budget)
+  | split :: rest =>
+      if budget = 0 then (none, 0)
+      else match fuel with
+        | 0 => (none, budget)
+        | fuel + 1 =>
+            let budget' := budget - 1
+            if coreCandidatePrefilter coreLc target modulus split.1 then
+              let candidate := coreRecombinationCandidate coreLc modulus split.1
+              if shouldRecordPolynomialFactor candidate then
+                match exactQuotient? target candidate with
+                | some quotient =>
+                    match coreRecombinationSmartAux coreLc quotient modulus split.2
+                        budget' fuel with
+                    | (some sub, b) => (some (candidate :: sub), b)
+                    | (none, b) =>
+                        coreRecombinationSmartCandLoop coreLc target modulus
+                          rest b fuel
+                | none =>
+                    coreRecombinationSmartCandLoop coreLc target modulus
+                      rest budget' fuel
+              else
+                coreRecombinationSmartCandLoop coreLc target modulus
+                  rest budget' fuel
+            else
+              coreRecombinationSmartCandLoop coreLc target modulus
+                rest budget' fuel
+end
+
+/-- Budgeted wrapper for original-coordinate size-ordered recombination. -/
+@[expose]
+def coreRecombinationSmart
+    (coreLc : Int) (f : ZPoly) (modulus : Nat) (localFactors : List ZPoly)
+    (budget : Nat := defaultSubsetBudget) : Option (List ZPoly) × RecombStats :=
+  let r := localFactors.length
+  let levelBudget := levelAwareSubsetBudget r budget
+  let (res, remaining) :=
+    coreRecombinationSmartAux coreLc f modulus localFactors levelBudget
+      (levelBudget + (r + 1) * (2 * r + 3))
+  (res,
+    { candidatesTried := levelBudget - remaining,
+      budgetExhausted := res.isNone && remaining == 0 })
+
 /-- A fully-split target recovers all linear factors, in `O(r²)` candidates. -/
 private def smartGuardFactors : List ZPoly :=
   [DensePoly.ofCoeffs #[-1, 1], DensePoly.ofCoeffs #[-2, 1], DensePoly.ofCoeffs #[-3, 1]]
@@ -518,6 +646,13 @@ private def smartGuardTarget : ZPoly := Array.polyProduct smartGuardFactors.toAr
   | none => false
 
 #guard (scaledRecombinationSmart 1 smartGuardTarget 1000003 smartGuardFactors).2.candidatesTried ≤ 6
+
+#guard
+  match (coreRecombinationSmart 1 smartGuardTarget 1000003 smartGuardFactors).1 with
+  | some fs => Array.polyProduct fs.toArray = smartGuardTarget && fs.length = 3
+  | none => false
+
+#guard (coreRecombinationSmart 1 smartGuardTarget 1000003 smartGuardFactors).2.candidatesTried ≤ 6
 
 -- An irreducible-over-ℤ target whose lifted factors do not recombine returns the
 -- whole product as the single factor, having tried every proper subset.

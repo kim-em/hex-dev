@@ -1047,6 +1047,507 @@ theorem classicalCoreFactorsRecursive_degree_pos
   · exact classicalCoreFactorsRecursiveAux_degree_pos _ _ _ _ _ h
       hcore_prim hcore_pos
 
+/-- Independent per-piece M2 refinement preserves the ordered product of the
+coarse M1 pieces. -/
+theorem refineCoreFactorsM2_polyProduct :
+    ∀ (factors : List Hex.ZPoly) {out : Array Hex.ZPoly},
+      Hex.refineCoreFactorsM2 factors = some out →
+        Array.polyProduct out = Array.polyProduct factors.toArray
+  | [], out, h => by
+      simp [Hex.refineCoreFactorsM2] at h
+      subst out
+      rfl
+  | g :: factors, out, h => by
+      simp only [Hex.refineCoreFactorsM2] at h
+      by_cases hlinear : g.degree?.getD 0 ≤ 1
+      · rw [if_pos hlinear] at h
+        cases htail : Hex.refineCoreFactorsM2 factors with
+        | none => simp [htail] at h
+        | some rest =>
+            simp only [htail, Option.map_some, Option.bind_some,
+              Option.some.injEq] at h
+            subst out
+            rw [Hex.ZPoly.polyProduct_append,
+              Hex.ZPoly.polyProduct_singleton,
+              refineCoreFactorsM2_polyProduct factors htail,
+              Hex.ZPoly.polyProduct_cons_toArray]
+      · rw [if_neg hlinear] at h
+        cases hwitness : Hex.smallModIrreducibilityWitness? g with
+        | some witness =>
+            simp only [hwitness] at h
+            cases htail : Hex.refineCoreFactorsM2 factors with
+            | none => simp [htail] at h
+            | some rest =>
+                simp only [htail, Option.map_some, Option.bind_some,
+                  Option.some.injEq] at h
+                subst out
+                rw [Hex.ZPoly.polyProduct_append,
+                  Hex.ZPoly.polyProduct_singleton,
+                  refineCoreFactorsM2_polyProduct factors htail,
+                  Hex.ZPoly.polyProduct_cons_toArray]
+        | none =>
+            simp only [hwitness] at h
+            cases hselected : Hex.ZPoly.toMonicPrimeData? g with
+            | none => simp [hselected] at h
+            | some primeData =>
+                simp only [hselected, Option.bind_some] at h
+                cases hrecursive :
+                    Hex.classicalCoreFactorsRecursive g
+                      (Hex.ZPoly.defaultFactorCoeffBound g) primeData with
+                | none => simp [hrecursive] at h
+                | some refined =>
+                    simp only [hrecursive] at h
+                    cases htail : Hex.refineCoreFactorsM2 factors with
+                    | none => simp [htail] at h
+                    | some rest =>
+                        simp only [htail, Option.map_some, Option.bind_some,
+                          Option.some.injEq] at h
+                        subst out
+                        rw [Hex.ZPoly.polyProduct_append,
+                          classicalCoreFactorsRecursive_polyProduct _ _ _
+                            hrecursive,
+                          refineCoreFactorsM2_polyProduct factors htail,
+                          Hex.ZPoly.polyProduct_cons_toArray]
+
+/-- A normalized nonconstant integer polynomial has positive leading
+coefficient. -/
+private theorem leadingCoeff_pos_of_normalized_degree
+    {g : Hex.ZPoly}
+    (hnorm : Hex.normalizeFactorSign g = g)
+    (hdegree : 0 < g.degree?.getD 0) :
+    0 < Hex.DensePoly.leadingCoeff g := by
+  have hnonneg := Hex.normalizeFactorSign_leadingCoeff_nonneg g
+  rw [hnorm] at hnonneg
+  have hne : g ≠ 0 := by
+    intro hzero
+    subst g
+    simp at hdegree
+  have hlc_ne := Hex.ZPoly.leadingCoeff_ne_zero_of_ne_zero g hne
+  omega
+
+/--
+Every factor emitted by independent per-piece M2 refinement is irreducible,
+normalized, and nonconstant, provided the coarse pieces have the validator
+facts and inherit squarefreeness from their common core.
+-/
+theorem refineCoreFactorsM2_factor_spec :
+    ∀ (factors : List Hex.ZPoly) {out : Array Hex.ZPoly},
+      (∀ g ∈ factors, Hex.ZPoly.Primitive g) →
+      (∀ g ∈ factors, Hex.normalizeFactorSign g = g) →
+      (∀ g ∈ factors, 0 < g.degree?.getD 0) →
+      (∀ g ∈ factors, Squarefree (HexPolyZMathlib.toPolynomial g)) →
+      Hex.refineCoreFactorsM2 factors = some out →
+      ∀ q ∈ out.toList,
+        Hex.ZPoly.Irreducible q ∧
+          Hex.normalizeFactorSign q = q ∧
+          0 < q.degree?.getD 0
+  | [], out, _, _, _, _, h, q, hq => by
+      simp [Hex.refineCoreFactorsM2] at h
+      subst out
+      simp at hq
+  | g :: factors, out, hprimitive, hnorm, hdegree, hsquarefree, h, q, hq => by
+      have hg_primitive := hprimitive g List.mem_cons_self
+      have hg_norm := hnorm g List.mem_cons_self
+      have hg_degree := hdegree g List.mem_cons_self
+      have hg_squarefree := hsquarefree g List.mem_cons_self
+      have hg_lc_pos :=
+        leadingCoeff_pos_of_normalized_degree hg_norm hg_degree
+      have htail_primitive :
+          ∀ u ∈ factors, Hex.ZPoly.Primitive u :=
+        fun u hu => hprimitive u (List.mem_cons_of_mem g hu)
+      have htail_norm :
+          ∀ u ∈ factors, Hex.normalizeFactorSign u = u :=
+        fun u hu => hnorm u (List.mem_cons_of_mem g hu)
+      have htail_degree :
+          ∀ u ∈ factors, 0 < u.degree?.getD 0 :=
+        fun u hu => hdegree u (List.mem_cons_of_mem g hu)
+      have htail_squarefree :
+          ∀ u ∈ factors, Squarefree (HexPolyZMathlib.toPolynomial u) :=
+        fun u hu => hsquarefree u (List.mem_cons_of_mem g hu)
+      simp only [Hex.refineCoreFactorsM2] at h
+      by_cases hlinear : g.degree?.getD 0 ≤ 1
+      · rw [if_pos hlinear] at h
+        cases htail : Hex.refineCoreFactorsM2 factors with
+        | none => simp [htail] at h
+        | some rest =>
+            simp only [htail, Option.map_some, Option.bind_some,
+              Option.some.injEq] at h
+            subst out
+            rw [Array.toList_append, List.mem_append] at hq
+            rcases hq with hq | hq
+            · rw [show (#[g] : Array Hex.ZPoly).toList = [g] from rfl,
+                List.mem_singleton] at hq
+              subst q
+              have hg_degree_one : g.degree?.getD 0 = 1 := by omega
+              refine ⟨?_, hg_norm, hg_degree⟩
+              rw [Hex.ZPoly.Irreducible_iff_polynomialIrreducible]
+              exact irreducible_toPolynomial_of_primitive_of_degree_one
+                hg_primitive hg_degree_one
+            · exact refineCoreFactorsM2_factor_spec factors
+                htail_primitive htail_norm htail_degree htail_squarefree
+                htail q hq
+      · rw [if_neg hlinear] at h
+        cases hwitness : Hex.smallModIrreducibilityWitness? g with
+        | some witness =>
+            simp only [hwitness] at h
+            cases htail : Hex.refineCoreFactorsM2 factors with
+            | none => simp [htail] at h
+            | some rest =>
+                simp only [htail, Option.map_some, Option.bind_some,
+                  Option.some.injEq] at h
+                subst out
+                rw [Array.toList_append, List.mem_append] at hq
+                rcases hq with hq | hq
+                · rw [show (#[g] : Array Hex.ZPoly).toList = [g] from rfl,
+                    List.mem_singleton] at hq
+                  subst q
+                  exact
+                    ⟨smallModIrreducibilityWitness?_irreducible
+                        g witness hwitness hg_degree hg_primitive,
+                      hg_norm, hg_degree⟩
+                · exact refineCoreFactorsM2_factor_spec factors
+                    htail_primitive htail_norm htail_degree htail_squarefree
+                    htail q hq
+        | none =>
+            simp only [hwitness] at h
+            cases hselected : Hex.ZPoly.toMonicPrimeData? g with
+            | none => simp [hselected] at h
+            | some primeData =>
+                simp only [hselected, Option.bind_some] at h
+                cases hrecursive :
+                    Hex.classicalCoreFactorsRecursive g
+                      (Hex.ZPoly.defaultFactorCoeffBound g) primeData with
+                | none => simp [hrecursive] at h
+                | some refined =>
+                    simp only [hrecursive] at h
+                    cases htail : Hex.refineCoreFactorsM2 factors with
+                    | none => simp [htail] at h
+                    | some rest =>
+                        simp only [htail, Option.map_some, Option.bind_some,
+                          Option.some.injEq] at h
+                        subst out
+                        rw [Array.toList_append, List.mem_append] at hq
+                        rcases hq with hq | hq
+                        · have hbundle :
+                              ModPFactorization
+                                (Hex.ZPoly.toMonic g).monic primeData :=
+                            modPFactorization_of_toMonicPrimeData hselected
+                              hg_lc_pos hg_degree
+                          have hirreducible :=
+                            classicalCoreFactorsRecursive_factor_irreducible
+                              g (Hex.ZPoly.defaultFactorCoeffBound g) primeData
+                              hrecursive hbundle hg_primitive hg_lc_pos
+                              hg_squarefree (by rfl) q hq
+                          have hnorm_q :=
+                            classicalCoreFactorsRecursive_normalizeFactorSign
+                              g (Hex.ZPoly.defaultFactorCoeffBound g) primeData
+                              hg_lc_pos hg_primitive hrecursive q hq
+                          have hdegree_q :=
+                            classicalCoreFactorsRecursive_degree_pos
+                              g (Hex.ZPoly.defaultFactorCoeffBound g) primeData
+                              hg_degree hg_lc_pos hg_primitive hrecursive q hq
+                          exact
+                            ⟨(Hex.ZPoly.Irreducible_iff_polynomialIrreducible q).mpr
+                                hirreducible,
+                              hnorm_q, hdegree_q⟩
+                        · exact refineCoreFactorsM2_factor_spec factors
+                            htail_primitive htail_norm htail_degree
+                            htail_squarefree htail q hq
+
+/-- Any member of a coarse factor list divides its ordered product. -/
+private theorem mem_dvd_polyProduct_toArray {q : Hex.ZPoly} :
+    ∀ factors : List Hex.ZPoly,
+      q ∈ factors → q ∣ Array.polyProduct factors.toArray
+  | [], hmem => absurd hmem List.not_mem_nil
+  | head :: tail, hmem => by
+      rw [Hex.ZPoly.polyProduct_cons_toArray]
+      rcases List.mem_cons.mp hmem with hhead | htail
+      · subst q
+        exact ⟨Array.polyProduct tail.toArray, rfl⟩
+      · obtain ⟨cofactor, hcofactor⟩ :=
+          mem_dvd_polyProduct_toArray tail htail
+        refine ⟨head * cofactor, ?_⟩
+        rw [hcofactor, ← Hex.DensePoly.mul_assoc_poly (S := Int) head q cofactor,
+          Hex.DensePoly.mul_comm_poly (S := Int) head q,
+          Hex.DensePoly.mul_assoc_poly (S := Int) q head cofactor]
+
+/--
+An accepted original-coordinate run reconstructs the core and emits only
+independently certified, normalized, nonconstant irreducible factors.  The
+transported modular factors used for the M1 search are deliberately absent
+from the proof: product validation, two-prime obstruction, and per-piece M2
+refinement form the complete acceptance boundary.
+-/
+theorem classicalCoreFactorsM1WithBound_spec
+    (core : Hex.ZPoly) (B : Nat)
+    (primeData degreeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some degreeData)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_degree : 0 < core.degree?.getD 0)
+    (hcore_squarefree : Squarefree (HexPolyZMathlib.toPolynomial core))
+    {out : Array Hex.ZPoly}
+    (h :
+      Hex.classicalCoreFactorsM1WithBound core B primeData degreeData =
+        some out) :
+    Array.polyProduct out = core ∧
+      ∀ q ∈ out.toList,
+        Hex.ZPoly.Irreducible q ∧
+          Hex.normalizeFactorSign q = q ∧
+          0 < q.degree?.getD 0 := by
+  unfold Hex.classicalCoreFactorsM1WithBound Hex.classicalCoreFactorsM1Run at h
+  by_cases hB : B = 0
+  · simp [hB] at h
+  · rw [if_neg hB] at h
+    dsimp only at h
+    cases hsearch :
+        (Hex.coreRecombinationSmart
+          (Hex.DensePoly.leadingCoeff core) core
+          (Hex.liftModulus (Hex.ZPoly.coreLiftData core B primeData))
+          (Hex.ZPoly.coreLiftData core B primeData).liftedFactors.toList).1 with
+    | none => simp [hsearch] at h
+    | some factors =>
+        rw [hsearch] at h
+        simp only [Option.bind_some] at h
+        by_cases hvalidate : Hex.validateCoreFactors core factors = true
+        · rw [if_pos hvalidate] at h
+          obtain ⟨hne, hproduct, hprimitive, hnorm, hdegree⟩ :=
+            Hex.validateCoreFactors_spec core factors hvalidate
+          by_cases hlength : factors.length = 1
+          · rw [if_pos hlength] at h
+            obtain ⟨g, hfg⟩ := List.length_eq_one_iff.mp hlength
+            subst factors
+            have hg_core : g = core := by
+              simpa [Array.polyProduct] using hproduct
+            subst g
+            by_cases hsmall : degreeData.factorsModP.size ≤ 1
+            · rw [if_pos hsmall] at h
+              obtain rfl := Option.some.inj h
+              have hcore_irreducible :=
+                irreducible_of_toMonic_smallMod core degreeData hselected
+                  hcore_lc_pos hcore_degree hcore_primitive hsmall
+              refine ⟨Hex.ZPoly.polyProduct_singleton core, ?_⟩
+              intro q hq
+              rw [show (#[core] : Array Hex.ZPoly).toList = [core] from rfl,
+                List.mem_singleton] at hq
+              subst q
+              exact
+                ⟨hcore_irreducible,
+                  hnorm core List.mem_cons_self,
+                  hdegree core List.mem_cons_self⟩
+            · rw [if_neg hsmall] at h
+              cases hwitness :
+                  Hex.modularDegreePairWitness?
+                    (Hex.ZPoly.toMonic core).monic degreeData with
+              | none => simp [hwitness] at h
+              | some pair =>
+                  simp only [hwitness, Option.map_some, Option.some.injEq] at h
+                  subst out
+                  obtain ⟨candidate, second⟩ := pair
+                  obtain ⟨hprobe, hcert⟩ :=
+                    Hex.modularDegreePairWitness?_spec
+                      (Hex.ZPoly.toMonic core).monic degreeData
+                      candidate second hwitness
+                  have hmonic :
+                      Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
+                    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core
+                      hcore_lc_pos hcore_degree
+                  have hmonic_degree :
+                      0 < (Hex.ZPoly.toMonic core).monic.degree?.getD 0 := by
+                    rw [Hex.ZPoly.toMonic_monic_degree_eq_of_pos_degree core
+                      hcore_lc_pos hcore_degree]
+                    exact hcore_degree
+                  have hfirst :
+                      ModPFactorization (Hex.ZPoly.toMonic core).monic degreeData :=
+                    modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos
+                      hcore_degree
+                  have hsecond :
+                      ModPFactorization (Hex.ZPoly.toMonic core).monic second :=
+                    modPFactorization_of_form
+                      (Hex.probePrimeData?_prime _ candidate second hprobe)
+                      (Hex.probePrimeData?_isGoodPrime _ candidate second hprobe)
+                      (Hex.probePrimeData?_fModP_eq _ candidate second hprobe)
+                      (Hex.probePrimeData?_form _ candidate second hprobe)
+                      (zpoly_primitive_of_monic hmonic)
+                      (by rw [show Hex.DensePoly.leadingCoeff
+                          (Hex.ZPoly.toMonic core).monic = 1 from hmonic]
+                          exact Int.one_pos)
+                      hmonic_degree
+                  have hmonic_irreducible :=
+                    modularDegreePairCertifies_irreducible
+                      (Hex.ZPoly.toMonic core).monic degreeData second
+                      hfirst hsecond hmonic hmonic_degree hcert
+                  have hcore_irreducible :=
+                    zpolyIrreducible_of_toMonicMonic_irreducible core
+                      hcore_lc_pos hcore_degree hcore_primitive
+                      hmonic_irreducible
+                  refine ⟨Hex.ZPoly.polyProduct_singleton core, ?_⟩
+                  intro q hq
+                  rw [show (#[core] : Array Hex.ZPoly).toList = [core] from rfl,
+                    List.mem_singleton] at hq
+                  subst q
+                  exact
+                    ⟨hcore_irreducible,
+                      hnorm core List.mem_cons_self,
+                      hdegree core List.mem_cons_self⟩
+          · rw [if_neg hlength] at h
+            cases hrefined : Hex.refineCoreFactorsM2 factors with
+            | none => simp [hrefined] at h
+            | some refined =>
+                simp only [hrefined, Option.some.injEq] at h
+                subst out
+                have hsquarefree :
+                    ∀ g ∈ factors,
+                      Squarefree (HexPolyZMathlib.toPolynomial g) := by
+                  intro g hg
+                  have hdvd := mem_dvd_polyProduct_toArray factors hg
+                  rw [hproduct] at hdvd
+                  exact Squarefree.squarefree_of_dvd
+                    (HexPolyMathlib.toPolynomial_dvd hdvd) hcore_squarefree
+                refine
+                  ⟨(refineCoreFactorsM2_polyProduct factors hrefined).trans
+                      hproduct,
+                    ?_⟩
+                exact refineCoreFactorsM2_factor_spec factors hprimitive hnorm
+                  hdegree hsquarefree hrefined
+        · rw [if_neg hvalidate] at h
+          simp at h
+
+/-- Structural contract shared by the cost-gated M1 path and its exact M2
+fallback.  Unlike the irreducibility contract below, this theorem is valid for
+an arbitrary caller-supplied coefficient bound. -/
+theorem classicalCoreFactorsM1OrM2_shape
+    (core : Hex.ZPoly) (B : Nat)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_degree : 0 < core.degree?.getD 0)
+    (hcore_squarefree : Squarefree (HexPolyZMathlib.toPolynomial core))
+    {out : Array Hex.ZPoly}
+    (h : Hex.classicalCoreFactorsM1OrM2 core B = some out) :
+    Array.polyProduct out = core ∧
+      (∀ q ∈ out.toList, Hex.normalizeFactorSign q = q) ∧
+      ∀ q ∈ out.toList, 0 < q.degree?.getD 0 := by
+  have recursive_shape :
+      ∀ (primeData : Hex.PrimeChoiceData),
+        Hex.ZPoly.toMonicPrimeData? core = some primeData →
+        Hex.classicalCoreFactorsRecursive core B primeData = some out →
+        Array.polyProduct out = core ∧
+          (∀ q ∈ out.toList, Hex.normalizeFactorSign q = q) ∧
+          ∀ q ∈ out.toList, 0 < q.degree?.getD 0 := by
+    intro primeData _hselected hrecursive
+    exact
+      ⟨classicalCoreFactorsRecursive_polyProduct core B primeData hrecursive,
+        classicalCoreFactorsRecursive_normalizeFactorSign core B primeData
+          hcore_lc_pos hcore_primitive hrecursive,
+        classicalCoreFactorsRecursive_degree_pos core B primeData
+          hcore_degree hcore_lc_pos hcore_primitive hrecursive⟩
+  unfold Hex.classicalCoreFactorsM1OrM2 at h
+  cases hselected : Hex.ZPoly.toMonicPrimeData? core with
+  | none => simp [hselected] at h
+  | some toMonicData =>
+      simp only [hselected] at h
+      let coreData := Hex.ZPoly.corePrimeDataOfToMonic core toMonicData
+      by_cases htry : Hex.shouldTryM1 core toMonicData = true
+      · rw [if_pos htry] at h
+        simp only [Hex.tryM1ThenM2] at h
+        cases hm1 :
+            Hex.classicalCoreFactorsM1WithBound core B coreData toMonicData with
+        | some factors =>
+            rw [hm1] at h
+            have hout : factors = out := Option.some.inj h
+            subst out
+            have hspec := classicalCoreFactorsM1WithBound_spec core B coreData
+              toMonicData hselected hcore_primitive hcore_lc_pos hcore_degree
+              hcore_squarefree hm1
+            exact
+              ⟨hspec.1, (fun q hq => (hspec.2 q hq).2.1),
+                fun q hq => (hspec.2 q hq).2.2⟩
+        | none =>
+            rw [hm1] at h
+            exact recursive_shape toMonicData hselected h
+      · rw [if_neg (by simpa using htry)] at h
+        exact recursive_shape toMonicData hselected h
+
+/-- Product, normalization, degree, and irreducibility contract shared by the
+cost-gated M1 path and its exact M2 fallback. -/
+theorem classicalCoreFactorsM1OrM2_spec
+    (core : Hex.ZPoly) (B : Nat)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_degree : 0 < core.degree?.getD 0)
+    (hcore_squarefree : Squarefree (HexPolyZMathlib.toPolynomial core))
+    (hB_ne : B ≠ 0)
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hvalid : ∀ d : Hex.ZPoly, d ∣ core → ∀ i,
+      (d.coeff i).natAbs ≤ B')
+    (hprecision : ∀ primeData : Hex.PrimeChoiceData,
+      Hex.ZPoly.toMonicPrimeData? core = some primeData →
+        2 * B' < primeData.p ^
+          Hex.precisionForCoeffBound
+            (Hex.ZPoly.exhaustiveLiftBound core B) primeData.p)
+    {out : Array Hex.ZPoly}
+    (h : Hex.classicalCoreFactorsM1OrM2 core B = some out) :
+    Array.polyProduct out = core ∧
+      ∀ q ∈ out.toList,
+        Hex.ZPoly.Irreducible q ∧
+          Hex.normalizeFactorSign q = q ∧
+          0 < q.degree?.getD 0 := by
+  have recursive_spec :
+      ∀ (primeData : Hex.PrimeChoiceData),
+        Hex.ZPoly.toMonicPrimeData? core = some primeData →
+        Hex.classicalCoreFactorsRecursive core B primeData = some out →
+        Array.polyProduct out = core ∧
+          ∀ q ∈ out.toList,
+            Hex.ZPoly.Irreducible q ∧
+              Hex.normalizeFactorSign q = q ∧
+              0 < q.degree?.getD 0 := by
+    intro primeData hselected hrecursive
+    have hbundle :
+        ModPFactorization (Hex.ZPoly.toMonic core).monic primeData :=
+      modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos
+        hcore_degree
+    have hirreducible :=
+      classicalCoreFactorsRecursive_factor_irreducible_of_validBound
+        core B primeData
+        hrecursive hbundle hcore_primitive hcore_lc_pos hcore_squarefree
+        hB_ne B' hcore_lc_le hvalid (hprecision primeData hselected)
+    refine
+      ⟨classicalCoreFactorsRecursive_polyProduct core B primeData hrecursive,
+        ?_⟩
+    intro q hq
+    exact
+      ⟨(Hex.ZPoly.Irreducible_iff_polynomialIrreducible q).mpr
+          (hirreducible q hq),
+        classicalCoreFactorsRecursive_normalizeFactorSign core B primeData
+          hcore_lc_pos hcore_primitive hrecursive q hq,
+        classicalCoreFactorsRecursive_degree_pos core B primeData
+          hcore_degree hcore_lc_pos hcore_primitive hrecursive q hq⟩
+  unfold Hex.classicalCoreFactorsM1OrM2 at h
+  cases hselected : Hex.ZPoly.toMonicPrimeData? core with
+  | none => simp [hselected] at h
+  | some toMonicData =>
+      simp only [hselected] at h
+      let coreData := Hex.ZPoly.corePrimeDataOfToMonic core toMonicData
+      by_cases htry : Hex.shouldTryM1 core toMonicData = true
+      · rw [if_pos htry] at h
+        simp only [Hex.tryM1ThenM2] at h
+        cases hm1 :
+            Hex.classicalCoreFactorsM1WithBound core B coreData toMonicData with
+        | some factors =>
+            rw [hm1] at h
+            have hout : factors = out := Option.some.inj h
+            subst out
+            exact classicalCoreFactorsM1WithBound_spec core B coreData
+              toMonicData hselected hcore_primitive hcore_lc_pos hcore_degree
+              hcore_squarefree hm1
+        | none =>
+            rw [hm1] at h
+            exact recursive_spec toMonicData hselected h
+      ·
+        rw [if_neg (by simpa using htry)] at h
+        exact recursive_spec toMonicData hselected h
+
 /-- **Recursive residual-arm irreducibility (public-bound form).** Mirror of
 `classicalCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible` for the
 recursive tier: the bound is handled at `defaultFactorCoeffBound f` via
@@ -1185,29 +1686,69 @@ theorem factorClassicalFactorsWithBound_factor_irreducible
             hcore_pos hcore_prim hquad hfmem
     | none =>
         simp only [hquad] at hcf
-        cases hsel :
-            Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore with
-        | none => simp [hsel] at hcf
-        | some primeData =>
-            simp only [hsel, Option.bind_some] at hcf
-            cases hcore :
-                Hex.classicalCoreFactorsRecursive (Hex.normalizeForFactor f).squareFreeCore
-                  (Hex.ZPoly.defaultFactorCoeffBound f) primeData with
-            | none => simp [hcore] at hcf
-            | some coreFactors =>
-                simp only [hcore, Option.map_some] at hcf
-                obtain rfl := Option.some.inj hcf
-                -- Residual arm: the size-ordered classical recombination core.
-                -- Per-factor irreducibility from #8510, reassembly completeness
-                -- from #8511.
-                exact
-                  Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
-                    _ _
-                    (reassemblyExpansionComplete_classicalRecursive_of_ne_zero
-                      f hf primeData hsel hdeg hcore)
-                    (classicalCoreFactorsRecursive_squareFreeCore_factor_zpolyIrreducible
-                      f hf primeData hsel hdeg hcore)
-                    hmem
+        cases hcore :
+            Hex.classicalCoreFactorsM1OrM2
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.ZPoly.defaultFactorCoeffBound f) with
+        | none => simp [hcore] at hcf
+        | some coreFactors =>
+            simp only [hcore, Option.map_some] at hcf
+            obtain rfl := Option.some.inj hcf
+            set core := (Hex.normalizeForFactor f).squareFreeCore
+            have hcore_ne : core ≠ 0 :=
+              zpoly_ne_zero_of_pos_lc hcore_pos
+            have hcore_degree : 0 < core.degree?.getD 0 :=
+              Nat.pos_of_ne_zero hdeg
+            have hcore_squarefree :
+                Squarefree (HexPolyZMathlib.toPolynomial core) :=
+              IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree
+                f hf
+            have hcore_dvd_f : core ∣ f :=
+              Hex.squareFreeCore_dvd_self f hf
+            have hB_ne : Hex.ZPoly.defaultFactorCoeffBound f ≠ 0 :=
+              (Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hf).ne'
+            have hcore_lc_le :
+                (Hex.DensePoly.leadingCoeff core).natAbs ≤
+                  Hex.ZPoly.defaultFactorCoeffBound f := by
+              have hsize_pos : 0 < core.size :=
+                Hex.ZPoly.size_pos_of_ne_zero core hcore_ne
+              rw [Hex.DensePoly.leadingCoeff_eq_coeff_last _ hsize_pos]
+              exact defaultFactorCoeffBound_valid f hf core hcore_dvd_f
+                (core.size - 1)
+            have hvalid : ∀ g : Hex.ZPoly, g ∣ core → ∀ i,
+                (g.coeff i).natAbs ≤ Hex.ZPoly.defaultFactorCoeffBound f := by
+              intro g hg i
+              exact defaultFactorCoeffBound_valid f hf g
+                (zpoly_dvd_trans hg hcore_dvd_f) i
+            have hprecision : ∀ primeData : Hex.PrimeChoiceData,
+                Hex.ZPoly.toMonicPrimeData? core = some primeData →
+                  2 * Hex.ZPoly.defaultFactorCoeffBound f <
+                    primeData.p ^
+                      Hex.precisionForCoeffBound
+                        (Hex.ZPoly.exhaustiveLiftBound core
+                          (Hex.ZPoly.defaultFactorCoeffBound f))
+                        primeData.p := by
+              intro primeData hselected
+              have hp2 : 2 ≤ primeData.p :=
+                (Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected).two_le
+              exact IntReductionMod.exhaustiveLiftBound_precision core
+                (Hex.ZPoly.defaultFactorCoeffBound f) primeData.p hp2
+            have hspec := classicalCoreFactorsM1OrM2_spec core
+              (Hex.ZPoly.defaultFactorCoeffBound f)
+              hcore_prim hcore_pos hcore_degree hcore_squarefree hB_ne
+              (Hex.ZPoly.defaultFactorCoeffBound f) hcore_lc_le hvalid
+              hprecision hcore
+            have hcomplete :=
+              IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_norm
+                f hf coreFactors
+                (fun g hg => (hspec.2 g hg).1)
+                hspec.1
+                (fun g hg => (hspec.2 g hg).2.1)
+                (fun g hg => (hspec.2 g hg).2.2)
+            exact
+              Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+                _ _ hcomplete (fun factor hfactor => (hspec.2 factor hfactor).1)
+                hmem
 
 
 end HexBerlekampZassenhausMathlib

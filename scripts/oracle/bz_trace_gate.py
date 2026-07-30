@@ -2,9 +2,9 @@
 """Performance gate for HexBerlekampZassenhaus.
 
 Asserts the per-case `FactorTrace` emitted by the Lean fixtures (chosen tier,
-declined flag, and size-ordered subset-candidate count) stays within a committed
-baseline. A recombination blow-up (subsetCandidates jumps), an unexpected tier
-downgrade, or an unexpected decline/fallback therefore fails the merge — even
+M1 route, declined flag, and size-ordered subset-candidate count) stays within a
+committed baseline. A recombination blow-up (subsetCandidates jumps), an
+unexpected tier or M1-route change, or an unexpected decline/fallback fails the merge — even
 though every such regression would still produce *correct* factorisations and so
 slip past the FLINT oracle.
 
@@ -51,6 +51,7 @@ def main(argv: list[str]) -> int:
         baseline = {
             case: {
                 "tier": tr["tier"],
+                "m1": tr["m1"],
                 "declined": tr["declined"],
                 "subsetCandidates": tr["subsetCandidates"],
             }
@@ -70,6 +71,12 @@ def main(argv: list[str]) -> int:
             continue
         if tr["tier"] != b["tier"]:
             print(f"FAIL {case}: tier {tr['tier']!r} != baseline {b['tier']!r}", file=sys.stderr)
+            failures += 1
+        if tr["m1"] != b["m1"]:
+            print(
+                f"FAIL {case}: M1 route {tr['m1']!r} != baseline {b['m1']!r}",
+                file=sys.stderr,
+            )
             failures += 1
         if tr["declined"] != b["declined"]:
             print(

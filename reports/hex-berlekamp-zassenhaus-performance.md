@@ -1,15 +1,12 @@
 # HexBerlekampZassenhaus Performance Report
 
-The current public-factor and classical-no-decline measurements add cached
-classical recombination at
-`b0150d2b4a6154d7b9ed3c7cace4fee0ace64165`. The unchanged lattice,
-parametric, and fixed measurements cover the underlying exact-exponent/
-factor-only Hensel implementation, guarded dominant-degree tree,
-remainder-only Euclidean GCD, inverse-cached finite-field GCD,
-coefficient-array prime-power reduction, and monomial quadratic-division
-kernel at `0b95505b7c926911a9f487bac56676a8c7da48f6`. All were measured
-2026-07-29 on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0, from
-clean worktrees.
+The current public-factor measurement adds verified original-coordinate M1
+lifting, bounded modular degree certificates, and review-hardened routing at
+`d580b121292be127be33b312fe888b00573379ed`. The unchanged
+classical-no-decline measurement is at `b0150d2b`; lattice, parametric, and
+fixed measurements remain at `0b95505b7c926911a9f487bac56676a8c7da48f6`.
+All were measured on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU
+0, from clean worktrees.
 
 ## Bench Targets
 
@@ -64,7 +61,7 @@ so no unchanged rows are inherited from an earlier implementation.
 
 | System | OK | Timeout | Solved-row median |
 |---|---:|---:|---:|
-| Hex public factor | 373 | 19 | 395.506 µs |
+| Hex public factor | 373 | 19 | 401.114 µs |
 | Hex lattice | 369 | 23 | 1.812 ms |
 | Hex classical, no decline | 372 | 20 | 386.358 µs |
 | FLINT 0.9.0 | 391 | 1 | 66.850 µs |
@@ -74,44 +71,69 @@ so no unchanged rows are inherited from an earlier implementation.
 | Verified Isabelle LLL | 314 | 78 | 6.109 ms |
 
 The external rows are the unchanged current 2026-07-28 measurements from the
-same host, corpus, CPU, and protocol. On 235 common rows above each service's
+same host, corpus, CPU, and protocol. On 234 common rows above each service's
 10× protocol-overhead threshold, public Hex / verified Isabelle BZ has median
-0.866× and p10–p90 0.453×–2.274×; Hex wins 136 rows and Isabelle 99. This is a
+0.852× and p10–p90 0.450×–2.033×; Hex wins 143 rows and Isabelle 91. This is a
 clear aggregate Hex lead, but the wide family-dependent range is not uniform
 superiority. The old eligible-row median was 3.95×.
 
-The public protocol floor is 17.015 µs. Reapplying the preceding 16.975 µs
-Hex floor leaves the same 235 rows and 0.866× median; applying the larger
-current pair floor to both sides gives 0.869× over 234 rows. The lead is
-therefore not created by the eligibility boundary.
+The public protocol floor is 17.215 µs.
 
 The public row is recorded in
-`reports/bench-results/hexbz-factor-sweep-hex-b0150d2b-recombine-cache-chungus2.json`
-(SHA-256 `7222c12c206d9fdb3489d98595c72f9eb254f31108e5136722242784eb086be3`).
+`reports/bench-results/hexbz-factor-sweep-hex-d580b121-m1-review-chungus2.json`
+(SHA-256 `455b5fc28681707357eda6c60fba25531937128c51f9c3065231adf73dbd959d`).
 It records a clean worktree.
 
 The current public/classical comparison has 237 eligible rows and a 1.003×
-median ratio; public wins 117 and classical 120. This is measurement-level
-parity, not evidence for a better classical algorithm: the diagnostic removes
-bounded decline/fallback behavior and the public result check while sharing the
-same lifting and recombination core. Public is better on selected hard rows and
-uniquely solves `sd6`.
+median ratio in the pre-M1 record. Comparing current public with that unchanged
+diagnostic also gives 1.003×, with a 116–121 win split and a wider band because
+the production path now uses M1 selectively. Public is better on selected hard
+rows and uniquely solves `sd6`.
 
 The current classical row is in the `b0150d2b` artifact; the unchanged lattice
 row is in `0b95505b`. The older `aaabcf15` record remains a historical A/B
 reference.
 
-The bounded prime-width policy drives the large selector wins. It looks ahead by
+At the preceding `b0150d2b` stage, the bounded prime-width policy drives the
+large selector wins. It looks ahead by
 at most two good primes only on predicted high-cost transforms, requires at
 least a 25% modular-width reduction before changing prime, and preserves cheap
 even `x^n - 1` recursion. The largest current/pre-policy gains are 75.54× on
 `sd5_x_phi45`, 29.03× on `xpow105_minus1`, 12.39× on `legendre_P30`, 7.42×
 on `cyclo_phi151`, 7.09× on `cyclo_phi179`, and 5.60× on `cyclo_phi61`.
 
-Cached recombination is the latest movement. Against `0b95505b`, the
-eligible-row paired median is 0.988× and current Hex wins 171 of 243 rows. The
+Cached recombination is the next preceding movement. Against `0b95505b`, the
+eligible-row paired median is 0.988× and `b0150d2b` wins 171 of 243 rows. The
 targeted `sd5` family improves by 2.24×–2.73× while the full corpus remains
 stable.
+
+## Original-coordinate M1
+
+The production classical tier now reuses the adaptive selector's chosen prime
+and modular factors, transports them back to the original coordinate, and
+Hensel-lifts `monicTarget core` at the original core's Mignotte precision.
+Acceptance is independently certified; any failed search or certificate falls
+back to the proved M2 route.
+
+The same-prime lift changes include 4.23 ms to 0.24 ms on Chebyshev U24,
+4.08 ms to 0.42 ms on Legendre P30, and 5.22 ms to 0.64 ms on Legendre P38.
+End to end, U24 falls from 2.610 ms to 0.816 ms, P28 from 8.205 ms to
+4.952 ms, P30 from 13.807 ms to 11.034 ms, and P38 from 13.602 ms to
+8.422 ms.
+
+The Chebyshev family median against Isabelle improves from 1.619× to 1.260×;
+Legendre improves from 1.435× to 1.249×. A degree-aware Mignotte cap, longer
+modular singleton scan, and global removal of recursive relifting do not clear
+their measured gates. The implementation instead uses a bounded two-prime
+degree obstruction and a deterministic M1 cost gate. See
+`hexbz-m1-chebyshev-legendre.md` for the complete dependency and measurement
+record.
+
+Review hardening bounds the exponential certificate inputs, records the M1
+route in the conformance trace, pins accepted and fallback behavior, and moves
+coordinate transport inside the taken branch. The last change restores eight
+monic cyclotomic rows from 1.47×–1.64× regressions to within 1.009×–1.041× of
+their pre-M1 times.
 
 The preceding movement removes discarded quotient construction from Euclidean
 GCD, caches finite-field divisor inverses, maps prime-power coefficient
@@ -151,25 +173,25 @@ Both paths are relative to `reports/bench-results/`.
 
 | Fixture | Hex public | Verified Isabelle BZ | Hex / Isabelle |
 |---|---:|---:|---:|
-| `SD_5` | 39.730 ms | 22.827 ms | 1.74x |
-| `SD_5` shifted by 1 | 28.073 ms | 14.875 ms | 1.89x |
-| `SD_5` shifted by 2 | 29.903 ms | 14.907 ms | 2.01x |
-| `SD_6` | 9.137 s | timeout | — |
+| `SD_5` | 40.496 ms | 22.827 ms | 1.77x |
+| `SD_5` shifted by 1 | 27.918 ms | 14.875 ms | 1.88x |
+| `SD_5` shifted by 2 | 29.489 ms | 14.907 ms | 1.98x |
+| `SD_6` | 8.900 s | timeout | — |
 
 The fresh public service now solves `SD_6`; the no-decline classical service
 still times out. The public result and the isolated lattice result (8.583 s)
 show that the dispatcher is adding useful reach here. The public measurement
-is a single cutoff-limited shot only 8.6% below ten seconds, so this frontier
+is a single cutoff-limited shot only 11.0% below ten seconds, so this frontier
 success has a narrow margin.
 
 ## Concerns
 
 - Nineteen public corpus cases still hit the 10-second cutoff.
 - FLINT, PARI/GP, and NTL remain much faster in aggregate.
-- Hex has a 13.4% aggregate lead over Isabelle BZ, but Chebyshev still favours
-  Isabelle by 1.62× and Legendre by 1.44× at their family medians.
-- No-decline classical has a 0.3% paired-median lead over public; further broad
-  gains must come from the factorization core rather than dispatch alone.
+- Hex has a 13.5% aggregate lead over Isabelle BZ, but Chebyshev still favours
+  Isabelle by 1.20× and Legendre by 1.26× at their family medians.
+- The unchanged no-decline diagnostic is no longer the same lifting core as
+  production; current public/no-decline ratios include the selective M1 route.
 - The lattice route has a much heavier tail than the classical route.
 - `wilkinson_56` remains a slower outlier despite the 0.60× current
   Wilkinson-family median.

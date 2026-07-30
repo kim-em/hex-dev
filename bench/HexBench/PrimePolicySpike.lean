@@ -55,6 +55,43 @@ def timeLiftArm (iters : Nat) (run : Unit → Array ZPoly) : IO (Float × Array 
   if sink = 0 then throw <| IO.userError "impossible empty lift checksum"
   pure ((t₁ - t₀).toFloat / iters.toFloat / 1.0e6, result)
 
+/--
+Largest degree of a proper candidate in the current head-forced subset search.
+Every enumerated candidate contains the first local factor, so the largest
+proper one omits the smallest degree in the tail.
+-/
+def headForcedMaxProperDegree (pd : PrimeChoiceData) : Nat :=
+  match modularFactorDegrees pd with
+  | [] => 0
+  | [_] => pd.fModP.degree?.getD 0
+  | head :: next :: tail =>
+      let minTail := tail.foldl min next
+      head + next + tail.sum - minTail
+
+/-- Closed-form Mignotte opportunity bound when candidate degree is capped. -/
+def factorCoeffBoundAtDegree (f : ZPoly) (degree : Nat) : Nat :=
+  Nat.binom degree (degree / 2) * ZPoly.coeffL2NormBound f
+
+/--
+Measure the current M1 lift and the most optimistic degree cap admitted by the
+existing head-forced search.  The capped arm is diagnostic only: production
+continues to use the fully proved uniform bound.
+-/
+def compareM1Bounds (core : ZPoly) (pd : PrimeChoiceData) : IO Unit := do
+  let corePd := ZPoly.corePrimeDataOfToMonic core pd
+  let uniformBound := ZPoly.defaultFactorCoeffBound core
+  let degreeBound := headForcedMaxProperDegree pd
+  let cappedBound := factorCoeffBoundAtDegree core degreeBound
+  let uniformK := precisionForCoeffBound uniformBound pd.p
+  let cappedK := precisionForCoeffBound cappedBound pd.p
+  let uniform ← timeLiftArm 7 (fun _ =>
+    (ZPoly.coreLiftData core uniformBound corePd).liftedFactors)
+  let capped ← timeLiftArm 7 (fun _ =>
+    (ZPoly.coreLiftData core cappedBound corePd).liftedFactors)
+  IO.println s!"  M1 bound: n={core.degree?.getD 0}, D={degreeBound}, \
+    bits={uniformBound.log2 + 1}->{cappedBound.log2 + 1}, \
+    k={uniformK}->{cappedK}, lift={uniform.1}->{capped.1} ms"
+
 def compareLiftTrees
     (label : String) (f core monic : ZPoly) (pd : PrimeChoiceData) : IO Unit := do
   -- This isolates the lift tree at the exhaustive coefficient bound; it is not
@@ -96,15 +133,51 @@ def timePrimeChoice (label : String) (f : ZPoly) : IO Unit := do
         let bound := ZPoly.exhaustiveLiftBound core (ZPoly.defaultFactorCoeffBound f)
         let k := precisionForCoeffBound bound pd.p
         s!"p={pd.p}, r={pd.factorsModP.size}, k={k}, degrees=[{String.intercalate "," degrees}]"
+  let describeM1 : Option PrimeChoiceData → String
+    | none => "no-prime"
+    | some pd =>
+        if shouldTryM1 core pd then
+          let corePd := ZPoly.corePrimeDataOfToMonic core pd
+          let result :=
+            classicalCoreFactorsM1WithBound core
+              (ZPoly.defaultFactorCoeffBound f) corePd pd
+          if result.isSome then "accepted" else "fell-back"
+        else
+          "not-tried"
   IO.println s!"{label}: first [{describe first}] {(t1 - t0).toFloat / 1.0e6} ms; \
     adaptive [{describe adaptive}] {(t2 - t1).toFloat / 1.0e6} ms; \
     factor {(t3 - t2).toFloat / 1.0e6} ms \
     (tier={trace.tier}, p={trace.prime}, r={trace.liftedFactorCount}, \
-    declined={trace.declined})"
+    declined={trace.declined}, M1={describeM1 adaptive})"
   match adaptive with
   | none => pure ()
-  | some pd => compareLiftTrees label f core monic pd
+  | some pd =>
+      compareLiftTrees label f core monic pd
+      compareM1Bounds core pd
   ( ← IO.getStdout).flush
+
+/-- Print the modular degree partitions at the first `limit` good candidates.
+These are the degree-obstruction inputs available to an adaptive selector
+without any Rabin-certificate scan. -/
+def printGoodPrimeDegrees (label : String) (f : ZPoly) (limit : Nat := 6) :
+    IO Unit := do
+  let core := (normalizeForFactor f).squareFreeCore
+  let mut seen := 0
+  let mut lines : List String := []
+  for c in smallPrimeCandidates ++ extendedSmallPrimeCandidates do
+    if seen < limit then
+      let t₀ ← IO.monoNanosNow
+      let pd? ← IO.lazyPure (fun _ => probePrimeData? core c)
+      let t₁ ← IO.monoNanosNow
+      match pd? with
+      | none => pure ()
+      | some pd =>
+          let degrees := pd.factorsModP.toList.map (fun g => g.degree?.getD 0)
+          lines := lines ++
+            [s!"p={pd.p} degrees={degrees} time={(t₁ - t₀).toFloat / 1.0e6}ms"]
+          seen := seen + 1
+  let joined := String.intercalate "; " lines
+  IO.println s!"{label} good-prime degrees: {joined}"
 
 /-- Read selected named cases from the checked-in comparison corpus. Keeping
 the larger diagnostic inputs in the corpus avoids duplicating their coefficient
@@ -123,7 +196,13 @@ def timeCorpusCases (corpusPath : String) (wanted : List String) : IO Unit := do
       | .error error => throw <| IO.userError s!"invalid corpus row: {error}"
       | .ok (name, coeffs) =>
           if wanted.contains name then
-            timePrimeChoice name (DensePoly.ofCoeffs coeffs.toArray)
+            let f := DensePoly.ofCoeffs coeffs.toArray
+            timePrimeChoice name f
+            if name == "legendre_P38" then
+              printGoodPrimeDegrees name f 30
+            else if ["legendre_P24", "legendre_P26", "legendre_P28",
+                "legendre_P34"].contains name then
+              printGoodPrimeDegrees name f 12
 
 def main (args : List String) : IO Unit := do
   let corpusPath ← match args with
@@ -141,6 +220,10 @@ def main (args : List String) : IO Unit := do
     #[1, 0, -312, 0, 16016, 0, -320320, 0, 3294720, 0, -19914752, 0,
       76038144, 0, -190513152, 0, 317521920, 0, -348651520, 0, 242221056,
       0, -96468992, 0, 16777216]
+  let chebyshevT24 : ZPoly := DensePoly.ofCoeffs
+    #[1, 0, -288, 0, 13728, 0, -256256, 0, 2471040, 0, -14057472, 0,
+      50692096, 0, -120324096, 0, 190513152, 0, -199229440, 0, 132120576,
+      0, -50331648, 0, 8388608]
   let legendreP30 : ZPoly := DensePoly.ofCoeffs
     #[-155117520, 0, 72129646800, 0, -5553982803600, 0, 168470811709200, 0,
       -2671465728531600, 0, 25467973278667920, 0, -158210137034149200, 0,
@@ -159,9 +242,14 @@ def main (args : List String) : IO Unit := do
   timePrimeChoice "x^105-1" xpow105
   timePrimeChoice "Conway(2,38)" conway38
   timePrimeChoice "Chebyshev U24" chebyshevU24
+  printGoodPrimeDegrees "Chebyshev U24" chebyshevU24
+  printGoodPrimeDegrees "Chebyshev T24" chebyshevT24
   timePrimeChoice "Legendre P30" legendreP30
+  printGoodPrimeDegrees "Legendre P30" legendreP30 30
   timePrimeChoice "SD5" sd5
   timeCorpusCases corpusPath
     ["chebyshev_T10", "chebyshev_T15", "chebyshev_U12", "legendre_P16",
-      "legendre_P24", "legendre_P26", "legendre_P28", "legendre_P38",
+      "legendre_P18", "legendre_P20", "legendre_P22", "legendre_P24",
+      "legendre_P26", "legendre_P28", "legendre_P30", "legendre_P32",
+      "legendre_P34", "legendre_P36", "legendre_P38", "legendre_P40",
       "cyclo_phi385"]
