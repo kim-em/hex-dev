@@ -5,13 +5,13 @@ Authors: Kim Morrison
 -/
 
 import CompPoly.Multivariate.CMvPolynomial
-import HexMvPolyBench.Corpus
+import HexMvPoly.Corpus
 import LeanBench
 
 /-!
 External native comparator driver for CompPoly's `CMvPolynomial`.
 
-Inputs come from `HexMvPolyBench.Corpus`; construction is outside the timed
+Inputs come from `HexMvPoly.Corpus`; construction is outside the timed
 region.  One representative operation covers each HexMvPoly Phase 4 family.
 -/
 

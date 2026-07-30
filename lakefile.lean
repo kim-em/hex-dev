@@ -232,7 +232,7 @@ lean_lib HexGF2BenchSupport where
 
 lean_lib HexMvPolyBenchSupport where
   srcDir := "bench"
-  globs := #[`HexMvPolyBench.Corpus]
+  globs := #[`HexMvPoly.Corpus]
 
 lean_lib HexMvPolyMathlibProofProbe where
   srcDir := "bench"
@@ -379,12 +379,8 @@ lean_lib HexReleaseTests where
     `HexRealRoots.ReplayTest,
     `HexRealRootsMathlib.IsolateRootsTests,
     `HexRealRootsMathlib.IsolateRootsElabTests,
-    `HexRootsMathlib.Examples]
-
--- HexMvPoly is not yet a published split repository, so its downstream
--- kernel-reduction checks stay separate from release-manifest-backed tests.
-lean_lib HexMvPolyTests where
-  globs := #[`HexMvPoly.KernelTests]
+    `HexRootsMathlib.Examples,
+    `HexMvPoly.KernelTests]
 
 -- HexRCF is not yet a published split repository, so its verification-only
 -- modules stay separate from the release-manifest-backed target above.

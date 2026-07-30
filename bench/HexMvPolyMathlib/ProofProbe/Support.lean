@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexMvPolyMathlib
-public import HexMvPolyBench.Corpus
+public import HexMvPoly.Corpus
 
 @[expose] public section
 
