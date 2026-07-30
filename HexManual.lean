@@ -17,6 +17,7 @@ import HexManual.Chapters.HexLLL
 import HexManual.Chapters.HexArith
 import HexManual.Chapters.HexModArith
 import HexManual.Chapters.HexPoly
+import HexManual.Chapters.HexMvPoly
 import HexManual.Chapters.HexPolyZ
 import HexManual.Chapters.HexResultant
 import HexManual.Chapters.HexPolyFp
@@ -98,6 +99,8 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexModArith}
 
 {include 2 HexManual.Chapters.HexPoly}
+
+{include 2 HexManual.Chapters.HexMvPoly}
 
 {include 2 HexManual.Chapters.HexPolyZ}
 

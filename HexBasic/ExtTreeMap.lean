@@ -32,6 +32,14 @@ universe u v w x
 variable {α : Type u} {β : Type v} {γ : Type w} {δ : Type x}
   {cmp : α → α → Ordering}
 
+/-- The empty map has no maximum entry. -/
+@[simp] theorem maxEntry?_empty [TransCmp cmp] :
+    (∅ : ExtTreeMap α β cmp).maxEntry? = none := by
+  change DTreeMap.Const.maxEntry? (DTreeMap.empty (cmp := cmp)) = none
+  unfold DTreeMap.Const.maxEntry? DTreeMap.empty
+    DTreeMap.Internal.Impl.Const.maxEntry? DTreeMap.Internal.Impl.empty
+  rfl
+
 /-- Joint ordered fold over two maps in increasing comparator order.
 
 The callback sees `some` exactly on the sides that contain a

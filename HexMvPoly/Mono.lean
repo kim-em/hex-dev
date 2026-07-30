@@ -254,63 +254,77 @@ class IsMonomialOrder {n : Nat} (cmp : Mono n → Mono n → Ordering) : Prop
 
 namespace Mono
 
+/-- Every exponent of the zero monomial is zero. -/
 @[simp] theorem getElem_zero (i : Fin n) : (zero : Mono n)[i] = 0 := by
   simp [zero]
 
+/-- A unit monomial has exponent one at its selected variable and zero
+elsewhere. -/
 @[simp] theorem getElem_unit (i j : Fin n) :
     (unit i : Mono n)[j] = if j = i then 1 else 0 := by
   simp [unit]
 
+/-- Monomial multiplication adds exponents pointwise. -/
 @[simp] theorem getElem_mul (a b : Mono n) (i : Fin n) :
     (mul a b)[i] = a[i] + b[i] := by
   simp [mul]
 
+/-- The zero monomial is a left identity for monomial multiplication. -/
 @[simp] theorem zero_mul (m : Mono n) : mul zero m = m := by
   apply Vector.ext
   intro i hi
   simp [mul, zero]
 
+/-- The zero monomial is a right identity for monomial multiplication. -/
 @[simp] theorem mul_zero (m : Mono n) : mul m zero = m := by
   apply Vector.ext
   intro i hi
   simp [mul, zero]
 
+/-- Monomial multiplication is associative. -/
 theorem mul_assoc (a b c : Mono n) :
     mul (mul a b) c = mul a (mul b c) := by
   apply Vector.ext
   intro i hi
   simp [mul, Nat.add_assoc]
 
+/-- Monomial multiplication is commutative. -/
 theorem mul_comm (a b : Mono n) : mul a b = mul b a := by
   apply Vector.ext
   intro i hi
   simp [mul, Nat.add_comm]
 
+/-- Scaling a monomial multiplies every exponent by the scale. -/
 @[simp] theorem getElem_scale (k : Nat) (m : Mono n) (i : Fin n) :
     (scale k m)[i] = k * m[i] := by
   simp [scale]
 
+/-- Scaling by zero yields the zero monomial. -/
 @[simp] theorem zero_scale (m : Mono n) : scale 0 m = zero := by
   apply Vector.ext
   intro i hi
   simp [scale, zero]
 
+/-- Every scaling of the zero monomial is zero. -/
 @[simp] theorem scale_zero (k : Nat) : scale k (zero : Mono n) = zero := by
   apply Vector.ext
   intro i hi
   simp [scale, zero]
 
+/-- Scaling by one leaves a monomial unchanged. -/
 @[simp] theorem one_scale (m : Mono n) : scale 1 m = m := by
   apply Vector.ext
   intro i hi
   simp [scale]
 
+/-- Scaling by a sum is multiplication of the separately scaled monomials. -/
 theorem add_scale (a b : Nat) (m : Mono n) :
     scale (a + b) m = mul (scale a m) (scale b m) := by
   apply Vector.ext
   intro i hi
   simp [scale, mul, Nat.add_mul]
 
+/-- Every monomial is the product of its scaled unit monomials. -/
 theorem mul_units (m : Mono n) :
     (List.finRange n).foldl
         (fun acc i => mul acc (scale m[i] (unit i)))
@@ -355,26 +369,32 @@ theorem mul_units (m : Mono n) :
         (List.mem_finRange r) (List.nodup_finRange n)
     _ = m[r] := by omega
 
+/-- The monomial least common multiple takes pointwise maximum exponents. -/
 @[simp] theorem getElem_lcm (a b : Mono n) (i : Fin n) :
     (lcm a b)[i] = max a[i] b[i] := by
   simp [lcm]
 
+/-- The monomial greatest common divisor takes pointwise minimum exponents. -/
 @[simp] theorem getElem_gcd (a b : Mono n) (i : Fin n) :
     (gcd a b)[i] = min a[i] b[i] := by
   simp [gcd]
 
+/-- Dropping the head shifts every remaining exponent down one coordinate. -/
 @[simp] theorem getElem_dropHead (m : Mono (n + 1)) (i : Fin n) :
     (dropHead m)[i] = m[i.succ] := by
   simp [dropHead]
 
+/-- The head of a prepended monomial is the supplied exponent. -/
 @[simp] theorem getElem_prepend_zero (e : Nat) (m : Mono n) :
     (prepend e m)[0] = e := by
   simp [prepend]
 
+/-- The tail of a prepended monomial contains the original exponents. -/
 @[simp] theorem getElem_prepend_succ (e : Nat) (m : Mono n) (i : Fin n) :
     (prepend e m)[i.succ] = m[i] := by
   simp [prepend]
 
+/-- Dropping a freshly prepended exponent recovers the original monomial. -/
 @[simp] theorem dropHead_prepend (e : Nat) (m : Mono n) :
     dropHead (prepend e m) = m := by
   apply Vector.ext
@@ -383,6 +403,7 @@ theorem mul_units (m : Mono n) :
   change (dropHead (prepend e m))[j] = m[j]
   rw [getElem_dropHead, getElem_prepend_succ]
 
+/-- Prepending a monomial's head to its tail reconstructs it. -/
 theorem prepend_head_dropHead (m : Mono (n + 1)) :
     prepend m.head (dropHead m) = m := by
   apply Vector.ext
@@ -403,6 +424,7 @@ theorem prepend_head_dropHead (m : Mono (n + 1)) :
       change m[(i - 1) + 1] = m[i]
       exact getElem_congr_idx (c := m) (by omega)
 
+/-- Multiplication distributes across prepended exponent vectors. -/
 theorem mul_prepend (ea eb : Nat) (a b : Mono n) :
     mul (prepend ea a) (prepend eb b) =
       prepend (ea + eb) (mul a b) := by
@@ -436,6 +458,7 @@ theorem mul_prepend (ea eb : Nat) (a b : Mono n) :
     change a.get j + b.get j = (mul a b).get j
     exact (get_mul a b j).symm
 
+/-- Dropping the head commutes with monomial multiplication. -/
 theorem dropHead_mul (a b : Mono (n + 1)) :
     dropHead (mul a b) = mul (dropHead a) (dropHead b) := by
   have get_ofFn {r : Nat} (g : Fin r → Nat) (j : Fin r) :
@@ -460,10 +483,13 @@ theorem dropHead_mul (a b : Mono (n + 1)) :
     (mul (dropHead a) (dropHead b)).get j
   rw [get_drop, get_mul, get_mul, get_drop, get_drop]
 
+/-- Boolean monomial divisibility is pointwise exponent comparison. -/
 theorem dvd_eq_true_iff (a b : Mono n) :
     dvd a b = true ↔ ∀ i : Fin n, a[i] ≤ b[i] := by
   simp [dvd]
 
+/-- Exact monomial division returns a quotient exactly when multiplying it
+back recovers the dividend. -/
 theorem div_eq_some_iff (a b q : Mono n) :
     div a b = some q ↔ Mono.mul a q = b := by
   have get_ofFn (f : Fin n → Nat) (j : Fin n) :
@@ -510,10 +536,12 @@ theorem div_eq_some_iff (a b q : Mono n) :
     change b.get j - a.get j = q.get j
     omega
 
+/-- Exact monomial division fails exactly when the divisor does not divide. -/
 theorem div_eq_none_iff (a b : Mono n) :
     div a b = none ↔ ¬ ∀ i : Fin n, a[i] ≤ b[i] := by
   simp [div]
 
+/-- Total degree is additive under monomial multiplication. -/
 theorem degree_mul (a b : Mono n) :
     degree (mul a b) = degree a + degree b := by
   have fold_start (f : Fin n → Nat) :
@@ -546,6 +574,7 @@ theorem degree_mul (a b : Mono n) :
   simp only [getElem_mul]
   exact fold_add (List.finRange n)
 
+/-- Converting a prepended monomial to a list prepends the exponent. -/
 @[simp] theorem toList_prepend (e : Nat) (m : Mono n) :
     (prepend e m).toList = e :: m.toList := by
   apply List.ext_getElem
@@ -560,6 +589,7 @@ theorem degree_mul (a b : Mono n) :
         change (prepend e m)[i + 1] = m[i]
         exact getElem_prepend_succ e m j
 
+/-- The exponent list of a product is the pointwise sum of exponent lists. -/
 theorem toList_mul (a b : Mono n) :
     (mul a b).toList = List.zipWith (· + ·) a.toList b.toList := by
   apply List.ext_getElem
@@ -568,17 +598,21 @@ theorem toList_mul (a b : Mono n) :
     rw [List.getElem_zipWith]
     simp [mul]
 
+/-- Lexicographic comparison of prepended monomials first compares their
+heads. -/
 theorem lex_prepend (ea eb : Nat) (a b : Mono n) :
     lex (prepend ea a) (prepend eb b) =
       (compare ea eb).then (lex a b) := by
   simp [lex, List.compareLex_cons_cons]
 
+/-- The zero monomial is zero prepended to the smaller zero monomial. -/
 private theorem zero_eq_prepend :
     (zero : Mono (n + 1)) = prepend 0 (zero : Mono n) := by
   apply Vector.ext
   intro i hi
   simp [zero, prepend]
 
+/-- Adding a common natural number preserves comparison. -/
 private theorem compare_add_right (a b c : Nat) :
     compare a b = compare (a + c) (b + c) := by
   cases h : compare a b with
@@ -598,6 +632,7 @@ private theorem compare_add_right (a b c : Nat) :
       rw [Nat.compare_eq_gt]
       omega
 
+/-- The zero monomial is least in lexicographic order. -/
 private theorem lex_zero_le : ∀ {n} (m : Mono n), lex zero m ≠ .gt
   | 0, m => by
       have hm : m = zero := by
@@ -621,6 +656,7 @@ private theorem lex_zero_le : ∀ {n} (m : Mono n), lex zero m ≠ .gt
           rw [Nat.compare_eq_gt] at h
           omega
 
+/-- Lexicographic comparison is invariant under a common monomial factor. -/
 private theorem lex_mul_mono : ∀ {n} (a b c : Mono n),
     lex a b = lex (mul a c) (mul b c)
   | 0, a, b, c => by
@@ -635,6 +671,8 @@ private theorem lex_mul_mono : ∀ {n} (a b c : Mono n),
         lex_prepend, lex_prepend, ← compare_add_right,
         lex_mul_mono (dropHead a) (dropHead b) (dropHead c)]
 
+/-- Strict lexicographic order on fixed-arity natural exponent vectors is
+well-founded. -/
 private theorem lex_wf : ∀ n, WellFounded fun a b : Mono n => lex a b = .lt
   | 0 => by
       apply WellFounded.intro
@@ -672,12 +710,14 @@ instance instLexOrder : IsMonomialOrder (@lex n) where
   mul_mono := lex_mul_mono
   wf := lex_wf n
 
+/-- The zero monomial has total degree zero. -/
 @[simp] theorem degree_zero : degree (zero : Mono n) = 0 := by
   unfold degree
   apply List.foldl_add_eq_self
   intro i _
   exact getElem_zero i
 
+/-- The zero monomial is least in graded lexicographic order. -/
 private theorem grlex_zero_le (m : Mono n) : grlex zero m ≠ .gt := by
   unfold grlex compareLex
   change
@@ -692,6 +732,8 @@ private theorem grlex_zero_le (m : Mono n) : grlex zero m ≠ .gt := by
       rw [Nat.compare_eq_gt] at h
       omega
 
+/-- Graded lexicographic comparison is invariant under a common monomial
+factor. -/
 private theorem grlex_mul_mono (a b c : Mono n) :
     grlex a b = grlex (mul a c) (mul b c) := by
   unfold grlex compareLex
@@ -702,6 +744,7 @@ private theorem grlex_mul_mono (a b c : Mono n) :
   rw [degree_mul, degree_mul, ← compare_add_right,
     lex_mul_mono a b c]
 
+/-- Strict graded lexicographic order is well-founded. -/
 private theorem grlex_wf :
     WellFounded fun a b : Mono n => grlex a b = .lt := by
   let lexOrder : WellFoundedRelation (Mono n) :=
@@ -726,6 +769,8 @@ instance instGrlexOrder :
   mul_mono := grlex_mul_mono
   wf := grlex_wf
 
+/-- Reverse lexicographic comparison is invariant under a common monomial
+factor. -/
 private theorem revlex_mul_mono (a b c : Mono n) :
     revlex a b = revlex (mul a c) (mul b c) := by
   have hac : a.toList.length = c.toList.length := by simp
@@ -740,6 +785,7 @@ private theorem revlex_mul_mono (a b c : Mono n) :
   · simp
   · simp
 
+/-- Every individual exponent is bounded by total degree. -/
 theorem degreeOf_le_degree (i : Fin n) (m : Mono n) :
     degreeOf i m ≤ degree m := by
   unfold degreeOf degree
@@ -752,6 +798,7 @@ exponent is bounded by the total degree. -/
 private def revDegreeKey (m : Mono n) : Mono n :=
   Hex.Vector.ofFn' fun i => degree m - m[i.rev]
 
+/-- The reverse-degree key lists complementary exponents in reverse order. -/
 private theorem toList_revDegreeKey (m : Mono n) :
     (revDegreeKey m).toList =
       m.toList.reverse.map (fun e => degree m - e) := by
@@ -761,6 +808,7 @@ private theorem toList_revDegreeKey (m : Mono n) :
     simp [revDegreeKey, Fin.rev]
     congr 2 <;> omega
 
+/-- Comparing complements reverses comparison of bounded naturals. -/
 private theorem compare_sub (d x y : Nat) (hx : x ≤ d) (hy : y ≤ d) :
     compare y x = compare (d - x) (d - y) := by
   cases h : compare y x with
@@ -780,6 +828,8 @@ private theorem compare_sub (d x y : Nat) (hx : x ≤ d) (hy : y ≤ d) :
       rw [Nat.compare_eq_gt]
       omega
 
+/-- Lexicographic comparison of complement lists reverses the original
+comparison. -/
 private theorem compareLex_complement (d : Nat) :
     ∀ (xs ys : List Nat),
       (∀ x, x ∈ xs → x ≤ d) →
@@ -818,6 +868,7 @@ private theorem revlex_eq_key_lex {a b : Mono n}
     rw [hdegree]
     exact degreeOf_le_degree j b
 
+/-- The zero monomial is least in graded reverse lexicographic order. -/
 private theorem grevlex_zero_le (m : Mono n) : grevlex zero m ≠ .gt := by
   unfold grevlex compareLex
   change
@@ -844,6 +895,8 @@ private theorem grevlex_zero_le (m : Mono n) : grevlex zero m ≠ .gt := by
       rw [Nat.compare_eq_gt] at h
       omega
 
+/-- Graded reverse lexicographic comparison is invariant under a common
+monomial factor. -/
 private theorem grevlex_mul_mono (a b c : Mono n) :
     grevlex a b = grevlex (mul a c) (mul b c) := by
   unfold grevlex compareLex
@@ -854,6 +907,7 @@ private theorem grevlex_mul_mono (a b c : Mono n) :
   rw [degree_mul, degree_mul, ← compare_add_right,
     revlex_mul_mono a b c]
 
+/-- Strict graded reverse lexicographic order is well-founded. -/
 private theorem grevlex_wf :
     WellFounded fun a b : Mono n => grevlex a b = .lt := by
   let lexOrder : WellFoundedRelation (Mono n) :=
@@ -882,6 +936,7 @@ instance instGrevlexOrder :
   mul_mono := grevlex_mul_mono
   wf := grevlex_wf
 
+/-- Renaming variables commutes with monomial multiplication. -/
 theorem rename_mul {k : Nat} (f : Fin n → Fin k) (a b : Mono n) :
     rename f (mul a b) = mul (rename f a) (rename f b) := by
   have get_ofFn {r : Nat} (g : Fin r → Nat) (j : Fin r) :
@@ -944,6 +999,7 @@ theorem rename_mul {k : Nat} (f : Fin n → Fin k) (a b : Mono n) :
     (fun i => if f i = j then b[i] else 0)
     (List.finRange n)
 
+/-- A pair occurs in `splits m` exactly when its monomial product is `m`. -/
 theorem splits_mem_iff (m a b : Mono n) :
     (a, b) ∈ splits m ↔ mul a b = m := by
   induction n with
@@ -1023,18 +1079,21 @@ theorem splits_nodup (m : Mono n) : (splits m).Nodup := by
             hxy
         simpa using hhead
 
+/-- The left input divides the monomial least common multiple. -/
 theorem dvd_lcm_left (a b : Mono n) : dvd a (lcm a b) = true := by
   simp only [dvd, decide_eq_true_eq]
   intro i
   rw [getElem_lcm]
   exact Nat.le_max_left _ _
 
+/-- The right input divides the monomial least common multiple. -/
 theorem dvd_lcm_right (a b : Mono n) : dvd b (lcm a b) = true := by
   simp only [dvd, decide_eq_true_eq]
   intro i
   rw [getElem_lcm]
   exact Nat.le_max_right _ _
 
+/-- The monomial least common multiple divides every common multiple. -/
 theorem lcm_dvd (a b c : Mono n)
     (ha : dvd a c = true) (hb : dvd b c = true) :
     dvd (lcm a b) c = true := by
@@ -1043,18 +1102,21 @@ theorem lcm_dvd (a b c : Mono n)
   rw [getElem_lcm]
   exact Nat.max_le.mpr ⟨ha i, hb i⟩
 
+/-- The monomial greatest common divisor divides the left input. -/
 theorem gcd_dvd_left (a b : Mono n) : dvd (gcd a b) a = true := by
   simp only [dvd, decide_eq_true_eq]
   intro i
   rw [getElem_gcd]
   exact Nat.min_le_left _ _
 
+/-- The monomial greatest common divisor divides the right input. -/
 theorem gcd_dvd_right (a b : Mono n) : dvd (gcd a b) b = true := by
   simp only [dvd, decide_eq_true_eq]
   intro i
   rw [getElem_gcd]
   exact Nat.min_le_right _ _
 
+/-- Every common divisor divides the monomial greatest common divisor. -/
 theorem dvd_gcd (a b c : Mono n)
     (ha : dvd c a = true) (hb : dvd c b = true) :
     dvd c (gcd a b) = true := by

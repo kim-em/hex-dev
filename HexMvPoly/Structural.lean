@@ -48,6 +48,7 @@ unchanged. -/
 def predAt (i : Fin n) (m : Mono n) : Mono n :=
   Hex.Vector.ofFn' fun j => if j = i then m[j] - 1 else m[j]
 
+/-- Incrementing a monomial raises the selected variable degree by one. -/
 @[simp] theorem degreeOf_succAt (i : Fin n) (m : Mono n) :
     Mono.degreeOf i (Mono.succAt i m) = Mono.degreeOf i m + 1 := by
   have get_ofFn {r : Nat} (g : Fin r → Nat) (j : Fin r) :
@@ -68,6 +69,7 @@ def predAt (i : Fin n) (m : Mono n) : Mono n :=
   rw [get_mul, get_unit]
   simp
 
+/-- Decrementing the selected exponent reverses `succAt`. -/
 @[simp] theorem predAt_succAt (i : Fin n) (m : Mono n) :
     predAt i (Mono.succAt i m) = m := by
   have get_ofFn {r : Nat} (g : Fin r → Nat) (j : Fin r) :
@@ -98,6 +100,8 @@ def predAt (i : Fin n) (m : Mono n) : Mono n :=
   · simp [hki]
   · simp [hki]
 
+/-- `predAt` yields a monomial exactly when the source is its successor at
+the selected variable. -/
 theorem predAt_eq_iff (i : Fin n) (m t : Mono n)
     (ht : Mono.degreeOf i t ≠ 0) :
     predAt i t = m ↔ t = Mono.succAt i m := by
@@ -166,6 +170,17 @@ def bind [Zero R] [Lean.Grind.Semiring S] [DecidableEq S]
     (fun acc m c => acc + C (f c) * Mono.prod g m)
     0
 
+/-- General substitution is the ordered sum of mapped coefficient-monomial
+terms. -/
+theorem bind_eq [Zero R] [Lean.Grind.Semiring S] [DecidableEq S]
+    (f : R → S) (g : Fin n → MvPoly k S targetCmp)
+    (p : MvPoly n R cmp) :
+    bind f g p =
+      p.termsList.foldl
+        (fun acc term => acc + C (f term.2) * Mono.prod g term.1) 0 := by
+  unfold bind foldTerms termsList
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList]
+
 /-- Substitute polynomials for variables without changing the coefficient
 type. -/
 def subst [Lean.Grind.Semiring R] [DecidableEq R]
@@ -184,6 +199,7 @@ def sumToIter [Lean.Grind.Semiring R] [DecidableEq R]
     (p : MvPoly n R cmp) : MvPoly n R cmp :=
   ofTerms p.termsList
 
+/-- Reconstructing from the ordered term iterator recovers the polynomial. -/
 @[simp] theorem sumToIter_eq [Lean.Grind.Semiring R] [DecidableEq R]
     (p : MvPoly n R cmp) :
     sumToIter p = p := by
@@ -192,6 +208,7 @@ def sumToIter [Lean.Grind.Semiring R] [DecidableEq R]
   unfold sumToIter
   rw [coeff_ofTerms, coeff_terms]
 
+/-- Reordering a polynomial preserves every coefficient. -/
 theorem coeff_reorder [Lean.Grind.Semiring R] [DecidableEq R]
     (cmp' : Mono n → Mono n → Ordering)
     [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
@@ -200,6 +217,7 @@ theorem coeff_reorder [Lean.Grind.Semiring R] [DecidableEq R]
   unfold reorder
   rw [coeff_ofTerms, coeff_terms]
 
+/-- Renaming variables sums coefficients whose target monomials coincide. -/
 theorem coeff_rename [Lean.Grind.Semiring R] [DecidableEq R]
     (cmp' : Mono k → Mono k → Ordering)
     [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
@@ -232,6 +250,8 @@ theorem coeff_rename [Lean.Grind.Semiring R] [DecidableEq R]
   rw [Std.ExtTreeMap.foldl_eq_foldl_toList, aux, coeff_zero]
   rfl
 
+/-- A derivative coefficient is the successor coefficient scaled by its
+corresponding exponent. -/
 theorem coeff_derivative [Lean.Grind.Semiring R] [DecidableEq R]
     (i : Fin n) (m : Mono n) (p : MvPoly n R cmp) :
     coeff m (derivative i p) =
@@ -325,6 +345,8 @@ theorem coeff_derivative [Lean.Grind.Semiring R] [DecidableEq R]
   congr 1
   simpa [termsList] using coeff_terms (Mono.succAt i m) p
 
+/-- A homogeneous component keeps exactly the terms of the requested total
+degree. -/
 theorem coeff_homogeneousComponent [Lean.Grind.Semiring R] [DecidableEq R]
     (d : Nat) (m : Mono n) (p : MvPoly n R cmp) :
     coeff m (homogeneousComponent d p) =
@@ -333,6 +355,8 @@ theorem coeff_homogeneousComponent [Lean.Grind.Semiring R] [DecidableEq R]
   rw [coeff_restrictBy]
   simp
 
+/-- Substitution evaluates each source monomial at the replacement
+polynomials and sums the results. -/
 theorem subst_eq [Lean.Grind.Semiring R] [DecidableEq R]
     (f : Fin n → MvPoly k R targetCmp) (p : MvPoly n R cmp) :
     subst f p =
@@ -343,6 +367,110 @@ theorem subst_eq [Lean.Grind.Semiring R] [DecidableEq R]
   unfold termsList
   rfl
 
+/-- Substituting variables into one monomial produces the renamed
+monomial. -/
+private theorem prod_X_rename [Lean.Grind.Semiring R] [DecidableEq R]
+    (f : Fin n → Fin k) (m : Mono n) :
+    Mono.prod
+        (fun i => X (f i) : Fin n → MvPoly k R targetCmp) m =
+      monomial (Mono.rename f m) 1 := by
+  unfold Mono.prod
+  have one_pow (d : Nat) : Mono.powBySq (1 : R) d = 1 := by
+    rw [Mono.powBySq_eq_pow]
+    induction d with
+    | zero =>
+        rw [Lean.Grind.Semiring.pow_zero]
+    | succ d ih =>
+        rw [Lean.Grind.Semiring.pow_succ, ih,
+          Lean.Grind.Semiring.one_mul]
+  have factor (i : Fin n) :
+      Mono.powBySq (X (f i) : MvPoly k R targetCmp) m[i] =
+        monomial (Mono.scale m[i] (Mono.unit (f i))) 1 := by
+    change
+      Mono.powBySq
+          (monomial (Mono.unit (f i)) 1 : MvPoly k R targetCmp)
+          m[i] =
+        monomial (Mono.scale m[i] (Mono.unit (f i))) 1
+    rw [powBySq_monomial, one_pow]
+  have fold : ∀ (xs : List (Fin n)) (a : Mono k),
+      xs.foldl
+          (fun acc i => acc * Mono.powBySq (X (f i)) m[i])
+          (monomial a 1 : MvPoly k R targetCmp) =
+        monomial
+          (xs.foldl
+            (fun acc i =>
+              Mono.mul acc (Mono.scale m[i] (Mono.unit (f i))))
+            a)
+          1 := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro a
+        rfl
+    | cons i xs ih =>
+        intro a
+        simp only [List.foldl_cons]
+        rw [factor, monomial_mul_monomial,
+          Lean.Grind.Semiring.one_mul]
+        exact ih _
+  have hone :
+      (1 : MvPoly k R targetCmp) = monomial Mono.zero 1 := by
+    rfl
+  rw [hone, fold]
+  congr 1
+  apply Vector.ext
+  intro j hj
+  let r : Fin k := ⟨j, hj⟩
+  have get_fold : ∀ (xs : List (Fin n)) (a : Mono k),
+      (xs.foldl
+          (fun acc i =>
+            Mono.mul acc (Mono.scale m[i] (Mono.unit (f i))))
+          a)[r] =
+        xs.foldl
+          (fun acc i => acc + if f i = r then m[i] else 0)
+          a[r] := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro a
+        rfl
+    | cons i xs ih =>
+        intro a
+        simp only [List.foldl_cons]
+        rw [ih, Mono.getElem_mul, Mono.getElem_scale,
+          Mono.getElem_unit]
+        by_cases h : f i = r
+        · simp [h]
+        · simp [h, Ne.symm h]
+  change
+    ((List.finRange n).foldl
+        (fun acc i =>
+          Mono.mul acc (Mono.scale m[i] (Mono.unit (f i))))
+        Mono.zero)[r] =
+      (Mono.rename f m)[r]
+  rw [get_fold, Mono.getElem_zero]
+  simp [Mono.rename]
+
+/-- Renaming is substitution by the target variables. -/
+theorem rename_eq_subst [Lean.Grind.Semiring R] [DecidableEq R]
+    (f : Fin n → Fin k) (p : MvPoly n R cmp) :
+    rename targetCmp f p =
+      subst (targetCmp := targetCmp) (fun i => X (f i)) p := by
+  unfold rename subst bind foldTerms
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList,
+    Std.ExtTreeMap.foldl_eq_foldl_toList]
+  apply List.foldl_congr
+  intro acc term _
+  rw [addMonomial_eq, prod_X_rename]
+  change
+    acc + monomial (Mono.rename f term.1) term.2 =
+      acc + monomial Mono.zero term.2 *
+        monomial (Mono.rename f term.1) 1
+  rw [monomial_mul_monomial, Mono.zero_mul,
+    Lean.Grind.Semiring.mul_one]
+
+/-- The residual monomial product is the corresponding substitution
+product. -/
 private theorem prod_subst [Lean.Grind.Semiring R] [DecidableEq R]
     (s : Fin n → Option R) (m : Mono n) :
     Mono.prod
@@ -408,6 +536,8 @@ private theorem prod_subst [Lean.Grind.Semiring R] [DecidableEq R]
             cases hsi : s i <;> simp [hsi]
     _ = eraseAssigned s m := Mono.mul_units _
 
+/-- Partial evaluation is substitution by constants at assigned variables
+and variables at unassigned ones. -/
 theorem partialEval_eq_subst [Lean.Grind.Semiring R] [DecidableEq R]
     (s : Fin n → Option R) (p : MvPoly n R cmp) :
     partialEval s p =

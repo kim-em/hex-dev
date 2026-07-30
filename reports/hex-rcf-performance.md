@@ -197,6 +197,12 @@ and this report cites its SHA-256 rather than mutable `/tmp` state.
 | maximum CPU-pressure `some` delta | `4,626,814 us` |
 | maximum concurrent Lake/Lean process count | `7` |
 
+This artifact predates the shared runner's
+`paired-fresh-module-olean-wall-robust-null-v2` contract and remains a
+historical v6/v1 record; it has not been retrospectively reclassified. Future
+HexRCF captures use schema v7 and floor each robust null envelope by the
+maximum observed absolute null delta.
+
 Only wholly admitted complete-pair attempts enter the following raw tables.
 Each cell is `attempt, orientation; reference / candidate / signed
 candidate-reference`, with wall times rendered from the artifact's exact

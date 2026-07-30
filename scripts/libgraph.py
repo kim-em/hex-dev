@@ -16,6 +16,7 @@ BUILD_ONLY_LIBS = {
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
     "HexMvPolyBenchSupport",
+    "HexMvPolyMathlibProofProbe",
     "HexIntervalExperiment",
     "HexIntervalMathlibExperiment",
     "HexIntervalReplayProbe",

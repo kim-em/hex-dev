@@ -87,6 +87,13 @@ propositionally equal and the canonical form condition reduces to "no
 zero values". The Phase 4 proof probes described below determine
 whether this representation also meets the kernel-reduction budget.
 
+Reusable map algorithms belong in `HexBasic/ExtTreeMap.lean`, in the
+`Std.ExtTreeMap` namespace, with no Hex-specific types or polynomial
+policy. That file is the designated upstream candidate. In particular,
+joint ordered traversal and deletion-capable merge are map operations;
+the coefficient-combination and zero-deletion policy passed to them
+belongs in `HexMvPoly`.
+
 The `nonzero` field makes the representation canonical: every
 polynomial has exactly one representation. Operations restore it by
 construction, using `ExtTreeMap.alter` to delete a key whose
@@ -274,11 +281,12 @@ and disappear when it lands. The comparison shim remains until
 
 The kernel replay closure is everything a certificate check touches:
 `Mono` operations, the comparator, `ExtTreeMap` lookup and `alter`,
-addition, multiplication, and the equality instance. Each is `@[expose]`,
-and a downstream module must carry a `decide +kernel` test that would
-fail if any of them stopped reducing. Anything outside that closure
-(`totalDegree`, `vars`, pretty-printing, the recursive view) does not
-need exposure and should not pay for it.
+arithmetic and equality, direct and Horner evaluation, substitution and
+partial evaluation, and the recursive view. Each is `@[expose]`, and a
+downstream module carries `decide +kernel` tests that fail if any of them
+stops reducing. Storage-order and reporting queries such as
+`totalDegree`, `vars`, and pretty-printing remain outside that closure
+and expose their behavior through characterizing lemmas instead.
 
 Operations whose kernel-friendly shape differs from the fast shape carry
 a `@[csimp]` pair, as `Hex.Array.ofFn'` does. Multiplication is the
@@ -376,24 +384,31 @@ def bind₁ (f : Fin n → MvPoly k R cmp')
 
 The signatures above elide their typeclass bounds, and the elision
 hides a real requirement: `[Zero R]` alone is not enough for any
-operation that has to drop a cancelled term. `C`, `monomial`,
-`ofTerms`, addition, multiplication, subtraction, and collision-producing
-transformations need to decide whether a coefficient is zero, so each
-carries `[DecidableEq R]` alongside the algebraic class it needs.
-Coefficientwise negation is the exception: its nonzero-preservation
-proof lets it map the tree without an equality test. The equality
-instance uses the same explicit path. Canonical arithmetic and semantic
-transformations use the Mathlib-free `Lean.Grind.Semiring` /
-`Lean.Grind.Ring` classes; representation helpers keep narrower
-`Zero`/`Add`/`Mul` bounds where those suffice. Write the real bounds per
-declaration rather than a single blanket variable block. Direct evaluation
-keeps the order `c * x₀^a₀ * x₁^a₁ * ⋯` and therefore needs only a
-`Lean.Grind.Semiring`; fixed-order Horner nesting can move an outer variable
-factor past inner-variable factors, so `evalHorner` and `eval₂Horner` require a
-`Lean.Grind.CommSemiring`. `subst` keeps
-the target comparator implicit because the codomain of `f` determines
-it; that codomain carries the same `TransCmp` and `LawfulEqCmp`
-obligations as every `MvPoly`.
+operation that has to drop a cancelled term. The primitive canonical
+layer (`C`, `monomial`, `ofTerms`, addition, negation, multiplication,
+subtraction, and powers) carries `[BEq R] [LawfulBEq R]` alongside only
+the operational classes it needs. It derives a local `DecidableEq` for
+proof-relevant branches, so the executable operation does not depend on
+which larger algebraic law bundle happened to supply equality. Negation
+uses one deletion-capable `ExtTreeMap.filterMap` pass rather than assuming
+that an arbitrary `Neg` operation preserves nonzero coefficients.
+The polynomial equality instance remains the explicit
+`[DecidableEq R]` ordered-term-list path described above.
+
+Canonical arithmetic laws and semantic transformations use the
+Mathlib-free `Lean.Grind.Semiring` / `Lean.Grind.Ring` classes;
+representation helpers keep narrower `Zero`/`Add`/`Mul` bounds where
+those suffice. Higher collision-producing structural transformations
+currently state `[DecidableEq R]`, which coherently supplies the
+primitive layer's lawful boolean equality. Write the real bounds per
+declaration rather than a single blanket variable block. Direct
+evaluation keeps the order `c * x₀^a₀ * x₁^a₁ * ⋯` and therefore needs
+only a `Lean.Grind.Semiring`; fixed-order Horner nesting can move an
+outer variable factor past inner-variable factors, so `evalHorner` and
+`eval₂Horner` require a `Lean.Grind.CommSemiring`. `subst` keeps the
+target comparator implicit because the codomain of `f` determines it;
+that codomain carries the same `TransCmp` and `LawfulEqCmp` obligations
+as every `MvPoly`.
 In particular, the computational `derivative` states the narrower
 `[Zero R] [NatCast R] [Add R] [Mul R] [DecidableEq R]` bounds directly,
 matching the shape of `Hex.DensePoly.derivative` while retaining
@@ -522,7 +537,10 @@ outside the stored support.
 
 ## The Mathlib layer
 
-`hex-mv-poly-mathlib` proves:
+`hex-mv-poly-mathlib` proves the following. As in the computational API
+block, signatures here show the mathematical bounds and elide the
+primitive `[BEq R] [LawfulBEq R]` arguments that maintain coherent
+executable equality:
 
 ```lean
 def equiv [CommSemiring R] [DecidableEq R] :
@@ -703,9 +721,14 @@ implementation gets wrong:
 - monomial operations: `div` on the non-divisible case, `lcm` and `gcd`
   against pointwise max and min.
 
-The companion adds randomised comparison against Mathlib's
-`MvPolynomial (Fin n) R` through `equiv`, which is the strongest
-available check and needs no external oracle.
+The companion adds theorem-level transport and instance-coherence checks
+against Mathlib's `MvPolynomial (Fin n) R` through `equiv`. These check
+that the public correspondence API applies under lex, grlex, and grevlex
+and that importing the bridge does not replace executable notation with a
+noncomputable path. They are deliberately not described as an independent
+randomized oracle: Mathlib's representation is noncomputable. The core
+fixture stream and SymPy comparison provide the independent randomized
+coverage.
 
 ## Benchmarking
 
@@ -743,8 +766,38 @@ families, where the representation decision is made.
 **The threshold, written down in advance.** A second, kernel-specialised
 representation is justified only if the kernel suite shows the sorted
 form beating `ExtTreeMap` by more than 2× on at least two workload
-families at the largest size that fits the bench time budget. Anything
-less and the single representation stands.
+families at the largest size that fits the bench time budget. The ratio
+is the median production workload time divided by the median sorted
+workload time after subtracting the same round's matched import-only
+module build from each arm. Raw fresh-module wall times are still
+reported, together with the maximum raw ratio attainable if the sorted
+workload itself took zero time; an import-dominated raw ratio is not
+used for this decision.
+
+Both baseline-subtracted medians must exceed the robust variability
+envelope of the round-matched import baseline. The record separately
+calibrates pair-order noise with same-module controls at three build
+magnitudes, including a large SOS-scale control. At each substantive build
+magnitude it interpolates median/MAD/IQR/Tukey statistics and makes the
+conservative envelope no smaller than the maximum observed absolute null
+delta. The record is invalid when a control's IQR exceeds 10% of its build
+magnitude. A baseline-limited ratio or a comparison whose arm delta is
+unresolved against the interpolated null envelope does not count toward the
+threshold. Reference and candidate arms use the same coefficient type,
+arity, comparator, support stream, and identity; the report records those
+axes for every pair. Anything short of two conservative greater-than-2×
+workload ratios leaves the single representation standing. Concretely, if
+the attributed reference and candidate workloads are `r` and `c` and the
+comparable null envelope is `e`, the threshold interval is
+`(r - e) / (c + e)` through `(r + e) / (c - e)`. A family passes only
+when the comparison is resolved and the lower bound exceeds 2; a point
+estimate above 2 is not sufficient.
+
+When a workload includes materially different input construction, a matched
+construction-only pair is subtracted round by round after import subtraction.
+The resulting net ratio counts only when both net arms exceed the sum of the
+full-workload and construction-control null envelopes. This prevents a faster
+constructor from being reported as a faster arithmetic operation.
 
 The native driver lives at `bench/HexMvPoly/Bench.lean`. Kernel probes
 live below `bench/HexMvPolyMathlib/ProofProbe/`, contain no `main`,
@@ -782,16 +835,16 @@ HexMvPolyMathlib.lean
   HexMvPoly:
     deps: [HexPoly, HexBasic]
     mathlib: false
-    done_through: 0
+    done_through: 7
     status: active
     phase4:
       comparators:
         - tool: "CompPoly CMvPolynomial"
           class: informational
           rationale: "CompPoly uses the same ExtTreeMap representation behind a Mathlib-dependent API; the comparison records integration and implementation overhead rather than gating release."
-        - tool: "Mathlib MvSparsePoly"
+        - tool: "canonical sorted-list MvSparsePoly proxy"
           class: informational
-          rationale: "MvSparsePoly uses a structurally different sorted-list representation aimed at kernel reflection; the comparison decides whether a second kernel-specialized representation is justified."
+          rationale: "The pinned Mathlib revision has no MvSparsePoly, so a local canonical sorted-list proxy records compiled throughput for the alternative algorithmic shape. The native comparison is informational; only the registered kernel proof probes can decide whether a second representation is justified."
       input_families:
         - name: sparse-addition
           description: Disjoint and interleaved sparse supports across lexicographic, graded lexicographic, and graded reverse lexicographic order.
@@ -806,17 +859,23 @@ HexMvPolyMathlib.lean
   HexMvPolyMathlib:
     deps: [HexMvPoly, HexPolyMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 7
     status: active
     proof_probes: [bench/HexMvPolyMathlib/ProofProbe]
     phase4:
       comparators:
-        - tool: "Mathlib MvSparsePoly"
+        - tool: "canonical sorted-list MvSparsePoly proxy"
           class: informational
-          rationale: "The Mathlib sorted-list representation is the kernel-reflection comparator used to decide whether HexMvPoly needs a second representation."
+          rationale: "Mathlib MvSparsePoly is not yet available in the pinned Mathlib revision, so a local canonical sorted-list proxy with linear merge addition and balanced translated-row multiplication is used to decide whether HexMvPoly needs a second representation."
       input_families:
+        - name: kernel-sparse-addition
+          description: Disjoint, interleaved, and scattered supports checked under lex and grevlex, including an arity-eight case.
+        - name: kernel-sparse-multiplication
+          description: Low-collision integer and high-collision rational products checked across lex and arity-eight grevlex representations.
         - name: kernel-cancellation-identities
           description: Cancellation-heavy integer and rational identities checked from a downstream module with decide +kernel.
+        - name: kernel-structural-collisions
+          description: Rename and substitution identities whose distinct source terms collide in the destination support.
         - name: kernel-sos-certificates
           description: Representative sum-of-squares certificate identities checked from a downstream module with decide +kernel.
 ```
@@ -888,7 +947,10 @@ check, because it is the acceptance test for the surface listed here.
    the recursive view.
 4. Add conformance fixtures and the Mathlib correspondence.
 5. Run the module-boundary kernel probes and native benchmarks. Keep
-   `ExtTreeMap` unless the recorded threshold selects the sorted form.
+   `ExtTreeMap` as the compiled representation. If the recorded threshold
+   selects the sorted form, record the justified kernel-specialized second
+   representation under [future-work](../future-work.md), where the
+   representation abstraction belongs.
 
 ## Open questions
 

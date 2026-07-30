@@ -78,12 +78,16 @@ theorem monomials_nodup (p : MvPoly n R cmp) : p.monomials.Nodup := by
   rw [Std.ExtTreeMap.map_fst_toList_eq_keys]
   exact p.termsInternal.nodup_keys
 
+/-- A monomial occurs in the ordered monomial list exactly when coefficient
+lookup succeeds. -/
 theorem mem_monomials_iff_isSome (m : Mono n) (p : MvPoly n R cmp) :
     m ∈ p.monomials ↔ (p.coeff? m).isSome := by
   unfold monomials termsList coeff?
   rw [Std.ExtTreeMap.map_fst_toList_eq_keys, Std.ExtTreeMap.mem_keys,
     Std.ExtTreeMap.mem_iff_isSome_getElem?]
 
+/-- A monomial occurs in the ordered monomial list exactly when its
+coefficient is nonzero. -/
 @[simp] theorem mem_monomials_iff (m : Mono n) (p : MvPoly n R cmp) :
     m ∈ p.monomials ↔ coeff m p ≠ 0 := by
   rw [mem_monomials_iff_isSome]
@@ -98,6 +102,8 @@ theorem mem_monomials_iff_isSome (m : Mono n) (p : MvPoly n R cmp) :
         simpa [hzero] using hcoeff
       simp [hc]
 
+/-- Membership in the support is equivalent to having a nonzero
+coefficient. -/
 @[simp] theorem mem_support_iff (m : Mono n) (p : MvPoly n R cmp) :
     m ∈ p.support ↔ coeff m p ≠ 0 := by
   unfold support
@@ -128,9 +134,63 @@ theorem coeff_eq_of_mem_terms (p : MvPoly n R cmp) {m : Mono n} {c : R}
 @[inline] def termCount (p : MvPoly n R cmp) : Nat :=
   p.termsInternal.size
 
-/-- Greatest term in `cmp` order. -/
+/-- Greatest term in `cmp` order.
+
+This uses the tree's logarithmic maximum-key query followed by one logarithmic
+lookup. Keeping the definition in terms of the public key and lookup API gives
+downstream proofs access to the complete maximum-entry specification even
+though `Std.ExtTreeMap.maxEntry?` currently lacks corresponding lemmas. -/
 @[inline] def maxTerm? (p : MvPoly n R cmp) : Option (Mono n × R) :=
-  p.termsInternal.maxEntry?
+  p.termsInternal.maxKey?.bind fun m =>
+    p.termsInternal[m]?.map fun c => (m, c)
+
+/-- A maximum term is exactly a stored coefficient whose monomial bounds
+every supported monomial in `cmp` order. -/
+theorem maxTerm?_eq_some_iff (p : MvPoly n R cmp)
+    (m : Mono n) (c : R) :
+    p.maxTerm? = some (m, c) ↔
+      p.coeff? m = some c ∧
+        ∀ k ∈ p.monomials, (cmp k m).isLE := by
+  constructor
+  · intro hterm
+    unfold maxTerm? at hterm
+    cases hmax : p.termsInternal.maxKey? with
+    | none =>
+        simp [hmax] at hterm
+    | some k =>
+        cases hcoeff : p.termsInternal[k]? with
+        | none =>
+            simp [hmax, hcoeff] at hterm
+        | some value =>
+            simp only [hmax, Option.bind_some, hcoeff, Option.map_some,
+              Option.some.injEq, Prod.mk.injEq] at hterm
+            rcases hterm with ⟨rfl, rfl⟩
+            constructor
+            · exact hcoeff
+            · intro k hk
+              have hbound :=
+                (Std.ExtTreeMap.maxKey?_eq_some_iff_mem_and_forall.mp hmax).2
+                  k
+              apply hbound
+              rw [Std.ExtTreeMap.mem_iff_isSome_getElem?]
+              exact (mem_monomials_iff_isSome k p).mp hk
+  · rintro ⟨hcoeff, hbound⟩
+    change p.termsInternal[m]? = some c at hcoeff
+    have hmem : m ∈ p.termsInternal := by
+      rw [Std.ExtTreeMap.mem_iff_isSome_getElem?]
+      simp [hcoeff]
+    have hmax : p.termsInternal.maxKey? = some m := by
+      apply Std.ExtTreeMap.maxKey?_eq_some_iff_mem_and_forall.mpr
+      refine ⟨hmem, ?_⟩
+      intro k hk
+      apply hbound k
+      rw [mem_monomials_iff_isSome]
+      unfold coeff?
+      rw [← Std.ExtTreeMap.mem_iff_isSome_getElem?]
+      exact hk
+    unfold maxTerm?
+    rw [hmax]
+    simp [hcoeff]
 
 /-- The zero polynomial. -/
 def zero : MvPoly n R cmp where
@@ -221,7 +281,8 @@ instance [DecidableEq R] : DecidableEq (MvPoly n R cmp) := fun p q =>
       isFalse fun hpq => hl (congrArg termsList hpq)
 
 /-- A single term, dropping it when its coefficient is zero. -/
-def monomial [DecidableEq R] (m : Mono n) (c : R) : MvPoly n R cmp :=
+def monomial [BEq R] [LawfulBEq R] (m : Mono n) (c : R) : MvPoly n R cmp :=
+  letI : DecidableEq R := instDecidableEqOfLawfulBEq
   if hc : c = 0 then
     0
   else
@@ -234,59 +295,47 @@ def monomial [DecidableEq R] (m : Mono n) (c : R) : MvPoly n R cmp :=
         · simp }
 
 /-- A constant polynomial. -/
-def C [DecidableEq R] (c : R) : MvPoly n R cmp :=
+def C [BEq R] [LawfulBEq R] (c : R) : MvPoly n R cmp :=
   monomial Mono.zero c
 
 /-- The variable `xᵢ`. -/
-def X [One R] [DecidableEq R] (i : Fin n) : MvPoly n R cmp :=
+def X [One R] [BEq R] [LawfulBEq R] (i : Fin n) : MvPoly n R cmp :=
   monomial (Mono.unit i) 1
 
 /-- Add `c` to the coefficient at `m`, deleting the term if the new
 coefficient is zero. -/
-def addMonomial [Add R] [DecidableEq R]
-    (p : MvPoly n R cmp) (m : Mono n) (c : R) : MvPoly n R cmp where
-  termsInternal := p.termsInternal.alter m fun old =>
-    let c' := old.getD 0 + c
-    if c' = 0 then none else some c'
-  nonzeroInternal := by
-    intro k
-    rw [Std.ExtTreeMap.getElem?_alter]
-    split
-    · simp only
-      split <;> simp_all
-    · exact p.nonzeroInternal k
-
-/-- Map stored coefficients without changing the support. The proof
-argument records that nonzero values remain nonzero. -/
-def mapCoeffs (p : MvPoly n R cmp) (f : R → R)
-    (hf : ∀ c, c ≠ 0 → f c ≠ 0) : MvPoly n R cmp where
-  termsInternal := p.termsInternal.map fun _ c => f c
-  nonzeroInternal := by
-    intro m
-    rw [Std.ExtTreeMap.getElem?_map]
-    cases hcoeff : p.termsInternal[m]? with
-    | none => simp
-    | some c =>
-      have hc : c ≠ 0 := by
-        intro hzero
-        apply p.nonzeroInternal m
-        simpa [hzero] using hcoeff
-      simpa using hf c hc
+def addMonomial [Add R] [BEq R] [LawfulBEq R]
+    (p : MvPoly n R cmp) (m : Mono n) (c : R) : MvPoly n R cmp :=
+  letI : DecidableEq R := instDecidableEqOfLawfulBEq
+  { termsInternal := p.termsInternal.alter m fun old =>
+      let c' := old.getD 0 + c
+      if c' = 0 then none else some c'
+    nonzeroInternal := by
+      intro k
+      rw [Std.ExtTreeMap.getElem?_alter]
+      split
+      · simp only
+        split <;> simp_all
+      · exact p.nonzeroInternal k }
 
 end Representation
 
 /-- Build a polynomial by summing duplicate monomials and dropping all
-zero coefficients. -/
-def ofTerms [Lean.Grind.Semiring R] [DecidableEq R]
+zero coefficients. Only additive structure is needed by the constructor. -/
+def ofTerms [Zero R] [Add R] [BEq R] [LawfulBEq R]
     (ts : List (Mono n × R)) : MvPoly n R cmp :=
   ts.foldl (fun p t => addMonomial p t.1 t.2) 0
 
+/-- Every coefficient of the zero polynomial is zero. -/
 @[simp] theorem coeff_zero [Zero R] (m : Mono n) :
     coeff m (0 : MvPoly n R cmp) = 0 := by
   change ((∅ : Std.ExtTreeMap (Mono n) R cmp)[m]?).getD 0 = 0
   simp
 
-theorem coeff_monomial [Zero R] [DecidableEq R] (m m' : Mono n) (c : R) :
+/-- A monomial polynomial has its supplied coefficient at the selected
+monomial and zero elsewhere. -/
+theorem coeff_monomial [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R]
+    (m m' : Mono n) (c : R) :
     coeff m (monomial m' c : MvPoly n R cmp) =
       if m = m' then c else 0 := by
   by_cases hc : c = 0
@@ -302,17 +351,23 @@ theorem coeff_monomial [Zero R] [DecidableEq R] (m m' : Mono n) (c : R) :
     · have hm' : m' ≠ m := fun h => hm h.symm
       simp [hm, hm']
 
-theorem coeff_C [Zero R] [DecidableEq R] (m : Mono n) (c : R) :
+/-- A constant polynomial is supported at the zero monomial. -/
+theorem coeff_C [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R]
+    (m : Mono n) (c : R) :
     coeff m (C c : MvPoly n R cmp) =
       if m = Mono.zero then c else 0 := by
   simp [C, coeff_monomial]
 
-theorem coeff_X [Zero R] [One R] [DecidableEq R] (m : Mono n) (i : Fin n) :
+/-- A variable polynomial is supported at its unit monomial. -/
+theorem coeff_X [Zero R] [One R] [BEq R] [LawfulBEq R] [DecidableEq R]
+    (m : Mono n) (i : Fin n) :
     coeff m (X i : MvPoly n R cmp) =
       if m = Mono.unit i then 1 else 0 := by
   simp [X, coeff_monomial]
 
-theorem coeff_addMonomial [Zero R] [Add R] [DecidableEq R]
+/-- Adding a monomial changes only the selected coefficient. -/
+theorem coeff_addMonomial [Zero R] [Add R] [BEq R] [LawfulBEq R]
+    [DecidableEq R]
     (p : MvPoly n R cmp) (m k : Mono n) (c : R) :
     coeff k (addMonomial p m c) =
       if k = m then coeff k p + c else coeff k p := by
@@ -325,7 +380,9 @@ theorem coeff_addMonomial [Zero R] [Add R] [DecidableEq R]
   · have hmk : m ≠ k := fun h => hkm h.symm
     simp [hkm, hmk]
 
-theorem coeff_ofTerms [Lean.Grind.Semiring R] [DecidableEq R]
+/-- `ofTerms` sums the coefficients of duplicate monomials. -/
+theorem coeff_ofTerms [Lean.Grind.Semiring R] [BEq R] [LawfulBEq R]
+    [DecidableEq R]
     (m : Mono n) (ts : List (Mono n × R)) :
     coeff m (ofTerms ts : MvPoly n R cmp) =
       (ts.filter (fun t => t.1 = m)).foldl (fun acc t => acc + t.2) 0 := by
@@ -349,7 +406,8 @@ theorem coeff_ofTerms [Lean.Grind.Semiring R] [DecidableEq R]
 
 /-- Filtering the canonical term list at one monomial recovers its
 coefficient. -/
-theorem coeff_terms [Lean.Grind.Semiring R] [DecidableEq R]
+theorem coeff_terms [Lean.Grind.Semiring R] [BEq R] [LawfulBEq R]
+    [DecidableEq R]
     (m : Mono n) (p : MvPoly n R cmp) :
     (p.termsList.filter (fun t => t.1 = m)).foldl
         (fun acc t => acc + t.2) 0 =

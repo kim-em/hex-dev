@@ -133,6 +133,9 @@ lean_lib HexInterval where
 lean_lib HexPolyMathlib where
 
 @[default_target]
+lean_lib HexMvPolyMathlib where
+
+@[default_target]
 lean_lib HexModArithMathlib where
 
 @[default_target]
@@ -231,6 +234,61 @@ lean_lib HexMvPolyBenchSupport where
   srcDir := "bench"
   globs := #[`HexMvPolyBench.Corpus]
 
+lean_lib HexMvPolyMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[`HexMvPolyMathlib.ProofProbe.Support,
+    `HexMvPolyMathlib.ProofProbe.Baseline,
+    `HexMvPolyMathlib.ProofProbe.HexAdditionInputs32,
+    `HexMvPolyMathlib.ProofProbe.SortedAdditionInputs32,
+    `HexMvPolyMathlib.ProofProbe.HexAddition32,
+    `HexMvPolyMathlib.ProofProbe.SortedAddition32,
+    `HexMvPolyMathlib.ProofProbe.HexAdditionInputs64,
+    `HexMvPolyMathlib.ProofProbe.SortedAdditionInputs64,
+    `HexMvPolyMathlib.ProofProbe.HexAddition64,
+    `HexMvPolyMathlib.ProofProbe.SortedAddition64,
+    `HexMvPolyMathlib.ProofProbe.HexMulSparse6,
+    `HexMvPolyMathlib.ProofProbe.SortedMulSparse6,
+    `HexMvPolyMathlib.ProofProbe.HexMulCollideInputs8,
+    `HexMvPolyMathlib.ProofProbe.SortedMulCollideInputs8,
+    `HexMvPolyMathlib.ProofProbe.HexMulCollide8,
+    `HexMvPolyMathlib.ProofProbe.SortedMulCollide8,
+    `HexMvPolyMathlib.ProofProbe.HexMulCollideInputs12,
+    `HexMvPolyMathlib.ProofProbe.SortedMulCollideInputs12,
+    `HexMvPolyMathlib.ProofProbe.HexMulCollide12,
+    `HexMvPolyMathlib.ProofProbe.SortedMulCollide12,
+    `HexMvPolyMathlib.ProofProbe.HexCancellation4,
+    `HexMvPolyMathlib.ProofProbe.SortedCancellation4,
+    `HexMvPolyMathlib.ProofProbe.HexCancellation6,
+    `HexMvPolyMathlib.ProofProbe.SortedCancellation6,
+    `HexMvPolyMathlib.ProofProbe.HexCancellationInputs8,
+    `HexMvPolyMathlib.ProofProbe.SortedCancellationInputs8,
+    `HexMvPolyMathlib.ProofProbe.HexCancellation8,
+    `HexMvPolyMathlib.ProofProbe.SortedCancellation8,
+    `HexMvPolyMathlib.ProofProbe.HexCancellationInputs10,
+    `HexMvPolyMathlib.ProofProbe.SortedCancellationInputs10,
+    `HexMvPolyMathlib.ProofProbe.HexCancellation10,
+    `HexMvPolyMathlib.ProofProbe.SortedCancellation10,
+    `HexMvPolyMathlib.ProofProbe.HexSos3,
+    `HexMvPolyMathlib.ProofProbe.SortedSos3,
+    `HexMvPolyMathlib.ProofProbe.HexSos4,
+    `HexMvPolyMathlib.ProofProbe.SortedSos4,
+    `HexMvPolyMathlib.ProofProbe.HexSosInputs6,
+    `HexMvPolyMathlib.ProofProbe.SortedSosInputs6,
+    `HexMvPolyMathlib.ProofProbe.HexSos6,
+    `HexMvPolyMathlib.ProofProbe.SortedSos6,
+    `HexMvPolyMathlib.ProofProbe.HexSosInputs8,
+    `HexMvPolyMathlib.ProofProbe.SortedSosInputs8,
+    `HexMvPolyMathlib.ProofProbe.HexSos8,
+    `HexMvPolyMathlib.ProofProbe.SortedSos8,
+    `HexMvPolyMathlib.ProofProbe.HexStructuralInputs8,
+    `HexMvPolyMathlib.ProofProbe.SortedStructuralInputs8,
+    `HexMvPolyMathlib.ProofProbe.HexStructural8,
+    `HexMvPolyMathlib.ProofProbe.SortedStructural8,
+    `HexMvPolyMathlib.ProofProbe.HexStructuralInputs32,
+    `HexMvPolyMathlib.ProofProbe.SortedStructuralInputs32,
+    `HexMvPolyMathlib.ProofProbe.HexStructural32,
+    `HexMvPolyMathlib.ProofProbe.SortedStructural32].map Glob.one
+
 lean_lib HexIntervalExperiment where
   globs := #[`HexInterval.Experiment.Representation,
     `HexInterval.Experiment.Rational, `HexInterval.Experiment.Center,
@@ -308,7 +366,7 @@ lean_lib HexRCFProofProbeScientific where
 -- `*_emit_fixtures` exes below, carrying `srcDir := "conformance"`.
 lean_lib HexConformance where
   srcDir := "conformance"
-  globs := #[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexInterval.Conformance, `HexInterval.CenterConformance, `HexInterval.ScaleConformance, `HexInterval.PropagatorConformance, `HexInterval.ScopeConformance, `HexInterval.StructuralMatcherConformance, `HexInterval.MatcherSchedulerConformance, `HexInterval.StructureViewConformance, `HexInterval.PolicyConformance, `HexInterval.PolicyFrontierConformance, `HexInterval.PolicyDriverConformance, `HexInterval.PackageRegistryConformance, `HexInterval.DyadicIntervalConformance, `HexInterval.DyadicRulesConformance, `HexInterval.PayloadArenaConformance, `HexInterval.PayloadSessionConformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexMvPoly.Fixtures, `HexMvPoly.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexNumberField.Conformance, `HexNumberFieldTower.Conformance, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRCF.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexResultant.Conformance, `HexRoots.Conformance].map Glob.one
+  globs := #[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexInterval.Conformance, `HexInterval.CenterConformance, `HexInterval.ScaleConformance, `HexInterval.PropagatorConformance, `HexInterval.ScopeConformance, `HexInterval.StructuralMatcherConformance, `HexInterval.MatcherSchedulerConformance, `HexInterval.StructureViewConformance, `HexInterval.PolicyConformance, `HexInterval.PolicyFrontierConformance, `HexInterval.PolicyDriverConformance, `HexInterval.PackageRegistryConformance, `HexInterval.DyadicIntervalConformance, `HexInterval.DyadicRulesConformance, `HexInterval.PayloadArenaConformance, `HexInterval.PayloadSessionConformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexMvPoly.Fixtures, `HexMvPoly.Conformance, `HexMvPolyMathlib.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexNumberField.Conformance, `HexNumberFieldTower.Conformance, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRCF.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexResultant.Conformance, `HexRoots.Conformance].map Glob.one
 
 -- Public umbrellas intentionally contain only the supported API. Executable
 -- examples and regression tests are compiled through this separate target so
