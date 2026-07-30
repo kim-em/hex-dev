@@ -17,6 +17,11 @@ on:
         description: "Dry run (print planned changes; do not push)"
         type: boolean
         default: true
+      only:
+        description: "Optional repository short name (for staged first publishes)"
+        type: string
+        required: false
+        default: ""
 
 concurrency:
   group: sync-released
@@ -55,9 +60,11 @@ jobs:
         env:
           RELEASED_SYNC_PAT: ${{ secrets.RELEASED_SYNC_PAT }}
         run: |
-          extra=""
-          [ "${{ inputs.dry_run }}" = "false" ] || extra="--dry-run"
-          python3 scripts/release/sync_released.py --baseline /tmp/baseline.json $extra
+          args=()
+          [ "${{ inputs.dry_run }}" = "false" ] || args+=(--dry-run)
+          [ -z "${{ inputs.only }}" ] || args+=(--only "${{ inputs.only }}")
+          python3 scripts/release/sync_released.py \
+            --baseline /tmp/baseline.json "${args[@]}"
       - name: Publish advanced baseline
         if: ${{ inputs.dry_run == false }}
         env:
