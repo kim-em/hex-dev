@@ -86,6 +86,9 @@
 - Re-ran Phase-4, release-manifest, dependency-DAG, Mathlib-free bench/probe,
   diff-hygiene, artifact-completeness, and exact-hash checks successfully on
   the final evidence refresh.
+- Opened PR #9103. Its first CI run stopped at the copyright-header gate;
+  normalized the three pinned-consumer adapter headers to the repository's
+  required form before rerunning CI.
 
 ## Current frontier
 
