@@ -86,7 +86,9 @@ repos:
     umbrella: true
     spec: hex-mv-poly
     bench: true
+    bench_files: [HexMvPolyCorpus.lean]
     conformance: true
+    conformance_files: [HexMvPolyFixtures.lean]
     fixtures: [HexMvPoly]
     oracles: [mvpoly_sympy.py, common.py]
     pins: [hex-basic, hex-poly]

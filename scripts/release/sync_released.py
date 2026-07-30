@@ -113,8 +113,12 @@ def managed_paths(entry: dict) -> list[tuple[Path, Path, bool]]:
         umb = REPO_ROOT / "bench" / f"{bdir}.lean"
         if umb.exists():
             out.append((umb, Path("bench") / f"{bdir}.lean", False))
+    for f in entry.get("bench_files") or []:
+        out.append((REPO_ROOT / "bench" / f, Path("bench") / f, False))
     if entry.get("conformance"):
         out.append((REPO_ROOT / "conformance" / lib, Path("conformance") / lib, True))
+    for f in entry.get("conformance_files") or []:
+        out.append((REPO_ROOT / "conformance" / f, Path("conformance") / f, False))
     for f in entry.get("fixtures") or []:
         out.append((REPO_ROOT / "conformance-fixtures" / f, Path("conformance-fixtures") / f, True))
     for o in entry.get("oracles") or []:

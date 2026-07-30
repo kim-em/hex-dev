@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import Hex.Conformance.Emit
-import HexMvPoly.Fixtures
+import HexMvPolyFixtures
 
 /-!
 JSONL emit driver for the `hex-mv-poly` SymPy oracle.
