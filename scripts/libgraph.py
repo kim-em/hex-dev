@@ -27,7 +27,6 @@ BUILD_ONLY_LIBS = {
     "HexRCFProofProbeScientific",
     "HexConformance",
     "HexReleaseTests",
-    "HexMvPolyTests",
     "HexRCFTests",
     "HexReleaseExamples",
 }

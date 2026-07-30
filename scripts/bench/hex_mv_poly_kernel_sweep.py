@@ -280,7 +280,7 @@ SPEC = SweepSpec(
     extra_sources=(
         Path("libraries.yml"),
         Path("SPEC/benchmarking.md"),
-        Path("SPEC/Libraries/hex-mv-poly.md"),
+        Path("HexMvPoly/SPEC/hex-mv-poly.md"),
     ),
     required_samples=6,
     max_pair_retries=32,

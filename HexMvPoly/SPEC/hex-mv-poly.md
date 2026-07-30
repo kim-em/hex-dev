@@ -46,7 +46,7 @@ passing unchanged.
 **Later Hex work.** Multivariate gcd and squarefree decomposition,
 multivariate factorization, Gröbner bases, rational-expression tactics,
 and cylindrical algebraic decomposition all sit on this type. See
-[future-work](../future-work.md).
+[future work](https://github.com/kim-em/hex-dev/blob/main/SPEC/future-work.md).
 
 ## Representation
 
@@ -242,7 +242,8 @@ representation is justified only if the sorted form beats
 `ExtTreeMap` by more than 2× on at least two workload families at the
 largest size within the proof-probe time budget. Otherwise the single
 representation stands. The `PolyOps`-style abstraction in
-[future-work](../future-work.md) is where a second representation would
+[future work](https://github.com/kim-em/hex-dev/blob/main/SPEC/future-work.md)
+is where a second representation would
 attach.
 
 ## Kernel exposure
@@ -430,7 +431,8 @@ Content and primitive part are deliberately *not* in this SPEC. The
 coefficients in the recursive view are themselves multivariate
 polynomials, so a gcd-domain hypothesis on `R` does not determine the
 executable algorithm, and the operation belongs with the multivariate
-gcd layer in [future-work](../future-work.md).
+gcd layer in
+[future work](https://github.com/kim-em/hex-dev/blob/main/SPEC/future-work.md).
 
 The backing map should not be public. Exposing `terms` invites exactly
 the `p.1.toList` coupling that appears in SOS against CompPoly today
@@ -637,7 +639,9 @@ Davenport. It is axiom-free and targets kernel reduction specifically.
 The design agrees with this one on arity, canonicality, and the shape of
 the equivalence, and differs on the container. `mv_mem` decides ideal
 membership by multi-divisor normal form, which is the shape the Gröbner
-item in [future-work](../future-work.md) wants.
+item in
+[future work](https://github.com/kim-em/hex-dev/blob/main/SPEC/future-work.md)
+wants.
 
 **`MonomialOrderedPolynomial`** (WuProver) builds
 `SortedAddMonoidAlgebra` on `SortedFinsupp σ R cmp`, generic in the
@@ -949,7 +953,9 @@ check, because it is the acceptance test for the surface listed here.
 5. Run the module-boundary kernel probes and native benchmarks. Keep
    `ExtTreeMap` as the compiled representation. If the recorded threshold
    selects the sorted form, record the justified kernel-specialized second
-   representation under [future-work](../future-work.md), where the
+   representation under
+   [future work](https://github.com/kim-em/hex-dev/blob/main/SPEC/future-work.md),
+   where the
    representation abstraction belongs.
 
 ## Open questions

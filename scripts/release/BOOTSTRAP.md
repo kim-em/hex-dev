@@ -1,7 +1,7 @@
 # Bootstrapping released repositories
 
 `scripts/release/released.yml` is the authoritative publication graph for the
-33 split repositories and the `leanprover/hex` aggregate. The sync workflow
+35 split repositories and the `leanprover/hex` aggregate. The sync workflow
 clones each repository's `main`, overwrites its managed paths from this
 monorepo, rewrites every published Hex revision, and pushes the result. It does
 not create repositories or author their un-managed Lake and CI skeletons.
@@ -33,6 +33,20 @@ order (the manifest remains the source of truth for the exact order):
 Computational repositories remain Mathlib-free. Repositories ending in
 `-mathlib` are bridge layers containing correspondence proofs and
 Mathlib-facing APIs.
+
+## Repository set added for multivariate polynomials
+
+The multivariate-polynomial publication adds:
+
+- `hex-mv-poly`, the Mathlib-free computational library, after `hex-basic`
+  and `hex-poly`; and
+- `hex-mv-poly-mathlib`, the Mathlib bridge, after `hex-mv-poly` and
+  `hex-poly-mathlib`.
+
+The core repository ships its benchmark, regression tests, SymPy conformance
+oracle, and committed fixtures. The bridge ships its self-contained
+Mathlib-correspondence conformance target; the kernel proof probes remain
+monorepo development benchmarks.
 
 ## Skeleton checklist
 
