@@ -55,6 +55,43 @@ def timeLiftArm (iters : Nat) (run : Unit → Array ZPoly) : IO (Float × Array 
   if sink = 0 then throw <| IO.userError "impossible empty lift checksum"
   pure ((t₁ - t₀).toFloat / iters.toFloat / 1.0e6, result)
 
+/--
+Largest degree of a proper candidate in the current head-forced subset search.
+Every enumerated candidate contains the first local factor, so the largest
+proper one omits the smallest degree in the tail.
+-/
+def headForcedMaxProperDegree (pd : PrimeChoiceData) : Nat :=
+  match modularFactorDegrees pd with
+  | [] => 0
+  | [_] => pd.fModP.degree?.getD 0
+  | head :: next :: tail =>
+      let minTail := tail.foldl min next
+      head + next + tail.sum - minTail
+
+/-- Closed-form Mignotte opportunity bound when candidate degree is capped. -/
+def factorCoeffBoundAtDegree (f : ZPoly) (degree : Nat) : Nat :=
+  Nat.binom degree (degree / 2) * ZPoly.coeffL2NormBound f
+
+/--
+Measure the current M1 lift and the most optimistic degree cap admitted by the
+existing head-forced search.  The capped arm is diagnostic only: production
+continues to use the fully proved uniform bound.
+-/
+def compareM1Bounds (core : ZPoly) (pd : PrimeChoiceData) : IO Unit := do
+  let corePd := ZPoly.corePrimeDataOfToMonic core pd
+  let uniformBound := ZPoly.defaultFactorCoeffBound core
+  let degreeBound := headForcedMaxProperDegree pd
+  let cappedBound := factorCoeffBoundAtDegree core degreeBound
+  let uniformK := precisionForCoeffBound uniformBound pd.p
+  let cappedK := precisionForCoeffBound cappedBound pd.p
+  let uniform ← timeLiftArm 7 (fun _ =>
+    (ZPoly.coreLiftData core uniformBound corePd).liftedFactors)
+  let capped ← timeLiftArm 7 (fun _ =>
+    (ZPoly.coreLiftData core cappedBound corePd).liftedFactors)
+  IO.println s!"  M1 bound: n={core.degree?.getD 0}, D={degreeBound}, \
+    bits={uniformBound.log2 + 1}->{cappedBound.log2 + 1}, \
+    k={uniformK}->{cappedK}, lift={uniform.1}->{capped.1} ms"
+
 def compareLiftTrees
     (label : String) (f core monic : ZPoly) (pd : PrimeChoiceData) : IO Unit := do
   -- This isolates the lift tree at the exhaustive coefficient bound; it is not
@@ -103,7 +140,9 @@ def timePrimeChoice (label : String) (f : ZPoly) : IO Unit := do
     declined={trace.declined})"
   match adaptive with
   | none => pure ()
-  | some pd => compareLiftTrees label f core monic pd
+  | some pd =>
+      compareLiftTrees label f core monic pd
+      compareM1Bounds core pd
   ( ← IO.getStdout).flush
 
 /-- Print the modular degree partitions at the first `limit` good candidates.

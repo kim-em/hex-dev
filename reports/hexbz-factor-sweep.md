@@ -1,15 +1,15 @@
 # HexBZ Cross-System Factorization Sweep
 
-The current public-factor and no-decline classical measurements cover
-the exact-exponent/factor-only Hensel implementation, guarded dominant-degree
-tree, remainder-only polynomial GCD, cached finite-field inverses, and linear
-monomial Hensel kernel, plus cached classical recombination search, at clean
-revision `b0150d2b4a6154d7b9ed3c7cace4fee0ace64165`. They were measured
-2026-07-29 on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0. The
-unchanged Hex lattice row remains from clean revision `0b95505b`. FLINT,
-PARI/GP, NTL, and Isabelle are the already-current 2026-07-28 exports from the
-same host, corpus, CPU placement, and timing protocol. Those systems were not
-rerun because this change only modifies classical Hex recombination.
+The current public-factor measurement adds verified original-coordinate M1
+lifting, bounded modular degree-obstruction certificates, and a measured cost
+gate at clean revision `2ee33dc56118b9bd4da5d1800c3807a38158bdb2`. It was
+measured 2026-07-30 on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU
+0. The unchanged no-decline classical row remains at clean revision
+`b0150d2b`, and the unchanged Hex lattice row remains at clean revision
+`0b95505b`. FLINT, PARI/GP, NTL, and Isabelle are the already-current
+2026-07-28 exports from the same host, corpus, CPU placement, and timing
+protocol. Those systems were not rerun because this change modifies only Hex's
+bounded production classical route.
 
 ## Systems
 
@@ -47,7 +47,7 @@ session and Haskell-export builds completed before the timed sweeps.
 
 | System | OK | Timeout | p50 solved | p90 solved | Slowest solved | Protocol overhead |
 |---|---:|---:|---:|---:|---:|---:|
-| Hex public factor | 373 | 19 | 395.506 µs | 4.074 ms | 9.137 s | 17.015 µs |
+| Hex public factor | 373 | 19 | 400.905 µs | 4.079 ms | 8.994 s | 17.466 µs |
 | Hex lattice | 369 | 23 | 1.812 ms | 87.886 ms | 9.590 s | 18.848 µs |
 | Hex classical, no decline | 372 | 20 | 386.358 µs | 5.556 ms | 3.717 s | 18.297 µs |
 | FLINT | 391 | 1 | 66.850 µs | 1.184 ms | 1.228 s | 19.219 µs |
@@ -65,22 +65,29 @@ factor-count result on the seven rows without a committed degree oracle;
 FLINT, PARI/GP, and NTL factor counts agree on all seven.
 
 Relative to the pre-hot-path Hex record, the public median fell from 1.244 ms
-to 395.506 µs and retained two additional solves, `sd5_x_phi45` and `sd6`.
+to 400.905 µs and retained two additional solves, `sd5_x_phi45` and `sd6`.
 The current no-decline classical entry now also solves `sd5_x_phi45`, leaving
 `sd6` as the public dispatcher's one additional frontier success.
 
-On 237 common rows for which both current Hex measurements are at least 10×
-their own protocol overhead, public/classical has median 1.003× and
-p10–p90 0.796×–1.145×. Public is faster on 117 and classical on 120. The
-ordinary rows are therefore at parity: no-decline is a diagnostic that omits
-bounded decline/fallback behavior and the public result check, not a distinct
-lifting core. The production path improves selected hard rows and adds the
-`sd6` solve.
+On 237 common rows for which current public Hex and the unchanged no-decline
+diagnostic are at least 10× their own protocol overhead, public/classical has
+median 1.007× and p10–p90 0.720×–1.187×. Public is faster on 108 and classical
+on 129. The broader band now contains the deliberately selective M1 wins;
+no-decline remains an M2 diagnostic that omits bounded decline/fallback
+behavior and the public result check. The production path improves selected
+hard rows and adds the `sd6` solve.
 
-On the corresponding 235 public/verified-Isabelle BZ rows, Hex has median
-0.866× and p10–p90 0.453×–2.274×; Hex is faster on 136 and Isabelle on 99. The
-13.4% aggregate lead is clear, though the family spread still rules out a claim
+On the corresponding 234 public/verified-Isabelle BZ rows, Hex has median
+0.865× and p10–p90 0.466×–2.062×; Hex is faster on 135 and Isabelle on 99. The
+13.5% aggregate lead is clear, though the family spread still rules out a claim
 of uniform superiority.
+
+The new M1 result is concentrated on non-monic Chebyshev and Legendre rows:
+U24 falls from 2.610 ms to 0.814 ms, P28 from 8.205 ms to 5.074 ms, P30
+from 13.807 ms to 11.367 ms, and P38 from 13.602 ms to 8.701 ms. The complete
+phase analysis, degree-bound no-go, modular-scan decision, and dependency
+outcomes for issues #9104–#9109 are in
+[`hexbz-m1-chebyshev-legendre.md`](hexbz-m1-chebyshev-legendre.md).
 
 Against the immediately preceding `0b95505b` sweep, the cached recombination
 implementation has a 0.988× eligible-row median and a 171–72 win split. Its
@@ -95,22 +102,29 @@ faster.
 
 | Family | Common rows | Median new/old | Rows slower |
 |---|---:|---:|---:|
-| Certificate boundary | 1 | 0.366× | 0 |
-| Chebyshev | 28 | 0.231× | 1 |
-| Conway | 186 | 0.307× | 0 |
-| Cyclotomic | 32 | 0.603× | 1 |
-| Cyclotomic products | 19 | 0.619× | 0 |
-| Laguerre | 20 | 0.232× | 0 |
-| Legendre | 20 | 0.187× | 0 |
-| Random products | 30 | 0.221× | 0 |
-| Signed-digit products | 9 | 0.499× | 1 |
-| Swinnerton-Dyer | 11 | 0.163× | 0 |
-| Wilkinson | 15 | 0.889× | 4 |
+| Certificate boundary | 1 | 0.377× | 0 |
+| Chebyshev | 28 | 0.214× | 3 |
+| Conway | 186 | 0.325× | 1 |
+| Cyclotomic | 32 | 0.611× | 4 |
+| Cyclotomic products | 19 | 0.626× | 0 |
+| Laguerre | 20 | 0.236× | 0 |
+| Legendre | 20 | 0.176× | 0 |
+| Random products | 30 | 0.208× | 0 |
+| Signed-digit products | 9 | 0.424× | 1 |
+| Swinnerton-Dyer | 11 | 0.164× | 0 |
+| Wilkinson | 15 | 0.906× | 5 |
 
 Every family median improves over the pre-hot-path record. The cumulative
 GCD/Hensel stage had an all-row paired median of 0.964× against its immediately
 preceding guarded-tree export; the recombination stage above is its own A/B
 against `0b95505b`.
+
+Eight monic cyclotomic rows recorded implausible 1.47–1.64× movements against
+`b0150d2b` in the long final sweep even though the M1 predicate is false on all
+of them. A pinned interleaved old/new control, 21 measurements per revision,
+has median ratio 1.0005× and range 0.9939×–1.0104× with identical outputs.
+Those long-run outliers are CPU-frequency drift rather than a reachable-path
+regression.
 
 ## Charts
 
@@ -134,8 +148,11 @@ uv run --with matplotlib python3 scripts/plots/hexbz-cactus.py
 
 Fresh Hex exports:
 
+- `reports/bench-results/hexbz-factor-sweep-hex-2ee33dc5-m1-chungus2.json`
+  (current public factor; SHA-256
+  `a604aaaf492dacf726a0ae6315744f14a46dd21d124033b846a73e00f5511e89`)
 - `reports/bench-results/hexbz-factor-sweep-hex-b0150d2b-recombine-cache-chungus2.json`
-  (current public and no-decline classical; SHA-256
+  (preceding public and unchanged no-decline classical; SHA-256
   `7222c12c206d9fdb3489d98595c72f9eb254f31108e5136722242784eb086be3`)
 - `reports/bench-results/hexbz-factor-sweep-hex-0b95505b-gcd-hensel-final-chungus2.json`
   (preceding public/classical and current lattice; SHA-256
