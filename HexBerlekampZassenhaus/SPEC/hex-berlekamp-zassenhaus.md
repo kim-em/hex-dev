@@ -444,8 +444,9 @@ and the CLD lattice tier does the work.
 
 **Dispatch must be observable, and the merge gate asserts on it
 (not just on wall-clock).** `factorize` records a `FactorTrace` —
-chosen tier, prime `p`, `r`, Hensel precision, subset candidates
-tried, lattice dimension, and **whether the trial backstop ran**.
+chosen tier, prime `p`, `r`, the M1 route (`notTried`, `accepted`, or
+`fallback`), M1 subset candidates tried, and whether the classical tier
+declined.
 A pure timing gate is gameable (a regression can "pass" by silently
 falling back to a slow tier, or by only timing out on machines CI does
 not expose); the counter assertions close that hole. Per the named
@@ -458,6 +459,9 @@ conformance suite (fixtures under
   merge gate**;
 - the size-ordered subset count on small-`r` fixtures must stay under
   the declared bound;
+- designated original-coordinate fixtures must keep their expected M1
+  route, including reducible acceptance, two-prime irreducibility
+  acceptance, and checked M1-to-M2 fallback;
 - `factorTrial` MUST never run on any fixture except the dedicated
   `X² − L²`-style regression cases that exercise the
   `choosePrimeData? = none` path; those are tagged `scheduledHardwareTag`
@@ -927,8 +931,8 @@ Two gates, distinct enforcement:
   pass; every designated fixture must finish under a *generous*
   wall-clock budget (catastrophic order-of-magnitude regressions trip it
   while runner noise does not); and the `FactorTrace` counters must
-  satisfy per-fixture assertions — expected tier used, **no unexpected
-  `factorTrial` fallback**, size-ordered subset count under bound, no
+  satisfy per-fixture assertions — expected tier and M1 route used,
+  **no unexpected `factorTrial` fallback**, size-ordered subset count under bound, no
   small-`r` case entering `factorLattice` (or vice versa). A checked-in
   baseline JSON pins the counters and a coarse timing band. This gate is
   what prevents a future change from replacing the implementation with

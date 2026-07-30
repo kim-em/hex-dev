@@ -494,6 +494,146 @@ theorem scaledCandidatePrefilter_eq_true_of_exactQuotient?_some
     rw [htrail, ← hD0L, hD0]
     exact mul_dvd_mul hdvd_content hpp0_dvd
 
+/-- **M1 degree-prefilter soundness.** A monic selected subset whose
+original-coordinate candidate divides a nonzero target cannot have total
+degree larger than that target. The executable's non-monic and vanishing-
+leading-residue escape cases make the statement unconditional for standalone
+callers. -/
+theorem coreCandidatePrefilter_eq_true_of_exactQuotient?_some
+    {coreLc : ℤ} {target : Hex.ZPoly} {modulus : ℕ} {sel : List Hex.ZPoly}
+    {quotient : Hex.ZPoly}
+    (hq : Hex.exactQuotient? target
+        (Hex.coreRecombinationCandidate coreLc modulus sel) = some quotient) :
+    Hex.coreCandidatePrefilter coreLc target modulus sel = true := by
+  by_cases hmonic :
+      sel.all (fun g => Hex.DensePoly.leadingCoeff g == 1) = false
+  · simp [Hex.coreCandidatePrefilter, hmonic]
+  have hmonic' :
+      sel.all (fun g => Hex.DensePoly.leadingCoeff g == 1) = true := by
+    cases hvalue :
+        sel.all (fun g => Hex.DensePoly.leadingCoeff g == 1) <;> simp_all
+  by_cases hlc0 : Hex.centeredModNat coreLc modulus = 0
+  · simp [Hex.coreCandidatePrefilter, hmonic', hlc0]
+  by_cases htarget0 : target = 0
+  · simp [Hex.coreCandidatePrefilter, hmonic', htarget0]
+  suffices hdegree :
+      Hex.selectedDegreeSum sel ≤ target.degree?.getD 0 by
+    simp [Hex.coreCandidatePrefilter, hmonic', htarget0, hdegree]
+  set P := Array.polyProduct sel.toArray with hP_def
+  set S := Hex.DensePoly.scale coreLc P with hS_def
+  set L := Hex.centeredLiftPoly S modulus with hL_def
+  set pp := Hex.ZPoly.primitivePart L with hpp_def
+  set cand := Hex.normalizeFactorSign pp with hcand_def
+  have hcand :
+      cand = Hex.coreRecombinationCandidate coreLc modulus sel := by
+    simp [cand, pp, L, S, P, Hex.coreRecombinationCandidate]
+  have hprod : quotient * cand = target := by
+    apply Hex.exactQuotient?_product
+    rwa [hcand]
+  have htarget_poly : HexPolyZMathlib.toPolynomial target =
+      HexPolyZMathlib.toPolynomial quotient *
+        HexPolyZMathlib.toPolynomial cand := by
+    rw [← HexPolyZMathlib.toPolynomial_mul, hprod]
+  have hleading : ∀ g ∈ sel, Hex.DensePoly.leadingCoeff g = 1 := by
+    simpa [List.all_eq_true] using hmonic'
+  have hlcprod :
+      (sel.map Hex.DensePoly.leadingCoeff).prod = (1 : ℤ) := by
+    calc
+      (sel.map Hex.DensePoly.leadingCoeff).prod =
+          (sel.map fun _ => (1 : ℤ)).prod := by
+        congr 1
+        exact List.map_congr_left fun g hg => hleading g hg
+      _ = 1 := by simp
+  have hg_ne : ∀ g ∈ sel, g ≠ 0 := by
+    intro g hg hg0
+    have := hleading g hg
+    rw [hg0, zpoly_leadingCoeff_zero] at this
+    omega
+  have hTg_ne : ∀ p ∈ sel.map HexPolyZMathlib.toPolynomial, p ≠ 0 := by
+    intro p hp hp0
+    obtain ⟨g, hg, rfl⟩ := List.mem_map.mp hp
+    apply hg_ne g hg
+    rw [← HexPolyZMathlib.ofPolynomial_toPolynomial g, hp0,
+      HexPolyZMathlib.ofPolynomial_zero]
+  have hTP_deg : (HexPolyZMathlib.toPolynomial P).natDegree =
+      Hex.selectedDegreeSum sel := by
+    rw [hP_def, polyProduct_toPolynomial]
+    rw [natDegree_list_prod_of_ne_zero _ hTg_ne, selectedDegreeSum_eq_sum,
+      List.map_map]
+    rfl
+  have hS_coeff : ∀ n, S.coeff n = coreLc * P.coeff n := by
+    intro n
+    rw [hS_def, Hex.DensePoly.coeff_scale (R := Int) coreLc P n
+      (Int.mul_zero coreLc)]
+  have hL_coeff :
+      ∀ n, L.coeff n = Hex.centeredModNat (S.coeff n) modulus := by
+    intro n
+    rw [hL_def]
+    exact Hex.coeff_centeredLiftPoly S modulus n
+  have hP_top : P.coeff (Hex.selectedDegreeSum sel) = 1 := by
+    rw [hP_def, polyProduct_coeff_selectedDegreeSum, hlcprod]
+  have hL_top : L.coeff (Hex.selectedDegreeSum sel) =
+      Hex.centeredModNat coreLc modulus := by
+    rw [hL_coeff, hS_coeff, hP_top, mul_one]
+  have hTL_deg : (HexPolyZMathlib.toPolynomial L).natDegree =
+      Hex.selectedDegreeSum sel := by
+    apply le_antisymm
+    · apply Polynomial.natDegree_le_iff_coeff_eq_zero.mpr
+      intro N hN
+      rw [HexPolyZMathlib.coeff_toPolynomial, hL_coeff, hS_coeff]
+      have hPN : P.coeff N = 0 := by
+        rw [← HexPolyZMathlib.coeff_toPolynomial]
+        exact Polynomial.coeff_eq_zero_of_natDegree_lt (hTP_deg ▸ hN)
+      rw [hPN, mul_zero, Hex.centeredModNat_zero]
+    · apply Polynomial.le_natDegree_of_ne_zero
+      rw [HexPolyZMathlib.coeff_toPolynomial, hL_top]
+      exact hlc0
+  have hL_ne : L ≠ 0 := by
+    intro h0
+    apply hlc0
+    rw [← hL_top, h0]
+    exact Hex.DensePoly.coeff_zero _
+  have hcontent_ne : Hex.ZPoly.content L ≠ 0 :=
+    HexPolyZMathlib.content_ne_zero L hL_ne
+  have hTpp_deg : (HexPolyZMathlib.toPolynomial pp).natDegree =
+      Hex.selectedDegreeSum sel := by
+    have hCL := HexPolyZMathlib.toPolynomial_eq_C_content_mul_primitivePart L
+    have hnat := congrArg Polynomial.natDegree hCL
+    rw [hTL_deg, Polynomial.natDegree_C_mul hcontent_ne] at hnat
+    rw [hpp_def]
+    exact hnat.symm
+  have hsize : cand.size = pp.size := by
+    rw [hcand_def]
+    exact size_normalizeFactorSign_eq pp
+  have hcand_deg : cand.degree?.getD 0 = pp.degree?.getD 0 := by
+    simp only [Hex.DensePoly.degree?, hsize]
+  have hTC_deg : (HexPolyZMathlib.toPolynomial cand).natDegree =
+      Hex.selectedDegreeSum sel := by
+    rw [HexPolyMathlib.natDegree_toPolynomial, hcand_deg,
+      ← HexPolyMathlib.natDegree_toPolynomial, hTpp_deg]
+  have hT_ne : HexPolyZMathlib.toPolynomial target ≠ 0 := by
+    intro h0
+    apply htarget0
+    rw [← HexPolyZMathlib.ofPolynomial_toPolynomial target, h0,
+      HexPolyZMathlib.ofPolynomial_zero]
+  have hTC_ne : HexPolyZMathlib.toPolynomial cand ≠ 0 := by
+    intro h0
+    apply hT_ne
+    rw [htarget_poly, h0, mul_zero]
+  have hTQ_ne : HexPolyZMathlib.toPolynomial quotient ≠ 0 := by
+    intro h0
+    apply hT_ne
+    rw [htarget_poly, h0, zero_mul]
+  have hT_deg :
+      target.degree?.getD 0 =
+        (HexPolyZMathlib.toPolynomial quotient).natDegree +
+          Hex.selectedDegreeSum sel := by
+    have h := congrArg Polynomial.natDegree htarget_poly
+    rw [Polynomial.natDegree_mul hTQ_ne hTC_ne, hTC_deg,
+      HexPolyMathlib.natDegree_toPolynomial] at h
+    exact h
+  omega
+
 mutual
 
 /-- Trustworthy-none completeness for the size-ordered search: with adequate

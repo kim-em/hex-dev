@@ -291,7 +291,8 @@ last resort. These complementary costs explain the three tiers:
   accepts an answer only after its product reconstructs the input, and uses
   the direct search if both decline.
 * {name}`Hex.factorTraced` returns the same result together with a
-  {name}`Hex.FactorTrace` recording which route was taken.
+  {name}`Hex.FactorTrace` recording which tier and M1 coordinate route were
+  taken.
 
 For each optional tier there are two separate proof questions: whether a
 successful answer is correct, and whether the tier is guaranteed to return an

@@ -520,6 +520,22 @@ def coreRecombinationCandidate
     centeredLiftPoly
       (DensePoly.scale coreLc (Array.polyProduct selected.toArray)) modulus
 
+/--
+Sound degree rejection for an original-coordinate candidate, before forming
+its full polynomial product.  The selected modular factors are monic, so when
+the centered residue of `coreLc` is nonzero the candidate has degree exactly
+`selectedDegreeSum selected`; a divisor of a nonzero target cannot have larger
+degree.  The conservative escape cases keep this helper sound for arbitrary
+standalone callers as well as the production good-prime path.
+-/
+@[expose]
+def coreCandidatePrefilter
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (selected : List ZPoly) : Bool :=
+  !(selected.all fun g => DensePoly.leadingCoeff g == 1) ||
+    centeredModNat coreLc modulus == 0 ||
+    decide (target = 0) ||
+    decide (selectedDegreeSum selected ≤ target.degree?.getD 0)
+
 mutual
 
 /--
@@ -527,10 +543,10 @@ Size-ordered recombination in the original (`M1`) coordinate.
 
 This deliberately mirrors `scaledRecombinationSmartAux`, but forms
 `coreRecombinationCandidate` rather than dilating a factor of the coefficient-
-swollen `toMonic` transform.  The executable prefilter is not shared: its
-constant-term formula is specific to the dilation candidate.  The caller
-validates every successful result (product, shape, and irreducibility
-certificates) before exposing it.
+swollen `toMonic` transform.  Its degree prefilter is shared in spirit with the
+scaled path, while the scaled path's constant-term formula is specific to the
+dilation candidate.  The caller validates every successful result (product,
+shape, and irreducibility certificates) before exposing it.
 -/
 @[expose]
 def coreRecombinationSmartAux
@@ -583,19 +599,23 @@ def coreRecombinationSmartCandLoop
         | 0 => (none, budget)
         | fuel + 1 =>
             let budget' := budget - 1
-            let candidate := coreRecombinationCandidate coreLc modulus split.1
-            if shouldRecordPolynomialFactor candidate then
-              match exactQuotient? target candidate with
-              | some quotient =>
-                  match coreRecombinationSmartAux coreLc quotient modulus split.2
-                      budget' fuel with
-                  | (some sub, b) => (some (candidate :: sub), b)
-                  | (none, b) =>
-                      coreRecombinationSmartCandLoop coreLc target modulus
-                        rest b fuel
-              | none =>
-                  coreRecombinationSmartCandLoop coreLc target modulus
-                    rest budget' fuel
+            if coreCandidatePrefilter coreLc target modulus split.1 then
+              let candidate := coreRecombinationCandidate coreLc modulus split.1
+              if shouldRecordPolynomialFactor candidate then
+                match exactQuotient? target candidate with
+                | some quotient =>
+                    match coreRecombinationSmartAux coreLc quotient modulus split.2
+                        budget' fuel with
+                    | (some sub, b) => (some (candidate :: sub), b)
+                    | (none, b) =>
+                        coreRecombinationSmartCandLoop coreLc target modulus
+                          rest b fuel
+                | none =>
+                    coreRecombinationSmartCandLoop coreLc target modulus
+                      rest budget' fuel
+              else
+                coreRecombinationSmartCandLoop coreLc target modulus
+                  rest budget' fuel
             else
               coreRecombinationSmartCandLoop coreLc target modulus
                 rest budget' fuel
@@ -626,6 +646,13 @@ private def smartGuardTarget : ZPoly := Array.polyProduct smartGuardFactors.toAr
   | none => false
 
 #guard (scaledRecombinationSmart 1 smartGuardTarget 1000003 smartGuardFactors).2.candidatesTried ≤ 6
+
+#guard
+  match (coreRecombinationSmart 1 smartGuardTarget 1000003 smartGuardFactors).1 with
+  | some fs => Array.polyProduct fs.toArray = smartGuardTarget && fs.length = 3
+  | none => false
+
+#guard (coreRecombinationSmart 1 smartGuardTarget 1000003 smartGuardFactors).2.candidatesTried ≤ 6
 
 -- An irreducible-over-ℤ target whose lifted factors do not recombine returns the
 -- whole product as the single factor, having tried every proper subset.

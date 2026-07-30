@@ -1449,6 +1449,7 @@ theorem classicalCoreFactorsM1OrM2_shape
       let coreData := Hex.ZPoly.corePrimeDataOfToMonic core toMonicData
       by_cases htry : Hex.shouldTryM1 core toMonicData = true
       · rw [if_pos htry] at h
+        simp only [Hex.tryM1ThenM2] at h
         cases hm1 :
             Hex.classicalCoreFactorsM1WithBound core B coreData toMonicData with
         | some factors =>
@@ -1530,6 +1531,7 @@ theorem classicalCoreFactorsM1OrM2_spec
       let coreData := Hex.ZPoly.corePrimeDataOfToMonic core toMonicData
       by_cases htry : Hex.shouldTryM1 core toMonicData = true
       · rw [if_pos htry] at h
+        simp only [Hex.tryM1ThenM2] at h
         cases hm1 :
             Hex.classicalCoreFactorsM1WithBound core B coreData toMonicData with
         | some factors =>

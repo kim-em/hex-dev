@@ -133,11 +133,22 @@ def timePrimeChoice (label : String) (f : ZPoly) : IO Unit := do
         let bound := ZPoly.exhaustiveLiftBound core (ZPoly.defaultFactorCoeffBound f)
         let k := precisionForCoeffBound bound pd.p
         s!"p={pd.p}, r={pd.factorsModP.size}, k={k}, degrees=[{String.intercalate "," degrees}]"
+  let describeM1 : Option PrimeChoiceData → String
+    | none => "no-prime"
+    | some pd =>
+        if shouldTryM1 core pd then
+          let corePd := ZPoly.corePrimeDataOfToMonic core pd
+          let result :=
+            classicalCoreFactorsM1WithBound core
+              (ZPoly.defaultFactorCoeffBound f) corePd pd
+          if result.isSome then "accepted" else "fell-back"
+        else
+          "not-tried"
   IO.println s!"{label}: first [{describe first}] {(t1 - t0).toFloat / 1.0e6} ms; \
     adaptive [{describe adaptive}] {(t2 - t1).toFloat / 1.0e6} ms; \
     factor {(t3 - t2).toFloat / 1.0e6} ms \
     (tier={trace.tier}, p={trace.prime}, r={trace.liftedFactorCount}, \
-    declined={trace.declined})"
+    declined={trace.declined}, M1={describeM1 adaptive})"
   match adaptive with
   | none => pure ()
   | some pd =>
@@ -238,6 +249,7 @@ def main (args : List String) : IO Unit := do
   timePrimeChoice "SD5" sd5
   timeCorpusCases corpusPath
     ["chebyshev_T10", "chebyshev_T15", "chebyshev_U12", "legendre_P16",
-      "legendre_P24", "legendre_P26", "legendre_P28", "legendre_P34",
-      "legendre_P38",
+      "legendre_P18", "legendre_P20", "legendre_P22", "legendre_P24",
+      "legendre_P26", "legendre_P28", "legendre_P30", "legendre_P32",
+      "legendre_P34", "legendre_P36", "legendre_P38", "legendre_P40",
       "cyclo_phi385"]
