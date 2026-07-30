@@ -11,7 +11,7 @@ public import HexMvPoly
 @[expose] public section
 
 /-!
-Deterministic input generators shared by the native `HexMvPoly` benchmark and
+Deterministic benchmark input generators shared by the native `HexMvPoly` benchmark and
 the external CompPoly and Mathlib `MvSparsePoly` comparator adapters.
 
 This file deliberately does not import LeanBench or Mathlib. Comparator drivers

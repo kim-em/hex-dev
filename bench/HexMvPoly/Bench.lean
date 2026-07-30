@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMvPoly.Corpus
+import HexMvPolyCorpus
 import LeanBench
 
 /-!
@@ -25,7 +25,7 @@ Input construction is hoisted through `prep`. Timed targets return structural
 hashes of the canonical outputs, so result traversal stays within the declared
 operation cost and gives LeanBench a conformance signal.
 
-`HexMvPoly.Corpus` owns the representation-independent deterministic term
+`HexMvPolyCorpus` owns the representation-independent deterministic term
 generators. Phase 4's informational CompPoly and Mathlib `MvSparsePoly`
 adapters consume those generators externally; neither comparator is imported
 here, keeping the native executable Mathlib-free.
