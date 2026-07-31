@@ -26,6 +26,7 @@ BUILD_ONLY_LIBS = {
     "HexRCFProofProbe",
     "HexRCFProofProbeScientific",
     "HexConformance",
+    "HexFactorizationModules",
     "HexReleaseTests",
     "HexRCFTests",
     "HexReleaseExamples",

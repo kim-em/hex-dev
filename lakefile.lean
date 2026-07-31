@@ -372,9 +372,7 @@ lean_lib HexConformance where
 -- examples and regression tests are compiled through this separate target so
 -- removing them from an umbrella cannot silently remove them from CI.
 lean_lib HexReleaseTests where
-  globs := #[`HexBerlekampZassenhaus.All,
-    `HexBerlekampZassenhausMathlib.All,
-    `HexBerlekamp.FactorTacticTests,
+  globs := #[`HexBerlekamp.FactorTacticTests,
     `HexBerlekampMathlib.FactorPolyTests,
     `HexBerlekampZassenhaus.FactorTacticTests,
     `HexBerlekampZassenhausMathlib.FactorPolyTests,
@@ -384,6 +382,12 @@ lean_lib HexReleaseTests where
     `HexRealRootsMathlib.IsolateRootsElabTests,
     `HexRootsMathlib.Examples,
     `HexMvPoly.KernelTests]
+
+-- Complete development imports for the two factorization packages. Their
+-- ordinary umbrellas deliberately expose only the supported release API.
+lean_lib HexFactorizationModules where
+  globs := #[`HexBerlekampZassenhaus.All,
+    `HexBerlekampZassenhausMathlib.All]
 
 -- HexRCF is not yet a published split repository, so its verification-only
 -- modules stay separate from the release-manifest-backed target above.

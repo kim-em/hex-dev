@@ -67,7 +67,7 @@ repos:
     fixtures: []
     oracles: []
     pins: []
-    lakefile: toml
+    lakefile: lean
 
   - repo: leanprover/hex-poly
     lib: HexPoly
@@ -103,7 +103,7 @@ repos:
     fixtures: []
     oracles: []
     pins: [hex-arith]
-    lakefile: toml
+    lakefile: lean
 
   - repo: leanprover/hex-poly-mathlib
     lib: HexPolyMathlib
