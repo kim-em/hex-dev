@@ -33,8 +33,36 @@ module makes any new nonstandard axiom visible in both the monorepo and the
 standalone package build.
 -/
 
+/--
+info: 'Hex.factorize_product' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms Hex.factorize_product
+
+/--
+info: 'HexBerlekampZassenhausMathlib.factorize_unique' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms HexBerlekampZassenhausMathlib.factorize_unique
+
+/--
+info: 'HexBerlekampZassenhausMathlib.factorize_normalized' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms HexBerlekampZassenhausMathlib.factorize_normalized
+
+/--
+info: 'HexBerlekampZassenhausMathlib.factorize_irreducible_of_nonUnit' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
 #print axioms HexBerlekampZassenhausMathlib.factorize_irreducible_of_nonUnit
+
+/--
+info: 'HexBerlekampZassenhausMathlib.factorLattice_ne_none_of_directPrimePlan' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
 #print axioms HexBerlekampZassenhausMathlib.factorLattice_ne_none_of_directPrimePlan

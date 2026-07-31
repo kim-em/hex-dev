@@ -7,6 +7,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from scripts.release import sync_released
 
@@ -61,6 +62,70 @@ class SyncReleasedTests(unittest.TestCase):
             (self.repo / "bench" / "lakefile.lean").read_text(),
         )
 
+    def test_reservoir_toml_pin_rewrites_by_package_name(self) -> None:
+        (self.repo / "lakefile.toml").write_text(
+            'name = "consumer"\n'
+            '\n'
+            '[[require]]\n'
+            'name = "mathlib"\n'
+            'scope = "leanprover-community"\n'
+            'rev = "v4.32.0-rc1-patch1"\n'
+            '\n'
+            '[[require]]\n'
+            'rev = "v4.32.0-rc1"\n'
+            'git = "https://github.com/leanprover/verso.git"\n'
+            'name = "verso"\n'
+            '\n'
+            '[[lean_lib]]\n'
+            'name = "Consumer"\n',
+            encoding="utf-8",
+        )
+        notes = sync_released.rewrite_external_pins(self.repo, self.pins)
+        rewritten = (self.repo / "lakefile.toml").read_text()
+        self.assertIn(f'rev = "{self.mathlib["inputRev"]}"', rewritten)
+        self.assertIn(f'rev = "{self.verso["inputRev"]}"', rewritten)
+        self.assertEqual(len(notes), 2)
+
+    def test_external_toml_requirement_without_rev_fails_closed(self) -> None:
+        (self.repo / "lakefile.toml").write_text(
+            '[[require]]\n'
+            'name = "mathlib"\n'
+            'scope = "leanprover-community"\n',
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(RuntimeError, "has no rev"):
+            sync_released.rewrite_external_pins(self.repo, self.pins)
+
+    def test_release_skeleton_checks_build_roots(self) -> None:
+        (self.repo / "lakefile.lean").write_text(
+            "import Lake\n"
+            "lean_lib ConsumerTests where\n"
+            "  globs := #[`Consumer.Tests]\n"
+            "lean_lib ConsumerModules where\n"
+            "  globs := #[`Consumer.All]\n"
+            "lean_exe consumer_check where\n"
+            "  root := `Consumer.Check\n"
+            "lean_exe unrelated where\n"
+            "  root := `Consumer.Other\n",
+            encoding="utf-8",
+        )
+        entry = {
+            "lakefile": "lean",
+            "test_modules": ["Consumer.Tests"],
+            "build_modules": ["Consumer.All"],
+            "executables": {"consumer_check": "Consumer.Check"},
+        }
+        sync_released.validate_skeleton(entry, self.repo)
+
+        entry["executables"]["consumer_check"] = "Consumer.Other"
+        with self.assertRaisesRegex(RuntimeError, "must define executable"):
+            sync_released.validate_skeleton(entry, self.repo)
+
+    def test_release_skeleton_requires_declared_lake_format(self) -> None:
+        (self.repo / "lakefile.lean").write_text("import Lake\n", encoding="utf-8")
+        with self.assertRaisesRegex(RuntimeError, "lakefile.toml"):
+            sync_released.validate_skeleton({"lakefile": "toml"}, self.repo)
+
     def test_manifest_uses_exact_external_commit(self) -> None:
         manifest = {
             "version": "1.1.0",
@@ -83,6 +148,47 @@ class SyncReleasedTests(unittest.TestCase):
         (self.repo / "lean-toolchain").unlink()
         with self.assertRaisesRegex(RuntimeError, "no root lean-toolchain"):
             sync_released.rewrite_toolchains(self.repo)
+
+    def test_failed_publication_persists_already_pushed_heads(self) -> None:
+        manifest = self.repo / "released.yml"
+        manifest.write_text(
+            "repos:\n"
+            "  - repo: leanprover/first\n"
+            "  - repo: leanprover/second\n",
+            encoding="utf-8",
+        )
+        baseline = self.repo / "baseline.json"
+        baseline.write_text(
+            json.dumps({"first": "old-first", "second": "old-second"}),
+            encoding="utf-8",
+        )
+
+        def publish(entry, _source_sha, _token, _dry_run, synced,
+                    _baseline, _force, _dep_owner, _pins):
+            if entry["repo"].endswith("/first"):
+                synced["first"] = "new-first"
+                return True
+            raise RuntimeError("second mirror failed")
+
+        argv = [
+            "sync_released.py",
+            "--token",
+            "secret-token",
+            "--baseline",
+            str(baseline),
+        ]
+        with (
+            patch.object(sync_released, "MANIFEST", manifest),
+            patch.object(sync_released, "external_pins", return_value={}),
+            patch.object(sync_released, "run", return_value="source-sha"),
+            patch.object(sync_released, "sync_repo", side_effect=publish),
+            patch("sys.argv", argv),
+        ):
+            self.assertEqual(sync_released.main(), 1)
+
+        advanced = json.loads(baseline.read_text(encoding="utf-8"))
+        self.assertEqual(advanced["first"], "new-first")
+        self.assertEqual(advanced["second"], "old-second")
 
 
 if __name__ == "__main__":

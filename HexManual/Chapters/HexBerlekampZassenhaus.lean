@@ -38,9 +38,7 @@ recombination.
 # Direct integer coordinates
 
 Let `f` have leading coefficient `c`. The finite-field target is the
-monic unit multiple
-
-The target is `c⁻¹ f mod p`.
+monic unit multiple `c⁻¹ f mod p`.
 
 {name}`Hex.ZPoly.monicTarget` is its canonical integer lift modulo
 `p^a`. This multiplication by a unit in `𝔽_p` does not change the
@@ -72,9 +70,8 @@ starting that level.
 
 For larger modular factorizations, Hex uses the recombination method
 of Belabas, van Hoeij, Klüners, and Steel. For a lifted local factor
-`g`, form its combined logarithmic derivative (CLD)
-
-It is `Φ(g) = f · g' / g mod p^a`.
+`g`, form its combined logarithmic derivative (CLD),
+`Φ(g) = f · g' / g mod p^a`.
 
 The identity `Φ(gh) = Φ(g) + Φ(h)` changes multiplication of selected
 factors into addition of coefficient vectors. These vectors form the

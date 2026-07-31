@@ -72,7 +72,7 @@ meta structure Extension where
   goalIrred? : MVarId → Tactic.TacticM ExtensionResult
 
 /-- Interface version expected by the tactic driver. -/
-meta def Extension.abiVersion : Nat := 1
+meta def Extension.abiVersion : Nat := 2
 
 /-- Well-known extension constants, checked in order. Downstream libraries
 declare a `public meta def` of type `Extension` under one of these names;

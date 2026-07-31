@@ -24,6 +24,10 @@
 # `test_modules` lists verification-only modules copied with the source but
 # intentionally absent from the public umbrella; released CI builds them via a
 # non-public `lean_lib` target.
+# `build_modules` lists complete development umbrellas that the released Lake
+# skeleton must build separately from the curated public umbrella.
+# `executables` maps an unmanaged released executable name to its mathematical
+# root module. The sync refuses to publish when the skeleton is stale.
 # `pins` lists the upstream repos whose git rev is rewritten in this repo's root
 # lakefile (matched by their github URL); `lakefile` is that file's format.
 #
@@ -388,6 +392,7 @@ repos:
 
   - repo: leanprover/hex-lll
     lib: HexLLL
+    executables: {hexlll_external_reduction: HexLLL.ExternalReduction}
     umbrella: true
     spec: hex-lll
     bench: true
@@ -411,6 +416,7 @@ repos:
   - repo: leanprover/hex-berlekamp-zassenhaus
     lib: HexBerlekampZassenhaus
     test_modules: [HexBerlekampZassenhaus.FactorTacticTests]
+    build_modules: [HexBerlekampZassenhaus.All]
     umbrella: true
     spec: hex-berlekamp-zassenhaus
     bench: true
@@ -436,6 +442,7 @@ repos:
     test_modules:
       - HexBerlekampZassenhausMathlib.FactorPolyTests
       - HexBerlekampZassenhausMathlib.IrreducibilityTests
+    build_modules: [HexBerlekampZassenhausMathlib.All]
     umbrella: true
     spec: hex-berlekamp-zassenhaus-mathlib
     bench: false

@@ -17,7 +17,7 @@ Executable class-count semantics for the BHKS equivalence-class indicators.
 
 The executable `bhksEquivalenceClassIndicators` array has size
 equal to the RREF signature partition (`bhksEquivalenceClassIndicators_size_eq`),
-and; given the cut inclusion `W ⊆ L'` (`CutProjectionHypotheses`); at least
+and, given the cut inclusion `W ⊆ L'` (`CutProjectionHypotheses`), at least
 one class per true-support-equivalence class
 (`supportPartitionByMinColumn_length_le_bhksEquivalenceClassIndicators_size`).
 No reverse `L' = W` separation is consumed.

@@ -153,11 +153,63 @@ small-prime irreducibility and multi-prime degree obstructions. The
 factorization and certificate generators are not trusted: only the
 small checkers and their Lean proofs are part of the logical argument.
 
-The ordinary tactics accept closed expressions built from variables,
-constants, numerals, addition, subtraction, multiplication, negation,
-and natural powers. Named definitions may be unfolded within a fixed
-fuel limit. Unsupported syntax or an unavailable certificate produces
-an elaboration error rather than an unproved term.
+The generated proofs use only Lean and Mathlib's documented
+foundations:
+
+```lean (name := axiomsCheck)
+#print axioms sqrt2_irred
+```
+```leanOutput axiomsCheck
+'sqrt2_irred' depends on axioms: [propext, Classical.choice, Quot.sound]
+```
+
+# Coverage and failure messages
+%%%
+tag := "factor-tactics-coverage"
+%%%
+
+Every input must be a closed term. A polynomial mentioning a local
+hypothesis or metavariable is rejected. Executable `FpPoly` and
+`ZPoly` inputs must also be definitionally transparent, so compiled
+evaluation and kernel checking can both see their coefficients.
+
+Mathlib `Polynomial` inputs are parsed from `X`, `Polynomial.C`,
+numerals, addition, subtraction, multiplication, negation, and powers
+with literal natural exponents. Named definitions are unfolded within
+a fixed fuel limit. Other constructors, such as a raw
+`Polynomial.monomial` application, receive an unsupported-syntax
+error even when the term is closed.
+
+For `FpPoly p`, every closed input at a literal prime modulus inside
+the `ZMod64` bounds is covered, subject to the Rabin-certificate replay
+budget
+
+`(degree + 1) · p ≤ 2²⁶`.
+
+The budget is checked once for each distinct factor. An over-budget
+input is rejected during elaboration instead of emitting a proof that
+would be too expensive to check. A composite modulus is rejected with
+a message saying that the modulus is not prime.
+
+Integer factor search is total, but the plain tactics still need a
+small certificate for each irreducible factor. They recognize:
+
+* prime constants and primitive linear polynomials;
+* irreducibility after reduction at a prime below `512`;
+* Eisenstein's criterion after shifts `0, ±1, ±2, ±3`, with witness
+  primes at most `128`;
+* multi-prime degree obstructions using primes from `3` through `71`.
+
+These bounded searches do not cover every irreducible polynomial.
+Balanced Swinnerton-Dyer examples can be reducible at every candidate
+prime, fail all of the small Eisenstein shifts, and retain a possible
+proper factor degree in every modular factorization. The plain tactics
+then report the factor they could not certify and point to the
+kernel-evaluated forms. They never weaken the requested statement.
+
+Zero polynomials and units receive targeted messages rather than false
+irreducibility proofs. A reducible input to `irreducibility` reports
+the factor count found by `factor_poly`.
 
 # Kernel-evaluated fallbacks
 %%%
@@ -168,14 +220,16 @@ tag := "factor-tactics-kernel"
 certificate forms. If no compact certificate is available, they may
 ask the kernel to evaluate the decidable irreducibility procedure.
 This can handle balanced examples outside the certificate languages,
-but it is intentionally restricted to small dense polynomials because
-kernel evaluation is much slower than compiled search.
+but a dense-size budget of `13` rejects larger inputs because kernel
+evaluation is much slower than compiled search.
 
 The fallback also requires the complete executable definitions to be
-visible in the calling module. It cannot evaluate the native LLL
-function used by lattice recombination. For routine proofs, the plain
-forms are preferable: they provide smaller proof terms, clearer
-failure messages, and predictable checking cost.
+visible in the calling module. A caller using Lean's `module` system
+must `import all` of that executable closure, as demonstrated by
+`HexBerlekampZassenhausMathlib.FactorPolyTests`. The fallback cannot
+evaluate the native LLL function used by lattice recombination. For
+routine proofs, the plain forms are preferable: they provide smaller
+proof terms, clearer failure messages, and predictable checking cost.
 
 # Mathematical algorithms
 

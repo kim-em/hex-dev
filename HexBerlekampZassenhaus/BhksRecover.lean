@@ -193,7 +193,7 @@ already ran, adding roughly 1.5–2× to the step that dominates irreducible
 inputs. This
 def shares that pass: `bhksRecoverClassifiedWithAllOnes_fst` pins `.1` to
 `bhksRecoverClassified` and `bhksRecoverClassifiedWithAllOnes_snd` (in
-`FactorEntryPoints`) pins `.2` to `bhksSingleAllOnesPartition`, so the loop reads
+`Factorization`) pins `.2` to `bhksSingleAllOnesPartition`, so the loop reads
 both off one lattice build with no change to either public surface.
 -/
 private def bhksRecoverClassifiedWithAllOnes (f : ZPoly) (d : LiftData) :

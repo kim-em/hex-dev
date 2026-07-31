@@ -54,7 +54,7 @@ def main (args : List String) : IO UInt32 := do
         IO.eprintln "externalReducerActive = false after a successful loadExternalReducer"
         return 1
   | _ =>
-      IO.eprintln "usage: hexlll_external reducer_probe absent | present <path>"
+      IO.eprintln "usage: hexlll_external_reduction absent | present <path>"
       return 2
 
 end ExternalReduction

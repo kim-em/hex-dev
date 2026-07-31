@@ -234,7 +234,7 @@ private def classicalGuardSextic : ZPoly := DensePoly.ofCoeffs #[720, -1764, 162
   = some exhaustiveNonMonicQuadraticGuard
 
 -- the traced variant's result agrees with `factorClassical`, and reports the
--- classical tier, no decline, and a small (size-ordered) candidate count.
+-- classical method, no decline, and a small (size-ordered) candidate count.
 #guard (factorClassicalTraced classicalGuardCubic).1 = factorClassical classicalGuardCubic
 #guard (factorClassicalTraced classicalGuardCubic).2.method = .classical
 #guard (factorClassicalTraced classicalGuardCubic).2.classicalDecline = none
@@ -460,7 +460,8 @@ private def latticeCoreLoop
         -- Build the CLD lattice once per step and read both the classification
         -- and the single-all-ones certificate off it (#8543): the `.degenerate`
         -- arm below no longer re-runs `bhksSingleAllOnesPartition`, which would
-        -- rebuild the whole Hensel-lift/CLD/LLL/indicator pipeline.
+        -- repeat Hensel lifting, the logarithmic-derivative lattice reduction,
+        -- and support-indicator extraction.
         let step := bhksRecoverClassifiedWithAllOnes core (ZPoly.directLiftData core k primeData)
         match step.1 with
         | .success factors =>
@@ -808,9 +809,9 @@ declines). The lattice method is correct but slower because it runs to the preci
 cap, so the function runs the classical method first and falls back to the
 lattice only when classical declines (budget exhausted, i.e. `r` too large), then
 to trial division when no admissible prime exists. This dominates an up-front
-`r`-estimate that could mis-method a reducible high-`r` input to the slow lattice.
+`r`-estimate that could send a reducible high-`r` input to the slow lattice method.
 
-Returns the chosen `Factorization` and a `DirectFactorTrace` whose `tier`
+Returns the chosen `Factorization` and a `DirectFactorTrace` whose `method`
 records which method answered.  A classical decline retains its direct prime
 plan, and the lattice fallback consumes that plan without repeating modular
 factorization.

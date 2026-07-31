@@ -26,22 +26,16 @@ The library also supplies Rabin's irreducibility test and a
 distinct-degree factorization.
 
 For a monic square-free polynomial `f` of degree `n`, Berlekamp's
-method studies the Frobenius map
-
-The map sends `h` to `h^p mod f`.
-
-on the `n`-dimensional vector space `𝔽_p[X] / (f)`. In the basis
+method studies the Frobenius map `h ↦ h^p mod f` on the
+`n`-dimensional vector space `𝔽_p[X] / (f)`. In the basis
 `1, X, ..., X^(n-1)`, subtracting the identity gives the
 Berlekamp matrix `Q_f - I`.
 
 # Fixed points and factors
 
 The kernel of `Q_f - I` consists of residue classes satisfying
-`h^p = h`. If
-
-Write the factorization as `f = f₁ ··· fᵣ`.
-
-is a product of distinct monic irreducibles, the Chinese remainder
+`h^p = h`. If `f = f₁ ··· fᵣ` is a product of distinct monic
+irreducibles, the Chinese remainder
 theorem identifies that kernel with `𝔽_p^r`: a fixed residue is
 constant on each irreducible factor. Its dimension is therefore the
 number of irreducible factors.
@@ -67,13 +61,7 @@ the returned factors.
 
 Rabin's criterion avoids constructing a complete factorization. A
 monic polynomial `f` of degree `n` over `𝔽_p` is irreducible exactly
-when
-
-The first condition is `f ∣ X^(p^n) - X`.
-
-and, for every prime divisor `q` of `n`,
-
-The remaining conditions are
+when `f ∣ X^(p^n) - X` and, for every prime divisor `q` of `n`,
 `gcd(f, X^(p^(n/q)) - X) = 1`.
 
 The first condition says that all roots of `f` lie in `𝔽_(p^n)`.

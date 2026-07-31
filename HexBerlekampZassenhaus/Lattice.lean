@@ -371,7 +371,7 @@ def cldQuotientMod (f g : ZPoly) (p a : Nat) : ZPoly :=
   -- divisor of positive degree, `cldQuotientModWord?` computes the identical
   -- quotient over `WordMod` (single-reduction Montgomery). The byte-identical
   -- correspondence is `cldQuotientModWord?_eq`; `cldQuotientMod_eq_spec` proves
-  -- this applyExtensions equals `cldQuotientModBignum` for every input.
+  -- the selected implementation equals `cldQuotientModBignum` for every input.
   match powLtWord? p a with
   | some m =>
       if (UInt64.ofNat m) % 2 = 1 ∧ 1 < m ∧

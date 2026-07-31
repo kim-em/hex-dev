@@ -92,8 +92,8 @@ The proof modules separate:
 - the short-vector theorem.
 
 `HexLLL.Reduction` is the supported reduction surface.
-`HexLLL.ReductionInvariant` contains the state invariant used by its
-proof.
+`HexLLLMathlib.ReductionInvariant` contains the state invariant used by the
+Mathlib proof of that surface.
 
 ## Certified external reduction
 
@@ -150,7 +150,7 @@ lattice argument.
 The root library always contains the exact Lean implementation.
 Executables that use the optional external reducer must link the FFI
 object listed in `lakefile.lean`. The release includes the
-`hexlll_provider_probe` executable, which checks both the absent case
+`hexlll_external_reduction` executable, which checks both the absent case
 and explicit loading of a shared library.
 
 ## Verification
@@ -162,7 +162,8 @@ Changes must pass:
 - exact-reduction and certified-external-reduction tests;
 - native linkage checks with and without an installed external
   reducer;
-- benchmark verification and the declared LLL input families.
+- benchmark verification across the six input families listed in
+  `HexLLL/PERFORMANCE.md`.
 
 Performance reports state the source revision, Lean toolchain,
 machine, CPU placement, input corpus, repetitions, timeout, and

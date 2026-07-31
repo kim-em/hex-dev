@@ -75,7 +75,7 @@ while `Hex.isLLLReduced` quantifies the rational Lovász condition
 over every adjacent pair `(i, i+1)`. Under `s.Valid` and `s.b.independent`,
 the two formulations agree at pair `(k - 1, k)`: the integer scaled
 Gram-Schmidt data carried by `s` faithfully encodes the rational Lovász
-predicate at that position. This correspondences the loop's executable check to the
+predicate at that position. This relates the loop's executable check to the
 specification side of `isLLLReduced` so the loop-invariant proof can read off
 "the loop advances ⇒ Lovász holds at this pair." -/
 theorem lovasz_check_iff_isLLLReduced_pair

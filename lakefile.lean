@@ -215,7 +215,7 @@ lean_lib HexRealRootsMathlib where
 @[default_target]
 lean_lib HexRCF where
 
-lean_exe hexlll_provider_probe where
+lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction
 
 -- Multi-file bench drivers: their modules live under `bench/` and are owned by

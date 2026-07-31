@@ -204,8 +204,8 @@ theorem squareFree_factors_squareFree (hp : Hex.Nat.Prime p) (f : FpPoly p) :
 
 /-- Every factor emitted by {name}`Hex.FpPoly.squareFreeDecomposition` is
 square-free, witnessed by the normalized gcd with
-its derivative reducing to `1`. The provider instantiation is closed internally,
-so no provider arguments appear in the statement. -/
+its derivative reducing to `1`. All facts about intermediate Yun states are
+proved internally, so the statement needs no auxiliary hypotheses. -/
 theorem squareFreeDecomposition_factors_squareFree (hp : Hex.Nat.Prime p) (f : FpPoly p) :
     let d := squareFreeDecomposition hp f
     ∀ sf ∈ d.factors,
@@ -231,16 +231,16 @@ theorem squareFreeDecomposition_multiplicity_pos (hp : Hex.Nat.Prime p) (f : FpP
   exact hraw sf (by simpa using hsf)
 
 /-- Public reconstruction wrapper: the emitted unit and weighted factor product
-recover the input. The provider instantiation is closed internally, so no
-provider arguments appear in the statement. -/
+recover the input. All facts about intermediate Yun states are proved internally,
+so the statement needs no auxiliary hypotheses. -/
 theorem squareFreeDecomposition_weightedProduct (hp : Hex.Nat.Prime p) (f : FpPoly p) :
     let d := squareFreeDecomposition hp f
     DensePoly.C d.unit * weightedProduct d.factors = f :=
   squareFree_weightedProduct hp f
 
 /-- Public coprimality wrapper: the emitted factors are pairwise coprime, witnessed
-by the normalized gcd reducing to `1`. The provider instantiation is closed
-internally, so no provider arguments appear in the statement. -/
+by the normalized gcd reducing to `1`. All facts about intermediate Yun states
+are proved internally, so the statement needs no auxiliary hypotheses. -/
 theorem squareFreeDecomposition_pairwise_coprime (hp : Hex.Nat.Prime p) (f : FpPoly p) :
     let d := squareFreeDecomposition hp f
     d.factors.Pairwise

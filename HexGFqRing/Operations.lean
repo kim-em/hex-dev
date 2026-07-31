@@ -996,8 +996,9 @@ private theorem linearPow_double_add_one {f : FpPoly p} {hf : 0 < FpPoly.degree 
   rw [linearPow_succ, linearPow_double]
   exact linearPow_mul_comm (linearPow (x * x) n) x
 
-/-- {name}`pow_go_eq_acc_mul_linearPow` correspondences the executable accumulator loop to the
-proof-only recurrence used to prove square-and-multiply exponentiation correct. -/
+/-- {name}`pow_go_eq_acc_mul_linearPow` identifies the executable accumulator
+loop with the proof-only recurrence used to prove square-and-multiply
+exponentiation correct. -/
 private theorem pow_go_eq_acc_mul_linearPow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (acc base : PolyQuotient f hf) (k : Nat) :

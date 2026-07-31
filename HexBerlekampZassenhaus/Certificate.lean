@@ -309,7 +309,8 @@ def checkForPolynomialLinear (f : ZPoly) (d : PrimeFactorData) : Bool :=
 /--
 `checkCertAtFactorLinear` implies `checkCertAtFactor` once the block's prime
 is genuinely prime: the two differ only in the nested pow-chain replay, which
-`Berlekamp.checkIrreducibilityCertificate_of_linearIncremental` correspondences.
+`Berlekamp.checkIrreducibilityCertificate_of_linearIncremental` identifies
+with the committed checker.
 -/
 theorem checkCertAtFactor_of_linear
     (d : PrimeFactorData) (degree : Nat) (factor : @FpPoly d.p d.bounds)
@@ -457,8 +458,8 @@ factor of that degree.
 
 Returns `none` if some candidate degree cannot be obstructed by any of the
 supplied blocks. That happens both when `f` really does have an integer factor
-of that degree, and; a genuine limitation of this per-prime degree-sum
-language; when a degree is un-obstructable because every prime's factorization
+of that degree and, as a genuine limitation of this per-prime degree-sum
+criterion, when a degree cannot be obstructed because every prime's factorization
 admits a subset summing to it. The latter rules out the balanced half-degree
 cases (e.g. Swinnerton-Dyer `√2+√3+√5` and `Φ₁₅`, whose `deg/2` obstruction is
 never available): the checker cannot certify those irreducibles, so the

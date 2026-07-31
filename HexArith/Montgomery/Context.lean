@@ -10,7 +10,6 @@ public import HexArith.Montgomery.Redc
 
 public section
 set_option backward.proofsInPublic true
-set_option maxHeartbeats 1000000
 
 /-!
 User-facing Montgomery modular arithmetic for `HexArith`.

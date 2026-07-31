@@ -27,7 +27,7 @@ namespace HexLLLMathlib
 /-! # Soundness of the integer reducedness checker
 
 `Hex.lllReduced b δ η` accepts iff three integer-only inequalities hold over
-`Hex.GramSchmidt.Int.data b`. This section correspondences those integer inequalities
+`Hex.GramSchmidt.Int.data b`. This section relates those integer inequalities
 to the rational predicate `Hex.isLLLReduced b δ η` and to `b.independent`, the
 last theorem (`Hex.lllReduced_sound`) feeding the combined
 `certCheck_sound` theorem for certified external selection. -/
