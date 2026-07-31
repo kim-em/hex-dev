@@ -1,164 +1,160 @@
 # Polynomial Factorization Performance
 
-This report is the current cross-system performance snapshot for integer
-polynomial factorization. It intentionally describes the current implementation
-rather than preserving a history of earlier Hex routes.
+This is the current cross-system performance snapshot for the supported
+integer polynomial factorization function. It compares the one public Hex
+implementation with optimized external libraries and two verified Isabelle
+implementations.
 
 ## Measurement
 
-- Hex revision: `081b7a679e2e0fb218068a14afed5b3102a3266e`
-- Hex measurement: 2026-07-31
-- External measurements: 2026-07-28; unchanged because this work changes only
-  Hex
+- Hex source revision:
+  `75291ae2fe6c58d95ba73dff9e5d2720df11b3d5`, with a clean worktree
+- Hex executable SHA-256:
+  `f1b2c4262493cc35c68b2c433bba3803d31f6a27631000f52a6ee295721a6fe4`
+- Hex toolchain: `leanprover/lean4:v4.32.2`
+- Measurement date: 2026-07-31
+- External measurements: 2026-07-28, retained because their inputs did not
+  change
 - Host: `chungus2`, AMD EPYC 9455, Linux x86-64
-- Lean: `leanprover/lean4:v4.32.0-rc1`
 - External systems: python-flint 0.9.0; PARI/GP 2.17.3 through cypari2
   2.2.4; NTL 11.6.0; Isabelle2025-2 with AFP 2026-05-29
-- CPU placement: every timing command pinned with `taskset -c 0`
+- CPU placement: harness and service pinned to CPU 0
 - Corpus: 392 rows, SHA-256
   `619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`
 - Protocol: persistent warm process, median of five when the first call is
   below one second, otherwise one call; ten-second per-call cutoff; no early
   termination
 
-The fresh Hex record is
-[`hexbz-factor-sweep-081b7a67-chungus2.json`](bench-results/hexbz-factor-sweep-081b7a67-chungus2.json).
+The durable Hex record is
+[`hexbz-factor-sweep-75291ae2-chungus2.json`](bench-results/hexbz-factor-sweep-75291ae2-chungus2.json).
 Its SHA-256 is
-`f4747b284a11b17b59b12faa1a93dd002387f671b53345f03b6034112dcbd9b6`.
-The record's `git_dirty` marker is true because report, plot, and generated
-evidence files were already being refreshed around the committed source
-revision. No Lean source or measured executable input differed from
-`081b7a67`; the executable was built from that source commit.
+`5d8b08225a4f2a0c8288d9f536303193a2f54b312a1cbae57ffcac23cd6295bd`.
+The record includes the full source revision, clean-worktree marker,
+toolchain, corpus hash, host, repetition rule, cutoff, and measured protocol
+overhead.
 
 ## Current result
 
-| System | Solved | Unsolved | Median | p90 | Slowest solved |
+| System | Answered | Timed out | Median | p90 | Slowest answer |
 |---|---:|---:|---:|---:|---:|
-| Hex factor | 375 | 17 | 338.141 µs | 6.995 ms | 8.130 s |
+| Hex factorization | 375 | 17 | 352.262 µs | 7.107 ms | 8.727 s |
 | FLINT | 391 | 1 | 66.850 µs | 1.184 ms | 1.228 s |
 | PARI/GP | 391 | 1 | 99.958 µs | 1.254 ms | 823.201 ms |
 | NTL | 391 | 1 | 135.631 µs | 2.714 ms | 1.919 s |
 | Verified Isabelle BZ | 371 | 21 | 441.134 µs | 5.128 ms | 8.363 s |
 | Verified Isabelle LLL | 314 | 78 | 6.109 ms | 1.219 s | 9.528 s |
 
-Every pair of systems that answered a corpus row agreed on the factor-degree
-multiset. Hex also answers `hoeij_M12_f132` in 1.653 s, where every retained
-external comparator times out.
+Every pair of systems that answered agreed on the multiset of factor degrees.
+Hex also answers `hoeij_M12_f132` in 1.652 seconds, while all retained
+external comparators time out.
 
-The important aggregate conclusion is mixed:
+The result is mixed:
 
-- Hex is ahead of verified Isabelle BZ on the matched corpus overall.
+- Hex is faster than verified Isabelle BZ on the matched corpus overall.
 - FLINT, PARI/GP, and NTL remain substantially faster.
-- Hex's long tail remains worse than its median: p90 is 6.995 ms despite the
-  338.141 µs median.
-
-### Regressions against the previous public record
-
-The direct rewrite improves coverage and the median, but it does not dominate
-the previous implementation on every row:
-
-| Measurement | Previous `d580b121` | Current `081b7a67` | Change |
-|---|---:|---:|---:|
-| all-solved p90 | 4.052 ms | 6.995 ms | 1.73× slower |
-| `sd5` | 40.496 ms | 108.855 ms | 2.69× slower |
-| `xpow120_minus1` | 152.116 ms | 514.891 ms | 3.38× slower |
-
-These are current optimization targets, not hidden historical routes: the
-comparison is included so the architectural simplification is evaluated with
-its actual long-tail cost.
+- Hex has a pronounced long tail despite its sub-millisecond median.
 
 ## Paired comparisons
 
-To suppress persistent-process noise, a pair is eligible only when both
-measurements are at least ten times their own measured protocol overhead.
-The Hex protocol floor is 19.599 µs.
+A pair is eligible only when both measurements exceed ten times their own
+service's measured protocol overhead. The Hex protocol floor is 20.120
+microseconds.
 
-| Pair, Hex / comparator | Eligible | Median ratio | p10–p90 | Hex faster | Comparator faster |
+| Hex / comparator | Eligible pairs | Median ratio | p10 to p90 | Hex wins | Comparator wins |
 |---|---:|---:|---:|---:|---:|
-| FLINT | 64 | 11.350× | 3.773×–92.284× | 0 | 64 |
-| PARI/GP | 81 | 7.419× | 1.905×–79.688× | 0 | 81 |
-| NTL | 170 | 4.236× | 0.957×–17.177× | 17 | 153 |
-| Verified Isabelle BZ | 219 | 0.715× | 0.442×–2.516× | 140 | 79 |
+| FLINT | 64 | 11.680× | 3.893× to 91.139× | 0 | 64 |
+| PARI/GP | 81 | 7.650× | 1.932× to 81.228× | 0 | 81 |
+| NTL | 170 | 4.360× | 1.045× to 17.732× | 17 | 153 |
+| Verified Isabelle BZ | 218 | 0.734× | 0.460× to 2.552× | 137 | 81 |
 
-A ratio below one favors Hex. The wide percentile bands mean none of these
-comparisons is a uniform ordering over all polynomial families.
+A ratio below one favors Hex. The broad percentile bands show that no row of
+this table is a uniform ordering across polynomial families.
 
-## Relative to Isabelle BZ by family
+## Relative to verified Isabelle BZ by family
 
-| Family | Eligible | Median Hex / Isabelle | Hex–Isabelle wins |
+| Family | Eligible pairs | Median Hex / Isabelle | Hex wins |
 |---|---:|---:|---:|
-| Chebyshev | 9 | 0.450× | 9–0 |
-| Legendre | 13 | 0.560× | 12–1 |
-| Random products | 26 | 0.553× | 26–0 |
-| Conway | 91 | 0.682× | 52–39 |
-| Laguerre | 13 | 0.732× | 13–0 |
-| SD products | 7 | 0.774× | 4–3 |
-| Cyclotomic products | 18 | 1.019× | 9–9 |
-| Cyclotomic | 24 | 1.091× | 11–13 |
-| Wilkinson | 12 | 1.328× | 1–11 |
-| Swinnerton–Dyer | 6 | 2.796× | 3–3 |
+| Chebyshev | 9 | 0.469× | 9 |
+| Conway | 90 | 0.693× | 50 |
+| Cyclotomic | 24 | 1.112× | 10 |
+| Cyclotomic products | 18 | 1.046× | 9 |
+| Laguerre | 13 | 0.757× | 13 |
+| Legendre | 13 | 0.576× | 12 |
+| Random products | 26 | 0.555× | 26 |
+| Swinnerton-Dyer products | 7 | 0.798× | 4 |
+| Swinnerton-Dyer | 6 | 2.772× | 3 |
+| Wilkinson | 12 | 1.369× | 1 |
 
-The Chebyshev and Legendre goal is therefore achieved: they are now strong Hex
-families rather than the principal deficit. The next useful optimization
-frontier is Swinnerton–Dyer, wide cyclotomic products, and Wilkinson.
+Hoeij-Zimmermann has no common answered row with verified Isabelle BZ.
+Chebyshev and Legendre are now strong Hex families. The most useful next
+optimization targets are plain Swinnerton-Dyer, Wilkinson, parts of the
+cyclotomic families, and the Hoeij-Zimmermann coverage gap.
 
-Representative timings make the boundary concrete:
+Representative timings show the family differences:
 
 | Row | Hex | Isabelle BZ |
 |---|---:|---:|
-| `chebyshev_T20` | 580.650 µs | 1.316 ms |
-| `chebyshev_U24` | 662.522 µs | 1.472 ms |
-| `legendre_P30` | 8.134 ms | 10.717 ms |
-| `legendre_P38` | 4.568 ms | 6.743 ms |
-| `sd5` | 108.855 ms | 22.827 ms |
-| `sd5_shift1` | 96.471 ms | 14.875 ms |
-| `sd4_x_sd4shift1` | 24.799 ms | 10.683 ms |
-| `xpow120_minus1` | 514.891 ms | 169.354 ms |
-| `cyclo_phi64_x_phi105` | 84.820 ms | 38.511 ms |
+| `chebyshev_T20` | 616.595 µs | 1.316 ms |
+| `chebyshev_U24` | 674.682 µs | 1.472 ms |
+| `legendre_P30` | 8.391 ms | 10.717 ms |
+| `legendre_P38` | 4.755 ms | 6.743 ms |
+| `sd5` | 107.167 ms | 22.827 ms |
+| `sd5_shift1` | 96.758 ms | 14.875 ms |
+| `sd4_x_sd4shift1` | 24.875 ms | 10.683 ms |
+| `xpow120_minus1` | 523.364 ms | 169.354 ms |
+| `cyclo_phi64_x_phi105` | 87.946 ms | 38.511 ms |
 
-## What is being measured
+## What Hex computes
 
-There is one production direct-coordinate architecture:
+The public function uses one direct-coordinate design:
 
 1. normalize the polynomial once;
-2. select and retain one direct modular prime plan;
-3. Hensel-lift and run bounded head-forced classical recombination;
-4. on a typed decline, pass that same modular plan to direct-coordinate CLD;
-5. use exact trial division only as the total backstop.
+2. select and retain one modular prime plan in the original coordinates;
+3. Hensel-lift and run bounded, size-ordered classical recombination;
+4. when that search reaches its bound, pass the same modular plan to the
+   direct-coordinate combined-logarithmic-derivative lattice method;
+5. use exact trial division only when no suitable modular prime exists.
 
-There is no production monic-coordinate recombination fallback. The direct
-classical iterator carries degree and trailing residue down the subset tree.
-Before constructing a polynomial candidate, it proves and checks that the
-raw trailing coefficient divides
-`leadingCoeff(core) · target(0)`. The Mathlib proof relates the cached iterator
-to the extensional support enumeration and proves that every genuine
-irreducible support survives the filter.
+The classical iterator carries degree and trailing-residue information down
+the subset tree. Before constructing a polynomial candidate, it checks the
+necessary divisibility of the raw trailing coefficient. The Mathlib proof
+relates this cached iterator to the extensional support enumeration and proves
+that every genuine irreducible support survives the filter.
 
-The remaining SD5 cost is not accidental duplicate dispatch. Its selected
-modular image has sixteen factors, and proving irreducibility still visits
-32,768 head-forced supports. SD6-class inputs also show comparable
-classical and CLD runtimes, so a width-only route switch does not solve the
-long tail. Further work should separately measure:
+The remaining Swinnerton-Dyer cost is not duplicate work between coordinate
+systems. For example, the selected modular image of `sd5` has sixteen factors,
+and the irreducibility argument still examines 32,768 head-forced supports.
+Useful future measurements should separate:
 
-- modular planning, Hensel lifting, filter survivors, candidate construction,
-  exact division, and CLD lattice reduction;
+- modular prime selection, Hensel lifting, filter survivors, candidate
+  construction, exact division, and lattice reduction;
 - allocation and coefficient growth in the direct Hensel basis;
-- CLD column count, lattice dimension, reduction iterations, and recovery
-  precision.
+- logarithmic-derivative column count, lattice dimension, reduction
+  iterations, and recovery precision.
 
-Those counters are needed before and after any proposed SD/cyclotomic
-optimization; total wall-clock alone cannot distinguish a better algorithm
-from moving the same cost between tiers.
+These counters are needed before and after a proposed Swinnerton-Dyer or
+cyclotomic optimization. Total wall time alone cannot distinguish a better
+algorithm from a redistribution of the same work.
+
+## Coverage and long tail
+
+The 17 Hex timeouts are `cyclo_phi1031`; `sd7`, `sd6_shift1`, and
+`sd6_shift5`; `sd5_x_sd5shift1`, `sd6_x_sd6shift1`, `sd6_x_phi13`, and
+`sd6_x_phi105`; and nine of the ten Hoeij-Zimmermann rows:
+`hoeij_P7`, `hoeij_F190`, `hoeij_F192`, `hoeij_F256`, `hoeij_F351`,
+`hoeij_F630`, `hoeij_S7`, `hoeij_S8`, and `hoeij_S9`.
+
+This coverage gap and the large difference from FLINT, PARI/GP, and NTL are
+the main performance limitations after release.
 
 ## Six decision-useful graphs
 
 1. [Balanced combined cactus plot](figures/hexbz-cactus-combined.svg)
 2. [Chebyshev runtime versus degree](figures/hexbz-runtime-degree-chebyshev.svg)
 3. [Legendre runtime versus degree](figures/hexbz-runtime-degree-legendre.svg)
-4. [Swinnerton–Dyer runtime versus degree](figures/hexbz-runtime-degree-swinnerton-dyer.svg)
+4. [Swinnerton-Dyer runtime versus degree](figures/hexbz-runtime-degree-swinnerton-dyer.svg)
 5. [Cyclotomic-product runtime versus degree](figures/hexbz-runtime-degree-cyclotomic-products.svg)
-6. [Hoeij–Zimmermann runtime versus degree](figures/hexbz-runtime-degree-hoeij-zimmermann.svg)
+6. [Hoeij-Zimmermann runtime versus degree](figures/hexbz-runtime-degree-hoeij-zimmermann.svg)
 
-The default plot generation deliberately excludes superseded Hex diagnostic
-routes. It shows the current public Hex implementation against FLINT, PARI/GP,
-NTL, Isabelle BZ, and Isabelle LLL.
+The figures use the current public Hex record and the unchanged external
+records. Superseded diagnostic implementations are not included.
