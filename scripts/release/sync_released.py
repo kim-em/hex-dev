@@ -223,6 +223,16 @@ def validate_skeleton(entry: dict, clone: Path) -> None:
             f"{clone}"
         )
     text = lakefile.read_text(encoding="utf-8")
+    if entry.get("precompile_modules"):
+        assignment = (
+            r"(?m)^\s*precompileModules\s*=\s*true\s*$"
+            if entry["lakefile"] == "toml"
+            else r"(?m)^\s*precompileModules\s*:=\s*true\s*$"
+        )
+        if re.search(assignment, text) is None:
+            raise RuntimeError(
+                f"released Lake file {lakefile} must precompile modules"
+            )
     for module in entry.get("test_modules", []):
         if module not in text:
             raise RuntimeError(

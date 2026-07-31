@@ -109,6 +109,8 @@ def main() -> int:
             if lib in library_names:
                 fail(f"duplicate released library {lib}")
             library_names.add(lib)
+            if not isinstance(entry.get("precompile_modules", False), bool):
+                fail(f"{repo}: precompile_modules must be a Boolean")
             test_modules = entry.get("test_modules", [])
             if (
                 not isinstance(test_modules, list)

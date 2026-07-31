@@ -178,6 +178,7 @@ repos:
 
   - repo: leanprover/hex-hensel
     lib: HexHensel
+    precompile_modules: true
     umbrella: true
     spec: hex-hensel
     bench: true
