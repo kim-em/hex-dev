@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexPolyZ.Core
+public import HexPolyZ.IntegerPolynomial
 public import HexPolyZ.Rational
 public import HexPolyZ.Decomposition
 public import HexPolyZ.Mignotte

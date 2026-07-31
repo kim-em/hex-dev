@@ -7,10 +7,10 @@ Authors: Kim Morrison
 import HexBerlekampZassenhaus
 
 /-!
-Core conformance checks for the `HexBerlekampZassenhaus` integer
-Berlekamp-Zassenhaus pipeline.
+Conformance checks for `HexBerlekampZassenhaus` integer
+Berlekamp-Zassenhaus factorization.
 
-Oracle: python-flint for the external JSONL factorization profile; core uses
+Oracle: python-flint for the external JSONL factorization profile; Lean uses
 Lean-only property and committed-fixture checks.
 Mode: `if_available`
 Covered operations:
@@ -26,7 +26,7 @@ Covered operations:
   and `checkIrreducibleCert`
 Covered properties:
 - selected good primes satisfy the executable admissibility predicate
-- normalization prefix factors and square-free core multiply back to the input
+- normalization prefix factors and square-free input multiply back to the input
 - supported recombination/factorization outputs multiply back to the target on
   committed lifted factors
 - adversarial modular split cases exercise non-trivial subset-product
@@ -368,7 +368,7 @@ private def factorizationCaseMatches (c : FactorizationCase) : Bool :=
 
 /-- A live bounded-selector counterexample. For `g = X^3 - P`, where `P` is
 the product of all 94 candidates, every candidate reduction is `X^3`.
-Thus neither direct prime planning nor the conditional lattice tier succeeds. -/
+Thus neither direct prime planning nor the conditional lattice method succeeds. -/
 private def hotPathNoPrimeCubic : ZPoly :=
   DensePoly.ofCoeffs #[-(hotPathPrimorial : Int), 0, 0, 1]
 
@@ -574,13 +574,13 @@ private def extendedCascade2 : ZPoly :=
   factorPreservesProduct swinnertonDyerSD3 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[swinnertonDyerSD3] |>.map fun coeffs => (coeffs, 1))
-#guard (factorTraced swinnertonDyerSD3).2.tier = .classical
+#guard (factorTraced swinnertonDyerSD3).2.method = .classical
 #guard
   let factors := ZPoly.factorize phi15
   factorPreservesProduct phi15 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[phi15] |>.map fun coeffs => (coeffs, 1))
-#guard (factorTraced phi15).2.tier = .classical
+#guard (factorTraced phi15).2.method = .classical
 
 #guard PrimeFactorData.degreeSum primeDataValidQuad = 2
 #guard coeffNats (PrimeFactorData.factorProduct primeDataValidQuad) = [2, 0, 1]

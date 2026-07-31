@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexPolyZMathlib.Basic
+public import HexPolyZMathlib.PolynomialEquivalence
 public import Mathlib.Analysis.Polynomial.MahlerMeasure
 public import Mathlib.NumberTheory.MahlerMeasure
 
@@ -28,7 +28,7 @@ namespace HexPolyZMathlib
 noncomputable section
 
 /-- A left fold of additions over `List.range m` equals the corresponding
-`Finset.range` sum. Bridges the executable `coeffNormSq` accumulation fold to a
+`Finset.range` sum. Correspondences the executable `coeffNormSq` accumulation fold to a
 Mathlib `Finset` sum. -/
 private theorem range_foldl_add_eq_finset_sum_nat (g : Nat → Nat) (m : Nat) :
     (List.range m).foldl (fun acc i => acc + g i) 0 = ∑ i ∈ Finset.range m, g i := by
@@ -193,7 +193,7 @@ theorem l2norm_toPolynomial_sq_eq_coeffNormSq (f : Hex.ZPoly) :
     _ = (Hex.ZPoly.coeffNormSq f : ℝ) := hnorm_sum.symm
 
 /-- The executable multiplicative binomial-coefficient fold over `List.range m`
-equals `Nat.choose n m`, the recurrence the `binom_eq_choose` bridge consumes. -/
+equals `Nat.choose n m`, the recurrence the `binom_eq_choose` correspondence consumes. -/
 private theorem foldl_binom_iter_eq_choose (n m : Nat) :
     (List.range m).foldl (fun acc i => acc * (n - i) / (i + 1)) 1 = Nat.choose n m := by
   induction m with

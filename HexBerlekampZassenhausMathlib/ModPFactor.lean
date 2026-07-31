@@ -7,10 +7,10 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhaus
-public import HexBerlekampMathlib.Basic
+public import HexBerlekampMathlib.Irreducibility
 public import HexBerlekampZassenhausMathlib.UFDPartition
-public import HexHenselMathlib.Correctness
-public import HexPolyZMathlib.Basic
+public import HexHenselMathlib.HenselLemmas
+public import HexPolyZMathlib.PolynomialEquivalence
 public import HexPolyZMathlib.Mignotte
 public import Mathlib.RingTheory.Coprime.Lemmas
 public import Mathlib.RingTheory.Polynomial.UniqueFactorization
@@ -88,6 +88,7 @@ def monicModPImage {p : Nat} [Hex.ZMod64.Bounds p] (f : Hex.FpPoly p) : Hex.FpPo
   else
     Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)⁻¹ f
 
+/-- The proof-facing and executable monic modular images are the same polynomial. -/
 theorem monicModPImage_eq_monicModularImage
     {p : Nat} [Hex.ZMod64.Bounds p] (f : Hex.FpPoly p) :
     monicModPImage f = Hex.monicModularImage f := by
@@ -121,6 +122,7 @@ theorem monicModPImage_ne_zero_of_ne_zero
     contradiction
   exact Hex.monicModularImage_ne_zero_of_ne_zero (Fact.out : Hex.Nat.Prime p) hf_ne
 
+/-- The monic modular image of a nonzero polynomial over a prime field is monic. -/
 theorem monicModPImage_monic_of_ne_zero
     {p : Nat} [Hex.ZMod64.Bounds p]
     (hprime : Hex.Nat.Prime p) {f : Hex.FpPoly p} (hf : f.isZero = false) :
@@ -193,6 +195,7 @@ theorem dvd_monicModPImage_of_dvd
     _ = f * Hex.DensePoly.C (Hex.DensePoly.leadingCoeff f)⁻¹ :=
           Hex.DensePoly.mul_comm_poly _ _
 
+/-- Coefficientwise reduction modulo `p` preserves multiplication. -/
 theorem modP_mul
     (p : Nat) [Hex.ZMod64.Bounds p] (f g : Hex.ZPoly) :
     Hex.ZPoly.modP p (f * g) = Hex.ZPoly.modP p f * Hex.ZPoly.modP p g := by
@@ -217,6 +220,7 @@ theorem modP_mul
   simp only [Hex.FpPoly.modP_liftToZ] at hmod
   exact hmod.symm
 
+/-- Integer-polynomial divisibility descends through reduction modulo `p`. -/
 theorem modP_dvd_modP_of_dvd
     (p : Nat) [Hex.ZMod64.Bounds p] {factor core : Hex.ZPoly}
     (hdvd : factor ∣ core) :
@@ -278,6 +282,7 @@ private theorem fpPoly_mul_dvd_mul
   rw [hq, hv, Hex.FpPoly.mul_assoc a q (c * v), ← Hex.FpPoly.mul_assoc q c v,
     Hex.FpPoly.mul_comm q c, Hex.FpPoly.mul_assoc c q v, ← Hex.FpPoly.mul_assoc a c (q * v)]
 
+/-- At a good prime, divisibility survives after normalizing both modular images to monic form. -/
 theorem monicModPImage_dvd_monicModularImage_of_dvd_of_goodPrime
     {core factor : Hex.ZPoly}
     (hdvd : factor ∣ core)
@@ -369,19 +374,25 @@ proof of this package.
 structure ModPSubsetPartitionHypotheses
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (admissiblePrime squareFreeReduction : Prop) : Prop where
+  /-- The cached polynomial is the reduction of the integer polynomial. -/
   fModP_eq : primeData.fModP = @Hex.ZPoly.modP primeData.p primeData.bounds core
+  /-- The selected prime satisfies the caller's admissibility condition. -/
   admissible_prime : admissiblePrime
+  /-- Reduction modulo the selected prime preserves square-freeness. -/
   square_free_reduction : squareFreeReduction
+  /-- Every indexed modular factor is irreducible. -/
   factors_irreducible :
     ∀ i : ModPFactorIndex primeData,
       Irreducible
         (@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
           (modPFactor primeData i))
+  /-- Every irreducible integer divisor has a representing modular subset. -/
   exists_subset :
     ∀ {factor : Hex.ZPoly},
       Irreducible (HexPolyZMathlib.toPolynomial factor) →
       factor ∣ core →
       ∃ S : ModPFactorSubset primeData, RepresentsIntegerFactorModP primeData factor S
+  /-- The modular subset representing an irreducible integer divisor is unique. -/
   unique_subset :
     ∀ {factor : Hex.ZPoly} {S T : ModPFactorSubset primeData},
       Irreducible (HexPolyZMathlib.toPolynomial factor) →
@@ -392,7 +403,7 @@ structure ModPSubsetPartitionHypotheses
 
 /--
 Caller-facing mod-`p` subset partition: an irreducible integer factor of the
-core has a unique representing subset of the selected modular factors.
+square-free part has a unique representing subset of the selected modular factors.
 -/
 theorem existsUnique_modPFactorSubset_of_modPSubsetPartition
     {core : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
@@ -587,7 +598,7 @@ private theorem toPolynomial_scale_neg_one (f : Hex.ZPoly) :
   ring
 
 /-- The `ZMod p` image of the residue `-1` is `-1`. Computed through the
-ring-hom bridge `toZMod`, keeping `ZMod64` arithmetic on the `grind` side. -/
+ring-hom correspondence `toZMod`, keeping `ZMod64` arithmetic on the `grind` side. -/
 private theorem toZMod_neg_one {p : Nat} [Hex.ZMod64.Bounds p] :
     HexModArithMathlib.ZMod64.toZMod (-1 : Hex.ZMod64 p) = (-1 : ZMod p) := by
   have hzm : (-1 : Hex.ZMod64 p) + 1 = 0 := by grind
@@ -597,7 +608,7 @@ private theorem toZMod_neg_one {p : Nat} [Hex.ZMod64.Bounds p] :
   exact eq_neg_of_add_eq_zero_left h0
 
 /-- Reduction modulo `p` commutes with `-1` scaling: it lands on scaling by the
-residue `-1`. Proved through the `Polynomial (ZMod p)` bridge. -/
+residue `-1`. Proved through the `Polynomial (ZMod p)` correspondence. -/
 private theorem modP_scale_neg_one {p : Nat} [Hex.ZMod64.Bounds p] (f : Hex.ZPoly) :
     Hex.ZPoly.modP p (Hex.DensePoly.scale (-1 : Int) f) =
       Hex.DensePoly.scale (-1 : Hex.ZMod64 p) (Hex.ZPoly.modP p f) := by
@@ -719,7 +730,7 @@ private theorem self_dvd_monicModPImage {p : Nat} [Hex.ZMod64.Bounds p]
 `core` are represented by disjoint subsets of the modular factors. The genuine
 square-freeness of the modular reduction is threaded as the explicit hypothesis
 `hsqfree`; if two representing subsets shared an index, that modular factor would
-square-divide the (square-free) modular core, an impossibility. -/
+square-divide the (square-free) modular polynomial, an impossibility. -/
 theorem modPFactorSubset_disjoint_of_not_associated
     {core : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {admissiblePrime squareFreeReduction : Prop}

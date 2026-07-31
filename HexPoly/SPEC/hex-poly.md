@@ -1,6 +1,6 @@
 # hex-poly (dense polynomial library, no dependencies)
 
-The core polynomial library.
+The dense polynomial library.
 
 **Dense representation:**
 ```lean
@@ -27,15 +27,15 @@ type. As with `ofCoeffs`, trailing zero coefficients are removed.
 - Coefficient scaling, with public composition, addition, and multiplication
   transport laws (`scale_scale`, `scale_add`, `scale_mul`, `mul_scale`)
 - Division with remainder (for monic divisors; general division over fields)
-- Polynomial GCD (plain Euclidean remainder sequence — **not** the extended
+- Polynomial GCD (plain Euclidean remainder sequence, **not** the extended
   algorithm). `gcd` tracks only the remainders, so it is `O(deg²)`. The extended
   algorithm additionally multiplies the divisor against the growing Bezout
   accumulators `s`, `t` at every step (`q*s₁`, `q*t₁`), which is `O(deg³)` and
-  pure waste when only the gcd *value* is needed — the common case being the
+  unnecessary when only the gcd *value* is needed. The common case is the
   square-free / separability test `gcd(f, f') = 1`. Computing Bezout coefficients
   inside `gcd` is a correctness-neutral but ~10⁴× performance defect on the BHKS
   prime-selection hot path, so `gcd` must be the plain remainder sequence.
-- Extended GCD (`xgcd`, Bezout coefficients: `a*f + b*g = gcd(f,g)`) — a
+- Extended GCD (`xgcd`, Bezout coefficients: `a*f + b*g = gcd(f,g)`), a
   *separate* function for the genuine Bezout use-sites (CRT, Hensel, Berlekamp
   correctness). `gcd` agrees with `xgcd`'s gcd component (`gcd_eq_xgcd_gcd`), so
   the gcd-value lemmas transfer.
@@ -46,7 +46,7 @@ type. As with `ofCoeffs`, trailing zero coefficients are removed.
 - Composition, derivative
 - Content and primitive part (for `DensePoly Int`)
 
-**Polynomial GCD — key properties:**
+**Polynomial GCD, key properties:**
 - `gcd f g` divides both `f` and `g`
 - Every common divisor of `f` and `g` divides `gcd f g`
 - Bezout: `∃ a b, a * f + b * g = gcd f g`
@@ -86,8 +86,6 @@ crossovers in `fmpz_poly_mul` and uses non-recursive Newton-style
 algorithms for division and GCD; Hex's implementation is
 schoolbook with the Karatsuba crossover named in the algorithm
 table above. The constant-factor gap is structural, not
-algorithmic — the ratio is recorded for orientation but is not a
-Phase-4 gate. Wired via a persistent-subprocess Python driver per
+algorithmic. The ratio is recorded for orientation rather than as an
+acceptance threshold. It is measured through a persistent Python process per
 `SPEC/benchmarking.md §"External comparators" §"Process call"`.
-
-Structured metadata in `libraries.yml: HexPoly.phase4.comparators`.

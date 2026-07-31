@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexLLL.Basic
+public import HexLLL
 public import HexGramSchmidtMathlib.Int
 
 public section

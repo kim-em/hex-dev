@@ -8,9 +8,9 @@ module
 
 public import HexLLLMathlib.Interval
 public import HexLLLMathlib.State
-public import HexLLLMathlib.Bridge
+public import HexLLLMathlib.IntegerLattice
 public import HexLLLMathlib.Checker
-public import HexLLLMathlib.Reducer
+public import HexLLLMathlib.Reduction
 public import HexLLLMathlib.ShortVector
 
 public section

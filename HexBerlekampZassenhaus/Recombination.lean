@@ -9,18 +9,18 @@ module
 public meta import HexArith.Nat.Prime
 public meta import HexBerlekamp.Factor
 public meta import HexBerlekamp.Irreducibility
-public meta import HexHensel.Basic
+public meta import HexHensel.ModularPolynomial
 public meta import HexHensel.Multifactor
 public meta import HexHensel.QuadraticMultifactor
 public meta import HexMatrix.Basic
 public meta import HexPolyZ.Mignotte
-public meta import HexLLL.Basic
+public meta import HexLLL
 public import HexArith.Nat.Prime
 public import HexBerlekamp.Factor
 public import HexBerlekamp.Irreducibility
 public import HexHensel.Multifactor
 public import HexHensel.QuadraticMultifactor
-public import HexLLL.Basic
+public import HexLLL
 -- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
 -- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
 public import HexBasic.ArrayDecEq
@@ -28,10 +28,10 @@ public import HexBasic.ArrayDecEq
 public import HexBerlekampZassenhaus.BhksRecover
 public meta import HexBerlekampZassenhaus.BhksRecover
 import all HexBerlekampZassenhaus.PrimeSelection
-import all HexBerlekampZassenhaus.Records
+import all HexBerlekampZassenhaus.FactorizationData
 import all HexBerlekampZassenhaus.Certificate
 import all HexBerlekampZassenhaus.ChoosePrimeData
-import all HexBerlekampZassenhaus.ReassemblyProofs
+import all HexBerlekampZassenhaus.FactorizationResult
 import all HexBerlekampZassenhaus.Lattice
 import all HexBerlekampZassenhaus.BhksCandidates
 import all HexBerlekampZassenhaus.BhksRecover
@@ -144,9 +144,9 @@ namespace ZPoly
 
 /--
 Build the fixed-precision Hensel lift data for the monic transform of an
-integer core.  The exhaustive slow path still recombines against the original
-primitive core, but the lift stage sees the monic polynomial required by the
-Hensel pipeline.
+square-free part. The exhaustive slow path still recombines against the original
+primitive polynomial, but the lift stage sees the monic polynomial required by the
+Hensel computation.
 -/
 @[expose]
 def toMonicLiftData
@@ -188,7 +188,7 @@ leading-coefficient-normalised `monicTarget` rather than the `x ↦ x/ℓf` dila
 `(ℤ/p^a)[x]` directly, and the CLD lattice runs over `core`'s own coordinate.
 -/
 @[expose]
-def coreLiftData
+def directLiftData
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : LiftData :=
   henselLiftData (monicTarget core primeData.p (precisionForCoeffBound B primeData.p))
     (precisionForCoeffBound B primeData.p) primeData
@@ -226,7 +226,7 @@ trailing zeros). -/
 theorem reduceModPow_size_le (f : ZPoly) (p k : Nat) :
     (reduceModPow f p k).size ≤ f.size := by
   unfold reduceModPow
-  refine Nat.le_trans (DensePoly.size_ofCoeffs_le _) ?_
+  refine Nat.le_trans (DensePoly.size_ofList_le _) ?_
   simp
 
 /--
@@ -279,7 +279,7 @@ theorem monicTarget_size_eq (core : ZPoly) (p k : Nat)
 The BHKS leading-coefficient-faithful monic target is genuinely monic over ℤ when
 `core`'s leading coefficient is coprime to `p ^ k` and `core` is nonconstant.
 
-This is the load-bearing soundness fact for routing the existing monic Hensel lift
+This is the load-bearing soundness fact for handling the existing monic Hensel lift
 against `monicTarget` (van Hoeij `M1`) instead of the `toMonic` `x ↦ x/ℓf`
 dilation (`M2`): the lift's producer lemma
 `QuadraticMultifactorLiftInvariant_of_choosePrimeData` requires its target monic,
@@ -330,7 +330,7 @@ theorem monicTarget_monic (core : ZPoly) (p k : Nat)
 end ZPoly
 
 /--
-CLD column-adequacy floor for the fast-core acceptance gate.
+CLD column-adequacy floor for the fast recovery acceptance condition.
 
 A successful BHKS recovery at schedule coefficient bound `k` only certifies
 column adequacy (the BHKS Lemma 5.7 separation `hsep`) once the lift precision
@@ -344,20 +344,22 @@ def cldCoeffFloor (core : ZPoly) : Nat :=
   2 * (List.range (n + 1)).foldl
     (fun acc j => max acc (bhksCoeffBound core j)) 0
 
-/-- Acceptance floor for the fast-core loop: the CLD column-adequacy floor
+/-- Acceptance floor for the fast recovery loop: the CLD column-adequacy floor
 `cldCoeffFloor` joined with the direct Mignotte recovery bound of `core`. -/
 def bhksRecoveryFloor (core : ZPoly) : Nat :=
   max (cldCoeffFloor core) (ZPoly.defaultFactorCoeffBound core)
 
+/-- The recovery floor is at least the logarithmic-derivative coefficient floor. -/
 theorem cldCoeffFloor_le_bhksRecoveryFloor (core : ZPoly) :
     cldCoeffFloor core ≤ bhksRecoveryFloor core :=
   Nat.le_max_left _ _
 
+/-- The recovery floor is at least the direct coefficient-recovery bound. -/
 theorem defaultFactorCoeffBound_le_bhksRecoveryFloor (core : ZPoly) :
     ZPoly.defaultFactorCoeffBound core ≤ bhksRecoveryFloor core :=
   Nat.le_max_right _ _
 
-/-- The acceptance floor used solely as the fast-core loop's skip gate.
+/-- An irreducible copy of the acceptance floor used when reducing the fast loop.
 
 Definitionally `bhksRecoveryFloor`, but marked `irreducible` so that `whnf` in
 downstream proofs that case-split on a `bhksRecoveryCoreWithBound` application
@@ -365,17 +367,18 @@ does not eagerly expand the (symbolic, structurally large) floor computation
 while reducing the loop's head `if`.  The loop's behavioural unfolding lemma
 `bhksRecoveryCoreWithBound_unfold` re-exposes the plain `bhksRecoveryFloor`
 comparison, so proofs reason about the genuine floor. -/
-@[irreducible] def bhksRecoveryFloorGate (core : ZPoly) : Nat :=
+@[irreducible] def bhksRecoveryThreshold (core : ZPoly) : Nat :=
   bhksRecoveryFloor core
 
-theorem bhksRecoveryFloorGate_eq (core : ZPoly) :
-    bhksRecoveryFloorGate core = bhksRecoveryFloor core := by
-  simp only [bhksRecoveryFloorGate]
+/-- The opaque recovery threshold equals its mathematical coefficient floor. -/
+theorem bhksRecoveryThreshold_eq (core : ZPoly) :
+    bhksRecoveryThreshold core = bhksRecoveryFloor core := by
+  simp only [bhksRecoveryThreshold]
 
-/-- Inner fast-core recombination loop, parameterised by a precomputed CLD
+/-- Inner fast recovery recombination loop, parameterised by a precomputed CLD
 column-adequacy `floor`.  Below `floor` a success cannot be accepted and every
 recovery class (success or failure) advances the schedule identically, so the
-expensive Hensel-lift / CLD-lattice / LLL / reconstruction pipeline is skipped
+expensive Hensel-lift / CLD-lattice / LLL / reconstruction computation is skipped
 and the loop steps straight to the next scheduled precision.  At/above `floor`
 a success is column-adequate and accepted immediately.
 
@@ -397,7 +400,7 @@ private def bhksRecoveryLoop
         else
           bhksRecoveryLoop core B floor primeData (nextHenselPrecision k B) fuel
       else
-        match bhksRecoverClassified core (ZPoly.coreLiftData core k primeData) with
+        match bhksRecoverClassified core (ZPoly.directLiftData core k primeData) with
         | .success factors =>
           some factors
         | .candidateFailure =>
@@ -416,25 +419,25 @@ private def bhksRecoveryLoop
           else
             bhksRecoveryLoop core B floor primeData (nextHenselPrecision k B) fuel
 
-/-- BHKS fast-core recombination loop.  Computes the CLD column-adequacy floor
-once (through the irreducible `bhksRecoveryFloorGate`, so `whnf` in downstream
+/-- BHKS fast recovery recombination loop.  Computes the CLD column-adequacy floor
+once (through the irreducible `bhksRecoveryThreshold`, so `whnf` in downstream
 proofs that case-split on this application does not eagerly expand the symbolic
 floor) and runs `bhksRecoveryLoop`. -/
 def bhksRecoveryCoreWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) (k fuel : Nat) :
     Option (Array ZPoly) :=
-  bhksRecoveryLoop core B (bhksRecoveryFloorGate core) primeData k fuel
+  bhksRecoveryLoop core B (bhksRecoveryThreshold core) primeData k fuel
 
-/-- Behavioural unfolding for the optimized fast-core loop: the precision-floor
+/-- Behavioural unfolding for the optimized fast recovery loop: the precision-floor
 short-circuit is propositionally equal to the original "recover at every step,
 accept only at the floor" body.  Below the floor every recovery class steps to
 the next precision, and at/above the floor a success is column-adequate; both
-match the gated form, so this lemma lets the recovery-on-schedule proofs reason
+match the conditional form, so this lemma lets the recovery-on-schedule proofs reason
 about the loop exactly as before. -/
 private theorem bhksRecoveryCoreWithBound_unfold
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) (k fuel : Nat) :
     bhksRecoveryCoreWithBound core B primeData k (fuel + 1) =
-      match bhksRecoverClassified core (ZPoly.coreLiftData core k primeData) with
+      match bhksRecoverClassified core (ZPoly.directLiftData core k primeData) with
       | .success factors =>
         if k ≥ bhksRecoveryFloor core then
           some factors
@@ -461,20 +464,20 @@ private theorem bhksRecoveryCoreWithBound_unfold
       bhksRecoveryLoop core B (bhksRecoveryFloor core) primeData k' fuel =
         bhksRecoveryCoreWithBound core B primeData k' fuel := by
     intro k'
-    rw [bhksRecoveryCoreWithBound, bhksRecoveryFloorGate_eq]
-  rw [bhksRecoveryCoreWithBound, bhksRecoveryFloorGate_eq, bhksRecoveryLoop]
+    rw [bhksRecoveryCoreWithBound, bhksRecoveryThreshold_eq]
+  rw [bhksRecoveryCoreWithBound, bhksRecoveryThreshold_eq, bhksRecoveryLoop]
   simp only [hrec]
   by_cases hf : k < bhksRecoveryFloor core
   · rw [if_pos hf]
     have hfloor : ¬ k ≥ bhksRecoveryFloor core := Nat.not_le.mpr hf
-    cases bhksRecoverClassified core (ZPoly.coreLiftData core k primeData) <;>
+    cases bhksRecoverClassified core (ZPoly.directLiftData core k primeData) <;>
       simp only [hfloor, if_false]
   · rw [if_neg hf]
     have hfloor : k ≥ bhksRecoveryFloor core := Nat.le_of_not_lt hf
-    cases bhksRecoverClassified core (ZPoly.coreLiftData core k primeData) <;>
+    cases bhksRecoverClassified core (ZPoly.directLiftData core k primeData) <;>
       simp only [hfloor, if_true]
 
-/-- Finite list of Hensel precisions inspected by the fast BHKS core loop. -/
+/-- Finite list of Hensel precisions inspected by the fast BHKS recovery loop. -/
 def henselPrecisionSchedule (B : Nat) : Nat → Nat → List Nat
   | _k, 0 => []
   | k, fuel + 1 =>
@@ -626,14 +629,14 @@ private theorem bhksRecoveryCoreWithBound_isSome_of_recovery_on_schedule
     (hfloor : bhksRecoveryFloor core ≤ target)
     (hmem : target ∈ henselPrecisionSchedule B start fuel)
     (hrecover :
-      bhksRecover? core (ZPoly.coreLiftData core target primeData) = some factors) :
+      bhksRecover? core (ZPoly.directLiftData core target primeData) = some factors) :
     (bhksRecoveryCoreWithBound core B primeData start fuel).isSome := by
   induction fuel generalizing start with
   | zero =>
       simp [henselPrecisionSchedule] at hmem
   | succ fuel ih =>
       rw [bhksRecoveryCoreWithBound_unfold]
-      cases hclass : bhksRecoverClassified core (ZPoly.coreLiftData core start primeData) with
+      cases hclass : bhksRecoverClassified core (ZPoly.directLiftData core start primeData) with
       | success xs =>
           by_cases hstart : start ≥ bhksRecoveryFloor core
           · simp [hstart]
@@ -732,7 +735,7 @@ private theorem bhksRecoveryCoreWithBound_isSome_of_recovery_on_schedule
             exact ih hmem'
 
 /--
-If a target precision is on the fast-core schedule, recovery succeeds there,
+If a target precision is on the fast recovery schedule, recovery succeeds there,
 and no other scheduled precision before the target succeeds, then the
 first-success loop returns exactly the target recovery.
 
@@ -747,16 +750,16 @@ theorem bhksRecoveryCoreWithBound_eq_some_of_recovery_on_schedule_of_no_prior_re
     (hmem : target ∈ henselPrecisionSchedule B start fuel)
     (hno :
       ∀ k, k ∈ henselPrecisionSchedule B start fuel → k ≠ target →
-        bhksRecover? core (ZPoly.coreLiftData core k primeData) = none)
+        bhksRecover? core (ZPoly.directLiftData core k primeData) = none)
     (hrecover :
-      bhksRecover? core (ZPoly.coreLiftData core target primeData) = some factors) :
+      bhksRecover? core (ZPoly.directLiftData core target primeData) = some factors) :
     bhksRecoveryCoreWithBound core B primeData start fuel = some factors := by
   induction fuel generalizing start with
   | zero =>
       simp [henselPrecisionSchedule] at hmem
   | succ fuel ih =>
       rw [bhksRecoveryCoreWithBound_unfold]
-      cases hclass : bhksRecoverClassified core (ZPoly.coreLiftData core start primeData) with
+      cases hclass : bhksRecoverClassified core (ZPoly.directLiftData core start primeData) with
       | success xs =>
           by_cases htarget : start = target
           · subst target

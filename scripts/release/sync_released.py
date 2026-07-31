@@ -5,8 +5,9 @@ For each repo in scripts/release/released.yml (topological order), this:
   1. clones the repo's `main`,
   2. overwrites its *managed* paths from this monorepo,
   3. for managed-source repos, enables native Verso docstrings,
-  4. rewrites cross-repo Hex pins in the repo's Lake files,
-  5. commits `chore: sync from hex-dev@<sha>` and pushes to `main`
+  4. copies the stable Lean toolchain and exact external dependency pins,
+  5. rewrites cross-repo Hex pins in the repo's Lake files,
+  6. commits `chore: sync from hex-dev@<sha>` and pushes to `main`
      (unless --dry-run, which prints the planned changes and pin rewrites).
 
 A `pins_only` entry (the `leanprover/hex` aggregate) skips steps 2-3 entirely: it
@@ -40,6 +41,8 @@ import yaml
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "scripts" / "release" / "released.yml"
 BASELINE = REPO_ROOT / "scripts" / "release" / "synced.json"
+TOOLCHAIN = REPO_ROOT / "lean-toolchain"
+LAKE_MANIFEST = REPO_ROOT / "lake-manifest.json"
 
 
 def run(cmd: list[str], cwd: Path | None = None, capture: bool = False) -> str:
@@ -155,6 +158,186 @@ def _lake_files(clone: Path, name_globs: list[str]) -> list[Path]:
     for g in name_globs:
         out += [p for p in clone.glob(f"**/{g}") if ".lake" not in p.parts]
     return sorted(out)
+
+
+def _git_url(url: str) -> str:
+    """Normalize a Git URL for comparison without changing its published form."""
+    normalized = url.rstrip("/")
+    if normalized.endswith(".git"):
+        normalized = normalized[:-4]
+    return normalized.lower()
+
+
+def external_pins() -> dict[str, dict[str, str]]:
+    """Exact non-Hex Git dependencies selected by this monorepo's lockfile."""
+    doc = json.loads(LAKE_MANIFEST.read_text(encoding="utf-8"))
+    pins: dict[str, dict[str, str]] = {}
+    for package in doc.get("packages", []):
+        url = package.get("url")
+        rev = package.get("rev")
+        input_rev = package.get("inputRev")
+        if not all(isinstance(value, str) for value in (url, rev, input_rev)):
+            continue
+        normalized = _git_url(url)
+        if re.fullmatch(r"https://github\.com/(?:kim-em|leanprover)/hex(?:-[^/]+)?",
+                        normalized):
+            continue
+        name = package.get("name")
+        if not isinstance(name, str):
+            continue
+        pins[normalized] = {
+            "name": name,
+            "url": url,
+            "rev": rev,
+            "inputRev": input_rev,
+        }
+    return pins
+
+
+def rewrite_toolchains(clone: Path) -> list[str]:
+    """Use one stable Lean toolchain in the root and every side project."""
+    notes: list[str] = []
+    expected = TOOLCHAIN.read_text(encoding="utf-8")
+    toolchains = _lake_files(clone, ["lean-toolchain"])
+    if clone / "lean-toolchain" not in toolchains:
+        raise RuntimeError(f"released repository has no root lean-toolchain: {clone}")
+    for toolchain in toolchains:
+        if toolchain.read_text(encoding="utf-8") != expected:
+            toolchain.write_text(expected, encoding="utf-8")
+            notes.append(f"  toolchain {expected.strip()} ({toolchain.relative_to(clone)})")
+    return notes
+
+
+def validate_skeleton(entry: dict, clone: Path) -> None:
+    """Check the unmanaged Lake file carries every release build root.
+
+    Source synchronization deliberately does not overwrite a released
+    repository's Lake configuration.  This check keeps that boundary explicit:
+    a renamed executable or newly separate development umbrella must be added
+    to the mirror skeleton before publication can proceed.
+    """
+    lakefile = clone / f"lakefile.{entry['lakefile']}"
+    if not lakefile.is_file():
+        raise RuntimeError(
+            f"released repository expects {lakefile.name}, but it is missing: "
+            f"{clone}"
+        )
+    text = lakefile.read_text(encoding="utf-8")
+    for module in entry.get("test_modules", []):
+        if module not in text:
+            raise RuntimeError(
+                f"released Lake file {lakefile} does not build test module "
+                f"{module}"
+            )
+    for module in entry.get("build_modules", []):
+        if module not in text:
+            raise RuntimeError(
+                f"released Lake file {lakefile} does not build development "
+                f"module {module}"
+            )
+    for executable, module in entry.get("executables", {}).items():
+        executable_pattern = (
+            rf"(?ms)^\s*lean_exe\s+[«\"]?{re.escape(executable)}[»\"]?\s+where\s*$"
+            rf"(?P<body>.*?)(?=^\S|\Z)"
+        )
+        executable_match = re.search(executable_pattern, text)
+        root_pattern = rf"(?m)^\s*root\s*:=\s*`{re.escape(module)}\s*$"
+        if (
+            executable_match is None
+            or not re.search(root_pattern, executable_match.group("body"))
+        ):
+            raise RuntimeError(
+                f"released Lake file {lakefile} must define executable "
+                f"{executable} at {module}"
+            )
+
+
+def rewrite_external_pins(clone: Path,
+                          pins: dict[str, dict[str, str]]) -> list[str]:
+    """Synchronize direct non-Hex requirements with the monorepo lock.
+
+    Lake files retain a readable tag or branch in ``inputRev`` form. Their
+    manifests carry the exact resolved commit, updated separately below.
+    """
+    notes: list[str] = []
+    pins_by_name = {pin["name"].lower(): pin for pin in pins.values()}
+    for lakefile in _lake_files(clone, ["lakefile.toml", "lakefile.lean"]):
+        text = lakefile.read_text(encoding="utf-8")
+        original = text
+        if lakefile.name == "lakefile.toml":
+            # A Reservoir requirement commonly has only `name`, `scope`, and
+            # `rev`; it need not repeat the resolved Git URL.  Rewrite each
+            # complete require table by parsed package identity, while
+            # preserving the author's TOML formatting.
+            def rewrite_require(match: re.Match[str]) -> str:
+                block = match.group(0)
+                try:
+                    requirement = tomllib.loads(block)["require"][0]
+                except (KeyError, IndexError, tomllib.TOMLDecodeError) as exc:
+                    raise RuntimeError(
+                        f"cannot parse require table in {lakefile}: {exc}"
+                    ) from exc
+                git = requirement.get("git")
+                pin = (
+                    pins.get(_git_url(git))
+                    if isinstance(git, str)
+                    else pins_by_name.get(str(requirement.get("name", "")).lower())
+                )
+                if pin is None:
+                    return block
+                if "rev" not in requirement:
+                    raise RuntimeError(
+                        f"direct external requirement {pin['name']} in "
+                        f"{lakefile} has no rev"
+                    )
+                rewritten, count = re.subn(
+                    r'(?m)^(\s*rev\s*=\s*")[^"]+(")',
+                    lambda rev_match: (
+                        rev_match.group(1)
+                        + pin["inputRev"]
+                        + rev_match.group(2)
+                    ),
+                    block,
+                    count=1,
+                )
+                if count != 1:
+                    raise RuntimeError(
+                        f"cannot locate rev for {pin['name']} in {lakefile}"
+                    )
+                if rewritten != block:
+                    notes.append(
+                        f"  external pin {pin['url']} -> {pin['inputRev']} "
+                        f"({lakefile.relative_to(clone)})"
+                    )
+                return rewritten
+
+            text = re.sub(
+                r"(?ms)^\[\[require\]\][^\n]*\n.*?(?=^\[|\Z)",
+                rewrite_require,
+                text,
+            )
+            if text != original:
+                lakefile.write_text(text, encoding="utf-8")
+            continue
+        for normalized, pin in pins.items():
+            before = text
+            url_pattern = re.escape(normalized) + r"(?:\.git)?"
+            pattern = (r'("' + url_pattern
+                       + r'"\s*@\s*")[^"]+(")')
+            text, count = re.subn(
+                pattern,
+                lambda match, rev=pin["inputRev"]:
+                    match.group(1) + rev + match.group(2),
+                text,
+                flags=re.IGNORECASE,
+            )
+            if count and text != before:
+                notes.append(
+                    f"  external pin {pin['url']} -> {pin['inputRev']} "
+                    f"({lakefile.relative_to(clone)})")
+        if text != original:
+            lakefile.write_text(text, encoding="utf-8")
+    return notes
 
 
 def _flatten_lean_options(options: dict, prefix: str = "") -> list[tuple[str, object]]:
@@ -353,7 +536,8 @@ def rewrite_pins(entry: dict, clone: Path, synced: dict[str, str],
 
 
 def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
-                     dep_owner: dict[str, str]) -> list[str]:
+                     dep_owner: dict[str, str],
+                     pins: dict[str, dict[str, str]]) -> list[str]:
     """Pin the synced SHAs in every lake-manifest.json (root + sub-projects), so
     Lake's lockfile points at the new revisions, not a stale checkout. Lake
     trusts the manifest, and the bench/ and conformance/ sub-projects keep their
@@ -369,6 +553,16 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
         changed = 0
         for pkg in doc.get("packages", []):
             url = pkg.get("url", "")
+            pin = pins.get(_git_url(url)) if isinstance(url, str) else None
+            if pin is not None:
+                if (pkg.get("rev") != pin["rev"] or
+                        pkg.get("inputRev") != pin["inputRev"]):
+                    pkg["rev"] = pin["rev"]
+                    pkg["inputRev"] = pin["inputRev"]
+                    changed += 1
+                    notes.append(
+                        f"  manifest {pin['url']} -> {pin['rev'][:12]} "
+                        f"({mf.relative_to(clone)})")
             for frag, dep in by_url.items():
                 if frag in url:
                     target = dep_owner.get(dep, "leanprover")
@@ -386,7 +580,8 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
 
 def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
               synced: dict[str, str], baseline: dict[str, str], force: bool,
-              dep_owner: dict[str, str]) -> bool:
+              dep_owner: dict[str, str],
+              pins: dict[str, dict[str, str]]) -> bool:
     """Sync one repo. Returns True if the baseline SHA changed (a push happened)."""
     repo = entry["repo"]
     short = repo.split("/")[-1]
@@ -406,14 +601,19 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
                 synced[short] = expected
                 return False
             print(msg + " Overriding (--force).")
+        validate_skeleton(entry, clone)
         for line in apply_paths(entry, clone):
             print(line)
         if not entry.get("pins_only"):
             for line in rewrite_doc_verso(clone):
                 print(line)
+        for line in rewrite_toolchains(clone):
+            print(line)
+        for line in rewrite_external_pins(clone, pins):
+            print(line)
         for line in rewrite_pins(entry, clone, synced, dep_owner):
             print(line)
-        for line in rewrite_manifest(entry, clone, synced, dep_owner):
+        for line in rewrite_manifest(entry, clone, synced, dep_owner, pins):
             print(line)
         status = run(["git", "status", "--porcelain"], cwd=clone, capture=True)
         if not status:
@@ -461,22 +661,42 @@ def main() -> int:
     # truth the pin/manifest rewrites target (kim-em pre-cutover, leanprover after).
     dep_owner = {e["repo"].split("/")[-1]: e["repo"].split("/")[0]
                  for e in manifest["repos"]}
+    pins = external_pins()
     synced: dict[str, str] = {}
-    for entry in manifest["repos"]:
-        if args.only and entry["repo"].split("/")[-1] != args.only:
-            continue
-        sync_repo(entry, source_sha, args.token, args.dry_run,
-                  synced, baseline, args.force, dep_owner)
-    # Advance the baseline to every processed repo's current HEAD (pushed, skipped,
-    # or unchanged) so the next run's guard is accurate. Written on a real run only;
-    # the workflow commits it to the release-sync-baseline branch.
-    if not args.dry_run and synced:
-        baseline_doc.update(synced)
-        args.baseline.write_text(json.dumps(baseline_doc, indent=2) + "\n", encoding="utf-8")
-        print(f"\nadvanced baseline -> {args.baseline}")
+    failed_repo: str | None = None
+    current_repo = "<manifest>"
+    try:
+        for entry in manifest["repos"]:
+            current_repo = entry["repo"]
+            if args.only and entry["repo"].split("/")[-1] != args.only:
+                continue
+            sync_repo(entry, source_sha, args.token, args.dry_run,
+                      synced, baseline, args.force, dep_owner, pins)
+    except Exception as exc:
+        failed_repo = current_repo
+        message = str(exc)
+        if args.token:
+            message = message.replace(args.token, "<redacted>")
+        print(
+            f"\nrelease sync failed in {failed_repo}: "
+            f"{type(exc).__name__}: {message}",
+            file=sys.stderr,
+        )
+    finally:
+        # A real run may already have pushed upstream repositories when a later
+        # skeleton or network operation fails. Persist those exact new heads so
+        # the workflow can advance its guard branch even while reporting the
+        # failed publication.
+        if not args.dry_run and synced:
+            baseline_doc.update(synced)
+            args.baseline.write_text(
+                json.dumps(baseline_doc, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            print(f"\nadvanced baseline -> {args.baseline}")
     print(f"\nsynced {len(synced)} repo(s) from hex-dev@{source_sha[:12]}"
           + (" (dry-run)" if args.dry_run else ""))
-    return 0
+    return 1 if failed_repo else 0
 
 
 if __name__ == "__main__":

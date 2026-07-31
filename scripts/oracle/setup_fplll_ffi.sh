@@ -2,7 +2,7 @@
 # Build `leanprover/fplll` and print the path to its `libfplllffi` shared
 # library — the FFI shim that exports `lean_fplll_lll_reduce`, the symbol the
 # HexLLL provider hook (`HexLLL/ffi/lean_hexlll_provider.c`) resolves after
-# `Hex.lll.loadProvider` `dlopen`s this library at the printed path.
+# `Hex.lll.loadExternalReducer` `dlopen`s this library at the printed path.
 #
 # Usage:
 #
@@ -114,7 +114,7 @@ fi
 # static archive into a clean shared library here: link directly against
 # `libleanshared` (which provides `lean_alloc_mpz` and friends) plus the
 # system fplll/MPFR/GMP, and bake the toolchain lib dir into the rpath so
-# `Hex.lll.loadProvider`'s dlopen of this library does not depend on the
+# `Hex.lll.loadExternalReducer`'s dlopen of this library does not depend on the
 # caller's `LD_LIBRARY_PATH`/`DYLD_LIBRARY_PATH`.
 lean_lib_dir="$(cd "$(dirname "$(elan which lean)")/../lib/lean" && pwd)"
 fplll_install_lib="${src_dir}/.lake/build/fplll-install/lib"

@@ -20,7 +20,7 @@ threading through the executable `ZMod64.inv` defined in
 `HexModArith/Basic.lean` and the prime-modulus inverse identities from
 `HexModArith/Prime.lean`.
 
-The instance is shared between the Berlekamp factorisation pipeline and the
+The instance is shared between the Berlekamp factorisation computation and the
 Berlekamp–Zassenhaus integer lift, which both previously carried an inline
 copy of the construction.
 -/
@@ -30,6 +30,7 @@ namespace ZMod64
 
 variable {p : Nat} [Bounds p]
 
+/-- Integer powers in the prime field, using inverses for negative exponents. -/
 @[expose]
 def intPow (a : ZMod64 p) : Int → ZMod64 p
   | .ofNat n => a ^ n

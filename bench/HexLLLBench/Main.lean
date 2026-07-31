@@ -48,7 +48,7 @@ Informational external comparator:
 * `fpLLL via fplll-ffi`: in-process FFI registrations call `libfplll`
   through the `fplll-ffi` shim — one C++ call per request, no
   subprocess. The bench installs the shim explicitly via
-  `Hex.lll.loadProvider` (see `ensureProviderLoaded`), reading the
+  `Hex.lll.loadExternalReducer` (see `ensureProviderLoaded`), reading the
   library path from `HEX_FPLLL_FFI_LIB` and `dlopen`ing it once;
   `HexLLL/ffi/lean_hexlll_provider.c` then resolves
   `lean_fplll_lll_reduce` from that handle. This mirrors the
@@ -65,12 +65,12 @@ Informational external comparator:
   speed comparator switched to the FFI shim.
 * `fpLLL certified path`: the same in-process `fplll-ffi` call returns
   the flat `(B', U, V)` candidate payload directly; the Lean target
-  runs `LLLProvider.certifyFlat`, so the measured path is fpLLL
+  runs `ExternalReducer.certifyFlat`, so the measured path is fpLLL
   candidate production plus the executable checker. Companion
   checker-only targets cache one candidate after warmup and re-run
   only `certCheck`, giving the checker's cost share. Public-dispatch
   verify targets check that, when an `fplll-ffi` provider is
-  intentionally installed via `Hex.lll.loadProvider` (path from
+  intentionally installed via `Hex.lll.loadExternalReducer` (path from
   `HEX_FPLLL_FFI_LIB`), the dispatch tally records at least one
   accepted candidate.
 
@@ -100,7 +100,7 @@ External comparator:
 
 The `fpLLL via fplll-ffi` comparator is an in-process FFI call: each
 request marshals the matrix into the `Array String` payload the
-provider hook expects, calls `LLLProvider.providerReduce`, and reads
+provider hook expects, calls `ExternalReducer.externalReduce`, and reads
 the flat `(status, rows, cols, has_inverse, reduced, U, V?)` reply.
 No subprocess, no IPC, no interpreter startup; the per-call overhead
 is the FFI marshalling cost alone.
@@ -150,12 +150,12 @@ process-call comparator registrations set `minTotalSeconds := 1.0`,
 forcing the fixed child to run enough inner iterations to amortize
 the one-time GHC start inside the child. For `fplll-ffi`, the
 per-process cost is the one-time `dlopen` performed on the first
-`ensureProviderLoaded` call (`Hex.lll.loadProvider` with the path from
+`ensureProviderLoaded` call (`Hex.lll.loadExternalReducer` with the path from
 `HEX_FPLLL_FFI_LIB`).
 
 **Driver path overrides.** `HEX_FPLLL_FFI_LIB` selects the
 `fplll-ffi` shared library that the bench installs at start-up via
-`Hex.lll.loadProvider` (see `ensureProviderLoaded` and
+`Hex.lll.loadExternalReducer` (see `ensureProviderLoaded` and
 `HexLLL/ffi/lean_hexlll_provider.c`). The Isabelle binary path
 is controlled by `HEX_LLL_ISABELLE_SVP`; the Isabelle certified binary
 path is controlled by `HEX_LLL_ISABELLE_CERTIFIED_SVP`.

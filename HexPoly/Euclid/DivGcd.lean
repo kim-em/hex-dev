@@ -534,8 +534,8 @@ remainder degree instead of rescanning from the top each step. The reference loo
 per step and `O(n²)` overall; here `ceil` is the scan ceiling, which in the well-formed
 case (`q.size = qDegree + 1`) only ever decreases, so the total scanning cost is `O(n)`.
 After eliminating at degree `rd`, the only coefficients that can be nonzero are those at
-or below `max (rd + 1) (shift + q.size)` — the elimination window tops out at
-`shift + q.size - 1` and everything above `rd` was already zero — so seeding the next scan
+or below `max (rd + 1) (shift + q.size)`; the elimination window tops out at
+`shift + q.size - 1` and everything above `rd` was already zero; so seeding the next scan
 at that ceiling returns the same index as the reference's `arrayDegree? rem`.
 `divModArrayAux_eq_impl` proves the two loops agree on every input. -/
 private def divModArrayAuxImplGo [Sub R] [Mul R]
@@ -789,7 +789,7 @@ private theorem divModArrayAux_scaleLead_congr [Sub R] [Mul R]
 
 /-- Under a `scaleLead` that cancels each leading term (`a - scaleLead a * q[qDegree] = 0`),
 {name}`divModArrayAux` drives every remainder coefficient at index `≥ qDegree` to zero, i.e. the
-final remainder has degree `< qDegree`; the core invariant establishing the division
+final remainder has degree `< qDegree`; the invariant establishing the division
 remainder-degree bound. -/
 private theorem divModArrayAux_remainder_zero_ge [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) (scaleLead : R → R)
@@ -1181,11 +1181,11 @@ def modByMonic [One R] [Add R] [Sub R] [Mul R]
     (p q : DensePoly R) (hmonic : Monic q) : DensePoly R :=
   (divModMonic p q hmonic).2
 
-/-- The `/` notation on dense polynomials dispatches to {name}`DensePoly.div`. -/
+/-- The `/` notation on dense polynomials selects to {name}`DensePoly.div`. -/
 instance [One R] [Add R] [Sub R] [Mul R] [Div R] : Div (DensePoly R) where
   div := div
 
-/-- The `%` notation on dense polynomials dispatches to {name}`DensePoly.mod`. -/
+/-- The `%` notation on dense polynomials selects to {name}`DensePoly.mod`. -/
 instance [One R] [Add R] [Sub R] [Mul R] [Div R] : Mod (DensePoly R) where
   mod := mod
 
@@ -1292,7 +1292,7 @@ theorem xgcdLeft_left_eq_xgcd [One R] [Add R] [Sub R] [Mul R] [Div R]
 /-- Tail-recursive Euclidean gcd tracking only the remainder sequence, **without**
 the Bezout coefficients. {name}`xgcd`/{name}`xgcdAux` carry the Bezout accumulators `s`, `t`
 and update them with a polynomial multiplication (`q * s₁`, `q * t₁`) at every
-step on polynomials whose degree grows through the run — that is `O(deg³)` work
+step on polynomials whose degree grows through the run; that is `O(deg³)` work
 and pure waste when only the gcd value is wanted (the common case: the square-free
 / separability test `gcd(f, f') = 1`). {name}`gcdAux` keeps only the remainders and is
 `O(deg²)`. -/
@@ -1638,7 +1638,7 @@ theorem divModMonic_eq_divMod_of_monic_of_scale [One R] [Add R] [Sub R] [Mul R] 
   rw [if_neg hnot_lt]
   exact (divModArray_scaleLead_congr p q (fun a => hscale a)).symm
 
-/-- Core division invariant: for positive-degree divisors, {name}`divMod` returns a remainder whose
+/-- Division invariant: for positive-degree divisors, {name}`divMod` returns a remainder whose
 degree is strictly smaller than the divisor degree. -/
 @[grind =>]
 theorem divMod_remainder_degree_lt_of_pos_degree [One R] [Add R] [Sub R] [Mul R] [Div R]

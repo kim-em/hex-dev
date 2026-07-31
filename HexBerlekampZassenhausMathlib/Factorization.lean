@@ -8,7 +8,7 @@ module
 
 public import HexBerlekampZassenhaus
 public import HexBerlekampZassenhausMathlib.UFDPartition
-public import HexPolyZMathlib.Basic
+public import HexPolyZMathlib.PolynomialEquivalence
 public import Mathlib.Analysis.Complex.Polynomial.Basic
 
 public section
@@ -47,7 +47,7 @@ theorem factorize_product (f : Hex.ZPoly) :
 The Mathlib-free executable irreducibility predicate agrees with Mathlib's
 irreducibility predicate after transport to `Polynomial ℤ`.
 -/
-theorem Hex.ZPoly.Irreducible_iff_polynomialIrreducible (f : Hex.ZPoly) :
+theorem _root_.Hex.ZPoly.Irreducible_iff_polynomialIrreducible (f : Hex.ZPoly) :
     Hex.ZPoly.Irreducible f ↔ Irreducible (HexPolyZMathlib.toPolynomial f) := by
   constructor
   · intro hf
@@ -92,7 +92,7 @@ theorem Hex.ZPoly.Irreducible_iff_polynomialIrreducible (f : Hex.ZPoly) :
 Mathlib irreducibility of the transported polynomial is equivalent to the
 Mathlib-free executable irreducibility predicate.
 -/
-theorem Hex.ZPoly.polynomialIrreducible_iff_irreducible (f : Hex.ZPoly) :
+theorem _root_.Hex.ZPoly.polynomialIrreducible_iff_irreducible (f : Hex.ZPoly) :
     Irreducible (HexPolyZMathlib.toPolynomial f) ↔ Hex.ZPoly.Irreducible f :=
   (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).symm
 
@@ -147,6 +147,7 @@ theorem factorize_entries_primitive_of_chosen_raw_primitive
     ∀ entry ∈ (Hex.ZPoly.factorize f).factors, Hex.ZPoly.Primitive entry.1 :=
   Hex.factorize_entries_primitive_of_ne_zero f hf
 
+/-- Conversion to Mathlib polynomials preserves a left-associated product. -/
 theorem toPolynomial_foldl_mul (lst : List Hex.ZPoly) (init : Hex.ZPoly) :
     HexPolyZMathlib.toPolynomial (lst.foldl (· * ·) init) =
       (lst.map HexPolyZMathlib.toPolynomial).foldl (· * ·)
@@ -167,6 +168,7 @@ theorem toPolynomial_one_zpoly :
   rw [HexPolyZMathlib.toPolynomial_C]
   simp
 
+/-- Converting an executable factor product gives the corresponding Mathlib list product. -/
 theorem polyProduct_toPolynomial (factors : Array Hex.ZPoly) :
     HexPolyZMathlib.toPolynomial (Array.polyProduct factors) =
       (factors.toList.map HexPolyZMathlib.toPolynomial).prod := by
@@ -184,6 +186,7 @@ def flattenedFactorEntries (entries : List (Hex.ZPoly × Nat)) : List Hex.ZPoly 
 def factorizationFlattenedFactors (φ : Hex.Factorization) : List Hex.ZPoly :=
   flattenedFactorEntries φ.factors.toList
 
+/-- Conversion to Mathlib polynomials preserves the executable factor power. -/
 theorem factorPower_toPolynomial (f : Hex.ZPoly) (k : Nat) :
     HexPolyZMathlib.toPolynomial (Hex.Factorization.factorPower f k) =
       HexPolyZMathlib.toPolynomial f ^ k := by
@@ -331,7 +334,6 @@ theorem zpoly_not_associated_of_ne_of_primitive_pos_leading
       hp_primitive hq_primitive hp_lc hq_lc hassoc
   exact hpq hpeq
 
-set_option maxHeartbeats 3000000 in
 /--
 Recorded entries of the default executable factorization of a nonzero input are
 pairwise non-associated after transport to `Polynomial ℤ`. Primitivity is

@@ -1,122 +1,126 @@
-# hex-berlekamp (factoring over F_p, depends on hex-poly-fp + hex-matrix + hex-gfq-ring)
+# hex-berlekamp
 
-Berlekamp's algorithm and Rabin's irreducibility test for polynomials
-over finite fields.
+`hex-berlekamp` factors dense polynomials over a prime field and
+checks irreducibility certificates. It depends on `hex-poly-fp`,
+exact matrix row reduction, and finite-field arithmetic, and has no
+Mathlib dependency.
 
-**Contents:**
-- **Berlekamp matrix**: compute `Q_f`, the matrix of the Frobenius map
-  `h ↦ h^p mod f` in the basis `{1, x, ..., x^{n-1}}`
-- **Berlekamp kernel**: nullspace of `Q_f - I` (from hex-matrix)
-- **Irreducibility test**: `f` is irreducible iff `rank(Q_f - I) = n - 1`
-- **Factoring**: elements of the kernel split `f` via `gcd(f, h - c)`
-- **Rabin's test**: `f` is irreducible iff `f | X^(p^n) - X` and
-  `gcd(f, X^(p^(n/d)) - X) = 1` for each maximal proper divisor `d | n`
-- **Distinct-degree factorization**: separate factors by degree
+## Berlekamp matrix
 
-**Certificate structures** (generated and checked in Lean):
-```lean
-structure IrreducibilityCertificate where
-  p : Nat
-  n : Nat
-  -- Square-and-multiply witnesses for X^(p^k) mod f
-  powChain : Array (FpPoly p)
-  -- Bezout coefficients for coprimality at each maximal divisor
-  bezout : Array (FpPoly p × FpPoly p)
+For a monic polynomial `f` of degree `n` over `𝔽_p`, the Frobenius
+map on `𝔽_p[X] / (f)` sends `h` to `h^p`. In the basis
+`1, X, ..., X^(n-1)`, its matrix is `Q_f`. The kernel of `Q_f - I`
+is the fixed space.
+
+If `f` is square-free and has `r` monic irreducible factors, the
+Chinese remainder theorem identifies its fixed space with `𝔽_p^r`.
+Thus:
+
+- the fixed-space dimension is the number of irreducible factors;
+- `f` is irreducible exactly when the fixed space contains only
+  constants;
+- a nonconstant fixed element splits `f` through the polynomials
+  `gcd(f, h - c)` for `c ∈ 𝔽_p`.
+
+The matrix construction is in `BerlekampMatrix.lean`. Exact
+nullspace calculation is supplied by the finite-field row-reduction
+library.
+
+## Factorization
+
+`Berlekamp.berlekampFactor` computes the fixed space once and applies
+its basis vectors to the current factor list. A split replaces one
+factor by exact complementary factors, preserving the product.
+
+The result records:
+
+- the monic factors;
+- their product;
+- the fixed-space witnesses used to split them.
+
+For every monic input, the Mathlib-free theorem
+`Berlekamp.prod_berlekampFactor` proves that the returned factors
+multiply to the input. `hex-berlekamp-mathlib` proves that the factors
+returned from a square-free input are irreducible.
+
+Distinct-degree factorization is provided separately. It partitions a
+square-free polynomial into products of irreducible factors of a common
+degree, using repeated Frobenius powers and greatest common divisors.
+
+## Rabin irreducibility certificates
+
+A monic polynomial `f` of degree `n` over `𝔽_p` is irreducible exactly
+when:
+
+1. `f` divides `X^(p^n) - X`;
+2. for every prime divisor `q` of `n`,
+   `gcd(f, X^(p^(n/q)) - X) = 1`.
+
+`Berlekamp.rabinTest` evaluates this criterion. The certificate records
+modular-power data and Bézout witnesses for the coprimality checks.
+The checker reconstructs every modular power and verifies every
+Bézout identity.
+
+Certificate generation and Berlekamp factor search are compiled
+search procedures. The checker and its correctness theorem determine
+the trusted result.
+
+## Tactic surface
+
+The ordinary umbrella supplies `factor_poly` and `irreducibility` for
+closed `FpPoly p` expressions at literal prime moduli within the
+`ZMod64` bounds.
+
+The parser accepts polynomial variables, constants, numerals,
+addition, subtraction, multiplication, negation, and natural powers.
+It produces a dense polynomial and a proof of the parsing equality.
+The emitted term contains:
+
+- a coefficientwise product check;
+- one irreducibility-certificate check per distinct factor;
+- no invocation of the factorization search.
+
+`hex-berlekamp-mathlib` adds the same syntax for
+`Polynomial (ZMod p)`.
+
+## Mathematical companion
+
+`hex-berlekamp-mathlib` uses the ring equivalence
+
+```text
+FpPoly p ≃+* Polynomial (ZMod p)
 ```
 
-The prime `p` and target degree `n` are bundled as fields so that a
-certificate is self-describing and collections of certificates at
-different primes can share a single type. `FpPoly p` references use
-the preceding field, which Lean 4 supports natively.
+to connect executable arithmetic with Mathlib's polynomial theory.
+It proves:
 
-The certificate checker is tiny and fully verified. The algorithm that
-*generates* certificates is also in Lean — Berlekamp's algorithm produces
-the factorization, from which certificates are extracted.
+- completeness of the Berlekamp splits on square-free inputs;
+- soundness and completeness of Rabin's criterion;
+- soundness of the certificate checker;
+- correspondence of coefficients, products, divisibility, and
+  irreducibility across the equivalence.
 
-**Proof split (computational vs correctness):**
+## Verification
 
-`hex-berlekamp` proves the computational invariant (no Mathlib):
-```lean
-theorem prod_berlekampFactor (f : FpPoly p) :
-    (berlekampFactor f).prod = f
-```
+Changes must pass:
 
-This is a loop invariant: each GCD step preserves
-`factors.prod * remaining = f`. Uses hex-poly's division/GCD
-correctness (`d ∣ g → d * (g / d) = g`).
+- the root build and trust-surface check;
+- finite-field factorization and irreducibility conformance fixtures;
+- the external finite-field oracle;
+- factor-tactic regression modules;
+- benchmark verification for the Berlekamp matrix, distinct-degree
+  factorization, Rabin's test, and full factorization.
 
-The deeper correctness theorems live in `hex-berlekamp-mathlib`:
-```lean
-theorem irreducible_of_mem_berlekampFactor (f : FpPoly p) (hf : squareFree f) :
-    ∀ g ∈ berlekampFactor f, Irreducible g
+Performance reports compare only operations with the same
+input-output relation. They record the exact source revision,
+toolchain, prime, degree, input family, machine, and repetition
+protocol.
 
-theorem rabin_irreducible (f : FpPoly p) (hf : f.degree = n) :
-    rabinTest f = true ↔ Irreducible f
-```
+## References
 
-These require Euclidean domain theory (coprime divisibility,
-irreducible ⟹ prime, factor theorem) — all available from Mathlib
-via the ring equivalence `FpPoly p ≃+* Polynomial (ZMod p)`. See
-hex-berlekamp-mathlib below for the proof strategy.
-
-**References:**
-- Berlekamp, "Factoring Polynomials Over Large Finite Fields,"
-  *Math. Comp.* 24(111), 1970, pp. 713-735 (freely available from AMS)
-- Shoup, *A Computational Introduction to Number Theory and Algebra*,
-  2nd ed. (2009), chs. 20-21 (free PDF at `shoup.net/ntb/`)
-- Knuth, *TAOCP* Vol. 2, section 4.6.2
-- Isabelle AFP entry "Berlekamp_Zassenhaus"
-  (Divason-Joosten-Thiemann-Yamada, 2016; JAR 2019). Browsable at
-  `isa-afp.org/entries/Berlekamp_Zassenhaus.html`.
-
-## External comparators
-
-The four Phase-4 bench targets in `HexBerlekamp/Bench.lean` decompose
-into two surfaces with `gating` FLINT comparators and two surfaces
-with declared absence:
-
-| Bench target | Comparator | Class | Goal / reason |
-|---|---|---|---|
-| `runRabinTestChecksum` | FLINT `nmod_poly.is_irreducible` via python-flint | **gating** | Same boolean predicate (is `f` irreducible). FLINT may internally use square-free + distinct-degree rather than Rabin's `X^(p^k) mod f` schema; the input-output relation is identical and FLINT's speed is the right yardstick. Goal: Lean's `runRabinTestChecksum` is at least as fast as FLINT's `is_irreducible` at the largest eligible rung per `SPEC/benchmarking.md §"Headline reports" §"Comparator ratios"`. |
-| `runDistinctDegreeChecksum` | FLINT `nmod_poly.factor_distinct_deg` via python-flint | **gating** | Same operation, same standard algorithm class — the cleanest apples-to-apples bar in HexBerlekamp. Goal: Lean's `runDistinctDegreeChecksum` is at least as fast as FLINT's `factor_distinct_deg` at the largest eligible rung. |
-| `runBerlekampMatrixChecksum` | (none) | **no-comparable-surface-in-named-comparator** | The Frobenius matrix `Q_f - I` is constructed internally by FLINT's factorization pipeline but not exposed as a user-callable function. The bench target's declared-complexity verdict (`O(n²)` for fixed `p`) is its only Phase-4 evidence. |
-| `runBerlekampFactorChecksum` | (none) | **no-comparable-surface-in-named-comparator** | The split-step kernel `gcd(f, witness - c)` for `c ∈ F_p` is FLINT-internal. Same justification. |
-
-Both gating comparators are wired via a persistent-subprocess
-Python driver per `SPEC/benchmarking.md §"External comparators"
-§"Process call"`. The shared driver invocation pattern handles
-multiple FLINT comparator families.
-
-Structured metadata in `libraries.yml: HexBerlekamp.phase4.comparators`.
-
-## The `factor_poly` and `irreducibility` tactics
-
-User-facing certificate-backed elaborators (`FactorPolyElab.lean`,
-`IrreducibilityElab.lean`), handling `FpPoly p` natively for literal prime
-moduli within the ZMod64 bounds:
-
-- `factor_poly f` (term) elaborates to an `FpPoly.Factored f`: a `scalar`,
-  a `factors` list (monic irreducible factors with repetition, nondecreasing
-  size, by generator convention), `factors_mul : C scalar * factors.prod = f`,
-  and `factors_irred : ∀ q ∈ factors, FpPoly.Irreducible q`. The tactic form
-  introduces `scalar`/`factors` as transparent `let`s plus the two hypotheses.
-- `irreducibility f` (term) elaborates to `FpPoly.Irreducible f`;
-  `irreducibility f` / `irreducibility h : f` (tactic) add it as a
-  hypothesis, and bare `irreducibility` closes an `FpPoly.Irreducible e`
-  goal.
-
-Trust model: the compiled Yun square-free decomposition, Berlekamp
-factorizer, and Rabin certificate generator run at elaboration time as
-untrusted search; the emitted terms carry only kernel checks on reified
-literal data (`DensePoly.beqCoeffs` product check, `Berlekamp.checkMonicCert`
-/ `checkIrredCover` certificate replays — one replay per distinct factor,
-budget-guarded at `deg · p ≤ 2²⁶`). The factorizer never runs in the kernel,
-and inputs must be kernel-transparent closed terms (checked, with a clear
-error, at elaboration time).
-
-Other input types dispatch through the `Hex.FactorTactic.Provider` hook
-(`TacticCore.lean`): downstream libraries declare a provider under a
-well-known name (`providerNames`), probed from the environment at
-elaboration time — no imports in this direction. `HexBerlekampZassenhaus`
-registers the `ZPoly` arms; the Mathlib bridges register the
-`Polynomial (ZMod q)` / `Polynomial ℤ` arms.
+- E. R. Berlekamp, “Factoring Polynomials Over Large Finite Fields,”
+  *Mathematics of Computation* 24 (1970), 713-735.
+- V. Shoup, *A Computational Introduction to Number Theory and
+  Algebra*, second edition, Chapters 20-21.
+- D. Knuth, *The Art of Computer Programming*, Volume 2,
+  Section 4.6.2.

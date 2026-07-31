@@ -65,7 +65,7 @@ private theorem mod_sub_self_eq_mul_neg_div {S : Type _}
     mul_sub_zero_comm m (p / m), coeff_sub 0 ((p / m) * m) n hzero_sub, coeff_zero]
   grind
 
-/-- Packages {name}`mod_sub_self_eq_mul_neg_div` as the divisibility `m ∣ (p % m - p)`, the core
+/-- Packages {name}`mod_sub_self_eq_mul_neg_div` as the divisibility `m ∣ (p % m - p)`, the
 fact behind the public `congr_mod`. -/
 private theorem dvd_mod_sub {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]

@@ -19,7 +19,7 @@ typedef lean_obj_res (*lean_fplll_lll_reduce_fn)(
      1 — probed, none linked and none installed by the loader,
      2 — a provider is installed (`lean_hexlll_provider_ptr` is valid).
    The slot is set either by `lean_hexlll_load_provider` (the explicit Lean
-   loader `Hex.lll.loadProvider`) or, for a statically-linked provider, by the
+   loader `Hex.lll.loadExternalReducer`) or, for a statically-linked provider, by the
    one-shot `RTLD_DEFAULT` probe in `lean_hexlll_resolve_provider`. There is no
    environment-variable read and no implicit `dlopen`: activation is always an
    explicit Lean action or a link-time fact. */
@@ -63,7 +63,7 @@ static lean_obj_res lean_hexlll_except_error(const char *msg) {
     return res;
 }
 
-/* `Hex.lll.loadProvider`: explicitly `dlopen` the shared library at `path`
+/* `Hex.lll.loadExternalReducer`: explicitly `dlopen` the shared library at `path`
    (with `RTLD_GLOBAL` so its symbols satisfy the provider's transitive deps),
    resolve `lean_fplll_lll_reduce` from that handle, and install it as the
    active provider. Returns `true` on success and `false` on failure; on failure

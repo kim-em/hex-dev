@@ -32,6 +32,35 @@ def release_test_modules() -> set[str]:
     return set(re.findall(r"`([A-Z][A-Za-z0-9_.]+)", match.group("body")))
 
 
+def release_build_modules() -> set[str]:
+    """Read complete development umbrellas from their monorepo Lake target."""
+    lakefile = (REPO_ROOT / "lakefile.lean").read_text(encoding="utf-8")
+    match = re.search(
+        r"(?ms)^lean_lib HexFactorizationModules where\n"
+        r"(?P<body>.*?)(?=^lean_(?:lib|exe) |\Z)",
+        lakefile,
+    )
+    if match is None:
+        fail("lakefile.lean has no HexFactorizationModules target")
+    return set(re.findall(r"`([A-Z][A-Za-z0-9_.]+)", match.group("body")))
+
+
+def release_executables() -> dict[str, str]:
+    """Read monorepo executable names and root modules."""
+    lakefile = (REPO_ROOT / "lakefile.lean").read_text(encoding="utf-8")
+    matches = re.finditer(
+        r"(?ms)^lean_exe\s+(?P<name>[A-Za-z0-9_]+)\s+where\n"
+        r"(?P<body>.*?)(?=^lean_(?:lib|exe) |\Z)",
+        lakefile,
+    )
+    out: dict[str, str] = {}
+    for match in matches:
+        root = re.search(r"(?m)^\s*root\s*:=\s*`([A-Z][A-Za-z0-9_.]+)", match.group("body"))
+        if root is not None:
+            out[match.group("name")] = root.group(1)
+    return out
+
+
 def main() -> int:
     document = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
     entries = document.get("repos") if isinstance(document, dict) else None
@@ -94,6 +123,38 @@ def main() -> int:
                 if not module_path.is_file():
                     fail(
                         f"{repo}: test module does not exist: "
+                        f"{module_path.relative_to(REPO_ROOT)}"
+                    )
+            build_modules = entry.get("build_modules", [])
+            if (
+                not isinstance(build_modules, list)
+                or not all(isinstance(module, str) for module in build_modules)
+                or len(build_modules) != len(set(build_modules))
+            ):
+                fail(f"{repo}: build_modules must be a duplicate-free string list")
+            for module in build_modules:
+                if not module.startswith(lib + "."):
+                    fail(f"{repo}: development module {module} is outside {lib}")
+                module_path = REPO_ROOT / Path(*module.split(".")).with_suffix(".lean")
+                if not module_path.is_file():
+                    fail(
+                        f"{repo}: development module does not exist: "
+                        f"{module_path.relative_to(REPO_ROOT)}"
+                    )
+            executables = entry.get("executables", {})
+            if (
+                not isinstance(executables, dict)
+                or not all(
+                    isinstance(name, str) and isinstance(module, str)
+                    for name, module in executables.items()
+                )
+            ):
+                fail(f"{repo}: executables must map names to root modules")
+            for name, module in executables.items():
+                module_path = REPO_ROOT / Path(*module.split(".")).with_suffix(".lean")
+                if not module_path.is_file():
+                    fail(
+                        f"{repo}: executable {name} root does not exist: "
                         f"{module_path.relative_to(REPO_ROOT)}"
                     )
             mappings = managed_paths(entry)
@@ -167,6 +228,28 @@ def main() -> int:
             f"missing={sorted(lake_tests - manifest_tests)}, "
             f"extra={sorted(manifest_tests - lake_tests)}"
         )
+
+    manifest_builds = {
+        module
+        for entry in entries
+        for module in entry.get("build_modules", [])
+    }
+    lake_builds = release_build_modules()
+    if manifest_builds != lake_builds:
+        fail(
+            "manifest build_modules differ from the HexFactorizationModules "
+            f"Lake target; missing={sorted(lake_builds - manifest_builds)}, "
+            f"extra={sorted(manifest_builds - lake_builds)}"
+        )
+
+    lake_executables = release_executables()
+    for entry in entries:
+        for name, module in entry.get("executables", {}).items():
+            if lake_executables.get(name) != module:
+                fail(
+                    f"{entry['repo']}: executable {name} must root at {module} "
+                    "in lakefile.lean"
+                )
 
     libraries = load_libraries()
     closure = reachable_dependencies(libraries)

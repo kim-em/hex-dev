@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexPolyZMathlib.Basic
+public import HexPolyZMathlib.PolynomialEquivalence
 public import HexPolyZMathlib.Discriminant
 public import HexPolyZMathlib.Hadamard
 public import HexPolyZMathlib.MahlerSeparation

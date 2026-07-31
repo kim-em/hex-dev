@@ -32,7 +32,7 @@ certificate `s · g + t · h ≡ 1 (mod p)`, it refines `g` and `h` step by
 step until they multiply to `f` modulo `p^k`. The precision `k` is
 chosen large enough (via a Mignotte bound) that the lifted factors
 coincide with the true integer factors. This connects the prime-field
-factorization in `HexPolyFp` to the integer factorization pipelines
+factorization in `HexPolyFp` to the integer factorization algorithms
 built on top of it.
 
 The library connects integer polynomials
@@ -40,7 +40,7 @@ The library connects integer polynomials
 polynomials (`HexPolyFp`, `Hex.FpPoly p`). It provides coefficientwise
 reduction modulo powers of `p`, the linear and quadratic single-step
 corrections, the iterative {name}`Hex.ZPoly.henselLift` wrapper, and the
-ordered multifactor lift API the factorization pipeline consumes. It is
+ordered multifactor lift API the factorization algorithm consumes. It is
 Mathlib-free and depends only on `HexPolyFp` and `HexPolyZ`. See
 {ref "hex-hensel-cross-references"}[Cross-references].
 
@@ -128,11 +128,11 @@ two-factor split all the way from modulus `p` to `p^k`.
 
 {docstring Hex.ZPoly.henselLift}
 
-Factorization pipelines need to lift an *ordered list* of mod-`p`
+Factorization algorithms need to lift an *ordered list* of mod-`p`
 factors simultaneously, not just a single split. The multifactor API
 does this by a sequential binary split tree: at each node it lifts the
 first factor against the product of the rest, then recurses. There are
-linear and quadratic-doubling versions. The factorization pipeline uses
+linear and quadratic-doubling versions. The factorization algorithm uses
 the quadratic one, because of its `O(log k)` precision growth.
 
 {docstring Hex.ZPoly.multifactorLift}
@@ -168,7 +168,7 @@ factor) are exactly the preconditions the doubling step requires.
 
 Monicity of the leading factor is preserved by the whole quadratic
 multifactor lift, so a monic input yields monic lifted factors, which
-the factorization pipeline requires.
+the factorization algorithm requires.
 
 {docstring Hex.ZPoly.multifactorLiftQuadratic_each_monic}
 
@@ -204,6 +204,6 @@ integer-factorization libraries depend on it:
   invariants are stated against, and the executable Mignotte bound that
   fixes the target precision `k`. `HexPolyFp` supplies the prime-field
   type `Hex.FpPoly p` and the mod-`p` Bezout witnesses that seed a lift.
-* Downstream, the integer Berlekamp–Zassenhaus factorization pipeline
+* Downstream, the integer Berlekamp–Zassenhaus factorization algorithm
   consumes {name}`Hex.ZPoly.multifactorLiftQuadratic` to lift its
   mod-`p` factorizations to working precision.

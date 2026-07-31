@@ -12,13 +12,13 @@ package Hex where
   leanOptions := #[⟨`doc.verso, true⟩, ⟨`doc.verso.suggestions, false⟩]
 
 require verso from git
-  "https://github.com/leanprover/verso.git" @ "v4.32.0-rc1"
+  "https://github.com/leanprover/verso.git" @ "v4.32.0"
 
 require «lean-bench» from git
   "https://github.com/kim-em/lean-bench.git" @ "master"
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @ "v4.32.0-rc1-patch1"
+  "https://github.com/leanprover-community/mathlib4.git" @ "v4.32.2"
 
 private def clmulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexGF2" / "ffi" / "clmul.o"
@@ -215,8 +215,8 @@ lean_lib HexRealRootsMathlib where
 @[default_target]
 lean_lib HexRCF where
 
-lean_exe hexlll_provider_probe where
-  root := `HexLLL.ProviderProbe
+lean_exe hexlll_external_reduction where
+  root := `HexLLL.ExternalReduction
 
 -- Multi-file bench drivers: their modules live under `bench/` and are owned by
 -- a precompiled lean_lib (mirroring the released bench sub-project), so the bench
@@ -376,11 +376,18 @@ lean_lib HexReleaseTests where
     `HexBerlekampMathlib.FactorPolyTests,
     `HexBerlekampZassenhaus.FactorTacticTests,
     `HexBerlekampZassenhausMathlib.FactorPolyTests,
+    `HexBerlekampZassenhausMathlib.IrreducibilityTests,
     `HexRealRoots.ReplayTest,
     `HexRealRootsMathlib.IsolateRootsTests,
     `HexRealRootsMathlib.IsolateRootsElabTests,
     `HexRootsMathlib.Examples,
     `HexMvPoly.KernelTests]
+
+-- Complete development imports for the two factorization packages. Their
+-- ordinary umbrellas deliberately expose only the supported release API.
+lean_lib HexFactorizationModules where
+  globs := #[`HexBerlekampZassenhaus.All,
+    `HexBerlekampZassenhausMathlib.All]
 
 -- HexRCF is not yet a published split repository, so its verification-only
 -- modules stay separate from the release-manifest-backed target above.

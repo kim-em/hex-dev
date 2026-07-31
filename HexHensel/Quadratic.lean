@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexHensel.Basic
+public import HexHensel.ModularPolynomial
 public import HexHensel.WordMul
 public import HexPoly.Euclid.MonicUnique
 
@@ -26,9 +26,13 @@ updated leading factor `g` (monic, the input `g` corrected modulo `m^2`), the
 updated complementary factor `h`, and the updated Bezout witnesses `s`, `t`
 satisfying `s * g + t * h ≡ 1 (mod m^2)`. -/
 structure QuadraticLiftResult where
+  /-- The updated monic factor. -/
   g : ZPoly
+  /-- The updated complementary factor. -/
   h : ZPoly
+  /-- The updated Bezout coefficient multiplying `g`. -/
   s : ZPoly
+  /-- The updated Bezout coefficient multiplying `h`. -/
   t : ZPoly
 
 namespace QuadraticLiftResult
@@ -1954,7 +1958,7 @@ def quadraticHenselStepBignum
   let s' := subModSquare (subModSquare s (mulModSquare s b m) m) (mulModSquare qBezout h' m) m
   { g := g', h := h', s := s', t := t' }
 
-/-- Guarded dispatch: the word-sized step when its guard holds, else the bignum step. -/
+/-- Guarded selection: the word-sized step when its guard holds, else the bignum step. -/
 def quadraticHenselStep
     (m : Nat) (f g h s t : ZPoly) : QuadraticLiftResult :=
   match quadraticHenselStepWord? m f g h s t with
@@ -2043,7 +2047,6 @@ theorem quadraticHenselFactors_eq
   | none => simp [quadraticHenselFactorsBignum, quadraticHenselStepBignum]
   | some result => simp
 
-set_option maxHeartbeats 2000000 in
 private theorem quadraticHenselStep_raw_factor_congr
     (m : Nat)
     (f g h s t : ZPoly)
@@ -2531,7 +2534,6 @@ private theorem toWP_divModMonicModSquare (m : Nat)
         DensePoly.degree?_eq_some_of_pos_size q hqpos, Option.getD_some, Option.getD_some]
       omega
 
-set_option maxHeartbeats 1000000 in
 theorem quadraticHenselStepWord?_eq (m : Nat) (f g h s t : ZPoly)
     (h2 : m * m < UInt64.word) (hodd : (UInt64.ofNat (m * m)) % 2 = 1) (h1 : 1 < m * m)
     (hmlc : DensePoly.leadingCoeff g = 1) (hd : 0 < g.degree?.getD 0) :

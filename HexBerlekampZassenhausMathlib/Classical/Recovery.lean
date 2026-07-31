@@ -17,7 +17,7 @@ set_option backward.proofsInPublic true
 /-!
 # Direct-coordinate recovery
 
-This module is the single bridge from the executable direct candidate to the
+This module is the single correspondence from the executable direct candidate to the
 proof-side M1 candidate.  It contains no dilation or `toMonic` recovery path.
 -/
 
@@ -104,7 +104,7 @@ theorem gcd_eq_one_of_dvd_left
 
 /-- The exact proportionality certificate behind direct recovery.
 
-For an integer factor represented by a modular support, the core-scaled
+For an integer factor represented by a modular support, the leading-coefficient-scaled
 product of the corresponding canonical Hensel factors is congruent to the
 factor scaled by the leading coefficient of its cofactor.  CLD consumes this
 statement directly; classical recovery additionally centers and
@@ -128,7 +128,7 @@ theorem directScaledProduct_congr_of_modP_support
       (Int.ofNat (data.p ^ Hex.precisionForCoeffBound B data.p)) = 1)
     (hprecision_pos : 1 ≤ Hex.precisionForCoeffBound B data.p)
     (hrep : RepresentsIntegerFactorModP data factor S) :
-    let d := Hex.ZPoly.coreLiftData core B data
+    let d := Hex.ZPoly.directLiftData core B data
     let T := liftedSubsetOfModPSubset data d
       (henselLiftData_liftedFactors_size_eq
         (Hex.ZPoly.monicTarget core data.p
@@ -141,7 +141,7 @@ theorem directScaledProduct_congr_of_modP_support
       (d.p ^ d.k) := by
   letI := data.bounds
   let k := Hex.precisionForCoeffBound B data.p
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let T : LiftedFactorSubset d :=
     liftedSubsetOfModPSubset data d
       (henselLiftData_liftedFactors_size_eq
@@ -167,8 +167,8 @@ theorem directScaledProduct_congr_of_modP_support
   have hsubset :
       Hex.ZPoly.congr (liftedFactorProduct d T)
         (Hex.ZPoly.monicTarget factor data.p k) (data.p ^ k) := by
-    simpa [d, T, k, Hex.ZPoly.coreLiftData] using
-      (coreLiftData_subset_congr_monicTarget core factor B data hval
+    simpa [d, T, k, Hex.ZPoly.directLiftData] using
+      (directLiftData_subset_congr_monicTarget core factor B data hval
         hcore_size hprecision_pos hgcd_core hfactor_size hgcd_factor
         hfactor_product hrepTarget)
   unfold scaledLiftedFactorProduct
@@ -209,7 +209,7 @@ theorem directCandidate_eq_of_modP_support
       2 * Hex.ZPoly.defaultFactorCoeffBound core <
         data.p ^ Hex.precisionForCoeffBound B data.p)
     (hrep : RepresentsIntegerFactorModP data factor S) :
-    let d := Hex.ZPoly.coreLiftData core B data
+    let d := Hex.ZPoly.directLiftData core B data
     scaledRecombinationCandidate core d
       (liftedSubsetOfModPSubset data d
         (henselLiftData_liftedFactors_size_eq
@@ -218,7 +218,7 @@ theorem directCandidate_eq_of_modP_support
           (Hex.precisionForCoeffBound B data.p) data) S) = factor := by
   letI := data.bounds
   let k := Hex.precisionForCoeffBound B data.p
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let T : LiftedFactorSubset d :=
     liftedSubsetOfModPSubset data d
       (henselLiftData_liftedFactors_size_eq
@@ -235,7 +235,7 @@ theorem directCandidate_eq_of_modP_support
         (Hex.DensePoly.scale
           (Hex.DensePoly.leadingCoeff cofactor) factor)
         (d.p ^ d.k) := by
-    simpa [d, T, k, Hex.ZPoly.coreLiftData] using
+    simpa [d, T, k, Hex.ZPoly.directLiftData] using
       (directScaledProduct_congr_of_modP_support
         (core := core) (factor := factor) (cofactor := cofactor)
         (B := B) (data := data) (S := S)
@@ -249,6 +249,6 @@ theorem directCandidate_eq_of_modP_support
       rw [hzero] at hcore_size
       simp at hcore_size)
     hproduct hcofactor_lc_pos hhonest hfactor_prim hfactor_norm
-    (by simpa [d, k, Hex.ZPoly.coreLiftData] using hprecision)
+    (by simpa [d, k, Hex.ZPoly.directLiftData] using hprecision)
 
 end HexBerlekampZassenhausMathlib

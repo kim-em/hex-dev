@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import Init.Grind.Ring.Basic
-public import HexModArith.Basic
+public import HexModArith.Residue
 
 public section
 

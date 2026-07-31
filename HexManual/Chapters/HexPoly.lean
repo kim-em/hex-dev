@@ -42,7 +42,7 @@ consume this representation. See
 
 # Dense polynomial type
 %%%
-tag := "hex-poly-core-types"
+tag := "hex-poly-types"
 %%%
 
 The normalization invariant is a predicate on coefficient arrays, and
@@ -65,7 +65,7 @@ polynomials are equal as soon as their coefficient functions agree.
 tag := "hex-poly-constructors"
 %%%
 
-Every constructor routes through normalization so the no-trailing-zeros
+Every constructor uses normalization so the no-trailing-zeros
 invariant holds by construction. Callers never trim by hand. The
 primitive normalizer drops trailing zeros from a raw array, and
 {name}`Hex.DensePoly.ofCoeffs` wraps it to build a polynomial.
@@ -136,7 +136,7 @@ Arithmetic is coefficientwise where it can be (addition, subtraction,
 negation, scalar and monomial scaling) and a schoolbook convolution for
 multiplication. Each operation re-normalizes its result, so the output
 is again a canonical representative. The standard `Add`, `Sub`, `Neg`,
-and `Mul` instances on {name}`Hex.DensePoly` dispatch to these, so
+and `Mul` instances on {name}`Hex.DensePoly` invoke these, so
 `p + q`, `p - q`, `-p`, and `p * q` notation works directly.
 
 {docstring Hex.DensePoly.add}

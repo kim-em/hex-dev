@@ -7,14 +7,14 @@ Authors: Kim Morrison
 module
 
 public import HexPoly
-public import HexPolyZ.Core
-import all HexPolyZ.Core
+public import HexPolyZ.IntegerPolynomial
+import all HexPolyZ.IntegerPolynomial
 
 public section
 set_option backward.proofsInPublic true
 
 /-!
-Rational-coefficient machinery for the primitive-square-free pipeline:
+Rational-coefficient machinery for the primitive-square-free computation:
 `normalizePrimitiveSign` / `ratPolyPrimitivePart` properties, the `rat_*`
 DensePoly arithmetic, and the `ratDivModLaws` / `ratGcdLaws` instances.
 -/
@@ -1149,7 +1149,7 @@ private theorem rat_mod_eq_mod_of_congr_not_pos_degree (p q m : DensePoly Rat)
     rw [hpmod, hqmod]
 
 /-- Congruent polynomials always have equal remainders modulo `m`, obtained by
-case-splitting on whether `m` has positive degree and dispatching to the two
+case-splitting on whether `m` has positive degree and applying the appropriate
 preceding lemmas. This is the workhorse behind the `mod_eq_mod_of_congr` law. -/
 private theorem rat_mod_eq_mod_of_congr (p q m : DensePoly Rat)
     (hcongr : DensePoly.Congr p q m) :

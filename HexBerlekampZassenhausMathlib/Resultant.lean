@@ -19,7 +19,7 @@ public section
 Resultant correspondence lemmas for the Berlekamp-Zassenhaus Mathlib layer.
 
 This module packages the upstream resultant API in the integer-polynomial
-forms needed by the BHKS bad-vector proof route.
+forms needed by the BHKS bad-vector proof method.
 -/
 
 namespace HexBerlekampZassenhausMathlib
@@ -225,7 +225,7 @@ Abstract Sylvester-column valuation criterion for integer resultants.
 
 If a determinant-preserving Sylvester column transformation produces `d`
 distinct columns whose entries are all divisible by `m`, then `m ^ d` divides
-the resultant.  This is the determinant-only core needed by the CLD/logarithmic
+the resultant.  This is the determinant argument needed by the CLD/logarithmic
 derivative argument: downstream code supplies the transformed matrix and column
 divisibility witnesses directly, without assuming that the selected local
 factor divides the auxiliary polynomial modulo `m`.
@@ -272,8 +272,8 @@ theorem pow_dvd_resultant_of_sylvester_cols
   simpa [hcast]
 
 /--
-Replacing a column of a square matrix by `A.mulVec w` — the linear combination
-of all columns with coefficients `w` — multiplies the determinant by the
+Replacing a column of a square matrix by `A.mulVec w`; the linear combination
+of all columns with coefficients `w`; multiplies the determinant by the
 coefficient `w p` of the replaced column.
 
 This is the determinant-preserving column-operation mechanism: when the
@@ -500,7 +500,7 @@ theorem int_resultant_eq_zero_iff_not_coprime_over_rat
     exact_mod_cast hcast
 
 /--
-Contrapositive form useful when the BHKS route proves coprimality after
+Contrapositive form useful when the BHKS method proves coprimality after
 transporting an integer-polynomial pair to `ℚ`.
 -/
 theorem int_resultant_ne_zero_of_coprime_over_rat
@@ -556,7 +556,7 @@ theorem int_resultant_ne_zero_of_no_monic_irreducible_common_factor
         hq_monic.isPrimitive).mpr (by simpa [φ, hq_map'] using hqQ_irr)
   have hq_f : q ∣ f := by
     apply (Polynomial.IsPrimitive.Int.dvd_iff_map_cast_dvd_map_cast
-      q f hq_monic.isPrimitive hf_monic.isPrimitive).mpr
+      q f hq_monic.isPrimitive).mpr
     simpa [φ, hq_map'] using hqQ_f
   have hq_g : q ∣ g := by
     have hremQ : (g %ₘ q).map φ = 0 := by
@@ -569,7 +569,7 @@ theorem int_resultant_ne_zero_of_no_monic_irreducible_common_factor
     exact (Polynomial.modByMonic_eq_zero_iff_dvd hq_monic).mp hrem
   exact hcommon q hq_monic hq_irr hq_f hq_g
 
-/-- An integer resultant against a nonzero primitive polynomial is nonzero
+/-- An integer resultant against a nonzero polynomial is nonzero
 when no irreducible integer factor of the first polynomial divides the second.
 
 This is the direct-coordinate form of
@@ -578,7 +578,7 @@ nonmonic input has no reason to admit monic integer factors.  A hypothetical
 rational common factor is cleared of denominators, replaced by its primitive
 part, and descended through Gauss's lemma. -/
 theorem int_resultant_ne_zero_of_no_irreducible_common_factor
-    (f g : Polynomial ℤ) (hf_primitive : f.IsPrimitive) (hf_ne : f ≠ 0)
+    (f g : Polynomial ℤ) (hf_ne : f ≠ 0)
     (hcommon : ∀ q : Polynomial ℤ,
       Irreducible q → q ∣ f → ¬ q ∣ g) :
     Polynomial.resultant f g ≠ 0 := by
@@ -663,8 +663,7 @@ theorem int_resultant_ne_zero_of_no_irreducible_common_factor
   have hq_f_map : q.map φ ∣ f.map φ := by
     simpa only [fQ, φ] using hq_qQ.dvd.trans hqQ_f
   have hq_f : q ∣ f :=
-    (hq_primitive.dvd_iff_fraction_map_dvd_fraction_map ℚ
-      hf_primitive).mpr hq_f_map
+    (hq_primitive.dvd_iff_fraction_map_dvd_fraction_map ℚ).mpr hq_f_map
   have hq_g_map : q.map φ ∣ g.map φ := by
     simpa only [gQ, φ] using hq_qQ.dvd.trans hqQ_g
   have hq_g : q ∣ g := by
@@ -694,8 +693,7 @@ theorem int_resultant_ne_zero_of_no_irreducible_common_factor
     have hq_gprim_map : q.map φ ∣ g.primPart.map φ :=
       hq_g_map.trans hg_assoc.dvd
     have hq_gprim : q ∣ g.primPart :=
-      (hq_primitive.dvd_iff_fraction_map_dvd_fraction_map ℚ
-        g.isPrimitive_primPart).mpr hq_gprim_map
+      (hq_primitive.dvd_iff_fraction_map_dvd_fraction_map ℚ).mpr hq_gprim_map
     exact hq_gprim.trans (Polynomial.primPart_dvd g)
   exact hcommon q hq_irr hq_f hq_g
 
@@ -784,12 +782,12 @@ theorem sylvesterMap_commonFactor_syzygy
 Scalar-shifted common-factor syzygy for the Sylvester map.
 
 When `f` and `g` share the factor `q` only after reducing modulo a scalar `c`
-— recorded by the explicit witnesses `f = q * a + C c * r` and
-`g = q * b + C c * s` — the shifted pair `(-a * X^t, b * X^t)` is no longer
+; recorded by the explicit witnesses `f = q * a + C c * r` and
+`g = q * b + C c * s`; the shifted pair `(-a * X^t, b * X^t)` is no longer
 killed by the Sylvester map, but its image is the *scalar multiple*
 `C c * ((r * b - s * a) * X^t)`.
 
-This is the bridge from the exact syzygy `sylvesterMap_commonFactor_syzygy`
+This is the correspondence from the exact syzygy `sylvesterMap_commonFactor_syzygy`
 (the `c = 0` case) to the divisibility used by the column-reduction proof: the
 linear combination of Sylvester columns selected by `(-a * X^t, b * X^t)` is
 entrywise divisible by `c`. Taking `t < q.natDegree` shifts gives `d`
@@ -883,7 +881,7 @@ General Sylvester column-image identity.
 The Sylvester matrix applied (`mulVec`) to the coordinate vector of a direction
 `(u, w)` in the product basis reads off, entry by entry, the coefficients of the
 image polynomial `f * w + g * u` under the Sylvester map.  This is the
-direction-agnostic core behind the common-factor specialisation
+direction-independent argument behind the common-factor specialisation
 `sylvester_mulVec_commonFactor_smul`: divisibility of a selected column
 combination reduces to divisibility of the coefficients of `f * w + g * u`.
 -/
@@ -904,12 +902,12 @@ Each entry of the Sylvester column combination selected by the CLD syzygy
 direction `(q * X^t, -q' * X^t)` is divisible by the scalar `c`.
 
 The CLD syzygy hypothesis records that the monic selected factor `q` of `f`
-satisfies `g * q - f * q' = C c * z` — for the BHKS application `c = p ^ k`, `f`
+satisfies `g * q - f * q' = C c * z`; for the BHKS application `c = p ^ k`, `f`
 the input polynomial, `g` the auxiliary polynomial, and the congruence supplied
 by `cldQuotientMod_congr_mul_derivative` (rearranged so the divisor `q` does not
 have to divide the auxiliary polynomial `g`).  The selected column combination is
 the coordinate image of `(q * X^t, -q' * X^t)`, whose Sylvester image is
-`(g * q - f * q') * X^t = C c * (z * X^t)` — visibly a `c`-multiple entrywise.
+`(g * q - f * q') * X^t = C c * (z * X^t)`; visibly a `c`-multiple entrywise.
 This is the per-entry input the determinant column-reduction needs once the
 `d = q.natDegree` shifts `t < d` are assembled into the `d` selected columns.
 -/
@@ -988,7 +986,7 @@ In the natural `Fin (m + n)` Sylvester column layout, columns `m + (n - d) ..
 m + n - 1` (the top `d` columns of the `f`-shift block) are the *pivot* columns.
 This matrix is the identity except on those `d` pivot columns, where column
 `m + (n - d) + t` carries the coordinate vector of the shifted common-factor
-direction `(-a * X^t, b * X^t)` — its left `m` entries are the coefficients of
+direction `(-a * X^t, b * X^t)`; its left `m` entries are the coefficients of
 `-a * X^t`, its right `n` entries those of `b * X^t`.
 
 Multiplying the Sylvester matrix `S` on the right by this matrix replaces each
@@ -1086,7 +1084,6 @@ theorem colReduceTransform_pivot_col {R : Type*} [CommRing R] (a b : Polynomial 
   | left k₁ => rw [Fin.addCases_left, basisProd_repr_castAdd]
   | right k₂ => rw [Fin.addCases_right, basisProd_repr_natAdd]
 
-set_option maxHeartbeats 400000 in
 /--
 Assembled common-factor column reduction for the Sylvester matrix.
 
@@ -1095,7 +1092,7 @@ two polynomials sharing the factor `q` modulo the scalar `c` (recorded by the
 explicit witnesses `f = q*a + C c*r`, `g = q*b + C c*s`). Right-multiplying `S` by
 `colReduceTransform a b m n d` produces a matrix `A'` whose
 
-- determinant is `(b.coeff (n - d)) ^ d * S.det` — the cofactor leading
+- determinant is `(b.coeff (n - d)) ^ d * S.det`; the cofactor leading
   coefficient raised to the `d = q.natDegree` shifts; under a *monic* cofactor
   `b` (so `b.coeff (n - d) = 1`) this is exactly `S.det`, and
 
@@ -1458,8 +1455,8 @@ identity column.
 Right-multiplying `sylvester f g m n` by this matrix replaces each pivot column
 with the syzygy combination `S.mulVec (direction)` (entrywise divisible by the
 syzygy scalar, via `sylvester_mulVec_cld_syzygy`) while leaving the others
-fixed. The matrix is block-lower-triangular for the left/right partition — its
-top-right block vanishes because the right columns stay identity — and its left
+fixed. The matrix is block-lower-triangular for the left/right partition; its
+top-right block vanishes because the right columns stay identity; and its left
 diagonal block is upper triangular with the monic leading `1` of `q * X^t` on
 the diagonal, so `det = 1`. Unlike `colReduceTransform`, the monic pivot here is
 the *left* component `q`, so the matrix is not triangular under the natural
@@ -1477,7 +1474,6 @@ def cldColReduceTransform {R : Type*} [CommRing R] (q : Polynomial R) (m n d : N
         else if i = j then 1 else 0)
       (fun _j₂ => if i = j then 1 else 0)
 
-set_option maxHeartbeats 400000 in
 /-- The determinant of `cldColReduceTransform` is `1`: the left diagonal block is
 upper triangular with the monic leading coefficient of `q` on its diagonal, and
 the top-right block vanishes (the right columns are identity). -/
@@ -1579,7 +1575,7 @@ theorem cldColReduceTransform_pivot_col {R : Type*} [CommRing R] (q : Polynomial
   | right k₂ => rw [Fin.addCases_right, basisProd_repr_natAdd]
 
 /--
-CLD-syzygy resultant divisibility (BHKS Lemma 3.2 core, scalar form).
+CLD-syzygy resultant divisibility (BHKS Lemma 3.2, scalar form).
 
 If a monic degree-`d` polynomial `q` and a witness `z` record the CLD syzygy
 `g * q - f * q' = C c * z`, then `c ^ d` divides the integer resultant of `f`
@@ -1588,7 +1584,7 @@ assumed: the syzygy provides `d` Sylvester column directions
 `(q * X^t, -q' * X^t)` whose images are `c`-multiples, and the monic leading `1`
 of each `q * X^t` makes the column-reduction transform determinant-preserving.
 
-The degree bounds are intrinsic to the syzygy route: the `d` shifts of `q * X^t`
+The degree bounds are intrinsic to the syzygy method: the `d` shifts of `q * X^t`
 must lie in `degreeLT f.natDegree` (forcing `2 * d ≤ f.natDegree`), and the `d`
 shifts of `-q' * X^t` must lie in `degreeLT g.natDegree` (forcing
 `2 * d ≤ g.natDegree + 1`). The first is the `deg input ≥ 2d` constraint flagged

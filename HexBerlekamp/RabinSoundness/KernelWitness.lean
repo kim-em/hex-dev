@@ -21,7 +21,7 @@ set_option backward.proofsInPublic true
 
 /-!
 Distinct-degree saturation and square-free kernel-witness
-infrastructure, including the Bezout-coefficient route for square-free
+infrastructure, including the Bezout-coefficient method for square-free
 monic splits.
 -/
 namespace Hex
@@ -461,8 +461,8 @@ private theorem gcd_isZero_false_of_left_pos_degree
 
 /-- Square-free divisor distribution (non-unit existence): if `f` has
 positive degree and divides the canonical witness product over `F_p`,
-some `gcd(f, w - C c)` is non-unit. This is the coprime-cancellation
-core of Step 3, working purely from the divisibility hypothesis. -/
+some `gcd(f, w - C c)` is non-unit. The proof uses only coprime cancellation
+and the divisibility hypothesis. -/
 theorem exists_gcd_not_isUnit_of_witnessProduct_dvd_of_pos_degree
     {f w : FpPoly p}
     (hf_pos : 0 < f.degree?.getD 0)
@@ -589,7 +589,7 @@ theorem exists_kernelWitnessSplit?_some_of_witnessProduct_dvd_of_pos_degree
     (by simpa [splitFactorAt] using hdegree)
     (by simpa [splitFactorAt] using hsize_lt)
 
-/-! # Bezout-coefficient route for square-free monic splits
+/-! # Bezout-coefficient method for square-free monic splits
 
 From any nontrivial product factorization of a square-free monic `f`, the
 common-divisor form `gcd a b ∣ 1` supplied by `common_dvd_one_of_squareFree_mul`
@@ -684,8 +684,8 @@ private theorem exists_reduced_crtZeroOne_kernelWitness_of_bezout
 
 /-- Reduced zero-one CRT witness for a monic split of a square-free product.
 Avoids the `Monic (DensePoly.gcd a b)` hypothesis of
-`exists_reduced_crtZeroOne_kernelWitness_of_squareFree_split` by routing
-through `common_dvd_one_of_squareFree_mul` and the Bezout-coefficient route.
+`exists_reduced_crtZeroOne_kernelWitness_of_squareFree_split` by handling
+through `common_dvd_one_of_squareFree_mul` and the Bezout-coefficient method.
 -/
 private theorem exists_reduced_crtZeroOne_kernelWitness_of_squareFree_monic_split
     (a b : FpPoly p)

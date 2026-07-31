@@ -66,10 +66,16 @@ jobs:
           python3 scripts/release/sync_released.py \
             --baseline /tmp/baseline.json "${args[@]}"
       - name: Publish advanced baseline
-        if: ${{ inputs.dry_run == false }}
+        # A later mirror can fail after earlier mirrors were pushed. Preserve
+        # those exact heads even when the sync step reports that failure.
+        if: ${{ always() && inputs.dry_run == false }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          if [ ! -f /tmp/baseline.json ]; then
+            echo "::warning::No baseline file was produced; nothing to publish."
+            exit 0
+          fi
           work=$(mktemp -d); cd "$work"
           git init -q -b "$BASELINE_BRANCH"
           cp /tmp/baseline.json synced.json

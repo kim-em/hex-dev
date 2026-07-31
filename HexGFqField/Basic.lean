@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexModArith.Prime
-public import HexGFqRing.Basic
+public import HexGFqRing.PolynomialQuotient
 
 public section
 

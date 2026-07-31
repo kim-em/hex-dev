@@ -4,7 +4,7 @@ Proves `DensePoly Int ≃+* Polynomial ℤ`, the Mignotte bound, and the
 Mathlib-side analytic polynomial inequalities over `Polynomial ℂ` that
 downstream integer-polynomial factorization needs.
 
-**Mignotte bound — proof strategy.**
+**Mignotte bound, proof strategy.**
 
 Statement (needs `hf : f ≠ 0`; false otherwise since every polynomial
 divides 0):
@@ -15,7 +15,7 @@ theorem mignotte_bound (f g : Polynomial ℤ) (hf : f ≠ 0) (hg : g ∣ f) (j :
 ```
 
 where `l2norm f := Real.sqrt (∑ i in f.support, (f.coeff i : ℝ) ^ 2)`.
-The core theorem is over `ℝ` (matching Mathlib's Mahler measure API).
+The principal theorem is over `ℝ` (matching Mathlib's Mahler measure API).
 An integer-facing corollary can extract `|g.coeff j| ≤ ⌊...⌋₊` if
 needed by downstream code.
 
@@ -67,14 +67,14 @@ The earlier Mahler measure library (by Fabrizio Barroero) provides:
    to bound `F.mahlerMeasure ≤ √(∑ ‖F.coeff i‖²)`.
 
 7. **Transport back to `ℤ`.** Four lemmas:
-   - **Coefficients:** `G.coeff j = ↑(g.coeff j)` — by
+   - **Coefficients:** `G.coeff j = ↑(g.coeff j)`, by
      `Polynomial.coeff_map`.
-   - **Degree:** `G.natDegree = g.natDegree` — by
+   - **Degree:** `G.natDegree = g.natDegree`, by
      `Polynomial.natDegree_map_of_injective` (injective cast).
-   - **Support:** `F.support = f.support` — by
+   - **Support:** `F.support = f.support`, by
      `Polynomial.support_map_of_injective` (injective cast).
      Needed to rewrite the L2 sum from `F`'s support to `f`'s.
-   - **Norms:** `‖((g.coeff j : ℤ) : ℂ)‖ = |(g.coeff j : ℝ)|` —
+   - **Norms:** `‖((g.coeff j : ℤ) : ℂ)‖ = |(g.coeff j : ℝ)|`,
      via `Complex.norm_intCast` or `Complex.norm_ofReal` +
      `Int.cast_abs`. The L2 sum rewrites similarly since
      `‖((f.coeff i : ℤ) : ℂ)‖² = (f.coeff i : ℝ)²`. The final
@@ -105,7 +105,7 @@ summands whose Mahler measures are individually controlled:
   `Polynomial.mahlerMeasure_rootDeletionDerivativeSummand_le`.
 
 `HexBerlekampZassenhausMathlib/CLDColumnBound.lean` consumes this surface to
-discharge the `hphi_mahler` hypothesis of `abs_phi_coeff_le` — the replacement
+discharge the `hphi_mahler` hypothesis of `abs_phi_coeff_le`, the replacement
 analytic obligation for the BHKS CLD `Φ` Mahler-measure bound.
 
 Downstream libraries may depend on these theorems as Mathlib-side analytic

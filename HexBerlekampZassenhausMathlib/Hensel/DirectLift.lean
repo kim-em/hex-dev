@@ -8,7 +8,7 @@ module
 
 public import HexBerlekampZassenhausMathlib.Classical.Recovery
 public import HexBerlekampZassenhausMathlib.SubsetCoprimality
-import all HexBerlekampZassenhausMathlib.HenselFactorProps
+import all HexBerlekampZassenhausMathlib.LocalFactors
 import all HexBerlekampZassenhausMathlib.LiftedFactor
 
 public section
@@ -84,10 +84,12 @@ theorem modPSubset_liftedSubset
 /-- Semantic facts attached to the one direct-coordinate lift. -/
 structure DirectLiftFacts
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData) : Prop where
+  /-- The polynomial lifted in the direct coordinates is monic. -/
   targetMonic :
     Hex.DensePoly.Monic
       (Hex.ZPoly.monicTarget core data.p
         (Hex.precisionForCoeffBound B data.p))
+  /-- The lifted factors satisfy the multifactor Hensel invariant. -/
   invariant :
     letI := data.bounds
     Hex.ZPoly.QuadraticMultifactorLiftInvariant data.p
@@ -95,6 +97,7 @@ structure DirectLiftFacts
       (Hex.ZPoly.monicTarget core data.p
         (Hex.precisionForCoeffBound B data.p))
       (data.factorsModP.map Hex.FpPoly.liftToZ).toList
+  /-- The initial lifted product agrees with the direct target modulo `p`. -/
   productModP :
     letI := data.bounds
     Hex.ZPoly.congr
@@ -102,26 +105,29 @@ structure DirectLiftFacts
       (Hex.ZPoly.monicTarget core data.p
         (Hex.precisionForCoeffBound B data.p))
       data.p
+  /-- Every resulting lifted factor is monic. -/
   liftedMonic :
-    ∀ i : LiftedFactorIndex (Hex.ZPoly.coreLiftData core B data),
+    ∀ i : LiftedFactorIndex (Hex.ZPoly.directLiftData core B data),
       Hex.DensePoly.Monic
-        (liftedFactor (Hex.ZPoly.coreLiftData core B data) i)
+        (liftedFactor (Hex.ZPoly.directLiftData core B data) i)
+  /-- Each lifted factor reduces to its corresponding modular factor. -/
   liftedModP :
     ∀ i : ModPFactorIndex data,
       letI := data.bounds
       Hex.ZPoly.modP data.p
-        (liftedFactor (Hex.ZPoly.coreLiftData core B data)
+        (liftedFactor (Hex.ZPoly.directLiftData core B data)
           (liftedIndexOfModPIndex data
-            (Hex.ZPoly.coreLiftData core B data)
+            (Hex.ZPoly.directLiftData core B data)
             (henselLiftData_liftedFactors_size_eq
               (Hex.ZPoly.monicTarget core data.p
                 (Hex.precisionForCoeffBound B data.p))
               (Hex.precisionForCoeffBound B data.p) data) i)) =
         modPFactor data i
+  /-- Reduction maps every selected lifted product to the same modular product. -/
   subsetProductMap :
     letI := data.bounds
     ∀ S : ModPFactorSubset data,
-      let d := Hex.ZPoly.coreLiftData core B data
+      let d := Hex.ZPoly.directLiftData core B data
       let hsize := henselLiftData_liftedFactors_size_eq
         (Hex.ZPoly.monicTarget core data.p
           (Hex.precisionForCoeffBound B data.p))
@@ -190,17 +196,17 @@ theorem directLiftFacts
       subsetProductMap := ?_ }
   · intro i
     unfold liftedFactor
-    simpa [Hex.ZPoly.coreLiftData, target, k] using
+    simpa [Hex.ZPoly.directLiftData, target, k] using
       (henselLiftData_liftedFactor_monic target k data htarget_monic
         hinvariant hp (by simpa [hk] using hprecision) i)
   · intro i
-    simpa [Hex.ZPoly.coreLiftData, target, k] using
+    simpa [Hex.ZPoly.directLiftData, target, k] using
       (henselLiftData_liftedFactor_modP_eq_modPFactor
         target k data htarget_monic hinvariant hp
         (by simpa [hk] using hprecision) hfactors_monic hproduct i)
   · intro S
     dsimp only
-    unfold Hex.ZPoly.coreLiftData
+    unfold Hex.ZPoly.directLiftData
     rw [← hk, ← htarget]
     have hcongr :=
       henselLiftData_liftedSubset_product_congr_mod_base

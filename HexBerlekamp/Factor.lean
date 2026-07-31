@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBasic
-public import HexBerlekamp.Basic
+public import HexBerlekamp.BerlekampMatrix
 
 public section
 
@@ -27,13 +27,18 @@ variable {p : Nat} [ZMod64.Bounds p]
 
 /-- Result of one Berlekamp kernel-witness split search. -/
 structure SplitResult (p : Nat) [ZMod64.Bounds p] where
+  /-- The field element whose kernel witness produced the split. -/
   splitConstant : ZMod64 p
+  /-- The first nontrivial factor found by the split. -/
   factor : FpPoly p
+  /-- The exact quotient by `factor`. -/
   cofactor : FpPoly p
 
 /-- Public result of executable Berlekamp factorization. -/
 structure Factorization (p : Nat) [ZMod64.Bounds p] where
+  /-- The polynomial supplied to Berlekamp factorization. -/
   input : FpPoly p
+  /-- The returned monic irreducible factors, with repetition. -/
   factors : List (FpPoly p)
 
 /-- Multiply a list of `F_p[x]` factors in stored order, starting from `1`. -/
@@ -293,7 +298,7 @@ A witness `w` can only split `f` when `w mod f` is nonconstant: every
 candidate `gcd(f, w - c)` reduces to `gcd(f, (w mod f) - c)`, which is `f`
 or a unit (never a proper factor) once `w mod f` is a field constant.  The
 leading `(witness % f).size ≤ 1` guard skips the whole `p`-wide constant
-sweep in that case — the dominant cost once a factor is already irreducible,
+sweep in that case; the dominant cost once a factor is already irreducible,
 since every kernel witness is then constant modulo it.  The guard is
 value-preserving: `kernelWitnessSplitAux_none_of_mod_size_le_one` proves the
 skipped sweep would have returned `none` (over a field), so this agrees with
@@ -339,7 +344,7 @@ private def splitWithWitnesses? (f : FpPoly p) : List (FpPoly p) → Option (Spl
 Fully split a single factor into its witness-irreducible pieces.
 
 Once `splitWithWitnesses?` reports that `f` admits no kernel-witness split,
-`f` is irreducible and is emitted as a leaf — the recursion never re-tests
+`f` is irreducible and is emitted as a leaf; the recursion never re-tests
 it. Polynomials of size at most two are emitted immediately: the split loop's
 proper factor must be nonconstant and strictly smaller, which is impossible
 for a polynomial of degree at most one. Each side of a successful split
@@ -982,7 +987,7 @@ theorem prod_berlekampFactor
 `fullySplit` emits a factor as a singleton leaf exactly when it admits no
 kernel-witness split, and a successful split produces two nonempty subtrees.
 So the output is always nonempty, and a length-≤-1 output means the input
-itself admits no split — every fixed-space kernel witness yields
+itself admits no split; every fixed-space kernel witness yields
 `kernelWitnessSplit? = none`. This isolates the executable side of Berlekamp
 completeness; the algebraic implication "no kernel-witness split implies
 irreducibility" lives in a separate finite-field module. -/
@@ -1727,7 +1732,7 @@ that no fixed-space kernel witness splits it.  This is structural for
 runs out before the leaves, because `size` strictly decreases at every split. -/
 
 /-- **Per-factor no-split.** With enough fuel (`f.size ≤ fuel`) every factor
-emitted by `fullySplit` admits no kernel-witness split — it was emitted exactly
+emitted by `fullySplit` admits no kernel-witness split; it was emitted exactly
 because `splitWithWitnesses?` returned `none` on it. -/
 private theorem fullySplit_unsplittable
     [ZMod64.PrimeModulus p]

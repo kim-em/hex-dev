@@ -18,7 +18,7 @@ certified irreducible factorization, destructured as
 `obtain ⟨scalar, factors, factors_mul, factors_irred⟩ := factor_poly f`.
 
 The generator emits monic factors in nondecreasing degree order with the
-leading unit in `scalar`, and repeats each factor to its multiplicity — but
+leading unit in `scalar`, and repeats each factor to its multiplicity; but
 those normalizations are conventions of the generator, not invariants of this
 type; users needing them on the emitted literals can `decide` them.
 -/

@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhaus.ProductProofs
+public import HexBerlekampZassenhaus.FactorProduct
 public import HexBerlekamp.RabinSoundness
 
 public section
@@ -142,7 +142,7 @@ irreducible as an `FpPoly`.
 Composes `choosePrimeData?_berlekampFactor_factors_length_le_one_of_small`
 (the shape fact) with the relaxed Berlekamp soundness theorem
 `Hex.Berlekamp.berlekampFactor_singleton_irreducible`, using the
-`isGoodPrime` invariants maintained by the prime selection to discharge
+`isGoodPrime` invariants maintained by the selected prime to discharge
 the relaxed common-divisor precondition through
 `common_dvd_one_of_isGoodPrime_monicModularImage`.
 -/
@@ -211,9 +211,9 @@ private theorem ZPoly_Primitive_left_of_mul (p q : Hex.ZPoly)
     omega
 
 /--
-Generic core-level small-mod singleton irreducibility lemma: given a primitive
+Generic polynomial-level small-mod singleton irreducibility lemma: given a primitive
 `ZPoly` whose `degree` is positive, a `choosePrimeData?` success witness, and a
-singleton-bounded Berlekamp factor count, the core is `ZPoly.Irreducible`.
+singleton-bounded Berlekamp factor count, the square-free part is `ZPoly.Irreducible`.
 
 Composes
 `monicModularImage_modP_irreducible_of_choosePrimeData?_small`
@@ -282,7 +282,7 @@ private theorem zpoly_irreducible_of_choosePrimeData?_small_of_primitive
     core primeData.p hprime hprim hadm hsize_gt_one hirr_modP
 
 /--
-Small-mod singleton branch irreducibility for the square-free core of
+Small-mod singleton branch irreducibility for the primitive square-free part of
 `Hex.normalizeForFactor f`, packaged Mathlib-free.
 
 Composes
@@ -291,7 +291,7 @@ Composes
 with the Gauss reduction-mod-`p` transfer
 `Hex.ZPoly.Irreducible_of_modP_irreducible_of_primitive_of_admissible`
 to lift `Hex.ZPoly.Irreducible` from the modular image back to the
-square-free core.
+primitive square-free part.
 
 Side conditions discharged internally:
 
@@ -302,9 +302,7 @@ Side conditions discharged internally:
   `choosePrimeData?_isGoodPrime` and `isGoodPrime_leadingCoeffAdmissible`.
 * `1 < core.size` from `hdeg`, which also identifies this nonconstant branch.
 
-This is the Mathlib-free analog of
-`IntReductionMod.squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP`
-in `HexBerlekampZassenhausMathlib/IntReductionMod.lean`. -/
+-/
 theorem squareFreeCore_irreducible_of_small_mod_singleton
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
     (primeData : Hex.PrimeChoiceData)

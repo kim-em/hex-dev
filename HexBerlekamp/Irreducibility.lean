@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekamp.Basic
+public import HexBerlekamp.BerlekampMatrix
 
 public section
 
@@ -100,7 +100,9 @@ def rabinWitnesses (f : FpPoly p) (hmonic : DensePoly.Monic f) : List (Nat × Bo
 
 /-- Bezout evidence that one Rabin gcd leg is coprime. -/
 structure RabinBezoutWitness (p : Nat) [ZMod64.Bounds p] where
+  /-- Coefficient multiplying the polynomial under test. -/
   left : FpPoly p
+  /-- Coefficient multiplying the corresponding Frobenius difference. -/
   right : FpPoly p
 
 /--
@@ -112,10 +114,14 @@ Each witness proves coprimality of `f` and
 `left * f + right * (X^(p^d) - X) = 1`.
 -/
 structure IrreducibilityCertificate where
+  /-- The characteristic of the finite field. -/
   p : Nat
   [bounds : ZMod64.Bounds p]
+  /-- The degree claimed for the polynomial under test. -/
   n : Nat
+  /-- Successive Frobenius powers used by the Rabin checks. -/
   powChain : Array (FpPoly p)
+  /-- Bezout witnesses for the maximal proper divisors of `n`. -/
   bezout : Array (RabinBezoutWitness p)
 
 namespace IrreducibilityCertificate
@@ -137,8 +143,11 @@ Same-prime view of a self-contained certificate after its stored `p` has been
 matched against the ambient field.
 -/
 structure SamePrimeIrreducibilityCertificate (p : Nat) [ZMod64.Bounds p] where
+  /-- The degree claimed for the polynomial under test. -/
   n : Nat
+  /-- Successive Frobenius powers used by the Rabin checks. -/
   powChain : Array (FpPoly p)
+  /-- Bezout witnesses for the maximal proper divisors of `n`. -/
   bezout : Array (RabinBezoutWitness p)
 
 /--
@@ -280,7 +289,7 @@ as `maximalProperDivisors`, matching `checkRabinBezoutWitnesses`. Returns
 This is the *prep* half of the certifying-irreducibility pattern: the expensive
 Frobenius-chain and extended-gcd work runs in compiled code here, so the kernel
 only has to replay the cheap `checkIrreducibilityCertificate` reduction on the
-finished data. The generator carries no soundness proof of its own — a wrong
+finished data. The generator carries no soundness proof of its own; a wrong
 certificate makes `checkIrreducibilityCertificate` return `false`, never a
 false pass.
 -/

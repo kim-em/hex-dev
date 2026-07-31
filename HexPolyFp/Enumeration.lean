@@ -201,7 +201,7 @@ theorem coeffLists_nodup (d : Nat) :
 /-- Turn a fixed coefficient list into an `FpPoly`. -/
 @[expose]
 def ofCoeffList (coeffs : List (ZMod64 p)) : FpPoly p :=
-  FpPoly.ofCoeffs coeffs.toArray
+  DensePoly.ofList coeffs
 
 /-- All `FpPoly p` values whose degree is below `d`, represented by length-`d`
 coefficient lists. -/
@@ -232,8 +232,8 @@ theorem of_first_coeffs_eq_of_degree_getD_lt {f : FpPoly p} {d : Nat}
     ofCoeffList ((List.range d).map fun i => f.coeff i) = f := by
   apply DensePoly.ext_coeff
   intro n
-  unfold ofCoeffList FpPoly.ofCoeffs
-  rw [DensePoly.coeff_ofCoeffs_list]
+  unfold ofCoeffList
+  rw [DensePoly.coeff_ofList]
   change ((List.range d).map (fun i => f.coeff i)).getD n 0 = f.coeff n
   have hget :
       ((List.range d).map (fun i => f.coeff i)).getD n 0 =
@@ -269,8 +269,8 @@ private theorem ofCoeffList_degree_getD_lt_of_length_eq
     (ofCoeffList coeffs).degree?.getD 0 < d := by
   have hzero_ge : ∀ i, d ≤ i → (ofCoeffList coeffs).coeff i = 0 := by
     intro i hi
-    unfold ofCoeffList FpPoly.ofCoeffs
-    rw [DensePoly.coeff_ofCoeffs_list]
+    unfold ofCoeffList
+    rw [DensePoly.coeff_ofList]
     have hlen_le : coeffs.length ≤ i := by omega
     change coeffs.getD i (0 : ZMod64 p) = (0 : ZMod64 p)
     simp [List.getD, hlen_le]
@@ -354,10 +354,8 @@ private theorem coeffList_eq_of_ofCoeffList_eq
   · exact hxs.trans hys.symm
   · intro i hi
     have hcoeff := congrArg (fun f : FpPoly p => f.coeff i) hpoly
-    unfold ofCoeffList FpPoly.ofCoeffs at hcoeff
-    change (DensePoly.ofCoeffs xs.toArray).coeff i =
-      (DensePoly.ofCoeffs ys.toArray).coeff i at hcoeff
-    rw [DensePoly.coeff_ofCoeffs_list, DensePoly.coeff_ofCoeffs_list] at hcoeff
+    unfold ofCoeffList at hcoeff
+    rw [DensePoly.coeff_ofList, DensePoly.coeff_ofList] at hcoeff
     exact hcoeff
 
 /-- The bounded-degree polynomial enumeration has no duplicate polynomial

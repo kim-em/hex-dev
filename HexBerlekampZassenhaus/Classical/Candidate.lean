@@ -35,6 +35,7 @@ def intDivides (multiple divisor : Int) : Bool :=
   else
     multiple % divisor == 0
 
+/-- The guarded integer divisibility test agrees with a zero-remainder test. -/
 @[simp]
 theorem intDivides_eq (multiple divisor : Int) :
     intDivides multiple divisor = (multiple % divisor == 0) := by
@@ -68,7 +69,7 @@ def directCandidatePrefilter
       decide (degreeSum ≤ target.degree?.getD 0)) &&
     intDivides (coreLc * target.coeff 0) rawTrail
 
-/-- Evaluate the candidate pipeline after the cached prefilters. -/
+/-- Evaluate the candidate computation after the cached prefilters. -/
 @[expose]
 def tryDirectCandidate
     (coreLc : Int) (target : ZPoly) (modulus : Nat)

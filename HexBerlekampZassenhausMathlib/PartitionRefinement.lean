@@ -26,10 +26,10 @@ namespace BHKS
 
 /-! # Support-partition length from a genuine partition
 
-The B8 partition-refinement hypothesis `hpartition` consumed by the fast-core
+The B8 partition-refinement hypothesis `hpartition` consumed by the fast recovery
 irreducibility wrappers is an equality
 `(supportPartitionByMinColumn trueSupports).length = normalizedFactors.card`.
-The lemma below supplies the provider-agnostic combinatorial half of that
+The lemma below supplies the extension-agnostic combinatorial half of that
 discharge: when `trueSupports` is a genuine partition of `Fin r` into nonempty
 parts (each column lies in exactly one part), the support-equivalence partition
 has exactly one class per part, so its length is the number of parts.  A

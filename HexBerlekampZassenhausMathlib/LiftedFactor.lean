@@ -7,10 +7,10 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhaus
-public import HexBerlekampMathlib.Basic
+public import HexBerlekampMathlib.Irreducibility
 public import HexBerlekampZassenhausMathlib.UFDPartition
-public import HexHenselMathlib.Correctness
-public import HexPolyZMathlib.Basic
+public import HexHenselMathlib.HenselLemmas
+public import HexPolyZMathlib.PolynomialEquivalence
 public import HexPolyZMathlib.Mignotte
 public import Mathlib.RingTheory.Coprime.Lemmas
 public import Mathlib.RingTheory.Polynomial.UniqueFactorization
@@ -154,7 +154,7 @@ theorem liftedSubsetOfModPSubset_disjoint_iff
 
 /--
 Selected lifted-factor product scaled by the leading coefficient of the integer
-core, matching the product formed by the executable recombination candidate
+square-free part, matching the product formed by the executable recombination candidate
 checker.
 -/
 @[expose]
@@ -181,14 +181,18 @@ This is the data-bearing carrier behind the public proof-level
 structure RecoveredAtLift
     (core : Hex.ZPoly) (d : Hex.LiftData) (factor : Hex.ZPoly)
     (S : LiftedFactorSubset d) where
+  /-- The monic-coordinate factor represented by the selected lifted factors. -/
   monicFactor : Hex.ZPoly
+  /-- The selected lifted product agrees with the monic factor modulo the lift modulus. -/
   congr :
     Hex.ZPoly.reduceModPow (liftedFactorProduct d S) d.p d.k =
       Hex.ZPoly.reduceModPow monicFactor d.p d.k
+  /-- Dilation by the input leading coefficient recovers the original factor. -/
   dilate_eq :
     Hex.ZPoly.primitivePart
         (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) monicFactor) =
       factor
+  /-- The monic-coordinate factor divides the transformed input. -/
   monic_dvd :
     monicFactor ∣ (Hex.ZPoly.toMonic core).monic
 
@@ -354,7 +358,7 @@ def liftedFactorProductCandidate (d : Hex.LiftData) (S : LiftedFactorSubset d) :
 
 /--
 Proof-side candidate for recovering an integer factor of a possibly non-monic
-core from a selected lifted-factor product.  The selected product is first
+square-free part from a selected lifted-factor product.  The selected product is first
 centred in the Hensel modulus, then transported back from the `toMonic`
 coordinate system by `X ↦ leadingCoeff core * X`, and finally made primitive
 with canonical sign.
@@ -369,7 +373,7 @@ def liftedRecoveryCandidate
 
 namespace liftedRecoveryCandidate
 
-/-- On monic cores, the recovered non-monic candidate collapses to the existing
+/-- On monic square-free parts, the recovered non-monic candidate collapses to the existing
 unscaled lifted-product candidate. -/
 theorem eq_productCandidate_of_lc_one
     {core : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
@@ -404,15 +408,20 @@ stable executable API.
 structure HenselSubsetCorrespondenceHypotheses
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (d : Hex.LiftData) (admissiblePrime successfulLift : Prop) : Prop where
+  /-- The lift data is the lift selected from these inputs. -/
   lift_eq : d = Hex.ZPoly.toMonicLiftData core B primeData
+  /-- The selected prime satisfies the caller's admissibility condition. -/
   admissible_prime : admissiblePrime
+  /-- The multifactor Hensel lift satisfies the caller's success condition. -/
   successful_lift : successfulLift
+  /-- Every normalized irreducible divisor has a representing lifted subset. -/
   exists_subset :
     ∀ {factor : Hex.ZPoly},
       Hex.normalizeFactorSign factor = factor →
       Irreducible (HexPolyZMathlib.toPolynomial factor) →
       factor ∣ core →
       ∃ S : LiftedFactorSubset d, RepresentsIntegerFactorAtLift core d factor S
+  /-- The lifted subset representing an irreducible divisor is unique. -/
   unique_subset :
     ∀ {factor : Hex.ZPoly} {S T : LiftedFactorSubset d},
       Irreducible (HexPolyZMathlib.toPolynomial factor) →
@@ -423,7 +432,7 @@ structure HenselSubsetCorrespondenceHypotheses
 
 /--
 Caller-facing square-free Hensel subset correspondence: an irreducible
-integer factor of the core has a unique representing subset of the executable
+integer factor of the square-free part has a unique representing subset of the executable
 lifted local factors.
 -/
 theorem existsUnique_liftedFactorSubset_of_henselSubsetCorrespondence
@@ -531,12 +540,19 @@ structure HenselSubsetLiftHypotheses
     (d : Hex.LiftData)
     (admissiblePrime squareFreeReduction successfulLift coprimeLift : Prop) :
     Prop where
+  /-- The lift data is the lift selected from these inputs. -/
   lift_eq : d = Hex.ZPoly.toMonicLiftData core B primeData
+  /-- The lift preserves the number of modular factors. -/
   factor_count_eq : d.liftedFactors.size = primeData.factorsModP.size
+  /-- The selected prime satisfies the caller's admissibility condition. -/
   admissible_prime : admissiblePrime
+  /-- Reduction modulo the selected prime preserves square-freeness. -/
   square_free_reduction : squareFreeReduction
+  /-- The multifactor Hensel lift satisfies the caller's success condition. -/
   successful_lift : successfulLift
+  /-- The lifted factors satisfy the caller's coprimality condition. -/
   coprime_lift : coprimeLift
+  /-- A modular representation gives a representation by the corresponding lifted factors. -/
   represents_lifted_of_modP :
     ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset primeData},
       Irreducible (HexPolyZMathlib.toPolynomial factor) →
@@ -544,6 +560,7 @@ structure HenselSubsetLiftHypotheses
       RepresentsIntegerFactorModP primeData factor S →
       RepresentsIntegerFactorAtLift core d factor
         (liftedSubsetOfModPSubset primeData d factor_count_eq S)
+  /-- Every lifted representation descends to a corresponding modular representation. -/
   represents_modP_of_lifted :
     ∀ {factor : Hex.ZPoly} {T : LiftedFactorSubset d},
       Irreducible (HexPolyZMathlib.toPolynomial factor) →
@@ -565,10 +582,15 @@ correspondence.
 structure HenselLiftDescentHypotheses
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (d : Hex.LiftData) (successfulLift coprimeLift : Prop) : Prop where
+  /-- The lift data is the lift selected from these inputs. -/
   lift_eq : d = Hex.ZPoly.toMonicLiftData core B primeData
+  /-- The lift preserves the number of modular factors. -/
   factor_count_eq : d.liftedFactors.size = primeData.factorsModP.size
+  /-- The multifactor Hensel lift satisfies the caller's success condition. -/
   successful_lift : successfulLift
+  /-- The lifted factors satisfy the caller's coprimality condition. -/
   coprime_lift : coprimeLift
+  /-- Every lifted representation descends to a corresponding modular representation. -/
   represents_modP_of_lifted :
     ∀ {factor : Hex.ZPoly} {T : LiftedFactorSubset d},
       Irreducible (HexPolyZMathlib.toPolynomial factor) →
@@ -591,9 +613,13 @@ structure MonicDescent
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
     (factor : Hex.ZPoly) (T : LiftedFactorSubset d)
     (hsize : d.liftedFactors.size = primeData.factorsModP.size) where
+  /-- The modular subset underlying the selected lifted factors. -/
   modPSubset : ModPFactorSubset primeData
+  /-- Lifting the modular subset gives the original lifted subset. -/
   subset_eq : T = liftedSubsetOfModPSubset primeData d hsize modPSubset
+  /-- The lifted subset recovers the original-coordinate factor. -/
   recovered : RecoveredAtLift core d factor T
+  /-- The modular subset represents the recovered monic-coordinate factor. -/
   represents_monic :
     RepresentsIntegerFactorModP primeData recovered.monicFactor modPSubset
 
@@ -658,10 +684,15 @@ original factor.
 structure MonicDescentHypotheses
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (d : Hex.LiftData) (successfulLift coprimeLift : Prop) : Prop where
+  /-- The lift data is the lift selected from these inputs. -/
   lift_eq : d = Hex.ZPoly.toMonicLiftData core B primeData
+  /-- The lift preserves the number of modular factors. -/
   factor_count_eq : d.liftedFactors.size = primeData.factorsModP.size
+  /-- The multifactor Hensel lift satisfies the caller's success condition. -/
   successful_lift : successfulLift
+  /-- The lifted factors satisfy the caller's coprimality condition. -/
   coprime_lift : coprimeLift
+  /-- A lifted representation descends to its modular subset and monic correspondent. -/
   descends :
     ∀ {factor : Hex.ZPoly} {T : LiftedFactorSubset d},
       Irreducible (HexPolyZMathlib.toPolynomial factor) →
@@ -892,7 +923,7 @@ private theorem centeredLiftPoly_reduceModPow_eq
   unfold Hex.centeredModNat
   rw [if_neg hpkne, if_neg hpkne, Int.emod_emod_of_dvd _ (dvd_refl _)]
 
-/-- Precision-gated exact recovery for `liftedRecoveryCandidate` in the
+/-- Precision-conditional exact recovery for `liftedRecoveryCandidate` in the
 dilation-coordinate model. -/
 theorem liftedRecoveryCandidate_eq_factor_of_congruence_of_bound
     {core factor monicFactor : Hex.ZPoly} {d : Hex.LiftData}
@@ -971,7 +1002,7 @@ arbitrary `B' : Nat`, an explicit validity hypothesis
 `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and the scaled-product
 congruence in place of the public representation predicate.  The body just
 threads `B'` and `hvalid` into `centeredLiftPoly_eq_of_reduceModPow_eq`
-(which already accepts an abstract bound).  The original core-shape theorem is
+(which already accepts an abstract bound).  The original input-shape theorem is
 a wrapper around this variant.
 -/
 theorem centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision_of_bound

@@ -7,10 +7,10 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhaus
-public import HexBerlekampMathlib.Basic
+public import HexBerlekampMathlib.Irreducibility
 public import HexBerlekampZassenhausMathlib.UFDPartition
-public import HexHenselMathlib.Correctness
-public import HexPolyZMathlib.Basic
+public import HexHenselMathlib.HenselLemmas
+public import HexPolyZMathlib.PolynomialEquivalence
 public import HexPolyZMathlib.Mignotte
 public import Mathlib.RingTheory.Coprime.Lemmas
 public import Mathlib.RingTheory.Polynomial.UniqueFactorization
@@ -27,7 +27,7 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-This module collects the mask/list combinatorics bridging `Finset` subsets to executable enumeration.
+This module collects the mask/list combinatorics relating `Finset` subsets to executable enumeration.
 -/
 
 namespace HexBerlekampZassenhausMathlib
@@ -370,7 +370,7 @@ theorem liftedSubsetRejectedList_eq_liftedSubsetSelectedList_sdiff
 leaves the executable's running `localFactors` matched to `Finset.univ \ S`.
 This is the universe-level case of the recursive invariant transition; the
 general `J ↦ J \ S` step lives in the recursive coverage proof and uses this
-lemma plus a partition-bridging lemma. -/
+lemma plus a partition-relating lemma. -/
 theorem LiftedFactorListMatches.rejected_of_subset
     (d : Hex.LiftData) (S : LiftedFactorSubset d) :
     LiftedFactorListMatches d (Finset.univ \ S) (liftedSubsetRejectedList d S) := by

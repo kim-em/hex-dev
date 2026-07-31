@@ -6,22 +6,22 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhausMathlib.LatticeTier
+public import HexBerlekampZassenhausMathlib.LatticeFactorization
 
 public section
 set_option backward.proofsInPublic true
 
 /-!
-# Totality of the CLD lattice tier
+# Totality of the CLD lattice method
 
-The exact-span argument lives in `LatticeTier`. This module lifts its cap-level
+The exact-span argument lives in `LatticeFactorization`. This module lifts its cap-level
 success theorem through normalization and the public raw and `Factorization`
 entry points.
 -/
 
 namespace HexBerlekampZassenhausMathlib
 
-/-- The public-cap raw lattice tier cannot decline once direct prime planning
+/-- The public-cap raw lattice method cannot decline once direct prime planning
 succeeds. -/
 theorem factorLatticeFactorsWithBound_ne_none_of_directPrimePlan
     (f : Hex.ZPoly)
@@ -99,7 +99,7 @@ theorem factorLatticeFactorsWithBound_ne_none_of_directPrimePlan
                   simp [hdeg, hB_ne, hquad]
                   exact hcore_ne_none
 
-/-- The factorization-valued lattice tier is likewise total under successful
+/-- The factorization-valued lattice method is likewise total under successful
 direct prime planning. -/
 theorem factorLattice_ne_none_of_directPrimePlan
     (f : Hex.ZPoly)

@@ -7,10 +7,10 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhaus
-public import HexBerlekampMathlib.Basic
-public import HexBerlekampZassenhausMathlib.HenselFactorProps
+public import HexBerlekampMathlib.Irreducibility
+public import HexBerlekampZassenhausMathlib.LocalFactors
 import all HexBerlekampZassenhausMathlib.ModPFactor
-import all HexBerlekampZassenhausMathlib.HenselFactorProps
+import all HexBerlekampZassenhausMathlib.LocalFactors
 
 public section
 set_option backward.proofsInPublic true
@@ -40,26 +40,35 @@ open Polynomial
 monic lift target `f`: everything the certification cone consumes about a
 `PrimeChoiceData`, with no reference to how it was produced. -/
 structure ModPFactorization (f : Hex.ZPoly) (data : Hex.PrimeChoiceData) : Prop where
+  /-- The selected modulus is prime. -/
   prime : Hex.Nat.Prime data.p
+  /-- The prime satisfies the executable admissibility test for `f`. -/
   good :
     letI := data.bounds
     Hex.isGoodPrime f data.p = true
+  /-- The cached modular polynomial is the reduction of `f`. -/
   fModP_eq :
     letI := data.bounds
     data.fModP = Hex.ZPoly.modP data.p f
+  /-- Every modular factor is monic. -/
   monic :
     letI := data.bounds
     ∀ g ∈ data.factorsModP, Hex.DensePoly.Monic g
+  /-- The modular factor list is nonempty. -/
   ne_nil : data.factorsModP.toList ≠ []
+  /-- No modular factor occurs twice. -/
   nodup : data.factorsModP.toList.Nodup
+  /-- The splits used for the multifactor lift are pairwise coprime. -/
   coprime :
     letI := data.bounds
     Hex.ZPoly.QuadraticMultifactorCoprimeSplits data.p data.factorsModP.toList
+  /-- Every indexed modular factor is irreducible. -/
   irreducible :
     ∀ i : ModPFactorIndex data,
       Irreducible
         (@HexBerlekampMathlib.toMathlibPolynomial data.p data.bounds
           (modPFactor data i))
+  /-- The product of the lifted factors agrees with the monic modular image. -/
   product :
     letI := data.bounds
     Hex.ZPoly.congr
@@ -67,6 +76,7 @@ structure ModPFactorization (f : Hex.ZPoly) (data : Hex.PrimeChoiceData) : Prop 
       (Hex.FpPoly.liftToZ
         (Hex.monicModularImage (Hex.ZPoly.modP data.p f)))
       data.p
+  /-- Every modular factor has positive degree. -/
   natDegree_pos :
     letI := data.bounds
     ∀ g ∈ data.factorsModP,
@@ -143,7 +153,7 @@ theorem modPFactorization_of_choosePrimeData
 
 /-- The adaptive prime-plan witness yields the same semantic bundle as the
 fixed prime selector.  Downstream lifting and recombination consume this
-bundle, not the history of which probes the adaptive selector performed. -/
+bundle, not the history of which trials the adaptive selector performed. -/
 theorem modPFactorization_of_choosePrimeDataAdaptive
     {f : Hex.ZPoly} {extra : Nat} {data : Hex.PrimeChoiceData}
     (hchoose : Hex.choosePrimeDataAdaptive? f extra = some data)
@@ -161,7 +171,7 @@ theorem modPFactorization_of_choosePrimeDataAdaptive
     (Hex.choosePrimeDataAdaptive?_fModP_eq f extra data hchoose)
     hform hprim hlc_pos hpos
 
-/-- An explicit cached prime probe yields the semantic modular factorization
+/-- An explicit cached prime trial yields the semantic modular factorization
 bundle consumed by direct lifting. -/
 theorem modPFactorization_of_probePrimeData
     {f : Hex.ZPoly} {candidate : Hex.SmallPrimeCandidate}

@@ -17,7 +17,7 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-Core `FpPoly` definitions (constructors, evaluation), the additive
+`FpPoly` constructors and evaluation, the additive
 structure, schoolbook multiplication, and the commutative-ring axioms.
 -/
 namespace Hex
@@ -745,7 +745,7 @@ private theorem coeff_mul_one_fold (f : FpPoly p) (n k : Nat) :
 `HexHensel/Linear.lean` reasons about the per-coefficient diagonal
 contribution of `FpPoly` multiplication when establishing the linear
 Hensel lift congruence. They are not part of the ordinary `FpPoly`
-multiplication API — callers who only need a characterisation of
+multiplication API; callers who only need a characterisation of
 `(f * g).coeff n` should use the public `coeff_mul` lemma below, which
 gives the same value without committing to the schoolbook fold shape.
 
@@ -1313,7 +1313,7 @@ private theorem rightAssocTriples_mem_iff (n : Nat) (abc : (Nat × Nat) × Nat) 
     refine ⟨a, ?_, b, ?_, ?_⟩ <;> omega
 
 /-- `leftAssocTriples_perm_rightAssocTriples` proves the left- and right-associated
-triple enumerations are permutations, giving the combinatorial core of the
+triple enumerations are permutations, giving the combinatorial identity behind the
 associativity reindexing. -/
 private theorem leftAssocTriples_perm_rightAssocTriples (n : Nat) :
     List.Perm (leftAssocTriples n) (rightAssocTriples n) := by
@@ -1745,7 +1745,7 @@ theorem mul_assoc (f g h : FpPoly p) :
             exact (fold_mulCoeff_assoc_right_expand f g h n).symm
 
 /-- `FpPoly p` is a multiplicative monoid for `Std`, so the shared
-`List.foldl_mul_*` algebra and core's `List.foldl_assoc` apply to fold-products
+`List.foldl_mul_*` algebra and the standard `List.foldl_assoc` apply to fold-products
 of `FpPoly`. -/
 instance instAssociativeMul {p : Nat} [ZMod64.Bounds p] :
     Std.Associative (· * · : FpPoly p → FpPoly p → FpPoly p) :=

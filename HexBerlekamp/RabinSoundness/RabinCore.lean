@@ -1332,7 +1332,7 @@ Every positive proper divisor `d` of `n` is dominated by some maximal
 proper divisor of `n` (with `d` dividing it).
 
 Combinatorial fact about the proper-divisor lattice. Used in the
-contrapositive proof to route an irreducible factor's degree `d` to a
+contrapositive proof to method an irreducible factor's degree `d` to a
 divisor at which the gcd leg of `rabinTest` rules out divisibility.
 -/
 theorem exists_maximalProperDivisor_dvd

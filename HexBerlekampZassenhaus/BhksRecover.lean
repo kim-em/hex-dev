@@ -9,18 +9,18 @@ module
 public meta import HexArith.Nat.Prime
 public meta import HexBerlekamp.Factor
 public meta import HexBerlekamp.Irreducibility
-public meta import HexHensel.Basic
+public meta import HexHensel.ModularPolynomial
 public meta import HexHensel.Multifactor
 public meta import HexHensel.QuadraticMultifactor
 public meta import HexMatrix.Basic
 public meta import HexPolyZ.Mignotte
-public meta import HexLLL.Basic
+public meta import HexLLL
 public import HexArith.Nat.Prime
 public import HexBerlekamp.Factor
 public import HexBerlekamp.Irreducibility
 public import HexHensel.Multifactor
 public import HexHensel.QuadraticMultifactor
-public import HexLLL.Basic
+public import HexLLL
 -- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
 -- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
 public import HexBasic.ArrayDecEq
@@ -28,10 +28,10 @@ public import HexBasic.ArrayDecEq
 public import HexBerlekampZassenhaus.BhksCandidates
 public meta import HexBerlekampZassenhaus.BhksCandidates
 import all HexBerlekampZassenhaus.PrimeSelection
-import all HexBerlekampZassenhaus.Records
+import all HexBerlekampZassenhaus.FactorizationData
 import all HexBerlekampZassenhaus.Certificate
 import all HexBerlekampZassenhaus.ChoosePrimeData
-import all HexBerlekampZassenhaus.ReassemblyProofs
+import all HexBerlekampZassenhaus.FactorizationResult
 import all HexBerlekampZassenhaus.Lattice
 import all HexBerlekampZassenhaus.BhksCandidates
 
@@ -42,7 +42,7 @@ set_option backward.proofsInPublic true
 
 /-!
 This module implements the proved direct-coordinate BHKS candidate recovery
-used by the CLD lattice tier.
+used by the CLD lattice method.
 -/
 namespace Hex
 
@@ -147,16 +147,16 @@ private def BhksRecoveryResult.isLatticeFailure : BhksRecoveryResult → Bool
   | .productMismatch _ => false
 
 /--
-Run the fixed-precision BHKS recovery pipeline.
+Run the fixed-precision BHKS recovery computation.
 
 This executable glue builds the CLD lattice for the lifted factors, runs LLL
 plus the Gram-Schmidt cut, extracts BHKS Lemma 3.3 equivalence-class
 indicators by RREF, reconstructs every indicated candidate by centred lifting,
 and accepts only when the verified candidates multiply back to `f`.
 
-The lattice tier runs the fused `bhksRecoverClassifiedWithAllOnes` instead,
+The lattice method runs the fused `bhksRecoverClassifiedWithAllOnes` instead,
 sharing one lattice build between the classification and the all-ones certificate;
-keep the two bodies in sync — `bhksRecoverClassifiedWithAllOnes_fst` fails to
+keep the two bodies in sync; `bhksRecoverClassifiedWithAllOnes_fst` fails to
 build if they drift.
 -/
 private def bhksRecoverClassified (f : ZPoly) (d : LiftData) : BhksRecoveryResult :=
@@ -177,22 +177,23 @@ private def bhksRecoverClassified (f : ZPoly) (d : LiftData) : BhksRecoveryResul
   else
     .degenerate
 
+/-- Return the factors recovered by the lattice computation when all checks succeed. -/
 def bhksRecover? (f : ZPoly) (d : LiftData) : Option (Array ZPoly) :=
   (bhksRecoverClassified f d).toOption
 
 /--
-Fused BHKS recovery step: run the CLD lattice / LLL / RREF-indicator pipeline
+Fused BHKS recovery step: run the CLD lattice / LLL / RREF-indicator computation
 **once** and return both the `bhksRecoverClassified` classification and the
 single-all-ones partition flag.
 
-The lattice tier's `.degenerate` arm needs the all-ones flag to certify
+The lattice method's `.degenerate` arm needs the all-ones flag to certify
 irreducibility, but recomputing it through `bhksSingleAllOnesPartition` rebuilds
-the whole Hensel-lift/CLD-lattice/LLL/indicator pipeline that the classifier
+the whole Hensel-lift/CLD-lattice/LLL/indicator computation that the classifier
 already ran, adding roughly 1.5–2× to the step that dominates irreducible
 inputs. This
 def shares that pass: `bhksRecoverClassifiedWithAllOnes_fst` pins `.1` to
 `bhksRecoverClassified` and `bhksRecoverClassifiedWithAllOnes_snd` (in
-`FactorEntryPoints`) pins `.2` to `bhksSingleAllOnesPartition`, so the loop reads
+`Factorization`) pins `.2` to `bhksSingleAllOnesPartition`, so the loop reads
 both off one lattice build with no change to either public surface.
 -/
 private def bhksRecoverClassifiedWithAllOnes (f : ZPoly) (d : LiftData) :

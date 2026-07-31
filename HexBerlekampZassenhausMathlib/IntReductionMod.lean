@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampMathlib.Basic
+public import HexBerlekampMathlib.Irreducibility
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.RingTheory.Polynomial.Content
 public import Mathlib.Algebra.Polynomial.Degree.Lemmas
@@ -26,15 +26,10 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-Public trial-tier soundness built from the reduction-mod-`p` descent core and
-the repeated-part/reassembly transport.
+Soundness of exhaustive trial factorization, built from reduction modulo a
+prime and the repeated-part reassembly theorem.
 -/
 namespace HexBerlekampZassenhausMathlib
-set_option maxHeartbeats 8000000
-
-set_option maxHeartbeats 4000000 in
-set_option maxHeartbeats 8000000
-
 
 /-- Divisibility propagation through `List.foldl (· * ·)` on `Hex.ZPoly`: if
 `x` divides the accumulator at any point, it divides the final foldl. Used by
@@ -108,15 +103,14 @@ private theorem factorPower_size_lower_bound
         Hex.ZPoly.mul_size_eq_top_succ_of_nonzero _ _ hprev_pos hq_pos
       omega
 
-set_option maxHeartbeats 200000
-
+namespace TrialFactorization
 
 /-- Mathlib-side abstract-bound wrapper for the slow-trial exhaustive arm.
 
 Specialises the Mathlib-free
 `Hex.exhaustiveIntegerTrialCoreFactorsWithBound_factor_irreducible`
 (`HexBerlekampZassenhaus`) to the normalized square-free
-core of an `f ≠ 0` input, discharging the four core-shape hypotheses
+square-free part of an `f ≠ 0` input, discharging the four input-shape hypotheses
 (`ne_zero`, `Primitive`, `0 < leadingCoeff`, `SquareFreeRat`) from `hf_ne`
 via the existing helpers:
 
@@ -128,16 +122,16 @@ via the existing helpers:
   `SquareFreeRat`.
 
 The divisor coefficient bound `hbound` stays explicit because two natural
-specialisations live downstream: the intrinsic-core form
+specialisations live downstream: the intrinsic-bound form
 (`B := Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore`,
-discharged below by `defaultFactorCoeffBound_valid` on the core) and the
+discharged below by `defaultFactorCoeffBound_valid` on the square-free part) and the
 public-bound form (`B := Hex.ZPoly.defaultFactorCoeffBound f`, required
-by the slow-trial arm of the `h_raw` dispatch in
+by the slow-trial arm of the `h_raw` selection in
 `factor_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible`), which
 needs the `g ∣ (Hex.normalizeForFactor f).squareFreeCore → g ∣ f`
 divisibility chain through `primitiveSquareFreeDecomposition_reassembly_signed`
 and the primitive-part divisibility relation. -/
-theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_of_bound
+theorem factors_irreducible_of_bound
     (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat)
     (hbound : ∀ g : Hex.ZPoly,
       g ∣ (Hex.normalizeForFactor f).squareFreeCore →
@@ -161,19 +155,19 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irr
     (Hex.normalizeForFactor f).squareFreeCore B
     hcore_ne hcore_prim hcore_pos hcore_sq hbound factor hmem
 
-/-- Intrinsic-core default-bound specialisation of
-`exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_of_bound`
+/-- Intrinsic square-free-factor bound specialization of
+`factors_irreducible_of_bound`
 at `B := Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore`.
 
 The divisor coefficient bound is discharged directly by
-`defaultFactorCoeffBound_valid` applied to the (nonzero) square-free core.
-This is the natural specialisation for callers that have already routed
-through the core's intrinsic Mignotte data; the public slow-trial dispatch
+`defaultFactorCoeffBound_valid` applied to the (nonzero) primitive square-free part.
+This is the natural specialisation for callers that have already handled
+through the square-free part's intrinsic Mignotte data; the public slow-trial selection
 in `Hex.factorTrialFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f)`
 uses the outer bound `Hex.ZPoly.defaultFactorCoeffBound f`, which requires
 an additional `(Hex.normalizeForFactor f).squareFreeCore ∣ f` divisibility
 chain (tracked separately) to discharge against this wrapper's `hbound`. -/
-theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_at_squareFreeCore_default
+theorem factors_irreducible_at_squareFree_bound
     (f : Hex.ZPoly) (hf_ne : f ≠ 0) :
     ∀ factor ∈ (Hex.exhaustiveIntegerTrialCoreFactorsWithBound
                   (Hex.normalizeForFactor f).squareFreeCore
@@ -185,7 +179,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irr
   have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 :=
     zpoly_ne_zero_of_pos_lc hcore_pos
   exact
-    exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_of_bound
+    factors_irreducible_of_bound
       f hf_ne
       (Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore)
       (defaultFactorCoeffBound_valid
@@ -200,16 +194,16 @@ private theorem zpoly_dvd_trans {a b c : Hex.ZPoly} (hab : a ∣ b) (hbc : b ∣
   obtain ⟨r, hr⟩ := hbc
   exact ⟨q * r, by rw [hr, hq, Hex.DensePoly.mul_assoc_poly (S := Int)]⟩
 
-/-- Public-bound specialisation of
-`exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_of_bound`
+/-- Input-polynomial bound specialization of
+`factors_irreducible_of_bound`
 at the outer bound `B := Hex.ZPoly.defaultFactorCoeffBound f` consumed by the
-slow-trial arm of the `h_raw` dispatch.
+slow-trial arm of the `h_raw` selection.
 
 The divisor coefficient bound is discharged by lifting
 `defaultFactorCoeffBound_valid f` along `Hex.squareFreeCore_dvd_self`: any
-divisor of the square-free core also divides `f`, so its coefficients are
+divisor of the primitive square-free part also divides `f`, so its coefficients are
 bounded by `Hex.ZPoly.defaultFactorCoeffBound f`. -/
-theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_at_default
+theorem factors_irreducible_at_input_bound
     (f : Hex.ZPoly) (hf_ne : f ≠ 0) :
     ∀ factor ∈ (Hex.exhaustiveIntegerTrialCoreFactorsWithBound
                   (Hex.normalizeForFactor f).squareFreeCore
@@ -217,7 +211,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irr
       Hex.ZPoly.Irreducible factor := by
   intro factor hmem
   refine
-    exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_of_bound
+    factors_irreducible_of_bound
       f hf_ne (Hex.ZPoly.defaultFactorCoeffBound f) ?_ factor hmem
   intro g hg i
   exact defaultFactorCoeffBound_valid f hf_ne g
@@ -226,17 +220,17 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irr
 /-- **Slow-trial exhaustive-arm reassembly discharger (Mathlib-side).**
 
 When the slow trial path takes the exhaustive branch, the reassembly of the
-integer-trial core factors of `(normalizeForFactor f).squareFreeCore` at the
+integer-trial factors of the square-free part of `(normalizeForFactor f).squareFreeCore` at the
 public bound `B := Hex.ZPoly.defaultFactorCoeffBound f` is expansion-complete.
 The integer-trial analog of
 `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`: it
-composes the public-bound core irreducibility wrapper, the polyProduct /
+composes the public-bound primitive-square-free-part irreducibility wrapper, the polyProduct /
 normalizeFactorSign / degree-positivity companions, and the non-monic
 expansion-complete surface `reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_pos_lc`.
 Per-factor positive leading coefficient follows from the sign-normalisation
 identity and irreducibility; the fuel bound from the per-factor
 `factorPower` size lower bound and `size_le_of_dvd_nonzero`. -/
-theorem reassemblyExpansionComplete_exhaustiveIntegerTrial_of_ne_zero
+theorem reassembly_complete
     (f : Hex.ZPoly) (hf : f ≠ 0) :
     Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
       (Hex.exhaustiveIntegerTrialCoreFactorsWithBound
@@ -251,7 +245,7 @@ theorem reassemblyExpansionComplete_exhaustiveIntegerTrial_of_ne_zero
       (Hex.normalizeForFactor f).squareFreeCore
       (Hex.ZPoly.defaultFactorCoeffBound f) with hcf
   have hirr : ∀ q ∈ coreFactors.toList, Hex.ZPoly.Irreducible q :=
-    exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_at_default f hf
+    factors_irreducible_at_input_bound f hf
   have hprod :
       Array.polyProduct coreFactors = (Hex.normalizeForFactor f).squareFreeCore :=
     Hex.exhaustiveIntegerTrialCoreFactorsWithBound_polyProduct _ _
@@ -370,6 +364,8 @@ theorem reassemblyExpansionComplete_exhaustiveIntegerTrial_of_ne_zero
     Hex.ZPoly.size_le_of_dvd_nonzero hfp_ne_zero hrp_ne_zero hfp_dvd_rp
   omega
 
+end TrialFactorization
+
 /-- Reassembly expansion-completeness for successful BHKS recovery from the
 recovery result and irreducibility of its factors.
 
@@ -463,7 +459,7 @@ theorem reassemblyComplete_of_bhksRecovery_irreducible
 /-- **Trial-branch raw-factor irreducibility (hybrid guard form).**
 
 Trial-branch raw-factor irreducibility for the cost-based hybrid, where the
-trial arm fires as the totality backstop.  Because the deg-0 (constant-core)
+trial arm fires as the totality backstop.  Because the deg-0 (constant-part)
 short-circuit is reachable, the raw output can contain the unit `1`, so the
 statement carries the `shouldRecordPolynomialFactor` guard that excludes it.  The
 two positive-degree arms reuse the quadratic and exhaustive integer-trial
@@ -508,9 +504,9 @@ theorem factorTrialFactorsWithBound_factor_irreducible
         simp only [hquad] at hmem
         refine Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
           _ _ ?_ ?_ hmem
-        · exact reassemblyExpansionComplete_exhaustiveIntegerTrial_of_ne_zero f hf
+        · exact TrialFactorization.reassembly_complete f hf
         · exact
-            exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_at_default
+            TrialFactorization.factors_irreducible_at_input_bound
               f hf
 
 end HexBerlekampZassenhausMathlib

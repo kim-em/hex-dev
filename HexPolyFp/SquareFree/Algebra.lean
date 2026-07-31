@@ -1259,7 +1259,7 @@ private theorem normalizeMonic_nonzero_isZero_false
 
 /-- Monic-normalized gcd: the canonical monic associate of `DensePoly.gcd c w`.
 
-Routing the Yun square-free loop's gcd through this keeps every intermediate
+Handling the Yun square-free loop's gcd through this keeps every intermediate
 polynomial monic. A raw {name}`DensePoly.gcd` of a coprime pair can be a non-trivial
 constant unit over `F_p` for `p > 2` (e.g. `gcd (x^2+1) (x+1) = 2` over `F_5`);
 emitting `c / gcd c w` then leaks that scalar into the square-free factor,
@@ -1491,7 +1491,7 @@ private theorem eq_C_of_mul_eq_one
   exact eq_C_of_size_one hsize
 
 /--
-Gcd scalar-multiple bridge over a prime modulus: scaling both arguments of
+Gcd scalar-multiple correspondence over a prime modulus: scaling both arguments of
 {name}`DensePoly.gcd` by the same nonzero constant scales the gcd by some nonzero
 constant `v`. The proof uses Bezout (`xgcd_bezout`) to extract a candidate
 generator and the `GcdLaws.dvd_gcd` package to show the two generators are
@@ -1638,7 +1638,7 @@ private theorem gcd_C_mul_C_mul_eq_C_mul_gcd
 
 /--
 Two-{name}`DensePoly.C` constants combine into a single {name}`DensePoly.C` of the
-product, in `FpPoly p`. Used by the asymmetric scalar bridges below to
+product, in `FpPoly p`. Used by the asymmetric scalar correspondences below to
 fold scalar factors during cancellation.
 -/
 private theorem fpPoly_C_mul_C_eq (a b : ZMod64 p) :
@@ -1696,9 +1696,9 @@ private theorem C_mul_dvd_of_C_mul_dvd_unit_swap
   rw [hk, ← hgoal]
 
 /--
-Asymmetric gcd scalar-multiple bridge: scaling the two arguments of
+Asymmetric gcd scalar-multiple correspondence: scaling the two arguments of
 {name}`DensePoly.gcd` by *different* nonzero constants `u_c`, `u_w` scales the
-gcd by some nonzero constant `v`. The proof routes through divisibility
+gcd by some nonzero constant `v`. The proof uses divisibility
 manipulation (rather than the Bezout factoring used by
 {name}`gcd_C_mul_C_mul_eq_C_mul_gcd`) because the two scalars cannot be
 factored out as a single common constant. Used by the inner Yun split

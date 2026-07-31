@@ -8,7 +8,7 @@ module
 
 public import Init.Grind.Ring.Basic
 public import HexModArith.Ring
-public import HexGFqRing.Basic
+public import HexGFqRing.PolynomialQuotient
 
 public section
 
@@ -733,7 +733,7 @@ theorem sub_eq_add_neg {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     _ = reduceMod f (repr x + reduceMod f (-repr y)) := by
           exact (reduceMod_add_right_reduceMod f (repr x) (-repr y)).symm
 
-/-- Even-index binary-decomposition gateway: doubling the base lets the recurrence
+/-- Even-index binary-decomposition identity: doubling the base lets the recurrence
 step over two summands at once. Consumed by `nsmul_go_eq_acc_add_linearNSmul`'s
 even-residue branch. -/
 private theorem linearNSmul_double {f : FpPoly p} {hf : 0 < FpPoly.degree f}
@@ -747,7 +747,7 @@ private theorem linearNSmul_double {f : FpPoly p} {hf : 0 < FpPoly.degree f}
       rw [htwo, linearNSmul_succ, linearNSmul_succ, ih, linearNSmul_succ]
       exact ext (repr_add_assoc (linearNSmul (x + x) n) x x)
 
-/-- Odd-index binary-decomposition gateway: one summand peels off and the rest
+/-- Odd-index binary-decomposition identity: one summand peels off and the rest
 collapses to the doubled-base recurrence. Consumed by
 `nsmul_go_eq_acc_add_linearNSmul`'s odd-residue branch. -/
 private theorem linearNSmul_double_add_one {f : FpPoly p} {hf : 0 < FpPoly.degree f}
@@ -941,7 +941,7 @@ theorem intCast_neg_eq (f : FpPoly p) (hf : 0 < FpPoly.degree f)
       exact (neg_neg_eq (natCast f hf (n + 1))).symm
 
 /-- {name}`linearPow_mul_assoc` supplies associativity for quotient multiplication in
-the proof-only recurrence used by the square-and-multiply correctness bridge. -/
+the proof-only recurrence used by the square-and-multiply correctness correspondence. -/
 private theorem linearPow_mul_assoc {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (a b c : PolyQuotient f hf) :
     a * b * c = a * (b * c) := by
@@ -996,8 +996,9 @@ private theorem linearPow_double_add_one {f : FpPoly p} {hf : 0 < FpPoly.degree 
   rw [linearPow_succ, linearPow_double]
   exact linearPow_mul_comm (linearPow (x * x) n) x
 
-/-- {name}`pow_go_eq_acc_mul_linearPow` bridges the executable accumulator loop to the
-proof-only recurrence used to prove square-and-multiply exponentiation correct. -/
+/-- {name}`pow_go_eq_acc_mul_linearPow` identifies the executable accumulator
+loop with the proof-only recurrence used to prove square-and-multiply
+exponentiation correct. -/
 private theorem pow_go_eq_acc_mul_linearPow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (acc base : PolyQuotient f hf) (k : Nat) :

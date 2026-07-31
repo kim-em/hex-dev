@@ -232,12 +232,12 @@ theorem directCandidatePrefilter_trueSupport
         data.p ^ Hex.precisionForCoeffBound B data.p)
     {selected :
       List (Hex.DirectLiftedIndex
-        (Hex.ZPoly.coreLiftData core B data))}
+        (Hex.ZPoly.directLiftData core B data))}
     (hnodup : selected.Nodup)
     (hcandidate :
       directSupportCandidate core B data
           (modPSubsetOfLiftedSubset data
-            (Hex.ZPoly.coreLiftData core B data)
+            (Hex.ZPoly.directLiftData core B data)
             (henselLiftData_liftedFactors_size_eq
               (Hex.ZPoly.monicTarget core data.p
                 (Hex.precisionForCoeffBound B data.p))
@@ -249,11 +249,11 @@ theorem directCandidatePrefilter_trueSupport
     (hproduct : quotient * factor = target) :
     Hex.directCandidatePrefilter
         (Hex.DensePoly.leadingCoeff core) target
-        (Hex.liftModulus (Hex.ZPoly.coreLiftData core B data))
-        (Hex.directSelectedDegree (Hex.ZPoly.coreLiftData core B data) selected)
-        (Hex.directSelectedTrail (Hex.ZPoly.coreLiftData core B data) selected) =
+        (Hex.liftModulus (Hex.ZPoly.directLiftData core B data))
+        (Hex.directSelectedDegree (Hex.ZPoly.directLiftData core B data) selected)
+        (Hex.directSelectedTrail (Hex.ZPoly.directLiftData core B data) selected) =
       true := by
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let hsize : d.liftedFactors.size = data.factorsModP.size :=
     henselLiftData_liftedFactors_size_eq
       (Hex.ZPoly.monicTarget core data.p
@@ -449,12 +449,12 @@ theorem tryDirectSplit_trueSupport
         data.p ^ Hex.precisionForCoeffBound B data.p)
     {selected :
       List (Hex.DirectLiftedIndex
-        (Hex.ZPoly.coreLiftData core B data))}
+        (Hex.ZPoly.directLiftData core B data))}
     (hnodup : selected.Nodup)
     (hcandidate :
       directSupportCandidate core B data
           (modPSubsetOfLiftedSubset data
-            (Hex.ZPoly.coreLiftData core B data)
+            (Hex.ZPoly.directLiftData core B data)
             (henselLiftData_liftedFactors_size_eq
               (Hex.ZPoly.monicTarget core data.p
                 (Hex.precisionForCoeffBound B data.p))
@@ -468,9 +468,9 @@ theorem tryDirectSplit_trueSupport
     (hproduct : quotient * factor = target) :
     Hex.tryDirectSplit
         (Hex.DensePoly.leadingCoeff core) target
-        (Hex.ZPoly.coreLiftData core B data) selected =
+        (Hex.ZPoly.directLiftData core B data) selected =
       some (factor, quotient) := by
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let hsize : d.liftedFactors.size = data.factorsModP.size :=
     henselLiftData_liftedFactors_size_eq
       (Hex.ZPoly.monicTarget core data.p
@@ -540,16 +540,16 @@ theorem tryDirectSplit_containsSupport
     (hrecover : directSupportCandidate core B data S = factor)
     {selected :
       List (Hex.DirectLiftedIndex
-        (Hex.ZPoly.coreLiftData core B data))}
+        (Hex.ZPoly.directLiftData core B data))}
     (hnodup : selected.Nodup)
     (htry :
       Hex.tryDirectSplit (Hex.DensePoly.leadingCoeff core) target
-          (Hex.ZPoly.coreLiftData core B data) selected =
+          (Hex.ZPoly.directLiftData core B data) selected =
         some (candidate, quotient))
     {i : ModPFactorIndex data} (hiS : i ∈ S)
     (hiSelected :
       i ∈ modPSubsetOfLiftedSubset data
-        (Hex.ZPoly.coreLiftData core B data)
+        (Hex.ZPoly.directLiftData core B data)
         (henselLiftData_liftedFactors_size_eq
           (Hex.ZPoly.monicTarget core data.p
             (Hex.precisionForCoeffBound B data.p))
@@ -557,13 +557,13 @@ theorem tryDirectSplit_containsSupport
         selected.toFinset) :
     S ⊆
       modPSubsetOfLiftedSubset data
-        (Hex.ZPoly.coreLiftData core B data)
+        (Hex.ZPoly.directLiftData core B data)
         (henselLiftData_liftedFactors_size_eq
           (Hex.ZPoly.monicTarget core data.p
             (Hex.precisionForCoeffBound B data.p))
           (Hex.precisionForCoeffBound B data.p) data)
         selected.toFinset := by
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let hsize : d.liftedFactors.size = data.factorsModP.size :=
     henselLiftData_liftedFactors_size_eq
       (Hex.ZPoly.monicTarget core data.p
@@ -610,16 +610,16 @@ theorem tryDirectSplit_eqSupport_of_card_le
     (hrecover : directSupportCandidate core B data S = factor)
     {selected :
       List (Hex.DirectLiftedIndex
-        (Hex.ZPoly.coreLiftData core B data))}
+        (Hex.ZPoly.directLiftData core B data))}
     (hnodup : selected.Nodup)
     (htry :
       Hex.tryDirectSplit (Hex.DensePoly.leadingCoeff core) target
-          (Hex.ZPoly.coreLiftData core B data) selected =
+          (Hex.ZPoly.directLiftData core B data) selected =
         some (candidate, quotient))
     {i : ModPFactorIndex data} (hiS : i ∈ S)
     (hiSelected :
       i ∈ modPSubsetOfLiftedSubset data
-        (Hex.ZPoly.coreLiftData core B data)
+        (Hex.ZPoly.directLiftData core B data)
         (henselLiftData_liftedFactors_size_eq
           (Hex.ZPoly.monicTarget core data.p
             (Hex.precisionForCoeffBound B data.p))
@@ -627,14 +627,14 @@ theorem tryDirectSplit_eqSupport_of_card_le
         selected.toFinset)
     (hcard :
       (modPSubsetOfLiftedSubset data
-        (Hex.ZPoly.coreLiftData core B data)
+        (Hex.ZPoly.directLiftData core B data)
         (henselLiftData_liftedFactors_size_eq
           (Hex.ZPoly.monicTarget core data.p
             (Hex.precisionForCoeffBound B data.p))
           (Hex.precisionForCoeffBound B data.p) data)
         selected.toFinset).card ≤ S.card) :
     modPSubsetOfLiftedSubset data
-        (Hex.ZPoly.coreLiftData core B data)
+        (Hex.ZPoly.directLiftData core B data)
         (henselLiftData_liftedFactors_size_eq
           (Hex.ZPoly.monicTarget core data.p
             (Hex.precisionForCoeffBound B data.p))

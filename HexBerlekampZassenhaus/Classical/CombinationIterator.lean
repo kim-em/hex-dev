@@ -57,14 +57,20 @@ theorem subsetsOfSizeWithComplement_mem {α : Type} :
 
 /-- A dividing candidate and the exact unused support complement. -/
 structure DirectSplit (basis : LiftData) where
+  /-- The lifted factors used in the candidate product. -/
   selected : List (DirectLiftedIndex basis)
+  /-- The exact complementary lifted factors. -/
   remaining : List (DirectLiftedIndex basis)
+  /-- The primitive normalized integer candidate. -/
   candidate : ZPoly
+  /-- The exact quotient of the current target by `candidate`. -/
   quotient : ZPoly
 
 /-- Result of streaming one complete subset-cardinality level. -/
 inductive DirectLevelResult (basis : LiftData) where
+  /-- A candidate divides the target; `tried` records the work performed. -/
   | found (split : DirectSplit basis) (tried : Nat)
+  /-- Every candidate at this cardinality was tested without success. -/
   | exhausted (tried : Nat)
 
 /-- Lifted polynomials selected by an indexed support list. -/

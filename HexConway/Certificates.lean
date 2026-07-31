@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexBerlekamp.RabinSoundness
-import HexGFqRing.Basic
+import HexGFqRing.PolynomialQuotient
 import HexConway.Table
 
 /-!

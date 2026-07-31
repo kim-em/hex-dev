@@ -1,199 +1,104 @@
 # HexBerlekampZassenhaus Performance Report
 
-The current public-factor measurement adds verified original-coordinate M1
-lifting, bounded modular degree certificates, and review-hardened routing at
-`d580b121292be127be33b312fe888b00573379ed`. The unchanged
-classical-no-decline measurement is at `b0150d2b`; lattice, parametric, and
-fixed measurements remain at `0b95505b7c926911a9f487bac56676a8c7da48f6`.
-All were measured on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU
-0, from clean worktrees.
+This report describes the supported public integer-factorization entry point.
+Standalone classical and lattice entries remain useful development diagnostics,
+but they are not presented as alternative public implementations.
 
-## Bench Targets
+## Measurement
 
-Eight parametric targets cover public factorization, the exhaustive backstop,
-degree/height, fallback behaviour, and fast-path precision/local-factor axes.
-Eight canonical adversarial fixtures are warm fixed benchmarks. All parametric
-targets completed three outer trials; their classical BHKS upper-bound models
-are loose on these small deterministic fixtures, so the verdicts are
-inconclusive rather than failed.
+The Hex record measures clean source revision
+`75291ae2fe6c58d95ba73dff9e5d2720df11b3d5` with
+`leanprover/lean4:v4.32.2`.  The executable SHA-256 is
+`f1b2c4262493cc35c68b2c433bba3803d31f6a27631000f52a6ee295721a6fe4`.
 
-| Target | Largest rung | Median |
-|---|---:|---:|
-| Public factorization | 24 | 1.719 ms |
-| Fallback probe | 24 | 1.475 ms |
-| Degree/height | `(6,32)` | 199.855 µs |
-| Fast-path precision/local | `(8,32,128,8)` | 1.255 ms |
-| Slow factorization | 4 | 12.273 µs |
-| Slow degree/height | `(3,8)` | 30.940 µs |
-| Public compare domain | 4 | 68.589 µs |
-| Slow compare domain | 4 | 12.281 µs |
+The sweep ran on `chungus2`, an AMD EPYC 9455 Linux x86-64 host, with the
+harness and service pinned to CPU 0.  It used the committed 392-row corpus
+`bench/corpus/hexbz-factor-corpus.jsonl`, whose SHA-256 is
+`619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`.
+Each service is persistent and warmed before measurement.  The harness uses a
+ten-second cutoff per call, the median of five calls when the first call is
+under one second, and one call otherwise.  Early termination was disabled.
+The public Hex protocol floor was 20.120 microseconds.
 
-| Warm fixed fixture | Median | Min–max |
-|---|---:|---:|
-| `X⁴ + 1`, public | 28.916 µs | 28.671–29.082 µs |
-| `X⁴ + 1`, fast setup | 20.359 µs | 20.285–20.393 µs |
-| `(X²-2)(X²-3)`, public | 27.071 µs | 26.985–27.567 µs |
-| `Phi_15`, public | 86.801 µs | 86.342–88.227 µs |
-| `Phi_15`, fast setup | 25.437 µs | 25.201–25.609 µs |
-| `SD_3`, modular split | 8.478 µs | 8.325–8.802 µs |
-| `SD_3`, lattice factorization | 1.593 ms | 1.575–1.604 ms |
-| `SD_4`, lattice factorization | 29.294 ms | 29.256–30.226 ms |
+The durable Hex record is
+`reports/bench-results/hexbz-factor-sweep-75291ae2-chungus2.json`
+(SHA-256
+`5d8b08225a4f2a0c8288d9f536303193a2f54b312a1cbae57ffcac23cd6295bd`).
+It records the full source revision, clean-worktree flag, toolchain, corpus
+hash, host, cutoff, repetition policy, and protocol overhead.
 
-The public `X⁴+1` fixed fixture falls from 98.628 µs to 28.916 µs and
-`Phi_15` from 205.705 µs to 86.801 µs. Quadratic multifactor Hensel lifting,
-reported separately, is the largest lower-layer improvement.
+The FLINT, PARI/GP, NTL, and verified Isabelle records are the unchanged
+2026-07-28 measurements from the same host, corpus, CPU placement, cutoff, and
+protocol.  They were not rerun because none of those inputs changed.
 
-Exports under `reports/bench-results/`:
+## Cross-system results
 
-- `hex-berlekamp-zassenhaus-parametric-0b95505b-gcd-hensel-chungus2.json`
-  (SHA-256
-  `b915b2f27be36251cc8be6603858dbe29f5311502d00a030235351a9a1b1dd70`)
-- `hex-berlekamp-zassenhaus-fixed-0b95505b-gcd-hensel-chungus2.json`
-  (SHA-256
-  `82ddd9e54cfafcfefc936ffeb1f1c8bb7e926e7545cd2b992ecfbc508e1ee78d`)
-
-`list` and every non-scheduled `verify` target passed.
-
-Both exports record clean worktrees and cover all eight non-scheduled targets,
-so no unchanged rows are inherited from an earlier implementation.
-
-## Cross-System Frontier
-
-| System | OK | Timeout | Solved-row median |
+| System | Answered | Timed out | Median among answered rows |
 |---|---:|---:|---:|
-| Hex public factor | 373 | 19 | 401.114 µs |
-| Hex lattice | 369 | 23 | 1.812 ms |
-| Hex classical, no decline | 372 | 20 | 386.358 µs |
+| Hex public factorization | 375 | 17 | 352.262 µs |
 | FLINT 0.9.0 | 391 | 1 | 66.850 µs |
 | PARI/GP 2.17.3 | 391 | 1 | 99.958 µs |
 | NTL 11.6.0 | 391 | 1 | 135.631 µs |
 | Verified Isabelle BZ | 371 | 21 | 441.134 µs |
 | Verified Isabelle LLL | 314 | 78 | 6.109 ms |
 
-The external rows are the unchanged current 2026-07-28 measurements from the
-same host, corpus, CPU, and protocol. On 234 common rows above each service's
-10× protocol-overhead threshold, public Hex / verified Isabelle BZ has median
-0.852× and p10–p90 0.450×–2.033×; Hex wins 143 rows and Isabelle 91. This is a
-clear aggregate Hex lead, but the wide family-dependent range is not uniform
-superiority. The old eligible-row median was 3.95×.
+Every pair of systems that answered agreed on the multiset of factor degrees.
+The coverage count treats every timeout as unsolved; it does not discard hard
+rows.
 
-The public protocol floor is 17.215 µs.
+For comparisons below, a pair is eligible only when both measurements exceed
+ten times their own service's protocol floor.  On the 218 eligible common rows,
+Hex divided by verified Isabelle Berlekamp-Zassenhaus has median `0.734×` and
+10th-to-90th percentile range `0.460×` to `2.552×`.  Hex wins 137 rows and
+Isabelle wins 81.  Thus Hex has a useful aggregate lead, but the broad range
+does not support a claim of uniform superiority.
 
-The public row is recorded in
-`reports/bench-results/hexbz-factor-sweep-hex-d580b121-m1-review-chungus2.json`
-(SHA-256 `455b5fc28681707357eda6c60fba25531937128c51f9c3065231adf73dbd959d`).
-It records a clean worktree.
+The optimized unverified libraries remain substantially faster.  Hex/FLINT has
+median `11.68×` on 64 eligible rows, Hex/PARI has median `7.65×` on 81, and
+Hex/NTL has median `4.36×` on 170.  Hex wins none of the eligible FLINT or PARI
+pairs and 17 of the NTL pairs.
 
-The current public/classical comparison has 237 eligible rows and a 1.003×
-median ratio in the pre-M1 record. Comparing current public with that unchanged
-diagnostic also gives 1.003×, with a 116–121 win split and a wider band because
-the production path now uses M1 selectively. Public is better on selected hard
-rows and uniquely solves `sd6`.
+## Families relative to verified Isabelle BZ
 
-The current classical row is in the `b0150d2b` artifact; the unchanged lattice
-row is in `0b95505b`. The older `aaabcf15` record remains a historical A/B
-reference.
-
-At the preceding `b0150d2b` stage, the bounded prime-width policy drives the
-large selector wins. It looks ahead by
-at most two good primes only on predicted high-cost transforms, requires at
-least a 25% modular-width reduction before changing prime, and preserves cheap
-even `x^n - 1` recursion. The largest current/pre-policy gains are 75.54× on
-`sd5_x_phi45`, 29.03× on `xpow105_minus1`, 12.39× on `legendre_P30`, 7.42×
-on `cyclo_phi151`, 7.09× on `cyclo_phi179`, and 5.60× on `cyclo_phi61`.
-
-Cached recombination is the next preceding movement. Against `0b95505b`, the
-eligible-row paired median is 0.988× and `b0150d2b` wins 171 of 243 rows. The
-targeted `sd5` family improves by 2.24×–2.73× while the full corpus remains
-stable.
-
-## Original-coordinate M1
-
-The production classical tier now reuses the adaptive selector's chosen prime
-and modular factors, transports them back to the original coordinate, and
-Hensel-lifts `monicTarget core` at the original core's Mignotte precision.
-Acceptance is independently certified; any failed search or certificate falls
-back to the proved M2 route.
-
-The same-prime lift changes include 4.23 ms to 0.24 ms on Chebyshev U24,
-4.08 ms to 0.42 ms on Legendre P30, and 5.22 ms to 0.64 ms on Legendre P38.
-End to end, U24 falls from 2.610 ms to 0.816 ms, P28 from 8.205 ms to
-4.952 ms, P30 from 13.807 ms to 11.034 ms, and P38 from 13.602 ms to
-8.422 ms.
-
-The Chebyshev family median against Isabelle improves from 1.619× to 1.260×;
-Legendre improves from 1.435× to 1.249×. A degree-aware Mignotte cap, longer
-modular singleton scan, and global removal of recursive relifting do not clear
-their measured gates. The implementation instead uses a bounded two-prime
-degree obstruction and a deterministic M1 cost gate. See
-`hexbz-m1-chebyshev-legendre.md` for the complete dependency and measurement
-record.
-
-Review hardening bounds the exponential certificate inputs, records the M1
-route in the conformance trace, pins accepted and fallback behavior, and moves
-coordinate transport inside the taken branch. The last change restores eight
-monic cyclotomic rows from 1.47×–1.64× regressions to within 1.009×–1.041× of
-their pre-M1 times.
-
-The preceding movement removes discarded quotient construction from Euclidean
-GCD, caches finite-field divisor inverses, maps prime-power coefficient
-reduction directly over the stored array, and replaces multiplication by a
-monomial in quadratic Hensel division with an exact shift-and-scale kernel.
-Against the immediately preceding public export, the all-row paired median is
-0.964× and current Hex is faster on 306 of 373 rows. `chebyshev_U24` is now
-2.608 ms, `legendre_P30` 13.970 ms, `legendre_P38` 13.771 ms, and
-`cyclo_phi385` 447.061 ms. The quadratic-multifactor microbenchmark falls from
-67.229 ms to 48.711 ms.
-
-## Retained phase diagnostics
-
-The following phase attribution and factor-only A/B belong to their named
-earlier revisions; they remain useful localization evidence but are not
-relabelled as current timings:
-
-- Split degree 24: 16.387 ms rebuilding the kernel, 1.245 ms sharing it,
-  569.224 µs on the fixed path.
-- Fixed split-degree-24 attribution: 18.89% matrix, 2.95% nullspace,
-  78.17% witness splitting.
-
-At degree 24 on the Mignotte schedule, the production balanced lift takes
-4.506 ms versus 5.837 ms for the same tree with a full-witness final
-correction, a 1.30× factor-only speedup.
-
-Raw diagnostic artifacts:
-
-- `berlekamp-diagnostic-a1fdbd81-chungus2.txt` (SHA-256
-  `03e59491ed588ca377ece2ef387450ba699ef9e63d323db50e6c36fa17f265b5`)
-- `bz-spikes-b4b36754-exact-factor-only-chungus2.txt` (SHA-256
-  `1e63599da4da285708b9ac2a6b06fbbb3986b7d418f3452b374682306b3f7efb`)
-
-Both paths are relative to `reports/bench-results/`.
-
-### Swinnerton-Dyer seam
-
-| Fixture | Hex public | Verified Isabelle BZ | Hex / Isabelle |
+| Corpus family | Eligible pairs | Median Hex / Isabelle | Hex wins |
 |---|---:|---:|---:|
-| `SD_5` | 40.496 ms | 22.827 ms | 1.77x |
-| `SD_5` shifted by 1 | 27.918 ms | 14.875 ms | 1.88x |
-| `SD_5` shifted by 2 | 29.489 ms | 14.907 ms | 1.98x |
-| `SD_6` | 8.900 s | timeout | — |
+| Chebyshev | 9 | 0.469× | 9 |
+| Conway | 90 | 0.693× | 50 |
+| Cyclotomic | 24 | 1.112× | 10 |
+| Cyclotomic products | 18 | 1.046× | 9 |
+| Laguerre | 13 | 0.757× | 13 |
+| Legendre | 13 | 0.576× | 12 |
+| Random products | 26 | 0.555× | 26 |
+| Swinnerton-Dyer products | 7 | 0.798× | 4 |
+| Swinnerton-Dyer | 6 | 2.772× | 3 |
+| Wilkinson | 12 | 1.369× | 1 |
 
-The fresh public service now solves `SD_6`; the no-decline classical service
-still times out. The public result and the isolated lattice result (8.583 s)
-show that the dispatcher is adding useful reach here. The public measurement
-is a single cutoff-limited shot only 11.0% below ten seconds, so this frontier
-success has a narrow margin.
+Hoeij-Zimmermann has no common answered row with verified Isabelle BZ, so it
+has no eligible family comparison.
 
-## Concerns
+The stable build is particularly strong on the Chebyshev and Legendre rows
+that motivated the direct-coordinate lifting work.  The remaining weak
+families are plain Swinnerton-Dyer, Wilkinson, and parts of the cyclotomic
+families.
 
-- Nineteen public corpus cases still hit the 10-second cutoff.
-- FLINT, PARI/GP, and NTL remain much faster in aggregate.
-- Hex has a 13.5% aggregate lead over Isabelle BZ, but Chebyshev still favours
-  Isabelle by 1.20× and Legendre by 1.26× at their family medians.
-- The unchanged no-decline diagnostic is no longer the same lifting core as
-  production; current public/no-decline ratios include the selective M1 route.
-- The lattice route has a much heavier tail than the classical route.
-- `wilkinson_56` remains a slower outlier despite the 0.60× current
-  Wilkinson-family median.
-- The BHKS registrations are useful upper bounds but do not describe the
-  observed small-fixture scaling.
+## Coverage and long tail
+
+Hex solves every Chebyshev, Conway, cyclotomic-product, Laguerre, Legendre,
+random-product, and Wilkinson row.  The 17 cutoff rows are:
+
+- `cyclo_phi1031`;
+- `sd7`, `sd6_shift1`, and `sd6_shift5`;
+- `sd5_x_sd5shift1`, `sd6_x_sd6shift1`, `sd6_x_phi13`, and `sd6_x_phi105`;
+- `hoeij_P7`, `hoeij_F190`, `hoeij_F192`, `hoeij_F256`, `hoeij_F351`,
+  `hoeij_F630`, `hoeij_S7`, `hoeij_S8`, and `hoeij_S9`.
+
+The Hoeij-Zimmermann family is the largest coverage gap: one of ten rows
+answers within the cutoff.  Swinnerton-Dyer products solve ten of fourteen,
+plain Swinnerton-Dyer solves twelve of fifteen, and cyclotomic solves
+thirty-three of thirty-four.  These failures, together with the large gap to
+FLINT, PARI, and NTL, are the main performance work remaining after release.
+
+The regenerated cactus and runtime-by-degree figures under `reports/figures/`
+merge this Hex record with the unchanged external records.  The plotting tool
+checks the common corpus hash before combining them and identifies the exact
+source artifact used for each system.

@@ -74,7 +74,7 @@ theorem modPFactorSubset_disjoint_of_modPFactorization
 noncomputable def directSupportCandidate
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (S : ModPFactorSubset data) : Hex.ZPoly :=
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   scaledRecombinationCandidate core d
     (liftedSubsetOfModPSubset data d
       (henselLiftData_liftedFactors_size_eq
@@ -124,7 +124,7 @@ theorem directSupportCandidate_map_associated
       (Int.ofNat (data.p ^ Hex.precisionForCoeffBound B data.p)) = 1)
     (S : ModPFactorSubset data) :
     letI := data.bounds
-    let d := Hex.ZPoly.coreLiftData core B data
+    let d := Hex.ZPoly.directLiftData core B data
     let T := liftedSubsetOfModPSubset data d
       (henselLiftData_liftedFactors_size_eq
         (Hex.ZPoly.monicTarget core data.p
@@ -140,7 +140,7 @@ theorem directSupportCandidate_map_associated
   letI := data.bounds
   letI : Fact (_root_.Nat.Prime data.p) :=
     ⟨natPrime_of_hexNatPrime hprime⟩
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let T := liftedSubsetOfModPSubset data d
     (henselLiftData_liftedFactors_size_eq
       (Hex.ZPoly.monicTarget core data.p
@@ -152,10 +152,10 @@ theorem directSupportCandidate_map_associated
   let pp := Hex.ZPoly.primitivePart raw
   let cast := Int.castRingHom (ZMod data.p)
   have hk : 0 < d.k := by
-    dsimp [d, Hex.ZPoly.coreLiftData]
+    dsimp [d, Hex.ZPoly.directLiftData]
     omega
   have hp_dvd : data.p ∣ d.p ^ d.k := by
-    simpa [d, Hex.ZPoly.coreLiftData] using dvd_pow_self data.p hk.ne'
+    simpa [d, Hex.ZPoly.directLiftData] using dvd_pow_self data.p hk.ne'
   have hraw_congr : Hex.ZPoly.congr raw scaled data.p :=
     Hex.ZPoly.congr_of_dvd_modulus _ _ hp_dvd
       (centeredLiftPoly_congr_self scaled (d.p ^ d.k))
@@ -311,18 +311,18 @@ theorem directSupport_subset_of_dvd
       hval.prime hprecision hgcd T
   have hprod_dvd :
       (HexPolyZMathlib.toPolynomial
-        (liftedFactorProduct (Hex.ZPoly.coreLiftData core B data)
+        (liftedFactorProduct (Hex.ZPoly.directLiftData core B data)
           (liftedSubsetOfModPSubset data
-            (Hex.ZPoly.coreLiftData core B data)
+            (Hex.ZPoly.directLiftData core B data)
             (henselLiftData_liftedFactors_size_eq
               (Hex.ZPoly.monicTarget core data.p
                 (Hex.precisionForCoeffBound B data.p))
               (Hex.precisionForCoeffBound B data.p) data) S))).map
           (Int.castRingHom (ZMod data.p)) ∣
       (HexPolyZMathlib.toPolynomial
-        (liftedFactorProduct (Hex.ZPoly.coreLiftData core B data)
+        (liftedFactorProduct (Hex.ZPoly.directLiftData core B data)
           (liftedSubsetOfModPSubset data
-            (Hex.ZPoly.coreLiftData core B data)
+            (Hex.ZPoly.directLiftData core B data)
             (henselLiftData_liftedFactors_size_eq
               (Hex.ZPoly.monicTarget core data.p
                 (Hex.precisionForCoeffBound B data.p))
@@ -347,7 +347,7 @@ theorem leadingCoeff_pos_of_normalized
     Hex.ZPoly.leadingCoeff_ne_zero_of_ne_zero f hf
   omega
 
-/-- Every normalized irreducible divisor of the primitive direct core is
+/-- Every normalized irreducible divisor of the primitive direct polynomial is
 recovered exactly from its unique modular support. -/
 theorem directSupportCandidate_eq_of_irreducible_dvd
     {core factor : Hex.ZPoly} {B : Nat} {data : Hex.PrimeChoiceData}
@@ -431,13 +431,16 @@ current target, and its direct candidate is that normalized factor. -/
 structure DirectSupportPartition
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (J : ModPFactorSubset data) (target : Hex.ZPoly) : Prop where
+  /-- The current target has no repeated irreducible factors. -/
   targetSquarefree : Squarefree (HexPolyZMathlib.toPolynomial target)
+  /-- Every irreducible divisor of the target has a support inside `J`. -/
   existsSupport :
     ∀ {factor : Hex.ZPoly},
       Irreducible (HexPolyZMathlib.toPolynomial factor) →
       factor ∣ target →
       ∃ S : ModPFactorSubset data,
         S ⊆ J ∧ RepresentsIntegerFactorModP data factor S
+  /-- Every remaining modular index belongs to a recovered irreducible factor. -/
   cover :
     ∀ {i : ModPFactorIndex data}, i ∈ J →
       ∃ (factor : Hex.ZPoly) (S : ModPFactorSubset data),
@@ -448,6 +451,7 @@ structure DirectSupportPartition
         RepresentsIntegerFactorModP data factor S ∧
         Hex.normalizeFactorSign factor = factor ∧
         directSupportCandidate core B data S = factor
+  /-- Nonassociated irreducible factors have disjoint modular supports. -/
   pairwiseDisjoint :
     ∀ {f g : Hex.ZPoly} {S T : ModPFactorSubset data},
       Irreducible (HexPolyZMathlib.toPolynomial f) →
@@ -461,6 +465,7 @@ structure DirectSupportPartition
       ¬ Associated (HexPolyZMathlib.toPolynomial f)
         (HexPolyZMathlib.toPolynomial g) →
       Disjoint S T
+  /-- Associated irreducible factors have the same modular support. -/
   unique :
     ∀ {f g : Hex.ZPoly} {S T : ModPFactorSubset data},
       Irreducible (HexPolyZMathlib.toPolynomial f) →

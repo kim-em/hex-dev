@@ -9,18 +9,18 @@ module
 public meta import HexArith.Nat.Prime
 public meta import HexBerlekamp.Factor
 public meta import HexBerlekamp.Irreducibility
-public meta import HexHensel.Basic
+public meta import HexHensel.ModularPolynomial
 public meta import HexHensel.Multifactor
 public meta import HexHensel.QuadraticMultifactor
 public meta import HexMatrix.Basic
 public meta import HexPolyZ.Mignotte
-public meta import HexLLL.Basic
+public meta import HexLLL
 public import HexArith.Nat.Prime
 public import HexBerlekamp.Factor
 public import HexBerlekamp.Irreducibility
 public import HexHensel.Multifactor
 public import HexHensel.QuadraticMultifactor
-public import HexLLL.Basic
+public import HexLLL
 -- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
 -- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
 public import HexBasic.ArrayDecEq
@@ -28,10 +28,10 @@ public import HexBasic.ArrayDecEq
 public import HexBerlekampZassenhaus.Lattice
 public meta import HexBerlekampZassenhaus.Lattice
 import all HexBerlekampZassenhaus.PrimeSelection
-import all HexBerlekampZassenhaus.Records
+import all HexBerlekampZassenhaus.FactorizationData
 import all HexBerlekampZassenhaus.Certificate
 import all HexBerlekampZassenhaus.ChoosePrimeData
-import all HexBerlekampZassenhaus.ReassemblyProofs
+import all HexBerlekampZassenhaus.FactorizationResult
 import all HexBerlekampZassenhaus.Lattice
 
 open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
@@ -153,11 +153,13 @@ def bhksProjectedRowsAsRatMatrix
   Matrix.ofFn fun i j =>
     ((rows.getD i.val #[]).getD j.val (0 : Int) : Rat)
 
+/-- The entries in column `j` of a row-reduced projected matrix. -/
 @[expose]
 def bhksColumnSignature
     (echelonRows : Array (Array Rat)) (j : Nat) : Array Rat :=
   echelonRows.map (·.getD j 0)
 
+/-- Add a column index to the class with the same signature, or start a new class. -/
 @[expose]
 def bhksInsertSignatureClass
     (sig : Array Rat) (j : Nat) :
@@ -167,6 +169,7 @@ def bhksInsertSignatureClass
       if s = sig then (s, members ++ [j]) :: rest
       else (s, members) :: bhksInsertSignatureClass sig j rest
 
+/-- The zero-one indicator vector of a class of column indices. -/
 @[expose]
 def bhksClassIndicator (r : Nat) (members : List Nat) : Array Int :=
   ((List.range r).map (fun i => if i ∈ members then (1 : Int) else 0)).toArray
@@ -227,10 +230,12 @@ private def bhksNoProgressProjectedRows : BhksProjectedRows :=
 #guard bhksEquivalenceClassIndicators bhksNoProgressProjectedRows =
   #[#[1, 0, 0], #[0, 1, 0], #[0, 0, 1]]
 
+/-- The prime-power modulus of a Hensel lift. -/
 @[expose]
 def liftModulus (d : LiftData) : Nat :=
   d.p ^ d.k
 
+/-- Replace every coefficient by its centred representative modulo `m`. -/
 @[expose]
 def centeredLiftPoly (f : ZPoly) (m : Nat) : ZPoly :=
   DensePoly.ofCoeffs <| f.toArray.map fun coeff => centeredModNat coeff m
@@ -248,6 +253,7 @@ theorem coeff_centeredLiftPoly (f : ZPoly) (m i : Nat) :
     change (0 : Int) = centeredModNat 0 m
     exact hzero.symm
 
+/-- A sufficiently large modulus makes centred coefficient recovery exact. -/
 theorem centeredLiftPoly_reduceModPow_eq_of_coeff_natAbs_le
     (g : ZPoly) (p k B : Nat)
     (hbound : ∀ i, (g.coeff i).natAbs ≤ B)
@@ -260,6 +266,7 @@ theorem centeredLiftPoly_reduceModPow_eq_of_coeff_natAbs_le
   rw [ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ hpk]
   exact centeredModNat_emod_eq_of_natAbs_le (g.coeff i) (p ^ k) B (hbound i) hsep
 
+/-- Equal sufficiently precise residues recover the same coefficient-bounded polynomial. -/
 theorem centeredLiftPoly_eq_of_reduceModPow_eq
     (g h : ZPoly) (p k B : Nat)
     (hbound : ∀ i, (g.coeff i).natAbs ≤ B)
@@ -298,6 +305,7 @@ theorem normalizeCandidateFactor_eq_of_primitive_nonneg_leading
   have hnot_neg : ¬ DensePoly.leadingCoeff g < 0 := Int.not_lt.mpr hsign
   rw [if_neg hnot_neg]
 
+/-- Select the lifted factors marked by a nonempty zero-one indicator. -/
 def bhksIndicatorSelectedFactors
     (liftedFactors : Array ZPoly) (indicator : Array Int) : Option (Array ZPoly) :=
   if indicator.size != liftedFactors.size then
@@ -433,7 +441,6 @@ def bhksIndicatorCandidate?
       else
         none
 
-set_option maxHeartbeats 800000
 private theorem bhksIndicatorCandidate?_normalizeFactorSign
     {f : ZPoly} {d : LiftData} {indicator : Array Int}
     {candidate quotient : ZPoly}
@@ -1046,11 +1053,13 @@ theorem bhksIndicatorCandidate?_eq_some_of_directRecovery
        none) = some (expectedFactor, quotient)
   simp [liftModulus, hnormalize, hrecord, hquotient]
 
+/-- Count the entries equal to one among the first `r` indicator entries. -/
 def bhksIndicatorOneCount (r : Nat) (indicator : Array Int) : Nat :=
   (List.range r).foldl
     (fun count i => if indicator.getD i 0 == 1 then count + 1 else count)
     0
 
+/-- Test whether an indicator has width `r` and consists entirely of ones. -/
 def bhksIndicatorAllOnes (r : Nat) (indicator : Array Int) : Bool :=
   indicator.size == r && bhksIndicatorOneCount r indicator == r
 
@@ -1597,7 +1606,7 @@ end ZPoly.ToMonicData
 namespace ZPoly
 
 /-- Public face of the inverse-recovery keystone, stated on the `toMonic` monic
-field rather than the private `transformedCore`. For a core of degree `≥ 1`,
+field rather than the private `transformedCore`. For a square-free part of degree `≥ 1`,
 dilating `(toMonic core).monic` by the leading coefficient recovers `core`
 scaled by `leadingCoeff core ^ (degree - 1)`. Holds in both the already-monic
 and the genuine transform branch. -/
@@ -1649,8 +1658,8 @@ theorem toMonic_monic_degree_getD (core : ZPoly) :
         simp [toMonic, hmonic]]
     exact ToMonicData.transformedCore_degree_getD core (core.degree?.getD 0)
 
-/-- Stored size of the monic transform of a positive-degree core: one more than
-the core degree, in both the already-monic and genuine-transform branches. -/
+/-- Stored size of the monic transform of a positive-degree square-free part: one more than
+the square-free part degree, in both the already-monic and genuine-transform branches. -/
 theorem toMonic_monic_size_of_pos_degree (core : ZPoly)
     (hdeg : 0 < core.degree?.getD 0) :
     (toMonic core).monic.size = core.degree?.getD 0 + 1 := by

@@ -388,7 +388,7 @@ theorem exact?_isSome (a : AlgebraicRoot) :
     HexBerlekampZassenhausMathlib.factorize_irreducible_of_nonUnit
       a.p entry hentry
   have hirred : ZPoly.isIrreducible entry.1 = true :=
-    (HexBerlekampZassenhausMathlib.Hex.ZPoly.isIrreducible_iff
+    (Hex.ZPoly.isIrreducible_iff
       entry.1).mpr hirredProp
   let checked : ZPoly.CheckedIrreducible entry.1 := ⟨hirred, hdegree⟩
   letI : ZPoly.CheckedIrreducible entry.1 := checked
@@ -962,10 +962,10 @@ private theorem minpoly?_certificates [ZPoly.CheckedIrreducible p]
     (Polynomial.IsPrimitive.Int.irreducible_iff_irreducible_map_cast
       hprimPoly).mpr (by simpa [HexPolyZMathlib.toPolyℚ] using hirredRat)
   have hirredProp : ZPoly.Irreducible q :=
-    (HexBerlekampZassenhausMathlib.Hex.ZPoly.Irreducible_iff_polynomialIrreducible
+    (Hex.ZPoly.Irreducible_iff_polynomialIrreducible
       q).mpr hirredPoly
   have hirred : ZPoly.isIrreducible q = true :=
-    (HexBerlekampZassenhausMathlib.Hex.ZPoly.isIrreducible_iff q).mpr
+    (Hex.ZPoly.isIrreducible_iff q).mpr
       hirredProp
   let checked : ZPoly.CheckedIrreducible q := ⟨hirred, by
     simpa [q] using hdegree⟩

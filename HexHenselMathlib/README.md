@@ -7,7 +7,7 @@ with spec-driven development.
 Correctness and uniqueness theorems for
 [`hex-hensel`](https://github.com/leanprover/hex-hensel).
 
-This Mathlib bridge relates the executable lifts to `Polynomial ℤ`, carries
+This Mathlib package relates the executable lifts to `Polynomial ℤ`, carries
 coprimality through powers of the lifting modulus, and provides the proof
 surface consumed by certified integer factorization.
 
@@ -26,7 +26,7 @@ import HexHenselMathlib
 
 # Functionality
 
-The bridge exposes the polynomial lift invariant, correctness of each lifting
+The package exposes the polynomial lift invariant, correctness of each lifting
 schedule, coprimality preservation, and uniqueness at the lifted modulus.
 
 # Verification
