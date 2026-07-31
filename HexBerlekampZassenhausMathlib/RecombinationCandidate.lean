@@ -584,6 +584,72 @@ theorem centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
     hscaled hprecision
 
+/--
+Direct-coordinate proportional recovery.
+
+The selected monic Hensel product is scaled by `leadingCoeff core`; for a
+proper factor this is congruent to `c • factor`, where `c` is the cofactor's
+positive leading coefficient.  Once that proportional polynomial lies in the
+centred recovery window, `primitivePart` removes `c` and the executable direct
+candidate is exactly `factor`.
+-/
+theorem scaledRecombinationCandidate_eq_of_proportional
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (c : Int) (hc_pos : 0 < c)
+    (hhonest :
+      Hex.ZPoly.congr
+        (scaledLiftedFactorProduct core d S)
+        (Hex.DensePoly.scale c factor)
+        (d.p ^ d.k))
+    (hfactor_prim : Hex.ZPoly.primitivePart factor = factor)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (B' : Nat)
+    (hvalid : ∀ i, ((Hex.DensePoly.scale c factor).coeff i).natAbs ≤ B')
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    scaledRecombinationCandidate core d S = factor := by
+  have hscale_eq :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+        Hex.ZPoly.reduceModPow (Hex.DensePoly.scale c factor) d.p d.k :=
+    Hex.ZPoly.reduceModPow_eq_of_congr _ _ d.p d.k hhonest
+  have hcl :
+      Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S) (d.p ^ d.k) =
+        Hex.DensePoly.scale c factor := by
+    rw [← centeredLiftPoly_reduceModPow_eq
+      (scaledLiftedFactorProduct core d S) d.p d.k d.p_pos]
+    exact Hex.centeredLiftPoly_eq_of_reduceModPow_eq
+      (Hex.DensePoly.scale c factor)
+      (scaledLiftedFactorProduct core d S)
+      d.p d.k B' hvalid hprecision hscale_eq
+  unfold scaledRecombinationCandidate
+  rw [hcl, primitivePart_scale_of_pos hc_pos factor, hfactor_prim,
+    hfactor_norm]
+
+/--
+Default-bound wrapper for direct proportional recovery from an explicit
+factor/cofactor product.
+-/
+theorem scaledRecombinationCandidate_eq_of_factorization
+    {core factor cofactor : Hex.ZPoly} {d : Hex.LiftData}
+    {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hproduct : factor * cofactor = core)
+    (hcofactor_lc_pos : 0 < Hex.DensePoly.leadingCoeff cofactor)
+    (hhonest :
+      Hex.ZPoly.congr
+        (scaledLiftedFactorProduct core d S)
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff cofactor) factor)
+        (d.p ^ d.k))
+    (hfactor_prim : Hex.ZPoly.primitivePart factor = factor)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    scaledRecombinationCandidate core d S = factor :=
+  scaledRecombinationCandidate_eq_of_proportional
+    (Hex.DensePoly.leadingCoeff cofactor) hcofactor_lc_pos hhonest
+    hfactor_prim hfactor_norm (Hex.ZPoly.defaultFactorCoeffBound core)
+    (cofactorCoeff_le_defaultBound core factor cofactor hcore_ne hproduct)
+    hprecision
+
 /-- **M1 recovery-witness constructor (primitivePart-aware).**
 
 Build a `RecoveredAtLiftM1 core d factor S` from genuine core-coordinate recovery

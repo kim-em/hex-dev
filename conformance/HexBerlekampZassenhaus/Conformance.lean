@@ -563,17 +563,6 @@ recovered true factor.
     sameFactorCoeffSet (factorizationCoeffSummary φ)
       (factorCoeffSummary quadSqrt2Sqrt3ExpectedFactors |>.map fun coeffs =>
         (coeffs, 1))
--- Size-ordered full classical recombination (the complete subset-product search,
--- with the level-aware early decline disabled) recovers the same quadratic
--- buckets `X^2 - 2`, `X^2 - 3` on the adversarial subset-product case.
-#guard
-  match factorClassicalNoDecline quadSqrt2Sqrt3 with
-  | some φ =>
-      Factorization.product φ = quadSqrt2Sqrt3 &&
-        sameFactorCoeffSet (factorizationCoeffSummary φ)
-          (factorCoeffSummary quadSqrt2Sqrt3ExpectedFactors |>.map fun coeffs =>
-            (coeffs, 1))
-  | none => false
 #guard
   let factors := ZPoly.factorize monomialWithContent
   Factorization.product factors = monomialWithContent
@@ -612,32 +601,11 @@ recovered true factor.
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[x4Plus1] |>.map fun coeffs => (coeffs, 1))
 
--- Heavy (8-way split) adversarial backstop cases: `swinnertonDyerSD3` and
--- `phi15` each split into eight linear factors over their small admissible
--- prime yet are irreducible over `ℤ`.  Size-ordered full classical recombination
--- must reject every one of the `2^8` proper subset products and fall back to
--- the single irreducible input. This is the genuine worst case for "no
--- spurious recombination," dual to the `quadSqrt2Sqrt3` / `x4Plus1` guards
--- above.
-#guard
-  match factorClassicalNoDecline swinnertonDyerSD3 with
-  | some φ =>
-      Factorization.product φ = swinnertonDyerSD3 &&
-        sameFactorCoeffSet (factorizationCoeffSummary φ)
-          (factorCoeffSummary #[swinnertonDyerSD3] |>.map fun coeffs => (coeffs, 1))
-  | none => false
 #guard
   let factors := ZPoly.factorize swinnertonDyerSD3
   factorPreservesProduct swinnertonDyerSD3 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[swinnertonDyerSD3] |>.map fun coeffs => (coeffs, 1))
-#guard
-  match factorClassicalNoDecline phi15 with
-  | some φ =>
-      Factorization.product φ = phi15 &&
-        sameFactorCoeffSet (factorizationCoeffSummary φ)
-          (factorCoeffSummary #[phi15] |>.map fun coeffs => (coeffs, 1))
-  | none => false
 #guard
   let factors := ZPoly.factorize phi15
   factorPreservesProduct phi15 &&

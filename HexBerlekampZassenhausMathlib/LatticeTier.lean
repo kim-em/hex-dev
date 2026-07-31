@@ -7,7 +7,6 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhausMathlib.IntReductionMod
-public import HexBerlekampZassenhausMathlib.Relift
 public import HexBerlekampZassenhausMathlib.CLDColumnBound
 public import HexBerlekampZassenhausMathlib.Recovery
 public import HexBerlekampZassenhausMathlib.PartitionRefinement
@@ -2913,21 +2912,6 @@ theorem factorLatticeFactorsWithBound_factor_irreducible
               f hf (Hex.latticePrecisionCap f) primeData hselected hdeg0
               (Hex.bhksRecoveryFloor_squareFreeCore_le_latticePrecisionCap f) hB0
               hcore_lattice
-
-/-- **Hybrid raw-factor irreducibility assembly.**  Every raw factor of
-`factorFactors f` passing the recorded-factor filter is irreducible,
-dispatched over the classical / lattice / trial tiers. -/
-theorem factorFactors_factor_irreducible
-    (f : Hex.ZPoly) (hf : f ≠ 0)
-    {raw : Hex.ZPoly}
-    (hmem : raw ∈ (Hex.factorFactors f).toList)
-    (hrec : Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true) :
-    Hex.ZPoly.Irreducible raw := by
-  rcases Hex.factorFactors_mem_source f hmem with
-    ⟨cf, hcf, hraw⟩ | ⟨cf, hcf, hraw⟩ | htrial
-  · exact factorClassicalFactorsWithBound_factor_irreducible f hf hcf hraw hrec
-  · exact factorLatticeFactorsWithBound_factor_irreducible f hf hcf hraw hrec
-  · exact factorTrialFactorsWithBound_factor_irreducible f hf htrial hrec
 
 end
 

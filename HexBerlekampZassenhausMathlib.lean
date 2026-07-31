@@ -14,7 +14,6 @@ public import HexBerlekampZassenhausMathlib.RecombinationSplit
 public import HexBerlekampZassenhausMathlib.RecombinationCandidate
 public import HexBerlekampZassenhausMathlib.HenselFactorProps
 public import HexBerlekampZassenhausMathlib.ModPFactorization
-public import HexBerlekampZassenhausMathlib.Relift
 public import HexBerlekampZassenhausMathlib.SubsetCoprimality
 public import HexBerlekampZassenhausMathlib.ForwardHenselTransport
 public import HexBerlekampZassenhausMathlib.RecombinationMonic
@@ -42,7 +41,14 @@ public import HexBerlekampZassenhausMathlib.WordCld
 public import HexBerlekampZassenhausMathlib.Resultant
 public import HexBerlekampZassenhausMathlib.Termination
 public import HexBerlekampZassenhausMathlib.HotPathAdmissibility
-public import HexBerlekampZassenhausMathlib.HybridDispatch
+public import HexBerlekampZassenhausMathlib.Modular.PrimePlan
+public import HexBerlekampZassenhausMathlib.Hensel.DirectLift
+public import HexBerlekampZassenhausMathlib.Classical.Recovery
+public import HexBerlekampZassenhausMathlib.Classical.SupportPartition
+public import HexBerlekampZassenhausMathlib.Classical.CombinationIterator
+public import HexBerlekampZassenhausMathlib.Classical.SearchCompleteness
+public import HexBerlekampZassenhausMathlib.Classical.Correctness
+public import HexBerlekampZassenhausMathlib.Dispatch
 
 public section
 

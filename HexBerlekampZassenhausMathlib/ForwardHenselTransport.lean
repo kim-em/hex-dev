@@ -99,7 +99,7 @@ private theorem modP_isZero_false_of_monic
 /-- `monicModPImage` is the identity on the mod-`p` reduction of a monic
 integer polynomial, since the leading coefficient `1` reduces to `1` and
 `(1 : ZMod64 p)⁻¹ = 1`. -/
-private theorem monicModPImage_modP_eq_self_of_monic
+theorem monicModPImage_modP_eq_self_of_monic
     {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
     {f : Hex.ZPoly} (hf_monic : Hex.DensePoly.Monic f)
     (hprime : Hex.Nat.Prime p) (hp : 1 < p) :
@@ -107,6 +107,36 @@ private theorem monicModPImage_modP_eq_self_of_monic
   rw [monicModPImage_eq_monicModularImage]
   exact monicModularImage_modP_eq_of_monic f hf_monic hprime hp
     (modP_isZero_false_of_monic hf_monic hp)
+
+/--
+A modular support representing an integer factor also represents that
+factor's direct-coordinate `monicTarget` at any positive coprime precision.
+-/
+theorem representsMonicTarget_of_represents
+    {factor : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {S : ModPFactorSubset primeData} {k : Nat}
+    (hprime : Hex.Nat.Prime primeData.p)
+    (hpk : 1 < primeData.p ^ k)
+    (hk : 0 < k)
+    (hfactor_size : 0 < factor.size)
+    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff factor)
+      (Int.ofNat (primeData.p ^ k)) = 1)
+    (hrep : RepresentsIntegerFactorModP primeData factor S) :
+    RepresentsIntegerFactorModP primeData
+      (Hex.ZPoly.monicTarget factor primeData.p k) S := by
+  letI := primeData.bounds
+  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime
+  have hp : 1 < primeData.p := hprime.one_lt
+  have htarget_monic :
+      Hex.DensePoly.Monic
+        (Hex.ZPoly.monicTarget factor primeData.p k) :=
+    Hex.ZPoly.monicTarget_monic factor primeData.p k hpk hgcd hfactor_size
+  unfold RepresentsIntegerFactorModP at hrep ⊢
+  rw [monicModPImage_modP_eq_self_of_monic htarget_monic hprime hp]
+  rw [← monicModularImage_modP_eq_modP_monicTarget
+    factor primeData.p k hprime hpk hk hgcd]
+  exact hrep
 
 /-- Forward Hensel-lift transport for the canonical lifted subset: a monic
 integer factor of `core` that is represented modulo `primeData.p` by a
@@ -565,8 +595,7 @@ derived from the older dilation-coordinate recovery carrier.
 -/
 theorem coreLiftData_subset_congr_monicTarget
     (core factor : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
-    (hselected : Hex.choosePrimeData? core = some primeData)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hvalid : ModPFactorization core primeData)
     (hcore_size : 0 < core.size)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p)
     (hgcd_core : Int.gcd (Hex.DensePoly.leadingCoeff core)
@@ -601,8 +630,7 @@ theorem coreLiftData_subset_congr_monicTarget
   set precision := Hex.precisionForCoeffBound B primeData.p with hprecision_def
   set target := Hex.ZPoly.monicTarget core primeData.p precision with htarget_def
   set monicFactor := Hex.ZPoly.monicTarget factor primeData.p precision with hfactor_def
-  have hp_prime_hex : Hex.Nat.Prime primeData.p :=
-    Hex.choosePrimeData?_prime core primeData hselected
+  have hp_prime_hex : Hex.Nat.Prime primeData.p := hvalid.prime
   have hp_prime : _root_.Nat.Prime primeData.p :=
     natPrime_of_hexNatPrime hp_prime_hex
   have hp : 1 < primeData.p := hp_prime_hex.one_lt
@@ -616,28 +644,34 @@ theorem coreLiftData_subset_congr_monicTarget
     rw [hfactor_def]
     exact Hex.ZPoly.monicTarget_monic factor primeData.p precision hpk
       (by simpa [hprecision_def] using hgcd_factor) hfactor_size
-  obtain ⟨hzeroP, heqP⟩ :=
-    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected
-  have hform : Hex.factorsModPBerlekampForm core primeData :=
-    ⟨hp_prime_hex, hzeroP, heqP⟩
-  have hgood : Hex.isGoodPrime core primeData.p = true :=
-    Hex.choosePrimeData?_isGoodPrime core primeData hselected
   have hfactors_monic :
       ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g :=
-    factorsModP_monic_of_factorsModPBerlekampForm core primeData hform
+    hvalid.monic
   have hproduct_mod_p :
       Hex.ZPoly.congr
         (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
         target primeData.p := by
-    rw [htarget_def]
-    exact factorsModP_polyProduct_congr_monicTarget core precision primeData hpk
-      (by omega) (by simpa [hprecision_def] using hgcd_core) hform hgood
+    have htarget_modP :
+        Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) =
+          Hex.ZPoly.modP primeData.p target := by
+      rw [htarget_def]
+      exact monicModularImage_modP_eq_modP_monicTarget
+        core primeData.p precision hp_prime_hex hpk (by omega)
+        (by simpa [hprecision_def] using hgcd_core)
+    have hroundtrip :
+        Hex.ZPoly.congr
+          (Hex.FpPoly.liftToZ
+            (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)))
+          target primeData.p := by
+      rw [htarget_modP]
+      exact Hex.FpPoly.congr_liftToZ_modP target
+    exact Hex.ZPoly.congr_trans _ _ _ primeData.p hvalid.product hroundtrip
   have hcoprime :
       Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
         primeData.factorsModP.toList :=
-    factorsModP_coprime_of_factorsModPBerlekampForm core primeData hform hgood
+    hvalid.coprime
   have hnonempty : primeData.factorsModP.toList ≠ [] :=
-    factorsModP_ne_nil_of_factorsModPBerlekampForm core primeData hform
+    hvalid.ne_nil
   have hinv :
       Hex.ZPoly.QuadraticMultifactorLiftInvariant primeData.p precision target
         (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList :=
@@ -649,10 +683,9 @@ theorem coreLiftData_subset_congr_monicTarget
       ∀ i : ModPFactorIndex primeData,
         Irreducible
           (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)) :=
-    factors_irreducible_of_factorsModPBerlekampForm
-      core primeData hform hgood hcore_pos
+    hvalid.irreducible
   have hfactors_nodup : primeData.factorsModP.toList.Nodup :=
-    factorsModP_nodup_of_factorsModPBerlekampForm core primeData hform hgood
+    hvalid.nodup
   have hproduct : Hex.ZPoly.congr (monicFactor * cofactor) target
       (primeData.p ^ precision) := by
     simpa [hfactor_def, htarget_def, hprecision_def] using hfactor_product

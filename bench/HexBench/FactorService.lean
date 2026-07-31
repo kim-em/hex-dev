@@ -26,10 +26,7 @@ The `--entry` flag selects which library entry answers each request:
 
 * `factor` — the production cost-based hybrid (`Hex.ZPoly.factorize`); never declines.
 * `factorLattice` — the van Hoeij CLD lattice tier (`Hex.factorLattice`).
-* `factorClassicalNoDecline` — classical recombination run to completion or
-  cutoff (`Hex.factorClassicalNoDecline`), exposing the classical exponential
-  wall.
-* `factorTrace` — the bounded classical tier plus its prime/factor-count trace;
+* `factorTrace` — the direct classical tier plus its typed execution trace;
   a diagnostic response rather than the cross-system factorization protocol.
 
 This is a comparator driver, not a hex-internal benchmark harness: it emits raw
@@ -46,14 +43,12 @@ namespace HexBench.FactorService
 inductive Entry where
   | factor
   | factorLattice
-  | factorClassicalNoDecline
   | factorTrace
 deriving Repr, DecidableEq
 
 def Entry.ofString? : String → Option Entry
   | "factor" => some .factor
   | "factorLattice" => some .factorLattice
-  | "factorClassicalNoDecline" => some .factorClassicalNoDecline
   | "factorTrace" => some .factorTrace
   | _ => none
 
@@ -62,7 +57,6 @@ production `factor` never declines (it wraps its total `Factorization`). -/
 def Entry.run : Entry → ZPoly → Option Factorization
   | .factor, f => some (Hex.ZPoly.factorize f)
   | .factorLattice, f => Hex.factorLattice f
-  | .factorClassicalNoDecline, f => Hex.factorClassicalNoDecline f
   | .factorTrace, f => (Hex.factorClassicalTraced f).1
 
 /-- Parse a request line into its ascending coefficient list. -/
@@ -85,23 +79,24 @@ def factorizationToJson (φ : Factorization) : Json :=
 /-- Encode the bounded classical tier's selected-prime diagnostics. -/
 def factorTraceToJson (trace : FactorTrace) : Json :=
   Json.mkObj
-    [ ("tier", Json.str trace.tier),
-      ("prime", Json.num (JsonNumber.fromInt (Int.ofNat trace.prime))),
+    [ ("tier", Json.str trace.tier.name),
+      ("decline",
+        trace.classicalDecline.map (Json.str ·.name) |>.getD Json.null),
+      ("prime",
+        Json.num (JsonNumber.fromInt (Int.ofNat trace.classical.prime))),
+      ("primeProbes",
+        Json.num (JsonNumber.fromInt (Int.ofNat trace.classical.primeProbes))),
       ("liftedFactorCount",
-        Json.num (JsonNumber.fromInt (Int.ofNat trace.liftedFactorCount))),
-      ("m1", Json.str trace.m1),
-      ("subsetCandidates",
-        Json.num (JsonNumber.fromInt (Int.ofNat trace.subsetCandidates))),
-      ("declined", Json.bool trace.declined) ]
-
-/-- Encode an optional prime choice as the compact width diagnostic. -/
-def primeChoiceToJson : Option PrimeChoiceData → Json
-  | none => Json.null
-  | some choice =>
-      Json.mkObj
-        [ ("prime", Json.num (JsonNumber.fromInt (Int.ofNat choice.p))),
-          ("factorCount",
-            Json.num (JsonNumber.fromInt (Int.ofNat choice.factorsModP.size))) ]
+        Json.num
+          (JsonNumber.fromInt (Int.ofNat trace.classical.liftedFactorCount))),
+      ("henselLifts",
+        Json.num (JsonNumber.fromInt (Int.ofNat trace.classical.henselLifts))),
+      ("candidatesTried",
+        Json.num
+          (JsonNumber.fromInt (Int.ofNat trace.classical.candidatesTried))),
+      ("completedLevels",
+        Json.arr (trace.classical.completedLevels.map fun level =>
+          Json.num (JsonNumber.fromInt (Int.ofNat level)))) ]
 
 def replyOk (result : Json) : Json :=
   Json.mkObj [("ok", Json.bool true), ("result", result)]
@@ -120,12 +115,9 @@ def handleLine (entry : Entry) (line : String) : Json :=
   | .ok coeffs =>
       let f := DensePoly.ofCoeffs coeffs.toArray
       if entry == .factorTrace then
-        let core := (normalizeForFactor f).squareFreeCore
-        let first := choosePrimeData? (ZPoly.toMonic core).monic
         let (result, trace) := Hex.factorClassicalTraced f
         replyOk <| Json.mkObj
           [ ("factorization", result.map factorizationToJson |>.getD Json.null),
-            ("firstChoice", primeChoiceToJson first),
             ("trace", factorTraceToJson trace) ]
       else
         match entry.run f with
@@ -161,7 +153,7 @@ def main (args : List String) : IO Unit := do
   | none =>
       throw <| IO.userError
         s!"unknown --entry {entryName}; expected \
-          factor|factorLattice|factorClassicalNoDecline|factorTrace"
+          factor|factorLattice|factorTrace"
   | some entry => runLoop entry
 
 end HexBench.FactorService

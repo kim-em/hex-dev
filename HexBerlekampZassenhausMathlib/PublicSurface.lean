@@ -139,6 +139,88 @@ theorem defaultFactorCoeffBound_valid
     have hgcoeff_zero : g.coeff i = 0 := hcoeff_eq ▸ hcoeff_zero
     simp [hgcoeff_zero]
 
+/--
+The default recovery window also bounds the proportional factor reconstructed
+by the direct-coordinate Hensel path.
+
+When `factor * cofactor = core`, direct recombination reconstructs
+`leadingCoeff cofactor • factor`.  The sharpened Mignotte inequality bounds
+this polynomial by the same executable window as an ordinary divisor; no
+leading-coefficient multiplier or squared bound is needed.
+-/
+theorem cofactorCoeff_le_defaultBound
+    (core factor cofactor : Hex.ZPoly)
+    (hcore_ne : core ≠ 0)
+    (hproduct : factor * cofactor = core) :
+    ∀ i,
+      ((Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff cofactor) factor).coeff i).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound core := by
+  intro i
+  have hfactor_dvd : factor ∣ core := ⟨cofactor, hproduct.symm⟩
+  have hdegree :
+      (HexPolyZMathlib.toPolynomial factor).natDegree ≤ core.degree?.getD 0 :=
+    natDegree_toPolynomial_le_degree_getD_of_dvd
+      core factor hcore_ne hfactor_dvd
+  have hpoly_product :
+      HexPolyZMathlib.toPolynomial factor *
+          HexPolyZMathlib.toPolynomial cofactor =
+        HexPolyZMathlib.toPolynomial core := by
+    rw [← HexPolyZMathlib.toPolynomial_mul, hproduct]
+  have hmignotte :=
+    HexPolyZMathlib.mignotte_cofactor_bound
+      (HexPolyZMathlib.toPolynomial factor)
+      (HexPolyZMathlib.toPolynomial cofactor) i
+  rw [hpoly_product, HexPolyMathlib.leadingCoeff_toPolynomial,
+    HexPolyZMathlib.coeff_toPolynomial] at hmignotte
+  have hscaled_coeff :
+      (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff cofactor) factor).coeff i =
+        Hex.DensePoly.leadingCoeff cofactor * factor.coeff i := by
+    rw [Hex.DensePoly.coeff_scale (R := Int)
+      (Hex.DensePoly.leadingCoeff cofactor) factor i (Int.mul_zero _)]
+  rw [hscaled_coeff]
+  by_cases hi : i ≤ (HexPolyZMathlib.toPolynomial factor).natDegree
+  · have hl2 :
+        HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial core) ≤
+          (Hex.ZPoly.coeffL2NormBound core : ℝ) :=
+      l2norm_toPolynomial_le_coeffL2NormBound core
+    have hchoose_nonneg :
+        (0 : ℝ) ≤ Nat.choose (HexPolyZMathlib.toPolynomial factor).natDegree i :=
+      Nat.cast_nonneg _
+    have hstep :
+        ((Hex.DensePoly.leadingCoeff cofactor * factor.coeff i).natAbs : ℝ) ≤
+          (Nat.choose (HexPolyZMathlib.toPolynomial factor).natDegree i : ℝ) *
+            (Hex.ZPoly.coeffL2NormBound core : ℝ) :=
+      hmignotte.trans (mul_le_mul_of_nonneg_left hl2 hchoose_nonneg)
+    have hbinom :
+        (Nat.choose (HexPolyZMathlib.toPolynomial factor).natDegree i : ℝ) =
+          (Hex.Nat.binom (HexPolyZMathlib.toPolynomial factor).natDegree i : ℝ) := by
+      rw [HexPolyZMathlib.binom_eq_choose]
+    rw [hbinom] at hstep
+    have huniform_nat :=
+      Hex.ZPoly.mignotteCoeffBound_le_defaultFactorCoeffBound
+        core (k := (HexPolyZMathlib.toPolynomial factor).natDegree) (j := i)
+        hdegree hi
+    have hmig_eq :
+        Hex.ZPoly.mignotteCoeffBound core
+            (HexPolyZMathlib.toPolynomial factor).natDegree i =
+          Hex.Nat.binom (HexPolyZMathlib.toPolynomial factor).natDegree i *
+            Hex.ZPoly.coeffL2NormBound core :=
+      Hex.ZPoly.mignotteCoeffBound_eq core _ _
+    have huniform_real :
+        (Hex.Nat.binom (HexPolyZMathlib.toPolynomial factor).natDegree i : ℝ) *
+            (Hex.ZPoly.coeffL2NormBound core : ℝ) ≤
+          (Hex.ZPoly.defaultFactorCoeffBound core : ℝ) := by
+      rw [hmig_eq] at huniform_nat
+      exact_mod_cast huniform_nat
+    exact_mod_cast hstep.trans huniform_real
+  · have hi' : (HexPolyZMathlib.toPolynomial factor).natDegree < i :=
+      Nat.lt_of_not_le hi
+    have hcoeff_zero :
+        (HexPolyZMathlib.toPolynomial factor).coeff i = 0 :=
+      Polynomial.coeff_eq_zero_of_natDegree_lt hi'
+    rw [HexPolyZMathlib.coeff_toPolynomial] at hcoeff_zero
+    simp [hcoeff_zero]
+
 /-- The default factor coefficient bound dominates the natural absolute value
 of the leading coefficient of any nonzero executable polynomial. Standard
 packaging of `defaultFactorCoeffBound_valid` at

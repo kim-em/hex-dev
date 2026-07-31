@@ -57,6 +57,28 @@ theorem scale_congr_of_congr (c : Int) (f g : Hex.ZPoly) (m : Nat)
   rw [hrw]
   exact Int.emod_eq_zero_of_dvd (hdvd.mul_left c)
 
+/-- Scalar multiplications multiply through a polynomial product. -/
+theorem scale_mul_scale (a b : Int) (p q : Hex.ZPoly) :
+    Hex.DensePoly.scale a p * Hex.DensePoly.scale b q =
+      Hex.DensePoly.scale (a * b) (p * q) := by
+  rw [← Hex.ZPoly.C_mul_eq_scale, ← Hex.ZPoly.C_mul_eq_scale,
+    ← Hex.ZPoly.C_mul_eq_scale]
+  apply HexPolyZMathlib.equiv.injective
+  simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
+    HexPolyZMathlib.toPolynomial_C, Polynomial.C_mul]
+  ring
+
+/-- Congruent integer scalars produce coefficientwise-congruent scalings. -/
+theorem scale_congr_of_modEq
+    {a b : Int} {m : Nat} (h : a ≡ b [ZMOD (m : Int)]) (f : Hex.ZPoly) :
+    Hex.ZPoly.congr (Hex.DensePoly.scale a f) (Hex.DensePoly.scale b f) m := by
+  intro i
+  rw [Hex.DensePoly.coeff_scale a f i (Int.mul_zero a),
+    Hex.DensePoly.coeff_scale b f i (Int.mul_zero b)]
+  rw [show a * f.coeff i - b * f.coeff i = (a - b) * f.coeff i by ring]
+  exact Int.emod_eq_zero_of_dvd
+    ((Int.modEq_iff_dvd.mp h.symm).mul_right (f.coeff i))
+
 /-- The BHKS `monicTarget` is, coefficientwise modulo `p^k`, the rescaling of
 `core` by the modular inverse of its leading coefficient:
 `monicTarget core p k ≡ core · ℓf⁻¹ (mod p^k)`.  Immediate from
@@ -66,6 +88,77 @@ theorem monicTarget_congr_scaleInv (core : Hex.ZPoly) (p k : Nat) (hpk : 0 < p ^
       (Hex.DensePoly.scale (Hex.ZPoly.leadingCoeffInverse core p k) core) (p ^ k) :=
   Hex.ZPoly.congr_reduceModPow
     (Hex.DensePoly.scale (Hex.ZPoly.leadingCoeffInverse core p k) core) p k hpk
+
+/--
+Multiplication of direct-coordinate monic targets follows multiplication of
+their integer polynomials modulo the Hensel modulus.
+-/
+theorem monicTarget_mul_congr
+    {core factor cofactor : Hex.ZPoly} {p k : Nat}
+    (hpk : 1 < p ^ k)
+    (hproduct : factor * cofactor = core)
+    (hlc :
+      Hex.DensePoly.leadingCoeff core =
+        Hex.DensePoly.leadingCoeff factor * Hex.DensePoly.leadingCoeff cofactor)
+    (hgcd_core :
+      Int.gcd (Hex.DensePoly.leadingCoeff core) (Int.ofNat (p ^ k)) = 1)
+    (hgcd_factor :
+      Int.gcd (Hex.DensePoly.leadingCoeff factor) (Int.ofNat (p ^ k)) = 1)
+    (hgcd_cofactor :
+      Int.gcd (Hex.DensePoly.leadingCoeff cofactor) (Int.ofNat (p ^ k)) = 1) :
+    Hex.ZPoly.congr
+      (Hex.ZPoly.monicTarget factor p k * Hex.ZPoly.monicTarget cofactor p k)
+      (Hex.ZPoly.monicTarget core p k)
+      (p ^ k) := by
+  let sf := Hex.ZPoly.leadingCoeffInverse factor p k
+  let sc := Hex.ZPoly.leadingCoeffInverse cofactor p k
+  let s := Hex.ZPoly.leadingCoeffInverse core p k
+  let lf := Hex.DensePoly.leadingCoeff factor
+  let lc := Hex.DensePoly.leadingCoeff cofactor
+  let m : Int := Int.ofNat (p ^ k)
+  have hinv (g : Hex.ZPoly)
+      (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff g) m = 1) :
+      Hex.ZPoly.leadingCoeffInverse g p k * Hex.DensePoly.leadingCoeff g
+          ≡ 1 [ZMOD m] := by
+    show _ % m = _ % m
+    rw [Hex.ZPoly.leadingCoeffInverse_mul_emod g p k hpk hgcd]
+    exact (Int.emod_eq_of_lt (by decide) (by
+      simpa [m] using Int.ofNat_lt.mpr hpk)).symm
+  have hf_inv : sf * lf ≡ 1 [ZMOD m] := hinv factor (by simpa [m] using hgcd_factor)
+  have hc_inv : sc * lc ≡ 1 [ZMOD m] := hinv cofactor (by simpa [m] using hgcd_cofactor)
+  have hcore_inv : s * (lf * lc) ≡ 1 [ZMOD m] := by
+    have := hinv core (by simpa [m] using hgcd_core)
+    simpa [s, lf, lc, hlc] using this
+  have hpair_inv : (sf * sc) * (lf * lc) ≡ 1 [ZMOD m] := by
+    calc
+      (sf * sc) * (lf * lc) = (sf * lf) * (sc * lc) := by ring
+      _ ≡ 1 * 1 [ZMOD m] := hf_inv.mul hc_inv
+      _ = 1 := by ring
+  have hscalar : sf * sc ≡ s [ZMOD m] := by
+    calc
+      sf * sc = (sf * sc) * 1 := by ring
+      _ ≡ (sf * sc) * ((lf * lc) * s) [ZMOD m] := by
+        have hs : (lf * lc) * s ≡ 1 [ZMOD m] := by
+          simpa [mul_comm] using hcore_inv
+        exact hs.symm.mul_left (sf * sc)
+      _ = ((sf * sc) * (lf * lc)) * s := by ring
+      _ ≡ 1 * s [ZMOD m] := hpair_inv.mul_right s
+      _ = s := by ring
+  have hfactor :=
+    monicTarget_congr_scaleInv factor p k (Nat.zero_lt_of_lt hpk)
+  have hcofactor :=
+    monicTarget_congr_scaleInv cofactor p k (Nat.zero_lt_of_lt hpk)
+  have hmul := Hex.ZPoly.congr_mul _ _ _ _ _ hfactor hcofactor
+  have hscaled :
+      Hex.ZPoly.congr
+        (Hex.DensePoly.scale (sf * sc) core)
+        (Hex.DensePoly.scale s core) (p ^ k) := by
+    exact scale_congr_of_modEq (by simpa [m] using hscalar) core
+  exact Hex.ZPoly.congr_trans _ _ _ _
+    (by simpa [sf, sc, hproduct, scale_mul_scale] using hmul)
+    (Hex.ZPoly.congr_trans _ _ _ _ hscaled
+      (Hex.ZPoly.congr_symm _ _ _
+        (monicTarget_congr_scaleInv core p k (Nat.zero_lt_of_lt hpk))))
 
 /-- The BHKS mod-bridge: rescaling the `monicTarget` by `ℓf = leadingCoeff core`
 recovers `core` modulo `p^k`, i.e. `ℓf · monicTarget core p k ≡ core (mod p^k)`,
@@ -289,6 +382,51 @@ private theorem zmod64_toZMod_injective {p : Nat} [Hex.ZMod64.Bounds p] :
   rw [← HexModArithMathlib.ZMod64.ofZMod_toZMod x,
     ← HexModArithMathlib.ZMod64.ofZMod_toZMod y, h]
 
+/-- Coprimality with `p ^ k` makes the integer leading coefficient nonzero
+in the prime field at `p`. -/
+theorem leadingCoeffAdmissible_of_gcd_pow
+    (core : Hex.ZPoly) (p k : Nat) [Hex.ZMod64.Bounds p]
+    (hprime : Hex.Nat.Prime p)
+    (hpk : 1 < p ^ k) (hk : 0 < k)
+    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
+      (Int.ofNat (p ^ k)) = 1) :
+    Hex.leadingCoeffAdmissible core p := by
+  letI : Fact (_root_.Nat.Prime p) := ⟨natPrime_of_hexNatPrime hprime⟩
+  have hs_inv :
+      (Hex.ZPoly.leadingCoeffInverse core p k *
+          Hex.DensePoly.leadingCoeff core) %
+        Int.ofNat (p ^ k) = 1 :=
+    Hex.ZPoly.leadingCoeffInverse_mul_emod core p k hpk hgcd
+  have hmod_pk :
+      (Hex.ZPoly.leadingCoeffInverse core p k *
+          Hex.DensePoly.leadingCoeff core) ≡ 1
+        [ZMOD Int.ofNat (p ^ k)] := by
+    show _ % _ = _ % _
+    rw [hs_inv]
+    exact (Int.emod_eq_of_lt (by decide) (Int.ofNat_lt.mpr hpk)).symm
+  have hp_dvd : (p : Int) ∣ Int.ofNat (p ^ k) := by
+    rw [Int.ofNat_eq_natCast]
+    exact_mod_cast dvd_pow_self p hk.ne'
+  have hmod_p := hmod_pk.of_dvd hp_dvd
+  have hunit :
+      ((Hex.ZPoly.leadingCoeffInverse core p k : Int) : ZMod p) *
+          ((Hex.DensePoly.leadingCoeff core : Int) : ZMod p) = 1 := by
+    rw [← Int.cast_mul]
+    simpa using (ZMod.intCast_eq_intCast_iff _ _ _).mpr hmod_p
+  have hlc_ne :
+      ((Hex.DensePoly.leadingCoeff core : Int) : ZMod p) ≠ 0 := by
+    intro hzero
+    rw [hzero, mul_zero] at hunit
+    exact zero_ne_one hunit
+  unfold Hex.leadingCoeffAdmissible Hex.ZPoly.leadingCoeffModP
+  intro hzero
+  apply hlc_ne
+  have hz := congrArg
+    (HexModArithMathlib.ZMod64.toZMod (p := p)) hzero
+  rw [HexPolyZMathlib.toZMod_ZMod64_ofNat_intModNat_eq_intCast,
+    HexModArithMathlib.ZMod64.toZMod_zero] at hz
+  exact hz
+
 /-- Reduction modulo `p` of an integer rescaling: the integer scalar reduces to
 its `ZMod64 p` image, `modP p (scale c f) = scale (↑c) (modP p f)`. -/
 theorem modP_scale_intCast {p : Nat} [Hex.ZMod64.Bounds p] (c : Int) (f : Hex.ZPoly) :
@@ -317,13 +455,12 @@ theorem monicModularImage_modP_eq_modP_monicTarget
     (core : Hex.ZPoly) (p k : Nat) [Hex.ZMod64.Bounds p]
     (hprime : Hex.Nat.Prime p)
     (hpk : 1 < p ^ k) (hk : 0 < k)
-    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core) (Int.ofNat (p ^ k)) = 1)
-    (hgood : Hex.isGoodPrime core p = true) :
+    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core) (Int.ofNat (p ^ k)) = 1) :
     Hex.monicModularImage (Hex.ZPoly.modP p core) =
       Hex.ZPoly.modP p (Hex.ZPoly.monicTarget core p k) := by
   haveI : Fact (_root_.Nat.Prime p) := ⟨natPrime_of_hexNatPrime hprime⟩
   have hadm : Hex.leadingCoeffAdmissible core p :=
-    Hex.isGoodPrime_leadingCoeffAdmissible core p hgood
+    leadingCoeffAdmissible_of_gcd_pow core p k hprime hpk hk hgcd
   have hsize : 0 < (Hex.ZPoly.modP p core).size := by
     rw [Hex.size_modP_eq_of_leadingCoeffAdmissible core p hadm]
     exact Hex.leadingCoeffAdmissible_size_pos core p hadm

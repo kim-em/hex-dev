@@ -29,6 +29,8 @@ public import HexBerlekampZassenhaus.Recombination
 public meta import HexBerlekampZassenhaus.Recombination
 public import HexBerlekampZassenhaus.SmartSearchImpl
 public meta import HexBerlekampZassenhaus.SmartSearchImpl
+public import HexBerlekampZassenhaus.Classical.Engine
+public meta import HexBerlekampZassenhaus.Classical.Engine
 import all HexBerlekampZassenhaus.PrimeSelection
 import all HexBerlekampZassenhaus.Records
 import all HexBerlekampZassenhaus.Certificate
@@ -1131,6 +1133,20 @@ def validateCoreFactors
     factors.all (fun g => decide (normalizeFactorSign g = g)) &&
     factors.all (fun g => decide (0 < g.degree?.getD 0))
 
+/--
+Coefficient window sufficient for direct-coordinate recovery.
+
+For a normalized factor `g` of `core`, the selected monic Hensel product
+recovers `leadingCoeff (core / g) • g`.  Mignotte bounds the coefficients of
+that proportional polynomial directly by the ordinary factor bound of `core`
+(`mignotte_cofactor_bound`).  Keeping this named value separate documents the
+stronger invariant consumed by M1 recovery even though it is value-equal to
+`defaultFactorCoeffBound`.
+-/
+@[expose]
+def directRecoveryCoeffBound (core : ZPoly) : Nat :=
+  ZPoly.defaultFactorCoeffBound core
+
 /-- Logical facts exposed by a successful direct-result validator. -/
 theorem validateCoreFactors_spec
     (core : ZPoly) (factors : List ZPoly)
@@ -1236,123 +1252,80 @@ def classicalCoreFactorsM1OrM2
       else
         classicalCoreFactorsRecursive core B toMonicData
 
-/-- Raw factor array for the classical small-`r` tier. Declines (`none`) on no
-admissible prime or subset-budget exhaustion. -/
+/-- Run the sole direct-coordinate classical engine on a normalized core. -/
 @[expose]
-def factorClassicalFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
+def classicalCoreFactors (core : ZPoly) : ClassicalOutcome :=
+  match factorDirectCore ⟨core⟩ with
+  | outcome => outcome
+
+/-- Normalize once, handle the cheap terminal cases, and otherwise execute the
+one direct engine.  This value is the shared source for the traced and
+untraced classical APIs. -/
+@[expose]
+def runClassical (f : ZPoly) : ClassicalRun :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
-    some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
+    { factors :=
+        some (reassemblePolynomialFactors normalized
+          #[normalized.squareFreeCore])
+      trace := { tier := .constant } }
   else
     match quadraticIntegerRootFactors? normalized.squareFreeCore with
-    | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
+    | some coreFactors =>
+        { factors :=
+            some (reassemblePolynomialFactors normalized coreFactors)
+          trace := { tier := .quadratic } }
     | none =>
-        (classicalCoreFactorsM1OrM2 normalized.squareFreeCore B).map fun coreFactors =>
-          reassemblePolynomialFactors normalized coreFactors
+        match classicalCoreFactors normalized.squareFreeCore with
+        | .factored coreFactors stats =>
+            { factors :=
+                some (reassemblePolynomialFactors normalized coreFactors)
+              trace := { tier := .classical, classical := stats } }
+        | .declined reason stats =>
+            { factors := none
+              trace :=
+                { tier := .classical
+                  classicalDecline := some reason
+                  classical := stats } }
+
+/-- Raw factor array for the sole production classical tier. -/
+@[expose]
+def factorClassicalFactors (f : ZPoly) : Option (Array ZPoly) :=
+  (runClassical f).factors
+
+/-- Transitional theorem-facing spelling.  All callers receive the canonical
+validated precision; the numeric argument is ignored pending proof-surface
+cutover. -/
+@[expose]
+def factorClassicalFactorsWithBound (f : ZPoly) (_B : Nat) :
+    Option (Array ZPoly) :=
+  factorClassicalFactors f
 
 @[expose]
-def factorClassicalWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
-  (factorClassicalFactorsWithBound f B).map (factorizationOfFactors f)
+def factorClassicalWithBound (f : ZPoly) (_B : Nat) : Option Factorization :=
+  (factorClassicalFactors f).map (factorizationOfFactors f)
 
 /-- Factor via the size-ordered classical recombination tier at the default
 Mignotte bound. The small-`r` tier of the cost-based hybrid; returns `none` when
 no admissible prime is available or the subset budget is exceeded. -/
 def factorClassical (f : ZPoly) : Option Factorization :=
-  factorClassicalWithBound f (ZPoly.defaultFactorCoeffBound f)
+  (factorClassicalFactors f).map (factorizationOfFactors f)
 
-/-- Per-`factorize` diagnostic trace, consumed by conformance and performance
-gates. `tier` records the path that produced the accepted answer (`constant`,
-`quadratic`, `classical`, `lattice`, or `trial`). `declined = true` records that
-the classical tier did not answer before dispatch continued; the final result
-is still product-checked, and the trial tier is the total backstop. `m1`
-separately records whether original-coordinate lifting was skipped, accepted,
-or declined into the exact M2 fallback. -/
-structure FactorTrace where
-  tier : String
-  prime : Nat
-  liftedFactorCount : Nat
-  /-- M1 routing state: `"notTried"`, `"accepted"`, or `"fallback"`. -/
-  m1 : String
-  subsetCandidates : Nat
-  declined : Bool
-deriving Repr, DecidableEq
+/-- Typed factorization trace. -/
+abbrev FactorTrace := DirectFactorTrace
 
-/-- Classical-tier factorisation with its diagnostic trace. The `Option` result
-agrees with `factorClassicalWithBound f B`; the trace exposes the prime, the
-lifted-factor count `r`, the M1 route, the M1 recombination candidate count when
-attempted (zero otherwise), and whether the tier declined (budget exhausted /
-no admissible prime). Recursive M2 candidate counts are not exposed by the
-current trace surface. -/
+/-- Classical factorization and trace derived from one shared execution. -/
 @[expose]
-def factorClassicalTracedWithBound (f : ZPoly) (B : Nat) : Option Factorization × FactorTrace :=
-  let normalized := normalizeForFactor f
-  if normalized.squareFreeCore.degree?.getD 0 = 0 then
-    (some (factorizationOfFactors f
-        (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])),
-      { tier := "constant", prime := 0, liftedFactorCount := 0,
-        m1 := "notTried", subsetCandidates := 0, declined := false })
-  else
-    match quadraticIntegerRootFactors? normalized.squareFreeCore with
-    | some coreFactors =>
-        (some (factorizationOfFactors f (reassemblePolynomialFactors normalized coreFactors)),
-          { tier := "quadratic", prime := 0, liftedFactorCount := 0,
-            m1 := "notTried", subsetCandidates := 0, declined := false })
-    | none =>
-        match ZPoly.toMonicPrimeData? normalized.squareFreeCore with
-        | none =>
-            (none,
-              { tier := "noPrime"
-                prime := 0
-                liftedFactorCount := 0
-                m1 := "notTried"
-                subsetCandidates := 0
-                declined := true })
-        | some toMonicData =>
-            let core := normalized.squareFreeCore
-            if B = 0 then
-              (some (factorizationOfFactors f
-                  (reassemblePolynomialFactors normalized #[core])),
-                { tier := "classical", prime := toMonicData.p,
-                  liftedFactorCount := 0, m1 := "notTried", subsetCandidates := 0,
-                  declined := false })
-            else if shouldTryM1 core toMonicData then
-              let coreData := ZPoly.corePrimeDataOfToMonic core toMonicData
-              let (res, stats) :=
-                classicalCoreFactorsM1Run core B coreData toMonicData
-              match res with
-              | some coreFactors =>
-                  (some (factorizationOfFactors f
-                    (reassemblePolynomialFactors normalized coreFactors)),
-                    { tier := "classical", prime := toMonicData.p,
-                      liftedFactorCount := coreData.factorsModP.size,
-                      m1 := "accepted",
-                      subsetCandidates := stats.candidatesTried,
-                      declined := false })
-              | none =>
-                  let fallback := classicalCoreFactorsRecursive core B toMonicData
-                  (fallback.map fun coreFactors =>
-                    factorizationOfFactors f
-                      (reassemblePolynomialFactors normalized coreFactors),
-                    { tier := "classical", prime := toMonicData.p,
-                      liftedFactorCount := toMonicData.factorsModP.size,
-                      m1 := "fallback",
-                      subsetCandidates := stats.candidatesTried,
-                      declined := fallback.isNone })
-            else
-              let fallback := classicalCoreFactorsRecursive core B toMonicData
-              (fallback.map fun coreFactors =>
-                factorizationOfFactors f
-                  (reassemblePolynomialFactors normalized coreFactors),
-                { tier := "classical", prime := toMonicData.p,
-                  liftedFactorCount := toMonicData.factorsModP.size,
-                  m1 := "notTried",
-                  subsetCandidates := 0,
-                  declined := fallback.isNone })
+def factorClassicalTracedWithBound (f : ZPoly) (_B : Nat) :
+    Option Factorization × FactorTrace :=
+  let run := runClassical f
+  (run.factors.map (factorizationOfFactors f), run.trace)
 
 /-- Classical-tier factorisation with trace, at the default Mignotte bound. -/
 @[expose]
 def factorClassicalTraced (f : ZPoly) : Option Factorization × FactorTrace :=
-  factorClassicalTracedWithBound f (ZPoly.defaultFactorCoeffBound f)
+  let run := runClassical f
+  (run.factors.map (factorizationOfFactors f), run.trace)
 
 /-- Subset-enumeration budget that runs the classical recombination search to
 completion for `r` lifted factors: `2 ^ r` exceeds the total subset count, so the
@@ -1442,9 +1415,9 @@ private def classicalGuardSextic : ZPoly := DensePoly.ofCoeffs #[720, -1764, 162
 -- the traced variant's result agrees with `factorClassical`, and reports the
 -- classical tier, no decline, and a small (size-ordered) candidate count.
 #guard (factorClassicalTraced classicalGuardCubic).1 = factorClassical classicalGuardCubic
-#guard (factorClassicalTraced classicalGuardCubic).2.tier = "classical"
-#guard (factorClassicalTraced classicalGuardCubic).2.declined = false
-#guard (factorClassicalTraced classicalGuardCubic).2.subsetCandidates ≤ 64
+#guard (factorClassicalTraced classicalGuardCubic).2.tier = .classical
+#guard (factorClassicalTraced classicalGuardCubic).2.classicalDecline = none
+#guard (factorClassicalTraced classicalGuardCubic).2.classical.candidatesTried ≤ 64
 
 /-- Raw factor array produced by the integer trial-division slow path.
 
@@ -2078,13 +2051,13 @@ def factorTraced (f : ZPoly) : Factorization × FactorTrace :=
   match factorClassicalTraced f with
   | (some φ, trace) =>
       if Factorization.product φ = f then (φ, trace)   -- classical answered, certified
-      else (factorTrial f, { trace with tier := "trial", declined := true })
+      else (factorTrial f, { trace with tier := .trial })
   | (none, trace) =>
       match factorLattice f with
       | some φ =>
-          if Factorization.product φ = f then (φ, { trace with tier := "lattice" })
-          else (factorTrial f, { trace with tier := "trial", declined := true })
-      | none => (factorTrial f, { trace with tier := "trial" })  -- totality backstop
+          if Factorization.product φ = f then (φ, { trace with tier := .lattice })
+          else (factorTrial f, { trace with tier := .trial })
+      | none => (factorTrial f, { trace with tier := .trial })  -- totality backstop
 
 /--
 The public total factorisation of a {name}`Hex.ZPoly`.
@@ -2114,12 +2087,12 @@ def ZPoly.factors (f : ZPoly) : Array (ZPoly × Nat) :=
 -- budget-exceeding tail and the no-prime case).
 #guard Factorization.product (ZPoly.factorize (DensePoly.ofCoeffs #[6, 0, -5, 0, 1]))
   = DensePoly.ofCoeffs #[6, 0, -5, 0, 1]                                      -- reducible
-#guard (factorTraced (DensePoly.ofCoeffs #[6, 0, -5, 0, 1])).2.tier = "classical"
+#guard (factorTraced (DensePoly.ofCoeffs #[6, 0, -5, 0, 1])).2.tier = .classical
 #guard Factorization.product (ZPoly.factorize (DensePoly.ofCoeffs #[1, 0, -10, 0, 1]))
   = DensePoly.ofCoeffs #[1, 0, -10, 0, 1]                                     -- SD2, irreducible
 #guard ((ZPoly.factorize (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).factors.size) = 1
-#guard (factorTraced (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).2.tier = "classical"
-#guard (factorTraced (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).2.declined = false
+#guard (factorTraced (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).2.tier = .classical
+#guard (factorTraced (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).2.classicalDecline = none
 
 -- The route-equivalence proof unfolds both executable dispatchers, including
 -- the bounded M1 search, so elaboration needs more than the project default.
@@ -2131,42 +2104,7 @@ self-certifying-free classical answer as `factorClassicalFactorsWithBound`. -/
 theorem factorClassicalTracedWithBound_fst (f : ZPoly) (B : Nat) :
     (factorClassicalTracedWithBound f B).1 =
       (factorClassicalFactorsWithBound f B).map (factorizationOfFactors f) := by
-  unfold factorClassicalTracedWithBound factorClassicalFactorsWithBound
-    classicalCoreFactorsM1OrM2 tryM1ThenM2 classicalCoreFactorsM1WithBound
-  by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-  · simp only [hdeg, if_true, Option.map_some]
-  · simp only [hdeg, if_false]
-    cases quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
-    | some cf => simp only [Option.map_some]
-    | none =>
-        cases ZPoly.toMonicPrimeData? (normalizeForFactor f).squareFreeCore with
-        | none => rfl
-        | some toMonicData =>
-            let coreData :=
-              (normalizeForFactor f).squareFreeCore.corePrimeDataOfToMonic
-                toMonicData
-            by_cases hB : B = 0
-            · cases htry :
-                  shouldTryM1 (normalizeForFactor f).squareFreeCore toMonicData <;>
-                dsimp [coreData] at htry ⊢ <;>
-                simp [hB, htry, classicalCoreFactorsM1Run,
-                  classicalCoreFactorsRecursive]
-            · cases htry :
-                  shouldTryM1 (normalizeForFactor f).squareFreeCore toMonicData with
-              | false =>
-                  dsimp [coreData] at htry ⊢
-                  simp [hB, htry, Option.map_map, Function.comp_def]
-              | true =>
-                dsimp [coreData] at htry ⊢
-                simp only [hB, if_false, htry, if_true]
-                cases classicalCoreFactorsM1Run
-                    (normalizeForFactor f).squareFreeCore B coreData toMonicData with
-                | mk res stats =>
-                    cases res with
-                    | none =>
-                        simp only [Option.map_map, Function.comp_def]
-                    | some coreFactors =>
-                        simp only [Option.map_some]
+  rfl
 
 /-- The CLD lattice tier's `Factorization` is the raw lattice factor array packed
 through `factorizationOfFactors f`. -/
@@ -2213,7 +2151,7 @@ theorem factorize_eq_factorizationOfFactors (f : ZPoly) :
       (factorClassicalTraced f).1 =
         (factorClassicalFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)).map
           (factorizationOfFactors f) := by
-    rw [factorClassicalTraced, factorClassicalTracedWithBound_fst]
+    rfl
   rcases hcl : factorClassicalTraced f with ⟨cres, trace⟩
   rw [hcl] at hclassical
   cases hcf : factorClassicalFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) with

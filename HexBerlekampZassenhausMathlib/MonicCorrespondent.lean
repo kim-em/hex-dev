@@ -397,17 +397,6 @@ theorem scale_scale (a b : Int) (p : Hex.ZPoly) :
     Hex.DensePoly.coeff_scale (R := Int) (a * b) p n (Int.mul_zero (a * b)),
     ← Int.mul_assoc]
 
-/-- Scalar multiplications multiply through a product:
-`scale a p * scale b q = scale (a*b) (p*q)`. -/
-theorem scale_mul_scale (a b : Int) (p q : Hex.ZPoly) :
-    Hex.DensePoly.scale a p * Hex.DensePoly.scale b q =
-      Hex.DensePoly.scale (a * b) (p * q) := by
-  rw [← Hex.ZPoly.C_mul_eq_scale, ← Hex.ZPoly.C_mul_eq_scale, ← Hex.ZPoly.C_mul_eq_scale]
-  apply HexPolyZMathlib.equiv.injective
-  simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
-    HexPolyZMathlib.toPolynomial_C, Polynomial.C_mul]
-  ring
-
 /-- **Scale-coordinate congruence from a `monicTarget` subset correspondence.**
 
 Given the per-support `monicTarget`-coordinate correspondence

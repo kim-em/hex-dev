@@ -8,7 +8,7 @@ module
 
 public import HexBerlekampZassenhaus.ProductProofs
 public import HexBerlekampZassenhausMathlib.IntReductionMod
-public import HexBerlekampZassenhausMathlib.LatticeTier
+public import HexBerlekampZassenhausMathlib.Dispatch
 
 public section
 

@@ -147,6 +147,43 @@ theorem modPFactorization_of_choosePrimeData
   exact modPFactorization_of_form hprime hgood
     (Hex.choosePrimeData?_fModP_eq f data hchoose) hform hprim hlc_pos hpos
 
+/-- The adaptive prime-plan witness yields the same semantic bundle as the
+fixed prime selector.  Downstream lifting and recombination consume this
+bundle, not the history of which probes the adaptive selector performed. -/
+theorem modPFactorization_of_choosePrimeDataAdaptive
+    {f : Hex.ZPoly} {extra : Nat} {data : Hex.PrimeChoiceData}
+    (hchoose : Hex.choosePrimeDataAdaptive? f extra = some data)
+    (hprim : Hex.ZPoly.Primitive f)
+    (hlc_pos : 0 < Hex.DensePoly.leadingCoeff f)
+    (hpos : 0 < f.degree?.getD 0) :
+    ModPFactorization f data := by
+  have hprime := Hex.choosePrimeDataAdaptive?_prime f extra data hchoose
+  have hgood := Hex.choosePrimeDataAdaptive?_isGoodPrime f extra data hchoose
+  have hform : Hex.factorsModPBerlekampForm f data := by
+    obtain ⟨hzero, heq⟩ :=
+      Hex.choosePrimeDataAdaptive?_form f extra data hchoose
+    exact ⟨hprime, hzero, heq⟩
+  exact modPFactorization_of_form hprime hgood
+    (Hex.choosePrimeDataAdaptive?_fModP_eq f extra data hchoose)
+    hform hprim hlc_pos hpos
+
+/-- An explicit cached prime probe yields the semantic modular factorization
+bundle consumed by direct lifting. -/
+theorem modPFactorization_of_probePrimeData
+    {f : Hex.ZPoly} {candidate : Hex.SmallPrimeCandidate}
+    {data : Hex.PrimeChoiceData}
+    (hprobe : Hex.probePrimeData? f candidate = some data)
+    (hprim : Hex.ZPoly.Primitive f)
+    (hlc_pos : 0 < Hex.DensePoly.leadingCoeff f)
+    (hpos : 0 < f.degree?.getD 0) :
+    ModPFactorization f data :=
+  modPFactorization_of_form
+    (Hex.probePrimeData?_prime f candidate data hprobe)
+    (Hex.probePrimeData?_isGoodPrime f candidate data hprobe)
+    (Hex.probePrimeData?_fModP_eq f candidate data hprobe)
+    (Hex.probePrimeData?_form f candidate data hprobe)
+    hprim hlc_pos hpos
+
 /-- Monic-target form of the bundle producer: primitivity and the positive
 leading coefficient come from monicity. -/
 theorem modPFactorization_of_choosePrimeData_of_monic

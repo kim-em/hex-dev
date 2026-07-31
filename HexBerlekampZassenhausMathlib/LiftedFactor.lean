@@ -61,6 +61,7 @@ def liftedIndexOfModPIndex
     exact i.isLt⟩
 
 /-- Embedding version of `liftedIndexOfModPIndex` for finite-set transport. -/
+@[expose]
 def modPIndexToLiftedEmbedding
     (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
     (hsize : d.liftedFactors.size = primeData.factorsModP.size) :
@@ -77,6 +78,7 @@ def modPIndexToLiftedEmbedding
 Transport a selected subset of modular factors to the corresponding selected
 subset of lifted factors, once the lift stage is known to preserve factor count.
 -/
+@[expose]
 def liftedSubsetOfModPSubset
     (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
     (hsize : d.liftedFactors.size = primeData.factorsModP.size)
