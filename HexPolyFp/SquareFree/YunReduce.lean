@@ -1026,7 +1026,6 @@ private theorem quotient_dvd_of_mul_right_dvd_mul_right
                   exact congrArg (fun x => z * x) (DensePoly.mul_comm_poly y q)
             _ = (z * q) * y := (DensePoly.mul_assoc_poly z q y).symm
 
-set_option maxHeartbeats 800000 in
 private theorem yunStep_residual_dvd_derivative_product_of_factors
     [ZMod64.PrimeModulus p]
     (c w y a z : FpPoly p)

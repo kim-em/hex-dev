@@ -433,7 +433,6 @@ def bhksIndicatorCandidate?
       else
         none
 
-set_option maxHeartbeats 800000
 private theorem bhksIndicatorCandidate?_normalizeFactorSign
     {f : ZPoly} {d : LiftData} {indicator : Array Int}
     {candidate quotient : ZPoly}

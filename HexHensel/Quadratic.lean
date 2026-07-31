@@ -2043,7 +2043,6 @@ theorem quadraticHenselFactors_eq
   | none => simp [quadraticHenselFactorsBignum, quadraticHenselStepBignum]
   | some result => simp
 
-set_option maxHeartbeats 2000000 in
 private theorem quadraticHenselStep_raw_factor_congr
     (m : Nat)
     (f g h s t : ZPoly)
@@ -2531,7 +2530,6 @@ private theorem toWP_divModMonicModSquare (m : Nat)
         DensePoly.degree?_eq_some_of_pos_size q hqpos, Option.getD_some, Option.getD_some]
       omega
 
-set_option maxHeartbeats 1000000 in
 theorem quadraticHenselStepWord?_eq (m : Nat) (f g h s t : ZPoly)
     (h2 : m * m < UInt64.word) (hodd : (UInt64.ofNat (m * m)) % 2 = 1) (h1 : 1 < m * m)
     (hmlc : DensePoly.leadingCoeff g = 1) (hd : 0 < g.degree?.getD 0) :

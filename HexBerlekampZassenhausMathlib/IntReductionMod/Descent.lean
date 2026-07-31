@@ -307,7 +307,6 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton
     (core := core)
     hfModP_eq hprim hlc_map_ne hirr_fModP
 
-set_option maxHeartbeats 4000000 in
 /-- A bridged executable polynomial that transports to a unit has executable
 size one, hence passes the `gcdIsUnit` size check when used as a gcd. -/
 private theorem size_eq_one_of_toMathlibPolynomial_isUnit
@@ -361,7 +360,6 @@ private theorem isUnitPolynomial_of_gcdIsUnit
   rw [Hex.DensePoly.degree?_eq_some_of_pos_size g hpos, hsize]
   rfl
 
-set_option maxHeartbeats 4000000 in
 /--
 The executable square-free check records that the raw Euclidean gcd is a
 nonzero constant.  After transport to Mathlib this is enough to give
@@ -492,7 +490,6 @@ private theorem gcd_monicModularImage_derivative_isUnit
   change (g.size == 1) = true
   exact beq_iff_eq.mpr hg_size
 
-set_option maxHeartbeats 4000000
 
 /--
 Small-mod singleton irreducibility composed without the explicit
@@ -649,7 +646,6 @@ theorem irreducible_of_smallMod_form
     (p := primeData.p) (core := core)
     hprim hlc_map_ne hirr_fModP
 
-set_option maxHeartbeats 4000000
 
 /--
 Small-mod singleton irreducibility for a selected good-prime record, deriving

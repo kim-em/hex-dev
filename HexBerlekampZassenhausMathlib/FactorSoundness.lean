@@ -181,7 +181,6 @@ theorem factorize_unique_of_product_default
     (factorize_entries_normalizeFactorSign f) hφ_nonconst
     (factorize_entries_degree_pos f hf_ne) hirr
 
-set_option maxHeartbeats 1000000 in
 /--
 The executable irreducibility checker `Hex.ZPoly.isIrreducible` agrees with the
 `Hex.ZPoly.Irreducible` class.

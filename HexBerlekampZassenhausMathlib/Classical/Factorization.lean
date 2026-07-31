@@ -85,7 +85,6 @@ structure DirectSearchInvariant
             (Hex.precisionForCoeffBound B data.p))
           (Hex.precisionForCoeffBound B data.p) data) support
 
-set_option maxHeartbeats 1000000
 
 /-- The accepted head split is precisely the irreducible support containing
 the head, and its remaining list is the exact support complement. -/

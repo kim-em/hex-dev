@@ -992,7 +992,6 @@ def factorsModPBerlekampForm
         (@zmod64FieldOfPrime data.p data.bounds
           (ZMod64.primeModulusOfPrime hprime))).factors.map monicModularImage).toArray
 
-set_option maxHeartbeats 800000 in
 private theorem primeChoiceDataScore_factorsModPBerlekampForm
     (f : ZPoly) (c : SmallPrimeCandidate) (score : PrimeChoiceDataScore)
     (hscore : primeChoiceDataScore f c = some score) :
@@ -1009,7 +1008,6 @@ private theorem primeChoiceDataScore_factorsModPBerlekampForm
     exact berlekampFactorsModP_eq_of_isZero_false f c hzero
   · simp [hgood] at hscore
 
-set_option maxHeartbeats 800000 in
 private theorem betterPrimeChoiceDataScore_factorsModPBerlekampForm
     (f : ZPoly) (old new score : PrimeChoiceDataScore)
     (hold : factorsModPBerlekampForm f old.data)

@@ -1631,7 +1631,6 @@ theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
       rw [Hex.ZPoly.QuadraticMultifactorCoprimeSplits]
       exact ⟨hgcd _ _ hmodP_L hmodP_R, ihL hL_dvd_X, ihR hR_dvd_X⟩
 
-set_option maxHeartbeats 400000 in
 /-- Discharge of the coprime-splits boundary premise on
 `Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData`: given the
 `factorsModPBerlekampForm` invariant (which records that `primeData.factorsModP`

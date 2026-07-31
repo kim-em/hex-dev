@@ -30,10 +30,6 @@ Public trial-tier soundness built from the reduction-mod-`p` descent core and
 the repeated-part/reassembly transport.
 -/
 namespace HexBerlekampZassenhausMathlib
-set_option maxHeartbeats 8000000
-
-set_option maxHeartbeats 4000000 in
-set_option maxHeartbeats 8000000
 
 
 /-- Divisibility propagation through `List.foldl (· * ·)` on `Hex.ZPoly`: if
@@ -107,9 +103,6 @@ private theorem factorPower_size_lower_bound
             (Hex.Factorization.factorPower q n).size + q.size - 1 :=
         Hex.ZPoly.mul_size_eq_top_succ_of_nonzero _ _ hprev_pos hq_pos
       omega
-
-set_option maxHeartbeats 200000
-
 
 /-- Mathlib-side abstract-bound wrapper for the slow-trial exhaustive arm.
 

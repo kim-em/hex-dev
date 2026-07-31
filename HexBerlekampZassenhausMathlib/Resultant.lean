@@ -1084,7 +1084,6 @@ theorem colReduceTransform_pivot_col {R : Type*} [CommRing R] (a b : Polynomial 
   | left k₁ => rw [Fin.addCases_left, basisProd_repr_castAdd]
   | right k₂ => rw [Fin.addCases_right, basisProd_repr_natAdd]
 
-set_option maxHeartbeats 400000 in
 /--
 Assembled common-factor column reduction for the Sylvester matrix.
 
@@ -1475,7 +1474,6 @@ def cldColReduceTransform {R : Type*} [CommRing R] (q : Polynomial R) (m n d : N
         else if i = j then 1 else 0)
       (fun _j₂ => if i = j then 1 else 0)
 
-set_option maxHeartbeats 400000 in
 /-- The determinant of `cldColReduceTransform` is `1`: the left diagonal block is
 upper triangular with the monic leading coefficient of `q` on its diagonal, and
 the top-right block vanishes (the right columns are identity). -/

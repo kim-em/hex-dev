@@ -1118,7 +1118,6 @@ theorem directFactorCount_le_classCount
         _ _ (directCutProjection core B data hcore_lc_pos hcore_pos
           hcore_prim hcore_sqfree hval hB_floor hB_ne hrows)
 
-set_option maxHeartbeats 1000000 in
 /--
 At an adequate precision, the projected CLD lattice is exactly the span of
 the direct modular supports of the normalized irreducible integer factors.

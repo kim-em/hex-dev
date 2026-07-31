@@ -999,7 +999,6 @@ theorem factorFactors_mem_source (f : ZPoly) {raw : ZPoly}
               · rw [if_neg hp] at hmem
                 exact Or.inr (Or.inr hmem)
 
-set_option maxHeartbeats 800000
 
 private theorem content_ne_zero_of_zpoly_ne_zero (f : ZPoly) (hf : f ≠ 0) :
     ZPoly.content f ≠ 0 := by

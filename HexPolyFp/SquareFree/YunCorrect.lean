@@ -412,7 +412,6 @@ private theorem yunFactorsWithLevel_current_repeated_coprime_of_common_dvd_one
       (dvd_trans_poly htail_dvd hright_dvd)
       hcommon
 
-set_option maxHeartbeats 800000 in
 private theorem yunFactorsWithLevel_factors_coprime_repeated_of_reachable
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p) (base level fuel : Nat)

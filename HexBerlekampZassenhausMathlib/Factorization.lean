@@ -331,7 +331,6 @@ theorem zpoly_not_associated_of_ne_of_primitive_pos_leading
       hp_primitive hq_primitive hp_lc hq_lc hassoc
   exact hpq hpeq
 
-set_option maxHeartbeats 3000000 in
 /--
 Recorded entries of the default executable factorization of a nonzero input are
 pairwise non-associated after transport to `Polynomial ℤ`. Primitivity is

@@ -628,7 +628,6 @@ private theorem squareFree_predicate_of_mul
     exact DensePoly.dvd_add_poly (dvd_mul_right_poly cof hdg')
       (dvd_mul_right_poly (DensePoly.derivative cof) hdg)
 
-set_option maxHeartbeats 800000 in
 /--
 **CRT lift of a kernel witness.** Given `g * cof = f` with `f` square-free and
 `g` of positive degree, a `g`-kernel polynomial `hh` nonconstant modulo `g`
@@ -723,7 +722,6 @@ private theorem exists_fKernel_witness_nonconst_mod_g
         (ZMod64.instDivModLawsZMod64Fp p) _ _ _ e_modf
     exact hmg.symm.trans (e_modf'.symm.trans e_hc)
 
-set_option maxHeartbeats 800000 in
 /--
 **Span-mod-`g`.** If an `f`-kernel polynomial `H` (reduced mod `f`) is
 nonconstant modulo `g`, then some `f`-kernel basis polynomial is nonconstant
@@ -814,7 +812,6 @@ private theorem exists_basis_nonconst_mod_g
     obtain ⟨k, hk⟩ := Classical.not_forall.mp hall
     exact ⟨k, fun c hc => hk ⟨c, hc⟩⟩
 
-set_option maxHeartbeats 800000 in
 /--
 **Divisor-generalized Berlekamp completeness.** For a monic square-free `f` and
 a monic divisor `g ∣ f`, if no fixed-space kernel witness of `f` admits a

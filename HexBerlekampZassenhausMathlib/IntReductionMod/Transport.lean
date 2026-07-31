@@ -33,8 +33,6 @@ namespace IntReductionMod
 open Polynomial
 
 variable {p : ℕ}
-
-set_option maxHeartbeats 4000000
 /-! # Rational repeated-part transport
 
 These helpers supply the polynomial-over-ℚ facts used by integer Gauss
