@@ -25,6 +25,10 @@ The fresh Hex record is
 [`hexbz-factor-sweep-081b7a67-chungus2.json`](bench-results/hexbz-factor-sweep-081b7a67-chungus2.json).
 Its SHA-256 is
 `f4747b284a11b17b59b12faa1a93dd002387f671b53345f03b6034112dcbd9b6`.
+The record's `git_dirty` marker is true because report, plot, and generated
+evidence files were already being refreshed around the committed source
+revision. No Lean source or measured executable input differed from
+`081b7a67`; the executable was built from that source commit.
 
 ## Current result
 
@@ -47,6 +51,21 @@ The important aggregate conclusion is mixed:
 - FLINT, PARI/GP, and NTL remain substantially faster.
 - Hex's long tail remains worse than its median: p90 is 6.995 ms despite the
   338.141 µs median.
+
+### Regressions against the previous public record
+
+The direct rewrite improves coverage and the median, but it does not dominate
+the previous implementation on every row:
+
+| Measurement | Previous `d580b121` | Current `081b7a67` | Change |
+|---|---:|---:|---:|
+| all-solved p90 | 4.052 ms | 6.995 ms | 1.73× slower |
+| `sd5` | 40.496 ms | 108.855 ms | 2.69× slower |
+| `xpow120_minus1` | 152.116 ms | 514.891 ms | 3.38× slower |
+
+These are current optimization targets, not hidden historical routes: the
+comparison is included so the architectural simplification is evaluated with
+its actual long-tail cost.
 
 ## Paired comparisons
 

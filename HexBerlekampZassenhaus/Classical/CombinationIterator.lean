@@ -67,15 +67,6 @@ inductive DirectLevelResult (basis : LiftData) where
   | found (split : DirectSplit basis) (tried : Nat)
   | exhausted (tried : Nat)
 
-namespace DirectLevelResult
-
-@[expose]
-def tried {basis : LiftData} : DirectLevelResult basis → Nat
-  | .found _ n => n
-  | .exhausted n => n
-
-end DirectLevelResult
-
 /-- Lifted polynomials selected by an indexed support list. -/
 @[expose]
 def directSelectedFactors (basis : LiftData)

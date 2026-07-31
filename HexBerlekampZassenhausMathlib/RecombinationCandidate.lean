@@ -191,10 +191,8 @@ theorem subsetsOfSizeWithComplement_liftedFactors_exists_subset
 
 /-- The selected-list map of a lifted-factor subset determines the subset when
 the lifted factors are distinct: `liftedSubsetSelectedList d` is injective in
-`S` whenever `liftedFactor d` is injective.  This is the distinctness step the
-`RecoveredScaledSearch.covers` completeness argument relies on, discharged for
-`toMonicLiftData core B primeData` (squarefree `core`) by the existing
-mod-`p`-nodup lifted-factor injectivity lemmas. -/
+`S` whenever `liftedFactor d` is injective. This is the support-uniqueness step
+used by direct recombination completeness. -/
 theorem liftedSubsetSelectedList_injective
     {d : Hex.LiftData} (hinj : Function.Injective (liftedFactor d))
     {S S' : LiftedFactorSubset d}
@@ -215,7 +213,7 @@ single proof-side `liftedRecoveryCandidate core d S`.
 
 This packages `subsetsOfSizeWithComplement_liftedFactors_exists_subset` with the
 distinctness-driven uniqueness, taking `Function.Injective (liftedFactor d)` as
-an explicit hypothesis (the same one `RecoveredScaledSearch.covers` carries). -/
+an explicit hypothesis. -/
 theorem subsetsOfSizeWithComplement_liftedFactors_exists_unique_subset
     (core : Hex.ZPoly) (d : Hex.LiftData)
     (hinj : Function.Injective (liftedFactor d))

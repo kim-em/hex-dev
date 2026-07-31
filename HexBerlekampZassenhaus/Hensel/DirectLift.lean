@@ -17,6 +17,60 @@ set_option backward.proofsInPublic true
 
 namespace Hex
 
+/-- Validated recovery precision for one direct modular plan. There is no
+`B = 0` meaning: construction fixes the ordinary Mignotte recovery bound and
+the corresponding positive Hensel exponent. -/
+structure DirectLiftPlan
+    (core : CoreProblem) (modular : DirectPrimePlan core) where
+deriving DecidableEq
+
+namespace DirectLiftPlan
+
+/-- The unique recovery plan indexed by a core and its selected modular
+factorization. -/
+@[expose]
+def canonical (core : CoreProblem) (modular : DirectPrimePlan core) :
+    DirectLiftPlan core modular :=
+  ⟨⟩
+
+/-- Ordinary direct Mignotte coefficient bound. -/
+@[expose]
+def coeffBound {core : CoreProblem} {modular : DirectPrimePlan core}
+    (_plan : DirectLiftPlan core modular) : Nat :=
+  ZPoly.defaultFactorCoeffBound core.poly
+
+/-- Recovery precision derived from the indexed core, bound, and prime. -/
+@[expose]
+def precision {core : CoreProblem} {modular : DirectPrimePlan core}
+    (plan : DirectLiftPlan core modular) : Nat :=
+  precisionForCoeffBound plan.coeffBound modular.data.p
+
+end DirectLiftPlan
+
+/-- Token for the one direct-coordinate Hensel lift owned by a lift plan.
+The lifted data is derived from the indices rather than stored, so a basis
+from another core or precision cannot be inserted. -/
+structure DirectLiftedBasis
+    {core : CoreProblem} {modular : DirectPrimePlan core}
+    (plan : DirectLiftPlan core modular) where
+
+namespace DirectLiftedBasis
+
+/-- Construct the unique basis token for a recovery plan. -/
+@[expose]
+def canonical {core : CoreProblem} {modular : DirectPrimePlan core}
+    (plan : DirectLiftPlan core modular) : DirectLiftedBasis plan :=
+  ⟨⟩
+
+/-- Execute the lift determined by the indexed recovery plan. -/
+@[expose]
+def data {core : CoreProblem} {modular : DirectPrimePlan core}
+    {plan : DirectLiftPlan core modular}
+    (_basis : DirectLiftedBasis plan) : LiftData :=
+  ZPoly.coreLiftData core.poly plan.coeffBound modular.data
+
+end DirectLiftedBasis
+
 /-- Stable identity of a factor in the one direct lifted basis. -/
 abbrev DirectLiftedIndex (basis : LiftData) : Type :=
   Fin basis.liftedFactors.size

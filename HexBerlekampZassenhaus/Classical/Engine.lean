@@ -17,6 +17,12 @@ set_option backward.proofsInPublic true
 
 namespace Hex
 
+/-- Typed result of the sole production classical engine. -/
+inductive ClassicalOutcome where
+  | factored (factors : Array ZPoly) (stats : ClassicalStats)
+  | declined (reason : DeclineReason) (stats : ClassicalStats)
+deriving DecidableEq
+
 /-- Directly checkable output invariants at the executable boundary.  The
 Mathlib theorem proves these facts and irreducibility; this guard also keeps a
 malformed low-level result from escaping in non-proof consumers. -/

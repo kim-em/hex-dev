@@ -21,6 +21,39 @@ and per-piece refinement are unnecessary.
 
 namespace Hex
 
+/-- Global cap on direct classical recombination candidates. -/
+def defaultSubsetBudget : Nat := 262144
+
+/-- Why the bounded direct classical engine declined. -/
+inductive DeclineReason where
+  | noGoodPrime
+  | subsetBudget
+  | liftFailure
+  | invalidCandidate
+deriving DecidableEq
+
+namespace DeclineReason
+
+@[expose]
+def name : DeclineReason → String
+  | .noGoodPrime => "noGoodPrime"
+  | .subsetBudget => "subsetBudget"
+  | .liftFailure => "liftFailure"
+  | .invalidCandidate => "invalidCandidate"
+
+end DeclineReason
+
+/-- Statistics from a direct classical attempt. `completedLevels` records the
+fully exhausted head-forced subset cardinalities, in execution order. -/
+structure ClassicalStats where
+  prime : Nat := 0
+  primeProbes : Nat := 0
+  liftedFactorCount : Nat := 0
+  henselLifts : Nat := 0
+  candidatesTried : Nat := 0
+  completedLevels : Array Nat := #[]
+deriving DecidableEq
+
 /-- Internal result of a head search. -/
 inductive DirectHeadResult (basis : LiftData) where
   | found (split : DirectSplit basis) (budget : Nat)

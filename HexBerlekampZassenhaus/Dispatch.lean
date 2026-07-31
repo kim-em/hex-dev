@@ -50,6 +50,50 @@ Typed dispatch for `factorClassical`/`Trial`/`Lattice`/`factorize` and the
 -/
 namespace Hex
 
+/-- Public dispatch tier. -/
+inductive FactorTier where
+  | constant
+  | quadratic
+  | classical
+  | lattice
+  | trial
+deriving DecidableEq
+
+namespace FactorTier
+
+@[expose]
+def name : FactorTier → String
+  | .constant => "constant"
+  | .quadratic => "quadratic"
+  | .classical => "classical"
+  | .lattice => "lattice"
+  | .trial => "trial"
+
+end FactorTier
+
+/-- Trace derived from the same dispatcher result used by the untraced API. -/
+structure DirectFactorTrace where
+  tier : FactorTier
+  classicalDecline : Option DeclineReason := none
+  classical : ClassicalStats := {}
+deriving DecidableEq
+
+/-- Result of the shared normalization/classical dispatcher. A successful
+prime plan is retained even when recombination declines, so the lattice tier
+can consume the exact modular factorization already computed. -/
+structure ClassicalRun (f : ZPoly) where
+  factors : Option (Array ZPoly)
+  trace : DirectFactorTrace
+  modular :
+    Option (DirectPrimePlan (CoreProblem.ofNormalized (normalizeForFactor f))) :=
+      none
+
+/-- Raw factors and trace produced by the total dispatcher in one execution. -/
+structure FactorRun where
+  factors : Array ZPoly
+  trace : DirectFactorTrace
+deriving DecidableEq
+
 theorem bhksRecoveryCoreWithBound_ne_none_of_recovery_on_schedule
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     {start fuel target : Nat} {factors : Array ZPoly}
@@ -954,32 +998,6 @@ theorem factorFactors_mem_source (f : ZPoly) {raw : ZPoly}
                     hl, hmem⟩)
               · rw [if_neg hp] at hmem
                 exact Or.inr (Or.inr hmem)
-
-/--
-Product of every odd prime searched by the historical bounded
-`choosePrimeData?`: the fixed `smallPrimeCandidates` plus every prime formerly
-materialized by the `73`/`128` extended list, namely
-`3, 5, 7, 11, 13, 17, 19, 23, 31, 71, 73, 79, 83, 89, 97, 101, 103, 107,
-109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191,
-193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271,
-277, 281, 283, 293, 307, 311, 313, 317`.
--/
-private def finitePrimeSearchProduct : Int :=
-  8519695066439135286155430686880858459745606608870837864424372151015956571725147275621002356920661035228663328981905
-
-/--
-Regression fixture for bounded prime search. It is `P * X^2 + X + 1`, where `P`
-is the product of every odd prime in the former closed candidate set. The
-extended prefix includes additional primes, and this fixture confirms one of
-them keeps prime selection from falling through to the no-prime branch.
--/
-private def finitePrimeSearchNoneQuadratic : ZPoly :=
-  DensePoly.ofCoeffs #[1, 1, finitePrimeSearchProduct]
-
-#guard
-  match choosePrimeData? finitePrimeSearchNoneQuadratic with
-  | none => false
-  | some data => data.p == 29
 
 set_option maxHeartbeats 800000
 

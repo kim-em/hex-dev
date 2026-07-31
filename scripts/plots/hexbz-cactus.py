@@ -19,8 +19,9 @@ matching corpus SHA-256), so the Lean entries can be re-run as they evolve
 without re-running the expensive external comparators: record a fresh hex-only
 sweep, then regenerate charts and each external curve is carried over from the
 committed baseline it was last measured in. The default current-state charts
-exclude superseded Hex diagnostic entries; they can still be plotted by naming
-their records explicitly with ``--sweep``.
+exclude retired standalone Hex diagnostic comparators; they can still be
+plotted by naming their records explicitly with ``--sweep``. This does not
+remove the live lattice fallback inside ``hex-factor``.
 
 Run (default: merge committed records for the current corpus, newest per system):
 ``python3 scripts/plots/hexbz-cactus.py``

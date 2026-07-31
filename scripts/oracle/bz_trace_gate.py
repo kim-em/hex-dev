@@ -2,9 +2,9 @@
 """Performance gate for HexBerlekampZassenhaus.
 
 Asserts the per-case typed direct trace emitted by the Lean fixtures (chosen
-tier, decline reason, prime probes, Hensel lifts, and candidate count) stays
-within a committed baseline. A recombination blow-up or route/resource change
-fails the merge even when the factors remain correct.
+tier, decline reason, prime probes, lifted-factor count, Hensel lifts, and
+candidate count) stays within a committed baseline. A recombination blow-up or
+route/resource change fails the merge even when the factors remain correct.
 
 Deterministic: it reads the committed trace records and a committed baseline, with
 no wall-clock measurement, so it is robust to CI-runner noise. A legitimate change
@@ -51,6 +51,7 @@ def main(argv: list[str]) -> int:
                 "tier": tr["tier"],
                 "decline": tr["decline"],
                 "primeProbes": tr["primeProbes"],
+                "r": tr["r"],
                 "henselLifts": tr["henselLifts"],
                 "candidatesTried": tr["candidatesTried"],
             }
@@ -82,6 +83,13 @@ def main(argv: list[str]) -> int:
             print(
                 f"FAIL {case}: primeProbes {tr['primeProbes']} != baseline "
                 f"{b['primeProbes']}",
+                file=sys.stderr,
+            )
+            failures += 1
+        if tr["r"] != b["r"]:
+            print(
+                f"FAIL {case}: r {tr['r']} != baseline "
+                f"{b['r']}",
                 file=sys.stderr,
             )
             failures += 1

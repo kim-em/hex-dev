@@ -41,8 +41,8 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-This module implements the proved monic-coordinate BHKS candidate recovery used
-by the CLD lattice tier.
+This module implements the proved direct-coordinate BHKS candidate recovery
+used by the CLD lattice tier.
 -/
 namespace Hex
 

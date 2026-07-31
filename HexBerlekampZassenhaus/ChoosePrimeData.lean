@@ -913,10 +913,8 @@ private theorem choosePrimeDataScore_fold_none_forall_isGoodPrime_false
 When `choosePrimeData? f` returns `none`, every candidate in the hot-path
 prime list fails the executable good-prime predicate `Hex.isGoodPrime f`.
 
-This feeds `choosePrimeData?_none_implies_huge`: the executable's failure to
-find any good prime over the fixed list means every prime in the admissible
-range was tried and rejected, and rejection (`isGoodPrime ... = false`) feeds
-the Mathlib-side per-prime divisibility bridge.
+This records that failure of the fixed candidate fold means every retained
+candidate was tried and rejected.
 -/
 theorem mem_hotPathCandidates_isGoodPrime_false_of_choosePrimeData?_none
     {f : ZPoly} (hf : choosePrimeData? f = none)

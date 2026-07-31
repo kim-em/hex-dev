@@ -73,12 +73,12 @@ admissible (squarefree-image) prime, so the lifted-factor count is
 `r ≥ 32` no matter which prime the selector picks (at the selected
 primes, 29 and 19, all blocks are quadratic and `r = 32`), and the
 size-ordered classical search would need ΣC(31,≤15) ≈ 2³⁰ subset
-candidates to reach its half-size frontier — for `sd5_pair` that is
-    where the two 16-block factors live, and for `sd6` that is what
-    exhausting all nontrivial subset products takes — far past the direct
-    classical candidate budget, so it declines before starting an incomplete
-    cardinality level and the hybrid falls through to the
-van Hoeij CLD lattice arm. Both cases emit the
+candidates to reach its half-size frontier. For `sd5_pair` that is
+where the two 16-block factors live, and for `sd6` that is what
+exhausting all nontrivial subset products takes. This is far past the direct
+classical candidate budget, so it declines before starting an incomplete
+cardinality level and the hybrid falls through to the van Hoeij CLD lattice
+arm. Both cases emit the
 *hybrid* trace (`factorTraced`) rather than the classical one. The emit helper
 rejects a run unless the lattice tier answered, while the committed trace records
 `tier = "lattice"`, `declined = true`, the prime, and `r = 32`. Since each
@@ -427,8 +427,7 @@ lattice ones. -/
   √2+√3+√5+√7+√11) with its shift by one.  Degree 64, content 1, exactly
   two integer factors (the two 32-blocks).
 * `adv/swinnerton_dyer_sd6` (certification arm) — Swinnerton-Dyer SD₆
-  (the committed bench `sd6` polynomial from
-  `bench/HexBench/LatticeSpike.lean`, minimal polynomial of
+  (the committed corpus `sd6` polynomial, minimal polynomial of
   √2+√3+√5+√7+√11+√13).  Degree 64, content 1, irreducible over ℤ. -/
 private def cases_lattice : List PinnedCase :=
   [ mkPinned "adv/swinnerton_dyer_sd5_pair"

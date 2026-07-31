@@ -4,6 +4,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 4,
     "tier": "classical"
   },
   "adv/cyclotomic_12": {
@@ -11,6 +12,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 2,
     "tier": "classical"
   },
   "adv/cyclotomic_15": {
@@ -18,6 +20,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 2,
     "tier": "classical"
   },
   "adv/cyclotomic_8": {
@@ -25,6 +28,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 2,
     "tier": "classical"
   },
   "adv/eisenstein_5": {
@@ -32,6 +36,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 2,
     "tier": "classical"
   },
   "adv/high_multiplicity": {
@@ -39,6 +44,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 2,
     "tier": "classical"
   },
   "adv/identical_mod_profile": {
@@ -46,6 +52,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 2,
     "tier": "classical"
   },
   "adv/large_height": {
@@ -53,6 +60,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 3,
     "tier": "classical"
   },
   "adv/large_plus_distractors": {
@@ -60,6 +68,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 4,
     "tier": "classical"
   },
   "adv/mignotte_swell": {
@@ -67,6 +76,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 4,
     "tier": "classical"
   },
   "adv/neg_content": {
@@ -74,6 +84,7 @@
     "decline": null,
     "henselLifts": 0,
     "primeProbes": 0,
+    "r": 0,
     "tier": "quadratic"
   },
   "adv/non_monic": {
@@ -81,6 +92,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 2,
     "tier": "classical"
   },
   "adv/phi15": {
@@ -88,6 +100,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 2,
     "tier": "classical"
   },
   "adv/planted_1": {
@@ -95,6 +108,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 4,
     "tier": "classical"
   },
   "adv/planted_nonmonic": {
@@ -102,6 +116,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 3,
     "tier": "classical"
   },
   "adv/quad_sqrt2_sqrt3": {
@@ -109,6 +124,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 2,
     "tier": "classical"
   },
   "adv/reciprocal": {
@@ -116,6 +132,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 2,
     "tier": "classical"
   },
   "adv/swinnerton_dyer_2": {
@@ -123,6 +140,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 2,
     "tier": "classical"
   },
   "adv/swinnerton_dyer_3_shift1": {
@@ -130,6 +148,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 4,
     "tier": "classical"
   },
   "adv/swinnerton_dyer_sd3": {
@@ -137,6 +156,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 4,
     "tier": "classical"
   },
   "adv/swinnerton_dyer_sd5_pair": {
@@ -144,6 +164,7 @@
     "decline": "subsetBudget",
     "henselLifts": 1,
     "primeProbes": 3,
+    "r": 32,
     "tier": "lattice"
   },
   "adv/swinnerton_dyer_sd6": {
@@ -151,6 +172,7 @@
     "decline": "subsetBudget",
     "henselLifts": 1,
     "primeProbes": 3,
+    "r": 32,
     "tier": "lattice"
   },
   "adv/trinomial": {
@@ -158,6 +180,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 2,
     "tier": "classical"
   },
   "adv/x12_minus_1": {
@@ -165,6 +188,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 8,
     "tier": "classical"
   },
   "adv/x4_plus_1": {
@@ -172,6 +196,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 2,
     "tier": "classical"
   },
   "adv/x6_minus_1": {
@@ -179,6 +204,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 4,
     "tier": "classical"
   },
   "content2/cyclo5": {
@@ -186,6 +212,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 1,
     "tier": "classical"
   },
   "content3/cyclo7": {
@@ -193,6 +220,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 1,
     "tier": "classical"
   },
   "direct/chebyshev_u18": {
@@ -200,6 +228,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 2,
     "tier": "classical"
   },
   "direct/legendre_p28": {
@@ -207,6 +236,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 4,
     "tier": "classical"
   },
   "edge/neg_one": {
@@ -214,6 +244,7 @@
     "decline": null,
     "henselLifts": 0,
     "primeProbes": 0,
+    "r": 0,
     "tier": "constant"
   },
   "edge/neg_six": {
@@ -221,6 +252,7 @@
     "decline": null,
     "henselLifts": 0,
     "primeProbes": 0,
+    "r": 0,
     "tier": "constant"
   },
   "edge/neg_two": {
@@ -228,6 +260,7 @@
     "decline": null,
     "henselLifts": 0,
     "primeProbes": 0,
+    "r": 0,
     "tier": "constant"
   },
   "edge/neg_two_x_minus_one_squared": {
@@ -235,6 +268,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 1,
     "tier": "classical"
   },
   "edge/neg_x": {
@@ -242,6 +276,7 @@
     "decline": null,
     "henselLifts": 0,
     "primeProbes": 0,
+    "r": 0,
     "tier": "constant"
   },
   "edge/neg_x_minus_one_squared": {
@@ -249,6 +284,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 1,
     "tier": "classical"
   },
   "edge/neg_x_squared_plus_one": {
@@ -256,6 +292,7 @@
     "decline": null,
     "henselLifts": 0,
     "primeProbes": 0,
+    "r": 0,
     "tier": "quadratic"
   },
   "edge/one": {
@@ -263,6 +300,7 @@
     "decline": null,
     "henselLifts": 0,
     "primeProbes": 0,
+    "r": 0,
     "tier": "constant"
   },
   "edge/six": {
@@ -270,6 +308,7 @@
     "decline": null,
     "henselLifts": 0,
     "primeProbes": 0,
+    "r": 0,
     "tier": "constant"
   },
   "edge/two": {
@@ -277,6 +316,7 @@
     "decline": null,
     "henselLifts": 0,
     "primeProbes": 0,
+    "r": 0,
     "tier": "constant"
   },
   "edge/two_x_minus_one_x_plus_one": {
@@ -284,6 +324,7 @@
     "decline": null,
     "henselLifts": 0,
     "primeProbes": 0,
+    "r": 0,
     "tier": "quadratic"
   },
   "edge/x": {
@@ -291,6 +332,7 @@
     "decline": null,
     "henselLifts": 0,
     "primeProbes": 0,
+    "r": 0,
     "tier": "constant"
   },
   "edge/x_minus_one_squared": {
@@ -298,6 +340,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 1,
     "tier": "classical"
   },
   "edge/x_squared": {
@@ -305,6 +348,7 @@
     "decline": null,
     "henselLifts": 0,
     "primeProbes": 0,
+    "r": 0,
     "tier": "constant"
   },
   "edge/zero": {
@@ -312,6 +356,7 @@
     "decline": null,
     "henselLifts": 0,
     "primeProbes": 0,
+    "r": 0,
     "tier": "constant"
   },
   "irr/cyclo11": {
@@ -319,6 +364,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 2,
     "tier": "classical"
   },
   "irr/cyclo17": {
@@ -326,6 +372,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 1,
     "tier": "classical"
   },
   "irr/cyclo5": {
@@ -333,6 +380,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 1,
     "tier": "classical"
   },
   "irr/cyclo7": {
@@ -340,6 +388,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 1,
     "tier": "classical"
   },
   "red/cyclo11_cyclo22": {
@@ -347,6 +396,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 4,
     "tier": "classical"
   },
   "red/quad2_deg4": {
@@ -354,6 +404,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 1,
+    "r": 3,
     "tier": "classical"
   },
   "regression/split_roots_1_11": {
@@ -361,6 +412,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 3,
+    "r": 11,
     "tier": "classical"
   },
   "regression/split_roots_1_24": {
@@ -368,6 +420,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 3,
+    "r": 24,
     "tier": "classical"
   },
   "regression/split_roots_1_72": {
@@ -375,6 +428,7 @@
     "decline": null,
     "henselLifts": 1,
     "primeProbes": 3,
+    "r": 72,
     "tier": "classical"
   }
 }

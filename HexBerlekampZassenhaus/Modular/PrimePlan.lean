@@ -6,7 +6,9 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhaus.Data
+public import HexBerlekampZassenhaus.ChoosePrimeData
+public import HexBerlekampZassenhaus.CoreProblem
+public import HexBerlekampZassenhaus.Recombination
 
 public section
 set_option backward.proofsInPublic true
@@ -21,6 +23,59 @@ different coordinate.
 -/
 
 namespace Hex
+
+/-- One good-prime factorization computed while planning. The candidate is
+retained with its result so proof provenance and diagnostics never need to
+recover it by searching the candidate table. -/
+structure DirectPrimeProbe (core : CoreProblem) where
+  candidate : SmallPrimeCandidate
+  data : PrimeChoiceData
+  /-- Degrees of the cached modular factors. -/
+  factorDegrees : Array Nat
+  /-- Subset-degree reachability bitset, indexed from zero through
+  `degree core`. This is computed once with the modular factorization and is
+  reused by planning and optional degree-obstruction checks. -/
+  reachableDegrees : Array Bool
+
+/-- Cached direct-coordinate modular plan. Every successful probe performed by
+the planner is retained. The selected probe is stored separately from the
+other successful probes, so it is structurally impossible for selection to
+refer to an uncached factorization. -/
+structure DirectPrimePlan (core : CoreProblem) where
+  selected : DirectPrimeProbe core
+  otherProbes : Array (DirectPrimeProbe core)
+
+namespace DirectPrimePlan
+
+/-- Build a plan from its selected successful probe and all other successful
+probes. This is the only constructor exposed outside this module. -/
+@[expose]
+def ofSelection {core : CoreProblem} (selected : DirectPrimeProbe core)
+    (otherProbes : Array (DirectPrimeProbe core)) : DirectPrimePlan core :=
+  ⟨selected, otherProbes⟩
+
+/-- All cached successful probes, with the selected value first. -/
+@[expose]
+def probes {core : CoreProblem} (plan : DirectPrimePlan core) :
+    Array (DirectPrimeProbe core) :=
+  #[plan.selected] ++ plan.otherProbes
+
+/-- Selected modular factorization. -/
+@[expose]
+def data {core : CoreProblem} (plan : DirectPrimePlan core) : PrimeChoiceData :=
+  plan.selected.data
+
+/-- Selected prime. -/
+@[expose]
+def prime {core : CoreProblem} (plan : DirectPrimePlan core) : Nat :=
+  plan.data.p
+
+/-- Number of local factors at the selected prime. -/
+@[expose]
+def width {core : CoreProblem} (plan : DirectPrimePlan core) : Nat :=
+  plan.data.factorsModP.size
+
+end DirectPrimePlan
 
 /-- Degree list retained beside a direct modular factorization. -/
 @[expose]

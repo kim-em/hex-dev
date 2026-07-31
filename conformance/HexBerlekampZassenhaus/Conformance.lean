@@ -18,7 +18,7 @@ Covered operations:
 - `normalizeForFactor`, `normalizationPrefixFactors`, and
   `reassembleNormalizedFactors`
 - `henselLiftData`
-- `bhksRecover?`, `recombinationSearch`, `factorTrial`, and `factorClassical`
+- `bhksRecover?`, `recombinationSearch`, and `factorTrial`
 - `factor`
 - `PrimeFactorData.degreeSum`, `PrimeFactorData.factorProduct`,
   `PrimeFactorData.containsDegree`, `PrimeFactorData.hasSubsetDegree`,
@@ -574,11 +574,13 @@ private def extendedCascade2 : ZPoly :=
   factorPreservesProduct swinnertonDyerSD3 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[swinnertonDyerSD3] |>.map fun coeffs => (coeffs, 1))
+#guard (factorTraced swinnertonDyerSD3).2.tier = .classical
 #guard
   let factors := ZPoly.factorize phi15
   factorPreservesProduct phi15 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[phi15] |>.map fun coeffs => (coeffs, 1))
+#guard (factorTraced phi15).2.tier = .classical
 
 #guard PrimeFactorData.degreeSum primeDataValidQuad = 2
 #guard coeffNats (PrimeFactorData.factorProduct primeDataValidQuad) = [2, 0, 1]

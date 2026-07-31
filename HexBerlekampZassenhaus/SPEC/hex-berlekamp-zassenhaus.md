@@ -293,7 +293,7 @@ Changes to this library must run:
 
 - `lake build`;
 - the Mathlib-free benchmark import lint;
-- the benchmark smoke gate;
+- the benchmark verification check;
 - Berlekamp-Zassenhaus conformance and oracle checks;
 - the polynomial-factorization corpus comparison;
 - focused public `factor` performance measurements for affected rows.
