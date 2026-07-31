@@ -61,9 +61,12 @@ Data produced by modular prime selection: the selected prime, the image of the
 input polynomial over that prime field, and its modular factors.
 -/
 structure PrimeChoiceData where
+  /-- The selected prime modulus. -/
   p : Nat
   [bounds : ZMod64.Bounds p]
+  /-- The input polynomial reduced modulo `p`. -/
   fModP : FpPoly p
+  /-- Its monic irreducible factors over the prime field. -/
   factorsModP : Array (FpPoly p)
 
 instance : Inhabited PrimeChoiceData where
@@ -78,32 +81,42 @@ Data produced by Hensel lifting and consumed by integer recombination: the
 prime, the requested lift precision, and the lifted integer factors.
 -/
 structure LiftData where
+  /-- The prime underlying the Hensel modulus. -/
   p : Nat
+  /-- Positivity of the prime, retained for arithmetic bounds. -/
   p_pos : 0 < p
+  /-- The exponent in the lifting modulus `p ^ k`. -/
   k : Nat
+  /-- The modular factors lifted to integer polynomials modulo `p ^ k`. -/
   liftedFactors : Array ZPoly
 
 /--
 Executable normalization data for the public integer factorization API.
 
 The public input is first split into its integer content, primitive part,
-initial `X` power, and primitive square-free core. The Berlekamp-Zassenhaus
-prime/lift/factorization pipeline runs on `squareFreeCore`; the other fields are
-reassembled around the resulting core factors.
+initial `X` power, and primitive square-free part. The Berlekamp-Zassenhaus
+prime/lift/factorization computation runs on `squareFreeCore`; the other fields are
+reassembled around the resulting factors of the square-free part.
 -/
 structure FactorNormalizationData where
+  /-- The signed-independent integer content of the input. -/
   content : Int
+  /-- The content-free input with normalized sign. -/
   primitive : ZPoly
+  /-- The largest exponent of `X` dividing the primitive input. -/
   xPower : Nat
+  /-- The primitive input after removing its initial power of `X`. -/
   xFreePrimitive : ZPoly
+  /-- The primitive product of the distinct nonzero irreducible factors. -/
   squareFreeCore : ZPoly
+  /-- The primitive repeated-factor contribution. -/
   repeatedPart : ZPoly
 
 namespace ZPoly
 
 /--
 Executable data for the integer scaling transform that sends a primitive
-positive-leading core to a monic integer polynomial with the same roots
+polynomial with positive leading coefficient to a monic integer polynomial with the same roots
 (scaled by the leading coefficient).
 
 If `core` has degree `n` and leading coefficient `c`, `monic` is the
@@ -112,18 +125,24 @@ coefficientwise integer polynomial `c^(n-1) * core (X / c)`: lower coefficient
 `1`.
 -/
 structure ToMonicData where
+  /-- The primitive positive-leading polynomial being transformed. -/
   core : ZPoly
+  /-- The leading coefficient of `core`. -/
   leadingCoeff : Int
+  /-- The degree of `core`. -/
   degree : Nat
+  /-- The integral monic polynomial obtained by the scaling transform. -/
   monic : ZPoly
 
 namespace ToMonicData
 
+/-- Coefficients of the degree-dependent transformed polynomial. -/
 @[expose]
 def transformedCoeffs (core : ZPoly) (degree : Nat) : Array Int :=
   ((List.range degree).map fun i =>
       core.coeff i * (DensePoly.leadingCoeff core) ^ (degree - 1 - i)).toArray.push 1
 
+/-- The degree-dependent transform used for repeated-factor recovery. -/
 @[expose]
 def transformedCore (core : ZPoly) (degree : Nat) : ZPoly :=
   { coeffs := transformedCoeffs core degree
@@ -144,6 +163,7 @@ def transformedCore (core : ZPoly) (degree : Nat) : ZPoly :=
     (transformedCore core degree).size = degree + 1 := by
   simp [transformedCore, DensePoly.size]
 
+/-- The coefficient in the prescribed top degree of the transformed polynomial is one. -/
 theorem transformedCore_coeff_top (core : ZPoly) (degree : Nat) :
     (transformedCore core degree).coeff degree = 1 := by
   change (transformedCoeffs core degree).getD degree (0 : Int) = 1
@@ -161,7 +181,7 @@ theorem transformedCore_monic (core : ZPoly) (degree : Nat) :
 
 end ToMonicData
 
-/-- Build the `ToMonicData` packet for a core by the integer scaling transform. -/
+/-- Build the `ToMonicData` packet for a square-free part by the integer scaling transform. -/
 @[expose]
 def toMonic (core : ZPoly) : ToMonicData :=
   let degree := core.degree?.getD 0
@@ -210,7 +230,7 @@ theorem toMonic_monic_degree_eq_of_pos_degree
   · simp [hmonic]
   · simp [hmonic]
 
-/-- Applying `toMonic` to an already-monic core leaves its `monic` field equal
+/-- Applying `toMonic` to an already-monic polynomial leaves its `monic` field equal
 to the original. -/
 theorem toMonic_monic_eq_core_of_leadingCoeff_eq_one
     (core : ZPoly) (hmonic : DensePoly.leadingCoeff core = 1) :
@@ -255,6 +275,7 @@ deriving DecidableEq
 
 namespace Factorization
 
+/-- Natural powers of an integer polynomial. -/
 @[expose]
 def polyPow (f : ZPoly) : Nat → ZPoly
   | 0 => 1
@@ -292,7 +313,7 @@ theorem product_eq_foldl_factorPower (φ : Factorization) :
 
 end Factorization
 
-/-- Compute the normalization data required before the square-free pipeline. -/
+/-- Compute the normalization data required before the square-free computation. -/
 @[expose]
 def normalizeForFactor (f : ZPoly) : FactorNormalizationData :=
   let primitive := ZPoly.primitivePart f
@@ -339,7 +360,7 @@ theorem ZPoly.contentPrimitive_eq_impl :
   funext f
   exact ZPoly.contentPrimitive_eq_impl_value f
 
-/-- Certified probe prime for the modular square-free fast path.  `499` is a
+/-- Certified trial prime for the modular square-free fast path.  `499` is a
 cheap fixed choice: it is large enough that a distinct-root input rarely reduces
 non-square-free at it, but it carries no guarantee (a rationally square-free
 input whose discriminant is divisible by `499` reduces non-square-free and simply
@@ -349,20 +370,20 @@ theorem prime_499 : Hex.Nat.Prime 499 :=
 
 instance bounds_499 : ZMod64.Bounds 499 := ⟨by decide, by decide⟩
 
-/-- The prepared-core form of the modular square-free probe. -/
+/-- The prepared-input form of the modular square-free trial. -/
 @[expose]
 def modularSquareFreeCoreFires (q : ZPoly) : Bool :=
   !q.isZero && (ZPoly.leadingCoeffModP q 499 != 0) && ZPoly.separableModP q 499
 
 /-- Boolean guard for the modular square-free fast path: the primitive `x`-free
-core is nonzero, admissible at the probe prime, and separable over `𝔽_p`. -/
+square-free part is nonzero, admissible at the trial prime, and separable over `𝔽_p`. -/
 @[expose]
 def modularSquareFreeFires (f : ZPoly) : Bool :=
   let q := ZPoly.primitivePart (ZPoly.extractXPower (ZPoly.primitivePart f)).core
   modularSquareFreeCoreFires q
 
 /-- Fast implementation of `normalizeForFactor`: a machine-word `𝔽_p`
-square-freeness probe on the primitive `x`-free core.  When it fires (the input
+square-freeness trial on the primitive `x`-free square-free part.  When it fires (the input
 is square-free over `ℚ`) the decomposition is trivial; otherwise it falls back to
 the exact rational computation, inlined rather than a self-call so the `@[csimp]`
 rewrite below does not make the fallback recurse.  Proven equal to
@@ -429,10 +450,12 @@ private def contentFactorArray (content : Int) : Array ZPoly :=
   else
     #[DensePoly.C content]
 
+/-- The factor `X` with the requested multiplicity, omitted at multiplicity zero. -/
 @[expose]
 def xPowerFactorArray (power : Nat) : Array ZPoly :=
   (List.replicate power ZPoly.X).toArray
 
+/-- The repeated part as a singleton factor array, omitting the unit polynomial. -/
 @[expose]
 def repeatedPartFactorArray (repeatedPart : ZPoly) : Array ZPoly :=
   if repeatedPart = 1 then
@@ -440,6 +463,7 @@ def repeatedPartFactorArray (repeatedPart : ZPoly) : Array ZPoly :=
   else
     #[repeatedPart]
 
+/-- The signed content carried by the scalar part of a factorization. -/
 @[expose]
 def signedContentScalar (f : ZPoly) : Int :=
   if f = 0 then
@@ -467,6 +491,7 @@ Mathlib-side lemmas can transport the predicate into `¬ IsUnit` over
 def shouldRecordPolynomialFactor (f : ZPoly) : Bool :=
   f ≠ 0 && f ≠ 1 && f ≠ DensePoly.C (-1)
 
+/-- Increase the multiplicity of `f`, or append it with multiplicity one. -/
 @[expose]
 def bumpFactorMultiplicity (f : ZPoly) : List (ZPoly × Nat) → List (ZPoly × Nat)
   | [] => [(f, 1)]
@@ -476,6 +501,7 @@ def bumpFactorMultiplicity (f : ZPoly) : List (ZPoly × Nat) → List (ZPoly × 
       else
         entry :: bumpFactorMultiplicity f entries
 
+/-- Collect equal factors and their multiplicities in first-occurrence order. -/
 @[expose]
 def collectFactorMultiplicities (factors : Array ZPoly) : Array (ZPoly × Nat) :=
   factors.toList.foldl
@@ -488,17 +514,18 @@ def collectFactorMultiplicities (factors : Array ZPoly) : Array (ZPoly × Nat) :
     []
   |>.reverse.toArray
 
+/-- The `X`-power and repeated-part factors preceding the square-free factors. -/
 @[expose]
 def polynomialNormalizationPrefixFactors (d : FactorNormalizationData) : Array ZPoly :=
   xPowerFactorArray d.xPower ++ repeatedPartFactorArray d.repeatedPart
 
-/-- Factors that come from normalization before the square-free core is factored. -/
+/-- Factors that come from normalization before the primitive square-free part is factored. -/
 def normalizationPrefixFactors (d : FactorNormalizationData) : Array ZPoly :=
   contentFactorArray d.content ++
     xPowerFactorArray d.xPower ++
     repeatedPartFactorArray d.repeatedPart
 
-/-- Reassemble normalization factors around the factors of the square-free core. -/
+/-- Reassemble normalization factors around the factors of the primitive square-free part. -/
 def reassembleNormalizedFactors
     (d : FactorNormalizationData) (coreFactors : Array ZPoly) : Array ZPoly :=
   normalizationPrefixFactors d ++ coreFactors

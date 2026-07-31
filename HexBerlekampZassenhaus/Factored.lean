@@ -8,7 +8,7 @@ module
 
 public import HexPolyZ.IntegerPolynomial
 public import HexPoly.Euclid
-public import HexBerlekampZassenhaus.IrreducibleCore
+public import HexBerlekampZassenhaus.FactorIrreducibility
 
 public section
 

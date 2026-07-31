@@ -14,27 +14,27 @@ public import HexBerlekampMathlib.FactorPoly
 public section
 
 /-!
-The `Polynomial (ZMod q)` provider for the `factor_poly`/`irreducibility`
+The `Polynomial (ZMod q)` extension for the `factor_poly`/`irreducibility`
 elaborators: importing this library upgrades the tactics (declared in
-`HexBerlekamp.PolynomialTactic` / probed by name, see `providerNames`) to handle
+`HexBerlekamp.PolynomialTactic` / checked by name, see `extensionNames`) to handle
 Mathlib polynomials over prime fields with a literal modulus.
 
-The heart of the provider is a parser-with-proof: a meta recursion over the
+The heart of the extension is a parser-with-proof: a meta recursion over the
 input `Polynomial (ZMod q)` expression that simultaneously evaluates each node
 to an executable `Hex.FpPoly q` value and builds a proof that the transported
 value equals the node, combining child proofs through the named
 `toMathlibPolynomial_*` transport lemmas. The compiled Berlekamp factorizer
-then runs as untrusted search exactly as in the `FpPoly` pipeline, and the
+then runs as untrusted search exactly as in the `FpPoly` computation, and the
 emitted terms apply the kernel-decidable assemblers `Hex.FactoredPoly.ofFp` /
 `HexBerlekampMathlib.irreducible_ofFp` to reified literal data: every
 certification slot is discharged by `Eq.refl true`/`Eq.refl false`, plus the
-parser-built bridge equation. The factorizer never appears in emitted terms.
+parser-built translation equality. The factorizer never appears in emitted terms.
 -/
 
 namespace HexBerlekampMathlib.FactorTactic
 
 open Lean Meta Elab
-open Hex.FactorTactic (ProviderResult)
+open Hex.FactorTactic (ExtensionResult)
 
 /-- Match a (whnfR-normalized) type against `Polynomial (ZMod q)` for a
 literal `q`, returning the modulus and its literal expression. -/
@@ -326,7 +326,7 @@ oversized moduli are declined with a diagnostic. -/
 meta def withZModInput (tactic : String) (ty : Expr)
     (k : (q : Nat) → Hex.ZMod64.Bounds q → Hex.Nat.isPrimeTrial q = true →
       Expr → Term.TermElabM Expr) :
-    Term.TermElabM ProviderResult := do
+    Term.TermElabM ExtensionResult := do
   let some (q, qE) ← zmodInput? ty | return .notApplicable
   -- The emitted primality slot kernel-replays the bounded trial scan, so
   -- budget its worst-case number of candidate remainder tests.
@@ -345,13 +345,13 @@ meta def withZModInput (tactic : String) (ty : Expr)
             over the supported budget ({Hex.FactorTactic.primeReplayBudget})"
     else
       return .declined m!"{tactic}: the modulus {q} is over the ZMod64 \
-          bound (2^31), so the Polynomial (ZMod q) provider cannot \
+          bound (2^31), so the Polynomial (ZMod q) extension cannot \
           certify it"
   else
     return .notApplicable
 
 /-- Goal mode: close `Irreducible P` for `P : Polynomial (ZMod q)`. -/
-meta def goalIrredZMod (goal : MVarId) : Tactic.TacticM ProviderResult := do
+meta def goalIrredZMod (goal : MVarId) : Tactic.TacticM ExtensionResult := do
   goal.withContext do
     let tgt ← instantiateMVars (← goal.getType)
     unless tgt.getAppFn.isConstOf ``Irreducible && tgt.getAppNumArgs == 3 do
@@ -374,11 +374,11 @@ namespace HexBerlekampMathlib.FactorTactic
 
 open Lean Elab
 
-/-- The `Polynomial (ZMod q)` provider, probed by name from
-`Hex.FactorTactic.providerNames` — renaming it severs the hook (the bridge
-test suite is the liveness canary). -/
-public meta def provider : Hex.FactorTactic.Provider where
-  version := Hex.FactorTactic.Provider.abiVersion
+/-- The `Polynomial (ZMod q)` extension, checked by name from
+`Hex.FactorTactic.extensionNames`; the registration tests fail if a rename makes
+the extension undiscoverable. -/
+public meta def extension : Hex.FactorTactic.Extension where
+  version := Hex.FactorTactic.Extension.abiVersion
   factorPoly? := fun _stx eP ty _expectedType? =>
     withZModInput "factor_poly" ty fun q inst hpt qE =>
       @elabFactorZMod "factor_poly" q inst hpt qE eP

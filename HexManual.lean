@@ -21,8 +21,10 @@ import HexManual.Chapters.HexMvPoly
 import HexManual.Chapters.HexPolyZ
 import HexManual.Chapters.HexResultant
 import HexManual.Chapters.HexPolyFp
+import HexManual.Chapters.HexBerlekamp
 import HexManual.Chapters.HexGF2
 import HexManual.Chapters.HexHensel
+import HexManual.Chapters.HexBerlekampZassenhaus
 import HexManual.Chapters.HexGFqRing
 import HexManual.Chapters.HexGFqField
 import HexManual.Chapters.HexConway
@@ -108,9 +110,13 @@ here to keep the reference chapters above focused on the released libraries.
 
 {include 2 HexManual.Chapters.HexPolyFp}
 
+{include 2 HexManual.Chapters.HexBerlekamp}
+
 {include 2 HexManual.Chapters.HexGF2}
 
 {include 2 HexManual.Chapters.HexHensel}
+
+{include 2 HexManual.Chapters.HexBerlekampZassenhaus}
 
 {include 2 HexManual.Chapters.HexGFqRing}
 

@@ -7,15 +7,15 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekamp.IrreducibleDecide
-public import HexBerlekampZassenhaus.EisensteinCore
-public import HexBerlekampZassenhaus.IrreducibleCore
+public import HexBerlekampZassenhaus.EisensteinCriterion
+public import HexBerlekampZassenhaus.FactorIrreducibility
 public import HexBerlekampZassenhaus.PrimeSelection
 
 public section
 
 /-!
-Kernel-decidable irreducibility entry points for `Hex.ZPoly` — a single-prime
-modular witness or an Eisenstein-after-shift certificate — consumed by the
+Kernel-decidable irreducibility entry points for `Hex.ZPoly`; a single-prime
+modular witness or an Eisenstein-after-shift certificate; consumed by the
 `irreducibility`/`factor_poly` elaborators.
 
 For a primitive, non-constant `f` whose leading coefficient survives reduction
@@ -37,9 +37,9 @@ namespace ZPoly
 primitive and non-constant, its reduction mod the trial-division prime `p`
 reconstructs as `scale c m` for a monic `m` with a passing Rabin certificate,
 and the leading coefficient survives the reduction. Fails to apply (no slot
-reduces to `true`) exactly when no single prime witnesses irreducibility —
+reduces to `true`) exactly when no single prime witnesses irreducibility;
 balanced inputs need the multi-prime degree-obstruction certificate from the
-Mathlib bridge. -/
+Mathlib correspondence. -/
 theorem irreducible_of_modPCert
     (f : ZPoly) (p : Nat) [ZMod64.Bounds p]
     (m : FpPoly p) (c : ZMod64 p) (cert : Berlekamp.IrreducibilityCertificate)
@@ -97,9 +97,9 @@ inductive IrredWitness where
   | primeConst
   /-- The polynomial is linear (dense size two) and primitive. -/
   | linear
-  /-- Single-prime route: the reduction mod `w.p` is irreducible. -/
+  /-- Single-prime method: the reduction mod `w.p` is irreducible. -/
   | modP (w : ModPWitness)
-  /-- Eisenstein route: `ZPoly.translate shift f` satisfies Eisenstein's
+  /-- Eisenstein method: `ZPoly.translate shift f` satisfies Eisenstein's
   criterion at the prime `q`. -/
   | eisenstein (q : Nat) (shift : Int)
 

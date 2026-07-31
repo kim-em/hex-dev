@@ -42,7 +42,7 @@ set_option backward.proofsInPublic true
 
 /-!
 This module implements the proved direct-coordinate BHKS candidate recovery
-used by the CLD lattice tier.
+used by the CLD lattice method.
 -/
 namespace Hex
 
@@ -147,16 +147,16 @@ private def BhksRecoveryResult.isLatticeFailure : BhksRecoveryResult → Bool
   | .productMismatch _ => false
 
 /--
-Run the fixed-precision BHKS recovery pipeline.
+Run the fixed-precision BHKS recovery computation.
 
 This executable glue builds the CLD lattice for the lifted factors, runs LLL
 plus the Gram-Schmidt cut, extracts BHKS Lemma 3.3 equivalence-class
 indicators by RREF, reconstructs every indicated candidate by centred lifting,
 and accepts only when the verified candidates multiply back to `f`.
 
-The lattice tier runs the fused `bhksRecoverClassifiedWithAllOnes` instead,
+The lattice method runs the fused `bhksRecoverClassifiedWithAllOnes` instead,
 sharing one lattice build between the classification and the all-ones certificate;
-keep the two bodies in sync — `bhksRecoverClassifiedWithAllOnes_fst` fails to
+keep the two bodies in sync; `bhksRecoverClassifiedWithAllOnes_fst` fails to
 build if they drift.
 -/
 private def bhksRecoverClassified (f : ZPoly) (d : LiftData) : BhksRecoveryResult :=
@@ -177,17 +177,18 @@ private def bhksRecoverClassified (f : ZPoly) (d : LiftData) : BhksRecoveryResul
   else
     .degenerate
 
+/-- Return the factors recovered by the lattice computation when all checks succeed. -/
 def bhksRecover? (f : ZPoly) (d : LiftData) : Option (Array ZPoly) :=
   (bhksRecoverClassified f d).toOption
 
 /--
-Fused BHKS recovery step: run the CLD lattice / LLL / RREF-indicator pipeline
+Fused BHKS recovery step: run the CLD lattice / LLL / RREF-indicator computation
 **once** and return both the `bhksRecoverClassified` classification and the
 single-all-ones partition flag.
 
-The lattice tier's `.degenerate` arm needs the all-ones flag to certify
+The lattice method's `.degenerate` arm needs the all-ones flag to certify
 irreducibility, but recomputing it through `bhksSingleAllOnesPartition` rebuilds
-the whole Hensel-lift/CLD-lattice/LLL/indicator pipeline that the classifier
+the whole Hensel-lift/CLD-lattice/LLL/indicator computation that the classifier
 already ran, adding roughly 1.5–2× to the step that dominates irreducible
 inputs. This
 def shares that pass: `bhksRecoverClassifiedWithAllOnes_fst` pins `.1` to

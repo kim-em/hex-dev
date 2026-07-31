@@ -172,8 +172,8 @@ theorem liftedSubsetOfClass_mem
 def recoveredClassFactor
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (members : List Nat) : Hex.ZPoly :=
-  scaledRecombinationCandidate core (Hex.ZPoly.coreLiftData core B data)
-    (liftedSubsetOfClass (Hex.ZPoly.coreLiftData core B data) members)
+  scaledRecombinationCandidate core (Hex.ZPoly.directLiftData core B data)
+    (liftedSubsetOfClass (Hex.ZPoly.directLiftData core B data) members)
 
 /-- Recovered factors in canonical signature-class order. -/
 noncomputable def recoveredClassFactors
@@ -186,11 +186,14 @@ noncomputable def recoveredClassFactors
 structure RecoveredClassCertificate
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (members : List Nat) where
+  /-- The modular support represented by the signature class. -/
   support : ModPFactorSubset data
+  /-- The recovered irreducible factor and its direct-support proof. -/
   certificate : DirectFactorCertificate core B data support
+  /-- The direct lifted support is exactly the selected signature class. -/
   support_eq :
     directLiftedSupport core B data support =
-      liftedSubsetOfClass (Hex.ZPoly.coreLiftData core B data) members
+      liftedSubsetOfClass (Hex.ZPoly.directLiftData core B data) members
 
 /-- Select the unique direct factor certificate carried by a canonical class. -/
 noncomputable def recoveredClassCertificate
@@ -204,7 +207,7 @@ noncomputable def recoveredClassCertificate
     (hmem : members ∈
       supportPartitionByMinColumn (directTrueSupports core B data)) :
     RecoveredClassCertificate core B data members := by
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   have hcarrier :
       (↑(liftedSubsetOfClass d members) : Set (LiftedFactorIndex d)) ∈
         directTrueSupports core B data :=
@@ -241,7 +244,7 @@ theorem recoveredClassFactor_eq
     R.certificate.candidate_eq
 
 /-- Canonical recovered class factors multiply back to the primitive,
-positive-leading square-free core. -/
+positive-leading primitive square-free part. -/
 theorem recoveredClassFactors_polyProduct
     {core : Hex.ZPoly} {B : Nat} {data : Hex.PrimeChoiceData}
     (hcore_ne : core ≠ 0)
@@ -327,8 +330,8 @@ theorem recoveredClassFactors_polyProduct
         (Finset.subset_univ _) R₂.certificate.represented
         (Associated.of_eq hfactor_eq)
     have hsub :
-        liftedSubsetOfClass (Hex.ZPoly.coreLiftData core B data) m₁ =
-          liftedSubsetOfClass (Hex.ZPoly.coreLiftData core B data) m₂ := by
+        liftedSubsetOfClass (Hex.ZPoly.directLiftData core B data) m₁ =
+          liftedSubsetOfClass (Hex.ZPoly.directLiftData core B data) m₂ := by
       rw [← R₁.support_eq, ← R₂.support_eq, hsupport]
     unfold classes supportPartitionByMinColumn at hm₁ hm₂
     rw [List.mem_map] at hm₁ hm₂
@@ -339,8 +342,8 @@ theorem recoveredClassFactors_polyProduct
     have hmem₁ : rep₁ ∈ supportClassMembers supports rep₂ := by
       have hi : (⟨rep₁,
           supportRepresentativeColumns_lt supports hrep₁'⟩ :
-          LiftedFactorIndex (Hex.ZPoly.coreLiftData core B data)) ∈
-          liftedSubsetOfClass (Hex.ZPoly.coreLiftData core B data)
+          LiftedFactorIndex (Hex.ZPoly.directLiftData core B data)) ∈
+          liftedSubsetOfClass (Hex.ZPoly.directLiftData core B data)
             (supportClassMembers supports rep₁) := by
         simp only [mem_liftedSubsetOfClass]
         exact supportClassMembers_rep_mem supports hrep₁'
@@ -349,8 +352,8 @@ theorem recoveredClassFactors_polyProduct
     have hmem₂ : rep₂ ∈ supportClassMembers supports rep₁ := by
       have hi : (⟨rep₂,
           supportRepresentativeColumns_lt supports hrep₂'⟩ :
-          LiftedFactorIndex (Hex.ZPoly.coreLiftData core B data)) ∈
-          liftedSubsetOfClass (Hex.ZPoly.coreLiftData core B data)
+          LiftedFactorIndex (Hex.ZPoly.directLiftData core B data)) ∈
+          liftedSubsetOfClass (Hex.ZPoly.directLiftData core B data)
             (supportClassMembers supports rep₂) := by
         simp only [mem_liftedSubsetOfClass]
         exact supportClassMembers_rep_mem supports hrep₂'
@@ -469,32 +472,32 @@ theorem bhksIndicatorCandidates_eq_some_of_span_eq
           ∀ i, i ∈ U → i ∈ V → U = V)
     (hrows : 1 ≤
       (Hex.bhksLatticeBasis core
-        (Hex.ZPoly.coreLiftData core B data).p
-        (Hex.ZPoly.coreLiftData core B data).k
-        (Hex.ZPoly.coreLiftData core B data).liftedFactors).factorCount +
+        (Hex.ZPoly.directLiftData core B data).p
+        (Hex.ZPoly.directLiftData core B data).k
+        (Hex.ZPoly.directLiftData core B data).liftedFactors).factorCount +
       (Hex.bhksLatticeBasis core
-        (Hex.ZPoly.coreLiftData core B data).p
-        (Hex.ZPoly.coreLiftData core B data).k
-        (Hex.ZPoly.coreLiftData core B data).liftedFactors).coeffWidth)
+        (Hex.ZPoly.directLiftData core B data).p
+        (Hex.ZPoly.directLiftData core B data).k
+        (Hex.ZPoly.directLiftData core B data).liftedFactors).coeffWidth)
     (hspan :
       projectedRowSpanInt
           (Hex.bhksProjectedRows
             (Hex.bhksLatticeBasis core
-              (Hex.ZPoly.coreLiftData core B data).p
-              (Hex.ZPoly.coreLiftData core B data).k
-              (Hex.ZPoly.coreLiftData core B data).liftedFactors) hrows) =
+              (Hex.ZPoly.directLiftData core B data).p
+              (Hex.ZPoly.directLiftData core B data).k
+              (Hex.ZPoly.directLiftData core B data).liftedFactors) hrows) =
         trueSupportSpanInt (directTrueSupports core B data)) :
     Hex.bhksIndicatorCandidates? core
-        (Hex.ZPoly.coreLiftData core B data)
+        (Hex.ZPoly.directLiftData core B data)
         (Hex.bhksEquivalenceClassIndicators
           (Hex.bhksProjectedRows
             (Hex.bhksLatticeBasis core
-              (Hex.ZPoly.coreLiftData core B data).p
-              (Hex.ZPoly.coreLiftData core B data).k
-              (Hex.ZPoly.coreLiftData core B data).liftedFactors) hrows)) =
+              (Hex.ZPoly.directLiftData core B data).p
+              (Hex.ZPoly.directLiftData core B data).k
+              (Hex.ZPoly.directLiftData core B data).liftedFactors) hrows)) =
       some (recoveredClassFactors core B data) := by
   classical
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let supports := directTrueSupports core B data
   let classes := supportPartitionByMinColumn supports
   let projected :=
@@ -657,27 +660,27 @@ theorem bhksRecover_eq_some_of_span_eq
           (HexPolyZMathlib.toPolynomial core)).card)
     (hrows : 1 ≤
       (Hex.bhksLatticeBasis core
-        (Hex.ZPoly.coreLiftData core B data).p
-        (Hex.ZPoly.coreLiftData core B data).k
-        (Hex.ZPoly.coreLiftData core B data).liftedFactors).factorCount +
+        (Hex.ZPoly.directLiftData core B data).p
+        (Hex.ZPoly.directLiftData core B data).k
+        (Hex.ZPoly.directLiftData core B data).liftedFactors).factorCount +
       (Hex.bhksLatticeBasis core
-        (Hex.ZPoly.coreLiftData core B data).p
-        (Hex.ZPoly.coreLiftData core B data).k
-        (Hex.ZPoly.coreLiftData core B data).liftedFactors).coeffWidth)
+        (Hex.ZPoly.directLiftData core B data).p
+        (Hex.ZPoly.directLiftData core B data).k
+        (Hex.ZPoly.directLiftData core B data).liftedFactors).coeffWidth)
     (hspan :
       projectedRowSpanInt
           (Hex.bhksProjectedRows
             (Hex.bhksLatticeBasis core
-              (Hex.ZPoly.coreLiftData core B data).p
-              (Hex.ZPoly.coreLiftData core B data).k
-              (Hex.ZPoly.coreLiftData core B data).liftedFactors) hrows) =
+              (Hex.ZPoly.directLiftData core B data).p
+              (Hex.ZPoly.directLiftData core B data).k
+              (Hex.ZPoly.directLiftData core B data).liftedFactors) hrows) =
         trueSupportSpanInt (directTrueSupports core B data))
     (hclasses : 2 ≤
       (supportPartitionByMinColumn
         (directTrueSupports core B data)).length) :
-    Hex.bhksRecover? core (Hex.ZPoly.coreLiftData core B data) =
+    Hex.bhksRecover? core (Hex.ZPoly.directLiftData core B data) =
       some (recoveredClassFactors core B data) := by
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let L := Hex.bhksLatticeBasis core d.p d.k d.liftedFactors
   let projected := Hex.bhksProjectedRows L hrows
   let supports := directTrueSupports core B data
@@ -721,9 +724,9 @@ theorem bhksRecover_eq_some_of_span_eq
       (projectedRows_isEmpty_eq_false_of_span_eq
         (Hex.bhksProjectedRows
           (Hex.bhksLatticeBasis core
-            (Hex.ZPoly.coreLiftData core B data).p
-            (Hex.ZPoly.coreLiftData core B data).k
-            (Hex.ZPoly.coreLiftData core B data).liftedFactors) hrows)
+            (Hex.ZPoly.directLiftData core B data).p
+            (Hex.ZPoly.directLiftData core B data).k
+            (Hex.ZPoly.directLiftData core B data).liftedFactors) hrows)
         (directTrueSupports core B data) hspan hcover hclasses_ne)
   have hind_not_one : (indicators.size == 1) = false := by
     simp only [beq_eq_false_iff_ne]
@@ -760,28 +763,28 @@ theorem bhksSingleAllOnesPartition_eq_true_of_span_eq
           ∀ i, i ∈ U → i ∈ V → U = V)
     (hrows : 1 ≤
       (Hex.bhksLatticeBasis core
-        (Hex.ZPoly.coreLiftData core B data).p
-        (Hex.ZPoly.coreLiftData core B data).k
-        (Hex.ZPoly.coreLiftData core B data).liftedFactors).factorCount +
+        (Hex.ZPoly.directLiftData core B data).p
+        (Hex.ZPoly.directLiftData core B data).k
+        (Hex.ZPoly.directLiftData core B data).liftedFactors).factorCount +
       (Hex.bhksLatticeBasis core
-        (Hex.ZPoly.coreLiftData core B data).p
-        (Hex.ZPoly.coreLiftData core B data).k
-        (Hex.ZPoly.coreLiftData core B data).liftedFactors).coeffWidth)
+        (Hex.ZPoly.directLiftData core B data).p
+        (Hex.ZPoly.directLiftData core B data).k
+        (Hex.ZPoly.directLiftData core B data).liftedFactors).coeffWidth)
     (hspan :
       projectedRowSpanInt
           (Hex.bhksProjectedRows
             (Hex.bhksLatticeBasis core
-              (Hex.ZPoly.coreLiftData core B data).p
-              (Hex.ZPoly.coreLiftData core B data).k
-              (Hex.ZPoly.coreLiftData core B data).liftedFactors) hrows) =
+              (Hex.ZPoly.directLiftData core B data).p
+              (Hex.ZPoly.directLiftData core B data).k
+              (Hex.ZPoly.directLiftData core B data).liftedFactors) hrows) =
         trueSupportSpanInt (directTrueSupports core B data))
     (hclasses :
       (supportPartitionByMinColumn
         (directTrueSupports core B data)).length = 1) :
     Hex.bhksSingleAllOnesPartition core
-      (Hex.ZPoly.coreLiftData core B data) = true := by
+      (Hex.ZPoly.directLiftData core B data) = true := by
   classical
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let L := Hex.bhksLatticeBasis core d.p d.k d.liftedFactors
   let projected := Hex.bhksProjectedRows L hrows
   let supports := directTrueSupports core B data
@@ -881,9 +884,9 @@ theorem bhksSingleAllOnesPartition_eq_true_of_span_eq
       (projectedRows_isEmpty_eq_false_of_span_eq
         (Hex.bhksProjectedRows
           (Hex.bhksLatticeBasis core
-            (Hex.ZPoly.coreLiftData core B data).p
-            (Hex.ZPoly.coreLiftData core B data).k
-            (Hex.ZPoly.coreLiftData core B data).liftedFactors) hrows)
+            (Hex.ZPoly.directLiftData core B data).p
+            (Hex.ZPoly.directLiftData core B data).k
+            (Hex.ZPoly.directLiftData core B data).liftedFactors) hrows)
         (directTrueSupports core B data) hspan hcover hclasses_ne)
   rw [Hex.bhksSingleAllOnesPartition, dif_pos hrows]
   change (!indicators.isEmpty && !projected.projectedRows.isEmpty &&

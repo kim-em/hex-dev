@@ -19,7 +19,9 @@ namespace Hex
 
 /-- Result of direct classical factorization. -/
 inductive ClassicalOutcome where
+  /-- Direct recombination produced a complete factor array. -/
   | factored (factors : Array ZPoly) (stats : ClassicalStats)
+  /-- Direct recombination stopped for the recorded resource reason. -/
   | declined (reason : DeclineReason) (stats : ClassicalStats)
 deriving DecidableEq
 
@@ -35,7 +37,7 @@ def validDirectFactors (core : ZPoly) (factors : List ZPoly) : Bool :=
     factors.all (fun g => decide (0 < g.degree?.getD 0))
 
 /-- One lift and one greedy direct recombination search from an existing prime
-plan.  Keeping planning outside this function lets the total dispatcher reuse
+plan.  Keeping planning outside this function lets the total selector reuse
 the plan if the bounded search declines. -/
 @[expose]
 def factorDirectCoreOfPlan

@@ -6,9 +6,9 @@ Authors: Kim Morrison
 
 module
 
-public meta import HexModArith.Basic
+public meta import HexModArith.Residue
 public meta import HexModArith.WordMod
-public import HexModArith.Basic
+public import HexModArith.Residue
 public import HexModArith.WordMod
 
 public section
@@ -18,7 +18,7 @@ Executable `#guard` / `#eval` checks for the default `ZMod64` extern paths.
 
 Because `Hex.ZMod64.mul`, `pow`, and `inv` are extern-backed, these checks live
 in a separate module so `#eval` runs against the compiled native
-implementations from `HexModArith.Basic`.
+implementations from `HexModArith.Residue`.
 -/
 namespace Hex
 namespace ZMod64

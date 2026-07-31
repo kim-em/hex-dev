@@ -108,7 +108,7 @@ private theorem fold_mulCoeff_outer_eq_diagonal {S : Type _}
       exact ih (acc + diagonalMulCoeffTerm p q n i)
 
 /-- The schoolbook coefficient `mulCoeffSum p q n` equals the diagonal sum
-`Σ_{i < p.size} diagonalMulCoeffTerm p q n i`; the bridge from the executable
+`Σ_{i < p.size} diagonalMulCoeffTerm p q n i`; the correspondence from the executable
 loop order to the convolution form used in the ring-law proofs. -/
 theorem mulCoeffSum_eq_diagonal {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
@@ -248,7 +248,7 @@ private theorem range_succ_reverse_eq_map_sub (n : Nat) :
 /-- Under the reflection `i ↦ n - i` (for `i < n + 1`), the diagonal term of
 `p, q` becomes that of `q, p`:
 `diagonalMulCoeffTerm p q n (n - i) = diagonalMulCoeffTerm q p n i`; the pointwise
-core of convolution commutativity. -/
+identity behind convolution commutativity. -/
 private theorem diagonalMulCoeffTerm_comm_reindex {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n i : Nat) (hi : i < n + 1) :
@@ -1265,7 +1265,7 @@ cancel multiplications by the unit polynomial through it. -/
   exact fold_diagonal_one_right p n
 
 /-- `DensePoly S` is a multiplicative monoid: these `Std` instances let the
-shared `List.foldl_mul_*` algebra (and core's {name}`List.foldl_assoc`) apply to
+shared `List.foldl_mul_*` algebra (and the standard {name}`List.foldl_assoc`) apply to
 fold-products of polynomials such as `FpPoly`/`ZPoly`. -/
 instance instAssociativeMulDensePoly {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S] :
     Std.Associative (· * · : DensePoly S → DensePoly S → DensePoly S) :=

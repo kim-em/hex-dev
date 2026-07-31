@@ -20,9 +20,9 @@ public import HexBerlekampZassenhaus.Factorization
 public section
 
 /-!
-The `Hex.ZPoly` provider for the `factor_poly`/`irreducibility` elaborators:
+The `Hex.ZPoly` extension for the `factor_poly`/`irreducibility` elaborators:
 importing this library upgrades the tactics (declared in
-`HexBerlekamp.PolynomialTactic` / probed by name, see `providerNames`) to handle
+`HexBerlekamp.PolynomialTactic` / checked by name, see `extensionNames`) to handle
 integer polynomials.
 
 The compiled Berlekamp–Zassenhaus factorizer runs at elaboration time as
@@ -33,8 +33,8 @@ only kernel checks on reified literal data. Factors that are irreducible
 over `ℤ` but reducible mod every candidate prime (balanced factors) fall to
 the Eisenstein-after-shift search (which covers e.g. `X⁴+1` at shift `1`,
 prime `2`); when that also fails (e.g. Swinnerton-Dyer polynomials, which
-are not shift-Eisenstein), this provider *declines* with a diagnostic, so
-the Mathlib bridge provider (multi-prime degree-obstruction certificates)
+are not shift-Eisenstein), this extension *declines* with a diagnostic, so
+the Mathlib correspondence extension (multi-prime degree-obstruction certificates)
 can take over when imported, and the final error explains the gap
 otherwise.
 -/
@@ -42,7 +42,7 @@ otherwise.
 namespace HexBerlekampZassenhaus.FactorTactic
 
 open Lean Meta Elab
-open Hex.FactorTactic (ProviderResult)
+open Hex.FactorTactic (ExtensionResult)
 
 private meta unsafe def evalZPolyUnsafe (e : Expr) :
     MetaM (Except String Hex.ZPoly) :=
@@ -70,7 +70,7 @@ meta def witnessPrimes : List Nat :=
   (List.range 512).filter Hex.Nat.isPrimeTrial
 
 /-- Search for a single-prime modular witness for `q` (already known
-non-constant, non-linear). Returns `none` when no candidate prime works —
+non-constant, non-linear). Returns `none` when no candidate prime works;
 either `q` is reducible, or it is balanced at every candidate prime. -/
 meta def searchModPWitness (q : Hex.ZPoly) : Option Hex.ZPoly.ModPWitness := Id.run do
   for p in witnessPrimes do
@@ -184,8 +184,8 @@ meta def balancedDecline (tactic : String) (q : Hex.ZPoly) : MetaM MessageData :
       \nhas no single-prime modular witness among the candidate primes \
       (its modular factorizations are balanced, e.g. Swinnerton-Dyer \
       polynomials) and is not Eisenstein at any small shift; the Mathlib \
-      bridge's multi-prime degree-obstruction certificates may certify it \
-      — import HexBerlekampZassenhausMathlib."
+      integration's multi-prime degree-obstruction certificates may certify it; \
+      import HexBerlekampZassenhausMathlib."
 
 /-- Checks that the user's term is definitionally transparent down to its
 evaluated literal. -/
@@ -204,7 +204,7 @@ meta def checkTransparent (tactic : String) (f : Hex.ZPoly) (fE : Expr) :
 `IrredWitness`, and emit a reified `Hex.ZPoly.Factored`. Declines when some
 factor has no free-layer witness. -/
 meta def factorPolyZPoly (zeroE decE fE : Expr) :
-    Term.TermElabM ProviderResult := do
+    Term.TermElabM ExtensionResult := do
   let f ← evalZPoly "factor_poly" fE
   discard <| checkTransparent "factor_poly" f fE
   let φ := Hex.ZPoly.factorize f
@@ -283,14 +283,14 @@ meta def irredProof (fE : Expr) (f : Hex.ZPoly) :
             irreducible factors (with multiplicity), scalar {φ.scalar}"
 
 /-- The `irreducibility` term arm. -/
-meta def irreducibilityZPoly (fE : Expr) : Term.TermElabM ProviderResult := do
+meta def irreducibilityZPoly (fE : Expr) : Term.TermElabM ExtensionResult := do
   let f ← evalZPoly "irreducibility" fE
   match ← irredProof fE f with
   | .ok proof => return .success proof
   | .error why => return .declined why
 
 /-- Goal mode: close `Hex.ZPoly.Irreducible e`. -/
-meta def goalIrredZPoly (goal : MVarId) : Tactic.TacticM ProviderResult := do
+meta def goalIrredZPoly (goal : MVarId) : Tactic.TacticM ExtensionResult := do
   goal.withContext do
     let tgt ← instantiateMVars (← goal.getType)
     unless tgt.getAppFn.isConstOf ``Hex.ZPoly.Irreducible &&
@@ -314,11 +314,11 @@ namespace HexBerlekampZassenhaus.FactorTactic
 
 open Lean Elab
 
-/-- The `Hex.ZPoly` provider, probed by name from
-`Hex.FactorTactic.providerNames` — renaming it severs the hook (the free and
-bridge test suites are the liveness canaries). -/
-public meta def provider : Hex.FactorTactic.Provider where
-  version := Hex.FactorTactic.Provider.abiVersion
+/-- The `Hex.ZPoly` extension, checked by name from
+`Hex.FactorTactic.extensionNames`; the free and integration regression tests
+fail if a rename makes the extension undiscoverable. -/
+public meta def extension : Hex.FactorTactic.Extension where
+  version := Hex.FactorTactic.Extension.abiVersion
   factorPoly? := fun _stx pE ty _expectedType? => do
     match ← Hex.FactorTactic.classify ty with
     | .zpoly _ zeroE decE => factorPolyZPoly zeroE decE pE

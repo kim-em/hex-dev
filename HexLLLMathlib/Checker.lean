@@ -16,7 +16,7 @@ public section
 
 /-!
 Soundness of the executable reducedness checkers: acceptance of the exact
-`lllReduced`, the dispatched `lllReducedCheck`, and the bundled
+`lllReduced`, the selected `lllReducedCheck`, and the bundled
 `certCheck` entails the rational `Hex.isLLLReduced` predicate, independence,
 and the same-lattice property. The interval branch consumes
 `lllReducedInterval_sound`.
@@ -27,10 +27,10 @@ namespace HexLLLMathlib
 /-! # Soundness of the integer reducedness checker
 
 `Hex.lllReduced b δ η` accepts iff three integer-only inequalities hold over
-`Hex.GramSchmidt.Int.data b`. This section bridges those integer inequalities
+`Hex.GramSchmidt.Int.data b`. This section correspondences those integer inequalities
 to the rational predicate `Hex.isLLLReduced b δ η` and to `b.independent`, the
 last theorem (`Hex.lllReduced_sound`) feeding the combined
-`certCheck_sound` theorem for certified external dispatch. -/
+`certCheck_sound` theorem for certified external selection. -/
 
 /-- Independence from the executable checker's `d`-positivity pass.
 
@@ -61,7 +61,7 @@ private theorem independent_of_dPos
 /-- Size-reduced contribution: from one integer `|ν| · η.den ≤ η.num · d[j+1]`
 inequality plus `0 < d[j+1]`, derive `μ² ≤ η²` at the same `(i, j)` slot.
 
-The bridge is `scaledCoeffs_eq`, which equates `(ν[i][j] : Rat)` with
+The correspondence is `scaledCoeffs_eq`, which equates `(ν[i][j] : Rat)` with
 `d[j+1] · μ[i][j]`. Once `d[j+1] > 0` and `η.den > 0` are pinned, division by
 the positive product `d[j+1] · η.den` turns the integer inequality into
 `|μ| ≤ η`, hence (since `η ≥ 0` follows from the same inequality) `μ² ≤ η²`. -/
@@ -183,7 +183,7 @@ Lovász condition at the same slot.
 
 Same algebraic identity as `lovasz_check_iff_isLLLReduced_pair`, but stated
 directly on `(GramSchmidt.Int.data b).d / ν` rather than going through an
-`LLLState`. Bridges: `gramDetVec_eq_gramDet`, `scaledCoeffs_eq`, and
+`LLLState`. Correspondences: `gramDetVec_eq_gramDet`, `scaledCoeffs_eq`, and
 `basis_normSq`. -/
 private theorem lovasz_of_intCheck
     {n m : Nat} (b : Hex.Matrix Int n m) (δ _η : Rat) {i : Nat}
@@ -361,7 +361,7 @@ private theorem lovasz_of_intCheck
 both `b.independent` and the rational `isLLLReduced b δ η` predicate.
 
 This is one of the two soundness ingredients feeding the combined
-`certCheck_sound` of `hex-lll` §"Certified external dispatch". The
+`certCheck_sound` of `hex-lll` §"Certified external selection". The
 companion same-lattice piece is `Hex.Matrix.sameLatticeCert_sound`. -/
 theorem lllReduced_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
     Hex.lllReduced b δ η = true →
@@ -409,11 +409,11 @@ theorem lllReduced_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
     intro i hi
     exact lovasz_of_intCheck b δ η hi hindep (hlovasz i hi)
 
-/-- Soundness of the dispatched reducedness clause `Hex.lllReducedCheck`:
-whichever side decided — the fixed-precision interval checker
+/-- Soundness of the selected reducedness clause `Hex.lllReducedCheck`:
+whichever side decided; the fixed-precision interval checker
 (`HexLLLMathlib.lllReducedInterval_sound`), the exact integer checker
 chosen by the size predictor, or the exact fallback after interval
-indecision (both via `lllReduced_sound` above) — acceptance entails
+indecision (both via `lllReduced_sound` above); acceptance entails
 the rational `isLLLReduced` predicate and independence. The predictor
 `Hex.Internal.intervalWins` only selects between sound checkers, so no hypothesis
 about it is needed. -/
@@ -432,7 +432,7 @@ theorem lllReducedCheck_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
   · rw [if_neg (by simpa using hwin)] at hcheck
     exact lllReduced_sound b δ η hcheck
 
-/-- Soundness of the certified-dispatch checker `Hex.certCheck`: an accepted
+/-- Soundness of the certified-selection checker `Hex.certCheck`: an accepted
 certificate `(B', U, V)` proves that `B` and `B'` generate the same integer row
 lattice, that `B'` is independent, and that `B'` is `(δ, η)`-LLL-reduced.
 
@@ -445,7 +445,7 @@ Composes the two soundness ingredients:
 No validity hypothesis on `η`: the `1/2 ≤ η`, `η² < δ` conditions for the LLL
 short-vector bound live on `short_vector_bound_of_size_bound`, not on the
 checker. This is the single trusted soundness theorem feeding the
-certified-dispatch correctness of `lll`. -/
+certified-selection correctness of `lll`. -/
 theorem certCheck_sound {B B' : Hex.Matrix Int n m} {U V : Hex.Matrix Int n n}
     {δ η : Rat} :
     Hex.certCheck B B' U V δ η = true →

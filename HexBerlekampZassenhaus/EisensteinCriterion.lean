@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexArith.Nat.Prime
-public import HexBerlekampZassenhaus.IrreducibleCore
+public import HexBerlekampZassenhaus.FactorIrreducibility
 
 public section
 set_option backward.proofsInPublic true
@@ -612,7 +612,7 @@ private theorem int_dvd_mul_right {d x : Int} (h : d ∣ x) (y : Int) :
   rcases h with ⟨u, hu⟩
   exact ⟨u * y, by rw [hu, Int.mul_assoc]⟩
 
-/-- Euclid's lemma over `Int` for the elementary prime predicate, routed
+/-- Euclid's lemma over `Int` for the elementary prime predicate, handled
 through `natAbs` and the `Nat`-level `Hex.Nat.Prime.dvd_mul`. -/
 private theorem prime_int_dvd_mul {q : Nat} (hq : Hex.Nat.Prime q) {x y : Int}
     (h : (q : Int) ∣ x * y) : (q : Int) ∣ x ∨ (q : Int) ∣ y := by

@@ -23,7 +23,7 @@ from `HexPoly`. -/
 abbrev ZPoly := DensePoly Int
 
 /-- `ZPoly` is a multiplicative monoid for `Std`, so the shared
-`List.foldl_mul_*` algebra and core's {name}`List.foldl_assoc` apply to fold-products
+`List.foldl_mul_*` algebra and the standard {name}`List.foldl_assoc` apply to fold-products
 of integer polynomials. -/
 instance : Std.Associative (· * · : ZPoly → ZPoly → ZPoly) :=
   ⟨DensePoly.mul_assoc_poly⟩
@@ -602,8 +602,11 @@ also converted to a primitive integer representative. The proof layer relates
 these representatives back to the primitive input up to a rational unit.
 -/
 structure PrimitiveSquareFreeDecomposition where
+  /-- The input divided by its content and normalized to positive leading coefficient. -/
   primitive : ZPoly
+  /-- A primitive representative of the product of the distinct irreducible factors. -/
   squareFreeCore : ZPoly
+  /-- A primitive representative of the gcd of the primitive polynomial and its derivative. -/
   repeatedPart : ZPoly
 
 /-- Square-free over `Rat[x]`, up to the executable rational gcd's unit factor. -/
@@ -619,7 +622,7 @@ instance (f : ZPoly) : Decidable (SquareFreeRat f) :=
 
 /--
 Compute the primitive square-free normalization data needed by the integer
-factorization pipeline.
+factorization computation.
 -/
 @[expose]
 def primitiveSquareFreeDecomposition (f : ZPoly) : PrimitiveSquareFreeDecomposition :=
@@ -637,7 +640,7 @@ def primitiveSquareFreeDecomposition (f : ZPoly) : PrimitiveSquareFreeDecomposit
         squareFreeCore := ratPolyPrimitivePart (ratPrimitive / repeatedRat)
         repeatedPart := ratPolyPrimitivePart repeatedRat }
 
-/-- The square-free core projection of `primitiveSquareFreeDecomposition`. -/
+/-- The square-free part projection of `primitiveSquareFreeDecomposition`. -/
 @[expose]
 def squareFreeCore (f : ZPoly) : ZPoly :=
   (primitiveSquareFreeDecomposition f).squareFreeCore

@@ -34,7 +34,7 @@ import all HexArith.Nat.ModArith
 import all HexArith.Nat.Pow
 import all HexArith.Nat.Prime
 import all HexArith.UInt64.Wide
-import all HexModArith.Basic
+import all HexModArith.Residue
 import all HexModArith.HotLoop
 import all HexModArith.Prime
 import all HexModArith.Ring
@@ -103,7 +103,7 @@ import all HexBerlekampZassenhaus.Factorization
 import all HexBerlekampZassenhaus.FactorTactic
 import all HexBerlekampZassenhaus.FactorTacticTests
 import all HexBerlekampZassenhaus.Factored
-import all HexBerlekampZassenhaus.IrreducibleCore
+import all HexBerlekampZassenhaus.FactorIrreducibility
 import all HexBerlekampZassenhaus.IrreducibleDecide
 import all HexBerlekampZassenhaus.Lattice
 import all HexBerlekampZassenhaus.PrimeSelection
@@ -165,11 +165,11 @@ open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayD
 public section
 
 /-!
-End-to-end tests for the `Polynomial ℤ` / strong `Hex.ZPoly` provider of
+End-to-end tests for the `Polynomial ℤ` / strong `Hex.ZPoly` extension of
 `factor_poly`/`irreducibility`, including the goal-mode subsumption of the
 deleted `irreducible_cert` tactic (its generator guard polynomials from
 the compiled generator), the certificate reification round-trips, the
-decline→multi-prime handover on an A4 quartic the free provider cannot
+decline→multi-prime handover on an A4 quartic the free extension cannot
 certify, the free-layer Eisenstein handover on `x⁴ + 1`, and the decline
 diagnostic for balanced inputs outside every certificate language.
 -/
@@ -286,7 +286,7 @@ info: 'HexBerlekampZassenhausMathlib.FactorPolyTests.cubicInert_irreducible' dep
 #guard_msgs in
 #print axioms cubicInert_irreducible
 
-/-! # `Polynomial ℤ` inputs (bridge-only: the provider-liveness canary) -/
+/-! # `Polynomial ℤ` inputs (integration-only registration test) -/
 
 theorem sqrt2_irred : Irreducible ((X : Polynomial ℤ) ^ 2 - 2) :=
   irreducibility ((X : Polynomial ℤ) ^ 2 - 2)
@@ -328,8 +328,8 @@ example : True := by
     factor_poly (X ^ 2 - 2 : Polynomial ℤ)
   trivial
 
--- Tactic form: Mathlib providers expose the same four local names as the
--- executable providers.
+-- Tactic form: Mathlib extensions expose the same four local names as the
+-- executable extensions.
 example : True := by
   factor_poly (X ^ 2 - 2 : Polynomial ℤ)
   have : factors.length = 1 := rfl
@@ -341,10 +341,10 @@ example : True := by
 
 `x⁴ + 8x + 12` has Galois group `A₄`: no 4-cycle, so it is reducible mod
 every prime and `searchWitness` finds no single-prime witness; it is not
-Eisenstein at any small shift either, so the free provider declines. Its
+Eisenstein at any small shift either, so the free extension declines. Its
 mod-p degree splittings `{1,3}` and `{2,2}` jointly obstruct every proper
 factor degree, so `certifyIrreducible?` produces a multi-prime certificate
-and this provider certifies it. -/
+and this extension certifies it. -/
 
 /-- `x⁴ + 8x + 12`, irreducible with Galois group `A₄`: no free-layer
 witness exists, only the multi-prime degree obstruction. -/
@@ -387,7 +387,7 @@ example : Irreducible (X ^ 4 + Polynomial.C 8 * X + 12 : Polynomial ℤ) := by
 
 /-! # Reducible and degenerate inputs: targeted errors -/
 
-/-- `x² - 1`, reducible: the provider reports the factor count instead of
+/-- `x² - 1`, reducible: the extension reports the factor count instead of
 handing the kernel a bogus certificate. -/
 def reducibleQuad : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[-1, 0, 1]
 
@@ -420,13 +420,13 @@ is a unit (±1), not irreducible
 #guard_msgs in
 example := irreducibility (1 : Polynomial ℤ)
 
-/-! # The Eisenstein handover: `x⁴ + 1` never reaches this provider
+/-! # The Eisenstein handover: `x⁴ + 1` never reaches this extension
 
 `x⁴ + 1` is reducible mod every prime *and* a degree-2 factor sum is
 available in every mod-p splitting (`{1,1,1,1}` or `{2,2}`), so neither the
 single-prime witness nor the multi-prime degree obstruction applies. The
 free layer's Eisenstein-after-shift search certifies it (shift `1`,
-prime `2`) before either bridge certificate language is consulted. -/
+prime `2`) before either correspondence certificate language is consulted. -/
 
 def x4p1 : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[1, 0, 0, 0, 1]
 
@@ -451,11 +451,11 @@ fails as well: no kernel-checkable certificate exists in the tree. -/
 /--
 error: irreducibility: unsupported polynomial type
   Hex.DensePoly ℤ
-Supported without further imports: Hex.FpPoly p (prime p). Importing HexBerlekampZassenhaus adds Hex.ZPoly; the Mathlib bridge libraries add Polynomial (ZMod q) and Polynomial ℤ.
+Supported without further imports: Hex.FpPoly p (prime p). Importing HexBerlekampZassenhaus adds Hex.ZPoly; the Mathlib integration libraries add Polynomial (ZMod q) and Polynomial ℤ.
 
 irreducibility: the irreducible factor
   Hex.DensePoly.ofCoeffs #[1, 0, -10, 0, 1]
-has no single-prime modular witness among the candidate primes (its modular factorizations are balanced, e.g. Swinnerton-Dyer polynomials) and is not Eisenstein at any small shift; the Mathlib bridge's multi-prime degree-obstruction certificates may certify it — import HexBerlekampZassenhausMathlib.
+has no single-prime modular witness among the candidate primes (its modular factorizations are balanced, e.g. Swinnerton-Dyer polynomials) and is not Eisenstein at any small shift; the Mathlib integration's multi-prime degree-obstruction certificates may certify it; import HexBerlekampZassenhausMathlib.
 
 irreducibility: the irreducible factor
   Hex.DensePoly.ofCoeffs #[1, 0, -10, 0, 1]
@@ -470,8 +470,8 @@ The Swinnerton-Dyer quartic `x⁴ - 10x² + 1` is exactly the decline case
 above, so the bang forms exercise the genuine fallback path: the emitted
 proofs make the kernel re-run the factorizer (which is why this file
 carries the `import all` closure block). On inputs the certificate
-pipeline handles — including `x⁴ + 1`, now Eisenstein-certified at shift
-`1` — the bang forms are pass-throughs. -/
+computation handles; including `x⁴ + 1`, now Eisenstein-certified at shift
+`1`; the bang forms are pass-throughs. -/
 
 /-- `x⁴ + 1`, certified by the Eisenstein-after-shift witness, so a bang
 pass-through. -/

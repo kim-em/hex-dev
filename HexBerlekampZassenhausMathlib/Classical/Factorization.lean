@@ -71,15 +71,20 @@ structure DirectSearchInvariant
     (support : ModPFactorSubset data)
     (target : Hex.ZPoly)
     (localFactors :
-      List (Hex.DirectLiftedIndex (Hex.ZPoly.coreLiftData core B data))) :
+      List (Hex.DirectLiftedIndex (Hex.ZPoly.directLiftData core B data))) :
     Prop where
+  /-- The current target is nonzero. -/
   targetNe : target ≠ 0
+  /-- The current target divides the original square-free polynomial. -/
   targetDvdCore : target ∣ core
+  /-- The remaining modular indices partition the factors of the target. -/
   partition : DirectSupportPartition core B data support target
+  /-- No lifted-factor index occurs twice in the remaining list. -/
   localNodup : localFactors.Nodup
+  /-- The remaining list contains exactly the lifted indices of `support`. -/
   localSupport :
     localFactors.toFinset =
-      liftedSubsetOfModPSubset data (Hex.ZPoly.coreLiftData core B data)
+      liftedSubsetOfModPSubset data (Hex.ZPoly.directLiftData core B data)
         (henselLiftData_liftedFactors_size_eq
           (Hex.ZPoly.monicTarget core data.p
             (Hex.precisionForCoeffBound B data.p))
@@ -103,16 +108,16 @@ theorem findDirectHead_correct
     (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
       (Int.ofNat (data.p ^ Hex.precisionForCoeffBound B data.p)) = 1)
     {J : ModPFactorSubset data}
-    {head : Hex.DirectLiftedIndex (Hex.ZPoly.coreLiftData core B data)}
+    {head : Hex.DirectLiftedIndex (Hex.ZPoly.directLiftData core B data)}
     {tail : List
-      (Hex.DirectLiftedIndex (Hex.ZPoly.coreLiftData core B data))}
+      (Hex.DirectLiftedIndex (Hex.ZPoly.directLiftData core B data))}
     (state : DirectSearchInvariant core B data J target (head :: tail))
     {budget candidates : Nat} {completed : Array Nat}
-    {split : Hex.DirectSplit (Hex.ZPoly.coreLiftData core B data)}
+    {split : Hex.DirectSplit (Hex.ZPoly.directLiftData core B data)}
     {budget' candidates' : Nat} {completed' : Array Nat}
     (hfind :
       Hex.findDirectHead (Hex.DensePoly.leadingCoeff core) target
-          (Hex.ZPoly.coreLiftData core B data) head tail
+          (Hex.ZPoly.directLiftData core B data) head tail
           (List.range (tail.length + 1)) budget candidates completed =
         .found split budget' candidates' completed') :
     ∃ (factor : Hex.ZPoly) (S : ModPFactorSubset data),
@@ -125,14 +130,14 @@ theorem findDirectHead_correct
       split.quotient * factor = target ∧
       split.selected.toFinset =
         liftedSubsetOfModPSubset data
-          (Hex.ZPoly.coreLiftData core B data)
+          (Hex.ZPoly.directLiftData core B data)
           (henselLiftData_liftedFactors_size_eq
             (Hex.ZPoly.monicTarget core data.p
               (Hex.precisionForCoeffBound B data.p))
             (Hex.precisionForCoeffBound B data.p) data) S ∧
       split.remaining.toFinset =
         liftedSubsetOfModPSubset data
-          (Hex.ZPoly.coreLiftData core B data)
+          (Hex.ZPoly.directLiftData core B data)
           (henselLiftData_liftedFactors_size_eq
             (Hex.ZPoly.monicTarget core data.p
               (Hex.precisionForCoeffBound B data.p))
@@ -140,7 +145,7 @@ theorem findDirectHead_correct
           (J \ S) ∧
       split.remaining.Nodup := by
   classical
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let hsize : d.liftedFactors.size = data.factorsModP.size :=
     henselLiftData_liftedFactors_size_eq
       (Hex.ZPoly.monicTarget core data.p
@@ -373,12 +378,16 @@ theorem findDirectHead_correct
 /-- Semantic contract for a completed direct recursive search. -/
 structure DirectFactorListSpec
     (target : Hex.ZPoly) (factors : List Hex.ZPoly) : Prop where
+  /-- The returned factors multiply to the target polynomial. -/
   product : Array.polyProduct factors.toArray = target
+  /-- Every returned factor is irreducible. -/
   irreducible :
     ∀ factor ∈ factors,
       Irreducible (HexPolyZMathlib.toPolynomial factor)
+  /-- Every returned factor uses the chosen sign normalization. -/
   normalized :
     ∀ factor ∈ factors, Hex.normalizeFactorSign factor = factor
+  /-- Every returned factor has positive degree. -/
   degreePos :
     ∀ factor ∈ factors, 0 < factor.degree?.getD 0
 
@@ -402,7 +411,7 @@ theorem searchDirectAux_factored
       {J : ModPFactorSubset data},
       DirectSearchInvariant core B data J target localFactors →
       Hex.searchDirectAux (Hex.DensePoly.leadingCoeff core)
-          (Hex.ZPoly.coreLiftData core B data)
+          (Hex.ZPoly.directLiftData core B data)
           fuel target localFactors budget stats =
         .factored factors budget' stats' →
       DirectFactorListSpec target factors := by
@@ -431,7 +440,7 @@ theorem searchDirectAux_factored
             simp only at hrun
             generalize hfind :
                 Hex.findDirectHead (Hex.DensePoly.leadingCoeff core) target
-                    (Hex.ZPoly.coreLiftData core B data) head tail
+                    (Hex.ZPoly.directLiftData core B data) head tail
                     (List.range (tail.length + 1)) budget 0 #[] = headResult
               at hrun
             cases headResult with
@@ -446,7 +455,7 @@ theorem searchDirectAux_factored
                     completedLevels := stats.completedLevels ++ completed }
                 generalize hnext :
                     Hex.searchDirectAux (Hex.DensePoly.leadingCoeff core)
-                        (Hex.ZPoly.coreLiftData core B data) fuel
+                        (Hex.ZPoly.directLiftData core B data) fuel
                         split.quotient split.remaining remainingBudget
                         nextStats = nextResult at hrun
                 cases nextResult with
@@ -530,10 +539,10 @@ theorem searchDirect_factored
     {stats' : Hex.ClassicalStats}
     (hrun :
       Hex.searchDirect (Hex.DensePoly.leadingCoeff core) core
-          (Hex.ZPoly.coreLiftData core B data) budget stats =
+          (Hex.ZPoly.directLiftData core B data) budget stats =
         .factored factors budget' stats') :
     DirectFactorListSpec core factors := by
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let hsize : d.liftedFactors.size = data.factorsModP.size :=
     henselLiftData_liftedFactors_size_eq
       (Hex.ZPoly.monicTarget core data.p
@@ -618,7 +627,7 @@ theorem validDirectFactors_of_spec
   exact ⟨by simpa using hfactors_ne, h.product⟩
 
 /-- A successful run from a selected direct prime is an irreducible
-factorization of its indexed direct-coordinate core. -/
+factorization of its indexed direct-coordinate polynomial. -/
 theorem factorDirectCoreOfPlan_factored
     (core : Hex.SquareFreeInput)
     (modular : Hex.DirectPrimePlan core)
@@ -677,11 +686,11 @@ theorem factorDirectCoreOfPlan_factored
     Hex.DirectLiftPlan.coeffBound] at hrun
   generalize hsearch :
       Hex.searchDirect (Hex.DensePoly.leadingCoeff core.poly) core.poly
-          (Hex.ZPoly.coreLiftData core.poly B modular.data) budget
+          (Hex.ZPoly.directLiftData core.poly B modular.data) budget
           { prime := modular.prime
             primeProbes := modular.probes.size
             liftedFactorCount :=
-              (Hex.ZPoly.coreLiftData core.poly B modular.data).liftedFactors.size
+              (Hex.ZPoly.directLiftData core.poly B modular.data).liftedFactors.size
             henselLifts := 1 } = result at hrun
   cases result with
   | declined reason budget' stats' => simp at hrun
@@ -697,7 +706,7 @@ theorem factorDirectCoreOfPlan_factored
       simpa using hspec
 
 /-- A successful run of the sole classical engine is an irreducible
-factorization of its indexed direct-coordinate core. -/
+factorization of its indexed direct-coordinate polynomial. -/
 theorem factorDirectCore_factored
     (core : Hex.SquareFreeInput)
     (hcore_prim : Hex.ZPoly.Primitive core.poly)

@@ -25,8 +25,8 @@ public import HexLLL
 -- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
 public import HexBasic.ArrayDecEq
 
-public import HexBerlekampZassenhaus.IrreducibleCore
-public meta import HexBerlekampZassenhaus.IrreducibleCore
+public import HexBerlekampZassenhaus.FactorIrreducibility
+public meta import HexBerlekampZassenhaus.FactorIrreducibility
 import all HexBerlekampZassenhaus.PrimeSelection
 import all HexBerlekampZassenhaus.FactorizationData
 import all HexBerlekampZassenhaus.Certificate
@@ -37,7 +37,7 @@ import all HexBerlekampZassenhaus.BhksCandidates
 import all HexBerlekampZassenhaus.BhksRecover
 import all HexBerlekampZassenhaus.Recombination
 import all HexBerlekampZassenhaus.Factorization
-import all HexBerlekampZassenhaus.IrreducibleCore
+import all HexBerlekampZassenhaus.FactorIrreducibility
 
 open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
 
@@ -45,7 +45,8 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-This module collects the recombination and `bhksRecover*` correctness proofs and core-factors specifications.
+This module collects correctness proofs for recombination, `bhksRecover*`, and
+the factors of the square-free part.
 -/
 namespace Hex
 
@@ -245,6 +246,7 @@ private theorem firstSome_eq_some_of_append
       rw [hprefix z (by simp)]
       exact ih (fun w hw => hprefix w (by simp [hw]))
 
+/-- A subset split extends to the corresponding split after adjoining a required head. -/
 theorem subsetSplitsWithFirst_mem_cons
     {factor : ZPoly} {factors selected rest : List ZPoly}
     (hmem : (selected, rest) ∈ subsetSplits factors) :
@@ -881,7 +883,7 @@ theorem bhksRecoveryCoreWithBound_product
   | succ fuel ih =>
       intro coreFactors hfast
       rw [bhksRecoveryCoreWithBound_unfold] at hfast
-      cases hclass : bhksRecoverClassified core (ZPoly.coreLiftData core k primeData) with
+      cases hclass : bhksRecoverClassified core (ZPoly.directLiftData core k primeData) with
       | success xs =>
           by_cases hfloor : k ≥ bhksRecoveryFloor core
           · simp [hclass, hfloor] at hfast
@@ -967,7 +969,7 @@ private theorem bhksRecoveryCoreWithBound_some_classifiedSuccess
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
     ∀ k fuel coreFactors,
       bhksRecoveryCoreWithBound core B primeData k fuel = some coreFactors →
-        ∃ k', bhksRecoverClassified core (ZPoly.coreLiftData core k' primeData) =
+        ∃ k', bhksRecoverClassified core (ZPoly.directLiftData core k' primeData) =
           .success coreFactors ∧ bhksRecoveryFloor core ≤ k' := by
   intro k fuel
   induction fuel generalizing k with
@@ -977,7 +979,7 @@ private theorem bhksRecoveryCoreWithBound_some_classifiedSuccess
   | succ fuel ih =>
       intro coreFactors hfast
       rw [bhksRecoveryCoreWithBound_unfold] at hfast
-      cases hclass : bhksRecoverClassified core (ZPoly.coreLiftData core k primeData) with
+      cases hclass : bhksRecoverClassified core (ZPoly.directLiftData core k primeData) with
       | success xs =>
           by_cases hfloor : k ≥ bhksRecoveryFloor core
           · simp [hclass, hfloor] at hfast
@@ -1009,7 +1011,7 @@ without reference to the private `bhksRecoverClassified`. A successful
 `k'`: at the `toMonicLiftData` for that precision there is a positive-dimension
 witness `hrows` whose equivalence-class indicator candidates reconstruct exactly
 to `coreFactors`, the indicator partition is non-degenerate, and the candidates
-multiply back to `core`. This is the bridge-side entry point used to rebuild the
+multiply back to `core`. This is the correspondence-side entry point used to rebuild the
 forward-recovery package (and hence the selected support/subset witnesses) that
 the per-factor success lemmas discard. -/
 theorem bhksRecoveryCoreWithBound_some_indicatorCandidates
@@ -1019,35 +1021,35 @@ theorem bhksRecoveryCoreWithBound_some_indicatorCandidates
     ∃ k',
       ∃ hrows :
         1 ≤ (bhksLatticeBasis core
-              (ZPoly.coreLiftData core k' primeData).p
-              (ZPoly.coreLiftData core k' primeData).k
-              (ZPoly.coreLiftData core k' primeData).liftedFactors).factorCount +
+              (ZPoly.directLiftData core k' primeData).p
+              (ZPoly.directLiftData core k' primeData).k
+              (ZPoly.directLiftData core k' primeData).liftedFactors).factorCount +
             (bhksLatticeBasis core
-              (ZPoly.coreLiftData core k' primeData).p
-              (ZPoly.coreLiftData core k' primeData).k
-              (ZPoly.coreLiftData core k' primeData).liftedFactors).coeffWidth,
-      bhksIndicatorCandidates? core (ZPoly.coreLiftData core k' primeData)
+              (ZPoly.directLiftData core k' primeData).p
+              (ZPoly.directLiftData core k' primeData).k
+              (ZPoly.directLiftData core k' primeData).liftedFactors).coeffWidth,
+      bhksIndicatorCandidates? core (ZPoly.directLiftData core k' primeData)
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows
               (bhksLatticeBasis core
-                (ZPoly.coreLiftData core k' primeData).p
-                (ZPoly.coreLiftData core k' primeData).k
-                (ZPoly.coreLiftData core k' primeData).liftedFactors)
+                (ZPoly.directLiftData core k' primeData).p
+                (ZPoly.directLiftData core k' primeData).k
+                (ZPoly.directLiftData core k' primeData).liftedFactors)
               hrows)) =
         some coreFactors ∧
       bhksDegenerateIndicatorPartition
           (bhksProjectedRows
             (bhksLatticeBasis core
-              (ZPoly.coreLiftData core k' primeData).p
-              (ZPoly.coreLiftData core k' primeData).k
-              (ZPoly.coreLiftData core k' primeData).liftedFactors)
+              (ZPoly.directLiftData core k' primeData).p
+              (ZPoly.directLiftData core k' primeData).k
+              (ZPoly.directLiftData core k' primeData).liftedFactors)
             hrows)
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows
               (bhksLatticeBasis core
-                (ZPoly.coreLiftData core k' primeData).p
-                (ZPoly.coreLiftData core k' primeData).k
-                (ZPoly.coreLiftData core k' primeData).liftedFactors)
+                (ZPoly.directLiftData core k' primeData).p
+                (ZPoly.directLiftData core k' primeData).k
+                (ZPoly.directLiftData core k' primeData).liftedFactors)
               hrows)) =
         false ∧
       Array.polyProduct coreFactors = core ∧ bhksRecoveryFloor core ≤ k' := by
@@ -1075,7 +1077,7 @@ private theorem bhksRecoveryCoreWithBound_some_all_of_recovery
   | succ fuel ih =>
       intro coreFactors hfast
       rw [bhksRecoveryCoreWithBound_unfold] at hfast
-      cases hclass : bhksRecoverClassified core (ZPoly.coreLiftData core k primeData) with
+      cases hclass : bhksRecoverClassified core (ZPoly.directLiftData core k primeData) with
       | success xs =>
           by_cases hfloor : k ≥ bhksRecoveryFloor core
           · simp [hclass, hfloor] at hfast
@@ -1101,6 +1103,7 @@ private theorem bhksRecoveryCoreWithBound_some_all_of_recovery
           · simp [hclass, hk] at hfast
             exact ih _ coreFactors hfast
 
+/-- Successful lattice recovery returns factors with normalized signs. -/
 theorem bhksRecoveryCoreWithBound_some_normalizeFactorSign
     {core : ZPoly} {B : Nat} {primeData : PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array ZPoly}
@@ -1111,6 +1114,7 @@ theorem bhksRecoveryCoreWithBound_some_normalizeFactorSign
     (fun hrecover => bhksRecoverClassified_success_normalizeFactorSign hrecover)
     core B primeData k fuel coreFactors h
 
+/-- Successful lattice recovery returns only nonconstant polynomial factors. -/
 theorem bhksRecoveryCoreWithBound_some_shouldRecord
     {core : ZPoly} {B : Nat} {primeData : PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array ZPoly}
@@ -1121,6 +1125,7 @@ theorem bhksRecoveryCoreWithBound_some_shouldRecord
     (fun hrecover => bhksRecoverClassified_success_shouldRecord hrecover)
     core B primeData k fuel coreFactors h
 
+/-- Every factor returned by successful lattice recovery has positive degree. -/
 theorem bhksRecoveryCoreWithBound_some_degree_pos
     {core : ZPoly} {B : Nat} {primeData : PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array ZPoly}
@@ -1135,7 +1140,7 @@ theorem bhksRecoveryCoreWithBound_some_degree_pos
     core B primeData k fuel coreFactors h
 
 /-- Every factor emitted by the BHKS fast-recombination loop divides the
-input core. The success branch is the only branch that exits with
+input polynomial. The success branch is the only branch that exits with
 `some coreFactors`, and `bhksRecoverClassified_success_dvd` certifies
 divisibility for each candidate at that exit. -/
 theorem bhksRecoveryCoreWithBound_some_dvd
@@ -1151,7 +1156,7 @@ theorem bhksRecoveryCoreWithBound_some_dvd
   | succ fuel ih =>
       intro coreFactors hfast
       rw [bhksRecoveryCoreWithBound_unfold] at hfast
-      cases hclass : bhksRecoverClassified core (ZPoly.coreLiftData core k primeData) with
+      cases hclass : bhksRecoverClassified core (ZPoly.directLiftData core k primeData) with
       | success xs =>
           by_cases hfloor : k ≥ bhksRecoveryFloor core
           · simp [hclass, hfloor] at hfast
@@ -1206,7 +1211,7 @@ every entry has positive leading coefficient, then every entry is monic.
 The product of positive integer leading coefficients equals the monic product's
 leading coefficient `1`; since each factor is a positive integer, each must
 itself be `1`. Used by the exhaustive-arm reassembly discharger to recover
-monicness of emitted core factors from monicness of the squarefree core. -/
+monicness of emitted factors of the square-free part from monicness of the primitive square-free part. -/
 private theorem polyProduct_toArray_monic_factors_monic_of_pos_lc :
     ∀ (factors : List ZPoly),
       DensePoly.Monic (Array.polyProduct factors.toArray) →

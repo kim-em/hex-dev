@@ -223,17 +223,28 @@ equation in this interface.
 -/
 structure RecoveredLift
     (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) where
+  /-- The integer polynomial from which the lattice was constructed. -/
   f : Hex.ZPoly
+  /-- The prime underlying the Hensel lift. -/
   p : Nat
+  /-- The exponent in the lift modulus `p ^ a`. -/
   a : Nat
+  /-- The local factors used to construct the lattice. -/
   liftedFactors : Array Hex.ZPoly
+  /-- The abstract lattice is the lattice constructed from these data. -/
   basis_eq : L = Hex.bhksLatticeBasis f p a liftedFactors
+  /-- The integer factor represented by the support. -/
   factor : Hex.ZPoly
+  /-- The complementary integer factor. -/
   cofactor : Hex.ZPoly
+  /-- The factor and cofactor multiply to the input polynomial. -/
   factor_mul : factor * cofactor = f
+  /-- The scalar relating the support product to the represented factor. -/
   factorScale : Int
+  /-- The input leading coefficient is invertible modulo the lift modulus. -/
   inputScale_coprime :
     Int.gcd (Hex.DensePoly.leadingCoeff f) (Int.ofNat (p ^ a)) = 1
+  /-- The scaled support product agrees with the scaled factor modulo the lift modulus. -/
   scaledProduct_congr :
     Hex.ZPoly.congr
       (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f) (supportProduct L S))
@@ -300,12 +311,16 @@ the tight cut radius bound.
 -/
 structure SupportShortVectorData
     (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) where
+  /-- A short vector in the row lattice. -/
   vector : Vector ℤ (L.factorCount + L.coeffWidth)
+  /-- The vector is an integer combination of the lattice rows. -/
   memLattice : Hex.Matrix.memLattice L.basis vector
+  /-- The first coordinates form the indicator vector of `S`. -/
   project_eq :
     ∀ i : Fin L.factorCount,
       vector[(⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ :
         Fin (L.factorCount + L.coeffWidth))] = indicatorVector S i
+  /-- Four times the squared Euclidean norm is within the cut radius. -/
   four_mul_sq_norm_le :
     4 * (∑ i : Fin (L.factorCount + L.coeffWidth),
       ((((vector[i] : ℤ) : ℝ) ^ 2))) ≤ (Hex.bhksCutRadiusSq4 L : ℝ)
@@ -348,7 +363,7 @@ theorem SupportShortVectorData.coord_natAbs_le
 
 /--
 The BHKS block-form predicate: `L.basis` is the all-coefficients CLD row basis
-`[ I | A_tilde ; 0 | diag ]` built by `bhksLatticeEntry` from `L`'s own data.
+`[ I | A_tilde; 0 | diag ]` built by `bhksLatticeEntry` from `L`'s own data.
 This holds definitionally for `Hex.bhksLatticeBasis` (see
 `bhksLatticeBasis_blockForm`) and is the only fact the canonical coordinate
 producers need about the basis.
@@ -554,6 +569,7 @@ theorem precision_eq
 
 end RecoveredLift
 
+/-- Two supports are equivalent when every projected row is constant across them. -/
 @[expose]
 def supportEquivalent {r : Nat} (trueSupports : Set (Set (Fin r)))
     (j k : Fin r) : Prop :=
@@ -567,6 +583,7 @@ def supportEquivalentAt {r : Nat} (trueSupports : Set (Set (Fin r)))
   ∃ (hj : j < r) (hk : k < r),
     supportEquivalent trueSupports ⟨j, hj⟩ ⟨k, hk⟩
 
+/-- The natural-index and finite-index forms of support equivalence agree in range. -/
 theorem supportEquivalentAt_iff {r : Nat}
     (trueSupports : Set (Set (Fin r))) {j k : Nat}
     (hj : j < r) (hk : k < r) :
@@ -579,11 +596,13 @@ theorem supportEquivalentAt_iff {r : Nat}
   · intro h
     exact ⟨hj, hk, h⟩
 
+/-- Support equivalence is reflexive on in-range indices. -/
 theorem supportEquivalentAt_refl {r : Nat}
     (trueSupports : Set (Set (Fin r))) {j : Nat} (hj : j < r) :
     supportEquivalentAt trueSupports j j := by
   exact ⟨hj, hj, by intro S hS; simp⟩
 
+/-- Support equivalence is symmetric. -/
 theorem supportEquivalentAt_symm {r : Nat}
     (trueSupports : Set (Set (Fin r))) {j k : Nat}
     (h : supportEquivalentAt trueSupports j k) :
@@ -591,6 +610,7 @@ theorem supportEquivalentAt_symm {r : Nat}
   rcases h with ⟨hj, hk, h⟩
   exact ⟨hk, hj, by intro S hS; exact (h S hS).symm⟩
 
+/-- Support equivalence is transitive. -/
 theorem supportEquivalentAt_trans {r : Nat}
     (trueSupports : Set (Set (Fin r))) {i j k : Nat}
     (hij : supportEquivalentAt trueSupports i j)
@@ -639,6 +659,7 @@ def classIndicatorArray (r : Nat) (members : List Nat) : Array Int :=
   unfold classIndicatorArray
   simp
 
+/-- Entries of a class indicator are one exactly at in-range class members. -/
 theorem classIndicatorArray_getD
     (r : Nat) (members : List Nat) (i : Nat) :
     (classIndicatorArray r members).getD i 0 =
@@ -651,6 +672,7 @@ theorem classIndicatorArray_getD
       simp
     simp [Array.getD, hi, hsize]
 
+/-- Every entry of a class indicator is zero or one. -/
 theorem classIndicatorArray_bits (r : Nat) (members : List Nat) :
     ∀ i, i < (classIndicatorArray r members).size →
       (classIndicatorArray r members).getD i 0 = 0 ∨
@@ -662,6 +684,7 @@ theorem classIndicatorArray_bits (r : Nat) (members : List Nat) :
   · simp [hi, hmem]
   · simp [hi, hmem]
 
+/-- Every in-range class member has indicator entry one. -/
 theorem classIndicatorArray_has_one_of_mem
     (r : Nat) (members : List Nat) {i : Nat}
     (hi : i < r) (hmem : i ∈ members) :
@@ -670,6 +693,7 @@ theorem classIndicatorArray_has_one_of_mem
   simp [hi, hmem]
 
 
+/-- Support-class representatives are precisely the least indices in their classes. -/
 theorem mem_supportRepresentativeColumns_iff {r : Nat}
     (trueSupports : Set (Set (Fin r))) (rep : Nat) :
     rep ∈ supportRepresentativeColumns trueSupports ↔
@@ -696,17 +720,20 @@ theorem mem_supportRepresentativeColumns_iff {r : Nat}
     rw [List.mem_filter] at hk
     exact hfresh k (List.mem_range.mp hk.1) (by simpa using hk.2)
 
+/-- Every support-class representative is a valid column index. -/
 theorem supportRepresentativeColumns_lt {r : Nat}
     (trueSupports : Set (Set (Fin r))) {rep : Nat}
     (hrep : rep ∈ supportRepresentativeColumns trueSupports) : rep < r :=
   ((mem_supportRepresentativeColumns_iff trueSupports rep).mp hrep).1
 
+/-- No earlier column is support-equivalent to a representative. -/
 theorem supportRepresentativeColumns_min {r : Nat}
     (trueSupports : Set (Set (Fin r))) {rep : Nat}
     (hrep : rep ∈ supportRepresentativeColumns trueSupports) :
     ∀ k, k < rep → ¬ supportEquivalentAt trueSupports k rep :=
   ((mem_supportRepresentativeColumns_iff trueSupports rep).mp hrep).2
 
+/-- A column belongs to a representative's class exactly when it is equivalent and in range. -/
 theorem mem_supportClassMembers_iff {r : Nat}
     (trueSupports : Set (Set (Fin r))) (rep j : Nat) :
     j ∈ supportClassMembers trueSupports rep ↔
@@ -716,6 +743,7 @@ theorem mem_supportClassMembers_iff {r : Nat}
   rw [List.mem_filter]
   simp [List.mem_range]
 
+/-- Every support-class representative belongs to its own class. -/
 theorem supportClassMembers_rep_mem {r : Nat}
     (trueSupports : Set (Set (Fin r))) {rep : Nat}
     (hrep : rep ∈ supportRepresentativeColumns trueSupports) :
@@ -1085,6 +1113,7 @@ from the BHKS norm bound and Gram-Schmidt cut soundness.
 -/
 structure CutProjectionHypotheses
     (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount))) where
+  /-- Every genuine support indicator belongs to the span of the projected rows. -/
   indicator_mem_projected :
     ∀ S : trueSupports, indicatorVector S.1 ∈ projectedRowSpanInt L
 
@@ -1131,6 +1160,7 @@ theorem projectedRowSpanInt_eq_trueSupportSpanInt
   · exact projectedRowSpanInt_le_trueSupportSpanInt_of_rows L trueSupports hrows
   · exact trueSupportSpanInt_le_projectedRowSpanInt L trueSupports hcut
 
+/-- Every projected matrix row belongs to the integer span of the projected rows. -/
 theorem projectedRow_mem_projectedRowSpanInt
     (L : Hex.BhksProjectedRows) (i : Fin L.projectedRows.size) :
     Matrix.row (projectedRowsIntMatrix L) i ∈ projectedRowSpanInt L := by

@@ -19,7 +19,7 @@ set_option backward.proofsInPublic true
 # Correctness of verified CLD candidates
 
 The executable CLD recovery accepts only nonunit divisors whose product is the
-input core.  These small UFD consequences belong to the lattice proof rather
+input polynomial.  These small UFD consequences belong to the lattice proof rather
 than to a historical recombination-search coverage module.
 -/
 

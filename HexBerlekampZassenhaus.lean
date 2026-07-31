@@ -10,6 +10,10 @@ public import HexBerlekampZassenhaus.Factorization
 public import HexBerlekampZassenhaus.FactorProduct
 public import HexBerlekampZassenhaus.IrreducibleDecide
 public import HexBerlekampZassenhaus.Factored
+public meta import HexBerlekamp.FactorPolyElab
+public import HexBerlekamp.FactorPolyElab
+public meta import HexBerlekamp.IrreducibilityElab
+public import HexBerlekamp.IrreducibilityElab
 public meta import HexBerlekampZassenhaus.FactorTactic
 public import HexBerlekampZassenhaus.FactorTactic
 

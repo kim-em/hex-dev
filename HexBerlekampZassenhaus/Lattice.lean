@@ -47,7 +47,7 @@ namespace Hex
 /-- Non-monic converse to `exactQuotient?_product` for divisors with positive
 leading coefficient.  Drops the `Monic` hypothesis from
 `exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree` in favour of
-`0 < leadingCoeff candidate`, routing the executable division through
+`0 < leadingCoeff candidate`, handling the executable division through
 `ZPoly.divMod_eq_mul` and packaging the result with
 `exactQuotient?_eq_some_of_divMod_eq_of_shouldRecord`.  Positive degree alone
 discharges `shouldRecordPolynomialFactor`, since `0`, `C 1`, and `C (-1)` all
@@ -86,11 +86,13 @@ theorem exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq
 private def positiveDivisors (n : Nat) : List Nat :=
   (List.range (n + 1)).filter fun d => d != 0 && n % d == 0
 
+/-- Positive and negative divisors of the constant coefficient, hence all possible integer roots. -/
 def integerRootCandidates (f : ZPoly) : List Int :=
   (positiveDivisors (f.coeff 0).natAbs).flatMap fun d =>
     let r : Int := Int.ofNat d
     [r, -r]
 
+/-- The monic polynomial `X - r`. -/
 def linearFactorForRoot (r : Int) : ZPoly :=
   DensePoly.ofCoeffs #[-r, 1]
 
@@ -147,6 +149,7 @@ private theorem shouldRecordPolynomialFactor_linearFactorForRoot (r : Int) :
   simp [linearFactorForRoot_ne_zero, linearFactorForRoot_ne_one,
     linearFactorForRoot_ne_C_neg_one]
 
+/-- Remove integer-root factors using bounded repeated exact division. -/
 def splitIntegerRootFactorsAux :
     ZPoly → List Int → Nat → Array ZPoly × ZPoly
   | target, _roots, 0 => (#[], target)
@@ -159,6 +162,7 @@ def splitIntegerRootFactorsAux :
           (#[factor] ++ rest.1, rest.2)
       | none => splitIntegerRootFactorsAux target roots fuel
 
+/-- Factor a quadratic by its integer roots when it is reducible over the integers. -/
 def quadraticIntegerRootFactors? (core : ZPoly) : Option (Array ZPoly) :=
   if core.degree?.getD 0 = 2 then
     let roots := integerRootCandidates core
@@ -218,7 +222,7 @@ private def trialDivisionPeelAux :
       | none => trialDivisionPeelAux target candidates
 
 /--
-Standalone integer trial-division core for the slow factorization path.
+Standalone integer trial-division algorithm for the slow factorization path.
 
 First peels monic linear integer-root factors `(x - r)` off `core` via
 `splitIntegerRootFactorsAux`, then enumerates non-unit polynomial candidates
@@ -246,6 +250,7 @@ def exhaustiveIntegerTrialCoreFactorsWithBound
   else
     (split.1 ++ peel.1).push peel.2
 
+/-- The centred representative of `z` modulo the natural number `m`. -/
 @[expose]
 def centeredModNat (z : Int) (m : Nat) : Int :=
   if m = 0 then
@@ -259,11 +264,13 @@ def centeredModNat (z : Int) (m : Nat) : Int :=
     else
       r - Int.ofNat m
 
+/-- Zero is already its centred representative for every modulus. -/
 theorem centeredModNat_zero (m : Nat) :
     centeredModNat 0 m = 0 := by
   unfold centeredModNat
   by_cases hm : m = 0 <;> simp [hm]
 
+/-- Centred reduction recovers an integer whose absolute value is below half the modulus. -/
 theorem centeredModNat_emod_eq_of_natAbs_le
     (z : Int) (m B : Nat)
     (hbound : z.natAbs ≤ B) (hsep : 2 * B < m) :
@@ -354,7 +361,7 @@ Mod-`p^a` representative of `f * g.derivative / g`, the polynomial whose
 `x^j` coefficient is the integer CLD coefficient `[x^j] Phi(g)` reduced
 modulo `p^a`.
 
-Exposed (rather than private) so the BHKS bridge layer can state the
+Exposed (rather than private) so the BHKS correspondence layer can state the
 congruence linking the executable quotient to the exact integer CLD
 coefficient.
 -/
@@ -364,7 +371,7 @@ def cldQuotientMod (f g : ZPoly) (p a : Nat) : ZPoly :=
   -- divisor of positive degree, `cldQuotientModWord?` computes the identical
   -- quotient over `WordMod` (single-reduction Montgomery). The byte-identical
   -- correspondence is `cldQuotientModWord?_eq`; `cldQuotientMod_eq_spec` proves
-  -- this dispatch equals `cldQuotientModBignum` for every input.
+  -- this applyExtensions equals `cldQuotientModBignum` for every input.
   match powLtWord? p a with
   | some m =>
       if (UInt64.ofNat m) % 2 = 1 ∧ 1 < m ∧
@@ -565,7 +572,7 @@ theorem cldQuotientMod_coeff_decomp_of_lt
 monic divisor `g`, the raw quotient and remainder of `numerator / g` recompose
 `numerator`, where `numerator = (f * g') mod p^a` is the dividend `cldQuotientMod`
 feeds to `DensePoly.divMod` before its own mod-`p^a` reduction of the quotient.
-The downstream modular-congruence bridge reduces this exact identity mod `p^a`. -/
+The downstream modular-congruence correspondence reduces this exact identity mod `p^a`. -/
 theorem cldQuotientMod_divMod_reconstruction (f g : ZPoly) (p a : Nat)
     (hg : DensePoly.Monic g) :
     let numerator := ZPoly.reduceModPow (f * DensePoly.derivative g) p a
@@ -600,13 +607,21 @@ The basis has row and column dimension `factorCount + coeffWidth`. Its first
 `coeffWidth` columns are CLD high-bit coordinates.
 -/
 structure BhksLatticeBasis where
+  /-- The prime underlying the lifted factors. -/
   p : Nat
+  /-- The exponent in the modulus `p ^ precision`. -/
   precision : Nat
+  /-- The number of lifted modular factors. -/
   factorCount : Nat
+  /-- The number of coefficient columns used for logarithmic derivatives. -/
   coeffWidth : Nat
+  /-- The lifted modular factors defining the logarithmic derivatives. -/
   liftedFactors : Array ZPoly
+  /-- Per-column powers of `p` discarded from logarithmic-derivative coefficients. -/
   cutThresholds : Array Nat
+  /-- The scaled logarithmic-derivative coefficient rows. -/
   cldRows : Array (Array Int)
+  /-- The square integer lattice basis containing indicator and coefficient columns. -/
   basis : Matrix Int (factorCount + coeffWidth) (factorCount + coeffWidth)
 
 /--
@@ -616,12 +631,18 @@ Projected BHKS rows after LLL reduction and the Gram-Schmidt cut.
 floating-point arithmetic for the BHKS cut radius.
 -/
 structure BhksProjectedRows where
+  /-- The number of lifted-factor indicator coordinates. -/
   factorCount : Nat
+  /-- The number of logarithmic-derivative coefficient coordinates before projection. -/
   coeffWidth : Nat
+  /-- Four times the squared Gram-Schmidt cut radius. -/
   cutRadiusSq4 : Nat
+  /-- The number of LLL-reduced rows before the Gram-Schmidt cut. -/
   reducedRowCount : Nat
+  /-- The retained rows projected to their factor-indicator coordinates. -/
   projectedRows : Array (Array Int)
 
+/-- One entry of the lattice basis used for logarithmic-derivative recombination. -/
 @[expose]
 def bhksLatticeEntry
     (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
@@ -642,7 +663,7 @@ def bhksLatticeEntry
 
 /--
 Build the BHKS all-coefficients CLD row-basis matrix
-`[ I_r | A_tilde ; 0 | diag(p^(a-l_j)) ]`.
+`[ I_r | A_tilde; 0 | diag(p^(a-l_j)) ]`.
 
 The diagonal exponent uses natural subtraction; callers that need the exact
 BHKS hypotheses should lift to a precision `a` satisfying every `l_j ≤ a`.
@@ -675,6 +696,7 @@ private theorem bhksLatticeBasis_coeffWidth_eq
     (bhksLatticeBasis f p a liftedFactors).coeffWidth = f.degree?.getD 0 := by
   rfl
 
+/-- The upper-left block of the recombination lattice basis is the identity matrix. -/
 theorem bhksLatticeEntry_topLeft
     (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
     (i j : Fin (r + n)) (hi : i.val < r) (hj : j.val < r) :
@@ -682,6 +704,7 @@ theorem bhksLatticeEntry_topLeft
       if i.val = j.val then 1 else 0 := by
   simp [bhksLatticeEntry, hi, hj]
 
+/-- The lower-left block of the recombination lattice basis is zero. -/
 theorem bhksLatticeEntry_bottomLeft
     (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
     (i j : Fin (r + n)) (hi : r ≤ i.val) (hj : j.val < r) :
@@ -705,6 +728,7 @@ theorem bhksLatticeEntry_bottomRight
     omega
   simp [bhksLatticeEntry, hnot_i, hnot_j]
 
+/-- Off-diagonal entries in the lower-right block of the lattice basis vanish. -/
 theorem bhksLatticeEntry_bottomRight_offDiag
     (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
     (i j : Fin (r + n)) (hi : r ≤ i.val) (hj : r ≤ j.val)
@@ -713,6 +737,7 @@ theorem bhksLatticeEntry_bottomRight_offDiag
   rw [bhksLatticeEntry_bottomRight r n p a thresholds cldRows i j hi hj]
   simp [hneq]
 
+/-- Diagonal entries in the lower-right block are the prescribed prime powers. -/
 theorem bhksLatticeEntry_bottomRight_diag
     (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
     (i : Fin (r + n)) (hi : r ≤ i.val) :
@@ -736,6 +761,7 @@ theorem bhksLatticeEntry_bottomRight_diag_pos
 def bhksCutRadiusSq4 (L : BhksLatticeBasis) : Nat :=
   4 * L.factorCount + L.coeffWidth * L.factorCount * L.factorCount
 
+/-- Test whether one Gram-Schmidt row lies within the lattice cut radius. -/
 @[expose]
 def bhksWithinGramSchmidtCut (L : BhksLatticeBasis)
     (dets : Vector Nat (L.factorCount + L.coeffWidth + 1))
@@ -748,6 +774,7 @@ def bhksWithinGramSchmidtCut (L : BhksLatticeBasis)
   else
     4 * ((d1 : Rat) / (d0 : Rat)) ≤ (bhksCutRadiusSq4 L : Rat)
 
+/-- Retain the factor-indicator coordinates of a full lattice vector. -/
 @[expose]
 def bhksProjectIndicator (r n : Nat) (v : Vector Int (r + n)) : Array Int :=
   (List.range r).map
@@ -758,6 +785,7 @@ def bhksProjectIndicator (r n : Nat) (v : Vector Int (r + n)) : Array Int :=
         0)
     |>.toArray
 
+/-- View an array of rows as an `n`-row matrix, padding absent rows with zeros. -/
 def bhksRowsArrayToMatrix {m : Nat} (n : Nat) (rows : Array (Vector Int m)) :
     Matrix Int n m :=
   Matrix.ofFn fun i j => (rows.getD i.val (Vector.ofFn fun _ => 0))[j]
@@ -772,6 +800,7 @@ theorem bhksRowsArrayToMatrix_row {m n : Nat} (rows : Array (Vector Int m))
   rw [bhksRowsArrayToMatrix, Hex.Matrix.getElem_ofFn]
   rfl
 
+/-- Converting a matrix row array back to a matrix recovers the original matrix. -/
 theorem bhksRowsArrayToMatrix_toArray {m n : Nat} (B : Matrix Int n m) :
     bhksRowsArrayToMatrix n B.rows.toArray = B := by
   apply Hex.Matrix.ext_getElem
@@ -780,9 +809,11 @@ theorem bhksRowsArrayToMatrix_toArray {m n : Nat} (B : Matrix Int n m) :
   rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem (by simp)]
   simp [Hex.Matrix.getElem_rows]
 
+/-- The chosen Lovász parameter is strictly above one quarter. -/
 theorem lll_delta_lower : (1 / 4 : Rat) < 3 / 4 := by
   grind
 
+/-- The chosen Lovász parameter is at most one. -/
 theorem lll_delta_upper : (3 / 4 : Rat) ≤ 1 := by
   grind
 
@@ -791,7 +822,7 @@ Length of the BHKS Lemma 5.7 *prefix* cut: one past the last Gram-Schmidt
 index whose squared length is within the radius (`0` if none passes).  Because
 the fold runs in increasing index order, the accumulator ends at
 `(max { i : ‖b*_i‖² ≤ radius }) + 1`, so retaining indices `< t` keeps the
-contiguous prefix `b_0 … b_t` in original order — including earlier rows whose
+contiguous prefix `b_0 … b_t` in original order; including earlier rows whose
 own Gram-Schmidt norm exceeds the radius.
 -/
 @[expose]
@@ -806,6 +837,7 @@ def bhksCutPrefixCount
       if bhksWithinGramSchmidtCut L dets i then i.val + 1 else acc)
     0
 
+/-- Keep the initial reduced rows selected by the cut and project their indicator coordinates. -/
 @[expose]
 def bhksCutProjectReducedRows
     (L : BhksLatticeBasis)
@@ -821,6 +853,7 @@ def bhksCutProjectReducedRows
         acc)
     #[]
 
+/-- Indices of the initial reduced rows retained by the Gram-Schmidt cut. -/
 def bhksRetainedRowIndices
     (L : BhksLatticeBasis)
     (reduced : Matrix Int (L.factorCount + L.coeffWidth)
@@ -835,6 +868,7 @@ def bhksRetainedRowIndices
         acc)
     #[]
 
+/-- Project the factor-indicator coordinates of the retained reduced rows. -/
 def bhksProjectRetainedRows
     (L : BhksLatticeBasis)
     (reduced : Matrix Int (L.factorCount + L.coeffWidth)
@@ -850,14 +884,21 @@ used by the cut, the retained source row indices, and the projected retained
 rows.  `bhksProjectedRows` below is the old compact projection of this trace.
 -/
 structure BhksProjectedRowsTrace (L : BhksLatticeBasis) where
+  /-- The rows returned by exact LLL reduction. -/
   reducedRows : Array (Vector Int (L.factorCount + L.coeffWidth))
+  /-- The same reduced rows as a square matrix. -/
   reducedMatrix : Matrix Int (L.factorCount + L.coeffWidth)
       (L.factorCount + L.coeffWidth)
+  /-- Determinants of the leading Gram matrices used by the exact cut. -/
   gramDets : Vector Nat (L.factorCount + L.coeffWidth + 1)
+  /-- Indices of the reduced rows below the cut radius. -/
   retainedIndices : Array (Fin (L.factorCount + L.coeffWidth))
+  /-- Retained full rows before discarding coefficient coordinates. -/
   projectedRetainedRows : Array (Array Int)
+  /-- Retained rows restricted to factor-indicator coordinates. -/
   projectedRows : Array (Array Int)
 
+/-- Compute the reduced rows, cut data, and projected rows used in lattice recovery. -/
 @[expose]
 def bhksProjectedRowsTrace (L : BhksLatticeBasis)
     (hrows : 1 ≤ L.factorCount + L.coeffWidth) : BhksProjectedRowsTrace L :=
@@ -873,6 +914,7 @@ def bhksProjectedRowsTrace (L : BhksLatticeBasis)
     projectedRetainedRows := bhksProjectRetainedRows L reducedMatrix retainedIndices
     projectedRows := bhksCutProjectReducedRows L reducedMatrix }
 
+/-- The trace's reduced matrix is the matrix returned by exact LLL reduction. -/
 theorem bhksProjectedRowsTrace_reducedMatrix_eq
     (L : BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth) :
     (bhksProjectedRowsTrace L hrows).reducedMatrix =

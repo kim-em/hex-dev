@@ -396,7 +396,7 @@ Duplicated here because `IntReductionMod` imports `Basic`; the proof routes
 through `IsCoprime` in `Polynomial (ZMod p)` using
 `toMathlibPolynomial_squareFree_coprime` and the `toMathlibPolynomial_scale`
 identification for the unit scalar `(leadingCoeff f)⁻¹`. -/
-/-- A bridged executable polynomial that transports to a unit has executable
+/-- A transported executable polynomial that transports to a unit has executable
 size one, hence passes the `gcdIsUnit` size check when used as a gcd. -/
 private theorem size_eq_one_of_toMathlibPolynomial_isUnit_local
     {p : Nat} [Hex.ZMod64.Bounds p] [Fact (Nat.Prime p)]
@@ -569,7 +569,7 @@ irreducible.
 Proof: each entry of `primeData.factorsModP` is `monicModularImage g` for
 some raw Berlekamp factor `g`.  `irreducible_of_mem_berlekampFactor` gives
 `Irreducible (toMathlibPolynomial g)`.  The transfer to
-`monicModularImage g` routes through `toMathlibPolynomial_scale`: since
+`monicModularImage g` uses `toMathlibPolynomial_scale`: since
 `monicModularImage g = scale (lc g)⁻¹ g`, the Mathlib image equals
 `C ((lc g)⁻¹.toZMod) * toMathlibPolynomial g`, a unit multiple of the
 original, and `Associated.irreducible` transfers the irreducibility.

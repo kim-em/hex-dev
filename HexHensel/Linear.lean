@@ -345,7 +345,7 @@ private theorem zmod_mul_lift_congr
 /-- Per-term coefficient congruence at the lifted product diagonal: the `i`th
 diagonal contribution to the `n`th coefficient of `f * g` over `FpPoly p`,
 lifted to `Int`, agrees mod `p` with the corresponding `DensePoly.mulCoeffStep`
-contribution over `FpPoly.liftToZ f · FpPoly.liftToZ g`. Gates the diagonal
+contribution over `FpPoly.liftToZ f · FpPoly.liftToZ g`. Conditions the diagonal
 fold underlying `liftToZ_mul_congr`. -/
 private theorem liftToZ_mulCoeffTerm_congr
     (p : Nat) [ZMod64.Bounds p] (f g : FpPoly p) (n i : Nat) :
@@ -1860,7 +1860,7 @@ private theorem stepDegree_of_monic_pos
   rw [hgMod] at hlt
   exact hlt
 
-/-- The core invariant-preservation lemma for the linear-lift loop: given the
+/-- Invariant preservation for the linear-lift loop: given the
 `LinearLiftLoopInvariant` at modulus `p^current` plus the per-step degree and
 Bezout preservation hypotheses, running `steps` iterations keeps the invariant
 at the advanced modulus. The product/Bezout/monic correctness of `henselLift`
@@ -2066,7 +2066,7 @@ private theorem loopInvariant_one_of_base
 /-- Convenience corollary of `henselLift_spec`: the lifted factorization is
 congruent to `f` modulo `p^k`, discharging the loop preconditions internally
 from the base mod-`p` factorization data plus a nonconstant hypothesis on `g`.
-The nonconstant condition `0 < g.degree?.getD 0` is genuine — it is what makes
+The nonconstant condition `0 < g.degree?.getD 0` is genuine; it is what makes
 the per-step degree drop available; the admissible constant case `g = 1` has no
 such drop. -/
 theorem henselLift_congr_of_base

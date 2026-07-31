@@ -55,7 +55,9 @@ private def splitInitialZeros : List Int → Nat × List Int
 
 /-- Data from extracting the largest visible power of `X` from a dense integer polynomial. -/
 structure XPowerData where
+  /-- The largest exponent of `X` dividing the input. -/
   power : Nat
+  /-- The quotient after removing that power of `X`. -/
   core : ZPoly
 
 /--
@@ -99,7 +101,7 @@ def squareFreeModP (f : ZPoly) (p : Nat) [ZMod64.Bounds p] : Prop :=
   gcdIsUnit (DensePoly.gcd fModP (DensePoly.derivative fModP)) = true
 
 /--
-Executable good-prime predicate for the Berlekamp-Zassenhaus pipeline.
+Executable good-prime predicate for the Berlekamp-Zassenhaus computation.
 
 It checks that the modulus is at least `3`, that the integer leading coefficient
 survives reduction modulo `p`, and that the modular image is square-free.
@@ -523,8 +525,10 @@ can retain the exact candidate and its primality evidence beside the cached
 factorization.
 -/
 structure SmallPrimeCandidate where
+  /-- The candidate prime modulus. -/
   p : Nat
   [bounds : ZMod64.Bounds p]
+  /-- A proof that `p` is prime. -/
   prime : Nat.Prime p
 
 /-- Build a `SmallPrimeCandidate` from a trial-division primality witness and the
@@ -717,6 +721,7 @@ def monicModularImage {p : Nat} [ZMod64.Bounds p] (f : FpPoly p) : FpPoly p :=
   else
     DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f
 
+/-- Normalizing a nonzero polynomial over a prime field produces a monic polynomial. -/
 theorem monicModularImage_monic
     {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p) (f : FpPoly p)
     (hgood : f.isZero = false) :
@@ -1033,7 +1038,7 @@ Return the sorted degrees of the Berlekamp factors of `f mod p` at an
 explicit small prime supported by the executable prime-selection list.
 
 This testing-facing surface deliberately reuses the production small-prime
-pipeline. For complete linear splits, it records the explicit root-degree
+computation. For complete linear splits, it records the explicit root-degree
 evidence directly so pinned conformance checks are not sensitive to the current
 Berlekamp witness splitting surface. It returns `none` if `p` is unsupported or
 the leading coefficient vanishes modulo `p`; the Berlekamp branch also requires
@@ -1177,7 +1182,7 @@ private theorem choosePrimeScore?_fold_isGoodPrime
         hscore
 
 /--
-Choose a small admissible prime for the Berlekamp-Zassenhaus pipeline.
+Choose a small admissible prime for the Berlekamp-Zassenhaus computation.
 
 The search is bounded to a fixed ascending list of small primes. Candidate
 scores use the currently available executable modular factor surface; strict

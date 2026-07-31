@@ -147,6 +147,7 @@ theorem factorize_entries_primitive_of_chosen_raw_primitive
     ∀ entry ∈ (Hex.ZPoly.factorize f).factors, Hex.ZPoly.Primitive entry.1 :=
   Hex.factorize_entries_primitive_of_ne_zero f hf
 
+/-- Conversion to Mathlib polynomials preserves a left-associated product. -/
 theorem toPolynomial_foldl_mul (lst : List Hex.ZPoly) (init : Hex.ZPoly) :
     HexPolyZMathlib.toPolynomial (lst.foldl (· * ·) init) =
       (lst.map HexPolyZMathlib.toPolynomial).foldl (· * ·)
@@ -167,6 +168,7 @@ theorem toPolynomial_one_zpoly :
   rw [HexPolyZMathlib.toPolynomial_C]
   simp
 
+/-- Converting an executable factor product gives the corresponding Mathlib list product. -/
 theorem polyProduct_toPolynomial (factors : Array Hex.ZPoly) :
     HexPolyZMathlib.toPolynomial (Array.polyProduct factors) =
       (factors.toList.map HexPolyZMathlib.toPolynomial).prod := by
@@ -184,6 +186,7 @@ def flattenedFactorEntries (entries : List (Hex.ZPoly × Nat)) : List Hex.ZPoly 
 def factorizationFlattenedFactors (φ : Hex.Factorization) : List Hex.ZPoly :=
   flattenedFactorEntries φ.factors.toList
 
+/-- Conversion to Mathlib polynomials preserves the executable factor power. -/
 theorem factorPower_toPolynomial (f : Hex.ZPoly) (k : Nat) :
     HexPolyZMathlib.toPolynomial (Hex.Factorization.factorPower f k) =
       HexPolyZMathlib.toPolynomial f ^ k := by

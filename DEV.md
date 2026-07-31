@@ -52,7 +52,7 @@ CLD adequacy are organized around the mathematical objects they establish:
 - `Lattice/DirectSupport.lean`;
 - `Lattice/DirectRecovery.lean`;
 - `Lattice/DirectAdequacy.lean`;
-- `LatticeTier.lean`;
+- `LatticeFactorization.lean`;
 - `LatticeTotality.lean`.
 
 The classical completeness proof is in `Classical/`.  General mathematical

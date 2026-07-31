@@ -16,11 +16,11 @@ public section
 /-!
 The kernel-decide fallbacks `irreducibility!` and `factor_poly!`.
 
-Each bang form first runs the normal certificate pipeline (the same driver
-entry points as the plain forms, including all providers). Only when that
-fails — balanced inputs outside both the single-prime witness and the
+Each bang form first runs the normal certificate computation (the same driver
+entry points as the plain forms, including all extensions). Only when that
+fails; balanced inputs outside both the single-prime witness and the
 multi-prime degree-obstruction languages, e.g. Swinnerton-Dyer polynomials
-or `X⁴+1` — does it fall back to a kernel `decide` through
+or `X⁴+1`; does it fall back to a kernel `decide` through
 `Hex.ZPoly.instDecidableIrreducible`: the emitted proof is
 `Hex.ZPoly.irreducible_of_decide f (Eq.refl true)` (or its `Polynomial ℤ` /
 `Factored` transports), so **the kernel re-runs the Berlekamp-Zassenhaus
@@ -34,7 +34,7 @@ Two costs follow, stated here because they land on the *calling* module:
   `HexArith`/`HexModArith`/`HexPoly`/`HexPolyZ`/`HexPolyFp`/`HexBerlekamp`/
   `HexBerlekampZassenhaus`/`HexHensel`/`HexMatrix`/`HexRowReduce` module
   files on the factorize path, plus `Init.Data.Fin.Fold` and the
-  `Init.Data.Array` basics — see the header block of
+  `Init.Data.Array` basics; see the header block of
   `HexBerlekampZassenhausMathlib/FactorPolyTests.lean` for a working set).
   The elaborator prechecks kernel reducibility with `Lean.Kernel.whnf` and
   fails with a clear message when the closure is missing, instead of
@@ -43,8 +43,8 @@ Two costs follow, stated here because they land on the *calling* module:
   re-run by the kernel evaluator, twice (precheck + final check): quartics
   are sub-second, degree 8 takes a few seconds, degree 12 tens of seconds.
   Inputs above dense size `bangBudget` (degree 12) are rejected at
-  elaboration time. Inputs that the classical tier declines (routed to the
-  lattice tier, whose FFI `lllNative` has no kernel-reducible body) cannot
+  elaboration time. Inputs that the classical method declines (handled to the
+  lattice method, whose FFI `lllNative` has no kernel-reducible body) cannot
   be certified this way at any size.
 
 The plain forms never pay these costs: their emitted terms replay only
@@ -116,7 +116,7 @@ meta def bangZPolyIrred (tactic : String) (fE : Expr) : MetaM Expr := do
     fE Hex.CertificateSyntax.reflTrue
 
 /-- The `irreducibility!` fallback for `Polynomial ℤ` inputs: parse with
-proof, then transport the kernel replay through the bridge equation. -/
+proof, then transport the kernel replay through the translation equality. -/
 meta def bangIntIrred (tactic : String) (e : Expr) : MetaM Expr := do
   let (f, fLit, hP) ← parseInput tactic e
   bangChecks tactic e f
@@ -171,7 +171,7 @@ meta def bangIntFactor (e : Expr) : MetaM Expr := do
     #[e, fLit, scalarE, factorsE, Hex.CertificateSyntax.reflTrue,
       Hex.CertificateSyntax.reflTrue, hP]
 
-/-- Elaborate a bang-fallback argument and dispatch on its type. -/
+/-- Elaborate a bang-fallback argument and selection on its type. -/
 meta def elabBangArg (tactic : String) (t : Syntax)
     (onZPoly : Expr → MetaM Expr) (onInt : Expr → MetaM Expr) :
     Term.TermElabM Expr := do
@@ -193,7 +193,7 @@ meta def elabBangArg (tactic : String) (t : Syntax)
             \nThe kernel decide fallback covers Hex.ZPoly and Polynomial ℤ"
 
 /-- `irreducibility! f` behaves as `irreducibility f`, then falls back to the
-kernel factorizer replay when the certificate pipeline declines (see the
+kernel factorizer replay when the certificate computation declines (see the
 module docstring for the `import all` closure and cost caveats). -/
 syntax (name := irreducibilityBangTerm) "irreducibility!" term:max : term
 
@@ -249,7 +249,7 @@ meta def bangGoalProof (tgt : Expr) : MetaM Expr := do
 /-- Tactic forms of `irreducibility!`, mirroring `irreducibility`: bare form
 closes an irreducibility goal, `irreducibility! f` adds `this`, and
 `irreducibility! h : f` names it `h`, each falling back to the kernel
-factorizer replay when the certificate pipeline declines. -/
+factorizer replay when the certificate computation declines. -/
 syntax (name := irreducibilityBangTac)
   "irreducibility!" (atomic(ident " : "))? (term:max)? : tactic
 
@@ -303,7 +303,7 @@ meta def elabFactorBangArgument (stx : Syntax) (t : Syntax)
     elabBangArg "factor_poly!" t bangZPolyFactor bangIntFactor
 
 /-- `factor_poly! f` behaves as `factor_poly f`, then falls back to per-factor
-kernel factorizer replays when the certificate pipeline declines (see the
+kernel factorizer replays when the certificate computation declines (see the
 module docstring for the `import all` closure and cost caveats). -/
 syntax (name := factorPolyBangTerm) "factor_poly!" term:max : term
 

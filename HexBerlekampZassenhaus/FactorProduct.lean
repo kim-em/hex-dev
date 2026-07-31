@@ -37,7 +37,7 @@ import all HexBerlekampZassenhaus.BhksCandidates
 import all HexBerlekampZassenhaus.BhksRecover
 import all HexBerlekampZassenhaus.Recombination
 import all HexBerlekampZassenhaus.Factorization
-import all HexBerlekampZassenhaus.IrreducibleCore
+import all HexBerlekampZassenhaus.FactorIrreducibility
 import all HexBerlekampZassenhaus.RecombinationFactors
 import all HexBerlekampZassenhaus.TrialFactorization
 import all HexBerlekampZassenhaus.QuadraticFactors
@@ -53,9 +53,9 @@ This module collects `factorTrial_product`, `factorize_product`, and the `checkI
 -/
 namespace Hex
 
-/-- When the recorded square-free core has degree zero (and `f ≠ 0`),
-the fast-path singleton-core reassembly is automatically expansion-complete: the
-square-free core collapses to `1` via
+/-- When the recorded primitive square-free part has degree zero (and `f ≠ 0`),
+the fast-path singleton-part reassembly is automatically expansion-complete: the
+primitive square-free part collapses to `1` via
 `squareFreeCore_eq_one_of_constant_of_ne_zero`, the singleton-`1` expansion is
 the identity via `expandRepeatedPartFactorArray_singleton_one`, and the residual
 `(normalizeForFactor f).repeatedPart` is forced to `1` by
@@ -77,7 +77,7 @@ theorem reassemblyExpansionComplete_constant_of_ne_zero
   rw [hcore_one, expandRepeatedPartFactorArray_singleton_one]
   exact hrep_one
 
-/-- The normalized square-free core has positive leading coefficient
+/-- The normalized primitive square-free part has positive leading coefficient
 (`squareFreeCore_leadingCoeff_pos_of_ne_zero`), so its sign-normalisation
 is the identity. Exposed publicly for support-lemma callers in the
 Mathlib-side layer (notably the small-mod singleton arm specialisation of
@@ -351,7 +351,7 @@ theorem factorTrial_product (f : ZPoly) :
   exact factorTrialWithBound_product f (ZPoly.defaultFactorCoeffBound f)
 
 /-- The public total factorization reconstructs its input. This holds
-unconditionally: each non-backstop tier's result is accepted only when it
+unconditionally: each non-backstop method's result is accepted only when it
 reconstructs `f` (the self-certifying guard in `factorTraced`), and every
 fallback is the proven `factorTrial` backstop. -/
 theorem factorize_product (f : ZPoly) :
@@ -581,7 +581,7 @@ theorem ZPoly.isIrreducible_X : ZPoly.isIrreducible ZPoly.X = true := by
 
 /--
 A successful integer certificate exposes the per-prime polynomial check fact:
-every recorded `PrimeFactorData` block satisfies `checkForPolynomial f` —
+every recorded `PrimeFactorData` block satisfies `checkForPolynomial f`;
 admissible prime, positive recorded factor degrees, modular degree-sum and
 factor-product alignment, and aligned nested Rabin certificates. Callers
 extract individual conjuncts via the dedicated helpers below.

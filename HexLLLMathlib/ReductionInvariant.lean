@@ -73,7 +73,7 @@ namespace Internal.LLLState
 
 /-- Size reduction preserves the executable Gram-determinant independence
 predicate.  This public theorem lives in the Mathlib-side library so the
-Mathlib-free LLL core does not expose determinant-bound preservation surfaces. -/
+Mathlib-free LLL implementation does not expose determinant-bound preservation theorems. -/
 theorem sizeReduce_independent (s : LLLState n m) (k : Nat)
     (hind : s.b.independent) (hvalid : s.Valid) (hvalid' : (s.sizeReduce k).Valid) :
     (s.sizeReduce k).b.independent := by
@@ -1687,7 +1687,7 @@ Hypotheses:
   integer inequality on its numerator and denominator (in the form
   `lllLoop`'s integer Lovász test consumes; follows from `1/4 < δ ≤ 1`).
 * `hfail`: the failing integer Lovász condition at `k`, exactly the
-  test `lllLoop` evaluates before dispatching the swap branch.
+  test `lllLoop` evaluates before selecting the swap branch.
 
 Conclusion: `(s.swapStep k).potential < s.potential`. -/
 theorem swapStep_potential_lt (s : LLLState n m) (k : Nat)
@@ -2085,7 +2085,7 @@ independent basis, started at row `k = 1`, the bound
 `k = n` base case.  Equivalently, `lllLoop` is fuel-stable above this
 threshold: running with any `fuel' ≥ lllFuel s` returns the same matrix.
 Thus the `fuel = 0` fallback in `lllLoop` is unreachable from valid public
-pipeline inputs. -/
+computation inputs. -/
 theorem lllLoop_fuel_sufficient
     (s : LLLState n m) (δ : Rat) (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hvalid : s.Valid) (hind : s.b.independent) {fuel' : Nat}

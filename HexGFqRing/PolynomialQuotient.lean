@@ -11,7 +11,7 @@ public import HexPolyFp.Degree
 public section
 
 /-!
-Core quotient-representation definitions for executable `F_p[x] / (f)`.
+Quotient representatives for executable `F_p[x] / (f)`.
 
 This module introduces the canonical reduction function together with the
 quotient-element wrapper that stores reduced representatives modulo a fixed

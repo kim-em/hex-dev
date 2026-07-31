@@ -1023,7 +1023,7 @@ private def scalarDividedDifferenceCoeffs :
   | _ :: c :: cs, α =>
       evalScalarCoeffList (c :: cs) α :: scalarDividedDifferenceCoeffs (c :: cs) α
 
-/-- Routine bridge: the {name}`Zero.zero` literal coincides with `0` in `ZMod64 p`. -/
+/-- Routine correspondence: the {name}`Zero.zero` literal coincides with `0` in `ZMod64 p`. -/
 private theorem zmod_Zero_zero_eq_zero :
     (Zero.zero : ZMod64 p) = (0 : ZMod64 p) := by
   apply zmod_eq_of_toNat_eq

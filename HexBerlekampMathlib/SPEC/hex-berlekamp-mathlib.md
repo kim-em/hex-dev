@@ -48,7 +48,7 @@ Then:
 
 And `h` is nonconstant mod `g`: `h ≡ 0 (mod a)` but `h ≡ 1 (mod b)`.
 
-Note: this does NOT require factoring `g` into irreducibles — any
+This does not require factoring `g` into irreducibles; any
 nontrivial coprime splitting works.
 
 **Step 3. Nonconstant kernel elements produce nontrivial GCD splits.**
@@ -85,7 +85,7 @@ Since every basis element is constant on `g`, and the basis spans the
 kernel of `f`, the image of the kernel of `f` under reduction mod `g`
 consists only of constants. By surjectivity (step 4), the kernel of `g`
 itself consists only of constants. If `g` were reducible, step 2 would
-give a nonconstant kernel element — contradiction. So `g` is
+give a nonconstant kernel element, a contradiction. So `g` is
 irreducible.
 
 **Note on representatives.** The `polyCRT` construction builds
@@ -114,7 +114,7 @@ degree `d < n`. Then `g | X^(p^n) - X`, so by the degree lemma
 `g | gcd(f, X^(p^(n/q)) - X)`, meaning the gcd is nontrivial and
 the coprimality check rejects.
 
-Note: `reducible f` alone does not give `d | n` — we need the
+The assumption `reducible f` alone does not give `d | n`; we need the
 test's divisibility condition `f | X^(p^n) - X` to get
 `g | X^(p^n) - X` first.
 
@@ -179,24 +179,25 @@ assembled from (1)+(4)):
   via `AdjoinRoot.liftAlgHom`
 - `finrank (ZMod p) (AdjoinRoot g) = g.natDegree` from
   `AdjoinRoot.powerBasis` and `PowerBasis.dim`
-- gcd ↔ divisibility bridge: `gcd(f, P) ≠ 1` plus `Irreducible f`
+- gcd-divisibility correspondence: `gcd(f, P) ≠ 1` plus `Irreducible f`
   gives `f | P` in `Polynomial (ZMod p)`, via Euclidean-domain / prime API
 - Divisibility arithmetic: from `d | n` and `d < n`, choose a prime
   `q | n/d` and derive `d | n/q` and `q | n`
-- Computational bridge: `rabinTest f = true` unfolds to the exact
+- Executable correspondence: `rabinTest f = true` unfolds to the exact
   divisibility check `f | X^(p^n) - X` plus coprimality of
   `f` with `X^(p^(n/q)) - X` for each prime `q | n`
 
-## The `Polynomial (ZMod q)` provider for `factor_poly` / `irreducibility`
+## The `Polynomial (ZMod q)` extension for `factor_poly` / `irreducibility`
 
 `HexBerlekampMathlib/FactorTactic.lean` declares
-`HexBerlekampMathlib.FactorTactic.provider` (probed by name from
-`Hex.FactorTactic.providerNames`; renaming it severs the hook), extending
+`HexBerlekampMathlib.FactorTactic.extension`. The tactic driver finds it
+through `Hex.FactorTactic.extensionNames`, and registration tests ensure that
+the declaration remains discoverable. It extends
 the `factor_poly`/`irreducibility` elaborators to `Polynomial (ZMod q)`
 inputs with a literal prime modulus `q < 2^31`. Composite or oversized
 moduli are declined with a diagnostic; other types are not applicable.
 
-The provider's core is a parser-with-proof: a meta recursion over the
+The implementation is a parser-with-proof: a meta recursion over the
 input expression (`X`, `Polynomial.C`, numerals, `+`, `-`, `*`, negation,
 `^` with `Nat` literal exponents, named defs unfolded under a fuel guard)
 that evaluates each node to an executable `Hex.FpPoly q` and combines
@@ -206,12 +207,12 @@ lemmas, producing `toMathlibPolynomial fLit = P` for the reified literal
 `ZMod64.toZMod` values (checked to reduce at elaboration time before
 emission).
 
-The factor search reuses the `FpPoly` pipeline
+The factor search reuses the `FpPoly` factorization
 (`Hex.FactorTactic.fpFactorSearch` / `fpCoverEntries`) as untrusted
 search. Emitted terms apply the kernel-decidable assemblers in
-`HexBerlekampMathlib/FactorPoly.lean` — `Hex.FactoredPoly.ofFp` (result
+`HexBerlekampMathlib/FactorPoly.lean`: `Hex.FactoredPoly.ofFp` (result
 type `Hex.FactoredPoly P`, the `Polynomial`-level counterpart of
-`FpPoly.Factored`) and `HexBerlekampMathlib.irreducible_ofFp` — whose
+`FpPoly.Factored`) and `HexBerlekampMathlib.irreducible_ofFp`, whose
 certification slots are all Boolean checks on reified literals discharged
 by `Eq.refl true`/`Eq.refl false`; the factorizer and certificate
 generator never appear in emitted terms.

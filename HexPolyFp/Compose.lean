@@ -320,7 +320,7 @@ theorem composeCoeffPowerSumUpTo_eq
 
 /-- The list-fed accumulator {name}`composeCoeffPowerSumFrom` over the coefficient
 slice `[coeff base, …, coeff (base + n - 1)]` agrees with the index-fed
-`composeCoeffPowerSumUpTo coeff n base w`. This bridges the two power-sum
+`composeCoeffPowerSumUpTo coeff n base w`. This correspondences the two power-sum
 representations so the explicit list form can be rewritten into the bounded
 indexed form used by the extension and subtraction lemmas. -/
 private theorem composeCoeffPowerSumFrom_range_eq_upTo

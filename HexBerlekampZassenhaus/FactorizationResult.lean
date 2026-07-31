@@ -152,6 +152,7 @@ def bhksBound (f : ZPoly) : Nat :=
   let A := max (ZPoly.defaultFactorCoeffBound f) M
   1 + ((2 * n) * A) ^ (2 * n)
 
+/-- Bounded iteration finding the least exponent whose `p`-power reaches `target`. -/
 def ceilLogPAux (p target : Nat) : Nat → Nat → Nat → Nat
   | 0, ell, _ => ell
   | fuel + 1, ell, power =>
@@ -184,8 +185,8 @@ Hensel precision exponent for a Mignotte coefficient bound.
 
 For the Mignotte criterion `p^a > 2·B`, returns the smallest exponent
 `a` with `p^a ≥ 2·B + 1` (equivalently `p^a > 2·B`). The two quantities
-are different — `B` is a magnitude on integer coefficients, `a` is the
-small exponent on the Hensel modulus `p^a` — and must not be conflated.
+are different; `B` is a magnitude on integer coefficients, `a` is the
+small exponent on the Hensel modulus `p^a`; and must not be conflated.
 -/
 @[expose]
 def precisionForCoeffBound (B p : Nat) : Nat :=
@@ -712,9 +713,9 @@ def reassemblyExpansionComplete
 /--
 Sharp membership split for the complete-expansion branch of reassembly.
 
-When the repeated part has been completely expanded by the supplied core
+When the repeated part has been completely expanded by the supplied square-free part
 factors, a reassembled raw factor is either an extracted `X`-power factor or one
-of the supplied core factors. In particular, it cannot be the non-decomposed
+of the supplied factors of the square-free part. In particular, it cannot be the non-decomposed
 `repeatedPartFactorArray` fallback.
 -/
 theorem reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete
@@ -1423,7 +1424,7 @@ private theorem shouldRecordPolynomialFactor_X :
 
 /-- The sign-normalisation of `1` is `1`.  Exposed publicly so Mathlib-side
 per-branch umbrellas (in particular the fast-path constant arm, where the
-singleton square-free core collapses to `1`) can normalise the unit core
+singleton primitive square-free part collapses to `1`) can normalise the unit factor
 without re-deriving the leading-coefficient computation inline. -/
 theorem normalizeFactorSign_one :
     normalizeFactorSign (1 : ZPoly) = 1 := by
@@ -1438,7 +1439,7 @@ theorem normalizeFactorSign_one :
 publicly so Mathlib-side per-branch umbrellas can contradict
 `factorize_entry_shouldRecord` directly when an entry collapses to a
 unit (in particular the fast-path constant arm, where the singleton
-square-free core is `1`). -/
+primitive square-free part is `1`). -/
 theorem shouldRecordPolynomialFactor_one :
     shouldRecordPolynomialFactor (1 : ZPoly) = false := by
   unfold shouldRecordPolynomialFactor
@@ -1483,6 +1484,7 @@ private theorem mem_repeatedPartFactorArray_ne_one
   · simp [hone] at h
   · exact hone
 
+/-- Sign normalization fixes a polynomial with nonnegative leading coefficient. -/
 theorem normalizeFactorSign_eq_self_of_leadingCoeff_nonneg (g : ZPoly)
     (h : 0 ≤ DensePoly.leadingCoeff g) :
     normalizeFactorSign g = g := by
@@ -1490,6 +1492,7 @@ theorem normalizeFactorSign_eq_self_of_leadingCoeff_nonneg (g : ZPoly)
   have hnot : ¬ DensePoly.leadingCoeff g < 0 := by omega
   rw [if_neg hnot]
 
+/-- Sign normalization produces a nonnegative leading coefficient. -/
 theorem normalizeFactorSign_leadingCoeff_nonneg (g : ZPoly) :
     0 ≤ DensePoly.leadingCoeff (normalizeFactorSign g) := by
   unfold normalizeFactorSign
@@ -1505,6 +1508,7 @@ theorem normalizeFactorSign_leadingCoeff_nonneg (g : ZPoly) :
   · rw [if_neg hlead]
     omega
 
+/-- Sign normalization is idempotent. -/
 theorem normalizeFactorSign_idem (g : ZPoly) :
     normalizeFactorSign (normalizeFactorSign g) = normalizeFactorSign g :=
   normalizeFactorSign_eq_self_of_leadingCoeff_nonneg

@@ -36,7 +36,7 @@ public import HexBerlekampZassenhausMathlib.PartitionRefinement
 public import HexBerlekampZassenhausMathlib.UFDPartition
 public import HexBerlekampZassenhausMathlib.IntReductionMod
 public import HexBerlekampZassenhausMathlib.FactorSoundness
-public import HexBerlekampZassenhausMathlib.LatticeTier
+public import HexBerlekampZassenhausMathlib.LatticeFactorization
 public import HexBerlekampZassenhausMathlib.LatticeTotality
 public import HexBerlekampZassenhausMathlib.WordCld
 public import HexBerlekampZassenhausMathlib.Resultant

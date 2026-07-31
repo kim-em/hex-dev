@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGFqRing.Basic
+public import HexGFqRing.PolynomialQuotient
 public import HexGFqRing.Operations
 
 public section

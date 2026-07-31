@@ -62,7 +62,7 @@ def input : ZPoly := DensePoly.ofCoeffs
 /-- Force the full result and reject a classical or trial answer. -/
 def check : Bool :=
   let result := factorTraced input
-  result.2.tier == .lattice && result.2.classicalDecline.isSome &&
+  result.2.method == .lattice && result.2.classicalDecline.isSome &&
     DensePoly.beqCoeffs (Factorization.product result.1) input &&
     result.1.factors.size == 1
 

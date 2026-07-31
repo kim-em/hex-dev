@@ -16,7 +16,7 @@ public section
 Mathlib-free foundation for transporting integer polynomial arithmetic (reduced
 modulo a working modulus) into the word-sized Montgomery ring `WordMod ctx`.
 
-This file provides the scalar bridge used by a word-sized Hensel step:
+This file provides the scalar correspondence used by a word-sized Hensel step:
 `WordMod.toNat` is injective and `WordMod.ofNat` inverts it (`ofNat_toNat`), and
 `ZPoly.intModNat` (the canonical `[0, M)` residue) commutes with `+`, `*`, and the
 full-range modular `-` of `WordMod` (`intModNat_add`/`intModNat_mul`/`intModNat_sub`).
@@ -39,6 +39,7 @@ theorem toNat_injective {a b : WordMod ctx} (h : a.toNat = b.toNat) : a = b := b
   apply UInt64.toNat_inj.mp
   rw [← toNat_mul_word a, ← toNat_mul_word b, h]
 
+/-- Two Montgomery residues are equal exactly when their natural representatives agree. -/
 theorem eq_iff_toNat {a b : WordMod ctx} : a = b ↔ a.toNat = b.toNat :=
   ⟨fun h => by rw [h], toNat_injective⟩
 
@@ -193,6 +194,7 @@ theorem intModNat_cast (z : Int) {M : Nat} (hM : 0 < M) :
   unfold intModNat
   exact Int.toNat_of_nonneg (Int.emod_nonneg _ (Int.ofNat_ne_zero.mpr (Nat.ne_of_gt hM)))
 
+/-- The natural remainder of an integer lies below every positive modulus. -/
 theorem intModNat_lt' (z : Int) {M : Nat} (hM : 0 < M) : intModNat z M < M := by
   have hc := intModNat_cast z hM
   have h1 : z % (M : Int) < M := Int.emod_lt_of_pos z (by exact_mod_cast hM)

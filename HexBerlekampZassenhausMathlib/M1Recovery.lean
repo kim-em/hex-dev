@@ -36,12 +36,12 @@ open Polynomial
 
 /-! # M1 (`monicTarget`-coordinate) recovery math
 
-Additive congruence machinery for routing the fast-core recovery through the van
+Additive congruence machinery for handling the fast recovery recovery through the van
 Hoeij `M1` target `monicTarget core p k = core · ℓf⁻¹ (mod p^k)`
 (`Hex.ZPoly.monicTarget`) instead of the `toMonic` `x ↦ x/ℓf` dilation.  Over
 `(ℤ/p^k)` the `monicTarget` keeps `core`'s own coordinate, so scaling the lifted
-monic product by `ℓf = leadingCoeff core` lands back on `core` directly — no
-`dilate`.  These lemmas are the "new math" the core-coordinate swap consumes; they
+monic product by `ℓf = leadingCoeff core` lands back on `core` directly; no
+`dilate`.  These lemmas are the "new math" the original-coordinate swap consumes; they
 are stated additively so they land green ahead of that atomic remodel. -/
 
 /-- Constant scaling preserves coefficientwise congruence modulo `m`:
@@ -171,7 +171,7 @@ theorem monicTarget_mul_congr
       (Hex.ZPoly.congr_symm _ _ _
         (monicTarget_congr_scaleInv core p k (Nat.zero_lt_of_lt hpk))))
 
-/-- The BHKS mod-bridge: rescaling the `monicTarget` by `ℓf = leadingCoeff core`
+/-- The BHKS mod-correspondence: rescaling the `monicTarget` by `ℓf = leadingCoeff core`
 recovers `core` modulo `p^k`, i.e. `ℓf · monicTarget core p k ≡ core (mod p^k)`,
 provided `core`'s leading coefficient is coprime to `p^k` (the good-prime
 condition).  This is what lets the lifted monic factors of `monicTarget` recover
@@ -220,7 +220,7 @@ theorem leadingCoeff_scale_monicTarget_congr_core (core : Hex.ZPoly) (p k : Nat)
     (Int.modEq_iff_dvd.mp hmod.symm)
   exact Int.emod_eq_zero_of_dvd hdvd
 
-/-- The core-coordinate scaled-product congruence: given the `M1` lift congruence
+/-- The original-coordinate scaled-product congruence: given the `M1` lift congruence
 `∏ liftedFactors ≡ monicTarget core p k (mod p^k)` for a selected subset `S`,
 the `ℓf`-scaled lifted product is congruent to `core` itself modulo `p^k`:
 `scaledLiftedFactorProduct core d S ≡ core (mod p^k)`.  This is the precise
@@ -262,7 +262,7 @@ theorem factorCongr_of_product_congr_monicTarget
       (core := factor) (d := d) (S := S) hpk hgcd hprod)
 
 /-- Scale a factor-coordinate congruence through the leading-coefficient
-factorization of the original core. -/
+factorization of the original polynomial. -/
 theorem honestCongr_of_correspondence
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
     (cofactorLc : Int)
@@ -283,7 +283,7 @@ theorem honestCongr_of_correspondence
   rwa [show cofactorLc * Hex.DensePoly.leadingCoeff factor =
       Hex.DensePoly.leadingCoeff core by rw [hlc]; ring] at hscaled
 
-/-- Compose direct-target recovery with the original core's
+/-- Compose direct-target recovery with the original polynomial's
 leading-coefficient factorization. -/
 theorem honestCongr_of_product_congr_monicTarget
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
@@ -306,15 +306,15 @@ theorem honestCongr_of_product_congr_monicTarget
   honestCongr_of_correspondence cofactorLc hlc
     (factorCongr_of_product_congr_monicTarget hprod hgcd hpk)
 
-/-- Core-coordinate recovery theorem: when the lifted product is congruent
+/-- Original-coordinate recovery theorem: when the lifted product is congruent
 to the whole `monicTarget core p k` modulo the Hensel modulus `p^a`, the executable
 centred lift of the `ℓf`-scaled lifted product recovers `core` exactly, provided the
 modulus is beyond twice the default Mignotte coefficient bound for `core`.
 
-This is the core-coordinate analogue of
+This is the original-coordinate analogue of
 `centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision`: it threads the M1
-mod-bridge (`scaledLiftedFactorProduct_congr_core_of_product_congr_monicTarget`)
-into the existing Mignotte recovery with `factor := core`.  No `dilate` is needed —
+mod-correspondence (`scaledLiftedFactorProduct_congr_core_of_product_congr_monicTarget`)
+into the existing Mignotte recovery with `factor := core`.  No `dilate` is needed;
 the recovery lands directly in `core`'s own coordinate. -/
 theorem centeredLift_scaledLiftedFactorProduct_eq_core_of_product_congr_monicTarget
     {core : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
@@ -342,7 +342,7 @@ M1 (`monicTarget`-coordinate) recovery witness, the van Hoeij analogue of
 
 The selected lifted product represents a monic-coordinate factor `monicFactor`
 modulo `p^k`; the integer factor is recovered by scaling that monic factor by
-`ℓf = leadingCoeff core` and taking the primitive part of its centred lift — no
+`ℓf = leadingCoeff core` and taking the primitive part of its centred lift; no
 `dilate`, because the `monicTarget` coordinate already *is* `core`'s coordinate
 (`monicTarget ≡ core·ℓf⁻¹`).  Accordingly `monic_dvd` pins `monicFactor` to a
 divisor of `monicTarget core p k` rather than `(toMonic core).monic`.
@@ -353,10 +353,13 @@ so it lands green without rerouting any existing `RecoveredAtLift` (M2) consumer
 structure RecoveredAtLiftM1
     (core : Hex.ZPoly) (d : Hex.LiftData) (factor : Hex.ZPoly)
     (S : LiftedFactorSubset d) where
+  /-- The direct-coordinate factor represented by the selected lifted factors. -/
   monicFactor : Hex.ZPoly
+  /-- The selected lifted product agrees with that factor modulo the lift modulus. -/
   congr :
     Hex.ZPoly.reduceModPow (liftedFactorProduct d S) d.p d.k =
       Hex.ZPoly.reduceModPow monicFactor d.p d.k
+  /-- Scaling and centred lifting recover the original integer factor. -/
   recovered_eq :
     Hex.ZPoly.primitivePart
         (Hex.centeredLiftPoly
@@ -365,13 +368,14 @@ structure RecoveredAtLiftM1
             d.p d.k)
           (d.p ^ d.k)) =
       factor
+  /-- The direct-coordinate factor divides the polynomial lifted by Hensel's method. -/
   monic_dvd : monicFactor ∣ Hex.ZPoly.monicTarget core d.p d.k
 
 /-- Recovery formula in `core`'s own coordinate: an `M1` recovery witness recovers
 its integer factor as the primitive part of the centred lift of the `ℓf`-scaled
 selected lifted product, `primitivePart (centeredLiftPoly ((ℓf · ∏ S) % p^k)) =
-factor`.  This is the core-coordinate analogue of
-`RecoveredAtLift.candidate_eq_of_monic_dvd`, but with no `dilate` — the proof just
+factor`.  This is the original-coordinate analogue of
+`RecoveredAtLift.candidate_eq_of_monic_dvd`, but with no `dilate`; the proof just
 transports the witness `congr` through the `ℓf`-scaling (`scale_congr_of_congr`).
 -/
 theorem RecoveredAtLiftM1.candidate_eq
@@ -413,7 +417,7 @@ theorem centeredLiftPoly_congr_self (g : Hex.ZPoly) (m : Nat) :
 `ℓf`-scaled selected lifted product is congruent to a constant multiple of the recovered integer
 factor modulo `p^k`: `ℓf · (∏ S) ≡ c · factor (mod p^k)`, where `c` is the content
 of the centred lift.  This is the proportionality hypothesis consumed by the
-logarithmic-derivative bridge `congr_logDeriv_bridge_of_scale_congr`.
+logarithmic-derivative correspondence `congr_logDeriv_bridge_of_scale_congr`.
 
 The witness recovers `factor` as the primitive part of the centred lift `L` of the
 `ℓf`-scaled product, so `L = scale (content L) factor` by `content_mul_primitivePart`;
@@ -447,7 +451,7 @@ theorem exists_scale_congr_factor_of_recoveredM1
 
 /-! # M1 Hensel lift invariant: `monicTarget` mod-`p` structure transfers from `core`
 
-The fast-core lift `coreLiftData` lifts `core`'s Berlekamp factors against the
+The fast recovery lift `directLiftData` lifts `core`'s Berlekamp factors against the
 `monicTarget`, but the prime is selected against `core`.  Over `ℤ/p` the
 `monicTarget` is the unit rescaling `ℓf⁻¹·core`, so it shares its monic modular
 image with `core`; the boundary facts the Hensel lift invariant consumes
@@ -605,10 +609,10 @@ theorem monicModularImage_modP_eq_modP_monicTarget
 Abstract-bound variant of
 `existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence`:
 takes `B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
-`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`hprecision : 2 * B' < d.p ^ d.k` in place of the input-shape
 `defaultFactorCoeffBound core` precision constraint.  The body mirrors
 the original but invokes the `_of_bound` recovery theorem instead of
-the core-shape one.
+the input-shape one.
 -/
 theorem existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence_of_bound
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
@@ -723,6 +727,7 @@ emission step at a time.
 structure HenselSubsetCorrespondenceRest
     (core : Hex.ZPoly) (d : Hex.LiftData)
     (J : LiftedFactorSubset d) (target : Hex.ZPoly) : Prop where
+  /-- Every normalized irreducible divisor has a representing subset inside `J`. -/
   exists_subset :
     ∀ {factor : Hex.ZPoly},
       Hex.normalizeFactorSign factor = factor →
@@ -730,6 +735,7 @@ structure HenselSubsetCorrespondenceRest
       factor ∣ target →
       ∃ S : LiftedFactorSubset d,
         S ⊆ J ∧ RepresentsIntegerFactorAtLift core d factor S
+  /-- An irreducible divisor has at most one representing subset inside `J`. -/
   unique_subset :
     ∀ {factor : Hex.ZPoly} {S T : LiftedFactorSubset d},
       Irreducible (HexPolyZMathlib.toPolynomial factor) →
@@ -906,7 +912,9 @@ structure LiftedFactorSubsetPartition
     (core : Hex.ZPoly) (d : Hex.LiftData)
     (J : LiftedFactorSubset d) (target : Hex.ZPoly) : Prop
     extends HenselSubsetCorrespondenceRest core d J target where
+  /-- The current target has no repeated irreducible factors. -/
   target_squarefree : Squarefree (HexPolyZMathlib.toPolynomial target)
+  /-- Every remaining lifted factor belongs to an irreducible divisor of the target. -/
   cover :
     ∀ {i : LiftedFactorIndex d}, i ∈ J →
       ∃ (f : Hex.ZPoly) (S : LiftedFactorSubset d),
@@ -914,6 +922,7 @@ structure LiftedFactorSubsetPartition
         f ∣ target ∧
         S ⊆ J ∧ i ∈ S ∧
         RepresentsIntegerFactorAtLift core d f S
+  /-- Nonassociated irreducible factors have disjoint lifted supports. -/
   pairwise_disjoint :
     ∀ {f g : Hex.ZPoly} {S T : LiftedFactorSubset d},
       Irreducible (HexPolyZMathlib.toPolynomial f) →
@@ -927,6 +936,7 @@ structure LiftedFactorSubsetPartition
       ¬ Associated (HexPolyZMathlib.toPolynomial f)
         (HexPolyZMathlib.toPolynomial g) →
       Disjoint S T
+  /-- Associated irreducible factors have the same lifted support. -/
   unique_up_to_associated :
     ∀ {f g : Hex.ZPoly} {S T : LiftedFactorSubset d},
       Irreducible (HexPolyZMathlib.toPolynomial f) →
@@ -940,6 +950,7 @@ structure LiftedFactorSubsetPartition
       Associated (HexPolyZMathlib.toPolynomial f)
         (HexPolyZMathlib.toPolynomial g) →
       S = T
+  /-- Divisibility of a direct recombination candidate implies support inclusion. -/
   support_subset_of_dvd_recombinationCandidate :
     ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
       Irreducible (HexPolyZMathlib.toPolynomial f) →
@@ -950,6 +961,7 @@ structure LiftedFactorSubsetPartition
       S ⊆ J →
       RepresentsIntegerFactorAtLift core d f S →
       S ⊆ T
+  /-- Divisibility of a recovered candidate implies support inclusion. -/
   support_subset_of_dvd_liftedRecoveryCandidate :
     ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
       Irreducible (HexPolyZMathlib.toPolynomial f) →
@@ -959,6 +971,7 @@ structure LiftedFactorSubsetPartition
       S ⊆ J →
       RepresentsIntegerFactorAtLift core d f S →
       S ⊆ T
+  /-- Recovery from a genuine support returns its represented factor. -/
   liftedRecoveryCandidate_eq :
     ∀ {f : Hex.ZPoly} {S : LiftedFactorSubset d},
       Irreducible (HexPolyZMathlib.toPolynomial f) →

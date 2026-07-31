@@ -121,7 +121,7 @@ The nonconstant side condition for the default executable factorization: every
 recorded polynomial factor has positive degree. This is the `hψ_nonconst` clause
 uniqueness/checker callers would otherwise reconstruct.
 
-Positive degree is *not* derivable from `shouldRecordPolynomialFactor` alone — a
+Positive degree is *not* derivable from `shouldRecordPolynomialFactor` alone; a
 constant like `Hex.DensePoly.C 2` passes the recording filter, has positive
 leading coefficient, and is sign-normalized. The constant case is excluded by
 *primitivity* (content `1` forces a constant to be `±1`), so this carries the

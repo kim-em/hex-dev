@@ -68,7 +68,7 @@ def x4p1 : ZPoly := DensePoly.ofCoeffs #[1, 0, 0, 0, 1]
 theorem x4p1_irred : ZPoly.Irreducible x4p1 := irreducibility x4p1
 
 /-- `X²-2`: plain Eisenstein at prime `2`, shift `0`. The tactic itself
-certifies this via the mod-3 route, so the shift-`0` Eisenstein witness is
+certifies this via the mod-3 method, so the shift-`0` Eisenstein witness is
 exercised directly through the checker and its soundness theorem. -/
 def x2m2 : ZPoly := DensePoly.ofCoeffs #[-2, 0, 1]
 

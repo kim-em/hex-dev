@@ -18,7 +18,7 @@ public section
 /-!
 Soundness of a modular square-freeness certificate.
 
-The classical Berlekamp-Zassenhaus square-free-core extraction runs an exact
+The classical Berlekamp-Zassenhaus primitive square-free part extraction runs an exact
 `gcd(f, f')` over `ℚ`, whose rational coefficient blow-up dominates
 `normalizeForFactor`.  For the common (square-free) input the whole computation
 collapses to a trivial decomposition; a cheap machine-word modular test decides

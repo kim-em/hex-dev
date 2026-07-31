@@ -605,7 +605,7 @@ def ZCoprimeSplits (p : Nat) [ZMod64.Bounds p] : List ZPoly → Prop
 
 /-- Build the guarded quadratic multifactor lift invariant from `ZPoly`-level
 boundary facts: monic factors, split coprimality (`ZCoprimeSplits`), and the
-lifted product congruence modulo `p`. No monic-target hypothesis is required —
+lifted product congruence modulo `p`. No monic-target hypothesis is required;
 the balanced invariant constrains only the leading factor of each split, which
 is a product of the (monic) input factors. -/
 theorem inv_of_ZCoprimeSplits (p k : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]

@@ -429,7 +429,7 @@ theorem rowNormSq_le_basisNormSq (b : Matrix Int n m) {δ η : Rat}
 
 end Internal.LLLCore
 
-/-- LLL short-vector core inequality, parameterized by the size-reduction bound
+/-- LLL short-vector inequality, parameterized by the size-reduction bound
 `η`. For a `(δ, η)`-LLL-reduced basis with `1/2 ≤ η`, `η² < δ ≤ 1`, the
 squared norm of the first row is at most `(1 / (δ - η²)) ^ (n - 1)` times the
 squared norm of any nonzero lattice vector. The proof combines the telescoping

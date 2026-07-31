@@ -585,7 +585,8 @@ private theorem mod_eq_mod_of_congr_not_pos_degree
         (fun a => zmod_div_mul_cancel_of_ne a m.leadingCoeff hlead_ne)
     rw [hfmod, hgmod]
 
-/-- {name}`mod_eq_mod_of_congr` combines the positive-degree and non-positive-degree branches into the core equality of congruent remainders. -/
+/-- {name}`mod_eq_mod_of_congr` combines the positive-degree and non-positive-degree
+branches into the equality of congruent remainders. -/
 private theorem mod_eq_mod_of_congr
     [PrimeModulus p] (f g m : DensePoly (ZMod64 p))
     (hcongr : DensePoly.Congr f g m) :
@@ -602,7 +603,8 @@ private theorem sub_zero_poly (f : DensePoly (ZMod64 p)) :
   rw [DensePoly.coeff_sub_ring, DensePoly.coeff_zero]
   grind
 
-/-- {name}`mod_eq_zero_of_dvd` converts divisibility by the modulus into a zero remainder using the core remainder-congruence theorem. -/
+/-- {name}`mod_eq_zero_of_dvd` converts divisibility by the modulus into a zero
+remainder using the remainder-congruence theorem. -/
 private theorem mod_eq_zero_of_dvd
     [PrimeModulus p] (f g : DensePoly (ZMod64 p)) (hdiv : g ∣ f) :
     f % g = 0 := by

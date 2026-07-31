@@ -173,11 +173,13 @@ def balancedSplitIndex (factors : List ZPoly) : Nat :=
       factors.length / 2
   max 1 (min raw (factors.length - 1))
 
+/-- The balanced split leaves at least one factor on its left. -/
 theorem balancedSplitIndex_pos (factors : List ZPoly) :
     0 < balancedSplitIndex factors := by
   simp only [balancedSplitIndex]
   exact Nat.lt_of_lt_of_le Nat.zero_lt_one (Nat.le_max_left 1 _)
 
+/-- A balanced split of at least two factors leaves at least one factor on its right. -/
 theorem balancedSplitIndex_lt_length
     (factors : List ZPoly) (h : 2 ≤ factors.length) :
     balancedSplitIndex factors < factors.length := by
@@ -588,7 +590,7 @@ of the left product `g := Array.polyProduct L.toArray` against the right product
 `h := Array.polyProduct R.toArray`, followed by the recursive preconditions for
 each lifted sub-product:
 
-1. `QuadraticLiftLoopInvariant` at modulus `p` — initial state package
+1. `QuadraticLiftLoopInvariant` at modulus `p`; initial state package
    (product congruence, Bezout, monicness) for the binary exact lift;
 2. `QuadraticMultifactorLiftInvariant` for the left half with `lifted.1`
    as the new target;
@@ -1048,15 +1050,15 @@ Build the recursive quadratic multifactor lift invariant from the natural
 mod-`p` boundary facts. The caller supplies, for the list of `FpPoly p`
 factors lifted via `FpPoly.liftToZ`:
 
-* `hf_monic` and `hfactors_monic` — `f` and every factor is monic
+* `hf_monic` and `hfactors_monic`; `f` and every factor is monic
   (each split's leading factor is monic; `f` itself is needed
   recursively as the doubling-loop's target stays monic);
-* `hproduct_mod_p` — the lifted ordered product is congruent to `f` mod `p`
+* `hproduct_mod_p`; the lifted ordered product is congruent to `f` mod `p`
   (feeds the product half of `QuadraticLiftLoopInvariant`);
-* `hcoprime : QuadraticMultifactorCoprimeSplits p factors` — every split's
+* `hcoprime : QuadraticMultifactorCoprimeSplits p factors`; every split's
   normalised XGCD has `gcd = 1` over `FpPoly p` (feeds the Bezout half
   via `normalizedXGCD_liftToZ_bezout_congr_of_gcd_eq_one`);
-* `hnonempty` — the factor list is nonempty (rules out the vacuous base
+* `hnonempty`; the factor list is nonempty (rules out the vacuous base
   case which would force `congr 1 f (p^k)`).
 
 The recursive tail re-establishes the same package using

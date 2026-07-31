@@ -12,7 +12,7 @@ public section
 Extended GCD algorithms and specifications.
 
 This module defines pure-`Nat`, `Int`, and `UInt64` extended-GCD
-operations together with the core gcd and Bezout-certificate theorems
+operations together with the fundamental gcd and Bezout-certificate theorems
 used by the arithmetic library.
 -/
 

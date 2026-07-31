@@ -26,9 +26,13 @@ updated leading factor `g` (monic, the input `g` corrected modulo `m^2`), the
 updated complementary factor `h`, and the updated Bezout witnesses `s`, `t`
 satisfying `s * g + t * h ≡ 1 (mod m^2)`. -/
 structure QuadraticLiftResult where
+  /-- The updated monic factor. -/
   g : ZPoly
+  /-- The updated complementary factor. -/
   h : ZPoly
+  /-- The updated Bezout coefficient multiplying `g`. -/
   s : ZPoly
+  /-- The updated Bezout coefficient multiplying `h`. -/
   t : ZPoly
 
 namespace QuadraticLiftResult
@@ -1954,7 +1958,7 @@ def quadraticHenselStepBignum
   let s' := subModSquare (subModSquare s (mulModSquare s b m) m) (mulModSquare qBezout h' m) m
   { g := g', h := h', s := s', t := t' }
 
-/-- Guarded dispatch: the word-sized step when its guard holds, else the bignum step. -/
+/-- Guarded selection: the word-sized step when its guard holds, else the bignum step. -/
 def quadraticHenselStep
     (m : Nat) (f g h s t : ZPoly) : QuadraticLiftResult :=
   match quadraticHenselStepWord? m f g h s t with

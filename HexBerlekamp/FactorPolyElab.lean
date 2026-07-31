@@ -19,9 +19,9 @@ public section
 The `factor_poly` term elaborator and tactic.
 
 `factor_poly f` elaborates to a `Hex.FpPoly.Factored f` value (further input
-types via providers): the compiled Yun square-free decomposition and Berlekamp
+types via extensions): the compiled Yun square-free decomposition and Berlekamp
 factorizer run at elaboration time as untrusted search, and the emitted
-structure carries kernel checks on reified literal data — one
+structure carries kernel checks on reified literal data; one
 `DensePoly.beqCoeffs` product check and one `Berlekamp.checkIrredCover` pass
 replaying each distinct factor's Rabin certificate once. The factorizer never
 runs in the kernel.
@@ -162,8 +162,8 @@ meta def mkFpFactored (tactic : String) (p : Nat)
       return mkApp7 (mkConst ``Hex.FpPoly.Factored.mk)
         pE boundsE fE scalarE factorsE hmulE hirredE
 
-/-- Dispatch the `factor_poly` elaboration for `f : FpPoly p`: primality and
-bounds checks on the literal modulus, then the instance-carrying core. -/
+/-- Elaborate `factor_poly f` for `f : FpPoly p`: check primality and bounds
+for the literal modulus, then run the instance-carrying implementation. -/
 meta def elabFactorPolyFp (tactic : String) (p : Nat)
     (pE boundsE RE zeroE decE fE : Expr) : MetaM Expr := do
   if hpt : Hex.Nat.isPrimeTrial p = true then
@@ -181,7 +181,7 @@ meta def elabFactorPolyFp (tactic : String) (p : Nat)
         irreducibles requires a prime field"
 
 /-- Elaborate a `factor_poly` argument and produce the structure value,
-dispatching to providers for non-`FpPoly` input types. -/
+trying registered extensions for non-`FpPoly` input types. -/
 meta def elabFactorPolyArgument (stx : Syntax) (t : Syntax)
     (expectedType? : Option Expr) : Term.TermElabM Expr := do
   let pE ← Term.elabTerm t none
@@ -193,12 +193,12 @@ meta def elabFactorPolyArgument (stx : Syntax) (t : Syntax)
   | .fp p pE' boundsE RE zeroE decE =>
       elabFactorPolyFp "factor_poly" p pE' boundsE RE zeroE decE pE
   | _ =>
-      dispatch (fun prov => prov.factorPoly? stx pE ty expectedType?)
+      applyExtensions (fun prov => prov.factorPoly? stx pE ty expectedType?)
         (fun declines =>
           throwError (unsupportedMessage "factor_poly" ty declines))
 
 /-- `factor_poly f` elaborates to a certified irreducible factorization of
-`f` (a `Hex.FpPoly.Factored f` for `f : FpPoly p`; providers add further
+`f` (a `Hex.FpPoly.Factored f` for `f : FpPoly p`; extensions add further
 input types), usable as
 `obtain ⟨scalar, factors, factors_mul, factors_irred⟩ := factor_poly f`. -/
 syntax (name := factorPolyTerm) "factor_poly" term:max : term
@@ -214,9 +214,9 @@ syntax (name := factorPolyTerm) "factor_poly" term:max : term
 /-- Introduce the four fields of a recognized factorization result as
 `scalar`/`factors` `let` bindings plus `factors_mul`/`factors_irred`
 hypotheses. Inspecting the result type rather than the emitted constructor
-lets provider assemblers return opaque `Hex.FactoredPoly` terms while exposing
-the same tactic interface as the executable `FpPoly` and `ZPoly` providers.
-Unrecognized provider result types land as a single `factored` hypothesis.
+lets extension assemblers return opaque `Hex.FactoredPoly` terms while exposing
+the same tactic interface as the executable `FpPoly` and `ZPoly` extensions.
+Unrecognized extension result types land as a single `factored` hypothesis.
 Shared by the `factor_poly` and `factor_poly!` tactic forms. -/
 meta def introFactored (e : Expr) : Tactic.TacticM Unit := do
   let ty ← whnf (← inferType e)
@@ -234,7 +234,7 @@ meta def introFactored (e : Expr) : Tactic.TacticM Unit := do
     else
       none
   let some (scalarName, factorsName, mulName, irredName) := shape? |
-    -- Unrecognized provider result: fall back to a plain `have`.
+    -- Unrecognized extension result: fall back to a plain `have`.
     Tactic.liftMetaTactic fun g => do
       let (_, g) ← (← g.assert `factored ty e).intro1P
       return [g]

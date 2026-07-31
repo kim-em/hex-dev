@@ -112,6 +112,7 @@ theorem henselLiftData_liftedFactor_modP_eq_modPFactor
     Hex.ZPoly.modP_eq_of_congr primeData.p _ _ hcongr_i
   simpa [modPFactor, Hex.FpPoly.modP_liftToZ] using hmodP
 
+/-- Square-free reduction forbids a positive-degree common divisor of the image and its derivative. -/
 theorem squareFree_common_of_squareFreeModP
     {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
     (f : Hex.ZPoly)
@@ -384,7 +385,7 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
 degree input polynomial has a positive-degree monic modular image.  `isGoodPrime`'s
 leading-coefficient admissibility preserves the degree through `modP`, and the
 monic rescale is by a nonzero unit, so it preserves size.  This is the positivity
-guard consumed by the per-modular-factor Mathlib irreducibility bridge. -/
+guard consumed by the per-modular-factor Mathlib irreducibility correspondence. -/
 theorem monicModularImage_modP_degree?_pos_of_factorsModPBerlekampForm
     (f : Hex.ZPoly) (data : Hex.PrimeChoiceData)
     (hform : Hex.factorsModPBerlekampForm f data)
@@ -460,7 +461,7 @@ Proof: extract the existential witnesses from `factorsModPBerlekampForm` to view
 then apply the polymorphic abstract `Hex.Berlekamp.berlekampFactor_factors_pos_degree`.
 The required positivity of the monic modular image follows from `isGoodPrime`'s
 leading-coefficient admissibility (which preserves degree through `modP`) together
-with the input's positive degree.  The route from `0 < g.degree?.getD 0` on each
+with the input's positive degree. The deduction from `0 < g.degree?.getD 0` on each
 `FpPoly p` factor to `0 < (toPolynomial (liftToZ g)).natDegree` on the integer
 side is `HexPolyMathlib.natDegree_toPolynomial` plus the (inline) observation
 that `liftToZ` preserves size on any nonzero `FpPoly p`.
@@ -757,7 +758,7 @@ theorem factorsModP_polyProduct_congr_of_factorsModPBerlekampForm_of_primitive_p
         (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
         hmonicImage_monic hfield).factors
   -- `factorProduct raw = monicModularImage (modP p core)` (input recovered;
-  -- no `hcore_monic` needed here — the monic premise of `factorProduct_berlekampFactor`
+  -- no `hcore_monic` needed here; the monic premise of `factorProduct_berlekampFactor`
   -- is supplied by `monicModularImage_monic`).
   have hprod_eq_raw :
       Hex.Berlekamp.factorProduct raw =
@@ -855,7 +856,7 @@ theorem factorsModP_polyProduct_congr_monicImage_of_factorsModPBerlekampForm
 
 The product of `core`'s lifted modular factors is congruent to the `monicTarget`
 modulo `p`.  Derived from `core`'s Berlekamp form (which lands the product at the
-monic modular image of `modP p core`) plus the bridge
+monic modular image of `modP p core`) plus the correspondence
 `monicModularImage_modP_eq_modP_monicTarget`. -/
 theorem factorsModP_polyProduct_congr_monicTarget
     (core : Hex.ZPoly) (k : Nat) (primeData : Hex.PrimeChoiceData)

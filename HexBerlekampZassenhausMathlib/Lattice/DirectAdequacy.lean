@@ -36,7 +36,7 @@ short CLD vectors.  The ordinary recovery floor proves the forward inclusion
 certificate.  A larger resultant bound additionally proves `L' ≤ W`.
 
 Every polynomial and support in this module is expressed in the original
-coordinates and uses `Hex.ZPoly.coreLiftData`.
+coordinates and uses `Hex.ZPoly.directLiftData`.
 -/
 
 namespace HexBerlekampZassenhausMathlib
@@ -50,14 +50,14 @@ open Polynomial
 /-!
 # Lattice geometry
 
-The van Hoeij knapsack basis `[I_r | Ã ; 0 | diag(p^(a-l_j))]` is upper-triangular
+The van Hoeij knapsack basis `[I_r | Ã; 0 | diag(p^(a-l_j))]` is upper-triangular
 with strictly positive diagonal (1's in the `I_r` block, `p^(a-l_j)` in the
-`D` block), so its rows are LLL-independent.  This is the entry gate to the
+`D` block), so its rows are LLL-independent.  This is the entry condition to the
 proven LLL short-vector bound `HexLLLMathlib.lllNative_first_row_norm_sq_le`.
 -/
 
 /-- The BHKS knapsack lattice basis is upper-triangular: below-diagonal entries
-vanish.  Follows from the block structure `[I_r | Ã ; 0 | diag]`. -/
+vanish.  Follows from the block structure `[I_r | Ã; 0 | diag]`. -/
 theorem bhksLatticeBasis_basis_lowerZero
     (f : Hex.ZPoly) (p a : Nat) (lifted : Array Hex.ZPoly)
     (i j : Fin (lifted.size + (f.degree?.getD 0)))
@@ -219,8 +219,8 @@ theorem directLiftedFactor_degree_pos
     (hval : ModPFactorization core data)
     (facts : DirectLiftFacts core B data)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B data.p)
-    (i : LiftedFactorIndex (Hex.ZPoly.coreLiftData core B data)) :
-    0 < (liftedFactor (Hex.ZPoly.coreLiftData core B data) i).degree?.getD 0 := by
+    (i : LiftedFactorIndex (Hex.ZPoly.directLiftData core B data)) :
+    0 < (liftedFactor (Hex.ZPoly.directLiftData core B data) i).degree?.getD 0 := by
   have h :=
     henselLiftData_liftedFactor_natDegree_pos
       (Hex.ZPoly.monicTarget core data.p
@@ -239,21 +239,21 @@ theorem directLiftedFactor_core_congr
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B data.p)
     (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
       (Int.ofNat (data.p ^ Hex.precisionForCoeffBound B data.p)) = 1)
-    (i : LiftedFactorIndex (Hex.ZPoly.coreLiftData core B data)) :
+    (i : LiftedFactorIndex (Hex.ZPoly.directLiftData core B data)) :
     Hex.ZPoly.congr core
-      (liftedFactor (Hex.ZPoly.coreLiftData core B data) i *
+      (liftedFactor (Hex.ZPoly.directLiftData core B data) i *
         Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
-          (liftedFactorProduct (Hex.ZPoly.coreLiftData core B data)
+          (liftedFactorProduct (Hex.ZPoly.directLiftData core B data)
             ((Finset.univ : LiftedFactorSubset
-              (Hex.ZPoly.coreLiftData core B data)) \ {i})))
-      ((Hex.ZPoly.coreLiftData core B data).p ^
-        (Hex.ZPoly.coreLiftData core B data).k) := by
+              (Hex.ZPoly.directLiftData core B data)) \ {i})))
+      ((Hex.ZPoly.directLiftData core B data).p ^
+        (Hex.ZPoly.directLiftData core B data).k) := by
   letI := data.bounds
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   have hp_eq : d.p = data.p := by
-    simp [d, Hex.ZPoly.coreLiftData]
+    simp [d, Hex.ZPoly.directLiftData]
   have hk_eq : d.k = Hex.precisionForCoeffBound B data.p := by
-    simp [d, Hex.ZPoly.coreLiftData]
+    simp [d, Hex.ZPoly.directLiftData]
   have hpk : 1 < d.p ^ d.k := by
     rw [hp_eq, hk_eq]
     exact Nat.one_lt_pow (by omega) hval.prime.one_lt
@@ -309,24 +309,24 @@ theorem directLiftedFactors_isCoprime
     (hval : ModPFactorization core data)
     (facts : DirectLiftFacts core B data)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B data.p)
-    (i j : LiftedFactorIndex (Hex.ZPoly.coreLiftData core B data))
+    (i j : LiftedFactorIndex (Hex.ZPoly.directLiftData core B data))
     (hji : j ≠ i) :
     IsCoprime
       ((HexPolyZMathlib.toPolynomial
-        (liftedFactor (Hex.ZPoly.coreLiftData core B data) i)).map
+        (liftedFactor (Hex.ZPoly.directLiftData core B data) i)).map
           (Int.castRingHom (ZMod
-            ((Hex.ZPoly.coreLiftData core B data).p ^
-              (Hex.ZPoly.coreLiftData core B data).k))))
+            ((Hex.ZPoly.directLiftData core B data).p ^
+              (Hex.ZPoly.directLiftData core B data).k))))
       ((HexPolyZMathlib.toPolynomial
-        (liftedFactor (Hex.ZPoly.coreLiftData core B data) j)).map
+        (liftedFactor (Hex.ZPoly.directLiftData core B data) j)).map
           (Int.castRingHom (ZMod
-            ((Hex.ZPoly.coreLiftData core B data).p ^
-              (Hex.ZPoly.coreLiftData core B data).k)))) := by
+            ((Hex.ZPoly.directLiftData core B data).p ^
+              (Hex.ZPoly.directLiftData core B data).k)))) := by
   classical
   letI := data.bounds
   let k := Hex.precisionForCoeffBound B data.p
   let target := Hex.ZPoly.monicTarget core data.p k
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let hsize : d.liftedFactors.size = data.factorsModP.size :=
     henselLiftData_liftedFactors_size_eq target k data
   let S : ModPFactorSubset data :=
@@ -383,7 +383,7 @@ theorem directLiftedFactors_isCoprime
     (HexPolyZMathlib.toPolynomial (liftedFactor d i))
     (HexPolyZMathlib.toPolynomial (liftedFactor d j))
     data.p d.k
-    (by simp [d, Hex.ZPoly.coreLiftData]; omega)
+    (by simp [d, Hex.ZPoly.directLiftData]; omega)
     hcopp
   change IsCoprime
     ((HexPolyZMathlib.toPolynomial (liftedFactor d i)).map
@@ -391,7 +391,7 @@ theorem directLiftedFactors_isCoprime
     ((HexPolyZMathlib.toPolynomial (liftedFactor d j)).map
       (Int.castRingHom (ZMod (d.p ^ d.k))))
   have hp_eq : d.p = data.p := by
-    simp [d, Hex.ZPoly.coreLiftData]
+    simp [d, Hex.ZPoly.directLiftData]
   rw [hp_eq]
   exact hpow
 
@@ -401,13 +401,13 @@ theorem directLiftedFactor_map_irreducible
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (hval : ModPFactorization core data)
     (facts : DirectLiftFacts core B data)
-    (i : LiftedFactorIndex (Hex.ZPoly.coreLiftData core B data)) :
+    (i : LiftedFactorIndex (Hex.ZPoly.directLiftData core B data)) :
     Irreducible
       ((HexPolyZMathlib.toPolynomial
-        (liftedFactor (Hex.ZPoly.coreLiftData core B data) i)).map
+        (liftedFactor (Hex.ZPoly.directLiftData core B data) i)).map
           (Int.castRingHom (ZMod data.p))) := by
   letI := data.bounds
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let hsize : d.liftedFactors.size = data.factorsModP.size :=
     henselLiftData_liftedFactors_size_eq
       (Hex.ZPoly.monicTarget core data.p
@@ -434,24 +434,24 @@ theorem directLiftedFactor_map_irreducible_at_liftPrime
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (hval : ModPFactorization core data)
     (facts : DirectLiftFacts core B data)
-    (i : LiftedFactorIndex (Hex.ZPoly.coreLiftData core B data)) :
+    (i : LiftedFactorIndex (Hex.ZPoly.directLiftData core B data)) :
     Irreducible
       ((HexPolyZMathlib.toPolynomial
-        (liftedFactor (Hex.ZPoly.coreLiftData core B data) i)).map
+        (liftedFactor (Hex.ZPoly.directLiftData core B data) i)).map
           (Int.castRingHom
-            (ZMod (Hex.ZPoly.coreLiftData core B data).p))) := by
-  let d := Hex.ZPoly.coreLiftData core B data
+            (ZMod (Hex.ZPoly.directLiftData core B data).p))) := by
+  let d := Hex.ZPoly.directLiftData core B data
   change Irreducible
     ((HexPolyZMathlib.toPolynomial (liftedFactor d i)).map
       (Int.castRingHom (ZMod d.p)))
   have hp_eq : d.p = data.p := by
-    simp [d, Hex.ZPoly.coreLiftData]
+    simp [d, Hex.ZPoly.directLiftData]
   rw [hp_eq]
   exact directLiftedFactor_map_irreducible core B data hval facts i
 
-/-- Every direct Hensel factor has degree at most the input core.  Reduction at
+/-- Every direct Hensel factor has degree at most the input polynomial.  Reduction at
 the selected prime preserves both degrees, and the direct factor congruence
-makes the local factor divide the reduced core. -/
+makes the local factor divide the reduced square-free part. -/
 theorem directLiftedFactor_natDegree_le_core
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (hcore_pos : 0 < core.degree?.getD 0)
@@ -460,21 +460,21 @@ theorem directLiftedFactor_natDegree_le_core
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B data.p)
     (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
       (Int.ofNat (data.p ^ Hex.precisionForCoeffBound B data.p)) = 1)
-    (i : LiftedFactorIndex (Hex.ZPoly.coreLiftData core B data)) :
+    (i : LiftedFactorIndex (Hex.ZPoly.directLiftData core B data)) :
     (HexPolyZMathlib.toPolynomial
-      ((Hex.ZPoly.coreLiftData core B data).liftedFactors.getD i.val 1)).natDegree ≤
+      ((Hex.ZPoly.directLiftData core B data).liftedFactors.getD i.val 1)).natDegree ≤
         (HexPolyZMathlib.toPolynomial core).natDegree := by
   classical
   letI := data.bounds
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let q := HexPolyZMathlib.toPolynomial (liftedFactor d i)
   let h := liftedFactorProduct d
     ((Finset.univ : LiftedFactorSubset d) \ {i})
   let φ := Int.castRingHom (ZMod data.p)
   have hp_eq : d.p = data.p := by
-    simp [d, Hex.ZPoly.coreLiftData]
+    simp [d, Hex.ZPoly.directLiftData]
   have hk_eq : d.k = Hex.precisionForCoeffBound B data.p := by
-    simp [d, Hex.ZPoly.coreLiftData]
+    simp [d, Hex.ZPoly.directLiftData]
   have hp_dvd : data.p ∣ d.p ^ d.k := by
     rw [hp_eq]
     exact dvd_pow_self data.p (by rw [hk_eq]; omega)
@@ -525,8 +525,8 @@ theorem directLiftedFactor_natDegree_le_core
   have hq_degree_map : (q.map φ).natDegree = q.natDegree :=
     hq_monic.natDegree_map φ
   have hgetD :
-      (Hex.ZPoly.coreLiftData core B data).liftedFactors.getD i.val 1 =
-        liftedFactor (Hex.ZPoly.coreLiftData core B data) i := by
+      (Hex.ZPoly.directLiftData core B data).liftedFactors.getD i.val 1 =
+        liftedFactor (Hex.ZPoly.directLiftData core B data) i := by
     unfold liftedFactor
     simp [Array.getD]
   rw [hgetD]
@@ -555,24 +555,24 @@ theorem directLiftedFactor_isCoprime_cldQuotient
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B data.p)
     (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
       (Int.ofNat (data.p ^ Hex.precisionForCoeffBound B data.p)) = 1)
-    (i : LiftedFactorIndex (Hex.ZPoly.coreLiftData core B data)) :
+    (i : LiftedFactorIndex (Hex.ZPoly.directLiftData core B data)) :
     IsCoprime
       ((HexPolyZMathlib.toPolynomial
-        (liftedFactor (Hex.ZPoly.coreLiftData core B data) i)).map
+        (liftedFactor (Hex.ZPoly.directLiftData core B data) i)).map
           (Int.castRingHom (ZMod
-            ((Hex.ZPoly.coreLiftData core B data).p ^
-              (Hex.ZPoly.coreLiftData core B data).k))))
+            ((Hex.ZPoly.directLiftData core B data).p ^
+              (Hex.ZPoly.directLiftData core B data).k))))
       ((HexPolyZMathlib.toPolynomial
         (Hex.cldQuotientMod core
-          (liftedFactor (Hex.ZPoly.coreLiftData core B data) i)
-          (Hex.ZPoly.coreLiftData core B data).p
-          (Hex.ZPoly.coreLiftData core B data).k)).map
+          (liftedFactor (Hex.ZPoly.directLiftData core B data) i)
+          (Hex.ZPoly.directLiftData core B data).p
+          (Hex.ZPoly.directLiftData core B data).k)).map
             (Int.castRingHom (ZMod
-              ((Hex.ZPoly.coreLiftData core B data).p ^
-                (Hex.ZPoly.coreLiftData core B data).k)))) := by
+              ((Hex.ZPoly.directLiftData core B data).p ^
+                (Hex.ZPoly.directLiftData core B data).k)))) := by
   classical
   letI := data.bounds
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let q := HexPolyZMathlib.toPolynomial (liftedFactor d i)
   let complement :=
     liftedFactorProduct d
@@ -581,9 +581,9 @@ theorem directLiftedFactor_isCoprime_cldQuotient
   let h := (HexPolyZMathlib.toPolynomial
     (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core) complement)).map φ
   have hp_eq : d.p = data.p := by
-    simp [d, Hex.ZPoly.coreLiftData]
+    simp [d, Hex.ZPoly.directLiftData]
   have hk_eq : d.k = Hex.precisionForCoeffBound B data.p := by
-    simp [d, Hex.ZPoly.coreLiftData]
+    simp [d, Hex.ZPoly.directLiftData]
   have hmodulus : 1 < d.p ^ d.k := by
     rw [hp_eq, hk_eq]
     exact Nat.one_lt_pow (by omega) hval.prime.one_lt
@@ -801,14 +801,19 @@ recombination-adequate precision.  This is the shared algebraic context for
 both the inexpensive forward cut theorem and the full resultant argument. -/
 structure DirectAdequacy
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData) where
+  /-- The Hensel precision contains at least one prime-power digit. -/
   precision : 1 ≤ Hex.precisionForCoeffBound B data.p
+  /-- The input leading coefficient is invertible modulo the lift modulus. -/
   inputScale_coprime :
     Int.gcd (Hex.DensePoly.leadingCoeff core)
       (Int.ofNat (data.p ^ Hex.precisionForCoeffBound B data.p)) = 1
+  /-- The modulus is large enough for unique centred coefficient recovery. -/
   recovery :
     2 * Hex.ZPoly.defaultFactorCoeffBound core <
       data.p ^ Hex.precisionForCoeffBound B data.p
+  /-- The semantic properties of the direct-coordinate Hensel lift. -/
   lift : DirectLiftFacts core B data
+  /-- The genuine-factor supports partition all modular factors. -/
   partition : DirectSupportPartition core B data Finset.univ core
 
 /-- Build the unique direct adequacy context from the semantic prime plan and
@@ -877,6 +882,7 @@ theorem directAdequacy
 
 namespace DirectAdequacy
 
+/-- Every lifted-factor index belongs to a genuine support. -/
 theorem cover
     {core : Hex.ZPoly} {B : Nat} {data : Hex.PrimeChoiceData}
     (A : DirectAdequacy core B data)
@@ -887,6 +893,7 @@ theorem cover
   directTrueSupports.cover hcore_prim hcore_lc_pos A.recovery
     hval A.precision A.inputScale_coprime A.partition
 
+/-- Two genuine supports sharing an index are equal. -/
 theorem disjoint
     {core : Hex.ZPoly} {B : Nat} {data : Hex.PrimeChoiceData}
     (A : DirectAdequacy core B data) :
@@ -895,6 +902,7 @@ theorem disjoint
         ∀ i, i ∈ U → i ∈ V → U = V :=
   directTrueSupports.eq_of_mem_inter A.partition
 
+/-- The number of genuine supports equals the number of normalized irreducible factors. -/
 theorem factorCount
     {core : Hex.ZPoly} {B : Nat} {data : Hex.PrimeChoiceData}
     (A : DirectAdequacy core B data)
@@ -914,19 +922,19 @@ theorem localFactor
     {core : Hex.ZPoly} {B : Nat} {data : Hex.PrimeChoiceData}
     (A : DirectAdequacy core B data)
     (hval : ModPFactorization core data) :
-    ∀ i : LiftedFactorIndex (Hex.ZPoly.coreLiftData core B data),
+    ∀ i : LiftedFactorIndex (Hex.ZPoly.directLiftData core B data),
       ∃ h : Hex.ZPoly,
         Hex.DensePoly.Monic
-          ((Hex.ZPoly.coreLiftData core B data).liftedFactors.getD i.val 1) ∧
+          ((Hex.ZPoly.directLiftData core B data).liftedFactors.getD i.val 1) ∧
         0 <
-          ((Hex.ZPoly.coreLiftData core B data).liftedFactors.getD
+          ((Hex.ZPoly.directLiftData core B data).liftedFactors.getD
             i.val 1).degree?.getD 0 ∧
         Hex.ZPoly.congr core
-          ((Hex.ZPoly.coreLiftData core B data).liftedFactors.getD i.val 1 * h)
-          ((Hex.ZPoly.coreLiftData core B data).p ^
-            (Hex.ZPoly.coreLiftData core B data).k) := by
+          ((Hex.ZPoly.directLiftData core B data).liftedFactors.getD i.val 1 * h)
+          ((Hex.ZPoly.directLiftData core B data).p ^
+            (Hex.ZPoly.directLiftData core B data).k) := by
   intro i
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   have hgetD :
       d.liftedFactors.getD i.val 1 = liftedFactor d i := by
     have hi : i.val < d.liftedFactors.size := by
@@ -956,17 +964,17 @@ noncomputable def shortVector
     ∀ U : directTrueSupports core B data,
       BHKS.SupportShortVectorData
         (Hex.bhksLatticeBasis core
-          (Hex.ZPoly.coreLiftData core B data).p
-          (Hex.ZPoly.coreLiftData core B data).k
-          (Hex.ZPoly.coreLiftData core B data).liftedFactors) U.1 := by
+          (Hex.ZPoly.directLiftData core B data).p
+          (Hex.ZPoly.directLiftData core B data).k
+          (Hex.ZPoly.directLiftData core B data).liftedFactors) U.1 := by
   classical
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   have hp2 : 2 ≤ data.p :=
     hval.prime.two_le
   have hp_eq : d.p = data.p := by
-    simp [d, Hex.ZPoly.coreLiftData]
+    simp [d, Hex.ZPoly.directLiftData]
   have hk_eq : d.k = Hex.precisionForCoeffBound B data.p := by
-    simp [d, Hex.ZPoly.coreLiftData]
+    simp [d, Hex.ZPoly.directLiftData]
   have hk1 : 1 < d.p ^ d.k := by
     rw [hp_eq, hk_eq]
     exact Nat.one_lt_pow (Nat.ne_of_gt A.precision) hval.prime.one_lt
@@ -1035,27 +1043,27 @@ theorem directCutProjection
     (hB_ne : B ≠ 0)
     (hrows : 1 ≤
       (Hex.bhksLatticeBasis core
-        (Hex.ZPoly.coreLiftData core B data).p
-        (Hex.ZPoly.coreLiftData core B data).k
-        (Hex.ZPoly.coreLiftData core B data).liftedFactors).factorCount +
+        (Hex.ZPoly.directLiftData core B data).p
+        (Hex.ZPoly.directLiftData core B data).k
+        (Hex.ZPoly.directLiftData core B data).liftedFactors).factorCount +
       (Hex.bhksLatticeBasis core
-        (Hex.ZPoly.coreLiftData core B data).p
-        (Hex.ZPoly.coreLiftData core B data).k
-        (Hex.ZPoly.coreLiftData core B data).liftedFactors).coeffWidth) :
+        (Hex.ZPoly.directLiftData core B data).p
+        (Hex.ZPoly.directLiftData core B data).k
+        (Hex.ZPoly.directLiftData core B data).liftedFactors).coeffWidth) :
     BHKS.CutProjectionHypotheses
       (Hex.bhksProjectedRows
         (Hex.bhksLatticeBasis core
-          (Hex.ZPoly.coreLiftData core B data).p
-          (Hex.ZPoly.coreLiftData core B data).k
-          (Hex.ZPoly.coreLiftData core B data).liftedFactors) hrows)
+          (Hex.ZPoly.directLiftData core B data).p
+          (Hex.ZPoly.directLiftData core B data).k
+          (Hex.ZPoly.directLiftData core B data).liftedFactors) hrows)
       (directTrueSupports core B data) := by
   classical
   letI := data.bounds
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let A := directAdequacy core B data hcore_lc_pos hcore_pos
     hcore_prim hcore_sqfree hval hB_floor hB_ne
   have hp_eq : d.p = data.p := by
-    simp [d, Hex.ZPoly.coreLiftData]
+    simp [d, Hex.ZPoly.directLiftData]
   exact
     BHKS.cutProjectionHypotheses_of_shortVectors _ hrows
       (bhksLatticeBasis_basis_independent core d.p d.k
@@ -1075,21 +1083,21 @@ theorem directFactorCount_le_classCount
     (hB_ne : B ≠ 0)
     (hrows : 1 ≤
       (Hex.bhksLatticeBasis core
-        (Hex.ZPoly.coreLiftData core B data).p
-        (Hex.ZPoly.coreLiftData core B data).k
-        (Hex.ZPoly.coreLiftData core B data).liftedFactors).factorCount +
+        (Hex.ZPoly.directLiftData core B data).p
+        (Hex.ZPoly.directLiftData core B data).k
+        (Hex.ZPoly.directLiftData core B data).liftedFactors).factorCount +
       (Hex.bhksLatticeBasis core
-        (Hex.ZPoly.coreLiftData core B data).p
-        (Hex.ZPoly.coreLiftData core B data).k
-        (Hex.ZPoly.coreLiftData core B data).liftedFactors).coeffWidth) :
+        (Hex.ZPoly.directLiftData core B data).p
+        (Hex.ZPoly.directLiftData core B data).k
+        (Hex.ZPoly.directLiftData core B data).liftedFactors).coeffWidth) :
     (UniqueFactorizationMonoid.normalizedFactors
         (HexPolyZMathlib.toPolynomial core)).card ≤
       (Hex.bhksEquivalenceClassIndicators
         (Hex.bhksProjectedRows
           (Hex.bhksLatticeBasis core
-            (Hex.ZPoly.coreLiftData core B data).p
-            (Hex.ZPoly.coreLiftData core B data).k
-            (Hex.ZPoly.coreLiftData core B data).liftedFactors) hrows)).size := by
+            (Hex.ZPoly.directLiftData core B data).p
+            (Hex.ZPoly.directLiftData core B data).k
+            (Hex.ZPoly.directLiftData core B data).liftedFactors) hrows)).size := by
   let A := directAdequacy core B data hcore_lc_pos hcore_pos
     hcore_prim hcore_sqfree hval hB_floor hB_ne
   have hcore_ne : core ≠ 0 :=
@@ -1111,9 +1119,9 @@ theorem directFactorCount_le_classCount
         (Hex.bhksEquivalenceClassIndicators
           (Hex.bhksProjectedRows
             (Hex.bhksLatticeBasis core
-              (Hex.ZPoly.coreLiftData core B data).p
-              (Hex.ZPoly.coreLiftData core B data).k
-              (Hex.ZPoly.coreLiftData core B data).liftedFactors) hrows)).size :=
+              (Hex.ZPoly.directLiftData core B data).p
+              (Hex.ZPoly.directLiftData core B data).k
+              (Hex.ZPoly.directLiftData core B data).liftedFactors) hrows)).size :=
       BHKS.supportPartitionByMinColumn_length_le_bhksEquivalenceClassIndicators_size
         _ _ (directCutProjection core B data hcore_lc_pos hcore_pos
           hcore_prim hcore_sqfree hval hB_floor hB_ne hrows)
@@ -1121,7 +1129,7 @@ theorem directFactorCount_le_classCount
 /--
 At an adequate precision, the projected CLD lattice is exactly the span of
 the direct modular supports of the normalized irreducible integer factors.
-All algebraic inputs use `coreLiftData`; no dilation-coordinate lift appears
+All algebraic inputs use `directLiftData`; no dilation-coordinate lift appears
 in the statement or proof.
 -/
 theorem directProjectedSpan_eq
@@ -1136,27 +1144,27 @@ theorem directProjectedSpan_eq
     (hB_ne : B ≠ 0)
     (hadequate :
       2 * Hex.bhksBound core <
-        (Hex.ZPoly.coreLiftData core B data).p ^
-          (Hex.ZPoly.coreLiftData core B data).k)
+        (Hex.ZPoly.directLiftData core B data).p ^
+          (Hex.ZPoly.directLiftData core B data).k)
     (hrows : 1 ≤
       (Hex.bhksLatticeBasis core
-        (Hex.ZPoly.coreLiftData core B data).p
-        (Hex.ZPoly.coreLiftData core B data).k
-        (Hex.ZPoly.coreLiftData core B data).liftedFactors).factorCount +
+        (Hex.ZPoly.directLiftData core B data).p
+        (Hex.ZPoly.directLiftData core B data).k
+        (Hex.ZPoly.directLiftData core B data).liftedFactors).factorCount +
       (Hex.bhksLatticeBasis core
-        (Hex.ZPoly.coreLiftData core B data).p
-        (Hex.ZPoly.coreLiftData core B data).k
-        (Hex.ZPoly.coreLiftData core B data).liftedFactors).coeffWidth) :
+        (Hex.ZPoly.directLiftData core B data).p
+        (Hex.ZPoly.directLiftData core B data).k
+        (Hex.ZPoly.directLiftData core B data).liftedFactors).coeffWidth) :
     BHKS.projectedRowSpanInt
         (Hex.bhksProjectedRows
           (Hex.bhksLatticeBasis core
-            (Hex.ZPoly.coreLiftData core B data).p
-            (Hex.ZPoly.coreLiftData core B data).k
-            (Hex.ZPoly.coreLiftData core B data).liftedFactors) hrows) =
+            (Hex.ZPoly.directLiftData core B data).p
+            (Hex.ZPoly.directLiftData core B data).k
+            (Hex.ZPoly.directLiftData core B data).liftedFactors) hrows) =
       BHKS.trueSupportSpanInt (directTrueSupports core B data) := by
   classical
   letI := data.bounds
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   have hcore_ne : core ≠ 0 :=
     zpoly_ne_zero_of_pos_lc hcore_lc_pos
   have hcore_size : 0 < core.size :=
@@ -1166,9 +1174,9 @@ theorem directProjectedSpan_eq
   have hp2 : 2 ≤ data.p :=
     hval.prime.two_le
   have hp_eq : d.p = data.p := by
-    simp [d, Hex.ZPoly.coreLiftData]
+    simp [d, Hex.ZPoly.directLiftData]
   have hk_eq : d.k = Hex.precisionForCoeffBound B data.p := by
-    simp [d, Hex.ZPoly.coreLiftData]
+    simp [d, Hex.ZPoly.directLiftData]
   have hk1 : 1 < d.p ^ d.k := by
     rw [hp_eq, hk_eq]
     exact Nat.one_lt_pow (Nat.ne_of_gt A.precision) hval.prime.one_lt
@@ -1252,7 +1260,7 @@ theorem directProjectedSpan_eq
           (HexPolyZMathlib.toPolynomial core).leadingCoeff := by
       rw [HexPolyMathlib.leadingCoeff_toPolynomial]
       exact (Int.isCoprime_iff_gcd_eq_one.mpr
-        (by simpa [d, Hex.ZPoly.coreLiftData] using
+        (by simpa [d, Hex.ZPoly.directLiftData] using
           A.inputScale_coprime)).symm
     have hdeg :
         ∀ i : LiftedFactorIndex d,
@@ -1335,8 +1343,8 @@ theorem directProjectedSpan_eq
             q.map (Int.castRingHom (ZMod (d.p ^ d.k))) :=
         Polynomial.map_dvd _ hassoc.dvd
       have hgetD' :
-          (Hex.ZPoly.coreLiftData core B data).liftedFactors.getD i.val 1 =
-            liftedFactor (Hex.ZPoly.coreLiftData core B data) i := by
+          (Hex.ZPoly.directLiftData core B data).liftedFactors.getD i.val 1 =
+            liftedFactor (Hex.ZPoly.directLiftData core B data) i := by
         unfold liftedFactor
         simp [Array.getD]
       have hgetD :

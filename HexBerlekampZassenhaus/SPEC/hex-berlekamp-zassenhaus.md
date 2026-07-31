@@ -1,10 +1,9 @@
 # hex-berlekamp-zassenhaus
 
-Complete factorization of univariate polynomials over `ℤ`.
-
-This library depends on `hex-berlekamp`, `hex-hensel`, and `hex-lll`.  The
-executable library is Mathlib-free; correspondence, completeness, and
-irreducibility proofs live in `HexBerlekampZassenhausMathlib`.
+`hex-berlekamp-zassenhaus` factors dense univariate polynomials over
+the integers. It depends on finite-field Berlekamp factorization,
+Hensel lifting, and LLL reduction. The executable library has no
+Mathlib dependency.
 
 ## Public API
 
@@ -16,23 +15,15 @@ def ZPoly.factorize (f : ZPoly) : Factorization
 def ZPoly.factors   (f : ZPoly) : Array (ZPoly × Nat)
 ```
 
-`factorClassical` and `factorLattice` are partial modular algorithms.
-`factorTrial` is the unconditional exhaustive backstop.  `ZPoly.factorize`
-uses the classical engine first, the CLD lattice engine after a typed
-classical decline, and trial factorization if modular prime planning or CLD
-declines.
+`factorClassical` performs bounded subset recombination.
+`factorLattice` performs logarithmic-derivative lattice
+recombination. `factorTrial` performs exhaustive integer trial
+division. `ZPoly.factorize` is total: it uses the first two methods
+when they return a verified answer and otherwise uses trial division.
 
-All entry points use the same normalization and reassembly:
-
-1. extract the signed content;
-2. remove the maximal power of `X`;
-3. compute the primitive square-free core and its multiplicity data;
-4. factor the core;
-5. restore powers of `X`, repeated-factor multiplicities, and the signed
-   scalar.
-
-There is no separate scaled-coordinate classical engine and no refinement of
-direct factors through a second factorization route.
+`factorTraced` returns the same factorization together with a
+`DirectFactorTrace`. The trace records the `FactorMethod`, a possible
+typed classical decline, and classical-search measurements.
 
 ## Factorization result
 
@@ -40,264 +31,219 @@ direct factors through a second factorization route.
 structure Factorization where
   scalar  : Int
   factors : Array (ZPoly × Nat)
-deriving DecidableEq
-
-def Factorization.product (φ : Factorization) : ZPoly := ...
 ```
 
-For nonzero `f`, `factorize f` returns a factorization satisfying:
+`Factorization.product` multiplies the scalar and the recorded
+polynomial powers. For a nonzero input, the normalized result has:
 
-- `scalar` is the signed content of `f`;
-- every recorded polynomial factor is primitive, irreducible, and has
-  positive leading coefficient;
-- every multiplicity is positive;
-- distinct entries are not associates;
-- `Factorization.product (factorize f) = f`.
+- signed content as its scalar;
+- primitive irreducible polynomial factors;
+- positive leading coefficients and positive multiplicities;
+- no two associated factor entries;
+- product equal to the input.
 
-Integer content is not split into prime constant polynomials.  For example,
-`factorize 6 = ⟨6, #[]⟩`.
+The zero result is `⟨0, #[]⟩`. Units and nonzero constants have no
+polynomial factors. Integer content is not split into constant prime
+polynomials. A power of `X` is stored as one factor with its
+multiplicity.
 
-The zero result is `⟨0, #[]⟩`.  Units and nonzero constants have an empty
-polynomial-factor array.  Powers of `X` are represented by the factor `X`
-with the corresponding multiplicity.
+## Normalization
 
-## Coordinate model
+Every factorization method uses the same normalization:
 
-The production modular and Hensel pipeline is in the original integer
-coordinates.
+1. extract the signed content;
+2. remove the maximal power of `X`;
+3. compute the primitive square-free part and its multiplicity data;
+4. factor the square-free part;
+5. restore the powers of `X`, repeated factors, and scalar.
 
-For a primitive square-free core `f` with leading coefficient `a` and a good
-prime `p`, the finite-field factorization target is
+`SquareFreeInput` indexes data that belongs to the normalized
+primitive square-free polynomial. Reassembly is shared, so the three
+factorization methods cannot disagree about output conventions.
+
+## Direct integer coordinates
+
+Let `f` be primitive and square-free with leading coefficient `a`.
+At a suitable prime `p`, the finite-field target is
 
 ```text
 monicModularImage (f mod p) = a⁻¹ · (f mod p).
 ```
 
-Finite-field irreducible factors are monic by convention.  This normalization
-does not change the integer coordinate or substitute the variable: it is only
-multiplication by the unit `a⁻¹` in `𝔽_p`.  In particular, it is distinct from
-the coefficient-swelling integral transform
-`a^(deg f - 1) · f(X / a)`.
+This is multiplication by a unit in `𝔽_p`; it does not substitute the
+variable. `ZPoly.monicTarget f p k` is the canonical integer lift of
+that modular image at precision `p^k`.
 
-The Hensel target is `ZPoly.monicTarget f p k`, the canonical integer lift of
-that direct modular image.  Recombination restores the original leading
-coefficient through `scaledLiftedFactorProduct`; centered lifting,
-primitive-part extraction, and sign normalization then recover factors of the
-original core.
+The lifted factors are monic. To return to the coordinates of `f`,
+recombination scales a selected lifted product by `a`, takes centred
+coefficient representatives, extracts the primitive part, and
+normalizes its sign.
 
-Classical and CLD recombination use the same direct modular factorization and
-factor indexing. Each constructs its own direct Hensel lift at the precision
-required by its recovery bound.
+Classical and lattice recombination use the same modular
+factorization, factor indexing, and direct-coordinate Hensel lift.
+There is no dilation-coordinate factorization method.
 
-## Typed data
+## Prime selection
 
-The main executable records tie data to the polynomial it describes.
+`DirectPrimeProbe` stores one successful modular factorization:
 
-```lean
-structure SquareFreeInput where
-  poly : ZPoly
+- the prime and its arithmetic bounds;
+- the monic modular image and its irreducible factors;
+- the modular factor degrees;
+- a bitset of subset-reachable degrees.
 
-structure DirectPrimeProbe (core : SquareFreeInput) where
-  candidate        : SmallPrimeCandidate
-  data             : PrimeChoiceData
-  factorDegrees    : Array Nat
-  reachableDegrees : Array Bool
+`DirectPrimePlan` stores the chosen factorization and the other
+successful factorizations examined. If the first admissible prime has
+few modular factors, it is used immediately. Otherwise a bounded
+number of further admissible primes are compared by:
 
-structure DirectPrimePlan (core : SquareFreeInput) where
-  selected    : DirectPrimeProbe core
-  otherProbes : Array (DirectPrimeProbe core)
+1. predicted complete subset-search work;
+2. number of reachable proper factor degrees;
+3. required Hensel precision;
+4. the prime, as a deterministic tie breaker.
 
-structure DirectLiftPlan
-    (core : SquareFreeInput) (modular : DirectPrimePlan core) where
-  ...
+Inadmissible primes do not spend the allowance of successful
+factorizations. A singleton modular factorization is selected
+immediately.
 
-inductive ClassicalOutcome where
-  | factored (factors : Array ZPoly) (stats : ClassicalStats)
-  | declined (reason : DeclineReason) (stats : ClassicalStats)
-```
-
-A plan retains every successful modular probe it performs.  Selection can
-therefore refer only to a cached factorization.  A lift plan carries a positive
-validated recovery precision; `B = 0` has no implicit semantic meaning.
-
-Declines are typed.  Trace information is returned from the same execution as
-the factors, so traced and untraced entry points cannot follow different
-dispatch trees.
-
-## Prime planning
-
-`directPrimePlan?` checks the fixed small-prime candidates against the original
-core.  A successful probe records:
-
-- the good prime and its bounds instance;
-- the factorization of the direct monic modular image;
-- modular factor degrees;
-- a subset-degree reachability bitset.
-
-If the first successful probe has at most `directProbeWidth` factors, it is
-used immediately.  Otherwise the planner considers at most
-`directProbeFuel` further successful probes and chooses lexicographically by:
-
-1. complete head-forced subset-search cost;
-2. number of reachable proper subset degrees;
-3. direct Hensel precision;
-4. prime, as a stable tie breaker.
-
-Bad primes do not consume the successful-probe allowance.  A singleton modular
-factorization stops planning immediately.
-
-The degree reachability table is computed by dynamic programming in
-`O(number of factors × degree)`.  No recursive exponential subset-degree
-certificate or factor-width cutoff is used.
+The reachability bitset is computed by dynamic programming in
+`O(number of factors × degree)`.
 
 ## Direct Hensel lift
 
-`coreLiftData` lifts the direct target at
-`precisionForCoeffBound B p`.  `DirectLiftFacts` packages:
+`ZPoly.directLiftData` lifts `ZPoly.monicTarget` to the precision
+chosen by `precisionForCoeffBound`. `DirectLiftFacts` states:
 
-- the semantic modular factorization;
-- monicity, irreducibility, distinctness, and pairwise coprimality of the
-  modular factors;
-- equality of the direct target with their product modulo `p`;
+- monicity of the target and all lifted factors;
 - the multifactor Hensel invariant;
-- factor-count preservation;
-- the precision and leading-coefficient coprimality facts required for exact
-  recovery.
+- reduction of each lifted factor to its modular ancestor;
+- preservation of factor count;
+- compatibility of every selected-factor product with modular
+  reduction.
 
-The ordinary recovery precision satisfies
-
-```text
-2 · B < p^k.
-```
-
-The public core uses `defaultFactorCoeffBound`, whose Mathlib proof is in
-`FactorBound.lean`.
+The ordinary recovery precision satisfies `2 B < p^k`, where `B` is
+the coefficient bound. The public value is proved from Mignotte's
+bound in the Mathlib companion.
 
 ## Classical recombination
 
-The sole classical engine is `factorDirectCore`.
+The classical method chooses one distinguished lifted factor and
+enumerates subsets of the remaining factors in increasing
+cardinality. It maintains the selected degree and a cheap trailing
+coefficient test before constructing a full candidate. A surviving
+candidate is accepted only when exact bounded division succeeds.
 
-At each recursive step it:
+The budget is measured in complete subset-cardinality levels. If the
+next level does not fit, the method declines before testing any member
+of that level. An incomplete search is never used as evidence of
+irreducibility.
 
-1. chooses the distinguished head lifted factor;
-2. enumerates subsets of the remaining factors in increasing cardinality;
-3. carries the selected degree and trailing residue through the subset tree,
-   rejecting a support unless its raw trailing coefficient divides
-   `leadingCoeff(core) · target(0)`;
-4. constructs the original-coordinate candidate;
-5. tests an exact bounded quotient;
-6. removes the accepted support and continues on the exact quotient.
+`DirectSupportPartition` associates each irreducible integer factor
+with its unique modular support. The minimal-head proof shows that the
+first accepted subset containing the distinguished factor is exactly
+its irreducible support. Removing that support and recursing on the
+exact quotient yields a complete irreducible factorization.
 
-The iterator is streaming and reports completed cardinality levels.  A resource
-limit may stop only with a typed decline; incomplete search is never used as an
-irreducibility certificate.
-
-`DirectSupportPartition` identifies irreducible integer factors with unique
-subsets of the selected modular factor indices.  The minimal-head theorem says
-that the first accepted head-containing subset is exactly the support of the
-irreducible factor containing that head.  Consequently:
-
-- every accepted candidate is already irreducible;
-- no per-piece prime selection or Hensel lift is performed;
-- completed exhaustive failure to find a proper split proves the current
-  target irreducible;
-- recursive complement removal yields a complete irreducible factorization.
-
-The Mathlib proof is organized as:
+The mathematical modules are:
 
 ```text
 Classical/Recovery.lean
 Classical/SupportPartition.lean
 Classical/CombinationIterator.lean
 Classical/SearchCompleteness.lean
-Classical/Correctness.lean
+Classical/Factorization.lean
 ```
 
-## CLD lattice recombination
+## Logarithmic-derivative lattice recombination
 
-The lattice tier consumes the same `DirectPrimePlan`, `DirectLiftFacts`, and
-`DirectSupportPartition` as the classical engine.
-
-`DirectAdequacy` is the proof context shared by the forward and exact CLD
-arguments.  It contains:
-
-- validated recovery precision and leading-coefficient coprimality;
-- the direct Hensel lift facts;
-- cover and disjointness of irreducible supports;
-- local factor recovery and factor-count facts;
-- short-vector data for every true support.
-
-The BHKS/van-Hoeij lattice uses CLD columns
+For a lifted factor `g`, its combined logarithmic derivative (CLD) is
 
 ```text
-Φ(g) = f · g' / g
+Φ(g) = f · g' / g mod p^k.
 ```
 
-and projected LLL rows.  At the column-adequacy floor, every true direct support
-indicator lies in the retained projected row span (`W ⊆ L'`).  At the
-resultant precision bound, every retained vector is constant on true supports,
-which gives exact equality of the projected span with the support span.
+Since `Φ(gh) = Φ(g) + Φ(h)`, the CLD coefficient vectors convert
+products of local factors into sums. They form the coefficient block
+of the Belabas-Hoeij-Klüners-Steel (BHKS) recombination lattice.
 
-The executable loop increases Hensel precision through a quadratic schedule.
-A non-single partition yields recovered direct factors.  A single all-ones
-partition is accepted as irreducible only at an adequate precision.  At the
-public cap, exact span makes either result conclusive.
+After exact LLL reduction, rows below the Gram-Schmidt cut are
+projected to their first coordinates. Those coordinates describe
+integer combinations of zero-one factor-support indicators.
 
-The proof modules are:
+The proof has two parts:
+
+1. at the coefficient-recovery precision, every genuine support
+   indicator belongs to the projected row span;
+2. at the resultant precision, every retained projected row is
+   constant on each genuine support.
+
+The spans are therefore equal. Equal projected columns belong to the
+same irreducible support, so their equivalence classes recover the
+integer factors.
+
+The executable calculation increases Hensel precision
+quadratically. A nonsingleton support partition returns the recovered
+factors. A single all-ones class proves irreducibility only after the
+proved precision threshold has been reached.
+
+The proof is organized around:
 
 ```text
+Lattice/ProjectedRows.lean
+Lattice/CutProjection.lean
+Lattice/SupportEquivalence.lean
 Lattice/DirectSupport.lean
 Lattice/DirectRecovery.lean
 Lattice/DirectAdequacy.lean
-LatticeTier.lean
+LatticeFactorization.lean
 LatticeTotality.lean
 ```
 
-`factorLatticeFactorsWithBound_ne_none_of_directPrimePlan` and
-`factorLattice_ne_none_of_directPrimePlan` prove public-cap totality
-conditional on successful direct prime planning.
+Lattice totality is conditional on successful direct prime selection.
 
-## Trial backstop
+## Trial division
 
-`factorTrial` performs exhaustive integer trial division at the proved
-coefficient bound.  It does not depend on modular prime selection and is total.
-This makes the default dispatcher total even for inputs for which the finite
-prime planner finds no admissible prime.
+`factorTrial` enumerates integer candidates up to the proved
+coefficient bound and tests exact division. It does not require a
+suitable modular prime and is therefore the unconditional final
+method.
 
-## Correctness boundary
+## Correctness
 
-The Mathlib-free layer proves executable identities such as product
-reconstruction and exact quotient results.  The Mathlib bridge proves:
+The Mathlib-free library proves executable product reconstruction,
+exact quotient identities, normalization identities, and the
+correctness of the bounded iterators.
 
-- semantic validity of modular factorizations;
-- direct Hensel correspondence and recovery;
-- unique support partitions;
-- classical minimal-head completeness;
-- CLD forward inclusion and exact span;
-- irreducibility of every recorded factor;
-- normalization, multiplicity, and uniqueness of the final factorization.
+`hex-berlekamp-zassenhaus-mathlib` proves:
 
-The bridge contains no axioms, `native_decide`, or unproved placeholders.
+- semantic validity of the selected modular factorization;
+- direct-coordinate Hensel correspondence and recovery;
+- existence, disjointness, and uniqueness of supports;
+- completeness of classical recombination;
+- both inclusions in the lattice support-span equality;
+- irreducibility and normalization of every recorded factor;
+- uniqueness of the final factorization.
 
-General mathematical objects are separated into correspondingly named modules:
+The ordinary umbrella exposes the supported factorization and tactic
+surface. `HexBerlekampZassenhaus.All` and
+`HexBerlekampZassenhausMathlib.All` expose the complete development
+module collections.
 
-- `FactorBound.lean`;
-- `Factorization.lean`;
-- `ModularPolynomial.lean`;
-- `IrreducibilityCertificate.lean`;
-- `ModPPartition.lean`.
+## Verification and performance
 
-## Validation
+Changes must pass:
 
-Changes to this library must run:
+- the root build and trust-surface check;
+- modular, lifting, recombination, and factorization conformance
+  fixtures;
+- external FLINT, PARI/GP, NTL, and verified Isabelle comparisons;
+- factor-tactic regression modules;
+- benchmark verification and the complete polynomial-factorization
+  corpus.
 
-- `lake build`;
-- the Mathlib-free benchmark import lint;
-- the benchmark verification check;
-- Berlekamp-Zassenhaus conformance and oracle checks;
-- the polynomial-factorization corpus comparison;
-- focused public `factor` performance measurements for affected rows.
-
-Stored cross-system benchmark results are immutable observations of the
-recorded tool revisions.  A Hex implementation change reruns the public Hex
-service only and records the exact commit, host, command, and timeout policy.
+The current performance report presents only the public
+`ZPoly.factorize` service. It states the exact source revision,
+toolchain, corpus hash, host, CPU placement, repetitions, warmup,
+timeout, and comparator revisions. Timeout rows and the long tail
+remain visible. Unchanged external observations are retained when
+their host, inputs, and protocol are unchanged.

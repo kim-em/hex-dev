@@ -102,7 +102,7 @@ positivity premise on the lift of each input `factorsModP` entry, and
 concludes that every lifted factor's transported Mathlib polynomial has
 positive natural degree.
 
-The proof routes through `Hex.ZPoly.multifactorLiftQuadratic_each_congr_mod_base`
+The proof uses `Hex.ZPoly.multifactorLiftQuadratic_each_congr_mod_base`
 to identify each lifted factor's mod-`p` reduction with the corresponding
 modular factor (after `FpPoly.liftToZ`), then transports through the
 `toMathlibPolynomial`/`Polynomial.map` map.  Both the lifted factor and
@@ -373,12 +373,12 @@ turn folds in `Hex.Berlekamp.berlekampFactor_factors_pos_degree`.
 
 The discharge requires three facts on `core` and `primeData`:
 
-* `hform : Hex.factorsModPBerlekampForm core primeData` — recorded by
+* `hform : Hex.factorsModPBerlekampForm core primeData`; recorded by
   `Hex.choosePrimeData?_factorsModP_berlekamp_form` (`HexBerlekampZassenhaus/
   Basic.lean`);
-* `hgood : Hex.isGoodPrime core primeData.p = true` — recorded by
+* `hgood : Hex.isGoodPrime core primeData.p = true`; recorded by
   `Hex.choosePrimeData?_isGoodPrime`;
-* `hcore_pos : 0 < core.degree?.getD 0` — supplied by the caller (the slow path
+* `hcore_pos : 0 < core.degree?.getD 0`; supplied by the caller (the slow path
   uses `normalizeForFactor.squareFreeCore` as `core`,
   which has positive degree on every non-unit input).
 
@@ -433,15 +433,15 @@ natural-degree analog just above). It drops `hfactorsModP_nodup` from
 `henselLiftData_liftedFactor_injective_of_choosePrimeData` by
 discharging that premise through
 `factorsModP_nodup_of_factorsModPBerlekampForm`.  No `hcore_pos` premise is
-needed (the `Nodup` discharge routes through `isGoodPrime`'s
+needed (the `Nodup` proof uses `isGoodPrime`'s
 modular-squarefreeness alone, unlike the natural-degree analog).
 
 The discharge requires two facts on `core` and `primeData`:
 
-* `hform : Hex.factorsModPBerlekampForm core primeData` — recorded by
+* `hform : Hex.factorsModPBerlekampForm core primeData`; recorded by
   `Hex.choosePrimeData?_factorsModP_berlekamp_form` (`HexBerlekampZassenhaus/
   Basic.lean`);
-* `hgood : Hex.isGoodPrime core primeData.p = true` — recorded by
+* `hgood : Hex.isGoodPrime core primeData.p = true`; recorded by
   `Hex.choosePrimeData?_isGoodPrime`.
 
 The signature otherwise mirrors `_of_choosePrimeData` exactly, so downstream
@@ -483,7 +483,7 @@ theorem henselLiftData_liftedFactor_injective_of_factorsModPBerlekampForm
 Per-output monicness for the `toMonic` lift whose prime data is selected from
 the monic transform itself.
 
-This is the non-monic-core wrapper over
+This is the non-monic polynomial wrapper over
 `MonicLift.factor_monic`: the original `core` only needs
 positive leading coefficient and positive degree, which together make
 `(Hex.ZPoly.toMonic core).monic` monic.
@@ -1114,7 +1114,7 @@ theorem liftedFactorProduct_union_of_disjoint
 The full lifted-factor product over `Finset.univ` collapses to the executable
 `Array.polyProduct` of the raw lifted-factor array.
 
-The proof routes through `HexPolyZMathlib.equiv.injective`: under the
+The proof uses `HexPolyZMathlib.equiv.injective`: under the
 `toPolynomial` map, both sides expand to the same finite product over
 `Fin d.liftedFactors.size`, using `toPolynomial_liftedFactorProduct`,
 `polyProduct_toPolynomial`, and `Finset.prod_univ_fun_getElem` modulo the
@@ -1241,7 +1241,7 @@ Multiplicative closure of the recovered/monic-coordinate representation carrier
 integer factor `f` and `T` (disjoint from `S`) recovers `g`, then `S ∪ T`
 recovers `f * g`.
 
-This holds for an arbitrary core: the carrier separates the mod-`p^k`
+This holds for an arbitrary square-free part: the carrier separates the mod-`p^k`
 congruence (on
 the unscaled `liftedFactorProduct`) from the dilation by `leadingCoeff core`, so
 no monicity hypothesis is needed. The witness monic coordinate is the product of

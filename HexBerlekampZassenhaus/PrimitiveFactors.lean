@@ -37,7 +37,7 @@ import all HexBerlekampZassenhaus.BhksCandidates
 import all HexBerlekampZassenhaus.BhksRecover
 import all HexBerlekampZassenhaus.Recombination
 import all HexBerlekampZassenhaus.Factorization
-import all HexBerlekampZassenhaus.IrreducibleCore
+import all HexBerlekampZassenhaus.FactorIrreducibility
 import all HexBerlekampZassenhaus.RecombinationFactors
 import all HexBerlekampZassenhaus.TrialFactorization
 import all HexBerlekampZassenhaus.QuadraticFactors
@@ -53,10 +53,10 @@ This module collects `squareFreeCore`/`expandRepeatedPart`/reassembly primitivit
 namespace Hex
 
 /-- Every factor emitted by `quadraticIntegerRootFactors?` has positive degree
-when the input core is primitive with positive leading coefficient. Linear
+when the input polynomial is primitive with positive leading coefficient. Linear
 entries are the splitter's `linearFactorForRoot` outputs; the optional residual
 cannot be constant because then its positive constant coefficient would divide
-the primitive core's content. -/
+the primitive polynomial's content. -/
 theorem quadraticIntegerRootFactors?_degree_pos_of_primitive
     {core : ZPoly} (hcore_pos : 0 < DensePoly.leadingCoeff core)
     (hcore_primitive : ZPoly.Primitive core)
@@ -201,10 +201,12 @@ theorem quadraticIntegerRootFactors?_degree_pos_of_primitive
   · rw [if_neg hdeg] at hquad
     contradiction
 
+/-- Removing the maximal power of `X` from a nonzero primitive part leaves a nonzero factor. -/
 theorem extractXPower_core_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
     (ZPoly.extractXPower (ZPoly.primitivePart f)).core ≠ 0 :=
   ZPoly.ne_zero_of_primitive _ (extractXPower_core_primitive_of_ne_zero f hf)
 
+/-- The repeated-factor part of a nonzero polynomial is nonzero. -/
 theorem repeatedPart_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
     (normalizeForFactor f).repeatedPart ≠ 0 := by
   unfold normalizeForFactor
@@ -295,7 +297,7 @@ private theorem polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
   | inr hrep =>
       exact repeatedPartFactorArray_shouldRecord_of_ne_zero f hf factor hrep
 
-/-- Lift a per-coreFactor normalize property through the reassembly: any factor
+/-- Lift a per-factor normalize property through the reassembly: any factor
 appearing in `reassemblePolynomialFactors` is either a normalization-prefix
 factor (handled by `polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero`)
 or appears in the supplied `coreFactors`. -/
@@ -311,7 +313,7 @@ theorem reassemblePolynomialFactors_normalizeFactorSign_of_ne_zero
       f hf factor hprefix
   · exact hcore factor hcoreMem
 
-/-- Lift a per-coreFactor `shouldRecord` property through the reassembly. -/
+/-- Lift a per-factor `shouldRecord` property through the reassembly. -/
 theorem reassemblePolynomialFactors_shouldRecord_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0) (coreFactors : Array ZPoly)
     (hcore : ∀ factor ∈ coreFactors.toList, shouldRecordPolynomialFactor factor = true)
@@ -367,7 +369,7 @@ theorem irreducible_not_dvd_of_not_associated
   · exact hassoc ⟨w, hunit_w, hw⟩
 
 /-- Converse of `exactQuotient?_product`: when `candidate` does not divide
-`target` in `ZPoly`, the exact-quotient probe necessarily returns `none`.
+`target` in `ZPoly`, the exact-quotient trial necessarily returns `none`.
 A direct contrapositive of the witness extraction. -/
 private theorem exactQuotient?_eq_none_of_not_dvd
     {target candidate : ZPoly}
@@ -441,12 +443,12 @@ private theorem consumeExactPower_pow_mul_of_not_dvd
           rw [ih fuel' hfuel']
 
 /-- Non-monic analogue of `consumeExactPower_pow_mul_of_not_dvd`: drops the
-`Monic q` hypothesis in favour of `0 < leadingCoeff q`, routing the
+`Monic q` hypothesis in favour of `0 < leadingCoeff q`, handling the
 divisibility-extraction step through
 `exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq`, the non-monic
 companion of `exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree`. Used by
 `expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decomposition_of_pos_lc`
-to handle quadratic-arm core factors emitted by
+to handle quadratic-arm factors of the square-free part emitted by
 `quadraticIntegerRootFactors?` that are primitive, positive-leading, but
 non-monic (e.g. the `2X + 3` residual from
 `(X-1)(2X+3) = 2X^2 + X - 3`). -/
@@ -488,10 +490,10 @@ exponents, if the running residual `rp` factors as
 `(∏ (qᵢ, eᵢ) ∈ pairs, qᵢ ^ eᵢ)` and each head factor fails to divide its
 suffix product (the "tail non-divisibility" prefix witness), then
 `expandRepeatedPartFactorsAux` reduces the residual to `1`. Proved by
-induction on the core-factor list, peeling off one head factor at a time
+induction on the square-free-factor list, peeling off one head factor at a time
 via `consumeExactPower_pow_mul_of_not_dvd`. The fuel budget must cover each
 individual exponent (which is automatic for the default
-`rp.size + 1` budget when the core factors are nonzero). -/
+`rp.size + 1` budget when the factors of the square-free part are nonzero). -/
 private theorem expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decomposition :
     ∀ (coreFactors : List ZPoly) (exponents : List Nat) (rp : ZPoly) (fuel : Nat),
       exponents.length = coreFactors.length →
@@ -574,7 +576,7 @@ private theorem expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decompositio
 
 /-- Non-monic analogue of
 `expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decomposition`: replaces
-the per-factor `Monic q` hypothesis by `0 < leadingCoeff q`, routing the
+the per-factor `Monic q` hypothesis by `0 < leadingCoeff q`, handling the
 single-factor extraction through
 `consumeExactPower_pow_mul_of_not_dvd_of_pos_lc`, which itself uses
 `exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq`. Used by the public array-level surface
@@ -582,7 +584,7 @@ single-factor extraction through
 which supplies a precondition of
 `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` and needs
 to admit a non-monic primitive
-positive-leading core factor such as `2X + 3`. -/
+polynomial with positive leading coefficient factor such as `2X + 3`. -/
 private theorem expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decomposition_of_pos_lc :
     ∀ (coreFactors : List ZPoly) (exponents : List Nat) (rp : ZPoly) (fuel : Nat),
       exponents.length = coreFactors.length →
@@ -666,7 +668,7 @@ private theorem expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decompositio
 /-- Array-level power-decomposition expansion helper.
 This is the array form of `expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decomposition`
 that targets `expandRepeatedPartFactorArray` directly. Given a list of monic
-positive-degree core factors, a matching list of exponents, a head-product
+positive-degree factors of the square-free part, a matching list of exponents, a head-product
 decomposition `rp = ∏ qᵢ ^ eᵢ`, and pairwise tail-non-divisibility for each
 head factor relative to the suffix product, the greedy expansion completely
 consumes `rp` and reports residual `1`. The downstream theorem
@@ -774,7 +776,7 @@ replaces the per-factor `Monic q` hypothesis by `0 < leadingCoeff q`, exposing
 the contract using `Factorization.factorPower` (the public-API power operation
 referenced by Mathlib-side assemblers). Consumed by the quadratic-arm
 discharger `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
-when the core factor emitted by `quadraticIntegerRootFactors?`
+when the square-free factor emitted by `quadraticIntegerRootFactors?`
 is primitive and positive-leading but non-monic (e.g. the `2X + 3` residual
 from `(X-1)(2X+3) = 2X^2 + X - 3`). -/
 theorem expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc
@@ -862,7 +864,7 @@ private theorem irreducible_not_dvd_one {q : ZPoly}
 /-- Singleton expansion specialization of
 `expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition`:
 when the repeated part `rp` is the `k`-th `Hex.Factorization.factorPower` of an
-irreducible monic positive-degree `q`, expanding against the singleton core
+irreducible monic positive-degree `q`, expanding against the singleton square-free part
 `#[q]` consumes the repeated part exactly, emitting `k` copies of `q` and
 reporting residual `1`. It feeds the public discharger
 `Hex.reassemblyExpansionComplete_singleton_of_irreducible`; the corresponding
@@ -896,7 +898,7 @@ theorem expandRepeatedPartFactorArray_pow_singleton
 
 /-- Non-monic counterpart of `expandRepeatedPartFactorArray_pow_singleton`:
 replaces the `Monic q` premise by `0 < leadingCoeff q`, with a
-**weakened conclusion** — only the residual projection `.2 = 1`, not the
+**weakened conclusion**; only the residual projection `.2 = 1`, not the
 full pair. The full-pair version has no non-monic counterpart at the
 executable layer (`consumeExactPower_pow_mul_of_not_dvd` is genuinely
 monic-only; under non-monic `q`, the recursive `consumeExactPower` step's
@@ -905,7 +907,7 @@ to `1`). The residual-only form suffices for the
 `_of_pos_lc` sibling of
 `reassemblyExpansionComplete_singleton_of_irreducible`, which
 unfolds `reassemblyExpansionComplete` to `(expand ...).2 = 1`. The
-proof routes through the array-level public surface
+proof uses the array-level public surface
 `expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`
 specialised to `coreFactors = #[q]`, `exponents = [k]`. -/
 theorem expandRepeatedPartFactorArray_pow_singleton_of_pos_lc
@@ -959,7 +961,7 @@ theorem expandRepeatedPartFactorArray_pow_singleton_of_pos_lc
     rw [hqe]
     exact hfuel
 
-/-- The reassembled output for a single-`1` core list is exactly the
+/-- The reassembled output for the singleton factor list `[1]` is exactly the
 normalization prefix followed by `1`. Both branches of `reassemblePolynomialFactors`
 collapse to this shape because the expansion never extracts anything when the
 sole candidate is the unit `1`. -/
@@ -994,6 +996,7 @@ private theorem squareFreeCore_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
   rw [hzero]
   exact DensePoly.zero_mul _
 
+/-- The square-free part of a nonzero normalized input has positive leading coefficient. -/
 theorem squareFreeCore_leadingCoeff_pos_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0) :
     0 < DensePoly.leadingCoeff (normalizeForFactor f).squareFreeCore := by
@@ -1126,7 +1129,7 @@ private theorem splitInitialZeros_tail_getD_ne_zero (coeffs : List Int) :
       · rw [if_pos hc]; simpa using ih
       · rw [if_neg hc]; exact Or.inr (by simpa using hc)
 
-/-- The `X`-power-free core extracted from a nonzero primitive part has a nonzero
+/-- The `X`-power-free square-free part extracted from a nonzero primitive part has a nonzero
 constant term: `extractXPower` strips the leading zero run, so the lowest stored
 coefficient is nonzero. -/
 private theorem extractXPower_core_coeff_zero_ne_zero (f : ZPoly) (hf : f ≠ 0) :
@@ -1143,9 +1146,9 @@ private theorem extractXPower_core_coeff_zero_ne_zero (f : ZPoly) (hf : f ≠ 0)
     rw [DensePoly.coeff_ofList]
     exact hne
 
-/-- The reachable square-free core has a nonzero constant term.
+/-- The reachable primitive square-free part has a nonzero constant term.
 `normalizeForFactor` strips the visible power of `X` (via `extractXPower`) before
-`primitiveSquareFreeDecomposition`, so the core fed to the prime/lift pipeline is
+`primitiveSquareFreeDecomposition`, so the square-free part fed to the prime/lift computation is
 not divisible by `X`. Over `ℚ` the primitive part reassembles as a unit scalar
 times `squareFreeCore * repeatedPart`; reading the constant term forces
 `squareFreeCore.coeff 0 ≠ 0`. -/
@@ -1203,7 +1206,7 @@ private theorem ZPoly_primitive_left_of_mul (p q : ZPoly)
   · rw [heq, habs_eq] at hp_nn
     omega
 
-/-- The normalized square-free core is primitive whenever the input is nonzero.
+/-- The normalized primitive square-free part is primitive whenever the input is nonzero.
 Discharges the `ZPoly.Primitive core` precondition of
 `exhaustiveIntegerTrialCoreFactorsWithBound_factor_irreducible` (`:13443`) and
 `quadraticIntegerRootFactors?_factor_irreducible_of_primitive` (`:14060`) when
@@ -1221,12 +1224,12 @@ theorem squareFreeCore_primitive_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
     ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive _ hcore_ne
   exact ZPoly_primitive_left_of_mul _ _ hprod_primitive
 
-/-- The normalized square-free core is square-free over `ℚ` whenever the input
+/-- The normalized primitive square-free part is square-free over `ℚ` whenever the input
 is nonzero. Discharges the `Hex.ZPoly.SquareFreeRat core` precondition of
 `exhaustiveIntegerTrialCoreFactorsWithBound_factor_irreducible` (`:13443`) and
 `quadraticIntegerRootFactors?_factor_irreducible_of_primitive` (`:14060`) when
 both are specialised to `(normalizeForFactor f).squareFreeCore`. The proof
-forwards the recorded core's non-zeroness (from `squareFreeCore_ne_zero_of_ne_zero`)
+forwards the recorded square-free part's non-zeroness (from `squareFreeCore_ne_zero_of_ne_zero`)
 to `ZPoly.primitiveSquareFreeDecomposition_squareFreeCore`, which gives the
 intrinsic square-free-over-`ℚ` invariant of the decomposition. -/
 theorem squareFreeCore_squareFreeRat_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
@@ -1236,10 +1239,10 @@ theorem squareFreeCore_squareFreeRat_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
   simp only at hcore_ne ⊢
   exact ZPoly.primitiveSquareFreeDecomposition_squareFreeCore _ hcore_ne
 
-/-- When the normalized square-free core has degree zero (and `f ≠ 0`), the
-primitive square-free decomposition forces the core to be exactly `1`.  Exposed
+/-- When the normalized primitive square-free part has degree zero (and `f ≠ 0`), the
+primitive square-free decomposition forces the square-free part to be exactly `1`.  Exposed
 publicly so Mathlib-side per-branch wrappers (in particular the fast-path
-constant arm) can rule out the singleton-core entry from the recorded factor
+constant arm) can rule out the singleton-part entry from the recorded factor
 set. -/
 theorem squareFreeCore_eq_one_of_constant_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0)

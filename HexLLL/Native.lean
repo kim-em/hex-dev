@@ -35,7 +35,7 @@ structure LLLState (n m : Nat) where
 namespace LLLState
 
 /-- Correctness predicate for the proof-facing interpretation of an executable
-`LLLState`. Keeping this separate lets core state updates remain purely
+`LLLState`. Keeping this separate lets executable state updates remain purely
 computational; Mathlib-side modules can prove preservation when they need the
 Gram-Schmidt interpretation. -/
 structure Valid (s : LLLState n m) : Prop where
@@ -449,7 +449,7 @@ def ofBasis (b : Matrix Int n m) : LLLState n m :=
 
 end LLLState
 
-/-- Fuel-bounded outer LLL loop, dispatched by `lllAux`.
+/-- Fuel-bounded outer LLL loop, selected by `lllAux`.
 
 At row `k`, the loop size-reduces the current row, checks the integer
 Lovasz condition, and either advances to `k + 1` or swaps adjacent rows and
@@ -457,7 +457,7 @@ continues from the previous position.
 
 The `fuel = 0` branch returns the current basis as a total fallback.
 The fuel-sufficiency theorem proves that `lllFuel` reaches the completed state
-for valid independent inputs used by the public pipeline. -/
+for valid independent inputs used by the public computation. -/
 @[expose]
 def lllLoop (s : LLLState n m) (k : Nat) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hk : 1 ≤ k) (hkn : k ≤ n) :
@@ -528,7 +528,7 @@ def lllLoop (s : LLLState n m) (k : Nat) (δ : Rat)
           LLLState.sizeReduce_memLattice_iff]
 
 /-- Initial fuel bound for `lllLoop`, sufficient for valid independent inputs
-used by the public LLL pipeline. -/
+used by the public LLL computation. -/
 @[expose]
 def lllFuel (s : LLLState n m) : Nat :=
   (s.potential + 1) * (n + 1)
@@ -546,7 +546,7 @@ end Internal
 
 open Hex.Internal
 
-/-- Native (non-dispatched) executable LLL entry point. Builds the canonical
+/-- Native (non-selected) executable LLL entry point. Builds the canonical
 integer state via {name}`Hex.Internal.LLLState.ofBasis` and runs
 {name}`Hex.Internal.lllAux`. Its output achieves the
 classical size-reduction bound `|μ| ≤ 1/2` (η = 1/2), so its short-vector

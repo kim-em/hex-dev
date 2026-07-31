@@ -18,7 +18,7 @@ set_option backward.proofsInPublic true
 # Direct-coordinate factor supports for CLD
 
 The classical and CLD engines use the same modular support and the same
-canonical `coreLiftData` lift.  A `DirectFactorCertificate` packages the two
+canonical `directLiftData` lift.  A `DirectFactorCertificate` packages the two
 facts downstream consumers need:
 
 * the executable scaled candidate is the normalized integer factor;
@@ -39,8 +39,8 @@ open Polynomial
 def directLiftedSupport
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (S : ModPFactorSubset data) :
-    LiftedFactorSubset (Hex.ZPoly.coreLiftData core B data) :=
-  liftedSubsetOfModPSubset data (Hex.ZPoly.coreLiftData core B data)
+    LiftedFactorSubset (Hex.ZPoly.directLiftData core B data) :=
+  liftedSubsetOfModPSubset data (Hex.ZPoly.directLiftData core B data)
     (henselLiftData_liftedFactors_size_eq
       (Hex.ZPoly.monicTarget core data.p
         (Hex.precisionForCoeffBound B data.p))
@@ -86,26 +86,36 @@ support and carrying the exact congruence used by the CLD column proof. -/
 structure DirectFactorCertificate
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (S : ModPFactorSubset data) where
+  /-- The normalized integer factor represented by `S`. -/
   factor : Hex.ZPoly
+  /-- The complementary integer factor. -/
   cofactor : Hex.ZPoly
+  /-- The represented integer factor is irreducible. -/
   irreducible : Irreducible (HexPolyZMathlib.toPolynomial factor)
+  /-- The factor and cofactor multiply to the input polynomial. -/
   factor_mul : factor * cofactor = core
+  /-- The modular subset represents the integer factor. -/
   represented : RepresentsIntegerFactorModP data factor S
+  /-- The factor uses the chosen sign normalization. -/
   normalized : Hex.normalizeFactorSign factor = factor
+  /-- The modular support is not empty. -/
   supportNonempty : S.Nonempty
+  /-- Direct coefficient recovery returns this factor. -/
   candidate_eq : directSupportCandidate core B data S = factor
+  /-- The input leading coefficient is invertible modulo the lift modulus. -/
   inputScale_coprime :
     Int.gcd (Hex.DensePoly.leadingCoeff core)
       (Int.ofNat (data.p ^ Hex.precisionForCoeffBound B data.p)) = 1
+  /-- The scaled lifted product agrees with the scaled factor modulo the lift modulus. -/
   scaledProduct_congr :
     Hex.ZPoly.congr
       (scaledLiftedFactorProduct core
-        (Hex.ZPoly.coreLiftData core B data)
+        (Hex.ZPoly.directLiftData core B data)
         (directLiftedSupport core B data S))
       (Hex.DensePoly.scale
         (Hex.DensePoly.leadingCoeff cofactor) factor)
-      ((Hex.ZPoly.coreLiftData core B data).p ^
-        (Hex.ZPoly.coreLiftData core B data).k)
+      ((Hex.ZPoly.directLiftData core B data).p ^
+        (Hex.ZPoly.directLiftData core B data).k)
 
 /-- View a direct factor certificate as the logarithmic-derivative recovery
 package used by the lattice geometry. -/
@@ -116,12 +126,12 @@ noncomputable def DirectFactorCertificate.recoveredLift
     (C : DirectFactorCertificate core B data S) :
     BHKS.RecoveredLift
       (Hex.bhksLatticeBasis core
-        (Hex.ZPoly.coreLiftData core B data).p
-        (Hex.ZPoly.coreLiftData core B data).k
-        (Hex.ZPoly.coreLiftData core B data).liftedFactors)
+        (Hex.ZPoly.directLiftData core B data).p
+        (Hex.ZPoly.directLiftData core B data).k
+        (Hex.ZPoly.directLiftData core B data).liftedFactors)
       (↑(directLiftedSupport core B data S) :
-        Set (LiftedFactorIndex (Hex.ZPoly.coreLiftData core B data))) := by
-  let d := Hex.ZPoly.coreLiftData core B data
+        Set (LiftedFactorIndex (Hex.ZPoly.directLiftData core B data))) := by
+  let d := Hex.ZPoly.directLiftData core B data
   refine
     { f := core
       p := d.p
@@ -150,6 +160,7 @@ private theorem intCast_isUnit
   apply isCoprime_zero_right.mp
   simpa using hmap
 
+/-- A certified direct factor divides the input polynomial. -/
 theorem factor_dvd
     {core : Hex.ZPoly} {B : Nat} {data : Hex.PrimeChoiceData}
     {S : ModPFactorSubset data}
@@ -167,6 +178,7 @@ theorem factor_ne
     rw [hzero]
     exact HexPolyZMathlib.toPolynomial_zero)
 
+/-- A certified direct factor of a primitive input is primitive. -/
 theorem primitive
     {core : Hex.ZPoly} {B : Nat} {data : Hex.PrimeChoiceData}
     {S : ModPFactorSubset data}
@@ -175,6 +187,7 @@ theorem primitive
     Hex.ZPoly.Primitive C.factor :=
   zpoly_primitive_of_dvd_primitive_basic hcore_primitive C.factor_dvd
 
+/-- A certified normalized direct factor has positive leading coefficient. -/
 theorem leadingCoeff_pos
     {core : Hex.ZPoly} {B : Nat} {data : Hex.PrimeChoiceData}
     {S : ModPFactorSubset data}
@@ -182,6 +195,7 @@ theorem leadingCoeff_pos
     0 < Hex.DensePoly.leadingCoeff C.factor :=
   leadingCoeff_pos_of_normalized C.factor_ne C.normalized
 
+/-- A certified direct factor of a primitive input has positive degree. -/
 theorem degree_pos
     {core : Hex.ZPoly} {B : Nat} {data : Hex.PrimeChoiceData}
     {S : ModPFactorSubset data}
@@ -201,19 +215,19 @@ theorem liftedFactor_map_dvd
     {S : ModPFactorSubset data}
     (C : DirectFactorCertificate core B data S)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (i : LiftedFactorIndex (Hex.ZPoly.coreLiftData core B data))
+    (i : LiftedFactorIndex (Hex.ZPoly.directLiftData core B data))
     (hi : i ∈ directLiftedSupport core B data S) :
     (HexPolyZMathlib.toPolynomial
-      (liftedFactor (Hex.ZPoly.coreLiftData core B data) i)).map
+      (liftedFactor (Hex.ZPoly.directLiftData core B data) i)).map
         (Int.castRingHom (ZMod
-          ((Hex.ZPoly.coreLiftData core B data).p ^
-            (Hex.ZPoly.coreLiftData core B data).k))) ∣
+          ((Hex.ZPoly.directLiftData core B data).p ^
+            (Hex.ZPoly.directLiftData core B data).k))) ∣
       (HexPolyZMathlib.toPolynomial C.factor).map
         (Int.castRingHom (ZMod
-          ((Hex.ZPoly.coreLiftData core B data).p ^
-            (Hex.ZPoly.coreLiftData core B data).k))) := by
+          ((Hex.ZPoly.directLiftData core B data).p ^
+            (Hex.ZPoly.directLiftData core B data).k))) := by
   classical
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let M := d.p ^ d.k
   let φ := Int.castRingHom (ZMod M)
   let P := liftedFactorProduct d (directLiftedSupport core B data S)
@@ -247,7 +261,7 @@ theorem liftedFactor_map_dvd
       Int.gcd (Hex.DensePoly.leadingCoeff C.cofactor)
         (Int.ofNat M) = 1 := by
     exact gcd_eq_one_of_dvd_left hcofactor_lc_dvd
-      (by simpa [M, d, Hex.ZPoly.coreLiftData] using C.inputScale_coprime)
+      (by simpa [M, d, Hex.ZPoly.directLiftData] using C.inputScale_coprime)
   have hcofactor_unit :
       IsUnit (Polynomial.C (φ
         (Hex.DensePoly.leadingCoeff C.cofactor))) :=
@@ -501,12 +515,12 @@ factor certificate for that same support. -/
 @[expose]
 def directTrueSupports
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData) :
-    Set (Set (LiftedFactorIndex (Hex.ZPoly.coreLiftData core B data))) :=
+    Set (Set (LiftedFactorIndex (Hex.ZPoly.directLiftData core B data))) :=
   fun U =>
     ∃ S : ModPFactorSubset data,
       Nonempty (DirectFactorCertificate core B data S) ∧
         (↑(directLiftedSupport core B data S) :
-          Set (LiftedFactorIndex (Hex.ZPoly.coreLiftData core B data))) = U
+          Set (LiftedFactorIndex (Hex.ZPoly.directLiftData core B data))) = U
 
 namespace directTrueSupports
 
@@ -524,10 +538,10 @@ theorem cover
       (Int.ofNat (data.p ^ Hex.precisionForCoeffBound B data.p)) = 1)
     (hpartition :
       DirectSupportPartition core B data Finset.univ core) :
-    ∀ i : LiftedFactorIndex (Hex.ZPoly.coreLiftData core B data),
+    ∀ i : LiftedFactorIndex (Hex.ZPoly.directLiftData core B data),
       ∃ U ∈ directTrueSupports core B data, i ∈ U := by
   intro i
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let hsize : d.liftedFactors.size = data.factorsModP.size :=
     henselLiftData_liftedFactors_size_eq
       (Hex.ZPoly.monicTarget core data.p
@@ -584,7 +598,7 @@ theorem eq_of_mem_inter
           (directLiftedSupport core B data T) := by
       exact
         (liftedSubsetOfModPSubset_disjoint_iff data
-          (Hex.ZPoly.coreLiftData core B data)
+          (Hex.ZPoly.directLiftData core B data)
           (henselLiftData_liftedFactors_size_eq
             (Hex.ZPoly.monicTarget core data.p
               (Hex.precisionForCoeffBound B data.p))
@@ -601,20 +615,20 @@ theorem nonempty
   rcases hU with ⟨S, ⟨C⟩, rfl⟩
   obtain ⟨i, hi⟩ := C.supportNonempty
   refine ⟨liftedIndexOfModPIndex data
-      (Hex.ZPoly.coreLiftData core B data)
+      (Hex.ZPoly.directLiftData core B data)
       (henselLiftData_liftedFactors_size_eq
         (Hex.ZPoly.monicTarget core data.p
           (Hex.precisionForCoeffBound B data.p))
         (Hex.precisionForCoeffBound B data.p) data) i, ?_⟩
   exact liftedIndex_mem_liftedSubset_iff data
-    (Hex.ZPoly.coreLiftData core B data)
+    (Hex.ZPoly.directLiftData core B data)
     (henselLiftData_liftedFactors_size_eq
       (Hex.ZPoly.monicTarget core data.p
         (Hex.precisionForCoeffBound B data.p))
       (Hex.precisionForCoeffBound B data.p) data) S i |>.mpr hi
 
 /-- Direct true supports are in bijection with the normalized irreducible
-factors of the square-free core. -/
+factors of the primitive square-free part. -/
 theorem ncard_eq_normalizedFactors_card
     {core : Hex.ZPoly} {B : Nat} {data : Hex.PrimeChoiceData}
     (hcore_primitive : Hex.ZPoly.Primitive core)
@@ -633,7 +647,7 @@ theorem ncard_eq_normalizedFactors_card
       (UniqueFactorizationMonoid.normalizedFactors
         (HexPolyZMathlib.toPolynomial core)).card := by
   classical
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   set X := HexPolyZMathlib.toPolynomial core with hX
   have hX_ne : X ≠ 0 := by
     rw [hX]

@@ -26,7 +26,7 @@ deriving DecidableEq
 
 namespace DirectLiftPlan
 
-/-- The unique recovery plan indexed by a core and its selected modular
+/-- The unique recovery plan indexed by a square-free part and its selected modular
 factorization. -/
 @[expose]
 def canonical (core : SquareFreeInput) (modular : DirectPrimePlan core) :
@@ -39,7 +39,7 @@ def coeffBound {core : SquareFreeInput} {modular : DirectPrimePlan core}
     (_plan : DirectLiftPlan core modular) : Nat :=
   ZPoly.defaultFactorCoeffBound core.poly
 
-/-- Recovery precision derived from the indexed core, bound, and prime. -/
+/-- Recovery precision derived from the indexed polynomial, bound, and prime. -/
 @[expose]
 def precision {core : SquareFreeInput} {modular : DirectPrimePlan core}
     (plan : DirectLiftPlan core modular) : Nat :=
@@ -49,7 +49,7 @@ end DirectLiftPlan
 
 /-- Token for the one direct-coordinate Hensel lift owned by a lift plan.
 The lifted data is derived from the indices rather than stored, so a basis
-from another core or precision cannot be inserted. -/
+from another square-free part or precision cannot be inserted. -/
 structure DirectLiftedBasis
     {core : SquareFreeInput} {modular : DirectPrimePlan core}
     (plan : DirectLiftPlan core modular) where
@@ -67,7 +67,7 @@ def canonical {core : SquareFreeInput} {modular : DirectPrimePlan core}
 def data {core : SquareFreeInput} {modular : DirectPrimePlan core}
     {plan : DirectLiftPlan core modular}
     (_basis : DirectLiftedBasis plan) : LiftData :=
-  ZPoly.coreLiftData core.poly plan.coeffBound modular.data
+  ZPoly.directLiftData core.poly plan.coeffBound modular.data
 
 end DirectLiftedBasis
 

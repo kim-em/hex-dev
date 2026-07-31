@@ -105,13 +105,13 @@ theorem monic_primitive_sign_normalized_of_monic
     zpoly_normalize_factor_sign_of_monic hfactor_monic⟩
 
 /--
-In the monic-core regime the centered/dilated recovered product equals the
+In the monic polynomial regime the centered/dilated recovered product equals the
 represented integer factor with no primitive-part correction.
 
 The carrier's `dilate_eq` field only exposes
 `primitivePart (dilate (lc core) monicFactor) = factor`, but when `core` is
 monic the dilation collapses (`leadingCoeff core = 1`) and `monicFactor` is a
-divisor of the monic core, hence primitive, so the `primitivePart` is the
+divisor of the monic polynomial, hence primitive, so the `primitivePart` is the
 identity.  The congruence field plus the Mignotte bound then identify the
 centered selected product with `monicFactor`.  This is exactly the
 recovered-equality input consumed by `BHKS.recoveredLiftOfSubset`, and unlike
@@ -198,6 +198,7 @@ theorem henselLiftData_liftedFactors_size_eq
   rw [Hex.ZPoly.multifactorLiftQuadratic_size_eq_input]
   simp
 
+/-- Multifactor Hensel lifting preserves the number of selected modular factors. -/
 theorem MonicLift.factorCount_eq
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData) :
     (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors.size =
@@ -214,7 +215,7 @@ the Mathlib-facing surface.
 `Hex.henselLiftData` produces its `liftedFactors` by invoking
 `Hex.ZPoly.multifactorLiftQuadratic`, and the executable proof
 `Hex.ZPoly.multifactorLiftQuadratic_each_monic` already supplies monicness of
-every output index given monicness of the input core and the quadratic
+every output index given monicness of the input polynomial and the quadratic
 multifactor lift invariant. This wrapper simply re-exposes that conclusion at
 the `henselLiftData` umbrella for downstream callers
 (notably `monic_primitive_sign_normalized_of_monic` above, which discharges
@@ -326,7 +327,7 @@ recursive `QuadraticMultifactorLiftInvariant` package plus mod-`p` product
 congruence and `Nodup` of the original modular factor list, and produces
 `Function.Injective (liftedFactor d)` directly.
 
-The proof routes through `Hex.ZPoly.multifactorLiftQuadratic_each_congr_mod_base`:
+The proof uses `Hex.ZPoly.multifactorLiftQuadratic_each_congr_mod_base`:
 each lifted factor reduces modulo `p` to the corresponding original modular
 factor (after `FpPoly.liftToZ`). Equal lifted factors therefore force equal
 modular factors, and `Nodup` of `factorsModP` collapses to equal indices.

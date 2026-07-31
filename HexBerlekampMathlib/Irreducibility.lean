@@ -224,6 +224,7 @@ theorem fpPolyEquiv_symm_apply (f : Polynomial (ZMod p)) :
     fpPolyEquiv.symm f = polynomialToFpPoly f := by
   rfl
 
+/-- Coefficients are preserved by the equivalence with Mathlib polynomials. -/
 @[simp, grind =]
 theorem coeff_toMathlibPolynomial (f : Hex.FpPoly p) (n : Nat) :
     (toMathlibPolynomial f).coeff n = HexModArithMathlib.ZMod64.toZMod (f.coeff n) := by

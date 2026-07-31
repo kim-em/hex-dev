@@ -180,7 +180,7 @@ theorem derivativeMahler_reflectedLinearFactor_eq
 
 /--
 If the derivative Mahler measure is monotone along the Schur path on `[0,1]`,
-its value at the original root `α` is at most its value at the reflected root —
+its value at the original root `α` is at most its value at the reflected root;
 the comparison of the two path endpoints.
 -/
 theorem derivativeMahlerAlongLinearFactor_le_schurReflectedRoot_of_monotoneOn
@@ -234,7 +234,7 @@ theorem mahlerMeasure_derivative_le_of_schurRootPath_monotoneOn
     (derivativeMahlerAlongLinearFactor_le_schurReflectedRoot_of_monotoneOn f α hmono)
 
 /--
-One root-reflection step in the de Bruijn-Springer/Boyd route toward
+One root-reflection step in the de Bruijn-Springer/Boyd method toward
 `p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure`: if the Mahler
 measure of the derivative is monotone along the Schur path for the selected
 linear factor, then reflecting that exterior root cannot decrease the Mahler
@@ -324,7 +324,7 @@ theorem norm_eval_robinsonFactor_eq_norm_eval_X_sub_C
       _ = ‖(X - C α : ℂ[X]).eval z‖ := by simp
 
 /--
-The Robinson form agrees with `p` in modulus everywhere on the unit circle —
+The Robinson form agrees with `p` in modulus everywhere on the unit circle;
 the pointwise boundary identity behind the Mahler-measure equality
 `mahlerMeasure_robinsonForm`.
 -/
@@ -380,7 +380,7 @@ theorem mahlerMeasure_eq_of_boundary_norm_eq_of_ne_zero {p q : ℂ[X]}
 
 open Filter MeasureTheory Set in
 /--
-Jensen/circle-average upper bound used in the Mahler--Boyd analytic route:
+Jensen/circle-average upper bound used in the Mahler--Boyd analytic method:
 the exponential Mahler measure is bounded by the unit-circle mean of the
 absolute value.  This is the first Jensen step in the standard Landau/Mahler
 integral proof, exposed here so derivative-bound arguments can cite the
@@ -864,7 +864,7 @@ theorem prod_max_one_norm_roots_derivative_le_of_roots_le_one
 
 /--
 Robinson endpoint root-product comparison for the derivative.  This is the
-closed-disk endpoint of the de Bruijn-Springer/Boyd reflection route: all roots
+closed-disk endpoint of the de Bruijn-Springer/Boyd reflection method: all roots
 of `p.robinsonForm` lie in the closed unit disk, so Gauss-Lucas puts all roots
 of its derivative there as well.
 -/

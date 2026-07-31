@@ -1,29 +1,15 @@
 # hex-berlekamp-zassenhaus
 
 Part of [`hex`](https://github.com/kim-em/hex-dev), a computer algebra
-library for Lean 4. The aim is fast executable code, fully verified, built
-with spec-driven development.
+library for Lean 4.
 
-Executable factorization of dense univariate polynomials over `ℤ`, written in
-Lean 4 and independent of Mathlib.
-
-The library implements the full production cascade:
-
-- content, sign, powers of `X`, and multiplicities are normalized first;
-- Berlekamp factorization supplies modular factors;
-- multifactor Hensel lifting raises them to a reconstruction precision;
-- classical size-ordered recombination handles small modular factor counts;
-- CLD/LLL recombination handles larger counts; and
-- exact trial division is the unconditional total backstop.
-
-The public result separates the signed scalar from primitive polynomial
-factors and records multiplicities explicitly. This matches the conventions of
-FLINT, Sage, and SymPy and avoids treating integer content as a polynomial
-factor.
+This package factors dense univariate polynomials over `ℤ` without depending
+on Mathlib. It combines modular Berlekamp factorization, multifactor Hensel
+lifting, classical or lattice recombination, and exact trial division. The
+result records the signed scalar separately from primitive factors and their
+multiplicities.
 
 # Quickstart
-
-Add the released package to a Lake project, pinning a tag or commit:
 
 ```toml
 [[require]]
@@ -32,87 +18,59 @@ git = "https://github.com/leanprover/hex-berlekamp-zassenhaus.git"
 rev = "main"
 ```
 
-Then import the supported umbrella:
-
 ```lean
 import HexBerlekampZassenhaus
-```
 
-The package uses native code supplied transitively by `hex-lll`; consumers do
-not need Mathlib. Projects that want the correspondence theorems or tactics for
-`Polynomial ℤ` should use
-[`hex-berlekamp-zassenhaus-mathlib`](https://github.com/leanprover/hex-berlekamp-zassenhaus-mathlib).
+open Hex
+
+#check ZPoly.factorize
+#check ZPoly.factors
+#check Factorization.product
+#check factorClassical
+#check factorLattice
+#check factorTrial
+```
 
 # Functionality
 
+`ZPoly.factorize` is the total user operation. It normalizes content, sign,
+powers of `X`, and repeated factors before factoring the primitive square-free
+part. Small modular factorizations use classical subset recombination. Larger
+ones use a lattice generated from coefficient vectors and logarithmic
+derivatives. Exact trial division proves totality when modular methods do not
+return an answer.
+
+The ordinary umbrella also supplies `factor_poly` and `irreducibility` for
+`Hex.ZPoly`. Search runs in compiled elaborator code and emits product and
+irreducibility certificates checked by the kernel:
+
 ```lean
+import HexBerlekampZassenhaus
+
 open Hex
 
-def f : ZPoly :=
-  DensePoly.ofCoeffs #[1000, 1] *
-  DensePoly.ofCoeffs #[-2003, 1] *
-  DensePoly.ofCoeffs #[1, 0, 1]
+def f : ZPoly := DensePoly.ofCoeffs #[1, 0, 1]
 
-def result : Factorization := f.factorize
-
-#eval result.scalar
-#eval result.factors.size
+noncomputable def fFactored := factor_poly f
+theorem fIrreducible : ZPoly.Irreducible f := irreducibility f
 ```
 
-The stable entry points are:
-
-```lean
-Hex.ZPoly.factorize       -- ZPoly → Factorization, total
-Hex.ZPoly.factors         -- ZPoly → Array (ZPoly × Nat)
-Hex.factorClassical       -- classical recombination, Option-valued
-Hex.factorLattice         -- lattice recombination, Option-valued
-Hex.factorTrial           -- exact total fallback
-Hex.Factorization.product -- reconstruct the input
-```
-
-`factorize` is the normal user API. The tier-specific operations are exposed
-for benchmarking, diagnosis, and clients with a known workload.
+Import `HexBerlekampZassenhaus.All` only when developing the algorithms and
+their internal certificates.
 
 # Verification
 
-The computational package returns executable data. Its checkers, records, and
-Mathlib-free irreducibility notion are designed so a proof layer can certify
-that data without trusting search. The complete product, irreducibility,
-normalization, and uniqueness theorems live in the Mathlib bridge.
+The computational package defines a Mathlib-free irreducibility predicate and
+the executable checks needed by the proof library.
+[`hex-berlekamp-zassenhaus-mathlib`](https://github.com/leanprover/hex-berlekamp-zassenhaus-mathlib)
+proves product reconstruction, factor irreducibility, normalization, and
+uniqueness.
 
-The public cascade is total because `factorTrial` does not depend on finding an
-admissible modular prime. The stronger claim that lattice recombination
-succeeds without the exponential fallback is intentionally separate and
-conditional on its explicit admissibility and precision hypotheses.
-
-# Tactics
-
-Importing this package extends the shared `factor_poly` and `irreducibility`
-elaborators to `Hex.ZPoly`. Search runs in compiled code at elaboration time;
-the generated term contains small product and irreducibility-certificate
-checks, not a replay of the factorizer.
-
-```lean
-open Hex
-
-def g : ZPoly := DensePoly.ofCoeffs #[1, 0, 1]
-
-noncomputable def gFactored := factor_poly g
-theorem gIrreducible : ZPoly.Irreducible g := irreducibility g
-```
-
-The Mathlib bridge adds `Polynomial ℤ`, multi-prime irreducibility
-certificates, and deliberately marked `factor_poly!` / `irreducibility!`
-fallbacks for small inputs outside the ordinary certificate languages.
-
-# Reference manual
-
-- [SPEC](SPEC/hex-berlekamp-zassenhaus.md) — algorithms, contracts, edge cases,
-  performance policy, and trust model.
-- The Hex manual's factor-tactics chapter — checked end-to-end examples.
-- `bench/HexBerlekampZassenhaus/` — deterministic benchmark drivers.
-- `conformance/HexBerlekampZassenhaus/` — fixture emission and conformance
-  checks against python-flint.
+The lattice method uses coefficient vectors of logarithmic derivatives in the
+sense of van Hoeij. The exact trial method is independent of finding a
+suitable prime, so the public factorization operation is total. See the
+[SPEC](SPEC/hex-berlekamp-zassenhaus.md) for the algorithms, contracts, and
+test protocol.
 
 # Contributing
 

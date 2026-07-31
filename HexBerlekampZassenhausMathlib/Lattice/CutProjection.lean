@@ -24,9 +24,9 @@ namespace BHKS
 /-!
 # True-factor cut-projection producer
 
-The following bridges the BHKS prefix survivor-span lemma
+The following correspondences the BHKS prefix survivor-span lemma
 (`mem_prefixSubmodule_of_normSq_le`) to `CutProjectionHypotheses` *without*
-routing through `CutRetention`.  A true factor's CLD vector is a genuine short
+handling through `CutRetention`.  A true factor's CLD vector is a genuine short
 lattice vector; the survivor-span lemma places it in the integer span of the
 retained prefix rows, and projecting that span to the first `factorCount`
 coordinates lands in `projectedRowSpanInt`, exactly where the executable cut
@@ -279,7 +279,7 @@ norm bounds (`TrueFactorCLDTightNormBound`), and independence of the BHKS basis.
 Each true support's indicator vector is the first block of a genuine short
 lattice vector, which the prefix survivor-span lemma places in the retained
 prefix span; projecting to the first `factorCount` coordinates lands the
-indicator in `projectedRowSpanInt`.  This route does **not** pass through
+indicator in `projectedRowSpanInt`.  This method does **not** pass through
 `CutRetention`.
 -/
 

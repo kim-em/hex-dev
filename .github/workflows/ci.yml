@@ -240,7 +240,7 @@ jobs:
         run: |
           bash scripts/ci/run_oracles.sh
           # Deterministic anti-regression gate: a recombination blow-up,
-          # unexpected tier downgrade, or unexpected decline/fallback fails the
+          # unexpected method downgrade, or unexpected decline/fallback fails the
           # merge even though it would still factor correctly.
           python3 scripts/oracle/bz_trace_gate.py
           # Catastrophic (order-of-magnitude) slow-downs trip this generous cap.

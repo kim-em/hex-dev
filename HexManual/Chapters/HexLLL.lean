@@ -49,7 +49,7 @@ The {ref "hex-lll-performance"}[performance comparison] below describes every
 curve and all six input families.
 
 The library splits computation from proof. The public reducer can
-accelerate through an optional external `fpLLL` provider (fast, untrusted
+accelerate through an optional external `fpLLL` reducer (fast, untrusted
 numerics), but no proof depends on those numerics being correct. Every
 external candidate is fed through a verified integer checker. Only a basis
 the checker accepts is returned, and the checker's soundness theorem
@@ -113,7 +113,7 @@ clears denominators in both the size-reduced and Lovász clauses.
 The exact integer checker is complete, but its operands grow with the
 input. For larger inputs an unverified fixed-precision interval pass over
 the same integer data is usually faster at deciding reducedness, so the
-dispatching checker uses a cheap size predictor to pick between the two,
+adaptive checker uses a cheap size predictor to pick between the two,
 always keeping the exact integer checker as a mandatory fallback when the
 interval pass is indecisive; completeness therefore stays structural
 rather than numerical. This is a choice between two *checkers* for a
@@ -143,7 +143,7 @@ tag := "hex-lll-reduction"
 %%%
 
 The exact all-integer reducer {name}`Hex.lllNative` drives the standard LLL
-outer loop — integer size-reduction and adjacent Lovász swaps — directly on
+outer loop of integer size reduction and adjacent Lovász swaps directly on
 the exact `d`/`ν` Gram-Schmidt data. Its size-reduction step produces exact
 `|μ| ≤ 1/2`, so it satisfies the classical `η = 1/2` bound and is the direct
 `1/4 < δ` entry point.
@@ -153,10 +153,10 @@ the exact `d`/`ν` Gram-Schmidt data. Its size-reduction step produces exact
 The public entry point unifies two internal paths behind one signature.
 Given a basis with independent rows and `δ` in the classical range,
 {name}`Hex.lll` returns a reduced basis for the same lattice. It gets there
-either by running {name}`Hex.lllNative` directly, or, when an external `fpLLL` provider
-is available at runtime, by certifying the provider's candidate with the
+either by running {name}`Hex.lllNative` directly, or, when an external `fpLLL` reducer
+is available at runtime, by certifying the reducer's candidate with the
 verified checker and returning that instead (the
-{ref "hex-lll-dispatch"}[next section] describes the switch). Accepting a
+{ref "hex-lll-external-reduction"}[next section] describes the switch). Accepting a
 black-box candidate is what forces the slightly weaker `η = 11/20` bound
 described below; both paths meet the same short-vector and same-lattice
 post-conditions, so callers and proofs never see which one ran.
@@ -175,7 +175,7 @@ follow from `η = 11/20`. The precondition is `121/400 < δ`, because
 short-vector constant is `1/(δ − 121/400)`. So the `121/400` stands exactly
 where the classical bound would put `1/4 = (1/2)²`.
 
-Why `11/20` rather than the classical `1/2`? Solely the external provider. The
+Why `11/20` rather than the classical `1/2`? Solely the external reducer. The
 exact {name}`Hex.lllNative` already lands at `|μ| ≤ 1/2`, but a black-box reducer
 cannot be forced to exactly `1/2` (fpLLL's default size-reduction target sits
 slightly above it), so the certified path accepts its candidate at the looser
@@ -200,8 +200,8 @@ basis as an ordered candidate list.
 Each has a counterpart under the {name}`Hex.lllNative` namespace.
 {name}`Hex.lllNative.firstShortVector` and {name}`Hex.lllNative.shortVectors`
 call {name}`Hex.lllNative` directly, so they take the tighter native precondition
-`1/4 < δ` and skip the provider dispatch and its certification. They also omit
-the `b.independent` hypothesis — and this is the key point: independence is a
+`1/4 < δ` and skip the external reduction and its certification. They also omit
+the `b.independent` hypothesis. Independence is a
 precondition of the *theorems* about the output, not of the *computation*. The
 reducer runs on any input; the native-namespace variants simply forgo the
 reduced-basis guarantees, so you get the reduced rows back without having to
@@ -212,34 +212,34 @@ experimentation.
 
 {docstring Hex.lllNative.shortVectors}
 
-# Certified external dispatch
+# Certified external reduction
 %%%
-tag := "hex-lll-dispatch"
+tag := "hex-lll-external-reduction"
 %%%
 
 By default {name}`Hex.lll` runs the exact {name}`Hex.lllNative`. To let it accelerate
-through the external `fpLLL` provider instead, call {name}`Hex.lll.loadProvider`
+through the external `fpLLL` reducer instead, call {name}`Hex.lll.loadExternalReducer`
 with the path to a built fpLLL-ffi shared library
 (`scripts/oracle/setup_fplll_ffi.sh` builds one and prints its path); it
-`dlopen`s the library, installs it as the process provider, and returns `true`
-on success. {name}`Hex.lll.providerActive` reports whether one is installed.
-This is a runtime switch, not a matter of importing a different module —
-`HexLLL` always links its small provider shim, and the *same* {name}`Hex.lll` call
-takes the certified path exactly when a provider is installed. Loading is an
+`dlopen`s the library, installs it as the process reducer, and returns `true`
+on success. {name}`Hex.lll.externalReducerActive` reports whether one is installed.
+This is a runtime switch, not a matter of importing a different module;
+`HexLLL` always links its small reducer shim, and the *same* {name}`Hex.lll` call
+takes the certified path exactly when a reducer is installed. Loading is an
 explicit, discoverable Lean action next to {name}`Hex.lll`: there is no environment
 variable read on the {name}`Hex.lll` path and no implicit `dlopen`.
 
-Either way the result is `(δ, 11/20)`-reduced. When the provider is in use,
+Either way the result is `(δ, 11/20)`-reduced. When the reducer is in use,
 {name}`Hex.lll` asks it for a reduced basis and re-checks the candidate with
 {name}`Hex.certCheck` before returning it; a candidate the checker rejects,
-or an absent provider, falls straight through to the native reducer. The
+or an absent reducer, falls straight through to the native reducer. The
 foreign numerics can therefore speed things up but can never affect
-correctness: nothing the provider returns is trusted until the verified
+correctness: nothing the reducer returns is trusted until the verified
 integer checker has accepted it.
 
-{docstring Hex.lll.loadProvider}
+{docstring Hex.lll.loadExternalReducer}
 
-{docstring Hex.lll.providerActive}
+{docstring Hex.lll.externalReducerActive}
 
 # Performance comparison
 %%%
@@ -291,7 +291,7 @@ Across every family the exact reducers are correct but climb steeply on the hard
 bases, while `Lean certified` stays within about 1.2 to 2.5 times raw `fpLLL`:
 verified output at close to floating-point cost. Selecting the certified
 versus native path is the runtime switch described under
-{ref "hex-lll-dispatch"}[Certified external dispatch]; the `η = 11/20`
+{ref "hex-lll-external-reduction"}[Certified external reduction]; the `η = 11/20`
 constants both paths report are explained under
 {ref "hex-lll-bound"}[the size-reduction bound].
 
@@ -366,13 +366,13 @@ A short vector of a well-chosen lattice recovers an integer relation among
 real numbers. The classic application is guessing the minimal polynomial
 of an algebraic number from a numerical approximation. Take the decimal
 `α = 1.220744…`, and suppose all we know is that it is a root of some monic
-integer polynomial of degree at most four — but not which one.
+integer polynomial of degree at most four, but not which one.
 
 Scale the powers `1, α, α², α³, α⁴` by `C = 10⁶` and round to integers. The
 lattice has one row per power: an identity block that remembers the
 coefficient, and a last column holding the scaled power. A combination
 `Σ aᵢ · rowᵢ` has last coordinate `≈ C · Σ aᵢ αⁱ`, which is tiny exactly
-when `Σ aᵢ αⁱ ≈ 0` — that is, when the `aᵢ` are the coefficients of a
+when `Σ aᵢ αⁱ ≈ 0`, that is, when the `aᵢ` are the coefficients of a
 polynomial that `α` nearly satisfies. LLL finds the shortest such vector.
 
 ```lean
@@ -427,5 +427,5 @@ proofs in `HexLLLMathlib`:
   and `lllReducedCheck_sound` relate the integer checkers to
   {name}`Hex.isLLLReduced`, and `certCheck_sound` combines those with
   {name}`Hex.Matrix.sameLatticeCert_sound` into the property triple (same
-  lattice, independence, reducedness) that the certified-dispatch path of
+  lattice, independence, reducedness) that the certified external path of
   {name}`Hex.lll` relies on. `HexLLL` itself is Mathlib-free.

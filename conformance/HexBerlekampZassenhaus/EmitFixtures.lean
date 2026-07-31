@@ -53,9 +53,9 @@ verifies the named modular split:
 * `adv/phi15` — Φ₁₅, irreducible over ℤ, splits completely as eight
   linear factors over F₃₁ (heavy split, small admissible prime).
 
-# Lattice-tier dispatch coverage
+# Lattice-method coverage
 
-Two corpus cases can be answered **only by the lattice tier**, one for each
+Two corpus cases can be answered **only by the lattice method**, one for each
 lattice result:
 
 * `adv/swinnerton_dyer_sd5_pair` — `SD₅(x)·SD₅(x+1)` (degree 64, the
@@ -66,7 +66,7 @@ lattice result:
   √2+√3+√5+√7+√11+√13, irreducible over ℤ) exercises the
   **irreducibility-certification** arm: recovery converges to the
   single all-ones class and the certificate-backed early stop
-  answers `some #[core]` without grinding to the `bhksBound` cap.
+  returns the original polynomial without grinding to the `bhksBound` cap.
 
 Swinnerton-Dyer blocks split into factors of degree ≤ 2 modulo every
 admissible (squarefree-image) prime, so the lifted-factor count is
@@ -80,11 +80,11 @@ classical candidate budget, so it declines before starting an incomplete
 cardinality level and the hybrid falls through to the van Hoeij CLD lattice
 arm. Both cases emit the
 *hybrid* trace (`factorTraced`) rather than the classical one. The emit helper
-rejects a run unless the lattice tier answered, while the committed trace records
-`tier = "lattice"`, `declined = true`, the prime, and `r = 32`. Since each
+rejects a run unless the lattice method answered, while the committed trace records
+`method = "lattice"`, `declined = true`, the prime, and `r = 32`. Since each
 remainder is lifted independently, the classical trace reports
 `subsetCandidates = 0`; the separate wall-clock benchmark detects excessive
-recombination work. The `bz_trace_gate.py` baseline also checks the tier,
+recombination work. The `bz_trace_gate.py` baseline also checks the method,
 decline status, and candidate-count bound.
 There is deliberately no `#guard` twin in `Conformance.lean` —
 elaboration-time interpretation of the lattice run would cost minutes
@@ -151,7 +151,7 @@ private def expectedFactorValue (scalar : Int) (factors : List (List Int × Nat)
 (no wall-clock), so it lives in the committed fixtures and is pinned by the gate
 baseline. -/
 private def traceValue (t : DirectFactorTrace) : String :=
-  "{\"tier\":\"" ++ t.tier.name ++ "\"" ++
+  "{\"method\":\"" ++ t.method.name ++ "\"" ++
     ",\"decline\":" ++
       (match t.classicalDecline with
       | none => "null"
@@ -165,10 +165,10 @@ private def traceValue (t : DirectFactorTrace) : String :=
       String.intercalate ","
         (t.classical.completedLevels.toList.map toString) ++ "]}"
 
-/-- Emit the size-ordered classical tier's result (`factorClassical`) for cross
-checking against FLINT, plus its diagnostic `trace` (tier, prime, `r`, subset
+/-- Emit the size-ordered classical method's result (`factorClassical`) for cross
+checking against FLINT, plus its diagnostic `trace` (method, prime, `r`, subset
 candidate count, declined) for the performance gate. The `classicalFactor` value
-is `null` when the tier declines (no admissible prime or subset budget exceeded),
+is `null` when the method declines (no admissible prime or subset budget exceeded),
 which the oracle treats as a skip. -/
 private def emitClassicalResult (case : String) (f : ZPoly) : IO Unit := do
   let (result, trace) := factorClassicalTraced f
@@ -412,11 +412,11 @@ private def cases_direct : List Case :=
         -290744394806829600, 0, 161173523208133800, 0,
         -52567364492499024, 0, 7648690600760440] ]
 
-/-! # Lattice-tier dispatch coverage
+/-! # Lattice-method coverage
 
-See the module docstring section "Lattice-tier dispatch coverage". The cases are
+See the module docstring section "Lattice-method coverage". The cases are
 emitted through the public `factorize` path (`factorTraced`, whose `.1`
-is `factorize`) so the pinned trace catches dispatch regressions, not just
+is `factorize`) so the pinned trace catches method regressions, not just
 lattice ones. -/
 
 /-- The two lattice-only cases, one per lattice answer arm:
@@ -531,28 +531,28 @@ private def emitPinnedCase (c : PinnedCase) : IO Unit := do
   emitResult lib c.id "factor" (factorValue (ZPoly.factorize f))
   emitClassicalResult c.id f
 
-/-- Emit one lattice-only fixture through the traced public dispatch path.
+/-- Emit one lattice-only fixture through the traced public factorization path.
 
 single `factorTraced` run supplies the `factorize` result (its `.1` is the
-public `factorize`) **and** the trace, so the committed trace pins the tier
+public `factorize`) **and** the trace, so the committed trace pins the method
 `factorize` actually used.  The helper is sentinel-only: it errors out unless the
-classical tier declined and the lattice tier answered, which is the case's
-purpose — a case that stops routing to the lattice arm must not emit
-quietly. A tier change also breaks the committed-fixture byte comparison and
+classical method declined and the lattice method answered, which is the case's
+purpose: a case that stops using the lattice method must not emit
+quietly. A method change also breaks the committed-fixture byte comparison and
 the `bz_trace_gate.py` baseline. Since the
-lattice tier answered, the classical tier returned `none`, so
+lattice method answered, the classical method returned `none`, so
 `classicalFactor` is `null` (an oracle skip) without paying the classical
 decline burn a second time.  The exact `prime` / `r` / `subsetCandidates`
 values are pinned by the committed-fixture byte-diff in
 `scripts/ci/run_oracles.sh`; the trace-gate baseline additionally pins
-tier/decline and upper-bounds `subsetCandidates`. -/
+method/decline and upper-bounds `subsetCandidates`. -/
 private def emitHybridTracedCase (c : PinnedCase) : IO Unit := do
   let f := DensePoly.ofCoeffs c.coeffs
   let (φ, trace) := factorTraced f
-  unless trace.tier == .lattice && trace.classicalDecline.isSome do
+  unless trace.method == .lattice && trace.classicalDecline.isSome do
     throw <| IO.userError
-      s!"emitHybridTracedCase {c.id}: expected the classical tier to decline and \
-        the lattice tier to answer, got tier={trace.tier.name}, \
+      s!"emitHybridTracedCase {c.id}: expected the classical method to decline and \
+        the lattice method to answer, got method={trace.method.name}, \
         decline={trace.classicalDecline.map (·.name)}"
   emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
   emitResult lib c.id "factor" (factorValue φ)

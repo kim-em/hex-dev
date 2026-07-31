@@ -19,37 +19,38 @@ public section
 /-!
 Shared infrastructure for the `factor_poly` / `irreducibility` elaborators:
 input classification, compiled-evaluation shims, the kernel-replay budget, and
-the provider hook through which downstream libraries extend the tactics to
+the registered extensions through which downstream libraries add support for
 further input types.
 
-# The provider hook
+# Tactic extensions
 
 The elaborators handle `Hex.FpPoly p` natively. Every other input type is
-offered to *providers*: values of `Hex.FactorTactic.Provider` declared by
-downstream libraries under one of the well-known names in `providerNames`
-(`HexBerlekampZassenhaus` adds the `Hex.ZPoly` arms; the Mathlib bridge
-libraries add `Polynomial (ZMod q)` / `Polynomial ℤ`). Nothing here imports
-those libraries — the driver probes the environment by name at elaboration
-time and evaluates the provider through the interpreter, so this library
-builds and works standalone, and importing a bridge upgrades the tactics.
+offered to *extensions*: values of `Hex.FactorTactic.Extension` declared by
+downstream libraries under one of the well-known names in `extensionNames`
+(`HexBerlekampZassenhaus` adds the `Hex.ZPoly` cases; the Mathlib integration
+libraries add `Polynomial (ZMod q)` and `Polynomial ℤ`). Nothing here imports
+those libraries. At elaboration time the driver looks up the declarations by
+name and evaluates each extension through the interpreter. Thus this library
+works standalone, while importing an integration library adds its input types.
 
-A provider module must `public meta import HexBerlekamp.PolynomialTactic` (the
-constructor of `Provider` is meta code) and declare its provider as a
-`public meta def`. Renaming a probed constant silently severs the hook, so
-each provider carries a cross-referencing comment and the bridge test suites
-act as liveness canaries; the `version` field is checked against
-`Provider.abiVersion` at probe time so a stale provider fails loudly.
+An extension module must `public meta import HexBerlekamp.PolynomialTactic`
+because the constructor of `Extension` is meta code, and must declare its
+extension as a `public meta def`. Its registration comment names
+`extensionNames`, and regression tests ensure that the declaration remains
+discoverable after renaming. The `version` field is checked against
+`Extension.abiVersion` before use, so an extension compiled against an
+incompatible interface fails with an explicit error.
 -/
 
 namespace Hex.FactorTactic
 
 open Lean Meta Elab
 
-/-- Outcome of offering an input to a provider. `notApplicable` means the
-provider does not handle this input type at all (try the next silently);
+/-- Outcome of offering an input to an extension. `notApplicable` means the
+extension does not handle this input type at all (try the next silently);
 `declined` means it handles the type but cannot certify this input (try the
-next, keep the diagnostic for the final error); `fatal` aborts dispatch. -/
-meta inductive ProviderResult where
+next, keep the diagnostic for the final error); `fatal` aborts selection. -/
+meta inductive ExtensionResult where
   | notApplicable
   | declined (why : MessageData)
   | success (e : Expr)
@@ -60,49 +61,49 @@ meta inductive ProviderResult where
 term hooks are the original syntax, the elaborated polynomial, its
 `whnfR`-normalized type, and the expected type of the surrounding
 elaboration. -/
-meta structure Provider where
-  /-- ABI guard, checked against `Provider.abiVersion` at probe time. -/
+meta structure Extension where
+  /-- ABI guard, checked against `Extension.abiVersion` at trial time. -/
   version : Nat
   /-- Handle a `factor_poly p` term elaboration. -/
-  factorPoly? : Syntax → Expr → Expr → Option Expr → Term.TermElabM ProviderResult
+  factorPoly? : Syntax → Expr → Expr → Option Expr → Term.TermElabM ExtensionResult
   /-- Handle an `irreducibility p` term elaboration. -/
-  irreducibility? : Syntax → Expr → Expr → Option Expr → Term.TermElabM ProviderResult
+  irreducibility? : Syntax → Expr → Expr → Option Expr → Term.TermElabM ExtensionResult
   /-- Handle goal-closing `irreducibility` on the given goal. -/
-  goalIrred? : MVarId → Tactic.TacticM ProviderResult
+  goalIrred? : MVarId → Tactic.TacticM ExtensionResult
 
-/-- The provider ABI version this driver expects. -/
-meta def Provider.abiVersion : Nat := 1
+/-- Interface version expected by the tactic driver. -/
+meta def Extension.abiVersion : Nat := 1
 
-/-- Well-known provider constants, probed in order. Downstream libraries
-declare a `public meta def` of type `Provider` under one of these names;
+/-- Well-known extension constants, checked in order. Downstream libraries
+declare a `public meta def` of type `Extension` under one of these names;
 adding an entry requires a `HexBerlekamp` release. -/
-meta def providerNames : List Name :=
-  [`HexBerlekampZassenhaus.FactorTactic.provider,
-   `HexBerlekampMathlib.FactorTactic.provider,
-   `HexBerlekampZassenhausMathlib.FactorTactic.provider]
+meta def extensionNames : List Name :=
+  [`HexBerlekampZassenhaus.FactorTactic.extension,
+   `HexBerlekampMathlib.FactorTactic.extension,
+   `HexBerlekampZassenhausMathlib.FactorTactic.extension]
 
-private meta unsafe def evalProviderUnsafe (n : Name) : MetaM Provider :=
-  evalConst Provider n
+private meta unsafe def evalExtensionUnsafe (n : Name) : MetaM Extension :=
+  evalConst Extension n
 
-@[implemented_by evalProviderUnsafe]
-private meta opaque evalProviderCore (n : Name) : MetaM Provider
+@[implemented_by evalExtensionUnsafe]
+private meta opaque evalExtensionCore (n : Name) : MetaM Extension
 
-/-- All providers present in the current environment, in probe order, with
+/-- All extensions present in the current environment, in lookup order, with
 the declared type and ABI version checked before use. -/
-meta def providers : MetaM (List Provider) := do
+meta def extensions : MetaM (List Extension) := do
   let env ← getEnv
   let mut found := []
-  for n in providerNames do
+  for n in extensionNames do
     if let some info := env.find? n then
-      unless info.type.isConstOf ``Provider do
-        throwError "factor_poly/irreducibility: provider {n} has unexpected \
+      unless info.type.isConstOf ``Extension do
+        throwError "factor_poly/irreducibility: extension {n} has unexpected \
             type{indentExpr info.type}"
-      let prov ← evalProviderCore n
-      unless prov.version == Provider.abiVersion do
-        throwError "factor_poly/irreducibility: provider {n} has ABI version \
-            {prov.version}, but this driver expects {Provider.abiVersion}; \
-            rebuild the provider library against the current HexBerlekamp"
-      found := found ++ [prov]
+      let ext ← evalExtensionCore n
+      unless ext.version == Extension.abiVersion do
+        throwError "factor_poly/irreducibility: extension {n} has ABI version \
+            {ext.version}, but this driver expects {Extension.abiVersion}; \
+            rebuild the extension library against the current HexBerlekamp"
+      found := found ++ [ext]
   return found
 
 /-- Classification of a `factor_poly`/`irreducibility` input by its
@@ -113,7 +114,7 @@ meta inductive PolyInput where
   | fp (p : Nat) (pE boundsE RE zeroE decE : Expr)
   /-- `Hex.ZPoly`, with the instance expressions from the input's type. -/
   | zpoly (RE zeroE decE : Expr)
-  /-- Anything else (offered to providers). -/
+  /-- Anything else (offered to extensions). -/
   | other
 
 /-- Classify an input's type: `DensePoly (ZMod64 p) → .fp`,
@@ -196,27 +197,27 @@ meta def checkClosed (tactic : String) (e : Expr) : MetaM Unit := do
     throwError "{tactic}: the polynomial{indentExpr e}\
         \nmust be a closed term (no local hypotheses or metavariables)"
 
-/-- Run provider dispatch over `providers`, accumulating decline diagnostics;
-`whenNone` renders the final error when no provider succeeds. -/
-meta def dispatch (run : Provider → Term.TermElabM ProviderResult)
+/-- Try the registered extensions in order, retaining decline diagnostics.
+`whenNone` renders the final error when no extension succeeds. -/
+meta def applyExtensions (run : Extension → Term.TermElabM ExtensionResult)
     (whenNone : Array MessageData → Term.TermElabM Expr) :
     Term.TermElabM Expr := do
   let mut declines : Array MessageData := #[]
-  for prov in (← providers) do
-    match ← run prov with
+  for ext in (← extensions) do
+    match ← run ext with
     | .success e => return e
     | .notApplicable => pure ()
     | .declined why => declines := declines.push why
     | .fatal msg => throwError msg
   whenNone declines
 
-/-- The standard "unsupported input type" tail for dispatch failures,
-including any provider decline diagnostics. -/
+/-- The standard "unsupported input type" tail for selection failures,
+including any extension decline diagnostics. -/
 meta def unsupportedMessage (tactic : String) (ty : Expr)
     (declines : Array MessageData) : MessageData :=
   let base := m!"{tactic}: unsupported polynomial type{indentExpr ty}\
       \nSupported without further imports: Hex.FpPoly p (prime p). \
-      Importing HexBerlekampZassenhaus adds Hex.ZPoly; the Mathlib bridge \
+      Importing HexBerlekampZassenhaus adds Hex.ZPoly; the Mathlib integration \
       libraries add Polynomial (ZMod q) and Polynomial ℤ."
   declines.foldl (fun acc d => acc ++ m!"\n\n{d}") base
 

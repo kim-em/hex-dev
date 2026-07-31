@@ -497,7 +497,7 @@ private theorem dvd_diagonalMulCoeffTerm_of_dvd_mul_coeff_of_dvd_other_diagonal_
     simp
 
 /-- `dvd_coeff_mul_of_dvd_mul_coeff_of_dvd_other_diagonal_products`: the
-`DensePoly Int` analogue — if `d` divides `(p * q).coeff (i + j)` and every
+`DensePoly Int` analogue; if `d` divides `(p * q).coeff (i + j)` and every
 product `p.coeff r * q.coeff s` with `r + s = i + j` and `r ≠ i`, then it divides
 `p.coeff i * q.coeff j`. -/
 private theorem dvd_coeff_mul_of_dvd_mul_coeff_of_dvd_other_diagonal_products
@@ -542,7 +542,7 @@ private theorem dvd_coeff_mul_last_of_dvd_mul_coeff_of_dvd_larger_left_products
         simpa [hs] using hlarger r hir)
 
 /-- `mcCoy_grid_band_descent`: the strong-induction descent over the `(i, j)`
-grid — if predicate `D` holds whenever the left index exceeds `bound` and is
+grid; if predicate `D` holds whenever the left index exceeds `bound` and is
 preserved by the step from all larger-left cells, then `D i j` holds for every
 `i` and every `j ≤ k`. -/
 private theorem mcCoy_grid_band_descent
@@ -570,7 +570,7 @@ private theorem mcCoy_grid_band_descent
     exact hRight i j (Nat.lt_of_not_ge hi)
 
 /-- `mcCoy_top_row_descent`: the top-row corollary of `mcCoy_grid_band_descent`
-— under the same boundary and step hypotheses, `D i k` holds for every `i`. -/
+; under the same boundary and step hypotheses, `D i k` holds for every `i`. -/
 private theorem mcCoy_top_row_descent
     (D : Nat → Nat → Prop) (bound k : Nat)
     (hRight : ∀ r s, bound < r → D r s)

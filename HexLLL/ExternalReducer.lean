@@ -14,71 +14,84 @@ public section
 The optional external LLL reducer. `lll` uses an `@[extern]` hook for
 an independent native reducer, marshals the basis, and certifies the
 returned candidate with `certCheck`; absence or rejection falls through
-to the exact `lllNative` path. The provider is acceleration only.
+to the exact `lllNative` path. The external reducer is acceleration only.
 -/
 
 namespace Hex
 
-/-! # External LLL provider
+/-! # External LLL reduction
 
 Optional runtime hook for an external reducer (e.g. fpLLL) reached through the
-C FFI shim in `HexLLL/ffi/`. A provider is installed either by the explicit
-Lean loader `Hex.lll.loadProvider` (which `dlopen`s a named shared library) or,
-for a provider linked into the process, by a one-shot static-symbol probe;
+C FFI shim in `HexLLL/ffi/`. An external reducer is installed either by the explicit
+Lean loader `Hex.lll.loadExternalReducer` (which `dlopen`s a named shared library) or,
+for a reducer linked into the process, by a one-shot static-symbol check;
 there is no environment-variable read and no implicit `dlopen`.
-`providerAvailable` reports whether a provider is currently installed; when none
+`externalReducerAvailable` reports whether an external reducer is currently installed; when none
 is present, or a returned candidate fails validation, callers fall back to the
-verified native reducer `lllNative`. The provider is acceleration only and is
-never part of the trusted path — every candidate it returns is checked before
+verified native reducer `lllNative`. The external reducer is acceleration only and is
+never part of the trusted path; every candidate it returns is checked before
 use. -/
-namespace Internal.LLLProvider
+namespace Internal.ExternalReducer
 
+/-- Report whether an external reduction function is installed. -/
 @[extern "lean_hexlll_provider_available"]
-opaque providerAvailable : Unit → Bool
+opaque externalReducerAvailable : Unit → Bool
 
+/-- Ask the installed external function for a reduced basis and transformation data. -/
 @[extern "lean_hexlll_provider_reduce"]
-opaque providerReduce (rows cols : USize) (entries : @& Array String)
+opaque externalReduce (rows cols : USize) (entries : @& Array String)
     (delta eta : Float) (method : UInt8) (withInverse : Bool) :
     Except String (Array Int)
 
-/-- Install the external provider from the shared library at `path`: `dlopen`
+/-- Install the external reducer from the shared library at `path`: `dlopen`
 the library, resolve `lean_fplll_lll_reduce` from it, and set the process
-provider slot. Returns `true` on success and `false` when the library cannot be
+reducer slot. Returns `true` on success and `false` when the library cannot be
 loaded or the symbol is missing (the loader diagnostic is written to stderr).
-This is the raw FFI entry point behind the public `Hex.lll.loadProvider`. -/
+This is the raw FFI entry point behind the public `Hex.lll.loadExternalReducer`. -/
 @[extern "lean_hexlll_load_provider"]
-opaque loadProviderImpl (path : @& String) : IO Bool
+opaque loadExternalReducerImpl (path : @& String) : IO Bool
 
-/-- Decoded result returned by the external LLL provider.
+/-- Decoded result returned by the external LLL reducer.
 
 `reduced` is the row-major reduced basis, `transform` is the row-major
 unimodular transformation matrix with `transform * input = reduced`, and
 `inverse?` is the optional row-major inverse transformation when the caller
 requested it. -/
 structure Candidate where
+  /-- The proposed reduced basis in row-major order. -/
   reduced : Array Int
+  /-- A proposed transformation mapping the input basis to `reduced`. -/
   transform : Array Int
+  /-- An optional proposed inverse transformation. -/
   inverse? : Option (Array Int)
 deriving Repr, BEq
 
-/-- Diagnostic counters for attempts to use the external LLL provider.
+/-- Diagnostic counters for attempts to use the external LLL reducer.
 
-`absent` counts calls made when the provider is unavailable, `providerError`
-counts provider-level failures, `rejected` counts structurally invalid provider
+`absent` counts calls made when the external reducer is unavailable, `reductionError`
+counts reducer-level failures, `rejected` counts structurally invalid external reducer
 responses, and `accepted` counts responses decoded into a `Candidate`. -/
 structure Diagnostics where
+  /-- Calls made without an installed external reducer. -/
   absent : Nat := 0
-  providerError : Nat := 0
+  /-- Calls for which the external reducer reported an error. -/
+  reductionError : Nat := 0
+  /-- Candidates rejected because their shape or arithmetic certificate failed. -/
   rejected : Nat := 0
+  /-- Candidates decoded successfully for later certification. -/
   accepted : Nat := 0
 deriving Repr, BEq, Inhabited
 
-/-- Classification of one external-provider attempt: unavailable provider,
-provider error, rejected response, or accepted candidate. -/
+/-- Classification of one external-reducer attempt: unavailable external reducer,
+external reducer error, rejected response, or accepted candidate. -/
 inductive Outcome where
+  /-- No external reduction function was installed. -/
   | absent
-  | providerError
+  /-- The external reduction function reported an error. -/
+  | reductionError
+  /-- The returned arrays could not form a valid candidate. -/
   | rejected
+  /-- The returned arrays formed a candidate ready for certification. -/
   | accepted
 deriving Repr, BEq
 
@@ -86,20 +99,20 @@ deriving Repr, BEq
 @[expose]
 def bump (d : Diagnostics) : Outcome → Diagnostics
   | .absent => { d with absent := d.absent + 1 }
-  | .providerError => { d with providerError := d.providerError + 1 }
+  | .reductionError => { d with reductionError := d.reductionError + 1 }
   | .rejected => { d with rejected := d.rejected + 1 }
   | .accepted => { d with accepted := d.accepted + 1 }
 
 initialize diagnosticsRef : IO.Ref Diagnostics ← IO.mkRef {}
 
-/-- Reset the external-provider diagnostics counters to zero. Test and bench
-harnesses use this to isolate one run's provider availability, rejection, and
+/-- Reset the external-reducer diagnostics counters to zero. Test and bench
+harnesses use this to isolate one run's external reducer availability, rejection, and
 acceptance counts. -/
 @[expose]
 def resetDiagnostics : IO Unit :=
   diagnosticsRef.set {}
 
-/-- Read the external-provider diagnostics accumulated since the last
+/-- Read the external-reducer diagnostics accumulated since the last
 `resetDiagnostics`. The snapshot is the observability hook for deciding whether
 the external reducer was absent, failed, returned malformed data, or supplied a
 candidate accepted by the decoder. -/
@@ -107,8 +120,8 @@ candidate accepted by the decoder. -/
 def diagnostics : IO Diagnostics :=
   diagnosticsRef.get
 
-/-- Increment the external-provider diagnostic counter for `outcome`. This is
-the `IO` entry point used by provider calls; pure LLL code uses
+/-- Increment the external-reducer diagnostic counter for `outcome`. This is
+the `IO` entry point used by external reducer calls; pure LLL code uses
 `withRecordOutcome` to record the same classifications without changing its
 surface type. -/
 @[expose]
@@ -119,7 +132,7 @@ def recordOutcome (outcome : Outcome) : IO Unit :=
 `Candidate`. The decoder checks the status word, row/column headers, inverse
 flag, and total payload length before slicing out the reduced basis,
 transformation, and optional inverse; any mismatch returns `none`, so malformed
-provider output cannot enter the certified path. -/
+external reducer output cannot enter the certified path. -/
 @[expose]
 def validateFlat (rows cols : Nat) (withInverse : Bool) (flat : Array Int) :
     Option Candidate := do
@@ -157,20 +170,20 @@ def validateFlat (rows cols : Nat) (withInverse : Bool) (flat : Array Int) :
       none
   some { reduced, transform, inverse? }
 
-/-- Try to obtain an LLL candidate from the external provider. The call records
-why no candidate was used (`absent`, provider error, or rejected flat payload)
-and returns `some candidate` only after `validateFlat` accepts the provider's
+/-- Try to obtain an LLL candidate from the external reducer. The call records
+why no candidate was used (`absent`, external reducer error, or rejected flat payload)
+and returns `some candidate` only after `validateFlat` accepts the external reducer's
 response shape. -/
 @[expose]
 def tryReduce (rows cols : USize) (entries : Array String)
     (delta eta : Float) (method : UInt8) (withInverse : Bool) :
     IO (Option Candidate) := do
-  if !providerAvailable () then
+  if !externalReducerAvailable () then
     recordOutcome .absent
     return none
-  match providerReduce rows cols entries delta eta method withInverse with
+  match externalReduce rows cols entries delta eta method withInverse with
   | .error _ =>
-      recordOutcome .providerError
+      recordOutcome .reductionError
       return none
   | .ok flat =>
       match validateFlat rows.toNat cols.toNat withInverse flat with
@@ -204,9 +217,9 @@ unsafe def withRecordOutcomeImpl {α : Sort u} (o : Outcome) (k : α) : α :=
   match unsafeBaseIO (diagnosticsRef.modify (fun d => bump d o)) with
   | () => k
 
-/-- Pure-facing wrapper that records one external-provider outcome in compiled
+/-- Pure-facing wrapper that records one external-reducer outcome in compiled
 code and otherwise returns `k`. This lets the public reducer stay pure while
-compiled runs still populate `diagnosticsRef` for provider observability. -/
+compiled runs still populate `diagnosticsRef` for external reducer observability. -/
 @[expose, implemented_by withRecordOutcomeImpl]
 def withRecordOutcome {α : Sort u} (_o : Outcome) (k : α) : α := k
 
@@ -221,7 +234,7 @@ def ratToFloat (r : Rat) : Float :=
 /-- Size-reduction bound *requested* from the external reducer, strictly
 stronger than the `η = 11/20` the checker certifies.
 
-The dispatch asks the reducer for a `(requestedDelta δ, requestedEta)`-reduced
+The selection asks the reducer for a `(requestedDelta δ, requestedEta)`-reduced
 basis but certifies it against the public `(δ, 11/20)`. The two differ on
 purpose. `certCheck`'s reducedness clause is decided by a fixed-precision
 enclosure pass that resolves open inequalities only by *margin*; a candidate
@@ -250,7 +263,7 @@ def requestedEta : Rat := 107 / 200
 margin above the caller's `δ`, but never past the midpoint `(δ + 1)/2`
 between `δ` and `1`.
 
-Mirrors `requestedEta`: the dispatch certifies the candidate against the
+Mirrors `requestedEta`: the selection certifies the candidate against the
 caller's exact `δ` but asks the reducer for the stronger `requestedDelta δ`,
 so a correctly-functioning reducer clears every Lovász inequality by a
 positive margin `(requestedDelta δ − δ)·d[i+1]²` and the enclosure decides it
@@ -262,7 +275,7 @@ the margin is the full `1/100`; for `49/50 < δ < 1` the midpoint wins and the
 margin is `(1 − δ)/2`, still positive, so `δ < requestedDelta δ < 1` holds for
 every `δ < 1`. At the boundary `δ = 1` the midpoint is `1`: no value is both
 `> δ` and `< 1`, so the request equals the certified `δ` and the prophylactic
-gap is unavoidably lost — a candidate the reducer cannot strengthen there
+gap is unavoidably lost; a candidate the reducer cannot strengthen there
 falls back through certification to the native path, which stays sound.
 
 The Lovász condition governs how many swaps the reducer performs, so the
@@ -277,7 +290,7 @@ soundness. -/
 def requestedDelta (δ : Rat) : Rat := min (δ + 1 / 100) ((δ + 1) / 2)
 
 /-- Row-major marshalling of an integer matrix into the `Array String` payload
-the external provider expects. -/
+the external reducer expects. -/
 @[expose]
 def matrixToEntries (B : Hex.Matrix Int n m) : Array String :=
   B.rows.toArray.flatMap (fun row => row.toArray.map toString)
@@ -304,7 +317,7 @@ def matrixFromArray (rows cols : Nat) (a : Array Int) :
   else
     none
 
-/-- Bundled output of the shape/cert pipeline: the reduced basis `B'`,
+/-- Bundled output of the shape/cert computation: the reduced basis `B'`,
 the two integer transforms, and a proof that they pass `Hex.certCheck` at
 `(δ, 11/20)`. Bundling the proof inside the option lets the extraction lemma
 read it off as a projection. -/
@@ -313,7 +326,7 @@ def CertifiedTriple (B : Hex.Matrix Int n m) (δ : Rat) : Type :=
   Σ' (B' : Hex.Matrix Int n m) (U V : Hex.Matrix Int n n),
     Hex.certCheck B B' U V δ (11 / 20) = true
 
-/-- Pure shape/cert pipeline run on a flat provider payload. Validates the
+/-- Pure shape/cert computation run on a flat external reducer payload. Validates the
 header, reshapes the reduced basis and the two transforms, and runs
 `Hex.certCheck` at `η = 11/20`. Returns the bundled certified triple on
 acceptance and `none` on any failure. -/
@@ -339,36 +352,36 @@ def certifyFlat (B : Hex.Matrix Int n m) (δ : Rat) (flat : Array Int) :
                       | true => some ⟨B', U, V, h⟩
                       | false => none
 
-/-- Pure certified-dispatch core. Gates on `providerAvailable ()` first so the
-native path pays only the cached probe; marshals input and certifies the
-candidate when the provider is present; updates the diagnostic tally via
+/-- Pure certified reduction. Checks `externalReducerAvailable ()` first so the
+native path pays only the cached trial; marshals input and certifies the
+candidate when the external reducer is present; updates the diagnostic tally via
 `withRecordOutcome` on each outcome.
 
 Returns the certified reduced basis `B'` on acceptance and `none` on absent /
-provider error / shape rejection / certificate rejection. The Mathlib-free
-correctness hook is `dispatch_some_certCheck`. -/
+external reducer error / shape rejection / certificate rejection. The Mathlib-free
+correctness hook is `certifiedReduction_some_certCheck`. -/
 @[expose]
-def dispatch (B : Hex.Matrix Int n m) (δ : Rat) :
+def certifiedReduction (B : Hex.Matrix Int n m) (δ : Rat) :
     Option (Hex.Matrix Int n m) :=
-  if !providerAvailable () then
+  if !externalReducerAvailable () then
     withRecordOutcome .absent none
   else
-    match providerReduce (USize.ofNat n) (USize.ofNat m) (matrixToEntries B)
+    match externalReduce (USize.ofNat n) (USize.ofNat m) (matrixToEntries B)
         (ratToFloat (requestedDelta δ)) (ratToFloat requestedEta) 0 true with
-    | .error _ => withRecordOutcome .providerError none
+    | .error _ => withRecordOutcome .reductionError none
     | .ok flat =>
         match certifyFlat B δ flat with
         | none => withRecordOutcome .rejected none
         | some triple => withRecordOutcome .accepted (some triple.1)
 
-/-- An accepted `dispatch` result exhibits the integer transforms witnessing
+/-- An accepted `certifiedReduction` result exhibits the integer transforms witnessing
 `certCheck B B' U V δ (11/20) = true`. The property-level extraction
 (`(same lattice, B'.independent, isLLLReduced B' δ (11/20))`) is `certCheck`'s
 soundness theorem in HexLLLMathlib. -/
-theorem dispatch_some_certCheck {B : Hex.Matrix Int n m} {δ : Rat}
-    {B' : Hex.Matrix Int n m} (h : dispatch B δ = some B') :
+theorem certifiedReduction_some_certCheck {B : Hex.Matrix Int n m} {δ : Rat}
+    {B' : Hex.Matrix Int n m} (h : certifiedReduction B δ = some B') :
     ∃ U V : Hex.Matrix Int n n, Hex.certCheck B B' U V δ (11 / 20) = true := by
-  unfold dispatch at h
+  unfold certifiedReduction at h
   simp only [withRecordOutcome] at h
   split at h
   · cases h
@@ -382,6 +395,6 @@ theorem dispatch_some_certCheck {B : Hex.Matrix Int n m} {δ : Rat}
   rw [← heq]
   exact triple.2.2.2
 
-end Internal.LLLProvider
+end Internal.ExternalReducer
 
 end Hex

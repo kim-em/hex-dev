@@ -363,7 +363,7 @@ theorem normalizeForFactor_repeatedPart_map_intCast_dvd_squareFreeCore_map_intCa
 
 /--
 The repeated part of `normalizeForFactor f` divides a power of the
-square-free core over integer polynomials.
+primitive square-free part over integer polynomials.
 
 This is the integer Gauss-descent form of
 `normalizeForFactor_repeatedPart_map_intCast_dvd_squareFreeCore_map_intCast_pow`.
@@ -385,7 +385,7 @@ theorem normalizeForFactor_repeatedPart_toPolynomial_dvd_squareFreeCore_pow
 /--
 Every normalized irreducible factor of the repeated part is represented,
 up to association in `Polynomial ℤ`, by one of the supplied irreducible
-core factors.
+factors of the square-free part.
 
 This is the normalized-factor support step consumed by the successor
 exponent-list construction for
@@ -447,7 +447,7 @@ The executable fold of packed powers agrees with the corresponding
 `toPolynomial`.
 
 This is the transport half of the exponent-decomposition theorem:
-once the UFD argument supplies the polynomial-level powers in core-factor
+once the UFD argument supplies the polynomial-level powers in square-free-factor
 order, this lemma converts that certificate back to the exact `ZPoly` fold
 shape expected by the Mathlib-free expansion helper.
 -/
@@ -490,7 +490,7 @@ decomposition.
 The remaining mathematical side condition is the polynomial-level exact
 decomposition `hpoly_decomp`. The normalized-factor exponent extraction shows
 that every normalized factor of the repeated part occurs among the supplied
-core factors; the caller must still show that the chosen exponents multiply to
+factors of the square-free part; the caller must still show that the chosen exponents multiply to
 the transported repeated part.
 This theorem then converts that certificate into the exact executable
 `Factorization.factorPower` fold consumed by
@@ -570,15 +570,15 @@ The proof composes three structural lemmas:
 
 * `normalizeForFactor_repeatedPart_normalizedFactor_covered_by_coreFactors`,
   which guarantees every normalized factor of the repeated part is associated
-  to one of the supplied core factors;
+  to one of the supplied factors of the square-free part;
 * the normalize identifications
   `normalizeForFactor_repeatedPart_toPolynomial_normalize` and
   `HexBerlekampZassenhausMathlib.normalize_toPolynomial_of_normalizeFactorSign_id`,
-  which align the repeated part and each supplied core factor with
+  which align the repeated part and each supplied square-free factor with
   the `normalize`-fixed UFD canonical form in `Polynomial ℤ`;
 * `normalizeForFactor_squareFreeCore_toPolynomial_squarefree`, which (via the
   local `List.nodup_of_prod_squarefree` helper) makes the transported
-  core-factor list pairwise distinct so that exponents per position are
+  square-free-factor list pairwise distinct so that exponents per position are
   unambiguous, and Mathlib's `Finset.prod_multiset_count_of_subset`
   re-expresses `(normalizedFactors R).prod` as a finset-product over the
   list's `toFinset`.
@@ -587,7 +587,7 @@ The constructed exponents are
 `exponents[i] = Multiset.count (toPolynomial coreFactors[i]) (normalizedFactors R)`
 where `R = toPolynomial (normalizeForFactor f).repeatedPart`.
 
-The `hnorm` hypothesis (`Hex.normalizeFactorSign q = q` for each supplied core
+The `hnorm` hypothesis (`Hex.normalizeFactorSign q = q` for each supplied square-free part
 factor) is downstream-friendly: every arm discharger reaches this point after
 `multifactorLiftQuadratic`, where the lifted factors are monic, so
 `normalizeFactorSign q = q` is immediate from monicity (`leadingCoeff = 1`).
@@ -711,8 +711,8 @@ exhaustive arm of
 `Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition`.
 
 The proof transports both `q` and the suffix product to `Polynomial ℤ` through
-`HexPolyZMathlib.equiv`, uses the squarefree square-free core to obtain
-`Nodup` of the transported core-factor list, and finishes with a UFD
+`HexPolyZMathlib.equiv`, uses the primitive square-free part to obtain
+`Nodup` of the transported square-free-factor list, and finishes with a UFD
 prime-divides-product argument: `toPolynomial q` is prime in `Polynomial ℤ`,
 so any divisor witness would force `q` to coincide with some entry in `suf`
 (by `Associated` ⟹ `normalize`-fixed equality, then injectivity), contradicting
@@ -899,7 +899,7 @@ from `HexBerlekampZassenhaus`. This provides a surface for
 callers wanting to delegate to the assembler under a primitive + pos-lc
 precondition; the existing quadratic-arm caller
 `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` (below)
-bypasses this theorem by routing through the leaf directly, while
+bypasses this theorem by handling through the leaf directly, while
 `reassemblyExpansionComplete_exhaustive_of_ne_zero` uses this variant. -/
 theorem reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_pos_lc
     (f : Hex.ZPoly) (hf : f ≠ 0)
@@ -947,10 +947,10 @@ derives the per-factor positive leading coefficient from the
 sign-normalization identity plus irreducibility (hence nonzero-ness), and the
 fuel bound from the per-factor `factorPower` size lower bound together with
 `size_le_of_dvd_nonzero`, so callers supply only the irreducible,
-sign-normalized, positive-degree cover of the square-free core. Consumed by
+sign-normalized, positive-degree cover of the primitive square-free part. Consumed by
 the classical residual arm
-(`reassemblyExpansionComplete_classicalCore_of_ne_zero`) and the lattice tier
-(`reassemblyExpansionComplete_latticeCore_of_ne_zero`, `LatticeTier.lean`). -/
+(`reassemblyExpansionComplete_classicalCore_of_ne_zero`) and the lattice method
+(`reassemblyExpansionComplete_latticeCore_of_ne_zero`, `LatticeFactorization.lean`). -/
 theorem reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_norm
     (f : Hex.ZPoly) (hf : f ≠ 0)
     (coreFactors : Array Hex.ZPoly)
@@ -1070,13 +1070,13 @@ theorem reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_norm
 Singleton specialisation of
 `normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`:
 when the
-normalized square-free core is itself irreducible, the repeated part is
-exactly a `Hex.Factorization.factorPower` of the square-free core. The
+normalized primitive square-free part is itself irreducible, the repeated part is
+exactly a `Hex.Factorization.factorPower` of the primitive square-free part. The
 `hnorm` precondition of the general theorem is discharged by
 `Hex.squareFreeCore_normalizeFactorSign_of_ne_zero` (the normalized
-square-free core has positive leading coefficient, hence its
+primitive square-free part has positive leading coefficient, hence its
 sign-normalisation is the identity). It is consumed by
-`Hex.reassemblyExpansionComplete_singleton_of_irreducible` to dispatch the
+`Hex.reassemblyExpansionComplete_singleton_of_irreducible` to selection the
 singleton expansion theorem
 `Hex.expandRepeatedPartFactorArray_pow_singleton`. -/
 theorem normalizeForFactor_repeatedPart_isFactorPower_squareFreeCore_of_irreducible
@@ -1118,19 +1118,19 @@ theorem normalizeForFactor_repeatedPart_isFactorPower_squareFreeCore_of_irreduci
           exact hdecomp
 
 /-- **Small-mod singleton reassembly completeness.**
-When the normalized square-free core is
-itself irreducible, the singleton-core reassembly is expansion-complete:
+When the normalized primitive square-free part is
+itself irreducible, the singleton-part reassembly is expansion-complete:
 the `repeatedPart` of `normalizeForFactor f` is exactly a
-`Hex.Factorization.factorPower` of the square-free core,
+`Hex.Factorization.factorPower` of the primitive square-free part,
 and that factorPower is consumed completely by
-`Hex.expandRepeatedPartFactorArray`.  It lets singleton-core callers derive
+`Hex.expandRepeatedPartFactorArray`.  It lets singleton-part callers derive
 expansion completeness from irreducibility instead of carrying it as a
 separate premise.
 
 The explicit `hmonic` premise is required because the executable extraction
 (`consumeExactPower_pow_mul_of_not_dvd` and the
 `expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition`
-wrapper) currently requires monicness of the core factor; dropping the
+wrapper) currently requires monicness of the square-free factor; dropping the
 hypothesis would require a non-monic divMod/exactQuotient generalisation
 in `HexPolyZ/Basic.lean`. -/
 theorem reassemblyExpansionComplete_singleton_of_irreducible
@@ -1188,16 +1188,16 @@ theorem reassemblyExpansionComplete_singleton_of_irreducible
   rw [hexpand]
 
 /-- Discharge small-mod singleton expansion completeness for a non-monic
-primitive core. This is the companion to the monic
+primitive polynomial. This is the companion to the monic
 `reassemblyExpansionComplete_singleton_of_irreducible` above. Drops the
-`hmonic` premise on the square-free core in favour of `0 < leadingCoeff core`,
+`hmonic` premise on the primitive square-free part in favour of `0 < leadingCoeff core`,
 producing the same `Hex.reassemblyExpansionComplete` conclusion. The proof
-routes through the non-monic array-level public surface
+uses the non-monic array-level public surface
 `Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`,
 with the
 no-tail-divisibility precondition discharged by
 `factorPower_cover_not_dvd_tail_of_irreducible_squarefree`.
-This sibling lets downstream dispatchers discharge `hcomplete` under a
+This sibling lets downstream selectors discharge `hcomplete` under a
 non-monic primitive `squareFreeCore` (e.g. the `2X + 3` residual from
 `(X-1)(2X+3) = 2X^2 + X - 3`). -/
 theorem reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc
@@ -1276,7 +1276,7 @@ theorem reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc
   have hlen' :
       ([k] : List Nat).length = (#[core] : Array Hex.ZPoly).size := by
     simp
-  -- No-tail-divisibility for the singleton split — discharged by the generic
+  -- No-tail-divisibility for the singleton split; discharged by the generic
   -- `factorPower_cover_not_dvd_tail_of_irreducible_squarefree` helper (#4807).
   have hnot_dvd_tail :=
     factorPower_cover_not_dvd_tail_of_irreducible_squarefree
@@ -1311,12 +1311,12 @@ theorem reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc
     [k] hlen' hnot_dvd_tail hdecomp hfuel'
 
 /-- Discharge reassembly expansion for the quadratic integer-root branch. When
-the normalized square-free core
+the normalized primitive square-free part
 `(normalizeForFactor f).squareFreeCore` factors through the executable
 `quadraticIntegerRootFactors?` short-circuit (returning `some coreFactors`),
-the reassembly of the recorded core factors is expansion-complete: the
+the reassembly of the recorded factors of the square-free part is expansion-complete: the
 `repeatedPart` of `normalizeForFactor f` is exactly the
-`Factorization.factorPower` foldl product over the core-factor / exponent
+`Factorization.factorPower` foldl product over the square-free-factor / exponent
 pairs supplied by
 `normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`,
 and that fold is consumed completely by
@@ -1331,26 +1331,26 @@ Composes:
 
 * `Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero` and the Mathlib-side lemma
   `zpoly_primitive_of_toPolynomial_isPrimitive` ∘
-  `normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive` —
+  `normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive`;
   the squareFreeCore positive-leading-coefficient and primitivity invariants;
-* `Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive` — every
-  emitted core factor is irreducible under primitivity;
-* `Hex.polyProduct_quadraticIntegerRootFactors?_some` —
+* `Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive`; every
+  emitted square-free factor is irreducible under primitivity;
+* `Hex.polyProduct_quadraticIntegerRootFactors?_some`;
   the polyProduct = squareFreeCore invariant;
-* `Hex.quadraticIntegerRootFactors?_normalizeFactorSign` —
+* `Hex.quadraticIntegerRootFactors?_normalizeFactorSign`;
   the per-factor `normalizeFactorSign` identity, discharging the `hnorm`
   precondition of
   `normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`;
-* `Hex.quadraticIntegerRootFactors?_factor_size_eq_two` —
-  every core factor has dense size two, supplying the per-factor positive
+* `Hex.quadraticIntegerRootFactors?_factor_size_eq_two`;
+  every square-free factor has dense size two, supplying the per-factor positive
   leading coefficient and positive degree preconditions of the non-monic
   expansion-complete surface;
 * `normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`
-  — the structural `factorPower` decomposition of the repeated part;
-* `factorPower_cover_not_dvd_tail_of_irreducible_squarefree` — the
+; the structural `factorPower` decomposition of the repeated part;
+* `factorPower_cover_not_dvd_tail_of_irreducible_squarefree`; the
   per-position tail-non-divisibility certificate;
 * `Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`
-  — the non-monic public expansion-complete surface; the non-monic
+; the non-monic public expansion-complete surface; the non-monic
   version is required because `quadraticIntegerRootFactors?` may emit a
   primitive non-monic residual (e.g. `2X + 3` from
   `(X-1)(2X+3) = 2X^2 + X - 3`).

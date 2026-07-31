@@ -554,7 +554,7 @@ theorem modPSubsetPartitionHypotheses_of_modPFactorization
       ⟨_, _, huniq⟩
     exact (huniq S hS).trans (huniq T hT).symm
 
-/-- A successful `choosePrimeData?` run forces a nonzero core: the selected
+/-- A successful `choosePrimeData?` run forces a nonzero square-free part: the selected
 prime is `isGoodPrime`, which keeps `(modP p core)` nonzero, whereas
 `modP p 0 = 0`. -/
 theorem core_ne_zero_of_modPFactorization

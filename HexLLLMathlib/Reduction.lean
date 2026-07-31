@@ -96,34 +96,34 @@ theorem lllNative_short_vector
   rw [hηη] at hbnd
   exact hbnd
 
-/-- Property triple for an accepted dispatch result: a `B'` returned by
-`LLLProvider.dispatch b δ` generates the same lattice as `b`, is independent,
-and is `(δ, 11/20)`-LLL-reduced. Composes `dispatch_some_certCheck` with
-`HexLLLMathlib.certCheck_sound`, the single trusted property-level bridge of
-`hex-lll` §"Certified external dispatch". -/
-theorem dispatch_some_property {b : Matrix Int n m} {δ : Rat}
-    {B' : Matrix Int n m} (h : LLLProvider.dispatch b δ = some B') :
+/-- Property triple for an accepted external reduction: a `B'` returned by
+`ExternalReducer.certifiedReduction b δ` generates the same lattice as `b`, is independent,
+and is `(δ, 11/20)`-LLL-reduced. Composes `certifiedReduction_some_certCheck` with
+`HexLLLMathlib.certCheck_sound`, the single trusted property-level correspondence of
+`hex-lll` §"Certified external selection". -/
+theorem certifiedReduction_some_property {b : Matrix Int n m} {δ : Rat}
+    {B' : Matrix Int n m} (h : ExternalReducer.certifiedReduction b δ = some B') :
     (∀ v, b.memLattice v ↔ B'.memLattice v) ∧
       B'.independent ∧ isLLLReduced B' δ (11 / 20) := by
-  obtain ⟨U, V, hcheck⟩ := LLLProvider.dispatch_some_certCheck h
+  obtain ⟨U, V, hcheck⟩ := ExternalReducer.certifiedReduction_some_certCheck h
   exact HexLLLMathlib.certCheck_sound hcheck
 
 /-- The public LLL `lll` produces a `(δ, 11/20)`-LLL-reduced matrix. On the
 native path this is `lllNative_isLLLReduced` (`η = 1/2`) lifted to `η = 11/20`
-by `isLLLReduced.mono_η`. On the certified-dispatch path it follows from
-`certCheck_sound` via `dispatch_some_property`. -/
+by `isLLLReduced.mono_η`. On the certified-selection path it follows from
+`certCheck_sound` via `certifiedReduction_some_property`. -/
 theorem lll_isLLLReduced (b : Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent) :
     isLLLReduced (lll b δ hδ hδ' hn) δ (11 / 20) := by
   unfold lll
-  cases hd : LLLProvider.dispatch b δ with
+  cases hd : ExternalReducer.certifiedReduction b δ with
   | none =>
       exact Hex.Internal.isLLLReduced.mono_η _ (by grind) (by grind)
         (lllNative_isLLLReduced b δ
           (Hex.Internal.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind)
   | some B' =>
-      exact (dispatch_some_property hd).2.2
+      exact (certifiedReduction_some_property hd).2.2
 
 /-- The generated lattice is preserved by `Hex.lll`. -/
 theorem lll_memLattice_iff (b : Matrix Int n m) (δ : Rat)
@@ -131,12 +131,12 @@ theorem lll_memLattice_iff (b : Matrix Int n m) (δ : Rat)
     (_hind : b.independent) (v : Vector Int m) :
     Matrix.memLattice (lll b δ hδ hδ' hn) v ↔ Matrix.memLattice b v := by
   unfold lll
-  cases hd : LLLProvider.dispatch b δ with
+  cases hd : ExternalReducer.certifiedReduction b δ with
   | none =>
       exact lllNative_memLattice_iff b δ
         (Hex.Internal.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn v
   | some B' =>
-      exact ((dispatch_some_property hd).1 v).symm
+      exact ((certifiedReduction_some_property hd).1 v).symm
 
 /-- Independence is preserved by `Hex.lll`. -/
 theorem lll_independent (b : Matrix Int n m) (δ : Rat)
@@ -144,12 +144,12 @@ theorem lll_independent (b : Matrix Int n m) (δ : Rat)
     (hind : b.independent) :
     (lll b δ hδ hδ' hn).independent := by
   unfold lll
-  cases hd : LLLProvider.dispatch b δ with
+  cases hd : ExternalReducer.certifiedReduction b δ with
   | none =>
       exact lllNative_independent b δ
         (Hex.Internal.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
   | some B' =>
-      exact (dispatch_some_property hd).2.1
+      exact (certifiedReduction_some_property hd).2.1
 
 /-- Public LLL short-vector bound at `η = 11/20`. For any independent
 integer basis `b`, the first row of `Hex.lll b δ …` has squared norm at

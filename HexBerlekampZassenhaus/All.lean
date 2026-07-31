@@ -17,8 +17,8 @@ public import HexBerlekampZassenhaus.BhksCandidates
 public import HexBerlekampZassenhaus.BhksRecover
 public import HexBerlekampZassenhaus.Recombination
 public import HexBerlekampZassenhaus.Factorization
-public import HexBerlekampZassenhaus.EisensteinCore
-public import HexBerlekampZassenhaus.IrreducibleCore
+public import HexBerlekampZassenhaus.EisensteinCriterion
+public import HexBerlekampZassenhaus.FactorIrreducibility
 public import HexBerlekampZassenhaus.IrreducibleDecide
 public import HexBerlekampZassenhaus.Factored
 public import HexBerlekampZassenhaus.FactorTactic

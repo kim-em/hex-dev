@@ -13,7 +13,7 @@ public import HexArith.UInt64.Wide
 public section
 
 /-!
-Core `ZMod64` definitions for `hex-mod-arith`.
+Machine-word residues in `ZMod64`.
 
 This module introduces the `UInt64`-backed residue type `Hex.ZMod64 p`
 together with a project-local modulus-bounds typeclass, smart construction by

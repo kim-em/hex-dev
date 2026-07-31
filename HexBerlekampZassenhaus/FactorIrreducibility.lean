@@ -124,7 +124,7 @@ private def quadraticCubeRegression : ZPoly :=
 `2X³+9X²+10X+3 = (2X+1)(X+1)(X+3)` must split into three factors, not be
 reported as a single irreducible factor.  Before the `ZPoly.dilate`
 inverse-transform fix, the slow exhaustive recombination recombined against the
-non-monic core via a scalar `DensePoly.scale`, failed to find any split, and
+non-monic polynomial via a scalar `DensePoly.scale`, failed to find any split, and
 fell back to `#[core]`. -/
 private def nonMonicCubicRegression : ZPoly :=
   DensePoly.ofCoeffs #[3, 10, 9, 2]
@@ -150,7 +150,7 @@ private def nonMonicQuarticRegression : ZPoly :=
 #guard (ZPoly.factorize nonMonicQuarticRegression).factors.size = 3
 #guard Factorization.product (ZPoly.factorize nonMonicQuarticRegression) = nonMonicQuarticRegression
 
-/-- Non-monic core carrying nontrivial content, `6(X-1)(X+1) = 6X²-6`: the signed
+/-- Non-monic polynomial carrying nontrivial content, `6(X-1)(X+1) = 6X²-6`: the signed
 content scalar is `6` and the primitive factors are the two integer roots. -/
 private def nonMonicWithContentRegression : ZPoly :=
   DensePoly.ofCoeffs #[-6, 0, 6]
@@ -181,7 +181,7 @@ class Irreducible (f : ZPoly) : Prop where
 /-- Mathlib-free associatedness predicate for integer polynomials: `a` and
 `b` are associated when `b = a * u` for some `ZPoly`-unit `u` (i.e. `u = ±1`).
 Used by irreducibility dischargers to translate "Mathlib-side irreducible factor
-of the square-free core" to the direct non-divisibility hypothesis required
+of the primitive square-free part" to the direct non-divisibility hypothesis required
 by the greedy expansion helper. -/
 def Associated (a b : ZPoly) : Prop :=
   ∃ u : ZPoly, ZPoly.IsUnit u ∧ b = a * u
@@ -1099,9 +1099,9 @@ theorem reassemblePolynomialFactors_xPower_irreducible
     ZPoly.Irreducible factor :=
   xPowerFactorArray_irreducible d.xPower factor hx
 
-/-- Lift core-factor irreducibility through the reassembly.  When the
+/-- Lift square-free-factor irreducibility through the reassembly.  When the
 repeated-part expansion fully consumes its residual (so the reassembly emits
-only `X` powers and the supplied core factors), every emitted raw factor is
+only `X` powers and the supplied factors of the square-free part), every emitted raw factor is
 irreducible.  This is the Mathlib-free "reassemble lift" consumed by the
 assembled per-branch output theorem to discharge the `xPower` half of each
 branch automatically. -/
@@ -1117,10 +1117,10 @@ theorem reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irre
   · exact xPowerFactorArray_irreducible d.xPower factor hx
   · exact h_core factor hcore
 
-/-- Membership classifier for the constant square-free-core branch. The only
+/-- Membership classifier for the constant primitive square-free part branch. The only
 raw factors requiring irreducibility content are extracted powers of `X`; the
-singleton core factor is `1`, and any repeated-part fallback is identified
-separately for later expansion through actual core factors. -/
+singleton square-free factor is `1`, and any repeated-part fallback is identified
+separately for later expansion through actual factors of the square-free part. -/
 theorem reassemblePolynomialFactors_constant_irreducible_or_repeated_or_one
     (d : FactorNormalizationData) {factor : ZPoly}
     (hcore : d.squareFreeCore = 1)
@@ -1152,7 +1152,7 @@ private theorem irreducible_linearFactorForRoot (r : Int) :
 
 /--
 The primitive square-free layer in normalization reassembles the extracted
-`X`-free primitive core up to the rational unit introduced by clearing
+`X`-free primitive polynomial up to the rational unit introduced by clearing
 denominators.
 -/
 theorem normalizeForFactor_reassembles (f : ZPoly) :
@@ -1167,8 +1167,8 @@ theorem normalizeForFactor_reassembles (f : ZPoly) :
     (ZPoly.extractXPower (ZPoly.primitivePart f)).core
 
 /--
-Replacing the square-free core by a product-equivalent factor array preserves
-the rational-associate normalization invariant for the extracted primitive core.
+Replacing the primitive square-free part by a product-equivalent factor array preserves
+the rational-associate normalization invariant for the extracted primitive polynomial.
 -/
 theorem reassembleNormalizedFactors_product
     (f : ZPoly) (normalized : FactorNormalizationData) (coreFactors : Array ZPoly)
@@ -1189,8 +1189,8 @@ theorem reassembleNormalizedFactors_product
   simpa [hcore] using hnormalized
 
 /--
-For constant square-free cores, the normalization-only factor array preserves the
-rational-associate normalization invariant for the extracted primitive core.
+For constant square-free parts, the normalization-only factor array preserves the
+rational-associate normalization invariant for the extracted primitive polynomial.
 -/
 theorem normalizedConstantFactors_product
     (f : ZPoly) (normalized : FactorNormalizationData)

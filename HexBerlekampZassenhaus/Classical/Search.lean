@@ -26,14 +26,19 @@ def defaultSubsetBudget : Nat := 262144
 
 /-- Why the bounded direct classical engine declined. -/
 inductive DeclineReason where
+  /-- No admissible modular factorization was found. -/
   | noGoodPrime
+  /-- The next complete subset-cardinality level exceeds the remaining budget. -/
   | subsetBudget
+  /-- The modular factors could not be lifted to the required precision. -/
   | liftFailure
+  /-- The search exhausted all allowed candidates without a valid split. -/
   | invalidCandidate
 deriving DecidableEq
 
 namespace DeclineReason
 
+/-- A short diagnostic name for a direct-search resource limit. -/
 @[expose]
 def name : DeclineReason → String
   | .noGoodPrime => "noGoodPrime"
@@ -46,18 +51,26 @@ end DeclineReason
 /-- Statistics from a direct classical attempt. `completedLevels` records the
 fully exhausted head-forced subset cardinalities, in execution order. -/
 structure ClassicalStats where
+  /-- The prime selected for the successful modular factorization, or zero. -/
   prime : Nat := 0
+  /-- The number of prime candidates examined. -/
   primeProbes : Nat := 0
+  /-- The number of lifted modular factors. -/
   liftedFactorCount : Nat := 0
+  /-- The number of quadratic Hensel lifts performed. -/
   henselLifts : Nat := 0
+  /-- The number of recombination candidates tested by exact division. -/
   candidatesTried : Nat := 0
+  /-- Subset cardinalities exhausted completely, in execution order. -/
   completedLevels : Array Nat := #[]
 deriving DecidableEq
 
 /-- Internal result of a head search. -/
 inductive DirectHeadResult (basis : LiftData) where
+  /-- A factor and exact quotient were found. -/
   | found (split : DirectSplit basis) (budget : Nat)
       (candidates : Nat) (completed : Array Nat)
+  /-- The bounded search stopped for the recorded reason. -/
   | declined (reason : DeclineReason) (budget : Nat)
       (candidates : Nat) (completed : Array Nat)
 
@@ -86,9 +99,12 @@ def findDirectHead
 
 /-- Internal recursive result. -/
 inductive DirectSearchResult where
+  /-- The recursive search produced a complete factor list. -/
   | factored (factors : List ZPoly) (budget : Nat) (stats : ClassicalStats)
+  /-- The recursive search stopped for the recorded reason. -/
   | declined (reason : DeclineReason) (budget : Nat) (stats : ClassicalStats)
 
+/-- Search recursively for direct-coordinate factors within the remaining budget. -/
 @[expose]
 def searchDirectAux
     (coreLc : Int) (basis : LiftData) :

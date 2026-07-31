@@ -79,7 +79,7 @@ def factorizationToJson (φ : Factorization) : Json :=
 /-- Encode the bounded classical tier's selected-prime diagnostics. -/
 def factorTraceToJson (trace : DirectFactorTrace) : Json :=
   Json.mkObj
-    [ ("tier", Json.str trace.tier.name),
+    [ ("method", Json.str trace.method.name),
       ("decline",
         trace.classicalDecline.map (Json.str ·.name) |>.getD Json.null),
       ("prime",

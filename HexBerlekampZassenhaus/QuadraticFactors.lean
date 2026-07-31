@@ -37,7 +37,7 @@ import all HexBerlekampZassenhaus.BhksCandidates
 import all HexBerlekampZassenhaus.BhksRecover
 import all HexBerlekampZassenhaus.Recombination
 import all HexBerlekampZassenhaus.Factorization
-import all HexBerlekampZassenhaus.IrreducibleCore
+import all HexBerlekampZassenhaus.FactorIrreducibility
 import all HexBerlekampZassenhaus.RecombinationFactors
 import all HexBerlekampZassenhaus.TrialFactorization
 
@@ -51,7 +51,7 @@ This module collects the quadratic-integer-root correctness proofs.
 -/
 namespace Hex
 
-/-- Every factor emitted by the standalone integer trial-division core is
+/-- Every factor emitted by the standalone integer trial-division algorithm is
 irreducible when `core` is a primitive, square-free polynomial with
 positive leading coefficient and the bound `B` covers the coefficients of
 every divisor of `core`.
@@ -314,6 +314,7 @@ theorem quadraticIntegerRootFactors?_normalizeFactorSign
         · simp [roots, split, hres_deg] at hquad
   · simp [hdeg] at hquad
 
+/-- Every factor returned by quadratic root extraction satisfies the factor-recording test. -/
 theorem quadraticIntegerRootFactors?_shouldRecord
     {core : ZPoly} {factors : Array ZPoly}
     (hcore_pos : 0 < DensePoly.leadingCoeff core)
@@ -438,10 +439,10 @@ theorem quadraticIntegerRootFactors?_factor_irreducible_of_ne_residual
   · simp [hdeg] at hquad
 
 /-- The optional final residual of the quadratic integer-root branch is
-irreducible whenever the core is primitive with positive leading coefficient.
+irreducible whenever the square-free part is primitive with positive leading coefficient.
 The function's degree filter forces the residual's `degree?.getD 0` to be at
 most `1`; primitivity rules out degree-`0` residuals (which would be non-unit
-constants dividing every coefficient of the primitive core); hence the
+constants dividing every coefficient of the primitive polynomial); hence the
 residual, when emitted, has size two and is irreducible by the
 `irreducible_of_size_two_primitive` companion of `_monic`, applied to the
 residual's own primitivity inherited from the product `split.2 *
@@ -667,11 +668,11 @@ private theorem quadraticIntegerRootFactors?_residual_irreducible
   · simp [hdeg] at hquad
 
 /-- Every factor emitted by the quadratic integer-root branch is irreducible
-when the core is primitive with positive leading coefficient. Non-residual
+when the square-free part is primitive with positive leading coefficient. Non-residual
 factors come from the integer-root splitter (linear, hence irreducible);
 the optional final residual is also irreducible because primitivity rules
 out degree-`0` residuals (non-unit constants would divide every coefficient
-of the primitive core) and the function's degree filter restricts residuals
+of the primitive polynomial) and the function's degree filter restricts residuals
 to size two, where the `irreducible_of_size_two_primitive` companion of
 `_monic` applies via the constant-factor argument on `core`.
 
@@ -696,6 +697,7 @@ theorem quadraticIntegerRootFactors?_factor_irreducible_of_primitive
   · exact quadraticIntegerRootFactors?_factor_irreducible_of_ne_residual
       hquad hmem hres
 
+/-- The factors returned by quadratic root extraction multiply to the input quadratic. -/
 theorem quadraticIntegerRootFactors?_product
     {core : ZPoly} {factors : Array ZPoly}
     (hquad : quadraticIntegerRootFactors? core = some factors) :
@@ -1219,7 +1221,7 @@ theorem quadraticIntegerRootFactors?_pairwise_not_associated
   · simp [hdeg] at hquad
 
 /-- Every factor emitted by `quadraticIntegerRootFactors?` has positive leading
-coefficient when the input core has positive leading coefficient. This packages
+coefficient when the input polynomial has positive leading coefficient. This packages
 the normalization and recording invariants for Mathlib-side callers of the
 non-monic repeated-part expansion helper. -/
 theorem quadraticIntegerRootFactors?_leadingCoeff_pos

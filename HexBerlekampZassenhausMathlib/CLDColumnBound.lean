@@ -530,7 +530,7 @@ theorem abs_factorColumn_coeff_le
 
 end BHKS
 
-/-- CLD quotient congruence (BHKS logarithmic-derivative bridge).
+/-- CLD quotient congruence (BHKS logarithmic-derivative correspondence).
 
 When a monic positive-degree lifted factor `g` divides `input` modulo `p ^ k`
 (witnessed by `input ≡ g * h`), multiplying the executable CLD quotient
@@ -774,9 +774,9 @@ per-element ambient residues pinned to a small integer (forcing per-factor
 smallness), this version bounds the cut-sum *modulo the period* `q = p^(a−b)` and
 needs only the *aggregate* residue `centeredResiduePow p a (Σ w_i)` to be small.
 
-This is the analytic core of the recombination case: for split irreducible
-factors the per-local CLD residues are not individually small — only their
-aggregate `Φ(factor)` is — and the lattice's period rows `diag(p^(a−l_j))` absorb
+This is the main estimate of the recombination case: for split irreducible
+factors the per-local CLD residues are not individually small; only their
+aggregate `Φ(factor)` is; and the lattice's period rows `diag(p^(a−l_j))` absorb
 the large per-local parts.  The raw-sum bound is *false* here (no per-factor
 hypothesis is available); the `∃ t` period reduction by an integer multiple of `q`
 is exactly what makes the aggregate-only bound true.
@@ -990,11 +990,11 @@ theorem abs_factorColumn_coeff_le_bhksCoeffBound
     exact mul_le_mul_of_nonneg_left hl2 hnonneg
   exact_mod_cast hkey
 
-/-- **Generic CLD residue bridge.**  For a monic divisor `g` of `f` whose
+/-- **Generic CLD residue correspondence.**  For a monic divisor `g` of `f` whose
 precision `p^a` separates the Mignotte column bound, the centred ambient residue
 of *any* polynomial `q` whose product `g * q` is congruent to the
 logarithmic-derivative numerator `f * g'` modulo `p^a` is exactly the integer
-`Phi`-column coefficient.  The per-factor bridge below is the special case
+`Phi`-column coefficient.  The per-factor correspondence below is the special case
 `q := cldQuotientMod f g p a`; the aggregate residue work instantiates it with
 `q := supportCldSum`, which satisfies the same congruence against the whole
 recovered factor without being a single `cldQuotientMod`. -/
@@ -1404,9 +1404,9 @@ theorem recoveredLift_aggregate_residue
 /-! # Period-adjusted true-factor short vector from a `RecoveredLift`
 
 The per-factor tight column (`tightColumnBound_of_lift`) bounds the *zero-period*
-tail `∑_{i∈S} psiCut(zᵢ)` and routes through per-factor integer divisibility,
+tail `∑_{i∈S} psiCut(zᵢ)` and uses per-factor integer divisibility,
 which a `RecoveredLift` cannot supply. The
-sound route uses the BHKS lattice's own period rows `diag(p^(a−ℓⱼ))`: the
+sound method uses the BHKS lattice's own period rows `diag(p^(a−ℓⱼ))`: the
 *period-adjusted* tail `∑_{i∈S} psiCut(zᵢ) − tⱼ·p^(a−ℓⱼ)` is still bounded by
 `factorCount/2` (`two_mul_natAbs_sum_psiCut_period_le`) from only the aggregate
 residue (`recoveredLift_aggregate_residue`), and the adjusted vector is still a
@@ -1676,7 +1676,7 @@ theorem four_mul_sq_norm_le_of_colBound
   ring
 
 /-- **Period-adjusted true-factor short vector from a `RecoveredLift`.**
-The direct-coordinate aggregate residue bridge
+The direct-coordinate aggregate residue correspondence
 (`recoveredLift_aggregate_residue`) and the period-aware carry lemma
 (`two_mul_natAbs_sum_psiCut_period_le`) bound each tail column of the
 period-adjusted vector by `factorCount/2`.  Together with the structural project

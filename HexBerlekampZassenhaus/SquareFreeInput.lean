@@ -14,23 +14,24 @@ set_option backward.proofsInPublic true
 /-!
 # Primitive square-free factorization problems
 
-Both modular paths are indexed by the primitive square-free polynomial produced by
-normalization. A plan or lift for one core therefore cannot be paired with a
+Both modular paths are indexed by the square-free part produced by
+normalization. A plan or lift for one square-free part therefore cannot be paired with a
 different polynomial.
 -/
 
 namespace Hex
 
-/-- A primitive square-free polynomial presented to classical factorization.
+/-- A square-free part presented to classical factorization.
 The executable layer stores the polynomial; the Mathlib correctness layer
 supplies and retains the normalization invariants. -/
 structure SquareFreeInput where
+  /-- The square-free part to be factored. -/
   poly : ZPoly
 deriving DecidableEq
 
 namespace SquareFreeInput
 
-/-- Package the square-free core produced by the common normalization pass. -/
+/-- Package the primitive square-free part produced by the common normalization pass. -/
 @[expose]
 def ofNormalized (normalized : FactorNormalizationData) : SquareFreeInput :=
   ⟨normalized.squareFreeCore⟩

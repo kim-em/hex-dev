@@ -459,7 +459,7 @@ theorem toNat_toMont (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
 /--
 The Montgomery product `mulMont a b` represents `a * b` scaled by `word`:
 its representative multiplied back by `word` equals `a * b` modulo `p`. This
-is the core algebraic identity from which the user-facing `mulMont`
+is the fundamental algebraic identity from which the user-facing `mulMont`
 correctness lemmas are derived.
 -/
 private theorem mulMont_repr_word (ctx : MontCtx p) (a b : UInt64)
@@ -1102,7 +1102,7 @@ theorem powMod_mul_base (a b n p : Nat) (hp : p > 0) :
   rw [powMod_eq (a * b) n p hp, powMod_eq a n p hp, powMod_eq b n p hp,
     Nat.mul_pow, Nat.mul_mod]
 
-/-- Exponent-addition expansion for `powMod`: combine two exponentiation phases
+/-- Exponent-addition expansion for `powMod`: combine two exponentiation steps
 by multiplying their reduced results. -/
 @[grind =>]
 theorem powMod_add_exp (a m n p : Nat) (hp : p > 0) :

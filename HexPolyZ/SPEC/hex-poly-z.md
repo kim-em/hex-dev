@@ -23,7 +23,7 @@ Specialized polynomial arithmetic over `Z`.
   - `binom n k` uses the multiplicative formula
     `(∏ i<k, (n − i)) / k!` and runs in `O(k)` `Nat` multiplications.
     The Pascal-triangle recursion `binom (n+1) (k+1) = binom n k +
-    binom n (k+1)` is forbidden as the executable body — without
+    binom n (k+1)` is forbidden as the executable body. Without
     memoisation it takes `Θ(2^k)` calls and a Mignotte computation
     over a degree-50 factor cannot terminate.
   - `floorSqrt n` runs in `O(log n)` iterations via Newton's method
@@ -32,11 +32,10 @@ Specialized polynomial arithmetic over `Z`.
     `ZPoly` is at least `2^40`, and a linear-time `floorSqrt` makes
     `coeffNorm f` non-terminating in practice.
 
-  Both prohibitions are instances of [PLAN/Phase1.md](../../PLAN/Phase1.md)'s
-  general "no alternative implementations with the wrong algorithmic
-  complexity" rule; they are spelt out here because the SPEC's
-  one-line description "binomial coefficients and the 2-norm" is
-  satisfied by both correct and wrong-complexity bodies.
+  These requirements prevent mathematically correct formulas with the
+  wrong executable complexity. The short description "binomial
+  coefficients and the 2-norm" would otherwise permit both efficient
+  and exponential implementations.
 
 **Key properties:**
 - `primitivePart(f)` is primitive (content = 1)
@@ -71,7 +70,7 @@ instance : Decidable (Hex.ZPoly.IsUnit f) := …   -- structural via DecidableEq
 
 Used by downstream irreducibility predicates (in
 `hex-berlekamp-zassenhaus`) and by any code that needs to test
-unit-ness in `ℤ[x]`. The Mathlib bridge
+unit-ness in `ℤ[x]`. The Mathlib correspondence theorem
 `Hex.ZPoly.IsUnit f ↔ IsUnit (toPolynomial f)` lives in
 `hex-poly-z-mathlib`.
 
@@ -88,5 +87,3 @@ data surfaces specific to `hex-poly-z` have no direct FLINT
 analog at the same level of abstraction; those bench targets
 declare absence with the `no-comparable-surface-in-named-comparator`
 reason per `SPEC/benchmarking.md §"Comparator naming"`.
-
-Structured metadata in `libraries.yml: HexPolyZ.phase4.comparators`.

@@ -553,7 +553,7 @@ Soundness of the executable Rabin test against the project-side
 
 The proof orchestrates the foundational lemmas above. The combinatorial
 shape (decomposing `rabinTest`, picking a monic irreducible factor of
-size strictly between `0` and `n`, routing through a maximal proper
+size strictly between `0` and `n`, handling through a maximal proper
 divisor, and contradicting the gcd leg) lives here. The heavy
 mathematical content (Rabin's degree theorem in both directions,
 finite-field factor existence, the absolute–modular Frobenius identity,

@@ -214,7 +214,7 @@ theorem dvd_modP_of_dvd
   rw [toPolynomial_mul, Polynomial.map_mul]
 
 /--
-Core integer-to-`ZMod p` identity underlying `modP`: pushing an
+Integer-to-`ZMod p` identity underlying `modP`: pushing an
 integer through `intModNat`/`ZMod64.ofNat` and then to Mathlib's `ZMod p` via
 `toZMod` agrees with the direct integer cast.
 -/
@@ -344,7 +344,7 @@ recombination recovery proof can lean on Mathlib's Gauss lemma machinery. -/
 
 /-- The Mathlib content of the embedded polynomial agrees with the executable
 integer content. Both are the normalized (nonnegative) gcd of the coefficients,
-so this is the Gauss bridge between the two content theories. -/
+so this is the Gauss correspondence between the two content theories. -/
 theorem toPolynomial_content (f : Hex.ZPoly) :
     (toPolynomial f).content = Hex.ZPoly.content f := by
   have hnonneg : 0 ≤ Hex.ZPoly.content f := by

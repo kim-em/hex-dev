@@ -466,12 +466,9 @@ size agreement is forced by {name}`Hex.DensePoly.size_eq_of_coeff_eq`. -/
   exact hcoeff i
 
 /-- Coefficient-level Boolean equality of two dense polynomials: equal stored
-sizes and equal coefficients at every stored index. Because `DensePoly` is
-normalized (no trailing zeros), this decides genuine equality, and unlike the
-structural `DecidableEq (DensePoly R)` — which delegates to the core
-{name}`Array.instDecidableEqImpl` and does not kernel-reduce under the module system
-(see `progress/lean4-array-decidableeq-module-repro.md`) — it is a plain
-`Bool` fold that reduces on literal data under plain `public import`. -/
+sizes and equal coefficients at every stored index. Because `DensePoly` has no
+trailing zero coefficients, this decides polynomial equality. Its explicit
+`Bool` fold also reduces on literal data after an ordinary public import. -/
 @[expose]
 def beqCoeffs (a b : DensePoly R) : Bool :=
   a.size == b.size && (List.range a.size).all fun i => decide (a.coeff i = b.coeff i)

@@ -1,317 +1,129 @@
-# hex-hensel (Hensel lifting, depends on hex-poly-fp + hex-poly-z)
+# hex-hensel
 
-Lifts a factorization of `f mod p` to a factorization of `f mod p^k`.
-This library contains the lifting algorithms together with the
-computational invariant lemmas needed by downstream code. The heavier
-abstract-algebraic correctness and transfer results live in
-hex-hensel-mathlib.
+`hex-hensel` implements Hensel lifting for dense integer
+polynomials. It depends on `hex-poly-fp`, `hex-poly-z`, and modular
+arithmetic, and has no Mathlib dependency.
 
-The computational functions in this library are **total**. They return
-plain data, not sigma-types carrying proof obligations. Monicity,
-congruence modulo `p^k`, and Bezout identities are treated as algorithm
-preconditions, not as bundled proof fields in the computational data
-structures. Theorems in this library record how those invariants evolve
-under the computation.
+The library contains linear two-factor lifting, quadratic-doubling
+lifting, and multifactor lifting. The executable representation is
+shared with Berlekamp-Zassenhaus factorization.
 
-Congruence modulo an integer modulus is the shared notion from
-`hex-poly-z`, not a Hensel-specific predicate:
-`ZPoly.congr f g m`. This is the relation used throughout the API for
-statements like "mod `p^k`" and "mod `p^(k+1)`".
+## Congruence and reduction
 
-**Contents:**
-- **Bridge operations** between `ZPoly` and `FpPoly p`:
-  ```lean
-  def ZPoly.modP (p : Nat) : ZPoly → FpPoly p
-  def FpPoly.liftToZ (f : FpPoly p) : ZPoly
-  def ZPoly.reduceModPow (f : ZPoly) (p k : Nat) : ZPoly
-  ```
-- Canonicalization convention for bridge operations:
-  - `FpPoly.liftToZ` uses the standard nonnegative representatives for
-    coefficients, i.e. each lifted coefficient lies in `[0, p)`.
-  - `ZPoly.reduceModPow f p k` reduces each coefficient to the standard
-    representative in `[0, p^k)`, then renormalizes the resulting
-    `ZPoly` to remove trailing zero coefficients.
-- **Linear Hensel lifting**: from `mod p^k` to `mod p^(k+1)`
-- **Quadratic Hensel lifting**: a single doubling step takes data
-  valid `mod m` to data valid `mod m²`. The wrapper that lifts from
-  `mod p` to a target precision `mod p^k` must run `⌈log₂ k⌉` doubling
-  steps (then reduce modulo `p^k`), **not** `k` doubling steps. With
-  `k` doublings the intermediate modulus is `p^(2^k)`, exponential in
-  `k`, which breaks the polynomial-time complexity model for the
-  Berlekamp–Zassenhaus pipeline.
-- **Multifactor lifting**: public API returns a list/array of lifted
-  factors; any binary factor tree is internal to the implementation
+`ZPoly.congr f g m` means that corresponding coefficients of `f` and
+`g` are congruent modulo `m`. `ZPoly.reduceModPow f p k` reduces every
+coefficient modulo `p^k`.
 
-Suggested computational result types:
-```lean
-structure LinearLiftResult where
-  g : ZPoly
-  h : ZPoly
+The reduction functions satisfy the usual laws for addition,
+subtraction, multiplication, scaling, and monic polynomials. Conversion
+between `ZPoly` and `FpPoly p` uses canonical representatives in
+`[0, p)`.
 
-structure QuadraticLiftResult where
-  g : ZPoly
-  h : ZPoly
-  s : ZPoly
-  t : ZPoly
+For word-sized moduli, `WordMod` and `toWP` provide the same operations
+through Montgomery arithmetic. Their transport theorems show that the
+word calculation denotes the ordinary integer reduction.
+
+## Two-factor linear lifting
+
+Suppose
+
+```text
+f = g h mod p
 ```
 
-Hex-hensel lifts to a requested precision `k`; the caller (typically
-hex-berlekamp-zassenhaus) computes `k` from the Mignotte bound. The
-public meaning of "lift to precision `k`" is always "produce data valid
-modulo `p^k`".
+and Bézout polynomials `s,t` satisfy `s g + t h = 1 mod p`.
+One linear step corrects the factorization from modulus `p^k` to
+`p^(k+1)`. The correction is computed from the error
 
-Suggested top-level entry points:
-```lean
-def linearHenselStep
-    (p k : Nat) (f g h : ZPoly) (s t : FpPoly p) : LinearLiftResult
-
-def quadraticHenselStep
-    (m : Nat) (f g h s t : ZPoly) : QuadraticLiftResult
-
-def henselLiftQuadratic
-    (p k : Nat) (f g h s t : ZPoly) : QuadraticLiftResult
-
-def henselLiftFactors
-    (p k : Nat) (f g h s t : ZPoly) : ZPoly × ZPoly
-
-def henselLift
-    (p k : Nat) (f g h : ZPoly) (s t : FpPoly p) : LinearLiftResult
-
-def multifactorLift
-    (p k : Nat) (f : ZPoly) (factors : Array ZPoly) : Array ZPoly
-
-def multifactorLiftQuadratic
-    (p k : Nat) (f : ZPoly) (factors : Array ZPoly) : Array ZPoly
+```text
+(f - g h) / p^k mod p.
 ```
 
-`multifactorLift` is the linear-lift reference surface; it is retained
-because its single-step invariant is easy to verify and it acts as the
-oracle against which the production lifter is cross-checked.
-`multifactorLiftQuadratic` is the production lifter used by
-`hex-berlekamp-zassenhaus` and is a Phase 1 deliverable on equal
-footing with `multifactorLift`.
+The result preserves:
 
-The production lifter normally halves a node by factor count. If one modular
-factor has more than half the node's total degree, it instead chooses the
-nontrivial prefix split of the supplied factor order with the smallest
-total-degree imbalance. This can keep a dominant factor from being recursively
-paired with much smaller neighbours when the incoming order permits it,
-while retaining the cheaper, deliberately degree-unbalanced root XGCDs of the
-count tree when no factor dominates. The executable tree, its recursive
-invariant, and the Mathlib coprimality bridge must use the same split function.
+- congruence of the lifted factors to the original modular factors;
+- the product congruence at the new modulus;
+- degree and monicity conditions;
+- the Bézout relation needed by the next step.
 
-For the multifactor API, the public product convention is the left fold
-of multiplication with identity `1`:
-```lean
-def Array.polyProduct (factors : Array ZPoly) : ZPoly :=
-  factors.foldl (· * ·) 1
-```
-This fixes the exact meaning of statements such as "the product of the
-lifted factors is congruent to `f` mod `p^k`". The public contract does
-not treat factor order as semantically significant beyond this ordered
-array interface.
+`linearLift` iterates this construction to a requested exponent.
 
-**Linear Hensel lifting algorithm:**
+## Quadratic lifting
 
-Input: `f, g, h : ZPoly` with `g` monic, `s, t : FpPoly p` with
-`s*g + t*h ≡ 1 mod p`. Precondition (not checked): `g*h ≡ f mod p^k`.
+Quadratic lifting doubles the available precision. Given a
+factorization and Bézout relation modulo `p^k`, one step produces both
+relations modulo `p^(2k)`. This reduces the number of precision steps
+from linear in `k` to logarithmic in `k`.
 
-```
-1. e := coeffwise_div (f - g*h) p^k    -- truncating Int.div
-2. (q, r) := divmod(t*e, g) in F_p[x]  -- deg(r) < deg(g)
-3. g' := g + p^k * lift(r)
-4. h' := h + p^k * lift(s*e + q*h mod p)
-```
+`quadraticLift` records the two lifted factors, updated Bézout
+polynomials, and their product and coprimality data. The implementation
+uses monic division where the mathematical argument requires it and
+checks every exact integer division.
 
-Correctness: `r*h + g*(s*e + q*h) = (s*g + t*h)*e = e mod p`, so
-`g'*h' ≡ g*h + p^k*e ≡ f mod p^(k+1)`.
+## Multifactor lifting
 
-Key properties:
-- `s, t` are computed once mod `p` and reused at every step
-- `deg(δg) < deg(g)` from divmod, so `g'` stays monic of same degree
-- `deg(δh) < deg(h)` follows from `deg(e) < deg(f) = deg(g) + deg(h)`
-  (proved in hex-hensel as a computational invariant)
-- Output coefficients are reduced mod `p^(k+1)`
-- Companion theorem shape (in `hex-hensel`):
-  ```lean
-  theorem linearHenselStep_spec
-      (hprod : ZPoly.congr (g * h) f (p^k))
-      (hbez : ... ) (hmonic : ...)
-      : let r := linearHenselStep p k f g h s t
-        ZPoly.congr (r.g * r.h) f (p^(k+1))
-  ```
+For a list of pairwise coprime modular factors, multifactor lifting
+uses a balanced product tree:
 
-Further computational lemmas in `hex-hensel` should include bridge and
-congruence facts needed by downstream code, such as:
-- `ZPoly.modP`, `FpPoly.liftToZ`, and `ZPoly.reduceModPow` compatibility lemmas
-- congruence preservation under `+`, `*`, and coefficient-wise reduction
-- monicity/degree preservation lemmas needed by iterative lifting and
-  by `hex-berlekamp-zassenhaus`
+1. split the factor list into two nonempty parts;
+2. multiply each part;
+3. lift the two products quadratically;
+4. recurse inside both lifted products;
+5. return the lifted leaves in the original order.
 
-**Quadratic Hensel lifting algorithm:**
+The degree-balanced split avoids an unnecessarily expensive side when
+one modular factor dominates the total degree. The public invariants
+state:
 
-Input: `f, g, h : ZPoly` with `g` monic, `s, t : ZPoly` with
-`s*g + t*h ≡ 1 mod m`. Precondition: `g*h ≡ f mod m`.
+- preservation of the factor count and ordering;
+- monicity of every lifted factor;
+- reduction of each lifted factor to its modular ancestor;
+- congruence of their product to the target modulo `p^k`;
+- coprimality of the complementary product splits.
 
-Factor update (mod `m²`):
-```
-1. e := f - g*h
-2. (q, r) := divmod(t*e, g) in (Z/m²Z)[x]
-3. g* := g + r mod m²
-4. h* := h + s*e + q*h mod m²
-```
+`multifactorLiftQuadratic` is the primary lifting function used by
+integer factorization.
 
-Bezout update — divmod by `g*` (which is monic):
-```
-5. b := s*g* + t*h* - 1
-6. (q, r) := divmod(t*b, g*) in (Z/m²Z)[x]
-7. t* := t - r
-8. s* := s - s*b - q*h*
-```
+## Direct-coordinate target
 
-Correctness: `s**g* + t**h* = 1 - b²`. Since `b ≡ 0 mod m`, we get
-`b² ≡ 0 mod m²`, so `s**g* + t**h* ≡ 1 mod m²`.
+For a primitive square-free integer polynomial `f` with leading
+coefficient `a`, Berlekamp-Zassenhaus factorization first factors the
+monic unit multiple `a⁻¹ f mod p`.
 
-Note: divmod by `g*` (not `h*`) because `g*` is monic; `h` may not be.
-Both factor and Bezout coefficients are lifted together at every correction
-whose witnesses are consumed by a later correction (unlike linear lifting,
-which reuses `s, t` mod `p`). When the caller ultimately needs only the two
-factors, `quadraticHenselFactors` may omit the final witness update; its result
-is proved equal to the factor projection of `quadraticHenselStep`.
+`ZPoly.monicTarget f p k` is the canonical integer polynomial whose
+reduction modulo `p^k` represents this unit-normalized modular image.
+It remains in the coordinates of `f`; it does not apply the integral
+substitution `a^(deg f - 1) f(X/a)`.
 
-When `m² < 2^64`, the quadratic step caches the word-polynomial forms of
-`f`, `g`, `h`, `s`, and `t` and performs coefficientwise add, subtract,
-convolution, and fused multiply-add through packed-array C externs. Each
-`WordPoly` operation has a transparent generic body and a proved equality to
-its extern-backed implementation; the algebraic proof of the quadratic step
-therefore continues to reduce to the generic polynomial operations. The
-bignum branch and every modulus outside the word guard retain the ordinary
-`ZPoly` implementation.
+The direct Hensel lift used by both classical and lattice
+recombination is `ZPoly.directLiftData`. Its lifted-factor indices are
+identified with the indices of the selected modular factors.
 
-Suggested companion theorem shape (in `hex-hensel`):
-```lean
-theorem quadraticHenselStep_spec
-    (hprod : ZPoly.congr (g * h) f m)
-    (hbez : ZPoly.congr (s * g + t * h) 1 m)
-    (hmonic : ...)
-    : let r := quadraticHenselStep m f g h s t
-      ZPoly.congr (r.g * r.h) f (m*m) ∧
-      ZPoly.congr (r.s * r.g + r.t * r.h) 1 (m*m)
-```
+## Proof responsibilities
 
-**Multifactor lifting API:**
+The Mathlib-free library proves all executable congruence, product,
+degree, list-shape, and invariant-preservation statements.
+`hex-hensel-mathlib` supplies the polynomial-ring interpretation:
 
-The public multifactor interface should be list-shaped, because the
-downstream factoring pipeline wants a collection of lifted factors, not
-an implementation-specific factor tree. The implementation may still use
-a binary factor tree internally for efficiency and for divide-and-conquer
-proofs, but that tree is not part of the external contract.
+- coprimality modulo `p` lifts through powers of `p`;
+- a successful lift has the expected uniqueness property;
+- executable congruence agrees with coefficientwise congruence in
+  Mathlib polynomials.
 
-Suggested companion theorem shape (in `hex-hensel`):
-```lean
-theorem multifactorLift_spec
-    (hk : 1 ≤ k)
-    (hp : 1 < p)
-    (hinv : MultifactorLiftInvariant p k f factors.toList)
-    : ZPoly.congr (Array.polyProduct (multifactorLift p k f factors)) f (p^k)
+The later Berlekamp-Zassenhaus companion proves the correspondence
+between subsets of lifted factors and irreducible integer factors.
 
-theorem multifactorLiftQuadratic_spec
-    (hk : 1 ≤ k)
-    (hp : 1 < p)
-    (hinv : MultifactorLiftInvariant p k f factors.toList)
-    : ZPoly.congr
-        (Array.polyProduct (multifactorLiftQuadratic p k f factors))
-        f (p^k)
-```
-The invariant is recursive over the sequential split tree. Each nontrivial
-split carries the same start invariant, degree preservation hypothesis, and
-Bezout preservation hypothesis required by `henselLift_spec`; the tail carries
-the invariant for the lifted complementary factor. Product congruence modulo
-`p` alone is not sufficient for multifactor lifting.
+## Verification
 
-Both `_spec` theorems are Phase 1 obligations of `hex-hensel`. Lift
-uniqueness — that `multifactorLiftQuadratic` and `multifactorLift`
-produce the same array of lifted factors after canonicalisation by
-`ZPoly.reduceModPow _ p k` — is a `hex-hensel-mathlib` obligation, not
-a `hex-hensel` one.
+Changes must pass:
 
-Theorems that belong in `hex-hensel-mathlib` are the ones that use
-Mathlib's abstract polynomial/divisibility/coprimality infrastructure
-rather than just the computational `ZPoly`/`FpPoly` representations.
-Examples include uniqueness of lifts (including the
-linear-vs-quadratic agreement statement), `coprime_mod_p_lifts`, and
-transfer theorems phrased in terms of Mathlib polynomials.
+- the root build and trust-surface check;
+- linear, quadratic, and multifactor conformance fixtures;
+- the external algebra-system oracle;
+- word-sized and arbitrary-precision cross-checks;
+- benchmark verification on lift exponents large enough to exercise
+  repeated doubling.
 
-**Iteration count for the quadratic wrapper.** `multifactorLiftQuadratic
-p k`, `henselLiftQuadratic p k`, and `henselLiftFactors p k` produce data
-valid modulo `p^k` using `⌈log₂ k⌉` quadratic corrections. To reach exponent
-`k`, the wrapper first recursively reaches `⌈k/2⌉`, performs one correction,
-and immediately reduces every retained component modulo `p^k`. An even target
-has no transient overshoot; an odd target computes at exponent `k + 1` before
-that reduction. Thus the working exponent exceeds the requested one by at
-most one, rather than climbing to the next power of two and reducing only at
-the end. `henselLiftFactors` performs full factor-and-Bezout corrections while
-a later correction still consumes the witnesses, then uses the proved
-factor-only primitive for the last correction.
-
-The iteration count is `O(log k)` — never `O(k)`. In the
-Berlekamp–Zassenhaus pipeline `k` is a Mignotte bound, polynomial in
-the input size; `O(log k)` corrections are what keep the lifter
-polynomial. Note that `hex-berlekamp-zassenhaus` calls this wrapper
-*adaptively* (see that library's "Precision selection" subsection):
-typically multiple times with successively larger `k`, not once at
-the Mignotte upper bound. Each individual call still uses
-`⌈log₂ k⌉` corrections for its given target.
-
-**Phase 4 bench coverage.** Bench registrations for `multifactorLift`,
-`multifactorLiftQuadratic`, `henselLift`, and `henselLiftQuadratic`
-must vary `k` as a benchmark parameter (not only the degree `n`) with
-a declared complexity model in both. The `k` schedule must include
-realistic Mignotte-bound values produced by
-`ZPoly.defaultFactorCoeffBound` on the inputs
-`HexBerlekampZassenhaus.Bench` exercises — typically tens, not single
-digits. A registration over only `n` at fixed small `k` cannot detect
-a wrong iteration count and is not an admissible Phase 4 deliverable.
-The linear-vs-quadratic `compare` cross-check varies both `n` and `k`.
-
-**Strategy**: Quadratic Hensel lifting is the production lifter for
-the Berlekamp–Zassenhaus pipeline, and the `multifactorLiftQuadratic`
-surface is a Phase 1 deliverable, not an optimisation deferred to a
-later phase. Linear Hensel lifting remains specified and implemented
-as a verification-friendly reference: the two paths must agree on
-shared inputs, and that agreement is the obligation of
-`hex-hensel-mathlib` via lift uniqueness. Phase 3 conformance must
-exercise `multifactorLiftQuadratic` end-to-end (cross-checked against
-`multifactorLift` at small `k`); Phase 4 benchmarks must register
-quadratic lifting as the hot path, under the iteration-count and
-`k`-coverage rules in the previous subsections. Treating quadratic
-lifting as "later" is incompatible with the polynomial-time complexity
-model declared for the Berlekamp–Zassenhaus pipeline.
-
-## External comparators
-
-| Comparator | Class | Scope |
-|---|---|---|
-| FLINT `nmod_poly_hensel_lift_*` via python-flint | informational | bench targets exercising single-step and iterated Hensel lifting of factor pairs over `Z_{p^k}` |
-
-FLINT exposes a family of Hensel-lift functions
-(`nmod_poly_hensel_lift_once_preinv`, `nmod_poly_hensel_lift`,
-`nmod_poly_hensel_continue_lift`) that perform the same Newton-style
-quadratic lift Hex implements. The concrete framings differ —
-FLINT exposes single-step and incremental APIs while Hex exposes
-linear / quadratic / multifactor entry points — but the underlying
-operation is the same and FLINT's tuned implementation is a useful
-speed reference.
-
-Classification is **fixed informational**, not a deferred decision.
-The constant-factor gap reflects FLINT's word-level operand
-tuning and its `preinv` precomputation that Hex doesn't currently
-exploit; a future gating upgrade requires a separate SPEC PR
-identifying a narrower comparable kernel (e.g. single-step lift
-with preinv on canonical inputs) and is not delegated to an HO
-implementer.
-
-Wired via a persistent-subprocess Python driver per
-`SPEC/benchmarking.md §"External comparators" §"Process call"`.
-
-Structured metadata in `libraries.yml: HexHensel.phase4.comparators`.
+Benchmarks report the exact source revision, toolchain, machine,
+inputs, and lift exponent. Linear and quadratic lifting are recorded
+as distinct operations.

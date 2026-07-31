@@ -42,12 +42,12 @@ namespace Hex
 
 /--
 Reassemble normalization-prefix and square-free factors around the supplied
-core factors, expanding each core factor `q` to its multiplicity in
+factors of the square-free part, expanding each square-free factor `q` to its multiplicity in
 `d.repeatedPart` so the recorded `Factorization` carries the right exponents
 for higher-multiplicity inputs. Falls back to the un-expanded
 `polynomialNormalizationPrefixFactors` shape when the expansion does not
-fully consume `repeatedPart` (e.g. when the BZ pipeline emitted the raw
-square-free core as a single core factor).
+fully consume `repeatedPart` (e.g. when the BZ computation emitted the raw
+primitive square-free part as a single square-free factor).
 -/
 @[expose]
 def reassemblePolynomialFactors
@@ -58,6 +58,7 @@ def reassemblePolynomialFactors
   else
     polynomialNormalizationPrefixFactors d ++ coreFactors
 
+/-- Package a verified factor array as a factorization with collected multiplicities. -/
 @[expose]
 def factorizationOfFactors (f : ZPoly) (factors : Array ZPoly) : Factorization :=
   { scalar := signedContentScalar f
@@ -81,10 +82,14 @@ checker can validate certificate metadata and the executable Rabin witness
 against the polynomial it is meant to certify.
 -/
 structure PrimeFactorData where
+  /-- The prime characteristic of this factorization. -/
   p : Nat
   [bounds : ZMod64.Bounds p]
+  /-- The degrees of the modular irreducible factors. -/
   factorDegrees : Array Nat
+  /-- The modular irreducible factors themselves. -/
   factorPolys : Array (FpPoly p)
+  /-- Rabin certificates paired with `factorPolys`. -/
   factorCerts : Array Berlekamp.IrreducibilityCertificate
 
 /--
@@ -97,7 +102,9 @@ prime gives a product of modular irreducible factors whose degrees sum to
 referenced prime block has no subset of recorded factor degrees with this sum.
 -/
 structure DegreeObstruction where
+  /-- The proposed integer factor degree ruled out by this obstruction. -/
   targetDegree : Nat
+  /-- The index of the prime factorization whose subset sums rule it out. -/
   primeIndex : Nat
 
 /--
@@ -108,7 +115,9 @@ single prime so the checker can validate the prime and degree metadata before
 the later proof layer interprets the degree obstruction mathematically.
 -/
 structure ZPolyIrreducibilityCertificate where
+  /-- Modular factorizations used by the certificate. -/
   perPrime : Array PrimeFactorData
+  /-- Obstructions covering every possible proper factor degree. -/
   degreeObstructions : Array DegreeObstruction
 
 namespace PrimeFactorData
@@ -127,6 +136,7 @@ def factorProduct (d : PrimeFactorData) : @FpPoly d.p d.bounds :=
 def containsDegree (d : PrimeFactorData) (n : Nat) : Bool :=
   d.factorDegrees.toList.any fun degree => degree == n
 
+/-- Test whether a submultiset of the listed degrees sums to the target. -/
 @[expose]
 def hasSubsetDegreeAux : List Nat → Nat → Bool
   | [], target => target == 0
@@ -299,7 +309,7 @@ def checkForPolynomialLinear (f : ZPoly) (d : PrimeFactorData) : Bool :=
 /--
 `checkCertAtFactorLinear` implies `checkCertAtFactor` once the block's prime
 is genuinely prime: the two differ only in the nested pow-chain replay, which
-`Berlekamp.checkIrreducibilityCertificate_of_linearIncremental` bridges.
+`Berlekamp.checkIrreducibilityCertificate_of_linearIncremental` correspondences.
 -/
 theorem checkCertAtFactor_of_linear
     (d : PrimeFactorData) (degree : Nat) (factor : @FpPoly d.p d.bounds)
@@ -442,18 +452,18 @@ private def buildPrimeFactorData? (f : ZPoly) (c : SmallPrimeCandidate) :
 /--
 Choose, for each nontrivial candidate integer factor degree of `f`, a prime
 block whose recorded modular factor degrees have no subset summing to that
-degree — the multi-prime degree obstruction that rules out a genuine integer
+degree; the multi-prime degree obstruction that rules out a genuine integer
 factor of that degree.
 
 Returns `none` if some candidate degree cannot be obstructed by any of the
 supplied blocks. That happens both when `f` really does have an integer factor
-of that degree, and — a genuine limitation of this per-prime degree-sum
-language — when a degree is un-obstructable because every prime's factorization
+of that degree, and; a genuine limitation of this per-prime degree-sum
+language; when a degree is un-obstructable because every prime's factorization
 admits a subset summing to it. The latter rules out the balanced half-degree
 cases (e.g. Swinnerton-Dyer `√2+√3+√5` and `Φ₁₅`, whose `deg/2` obstruction is
 never available): the checker cannot certify those irreducibles, so the
 generator declines them. It succeeds whenever each target degree has some
-admissible obstructing prime — in particular whenever `f` has an inert prime,
+admissible obstructing prime; in particular whenever `f` has an inert prime,
 whose single block obstructs every proper degree at once.
 -/
 private def buildDegreeObstructions (f : ZPoly) (blocks : Array PrimeFactorData) :

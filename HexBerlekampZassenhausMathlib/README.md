@@ -1,17 +1,13 @@
 # hex-berlekamp-zassenhaus-mathlib
 
 Part of [`hex`](https://github.com/kim-em/hex-dev), a computer algebra
-library for Lean 4. The aim is fast executable code, fully verified, built
-with spec-driven development.
+library for Lean 4.
 
-Mathlib correspondence theorems and proof-facing APIs for
+This package proves the mathematical specification of
 [`hex-berlekamp-zassenhaus`](https://github.com/leanprover/hex-berlekamp-zassenhaus).
-
-This package proves that the executable factorization reconstructs its input,
-that every nonconstant returned factor is irreducible, that entries are
-primitive, and that normalized factorizations are unique. It also provides
-`factor_poly` and `irreducibility` for `Polynomial ℤ` and the stronger
-certificate coverage available when Mathlib is present.
+It relates `Hex.ZPoly` to `Polynomial ℤ`, proves that executable
+factorizations reconstruct their inputs, and proves irreducibility,
+normalization, and uniqueness of the returned factors.
 
 # Quickstart
 
@@ -24,30 +20,30 @@ rev = "main"
 
 ```lean
 import HexBerlekampZassenhausMathlib
+
+#check HexBerlekampZassenhausMathlib.factorize_product
+#check HexBerlekampZassenhausMathlib.factorize_normalized
+#check HexBerlekampZassenhausMathlib.factorize_unique
+#check Hex.ZPoly.Irreducible_iff_polynomialIrreducible
 ```
 
 # Functionality
 
-For nonzero `f : Hex.ZPoly`,
-`HexBerlekampZassenhausMathlib.factorize_normalized f hf` states:
+For nonzero `f`, `factorize_normalized f hf` proves that the result has the
+prescribed signed content, positive multiplicities, primitive irreducible
+factors with positive leading coefficients, no associated duplicates, and
+product equal to `f`.
 
-- the factorization product is exactly `f`;
-- its scalar is the signed content prescribed by the normalization convention;
-- every entry has positive multiplicity;
-- every entry is primitive and irreducible, with positive leading
-  coefficient; and
-- distinct entries are not associates.
-
-Lower-level theorems such as
-`HexBerlekampZassenhausMathlib.factorize_product`,
-`HexBerlekampZassenhausMathlib.factorize_irreducible_of_nonUnit`, and
-`HexBerlekampZassenhausMathlib.factorize_unique` are available when a client
-wants only one of these conclusions.
-
-# Tactics for `Polynomial ℤ`
+The ordinary umbrella supplies `factor_poly` and `irreducibility` for
+`Polynomial ℤ` as well as `Hex.ZPoly`. The usual forms use compiled search and
+emit certificates. The explicitly expensive `factor_poly!` and
+`irreducibility!` forms replay the factorizer in the kernel for small
+polynomials outside the ordinary certificate languages.
 
 ```lean
-open Hex Polynomial
+import HexBerlekampZassenhausMathlib
+
+open Polynomial
 
 noncomputable def fac :=
   factor_poly ((X - 1) ^ 2 * (X ^ 2 + 1) : Polynomial ℤ)
@@ -56,27 +52,19 @@ example : Irreducible (X ^ 4 + 8 * X + 12 : Polynomial ℤ) := by
   irreducibility
 ```
 
-The ordinary forms use untrusted compiled search and emit kernel-checked
-product and irreducibility certificates. They cover single-prime Rabin,
-Eisenstein-after-shift, and multi-prime degree-obstruction witnesses.
-
-`factor_poly!` and `irreducibility!` are explicit fallbacks for small balanced
-inputs outside those certificate languages. They make the kernel replay the
-factorizer, have a strict degree budget, and require the executable closure to
-be visible in module-based clients. Prefer the ordinary forms whenever they
-apply; the bang forms are intentionally expensive and loudly named.
+Import `HexBerlekampZassenhausMathlib.All` only when developing the detailed
+modular, Hensel, lattice, and recombination proofs.
 
 # Verification
 
-The computational package is Mathlib-free. This bridge owns all statements in
-terms of Mathlib's `Polynomial`, unique factorization, Gauss's lemma, and
-correspondence with modular/Hensel data. Keeping that boundary explicit lets
-runtime-only users avoid the Mathlib dependency while proof clients get the
-full mathematical specification.
+The principal proof surface is `FactorSoundness.lean`. The detailed modules
+relate modular factors to unique Hensel lifts, use logarithmic derivatives to
+recover support partitions, prove both classical and lattice recombination
+complete under their stated hypotheses, and prove the exact trial
+factorization irreducible.
 
-See the [SPEC](SPEC/hex-berlekamp-zassenhaus-mathlib.md) and the Hex manual's
-factor-tactics chapter for theorem maps, certificate coverage, examples, and
-the trust model.
+See the [SPEC](SPEC/hex-berlekamp-zassenhaus-mathlib.md) for the theorem map,
+certificate languages, and trust assumptions.
 
 # Contributing
 

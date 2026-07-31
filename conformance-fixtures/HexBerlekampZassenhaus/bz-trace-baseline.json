@@ -5,7 +5,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 4,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/cyclotomic_12": {
     "candidatesTried": 2,
@@ -13,7 +13,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 2,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/cyclotomic_15": {
     "candidatesTried": 2,
@@ -21,7 +21,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 2,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/cyclotomic_8": {
     "candidatesTried": 2,
@@ -29,7 +29,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 2,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/eisenstein_5": {
     "candidatesTried": 2,
@@ -37,7 +37,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 2,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/high_multiplicity": {
     "candidatesTried": 2,
@@ -45,7 +45,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 2,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/identical_mod_profile": {
     "candidatesTried": 2,
@@ -53,7 +53,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 2,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/large_height": {
     "candidatesTried": 3,
@@ -61,7 +61,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 3,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/large_plus_distractors": {
     "candidatesTried": 4,
@@ -69,7 +69,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 4,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/mignotte_swell": {
     "candidatesTried": 6,
@@ -77,7 +77,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 4,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/neg_content": {
     "candidatesTried": 0,
@@ -85,7 +85,7 @@
     "henselLifts": 0,
     "primeProbes": 0,
     "r": 0,
-    "tier": "quadratic"
+    "method": "quadratic"
   },
   "adv/non_monic": {
     "candidatesTried": 2,
@@ -93,7 +93,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 2,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/phi15": {
     "candidatesTried": 2,
@@ -101,7 +101,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 2,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/planted_1": {
     "candidatesTried": 6,
@@ -109,7 +109,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 4,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/planted_nonmonic": {
     "candidatesTried": 3,
@@ -117,7 +117,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 3,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/quad_sqrt2_sqrt3": {
     "candidatesTried": 2,
@@ -125,7 +125,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 2,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/reciprocal": {
     "candidatesTried": 2,
@@ -133,7 +133,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 2,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/swinnerton_dyer_2": {
     "candidatesTried": 2,
@@ -141,7 +141,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 2,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/swinnerton_dyer_3_shift1": {
     "candidatesTried": 8,
@@ -149,7 +149,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 4,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/swinnerton_dyer_sd3": {
     "candidatesTried": 8,
@@ -157,7 +157,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 4,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/swinnerton_dyer_sd5_pair": {
     "candidatesTried": 206368,
@@ -165,7 +165,7 @@
     "henselLifts": 1,
     "primeProbes": 3,
     "r": 32,
-    "tier": "lattice"
+    "method": "lattice"
   },
   "adv/swinnerton_dyer_sd6": {
     "candidatesTried": 206368,
@@ -173,7 +173,7 @@
     "henselLifts": 1,
     "primeProbes": 3,
     "r": 32,
-    "tier": "lattice"
+    "method": "lattice"
   },
   "adv/trinomial": {
     "candidatesTried": 2,
@@ -181,7 +181,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 2,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/x12_minus_1": {
     "candidatesTried": 10,
@@ -189,7 +189,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 8,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/x4_plus_1": {
     "candidatesTried": 2,
@@ -197,7 +197,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 2,
-    "tier": "classical"
+    "method": "classical"
   },
   "adv/x6_minus_1": {
     "candidatesTried": 4,
@@ -205,7 +205,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 4,
-    "tier": "classical"
+    "method": "classical"
   },
   "content2/cyclo5": {
     "candidatesTried": 1,
@@ -213,7 +213,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 1,
-    "tier": "classical"
+    "method": "classical"
   },
   "content3/cyclo7": {
     "candidatesTried": 1,
@@ -221,7 +221,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 1,
-    "tier": "classical"
+    "method": "classical"
   },
   "direct/chebyshev_u18": {
     "candidatesTried": 2,
@@ -229,7 +229,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 2,
-    "tier": "classical"
+    "method": "classical"
   },
   "direct/legendre_p28": {
     "candidatesTried": 8,
@@ -237,7 +237,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 4,
-    "tier": "classical"
+    "method": "classical"
   },
   "edge/neg_one": {
     "candidatesTried": 0,
@@ -245,7 +245,7 @@
     "henselLifts": 0,
     "primeProbes": 0,
     "r": 0,
-    "tier": "constant"
+    "method": "constant"
   },
   "edge/neg_six": {
     "candidatesTried": 0,
@@ -253,7 +253,7 @@
     "henselLifts": 0,
     "primeProbes": 0,
     "r": 0,
-    "tier": "constant"
+    "method": "constant"
   },
   "edge/neg_two": {
     "candidatesTried": 0,
@@ -261,7 +261,7 @@
     "henselLifts": 0,
     "primeProbes": 0,
     "r": 0,
-    "tier": "constant"
+    "method": "constant"
   },
   "edge/neg_two_x_minus_one_squared": {
     "candidatesTried": 1,
@@ -269,7 +269,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 1,
-    "tier": "classical"
+    "method": "classical"
   },
   "edge/neg_x": {
     "candidatesTried": 0,
@@ -277,7 +277,7 @@
     "henselLifts": 0,
     "primeProbes": 0,
     "r": 0,
-    "tier": "constant"
+    "method": "constant"
   },
   "edge/neg_x_minus_one_squared": {
     "candidatesTried": 1,
@@ -285,7 +285,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 1,
-    "tier": "classical"
+    "method": "classical"
   },
   "edge/neg_x_squared_plus_one": {
     "candidatesTried": 0,
@@ -293,7 +293,7 @@
     "henselLifts": 0,
     "primeProbes": 0,
     "r": 0,
-    "tier": "quadratic"
+    "method": "quadratic"
   },
   "edge/one": {
     "candidatesTried": 0,
@@ -301,7 +301,7 @@
     "henselLifts": 0,
     "primeProbes": 0,
     "r": 0,
-    "tier": "constant"
+    "method": "constant"
   },
   "edge/six": {
     "candidatesTried": 0,
@@ -309,7 +309,7 @@
     "henselLifts": 0,
     "primeProbes": 0,
     "r": 0,
-    "tier": "constant"
+    "method": "constant"
   },
   "edge/two": {
     "candidatesTried": 0,
@@ -317,7 +317,7 @@
     "henselLifts": 0,
     "primeProbes": 0,
     "r": 0,
-    "tier": "constant"
+    "method": "constant"
   },
   "edge/two_x_minus_one_x_plus_one": {
     "candidatesTried": 0,
@@ -325,7 +325,7 @@
     "henselLifts": 0,
     "primeProbes": 0,
     "r": 0,
-    "tier": "quadratic"
+    "method": "quadratic"
   },
   "edge/x": {
     "candidatesTried": 0,
@@ -333,7 +333,7 @@
     "henselLifts": 0,
     "primeProbes": 0,
     "r": 0,
-    "tier": "constant"
+    "method": "constant"
   },
   "edge/x_minus_one_squared": {
     "candidatesTried": 1,
@@ -341,7 +341,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 1,
-    "tier": "classical"
+    "method": "classical"
   },
   "edge/x_squared": {
     "candidatesTried": 0,
@@ -349,7 +349,7 @@
     "henselLifts": 0,
     "primeProbes": 0,
     "r": 0,
-    "tier": "constant"
+    "method": "constant"
   },
   "edge/zero": {
     "candidatesTried": 0,
@@ -357,7 +357,7 @@
     "henselLifts": 0,
     "primeProbes": 0,
     "r": 0,
-    "tier": "constant"
+    "method": "constant"
   },
   "irr/cyclo11": {
     "candidatesTried": 2,
@@ -365,7 +365,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 2,
-    "tier": "classical"
+    "method": "classical"
   },
   "irr/cyclo17": {
     "candidatesTried": 1,
@@ -373,7 +373,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 1,
-    "tier": "classical"
+    "method": "classical"
   },
   "irr/cyclo5": {
     "candidatesTried": 1,
@@ -381,7 +381,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 1,
-    "tier": "classical"
+    "method": "classical"
   },
   "irr/cyclo7": {
     "candidatesTried": 1,
@@ -389,7 +389,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 1,
-    "tier": "classical"
+    "method": "classical"
   },
   "red/cyclo11_cyclo22": {
     "candidatesTried": 4,
@@ -397,7 +397,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 4,
-    "tier": "classical"
+    "method": "classical"
   },
   "red/quad2_deg4": {
     "candidatesTried": 3,
@@ -405,7 +405,7 @@
     "henselLifts": 1,
     "primeProbes": 1,
     "r": 3,
-    "tier": "classical"
+    "method": "classical"
   },
   "regression/split_roots_1_11": {
     "candidatesTried": 11,
@@ -413,7 +413,7 @@
     "henselLifts": 1,
     "primeProbes": 3,
     "r": 11,
-    "tier": "classical"
+    "method": "classical"
   },
   "regression/split_roots_1_24": {
     "candidatesTried": 24,
@@ -421,7 +421,7 @@
     "henselLifts": 1,
     "primeProbes": 3,
     "r": 24,
-    "tier": "classical"
+    "method": "classical"
   },
   "regression/split_roots_1_72": {
     "candidatesTried": 72,
@@ -429,6 +429,6 @@
     "henselLifts": 1,
     "primeProbes": 3,
     "r": 72,
-    "tier": "classical"
+    "method": "classical"
   }
 }

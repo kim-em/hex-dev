@@ -15,7 +15,7 @@ public section
 /-!
 # Generic Mahler separation analysis
 
-This module develops the Hex-independent analytic core of Mahler's
+This module develops the Hex-independent analytic part of Mahler's
 root-separation argument over complex roots. It bounds ordinary and differenced
 Vandermonde columns, applies the sharp column form of Hadamard's determinant inequality,
 and identifies the discriminant root product with the squared Vandermonde

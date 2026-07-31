@@ -28,7 +28,9 @@ namespace Hex
 retained with its result so proof provenance and diagnostics never need to
 recover it by searching the candidate table. -/
 structure DirectPrimeProbe (core : SquareFreeInput) where
+  /-- The candidate prime and its primality witness. -/
   candidate : SmallPrimeCandidate
+  /-- The modular image and its factorization. -/
   data : PrimeChoiceData
   /-- Degrees of the cached modular factors. -/
   factorDegrees : Array Nat
@@ -37,24 +39,26 @@ structure DirectPrimeProbe (core : SquareFreeInput) where
   reused by planning and optional degree-obstruction checks. -/
   reachableDegrees : Array Bool
 
-/-- Cached direct-coordinate modular plan. Every successful probe performed by
-the planner is retained. The selected probe is stored separately from the
-other successful probes, so it is structurally impossible for selection to
+/-- Cached direct-coordinate modular plan. Every successful trial performed by
+the planner is retained. The selected trial is stored separately from the
+other successful trials, so it is structurally impossible for the choice to
 refer to an uncached factorization. -/
 structure DirectPrimePlan (core : SquareFreeInput) where
+  /-- The successful trial chosen for Hensel lifting and recombination. -/
   selected : DirectPrimeProbe core
+  /-- Other successful trials retained for degree-obstruction certificates. -/
   otherProbes : Array (DirectPrimeProbe core)
 
 namespace DirectPrimePlan
 
-/-- Build a plan from its selected successful probe and all other successful
-probes. This is the only constructor exposed outside this module. -/
+/-- Build a plan from its selected successful trial and all other successful
+trials. This is the only constructor exposed outside this module. -/
 @[expose]
 def ofSelection {core : SquareFreeInput} (selected : DirectPrimeProbe core)
     (otherProbes : Array (DirectPrimeProbe core)) : DirectPrimePlan core :=
   ⟨selected, otherProbes⟩
 
-/-- All cached successful probes, with the selected value first. -/
+/-- All cached successful trials, with the selected value first. -/
 @[expose]
 def probes {core : SquareFreeInput} (plan : DirectPrimePlan core) :
     Array (DirectPrimeProbe core) :=
@@ -101,7 +105,7 @@ def directDegreeBits (maxDegree : Nat) (degrees : Array Nat) : Array Bool :=
   degrees.foldl (directDegreeBitsStep maxDegree)
     (#[true] ++ Array.replicate maxDegree false)
 
-/-- Build the indexed cached probe and its degree DP in one place. -/
+/-- Build the indexed cached trial and its degree DP in one place. -/
 @[expose]
 def DirectPrimeProbe.ofData
     (core : SquareFreeInput) (candidate : SmallPrimeCandidate)
@@ -112,7 +116,7 @@ def DirectPrimeProbe.ofData
     factorDegrees := degrees
     reachableDegrees := directDegreeBits (core.poly.degree?.getD 0) degrees }
 
-/-- Number of proper degrees still possible at a modular probe.  Fewer
+/-- Number of proper degrees still possible at a modular trial.  Fewer
 reachable degrees means more cheap degree rejections during recombination. -/
 @[expose]
 def directReachableProperCount {core : SquareFreeInput}
@@ -146,7 +150,7 @@ private def probeBetter {core : SquareFreeInput}
         (sb.2.2.1 = sa.2.2.1 && sb.2.2.2 < sa.2.2.2))))))
 
 /-- Once a first good prime has at most this many modular factors, complete
-direct recombination is cheaper than another Berlekamp probe on the measured
+direct recombination is cheaper than another Berlekamp trial on the measured
 classical corpus. -/
 def directProbeWidth : Nat := 8
 
@@ -155,6 +159,7 @@ too wide.  Bad primes do not spend this allowance because they never run
 Berlekamp factorization. -/
 def directProbeFuel : Nat := 2
 
+/-- Trial further good primes and retain the least expensive direct recombination plan. -/
 def improveDirectPlan
     (core : SquareFreeInput) :
     Nat → List SmallPrimeCandidate → DirectPrimeProbe core →
@@ -176,6 +181,7 @@ def improveDirectPlan
             improveDirectPlan core fuel candidates best
               (probes.push probe)
 
+/-- Select the first good prime and optionally improve a wide modular factorization. -/
 def firstDirectPlan?
     (core : SquareFreeInput) :
     List SmallPrimeCandidate → Option (DirectPrimePlan core)
@@ -264,7 +270,7 @@ private theorem firstDirectPlan?_selected_spec
               #[] hprobe
 
 /-- The selected cached value is exactly the result of its retained explicit
-prime probe. -/
+prime trial. -/
 theorem directPrimePlan?_selected_spec
     (core : SquareFreeInput) (plan : DirectPrimePlan core)
     (h : directPrimePlan? core = some plan) :

@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhausMathlib.Classical.Factorization
-public import HexBerlekampZassenhausMathlib.LatticeTier
+public import HexBerlekampZassenhausMathlib.LatticeFactorization
 
 public section
 set_option backward.proofsInPublic true
@@ -17,14 +17,14 @@ set_option backward.proofsInPublic true
 
 The classical branch is proved directly from `factorDirectCore_factored`.
 There is no scaled-coordinate fallback or per-piece refinement theorem in this
-bridge.
+correspondence.
 -/
 
 namespace HexBerlekampZassenhausMathlib
 
 open Polynomial
 
-/-- Every recordable raw factor returned by the direct classical tier is
+/-- Every recordable raw factor returned by the direct classical method is
 irreducible. -/
 theorem factorClassicalFactors_factor_irreducible
     (f : Hex.ZPoly) (hf : f ≠ 0)
@@ -129,7 +129,7 @@ theorem factorClassicalFactors_factor_irreducible
                         (hspec.irreducible g hg))
                     hmem
 
-/-- Hybrid raw-factor irreducibility, dispatching over direct classical,
+/-- Hybrid raw-factor irreducibility, selecting over direct classical,
 lattice, and trial sources. -/
 theorem factorFactors_factor_irreducible
     (f : Hex.ZPoly) (hf : f ≠ 0)

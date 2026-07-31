@@ -16,7 +16,7 @@ Executable arithmetic operations for dense array-backed polynomials.
 
 This module implements executable `DensePoly` operations: addition,
 subtraction, schoolbook multiplication, Horner evaluation, composition,
-and derivative. All constructors route through `ofCoeffs`, so results are
+and derivative. All constructors use `ofCoeffs`, so results are
 re-normalized automatically.
 -/
 namespace Hex
@@ -279,7 +279,7 @@ theorem toList_getD_eq_coeff (p : DensePoly R) (n : Nat) :
 /-- Zip two coefficient lists with `f`, padding the shorter list with literal
 {name}`Zero.zero` arguments: overhang entries become `f p Zero.zero` / `f Zero.zero q`
 rather than being passed through, so every output entry is literally
-`f (xs.getD i) (ys.getD i)` — the value the `Array.ofFn` runtime impls
+`f (xs.getD i) (ys.getD i)`; the value the `Array.ofFn` runtime impls
 reproduce with no algebraic laws on `R`. -/
 @[expose]
 def zipPad (f : R → R → R) : List R → List R → List R

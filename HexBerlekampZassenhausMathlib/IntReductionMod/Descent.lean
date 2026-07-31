@@ -201,9 +201,9 @@ theorem irreducible_of_isPrimitive_of_irreducible_map_intCast_zmod
 /--
 `Hex.ZPoly`-level transfer of `irreducible_of_isPrimitive_of_irreducible_map_intCast_zmod`.
 
-Given a `Hex.ZPoly` core whose Mathlib image is primitive, with a prime `p`
+Given a `Hex.ZPoly` square-free part whose Mathlib image is primitive, with a prime `p`
 whose action via `Int.castRingHom (ZMod p)` does not kill the leading
-coefficient, and with the reduction Mathlib-irreducible, the original core is
+coefficient, and with the reduction Mathlib-irreducible, the original polynomial is
 `Hex.ZPoly.Irreducible` via the existing equivalence.
 -/
 theorem Hex_ZPoly_Irreducible_of_irreducible_map_intCast_zmod
@@ -222,7 +222,7 @@ theorem Hex_ZPoly_Irreducible_of_irreducible_map_intCast_zmod
       hprim hlc_map_ne hirr)
 
 /--
-Small-mod singleton branch core irreducibility, stated at the executable
+Small-mod singleton branch primitive-square-free-part irreducibility, stated at the executable
 `Hex.ZPoly` level.
 
 The branch-specific executable facts identify the relevant modular image as
@@ -275,10 +275,10 @@ theorem Hex_ZPoly_Irreducible_of_primeChoice_fModP
 
 /--
 Small-mod singleton branch irreducibility package for the selected
-square-free core.
+primitive square-free part.
 
 The branch hypotheses mirror the executable shape: the fast path
-reassembles from the singleton square-free core when the selected modular
+reassembles from the singleton primitive square-free part when the selected modular
 factor list has size at most one.  The mathematical irreducibility payload is
 kept as an explicit `PrimeChoiceData.fModP` irreducibility hypothesis, so the
 eventual Berlekamp singleton theorem can replace it directly.
@@ -307,7 +307,7 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton
     (core := core)
     hfModP_eq hprim hlc_map_ne hirr_fModP
 
-/-- A bridged executable polynomial that transports to a unit has executable
+/-- A transported executable polynomial that transports to a unit has executable
 size one, hence passes the `gcdIsUnit` size check when used as a gcd. -/
 private theorem size_eq_one_of_toMathlibPolynomial_isUnit
     {p : Nat} [Hex.ZMod64.Bounds p] [Fact (Nat.Prime p)]
@@ -810,10 +810,10 @@ theorem normalizeForFactor_squareFreeCore_mul_repeatedPart_primitive_of_ne_zero
       _ hcore_ne
 
 /--
-The square-free core extracted by `normalizeForFactor` is primitive
+The primitive square-free part extracted by `normalizeForFactor` is primitive
 over `Polynomial ℤ` whenever the input integer polynomial is nonzero.
 
-The proof routes through the executable `Hex.ZPoly.Primitive` predicate
+The proof uses the executable `Hex.ZPoly.Primitive` predicate
 on `squareFreeCore * repeatedPart` (from
 `primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive`),
 transports it to `Polynomial ℤ` via
@@ -892,24 +892,24 @@ private theorem isPrimitive_pow {p : Polynomial ℤ} (hp : p.IsPrimitive) (N : N
   | succ N ih =>
       simpa [pow_succ] using ih.mul hp
 
-/-! # Squarefree transport for the square-free core
+/-! # Squarefree transport for the primitive square-free part
 
 The lemmas below identify the executable `Hex.ZPoly.SquareFreeRat` invariant
 (from `Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore`) to
 Mathlib's `Squarefree` over `Polynomial ℤ` via the rational image.  The
 chain is:
 
-1. `toPolynomial_derivative` — `HexPolyMathlib.toPolynomial` intertwines
+1. `toPolynomial_derivative`; `HexPolyMathlib.toPolynomial` intertwines
    the executable `Hex.DensePoly.derivative` with `Polynomial.derivative`.
-2. `toPolynomial_toRatPoly_eq_map_intCast` — `HexPolyMathlib.toPolynomial`
+2. `toPolynomial_toRatPoly_eq_map_intCast`; `HexPolyMathlib.toPolynomial`
    applied to the rational view of an integer polynomial agrees with the
    integer-side `toPolynomial` composed with `Polynomial.map`
    `(Int.castRingHom ℚ)`.
-3. `isCoprime_toPolynomial_map_intCast_derivative_of_squareFreeRat` — the
+3. `isCoprime_toPolynomial_map_intCast_derivative_of_squareFreeRat`; the
    executable square-free invariant transports to coprimeness with the
    formal derivative over `Polynomial ℚ`, using
    `HexPolyMathlib.toPolynomial_gcd_associated` over the field `ℚ`.
-4. `squarefree_of_isPrimitive_of_squarefree_map_intCast` — the Gauss-style
+4. `squarefree_of_isPrimitive_of_squarefree_map_intCast`; the Gauss-style
    descent: a primitive integer polynomial is squarefree whenever its
    rational image is.
 
@@ -1079,7 +1079,7 @@ theorem squarefree_of_isPrimitive_of_squarefree_map_intCast
   rw [hn]
   exact Polynomial.isUnit_C.mpr hn_unit
 
-/-- The rational image of the square-free core extracted by
+/-- The rational image of the primitive square-free part extracted by
 `normalizeForFactor` is separable whenever the input polynomial is nonzero. -/
 theorem normalizeForFactor_squareFreeCore_toPolynomial_separable
     (f : Hex.ZPoly) (hf : f ≠ 0) :
@@ -1094,7 +1094,7 @@ theorem normalizeForFactor_squareFreeCore_toPolynomial_separable
     (Hex.squareFreeCore_squareFreeRat_of_ne_zero f hf)
 
 /--
-The square-free core extracted by `normalizeForFactor` is squarefree over
+The primitive square-free part extracted by `normalizeForFactor` is squarefree over
 `Polynomial ℤ` whenever the input integer polynomial is nonzero.
 
 The proof composes the rational-side squarefreeness obtained from the
@@ -1218,7 +1218,7 @@ theorem zpoly_primitive_of_toPolynomial_isPrimitive
   · rw [hneg] at hcontent_nonneg; omega
 
 /--
-The square-free core extracted by `normalizeForFactor` is executably
+The primitive square-free part extracted by `normalizeForFactor` is executably
 primitive whenever the input integer polynomial is nonzero.
 
 The proof transports

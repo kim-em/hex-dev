@@ -22,16 +22,16 @@ public import HexBerlekampZassenhausMathlib.FactorTransport
 public section
 
 /-!
-The `Polynomial ℤ` and strong `Hex.ZPoly` provider for the
+The `Polynomial ℤ` and strong `Hex.ZPoly` extension for the
 `factor_poly`/`irreducibility` elaborators: importing this library upgrades
-the tactics (declared in `HexBerlekamp.PolynomialTactic` / probed by name, see
-`providerNames`) to handle Mathlib integer polynomials, and extends the
-`Hex.ZPoly` coverage of the free `HexBerlekampZassenhaus` provider (probed
+the tactics (declared in `HexBerlekamp.PolynomialTactic` / checked by name, see
+`extensionNames`) to handle Mathlib integer polynomials, and extends the
+`Hex.ZPoly` coverage of the free `HexBerlekampZassenhaus` extension (checked
 first) with multi-prime degree-obstruction certificates for balanced factors
 it declines.
 
 For `Polynomial ℤ` inputs the heart is a parser-with-proof mirroring the
-`Polynomial (ZMod q)` provider: a meta recursion over the input expression
+`Polynomial (ZMod q)` extension: a meta recursion over the input expression
 that simultaneously evaluates each node to an executable `Hex.ZPoly` value
 and builds a proof that `HexPolyZMathlib.toPolynomial` of the value equals
 the node, combining child proofs through the named `toPolynomial_*` transport
@@ -47,7 +47,7 @@ Balanced factors that are not Eisenstein at any small shift (the free
 layer certifies e.g. `X⁴+1` that way) and whose modular factorizations also
 fall outside the per-prime degree-sum obstruction language (e.g.
 Swinnerton-Dyer polynomials) have no certificate in either language; the
-provider declines with a diagnostic pointing at the kernel-decide fallbacks
+extension declines with a diagnostic pointing at the kernel-decide fallbacks
 `irreducibility!` / `factor_poly!` (`KernelFactorTactic.lean`), which certify small
 such inputs by re-running the factorizer in the kernel.
 -/
@@ -55,7 +55,7 @@ such inputs by re-running the factorizer in the kernel.
 namespace HexBerlekampZassenhausMathlib.FactorTactic
 
 open Lean Meta Elab
-open Hex.FactorTactic (ProviderResult)
+open Hex.FactorTactic (ExtensionResult)
 open HexBerlekampZassenhaus.FactorTactic (evalZPoly checkTransparent
   searchWitness reifyWitness dedupZPolys)
 
@@ -374,7 +374,7 @@ meta def zpolyIrredProof (fE : Expr) (w : OneWitness) : MetaM Expr :=
 untrusted search, certify the cover, and emit a reified
 `Hex.FactoredPoly.ofZ` application. -/
 meta def elabFactorInt (tactic : String) (e : Expr) :
-    Term.TermElabM ProviderResult := do
+    Term.TermElabM ExtensionResult := do
   let (f, fLit, hP) ← parseInput tactic e
   let (scalar, factors) ← factorSearch tactic f
   match ← searchCover tactic factors with
@@ -389,17 +389,17 @@ meta def elabFactorInt (tactic : String) (e : Expr) :
 
 /-- The `irreducibility` arm for `Polynomial ℤ`. -/
 meta def elabIrredInt (tactic : String) (e : Expr) :
-    Term.TermElabM ProviderResult := do
+    Term.TermElabM ExtensionResult := do
   let (f, fLit, hP) ← parseInput tactic e
   match ← searchOne tactic e f with
   | .error why => return .declined why
   | .ok w => return .success (← emitIrreducibleOfZ tactic e fLit hP f w)
 
-/-- The strong `Hex.ZPoly` `factor_poly` arm: probed after the free provider,
+/-- The strong `Hex.ZPoly` `factor_poly` arm: checked after the free extension,
 so it certifies covers the free layer declines (balanced factors) through the
 multi-prime certificates, emitting a `Hex.ZPoly.Factored` whose
 `factors_irred` is one `irreducible_of_checkMultiPrimeCover` check. -/
-meta def factorZPolyStrong (fE : Expr) : Term.TermElabM ProviderResult := do
+meta def factorZPolyStrong (fE : Expr) : Term.TermElabM ExtensionResult := do
   let f ← evalZPoly "factor_poly" fE
   discard <| checkTransparent "factor_poly" f fE
   let (scalar, factors) ← factorSearch "factor_poly" f
@@ -425,8 +425,8 @@ meta def factorZPolyStrong (fE : Expr) : Term.TermElabM ProviderResult := do
 
 /-- The strong `Hex.ZPoly` `irreducibility` arm: free-layer conclusion
 `Hex.ZPoly.Irreducible fE`, certified through the multi-prime checker when
-the free provider declined. -/
-meta def irredZPolyStrong (fE : Expr) : Term.TermElabM ProviderResult := do
+the free extension declined. -/
+meta def irredZPolyStrong (fE : Expr) : Term.TermElabM ExtensionResult := do
   let f ← evalZPoly "irreducibility" fE
   discard <| checkTransparent "irreducibility" f fE
   match ← searchOne "irreducibility" fE f with
@@ -449,7 +449,7 @@ meta def matchToPolynomial? (arg : Expr) : MetaM (Option Expr) := do
 
 /-- Certify `proof` against the goal up to definitional equality and report
 success. -/
-meta def closeGoal (tgt proof : Expr) : MetaM ProviderResult := do
+meta def closeGoal (tgt proof : Expr) : MetaM ExtensionResult := do
   unless ← isDefEq (← inferType proof) tgt do
     throwError "irreducibility: the certified statement\
         {indentExpr (← inferType proof)}\
@@ -459,7 +459,7 @@ meta def closeGoal (tgt proof : Expr) : MetaM ProviderResult := do
 /-- Goal mode: close `Hex.ZPoly.Irreducible e` (free-layer statement),
 `Irreducible (toPolynomial f)`, and `Irreducible P` for parseable
 `P : Polynomial ℤ`. -/
-meta def goalIrredInt (goal : MVarId) : Tactic.TacticM ProviderResult := do
+meta def goalIrredInt (goal : MVarId) : Tactic.TacticM ExtensionResult := do
   goal.withContext do
     let tgt ← instantiateMVars (← goal.getType)
     if tgt.getAppFn.isConstOf ``Hex.ZPoly.Irreducible &&
@@ -505,12 +505,12 @@ namespace HexBerlekampZassenhausMathlib.FactorTactic
 
 open Lean Elab
 
-/-- The `Polynomial ℤ` / strong `Hex.ZPoly` provider, probed by name from
-`Hex.FactorTactic.providerNames` — renaming it severs the hook (the bridge
-test suite is the liveness canary). Probed after the free `Hex.ZPoly`
-provider, so its `ZPoly` arms only see inputs the free layer declined. -/
-public meta def provider : Hex.FactorTactic.Provider where
-  version := Hex.FactorTactic.Provider.abiVersion
+/-- The `Polynomial ℤ` / strong `Hex.ZPoly` extension, checked by name from
+`Hex.FactorTactic.extensionNames`; the integration tests fail if a rename makes
+the extension undiscoverable. Checked after the free `Hex.ZPoly`
+extension, so its `ZPoly` arms only see inputs the free layer declined. -/
+public meta def extension : Hex.FactorTactic.Extension where
+  version := Hex.FactorTactic.Extension.abiVersion
   factorPoly? := fun _stx eP ty _expectedType? => do
     match ← Hex.FactorTactic.classify ty with
     | .zpoly _ _ _ => factorZPolyStrong eP

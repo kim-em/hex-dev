@@ -165,7 +165,7 @@ theorem toZMod_mul (a b : Hex.ZMod64 p) :
   exact Hex.ZMod64.toNat_mul a b
 
 /-- {name}`toZMod` commutes with the `Nat` cast: a numeral built in `ZMod64` transfers to the
-same numeral in `ZMod`. Lets callers move `Nat`-literal coefficients across the bridge. -/
+same numeral in `ZMod`. Lets callers move `Nat`-literal coefficients across the correspondence. -/
 @[simp, grind =]
 theorem toZMod_natCast (n : Nat) :
     toZMod ((n : Hex.ZMod64 p)) = (n : ZMod p) := by
@@ -174,7 +174,7 @@ theorem toZMod_natCast (n : Nat) :
   simp
 
 /-- {name}`toZMod` commutes with the `Int` cast: an integer built in `ZMod64` transfers to the
-same integer in `ZMod`. Lets callers move signed integer coefficients across the bridge. -/
+same integer in `ZMod`. Lets callers move signed integer coefficients across the correspondence. -/
 @[simp, grind =]
 theorem toZMod_intCast (z : Int) :
     toZMod ((z : Hex.ZMod64 p)) = (z : ZMod p) := by

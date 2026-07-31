@@ -16,9 +16,9 @@ set_option backward.proofsInPublic true
 /-!
 # Direct-coordinate van Hoeij / CLD factorization
 
-The classical and lattice tiers share one modular plan:
-`Hex.directPrimePlan?` factors the primitive square-free core directly, and
-each tier uses `Hex.ZPoly.coreLiftData` at its required precision. No
+The classical and lattice methods share one modular plan:
+`Hex.directPrimePlan?` factors the primitive square-free part directly, and
+each method uses `Hex.ZPoly.directLiftData` at its required precision. No
 dilation-coordinate factorization or coordinate correspondence appears in
 this module.
 
@@ -97,7 +97,7 @@ theorem bhksRecoveryCoreWithBound_factorCount
   omega
 
 /-- At a forward-adequate precision, the executable single-all-ones
-certificate implies that the primitive square-free core is irreducible. -/
+certificate implies that the primitive square-free part is irreducible. -/
 theorem irreducible_of_directSingleClass
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
@@ -108,9 +108,9 @@ theorem irreducible_of_directSingleClass
     (hB_floor : Hex.bhksRecoveryFloor core ≤ B)
     (hB_ne : B ≠ 0)
     (hsingle : Hex.bhksSingleAllOnesPartition core
-      (Hex.ZPoly.coreLiftData core B data) = true) :
+      (Hex.ZPoly.directLiftData core B data) = true) :
     Hex.ZPoly.Irreducible core := by
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   rw [Hex.bhksSingleAllOnesPartition] at hsingle
   split at hsingle
   · rename_i hrows
@@ -169,7 +169,7 @@ theorem irreducible_of_directSingleClass
     exact hassoc.irreducible_iff.mp hirr
   · simp at hsingle
 
-/-- Every factor returned by the direct-coordinate CLD core tier is
+/-- Every factor returned by the direct-coordinate CLD method is
 irreducible.  Split success uses the forward count theorem; either all-ones
 arm uses the forward irreducibility certificate. -/
 theorem latticeCoreFactorsWithBound_factor_irreducible
@@ -233,7 +233,7 @@ theorem latticeCoreFactorsWithBound_factor_irreducible
         · exact absurd hlattice.symm (Option.some_ne_none coreFactors)
       · exact absurd hlattice.symm (Option.some_ne_none coreFactors)
 
-/-- At full resultant-adequate precision, the direct-coordinate CLD core tier
+/-- At full resultant-adequate precision, the direct-coordinate CLD method
 is total for every successful prime plan.  Exact span yields either a genuine
 multi-class recovery on the scheduled cap visit or the single-all-ones
 certificate. -/
@@ -248,11 +248,11 @@ theorem latticeCoreFactorsWithBound_ne_none
     (hB_ne : B ≠ 0)
     (hresultant :
       2 * Hex.bhksBound core <
-        (Hex.ZPoly.coreLiftData core B data).p ^
-          (Hex.ZPoly.coreLiftData core B data).k) :
+        (Hex.ZPoly.directLiftData core B data).p ^
+          (Hex.ZPoly.directLiftData core B data).k) :
     Hex.latticeCoreFactorsWithBound core B data ≠ none := by
   classical
-  let d := Hex.ZPoly.coreLiftData core B data
+  let d := Hex.ZPoly.directLiftData core B data
   let A := directAdequacy core B data hcore_lc_pos hcore_pos
     hcore_prim hcore_sqfree prime.factorization hB_floor hB_ne
   have hcore_ne : core ≠ 0 :=
@@ -320,8 +320,8 @@ theorem latticeCoreFactorsWithBound_ne_none
               hcover hdisjoint (by simpa only [d] using hrows)
               (by simpa only [d] using hspan)
               (by simpa only [classes] using hsingle)
-          rw [Hex.bhksRecoveryFloorGate_eq, if_pos hB_floor]
-          rw [show Hex.ZPoly.coreLiftData core B data = d by rfl,
+          rw [Hex.bhksRecoveryThreshold_eq, if_pos hB_floor]
+          rw [show Hex.ZPoly.directLiftData core B data = d by rfl,
             if_pos hallones]
           simp
         · have hclasses_two : 2 ≤ classes.length := by omega
@@ -343,7 +343,7 @@ theorem latticeCoreFactorsWithBound_ne_none
               (by simpa only [d] using hrecover)
           exact absurd hlattice hloop_ne
 
-/-- Reassembling a successful direct CLD core factorization covers the original
+/-- Reassembling a successful direct CLD factorization of the square-free part covers the original
 input exactly. -/
 theorem reassemblyExpansionComplete_latticeCore
     (f : Hex.ZPoly) (hf : f ≠ 0) (B : Nat)

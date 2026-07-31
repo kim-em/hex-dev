@@ -376,7 +376,7 @@ theorem henselLiftData_represents_lifted_of_modP
 /--
 Subset-level Hensel uniqueness in additive congruence form.
 
-This is the proof core behind the recovered-coordinate
+This is the main proof behind the recovered-coordinate
 `henselLiftData_represents_lifted_of_modP`: if a selected modular subset `S`
 represents a monic integer factor `factor` modulo `p`, and `factor * cofactor`
 is a second factorisation of the same monic Hensel target modulo `p ^ B`, then
@@ -583,17 +583,17 @@ theorem henselLiftData_liftedSubset_congr_of_modP
   exact HexHenselMathlib.zpoly_congr_of_toPolynomial_map_eq _ _ _ hgg'
 
 /--
-M1 (`monicTarget`-coordinate) subset Hensel uniqueness for `coreLiftData`.
+M1 (`monicTarget`-coordinate) subset Hensel uniqueness for `directLiftData`.
 
 If the modular subset `S` represents the `monicTarget` coordinate of an integer
 factor, and that coordinate participates in a modular factorisation of
 `monicTarget core p k`, then the canonical selected product in
-`coreLiftData core B primeData` is congruent to `monicTarget factor p k` modulo
+`directLiftData core B primeData` is congruent to `monicTarget factor p k` modulo
 the Hensel modulus.  The modular product decomposition is an explicit premise:
 it is the scale-coordinate M1 fact to be supplied by callers, not something
 derived from the older dilation-coordinate recovery carrier.
 -/
-theorem coreLiftData_subset_congr_monicTarget
+theorem directLiftData_subset_congr_monicTarget
     (core factor : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hvalid : ModPFactorization core primeData)
     (hcore_size : 0 < core.size)
@@ -616,16 +616,16 @@ theorem coreLiftData_subset_congr_monicTarget
         (Hex.precisionForCoeffBound B primeData.p)) S) :
     letI := primeData.bounds
     Hex.ZPoly.congr
-      (liftedFactorProduct (Hex.ZPoly.coreLiftData core B primeData)
-        (liftedSubsetOfModPSubset primeData (Hex.ZPoly.coreLiftData core B primeData)
+      (liftedFactorProduct (Hex.ZPoly.directLiftData core B primeData)
+        (liftedSubsetOfModPSubset primeData (Hex.ZPoly.directLiftData core B primeData)
           (henselLiftData_liftedFactors_size_eq
             (Hex.ZPoly.monicTarget core primeData.p
               (Hex.precisionForCoeffBound B primeData.p))
             (Hex.precisionForCoeffBound B primeData.p) primeData) S))
       (Hex.ZPoly.monicTarget factor primeData.p
         (Hex.precisionForCoeffBound B primeData.p))
-      ((Hex.ZPoly.coreLiftData core B primeData).p ^
-        (Hex.ZPoly.coreLiftData core B primeData).k) := by
+      ((Hex.ZPoly.directLiftData core B primeData).p ^
+        (Hex.ZPoly.directLiftData core B primeData).k) := by
   letI := primeData.bounds
   set precision := Hex.precisionForCoeffBound B primeData.p with hprecision_def
   set target := Hex.ZPoly.monicTarget core primeData.p precision with htarget_def
@@ -696,7 +696,7 @@ theorem coreLiftData_subset_congr_monicTarget
       htarget_monic hp_prime hinv (by simpa [hprecision_def] using hprecision)
       hfactors_monic hproduct_mod_p hfactors_irr hfactors_nodup
       hfactor_monic hproduct hrepP'
-  simpa [Hex.ZPoly.coreLiftData, htarget_def, hfactor_def, hprecision_def] using hcongr
+  simpa [Hex.ZPoly.directLiftData, htarget_def, hfactor_def, hprecision_def] using hcongr
 
 /-- Transport a modular representation to the monic-coordinate Hensel lift
 constructed by `toMonicLiftData`.
@@ -918,17 +918,17 @@ theorem polyProduct_monic_of_all_monic
 
 /--
 Derive the **dilated centered-lift** reconstruction equality from a proof-side
-lifted-subset representation.  This is the producer-side bridge consumed by the
+lifted-subset representation.  This is the producer-side correspondence consumed by the
 fast-path BHKS recovery wrappers
 (`candidatesOfDilatedCenteredLift`, `ofMignottePrecisionCandidateProducts`),
 which restate the reconstruction in the executable monic-transform recovery
 coordinate `dilate (leadingCoeff core) ∘ centeredLiftPoly` rather than the
 additive `scale`-coordinate modular congruence.
 
-The fast-path recovery chain is monic-gated (its producer
+The fast-path recovery chain is monic-conditional (its producer
 `bhksIndicatorCandidate?_representsIntegerFactorAtLift` carries `hcore_monic`),
 so `leadingCoeff core = 1` and the dilation collapses to the identity.  The
-proof routes through `RecoveredAtLift.candidate_eq_of_monic_dvd`
+proof uses `RecoveredAtLift.candidate_eq_of_monic_dvd`
 (`liftedRecoveryCandidate core d S = factor`) and then collapses the
 `primitivePart`/`normalizeFactorSign` normalizations of `liftedRecoveryCandidate`
 on the monic centred lift of the selected product.
@@ -965,13 +965,13 @@ theorem dilatedCenteredLift_of_representsIntegerFactorAtLift
     zpoly_normalize_factor_sign_of_monic hcl_monic]
 
 /--
-A successful `bhksIndicatorCandidate?` call yields, under monic-core and
+A successful `bhksIndicatorCandidate?` call yields, under monic polynomial and
 monic-selected-factor hypotheses, the canonical modular product equality
 `reduceModPow raw p k = reduceModPow candidate p k`.
 
 This is the per-candidate modular-product fact needed to derive the
 `RepresentsIntegerFactorAtLift` certificate from a successful candidate path
-and routes through:
+and uses:
 
 - the centred-lift round-trip identity `centeredLiftPoly_reduceModPow_eq`,
 - `monic_centeredLiftPoly_of_monic` to push monicness through the centred lift,
@@ -1161,10 +1161,10 @@ The Mathlib-transported `natDegree` of a represented integer factor equals the
 sum of the Mathlib-transported `natDegree`s of the lifted factors in the
 representing subset.
 
-On a monic core, the partition pins the represented factor to its executable
+On a monic polynomial, the partition pins the represented factor to its executable
 recombination candidate (`LiftedFactorSubsetPartition.recombinationCandidate_eq`),
 after which `natDegree_toPolynomial_recombinationCandidate_eq_sum` reads off the
-degree sum. This routes through the sound partition equality rather than passing
+degree sum. This uses the sound partition equality rather than passing
 `RepresentsIntegerFactorAtLift` to the old scaled-product recovery lemmas.
 -/
 theorem natDegree_toPolynomial_eq_sum_of_represents
@@ -1261,6 +1261,7 @@ private theorem zpoly_eq_one_of_toPolynomial_isUnit_of_pos_lc
     change 0 < Hex.DensePoly.leadingCoeff (Hex.DensePoly.C (-1 : Int)) at hpos
     simp [Hex.DensePoly.leadingCoeff, Hex.DensePoly.coeffs_C_of_ne_zero] at hpos
 
+/-- Every integer-polynomial divisor of a primitive polynomial is primitive. -/
 theorem zpoly_primitive_of_dvd_primitive_basic
     {factor target : Hex.ZPoly}
     (htarget_primitive : Hex.ZPoly.Primitive target)
@@ -1489,7 +1490,7 @@ private theorem size_primitivePart_eq_of_ne_zero {f : Hex.ZPoly} (hf : f ≠ 0) 
 /-- Abstract-bound variant of
 `natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum`: takes
 `B' : Nat`, `hcore_lc_le : (lc core).natAbs ≤ B'`, and
-`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`hprecision : 2 * B' < d.p ^ d.k` in place of the input-shape
 `defaultFactorCoeffBound core` precision constraint.
 
 The single precision caller in the proof body is
@@ -1741,14 +1742,14 @@ theorem natDegree_toPolynomial_liftedRecoveryCandidate_eq_sum_of_bound
 `natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core`:
 takes `B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`,
 `hcore_lc_le : (lc core).natAbs ≤ B'`, and
-`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`hprecision : 2 * B' < d.p ^ d.k` in place of the input-shape
 `defaultFactorCoeffBound core` precision constraint.
 
 The unscaled `_hrec_scaled` step from the existing proof is dropped
-entirely — its result was never consumed — and the centred-lift
-recovery call is routed through
+entirely; its result was never consumed; and the centred-lift
+recovery call is handled through
 `centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound`
-in place of the core-shape recovery. Both changes make this sibling
+in place of the input-shape recovery. Both changes make this sibling
 independent of `scaledRecombinationCandidate_eq_factor_of_recovery`
 and hence of the scaled recovery-candidate `_of_bound` chain.
 
@@ -1759,7 +1760,7 @@ leading-coefficient bound on `scaledLiftedFactorProduct core d S`,
 whose leading coefficient is `lc core`. Without a `B'`-shape bound
 on `lc core` itself, the abstract-precision hypothesis cannot
 discharge that lemma's separation requirement. The existing
-core-shape wrapper supplies this from
+input-shape wrapper supplies this from
 `defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self`.
 -/
 theorem natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound
@@ -1790,11 +1791,11 @@ theorem natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_
     B' hcore_lc_pos hcore_lc_le hd_liftedFactor_monic hprecision S
 
 /--
-Primitive + positive-leading-core variant of
+Primitive + positive-leading-coefficient polynomial variant of
 `natDegree_toPolynomial_eq_sum_of_represents`.
 
 For primitive non-monic `core`, the represented factor's natDegree equals the
-sum of natDegrees of the selected lifted factors. The proof routes through the
+sum of natDegrees of the selected lifted factors. The proof uses the
 scaled recovery identity `scaledRecombinationCandidate core d S = factor`
   and the size identities
 `factor.size = (scaledLiftedFactorProduct core d S).size =
@@ -1946,7 +1947,7 @@ When the scaled candidate equals an integer divisor of `target` with positive
 leading coefficient and positive degree, the executable exact-division check
 on `target` returns `some` of the proof-side cofactor.
 
-Drops `Monic factor` in favour of `0 < lc factor`, routing through
+Drops `Monic factor` in favour of `0 < lc factor`, handling through
 `exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq` instead of the
 monic-only `exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree`.  Consumed
 by the primitive recursive coverage proof together with the recovery identity

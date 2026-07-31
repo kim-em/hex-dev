@@ -37,7 +37,7 @@ import all HexBerlekampZassenhaus.BhksCandidates
 import all HexBerlekampZassenhaus.BhksRecover
 import all HexBerlekampZassenhaus.Recombination
 import all HexBerlekampZassenhaus.Factorization
-import all HexBerlekampZassenhaus.IrreducibleCore
+import all HexBerlekampZassenhaus.FactorIrreducibility
 import all HexBerlekampZassenhaus.RecombinationFactors
 
 open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
@@ -50,7 +50,7 @@ This module collects the trial-division and integer-root correctness proofs.
 -/
 namespace Hex
 
-/-- Structural case-split for the van Hoeij lattice-tier core. Every `some cf`
+/-- Structural case-split for the van Hoeij lattice factorization. Every `some cf`
 result of `latticeCoreFactorsWithBound` is either the singleton `#[core]` (the
 small-mod arm, the loop's certificate-backed early stop, and the cap all-ones
 certification arm) or a `bhksRecoveryCoreWithBound` success (the CLD-split arm,
@@ -78,7 +78,7 @@ private theorem latticeCoreFactorsWithBound_spec
         · exact absurd h.symm (Option.some_ne_none cf)
       · exact absurd h.symm (Option.some_ne_none cf)
 
-/-- PolyProduct identity for the van Hoeij lattice-tier core: every emitted
+/-- PolyProduct identity for the van Hoeij lattice factorization: every emitted
 factor array multiplies back to `core`. The singleton arms are immediate and
 the CLD-split arm reuses `bhksRecoveryCoreWithBound_product`. -/
 theorem latticeCoreFactorsWithBound_polyProduct
@@ -90,7 +90,7 @@ theorem latticeCoreFactorsWithBound_polyProduct
   · rw [hsing]; exact ZPoly.polyProduct_singleton core
   · exact bhksRecoveryCoreWithBound_product core B primeData _ _ cf hfast
 
-/-- Each factor emitted by the van Hoeij lattice-tier core is fixed by
+/-- Each factor emitted by the van Hoeij lattice factorization is fixed by
 `normalizeFactorSign`, provided `core` has positive leading coefficient. The
 CLD-split factors are sign-normalized by construction, and the singleton arms
 are `core`, fixed by its positive leading coefficient. -/
@@ -108,7 +108,7 @@ theorem latticeCoreFactorsWithBound_normalizeFactorSign
     exact normalizeFactorSign_eq_self_of_leadingCoeff_nonneg core (by omega)
   · exact bhksRecoveryCoreWithBound_some_normalizeFactorSign hfast
 
-/-- Each factor emitted by the van Hoeij lattice-tier core has positive
+/-- Each factor emitted by the van Hoeij lattice factorization has positive
 `degree?`, provided `core` itself has positive degree. The CLD-split factors
 have positive degree by construction, and the singleton arms are `core`, whose
 positive degree is the sole hypothesis. -/
@@ -688,7 +688,7 @@ private theorem trialDivisionPeelAux_factor_mem
 
 /-- A square-free integer polynomial over `Rat[x]` is not divisible by the
 square of any positive-degree integer polynomial.  This is the generic
-no-repeated-divisor bridge needed by the trial-division slow path: if
+no-repeated-divisor correspondence needed by the trial-division slow path: if
 `q * q ∣ core`, then `toRatPoly q` divides both `toRatPoly core` and its
 derivative, forcing the gcd in `SquareFreeRat core` to have size at least two. -/
 private theorem square_not_dvd_of_squareFreeRat
@@ -1017,7 +1017,7 @@ private theorem trialDivisionPeelAux_factor_property
     (trialDivisionPeelAux_factor_mem target candidates factors residual hsplit
       factor hmem)
 
-/-- PolyProduct identity for the standalone integer trial-division core. -/
+/-- PolyProduct identity for the standalone integer trial-division algorithm. -/
 theorem exhaustiveIntegerTrialCoreFactorsWithBound_polyProduct
     (core : ZPoly) (B : Nat) :
     Array.polyProduct (exhaustiveIntegerTrialCoreFactorsWithBound core B) =
@@ -1049,7 +1049,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_polyProduct
         hpeel_prod, DensePoly.mul_comm_poly (S := Int)]
     exact hsplit_prod
 
-/-- Each factor emitted by the standalone integer trial-division core is
+/-- Each factor emitted by the standalone integer trial-division algorithm is
 fixed by `normalizeFactorSign`, provided `core` has positive leading
 coefficient. -/
 theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign
@@ -1158,7 +1158,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign
       have hnot_neg : ¬ DensePoly.leadingCoeff peel.2 < 0 := by omega
       rw [if_neg hnot_neg]
 
-/-- Each factor emitted by the standalone integer trial-division core
+/-- Each factor emitted by the standalone integer trial-division algorithm
 satisfies `shouldRecordPolynomialFactor`, provided `core` has positive
 leading coefficient. -/
 theorem exhaustiveIntegerTrialCoreFactorsWithBound_shouldRecord
@@ -1509,7 +1509,7 @@ private theorem size_scale_neg_one (p : ZPoly) :
       omega
 
 /-- The peel residual is irreducible when the running target is a primitive,
-square-free divisor of the original core with positive leading coefficient
+square-free divisor of the original polynomial with positive leading coefficient
 and the trial candidates exhaust every bounded positive-leading positive-
 degree divisor.
 
@@ -1788,7 +1788,7 @@ private theorem trialDivisionCandidatesUpTo_split_at_degree
     · intro c hc; simp at hc
 
 /-- Each factor emitted by the candidate peel is irreducible when the
-running target is a primitive, square-free divisor of the original core
+running target is a primitive, square-free divisor of the original polynomial
 with positive leading coefficient and the trial candidates exhaust every
 bounded positive-leading positive-degree divisor.
 
@@ -2048,7 +2048,7 @@ private theorem trialDivisionPeel_factor_irreducible
                 DensePoly.mul_comm_poly (S := Int) finalRes factor,
                 DensePoly.mul_assoc_poly (S := Int)]
             have hq_dvd_mid : q ∣ mid := ZPoly_dvd_trans hq_dvd_factor hfactor_dvd_mid
-            -- q ∈ pre (degree q = d_split, pre has degree ≤ d_split — but pre may exclude q
+            -- q ∈ pre (degree q = d_split, pre has degree ≤ d_split; but pre may exclude q
             -- since List.append may split at any boundary; however, the construction
             -- via _split_at_degree puts q in pre since q.degree = d_split.)
             have hq_in_pre : q ∈ pre := by
@@ -2139,14 +2139,14 @@ private theorem dvd_scale_unit (p : ZPoly) {ε : Int} (hε : ε = 1 ∨ ε = -1)
   · have h := dvd_scale_neg_one (DensePoly.scale (-1 : Int) p)
     rwa [scale_neg_one_neg_one p] at h
 
-/-- The normalized square-free core divides the original polynomial.
+/-- The normalized primitive square-free part divides the original polynomial.
 
 Chains `squareFreeCore ∣ squareFreeCore * repeatedPart` through the signed
 reassembly `scale ε (squareFreeCore * repeatedPart) = primitivePart core` (the
-`X`-free core is primitive, so its primitive part is itself), then
+`X`-free part is primitive, so its primitive part is itself), then
 `core ∣ primitivePart f` (the `X`-power extraction product) and
 `primitivePart f ∣ f` (`content_mul_primitivePart`).  Lifts a coefficient bound
-on divisors of `f` to a bound on divisors of the square-free core. -/
+on divisors of `f` to a bound on divisors of the primitive square-free part. -/
 theorem squareFreeCore_dvd_self (f : ZPoly) (hf : f ≠ 0) :
     (normalizeForFactor f).squareFreeCore ∣ f := by
   have hc_prim :
@@ -2199,14 +2199,14 @@ theorem squareFreeCore_dvd_self (f : ZPoly) (hf : f ≠ 0) :
     exact (ZPoly.content_mul_primitivePart f).symm
   exact ZPoly_dvd_trans hsfc_dvd_c (ZPoly_dvd_trans hc_dvd_pf hpf_dvd_f)
 
-/-- Every factor emitted by the standalone integer trial-division core has
+/-- Every factor emitted by the standalone integer trial-division algorithm has
 positive degree, when `core` is primitive with positive leading coefficient.
 
 The three factor families are handled separately: integer-root split factors
 are `linearFactorForRoot` images (degree one); peeled candidates carry the
 positive-degree invariant of `trialDivisionCandidatesUpTo`; and the final
 residual, when retained, cannot be a constant, because a size-one divisor of a
-primitive core is a unit, which a `≠ 1` residual with positive leading
+primitive polynomial is a unit, which a `≠ 1` residual with positive leading
 coefficient is not. -/
 theorem exhaustiveIntegerTrialCoreFactorsWithBound_degree_pos
     (core : ZPoly) (B : Nat)
