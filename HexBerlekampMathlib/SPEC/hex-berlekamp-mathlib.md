@@ -189,7 +189,7 @@ assembled from (1)+(4)):
 
 ## The `Polynomial (ZMod q)` provider for `factor_poly` / `irreducibility`
 
-`HexBerlekampMathlib/FactorProvider.lean` declares
+`HexBerlekampMathlib/FactorTactic.lean` declares
 `HexBerlekampMathlib.FactorTactic.provider` (probed by name from
 `Hex.FactorTactic.providerNames`; renaming it severs the hook), extending
 the `factor_poly`/`irreducibility` elaborators to `Polynomial (ZMod q)`

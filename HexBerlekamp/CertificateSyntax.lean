@@ -35,10 +35,10 @@ output depends on elaborator-side evaluation.
 
 The `ZPoly`-level certificate tower (`PrimeFactorData`, `DegreeObstruction`,
 `ZPolyIrreducibilityCertificate`) is reified in
-`HexBerlekampZassenhaus.CertReify`, which builds on this module.
+`HexBerlekampZassenhaus.CertificateSyntax`, which builds on this module.
 -/
 
-namespace Hex.CertReify
+namespace Hex.CertificateSyntax
 
 open Lean
 
@@ -137,4 +137,4 @@ def rabinCertData (cert : Hex.Berlekamp.IrreducibilityCertificate) :
         bezout.toList.map fun w =>
           (@fpCoeffNats p bounds w.left, @fpCoeffNats p bounds w.right))
 
-end Hex.CertReify
+end Hex.CertificateSyntax

@@ -188,8 +188,8 @@ def rabinCaseJson {{p : Nat}} [bounds : ZMod64.Bounds p]
   Json.mkObj
     [("degree", natJson degree),
      ("monic", Json.bool (factor.leadingCoeff == 1)),
-     ("factor", natListJson (Hex.CertReify.fpCoeffNats factor)),
-     ("certificate", rabinJson (Hex.CertReify.rabinCertData cert)),
+     ("factor", natListJson (Hex.CertificateSyntax.fpCoeffNats factor)),
+     ("certificate", rabinJson (Hex.CertificateSyntax.rabinCertData cert)),
      ("accepted_linear", Json.bool acceptedLinear),
      ("accepted_incremental", Json.bool acceptedIncremental)]
 
@@ -274,7 +274,7 @@ def gen_rabin_replay(case, checker, max_rec, max_heartbeats):
         f"import {CERTIFICATE_IMPORT}\n"
         "open Hex\n"
         f"local instance : Hex.ZMod64.Bounds {prime} :=\n"
-        f"  Hex.CertReify.boundsOfDecide {prime} rfl\n"
+        f"  Hex.CertificateSyntax.boundsOfDecide {prime} rfl\n"
         + option_block(max_rec, max_heartbeats, declaration)
     )
 

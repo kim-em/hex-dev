@@ -6,10 +6,10 @@ Authors: Kim Morrison
 
 module
 
-public meta import HexBerlekamp.CertReify
+public meta import HexBerlekamp.CertificateSyntax
 public meta import HexBerlekamp.IrreducibleDecide
 public meta import HexBerlekamp.Factored
-public import HexBerlekamp.CertReify
+public import HexBerlekamp.CertificateSyntax
 public import HexBerlekamp.IrreducibleDecide
 public import HexBerlekamp.Factored
 public import Lean
@@ -33,7 +33,7 @@ those libraries — the driver probes the environment by name at elaboration
 time and evaluates the provider through the interpreter, so this library
 builds and works standalone, and importing a bridge upgrades the tactics.
 
-A provider module must `public meta import HexBerlekamp.TacticCore` (the
+A provider module must `public meta import HexBerlekamp.PolynomialTactic` (the
 constructor of `Provider` is meta code) and declare its provider as a
 `public meta def`. Renaming a probed constant silently severs the hook, so
 each provider carries a cross-referencing comment and the bridge test suites
@@ -145,7 +145,7 @@ private meta opaque evalFpPolyCore (p : Nat) [Hex.ZMod64.Bounds p]
 elaboration time (compiled/interpreted evaluation, not kernel reduction). -/
 meta def evalFpPoly (tactic : String) (p : Nat) [Hex.ZMod64.Bounds p]
     (pE boundsE e : Expr) : MetaM (Hex.FpPoly p) := do
-  match ← evalFpPolyCore p (Hex.CertReify.fpPolyType pE boundsE) e with
+  match ← evalFpPolyCore p (Hex.CertificateSyntax.fpPolyType pE boundsE) e with
   | .ok f => return f
   | .error msg =>
       throwError "{tactic}: failed to evaluate the polynomial{indentExpr e}\

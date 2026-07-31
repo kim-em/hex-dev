@@ -7,9 +7,9 @@ Authors: Kim Morrison
 module
 
 public meta import HexBerlekamp.IrreducibilityElab
-public meta import HexBerlekampZassenhausMathlib.FactorProvider
+public meta import HexBerlekampZassenhausMathlib.FactorTactic
 public import HexBerlekamp.IrreducibilityElab
-public import HexBerlekampZassenhausMathlib.FactorProvider
+public import HexBerlekampZassenhausMathlib.FactorTactic
 
 public section
 
@@ -79,7 +79,7 @@ meta def kernelDecideTrue (tactic : String) (prop : Expr) : MetaM Unit := do
         throwError "{tactic}: the kernel cannot reduce the factorizer replay \
             for{indentExpr prop}\nThe calling module must `import all` the \
             executable closure (see the module docstring of \
-            HexBerlekampZassenhausMathlib.BangElab and the header block of \
+            HexBerlekampZassenhausMathlib.KernelFactorTactic and the header block of \
             HexBerlekampZassenhausMathlib/FactorPolyTests.lean); reduction \
             got stuck at{indentExpr r}"
   | .error _ =>
@@ -87,7 +87,7 @@ meta def kernelDecideTrue (tactic : String) (prop : Expr) : MetaM Unit := do
           for{indentExpr prop}\nfailed (out of budget or a stuck \
           definition); the calling module must `import all` the executable \
           closure (see the module docstring of \
-          HexBerlekampZassenhausMathlib.BangElab)"
+          HexBerlekampZassenhausMathlib.KernelFactorTactic)"
 
 /-- Shared degenerate-input and budget checks for the bang fallbacks. -/
 meta def bangChecks (tactic : String) (fE : Expr) (f : Hex.ZPoly) :
@@ -113,7 +113,7 @@ meta def bangZPolyIrred (tactic : String) (fE : Expr) : MetaM Expr := do
   bangChecks tactic fE f
   kernelDecideTrue tactic (mkApp (mkConst ``Hex.ZPoly.Irreducible) fE)
   return mkApp2 (mkConst ``Hex.ZPoly.irreducible_of_decide)
-    fE Hex.CertReify.reflTrue
+    fE Hex.CertificateSyntax.reflTrue
 
 /-- The `irreducibility!` fallback for `Polynomial ℤ` inputs: parse with
 proof, then transport the kernel replay through the bridge equation. -/
@@ -122,7 +122,7 @@ meta def bangIntIrred (tactic : String) (e : Expr) : MetaM Expr := do
   bangChecks tactic e f
   kernelDecideTrue tactic (mkApp (mkConst ``Hex.ZPoly.Irreducible) fLit)
   return mkApp4 (mkConst ``HexBerlekampZassenhausMathlib.irreducible_ofZ_decide)
-    e fLit Hex.CertReify.reflTrue hP
+    e fLit Hex.CertificateSyntax.reflTrue hP
 
 /-- The membership-bounded irreducibility proposition
 `∀ q ∈ factorsE, Hex.ZPoly.Irreducible q` as an expression. -/
@@ -142,7 +142,7 @@ meta def bangFactorCommon (tactic : String) (f : Hex.ZPoly) :
     throwError "{tactic}: internal error: a factorization entry fails \
         isIrreducible; please report this"
   let factorsE := Hex.FactorTactic.listLit zpolyTy
-    (← factors.mapM fun q => Hex.CertReify.reifyZPoly q)
+    (← factors.mapM fun q => Hex.CertificateSyntax.reifyZPoly q)
   kernelDecideTrue tactic (← forallIrredProp factorsE)
   return (toExpr scalar, factorsE)
 
@@ -157,9 +157,9 @@ meta def bangZPolyFactor (fE : Expr) : MetaM Expr := do
   let lhsE ← mkAppM ``HMul.hMul
     #[← mkAppM ``Hex.DensePoly.C #[scalarE], ← mkAppM ``List.prod #[factorsE]]
   let hmulE := mkApp6 (mkConst ``Hex.DensePoly.eq_of_beqCoeffs [Level.zero])
-    intE zeroE decE lhsE fE Hex.CertReify.reflTrue
+    intE zeroE decE lhsE fE Hex.CertificateSyntax.reflTrue
   let hirredE := mkApp2 (mkConst ``Hex.ZPoly.forall_irreducible_of_decide)
-    factorsE Hex.CertReify.reflTrue
+    factorsE Hex.CertificateSyntax.reflTrue
   return mkApp5 (mkConst ``Hex.ZPoly.Factored.mk)
     fE scalarE factorsE hmulE hirredE
 
@@ -168,8 +168,8 @@ meta def bangIntFactor (e : Expr) : MetaM Expr := do
   let (f, fLit, hP) ← parseInput "factor_poly!" e
   let (scalarE, factorsE) ← bangFactorCommon "factor_poly!" f
   return mkAppN (mkConst ``Hex.FactoredPoly.ofZDecide)
-    #[e, fLit, scalarE, factorsE, Hex.CertReify.reflTrue,
-      Hex.CertReify.reflTrue, hP]
+    #[e, fLit, scalarE, factorsE, Hex.CertificateSyntax.reflTrue,
+      Hex.CertificateSyntax.reflTrue, hP]
 
 /-- Elaborate a bang-fallback argument and dispatch on its type. -/
 meta def elabBangArg (tactic : String) (t : Syntax)
@@ -234,16 +234,16 @@ meta def bangGoalProof (tgt : Expr) : MetaM Expr := do
         let f ← evalZPoly "irreducibility!" fE
         discard <| checkTransparent "irreducibility!" f fE
         bangChecks "irreducibility!" fE f
-        let fLit ← Hex.CertReify.reifyZPoly f
+        let fLit ← Hex.CertificateSyntax.reifyZPoly f
         let intE := mkConst ``Int
         let zeroE ← synthInstance (← mkAppM ``Zero #[intE])
         let decE ← synthInstance (← mkAppM ``DecidableEq #[intE])
         let hroot := mkApp6 (mkConst ``Hex.DensePoly.eq_of_beqCoeffs [Level.zero])
-          intE zeroE decE fLit fE Hex.CertReify.reflTrue
+          intE zeroE decE fLit fE Hex.CertificateSyntax.reflTrue
         let hP ← mkCongrArg tomlFn hroot
         kernelDecideTrue "irreducibility!" (mkApp (mkConst ``Hex.ZPoly.Irreducible) fLit)
         return mkApp4 (mkConst ``HexBerlekampZassenhausMathlib.irreducible_ofZ_decide)
-          (mkApp tomlFn fE) fLit Hex.CertReify.reflTrue hP
+          (mkApp tomlFn fE) fLit Hex.CertificateSyntax.reflTrue hP
     | none => bangIntIrred "irreducibility!" arg
 
 /-- Tactic forms of `irreducibility!`, mirroring `irreducibility`: bare form

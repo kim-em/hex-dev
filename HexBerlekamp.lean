@@ -7,9 +7,9 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekamp.BerlekampMatrix
-public import HexBerlekamp.CertReify
+public import HexBerlekamp.CertificateSyntax
 public import HexBerlekamp.Factored
-public import HexBerlekamp.TacticCore
+public import HexBerlekamp.PolynomialTactic
 public import HexBerlekamp.FactorPolyElab
 public import HexBerlekamp.IrreducibilityElab
 public import HexBerlekamp.DelayedKernel

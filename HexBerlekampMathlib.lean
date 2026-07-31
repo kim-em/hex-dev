@@ -8,7 +8,7 @@ module
 
 public import HexBerlekampMathlib.Irreducibility
 public import HexBerlekampMathlib.FactorPoly
-public import HexBerlekampMathlib.FactorProvider
+public import HexBerlekampMathlib.FactorTactic
 
 public section
 

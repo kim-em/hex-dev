@@ -7,20 +7,20 @@ Authors: Kim Morrison
 module
 
 public meta import HexBerlekamp.IrreducibilityElab
-public meta import HexBerlekampZassenhaus.FactorProvider
-public meta import HexBerlekampZassenhausMathlib.FactorProvider
-public meta import HexBerlekampZassenhausMathlib.BangElab
+public meta import HexBerlekampZassenhaus.FactorTactic
+public meta import HexBerlekampZassenhausMathlib.FactorTactic
+public meta import HexBerlekampZassenhausMathlib.KernelFactorTactic
 public import HexBerlekamp.IrreducibilityElab
-public import HexBerlekampZassenhaus.FactorProvider
-public import HexBerlekampZassenhausMathlib.FactorProvider
-public import HexBerlekampZassenhausMathlib.BangElab
+public import HexBerlekampZassenhaus.FactorTactic
+public import HexBerlekampZassenhausMathlib.FactorTactic
+public import HexBerlekampZassenhausMathlib.KernelFactorTactic
 -- The multi-prime proofs attach `Eq.refl true` for each certificate check, so
 -- the kernel must reduce `checkIrreducibleCertLinear` (and its Berlekamp
 -- pow-chain replay) plus the `Array`/`DensePoly` `==` comparisons; the bang
 -- forms additionally make the kernel re-run the whole factorizer, whose
 -- bodies are not `@[expose]`d. `import all` the executable closure so both
 -- kinds of emitted checks reduce (this is the calling-module cost of the
--- bang forms documented in `BangElab.lean`).
+-- bang forms documented in `KernelFactorTactic.lean`).
 import all HexArith.ExtGcd
 import all HexArith.Barrett.Accumulator
 import all HexArith.Barrett.Context
@@ -71,7 +71,7 @@ import all HexPolyFp.SquareFree.YunCorrect
 import all HexPolyFp.SquareFree.YunMeasure
 import all HexPolyFp.SquareFree.YunReduce
 import all HexBerlekamp.BerlekampMatrix
-import all HexBerlekamp.CertReify
+import all HexBerlekamp.CertificateSyntax
 import all HexBerlekamp.DelayedKernel
 import all HexBerlekamp.DistinctDegree
 import all HexBerlekamp.Factor
@@ -82,13 +82,13 @@ import all HexBerlekamp.Irreducibility
 import all HexBerlekamp.IrreducibilityElab
 import all HexBerlekamp.IrreducibleDecide
 import all HexBerlekamp.RabinSoundness
-import all HexBerlekamp.TacticCore
+import all HexBerlekamp.PolynomialTactic
 import all HexBerlekamp.RabinSoundness.KernelWitness
 import all HexBerlekamp.RabinSoundness.RabinCore
 import all HexBerlekamp.RabinSoundness.RabinShape
 import all HexBerlekampZassenhaus.BhksCandidates
 import all HexBerlekampZassenhaus.BhksRecover
-import all HexBerlekampZassenhaus.CertReify
+import all HexBerlekampZassenhaus.CertificateSyntax
 import all HexBerlekampZassenhaus.Certificate
 import all HexBerlekampZassenhaus.ChoosePrimeData
 import all HexBerlekampZassenhaus.SquareFreeInput
@@ -100,7 +100,7 @@ import all HexBerlekampZassenhaus.Classical.Search
 import all HexBerlekampZassenhaus.Classical.Factorization
 import all HexBerlekampZassenhaus.Factorization
 import all HexBerlekampZassenhaus.Factorization
-import all HexBerlekampZassenhaus.FactorProvider
+import all HexBerlekampZassenhaus.FactorTactic
 import all HexBerlekampZassenhaus.FactorTacticTests
 import all HexBerlekampZassenhaus.Factored
 import all HexBerlekampZassenhaus.IrreducibleCore
@@ -239,13 +239,13 @@ private meta def roundTrips (f : Hex.ZPoly) : MetaM Bool := do
   match Hex.certifyIrreducible? f with
   | none => return false
   | some cert => do
-      let certE := Hex.CertReify.reifyCertificate cert
+      let certE := Hex.CertificateSyntax.reifyCertificate cert
       Meta.check certE
       let cert' ← evalCertificate certE
-      let fE ← Hex.CertReify.reifyZPoly f
+      let fE ← Hex.CertificateSyntax.reifyZPoly f
       Meta.check fE
       let f' ← evalZPoly fE
-      return Hex.CertReify.certificateData cert == Hex.CertReify.certificateData cert'
+      return Hex.CertificateSyntax.certificateData cert == Hex.CertificateSyntax.certificateData cert'
         && f.toArray == f'.toArray
         && Hex.checkIrreducibleCertLinear f' cert'
 

@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekamp.CertReify
+public import HexBerlekamp.CertificateSyntax
 public import HexBerlekampZassenhaus.Certificate
 public import Lean
 
@@ -16,12 +16,12 @@ public section
 Elaboration-time reification of `Hex.ZPoly` values and the
 `Hex.ZPolyIrreducibilityCertificate` tower as literal `Expr`s, for the
 certificate-backed tactics (`irreducibility`, `factor_poly`). Builds on the
-`FpPoly`-level reifiers in `HexBerlekamp.CertReify`; see that module for the
+`FpPoly`-level reifiers in `HexBerlekamp.CertificateSyntax`; see that module for the
 smart-constructor discipline (every proof obligation is a `_ = true` slot the
 kernel discharges by reduction on literal data).
 -/
 
-namespace Hex.CertReify
+namespace Hex.CertificateSyntax
 
 open Lean
 
@@ -78,4 +78,4 @@ def certificateData (cert : Hex.ZPolyIrreducibilityCertificate) :
   (cert.perPrime.toList.map primeFactorDataData,
     cert.degreeObstructions.toList.map fun o => (o.targetDegree, o.primeIndex))
 
-end Hex.CertReify
+end Hex.CertificateSyntax

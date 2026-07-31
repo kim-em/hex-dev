@@ -1974,6 +1974,8 @@ theorem exactQuotient?_scaledRecombinationCandidate_eq_some_of_eq_factor_of_prim
     exact Hex.exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq hpos_lc hpos hmul
   · rw [heq]; exact hmul
 
+namespace RecombinationSearch
+
 /--
 Executable recombination-search success for one lifted subset.
 
@@ -1983,7 +1985,7 @@ by `recombinationSearchMod`.  If the subset's executable candidate is an
 irreducible integer divisor of the current target and the recursive search on
 the quotient/rest problem succeeds, the surface recombination search succeeds.
 -/
-theorem recombinationSearchMod_isSome_of_liftedSubset_candidate_eq_factor
+theorem succeeds_for_represented_factor
     {core factor quotient : Hex.ZPoly} {d : Hex.LiftData}
     {S : LiftedFactorSubset d}
     (hcore_ne_one : core ≠ 1)
@@ -2019,8 +2021,7 @@ theorem recombinationSearchMod_isSome_of_liftedSubset_candidate_eq_factor
   · simpa [heq] using hquot
 
 /--
-Matched-rest variant of
-`recombinationSearchMod_isSome_of_liftedSubset_candidate_eq_factor`.
+Remaining-factor variant of `succeeds_for_represented_factor`.
 
 At a recursive recombination state, `localFactors` is no longer the full
 lifted-factor list; it is the order-preserving list of the remaining proof-side
@@ -2028,7 +2029,7 @@ indices `J`.  If a represented subset `S ⊆ J` contains the current minimum
 remaining index, the matching predicate identifies its executable split and
 the ordinary one-step search lemma applies.
 -/
-theorem recombinationSearchModAux_isSome_of_liftedSubset_candidate_eq_factor_of_matches
+theorem succeeds_for_matched_factors
     {target factor quotient : Hex.ZPoly} {d : Hex.LiftData}
     {J S : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
     {fuel : Nat}
@@ -2069,15 +2070,14 @@ theorem recombinationSearchModAux_isSome_of_liftedSubset_candidate_eq_factor_of_
   · simpa [heq] using hquot
 
 /--
-Exact-output matched-rest variant of
-`recombinationSearchModAux_isSome_of_liftedSubset_candidate_eq_factor_of_matches`.
+Exact-output variant of `succeeds_for_matched_factors`.
 
 When the split selected from a matched remaining-index set is the first
 successful executable split, the returned factor list has the represented
 factor at its head. This is the local first-success lemma needed by the
 recursive coverage proof before it reasons about earlier successful splits.
 -/
-theorem recombinationSearchModAux_first_success_witness_of_liftedSubset_candidate_eq_factor_of_matches
+theorem emits_represented_factor
     {target factor quotient : Hex.ZPoly} {d : Hex.LiftData}
     {J S : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
     {fuel : Nat} {restFactors : List Hex.ZPoly}
@@ -2150,12 +2150,11 @@ theorem recombinationSearchModAux_first_success_witness_of_liftedSubset_candidat
     exact Associated.refl (HexPolyZMathlib.toPolynomial factor)
 
 /--
-Variant of
-`recombinationSearchMod_isSome_of_liftedSubset_candidate_eq_factor` that
+Variant of `succeeds_for_represented_factor` that
 discharges the executable quotient check from ordinary divisibility plus the
 monic positive-degree hypotheses required by `exactQuotient?`.
 -/
-theorem recombinationSearchMod_isSome_of_liftedSubset_factor_dvd
+theorem succeeds_for_divisor
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
     (hcore_ne_one : core ≠ 1)
     (hsize_pos : 0 < d.liftedFactors.size)
@@ -2178,20 +2177,19 @@ theorem recombinationSearchMod_isSome_of_liftedSubset_factor_dvd
       heq hmonic hdegree hdvd with
     ⟨quotient, hquot, _hmul⟩
   exact
-    recombinationSearchMod_isSome_of_liftedSubset_candidate_eq_factor
+    succeeds_for_represented_factor
       (core := core) (factor := factor) (quotient := quotient) (d := d)
       (S := S) hcore_ne_one hsize_pos hfirst heq hirr
       (hsearch_rest quotient hquot) hquot
 
 /--
-Matched-rest variant of
-`recombinationSearchMod_isSome_of_liftedSubset_factor_dvd`: discharges the
+Remaining-factor variant of `succeeds_for_divisor`: discharges the
 executable quotient check from divisibility plus monic positive-degree
 hypotheses at the recursive recombination state, where the running
 `localFactors` list matches an arbitrary remaining-index set `J` and the
 candidate subset `S ⊆ J` contains the current minimum remaining index.
 -/
-theorem recombinationSearchModAux_isSome_of_liftedSubset_factor_dvd_of_matches
+theorem succeeds_for_matched_divisor
     {target factor : Hex.ZPoly} {d : Hex.LiftData}
     {J S : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
     {fuel : Nat}
@@ -2218,7 +2216,7 @@ theorem recombinationSearchModAux_isSome_of_liftedSubset_factor_dvd_of_matches
       heq hmonic hdegree hdvd with
     ⟨quotient, hquot, _hmul⟩
   exact
-    recombinationSearchModAux_isSome_of_liftedSubset_candidate_eq_factor_of_matches
+    succeeds_for_matched_factors
       (target := target) (factor := factor) (quotient := quotient) (d := d)
       (J := J) (S := S) (localFactors := localFactors) (fuel := fuel)
       htarget_ne_one hmatches hSJ hne hmin heq hirr
@@ -2233,7 +2231,7 @@ Mathlib-side coverage proofs need without requiring downstream statements to
 mention the internals of `firstSome`: the returned list, head membership,
 `shouldRecord`, exact quotient witness, and recursive-rest success.
 -/
-theorem recombinationSearchMod_first_success_witness_of_step_of_prefix_none
+theorem emits_first_success
     {target candidate quotient : Hex.ZPoly} {modulus : Nat}
     {localFactors selected rest restFactors : List Hex.ZPoly}
     {pre suffix : List (List Hex.ZPoly × List Hex.ZPoly)}
@@ -2280,6 +2278,7 @@ theorem recombinationSearchMod_first_success_witness_of_step_of_prefix_none
   · simp
   · exact ⟨quotient, hquot, hsearch_rest⟩
 
+end RecombinationSearch
 
 /-- A `Hex.ZPoly` factor that passes the executable `shouldRecordPolynomialFactor`
 check is non-zero and not a unit after transport to `Polynomial ℤ`.  The

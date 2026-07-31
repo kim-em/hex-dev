@@ -10,9 +10,9 @@ module
 -- elaboration-time evaluation): the emitted kernel checks must reduce through
 -- the exposed closure alone.
 public meta import HexBerlekamp.IrreducibilityElab
-public meta import HexBerlekampZassenhaus.FactorProvider
+public meta import HexBerlekampZassenhaus.FactorTactic
 public import HexBerlekamp.IrreducibilityElab
-public import HexBerlekampZassenhaus.FactorProvider
+public import HexBerlekampZassenhaus.FactorTactic
 
 public section
 

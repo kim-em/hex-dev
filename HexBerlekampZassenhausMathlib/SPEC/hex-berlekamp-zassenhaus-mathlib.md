@@ -141,7 +141,7 @@ with a diagnostic pointing at the kernel-decide fallbacks.
 
 ## The kernel-decide fallbacks `irreducibility!` / `factor_poly!`
 
-`BangElab.lean` declares bang variants of both tactics (term, tactic, and
+`KernelFactorTactic.lean` declares bang variants of both tactics (term, tactic, and
 goal forms). Each first runs the normal certificate pipeline; on failure it
 falls back to a kernel `decide` through
 `Hex.ZPoly.instDecidableIrreducible` — the emitted proof is
@@ -151,7 +151,7 @@ falls back to a kernel `decide` through
 Berlekamp-Zassenhaus factorizer to verify it. This is the only route for
 balanced inputs outside both certificate languages.
 
-Two costs land on the *calling* module (see the `BangElab` module
+Two costs land on the *calling* module (see the `KernelFactorTactic` module
 docstring): it must `import all` the executable closure (the factorizer's
 bodies are not `@[expose]`d, and non-exposed bodies are invisible to a
 downstream module's kernel — this includes core modules such as

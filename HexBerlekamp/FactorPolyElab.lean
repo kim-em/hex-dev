@@ -6,10 +6,10 @@ Authors: Kim Morrison
 
 module
 
-public meta import HexBerlekamp.TacticCore
+public meta import HexBerlekamp.PolynomialTactic
 public meta import HexPolyFp.SquareFree
 public meta import HexBerlekamp.Factor
-public import HexBerlekamp.TacticCore
+public import HexBerlekamp.PolynomialTactic
 public import HexPolyFp.SquareFree
 public import HexBerlekamp.Factor
 
@@ -44,26 +44,26 @@ meta def listLit (ty : Expr) (xs : List Expr) : Expr :=
 certified-cover entry, at a reified prime and bounds instance. -/
 meta def coverEntryType (pE boundsE : Expr) : Expr :=
   mkApp2 (mkConst ``Prod [Level.zero, Level.zero])
-    (Hex.CertReify.fpPolyType pE boundsE)
+    (Hex.CertificateSyntax.fpPolyType pE boundsE)
     (mkApp2 (mkConst ``Prod [Level.zero, Level.zero])
-      (Hex.CertReify.zmodType pE boundsE)
+      (Hex.CertificateSyntax.zmodType pE boundsE)
       (mkConst ``Hex.Berlekamp.IrreducibilityCertificate))
 
 /-- Reify one certified-cover entry `(m, c, cert)`. -/
 meta def reifyCoverEntry (pE boundsE : Expr) {p : Nat} [Hex.ZMod64.Bounds p]
     (m : Hex.FpPoly p) (c : Hex.ZMod64 p)
     (cert : Hex.Berlekamp.IrreducibilityCertificate) : Expr :=
-  let mE := Hex.CertReify.reifyFpPolyOfNats pE boundsE (Hex.CertReify.fpCoeffNats m)
-  let cE := Hex.CertReify.reifyZMod64 pE boundsE c.toNat
-  let certE := Hex.CertReify.reifyRabinCert cert
+  let mE := Hex.CertificateSyntax.reifyFpPolyOfNats pE boundsE (Hex.CertificateSyntax.fpCoeffNats m)
+  let cE := Hex.CertificateSyntax.reifyZMod64 pE boundsE c.toNat
+  let certE := Hex.CertificateSyntax.reifyRabinCert cert
   mkApp4 (mkConst ``Prod.mk [Level.zero, Level.zero])
-    (Hex.CertReify.fpPolyType pE boundsE)
+    (Hex.CertificateSyntax.fpPolyType pE boundsE)
     (mkApp2 (mkConst ``Prod [Level.zero, Level.zero])
-      (Hex.CertReify.zmodType pE boundsE)
+      (Hex.CertificateSyntax.zmodType pE boundsE)
       (mkConst ``Hex.Berlekamp.IrreducibilityCertificate))
     mE
     (mkApp4 (mkConst ``Prod.mk [Level.zero, Level.zero])
-      (Hex.CertReify.zmodType pE boundsE)
+      (Hex.CertificateSyntax.zmodType pE boundsE)
       (mkConst ``Hex.Berlekamp.IrreducibilityCertificate) cE certE)
 
 /-- The untrusted factor search for `f : FpPoly p`: leading unit plus monic
@@ -127,8 +127,8 @@ meta def mkFpFactored (tactic : String) (p : Nat)
       let f ← evalFpPoly tactic p pE boundsE fE
       -- Opaque-input contract: the emitted checks state over the user's term,
       -- so it must be definitionally transparent down to its literal.
-      let fLit := Hex.CertReify.reifyFpPolyOfNats pE boundsE
-        (Hex.CertReify.fpCoeffNats f)
+      let fLit := Hex.CertificateSyntax.reifyFpPolyOfNats pE boundsE
+        (Hex.CertificateSyntax.fpCoeffNats f)
       unless ← isDefEq fLit fE do
         throwError "{tactic}: the polynomial{indentExpr fE}\
             \nevaluates to{indentExpr fLit}\
@@ -145,20 +145,20 @@ meta def mkFpFactored (tactic : String) (p : Nat)
       unless Hex.Berlekamp.checkIrredCover factors entries do
         throwError "{tactic}: internal error: the generated certificates fail \
             checkIrredCover; please report this"
-      let polyTy := Hex.CertReify.fpPolyType pE boundsE
-      let scalarE := Hex.CertReify.reifyZMod64 pE boundsE scalar.toNat
+      let polyTy := Hex.CertificateSyntax.fpPolyType pE boundsE
+      let scalarE := Hex.CertificateSyntax.reifyZMod64 pE boundsE scalar.toNat
       let factorsE := listLit polyTy (factors.map fun q =>
-        Hex.CertReify.reifyFpPolyOfNats pE boundsE (Hex.CertReify.fpCoeffNats q))
+        Hex.CertificateSyntax.reifyFpPolyOfNats pE boundsE (Hex.CertificateSyntax.fpCoeffNats q))
       let certifiedE := listLit (coverEntryType pE boundsE)
         (entries.map fun (m, c, cert) => reifyCoverEntry pE boundsE m c cert)
       let lhsE ← mkAppM ``HMul.hMul
         #[← mkAppM ``Hex.DensePoly.C #[scalarE], ← mkAppM ``List.prod #[factorsE]]
       let hmulE := mkApp6 (mkConst ``Hex.DensePoly.eq_of_beqCoeffs [Level.zero])
-        RE zeroE decE lhsE fE Hex.CertReify.reflTrue
+        RE zeroE decE lhsE fE Hex.CertificateSyntax.reflTrue
       let hirredE := mkApp6
         (mkConst ``Hex.Berlekamp.irreducible_of_checkIrredCover)
-        pE boundsE Hex.CertReify.reflTrue factorsE certifiedE
-        Hex.CertReify.reflTrue
+        pE boundsE Hex.CertificateSyntax.reflTrue factorsE certifiedE
+        Hex.CertificateSyntax.reflTrue
       return mkApp7 (mkConst ``Hex.FpPoly.Factored.mk)
         pE boundsE fE scalarE factorsE hmulE hirredE
 

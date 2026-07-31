@@ -37,8 +37,8 @@ meta def proveFpIrreducible (tactic : String) (p : Nat)
     (pE boundsE fE : Expr) : MetaM Expr := do
       let hp : Hex.Nat.Prime p := Hex.Nat.isPrimeTrial_isPrime hpt
       let f ← evalFpPoly tactic p pE boundsE fE
-      let fLit := Hex.CertReify.reifyFpPolyOfNats pE boundsE
-        (Hex.CertReify.fpCoeffNats f)
+      let fLit := Hex.CertificateSyntax.reifyFpPolyOfNats pE boundsE
+        (Hex.CertificateSyntax.fpCoeffNats f)
       unless ← isDefEq fLit fE do
         throwError "{tactic}: the polynomial{indentExpr fE}\
             \nevaluates to{indentExpr fLit}\
@@ -60,10 +60,10 @@ meta def proveFpIrreducible (tactic : String) (p : Nat)
                 \nis not irreducible over F_{p}: factor_poly finds \
                 {factors.length} irreducible factors (with multiplicity)"
         | some cert =>
-            let mE := Hex.CertReify.reifyFpPolyOfNats pE boundsE
-              (Hex.CertReify.fpCoeffNats m)
-            let cE := Hex.CertReify.reifyZMod64 pE boundsE unit.toNat
-            let certE := Hex.CertReify.reifyRabinCert cert
+            let mE := Hex.CertificateSyntax.reifyFpPolyOfNats pE boundsE
+              (Hex.CertificateSyntax.fpCoeffNats m)
+            let cE := Hex.CertificateSyntax.reifyZMod64 pE boundsE unit.toNat
+            let certE := Hex.CertificateSyntax.reifyRabinCert cert
             -- Untrusted-search self-checks before emitting anything.
             unless decide (unit = 0) = false &&
                 Hex.DensePoly.beqCoeffs (Hex.DensePoly.scale unit m) f &&
@@ -73,8 +73,8 @@ meta def proveFpIrreducible (tactic : String) (p : Nat)
             return mkApp10
               (mkConst ``Hex.Berlekamp.irreducible_of_checkMonicCert_scale)
               pE boundsE fE mE cE certE
-              Hex.CertReify.reflTrue Hex.CertReify.reflFalse
-              Hex.CertReify.reflTrue Hex.CertReify.reflTrue
+              Hex.CertificateSyntax.reflTrue Hex.CertificateSyntax.reflFalse
+              Hex.CertificateSyntax.reflTrue Hex.CertificateSyntax.reflTrue
       else
         throwError "{tactic}: internal error: non-monic normalization; \
             please report this"

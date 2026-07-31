@@ -16,7 +16,7 @@ public section
 /-!
 The `Polynomial (ZMod q)` provider for the `factor_poly`/`irreducibility`
 elaborators: importing this library upgrades the tactics (declared in
-`HexBerlekamp.TacticCore` / probed by name, see `providerNames`) to handle
+`HexBerlekamp.PolynomialTactic` / probed by name, see `providerNames`) to handle
 Mathlib polynomials over prime fields with a literal modulus.
 
 The heart of the provider is a parser-with-proof: a meta recursion over the
@@ -109,7 +109,7 @@ meta def constLeaf {q : Nat} [Hex.ZMod64.Bounds q]
     (tactic : String) (pE boundsE : Expr) (k : Nat) (cRhsE : Expr)
     (hTail? : Option Expr) : MetaM (Hex.FpPoly q × Expr × Expr) := do
   let v : Hex.FpPoly q := Hex.DensePoly.C (Hex.ZMod64.ofNat q k)
-  let zLit := Hex.CertReify.reifyZMod64 pE boundsE k
+  let zLit := Hex.CertificateSyntax.reifyZMod64 pE boundsE k
   let vE ← mkAppM ``Hex.DensePoly.C #[zLit]
   let t1 ← mkAppOptM ``HexBerlekampMathlib.toMathlibPolynomial_C
     #[some pE, some boundsE, some zLit]
@@ -168,7 +168,7 @@ meta partial def parsePolynomial (tactic : String) (q : Nat) [Hex.ZMod64.Bounds 
       let (va, vaE, pa) ← parsePolynomial tactic q pE boundsE fuel a
       let n ← getNatLit tactic nE
       let polyTy ← inferType e
-      let fpTy := Hex.CertReify.fpPolyType pE boundsE
+      let fpTy := Hex.CertificateSyntax.fpPolyType pE boundsE
       let mulFn ← mkAppOptM ``HMul.hMul #[some polyTy, some polyTy, some polyTy, none]
       -- `a ^ 0`: value `1`, proof through `toMathlibPolynomial_one` and `pow_zero`.
       let mut v : Hex.FpPoly q := 1
@@ -236,12 +236,12 @@ meta def parseInput (tactic : String) (q : Nat) [Hex.ZMod64.Bounds q]
     (pE boundsE : Expr) (e : Expr) :
     MetaM (Hex.FpPoly q × Expr × Expr) := do
   let (v, vE, prf) ← parsePolynomial tactic q pE boundsE 16 e
-  let fLit := Hex.CertReify.reifyFpPolyOfNats pE boundsE (Hex.CertReify.fpCoeffNats v)
-  let RE := Hex.CertReify.zmodType pE boundsE
+  let fLit := Hex.CertificateSyntax.reifyFpPolyOfNats pE boundsE (Hex.CertificateSyntax.fpCoeffNats v)
+  let RE := Hex.CertificateSyntax.zmodType pE boundsE
   let zeroE ← synthInstance (← mkAppM ``Zero #[RE])
   let decE ← synthInstance (← mkAppM ``DecidableEq #[RE])
   let hroot := mkApp6 (mkConst ``Hex.DensePoly.eq_of_beqCoeffs [Level.zero])
-    RE zeroE decE fLit vE Hex.CertReify.reflTrue
+    RE zeroE decE fLit vE Hex.CertificateSyntax.reflTrue
   let hP ← mkEqTrans (← mkCongrArg (tomlFn pE boundsE) hroot) prf
   return (v, fLit, hP)
 
@@ -251,7 +251,7 @@ search as untrusted search, self-check, and emit a reified
 meta def elabFactorZMod (tactic : String) (q : Nat) [Hex.ZMod64.Bounds q]
     (hpt : Hex.Nat.isPrimeTrial q = true) (pE e : Expr) :
     Term.TermElabM Expr := do
-  let boundsE := Hex.CertReify.reifyBounds pE
+  let boundsE := Hex.CertificateSyntax.reifyBounds pE
   let (f, fLit, hP) ← parseInput tactic q pE boundsE e
   let hp : Hex.Nat.Prime q := Hex.Nat.isPrimeTrial_isPrime hpt
   let (scalar, factors) := Hex.FactorTactic.fpFactorSearch q hp f
@@ -266,16 +266,16 @@ meta def elabFactorZMod (tactic : String) (q : Nat) [Hex.ZMod64.Bounds q]
   unless Hex.Berlekamp.checkIrredCover factors entries do
     throwError "{tactic}: internal error: the generated certificates fail \
         checkIrredCover; please report this"
-  let polyTy := Hex.CertReify.fpPolyType pE boundsE
-  let scalarE := Hex.CertReify.reifyZMod64 pE boundsE scalar.toNat
+  let polyTy := Hex.CertificateSyntax.fpPolyType pE boundsE
+  let scalarE := Hex.CertificateSyntax.reifyZMod64 pE boundsE scalar.toNat
   let factorsE := Hex.FactorTactic.listLit polyTy (factors.map fun g =>
-    Hex.CertReify.reifyFpPolyOfNats pE boundsE (Hex.CertReify.fpCoeffNats g))
+    Hex.CertificateSyntax.reifyFpPolyOfNats pE boundsE (Hex.CertificateSyntax.fpCoeffNats g))
   let certifiedE := Hex.FactorTactic.listLit (Hex.FactorTactic.coverEntryType pE boundsE)
     (entries.map fun (m, c, cert) => Hex.FactorTactic.reifyCoverEntry pE boundsE m c cert)
   return mkAppN (mkConst ``Hex.FactoredPoly.ofFp)
     #[pE, boundsE, e, fLit, scalarE, factorsE, certifiedE,
-      Hex.CertReify.reflTrue, Hex.CertReify.reflTrue, Hex.CertReify.reflTrue,
-      Hex.CertReify.reflTrue, hP]
+      Hex.CertificateSyntax.reflTrue, Hex.CertificateSyntax.reflTrue, Hex.CertificateSyntax.reflTrue,
+      Hex.CertificateSyntax.reflTrue, hP]
 
 /-- The `irreducibility` arm: parse with proof, build the Rabin certificate as
 untrusted search, self-check, and emit a reified
@@ -283,7 +283,7 @@ untrusted search, self-check, and emit a reified
 meta def elabIrredZMod (tactic : String) (q : Nat) [Hex.ZMod64.Bounds q]
     (hpt : Hex.Nat.isPrimeTrial q = true) (pE e : Expr) :
     Term.TermElabM Expr := do
-  let boundsE := Hex.CertReify.reifyBounds pE
+  let boundsE := Hex.CertificateSyntax.reifyBounds pE
   let (f, fLit, hP) ← parseInput tactic q pE boundsE e
   if f.size = 0 then
     throwError "{tactic}: the zero polynomial is not irreducible"
@@ -308,13 +308,13 @@ meta def elabIrredZMod (tactic : String) (q : Nat) [Hex.ZMod64.Bounds q]
             decide (0 < f.degree?.getD 0) do
           throwError "{tactic}: internal error: the generated certificate \
               fails its own checks; please report this"
-        let mE := Hex.CertReify.reifyFpPolyOfNats pE boundsE (Hex.CertReify.fpCoeffNats m)
-        let cE := Hex.CertReify.reifyZMod64 pE boundsE unit.toNat
-        let certE := Hex.CertReify.reifyRabinCert cert
+        let mE := Hex.CertificateSyntax.reifyFpPolyOfNats pE boundsE (Hex.CertificateSyntax.fpCoeffNats m)
+        let cE := Hex.CertificateSyntax.reifyZMod64 pE boundsE unit.toNat
+        let certE := Hex.CertificateSyntax.reifyRabinCert cert
         return mkAppN (mkConst ``HexBerlekampMathlib.irreducible_ofFp)
           #[pE, boundsE, e, fLit, mE, cE, certE,
-            Hex.CertReify.reflTrue, Hex.CertReify.reflFalse, Hex.CertReify.reflTrue,
-            Hex.CertReify.reflTrue, Hex.CertReify.reflTrue, hP]
+            Hex.CertificateSyntax.reflTrue, Hex.CertificateSyntax.reflFalse, Hex.CertificateSyntax.reflTrue,
+            Hex.CertificateSyntax.reflTrue, Hex.CertificateSyntax.reflTrue, hP]
   else
     throwError "{tactic}: internal error: non-monic normalization; please \
         report this"

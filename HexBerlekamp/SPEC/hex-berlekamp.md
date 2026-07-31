@@ -115,7 +115,7 @@ and inputs must be kernel-transparent closed terms (checked, with a clear
 error, at elaboration time).
 
 Other input types dispatch through the `Hex.FactorTactic.Provider` hook
-(`TacticCore.lean`): downstream libraries declare a provider under a
+(`PolynomialTactic.lean`): downstream libraries declare a provider under a
 well-known name (`providerNames`), probed from the environment at
 elaboration time — no imports in this direction. `HexBerlekampZassenhaus`
 registers the `ZPoly` arms; the Mathlib bridges register the

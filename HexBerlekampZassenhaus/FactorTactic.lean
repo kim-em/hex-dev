@@ -6,13 +6,13 @@ Authors: Kim Morrison
 
 module
 
-public meta import HexBerlekamp.TacticCore
-public meta import HexBerlekampZassenhaus.CertReify
+public meta import HexBerlekamp.PolynomialTactic
+public meta import HexBerlekampZassenhaus.CertificateSyntax
 public meta import HexBerlekampZassenhaus.IrreducibleDecide
 public meta import HexBerlekampZassenhaus.Factored
 public meta import HexBerlekampZassenhaus.Factorization
-public import HexBerlekamp.TacticCore
-public import HexBerlekampZassenhaus.CertReify
+public import HexBerlekamp.PolynomialTactic
+public import HexBerlekampZassenhaus.CertificateSyntax
 public import HexBerlekampZassenhaus.IrreducibleDecide
 public import HexBerlekampZassenhaus.Factored
 public import HexBerlekampZassenhaus.Factorization
@@ -22,7 +22,7 @@ public section
 /-!
 The `Hex.ZPoly` provider for the `factor_poly`/`irreducibility` elaborators:
 importing this library upgrades the tactics (declared in
-`HexBerlekamp.TacticCore` / probed by name, see `providerNames`) to handle
+`HexBerlekamp.PolynomialTactic` / probed by name, see `providerNames`) to handle
 integer polynomials.
 
 The compiled Berlekamp–Zassenhaus factorizer runs at elaboration time as
@@ -152,11 +152,11 @@ meta def searchWitness (q : Hex.ZPoly) : Option Hex.ZPoly.IrredWitness := Id.run
 meta def reifyModPWitness (w : Hex.ZPoly.ModPWitness) : Expr :=
   letI := w.bounds
   let pE := mkNatLit w.p
-  let boundsE := Hex.CertReify.reifyBounds pE
+  let boundsE := Hex.CertificateSyntax.reifyBounds pE
   mkApp5 (mkConst ``Hex.ZPoly.ModPWitness.mk) pE boundsE
-    (Hex.CertReify.reifyFpPolyOfNats pE boundsE (Hex.CertReify.fpCoeffNats w.m))
-    (Hex.CertReify.reifyZMod64 pE boundsE w.c.toNat)
-    (Hex.CertReify.reifyRabinCert w.cert)
+    (Hex.CertificateSyntax.reifyFpPolyOfNats pE boundsE (Hex.CertificateSyntax.fpCoeffNats w.m))
+    (Hex.CertificateSyntax.reifyZMod64 pE boundsE w.c.toNat)
+    (Hex.CertificateSyntax.reifyRabinCert w.cert)
 
 /-- Reify an `IrredWitness`. -/
 meta def reifyWitness : Hex.ZPoly.IrredWitness → Expr
@@ -179,7 +179,7 @@ meta def dedupZPolys (l : List Hex.ZPoly) : List Hex.ZPoly :=
 
 /-- The balanced-factor decline diagnostic. -/
 meta def balancedDecline (tactic : String) (q : Hex.ZPoly) : MetaM MessageData := do
-  let qE ← Hex.CertReify.reifyZPoly q
+  let qE ← Hex.CertificateSyntax.reifyZPoly q
   return m!"{tactic}: the irreducible factor{indentExpr qE}\
       \nhas no single-prime modular witness among the candidate primes \
       (its modular factorizations are balanced, e.g. Swinnerton-Dyer \
@@ -191,7 +191,7 @@ meta def balancedDecline (tactic : String) (q : Hex.ZPoly) : MetaM MessageData :
 evaluated literal. -/
 meta def checkTransparent (tactic : String) (f : Hex.ZPoly) (fE : Expr) :
     MetaM Expr := do
-  let fLit ← Hex.CertReify.reifyZPoly f
+  let fLit ← Hex.CertificateSyntax.reifyZPoly f
   unless ← isDefEq fLit fE do
     throwError "{tactic}: the polynomial{indentExpr fE}\
         \nevaluates to{indentExpr fLit}\
@@ -231,18 +231,18 @@ meta def factorPolyZPoly (zeroE decE fE : Expr) :
   let zpolyTy := mkApp3 (mkConst ``Hex.DensePoly [Level.zero]) intE zeroE decE
   let scalarE := toExpr scalar
   let factorsE := listLit zpolyTy
-    (← factors.mapM fun q => Hex.CertReify.reifyZPoly q)
+    (← factors.mapM fun q => Hex.CertificateSyntax.reifyZPoly q)
   let witnessTy := mkConst ``Hex.ZPoly.IrredWitness
   let pairTy := mkApp2 (mkConst ``Prod [Level.zero, Level.zero]) zpolyTy witnessTy
   let certifiedE := listLit pairTy (← certified.mapM fun (q, w) => do
     return mkApp4 (mkConst ``Prod.mk [Level.zero, Level.zero]) zpolyTy witnessTy
-      (← Hex.CertReify.reifyZPoly q) (reifyWitness w))
+      (← Hex.CertificateSyntax.reifyZPoly q) (reifyWitness w))
   let lhsE ← mkAppM ``HMul.hMul
     #[← mkAppM ``Hex.DensePoly.C #[scalarE], ← mkAppM ``List.prod #[factorsE]]
   let hmulE := mkApp6 (mkConst ``Hex.DensePoly.eq_of_beqCoeffs [Level.zero])
-    intE zeroE decE lhsE fE Hex.CertReify.reflTrue
+    intE zeroE decE lhsE fE Hex.CertificateSyntax.reflTrue
   let hirredE := mkApp3 (mkConst ``Hex.ZPoly.irreducible_of_checkIrredCover)
-    factorsE certifiedE Hex.CertReify.reflTrue
+    factorsE certifiedE Hex.CertificateSyntax.reflTrue
   return .success (mkApp5 (mkConst ``Hex.ZPoly.Factored.mk)
     fE scalarE factorsE hmulE hirredE)
 
@@ -262,7 +262,7 @@ meta def irredProof (fE : Expr) (f : Hex.ZPoly) :
         throwError "irreducibility: internal error: a generated witness \
             fails checkIrredWitness; please report this"
       return .ok (mkApp3 (mkConst ``Hex.ZPoly.irreducible_of_checkIrredWitness)
-        fE (reifyWitness w) Hex.CertReify.reflTrue)
+        fE (reifyWitness w) Hex.CertificateSyntax.reflTrue)
   | none =>
       if f.size = 1 then
         let primeCost :=

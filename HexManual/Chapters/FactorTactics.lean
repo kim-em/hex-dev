@@ -8,6 +8,7 @@ import VersoManual
 
 import HexBerlekampMathlib
 import HexBerlekampZassenhausMathlib
+import HexBerlekampZassenhausMathlib.LatticeTotality
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -549,7 +550,7 @@ lattice tier cannot be certified this way at any size: the FFI
 Two further costs land on the calling file when it uses the
 module system: the kernel can only re-run definitions whose bodies it
 can see, so a `module`-based caller must `import all` the executable
-closure (the `HexBerlekampZassenhausMathlib.BangElab` module docstring
+closure (the `HexBerlekampZassenhausMathlib.KernelFactorTactic` module docstring
 and `FactorPolyTests.lean` carry the working block). The examples in
 this chapter need no such block because the manual's chapters are not
 `module`-based, so every imported body is visible. The elaborator

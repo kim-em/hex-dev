@@ -7,9 +7,9 @@ Authors: Kim Morrison
 module
 
 public meta import HexBerlekamp.IrreducibilityElab
-public meta import HexBerlekampZassenhaus.FactorProvider
+public meta import HexBerlekampZassenhaus.FactorTactic
 public import HexBerlekamp.IrreducibilityElab
-public import HexBerlekampZassenhaus.FactorProvider
+public import HexBerlekampZassenhaus.FactorTactic
 
 public section
 
