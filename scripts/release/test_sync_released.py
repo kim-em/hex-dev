@@ -126,6 +126,21 @@ class SyncReleasedTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "lakefile.toml"):
             sync_released.validate_skeleton({"lakefile": "toml"}, self.repo)
 
+    def test_release_skeleton_checks_module_precompilation(self) -> None:
+        lakefile = self.repo / "lakefile.toml"
+        lakefile.write_text(
+            '[[lean_lib]]\nname = "Consumer"\n',
+            encoding="utf-8",
+        )
+        entry = {"lakefile": "toml", "precompile_modules": True}
+        with self.assertRaisesRegex(RuntimeError, "must precompile modules"):
+            sync_released.validate_skeleton(entry, self.repo)
+        lakefile.write_text(
+            '[[lean_lib]]\nname = "Consumer"\nprecompileModules = true\n',
+            encoding="utf-8",
+        )
+        sync_released.validate_skeleton(entry, self.repo)
+
     def test_manifest_uses_exact_external_commit(self) -> None:
         manifest = {
             "version": "1.1.0",

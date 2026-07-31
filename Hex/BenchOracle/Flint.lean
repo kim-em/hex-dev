@@ -50,10 +50,10 @@ result schema. For example:
 
 ## Configuration
 
-* `HEX_FLINT_BENCH_DRIVER` — absolute path to the driver script,
-  overriding the default `scripts/oracle/flint_bench_driver.py`
-  (relative to the bench process's cwd, which is the repo root
-  under `lake exe`).
+* `HEX_FLINT_BENCH_DRIVER` — path to the driver script, overriding automatic
+  discovery.  By default the helper checks `scripts/oracle/flint_bench_driver.py`
+  and then `../scripts/oracle/flint_bench_driver.py`, covering both the
+  development repository root and a released repository's `bench/` side project.
 * `HEX_FLINT_BENCH_PYTHON` — interpreter command (default
   `python3`). Useful in CI when only `python` is on `PATH`.
 -/
@@ -115,8 +115,13 @@ private def envOr (name : String) (default : String) : IO String := do
   | some v => return v
   | none => return default
 
-private def driverPath : IO String :=
-  envOr "HEX_FLINT_BENCH_DRIVER" "scripts/oracle/flint_bench_driver.py"
+private def driverPath : IO String := do
+  if let some path ← IO.getEnv "HEX_FLINT_BENCH_DRIVER" then
+    return path
+  let rootPath : System.FilePath := "scripts/oracle/flint_bench_driver.py"
+  if ← rootPath.pathExists then
+    return rootPath.toString
+  return "../scripts/oracle/flint_bench_driver.py"
 
 private def pythonCommand : IO String :=
   envOr "HEX_FLINT_BENCH_PYTHON" "python3"
