@@ -739,20 +739,20 @@ private theorem bhksRecoverClassified_success_product
     (hrecover : bhksRecoverClassified f d = .success candidates) :
     Array.polyProduct candidates = f := by
   rw [bhksRecoverClassified] at hrecover
-  by_cases hrows : 1 ≤ (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).factorCount +
-      (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).coeffWidth
+  by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
   · rw [dif_pos hrows] at hrecover
     by_cases hdeg :
         bhksDegenerateIndicatorPartition
-          (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows)
+          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
           (bhksEquivalenceClassIndicators
-            (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors)
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
               hrows)) = true
     · simp [hdeg] at hrecover
     · simp only [hdeg, Bool.false_eq_true, if_false] at hrecover
       cases hcand : bhksIndicatorCandidates? f d
           (bhksEquivalenceClassIndicators
-            (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors)
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
               hrows)) with
       | none => simp [hcand] at hrecover
       | some cands =>
@@ -776,11 +776,11 @@ private theorem bhksRecoverClassified_success_all_of_candidates
     (hrecover : bhksRecoverClassified f d = .success candidates) :
     ∀ factor ∈ candidates.toList, P factor := by
   rw [bhksRecoverClassified] at hrecover
-  by_cases hrows : 1 ≤ (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).factorCount +
-      (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).coeffWidth
+  by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
   · rw [dif_pos hrows] at hrecover
     let projected :=
-      bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows
+      bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows
     let indicators := bhksEquivalenceClassIndicators projected
     by_cases hdeg : bhksDegenerateIndicatorPartition projected indicators = true
     · simp [projected, indicators, hdeg] at hrecover
@@ -823,11 +823,11 @@ private theorem bhksRecoverClassified_success_dvd
     (hrecover : bhksRecoverClassified f d = .success candidates) :
     ∀ factor ∈ candidates.toList, factor ∣ f := by
   rw [bhksRecoverClassified] at hrecover
-  by_cases hrows : 1 ≤ (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).factorCount +
-      (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).coeffWidth
+  by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
   · rw [dif_pos hrows] at hrecover
     let projected :=
-      bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows
+      bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows
     let indicators := bhksEquivalenceClassIndicators projected
     by_cases hdeg : bhksDegenerateIndicatorPartition projected indicators = true
     · simp [projected, indicators, hdeg] at hrecover
@@ -881,7 +881,7 @@ theorem bhksRecoveryCoreWithBound_product
   | succ fuel ih =>
       intro coreFactors hfast
       rw [bhksRecoveryCoreWithBound_unfold] at hfast
-      cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
+      cases hclass : bhksRecoverClassified core (ZPoly.coreLiftData core k primeData) with
       | success xs =>
           by_cases hfloor : k ≥ bhksRecoveryFloor core
           · simp [hclass, hfloor] at hfast
@@ -917,32 +917,32 @@ names `bhksRecoverClassified`; the public extractor
 private theorem bhksRecoverClassified_success_indicatorCandidates
     {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
     (hrecover : bhksRecoverClassified f d = .success candidates) :
-    ∃ hrows : 1 ≤ (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).factorCount +
-        (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).coeffWidth,
+    ∃ hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+        (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth,
       bhksIndicatorCandidates? f d
           (bhksEquivalenceClassIndicators
-            (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows)) =
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) =
         some candidates ∧
       bhksDegenerateIndicatorPartition
-          (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows)
+          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
           (bhksEquivalenceClassIndicators
-            (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows)) =
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) =
         false := by
   rw [bhksRecoverClassified] at hrecover
-  by_cases hrows : 1 ≤ (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).factorCount +
-      (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).coeffWidth
+  by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
   · rw [dif_pos hrows] at hrecover
     by_cases hdeg :
         bhksDegenerateIndicatorPartition
-          (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows)
+          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
           (bhksEquivalenceClassIndicators
-            (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors)
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
               hrows)) = true
     · simp [hdeg] at hrecover
     · simp only [hdeg, Bool.false_eq_true, if_false] at hrecover
       cases hcand : bhksIndicatorCandidates? f d
           (bhksEquivalenceClassIndicators
-            (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors)
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
               hrows)) with
       | none => simp [hcand] at hrecover
       | some cands =>
@@ -967,7 +967,7 @@ private theorem bhksRecoveryCoreWithBound_some_classifiedSuccess
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
     ∀ k fuel coreFactors,
       bhksRecoveryCoreWithBound core B primeData k fuel = some coreFactors →
-        ∃ k', bhksRecoverClassified core (ZPoly.toMonicLiftData core k' primeData) =
+        ∃ k', bhksRecoverClassified core (ZPoly.coreLiftData core k' primeData) =
           .success coreFactors ∧ bhksRecoveryFloor core ≤ k' := by
   intro k fuel
   induction fuel generalizing k with
@@ -977,7 +977,7 @@ private theorem bhksRecoveryCoreWithBound_some_classifiedSuccess
   | succ fuel ih =>
       intro coreFactors hfast
       rw [bhksRecoveryCoreWithBound_unfold] at hfast
-      cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
+      cases hclass : bhksRecoverClassified core (ZPoly.coreLiftData core k primeData) with
       | success xs =>
           by_cases hfloor : k ≥ bhksRecoveryFloor core
           · simp [hclass, hfloor] at hfast
@@ -1018,36 +1018,36 @@ theorem bhksRecoveryCoreWithBound_some_indicatorCandidates
     (h : bhksRecoveryCoreWithBound core B primeData k fuel = some coreFactors) :
     ∃ k',
       ∃ hrows :
-        1 ≤ (bhksLatticeBasis (ZPoly.toMonic core).monic
-              (ZPoly.toMonicLiftData core k' primeData).p
-              (ZPoly.toMonicLiftData core k' primeData).k
-              (ZPoly.toMonicLiftData core k' primeData).liftedFactors).factorCount +
-            (bhksLatticeBasis (ZPoly.toMonic core).monic
-              (ZPoly.toMonicLiftData core k' primeData).p
-              (ZPoly.toMonicLiftData core k' primeData).k
-              (ZPoly.toMonicLiftData core k' primeData).liftedFactors).coeffWidth,
-      bhksIndicatorCandidates? core (ZPoly.toMonicLiftData core k' primeData)
+        1 ≤ (bhksLatticeBasis core
+              (ZPoly.coreLiftData core k' primeData).p
+              (ZPoly.coreLiftData core k' primeData).k
+              (ZPoly.coreLiftData core k' primeData).liftedFactors).factorCount +
+            (bhksLatticeBasis core
+              (ZPoly.coreLiftData core k' primeData).p
+              (ZPoly.coreLiftData core k' primeData).k
+              (ZPoly.coreLiftData core k' primeData).liftedFactors).coeffWidth,
+      bhksIndicatorCandidates? core (ZPoly.coreLiftData core k' primeData)
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows
-              (bhksLatticeBasis (ZPoly.toMonic core).monic
-                (ZPoly.toMonicLiftData core k' primeData).p
-                (ZPoly.toMonicLiftData core k' primeData).k
-                (ZPoly.toMonicLiftData core k' primeData).liftedFactors)
+              (bhksLatticeBasis core
+                (ZPoly.coreLiftData core k' primeData).p
+                (ZPoly.coreLiftData core k' primeData).k
+                (ZPoly.coreLiftData core k' primeData).liftedFactors)
               hrows)) =
         some coreFactors ∧
       bhksDegenerateIndicatorPartition
           (bhksProjectedRows
-            (bhksLatticeBasis (ZPoly.toMonic core).monic
-              (ZPoly.toMonicLiftData core k' primeData).p
-              (ZPoly.toMonicLiftData core k' primeData).k
-              (ZPoly.toMonicLiftData core k' primeData).liftedFactors)
+            (bhksLatticeBasis core
+              (ZPoly.coreLiftData core k' primeData).p
+              (ZPoly.coreLiftData core k' primeData).k
+              (ZPoly.coreLiftData core k' primeData).liftedFactors)
             hrows)
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows
-              (bhksLatticeBasis (ZPoly.toMonic core).monic
-                (ZPoly.toMonicLiftData core k' primeData).p
-                (ZPoly.toMonicLiftData core k' primeData).k
-                (ZPoly.toMonicLiftData core k' primeData).liftedFactors)
+              (bhksLatticeBasis core
+                (ZPoly.coreLiftData core k' primeData).p
+                (ZPoly.coreLiftData core k' primeData).k
+                (ZPoly.coreLiftData core k' primeData).liftedFactors)
               hrows)) =
         false ∧
       Array.polyProduct coreFactors = core ∧ bhksRecoveryFloor core ≤ k' := by
@@ -1075,7 +1075,7 @@ private theorem bhksRecoveryCoreWithBound_some_all_of_recovery
   | succ fuel ih =>
       intro coreFactors hfast
       rw [bhksRecoveryCoreWithBound_unfold] at hfast
-      cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
+      cases hclass : bhksRecoverClassified core (ZPoly.coreLiftData core k primeData) with
       | success xs =>
           by_cases hfloor : k ≥ bhksRecoveryFloor core
           · simp [hclass, hfloor] at hfast
@@ -1151,7 +1151,7 @@ theorem bhksRecoveryCoreWithBound_some_dvd
   | succ fuel ih =>
       intro coreFactors hfast
       rw [bhksRecoveryCoreWithBound_unfold] at hfast
-      cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
+      cases hclass : bhksRecoverClassified core (ZPoly.coreLiftData core k primeData) with
       | success xs =>
           by_cases hfloor : k ≥ bhksRecoveryFloor core
           · simp [hclass, hfloor] at hfast

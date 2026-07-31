@@ -1093,6 +1093,20 @@ theorem probePrimeData?_prime
       subst data
       exact primeChoiceDataScore_prime f c score hscore
 
+/-- An explicit probe inherits any proved upper bound on its candidate prime. -/
+theorem probePrimeData?_p_le
+    (f : ZPoly) (c : SmallPrimeCandidate) (data : PrimeChoiceData)
+    (hc : c.p ≤ 500)
+    (hdata : probePrimeData? f c = some data) :
+    data.p ≤ 500 := by
+  unfold probePrimeData? at hdata
+  cases hscore : primeChoiceDataScore f c with
+  | none => simp [hscore] at hdata
+  | some score =>
+      simp [hscore] at hdata
+      subst data
+      exact primeChoiceDataScore_p_le f c score hc hscore
+
 /-- Good-prime provenance for one explicit diagnostic/degree-obstruction probe. -/
 theorem probePrimeData?_isGoodPrime
     (f : ZPoly) (c : SmallPrimeCandidate) (data : PrimeChoiceData)

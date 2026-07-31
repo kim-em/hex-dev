@@ -650,6 +650,7 @@ by every prime up to `499`. Exposed so that the composition theorem can pull a
 specific candidate out and bridge to the Mathlib per-prime
 discriminant lemma.
 -/
+@[expose]
 def hotPathCandidates : List SmallPrimeCandidate :=
   smallPrimeCandidates ++ extendedSmallPrimeCandidates
 

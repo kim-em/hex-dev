@@ -6,7 +6,10 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhausMathlib.PublicSurface
+public import HexBerlekampZassenhausMathlib.FactorBound
+public import HexBerlekampZassenhausMathlib.Factorization
+public import HexBerlekampZassenhausMathlib.ModularPolynomial
+public import HexBerlekampZassenhausMathlib.IrreducibilityCertificate
 public import HexBerlekampZassenhausMathlib.ModPFactor
 public import HexBerlekampZassenhausMathlib.LiftedFactor
 public import HexBerlekampZassenhausMathlib.M1Recovery
@@ -16,12 +19,11 @@ public import HexBerlekampZassenhausMathlib.HenselFactorProps
 public import HexBerlekampZassenhausMathlib.ModPFactorization
 public import HexBerlekampZassenhausMathlib.SubsetCoprimality
 public import HexBerlekampZassenhausMathlib.ForwardHenselTransport
-public import HexBerlekampZassenhausMathlib.RecombinationMonic
-public import HexBerlekampZassenhausMathlib.Lattice.RecoveryFacts
-public import HexBerlekampZassenhausMathlib.Lattice.SupportPartition
+public import HexBerlekampZassenhausMathlib.ModPPartition
 public import HexBerlekampZassenhausMathlib.Lattice.CandidateCorrectness
-public import HexBerlekampZassenhausMathlib.Lattice.MonicCorrespondence
-public import HexBerlekampZassenhausMathlib.Lattice.SupportUniqueness
+public import HexBerlekampZassenhausMathlib.Lattice.DirectSupport
+public import HexBerlekampZassenhausMathlib.Lattice.DirectRecovery
+public import HexBerlekampZassenhausMathlib.Lattice.DirectAdequacy
 public import HexBerlekampZassenhausMathlib.FactorTransport
 public import HexBerlekampZassenhausMathlib.FactorProvider
 public import HexBerlekampZassenhausMathlib.BangElab
@@ -39,7 +41,6 @@ public import HexBerlekampZassenhausMathlib.LatticeTotality
 public import HexBerlekampZassenhausMathlib.WordCld
 public import HexBerlekampZassenhausMathlib.Resultant
 public import HexBerlekampZassenhausMathlib.Termination
-public import HexBerlekampZassenhausMathlib.HotPathAdmissibility
 public import HexBerlekampZassenhausMathlib.Modular.PrimePlan
 public import HexBerlekampZassenhausMathlib.Hensel.DirectLift
 public import HexBerlekampZassenhausMathlib.Classical.Recovery

@@ -219,4 +219,104 @@ theorem directPrimePlan?_selected_spec
     (smallPrimeCandidates ++ extendedSmallPrimeCandidates) plan
       (by simpa [directPrimePlan?] using h)
 
+private theorem improveDirectPlan_selected_mem
+    (core : CoreProblem) :
+    ∀ fuel candidates first probes,
+      let result := improveDirectPlan core fuel candidates first probes
+      result.1.candidate = first.candidate ∨
+        result.1.candidate ∈ candidates := by
+  intro fuel candidates
+  induction candidates generalizing fuel with
+  | nil =>
+      intro first probes
+      cases fuel <;> simp [improveDirectPlan]
+  | cons candidate candidates ih =>
+      intro first probes
+      cases fuel with
+      | zero => simp [improveDirectPlan]
+      | succ fuel =>
+          simp only [improveDirectPlan]
+          cases hprobe : probePrimeData? core.poly candidate with
+          | none =>
+              rcases ih (fuel + 1) first probes with h | h
+              · exact Or.inl h
+              · exact Or.inr (List.mem_cons_of_mem candidate h)
+          | some data =>
+              simp only
+              by_cases hone : data.factorsModP.size = 1
+              · simp only [hone, if_true]
+                exact Or.inr (by simp [DirectPrimeProbe.ofData])
+              · simp only [hone, if_false]
+                cases hbetter :
+                    probeBetter first
+                      (DirectPrimeProbe.ofData core candidate data) with
+                | false =>
+                    simp only [Bool.false_eq_true, if_false]
+                    rcases ih fuel first
+                        (probes.push (DirectPrimeProbe.ofData core candidate data)) with
+                      h | h
+                    · exact Or.inl h
+                    · exact Or.inr (List.mem_cons_of_mem candidate h)
+                | true =>
+                    simp only [if_true]
+                    rcases ih fuel (DirectPrimeProbe.ofData core candidate data)
+                        (probes.push first) with h | h
+                    · exact Or.inr (by
+                        rw [h]
+                        exact List.mem_cons_self)
+                    · exact Or.inr (List.mem_cons_of_mem candidate h)
+
+private theorem firstDirectPlan?_selected_mem
+    (core : CoreProblem) :
+    ∀ candidates plan,
+      firstDirectPlan? core candidates = some plan →
+      plan.selected.candidate ∈ candidates := by
+  intro candidates
+  induction candidates with
+  | nil =>
+      intro plan h
+      simp [firstDirectPlan?] at h
+  | cons candidate candidates ih =>
+      intro plan h
+      simp only [firstDirectPlan?] at h
+      cases hprobe : probePrimeData? core.poly candidate with
+      | none =>
+          simp only [hprobe] at h
+          exact List.mem_cons_of_mem candidate (ih plan h)
+      | some data =>
+          simp only [hprobe] at h
+          by_cases hsmall : data.factorsModP.size ≤ directProbeWidth
+          · simp only [hsmall, if_true, Option.some.injEq] at h
+            subst plan
+            simp [DirectPrimePlan.ofSelection, DirectPrimeProbe.ofData]
+          · simp only [hsmall, if_false, Option.some.injEq] at h
+            subst plan
+            rcases improveDirectPlan_selected_mem core directProbeFuel candidates
+                (DirectPrimeProbe.ofData core candidate data) #[] with hfirst | htail
+            · change
+                (improveDirectPlan core directProbeFuel candidates
+                  (DirectPrimeProbe.ofData core candidate data) #[]).1.candidate ∈
+                    candidate :: candidates
+              rw [hfirst]
+              exact List.mem_cons_self
+            · exact List.mem_cons_of_mem candidate htail
+
+/-- The direct planner selects only from the fixed `[3, 500]` hot-path
+candidate list. -/
+theorem directPrimePlan?_selected_p_le_500
+    (core : CoreProblem) (plan : DirectPrimePlan core)
+    (h : directPrimePlan? core = some plan) :
+    plan.prime ≤ 500 := by
+  have hmem : plan.selected.candidate ∈
+      smallPrimeCandidates ++ extendedSmallPrimeCandidates :=
+    firstDirectPlan?_selected_mem core
+      (smallPrimeCandidates ++ extendedSmallPrimeCandidates) plan
+      (by simpa [directPrimePlan?] using h)
+  have hhot : plan.selected.candidate ∈ hotPathCandidates := by
+    simpa only [hotPathCandidates] using hmem
+  have hc : plan.selected.candidate.p ≤ 500 :=
+    (mem_hotPathCandidates_prime hhot).2.2
+  exact probePrimeData?_p_le core.poly plan.selected.candidate
+    plan.selected.data hc (directPrimePlan?_selected_spec core plan h)
+
 end Hex

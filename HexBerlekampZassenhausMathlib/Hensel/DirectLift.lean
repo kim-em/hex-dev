@@ -95,6 +95,13 @@ structure DirectLiftFacts
       (Hex.ZPoly.monicTarget core data.p
         (Hex.precisionForCoeffBound B data.p))
       (data.factorsModP.map Hex.FpPoly.liftToZ).toList
+  productModP :
+    letI := data.bounds
+    Hex.ZPoly.congr
+      (Array.polyProduct (data.factorsModP.map Hex.FpPoly.liftToZ))
+      (Hex.ZPoly.monicTarget core data.p
+        (Hex.precisionForCoeffBound B data.p))
+      data.p
   liftedMonic :
     ∀ i : LiftedFactorIndex (Hex.ZPoly.coreLiftData core B data),
       Hex.DensePoly.Monic
@@ -177,6 +184,7 @@ theorem directLiftFacts
   refine
     { targetMonic := by simpa [target, k] using htarget_monic
       invariant := by simpa [target, k] using hinvariant
+      productModP := by simpa [target, k] using hproduct
       liftedMonic := ?_
       liftedModP := ?_
       subsetProductMap := ?_ }

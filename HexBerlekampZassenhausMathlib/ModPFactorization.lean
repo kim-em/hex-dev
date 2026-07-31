@@ -24,15 +24,9 @@ the good-prime condition for the lift target `f`, the recorded modular image,
 and the semantic invariants of the factor array (monic, irreducible, nodup,
 pairwise coprime, nonempty, product congruent to `f` mod `p`).
 
-Historically the cone was keyed on the SELECTION witness
-`ZPoly.toMonicPrimeData? core = some data`, whose `factorsModPBerlekampForm`
-component records that `data.factorsModP` is the LITERAL `berlekampFactor`
-output. No consumer needs that literal form (nor any selection-walk fact):
-they extract exactly the fields below, via the
-`…_of_factorsModPBerlekampForm` family. Keying the cone on this bundle
-instead lets the recursive per-remainder re-lift certify pieces whose factor
-arrays are dilated tracked sublists of the parent's — semantically valid
-factorizations that no Berlekamp run ever produced.
+The bundle is independent of how the prime and factor array were selected, so
+recursive direct lifting can certify tracked sublists of a parent
+factorization without replaying a Berlekamp run.
 
 `modPFactorization_of_choosePrimeData` recovers the bundle from the
 selection witness, so existing entry points discharge it for free.
@@ -222,37 +216,19 @@ theorem ModPFactorization.product_congr_target
   exact Hex.ZPoly.congr_trans _ _ _ data.p hprod
     (Hex.FpPoly.congr_liftToZ_modP f)
 
-/-- The `toMonicPrimeData?` form of the bundle producer. -/
-theorem modPFactorization_of_toMonicPrimeData
-    {core : Hex.ZPoly} {data : Hex.PrimeChoiceData}
-    (hselected : Hex.ZPoly.toMonicPrimeData? core = some data)
-    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_pos : 0 < core.degree?.getD 0) :
-    ModPFactorization (Hex.ZPoly.toMonic core).monic data := by
-  have hpos : 0 < (Hex.ZPoly.toMonic core).monic.degree?.getD 0 := by
-    rw [Hex.ZPoly.toMonic_monic_degree_eq_of_pos_degree core hcore_lc_pos hcore_pos]
-    exact hcore_pos
-  have hmonic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
-    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
-  exact modPFactorization_of_form
-    (Hex.ZPoly.toMonicPrimeData?_prime core data hselected)
-    (Hex.ZPoly.toMonicPrimeData?_isGoodPrime core data hselected)
-    (Hex.ZPoly.toMonicPrimeData?_fModP_eq core data hselected)
-    (Hex.ZPoly.toMonicPrimeData?_factorsModP_berlekamp_form core data hselected)
-    (zpoly_primitive_of_monic hmonic)
-    (by rw [show Hex.DensePoly.leadingCoeff (Hex.ZPoly.toMonic core).monic = 1
-      from hmonic]; exact Int.one_pos)
-    hpos
-
-/--
-A modular factorization into positive-degree factors has no more factors than
-the degree of its monic target.
--/
-theorem ModPFactorization.factorCount_le_degree
-    {f : Hex.ZPoly} {data : Hex.PrimeChoiceData}
+/-- A modular factor array of positive-degree monic factors has no more
+entries than the degree of any monic integer target to which its product is
+congruent. -/
+theorem ModPFactorization.factorCount_le_degree_of_product
+    {f target : Hex.ZPoly} {data : Hex.PrimeChoiceData}
     (h : ModPFactorization f data)
-    (hmonic : Hex.DensePoly.Monic f) :
-    data.factorsModP.size ≤ f.degree?.getD 0 := by
+    (hmonic : Hex.DensePoly.Monic target)
+    (hcongr :
+      letI := data.bounds
+      Hex.ZPoly.congr
+        (Array.polyProduct (data.factorsModP.map Hex.FpPoly.liftToZ))
+        target data.p) :
+    data.factorsModP.size ≤ target.degree?.getD 0 := by
   letI := data.bounds
   have hp : 1 < data.p := h.prime.one_lt
   haveI : Fact (_root_.Nat.Prime data.p) :=
@@ -297,11 +273,10 @@ theorem ModPFactorization.factorCount_le_degree
     simp only [t, Multiset.map_coe, Multiset.prod_coe, Array.toList_map,
       List.map_map]
     congr 1
-  have hcongr := h.product_congr_target hmonic
   have hmap :=
     HexHenselMathlib.zpoly_congr_toPolynomial_map_eq
       (Array.polyProduct (data.factorsModP.map Hex.FpPoly.liftToZ))
-      f data.p hcongr
+      target data.p hcongr
   have hprod_monic : t.prod.Monic := by
     have aux : ∀ u : Multiset (Polynomial ℤ),
         (∀ q ∈ u, q.Monic) → u.prod.Monic := by
@@ -313,30 +288,41 @@ theorem ModPFactorization.factorCount_le_degree
           exact (hu q (by simp)).mul
             (ih (fun z hz => hu z (Multiset.mem_cons_of_mem hz)))
     exact aux t ht_monic
-  have hf_monic : (HexPolyZMathlib.toPolynomial f).Monic :=
-    HexHenselMathlib.toPolynomial_monic_of_dense_monic f hmonic
+  have hf_monic : (HexPolyZMathlib.toPolynomial target).Monic :=
+    HexHenselMathlib.toPolynomial_monic_of_dense_monic target hmonic
   have hdegree :
       t.prod.natDegree =
-        (HexPolyZMathlib.toPolynomial f).natDegree := by
+        (HexPolyZMathlib.toPolynomial target).natDegree := by
     have hleft :=
       hprod_monic.natDegree_map (Int.castRingHom (ZMod data.p))
     have hright :=
       hf_monic.natDegree_map (Int.castRingHom (ZMod data.p))
     have hmap' :
-        t.prod.map (Int.castRingHom (ZMod data.p)) =
-          (HexPolyZMathlib.toPolynomial f).map
+      t.prod.map (Int.castRingHom (ZMod data.p)) =
+          (HexPolyZMathlib.toPolynomial target).map
             (Int.castRingHom (ZMod data.p)) := by
       rw [hprod]
       simpa using hmap
     rw [← hleft, ← hright, hmap']
   have hsum :
       (t.map Polynomial.natDegree).sum =
-        (HexPolyZMathlib.toPolynomial f).natDegree := by
+        (HexPolyZMathlib.toPolynomial target).natDegree := by
     rw [← Polynomial.natDegree_multiset_prod_of_monic t ht_monic, hdegree]
   have hcard : t.card = data.factorsModP.size := by
     simp [t]
-  rw [← hcard, ← HexPolyMathlib.natDegree_toPolynomial f, ← hsum]
+  rw [← hcard, ← HexPolyMathlib.natDegree_toPolynomial target, ← hsum]
   exact hcard_le_sum
+
+/--
+A modular factorization into positive-degree factors has no more factors than
+the degree of its monic target.
+-/
+theorem ModPFactorization.factorCount_le_degree
+    {f : Hex.ZPoly} {data : Hex.PrimeChoiceData}
+    (h : ModPFactorization f data)
+    (hmonic : Hex.DensePoly.Monic f) :
+    data.factorsModP.size ≤ f.degree?.getD 0 :=
+  h.factorCount_le_degree_of_product hmonic (h.product_congr_target hmonic)
 
 
 end HexBerlekampZassenhausMathlib

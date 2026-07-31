@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhausMathlib.Hensel.DirectLift
-public import HexBerlekampZassenhausMathlib.Lattice.SupportPartition
+public import HexBerlekampZassenhausMathlib.ModPPartition
 import all HexBerlekampZassenhausMathlib.LiftedFactor
 import all HexBerlekampZassenhausMathlib.M1Recovery
 import all HexBerlekampZassenhausMathlib.SubsetCoprimality
@@ -42,6 +42,32 @@ theorem normalizeFactorSign_associated (q : Hex.ZPoly) :
     rw [hunit.unit_spec, mul_comm, ← mul_assoc, ← Polynomial.C_mul]
     norm_num
   · exact Associated.refl _
+
+/-- Distinct irreducible integer factors have disjoint direct modular
+supports at the selected square-free prime. -/
+theorem modPFactorSubset_disjoint_of_modPFactorization
+    {core : Hex.ZPoly} {data : Hex.PrimeChoiceData}
+    (hval : ModPFactorization core data)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    {f g : Hex.ZPoly} {S T : ModPFactorSubset data}
+    (hf_irr : Irreducible (HexPolyZMathlib.toPolynomial f)) (hf_dvd : f ∣ core)
+    (hg_irr : Irreducible (HexPolyZMathlib.toPolynomial g)) (hg_dvd : g ∣ core)
+    (hS : RepresentsIntegerFactorModP data f S)
+    (hT : RepresentsIntegerFactorModP data g T)
+    (hnotassoc :
+      ¬ Associated (HexPolyZMathlib.toPolynomial f)
+        (HexPolyZMathlib.toPolynomial g)) :
+    Disjoint S T := by
+  letI := data.bounds
+  have hcore_modP_nz :
+      (@Hex.ZPoly.modP data.p data.bounds core).isZero = false :=
+    Hex.isGoodPrime_modP_isZero_false core data.p hval.good
+  exact modPFactorSubset_disjoint_of_not_associated hval.prime
+    (modPSubsetPartitionHypotheses_of_modPFactorization core data hcore_pos hval)
+    hcore_modP_nz
+    (IntReductionMod.squarefree_toMathlibPolynomial_monicModPImage_of_goodPrime
+      core data hval.prime hval.good)
+    hf_irr hf_dvd hg_irr hg_dvd hS hT hnotassoc
 
 /-- The selected direct candidate, expressed on a modular support. -/
 @[expose]
@@ -327,7 +353,9 @@ theorem directSupportCandidate_eq_of_irreducible_dvd
     {core factor : Hex.ZPoly} {B : Nat} {data : Hex.PrimeChoiceData}
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hB : B = Hex.ZPoly.defaultFactorCoeffBound core)
+    (hrecovery :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core <
+        data.p ^ Hex.precisionForCoeffBound B data.p)
     (hval : ModPFactorization core data)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B data.p)
     (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
@@ -387,13 +415,6 @@ theorem directSupportCandidate_eq_of_irreducible_dvd
   have hgcd_cofactor :
       Int.gcd (Hex.DensePoly.leadingCoeff cofactor) modulus = 1 :=
     gcd_eq_one_of_dvd_left hcofactor_lc_dvd (by simpa [modulus] using hgcd)
-  have hrecovery :
-      2 * Hex.ZPoly.defaultFactorCoeffBound core <
-        data.p ^ Hex.precisionForCoeffBound B data.p :=
-    by
-      rw [hB]
-      exact Hex.precisionForCoeffBound_spec hval.prime.two_le
-        (Hex.ZPoly.defaultFactorCoeffBound core)
   simpa [directSupportCandidate] using
     (directCandidate_eq_of_modP_support
       (core := core) (factor := factor) (cofactor := cofactor)
@@ -462,7 +483,9 @@ theorem directSupportPartition_initial
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_degree_pos : 0 < core.degree?.getD 0)
     (hcore_squarefree : Squarefree (HexPolyZMathlib.toPolynomial core))
-    (hB : B = Hex.ZPoly.defaultFactorCoeffBound core)
+    (hrecovery :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core <
+        data.p ^ Hex.precisionForCoeffBound B data.p)
     (hval : ModPFactorization core data)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B data.p)
     (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
@@ -503,10 +526,10 @@ theorem directSupportPartition_initial
     refine ⟨factor, S, hfactor_irr, hfactor_dvd,
       Finset.subset_univ S, hiS, hfactor_rep, hfactor_norm, ?_⟩
     exact directSupportCandidate_eq_of_irreducible_dvd
-      hcore_primitive hcore_lc_pos hB hval hprecision hgcd
+      hcore_primitive hcore_lc_pos hrecovery hval hprecision hgcd
       hfactor_irr hfactor_dvd hfactor_norm hfactor_rep
   · intro f g S T hf_irr hf_dvd _ hS hg_irr hg_dvd _ hT hnotassoc
-    exact IntReductionMod.modPFactorSubset_disjoint_of_modPFactorization
+    exact modPFactorSubset_disjoint_of_modPFactorization
       hval hcore_degree_pos hf_irr hf_dvd hg_irr hg_dvd hS hT hnotassoc
   · intro f g S T _ _ _ hS hg_irr hg_dvd _ hT hassoc
     exact unique_modPFactorSubset_up_to_associated

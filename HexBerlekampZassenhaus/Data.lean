@@ -16,10 +16,9 @@ set_option backward.proofsInPublic true
 /-!
 # Data carried by the direct classical factorization engine
 
-The classical path is indexed by its normalized square-free core.  A modular
+Both modular paths are indexed by their normalized square-free core.  A prime
 plan, recovery lift, and search result therefore cannot accidentally be paired
-with a different polynomial.  Lattice data deliberately does not use these
-types: the lattice tier still has its own `toMonic` coordinate.
+with a different polynomial.
 -/
 
 namespace Hex
@@ -214,11 +213,19 @@ structure DirectFactorTrace where
   classical : ClassicalStats := {}
 deriving DecidableEq
 
-/-- Result of the shared normalization/classical dispatcher.  The raw factors
-and typed trace are produced together, so traced and untraced callers cannot
-execute different route trees. -/
-structure ClassicalRun where
+/-- Result of the shared normalization/classical dispatcher.  A successful
+prime plan is retained even when recombination declines, so the lattice tier
+can consume the exact modular factorization already computed. -/
+structure ClassicalRun (f : ZPoly) where
   factors : Option (Array ZPoly)
+  trace : DirectFactorTrace
+  modular :
+    Option (DirectPrimePlan (CoreProblem.ofNormalized (normalizeForFactor f))) :=
+      none
+
+/-- Raw factors and trace produced by the total dispatcher in one execution. -/
+structure FactorRun where
+  factors : Array ZPoly
   trace : DirectFactorTrace
 deriving DecidableEq
 

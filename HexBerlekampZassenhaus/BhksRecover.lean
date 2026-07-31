@@ -160,13 +160,7 @@ keep the two bodies in sync — `bhksRecoverClassifiedWithAllOnes_fst` fails to
 build if they drift.
 -/
 private def bhksRecoverClassified (f : ZPoly) (d : LiftData) : BhksRecoveryResult :=
-  -- The CLD lattice runs in the monic (`M2`, `x ↦ x/ℓf`) coordinate: `d` is a
-  -- `toMonicLiftData`, so `d.liftedFactors` are Hensel factors of
-  -- `(ZPoly.toMonic f).monic`, and the CLD columns must be computed against
-  -- that same monic transform (for monic `f` this is `f` itself).  Building
-  -- them against `f` would mix coordinates and empty the columns of meaning
-  -- whenever `leadingCoeff f ≢ 1 (mod p)` (#8519).
-  let L := bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors
+  let L := bhksLatticeBasis f d.p d.k d.liftedFactors
   if hrows : 1 ≤ L.factorCount + L.coeffWidth then
     let projected := bhksProjectedRows L hrows
     let indicators := bhksEquivalenceClassIndicators projected
@@ -203,7 +197,7 @@ both off one lattice build with no change to either public surface.
 -/
 private def bhksRecoverClassifiedWithAllOnes (f : ZPoly) (d : LiftData) :
     BhksRecoveryResult × Bool :=
-  let L := bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors
+  let L := bhksLatticeBasis f d.p d.k d.liftedFactors
   if hrows : 1 ≤ L.factorCount + L.coeffWidth then
     let projected := bhksProjectedRows L hrows
     let indicators := bhksEquivalenceClassIndicators projected
@@ -230,8 +224,8 @@ private theorem bhksRecoverClassifiedWithAllOnes_fst (f : ZPoly) (d : LiftData) 
     (bhksRecoverClassifiedWithAllOnes f d).1 = bhksRecoverClassified f d := by
   rw [bhksRecoverClassifiedWithAllOnes, bhksRecoverClassified]
   by_cases hrows :
-      1 ≤ (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).factorCount +
-        (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).coeffWidth
+      1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+        (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
   · simp only [dif_pos hrows]
   · simp only [dif_neg hrows]
 
@@ -244,19 +238,19 @@ unfold the private failure classifier used by the executable.
 -/
 theorem bhksRecover?_eq_some_of_checks
     (f : ZPoly) (d : LiftData) {candidates : Array ZPoly}
-    (hrows : 1 ≤ (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).factorCount +
-      (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).coeffWidth)
+    (hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth)
     (hnondeg :
       bhksDegenerateIndicatorPartition
-          (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows)
+          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows
-              (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows)) = false)
+              (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) = false)
     (hcand :
       bhksIndicatorCandidates? f d
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows
-              (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows)) =
+              (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) =
         some candidates)
     (hprod : Array.polyProduct candidates = f) :
     bhksRecover? f d = some candidates := by

@@ -18,7 +18,7 @@ public import Mathlib.RingTheory.PrincipalIdealDomain
 
 public import HexBerlekampZassenhausMathlib.SubsetCoprimality
 public import HexBerlekampZassenhausMathlib.ModPFactorization
-import all HexBerlekampZassenhausMathlib.PublicSurface
+import all HexBerlekampZassenhausMathlib.ModularPolynomial
 import all HexBerlekampZassenhausMathlib.ModPFactor
 import all HexBerlekampZassenhausMathlib.LiftedFactor
 import all HexBerlekampZassenhausMathlib.M1Recovery
@@ -704,8 +704,7 @@ constructed by `toMonicLiftData`.
 For `M := (Hex.ZPoly.toMonic core).monic`, this instantiates
 `henselLiftData_represents_lifted_of_modP` at Hensel precision
 `Hex.precisionForCoeffBound B primeData.p`, discharging the analytic inputs
-from the `toMonicPrimeData?` / `factorsModPBerlekampForm` extractors and the
-`Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData` path, then
+from the supplied finite-field factorization and Hensel invariants, then
 records the conclusion against `Hex.ZPoly.toMonicLiftData core B primeData`,
 which is definitionally
 `Hex.henselLiftData M (Hex.precisionForCoeffBound B primeData.p) primeData`.
@@ -1037,11 +1036,20 @@ theorem bhksIndicatorCandidate?_reduceModPow_eq_of_monic
     zpoly_normalize_factor_sign_of_monic hcl_monic
   -- Step 7: candidate = cl, using the executable-layer characterization.
   have hcand_eq : candidate = cl := by
-    have hext := Hex.bhksIndicatorCandidate?_eq_normalized_dilatedCenteredLift h hselected
+    have hext := Hex.bhksIndicatorCandidate?_eq_normalized_directLift h hselected
     have hcl_selected :
         Hex.centeredLiftPoly selected.polyProduct (d.p ^ d.k) = cl := by
       rw [hcl_eq, hraw_eq]
-    rw [hext, hlc, Hex.ZPoly.dilate_one, hcl_selected, hnorm_cand, hnorm_sign]
+    have hscale_one :
+        Hex.DensePoly.scale (1 : Int) selected.polyProduct =
+          selected.polyProduct := by
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      rw [Hex.DensePoly.coeff_scale _ _ _ (by ring : (1 : Int) * 0 = 0)]
+      ring
+    rw [hext, hlc]
+    rw [hscale_one]
+    rw [hcl_selected, hnorm_cand, hnorm_sign]
   -- Step 8: reduceModPow raw p k = reduceModPow cl p k via the centered lift.
   rw [hcand_eq]
   -- Goal: reduceModPow raw p k = reduceModPow cl p k.
@@ -1226,15 +1234,6 @@ private theorem zpoly_primitive_of_toPolynomial_isPrimitive_basic
   · exact hone
   · rw [hneg] at hcontent_nonneg
     omega
-
-/-- A `Hex.ZPoly` with positive leading coefficient is nonzero. -/
-theorem zpoly_ne_zero_of_pos_lc {f : Hex.ZPoly}
-    (hpos : 0 < Hex.DensePoly.leadingCoeff f) : f ≠ 0 := by
-  intro hf
-  rw [hf] at hpos
-  have hzero_lc : Hex.DensePoly.leadingCoeff (0 : Hex.ZPoly) = 0 := rfl
-  rw [hzero_lc] at hpos
-  omega
 
 /-- A `Hex.ZPoly` with positive leading coefficient has positive stored size. -/
 private theorem zpoly_size_pos_of_pos_lc {f : Hex.ZPoly}

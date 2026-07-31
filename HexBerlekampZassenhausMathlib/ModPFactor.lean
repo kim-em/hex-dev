@@ -16,8 +16,8 @@ public import Mathlib.RingTheory.Coprime.Lemmas
 public import Mathlib.RingTheory.Polynomial.UniqueFactorization
 public import Mathlib.RingTheory.PrincipalIdealDomain
 
-public import HexBerlekampZassenhausMathlib.PublicSurface
-import all HexBerlekampZassenhausMathlib.PublicSurface
+public import HexBerlekampZassenhausMathlib.ModularPolynomial
+import all HexBerlekampZassenhausMathlib.ModularPolynomial
 
 public section
 set_option backward.proofsInPublic true

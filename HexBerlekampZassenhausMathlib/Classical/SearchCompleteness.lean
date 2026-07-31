@@ -9,7 +9,7 @@ module
 public import HexBerlekampZassenhausMathlib.Classical.CombinationIterator
 public import HexBerlekampZassenhaus.Classical.Search
 import all HexBerlekampZassenhausMathlib.ForwardHenselTransport
-import all HexBerlekampZassenhausMathlib.PublicSurface
+import all HexBerlekampZassenhausMathlib.ModularPolynomial
 
 public section
 set_option backward.proofsInPublic true

@@ -295,7 +295,7 @@ theorem findDirectHead_correct
         liftedSubsetOfModPSubset data d hsize T = split.selected.toFinset :=
       liftedSubset_modPSubset data d hsize split.selected.toFinset
     rw [← hrecover, ← hTeq]
-    simp [directSupportCandidate, d, T, hsize, htransport]
+    simp [directSupportCandidate, d, T, htransport]
   have hremainingSupport :
       split.remaining.toFinset =
         liftedSubsetOfModPSubset data d hsize (J \ S) := by
@@ -303,8 +303,7 @@ theorem findDirectHead_correct
     have hall :
         (head :: selected).toFinset ∪ remaining.toFinset =
           (head :: tail).toFinset := by
-      simpa [hunion, Finset.insert_union] using
-        congrArg (Finset.insert head) hunion
+      simp [Finset.insert_union, hunion]
     have hselectedSupport :
         (head :: selected).toFinset = liftS := by
       calc
@@ -557,7 +556,7 @@ theorem searchDirect_factored
       { targetNe := hcore_ne
         targetDvdCore := Hex.DensePoly.dvd_refl_poly core
         partition := directSupportPartition_initial core B data
-          hcore_prim hcore_lc_pos hcore_degree_pos hcore_squarefree hB
+          hcore_prim hcore_lc_pos hcore_degree_pos hcore_squarefree hrecover
           hval hprecision hgcd
         localNodup := List.nodup_finRange _
         localSupport := ?_ }
@@ -619,6 +618,85 @@ theorem validDirectFactors_of_spec
   refine ⟨?_, hcontent⟩
   exact ⟨by simpa using hfactors_ne, h.product⟩
 
+/-- A successful run from a selected direct prime is an irreducible
+factorization of its indexed direct-coordinate core. -/
+theorem factorDirectCoreOfPlan_factored
+    (core : Hex.CoreProblem)
+    (modular : Hex.DirectPrimePlan core)
+    (hplan : Hex.directPrimePlan? core = some modular)
+    (hcore_prim : Hex.ZPoly.Primitive core.poly)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core.poly)
+    (hcore_degree_pos : 0 < core.poly.degree?.getD 0)
+    (hcore_squarefree :
+      Squarefree (HexPolyZMathlib.toPolynomial core.poly))
+    {budget : Nat} {factors : Array Hex.ZPoly}
+    {stats : Hex.ClassicalStats}
+    (hrun :
+      Hex.factorDirectCoreOfPlan core modular budget =
+        .factored factors stats) :
+    DirectFactorListSpec core.poly factors.toList := by
+  have hval :=
+    directPrimePlan_modPFactorization core modular hplan
+      hcore_prim hcore_lc_pos hcore_degree_pos
+  let B := Hex.ZPoly.defaultFactorCoeffBound core.poly
+  have hcore_ne : core.poly ≠ 0 :=
+    zpoly_ne_zero_of_pos_lc hcore_lc_pos
+  have hBpos : 0 < B :=
+    Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hcore_ne
+  have hprecision :
+      1 ≤ Hex.precisionForCoeffBound B modular.data.p := by
+    have hrecover :=
+      Hex.precisionForCoeffBound_spec hval.prime.two_le B
+    by_contra hnot
+    have hk : Hex.precisionForCoeffBound B modular.data.p = 0 := by
+      omega
+    rw [hk, pow_zero] at hrecover
+    omega
+  letI := modular.data.bounds
+  have hadm :
+      Hex.leadingCoeffAdmissible core.poly modular.data.p :=
+    Hex.isGoodPrime_leadingCoeffAdmissible core.poly modular.data.p
+      hval.good
+  have hcast :
+      ((Hex.DensePoly.leadingCoeff core.poly : Int) :
+        ZMod modular.data.p) ≠ 0 := by
+    have hpolyCast :=
+      (IntReductionMod.intCast_zmod_leadingCoeff_ne_zero_iff_leadingCoeffModP_ne_zero
+        (p := modular.data.p) (f := core.poly)).mpr hadm
+    simpa [HexPolyMathlib.leadingCoeff_toPolynomial] using hpolyCast
+  have hgcd :
+      Int.gcd (Hex.DensePoly.leadingCoeff core.poly)
+        (Int.ofNat
+          (modular.data.p ^
+            Hex.precisionForCoeffBound B modular.data.p)) = 1 :=
+    gcd_primePow_eq_one_of_cast_ne_zero
+      (Hex.DensePoly.leadingCoeff core.poly) modular.data.p
+      (Hex.precisionForCoeffBound B modular.data.p)
+      (natPrime_of_hexNatPrime hval.prime) hcast
+  unfold Hex.factorDirectCoreOfPlan at hrun
+  simp only [Hex.DirectLiftedBasis.data,
+    Hex.DirectLiftPlan.coeffBound] at hrun
+  generalize hsearch :
+      Hex.searchDirect (Hex.DensePoly.leadingCoeff core.poly) core.poly
+          (Hex.ZPoly.coreLiftData core.poly B modular.data) budget
+          { prime := modular.prime
+            primeProbes := modular.probes.size
+            liftedFactorCount :=
+              (Hex.ZPoly.coreLiftData core.poly B modular.data).liftedFactors.size
+            henselLifts := 1 } = result at hrun
+  cases result with
+  | declined reason budget' stats' => simp at hrun
+  | factored found budget' stats' =>
+      simp only at hrun
+      have hspec :=
+        searchDirect_factored hcore_prim hcore_lc_pos hcore_degree_pos
+          hcore_squarefree (B := B) rfl hval hprecision hgcd hsearch
+      have hvalid :=
+        validDirectFactors_of_spec hcore_degree_pos hspec
+      rw [hvalid] at hrun
+      cases hrun
+      simpa using hspec
+
 /-- A successful run of the sole classical engine is an irreducible
 factorization of its indexed direct-coordinate core. -/
 theorem factorDirectCore_factored
@@ -637,65 +715,7 @@ theorem factorDirectCore_factored
   cases plan? with
   | none => simp at hrun
   | some modular =>
-      have hval :=
-        directPrimePlan_modPFactorization core modular hplan
-          hcore_prim hcore_lc_pos hcore_degree_pos
-      let B := Hex.ZPoly.defaultFactorCoeffBound core.poly
-      have hcore_ne : core.poly ≠ 0 :=
-        zpoly_ne_zero_of_pos_lc hcore_lc_pos
-      have hBpos : 0 < B :=
-        Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hcore_ne
-      have hprecision :
-          1 ≤ Hex.precisionForCoeffBound B modular.data.p := by
-        have hrecover :=
-          Hex.precisionForCoeffBound_spec hval.prime.two_le B
-        by_contra hnot
-        have hk : Hex.precisionForCoeffBound B modular.data.p = 0 := by
-          omega
-        rw [hk, pow_zero] at hrecover
-        omega
-      letI := modular.data.bounds
-      have hadm :
-          Hex.leadingCoeffAdmissible core.poly modular.data.p :=
-        Hex.isGoodPrime_leadingCoeffAdmissible core.poly modular.data.p
-          hval.good
-      have hcast :
-          ((Hex.DensePoly.leadingCoeff core.poly : Int) :
-            ZMod modular.data.p) ≠ 0 := by
-        have hpolyCast :=
-          (IntReductionMod.intCast_zmod_leadingCoeff_ne_zero_iff_leadingCoeffModP_ne_zero
-            (p := modular.data.p) (f := core.poly)).mpr hadm
-        simpa [HexPolyMathlib.leadingCoeff_toPolynomial] using hpolyCast
-      have hgcd :
-          Int.gcd (Hex.DensePoly.leadingCoeff core.poly)
-            (Int.ofNat
-              (modular.data.p ^
-                Hex.precisionForCoeffBound B modular.data.p)) = 1 :=
-        gcd_primePow_eq_one_of_cast_ne_zero
-          (Hex.DensePoly.leadingCoeff core.poly) modular.data.p
-          (Hex.precisionForCoeffBound B modular.data.p)
-          (natPrime_of_hexNatPrime hval.prime) hcast
-      simp only [Hex.DirectLiftedBasis.data,
-        Hex.DirectLiftPlan.coeffBound] at hrun
-      generalize hsearch :
-          Hex.searchDirect (Hex.DensePoly.leadingCoeff core.poly) core.poly
-              (Hex.ZPoly.coreLiftData core.poly B modular.data) budget
-              { prime := modular.prime
-                primeProbes := modular.probes.size
-                liftedFactorCount :=
-                  (Hex.ZPoly.coreLiftData core.poly B modular.data).liftedFactors.size
-                henselLifts := 1 } = result at hrun
-      cases result with
-      | declined reason budget' stats' => simp at hrun
-      | factored found budget' stats' =>
-          simp only at hrun
-          have hspec :=
-            searchDirect_factored hcore_prim hcore_lc_pos hcore_degree_pos
-              hcore_squarefree (B := B) rfl hval hprecision hgcd hsearch
-          have hvalid :=
-            validDirectFactors_of_spec hcore_degree_pos hspec
-          rw [hvalid] at hrun
-          cases hrun
-          simpa using hspec
+      exact factorDirectCoreOfPlan_factored core modular hplan
+        hcore_prim hcore_lc_pos hcore_degree_pos hcore_squarefree hrun
 
 end HexBerlekampZassenhausMathlib

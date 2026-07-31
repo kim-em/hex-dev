@@ -366,14 +366,13 @@ private def factorizationCaseMatches (c : FactorizationCase) : Bool :=
 #guard isGoodPrime squareFreeTypical 3
 #guard choosePrime leadingCoeffDivisibleByFive = 3
 
-/-- A live bounded-selector counterexample. For
-`g = X^3 - P`, where `P` is the product of all 94 hot-path candidates,
-the monic transform is `g` itself and every candidate reduction is `X^3`.
-Thus neither the bounded selector nor the conditional lattice tier succeeds. -/
+/-- A live bounded-selector counterexample. For `g = X^3 - P`, where `P` is
+the product of all 94 candidates, every candidate reduction is `X^3`.
+Thus neither direct prime planning nor the conditional lattice tier succeeds. -/
 private def hotPathNoPrimeCubic : ZPoly :=
   DensePoly.ofCoeffs #[-(hotPathPrimorial : Int), 0, 0, 1]
 
-#guard ZPoly.toMonicPrimeData? hotPathNoPrimeCubic = none
+#guard (directPrimePlan? ⟨hotPathNoPrimeCubic⟩).isNone
 #guard factorLattice hotPathNoPrimeCubic = none
 
 #guard
@@ -413,10 +412,9 @@ private def hotPathNoPrimeCubic : ZPoly :=
   | some data => 3 <= data.p
 
 #guard
-  let monic := (ZPoly.toMonic legendreP20).monic
-  match choosePrimeData? monic, ZPoly.toMonicPrimeData? legendreP20 with
-  | some first, some adaptive =>
-      first.factorsModP.size = 10 && adaptive.factorsModP.size = 1
+  match choosePrimeData? legendreP20, directPrimePlan? ⟨legendreP20⟩ with
+  | some first, some plan =>
+      first.factorsModP.size = 10 && plan.width = 1
   | _, _ => false
 
 /-! # Extended prime search

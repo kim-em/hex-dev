@@ -28,29 +28,37 @@ def validDirectFactors (core : ZPoly) (factors : List ZPoly) : Bool :=
     factors.all (fun g => decide (normalizeFactorSign g = g)) &&
     factors.all (fun g => decide (0 < g.degree?.getD 0))
 
-/-- One prime plan, one lift, and one greedy direct recombination search. -/
+/-- One lift and one greedy direct recombination search from an existing prime
+plan.  Keeping planning outside this function lets the total dispatcher reuse
+the plan if the bounded search declines. -/
+@[expose]
+def factorDirectCoreOfPlan
+    (core : CoreProblem) (modular : DirectPrimePlan core)
+    (budget : Nat := defaultSubsetBudget) :
+    ClassicalOutcome :=
+  let liftPlan := directLiftPlan core modular
+  let basis := directLiftedBasis core modular liftPlan
+  let initialStats : ClassicalStats :=
+    { prime := modular.prime
+      primeProbes := modular.probes.size
+      liftedFactorCount := basis.data.liftedFactors.size
+      henselLifts := 1 }
+  match searchDirect (DensePoly.leadingCoeff core.poly) core.poly basis.data
+      budget initialStats with
+  | .declined reason _ stats => .declined reason stats
+  | .factored factors _ stats =>
+      if validDirectFactors core.poly factors then
+        .factored factors.toArray stats
+      else
+        .declined .invalidCandidate stats
+
+/-- Plan once, then run the direct classical engine. -/
 @[expose]
 def factorDirectCore
     (core : CoreProblem) (budget : Nat := defaultSubsetBudget) :
     ClassicalOutcome :=
   match directPrimePlan? core with
   | none => .declined .noGoodPrime {}
-  | some modular =>
-      let liftPlan := directLiftPlan core modular
-      let basis := directLiftedBasis core modular liftPlan
-      let initialStats : ClassicalStats :=
-        { prime := modular.prime
-          primeProbes := modular.probes.size
-          liftedFactorCount := basis.data.liftedFactors.size
-          henselLifts := 1 }
-      match searchDirect (DensePoly.leadingCoeff core.poly) core.poly basis.data
-          budget initialStats with
-      | .declined reason _ stats => .declined reason stats
-      | .factored factors _ stats =>
-          if validDirectFactors core.poly factors then
-            .factored factors.toArray stats
-          else
-            .declined .invalidCandidate stats
+  | some modular => factorDirectCoreOfPlan core modular budget
 
 end Hex
-

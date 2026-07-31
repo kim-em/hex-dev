@@ -17,7 +17,7 @@ public import Mathlib.RingTheory.Polynomial.UniqueFactorization
 public import Mathlib.RingTheory.PrincipalIdealDomain
 
 public import HexBerlekampZassenhausMathlib.LiftedFactor
-import all HexBerlekampZassenhausMathlib.PublicSurface
+import all HexBerlekampZassenhausMathlib.ModularPolynomial
 import all HexBerlekampZassenhausMathlib.ModPFactor
 import all HexBerlekampZassenhausMathlib.LiftedFactor
 

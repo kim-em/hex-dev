@@ -17,7 +17,7 @@ public import Mathlib.RingTheory.Polynomial.UniqueFactorization
 public import Mathlib.RingTheory.PrincipalIdealDomain
 
 public import HexBerlekampZassenhausMathlib.RecombinationSplit
-import all HexBerlekampZassenhausMathlib.PublicSurface
+import all HexBerlekampZassenhausMathlib.ModularPolynomial
 import all HexBerlekampZassenhausMathlib.ModPFactor
 import all HexBerlekampZassenhausMathlib.LiftedFactor
 import all HexBerlekampZassenhausMathlib.M1Recovery
@@ -145,9 +145,9 @@ selected component and partitions the remaining tail by
 the `(selected, rejected)` list partition of a lifted-factor subset `S`: its
 selected sublist is `liftedSubsetSelectedList d S`, hence its product is the
 proof-side `liftedFactorProduct d S`, and the executable scaled candidate built
-from the selected product (the candidate `scaledRecombinationSmartCandLoop`
-forms, with `coreLc = leadingCoeff core` and `modulus = d.p ^ d.k`) is exactly
-the proof-side `liftedRecoveryCandidate core d S`.
+from the selected product (with `coreLc = leadingCoeff core` and
+`modulus = d.p ^ d.k`) is exactly the proof-side
+`liftedRecoveryCandidate core d S`.
 
 Existence of the identifying subset needs no distinctness hypothesis — the
 subset is recovered from the mask over the matched *index* list, which is
@@ -245,13 +245,12 @@ size-ordered coverage walk: at an intermediate state whose running local-factor
 list matches a sub-universe `J` (`LiftedFactorListMatches d J localFactors`), a
 head-forced size-ordered split of the tail is the `(selected, rejected)` list
 partition of a subset `T ⊆ J` containing `J.min'`.  The rejected component is the
-selected list of `J \ T` (the natural form for the descent into `scaledRecombinationSmartAux`
-on the rest list), and the product / candidate identities specialise as before.
+selected list of `J \ T` (the natural form for recursion on the rest list),
+and the product / candidate identities specialise as before.
 
 This is the shape consumed by the recursive coverage proof while walking
-`scaledRecombinationSmartAux`/`SizeLoop`/`CandLoop`, where the running
-`localFactors` is the matched list of the remaining indices `J`, not the full
-universe. -/
+the head-forced subset search, where the running `localFactors` is the matched
+list of the remaining indices `J`, not the full universe. -/
 theorem subsetsOfSizeWithComplement_liftedFactors_exists_subset_of_matches
     (core : Hex.ZPoly) (d : Hex.LiftData)
     {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}

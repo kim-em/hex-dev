@@ -17,7 +17,8 @@ public import Mathlib.RingTheory.Polynomial.UniqueFactorization
 public import Mathlib.RingTheory.PrincipalIdealDomain
 
 public import HexBerlekampZassenhausMathlib.ModPFactor
-import all HexBerlekampZassenhausMathlib.PublicSurface
+public import HexBerlekampZassenhausMathlib.FactorBound
+import all HexBerlekampZassenhausMathlib.ModularPolynomial
 import all HexBerlekampZassenhausMathlib.ModPFactor
 
 public section
@@ -156,6 +157,7 @@ Selected lifted-factor product scaled by the leading coefficient of the integer
 core, matching the product formed by the executable recombination candidate
 checker.
 -/
+@[expose]
 def scaledLiftedFactorProduct
     (core : Hex.ZPoly) (d : Hex.LiftData) (S : LiftedFactorSubset d) : Hex.ZPoly :=
   Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core) (liftedFactorProduct d S)
@@ -577,7 +579,7 @@ structure HenselLiftDescentHypotheses
           RepresentsIntegerFactorModP primeData factor S
 
 /--
-Data-bearing reverse-descent witness for `toMonicPrimeData?` surfaces.
+Data-bearing reverse descent from a monic-coordinate lift.
 
 The lifted representation still recovers the original integer `factor`, but the
 descended mod-`p` subset represents the monic correspondent stored inside the

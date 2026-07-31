@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhausMathlib.Lattice.SupportUniqueness
+public import HexBerlekampZassenhausMathlib.ModPFactorization
 public import HexBerlekampMathlib.Basic
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.RingTheory.Polynomial.Content
@@ -17,6 +17,9 @@ public import Mathlib.FieldTheory.Separable
 public import Mathlib.FieldTheory.Perfect
 public import Mathlib.RingTheory.Polynomial.Radical
 public import Mathlib.RingTheory.Polynomial.GaussLemma
+import all HexBerlekampZassenhausMathlib.ModularPolynomial
+import all HexBerlekampZassenhausMathlib.ModPFactor
+import all HexBerlekampZassenhausMathlib.SubsetCoprimality
 
 public section
 set_option backward.proofsInPublic true
@@ -34,25 +37,6 @@ namespace IntReductionMod
 open Polynomial
 
 variable {p : ℕ}
-
-private theorem precision_of_le
-    {B L p : Nat} (hp : 2 ≤ p) (hBL : B ≤ L) :
-    2 * B < p ^ Hex.precisionForCoeffBound L p := by
-  have hspec : 2 * L < p ^ Hex.precisionForCoeffBound L p :=
-    Hex.precisionForCoeffBound_spec hp L
-  omega
-
-theorem exhaustiveLiftBound_precision
-    (core : Hex.ZPoly) (B p : Nat) (hp : 2 ≤ p) :
-    2 * B <
-      p ^ Hex.precisionForCoeffBound (Hex.ZPoly.exhaustiveLiftBound core B) p :=
-  precision_of_le hp (Hex.ZPoly.le_exhaustiveLiftBound core B)
-
-theorem exhaustiveLiftBound_monic_precision
-    (core : Hex.ZPoly) (B p : Nat) (hp : 2 ≤ p) :
-    2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
-      p ^ Hex.precisionForCoeffBound (Hex.ZPoly.exhaustiveLiftBound core B) p :=
-  precision_of_le hp (Hex.ZPoly.monicBound_le_exhaustiveLiftBound core B)
 
 /--
 The executable coefficientwise reduction `Hex.ZPoly.modP` agrees with
@@ -826,41 +810,6 @@ theorem squarefree_toMathlibPolynomial_monicModPImage_of_goodPrime
           (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))) :=
     Polynomial.Separable.squarefree hsep
   rwa [monicModPImage_eq_monicModularImage]
-
-/-- **modP pairwise-disjointness from a `choosePrimeData?` witness.**
-
-Specialisation of `modPFactorSubset_disjoint_of_not_associated` to the executable
-`choosePrimeData?` boundary: the selected prime is `isGoodPrime`, which supplies
-both the nonzero mod-`p` core (`isGoodPrime_modP_isZero_false`) and the modular
-squarefreeness (`squarefree_toMathlibPolynomial_monicModPImage_of_choosePrimeData`)
-that the bare `ModPSubsetPartitionHypotheses … True True` package fills with
-`trivial`. -/
-theorem modPFactorSubset_disjoint_of_modPFactorization
-    {core : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
-    (hval : ModPFactorization core primeData)
-    (hcore_pos : 0 < core.degree?.getD 0)
-    {f g : Hex.ZPoly} {S T : ModPFactorSubset primeData}
-    (hf_irr : Irreducible (HexPolyZMathlib.toPolynomial f)) (hf_dvd : f ∣ core)
-    (hg_irr : Irreducible (HexPolyZMathlib.toPolynomial g)) (hg_dvd : g ∣ core)
-    (hS : RepresentsIntegerFactorModP primeData f S)
-    (hT : RepresentsIntegerFactorModP primeData g T)
-    (hnotassoc :
-      ¬ Associated (HexPolyZMathlib.toPolynomial f)
-        (HexPolyZMathlib.toPolynomial g)) :
-    Disjoint S T := by
-  letI := primeData.bounds
-  have hprime_hex : Hex.Nat.Prime primeData.p := hval.prime
-  have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
-    hval.good
-  have hcore_modP_nz :
-      (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
-    Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
-  exact modPFactorSubset_disjoint_of_not_associated hprime_hex
-    (modPSubsetPartitionHypotheses_of_modPFactorization core primeData hcore_pos hval)
-    hcore_modP_nz
-    (squarefree_toMathlibPolynomial_monicModPImage_of_goodPrime core primeData
-      hval.prime hval.good)
-    hf_irr hf_dvd hg_irr hg_dvd hS hT hnotassoc
 
 /-! # Base discharges for the small-mod singleton branch
 

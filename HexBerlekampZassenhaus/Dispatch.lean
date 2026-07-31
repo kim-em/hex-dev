@@ -56,7 +56,7 @@ theorem bhksRecoveryCoreWithBound_ne_none_of_recovery_on_schedule
     (hfloor : bhksRecoveryFloor core ≤ target)
     (hmem : target ∈ henselPrecisionSchedule B start fuel)
     (hrecover :
-      bhksRecover? core (ZPoly.toMonicLiftData core target primeData) = some factors) :
+      bhksRecover? core (ZPoly.coreLiftData core target primeData) = some factors) :
     bhksRecoveryCoreWithBound core B primeData start fuel ≠ none := by
   intro hnone
   have hsome :=
@@ -92,80 +92,6 @@ private def bhksRecoveryGuardPrimeData : PrimeChoiceData :=
     (initialHenselPrecision 32) (ZPoly.quadraticDoublingSteps 32 + 2) =
   some bhksGuardFactors
 
-namespace ZPoly
-
-/-- Maximum number of further good primes inspected to reduce modular-factor
-width on a high-cost monic transform. -/
-def primeProbeFuel : Nat := 2
-
-/--
-Optional prime-choice data for the monic polynomial sent to Hensel lifting.
-
-This is the prime selector for every tier that lifts through
-`toMonicLiftData` (fast, classical, lattice, slow modular): the selected
-modular factor data is the Berlekamp-form mod-`p` factorisation of
-`(toMonic core).monic`, the polynomial that `toMonicLiftData` passes to
-`henselLiftData`, so the Hensel seeds match the lift target.
--/
-@[expose]
-def toMonicPrimeData? (core : ZPoly) : Option PrimeChoiceData :=
-  choosePrimeDataAdaptive? (toMonic core).monic primeProbeFuel
-
-/-- A good hot-path candidate for the transformed monic polynomial forces the
-selector used by every Hensel-lifting tier to succeed. -/
-theorem toMonicPrimeData?_ne_none_of_good
-    {core : ZPoly} {c : SmallPrimeCandidate}
-    (hc : c ∈ hotPathCandidates)
-    (hgood : @isGoodPrime (toMonic core).monic c.p c.bounds = true) :
-    toMonicPrimeData? core ≠ none := by
-  exact choosePrimeDataAdaptive?_ne_none_of_good (extra := primeProbeFuel) hc hgood
-
-/-- Internal Hensel precision bound for the slow exhaustive branch.
-
-It preserves the public caller's coefficient bound while also covering the
-monic transform used by `toMonicLiftData`. -/
-def exhaustiveLiftBound (core : ZPoly) (B : Nat) : Nat :=
-  max B (defaultFactorCoeffBound (toMonic core).monic)
-
-theorem le_exhaustiveLiftBound (core : ZPoly) (B : Nat) :
-    B ≤ exhaustiveLiftBound core B := by
-  exact Nat.le_max_left B (defaultFactorCoeffBound (toMonic core).monic)
-
-theorem monicBound_le_exhaustiveLiftBound (core : ZPoly) (B : Nat) :
-    defaultFactorCoeffBound (toMonic core).monic ≤ exhaustiveLiftBound core B := by
-  exact Nat.le_max_right B (defaultFactorCoeffBound (toMonic core).monic)
-
-theorem toMonicPrimeData?_prime
-    (core : ZPoly) (data : PrimeChoiceData)
-    (hdata : toMonicPrimeData? core = some data) :
-    Nat.Prime data.p := by
-  exact choosePrimeDataAdaptive?_prime (toMonic core).monic primeProbeFuel data hdata
-
-theorem toMonicPrimeData?_isGoodPrime
-    (core : ZPoly) (data : PrimeChoiceData)
-    (hdata : toMonicPrimeData? core = some data) :
-    @isGoodPrime (toMonic core).monic data.p data.bounds = true := by
-  exact choosePrimeDataAdaptive?_isGoodPrime
-    (toMonic core).monic primeProbeFuel data hdata
-
-theorem toMonicPrimeData?_fModP_eq
-    (core : ZPoly) (data : PrimeChoiceData)
-    (hdata : toMonicPrimeData? core = some data) :
-    data.fModP = @ZPoly.modP data.p data.bounds (toMonic core).monic := by
-  exact choosePrimeDataAdaptive?_fModP_eq
-    (toMonic core).monic primeProbeFuel data hdata
-
-theorem toMonicPrimeData?_factorsModP_berlekamp_form
-    (core : ZPoly) (data : PrimeChoiceData)
-    (hdata : toMonicPrimeData? core = some data) :
-    factorsModPBerlekampForm (toMonic core).monic data := by
-  obtain ⟨hzero, heq⟩ :=
-    choosePrimeDataAdaptive?_form
-      (toMonic core).monic primeProbeFuel data hdata
-  exact ⟨toMonicPrimeData?_prime core data hdata, hzero, heq⟩
-
-end ZPoly
-
 private def exhaustiveNonMonicQuadraticGuard : ZPoly :=
   DensePoly.ofCoeffs #[1, 0, 2]
 
@@ -180,11 +106,11 @@ def classicalCoreFactors (core : ZPoly) : ClassicalOutcome :=
   match factorDirectCore ⟨core⟩ with
   | outcome => outcome
 
-/-- Normalize once, handle the cheap terminal cases, and otherwise execute the
-one direct engine.  This value is the shared source for the traced and
-untraced classical APIs. -/
+/-- Normalize once, handle the cheap terminal cases, and otherwise plan and
+execute the direct engine.  A successful modular plan remains attached to a
+decline for the total dispatcher. -/
 @[expose]
-def runClassical (f : ZPoly) : ClassicalRun :=
+def runClassical (f : ZPoly) : ClassicalRun f :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
     { factors :=
@@ -198,17 +124,27 @@ def runClassical (f : ZPoly) : ClassicalRun :=
             some (reassemblePolynomialFactors normalized coreFactors)
           trace := { tier := .quadratic } }
     | none =>
-        match classicalCoreFactors normalized.squareFreeCore with
-        | .factored coreFactors stats =>
-            { factors :=
-                some (reassemblePolynomialFactors normalized coreFactors)
-              trace := { tier := .classical, classical := stats } }
-        | .declined reason stats =>
+        let core := CoreProblem.ofNormalized normalized
+        match directPrimePlan? core with
+        | none =>
             { factors := none
               trace :=
                 { tier := .classical
-                  classicalDecline := some reason
-                  classical := stats } }
+                  classicalDecline := some .noGoodPrime } }
+        | some modular =>
+            match factorDirectCoreOfPlan core modular with
+            | .factored coreFactors stats =>
+                { factors :=
+                    some (reassemblePolynomialFactors normalized coreFactors)
+                  trace := { tier := .classical, classical := stats }
+                  modular := some modular }
+            | .declined reason stats =>
+                { factors := none
+                  trace :=
+                    { tier := .classical
+                      classicalDecline := some reason
+                      classical := stats }
+                  modular := some modular }
 
 /-- Raw factor array for the sole production classical tier. -/
 @[expose]
@@ -304,37 +240,22 @@ square-free core and the Mignotte coefficient bound of the input, so later
 termination proofs can use the same precision for both lattice separation
 and exact integer reconstruction.
 
-The BHKS component dominates both `(normalizeForFactor f).squareFreeCore` and
-its integer monic transform.  The latter is the polynomial whose CLD lattice is
-actually reduced; on nonmonic inputs its lower coefficients can be amplified by
-powers of the leading coefficient, so a bound on the untransformed core alone
-does not justify lattice separation.  The former remains explicit because a
-square-free core can also have a larger coefficient norm than `f` (for
+The CLD lattice is built directly over `(normalizeForFactor f).squareFreeCore`.
+The core remains explicit because it can have a larger coefficient norm than
+`f` (for
 `f = (x¹⁸ - 1)(x¹⁹ - 1)` the core `f / (x - 1)` has `coeffNormSq 36` against
 `f`'s `4`).
 -/
 def latticePrecisionCap (f : ZPoly) : Nat :=
   let core := (normalizeForFactor f).squareFreeCore
-  max (max (max (bhksBound core) (bhksBound (ZPoly.toMonic core).monic))
-        (cldCoeffFloor core))
+  max (max (bhksBound core) (cldCoeffFloor core))
     (max (ZPoly.defaultFactorCoeffBound f)
-      (max (ZPoly.defaultFactorCoeffBound core)
-        (ZPoly.defaultFactorCoeffBound (ZPoly.toMonic core).monic)))
+      (ZPoly.defaultFactorCoeffBound core))
 
 theorem bhksBound_squareFreeCore_le_latticePrecisionCap (f : ZPoly) :
     bhksBound (normalizeForFactor f).squareFreeCore ≤ latticePrecisionCap f := by
   unfold latticePrecisionCap
-  exact Nat.le_trans (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _))
-    (Nat.le_max_left _ _)
-
-/-- The public lattice cap dominates the BHKS bound of the monic transform,
-which is the polynomial used to build the production CLD lattice. -/
-theorem bhksBound_toMonic_squareFreeCore_le_latticePrecisionCap (f : ZPoly) :
-    bhksBound (ZPoly.toMonic (normalizeForFactor f).squareFreeCore).monic ≤
-      latticePrecisionCap f := by
-  unfold latticePrecisionCap
-  exact Nat.le_trans (Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_left _ _))
-    (Nat.le_max_left _ _)
+  exact Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _)
 
 /-- The cap clears the CLD column-adequacy floor of the square-free core, so the
 lattice tier's cap-precision run is column-adequate by construction. -/
@@ -354,13 +275,9 @@ theorem bhksRecoveryFloor_squareFreeCore_le_latticePrecisionCap (f : ZPoly) :
     bhksRecoveryFloor (normalizeForFactor f).squareFreeCore ≤ latticePrecisionCap f := by
   unfold bhksRecoveryFloor
   refine Nat.max_le.mpr ⟨cldCoeffFloor_squareFreeCore_le_latticePrecisionCap f,
-    Nat.max_le.mpr ⟨?_, ?_⟩⟩
-  · unfold latticePrecisionCap
-    exact Nat.le_trans (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_right _ _))
-      (Nat.le_max_right _ _)
-  · unfold latticePrecisionCap
-    exact Nat.le_trans (Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_right _ _))
-      (Nat.le_max_right _ _)
+    ?_⟩
+  unfold latticePrecisionCap
+  exact Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_right _ _)
 
 /-- The cap dominates the Mignotte bound of the square-free core itself, needed
 by the true-support nonemptiness argument at cap precision. -/
@@ -368,20 +285,7 @@ theorem defaultFactorCoeffBound_squareFreeCore_le_latticePrecisionCap (f : ZPoly
     ZPoly.defaultFactorCoeffBound (normalizeForFactor f).squareFreeCore ≤
       latticePrecisionCap f := by
   unfold latticePrecisionCap
-  exact Nat.le_trans (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_right _ _))
-    (Nat.le_max_right _ _)
-
-/-- The cap dominates the Mignotte bound of the monic transform of the
-square-free core, the `hbound` input of the toMonic partition producers
-used by the lattice tier. -/
-theorem defaultFactorCoeffBound_toMonic_squareFreeCore_le_latticePrecisionCap
-    (f : ZPoly) :
-    ZPoly.defaultFactorCoeffBound
-        (ZPoly.toMonic (normalizeForFactor f).squareFreeCore).monic ≤
-      latticePrecisionCap f := by
-  unfold latticePrecisionCap
-  exact Nat.le_trans (Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_right _ _))
-    (Nat.le_max_right _ _)
+  exact Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_right _ _)
 
 /--
 At the public precision cap, the monic lift for the square-free core clears
@@ -394,36 +298,16 @@ theorem two_mul_bhksBound_squareFreeCore_lt_pow_cap
     (f : ZPoly) (primeData : PrimeChoiceData) (hp : 2 ≤ primeData.p) :
     2 * bhksBound (normalizeForFactor f).squareFreeCore <
       primeData.p ^
-        (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
+        (ZPoly.coreLiftData (normalizeForFactor f).squareFreeCore
           (latticePrecisionCap f) primeData).k := by
   have hk :
-      (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
+      (ZPoly.coreLiftData (normalizeForFactor f).squareFreeCore
           (latticePrecisionCap f) primeData).k =
         precisionForCoeffBound (latticePrecisionCap f) primeData.p := by
-    unfold ZPoly.toMonicLiftData
+    unfold ZPoly.coreLiftData
     exact henselLiftData_k _ _ _
   rw [hk]
   have hle := bhksBound_squareFreeCore_le_latticePrecisionCap f
-  have hspec := precisionForCoeffBound_spec hp (latticePrecisionCap f)
-  omega
-
-/-- At the public cap the actual monic-coordinate CLD lattice also clears its
-BHKS bound.  This is the separation inequality needed by lattice totality; the
-core-coordinate variant above is not a substitute on nonmonic inputs. -/
-theorem two_mul_bhksBound_toMonic_squareFreeCore_lt_pow_cap
-    (f : ZPoly) (primeData : PrimeChoiceData) (hp : 2 ≤ primeData.p) :
-    2 * bhksBound (ZPoly.toMonic (normalizeForFactor f).squareFreeCore).monic <
-      primeData.p ^
-        (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
-          (latticePrecisionCap f) primeData).k := by
-  have hk :
-      (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
-          (latticePrecisionCap f) primeData).k =
-        precisionForCoeffBound (latticePrecisionCap f) primeData.p := by
-    unfold ZPoly.toMonicLiftData
-    exact henselLiftData_k _ _ _
-  rw [hk]
-  have hle := bhksBound_toMonic_squareFreeCore_le_latticePrecisionCap f
   have hspec := precisionForCoeffBound_spec hp (latticePrecisionCap f)
   omega
 
@@ -436,23 +320,10 @@ theorem two_mul_bhksBound_squareFreeCore_lt_pow_cap_of_choosePrimeData
       choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData) :
     2 * bhksBound (normalizeForFactor f).squareFreeCore <
       primeData.p ^
-        (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
+        (ZPoly.coreLiftData (normalizeForFactor f).squareFreeCore
           (latticePrecisionCap f) primeData).k :=
   two_mul_bhksBound_squareFreeCore_lt_pow_cap f primeData
     (choosePrimeData?_prime _ primeData hchoose).two_le
-
-/-- Variant of `two_mul_bhksBound_squareFreeCore_lt_pow_cap` keyed on the
-lattice tier's monic-transform prime-selection witness. -/
-theorem two_mul_bhksBound_squareFreeCore_lt_pow_cap_of_toMonicPrimeData
-    (f : ZPoly) (primeData : PrimeChoiceData)
-    (hselected :
-      ZPoly.toMonicPrimeData? (normalizeForFactor f).squareFreeCore = some primeData) :
-    2 * bhksBound (normalizeForFactor f).squareFreeCore <
-      primeData.p ^
-        (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
-          (latticePrecisionCap f) primeData).k :=
-  two_mul_bhksBound_squareFreeCore_lt_pow_cap f primeData
-    (ZPoly.toMonicPrimeData?_prime _ primeData hselected).two_le
 
 -- #8521 regression witness: normalization can increase the square-free core's
 -- coefficient norm, so the cap must not rely on norm monotonicity.
@@ -476,8 +347,7 @@ in `latticeCoreLoop`'s early stop and in the trailing cap check, to turn the
 declined-but-certified case into a positive irreducibility verdict.) -/
 @[expose]
 def bhksSingleAllOnesPartition (f : ZPoly) (d : LiftData) : Bool :=
-  -- Monic (`M2`) coordinate, matching `bhksRecoverClassified` (#8519).
-  let L := bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors
+  let L := bhksLatticeBasis f d.p d.k d.liftedFactors
   if hrows : 1 ≤ L.factorCount + L.coeffWidth then
     let projected := bhksProjectedRows L hrows
     let indicators := bhksEquivalenceClassIndicators projected
@@ -494,8 +364,8 @@ private theorem bhksRecoverClassifiedWithAllOnes_snd (f : ZPoly) (d : LiftData) 
     (bhksRecoverClassifiedWithAllOnes f d).2 = bhksSingleAllOnesPartition f d := by
   rw [bhksRecoverClassifiedWithAllOnes, bhksSingleAllOnesPartition]
   by_cases hrows :
-      1 ≤ (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).factorCount +
-        (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).coeffWidth
+      1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+        (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
   · simp only [dif_pos hrows]
   · simp only [dif_neg hrows]
 
@@ -531,7 +401,7 @@ private def latticeCoreLoop
         -- and the single-all-ones certificate off it (#8543): the `.degenerate`
         -- arm below no longer re-runs `bhksSingleAllOnesPartition`, which would
         -- rebuild the whole Hensel-lift/CLD/LLL/indicator pipeline.
-        let step := bhksRecoverClassifiedWithAllOnes core (ZPoly.toMonicLiftData core k primeData)
+        let step := bhksRecoverClassifiedWithAllOnes core (ZPoly.coreLiftData core k primeData)
         match step.1 with
         | .success factors =>
           some factors
@@ -576,7 +446,7 @@ private theorem latticeCoreLoop_unfold
         else
           latticeCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
       else
-        match bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
+        match bhksRecoverClassified core (ZPoly.coreLiftData core k primeData) with
         | .success factors => some factors
         | .candidateFailure =>
           if k ≥ B then none
@@ -585,7 +455,7 @@ private theorem latticeCoreLoop_unfold
           if k ≥ B then none
           else latticeCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
         | .degenerate =>
-          if bhksSingleAllOnesPartition core (ZPoly.toMonicLiftData core k primeData) then
+          if bhksSingleAllOnesPartition core (ZPoly.coreLiftData core k primeData) then
             some #[core]
           else if k ≥ B then none
           else latticeCoreLoop core B floor primeData (nextHenselPrecision k B) fuel) := by
@@ -621,7 +491,7 @@ private theorem latticeCoreLoop_none_imp_bhksRecoveryLoop_none
       · rw [if_neg hfl] at hnone ⊢
         cases hclass :
             bhksRecoverClassified core
-              (ZPoly.toMonicLiftData core k primeData) with
+              (ZPoly.coreLiftData core k primeData) with
         | success factors =>
             rw [hclass] at hnone
             simp at hnone
@@ -641,7 +511,7 @@ private theorem latticeCoreLoop_none_imp_bhksRecoveryLoop_none
             rw [hclass] at hnone
             by_cases hones :
                 bhksSingleAllOnesPartition core
-                  (ZPoly.toMonicLiftData core k primeData) = true
+                  (ZPoly.coreLiftData core k primeData) = true
             · rw [if_pos hones] at hnone
               simp at hnone
             · rw [if_neg hones] at hnone
@@ -658,7 +528,7 @@ theorem latticeCoreWithBound_ne_none_of_recovery_on_schedule
     (hfloor : bhksRecoveryFloor core ≤ target)
     (hmem : target ∈ henselPrecisionSchedule B start fuel)
     (hrecover :
-      bhksRecover? core (ZPoly.toMonicLiftData core target primeData) =
+      bhksRecover? core (ZPoly.coreLiftData core target primeData) =
         some factors) :
     latticeCoreWithBound core B primeData start fuel ≠ none := by
   intro hnone
@@ -685,7 +555,7 @@ private theorem latticeCoreLoop_some_spec
       latticeCoreLoop core B floor primeData k fuel = some cf →
         bhksRecoveryLoop core B floor primeData k fuel = some cf ∨
           (cf = #[core] ∧ ∃ k', floor ≤ k' ∧
-            bhksSingleAllOnesPartition core (ZPoly.toMonicLiftData core k' primeData)
+            bhksSingleAllOnesPartition core (ZPoly.coreLiftData core k' primeData)
               = true) := by
   intro fuel
   induction fuel with
@@ -703,7 +573,7 @@ private theorem latticeCoreLoop_some_spec
         · rw [if_neg hk] at h ⊢
           exact ih _ cf h
       · rw [if_neg hfl] at h ⊢
-        cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
+        cases hclass : bhksRecoverClassified core (ZPoly.coreLiftData core k primeData) with
         | success factors =>
             rw [hclass] at h
             exact Or.inl h
@@ -722,7 +592,7 @@ private theorem latticeCoreLoop_some_spec
         | degenerate =>
             rw [hclass] at h
             by_cases hones :
-                bhksSingleAllOnesPartition core (ZPoly.toMonicLiftData core k primeData) = true
+                bhksSingleAllOnesPartition core (ZPoly.coreLiftData core k primeData) = true
             · rw [if_pos hones] at h
               exact Or.inr ⟨(Option.some.inj h).symm,
                 k, Nat.le_of_not_lt hfl, hones⟩
@@ -744,7 +614,7 @@ theorem latticeCoreWithBound_some_spec
     (h : latticeCoreWithBound core B primeData k fuel = some cf) :
     bhksRecoveryCoreWithBound core B primeData k fuel = some cf ∨
       (cf = #[core] ∧ ∃ k', bhksRecoveryFloor core ≤ k' ∧
-        bhksSingleAllOnesPartition core (ZPoly.toMonicLiftData core k' primeData)
+        bhksSingleAllOnesPartition core (ZPoly.coreLiftData core k' primeData)
           = true) := by
   rw [latticeCoreWithBound, bhksRecoveryFloorGate_eq] at h
   rcases latticeCoreLoop_some_spec core B (bhksRecoveryFloor core) primeData fuel k cf h with
@@ -778,12 +648,31 @@ def latticeCoreFactorsWithBound
     | some coreFactors => some coreFactors
     | none =>
         if bhksRecoveryFloorGate core ≤ B then
-          if bhksSingleAllOnesPartition core (ZPoly.toMonicLiftData core B primeData) then
+          if bhksSingleAllOnesPartition core (ZPoly.coreLiftData core B primeData) then
             some #[core]
           else
             none
         else
           none
+
+/-- Reassemble a lattice result from an existing direct prime plan.  The plan
+is indexed by the normalized core, so callers cannot reuse modular factors for
+a different polynomial. -/
+@[expose]
+def factorLatticeFactorsWithPlan
+    (normalized : FactorNormalizationData) (B : Nat)
+    (modular : DirectPrimePlan (CoreProblem.ofNormalized normalized)) :
+    Option (Array ZPoly) :=
+  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+    some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
+  else if B = 0 then
+    none
+  else
+    match quadraticIntegerRootFactors? normalized.squareFreeCore with
+    | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
+    | none =>
+        (latticeCoreFactorsWithBound normalized.squareFreeCore B modular.data).map
+          fun coreFactors => reassemblePolynomialFactors normalized coreFactors
 
 /-- Raw factor array for the large-`r` lattice tier: the CLD lattice recovery,
 certifying irreducibility at the cap so that Swinnerton-Dyer / high-`r`
@@ -799,17 +688,10 @@ def factorLatticeFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :
     match quadraticIntegerRootFactors? normalized.squareFreeCore with
     | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
     | none =>
-        -- Select the prime on the monic transform (`toMonicPrimeData?`, as the
-        -- classical tier does): `latticeCoreFactorsWithBound` Hensel-lifts the
-        -- selected modular factors against `(ZPoly.toMonic core).monic`, so the
-        -- seeds must be that transform's mod-`p` factorisation.  Selecting on
-        -- `core` itself breaks the lift invariant whenever
-        -- `leadingCoeff core ≢ 1 (mod p)` (#8519).
-        match ZPoly.toMonicPrimeData? normalized.squareFreeCore with
+        match directPrimePlan? ⟨normalized.squareFreeCore⟩ with
         | none => none
-        | some primeData =>
-            (latticeCoreFactorsWithBound normalized.squareFreeCore B primeData).map
-              fun coreFactors => reassemblePolynomialFactors normalized coreFactors
+        | some modular =>
+            factorLatticeFactorsWithPlan normalized B modular
 
 theorem factorLatticeFactorsWithBound_zero (B : Nat) :
     factorLatticeFactorsWithBound 0 B =
@@ -866,9 +748,10 @@ lattice only when classical declines (budget exhausted, i.e. `r` too large), the
 to trial division when no admissible prime exists. This dominates an up-front
 `r`-estimate that could mis-route a reducible high-`r` input to the slow lattice.
 
-Returns the chosen `Factorization` and a `DirectFactorTrace` whose `tier` records which
-tier answered; `declined = true` marks that the classical tier did not answer and
-a fallback was taken.
+Returns the chosen `Factorization` and a `DirectFactorTrace` whose `tier`
+records which tier answered.  A classical decline retains its direct prime
+plan, and the lattice fallback consumes that plan without repeating modular
+factorization.
 
 **Self-certifying.** Each non-backstop tier's `Factorization` is accepted only
 when it reconstructs the input (`Factorization.product φ = f`, decidable on
@@ -877,19 +760,48 @@ when it reconstructs the input (`Factorization.product φ = f`, decidable on
 provable unconditionally without yet proving the classical recombination loop
 reconstructs (that, with per-factor irreducibility, is the separate re-proof
 step). The classical tier is correct on the whole conformance corpus, so the
-guard always passes there and the emitted factor/trace values are unchanged. -/
+guard always passes there and the emitted factor/trace values are unchanged.
+
+The raw factors and trace are retained together so every public view observes
+the same dispatch execution. -/
+@[expose]
+def runFactor (f : ZPoly) : FactorRun :=
+  let run := runClassical f
+  match run.factors with
+  | some factors =>
+      let φ := factorizationOfFactors f factors
+      if Factorization.product φ = f then
+        { factors, trace := run.trace }
+      else
+        { factors :=
+            factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
+          trace := { run.trace with tier := .trial } }
+  | none =>
+      match run.modular with
+      | some modular =>
+          match factorLatticeFactorsWithPlan
+              (normalizeForFactor f) (latticePrecisionCap f) modular with
+          | some factors =>
+              let φ := factorizationOfFactors f factors
+              if Factorization.product φ = f then
+                { factors, trace := { run.trace with tier := .lattice } }
+              else
+                { factors :=
+                    factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
+                  trace := { run.trace with tier := .trial } }
+          | none =>
+              { factors :=
+                  factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
+                trace := { run.trace with tier := .trial } }
+      | none =>
+          { factors :=
+              factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
+            trace := { run.trace with tier := .trial } }
+
 @[expose]
 def factorTraced (f : ZPoly) : Factorization × DirectFactorTrace :=
-  match factorClassicalTraced f with
-  | (some φ, trace) =>
-      if Factorization.product φ = f then (φ, trace)   -- classical answered, certified
-      else (factorTrial f, { trace with tier := .trial })
-  | (none, trace) =>
-      match factorLattice f with
-      | some φ =>
-          if Factorization.product φ = f then (φ, { trace with tier := .lattice })
-          else (factorTrial f, { trace with tier := .trial })
-      | none => (factorTrial f, { trace with tier := .trial })  -- totality backstop
+  let run := runFactor f
+  (factorizationOfFactors f run.factors, run.trace)
 
 /--
 The public total factorisation of a {name}`Hex.ZPoly`.
@@ -933,27 +845,11 @@ theorem factorLattice_eq_map (f : ZPoly) :
       (factorLatticeFactorsWithBound f (latticePrecisionCap f)).map
         (factorizationOfFactors f) := rfl
 
-/-- Raw factor array assembled by the cost-based hybrid, the bridge counterpart
-of `factorFactors`-consuming structural lemmas.
-
-Each non-backstop tier (`factorClassicalFactors` / lattice) is accepted
-only when its `factorizationOfFactors`-packed answer reconstructs `f` (the
-self-certifying guard mirrored here), and every fallback is the proven
-`factorTrial` backstop's raw array. The identity
-`ZPoly.factorize f = factorizationOfFactors f (factorFactors f)` is
-`factorize_eq_factorizationOfFactors`. -/
+/-- Raw factor array produced by the same total-dispatch execution as
+`ZPoly.factorize`. -/
 @[expose]
 def factorFactors (f : ZPoly) : Array ZPoly :=
-  match factorClassicalFactors f with
-  | some cf =>
-      if Factorization.product (factorizationOfFactors f cf) = f then cf
-      else factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
-  | none =>
-      match factorLatticeFactorsWithBound f (latticePrecisionCap f) with
-      | some cf =>
-          if Factorization.product (factorizationOfFactors f cf) = f then cf
-          else factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
-      | none => factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
+  (runFactor f).factors
 
 /-- The cost-based hybrid factorisation is the `factorizationOfFactors`-packed
 form of its raw factor array `factorFactors`. Every tier (classical /
@@ -961,41 +857,48 @@ lattice / trial) assembles via `factorizationOfFactors f`, so this bridge lets
 the structural `factorizationOfFactors_entry_*` lemmas apply to every entry
 of the hybrid result. -/
 theorem factorize_eq_factorizationOfFactors (f : ZPoly) :
-    ZPoly.factorize f = factorizationOfFactors f (factorFactors f) := by
-  have htrial : factorTrial f =
-      factorizationOfFactors f
-        (factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)) := by
-    rw [factorTrial, factorTrialWithBound_eq_factorizationOfFactors]
-  unfold ZPoly.factorize factorTraced factorFactors
-  have hclassical :
-      (factorClassicalTraced f).1 =
-        (factorClassicalFactors f).map
-          (factorizationOfFactors f) := by
-    rfl
-  rcases hcl : factorClassicalTraced f with ⟨cres, trace⟩
-  rw [hcl] at hclassical
-  cases hcf : factorClassicalFactors f with
-  | some cf =>
-      rw [hcf] at hclassical
-      simp only [Option.map_some] at hclassical
-      subst hclassical
-      by_cases hp : Factorization.product (factorizationOfFactors f cf) = f
-      · simp only [hp, if_true]
-      · simp only [hp, if_false]; exact htrial
-  | none =>
-      rw [hcf] at hclassical
-      simp only [Option.map_none] at hclassical
-      subst hclassical
-      simp only
-      rw [factorLattice_eq_map]
-      cases hl : factorLatticeFactorsWithBound f (latticePrecisionCap f) with
-      | some cf =>
-          simp only [Option.map_some]
-          by_cases hp : Factorization.product (factorizationOfFactors f cf) = f
-          · simp only [hp, if_true]
-          · simp only [hp, if_false]; exact htrial
-      | none =>
-          simp only [Option.map_none]; exact htrial
+    ZPoly.factorize f = factorizationOfFactors f (factorFactors f) := rfl
+
+/-- A modular plan retained by the classical run is exactly the plan selected
+for the normalized core. -/
+theorem runClassical_modular_eq_some
+    (f : ZPoly)
+    {modular : DirectPrimePlan
+      (CoreProblem.ofNormalized (normalizeForFactor f))}
+    (hmodular : (runClassical f).modular = some modular) :
+  directPrimePlan? (CoreProblem.ofNormalized (normalizeForFactor f)) =
+      some modular := by
+  unfold runClassical at hmodular
+  by_cases hdegree :
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+  · rw [if_pos hdegree] at hmodular
+    simp at hmodular
+  · rw [if_neg hdegree] at hmodular
+    cases hquadratic :
+        quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
+    | some coreFactors =>
+        simp [hquadratic] at hmodular
+    | none =>
+        simp only [hquadratic] at hmodular
+        generalize hplan :
+            directPrimePlan?
+                (CoreProblem.ofNormalized (normalizeForFactor f)) = plan?
+          at hmodular
+        cases plan? with
+        | none => simp at hmodular
+        | some plan =>
+            cases houtcome : factorDirectCoreOfPlan
+                (CoreProblem.ofNormalized (normalizeForFactor f)) plan with
+            | factored factors stats =>
+                have heq : some plan = some modular := by
+                  simpa only [houtcome] using hmodular
+                cases Option.some.inj heq
+                rfl
+            | declined reason stats =>
+                have heq : some plan = some modular := by
+                  simpa only [houtcome] using hmodular
+                cases Option.some.inj heq
+                rfl
 
 /-- Every raw factor of the cost-based hybrid comes from one of its three
 dispatch branches: the classical tier's certified output, the CLD lattice
@@ -1007,25 +910,50 @@ theorem factorFactors_mem_source (f : ZPoly) {raw : ZPoly}
     (hmem : raw ∈ (factorFactors f).toList) :
     (∃ cf, factorClassicalFactors f =
         some cf ∧ raw ∈ cf.toList) ∨
-      (∃ cf, factorLatticeFactorsWithBound f (latticePrecisionCap f) =
-        some cf ∧ raw ∈ cf.toList) ∨
+      (∃ (modular : DirectPrimePlan
+            (CoreProblem.ofNormalized (normalizeForFactor f)))
+          (cf : Array ZPoly),
+        directPrimePlan?
+            (CoreProblem.ofNormalized (normalizeForFactor f)) = some modular ∧
+          factorLatticeFactorsWithPlan
+            (normalizeForFactor f) (latticePrecisionCap f) modular = some cf ∧
+          raw ∈ cf.toList) ∨
       raw ∈ (factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)).toList := by
-  unfold factorFactors at hmem
-  rcases Option.eq_none_or_eq_some
-      (factorClassicalFactors f) with hcf | ⟨cf, hcf⟩
-  · simp only [hcf] at hmem
-    rcases Option.eq_none_or_eq_some
-        (factorLatticeFactorsWithBound f (latticePrecisionCap f)) with hl | ⟨cf, hl⟩
-    · simp only [hl] at hmem
-      exact Or.inr (Or.inr hmem)
-    · simp only [hl] at hmem
-      rcases Classical.em (Factorization.product (factorizationOfFactors f cf) = f) with hp | hp
-      · rw [if_pos hp] at hmem; exact Or.inr (Or.inl ⟨cf, hl, hmem⟩)
-      · rw [if_neg hp] at hmem; exact Or.inr (Or.inr hmem)
-  · simp only [hcf] at hmem
-    rcases Classical.em (Factorization.product (factorizationOfFactors f cf) = f) with hp | hp
-    · rw [if_pos hp] at hmem; exact Or.inl ⟨cf, hcf, hmem⟩
-    · rw [if_neg hp] at hmem; exact Or.inr (Or.inr hmem)
+  simp only [factorFactors, runFactor] at hmem
+  generalize hrun : runClassical f = run at hmem
+  cases hcf : run.factors with
+  | some cf =>
+      simp only [hcf] at hmem
+      by_cases hp : Factorization.product (factorizationOfFactors f cf) = f
+      · rw [if_pos hp] at hmem
+        exact Or.inl ⟨cf, by simp [factorClassicalFactors, hrun, hcf], hmem⟩
+      · rw [if_neg hp] at hmem
+        exact Or.inr (Or.inr hmem)
+  | none =>
+      simp only [hcf] at hmem
+      cases hmod : run.modular with
+      | none =>
+          simp only [hmod] at hmem
+          exact Or.inr (Or.inr hmem)
+      | some modular =>
+          simp only [hmod] at hmem
+          cases hl : factorLatticeFactorsWithPlan
+              (normalizeForFactor f) (latticePrecisionCap f) modular with
+          | none =>
+              simp only [hl] at hmem
+              exact Or.inr (Or.inr hmem)
+          | some cf =>
+              simp only [hl] at hmem
+              by_cases hp :
+                  Factorization.product (factorizationOfFactors f cf) = f
+              · rw [if_pos hp] at hmem
+                exact Or.inr (Or.inl
+                  ⟨modular, cf,
+                    runClassical_modular_eq_some f
+                      (by simpa [hrun] using hmod),
+                    hl, hmem⟩)
+              · rw [if_neg hp] at hmem
+                exact Or.inr (Or.inr hmem)
 
 /--
 Product of every odd prime searched by the historical bounded

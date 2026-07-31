@@ -9,7 +9,7 @@ module
 public import HexBerlekampZassenhaus
 public import HexBerlekampZassenhausMathlib.ForwardHenselTransport
 public import HexBerlekampZassenhausMathlib.UFDPartition
-public import HexBerlekampZassenhausMathlib.PublicSurface
+public import HexBerlekampZassenhausMathlib.ModularPolynomial
 public import HexPolyZMathlib.Basic
 
 public section
