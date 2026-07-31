@@ -18,7 +18,9 @@ Multiple records merge by **newest measurement per system** (guarded by a
 matching corpus SHA-256), so the Lean entries can be re-run as they evolve
 without re-running the expensive external comparators: record a fresh hex-only
 sweep, then regenerate charts and each external curve is carried over from the
-committed baseline it was last measured in.
+committed baseline it was last measured in. The default current-state charts
+exclude superseded Hex diagnostic entries; they can still be plotted by naming
+their records explicitly with ``--sweep``.
 
 Run (default: merge committed records for the current corpus, newest per system):
 ``python3 scripts/plots/hexbz-cactus.py``
@@ -61,6 +63,10 @@ STYLE = {
     "pari": ("#e377c2", "P", "PARI/GP"),
     "isabelle-bz": ("#ff7f0e", "*", "verified Isabelle BZ"),
     "isabelle-lll": ("#bcbd22", "h", "verified Isabelle LLL"),
+}
+
+CURRENT_SYSTEMS = {
+    "hex-factor", "flint", "ntl", "pari", "isabelle-bz", "isabelle-lll"
 }
 
 
@@ -263,6 +269,13 @@ def main():
     if skipped:
         print(f"skipped {skipped} historical sweep records with a different corpus hash")
     results, systems, provenance, cutoffs = merge_reports(paths)
+    if args.sweep is None:
+        systems = [system for system in systems if system in CURRENT_SYSTEMS]
+        results = [result for result in results if result["system"] in CURRENT_SYSTEMS]
+        provenance = {
+            system: source for system, source in provenance.items()
+            if system in CURRENT_SYSTEMS
+        }
 
     baseline_results = None
     if args.baseline:
