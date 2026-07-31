@@ -41,6 +41,7 @@ jobs:
         run: python3 scripts/check_file_line_counts.py
       - run: python3 scripts/check_dag.py
       - run: python3 scripts/release/check_released_manifest.py
+      - run: python3 -m unittest scripts/release/test_sync_released.py
       - run: python3 scripts/release/check_trust_surface.py
       - run: python3 scripts/check_phase4.py
       - name: Lint benches are Mathlib-free (SPEC/benchmarking.md §Mathlib-free benches)

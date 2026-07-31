@@ -5,8 +5,9 @@ For each repo in scripts/release/released.yml (topological order), this:
   1. clones the repo's `main`,
   2. overwrites its *managed* paths from this monorepo,
   3. for managed-source repos, enables native Verso docstrings,
-  4. rewrites cross-repo Hex pins in the repo's Lake files,
-  5. commits `chore: sync from hex-dev@<sha>` and pushes to `main`
+  4. copies the stable Lean toolchain and exact external dependency pins,
+  5. rewrites cross-repo Hex pins in the repo's Lake files,
+  6. commits `chore: sync from hex-dev@<sha>` and pushes to `main`
      (unless --dry-run, which prints the planned changes and pin rewrites).
 
 A `pins_only` entry (the `leanprover/hex` aggregate) skips steps 2-3 entirely: it
@@ -40,6 +41,8 @@ import yaml
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "scripts" / "release" / "released.yml"
 BASELINE = REPO_ROOT / "scripts" / "release" / "synced.json"
+TOOLCHAIN = REPO_ROOT / "lean-toolchain"
+LAKE_MANIFEST = REPO_ROOT / "lake-manifest.json"
 
 
 def run(cmd: list[str], cwd: Path | None = None, capture: bool = False) -> str:
@@ -155,6 +158,82 @@ def _lake_files(clone: Path, name_globs: list[str]) -> list[Path]:
     for g in name_globs:
         out += [p for p in clone.glob(f"**/{g}") if ".lake" not in p.parts]
     return sorted(out)
+
+
+def _git_url(url: str) -> str:
+    """Normalize a Git URL for comparison without changing its published form."""
+    normalized = url.rstrip("/")
+    if normalized.endswith(".git"):
+        normalized = normalized[:-4]
+    return normalized.lower()
+
+
+def external_pins() -> dict[str, dict[str, str]]:
+    """Exact non-Hex Git dependencies selected by this monorepo's lockfile."""
+    doc = json.loads(LAKE_MANIFEST.read_text(encoding="utf-8"))
+    pins: dict[str, dict[str, str]] = {}
+    for package in doc.get("packages", []):
+        url = package.get("url")
+        rev = package.get("rev")
+        input_rev = package.get("inputRev")
+        if not all(isinstance(value, str) for value in (url, rev, input_rev)):
+            continue
+        normalized = _git_url(url)
+        if re.fullmatch(r"https://github\.com/(?:kim-em|leanprover)/hex(?:-[^/]+)?",
+                        normalized):
+            continue
+        pins[normalized] = {"url": url, "rev": rev, "inputRev": input_rev}
+    return pins
+
+
+def rewrite_toolchains(clone: Path) -> list[str]:
+    """Use one stable Lean toolchain in the root and every side project."""
+    notes: list[str] = []
+    expected = TOOLCHAIN.read_text(encoding="utf-8")
+    toolchains = _lake_files(clone, ["lean-toolchain"])
+    if clone / "lean-toolchain" not in toolchains:
+        raise RuntimeError(f"released repository has no root lean-toolchain: {clone}")
+    for toolchain in toolchains:
+        if toolchain.read_text(encoding="utf-8") != expected:
+            toolchain.write_text(expected, encoding="utf-8")
+            notes.append(f"  toolchain {expected.strip()} ({toolchain.relative_to(clone)})")
+    return notes
+
+
+def rewrite_external_pins(clone: Path,
+                          pins: dict[str, dict[str, str]]) -> list[str]:
+    """Synchronize direct non-Hex requirements with the monorepo lock.
+
+    Lake files retain a readable tag or branch in ``inputRev`` form. Their
+    manifests carry the exact resolved commit, updated separately below.
+    """
+    notes: list[str] = []
+    for lakefile in _lake_files(clone, ["lakefile.toml", "lakefile.lean"]):
+        text = lakefile.read_text(encoding="utf-8")
+        original = text
+        for normalized, pin in pins.items():
+            before = text
+            url_pattern = re.escape(normalized) + r"(?:\.git)?"
+            if lakefile.name == "lakefile.toml":
+                pattern = (r'(git\s*=\s*"' + url_pattern
+                           + r'"\s*\n\s*rev\s*=\s*")[^"]+(")')
+            else:
+                pattern = (r'("' + url_pattern
+                           + r'"\s*@\s*")[^"]+(")')
+            text, count = re.subn(
+                pattern,
+                lambda match, rev=pin["inputRev"]:
+                    match.group(1) + rev + match.group(2),
+                text,
+                flags=re.IGNORECASE,
+            )
+            if count and text != before:
+                notes.append(
+                    f"  external pin {pin['url']} -> {pin['inputRev']} "
+                    f"({lakefile.relative_to(clone)})")
+        if text != original:
+            lakefile.write_text(text, encoding="utf-8")
+    return notes
 
 
 def _flatten_lean_options(options: dict, prefix: str = "") -> list[tuple[str, object]]:
@@ -353,7 +432,8 @@ def rewrite_pins(entry: dict, clone: Path, synced: dict[str, str],
 
 
 def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
-                     dep_owner: dict[str, str]) -> list[str]:
+                     dep_owner: dict[str, str],
+                     pins: dict[str, dict[str, str]]) -> list[str]:
     """Pin the synced SHAs in every lake-manifest.json (root + sub-projects), so
     Lake's lockfile points at the new revisions, not a stale checkout. Lake
     trusts the manifest, and the bench/ and conformance/ sub-projects keep their
@@ -369,6 +449,16 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
         changed = 0
         for pkg in doc.get("packages", []):
             url = pkg.get("url", "")
+            pin = pins.get(_git_url(url)) if isinstance(url, str) else None
+            if pin is not None:
+                if (pkg.get("rev") != pin["rev"] or
+                        pkg.get("inputRev") != pin["inputRev"]):
+                    pkg["rev"] = pin["rev"]
+                    pkg["inputRev"] = pin["inputRev"]
+                    changed += 1
+                    notes.append(
+                        f"  manifest {pin['url']} -> {pin['rev'][:12]} "
+                        f"({mf.relative_to(clone)})")
             for frag, dep in by_url.items():
                 if frag in url:
                     target = dep_owner.get(dep, "leanprover")
@@ -386,7 +476,8 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
 
 def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
               synced: dict[str, str], baseline: dict[str, str], force: bool,
-              dep_owner: dict[str, str]) -> bool:
+              dep_owner: dict[str, str],
+              pins: dict[str, dict[str, str]]) -> bool:
     """Sync one repo. Returns True if the baseline SHA changed (a push happened)."""
     repo = entry["repo"]
     short = repo.split("/")[-1]
@@ -411,9 +502,13 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
         if not entry.get("pins_only"):
             for line in rewrite_doc_verso(clone):
                 print(line)
+        for line in rewrite_toolchains(clone):
+            print(line)
+        for line in rewrite_external_pins(clone, pins):
+            print(line)
         for line in rewrite_pins(entry, clone, synced, dep_owner):
             print(line)
-        for line in rewrite_manifest(entry, clone, synced, dep_owner):
+        for line in rewrite_manifest(entry, clone, synced, dep_owner, pins):
             print(line)
         status = run(["git", "status", "--porcelain"], cwd=clone, capture=True)
         if not status:
@@ -461,12 +556,13 @@ def main() -> int:
     # truth the pin/manifest rewrites target (kim-em pre-cutover, leanprover after).
     dep_owner = {e["repo"].split("/")[-1]: e["repo"].split("/")[0]
                  for e in manifest["repos"]}
+    pins = external_pins()
     synced: dict[str, str] = {}
     for entry in manifest["repos"]:
         if args.only and entry["repo"].split("/")[-1] != args.only:
             continue
         sync_repo(entry, source_sha, args.token, args.dry_run,
-                  synced, baseline, args.force, dep_owner)
+                  synced, baseline, args.force, dep_owner, pins)
     # Advance the baseline to every processed repo's current HEAD (pushed, skipped,
     # or unchanged) so the next run's guard is accurate. Written on a real run only;
     # the workflow commits it to the release-sync-baseline branch.

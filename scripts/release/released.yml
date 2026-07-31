@@ -3,10 +3,11 @@
 # `hex-dev` is the source of truth. The sync (scripts/release/sync_released.py,
 # driven by .github/workflows/sync-released.yml) regenerates each released repo
 # from this monorepo: it overwrites the repo's *managed* paths from here, leaves
-# everything else (CI, toolchains, LICENSE, manifests) untouched, enables
-# native Verso docstrings in each managed-source repo's root + sidecar
-# lakefiles, rewrites cross-repo Hex pins to the commits just synced, and
-# commits to the released repo's `main`.
+# everything else except the release-wide toolchain and dependency locks
+# untouched, enables native Verso docstrings in each managed-source repo's root
+# + sidecar lakefiles, copies the monorepo's Lean toolchain, synchronizes exact
+# external dependency locks, rewrites cross-repo Hex pins to the commits just
+# synced, and commits to the released repo's `main`.
 #
 # Order is topological (upstream first) so each repo's freshly-pushed SHA is
 # known before its downstream consumers are processed.
