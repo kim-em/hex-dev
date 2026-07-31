@@ -14,7 +14,7 @@ public import Mathlib.Analysis.InnerProductSpace.GramSchmidtOrtho
 public section
 
 /-!
-The executable-to-Mathlib correspondence: the integer row lattice as a
+The integer row lattice as a
 `Submodule ℤ`, its identification with `Hex.Matrix.memLattice`, the
 `EuclideanSpace` embeddings with their norm transport, and the conditional
 Euclidean short-vector bound for an already-reduced basis.

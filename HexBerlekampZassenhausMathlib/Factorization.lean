@@ -8,7 +8,7 @@ module
 
 public import HexBerlekampZassenhaus
 public import HexBerlekampZassenhausMathlib.UFDPartition
-public import HexPolyZMathlib.Basic
+public import HexPolyZMathlib.PolynomialEquivalence
 public import Mathlib.Analysis.Complex.Polynomial.Basic
 
 public section

@@ -8,7 +8,7 @@ module
 
 public import Mathlib.Algebra.MvPolynomial.Equiv
 public import HexMvPolyMathlib.Equiv
-public import HexPolyMathlib.Basic
+public import HexPolyMathlib.PolynomialEquivalence
 
 public section
 

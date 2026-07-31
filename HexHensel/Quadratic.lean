@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexHensel.Basic
+public import HexHensel.ModularPolynomial
 public import HexHensel.WordMul
 public import HexPoly.Euclid.MonicUnique
 

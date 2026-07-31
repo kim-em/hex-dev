@@ -12,12 +12,12 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-# Direct classical engine
+# Direct classical factorization
 -/
 
 namespace Hex
 
-/-- Typed result of the sole production classical engine. -/
+/-- Result of direct classical factorization. -/
 inductive ClassicalOutcome where
   | factored (factors : Array ZPoly) (stats : ClassicalStats)
   | declined (reason : DeclineReason) (stats : ClassicalStats)
@@ -39,7 +39,7 @@ plan.  Keeping planning outside this function lets the total dispatcher reuse
 the plan if the bounded search declines. -/
 @[expose]
 def factorDirectCoreOfPlan
-    (core : CoreProblem) (modular : DirectPrimePlan core)
+    (core : SquareFreeInput) (modular : DirectPrimePlan core)
     (budget : Nat := defaultSubsetBudget) :
     ClassicalOutcome :=
   let liftPlan := directLiftPlan core modular
@@ -61,7 +61,7 @@ def factorDirectCoreOfPlan
 /-- Plan once, then run the direct classical engine. -/
 @[expose]
 def factorDirectCore
-    (core : CoreProblem) (budget : Nat := defaultSubsetBudget) :
+    (core : SquareFreeInput) (budget : Nat := defaultSubsetBudget) :
     ClassicalOutcome :=
   match directPrimePlan? core with
   | none => .declined .noGoodPrime {}

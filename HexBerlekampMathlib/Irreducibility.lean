@@ -17,7 +17,7 @@ public import Mathlib.FieldTheory.Finite.GaloisField
 public section
 
 /-!
-Mathlib-facing correctness surface for `HexBerlekamp`.
+Irreducibility of finite-field polynomials factored by `HexBerlekamp`.
 
 This module transfers executable `FpPoly p` values to Mathlib polynomials over
 `ZMod p` and states the initial Berlekamp-factor and Rabin-test correctness

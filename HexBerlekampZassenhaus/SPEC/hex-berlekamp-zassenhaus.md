@@ -94,21 +94,21 @@ required by its recovery bound.
 The main executable records tie data to the polynomial it describes.
 
 ```lean
-structure CoreProblem where
+structure SquareFreeInput where
   poly : ZPoly
 
-structure DirectPrimeProbe (core : CoreProblem) where
+structure DirectPrimeProbe (core : SquareFreeInput) where
   candidate        : SmallPrimeCandidate
   data             : PrimeChoiceData
   factorDegrees    : Array Nat
   reachableDegrees : Array Bool
 
-structure DirectPrimePlan (core : CoreProblem) where
+structure DirectPrimePlan (core : SquareFreeInput) where
   selected    : DirectPrimeProbe core
   otherProbes : Array (DirectPrimeProbe core)
 
 structure DirectLiftPlan
-    (core : CoreProblem) (modular : DirectPrimePlan core) where
+    (core : SquareFreeInput) (modular : DirectPrimePlan core) where
   ...
 
 inductive ClassicalOutcome where

@@ -30,7 +30,7 @@ structure DirectPrimeFacts
 /-- A selected direct plan describes the normalized modular image of its own
 indexed core. -/
 theorem directPrimePlan_modPFactorization
-    (core : Hex.CoreProblem) (plan : Hex.DirectPrimePlan core)
+    (core : Hex.SquareFreeInput) (plan : Hex.DirectPrimePlan core)
     (hplan : Hex.directPrimePlan? core = some plan)
     (hprim : Hex.ZPoly.Primitive core.poly)
     (hlc_pos : 0 < Hex.DensePoly.leadingCoeff core.poly)
@@ -43,7 +43,7 @@ theorem directPrimePlan_modPFactorization
 /-- A successful direct plan supplies exactly the modular facts used by the
 classical and lattice proof cones. -/
 theorem directPrimePlan_facts
-    (core : Hex.CoreProblem) (plan : Hex.DirectPrimePlan core)
+    (core : Hex.SquareFreeInput) (plan : Hex.DirectPrimePlan core)
     (hplan : Hex.directPrimePlan? core = some plan)
     (hprim : Hex.ZPoly.Primitive core.poly)
     (hlc_pos : 0 < Hex.DensePoly.leadingCoeff core.poly)

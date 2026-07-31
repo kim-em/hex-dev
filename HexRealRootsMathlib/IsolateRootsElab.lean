@@ -12,7 +12,7 @@ public import HexPolyZMathlib.PolyParse
 public meta import HexRealRoots.Isolate
 public meta import HexRealRoots.Refine
 public meta import HexRealRoots.Cert
-public meta import HexPolyZ.Core
+public meta import HexPolyZ.IntegerPolynomial
 public meta import HexPolyZMathlib.PolyParse
 public import Lean
 

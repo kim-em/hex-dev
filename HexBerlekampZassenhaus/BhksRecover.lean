@@ -9,7 +9,7 @@ module
 public meta import HexArith.Nat.Prime
 public meta import HexBerlekamp.Factor
 public meta import HexBerlekamp.Irreducibility
-public meta import HexHensel.Basic
+public meta import HexHensel.ModularPolynomial
 public meta import HexHensel.Multifactor
 public meta import HexHensel.QuadraticMultifactor
 public meta import HexMatrix.Basic
@@ -28,10 +28,10 @@ public import HexBasic.ArrayDecEq
 public import HexBerlekampZassenhaus.BhksCandidates
 public meta import HexBerlekampZassenhaus.BhksCandidates
 import all HexBerlekampZassenhaus.PrimeSelection
-import all HexBerlekampZassenhaus.Records
+import all HexBerlekampZassenhaus.FactorizationData
 import all HexBerlekampZassenhaus.Certificate
 import all HexBerlekampZassenhaus.ChoosePrimeData
-import all HexBerlekampZassenhaus.ReassemblyProofs
+import all HexBerlekampZassenhaus.FactorizationResult
 import all HexBerlekampZassenhaus.Lattice
 import all HexBerlekampZassenhaus.BhksCandidates
 

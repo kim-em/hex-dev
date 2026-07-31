@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekamp.Basic
+public import HexBerlekamp.BerlekampMatrix
 public import HexBerlekamp.CertReify
 public import HexBerlekamp.Factored
 public import HexBerlekamp.TacticCore

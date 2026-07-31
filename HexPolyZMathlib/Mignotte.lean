@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexPolyZMathlib.Basic
+public import HexPolyZMathlib.PolynomialEquivalence
 public import Mathlib.Analysis.Polynomial.MahlerMeasure
 public import Mathlib.NumberTheory.MahlerMeasure
 

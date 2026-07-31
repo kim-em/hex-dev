@@ -8,7 +8,7 @@ module
 
 public import Mathlib
 public import HexRealRoots.Prec
-public import HexPolyZMathlib.Basic
+public import HexPolyZMathlib.PolynomialEquivalence
 public import HexPolyZMathlib.Discriminant
 public import HexPolyZMathlib.Mignotte
 public import HexPolyZMathlib.MahlerSeparation

@@ -8,7 +8,7 @@ module
 
 public import HexPoly
 public import HexPolyZ.Rational
-import all HexPolyZ.Core
+import all HexPolyZ.IntegerPolynomial
 import all HexPolyZ.Rational
 
 public section

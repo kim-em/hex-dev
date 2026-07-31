@@ -12,7 +12,7 @@ public import HexPolyZ
 public section
 
 /-!
-Core conversion operations for executable Hensel lifting.
+Modular polynomial operations for executable Hensel lifting.
 
 This module connects the integer polynomial surface from `HexPolyZ` with the
 prime-field polynomial surface from `HexPolyFp`, exposing the coefficientwise

@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexPolyMathlib.Basic
+public import HexPolyMathlib.PolynomialEquivalence
 public import HexPolyMathlib.Euclid
 
 public section

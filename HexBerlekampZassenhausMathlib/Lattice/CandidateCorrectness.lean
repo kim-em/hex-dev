@@ -10,7 +10,7 @@ public import HexBerlekampZassenhaus
 public import HexBerlekampZassenhausMathlib.ForwardHenselTransport
 public import HexBerlekampZassenhausMathlib.UFDPartition
 public import HexBerlekampZassenhausMathlib.ModularPolynomial
-public import HexPolyZMathlib.Basic
+public import HexPolyZMathlib.PolynomialEquivalence
 
 public section
 set_option backward.proofsInPublic true

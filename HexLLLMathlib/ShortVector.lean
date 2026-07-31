@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexLLLMathlib.Bridge
+public import HexLLLMathlib.IntegerLattice
 public import HexLLLMathlib.Reducer
 public import HexLLL
 

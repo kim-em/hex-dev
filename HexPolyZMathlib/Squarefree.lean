@@ -8,7 +8,7 @@ module
 
 public import Mathlib
 public import HexPolyMathlib.Euclid
-public import HexPolyZMathlib.Basic
+public import HexPolyZMathlib.PolynomialEquivalence
 
 public section
 

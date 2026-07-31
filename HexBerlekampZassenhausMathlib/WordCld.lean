@@ -9,7 +9,7 @@ module
 public import HexBerlekampZassenhaus.WordCld
 public import HexBerlekampZassenhaus.Lattice
 public import HexModArithMathlib.WordMod
-public import HexPolyMathlib.Basic
+public import HexPolyMathlib.PolynomialEquivalence
 public import Mathlib.Algebra.Polynomial.Div
 
 public section

@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public meta import HexBerlekampZassenhaus.ProductProofs
-public import HexBerlekampZassenhaus.ProductProofs
+public meta import HexBerlekampZassenhaus.FactorProduct
+public import HexBerlekampZassenhaus.FactorProduct
 
 public section
 

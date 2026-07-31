@@ -6,12 +6,12 @@ Authors: Kim Morrison
 
 module
 
-public import HexLLL.Dispatch
+public import HexLLL.Reduction
 
 public section
 
 /-!
-Executable probe entry point for the `hex-lll` external reduction provider.
+Executable entry point for checking external LLL reduction.
 
 This module defines a small `main` driver that checks the optional native LLL
 provider against an expected `absent`/`present` state, exercising the public
@@ -29,7 +29,7 @@ misuse) for use as a CI check.
 namespace Hex
 
 open Hex.Internal
-namespace LLLProviderProbe
+namespace ExternalReduction
 
 @[expose]
 def main (args : List String) : IO UInt32 := do
@@ -56,9 +56,9 @@ def main (args : List String) : IO UInt32 := do
       IO.eprintln "usage: hexlll_provider_probe absent | present <path>"
       return 2
 
-end LLLProviderProbe
+end ExternalReduction
 end Hex
 
 @[expose]
 def main (args : List String) : IO UInt32 :=
-  Hex.LLLProviderProbe.main args
+  Hex.ExternalReduction.main args

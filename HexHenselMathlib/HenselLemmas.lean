@@ -6,16 +6,15 @@ Authors: Kim Morrison
 
 module
 
-public import HexHenselMathlib.Basic
-public import HexPolyMathlib.Basic
+public import HexHenselMathlib.CoprimeLift
+public import HexPolyMathlib.PolynomialEquivalence
 public import Mathlib.Algebra.Polynomial.Degree.IsMonicOfDegree
 public import Mathlib.Algebra.Field.ZMod
 
 public section
 
 /-!
-Mathlib-facing correctness and uniqueness theorem surface for executable
-Hensel lifting.
+Correctness and uniqueness lemmas for executable Hensel lifting.
 
 The statements in this module transfer the `Hex.ZPoly` Hensel API through
 `HexPolyMathlib.toPolynomial`, while keeping all new content proof-only.

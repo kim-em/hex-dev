@@ -6,14 +6,14 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhausMathlib.Classical.Correctness
+public import HexBerlekampZassenhausMathlib.Classical.Factorization
 public import HexBerlekampZassenhausMathlib.LatticeTier
 
 public section
 set_option backward.proofsInPublic true
 
 /-!
-# Correctness of the direct classical and total dispatchers
+# Irreducibility of factors returned by the classical and total methods
 
 The classical branch is proved directly from `factorDirectCore_factored`.
 There is no scaled-coordinate fallback or per-piece refinement theorem in this
@@ -81,14 +81,14 @@ theorem factorClassicalFactors_factor_irreducible
         simp only [hquad] at hcf
         cases hplan :
             Hex.directPrimePlan?
-              (Hex.CoreProblem.ofNormalized (Hex.normalizeForFactor f)) with
+              (Hex.SquareFreeInput.ofNormalized (Hex.normalizeForFactor f)) with
         | none =>
             simp [hplan] at hcf
         | some modular =>
             simp only [hplan] at hcf
             generalize hrun :
                 Hex.factorDirectCoreOfPlan
-                  (Hex.CoreProblem.ofNormalized (Hex.normalizeForFactor f))
+                  (Hex.SquareFreeInput.ofNormalized (Hex.normalizeForFactor f))
                   modular = outcome at hcf
             cases outcome with
             | declined reason stats => simp at hcf
@@ -110,7 +110,7 @@ theorem factorClassicalFactors_factor_irreducible
                         (Hex.normalizeForFactor f).squareFreeCore
                         coreFactors.toList :=
                   factorDirectCoreOfPlan_factored
-                    (Hex.CoreProblem.ofNormalized (Hex.normalizeForFactor f))
+                    (Hex.SquareFreeInput.ofNormalized (Hex.normalizeForFactor f))
                     modular hplan hcore_prim hcore_pos hcore_degree
                     hcore_squarefree hrun
                 have hcomplete :=

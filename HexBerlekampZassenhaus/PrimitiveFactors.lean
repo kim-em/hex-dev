@@ -9,7 +9,7 @@ module
 public meta import HexArith.Nat.Prime
 public meta import HexBerlekamp.Factor
 public meta import HexBerlekamp.Irreducibility
-public meta import HexHensel.Basic
+public meta import HexHensel.ModularPolynomial
 public meta import HexHensel.Multifactor
 public meta import HexHensel.QuadraticMultifactor
 public meta import HexMatrix.Basic
@@ -25,22 +25,22 @@ public import HexLLL
 -- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
 public import HexBasic.ArrayDecEq
 
-public import HexBerlekampZassenhaus.QuadraticRootProofs
-public meta import HexBerlekampZassenhaus.QuadraticRootProofs
+public import HexBerlekampZassenhaus.QuadraticFactors
+public meta import HexBerlekampZassenhaus.QuadraticFactors
 import all HexBerlekampZassenhaus.PrimeSelection
-import all HexBerlekampZassenhaus.Records
+import all HexBerlekampZassenhaus.FactorizationData
 import all HexBerlekampZassenhaus.Certificate
 import all HexBerlekampZassenhaus.ChoosePrimeData
-import all HexBerlekampZassenhaus.ReassemblyProofs
+import all HexBerlekampZassenhaus.FactorizationResult
 import all HexBerlekampZassenhaus.Lattice
 import all HexBerlekampZassenhaus.BhksCandidates
 import all HexBerlekampZassenhaus.BhksRecover
 import all HexBerlekampZassenhaus.Recombination
-import all HexBerlekampZassenhaus.FactorEntryPoints
+import all HexBerlekampZassenhaus.Factorization
 import all HexBerlekampZassenhaus.IrreducibleCore
-import all HexBerlekampZassenhaus.RecombineProofs
-import all HexBerlekampZassenhaus.TrialProofs
-import all HexBerlekampZassenhaus.QuadraticRootProofs
+import all HexBerlekampZassenhaus.RecombinationFactors
+import all HexBerlekampZassenhaus.TrialFactorization
+import all HexBerlekampZassenhaus.QuadraticFactors
 
 open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
 

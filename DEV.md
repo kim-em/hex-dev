@@ -29,7 +29,7 @@ before the dispatcher accepts it.
 
 ## Executable modules
 
-- `CoreProblem.lean` defines the primitive square-free problem indexed by every
+- `SquareFreeInput.lean` defines the primitive square-free problem indexed by every
   direct plan and lift.
 - `PrimeSelection.lean`, `ChoosePrimeData.lean`, and
   `Modular/PrimePlan.lean` implement direct modular planning.

@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampMathlib.Basic
+public import HexBerlekampMathlib.Irreducibility
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.RingTheory.Polynomial.Content
 public import Mathlib.Algebra.Polynomial.Degree.Lemmas

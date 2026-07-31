@@ -7,26 +7,26 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhaus.PrimeSelection
-public import HexBerlekampZassenhaus.Records
+public import HexBerlekampZassenhaus.FactorizationData
 public import HexBerlekampZassenhaus.Certificate
 public import HexBerlekampZassenhaus.CertReify
 public import HexBerlekampZassenhaus.ChoosePrimeData
-public import HexBerlekampZassenhaus.ReassemblyProofs
+public import HexBerlekampZassenhaus.FactorizationResult
 public import HexBerlekampZassenhaus.Lattice
 public import HexBerlekampZassenhaus.BhksCandidates
 public import HexBerlekampZassenhaus.BhksRecover
 public import HexBerlekampZassenhaus.Recombination
-public import HexBerlekampZassenhaus.FactorEntryPoints
+public import HexBerlekampZassenhaus.Factorization
 public import HexBerlekampZassenhaus.EisensteinCore
 public import HexBerlekampZassenhaus.IrreducibleCore
 public import HexBerlekampZassenhaus.IrreducibleDecide
 public import HexBerlekampZassenhaus.Factored
 public import HexBerlekampZassenhaus.FactorProvider
-public import HexBerlekampZassenhaus.RecombineProofs
-public import HexBerlekampZassenhaus.TrialProofs
-public import HexBerlekampZassenhaus.QuadraticRootProofs
-public import HexBerlekampZassenhaus.PrimitivityProofs
-public import HexBerlekampZassenhaus.ProductProofs
+public import HexBerlekampZassenhaus.RecombinationFactors
+public import HexBerlekampZassenhaus.TrialFactorization
+public import HexBerlekampZassenhaus.QuadraticFactors
+public import HexBerlekampZassenhaus.PrimitiveFactors
+public import HexBerlekampZassenhaus.FactorProduct
 public import HexBerlekampZassenhaus.SmallModSingleton
 public import HexBerlekampZassenhaus.WordCld
 

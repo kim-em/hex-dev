@@ -8,7 +8,7 @@ module
 
 public import Mathlib
 public import HexPolyZ
-public import HexPolyMathlib.Basic
+public import HexPolyMathlib.PolynomialEquivalence
 public import HexRealRoots.Mobius
 public import HexRealRootsMathlib.Separation
 public import HexRealRootsMathlib.ChainCorrespond

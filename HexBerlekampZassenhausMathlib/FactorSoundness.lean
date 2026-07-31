@@ -6,9 +6,9 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhaus.ProductProofs
+public import HexBerlekampZassenhaus.FactorProduct
 public import HexBerlekampZassenhausMathlib.IntReductionMod
-public import HexBerlekampZassenhausMathlib.Dispatch
+public import HexBerlekampZassenhausMathlib.FactorIrreducibility
 
 public section
 

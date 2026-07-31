@@ -12,7 +12,7 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-Core `ZPoly` (integer dense polynomial) definitions: the `ZPoly`
+Integer dense-polynomial definitions: the `ZPoly`
 abbreviation and law instances, the congruence predicate, content /
 primitive part / `toRatPoly`, the decomposition definitions, content
 multiplicativity, and integer degree/divMod arithmetic.

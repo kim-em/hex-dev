@@ -19,7 +19,7 @@ public import HexPoly
 public section
 
 /-!
-Identification definitions between the executable `Hex.DensePoly`
+Equivalence between the executable `Hex.DensePoly`
 representation and Mathlib's `Polynomial`.
 
 This module provides the concrete conversion functions and ring equivalence

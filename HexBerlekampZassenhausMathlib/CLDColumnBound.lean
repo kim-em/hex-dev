@@ -9,7 +9,7 @@ module
 public import HexBerlekampZassenhaus
 public import HexBerlekampZassenhausMathlib.Lattice
 public import HexBerlekampZassenhausMathlib.WordCld
-public import HexHenselMathlib.Correctness
+public import HexHenselMathlib.HenselLemmas
 public import HexPolyZMathlib.Mignotte
 public import HexPolyZMathlib.RobinsonForm
 public import Mathlib.Algebra.Polynomial.FieldDivision

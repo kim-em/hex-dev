@@ -9,7 +9,7 @@ module
 public meta import HexArith.Nat.Prime
 public meta import HexBerlekamp.Factor
 public meta import HexBerlekamp.Irreducibility
-public meta import HexHensel.Basic
+public meta import HexHensel.ModularPolynomial
 public meta import HexHensel.Multifactor
 public meta import HexHensel.QuadraticMultifactor
 public meta import HexMatrix.Basic
@@ -36,7 +36,7 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-This module collects the executable data records, `Factorization` product, and normalization-pipeline definitions.
+Data carried by modular factorization, lifting, normalization, and factorization results.
 -/
 namespace Hex
 

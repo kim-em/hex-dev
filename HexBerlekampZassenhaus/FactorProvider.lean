@@ -10,12 +10,12 @@ public meta import HexBerlekamp.TacticCore
 public meta import HexBerlekampZassenhaus.CertReify
 public meta import HexBerlekampZassenhaus.IrreducibleDecide
 public meta import HexBerlekampZassenhaus.Factored
-public meta import HexBerlekampZassenhaus.FactorEntryPoints
+public meta import HexBerlekampZassenhaus.Factorization
 public import HexBerlekamp.TacticCore
 public import HexBerlekampZassenhaus.CertReify
 public import HexBerlekampZassenhaus.IrreducibleDecide
 public import HexBerlekampZassenhaus.Factored
-public import HexBerlekampZassenhaus.FactorEntryPoints
+public import HexBerlekampZassenhaus.Factorization
 
 public section
 

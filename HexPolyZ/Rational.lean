@@ -7,8 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexPoly
-public import HexPolyZ.Core
-import all HexPolyZ.Core
+public import HexPolyZ.IntegerPolynomial
+import all HexPolyZ.IntegerPolynomial
 
 public section
 set_option backward.proofsInPublic true

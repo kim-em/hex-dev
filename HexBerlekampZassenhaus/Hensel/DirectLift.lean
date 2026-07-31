@@ -21,7 +21,7 @@ namespace Hex
 `B = 0` meaning: construction fixes the ordinary Mignotte recovery bound and
 the corresponding positive Hensel exponent. -/
 structure DirectLiftPlan
-    (core : CoreProblem) (modular : DirectPrimePlan core) where
+    (core : SquareFreeInput) (modular : DirectPrimePlan core) where
 deriving DecidableEq
 
 namespace DirectLiftPlan
@@ -29,19 +29,19 @@ namespace DirectLiftPlan
 /-- The unique recovery plan indexed by a core and its selected modular
 factorization. -/
 @[expose]
-def canonical (core : CoreProblem) (modular : DirectPrimePlan core) :
+def canonical (core : SquareFreeInput) (modular : DirectPrimePlan core) :
     DirectLiftPlan core modular :=
   ⟨⟩
 
 /-- Ordinary direct Mignotte coefficient bound. -/
 @[expose]
-def coeffBound {core : CoreProblem} {modular : DirectPrimePlan core}
+def coeffBound {core : SquareFreeInput} {modular : DirectPrimePlan core}
     (_plan : DirectLiftPlan core modular) : Nat :=
   ZPoly.defaultFactorCoeffBound core.poly
 
 /-- Recovery precision derived from the indexed core, bound, and prime. -/
 @[expose]
-def precision {core : CoreProblem} {modular : DirectPrimePlan core}
+def precision {core : SquareFreeInput} {modular : DirectPrimePlan core}
     (plan : DirectLiftPlan core modular) : Nat :=
   precisionForCoeffBound plan.coeffBound modular.data.p
 
@@ -51,20 +51,20 @@ end DirectLiftPlan
 The lifted data is derived from the indices rather than stored, so a basis
 from another core or precision cannot be inserted. -/
 structure DirectLiftedBasis
-    {core : CoreProblem} {modular : DirectPrimePlan core}
+    {core : SquareFreeInput} {modular : DirectPrimePlan core}
     (plan : DirectLiftPlan core modular) where
 
 namespace DirectLiftedBasis
 
 /-- Construct the unique basis token for a recovery plan. -/
 @[expose]
-def canonical {core : CoreProblem} {modular : DirectPrimePlan core}
+def canonical {core : SquareFreeInput} {modular : DirectPrimePlan core}
     (plan : DirectLiftPlan core modular) : DirectLiftedBasis plan :=
   ⟨⟩
 
 /-- Execute the lift determined by the indexed recovery plan. -/
 @[expose]
-def data {core : CoreProblem} {modular : DirectPrimePlan core}
+def data {core : SquareFreeInput} {modular : DirectPrimePlan core}
     {plan : DirectLiftPlan core modular}
     (_basis : DirectLiftedBasis plan) : LiftData :=
   ZPoly.coreLiftData core.poly plan.coeffBound modular.data
@@ -84,14 +84,14 @@ def directLiftedFactor (basis : LiftData)
 /-- Recovery plan at the ordinary direct Mignotte bound. -/
 @[expose]
 def directLiftPlan
-    (core : CoreProblem) (modular : DirectPrimePlan core) :
+    (core : SquareFreeInput) (modular : DirectPrimePlan core) :
     DirectLiftPlan core modular :=
   DirectLiftPlan.canonical core modular
 
 /-- Execute the unique Hensel lift owned by a direct recovery plan. -/
 @[expose]
 def directLiftedBasis
-    (core : CoreProblem) (modular : DirectPrimePlan core)
+    (core : SquareFreeInput) (modular : DirectPrimePlan core)
     (plan : DirectLiftPlan core modular) :
     DirectLiftedBasis plan :=
   DirectLiftedBasis.canonical plan

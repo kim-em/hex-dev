@@ -8,7 +8,7 @@ module
 
 public import HexBerlekampZassenhaus.PrimeSelection
 public import HexPolyZ.Decomposition
-import all HexPolyZ.Core
+import all HexPolyZ.IntegerPolynomial
 import all HexPolyZ.Rational
 import all HexPolyZ.Decomposition
 import all HexBerlekampZassenhaus.PrimeSelection

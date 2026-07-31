@@ -9,7 +9,7 @@ module
 public meta import HexArith.Nat.Prime
 public meta import HexBerlekamp.Factor
 public meta import HexBerlekamp.Irreducibility
-public meta import HexHensel.Basic
+public meta import HexHensel.ModularPolynomial
 public meta import HexHensel.Multifactor
 public meta import HexHensel.QuadraticMultifactor
 public meta import HexMatrix.Basic
@@ -27,13 +27,13 @@ public import HexBasic.ArrayDecEq
 
 public import HexBerlekampZassenhaus.Recombination
 public meta import HexBerlekampZassenhaus.Recombination
-public import HexBerlekampZassenhaus.Classical.Engine
-public meta import HexBerlekampZassenhaus.Classical.Engine
+public import HexBerlekampZassenhaus.Classical.Factorization
+public meta import HexBerlekampZassenhaus.Classical.Factorization
 import all HexBerlekampZassenhaus.PrimeSelection
-import all HexBerlekampZassenhaus.Records
+import all HexBerlekampZassenhaus.FactorizationData
 import all HexBerlekampZassenhaus.Certificate
 import all HexBerlekampZassenhaus.ChoosePrimeData
-import all HexBerlekampZassenhaus.ReassemblyProofs
+import all HexBerlekampZassenhaus.FactorizationResult
 import all HexBerlekampZassenhaus.Lattice
 import all HexBerlekampZassenhaus.BhksCandidates
 import all HexBerlekampZassenhaus.BhksRecover
@@ -45,12 +45,12 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-Typed dispatch for `factorClassical`/`Trial`/`Lattice`/`factorize` and the
+Integer factorization by the classical, lattice, and trial methods, with the
 `factorize_scalar` theorems.
 -/
 namespace Hex
 
-/-- Public dispatch tier. -/
+/-- Method that produced a public factorization result. -/
 inductive FactorTier where
   | constant
   | quadratic
@@ -85,7 +85,7 @@ structure ClassicalRun (f : ZPoly) where
   factors : Option (Array ZPoly)
   trace : DirectFactorTrace
   modular :
-    Option (DirectPrimePlan (CoreProblem.ofNormalized (normalizeForFactor f))) :=
+    Option (DirectPrimePlan (SquareFreeInput.ofNormalized (normalizeForFactor f))) :=
       none
 
 /-- Raw factors and trace produced by the total dispatcher in one execution. -/
@@ -168,7 +168,7 @@ def runClassical (f : ZPoly) : ClassicalRun f :=
             some (reassemblePolynomialFactors normalized coreFactors)
           trace := { tier := .quadratic } }
     | none =>
-        let core := CoreProblem.ofNormalized normalized
+        let core := SquareFreeInput.ofNormalized normalized
         match directPrimePlan? core with
         | none =>
             { factors := none
@@ -705,7 +705,7 @@ a different polynomial. -/
 @[expose]
 def factorLatticeFactorsWithPlan
     (normalized : FactorNormalizationData) (B : Nat)
-    (modular : DirectPrimePlan (CoreProblem.ofNormalized normalized)) :
+    (modular : DirectPrimePlan (SquareFreeInput.ofNormalized normalized)) :
     Option (Array ZPoly) :=
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
     some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
@@ -908,9 +908,9 @@ for the normalized core. -/
 theorem runClassical_modular_eq_some
     (f : ZPoly)
     {modular : DirectPrimePlan
-      (CoreProblem.ofNormalized (normalizeForFactor f))}
+      (SquareFreeInput.ofNormalized (normalizeForFactor f))}
     (hmodular : (runClassical f).modular = some modular) :
-  directPrimePlan? (CoreProblem.ofNormalized (normalizeForFactor f)) =
+  directPrimePlan? (SquareFreeInput.ofNormalized (normalizeForFactor f)) =
       some modular := by
   unfold runClassical at hmodular
   by_cases hdegree :
@@ -926,13 +926,13 @@ theorem runClassical_modular_eq_some
         simp only [hquadratic] at hmodular
         generalize hplan :
             directPrimePlan?
-                (CoreProblem.ofNormalized (normalizeForFactor f)) = plan?
+                (SquareFreeInput.ofNormalized (normalizeForFactor f)) = plan?
           at hmodular
         cases plan? with
         | none => simp at hmodular
         | some plan =>
             cases houtcome : factorDirectCoreOfPlan
-                (CoreProblem.ofNormalized (normalizeForFactor f)) plan with
+                (SquareFreeInput.ofNormalized (normalizeForFactor f)) plan with
             | factored factors stats =>
                 have heq : some plan = some modular := by
                   simpa only [houtcome] using hmodular
@@ -955,10 +955,10 @@ theorem factorFactors_mem_source (f : ZPoly) {raw : ZPoly}
     (∃ cf, factorClassicalFactors f =
         some cf ∧ raw ∈ cf.toList) ∨
       (∃ (modular : DirectPrimePlan
-            (CoreProblem.ofNormalized (normalizeForFactor f)))
+            (SquareFreeInput.ofNormalized (normalizeForFactor f)))
           (cf : Array ZPoly),
         directPrimePlan?
-            (CoreProblem.ofNormalized (normalizeForFactor f)) = some modular ∧
+            (SquareFreeInput.ofNormalized (normalizeForFactor f)) = some modular ∧
           factorLatticeFactorsWithPlan
             (normalizeForFactor f) (latticePrecisionCap f) modular = some cf ∧
           raw ∈ cf.toList) ∨

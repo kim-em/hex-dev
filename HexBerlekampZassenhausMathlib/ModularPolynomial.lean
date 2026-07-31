@@ -7,8 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhaus
-public import HexBerlekampMathlib.Basic
-public import HexPolyZMathlib.Basic
+public import HexBerlekampMathlib.Irreducibility
+public import HexPolyZMathlib.PolynomialEquivalence
 
 public section
 set_option backward.proofsInPublic true

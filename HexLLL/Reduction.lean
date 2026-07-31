@@ -6,13 +6,13 @@ Authors: Kim Morrison
 
 module
 
-public import HexLLL.Provider
+public import HexLLL.ExternalReducer
 public import HexLLL.Native
 
 public section
 
 /-!
-The public LLL entry points. `lll` keeps two paths: the certified
+The public LLL reduction. `lll` keeps two paths: the certified
 external-candidate dispatch (provider → `certCheck`) and, when no
 provider candidate certifies, the exact `lllNative`. Both satisfy the
 same `(δ, 11/20)` contract. `lll.firstShortVector` / `lll.shortVectors`

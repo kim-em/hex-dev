@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexPolyMathlib.Basic
-public import HexHensel.Basic
+public import HexPolyMathlib.PolynomialEquivalence
+public import HexHensel.ModularPolynomial
 public import HexModArithMathlib
 public import Mathlib.Algebra.Polynomial.Degree.Units
 public import Mathlib.Algebra.Ring.Int.Units
@@ -19,7 +19,7 @@ public import HexPolyZ
 public section
 
 /-!
-Correspondence definitions between `Hex.ZPoly` and Mathlib's `Polynomial ℤ`.
+Equivalence between `Hex.ZPoly` and Mathlib's `Polynomial ℤ`.
 
 This module specializes the generic dense-polynomial correspondence to integer
 coefficients so downstream libraries can work directly with the `ZPoly`

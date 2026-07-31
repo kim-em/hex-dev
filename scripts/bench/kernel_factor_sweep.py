@@ -52,7 +52,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 CORPUS_PATH = ROOT / "bench" / "corpus" / "hexbz-factor-corpus.jsonl"
 HEX_SERVICE = ROOT / ".lake" / "build" / "bin" / "hexbz_factor_service"
-KERNEL_IMPORT = "HexBerlekampZassenhaus.FactorEntryPoints"
+KERNEL_IMPORT = "HexBerlekampZassenhaus.Factorization"
 CERTIFICATE_IMPORT = "HexBerlekampZassenhausMathlib"
 META_PREFIX = "KERNEL_FACTOR_META="
 

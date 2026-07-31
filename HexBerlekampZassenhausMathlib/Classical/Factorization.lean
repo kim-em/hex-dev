@@ -7,14 +7,14 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhausMathlib.Classical.SearchCompleteness
-public import HexBerlekampZassenhaus.Classical.Engine
+public import HexBerlekampZassenhaus.Classical.Factorization
 import all HexBerlekampZassenhausMathlib.IntReductionMod.Descent
 
 public section
 set_option backward.proofsInPublic true
 
 /-!
-# Correctness of the direct classical search
+# Direct classical factorization
 
 The recursive invariant says that the executable list of remaining lifted
 indices is exactly the lift of the remaining modular support.  The
@@ -621,7 +621,7 @@ theorem validDirectFactors_of_spec
 /-- A successful run from a selected direct prime is an irreducible
 factorization of its indexed direct-coordinate core. -/
 theorem factorDirectCoreOfPlan_factored
-    (core : Hex.CoreProblem)
+    (core : Hex.SquareFreeInput)
     (modular : Hex.DirectPrimePlan core)
     (hplan : Hex.directPrimePlan? core = some modular)
     (hcore_prim : Hex.ZPoly.Primitive core.poly)
@@ -700,7 +700,7 @@ theorem factorDirectCoreOfPlan_factored
 /-- A successful run of the sole classical engine is an irreducible
 factorization of its indexed direct-coordinate core. -/
 theorem factorDirectCore_factored
-    (core : Hex.CoreProblem)
+    (core : Hex.SquareFreeInput)
     (hcore_prim : Hex.ZPoly.Primitive core.poly)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core.poly)
     (hcore_degree_pos : 0 < core.poly.degree?.getD 0)

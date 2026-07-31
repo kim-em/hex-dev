@@ -20,7 +20,7 @@ public import Mathlib.Tactic.LinearCombination
 public section
 
 /-!
-Initial coprimality-lifting infrastructure for `HexHenselMathlib`.
+Coprimality lifting for integer polynomials.
 
 This module sets up the `Polynomial ℤ` statements that later Hensel-correctness
 and uniqueness proofs need: coefficientwise divisibility transport through

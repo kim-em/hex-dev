@@ -11,7 +11,7 @@ public import HexLLL.Checker
 public section
 
 /-!
-The optional external LLL provider. `lll` probes an `@[extern]` hook for
+The optional external LLL reducer. `lll` uses an `@[extern]` hook for
 an independent native reducer, marshals the basis, and certifies the
 returned candidate with `certCheck`; absence or rejection falls through
 to the exact `lllNative` path. The provider is acceleration only.

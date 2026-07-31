@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public meta import HexPolyZ.Core
-public import HexPolyZMathlib.Basic
+public meta import HexPolyZ.IntegerPolynomial
+public import HexPolyZMathlib.PolynomialEquivalence
 public import Lean
 
 public section

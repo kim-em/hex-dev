@@ -47,8 +47,8 @@ public import HexBerlekampZassenhausMathlib.Classical.Recovery
 public import HexBerlekampZassenhausMathlib.Classical.SupportPartition
 public import HexBerlekampZassenhausMathlib.Classical.CombinationIterator
 public import HexBerlekampZassenhausMathlib.Classical.SearchCompleteness
-public import HexBerlekampZassenhausMathlib.Classical.Correctness
-public import HexBerlekampZassenhausMathlib.Dispatch
+public import HexBerlekampZassenhausMathlib.Classical.Factorization
+public import HexBerlekampZassenhausMathlib.FactorIrreducibility
 
 public section
 
