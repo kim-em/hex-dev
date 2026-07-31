@@ -14,13 +14,13 @@ public meta import HexHensel.Multifactor
 public meta import HexHensel.QuadraticMultifactor
 public meta import HexMatrix.Basic
 public meta import HexPolyZ.Mignotte
-public meta import HexLLL.Basic
+public meta import HexLLL
 public import HexArith.Nat.Prime
 public import HexBerlekamp.Factor
 public import HexBerlekamp.Irreducibility
 public import HexHensel.Multifactor
 public import HexHensel.QuadraticMultifactor
-public import HexLLL.Basic
+public import HexLLL
 -- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
 -- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
 public import HexBasic.ArrayDecEq
@@ -716,28 +716,6 @@ theorem choosePrimeDataAdaptive?_isGoodPrime
     (fun score => @isGoodPrime f score.data.p score.data.bounds = true)
     (fun c score hscore => primeChoiceDataScore_isGoodPrime f c score hscore) hdata
   exact hgood
-
-/--
-Choose an admissible small prime and package the modular image together with
-its Berlekamp irreducible factor data for the rest of the pipeline.
-
-The returned record stores the selected prime's `ZMod64.Bounds` instance, so
-callers can consume `fModP` and `factorsModP` directly without re-running the
-prime search or reconstructing typeclass evidence.
-
-This total wrapper is retained for compatibility with existing total slow-path
-statements. It fails through `Option.get!` when no admissible prime is selected;
-new call sites that require an actual selected prime should use
-`choosePrimeData?` directly and carry the local `some` witness.
--/
-def choosePrimeData (f : ZPoly) : PrimeChoiceData :=
-  (choosePrimeData? f).get!
-
-theorem choosePrimeData_eq_of_choosePrimeData?_some
-    {f : ZPoly} {data : PrimeChoiceData}
-    (hdata : choosePrimeData? f = some data) :
-    choosePrimeData f = data := by
-  simp [choosePrimeData, hdata]
 
 theorem choosePrimeData?_prime
     (f : ZPoly) (data : PrimeChoiceData)

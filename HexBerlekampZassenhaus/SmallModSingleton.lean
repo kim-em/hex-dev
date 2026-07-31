@@ -302,9 +302,7 @@ Side conditions discharged internally:
   `choosePrimeData?_isGoodPrime` and `isGoodPrime_leadingCoeffAdmissible`.
 * `1 < core.size` from `hdeg`, which also identifies this nonconstant branch.
 
-This is the Mathlib-free analog of
-`IntReductionMod.squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP`
-in `HexBerlekampZassenhausMathlib/IntReductionMod.lean`. -/
+-/
 theorem squareFreeCore_irreducible_of_small_mod_singleton
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
     (primeData : Hex.PrimeChoiceData)

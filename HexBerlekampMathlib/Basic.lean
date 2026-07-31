@@ -41,9 +41,9 @@ def fpPolyToPolynomial (f : Hex.FpPoly p) : Polynomial (ZMod p) :=
 
 /-- Rebuild an executable `FpPoly p` from a Mathlib polynomial over `ZMod p`. -/
 def polynomialToFpPoly (f : Polynomial (ZMod p)) : Hex.FpPoly p :=
-  Hex.DensePoly.ofCoeffs <|
-    ((List.range (f.natDegree + 1)).map fun i =>
-      HexModArithMathlib.ZMod64.equiv.symm (f.coeff i)).toArray
+  Hex.DensePoly.ofList <|
+    (List.range (f.natDegree + 1)).map fun i =>
+      HexModArithMathlib.ZMod64.equiv.symm (f.coeff i)
 
 /-- Coefficient view of the direct finite-field transport `fpPolyToPolynomial`,
 the standalone form of `coeff_toMathlibPolynomial` available before the ring
@@ -163,7 +163,7 @@ def fpPolyEquiv : Hex.FpPoly p ≃+* Polynomial (ZMod p) where
     intro f
     apply Hex.DensePoly.ext_coeff
     intro n
-    rw [polynomialToFpPoly, Hex.DensePoly.coeff_ofCoeffs_list,
+    rw [polynomialToFpPoly, Hex.DensePoly.coeff_ofList,
       HexPolyMathlib.list_getD_map_range_zero]
     by_cases hn : n < (fpPolyToPolynomial f).natDegree + 1
     · simp only [if_pos hn, coeff_fpPolyToPolynomial,
@@ -181,7 +181,7 @@ def fpPolyEquiv : Hex.FpPoly p ≃+* Polynomial (ZMod p) where
     intro P
     apply Polynomial.ext
     intro n
-    rw [coeff_fpPolyToPolynomial, polynomialToFpPoly, Hex.DensePoly.coeff_ofCoeffs_list,
+    rw [coeff_fpPolyToPolynomial, polynomialToFpPoly, Hex.DensePoly.coeff_ofList,
       HexPolyMathlib.list_getD_map_range_zero]
     by_cases hn : n < P.natDegree + 1
     · simp only [if_pos hn, HexModArithMathlib.ZMod64.equiv_symm_apply,

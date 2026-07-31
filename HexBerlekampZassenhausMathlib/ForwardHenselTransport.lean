@@ -736,7 +736,7 @@ theorem toMonicLiftData_represents_lifted_monicCorrespondent
       (Hex.ZPoly.toMonicLiftData core B primeData) g
       (liftedSubsetOfModPSubset primeData
         (Hex.ZPoly.toMonicLiftData core B primeData)
-        (Hex.ZPoly.toMonicLiftData_liftedFactors_size_eq core B primeData) S) := by
+        (MonicLift.factorCount_eq core B primeData) S) := by
   letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   have hmonicCore_monic :
       Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
@@ -1373,10 +1373,8 @@ private theorem size_scale_eq_of_monic_of_ne_zero
   have hg_size_le : g.size ≤ f.size := by
     rw [hg_def]
     unfold Hex.DensePoly.scale
-    have h := Hex.DensePoly.size_ofCoeffs_le
-      ((f.toList.map fun a => c * a).toArray)
-    rw [List.size_toArray, List.length_map, Hex.DensePoly.length_toList] at h
-    simpa [Hex.DensePoly.size] using h
+    simpa [Hex.DensePoly.length_toList] using
+      Hex.DensePoly.size_ofList_le (f.toList.map fun a => c * a)
   exact le_antisymm hg_size_le hg_size_ge
 
 /-- Variable dilation by a nonzero integer preserves stored size for monic
@@ -1402,10 +1400,9 @@ private theorem size_dilate_eq_of_monic_of_ne_zero
   have hg_size_le : g.size ≤ f.size := by
     rw [hg_def]
     unfold Hex.ZPoly.dilate
-    have h := Hex.DensePoly.size_ofCoeffs_le
-      ((List.range f.size).map fun i => c ^ i * f.coeff i).toArray
-    rw [List.size_toArray, List.length_map, List.length_range] at h
-    simpa [Hex.DensePoly.size] using h
+    simpa using
+      Hex.DensePoly.size_ofList_le
+        ((List.range f.size).map fun i => c ^ i * f.coeff i)
   exact le_antisymm hg_size_le hg_size_ge
 
 /-- Centred-lift preserves stored size when the leading coefficient is strictly

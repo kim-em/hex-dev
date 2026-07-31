@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexLLL.Basic
+import HexLLL
 import HexMatrix
 
 open Verso.Genre Manual

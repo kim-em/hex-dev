@@ -35,7 +35,7 @@ Compiled code uses `Hex.DensePoly.scaleImpl`, the value-equal
 `Hex.DensePoly.scale_eq_impl`. -/
 @[expose]
 noncomputable def scale [Mul R] (c : R) (p : DensePoly R) : DensePoly R :=
-  ofCoeffs (p.toList.map (fun a => c * a)).toArray
+  ofList (p.toList.map (fun a => c * a))
 
 /-- Runtime implementation of {name}`scale`: one `Array.map` pass over the stored
 coefficients (value-equal to {name}`scale` by `scale_eq_impl`, registered
@@ -48,7 +48,7 @@ def scaleImpl [Mul R] (c : R) (p : DensePoly R) : DensePoly R :=
 polynomial. -/
 theorem scale_eq_scaleImpl [Mul R] (c : R) (p : DensePoly R) :
     scale c p = scaleImpl c p := by
-  unfold scale scaleImpl
+  unfold scale scaleImpl ofList
   congr 1
   show ((p.toArray.toList).map (fun a => c * a)).toArray = _
   rw [← Array.toList_map, Array.toArray_toList]
@@ -74,7 +74,7 @@ implementation selected by `Hex.DensePoly.shift_eq_impl`. -/
 @[expose]
 noncomputable def shift (n : Nat) (p : DensePoly R) : DensePoly R :=
   if p.isZero then 0 else
-    ofCoeffs ((List.replicate n (Zero.zero : R)) ++ p.toList).toArray
+    ofList ((List.replicate n (Zero.zero : R)) ++ p.toList)
 
 /-- Runtime implementation of {name}`shift`: one `Array` append with no intermediate
 list (value-equal to {name}`shift` by `shift_eq_impl`, registered `@[csimp]`). -/
@@ -86,7 +86,7 @@ def shiftImpl (n : Nat) (p : DensePoly R) : DensePoly R :=
 /-- The reference {name}`shift` and the `Array` append compute the same polynomial. -/
 theorem shift_eq_shiftImpl (n : Nat) (p : DensePoly R) :
     shift n p = shiftImpl n p := by
-  unfold shift shiftImpl
+  unfold shift shiftImpl ofList
   by_cases hz : p.isZero
   · rw [if_pos hz, if_pos hz]
   · rw [if_neg hz, if_neg hz]
@@ -154,7 +154,7 @@ theorem coeff_scale [Mul R] (c : R) (p : DensePoly R) (n : Nat)
     (hzero : c * (Zero.zero : R) = (Zero.zero : R)) :
     (scale c p).coeff n = c * p.coeff n := by
   unfold scale
-  rw [coeff_ofCoeffs_list]
+  rw [coeff_ofList]
   simpa [coeff, toList, toArray] using
     list_getD_map_mul_zero (R := R) c p.toList n hzero
 
@@ -215,7 +215,7 @@ coefficients are read from the original polynomial with the index shifted down. 
       change (0 : DensePoly R).coeff k = (Zero.zero : R)
       exact coeff_eq_zero_of_size_le (0 : DensePoly R) (by simp)
   · rw [if_neg hp]
-    rw [coeff_ofCoeffs_list]
+    rw [coeff_ofList]
     simpa [coeff, toList, toArray] using
       list_getD_replicate_append_zero (R := R) n k p.toList
 

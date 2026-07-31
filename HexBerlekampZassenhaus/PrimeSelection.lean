@@ -14,13 +14,13 @@ public meta import HexHensel.Multifactor
 public meta import HexHensel.QuadraticMultifactor
 public meta import HexMatrix.Basic
 public meta import HexPolyZ.Mignotte
-public meta import HexLLL.Basic
+public meta import HexLLL
 public import HexArith.Nat.Prime
 public import HexBerlekamp.Factor
 public import HexBerlekamp.Irreducibility
 public import HexHensel.Multifactor
 public import HexHensel.QuadraticMultifactor
-public import HexLLL.Basic
+public import HexLLL
 -- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
 -- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
 public import HexBasic.ArrayDecEq
@@ -66,7 +66,7 @@ run is exactly the executable power of `X` dividing the polynomial.
 -/
 def extractXPower (f : ZPoly) : XPowerData :=
   let split := splitInitialZeros f.toArray.toList
-  { power := split.1, core := DensePoly.ofCoeffs split.2.toArray }
+  { power := split.1, core := DensePoly.ofList split.2 }
 
 /-- The integer leading coefficient reduced to the candidate prime field. -/
 @[expose]
@@ -1341,13 +1341,13 @@ theorem size_modP_eq_of_leadingCoeffAdmissible
     · exact hge
   have hle : (ZPoly.modP p f).size ≤ f.size := by
     show (ZPoly.modP p f).coeffs.size ≤ f.size
-    unfold ZPoly.modP FpPoly.ofCoeffs
-    have h := DensePoly.size_ofCoeffs_le
+    unfold ZPoly.modP
+    have h := DensePoly.size_ofList_le
       (R := ZMod64 p)
       ((List.range f.size).map
-        (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p))).toArray
+        (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p)))
     have hlen : ((List.range f.size).map
-        (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p))).toArray.size =
+        (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p))).length =
           f.size := by simp
     simpa [DensePoly.size, hlen] using h
   omega

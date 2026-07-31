@@ -432,7 +432,9 @@ repos:
 
   - repo: leanprover/hex-berlekamp-zassenhaus-mathlib
     lib: HexBerlekampZassenhausMathlib
-    test_modules: [HexBerlekampZassenhausMathlib.FactorPolyTests]
+    test_modules:
+      - HexBerlekampZassenhausMathlib.FactorPolyTests
+      - HexBerlekampZassenhausMathlib.IrreducibilityTests
     umbrella: true
     spec: hex-berlekamp-zassenhaus-mathlib
     bench: false

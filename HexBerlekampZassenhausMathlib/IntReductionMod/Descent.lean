@@ -217,7 +217,7 @@ theorem Hex_ZPoly_Irreducible_of_irreducible_map_intCast_zmod
       Irreducible
         ((HexPolyZMathlib.toPolynomial core).map (Int.castRingHom (ZMod p)))) :
     Hex.ZPoly.Irreducible core :=
-  (HexBerlekampZassenhausMathlib.Hex.ZPoly.polynomialIrreducible_iff_irreducible core).mp
+  (Hex.ZPoly.polynomialIrreducible_iff_irreducible core).mp
     (irreducible_of_isPrimitive_of_irreducible_map_intCast_zmod
       hprim hlc_map_ne hirr)
 
@@ -508,9 +508,8 @@ Mathlib irreducibility of `fModP` and finally to integer-level
 irreducibility of `core`.
 
 The square-free precondition on the monic modular image is supplied
-explicitly. Use
-`squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP`
-when the selected prime's executable `squareFreeModP` check should provide it.
+explicitly. `irreducible_of_smallMod` derives it from the selected good-prime
+record.
 -/
 theorem irreducible_of_smallMod_form
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
@@ -650,32 +649,6 @@ theorem irreducible_of_smallMod_form
     (p := primeData.p) (core := core)
     hprim hlc_map_ne hirr_fModP
 
-/-- Compatibility wrapper for the ordinary first-good selector. -/
-theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
-    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
-    (hselected : Hex.choosePrimeData? core = some primeData)
-    (hcore_pos : 0 < core.degree?.getD 0)
-    (hsmall : primeData.factorsModP.size ≤ 1)
-    (hprim : (HexPolyZMathlib.toPolynomial core).IsPrimitive)
-    (hlc_map_ne :
-      (Int.castRingHom (ZMod primeData.p))
-        (HexPolyZMathlib.toPolynomial core).leadingCoeff ≠ 0)
-    (hsquareFree_monic :
-      Hex.gcdIsUnit
-        (Hex.DensePoly.gcd
-          (@Hex.monicModularImage primeData.p primeData.bounds
-            (@Hex.ZPoly.modP primeData.p primeData.bounds core))
-          (Hex.DensePoly.derivative
-            (@Hex.monicModularImage primeData.p primeData.bounds
-              (@Hex.ZPoly.modP primeData.p primeData.bounds core)))) = true) :
-    Hex.ZPoly.Irreducible core := by
-  have hprime := Hex.choosePrimeData?_prime core primeData hselected
-  have hgood := Hex.choosePrimeData?_isGoodPrime core primeData hselected
-  obtain ⟨hzero, heq⟩ :=
-    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected
-  exact irreducible_of_smallMod_form core primeData hprime hgood
-    ⟨hprime, hzero, heq⟩ hcore_pos hsmall hprim hlc_map_ne hsquareFree_monic
-
 set_option maxHeartbeats 4000000
 
 /--
@@ -725,26 +698,6 @@ theorem irreducible_of_smallMod
       (p := primeData.p) (Hex.ZPoly.modP primeData.p core) hzero hsquareFree_modP
   exact irreducible_of_smallMod_form core primeData hprime_hex hgood hform
     hcore_pos hsmall hprim hlc_map_ne hsquareFree_monic
-
-/-- Compatibility wrapper for the ordinary first-good selector. -/
-theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP
-    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
-    (hselected : Hex.choosePrimeData? core = some primeData)
-    (hcore_pos : 0 < core.degree?.getD 0)
-    (hsmall : primeData.factorsModP.size ≤ 1)
-    (hprim :
-      (HexPolyZMathlib.toPolynomial core).IsPrimitive)
-    (hlc_map_ne :
-      (Int.castRingHom (ZMod primeData.p))
-        (HexPolyZMathlib.toPolynomial core).leadingCoeff ≠ 0) :
-    Hex.ZPoly.Irreducible core := by
-  have hprime := Hex.choosePrimeData?_prime core primeData hselected
-  have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
-    Hex.choosePrimeData?_isGoodPrime core primeData hselected
-  obtain ⟨hzero, heq⟩ :=
-    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected
-  exact irreducible_of_smallMod core primeData hprime hgood
-    ⟨hprime, hzero, heq⟩ hcore_pos hsmall hprim hlc_map_ne
 
 /-- The Mathlib image over `ZMod p` of the monic modular reduction selected by a
 successful `choosePrimeData?` run is squarefree.

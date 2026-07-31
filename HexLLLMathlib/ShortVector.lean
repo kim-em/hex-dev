@@ -8,7 +8,7 @@ module
 
 public import HexLLLMathlib.Bridge
 public import HexLLLMathlib.Reducer
-public import HexLLL.Basic
+public import HexLLL
 
 public section
 

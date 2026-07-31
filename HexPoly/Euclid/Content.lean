@@ -73,7 +73,7 @@ noncomputable def primitivePart (p : DensePoly Int) : DensePoly Int :=
     0
   else
     let c := Int.ofNat cNat
-    ofCoeffs (p.toList.map (fun coeff => coeff / c)).toArray
+    ofList (p.toList.map (fun coeff => coeff / c))
 
 /-- Runtime implementation of `primitivePart`: one `Array.map` pass over the
 stored coefficients (value-equal to `primitivePart` by
@@ -90,7 +90,7 @@ def primitivePartImpl (p : DensePoly Int) : DensePoly Int :=
 /-- The reference `primitivePart` and the `Array.map` runtime pass agree. -/
 theorem primitivePart_eq_primitivePartImpl (p : DensePoly Int) :
     primitivePart p = primitivePartImpl p := by
-  simp only [primitivePart, primitivePartImpl, ← contentNat_eq_contentNatImpl]
+  simp only [primitivePart, primitivePartImpl, ofList, ← contentNat_eq_contentNatImpl]
   by_cases h : contentNat p = 0
   · rw [if_pos h, if_pos h]
   · rw [if_neg h, if_neg h]
@@ -357,7 +357,7 @@ private def finiteCoeffConvolution (pCoeff qCoeff : Nat → Int) (n : Nat) : Int
   (List.range (n + 1)).foldl (fun acc r => acc + pCoeff r * qCoeff (n - r)) 0
 
 private def finiteCoeffFamilyPoly (coeff : Nat → Int) (bound : Nat) : DensePoly Int :=
-  ofCoeffs ((List.range (bound + 1)).map coeff).toArray
+  ofList ((List.range (bound + 1)).map coeff)
 
 /-- `finiteCoeffFamilyPoly coeff bound` reads back its defining coefficient
 `coeff i` at every index `i ≤ bound`. -/
@@ -365,7 +365,7 @@ private theorem finiteCoeffFamilyPoly_coeff_of_le
     (coeff : Nat → Int) (bound i : Nat) (hi : i ≤ bound) :
     (finiteCoeffFamilyPoly coeff bound).coeff i = coeff i := by
   unfold finiteCoeffFamilyPoly
-  rw [coeff_ofCoeffs_list]
+  rw [coeff_ofList]
   simp [hi, Nat.lt_succ_iff]
 
 /-- `finiteCoeffFamilyPoly coeff bound` has coefficient `0` at every index `i`
@@ -374,7 +374,7 @@ private theorem finiteCoeffFamilyPoly_coeff_of_lt
     (coeff : Nat → Int) (bound i : Nat) (hi : bound < i) :
     (finiteCoeffFamilyPoly coeff bound).coeff i = 0 := by
   unfold finiteCoeffFamilyPoly
-  rw [coeff_ofCoeffs_list]
+  rw [coeff_ofList]
   simp [hi, Nat.lt_succ_iff]
   rfl
 
@@ -827,7 +827,7 @@ theorem content_mul_primitivePart (p : DensePoly Int) :
       · have hpart :
             (primitivePart p).coeff n = p.coeff n / content p := by
           unfold primitivePart content
-          rw [if_neg hc, coeff_ofCoeffs_list, list_getD_map_ediv_zero]
+          rw [if_neg hc, coeff_ofList, list_getD_map_ediv_zero]
           unfold coeff toList toArray Array.getD
           by_cases hn : n < p.coeffs.size
           · simp [hn]
@@ -953,7 +953,7 @@ theorem content_scale_int (c : Int) (p : DensePoly Int) :
   have hscale_coeffs :
       (scale c p).toList =
         trimTrailingZerosList (p.toArray.toList.map (fun x => c * x)) := by
-    unfold scale ofCoeffs toList toArray trimTrailingZeros
+    unfold scale ofList ofCoeffs toList toArray trimTrailingZeros
     simp
   rw [hscale_coeffs, foldl_gcd_natAbs_trim_eq, List.foldl_map]
   have h := foldl_gcd_natAbs_mul_const_int c p.toArray.toList 0

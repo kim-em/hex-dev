@@ -14,13 +14,13 @@ public meta import HexHensel.Multifactor
 public meta import HexHensel.QuadraticMultifactor
 public meta import HexMatrix.Basic
 public meta import HexPolyZ.Mignotte
-public meta import HexLLL.Basic
+public meta import HexLLL
 public import HexArith.Nat.Prime
 public import HexBerlekamp.Factor
 public import HexBerlekamp.Irreducibility
 public import HexHensel.Multifactor
 public import HexHensel.QuadraticMultifactor
-public import HexLLL.Basic
+public import HexLLL
 -- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
 -- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
 public import HexBasic.ArrayDecEq
@@ -1138,9 +1138,9 @@ private theorem extractXPower_core_coeff_zero_ne_zero (f : ZPoly) (hf : f ≠ 0)
     apply hcore_ne
     simp only [ZPoly.extractXPower]
     rw [hempty]
-    simp [DensePoly.ofCoeffs_empty]
+    simp
   · simp only [ZPoly.extractXPower]
-    rw [DensePoly.coeff_ofCoeffs_list]
+    rw [DensePoly.coeff_ofList]
     exact hne
 
 /-- The reachable square-free core has a nonzero constant term.

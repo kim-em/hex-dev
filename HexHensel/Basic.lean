@@ -70,8 +70,8 @@ private theorem intModNat_eq_of_congr {a b : Int} {m : Nat} (h : (a - b) % (m : 
 /-- Reduce the coefficients of an integer polynomial modulo `p`. -/
 @[expose]
 def modP (p : Nat) [ZMod64.Bounds p] (f : ZPoly) : FpPoly p :=
-  FpPoly.ofCoeffs <|
-    (List.range f.size).map (fun i => ZMod64.ofNat p (intModNat (f.coeff i) p)) |>.toArray
+  DensePoly.ofList <|
+    (List.range f.size).map (fun i => ZMod64.ofNat p (intModNat (f.coeff i) p))
 
 /-- Array-map implementation of coefficient reduction modulo `p`. -/
 def modPImpl (p : Nat) [ZMod64.Bounds p] (f : ZPoly) : FpPoly p :=
@@ -81,7 +81,7 @@ def modPImpl (p : Nat) [ZMod64.Bounds p] (f : ZPoly) : FpPoly p :=
 /-- The direct array map computes the reference modular image. -/
 theorem modP_eq_impl_value (p : Nat) [ZMod64.Bounds p] (f : ZPoly) :
     modP p f = modPImpl p f := by
-  unfold modP modPImpl
+  unfold modP modPImpl DensePoly.ofList
   congr 1
   rw [show
       (List.range f.size).map
@@ -104,8 +104,8 @@ theorem modP_eq_impl : @modP = @modPImpl := by
 /-- Reduce each coefficient to its canonical representative modulo `p^k`. -/
 @[expose]
 def reduceModPow (f : ZPoly) (p k : Nat) : ZPoly :=
-  DensePoly.ofCoeffs <|
-    (List.range f.size).map (fun i => Int.ofNat (intModNat (f.coeff i) (p ^ k))) |>.toArray
+  DensePoly.ofList <|
+    (List.range f.size).map (fun i => Int.ofNat (intModNat (f.coeff i) (p ^ k)))
 
 /-- Array-map implementation of coefficient reduction modulo `p^k`. -/
 def reduceModPowImpl (f : ZPoly) (p k : Nat) : ZPoly :=
@@ -116,7 +116,7 @@ def reduceModPowImpl (f : ZPoly) (p k : Nat) : ZPoly :=
 /-- The direct array map computes the reference prime-power reduction. -/
 theorem reduceModPow_eq_impl_value (f : ZPoly) (p k : Nat) :
     reduceModPow f p k = reduceModPowImpl f p k := by
-  unfold reduceModPow reduceModPowImpl
+  unfold reduceModPow reduceModPowImpl DensePoly.ofList
   congr 1
   rw [show
       (List.range f.size).map
@@ -138,8 +138,8 @@ theorem reduceModPow_eq_impl : @reduceModPow = @reduceModPowImpl := by
 is the `ZMod64` image of the canonical representative of the original coefficient. -/
 @[simp, grind =] theorem coeff_modP (p : Nat) [ZMod64.Bounds p] (f : ZPoly) (i : Nat) :
     (modP p f).coeff i = ZMod64.ofNat p (intModNat (f.coeff i) p) := by
-  unfold modP FpPoly.ofCoeffs
-  rw [DensePoly.coeff_ofCoeffs_list, list_getD_map_range]
+  unfold modP
+  rw [DensePoly.coeff_ofList, list_getD_map_range]
   by_cases hi : i < f.size
   · simp [hi]
   · have hcoeff : f.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le f (Nat.le_of_not_gt hi)
@@ -164,7 +164,7 @@ by its canonical nonnegative representative in `[0, p^k)`. -/
 @[simp, grind =] theorem coeff_reduceModPow (f : ZPoly) (p k i : Nat) :
     (reduceModPow f p k).coeff i = Int.ofNat (intModNat (f.coeff i) (p ^ k)) := by
   unfold reduceModPow
-  rw [DensePoly.coeff_ofCoeffs_list, list_getD_map_range]
+  rw [DensePoly.coeff_ofList, list_getD_map_range]
   by_cases hi : i < f.size
   · simp [hi]
   · have hcoeff : f.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le f (Nat.le_of_not_gt hi)
@@ -325,15 +325,15 @@ variable {p : Nat} [ZMod64.Bounds p]
 /-- Lift `F_p` coefficients to their standard nonnegative integer representatives. -/
 @[expose]
 def liftToZ (f : FpPoly p) : ZPoly :=
-  DensePoly.ofCoeffs <|
-    (List.range f.size).map (fun i => Int.ofNat (f.coeff i).toNat) |>.toArray
+  DensePoly.ofList <|
+    (List.range f.size).map (fun i => Int.ofNat (f.coeff i).toNat)
 
 /-- Coefficientwise characterisation of `liftToZ`: each coefficient is the standard
 nonnegative `Nat` representative of the corresponding `ZMod64` element. -/
 @[simp, grind =] theorem coeff_liftToZ (f : FpPoly p) (i : Nat) :
     (liftToZ f).coeff i = Int.ofNat (f.coeff i).toNat := by
   unfold liftToZ
-  rw [DensePoly.coeff_ofCoeffs_list, list_getD_map_range]
+  rw [DensePoly.coeff_ofList, list_getD_map_range]
   by_cases hi : i < f.size
   · simp [hi]
   · have hcoeff : f.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le f (Nat.le_of_not_gt hi)
@@ -473,9 +473,9 @@ theorem monic_liftToZ_of_monic
   have hle : (liftToZ f).size ≤ f.size := by
     unfold liftToZ
     simpa using
-      (DensePoly.size_ofCoeffs_le
-        (((List.range f.size).map
-          (fun i => Int.ofNat (f.coeff i).toNat)).toArray))
+      (DensePoly.size_ofList_le
+        ((List.range f.size).map
+          (fun i => Int.ofNat (f.coeff i).toNat)))
   have hge : f.size ≤ (liftToZ f).size := by
     by_cases hle_size : f.size ≤ (liftToZ f).size
     · exact hle_size

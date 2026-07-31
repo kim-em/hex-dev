@@ -276,7 +276,7 @@ Positive natural degree of every lifted local factor for the executable
 `Hex.ZPoly.toMonicLiftData`.  This is the surface over
 `henselLiftData_liftedFactor_natDegree_pos`.
 -/
-theorem Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos
+theorem MonicLift.factor_natDegree_pos
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hmonic_core :
       Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic)
@@ -484,11 +484,11 @@ Per-output monicness for the `toMonic` lift whose prime data is selected from
 the monic transform itself.
 
 This is the non-monic-core wrapper over
-`Hex.ZPoly.toMonicLiftData_liftedFactor_monic`: the original `core` only needs
+`MonicLift.factor_monic`: the original `core` only needs
 positive leading coefficient and positive degree, which together make
 `(Hex.ZPoly.toMonic core).monic` monic.
 -/
-theorem Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
+theorem MonicLift.factor_monic_of_modPFactorization
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_pos : 0 < core.degree?.getD 0)
@@ -534,14 +534,14 @@ theorem Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       monicCore (Hex.precisionForCoeffBound B primeData.p) primeData
       hp_prime hp hprecision hmonicCore_monic hfactors_monic
       hproduct_mod_p hcoprime hnonempty
-  exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic
+  exact MonicLift.factor_monic
     core B primeData hmonicCore_monic hinv hp hprecision
 
 /--
 Positive natural degree for each output of the `toMonic` lift whose prime
 data is selected from the monic transform itself.
 -/
-theorem Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
+theorem MonicLift.factor_natDegree_pos_of_modPFactorization
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_pos : 0 < core.degree?.getD 0)
@@ -601,7 +601,7 @@ theorem Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
       ∀ g ∈ primeData.factorsModP,
         0 < (HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ g)).natDegree :=
     hval.natDegree_pos
-  exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos
+  exact MonicLift.factor_natDegree_pos
     core B primeData hmonicCore_monic hinv hp hprecision
     hfactors_monic hproduct_mod_p hfactors_natDegree_pos
 
@@ -609,7 +609,7 @@ theorem Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
 Injectivity of lifted factors for the `toMonic` lift whose prime data is
 selected from the monic transform itself.
 -/
-theorem Hex.ZPoly.toMonicLiftData_liftedFactor_injective_of_monicPrimeData
+theorem MonicLift.factor_injective_of_modPFactorization
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_pos : 0 < core.degree?.getD 0)
@@ -655,7 +655,7 @@ theorem Hex.ZPoly.toMonicLiftData_liftedFactor_injective_of_monicPrimeData
       hp_prime hp hprecision hmonicCore_monic hfactors_monic
       hproduct_mod_p hcoprime hnonempty
   have hfactorsModP_nodup : primeData.factorsModP.toList.Nodup := hval.nodup
-  exact Hex.ZPoly.toMonicLiftData_liftedFactor_injective
+  exact MonicLift.factor_injective
     core B primeData hmonicCore_monic hinv hp hprecision
     hfactors_monic hproduct_mod_p hfactorsModP_nodup
 
@@ -1241,9 +1241,8 @@ Multiplicative closure of the recovered/monic-coordinate representation carrier
 integer factor `f` and `T` (disjoint from `S`) recovers `g`, then `S ∪ T`
 recovers `f * g`.
 
-Unlike the compatibility wrapper
-`representsIntegerFactorAtLift_mul_of_monic_core`, this holds for an
-*arbitrary* core: the carrier already separates the mod-`p^k` congruence (on
+This holds for an arbitrary core: the carrier separates the mod-`p^k`
+congruence (on
 the unscaled `liftedFactorProduct`) from the dilation by `leadingCoeff core`, so
 no monicity hypothesis is needed. The witness monic coordinate is the product of
 the two witnesses; the `congr` field combines
@@ -1286,30 +1285,6 @@ def RecoveredAtLift.mul
     rw [HexPolyZMathlib.dilate_mul, Hex.ZPoly.primitivePart_mul,
       hf.dilate_eq, hg.dilate_eq]
   monic_dvd := hmul_dvd
-
-/--
-Multiplicative closure of `RepresentsIntegerFactorAtLift` along a disjoint
-decomposition `S ∪ T`, packaged from the recovered carriers.  Thin wrapper over
-`RecoveredAtLift.mul` returning the public predicate.
-
-Inputs are the data-bearing `RecoveredAtLift` carriers (not the
-`Nonempty`-erased predicate) because the product-divisibility premise `hmul_dvd`
-the carrier's `monic_dvd` field now demands must reference the component monic
-coordinates, which are not nameable through the erased predicate.  The
-monic-core hypothesis is retained for signature compatibility with the prior
-wrapper.
--/
-theorem representsIntegerFactorAtLift_mul_of_monic_core
-    {core f g : Hex.ZPoly} {d : Hex.LiftData}
-    {S T : LiftedFactorSubset d}
-    (_hcore_monic : Hex.DensePoly.Monic core)
-    (hdisj : Disjoint S T)
-    (hf : RecoveredAtLift core d f S)
-    (hg : RecoveredAtLift core d g T)
-    (hmul_dvd :
-      hf.monicFactor * hg.monicFactor ∣ (Hex.ZPoly.toMonic core).monic) :
-    RepresentsIntegerFactorAtLift core d (f * g) (S ∪ T) :=
-  RepresentsIntegerFactorAtLift.ofRecovered (RecoveredAtLift.mul hdisj hf hg hmul_dvd)
 
 /--
 Monic-product closure for `liftedFactorProduct`: when every selected lifted

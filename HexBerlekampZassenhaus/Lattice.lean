@@ -14,13 +14,13 @@ public meta import HexHensel.Multifactor
 public meta import HexHensel.QuadraticMultifactor
 public meta import HexMatrix.Basic
 public meta import HexPolyZ.Mignotte
-public meta import HexLLL.Basic
+public meta import HexLLL
 public import HexArith.Nat.Prime
 public import HexBerlekamp.Factor
 public import HexBerlekamp.Irreducibility
 public import HexHensel.Multifactor
 public import HexHensel.QuadraticMultifactor
-public import HexLLL.Basic
+public import HexLLL
 public import HexBerlekampZassenhaus.WordCld
 -- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
 -- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.

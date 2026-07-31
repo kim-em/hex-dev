@@ -1071,12 +1071,12 @@ private theorem evalScalarCoeffList_drop_eq_getD_add
 
 /-- Routine round-trip: rebuilding a polynomial from its own coefficient array
 recovers it. -/
-private theorem ofCoeffs_toArray_fp (f : FpPoly p) :
-    (DensePoly.ofCoeffs f.toArray : FpPoly p) = f := by
+private theorem ofList_toList_fp (f : FpPoly p) :
+    (DensePoly.ofList f.toArray.toList : FpPoly p) = f := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_ofCoeffs]
-  rfl
+  rw [DensePoly.coeff_ofList]
+  simpa [DensePoly.toList] using DensePoly.toList_getD_eq_coeff f n
 
 /-- {name}`getElem?`/`getD` restatement of {name}`scalarDividedDifferenceCoeffs_getD`, the
 form used when reading quotient coefficients out of {name}`ofCoeffs` arrays. -/
@@ -1102,7 +1102,7 @@ The product-coefficient half of the factorization identity. -/
 private theorem scalar_linear_factor_mul_dividedDifference_coeff
     (cs : List (ZMod64 p)) (α : ZMod64 p) (n : Nat) :
     let q : FpPoly p :=
-      DensePoly.ofCoeffs (scalarDividedDifferenceCoeffs cs α).toArray
+      DensePoly.ofList (scalarDividedDifferenceCoeffs cs α)
     ((FpPoly.X - FpPoly.C α) * q).coeff n =
       (if n = 0 then 0 else evalScalarCoeffList (cs.drop n) α) -
         α * evalScalarCoeffList (cs.drop (n + 1)) α := by
@@ -1116,7 +1116,7 @@ private theorem scalar_linear_factor_mul_dividedDifference_coeff
   have hCmul : FpPoly.C α * q = DensePoly.scale α q := C_mul_eq_scale α q
   rw [hCmul, DensePoly.coeff_scale _ _ _ hzero_mul,
     show FpPoly.X = (DensePoly.monomial 1 (1 : ZMod64 p) : FpPoly p) from rfl, coeff_monomial_mul,
-    DensePoly.coeff_ofCoeffs_list, DensePoly.coeff_ofCoeffs_list, zmod_Zero_zero_eq_zero]
+    DensePoly.coeff_ofList, DensePoly.coeff_ofList, zmod_Zero_zero_eq_zero]
   cases n with
   | zero =>
       simp
@@ -1136,13 +1136,13 @@ the constant-term Horner unfolding with
 {name}`scalar_linear_factor_mul_dividedDifference_coeff` coefficientwise. -/
 private theorem ofCoeffs_eq_C_eval_add_linear_mul_dividedDifference
     (cs : List (ZMod64 p)) (α : ZMod64 p) :
-    (DensePoly.ofCoeffs cs.toArray : FpPoly p) =
+    (DensePoly.ofList cs : FpPoly p) =
       FpPoly.C (evalScalarCoeffList cs α) +
         (FpPoly.X - FpPoly.C α) *
-          (DensePoly.ofCoeffs (scalarDividedDifferenceCoeffs cs α).toArray : FpPoly p) := by
+          (DensePoly.ofList (scalarDividedDifferenceCoeffs cs α) : FpPoly p) := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_add_semiring, DensePoly.coeff_ofCoeffs_list, zmod_Zero_zero_eq_zero]
+  rw [DensePoly.coeff_add_semiring, DensePoly.coeff_ofList, zmod_Zero_zero_eq_zero]
   rw [show (FpPoly.C (evalScalarCoeffList cs α)).coeff n =
       if n = 0 then evalScalarCoeffList cs α else (Zero.zero : ZMod64 p) by
     unfold FpPoly.C
@@ -1164,7 +1164,7 @@ theorem X_sub_C_dvd_of_eval_eq_zero
     (hroot : DensePoly.eval f c = 0) :
     (FpPoly.X - FpPoly.C c) ∣ f := by
   let q : FpPoly p :=
-    DensePoly.ofCoeffs (scalarDividedDifferenceCoeffs f.toArray.toList c).toArray
+    DensePoly.ofList (scalarDividedDifferenceCoeffs f.toArray.toList c)
   refine ⟨q, ?_⟩
   have hcoeffs :=
     ofCoeffs_eq_C_eval_add_linear_mul_dividedDifference
@@ -1172,7 +1172,7 @@ theorem X_sub_C_dvd_of_eval_eq_zero
   rw [eval_eq_coeff_power_sum] at hroot
   have hroot_scalar : evalScalarCoeffList f.toArray.toList c = 0 := by
     rw [evalScalarCoeffList_eq_powerSumFrom_zero, hroot]
-  rw [← ofCoeffs_toArray_fp f, hcoeffs, hroot_scalar, C_zero_fp]
+  rw [← ofList_toList_fp f, hcoeffs, hroot_scalar, C_zero_fp]
   change (0 : FpPoly p) +
       (FpPoly.X - FpPoly.C c) * q = (FpPoly.X - FpPoly.C c) * q
   exact zero_add ((FpPoly.X - FpPoly.C c) * q)

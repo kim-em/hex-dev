@@ -32,8 +32,8 @@ namespace ZPoly
 
 /-- Divide every coefficient by `m` using Lean's truncating integer division. -/
 def coeffwiseDiv (f : ZPoly) (m : Nat) : ZPoly :=
-  DensePoly.ofCoeffs <|
-    (List.range f.size).map (fun i => f.coeff i / Int.ofNat m) |>.toArray
+  DensePoly.ofList <|
+    (List.range f.size).map (fun i => f.coeff i / Int.ofNat m)
 
 /-- The `i`-th coefficient of `coeffwiseDiv f m` is the truncating integer
 quotient of `f.coeff i` by `m`. Lets a caller rewrite coefficient queries on
@@ -42,7 +42,7 @@ coefficient, with no dependence on the polynomial's size. -/
 @[simp, grind =] theorem coeff_coeffwiseDiv (f : ZPoly) (m i : Nat) :
     (coeffwiseDiv f m).coeff i = f.coeff i / Int.ofNat m := by
   unfold coeffwiseDiv
-  rw [DensePoly.coeff_ofCoeffs_list, list_getD_map_range]
+  rw [DensePoly.coeff_ofList, list_getD_map_range]
   by_cases hi : i < f.size
   · simp [hi]
   · have hcoeff : f.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le f (Nat.le_of_not_gt hi)

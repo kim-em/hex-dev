@@ -31,8 +31,8 @@ theorem ZPoly.CheckedIrreducible.irreducibleRat (p : ZPoly)
     [ZPoly.CheckedIrreducible p] :
     _root_.Irreducible (HexPolyZMathlib.toPolyℚ p) := by
   have hirrZ : _root_.Irreducible (HexPolyZMathlib.toPolynomial p) :=
-    (HexBerlekampZassenhausMathlib.Hex.ZPoly.Irreducible_iff_polynomialIrreducible p).mp <|
-      (HexBerlekampZassenhausMathlib.Hex.ZPoly.isIrreducible_iff p).mp
+    (Hex.ZPoly.Irreducible_iff_polynomialIrreducible p).mp <|
+      (Hex.ZPoly.isIrreducible_iff p).mp
         (ZPoly.CheckedIrreducible.is_true (p := p))
   have hdegree : (HexPolyZMathlib.toPolynomial p).natDegree ≠ 0 := by
     rw [HexPolyMathlib.natDegree_toPolynomial]

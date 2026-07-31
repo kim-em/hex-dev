@@ -47,7 +47,7 @@ theorem factorize_product (f : Hex.ZPoly) :
 The Mathlib-free executable irreducibility predicate agrees with Mathlib's
 irreducibility predicate after transport to `Polynomial ℤ`.
 -/
-theorem Hex.ZPoly.Irreducible_iff_polynomialIrreducible (f : Hex.ZPoly) :
+theorem _root_.Hex.ZPoly.Irreducible_iff_polynomialIrreducible (f : Hex.ZPoly) :
     Hex.ZPoly.Irreducible f ↔ Irreducible (HexPolyZMathlib.toPolynomial f) := by
   constructor
   · intro hf
@@ -92,7 +92,7 @@ theorem Hex.ZPoly.Irreducible_iff_polynomialIrreducible (f : Hex.ZPoly) :
 Mathlib irreducibility of the transported polynomial is equivalent to the
 Mathlib-free executable irreducibility predicate.
 -/
-theorem Hex.ZPoly.polynomialIrreducible_iff_irreducible (f : Hex.ZPoly) :
+theorem _root_.Hex.ZPoly.polynomialIrreducible_iff_irreducible (f : Hex.ZPoly) :
     Irreducible (HexPolyZMathlib.toPolynomial f) ↔ Hex.ZPoly.Irreducible f :=
   (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).symm
 

@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexLLL.Basic
+public import HexLLL.Dispatch
 
 public section
 

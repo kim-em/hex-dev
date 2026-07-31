@@ -195,7 +195,7 @@ positive-degree arm composes `factorize_irreducible_of_nonUnit` (forward) with
 `factorize_unique_of_product_default` (backward, which pins the factor count to the
 `normalizedFactors` cardinality).
 -/
-theorem Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
+theorem _root_.Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
     Hex.ZPoly.isIrreducible f = true ↔ Hex.ZPoly.Irreducible f := by
   rw [Hex.ZPoly.isIrreducible]
   by_cases hf0 : f = 0
@@ -367,7 +367,7 @@ theorem Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
         simp only [hentry_list, Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq]
         exact ⟨⟨hscalar1, hsize1⟩, by simpa using hmult1⟩
 
-instance Hex.ZPoly.instDecidableIrreducible (f : Hex.ZPoly) :
+instance _root_.Hex.ZPoly.instDecidableIrreducible (f : Hex.ZPoly) :
     Decidable (Hex.ZPoly.Irreducible f) :=
   decidable_of_iff _ (Hex.ZPoly.isIrreducible_iff f)
 

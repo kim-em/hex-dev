@@ -14,13 +14,13 @@ public meta import HexHensel.Multifactor
 public meta import HexHensel.QuadraticMultifactor
 public meta import HexMatrix.Basic
 public meta import HexPolyZ.Mignotte
-public meta import HexLLL.Basic
+public meta import HexLLL
 public import HexArith.Nat.Prime
 public import HexBerlekamp.Factor
 public import HexBerlekamp.Irreducibility
 public import HexHensel.Multifactor
 public import HexHensel.QuadraticMultifactor
-public import HexLLL.Basic
+public import HexLLL
 -- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
 -- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
 public import HexBasic.ArrayDecEq
@@ -503,8 +503,8 @@ private theorem polyProduct_xPowerFactorArray_mul (power : Nat) (f : ZPoly) :
 
 private theorem splitInitialZeros_reassembles (coeffs : List Int) :
     let split := ZPoly.splitInitialZeros coeffs
-    DensePoly.shift split.1 (DensePoly.ofCoeffs split.2.toArray) =
-      DensePoly.ofCoeffs coeffs.toArray := by
+    DensePoly.shift split.1 (DensePoly.ofList split.2) =
+      DensePoly.ofList coeffs := by
   induction coeffs with
   | nil =>
       rfl
@@ -515,32 +515,32 @@ private theorem splitInitialZeros_reassembles (coeffs : List Int) :
         cases split : ZPoly.splitInitialZeros coeffs with
         | mk power core =>
             have hcore :
-                DensePoly.shift power (DensePoly.ofCoeffs core.toArray) =
-                  DensePoly.ofCoeffs coeffs.toArray := by
+                DensePoly.shift power (DensePoly.ofList core) =
+                  DensePoly.ofList coeffs := by
               simpa [split] using ih
             simp
             apply DensePoly.ext_coeff
             intro n
             cases n with
             | zero =>
-                rw [DensePoly.coeff_shift (power + 1) (DensePoly.ofCoeffs core.toArray) 0,
-                  DensePoly.coeff_ofCoeffs_list (0 :: coeffs) 0]
+                rw [DensePoly.coeff_shift (power + 1) (DensePoly.ofList core) 0,
+                  DensePoly.coeff_ofList (0 :: coeffs) 0]
                 simp
                 rfl
             | succ n =>
                 have hcoeff_n := congrArg (fun p : ZPoly => p.coeff n) hcore
-                change (DensePoly.shift power (DensePoly.ofCoeffs core.toArray)).coeff n =
-                  (DensePoly.ofCoeffs coeffs.toArray).coeff n at hcoeff_n
-                rw [DensePoly.coeff_shift power (DensePoly.ofCoeffs core.toArray) n] at hcoeff_n
-                rw [DensePoly.coeff_ofCoeffs_list coeffs n] at hcoeff_n
-                rw [DensePoly.coeff_shift (power + 1) (DensePoly.ofCoeffs core.toArray) (n + 1),
-                  DensePoly.coeff_ofCoeffs_list (0 :: coeffs) (n + 1)]
+                change (DensePoly.shift power (DensePoly.ofList core)).coeff n =
+                  (DensePoly.ofList coeffs).coeff n at hcoeff_n
+                rw [DensePoly.coeff_shift power (DensePoly.ofList core) n] at hcoeff_n
+                rw [DensePoly.coeff_ofList coeffs n] at hcoeff_n
+                rw [DensePoly.coeff_shift (power + 1) (DensePoly.ofList core) (n + 1),
+                  DensePoly.coeff_ofList (0 :: coeffs) (n + 1)]
                 by_cases hn : n < power
                 · have hsucc : n + 1 < power + 1 := by omega
                   simpa [hsucc, hn] using hcoeff_n
                 · have hsucc : ¬ n + 1 < power + 1 := by omega
                   have hvalue :
-                      (DensePoly.ofCoeffs core.toArray).coeff (n - power) =
+                      (DensePoly.ofList core).coeff (n - power) =
                         coeffs.getD n 0 := by
                     have key := hcoeff_n; rw [if_neg hn] at key; exact key
                   simp only [hsucc, Nat.succ_sub_succ_eq_sub, if_false, List.getD_cons_succ]
@@ -559,7 +559,7 @@ private theorem extractXPower_product (f : ZPoly) :
       have hreassemble := splitInitialZeros_reassembles f.toArray.toList
       rw [hsplit] at hreassemble
       rw [← ofCoeffs_toArray f]
-      simpa [DensePoly.toArray] using hreassemble
+      simpa [DensePoly.toArray, DensePoly.ofList] using hreassemble
 
 private theorem polyProduct_polynomialNormalizationPrefixFactors
     (d : FactorNormalizationData) :

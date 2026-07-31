@@ -198,7 +198,7 @@ theorem henselLiftData_liftedFactors_size_eq
   rw [Hex.ZPoly.multifactorLiftQuadratic_size_eq_input]
   simp
 
-theorem Hex.ZPoly.toMonicLiftData_liftedFactors_size_eq
+theorem MonicLift.factorCount_eq
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData) :
     (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors.size =
       primeData.factorsModP.size := by
@@ -249,7 +249,7 @@ This is the direct `Hex.ZPoly.toMonicLiftData` surface over the existing
 `(Hex.ZPoly.toMonic core).monic`, while recombination callers
 still keep representation predicates against the original `core`.
 -/
-theorem Hex.ZPoly.toMonicLiftData_liftedFactor_monic
+theorem MonicLift.factor_monic
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hmonic_core :
       Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic)
@@ -481,7 +481,7 @@ Injectivity of lifted local factors for the executable
 `Hex.ZPoly.toMonicLiftData`.  This is the surface over
 `henselLiftData_liftedFactor_injective`.
 -/
-theorem Hex.ZPoly.toMonicLiftData_liftedFactor_injective
+theorem MonicLift.factor_injective
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hmonic_core :
       Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic)
@@ -896,11 +896,10 @@ theorem monicModularImage_modP_degree?_pos_of_factorsModPBerlekampForm
     rw [Hex.ZPoly.coeff_modP, ← Hex.DensePoly.leadingCoeff_eq_coeff_last f hfsize_pos]
     exact hadm
   have hmodP_size_le : (Hex.ZPoly.modP data.p f).size ≤ f.size := by
-    unfold Hex.ZPoly.modP Hex.FpPoly.ofCoeffs
-    have := Hex.DensePoly.size_ofCoeffs_le
-      (((List.range f.size).map fun i =>
-          Hex.ZMod64.ofNat data.p (Hex.ZPoly.intModNat (f.coeff i) data.p)).toArray)
-    simpa using this
+    unfold Hex.ZPoly.modP
+    simpa using Hex.DensePoly.size_ofList_le
+      ((List.range f.size).map fun i =>
+        Hex.ZMod64.ofNat data.p (Hex.ZPoly.intModNat (f.coeff i) data.p))
   have hmodP_size_ge : f.size ≤ (Hex.ZPoly.modP data.p f).size := by
     by_contra h
     have hlt : (Hex.ZPoly.modP data.p f).size < f.size := Nat.not_le.mp h
@@ -1036,9 +1035,8 @@ theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
     exact hg_lead_toNat_ne (by simpa [Int.ofNat_eq_zero] using h)
   have hlift_size_le : (Hex.FpPoly.liftToZ g).size ≤ g.size := by
     unfold Hex.FpPoly.liftToZ
-    have := Hex.DensePoly.size_ofCoeffs_le
-      (((List.range g.size).map fun i => Int.ofNat (g.coeff i).toNat).toArray)
-    simpa using this
+    simpa using Hex.DensePoly.size_ofList_le
+      ((List.range g.size).map fun i => Int.ofNat (g.coeff i).toNat)
   have hlift_size_ge : g.size ≤ (Hex.FpPoly.liftToZ g).size := by
     by_contra h
     have hlt : (Hex.FpPoly.liftToZ g).size < g.size := Nat.not_le.mp h
@@ -1099,11 +1097,10 @@ theorem monicModularImage_modP_eq_of_monic
     rfl
   -- Size of `modP p core` equals `core.size`.
   have hmodP_size_le : (Hex.ZPoly.modP p core).size ≤ core.size := by
-    unfold Hex.ZPoly.modP Hex.FpPoly.ofCoeffs
-    have := Hex.DensePoly.size_ofCoeffs_le
-      (((List.range core.size).map fun i =>
-          Hex.ZMod64.ofNat p (Hex.ZPoly.intModNat (core.coeff i) p)).toArray)
-    simpa using this
+    unfold Hex.ZPoly.modP
+    simpa using Hex.DensePoly.size_ofList_le
+      ((List.range core.size).map fun i =>
+        Hex.ZMod64.ofNat p (Hex.ZPoly.intModNat (core.coeff i) p))
   have hmodP_size_ge : core.size ≤ (Hex.ZPoly.modP p core).size := by
     by_contra hneg
     have hlt : (Hex.ZPoly.modP p core).size < core.size := Nat.not_le.mp hneg

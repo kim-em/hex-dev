@@ -54,7 +54,7 @@ def toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) : Polynomial
 /-- Rebuild a normalized dense polynomial from the coefficients of a Mathlib polynomial. -/
 @[expose]
 def ofPolynomial [Semiring R] [DecidableEq R] (p : Polynomial R) : Hex.DensePoly R :=
-  Hex.DensePoly.ofCoeffs <| ((List.range (p.natDegree + 1)).map p.coeff).toArray
+  Hex.DensePoly.ofList ((List.range (p.natDegree + 1)).map p.coeff)
 
 /-- Rebuilding via {name}`ofPolynomial` preserves coefficients: the `n`th coefficient
 of `ofPolynomial p` agrees with the `n`th coefficient of `p`. -/
@@ -62,7 +62,7 @@ of `ofPolynomial p` agrees with the `n`th coefficient of `p`. -/
 theorem coeff_ofPolynomial [Semiring R] [DecidableEq R] (p : Polynomial R) (n : Nat) :
     (ofPolynomial p).coeff n = p.coeff n := by
   unfold ofPolynomial
-  rw [Hex.DensePoly.coeff_ofCoeffs_list, list_getD_map_range_zero]
+  rw [Hex.DensePoly.coeff_ofList, list_getD_map_range_zero]
   by_cases hn : n < p.natDegree + 1
   · simp [hn]
   · have hlt : p.natDegree < n := by omega

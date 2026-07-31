@@ -88,14 +88,14 @@ primitive integer factor of `core`. This is *not* the same as
 constant. -/
 @[expose]
 def dilate (c : Int) (p : ZPoly) : ZPoly :=
-  DensePoly.ofCoeffs <| ((List.range p.size).map fun i => c ^ i * p.coeff i).toArray
+  DensePoly.ofList ((List.range p.size).map fun i => c ^ i * p.coeff i)
 
 /-- The `n`-th coefficient of `dilate c p` is `c ^ n` times the `n`-th
 coefficient of `p`. -/
 theorem coeff_dilate (c : Int) (p : ZPoly) (n : Nat) :
     (dilate c p).coeff n = c ^ n * p.coeff n := by
   unfold dilate
-  rw [DensePoly.coeff_ofCoeffs_list, List.getD_eq_getElem?_getD, List.getElem?_map]
+  rw [DensePoly.coeff_ofList, List.getD_eq_getElem?_getD, List.getElem?_map]
   by_cases hn : n < p.size
   · rw [List.getElem?_range hn]; rfl
   · have hzero : p.coeff n = 0 :=
@@ -494,8 +494,8 @@ private theorem ratCommonDen_dvd_coeff (f : DensePoly Rat) (n : Nat) :
 `ratCommonDen`, producing the integer polynomial that is `f` scaled into `ℤ`. -/
 private def ratPolyPrimitivePartCleared (f : DensePoly Rat) : ZPoly :=
   let den := ratCommonDen f.toArray.toList
-  DensePoly.ofCoeffs <|
-    f.toArray.toList.map (fun coeff => ratCoeffToIntWithDen den coeff) |>.toArray
+  DensePoly.ofList <|
+    f.toArray.toList.map (fun coeff => ratCoeffToIntWithDen den coeff)
 
 /-- Casting the cleared integer polynomial back to `Rat` recovers `f` scaled by its common
 denominator, certifying `ratPolyPrimitivePartCleared` only rescales `f`. -/
@@ -506,7 +506,7 @@ private theorem toRatPoly_ratPolyPrimitivePartCleared (f : DensePoly Rat) :
   intro n
   rw [coeff_toRatPoly]
   unfold ratPolyPrimitivePartCleared
-  rw [DensePoly.coeff_ofCoeffs_list]
+  rw [DensePoly.coeff_ofList]
   change (((f.toArray.toList.map
       (fun coeff => ratCoeffToIntWithDen (ratCommonDen f.toArray.toList) coeff)).getD n
         (0 : Int) : Int) : Rat) =

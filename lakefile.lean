@@ -376,6 +376,7 @@ lean_lib HexReleaseTests where
     `HexBerlekampMathlib.FactorPolyTests,
     `HexBerlekampZassenhaus.FactorTacticTests,
     `HexBerlekampZassenhausMathlib.FactorPolyTests,
+    `HexBerlekampZassenhausMathlib.IrreducibilityTests,
     `HexRealRoots.ReplayTest,
     `HexRealRootsMathlib.IsolateRootsTests,
     `HexRealRootsMathlib.IsolateRootsElabTests,

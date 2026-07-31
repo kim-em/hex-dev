@@ -381,13 +381,6 @@ the value at any index. -/
     (ofList coeffs).coeff n = coeffs.getD n (Zero.zero : R) := by
   simp [ofList, coeff_ofCoeffs]
 
-/-- List-level companion to {name}`coeff_ofCoeffs`, retained as a compatibility alias for callers that
-construct lists explicitly before converting them to arrays. Prefer {name}`coeff_ofList` when the
-caller-facing constructor is {name}`ofList`. -/
-@[simp, grind =] theorem coeff_ofCoeffs_list (coeffs : List R) (n : Nat) :
-    (ofCoeffs coeffs.toArray).coeff n = coeffs.getD n (Zero.zero : R) := by
-  simp
-
 /-- The normalized polynomial built from a raw coefficient list stores no more coefficients
 than the input list. -/
 theorem size_ofList_le (coeffs : List R) :

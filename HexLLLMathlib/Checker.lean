@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexLLLMathlib.Interval
-public import HexLLL.Basic
+public import HexLLL
 public import HexGramSchmidtMathlib.Int
 public import HexRowReduceMathlib.RankSpanNullspace
 public import Mathlib.Analysis.InnerProductSpace.GramSchmidtOrtho
