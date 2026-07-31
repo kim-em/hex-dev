@@ -77,7 +77,7 @@ def factorizationToJson (φ : Factorization) : Json :=
               ("multiplicity", Json.num (JsonNumber.fromInt (Int.ofNat m))) ])) ]
 
 /-- Encode the bounded classical tier's selected-prime diagnostics. -/
-def factorTraceToJson (trace : FactorTrace) : Json :=
+def factorTraceToJson (trace : DirectFactorTrace) : Json :=
   Json.mkObj
     [ ("tier", Json.str trace.tier.name),
       ("decline",

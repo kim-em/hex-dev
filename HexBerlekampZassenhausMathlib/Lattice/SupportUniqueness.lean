@@ -16,7 +16,7 @@ public import Mathlib.RingTheory.Coprime.Lemmas
 public import Mathlib.RingTheory.Polynomial.UniqueFactorization
 public import Mathlib.RingTheory.PrincipalIdealDomain
 
-public import HexBerlekampZassenhausMathlib.MonicCorrespondent
+public import HexBerlekampZassenhausMathlib.Lattice.MonicCorrespondence
 import all HexBerlekampZassenhausMathlib.PublicSurface
 import all HexBerlekampZassenhausMathlib.ModPFactor
 import all HexBerlekampZassenhausMathlib.LiftedFactor
@@ -27,17 +27,15 @@ import all HexBerlekampZassenhausMathlib.HenselFactorProps
 import all HexBerlekampZassenhausMathlib.SubsetCoprimality
 import all HexBerlekampZassenhausMathlib.ForwardHenselTransport
 import all HexBerlekampZassenhausMathlib.RecombinationMonic
-import all HexBerlekampZassenhausMathlib.PrimitivityDegreeCover
-import all HexBerlekampZassenhausMathlib.ScaledSearchCoverage
-import all HexBerlekampZassenhausMathlib.SmartSearchCoverage
-import all HexBerlekampZassenhausMathlib.SearchAssembly
-import all HexBerlekampZassenhausMathlib.MonicCorrespondent
+import all HexBerlekampZassenhausMathlib.Lattice.RecoveryFacts
+import all HexBerlekampZassenhausMathlib.Lattice.MonicCorrespondence
 
 public section
 set_option backward.proofsInPublic true
 
 /-!
-This module collects the non-circular lift-stage subset-uniqueness core.
+This module proves uniqueness of monic-coordinate lifted supports without
+depending on an executable subset search.
 -/
 
 namespace HexBerlekampZassenhausMathlib

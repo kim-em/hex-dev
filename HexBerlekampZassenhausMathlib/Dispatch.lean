@@ -126,7 +126,7 @@ theorem factorFactors_factor_irreducible
   rcases Hex.factorFactors_mem_source f hmem with
     ⟨cf, hcf, hraw⟩ | ⟨cf, hcf, hraw⟩ | htrial
   · exact factorClassicalFactors_factor_irreducible f hf
-      (by simpa [Hex.factorClassicalFactorsWithBound] using hcf) hraw hrec
+      hcf hraw hrec
   · exact
       factorLatticeFactorsWithBound_factor_irreducible
         f hf hcf hraw hrec

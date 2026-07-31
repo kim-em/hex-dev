@@ -347,6 +347,7 @@ theorem factorTrialWithBound_product (f : ZPoly) (B : Nat) :
 /-- The public trial-division entry point reconstructs its input. -/
 theorem factorTrial_product (f : ZPoly) :
     Factorization.product (factorTrial f) = f := by
+  rw [factorTrial_eq]
   exact factorTrialWithBound_product f (ZPoly.defaultFactorCoeffBound f)
 
 /-- The public total factorization reconstructs its input. This holds

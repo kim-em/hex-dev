@@ -8,6 +8,7 @@ module
 
 public import HexBerlekampZassenhausMathlib.IntReductionMod
 public import HexBerlekampZassenhausMathlib.CLDColumnBound
+public import HexBerlekampZassenhausMathlib.Lattice.CandidateCorrectness
 public import HexBerlekampZassenhausMathlib.Recovery
 public import HexBerlekampZassenhausMathlib.PartitionRefinement
 public import HexBerlekampZassenhausMathlib.Termination
@@ -16,6 +17,7 @@ public import HexLLLMathlib.ShortVector
 public import Mathlib.FieldTheory.Perfect
 
 import all HexBerlekampZassenhausMathlib.RecombinationSplit
+import all HexBerlekampZassenhausMathlib.Lattice.RecoveryFacts
 
 public section
 set_option backward.proofsInPublic true
@@ -50,9 +52,8 @@ Hensel seeds match the lift target) it has three arms:
    over the certification precision, so it also covers arm 2's early stop).
 
 The reduction below discharges arm 1 and reduces the whole tier to the two BHKS
-obligations, mirroring the fast-path `_of_count` convention and the classical
-theorem `classicalCoreFactorsWithBound_factor_irreducible`. It is the
-proof architecture the deep-content successors plug into.
+obligations. It is the proof architecture the deep-content successors plug
+into.
 -/
 
 namespace HexBerlekampZassenhausMathlib

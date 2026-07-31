@@ -9,9 +9,7 @@ module
 public import HexBerlekampZassenhausMathlib.Modular.PrimePlan
 public import HexBerlekampZassenhausMathlib.ForwardHenselTransport
 public import HexBerlekampZassenhausMathlib.RecombinationCandidate
-public import HexBerlekampZassenhausMathlib.MonicCorrespondent
 import all HexBerlekampZassenhausMathlib.LiftedFactor
-import all HexBerlekampZassenhausMathlib.MonicCorrespondent
 
 public section
 set_option backward.proofsInPublic true

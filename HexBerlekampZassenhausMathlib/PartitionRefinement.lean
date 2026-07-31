@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhausMathlib.Recovery
-public import HexBerlekampZassenhausMathlib.ToMonicUniqueness
+public import HexBerlekampZassenhausMathlib.Lattice.SupportUniqueness
 
 public section
 set_option backward.proofsInPublic true

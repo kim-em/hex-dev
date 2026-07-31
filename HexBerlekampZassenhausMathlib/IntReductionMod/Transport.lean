@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhausMathlib.ToMonicUniqueness
+public import HexBerlekampZassenhausMathlib.Lattice.SupportUniqueness
 public import HexBerlekampMathlib.Basic
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.RingTheory.Polynomial.Content
@@ -19,6 +19,9 @@ public import Mathlib.RingTheory.Polynomial.Radical
 public import Mathlib.RingTheory.Polynomial.GaussLemma
 public import HexBerlekampZassenhausMathlib.IntReductionMod.Descent
 import all HexBerlekampZassenhausMathlib.IntReductionMod.Descent
+import all HexBerlekampZassenhausMathlib.SubsetCoprimality
+import all HexBerlekampZassenhausMathlib.ForwardHenselTransport
+import all HexBerlekampZassenhausMathlib.Lattice.RecoveryFacts
 
 public section
 set_option backward.proofsInPublic true

@@ -74,10 +74,10 @@ admissible (squarefree-image) prime, so the lifted-factor count is
 primes, 29 and 19, all blocks are quadratic and `r = 32`), and the
 size-ordered classical search would need ΣC(31,≤15) ≈ 2³⁰ subset
 candidates to reach its half-size frontier — for `sd5_pair` that is
-where the two 16-block factors live, and for `sd6` that is what
-exhausting all nontrivial subset products takes — far past its
-level-aware budget (`levelAwareSubsetBudget 32 defaultSubsetBudget =
-206368`), so it provably declines and the hybrid falls through to the
+    where the two 16-block factors live, and for `sd6` that is what
+    exhausting all nontrivial subset products takes — far past the direct
+    classical candidate budget, so it declines before starting an incomplete
+    cardinality level and the hybrid falls through to the
 van Hoeij CLD lattice arm. Both cases emit the
 *hybrid* trace (`factorTraced`) rather than the classical one. The emit helper
 rejects a run unless the lattice tier answered, while the committed trace records
@@ -147,10 +147,10 @@ private def factorValue (φ : Factorization) : String :=
 private def expectedFactorValue (scalar : Int) (factors : List (List Int × Nat)) : String :=
   "[" ++ toString scalar ++ "," ++ factorEntriesValue factors ++ "]"
 
-/-- Serialise a `FactorTrace` to JSON for the performance gate. Deterministic
+/-- Serialise a `DirectFactorTrace` to JSON for the performance gate. Deterministic
 (no wall-clock), so it lives in the committed fixtures and is pinned by the gate
 baseline. -/
-private def traceValue (t : FactorTrace) : String :=
+private def traceValue (t : DirectFactorTrace) : String :=
   "{\"tier\":\"" ++ t.tier.name ++ "\"" ++
     ",\"decline\":" ++
       (match t.classicalDecline with

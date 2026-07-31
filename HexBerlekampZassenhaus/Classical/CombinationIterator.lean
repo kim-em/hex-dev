@@ -21,6 +21,40 @@ and stops at the first exact divisor.
 
 namespace Hex
 
+/-- Every selected and rejected entry emitted by the extensional combination
+specification comes from its input list. -/
+theorem subsetsOfSizeWithComplement_mem {α : Type} :
+    ∀ (l : List α) (d : Nat) (sc : List α × List α),
+      sc ∈ subsetsOfSizeWithComplement l d →
+      (∀ x ∈ sc.1, x ∈ l) ∧ (∀ x ∈ sc.2, x ∈ l)
+  | l, 0, sc, h => by
+      simp only [subsetsOfSizeWithComplement, List.mem_singleton] at h
+      subst h
+      exact ⟨by simp, fun x hx => hx⟩
+  | [], d + 1, sc, h => by
+      simp [subsetsOfSizeWithComplement] at h
+  | a :: l, d + 1, sc, h => by
+      simp only [subsetsOfSizeWithComplement, List.mem_append,
+        List.mem_map] at h
+      rcases h with ⟨sc', hsc', rfl⟩ | ⟨sc', hsc', rfl⟩
+      · obtain ⟨h1, h2⟩ := subsetsOfSizeWithComplement_mem l d sc' hsc'
+        refine ⟨?_, ?_⟩
+        · intro x hx
+          rcases List.mem_cons.mp hx with rfl | hx
+          · exact List.mem_cons_self
+          · exact List.mem_cons_of_mem a (h1 x hx)
+        · intro x hx
+          exact List.mem_cons_of_mem a (h2 x hx)
+      · obtain ⟨h1, h2⟩ :=
+          subsetsOfSizeWithComplement_mem l (d + 1) sc' hsc'
+        refine ⟨?_, ?_⟩
+        · intro x hx
+          exact List.mem_cons_of_mem a (h1 x hx)
+        · intro x hx
+          rcases List.mem_cons.mp hx with rfl | hx
+          · exact List.mem_cons_self
+          · exact List.mem_cons_of_mem a (h2 x hx)
+
 /-- A dividing candidate and the exact unused support complement. -/
 structure DirectSplit (basis : LiftData) where
   selected : List (DirectLiftedIndex basis)

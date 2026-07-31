@@ -50,29 +50,6 @@ This module collects the trial-division and integer-root correctness proofs.
 -/
 namespace Hex
 
-/-- Each factor emitted by the size-ordered classical recombination core has
-positive `degree?`, provided `core` itself has positive degree. Classical analog
-of `exhaustiveIntegerTrialCoreFactorsWithBound_degree_pos`: the recombination
-factors are primitive and `normalizeFactorSign`-fixed with `shouldRecord = true`
-(all supplied by `classicalCoreFactorsWithBound_spec`), so
-`degree_pos_of_primitive_norm_record` applies; the singleton short-circuit is
-`core`, whose positive degree is the sole hypothesis. -/
-theorem classicalCoreFactorsWithBound_degree_pos
-    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
-    (hcore_deg : 0 < core.degree?.getD 0)
-    {cf : Array ZPoly}
-    (h : classicalCoreFactorsWithBound core B primeData = some cf) :
-    ∀ factor ∈ cf.toList, 0 < factor.degree?.getD 0 := by
-  rcases classicalCoreFactorsWithBound_spec core B primeData h with
-    hsing | ⟨_, hnorm, hprim, hrecord⟩
-  · intro factor hmem
-    rw [hsing] at hmem
-    have hfactor : factor = core := by simpa using hmem
-    rw [hfactor]; exact hcore_deg
-  · intro factor hmem
-    exact degree_pos_of_primitive_norm_record factor
-      (hprim factor hmem) (hnorm factor hmem) (hrecord factor hmem)
-
 /-- Structural case-split for the van Hoeij lattice-tier core. Every `some cf`
 result of `latticeCoreFactorsWithBound` is either the singleton `#[core]` (the
 small-mod arm, the loop's certificate-backed early stop, and the cap all-ones
@@ -102,9 +79,8 @@ private theorem latticeCoreFactorsWithBound_spec
       · exact absurd h.symm (Option.some_ne_none cf)
 
 /-- PolyProduct identity for the van Hoeij lattice-tier core: every emitted
-factor array multiplies back to `core`. Mirror of
-`classicalCoreFactorsWithBound_polyProduct`; the singleton arms are immediate
-and the CLD-split arm reuses `bhksRecoveryCoreWithBound_product`. -/
+factor array multiplies back to `core`. The singleton arms are immediate and
+the CLD-split arm reuses `bhksRecoveryCoreWithBound_product`. -/
 theorem latticeCoreFactorsWithBound_polyProduct
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     {cf : Array ZPoly}
@@ -115,10 +91,9 @@ theorem latticeCoreFactorsWithBound_polyProduct
   · exact bhksRecoveryCoreWithBound_product core B primeData _ _ cf hfast
 
 /-- Each factor emitted by the van Hoeij lattice-tier core is fixed by
-`normalizeFactorSign`, provided `core` has positive leading coefficient. Mirror
-of `classicalCoreFactorsWithBound_normalizeFactorSign`: the CLD-split factors
-are sign-normalized by construction, and the singleton arms are `core`, fixed
-by its positive leading coefficient. -/
+`normalizeFactorSign`, provided `core` has positive leading coefficient. The
+CLD-split factors are sign-normalized by construction, and the singleton arms
+are `core`, fixed by its positive leading coefficient. -/
 theorem latticeCoreFactorsWithBound_normalizeFactorSign
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     (hcore_pos : 0 < DensePoly.leadingCoeff core)
@@ -134,10 +109,9 @@ theorem latticeCoreFactorsWithBound_normalizeFactorSign
   · exact bhksRecoveryCoreWithBound_some_normalizeFactorSign hfast
 
 /-- Each factor emitted by the van Hoeij lattice-tier core has positive
-`degree?`, provided `core` itself has positive degree. Mirror of
-`classicalCoreFactorsWithBound_degree_pos`: the CLD-split factors have positive
-degree by construction, and the singleton arms are `core`, whose positive
-degree is the sole hypothesis. -/
+`degree?`, provided `core` itself has positive degree. The CLD-split factors
+have positive degree by construction, and the singleton arms are `core`, whose
+positive degree is the sole hypothesis. -/
 theorem latticeCoreFactorsWithBound_degree_pos
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     (hcore_deg : 0 < core.degree?.getD 0)

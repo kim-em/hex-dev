@@ -169,12 +169,12 @@ private theorem improveDirectPlan_selected_spec
                     probeBetter first
                       (DirectPrimeProbe.ofData core candidate data) with
                 | false =>
-                  simp only [hbetter, Bool.false_eq_true, if_false]
+                  simp only [Bool.false_eq_true, if_false]
                   exact ih fuel first
                     (probes.push (DirectPrimeProbe.ofData core candidate data))
                     hfirst
                 | true =>
-                  simp only [hbetter, if_true]
+                  simp only [if_true]
                   exact ih fuel (DirectPrimeProbe.ofData core candidate data)
                     (probes.push first) hprobe
 

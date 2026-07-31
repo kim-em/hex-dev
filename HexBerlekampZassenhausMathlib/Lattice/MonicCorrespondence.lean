@@ -16,7 +16,7 @@ public import Mathlib.RingTheory.Coprime.Lemmas
 public import Mathlib.RingTheory.Polynomial.UniqueFactorization
 public import Mathlib.RingTheory.PrincipalIdealDomain
 
-public import HexBerlekampZassenhausMathlib.SearchAssembly
+public import HexBerlekampZassenhausMathlib.Lattice.SupportPartition
 import all HexBerlekampZassenhausMathlib.PublicSurface
 import all HexBerlekampZassenhausMathlib.ModPFactor
 import all HexBerlekampZassenhausMathlib.LiftedFactor
@@ -27,16 +27,14 @@ import all HexBerlekampZassenhausMathlib.HenselFactorProps
 import all HexBerlekampZassenhausMathlib.SubsetCoprimality
 import all HexBerlekampZassenhausMathlib.ForwardHenselTransport
 import all HexBerlekampZassenhausMathlib.RecombinationMonic
-import all HexBerlekampZassenhausMathlib.PrimitivityDegreeCover
-import all HexBerlekampZassenhausMathlib.ScaledSearchCoverage
-import all HexBerlekampZassenhausMathlib.SmartSearchCoverage
-import all HexBerlekampZassenhausMathlib.SearchAssembly
+import all HexBerlekampZassenhausMathlib.Lattice.RecoveryFacts
 
 public section
 set_option backward.proofsInPublic true
 
 /-!
-This module collects the `ZPoly` scale/dilate helpers and the forward monic correspondent.
+This module owns the scale/dilate bridge from integer factors to the monic
+coordinate used by CLD recovery.
 -/
 
 namespace HexBerlekampZassenhausMathlib
@@ -386,108 +384,6 @@ theorem scale_injective {c : Int} (hc : c ≠ 0) (p q : Hex.ZPoly)
   rw [Hex.DensePoly.coeff_scale (R := Int) c p n (Int.mul_zero c),
     Hex.DensePoly.coeff_scale (R := Int) c q n (Int.mul_zero c)] at hn
   exact mul_left_cancel₀ hc hn
-
-/-- Scalar multiplications compose: `scale a (scale b p) = scale (a*b) p`. -/
-theorem scale_scale (a b : Int) (p : Hex.ZPoly) :
-    Hex.DensePoly.scale a (Hex.DensePoly.scale b p) = Hex.DensePoly.scale (a * b) p := by
-  apply Hex.DensePoly.ext_coeff
-  intro n
-  rw [Hex.DensePoly.coeff_scale (R := Int) a _ n (Int.mul_zero a),
-    Hex.DensePoly.coeff_scale (R := Int) b p n (Int.mul_zero b),
-    Hex.DensePoly.coeff_scale (R := Int) (a * b) p n (Int.mul_zero (a * b)),
-    ← Int.mul_assoc]
-
-/-- **Scale-coordinate congruence from a `monicTarget` subset correspondence.**
-
-Given the per-support `monicTarget`-coordinate correspondence
-`scale (leadingCoeff factor) (∏ S) ≡ factor (mod p^k)` — the selected lifted
-product, rescaled to `factor`'s leading coefficient, lands on `factor` itself —
-together with the leading-coefficient factorisation
-`leadingCoeff core = leadingCoeff factor * cofactorLc`, the honest proportional
-congruence `scale (leadingCoeff core) (∏ S) ≡ scale cofactorLc factor (mod p^k)`
-follows by scaling the correspondence by `cofactorLc` and composing the two
-scalings (`scale_scale`).  This is exactly the `hhonest` field that
-`recoveredAtLiftM1_of_recovery` / `cutProjectionHypotheses_of_recoveryData`
-consume per support.
-
-The spurious constant `cofactorLc` is the cofactor's leading coefficient; it is
-the `c` of the M1 recovery, stripped by `primitivePart` in `recovered_eq`.  This
-lemma is the `dilate`-free, soundness-clean reduction: it leaves a *single*
-remaining obligation — the correspondence hypothesis `hcorr`, i.e. the
-Hensel-uniqueness subset recovery in the `monicTarget` coordinate, which the
-`dilate`-coordinate `RecoveredAtLift` witness backing each true support does not
-itself supply (the two coordinates diverge). -/
-theorem honestCongr_of_correspondence
-    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
-    (cofactorLc : Int)
-    (hlc : Hex.DensePoly.leadingCoeff core
-        = Hex.DensePoly.leadingCoeff factor * cofactorLc)
-    (hcorr :
-      Hex.ZPoly.congr
-        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff factor) (liftedFactorProduct d S))
-        factor (d.p ^ d.k)) :
-    Hex.ZPoly.congr
-      (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core) (liftedFactorProduct d S))
-      (Hex.DensePoly.scale cofactorLc factor)
-      (d.p ^ d.k) := by
-  have hscaled := scale_congr_of_congr cofactorLc _ _ _ hcorr
-  rw [scale_scale] at hscaled
-  rwa [show cofactorLc * Hex.DensePoly.leadingCoeff factor
-        = Hex.DensePoly.leadingCoeff core by rw [hlc]; ring] at hscaled
-
-/-- Turn a `monicTarget factor` subset congruence into the scale-coordinate
-correspondence consumed by `honestCongr_of_correspondence`.
-
-This is the per-factor specialization of the global M1 bridge
-`scaledLiftedFactorProduct_congr_core_of_product_congr_monicTarget`: scaling the
-selected lifted product by `leadingCoeff factor` recovers `factor` modulo the
-Hensel modulus. -/
-theorem factorCongr_of_product_congr_monicTarget
-    {factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
-    (hprod :
-      Hex.ZPoly.congr
-        (liftedFactorProduct d S)
-        (Hex.ZPoly.monicTarget factor d.p d.k)
-        (d.p ^ d.k))
-    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff factor)
-      (Int.ofNat (d.p ^ d.k)) = 1)
-    (hpk : 1 < d.p ^ d.k) :
-    Hex.ZPoly.congr
-      (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff factor)
-        (liftedFactorProduct d S))
-      factor
-      (d.p ^ d.k) := by
-  simpa [scaledLiftedFactorProduct] using
-    (scaledLiftedFactorProduct_congr_core_of_product_congr_monicTarget
-      (core := factor) (d := d) (S := S) hpk hgcd hprod)
-
-/-- Compose the per-factor `monicTarget` bridge with the honest M1
-scale-coordinate wrapper.
-
-Given the leading-coefficient split
-`leadingCoeff core = leadingCoeff factor * cofactorLc`, a subset product
-congruent to `monicTarget factor` yields the per-support honest congruence
-`scale (leadingCoeff core) (∏ S) ≡ scale cofactorLc factor (mod p^k)`. -/
-theorem honestCongr_of_product_congr_monicTarget
-    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
-    (cofactorLc : Int)
-    (hlc : Hex.DensePoly.leadingCoeff core
-        = Hex.DensePoly.leadingCoeff factor * cofactorLc)
-    (hprod :
-      Hex.ZPoly.congr
-        (liftedFactorProduct d S)
-        (Hex.ZPoly.monicTarget factor d.p d.k)
-        (d.p ^ d.k))
-    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff factor)
-      (Int.ofNat (d.p ^ d.k)) = 1)
-    (hpk : 1 < d.p ^ d.k) :
-    Hex.ZPoly.congr
-      (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
-        (liftedFactorProduct d S))
-      (Hex.DensePoly.scale cofactorLc factor)
-      (d.p ^ d.k) :=
-  honestCongr_of_correspondence cofactorLc hlc
-    (factorCongr_of_product_congr_monicTarget hprod hgcd hpk)
 
 /-- The monic dilation transform of `base` by `c`: coefficient `n` is
 `c ^ (deg - n) * base.coeff n / leadingCoeff base` below the degree `deg`, and `1`

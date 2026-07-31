@@ -24,6 +24,9 @@ types: the lattice tier still has its own `toMonic` coordinate.
 
 namespace Hex
 
+/-- Global cap on direct classical recombination candidates. -/
+def defaultSubsetBudget : Nat := 262144
+
 /-- A primitive square-free polynomial presented to the classical engine.
 The executable layer stores the polynomial; the Mathlib correctness layer
 supplies and retains the normalization invariants. -/

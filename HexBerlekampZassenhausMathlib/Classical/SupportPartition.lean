@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhausMathlib.Hensel.DirectLift
-public import HexBerlekampZassenhausMathlib.SearchAssembly
+public import HexBerlekampZassenhausMathlib.Lattice.SupportPartition
 import all HexBerlekampZassenhausMathlib.LiftedFactor
 import all HexBerlekampZassenhausMathlib.M1Recovery
 import all HexBerlekampZassenhausMathlib.SubsetCoprimality

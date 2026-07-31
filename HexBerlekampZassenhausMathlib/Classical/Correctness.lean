@@ -612,7 +612,7 @@ theorem validDirectFactors_of_spec
       Polynomial.isPrimitive_iff_content_eq_one.mp hprimitive
     rwa [HexPolyZMathlib.toPolynomial_content] at hpolyContent
   unfold Hex.validDirectFactors
-  simp only [Bool.not_eq_true, decide_eq_true_eq,
+  simp only [decide_eq_true_eq,
     List.all_eq_true, Bool.and_eq_true]
   refine ⟨?_, h.degreePos⟩
   refine ⟨?_, h.normalized⟩
@@ -675,9 +675,8 @@ theorem factorDirectCore_factored
           (Hex.DensePoly.leadingCoeff core.poly) modular.data.p
           (Hex.precisionForCoeffBound B modular.data.p)
           (natPrime_of_hexNatPrime hval.prime) hcast
-      simp only [Hex.directLiftedBasis, Hex.directLiftPlan,
-        Hex.DirectLiftedBasis.data, Hex.DirectLiftedBasis.canonical,
-        Hex.DirectLiftPlan.coeffBound, Hex.DirectLiftPlan.canonical] at hrun
+      simp only [Hex.DirectLiftedBasis.data,
+        Hex.DirectLiftPlan.coeffBound] at hrun
       generalize hsearch :
           Hex.searchDirect (Hex.DensePoly.leadingCoeff core.poly) core.poly
               (Hex.ZPoly.coreLiftData core.poly B modular.data) budget

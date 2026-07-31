@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhausMathlib.ToMonicUniqueness
+public import HexBerlekampZassenhausMathlib.Lattice.SupportUniqueness
 public import HexBerlekampZassenhausMathlib.SignatureClasses
 public import HexLLLMathlib.ShortVector
 

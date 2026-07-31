@@ -68,6 +68,17 @@ theorem scale_mul_scale (a b : Int) (p q : Hex.ZPoly) :
     HexPolyZMathlib.toPolynomial_C, Polynomial.C_mul]
   ring
 
+/-- Scalar multiplications compose. -/
+theorem scale_scale (a b : Int) (p : Hex.ZPoly) :
+    Hex.DensePoly.scale a (Hex.DensePoly.scale b p) =
+      Hex.DensePoly.scale (a * b) p := by
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [Hex.DensePoly.coeff_scale (R := Int) a _ n (Int.mul_zero a),
+    Hex.DensePoly.coeff_scale (R := Int) b p n (Int.mul_zero b),
+    Hex.DensePoly.coeff_scale (R := Int) (a * b) p n
+      (Int.mul_zero (a * b)), ← Int.mul_assoc]
+
 /-- Congruent integer scalars produce coefficientwise-congruent scalings. -/
 theorem scale_congr_of_modEq
     {a b : Int} {m : Nat} (h : a ≡ b [ZMOD (m : Int)]) (f : Hex.ZPoly) :
@@ -228,6 +239,72 @@ theorem scaledLiftedFactorProduct_congr_core_of_product_congr_monicTarget
   exact Hex.ZPoly.congr_trans _ _ _ _
     (scale_congr_of_congr (Hex.DensePoly.leadingCoeff core) _ _ _ hprod)
     (leadingCoeff_scale_monicTarget_congr_core core d.p d.k hpk hgcd)
+
+/-- A subset product congruent to a factor's direct monic target recovers that
+factor after scaling by its leading coefficient. -/
+theorem factorCongr_of_product_congr_monicTarget
+    {factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hprod :
+      Hex.ZPoly.congr
+        (liftedFactorProduct d S)
+        (Hex.ZPoly.monicTarget factor d.p d.k)
+        (d.p ^ d.k))
+    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff factor)
+      (Int.ofNat (d.p ^ d.k)) = 1)
+    (hpk : 1 < d.p ^ d.k) :
+    Hex.ZPoly.congr
+      (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff factor)
+        (liftedFactorProduct d S))
+      factor
+      (d.p ^ d.k) := by
+  simpa [scaledLiftedFactorProduct] using
+    (scaledLiftedFactorProduct_congr_core_of_product_congr_monicTarget
+      (core := factor) (d := d) (S := S) hpk hgcd hprod)
+
+/-- Scale a factor-coordinate congruence through the leading-coefficient
+factorization of the original core. -/
+theorem honestCongr_of_correspondence
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (cofactorLc : Int)
+    (hlc : Hex.DensePoly.leadingCoeff core =
+      Hex.DensePoly.leadingCoeff factor * cofactorLc)
+    (hcorr :
+      Hex.ZPoly.congr
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff factor)
+          (liftedFactorProduct d S))
+        factor (d.p ^ d.k)) :
+    Hex.ZPoly.congr
+      (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+        (liftedFactorProduct d S))
+      (Hex.DensePoly.scale cofactorLc factor)
+      (d.p ^ d.k) := by
+  have hscaled := scale_congr_of_congr cofactorLc _ _ _ hcorr
+  rw [scale_scale] at hscaled
+  rwa [show cofactorLc * Hex.DensePoly.leadingCoeff factor =
+      Hex.DensePoly.leadingCoeff core by rw [hlc]; ring] at hscaled
+
+/-- Compose direct-target recovery with the original core's
+leading-coefficient factorization. -/
+theorem honestCongr_of_product_congr_monicTarget
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (cofactorLc : Int)
+    (hlc : Hex.DensePoly.leadingCoeff core =
+      Hex.DensePoly.leadingCoeff factor * cofactorLc)
+    (hprod :
+      Hex.ZPoly.congr
+        (liftedFactorProduct d S)
+        (Hex.ZPoly.monicTarget factor d.p d.k)
+        (d.p ^ d.k))
+    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff factor)
+      (Int.ofNat (d.p ^ d.k)) = 1)
+    (hpk : 1 < d.p ^ d.k) :
+    Hex.ZPoly.congr
+      (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+        (liftedFactorProduct d S))
+      (Hex.DensePoly.scale cofactorLc factor)
+      (d.p ^ d.k) :=
+  honestCongr_of_correspondence cofactorLc hlc
+    (factorCongr_of_product_congr_monicTarget hprod hgcd hpk)
 
 /-- Core-coordinate recovery theorem: when the lifted product is congruent
 to the whole `monicTarget core p k` modulo the Hensel modulus `p^a`, the executable
