@@ -37,7 +37,6 @@ is handled by Gauss's lemma. -/
 private theorem squarefree_map_rat {p : ℤ[X]} (hp : Squarefree p) :
     Squarefree (p.map (Int.castRingHom ℚ)) := by
   let p0 := p.primPart
-  have hp0prim : p0.IsPrimitive := p.isPrimitive_primPart
   have hp0sq : Squarefree p0 :=
     hp.squarefree_of_dvd (p.primPart_dvd)
   have hp0ne : p0 ≠ 0 := p.primPart_ne_zero
@@ -88,7 +87,7 @@ private theorem squarefree_map_rat {p : ℤ[X]} (hp : Squarefree p) :
       rw [Polynomial.map_mul]
       exact (hhr.mul_mul hhr).dvd_iff_dvd_left.mpr hrr
     have hDvd : h * h ∣ p0 :=
-      (hhprim.mul hhprim).dvd_of_fraction_map_dvd_fraction_map hp0prim hmapDvd
+      (hhprim.mul hhprim).dvd_of_fraction_map_dvd_fraction_map hmapDvd
     exact hhIrr.not_isUnit (hp0sq h hDvd)
   have hcontent0 : p.content ≠ 0 :=
     fun h0 => hp.ne_zero (content_eq_zero_iff.mp h0)

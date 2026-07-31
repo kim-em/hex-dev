@@ -271,6 +271,7 @@ Mathlib polynomial. -/
       MvPolynomial.rename f (toMvPolynomial p) := by
   rw [rename_eq_subst, toMvPolynomial_subst]
   simp only [toMvPolynomial_X]
+  rw [MvPolynomial.rename_eq_aeval, MvPolynomial.aeval_eq_bind₁]
   rfl
 
 section Recursive

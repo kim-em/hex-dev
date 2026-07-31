@@ -193,8 +193,6 @@ theorem no_badVector
     (f : Hex.ZPoly) (p a : Nat) (liftedFactors : Array Hex.ZPoly)
     (trueSupports : Set (Set (Fin liftedFactors.size)))
     (hf : f ≠ 0) (hfdeg : 0 < f.degree?.getD 0)
-    (hfprimitive :
-      (HexPolyZMathlib.toPolynomial f).IsPrimitive)
     (hf_lc_coprime :
       IsCoprime ((p ^ a : Nat) : Int)
         (HexPolyZMathlib.toPolynomial f).leadingCoeff)
@@ -279,7 +277,7 @@ theorem no_badVector
   have hres_ne : res ≠ 0 := by
     apply int_resultant_ne_zero_of_no_irreducible_common_factor
       (HexPolyZMathlib.toPolynomial f) (HexPolyZMathlib.toPolynomial H)
-      hfprimitive hf_poly_ne
+      hf_poly_ne
     intro q hqirr hqf hqH
     obtain ⟨S, hS, hSdiv⟩ := hsupport q hqirr hqf
     obtain ⟨i, hiS, hi_ne⟩ := hnonzero S hS

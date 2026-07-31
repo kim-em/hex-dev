@@ -381,9 +381,7 @@ theorem normalizeForFactor_repeatedPart_toPolynomial_dvd_squareFreeCore_pow
   refine (Polynomial.IsPrimitive.Int.dvd_iff_map_cast_dvd_map_cast
     (HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).repeatedPart)
     ((HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore) ^ N)
-    (normalizeForFactor_repeatedPart_toPolynomial_isPrimitive f hf)
-    (isPrimitive_pow
-      (normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive f hf) N)).mpr ?_
+    (normalizeForFactor_repeatedPart_toPolynomial_isPrimitive f hf)).mpr ?_
   simpa using hN
 
 /--

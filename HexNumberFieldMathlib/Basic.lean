@@ -227,9 +227,9 @@ private theorem AlgebraicNumber.eq_polynomial {a b : AlgebraicNumber}
   have hint : Associated (HexPolyZMathlib.toPolynomial a.p)
       (HexPolyZMathlib.toPolynomial b.p) :=
     dvd_dvd_iff_associated.mp ⟨
-      (Polynomial.IsPrimitive.Int.dvd_iff_map_cast_dvd_map_cast _ _ haprim hbprim).mpr
+      (Polynomial.IsPrimitive.Int.dvd_iff_map_cast_dvd_map_cast _ _ haprim).mpr
         hrat.dvd,
-      (Polynomial.IsPrimitive.Int.dvd_iff_map_cast_dvd_map_cast _ _ hbprim haprim).mpr
+      (Polynomial.IsPrimitive.Int.dvd_iff_map_cast_dvd_map_cast _ _ hbprim).mpr
         hrat.symm.dvd⟩
   exact
     HexBerlekampZassenhausMathlib.zpoly_eq_of_toPolynomial_associated_of_primitive_pos_leading

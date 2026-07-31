@@ -668,7 +668,6 @@ theorem bhksProjectedRowSpanInt_le_trueSupportSpanInt
     (f : Hex.ZPoly) (p a : Nat) (liftedFactors : Array Hex.ZPoly)
     (trueSupports : Set (Set (Fin liftedFactors.size)))
     (hf : f ≠ 0) (hfdeg : 0 < f.degree?.getD 0)
-    (hfprimitive : (HexPolyZMathlib.toPolynomial f).IsPrimitive)
     (hf_lc_coprime :
       IsCoprime ((p ^ a : Nat) : Int)
         (HexPolyZMathlib.toPolynomial f).leadingCoeff)
@@ -775,7 +774,7 @@ theorem bhksProjectedRowSpanInt_le_trueSupportSpanInt
     trueSupports hcover hdisjoint hne data V R hretained hdata
   intro w hwL hwzero hwnonzero hwBound
   apply BHKS.no_badVector f p a liftedFactors trueSupports
-    hf hfdeg hfprimitive hf_lc_coprime hp2 hp500 hr hk hprecision hcut
+    hf hfdeg hf_lc_coprime hp2 hp500 hr hk hprecision hcut
     hfac hdeg_le hcop hown
     hsupport w hwL hwzero hwnonzero
   intro x
@@ -1249,9 +1248,6 @@ theorem directProjectedSpan_eq
       rw [hsize, ← htargetDegree]
       exact hval.factorCount_le_degree_of_product
         facts.targetMonic facts.productModP
-    have hfprimitive :
-        (HexPolyZMathlib.toPolynomial core).IsPrimitive :=
-      HexPolyZMathlib.isPrimitive_toPolynomial_of_primitive core hcore_prim
     have hlcCoprime :
         IsCoprime ((d.p ^ d.k : Nat) : Int)
           (HexPolyZMathlib.toPolynomial core).leadingCoeff := by
@@ -1351,7 +1347,7 @@ theorem directProjectedSpan_eq
       simpa only [d] using hiDvd.trans hfactorMapDvd
     exact bhksProjectedRowSpanInt_le_trueSupportSpanInt
       core d.p d.k d.liftedFactors (directTrueSupports core B data)
-      hcore_ne hcore_pos hfprimitive hlcCoprime
+      hcore_ne hcore_pos hlcCoprime
       (by rw [hp_eq]; exact hp2) (by rw [hp_eq]; exact hp500)
       hr hk1 hadequate (fun j => hthreshold j.val) hrows
       (bhksLatticeBasis_basis_independent core d.p d.k

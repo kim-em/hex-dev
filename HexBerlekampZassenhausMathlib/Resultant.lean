@@ -556,7 +556,7 @@ theorem int_resultant_ne_zero_of_no_monic_irreducible_common_factor
         hq_monic.isPrimitive).mpr (by simpa [φ, hq_map'] using hqQ_irr)
   have hq_f : q ∣ f := by
     apply (Polynomial.IsPrimitive.Int.dvd_iff_map_cast_dvd_map_cast
-      q f hq_monic.isPrimitive hf_monic.isPrimitive).mpr
+      q f hq_monic.isPrimitive).mpr
     simpa [φ, hq_map'] using hqQ_f
   have hq_g : q ∣ g := by
     have hremQ : (g %ₘ q).map φ = 0 := by
@@ -569,7 +569,7 @@ theorem int_resultant_ne_zero_of_no_monic_irreducible_common_factor
     exact (Polynomial.modByMonic_eq_zero_iff_dvd hq_monic).mp hrem
   exact hcommon q hq_monic hq_irr hq_f hq_g
 
-/-- An integer resultant against a nonzero primitive polynomial is nonzero
+/-- An integer resultant against a nonzero polynomial is nonzero
 when no irreducible integer factor of the first polynomial divides the second.
 
 This is the direct-coordinate form of
@@ -578,7 +578,7 @@ nonmonic input has no reason to admit monic integer factors.  A hypothetical
 rational common factor is cleared of denominators, replaced by its primitive
 part, and descended through Gauss's lemma. -/
 theorem int_resultant_ne_zero_of_no_irreducible_common_factor
-    (f g : Polynomial ℤ) (hf_primitive : f.IsPrimitive) (hf_ne : f ≠ 0)
+    (f g : Polynomial ℤ) (hf_ne : f ≠ 0)
     (hcommon : ∀ q : Polynomial ℤ,
       Irreducible q → q ∣ f → ¬ q ∣ g) :
     Polynomial.resultant f g ≠ 0 := by
@@ -663,8 +663,7 @@ theorem int_resultant_ne_zero_of_no_irreducible_common_factor
   have hq_f_map : q.map φ ∣ f.map φ := by
     simpa only [fQ, φ] using hq_qQ.dvd.trans hqQ_f
   have hq_f : q ∣ f :=
-    (hq_primitive.dvd_iff_fraction_map_dvd_fraction_map ℚ
-      hf_primitive).mpr hq_f_map
+    (hq_primitive.dvd_iff_fraction_map_dvd_fraction_map ℚ).mpr hq_f_map
   have hq_g_map : q.map φ ∣ g.map φ := by
     simpa only [gQ, φ] using hq_qQ.dvd.trans hqQ_g
   have hq_g : q ∣ g := by
@@ -694,8 +693,7 @@ theorem int_resultant_ne_zero_of_no_irreducible_common_factor
     have hq_gprim_map : q.map φ ∣ g.primPart.map φ :=
       hq_g_map.trans hg_assoc.dvd
     have hq_gprim : q ∣ g.primPart :=
-      (hq_primitive.dvd_iff_fraction_map_dvd_fraction_map ℚ
-        g.isPrimitive_primPart).mpr hq_gprim_map
+      (hq_primitive.dvd_iff_fraction_map_dvd_fraction_map ℚ).mpr hq_gprim_map
     exact hq_gprim.trans (Polynomial.primPart_dvd g)
   exact hcommon q hq_irr hq_f hq_g
 

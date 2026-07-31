@@ -609,7 +609,7 @@ caller instantiates `α := Polynomial (ZMod p)` and transports the
 resulting sub-multiset through an executable factor-list indexing.
 -/
 theorem existsUnique_subset_product_eq_of_dvd_of_squarefree_prod
-    {α : Type*} [CommMonoidWithZero α] [NormalizationMonoid α]
+    {α : Type*} [CommMonoidWithZero α] [StrongNormalizationMonoid α]
     [UniqueFactorizationMonoid α]
     {factors : Multiset α}
     (hirr : ∀ q ∈ factors, Irreducible q)
