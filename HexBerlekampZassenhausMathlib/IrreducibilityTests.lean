@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhausMathlib
+public import HexBerlekampZassenhausMathlib.LatticeTotality
 
 public section
 
@@ -24,3 +25,16 @@ correspondence between executable and Mathlib irreducibility at the root
 
 example (f : Hex.ZPoly) : Decidable (Hex.ZPoly.Irreducible f) :=
   inferInstance
+
+/-!
+The release-critical factorization statements must remain within Lean and
+Mathlib's documented foundations.  Keeping these commands in a compiled test
+module makes any new nonstandard axiom visible in both the monorepo and the
+standalone package build.
+-/
+
+#print axioms Hex.factorize_product
+#print axioms HexBerlekampZassenhausMathlib.factorize_unique
+#print axioms HexBerlekampZassenhausMathlib.factorize_normalized
+#print axioms HexBerlekampZassenhausMathlib.factorize_irreducible_of_nonUnit
+#print axioms HexBerlekampZassenhausMathlib.factorLattice_ne_none_of_directPrimePlan
