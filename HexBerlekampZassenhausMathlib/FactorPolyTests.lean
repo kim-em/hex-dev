@@ -455,7 +455,7 @@ Supported without further imports: Hex.FpPoly p (prime p). Importing HexBerlekam
 
 irreducibility: the irreducible factor
   Hex.DensePoly.ofCoeffs #[1, 0, -10, 0, 1]
-has no single-prime modular witness among the candidate primes (its modular factorizations are balanced, e.g. Swinnerton-Dyer polynomials) and is not Eisenstein at any small shift; the Mathlib integration's multi-prime degree-obstruction certificates may certify it; import HexBerlekampZassenhausMathlib.
+has no single-prime modular witness among the candidate primes (its modular factorizations are balanced, e.g. Swinnerton-Dyer polynomials) and is not Eisenstein at any small shift; the Mathlib integration's multi-prime degree-obstruction certificates may certify it; please import HexBerlekampZassenhausMathlib.
 
 irreducibility: the irreducible factor
   Hex.DensePoly.ofCoeffs #[1, 0, -10, 0, 1]

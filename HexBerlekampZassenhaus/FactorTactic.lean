@@ -185,7 +185,7 @@ meta def balancedDecline (tactic : String) (q : Hex.ZPoly) : MetaM MessageData :
       (its modular factorizations are balanced, e.g. Swinnerton-Dyer \
       polynomials) and is not Eisenstein at any small shift; the Mathlib \
       integration's multi-prime degree-obstruction certificates may certify it; \
-      import HexBerlekampZassenhausMathlib."
+      please import HexBerlekampZassenhausMathlib."
 
 /-- Checks that the user's term is definitionally transparent down to its
 evaluated literal. -/

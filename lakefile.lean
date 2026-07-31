@@ -372,7 +372,9 @@ lean_lib HexConformance where
 -- examples and regression tests are compiled through this separate target so
 -- removing them from an umbrella cannot silently remove them from CI.
 lean_lib HexReleaseTests where
-  globs := #[`HexBerlekamp.FactorTacticTests,
+  globs := #[`HexBerlekampZassenhaus.All,
+    `HexBerlekampZassenhausMathlib.All,
+    `HexBerlekamp.FactorTacticTests,
     `HexBerlekampMathlib.FactorPolyTests,
     `HexBerlekampZassenhaus.FactorTacticTests,
     `HexBerlekampZassenhausMathlib.FactorPolyTests,
