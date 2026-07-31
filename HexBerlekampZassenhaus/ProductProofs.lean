@@ -347,6 +347,7 @@ theorem factorTrialWithBound_product (f : ZPoly) (B : Nat) :
 /-- The public trial-division entry point reconstructs its input. -/
 theorem factorTrial_product (f : ZPoly) :
     Factorization.product (factorTrial f) = f := by
+  rw [factorTrial_eq]
   exact factorTrialWithBound_product f (ZPoly.defaultFactorCoeffBound f)
 
 /-- The public total factorization reconstructs its input. This holds
@@ -355,20 +356,41 @@ reconstructs `f` (the self-certifying guard in `factorTraced`), and every
 fallback is the proven `factorTrial` backstop. -/
 theorem factorize_product (f : ZPoly) :
     Factorization.product (ZPoly.factorize f) = f := by
+  have htrial :
+      Factorization.product
+          (factorizationOfFactors f
+            (factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f))) =
+        f := by
+    exact factorTrialWithBound_product f (ZPoly.defaultFactorCoeffBound f)
   unfold ZPoly.factorize factorTraced
-  rcases hcl : factorClassicalTraced f with ⟨cres, trace⟩
-  cases cres with
-  | some φ =>
-      by_cases hp : Factorization.product φ = f
+  simp only
+  unfold runFactor
+  generalize hrun : runClassical f = run
+  cases hcf : run.factors with
+  | some factors =>
+      simp only [hcf]
+      by_cases hp :
+          Factorization.product (factorizationOfFactors f factors) = f
       · simp [hp]
-      · simp only [hp, if_false]; exact factorTrial_product f
+      · simpa [hp] using htrial
   | none =>
-      cases hl : factorLattice f with
-      | some φ =>
-          by_cases hp : Factorization.product φ = f
-          · simp [hp]
-          · simp only [hp, if_false]; exact factorTrial_product f
-      | none => exact factorTrial_product f
+      simp only [hcf]
+      cases hmod : run.modular with
+      | none =>
+          simpa [hmod] using htrial
+      | some modular =>
+          simp only
+          cases hl : factorLatticeFactorsWithPlan
+              (normalizeForFactor f) (latticePrecisionCap f) modular with
+          | none =>
+              simp only
+              exact htrial
+          | some factors =>
+              simp only
+              by_cases hp :
+                  Factorization.product (factorizationOfFactors f factors) = f
+              · simp [hp]
+              · simpa [hp] using htrial
 
 /-- Every recorded entry of the default factorization of a nonzero `f` is
 primitive, with no raw-source hypothesis. The hybrid's `factorizationOfFactors`

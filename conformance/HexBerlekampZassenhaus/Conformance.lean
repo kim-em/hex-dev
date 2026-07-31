@@ -18,8 +18,7 @@ Covered operations:
 - `normalizeForFactor`, `normalizationPrefixFactors`, and
   `reassembleNormalizedFactors`
 - `henselLiftData`
-- `bhksRecover?`, `recombinationSearch`, `factorTrial`,
-  and `factorClassicalNoDecline`
+- `bhksRecover?`, `recombinationSearch`, and `factorTrial`
 - `factor`
 - `PrimeFactorData.degreeSum`, `PrimeFactorData.factorProduct`,
   `PrimeFactorData.containsDegree`, `PrimeFactorData.hasSubsetDegree`,
@@ -367,14 +366,13 @@ private def factorizationCaseMatches (c : FactorizationCase) : Bool :=
 #guard isGoodPrime squareFreeTypical 3
 #guard choosePrime leadingCoeffDivisibleByFive = 3
 
-/-- A live bounded-selector counterexample. For
-`g = X^3 - P`, where `P` is the product of all 94 hot-path candidates,
-the monic transform is `g` itself and every candidate reduction is `X^3`.
-Thus neither the bounded selector nor the conditional lattice tier succeeds. -/
+/-- A live bounded-selector counterexample. For `g = X^3 - P`, where `P` is
+the product of all 94 candidates, every candidate reduction is `X^3`.
+Thus neither direct prime planning nor the conditional lattice tier succeeds. -/
 private def hotPathNoPrimeCubic : ZPoly :=
   DensePoly.ofCoeffs #[-(hotPathPrimorial : Int), 0, 0, 1]
 
-#guard ZPoly.toMonicPrimeData? hotPathNoPrimeCubic = none
+#guard (directPrimePlan? ⟨hotPathNoPrimeCubic⟩).isNone
 #guard factorLattice hotPathNoPrimeCubic = none
 
 #guard
@@ -414,10 +412,9 @@ private def hotPathNoPrimeCubic : ZPoly :=
   | some data => 3 <= data.p
 
 #guard
-  let monic := (ZPoly.toMonic legendreP20).monic
-  match choosePrimeData? monic, ZPoly.toMonicPrimeData? legendreP20 with
-  | some first, some adaptive =>
-      first.factorsModP.size = 10 && adaptive.factorsModP.size = 1
+  match choosePrimeData? legendreP20, directPrimePlan? ⟨legendreP20⟩ with
+  | some first, some plan =>
+      first.factorsModP.size = 10 && plan.width = 1
   | _, _ => false
 
 /-! # Extended prime search
@@ -509,35 +506,6 @@ private def extendedCascade2 : ZPoly :=
   | none => false
 #guard recombinationSearch liftedTarget3 [] = none
 
-/-
-Non-monic recovered-candidate guard for `core = 2X² + 3X + 1` at `p = 3`,
-`k = 2` (`p ^ k = 9`).  This exercises the corrected recovered-candidate model
-(`liftedRecoveryCandidate` / `RecoveredAtLift` on the Mathlib side, mirrored by
-the per-step candidate of `scaledRecombinationSearchModAux` here): the centred
-lifted product is dilated by the integer leading coefficient before the
-primitive part is taken, so the model recovers genuine integer factors of a
-non-monic core rather than monic-coordinate witnesses.
-
-The monic transform `toMonic core = X² + 3X + 2` splits as `(X+1)(X+2)`; lifting
-each centred factor and dilating by `coreLc = 2` recovers the true integer
-factors `2X+1` and `X+1`, whose product is `core`.  An obvious non-factor
-(`2X+3`) is rejected by the exact-division check, distinguishing it from the
-recovered true factor.
--/
-#guard
-  let core := zpoly #[1, 3, 2]          -- 2X² + 3X + 1
-  let coreLc := (2 : Int)
-  let modulus := 9                      -- p ^ k = 3 ^ 2
-  let liftedFactors := [zpoly #[1, 1], zpoly #[2, 1]]   -- X+1, X+2
-  let recovered := normalizeFactorSign <| ZPoly.primitivePart <|
-    ZPoly.dilate coreLc <| centeredLiftPoly (zpoly #[1, 1]) modulus
-  recovered = zpoly #[1, 2]                            -- 2X + 1, a true factor
-    && (exactQuotient? core recovered).isSome          -- ... which divides core
-    && (exactQuotient? core (zpoly #[3, 2])).isNone    -- 2X + 3 is not a factor
-    && (match scaledRecombinationSearchMod coreLc core modulus liftedFactors with
-        | some factors => Array.polyProduct factors.toArray = core
-        | none => false)
-
 #guard
   match bhksRecover? liftedTarget5 liftedData5 with
   | some factors =>
@@ -563,17 +531,6 @@ recovered true factor.
     sameFactorCoeffSet (factorizationCoeffSummary φ)
       (factorCoeffSummary quadSqrt2Sqrt3ExpectedFactors |>.map fun coeffs =>
         (coeffs, 1))
--- Size-ordered full classical recombination (the complete subset-product search,
--- with the level-aware early decline disabled) recovers the same quadratic
--- buckets `X^2 - 2`, `X^2 - 3` on the adversarial subset-product case.
-#guard
-  match factorClassicalNoDecline quadSqrt2Sqrt3 with
-  | some φ =>
-      Factorization.product φ = quadSqrt2Sqrt3 &&
-        sameFactorCoeffSet (factorizationCoeffSummary φ)
-          (factorCoeffSummary quadSqrt2Sqrt3ExpectedFactors |>.map fun coeffs =>
-            (coeffs, 1))
-  | none => false
 #guard
   let factors := ZPoly.factorize monomialWithContent
   Factorization.product factors = monomialWithContent
@@ -612,37 +569,18 @@ recovered true factor.
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[x4Plus1] |>.map fun coeffs => (coeffs, 1))
 
--- Heavy (8-way split) adversarial backstop cases: `swinnertonDyerSD3` and
--- `phi15` each split into eight linear factors over their small admissible
--- prime yet are irreducible over `ℤ`.  Size-ordered full classical recombination
--- must reject every one of the `2^8` proper subset products and fall back to
--- the single irreducible input. This is the genuine worst case for "no
--- spurious recombination," dual to the `quadSqrt2Sqrt3` / `x4Plus1` guards
--- above.
-#guard
-  match factorClassicalNoDecline swinnertonDyerSD3 with
-  | some φ =>
-      Factorization.product φ = swinnertonDyerSD3 &&
-        sameFactorCoeffSet (factorizationCoeffSummary φ)
-          (factorCoeffSummary #[swinnertonDyerSD3] |>.map fun coeffs => (coeffs, 1))
-  | none => false
 #guard
   let factors := ZPoly.factorize swinnertonDyerSD3
   factorPreservesProduct swinnertonDyerSD3 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[swinnertonDyerSD3] |>.map fun coeffs => (coeffs, 1))
-#guard
-  match factorClassicalNoDecline phi15 with
-  | some φ =>
-      Factorization.product φ = phi15 &&
-        sameFactorCoeffSet (factorizationCoeffSummary φ)
-          (factorCoeffSummary #[phi15] |>.map fun coeffs => (coeffs, 1))
-  | none => false
+#guard (factorTraced swinnertonDyerSD3).2.tier = .classical
 #guard
   let factors := ZPoly.factorize phi15
   factorPreservesProduct phi15 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[phi15] |>.map fun coeffs => (coeffs, 1))
+#guard (factorTraced phi15).2.tier = .classical
 
 #guard PrimeFactorData.degreeSum primeDataValidQuad = 2
 #guard coeffNats (PrimeFactorData.factorProduct primeDataValidQuad) = [2, 0, 1]

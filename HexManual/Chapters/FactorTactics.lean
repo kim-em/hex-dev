@@ -286,69 +286,43 @@ last resort. These complementary costs explain the three tiers:
   is found.
 * {name}`Hex.factorLattice` runs van Hoeij recombination and returns `none` if
   the available prime or precision does not produce a verified answer.
-* {name}`Hex.factorTrial` performs the direct exact search.
+* {name}`Hex.factorTrial` performs exhaustive integer trial division.
 * {name}`Hex.ZPoly.factorize` tries the two optional methods in that order,
   accepts an answer only after its product reconstructs the input, and uses
-  the direct search if both decline.
+  trial division if both decline.
 * {name}`Hex.factorTraced` returns the same result together with a
-  {name}`Hex.FactorTrace` recording which tier and M1 coordinate route were
-  taken.
+  {name}`Hex.DirectFactorTrace` recording the selected tier, any typed
+  classical decline, and the direct-search statistics.
 
 For each optional tier there are two separate proof questions: whether a
 successful answer is correct, and whether the tier is guaranteed to return an
 answer. These should not be conflated.
 
 On the first question, the Mathlib bridge already proves that every factor
-which would be recorded from a successful default-bound classical run is
-irreducible; the corresponding result holds for a successful lattice run at
-the public precision cap. These are
-{name}`HexBerlekampZassenhausMathlib.factorClassicalFactorsWithBound_factor_irreducible`
+which would be recorded from a successful classical run is irreducible; the
+corresponding result holds for a successful lattice run at the public precision
+cap. These are
+{name}`HexBerlekampZassenhausMathlib.factorClassicalFactors_factor_irreducible`
 and
 {name}`HexBerlekampZassenhausMathlib.factorLatticeFactorsWithBound_factor_irreducible`.
-The complementary packed-product contracts are
-{name}`HexBerlekampZassenhausMathlib.factorClassicalFactorsWithBound_product`
-and
-{name}`HexBerlekampZassenhausMathlib.factorLatticeFactorsWithBound_product`,
-with
-{name}`HexBerlekampZassenhausMathlib.factorClassicalWithBound_product_of_some`
-and
-{name}`HexBerlekampZassenhausMathlib.factorLatticeWithBound_product_of_some`
-as their
-{name}`Hex.Factorization`-level wrappers. Thus either modular tier's
-reconstruction guard accepts every successful answer. The guards remain as
-defensive executable checks. The Mathlib-free {name}`Hex.factorize_product`
-proof cannot appeal to these bridge contracts, so it case-splits on the guards
-and uses {name}`Hex.factorTrial_product` for a rejected optional answer or when
-both modular tiers decline.
+Each optional result is accepted only when its executable product reconstructs
+the input. The Mathlib-free {name}`Hex.factorize_product` proof case-splits on
+those guards and uses {name}`Hex.factorTrial_product` for a rejected optional
+answer or when both modular tiers decline.
 
 On the second question, classical recombination is deliberately allowed to
 decline when its resource budget is exhausted. For the lattice tier,
-{name}`HexBerlekampZassenhausMathlib.factorLatticeFactorsWithBound_ne_none_of_toMonicPrimeData`
-proves that
-the raw public-cap computation cannot decline once the monic-core prime
-selector has succeeded;
-{name}`HexBerlekampZassenhausMathlib.factorLattice_ne_none_of_toMonicPrimeData`
-is
-the corresponding {name}`Hex.Factorization`-level theorem. The hot-path
-selector theorems give two sufficient conditions for that hypothesis: a good
-prime among the fixed candidates, which is a decidable
-{name}`Hex.isGoodPrime` check, or a strict leading-coefficient/discriminant
-bound below {name}`Hex.hotPathPrimorial` for the normalized square-free core.
-The latter is stated over Mathlib's {name}`Polynomial.discr` and is established
-by proof rather than by computation. The good-prime and strict-bound wrappers
-both require the normalized square-free core to have positive degree; the
-strict-bound wrapper also requires a nonzero input.
-The
-{name}`HexBerlekampZassenhausMathlib.factorFactors_modular_of_toMonicPrimeData`,
-{name}`HexBerlekampZassenhausMathlib.factorFactors_modular_of_normalizedCore_good`,
-and
-{name}`HexBerlekampZassenhausMathlib.factorFactors_modular_of_normalizedCore_lt_primorial`
-theorems compose
-these facts with the two packed-product contracts. Their conclusions record
-whether the classical or lattice branch supplied the raw hybrid result, so the
-hybrid never reaches trial division under their hypotheses. This is conditional
-rather than global: the fixed admissible-prime search can itself fail, so the
-trial tier remains the unconditional backstop for arbitrary inputs.
+{name}`HexBerlekampZassenhausMathlib.factorLatticeFactorsWithBound_ne_none_of_directPrimePlan`
+proves that the raw public-cap computation cannot decline once direct prime
+planning has succeeded;
+{name}`HexBerlekampZassenhausMathlib.factorLattice_ne_none_of_directPrimePlan`
+is the corresponding {name}`Hex.Factorization`-level theorem. Both the
+classical and lattice engines consume the same cached factorization of the
+original square-free core. Prime planning ranks successful probes by predicted
+subset work and degree obstructions, and the proof retains the selected probe
+and its semantic factorization facts explicitly. Totality remains conditional:
+the finite prime search can fail, so trial division is the unconditional
+backstop for arbitrary inputs.
 
 Other formal precedents are the Isabelle/HOL developments
 [Polynomial Factorization](https://www.isa-afp.org/entries/Polynomial_Factorization.html),
@@ -363,13 +337,6 @@ best of our knowledge, Hex is the first implementation of van Hoeij's CLD
 method inside an interactive theorem prover. This is a claim about the
 implementation, not about global completeness: the lattice-tier totality
 theorem above is conditional on successful prime selection.
-
-The fixed prime selector checks all 94 odd primes at most 500, in two
-increasing fixed folds. The selector bridge proves both that any good listed
-prime forces success and that selector failure forces their primorial to
-divide the leading-coefficient/discriminant product; the dispatcher-facing
-strict-bound theorem is
-{name}`HexBerlekampZassenhausMathlib.HotPath.normalizedCore_toMonic_ne_none_of_lt_primorial`.
 
 For proof clients,
 {name}`HexBerlekampZassenhausMathlib.factorize_normalized` gives the full

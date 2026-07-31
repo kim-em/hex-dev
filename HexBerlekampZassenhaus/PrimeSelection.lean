@@ -518,10 +518,9 @@ A small-prime candidate for the Berlekamp-Zassenhaus prime-selection hot path.
 
 Bundles a candidate prime `p` together with the `ZMod64.Bounds p` instance and
 the propositional primality witness needed to drive the modular Berlekamp
-factorisation. Exposed alongside `hotPathCandidates` so that
-`HexBerlekampZassenhausMathlib.choosePrimeData?_none_implies_huge` can pull a
-specific candidate out of the fixed hot-path list and bridge to the Mathlib
-per-prime discriminant lemma.
+factorisation. Exposed alongside `hotPathCandidates` so direct prime planning
+can retain the exact candidate and its primality evidence beside the cached
+factorization.
 -/
 structure SmallPrimeCandidate where
   p : Nat
@@ -645,11 +644,10 @@ def extendedSmallPrimeCandidates : List SmallPrimeCandidate :=
     smallPrimeCandidateOfTrial 499 (by decide) (by decide) ]
 
 /--
-The hot-path prime candidate list: the deterministic small-prime prefix followed
-by every prime up to `499`. Exposed so that the composition theorem can pull a
-specific candidate out and bridge to the Mathlib per-prime
-discriminant lemma.
+The direct planner's prime candidate list: the deterministic small-prime prefix
+followed by every prime up to `499`.
 -/
+@[expose]
 def hotPathCandidates : List SmallPrimeCandidate :=
   smallPrimeCandidates ++ extendedSmallPrimeCandidates
 
@@ -689,8 +687,7 @@ set_option maxRecDepth 4096 in
 /--
 Coverage of the hot-path prime candidate list: every prime `p` with
 `3 ≤ p ≤ 500` appears as the `.p` field of some candidate in
-`hotPathCandidates`. Used by `choosePrimeData?_none_implies_huge` to walk the executable's
-candidate fold over any prime in the admissible range.
+`hotPathCandidates`.
 -/
 theorem exists_mem_hotPathCandidates_of_prime
     {p : Nat} (hprime : Hex.Nat.Prime p) (hge : 3 ≤ p) (hle : p ≤ 500) :

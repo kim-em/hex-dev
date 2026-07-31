@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """Performance gate for HexBerlekampZassenhaus.
 
-Asserts the per-case `FactorTrace` emitted by the Lean fixtures (chosen tier,
-M1 route, declined flag, and size-ordered subset-candidate count) stays within a
-committed baseline. A recombination blow-up (subsetCandidates jumps), an
-unexpected tier or M1-route change, or an unexpected decline/fallback fails the merge — even
-though every such regression would still produce *correct* factorisations and so
-slip past the FLINT oracle.
+Asserts the per-case typed direct trace emitted by the Lean fixtures (chosen
+tier, decline reason, prime probes, lifted-factor count, Hensel lifts, and
+candidate count) stays within a committed baseline. A recombination blow-up or
+route/resource change fails the merge even when the factors remain correct.
 
 Deterministic: it reads the committed trace records and a committed baseline, with
 no wall-clock measurement, so it is robust to CI-runner noise. A legitimate change
@@ -51,9 +49,11 @@ def main(argv: list[str]) -> int:
         baseline = {
             case: {
                 "tier": tr["tier"],
-                "m1": tr["m1"],
-                "declined": tr["declined"],
-                "subsetCandidates": tr["subsetCandidates"],
+                "decline": tr["decline"],
+                "primeProbes": tr["primeProbes"],
+                "r": tr["r"],
+                "henselLifts": tr["henselLifts"],
+                "candidatesTried": tr["candidatesTried"],
             }
             for case, tr in sorted(traces.items())
         }
@@ -72,23 +72,38 @@ def main(argv: list[str]) -> int:
         if tr["tier"] != b["tier"]:
             print(f"FAIL {case}: tier {tr['tier']!r} != baseline {b['tier']!r}", file=sys.stderr)
             failures += 1
-        if tr["m1"] != b["m1"]:
+        if tr["decline"] != b["decline"]:
             print(
-                f"FAIL {case}: M1 route {tr['m1']!r} != baseline {b['m1']!r}",
+                f"FAIL {case}: decline {tr['decline']!r} != baseline "
+                f"{b['decline']!r}",
                 file=sys.stderr,
             )
             failures += 1
-        if tr["declined"] != b["declined"]:
+        if tr["primeProbes"] != b["primeProbes"]:
             print(
-                f"FAIL {case}: declined {tr['declined']} != baseline {b['declined']} "
-                f"(unexpected fallback/decline)",
+                f"FAIL {case}: primeProbes {tr['primeProbes']} != baseline "
+                f"{b['primeProbes']}",
                 file=sys.stderr,
             )
             failures += 1
-        if tr["subsetCandidates"] > b["subsetCandidates"]:
+        if tr["r"] != b["r"]:
             print(
-                f"FAIL {case}: subsetCandidates {tr['subsetCandidates']} > baseline "
-                f"{b['subsetCandidates']} (recombination regression)",
+                f"FAIL {case}: r {tr['r']} != baseline "
+                f"{b['r']}",
+                file=sys.stderr,
+            )
+            failures += 1
+        if tr["henselLifts"] != b["henselLifts"]:
+            print(
+                f"FAIL {case}: henselLifts {tr['henselLifts']} != baseline "
+                f"{b['henselLifts']}",
+                file=sys.stderr,
+            )
+            failures += 1
+        if tr["candidatesTried"] > b["candidatesTried"]:
+            print(
+                f"FAIL {case}: candidatesTried {tr['candidatesTried']} > baseline "
+                f"{b['candidatesTried']} (recombination regression)",
                 file=sys.stderr,
             )
             failures += 1

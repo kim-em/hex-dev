@@ -913,10 +913,8 @@ private theorem choosePrimeDataScore_fold_none_forall_isGoodPrime_false
 When `choosePrimeData? f` returns `none`, every candidate in the hot-path
 prime list fails the executable good-prime predicate `Hex.isGoodPrime f`.
 
-This feeds `choosePrimeData?_none_implies_huge`: the executable's failure to
-find any good prime over the fixed list means every prime in the admissible
-range was tried and rejected, and rejection (`isGoodPrime ... = false`) feeds
-the Mathlib-side per-prime divisibility bridge.
+This records that failure of the fixed candidate fold means every retained
+candidate was tried and rejected.
 -/
 theorem mem_hotPathCandidates_isGoodPrime_false_of_choosePrimeData?_none
     {f : ZPoly} (hf : choosePrimeData? f = none)
@@ -1092,6 +1090,20 @@ theorem probePrimeData?_prime
       simp [hscore] at hdata
       subst data
       exact primeChoiceDataScore_prime f c score hscore
+
+/-- An explicit probe inherits any proved upper bound on its candidate prime. -/
+theorem probePrimeData?_p_le
+    (f : ZPoly) (c : SmallPrimeCandidate) (data : PrimeChoiceData)
+    (hc : c.p ≤ 500)
+    (hdata : probePrimeData? f c = some data) :
+    data.p ≤ 500 := by
+  unfold probePrimeData? at hdata
+  cases hscore : primeChoiceDataScore f c with
+  | none => simp [hscore] at hdata
+  | some score =>
+      simp [hscore] at hdata
+      subst data
+      exact primeChoiceDataScore_p_le f c score hc hscore
 
 /-- Good-prime provenance for one explicit diagnostic/degree-obstruction probe. -/
 theorem probePrimeData?_isGoodPrime

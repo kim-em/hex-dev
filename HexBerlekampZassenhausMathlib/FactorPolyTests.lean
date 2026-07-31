@@ -91,6 +91,14 @@ import all HexBerlekampZassenhaus.BhksRecover
 import all HexBerlekampZassenhaus.CertReify
 import all HexBerlekampZassenhaus.Certificate
 import all HexBerlekampZassenhaus.ChoosePrimeData
+import all HexBerlekampZassenhaus.CoreProblem
+import all HexBerlekampZassenhaus.Modular.PrimePlan
+import all HexBerlekampZassenhaus.Hensel.DirectLift
+import all HexBerlekampZassenhaus.Classical.Candidate
+import all HexBerlekampZassenhaus.Classical.CombinationIterator
+import all HexBerlekampZassenhaus.Classical.Search
+import all HexBerlekampZassenhaus.Classical.Engine
+import all HexBerlekampZassenhaus.Dispatch
 import all HexBerlekampZassenhaus.FactorEntryPoints
 import all HexBerlekampZassenhaus.FactorProvider
 import all HexBerlekampZassenhaus.FactorTacticTests

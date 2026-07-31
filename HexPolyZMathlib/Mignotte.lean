@@ -246,6 +246,51 @@ theorem mignotte_bound (f g : Polynomial ℤ) (hf : f ≠ 0) (hg : g ∣ f) (j :
       gcongr
       exact mahlerMeasure_le_l2norm (f := g * h)
 
+/--
+Mignotte's bound in the proportional coordinate used by direct
+Berlekamp--Zassenhaus recovery.
+
+If `f = g * h`, the coefficients reconstructed from the monic local factors
+are those of `leadingCoeff h • g`, not necessarily those of `g` itself.  The
+same Mignotte window bounds them: `‖leadingCoeff h‖ ≤ M(h)`, the ordinary
+coefficient estimate bounds `g` by `choose · M(g)`, and multiplicativity of
+Mahler measure gives `M(g) M(h) = M(f)`.
+-/
+theorem mignotte_cofactor_bound (g h : Polynomial ℤ) (j : ℕ) :
+    (Int.natAbs (h.leadingCoeff * g.coeff j) : ℝ) ≤
+      Nat.choose g.natDegree j * l2norm (g * h) := by
+  let gC := g.map (Int.castRingHom ℂ)
+  let hC := h.map (Int.castRingHom ℂ)
+  have hcoeff :
+      ‖gC.coeff j‖ ≤ Nat.choose gC.natDegree j * gC.mahlerMeasure :=
+    gC.norm_coeff_le_choose_mul_mahlerMeasure j
+  have hlc : ‖hC.leadingCoeff‖ ≤ hC.mahlerMeasure :=
+    Polynomial.leadingCoeff_le_mahlerMeasure hC
+  have hlc_norm :
+      ‖hC.leadingCoeff‖ = (Int.natAbs h.leadingCoeff : ℝ) := by
+    dsimp [hC]
+    rw [Polynomial.leadingCoeff_map_of_injective
+      (Int.cast_injective : Function.Injective (Int.castRingHom ℂ))]
+    simp [Complex.norm_intCast]
+  calc
+    (Int.natAbs (h.leadingCoeff * g.coeff j) : ℝ) =
+        ‖hC.leadingCoeff‖ * ‖gC.coeff j‖ := by
+      rw [Int.natAbs_mul, hlc_norm, norm_coeff_map_intCast]
+      norm_num
+    _ ≤ hC.mahlerMeasure *
+        (Nat.choose gC.natDegree j * gC.mahlerMeasure) :=
+      mul_le_mul hlc hcoeff (norm_nonneg _) hC.mahlerMeasure_nonneg
+    _ = Nat.choose g.natDegree j * (gC * hC).mahlerMeasure := by
+      rw [Polynomial.mahlerMeasure_mul]
+      simp [gC]
+      ring
+    _ = Nat.choose g.natDegree j *
+        ((g * h).map (Int.castRingHom ℂ)).mahlerMeasure := by
+      simp [gC, hC, Polynomial.map_mul]
+    _ ≤ Nat.choose g.natDegree j * l2norm (g * h) := by
+      gcongr
+      exact mahlerMeasure_le_l2norm (f := g * h)
+
 end
 
 end HexPolyZMathlib

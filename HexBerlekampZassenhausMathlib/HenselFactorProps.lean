@@ -17,7 +17,7 @@ public import Mathlib.RingTheory.Polynomial.UniqueFactorization
 public import Mathlib.RingTheory.PrincipalIdealDomain
 
 public import HexBerlekampZassenhausMathlib.RecombinationCandidate
-import all HexBerlekampZassenhausMathlib.PublicSurface
+import all HexBerlekampZassenhausMathlib.ModularPolynomial
 import all HexBerlekampZassenhausMathlib.ModPFactor
 import all HexBerlekampZassenhausMathlib.LiftedFactor
 import all HexBerlekampZassenhausMathlib.M1Recovery
@@ -1349,10 +1349,7 @@ theorem factorsModP_polyProduct_congr_monicTarget
     (hpk : 1 < primeData.p ^ k) (hk : 0 < k)
     (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
       (Int.ofNat (primeData.p ^ k)) = 1)
-    (hform : Hex.factorsModPBerlekampForm core primeData)
-    (hgood :
-      letI := primeData.bounds
-      Hex.isGoodPrime core primeData.p = true) :
+    (hform : Hex.factorsModPBerlekampForm core primeData) :
     letI := primeData.bounds
     Hex.ZPoly.congr
       (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
@@ -1372,7 +1369,8 @@ theorem factorsModP_polyProduct_congr_monicTarget
         (Hex.FpPoly.liftToZ
           (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)))
         (Hex.ZPoly.monicTarget core primeData.p k) primeData.p := by
-    rw [monicModularImage_modP_eq_modP_monicTarget core primeData.p k hprime hpk hk hgcd hgood]
+    rw [monicModularImage_modP_eq_modP_monicTarget
+      core primeData.p k hprime hpk hk hgcd]
     exact Hex.FpPoly.congr_liftToZ_modP (Hex.ZPoly.monicTarget core primeData.p k)
   exact Hex.ZPoly.congr_trans _ _ _ _ h1 hbridge
 

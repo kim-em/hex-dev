@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhausMathlib.FactorSoundness
+public import HexBerlekampZassenhausMathlib.IrreducibilityCertificate
 public import HexBerlekampZassenhaus.IrreducibleDecide
 public import HexBerlekampZassenhaus.Factored
 public import HexBerlekampMathlib.FactorPoly

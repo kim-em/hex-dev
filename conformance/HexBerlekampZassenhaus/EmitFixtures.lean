@@ -73,12 +73,12 @@ admissible (squarefree-image) prime, so the lifted-factor count is
 `r ≥ 32` no matter which prime the selector picks (at the selected
 primes, 29 and 19, all blocks are quadratic and `r = 32`), and the
 size-ordered classical search would need ΣC(31,≤15) ≈ 2³⁰ subset
-candidates to reach its half-size frontier — for `sd5_pair` that is
+candidates to reach its half-size frontier. For `sd5_pair` that is
 where the two 16-block factors live, and for `sd6` that is what
-exhausting all nontrivial subset products takes — far past its
-level-aware budget (`levelAwareSubsetBudget 32 defaultSubsetBudget =
-206368`), so it provably declines and the hybrid falls through to the
-van Hoeij CLD lattice arm. Both cases emit the
+exhausting all nontrivial subset products takes. This is far past the direct
+classical candidate budget, so it declines before starting an incomplete
+cardinality level and the hybrid falls through to the van Hoeij CLD lattice
+arm. Both cases emit the
 *hybrid* trace (`factorTraced`) rather than the classical one. The emit helper
 rejects a run unless the lattice tier answered, while the committed trace records
 `tier = "lattice"`, `declined = true`, the prime, and `r = 32`. Since each
@@ -147,15 +147,23 @@ private def factorValue (φ : Factorization) : String :=
 private def expectedFactorValue (scalar : Int) (factors : List (List Int × Nat)) : String :=
   "[" ++ toString scalar ++ "," ++ factorEntriesValue factors ++ "]"
 
-/-- Serialise a `FactorTrace` to JSON for the performance gate. Deterministic
+/-- Serialise a `DirectFactorTrace` to JSON for the performance gate. Deterministic
 (no wall-clock), so it lives in the committed fixtures and is pinned by the gate
 baseline. -/
-private def traceValue (t : FactorTrace) : String :=
-  "{\"tier\":\"" ++ t.tier ++ "\",\"prime\":" ++ toString t.prime ++
-    ",\"r\":" ++ toString t.liftedFactorCount ++
-    ",\"m1\":\"" ++ t.m1 ++ "\"" ++
-    ",\"subsetCandidates\":" ++ toString t.subsetCandidates ++
-    ",\"declined\":" ++ (if t.declined then "true" else "false") ++ "}"
+private def traceValue (t : DirectFactorTrace) : String :=
+  "{\"tier\":\"" ++ t.tier.name ++ "\"" ++
+    ",\"decline\":" ++
+      (match t.classicalDecline with
+      | none => "null"
+      | some reason => "\"" ++ reason.name ++ "\"") ++
+    ",\"prime\":" ++ toString t.classical.prime ++
+    ",\"primeProbes\":" ++ toString t.classical.primeProbes ++
+    ",\"r\":" ++ toString t.classical.liftedFactorCount ++
+    ",\"henselLifts\":" ++ toString t.classical.henselLifts ++
+    ",\"candidatesTried\":" ++ toString t.classical.candidatesTried ++
+    ",\"completedLevels\":[" ++
+      String.intercalate ","
+        (t.classical.completedLevels.toList.map toString) ++ "]}"
 
 /-- Emit the size-ordered classical tier's result (`factorClassical`) for cross
 checking against FLINT, plus its diagnostic `trace` (tier, prime, `r`, subset
@@ -390,19 +398,13 @@ private def cases_adversarial : List Case :=
   , mk "adv/large_plus_distractors" #[-6, 5, -1, 0, 0, 6, -5, 1]
   , mk "adv/mignotte_swell" #[1, 0, -10000, 0, 2, 0, 0, 0, 1] ]          -- (x⁴-100x+1)(x⁴+100x+1)
 
-/-! # Original-coordinate M1 coverage
+/-! # Direct classical performance controls -/
 
-These are public performance-corpus rows whose production cost gate takes M1.
-The emitter refuses to write them unless the trace reports an accepted M1
-result, so the committed fixture and trace baseline pin the route as well as
-the factorization.
--/
-
-private def cases_m1 : List Case :=
-  [ mk "m1/chebyshev_u18"
+private def cases_direct : List Case :=
+  [ mk "direct/chebyshev_u18"
       #[-1, 0, 180, 0, -5280, 0, 59136, 0, -329472, 0, 1025024, 0,
         -1863680, 0, 1966080, 0, -1114112, 0, 262144]
-  , mk "m1/legendre_p28"
+  , mk "direct/legendre_p28"
       #[40116600, 0, -16287339600, 0, 1093966309800, 0, -28880710578720,
         0, 397109770457400, 0, -3265124779316400, 0, 17364527235455400,
         0, -62588625639883200, 0, 156993135980040360, 0,
@@ -425,8 +427,7 @@ lattice ones. -/
   √2+√3+√5+√7+√11) with its shift by one.  Degree 64, content 1, exactly
   two integer factors (the two 32-blocks).
 * `adv/swinnerton_dyer_sd6` (certification arm) — Swinnerton-Dyer SD₆
-  (the committed bench `sd6` polynomial from
-  `bench/HexBench/LatticeSpike.lean`, minimal polynomial of
+  (the committed corpus `sd6` polynomial, minimal polynomial of
   √2+√3+√5+√7+√11+√13).  Degree 64, content 1, irreducible over ℤ. -/
 private def cases_lattice : List PinnedCase :=
   [ mkPinned "adv/swinnerton_dyer_sd5_pair"
@@ -519,56 +520,6 @@ private def metamorphicBase : ZPoly := DensePoly.ofCoeffs #[6, 0, -5, 0, 1]  -- 
 private def emitCase (c : Case) : IO Unit :=
   emitFactorCase c.id (DensePoly.ofCoeffs c.coeffs)
 
-/-- Emit a public case only when the traced dispatcher actually accepted M1. -/
-private def emitM1Case (c : Case) : IO Unit := do
-  let f := DensePoly.ofCoeffs c.coeffs
-  let (_, trace) := factorClassicalTraced f
-  unless trace.m1 == "accepted" do
-    throw <| IO.userError
-      s!"emitM1Case {c.id}: expected accepted M1 route, got {trace.m1}"
-  emitFactorCase c.id f
-
-/--
-Exercise the named M1→M2 composition on a checked certificate failure.
-
-The valid transported factors drive the M1 lift. The deliberately conservative
-degree view exposes every proper degree at the first prime, so no bounded
-two-prime obstruction is accepted; raw M1 must decline. The same production M2
-data must then recover the exact core through `tryM1ThenM2`.
--/
-private def checkM1CertificateFallback : IO Unit := do
-  let f := DensePoly.ofCoeffs
-    #[40116600, 0, -16287339600, 0, 1093966309800, 0, -28880710578720,
-      0, 397109770457400, 0, -3265124779316400, 0, 17364527235455400,
-      0, -62588625639883200, 0, 156993135980040360, 0,
-      -277046710553012400, 0, 342663036736620600, 0,
-      -290744394806829600, 0, 161173523208133800, 0,
-      -52567364492499024, 0, 7648690600760440]
-  let core := (normalizeForFactor f).squareFreeCore
-  match ZPoly.toMonicPrimeData? core with
-  | none => throw <| IO.userError "M1 fallback sentinel: no selected prime"
-  | some degreeData => do
-      letI := degreeData.bounds
-      let x : @FpPoly degreeData.p degreeData.bounds :=
-        FpPoly.ofCoeffs #[0, 1]
-      let conservativeDegreeData : PrimeChoiceData :=
-        { degreeData with
-          factorsModP := Array.replicate (core.degree?.getD 0) x }
-      let coreData := ZPoly.corePrimeDataOfToMonic core degreeData
-      let B := ZPoly.defaultFactorCoeffBound f
-      match classicalCoreFactorsM1WithBound core B coreData
-          conservativeDegreeData,
-          tryM1ThenM2 core B coreData conservativeDegreeData degreeData with
-      | some _, _ =>
-        throw <| IO.userError
-          "M1 fallback sentinel: conservative certificate unexpectedly accepted"
-      | none, none =>
-          throw <| IO.userError "M1 fallback sentinel: M2 fallback declined"
-      | none, some factors =>
-          unless Array.polyProduct factors = core do
-            throw <| IO.userError
-              "M1 fallback sentinel: M2 fallback changed the core product"
-
 private def emitExpectedCase (c : ExpectedCase) : IO Unit := do
   emitPolyFixture lib c.id c.coeffs.toList none
   emitResult lib c.id "factor" (expectedFactorValue c.scalar c.factors)
@@ -598,10 +549,11 @@ tier/decline and upper-bounds `subsetCandidates`. -/
 private def emitHybridTracedCase (c : PinnedCase) : IO Unit := do
   let f := DensePoly.ofCoeffs c.coeffs
   let (φ, trace) := factorTraced f
-  unless trace.tier == "lattice" && trace.declined do
+  unless trace.tier == .lattice && trace.classicalDecline.isSome do
     throw <| IO.userError
       s!"emitHybridTracedCase {c.id}: expected the classical tier to decline and \
-        the lattice tier to answer, got tier={trace.tier}, declined={trace.declined}"
+        the lattice tier to answer, got tier={trace.tier.name}, \
+        decline={trace.classicalDecline.map (·.name)}"
   emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
   emitResult lib c.id "factor" (factorValue φ)
   emitResult lib c.id "classicalFactor" "null"
@@ -616,7 +568,6 @@ private def emitPinnedExpectedCase (c : PinnedExpectedCase) : IO Unit := do
 end Hex.BZEmit
 
 def main : IO Unit := do
-  Hex.BZEmit.checkM1CertificateFallback
   for c in Hex.BZEmit.cases_edge    do Hex.BZEmit.emitCase c
   for c in Hex.BZEmit.cases_irr     do Hex.BZEmit.emitCase c
   for c in Hex.BZEmit.cases_irr_expected do Hex.BZEmit.emitExpectedCase c
@@ -626,5 +577,5 @@ def main : IO Unit := do
   for c in Hex.BZEmit.cases_content do Hex.BZEmit.emitExpectedCase c
   for c in Hex.BZEmit.cases_good_prime_regression do Hex.BZEmit.emitExpectedCase c
   for c in Hex.BZEmit.cases_adversarial do Hex.BZEmit.emitCase c
-  for c in Hex.BZEmit.cases_m1 do Hex.BZEmit.emitM1Case c
+  for c in Hex.BZEmit.cases_direct do Hex.BZEmit.emitCase c
   for c in Hex.BZEmit.cases_lattice do Hex.BZEmit.emitHybridTracedCase c

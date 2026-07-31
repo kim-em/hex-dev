@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhausMathlib.ToMonicUniqueness
 public import HexBerlekampZassenhausMathlib.SignatureClasses
 public import HexLLLMathlib.ShortVector
 
@@ -205,16 +204,21 @@ def supportCldSum (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L)
 
 
 /--
-Proof-facing package for a true factor recovered from the selected lifted-factor
-product by the executable centered/dilated recovery path.
+Proof-facing package for a true factor in the direct Hensel coordinate.
 
-This is parallel to `TrueFactorLift`, but it deliberately does not assert the
-raw integer equality `supportProduct L S = factor`.  The recovery algorithm
-only exposes the centered representative modulo `p ^ a`, dilated by the
-leading coefficient of `f`, as the recovered integer factor.  Downstream lemmas
-that only need the BHKS support, factor/cofactor identity, and recovered product
-shape should consume this package instead of strengthening their hypotheses back
-to raw selected-product equality.
+The selected monic local product represents the integer factor only up to the
+two constant scales inherent in the direct coordinate:
+
+* `leadingCoeff f` converts the monic Hensel target back to the input
+  coordinate;
+* `factorScale` is the leading coefficient of the complementary integer
+  factor.
+
+`scaledProduct_congr` records precisely that proportionality modulo the Hensel
+modulus.  `inputScale_coprime` says the input leading coefficient is a unit
+there, which is the exact scalar cancelled after the monic support product is
+cancelled in logarithmic derivatives.  There is no dilation-coordinate recovery
+equation in this interface.
 -/
 structure RecoveredLift
     (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) where
@@ -226,10 +230,14 @@ structure RecoveredLift
   factor : Hex.ZPoly
   cofactor : Hex.ZPoly
   factor_mul : factor * cofactor = f
-  recovered_eq :
-    Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff f)
-        (Hex.centeredLiftPoly (supportProduct L S) (p ^ a)) =
-      factor
+  factorScale : Int
+  inputScale_coprime :
+    Int.gcd (Hex.DensePoly.leadingCoeff f) (Int.ofNat (p ^ a)) = 1
+  scaledProduct_congr :
+    Hex.ZPoly.congr
+      (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f) (supportProduct L S))
+      (Hex.DensePoly.scale factorScale factor)
+      (p ^ a)
 
 /-- A left fold accumulating `g` over a list equals the running accumulator plus
 the sum of the mapped list; the start-from-`acc` form used to read a fold-sum off
@@ -463,7 +471,7 @@ theorem blockForm
     (D : RecoveredLift L S) :
     BhksBlockForm L := by
   rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
-    recovered_eq⟩
+    factorScale, inputScale_coprime, scaledProduct_congr⟩
   cases basis_eq
   exact bhksLatticeBasis_blockForm f p a liftedFactors
 
@@ -474,7 +482,7 @@ theorem liftedFactors_eq
     (D : RecoveredLift L S) :
     L.liftedFactors = D.liftedFactors := by
   rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
-    recovered_eq⟩
+    factorScale, inputScale_coprime, scaledProduct_congr⟩
   cases basis_eq
   rfl
 
@@ -485,7 +493,7 @@ theorem cutThresholds_eq
     (D : RecoveredLift L S) :
     L.cutThresholds = Hex.bhksCutThresholds D.f D.p := by
   rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
-    recovered_eq⟩
+    factorScale, inputScale_coprime, scaledProduct_congr⟩
   cases basis_eq
   rfl
 
@@ -496,7 +504,7 @@ theorem cldRows_eq
     (D : RecoveredLift L S) :
     L.cldRows = D.liftedFactors.map (fun g => Hex.cldCoeffs D.f D.p D.a g) := by
   rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
-    recovered_eq⟩
+    factorScale, inputScale_coprime, scaledProduct_congr⟩
   cases basis_eq
   rfl
 
@@ -507,7 +515,7 @@ theorem factorCount_eq
     (D : RecoveredLift L S) :
     L.factorCount = D.liftedFactors.size := by
   rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
-    recovered_eq⟩
+    factorScale, inputScale_coprime, scaledProduct_congr⟩
   cases basis_eq
   rfl
 
@@ -518,7 +526,7 @@ theorem coeffWidth_eq
     (D : RecoveredLift L S) :
     L.coeffWidth = D.f.degree?.getD 0 := by
   rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
-    recovered_eq⟩
+    factorScale, inputScale_coprime, scaledProduct_congr⟩
   cases basis_eq
   rfl
 
@@ -528,7 +536,7 @@ theorem p_eq
     (D : RecoveredLift L S) :
     L.p = D.p := by
   rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
-    recovered_eq⟩
+    factorScale, inputScale_coprime, scaledProduct_congr⟩
   cases basis_eq
   rfl
 
@@ -539,7 +547,7 @@ theorem precision_eq
     (D : RecoveredLift L S) :
     L.precision = D.a := by
   rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
-    recovered_eq⟩
+    factorScale, inputScale_coprime, scaledProduct_congr⟩
   cases basis_eq
   rfl
 
