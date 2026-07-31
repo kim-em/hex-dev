@@ -181,7 +181,9 @@ At each recursive step it:
 
 1. chooses the distinguished head lifted factor;
 2. enumerates subsets of the remaining factors in increasing cardinality;
-3. applies degree and trailing-coefficient filters;
+3. carries the selected degree and trailing residue through the subset tree,
+   rejecting a support unless its raw trailing coefficient divides
+   `leadingCoeff(core) · target(0)`;
 4. constructs the original-coordinate candidate;
 5. tests an exact bounded quotient;
 6. removes the accepted support and continues on the exact quotient.

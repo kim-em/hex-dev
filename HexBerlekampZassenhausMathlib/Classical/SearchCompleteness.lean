@@ -77,7 +77,15 @@ theorem findDirectHead_found_le
             cases hfind
             obtain ⟨selected, remaining, hmem, hselected, hremaining, heval⟩ :=
               scanDirectCombinations_found coreLc target basis head
-                tail level [] [] split tried
+                tail level [] []
+                ((Hex.directLiftedFactor basis head).degree?.getD 0)
+                ((Hex.directLiftedFactor basis head).coeff 0 %
+                  (Hex.liftModulus basis : Int))
+                split tried
+                (by simp [Hex.directSelectedDegree,
+                  Hex.directSelectedFactors])
+                (by simp [Hex.directSelectedTrail,
+                  Hex.directSelectedFactors])
                 (by simpa [Hex.scanDirectLevel] using hscan)
             refine ⟨level, selected, remaining, hmem, ?_, ?_, heval, ?_⟩
             · simpa using hselected
@@ -91,8 +99,16 @@ theorem findDirectHead_found_le
             · subst level
               obtain ⟨foundSplit, foundTried, hfound⟩ :=
                 scanDirectCombinations_finds coreLc target basis head
-                  tail trueLevel [] [] trueSelected trueRemaining
-                  trueCandidate trueQuotient htrueMem (by simpa using htrue)
+                  tail trueLevel [] []
+                  ((Hex.directLiftedFactor basis head).degree?.getD 0)
+                  ((Hex.directLiftedFactor basis head).coeff 0 %
+                    (Hex.liftModulus basis : Int))
+                  trueSelected trueRemaining trueCandidate trueQuotient
+                  (by simp [Hex.directSelectedDegree,
+                    Hex.directSelectedFactors])
+                  (by simp [Hex.directSelectedTrail,
+                    Hex.directSelectedFactors])
+                  htrueMem (by simpa using htrue)
               have hfoundLevel :
                   Hex.scanDirectLevel coreLc target basis head tail trueLevel =
                     .found foundSplit foundTried := by
@@ -326,75 +342,98 @@ theorem directCandidatePrefilter_trueSupport
               (fun g => g.coeff 0)).prod)
           (Hex.liftModulus d) := by
             rw [Hex.centeredModNat_emod_self]
-  have htrail_safe :
+  have htrail_dvd :
       Hex.centeredModNat
           (Hex.DensePoly.leadingCoeff core *
             Hex.directSelectedTrail d selected)
-          (Hex.liftModulus d) ≠ 0 ∨
-        target.coeff 0 = 0 := by
-    by_cases hraw0 :
-        Hex.centeredModNat
-            (Hex.DensePoly.leadingCoeff core *
-              Hex.directSelectedTrail d selected)
-            (Hex.liftModulus d) = 0
-    · right
-      let raw :=
-        Hex.centeredLiftPoly
-          (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
-            (Array.polyProduct
-              (Hex.directSelectedFactors d selected).toArray))
-          (Hex.liftModulus d)
-      let pp := Hex.ZPoly.primitivePart raw
-      have hnorm : Hex.normalizeFactorSign pp = factor := by
-        simpa [Hex.directCandidate, raw, pp] using hcand
-      have hpp_ne : pp ≠ 0 := by
-        intro hzero
-        apply hfactor_ne
-        rw [← hnorm, hzero]
-        rfl
-      have hraw_ne : raw ≠ 0 := by
-        intro hzero
-        apply hpp_ne
-        change Hex.ZPoly.primitivePart raw = 0
-        rw [hzero]
-        rfl
-      have hcontent_ne : Hex.ZPoly.content raw ≠ 0 :=
-        HexPolyZMathlib.content_ne_zero raw hraw_ne
-      have hraw_coeff :
-          raw.coeff 0 =
-            Hex.ZPoly.content raw * pp.coeff 0 := by
-        conv_lhs => rw [← Hex.ZPoly.content_mul_primitivePart raw]
-        exact Hex.DensePoly.coeff_scale (R := Int)
-          (Hex.ZPoly.content raw) pp 0 (Int.mul_zero _)
-      have hpp0 : pp.coeff 0 = 0 := by
-        have hz : raw.coeff 0 = 0 := by
-          rw [← htrail]
-          exact hraw0
-        rw [hraw_coeff] at hz
-        exact (mul_eq_zero.mp hz).resolve_left hcontent_ne
-      have hfactor0 : factor.coeff 0 = 0 := by
-        rw [← hnorm]
-        unfold Hex.normalizeFactorSign
-        split
-        · rw [Hex.DensePoly.coeff_scale (R := Int) (-1) pp 0
-              (Int.mul_zero _), hpp0, mul_zero]
-        · exact hpp0
+          (Hex.liftModulus d) ∣
+        Hex.DensePoly.leadingCoeff core * target.coeff 0 := by
+    let product :=
+      Array.polyProduct (Hex.directSelectedFactors d selected).toArray
+    let scaled :=
+      Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core) product
+    let raw := Hex.centeredLiftPoly scaled (Hex.liftModulus d)
+    let pp := Hex.ZPoly.primitivePart raw
+    have hnorm : Hex.normalizeFactorSign pp = factor := by
+      simpa [Hex.directCandidate, product, scaled, raw, pp] using hcand
+    have hproduct_monic : Hex.DensePoly.Monic product := by
+      apply polyProduct_monic_of_all_monic
+      intro g hg
+      rw [List.toList_toArray] at hg
+      simp only [Hex.directSelectedFactors, List.mem_map] at hg
+      obtain ⟨i, _, rfl⟩ := hg
+      exact facts.liftedMonic i
+    have hscaled_lc :
+        Hex.DensePoly.leadingCoeff scaled =
+          Hex.DensePoly.leadingCoeff core := by
+      unfold scaled
+      rw [Hex.ZPoly.leadingCoeff_scale_of_nonzero
+        (Hex.DensePoly.leadingCoeff core) product (ne_of_gt hcore_lc_pos),
+        show Hex.DensePoly.leadingCoeff product = 1 from hproduct_monic,
+        mul_one]
+    have hraw_lc :
+        Hex.DensePoly.leadingCoeff raw =
+          Hex.DensePoly.leadingCoeff core := by
+      unfold raw
+      calc
+        Hex.DensePoly.leadingCoeff
+            (Hex.centeredLiftPoly scaled (Hex.liftModulus d)) =
+            Hex.DensePoly.leadingCoeff scaled :=
+          leadingCoeff_centeredLiftPoly_of_pos_leadingCoeff_bound
+            (show 0 < Hex.DensePoly.leadingCoeff scaled by
+              rw [hscaled_lc]; exact hcore_lc_pos)
+            (show (Hex.DensePoly.leadingCoeff scaled).natAbs ≤
+                Hex.ZPoly.defaultFactorCoeffBound core by
+              rw [hscaled_lc]
+              exact defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne)
+            (by
+              change 2 * Hex.ZPoly.defaultFactorCoeffBound core <
+                data.p ^ Hex.precisionForCoeffBound B data.p
+              exact hprecision)
+        _ = Hex.DensePoly.leadingCoeff core := hscaled_lc
+    have hraw_size : 0 < raw.size := by
+      apply Hex.ZPoly.size_pos_of_ne_zero
+      intro hzero
+      rw [hzero] at hraw_lc
+      simp at hraw_lc
+      exact (ne_of_gt hcore_lc_pos) hraw_lc.symm
+    have hcontent_dvd_core :
+        Hex.ZPoly.content raw ∣ Hex.DensePoly.leadingCoeff core := by
+      rw [← hraw_lc,
+        Hex.DensePoly.leadingCoeff_eq_coeff_last raw hraw_size]
+      exact Hex.ZPoly.content_dvd_coeff raw (raw.size - 1)
+    have hpp0_dvd_factor0 : pp.coeff 0 ∣ factor.coeff 0 := by
+      rw [← hnorm]
+      unfold Hex.normalizeFactorSign
+      split
+      · rw [Hex.DensePoly.coeff_scale (R := Int) (-1) pp 0
+            (Int.mul_zero _)]
+        simp
+      · exact dvd_rfl
+    have hraw_coeff :
+        raw.coeff 0 =
+          Hex.ZPoly.content raw * pp.coeff 0 := by
+      conv_lhs => rw [← Hex.ZPoly.content_mul_primitivePart raw]
+      exact Hex.DensePoly.coeff_scale (R := Int)
+        (Hex.ZPoly.content raw) pp 0 (Int.mul_zero _)
+    have htarget_coeff :
+        target.coeff 0 = quotient.coeff 0 * factor.coeff 0 := by
       have hcoeff := congrArg (fun p : Polynomial Int => p.coeff 0)
         (congrArg HexPolyZMathlib.toPolynomial hproduct)
-      rw [HexPolyZMathlib.toPolynomial_mul, Polynomial.mul_coeff_zero,
-        HexPolyZMathlib.coeff_toPolynomial,
-        HexPolyZMathlib.coeff_toPolynomial, hfactor0,
-        HexPolyZMathlib.coeff_toPolynomial, mul_zero] at hcoeff
-      exact hcoeff.symm
-    · exact Or.inl hraw0
+      simpa [HexPolyZMathlib.toPolynomial_mul, Polynomial.mul_coeff_zero,
+        HexPolyZMathlib.coeff_toPolynomial] using hcoeff.symm
+    obtain ⟨a, ha⟩ := hcontent_dvd_core
+    obtain ⟨b, hb⟩ := hpp0_dvd_factor0
+    refine ⟨a * quotient.coeff 0 * b, ?_⟩
+    rw [htrail, hraw_coeff, ha, htarget_coeff, hb]
+    ring
   unfold Hex.directCandidatePrefilter
   simp only [Bool.and_eq_true, Bool.or_eq_true, beq_iff_eq,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩
   · simpa [ne_of_gt hcore_lc_pos, htarget_ne] using hdegree
-  · rcases htrail_safe with htrail_ne | htarget0
-    · exact Or.inl (by simpa using htrail_ne)
-    · exact Or.inr htarget0
+  · simpa [Hex.intDivides_eq] using
+      (Int.emod_eq_zero_of_dvd htrail_dvd)
 
 /-- A recovered true support reaches the successful exact-division leaf of the
 executable iterator. -/

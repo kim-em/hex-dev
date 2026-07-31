@@ -26,6 +26,31 @@ def directCandidate
     centeredLiftPoly
       (DensePoly.scale coreLc (Array.polyProduct selected.toArray)) modulus
 
+/-- Exact integer divisibility with a magnitude rejection before remainder
+calculation.  The arguments are the prospective multiple and divisor. -/
+@[expose]
+def intDivides (multiple divisor : Int) : Bool :=
+  if multiple.natAbs < divisor.natAbs ∧ multiple ≠ 0 then
+    false
+  else
+    multiple % divisor == 0
+
+@[simp]
+theorem intDivides_eq (multiple divisor : Int) :
+    intDivides multiple divisor = (multiple % divisor == 0) := by
+  unfold intDivides
+  split
+  · rename_i hlarge
+    apply Eq.symm
+    apply Bool.eq_false_iff.mpr
+    intro hemod
+    have hemod' : multiple % divisor = 0 := beq_iff_eq.mp hemod
+    have hdvdAbs : divisor.natAbs ∣ multiple.natAbs :=
+      Int.natAbs_dvd_natAbs.mpr (Int.dvd_of_emod_eq_zero hemod')
+    have hle := Nat.le_of_dvd (Int.natAbs_pos.mpr hlarge.2) hdvdAbs
+    omega
+  · rfl
+
 /-- Cached degree/trailing-coefficient prefilter for a direct candidate.
 
 The selected Hensel factors are monic.  At recovery precision the centered
@@ -41,7 +66,7 @@ def directCandidatePrefilter
   let rawTrail := centeredModNat (coreLc * trailingResidue) modulus
   (coreLc == 0 || decide (target = 0) ||
       decide (degreeSum ≤ target.degree?.getD 0)) &&
-    (rawTrail != 0 || target.coeff 0 == 0)
+    intDivides (coreLc * target.coeff 0) rawTrail
 
 /-- Evaluate the candidate pipeline after the cached prefilters. -/
 @[expose]

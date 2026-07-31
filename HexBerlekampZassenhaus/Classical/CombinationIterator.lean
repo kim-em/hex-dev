@@ -118,24 +118,30 @@ def scanDirectCombinations
     (head : DirectLiftedIndex basis) :
     (xs : List (DirectLiftedIndex basis)) → (choose : Nat) →
       (selectedRev rejectedRev : List (DirectLiftedIndex basis)) →
+      (selectedDegree : Nat) → (selectedTrail : Int) →
       DirectLevelResult basis
-  | xs, 0, selectedRev, rejectedRev =>
+  | xs, 0, selectedRev, rejectedRev, selectedDegree, selectedTrail =>
       let selected := head :: selectedRev.reverse
       let remaining := rejectedRev.reverse ++ xs
-      match tryDirectSplit coreLc target basis selected with
+      match tryDirectCandidate coreLc target (liftModulus basis)
+          (directSelectedFactors basis selected) selectedDegree selectedTrail with
       | some (candidate, quotient) =>
           .found { selected, remaining, candidate, quotient } 1
       | none => .exhausted 1
-  | [], _ + 1, _, _ => .exhausted 0
-  | x :: xs, choose + 1, selectedRev, rejectedRev =>
+  | [], _ + 1, _, _, _, _ => .exhausted 0
+  | x :: xs, choose + 1, selectedRev, rejectedRev,
+      selectedDegree, selectedTrail =>
+      let factor := directLiftedFactor basis x
       let included :=
         scanDirectCombinations coreLc target basis head xs choose
           (x :: selectedRev) rejectedRev
+          (selectedDegree + factor.degree?.getD 0)
+          (selectedTrail * factor.coeff 0 % (liftModulus basis : Int))
       match included with
       | .found split tried => .found split tried
       | .exhausted triedLeft =>
           match scanDirectCombinations coreLc target basis head xs (choose + 1)
-              selectedRev (x :: rejectedRev) with
+              selectedRev (x :: rejectedRev) selectedDegree selectedTrail with
           | .found split triedRight => .found split (triedLeft + triedRight)
           | .exhausted triedRight => .exhausted (triedLeft + triedRight)
 
@@ -146,6 +152,9 @@ def scanDirectLevel
     (head : DirectLiftedIndex basis)
     (tail : List (DirectLiftedIndex basis)) (tailCard : Nat) :
     DirectLevelResult basis :=
+  let factor := directLiftedFactor basis head
   scanDirectCombinations coreLc target basis head tail tailCard [] []
+    (factor.degree?.getD 0)
+    (factor.coeff 0 % (liftModulus basis : Int))
 
 end Hex

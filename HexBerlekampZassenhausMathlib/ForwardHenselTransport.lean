@@ -893,7 +893,7 @@ private theorem size_centeredLiftPoly_eq_of_monic
 The base case is `Monic 1` (`zpoly_monic_one`); the inductive step chains
 `zpoly_monic_mul` through each entry along the `foldl` accumulator.
 -/
-private theorem polyProduct_monic_of_all_monic
+theorem polyProduct_monic_of_all_monic
     {factors : Array Hex.ZPoly}
     (hmonic : ∀ p ∈ factors.toList, Hex.DensePoly.Monic p) :
     Hex.DensePoly.Monic (Array.polyProduct factors) := by
@@ -1312,7 +1312,7 @@ private theorem centeredModNat_eq_of_pos_natAbs_le
 Centred-lift preserves a strictly positive leading coefficient that lies inside
 the Mignotte half-window.
 -/
-private theorem leadingCoeff_centeredLiftPoly_of_pos_leadingCoeff_bound
+theorem leadingCoeff_centeredLiftPoly_of_pos_leadingCoeff_bound
     {g : Hex.ZPoly} {m B : Nat}
     (hg_lc_pos : 0 < Hex.DensePoly.leadingCoeff g)
     (hbound_lc : (Hex.DensePoly.leadingCoeff g).natAbs ≤ B)
