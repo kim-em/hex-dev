@@ -8,7 +8,7 @@ module
 
 public import HexBerlekampZassenhausMathlib.Classical.Recovery
 public import HexBerlekampZassenhausMathlib.SubsetCoprimality
-import all HexBerlekampZassenhausMathlib.HenselFactorProps
+import all HexBerlekampZassenhausMathlib.LocalFactors
 import all HexBerlekampZassenhausMathlib.LiftedFactor
 
 public section

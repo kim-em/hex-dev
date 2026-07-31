@@ -16,7 +16,7 @@ public import Mathlib.RingTheory.Coprime.Lemmas
 public import Mathlib.RingTheory.Polynomial.UniqueFactorization
 public import Mathlib.RingTheory.PrincipalIdealDomain
 
-public import HexBerlekampZassenhausMathlib.HenselFactorProps
+public import HexBerlekampZassenhausMathlib.LocalFactors
 public import HexBerlekampZassenhausMathlib.ModPFactorization
 import all HexBerlekampZassenhausMathlib.ModularPolynomial
 import all HexBerlekampZassenhausMathlib.ModPFactor
@@ -24,7 +24,7 @@ import all HexBerlekampZassenhausMathlib.LiftedFactor
 import all HexBerlekampZassenhausMathlib.M1Recovery
 import all HexBerlekampZassenhausMathlib.RecombinationSplit
 import all HexBerlekampZassenhausMathlib.RecombinationCandidate
-import all HexBerlekampZassenhausMathlib.HenselFactorProps
+import all HexBerlekampZassenhausMathlib.LocalFactors
 import all HexBerlekampZassenhausMathlib.ModPFactorization
 
 public section

@@ -8,9 +8,9 @@ module
 
 public import HexBerlekampZassenhaus
 public import HexBerlekampMathlib.Irreducibility
-public import HexBerlekampZassenhausMathlib.HenselFactorProps
+public import HexBerlekampZassenhausMathlib.LocalFactors
 import all HexBerlekampZassenhausMathlib.ModPFactor
-import all HexBerlekampZassenhausMathlib.HenselFactorProps
+import all HexBerlekampZassenhausMathlib.LocalFactors
 
 public section
 set_option backward.proofsInPublic true

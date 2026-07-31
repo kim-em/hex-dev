@@ -24,7 +24,7 @@ import all HexBerlekampZassenhausMathlib.LiftedFactor
 import all HexBerlekampZassenhausMathlib.M1Recovery
 import all HexBerlekampZassenhausMathlib.RecombinationSplit
 import all HexBerlekampZassenhausMathlib.RecombinationCandidate
-import all HexBerlekampZassenhausMathlib.HenselFactorProps
+import all HexBerlekampZassenhausMathlib.LocalFactors
 import all HexBerlekampZassenhausMathlib.SubsetCoprimality
 import all HexBerlekampZassenhausMathlib.ModPFactorization
 

@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexLLLMathlib.IntegerLattice
-public import HexLLLMathlib.Reducer
+public import HexLLLMathlib.Reduction
 public import HexLLL
 
 public section
