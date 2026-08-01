@@ -1006,7 +1006,8 @@ theorem refineAll_allReady {p : Hex.ZPoly}
     refineAll_component_certifies hp hsize hsep hdepth htarget hprec hcover
       strategy (Array.mem_toList_iff.mpr hc)
   simp only [hcert]
-  simpa only [Hex.Certified.square, decide_eq_true_eq] using hiso
+  exact decide_eq_true (show target ≤ (Hex.Certified.square (.atom iso)).prec by
+    simpa only [Hex.Certified.square] using hiso)
 
 /-- Successful attempts on the final normalized worklist pass the exact
 pairwise disc-disjointness check. -/

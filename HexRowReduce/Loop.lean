@@ -877,6 +877,8 @@ theorem rowReduce_isRowReduced (M : Matrix R n m) : IsRowReduced M (rowReduce M)
       ((rowReduce M).pivotCols.get i).val = (final.pivots[i.val]'hi).val := by
     intro i _hi
     simp [rowReduce, final, Vector.get, List.getElem_toArray]
+    change (final.pivots[i.val]'_).val = (final.pivots[i.val]'_).val
+    rfl
   refine
     { toIsEchelonForm :=
         { transform_mul := rowReduce_transform_mul M

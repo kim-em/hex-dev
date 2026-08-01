@@ -289,8 +289,11 @@ theorem abs_phi_coeff_le_of_monic_factor
                 (g.map (Int.castRingHom ℂ)) α).coeff j)).sum from ?_]
   pick_goal 2
   · rw [← Polynomial.lcoeff_apply (R := ℂ) j,
-      map_multiset_sum (Polynomial.lcoeff ℂ j)]
-    simp [Multiset.map_map, Polynomial.lcoeff_apply]
+      map_multiset_sum (Polynomial.lcoeff ℂ j), Multiset.map_map]
+    apply congrArg Multiset.sum
+    apply Multiset.map_congr rfl
+    intro p _hp
+    rfl
   -- Step 3: norm of multiset sum ≤ multiset sum of norms.
   refine (norm_multiset_sum_le _).trans ?_
   -- Now the goal is over `(roots.map (fun α => ‖...‖))` after `map_map` simplification.
@@ -434,8 +437,11 @@ theorem abs_factorColumn_coeff_le
                 (g.map (Int.castRingHom ℂ)) α).coeff j)).sum from ?_]
   pick_goal 2
   · rw [← Polynomial.lcoeff_apply (R := ℂ) j,
-      map_multiset_sum (Polynomial.lcoeff ℂ j)]
-    simp [Multiset.map_map, Polynomial.lcoeff_apply]
+      map_multiset_sum (Polynomial.lcoeff ℂ j), Multiset.map_map]
+    apply congrArg Multiset.sum
+    apply Multiset.map_congr rfl
+    intro p _hp
+    rfl
   refine (norm_multiset_sum_le _).trans ?_
   rw [Multiset.map_map]
   set B : ℝ :=

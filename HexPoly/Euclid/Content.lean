@@ -137,14 +137,16 @@ private theorem contentNat_dvd_coeff (p : DensePoly Int) (n : Nat) :
   by_cases hn : n < p.size
   · rw [Int.ofNat_dvd_left]
     unfold contentNat coeff toList toArray
-    have hmem : p.coeffs[n].natAbs ∈ p.coeffs.toList.map Int.natAbs := by
+    have hn' : n < p.coeffs.size := by simpa [size] using hn
+    have hmem : (p.coeffs[n]'hn').natAbs ∈ p.coeffs.toList.map Int.natAbs := by
       apply List.mem_map.mpr
-      refine ⟨p.coeffs[n], ?_, rfl⟩
+      refine ⟨p.coeffs[n]'hn', ?_, rfl⟩
       rw [List.mem_iff_getElem]
-      exact ⟨n, by simpa [size] using hn, by simp [Array.getElem_toList]; rfl⟩
+      exact ⟨n, by simpa [size] using hn, by simp [Array.getElem_toList]⟩
     have hfold := foldl_gcd_dvd_of_mem (acc := 0) hmem
-    have hcoeff : (p.coeffs.getD n (Zero.zero : Int)).natAbs = p.coeffs[n].natAbs := by
-      change (p.coeffs.getD n (0 : Int)).natAbs = p.coeffs[n].natAbs
+    have hcoeff : (p.coeffs.getD n (Zero.zero : Int)).natAbs =
+        (p.coeffs[n]'hn').natAbs := by
+      change (p.coeffs.getD n (0 : Int)).natAbs = (p.coeffs[n]'hn').natAbs
       rw [Array.getElem_eq_getD (0 : Int)]
     rw [hcoeff]
     simpa only [List.foldl_map] using hfold

@@ -401,8 +401,10 @@ theorem cldFullAux_coeff_natAbs_le
         (((p ^ ell : Nat) : ℤ) *
           v[Fin.natAdd r j]).natAbs ≤ E * C := by
       rw [Int.natAbs_mul]
-      simpa [C, Nat.mul_comm] using
-        Nat.mul_le_mul hpow (hv (Fin.natAdd r j))
+      calc
+        (p ^ ell) * v[Fin.natAdd r j].natAbs ≤ C * E :=
+          Nat.mul_le_mul hpow (hv (Fin.natAdd r j))
+        _ = E * C := Nat.mul_comm _ _
     have hterms (i : Fin r) :
         (v[Fin.castAdd n i] *
           Hex.centeredResiduePow p ell

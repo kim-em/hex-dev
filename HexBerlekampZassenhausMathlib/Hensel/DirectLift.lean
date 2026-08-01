@@ -63,8 +63,13 @@ theorem liftedSubset_modPSubset
     Finset.mem_map]
   constructor
   · rintro ⟨j, ⟨k, hk, rfl⟩, rfl⟩
-    simpa [modPIndexToLiftedEmbedding, liftedIndexToModPEmbedding,
-      liftedIndexOfModPIndex, modPIndexOfLiftedIndex] using hk
+    have hidx :
+        modPIndexToLiftedEmbedding data d hsize
+            (liftedIndexToModPEmbedding data d hsize k) = k := by
+      apply Fin.ext
+      rfl
+    rw [hidx]
+    exact hk
   · intro hi
     refine ⟨modPIndexOfLiftedIndex data d hsize i, ?_, ?_⟩
     · exact ⟨i, hi, rfl⟩
