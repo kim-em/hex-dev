@@ -220,57 +220,79 @@ structure DirectPartialFactorization (basis : LiftData) where
   /-- Measurements accumulated by the partial search. -/
   stats : ClassicalStats
 
-/-- Run one retained unforced low-cardinality sweep. The first exact factor is
-peeled and its quotient is handed directly to partition proposal, avoiding a
-second combinatorial pass over the residual support. -/
+/-- Repeatedly peel exact factors from one lifted basis.  `levels` controls the
+first sweep; after every split, the smaller `repeatLevels` schedule is restarted
+on the exact quotient and complementary support. -/
+@[expose]
+def peelDirectAux
+    (coreLc : Int) (basis : LiftData) (repeatLevels : List Nat) :
+    Nat → ZPoly → List (DirectLiftedIndex basis) → Array ZPoly → Nat →
+      ClassicalStats → List Nat → DirectPartialFactorization basis
+  | 0, target, support, factors, budget, stats, _ =>
+      { factors, residual := target, support, budget
+        stats :=
+          { stats with
+            residualLiftedFactorCount := support.length
+            remainingSubsetBudget := budget
+            unforcedDecline := some .liftFailure } }
+  | fuel + 1, target, support, factors, budget, stats, levels =>
+      if target = 1 then
+        { factors, residual := target, support := [], budget
+          stats :=
+            { stats with
+              residualLiftedFactorCount := 0
+              remainingSubsetBudget := budget
+              unforcedDecline := none } }
+      else
+        match findDirectSubset coreLc target basis support levels budget {} #[] with
+        | .stopped reason budget' sweepStats completed =>
+            { factors, residual := target, support, budget := budget'
+              stats :=
+                { stats with
+                  candidatesTried :=
+                    stats.candidatesTried + sweepStats.exactDivisions
+                  unforced := stats.unforced.add sweepStats
+                  unforcedCompletedLevels :=
+                    stats.unforcedCompletedLevels ++ completed
+                  residualLiftedFactorCount := support.length
+                  remainingSubsetBudget := budget'
+                  unforcedDecline := some reason } }
+        | .found split budget' sweepStats completed =>
+            let stats' :=
+              { stats with
+                candidatesTried :=
+                  stats.candidatesTried + sweepStats.exactDivisions
+                unforced := stats.unforced.add sweepStats
+                unforcedCompletedLevels :=
+                  stats.unforcedCompletedLevels ++ completed
+                peeledFactorDegrees :=
+                  stats.peeledFactorDegrees.push
+                    (split.candidate.degree?.getD 0)
+                peeledSupportSizes :=
+                  stats.peeledSupportSizes.push split.selected.length
+                peeledComplementSizes :=
+                  stats.peeledComplementSizes.push split.remaining.length
+                residualLiftedFactorCount := split.remaining.length
+                remainingSubsetBudget := budget'
+                unforcedDecline := none }
+            peelDirectAux coreLc basis repeatLevels fuel split.quotient
+              split.remaining (factors.push split.candidate) budget' stats'
+              repeatLevels
+
+/-- Retain every cheap exact factor exposed by one Hensel lift.  The first
+sweep admits support sizes up to `maxCardinality`; subsequent sweeps use the
+smaller `repeatCardinality` cap so progress is reused without repeatedly paying
+for the widest combinatorial level. -/
 @[expose]
 def peelDirect
     (coreLc : Int) (target : ZPoly) (basis : LiftData)
-    (maxCardinality : Nat := 3) (budget : Nat := defaultSubsetBudget)
+    (maxCardinality : Nat := 3) (repeatCardinality : Nat := 2)
+    (budget : Nat := defaultSubsetBudget)
     (stats : ClassicalStats := {}) : DirectPartialFactorization basis :=
   let support := List.finRange basis.liftedFactors.size
-  if target = 1 then
-    { factors := #[], residual := target, support := [], budget,
-      stats :=
-        { stats with
-          residualLiftedFactorCount := 0
-          remainingSubsetBudget := budget } }
-  else
-    let levels := (List.range maxCardinality).map (· + 1)
-    match findDirectSubset coreLc target basis support levels budget {} #[] with
-    | .stopped reason budget' sweepStats completed =>
-        { factors := #[], residual := target, support, budget := budget'
-          stats :=
-            { stats with
-              candidatesTried :=
-                stats.candidatesTried + sweepStats.exactDivisions
-              unforced := stats.unforced.add sweepStats
-              unforcedCompletedLevels :=
-                stats.unforcedCompletedLevels ++ completed
-              residualLiftedFactorCount := support.length
-              remainingSubsetBudget := budget'
-              unforcedDecline := some reason } }
-    | .found split budget' sweepStats completed =>
-        { factors := #[split.candidate]
-          residual := split.quotient
-          support := split.remaining
-          budget := budget'
-          stats :=
-            { stats with
-              candidatesTried :=
-                stats.candidatesTried + sweepStats.exactDivisions
-              unforced := stats.unforced.add sweepStats
-              unforcedCompletedLevels :=
-                stats.unforcedCompletedLevels ++ completed
-              peeledFactorDegrees :=
-                stats.peeledFactorDegrees.push
-                  (split.candidate.degree?.getD 0)
-              peeledSupportSizes :=
-                stats.peeledSupportSizes.push split.selected.length
-              peeledComplementSizes :=
-                stats.peeledComplementSizes.push split.remaining.length
-              residualLiftedFactorCount := split.remaining.length
-              remainingSubsetBudget := budget'
-              unforcedDecline := none } }
+  let levels := (List.range maxCardinality).map (· + 1)
+  let repeatLevels := (List.range repeatCardinality).map (· + 1)
+  peelDirectAux coreLc basis repeatLevels (support.length + 1) target support
+    #[] budget stats levels
 
 end Hex

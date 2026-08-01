@@ -1046,6 +1046,15 @@ fresh-build sample path/hash, applicable profile artefact location, source
 hash, host/toolchain/commit, and comparator source. A narrative without
 traceable artefacts does not satisfy this requirement.
 
+For the published integer polynomial factorization comparison, the current
+snapshot additionally covers the complete committed corpus for Hex, FLINT,
+NTL, PARI, Isabelle BZ, and Isabelle LLL. The sweep records the clean source
+commit and corpus hash, performs factor-degree cross-checking, and retains
+timeouts as explicit rows. Relevant source changes require fresh measurements
+for the affected systems. All cactus and runtime-by-degree figures are then
+regenerated from the newest current-corpus measurement of each system; CI
+checks both freshness and byte-for-byte figure regeneration on every PR.
+
 The `reports/<lib>-performance.md` file is overwrite-on-rerun:
 when the report is regenerated against a newer build, the previous
 content is replaced and `git log -- reports/<lib>-performance.md`

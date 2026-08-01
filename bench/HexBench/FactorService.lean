@@ -419,7 +419,7 @@ private def proposalProfile (f : ZPoly) : IO Json := do
           liftedFactorCount := liftedCount
           henselLifts := 1 }
       let peeled := peelDirect (DensePoly.leadingCoeff core.poly)
-        core.poly lifted 3 proposalSubsetBudget initialStats
+        core.poly lifted 3 2 proposalSubsetBudget initialStats
       observeNat sink (peeled.stats.candidatesTried + peeled.support.length +
         peeled.residual.degree?.getD 0)
       let peelStop ← IO.monoNanosNow
@@ -439,8 +439,11 @@ private def proposalProfile (f : ZPoly) : IO Json := do
       let cldStop ← IO.monoNanosNow
       let latticeStart ← IO.monoNanosNow
       let (residualPieces, supportAttempts, latticeProfiles) ←
-        profileLattices sink peeled.residual residualLift prepared
-          coordinateLatticeWidths none #[] #[]
+        if peeled.factors.isEmpty then
+          pure (none, #[], #[])
+        else
+          profileLattices sink peeled.residual residualLift prepared
+            coordinateLatticeWidths none #[] #[]
       let latticeStop ← IO.monoNanosNow
       let residualPieces := match residualPieces with
         | some pieces => some pieces
