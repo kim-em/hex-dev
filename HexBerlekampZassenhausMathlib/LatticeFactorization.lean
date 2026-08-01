@@ -408,7 +408,7 @@ theorem factorLatticeFactorsWithPlan_factor_irreducible
     Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
   have hcore_prim :=
     IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf
-  rw [Hex.factorLatticeFactorsWithPlan] at hresult
+  unfold Hex.factorLatticeFactorsWithPlan at hresult
   by_cases hdegree :
       (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
   · rw [if_pos hdegree] at hresult

@@ -205,6 +205,50 @@ class SyncReleasedTests(unittest.TestCase):
         self.assertEqual(advanced["first"], "new-first")
         self.assertEqual(advanced["second"], "old-second")
 
+    def test_only_sync_seeds_dependency_pins_from_baseline(self) -> None:
+        manifest = self.repo / "released.yml"
+        manifest.write_text(
+            "repos:\n"
+            "  - repo: leanprover/upstream\n"
+            "  - repo: leanprover/downstream\n",
+            encoding="utf-8",
+        )
+        baseline = self.repo / "baseline.json"
+        baseline.write_text(
+            json.dumps({"upstream": "new-upstream", "downstream": "old-downstream"}),
+            encoding="utf-8",
+        )
+
+        def publish(entry, _source_sha, _token, _dry_run, synced,
+                    _baseline, _force, _dep_owner, _pins):
+            self.assertEqual(entry["repo"], "leanprover/downstream")
+            self.assertEqual(synced["upstream"], "new-upstream")
+            self.assertEqual(synced["downstream"], "old-downstream")
+            synced["downstream"] = "new-downstream"
+            return True
+
+        argv = [
+            "sync_released.py",
+            "--token",
+            "secret-token",
+            "--baseline",
+            str(baseline),
+            "--only",
+            "downstream",
+        ]
+        with (
+            patch.object(sync_released, "MANIFEST", manifest),
+            patch.object(sync_released, "external_pins", return_value={}),
+            patch.object(sync_released, "run", return_value="source-sha"),
+            patch.object(sync_released, "sync_repo", side_effect=publish),
+            patch("sys.argv", argv),
+        ):
+            self.assertEqual(sync_released.main(), 0)
+
+        advanced = json.loads(baseline.read_text(encoding="utf-8"))
+        self.assertEqual(advanced["upstream"], "new-upstream")
+        self.assertEqual(advanced["downstream"], "new-downstream")
+
 
 if __name__ == "__main__":
     unittest.main()

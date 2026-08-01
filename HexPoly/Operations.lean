@@ -443,8 +443,9 @@ theorem neg_eq_negImpl [Sub R] (p : DensePoly R) : neg p = negImpl p := by
   rw [coeff_ofCoeffs, coeff_ofCoeffs, array_ofFn_getD, array_map_getD]
   simp only [size_zero, Nat.zero_max, toArray_size, coeff_zero]
   by_cases hn : n < p.size
-  · rw [dif_pos hn, dif_pos hn,
-      show p.toArray[n] = p.coeff n by
+  · have hn' : n < p.toArray.size := by simpa using hn
+    rw [dif_pos hn, dif_pos hn,
+      show p.toArray[n]'hn' = p.coeff n by
         rw [Array.getElem_eq_getD (Zero.zero : R), toArray_getD]]
     rfl
   · rw [dif_neg hn, dif_neg hn]

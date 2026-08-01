@@ -96,7 +96,16 @@ theorem liftedIndex_mem_liftedSubset_iff
         liftedSubsetOfModPSubset primeData d hsize S ↔
       i ∈ S := by
   unfold liftedSubsetOfModPSubset
-  simp [modPIndexToLiftedEmbedding]
+  rw [Finset.mem_map]
+  constructor
+  · rintro ⟨j, hj, hji⟩
+    have hji' :
+        (modPIndexToLiftedEmbedding primeData d hsize) j =
+          (modPIndexToLiftedEmbedding primeData d hsize) i := by
+      exact hji
+    exact (modPIndexToLiftedEmbedding primeData d hsize).injective hji' ▸ hj
+  · intro hi
+    exact ⟨i, hi, rfl⟩
 
 /-- The canonical lift from mod-`p` factor subsets to lifted-factor subsets is
 injective. -/

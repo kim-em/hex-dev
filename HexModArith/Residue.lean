@@ -122,14 +122,16 @@ def ofNat (p n : Nat) [Bounds p] : ZMod64 p := by
   let reduced := normalize p n
   have hred : reduced < p := normalize_lt p n
   have hword : reduced < UInt64.word := Nat.lt_trans hred (Bounds.pLtWord p)
-  refine ⟨UInt64.ofNatLT reduced hword, ?_⟩
-  simpa [reduced, UInt64.toNat_ofNatLT] using hred
+  have hsize : reduced < UInt64.size := by
+    simpa [UInt64.word, UInt64.size] using hword
+  refine ⟨UInt64.ofNatLT reduced hsize, ?_⟩
+  change (UInt64.ofNatLT reduced hsize).toNat < p
+  rw [UInt64.toNat_ofNatLT]
+  exact hred
 
 /-- The Nat representative of `ofNat p n` is `n` reduced modulo `p`. -/
 @[simp, grind =] theorem toNat_ofNat (n : Nat) : (ofNat p n).toNat = n % p := by
-  have hred : n % p < p := Nat.mod_lt _ (Bounds.pPos (p := p))
-  have hword : n % p < UInt64.word := Nat.lt_trans hred (Bounds.pLtWord p)
-  simp [ofNat, normalize, UInt64.toNat_ofNatLT]
+  simp [toNat, ofNat, normalize]
 
 /-- The stored word of `ofNat p n`, viewed as a Nat, is `n` reduced modulo `p`. -/
 @[simp, grind =] theorem val_toNat_ofNat (n : Nat) : (ofNat p n).val.toNat = n % p := by
@@ -252,17 +254,19 @@ protected def one : ZMod64 p :=
 /-- The modulus as a `UInt64` word when `p < 2^64`. -/
 @[expose]
 def modulusWord (p : Nat) (hp : p < UInt64.word) : UInt64 :=
-  UInt64.ofNatLT p hp
+  UInt64.ofNatLT p (by simpa [UInt64.word, UInt64.size] using hp)
 
 /-- The correction word `2^64 - p` used when `p < 2^64`. -/
 @[expose]
 def complementWord (p : Nat) [Bounds p] (_hp : p < UInt64.word) : UInt64 :=
   UInt64.ofNatLT (UInt64.word - p) <| by
-    exact Nat.sub_lt (by decide : 0 < 2 ^ 64) (Bounds.pPos (p := p))
+    have h : UInt64.word - p < UInt64.word :=
+      Nat.sub_lt (by decide : 0 < 2 ^ 64) (Bounds.pPos (p := p))
+    simpa [UInt64.word, UInt64.size] using h
 
 /-- The modulus word, viewed as a `Nat`, is exactly `p`. -/
 private theorem modulusWord_toNat : (modulusWord p (Bounds.pLtWord p)).toNat = p := by
-  simp [modulusWord, UInt64.toNat_ofNatLT]
+  simp [modulusWord]
 
 /-- The unreduced sum of two residues is faithful in a machine word: since
 `a, b < p < 2^31`, we have `a.toNat + b.toNat < 2^32 ≤ 2^64`, so machine-word
@@ -837,7 +841,7 @@ theorem sub_lt_modulus (a b : ZMod64 p) : (sub a b).toNat < p := by
 
 /-- Multiplication produces a canonical representative below the modulus. -/
 theorem mul_lt_modulus (a b : ZMod64 p) : (mul a b).toNat < p := by
-  exact normalize_lt p (a.toNat * b.toNat)
+  exact (mul a b).isLt
 
 /-- Exponentiation produces a canonical representative below the modulus. -/
 theorem pow_lt_modulus (a : ZMod64 p) (n : Nat) : (pow a n).toNat < p := by

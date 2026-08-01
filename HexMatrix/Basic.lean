@@ -926,7 +926,7 @@ private theorem flatIdx_swap_disj {i j : Nat} (hij : i ≠ j) :
         rw [if_pos rfl]
       · rw [if_neg hpt, if_neg hpt]
     have hid : (swap (⟨d⟩ : Matrix R n m) i i hi hi).data = d := by
-      show Fin.foldl m _ d = d
+      simp only [swap]
       rw [Fin.foldl_eq_finRange_foldl]
       generalize List.finRange m = xs
       induction xs with
@@ -948,7 +948,7 @@ private theorem flatIdx_swap_disj {i j : Nat} (hij : i ≠ j) :
         (List.finRange m).foldl
           (fun dd (t : Fin m) => dd.swap (i * m + t.val) (j * m + t.val)
             (flatIdx_lt hi t.isLt) (flatIdx_lt hj t.isLt)) d := by
-      show Fin.foldl m _ d = _
+      simp only [swap]
       rw [Fin.foldl_eq_finRange_foldl]
     by_cases hri : r = i
     · subst hri
