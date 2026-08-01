@@ -16,7 +16,9 @@ set_option backward.proofsInPublic true
 
 The search commits the first dividing head-forced subset.  Correctness proves
 that this subset is an irreducible support, so the transitional backtracking
-and per-piece refinement are unnecessary.
+and per-piece refinement are unnecessary.  A separate unforced sweep retains
+exact partial factors and indexed residual support for the untrusted proposal
+tier; proved classical replay remains its acceptance boundary.
 -/
 
 namespace Hex
@@ -32,6 +34,10 @@ inductive DeclineReason where
   | subsetBudget
   /-- The modular factors could not be lifted to the required precision. -/
   | liftFailure
+  /-- The lifted support is routed to incremental partition replay. -/
+  | largeSupport
+  /-- Every configured unforced cardinality was exhausted without a split. -/
+  | cardinalityCap
   /-- The search exhausted all allowed candidates without a valid split. -/
   | invalidCandidate
 deriving DecidableEq
@@ -44,6 +50,8 @@ def name : DeclineReason → String
   | .noGoodPrime => "noGoodPrime"
   | .subsetBudget => "subsetBudget"
   | .liftFailure => "liftFailure"
+  | .largeSupport => "largeSupport"
+  | .cardinalityCap => "cardinalityCap"
   | .invalidCandidate => "invalidCandidate"
 
 end DeclineReason
@@ -63,6 +71,22 @@ structure ClassicalStats where
   candidatesTried : Nat := 0
   /-- Subset cardinalities exhausted completely, in execution order. -/
   completedLevels : Array Nat := #[]
+  /-- Stage counters from the unforced low-cardinality sweep. -/
+  unforced : DirectCandidateStats := {}
+  /-- Unforced cardinalities exhausted completely, in execution order. -/
+  unforcedCompletedLevels : Array Nat := #[]
+  /-- Degrees peeled by the unforced sweep, in discovery order. -/
+  peeledFactorDegrees : Array Nat := #[]
+  /-- Selected lifted-support sizes of peeled factors. -/
+  peeledSupportSizes : Array Nat := #[]
+  /-- Complementary support sizes after each successful peel. -/
+  peeledComplementSizes : Array Nat := #[]
+  /-- Lifted factors left in the retained residual support. -/
+  residualLiftedFactorCount : Nat := 0
+  /-- Candidate budget retained for the residual problem. -/
+  remainingSubsetBudget : Nat := 0
+  /-- Why the unforced sweep stopped, if it left a residual problem. -/
+  unforcedDecline : Option DeclineReason := none
 deriving DecidableEq
 
 /-- Internal result of a head search. -/
@@ -145,5 +169,108 @@ def searchDirect
     DirectSearchResult :=
   searchDirectAux coreLc basis (basis.liftedFactors.size + 1)
     target (List.finRange basis.liftedFactors.size) budget stats
+
+/-- Result of one sequence of complete unforced cardinality sweeps. -/
+inductive DirectSweepResult (basis : LiftData) where
+  /-- A factor and exact quotient were found. -/
+  | found (split : DirectSplit basis) (budget : Nat)
+      (stats : DirectCandidateStats) (completed : Array Nat)
+  /-- No factor was found, or the next complete level exceeded the budget. -/
+  | stopped (reason : DeclineReason) (budget : Nat)
+      (stats : DirectCandidateStats) (completed : Array Nat)
+
+/-- Search complete unforced cardinality levels without materializing subsets. -/
+@[expose]
+def findDirectSubset
+    (coreLc : Int) (target : ZPoly) (basis : LiftData)
+    (support : List (DirectLiftedIndex basis)) :
+    (levels : List Nat) → (budget : Nat) →
+      (stats : DirectCandidateStats) →
+      (completed : Array Nat) → DirectSweepResult basis
+  | [], budget, stats, completed =>
+      .stopped .cardinalityCap budget stats completed
+  | level :: levels, budget, stats, completed =>
+      let levelCost := Nat.choose support.length level
+      if levelCost > budget then
+        .stopped .subsetBudget budget stats completed
+      else
+        match scanDirectSubsetLevel coreLc target basis support level with
+        | .found split levelStats =>
+            .found split (budget - levelStats.leaves)
+              (stats.add levelStats) completed
+        | .exhausted levelStats =>
+            findDirectSubset coreLc target basis support levels
+              (budget - levelStats.leaves) (stats.add levelStats)
+              (completed.push level)
+
+/-- An exact partial factorization together with its indexed lifted support.
+
+This is computational proposal state, not an irreducibility certificate.  The
+public factorizer only consumes it after exact reconstruction and proved
+classical replay. -/
+structure DirectPartialFactorization (basis : LiftData) where
+  /-- Exact factors already peeled from the original target. -/
+  factors : Array ZPoly
+  /-- Exact quotient remaining after the peeled factors. -/
+  residual : ZPoly
+  /-- Complementary lifted support for `residual`. -/
+  support : List (DirectLiftedIndex basis)
+  /-- Candidate budget not consumed by complete sweeps. -/
+  budget : Nat
+  /-- Measurements accumulated by the partial search. -/
+  stats : ClassicalStats
+
+/-- Run one retained unforced low-cardinality sweep. The first exact factor is
+peeled and its quotient is handed directly to partition proposal, avoiding a
+second combinatorial pass over the residual support. -/
+@[expose]
+def peelDirect
+    (coreLc : Int) (target : ZPoly) (basis : LiftData)
+    (maxCardinality : Nat := 3) (budget : Nat := defaultSubsetBudget)
+    (stats : ClassicalStats := {}) : DirectPartialFactorization basis :=
+  let support := List.finRange basis.liftedFactors.size
+  if target = 1 then
+    { factors := #[], residual := target, support := [], budget,
+      stats :=
+        { stats with
+          residualLiftedFactorCount := 0
+          remainingSubsetBudget := budget } }
+  else
+    let levels := (List.range maxCardinality).map (· + 1)
+    match findDirectSubset coreLc target basis support levels budget {} #[] with
+    | .stopped reason budget' sweepStats completed =>
+        { factors := #[], residual := target, support, budget := budget'
+          stats :=
+            { stats with
+              candidatesTried :=
+                stats.candidatesTried + sweepStats.exactDivisions
+              unforced := stats.unforced.add sweepStats
+              unforcedCompletedLevels :=
+                stats.unforcedCompletedLevels ++ completed
+              residualLiftedFactorCount := support.length
+              remainingSubsetBudget := budget'
+              unforcedDecline := some reason } }
+    | .found split budget' sweepStats completed =>
+        { factors := #[split.candidate]
+          residual := split.quotient
+          support := split.remaining
+          budget := budget'
+          stats :=
+            { stats with
+              candidatesTried :=
+                stats.candidatesTried + sweepStats.exactDivisions
+              unforced := stats.unforced.add sweepStats
+              unforcedCompletedLevels :=
+                stats.unforcedCompletedLevels ++ completed
+              peeledFactorDegrees :=
+                stats.peeledFactorDegrees.push
+                  (split.candidate.degree?.getD 0)
+              peeledSupportSizes :=
+                stats.peeledSupportSizes.push split.selected.length
+              peeledComplementSizes :=
+                stats.peeledComplementSizes.push split.remaining.length
+              residualLiftedFactorCount := split.remaining.length
+              remainingSubsetBudget := budget'
+              unforcedDecline := none } }
 
 end Hex
