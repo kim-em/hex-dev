@@ -469,7 +469,7 @@ theorem exists_witness_of_z2 {p : Hex.ZPoly} {z : ℂ}
       NewtonKantorovich.ComplexSup.deriv_ne_zero_of_defect (centerSup s)
         (hdefect.trans_lt (by norm_num))
   have hnorm := normSq_pos p s hcenter
-  apply witness_of_estimates p s (by simpa [coeffs_size] using hsize) hnorm
+  apply witness_of_estimates p s (by rw [coeffs_size]; exact hsize) hnorm
   · rw [← norm_residual]
     calc
       ‖approxInverse p s

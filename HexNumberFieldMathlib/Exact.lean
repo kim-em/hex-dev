@@ -52,9 +52,10 @@ theorem ofNormalized?_isSome
         have hmapSome := HexRootsMathlib.array_mapM_isSome
           (xs := isolations) (f := DyadicRootIsolation.toRefined?)
           (fun iso hiso => by
-            simp [DyadicRootIsolation.toRefined?,
-              HexRootsMathlib.isolate_refined p squarefree
-                (separationDepth p : Int) .nkThenPellet hrun iso hiso])
+            unfold DyadicRootIsolation.toRefined?
+            rw [dif_pos (HexRootsMathlib.isolate_refined p squarefree
+              (separationDepth p : Int) .nkThenPellet hrun iso hiso)]
+            rfl)
         cases hmap : isolations.mapM DyadicRootIsolation.toRefined? with
         | none => simp [hmap] at hmapSome
         | some refined =>
@@ -174,9 +175,10 @@ theorem exactFactor?_isSome (a : AlgebraicRoot) (q : ZPoly)
       have hmapSome := HexRootsMathlib.array_mapM_isSome
         (xs := isolations) (f := DyadicRootIsolation.toRefined?)
         (fun iso hiso => by
-          simp [DyadicRootIsolation.toRefined?,
-            HexRootsMathlib.isolate_refined q hsimple
-              (separationDepth q : Int) .nkThenPellet hrun iso hiso])
+          unfold DyadicRootIsolation.toRefined?
+          rw [dif_pos (HexRootsMathlib.isolate_refined q hsimple
+            (separationDepth q : Int) .nkThenPellet hrun iso hiso)]
+          rfl)
       cases hmap : isolations.mapM DyadicRootIsolation.toRefined? with
       | none => simp [hmap] at hmapSome
       | some refined =>
@@ -1228,9 +1230,10 @@ theorem toAlgebraicNumber?_isSome [ZPoly.CheckedIrreducible p]
           have hmapSome := HexRootsMathlib.array_mapM_isSome
             (xs := isolations) (f := DyadicRootIsolation.toRefined?)
             (fun iso hiso => by
-              simp [DyadicRootIsolation.toRefined?,
-                HexRootsMathlib.isolate_refined q hsimple
-                  (separationDepth q : Int) .nkThenPellet hrun iso hiso])
+              unfold DyadicRootIsolation.toRefined?
+              rw [dif_pos (HexRootsMathlib.isolate_refined q hsimple
+                (separationDepth q : Int) .nkThenPellet hrun iso hiso)]
+              rfl)
           cases hmap : isolations.mapM DyadicRootIsolation.toRefined? with
           | none => simp [hmap] at hmapSome
           | some refined =>

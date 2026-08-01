@@ -414,13 +414,11 @@ def normalizeForFactorFast (f : ZPoly) : FactorNormalizationData :=
 theorem normalizeForFactor_eq_normalizeForFactorFast :
     normalizeForFactor = normalizeForFactorFast := by
   funext f
-  simp only [normalizeForFactor, normalizeForFactorFast, ZPoly.contentPrimitive]
-  by_cases hcond : modularSquareFreeFires f = true
-  · have hcond' : modularSquareFreeCoreFires
-        (ZPoly.primitivePart (ZPoly.extractXPower (ZPoly.primitivePart f)).core) = true := by
-      simpa [modularSquareFreeFires] using hcond
-    rw [if_pos hcond']
-    simp only [modularSquareFreeFires, modularSquareFreeCoreFires,
+  unfold normalizeForFactor normalizeForFactorFast
+  dsimp only
+  split <;> rename_i hcond
+  · simp only [ZPoly.contentPrimitive] at hcond ⊢
+    simp only [modularSquareFreeCoreFires,
       Bool.and_eq_true, Bool.not_eq_true', bne_iff_ne] at hcond
     obtain ⟨⟨hq_isZero, hadm⟩, hsep⟩ := hcond
     have hq_ne : ZPoly.primitivePart (ZPoly.extractXPower (ZPoly.primitivePart f)).core ≠ 0 := by
@@ -439,10 +437,7 @@ theorem normalizeForFactor_eq_normalizeForFactorFast :
       ZPoly.squareFreeRat_of_separableModP _ 499 prime_499 hadm hsep
     rw [ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_eq_of_squareFreeRat _ hcore_ne hsq,
         ZPoly.primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeRat _ hcore_ne hsq]
-  · have hcond' : modularSquareFreeCoreFires
-        (ZPoly.primitivePart (ZPoly.extractXPower (ZPoly.primitivePart f)).core) ≠ true := by
-      simpa [modularSquareFreeFires] using hcond
-    rw [if_neg hcond']
+  · simp only [ZPoly.contentPrimitive]
 
 private def contentFactorArray (content : Int) : Array ZPoly :=
   if content = 1 then

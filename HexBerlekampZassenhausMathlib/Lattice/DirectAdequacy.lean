@@ -65,7 +65,7 @@ theorem bhksLatticeBasis_basis_lowerZero
     (Hex.bhksLatticeBasis f p a lifted).basis[i][j] = 0 := by
   simp only [Hex.bhksLatticeBasis]
   erw [Hex.Matrix.getElem_ofFn]
-  simp only [Fin.eta]
+  change Hex.bhksLatticeEntry _ _ _ _ _ _ i j = 0
   by_cases hi : i.val < lifted.size
   · -- i in the I_r block ⟹ j < i < r, top-left identity off-diagonal is 0.
     have hj : j.val < lifted.size := by omega
@@ -87,7 +87,7 @@ theorem bhksLatticeBasis_basis_diagPos
     0 < (Hex.bhksLatticeBasis f p a lifted).basis[i][i] := by
   simp only [Hex.bhksLatticeBasis]
   erw [Hex.Matrix.getElem_ofFn]
-  simp only [Fin.eta]
+  change 0 < Hex.bhksLatticeEntry _ _ _ _ _ _ i i
   by_cases hi : i.val < lifted.size
   · rw [Hex.bhksLatticeEntry_topLeft _ _ _ _ _ _ i i hi hi]
     simp

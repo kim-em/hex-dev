@@ -273,18 +273,21 @@ to the exact cached list. -/
   match strategy with
   | .nk | .nkThenPellet =>
     let base := enc.doubled
-    if h : TaylorShift.nkWitnessCheck base shift = true then
+    let baseShift : TaylorShift p base.center := shift.cast (by rfl)
+    if h : TaylorShift.nkWitnessCheck base baseShift = true then
       have h₀ : nkWitnessCheck p base = true := by
-        simpa using h
+        rw [TaylorShift.nkWitnessCheck_eq] at h
+        exact h
       -- `base` certifies; try to sharpen with a speculative Newton jump,
       -- accepted only when the recentred square stays inside `base` and
       -- certifies in the same (NK) form.
-      let cand := (TaylorShift.newtonSquare base shift 1).doubled
+      let cand := (TaylorShift.newtonSquare base baseShift 1).doubled
       if cand.squareInside base = true then
         let shift' := TaylorShift.compute p cand.center
         if h' : TaylorShift.nkWitnessCheck cand shift' = true then
           have h₀' : nkWitnessCheck p cand = true := by
-            simpa using h'
+            rw [TaylorShift.nkWitnessCheck_eq] at h'
+            exact h'
           return some (.atom ⟨cand, Or.inl h₀'⟩)
       return some (.atom ⟨base, Or.inl h₀⟩)
   | .pellet => pure ()
