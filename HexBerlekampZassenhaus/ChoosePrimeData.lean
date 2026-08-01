@@ -41,7 +41,7 @@ This module collects `choosePrimeData?`/`Walk?`/`Score` with their correctness l
 -/
 namespace Hex
 
-/--
+/-
 Compiled certificate generator for irreducibility of `f` over `ℤ`; the *prep*
 half of the certifying-irreducibility pattern for integer polynomials.
 
@@ -58,8 +58,10 @@ downstream `checkIrreducibleCert_sound`. Expensive Berlekamp/Rabin work runs
 here in compiled code; the kernel only replays the cheap `checkIrreducibleCert`
 reduction on the finished data.
 
-The generator declines non-primitive and constant inputs up front, mirroring
-the `IsPrimitive` / `0 < natDegree` side conditions of
+The search stops as soon as the accumulated prime blocks obstruct every
+possible proper factor degree; it never computes Rabin evidence for later,
+unused primes. The generator declines non-primitive and constant inputs up
+front, mirroring the `IsPrimitive` / `0 < natDegree` side conditions of
 `checkIrreducibleCert_sound`. Without this guard the checker accepts vacuous
 certificates for inputs those side conditions exclude (e.g. an empty
 certificate for a constant, or a full certificate for the non-primitive
@@ -67,15 +69,14 @@ certificate for a constant, or a full certificate for the non-primitive
 `certifyIrreducible? f = some _` an honest irreducibility signal: every side
 condition a consumer must discharge is already executable-checked.
 -/
-def certifyIrreducible? (f : ZPoly) : Option ZPolyIrreducibilityCertificate :=
-  if ZPoly.content f != 1 || f.degree?.getD 0 == 0 then none else
-  let blocks := (smallPrimeCandidates.filterMap fun c => buildPrimeFactorData? f c).toArray
+/-- Assemble the smallest subcertificate referenced by a complete collection
+of degree obstructions. -/
+private def certificateOfBlocks?
+    (f : ZPoly) (blocks : Array PrimeFactorData) :
+    Option ZPolyIrreducibilityCertificate :=
   match buildDegreeObstructions f blocks with
   | none => none
   | some obstructions =>
-    -- Keep only the prime blocks an obstruction actually references (in
-    -- first-seen order) and reindex the obstructions against them, so the
-    -- certificate the kernel later checks carries no unused Rabin data.
     let used : Array Nat :=
       obstructions.foldl
         (fun acc o => if acc.contains o.primeIndex then acc else acc.push o.primeIndex)
@@ -85,7 +86,42 @@ def certifyIrreducible? (f : ZPoly) : Option ZPolyIrreducibilityCertificate :=
       { o with primeIndex := (used.findIdx? (· == o.primeIndex)).getD 0 }
     let cert : ZPolyIrreducibilityCertificate :=
       { perPrime := perPrime, degreeObstructions := obstructions' }
-    if checkIrreducibleCert f cert then some cert else none
+    some cert
+
+/-- Add admissible prime blocks only until all possible proper factor degrees
+are obstructed. -/
+private def firstCertificate?
+    (f : ZPoly) : List SmallPrimeCandidate → Array PrimeFactorData →
+      Option ZPolyIrreducibilityCertificate
+  | [], blocks => certificateOfBlocks? f blocks
+  | candidate :: candidates, blocks =>
+      match certificateOfBlocks? f blocks with
+      | some cert => some cert
+      | none =>
+          let blocks := match buildPrimeFactorData? f candidate with
+            | some block => blocks.push block
+            | none => blocks
+          firstCertificate? f candidates blocks
+
+/-- Build a checked multi-prime degree-obstruction certificate for a primitive,
+positive-degree integer polynomial.  Prime blocks are added only until every
+possible proper factor degree is obstructed. -/
+def certifyIrreducible? (f : ZPoly) : Option ZPolyIrreducibilityCertificate :=
+  if ZPoly.content f != 1 || f.degree?.getD 0 == 0 then none else
+  match firstCertificate? f smallPrimeCandidates #[] with
+  | none => none
+  | some cert => if cert.certifies f then some cert else none
+
+/-- A certificate returned by the generator passes the complete executable
+irreducibility check, including primality, primitivity, and positive degree. -/
+theorem certifies_of_certifyIrreducible?_eq_some
+    {f : ZPoly} {cert : ZPolyIrreducibilityCertificate}
+    (h : certifyIrreducible? f = some cert) : cert.certifies f = true := by
+  unfold certifyIrreducible? at h
+  split at h <;> simp_all
+  split at h <;> simp_all
+  rcases h with ⟨hcertifies, rfl⟩
+  exact hcertifies
 
 /-- A successful modular factorization paired with its number of factors. -/
 structure PrimeChoiceDataScore where

@@ -520,7 +520,7 @@ def proposeFactorization
       liftedFactorCount := lifted.liftedFactors.size
       henselLifts := 1 }
   let peeled := peelDirect (DensePoly.leadingCoeff core.poly)
-    core.poly lifted 3 proposalSubsetBudget initialStats
+    core.poly lifted 3 2 proposalSubsetBudget initialStats
   let residualFactors :=
     (peeled.support.map (directLiftedFactor lifted)).toArray
   let residualLift : LiftData :=
@@ -1197,9 +1197,10 @@ def runLatticePlan
 /-- Total integer-polynomial factorization with bounded fast paths.
 
 Small modular supports use the proved size-ordered classical search directly.
-Large supports first run a complete unforced low-cardinality peel, retain its
-exact quotient and complementary lifted support, and ask a small leading-column
-CLD lattice for a partition.  The lattice is only a proposal: exact product
+Large supports first search support sizes one through three, then reuse the
+same Hensel lift to keep peeling factors of support size one or two.  The exact
+residual and its complementary lifted support pass to a small leading-column
+CLD lattice for partitioning.  The lattice is only a proposal: exact product
 checks and proved classical factorization of every proposed piece decide
 acceptance.  If that composition declines, the full proved CLD method remains
 the fallback, followed by trial division when necessary.
@@ -1265,13 +1266,14 @@ def factorTraced (f : ZPoly) : Factorization × DirectFactorTrace :=
 /--
 The public total factorisation of a {name}`Hex.ZPoly`.
 
-Small modular supports use {name}`Hex.factorClassical`.  Large supports first
-try exact low-cardinality peeling followed by a selected-column CLD proposal;
-every proposed piece is checked and factored again by the proved classical
-method.  If the proposal declines, {name}`Hex.factorLattice` tries full CLD
-recombination.  {name}`Hex.factorTrial` is the total backstop.  It does not
-depend on {name}`Hex.choosePrimeData?`, so this function still returns a
-factorisation when prime selection fails.
+Small modular supports use {name}`Hex.factorClassical`.  Large supports reuse
+one Hensel lift for repeated exact low-cardinality peeling, followed by a
+selected-column CLD proposal on the hard residual.  Every proposed piece is
+checked and factored again by the proved classical method.  If the proposal
+declines, {name}`Hex.factorLattice` tries full CLD recombination.
+{name}`Hex.factorTrial` is the total backstop.  It does not depend on
+{name}`Hex.choosePrimeData?`, so this function still returns a factorisation
+when prime selection fails.
 
 This definition lives in the {name}`Hex.ZPoly` namespace, so it can be called
 with dot notation as `f.factorize`.

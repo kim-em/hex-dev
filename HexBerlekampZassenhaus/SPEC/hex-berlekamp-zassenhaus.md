@@ -146,11 +146,14 @@ The total selector routes eligible large, dense, already-normalized
 inputs to a proposal stage before this unrestricted classical search.
 It streams every unforced subset of cardinality one through three,
 using degree and trailing-coefficient filters before constructing a
-candidate. The first factor found by exact division is peeled, and its
-exact quotient and complementary lifted-factor indices are passed
-directly to the proposal stage without scanning the residual again.
-Exhausting these configured cardinalities is distinct from exhausting
-the candidate budget.
+candidate. After the first exact split, it reuses the same Hensel lift
+and complementary lifted-factor indices to search support sizes one
+and two again on the exact quotient. This continues until the cheap
+search is exhausted, the residual is one, or the shared candidate
+budget cannot admit another complete level. The retained factors,
+exact residual, and residual support then pass directly to the
+proposal stage. Exhausting these configured cardinalities is distinct
+from exhausting the candidate budget.
 
 `DirectSupportPartition` associates each irreducible integer factor
 with its unique modular support. The minimal-head proof shows that the

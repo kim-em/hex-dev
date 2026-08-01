@@ -42,6 +42,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import tempfile
 
 import matplotlib
 
@@ -257,7 +258,17 @@ def main():
                         "system's before curve is overlaid as a dotted, hollow "
                         "line. Must cover the same corpus as --sweep.")
     p.add_argument("--outdir", type=Path, default=FIGURES)
+    p.add_argument("--check", action="store_true",
+                   help="regenerate the default figures in a temporary directory "
+                        "and fail if any committed SVG differs")
     args = p.parse_args()
+
+    check_directory = None
+    if args.check:
+        if args.sweep or args.baseline or args.outdir != FIGURES:
+            p.error("--check validates only the default committed figure set")
+        check_directory = tempfile.TemporaryDirectory(prefix="hexbz-plots-")
+        args.outdir = Path(check_directory.name)
 
     if args.sweep:
         paths = args.sweep
@@ -321,11 +332,36 @@ def main():
                    baseline_results):
         written.append(combined)
 
-    for path in written:
-        try:
-            print(path.relative_to(ROOT))
-        except ValueError:
-            print(path)
+    if args.check:
+        generated = {path.name: path for path in written}
+        committed_paths = list(FIGURES.glob("hexbz-cactus-*.svg")) + \
+            list(FIGURES.glob("hexbz-runtime-degree-*.svg"))
+        committed = {path.name: path for path in committed_paths}
+        stale = sorted(
+            name for name in generated.keys() & committed.keys()
+            if generated[name].read_bytes() != committed[name].read_bytes())
+        missing = sorted(generated.keys() - committed.keys())
+        obsolete = sorted(committed.keys() - generated.keys())
+        if stale or missing or obsolete:
+            details = []
+            if stale:
+                details.append("stale: " + ", ".join(stale))
+            if missing:
+                details.append("missing: " + ", ".join(missing))
+            if obsolete:
+                details.append("obsolete: " + ", ".join(obsolete))
+            raise SystemExit(
+                "committed factorization figures are not current; run "
+                "`uv run --with matplotlib==3.11.1 python3 "
+                "scripts/plots/hexbz-cactus.py`: " + "; ".join(details))
+        print(f"{len(written)} committed figures are current")
+        check_directory.cleanup()
+    else:
+        for path in written:
+            try:
+                print(path.relative_to(ROOT))
+            except ValueError:
+                print(path)
     print(f"{len(written)} figures written")
     print("system provenance (newest measurement used):")
     for system in systems:

@@ -261,6 +261,18 @@ def checkIrreducibleCert
   cert.perPrime.all (fun primeData => primeData.checkForPolynomial f) &&
     cert.checkDegreeObstructions f
 
+/-- Does this certificate establish integer irreducibility?  Besides checking
+its modular factorizations and degree obstructions, this includes the three
+mathematical side conditions needed to interpret them: every modulus is prime,
+the polynomial is primitive, and its degree is positive. -/
+@[expose]
+def ZPolyIrreducibilityCertificate.certifies
+    (cert : ZPolyIrreducibilityCertificate) (f : ZPoly) : Bool :=
+  cert.perPrime.all (fun primeData => Hex.Nat.isPrimeTrial primeData.p) &&
+    decide (ZPoly.content f = 1) &&
+    decide (0 < f.degree?.getD 0) &&
+    checkIrreducibleCert f cert
+
 namespace PrimeFactorData
 
 /--
