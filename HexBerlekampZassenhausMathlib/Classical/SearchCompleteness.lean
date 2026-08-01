@@ -427,7 +427,8 @@ theorem directCandidatePrefilter_trueSupport
     refine ⟨a * quotient.coeff 0 * b, ?_⟩
     rw [htrail, hraw_coeff, ha, htarget_coeff, hb]
     ring
-  unfold Hex.directCandidatePrefilter
+  unfold Hex.directCandidatePrefilter Hex.directDegreePrefilter
+    Hex.directTrailingPrefilter
   simp only [Bool.and_eq_true, Bool.or_eq_true, beq_iff_eq,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩

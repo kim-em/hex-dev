@@ -90,6 +90,15 @@ There is deliberately no `#guard` twin in `Conformance.lean` —
 elaboration-time interpretation of the lattice run would cost minutes
 of build time; the compiled emit executable covers it in seconds.
 
+# Checked-proposal replay coverage
+
+`regression/split_roots_1_24` has 24 lifted linear factors. The total selector
+routes it through unforced exact peeling and then replays the proved classical
+factorizer on every exact piece. Its helper requires `method = "replay"` and a
+`largeSupport` routing decline. The separately emitted classical result is
+deliberately skipped for this sentinel; nearby split-root cases continue to
+cover the unrestricted public classical entry point.
+
 # Cross-checked operation
 
 * `factor` — `Hex.ZPoly.factorize` from `HexBerlekampZassenhaus` (the
@@ -367,10 +376,16 @@ than emitted through `factor` so the oracle catches any reducible Hex output. -/
 
 private def cases_good_prime_regression : List ExpectedCase :=
   [ mkExpected "regression/split_roots_1_11" (splitProductCoeffs 11)
-      1 (splitProductExpectedFactors 11)
-  , mkExpected "regression/split_roots_1_24" (splitProductCoeffs 24)
-      1 (splitProductExpectedFactors 24)
-  , mkExpected "regression/split_roots_1_72" (splitProductCoeffs 72)
+      1 (splitProductExpectedFactors 11) ]
+
+/-- A large-support exact-peeling case accepted through proved classical
+replay. It is separated so the emitter can require the `.replay` method. -/
+private def cases_replay : List ExpectedCase :=
+  [ mkExpected "regression/split_roots_1_24" (splitProductCoeffs 24)
+      1 (splitProductExpectedFactors 24) ]
+
+private def cases_good_prime_regression_large : List ExpectedCase :=
+  [ mkExpected "regression/split_roots_1_72" (splitProductCoeffs 72)
       1 (splitProductExpectedFactors 72) ]
 
 /-- Adversarial conformance corpus (per-PR; the heavy high-`r` cases SD4-SD6 and
@@ -525,6 +540,24 @@ private def emitExpectedCase (c : ExpectedCase) : IO Unit := do
   emitResult lib c.id "factor" (expectedFactorValue c.scalar c.factors)
   emitClassicalResult c.id (DensePoly.ofCoeffs c.coeffs)
 
+/-- Emit a checked-proposal sentinel and reject any method change. The public
+factor result is independently pinned; the classical operation is skipped here
+because this case exists to exercise the total selector's replay branch. -/
+private def emitReplayExpectedCase (c : ExpectedCase) : IO Unit := do
+  let f := DensePoly.ofCoeffs c.coeffs
+  let (phi, trace) := factorTraced f
+  unless trace.method == .replay && trace.classicalDecline == some .largeSupport do
+    throw <| IO.userError
+      s!"emitReplayExpectedCase {c.id}: expected checked proposal replay, got \
+        method={trace.method.name}, decline={trace.classicalDecline.map (·.name)}"
+  unless Factorization.product phi == f do
+    throw <| IO.userError
+      s!"emitReplayExpectedCase {c.id}: replay result does not reconstruct input"
+  emitPolyFixture lib c.id c.coeffs.toList none
+  emitResult lib c.id "factor" (expectedFactorValue c.scalar c.factors)
+  emitResult lib c.id "classicalFactor" "null"
+  emitResult lib c.id "trace" (traceValue trace)
+
 private def emitPinnedCase (c : PinnedCase) : IO Unit := do
   let f := DensePoly.ofCoeffs c.coeffs
   emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
@@ -576,6 +609,9 @@ def main : IO Unit := do
   for c in Hex.BZEmit.cases_pinned_expected do Hex.BZEmit.emitPinnedExpectedCase c
   for c in Hex.BZEmit.cases_content do Hex.BZEmit.emitExpectedCase c
   for c in Hex.BZEmit.cases_good_prime_regression do Hex.BZEmit.emitExpectedCase c
+  for c in Hex.BZEmit.cases_replay do Hex.BZEmit.emitReplayExpectedCase c
+  for c in Hex.BZEmit.cases_good_prime_regression_large do
+    Hex.BZEmit.emitExpectedCase c
   for c in Hex.BZEmit.cases_adversarial do Hex.BZEmit.emitCase c
   for c in Hex.BZEmit.cases_direct do Hex.BZEmit.emitCase c
   for c in Hex.BZEmit.cases_lattice do Hex.BZEmit.emitHybridTracedCase c

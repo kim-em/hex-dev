@@ -364,33 +364,63 @@ theorem factorize_product (f : ZPoly) :
     exact factorTrialWithBound_product f (ZPoly.defaultFactorCoeffBound f)
   unfold ZPoly.factorize factorTraced
   simp only
-  unfold runFactor
-  generalize hrun : runClassical f = run
-  cases hcf : run.factors with
-  | some factors =>
-      simp only [hcf]
-      by_cases hp :
-          Factorization.product (factorizationOfFactors f factors) = f
-      · simp [hp]
-      · simpa [hp] using htrial
-  | none =>
-      simp only [hcf]
-      cases hmod : run.modular with
-      | none =>
-          simpa [hmod] using htrial
-      | some modular =>
-          simp only
-          cases hl : factorLatticeFactorsWithPlan
-              (normalizeForFactor f) (latticePrecisionCap f) modular with
-          | none =>
-              simp only
-              exact htrial
-          | some factors =>
-              simp only
-              by_cases hp :
-                  Factorization.product (factorizationOfFactors f factors) = f
-              · simp [hp]
-              · simpa [hp] using htrial
+  have hlattice
+      (trace : DirectFactorTrace)
+      (modular : DirectPrimePlan
+        (SquareFreeInput.ofNormalized (normalizeForFactor f))) :
+      Factorization.product
+          (factorizationOfFactors f (runLatticePlan f trace modular).factors) = f := by
+    unfold runLatticePlan
+    cases hl : factorLatticeFactorsWithPlan
+        (normalizeForFactor f) (latticePrecisionCap f) modular with
+    | none =>
+        simp only
+        exact htrial
+    | some factors =>
+        simp only
+        by_cases hp :
+            Factorization.product (factorizationOfFactors f factors) = f
+        · simp [hp]
+        · simpa [hp] using htrial
+  have hproduct :
+      Factorization.product
+          (factorizationOfFactors f (runFactor f).factors) = f := by
+    unfold runFactor
+    generalize hclassical : routeClassical f = run
+    cases hcf : run.factors with
+    | some factors =>
+        simp only [hcf]
+        by_cases hp :
+            Factorization.product (factorizationOfFactors f factors) = f
+        · simp [hp]
+        · simpa [hp] using htrial
+    | none =>
+        simp only [hcf]
+        cases hmod : run.modular with
+        | none =>
+            simpa [hmod] using htrial
+        | some modular =>
+            simp only
+            by_cases hlarge : proposalEligible
+                (normalizeForFactor f).squareFreeCore
+                modular.data.factorsModP.size
+            · simp only [if_pos hlarge]
+              by_cases hcore : (normalizeForFactor f).squareFreeCore = f
+              · simp only [dif_pos hcore]
+                generalize hproposal :
+                    proposeFactorization f hcore modular = proposal
+                cases hresult : proposal.1 with
+                | none =>
+                    simp only
+                    exact hlattice run.trace modular
+                | some result =>
+                    simp only
+                    exact result.product
+              · simp only [dif_neg hcore]
+                exact hlattice run.trace modular
+            · simp only [if_neg hlarge]
+              exact hlattice run.trace modular
+  exact hproduct
 
 /-- Every recorded entry of the default factorization of a nonzero `f` is
 primitive, with no raw-source hypothesis. The hybrid's `factorizationOfFactors`

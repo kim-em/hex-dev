@@ -66,6 +66,14 @@ implementation uses a complete-level budget: it either finishes a
 whole subset-cardinality level or reports a typed decline before
 starting that level.
 
+For a large modular support, the total factorizer first tries all
+unforced subsets of cardinality one through three. A factor found by
+exact division is peeled immediately; its exact quotient and the
+remaining lifted-factor indices are retained. This corrects an
+important weakness of a distinguished-first-factor search: a small
+integer factor need not contain the arbitrarily distinguished modular
+factor.
+
 # Logarithmic derivatives and lattice recombination
 
 For larger modular factorizations, Hex uses the recombination method
@@ -90,6 +98,22 @@ This lattice calculation determines which lifted factors belong
 together; it is not the older LLL polynomial-factorization algorithm
 that recovers a factor directly from one short vector.
 
+# Small lattices as checked proposals
+
+On eligible large, dense inputs, the total factorizer also uses CLD
+data as a cheap source of proposals. It prepares sixteen leading
+coefficient columns once and tries nested lattices with four, eight,
+twelve, and sixteen columns. These lattices have dimension close to
+the number of remaining lifted factors, instead of adding every
+coefficient of the polynomial.
+
+No theorem trusts the proposed partition. Hex reconstructs the
+proposed pieces in the original integer coordinates, checks their
+exact product, and runs the unrestricted proved classical factorizer
+on every piece. Only those classical results supply the final
+irreducibility proof. A failed proposal continues to the full proved
+CLD method and then, if necessary, trial division.
+
 # Prime choice and totality
 
 A direct prime plan records every successful modular factorization it
@@ -98,12 +122,12 @@ factor degrees, lift precision, and the prime as a deterministic tie
 breaker. The chosen factorization is reused by both recombination
 methods.
 
-Classical recombination may decline when its complete-level budget is
-exhausted. Lattice recombination is conclusive at its proved public
-precision whenever prime selection succeeds. The finite prime search
-itself can fail, so exhaustive integer trial division is the
-unconditional final method. Thus {name}`Hex.ZPoly.factorize` is total
-on every integer polynomial.
+Classical recombination and checked proposal replay may decline.
+Lattice recombination is conclusive at its proved public precision
+whenever prime selection succeeds. The finite prime search itself can
+fail, so exhaustive integer trial division is the unconditional final
+method. Thus {name}`Hex.ZPoly.factorize` is total on every integer
+polynomial.
 
 # Result and correctness
 

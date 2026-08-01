@@ -52,6 +52,21 @@ theorem intDivides_eq (multiple divisor : Int) :
     omega
   · rfl
 
+/-- Cached degree prefilter for a direct candidate. -/
+@[expose]
+def directDegreePrefilter
+    (coreLc : Int) (target : ZPoly) (degreeSum : Nat) : Bool :=
+  coreLc == 0 || decide (target = 0) ||
+    decide (degreeSum ≤ target.degree?.getD 0)
+
+/-- Cached trailing-coefficient prefilter for a direct candidate. -/
+@[expose]
+def directTrailingPrefilter
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (trailingResidue : Int) : Bool :=
+  let rawTrail := centeredModNat (coreLc * trailingResidue) modulus
+  intDivides (coreLc * target.coeff 0) rawTrail
+
 /-- Cached degree/trailing-coefficient prefilter for a direct candidate.
 
 The selected Hensel factors are monic.  At recovery precision the centered
@@ -64,10 +79,8 @@ standalone executable surface. -/
 def directCandidatePrefilter
     (coreLc : Int) (target : ZPoly) (modulus : Nat)
     (degreeSum : Nat) (trailingResidue : Int) : Bool :=
-  let rawTrail := centeredModNat (coreLc * trailingResidue) modulus
-  (coreLc == 0 || decide (target = 0) ||
-      decide (degreeSum ≤ target.degree?.getD 0)) &&
-    intDivides (coreLc * target.coeff 0) rawTrail
+  directDegreePrefilter coreLc target degreeSum &&
+    directTrailingPrefilter coreLc target modulus trailingResidue
 
 /-- Evaluate the candidate computation after the cached prefilters. -/
 @[expose]
