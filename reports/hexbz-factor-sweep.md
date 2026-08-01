@@ -6,7 +6,7 @@ algorithm variants.
 ## Systems
 
 - `hex-factor`: public Hex production factorization at clean revision
-  `acb930159913e8e6c04a271e4e9aa0d227ea0e7b`
+  `4dc6bb16ae7e349b061ef9f2a55a95095f45ae56`
 - `flint`: python-flint 0.9.0
 - `pari`: PARI/GP 2.17.2 through cypari2 2.2.4
 - `ntl`: NTL 11.6.0 `ZZXFactoring`
@@ -32,7 +32,7 @@ session and Haskell-export builds completed before timed calls.
 - Cross-check: committed expected factor degrees where available, pairwise
   agreement otherwise
 
-The per-system protocol overheads were 21.472 us for Hex, 15.493 us for FLINT,
+The per-system protocol overheads were 22.313 us for Hex, 15.493 us for FLINT,
 11.027 us for NTL, 18.006 us for PARI, 18.628 us for Isabelle BZ, and 18.848 us
 for Isabelle LLL. Reported service times do not subtract them.
 
@@ -40,9 +40,9 @@ for Isabelle LLL. Reported service times do not subtract them.
 
 The plotting tool selects the newest valid record for each system:
 
-- `reports/bench-results/hexbz-factor-sweep-acb93015-hex-chungus2.json`
+- `reports/bench-results/hexbz-factor-sweep-4dc6bb16-hex-chungus2.json`
   supplies Hex; SHA-256
-  `42b69d970e0cba7336091b16e512d89e9aed4383bdb661edbd6cc97e96f56138`.
+  `bdaecbe3e7e384baf8d828b18d5d9de0c024e3fdfdb6848822b93222ebcc4fa5`.
 - `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json`
   supplies FLINT, NTL, PARI, Isabelle BZ, and Isabelle LLL; SHA-256
   `4de27e389d738abc1e878f0be273485c3723216211a101c3eba55860e7b8a242`.
@@ -56,7 +56,7 @@ All answering systems agree.
 
 | System | OK | Timeout | p50 solved | p90 solved | Slowest solved |
 |---|---:|---:|---:|---:|---:|
-| Hex public factor | 376 | 16 | 367.114 us | 7.503 ms | 7.866 s |
+| Hex public factor | 376 | 16 | 372.713 us | 7.324 ms | 7.963 s |
 | FLINT | 391 | 1 | 60.089 us | 1.139 ms | 1.241 s |
 | PARI/GP | 391 | 1 | 65.687 us | 1.008 ms | 960.815 ms |
 | NTL | 391 | 1 | 88.160 us | 2.365 ms | 1.305 s |

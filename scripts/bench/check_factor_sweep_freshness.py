@@ -10,6 +10,7 @@ has changed since that commit.
 
 from __future__ import annotations
 
+from collections import Counter
 import hashlib
 import json
 from pathlib import Path
@@ -108,6 +109,7 @@ def main() -> int:
     }
     newest = load_current_reports(corpus_sha)
     errors = []
+    current_rows = {}
 
     for system in SYSTEMS:
         if system not in newest:
@@ -128,6 +130,7 @@ def main() -> int:
             errors.append(f"{system}: measured commit {commit[:12]} is not an ancestor")
             continue
         rows = [row for row in report.get("results", []) if row.get("system") == system]
+        current_rows[system] = rows
         names = {row.get("name") for row in rows}
         if names != corpus_names:
             missing = sorted(corpus_names - names)
@@ -138,6 +141,11 @@ def main() -> int:
             if extra:
                 details.append(f"extra {len(extra)}: " + ", ".join(str(n) for n in extra))
             errors.append(f"{system}: {path.name} corpus mismatch; " + "; ".join(details))
+        duplicates = sorted(str(name) for name, count in Counter(
+            row.get("name") for row in rows).items() if count != 1)
+        if duplicates:
+            errors.append(
+                f"{system}: {path.name} has duplicate rows: " + ", ".join(duplicates))
         if not report.get("cross_check", {}).get("ok"):
             errors.append(f"{system}: {path.name} failed its differential cross-check")
         changed = git("diff", "--name-only", f"{commit}..HEAD").splitlines()
@@ -145,6 +153,24 @@ def main() -> int:
         if stale:
             errors.append(
                 f"{system}: source changed after {commit[:12]}: " + ", ".join(stale))
+
+    # Newest-per-system plots may combine records made at different times.
+    # Recheck those selected answers together rather than relying only on each
+    # source record's internal cross-check.
+    for name in sorted(corpus_names):
+        answers = {}
+        for system, rows in current_rows.items():
+            row = next((row for row in rows if row.get("name") == name), None)
+            if row is not None and row.get("status") == "ok":
+                degrees = row.get("factor_degrees")
+                if degrees is None:
+                    errors.append(f"{system}: {name} answered without factor_degrees")
+                else:
+                    answers[system] = tuple(degrees)
+        if len(set(answers.values())) > 1:
+            rendered = ", ".join(
+                f"{system}={list(degrees)}" for system, degrees in sorted(answers.items()))
+            errors.append(f"{name}: current-system factor degrees disagree: {rendered}")
 
     if errors:
         print("factorization performance data is stale:", file=sys.stderr)

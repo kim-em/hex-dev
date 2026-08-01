@@ -9,7 +9,7 @@ implementations.
 
 | System | Answered / 392 | Median solved time | p90 solved time |
 |---|---:|---:|---:|
-| Hex factorization | 376 | 367.114 us | 7.503 ms |
+| Hex factorization | 376 | 372.713 us | 7.324 ms |
 | FLINT | 391 | 60.089 us | 1.139 ms |
 | PARI/GP | 391 | 65.687 us | 1.008 ms |
 | NTL | 391 | 88.160 us | 2.365 ms |
@@ -32,11 +32,11 @@ protocol overhead. A ratio below one favors Hex.
 
 | Hex / comparator | Eligible pairs | Median | p10-p90 | Hex wins |
 |---|---:|---:|---:|---:|
-| FLINT | 74 | 10.735x | 4.298x-96.447x | 0 |
-| PARI/GP | 79 | 11.726x | 2.635x-104.705x | 0 |
-| NTL | 140 | 5.683x | 1.140x-26.124x | 8 |
-| Verified Isabelle BZ | 216 | 0.729x | 0.462x-2.610x | 138 |
-| Verified Isabelle LLL | 166 | 0.00794x | 0.000286x-0.216x | 165 |
+| FLINT | 74 | 10.730x | 4.357x-100.759x | 0 |
+| PARI/GP | 79 | 11.919x | 2.649x-107.044x | 0 |
+| NTL | 139 | 5.746x | 1.137x-25.819x | 7 |
+| Verified Isabelle BZ | 213 | 0.746x | 0.467x-2.621x | 133 |
+| Verified Isabelle LLL | 163 | 0.00769x | 0.000277x-0.215x | 162 |
 
 The broad percentile bands matter: performance depends strongly on the
 polynomial family, so none of these medians is a uniform ordering.
@@ -49,18 +49,18 @@ has produced an exact factor; otherwise it goes directly to the exact full-CLD
 fallback. Every proposed piece is reconstructed exactly and refactored by the
 proved classical engine.
 
-This gives a general rather than family-specific result. On 98 common rows
+This gives a general rather than family-specific result. On 99 common rows
 above one millisecond versus the preceding clean record, median new/old is
-`0.995x`, with p10-p90 `0.973x-1.026x`; every family median is within about 3%
+`0.997x`, with p10-p90 `0.978x-1.022x`; every family median is within about 3%
 of parity. Coverage increases by one with no lost row:
 
-- `hoeij_F190`: 7.215 s, newly solved;
-- `sd6`: 7.866 s, retained at 79% of the cutoff;
-- Wilkinson degrees 24, 40, and 56: 3.992 ms, 15.666 ms, and 39.963 ms.
+- `hoeij_F190`: 7.369 s, newly solved;
+- `sd6`: 7.963 s, retained at 80% of the cutoff;
+- Wilkinson degrees 24, 40, and 56: 4.036 ms, 15.603 ms, and 39.783 ms.
 
 F190 and `sd6` each use one timed call because they exceed one second. These are
 coverage observations, not low-variance speed estimates. The Wilkinson points
-are within about five percent of the preceding clean record; they show that the
+are within about seven percent of the preceding clean record; they show that the
 general change did not introduce a new threshold regression, not a speedup.
 
 The remaining gap is still large. For example, NTL takes 35.224 ms on
