@@ -672,7 +672,11 @@ def main() -> int:
     dep_owner = {e["repo"].split("/")[-1]: e["repo"].split("/")[0]
                  for e in manifest["repos"]}
     pins = external_pins()
-    synced: dict[str, str] = {}
+    # A staged `--only` publication still has to pin all of its already-published
+    # upstreams. Seed the pin map from the live baseline; otherwise an isolated
+    # downstream sync silently retains stale pins because skipped entries never
+    # populate `synced`.
+    synced: dict[str, str] = dict(baseline) if args.only else {}
     failed_repo: str | None = None
     current_repo = "<manifest>"
     try:
