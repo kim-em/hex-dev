@@ -171,9 +171,10 @@ def nonzeroCoefficientCount (f : ZPoly) : Nat :=
   f.toArray.foldl (fun count coefficient =>
     if coefficient = 0 then count else count + 1) 0
 
-/-- Cost predicate for the proposal tier.  Large dense inputs benefit from
-support peeling and a small CLD lattice; lacunary inputs retain the direct
-classical route, whose coefficient filters are especially effective there. -/
+/-- Cost predicate for the proposal tier.  Large dense inputs may benefit from
+support peeling and, after an exact peel, a small CLD lattice on the residual;
+lacunary inputs retain the direct classical route, whose coefficient filters
+are especially effective there. -/
 @[expose]
 def proposalEligible (f : ZPoly) (liftedFactorCount : Nat) : Prop :=
   proposalLiftedFactorThreshold ≤ liftedFactorCount ∧
@@ -501,8 +502,10 @@ structure ProposedFactorization (f : ZPoly) where
   /-- The public factorization packing reconstructs the input exactly. -/
   product : Factorization.product (factorizationOfFactors f factors) = f
 
-/-- Low-cardinality peeling, selected-coordinate CLD partitioning, and proved
-classical replay from an existing modular plan. -/
+/-- Low-cardinality peeling, selected-coordinate CLD partitioning after exact
+progress, and proved classical replay from an existing modular plan.  With no
+peeled factor, the proposal declines before building a lattice so production
+can proceed directly to its exact full-CLD fallback. -/
 @[expose]
 def proposeFactorization
     (f : ZPoly)
@@ -531,6 +534,8 @@ def proposeFactorization
   let (residualPieces, lattices) :=
     if peeled.residual = 1 then
       (some #[], #[])
+    else if peeled.factors.isEmpty then
+      (none, #[])
     else if residualFactors.size < proposalLiftedFactorThreshold then
       (none, #[])
     else
@@ -1198,9 +1203,11 @@ def runLatticePlan
 
 Small modular supports use the proved size-ordered classical search directly.
 Large supports first search support sizes one through three, then reuse the
-same Hensel lift to keep peeling factors of support size one or two.  The exact
-residual and its complementary lifted support pass to a small leading-column
-CLD lattice for partitioning.  The lattice is only a proposal: exact product
+same Hensel lift to keep peeling factors of support size one or two.  After at
+least one exact peel, the residual and its complementary lifted support pass
+to a small leading-column CLD lattice for partitioning.  Without exact
+progress, production skips that speculative lattice and proceeds directly to
+the full CLD fallback.  The small lattice is only a proposal: exact product
 checks and proved classical factorization of every proposed piece decide
 acceptance.  If that composition declines, the full proved CLD method remains
 the fallback, followed by trial division when necessary.
@@ -1267,10 +1274,11 @@ def factorTraced (f : ZPoly) : Factorization × DirectFactorTrace :=
 The public total factorisation of a {name}`Hex.ZPoly`.
 
 Small modular supports use {name}`Hex.factorClassical`.  Large supports reuse
-one Hensel lift for repeated exact low-cardinality peeling, followed by a
-selected-column CLD proposal on the hard residual.  Every proposed piece is
-checked and factored again by the proved classical method.  If the proposal
-declines, {name}`Hex.factorLattice` tries full CLD recombination.
+one Hensel lift for repeated exact low-cardinality peeling.  Once peeling makes
+exact progress, a selected-column CLD proposal partitions the hard residual;
+otherwise the speculative tier is skipped.  Every proposed piece is checked
+and factored again by the proved classical method.  If the proposal declines,
+{name}`Hex.factorLattice` tries full CLD recombination.
 {name}`Hex.factorTrial` is the total backstop.  It does not depend on
 {name}`Hex.choosePrimeData?`, so this function still returns a factorisation
 when prime selection fails.

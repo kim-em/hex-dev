@@ -150,10 +150,12 @@ candidate. After the first exact split, it reuses the same Hensel lift
 and complementary lifted-factor indices to search support sizes one
 and two again on the exact quotient. This continues until the cheap
 search is exhausted, the residual is one, or the shared candidate
-budget cannot admit another complete level. The retained factors,
-exact residual, and residual support then pass directly to the
-proposal stage. Exhausting these configured cardinalities is distinct
-from exhausting the candidate budget.
+budget cannot admit another complete level. After an exact peel, the
+retained factors, residual, and residual support pass directly to the
+proposal lattice. With no exact progress, the selector skips that
+speculative lattice and proceeds to the full CLD fallback. Exhausting
+these configured cardinalities is distinct from exhausting the
+candidate budget.
 
 `DirectSupportPartition` associates each irreducible integer factor
 with its unique modular support. The minimal-head proof shows that the
@@ -220,12 +222,12 @@ Lattice totality is conditional on successful direct prime selection.
 
 ## Selected-coordinate proposals
 
-For an eligible large support, `ZPoly.factorize` first tries a cheaper,
-untrusted use of the same CLD data. It prepares the leading sixteen
-coefficient columns once, then reduces nested lattices using prefixes
-of four, eight, twelve, and sixteen columns. Equal projected columns
-propose groups of lifted factors. This stage may also run when the
-low-cardinality sweep found no factor.
+For an eligible large support where low-cardinality peeling makes exact
+progress, `ZPoly.factorize` next tries a cheaper, untrusted use of the
+same CLD data. It prepares the leading sixteen coefficient columns
+once, then reduces nested lattices using prefixes of four, eight,
+twelve, and sixteen columns. Equal projected columns propose groups of
+lifted factors.
 
 Acceptance has a deliberately narrow boundary:
 
@@ -240,9 +242,9 @@ final product theorem follows from the exact checks, and the final
 irreducibility theorem follows only from the ordinary classical
 factorization theorem. If no CLD partition is found after a genuine
 peel, the peeled factors and exact residual form a useful proposal of
-their own. If neither a peel nor a CLD partition exists, the selector
-does not replay the unchanged input and proceeds to the proved full
-lattice method.
+their own. If no peel exists, the selector does not build a
+speculative lattice or replay the unchanged input and proceeds to the
+proved full lattice method.
 
 ## Trial division
 
