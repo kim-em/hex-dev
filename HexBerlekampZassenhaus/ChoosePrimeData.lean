@@ -88,20 +88,31 @@ private def certificateOfBlocks?
       { perPrime := perPrime, degreeObstructions := obstructions' }
     some cert
 
-/-- Add admissible prime blocks only until all possible proper factor degrees
-are obstructed. -/
-private def firstCertificate?
+/-- Continue adding admissible prime blocks after confirming that the current
+blocks do not yet obstruct every possible proper factor degree. Failed prime
+candidates leave the blocks unchanged, so they do not repeat that check. -/
+private def continueCertificate?
     (f : ZPoly) : List SmallPrimeCandidate → Array PrimeFactorData →
       Option ZPolyIrreducibilityCertificate
-  | [], blocks => certificateOfBlocks? f blocks
+  | [], _ => none
   | candidate :: candidates, blocks =>
-      match certificateOfBlocks? f blocks with
-      | some cert => some cert
-      | none =>
-          let blocks := match buildPrimeFactorData? f candidate with
-            | some block => blocks.push block
-            | none => blocks
-          firstCertificate? f candidates blocks
+      match buildPrimeFactorData? f candidate with
+      | none => continueCertificate? f candidates blocks
+      | some block =>
+          let blocks := blocks.push block
+          match certificateOfBlocks? f blocks with
+          | some cert => some cert
+          | none => continueCertificate? f candidates blocks
+
+/-- Add admissible prime blocks only until all possible proper factor degrees
+are obstructed. The initial check preserves the valid empty certificate for
+primitive linear polynomials. -/
+private def firstCertificate?
+    (f : ZPoly) (candidates : List SmallPrimeCandidate)
+    (blocks : Array PrimeFactorData) : Option ZPolyIrreducibilityCertificate :=
+  match certificateOfBlocks? f blocks with
+  | some cert => some cert
+  | none => continueCertificate? f candidates blocks
 
 /-- Build a checked multi-prime degree-obstruction certificate for a primitive,
 positive-degree integer polynomial.  Prime blocks are added only until every

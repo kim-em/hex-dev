@@ -45,6 +45,7 @@ SYSTEM_PATHS = {
 }
 
 HEX_PREFIXES = (
+    "Hex/",
     "HexArith/",
     "HexBareiss/",
     "HexBerlekamp/",
@@ -56,6 +57,7 @@ HEX_PREFIXES = (
     "HexPoly/",
     "HexPolyFp/",
     "HexPolyZ/",
+    "HexBasic/",
 )
 
 HEX_PATHS = {
@@ -128,8 +130,14 @@ def main() -> int:
         rows = [row for row in report.get("results", []) if row.get("system") == system]
         names = {row.get("name") for row in rows}
         if names != corpus_names:
-            errors.append(
-                f"{system}: {path.name} covers {len(names)}/{len(corpus_names)} instances")
+            missing = sorted(corpus_names - names)
+            extra = sorted(names - corpus_names)
+            details = []
+            if missing:
+                details.append(f"missing {len(missing)}: " + ", ".join(missing))
+            if extra:
+                details.append(f"extra {len(extra)}: " + ", ".join(str(n) for n in extra))
+            errors.append(f"{system}: {path.name} corpus mismatch; " + "; ".join(details))
         if not report.get("cross_check", {}).get("ok"):
             errors.append(f"{system}: {path.name} failed its differential cross-check")
         changed = git("diff", "--name-only", f"{commit}..HEAD").splitlines()

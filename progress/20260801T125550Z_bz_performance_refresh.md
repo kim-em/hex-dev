@@ -6,8 +6,9 @@
   factor exposed after the initial support-size-one-through-three sweep, while
   reusing one Hensel lift and one shared candidate budget.
 - Required exact peeling progress before building a selected-coordinate
-  proposal lattice. This retains the F190 win, removes the Wilkinson threshold
-  cliff, and restores `sd6` cutoff headroom without a family-specific rule.
+  proposal lattice. This retains the F190 coverage gain, leaves the measured
+  Wilkinson curve within about five percent of its prior values, and restores
+  `sd6` coverage without a family-specific rule.
 - Recorded clean full-corpus data for Hex, FLINT, NTL, PARI, Isabelle BZ, and
   Isabelle LLL with no early termination; every answering system agreed on
   factor degrees.
@@ -20,6 +21,8 @@
 - Passed the complete 9,711-job root build, Berlekamp--Zassenhaus conformance,
   source/data freshness checking, deterministic regeneration of all 25 plots,
   and the no-new-axiom-or-sorry diff check.
+- Recorded the expected proposal-count change in the trace fixture and baseline:
+  the 24-root replay case now counts all 24 cheap exact-division proposals.
 
 ## Current frontier
 

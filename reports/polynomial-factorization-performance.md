@@ -55,8 +55,13 @@ above one millisecond versus the preceding clean record, median new/old is
 of parity. Coverage increases by one with no lost row:
 
 - `hoeij_F190`: 7.215 s, newly solved;
-- `sd6`: 7.866 s, retained with comfortable cutoff headroom;
+- `sd6`: 7.866 s, retained at 79% of the cutoff;
 - Wilkinson degrees 24, 40, and 56: 3.992 ms, 15.666 ms, and 39.963 ms.
+
+F190 and `sd6` each use one timed call because they exceed one second. These are
+coverage observations, not low-variance speed estimates. The Wilkinson points
+are within about five percent of the preceding clean record; they show that the
+general change did not introduce a new threshold regression, not a speedup.
 
 The remaining gap is still large. For example, NTL takes 35.224 ms on
 `hoeij_F190`, and FLINT, PARI, and NTL all solve 391 rows.

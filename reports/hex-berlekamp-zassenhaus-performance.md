@@ -26,12 +26,22 @@ The current artifacts are:
   `42b69d970e0cba7336091b16e512d89e9aed4383bdb661edbd6cc97e96f56138`;
 - `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json`
   for FLINT, NTL, PARI, and both Isabelle implementations, SHA-256
-  `4de27e389d738abc1e878f0be273485c3723216211a101c3eba55860e7b8a242`.
+  `4de27e389d738abc1e878f0be273485c3723216211a101c3eba55860e7b8a242`;
+- `reports/bench-results/hexbz-factor-sweep-04107b17-hex-chungus2.json`,
+  SHA-256
+  `b4f923078d3ac66482da91a646780d939bbc1cd656259ba912d197779952c94d`,
+  is a clean intermediate Hex repeatability record. It independently records
+  the F190 result but is older than the final Hex artifact and is not selected
+  for the current plots.
 
 The second artifact contains a same-run Hex row too, but the newer clean Hex
 record supersedes it after a repeatability check found transient host
 contention in that row. The plotting and freshness tools select the newest
 valid record independently for each system.
+
+The prior PARI comparator artifact used PARI/GP 2.17.3; the current Nix closure
+provided 2.17.2. No cross-record PARI change is attributed to Hex. All current
+ratios and curves use the fresh same-protocol 2.17.2 measurement above.
 
 ## Cross-system result
 
@@ -67,15 +77,15 @@ The proposal path now has two general rules:
 2. build a selected-coordinate proposal lattice only after peeling has made
    exact progress. With no peel, go directly to the exact full-CLD fallback.
 
-These rules contain no family or benchmark names. They remove the Wilkinson
-threshold cliff caused by stopping after one peel, and they avoid speculative
-lattice work on inputs such as `sd6` where the cheap search found nothing.
+These rules contain no family or benchmark names. They retain repeated cheap
+progress on Wilkinson inputs and avoid speculative lattice work on inputs such
+as `sd6` where the cheap search found nothing.
 
 Against the preceding clean public record, 98 common rows above one
 millisecond have median new/old `0.995x` and p10-p90
 `0.973x-1.026x`; 59 are faster and 39 slower. Every family median lies between
-`0.973x` and `1.014x`. The change is therefore neutral-to-slightly-positive
-across the existing corpus rather than a narrow exchange of regressions.
+`0.973x` and `1.014x`. The aggregate timed result is therefore neutral within
+run-to-run noise across the existing corpus, while coverage improves by one.
 
 Two hard rows make the benefit concrete:
 
@@ -86,7 +96,14 @@ Two hard rows make the benefit concrete:
   during the intermediate design.
 
 Representative Wilkinson timings remain smooth: 3.992 ms at degree 24,
-15.666 ms at degree 40, and 39.963 ms at degree 56.
+15.666 ms at degree 40, and 39.963 ms at degree 56. They are within about five
+percent of the preceding clean record, so the data supports absence of a new
+threshold regression, not a Wilkinson speedup claim.
+
+Both hard-row successes exceed one second and therefore use one timed call under
+the declared repetition policy. F190 consumed 72% and `sd6` 79% of the ten-second
+cutoff. They establish current coverage, but should be rechecked after future
+factorization changes rather than treated as low-variance timing estimates.
 
 ## Relative to verified Isabelle BZ
 

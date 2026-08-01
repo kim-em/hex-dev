@@ -416,7 +416,7 @@
     "method": "classical"
   },
   "regression/split_roots_1_24": {
-    "candidatesTried": 1,
+    "candidatesTried": 24,
     "decline": "largeSupport",
     "henselLifts": 1,
     "primeProbes": 3,

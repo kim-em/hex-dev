@@ -46,6 +46,7 @@ import tempfile
 
 import matplotlib
 
+matplotlib.rcParams.update(matplotlib.rcParamsDefault)
 matplotlib.use("Agg")
 matplotlib.rcParams["svg.hashsalt"] = "hexbz-cactus"
 import matplotlib.pyplot as plt
@@ -352,7 +353,7 @@ def main():
                 details.append("obsolete: " + ", ".join(obsolete))
             raise SystemExit(
                 "committed factorization figures are not current; run "
-                "`uv run --with matplotlib==3.11.1 python3 "
+                "with matplotlib 3.11.1: `python3 "
                 "scripts/plots/hexbz-cactus.py`: " + "; ".join(details))
         print(f"{len(written)} committed figures are current")
         check_directory.cleanup()
