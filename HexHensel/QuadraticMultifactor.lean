@@ -51,7 +51,7 @@ def quadraticDoublingSteps (k : Nat) : Nat :=
   simp [quadraticDoublingSteps]
 
 /-- Canonicalise every component of a quadratic lift at precision `p^k`. -/
-private def reduceLift
+def reduceLift
     (p k : Nat) [ZMod64.Bounds p]
     (r : QuadraticLiftResult) : QuadraticLiftResult :=
   { g := ZPoly.reduceModPow r.g p k
@@ -61,8 +61,10 @@ private def reduceLift
 
 /-- Return a lift reduced at exactly exponent `k`. Recursing through
 `ceil(k / 2)` limits a correction's transient working exponent to `k` when
-even and `k + 1` when odd, instead of the next power of two. -/
-private def liftExact
+even and `k + 1` when odd, instead of the next power of two.
+
+This is the specification; `liftExactImpl` is the compiled shape. -/
+def liftExact
     (p : Nat) [ZMod64.Bounds p] (f : ZPoly) :
     (k : Nat) → QuadraticLiftResult → QuadraticLiftResult
   | k, acc =>
@@ -75,6 +77,87 @@ private def liftExact
           quadraticHenselStep (p ^ half) f prior.g prior.h prior.s prior.t
   termination_by k => k
   decreasing_by omega
+
+/-- A lift whose four components are already canonical modulo `p^k` is returned
+unchanged by `reduceLift`. -/
+private theorem reduceLift_eq_self
+    (p k : Nat) [ZMod64.Bounds p] (r : QuadraticLiftResult)
+    (hg : ZPoly.Canonical r.g (p ^ k)) (hh : ZPoly.Canonical r.h (p ^ k))
+    (hs : ZPoly.Canonical r.s (p ^ k)) (ht : ZPoly.Canonical r.t (p ^ k)) :
+    reduceLift p k r = r := by
+  have hpk : 0 < p ^ k := Nat.pow_pos (ZMod64.Bounds.pPos (p := p))
+  unfold reduceLift
+  rw [ZPoly.reduceModPow_eq_self_of_canonical _ p k hpk hg,
+    ZPoly.reduceModPow_eq_self_of_canonical _ p k hpk hh,
+    ZPoly.reduceModPow_eq_self_of_canonical _ p k hpk hs,
+    ZPoly.reduceModPow_eq_self_of_canonical _ p k hpk ht]
+
+/--
+On an even target exponent the doubling step lands on `p^k` exactly, so its
+output is already canonical there and `reduceLift` is the identity.
+
+This is the theorem the runtime shape below trades on: `liftExact` reaches
+`k` from `half = ceil(k/2)`, and for even `k` the step's working modulus
+`p^half * p^half` *is* `p^k`.
+-/
+private theorem reduceLift_step_eq_of_even
+    (p k half : Nat) [ZMod64.Bounds p] (f g h s t : ZPoly)
+    (hk : 2 * half = k) :
+    reduceLift p k (quadraticHenselStep (p ^ half) f g h s t) =
+      quadraticHenselStep (p ^ half) f g h s t := by
+  have hmpos : 0 < p ^ half := Nat.pow_pos (ZMod64.Bounds.pPos (p := p))
+  have hmm : p ^ half * p ^ half = p ^ k := by
+    rw [← Nat.pow_add, ← hk]
+    congr 1
+    omega
+  obtain ⟨hg, hh, hs, ht⟩ :=
+    quadraticHenselStep_canonical (p ^ half) f g h s t hmpos
+  rw [hmm] at hg hh hs ht
+  exact reduceLift_eq_self p k _ hg hh hs ht
+
+/-- Runtime shape of `liftExact`, dropping the canonicalisation that
+`reduceLift_step_eq_of_even` proves redundant. For even `k` the preceding step
+runs at modulus `p^(k/2)` and returns coefficients already canonical modulo
+`(p^(k/2))^2 = p^k`; only an odd `k`, whose step overshoots to `p^(k+1)`,
+needs the descent back to `p^k`. Proved equal to `liftExact` in
+`liftExact_eq_impl`. -/
+def liftExactImpl
+    (p : Nat) [ZMod64.Bounds p] (f : ZPoly) :
+    (k : Nat) → QuadraticLiftResult → QuadraticLiftResult
+  | k, acc =>
+      if k ≤ 1 then
+        reduceLift p k acc
+      else
+        let half := (k + 1) / 2
+        let prior := liftExactImpl p f half acc
+        let stepped :=
+          quadraticHenselStep (p ^ half) f prior.g prior.h prior.s prior.t
+        if 2 * half = k then stepped else reduceLift p k stepped
+  termination_by k => k
+  decreasing_by omega
+
+private theorem liftExact_eq_impl_value
+    (p : Nat) [ZMod64.Bounds p] (f : ZPoly) (k : Nat) (acc : QuadraticLiftResult) :
+    liftExact p f k acc = liftExactImpl p f k acc := by
+  induction k, acc using liftExact.induct (p := p) (f := f) with
+  | case1 k acc hsmall =>
+      rw [liftExact, liftExactImpl]
+      simp only [if_pos hsmall]
+  | case2 k acc hlarge half ih =>
+      rw [liftExact, liftExactImpl]
+      simp only [if_neg hlarge]
+      have ih' : liftExact p f ((k + 1) / 2) acc = liftExactImpl p f ((k + 1) / 2) acc := ih
+      rw [ih']
+      by_cases heven : 2 * ((k + 1) / 2) = k
+      · simp only [if_pos heven]
+        exact reduceLift_step_eq_of_even p k ((k + 1) / 2) f _ _ _ _ heven
+      · simp only [if_neg heven]
+
+/-- Proof-backed compiled implementation of the exact-exponent quadratic
+recursion. -/
+@[csimp] theorem liftExact_eq_impl : @liftExact = @liftExactImpl := by
+  funext p inst f k acc
+  exact liftExact_eq_impl_value p f k acc
 
 /-- Lift a Bezout-witnessed factorisation modulo `p` to one valid modulo
 `p^k` by iterating `quadraticHenselStep` at exact requested exponents.
@@ -102,6 +185,49 @@ def henselLiftFactors
       prior.g prior.h prior.s prior.t
     (ZPoly.reduceModPow factors.1 p k, ZPoly.reduceModPow factors.2 p k)
 
+/-- Runtime shape of `henselLiftFactors`. The final factor-only step obeys the
+same coefficient-range invariant as the full step
+(`quadraticHenselFactors_canonical`), so for even `k` the closing pair of
+reductions is the identity. Proved equal to `henselLiftFactors` in
+`henselLiftFactors_eq_impl`. -/
+def henselLiftFactorsImpl
+    (p k : Nat) [ZMod64.Bounds p]
+    (f g h s t : ZPoly) : ZPoly × ZPoly :=
+  if k ≤ 1 then
+    (ZPoly.reduceModPow g p k, ZPoly.reduceModPow h p k)
+  else
+    let half := (k + 1) / 2
+    let prior := liftExact p f half { g, h, s, t }
+    let factors := quadraticHenselFactors (p ^ half) f
+      prior.g prior.h prior.s prior.t
+    if 2 * half = k then factors
+    else (ZPoly.reduceModPow factors.1 p k, ZPoly.reduceModPow factors.2 p k)
+
+/-- Proof-backed compiled implementation of the factor-only exact lift. -/
+@[csimp] theorem henselLiftFactors_eq_impl :
+    @henselLiftFactors = @henselLiftFactorsImpl := by
+  funext p k inst f g h s t
+  unfold henselLiftFactors henselLiftFactorsImpl
+  split
+  · rfl
+  · rename_i hlarge
+    dsimp only
+    by_cases heven : 2 * ((k + 1) / 2) = k
+    · simp only [if_pos heven]
+      have hmpos : 0 < p ^ ((k + 1) / 2) :=
+        Nat.pow_pos (ZMod64.Bounds.pPos (p := p))
+      have hmm : p ^ ((k + 1) / 2) * p ^ ((k + 1) / 2) = p ^ k := by
+        rw [← Nat.pow_add, ← heven]
+        congr 1
+        omega
+      have hpk : 0 < p ^ k := Nat.pow_pos (ZMod64.Bounds.pPos (p := p))
+      obtain ⟨hfst, hsnd⟩ :=
+        quadraticHenselFactors_canonical (p ^ ((k + 1) / 2)) f _ _ _ _ hmpos
+      rw [hmm] at hfst hsnd
+      rw [ZPoly.reduceModPow_eq_self_of_canonical _ p k hpk hfst,
+        ZPoly.reduceModPow_eq_self_of_canonical _ p k hpk hsnd]
+    · simp only [if_neg heven]
+
 /-- The factor-only final step is byte-identical to projecting the full lift. -/
 theorem henselLiftFactors_eq
     (p k : Nat) [ZMod64.Bounds p]
@@ -128,6 +254,22 @@ theorem henselLiftFactors_snd
     (f g h s t : ZPoly) :
     (henselLiftFactors p k f g h s t).2 = (henselLiftQuadratic p k f g h s t).h := by
   rw [henselLiftFactors_eq]
+
+/-- Both outputs of the factor-only exact lift are canonical modulo `p^k`:
+either branch of `henselLiftFactors` ends in `ZPoly.reduceModPow _ p k`.
+
+This is what lets the multifactor tree skip the reduction at every leaf below
+the root, since each recursive call's target is a `henselLiftFactors` output. -/
+theorem henselLiftFactors_canonical
+    (p k : Nat) [ZMod64.Bounds p]
+    (f g h s t : ZPoly) :
+    ZPoly.Canonical (henselLiftFactors p k f g h s t).1 (p ^ k) ∧
+      ZPoly.Canonical (henselLiftFactors p k f g h s t).2 (p ^ k) := by
+  have hpk : 0 < p ^ k := Nat.pow_pos (ZMod64.Bounds.pPos (p := p))
+  unfold henselLiftFactors
+  split <;>
+    exact ⟨ZPoly.canonical_reduceModPow _ p k hpk,
+      ZPoly.canonical_reduceModPow _ p k hpk⟩
 
 /-- Sum of polynomial degrees used to estimate the work on one side of a
 multifactor Hensel split. -/
@@ -222,6 +364,80 @@ def multifactorLiftQuadraticList
       have hlt := balancedSplitIndex_lt_length (g₀ :: g₁ :: rest) (by simp)
       simp only [List.length_cons] at hlt
       omega
+
+/-- Runtime shape of `multifactorLiftQuadraticList`. The extra `canonical` flag
+records whether the incoming target is already reduced modulo `p^k`. Every
+recursive call passes a `henselLiftFactors` output, which
+`henselLiftFactors_canonical` shows is canonical, so only the root -- the one
+target the caller supplies as an arbitrary integer polynomial -- can still need
+the leaf reduction. On a one-node tree at odd precision that removes a full
+top-precision reduction per output factor. Proved equal to
+`multifactorLiftQuadraticList` in `multifactorLiftQuadraticList_eq_impl`. -/
+def multifactorLiftQuadraticListImpl
+    (p k : Nat) [ZMod64.Bounds p]
+    (canonical : Bool) (f : ZPoly) : List ZPoly → Array ZPoly
+  | [] => #[]
+  | [_g] => #[if canonical then f else ZPoly.reduceModPow f p k]
+  | g₀ :: g₁ :: rest =>
+      let gs := g₀ :: g₁ :: rest
+      let split := balancedSplitIndex gs
+      let L := gs.take split
+      let R := gs.drop split
+      let g := Array.polyProduct L.toArray
+      let h := Array.polyProduct R.toArray
+      let xgcd := ZPoly.normalizedXGCD p g h
+      let s := FpPoly.liftToZ xgcd.left
+      let t := FpPoly.liftToZ xgcd.right
+      let lifted := henselLiftFactors p k f g h s t
+      multifactorLiftQuadraticListImpl p k true lifted.1 L ++
+        multifactorLiftQuadraticListImpl p k true lifted.2 R
+  termination_by factors => factors.length
+  decreasing_by
+    all_goals
+      simp only [List.length_take, List.length_drop, List.length_cons]
+      have hpos := balancedSplitIndex_pos (g₀ :: g₁ :: rest)
+      have hlt := balancedSplitIndex_lt_length (g₀ :: g₁ :: rest) (by simp)
+      simp only [List.length_cons] at hlt
+      omega
+
+private theorem multifactorLiftQuadraticList_eq_impl_value
+    (p k : Nat) [ZMod64.Bounds p]
+    (f : ZPoly) (factors : List ZPoly) :
+    ∀ canonical : Bool, (canonical = true → ZPoly.Canonical f (p ^ k)) →
+      multifactorLiftQuadraticList p k f factors =
+        multifactorLiftQuadraticListImpl p k canonical f factors := by
+  have hpk : 0 < p ^ k := Nat.pow_pos (ZMod64.Bounds.pPos (p := p))
+  induction f, factors using multifactorLiftQuadraticList.induct (p := p) (k := k) with
+  | case1 f =>
+      intro canonical _
+      rw [multifactorLiftQuadraticList, multifactorLiftQuadraticListImpl]
+  | case2 f _g =>
+      intro canonical hcanonical
+      rw [multifactorLiftQuadraticList, multifactorLiftQuadraticListImpl]
+      cases canonical with
+      | false => simp
+      | true =>
+          simp only [if_true]
+          rw [ZPoly.reduceModPow_eq_self_of_canonical f p k hpk (hcanonical rfl)]
+  | case3 f g₀ g₁ rest =>
+      rename_i ihL ihR
+      intro canonical _
+      rw [multifactorLiftQuadraticList, multifactorLiftQuadraticListImpl]
+      rw [ihL true (fun _ => (henselLiftFactors_canonical p k f _ _ _ _).1),
+        ihR true (fun _ => (henselLiftFactors_canonical p k f _ _ _ _).2)]
+
+/-- Root entry point of the compiled tree walk: the caller's target is an
+arbitrary integer polynomial, so the root leaf still reduces. -/
+def multifactorLiftQuadraticListRoot
+    (p k : Nat) [ZMod64.Bounds p]
+    (f : ZPoly) (factors : List ZPoly) : Array ZPoly :=
+  multifactorLiftQuadraticListImpl p k false f factors
+
+/-- Proof-backed compiled implementation of the multifactor tree walk. -/
+@[csimp] theorem multifactorLiftQuadraticList_eq_impl :
+    @multifactorLiftQuadraticList = @multifactorLiftQuadraticListRoot := by
+  funext p k inst f factors
+  exact multifactorLiftQuadraticList_eq_impl_value p k f factors false (by simp)
 
 /--
 Quadratic multifactor Hensel lift.

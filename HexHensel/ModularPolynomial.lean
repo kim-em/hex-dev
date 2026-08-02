@@ -276,6 +276,41 @@ theorem reduceModPow_idempotent (f : ZPoly) (p k : Nat) (hpk : 0 < p ^ k) :
     reduceModPow (reduceModPow f p k) p k = reduceModPow f p k :=
   reduceModPow_idempotent f p k (Nat.pow_pos (ZMod64.Bounds.pPos (p := p)))
 
+/--
+The coefficient-range invariant of the modular kernels: every coefficient of
+`f` is the canonical residue in `[0, m)`.
+
+This is the invariant a lift must carry in order to drop a canonicalisation:
+`reduceModPow_eq_self_of_canonical` says it is exactly the hypothesis under
+which `reduceModPow` is the identity.
+-/
+@[expose]
+def Canonical (f : ZPoly) (m : Nat) : Prop :=
+  ∀ i, 0 ≤ f.coeff i ∧ f.coeff i < (m : Int)
+
+/-- Canonical reduction at a positive modulus produces canonical coefficients. -/
+theorem canonical_reduceModPow (f : ZPoly) (p k : Nat) (hpk : 0 < p ^ k) :
+    Canonical (reduceModPow f p k) (p ^ k) := by
+  intro i
+  have hpos : (0 : Int) < ((p ^ k : Nat) : Int) := by exact_mod_cast hpk
+  rw [coeff_reduceModPow_eq_emod_of_pos f p k i hpk, Int.ofNat_eq_natCast]
+  exact ⟨Int.emod_nonneg _ (Int.ne_of_gt hpos), Int.emod_lt_of_pos _ hpos⟩
+
+/--
+Canonical coefficients are fixed by `reduceModPow`.
+
+This is the theorem that licenses deleting a redundant canonicalisation: a
+reduction applied to data already reduced to `[0, p ^ k)` returns its input
+unchanged, so removing it cannot change any result.
+-/
+theorem reduceModPow_eq_self_of_canonical (f : ZPoly) (p k : Nat)
+    (hpk : 0 < p ^ k) (hf : Canonical f (p ^ k)) :
+    reduceModPow f p k = f := by
+  apply DensePoly.ext_coeff
+  intro i
+  rw [coeff_reduceModPow_eq_emod_of_pos f p k i hpk, Int.ofNat_eq_natCast]
+  exact Int.emod_eq_of_lt (hf i).1 (hf i).2
+
 /-- Congruent integer polynomials have the same reduction modulo `p`. -/
 theorem modP_eq_of_congr (p : Nat) [ZMod64.Bounds p] (f g : ZPoly)
     (hfg : congr f g p) :
