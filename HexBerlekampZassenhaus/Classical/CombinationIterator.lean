@@ -183,19 +183,20 @@ end SupportMeta
 
 /-- Compute the traversal metadata of a lifted basis. -/
 @[expose]
-def supportMeta (basis : LiftData) : SupportMeta basis where
-  modulus := liftModulus basis
-  modulusInt := (liftModulus basis : Int)
-  degrees := basis.liftedFactors.map fun factor => factor.degree?.getD 0
-  trails := basis.liftedFactors.map fun factor => factor.coeff 0
-  modulus_eq := rfl
-  modulusInt_eq := rfl
-  degrees_eq := by
-    intro i
-    simp [Array.getD, directLiftedFactor]
-  trails_eq := by
-    intro i
-    simp [Array.getD, directLiftedFactor]
+def supportMeta (basis : LiftData) : SupportMeta basis :=
+  let modulus := liftModulus basis
+  { modulus
+    modulusInt := (modulus : Int)
+    degrees := basis.liftedFactors.map fun factor => factor.degree?.getD 0
+    trails := basis.liftedFactors.map fun factor => factor.coeff 0
+    modulus_eq := rfl
+    modulusInt_eq := rfl
+    degrees_eq := by
+      intro i
+      simp [Array.getD, directLiftedFactor]
+    trails_eq := by
+      intro i
+      simp [Array.getD, directLiftedFactor] }
 
 /-- Evaluate one traversal leaf, materializing nothing a rejected support does
 not need.
