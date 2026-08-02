@@ -13,10 +13,11 @@ costs one Frobenius power and one gcd per separated factor degree, so it is
 cheap exactly when the image is wide, which is exactly when the walk has
 something to shop for; and it is expensive exactly when the image is narrow,
 which is exactly when the walk stops at the first prime and never scouts. That
-asymmetry is what makes the design work, and it is measured below: a scout that
-discards a candidate costs 1.5% to 24% of the split it replaces, one that has
-to score a candidate exactly costs up to 0.79x, and on the narrow first primes
-the walk never scouts it would have cost 0.83x to 6.5x.
+asymmetry is what makes the design work, and it is measured below: on 23 of the
+28 scouted candidates the scout costs at most a quarter of the split it
+replaces, and the five exceptions are exactly the candidates whose largest
+factor degree is 10 or more. At the narrow first primes the walk never scouts,
+a complete pattern would have cost 0.83x to 6.5x of the split.
 
 ## Revision and protocol
 
@@ -32,8 +33,10 @@ a **paired** run: two service binaries built from this worktree, differing only
 in `HexBerlekampZassenhaus/Modular/PrimePlan.lean`, alternated on the same
 pinned core over three rounds, with the rows whose plan does not change acting
 as a load control. And every per-candidate cost is the median of
-`--plan-repeats 3` calls, so no single loaded observation can make a
-candidate look good or bad.
+`--plan-repeats 3` calls of the same service, merged field by field after
+asserting that the repeats agree on everything deterministic, so no single
+loaded observation can make a candidate look good or bad. A merged candidate is
+a real plan with estimated durations, not one execution.
 
 ### Artifacts
 
@@ -111,6 +114,12 @@ there: those are exactly the narrow images, and the scout would have cost from
 0.83x to 6.5x the split it was trying to avoid. Splitting the first good prime
 and scouting only afterwards puts the scout exactly where it pays.
 
+Each candidate below is scouted against the *first* good prime's width. That is
+the target production carries until a scouted candidate wins and tightens it,
+which on this corpus happens only where the winning candidate is the last one
+scouted, so these prices match the production walk here; in general they are
+scout prices at a fixed target rather than a replay of it.
+
 ### Scout, kernel, and split prices at each scouted candidate
 
 | instance | prime | width | degree pattern | good-prime test | bounded scout | matrix + kernel | full split | scout / split | separated | residual | outcome |
@@ -176,19 +185,28 @@ there, for the cost a scout-first policy would have paid.
 | `randprod_10` | 7 | 4 | 3 4 6 7 | 542.985 us | 543.085 us | 1.000x |
 | `randprod_21` | 17 | 7 | 1^4 4 7 9 | 1.252 ms | 1.247 ms | 1.004x |
 
-The `outcome` column separates the two things a scout can do. *Abandoned* means
-the separated factors reached the current width, so the candidate is wider and
-cannot win: `cyclo_phi64_x_phi105` at prime 13 gives up once its twelve
-degree-4 factors reach the incumbent's ten, with 32 of the 80 degrees still
-unseparated, for 4.9 ms against the 25.1 ms split it avoided. *Scored* means
-the pattern completed and the candidate was ranked exactly, without a split.
+What the scout costs is decided by the largest factor degree, not by which
+candidate wins. Sorted by `scout / split`, the 28 scouted candidates run from
+0.015x (`xpow120_minus1` prime 11, 65 factors of degree at most 2) to 1.820x
+(`legendre_P30` prime 71, four factors reaching degree 22), and the ordering is
+the ordering of their largest factor degree. Twenty-three sit at 0.25x or
+below; the five above are `sd5_x_phi11` prime 29 (0.333x, degree 10),
+`xpow105_minus1` prime 17 (0.634x, 12), `cyclo_phi64_x_phi105` prime 17
+(0.791x, 12), and the two `legendre_P30` candidates (0.899x and 1.820x, 14 and
+22). The last of those is priced here but never actually scouted: the walk ends
+at prime 67, whose scouted width of 7 passes the gate.
 
-Where a family's candidates all have the same width the scout can never
-abandon, so every pattern completes: that is the Swinnerton-Dyer and Wilkinson
-block, where the scouts are 2.6% to 13% of a split and confirm what the split
-would have said. Where widths differ the scout usually gives up quickly --
-`xpow120_minus1` at prime 11 abandons after separating 65 factors of degree at
-most 2, in 465 us against a 30.9 ms split, 1.5%.
+The `outcome` column records the other way a scout can stop. *Abandoned* means
+the separated factors reached the current width, so the candidate is wider and
+cannot win, and the rest of its pattern is never computed:
+`cyclo_phi64_x_phi105` at prime 13 gives up once its twelve degree-4 factors
+reach the incumbent's ten, with 32 of the 80 degrees still unseparated, for
+4.9 ms against the 25.1 ms split it avoided. That is the only abandonment in
+this table. It is rare because the width test runs between degrees, and one
+gcd often separates enough factors to pass the target and finish the pattern in
+the same step -- `xpow120_minus1` at prime 11 goes from 10 separated factors to
+all 65 in its degree-2 gcd. Nothing is lost when that happens: the scout is
+cheap for the same reason the abandonment would have been.
 
 ## Counterfactual downstream costs
 
@@ -264,8 +282,8 @@ comparison does not depend on what the machine was doing when each row was
 measured. Modular costs come from the scout section, where the good-prime test,
 the bounded scout, the matrix with its kernel, and the full split are timed
 adjacently in one process; downstream costs come from the counterfactual
-section. Both are single observations per record, so all costs are medians over
-three independent records.
+section. Both are single observations per call, so all costs are the
+`--plan-repeats` medians the record already carries.
 
 * **first** -- split the first good prime and use it.
 * **fixed** -- the pre-#9128 rule.
@@ -326,8 +344,12 @@ The two service binaries were built from this worktree and differ only in
 the same pinned core, so machine load hits both equally. The rows whose plan
 does not change -- `cyclo_phi179`, `cyclo_phi128_x_phi165`, `cyclo_phi385`, the
 Chebyshev and `randprod` controls, `cyclo_phi17`, `cyclo_phi41`, `legendre_P38`
--- are the load control: their prime walk should be identical in both arms, and
-it is, to within 3%.
+-- are the load control: their prime walk does identical work in both arms, so
+their spread bounds what can be read into the rows that did change.
+
+The record is `reports/bench-results/hexbz-prime-plan-paired-f9de7cd8-chungus2.json`;
+it carries every round of both arms, and
+`scripts/bench/prime_plan_paired.py --report` regenerates this table from it.
 
 ### Paired before/after, median of 3 alternating rounds
 
@@ -348,22 +370,24 @@ it is, to within 3%.
 | `wilkinson_40` | 47 | 47 | 3 -> 2 | 5.954 ms | 4.409 ms | 1.544 ms | 15.798 ms | 14.355 ms | 0.909x |
 | `wilkinson_48` | 61 | 61 | 3 -> 2 | 9.483 ms | 6.952 ms | 2.531 ms | 29.413 ms | 27.126 ms | 0.922x |
 | `wilkinson_56` | 67 | 67 | 3 -> 2 | 13.797 ms | 10.145 ms | 3.652 ms | 40.265 ms | 36.641 ms | 0.910x |
-| `chebyshev_T24` | 5 | 5 | 1 -> 1 | 351.461 us | 363.299 us | -11838 ns | 567.011 us | 573.240 us | 1.011x |
+| `chebyshev_T24` | 5 | 5 | 1 -> 1 | 351.461 us | 363.299 us | -11.838 us | 567.011 us | 573.240 us | 1.011x |
 | `chebyshev_U24` | 3 | 3 | 1 -> 1 | 326.123 us | 322.028 us | 4.095 us | 697.985 us | 707.269 us | 1.013x |
 | `legendre_P30` | 71 | 67 | 3 -> 2 | 7.794 ms | 7.792 ms | 2.534 us | 8.456 ms | 9.535 ms | 1.128x |
-| `legendre_P38` | 79 | 79 | 1 -> 1 | 3.826 ms | 3.912 ms | -86377 ns | 4.752 ms | 4.750 ms | 1.000x |
+| `legendre_P38` | 79 | 79 | 1 -> 1 | 3.826 ms | 3.912 ms | -86.377 us | 4.752 ms | 4.750 ms | 1.000x |
 | `cyclo_phi17` | 3 | 3 | 1 -> 1 | 104.936 us | 104.705 us | 231 ns | 150.934 us | 152.727 us | 1.012x |
-| `cyclo_phi41` | 3 | 3 | 1 -> 1 | 700.679 us | 706.828 us | -6149 ns | 2.871 ms | 2.872 ms | 1.000x |
+| `cyclo_phi41` | 3 | 3 | 1 -> 1 | 700.679 us | 706.828 us | -6.149 us | 2.871 ms | 2.872 ms | 1.000x |
 | `xpow24_minus1` | 11 | 11 | 3 -> 2 | 1.463 ms | 1.189 ms | 274.007 us | 3.528 ms | 3.258 ms | 0.923x |
 | `randprod_10` | 7 | 7 | 1 -> 1 | 557.036 us | 549.856 us | 7.180 us | 821.478 us | 814.237 us | 0.991x |
 | `randprod_21` | 17 | 17 | 1 -> 1 | 1.289 ms | 1.287 ms | 1.513 us | 1.757 ms | 1.744 ms | 0.993x |
-| **aggregate** | | | | | | | 2.134 s | 2.039 s | **0.9554x** |
+| **aggregate** | | | | | | 103.485 ms | 2.134 s | 2.039 s | **0.9554x** |
 
-Every representative row improves, between 0.721x and 0.968x. The prime walk
-loses 103.485 ms across the corpus, of which `xpow120_minus1` is 46 ms and
-`cyclo_phi64_x_phi105` 26 ms. The load controls are within 1.6% either way,
-which is this machine's noise floor for the day; the one row above that band is
-`legendre_P30`.
+Load control (10 instances whose plan does not change): 0.991x to 1.016x.
+
+Every row whose plan changes improves, between 0.721x and 0.968x, except
+`legendre_P30`. The ten rows whose plan does not change span 0.991x to 1.016x
+and are the day's noise floor on this machine. The prime walk loses 103.485 ms
+across the corpus, of which `xpow120_minus1` is 46 ms and
+`cyclo_phi64_x_phi105` 26 ms.
 
 The three larger instances outside the representative set behave the same way.
 Paired over two rounds: `sd6` 3 splits to 2 and prime 29 kept, `hoeij_F190`
@@ -374,21 +398,24 @@ where nothing about the plan changed.
 ## Where the selection changed, and what it cost
 
 The scout compares candidates by exactly the score the old walk compared
-factorizations by, so the plan does not move: on all twenty-four rows here, and
-on `sd6`, `hoeij_M12_f132` and `hoeij_F190` besides, the selected prime is the
-one the fixed policy chose. The single exception is `legendre_P30`, where the
-walk stops at prime 67 (width 7) because a scouted image inside the width gate
-ends the walk, the same gate that governs the first good prime; the fixed
-policy went on to prime 71 (width 4).
+factorizations by, so a candidate the walk scores is ranked as its
+factorization would have been. That is not the same as selecting the old plan,
+because the walk also stops on a scouted image inside the width gate -- the
+same gate that governs the first good prime, but the old walk applied it only
+to the first prime. Where the gate does not fire the two selections coincide:
+on twenty-three of the twenty-four rows here, and on `sd6`, `hoeij_M12_f132`
+and `hoeij_F190` besides, the selected prime is the one the fixed policy chose.
+On `legendre_P30` the gate fires and the walk stops at prime 67 (width 7) where
+the fixed policy went on to prime 71 (width 4).
 
-That exception costs `legendre_P30` 1.03 ms of extra recombination and is the
-only measured regression: 8.456 ms to 9.535 ms, 1.128x. It is also the one row
-in the corpus where scouting cannot pay at all. Its factor degrees reach 22 of
-30 and 14 of 30, so its scouts run almost the whole degree range and cost
-0.90x and 1.82x of the splits they replace; splitting all three primes, as the
-fixed policy did, is genuinely cheaper there. Continuing the walk to prime 71
-instead is worse still, at 1.464x, because it adds the deeper second scout on
-top.
+That costs `legendre_P30` 1.03 ms of extra recombination and is the only
+measured regression: 8.456 ms to 9.535 ms, 1.128x. Removing the gate was
+measured too, and is worse: it selects prime 71 as the fixed policy did, but
+pays the deeper second scout to get there, and the row lands at 1.464x. The
+gate stays because `legendre_P30` is the one row in the corpus where scouting
+cannot pay at all -- its factor degrees reach 14 and 22 of 30, so its two
+scouts run most of the degree range and cost 0.90x and 1.82x of the splits they
+replace, and splitting all three primes outright is genuinely cheaper there.
 
 The remaining gap to the same-plan floor is the price of the evidence. On the
 equal-width families -- Swinnerton-Dyer, Wilkinson -- every candidate has the
@@ -408,8 +435,9 @@ discover it, and neither ever scouts -- so the honest number is the third, and
 the missing third of it is the complete scouts on equal-width families
 described above. The second clause is what this PR claims: the policy is
 simpler than the one it replaces (no width threshold, no fuel spent on
-splitting, one selector), selects the same plan, and is 0.9554x end to end on
-the paired corpus with every representative row improving.
+splitting, one selector), selects the same plan wherever the width gate does
+not fire, and is 0.9554x end to end on the paired corpus, with every row whose
+plan changes improving except `legendre_P30`.
 
 **Median unsuccessful-scout overhead below 3%.** An unsuccessful scout is one
 whose candidate is not selected. As a fraction of each scouting row's total:
@@ -442,9 +470,9 @@ as the baseline.
 
 **`xpow105_minus1` retains its useful width reduction.** It still selects prime
 17 at width 14, against widths 30 and 33 at the two primes it rejects, and the
-row improves 0.906x. The scout at prime 13 abandons the pattern once its 33
-separated factors exceed the incumbent's 30, for 2.4 ms against the 15.8 ms
-split it replaces.
+row improves 0.906x. The scout at prime 13 completes its pattern at width
+33 and is rejected by its score, for 2.4 ms against the 15.8 ms split it
+replaces.
 
 **The wasted extra splits on SD5, Wilkinson 56, `xpow120_minus1` and
 `cyclo_phi64_x_phi105` are removed or shown worthwhile.** `xpow120_minus1` and

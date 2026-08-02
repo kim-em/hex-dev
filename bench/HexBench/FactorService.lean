@@ -39,9 +39,10 @@ The `--entry` flag selects which library entry answers each request:
 * `primeCounterfactual` — for every good prime the bounded walk retained, the
   downstream lift and recombination cost of having stopped there.
 * `primeScout` — for every good prime in a bounded prefix of the hot-path
-  candidate list, the cost of learning its modular degree pattern three ways:
-  the distinct-degree scout, the Berlekamp matrix plus its kernel, and a full
-  Berlekamp split. The scouted pattern is checked against the split.
+  candidate list, the cost of learning its modular degree pattern four ways: a
+  bounded scout against the first good prime's width, the complete degree
+  pattern, the Berlekamp matrix plus its kernel, and a full Berlekamp split.
+  The scouted pattern is checked against the split.
 
 This is a comparator driver, not a hex-internal benchmark harness: it emits raw
 timings for the external orchestrator, keeping the one-harness rule intact.
@@ -1096,14 +1097,16 @@ private def scoutHorizon : Nat := 6
 private def degreeHistogram (n : Nat) (degrees : Array Nat) : Array Nat :=
   degrees.foldl (fun h d => h.modify d (· + 1)) (Array.replicate (n + 1) 0)
 
-/-- Cost of learning one candidate prime's modular degree pattern four ways:
-the bounded scout the planner runs against `target`, the complete degree
-pattern, the Berlekamp matrix with its kernel, and a full Berlekamp split.
-`none` when the candidate is not a good prime.
+/-- Cost of learning one candidate prime's modular degree pattern four ways: a
+bounded scout against `target`, the complete degree pattern, the Berlekamp
+matrix with its kernel, and a full Berlekamp split.  `none` when the candidate
+is not a good prime.
 
-The bounded scout is the production measurement; the complete pattern prices
-what a scout with no target would have cost, and is what the split is checked
-against. -/
+`target` is fixed by the caller at the first good prime's width, which is the
+target production uses until a scouted candidate wins and tightens it, so these
+are scout prices at a fixed target rather than a replay of the production
+walk.  The complete pattern prices what a scout with no target would cost, and
+is what the split is checked against. -/
 private def scoutRow (sink : IO.Ref Nat) (core : ZPoly) (target : Nat)
     (c : SmallPrimeCandidate) : IO (Option Json) :=
   letI := c.bounds
@@ -1184,8 +1187,11 @@ private def primeScout (f : ZPoly) : IO Json := do
   let firstWidth :=
     (counterfactualCandidates core 1 hotPathCandidates #[]).foldl
       (fun w probe => max w probe.data.factorsModP.size) 0
-  -- The planner scouts against the current best width, so that is the target
-  -- this record prices.
+  -- Every candidate is priced against the *first* good prime's width, not the
+  -- width the production walk would be carrying when it reaches that candidate:
+  -- production tightens its target whenever a scouted candidate wins, so a
+  -- later row here can be timed under a looser target than production uses.
+  -- The record names the target it used so the two are never confused.
   let target := firstWidth
   let mut rows : Array Json := #[]
   let mut seen := 0

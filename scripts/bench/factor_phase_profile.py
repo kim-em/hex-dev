@@ -23,8 +23,9 @@ The record answers four separate questions and keeps them separate:
   cascade does.
 
 Every cost in the plan sections is one observation per call, so both are
-repeated and merged by per-candidate median (`--plan-repeats`); the counts they
-carry are deterministic and identical across repeats.
+repeated and merged into one plan by per-candidate median (`--plan-repeats`).
+Everything else the service reports is deterministic, and the merge asserts
+that the repeats agree on all of it before replacing the durations.
 * **Validation.** Cross-checks run alongside, on a wider sample than the
   representative set: the counted recombination mirror must agree with the
   production `factorTrace` on leaf count, selected prime, completed subset
