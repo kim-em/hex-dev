@@ -93,7 +93,10 @@ Lift-phase allocation counts, which are exact:
 | `xpow105_minus1` | 26 | 447,097 | 446,063 | -0.23% |
 | `chebyshev_U24` (control) | 33 | 14,296 | 14,212 | -0.59% |
 
-Lift time under load average below 5, median of three alternating rounds:
+Lift time under load average below 5, median of three alternating rounds. The
+Wilkinson rows answer from the proposal-replay tier, so their lift runs inside
+`proposeFactorization` and the figure quoted for them is that whole phase, not
+the lift alone; the same caveat applies to their allocation counts above.
 
 | instance | k | lift, baseline | after removals | change |
 |---|---:|---:|---:|---:|

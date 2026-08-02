@@ -263,7 +263,8 @@ private def qmParityF : ZPoly := Array.polyProduct qmParityFactors
 #guard reduceArrModPow (ZPoly.multifactorLift 5 27 qmParityF qmParityFactors) 5 27
      = reduceArrModPow (ZPoly.multifactorLiftQuadratic 5 27 qmParityF qmParityFactors) 5 27
 
--- High-precision large-coefficient case, entirely on the bignum path.
+-- High-precision large-coefficient case, whose top steps take the bignum path
+-- while the lower recursive steps are still inside the word guard.
 #guard congrOn
   (Array.polyProduct (ZPoly.multifactorLiftQuadratic 5 40 qmParityF qmParityFactors))
   qmParityF (5 ^ 40) 8
@@ -272,15 +273,14 @@ private def qmParityF : ZPoly := Array.polyProduct qmParityFactors
 
 -- Every lifted factor is canonical in `[0, p^k)`, which is what the dropped
 -- reductions used to establish and the invariant now establishes instead.
-private def arrCanonical (a : Array ZPoly) (p k bound : Nat) : Bool :=
-  a.all (fun g => (List.range bound).all (fun i =>
-    0 ≤ g.coeff i ∧ g.coeff i < ((p ^ k : Nat) : Int)))
+private def arrCanonical (a : Array ZPoly) (p k : Nat) : Bool :=
+  a.all (fun g => g.toArray.all (fun c => 0 ≤ c ∧ c < ((p ^ k : Nat) : Int)))
 
-#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 8 qmParityF qmParityFactors) 5 8 8
-#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 9 qmParityF qmParityFactors) 5 9 8
-#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 26 qmParityF qmParityFactors) 5 26 8
-#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 27 qmParityF qmParityFactors) 5 27 8
-#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 40 qmParityF qmParityFactors) 5 40 8
+#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 8 qmParityF qmParityFactors) 5 8
+#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 9 qmParityF qmParityFactors) 5 9
+#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 26 qmParityF qmParityFactors) 5 26
+#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 27 qmParityF qmParityFactors) 5 27
+#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 40 qmParityF qmParityFactors) 5 40
 
 -- The factor-only last step still agrees with the projection of the full
 -- lift, at both parities and on both sides of the word-to-bignum boundary.
@@ -298,12 +298,54 @@ private def factorsMatchFullLift (k : Nat) : Bool :=
   let full := ZPoly.henselLiftQuadratic 5 k qmSplitF qmSplitG qmSplitH qmSplitS qmSplitT
   factors.1 == full.g && factors.2 == full.h
 
+#guard factorsMatchFullLift 0
 #guard factorsMatchFullLift 1
 #guard factorsMatchFullLift 8
 #guard factorsMatchFullLift 9
 #guard factorsMatchFullLift 26
 #guard factorsMatchFullLift 27
 #guard factorsMatchFullLift 40
+
+-- The two degenerate precisions the compiled tree walk short-circuits: at
+-- `k = 0` the modulus is `1`, so every lifted factor is zero, and at `k = 1`
+-- the lift is the input factors taken modulo `p`. Both are cases where the
+-- leaf flag is set from a `henselLiftFactors` output, so both are checked
+-- against the linear lift and for canonicity.
+#guard reduceArrModPow (ZPoly.multifactorLift 5 0 qmParityF qmParityFactors) 5 0
+     = reduceArrModPow (ZPoly.multifactorLiftQuadratic 5 0 qmParityF qmParityFactors) 5 0
+#guard reduceArrModPow (ZPoly.multifactorLift 5 1 qmParityF qmParityFactors) 5 1
+     = reduceArrModPow (ZPoly.multifactorLiftQuadratic 5 1 qmParityF qmParityFactors) 5 1
+#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 1 qmParityF qmParityFactors) 5 1
+#guard (ZPoly.multifactorLiftQuadratic 5 0 qmParityF qmParityFactors).all (· == 0)
+#guard congrOn
+  (Array.polyProduct (ZPoly.multifactorLiftQuadratic 5 1 qmParityF qmParityFactors))
+  qmParityF (5 ^ 1) 8
+
+/-
+Boundary conformance for the windowed canonical representative.
+
+`ZPoly.intModNatImpl` returns a value already in `[0, m)` untouched, covers
+`[-m, 0)` with one addition, and falls back to `Int.emod` elsewhere. The
+`@[csimp]` rule means `#guard` evaluates the windowed form, so these cases
+pin the branch boundaries -- both signs of the window, the two endpoints
+`z = m` and `z = -m`, values outside it, and the degenerate `m = 0`, where
+`Int.emod z 0 = z` and the specification returns `Int.toNat z`.
+-/
+#guard ZPoly.intModNat 0 7 == 0
+#guard ZPoly.intModNat 6 7 == 6
+#guard ZPoly.intModNat 7 7 == 0
+#guard ZPoly.intModNat 8 7 == 1
+#guard ZPoly.intModNat 100 7 == 2
+#guard ZPoly.intModNat (-1) 7 == 6
+#guard ZPoly.intModNat (-7) 7 == 0
+#guard ZPoly.intModNat (-8) 7 == 6
+#guard ZPoly.intModNat (-100) 7 == 5
+#guard ZPoly.intModNat 5 0 == 5
+#guard ZPoly.intModNat (-5) 0 == 0
+#guard ZPoly.intModNat 0 0 == 0
+#guard ZPoly.intModNat (5 ^ 40) (5 ^ 40) == 0
+#guard ZPoly.intModNat (5 ^ 40 - 1) (5 ^ 40) == 5 ^ 40 - 1
+#guard ZPoly.intModNat (-(5 ^ 40)) (5 ^ 40) == 0
 
 /-
 Asymptotic-gap commentary (observation only; no timing assertion).

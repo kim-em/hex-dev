@@ -370,8 +370,9 @@ records whether the incoming target is already reduced modulo `p^k`. Every
 recursive call passes a `henselLiftFactors` output, which
 `henselLiftFactors_canonical` shows is canonical, so only the root -- the one
 target the caller supplies as an arbitrary integer polynomial -- can still need
-the leaf reduction. On a one-node tree at odd precision that removes a full
-top-precision reduction per output factor. Proved equal to
+the leaf reduction. Every singleton subtree below a split therefore drops one
+full-precision reduction; on a two-factor lift at odd precision that is both
+output factors. Proved equal to
 `multifactorLiftQuadraticList` in `multifactorLiftQuadraticList_eq_impl`. -/
 def multifactorLiftQuadraticListImpl
     (p k : Nat) [ZMod64.Bounds p]
