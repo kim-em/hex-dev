@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexNumberFieldMathlib.AlgebraicPoly
+public import HexNumberFieldMathlib.Presentation
 public import HexNumberFieldMathlib.RootDisambiguation
 public import HexNumberFieldMathlib.Yun
 public import Mathlib.Algebra.Polynomial.Div

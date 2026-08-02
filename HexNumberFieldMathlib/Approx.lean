@@ -482,7 +482,9 @@ private theorem refined_extent_le {p : ZPoly} (rep : RefinedIsolation p)
   change ht + rt ≤ 4 * (hs + rs)
   nlinarith
 
-private theorem realRadius_ofRat_le (q : Rat) (prec : Int) :
+/-- The rational enclosure requested at precision `prec` has radius at most
+`2 ^ (-prec)`. -/
+theorem realRadius_ofRat_le (q : Rat) (prec : Int) :
     (DyadicComplexBall.ofRat q prec).realRadius ≤ (2 : ℝ) ^ (-prec) := by
   unfold DyadicComplexBall.ofRat
   dsimp only
