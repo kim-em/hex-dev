@@ -37,7 +37,8 @@ This module owns:
 ## Per-library use
 
 Each consuming library (HexPoly, HexPolyZ, HexHensel, HexMatrix,
-HexBerlekamp, HexGFqRing, HexRCF) calls `Hex.BenchOracle.Flint.runOp` from
+HexBerlekamp, HexGFqRing, HexResultant, HexRCF) calls
+`Hex.BenchOracle.Flint.runOp` from
 its `Bench.lean` and parses the returned `Json` per its family's
 result schema. For example:
 

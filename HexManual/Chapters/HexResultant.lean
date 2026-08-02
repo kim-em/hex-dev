@@ -35,6 +35,12 @@ correspondence between the final executable value and
 {name}`Polynomial.resultant`, including specialization and discriminant
 conventions.
 
+Exact division is a checked algebraic contract rather than an unchecked use of
+the total `/` operation. The algorithm only invokes it at factors whose
+divisibility has been established by the Brown recurrence:
+
+{docstring Hex.ExactDivLaws}
+
 # The executable API
 %%%
 tag := "hex-resultant-api"
@@ -281,6 +287,21 @@ determinant-defined resultant:
 
 {docstring Hex.DensePoly.toPolynomial_resultant}
 
+The executable discriminant has the same total zero/constant convention as
+Mathlib's determinant-defined discriminant:
+
+{docstring Hex.DensePoly.toPolynomial_disc}
+
+For positive-degree polynomials in characteristic zero, discriminants multiply
+with the square of the cross-resultant. The degree hypotheses exclude the
+nonunit-constant counterexample created by the total constant convention. Over
+a characteristic-zero field, nonvanishing is therefore the expected
+separability criterion:
+
+{docstring Hex.DensePoly.disc_mul}
+
+{docstring Hex.DensePoly.disc_ne_zero_iff_separable}
+
 The specialization contract retains the original formal degrees, so degree
 drops after substituting a parameter do not silently change the resultant
 convention:
@@ -298,8 +319,8 @@ carry into one-level field norms and Trager collision bounds:
 tag := "hex-resultant-cross-references"
 %%%
 
-* {ref "hex-poly"}[HexPoly] supplies the normalized dense representation and
-  pseudo-division primitives.
+* {ref "hex-poly"}[HexPoly] supplies the normalized dense representation;
+  `HexResultant` supplies the exact pseudo-division and Brown recurrence.
 * {ref "hex-number-field"}[HexNumberField] uses bivariate specialization
   vanishing to justify factorization-lazy arithmetic.
 * {ref "hex-number-field-tower"}[HexNumberFieldTower] uses the full value and

@@ -200,6 +200,19 @@ theorem toPolynomial_disc [CommRing R] [IsDomain R] [DecidableEq R]
     [Div R] [Hex.ExactDivLaws R] (f : DensePoly R) :
     disc f = Polynomial.discr (HexPolyMathlib.toPolynomial f)
 
+/-- Positive-degree characteristic-zero product identity. -/
+theorem disc_mul [CommRing R] [IsDomain R] [IsAddTorsionFree R]
+    [DecidableEq R] [Div R] [Hex.ExactDivLaws R]
+    (f g : DensePoly R) (hf : 0 < f.degree?.getD 0)
+    (hg : 0 < g.degree?.getD 0) :
+    disc (f * g) = disc f * disc g * resultant f g ^ 2
+
+/-- Positive-degree squarefreeness criterion over characteristic-zero fields. -/
+theorem disc_ne_zero_iff_separable [Field R] [IsAddTorsionFree R]
+    [DecidableEq R] [Hex.ExactDivLaws R]
+    (f : DensePoly R) (hf : 0 < f.degree?.getD 0) :
+    disc f ≠ 0 ↔ (HexPolyMathlib.toPolynomial f).Separable
+
 end Hex.DensePoly
 ```
 

@@ -534,6 +534,14 @@ libraries:
     mathlib: false
     done_through: 1
     status: active
+    phase4:
+      comparators:
+        - tool: "FLINT fmpz_poly resultant/discriminant via python-flint"
+          class: informational
+          rationale: "FLINT uses tuned modular and asymptotically fast integer-polynomial kernels, while Hex uses the integral Brown subresultant recurrence. The shared-rung ratios orient optimization work but do not gate Phase 4. Both operations are wired through the shared persistent-subprocess driver; FLINT/PARI correctness remains independently checked by the conformance oracle."
+      input_families:
+        - name: bounded-dense-polynomial-prs
+          description: Seed-0xC0FFEE bounded-coefficient dense integer polynomials with nonzero leading coefficients; equal-degree pairs drive Brown chains, resultants, and discriminants, while the degree-n by degree-n/2 variant drives pseudo-division.
   HexInterval:
     deps: []
     mathlib: false
