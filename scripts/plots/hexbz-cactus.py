@@ -39,10 +39,20 @@ record the same hex-only sweep on ``main`` and on a change branch, then::
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 from pathlib import Path
+import sys
 import tempfile
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from hexbz_sweep_data import (  # noqa: E402
+    CURRENT_SYSTEMS,
+    ROOT,
+    default_sweep_paths,
+    load_corpus,
+    merge_reports,
+)
 
 import matplotlib
 
@@ -52,8 +62,6 @@ matplotlib.rcParams["svg.hashsalt"] = "hexbz-cactus"
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 
-ROOT = Path(__file__).resolve().parents[2]
-CORPUS_PATH = ROOT / "bench" / "corpus" / "hexbz-factor-corpus.jsonl"
 FIGURES = ROOT / "reports" / "figures"
 
 # Stable per-system styling so a system keeps its colour/marker across figures.
@@ -68,10 +76,6 @@ STYLE = {
     "isabelle-lll": ("#bcbd22", "h", "verified Isabelle LLL"),
 }
 
-CURRENT_SYSTEMS = {
-    "hex-factor", "flint", "ntl", "pari", "isabelle-bz", "isabelle-lll"
-}
-
 
 def seconds_formatter(value, _pos):
     if value <= 0:
@@ -81,17 +85,6 @@ def seconds_formatter(value, _pos):
     if value >= 1e-3:
         return f"{value * 1e3:.0f}ms"
     return f"{value * 1e6:.0f}us"
-
-
-def load_corpus():
-    info = {}
-    for line in CORPUS_PATH.read_text().splitlines():
-        if not line.strip():
-            continue
-        rec = json.loads(line)
-        info[rec["name"]] = {"family": rec["family"], "degree": rec["degree"],
-                             "combined": rec.get("combined", False)}
-    return info
 
 
 def solved_series(results, system, names):
@@ -191,60 +184,6 @@ def plot_runtime_degree(results, systems, names, corpus, output, title, subtitle
         return False
     _finalize(fig, ax, output, title, "polynomial degree", "median wall-clock", subtitle)
     return True
-
-
-BENCH_RESULTS = ROOT / "reports" / "bench-results"
-
-
-def default_sweep_paths():
-    """Return committed sweep records whose corpus hash matches today's corpus."""
-    corpus_sha = hashlib.sha256(CORPUS_PATH.read_bytes()).hexdigest()
-    candidates = sorted(BENCH_RESULTS.glob("hexbz-factor-sweep-*.json"))
-    paths = []
-    for path in candidates:
-        report_sha = json.loads(path.read_text()).get("config", {}).get("corpus_sha256")
-        if report_sha == corpus_sha:
-            paths.append(path)
-    return paths, len(candidates) - len(paths)
-
-
-def merge_reports(paths):
-    """Merge several sweep records, taking the NEWEST measurement of each system.
-
-    This is what lets the Lean entries be re-run cheaply without re-running the
-    expensive external comparators: point the plotter at the fresh hex-only record
-    plus the committed baseline, and each system's curve comes from whichever
-    record measured it most recently. All records must cover the same corpus
-    (matching `corpus_sha256`), since a system's solved-set is only comparable
-    against the same instances.
-
-    Returns (results, systems, provenance, cutoffs). `systems` is ordered by the
-    canonical STYLE order for a stable legend; `provenance[system]` is
-    (record filename, ISO timestamp, cutoff).
-    """
-    reports = [(pth, json.loads(pth.read_text())) for pth in paths]
-    shas = {r["config"]["corpus_sha256"] for _, r in reports}
-    if len(shas) > 1:
-        raise SystemExit(
-            "refusing to merge sweeps over different corpora (corpus_sha256 "
-            "mismatch); re-run the external systems against the current corpus")
-    chosen = {}  # system -> (ts, filename, iso, cutoff, results)
-    for pth, rep in reports:
-        ts = rep["env"].get("timestamp_unix_ms") or 0
-        iso = rep["env"].get("timestamp_iso")
-        cutoff = rep["config"]["cutoff_seconds"]
-        for system in rep["config"]["systems"]:
-            if system not in chosen or ts > chosen[system][0]:
-                sysres = [r for r in rep["results"] if r["system"] == system]
-                chosen[system] = (ts, pth.name, iso, cutoff, sysres)
-    results, provenance, cutoffs = [], {}, set()
-    for system, (_, fname, iso, cutoff, sysres) in chosen.items():
-        results.extend(sysres)
-        provenance[system] = (fname, iso, cutoff)
-        cutoffs.add(cutoff)
-    order = list(STYLE.keys())
-    systems = sorted(chosen, key=lambda s: order.index(s) if s in order else len(order))
-    return results, systems, provenance, cutoffs
 
 
 def main():
