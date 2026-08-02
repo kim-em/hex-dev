@@ -9,7 +9,7 @@ implementations.
 
 | System | Answered / 392 | Median solved time | p90 solved time |
 |---|---:|---:|---:|
-| Hex factorization | 376 | 375.012 us | 7.532 ms |
+| Hex factorization | 376 | 378.276 us | 7.507 ms |
 | FLINT | 391 | 60.089 us | 1.139 ms |
 | PARI/GP | 391 | 65.687 us | 1.008 ms |
 | NTL | 391 | 88.160 us | 2.365 ms |
@@ -34,11 +34,11 @@ protocol overhead. A ratio below one favors Hex.
 
 | Hex / comparator | Eligible pairs | Median | p10-p90 | Hex wins |
 |---|---:|---:|---:|---:|
-| FLINT | 74 | 11.071x | 4.453x-101.165x | 0 |
-| PARI/GP | 79 | 11.912x | 2.709x-108.051x | 0 |
-| NTL | 140 | 5.972x | 1.188x-38.548x | 5 |
-| Verified Isabelle BZ | 216 | 0.765x | 0.473x-2.677x | 135 |
-| Verified Isabelle LLL | 166 | 0.00814x | 0.000281x-0.222x | 165 |
+| FLINT | 74 | 11.056x | 4.413x-100.350x | 0 |
+| PARI/GP | 79 | 12.029x | 2.699x-107.045x | 0 |
+| NTL | 140 | 5.923x | 1.189x-36.847x | 8 |
+| Verified Isabelle BZ | 216 | 0.754x | 0.467x-2.713x | 134 |
+| Verified Isabelle LLL | 166 | 0.00806x | 0.000281x-0.226x | 165 |
 
 The broad percentile bands matter: performance depends strongly on the
 polynomial family, so none of these medians is a uniform ordering.
@@ -58,9 +58,9 @@ of parity. This comparison includes the Lean 4.33 toolchain and core-library
 update, so it describes the final shipped state rather than isolating the
 optimization. Coverage increases by one with no lost row:
 
-- `hoeij_F190`: 7.253 s, newly solved;
-- `sd6`: 8.319 s, retained at 84% of the cutoff;
-- Wilkinson degrees 24, 40, and 56: 4.075 ms, 16.034 ms, and 41.031 ms.
+- `hoeij_F190`: 7.238 s, newly solved;
+- `sd6`: 8.115 s, retained at 81% of the cutoff;
+- Wilkinson degrees 24, 40, and 56: 4.083 ms, 15.912 ms, and 40.396 ms.
 
 F190 and `sd6` each use one timed call because they exceed one second. These are
 coverage observations, not low-variance speed estimates. The Wilkinson points

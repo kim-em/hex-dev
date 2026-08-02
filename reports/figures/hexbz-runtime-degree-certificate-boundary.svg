@@ -1139,7 +1139,7 @@ z
     </g>
    </g>
    <g id="line2d_39">
-    <path d="M 290.301172 192.25763
+    <path d="M 290.301172 196.536783
 " clip-path="url(#p2299177b78)" style="fill: none; stroke: #1f77b4; stroke-linecap: square"/>
     <defs>
      <path id="md73ba6276e" d="M 0 2
@@ -1155,7 +1155,7 @@ z
 " style="stroke: #1f77b4"/>
     </defs>
     <g clip-path="url(#p2299177b78)">
-     <use xlink:href="#md73ba6276e" x="290.301172" y="192.25763" style="fill: #1f77b4; stroke: #1f77b4"/>
+     <use xlink:href="#md73ba6276e" x="290.301172" y="196.536783" style="fill: #1f77b4; stroke: #1f77b4"/>
     </g>
    </g>
    <g id="line2d_40">
