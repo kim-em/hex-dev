@@ -83,13 +83,21 @@ from the definition rather than from measurement:
 | internal nodes that extend the selection | 278,512 | 458,756 |
 | list cells built at leaves, before | 557,056 | 1,179,198 |
 | `p ^ k` evaluations, before | 311,280 | 524,278 |
-| `p ^ k` evaluations, after | 16 | 16 |
+| `p ^ k` evaluations, after | 16 | 17 |
 
-A leaf at support size `k` built `2k + 2` cells; summed over the complete
-search that is `17 * 2^15` cells on `sd5`.  Only the 129 surviving supports
-build them now.  The modulus is computed once per subset-cardinality level into
+A leaf at support size `k` built `2k + 2` cells; summed over the complete search
+that is `17 * 2^15` cells on `sd5`.  Only the 129 surviving supports build them
+now.  The `sd5` column is exact for its whole search, which is one head search
+over the 15-element tail running cardinalities 0 through 15.  `sd5_x_phi11`
+answers with two divisors: a head search over its 16-element tail that
+completes cardinalities 0 through 14 and succeeds in 15, then a one-factor
+residual search that succeeds at cardinality 0; its column counts the first
+search, which is 65,519 of its 65,522 leaves.
+
+The modulus is computed once per subset-cardinality level into
 `Hex.SupportMeta`, together with each lifted factor's degree and trailing
-coefficient.
+coefficient, which is why the last row is the number of levels entered rather
+than a function of the leaf count.
 
 ## Measured effect
 
