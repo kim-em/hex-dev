@@ -72,6 +72,10 @@ degree (the same convention `Hex.DensePoly` uses in
 * ``primitive_part`` — returns ``a // content(a)`` as a coefficient
   list (FLINT's primitive-part normal form). The zero polynomial
   returns ``[]``.
+* ``resultant`` — returns the integer resultant of ``a`` and ``b``.
+* ``discriminant`` — returns the integer discriminant of ``a``.
+* ``overhead`` — returns ``0`` without constructing a polynomial; this is the
+  steady-state JSON framing / dispatch calibration used by headline reports.
 
 ### `nmod_poly` (F_p[x] for prime p that fits in a word)
 
@@ -279,6 +283,18 @@ def _fmpz_poly_primitive_part(req: dict[str, Any]) -> list[int]:
     return _fmpz_poly_coeffs(a // flint.fmpz_poly([c]))  # type: ignore[union-attr]
 
 
+def _fmpz_poly_resultant(req: dict[str, Any]) -> int:
+    return int(_fmpz_poly(req["a"]).resultant(_fmpz_poly(req["b"])))
+
+
+def _fmpz_poly_discriminant(req: dict[str, Any]) -> int:
+    return int(_fmpz_poly(req["a"]).discriminant())
+
+
+def _fmpz_poly_overhead(_req: dict[str, Any]) -> int:
+    return 0
+
+
 _FMPZ_POLY_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
     "add": _fmpz_poly_add,
     "sub": _fmpz_poly_sub,
@@ -289,6 +305,9 @@ _FMPZ_POLY_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
     "compose": _fmpz_poly_compose,
     "content": _fmpz_poly_content,
     "primitive_part": _fmpz_poly_primitive_part,
+    "resultant": _fmpz_poly_resultant,
+    "discriminant": _fmpz_poly_discriminant,
+    "overhead": _fmpz_poly_overhead,
 }
 
 
