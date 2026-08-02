@@ -93,24 +93,35 @@ instance {p : ZPoly} {i₁ i₂ : RefinedIsolation p} : Decidable (Intersects i�
 @[expose] def RefinedIsolation.sameRoot {p : ZPoly} (i₁ i₂ : RefinedIsolation p) : Bool :=
   DyadicSquare.discsMeet i₁.1.square i₂.1.square
 
-/-- A certified atom needs at least two stored coefficients. Both
-witness checkers inspect the full Taylor array: Newton--Kantorovich requires at
-least two coefficients, while the `k = 1` Pellet branch requires coefficient
-index one to exist. -/
+/-- Every structural atom certificate belongs to a polynomial with at least
+two stored coefficients. Exact reflection preserves that count. -/
+theorem AtomCertificate.size_gt_one {p : ZPoly} {s : DyadicSquare}
+    (certificate : AtomCertificate p s) : 1 < p.size := by
+  induction certificate with
+  | @nk p' s' hnk =>
+      by_cases h : 1 < p'.size
+      · exact h
+      · have hle : p'.size ≤ 1 := by omega
+        rw [nkWitness, nkWitnessCheck_false hle] at hnk
+        contradiction
+  | @pellet p' s' hpellet =>
+      by_cases h : 1 < p'.size
+      · exact h
+      · have hle : p'.size ≤ 1 := by omega
+        change witnessCheck p' s' 1 = true at hpellet
+        rw [witnessCheck_false hle] at hpellet
+        contradiction
+  | neg hprim certificate ih =>
+      rw [ZPoly.size_negRoots hprim]
+      exact ih
+  | normalize certificate ih =>
+      rw [ZPoly.size_normalizePrimitiveSign]
+      exact ih
+
+/-- A certified atom needs at least two stored coefficients. -/
 theorem DyadicRootIsolation.size_gt_one {p : ZPoly} (i : DyadicRootIsolation p) :
-    1 < p.size := by
-  rcases i.witness with hnk | hpellet
-  · by_cases h : 1 < p.size
-    · exact h
-    · have hle : p.size ≤ 1 := by omega
-      rw [nkWitness, nkWitnessCheck_false hle] at hnk
-      contradiction
-  · by_cases h : 1 < p.size
-    · exact h
-    · have hle : p.size ≤ 1 := by omega
-      change witnessCheck p i.square 1 = true at hpellet
-      rw [witnessCheck_false hle] at hpellet
-      contradiction
+    1 < p.size :=
+  i.witness.size_gt_one
 
 /-- A certified atom can only exist for a positive-degree polynomial. -/
 theorem DyadicRootIsolation.posDegree {p : ZPoly} (i : DyadicRootIsolation p) :

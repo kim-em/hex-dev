@@ -12,6 +12,7 @@ public import HexBerlekamp.Factored
 public import HexBerlekamp.PolynomialTactic
 public import HexBerlekamp.FactorPolyElab
 public import HexBerlekamp.IrreducibilityElab
+public import HexBerlekamp.DegreePattern
 public import HexBerlekamp.DelayedKernel
 public import HexBerlekamp.DistinctDegree
 public import HexBerlekamp.Factor

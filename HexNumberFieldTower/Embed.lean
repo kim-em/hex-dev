@@ -29,7 +29,7 @@ private def embedSqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def embedSqrtTwoRep : RefinedIsolation embedSqrtTwoPoly :=
-  ⟨⟨embedSqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨embedSqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def embedSqrtTwoRoot : SimpleRoot embedSqrtTwoPoly :=
   SimpleRoot.mk embedSqrtTwoRep
@@ -57,7 +57,7 @@ private def embedSqrtTwoRoot : SimpleRoot embedSqrtTwoPoly :=
 private def embedNegSqrtTwoPoly : ZPoly := DensePoly.ofList [2, 0, -1]
 
 private def embedNegSqrtTwoRep : RefinedIsolation embedNegSqrtTwoPoly :=
-  ⟨⟨embedSqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨embedSqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def embedNegSqrtTwoRoot : SimpleRoot embedNegSqrtTwoPoly :=
   SimpleRoot.mk embedNegSqrtTwoRep
@@ -83,7 +83,7 @@ private def embedNegRootSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec (-181) 7, 0, 8⟩
 
 private def embedNegRootRep : RefinedIsolation embedSqrtTwoPoly :=
-  ⟨⟨embedNegRootSquare, by decide⟩, by decide⟩
+  ⟨⟨embedNegRootSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def embedNegRoot : SimpleRoot embedSqrtTwoPoly :=
   SimpleRoot.mk embedNegRootRep
@@ -110,7 +110,7 @@ private def embedThreeHalvesSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 3 1, 0, 8⟩
 
 private def embedThreeHalvesRep : RefinedIsolation embedThreeHalvesPoly :=
-  ⟨⟨embedThreeHalvesSquare, by decide⟩, by decide⟩
+  ⟨⟨embedThreeHalvesSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def embedThreeHalvesRoot : SimpleRoot embedThreeHalvesPoly :=
   SimpleRoot.mk embedThreeHalvesRep
@@ -140,7 +140,7 @@ private def embedSqrtThreeHalvesSquare : DyadicSquare :=
 
 private def embedSqrtThreeHalvesRep :
     RefinedIsolation embedSqrtThreeHalvesPoly :=
-  ⟨⟨embedSqrtThreeHalvesSquare, by decide⟩, by decide⟩
+  ⟨⟨embedSqrtThreeHalvesSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def embedSqrtThreeHalvesRoot :
     SimpleRoot embedSqrtThreeHalvesPoly :=

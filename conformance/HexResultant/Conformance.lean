@@ -39,8 +39,9 @@ Covered properties:
 - resultants obey linear evaluation, the degree-product swap sign, common-root
   vanishing, recursive bivariate elimination, and the corrected defective-drop
   scale;
-- quadratic discriminants satisfy `b^2 - 4*c`, and repeated roots have
-  discriminant zero; the formal derivative-degree correction is exercised in
+- quadratic discriminants satisfy `b^2 - 4*c`, repeated roots have
+  discriminant zero, and positive-degree products satisfy the cross-resultant
+  square identity; the formal derivative-degree correction is exercised in
   positive characteristic.
 
 Covered edge cases:
@@ -566,6 +567,26 @@ example (f g : DensePoly Int) (hg : g ≠ 0) (hgf : g.size ≤ f.size) :
   disc (poly [1, -2, 1]) = (0 : Int) &&
     disc (poly [1, 2, 3]) = -8 &&
     disc (poly [-1, 0, 0, 1]) = -27
+
+-- Three positive-degree products exercise the discriminant product identity;
+-- the expected relation is independent of the implementation of `disc`.
+#guard
+  let f1 := poly [-1, 1]
+  let g1 := poly [-2, 1]
+  let f2 := poly [1, 0, 1]
+  let g2 := poly [-3, 1]
+  let f3 := poly [2, 3, 1]
+  let g3 := poly [1, 2]
+  disc (f1 * g1) = disc f1 * disc g1 * resultant f1 g1 ^ 2 &&
+    disc (f2 * g2) = disc f2 * disc g2 * resultant f2 g2 ^ 2 &&
+    disc (f3 * g3) = disc f3 * disc g3 * resultant f3 g3 ^ 2
+
+-- A nonunit constant breaks the product identity under the public convention
+-- `disc (C c) = 1`, pinning the need for both positive-degree hypotheses.
+#guard
+  let f := poly [1, 0, 1]
+  let c := poly [2]
+  disc (f * c) != disc f * disc c * resultant f c ^ 2
 
 /- The derivative of `2*X^10 + 3*X` in characteristic five is the constant
 `3`, nine degrees below its formal degree. This reaches the leading-coefficient

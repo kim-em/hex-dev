@@ -286,6 +286,62 @@ instance {p : ZPoly} {s : DyadicSquare} : Decidable (nkWitness p s) :=
 instance {p : ZPoly} {s : DyadicSquare} : Decidable (atomWitness p s) :=
   inferInstanceAs (Decidable (nkWitness p s ∨ witness p s 1))
 
+namespace ZPoly
+
+/-- Primitive positive-leading polynomial whose roots are the negatives of
+the roots of `p`. Primitive-part normalization precedes the exact `X ↦ -X`
+reflection so primitive inputs reduce directly to a parity sign change. -/
+@[expose]
+def negRoots (p : ZPoly) : ZPoly :=
+  normalizePrimitiveSign (dilate (-1) (primitivePart p))
+
+/-- On primitive input, root negation is just reflection followed by one
+leading-sign normalization. -/
+theorem negRoots_eq_reflect {p : ZPoly} (hprim : Primitive p) :
+    p.negRoots = normalizePrimitiveSign (dilate (-1) p) := by
+  rw [negRoots, primitivePart_eq_self_of_primitive p hprim]
+
+/-- Root negation preserves coefficient count on primitive input. -/
+@[simp] theorem size_negRoots {p : ZPoly} (hprim : Primitive p) :
+    p.negRoots.size = p.size := by
+  rw [negRoots_eq_reflect hprim, size_normalizePrimitiveSign,
+    size_dilate_neg_one]
+
+end ZPoly
+
+/-- Reflect a square through the origin. -/
+@[expose]
+def DyadicSquare.neg (s : DyadicSquare) : DyadicSquare :=
+  ⟨-s.re, -s.im, s.prec⟩
+
+/-- Structural evidence that an atom is certified. Checker-produced atoms
+retain their original NK/Pellet form; exact reflection transports an existing
+certificate without re-running either checker. -/
+inductive AtomCertificate : (p : ZPoly) → (s : DyadicSquare) → Type
+  | nk {p s} (h : nkWitness p s) : AtomCertificate p s
+  | pellet {p s} (h : witness p s 1) : AtomCertificate p s
+  | neg {p s} (hprim : ZPoly.Primitive p) (certificate : AtomCertificate p s) :
+      AtomCertificate p.negRoots s.neg
+  | normalize {p s} (certificate : AtomCertificate p s) :
+      AtomCertificate (ZPoly.normalizePrimitiveSign p) s
+
+namespace AtomCertificate
+
+/-- Package either checker result as structural atom evidence. -/
+def ofWitness {p : ZPoly} {s : DyadicSquare} :
+    atomWitness p s → AtomCertificate p s := fun h =>
+  if hnk : nkWitness p s then .nk hnk else .pellet (h.resolve_left hnk)
+
+/-- Whether the certificate selects the closed square (NK) rather than the
+circumscribed disc (Pellet). Reflection preserves this region choice. -/
+@[expose] def isNK {p : ZPoly} {s : DyadicSquare} : AtomCertificate p s → Bool
+  | .nk _ => true
+  | .pellet _ => false
+  | .neg _ certificate => certificate.isNK
+  | .normalize certificate => certificate.isNK
+
+end AtomCertificate
+
 /-- Which atom certificates `certify?` attempts, and in which order.
     `nkThenPellet` is the default; the singleton strategies exist for the
     side-by-side comparison of the two atom forms. -/
@@ -298,8 +354,8 @@ deriving DecidableEq, Repr
 structure DyadicRootIsolation (p : ZPoly) where
   /-- The isolating square. -/
   square : DyadicSquare
-  /-- Either atom certificate on the square's certified region. -/
-  witness : Hex.atomWitness p square
+  /-- An NK/Pellet atom certificate, possibly transported through reflection. -/
+  witness : Hex.AtomCertificate p square
 
 /-- The result of certifying one component: an atom (either atom certificate)
     or a `k ≥ 1` Pellet cluster. -/
@@ -314,13 +370,18 @@ inductive Certified (p : ZPoly) where
     Pellet witness already certifies exactly one root in the enclosing disc. -/
 @[expose] def DyadicRootCluster.atomize {p : ZPoly} (c : DyadicRootCluster p) (h : c.k = 1) :
     DyadicRootIsolation p :=
-  ⟨encSquare c.squares, Or.inr (h ▸ c.witness)⟩
+  ⟨encSquare c.squares, .pellet (h ▸ c.witness)⟩
 
 /-- Certify an arbitrary candidate square as an atom, deciding both
     `atomWitness` disjuncts fresh. This is the documented way to build a
     `DyadicRootIsolation` outside the drivers, e.g. after transforming an
     isolation's square (hex-number-field's `inv?` re-certification). -/
 def certifyAtom? (p : ZPoly) (s : DyadicSquare) : Option (DyadicRootIsolation p) :=
-  if h : atomWitness p s then some ⟨s, h⟩ else none
+  if hnk : nkWitness p s then
+    some ⟨s, .nk hnk⟩
+  else if hp : witness p s 1 then
+    some ⟨s, .pellet hp⟩
+  else
+    none
 
 end Hex

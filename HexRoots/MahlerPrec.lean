@@ -73,6 +73,56 @@ namespace ZPoly
 @[expose] def coeffAbsMax (p : ZPoly) : Nat :=
   (List.range p.size).foldl (fun acc i => Nat.max acc (p.coeff i).natAbs) 0
 
+/-- Reflection in the origin preserves coefficient height. -/
+@[simp] theorem coeffAbsMax_dilate_neg_one (p : ZPoly) :
+    coeffAbsMax (p.dilate (-1)) = coeffAbsMax p := by
+  unfold coeffAbsMax
+  rw [ZPoly.size_dilate_neg_one]
+  have hfold (indices : List Nat) (acc : Nat) :
+      indices.foldl
+          (fun total i => Nat.max total ((p.dilate (-1)).coeff i).natAbs) acc =
+        indices.foldl (fun total i => Nat.max total (p.coeff i).natAbs) acc := by
+    induction indices generalizing acc with
+    | nil => rfl
+    | cons n indices ih =>
+        simp only [List.foldl_cons]
+        have habs : ((p.dilate (-1)).coeff n).natAbs = (p.coeff n).natAbs := by
+          rw [ZPoly.coeff_dilate, Int.natAbs_mul, Int.natAbs_pow]
+          rw [show (-1 : Int).natAbs = 1 by decide, Nat.one_pow, Nat.one_mul]
+        rw [habs]
+        exact ih _
+  exact hfold (List.range p.size) 0
+
+/-- Multiplication by `-1` preserves coefficient height. -/
+@[simp] theorem coeffAbsMax_scale_neg_one (p : ZPoly) :
+    coeffAbsMax (DensePoly.scale (-1) p) = coeffAbsMax p := by
+  unfold coeffAbsMax
+  rw [ZPoly.scale_size_of_ne_zero (-1 : Int) p (by decide)]
+  have hfold (indices : List Nat) (acc : Nat) :
+      indices.foldl (fun total i =>
+          Nat.max total ((DensePoly.scale (-1) p).coeff i).natAbs) acc =
+        indices.foldl (fun total i => Nat.max total (p.coeff i).natAbs) acc := by
+    induction indices generalizing acc with
+    | nil => rfl
+    | cons n indices ih =>
+        simp only [List.foldl_cons]
+        have habs : ((DensePoly.scale (-1) p).coeff n).natAbs =
+            (p.coeff n).natAbs := by
+          rw [DensePoly.coeff_scale (R := Int) (-1) p n (Int.mul_zero _),
+            Int.natAbs_mul]
+          rw [show (-1 : Int).natAbs = 1 by decide, Nat.one_mul]
+        rw [habs]
+        exact ih _
+  exact hfold (List.range p.size) 0
+
+/-- Primitive sign normalization preserves coefficient height. -/
+@[simp] theorem coeffAbsMax_normalizePrimitiveSign (p : ZPoly) :
+    coeffAbsMax (p.normalizePrimitiveSign) = coeffAbsMax p := by
+  unfold normalizePrimitiveSign
+  split
+  · exact coeffAbsMax_scale_neg_one p
+  · rfl
+
 end ZPoly
 
 /-- Precision at which the circumscribed-disc radius `2^{−m}·√2` is

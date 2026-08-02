@@ -76,8 +76,8 @@ theorem findDirectHead_found_le
         | found foundSplit tried =>
             cases hfind
             obtain ⟨selected, remaining, hmem, hselected, hremaining, heval⟩ :=
-              scanDirectCombinations_found coreLc target basis head
-                tail level [] []
+              scanDirectCombinations_found coreLc target basis
+                (Hex.supportMeta basis) head tail level [] []
                 ((Hex.directLiftedFactor basis head).degree?.getD 0)
                 ((Hex.directLiftedFactor basis head).coeff 0 %
                   (Hex.liftModulus basis : Int))
@@ -98,8 +98,8 @@ theorem findDirectHead_found_le
             by_cases heq : level = trueLevel
             · subst level
               obtain ⟨foundSplit, foundTried, hfound⟩ :=
-                scanDirectCombinations_finds coreLc target basis head
-                  tail trueLevel [] []
+                scanDirectCombinations_finds coreLc target basis
+                  (Hex.supportMeta basis) head tail trueLevel [] []
                   ((Hex.directLiftedFactor basis head).degree?.getD 0)
                   ((Hex.directLiftedFactor basis head).coeff 0 %
                     (Hex.liftModulus basis : Int))
@@ -516,6 +516,7 @@ theorem tryDirectSplit_trueSupport
     Hex.exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq
       hfactor_lc_pos hfactor_degree_pos hproduct
   unfold Hex.tryDirectSplit Hex.tryDirectCandidate
+    Hex.directCandidateAfterPrefilter
   rw [hpre]
   simp only [if_true]
   rw [hcand, hrecord, hquot]

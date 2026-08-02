@@ -78,7 +78,7 @@ private def sqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
-  ⟨⟨sqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
   SimpleRoot.mk sqrtTwoRep
@@ -144,6 +144,34 @@ Canonical algebraic numbers reuse these lazy operations and exactify the
 answer. Their Boolean equality compares represented values rather than record
 layout. Lazy roots deliberately have no `BEq`; the root driver uses checked
 {name}`Hex.QAdjoin.Roots.sameValue?` instead.
+
+# Canonical field arithmetic
+%%%
+tag := "hex-number-field-canonical"
+%%%
+
+Canonical algebraic numbers also provide executable rational construction,
+casts, scalar multiplication, and natural and integer powers. The Mathlib
+companion proves that the complex interpretation is injective and installs a
+lawful {name}`Field` instance on {name}`Hex.AlgebraicNumber` whose data fields
+are these same executable operations.
+
+{docstring Hex.AlgebraicNumber.ofRat}
+
+{docstring Hex.AlgebraicNumber.ofRat_toComplex}
+
+{docstring Hex.AlgebraicNumber.toComplex_injective}
+
+```lean
+open Hex
+
+example : (2 : AlgebraicNumber) =
+    AlgebraicNumber.ofRat 2 := rfl
+example (a b : AlgebraicNumber) : a + b =
+    AlgebraicNumber.add a b := rfl
+example (a : AlgebraicNumber) : a ^ (3 : Nat) =
+    AlgebraicNumber.natPow a 3 := rfl
+```
 
 # Polynomials and roots
 %%%

@@ -41,7 +41,7 @@ private def sqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
-  ⟨⟨sqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtTwo? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots sqrtTwoPoly then
@@ -63,7 +63,7 @@ private def sqrtThreeSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 222 7, 0, 8⟩
 
 private def sqrtThreeRep : RefinedIsolation sqrtThreePoly :=
-  ⟨⟨sqrtThreeSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtThreeSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtThree? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots sqrtThreePoly then
@@ -88,7 +88,7 @@ private def twoWithZeroSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 2 0, 0, 8⟩
 
 private def twoWithZeroRep : RefinedIsolation twoWithZeroPoly :=
-  ⟨⟨twoWithZeroSquare, by decide⟩, by decide⟩
+  ⟨⟨twoWithZeroSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def twoWithZero? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots twoWithZeroPoly then
@@ -111,7 +111,7 @@ private def enclosingSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 6074001000 32, 0, 32⟩
 
 private def enclosingRep : RefinedIsolation enclosingPoly :=
-  ⟨⟨enclosingSquare, by decide⟩, by decide⟩
+  ⟨⟨enclosingSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def enclosingRoot? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots enclosingPoly then

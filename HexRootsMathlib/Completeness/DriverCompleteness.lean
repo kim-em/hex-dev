@@ -153,10 +153,10 @@ private theorem certifyNK_one {p : Hex.ZPoly} {c : Hex.Component}
   split <;> rename_i hbase'
   · split <;> rename_i hins
     · split <;> rename_i hcand
-      · refine ⟨⟨_, Or.inl hcand⟩, rfl, ?_⟩
+      · refine ⟨⟨_, .nk hcand⟩, rfl, ?_⟩
         exact newtonCandidate_prec hsize
-      · exact ⟨⟨_, Or.inl hbase'⟩, rfl, le_rfl⟩
-    · exact ⟨⟨_, Or.inl hbase'⟩, rfl, le_rfl⟩
+      · exact ⟨⟨_, .nk hbase'⟩, rfl, le_rfl⟩
+    · exact ⟨⟨_, .nk hbase'⟩, rfl, le_rfl⟩
   · exact (hbase' hbase).elim
 
 /-- The mixed strategy has the identical successful NK prefix. -/
@@ -170,10 +170,10 @@ private theorem certifyMixed_one {p : Hex.ZPoly} {c : Hex.Component}
   split <;> rename_i hbase'
   · split <;> rename_i hins
     · split <;> rename_i hcand
-      · refine ⟨⟨_, Or.inl hcand⟩, rfl, ?_⟩
+      · refine ⟨⟨_, .nk hcand⟩, rfl, ?_⟩
         exact newtonCandidate_prec hsize
-      · exact ⟨⟨_, Or.inl hbase'⟩, rfl, le_rfl⟩
-    · exact ⟨⟨_, Or.inl hbase'⟩, rfl, le_rfl⟩
+      · exact ⟨⟨_, .nk hbase'⟩, rfl, le_rfl⟩
+    · exact ⟨⟨_, .nk hbase'⟩, rfl, le_rfl⟩
   · exact (hbase' hbase).elim
 
 /-- A member of a globally normalized round is one level finer than every

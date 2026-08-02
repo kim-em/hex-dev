@@ -103,6 +103,88 @@ theorem coeff_dilate (c : Int) (p : ZPoly) (n : Nat) :
     rw [List.getElem?_eq_none (by simpa using Nat.le_of_not_lt hn), hzero, Int.mul_zero]
     rfl
 
+/-- Reflection in the origin preserves the stored coefficient count. -/
+theorem size_dilate_neg_one (p : ZPoly) :
+    (dilate (-1) p).size = p.size := by
+  by_cases hp : p.size = 0
+  · simp [dilate, hp]
+  · have hpPos : 0 < p.size := Nat.pos_of_ne_zero hp
+    apply Nat.le_antisymm
+    · unfold dilate
+      exact Nat.le_trans (DensePoly.size_ofCoeffs_le _) (by simp)
+    · apply Nat.le_of_not_gt
+      intro hle
+      have hcoeffZero := DensePoly.coeff_eq_zero_of_size_le
+        (dilate (-1) p) (i := p.size - 1) (Nat.le_sub_one_of_lt hle)
+      rw [coeff_dilate] at hcoeffZero
+      have hpTop := DensePoly.coeff_last_ne_zero_of_pos_size p hpPos
+      exact hpTop (by
+        have hsign : ((-1 : Int) ^ (p.size - 1)) ≠ 0 :=
+          Int.pow_ne_zero (by decide)
+        exact (Int.mul_eq_zero.mp hcoeffZero).resolve_left hsign)
+
+/-- Reflection in the origin is an involution on integer polynomials. -/
+@[simp] theorem dilate_neg_one_dilate_neg_one (p : ZPoly) :
+    dilate (-1) (dilate (-1) p) = p := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [coeff_dilate, coeff_dilate]
+  have hsign : ((-1 : Int) ^ n) * ((-1 : Int) ^ n) = 1 := by
+    induction n with
+    | zero => rfl
+    | succ n ih => simp only [Lean.Grind.Semiring.pow_succ]; grind
+  rw [← Int.mul_assoc, hsign, Int.one_mul]
+
+/-- Reflection in the origin preserves nonzeroness. -/
+theorem dilate_neg_one_ne_zero {p : ZPoly} (hp : p ≠ 0) :
+    dilate (-1) p ≠ 0 := by
+  intro hreflect
+  apply hp
+  rw [← dilate_neg_one_dilate_neg_one p, hreflect]
+  simp [dilate]
+
+/-- Reflection in the origin preserves integer content. -/
+@[simp] theorem content_dilate_neg_one (p : ZPoly) :
+    content (dilate (-1) p) = content p := by
+  unfold content DensePoly.content DensePoly.contentNat
+  rw [DensePoly.toList_eq_coeff_range, DensePoly.toList_eq_coeff_range,
+    size_dilate_neg_one]
+  apply congrArg Int.ofNat
+  have hfold (indices : List Nat) (acc : Nat) :
+      (indices.map fun i => (dilate (-1) p).coeff i).foldl
+          (fun g coeff => Nat.gcd g coeff.natAbs) acc =
+        (indices.map fun i => p.coeff i).foldl
+          (fun g coeff => Nat.gcd g coeff.natAbs) acc := by
+    induction indices generalizing acc with
+    | nil => rfl
+    | cons n indices ih =>
+        simp only [List.map_cons, List.foldl_cons]
+        have habs : ((dilate (-1) p).coeff n).natAbs = (p.coeff n).natAbs := by
+          rw [coeff_dilate, Int.natAbs_mul, Int.natAbs_pow]
+          rw [show (-1 : Int).natAbs = 1 by decide, Nat.one_pow, Nat.one_mul]
+        rw [habs]
+        exact ih _
+  exact hfold (List.range p.size) 0
+
+/-- Reflection in the origin preserves the optional degree. -/
+@[simp] theorem degree?_dilate_neg_one (p : ZPoly) :
+    (dilate (-1) p).degree? = p.degree? := by
+  simp [DensePoly.degree?, size_dilate_neg_one]
+
+/-- The reflected leading coefficient differs only by the degree-parity sign. -/
+theorem leadingCoeff_dilate_neg_one (p : ZPoly) :
+    (dilate (-1) p).leadingCoeff =
+      (-1 : Int) ^ (p.size - 1) * p.leadingCoeff := by
+  by_cases hp : p.size = 0
+  · have hpzero : p = 0 := (DensePoly.size_eq_zero_iff p).mp hp
+    subst p
+    simp [dilate]
+  · have hpPos : 0 < p.size := Nat.pos_of_ne_zero hp
+    rw [DensePoly.leadingCoeff_eq_coeff_last _ (by
+      rw [size_dilate_neg_one]
+      exact hpPos), size_dilate_neg_one, coeff_dilate,
+      DensePoly.leadingCoeff_eq_coeff_last p hpPos]
+
 /-- Dilation by `1` is the identity: `dilate 1 p = p`. The simp normal form for
 the trivial dilation. -/
 @[simp, grind =] theorem dilate_one (p : ZPoly) : dilate 1 p = p := by
@@ -114,6 +196,11 @@ the trivial dilation. -/
 @[expose]
 def Primitive (f : ZPoly) : Prop :=
   content f = 1
+
+/-- Reflection in the origin preserves primitivity. -/
+theorem primitive_dilate_neg_one {p : ZPoly} (hp : Primitive p) :
+    Primitive (dilate (-1) p) := by
+  simpa [Primitive] using hp
 
 /-- A {name}`Hex.ZPoly` is a unit iff it is the constant polynomial `1` or
 `-1`. -/

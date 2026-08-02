@@ -37,7 +37,7 @@ private def sqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
-  ⟨⟨sqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
   SimpleRoot.mk sqrtTwoRep
@@ -59,7 +59,7 @@ private def sqrtThreeSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 222 7, 0, 8⟩
 
 private def sqrtThreeRep : RefinedIsolation sqrtThreePoly :=
-  ⟨⟨sqrtThreeSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtThreeSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtThree? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots sqrtThreePoly then
@@ -82,7 +82,7 @@ private def fourthRootTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 77936 16, 0, 17⟩
 
 private def fourthRootTwoRep : RefinedIsolation fourthRootTwoPoly :=
-  ⟨⟨fourthRootTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨fourthRootTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def fourthRootTwo? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots fourthRootTwoPoly then
