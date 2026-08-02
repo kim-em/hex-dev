@@ -18,6 +18,11 @@ set_option backward.proofsInPublic true
 The runtime iterator does not allocate a list of combinations.  These theorems
 relate its depth-first traversal to the extensional
 `subsetsOfSizeWithComplement` specification used only in proofs.
+
+They hold for an arbitrary `Hex.SupportMeta`, not only the canonical
+`Hex.supportMeta`: the structure's proof fields pin every recorded value to the
+lifted factor it describes, so the traversal's arithmetic is the specification's
+arithmetic whatever precomputation supplied it.
 -/
 
 namespace HexBerlekampZassenhausMathlib
@@ -198,6 +203,7 @@ private theorem tryDirectCandidate_eq_tryDirectSplit
 /-- A successful leaf exposes its exact indexed split and candidate check. -/
 theorem scanDirectCombinations_found
     (coreLc : Int) (target : Hex.ZPoly) (basis : Hex.LiftData)
+    (metadata : Hex.SupportMeta basis)
     (head : Hex.DirectLiftedIndex basis) :
     ∀ (xs : List (Hex.DirectLiftedIndex basis)) (choose : Nat)
       (selectedRev rejectedRev : List (Hex.DirectLiftedIndex basis))
@@ -207,7 +213,7 @@ theorem scanDirectCombinations_found
           Hex.directSelectedDegree basis (head :: selectedRev.reverse) →
       selectedTrail =
           Hex.directSelectedTrail basis (head :: selectedRev.reverse) →
-      Hex.scanDirectCombinations coreLc target basis head xs choose
+      Hex.scanDirectCombinations coreLc target basis metadata head xs choose
           selectedRev rejectedRev selectedDegree selectedTrail =
         .found split tried →
       ∃ selected remaining,
@@ -225,7 +231,8 @@ theorem scanDirectCombinations_found
         split tried hdegree htrail h
       cases choose with
       | zero =>
-          simp only [Hex.scanDirectCombinations] at h
+          simp only [Hex.scanDirectCombinations, Hex.directLeaf_eq,
+            Hex.SupportMeta.modulus_spec] at h
           split at h
           next candidate quotient heval =>
             cases h
@@ -246,7 +253,8 @@ theorem scanDirectCombinations_found
         split tried hdegree htrail h
       cases choose with
       | zero =>
-          simp only [Hex.scanDirectCombinations] at h
+          simp only [Hex.scanDirectCombinations, Hex.directLeaf_eq,
+            Hex.SupportMeta.modulus_spec] at h
           split at h
           next candidate quotient heval =>
             cases h
@@ -261,9 +269,10 @@ theorem scanDirectCombinations_found
           next =>
             contradiction
       | succ choose =>
-          simp only [Hex.scanDirectCombinations] at h
+          simp only [Hex.scanDirectCombinations, Hex.SupportMeta.degree_spec,
+            Hex.SupportMeta.trail_spec, Hex.SupportMeta.modulusInt_spec] at h
           generalize hincluded :
-              Hex.scanDirectCombinations coreLc target basis head xs choose
+              Hex.scanDirectCombinations coreLc target basis metadata head xs choose
                 (x :: selectedRev) rejectedRev
                 (selectedDegree +
                   (Hex.directLiftedFactor basis x).degree?.getD 0)
@@ -297,7 +306,7 @@ theorem scanDirectCombinations_found
               · simpa [List.reverse_cons, List.append_assoc] using hselected
           | exhausted includedTried =>
               generalize hrejected :
-                  Hex.scanDirectCombinations coreLc target basis head xs
+                  Hex.scanDirectCombinations coreLc target basis metadata head xs
                     (choose + 1) selectedRev (x :: rejectedRev)
                     selectedDegree selectedTrail = rejected at h
               cases rejected with
@@ -319,6 +328,7 @@ theorem scanDirectCombinations_found
 iterator (possibly after an earlier working split). -/
 theorem scanDirectCombinations_finds
     (coreLc : Int) (target : Hex.ZPoly) (basis : Hex.LiftData)
+    (metadata : Hex.SupportMeta basis)
     (head : Hex.DirectLiftedIndex basis) :
     ∀ (xs : List (Hex.DirectLiftedIndex basis)) (choose : Nat)
       (selectedRev rejectedRev : List (Hex.DirectLiftedIndex basis))
@@ -335,7 +345,7 @@ theorem scanDirectCombinations_finds
           (head :: (selectedRev.reverse ++ selected)) =
         some (candidate, quotient) →
       ∃ split tried,
-        Hex.scanDirectCombinations coreLc target basis head xs choose
+        Hex.scanDirectCombinations coreLc target basis metadata head xs choose
           selectedRev rejectedRev selectedDegree selectedTrail =
         .found split tried := by
   intro xs
@@ -352,7 +362,8 @@ theorem scanDirectCombinations_finds
           rw [← tryDirectCandidate_eq_tryDirectSplit
             coreLc target basis (head :: selectedRev.reverse)
             selectedDegree selectedTrail hdegree htrail] at hworks
-          simp only [Hex.scanDirectCombinations, hworks]
+          simp only [Hex.scanDirectCombinations, Hex.directLeaf_eq,
+            Hex.SupportMeta.modulus_spec, hworks]
           exact ⟨_, 1, rfl⟩
       | succ choose =>
           simp [Hex.subsetsOfSizeWithComplement] at hmem
@@ -368,7 +379,8 @@ theorem scanDirectCombinations_finds
           rw [← tryDirectCandidate_eq_tryDirectSplit
             coreLc target basis (head :: selectedRev.reverse)
             selectedDegree selectedTrail hdegree htrail] at hworks
-          simp only [Hex.scanDirectCombinations, hworks]
+          simp only [Hex.scanDirectCombinations, Hex.directLeaf_eq,
+            Hex.SupportMeta.modulus_spec, hworks]
           exact ⟨_, 1, rfl⟩
       | succ choose =>
           simp only [Hex.subsetsOfSizeWithComplement, List.mem_append,
@@ -394,13 +406,15 @@ theorem scanDirectCombinations_finds
                 (by rw [directSelectedDegree_cons_reverse, ← hdegree])
                 (by rw [directSelectedTrail_cons_reverse, ← htrail])
                 hmem hworks'
-            simp only [Hex.scanDirectCombinations, hfound]
+            simp only [Hex.scanDirectCombinations, Hex.SupportMeta.degree_spec,
+              Hex.SupportMeta.trail_spec, Hex.SupportMeta.modulusInt_spec,
+              hfound]
             exact ⟨split, tried, rfl⟩
           · simp only [Prod.mk.injEq] at hshape
             obtain ⟨rfl, rfl⟩ := hshape
             generalize hincluded :
-                Hex.scanDirectCombinations coreLc target basis head xs choose
-                  (x :: selectedRev) rejectedRev
+                Hex.scanDirectCombinations coreLc target basis metadata head xs
+                  choose (x :: selectedRev) rejectedRev
                   (selectedDegree +
                     (Hex.directLiftedFactor basis x).degree?.getD 0)
                   (selectedTrail *
@@ -409,7 +423,9 @@ theorem scanDirectCombinations_finds
                 included
             cases included with
             | found split tried =>
-                simp only [Hex.scanDirectCombinations, hincluded]
+                simp only [Hex.scanDirectCombinations,
+                  Hex.SupportMeta.degree_spec, Hex.SupportMeta.trail_spec,
+                  Hex.SupportMeta.modulusInt_spec, hincluded]
                 exact ⟨split, tried, rfl⟩
             | exhausted triedLeft =>
                 have hworks' :
@@ -421,7 +437,9 @@ theorem scanDirectCombinations_finds
                   ih (choose + 1) selectedRev (x :: rejectedRev)
                     selectedDegree selectedTrail selected remaining
                     candidate quotient hdegree htrail hmem hworks'
-                simp only [Hex.scanDirectCombinations, hincluded, hfound]
+                simp only [Hex.scanDirectCombinations,
+                  Hex.SupportMeta.degree_spec, Hex.SupportMeta.trail_spec,
+                  Hex.SupportMeta.modulusInt_spec, hincluded, hfound]
                 exact ⟨split, triedLeft + tried, rfl⟩
 
 /-- Successful exact quotient and candidate identities at a checked leaf. -/
