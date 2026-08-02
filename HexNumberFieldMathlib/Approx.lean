@@ -197,7 +197,9 @@ private theorem invCenter_eq (a : DyadicComplexBall) :
   exact HexRootsMathlib.GaussDyadic.toComplex_mul
     (a.re, a.im) (b.re, b.im)
 
-@[simp] private theorem realRadius_mul (a b : DyadicComplexBall) :
+/-- Ball multiplication propagates centre and radius errors by the standard
+bilinear enclosure formula. -/
+@[simp] theorem realRadius_mul (a b : DyadicComplexBall) :
     (a.mul b).realRadius =
       HexRootsMathlib.Dyadic.toReal (GaussDyadic.hi (a.re, a.im)) * b.realRadius +
         HexRootsMathlib.Dyadic.toReal (GaussDyadic.hi (b.re, b.im)) * a.realRadius +
@@ -367,6 +369,36 @@ theorem realRadius_toBall_le {s : DyadicSquare} {prec : Int}
     _ ≤ (2 : ℝ) ^ (-prec) * 2 :=
       mul_le_mul_of_nonneg_right hpow (by norm_num)
     _ = 2 * (2 : ℝ) ^ (-prec) := by ring
+
+/-- Refinement one bit beyond `prec` gives the sharper three-quarter-ulp
+radius used by the bounded Horner disambiguation majorant. -/
+theorem realRadius_toBall_le_three_quarters {s : DyadicSquare} {prec : Int}
+    (hprec : prec + 1 ≤ s.prec) :
+    s.toBall.realRadius ≤ (3 / 4 : ℝ) * (2 : ℝ) ^ (-prec) := by
+  have hpow : (2 : ℝ) ^ (-s.prec) ≤ (2 : ℝ) ^ (-(prec + 1)) :=
+    zpow_le_zpow_right₀ (by norm_num) (by omega)
+  have hsqrt : HexRootsMathlib.Dyadic.toReal sqrt2Hi ≤ (3 / 2 : ℝ) := by
+    norm_num [Hex.sqrt2Hi, HexRootsMathlib.Dyadic.toReal_ofIntWithPrec]
+  rw [DyadicSquare.toBall, realRadius,
+    HexRootsMathlib.DyadicSquare.radiusHi_eq,
+    HexRootsMathlib.DyadicSquare.halfWidth_eq]
+  calc
+    (2 : ℝ) ^ (-s.prec) * HexRootsMathlib.Dyadic.toReal sqrt2Hi ≤
+        (2 : ℝ) ^ (-(prec + 1)) * (3 / 2 : ℝ) := by
+      calc
+        (2 : ℝ) ^ (-s.prec) * HexRootsMathlib.Dyadic.toReal sqrt2Hi ≤
+            (2 : ℝ) ^ (-(prec + 1)) *
+              HexRootsMathlib.Dyadic.toReal sqrt2Hi :=
+          mul_le_mul_of_nonneg_right hpow (by
+            norm_num [Hex.sqrt2Hi,
+              HexRootsMathlib.Dyadic.toReal_ofIntWithPrec])
+        _ ≤ (2 : ℝ) ^ (-(prec + 1)) * (3 / 2 : ℝ) :=
+          mul_le_mul_of_nonneg_left hsqrt (by positivity)
+    _ = (3 / 4 : ℝ) * (2 : ℝ) ^ (-prec) := by
+      rw [show -(prec + 1) = -prec + (-1 : Int) by ring,
+        zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+      norm_num
+      ring
 
 private theorem refined_extent_le {p : ZPoly} (rep : RefinedIsolation p)
     (target : Int) (strategy : AtomStrategy)
