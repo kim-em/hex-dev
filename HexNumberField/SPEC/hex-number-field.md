@@ -270,6 +270,16 @@ HexRoots separation theorem makes distinct candidates disjoint, so exactly one
 candidate isolation meets the operation ball. This path does not need a second
 eliminant or the Stage 2 resultant value theorem.
 
+Candidate isolations use `resultIsolationPrec(e)` itself. The operand balls use
+an additional, input-computable guard: four bits for addition,
+`8 + rootBits(a) + rootBits(b)` for multiplication, and
+`2 * ceilLog2(1 + coeffAbsMax(a.p)) + 16` for inversion. The multiplication
+guard pays for operand-magnitude amplification. The reciprocal guard combines
+the reciprocal Cauchy lower bound with the quadratic distortion of inversion
+and dyadic rounding. The selected operation ball is two bits smaller than the
+candidate separation precision for addition and four bits smaller for
+multiplication and inversion.
+
 Canonical `AlgebraicNumber` arithmetic converts inputs with `toRoot`, performs
 the lazy operation, then calls `exact`. A many-input common-field routine is used
 internally only for polynomials with canonical algebraic coefficients.

@@ -693,9 +693,40 @@ theorem squareFreeCore_ne_zero (f : ZPoly) (hf : f ≠ 0) :
     show (primitiveSquareFreeDecomposition f).squareFreeCore = 0 from hcore,
     DensePoly.zero_mul, DensePoly.scale_zero_right]
 
-/-- The square-free part of a nonzero polynomial is square-free over `Rat[x]`:
-combine the executable square-freeness result with nonzeroness of the
-square-free part. -/
+/-- The square-free core of a nonzero polynomial is primitive. -/
+theorem squareFreeCore_primitive (f : ZPoly) (hf : f ≠ 0) :
+    Primitive (squareFreeCore f) := by
+  let d := primitiveSquareFreeDecomposition f
+  have hproduct : Primitive (d.squareFreeCore * d.repeatedPart) := by
+    simpa [d] using
+      primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive f hf
+  have hmul : content d.squareFreeCore * content d.repeatedPart = 1 := by
+    rw [← content_mul]
+    exact hproduct
+  have hmulNat :
+      DensePoly.contentNat d.squareFreeCore *
+          DensePoly.contentNat d.repeatedPart = 1 := by
+    simp only [content, DensePoly.content] at hmul
+    have habs := congrArg Int.natAbs hmul
+    simpa only [Int.natAbs_mul, Int.natAbs_ofNat', Int.natAbs_one]
+      using habs
+  have hcoreNat : DensePoly.contentNat d.squareFreeCore = 1 := by
+    exact Nat.dvd_one.mp ⟨DensePoly.contentNat d.repeatedPart, hmulNat.symm⟩
+  simp [Primitive, squareFreeCore_eq, d, content,
+    DensePoly.content, hcoreNat]
+
+/-- The square-free core of a nonzero polynomial has positive leading
+coefficient. -/
+theorem leadingCoeff_squareFreeCore_pos (f : ZPoly) (hf : f ≠ 0) :
+    0 < (squareFreeCore f).leadingCoeff := by
+  have hnonneg : 0 ≤ (squareFreeCore f).leadingCoeff := by
+    simpa [squareFreeCore_eq] using leadingCoeff_squareFreeCore_nonneg f
+  have hne : (squareFreeCore f).leadingCoeff ≠ 0 :=
+    leadingCoeff_ne_zero_of_ne_zero _ (squareFreeCore_ne_zero f hf)
+  omega
+
+/-- The square-free core of a nonzero polynomial is square-free over `Rat[x]`:
+combine the executable core square-freeness with core nonzeroness. -/
 theorem squareFreeRat_squareFreeCore (f : ZPoly) (hf : f ≠ 0) :
     SquareFreeRat (squareFreeCore f) :=
   primitiveSquareFreeDecomposition_squareFreeCore f (squareFreeCore_ne_zero f hf)

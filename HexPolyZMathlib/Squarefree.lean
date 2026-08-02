@@ -102,6 +102,92 @@ theorem squareFreeRat_iff (f : Hex.ZPoly) (hf : f ≠ 0) :
   rw [key, hG, EuclideanDomain.gcd_isUnit_iff, ← Polynomial.separable_def,
     PerfectField.separable_iff_squarefree]
 
+private theorem repeatedPart_dvd_derivative_complex (f : Hex.ZPoly) :
+    ((toPolynomial (Hex.ZPoly.primitiveSquareFreeDecomposition f).repeatedPart).map
+        (Int.castRingHom ℂ)) ∣
+      derivative ((toPolynomial (Hex.ZPoly.primitivePart f)).map
+        (Int.castRingHom ℂ)) := by
+  rcases Hex.ZPoly.toRatPoly_repeatedPart_dvd_derivative f with ⟨q, hq⟩
+  refine ⟨(HexPolyMathlib.toPolynomial q).map (algebraMap ℚ ℂ), ?_⟩
+  have hqPolynomial := congrArg HexPolyMathlib.toPolynomial hq
+  rw [HexPolyMathlib.toPolynomial_mul,
+    HexPolyMathlib.toPolynomial_derivative,
+    toPolynomial_toRatPoly, toPolynomial_toRatPoly] at hqPolynomial
+  have hmapped := congrArg
+    (fun p : Polynomial ℚ => p.map (algebraMap ℚ ℂ)) hqPolynomial
+  have hcomp :
+      (algebraMap ℚ ℂ).comp (Int.castRingHom ℚ) =
+        Int.castRingHom ℂ := RingHom.ext_int _ _
+  simpa [Polynomial.map_mul, Polynomial.map_map, hcomp] using hmapped
+
+/-- Passing to the executable square-free core preserves every complex root
+of a nonzero integer polynomial. -/
+theorem isRoot_squareFreeCore {f : Hex.ZPoly} (hf : f ≠ 0) {z : ℂ}
+    (hz : ((toPolynomial f).map (Int.castRingHom ℂ)).IsRoot z) :
+    ((toPolynomial (Hex.ZPoly.squareFreeCore f)).map
+      (Int.castRingHom ℂ)).IsRoot z := by
+  let d := Hex.ZPoly.primitiveSquareFreeDecomposition f
+  let P : Polynomial ℂ :=
+    (toPolynomial (Hex.ZPoly.primitivePart f)).map (Int.castRingHom ℂ)
+  let C : Polynomial ℂ :=
+    (toPolynomial d.squareFreeCore).map (Int.castRingHom ℂ)
+  let R : Polynomial ℂ :=
+    (toPolynomial d.repeatedPart).map (Int.castRingHom ℂ)
+  have hcontent : Hex.ZPoly.content f ≠ 0 := content_ne_zero f hf
+  have hdecomp := congrArg
+    (fun p : Polynomial ℤ => p.map (Int.castRingHom ℂ))
+    (toPolynomial_eq_C_content_mul_primitivePart f)
+  rw [Polynomial.map_mul, Polynomial.map_C] at hdecomp
+  have hPRoot : P.IsRoot z := by
+    have hproduct : (Hex.ZPoly.content f : ℂ) * P.eval z = 0 := by
+      rw [hdecomp] at hz
+      change (Polynomial.C (Hex.ZPoly.content f : ℂ) * P).eval z = 0 at hz
+      rw [Polynomial.eval_mul, Polynomial.eval_C] at hz
+      exact hz
+    exact (mul_eq_zero.mp hproduct).resolve_left (by exact_mod_cast hcontent)
+  have hprimitive : Hex.ZPoly.primitivePart f ≠ 0 :=
+    Hex.ZPoly.ne_zero_of_primitive _
+      (Hex.ZPoly.primitivePart_primitive f hcontent)
+  have hPne : P ≠ 0 := by
+    intro hzero
+    apply hprimitive
+    have hpolynomial : toPolynomial (Hex.ZPoly.primitivePart f) = 0 :=
+      (Polynomial.map_eq_zero_iff
+        (RingHom.injective_int (Int.castRingHom ℂ))).mp (by
+          simpa [P] using hzero)
+    apply (HexPolyMathlib.equiv (R := Int)).injective
+    simpa [HexPolyMathlib.equiv_apply] using hpolynomial
+  have hrepDvd : R ∣ derivative P := by
+    simpa [d, P, R] using repeatedPart_dvd_derivative_complex f
+  rcases hrepDvd with ⟨Q, hQ⟩
+  rcases Hex.ZPoly.primitiveSquareFreeDecomposition_reassembly_signed f hf with
+    ⟨ε, hε, hreassembly⟩
+  have hreassemblyComplex := congrArg
+    (fun p : Hex.ZPoly => (toPolynomial p).map (Int.castRingHom ℂ))
+    hreassembly
+  have hPdvd : P ∣ derivative P * C := by
+    rcases hε with rfl | rfl
+    · refine ⟨Q, ?_⟩
+      simp only [HexPolyMathlib.toPolynomial_scale,
+        HexPolyMathlib.toPolynomial_mul, Polynomial.map_mul,
+        Polynomial.C_1, one_mul] at hreassemblyComplex
+      change C * R = P at hreassemblyComplex
+      rw [hQ]
+      change R * Q * C = P * Q
+      rw [← hreassemblyComplex]
+      ring
+    · refine ⟨-Q, ?_⟩
+      simp [HexPolyMathlib.toPolynomial_scale,
+        HexPolyMathlib.toPolynomial_mul] at hreassemblyComplex
+      change -(C * R) = P at hreassemblyComplex
+      rw [hQ]
+      change R * Q * C = P * -Q
+      rw [← hreassemblyComplex]
+      ring
+  have hCRoot : C.IsRoot z :=
+    Polynomial.isRoot_of_isRoot_of_dvd_derivative_mul hPne hPdvd hPRoot
+  simpa [d, C, Hex.ZPoly.squareFreeCore_eq] using hCRoot
+
 end
 
 end HexPolyZMathlib

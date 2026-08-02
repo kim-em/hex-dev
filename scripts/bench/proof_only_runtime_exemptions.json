@@ -4,5 +4,11 @@
     "baseline_blob": "893e5013cacbf1f00dc5a3f88c99f43ee97d5958",
     "current_blob": "6a967b30b4778ae1f5d9fed74e62452d35bac004",
     "reason": "Adds local classical decidability to a theorem proof; compiled factorization code is unchanged."
+  },
+  {
+    "path": "HexPolyZ/Decomposition.lean",
+    "baseline_blob": "9137a73618359488c9c2f8de6a0674f7918c7bd7",
+    "current_blob": "275022ccb5ce74a3bac17daa81a2ede16fe7e963",
+    "reason": "Adds square-free-core theorem proofs and docstring changes only; executable factorization definitions are unchanged."
   }
 ]

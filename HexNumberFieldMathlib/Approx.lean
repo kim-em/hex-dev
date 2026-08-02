@@ -113,6 +113,18 @@ private theorem abs_sub_round_lt (q : Rat) (prec : Int) :
   rw [abs_of_nonneg (sub_nonneg.mpr (round_le q prec))]
   linarith [lt_round_add q prec]
 
+private theorem invGuard_ulp_eq (prec : Int) (bits : Nat) :
+    (2 : ℝ) ^ (-(prec + ((2 * bits + 16 : Nat) : Int))) =
+      (2 : ℝ) ^ (-prec) /
+        (65536 * ((2 : ℝ) ^ bits) ^ 2) := by
+  rw [show -(prec + ((2 * bits + 16 : Nat) : Int)) =
+      -prec - ((2 * bits + 16 : Nat) : Int) by omega,
+    zpow_sub₀ (by norm_num : (2 : ℝ) ≠ 0), zpow_natCast]
+  rw [show 2 * bits + 16 = (bits + bits) + 16 by omega,
+    pow_add, pow_add]
+  norm_num
+  ring
+
 private theorem round_eq_of_pow2 (q : Rat) (prec : Int) (hprec : 0 ≤ prec)
     (hpow : q.den = 2 ^ q.den.log2) (hle : q.den.log2 ≤ prec.toNat) :
     HexRootsMathlib.Dyadic.toReal (q.toDyadic prec) = (q : ℝ) := by
@@ -175,7 +187,8 @@ private theorem invCenter_eq (a : DyadicComplexBall) :
   exact HexRootsMathlib.GaussDyadic.toComplex_add
     (a.re, a.im) (b.re, b.im)
 
-@[simp] private theorem realRadius_add (a b : DyadicComplexBall) :
+/-- Ball addition adds the represented radii. -/
+@[simp] theorem realRadius_add (a b : DyadicComplexBall) :
     (a.add b).realRadius = a.realRadius + b.realRadius := by
   exact HexRootsMathlib.Dyadic.toReal_add a.radius b.radius
 
@@ -335,7 +348,9 @@ private theorem realRadius_toBall_nonneg (s : DyadicSquare) :
     0 ≤ s.toBall.realRadius := by
   simpa [DyadicSquare.toBall, realRadius] using (radiusHi_pos s).le
 
-private theorem realRadius_toBall_le {s : DyadicSquare} {prec : Int}
+/-- A square refined to `prec` has a dyadic-ball radius bounded by two ulps at
+that precision. -/
+theorem realRadius_toBall_le {s : DyadicSquare} {prec : Int}
     (hprec : prec ≤ s.prec) :
     s.toBall.realRadius ≤ 2 * (2 : ℝ) ^ (-prec) := by
   have hpow : (2 : ℝ) ^ (-s.prec) ≤ (2 : ℝ) ^ (-prec) :=
@@ -795,6 +810,34 @@ theorem add_mem {a b : DyadicComplexBall} {z w : ℂ}
     _ = dist z a.center + dist w b.center := by rw [dist_eq_norm, dist_eq_norm]
     _ ≤ a.realRadius + b.realRadius := add_le_add hz hw
 
+/-- Two certified balls containing the same point meet. -/
+theorem meets_of_mem {a b : DyadicComplexBall} {z : ℂ}
+    (ha : z ∈ a.set) (hb : z ∈ b.set) : a.meets b = true := by
+  have ha' : dist a.center z ≤ a.realRadius := by
+    rw [dist_comm]
+    exact Metric.mem_closedBall.mp ha
+  have hb' : dist z b.center ≤ b.realRadius :=
+    Metric.mem_closedBall.mp hb
+  have hra : 0 ≤ a.realRadius := dist_nonneg.trans ha'
+  have hrb : 0 ≤ b.realRadius := dist_nonneg.trans hb'
+  have hdist : dist a.center b.center ≤ a.realRadius + b.realRadius :=
+    (dist_triangle a.center z b.center).trans (add_le_add ha' hb')
+  have hsq : dist a.center b.center ^ 2 ≤
+      (a.realRadius + b.realRadius) ^ 2 :=
+    (sq_le_sq₀ dist_nonneg (add_nonneg hra hrb)).mpr hdist
+  have hreal :
+      HexRootsMathlib.Dyadic.toReal
+          (GaussDyadic.distSq (a.re, a.im) (b.re, b.im)) ≤
+        HexRootsMathlib.Dyadic.toReal
+          ((a.radius + b.radius) * (a.radius + b.radius)) := by
+    simpa only [HexRootsMathlib.Dyadic.toReal_mul,
+      HexRootsMathlib.Dyadic.toReal_add,
+      HexRootsMathlib.DyadicSquare.toReal_distSq,
+      DyadicComplexBall.center, DyadicComplexBall.realRadius,
+      pow_two] using hsq
+  have hdy := HexRootsMathlib.Dyadic.toReal_le_toReal_iff.mp hreal
+  simpa [DyadicComplexBall.meets] using decide_eq_true hdy
+
 /-- A rational coefficient lies in its executable rounded enclosure. -/
 theorem ofRat_mem (q : Rat) (prec : Int) :
     (q : ℂ) ∈ (DyadicComplexBall.ofRat q prec).set := by
@@ -1203,6 +1246,332 @@ theorem inv_mem {a b : DyadicComplexBall} {z : ℂ} {prec : Int}
   · contradiction
 
 end DyadicComplexBall
+
+namespace RefinedIsolation
+
+/-- Refining two root isolations by the multiplication guard makes the product
+ball four bits smaller than the requested operation precision. The literal
+guard formula mirrors `AlgebraicRoot.mulGuardBits`, which is defined in the
+downstream lazy-arithmetic module. This margin is stronger than singleton
+selection currently requires. -/
+theorem mulRadius_le {p q : ZPoly}
+    (a : RefinedIsolation p) (b : RefinedIsolation q)
+    (prec : Int) (strategy : AtomStrategy)
+    {ar : {r : RefinedIsolation p //
+      SimpleRoot.mk r = SimpleRoot.mk a}}
+    {br : {r : RefinedIsolation q //
+      SimpleRoot.mk r = SimpleRoot.mk b}}
+    (har : a.refineTo?
+      (prec + ((8 + QAdjoin.rootBits a.1.square +
+        QAdjoin.rootBits b.1.square : Nat) : Int)) strategy = some ar)
+    (hbr : b.refineTo?
+      (prec + ((8 + QAdjoin.rootBits a.1.square +
+        QAdjoin.rootBits b.1.square : Nat) : Int)) strategy = some br) :
+    (ar.1.1.square.toBall.mul br.1.1.square.toBall).realRadius ≤
+      (2 : ℝ) ^ (-(prec + 4)) := by
+  let A := QAdjoin.rootBits a.1.square
+  let B := QAdjoin.rootBits b.1.square
+  let G := 8 + A + B
+  let H := 4 + A + B
+  let δ : ℝ := (2 : ℝ) ^ (-(prec + (G : Int)))
+  have harPrec : prec + (G : Int) ≤ ar.1.1.square.prec := by
+    exact refineTo?_precision a (prec + (G : Int)) strategy
+      (by simpa [G, A, B] using har)
+  have hbrPrec : prec + (G : Int) ≤ br.1.1.square.prec := by
+    exact refineTo?_precision b (prec + (G : Int)) strategy
+      (by simpa [G, A, B] using hbr)
+  have harRadius : ar.1.1.square.toBall.realRadius ≤ 2 * δ := by
+    simpa only [δ] using
+      DyadicComplexBall.realRadius_toBall_le harPrec
+  have hbrRadius : br.1.1.square.toBall.realRadius ≤ 2 * δ := by
+    simpa only [δ] using
+      DyadicComplexBall.realRadius_toBall_le hbrPrec
+  have har0 : 0 ≤ ar.1.1.square.toBall.realRadius :=
+    DyadicComplexBall.realRadius_toBall_nonneg _
+  have hbr0 : 0 ≤ br.1.1.square.toBall.realRadius :=
+    DyadicComplexBall.realRadius_toBall_nonneg _
+  have harExtent :
+      DyadicComplexBall.extent ar.1.1.square.toBall ≤
+        4 * (2 : ℝ) ^ A := by
+    calc
+      DyadicComplexBall.extent ar.1.1.square.toBall ≤
+          4 * DyadicComplexBall.extent a.1.square.toBall :=
+        DyadicComplexBall.refined_extent_le a
+          (prec + (G : Int)) strategy (by simpa [G, A, B] using har)
+      _ ≤ 4 * (2 : ℝ) ^ A :=
+        mul_le_mul_of_nonneg_left
+          (DyadicComplexBall.extent_toBall_le a.1.square) (by norm_num)
+  have hbrExtent :
+      DyadicComplexBall.extent br.1.1.square.toBall ≤
+        4 * (2 : ℝ) ^ B := by
+    calc
+      DyadicComplexBall.extent br.1.1.square.toBall ≤
+          4 * DyadicComplexBall.extent b.1.square.toBall :=
+        DyadicComplexBall.refined_extent_le b
+          (prec + (G : Int)) strategy (by simpa [G, A, B] using hbr)
+      _ ≤ 4 * (2 : ℝ) ^ B :=
+        mul_le_mul_of_nonneg_left
+          (DyadicComplexBall.extent_toBall_le b.1.square) (by norm_num)
+  have hA1 : 1 ≤ (2 : ℝ) ^ A := one_le_pow₀ (by norm_num)
+  have hB1 : 1 ≤ (2 : ℝ) ^ B := one_le_pow₀ (by norm_num)
+  have hsum :
+      (2 : ℝ) ^ A + (2 : ℝ) ^ B ≤
+        2 * (2 : ℝ) ^ (A + B) := by
+    calc
+      (2 : ℝ) ^ A + (2 : ℝ) ^ B ≤
+          (2 : ℝ) ^ A * (2 : ℝ) ^ B +
+            (2 : ℝ) ^ A * (2 : ℝ) ^ B :=
+        add_le_add
+          (by
+            calc
+              (2 : ℝ) ^ A = (2 : ℝ) ^ A * 1 := by ring
+              _ ≤ (2 : ℝ) ^ A * (2 : ℝ) ^ B :=
+                mul_le_mul_of_nonneg_left hB1 (by positivity))
+          (by
+            calc
+              (2 : ℝ) ^ B = 1 * (2 : ℝ) ^ B := by ring
+              _ ≤ (2 : ℝ) ^ A * (2 : ℝ) ^ B :=
+                mul_le_mul_of_nonneg_right hA1 (by positivity))
+      _ = 2 * (2 : ℝ) ^ (A + B) := by
+        rw [pow_add]
+        ring
+  have hamp :
+      8 * ((2 : ℝ) ^ A + (2 : ℝ) ^ B) ≤
+        (2 : ℝ) ^ H := by
+    calc
+      8 * ((2 : ℝ) ^ A + (2 : ℝ) ^ B) ≤
+          8 * (2 * (2 : ℝ) ^ (A + B)) :=
+        mul_le_mul_of_nonneg_left hsum (by norm_num)
+      _ = (2 : ℝ) ^ H := by
+        dsimp [H]
+        rw [show 4 + A + B = 4 + (A + B) by omega, pow_add]
+        ring
+  have hδ0 : 0 ≤ δ := by positivity
+  calc
+    (ar.1.1.square.toBall.mul br.1.1.square.toBall).realRadius ≤
+        DyadicComplexBall.extent ar.1.1.square.toBall *
+            br.1.1.square.toBall.realRadius +
+          DyadicComplexBall.extent br.1.1.square.toBall *
+            ar.1.1.square.toBall.realRadius :=
+      DyadicComplexBall.realRadius_mul_le _ _ har0 hbr0
+    _ ≤ (4 * (2 : ℝ) ^ A) * (2 * δ) +
+          (4 * (2 : ℝ) ^ B) * (2 * δ) :=
+      add_le_add
+        (mul_le_mul harExtent hbrRadius hbr0 (by positivity))
+        (mul_le_mul hbrExtent harRadius har0 (by positivity))
+    _ = 8 * ((2 : ℝ) ^ A + (2 : ℝ) ^ B) * δ := by ring
+    _ ≤ (2 : ℝ) ^ H * δ :=
+      mul_le_mul_of_nonneg_right hamp hδ0
+    _ = (2 : ℝ) ^ ((H : Int) + (-(prec + (G : Int)))) := by
+      dsimp [δ]
+      rw [← zpow_natCast, ← zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+    _ = (2 : ℝ) ^ (-(prec + 4)) := by
+      congr 1
+      dsimp [H, G]
+      omega
+
+/-- The reciprocal guard separates a refined nonzero root ball from zero and
+leaves four bits of radius slack after reciprocal distortion and rounding. The
+literal guard formula mirrors `AlgebraicRoot.invGuardBits`, which is defined in
+the downstream lazy-arithmetic module. This margin is stronger than singleton
+selection currently requires. -/
+theorem invBall_exists {p : ZPoly} (a : RefinedIsolation p)
+    (prec : Int) (hprec : 0 ≤ prec) (strategy : AtomStrategy)
+    (hlower : (((p.coeffAbsMax + 1 : Nat) : ℝ))⁻¹ <
+      ‖HexRootsMathlib.RefinedIsolation.root a‖)
+    {ar : {r : RefinedIsolation p //
+      SimpleRoot.mk r = SimpleRoot.mk a}}
+    (har : a.refineTo?
+      (prec + ((2 * Hex.ceilLog2 (p.coeffAbsMax + 1) + 16 : Nat) : Int))
+      strategy = some ar) :
+    ∃ ball : DyadicComplexBall,
+      ar.1.1.square.toBall.inv?
+          (prec + ((2 * Hex.ceilLog2 (p.coeffAbsMax + 1) + 16 : Nat) : Int)) =
+        some ball ∧
+      ball.realRadius ≤ (2 : ℝ) ^ (-(prec + 4)) := by
+  let D := p.coeffAbsMax + 1
+  let C := Hex.ceilLog2 D
+  let G := 2 * C + 16
+  let target : Int := prec + (G : Int)
+  let z := HexRootsMathlib.RefinedIsolation.root a
+  let input := ar.1.1.square.toBall
+  let r := input.realRadius
+  let lower := HexRootsMathlib.Dyadic.toReal
+    (GaussDyadic.lo (input.re, input.im))
+  let U : ℝ := (2 : ℝ) ^ C
+  let e : ℝ := (2 : ℝ) ^ (-prec)
+  let δ : ℝ := (2 : ℝ) ^ (-target)
+  have hDpos : 0 < (D : ℝ) := by
+    dsimp [D]
+    positivity
+  have hDU : (D : ℝ) ≤ U := by
+    dsimp [U]
+    exact_mod_cast HexRootsMathlib.le_two_pow_ceilLog2 D
+  have hUpos : 0 < U := by positivity
+  have hD1 : (1 : ℝ) ≤ D := by
+    dsimp [D]
+    norm_num
+  have hU1 : 1 ≤ U := hD1.trans hDU
+  have he0 : 0 ≤ e := by positivity
+  have he1 : e ≤ 1 := by
+    exact zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
+  have hδeq : δ = e / (65536 * U ^ 2) := by
+    simpa only [δ, target, G, C, e, U] using
+      DyadicComplexBall.invGuard_ulp_eq prec C
+  have hδ0 : 0 ≤ δ := by positivity
+  have hreach : target ≤ ar.1.1.square.prec := by
+    exact refineTo?_precision a target strategy
+      (by simpa only [target, G, C, D] using har)
+  have hrBound : r ≤ 2 * δ := by
+    simpa only [r, input, δ, target] using
+      DyadicComplexBall.realRadius_toBall_le hreach
+  have hr0 : 0 ≤ r := by
+    exact DyadicComplexBall.realRadius_toBall_nonneg _
+  have hrSmall : r ≤ U⁻¹ / 8 := by
+    calc
+      r ≤ 2 * δ := hrBound
+      _ = e / (32768 * U ^ 2) := by
+        rw [hδeq]
+        field_simp
+        ring
+      _ ≤ U⁻¹ / 8 := by
+        rw [div_le_div_iff₀ (by positivity : (0 : ℝ) < 32768 * U ^ 2)
+          (by positivity : (0 : ℝ) < 8)]
+        rw [inv_eq_one_div]
+        field_simp
+        nlinarith [sq_nonneg U]
+  have hrFine : 8 * U ^ 2 * r ≤ e / 4096 := by
+    calc
+      8 * U ^ 2 * r ≤ 8 * U ^ 2 * (2 * δ) := by
+        gcongr
+      _ = e / 4096 := by
+        rw [hδeq]
+        field_simp
+        ring
+  have hrootEq :
+      HexRootsMathlib.RefinedIsolation.root ar.1 = z := by
+    exact HexRootsMathlib.RefinedIsolation.refineTo_root
+      a target strategy (by simpa only [target, G, C, D] using har)
+  have hzBall : z ∈ input.set := by
+    rw [← hrootEq]
+    exact DyadicComplexBall.mem_toBall
+      (HexRootsMathlib.RefinedIsolation.root_mem_closedDisc ar.1)
+  have hzDist : dist z input.center ≤ r := by
+    simpa only [DyadicComplexBall.set, Metric.mem_closedBall, input, r]
+      using hzBall
+  have hzNorm : ‖z‖ ≤ r + ‖input.center‖ := by
+    calc
+      ‖z‖ = ‖(z - input.center) + input.center‖ := by
+        congr 1
+        ring
+      _ ≤ ‖z - input.center‖ + ‖input.center‖ := norm_add_le _ _
+      _ ≤ r + ‖input.center‖ := by
+        gcongr
+        simpa [dist_eq_norm] using hzDist
+  have hlower0 : 0 ≤ lower := by
+    dsimp [lower]
+    rw [HexRootsMathlib.GaussDyadic.toReal_lo]
+    positivity
+  have hsqrt : √(2 : ℝ) ≤ 3 / 2 := by
+    have hs0 : 0 ≤ √(2 : ℝ) := Real.sqrt_nonneg _
+    have hsq : √(2 : ℝ) ^ 2 = 2 := Real.sq_sqrt (by norm_num)
+    nlinarith
+  have hcenter : ‖input.center‖ ≤ (3 / 2 : ℝ) * lower := by
+    calc
+      ‖input.center‖ ≤ √(2 : ℝ) * lower := by
+        simpa only [DyadicComplexBall.center, lower] using
+          HexRootsMathlib.GaussDyadic.norm_le_sqrt_two_mul_lo
+            (input.re, input.im)
+      _ ≤ (3 / 2 : ℝ) * lower :=
+        mul_le_mul_of_nonneg_right hsqrt hlower0
+  have hInvUD : U⁻¹ ≤ (D : ℝ)⁻¹ :=
+    (inv_le_inv₀ hUpos hDpos).mpr hDU
+  have hrootU : U⁻¹ < ‖z‖ := by
+    exact hInvUD.trans_lt (by simpa only [z, D] using hlower)
+  have hrootUpper : ‖z‖ ≤ r + (3 / 2 : ℝ) * lower :=
+    hzNorm.trans (add_le_add_right hcenter r)
+  have hUinvPos : 0 < U⁻¹ := inv_pos.mpr hUpos
+  have hlowerHalf : U⁻¹ / 2 < lower := by
+    nlinarith
+  have hgap : (3 / 8 : ℝ) * U⁻¹ < lower - r := by
+    nlinarith
+  have hsepReal : r < lower := by
+    nlinarith
+  have hdenom : U⁻¹ ^ 2 / 8 < (lower - r) * lower := by
+    calc
+      U⁻¹ ^ 2 / 8 ≤
+          ((3 / 8 : ℝ) * U⁻¹) * (U⁻¹ / 2) := by
+        nlinarith [sq_nonneg U⁻¹]
+      _ < (lower - r) * (U⁻¹ / 2) :=
+        mul_lt_mul_of_pos_right hgap (by positivity)
+      _ < (lower - r) * lower :=
+        mul_lt_mul_of_pos_left hlowerHalf (by nlinarith)
+  have hsep : input.radius < GaussDyadic.lo (input.re, input.im) := by
+    exact HexRootsMathlib.Dyadic.toReal_lt_toReal_iff.mp
+      (by simpa only [r, DyadicComplexBall.realRadius, lower] using hsepReal)
+  let norm := GaussDyadic.normSq (input.re, input.im)
+  let denom := (GaussDyadic.lo (input.re, input.im) - input.radius) *
+    GaussDyadic.lo (input.re, input.im)
+  let qdist : Rat := input.radius.toRat / denom.toRat
+  let out : DyadicComplexBall :=
+    { re := (input.re.toRat / norm.toRat).toDyadic target
+      im := ((-input.im.toRat) / norm.toRat).toDyadic target
+      radius := qdist.toDyadic target + Dyadic.ofIntWithPrec 1 target +
+        Dyadic.ofIntWithPrec 1 target + Dyadic.ofIntWithPrec 1 target }
+  have hout : input.inv? target = some out := by
+    unfold DyadicComplexBall.inv?
+    dsimp only
+    rw [if_pos hsep]
+  refine ⟨out, by simpa only [input, target, G, C, D] using hout, ?_⟩
+  have hqdistReal : (qdist : ℝ) =
+      r / ((lower - r) * lower) := by
+    simp only [qdist, denom, Rat.cast_div, _root_.Dyadic.toRat_mul,
+      _root_.Dyadic.toRat_sub, Rat.cast_mul, Rat.cast_sub]
+    rfl
+  have hqdist0 : 0 ≤ (qdist : ℝ) := by
+    rw [hqdistReal]
+    positivity
+  have hqdist : (qdist : ℝ) ≤ e / 4096 := by
+    rw [hqdistReal]
+    calc
+      r / ((lower - r) * lower) ≤ r / (U⁻¹ ^ 2 / 8) :=
+        div_le_div_of_nonneg_left hr0 (by positivity) hdenom.le
+      _ = 8 * U ^ 2 * r := by
+        field_simp
+      _ ≤ e / 4096 := hrFine
+  have hδSmall : δ ≤ e / 65536 := by
+    rw [hδeq]
+    apply div_le_div_of_nonneg_left he0 (by positivity)
+    nlinarith [sq_nonneg U]
+  have houtRadius : out.realRadius ≤ (qdist : ℝ) + 3 * δ := by
+    change HexRootsMathlib.Dyadic.toReal
+        (qdist.toDyadic target + Dyadic.ofIntWithPrec 1 target +
+          Dyadic.ofIntWithPrec 1 target + Dyadic.ofIntWithPrec 1 target) ≤
+      (qdist : ℝ) + 3 * δ
+    simp only [HexRootsMathlib.Dyadic.toReal_add,
+      HexRootsMathlib.Dyadic.toReal_ofIntWithPrec]
+    have hround := DyadicComplexBall.round_le qdist target
+    norm_num
+    have hpow : ((2 : ℝ) ^ target)⁻¹ = δ := by
+      dsimp [δ]
+      rw [zpow_neg]
+    rw [hpow]
+    linarith
+  have hfinal : out.realRadius ≤ e / 16 := by
+    calc
+      out.realRadius ≤ (qdist : ℝ) + 3 * δ := houtRadius
+      _ ≤ e / 4096 + 3 * (e / 65536) :=
+        add_le_add hqdist (mul_le_mul_of_nonneg_left hδSmall (by norm_num))
+      _ ≤ e / 16 := by nlinarith
+  calc
+    out.realRadius ≤ e / 16 := hfinal
+    _ = (2 : ℝ) ^ (-(prec + 4)) := by
+      dsimp [e]
+      rw [show -(prec + 4) = -prec - 4 by omega,
+        zpow_sub₀ (by norm_num : (2 : ℝ) ≠ 0)]
+      norm_num
+
+end RefinedIsolation
 
 namespace QAdjoin
 
