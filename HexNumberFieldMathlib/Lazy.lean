@@ -65,7 +65,28 @@ private theorem ZPoly.map_liftOuter (p : ZPoly) (t : ℂ) :
   rw [HexPolyMathlib.toPolynomial_C, Polynomial.eval₂_C]
   rfl
 
-private theorem ZPoly.natDegree_liftOuter (p : ZPoly) :
+/-- Specialization of the coefficient variable commutes with the constant
+bivariate lift. -/
+theorem ZPoly.map_liftOuterAt (p : ZPoly) (t : ℂ) :
+    (HexPolyMathlib.toPolynomial p.liftOuter).map
+      ((Polynomial.eval₂RingHom (Int.castRingHom ℂ) t).comp
+        (HexPolyMathlib.equiv (R := Int)).toRingHom) =
+      HexRootsMathlib.toPolyℂ p :=
+  map_liftOuter p t
+
+/-- Specializing the coefficient variable of the constant bivariate lift
+recovers the original complex polynomial. -/
+theorem ZPoly.eval_liftOuter (p : ZPoly) (t y : ℂ) :
+    ((HexPolyMathlib.toPolynomial p.liftOuter).map
+      ((Polynomial.eval₂RingHom (Int.castRingHom ℂ) t).comp
+        (HexPolyMathlib.equiv (R := Int)).toRingHom)).eval y =
+      (HexRootsMathlib.toPolyℂ p).eval y := by
+  have hmap := map_liftOuterAt p t
+  exact congrArg (fun q : Polynomial ℂ => q.eval y) hmap
+
+/-- The constant bivariate lift preserves the degree of the source integer
+polynomial. -/
+theorem ZPoly.natDegree_liftOuter (p : ZPoly) :
     (HexPolyMathlib.toPolynomial p.liftOuter).natDegree =
       p.degree?.getD 0 := by
   rw [HexPolyMathlib.natDegree_toPolynomial]
@@ -276,7 +297,8 @@ private theorem ZPoly.toPolynomial_eq_X_pow_mul_removeX (p : ZPoly) :
   refine ⟨k, ?_⟩
   simpa [ZPoly.removeX_eq_ofList_dropWhile] using hk
 
-private theorem ZPoly.removeX_ne_zero {p : ZPoly} (hp : p ≠ 0) :
+/-- Removing the maximal power of `X` preserves nonzeroness. -/
+theorem ZPoly.removeX_ne_zero {p : ZPoly} (hp : p ≠ 0) :
     p.removeX ≠ 0 := by
   intro hremove
   obtain ⟨k, hk⟩ := ZPoly.toPolynomial_eq_X_pow_mul_removeX p
@@ -284,7 +306,8 @@ private theorem ZPoly.removeX_ne_zero {p : ZPoly} (hp : p ≠ 0) :
   apply hp
   exact HexPolyMathlib.equiv.injective (by simpa using hk)
 
-private theorem ZPoly.removeX_isRoot {p : ZPoly} {z : ℂ}
+/-- Removing the maximal power of `X` preserves every nonzero complex root. -/
+theorem ZPoly.removeX_isRoot {p : ZPoly} {z : ℂ}
     (hz : z ≠ 0) (hroot : (HexRootsMathlib.toPolyℂ p).IsRoot z) :
     (HexRootsMathlib.toPolyℂ p.removeX).IsRoot z := by
   obtain ⟨k, hk⟩ := ZPoly.toPolynomial_eq_X_pow_mul_removeX p
@@ -376,82 +399,91 @@ private theorem ZPoly.reciprocal_isRoot {p : ZPoly} {z : ℂ}
       (HexRootsMathlib.toPolyℂ p)).mpr (by simpa using hroot)
   simpa [invOf_eq_inv] using hreverse
 
-private theorem AlgebraicRoot.inv_norm_lower (a : AlgebraicRoot)
-    (ha : a.toComplex ≠ 0) :
-    (((a.p.coeffAbsMax + 1 : Nat) : ℝ))⁻¹ < ‖a.toComplex‖ := by
-  let P := HexRootsMathlib.toPolyℂ a.p
+/-- A nonzero complex root of a nonzero integer polynomial is bounded away
+from zero by the reciprocal Cauchy bound of its coefficient height. -/
+theorem ZPoly.root_norm_lower {p : ZPoly} {z : ℂ}
+    (hp : p ≠ 0) (hz : z ≠ 0)
+    (hroot : (HexRootsMathlib.toPolyℂ p).IsRoot z) :
+    (((p.coeffAbsMax + 1 : Nat) : ℝ))⁻¹ < ‖z‖ := by
+  let P := HexRootsMathlib.toPolyℂ p
   let R := P.reverse
-  have hp : a.p ≠ 0 :=
-    HexRootsMathlib.RefinedIsolation.poly_ne_zero a.rep
   have hPne : P ≠ 0 := by
-    exact HexRootsMathlib.toPolyℂ_ne_zero a.p fun hsize =>
-      hp ((DensePoly.size_eq_zero_iff a.p).mp hsize)
+    exact HexRootsMathlib.toPolyℂ_ne_zero p fun hsize =>
+      hp ((DensePoly.size_eq_zero_iff p).mp hsize)
   have hRne : R ≠ 0 := by
     simpa [R] using hPne
-  have hRroot : R.IsRoot a.toComplex⁻¹ := by
-    simpa [R, ZPoly.toPolyℂ_reciprocal a.p hp] using
-      ZPoly.reciprocal_isRoot hp ha
-        (AlgebraicRoot.toComplex_isRoot a)
+  have hRroot : R.IsRoot z⁻¹ := by
+    simpa [R, ZPoly.toPolyℂ_reciprocal p hp] using
+      ZPoly.reciprocal_isRoot hp hz hroot
   have hsup :
       (Finset.range R.natDegree).sup (fun i => ‖R.coeff i‖₊) ≤
-        (a.p.coeffAbsMax : NNReal) := by
+        (p.coeffAbsMax : NNReal) := by
     apply Finset.sup_le
     intro i hi
     rw [show R.coeff i = P.coeff (Polynomial.revAt P.natDegree i) by
       simp [R, Polynomial.coeff_reverse]]
     rw [show P.coeff (Polynomial.revAt P.natDegree i) =
-        (a.p.coeff (Polynomial.revAt P.natDegree i) : ℂ) by
+        (p.coeff (Polynomial.revAt P.natDegree i) : ℂ) by
       simp [P]]
     rw [Complex.nnnorm_intCast, ← NNReal.natCast_natAbs]
-    exact_mod_cast HexRootsMathlib.coeff_natAbs_le_coeffAbsMax a.p
+    exact_mod_cast HexRootsMathlib.coeff_natAbs_le_coeffAbsMax p
       (Polynomial.revAt P.natDegree i)
   have htrail : P.trailingCoeff ≠ 0 :=
     Polynomial.trailingCoeff_nonzero_iff_nonzero.mpr hPne
-  have htrailCoeff : a.p.coeff P.natTrailingDegree ≠ 0 := by
+  have htrailCoeff : p.coeff P.natTrailingDegree ≠ 0 := by
     intro hzero
     apply htrail
     rw [Polynomial.trailingCoeff, show P.coeff P.natTrailingDegree =
-        (a.p.coeff P.natTrailingDegree : ℂ) by simp [P], hzero]
+        (p.coeff P.natTrailingDegree : ℂ) by simp [P], hzero]
     simp
   have hlead : (1 : NNReal) ≤ ‖R.leadingCoeff‖₊ := by
     rw [show R.leadingCoeff = P.trailingCoeff by
       simp [R, Polynomial.reverse_leadingCoeff],
       Polynomial.trailingCoeff,
       show P.coeff P.natTrailingDegree =
-        (a.p.coeff P.natTrailingDegree : ℂ) by simp [P],
+        (p.coeff P.natTrailingDegree : ℂ) by simp [P],
       Complex.nnnorm_intCast, ← NNReal.natCast_natAbs]
-    exact_mod_cast (show 1 ≤ (a.p.coeff P.natTrailingDegree).natAbs by
+    exact_mod_cast (show 1 ≤ (p.coeff P.natTrailingDegree).natAbs by
       have := Int.natAbs_pos.mpr htrailCoeff
       omega)
   have hcauchyNN :
-      Polynomial.cauchyBound R ≤ (a.p.coeffAbsMax : NNReal) + 1 := by
+      Polynomial.cauchyBound R ≤ (p.coeffAbsMax : NNReal) + 1 := by
     rw [Polynomial.cauchyBound]
     calc
       (Finset.range R.natDegree).sup (fun i => ‖R.coeff i‖₊) /
               ‖R.leadingCoeff‖₊ + 1 ≤
-          (a.p.coeffAbsMax : NNReal) / 1 + 1 := by
+          (p.coeffAbsMax : NNReal) / 1 + 1 := by
         gcongr
-      _ = (a.p.coeffAbsMax : NNReal) + 1 := by simp
+      _ = (p.coeffAbsMax : NNReal) + 1 := by simp
   have hinvNN := hRroot.norm_lt_cauchyBound hRne
-  have hinv : ‖a.toComplex⁻¹‖ <
-      ((a.p.coeffAbsMax + 1 : Nat) : ℝ) := by
+  have hinv : ‖z⁻¹‖ <
+      ((p.coeffAbsMax + 1 : Nat) : ℝ) := by
     calc
-      ‖a.toComplex⁻¹‖ < (Polynomial.cauchyBound R : ℝ) := by
+      ‖z⁻¹‖ < (Polynomial.cauchyBound R : ℝ) := by
         exact_mod_cast hinvNN
-      _ ≤ ((a.p.coeffAbsMax : NNReal) + 1 : NNReal) := by
+      _ ≤ ((p.coeffAbsMax : NNReal) + 1 : NNReal) := by
         exact_mod_cast hcauchyNN
-      _ = ((a.p.coeffAbsMax + 1 : Nat) : ℝ) := by norm_num
+      _ = ((p.coeffAbsMax + 1 : Nat) : ℝ) := by norm_num
   rw [norm_inv] at hinv
-  have hnorm : 0 < ‖a.toComplex‖ := norm_pos_iff.mpr ha
-  have hdenom : 0 < ((a.p.coeffAbsMax + 1 : Nat) : ℝ) := by positivity
+  have hnorm : 0 < ‖z‖ := norm_pos_iff.mpr hz
+  have hdenom : 0 < ((p.coeffAbsMax + 1 : Nat) : ℝ) := by positivity
   have hprod :
-      1 < ((a.p.coeffAbsMax + 1 : Nat) : ℝ) * ‖a.toComplex‖ := by
+      1 < ((p.coeffAbsMax + 1 : Nat) : ℝ) * ‖z‖ := by
     exact (mul_inv_lt_iff₀ hnorm).mp (by simpa using hinv)
   have hfinal := (mul_inv_lt_iff₀ hdenom).mpr (by
     simpa [mul_comm] using hprod)
   simpa only [one_mul] using hfinal
 
-private theorem resultant_eval_eq_zero_of_common_root
+private theorem AlgebraicRoot.inv_norm_lower (a : AlgebraicRoot)
+    (ha : a.toComplex ≠ 0) :
+    (((a.p.coeffAbsMax + 1 : Nat) : ℝ))⁻¹ < ‖a.toComplex‖ :=
+  ZPoly.root_norm_lower
+    (HexRootsMathlib.RefinedIsolation.poly_ne_zero a.rep) ha
+    (AlgebraicRoot.toComplex_isRoot a)
+
+/-- A common complex root after specializing the coefficient variable is a
+root of the executable bivariate resultant. -/
+theorem resultant_isRoot
     (f g : DensePoly ZPoly) (t y : ℂ)
     (hpos : 1 < f.size ∨ 1 < g.size)
     (hf : ((HexPolyMathlib.toPolynomial f).map
@@ -727,7 +759,7 @@ private theorem ZPoly.addEliminant_isRoot (a b : AlgebraicRoot) :
     (HexRootsMathlib.toPolyℂ (ZPoly.addEliminant a.p b.p)).IsRoot
       (a.toComplex + b.toComplex) := by
   unfold ZPoly.addEliminant
-  apply resultant_eval_eq_zero_of_common_root
+  apply resultant_isRoot
       (y := a.toComplex)
   · left
     have hsize : 1 < a.p.size := by
@@ -772,7 +804,7 @@ private theorem ZPoly.mulEliminant_isRoot (a b : AlgebraicRoot)
     (HexRootsMathlib.toPolyℂ (ZPoly.mulEliminant a.p b.p)).IsRoot
       (a.toComplex * b.toComplex) := by
   unfold ZPoly.mulEliminant
-  apply resultant_eval_eq_zero_of_common_root
+  apply resultant_isRoot
       (y := a.toComplex)
   · left
     have hsize : 1 < a.p.size := by
