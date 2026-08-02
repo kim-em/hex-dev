@@ -308,8 +308,8 @@ Cactus ranks are unchanged for every representative row.
 
 ```sh
 lake build hexbz_factor_service
-taskset -c 0 python3 scripts/bench/factor_phase_profile.py --output /tmp/phase.json
-python3 scripts/profile/factor_sampling_profile.py --cpu 0 --output /tmp/profiles.json
+python3 scripts/bench/factor_phase_profile.py --output /tmp/phase.json
+python3 scripts/profile/factor_sampling_profile.py --output /tmp/profiles.json
 python3 scripts/bench/cactus_rank_table.py --lo 118 --hi 144
 ```
 
