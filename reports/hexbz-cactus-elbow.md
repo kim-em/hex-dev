@@ -138,6 +138,33 @@ below separate them.
 | `randprod_10` (control) | 20 | classical | 775.370 us | 2.7% | 71.0% | 21.6% | 2.7% | 0.0% | 58,749 |
 | `randprod_21` (control) | 24 | classical | 1.719 ms | 1.6% | 75.0% | 19.8% | 2.4% | 0.0% | 133,965 |
 
+### Where each representative row sits on the cactus
+
+The sweep and the phase profile use different protocols -- the sweep is a
+median of five warm calls including protocol overhead, the profile is one
+decomposed execution -- so their totals differ by a few percent. The cactus
+rank below is the sweep's.
+
+| instance | total factor time | cactus rank | cumulative at that rank | Isabelle BZ on the same row |
+|---|---:|---:|---:|---:|
+| `sd5` | 106.911 ms | 135 | 931.644 ms | 22.610 ms |
+| `sd5_shift1` | 96.670 ms | 133 | 725.020 ms | 14.815 ms |
+| `sd5_shift2` | 99.713 ms | 134 | 824.733 ms | 14.716 ms |
+| `sd4_x_sd4shift1` | 25.091 ms | 126 | 232.141 ms | 10.803 ms |
+| `sd5_x_phi11` | 222.540 ms | 138 | 1.544 s | 27.545 ms |
+| `xpow48_minus1` | 21.635 ms | 125 | 207.050 ms | 8.392 ms |
+| `xpow105_minus1` | 84.464 ms | 131 | 539.890 ms | 55.922 ms |
+| `xpow120_minus1` | 523.812 ms | 141 | 3.039 s | 168.811 ms |
+| `cyclo_phi179` | 80.025 ms | 130 | 455.426 ms | 14.956 ms |
+| `cyclo_phi64_x_phi105` | 88.460 ms | 132 | 628.350 ms | 37.990 ms |
+| `cyclo_phi128_x_phi165` | 205.261 ms | 137 | 1.322 s | 172.600 ms |
+| `cyclo_phi385` | 455.841 ms | 139 | 2.000 s | 355.307 ms |
+| `wilkinson_40` | 15.912 ms | 123 | 164.650 ms | 10.286 ms |
+| `wilkinson_48` | 29.732 ms | 127 | 261.873 ms | 14.492 ms |
+| `wilkinson_56` | 40.396 ms | 128 | 302.269 ms | 21.980 ms |
+
+Every representative row lands between ranks 123 and 141, which is the elbow.
+
 The elbow rows split into three shapes. Swinnerton-Dyer rows and `x^n - 1` are
 recombination-bound. `cyclo_phi179` is Hensel-bound. `cyclo_phi64_x_phi105`,
 `cyclo_phi128_x_phi165`, `cyclo_phi385`, and every cheap control are prime-walk
