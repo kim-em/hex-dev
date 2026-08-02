@@ -43,6 +43,10 @@ PROFILED = [
     "cyclo_phi64_x_phi105", "cyclo_phi385", "wilkinson_56",
 ]
 
+# Inclusive-share floor for the per-function Hex table. Low enough that a phase
+# worth attributing is never dropped, high enough to keep the record readable.
+INCLUSIVE_FLOOR_PERCENT = 0.5
+
 DEFAULT_TARGET_SECONDS = 6.0
 DEFAULT_RATE = 999
 DEFAULT_CPU = 0
@@ -233,8 +237,12 @@ def analyse(profile: dict, symbolicator: Symbolicator, top: int) -> dict:
     def share(count):
         return round(100.0 * count / total, 2)
 
+    # Every Hex function with a material inclusive share, not just the top few:
+    # the dependent issues each need the share of a different phase, and a
+    # fixed cut would silently drop the one they ask about.
     own = [(name, count) for name, count in inclusive_counts.items()
-           if categorise(name) == "lean-own-code"]
+           if categorise(name) == "lean-own-code"
+           and 100.0 * count / total >= INCLUSIVE_FLOOR_PERCENT]
     own.sort(key=lambda row: -row[1])
     return {
         "samples": total,
@@ -249,8 +257,8 @@ def analyse(profile: dict, symbolicator: Symbolicator, top: int) -> dict:
                      for name, count in self_counts.most_common(top)],
         "top_inclusive": [{"function": name, "percent": share(count)}
                           for name, count in inclusive_counts.most_common(top)],
-        "top_inclusive_hex": [{"function": name, "percent": share(count)}
-                              for name, count in own[:top]],
+        "inclusive_hex": [{"function": name, "percent": share(count)}
+                          for name, count in own],
         "allocation_share_percent": share(category_counts.get("allocation", 0)),
     }
 

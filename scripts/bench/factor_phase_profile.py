@@ -66,7 +66,7 @@ REPRESENTATIVE = [
 # phase share measured on the elbow can be read against a non-elbow baseline.
 CONTROLS = [
     "chebyshev_T24", "chebyshev_U24", "legendre_P30", "legendre_P38",
-    "cyclo_phi17", "cyclo_phi31", "xpow24_minus1",
+    "cyclo_phi17", "cyclo_phi41", "xpow24_minus1",
     "randprod_10", "randprod_21",
 ]
 
