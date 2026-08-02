@@ -157,23 +157,28 @@ def trail {basis : LiftData} (metadata : SupportMeta basis)
     (i : DirectLiftedIndex basis) : Int :=
   metadata.trails.getD i.1 0
 
+/-- A recorded degree is the degree of the lifted factor it indexes. -/
 @[simp]
 theorem degree_spec {basis : LiftData} (metadata : SupportMeta basis)
     (i : DirectLiftedIndex basis) :
     metadata.degree i = (directLiftedFactor basis i).degree?.getD 0 :=
   metadata.degrees_eq i
 
+/-- A recorded trailing coefficient is the constant term of the lifted factor
+it indexes. -/
 @[simp]
 theorem trail_spec {basis : LiftData} (metadata : SupportMeta basis)
     (i : DirectLiftedIndex basis) :
     metadata.trail i = (directLiftedFactor basis i).coeff 0 :=
   metadata.trails_eq i
 
+/-- The recorded modulus is the lift modulus. -/
 @[simp]
 theorem modulus_spec {basis : LiftData} (metadata : SupportMeta basis) :
     metadata.modulus = liftModulus basis :=
   metadata.modulus_eq
 
+/-- The recorded integer modulus is the lift modulus. -/
 @[simp]
 theorem modulusInt_spec {basis : LiftData} (metadata : SupportMeta basis) :
     metadata.modulusInt = (liftModulus basis : Int) := by
