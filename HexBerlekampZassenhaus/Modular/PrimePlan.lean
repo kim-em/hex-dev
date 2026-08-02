@@ -221,10 +221,12 @@ def probeDegreePattern? (f : ZPoly) (c : SmallPrimeCandidate) (target : Nat) :
 /-- Scout further good primes for a cheaper plan than the current best score.
 
 Nothing is split here.  A candidate is discarded as soon as its separated
-factors exceed the current width, since a wider image can only score worse; and
+factors reach the current width, since a wider image can only score worse; and
 a candidate whose pattern completes is scored exactly as the factorization it
-predicts would be.  The walk stops early on a scouted image narrow enough that
-no further shopping can pay, the same rule that governs the first good prime.
+predicts would be.  So the walk ends holding the plan a policy that split every
+candidate would have selected -- except that a scouted image narrow enough to
+pass `scoutWidth` ends the walk, the same gate that governs the first good
+prime.
 
 Returns the best scouted pattern strictly cheaper than `score`, if any. -/
 def scoutBetterPattern (core : SquareFreeInput) :

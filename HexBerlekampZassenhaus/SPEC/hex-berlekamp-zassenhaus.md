@@ -111,9 +111,12 @@ Every key of that score is a function of the prime and the multiset of
 modular factor degrees, so a scouted degree pattern scores exactly as
 the factorization it predicts would. Only the winner is split.
 
-Inadmissible primes do not spend the allowance of scouts. A scouted
-image narrow enough to end the walk ends it, the same rule that governs
-the first admissible prime.
+Inadmissible primes do not spend the allowance of scouts. The walk
+therefore ends holding the plan a policy that split every candidate
+would have selected, having split the first admissible prime and at
+most the winner — except that a scouted image narrow enough to pass
+the width gate ends the walk, the same gate that governs the first
+admissible prime.
 
 The reachability bitset is computed by dynamic programming in
 `O(number of factors × degree)`.
