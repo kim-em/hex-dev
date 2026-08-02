@@ -279,7 +279,7 @@ private def flattenSqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def flattenSqrtTwoRep : RefinedIsolation flattenSqrtTwoPoly :=
-  ⟨⟨flattenSqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨flattenSqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def flattenSqrtTwoRoot : SimpleRoot flattenSqrtTwoPoly :=
   SimpleRoot.mk flattenSqrtTwoRep
@@ -310,7 +310,7 @@ private def flattenSqrtThreeSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 222 7, 0, 8⟩
 
 private def flattenSqrtThreeRep : RefinedIsolation flattenSqrtThreePoly :=
-  ⟨⟨flattenSqrtThreeSquare, by decide⟩, by decide⟩
+  ⟨⟨flattenSqrtThreeSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def flattenSumPoly : ZPoly :=
   DensePoly.ofList [1, 0, -10, 0, 1]
@@ -323,7 +323,7 @@ private def flattenFourthRootTwoSquare : DyadicSquare :=
 
 private def flattenFourthRootTwoRep :
     RefinedIsolation flattenFourthRootTwoPoly :=
-  ⟨⟨flattenFourthRootTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨flattenFourthRootTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 #guard
     if hirred : ZPoly.isIrreducible flattenSqrtTwoPoly = true then

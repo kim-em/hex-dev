@@ -247,7 +247,7 @@ theorem mahlerPrec_positiveAssociate (p : ZPoly) :
 /-- Transport a refined isolation across global sign normalization. -/
 def RefinedIsolation.positiveAssociate {p : ZPoly}
     (rep : RefinedIsolation p) : RefinedIsolation (positiveAssociate p) :=
-  ⟨⟨rep.1.square, atomWitness_positiveAssociate rep.1.witness⟩, by
+  ⟨⟨rep.1.square, .normalize rep.1.witness⟩, by
     rw [mahlerPrec_positiveAssociate]
     exact rep.2⟩
 

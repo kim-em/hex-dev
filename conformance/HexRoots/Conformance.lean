@@ -297,7 +297,7 @@ kernel `decide` (degree 3), and the `RefinedIsolation` precision side-condition
 
 /-- A coarse atom of `rat1` at the real root `re`, half-width `2^{−prec}`. -/
 private def rootAtom (re prec : Int) (h : atomWitness rat1 ⟨re, 0, prec⟩) :
-    DyadicRootIsolation rat1 := ⟨⟨re, 0, prec⟩, h⟩
+    DyadicRootIsolation rat1 := ⟨⟨re, 0, prec⟩, .ofWitness h⟩
 
 private def atom1_20 : DyadicRootIsolation rat1 := rootAtom 1 20 (Or.inl (by decide))
 private def atom1_22 : DyadicRootIsolation rat1 := rootAtom 1 22 (Or.inl (by decide))
@@ -321,7 +321,7 @@ private def atom2_20 : DyadicRootIsolation rat1 := rootAtom 2 20 (Or.inl (by dec
 #guard (atom1_20.refineTo? 20 .nkThenPellet).map (·.square.prec) == some 20
 
 private def repeatedAwayAtom : DyadicRootIsolation repeatedAway :=
-  ⟨⟨1, 0, 32⟩, Or.inl (by decide)⟩
+  ⟨⟨1, 0, 32⟩, .nk (by decide)⟩
 
 -- Mixed refinement needs only local simplicity of the selected root; the
 -- repeated root at `2` does not prevent total refinement of the atom at `1`.

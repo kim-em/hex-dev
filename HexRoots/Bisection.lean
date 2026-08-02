@@ -288,8 +288,8 @@ to the exact cached list. -/
           have h₀' : nkWitnessCheck p cand = true := by
             rw [TaylorShift.nkWitnessCheck_eq] at h'
             exact h'
-          return some (.atom ⟨cand, Or.inl h₀'⟩)
-      return some (.atom ⟨base, Or.inl h₀⟩)
+          return some (.atom ⟨cand, .nk h₀'⟩)
+      return some (.atom ⟨base, .nk h₀⟩)
   | .pellet => pure ()
   -- Pellet attempt, on a quadrupled enclosing square. The original component
   -- lies in its central quarter, giving the converse theorem a uniform

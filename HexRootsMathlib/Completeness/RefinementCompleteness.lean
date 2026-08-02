@@ -336,10 +336,10 @@ private theorem certifyMixed_atom {p : Hex.ZPoly} {c : Hex.Component}
   split <;> rename_i hbase'
   · split <;> rename_i hins
     · split <;> rename_i hcand
-      · refine ⟨⟨_, Or.inl hcand⟩, rfl, ?_⟩
+      · refine ⟨⟨_, .nk hcand⟩, rfl, ?_⟩
         exact newtonCandidate_prec hsize
-      · exact ⟨⟨_, Or.inl hbase'⟩, rfl, le_rfl⟩
-    · exact ⟨⟨_, Or.inl hbase'⟩, rfl, le_rfl⟩
+      · exact ⟨⟨_, .nk hbase'⟩, rfl, le_rfl⟩
+    · exact ⟨⟨_, .nk hbase'⟩, rfl, le_rfl⟩
   · exact (hbase' hbase).elim
 
 private theorem allAtoms_outputs {p : Hex.ZPoly}

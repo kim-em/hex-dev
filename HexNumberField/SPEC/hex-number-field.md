@@ -70,10 +70,22 @@ def AlgebraicNumber.checked (a : AlgebraicNumber) :
     ZPoly.CheckedIrreducible a.p
 def AlgebraicNumber.squarefree (a : AlgebraicNumber) :
     HasOnlySimpleRoots a.p
-def AlgebraicNumber.x (a : AlgebraicNumber) : SimpleRoot a.p
 def AlgebraicNumber.rep (a : AlgebraicNumber) : RefinedIsolation a.p
+def AlgebraicNumber.IsCanonical (p : ZPoly)
+    (squarefree : HasOnlySimpleRoots p) (rep : RefinedIsolation p) : Prop
+def AlgebraicNumber.canonical (a : AlgebraicNumber) :
+    AlgebraicNumber.IsCanonical a.p a.squarefree a.rep
+def AlgebraicNumber.x (a : AlgebraicNumber) : SimpleRoot a.p
 def AlgebraicNumber.rep_mk (a : AlgebraicNumber) :
     SimpleRoot.mk a.rep = a.x
+def AlgebraicNumber.zeroRep : RefinedIsolation ZPoly.X
+def AlgebraicNumber.canonicalRep? (p : ZPoly)
+    (squarefree : HasOnlySimpleRoots p) (rep : RefinedIsolation p)
+    (hzero : p ≠ ZPoly.X) :
+    Option {r : RefinedIsolation p //
+      AlgebraicNumber.IsCanonical p squarefree r ∧ r.sameRoot rep = true}
+theorem AlgebraicNumber.ext (a b : AlgebraicNumber) (hp : a.p = b.p)
+    (hrep : HEq a.rep b.rep) : a = b
 def AlgebraicNumber.zero : AlgebraicNumber
 instance : Zero AlgebraicNumber
 instance : Inhabited AlgebraicNumber
@@ -111,7 +123,14 @@ isolation driver. Every other polynomial is re-isolated with the fixed default
 strategy at `separationDepth`, storing the unique matching disc. Thus equal
 complex values have identical hidden data, not merely a semantic `BEq`; this
 representation can support field laws stated with Lean equality. User-supplied
-alternative refined discs cannot enter the private constructor.
+alternative refined discs cannot enter the private constructor. The sealed
+record retains provenance that its representative belongs to the deterministic
+isolation/refinement array (or is the fixed `X` representative); the companion
+uses pairwise root separation in that array to prove this invariant unique.
+The certificate stored inside `RefinedIsolation` is proof-relevant, so this
+canonical-provenance field is load-bearing: every constructor path must use the
+fixed `zeroRep` or `canonicalRep?`, never insert an independently transported
+certificate directly.
 
 Do not instantiate `DensePoly AlgebraicNumber` in the Mathlib-free layer.
 `DensePoly` requires a kernel `DecidableEq` on coefficients so trailing-zero
@@ -288,6 +307,26 @@ Canonical `AlgebraicNumber` exposes the ordinary arithmetic operations, with
 structure. `AlgebraicRoot` exposes named operations but no field structure:
 two semantically equal lazy results can have different enclosing polynomials,
 so the field laws do not hold for structural equality on that record.
+
+The executable rational and power surface is:
+
+```lean
+def AlgebraicNumber.ofRat (q : Rat) : AlgebraicNumber
+instance : One AlgebraicNumber
+instance : NatCast AlgebraicNumber
+instance : IntCast AlgebraicNumber
+instance (n : Nat) : OfNat AlgebraicNumber (n + 2)
+instance : SMul Rat AlgebraicNumber
+instance : SMul Nat AlgebraicNumber
+instance : SMul Int AlgebraicNumber
+instance : Pow AlgebraicNumber Nat
+instance : Pow AlgebraicNumber Int
+```
+
+`ofRat` is the total wrapper around the checked linear-polynomial constructor;
+its panic fallback is proved unreachable by the companion. Rational scalar
+multiplication is multiplication by `ofRat q`, and powers use the existing
+executable multiplication and inversion with repeated squaring.
 
 ## Polynomial roots
 

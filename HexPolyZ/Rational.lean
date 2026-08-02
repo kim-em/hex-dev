@@ -165,6 +165,30 @@ private theorem normalizePrimitiveSign_primitivePart_primitive (f : ZPoly)
   · rw [normalizePrimitiveSign, if_neg hlead]
     exact primitivePart_primitive f hcontent_ne
 
+/-- Sign normalization preserves a primitive integer polynomial. -/
+theorem primitive_normalizePrimitiveSign {p : ZPoly} (hp : Primitive p) :
+    Primitive (normalizePrimitiveSign p) := by
+  unfold normalizePrimitiveSign
+  by_cases hlead : DensePoly.leadingCoeff p < 0
+  · rw [if_pos hlead, Primitive, content,
+      DensePoly.content_scale_neg_one]
+    simpa [Primitive, content] using hp
+  · rw [if_neg hlead]
+    exact hp
+
+/-- Sign normalization preserves the stored coefficient count. -/
+@[simp] theorem size_normalizePrimitiveSign (p : ZPoly) :
+    (normalizePrimitiveSign p).size = p.size := by
+  unfold normalizePrimitiveSign
+  split
+  · exact scale_size_of_ne_zero (-1 : Int) p (by decide)
+  · rfl
+
+/-- Sign normalization preserves optional degree. -/
+@[simp] theorem degree?_normalizePrimitiveSign (p : ZPoly) :
+    (normalizePrimitiveSign p).degree? = p.degree? := by
+  simp [DensePoly.degree?, size_normalizePrimitiveSign]
+
 /-- The rational primitive part is primitive when its content is nonzero. -/
 theorem ratPolyPrimitivePart_primitive (f : DensePoly Rat)
     (h : content (ratPolyPrimitivePart f) ≠ 0) :
@@ -310,6 +334,147 @@ private theorem rat_derivative_scale (u : Rat) (p : DensePoly Rat) :
     DensePoly.coeff_scale (R := Rat) u (DensePoly.derivative p) n (Rat.mul_zero u),
     rat_coeff_derivative, DensePoly.coeff_scale (R := Rat) u p (n + 1) (Rat.mul_zero u)]
   grind [Rat.mul_assoc, Rat.mul_comm]
+
+/-- Substitute `X ↦ -X` in a rational dense polynomial. This local
+coefficient transform is the rational counterpart of `ZPoly.dilate (-1)`. -/
+@[expose]
+def reflectRat (p : DensePoly Rat) : DensePoly Rat :=
+  DensePoly.ofList ((List.range p.size).map fun i => (-1 : Rat) ^ i * p.coeff i)
+
+/-- Coefficients of rational reflection differ by the parity sign. -/
+theorem coeff_reflectRat (p : DensePoly Rat) (n : Nat) :
+    (reflectRat p).coeff n = (-1 : Rat) ^ n * p.coeff n := by
+  unfold reflectRat
+  rw [DensePoly.coeff_ofList, List.getD_eq_getElem?_getD, List.getElem?_map]
+  by_cases hn : n < p.size
+  · rw [List.getElem?_range hn]
+    rfl
+  · have hpzero : p.coeff n = 0 :=
+      DensePoly.coeff_eq_zero_of_size_le p (Nat.le_of_not_lt hn)
+    rw [List.getElem?_eq_none (by simpa using Nat.le_of_not_lt hn), hpzero]
+    simp only [Option.map_none, Option.getD_none]
+    exact (Rat.mul_zero _).symm
+
+/-- Rational reflection preserves the stored coefficient count. -/
+@[simp] theorem size_reflectRat (p : DensePoly Rat) :
+    (reflectRat p).size = p.size := by
+  by_cases hp : p.size = 0
+  · simp [reflectRat, hp]
+  · have hpPos : 0 < p.size := Nat.pos_of_ne_zero hp
+    apply Nat.le_antisymm
+    · unfold reflectRat
+      exact Nat.le_trans (DensePoly.size_ofCoeffs_le _) (by simp)
+    · apply Nat.le_of_not_gt
+      intro hle
+      have hcoeffZero := DensePoly.coeff_eq_zero_of_size_le
+        (reflectRat p) (i := p.size - 1) (Nat.le_sub_one_of_lt hle)
+      rw [coeff_reflectRat] at hcoeffZero
+      have hpTop := DensePoly.coeff_last_ne_zero_of_pos_size p hpPos
+      apply hpTop
+      exact (Rat.mul_eq_zero.mp hcoeffZero).resolve_left (by
+        intro hsign
+        have hsquare : ((-1 : Rat) ^ (p.size - 1)) *
+            ((-1 : Rat) ^ (p.size - 1)) = 1 := by
+          induction p.size - 1 with
+          | zero =>
+              rw [Lean.Grind.Semiring.pow_zero]
+              exact Rat.one_mul 1
+          | succ n ih => grind [Lean.Grind.Semiring.pow_succ]
+        rw [hsign, Rat.zero_mul] at hsquare
+        contradiction)
+
+/-- Rational reflection is an involution. -/
+@[simp] theorem reflectRat_reflectRat (p : DensePoly Rat) :
+    reflectRat (reflectRat p) = p := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [coeff_reflectRat, coeff_reflectRat]
+  have hsign : ((-1 : Rat) ^ n) * ((-1 : Rat) ^ n) = 1 := by
+    induction n with
+    | zero =>
+        rw [Lean.Grind.Semiring.pow_zero]
+        exact Rat.one_mul 1
+    | succ n ih => grind [Lean.Grind.Semiring.pow_succ]
+  grind
+
+/-- Rational reflection preserves nonzeroness. -/
+theorem reflectRat_ne_zero {p : DensePoly Rat} (hp : p ≠ 0) :
+    reflectRat p ≠ 0 := by
+  intro hreflect
+  apply hp
+  rw [← reflectRat_reflectRat p, hreflect]
+  simp [reflectRat]
+
+/-- Differentiating a reflection contributes one global minus sign. -/
+theorem derivative_reflectRat (p : DensePoly Rat) :
+    DensePoly.derivative (reflectRat p) =
+      DensePoly.scale (-1) (reflectRat (DensePoly.derivative p)) := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [rat_coeff_derivative, coeff_reflectRat,
+    DensePoly.coeff_scale (R := Rat) (-1) (reflectRat (DensePoly.derivative p)) n
+      (Rat.mul_zero _), coeff_reflectRat, rat_coeff_derivative]
+  have hpow : (-1 : Rat) ^ (n + 1) = -((-1 : Rat) ^ n) := by
+    rw [Lean.Grind.Semiring.pow_succ]
+    grind
+  rw [hpow]
+  grind [Rat.mul_assoc, Rat.mul_comm]
+
+/-- Rational reflection is multiplicative. -/
+theorem reflectRat_mul (p q : DensePoly Rat) :
+    reflectRat (p * q) = reflectRat p * reflectRat q := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [coeff_reflectRat, DensePoly.coeff_mul, DensePoly.coeff_mul,
+    DensePoly.mulCoeffSum_eq_diagonal, DensePoly.mulCoeffSum_eq_diagonal,
+    size_reflectRat]
+  let sign : Rat := (-1 : Rat) ^ n
+  have hterm (i : Nat) :
+      DensePoly.diagonalMulCoeffTerm (reflectRat p) (reflectRat q) n i =
+        sign * DensePoly.diagonalMulCoeffTerm p q n i := by
+    unfold DensePoly.diagonalMulCoeffTerm
+    by_cases hni : n < i
+    · simp [hni, sign]
+    · rw [if_neg hni, if_neg hni, coeff_reflectRat, coeff_reflectRat]
+      have hpow : (-1 : Rat) ^ i * (-1 : Rat) ^ (n - i) = sign := by
+        rw [← Lean.Grind.Semiring.pow_add]
+        congr 1
+        exact Nat.add_sub_of_le (Nat.le_of_not_gt hni)
+      grind [Rat.mul_assoc, Rat.mul_comm]
+  have hfold (indices : List Nat) (acc : Rat) :
+      indices.foldl (fun total i => total +
+          DensePoly.diagonalMulCoeffTerm (reflectRat p) (reflectRat q) n i)
+          (sign * acc) =
+        sign * indices.foldl (fun total i => total +
+          DensePoly.diagonalMulCoeffTerm p q n i) acc := by
+    induction indices generalizing acc with
+    | nil => rfl
+    | cons i indices ih =>
+        simp only [List.foldl_cons]
+        rw [hterm]
+        have hacc : sign * acc +
+            sign * DensePoly.diagonalMulCoeffTerm p q n i =
+              sign * (acc + DensePoly.diagonalMulCoeffTerm p q n i) := by
+          grind [Rat.mul_add]
+        rw [hacc]
+        exact ih _
+  simpa [sign] using (hfold (List.range p.size) 0).symm
+
+/-- Rational reflection transports polynomial divisibility. -/
+theorem reflectRat_dvd {p q : DensePoly Rat} (h : p ∣ q) :
+    reflectRat p ∣ reflectRat q := by
+  rcases h with ⟨a, rfl⟩
+  exact ⟨reflectRat a, reflectRat_mul p a⟩
+
+/-- Casting an integer reflection to rational coefficients gives rational
+reflection. -/
+theorem toRatPoly_dilate_neg_one (p : ZPoly) :
+    toRatPoly (dilate (-1) p) = reflectRat (toRatPoly p) := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [coeff_toRatPoly, coeff_dilate, coeff_reflectRat, coeff_toRatPoly,
+    Rat.intCast_mul, Rat.intCast_pow]
+  rfl
 
 /-- The Leibniz product rule `derivative (p * q) = derivative p * q + p * derivative q` for rational dense polynomials. -/
 private theorem rat_derivative_mul (p q : DensePoly Rat) :
@@ -1323,6 +1488,90 @@ private theorem rat_squareFree_of_rational_associate
         d.size ≤ (DensePoly.gcd p (DensePoly.derivative p)).size :=
       rat_size_le_of_dvd_nonzero hd_ne hg_ne hdg
     omega
+
+/-- Multiplication by `-1` preserves executable rational squarefreeness. -/
+theorem squareFreeRat_scale_neg_one (p : ZPoly) (h : SquareFreeRat p) :
+    SquareFreeRat (DensePoly.scale (-1) p) := by
+  by_cases hp : p = 0
+  · subst p
+    simpa using h
+  · have hpRat : toRatPoly p ≠ 0 := by
+      intro hzero
+      have hsize := congrArg DensePoly.size hzero
+      rw [DensePoly.size_zero, size_toRatPoly] at hsize
+      exact hp ((DensePoly.size_eq_zero_iff p).mp hsize)
+    have hassoc : toRatPoly p = DensePoly.scale (-1 : Rat)
+        (toRatPoly (DensePoly.scale (-1 : Int) p)) := by
+      rw [toRatPoly_scale_int, DensePoly.scale_scale]
+      rw [show ((-1 : Int) : Rat) = (-1 : Rat) by rfl]
+      have hminus : (-1 : Rat) * (-1 : Rat) = 1 := by grind
+      rw [hminus, rat_scale_one]
+    exact rat_squareFree_of_rational_associate (u := (-1 : Rat))
+      (by decide) hpRat hassoc h
+
+/-- Sign normalization preserves executable rational squarefreeness. -/
+theorem squareFreeRat_normalizePrimitiveSign (p : ZPoly) (h : SquareFreeRat p) :
+    SquareFreeRat (normalizePrimitiveSign p) := by
+  unfold normalizePrimitiveSign
+  split
+  · exact squareFreeRat_scale_neg_one p h
+  · exact h
+
+/-- Reflection in the origin preserves executable rational squarefreeness. -/
+theorem squareFreeRat_dilate_neg_one (p : ZPoly) (h : SquareFreeRat p) :
+    SquareFreeRat (dilate (-1) p) := by
+  by_cases hp : p = 0
+  · subst p
+    simpa [dilate] using h
+  · let q := toRatPoly p
+    have hq : q ≠ 0 := by
+      intro hzero
+      have hsize := congrArg DensePoly.size hzero
+      rw [DensePoly.size_zero] at hsize
+      have hpSize : p.size = 0 := by
+        simpa [q, size_toRatPoly] using hsize
+      exact hp ((DensePoly.size_eq_zero_iff p).mp hpSize)
+    unfold SquareFreeRat at h ⊢
+    rw [toRatPoly_dilate_neg_one]
+    let d := DensePoly.gcd (reflectRat q)
+      (DensePoly.derivative (reflectRat q))
+    by_cases hdle : d.size ≤ 1
+    · simpa [d]
+    · exfalso
+      have hdgt : 1 < d.size := Nat.lt_of_not_ge hdle
+      have hddq : d ∣ reflectRat q := by
+        simpa [d] using DensePoly.gcd_dvd_left
+          (reflectRat q) (DensePoly.derivative (reflectRat q))
+      have hddq' : d ∣ DensePoly.derivative (reflectRat q) := by
+        simpa [d] using DensePoly.gcd_dvd_right
+          (reflectRat q) (DensePoly.derivative (reflectRat q))
+      have hdReflectDeriv : d ∣ reflectRat (DensePoly.derivative q) := by
+        rw [derivative_reflectRat] at hddq'
+        have hscaled := rat_dvd_scale_of_dvd (-1 : Rat) hddq'
+        rw [DensePoly.scale_scale] at hscaled
+        have hminus : (-1 : Rat) * (-1 : Rat) = 1 := by grind
+        rw [hminus, rat_scale_one] at hscaled
+        exact hscaled
+      have hreflectDvdQ : reflectRat d ∣ q := by
+        simpa using reflectRat_dvd hddq
+      have hreflectDvdDeriv : reflectRat d ∣ DensePoly.derivative q := by
+        simpa using reflectRat_dvd hdReflectDeriv
+      have hreflectDvdGcd : reflectRat d ∣
+          DensePoly.gcd q (DensePoly.derivative q) :=
+        DensePoly.dvd_gcd (reflectRat d) q (DensePoly.derivative q)
+          hreflectDvdQ hreflectDvdDeriv
+      have hreflectNe : (reflectRat d).size ≠ 0 := by
+        rw [size_reflectRat]
+        omega
+      have hgcdNe : (DensePoly.gcd q (DensePoly.derivative q)).size ≠ 0 :=
+        rat_gcd_size_ne_zero_of_left_ne_zero q (DensePoly.derivative q) hq
+      have hsizeLe : (reflectRat d).size ≤
+          (DensePoly.gcd q (DensePoly.derivative q)).size :=
+        rat_size_le_of_dvd_nonzero hreflectNe hgcdNe hreflectDvdGcd
+      have hqSquare : (DensePoly.gcd q (DensePoly.derivative q)).size ≤ 1 := by
+        simpa [q] using h
+      rw [size_reflectRat] at hsizeLe
+      omega
 
 private theorem rat_div_gcd_mul_reconstruct (f df : DensePoly Rat) :
     (f / DensePoly.gcd f df) * DensePoly.gcd f df = f := by

@@ -118,11 +118,10 @@ end Component
 
 namespace DyadicRootIsolation
 
-/-- The certified region selected by an atom witness. If both disjuncts hold,
-the Newton square is chosen; either choice contains the same unique root once
-both semantic developments are available. -/
+/-- The certified region selected by an atom certificate. Reflected
+certificates preserve the region kind of their source certificate. -/
 @[expose] def region {p : Hex.ZPoly} (iso : Hex.DyadicRootIsolation p) : Set ℂ :=
-  if Hex.nkWitness p iso.square then
+  if iso.witness.isNK then
     DyadicSquare.closedSquare iso.square
   else
     DyadicSquare.closedDisc iso.square

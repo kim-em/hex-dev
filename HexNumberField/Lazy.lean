@@ -83,50 +83,49 @@ an original zero constant coefficient. -/
 def reciprocal (p : ZPoly) : ZPoly :=
   DensePoly.ofCoeffs p.toArray.reverse
 
-/-- Primitive positive-leading polynomial whose roots are the negatives of
-the roots of `p`. -/
-@[expose]
-def negRoots (p : ZPoly) : ZPoly :=
-  normalizePrimitiveSign (primitivePart (DensePoly.compose p (-ZPoly.X)))
-
 /-- Negating roots preserves primitive normalization. -/
 theorem negRoots_primitive (p : ZPoly) (h : Primitive p) :
     Primitive (negRoots p) := by
-  sorry
+  rw [negRoots_eq_reflect h]
+  exact primitive_normalizePrimitiveSign (primitive_dilate_neg_one h)
 
 /-- Negating roots preserves positive leading normalization. -/
-theorem negRoots_lc_pos (p : ZPoly) (h : 0 < p.leadingCoeff) :
+theorem negRoots_lc_pos (p : ZPoly) (hprim : Primitive p)
+    (h : 0 < p.leadingCoeff) :
     0 < (negRoots p).leadingCoeff := by
-  sorry
+  rw [negRoots_eq_reflect hprim]
+  apply leadingCoeff_normalizePrimitiveSign_pos_of_ne_zero
+  apply dilate_neg_one_ne_zero
+  intro hp
+  rw [hp] at h
+  simp at h
 
 /-- Negating roots preserves positive degree. -/
-theorem negRoots_degree_pos (p : ZPoly) (h : 0 < p.degree?.getD 0) :
+theorem negRoots_degree_pos (p : ZPoly) (hprim : Primitive p)
+    (h : 0 < p.degree?.getD 0) :
     0 < (negRoots p).degree?.getD 0 := by
-  sorry
+  rw [negRoots_eq_reflect hprim, degree?_normalizePrimitiveSign,
+    degree?_dilate_neg_one]
+  exact h
 
 /-- Negating roots preserves squarefreeness. -/
-theorem negRoots_simple (p : ZPoly) (h : HasOnlySimpleRoots p) :
+theorem negRoots_simple (p : ZPoly) (hprim : Primitive p)
+    (h : HasOnlySimpleRoots p) :
     HasOnlySimpleRoots (negRoots p) := by
-  sorry
+  rw [negRoots_eq_reflect hprim]
+  exact ZPoly.squareFreeRat_normalizePrimitiveSign _
+    (ZPoly.squareFreeRat_dilate_neg_one p h)
 
 /-- The Mahler precision is invariant under reflection and unit
 normalization. -/
 theorem mahlerPrec_negRoots (p : ZPoly) (h : Primitive p) :
     mahlerPrec (negRoots p) = mahlerPrec p := by
-  sorry
+  unfold mahlerPrec
+  rw [negRoots_eq_reflect h, degree?_normalizePrimitiveSign,
+    degree?_dilate_neg_one, coeffAbsMax_normalizePrimitiveSign,
+    coeffAbsMax_dilate_neg_one]
 
 end ZPoly
-
-/-- Reflect a square through the origin. -/
-@[expose]
-def DyadicSquare.neg (s : DyadicSquare) : DyadicSquare :=
-  ⟨-s.re, -s.im, s.prec⟩
-
-/-- Reflection transports a root atom to the reflected polynomial. -/
-theorem atomWitness_negRoots {p : ZPoly} {s : DyadicSquare}
-    (hprim : ZPoly.Primitive p) (h : atomWitness p s) :
-    atomWitness p.negRoots s.neg := by
-  sorry
 
 namespace DyadicComplexBall
 
@@ -165,7 +164,7 @@ separation precision. -/
 @[expose]
 def RefinedIsolation.neg {p : ZPoly} (r : RefinedIsolation p)
     (hprim : ZPoly.Primitive p) : RefinedIsolation p.negRoots :=
-  ⟨⟨r.1.square.neg, atomWitness_negRoots hprim r.1.witness⟩, by
+  ⟨⟨r.1.square.neg, .neg hprim r.1.witness⟩, by
     rw [ZPoly.mahlerPrec_negRoots p hprim]
     exact r.2⟩
 
@@ -212,9 +211,9 @@ def neg (a : AlgebraicRoot) : AlgebraicRoot :=
   let rep := a.rep.neg a.prim
   { p := a.p.negRoots
     prim := ZPoly.negRoots_primitive a.p a.prim
-    pos_lc := ZPoly.negRoots_lc_pos a.p a.pos_lc
-    pos_degree := ZPoly.negRoots_degree_pos a.p a.pos_degree
-    squarefree := ZPoly.negRoots_simple a.p a.squarefree
+    pos_lc := ZPoly.negRoots_lc_pos a.p a.prim a.pos_lc
+    pos_degree := ZPoly.negRoots_degree_pos a.p a.prim a.pos_degree
+    squarefree := ZPoly.negRoots_simple a.p a.prim a.squarefree
     x := SimpleRoot.mk rep
     rep
     rep_mk := rfl }
@@ -357,7 +356,7 @@ private def sqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
-  ⟨⟨sqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtTwoRoot (hsimple : HasOnlySimpleRoots sqrtTwoPoly) :
     AlgebraicRoot where
@@ -395,7 +394,7 @@ private def tinyRootSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 1 60, 0, 70⟩
 
 private def tinyRootRep : RefinedIsolation tinyRootPoly :=
-  ⟨⟨tinyRootSquare, by decide⟩, by decide⟩
+  ⟨⟨tinyRootSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def tinyRoot (hsimple : HasOnlySimpleRoots tinyRootPoly) :
     AlgebraicRoot where
