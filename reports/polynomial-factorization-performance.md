@@ -9,7 +9,7 @@ implementations.
 
 | System | Answered / 392 | Median solved time | p90 solved time |
 |---|---:|---:|---:|
-| Hex factorization | 376 | 372.713 us | 7.324 ms |
+| Hex factorization | 376 | 375.596 us | 7.457 ms |
 | FLINT | 391 | 60.089 us | 1.139 ms |
 | PARI/GP | 391 | 65.687 us | 1.008 ms |
 | NTL | 391 | 88.160 us | 2.365 ms |
@@ -21,8 +21,8 @@ NTL remain substantially faster and cover almost the whole corpus. Hex has a
 sub-millisecond median but a pronounced multi-second tail.
 
 Every pair of answering systems agreed on factor degrees. Timings come from
-fresh 2026-08-01 measurements on the same host, corpus, CPU placement, cutoff,
-and repetition policy. See
+fresh 2026-08-01/02 measurements on the same host, corpus, CPU placement,
+cutoff, and repetition policy. See
 [`hexbz-factor-sweep.md`](hexbz-factor-sweep.md) for exact provenance.
 
 ## Paired comparisons
@@ -32,11 +32,11 @@ protocol overhead. A ratio below one favors Hex.
 
 | Hex / comparator | Eligible pairs | Median | p10-p90 | Hex wins |
 |---|---:|---:|---:|---:|
-| FLINT | 74 | 10.730x | 4.357x-100.759x | 0 |
-| PARI/GP | 79 | 11.919x | 2.649x-107.044x | 0 |
-| NTL | 139 | 5.746x | 1.137x-25.819x | 7 |
-| Verified Isabelle BZ | 213 | 0.746x | 0.467x-2.621x | 133 |
-| Verified Isabelle LLL | 163 | 0.00769x | 0.000277x-0.215x | 162 |
+| FLINT | 74 | 10.899x | 4.403x-101.352x | 0 |
+| PARI/GP | 79 | 11.803x | 2.697x-108.114x | 0 |
+| NTL | 140 | 5.961x | 1.165x-25.506x | 7 |
+| Verified Isabelle BZ | 216 | 0.775x | 0.472x-2.662x | 135 |
+| Verified Isabelle LLL | 166 | 0.00796x | 0.000290x-0.216x | 165 |
 
 The broad percentile bands matter: performance depends strongly on the
 polynomial family, so none of these medians is a uniform ordering.
@@ -51,12 +51,14 @@ proved classical engine.
 
 This gives a general rather than family-specific result. On 99 common rows
 above one millisecond versus the preceding clean record, median new/old is
-`0.997x`, with p10-p90 `0.978x-1.022x`; every family median is within about 3%
-of parity. Coverage increases by one with no lost row:
+`1.017x`, with p10-p90 `0.992x-1.043x`; every family median is within about 4%
+of parity. This comparison includes the Lean 4.33 toolchain and core-library
+update, so it describes the final shipped state rather than isolating the
+optimization. Coverage increases by one with no lost row:
 
-- `hoeij_F190`: 7.369 s, newly solved;
-- `sd6`: 7.963 s, retained at 80% of the cutoff;
-- Wilkinson degrees 24, 40, and 56: 4.036 ms, 15.603 ms, and 39.783 ms.
+- `hoeij_F190`: 7.212 s, newly solved;
+- `sd6`: 8.361 s, retained at 84% of the cutoff;
+- Wilkinson degrees 24, 40, and 56: 4.022 ms, 15.873 ms, and 40.423 ms.
 
 F190 and `sd6` each use one timed call because they exceed one second. These are
 coverage observations, not low-variance speed estimates. The Wilkinson points
