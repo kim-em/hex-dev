@@ -11,15 +11,20 @@ The record answers four separate questions and keeps them separate:
   factorization into the production functions it calls, in production order,
   and times each. Its counters and its times come from that one execution.
 * **Counterfactual prime plans.** `primeCounterfactual` replays the downstream
-  lift and recombination for every good prime the bounded walk retained, so the
+  lift and recombination for every good prime in a fixed comparison set, so the
   cost of having stopped at each candidate is measurable. Only the row marked
   `selected` is work the production cascade actually did.
 * **Scout prices.** `primeScout` prices, at every good prime in a bounded
-  prefix of the candidate list, the three ways of learning that prime's modular
-  degree pattern: the distinct-degree scout, the Berlekamp matrix with its
-  kernel, and a full Berlekamp split. It also checks the scouted pattern
-  against the split. This is the evidence the prime-planning policy is chosen
-  from; none of it is work the production cascade does.
+  prefix of the candidate list, the four ways of learning that prime's modular
+  degree pattern: the bounded scout the planner runs, the complete degree
+  pattern, the Berlekamp matrix with its kernel, and a full Berlekamp split. It
+  also checks the scouted pattern against the split. This is the evidence the
+  prime-planning policy is chosen from; none of it is work the production
+  cascade does.
+
+Every cost in the plan sections is one observation per call, so both are
+repeated and merged by per-candidate median (`--plan-repeats`); the counts they
+carry are deterministic and identical across repeats.
 * **Validation.** Cross-checks run alongside, on a wider sample than the
   representative set: the counted recombination mirror must agree with the
   production `factorTrace` on leaf count, selected prime, completed subset
@@ -84,6 +89,10 @@ PROFILED = [
 ]
 
 DEFAULT_CUTOFF = 120.0
+DEFAULT_PLAN_REPEATS = 3
+# Per-candidate costs merged by median across `--plan-repeats` calls.
+PLAN_NANO_KEYS = ("goodPrimeTest", "boundedScout", "scout", "berlekampMatrix",
+                  "rowReduction", "fullSplit", "henselLift", "recombination")
 DEFAULT_WARMUP = 1
 DEFAULT_REPEATS = 5
 # Above this first-call wall time a repeat sweep costs more than it buys, so the
@@ -184,6 +193,45 @@ def measure_end_to_end(service: Service, inst: dict, cutoff: float,
     }
 
 
+def merge_plans(plans):
+    """Median each per-candidate cost across repeated calls on one instance.
+
+    Structure (candidate order, primes, widths, degrees, node and division
+    counts) is deterministic, so the first non-empty plan supplies it and only
+    the timings are replaced.
+    """
+    plans = [p for p in plans if p]
+    if not plans:
+        return None
+    base = next((json.loads(json.dumps(p)) for p in plans if p.get("candidates")),
+                None)
+    if base is None:
+        return plans[0]
+    for i, cand in enumerate(base["candidates"]):
+        peers = [p["candidates"][i] for p in plans
+                 if len(p.get("candidates") or []) > i
+                 and p["candidates"][i].get("prime") == cand.get("prime")]
+        for key in PLAN_NANO_KEYS:
+            values = [q[key]["nanos"] for q in peers if key in q]
+            if values:
+                cand[key]["nanos"] = int(statistics.median(values))
+        values = [q["downstreamNanos"] for q in peers if "downstreamNanos" in q]
+        if values:
+            cand["downstreamNanos"] = int(statistics.median(values))
+    return base
+
+
+def measure_plan(service, inst, cutoff, repeats):
+    """Repeat one plan-section call and merge the repeats by median."""
+    plans = []
+    for _ in range(max(1, repeats)):
+        result, _ = call_ok(service, inst["coeffs"], cutoff)
+        if result is None:
+            return None
+        plans.append(result)
+    return merge_plans(plans)
+
+
 def degree_multiset(profile: dict):
     """Sorted factor degrees with multiplicity from a phase profile."""
     degrees = []
@@ -270,6 +318,10 @@ def main() -> int:
                    help="skip the per-candidate counterfactual prime plans")
     p.add_argument("--no-scout", dest="scout", action="store_false",
                    help="skip the per-candidate scout prices")
+    p.add_argument("--plan-repeats", type=int, default=DEFAULT_PLAN_REPEATS,
+                   help="calls per instance for the counterfactual and scout "
+                        f"sections (default {DEFAULT_PLAN_REPEATS}); the "
+                        "per-candidate costs are their median")
     p.add_argument("--output", type=Path, default=None)
     args = p.parse_args()
 
@@ -316,7 +368,7 @@ def main() -> int:
         for name in names:
             inst = corpus[name]
             print(f"counterfactual: {name}", file=sys.stderr)
-            result, _ = call_ok(cf_service, inst["coeffs"], args.cutoff)
+            result = measure_plan(cf_service, inst, args.cutoff, args.plan_repeats)
             counterfactuals.append({
                 "name": name,
                 "family": inst["family"],
@@ -332,7 +384,7 @@ def main() -> int:
         for name in names:
             inst = corpus[name]
             print(f"scout: {name}", file=sys.stderr)
-            result, _ = call_ok(scout_service, inst["coeffs"], args.cutoff)
+            result = measure_plan(scout_service, inst, args.cutoff, args.plan_repeats)
             scouts.append({
                 "name": name,
                 "family": inst["family"],
@@ -389,6 +441,7 @@ def main() -> int:
             "validate_cutoff_seconds": args.validate_cutoff,
             "warmup": args.warmup,
             "repeats": args.repeats,
+            "plan_repeats": args.plan_repeats,
             "repeat_ceiling_nanos": REPEAT_CEILING_NANOS,
             "names": names,
             "representative": REPRESENTATIVE,
