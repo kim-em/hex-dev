@@ -6,7 +6,7 @@ algorithm variants.
 ## Systems
 
 - `hex-factor`: public Hex production factorization at clean revision
-  `1de5a116fbc0220d8e382fd53f5af3d92f2220af`
+  `8b5cf9434d9fc7ed110b1e685a850ef7da37bf31`
 - `flint`: python-flint 0.9.0
 - `pari`: PARI/GP 2.17.2 through cypari2 2.2.4
 - `ntl`: NTL 11.6.0 `ZZXFactoring`
@@ -32,7 +32,7 @@ session and Haskell-export builds completed before timed calls.
 - Cross-check: committed expected factor degrees where available, pairwise
   agreement otherwise
 
-The per-system protocol overheads were 21.672 us for Hex, 15.493 us for FLINT,
+The per-system protocol overheads were 21.382 us for Hex, 15.493 us for FLINT,
 11.027 us for NTL, 18.006 us for PARI, 18.628 us for Isabelle BZ, and 18.848 us
 for Isabelle LLL. Reported service times do not subtract them.
 
@@ -40,23 +40,23 @@ for Isabelle LLL. Reported service times do not subtract them.
 
 The plotting tool selects the newest valid record for each system:
 
-- `reports/bench-results/hexbz-factor-sweep-1de5a116-hex-chungus2.json`
+- `reports/bench-results/hexbz-factor-sweep-8b5cf943-hex-chungus2.json`
   supplies Hex; SHA-256
-  `0cb56b948bdb48c31acfe4f325887dd2dd8801e9ac5f510f928158b44d2a2e7a`.
+  `c2f21575429dab828102008b71bb0a3bdf45a372b99737ef05f6cac73941c778`.
 - `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json`
   supplies FLINT, NTL, PARI, Isabelle BZ, and Isabelle LLL; SHA-256
   `4de27e389d738abc1e878f0be273485c3723216211a101c3eba55860e7b8a242`.
 
 Both records use a clean worktree, the current corpus hash, the same host and
 protocol, and no early termination. The Hex executable SHA-256 is
-`074d19f6139f4f596c0f84429815cf81021f10d56a71cbdf3f36240671547430`.
+`42d3031561c8eb56bcd9a540227278921ac57217b2fc0fabd77dd3e152d836e3`.
 All answering systems agree.
 
 ## Current summary
 
 | System | OK | Timeout | p50 solved | p90 solved | Slowest solved |
 |---|---:|---:|---:|---:|---:|
-| Hex public factor | 376 | 16 | 375.596 us | 7.457 ms | 8.361 s |
+| Hex public factor | 376 | 16 | 375.012 us | 7.532 ms | 8.319 s |
 | FLINT | 391 | 1 | 60.089 us | 1.139 ms | 1.241 s |
 | PARI/GP | 391 | 1 | 65.687 us | 1.008 ms | 960.815 ms |
 | NTL | 391 | 1 | 88.160 us | 2.365 ms | 1.305 s |
@@ -84,3 +84,14 @@ uv run --with matplotlib==3.11.1 python3 scripts/plots/hexbz-cactus.py --check
 CI runs `scripts/bench/check_factor_sweep_freshness.py` and the plot `--check`.
 Relevant factorization, corpus, harness, or comparator changes therefore make a
 PR fail until its data and all 25 SVGs are refreshed.
+
+Exact solved ranks around the Hex / verified Isabelle BZ crossover, in both the
+independently sorted cumulative form the charts plot and the paired-testcase
+form, come from the same records:
+
+```sh
+python3 scripts/bench/cactus_rank_table.py --lo 118 --hi 144
+```
+
+The phase-by-phase attribution of that crossover is
+[reports/hexbz-cactus-elbow.md](hexbz-cactus-elbow.md).

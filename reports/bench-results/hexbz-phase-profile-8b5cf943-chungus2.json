@@ -14,7 +14,7 @@
     "corpus": "bench/corpus/hexbz-factor-corpus.jsonl",
     "corpus_sha256": "619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d",
     "cutoff_seconds": 120.0,
-    "hex_exe_sha256": "ace287cd3a04e3029b027ed05c6522d8f6e6cc26129da5696f0a30e8113cebaf",
+    "hex_exe_sha256": "42d3031561c8eb56bcd9a540227278921ac57217b2fc0fabd77dd3e152d836e3",
     "names": [
       "sd5",
       "sd5_shift1",
@@ -98,7 +98,7 @@
               14
             ],
             "decline": null,
-            "downstreamNanos": 98423617,
+            "downstreamNanos": 97101704,
             "factorDegrees": [
               2,
               2,
@@ -118,7 +118,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 1976641,
+              "nanos": 1963972,
               "smallAllocs": 64903
             },
             "henselPrecision": 19,
@@ -126,7 +126,7 @@
             "modularFactorCount": 16,
             "prime": 29,
             "recombination": {
-              "nanos": 96446976,
+              "nanos": 95137732,
               "smallAllocs": 3264933
             },
             "selected": true,
@@ -161,7 +161,7 @@
               14
             ],
             "decline": null,
-            "downstreamNanos": 97669789,
+            "downstreamNanos": 97108304,
             "factorDegrees": [
               2,
               2,
@@ -181,7 +181,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 2021377,
+              "nanos": 1966987,
               "smallAllocs": 65403
             },
             "henselPrecision": 21,
@@ -189,7 +189,7 @@
             "modularFactorCount": 16,
             "prime": 19,
             "recombination": {
-              "nanos": 95648412,
+              "nanos": 95141317,
               "smallAllocs": 3266235
             },
             "selected": false,
@@ -224,7 +224,7 @@
               14
             ],
             "decline": null,
-            "downstreamNanos": 97417084,
+            "downstreamNanos": 96657796,
             "factorDegrees": [
               2,
               2,
@@ -244,7 +244,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 1995799,
+              "nanos": 1993516,
               "smallAllocs": 65431
             },
             "henselPrecision": 20,
@@ -252,7 +252,7 @@
             "modularFactorCount": 16,
             "prime": 23,
             "recombination": {
-              "nanos": 95421285,
+              "nanos": 94664280,
               "smallAllocs": 3266553
             },
             "selected": false,
@@ -301,7 +301,7 @@
               14
             ],
             "decline": null,
-            "downstreamNanos": 85579194,
+            "downstreamNanos": 84481060,
             "factorDegrees": [
               2,
               2,
@@ -321,7 +321,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 1996720,
+              "nanos": 1986024,
               "smallAllocs": 66620
             },
             "henselPrecision": 19,
@@ -329,7 +329,7 @@
             "modularFactorCount": 16,
             "prime": 29,
             "recombination": {
-              "nanos": 83582474,
+              "nanos": 82495036,
               "smallAllocs": 3083301
             },
             "selected": true,
@@ -364,7 +364,7 @@
               14
             ],
             "decline": null,
-            "downstreamNanos": 85239500,
+            "downstreamNanos": 84875446,
             "factorDegrees": [
               2,
               2,
@@ -384,7 +384,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 1995148,
+              "nanos": 1988078,
               "smallAllocs": 66391
             },
             "henselPrecision": 21,
@@ -392,7 +392,7 @@
             "modularFactorCount": 16,
             "prime": 19,
             "recombination": {
-              "nanos": 83244352,
+              "nanos": 82887368,
               "smallAllocs": 3083221
             },
             "selected": false,
@@ -427,7 +427,7 @@
               14
             ],
             "decline": null,
-            "downstreamNanos": 85628968,
+            "downstreamNanos": 84473250,
             "factorDegrees": [
               2,
               2,
@@ -447,7 +447,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 1957413,
+              "nanos": 1929060,
               "smallAllocs": 65065
             },
             "henselPrecision": 20,
@@ -455,7 +455,7 @@
             "modularFactorCount": 16,
             "prime": 23,
             "recombination": {
-              "nanos": 83671555,
+              "nanos": 82544190,
               "smallAllocs": 3083401
             },
             "selected": false,
@@ -504,7 +504,7 @@
               14
             ],
             "decline": null,
-            "downstreamNanos": 87817652,
+            "downstreamNanos": 85807668,
             "factorDegrees": [
               2,
               2,
@@ -524,7 +524,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 2000005,
+              "nanos": 1973115,
               "smallAllocs": 66367
             },
             "henselPrecision": 19,
@@ -532,7 +532,7 @@
             "modularFactorCount": 16,
             "prime": 29,
             "recombination": {
-              "nanos": 85817647,
+              "nanos": 83834553,
               "smallAllocs": 3116471
             },
             "selected": true,
@@ -567,7 +567,7 @@
               14
             ],
             "decline": null,
-            "downstreamNanos": 87902578,
+            "downstreamNanos": 85730223,
             "factorDegrees": [
               2,
               2,
@@ -587,7 +587,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 1937843,
+              "nanos": 1902651,
               "smallAllocs": 64149
             },
             "henselPrecision": 22,
@@ -595,7 +595,7 @@
             "modularFactorCount": 16,
             "prime": 19,
             "recombination": {
-              "nanos": 85964735,
+              "nanos": 83827572,
               "smallAllocs": 3116627
             },
             "selected": false,
@@ -630,7 +630,7 @@
               14
             ],
             "decline": null,
-            "downstreamNanos": 87461384,
+            "downstreamNanos": 85551949,
             "factorDegrees": [
               2,
               2,
@@ -650,7 +650,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 1980325,
+              "nanos": 1958614,
               "smallAllocs": 65976
             },
             "henselPrecision": 21,
@@ -658,7 +658,7 @@
             "modularFactorCount": 16,
             "prime": 23,
             "recombination": {
-              "nanos": 85481059,
+              "nanos": 83593335,
               "smallAllocs": 3116415
             },
             "selected": false,
@@ -706,7 +706,7 @@
               6
             ],
             "decline": null,
-            "downstreamNanos": 14477853,
+            "downstreamNanos": 14080017,
             "factorDegrees": [
               2,
               2,
@@ -726,7 +726,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 1914598,
+              "nanos": 1910042,
               "smallAllocs": 62875
             },
             "henselPrecision": 17,
@@ -734,7 +734,7 @@
             "modularFactorCount": 16,
             "prime": 29,
             "recombination": {
-              "nanos": 12563255,
+              "nanos": 12169975,
               "smallAllocs": 573241
             },
             "selected": true,
@@ -768,7 +768,7 @@
               6
             ],
             "decline": null,
-            "downstreamNanos": 13844695,
+            "downstreamNanos": 13486627,
             "factorDegrees": [
               2,
               2,
@@ -788,7 +788,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 1785807,
+              "nanos": 1777726,
               "smallAllocs": 60841
             },
             "henselPrecision": 22,
@@ -796,7 +796,7 @@
             "modularFactorCount": 16,
             "prime": 13,
             "recombination": {
-              "nanos": 12058888,
+              "nanos": 11708901,
               "smallAllocs": 568059
             },
             "selected": false,
@@ -830,7 +830,7 @@
               6
             ],
             "decline": null,
-            "downstreamNanos": 14015678,
+            "downstreamNanos": 13625543,
             "factorDegrees": [
               2,
               2,
@@ -850,7 +850,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 1790304,
+              "nanos": 1769834,
               "smallAllocs": 61600
             },
             "henselPrecision": 20,
@@ -858,7 +858,7 @@
             "modularFactorCount": 16,
             "prime": 17,
             "recombination": {
-              "nanos": 12225374,
+              "nanos": 11855709,
               "smallAllocs": 568706
             },
             "selected": false,
@@ -907,7 +907,7 @@
               14
             ],
             "decline": null,
-            "downstreamNanos": 200872490,
+            "downstreamNanos": 198235286,
             "factorDegrees": [
               2,
               2,
@@ -928,7 +928,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 3153315,
+              "nanos": 3296488,
               "smallAllocs": 98435
             },
             "henselPrecision": 21,
@@ -936,7 +936,7 @@
             "modularFactorCount": 17,
             "prime": 29,
             "recombination": {
-              "nanos": 197719175,
+              "nanos": 194938798,
               "smallAllocs": 7137862
             },
             "selected": true,
@@ -963,7 +963,7 @@
               6
             ],
             "decline": "subsetBudget",
-            "downstreamNanos": 263795385,
+            "downstreamNanos": 261935766,
             "factorDegrees": [
               2,
               2,
@@ -993,7 +993,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 3571314,
+              "nanos": 3399440,
               "smallAllocs": 111164
             },
             "henselPrecision": 22,
@@ -1001,7 +1001,7 @@
             "modularFactorCount": 26,
             "prime": 23,
             "recombination": {
-              "nanos": 260224071,
+              "nanos": 258536326,
               "smallAllocs": 14899180
             },
             "selected": false,
@@ -1036,7 +1036,7 @@
               14
             ],
             "decline": null,
-            "downstreamNanos": 212168066,
+            "downstreamNanos": 208701215,
             "factorDegrees": [
               2,
               10,
@@ -1057,7 +1057,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 3271330,
+              "nanos": 3202899,
               "smallAllocs": 103497
             },
             "henselPrecision": 24,
@@ -1065,7 +1065,7 @@
             "modularFactorCount": 17,
             "prime": 19,
             "recombination": {
-              "nanos": 208896736,
+              "nanos": 205498316,
               "smallAllocs": 7393548
             },
             "selected": false,
@@ -1108,7 +1108,7 @@
               2
             ],
             "decline": null,
-            "downstreamNanos": 15175489,
+            "downstreamNanos": 15038949,
             "factorDegrees": [
               2,
               2,
@@ -1131,7 +1131,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 1183124,
+              "nanos": 1185708,
               "smallAllocs": 58533
             },
             "henselPrecision": 14,
@@ -1139,7 +1139,7 @@
             "modularFactorCount": 19,
             "prime": 11,
             "recombination": {
-              "nanos": 13992365,
+              "nanos": 13853241,
               "smallAllocs": 239774
             },
             "selected": true,
@@ -1176,7 +1176,7 @@
               0
             ],
             "decline": null,
-            "downstreamNanos": 5265256126,
+            "downstreamNanos": 5261817392,
             "factorDegrees": [
               2,
               2,
@@ -1207,7 +1207,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 1560043,
+              "nanos": 1583588,
               "smallAllocs": 79189
             },
             "henselPrecision": 17,
@@ -1215,7 +1215,7 @@
             "modularFactorCount": 27,
             "prime": 7,
             "recombination": {
-              "nanos": 5263696083,
+              "nanos": 5260233804,
               "smallAllocs": 99263361
             },
             "selected": false,
@@ -1245,7 +1245,7 @@
               0
             ],
             "decline": null,
-            "downstreamNanos": 11613738,
+            "downstreamNanos": 11587832,
             "factorDegrees": [
               4,
               4,
@@ -1269,7 +1269,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 1445724,
+              "nanos": 1464291,
               "smallAllocs": 71077
             },
             "henselPrecision": 21,
@@ -1277,7 +1277,7 @@
             "modularFactorCount": 20,
             "prime": 5,
             "recombination": {
-              "nanos": 10168014,
+              "nanos": 10123541,
               "smallAllocs": 183079
             },
             "selected": false,
@@ -1317,7 +1317,7 @@
               0
             ],
             "decline": null,
-            "downstreamNanos": 44383239,
+            "downstreamNanos": 44816781,
             "factorDegrees": [
               1,
               6,
@@ -1335,7 +1335,7 @@
               4
             ],
             "henselLift": {
-              "nanos": 15618695,
+              "nanos": 15808450,
               "smallAllocs": 447098
             },
             "henselPrecision": 26,
@@ -1343,7 +1343,7 @@
             "modularFactorCount": 14,
             "prime": 17,
             "recombination": {
-              "nanos": 28764544,
+              "nanos": 29008331,
               "smallAllocs": 248733
             },
             "selected": true,
@@ -1369,7 +1369,7 @@
               5
             ],
             "decline": "subsetBudget",
-            "downstreamNanos": 36707873696,
+            "downstreamNanos": 37274944793,
             "factorDegrees": [
               1,
               4,
@@ -1406,7 +1406,7 @@
               4
             ],
             "henselLift": {
-              "nanos": 15991157,
+              "nanos": 16006894,
               "smallAllocs": 469063
             },
             "henselPrecision": 28,
@@ -1414,7 +1414,7 @@
             "modularFactorCount": 33,
             "prime": 13,
             "recombination": {
-              "nanos": 36691882539,
+              "nanos": 37258937899,
               "smallAllocs": 278486086
             },
             "selected": false,
@@ -1456,7 +1456,7 @@
               6
             ],
             "decline": null,
-            "downstreamNanos": 1435711876,
+            "downstreamNanos": 1447033693,
             "factorDegrees": [
               1,
               2,
@@ -1490,7 +1490,7 @@
               1
             ],
             "henselLift": {
-              "nanos": 15136511,
+              "nanos": 14959461,
               "smallAllocs": 433452
             },
             "henselPrecision": 30,
@@ -1498,7 +1498,7 @@
             "modularFactorCount": 30,
             "prime": 11,
             "recombination": {
-              "nanos": 1420575365,
+              "nanos": 1432074232,
               "smallAllocs": 16633513
             },
             "selected": false,
@@ -1555,7 +1555,7 @@
               2
             ],
             "decline": null,
-            "downstreamNanos": 464871706,
+            "downstreamNanos": 468873990,
             "factorDegrees": [
               4,
               4,
@@ -1598,7 +1598,7 @@
               4
             ],
             "henselLift": {
-              "nanos": 21616127,
+              "nanos": 21504144,
               "smallAllocs": 631468
             },
             "henselPrecision": 43,
@@ -1606,7 +1606,7 @@
             "modularFactorCount": 39,
             "prime": 7,
             "recombination": {
-              "nanos": 443255579,
+              "nanos": 447369846,
               "smallAllocs": 5069326
             },
             "selected": true,
@@ -1636,7 +1636,7 @@
               3
             ],
             "decline": "subsetBudget",
-            "downstreamNanos": 3981698027,
+            "downstreamNanos": 4026060593,
             "factorDegrees": [
               2,
               2,
@@ -1705,7 +1705,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 25095294,
+              "nanos": 24646333,
               "smallAllocs": 743867
             },
             "henselPrecision": 35,
@@ -1713,7 +1713,7 @@
             "modularFactorCount": 65,
             "prime": 11,
             "recombination": {
-              "nanos": 3956602733,
+              "nanos": 4001414260,
               "smallAllocs": 23612162
             },
             "selected": false,
@@ -1741,7 +1741,7 @@
               4
             ],
             "decline": "subsetBudget",
-            "downstreamNanos": 5907809816,
+            "downstreamNanos": 5942703439,
             "factorDegrees": [
               4,
               1,
@@ -1787,7 +1787,7 @@
               4
             ],
             "henselLift": {
-              "nanos": 9927759,
+              "nanos": 9853500,
               "smallAllocs": 327286
             },
             "henselPrecision": 32,
@@ -1795,7 +1795,7 @@
             "modularFactorCount": 42,
             "prime": 13,
             "recombination": {
-              "nanos": 5897882057,
+              "nanos": 5932849939,
               "smallAllocs": 39906093
             },
             "selected": false,
@@ -1830,13 +1830,13 @@
               0
             ],
             "decline": null,
-            "downstreamNanos": 66523403,
+            "downstreamNanos": 66258923,
             "factorDegrees": [
               89,
               89
             ],
             "henselLift": {
-              "nanos": 60869060,
+              "nanos": 60598320,
               "smallAllocs": 1354543
             },
             "henselPrecision": 113,
@@ -1844,7 +1844,7 @@
             "modularFactorCount": 2,
             "prime": 3,
             "recombination": {
-              "nanos": 5654343,
+              "nanos": 5660603,
               "smallAllocs": 44559
             },
             "selected": true,
@@ -1886,7 +1886,7 @@
               6
             ],
             "decline": null,
-            "downstreamNanos": 12794068,
+            "downstreamNanos": 12754361,
             "factorDegrees": [
               16,
               16,
@@ -1900,7 +1900,7 @@
               6
             ],
             "henselLift": {
-              "nanos": 7942235,
+              "nanos": 7869137,
               "smallAllocs": 243515
             },
             "henselPrecision": 24,
@@ -1908,7 +1908,7 @@
             "modularFactorCount": 10,
             "prime": 11,
             "recombination": {
-              "nanos": 4851833,
+              "nanos": 4885224,
               "smallAllocs": 83900
             },
             "selected": true,
@@ -1940,7 +1940,7 @@
               0
             ],
             "decline": null,
-            "downstreamNanos": 599158881,
+            "downstreamNanos": 605902703,
             "factorDegrees": [
               4,
               4,
@@ -1958,7 +1958,7 @@
               4
             ],
             "henselLift": {
-              "nanos": 8602804,
+              "nanos": 8510458,
               "smallAllocs": 260512
             },
             "henselPrecision": 22,
@@ -1966,7 +1966,7 @@
             "modularFactorCount": 14,
             "prime": 13,
             "recombination": {
-              "nanos": 590556077,
+              "nanos": 597392245,
               "smallAllocs": 8581850
             },
             "selected": false,
@@ -1996,7 +1996,7 @@
               2
             ],
             "decline": null,
-            "downstreamNanos": 105704070,
+            "downstreamNanos": 106819191,
             "factorDegrees": [
               4,
               4,
@@ -2012,7 +2012,7 @@
               12
             ],
             "henselLift": {
-              "nanos": 8308978,
+              "nanos": 8222772,
               "smallAllocs": 247771
             },
             "henselPrecision": 20,
@@ -2020,7 +2020,7 @@
             "modularFactorCount": 12,
             "prime": 17,
             "recombination": {
-              "nanos": 97395092,
+              "nanos": 98596419,
               "smallAllocs": 1310661
             },
             "selected": false,
@@ -2060,7 +2060,7 @@
               2
             ],
             "decline": null,
-            "downstreamNanos": 107775130,
+            "downstreamNanos": 107448874,
             "factorDegrees": [
               20,
               16,
@@ -2072,7 +2072,7 @@
               16
             ],
             "henselLift": {
-              "nanos": 66346250,
+              "nanos": 66029111,
               "smallAllocs": 1551121
             },
             "henselPrecision": 52,
@@ -2080,7 +2080,7 @@
             "modularFactorCount": 8,
             "prime": 7,
             "recombination": {
-              "nanos": 41428880,
+              "nanos": 41419763,
               "smallAllocs": 266752
             },
             "selected": true,
@@ -2117,7 +2117,7 @@
               2
             ],
             "decline": null,
-            "downstreamNanos": 252022160,
+            "downstreamNanos": 248981885,
             "factorDegrees": [
               60,
               60,
@@ -2125,7 +2125,7 @@
               60
             ],
             "henselLift": {
-              "nanos": 168867230,
+              "nanos": 166942365,
               "smallAllocs": 3767690
             },
             "henselPrecision": 152,
@@ -2133,7 +2133,7 @@
             "modularFactorCount": 4,
             "prime": 3,
             "recombination": {
-              "nanos": 83154930,
+              "nanos": 82039520,
               "smallAllocs": 396149
             },
             "selected": true,
@@ -2166,7 +2166,7 @@
           {
             "completedLevels": [],
             "decline": null,
-            "downstreamNanos": 8790372,
+            "downstreamNanos": 8913055,
             "factorDegrees": [
               1,
               1,
@@ -2210,7 +2210,7 @@
               1
             ],
             "henselLift": {
-              "nanos": 8288268,
+              "nanos": 8405643,
               "smallAllocs": 208400
             },
             "henselPrecision": 37,
@@ -2218,7 +2218,7 @@
             "modularFactorCount": 40,
             "prime": 47,
             "recombination": {
-              "nanos": 502104,
+              "nanos": 507412,
               "smallAllocs": 15669
             },
             "selected": true,
@@ -2237,7 +2237,7 @@
           {
             "completedLevels": [],
             "decline": null,
-            "downstreamNanos": 8724024,
+            "downstreamNanos": 8827498,
             "factorDegrees": [
               1,
               1,
@@ -2281,7 +2281,7 @@
               1
             ],
             "henselLift": {
-              "nanos": 8223211,
+              "nanos": 8326546,
               "smallAllocs": 207339
             },
             "henselPrecision": 38,
@@ -2289,7 +2289,7 @@
             "modularFactorCount": 40,
             "prime": 43,
             "recombination": {
-              "nanos": 500813,
+              "nanos": 500952,
               "smallAllocs": 15669
             },
             "selected": false,
@@ -2308,7 +2308,7 @@
           {
             "completedLevels": [],
             "decline": null,
-            "downstreamNanos": 8954306,
+            "downstreamNanos": 8836852,
             "factorDegrees": [
               1,
               1,
@@ -2352,7 +2352,7 @@
               1
             ],
             "henselLift": {
-              "nanos": 8363229,
+              "nanos": 8332955,
               "smallAllocs": 206803
             },
             "henselPrecision": 38,
@@ -2360,7 +2360,7 @@
             "modularFactorCount": 40,
             "prime": 41,
             "recombination": {
-              "nanos": 591077,
+              "nanos": 503897,
               "smallAllocs": 15669
             },
             "selected": false,
@@ -2393,7 +2393,7 @@
           {
             "completedLevels": [],
             "decline": null,
-            "downstreamNanos": 18766142,
+            "downstreamNanos": 18924309,
             "factorDegrees": [
               1,
               1,
@@ -2445,7 +2445,7 @@
               1
             ],
             "henselLift": {
-              "nanos": 17998874,
+              "nanos": 18171413,
               "smallAllocs": 396610
             },
             "henselPrecision": 43,
@@ -2453,7 +2453,7 @@
             "modularFactorCount": 48,
             "prime": 61,
             "recombination": {
-              "nanos": 767268,
+              "nanos": 752896,
               "smallAllocs": 22336
             },
             "selected": true,
@@ -2472,7 +2472,7 @@
           {
             "completedLevels": [],
             "decline": null,
-            "downstreamNanos": 19103672,
+            "downstreamNanos": 18785964,
             "factorDegrees": [
               1,
               1,
@@ -2524,7 +2524,7 @@
               1
             ],
             "henselLift": {
-              "nanos": 18338057,
+              "nanos": 18029082,
               "smallAllocs": 396409
             },
             "henselPrecision": 45,
@@ -2532,7 +2532,7 @@
             "modularFactorCount": 48,
             "prime": 53,
             "recombination": {
-              "nanos": 765615,
+              "nanos": 756882,
               "smallAllocs": 22336
             },
             "selected": false,
@@ -2551,7 +2551,7 @@
           {
             "completedLevels": [],
             "decline": null,
-            "downstreamNanos": 19434783,
+            "downstreamNanos": 18939963,
             "factorDegrees": [
               1,
               1,
@@ -2603,7 +2603,7 @@
               1
             ],
             "henselLift": {
-              "nanos": 18655557,
+              "nanos": 18167327,
               "smallAllocs": 395341
             },
             "henselPrecision": 44,
@@ -2611,7 +2611,7 @@
             "modularFactorCount": 48,
             "prime": 59,
             "recombination": {
-              "nanos": 779226,
+              "nanos": 772636,
               "smallAllocs": 22336
             },
             "selected": false,
@@ -2644,7 +2644,7 @@
           {
             "completedLevels": [],
             "decline": null,
-            "downstreamNanos": 25672630,
+            "downstreamNanos": 24949013,
             "factorDegrees": [
               1,
               1,
@@ -2704,7 +2704,7 @@
               1
             ],
             "henselLift": {
-              "nanos": 24640590,
+              "nanos": 23933577,
               "smallAllocs": 524500
             },
             "henselPrecision": 51,
@@ -2712,7 +2712,7 @@
             "modularFactorCount": 56,
             "prime": 67,
             "recombination": {
-              "nanos": 1032040,
+              "nanos": 1015436,
               "smallAllocs": 30158
             },
             "selected": true,
@@ -2731,7 +2731,7 @@
           {
             "completedLevels": [],
             "decline": null,
-            "downstreamNanos": 25140812,
+            "downstreamNanos": 24643127,
             "factorDegrees": [
               1,
               1,
@@ -2791,7 +2791,7 @@
               1
             ],
             "henselLift": {
-              "nanos": 24088131,
+              "nanos": 23624127,
               "smallAllocs": 524489
             },
             "henselPrecision": 53,
@@ -2799,7 +2799,7 @@
             "modularFactorCount": 56,
             "prime": 59,
             "recombination": {
-              "nanos": 1052681,
+              "nanos": 1019000,
               "smallAllocs": 30158
             },
             "selected": false,
@@ -2818,7 +2818,7 @@
           {
             "completedLevels": [],
             "decline": null,
-            "downstreamNanos": 24914817,
+            "downstreamNanos": 24639133,
             "factorDegrees": [
               1,
               1,
@@ -2878,7 +2878,7 @@
               1
             ],
             "henselLift": {
-              "nanos": 23892852,
+              "nanos": 23625430,
               "smallAllocs": 522999
             },
             "henselPrecision": 52,
@@ -2886,7 +2886,7 @@
             "modularFactorCount": 56,
             "prime": 61,
             "recombination": {
-              "nanos": 1021965,
+              "nanos": 1013703,
               "smallAllocs": 30158
             },
             "selected": false,
@@ -2921,14 +2921,14 @@
               0
             ],
             "decline": null,
-            "downstreamNanos": 177103,
+            "downstreamNanos": 172125,
             "factorDegrees": [
               8,
               8,
               8
             ],
             "henselLift": {
-              "nanos": 150934,
+              "nanos": 147809,
               "smallAllocs": 7375
             },
             "henselPrecision": 22,
@@ -2936,7 +2936,7 @@
             "modularFactorCount": 3,
             "prime": 5,
             "recombination": {
-              "nanos": 26169,
+              "nanos": 24316,
               "smallAllocs": 846
             },
             "selected": true,
@@ -2969,7 +2969,7 @@
           {
             "completedLevels": [],
             "decline": null,
-            "downstreamNanos": 351321,
+            "downstreamNanos": 332163,
             "factorDegrees": [
               2,
               10,
@@ -2977,7 +2977,7 @@
               10
             ],
             "henselLift": {
-              "nanos": 323560,
+              "nanos": 307416,
               "smallAllocs": 14297
             },
             "henselPrecision": 33,
@@ -2985,7 +2985,7 @@
             "modularFactorCount": 4,
             "prime": 3,
             "recombination": {
-              "nanos": 27761,
+              "nanos": 24747,
               "smallAllocs": 1086
             },
             "selected": true,
@@ -3022,7 +3022,7 @@
               2
             ],
             "decline": null,
-            "downstreamNanos": 695381,
+            "downstreamNanos": 555854,
             "factorDegrees": [
               22,
               2,
@@ -3030,7 +3030,7 @@
               3
             ],
             "henselLift": {
-              "nanos": 581081,
+              "nanos": 485730,
               "smallAllocs": 15159
             },
             "henselPrecision": 15,
@@ -3038,7 +3038,7 @@
             "modularFactorCount": 4,
             "prime": 71,
             "recombination": {
-              "nanos": 114300,
+              "nanos": 70124,
               "smallAllocs": 1706
             },
             "selected": true,
@@ -3072,7 +3072,7 @@
               13
             ],
             "decline": null,
-            "downstreamNanos": 41765328,
+            "downstreamNanos": 42488949,
             "factorDegrees": [
               2,
               2,
@@ -3091,7 +3091,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 1090437,
+              "nanos": 1019702,
               "smallAllocs": 35278
             },
             "henselPrecision": 15,
@@ -3099,7 +3099,7 @@
             "modularFactorCount": 15,
             "prime": 61,
             "recombination": {
-              "nanos": 40674891,
+              "nanos": 41469247,
               "smallAllocs": 1484970
             },
             "selected": false,
@@ -3125,7 +3125,7 @@
               5
             ],
             "decline": null,
-            "downstreamNanos": 1572762,
+            "downstreamNanos": 1582417,
             "factorDegrees": [
               2,
               2,
@@ -3136,7 +3136,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 1396611,
+              "nanos": 1403181,
               "smallAllocs": 40397
             },
             "henselPrecision": 15,
@@ -3144,7 +3144,7 @@
             "modularFactorCount": 7,
             "prime": 67,
             "recombination": {
-              "nanos": 176151,
+              "nanos": 179236,
               "smallAllocs": 5658
             },
             "selected": false,
@@ -3180,14 +3180,14 @@
               1
             ],
             "decline": null,
-            "downstreamNanos": 734208,
+            "downstreamNanos": 741940,
             "factorDegrees": [
               36,
               1,
               1
             ],
             "henselLift": {
-              "nanos": 684354,
+              "nanos": 691736,
               "smallAllocs": 21255
             },
             "henselPrecision": 19,
@@ -3195,7 +3195,7 @@
             "modularFactorCount": 3,
             "prime": 79,
             "recombination": {
-              "nanos": 49854,
+              "nanos": 50204,
               "smallAllocs": 1376
             },
             "selected": true,
@@ -3228,12 +3228,12 @@
           {
             "completedLevels": [],
             "decline": null,
-            "downstreamNanos": 9584,
+            "downstreamNanos": 9494,
             "factorDegrees": [
               16
             ],
             "henselLift": {
-              "nanos": 3435,
+              "nanos": 3405,
               "smallAllocs": 73
             },
             "henselPrecision": 11,
@@ -3241,7 +3241,7 @@
             "modularFactorCount": 1,
             "prime": 3,
             "recombination": {
-              "nanos": 6149,
+              "nanos": 6089,
               "smallAllocs": 221
             },
             "selected": true,
@@ -3279,7 +3279,7 @@
               3
             ],
             "decline": null,
-            "downstreamNanos": 2138100,
+            "downstreamNanos": 2158359,
             "factorDegrees": [
               8,
               8,
@@ -3288,7 +3288,7 @@
               8
             ],
             "henselLift": {
-              "nanos": 686497,
+              "nanos": 698906,
               "smallAllocs": 31145
             },
             "henselPrecision": 26,
@@ -3296,7 +3296,7 @@
             "modularFactorCount": 5,
             "prime": 3,
             "recombination": {
-              "nanos": 1451603,
+              "nanos": 1459453,
               "smallAllocs": 30631
             },
             "selected": true,
@@ -3335,7 +3335,7 @@
               0
             ],
             "decline": null,
-            "downstreamNanos": 2052573,
+            "downstreamNanos": 2074095,
             "factorDegrees": [
               2,
               2,
@@ -3352,7 +3352,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 319784,
+              "nanos": 317330,
               "smallAllocs": 17704
             },
             "henselPrecision": 7,
@@ -3360,7 +3360,7 @@
             "modularFactorCount": 13,
             "prime": 11,
             "recombination": {
-              "nanos": 1732789,
+              "nanos": 1756765,
               "smallAllocs": 40725
             },
             "selected": true,
@@ -3387,7 +3387,7 @@
               0
             ],
             "decline": null,
-            "downstreamNanos": 523226,
+            "downstreamNanos": 529704,
             "factorDegrees": [
               2,
               1,
@@ -3406,7 +3406,7 @@
               2
             ],
             "henselLift": {
-              "nanos": 369888,
+              "nanos": 374194,
               "smallAllocs": 21664
             },
             "henselPrecision": 9,
@@ -3414,7 +3414,7 @@
             "modularFactorCount": 15,
             "prime": 7,
             "recombination": {
-              "nanos": 153338,
+              "nanos": 155510,
               "smallAllocs": 4795
             },
             "selected": false,
@@ -3440,7 +3440,7 @@
               0
             ],
             "decline": null,
-            "downstreamNanos": 1724336,
+            "downstreamNanos": 1468508,
             "factorDegrees": [
               2,
               2,
@@ -3458,7 +3458,7 @@
               1
             ],
             "henselLift": {
-              "nanos": 393693,
+              "nanos": 398862,
               "smallAllocs": 22797
             },
             "henselPrecision": 11,
@@ -3466,7 +3466,7 @@
             "modularFactorCount": 14,
             "prime": 5,
             "recombination": {
-              "nanos": 1330643,
+              "nanos": 1069646,
               "smallAllocs": 26103
             },
             "selected": false,
@@ -3502,7 +3502,7 @@
               0
             ],
             "decline": null,
-            "downstreamNanos": 226846,
+            "downstreamNanos": 219246,
             "factorDegrees": [
               3,
               4,
@@ -3510,7 +3510,7 @@
               6
             ],
             "henselLift": {
-              "nanos": 206026,
+              "nanos": 199466,
               "smallAllocs": 9786
             },
             "henselPrecision": 11,
@@ -3518,7 +3518,7 @@
             "modularFactorCount": 4,
             "prime": 7,
             "recombination": {
-              "nanos": 20820,
+              "nanos": 19780,
               "smallAllocs": 754
             },
             "selected": true,
@@ -3556,7 +3556,7 @@
               2
             ],
             "decline": null,
-            "downstreamNanos": 398261,
+            "downstreamNanos": 385111,
             "factorDegrees": [
               9,
               7,
@@ -3567,7 +3567,7 @@
               1
             ],
             "henselLift": {
-              "nanos": 356279,
+              "nanos": 346944,
               "smallAllocs": 18002
             },
             "henselPrecision": 9,
@@ -3575,7 +3575,7 @@
             "modularFactorCount": 7,
             "prime": 17,
             "recombination": {
-              "nanos": 41982,
+              "nanos": 38167,
               "smallAllocs": 1302
             },
             "selected": true,
@@ -3605,7 +3605,7 @@
     "cpu_cores": 96,
     "cpu_model": null,
     "exe_name": "hexbz_factor_service",
-    "git_commit": "0801104cbeab0ddf9c312a489655515ec23cdcec",
+    "git_commit": "8b5cf9434d9fc7ed110b1e685a850ef7da37bf31",
     "git_dirty": false,
     "hostname": "chungus2",
     "lean_bench_version": null,
@@ -3613,16 +3613,16 @@
     "lean_version": null,
     "os": "linux",
     "platform_target": null,
-    "timestamp_iso": "2026-08-02T08:25:56Z",
-    "timestamp_unix_ms": 1785659156576
+    "timestamp_iso": "2026-08-02T08:39:40Z",
+    "timestamp_unix_ms": 1785659980995
   },
   "results": [
     {
       "degree": 32,
       "end_to_end": {
-        "max_nanos": 108332997,
-        "median_nanos": 107949148,
-        "min_nanos": 107436838,
+        "max_nanos": 108160292,
+        "median_nanos": 108008597,
+        "min_nanos": 107597958,
         "runs": 5,
         "status": "ok"
       },
@@ -3630,7 +3630,7 @@
         32
       ],
       "family": "swinnerton-dyer",
-      "instrumentation_ratio": 0.9969877298151534,
+      "instrumentation_ratio": 1.0263864644033844,
       "name": "sd5",
       "phase_profile": {
         "profile": {
@@ -3662,74 +3662,77 @@
             "modulusBits": 93,
             "precision": 19,
             "prime": 29,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 15,
+            "treeLeaves": 16,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 3587369,
+              "smallAllocs": 311817
+            },
             "berlekampMatrix": {
-              "nanos": 1502,
+              "nanos": 1472,
               "smallAllocs": 108
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 18308,
+              "nanos": 18307,
               "smallAllocs": 1594
             },
             "kernelDimension": 16,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 32,
             "modularImage": {
-              "nanos": 1472,
+              "nanos": 1342,
               "smallAllocs": 72
             },
             "prime": 29,
             "rowReduction": {
-              "nanos": 1544820,
+              "nanos": 1540234,
               "smallAllocs": 152147
             },
-            "splitting": {
-              "nanos": 3514190,
-              "smallAllocs": 311817
-            }
+            "splittingNanos": 2045663
           },
           "multiplicities": [
             1
           ],
           "phases": {
             "assembly": {
-              "nanos": 7391,
+              "nanos": 7041,
               "smallAllocs": 332
             },
             "diagnosticOverhead": {
-              "nanos": 5095584,
-              "smallAllocs": 466037
+              "nanos": 5165139,
+              "smallAllocs": 466043
             },
             "henselLift": {
-              "nanos": 2009149,
+              "nanos": 1947688,
               "smallAllocs": 64896
             },
             "normalization": {
-              "nanos": 38196,
+              "nanos": 34992,
               "smallAllocs": 1635
             },
             "primeWalk": {
-              "nanos": 9418072,
+              "nanos": 9395701,
               "smallAllocs": 819672
             },
             "quadratic": {
-              "nanos": 912,
+              "nanos": 902,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 96117026,
-              "smallAllocs": 3265053
+              "nanos": 99438049,
+              "smallAllocs": 3265061
             },
             "total": {
-              "nanos": 107623976,
-              "smallAllocs": 4152817
+              "nanos": 110858562,
+              "smallAllocs": 4152825
             },
             "validation": {
-              "nanos": 6630,
+              "nanos": 6449,
               "smallAllocs": 201
             }
           },
@@ -3855,9 +3858,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 109689228,
-        "total_nanos_median": 107623976,
-        "total_nanos_min": 107248811
+        "total_nanos_max": 111035415,
+        "total_nanos_median": 110858562,
+        "total_nanos_min": 110393784
       },
       "representative": true,
       "sampling_profile_captured": true,
@@ -3908,9 +3911,9 @@
     {
       "degree": 32,
       "end_to_end": {
-        "max_nanos": 98243149,
-        "median_nanos": 97456823,
-        "min_nanos": 97096429,
+        "max_nanos": 97434158,
+        "median_nanos": 96623156,
+        "min_nanos": 96433975,
         "runs": 5,
         "status": "ok"
       },
@@ -3918,7 +3921,7 @@
         32
       ],
       "family": "swinnerton-dyer",
-      "instrumentation_ratio": 0.9946695266271917,
+      "instrumentation_ratio": 1.0105963005389722,
       "name": "sd5_shift1",
       "phase_profile": {
         "profile": {
@@ -3950,74 +3953,77 @@
             "modulusBits": 93,
             "precision": 19,
             "prime": 29,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 15,
+            "treeLeaves": 16,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 3643542,
+              "smallAllocs": 321696
+            },
             "berlekampMatrix": {
-              "nanos": 1442,
+              "nanos": 1512,
               "smallAllocs": 108
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 32778,
+              "nanos": 32178,
               "smallAllocs": 2684
             },
             "kernelDimension": 16,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 32,
             "modularImage": {
-              "nanos": 1883,
+              "nanos": 1683,
               "smallAllocs": 72
             },
             "prime": 29,
             "rowReduction": {
-              "nanos": 2288093,
+              "nanos": 2222285,
               "smallAllocs": 211116
             },
-            "splitting": {
-              "nanos": 3690711,
-              "smallAllocs": 321696
-            }
+            "splittingNanos": 1419745
           },
           "multiplicities": [
             1
           ],
           "phases": {
             "assembly": {
-              "nanos": 9925,
+              "nanos": 9694,
               "smallAllocs": 382
             },
             "diagnosticOverhead": {
-              "nanos": 6031252,
-              "smallAllocs": 535994
+              "nanos": 5917975,
+              "smallAllocs": 536000
             },
             "henselLift": {
-              "nanos": 2091430,
+              "nanos": 1971944,
               "smallAllocs": 66619
             },
             "normalization": {
-              "nanos": 53449,
+              "nanos": 49934,
               "smallAllocs": 2801
             },
             "primeWalk": {
-              "nanos": 10579435,
+              "nanos": 10393821,
               "smallAllocs": 904861
             },
             "quadratic": {
-              "nanos": 771,
+              "nanos": 571,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 84162624,
-              "smallAllocs": 3083424
+              "nanos": 85183494,
+              "smallAllocs": 3083432
             },
             "total": {
-              "nanos": 96937332,
-              "smallAllocs": 4059394
+              "nanos": 97647004,
+              "smallAllocs": 4059402
             },
             "validation": {
-              "nanos": 8113,
+              "nanos": 7872,
               "smallAllocs": 229
             }
           },
@@ -4143,9 +4149,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 98121749,
-        "total_nanos_median": 96937332,
-        "total_nanos_min": 96533363
+        "total_nanos_max": 98159904,
+        "total_nanos_median": 97647004,
+        "total_nanos_min": 97376793
       },
       "representative": true,
       "sampling_profile_captured": false,
@@ -4196,9 +4202,9 @@
     {
       "degree": 32,
       "end_to_end": {
-        "max_nanos": 101058353,
-        "median_nanos": 100794481,
-        "min_nanos": 100537860,
+        "max_nanos": 101503452,
+        "median_nanos": 101229786,
+        "min_nanos": 100868610,
         "runs": 5,
         "status": "ok"
       },
@@ -4206,7 +4212,7 @@
         32
       ],
       "family": "swinnerton-dyer",
-      "instrumentation_ratio": 1.0025999240970347,
+      "instrumentation_ratio": 1.0076345711132888,
       "name": "sd5_shift2",
       "phase_profile": {
         "profile": {
@@ -4238,74 +4244,77 @@
             "modulusBits": 93,
             "precision": 19,
             "prime": 29,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 15,
+            "treeLeaves": 16,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 5119190,
+              "smallAllocs": 445187
+            },
             "berlekampMatrix": {
-              "nanos": 1512,
+              "nanos": 1482,
               "smallAllocs": 108
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 31977,
+              "nanos": 31457,
               "smallAllocs": 2660
             },
             "kernelDimension": 16,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 32,
             "modularImage": {
-              "nanos": 2023,
+              "nanos": 1782,
               "smallAllocs": 72
             },
             "prime": 29,
             "rowReduction": {
-              "nanos": 2269024,
+              "nanos": 2234544,
               "smallAllocs": 211421
             },
-            "splitting": {
-              "nanos": 5157466,
-              "smallAllocs": 445187
-            }
+            "splittingNanos": 2883164
           },
           "multiplicities": [
             1
           ],
           "phases": {
             "assembly": {
-              "nanos": 10716,
+              "nanos": 10235,
               "smallAllocs": 391
             },
             "diagnosticOverhead": {
-              "nanos": 7478417,
-              "smallAllocs": 659776
+              "nanos": 7404979,
+              "smallAllocs": 659782
             },
             "henselLift": {
-              "nanos": 2013365,
+              "nanos": 1970341,
               "smallAllocs": 66366
             },
             "normalization": {
-              "nanos": 54200,
+              "nanos": 49774,
               "smallAllocs": 2809
             },
             "primeWalk": {
-              "nanos": 12870521,
+              "nanos": 12630587,
               "smallAllocs": 1092079
             },
             "quadratic": {
-              "nanos": 801,
+              "nanos": 521,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 86065785,
-              "smallAllocs": 3116594
+              "nanos": 87304659,
+              "smallAllocs": 3116602
             },
             "total": {
-              "nanos": 101056539,
-              "smallAllocs": 4279564
+              "nanos": 102002632,
+              "smallAllocs": 4279572
             },
             "validation": {
-              "nanos": 9013,
+              "nanos": 8092,
               "smallAllocs": 234
             }
           },
@@ -4431,9 +4440,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 102696341,
-        "total_nanos_median": 101056539,
-        "total_nanos_min": 100534596
+        "total_nanos_max": 104373126,
+        "total_nanos_median": 102002632,
+        "total_nanos_min": 101840291
       },
       "representative": true,
       "sampling_profile_captured": false,
@@ -4484,9 +4493,9 @@
     {
       "degree": 32,
       "end_to_end": {
-        "max_nanos": 25074334,
-        "median_nanos": 24873486,
-        "min_nanos": 24745326,
+        "max_nanos": 25160556,
+        "median_nanos": 24792300,
+        "min_nanos": 24617000,
         "runs": 5,
         "status": "ok"
       },
@@ -4495,7 +4504,7 @@
         16
       ],
       "family": "sd-products",
-      "instrumentation_ratio": 0.9741349081507916,
+      "instrumentation_ratio": 0.9706097861029432,
       "name": "sd4_x_sd4shift1",
       "phase_profile": {
         "profile": {
@@ -4528,35 +4537,38 @@
             "modulusBits": 83,
             "precision": 17,
             "prime": 29,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 15,
+            "treeLeaves": 16,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 4409157,
+              "smallAllocs": 382875
+            },
             "berlekampMatrix": {
-              "nanos": 1513,
+              "nanos": 1462,
               "smallAllocs": 108
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 33349,
+              "nanos": 32949,
               "smallAllocs": 2760
             },
             "kernelDimension": 16,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 32,
             "modularImage": {
-              "nanos": 1673,
+              "nanos": 1693,
               "smallAllocs": 72
             },
             "prime": 29,
             "rowReduction": {
-              "nanos": 2289374,
+              "nanos": 2248835,
               "smallAllocs": 210624
             },
-            "splitting": {
-              "nanos": 4456967,
-              "smallAllocs": 382875
-            }
+            "splittingNanos": 2158860
           },
           "multiplicities": [
             1,
@@ -4564,39 +4576,39 @@
           ],
           "phases": {
             "assembly": {
-              "nanos": 21101,
+              "nanos": 20730,
               "smallAllocs": 901
             },
             "diagnosticOverhead": {
-              "nanos": 6796196,
-              "smallAllocs": 596718
+              "nanos": 6707616,
+              "smallAllocs": 596724
             },
             "henselLift": {
-              "nanos": 1904484,
+              "nanos": 1877114,
               "smallAllocs": 62874
             },
             "normalization": {
-              "nanos": 50515,
+              "nanos": 48813,
               "smallAllocs": 2794
             },
             "primeWalk": {
-              "nanos": 9818807,
+              "nanos": 9734524,
               "smallAllocs": 840633
             },
             "quadratic": {
-              "nanos": 630,
+              "nanos": 480,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 12374736,
-              "smallAllocs": 573364
+              "nanos": 12323652,
+              "smallAllocs": 573372
             },
             "total": {
-              "nanos": 24230131,
-              "smallAllocs": 1482907
+              "nanos": 24063649,
+              "smallAllocs": 1482915
             },
             "validation": {
-              "nanos": 20911,
+              "nanos": 20510,
               "smallAllocs": 745
             }
           },
@@ -4721,9 +4733,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 24389619,
-        "total_nanos_median": 24230131,
-        "total_nanos_min": 24149533
+        "total_nanos_max": 24107425,
+        "total_nanos_median": 24063649,
+        "total_nanos_min": 23922370
       },
       "representative": true,
       "sampling_profile_captured": false,
@@ -4772,9 +4784,9 @@
     {
       "degree": 42,
       "end_to_end": {
-        "max_nanos": 222122814,
-        "median_nanos": 221622202,
-        "min_nanos": 220380631,
+        "max_nanos": 224013540,
+        "median_nanos": 223234886,
+        "min_nanos": 222680974,
         "runs": 5,
         "status": "ok"
       },
@@ -4783,7 +4795,7 @@
         32
       ],
       "family": "sd-products",
-      "instrumentation_ratio": 1.0020110800992763,
+      "instrumentation_ratio": 1.0060021353472504,
       "name": "sd5_x_phi11",
       "phase_profile": {
         "profile": {
@@ -4817,35 +4829,38 @@
             "modulusBits": 103,
             "precision": 21,
             "prime": 29,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 16,
+            "treeLeaves": 17,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 8842230,
+              "smallAllocs": 792414
+            },
             "berlekampMatrix": {
-              "nanos": 1962,
+              "nanos": 1933,
               "smallAllocs": 138
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 51186,
+              "nanos": 49604,
               "smallAllocs": 4232
             },
             "kernelDimension": 17,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 42,
             "modularImage": {
-              "nanos": 2393,
+              "nanos": 2273,
               "smallAllocs": 92
             },
             "prime": 29,
             "rowReduction": {
-              "nanos": 4592129,
+              "nanos": 4498160,
               "smallAllocs": 428628
             },
-            "splitting": {
-              "nanos": 9079781,
-              "smallAllocs": 792414
-            }
+            "splittingNanos": 4342137
           },
           "multiplicities": [
             1,
@@ -4853,39 +4868,39 @@
           ],
           "phases": {
             "assembly": {
-              "nanos": 27912,
+              "nanos": 27531,
               "smallAllocs": 1170
             },
             "diagnosticOverhead": {
-              "nanos": 13745779,
-              "smallAllocs": 1225859
+              "nanos": 13412387,
+              "smallAllocs": 1225865
             },
             "henselLift": {
-              "nanos": 3129700,
+              "nanos": 3106296,
               "smallAllocs": 98434
             },
             "normalization": {
-              "nanos": 102162,
+              "nanos": 86499,
               "smallAllocs": 4519
             },
             "primeWalk": {
-              "nanos": 21849472,
+              "nanos": 21308334,
               "smallAllocs": 1899487
             },
             "quadratic": {
-              "nanos": 941,
+              "nanos": 651,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 196871839,
-              "smallAllocs": 7137988
+              "nanos": 199963971,
+              "smallAllocs": 7137996
             },
             "total": {
-              "nanos": 222067902,
-              "smallAllocs": 9144650
+              "nanos": 224574772,
+              "smallAllocs": 9144658
             },
             "validation": {
-              "nanos": 31227,
+              "nanos": 30555,
               "smallAllocs": 1070
             }
           },
@@ -5023,9 +5038,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 222338174,
-        "total_nanos_median": 222067902,
-        "total_nanos_min": 221393983
+        "total_nanos_max": 227860835,
+        "total_nanos_median": 224574772,
+        "total_nanos_min": 222816655
       },
       "representative": true,
       "sampling_profile_captured": true,
@@ -5076,9 +5091,9 @@
     {
       "degree": 48,
       "end_to_end": {
-        "max_nanos": 21320889,
-        "median_nanos": 21219288,
-        "min_nanos": 21083117,
+        "max_nanos": 21206994,
+        "median_nanos": 21071443,
+        "min_nanos": 21014268,
         "runs": 5,
         "status": "ok"
       },
@@ -5095,7 +5110,7 @@
         16
       ],
       "family": "cyclotomic-products",
-      "instrumentation_ratio": 0.9968260480747516,
+      "instrumentation_ratio": 1.003154933432893,
       "name": "xpow48_minus1",
       "phase_profile": {
         "profile": {
@@ -5139,35 +5154,38 @@
             "modulusBits": 49,
             "precision": 14,
             "prime": 11,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 18,
+            "treeLeaves": 19,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 2115636,
+              "smallAllocs": 181556
+            },
             "berlekampMatrix": {
-              "nanos": 2223,
+              "nanos": 2283,
               "smallAllocs": 156
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 5568,
+              "nanos": 5548,
               "smallAllocs": 510
             },
             "kernelDimension": 19,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 48,
             "modularImage": {
-              "nanos": 1191,
+              "nanos": 1112,
               "smallAllocs": 104
             },
             "prime": 11,
             "rowReduction": {
-              "nanos": 746567,
+              "nanos": 739707,
               "smallAllocs": 67517
             },
-            "splitting": {
-              "nanos": 2113603,
-              "smallAllocs": 181556
-            }
+            "splittingNanos": 1373646
           },
           "multiplicities": [
             1,
@@ -5183,39 +5201,39 @@
           ],
           "phases": {
             "assembly": {
-              "nanos": 22203,
+              "nanos": 22353,
               "smallAllocs": 2409
             },
             "diagnosticOverhead": {
-              "nanos": 2873300,
-              "smallAllocs": 250006
+              "nanos": 2869204,
+              "smallAllocs": 250012
             },
             "henselLift": {
-              "nanos": 1168913,
+              "nanos": 1178828,
               "smallAllocs": 58532
             },
             "normalization": {
-              "nanos": 16385,
+              "nanos": 16255,
               "smallAllocs": 563
             },
             "primeWalk": {
-              "nanos": 6157769,
+              "nanos": 6177460,
               "smallAllocs": 520784
             },
             "quadratic": {
-              "nanos": 601,
+              "nanos": 530,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 13730105,
-              "smallAllocs": 239873
+              "nanos": 13684190,
+              "smallAllocs": 239881
             },
             "total": {
-              "nanos": 21151939,
-              "smallAllocs": 827073
+              "nanos": 21137922,
+              "smallAllocs": 827081
             },
             "validation": {
-              "nanos": 18247,
+              "nanos": 18868,
               "smallAllocs": 1688
             }
           },
@@ -5353,9 +5371,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 21250755,
-        "total_nanos_median": 21151939,
-        "total_nanos_min": 21046964
+        "total_nanos_max": 21242667,
+        "total_nanos_median": 21137922,
+        "total_nanos_min": 21012876
       },
       "representative": true,
       "sampling_profile_captured": false,
@@ -5394,9 +5412,9 @@
     {
       "degree": 105,
       "end_to_end": {
-        "max_nanos": 83812905,
-        "median_nanos": 83737414,
-        "min_nanos": 83241448,
+        "max_nanos": 83152041,
+        "median_nanos": 82612912,
+        "min_nanos": 82522939,
         "runs": 5,
         "status": "ok"
       },
@@ -5411,7 +5429,7 @@
         48
       ],
       "family": "cyclotomic-products",
-      "instrumentation_ratio": 0.9918382480739135,
+      "instrumentation_ratio": 1.0058286651365105,
       "name": "xpow105_minus1",
       "phase_profile": {
         "profile": {
@@ -5448,35 +5466,38 @@
             "modulusBits": 107,
             "precision": 26,
             "prime": 17,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 13,
+            "treeLeaves": 14,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 9852869,
+              "smallAllocs": 885650
+            },
             "berlekampMatrix": {
-              "nanos": 4967,
+              "nanos": 4977,
               "smallAllocs": 327
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 11477,
+              "nanos": 11187,
               "smallAllocs": 1080
             },
             "kernelDimension": 14,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 105,
             "modularImage": {
-              "nanos": 2323,
+              "nanos": 2223,
               "smallAllocs": 218
             },
             "prime": 17,
             "rowReduction": {
-              "nanos": 4921947,
+              "nanos": 4785166,
               "smallAllocs": 462407
             },
-            "splitting": {
-              "nanos": 9924814,
-              "smallAllocs": 885650
-            }
+            "splittingNanos": 5062726
           },
           "multiplicities": [
             1,
@@ -5490,39 +5511,39 @@
           ],
           "phases": {
             "assembly": {
-              "nanos": 58116,
+              "nanos": 57044,
               "smallAllocs": 6483
             },
             "diagnosticOverhead": {
-              "nanos": 14877336,
-              "smallAllocs": 1350004
+              "nanos": 14668380,
+              "smallAllocs": 1350010
             },
             "henselLift": {
-              "nanos": 15632446,
+              "nanos": 15780718,
               "smallAllocs": 447097
             },
             "normalization": {
-              "nanos": 28553,
+              "nanos": 29404,
               "smallAllocs": 1190
             },
             "primeWalk": {
-              "nanos": 38789276,
+              "nanos": 38164167,
               "smallAllocs": 3323623
             },
             "quadratic": {
-              "nanos": 601,
+              "nanos": 641,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 28377781,
-              "smallAllocs": 248899
+              "nanos": 28902674,
+              "smallAllocs": 248907
             },
             "total": {
-              "nanos": 83053970,
-              "smallAllocs": 4040312
+              "nanos": 83094435,
+              "smallAllocs": 4040320
             },
             "validation": {
-              "nanos": 51857,
+              "nanos": 51627,
               "smallAllocs": 5196
             }
           },
@@ -5668,9 +5689,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 83403098,
-        "total_nanos_median": 83053970,
-        "total_nanos_min": 82532426
+        "total_nanos_max": 83240853,
+        "total_nanos_median": 83094435,
+        "total_nanos_min": 82616858
       },
       "representative": true,
       "sampling_profile_captured": false,
@@ -5703,9 +5724,9 @@
     {
       "degree": 120,
       "end_to_end": {
-        "max_nanos": 531282383,
-        "median_nanos": 528013297,
-        "min_nanos": 527022547,
+        "max_nanos": 533010436,
+        "median_nanos": 531898186,
+        "min_nanos": 530748672,
         "runs": 5,
         "status": "ok"
       },
@@ -5728,7 +5749,7 @@
         32
       ],
       "family": "cyclotomic-products",
-      "instrumentation_ratio": 1.0034744579547965,
+      "instrumentation_ratio": 1.0000922037361488,
       "name": "xpow120_minus1",
       "phase_profile": {
         "profile": {
@@ -5798,35 +5819,38 @@
             "modulusBits": 121,
             "precision": 43,
             "prime": 7,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 38,
+            "treeLeaves": 39,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 17128497,
+              "smallAllocs": 1440854
+            },
             "berlekampMatrix": {
-              "nanos": 5678,
+              "nanos": 6039,
               "smallAllocs": 372
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 13260,
+              "nanos": 13029,
               "smallAllocs": 1230
             },
             "kernelDimension": 39,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 120,
             "modularImage": {
-              "nanos": 2764,
+              "nanos": 2514,
               "smallAllocs": 248
             },
             "prime": 7,
             "rowReduction": {
-              "nanos": 3774146,
+              "nanos": 3705975,
               "smallAllocs": 329059
             },
-            "splitting": {
-              "nanos": 17091058,
-              "smallAllocs": 1440854
-            }
+            "splittingNanos": 13416483
           },
           "multiplicities": [
             1,
@@ -5848,39 +5872,39 @@
           ],
           "phases": {
             "assembly": {
-              "nanos": 95321,
+              "nanos": 96543,
               "smallAllocs": 11833
             },
             "diagnosticOverhead": {
-              "nanos": 20901797,
-              "smallAllocs": 1772127
+              "nanos": 20871086,
+              "smallAllocs": 1772133
             },
             "henselLift": {
-              "nanos": 21514386,
+              "nanos": 21446440,
               "smallAllocs": 631467
             },
             "normalization": {
-              "nanos": 64676,
+              "nanos": 55843,
               "smallAllocs": 1355
             },
             "primeWalk": {
-              "nanos": 64250774,
+              "nanos": 64209385,
               "smallAllocs": 5539984
             },
             "quadratic": {
-              "nanos": 1192,
+              "nanos": 911,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 443682494,
-              "smallAllocs": 5069585
+              "nanos": 445901006,
+              "smallAllocs": 5069593
             },
             "total": {
-              "nanos": 529847857,
-              "smallAllocs": 11276017
+              "nanos": 531947229,
+              "smallAllocs": 11276025
             },
             "validation": {
-              "nanos": 76143,
+              "nanos": 75492,
               "smallAllocs": 8230
             }
           },
@@ -6112,9 +6136,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 531898527,
-        "total_nanos_median": 529847857,
-        "total_nanos_min": 526513743
+        "total_nanos_max": 537563307,
+        "total_nanos_median": 531947229,
+        "total_nanos_min": 531790607
       },
       "representative": true,
       "sampling_profile_captured": true,
@@ -6181,9 +6205,9 @@
     {
       "degree": 178,
       "end_to_end": {
-        "max_nanos": 81787032,
-        "median_nanos": 80323742,
-        "min_nanos": 79929057,
+        "max_nanos": 80287463,
+        "median_nanos": 80038855,
+        "min_nanos": 79831909,
         "runs": 5,
         "status": "ok"
       },
@@ -6191,7 +6215,7 @@
         178
       ],
       "family": "cyclotomic",
-      "instrumentation_ratio": 1.01310597556573,
+      "instrumentation_ratio": 1.0046857991659175,
       "name": "cyclo_phi179",
       "phase_profile": {
         "profile": {
@@ -6209,74 +6233,77 @@
             "modulusBits": 180,
             "precision": 113,
             "prime": 3,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 1,
+            "treeLeaves": 2,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 14430836,
+              "smallAllocs": 1323123
+            },
             "berlekampMatrix": {
-              "nanos": 9334,
+              "nanos": 8353,
               "smallAllocs": 546
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 35162,
+              "nanos": 35031,
               "smallAllocs": 3356
             },
             "kernelDimension": 2,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 178,
             "modularImage": {
-              "nanos": 4317,
+              "nanos": 4037,
               "smallAllocs": 364
             },
             "prime": 3,
             "rowReduction": {
-              "nanos": 14010240,
+              "nanos": 13518134,
               "smallAllocs": 1226531
             },
-            "splitting": {
-              "nanos": 14844187,
-              "smallAllocs": 1323123
-            }
+            "splittingNanos": 904349
           },
           "multiplicities": [
             1
           ],
           "phases": {
             "assembly": {
-              "nanos": 19940,
+              "nanos": 20220,
               "smallAllocs": 1446
             },
             "diagnosticOverhead": {
-              "nanos": 28932824,
-              "smallAllocs": 2554434
+              "nanos": 28024011,
+              "smallAllocs": 2554440
             },
             "henselLift": {
-              "nanos": 60303202,
+              "nanos": 59971411,
               "smallAllocs": 1354541
             },
             "normalization": {
-              "nanos": 122331,
+              "nanos": 66178,
               "smallAllocs": 3772
             },
             "primeWalk": {
-              "nanos": 15298010,
+              "nanos": 14771141,
               "smallAllocs": 1328667
             },
             "quadratic": {
-              "nanos": 1102,
+              "nanos": 601,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 5553253,
-              "smallAllocs": 44784
+              "nanos": 5512594,
+              "smallAllocs": 44792
             },
             "total": {
-              "nanos": 81376463,
-              "smallAllocs": 2736475
+              "nanos": 80413901,
+              "smallAllocs": 2736483
             },
             "validation": {
-              "nanos": 18257,
+              "nanos": 18187,
               "smallAllocs": 901
             }
           },
@@ -6322,9 +6349,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 81843815,
-        "total_nanos_median": 81376463,
-        "total_nanos_min": 80653812
+        "total_nanos_max": 80781136,
+        "total_nanos_median": 80413901,
+        "total_nanos_min": 80156540
       },
       "representative": true,
       "sampling_profile_captured": true,
@@ -6347,9 +6374,9 @@
     {
       "degree": 80,
       "end_to_end": {
-        "max_nanos": 87612318,
-        "median_nanos": 86689200,
-        "min_nanos": 85983844,
+        "max_nanos": 87291349,
+        "median_nanos": 87049591,
+        "min_nanos": 86843384,
         "runs": 5,
         "status": "ok"
       },
@@ -6358,7 +6385,7 @@
         48
       ],
       "family": "cyclotomic-products",
-      "instrumentation_ratio": 1.0067090364197617,
+      "instrumentation_ratio": 0.9913887820564258,
       "name": "cyclo_phi64_x_phi105",
       "phase_profile": {
         "profile": {
@@ -6385,35 +6412,38 @@
             "modulusBits": 84,
             "precision": 24,
             "prime": 11,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 9,
+            "treeLeaves": 10,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 21463895,
+              "smallAllocs": 1996249
+            },
             "berlekampMatrix": {
-              "nanos": 3615,
+              "nanos": 3585,
               "smallAllocs": 252
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 155531,
+              "nanos": 154068,
               "smallAllocs": 13406
             },
             "kernelDimension": 10,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 80,
             "modularImage": {
-              "nanos": 2033,
+              "nanos": 2003,
               "smallAllocs": 168
             },
             "prime": 11,
             "rowReduction": {
-              "nanos": 18642899,
+              "nanos": 18362226,
               "smallAllocs": 1749247
             },
-            "splitting": {
-              "nanos": 21732409,
-              "smallAllocs": 1996249
-            }
+            "splittingNanos": 3098084
           },
           "multiplicities": [
             1,
@@ -6421,39 +6451,39 @@
           ],
           "phases": {
             "assembly": {
-              "nanos": 23965,
+              "nanos": 23735,
               "smallAllocs": 2390
             },
             "diagnosticOverhead": {
-              "nanos": 40546261,
-              "smallAllocs": 3759576
+              "nanos": 39995703,
+              "smallAllocs": 3759582
             },
             "henselLift": {
-              "nanos": 7791362,
+              "nanos": 7666047,
               "smallAllocs": 243514
             },
             "normalization": {
-              "nanos": 185575,
+              "nanos": 183783,
               "smallAllocs": 14419
             },
             "primeWalk": {
-              "nanos": 74475653,
+              "nanos": 73611194,
               "smallAllocs": 6772628
             },
             "quadratic": {
-              "nanos": 570,
+              "nanos": 671,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 4723913,
-              "smallAllocs": 84017
+              "nanos": 4745707,
+              "smallAllocs": 84025
             },
             "total": {
-              "nanos": 87270801,
-              "smallAllocs": 7122378
+              "nanos": 86299988,
+              "smallAllocs": 7122386
             },
             "validation": {
-              "nanos": 21712,
+              "nanos": 21442,
               "smallAllocs": 2017
             }
           },
@@ -6560,9 +6590,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 88021074,
-        "total_nanos_median": 87270801,
-        "total_nanos_min": 86845762
+        "total_nanos_max": 86952465,
+        "total_nanos_median": 86299988,
+        "total_nanos_min": 86106662
       },
       "representative": true,
       "sampling_profile_captured": true,
@@ -6599,9 +6629,9 @@
     {
       "degree": 144,
       "end_to_end": {
-        "max_nanos": 205385130,
-        "median_nanos": 204582199,
-        "min_nanos": 203246119,
+        "max_nanos": 240668663,
+        "median_nanos": 224023213,
+        "min_nanos": 204224117,
         "runs": 5,
         "status": "ok"
       },
@@ -6610,7 +6640,7 @@
         80
       ],
       "family": "cyclotomic-products",
-      "instrumentation_ratio": 0.9954114238453367,
+      "instrumentation_ratio": 0.9113164804041981,
       "name": "cyclo_phi128_x_phi165",
       "phase_profile": {
         "profile": {
@@ -6635,35 +6665,38 @@
             "modulusBits": 146,
             "precision": 52,
             "prime": 7,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 7,
+            "treeLeaves": 8,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 95803259,
+              "smallAllocs": 8948306
+            },
             "berlekampMatrix": {
-              "nanos": 7541,
+              "nanos": 6941,
               "smallAllocs": 444
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 458560,
+              "nanos": 458129,
               "smallAllocs": 39896
             },
             "kernelDimension": 8,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 144,
             "modularImage": {
-              "nanos": 3576,
+              "nanos": 3375,
               "smallAllocs": 296
             },
             "prime": 7,
             "rowReduction": {
-              "nanos": 89094635,
+              "nanos": 89724997,
               "smallAllocs": 8409957
             },
-            "splitting": {
-              "nanos": 95613871,
-              "smallAllocs": 8948306
-            }
+            "splittingNanos": 6071321
           },
           "multiplicities": [
             1,
@@ -6671,39 +6704,39 @@
           ],
           "phases": {
             "assembly": {
-              "nanos": 61551,
+              "nanos": 59428,
               "smallAllocs": 6582
             },
             "diagnosticOverhead": {
-              "nanos": 185204441,
-              "smallAllocs": 17399326
+              "nanos": 186019684,
+              "smallAllocs": 17399332
             },
             "henselLift": {
-              "nanos": 65055286,
+              "nanos": 65927231,
               "smallAllocs": 1551120
             },
             "normalization": {
-              "nanos": 547762,
+              "nanos": 553640,
               "smallAllocs": 44226
             },
             "primeWalk": {
-              "nanos": 96418123,
+              "nanos": 95985419,
               "smallAllocs": 9035102
             },
             "quadratic": {
-              "nanos": 1131,
+              "nanos": 1132,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 41406716,
-              "smallAllocs": 266907
+              "nanos": 41483769,
+              "smallAllocs": 266915
             },
             "total": {
-              "nanos": 203643458,
-              "smallAllocs": 10917277
+              "nanos": 204156046,
+              "smallAllocs": 10917285
             },
             "validation": {
-              "nanos": 59288,
+              "nanos": 57686,
               "smallAllocs": 6017
             }
           },
@@ -6760,9 +6793,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 205202440,
-        "total_nanos_median": 203643458,
-        "total_nanos_min": 203274320
+        "total_nanos_max": 205341473,
+        "total_nanos_median": 204156046,
+        "total_nanos_min": 203888049
       },
       "representative": true,
       "sampling_profile_captured": false,
@@ -6795,9 +6828,9 @@
     {
       "degree": 240,
       "end_to_end": {
-        "max_nanos": 458978329,
-        "median_nanos": 455342810,
-        "min_nanos": 453518846,
+        "max_nanos": 468507164,
+        "median_nanos": 453038017,
+        "min_nanos": 452375154,
         "runs": 5,
         "status": "ok"
       },
@@ -6805,7 +6838,7 @@
         240
       ],
       "family": "cyclotomic",
-      "instrumentation_ratio": 0.999643541093797,
+      "instrumentation_ratio": 1.0257103610799179,
       "name": "cyclo_phi385",
       "phase_profile": {
         "profile": {
@@ -6825,74 +6858,77 @@
             "modulusBits": 241,
             "precision": 152,
             "prime": 3,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 3,
+            "treeLeaves": 4,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 211525062,
+              "smallAllocs": 18622506
+            },
             "berlekampMatrix": {
-              "nanos": 11497,
+              "nanos": 13630,
               "smallAllocs": 732
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 741950,
+              "nanos": 774669,
               "smallAllocs": 68654
             },
             "kernelDimension": 4,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 240,
             "modularImage": {
-              "nanos": 5128,
+              "nanos": 6149,
               "smallAllocs": 488
             },
             "prime": 3,
             "rowReduction": {
-              "nanos": 204968913,
+              "nanos": 204971585,
               "smallAllocs": 18194276
             },
-            "splitting": {
-              "nanos": 213923057,
-              "smallAllocs": 18622506
-            }
+            "splittingNanos": 6539847
           },
           "multiplicities": [
             1
           ],
           "phases": {
             "assembly": {
-              "nanos": 27411,
+              "nanos": 28492,
               "smallAllocs": 1942
             },
             "diagnosticOverhead": {
-              "nanos": 419686989,
-              "smallAllocs": 36887327
+              "nanos": 417335250,
+              "smallAllocs": 36887333
             },
             "henselLift": {
-              "nanos": 167005250,
+              "nanos": 170992773,
               "smallAllocs": 3767689
             },
             "normalization": {
-              "nanos": 1166219,
+              "nanos": 1259608,
               "smallAllocs": 101209
             },
             "primeWalk": {
-              "nanos": 205259323,
+              "nanos": 209204982,
               "smallAllocs": 18694592
             },
             "quadratic": {
-              "nanos": 721,
+              "nanos": 1372,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 81618752,
-              "smallAllocs": 396440
+              "nanos": 83087865,
+              "smallAllocs": 396448
             },
             "total": {
-              "nanos": 455180499,
-              "smallAllocs": 22966215
+              "nanos": 464685788,
+              "smallAllocs": 22966223
             },
             "validation": {
-              "nanos": 25748,
+              "nanos": 25929,
               "smallAllocs": 1211
             }
           },
@@ -6942,9 +6978,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 455380395,
-        "total_nanos_median": 455180499,
-        "total_nanos_min": 449239592
+        "total_nanos_max": 484359889,
+        "total_nanos_median": 464685788,
+        "total_nanos_min": 462432846
       },
       "representative": true,
       "sampling_profile_captured": true,
@@ -6971,9 +7007,9 @@
     {
       "degree": 40,
       "end_to_end": {
-        "max_nanos": 15812482,
-        "median_nanos": 15792021,
-        "min_nanos": 15761567,
+        "max_nanos": 16230986,
+        "median_nanos": 15824303,
+        "min_nanos": 15689173,
         "runs": 5,
         "status": "ok"
       },
@@ -7020,7 +7056,7 @@
         1
       ],
       "family": "wilkinson",
-      "instrumentation_ratio": 0.9920159680638723,
+      "instrumentation_ratio": 0.987833587362426,
       "name": "wilkinson_40",
       "phase_profile": {
         "profile": {
@@ -7069,31 +7105,32 @@
           ],
           "method": "replay",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 1790545,
+              "smallAllocs": 150817
+            },
             "berlekampMatrix": {
-              "nanos": 1912,
+              "nanos": 1843,
               "smallAllocs": 132
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 18998,
+              "nanos": 19269,
               "smallAllocs": 1592
             },
             "kernelDimension": 40,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 40,
             "modularImage": {
-              "nanos": 2323,
+              "nanos": 2403,
               "smallAllocs": 88
             },
             "prime": 47,
             "rowReduction": {
-              "nanos": 251112,
+              "nanos": 248408,
               "smallAllocs": 20522
             },
-            "splitting": {
-              "nanos": 1803685,
-              "smallAllocs": 150817
-            }
+            "splittingNanos": 1540294
           },
           "multiplicities": [
             1,
@@ -7139,31 +7176,31 @@
           ],
           "phases": {
             "assembly": {
-              "nanos": 199687,
+              "nanos": 197363,
               "smallAllocs": 9051
             },
             "diagnosticOverhead": {
-              "nanos": 2119852,
-              "smallAllocs": 173882
+              "nanos": 2104550,
+              "smallAllocs": 173888
             },
             "normalization": {
-              "nanos": 70645,
+              "nanos": 74220,
               "smallAllocs": 4238
             },
             "primeWalk": {
-              "nanos": 5908219,
+              "nanos": 5926086,
               "smallAllocs": 482710
             },
             "proposal": {
-              "nanos": 9461126,
+              "nanos": 9406708,
               "smallAllocs": 255091
             },
             "quadratic": {
-              "nanos": 461,
+              "nanos": 511,
               "smallAllocs": 17
             },
             "total": {
-              "nanos": 15665937,
+              "nanos": 15631778,
               "smallAllocs": 752033
             }
           },
@@ -7330,9 +7367,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 15693135,
-        "total_nanos_median": 15665937,
-        "total_nanos_min": 15656861
+        "total_nanos_max": 15849089,
+        "total_nanos_median": 15631778,
+        "total_nanos_min": 15601083
       },
       "representative": true,
       "sampling_profile_captured": false,
@@ -7344,9 +7381,9 @@
     {
       "degree": 48,
       "end_to_end": {
-        "max_nanos": 29964243,
-        "median_nanos": 29919727,
-        "min_nanos": 29877524,
+        "max_nanos": 29751643,
+        "median_nanos": 29490506,
+        "min_nanos": 29320744,
         "runs": 5,
         "status": "ok"
       },
@@ -7401,7 +7438,7 @@
         1
       ],
       "family": "wilkinson",
-      "instrumentation_ratio": 0.994493465799337,
+      "instrumentation_ratio": 0.9999775520976141,
       "name": "wilkinson_48",
       "phase_profile": {
         "profile": {
@@ -7458,31 +7495,32 @@
           ],
           "method": "replay",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 2831628,
+              "smallAllocs": 242383
+            },
             "berlekampMatrix": {
-              "nanos": 2223,
+              "nanos": 2203,
               "smallAllocs": 156
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 33759,
+              "nanos": 34661,
               "smallAllocs": 2884
             },
             "kernelDimension": 48,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 48,
             "modularImage": {
-              "nanos": 2865,
+              "nanos": 2925,
               "smallAllocs": 104
             },
             "prime": 61,
             "rowReduction": {
-              "nanos": 359893,
+              "nanos": 359714,
               "smallAllocs": 29406
             },
-            "splitting": {
-              "nanos": 2845339,
-              "smallAllocs": 242383
-            }
+            "splittingNanos": 2469711
           },
           "multiplicities": [
             1,
@@ -7536,31 +7574,31 @@
           ],
           "phases": {
             "assembly": {
-              "nanos": 315799,
+              "nanos": 313004,
               "smallAllocs": 13013
             },
             "diagnosticOverhead": {
-              "nanos": 3300774,
-              "smallAllocs": 275837
+              "nanos": 3286313,
+              "smallAllocs": 275843
             },
             "normalization": {
-              "nanos": 95873,
+              "nanos": 96232,
               "smallAllocs": 5860
             },
             "primeWalk": {
-              "nanos": 9302451,
+              "nanos": 9337315,
               "smallAllocs": 776545
             },
             "proposal": {
-              "nanos": 20009375,
+              "nanos": 19711957,
               "smallAllocs": 460290
             },
             "quadratic": {
-              "nanos": 601,
+              "nanos": 591,
               "smallAllocs": 17
             },
             "total": {
-              "nanos": 29754973,
+              "nanos": 29489844,
               "smallAllocs": 1256804
             }
           },
@@ -7751,9 +7789,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 30026345,
-        "total_nanos_median": 29754973,
-        "total_nanos_min": 29659571
+        "total_nanos_max": 29638045,
+        "total_nanos_median": 29489844,
+        "total_nanos_min": 29393923
       },
       "representative": true,
       "sampling_profile_captured": false,
@@ -7765,9 +7803,9 @@
     {
       "degree": 56,
       "end_to_end": {
-        "max_nanos": 40606060,
-        "median_nanos": 40178836,
-        "min_nanos": 40011148,
+        "max_nanos": 40625205,
+        "median_nanos": 40076492,
+        "min_nanos": 39929725,
         "runs": 5,
         "status": "ok"
       },
@@ -7830,7 +7868,7 @@
         1
       ],
       "family": "wilkinson",
-      "instrumentation_ratio": 1.0095741947327692,
+      "instrumentation_ratio": 1.0006779785017113,
       "name": "wilkinson_56",
       "phase_profile": {
         "profile": {
@@ -7895,31 +7933,32 @@
           ],
           "method": "replay",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 4354977,
+              "smallAllocs": 369824
+            },
             "berlekampMatrix": {
               "nanos": 2624,
               "smallAllocs": 180
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 36043,
+              "nanos": 36164,
               "smallAllocs": 3020
             },
             "kernelDimension": 56,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 56,
             "modularImage": {
-              "nanos": 3495,
+              "nanos": 3375,
               "smallAllocs": 120
             },
             "prime": 67,
             "rowReduction": {
-              "nanos": 560912,
+              "nanos": 557617,
               "smallAllocs": 46891
             },
-            "splitting": {
-              "nanos": 4322899,
-              "smallAllocs": 369824
-            }
+            "splittingNanos": 3794736
           },
           "multiplicities": [
             1,
@@ -7981,23 +8020,23 @@
           ],
           "phases": {
             "assembly": {
-              "nanos": 429377,
+              "nanos": 431099,
               "smallAllocs": 17680
             },
             "diagnosticOverhead": {
-              "nanos": 4993053,
-              "smallAllocs": 421117
+              "nanos": 5021365,
+              "smallAllocs": 421123
             },
             "normalization": {
-              "nanos": 128340,
+              "nanos": 129963,
               "smallAllocs": 7736
             },
             "primeWalk": {
-              "nanos": 13768903,
+              "nanos": 13591142,
               "smallAllocs": 1152231
             },
             "proposal": {
-              "nanos": 26195987,
+              "nanos": 25907884,
               "smallAllocs": 607717
             },
             "quadratic": {
@@ -8005,7 +8044,7 @@
               "smallAllocs": 17
             },
             "total": {
-              "nanos": 40563516,
+              "nanos": 40103663,
               "smallAllocs": 1786620
             }
           },
@@ -8220,9 +8259,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 40819716,
-        "total_nanos_median": 40563516,
-        "total_nanos_min": 40365363
+        "total_nanos_max": 40153125,
+        "total_nanos_median": 40103663,
+        "total_nanos_min": 40016132
       },
       "representative": true,
       "sampling_profile_captured": true,
@@ -8234,9 +8273,9 @@
     {
       "degree": 24,
       "end_to_end": {
-        "max_nanos": 609744,
-        "median_nanos": 579278,
-        "min_nanos": 565809,
+        "max_nanos": 601582,
+        "median_nanos": 571548,
+        "min_nanos": 562674,
         "runs": 5,
         "status": "ok"
       },
@@ -8245,7 +8284,7 @@
         16
       ],
       "family": "chebyshev",
-      "instrumentation_ratio": 0.9036196782891807,
+      "instrumentation_ratio": 0.9166806637412781,
       "name": "chebyshev_T24",
       "phase_profile": {
         "profile": {
@@ -8265,35 +8304,38 @@
             "modulusBits": 52,
             "precision": 22,
             "prime": 5,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 2,
+            "treeLeaves": 3,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 324181,
+              "smallAllocs": 27542
+            },
             "berlekampMatrix": {
-              "nanos": 942,
+              "nanos": 972,
               "smallAllocs": 84
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 11487,
+              "nanos": 11387,
               "smallAllocs": 1040
             },
             "kernelDimension": 3,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 24,
             "modularImage": {
-              "nanos": 601,
+              "nanos": 591,
               "smallAllocs": 56
             },
             "prime": 5,
             "rowReduction": {
-              "nanos": 282518,
+              "nanos": 282568,
               "smallAllocs": 24421
             },
-            "splitting": {
-              "nanos": 323930,
-              "smallAllocs": 27542
-            }
+            "splittingNanos": 40641
           },
           "multiplicities": [
             1,
@@ -8301,23 +8343,23 @@
           ],
           "phases": {
             "assembly": {
-              "nanos": 4787,
+              "nanos": 4827,
               "smallAllocs": 414
             },
             "diagnosticOverhead": {
-              "nanos": 622272,
-              "smallAllocs": 53270
+              "nanos": 622713,
+              "smallAllocs": 53276
             },
             "henselLift": {
-              "nanos": 124805,
+              "nanos": 127028,
               "smallAllocs": 7374
             },
             "normalization": {
-              "nanos": 16665,
+              "nanos": 16274,
               "smallAllocs": 1006
             },
             "primeWalk": {
-              "nanos": 342087,
+              "nanos": 341627,
               "smallAllocs": 29106
             },
             "quadratic": {
@@ -8325,15 +8367,15 @@
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 21161,
-              "smallAllocs": 897
+              "nanos": 20621,
+              "smallAllocs": 905
             },
             "total": {
-              "nanos": 523447,
-              "smallAllocs": 39769
+              "nanos": 523927,
+              "smallAllocs": 39777
             },
             "validation": {
-              "nanos": 4507,
+              "nanos": 4286,
               "smallAllocs": 281
             }
           },
@@ -8380,9 +8422,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 553000,
-        "total_nanos_median": 523447,
-        "total_nanos_min": 520762
+        "total_nanos_max": 547562,
+        "total_nanos_median": 523927,
+        "total_nanos_min": 518268
       },
       "representative": false,
       "sampling_profile_captured": false,
@@ -8405,9 +8447,9 @@
     {
       "degree": 24,
       "end_to_end": {
-        "max_nanos": 750463,
-        "median_nanos": 719246,
-        "min_nanos": 678956,
+        "max_nanos": 753357,
+        "median_nanos": 722872,
+        "min_nanos": 691716,
         "runs": 5,
         "status": "ok"
       },
@@ -8418,7 +8460,7 @@
         10
       ],
       "family": "chebyshev",
-      "instrumentation_ratio": 0.9204250006256552,
+      "instrumentation_ratio": 0.9183147223851525,
       "name": "chebyshev_U24",
       "phase_profile": {
         "profile": {
@@ -8441,35 +8483,38 @@
             "modulusBits": 53,
             "precision": 33,
             "prime": 3,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 3,
+            "treeLeaves": 4,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 312313,
+              "smallAllocs": 25483
+            },
             "berlekampMatrix": {
-              "nanos": 1021,
+              "nanos": 991,
               "smallAllocs": 84
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 5899,
+              "nanos": 5719,
               "smallAllocs": 510
             },
             "kernelDimension": 4,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 24,
             "modularImage": {
-              "nanos": 631,
+              "nanos": 590,
               "smallAllocs": 56
             },
             "prime": 3,
             "rowReduction": {
-              "nanos": 232135,
+              "nanos": 232946,
               "smallAllocs": 19531
             },
-            "splitting": {
-              "nanos": 309068,
-              "smallAllocs": 25483
-            }
+            "splittingNanos": 78376
           },
           "multiplicities": [
             1,
@@ -8479,39 +8524,39 @@
           ],
           "phases": {
             "assembly": {
-              "nanos": 6490,
+              "nanos": 6630,
               "smallAllocs": 612
             },
             "diagnosticOverhead": {
-              "nanos": 551768,
-              "smallAllocs": 45791
+              "nanos": 555664,
+              "smallAllocs": 45797
             },
             "henselLift": {
-              "nanos": 270801,
+              "nanos": 271252,
               "smallAllocs": 14296
             },
             "normalization": {
-              "nanos": 16995,
+              "nanos": 17125,
               "smallAllocs": 1007
             },
             "primeWalk": {
-              "nanos": 324370,
+              "nanos": 325513,
               "smallAllocs": 26401
             },
             "quadratic": {
-              "nanos": 211,
+              "nanos": 270,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 25398,
-              "smallAllocs": 1140
+              "nanos": 25388,
+              "smallAllocs": 1148
             },
             "total": {
-              "nanos": 662012,
-              "smallAllocs": 44750
+              "nanos": 663824,
+              "smallAllocs": 44758
             },
             "validation": {
-              "nanos": 5729,
+              "nanos": 5668,
               "smallAllocs": 389
             }
           },
@@ -8557,9 +8602,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 696261,
-        "total_nanos_median": 662012,
-        "total_nanos_min": 650584
+        "total_nanos_max": 690745,
+        "total_nanos_median": 663824,
+        "total_nanos_min": 651176
       },
       "representative": false,
       "sampling_profile_captured": false,
@@ -8578,9 +8623,9 @@
     {
       "degree": 30,
       "end_to_end": {
-        "max_nanos": 8347015,
-        "median_nanos": 8338041,
-        "min_nanos": 8318473,
+        "max_nanos": 8289241,
+        "median_nanos": 8250433,
+        "min_nanos": 8228731,
         "runs": 5,
         "status": "ok"
       },
@@ -8588,7 +8633,7 @@
         30
       ],
       "family": "legendre",
-      "instrumentation_ratio": 0.9869261856591974,
+      "instrumentation_ratio": 0.986862507701111,
       "name": "legendre_P30",
       "phase_profile": {
         "profile": {
@@ -8608,17 +8653,23 @@
             "modulusBits": 93,
             "precision": 15,
             "prime": 71,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 3,
+            "treeLeaves": 4,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 2044461,
+              "smallAllocs": 194499
+            },
             "berlekampMatrix": {
-              "nanos": 1413,
+              "nanos": 1322,
               "smallAllocs": 102
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 17325,
+              "nanos": 17276,
               "smallAllocs": 1478
             },
             "kernelDimension": 4,
@@ -8630,52 +8681,49 @@
             },
             "prime": 71,
             "rowReduction": {
-              "nanos": 1718688,
+              "nanos": 1685058,
               "smallAllocs": 164549
             },
-            "splitting": {
-              "nanos": 2078842,
-              "smallAllocs": 194499
-            }
+            "splittingNanos": 358081
           },
           "multiplicities": [
             1
           ],
           "phases": {
             "assembly": {
-              "nanos": 7572,
+              "nanos": 7421,
               "smallAllocs": 329
             },
             "diagnosticOverhead": {
-              "nanos": 3832411,
-              "smallAllocs": 360996
+              "nanos": 3764301,
+              "smallAllocs": 361002
             },
             "henselLift": {
-              "nanos": 461404,
+              "nanos": 460743,
               "smallAllocs": 15158
             },
             "normalization": {
-              "nanos": 28242,
+              "nanos": 28132,
               "smallAllocs": 1488
             },
             "primeWalk": {
-              "nanos": 7637232,
+              "nanos": 7550805,
               "smallAllocs": 687466
             },
             "quadratic": {
-              "nanos": 391,
+              "nanos": 401,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 66900,
-              "smallAllocs": 1779
+              "nanos": 66979,
+              "smallAllocs": 1787
             },
             "total": {
-              "nanos": 8229031,
-              "smallAllocs": 707340
+              "nanos": 8142043,
+              "smallAllocs": 707348
             },
             "validation": {
-              "nanos": 5989,
+              "nanos": 5619,
               "smallAllocs": 198
             }
           },
@@ -8767,9 +8815,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 8331001,
-        "total_nanos_median": 8229031,
-        "total_nanos_min": 8182641
+        "total_nanos_max": 8160640,
+        "total_nanos_median": 8142043,
+        "total_nanos_min": 8137535
       },
       "representative": false,
       "sampling_profile_captured": false,
@@ -8796,9 +8844,9 @@
     {
       "degree": 38,
       "end_to_end": {
-        "max_nanos": 4877411,
-        "median_nanos": 4805574,
-        "min_nanos": 4785856,
+        "max_nanos": 4764284,
+        "median_nanos": 4723093,
+        "min_nanos": 4708772,
         "runs": 5,
         "status": "ok"
       },
@@ -8806,7 +8854,7 @@
         38
       ],
       "family": "legendre",
-      "instrumentation_ratio": 0.9729849129365191,
+      "instrumentation_ratio": 0.9667988752285843,
       "name": "legendre_P38",
       "phase_profile": {
         "profile": {
@@ -8825,74 +8873,77 @@
             "modulusBits": 120,
             "precision": 19,
             "prime": 79,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 2,
+            "treeLeaves": 3,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 3673797,
+              "smallAllocs": 354429
+            },
             "berlekampMatrix": {
-              "nanos": 1662,
+              "nanos": 1632,
               "smallAllocs": 126
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 25358,
+              "nanos": 27922,
               "smallAllocs": 2174
             },
             "kernelDimension": 3,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 38,
             "modularImage": {
-              "nanos": 1973,
+              "nanos": 1812,
               "smallAllocs": 84
             },
             "prime": 79,
             "rowReduction": {
-              "nanos": 3513900,
+              "nanos": 3407362,
               "smallAllocs": 334731
             },
-            "splitting": {
-              "nanos": 3756108,
-              "smallAllocs": 354429
-            }
+            "splittingNanos": 264803
           },
           "multiplicities": [
             1
           ],
           "phases": {
             "assembly": {
-              "nanos": 9554,
+              "nanos": 9454,
               "smallAllocs": 431
             },
             "diagnosticOverhead": {
-              "nanos": 7323057,
-              "smallAllocs": 691969
+              "nanos": 7135830,
+              "smallAllocs": 691975
             },
             "henselLift": {
-              "nanos": 654731,
+              "nanos": 657645,
               "smallAllocs": 21254
             },
             "normalization": {
-              "nanos": 38767,
+              "nanos": 38377,
               "smallAllocs": 2218
             },
             "primeWalk": {
-              "nanos": 3894323,
+              "nanos": 3783770,
               "smallAllocs": 362294
             },
             "quadratic": {
-              "nanos": 311,
+              "nanos": 370,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 50635,
-              "smallAllocs": 1448
+              "nanos": 49914,
+              "smallAllocs": 1456
             },
             "total": {
-              "nanos": 4675751,
-              "smallAllocs": 388685
+              "nanos": 4566281,
+              "smallAllocs": 388693
             },
             "validation": {
-              "nanos": 7672,
+              "nanos": 7401,
               "smallAllocs": 265
             }
           },
@@ -8940,9 +8991,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 4712046,
-        "total_nanos_median": 4675751,
-        "total_nanos_min": 4633889
+        "total_nanos_max": 4568474,
+        "total_nanos_median": 4566281,
+        "total_nanos_min": 4553192
       },
       "representative": false,
       "sampling_profile_captured": false,
@@ -8967,9 +9018,9 @@
     {
       "degree": 16,
       "end_to_end": {
-        "max_nanos": 164834,
-        "median_nanos": 153698,
-        "min_nanos": 151314,
+        "max_nanos": 159877,
+        "median_nanos": 152687,
+        "min_nanos": 147839,
         "runs": 5,
         "status": "ok"
       },
@@ -8977,7 +9028,7 @@
         16
       ],
       "family": "cyclotomic",
-      "instrumentation_ratio": 0.8299977878697186,
+      "instrumentation_ratio": 0.8369409314479949,
       "name": "cyclo_phi17",
       "phase_profile": {
         "profile": {
@@ -8994,74 +9045,77 @@
             "modulusBits": 18,
             "precision": 11,
             "prime": 3,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 0,
+            "treeLeaves": 1,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 95412,
+              "smallAllocs": 7631
+            },
             "berlekampMatrix": {
               "nanos": 591,
               "smallAllocs": 60
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 3826,
+              "nanos": 3845,
               "smallAllocs": 332
             },
             "kernelDimension": 1,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 16,
             "modularImage": {
-              "nanos": 440,
+              "nanos": 491,
               "smallAllocs": 40
             },
             "prime": 3,
             "rowReduction": {
-              "nanos": 92698,
+              "nanos": 91546,
               "smallAllocs": 7303
             },
-            "splitting": {
-              "nanos": 96282,
-              "smallAllocs": 7631
-            }
+            "splittingNanos": 3275
           },
           "multiplicities": [
             1
           ],
           "phases": {
             "assembly": {
-              "nanos": 2203,
+              "nanos": 2253,
               "smallAllocs": 150
             },
             "diagnosticOverhead": {
-              "nanos": 195690,
-              "smallAllocs": 15481
+              "nanos": 193977,
+              "smallAllocs": 15487
             },
             "henselLift": {
-              "nanos": 2164,
+              "nanos": 2133,
               "smallAllocs": 72
             },
             "normalization": {
-              "nanos": 7171,
+              "nanos": 7281,
               "smallAllocs": 370
             },
             "primeWalk": {
-              "nanos": 104254,
+              "nanos": 103794,
               "smallAllocs": 8181
             },
             "quadratic": {
-              "nanos": 200,
+              "nanos": 220,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 4667,
-              "smallAllocs": 266
+              "nanos": 4958,
+              "smallAllocs": 274
             },
             "total": {
-              "nanos": 127569,
-              "smallAllocs": 9518
+              "nanos": 127790,
+              "smallAllocs": 9526
             },
             "validation": {
-              "nanos": 1762,
+              "nanos": 1853,
               "smallAllocs": 91
             }
           },
@@ -9104,9 +9158,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 134269,
-        "total_nanos_median": 127569,
-        "total_nanos_min": 125947
+        "total_nanos_max": 134019,
+        "total_nanos_median": 127790,
+        "total_nanos_min": 126046
       },
       "representative": false,
       "sampling_profile_captured": false,
@@ -9125,9 +9179,9 @@
     {
       "degree": 40,
       "end_to_end": {
-        "max_nanos": 2966979,
-        "median_nanos": 2896845,
-        "min_nanos": 2869474,
+        "max_nanos": 2890776,
+        "median_nanos": 2864418,
+        "min_nanos": 2854612,
         "runs": 5,
         "status": "ok"
       },
@@ -9135,7 +9189,7 @@
         40
       ],
       "family": "cyclotomic",
-      "instrumentation_ratio": 0.9771378862175919,
+      "instrumentation_ratio": 0.9866506913446291,
       "name": "cyclo_phi41",
       "phase_profile": {
         "profile": {
@@ -9156,74 +9210,77 @@
             "modulusBits": 42,
             "precision": 26,
             "prime": 3,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 4,
+            "treeLeaves": 5,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 680529,
+              "smallAllocs": 57696
+            },
             "berlekampMatrix": {
-              "nanos": 1782,
+              "nanos": 1813,
               "smallAllocs": 132
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 8433,
+              "nanos": 8372,
               "smallAllocs": 780
             },
             "kernelDimension": 5,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 40,
             "modularImage": {
-              "nanos": 1061,
+              "nanos": 1032,
               "smallAllocs": 88
             },
             "prime": 3,
             "rowReduction": {
-              "nanos": 443648,
+              "nanos": 446512,
               "smallAllocs": 38465
             },
-            "splitting": {
-              "nanos": 675011,
-              "smallAllocs": 57696
-            }
+            "splittingNanos": 232204
           },
           "multiplicities": [
             1
           ],
           "phases": {
             "assembly": {
-              "nanos": 4817,
+              "nanos": 4767,
               "smallAllocs": 342
             },
             "diagnosticOverhead": {
-              "nanos": 1133881,
-              "smallAllocs": 97312
+              "nanos": 1142364,
+              "smallAllocs": 97318
             },
             "henselLift": {
-              "nanos": 678596,
+              "nanos": 678626,
               "smallAllocs": 31144
             },
             "normalization": {
-              "nanos": 16825,
+              "nanos": 16605,
               "smallAllocs": 874
             },
             "primeWalk": {
-              "nanos": 709422,
+              "nanos": 711735,
               "smallAllocs": 59158
             },
             "quadratic": {
-              "nanos": 361,
+              "nanos": 270,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 1405113,
-              "smallAllocs": 30688
+              "nanos": 1398724,
+              "smallAllocs": 30696
             },
             "total": {
-              "nanos": 2830617,
-              "smallAllocs": 123086
+              "nanos": 2826180,
+              "smallAllocs": 123094
             },
             "validation": {
-              "nanos": 4316,
+              "nanos": 4307,
               "smallAllocs": 211
             }
           },
@@ -9275,9 +9332,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 2839340,
-        "total_nanos_median": 2830617,
-        "total_nanos_min": 2809395
+        "total_nanos_max": 2837157,
+        "total_nanos_median": 2826180,
+        "total_nanos_min": 2814563
       },
       "representative": false,
       "sampling_profile_captured": false,
@@ -9306,9 +9363,9 @@
     {
       "degree": 24,
       "end_to_end": {
-        "max_nanos": 3560548,
-        "median_nanos": 3531705,
-        "min_nanos": 3518065,
+        "max_nanos": 3513058,
+        "median_nanos": 3484997,
+        "min_nanos": 3477617,
         "runs": 5,
         "status": "ok"
       },
@@ -9323,7 +9380,7 @@
         8
       ],
       "family": "cyclotomic-products",
-      "instrumentation_ratio": 0.9883736042506381,
+      "instrumentation_ratio": 0.9986060246249854,
       "name": "xpow24_minus1",
       "phase_profile": {
         "profile": {
@@ -9359,17 +9416,23 @@
             "modulusBits": 25,
             "precision": 7,
             "prime": 11,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 12,
+            "treeLeaves": 13,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 618698,
+              "smallAllocs": 50521
+            },
             "berlekampMatrix": {
-              "nanos": 1051,
+              "nanos": 1001,
               "smallAllocs": 84
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 3175,
+              "nanos": 3124,
               "smallAllocs": 270
             },
             "kernelDimension": 13,
@@ -9381,13 +9444,10 @@
             },
             "prime": 11,
             "rowReduction": {
-              "nanos": 192766,
+              "nanos": 187798,
               "smallAllocs": 17216
             },
-            "splitting": {
-              "nanos": 608372,
-              "smallAllocs": 50521
-            }
+            "splittingNanos": 429899
           },
           "multiplicities": [
             1,
@@ -9401,39 +9461,39 @@
           ],
           "phases": {
             "assembly": {
-              "nanos": 9574,
+              "nanos": 9644,
               "smallAllocs": 937
             },
             "diagnosticOverhead": {
-              "nanos": 808649,
-              "smallAllocs": 68274
+              "nanos": 814308,
+              "smallAllocs": 68280
             },
             "henselLift": {
-              "nanos": 304011,
+              "nanos": 307576,
               "smallAllocs": 17703
             },
             "normalization": {
-              "nanos": 8382,
+              "nanos": 8042,
               "smallAllocs": 299
             },
             "primeWalk": {
-              "nanos": 1452433,
+              "nanos": 1445664,
               "smallAllocs": 117772
             },
             "quadratic": {
-              "nanos": 301,
+              "nanos": 300,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 1688223,
-              "smallAllocs": 40806
+              "nanos": 1680342,
+              "smallAllocs": 40814
             },
             "total": {
-              "nanos": 3490644,
-              "smallAllocs": 179602
+              "nanos": 3480139,
+              "smallAllocs": 179610
             },
             "validation": {
-              "nanos": 7992,
+              "nanos": 7972,
               "smallAllocs": 574
             }
           },
@@ -9543,9 +9603,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 3499038,
-        "total_nanos_median": 3490644,
-        "total_nanos_min": 3471968
+        "total_nanos_max": 3520579,
+        "total_nanos_median": 3480139,
+        "total_nanos_min": 3461022
       },
       "representative": false,
       "sampling_profile_captured": false,
@@ -9576,9 +9636,9 @@
     {
       "degree": 20,
       "end_to_end": {
-        "max_nanos": 865644,
-        "median_nanos": 819835,
-        "min_nanos": 806175,
+        "max_nanos": 854768,
+        "median_nanos": 813256,
+        "min_nanos": 801508,
         "runs": 5,
         "status": "ok"
       },
@@ -9587,7 +9647,7 @@
         10
       ],
       "family": "random-products",
-      "instrumentation_ratio": 0.9511121140229436,
+      "instrumentation_ratio": 0.9552613199287802,
       "name": "randprod_10",
       "phase_profile": {
         "profile": {
@@ -9608,17 +9668,23 @@
             "modulusBits": 31,
             "precision": 11,
             "prime": 7,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 3,
+            "treeLeaves": 4,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 527161,
+              "smallAllocs": 44577
+            },
             "berlekampMatrix": {
-              "nanos": 772,
+              "nanos": 761,
               "smallAllocs": 72
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 12258,
+              "nanos": 12278,
               "smallAllocs": 1018
             },
             "kernelDimension": 4,
@@ -9630,13 +9696,10 @@
             },
             "prime": 7,
             "rowReduction": {
-              "nanos": 417198,
+              "nanos": 413323,
               "smallAllocs": 35832
             },
-            "splitting": {
-              "nanos": 528133,
-              "smallAllocs": 44577
-            }
+            "splittingNanos": 113077
           },
           "multiplicities": [
             1,
@@ -9644,39 +9707,39 @@
           ],
           "phases": {
             "assembly": {
-              "nanos": 4246,
+              "nanos": 4216,
               "smallAllocs": 338
             },
             "diagnosticOverhead": {
-              "nanos": 961636,
-              "smallAllocs": 81668
+              "nanos": 957109,
+              "smallAllocs": 81674
             },
             "henselLift": {
-              "nanos": 172406,
+              "nanos": 171884,
               "smallAllocs": 9785
             },
             "normalization": {
-              "nanos": 20350,
+              "nanos": 20210,
               "smallAllocs": 1219
             },
             "primeWalk": {
-              "nanos": 549575,
+              "nanos": 548212,
               "smallAllocs": 46043
             },
             "quadratic": {
-              "nanos": 220,
+              "nanos": 261,
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 20110,
-              "smallAllocs": 808
+              "nanos": 19540,
+              "smallAllocs": 816
             },
             "total": {
-              "nanos": 779755,
-              "smallAllocs": 59036
+              "nanos": 776872,
+              "smallAllocs": 59044
             },
             "validation": {
-              "nanos": 3936,
+              "nanos": 3825,
               "smallAllocs": 237
             }
           },
@@ -9725,9 +9788,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 810471,
-        "total_nanos_median": 779755,
-        "total_nanos_min": 759926
+        "total_nanos_max": 796630,
+        "total_nanos_median": 776872,
+        "total_nanos_min": 768429
       },
       "representative": false,
       "sampling_profile_captured": false,
@@ -9752,9 +9815,9 @@
     {
       "degree": 24,
       "end_to_end": {
-        "max_nanos": 1880889,
-        "median_nanos": 1786198,
-        "min_nanos": 1758607,
+        "max_nanos": 1779779,
+        "median_nanos": 1753601,
+        "min_nanos": 1736796,
         "runs": 5,
         "status": "ok"
       },
@@ -9764,7 +9827,7 @@
         9
       ],
       "family": "random-products",
-      "instrumentation_ratio": 0.9472342931746649,
+      "instrumentation_ratio": 0.9662078203650659,
       "name": "randprod_21",
       "phase_profile": {
         "profile": {
@@ -9789,35 +9852,38 @@
             "modulusBits": 37,
             "precision": 9,
             "prime": 17,
-            "treeShape": "flat-multifactor"
+            "treeInternalLifts": 6,
+            "treeLeaves": 7,
+            "treeShape": "balanced-split binary product tree"
           },
           "method": "classical",
           "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 1207360,
+              "smallAllocs": 105488
+            },
             "berlekampMatrix": {
-              "nanos": 1012,
+              "nanos": 1032,
               "smallAllocs": 84
             },
             "distinctDegree": "not-applicable",
             "goodPrimeTest": {
-              "nanos": 18918,
+              "nanos": 18908,
               "smallAllocs": 1592
             },
             "kernelDimension": 7,
             "measurement": "repeat-at-selected-prime",
             "modularDegree": 24,
             "modularImage": {
-              "nanos": 681,
+              "nanos": 691,
               "smallAllocs": 56
             },
             "prime": 17,
             "rowReduction": {
-              "nanos": 984950,
+              "nanos": 990839,
               "smallAllocs": 89421
             },
-            "splitting": {
-              "nanos": 1193539,
-              "smallAllocs": 105488
-            }
+            "splittingNanos": 215489
           },
           "multiplicities": [
             1,
@@ -9826,23 +9892,23 @@
           ],
           "phases": {
             "assembly": {
-              "nanos": 6109,
+              "nanos": 6210,
               "smallAllocs": 531
             },
             "diagnosticOverhead": {
-              "nanos": 2202275,
-              "smallAllocs": 196768
+              "nanos": 2221914,
+              "smallAllocs": 196774
             },
             "henselLift": {
-              "nanos": 324040,
+              "nanos": 323540,
               "smallAllocs": 18001
             },
             "normalization": {
-              "nanos": 26449,
+              "nanos": 25869,
               "smallAllocs": 1651
             },
             "primeWalk": {
-              "nanos": 1277925,
+              "nanos": 1282331,
               "smallAllocs": 111675
             },
             "quadratic": {
@@ -9850,15 +9916,15 @@
               "smallAllocs": 17
             },
             "recombination": {
-              "nanos": 38858,
-              "smallAllocs": 1365
+              "nanos": 38337,
+              "smallAllocs": 1373
             },
             "total": {
-              "nanos": 1691948,
-              "smallAllocs": 134439
+              "nanos": 1694343,
+              "smallAllocs": 134447
             },
             "validation": {
-              "nanos": 5778,
+              "nanos": 5668,
               "smallAllocs": 386
             }
           },
@@ -9912,9 +9978,9 @@
         },
         "runs": 5,
         "status": "ok",
-        "total_nanos_max": 1721061,
-        "total_nanos_median": 1691948,
-        "total_nanos_min": 1685609
+        "total_nanos_max": 1724757,
+        "total_nanos_median": 1694343,
+        "total_nanos_min": 1673541
       },
       "representative": false,
       "sampling_profile_captured": false,
@@ -9944,8 +10010,8 @@
   "schema": "hexbz-phase-profile/1",
   "validation": {
     "disagreements": [],
-    "instrumentation_ratio_max": 1.01310597556573,
-    "instrumentation_ratio_median": 0.9932547169316046,
+    "instrumentation_ratio_max": 1.0263864644033844,
+    "instrumentation_ratio_median": 0.9949974033407056,
     "nodes_agree": 367,
     "prime_agree": 367,
     "sample_size": 367
