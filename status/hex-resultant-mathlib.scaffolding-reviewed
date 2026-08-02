@@ -1,0 +1,4 @@
+Independently reviewed against
+HexResultantMathlib/SPEC/hex-resultant-mathlib.md during the consolidated
+Resultant completion milestone. The missing discriminant identities were
+implemented and axiom-audited; no downstream-facing scaffolding gap remains.
