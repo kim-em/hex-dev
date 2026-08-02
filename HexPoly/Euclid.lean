@@ -380,6 +380,7 @@ private theorem exists_natPrime_dvd_of_one_lt :
   induction n using Nat.strongRecOn with
   | ind n ih =>
       intro hn
+      classical
       by_cases hprime : NatPrime n
       · exact ⟨n, hprime, Nat.dvd_refl n⟩
       · -- `n` is composite: extract a proper divisor manually (no `push_neg`).

@@ -21,6 +21,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 CORPUS = ROOT / "bench" / "corpus" / "hexbz-factor-corpus.jsonl"
 RESULTS = ROOT / "reports" / "bench-results"
+PROOF_ONLY_EXEMPTIONS = (
+    ROOT / "scripts" / "bench" / "proof_only_runtime_exemptions.json")
 SYSTEMS = ("hex-factor", "flint", "ntl", "pari", "isabelle-bz", "isabelle-lll")
 
 COMMON_PATHS = {
@@ -87,6 +89,41 @@ def source_path(system: str, path: str) -> bool:
                for source in SYSTEM_PATHS[system])
 
 
+def git_blob(ref: str, path: str) -> str | None:
+    result = subprocess.run(
+        ["git", "rev-parse", f"{ref}:{path}"], cwd=ROOT,
+        text=True, capture_output=True, check=False)
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def load_proof_only_exemptions() -> set[tuple[str, str, str]]:
+    """Load exact, reviewer-auditable source transitions with no runtime effect.
+
+    Both blob IDs are required so an exemption expires automatically as soon
+    as the file changes again. This is intentionally narrower than exempting a
+    path or trusting a commit-message marker.
+    """
+    entries = json.loads(PROOF_ONLY_EXEMPTIONS.read_text())
+    exemptions = set()
+    for entry in entries:
+        required = {"path", "baseline_blob", "current_blob", "reason"}
+        missing = required - entry.keys()
+        if missing:
+            raise SystemExit(
+                f"{PROOF_ONLY_EXEMPTIONS}: missing {', '.join(sorted(missing))}")
+        exemptions.add((
+            entry["path"], entry["baseline_blob"], entry["current_blob"]))
+    return exemptions
+
+
+def proof_only_transition(
+        path: str, baseline: str,
+        exemptions: set[tuple[str, str, str]]) -> bool:
+    baseline_blob = git_blob(baseline, path)
+    current_blob = git_blob("HEAD", path)
+    return (path, baseline_blob, current_blob) in exemptions
+
+
 def load_current_reports(corpus_sha: str):
     newest = {}
     for path in sorted(RESULTS.glob("hexbz-factor-sweep-*.json")):
@@ -108,6 +145,7 @@ def main() -> int:
         if line.strip()
     }
     newest = load_current_reports(corpus_sha)
+    proof_only_exemptions = load_proof_only_exemptions()
     errors = []
     current_rows = {}
 
@@ -149,7 +187,11 @@ def main() -> int:
         if not report.get("cross_check", {}).get("ok"):
             errors.append(f"{system}: {path.name} failed its differential cross-check")
         changed = git("diff", "--name-only", f"{commit}..HEAD").splitlines()
-        stale = sorted(name for name in changed if source_path(system, name))
+        stale = sorted(
+            name for name in changed
+            if source_path(system, name) and not (
+                system == "hex-factor" and proof_only_transition(
+                    name, commit, proof_only_exemptions)))
         if stale:
             errors.append(
                 f"{system}: source changed after {commit[:12]}: " + ", ".join(stale))
