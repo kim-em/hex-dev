@@ -7,13 +7,15 @@ diagnostics, not alternative public implementations.
 ## Current measurement
 
 The current Hex record measures clean source revision
-`c34ffbbbc16bd8c93274d96f555e22e1bb8868bc` with
+`f8477abd0639062e1f81e9eaa62dc429631706d6` with
 `leanprover/lean4:v4.33.0-rc1`. The executable SHA-256 is
-`8835c9e760e8b671c51b6311f7da718e7edefeea8d3924125a9b76cf8357dc79`.
+`fef58662ad84d87c1bfcfb16690eae733a49c27e58644d88cf4f71ddd2067f7a`.
 
 Hex was measured on 2026-08-02 and the external systems on 2026-08-01 on
-`chungus2`, an AMD EPYC 9455 Linux x86-64 host, with the harness and service
-pinned to CPU 0. The committed
+`chungus2`, an AMD EPYC 9455 Linux x86-64 host. The harness and service were
+pinned to CPU 70 for the Hex record and to CPU 0 for the external one; the two
+are checked interchangeable in
+[hexbz-support-traversal.md](hexbz-support-traversal.md). The committed
 392-row corpus has SHA-256
 `619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`.
 Services were persistent and warmed. Each call had a ten-second cutoff; rows
@@ -22,9 +24,9 @@ Early termination was disabled.
 
 The current artifacts are:
 
-- `reports/bench-results/hexbz-factor-sweep-c34ffbbb-hex-chungus2.json`
+- `reports/bench-results/hexbz-factor-sweep-f8477abd-hex-chungus2.json`
   for Hex, SHA-256
-  `821f3d2dd9753b5d4e69a15501c42d6f833609c95e088d5f5f409b5e3a108572`;
+  `6fb6e0a5d2e4d67db59ea804e5030789419438f723048493da1a1806a0c63dda`;
 - `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json`
   for FLINT, NTL, PARI, and both Isabelle implementations, SHA-256
   `4de27e389d738abc1e878f0be273485c3723216211a101c3eba55860e7b8a242`.
@@ -41,7 +43,7 @@ ratios and curves use the fresh same-protocol 2.17.2 measurement above.
 
 | System | Answered | Timed out | Median | p90 | Slowest answer |
 |---|---:|---:|---:|---:|---:|
-| Hex public factorization | 376 | 16 | 378.276 us | 7.507 ms | 8.115 s |
+| Hex public factorization | 376 | 16 | 373.003 us | 7.375 ms | 8.367 s |
 | FLINT 0.9.0 | 391 | 1 | 60.089 us | 1.139 ms | 1.241 s |
 | PARI/GP 2.17.2 | 391 | 1 | 65.687 us | 1.008 ms | 960.815 ms |
 | NTL 11.6.0 | 391 | 1 | 88.160 us | 2.365 ms | 1.305 s |
@@ -52,16 +54,27 @@ Every answering system agreed with the committed factor-degree oracle or with
 the other systems on rows without one.
 
 For paired comparisons, both measurements must exceed ten times their own
-protocol overhead. On 216 eligible common rows, Hex divided by verified
-Isabelle BZ has median `0.754x`, p10-p90 `0.467x-2.713x`, and a 134-82 win
+protocol overhead. On 214 eligible common rows, Hex divided by verified
+Isabelle BZ has median `0.739x`, p10-p90 `0.467x-2.652x`, and a 135-79 win
 split. Hex therefore has a useful aggregate lead over verified Isabelle BZ,
 but not a uniform one.
 
 The optimized unverified libraries remain substantially faster. Median Hex
-ratios are `11.056x` against FLINT, `12.029x` against PARI, and `5.923x`
-against NTL on 74, 79, and 140 eligible pairs respectively.
+ratios are `11.009x` against FLINT, `11.789x` against PARI, and `5.851x`
+against NTL on 74, 79, and 139 eligible pairs respectively.
 
-## Effect of this optimization
+## Effect of the support-traversal change
+
+The head-forced recombination leaf now runs its metadata-only filters before
+it materializes anything, and the lift modulus and per-factor degree and
+trailing coefficient are precomputed once per subset-cardinality level. The
+Swinnerton-Dyer family moves from 0.684x to 0.850x against the preceding
+record, and its median against verified Isabelle BZ improves from `2.799x` to
+`2.116x`. No other family moves more than 3%.
+[hexbz-support-traversal.md](hexbz-support-traversal.md) is the measurement
+record.
+
+## Effect of the earlier proposal-path optimization
 
 The proposal path now has two general rules:
 
@@ -84,19 +97,19 @@ an optimization-only effect, while coverage improves by one.
 
 Two hard rows make the benefit concrete:
 
-- `hoeij_F190` is newly solved in 7.238 seconds after peeling a degree-10
+- `hoeij_F190` is newly solved in 6.862 seconds after peeling a degree-10
   factor and partitioning the degree-180 residual into two degree-90 pieces;
-- `sd6` answers in 8.115 seconds because a no-progress proposal now skips its
+- `sd6` answers in 8.367 seconds because a no-progress proposal now skips its
   futile selected-coordinate lattice. It had sat at or beyond the cutoff
   during the intermediate design.
 
-Representative Wilkinson timings remain smooth: 4.083 ms at degree 24,
-15.912 ms at degree 40, and 40.396 ms at degree 56. They are within about seven
+Representative Wilkinson timings remain smooth: 4.098 ms at degree 24,
+15.679 ms at degree 40, and 39.740 ms at degree 56. They are within about seven
 percent of the preceding clean record, so the data supports absence of a new
 threshold regression, not a Wilkinson speedup claim.
 
 Both hard-row successes exceed one second and therefore use one timed call under
-the declared repetition policy. F190 consumed 72% and `sd6` 81% of the ten-second
+the declared repetition policy. F190 consumed 69% and `sd6` 84% of the ten-second
 cutoff. They establish current coverage, but should be rechecked after future
 factorization changes rather than treated as low-variance timing estimates.
 
@@ -104,16 +117,16 @@ factorization changes rather than treated as low-variance timing estimates.
 
 | Family | Eligible pairs | Median Hex / Isabelle | Hex wins |
 |---|---:|---:|---:|
-| Chebyshev | 9 | 0.479x | 9 |
-| Conway | 88 | 0.720x | 50 |
-| Cyclotomic | 24 | 1.123x | 10 |
-| Cyclotomic products | 18 | 1.069x | 9 |
-| Laguerre | 13 | 0.786x | 12 |
-| Legendre | 13 | 0.581x | 12 |
-| Random products | 26 | 0.583x | 25 |
-| Swinnerton-Dyer products | 7 | 0.793x | 4 |
-| Swinnerton-Dyer | 6 | 2.799x | 3 |
-| Wilkinson | 12 | 1.400x | 0 |
+| Chebyshev | 9 | 0.467x | 9 |
+| Conway | 87 | 0.707x | 50 |
+| Cyclotomic | 24 | 1.085x | 11 |
+| Cyclotomic products | 18 | 1.044x | 9 |
+| Laguerre | 13 | 0.773x | 13 |
+| Legendre | 13 | 0.575x | 12 |
+| Random products | 25 | 0.584x | 24 |
+| Swinnerton-Dyer products | 7 | 0.766x | 4 |
+| Swinnerton-Dyer | 6 | 2.116x | 3 |
+| Wilkinson | 12 | 1.403x | 0 |
 
 There is no common answered Hoeij-Zimmermann row with verified Isabelle BZ.
 Hex is strong on Chebyshev, Legendre, random products, and Laguerre. Plain

@@ -10,6 +10,13 @@ modular prime would have cost.
 Every number here is reproducible from committed records by the commands in
 [Regeneration](#regeneration).
 
+**This page is the snapshot at revision `c34ffbbb`, and stays that way.** The
+recombination traversal it attributes has since changed: see
+[hexbz-support-traversal.md](hexbz-support-traversal.md), which supersedes the
+`sd5` and `sd5_x_phi11` rows of the tables below and carries the current
+cactus record. The go/no-go verdicts for the dependent issues were reached
+against the numbers here and are not restated there.
+
 ## Revision and protocol
 
 - Source revision `c34ffbbbc16bd8c93274d96f555e22e1bb8868bc` (clean worktree),

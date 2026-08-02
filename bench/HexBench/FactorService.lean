@@ -573,32 +573,35 @@ order and the same leaf predicates, carrying the `DirectCandidateStats` stage
 counters that `scanDirectSubsets` already records for the unforced sweep. -/
 private def countedScanCombinations
     (coreLc : Int) (target : ZPoly) (basis : LiftData)
-    (head : DirectLiftedIndex basis) :
+    (metadata : SupportMeta basis) (head : DirectLiftedIndex basis) :
     (xs : List (DirectLiftedIndex basis)) → (choose : Nat) →
       (selectedRev rejectedRev : List (DirectLiftedIndex basis)) →
       (selectedDegree : Nat) → (selectedTrail : Int) →
       DirectSubsetLevelResult basis
   | xs, 0, selectedRev, rejectedRev, selectedDegree, selectedTrail =>
-      let selected := head :: selectedRev.reverse
-      let remaining := rejectedRev.reverse ++ xs
-      -- `scanDirectCombinations` passes the selected lifted factors as an
-      -- argument to `tryDirectCandidate`, so the list is written before the
-      -- prefilters in the production leaf too; keep it in the same position
-      -- rather than sinking it into the surviving branch.
-      let selectedFactors := directSelectedFactors basis selected
+      -- `directLeaf` runs the metadata-only filters (short-circuited, degree
+      -- first) exactly once, and only then reverses the selected indices, maps
+      -- them to lifted factors, builds the candidate, and -- on success --
+      -- concatenates the complementary support. Splitting the prefilter into
+      -- its two components here is what makes the stage counters separable;
+      -- every materialization stays at the production operational point.
       let visited : DirectCandidateStats := { leaves := 1 }
       if directDegreePrefilter coreLc target selectedDegree then
         let degreePassed := { visited with degreeSurvivors := 1 }
-        if directTrailingPrefilter coreLc target (liftModulus basis) selectedTrail then
+        if directTrailingPrefilter coreLc target metadata.modulus selectedTrail then
           let filtered := { degreePassed with trailingSurvivors := 1 }
-          let candidate := directCandidate coreLc (liftModulus basis) selectedFactors
+          let selected := head :: selectedRev.reverse
+          let selectedFactors := directSelectedFactors basis selected
+          let candidate := directCandidate coreLc metadata.modulus selectedFactors
           let constructed := { filtered with constructed := 1 }
           if shouldRecordPolynomialFactor candidate then
             let divided :=
               { constructed with recordable := 1, exactDivisions := 1 }
             match exactQuotient? target candidate with
             | some quotient =>
-                .found { selected, remaining, candidate, quotient } divided
+                .found
+                  { selected, remaining := rejectedRev.reverse ++ xs,
+                    candidate, quotient } divided
             | none => .exhausted divided
           else
             .exhausted constructed
@@ -609,17 +612,15 @@ private def countedScanCombinations
   | [], _ + 1, _, _, _, _ => .exhausted {}
   | x :: xs, choose + 1, selectedRev, rejectedRev,
       selectedDegree, selectedTrail =>
-      let factor := directLiftedFactor basis x
-      let included :=
-        countedScanCombinations coreLc target basis head xs choose
+      match countedScanCombinations coreLc target basis metadata head xs choose
           (x :: selectedRev) rejectedRev
-          (selectedDegree + factor.degree?.getD 0)
-          (selectedTrail * factor.coeff 0 % (liftModulus basis : Int))
-      match included with
+          (selectedDegree + metadata.degree x)
+          (selectedTrail * metadata.trail x % metadata.modulusInt) with
       | .found split stats => .found split stats
       | .exhausted leftStats =>
-          match countedScanCombinations coreLc target basis head xs (choose + 1)
-              selectedRev (x :: rejectedRev) selectedDegree selectedTrail with
+          match countedScanCombinations coreLc target basis metadata head xs
+              (choose + 1) selectedRev (x :: rejectedRev) selectedDegree
+              selectedTrail with
           | .found split rightStats => .found split (leftStats.add rightStats)
           | .exhausted rightStats => .exhausted (leftStats.add rightStats)
 
@@ -643,10 +644,9 @@ private def countedFindHead
       if levelCost > budget then
         .declined .subsetBudget budget stats completed
       else
-        let factor := directLiftedFactor basis head
-        match countedScanCombinations coreLc target basis head tail level [] []
-            (factor.degree?.getD 0)
-            (factor.coeff 0 % (liftModulus basis : Int)) with
+        let metadata := supportMeta basis
+        match countedScanCombinations coreLc target basis metadata head tail level
+            [] [] (metadata.degree head) (metadata.trail head % metadata.modulusInt) with
         | .found split levelStats =>
             .found split (budget - levelStats.leaves) (stats.add levelStats)
               completed
