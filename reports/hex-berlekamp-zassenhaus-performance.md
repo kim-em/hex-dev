@@ -7,9 +7,9 @@ diagnostics, not alternative public implementations.
 ## Current measurement
 
 The current Hex record measures clean source revision
-`9410326790518e1563174dce21345efc2c427105` with
+`635854b7c4ba01cf81ccdcb40ed38e52cde2e7e8` with
 `leanprover/lean4:v4.33.0-rc1`. The executable SHA-256 is
-`add5bd4388a3aa0930974fe620144c78c8aaf7125704ea80165ddefb65dee5e5`.
+`9315676759b1cb76058d8fe542e3d4f75b5a44ac81f2b8b625a8a81294fc3238`.
 
 Hex was measured on 2026-08-02 and the external systems on 2026-08-01 on
 `chungus2`, an AMD EPYC 9455 Linux x86-64 host. The harness and service were
@@ -24,7 +24,7 @@ Early termination was disabled.
 
 The current artifacts are:
 
-- `reports/bench-results/hexbz-factor-sweep-94103267-hex-chungus2.json`
+- `reports/bench-results/hexbz-factor-sweep-635854b7-hex-chungus2.json`
   for Hex, SHA-256
   `50155349e1c3c897386cbdfa14cd0110224fc68ae21b1c378a7fa57d69aaefde`;
 - `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json`
@@ -43,7 +43,7 @@ ratios and curves use the fresh same-protocol 2.17.2 measurement above.
 
 | System | Answered | Timed out | Median | p90 | Slowest answer |
 |---|---:|---:|---:|---:|---:|
-| Hex public factorization | 376 | 16 | 378.075 us | 7.382 ms | 8.251 s |
+| Hex public factorization | 376 | 16 | 376.593 us | 7.560 ms | 8.444 s |
 | FLINT 0.9.0 | 391 | 1 | 60.089 us | 1.139 ms | 1.241 s |
 | PARI/GP 2.17.2 | 391 | 1 | 65.687 us | 1.008 ms | 960.815 ms |
 | NTL 11.6.0 | 391 | 1 | 88.160 us | 2.365 ms | 1.305 s |
@@ -54,13 +54,13 @@ Every answering system agreed with the committed factor-degree oracle or with
 the other systems on rows without one.
 
 For paired comparisons, both measurements must exceed ten times their own
-protocol overhead. On 215 eligible common rows, Hex divided by verified
-Isabelle BZ has median `0.747x`, p10-p90 `0.467x-2.656x`, and a 136-79 win
+protocol overhead. On 216 eligible common rows, Hex divided by verified
+Isabelle BZ has median `0.748x`, p10-p90 `0.471x-2.678x`, and a 135-81 win
 split. Hex therefore has a useful aggregate lead over verified Isabelle BZ,
 but not a uniform one.
 
 The optimized unverified libraries remain substantially faster. Median Hex
-ratios are `10.978x` against FLINT, `11.980x` against PARI, and `5.918x`
+ratios are `11.089x` against FLINT, `11.964x` against PARI, and `5.880x`
 against NTL on 74, 79, and 140 eligible pairs respectively.
 
 ## Effect of the support-traversal change
@@ -68,9 +68,9 @@ against NTL on 74, 79, and 140 eligible pairs respectively.
 The head-forced recombination leaf now runs its metadata-only filters before
 it materializes anything, and the lift modulus and per-factor degree and
 trailing coefficient are precomputed once per subset-cardinality level. The
-Swinnerton-Dyer family moves from 0.707x to 0.854x against the preceding
+Swinnerton-Dyer family moves from 0.721x to 0.853x against the preceding
 record, and its median against verified Isabelle BZ improves from `2.799x` to
-`2.154x`. No other family moves more than 3%.
+`2.160x`. No other family moves more than 3%.
 [hexbz-support-traversal.md](hexbz-support-traversal.md) is the measurement
 record.
 
@@ -97,19 +97,19 @@ an optimization-only effect, while coverage improves by one.
 
 Two hard rows make the benefit concrete:
 
-- `hoeij_F190` is newly solved in 6.867 seconds after peeling a degree-10
+- `hoeij_F190` is newly solved in 6.870 seconds after peeling a degree-10
   factor and partitioning the degree-180 residual into two degree-90 pieces;
-- `sd6` answers in 8.251 seconds because a no-progress proposal now skips its
+- `sd6` answers in 8.444 seconds because a no-progress proposal now skips its
   futile selected-coordinate lattice. It had sat at or beyond the cutoff
   during the intermediate design.
 
-Representative Wilkinson timings remain smooth: 4.035 ms at degree 24,
-15.791 ms at degree 40, and 40.167 ms at degree 56. They are within about seven
+Representative Wilkinson timings remain smooth: 4.149 ms at degree 24,
+16.170 ms at degree 40, and 41.081 ms at degree 56. They are within about seven
 percent of the preceding clean record, so the data supports absence of a new
 threshold regression, not a Wilkinson speedup claim.
 
 Both hard-row successes exceed one second and therefore use one timed call under
-the declared repetition policy. F190 consumed 69% and `sd6` 83% of the ten-second
+the declared repetition policy. F190 consumed 69% and `sd6` 84% of the ten-second
 cutoff. They establish current coverage, but should be rechecked after future
 factorization changes rather than treated as low-variance timing estimates.
 
@@ -117,16 +117,16 @@ factorization changes rather than treated as low-variance timing estimates.
 
 | Family | Eligible pairs | Median Hex / Isabelle | Hex wins |
 |---|---:|---:|---:|
-| Chebyshev | 9 | 0.470x | 9 |
-| Conway | 87 | 0.707x | 50 |
-| Cyclotomic | 24 | 1.095x | 11 |
-| Cyclotomic products | 18 | 1.062x | 9 |
-| Laguerre | 13 | 0.786x | 13 |
-| Legendre | 13 | 0.586x | 12 |
-| Random products | 26 | 0.582x | 25 |
-| Swinnerton-Dyer products | 7 | 0.773x | 4 |
-| Swinnerton-Dyer | 6 | 2.154x | 3 |
-| Wilkinson | 12 | 1.388x | 0 |
+| Chebyshev | 9 | 0.479x | 9 |
+| Conway | 88 | 0.721x | 50 |
+| Cyclotomic | 24 | 1.099x | 11 |
+| Cyclotomic products | 18 | 1.060x | 9 |
+| Laguerre | 13 | 0.792x | 12 |
+| Legendre | 13 | 0.591x | 12 |
+| Random products | 26 | 0.604x | 25 |
+| Swinnerton-Dyer products | 7 | 0.782x | 4 |
+| Swinnerton-Dyer | 6 | 2.160x | 3 |
+| Wilkinson | 12 | 1.423x | 0 |
 
 There is no common answered Hoeij-Zimmermann row with verified Isabelle BZ.
 Hex is strong on Chebyshev, Legendre, random products, and Laguerre. Plain

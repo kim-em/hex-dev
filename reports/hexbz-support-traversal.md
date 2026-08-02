@@ -9,7 +9,7 @@ what removing it bought, against the baseline in
 
 ## Revision and protocol
 
-- Source revision `9410326790518e1563174dce21345efc2c427105` (clean worktree),
+- Source revision `635854b7c4ba01cf81ccdcb40ed38e52cde2e7e8` (clean worktree),
   Lean toolchain `leanprover/lean4:v4.33.0-rc1`.
 - Baseline revision `c34ffbbbc16bd8c93274d96f555e22e1bb8868bc`, same host, same
   protocol, recorded by #9127.
@@ -18,7 +18,7 @@ what removing it bought, against the baseline in
   `619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`.
 - Sweep: persistent warm service, ten-second per-call cutoff, median of five
   calls below one second and one call otherwise, early termination disabled.
-  Measured protocol overhead 22.273 us per Hex call; reported times do not
+  Measured protocol overhead 22.063 us per Hex call; reported times do not
   subtract it.
 
 ### Pinning, and why it is not CPU 0
@@ -31,7 +31,7 @@ records below are pinned to CPU 70 instead, which was idle.
 
 That substitution is validated rather than assumed.  Across the 354 corpus rows
 outside the Swinnerton-Dyer families -- none of which this change can affect --
-the new sweep divided by the baseline has median **0.9977** and p90 **1.0234**,
+the new sweep divided by the baseline has median **1.0026** and p90 **1.0295**,
 with no row above 100 us moving more than 10%.  CPU 70 is therefore
 interchangeable with the baseline's CPU 0 for timing.  Allocation *shares* from
 the sampling profiler are less robust to the substitution; see the caveat under
@@ -41,9 +41,9 @@ the sampling profiler are less robust to the substitution; see the caveat under
 
 | Record | SHA-256 |
 |---|---|
-| `reports/bench-results/hexbz-factor-sweep-94103267-hex-chungus2.json` | `50155349e1c3c897386cbdfa14cd0110224fc68ae21b1c378a7fa57d69aaefde` |
-| `reports/bench-results/hexbz-phase-profile-94103267-chungus2.json` | `7878245a14a2984f4001c28a9c44ed0860b243288c4cd8d67c12d488f8276eaa` |
-| `reports/bench-results/hexbz-factor-sampling-profiles-94103267-chungus2.json` | `e1d7828ccf092b5bd282086d9f00592169f829e26869eb1d3db80ab0b7ac3274` |
+| `reports/bench-results/hexbz-factor-sweep-635854b7-hex-chungus2.json` | `99828b911190f4482c17434bde949f09f8e929df5ee775ec30f0fd4fdbd6b16e` |
+| `reports/bench-results/hexbz-phase-profile-635854b7-chungus2.json` | `d69ddd1bc54d980a43b1ad28793f309b840177d3dc446a570fe8faaf6f9af70c` |
+| `reports/bench-results/hexbz-factor-sampling-profiles-635854b7-chungus2.json` | `f0e71c356f2f8173ee710a02bd6d3f9db394898490144bd1af7fd4b32d39db65` |
 
 The comparator record `hexbz-factor-sweep-aa68c920-chungus2.json` (FLINT, NTL,
 PARI, both Isabelle extractions) is reused unchanged.
@@ -97,34 +97,35 @@ coefficient.
 
 | instance | baseline | now | |
 |---|---:|---:|---:|
-| `sd5_shift1` | 96.670 ms | 68.329 ms | **0.707x** |
-| `sd5_shift2` | 99.713 ms | 71.717 ms | **0.719x** |
-| `sd5_x_phi11` | 222.540 ms | 163.370 ms | **0.734x** |
-| `sd5` | 106.911 ms | 78.963 ms | **0.739x** |
-| `sd5_x_phi45` | 514.710 ms | 402.377 ms | **0.782x** |
-| `sd4_x_sd4shift1` | 25.091 ms | 21.429 ms | **0.854x** |
-| `xpow105_minus1` | 84.464 ms | 82.932 ms | 0.982x |
-| `xpow120_minus1` | 523.812 ms | 516.723 ms | 0.986x |
-| `wilkinson_48` | 29.732 ms | 29.356 ms | 0.987x |
-| `xpow48_minus1` | 21.635 ms | 21.460 ms | 0.992x |
-| `wilkinson_56` | 40.396 ms | 40.167 ms | 0.994x |
-| `cyclo_phi179` | 80.025 ms | 80.764 ms | 1.009x |
-| `cyclo_phi385` | 455.841 ms | 460.879 ms | 1.011x |
-| `sd6` | 8.115 s | 8.251 s | 1.017x |
-| `chebyshev_T24` (control) | 570.606 us | 570.396 us | 1.000x |
-| `cyclo_phi41` (control) | 2.981 ms | 2.981 ms | 1.000x |
-| `legendre_P30` (control) | 8.333 ms | 8.352 ms | 1.002x |
-| `xpow24_minus1` (control) | 3.714 ms | 3.603 ms | 0.970x |
-| `randprod_21` (control) | 1.771 ms | 1.750 ms | 0.988x |
+| `sd5_shift1` | 96.670 ms | 69.739 ms | **0.721x** |
+| `sd5_shift2` | 99.713 ms | 73.258 ms | **0.735x** |
+| `sd5` | 106.911 ms | 79.159 ms | **0.740x** |
+| `sd5_x_phi11` | 222.540 ms | 165.971 ms | **0.746x** |
+| `sd5_x_phi45` | 514.710 ms | 409.586 ms | **0.796x** |
+| `sd4_x_sd4shift1` | 25.091 ms | 21.400 ms | **0.853x** |
+| `xpow24_minus1` (control) | 3.714 ms | 3.583 ms | 0.965x |
+| `xpow105_minus1` | 84.464 ms | 82.707 ms | 0.979x |
+| `xpow48_minus1` | 21.635 ms | 21.280 ms | 0.984x |
+| `cyclo_phi41` (control) | 2.981 ms | 2.936 ms | 0.985x |
+| `cyclo_phi385` | 455.841 ms | 450.096 ms | 0.987x |
+| `wilkinson_48` | 29.732 ms | 29.615 ms | 0.996x |
+| `cyclo_phi179` | 80.025 ms | 79.815 ms | 0.997x |
+| `chebyshev_T24` (control) | 570.606 us | 570.085 us | 0.999x |
+| `xpow120_minus1` | 523.812 ms | 527.521 ms | 1.007x |
+| `wilkinson_56` | 40.396 ms | 41.081 ms | 1.017x |
+| `legendre_P30` (control) | 8.333 ms | 8.496 ms | 1.020x |
+| `randprod_21` (control) | 1.771 ms | 1.809 ms | 1.022x |
+| `sd6` | 8.115 s | 8.444 s | 1.041x |
 
 `sd6` is the row that reaches the subset budget: its head-forced search over 32
 lifted factors declines on `defaultSubsetBudget` and the answer comes from a
-later tier, so there is nothing here for this change to remove, and 1.017x is
-inside single-call noise on an eight-second row.
+later tier, so there is nothing here for this change to remove. It is a
+single-call row under the repetition policy, and repeated sweeps put it between
+1.017x and 1.041x, which is that call's variance rather than an effect.
 
-The phase profiler agrees on the rows that moved -- 0.772x on `sd5`, 0.748x and
-0.760x on its shifts, 0.780x on `sd5_x_phi11`, 0.892x on `sd4_x_sd4shift1` --
-and puts every non-SD row between 0.961x and 1.008x.
+The phase profiler agrees on the rows that moved -- 0.770x on `sd5`, 0.752x and
+0.759x on its shifts, 0.788x on `sd5_x_phi11`, 0.896x on `sd4_x_sd4shift1` --
+and puts every non-SD row within 2% of unchanged.
 
 ### Total factor time, independently, from the sampling profiles
 
@@ -135,19 +136,19 @@ absolute speed.
 
 | instance | prime-walk share, before | after | implied total-time factor |
 |---|---:|---:|---:|
-| `sd5` | 8.94% | 11.98% | **0.746x** |
-| `sd5_x_phi11` | 9.93% | 13.26% | **0.749x** |
-| `cyclo_phi385` | 44.83% | 45.36% | 0.988x |
-| `wilkinson_56` | 35.04% | 35.55% | 0.986x |
-| `cyclo_phi179` | 18.61% | 18.69% | 0.996x |
-| `cyclo_phi64_x_phi105` | 85.03% | 85.13% | 0.999x |
-| `xpow105_minus1` | 47.30% | 46.79% | 1.011x |
-| `xpow120_minus1` | 12.33% | 12.18% | 1.012x |
-| `xpow48_minus1` | 27.92% | 27.56% | 1.013x |
+| `sd5` | 8.94% | 12.03% | **0.743x** |
+| `sd5_x_phi11` | 9.93% | 13.32% | **0.745x** |
+| `wilkinson_56` | 35.04% | 35.86% | 0.977x |
+| `cyclo_phi385` | 44.83% | 45.40% | 0.987x |
+| `xpow120_minus1` | 12.33% | 12.39% | 0.995x |
+| `cyclo_phi64_x_phi105` | 85.03% | 85.20% | 0.998x |
+| `cyclo_phi179` | 18.61% | 18.60% | 1.001x |
+| `xpow105_minus1` | 47.30% | 47.14% | 1.003x |
+| `xpow48_minus1` | 27.92% | 27.58% | 1.012x |
 
 Three independent measurements -- the sweep, the phase profiler, and this
-ruler -- put `sd5` at 0.739x, 0.772x and 0.746x, and `sd5_x_phi11` at 0.734x,
-0.780x and 0.749x.
+ruler -- put `sd5` at 0.740x, 0.770x and 0.743x, and `sd5_x_phi11` at 0.746x,
+0.788x and 0.745x.
 
 ### Traversal time
 
@@ -159,9 +160,9 @@ the boundary is the same on each side.
 
 | instance | before | after | |
 |---|---:|---:|---:|
-| `sd5` | 55.45% of total | 33.25% of the old total | **-40.0%** |
-| `sd5_x_phi11` | 50.16% of total | 26.26% of the old total | **-47.6%** |
-| `xpow48_minus1` | 0.53% | 0.18% | (already nothing) |
+| `sd5` | 55.45% of total | 33.17% of the old total | **-40.2%** |
+| `sd5_x_phi11` | 50.16% of total | 27.09% of the old total | **-46.0%** |
+| `xpow48_minus1` | 0.53% | 0.13% | (already nothing) |
 | every other profiled row | < 0.5% | < 0.5% | (already nothing) |
 
 ### Allocator time
@@ -173,11 +174,11 @@ bignum limbs come from, and mimalloc, which is Lean's small-object path.
 | | glibc / GMP | Lean small objects | all allocation |
 |---|---:|---:|---:|
 | `sd5` before | 57.24% | 10.81% | 69.10% |
-| `sd5` after | 39.85% | 8.48% | 49.13% |
-| | **-30.4%** | **-21.5%** | **-28.9%** |
+| `sd5` after | 39.12% | 8.27% | 47.98% |
+| | **-31.7%** | **-23.5%** | **-30.6%** |
 | `sd5_x_phi11` before | 53.75% | 11.46% | 66.29% |
-| `sd5_x_phi11` after | 37.95% | 8.66% | 47.33% |
-| | **-29.4%** | **-24.5%** | **-28.6%** |
+| `sd5_x_phi11` after | 36.80% | 8.95% | 46.27% |
+| | **-31.5%** | **-21.9%** | **-30.2%** |
 
 The split is the mechanism: `p ^ k` is bignum work and shows up in glibc's
 allocator, the leaf list building is Lean constructor allocation and shows up
@@ -185,8 +186,8 @@ in mimalloc, and both fell.
 
 **Caveat.**  Unlike the timing comparison, this one is not validated against
 unchanged rows: the allocation share of `cyclo_phi64_x_phi105`, whose code path
-this change does not touch at all, moves by -20% between the two records, and
-`xpow120_minus1` by +8%.  Some of that is sampling variance and some is likely
+this change does not touch at all, moves by -23% between the two records, and
+`xpow48_minus1` by +6%.  Some of that is sampling variance and some is likely
 the core substitution.  So treat these three figures as good to roughly ten
 points, not to one.  The two allocation measurements that carry no such
 uncertainty are the exact counts in the table above and the deterministic
@@ -235,21 +236,21 @@ On `sd5`, as shares of the new total:
 
 | | share of new total |
 |---|---:|
-| `Hex.scanDirectCombinations` | 84.16% |
-| ... `Hex.directLeaf` | 39.61% |
-| ... ... `Hex.directCandidatePrefilter` | 24.24% |
-| ... ... ... `Hex.directTrailingPrefilter` | 15.54% |
-| ... ... ... ... `Hex.centeredModNat` | 8.77% |
-| ... ... ... `Hex.directDegreePrefilter` | 8.62% |
-| ... ... `Hex.directCandidate` | 6.16% |
-| ... ... `Hex.exactQuotient?` | 8.94% |
-| traversal outside the leaf | 44.55% |
+| `Hex.scanDirectCombinations` | 83.93% |
+| ... `Hex.directLeaf` | 39.30% |
+| ... ... `Hex.directCandidatePrefilter` | 24.53% |
+| ... ... ... `Hex.directTrailingPrefilter` | 15.87% |
+| ... ... ... ... `Hex.centeredModNat` | 9.12% |
+| ... ... ... `Hex.directDegreePrefilter` | 8.61% |
+| ... ... `Hex.directCandidate` | 5.88% |
+| ... ... `Hex.exactQuotient?` | 8.69% |
+| traversal outside the leaf | 44.63% |
 
 The traversal that remains is two cons cells and one modular multiply per
 internal node: `x :: selectedRev`, `x :: rejectedRev`, and
 `selectedTrail * trail x % modulusInt`.  The leaf that remains is dominated by
 the prefilters' own arithmetic on 93-bit integers; `Hex.centeredModNat` alone
-is 8.8% of total, and it reconverts the modulus from `Nat` to `Int` on every
+is 9.1% of total, and it reconverts the modulus from `Nat` to `Int` on every
 call.
 
 So the residual cost of enumerating supports is **modular arithmetic on
@@ -284,15 +285,19 @@ any `Hex.SupportMeta`, and adds one equation, `Hex.directLeaf_eq`.
 Precomputing per-factor metadata, the other half of the issue's proposal, *is*
 implemented: `Hex.SupportMeta` records the modulus, the modulus as an integer,
 and each lifted factor's degree and trailing coefficient, with proof fields
-pinning each recorded value to the factor it describes.
+pinning the arrays to the factors elementwise and to their length.  It is
+rebuilt once per subset-cardinality level rather than once per whole search:
+on `sd5` that is 16 constructions against 32,768 leaves, and hoisting it
+further would have to thread it through `findDirectHead` and
+`searchDirectAux`, whose signatures the completeness proofs consume.
 
 ## Acceptance criteria
 
 | criterion | outcome |
 |---|---|
 | candidate products not constructed before metadata-only filters finish | met; `Hex.directLeaf` guards on `directCandidatePrefilter`, confirmed in the generated C |
-| allocation attributable to support traversal falls at least 40% on `sd5` and `sd5_x_phi11` | met on the traversal: -40.0% and -47.6%. Whole-factorization allocator time falls 28.9% and 28.6%, with the sampling caveat above |
-| material end-to-end improvement on the SD family, no unexplained regression above 5% on low-width controls | met; 0.707x to 0.854x across the SD family, every control within 3% and every profiled non-SD row within 1.3% |
+| allocation attributable to support traversal falls at least 40% on `sd5` and `sd5_x_phi11` | met on the traversal: -40.2% and -46.0%. Whole-factorization allocator time falls 30.6% and 30.2%, with the sampling caveat above |
+| material end-to-end improvement on the SD family, no unexplained regression above 5% on low-width controls | met; 0.721x to 0.853x across the SD family, and every non-SD row within 4.1% (the largest, `sd6` at 1.041x, is a single-call eight-second row) |
 | search order, budget behavior, factor results, proof coverage deterministic | met; all stage counters, completed cardinalities and factor degrees identical, no new `sorry` or `axiom` |
 | full build, conformance, oracle and factorization tests pass | met; all oracles pass, `bz_trace_gate.py` checks 54 traces with 0 failures |
 | fresh full Hex sweep and regenerated figures | recorded above; all 25 SVGs regenerated |

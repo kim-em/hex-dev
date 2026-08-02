@@ -6,7 +6,7 @@ algorithm variants.
 ## Systems
 
 - `hex-factor`: public Hex production factorization at clean revision
-  `9410326790518e1563174dce21345efc2c427105`
+  `635854b7c4ba01cf81ccdcb40ed38e52cde2e7e8`
 - `flint`: python-flint 0.9.0
 - `pari`: PARI/GP 2.17.2 through cypari2 2.2.4
 - `ntl`: NTL 11.6.0 `ZZXFactoring`
@@ -35,7 +35,7 @@ session and Haskell-export builds completed before timed calls.
 - Cross-check: committed expected factor degrees where available, pairwise
   agreement otherwise
 
-The per-system protocol overheads were 22.273 us for Hex, 15.493 us for FLINT,
+The per-system protocol overheads were 22.063 us for Hex, 15.493 us for FLINT,
 11.027 us for NTL, 18.006 us for PARI, 18.628 us for Isabelle BZ, and 18.848 us
 for Isabelle LLL. Reported service times do not subtract them.
 
@@ -43,7 +43,7 @@ for Isabelle LLL. Reported service times do not subtract them.
 
 The plotting tool selects the newest valid record for each system:
 
-- `reports/bench-results/hexbz-factor-sweep-94103267-hex-chungus2.json`
+- `reports/bench-results/hexbz-factor-sweep-635854b7-hex-chungus2.json`
   supplies Hex; SHA-256
   `50155349e1c3c897386cbdfa14cd0110224fc68ae21b1c378a7fa57d69aaefde`.
 - `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json`
@@ -52,14 +52,14 @@ The plotting tool selects the newest valid record for each system:
 
 Both records use a clean worktree, the current corpus hash, the same host and
 protocol, and no early termination. The Hex executable SHA-256 is
-`add5bd4388a3aa0930974fe620144c78c8aaf7125704ea80165ddefb65dee5e5`.
+`9315676759b1cb76058d8fe542e3d4f75b5a44ac81f2b8b625a8a81294fc3238`.
 All answering systems agree.
 
 ## Current summary
 
 | System | OK | Timeout | p50 solved | p90 solved | Slowest solved |
 |---|---:|---:|---:|---:|---:|
-| Hex public factor | 376 | 16 | 378.075 us | 7.382 ms | 8.251 s |
+| Hex public factor | 376 | 16 | 376.593 us | 7.560 ms | 8.444 s |
 | FLINT | 391 | 1 | 60.089 us | 1.139 ms | 1.241 s |
 | PARI/GP | 391 | 1 | 65.687 us | 1.008 ms | 960.815 ms |
 | NTL | 391 | 1 | 88.160 us | 2.365 ms | 1.305 s |
