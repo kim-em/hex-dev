@@ -249,16 +249,16 @@ real headroom are `cyclo_phi64_x_phi105` (60.5% of total), `xpow105_minus1`
 **The selection rule usually picks well among what it sees, with one material
 miss.** The selected plan is within 5% of the cheapest retained plan on 11 of
 the 12 representative rows that retain more than one prime. The exception is
-`xpow48_minus1` at 1.308x: the selected prime 11 needs 15.039 ms downstream
-where the retained prime 5 needs 11.588 ms. The `xpow24_minus1` control is
-worse at 3.916x (2.074 ms against 529.704 us at prime 7), on a row whose whole
+`xpow48_minus1` at 1.308x: the selected prime 11 needs 15.021 ms downstream
+where the retained prime 5 needs 11.482 ms. The `xpow24_minus1` control is
+worse at 3.930x (2.100 ms against 534.423 us at prime 7), on a row whose whole
 factorization is 3.5 ms.
 
 **On some rows the walk is indispensable.** `xpow105_minus1` retains widths 30,
-33, and 14; stopping at the first good prime would cost 1.447 s instead of
-44.817 ms, and stopping at the second 37.275 s. `xpow120_minus1` retains widths
+33, and 14; stopping at the first good prime would cost 1.438 s instead of
+44.299 ms, and stopping at the second 36.732 s. `xpow120_minus1` retains widths
 39, 65, and 42 and selects its first good prime, but the two it rejects would
-have cost 4.026 s and 5.943 s, so the scouting is what protects it.
+have cost 3.966 s and 5.863 s, so the scouting is what protects it.
 `xpow48_minus1`, `cyclo_phi64_x_phi105`, and the `legendre_P30` control show
 the same shape. Reverting to first-good-prime selection is not an option.
 
@@ -561,8 +561,8 @@ production selection is within 5% on 11 of the 12 multi-prime representative
 rows. The exception is `xpow48_minus1` at 1.308x, so there is a second, smaller
 prize in the choice itself, not only in the cost of making it.
 `xpow105_minus1`, `xpow120_minus1`, and `legendre_P30` are the rows that forbid
-a first-good-prime rule: their rejected candidates cost 1.4 s to 37.3 s
-downstream.
+a first-good-prime rule: their rejected candidates cost 41.016 ms to 36.732 s
+downstream, against 553.782 us to 463.253 ms for the plans actually selected.
 
 Two of the issue's stated widths reproduce (`cyclo_phi64_x_phi105` at 10, 14,
 12 and `xpow105_minus1` at 30, 33, 14) and one does not: it gives
