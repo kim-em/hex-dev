@@ -27,6 +27,7 @@ import collections
 import gzip
 import json
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -39,8 +40,12 @@ BENCH_RESULTS = ROOT / "reports" / "bench-results"
 
 # The instances issue #9127 requires a symbolized profile for.
 PROFILED = [
+    # Required by issue #9127.
     "sd5", "sd5_x_phi11", "xpow120_minus1", "cyclo_phi179",
     "cyclo_phi64_x_phi105", "cyclo_phi385", "wilkinson_56",
+    # Added: #9130's exact-division evidence names these two rows, and the
+    # phase table alone cannot separate division from candidate construction.
+    "xpow48_minus1", "xpow105_minus1",
 ]
 
 # Inclusive-share floor for the per-function Hex table. Low enough that a phase
@@ -93,6 +98,28 @@ def demangle(symbol: str) -> str:
             out.append(".")
             i += 1
     return "".join(out) or symbol
+
+
+_SPEC_SUFFIX = re.compile(
+    r"(?:_\.redArg|_\.boxed|_\.lam_\d+|_\.elam_\d+|_\.jp_\d+|_\.cold"
+    r"|\.spec_\d+|_\.spec_\d+|_\.lam_\d+_\.boxed)$")
+
+
+def simplify(name: str) -> str:
+    """Fold Lean's specialization and join-point decorations into one name.
+
+    The compiler emits a distinct symbol per specialization site, so
+    `Hex.Matrix.rowAdd` appears under several mangled names that all denote the
+    same source function. Folding them before counting is what makes an
+    inclusive share readable: the specialization *context* is still visible in
+    the enclosing entries of the inclusive table.
+    """
+    head = name.split("_.at_.", 1)[0]
+    previous = None
+    while previous != head:
+        previous = head
+        head = _SPEC_SUFFIX.sub("", head)
+    return head or name
 
 
 # ------------------------------------------------------------ categorisation
@@ -194,7 +221,7 @@ def frame_names(profile: dict, thread: dict, symbolicator: Symbolicator):
         if lib is not None and address is not None and address >= 0:
             symbol = symbolicator.resolve(lib, address)
         name = demangle(symbol) if symbol else raw
-        out.append(name)
+        out.append((simplify(name), name))
     return out
 
 
@@ -210,8 +237,11 @@ def stack_chain(thread: dict, stack: int):
 
 def analyse(profile: dict, symbolicator: Symbolicator, top: int) -> dict:
     thread = main_thread(profile)
-    names = frame_names(profile, thread, symbolicator)
+    resolved = frame_names(profile, thread, symbolicator)
+    names = [short for short, _ in resolved]
+    raw_names = [full for _, full in resolved]
     samples = thread["samples"]
+    self_raw_counts = collections.Counter()
     self_counts = collections.Counter()
     inclusive_counts = collections.Counter()
     category_counts = collections.Counter()
@@ -226,6 +256,7 @@ def analyse(profile: dict, symbolicator: Symbolicator, top: int) -> dict:
         total += 1
         leaf = names[chain[0]]
         self_counts[leaf] += 1
+        self_raw_counts[raw_names[chain[0]]] += 1
         category_counts[categorise(leaf)] += 1
         # Dedupe by *name*, not by frame index: a recursive function occupies
         # several frames of one stack but is only on that stack once.
@@ -255,6 +286,9 @@ def analyse(profile: dict, symbolicator: Symbolicator, top: int) -> dict:
             total - category_counts.get("other", 0)),
         "top_self": [{"function": name, "percent": share(count)}
                      for name, count in self_counts.most_common(top)],
+        "top_self_undecorated": [
+            {"symbol": name, "percent": share(count)}
+            for name, count in self_raw_counts.most_common(top)],
         "top_inclusive": [{"function": name, "percent": share(count)}
                           for name, count in inclusive_counts.most_common(top)],
         "inclusive_hex": [{"function": name, "percent": share(count)}
