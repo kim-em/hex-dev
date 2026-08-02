@@ -9,7 +9,7 @@ implementations.
 
 | System | Answered / 392 | Median solved time | p90 solved time |
 |---|---:|---:|---:|
-| Hex factorization | 376 | 375.596 us | 7.457 ms |
+| Hex factorization | 376 | 378.276 us | 7.507 ms |
 | FLINT | 391 | 60.089 us | 1.139 ms |
 | PARI/GP | 391 | 65.687 us | 1.008 ms |
 | NTL | 391 | 88.160 us | 2.365 ms |
@@ -23,7 +23,9 @@ sub-millisecond median but a pronounced multi-second tail.
 Every pair of answering systems agreed on factor degrees. Timings come from
 fresh 2026-08-01/02 measurements on the same host, corpus, CPU placement,
 cutoff, and repetition policy. See
-[`hexbz-factor-sweep.md`](hexbz-factor-sweep.md) for exact provenance.
+[`hexbz-factor-sweep.md`](hexbz-factor-sweep.md) for exact provenance, and
+[`hexbz-cactus-elbow.md`](hexbz-cactus-elbow.md) for the phase-by-phase
+attribution of the mid-tail crossover with verified Isabelle BZ.
 
 ## Paired comparisons
 
@@ -32,11 +34,11 @@ protocol overhead. A ratio below one favors Hex.
 
 | Hex / comparator | Eligible pairs | Median | p10-p90 | Hex wins |
 |---|---:|---:|---:|---:|
-| FLINT | 74 | 10.899x | 4.403x-101.352x | 0 |
-| PARI/GP | 79 | 11.803x | 2.697x-108.114x | 0 |
-| NTL | 140 | 5.961x | 1.165x-25.506x | 7 |
-| Verified Isabelle BZ | 216 | 0.775x | 0.472x-2.662x | 135 |
-| Verified Isabelle LLL | 166 | 0.00796x | 0.000290x-0.216x | 165 |
+| FLINT | 74 | 11.056x | 4.413x-100.350x | 0 |
+| PARI/GP | 79 | 12.029x | 2.699x-107.045x | 0 |
+| NTL | 140 | 5.923x | 1.189x-36.847x | 8 |
+| Verified Isabelle BZ | 216 | 0.754x | 0.467x-2.713x | 134 |
+| Verified Isabelle LLL | 166 | 0.00806x | 0.000281x-0.226x | 165 |
 
 The broad percentile bands matter: performance depends strongly on the
 polynomial family, so none of these medians is a uniform ordering.
@@ -56,9 +58,9 @@ of parity. This comparison includes the Lean 4.33 toolchain and core-library
 update, so it describes the final shipped state rather than isolating the
 optimization. Coverage increases by one with no lost row:
 
-- `hoeij_F190`: 7.212 s, newly solved;
-- `sd6`: 8.361 s, retained at 84% of the cutoff;
-- Wilkinson degrees 24, 40, and 56: 4.022 ms, 15.873 ms, and 40.423 ms.
+- `hoeij_F190`: 7.238 s, newly solved;
+- `sd6`: 8.115 s, retained at 81% of the cutoff;
+- Wilkinson degrees 24, 40, and 56: 4.083 ms, 15.912 ms, and 40.396 ms.
 
 F190 and `sd6` each use one timed call because they exceed one second. These are
 coverage observations, not low-variance speed estimates. The Wilkinson points
