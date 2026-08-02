@@ -20,9 +20,9 @@ relate its depth-first traversal to the extensional
 `subsetsOfSizeWithComplement` specification used only in proofs.
 
 They hold for an arbitrary `Hex.SupportMeta`, not only the canonical
-`Hex.supportMeta`: the structure's proof fields pin every recorded value to the
-lifted factor it describes, so the traversal's arithmetic is the specification's
-arithmetic whatever precomputation supplied it.
+`Hex.supportMeta`: the structure's proof fields pin every recorded value
+to the lifted factor it describes, so the traversal's arithmetic is the
+specification's arithmetic whatever precomputation supplied it.
 -/
 
 namespace HexBerlekampZassenhausMathlib
@@ -454,7 +454,8 @@ theorem tryDirectSplit_some
         Hex.directCandidate coreLc (Hex.liftModulus basis)
           (Hex.directSelectedFactors basis selected) ∧
       quotient * candidate = target := by
-  unfold Hex.tryDirectSplit Hex.tryDirectCandidate at h
+  unfold Hex.tryDirectSplit Hex.tryDirectCandidate
+    Hex.directCandidateAfterPrefilter at h
   split at h
   · simp only at h
     split at h

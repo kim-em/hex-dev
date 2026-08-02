@@ -82,6 +82,20 @@ def directCandidatePrefilter
   directDegreePrefilter coreLc target degreeSum &&
     directTrailingPrefilter coreLc target modulus trailingResidue
 
+/-- The candidate computation itself, for a selection the cached prefilters have
+already accepted.  A caller that has run the prefilter — the streaming
+traversal does, so that it can decide whether to build `selected` at all — calls
+this rather than paying for the prefilter twice. -/
+@[expose]
+def directCandidateAfterPrefilter
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (selected : List ZPoly) :
+    Option (ZPoly × ZPoly) :=
+  let candidate := directCandidate coreLc modulus selected
+  if shouldRecordPolynomialFactor candidate then
+    (exactQuotient? target candidate).map fun quotient => (candidate, quotient)
+  else
+    none
+
 /-- Evaluate the candidate computation after the cached prefilters. -/
 @[expose]
 def tryDirectCandidate
@@ -89,11 +103,7 @@ def tryDirectCandidate
     (selected : List ZPoly) (degreeSum : Nat) (trailingResidue : Int) :
     Option (ZPoly × ZPoly) :=
   if directCandidatePrefilter coreLc target modulus degreeSum trailingResidue then
-    let candidate := directCandidate coreLc modulus selected
-    if shouldRecordPolynomialFactor candidate then
-      (exactQuotient? target candidate).map fun quotient => (candidate, quotient)
-    else
-      none
+    directCandidateAfterPrefilter coreLc target modulus selected
   else
     none
 

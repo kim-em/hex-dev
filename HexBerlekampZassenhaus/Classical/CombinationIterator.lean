@@ -20,13 +20,15 @@ and stops at the first exact divisor.  The proved classical search uses the
 head-forced iterator; the proposal tier uses the unforced low-cardinality
 iterator.
 
-Two properties keep a rejected support free of allocation.  `SupportMeta`
+Two properties keep the traversal off a rejected support's back.  `SupportMeta`
 records the lift modulus and each lifted factor's degree and trailing
 coefficient once, so a traversal step is an array read and one modular multiply
 rather than a fresh `p ^ k` and a fresh `Option`.  And every leaf runs its
 metadata-only filters before it reverses the selected indices, maps them to
 lifted polynomials, or concatenates the complementary support -- the last of
-which is built only once an exact divisor is in hand.
+which is built only once an exact divisor is in hand.  A rejected leaf still
+pays for the filters themselves, which are modular arithmetic on the lift
+modulus; what it no longer pays for is the support representation.
 -/
 
 namespace Hex
@@ -118,13 +120,14 @@ def tryDirectSplit
 
 /-- Traversal metadata for one lifted basis, computed once per sweep.
 
-The lift modulus is a prime power with as many bits as the recovery precision
-demands, and rebuilding it at every traversal step is the dominant cost of a
-support that no candidate test ever sees.  The proof fields pin each recorded
-value to the lifted factor it describes, so a traversal reading this metadata
-is interchangeable with one reading the factors directly. -/
+The lift modulus is `basis.p ^ basis.k`, which at recovery precision is wide
+enough to need several limbs, and rebuilding it at every traversal step is the
+dominant cost of a support that no candidate test ever sees.  The proof fields
+pin the arrays to the lifted factors elementwise and to their length, so a
+traversal reading this metadata is interchangeable with one reading the factors
+directly. -/
 structure SupportMeta (basis : LiftData) where
-  /-- The lift modulus `p ^ k`. -/
+  /-- The lift modulus `basis.p ^ basis.k`. -/
   modulus : Nat
   /-- The lift modulus as an integer, so the traversal never reconverts it. -/
   modulusInt : Int
@@ -136,6 +139,10 @@ structure SupportMeta (basis : LiftData) where
   modulus_eq : modulus = liftModulus basis
   /-- The recorded integer modulus is the recorded modulus. -/
   modulusInt_eq : modulusInt = (modulus : Int)
+  /-- There is one recorded degree per lifted factor. -/
+  degrees_size : degrees.size = basis.liftedFactors.size
+  /-- There is one recorded trailing coefficient per lifted factor. -/
+  trails_size : trails.size = basis.liftedFactors.size
   /-- Each recorded degree is its lifted factor's degree. -/
   degrees_eq : ∀ i : DirectLiftedIndex basis,
     degrees.getD i.1 0 = (directLiftedFactor basis i).degree?.getD 0
@@ -196,6 +203,8 @@ def supportMeta (basis : LiftData) : SupportMeta basis :=
     trails := basis.liftedFactors.map fun factor => factor.coeff 0
     modulus_eq := rfl
     modulusInt_eq := rfl
+    degrees_size := by simp
+    trails_size := by simp
     degrees_eq := by
       intro i
       simp [Array.getD, directLiftedFactor]
@@ -203,13 +212,14 @@ def supportMeta (basis : LiftData) : SupportMeta basis :=
       intro i
       simp [Array.getD, directLiftedFactor] }
 
-/-- Evaluate one traversal leaf, materializing nothing a rejected support does
-not need.
+/-- Evaluate one traversal leaf.
 
 The degree and trailing-coefficient filters read only the incrementally
 maintained statistics, so a support they reject never reverses the selected
-indices and never maps them to lifted polynomials.  The complementary support
-is concatenated only after an exact divisor is found. -/
+indices, never maps them to lifted polynomials, and never builds a candidate.
+The complementary support is concatenated only after an exact divisor is found.
+The prefilter runs once: a surviving leaf continues with
+`directCandidateAfterPrefilter` rather than re-entering `tryDirectCandidate`. -/
 @[expose]
 def directLeaf
     (coreLc : Int) (target : ZPoly) (basis : LiftData) (modulus : Nat)
@@ -219,8 +229,8 @@ def directLeaf
   if directCandidatePrefilter coreLc target modulus selectedDegree
       selectedTrail then
     let selected := head :: selectedRev.reverse
-    match tryDirectCandidate coreLc target modulus
-        (directSelectedFactors basis selected) selectedDegree selectedTrail with
+    match directCandidateAfterPrefilter coreLc target modulus
+        (directSelectedFactors basis selected) with
     | some (candidate, quotient) =>
         .found
           { selected, remaining := rejectedRev.reverse ++ xs,
@@ -231,7 +241,8 @@ def directLeaf
 
 /-- The guarded leaf agrees with evaluating the candidate test directly.  The
 prefilter is `tryDirectCandidate`'s own first step, so guarding on it changes
-only when the arguments are built. -/
+only when the arguments are built, and every field of the result -- including
+the `tried` count -- is unchanged. -/
 theorem directLeaf_eq
     (coreLc : Int) (target : ZPoly) (basis : LiftData) (modulus : Nat)
     (head : DirectLiftedIndex basis)

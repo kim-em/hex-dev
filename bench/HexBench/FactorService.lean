@@ -579,10 +579,12 @@ private def countedScanCombinations
       (selectedDegree : Nat) → (selectedTrail : Int) →
       DirectSubsetLevelResult basis
   | xs, 0, selectedRev, rejectedRev, selectedDegree, selectedTrail =>
-      -- `directLeaf` runs both metadata-only filters before it reverses the
-      -- selected indices, maps them to lifted factors, or concatenates the
-      -- complementary support; keep every materialization at the same
-      -- operational point here.
+      -- `directLeaf` runs the metadata-only filters (short-circuited, degree
+      -- first) exactly once, and only then reverses the selected indices, maps
+      -- them to lifted factors, builds the candidate, and -- on success --
+      -- concatenates the complementary support. Splitting the prefilter into
+      -- its two components here is what makes the stage counters separable;
+      -- every materialization stays at the production operational point.
       let visited : DirectCandidateStats := { leaves := 1 }
       if directDegreePrefilter coreLc target selectedDegree then
         let degreePassed := { visited with degreeSurvivors := 1 }

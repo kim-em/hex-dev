@@ -516,6 +516,7 @@ theorem tryDirectSplit_trueSupport
     Hex.exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq
       hfactor_lc_pos hfactor_degree_pos hproduct
   unfold Hex.tryDirectSplit Hex.tryDirectCandidate
+    Hex.directCandidateAfterPrefilter
   rw [hpre]
   simp only [if_true]
   rw [hcand, hrecord, hquot]
