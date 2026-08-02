@@ -608,10 +608,11 @@ theorem coordinates?_isSome (gamma a : AlgebraicNumber)
     have hrecoveredValue : recovered.toComplex = a.toComplex :=
       (QAdjoin.toAlgebraicNumber?_sound coordinate gamma.rep gamma.rep_mk
         hrecovered).trans hcoordinate
-    have hbeq : (recovered == a) = true :=
-      (AlgebraicNumber.beq_iff recovered a).mpr hrecoveredValue
+    have hrecoveredEq : recovered = a :=
+      AlgebraicNumber.toComplex_injective hrecoveredValue
+    subst recovered
     simp [hpowerTraces, hproducts, hrhs, hcoeffs, coordinate,
-      hrecovered, hbeq]
+      hrecovered]
 
 /-- Successful coordinate recovery represents the original algebraic value at
 the selected primitive embedding. -/

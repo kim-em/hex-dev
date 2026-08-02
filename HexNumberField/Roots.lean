@@ -444,6 +444,60 @@ def presentation? (coefficients : Array AlgebraicNumber) :
 
 end Hex.AlgebraicPoly.Common
 
+namespace Hex.AlgebraicNumber
+
+/-- Total executable embedding of a rational number into canonical algebraic
+numbers. The companion proves that the checked constructor cannot fail. -/
+@[expose]
+def ofRat (q : Rat) : AlgebraicNumber :=
+  (AlgebraicPoly.Common.rational? q).getD
+    (Hex.panicWith 0 "AlgebraicNumber.ofRat: certification failed")
+
+instance : One AlgebraicNumber := ⟨ofRat 1⟩
+instance : NatCast AlgebraicNumber := ⟨fun n => ofRat (n : Rat)⟩
+instance : IntCast AlgebraicNumber := ⟨fun n => ofRat (n : Rat)⟩
+-- Mathlib's generic `OfNat` from `NatCast` has priority 100. Keep this
+-- Mathlib-free fallback below it so importing the companion yields one normal
+-- form for numerals while the executable library still supports literals.
+instance (priority := 90) (n : Nat) : OfNat AlgebraicNumber (n + 2) :=
+  ⟨ofRat (n + 2 : Nat)⟩
+
+/-- Executable scalar multiplication through the canonical rational
+embedding. -/
+@[expose]
+def smul (q : Rat) (a : AlgebraicNumber) : AlgebraicNumber :=
+  ofRat q * a
+
+instance : SMul Rat AlgebraicNumber := ⟨smul⟩
+instance : SMul Nat AlgebraicNumber :=
+  ⟨fun n a => smul (n : Rat) a⟩
+instance : SMul Int AlgebraicNumber :=
+  ⟨fun n a => smul (n : Rat) a⟩
+
+/-- Natural powers by repeated squaring using executable canonical
+multiplication. -/
+@[expose]
+def natPow (a : AlgebraicNumber) : Nat → AlgebraicNumber
+  | 0 => 1
+  | n + 1 =>
+      let q := natPow a ((n + 1) / 2)
+      let q2 := q * q
+      if (n + 1) % 2 = 0 then q2 else q2 * a
+termination_by n => n
+decreasing_by omega
+
+instance : Pow AlgebraicNumber Nat := ⟨natPow⟩
+
+/-- Integer powers assembled from executable multiplication and inversion. -/
+@[expose]
+def intPow (a : AlgebraicNumber) : Int → AlgebraicNumber
+  | .ofNat n => natPow a n
+  | .negSucc n => (natPow a (n + 1))⁻¹
+
+instance : Pow AlgebraicNumber Int := ⟨intPow⟩
+
+end Hex.AlgebraicNumber
+
 namespace Hex.AlgebraicPoly
 
 /-- Checked roots of a polynomial with canonical algebraic coefficients. All
@@ -477,7 +531,7 @@ private def rootsSqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def rootsSqrtTwoRep : RefinedIsolation rootsSqrtTwoPoly :=
-  ⟨⟨rootsSqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨rootsSqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def rootsSqrtTwoRoot : SimpleRoot rootsSqrtTwoPoly :=
   SimpleRoot.mk rootsSqrtTwoRep

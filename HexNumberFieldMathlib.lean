@@ -9,6 +9,7 @@ module
 public import HexNumberFieldMathlib.Roots
 public import HexNumberFieldMathlib.ComponentRoots
 public import HexNumberFieldMathlib.AlgebraicRoots
+public import HexNumberFieldMathlib.Field
 
 public section
 

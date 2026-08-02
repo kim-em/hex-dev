@@ -108,7 +108,7 @@ private def sqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
-  ⟨⟨sqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtTwo? (_ : Unit) : Option (Extension rat) :=
   if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
@@ -128,7 +128,7 @@ private def sqrtThreeSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 222 7, 0, 8⟩
 
 private def sqrtThreeRep : RefinedIsolation sqrtThreePoly :=
-  ⟨⟨sqrtThreeSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtThreeSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtThree? (_ : Unit) : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots sqrtThreePoly then
@@ -146,7 +146,7 @@ private def fourthRootTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 77936 16, 0, 17⟩
 
 private def fourthRootTwoRep : RefinedIsolation fourthRootTwoPoly :=
-  ⟨⟨fourthRootTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨fourthRootTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def fourthRootTwo? (_ : Unit) : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots fourthRootTwoPoly then
@@ -167,7 +167,7 @@ private def retryThetaSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 1371068573887 40, 0, 16⟩
 
 private def retryThetaRep : RefinedIsolation retryThetaPoly :=
-  ⟨⟨retryThetaSquare, by decide⟩, by decide⟩
+  ⟨⟨retryThetaSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def retryTheta? (_ : Unit) : Option AlgebraicNumber :=
   if hsimple : HasOnlySimpleRoots retryThetaPoly then
@@ -189,7 +189,7 @@ private def retryAlphaSquare : DyadicSquare :=
 set_option maxRecDepth 100000 in
 set_option exponentiation.threshold 1000 in
 private def retryAlphaRep : RefinedIsolation retryAlphaPoly :=
-  ⟨⟨retryAlphaSquare, by decide⟩, by decide⟩
+  ⟨⟨retryAlphaSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def retryAlpha? (_ : Unit) : Option AlgebraicNumber :=
   if hsimple : HasOnlySimpleRoots retryAlphaPoly then

@@ -63,10 +63,10 @@ private def degreeTenSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 19770730768400532067 64, 0, 60⟩
 
 private def degreeTenRep : RefinedIsolation degreeTenPoly :=
-  ⟨⟨degreeTenSquare, by
+  ⟨⟨degreeTenSquare, .ofWitness (by
       set_option maxRecDepth 100000 in
       set_option exponentiation.threshold 2000 in
-        decide⟩,
+        decide)⟩,
     by
       set_option maxRecDepth 100000 in
       set_option exponentiation.threshold 2000 in
@@ -140,7 +140,7 @@ private def sqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
-  ⟨⟨sqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtTwo? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots sqrtTwoPoly then
@@ -156,7 +156,7 @@ private def sqrtThreeSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 222 7, 0, 8⟩
 
 private def sqrtThreeRep : RefinedIsolation sqrtThreePoly :=
-  ⟨⟨sqrtThreeSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtThreeSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtThree? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots sqrtThreePoly then
@@ -265,7 +265,7 @@ private def enclosingSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 6074001000 32, 0, 32⟩
 
 private def enclosingRep : RefinedIsolation enclosingPoly :=
-  ⟨⟨enclosingSquare, by decide⟩, by decide⟩
+  ⟨⟨enclosingSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def enclosingRoot? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots enclosingPoly then

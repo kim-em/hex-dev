@@ -199,6 +199,83 @@ private theorem RefinedIsolation.castPoly_root {p q : ZPoly} (h : p = q)
   cases h
   rfl
 
+private theorem RefinedIsolation.castPoly_heq {p q : ZPoly} (h : p = q)
+    (r : RefinedIsolation q) : HEq (r.castPoly h) r := by
+  cases h
+  rfl
+
+private theorem AlgebraicNumber.IsCanonical.castPoly {p q : ZPoly}
+    (h : p = q) {squarefreeP : HasOnlySimpleRoots p}
+    {squarefreeQ : HasOnlySimpleRoots q} {r : RefinedIsolation q}
+    (hr : AlgebraicNumber.IsCanonical q squarefreeQ r) :
+    AlgebraicNumber.IsCanonical p squarefreeP (r.castPoly h) := by
+  cases h
+  have hsimple : squarefreeP = squarefreeQ := Subsingleton.elim _ _
+  cases hsimple
+  exact hr
+
+/-- Deterministic isolation provenance makes a canonical representative unique
+once its polynomial and semantic root are fixed. -/
+private theorem RefinedIsolation.eq_of_canonical {p : ZPoly}
+    {squarefree₁ squarefree₂ : HasOnlySimpleRoots p}
+    {r s : RefinedIsolation p}
+    (hr : AlgebraicNumber.IsCanonical p squarefree₁ r)
+    (hs : AlgebraicNumber.IsCanonical p squarefree₂ s)
+    (hroot : r.root = s.root) : r = s := by
+  have hsimple : squarefree₁ = squarefree₂ := Subsingleton.elim _ _
+  subst squarefree₂
+  unfold AlgebraicNumber.IsCanonical at hr hs
+  rcases hr with ⟨rfl, hr⟩ | ⟨hpne, isolations, refined, hisolate,
+      hrefine, hrmem⟩
+  · rcases hs with ⟨_, hs⟩ | ⟨hsne, _⟩
+    · exact (eq_of_heq hr).trans (eq_of_heq hs).symm
+    · exact (hsne rfl).elim
+  · rcases hs with ⟨hpX, _⟩ | ⟨_, isolations', refined', hisolate',
+        hrefine', hsmem⟩
+    · exact (hpne hpX).elim
+    · have hisolations : isolations = isolations' :=
+        Option.some.inj (hisolate.symm.trans hisolate')
+      subst isolations'
+      have hrefined : refined = refined' :=
+        Option.some.inj (hrefine.symm.trans hrefine')
+      subst refined'
+      obtain ⟨i, hiList, hir⟩ := List.getElem_of_mem hrmem
+      obtain ⟨j, hjList, hjs⟩ := List.getElem_of_mem hsmem
+      have hiRefined : i < refined.size := by simpa using hiList
+      have hjRefined : j < refined.size := by simpa using hjList
+      have hri : refined[i] = r := by
+        rw [← hir]
+        exact (Array.getElem_toList hiRefined).symm
+      have hsj : refined[j] = s := by
+        rw [← hjs]
+        exact (Array.getElem_toList hjRefined).symm
+      obtain ⟨hsize, hget⟩ :=
+        HexRootsMathlib.array_mapM_some_get hrefine
+      have hi : i < isolations.size := by simpa [hsize] using hiRefined
+      have hj : j < isolations.size := by simpa [hsize] using hjRefined
+      have htoI := hget i hi hiRefined
+      have htoJ := hget j hj hjRefined
+      have hrawI : refined[i].1 = isolations[i] := by
+        rw [DyadicRootIsolation.toRefined?] at htoI
+        split at htoI
+        · exact (congrArg Subtype.val (Option.some.inj htoI)).symm
+        · simp at htoI
+      have hrawJ : refined[j].1 = isolations[j] := by
+        rw [DyadicRootIsolation.toRefined?] at htoJ
+        split at htoJ
+        · exact (congrArg Subtype.val (Option.some.inj htoJ)).symm
+        · simp at htoJ
+      have hij : i = j := by
+        by_contra hij
+        apply HexRootsMathlib.isolate_roots_ne p squarefree₁
+          (separationDepth p : Int) .nkThenPellet hisolate hi hj hij
+        rw [← hrawI, ← hrawJ]
+        change HexRootsMathlib.DyadicRootIsolation.root r.1 =
+          HexRootsMathlib.DyadicRootIsolation.root s.1 at hroot
+        simpa [hri, hsj] using hroot
+      subst j
+      exact hri.symm.trans hsj
+
 private theorem AlgebraicNumber.eq_polynomial {a b : AlgebraicNumber}
     (h : a.toComplex = b.toComplex) : a.p = b.p := by
   have hscaled :
@@ -234,6 +311,32 @@ private theorem AlgebraicNumber.eq_polynomial {a b : AlgebraicNumber}
   exact
     HexBerlekampZassenhausMathlib.zpoly_eq_of_toPolynomial_associated_of_primitive_pos_leading
         a.prim b.prim a.pos_lc b.pos_lc hint
+
+/-- Canonical algebraic numbers are determined by their represented complex
+value. -/
+theorem AlgebraicNumber.toComplex_injective :
+    Function.Injective AlgebraicNumber.toComplex := by
+  intro a b hroot
+  have hp := AlgebraicNumber.eq_polynomial hroot
+  apply AlgebraicNumber.ext a b hp
+  let brep : RefinedIsolation a.p := b.rep.castPoly hp
+  have hbcanonical :
+      AlgebraicNumber.IsCanonical a.p a.squarefree brep :=
+    AlgebraicNumber.IsCanonical.castPoly hp b.canonical
+  have hbrepRoot : brep.root = b.rep.root :=
+    RefinedIsolation.castPoly_root hp b.rep
+  have hroot' : a.rep.root = brep.root := by
+    change a.rep.root = b.rep.root at hroot
+    exact hroot.trans hbrepRoot.symm
+  have hrep : a.rep = brep :=
+    RefinedIsolation.eq_of_canonical a.canonical hbcanonical hroot'
+  exact (heq_of_eq hrep).trans (RefinedIsolation.castPoly_heq hp b.rep)
+
+/--
+info: 'Hex.AlgebraicNumber.toComplex_injective' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms AlgebraicNumber.toComplex_injective
 
 /-- Canonical zero denotes complex zero. -/
 @[simp] theorem AlgebraicNumber.zero_toComplex :
@@ -318,6 +421,20 @@ theorem AlgebraicNumber.beq_iff (a b : AlgebraicNumber) :
     rw [show brep.1.square = b.rep.1.square by
       exact RefinedIsolation.castPoly_square hp b.rep] at hinter
     exact hinter
+
+/-- Canonical Boolean equality agrees with Lean equality. -/
+instance : LawfulBEq AlgebraicNumber where
+  eq_of_beq := by
+    intro a b h
+    exact AlgebraicNumber.toComplex_injective
+      ((AlgebraicNumber.beq_iff a b).mp h)
+  rfl := by
+    intro a
+    exact (AlgebraicNumber.beq_iff a a).mpr rfl
+
+/-- Propositional equality is decided by canonical Boolean equality. -/
+instance : DecidableEq AlgebraicNumber :=
+  instDecidableEqOfLawfulBEq
 
 /-- The executable zero predicate recognizes exactly the complex value zero. -/
 theorem AlgebraicRoot.isZero_iff (a : AlgebraicRoot) :

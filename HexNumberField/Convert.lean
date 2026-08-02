@@ -105,7 +105,7 @@ private def sqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
-  ⟨⟨sqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtTwoRoot (hsquarefree : HasOnlySimpleRoots sqrtTwoPoly) : AlgebraicRoot where
   p := sqrtTwoPoly
@@ -130,7 +130,7 @@ private def enclosingSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 6074001000 32, 0, 32⟩
 
 private def enclosingRep : RefinedIsolation enclosingPoly :=
-  ⟨⟨enclosingSquare, by decide⟩, by decide⟩
+  ⟨⟨enclosingSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def reducibleRoot (hsquarefree : HasOnlySimpleRoots enclosingPoly) :
     AlgebraicRoot where
@@ -159,7 +159,7 @@ private def nearEnclosingPoly : ZPoly :=
   sqrtTwoPoly * DensePoly.ofList [-99, 70]
 
 private def nearEnclosingRep : RefinedIsolation nearEnclosingPoly :=
-  ⟨⟨enclosingSquare, by decide⟩, by decide⟩
+  ⟨⟨enclosingSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def nearReducibleRoot
     (hsquarefree : HasOnlySimpleRoots nearEnclosingPoly) : AlgebraicRoot where
@@ -311,7 +311,7 @@ private def sqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
-  ⟨⟨sqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
   SimpleRoot.mk sqrtTwoRep

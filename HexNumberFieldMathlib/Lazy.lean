@@ -1093,83 +1093,6 @@ theorem AlgebraicRoot.ofEliminant?_isSome
                       hzball hballRadius hsecond.2
                   exact (hneRoots (hmatchingRoot.trans hsecondRoot.symm)).elim
 
-private theorem ZPoly.negRoots_isRoot_of_isRoot {p : ZPoly} {z : ℂ}
-    (hp : p ≠ 0) (hz : (HexRootsMathlib.toPolyℂ p).IsRoot z) :
-    (HexRootsMathlib.toPolyℂ p.negRoots).IsRoot (-z) := by
-  let reflected : ZPoly := DensePoly.compose p (-ZPoly.X)
-  have hreflected :
-      HexRootsMathlib.toPolyℂ reflected =
-        (HexRootsMathlib.toPolyℂ p).comp (-Polynomial.X) := by
-    change
-      (HexPolyMathlib.toPolynomial reflected).map (Int.castRingHom ℂ) =
-        ((HexPolyMathlib.toPolynomial p).map (Int.castRingHom ℂ)).comp
-          (-Polynomial.X)
-    dsimp only [reflected]
-    rw [HexPolyMathlib.toPolynomial_compose, Polynomial.map_comp]
-    simp [ZPoly.X, HexPolyMathlib.toPolynomial_monomial,
-      Polynomial.monomial_one_one_eq_X]
-  have hreflectedRoot :
-      (HexRootsMathlib.toPolyℂ reflected).eval (-z) = 0 := by
-    rw [hreflected, Polynomial.eval_comp]
-    simpa [Polynomial.IsRoot] using hz
-  have hpSize : p.size ≠ 0 := by
-    intro hsize
-    exact hp ((DensePoly.size_eq_zero_iff p).mp hsize)
-  have hpComplex : HexRootsMathlib.toPolyℂ p ≠ 0 :=
-    HexRootsMathlib.toPolyℂ_ne_zero p hpSize
-  have hreflectedComplex : HexRootsMathlib.toPolyℂ reflected ≠ 0 := by
-    rw [hreflected]
-    intro hzero
-    have hdegree := congrArg Polynomial.degree hzero
-    rw [Polynomial.degree_comp_neg_X, Polynomial.degree_zero] at hdegree
-    exact hpComplex (Polynomial.degree_eq_bot.mp hdegree)
-  have hreflectedNe : reflected ≠ 0 := by
-    intro hzero
-    apply hreflectedComplex
-    rw [hzero]
-    simp [HexRootsMathlib.toPolyℂ]
-  have hcontent : ZPoly.content reflected ≠ 0 :=
-    HexPolyZMathlib.content_ne_zero reflected hreflectedNe
-  have hdecomp :
-      HexRootsMathlib.toPolyℂ reflected =
-        Polynomial.C (ZPoly.content reflected : ℂ) *
-          HexRootsMathlib.toPolyℂ (ZPoly.primitivePart reflected) := by
-    simpa [HexRootsMathlib.toPolyℂ] using congrArg
-      (fun q : Polynomial ℤ => q.map (Int.castRingHom ℂ))
-      (HexPolyZMathlib.toPolynomial_eq_C_content_mul_primitivePart reflected)
-  have hprimitiveRoot :
-      (HexRootsMathlib.toPolyℂ (ZPoly.primitivePart reflected)).eval (-z) = 0 := by
-    have hproduct :
-        (ZPoly.content reflected : ℂ) *
-          (HexRootsMathlib.toPolyℂ (ZPoly.primitivePart reflected)).eval (-z) = 0 := by
-      rw [← Polynomial.eval_C_mul, ← hdecomp]
-      exact hreflectedRoot
-    exact (mul_eq_zero.mp hproduct).resolve_left (by exact_mod_cast hcontent)
-  unfold ZPoly.negRoots ZPoly.normalizePrimitiveSign
-  change (HexRootsMathlib.toPolyℂ
-    (if (ZPoly.primitivePart reflected).leadingCoeff < 0 then
-      DensePoly.scale (-1) (ZPoly.primitivePart reflected)
-    else ZPoly.primitivePart reflected)).IsRoot (-z)
-  split
-  · simpa [Polynomial.IsRoot, HexRootsMathlib.toPolyℂ,
-      HexPolyMathlib.toPolynomial_scale] using hprimitiveRoot
-  · exact hprimitiveRoot
-
-private theorem DyadicSquare.neg_mem_closedDisc {s : DyadicSquare} {z : ℂ}
-    (hz : z ∈ HexRootsMathlib.DyadicSquare.closedDisc s) :
-    -z ∈ HexRootsMathlib.DyadicSquare.closedDisc s.neg := by
-  have hcenter : HexRootsMathlib.DyadicSquare.center s.neg =
-      -HexRootsMathlib.DyadicSquare.center s := by
-    apply Complex.ext <;>
-      simp [DyadicSquare.neg, HexRootsMathlib.DyadicSquare.center,
-        Hex.DyadicSquare.center, HexRootsMathlib.GaussDyadic.toComplex]
-  have hradius : HexRootsMathlib.DyadicSquare.radius s.neg =
-      HexRootsMathlib.DyadicSquare.radius s := by
-    simp [HexRootsMathlib.DyadicSquare.radius_eq, DyadicSquare.neg]
-  rw [HexRootsMathlib.DyadicSquare.closedDisc, Metric.mem_closedBall] at hz ⊢
-  rw [hcenter, hradius]
-  simpa only [dist_neg_neg] using hz
-
 namespace AlgebraicRoot
 
 /-- Reflection computes complex negation. -/
@@ -1177,13 +1100,13 @@ theorem neg_toComplex (a : AlgebraicRoot) :
     a.neg.toComplex = -a.toComplex := by
   have hroot :
       (HexRootsMathlib.toPolyℂ a.p.negRoots).IsRoot (-a.toComplex) :=
-    ZPoly.negRoots_isRoot_of_isRoot
-      (HexRootsMathlib.RefinedIsolation.poly_ne_zero a.rep)
+    HexRootsMathlib.ZPoly.isRoot_negRoots
+      a.prim
       (AlgebraicRoot.toComplex_isRoot a)
   have hmem :
       -a.toComplex ∈
         HexRootsMathlib.DyadicSquare.closedDisc a.neg.rep.1.square := by
-    exact DyadicSquare.neg_mem_closedDisc
+    exact HexRootsMathlib.DyadicSquare.closedDisc_neg.mpr
       (HexRootsMathlib.RefinedIsolation.root_mem_closedDisc a.rep)
   exact (HexRootsMathlib.RefinedIsolation.eq_root_of_mem_closedDisc
     a.neg.rep hroot hmem).symm

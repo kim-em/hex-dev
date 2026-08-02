@@ -247,7 +247,7 @@ private def selectSqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def selectSqrtTwoRep : RefinedIsolation selectSqrtTwoPoly :=
-  ⟨⟨selectSqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨selectSqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def selectSqrtTwoRoot : SimpleRoot selectSqrtTwoPoly :=
   SimpleRoot.mk selectSqrtTwoRep
@@ -308,7 +308,7 @@ private def selectSqrtThreeSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 222 7, 0, 8⟩
 
 private def selectSqrtThreeRep : RefinedIsolation selectSqrtThreePoly :=
-  ⟨⟨selectSqrtThreeSquare, by decide⟩, by decide⟩
+  ⟨⟨selectSqrtThreeSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def selectFourthRootTwoPoly : ZPoly :=
   DensePoly.ofList [-2, 0, 0, 0, 1]
@@ -318,7 +318,7 @@ private def selectFourthRootTwoSquare : DyadicSquare :=
 
 private def selectFourthRootTwoRep :
     RefinedIsolation selectFourthRootTwoPoly :=
-  ⟨⟨selectFourthRootTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨selectFourthRootTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 -- A genuinely new root is admitted through the checked relative-level
 -- constructor. The old generator occupies the first lower block and the new

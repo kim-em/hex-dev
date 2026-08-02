@@ -88,9 +88,18 @@ theorem ofNormalized?_isSome
                 refined[i] rep |>.mpr <|
                 (HexRootsMathlib.RefinedIsolation.intersects_iff_root_eq
                   refined[i] rep).mpr hroot
-            simp [hmap]
-            exact ⟨refined[i], by simp,
-              hsame⟩
+            have hfindSome :
+                (refined.toList.find? fun r => r.sameRoot rep).isSome = true := by
+              rw [List.find?_isSome]
+              exact ⟨refined[i], by simp, hsame⟩
+            unfold AlgebraicNumber.canonicalRep?
+            split
+            · simp_all
+            · split
+              · simp_all
+              · split
+                · simp_all
+                · rfl
 
 end AlgebraicNumber
 

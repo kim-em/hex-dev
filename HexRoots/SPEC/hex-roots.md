@@ -3,13 +3,16 @@
 Certified isolation of complex roots of integer-coefficient
 polynomials. A root isolation is a square in the complex plane with
 Gaussian-dyadic centre and power-of-two half-width, together with a
-witness, dischargeable by `decide`, that a certified region around
+structural certificate that a certified region around
 the square contains exactly one simple root (an *atom*) or exactly
 `k` roots counted with multiplicity (a *cluster*). Atoms carry one
 of two certificate forms, tried in a configurable order: a
 Newton-Kantorovich contraction witness, whose certified region is
 the square itself, or a Pellet witness, whose certified region is
-the square's circumscribed disc. Clusters carry Pellet witnesses on
+the square's circumscribed disc. Checker-produced certificates remain
+dischargeable by `decide`; exact polynomial and square transformations retain
+their source certificate as explicit provenance instead of rerunning a
+checker. Clusters carry Pellet witnesses on
 the circumscribed disc. Refinement combines speculative Newton
 iteration (using `Dyadic.invAtPrec` from the Lean standard library)
 with subdivision and component gluing as the fallback, following the
@@ -237,8 +240,10 @@ square is that doubled square. All downstream geometry
 nothing else changes; reaching a given stored precision costs one
 extra subdivision level, absorbed by `stopSlack`.
 
-The two atom forms are packaged as a disjunction, so consumers of
-isolations never care which route fired:
+The two checker forms remain packaged as the decidable `atomWitness`
+proposition. Stored atoms use an indexed structural certificate so exact root
+reflection and primitive-sign normalization can transport existing evidence
+without assuming that either checker fires again:
 
 ```lean
 /-- An atom certificate: either certificate form for "exactly one
@@ -246,6 +251,17 @@ isolations never care which route fired:
 def atomWitness (p : ZPoly) (s : DyadicSquare) : Prop :=
   nkWitness p s ∨ witness p s 1
 instance : Decidable (atomWitness p s) := …
+
+inductive AtomCertificate : (p : ZPoly) → (s : DyadicSquare) → Type
+  | nk (h : nkWitness p s) : AtomCertificate p s
+  | pellet (h : witness p s 1) : AtomCertificate p s
+  | neg (hprim : ZPoly.Primitive p) (h : AtomCertificate p s) :
+      AtomCertificate p.negRoots s.neg
+  | normalize (h : AtomCertificate p s) :
+      AtomCertificate (ZPoly.normalizePrimitiveSign p) s
+
+def AtomCertificate.ofWitness : atomWitness p s → AtomCertificate p s
+def AtomCertificate.isNK : AtomCertificate p s → Bool
 
 /-- Which atom certificates `certify?` attempts, and in which order.
     `nkThenPellet` is the default; the singleton strategies exist for
@@ -277,7 +293,7 @@ structure DyadicSquare where
     Pellet disjunct) contains exactly one simple root. -/
 structure DyadicRootIsolation (p : ZPoly) where
   square  : DyadicSquare
-  witness : atomWitness p square
+  witness : AtomCertificate p square
 
 /-- A certified cluster: an edge-or-corner-connected set of grid squares at a
     common `prec`, whose enclosing disc contains exactly `k` roots
@@ -374,7 +390,7 @@ def cauchy (p : ZPoly) (h : 0 < p.degree?.getD 0) : Component
 end Component
 
 /-- Repackage a certified `k = 1` cluster as an atom (the Pellet
-    disjunct of `atomWitness`). Total: the cluster's witness already
+    constructor of `AtomCertificate`). Total: the cluster's witness already
     lives on the enclosing square's disc, which is the atom's
     square. -/
 def DyadicRootCluster.atomize (c : DyadicRootCluster p) (h : c.k = 1) :
@@ -799,8 +815,9 @@ is made here for pure Pellet refinement of a non-squarefree ambient polynomial.
   (hex-number-field's disambiguation loops) use instead of re-deriving
   the `√2` radius bookkeeping.
 - `HexRoots/Kantorovich.lean`: `nkWitness` with its `Decidable`
-  instance, `atomWitness`, `AtomStrategy`, the
-  `atomWitness`-dependent `DyadicRootIsolation`, `Certified`, and
+  instance, the decidable `atomWitness` checker proposition,
+  `AtomCertificate` and its exact transport constructors, `AtomStrategy`, the
+  certificate-indexed `DyadicRootIsolation`, `Certified`, and
   `atomize`, and `certifyAtom?` (certify an arbitrary candidate
   square, deciding both disjuncts fresh; the documented constructor
   for re-certification after a square transform).

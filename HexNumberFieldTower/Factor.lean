@@ -76,7 +76,7 @@ private def factorSqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def factorSqrtTwoRep : RefinedIsolation factorSqrtTwoPoly :=
-  ⟨⟨factorSqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨factorSqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def factorSqrtTwoRoot : SimpleRoot factorSqrtTwoPoly :=
   SimpleRoot.mk factorSqrtTwoRep

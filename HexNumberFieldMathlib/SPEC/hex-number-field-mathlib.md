@@ -38,6 +38,12 @@ theorem AlgebraicNumber.p_eq_minpoly (a : AlgebraicNumber) :
     (a.p.leadingCoeff : ℚ)⁻¹ •
       (toPolynomial a.p).map (algebraMap ℤ ℚ) =
         minpoly ℚ a.toComplex
+
+theorem AlgebraicNumber.toComplex_injective :
+    Function.Injective AlgebraicNumber.toComplex
+
+instance : LawfulBEq AlgebraicNumber
+instance : DecidableEq AlgebraicNumber
 ```
 
 `QAdjoin.toComplex` evaluates reduced coordinates at an explicit refined
@@ -171,6 +177,19 @@ multiplication and inversion zero branches are handled before eliminant
 construction and agree with `0⁻¹ = 0`.
 Canonical `AlgebraicNumber` arithmetic follows by `toRoot`, the lazy headline,
 and `exact_toComplex`.
+
+The total rational constructor satisfies
+
+```lean
+theorem AlgebraicNumber.ofRat_toComplex (q : Rat) :
+    (AlgebraicNumber.ofRat q).toComplex = (q : ℂ)
+```
+
+Together with `toComplex_injective` and the arithmetic correspondence
+theorems, this transports the field laws from `ℂ` onto the existing executable
+zero, one, casts, scalar actions, powers, and arithmetic operations. The
+installed `Field AlgebraicNumber` therefore changes no computational data
+field; it only supplies the law-bearing dictionary.
 
 ## Algebraic coefficient polynomials
 
