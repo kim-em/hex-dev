@@ -2697,6 +2697,52 @@ theorem quadraticHenselStep_eq_bignum
       · rw [dif_neg a]
     rw [hnone]
 
+/-! # Coefficient-range invariant of one quadratic step
+
+Every field of a step's output is built by `addModSquare` or `subModSquare`,
+whose final action is the canonical reduction `reduceModSquare _ m`. The output
+is therefore canonical modulo the step's working modulus `m²`, on both the
+bignum path and — via `quadraticHenselStep_eq_bignum` — the word path, whose
+`ofWP` readback lands in the same `[0, m²)` window.
+
+`Hex.ZPoly.reduceModPow_eq_self_of_canonical` turns this into a licence to
+delete a downstream reduction whose modulus is exactly `m²`.
+-/
+
+private theorem canonical_addModSquare (m : Nat) (hm0 : 0 < m * m) (a b : ZPoly) :
+    ZPoly.Canonical (addModSquare a b m) (m * m) := by
+  intro i
+  obtain ⟨hle, hlt⟩ := reduceModSquare_coeff_lt m hm0 (a + b) i
+  exact ⟨hle, by exact_mod_cast hlt⟩
+
+private theorem canonical_subModSquare (m : Nat) (hm0 : 0 < m * m) (a b : ZPoly) :
+    ZPoly.Canonical (subModSquare a b m) (m * m) := by
+  intro i
+  obtain ⟨hle, hlt⟩ := reduceModSquare_coeff_lt m hm0 (a - b) i
+  exact ⟨hle, by exact_mod_cast hlt⟩
+
+/-- Every component of one quadratic Hensel step is canonical modulo the step's
+working modulus `m²`, on both the word and the bignum path. -/
+theorem quadraticHenselStep_canonical
+    (m : Nat) (f g h s t : ZPoly) (hm : 0 < m) :
+    ZPoly.Canonical (quadraticHenselStep m f g h s t).g (m * m) ∧
+      ZPoly.Canonical (quadraticHenselStep m f g h s t).h (m * m) ∧
+        ZPoly.Canonical (quadraticHenselStep m f g h s t).s (m * m) ∧
+          ZPoly.Canonical (quadraticHenselStep m f g h s t).t (m * m) := by
+  have hm0 : 0 < m * m := Nat.mul_pos hm hm
+  rw [quadraticHenselStep_eq_bignum]
+  refine ⟨canonical_addModSquare m hm0 _ _, canonical_addModSquare m hm0 _ _,
+    canonical_subModSquare m hm0 _ _, canonical_subModSquare m hm0 _ _⟩
+
+/-- The factor-only step inherits the same coefficient-range invariant. -/
+theorem quadraticHenselFactors_canonical
+    (m : Nat) (f g h s t : ZPoly) (hm : 0 < m) :
+    ZPoly.Canonical (quadraticHenselFactors m f g h s t).1 (m * m) ∧
+      ZPoly.Canonical (quadraticHenselFactors m f g h s t).2 (m * m) := by
+  rw [quadraticHenselFactors_eq]
+  obtain ⟨hg, hh, _, _⟩ := quadraticHenselStep_canonical m f g h s t hm
+  exact ⟨hg, hh⟩
+
 /-- The updated factors multiply to `f` modulo `m^2`. -/
 @[grind =>]
 theorem quadraticHenselStep_factor_spec
