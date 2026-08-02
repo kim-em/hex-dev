@@ -2,10 +2,11 @@
 """Fail when factorization measurements no longer cover their source code.
 
 The newest committed observation for every published curve must use the current
-corpus, come from a clean ancestor commit, and contain one result for every
-corpus instance.  A measurement becomes stale when its system adapter, the
-shared sweep protocol, the corpus, or (for Hex) executable factorization code
-has changed since that commit.
+corpus, come from a clean recorded commit, and contain one result for every
+corpus instance. A measurement remains valid across a squash merge when the
+relevant source tree is unchanged. It becomes stale when its system adapter,
+the shared sweep protocol, the corpus, or (for Hex) executable factorization
+code differs from that recorded commit.
 """
 
 from __future__ import annotations
@@ -161,11 +162,11 @@ def main() -> int:
         if not commit:
             errors.append(f"{system}: {path.name} has no source commit")
             continue
-        ancestor = subprocess.run(
-            ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
+        commit_exists = subprocess.run(
+            ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
             cwd=ROOT, capture_output=True).returncode == 0
-        if not ancestor:
-            errors.append(f"{system}: measured commit {commit[:12]} is not an ancestor")
+        if not commit_exists:
+            errors.append(f"{system}: measured commit {commit[:12]} is unavailable")
             continue
         rows = [row for row in report.get("results", []) if row.get("system") == system]
         current_rows[system] = rows
@@ -194,7 +195,7 @@ def main() -> int:
                     name, commit, proof_only_exemptions)))
         if stale:
             errors.append(
-                f"{system}: source changed after {commit[:12]}: " + ", ".join(stale))
+                f"{system}: source differs from {commit[:12]}: " + ", ".join(stale))
 
     # Newest-per-system plots may combine records made at different times.
     # Recheck those selected answers together rather than relying only on each
