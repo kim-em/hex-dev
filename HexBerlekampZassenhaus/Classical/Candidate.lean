@@ -83,9 +83,9 @@ def directCandidatePrefilter
     directTrailingPrefilter coreLc target modulus trailingResidue
 
 /-- The candidate computation itself, for a selection the cached prefilters have
-already accepted.  A caller that has run the prefilter — the streaming
-traversal does, so that it can decide whether to build `selected` at all — calls
-this rather than paying for the prefilter twice. -/
+already accepted.  The streaming traversal runs the prefilter itself, so that it
+can decide whether to build `selected` at all, and then calls this rather than
+paying for the prefilter twice. -/
 @[expose]
 def directCandidateAfterPrefilter
     (coreLc : Int) (target : ZPoly) (modulus : Nat) (selected : List ZPoly) :
