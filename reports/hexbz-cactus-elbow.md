@@ -1,5 +1,10 @@
 # HexBZ Cactus Elbow: Phase-Attributed Baseline
 
+> The prime-planning policy this report baselines was replaced by issue #9128:
+> the walk now scouts modular degree patterns and splits at most two candidate
+> primes. See [hexbz-prime-scout.md](hexbz-prime-scout.md). Everything below is
+> the record as measured at revision `c34ffbbb`.
+
 The combined cross-system cactus has Hex ahead of the verified Isabelle
 Berlekamp-Zassenhaus extraction through solved rank 124, behind it from 125
 through 140, and ahead again from 141 once Isabelle meets `cyclo_phi1031`.

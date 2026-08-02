@@ -97,21 +97,56 @@ There is no dilation-coordinate factorization method.
 - a bitset of subset-reachable degrees.
 
 `DirectPrimePlan` stores the chosen factorization and the other
-successful factorizations examined. If the first admissible prime has
-few modular factors, it is used immediately. Otherwise a bounded
-number of further admissible primes are compared by:
+successful factorization examined, if any. If the first admissible
+prime has few modular factors, it is used immediately. Otherwise a
+bounded number of further admissible primes are *scouted*, and plans
+are compared by:
 
 1. predicted complete subset-search work;
 2. number of reachable proper factor degrees;
 3. required Hensel precision;
 4. the prime, as a deterministic tie breaker.
 
-Inadmissible primes do not spend the allowance of successful
-factorizations. A singleton modular factorization is selected
-immediately.
+Every key of that score is a function of the prime and the multiset of
+modular factor degrees, so a scouted degree pattern scores exactly as
+the factorization it predicts would. Only the winner is split.
+
+Inadmissible primes do not spend the allowance of scouts. The walk
+therefore ends holding the plan a policy that split every candidate
+would have selected, having split the first admissible prime and at
+most the winner — except that a scouted image narrow enough to pass
+the width gate ends the walk, the same gate that governs the first
+admissible prime.
 
 The reachability bitset is computed by dynamic programming in
 `O(number of factors × degree)`.
+
+### Scouting a candidate's degree pattern
+
+A candidate's whole score follows from its modular factor degrees, and
+those can be obtained without splitting anything. The bounded
+distinct-degree scout separates the modular image one factor degree at
+a time. After degree `d` is separated, every irreducible factor left in
+a residual of degree `m` has degree at least `d`, so the factor count
+lies between `separated + 1` and `separated + m / d`.
+
+A candidate wider than the current best can only score worse, so the
+scout abandons it as soon as the factors it has separated reach the
+current width — however much of the polynomial is left. Otherwise the
+pattern completes and the candidate is scored exactly. The loop also
+stops when the residual is a unit, and when the residual is too small
+to be a product of two factors of degree at least `d` and is therefore
+irreducible, so it never runs past the largest factor degree.
+
+The scout is a performance heuristic, not a correctness oracle. Every
+factorization, certificate, and degree obstruction is built from the
+Berlekamp split at the selected prime. Prime choice may change
+performance; it cannot change the factorization theorem.
+
+The walk therefore performs one full Berlekamp split at the first
+admissible prime, at most `scoutFuel` bounded scouts, and one further
+full split for the scouted winner — at most two splits where the fixed
+policy it replaces performed three.
 
 ## Direct Hensel lift
 

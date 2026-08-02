@@ -47,6 +47,29 @@ Distinct-degree factorization is provided separately. It partitions a
 square-free polynomial into products of irreducible factors of a common
 degree, using repeated Frobenius powers and greatest common divisors.
 
+## Degree patterns
+
+The *degree pattern* of a monic square-free polynomial is the multiset
+of degrees of its irreducible factors. It is obtained from the same
+Frobenius powers and gcds as distinct-degree factorization, without
+splitting any equal-degree product: a degree-`d` product of degree `m`
+records `m / d` factors of degree `d`.
+
+A partial pattern already bounds the factor count from both sides.
+After degree `d` is separated, every factor left in a residual of
+degree `m` has degree at least `d`, so the count lies between
+`separated + 1` and `separated + m / d`. A caller that only wants to
+know whether the count is at most some target is therefore answered as
+soon as the factors already separated reach that target, however much
+of the polynomial is left. The loop also stops when the residual is a
+unit, and when the residual is too small to be a product of two factors
+of degree at least `d` and is therefore irreducible; so it stops at the
+largest factor degree rather than at the degree of the input.
+
+Degree patterns are a prediction surface with no certificate content.
+Callers that need factors use `berlekampFactor`; callers that need the
+separated degree products use `distinctDegreeFactor`.
+
 ## Rabin irreducibility certificates
 
 A monic polynomial `f` of degree `n` over `𝔽_p` is irreducible exactly

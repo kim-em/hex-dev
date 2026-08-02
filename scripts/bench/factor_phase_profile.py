@@ -1,19 +1,31 @@
 #!/usr/bin/env python3
-"""Phase-attributed factorization diagnostic sweep (issue #9127).
+"""Phase-attributed factorization diagnostic sweep (issues #9127, #9128).
 
-Drives the `factorPhaseProfile`, `primeCounterfactual`, `factorTrace`, and
-`factor` entries of `hexbz_factor_service` over a named subset of the committed
-corpus and writes one durable JSON record.
+Drives the `factorPhaseProfile`, `primeCounterfactual`, `primeScout`,
+`factorTrace`, and `factor` entries of `hexbz_factor_service` over a named
+subset of the committed corpus and writes one durable JSON record.
 
-The record answers three separate questions and keeps them separate:
+The record answers four separate questions and keeps them separate:
 
 * **Phase attribution.** `factorPhaseProfile` decomposes one production
   factorization into the production functions it calls, in production order,
   and times each. Its counters and its times come from that one execution.
 * **Counterfactual prime plans.** `primeCounterfactual` replays the downstream
-  lift and recombination for every good prime the bounded walk retained, so the
+  lift and recombination for every good prime in a fixed comparison set, so the
   cost of having stopped at each candidate is measurable. Only the row marked
   `selected` is work the production cascade actually did.
+* **Scout prices.** `primeScout` prices, at every good prime in a bounded
+  prefix of the candidate list, the four ways of learning that prime's modular
+  degree pattern: the bounded scout the planner runs, the complete degree
+  pattern, the Berlekamp matrix with its kernel, and a full Berlekamp split. It
+  also checks the scouted pattern against the split. This is the evidence the
+  prime-planning policy is chosen from; none of it is work the production
+  cascade does.
+
+Every cost in the plan sections is one observation per call, so both are
+repeated and merged into one plan by per-candidate median (`--plan-repeats`).
+Everything else the service reports is deterministic, and the merge asserts
+that the repeats agree on all of it before replacing the durations.
 * **Validation.** Cross-checks run alongside, on a wider sample than the
   representative set: the counted recombination mirror must agree with the
   production `factorTrace` on leaf count, selected prime, completed subset
@@ -78,6 +90,10 @@ PROFILED = [
 ]
 
 DEFAULT_CUTOFF = 120.0
+DEFAULT_PLAN_REPEATS = 3
+# Per-candidate costs merged by median across `--plan-repeats` calls.
+PLAN_NANO_KEYS = ("goodPrimeTest", "boundedScout", "scout", "berlekampMatrix",
+                  "rowReduction", "fullSplit", "henselLift", "recombination")
 DEFAULT_WARMUP = 1
 DEFAULT_REPEATS = 5
 # Above this first-call wall time a repeat sweep costs more than it buys, so the
@@ -178,6 +194,45 @@ def measure_end_to_end(service: Service, inst: dict, cutoff: float,
     }
 
 
+def merge_plans(plans):
+    """Median each per-candidate cost across repeated calls on one instance.
+
+    Structure (candidate order, primes, widths, degrees, node and division
+    counts) is deterministic, so the first non-empty plan supplies it and only
+    the timings are replaced.
+    """
+    plans = [p for p in plans if p]
+    if not plans:
+        return None
+    base = next((json.loads(json.dumps(p)) for p in plans if p.get("candidates")),
+                None)
+    if base is None:
+        return plans[0]
+    for i, cand in enumerate(base["candidates"]):
+        peers = [p["candidates"][i] for p in plans
+                 if len(p.get("candidates") or []) > i
+                 and p["candidates"][i].get("prime") == cand.get("prime")]
+        for key in PLAN_NANO_KEYS:
+            values = [q[key]["nanos"] for q in peers if key in q]
+            if values:
+                cand[key]["nanos"] = int(statistics.median(values))
+        values = [q["downstreamNanos"] for q in peers if "downstreamNanos" in q]
+        if values:
+            cand["downstreamNanos"] = int(statistics.median(values))
+    return base
+
+
+def measure_plan(service, inst, cutoff, repeats):
+    """Repeat one plan-section call and merge the repeats by median."""
+    plans = []
+    for _ in range(max(1, repeats)):
+        result, _ = call_ok(service, inst["coeffs"], cutoff)
+        if result is None:
+            return None
+        plans.append(result)
+    return merge_plans(plans)
+
+
 def degree_multiset(profile: dict):
     """Sorted factor degrees with multiplicity from a phase profile."""
     degrees = []
@@ -262,6 +317,12 @@ def main() -> int:
     p.add_argument("--no-counterfactual", dest="counterfactual",
                    action="store_false",
                    help="skip the per-candidate counterfactual prime plans")
+    p.add_argument("--no-scout", dest="scout", action="store_false",
+                   help="skip the per-candidate scout prices")
+    p.add_argument("--plan-repeats", type=int, default=DEFAULT_PLAN_REPEATS,
+                   help="calls per instance for the counterfactual and scout "
+                        f"sections (default {DEFAULT_PLAN_REPEATS}); the "
+                        "per-candidate costs are their median")
     p.add_argument("--output", type=Path, default=None)
     args = p.parse_args()
 
@@ -308,7 +369,7 @@ def main() -> int:
         for name in names:
             inst = corpus[name]
             print(f"counterfactual: {name}", file=sys.stderr)
-            result, _ = call_ok(cf_service, inst["coeffs"], args.cutoff)
+            result = measure_plan(cf_service, inst, args.cutoff, args.plan_repeats)
             counterfactuals.append({
                 "name": name,
                 "family": inst["family"],
@@ -317,6 +378,22 @@ def main() -> int:
                 "plan": result,
             })
         cf_service.kill()
+
+    scouts = []
+    if args.scout:
+        scout_service = Service(service_argv("primeScout"))
+        for name in names:
+            inst = corpus[name]
+            print(f"scout: {name}", file=sys.stderr)
+            result = measure_plan(scout_service, inst, args.cutoff, args.plan_repeats)
+            scouts.append({
+                "name": name,
+                "family": inst["family"],
+                "degree": inst["degree"],
+                "status": "timeout" if result is None else "ok",
+                "plan": result,
+            })
+        scout_service.kill()
 
     # Wider validation sample: every corpus instance the classical tier answers
     # quickly, so the mirror's agreement with the production trace is not only
@@ -342,8 +419,20 @@ def main() -> int:
 
     ratios = [r["instrumentation_ratio"] for r in results
               if r.get("instrumentation_ratio")]
+    scout_rows = 0
+    scout_agree = 0
+    scout_bad = []
+    for row in scouts:
+        for cand in ((row.get("plan") or {}).get("candidates") or []):
+            if cand.get("zeroModularImage"):
+                continue
+            scout_rows += 1
+            if cand.get("patternAgrees"):
+                scout_agree += 1
+            else:
+                scout_bad.append({"name": row["name"], **cand})
     record = {
-        "schema": "hexbz-phase-profile/1",
+        "schema": "hexbz-phase-profile/2",
         "env": env_block("hexbz_factor_service"),
         "config": {
             "corpus": str(args.corpus.relative_to(ROOT)),
@@ -353,6 +442,7 @@ def main() -> int:
             "validate_cutoff_seconds": args.validate_cutoff,
             "warmup": args.warmup,
             "repeats": args.repeats,
+            "plan_repeats": args.plan_repeats,
             "repeat_ceiling_nanos": REPEAT_CEILING_NANOS,
             "names": names,
             "representative": REPRESENTATIVE,
@@ -361,6 +451,7 @@ def main() -> int:
         },
         "results": results,
         "counterfactuals": counterfactuals,
+        "scouts": scouts,
         "validation": {
             "sample_size": len(validation),
             "nodes_agree": sum(1 for v in validation if v["nodes_agree"]),
@@ -374,6 +465,9 @@ def main() -> int:
             "instrumentation_ratio_median":
                 statistics.median(ratios) if ratios else None,
             "instrumentation_ratio_max": max(ratios) if ratios else None,
+            "scout_rows": scout_rows,
+            "scout_patterns_agree": scout_agree,
+            "scout_disagreements": scout_bad,
         },
     }
 
@@ -386,6 +480,10 @@ def main() -> int:
     out.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n")
     print(f"wrote {out}", file=sys.stderr)
 
+    if scout_bad:
+        print(f"scouted degree pattern disagreed with the Berlekamp split on "
+              f"{len(scout_bad)} candidates", file=sys.stderr)
+        return 1
     bad = record["validation"]["disagreements"]
     if bad:
         print(f"mirror disagreed with the production trace on {len(bad)} "

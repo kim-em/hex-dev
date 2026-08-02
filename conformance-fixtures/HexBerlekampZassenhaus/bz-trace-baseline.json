@@ -163,7 +163,7 @@
     "candidatesTried": 0,
     "decline": "largeSupport",
     "henselLifts": 0,
-    "primeProbes": 3,
+    "primeProbes": 2,
     "r": 32,
     "method": "lattice"
   },
@@ -171,7 +171,7 @@
     "candidatesTried": 0,
     "decline": "largeSupport",
     "henselLifts": 0,
-    "primeProbes": 3,
+    "primeProbes": 2,
     "r": 32,
     "method": "lattice"
   },
@@ -411,7 +411,7 @@
     "candidatesTried": 11,
     "decline": null,
     "henselLifts": 1,
-    "primeProbes": 3,
+    "primeProbes": 2,
     "r": 11,
     "method": "classical"
   },
@@ -419,7 +419,7 @@
     "candidatesTried": 24,
     "decline": "largeSupport",
     "henselLifts": 1,
-    "primeProbes": 3,
+    "primeProbes": 2,
     "r": 24,
     "method": "replay"
   },
@@ -427,7 +427,7 @@
     "candidatesTried": 72,
     "decline": null,
     "henselLifts": 1,
-    "primeProbes": 3,
+    "primeProbes": 2,
     "r": 72,
     "method": "classical"
   }
