@@ -99,19 +99,49 @@ There is no dilation-coordinate factorization method.
 `DirectPrimePlan` stores the chosen factorization and the other
 successful factorizations examined. If the first admissible prime has
 few modular factors, it is used immediately. Otherwise a bounded
-number of further admissible primes are compared by:
+number of further admissible primes are *scouted*, and only those a
+scout admits are factored and compared by:
 
 1. predicted complete subset-search work;
 2. number of reachable proper factor degrees;
 3. required Hensel precision;
 4. the prime, as a deterministic tie breaker.
 
-Inadmissible primes do not spend the allowance of successful
-factorizations. A singleton modular factorization is selected
-immediately.
+Inadmissible primes do not spend the allowance of scouts. A modular
+factorization narrow enough to end the walk is selected immediately.
 
 The reachability bitset is computed by dynamic programming in
 `O(number of factors × degree)`.
+
+### Scouting a candidate's modular width
+
+Only a candidate's *width* — its number of local factors — decides
+whether it is worth using, and a width can be bounded without
+splitting anything. The bounded distinct-degree scout separates the
+modular image one factor degree at a time. After degree `d` is
+separated, every irreducible factor left in a residual of degree `m`
+has degree at least `d`, so the factor count lies between
+`separated + 1` and `separated + m / d`. Those bounds tighten as `d`
+grows and the scout stops as soon as they settle whether the count is
+at most the target, so it never runs to a complete pattern unless the
+question needs it. It also stops early when the residual is a unit, and
+when the residual is too small to be a product of two factors of
+degree at least `d` and is therefore irreducible.
+
+A candidate is admitted only when its upper bound shows it removes at
+least a quarter of the current local factors: below that, recombination
+work is not reliably reduced and the split that would confirm it costs
+more than the difference is worth.
+
+The scout is a performance heuristic, not a correctness oracle. Every
+factorization, certificate, and degree obstruction is built from the
+Berlekamp split at the selected prime. Prime choice may change
+performance; it cannot change the factorization theorem.
+
+The walk therefore performs one full Berlekamp split at the first
+admissible prime, at most `scoutFuel` bounded scouts, and one further
+full split per admitted scout — never more splits than the fixed policy
+it replaces, and fewer whenever a scout declines.
 
 ## Direct Hensel lift
 

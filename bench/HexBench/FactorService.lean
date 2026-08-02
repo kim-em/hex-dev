@@ -38,6 +38,10 @@ The `--entry` flag selects which library entry answers each request:
   times come from one execution rather than from a second factorization.
 * `primeCounterfactual` — for every good prime the bounded walk retained, the
   downstream lift and recombination cost of having stopped there.
+* `primeScout` — for every good prime in a bounded prefix of the hot-path
+  candidate list, the cost of learning its modular degree pattern three ways:
+  the distinct-degree scout, the Berlekamp matrix plus its kernel, and a full
+  Berlekamp split. The scouted pattern is checked against the split.
 
 This is a comparator driver, not a hex-internal benchmark harness: it emits raw
 timings for the external orchestrator, keeping the one-harness rule intact.
@@ -58,6 +62,7 @@ inductive Entry where
   | proposalProfile
   | factorPhaseProfile
   | primeCounterfactual
+  | primeScout
 deriving Repr, DecidableEq
 
 def Entry.ofString? : String → Option Entry
@@ -68,6 +73,7 @@ def Entry.ofString? : String → Option Entry
   | "proposalProfile" => some .proposalProfile
   | "factorPhaseProfile" => some .factorPhaseProfile
   | "primeCounterfactual" => some .primeCounterfactual
+  | "primeScout" => some .primeScout
   | _ => none
 
 /-- Entries answered by an `IO`-timed profiler rather than by `handleLine`. -/
@@ -75,6 +81,7 @@ def Entry.timed : Entry → Bool
   | .proposalProfile => true
   | .factorPhaseProfile => true
   | .primeCounterfactual => true
+  | .primeScout => true
   | _ => false
 
 /-- Dispatch to the selected entry. `none` means the entry declined; the
@@ -89,6 +96,7 @@ def Entry.run : Entry → ZPoly → Option Factorization
   | .proposalProfile, _ => none
   | .factorPhaseProfile, _ => none
   | .primeCounterfactual, _ => none
+  | .primeScout, _ => none
 
 /-- Parse a request line into its ascending coefficient list. -/
 def parseCoeffs (line : String) : Except String (List Int) := do
@@ -1006,10 +1014,34 @@ where
         finishPhaseProfile f sink repeatAt core m0 "lattice" phases extras factors
     | none => runTrialTail f sink repeatAt core m0 phases extras
 
-/-- Downstream cost of stopping the bounded prime walk at one retained good
-prime.  The production selection is one of the rows; the others are
-counterfactual, and are the only place this service does work the production
-cascade would not have done. -/
+/-- Good primes the counterfactual compares.
+
+This is deliberately *not* the set the production plan retains: the plan splits
+only what its scout accepts, so following it would shrink the comparison set
+exactly where the policy is being evaluated.  The comparison set is fixed
+instead at the first good prime, plus -- when that first image is wide -- the
+next two good primes.  That is the set the pre-scout fixed policy retained, so
+the table stays row-for-row comparable with the recorded baseline. -/
+private def counterfactualCandidates (core : SquareFreeInput) :
+    Nat → List SmallPrimeCandidate → Array (DirectPrimeProbe core) →
+      Array (DirectPrimeProbe core)
+  | _, [], probes => probes
+  | 0, _, probes => probes
+  | fuel + 1, candidate :: candidates, probes =>
+      match probePrimeData? core.poly candidate with
+      | none => counterfactualCandidates core (fuel + 1) candidates probes
+      | some data =>
+          let probe := DirectPrimeProbe.ofData core candidate data
+          let probes := probes.push probe
+          if probes.size == 1 && data.factorsModP.size ≤ scoutWidth then
+            probes
+          else
+            counterfactualCandidates core fuel candidates probes
+
+/-- Downstream cost of stopping the bounded prime walk at one good prime.  The
+production selection is one of the rows; the others are counterfactual, and are
+the only place this service does work the production cascade would not have
+done. -/
 private def primeCounterfactual (f : ZPoly) : IO Json := do
   let sink ← IO.mkRef 0
   let normalized := normalizeForFactor f
@@ -1018,8 +1050,10 @@ private def primeCounterfactual (f : ZPoly) : IO Json := do
   | none => return Json.mkObj [("goodPrimeFound", Json.bool false)]
   | some modular =>
       let coreBound := ZPoly.defaultFactorCoeffBound core.poly
+      let candidates :=
+        counterfactualCandidates core (scoutFuel + 1) hotPathCandidates #[]
       let mut rows : Array Json := #[]
-      for probe in modular.probes do
+      for probe in candidates do
         let plan := DirectPrimePlan.ofSelection probe #[]
         let liftStart ← mark
         let liftPlan := directLiftPlan core plan
@@ -1053,6 +1087,99 @@ private def primeCounterfactual (f : ZPoly) : IO Json := do
           ("selectedPrime", natJson modular.prime),
           ("coeffBound", natJson coreBound),
           ("candidates", Json.arr rows) ]
+
+/-- How many good primes the scouting measurement examines.  Wider than any
+policy would use, so the record can price a horizon rather than assume one. -/
+private def scoutHorizon : Nat := 6
+
+/-- Multiplicity of each degree at most `n`, for comparing degree multisets. -/
+private def degreeHistogram (n : Nat) (degrees : Array Nat) : Array Nat :=
+  degrees.foldl (fun h d => h.modify d (· + 1)) (Array.replicate (n + 1) 0)
+
+/-- Cost of learning one candidate prime's modular degree pattern three ways:
+the distinct-degree scout, the Berlekamp matrix with its kernel, and a full
+Berlekamp split.  `none` when the candidate is not a good prime; the good-prime
+test is timed either way and reported by the caller. -/
+private def scoutRow (sink : IO.Ref Nat) (core : ZPoly) (c : SmallPrimeCandidate) :
+    IO (Option Json) :=
+  letI := c.bounds
+  letI : ZMod64.PrimeModulus c.p := ZMod64.primeModulusOfPrime c.prime
+  do
+  let m0 ← mark
+  let good := isGoodPrime core c.p
+  observeNat sink (if good then 1 else 0)
+  let m1 ← mark
+  if !good then
+    return none
+  let fModP := ZPoly.modP c.p core
+  if hzero : fModP.isZero = false then
+    let n := fModP.degree?.getD 0
+    let monic := monicModularImage fModP
+    let hmonic := monicModularImage_monic c.prime fModP hzero
+    let scoutStart ← mark
+    let pattern := Berlekamp.degreePattern? monic hmonic
+    observeNat sink ((pattern.map (·.size)).getD 0)
+    let scoutStop ← mark
+    let matrixStart ← mark
+    let fixed := Berlekamp.fixedSpaceMatrix monic hmonic
+    observeNat sink (Berlekamp.basisSize monic)
+    let matrixStop ← mark
+    let kernel := Matrix.nullspace fixed
+    observeNat sink kernel.size
+    let kernelStop ← mark
+    let splitStart ← mark
+    let factors := (Berlekamp.berlekampFactor monic hmonic).factors
+    observeNat sink factors.length
+    let splitStop ← mark
+    let splitDegrees := (factors.map fun g => g.degree?.getD 0).toArray
+    let scoutDegrees := pattern.getD #[]
+    return some <| Json.mkObj
+      [ ("prime", natJson c.p),
+        ("modularDegree", natJson n),
+        ("kernelDimension", natJson kernel.size),
+        ("scoutComplete", Json.bool pattern.isSome),
+        ("scoutDegrees", natArrayJson scoutDegrees),
+        ("splitDegrees", natArrayJson splitDegrees),
+        ("patternAgrees",
+          Json.bool (pattern.isSome &&
+            degreeHistogram n scoutDegrees == degreeHistogram n splitDegrees)),
+        ("goodPrimeTest", spanJson m0 m1),
+        ("scout", spanJson scoutStart scoutStop),
+        ("berlekampMatrix", spanJson matrixStart matrixStop),
+        ("rowReduction", spanJson matrixStop kernelStop),
+        ("fullSplit", spanJson splitStart splitStop) ]
+  else
+    return some <| Json.mkObj
+      [ ("prime", natJson c.p),
+        ("goodPrimeTest", spanJson m0 m1),
+        ("zeroModularImage", Json.bool true) ]
+
+/-- Price the degree-pattern scout against a full Berlekamp split at every good
+prime in a bounded prefix of the hot-path candidate list.
+
+Everything here is extra work the production cascade would not have done: the
+production planner splits only the primes its own policy retains.  The record
+exists to choose that policy, so it prices all three ways of learning a pattern
+at each candidate and checks the scouted pattern against the split. -/
+private def primeScout (f : ZPoly) : IO Json := do
+  let sink ← IO.mkRef 0
+  let normalized := normalizeForFactor f
+  let core := SquareFreeInput.ofNormalized normalized
+  let mut rows : Array Json := #[]
+  let mut seen := 0
+  for c in hotPathCandidates do
+    if seen < scoutHorizon then
+      match ← scoutRow sink core.poly c with
+      | none => pure ()
+      | some row =>
+          seen := seen + 1
+          rows := rows.push row
+  return Json.mkObj
+    [ ("degree", natJson (core.poly.degree?.getD 0)),
+      ("scoutHorizon", natJson scoutHorizon),
+      ("selectedPrime",
+        natJson ((directPrimePlan? core).map (·.prime) |>.getD 0)),
+      ("candidates", Json.arr rows) ]
 
 def replyOk (result : Json) : Json :=
   Json.mkObj [("ok", Json.bool true), ("result", result)]
@@ -1102,6 +1229,8 @@ private def handleProfileLine (entry : Entry) (line : String) : IO Json :=
         return replyOk (← factorPhaseProfile f)
       else if entry == .primeCounterfactual then
         return replyOk (← primeCounterfactual f)
+      else if entry == .primeScout then
+        return replyOk (← primeScout f)
       else
         return replyOk (← proposalProfile f)
 
@@ -1143,7 +1272,7 @@ def main (args : List String) : IO Unit := do
       throw <| IO.userError
         s!"unknown --entry {entryName}; expected \
           factor|factorLattice|factorTrace|proposalTrace|proposalProfile\
-          |factorPhaseProfile|primeCounterfactual"
+          |factorPhaseProfile|primeCounterfactual|primeScout"
   | some entry => runLoop entry
 
 end HexBench.FactorService

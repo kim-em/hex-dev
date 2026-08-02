@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Phase-attributed factorization diagnostic sweep (issue #9127).
+"""Phase-attributed factorization diagnostic sweep (issues #9127, #9128).
 
-Drives the `factorPhaseProfile`, `primeCounterfactual`, `factorTrace`, and
-`factor` entries of `hexbz_factor_service` over a named subset of the committed
-corpus and writes one durable JSON record.
+Drives the `factorPhaseProfile`, `primeCounterfactual`, `primeScout`,
+`factorTrace`, and `factor` entries of `hexbz_factor_service` over a named
+subset of the committed corpus and writes one durable JSON record.
 
-The record answers three separate questions and keeps them separate:
+The record answers four separate questions and keeps them separate:
 
 * **Phase attribution.** `factorPhaseProfile` decomposes one production
   factorization into the production functions it calls, in production order,
@@ -14,6 +14,12 @@ The record answers three separate questions and keeps them separate:
   lift and recombination for every good prime the bounded walk retained, so the
   cost of having stopped at each candidate is measurable. Only the row marked
   `selected` is work the production cascade actually did.
+* **Scout prices.** `primeScout` prices, at every good prime in a bounded
+  prefix of the candidate list, the three ways of learning that prime's modular
+  degree pattern: the distinct-degree scout, the Berlekamp matrix with its
+  kernel, and a full Berlekamp split. It also checks the scouted pattern
+  against the split. This is the evidence the prime-planning policy is chosen
+  from; none of it is work the production cascade does.
 * **Validation.** Cross-checks run alongside, on a wider sample than the
   representative set: the counted recombination mirror must agree with the
   production `factorTrace` on leaf count, selected prime, completed subset
@@ -262,6 +268,8 @@ def main() -> int:
     p.add_argument("--no-counterfactual", dest="counterfactual",
                    action="store_false",
                    help="skip the per-candidate counterfactual prime plans")
+    p.add_argument("--no-scout", dest="scout", action="store_false",
+                   help="skip the per-candidate scout prices")
     p.add_argument("--output", type=Path, default=None)
     args = p.parse_args()
 
@@ -318,6 +326,22 @@ def main() -> int:
             })
         cf_service.kill()
 
+    scouts = []
+    if args.scout:
+        scout_service = Service(service_argv("primeScout"))
+        for name in names:
+            inst = corpus[name]
+            print(f"scout: {name}", file=sys.stderr)
+            result, _ = call_ok(scout_service, inst["coeffs"], args.cutoff)
+            scouts.append({
+                "name": name,
+                "family": inst["family"],
+                "degree": inst["degree"],
+                "status": "timeout" if result is None else "ok",
+                "plan": result,
+            })
+        scout_service.kill()
+
     # Wider validation sample: every corpus instance the classical tier answers
     # quickly, so the mirror's agreement with the production trace is not only
     # checked where the expensive phase profile ran.
@@ -342,8 +366,20 @@ def main() -> int:
 
     ratios = [r["instrumentation_ratio"] for r in results
               if r.get("instrumentation_ratio")]
+    scout_rows = 0
+    scout_agree = 0
+    scout_bad = []
+    for row in scouts:
+        for cand in ((row.get("plan") or {}).get("candidates") or []):
+            if cand.get("zeroModularImage"):
+                continue
+            scout_rows += 1
+            if cand.get("patternAgrees"):
+                scout_agree += 1
+            else:
+                scout_bad.append({"name": row["name"], **cand})
     record = {
-        "schema": "hexbz-phase-profile/1",
+        "schema": "hexbz-phase-profile/2",
         "env": env_block("hexbz_factor_service"),
         "config": {
             "corpus": str(args.corpus.relative_to(ROOT)),
@@ -361,6 +397,7 @@ def main() -> int:
         },
         "results": results,
         "counterfactuals": counterfactuals,
+        "scouts": scouts,
         "validation": {
             "sample_size": len(validation),
             "nodes_agree": sum(1 for v in validation if v["nodes_agree"]),
@@ -374,6 +411,9 @@ def main() -> int:
             "instrumentation_ratio_median":
                 statistics.median(ratios) if ratios else None,
             "instrumentation_ratio_max": max(ratios) if ratios else None,
+            "scout_rows": scout_rows,
+            "scout_patterns_agree": scout_agree,
+            "scout_disagreements": scout_bad,
         },
     }
 
@@ -386,6 +426,10 @@ def main() -> int:
     out.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n")
     print(f"wrote {out}", file=sys.stderr)
 
+    if scout_bad:
+        print(f"scouted degree pattern disagreed with the Berlekamp split on "
+              f"{len(scout_bad)} candidates", file=sys.stderr)
+        return 1
     bad = record["validation"]["disagreements"]
     if bad:
         print(f"mirror disagreed with the production trace on {len(bad)} "
