@@ -161,6 +161,14 @@ Operation soundness uses the Stage 1 specialization-vanishing theorem from
 `hex-resultant-mathlib`. `_isSome` uses squarefree normalization,
 root-isolation completeness, and HexRoots separation at
 `resultIsolationPrec`; it does not require the Stage 2 resultant value theorem.
+Addition's fixed four-bit refinement bound follows directly from ball addition.
+Multiplication uses root-size bounds for both operands, while inversion uses the
+reciprocal Cauchy lower bound for a nonzero root and a doubled coefficient-height
+guard for reciprocal distortion. The resulting ball is two bits smaller than
+`resultIsolationPrec` for addition and four bits smaller for multiplication and
+inversion; each bound is sufficient for singleton selection. The checked
+multiplication and inversion zero branches are handled before eliminant
+construction and agree with `0⁻¹ = 0`.
 Canonical `AlgebraicNumber` arithmetic follows by `toRoot`, the lazy headline,
 and `exact_toComplex`.
 

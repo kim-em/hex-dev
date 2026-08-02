@@ -108,17 +108,37 @@ tag := "hex-number-field-lazy"
 
 Every certificate-producing operation has an `Option` form. The total form is
 the primary algebraic API; its loud fallback is paired with a companion
-completeness contract.
+completeness contract. In particular, the Mathlib companion proves that the
+bounded searches for addition, multiplication, inversion, and division always
+return a certificate. Their total wrappers therefore compute the corresponding
+complex operations, including the convention `0⁻¹ = 0`. Subtraction composes
+addition with certificate-free polynomial reflection.
 
 {docstring Hex.AlgebraicRoot.add?}
+
+{docstring Hex.AlgebraicRoot.sub?}
 
 {docstring Hex.AlgebraicRoot.mul?}
 
 {docstring Hex.AlgebraicRoot.inv?}
 
+{docstring Hex.AlgebraicRoot.div?}
+
 {docstring Hex.AlgebraicRoot.exact?}
 
 {docstring Hex.AlgebraicRoot.exact}
+
+{docstring Hex.AlgebraicRoot.add?_isSome}
+
+{docstring Hex.AlgebraicRoot.mul?_isSome}
+
+{docstring Hex.AlgebraicRoot.inv?_isSome}
+
+{docstring Hex.AlgebraicRoot.div?_isSome}
+
+{docstring Hex.AlgebraicRoot.mul_toComplex}
+
+{docstring Hex.AlgebraicRoot.inv_toComplex}
 
 Canonical algebraic numbers reuse these lazy operations and exactify the
 answer. Their Boolean equality compares represented values rather than record
