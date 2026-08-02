@@ -250,6 +250,22 @@ theorem degree_eq_minpoly (a : AlgebraicNumber) :
     _ = (minpoly Rat a.toComplex).natDegree := by
       rw [AlgebraicNumber.p_eq_minpoly]
 
+/-- The complex value represented by a canonical algebraic number is
+algebraic over the rationals. -/
+theorem isIntegral_toComplex (a : AlgebraicNumber) :
+    IsIntegral Rat a.toComplex := by
+  apply minpoly.ne_zero_iff.mp
+  rw [← AlgebraicNumber.p_eq_minpoly]
+  have hlc : (a.p.leadingCoeff : Rat) ≠ 0 := by
+    exact_mod_cast (ne_of_gt a.pos_lc)
+  have hp : a.p ≠ 0 := by
+    intro hzero
+    have hdegree := a.pos_degree
+    rw [hzero] at hdegree
+    simp at hdegree
+  exact smul_ne_zero (inv_ne_zero hlc)
+    (HexPolyZMathlib.toPolyℚ_ne_zero hp)
+
 /-- Every canonical algebraic number has positive degree. -/
 theorem degree_pos (a : AlgebraicNumber) : 0 < degree a := by
   exact a.pos_degree
@@ -271,7 +287,8 @@ theorem degree_pos (a : AlgebraicNumber) : 0 < degree a := by
   rw [show 2 * (n + 1) = 2 * n + 2 by omega,
     signedShift_even_succ]
 
-private theorem signedShift_injective : Function.Injective signedShift := by
+/-- The deterministic signed-shift enumeration never repeats a scalar. -/
+theorem signedShift_injective : Function.Injective signedShift := by
   intro i j hij
   obtain ⟨a, rfl | rfl⟩ := Nat.even_or_odd' i
   · cases a with
@@ -326,7 +343,9 @@ private theorem signedShift_injective : Function.Injective signedShift := by
         exact Int.ofNat.inj hij
       omega
 
-private def extendStep (theta alpha : AlgebraicNumber) :
+/-- One maximum-degree update in the bounded primitive-element search. -/
+@[expose]
+def extendStep (theta alpha : AlgebraicNumber) :
     Option AlgebraicNumber → Nat → Option (Option AlgebraicNumber) :=
   fun best k => do
     let candidate ← shift? theta alpha (signedShift k)
