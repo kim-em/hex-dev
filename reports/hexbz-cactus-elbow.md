@@ -574,7 +574,7 @@ Two of the issue's stated widths reproduce (`cyclo_phi64_x_phi105` at 10, 14,
 Confirmed, and the profiles locate the cost more precisely than the issue does.
 `Hex.scanDirectCombinations` is 85.6% inclusive on `sd5` and 86.5% on
 `sd5_x_phi11`, while `Hex.tryDirectCandidate` -- everything from the degree
-filter inwards -- is only 30.1% and 36.4%. **The remaining 55.5% and 50.2% is
+filter inwards -- is only 30.1% and 36.4%. **The remaining 55.5% and 50.1% is
 the traversal itself**: reversing selected indices, reversing and concatenating
 rejected indices, and building the selected-factor list at each of the 32,768
 and 65,522 leaves. Allocation is 69.1% and 66.3% of sampled leaves, above the
@@ -595,8 +595,10 @@ headroom directly: `xpow48_minus1` attempts 268 divisions of which 10 succeed
 (96.3% rejectable), `xpow105_minus1` 60 of which 8 succeed (86.7%), and
 `xpow120_minus1` 1,801 of which 16 succeed (99.1%). A necessary-condition
 filter therefore has 87%-99% of the divisions available to reject on exactly
-the rows the issue names, and on those rows the cheap filters currently reject
-nothing at all.
+the rows the issue names. On `xpow48_minus1` and `xpow105_minus1` the existing
+cheap filters reject nothing at all, so every one of those divisions is
+reachable; on `xpow120_minus1` they already reject 3,538 of 5,339 leaves and
+the 1,801 survivors are what remains.
 
 ### #9131 -- keep quadratic Hensel lifts canonical: **go**
 
