@@ -847,7 +847,7 @@ end
 
 /-- A successful eliminant search selects the supplied semantic root whenever
 the operation ball contains it. -/
-private theorem AlgebraicRoot.ofEliminant?_sound
+theorem AlgebraicRoot.ofEliminant?_sound
     (raw : ZPoly) (ballAt : Int → Option DyadicComplexBall)
     {c : AlgebraicRoot} {z : ℂ}
     (h : AlgebraicRoot.ofEliminant? raw ballAt = some c)
@@ -948,7 +948,7 @@ private theorem AlgebraicRoot.ofEliminant?_sound
 
 /-- A nonzero eliminant root enclosed by a sufficiently small operation ball
 survives normalization, isolation, and the singleton selection filter. -/
-private theorem AlgebraicRoot.ofEliminant?_isSome
+theorem AlgebraicRoot.ofEliminant?_isSome
     (raw : ZPoly) (ballAt : Int → Option DyadicComplexBall)
     {z : ℂ} (hraw : raw ≠ 0)
     (hroot : (HexRootsMathlib.toPolyℂ raw).IsRoot z)

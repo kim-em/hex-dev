@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexNumberFieldMathlib.AlgebraicPoly
+public import HexNumberFieldMathlib.Presentation
 public import HexNumberFieldMathlib.RootDisambiguation
 public import HexNumberFieldMathlib.Yun
 public import Mathlib.Algebra.Polynomial.Div
@@ -1373,60 +1373,6 @@ theorem roots_all_iff [ZPoly.CheckedIrreducible p]
   simp
 
 end QAdjoin
-
-namespace AlgebraicPoly
-
-/-- The algebraic-coefficient root driver always produces a checked root set. -/
-theorem roots?_isSome (f : AlgebraicPoly) :
-    f.roots?.isSome := by
-  sorry
-
-/-- The algebraic-coefficient driver returns `.all` exactly for the zero
-polynomial. -/
-theorem roots_all_iff (f : AlgebraicPoly) :
-    f.roots = .all ↔ f.toPolynomial = 0 := by
-  sorry
-
-/-- Semantic membership in the algebraic-coefficient output is exactly
-polynomial vanishing. -/
-theorem contains_roots_iff (f : AlgebraicPoly) (z : ℂ) :
-    RootSet.Contains f.roots z ↔
-      Polynomial.eval z f.toPolynomial = 0 := by
-  sorry
-
-/-- Algebraic-coefficient root multiplicities agree with Mathlib. -/
-theorem multiplicity_roots (f : AlgebraicPoly) (z : ℂ) :
-    f.roots.multiplicityOf z =
-      Polynomial.rootMultiplicity z f.toPolynomial := by
-  sorry
-
-/-- The algebraic-coefficient driver produces positive multiplicities. -/
-theorem roots_positive (f : AlgebraicPoly) :
-    RootSet.Positive f.roots := by
-  cases hroots : f.roots with
-  | all => trivial
-  | finite roots =>
-      intro entry _hentry
-      exact entry.multiplicity_pos
-
-/-- The algebraic-coefficient driver merges all semantic duplicates. -/
-theorem roots_noDuplicates (f : AlgebraicPoly) :
-    RootSet.NoDuplicates f.roots := by
-  sorry
-
-/-- The algebraic-coefficient driver uses its deterministic canonical order. -/
-theorem roots_ordered (f : AlgebraicPoly) :
-    RootSet.Ordered f.roots := by
-  sorry
-
-/-- For a nonzero algebraic-coefficient polynomial, output multiplicities sum
-to its degree. -/
-theorem totalMultiplicity_roots (f : AlgebraicPoly)
-    (hf : f.toPolynomial ≠ 0) :
-    f.roots.totalMultiplicity = f.toPolynomial.natDegree := by
-  sorry
-
-end AlgebraicPoly
 
 /-! The completed root-semantics foundations must not inherit unfinished proofs. -/
 
