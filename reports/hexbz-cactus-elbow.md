@@ -237,7 +237,8 @@ repeat) from the walk to bound it, and reports selection quality separately.
 
 Three facts fall out, and they are separate claims.
 
-**The walk is expensive, but a third of the elbow rows have nothing to save.**
+**The walk is expensive, but three of the fifteen representative rows have
+nothing to save.**
 `cyclo_phi179`, `cyclo_phi128_x_phi165`, and `cyclo_phi385` retain a single
 good prime: their 18.5%, 47.5%, and 45.2% prime-walk shares are one necessary
 full factorization, and the avoidable remainder is 0.0%, 0.9%, and 0.0%. Those
