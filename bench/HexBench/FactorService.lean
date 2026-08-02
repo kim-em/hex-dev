@@ -1096,12 +1096,16 @@ private def scoutHorizon : Nat := 6
 private def degreeHistogram (n : Nat) (degrees : Array Nat) : Array Nat :=
   degrees.foldl (fun h d => h.modify d (· + 1)) (Array.replicate (n + 1) 0)
 
-/-- Cost of learning one candidate prime's modular degree pattern three ways:
-the distinct-degree scout, the Berlekamp matrix with its kernel, and a full
-Berlekamp split.  `none` when the candidate is not a good prime; the good-prime
-test is timed either way and reported by the caller. -/
-private def scoutRow (sink : IO.Ref Nat) (core : ZPoly) (c : SmallPrimeCandidate) :
-    IO (Option Json) :=
+/-- Cost of learning one candidate prime's modular degree pattern four ways:
+the bounded scout the planner runs against `target`, the complete degree
+pattern, the Berlekamp matrix with its kernel, and a full Berlekamp split.
+`none` when the candidate is not a good prime.
+
+The bounded scout is the production measurement; the complete pattern prices
+what a scout with no target would have cost, and is what the split is checked
+against. -/
+private def scoutRow (sink : IO.Ref Nat) (core : ZPoly) (target : Nat)
+    (c : SmallPrimeCandidate) : IO (Option Json) :=
   letI := c.bounds
   letI : ZMod64.PrimeModulus c.p := ZMod64.primeModulusOfPrime c.prime
   do
@@ -1116,6 +1120,10 @@ private def scoutRow (sink : IO.Ref Nat) (core : ZPoly) (c : SmallPrimeCandidate
     let n := fModP.degree?.getD 0
     let monic := monicModularImage fModP
     let hmonic := monicModularImage_monic c.prime fModP hzero
+    let boundedStart ← mark
+    let bounded := Berlekamp.scoutDegreePattern monic hmonic target
+    observeNat sink (bounded.separated.size + bounded.residual)
+    let boundedStop ← mark
     let scoutStart ← mark
     let pattern := Berlekamp.degreePattern? monic hmonic
     observeNat sink ((pattern.map (·.size)).getD 0)
@@ -1137,6 +1145,14 @@ private def scoutRow (sink : IO.Ref Nat) (core : ZPoly) (c : SmallPrimeCandidate
       [ ("prime", natJson c.p),
         ("modularDegree", natJson n),
         ("kernelDimension", natJson kernel.size),
+        ("scoutTarget", natJson target),
+        ("boundedScout", spanJson boundedStart boundedStop),
+        ("boundedSeparated", natArrayJson bounded.separated),
+        ("boundedResidual", natJson bounded.residual),
+        ("boundedMinResidualDegree", natJson bounded.minResidualDegree),
+        ("boundedLowerBound", natJson bounded.lowerBound),
+        ("boundedUpperBound", natJson bounded.upperBound),
+        ("boundedAdmits", Json.bool (bounded.upperBound ≤ target)),
         ("scoutComplete", Json.bool pattern.isSome),
         ("scoutDegrees", natArrayJson scoutDegrees),
         ("splitDegrees", natArrayJson splitDegrees),
@@ -1165,11 +1181,17 @@ private def primeScout (f : ZPoly) : IO Json := do
   let sink ← IO.mkRef 0
   let normalized := normalizeForFactor f
   let core := SquareFreeInput.ofNormalized normalized
+  -- The planner scouts against the materiality bound of the first good prime's
+  -- width, so that is the target this record prices.
+  let firstWidth :=
+    (counterfactualCandidates core 1 hotPathCandidates #[]).foldl
+      (fun w probe => max w probe.data.factorsModP.size) 0
+  let target := materialWidth firstWidth
   let mut rows : Array Json := #[]
   let mut seen := 0
   for c in hotPathCandidates do
     if seen < scoutHorizon then
-      match ← scoutRow sink core.poly c with
+      match ← scoutRow sink core.poly target c with
       | none => pure ()
       | some row =>
           seen := seen + 1
@@ -1177,6 +1199,8 @@ private def primeScout (f : ZPoly) : IO Json := do
   return Json.mkObj
     [ ("degree", natJson (core.poly.degree?.getD 0)),
       ("scoutHorizon", natJson scoutHorizon),
+      ("firstGoodPrimeWidth", natJson firstWidth),
+      ("scoutTarget", natJson target),
       ("selectedPrime",
         natJson ((directPrimePlan? core).map (·.prime) |>.getD 0)),
       ("candidates", Json.arr rows) ]
