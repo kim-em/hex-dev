@@ -211,33 +211,30 @@ def sameValue? (a b : AlgebraicRoot) : Option Bool :=
     let b' ← b.exact?
     some (a' == b')
 
-/-- Merge one root into a duplicate-free multiplicity array. -/
+/-- Merge one root into a list, retaining the first representative of an
+existing semantic value and the incoming certified multiplicity. -/
 @[expose]
-def mergeRootAux (candidate : RootCount) (index : Nat) :
-    Nat → Array RootCount → Option (Array RootCount)
-  | 0, roots => some (roots.push candidate)
-  | fuel + 1, roots =>
-      if hi : index < roots.size then do
-        let current := roots[index]
-        let same ← sameValue? current.root candidate.root
-        if same then
-          let merged : RootCount :=
-            { root := current.root
-              multiplicity := current.multiplicity + candidate.multiplicity
-              multiplicity_pos := by
-                have hc : 0 < current.multiplicity := current.multiplicity_pos
-                omega }
-          some ((roots.eraseIdx index).push merged)
-        else
-          mergeRootAux candidate (index + 1) fuel roots
+def mergeRootList (candidate : RootCount) :
+    List RootCount → Option (List RootCount)
+  | [] => some [candidate]
+  | current :: rest => do
+      let same ← sameValue? current.root candidate.root
+      if same then
+        let merged : RootCount :=
+          { root := current.root
+            multiplicity := candidate.multiplicity
+            multiplicity_pos := candidate.multiplicity_pos }
+        some (merged :: rest)
       else
-        some (roots.push candidate)
+        let tail ← mergeRootList candidate rest
+        some (current :: tail)
 
 /-- Merge one root using a complete scan of the current array. -/
 @[expose]
 def mergeRoot (roots : Array RootCount) (candidate : RootCount) :
-    Option (Array RootCount) :=
-  mergeRootAux candidate 0 (roots.size + 1) roots
+    Option (Array RootCount) := do
+  let merged ← mergeRootList candidate roots.toList
+  some merged.toArray
 
 /-- Lexicographic non-strict order on integer coefficient lists. -/
 @[expose]
@@ -260,7 +257,7 @@ def rootLe (a b : RootCount) : Bool :=
   else if a.root.rep.1.square.im != b.root.rep.1.square.im then
     decide (a.root.rep.1.square.im < b.root.rep.1.square.im)
   else
-    decide (a.root.rep.1.square.prec < b.root.rep.1.square.prec)
+    decide (a.root.rep.1.square.prec ≤ b.root.rep.1.square.prec)
 
 end Hex.QAdjoin.Roots
 
@@ -287,7 +284,7 @@ def roots? [ZPoly.CheckedIrreducible p]
         else
           none)
       #[]
-    some (.finite (roots.qsort Roots.rootLe))
+    some (.finite (roots.mergeSort Roots.rootLe))
 
 /-- Total fixed-field root API. The loud `.all` fallback is unreachable once
 the companion discharges `roots?_isSome`. -/
