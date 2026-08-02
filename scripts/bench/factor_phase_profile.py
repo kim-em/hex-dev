@@ -14,10 +14,11 @@ The record answers three separate questions and keeps them separate:
   lift and recombination for every good prime the bounded walk retained, so the
   cost of having stopped at each candidate is measurable. Only the row marked
   `selected` is work the production cascade actually did.
-* **Validation.** Two cross-checks run alongside, on a wider sample than the
-  representative set: the counted recombination mirror's leaf count must equal
-  the production `factorTrace` `candidatesTried`, and the profile total must
-  track the untimed end-to-end `factor` call.
+* **Validation.** Cross-checks run alongside, on a wider sample than the
+  representative set: the counted recombination mirror must agree with the
+  production `factorTrace` on leaf count, selected prime, completed subset
+  cardinalities, and the factor-degree multiset it returns, and the profile
+  total must track the untimed end-to-end `factor` call.
 
 This is a diagnostic driver run manually on dedicated hardware, not a CI job
 and not a hex-internal benchmark harness, so the one-harness rule stays intact
@@ -177,6 +178,25 @@ def measure_end_to_end(service: Service, inst: dict, cutoff: float,
     }
 
 
+def degree_multiset(profile: dict):
+    """Sorted factor degrees with multiplicity from a phase profile."""
+    degrees = []
+    for degree, multiplicity in zip(profile.get("factorDegrees", []),
+                                    profile.get("multiplicities", [])):
+        degrees.extend([degree] * multiplicity)
+    return sorted(degrees)
+
+
+def trace_degree_multiset(factorization):
+    """Sorted factor degrees with multiplicity from a `factorTrace` reply."""
+    if factorization is None:
+        return None
+    degrees = []
+    for factor in factorization.get("factors", []):
+        degrees.extend([len(factor["coeffs"]) - 1] * factor.get("multiplicity", 1))
+    return sorted(degrees)
+
+
 def validate_instance(trace_service: Service, inst: dict, profile: dict,
                       cutoff: float) -> dict:
     """Cross-check the counted recombination mirror against the production trace.
@@ -199,17 +219,24 @@ def validate_instance(trace_service: Service, inst: dict, profile: dict,
         out["reason"] = f"factorTrace declined ({trace.get('decline')})"
         return out
     mirror_nodes = recombination["stages"]["nodes"]
+    mirror_prime = (profile.get("primeWalk") or {}).get("selectedPrime")
+    mirror_degrees = degree_multiset(profile)
+    production_degrees = trace_degree_multiset(result.get("factorization"))
     out.update({
         "applicable": True,
         "mirror_nodes": mirror_nodes,
         "production_candidates_tried": trace.get("candidatesTried"),
         "nodes_agree": mirror_nodes == trace.get("candidatesTried"),
-        "mirror_prime": (profile.get("primeWalk") or {}).get("selectedPrime"),
+        "mirror_prime": mirror_prime,
         "production_prime": trace.get("prime"),
-        "prime_agrees":
-            (profile.get("primeWalk") or {}).get("selectedPrime") == trace.get("prime"),
+        "prime_agrees": mirror_prime == trace.get("prime"),
         "mirror_completed_levels": recombination["completedLevels"],
         "production_completed_levels": trace.get("completedLevels"),
+        "levels_agree":
+            recombination["completedLevels"] == trace.get("completedLevels"),
+        "mirror_factor_degrees": mirror_degrees,
+        "production_factor_degrees": production_degrees,
+        "factors_agree": mirror_degrees == production_degrees,
     })
     return out
 
@@ -338,8 +365,12 @@ def main() -> int:
             "sample_size": len(validation),
             "nodes_agree": sum(1 for v in validation if v["nodes_agree"]),
             "prime_agree": sum(1 for v in validation if v["prime_agrees"]),
-            "disagreements": [v for v in validation
-                              if not (v["nodes_agree"] and v["prime_agrees"])],
+            "levels_agree": sum(1 for v in validation if v["levels_agree"]),
+            "factors_agree": sum(1 for v in validation if v["factors_agree"]),
+            "disagreements": [
+                v for v in validation
+                if not (v["nodes_agree"] and v["prime_agrees"]
+                        and v["levels_agree"] and v["factors_agree"])],
             "instrumentation_ratio_median":
                 statistics.median(ratios) if ratios else None,
             "instrumentation_ratio_max": max(ratios) if ratios else None,

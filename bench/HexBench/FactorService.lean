@@ -581,13 +581,17 @@ private def countedScanCombinations
   | xs, 0, selectedRev, rejectedRev, selectedDegree, selectedTrail =>
       let selected := head :: selectedRev.reverse
       let remaining := rejectedRev.reverse ++ xs
+      -- `scanDirectCombinations` passes the selected lifted factors as an
+      -- argument to `tryDirectCandidate`, so the list is written before the
+      -- prefilters in the production leaf too; keep it in the same position
+      -- rather than sinking it into the surviving branch.
+      let selectedFactors := directSelectedFactors basis selected
       let visited : DirectCandidateStats := { leaves := 1 }
       if directDegreePrefilter coreLc target selectedDegree then
         let degreePassed := { visited with degreeSurvivors := 1 }
         if directTrailingPrefilter coreLc target (liftModulus basis) selectedTrail then
           let filtered := { degreePassed with trailingSurvivors := 1 }
-          let candidate := directCandidate coreLc (liftModulus basis)
-            (directSelectedFactors basis selected)
+          let candidate := directCandidate coreLc (liftModulus basis) selectedFactors
           let constructed := { filtered with constructed := 1 }
           if shouldRecordPolynomialFactor candidate then
             let divided :=
@@ -783,28 +787,23 @@ private def modularSubPhases (sink : IO.Ref Nat) (core : ZPoly)
         ("goodPrimeTest", spanJson m1 m2),
         ("zeroModularImage", Json.bool true) ]
 
-/-- Assemble the answer and close out the profile.
+/-- Emit the finished profile.
 
-`excluded` accumulates the cost of measurements the production cascade would
-not have performed (currently only the modular sub-phase repeat), so the
-reported total is the cost of the cascade itself. -/
-private def finishPhaseProfile (f : ZPoly) (sink : IO.Ref Nat)
-    (excluded : IO.Ref (Nat × Nat)) (m0 : Mark)
-    (method : String) (phases extras : Array (String × Json))
-    (factors : Array ZPoly) : IO Json := do
-  let assemblyStart ← mark
-  let φ := factorizationOfFactors f factors
-  let reconstructs := Factorization.product φ = f
-  observeNat sink (if reconstructs then 1 else 0)
-  let assemblyStop ← mark
-  let phases := phases.push (phaseEntry "assembly" assemblyStart assemblyStop)
+The modular sub-phase repeat runs here, after the cascade's `total` mark, so it
+cannot perturb the cache, allocator, or memory state of any phase it is meant
+to describe. It is a second observation of the selected prime, not part of the
+timed execution, and the record labels it that way. -/
+private def emitPhaseProfile (f : ZPoly) (sink : IO.Ref Nat)
+    (repeatAt : IO.Ref (Option SmallPrimeCandidate)) (core : ZPoly)
+    (m0 : Mark) (method : String) (phases extras : Array (String × Json))
+    (φ : Factorization) (reconstructs : Bool) : IO Json := do
   let total ← mark
-  let (skipNanos, skipAllocs) ← excluded.get
-  let phases := phases.push ("total", Json.mkObj
-    [ ("nanos", natJson (total.nanos - m0.nanos - skipNanos)),
-      ("smallAllocs", natJson (total.allocs - m0.allocs - skipAllocs)) ])
-  let phases := phases.push ("diagnosticOverhead", Json.mkObj
-    [ ("nanos", natJson skipNanos), ("smallAllocs", natJson skipAllocs) ])
+  let phases := phases.push (phaseEntry "total" m0 total)
+  let extras ←
+    match ← repeatAt.get with
+    | none => pure extras
+    | some candidate =>
+        pure (extras.push ("modular", ← modularSubPhases sink core candidate))
   return Json.mkObj <|
     [ ("method", Json.str method),
       ("degree", natJson (f.degree?.getD 0)),
@@ -814,10 +813,47 @@ private def finishPhaseProfile (f : ZPoly) (sink : IO.Ref Nat)
       ("multiplicities", natArrayJson (φ.factors.map fun entry => entry.2)),
       ("phases", Json.mkObj phases.toList) ] ++ extras.toList
 
+/-- Assemble and self-certify the answer, exactly once.
+
+The constant, quadratic, classical, and lattice methods are self-certifying in
+production: `runFactor` accepts them only when `Factorization.product φ = f`,
+and otherwise falls through to the proved trial backstop. `certify := true`
+reproduces that fall-through. Proposal replay and trial division are accepted
+unconditionally in production, so they pass `certify := false`; the check still
+runs, because the record reports whether the answer reconstructs, but it never
+changes the route. -/
+private def finishPhaseProfile (f : ZPoly) (sink : IO.Ref Nat)
+    (repeatAt : IO.Ref (Option SmallPrimeCandidate)) (core : ZPoly) (m0 : Mark)
+    (method : String) (phases extras : Array (String × Json))
+    (factors : Array ZPoly) (certify : Bool := true) : IO Json := do
+  let assemblyStart ← mark
+  let φ := factorizationOfFactors f factors
+  let reconstructs := Factorization.product φ = f
+  observeNat sink (if reconstructs then 1 else 0)
+  let assemblyStop ← mark
+  let phases := phases.push (phaseEntry "assembly" assemblyStart assemblyStop)
+  if reconstructs || !certify then
+    emitPhaseProfile f sink repeatAt core m0 method phases extras φ reconstructs
+  else
+    let trialStart ← mark
+    let trialFactors :=
+      factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
+    observeNat sink trialFactors.size
+    let trialStop ← mark
+    let trialAssemblyStart ← mark
+    let ψ := factorizationOfFactors f trialFactors
+    let trialReconstructs := Factorization.product ψ = f
+    observeNat sink (if trialReconstructs then 1 else 0)
+    let trialAssemblyStop ← mark
+    emitPhaseProfile f sink repeatAt core m0 "trial"
+      ((phases.push (phaseEntry "trial" trialStart trialStop)).push
+        (phaseEntry "trialAssembly" trialAssemblyStart trialAssemblyStop))
+      extras ψ trialReconstructs
+
 /-- Phase-attributed profile of one production factorization. -/
 private def factorPhaseProfile (f : ZPoly) : IO Json := do
   let sink ← IO.mkRef 0
-  let excluded ← IO.mkRef (0, 0)
+  let repeatAt ← IO.mkRef (none : Option SmallPrimeCandidate)
   let m0 ← mark
   let normalized := normalizeForFactor f
   let core := SquareFreeInput.ofNormalized normalized
@@ -825,7 +861,7 @@ private def factorPhaseProfile (f : ZPoly) : IO Json := do
   let m1 ← mark
   let phases := #[phaseEntry "normalization" m0 m1]
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
-    return ← finishPhaseProfile f sink excluded m0 "constant" phases #[]
+    return ← finishPhaseProfile f sink repeatAt core.poly m0 "constant" phases #[]
       (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
   let quadratic := quadraticIntegerRootFactors? normalized.squareFreeCore
   observeNat sink (quadratic.map (·.size) |>.getD 0)
@@ -833,7 +869,7 @@ private def factorPhaseProfile (f : ZPoly) : IO Json := do
   let phases := phases.push (phaseEntry "quadratic" m1 m2)
   match quadratic with
   | some coreFactors =>
-      return ← finishPhaseProfile f sink excluded m0 "quadratic" phases #[]
+      return ← finishPhaseProfile f sink repeatAt core.poly m0 "quadratic" phases #[]
         (reassemblePolynomialFactors normalized coreFactors)
   | none => pure ()
   let plan := directPrimePlan? core
@@ -848,8 +884,9 @@ private def factorPhaseProfile (f : ZPoly) : IO Json := do
       observeNat sink factors.size
       let trialStop ← mark
       let phases := phases.push (phaseEntry "trial" trialStart trialStop)
-      return ← finishPhaseProfile f sink excluded m0 "trial" phases
+      return ← finishPhaseProfile f sink repeatAt core.poly m0 "trial" phases
         #[("primeWalk", Json.mkObj [("goodPrimeFound", Json.bool false)])] factors
+        (certify := false)
   | some modular =>
       let coreBound := ZPoly.defaultFactorCoeffBound core.poly
       let walkJson := Json.mkObj
@@ -860,13 +897,8 @@ private def factorPhaseProfile (f : ZPoly) : IO Json := do
           ("coeffBoundBits", natJson (bitLength coreBound)),
           ("candidates",
             Json.arr (modular.probes.map (probeJson coreBound modular.prime))) ]
-      let modularStart ← mark
-      let modularJson ← modularSubPhases sink core.poly modular.selected.candidate
-      let modularStop ← mark
-      excluded.modify fun (n, a) =>
-        (n + (modularStop.nanos - modularStart.nanos),
-          a + (modularStop.allocs - modularStart.allocs))
-      let extras := #[("primeWalk", walkJson), ("modular", modularJson)]
+      repeatAt.set (some modular.selected.candidate)
+      let extras := #[("primeWalk", walkJson)]
       -- `routeClassical` yields eligible normalized large-support inputs to
       -- proposal replay *before* running the classical engine.
       if heligible : proposalEligible core.poly modular.data.factorsModP.size ∧
@@ -878,7 +910,8 @@ private def factorPhaseProfile (f : ZPoly) : IO Json := do
         let phases := phases.push (phaseEntry "proposal" proposalStart proposalStop)
         match proposal.1 with
         | some result =>
-            return ← finishPhaseProfile f sink excluded m0 "replay" phases extras result.factors
+            return ← finishPhaseProfile f sink repeatAt core.poly m0 "replay" phases extras
+              result.factors (certify := false)
         | none =>
             let latticeStart ← mark
             let lattice := factorLatticeFactorsWithPlan normalized
@@ -888,11 +921,9 @@ private def factorPhaseProfile (f : ZPoly) : IO Json := do
             let phases := phases.push (phaseEntry "lattice" latticeStart latticeStop)
             match lattice with
             | some factors =>
-                if Factorization.product (factorizationOfFactors f factors) = f then
-                  return ← finishPhaseProfile f sink excluded m0 "lattice" phases extras factors
-                else
-                  return ← runTrialTail f sink excluded m0 phases extras
-            | none => return ← runTrialTail f sink excluded m0 phases extras
+                return ←
+                  finishPhaseProfile f sink repeatAt core.poly m0 "lattice" phases extras factors
+            | none => return ← runTrialTail f sink repeatAt core.poly m0 phases extras
       else
         let liftStart ← mark
         let liftPlan := directLiftPlan core modular
@@ -908,10 +939,14 @@ private def factorPhaseProfile (f : ZPoly) : IO Json := do
             ("liftedFactorDegrees",
               natArrayJson (basis.liftedFactors.map (·.degree?.getD 0))),
             ("liftedMaxCoeffBits", natJson (maxCoeffBits basis.liftedFactors)),
-            -- `multifactorLiftQuadraticList` recurses on a balanced split, so
-            -- the product tree is binary with one `henselLiftFactors` call per
-            -- internal node; the split point itself is degree-dependent.
-            ("treeShape", Json.str "balanced-split binary product tree"),
+            -- `balancedSplitIndex` halves by factor count, except when one
+            -- modular factor carries more than half the total degree, where it
+            -- picks the least degree-imbalanced prefix instead. Either way the
+            -- product tree is binary with one `henselLiftFactors` call per
+            -- internal node.
+            ("treeShape",
+              Json.str "count-balanced binary product tree with a guarded \
+                dominant-degree split"),
             ("treeLeaves", natJson basis.liftedFactors.size),
             ("treeInternalLifts", natJson (basis.liftedFactors.size - 1)) ]
         let searchStart ← mark
@@ -937,28 +972,26 @@ private def factorPhaseProfile (f : ZPoly) : IO Json := do
             let validStop ← mark
             let phases := phases.push (phaseEntry "validation" validStart validStop)
             if valid then
-              let reassembled :=
-                reassemblePolynomialFactors normalized factors.toArray
-              if Factorization.product (factorizationOfFactors f reassembled) = f then
-                return ← finishPhaseProfile f sink excluded m0 "classical" phases extras
-                  reassembled
-              else
-                return ← runTrialTail f sink excluded m0 phases extras
+              return ← finishPhaseProfile f sink repeatAt core.poly m0 "classical" phases
+                extras (reassemblePolynomialFactors normalized factors.toArray)
             else
-              return ← runLatticeTail f sink excluded m0 normalized modular phases extras
-        | none => return ← runLatticeTail f sink excluded m0 normalized modular phases extras
+              return ← runLatticeTail f sink repeatAt core.poly m0 normalized modular phases extras
+        | none => return ← runLatticeTail f sink repeatAt core.poly m0 normalized modular phases extras
 where
   /-- The proved trial-division backstop, timed. -/
-  runTrialTail (f : ZPoly) (sink : IO.Ref Nat) (excluded : IO.Ref (Nat × Nat))
+  runTrialTail (f : ZPoly) (sink : IO.Ref Nat)
+      (repeatAt : IO.Ref (Option SmallPrimeCandidate)) (core : ZPoly)
       (m0 : Mark) (phases extras : Array (String × Json)) : IO Json := do
     let trialStart ← mark
     let factors := factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
     observeNat sink factors.size
     let trialStop ← mark
-    finishPhaseProfile f sink excluded m0 "trial"
+    finishPhaseProfile f sink repeatAt core m0 "trial"
       (phases.push (phaseEntry "trial" trialStart trialStop)) extras factors
+      (certify := false)
   /-- The full CLD lattice tier, then the trial backstop, timed. -/
-  runLatticeTail (f : ZPoly) (sink : IO.Ref Nat) (excluded : IO.Ref (Nat × Nat))
+  runLatticeTail (f : ZPoly) (sink : IO.Ref Nat)
+      (repeatAt : IO.Ref (Option SmallPrimeCandidate)) (core : ZPoly)
       (m0 : Mark) (normalized : FactorNormalizationData)
       (modular : DirectPrimePlan (SquareFreeInput.ofNormalized normalized))
       (phases extras : Array (String × Json)) : IO Json := do
@@ -970,11 +1003,8 @@ where
     let phases := phases.push (phaseEntry "lattice" latticeStart latticeStop)
     match lattice with
     | some factors =>
-        if Factorization.product (factorizationOfFactors f factors) = f then
-          finishPhaseProfile f sink excluded m0 "lattice" phases extras factors
-        else
-          runTrialTail f sink excluded m0 phases extras
-    | none => runTrialTail f sink excluded m0 phases extras
+        finishPhaseProfile f sink repeatAt core m0 "lattice" phases extras factors
+    | none => runTrialTail f sink repeatAt core m0 phases extras
 
 /-- Downstream cost of stopping the bounded prime walk at one retained good
 prime.  The production selection is one of the rows; the others are
