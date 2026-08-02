@@ -1152,7 +1152,7 @@ private def scoutRow (sink : IO.Ref Nat) (core : ZPoly) (target : Nat)
         ("boundedMinResidualDegree", natJson bounded.minResidualDegree),
         ("boundedLowerBound", natJson bounded.lowerBound),
         ("boundedUpperBound", natJson bounded.upperBound),
-        ("boundedAdmits", Json.bool (bounded.upperBound ≤ target)),
+        ("boundedComplete", Json.bool bounded.complete),
         ("scoutComplete", Json.bool pattern.isSome),
         ("scoutDegrees", natArrayJson scoutDegrees),
         ("splitDegrees", natArrayJson splitDegrees),
@@ -1181,12 +1181,12 @@ private def primeScout (f : ZPoly) : IO Json := do
   let sink ← IO.mkRef 0
   let normalized := normalizeForFactor f
   let core := SquareFreeInput.ofNormalized normalized
-  -- The planner scouts against the materiality bound of the first good prime's
-  -- width, so that is the target this record prices.
   let firstWidth :=
     (counterfactualCandidates core 1 hotPathCandidates #[]).foldl
       (fun w probe => max w probe.data.factorsModP.size) 0
-  let target := materialWidth firstWidth
+  -- The planner scouts against the current best width, so that is the target
+  -- this record prices.
+  let target := firstWidth
   let mut rows : Array Json := #[]
   let mut seen := 0
   for c in hotPathCandidates do

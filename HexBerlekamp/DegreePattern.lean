@@ -23,10 +23,11 @@ matrix nor any equal-degree splitting is needed.
 A *partial* pattern is already useful.  After degree `d` has been separated,
 every irreducible factor still in the residual has degree at least `d`, so a
 residual of degree `m` carries between one and `m / d` factors.  Those two
-bounds pin the factor count from both sides and tighten as `d` grows, so a
-caller asking only "are there at most `t` irreducible factors?" can be
-answered long before the pattern is complete.  `scoutDegreePattern` stops at
-exactly that point.
+bounds pin the factor count from both sides and tighten as `d` grows.  A caller
+that only wants to know whether there are at most `t` irreducible factors is
+therefore answered as soon as the factors already separated reach `t`, however
+much of the polynomial is left: `scoutDegreePattern` abandons the pattern at
+exactly that point, and completes it otherwise.
 
 Two further exits keep the loop short: a unit residual is finished, and a
 residual of degree below `2 * d` is itself irreducible, because it is too small
@@ -96,13 +97,13 @@ def degreePatternStep (d : Nat) (diff residual : FpPoly p) :
   else
     (Array.replicate ((candidate.degree?.getD 0) / d) d, residual / candidate)
 
-/-- Whether a factor-count target is already settled by the bounds available
-after degree `d - 1` has been separated: `k` factors found and a residual of
-degree `m`, whose irreducible factors all have degree at least `d`. -/
+/-- Whether `k` separated factors and a nonempty residual already put the
+factor count above `target`.  The residual carries at least one more factor, so
+the count is at least `k + 1`, and `target ≤ k` settles it. -/
 @[expose]
-def targetSettled : Option Nat → Nat → Nat → Nat → Bool
-  | none, _, _, _ => false
-  | some t, k, m, d => decide (t ≤ k) || decide (k + m / d ≤ t)
+def aboveTarget : Option Nat → Nat → Bool
+  | none, _ => false
+  | some target, k => decide (target ≤ k)
 
 /--
 Fuel-bounded degree-pattern loop, maintaining the Frobenius power
@@ -110,9 +111,9 @@ Fuel-bounded degree-pattern loop, maintaining the Frobenius power
 `prevFrob` is `X^(p^(d-1)) mod f`, so the next power is computed only when the
 loop has decided to separate another degree.
 
-With `target = some t` the loop returns as soon as its bounds settle whether
-`f` has at most `t` irreducible factors; with `target = none` it runs until the
-pattern is complete.
+With `target = some t` the loop abandons the pattern as soon as the factors it
+has separated show that `f` has more than `t` of them; otherwise, and always
+with `target = none`, it runs until the pattern is complete.
 -/
 def degreePatternLoop (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (xMod : FpPoly p) (target : Option Nat) :
@@ -125,7 +126,7 @@ def degreePatternLoop (f : FpPoly p) (hmonic : DensePoly.Monic f)
       else if m < 2 * d then
         -- Too small to be a product of two factors of degree at least `d`.
         ⟨found.push m, 0, max d 1⟩
-      else if targetSettled target found.size m d then
+      else if aboveTarget target found.size then
         ⟨found, m, d⟩
       else
         let currentFrob := FpPoly.powModMonic prevFrob f hmonic p
@@ -135,12 +136,14 @@ def degreePatternLoop (f : FpPoly p) (hmonic : DensePoly.Monic f)
           (found ++ extracted)
 
 /--
-Separate the monic square-free `f` by irreducible-factor degree only as far as
-is needed to settle whether it has at most `target` irreducible factors.
+Separate the monic square-free `f` by irreducible-factor degree, abandoning the
+pattern as soon as it is clear that `f` has more than `target` irreducible
+factors.
 
-The returned pattern's `upperBound` and `lowerBound` bracket the true count;
-the caller reads whichever bound answers its question.  Work is bounded by one
-Frobenius power and one gcd per separated degree.
+So a `complete` result records the exact degree multiset, and an incomplete one
+records that the factor count exceeds `target` -- its `lowerBound` is the
+witness.  Work is bounded by one Frobenius power and one gcd per separated
+degree, and by the largest factor degree overall.
 -/
 @[expose]
 def scoutDegreePattern (f : FpPoly p) (hmonic : DensePoly.Monic f)

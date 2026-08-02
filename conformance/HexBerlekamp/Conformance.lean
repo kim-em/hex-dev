@@ -400,9 +400,9 @@ example : Berlekamp.rabinTest irreducibleQuad irreducibleQuad_monic = true :=
   let pattern := Berlekamp.scoutDegreePattern bigPoly bigPoly_monic 3
   pattern.complete && pattern.lowerBound == 3 && pattern.upperBound == 3
 
--- A scout with a target the input misses stops as soon as the factors already
--- separated exceed it, leaving an incomplete pattern whose bounds still
--- bracket the true count of three.
+-- A scout with a target the input misses abandons the pattern as soon as the
+-- factors already separated reach it, leaving an incomplete pattern whose
+-- lower bound witnesses that the count exceeds the target.
 #guard
   let pattern := Berlekamp.scoutDegreePattern bigPoly bigPoly_monic 1
   !pattern.complete && pattern.lowerBound == 2 && pattern.upperBound == 4
