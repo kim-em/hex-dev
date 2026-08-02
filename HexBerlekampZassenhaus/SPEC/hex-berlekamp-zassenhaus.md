@@ -16,10 +16,14 @@ def ZPoly.factors   (f : ZPoly) : Array (ZPoly × Nat)
 ```
 
 `factorClassical` performs bounded subset recombination.
-`factorLattice` performs logarithmic-derivative lattice
+`factorLattice` performs proved logarithmic-derivative lattice
 recombination. `factorTrial` performs exhaustive integer trial
-division. `ZPoly.factorize` is total: it uses the first two methods
-when they return a verified answer and otherwise uses trial division.
+division. `ZPoly.factorize` is total: on a large modular support it
+may first use a small logarithmic-derivative lattice to propose a
+partition, verify the partition exactly, and run `factorClassical`
+again on every proposed piece. A proposal is never evidence of
+irreducibility. If proposal replay or either ordinary fast method
+declines, the selector eventually uses trial division.
 
 `factorTraced` returns the same factorization together with a
 `DirectFactorTrace`. The trace records the `FactorMethod`, a possible
@@ -138,6 +142,21 @@ next level does not fit, the method declines before testing any member
 of that level. An incomplete search is never used as evidence of
 irreducibility.
 
+The total selector routes eligible large, dense, already-normalized
+inputs to a proposal stage before this unrestricted classical search.
+It streams every unforced subset of cardinality one through three,
+using degree and trailing-coefficient filters before constructing a
+candidate. After the first exact split, it reuses the same Hensel lift
+and complementary lifted-factor indices to search support sizes one
+and two again on the exact quotient. This continues until the cheap
+search is exhausted, the residual is one, or the shared candidate
+budget cannot admit another complete level. After an exact peel, the
+retained factors, residual, and residual support pass directly to the
+proposal lattice. With no exact progress, the selector skips that
+speculative lattice and proceeds to the full CLD fallback. Exhausting
+these configured cardinalities is distinct from exhausting the
+candidate budget.
+
 `DirectSupportPartition` associates each irreducible integer factor
 with its unique modular support. The minimal-head proof shows that the
 first accepted subset containing the distinguished factor is exactly
@@ -200,6 +219,32 @@ LatticeTotality.lean
 ```
 
 Lattice totality is conditional on successful direct prime selection.
+
+## Selected-coordinate proposals
+
+For an eligible large support where low-cardinality peeling makes exact
+progress, `ZPoly.factorize` next tries a cheaper, untrusted use of the
+same CLD data. It prepares the leading sixteen coefficient columns
+once, then reduces nested lattices using prefixes of four, eight,
+twelve, and sixteen columns. Equal projected columns propose groups of
+lifted factors.
+
+Acceptance has a deliberately narrow boundary:
+
+1. reconstruct every proposed piece in the original integer
+   coordinates;
+2. check exact product reconstruction;
+3. run the unrestricted, proved classical factorizer on every piece;
+4. concatenate its results and check the final public product.
+
+Thus LLL reduction and partition extraction are heuristics here. The
+final product theorem follows from the exact checks, and the final
+irreducibility theorem follows only from the ordinary classical
+factorization theorem. If no CLD partition is found after a genuine
+peel, the peeled factors and exact residual form a useful proposal of
+their own. If no peel exists, the selector does not build a
+speculative lattice or replay the unchanged input and proceeds to the
+proved full lattice method.
 
 ## Trial division
 

@@ -39,7 +39,8 @@ theorem factorClassicalFactors_factor_irreducible
     Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
   have hcore_prim :=
     IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf
-  simp only [Hex.factorClassicalFactors, Hex.runClassical] at hcf
+  simp only [Hex.factorClassicalFactors, Hex.runClassical,
+    Hex.classicalInput] at hcf
   by_cases hdeg :
       (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
   · rw [if_pos hdeg] at hcf
@@ -79,58 +80,132 @@ theorem factorClassicalFactors_factor_irreducible
               hcore_pos hcore_prim hquad hfactor
     | none =>
         simp only [hquad] at hcf
-        cases hplan :
-            Hex.directPrimePlan?
-              (Hex.SquareFreeInput.ofNormalized (Hex.normalizeForFactor f)) with
-        | none =>
-            simp [hplan] at hcf
-        | some modular =>
-            simp only [hplan] at hcf
-            generalize hrun :
-                Hex.factorDirectCoreOfPlan
+        split at hcf
+        · simp [Hex.ClassicalInput.run] at hcf
+        · rename_i modular hplan
+          simp only [Hex.ClassicalInput.run, Hex.runClassicalPlan] at hcf
+          generalize hrun :
+              Hex.factorDirectCoreOfPlan
+                (Hex.SquareFreeInput.ofNormalized (Hex.normalizeForFactor f))
+                modular = outcome at hcf
+          cases outcome with
+          | declined reason stats => simp at hcf
+          | factored coreFactors stats =>
+              simp only at hcf
+              cases hcf
+              have hcore_degree :
+                  0 <
+                    (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 :=
+                Nat.pos_of_ne_zero hdeg
+              have hcore_squarefree :
+                  Squarefree
+                    (HexPolyZMathlib.toPolynomial
+                      (Hex.normalizeForFactor f).squareFreeCore) :=
+                IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree
+                    f hf
+              have hspec :
+                  DirectFactorListSpec
+                      (Hex.normalizeForFactor f).squareFreeCore
+                      coreFactors.toList :=
+                factorDirectCoreOfPlan_factored
                   (Hex.SquareFreeInput.ofNormalized (Hex.normalizeForFactor f))
-                  modular = outcome at hcf
-            cases outcome with
-            | declined reason stats => simp at hcf
-            | factored coreFactors stats =>
-                simp only at hcf
-                cases hcf
-                have hcore_degree :
-                    0 <
-                      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 :=
-                  Nat.pos_of_ne_zero hdeg
-                have hcore_squarefree :
-                    Squarefree
-                      (HexPolyZMathlib.toPolynomial
-                        (Hex.normalizeForFactor f).squareFreeCore) :=
-                  IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree
-                      f hf
-                have hspec :
-                    DirectFactorListSpec
-                        (Hex.normalizeForFactor f).squareFreeCore
-                        coreFactors.toList :=
-                  factorDirectCoreOfPlan_factored
-                    (Hex.SquareFreeInput.ofNormalized (Hex.normalizeForFactor f))
-                    modular hplan hcore_prim hcore_pos hcore_degree
-                    hcore_squarefree hrun
-                have hcomplete :=
-                  IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_norm
-                      f hf coreFactors
-                      (fun g hg =>
-                        (Hex.ZPoly.Irreducible_iff_polynomialIrreducible g).mpr
-                          (hspec.irreducible g hg))
-                      (by simpa using hspec.product)
-                      hspec.normalized hspec.degreePos
-                exact
-                  Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
-                    _ _ hcomplete
+                  modular hplan hcore_prim hcore_pos hcore_degree
+                  hcore_squarefree hrun
+              have hcomplete :=
+                IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_norm
+                    f hf coreFactors
                     (fun g hg =>
                       (Hex.ZPoly.Irreducible_iff_polynomialIrreducible g).mpr
                         (hspec.irreducible g hg))
-                    hmem
+                    (by simpa using hspec.product)
+                    hspec.normalized hspec.degreePos
+              exact
+                Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+                  _ _ hcomplete
+                  (fun g hg =>
+                    (Hex.ZPoly.Irreducible_iff_polynomialIrreducible g).mpr
+                      (hspec.irreducible g hg))
+                  hmem
 
-/-- Hybrid raw-factor irreducibility, selecting over direct classical,
-lattice, and trial sources. -/
+/-- A member of an array product that is nonzero is itself nonzero. -/
+private theorem mem_ne_zero_of_polyProduct_ne_zero
+    (pieces : Array Hex.ZPoly) (piece : Hex.ZPoly)
+    (hproduct : Array.polyProduct pieces ≠ 0)
+    (hmem : piece ∈ pieces.toList) :
+    piece ≠ 0 := by
+  intro hpiece
+  subst piece
+  rw [List.mem_iff_append] at hmem
+  obtain ⟨before, after, hpieces⟩ := hmem
+  apply hproduct
+  have harray : pieces = before.toArray ++ #[0] ++ after.toArray := by
+    apply Array.toList_inj.mp
+    rw [hpieces]
+    simp
+  rw [harray]
+  rw [Hex.ZPoly.polyProduct_append, Hex.ZPoly.polyProduct_append,
+    Hex.ZPoly.polyProduct_singleton]
+  rw [Hex.DensePoly.mul_comm_poly (S := Int) _ 0,
+    Hex.DensePoly.zero_mul, Hex.DensePoly.zero_mul]
+
+/-- Every flattened factor returned by classical replay is irreducible, as
+long as every proposed input piece is nonzero. -/
+private theorem replayClassicalList_factor_irreducible
+    (pieces : List Hex.ZPoly)
+    (hnonzero : ∀ piece ∈ pieces, piece ≠ 0) :
+    ∀ {factors : Array Hex.ZPoly} {raw : Hex.ZPoly},
+      Hex.replayClassicalList pieces = some factors →
+      raw ∈ factors.toList →
+      Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true →
+      Hex.ZPoly.Irreducible raw := by
+  induction pieces with
+  | nil =>
+      intro factors raw hreplay hmem _hrecord
+      simp [Hex.replayClassicalList] at hreplay
+      subst factors
+      simp at hmem
+  | cons piece pieces ih =>
+      intro factors raw hreplay hmem hrecord
+      cases hpiece : Hex.factorClassicalFactors piece with
+      | none =>
+          simp [Hex.replayClassicalList, hpiece] at hreplay
+      | some pieceFactors =>
+          cases htail : Hex.replayClassicalList pieces with
+          | none =>
+              simp [Hex.replayClassicalList, hpiece, htail] at hreplay
+          | some tailFactors =>
+              simp only [Hex.replayClassicalList, hpiece, htail] at hreplay
+              obtain rfl := Option.some.inj hreplay
+              rw [Array.toList_append, List.mem_append] at hmem
+              rcases hmem with hhead | htailMem
+              · exact factorClassicalFactors_factor_irreducible
+                  piece (hnonzero piece (by simp)) hpiece hhead hrecord
+              · exact ih
+                  (fun q hq => hnonzero q (by simp [hq]))
+                  htail htailMem hrecord
+
+/-- A successful proposal is irreducible factorwise because its flattened
+array is exactly the output of proved classical factorization calls. -/
+theorem proposedFactorization_factor_irreducible
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    (result : Hex.ProposedFactorization f)
+    {raw : Hex.ZPoly}
+    (hmem : raw ∈ result.factors.toList)
+    (hrec :
+      Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true) :
+    Hex.ZPoly.Irreducible raw := by
+  apply replayClassicalList_factor_irreducible result.pieces.toList
+  · intro piece hpiece
+    apply mem_ne_zero_of_polyProduct_ne_zero result.pieces piece
+    · rw [result.pieces_product]
+      exact hf
+    · exact hpiece
+  · exact result.replay
+  · exact hmem
+  · exact hrec
+
+/-- Hybrid raw-factor irreducibility, selecting over proposal replay, direct
+classical, lattice, and trial sources. -/
 theorem factorFactors_factor_irreducible
     (f : Hex.ZPoly) (hf : f ≠ 0)
     {raw : Hex.ZPoly}
@@ -139,8 +214,10 @@ theorem factorFactors_factor_irreducible
       Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true) :
     Hex.ZPoly.Irreducible raw := by
   rcases Hex.factorFactors_mem_source f hmem with
-    ⟨cf, hcf, hraw⟩ |
-      ⟨modular, cf, hplan, hcf, hraw⟩ | htrial
+    ⟨result, hraw⟩ |
+      ⟨cf, hcf, hraw⟩ |
+        ⟨modular, cf, hplan, hcf, hraw⟩ | htrial
+  · exact proposedFactorization_factor_irreducible f hf result hraw hrec
   · exact factorClassicalFactors_factor_irreducible f hf
       hcf hraw hrec
   · exact

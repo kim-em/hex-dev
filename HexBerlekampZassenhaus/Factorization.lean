@@ -45,8 +45,8 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-Integer factorization by the classical, lattice, and trial methods, with the
-`factorize_scalar` theorems.
+Integer factorization by direct recombination, checked proposal replay, CLD
+lattices, and trial division, with the `factorize_scalar` theorems.
 -/
 namespace Hex
 
@@ -60,6 +60,8 @@ inductive FactorMethod where
   | classical
   /-- Lattice recombination using logarithmic derivatives. -/
   | lattice
+  /-- Exact classical replay of a partition proposed by a small CLD lattice. -/
+  | replay
   /-- Trial division by bounded candidate factors. -/
   | trial
 deriving DecidableEq
@@ -73,6 +75,7 @@ def name : FactorMethod → String
   | .quadratic => "quadratic"
   | .classical => "classical"
   | .lattice => "lattice"
+  | .replay => "replay"
   | .trial => "trial"
 
 end FactorMethod
@@ -158,51 +161,144 @@ private def exhaustiveNonMonicQuadraticGuard : ZPoly :=
 
 #guard quadraticIntegerRootFactors? exhaustiveNonMonicQuadraticGuard = none
 
+/-- Number of modular factors above which incremental partition replay is
+attempted before exhaustive direct recombination. -/
+def proposalLiftedFactorThreshold : Nat := 24
+
+/-- Number of nonzero coefficients in a polynomial. -/
+@[expose]
+def nonzeroCoefficientCount (f : ZPoly) : Nat :=
+  f.toArray.foldl (fun count coefficient =>
+    if coefficient = 0 then count else count + 1) 0
+
+/-- Cost predicate for the proposal tier.  Large dense inputs may benefit from
+support peeling and, after an exact peel, a small CLD lattice on the residual;
+lacunary inputs retain the direct classical route, whose coefficient filters
+are especially effective there. -/
+@[expose]
+def proposalEligible (f : ZPoly) (liftedFactorCount : Nat) : Prop :=
+  proposalLiftedFactorThreshold ≤ liftedFactorCount ∧
+    f.degree?.getD 0 < 4 * nonzeroCoefficientCount f
+
+instance (f : ZPoly) (liftedFactorCount : Nat) :
+    Decidable (proposalEligible f liftedFactorCount) := by
+  unfold proposalEligible
+  infer_instance
+
 /-- Run the sole direct-coordinate classical engine on a normalized polynomial. -/
 @[expose]
 def classicalCoreFactors (core : ZPoly) : ClassicalOutcome :=
   match factorDirectCore ⟨core⟩ with
   | outcome => outcome
 
-/-- Normalize once, handle the cheap terminal cases, and otherwise plan and
-execute the direct engine.  A successful modular plan remains attached to a
-decline for the total selector. -/
+/-- Normalization and prime selection for the classical engine.  The selected
+plan carries its defining equality, so every later route consumes exactly the
+prime data computed here. -/
+inductive ClassicalInput (f : ZPoly) where
+  /-- A normalization or quadratic case answered before prime selection. -/
+  | answered (factors : Array ZPoly) (trace : DirectFactorTrace)
+  /-- No admissible modular prime was found. -/
+  | noGoodPrime
+  /-- A selected modular plan and its defining equation. -/
+  | planned
+      (modular : DirectPrimePlan
+        (SquareFreeInput.ofNormalized (normalizeForFactor f)))
+      (selected : directPrimePlan?
+        (SquareFreeInput.ofNormalized (normalizeForFactor f)) = some modular)
+
+/-- Normalize and select the modular input for direct recombination. -/
 @[expose]
-def runClassical (f : ZPoly) : ClassicalRun f :=
+def classicalInput (f : ZPoly) : ClassicalInput f :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
-    { factors :=
-        some (reassemblePolynomialFactors normalized
-          #[normalized.squareFreeCore])
-      trace := { method := .constant } }
+    .answered
+      (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
+      { method := .constant }
   else
     match quadraticIntegerRootFactors? normalized.squareFreeCore with
     | some coreFactors =>
-        { factors :=
-            some (reassemblePolynomialFactors normalized coreFactors)
-          trace := { method := .quadratic } }
+        .answered (reassemblePolynomialFactors normalized coreFactors)
+          { method := .quadratic }
     | none =>
         let core := SquareFreeInput.ofNormalized normalized
-        match directPrimePlan? core with
-        | none =>
-            { factors := none
-              trace :=
-                { method := .classical
-                  classicalDecline := some .noGoodPrime } }
-        | some modular =>
-            match factorDirectCoreOfPlan core modular with
-            | .factored coreFactors stats =>
-                { factors :=
-                    some (reassemblePolynomialFactors normalized coreFactors)
-                  trace := { method := .classical, classical := stats }
-                  modular := some modular }
-            | .declined reason stats =>
-                { factors := none
-                  trace :=
-                    { method := .classical
-                      classicalDecline := some reason
-                      classical := stats }
-                  modular := some modular }
+        match hplan : directPrimePlan? core with
+        | none => .noGoodPrime
+        | some modular => .planned modular hplan
+
+/-- Execute direct recombination from an already selected modular plan. -/
+@[expose]
+def runClassicalPlan
+    (f : ZPoly)
+    (modular : DirectPrimePlan
+      (SquareFreeInput.ofNormalized (normalizeForFactor f))) : ClassicalRun f :=
+  let normalized := normalizeForFactor f
+  let core := SquareFreeInput.ofNormalized normalized
+  match factorDirectCoreOfPlan core modular with
+  | .factored coreFactors stats =>
+      { factors := some (reassemblePolynomialFactors normalized coreFactors)
+        trace := { method := .classical, classical := stats }
+        modular := some modular }
+  | .declined reason stats =>
+      { factors := none
+        trace :=
+          { method := .classical
+            classicalDecline := some reason
+            classical := stats }
+        modular := some modular }
+
+namespace ClassicalInput
+
+/-- Run the unrestricted classical method from a prepared input. -/
+@[expose]
+def run {f : ZPoly} : ClassicalInput f → ClassicalRun f
+  | .answered factors trace => { factors := some factors, trace }
+  | .noGoodPrime =>
+      { factors := none
+        trace :=
+          { method := .classical
+            classicalDecline := some .noGoodPrime } }
+  | .planned modular _ => runClassicalPlan f modular
+
+/-- Route an eligible normalized large-support input to proposal replay before
+direct recombination.  All other inputs run the unrestricted classical method. -/
+@[expose]
+def beforeProposal {f : ZPoly} : ClassicalInput f → ClassicalRun f
+  | .answered factors trace => { factors := some factors, trace }
+  | .noGoodPrime =>
+      { factors := none
+        trace :=
+          { method := .classical
+            classicalDecline := some .noGoodPrime } }
+  | .planned modular _ =>
+      if proposalEligible (normalizeForFactor f).squareFreeCore
+          modular.data.factorsModP.size ∧
+          (normalizeForFactor f).squareFreeCore = f then
+        { factors := none
+          trace :=
+            { method := .classical
+              classicalDecline := some .largeSupport
+              classical :=
+                { prime := modular.prime
+                  primeProbes := modular.probes.size
+                  liftedFactorCount := modular.data.factorsModP.size } }
+          modular := some modular }
+      else
+        runClassicalPlan f modular
+
+end ClassicalInput
+
+/-- Normalize once, select one modular plan, and execute the unrestricted
+direct-coordinate classical engine. -/
+@[expose]
+def runClassical (f : ZPoly) : ClassicalRun f :=
+  (classicalInput f).run
+
+/-- Cost-routed classical front end used by the total factorizer.  A normalized
+eligible large-support input retains its plan and yields to proposal replay;
+every other input agrees with `runClassical`. -/
+@[expose]
+def routeClassical (f : ZPoly) : ClassicalRun f :=
+  (classicalInput f).beforeProposal
 
 /-- Raw factor array for the sole production classical method. -/
 @[expose]
@@ -220,6 +316,287 @@ def factorClassicalTraced (f : ZPoly) :
     Option Factorization × DirectFactorTrace :=
   let run := runClassical f
   (run.factors.map (factorizationOfFactors f), run.trace)
+
+/-- Measurements from one selected-coordinate CLD lattice. -/
+structure CoordinateLatticeStats where
+  /-- Degree of the residual integer polynomial. -/
+  residualDegree : Nat := 0
+  /-- Lifted local factors represented by indicator coordinates. -/
+  liftedFactorCount : Nat := 0
+  /-- Selected coefficient coordinates. -/
+  coordinates : Array Nat := #[]
+  /-- Per-column coefficient cut thresholds. -/
+  cutThresholds : Array Nat := #[]
+  /-- Square lattice dimension. -/
+  dimension : Nat := 0
+  /-- Hensel exponent used by the CLD rows. -/
+  henselPrecision : Nat := 0
+  /-- Maximum bit length of an entry in the lattice basis. -/
+  maxEntryBits : Nat := 0
+  /-- Rows produced by the exact native LLL reducer. -/
+  reducedRows : Nat := 0
+  /-- Rows retained after exact LLL and the Gram-Schmidt cut. -/
+  projectedRows : Nat := 0
+  /-- Support classes suggested by row reduction. -/
+  indicatorCount : Nat := 0
+  /-- Sizes of the proposed lifted-factor support classes. -/
+  supportSizes : Array Nat := #[]
+  /-- Degrees of exactly reconstructed candidate pieces. -/
+  candidateDegrees : Array Nat := #[]
+  /-- Whether reconstruction produced an exact nontrivial partition. -/
+  accepted : Bool := false
+deriving DecidableEq
+
+/-- Diagnostics for low-cardinality peeling, CLD partitioning, and replay. -/
+structure ProposalTrace where
+  /-- Classical measurements, including peeled degrees and residual support. -/
+  classical : ClassicalStats := {}
+  /-- Selected-coordinate lattices tried in order. -/
+  lattices : Array CoordinateLatticeStats := #[]
+  /-- Degrees of exact pieces presented to proved classical replay. -/
+  pieceDegrees : Array Nat := #[]
+  /-- Degrees returned by the proved replay calls. -/
+  factorDegrees : Array Nat := #[]
+deriving DecidableEq
+
+/-- Deterministic incremental widths for selected-coordinate CLD lattices. -/
+def coordinateLatticeWidths : List Nat := [4, 8, 12, 16]
+
+/-- Candidate budget reserved for the proposal tier's complete low-cardinality
+levels.  A later level that does not fit leaves the already peeled factors and
+exact residual intact. -/
+def proposalSubsetBudget : Nat := 10000
+
+/-- Maximum bit length among entries of a square CLD lattice basis. -/
+@[expose]
+def coordinateLatticeMaxEntryBits (L : BhksLatticeBasis) : Nat :=
+  let cldMaximum := L.cldRows.foldl
+    (fun rowMax row => row.foldl (fun m entry => max m entry.natAbs) rowMax) 1
+  let maximum := (List.range L.coeffWidth).foldl
+    (fun entryMax j =>
+      max entryMax (L.p ^ (L.precision - L.cutThresholds.getD j 0)))
+    cldMaximum
+  if maximum = 0 then 0 else Nat.log2 maximum + 1
+
+/-- Cardinalities of proposed indicator support classes. -/
+@[expose]
+def indicatorSupportSizes (indicators : Array (Array Int)) : Array Nat :=
+  indicators.map fun row =>
+    row.foldl (fun count entry => if entry = 0 then count else count + 1) 0
+
+/-- Reduce a proposal lattice through the certified selector.  Without an
+installed provider this is the exact native reducer; an installed external
+candidate is used only after Hex's certificate checks accept it. -/
+@[expose]
+def coordinateProjectedRows (L : BhksLatticeBasis)
+    (hrows : 1 ≤ L.factorCount + L.coeffWidth) : BhksProjectedRows :=
+  let reducedRows :=
+    lll.shortVectors L.basis (3 / 4) (by grind) lll_delta_upper hrows
+  let reducedBasis :=
+    bhksRowsArrayToMatrix (L.factorCount + L.coeffWidth) reducedRows
+  { factorCount := L.factorCount
+    coeffWidth := L.coeffWidth
+    cutRadiusSq4 := bhksCutRadiusSq4 L
+    reducedRowCount := reducedRows.size
+    projectedRows := bhksCutProjectReducedRows L reducedBasis }
+
+/-- Try one prefix of prepared selected-coordinate CLD data and reconstruct
+an exact candidate partition. -/
+@[expose]
+def coordinateLatticeProposal
+    (f : ZPoly) (d : LiftData) (prepared : BhksLeadingLogDerivativeData)
+    (width : Nat) :
+    Option (Array ZPoly) × CoordinateLatticeStats :=
+  let L := prepared.coordinateLattice width
+  let baseStats : CoordinateLatticeStats :=
+    { residualDegree := f.degree?.getD 0
+      liftedFactorCount := d.liftedFactors.size
+      coordinates := prepared.coordinates
+      cutThresholds := L.cutThresholds
+      dimension := L.factorCount + L.coeffWidth
+      henselPrecision := d.k
+      maxEntryBits := coordinateLatticeMaxEntryBits L }
+  if hrows : 1 ≤ L.factorCount + L.coeffWidth then
+    let projected := coordinateProjectedRows L hrows
+    let indicators := bhksEquivalenceClassIndicators projected
+    let stats :=
+      { baseStats with
+        reducedRows := projected.reducedRowCount
+        projectedRows := projected.projectedRows.size
+        indicatorCount := indicators.size
+        supportSizes := indicatorSupportSizes indicators }
+    if bhksDegenerateIndicatorPartition projected indicators then
+      (none, stats)
+    else
+      match bhksIndicatorCandidates? f d indicators with
+      | none => (none, stats)
+      | some candidates =>
+          let stats :=
+            { stats with
+              candidateDegrees := candidates.map (·.degree?.getD 0) }
+          if Array.polyProduct candidates = f then
+            (some candidates, { stats with accepted := true })
+          else
+            (none, stats)
+  else
+    (none, baseStats)
+
+/-- Replay an incremental selected-coordinate schedule against one shared
+maximum-width CLD preparation until an exact partition is reconstructed. -/
+@[expose]
+def proposeCoordinatePrefixes
+    (f : ZPoly) (d : LiftData) (prepared : BhksLeadingLogDerivativeData) :
+    List Nat → Array CoordinateLatticeStats →
+      Option (Array ZPoly) × Array CoordinateLatticeStats
+  | [], attempts => (none, attempts)
+  | width :: widths, attempts =>
+      let (candidate, stats) := coordinateLatticeProposal f d prepared width
+      let attempts := attempts.push stats
+      match candidate with
+      | some factors => (some factors, attempts)
+      | none => proposeCoordinatePrefixes f d prepared widths attempts
+
+/-- Prepare the largest requested CLD prefix once, then try its nested
+prefixes in order. -/
+@[expose]
+def coordinateLatticeProposals
+    (f : ZPoly) (d : LiftData) (widths : List Nat)
+    (attempts : Array CoordinateLatticeStats) :
+    Option (Array ZPoly) × Array CoordinateLatticeStats :=
+  let maxWidth := widths.foldl max 0
+  let prepared :=
+    bhksLeadingLogDerivativeData f d.p d.k d.liftedFactors maxWidth
+  proposeCoordinatePrefixes f d prepared widths attempts
+
+/-- Replay the unrestricted proved classical factorizer on each exact
+proposal piece and concatenate the returned factor arrays. -/
+@[expose]
+def replayClassicalList : List ZPoly → Option (Array ZPoly)
+  | [] => some #[]
+  | piece :: pieces =>
+      match factorClassicalFactors piece, replayClassicalList pieces with
+      | some pieceFactors, some factors => some (pieceFactors ++ factors)
+      | _, _ => none
+
+/-- Factor every proposed integer piece again with the existing proved
+classical factorizer. -/
+@[expose]
+def replayClassicalPieces (pieces : Array ZPoly) : Option (Array ZPoly) :=
+  replayClassicalList pieces.toList
+
+/-- A self-contained successful proposal and replay result.  The proof fields
+are erased at runtime; they expose exactly the checks used at the executable
+acceptance boundary. -/
+structure ProposedFactorization (f : ZPoly) where
+  /-- Exact integer pieces before replay. -/
+  pieces : Array ZPoly
+  /-- Flattened factors returned by proved classical replay. -/
+  factors : Array ZPoly
+  /-- The proposal tier is entered only when normalization's square-free core
+  is the input itself. -/
+  core_eq : (normalizeForFactor f).squareFreeCore = f
+  /-- Proposed pieces reconstruct the input exactly. -/
+  pieces_product : Array.polyProduct pieces = f
+  /-- Every factor comes from an existing classical factorization call. -/
+  replay : replayClassicalPieces pieces = some factors
+  /-- The public factorization packing reconstructs the input exactly. -/
+  product : Factorization.product (factorizationOfFactors f factors) = f
+
+/-- Low-cardinality peeling, selected-coordinate CLD partitioning after exact
+progress, and proved classical replay from an existing modular plan.  With no
+peeled factor, the proposal declines before building a lattice so production
+can proceed directly to its exact full-CLD fallback. -/
+@[expose]
+def proposeFactorization
+    (f : ZPoly)
+    (hcore : (normalizeForFactor f).squareFreeCore = f)
+    (modular : DirectPrimePlan
+      (SquareFreeInput.ofNormalized (normalizeForFactor f))) :
+    Option (ProposedFactorization f) × ProposalTrace :=
+  let normalized := normalizeForFactor f
+  let core := SquareFreeInput.ofNormalized normalized
+  let liftPlan := directLiftPlan core modular
+  let lifted := (directLiftedBasis core modular liftPlan).data
+  let initialStats : ClassicalStats :=
+    { prime := modular.prime
+      primeProbes := modular.probes.size
+      liftedFactorCount := lifted.liftedFactors.size
+      henselLifts := 1 }
+  let peeled := peelDirect (DensePoly.leadingCoeff core.poly)
+    core.poly lifted 3 2 proposalSubsetBudget initialStats
+  let residualFactors :=
+    (peeled.support.map (directLiftedFactor lifted)).toArray
+  let residualLift : LiftData :=
+    { p := lifted.p
+      p_pos := lifted.p_pos
+      k := lifted.k
+      liftedFactors := residualFactors }
+  let (residualPieces, lattices) :=
+    if peeled.residual = 1 then
+      (some #[], #[])
+    else if peeled.factors.isEmpty then
+      (none, #[])
+    else if residualFactors.size < proposalLiftedFactorThreshold then
+      (none, #[])
+    else
+      coordinateLatticeProposals peeled.residual residualLift
+        coordinateLatticeWidths #[]
+  -- A genuine peel leaves an exact peeled-factor/residual partition even when
+  -- CLD declines.  With no peel and no CLD partition, replaying the original
+  -- input would merely duplicate the unrestricted classical search.
+  let residualPieces := match residualPieces with
+    | some pieces => some pieces
+    | none => if peeled.factors.isEmpty then none else some #[peeled.residual]
+  match residualPieces with
+  | none => (none, { classical := peeled.stats, lattices })
+  | some residualPieces =>
+      let pieces := peeled.factors ++ residualPieces
+      let pieceDegrees := pieces.map (·.degree?.getD 0)
+      if hpieces : Array.polyProduct pieces = core.poly then
+        match hreplay : replayClassicalPieces pieces with
+        | none =>
+            (none, { classical := peeled.stats, lattices, pieceDegrees })
+        | some coreFactors =>
+            let factorDegrees := coreFactors.map (·.degree?.getD 0)
+            if hproduct :
+                Factorization.product
+                    (factorizationOfFactors f coreFactors) = f then
+              (some
+                { pieces
+                  factors := coreFactors
+                  core_eq := hcore
+                  pieces_product := by simpa [core] using hpieces.trans hcore
+                  replay := hreplay
+                  product := hproduct },
+                { classical := peeled.stats, lattices, pieceDegrees,
+                  factorDegrees })
+            else
+              (none,
+                { classical := peeled.stats, lattices, pieceDegrees,
+                  factorDegrees })
+      else
+        (none, { classical := peeled.stats, lattices, pieceDegrees })
+
+/-- Standalone proposal/replay entry.  Production reuses the modular plan
+already selected by `runClassical`; this wrapper is retained for diagnostics. -/
+@[expose]
+def factorProposedTraced (f : ZPoly) :
+    Option (ProposedFactorization f) × ProposalTrace :=
+  if hcore : (normalizeForFactor f).squareFreeCore = f then
+    let core := SquareFreeInput.ofNormalized (normalizeForFactor f)
+    match directPrimePlan? core with
+    | none => (none, {})
+    | some modular =>
+        if ¬proposalEligible f modular.data.factorsModP.size then
+          (none,
+            { classical :=
+                { prime := modular.prime
+                  primeProbes := modular.probes.size
+                  liftedFactorCount := modular.data.factorsModP.size } })
+        else
+          proposeFactorization f hcore modular
+  else
+    (none, {})
 
 -- (X-1)(X-2)(X-3): a reducible cubic (past the quadratic short-circuit) that the
 -- size-ordered recombination must split into three linear factors.
@@ -800,16 +1177,40 @@ def factorLattice (f : ZPoly) : Option Factorization :=
 #guard ((factorLattice (DensePoly.ofCoeffs #[6, 0, -5, 0, 1])).map Factorization.product)
   = some (DensePoly.ofCoeffs #[6, 0, -5, 0, 1])
 
+/-- Package the CLD result from an existing modular plan, retaining the trial
+factorizer as the total backstop. -/
+@[expose]
+def runLatticePlan
+    (f : ZPoly) (trace : DirectFactorTrace)
+    (modular : DirectPrimePlan
+      (SquareFreeInput.ofNormalized (normalizeForFactor f))) : FactorRun :=
+  match factorLatticeFactorsWithPlan
+      (normalizeForFactor f) (latticePrecisionCap f) modular with
+  | some factors =>
+      let φ := factorizationOfFactors f factors
+      if Factorization.product φ = f then
+        { factors, trace := { trace with method := .lattice } }
+      else
+        { factors :=
+            factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
+          trace := { trace with method := .trial } }
+  | none =>
+      { factors :=
+          factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
+        trace := { trace with method := .trial } }
+
 /-- Total integer-polynomial factorization with bounded fast paths.
 
-The size-ordered classical method handles every input
-within its subset budget; fast for reducibles (it peels factors) and bounded for
-irreducibles (it exhausts subsets up to the budget, then
-declines). The lattice method is correct but slower because it runs to the precision
-cap, so the function runs the classical method first and falls back to the
-lattice only when classical declines (budget exhausted, i.e. `r` too large), then
-to trial division when no admissible prime exists. This dominates an up-front
-`r`-estimate that could send a reducible high-`r` input to the slow lattice method.
+Small modular supports use the proved size-ordered classical search directly.
+Large supports first search support sizes one through three, then reuse the
+same Hensel lift to keep peeling factors of support size one or two.  After at
+least one exact peel, the residual and its complementary lifted support pass
+to a small leading-column CLD lattice for partitioning.  Without exact
+progress, production skips that speculative lattice and proceeds directly to
+the full CLD fallback.  The small lattice is only a proposal: exact product
+checks and proved classical factorization of every proposed piece decide
+acceptance.  If that composition declines, the full proved CLD method remains
+the fallback, followed by trial division when necessary.
 
 Returns the chosen `Factorization` and a `DirectFactorTrace` whose `method`
 records which method answered.  A classical decline retains its direct prime
@@ -822,14 +1223,14 @@ when it reconstructs the input (`Factorization.product φ = f`, decidable on
 `factorTrial` backstop. This makes `Factorization.product (ZPoly.factorize f) = f`
 provable unconditionally without yet proving the classical recombination loop
 reconstructs (that, with per-factor irreducibility, is the separate re-proof
-step). The classical method is correct on the whole conformance corpus, so the
-guard always passes there and the emitted factor/trace values are unchanged.
+step).  Proposal irreducibility comes solely from the proved replay calls, not
+from trusting the selected-column lattice.
 
 The raw factors and trace are retained together so every public view observes
 the same selection execution. -/
 @[expose]
 def runFactor (f : ZPoly) : FactorRun :=
-  let run := runClassical f
+  let run := routeClassical f
   match run.factors with
   | some factors =>
       let φ := factorizationOfFactors f factors
@@ -842,20 +1243,22 @@ def runFactor (f : ZPoly) : FactorRun :=
   | none =>
       match run.modular with
       | some modular =>
-          match factorLatticeFactorsWithPlan
-              (normalizeForFactor f) (latticePrecisionCap f) modular with
-          | some factors =>
-              let φ := factorizationOfFactors f factors
-              if Factorization.product φ = f then
-                { factors, trace := { run.trace with method := .lattice } }
-              else
-                { factors :=
-                    factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
-                  trace := { run.trace with method := .trial } }
-          | none =>
-              { factors :=
-                  factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
-                trace := { run.trace with method := .trial } }
+          if proposalEligible (normalizeForFactor f).squareFreeCore
+              modular.data.factorsModP.size then
+            if hcore : (normalizeForFactor f).squareFreeCore = f then
+              let proposal := proposeFactorization f hcore modular
+              match proposal.1 with
+              | some result =>
+                  { factors := result.factors
+                    trace :=
+                      { method := .replay
+                        classicalDecline := run.trace.classicalDecline
+                        classical := proposal.2.classical } }
+              | none => runLatticePlan f run.trace modular
+            else
+              runLatticePlan f run.trace modular
+          else
+            runLatticePlan f run.trace modular
       | none =>
           { factors :=
               factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
@@ -870,12 +1273,15 @@ def factorTraced (f : ZPoly) : Factorization × DirectFactorTrace :=
 /--
 The public total factorisation of a {name}`Hex.ZPoly`.
 
-{name}`Hex.factorClassical` first tries a bounded subset search. If it declines,
-{name}`Hex.factorLattice` tries CLD lattice recombination. An answer from either
-optional method is accepted only when {name}`Hex.Factorization.product`
-reconstructs `f`. If both methods decline, {name}`Hex.factorTrial` supplies the
-total backstop. The trial method does not depend on {name}`Hex.choosePrimeData?`,
-so this function still returns a factorisation when prime selection fails.
+Small modular supports use {name}`Hex.factorClassical`.  Large supports reuse
+one Hensel lift for repeated exact low-cardinality peeling.  Once peeling makes
+exact progress, a selected-column CLD proposal partitions the hard residual;
+otherwise the speculative tier is skipped.  Every proposed piece is checked
+and factored again by the proved classical method.  If the proposal declines,
+{name}`Hex.factorLattice` tries full CLD recombination.
+{name}`Hex.factorTrial` is the total backstop.  It does not depend on
+{name}`Hex.choosePrimeData?`, so this function still returns a factorisation
+when prime selection fails.
 
 This definition lives in the {name}`Hex.ZPoly` namespace, so it can be called
 with dot notation as `f.factorize`.
@@ -925,7 +1331,16 @@ theorem factorize_eq_factorizationOfFactors (f : ZPoly) :
 
 /-- A modular plan retained by the classical run is exactly the plan selected
 for the normalized polynomial. -/
-theorem runClassical_modular_eq_some
+theorem runClassicalPlan_modular
+    (f : ZPoly)
+    (modular : DirectPrimePlan
+      (SquareFreeInput.ofNormalized (normalizeForFactor f))) :
+    (runClassicalPlan f modular).modular = some modular := by
+  cases hrun : factorDirectCoreOfPlan
+      (SquareFreeInput.ofNormalized (normalizeForFactor f)) modular <;>
+    simp [runClassicalPlan, hrun]
+
+theorem runClassical_plan
     (f : ZPoly)
     {modular : DirectPrimePlan
       (SquareFreeInput.ofNormalized (normalizeForFactor f))}
@@ -933,91 +1348,205 @@ theorem runClassical_modular_eq_some
   directPrimePlan? (SquareFreeInput.ofNormalized (normalizeForFactor f)) =
       some modular := by
   unfold runClassical at hmodular
-  by_cases hdegree :
-      (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-  · rw [if_pos hdegree] at hmodular
-    simp at hmodular
-  · rw [if_neg hdegree] at hmodular
-    cases hquadratic :
-        quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
-    | some coreFactors =>
-        simp [hquadratic] at hmodular
-    | none =>
-        simp only [hquadratic] at hmodular
-        generalize hplan :
-            directPrimePlan?
-                (SquareFreeInput.ofNormalized (normalizeForFactor f)) = plan?
-          at hmodular
-        cases plan? with
-        | none => simp at hmodular
-        | some plan =>
-            cases houtcome : factorDirectCoreOfPlan
-                (SquareFreeInput.ofNormalized (normalizeForFactor f)) plan with
-            | factored factors stats =>
-                have heq : some plan = some modular := by
-                  simpa only [houtcome] using hmodular
-                cases Option.some.inj heq
-                rfl
-            | declined reason stats =>
-                have heq : some plan = some modular := by
-                  simpa only [houtcome] using hmodular
-                cases Option.some.inj heq
-                rfl
+  generalize hinput : classicalInput f = input at hmodular
+  cases input with
+  | answered factors trace => simp [ClassicalInput.run] at hmodular
+  | noGoodPrime => simp [ClassicalInput.run] at hmodular
+  | planned plan selected =>
+      rw [ClassicalInput.run, runClassicalPlan_modular] at hmodular
+      cases Option.some.inj hmodular
+      exact selected
 
-/-- Every raw factor of the cost-based hybrid comes from one of its three
-selection branches: the classical method's certified output, the CLD lattice
-method's certified output, or the `factorTrial` totality backstop. It
-exposes the branch source (mirroring `factorize_entry_mem_raw_source` for the
-raw hybrid array) without leaking the private `factorizationOfFactors` guard, so
-the Mathlib-side irreducibility assembly can case-split over the branches. -/
-theorem factorFactors_mem_source (f : ZPoly) {raw : ZPoly}
-    (hmem : raw ∈ (factorFactors f).toList) :
-    (∃ cf, factorClassicalFactors f =
-        some cf ∧ raw ∈ cf.toList) ∨
-      (∃ (modular : DirectPrimePlan
-            (SquareFreeInput.ofNormalized (normalizeForFactor f)))
-          (cf : Array ZPoly),
-        directPrimePlan?
-            (SquareFreeInput.ofNormalized (normalizeForFactor f)) = some modular ∧
-          factorLatticeFactorsWithPlan
+/-- A modular plan retained by the cost router is the unique plan selected in
+its classical input. -/
+theorem routeClassical_plan
+    (f : ZPoly)
+    {modular : DirectPrimePlan
+      (SquareFreeInput.ofNormalized (normalizeForFactor f))}
+    (hmodular : (routeClassical f).modular = some modular) :
+  directPrimePlan? (SquareFreeInput.ofNormalized (normalizeForFactor f)) =
+      some modular := by
+  unfold routeClassical at hmodular
+  generalize hinput : classicalInput f = input at hmodular
+  cases input with
+  | answered factors trace => simp [ClassicalInput.beforeProposal] at hmodular
+  | noGoodPrime => simp [ClassicalInput.beforeProposal] at hmodular
+  | planned plan selected =>
+      by_cases hroute :
+          proposalEligible (normalizeForFactor f).squareFreeCore
+              plan.data.factorsModP.size ∧
+            (normalizeForFactor f).squareFreeCore = f
+      · simp only [ClassicalInput.beforeProposal, if_pos hroute] at hmodular
+        cases Option.some.inj hmodular
+        exact selected
+      · simp only [ClassicalInput.beforeProposal, if_neg hroute] at hmodular
+        rw [runClassicalPlan_modular] at hmodular
+        cases Option.some.inj hmodular
+        exact selected
+
+/-- A successful cost-routed classical run is the same success returned by the
+unrestricted public classical method. -/
+theorem routeClassical_success
+    (f : ZPoly) {factors : Array ZPoly}
+    (h : (routeClassical f).factors = some factors) :
+    factorClassicalFactors f = some factors := by
+  unfold routeClassical at h
+  generalize hinput : classicalInput f = input at h
+  rw [factorClassicalFactors, runClassical, hinput]
+  cases input with
+  | answered answered trace =>
+      simpa [ClassicalInput.beforeProposal, ClassicalInput.run] using h
+  | noGoodPrime =>
+      simp [ClassicalInput.beforeProposal] at h
+  | planned plan selected =>
+      by_cases hroute :
+          proposalEligible (normalizeForFactor f).squareFreeCore
+              plan.data.factorsModP.size ∧
+            (normalizeForFactor f).squareFreeCore = f
+      · simp [ClassicalInput.beforeProposal, hroute] at h
+        have heligible : proposalEligible f plan.data.factorsModP.size := by
+          simpa [hroute.2] using hroute.1
+        simp [heligible] at h
+      · simpa only [ClassicalInput.beforeProposal, ClassicalInput.run,
+          if_neg hroute] using h
+
+set_option maxHeartbeats 800000 in
+/-- Every factor returned by a planned CLD run comes from its successful
+lattice result or from the trial-factorization backstop. -/
+theorem runLatticePlan_mem_source
+    (f : ZPoly) (trace : DirectFactorTrace)
+    (modular : DirectPrimePlan
+      (SquareFreeInput.ofNormalized (normalizeForFactor f)))
+    {raw : ZPoly} (hmem : raw ∈ (runLatticePlan f trace modular).factors.toList) :
+    (∃ cf,
+        factorLatticeFactorsWithPlan
             (normalizeForFactor f) (latticePrecisionCap f) modular = some cf ∧
           raw ∈ cf.toList) ∨
-      raw ∈ (factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)).toList := by
-  simp only [factorFactors, runFactor] at hmem
-  generalize hrun : runClassical f = run at hmem
+      raw ∈ (factorTrialFactorsWithBound f
+        (ZPoly.defaultFactorCoeffBound f)).toList := by
+  unfold runLatticePlan at hmem
+  cases hl : factorLatticeFactorsWithPlan
+      (normalizeForFactor f) (latticePrecisionCap f) modular with
+  | none =>
+      simp only [hl] at hmem
+      exact Or.inr hmem
+  | some cf =>
+      simp only [hl] at hmem
+      by_cases hp : Factorization.product (factorizationOfFactors f cf) = f
+      · rw [if_pos hp] at hmem
+        exact Or.inl ⟨cf, rfl, hmem⟩
+      · rw [if_neg hp] at hmem
+        exact Or.inr hmem
+
+/-- Every raw factor of the total selector comes from proposal replay,
+the classical method, the CLD lattice method, or the trial backstop. -/
+theorem runFactor_mem_source (f : ZPoly) {raw : ZPoly}
+    (hmem : raw ∈ (runFactor f).factors.toList) :
+    (∃ result : ProposedFactorization f,
+        raw ∈ result.factors.toList) ∨
+      (∃ cf, factorClassicalFactors f =
+          some cf ∧ raw ∈ cf.toList) ∨
+        (∃ (modular : DirectPrimePlan
+              (SquareFreeInput.ofNormalized (normalizeForFactor f)))
+            (cf : Array ZPoly),
+          directPrimePlan?
+              (SquareFreeInput.ofNormalized (normalizeForFactor f)) = some modular ∧
+            factorLatticeFactorsWithPlan
+              (normalizeForFactor f) (latticePrecisionCap f) modular = some cf ∧
+            raw ∈ cf.toList) ∨
+        raw ∈ (factorTrialFactorsWithBound f
+          (ZPoly.defaultFactorCoeffBound f)).toList := by
+  simp only [runFactor] at hmem
+  generalize hrun : routeClassical f = run at hmem
   cases hcf : run.factors with
   | some cf =>
       simp only [hcf] at hmem
       by_cases hp : Factorization.product (factorizationOfFactors f cf) = f
       · rw [if_pos hp] at hmem
-        exact Or.inl ⟨cf, by simp [factorClassicalFactors, hrun, hcf], hmem⟩
+        exact Or.inr (Or.inl
+          ⟨cf,
+            routeClassical_success f
+              (by simpa [hrun] using hcf),
+            hmem⟩)
       · rw [if_neg hp] at hmem
-        exact Or.inr (Or.inr hmem)
+        exact Or.inr (Or.inr (Or.inr hmem))
   | none =>
       simp only [hcf] at hmem
       cases hmod : run.modular with
       | none =>
           simp only [hmod] at hmem
-          exact Or.inr (Or.inr hmem)
+          exact Or.inr (Or.inr (Or.inr hmem))
       | some modular =>
           simp only [hmod] at hmem
-          cases hl : factorLatticeFactorsWithPlan
-              (normalizeForFactor f) (latticePrecisionCap f) modular with
-          | none =>
-              simp only [hl] at hmem
-              exact Or.inr (Or.inr hmem)
-          | some cf =>
-              simp only [hl] at hmem
-              by_cases hp :
-                  Factorization.product (factorizationOfFactors f cf) = f
-              · rw [if_pos hp] at hmem
-                exact Or.inr (Or.inl
-                  ⟨modular, cf,
-                    runClassical_modular_eq_some f
-                      (by simpa [hrun] using hmod),
-                    hl, hmem⟩)
-              · rw [if_neg hp] at hmem
-                exact Or.inr (Or.inr hmem)
+          have hplan :
+              directPrimePlan?
+                  (SquareFreeInput.ofNormalized (normalizeForFactor f)) =
+                some modular :=
+            routeClassical_plan f
+              (by simpa [hrun] using hmod)
+          have fallbackSource
+              (h : raw ∈ (runLatticePlan f run.trace modular).factors.toList) :
+              (∃ (modular : DirectPrimePlan
+                    (SquareFreeInput.ofNormalized (normalizeForFactor f)))
+                  (cf : Array ZPoly),
+                directPrimePlan?
+                    (SquareFreeInput.ofNormalized (normalizeForFactor f)) =
+                      some modular ∧
+                  factorLatticeFactorsWithPlan
+                    (normalizeForFactor f) (latticePrecisionCap f) modular =
+                      some cf ∧
+                  raw ∈ cf.toList) ∨
+                raw ∈ (factorTrialFactorsWithBound f
+                  (ZPoly.defaultFactorCoeffBound f)).toList := by
+            rcases runLatticePlan_mem_source f run.trace modular h with
+              ⟨cf, hl, hraw⟩ | hraw
+            · exact Or.inl ⟨modular, cf, hplan, hl, hraw⟩
+            · exact Or.inr hraw
+          by_cases hlarge : proposalEligible
+              (normalizeForFactor f).squareFreeCore
+              modular.data.factorsModP.size
+          · simp only [if_pos hlarge] at hmem
+            by_cases hcore : (normalizeForFactor f).squareFreeCore = f
+            · simp only [dif_pos hcore] at hmem
+              generalize hproposal :
+                  proposeFactorization f hcore modular = proposal at hmem
+              cases hresult : proposal.1 with
+              | some result =>
+                  simp only [hresult] at hmem
+                  exact Or.inl ⟨result, hmem⟩
+              | none =>
+                  simp only [hresult] at hmem
+                  rcases fallbackSource hmem with hl | ht
+                  · exact Or.inr (Or.inr (Or.inl hl))
+                  · exact Or.inr (Or.inr (Or.inr ht))
+            · simp only [dif_neg hcore] at hmem
+              rcases fallbackSource hmem with hl | ht
+              · exact Or.inr (Or.inr (Or.inl hl))
+              · exact Or.inr (Or.inr (Or.inr ht))
+          · simp only [if_neg hlarge] at hmem
+            rcases fallbackSource hmem with hl | ht
+            · exact Or.inr (Or.inr (Or.inl hl))
+            · exact Or.inr (Or.inr (Or.inr ht))
+
+/-- Every raw factor of the total selector comes from proposal replay or one
+of the established classical, lattice, and trial branches. -/
+theorem factorFactors_mem_source (f : ZPoly) {raw : ZPoly}
+    (hmem : raw ∈ (factorFactors f).toList) :
+    (∃ result : ProposedFactorization f,
+        raw ∈ result.factors.toList) ∨
+      (∃ cf, factorClassicalFactors f =
+          some cf ∧ raw ∈ cf.toList) ∨
+        (∃ (modular : DirectPrimePlan
+              (SquareFreeInput.ofNormalized (normalizeForFactor f)))
+            (cf : Array ZPoly),
+          directPrimePlan?
+              (SquareFreeInput.ofNormalized (normalizeForFactor f)) = some modular ∧
+            factorLatticeFactorsWithPlan
+              (normalizeForFactor f) (latticePrecisionCap f) modular = some cf ∧
+            raw ∈ cf.toList) ∨
+        raw ∈ (factorTrialFactorsWithBound f
+          (ZPoly.defaultFactorCoeffBound f)).toList := by
+  exact runFactor_mem_source f (by simpa [factorFactors] using hmem)
 
 
 private theorem content_ne_zero_of_zpoly_ne_zero (f : ZPoly) (hf : f ≠ 0) :

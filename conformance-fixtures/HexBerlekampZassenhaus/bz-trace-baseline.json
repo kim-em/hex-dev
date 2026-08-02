@@ -160,17 +160,17 @@
     "method": "classical"
   },
   "adv/swinnerton_dyer_sd5_pair": {
-    "candidatesTried": 206368,
-    "decline": "subsetBudget",
-    "henselLifts": 1,
+    "candidatesTried": 0,
+    "decline": "largeSupport",
+    "henselLifts": 0,
     "primeProbes": 3,
     "r": 32,
     "method": "lattice"
   },
   "adv/swinnerton_dyer_sd6": {
-    "candidatesTried": 206368,
-    "decline": "subsetBudget",
-    "henselLifts": 1,
+    "candidatesTried": 0,
+    "decline": "largeSupport",
+    "henselLifts": 0,
     "primeProbes": 3,
     "r": 32,
     "method": "lattice"
@@ -417,11 +417,11 @@
   },
   "regression/split_roots_1_24": {
     "candidatesTried": 24,
-    "decline": null,
+    "decline": "largeSupport",
     "henselLifts": 1,
     "primeProbes": 3,
     "r": 24,
-    "method": "classical"
+    "method": "replay"
   },
   "regression/split_roots_1_72": {
     "candidatesTried": 72,

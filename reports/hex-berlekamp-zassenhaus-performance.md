@@ -1,104 +1,137 @@
 # HexBerlekampZassenhaus Performance Report
 
-This report describes the supported public integer-factorization entry point.
-Standalone classical and lattice entries remain useful development diagnostics,
-but they are not presented as alternative public implementations.
+This report describes the supported public integer-polynomial factorization
+entry point. Standalone classical and lattice entries remain development
+diagnostics, not alternative public implementations.
 
-## Measurement
+## Current measurement
 
-The Hex record measures clean source revision
-`75291ae2fe6c58d95ba73dff9e5d2720df11b3d5` with
-`leanprover/lean4:v4.32.2`.  The executable SHA-256 is
-`f1b2c4262493cc35c68b2c433bba3803d31f6a27631000f52a6ee295721a6fe4`.
+The current Hex record measures clean source revision
+`1de5a116fbc0220d8e382fd53f5af3d92f2220af` with
+`leanprover/lean4:v4.33.0-rc1`. The executable SHA-256 is
+`074d19f6139f4f596c0f84429815cf81021f10d56a71cbdf3f36240671547430`.
 
-The sweep ran on `chungus2`, an AMD EPYC 9455 Linux x86-64 host, with the
-harness and service pinned to CPU 0.  It used the committed 392-row corpus
-`bench/corpus/hexbz-factor-corpus.jsonl`, whose SHA-256 is
+Hex was measured on 2026-08-02 and the external systems on 2026-08-01 on
+`chungus2`, an AMD EPYC 9455 Linux x86-64 host, with the harness and service
+pinned to CPU 0. The committed
+392-row corpus has SHA-256
 `619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`.
-Each service is persistent and warmed before measurement.  The harness uses a
-ten-second cutoff per call, the median of five calls when the first call is
-under one second, and one call otherwise.  Early termination was disabled.
-The public Hex protocol floor was 20.120 microseconds.
+Services were persistent and warmed. Each call had a ten-second cutoff; rows
+below one second used the median of five calls, and slower rows used one call.
+Early termination was disabled.
 
-The durable Hex record is
-`reports/bench-results/hexbz-factor-sweep-75291ae2-chungus2.json`
-(SHA-256
-`5d8b08225a4f2a0c8288d9f536303193a2f54b312a1cbae57ffcac23cd6295bd`).
-It records the full source revision, clean-worktree flag, toolchain, corpus
-hash, host, cutoff, repetition policy, and protocol overhead.
+The current artifacts are:
 
-The FLINT, PARI/GP, NTL, and verified Isabelle records are the unchanged
-2026-07-28 measurements from the same host, corpus, CPU placement, cutoff, and
-protocol.  They were not rerun because none of those inputs changed.
+- `reports/bench-results/hexbz-factor-sweep-1de5a116-hex-chungus2.json`
+  for Hex, SHA-256
+  `0cb56b948bdb48c31acfe4f325887dd2dd8801e9ac5f510f928158b44d2a2e7a`;
+- `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json`
+  for FLINT, NTL, PARI, and both Isabelle implementations, SHA-256
+  `4de27e389d738abc1e878f0be273485c3723216211a101c3eba55860e7b8a242`.
 
-## Cross-system results
+The second artifact contains an older same-run Hex row too, but the clean Lean
+4.33 Hex record supersedes it. The plotting and freshness tools select the
+newest valid record independently for each system.
 
-| System | Answered | Timed out | Median among answered rows |
+The prior PARI comparator artifact used PARI/GP 2.17.3; the current Nix closure
+provided 2.17.2. No cross-record PARI change is attributed to Hex. All current
+ratios and curves use the fresh same-protocol 2.17.2 measurement above.
+
+## Cross-system result
+
+| System | Answered | Timed out | Median | p90 | Slowest answer |
+|---|---:|---:|---:|---:|---:|
+| Hex public factorization | 376 | 16 | 375.596 us | 7.457 ms | 8.361 s |
+| FLINT 0.9.0 | 391 | 1 | 60.089 us | 1.139 ms | 1.241 s |
+| PARI/GP 2.17.2 | 391 | 1 | 65.687 us | 1.008 ms | 960.815 ms |
+| NTL 11.6.0 | 391 | 1 | 88.160 us | 2.365 ms | 1.305 s |
+| Verified Isabelle BZ | 371 | 21 | 439.591 us | 5.072 ms | 8.179 s |
+| Verified Isabelle LLL | 314 | 78 | 6.036 ms | 1.210 s | 9.474 s |
+
+Every answering system agreed with the committed factor-degree oracle or with
+the other systems on rows without one.
+
+For paired comparisons, both measurements must exceed ten times their own
+protocol overhead. On 216 eligible common rows, Hex divided by verified
+Isabelle BZ has median `0.775x`, p10-p90 `0.472x-2.662x`, and a 135-81 win
+split. Hex therefore has a useful aggregate lead over verified Isabelle BZ,
+but not a uniform one.
+
+The optimized unverified libraries remain substantially faster. Median Hex
+ratios are `10.899x` against FLINT, `11.803x` against PARI, and `5.961x`
+against NTL on 74, 79, and 140 eligible pairs respectively.
+
+## Effect of this optimization
+
+The proposal path now has two general rules:
+
+1. search support sizes one through three once, then repeatedly peel support
+   sizes one or two from the exact quotient while reusing the same Hensel
+   lift;
+2. build a selected-coordinate proposal lattice only after peeling has made
+   exact progress. With no peel, go directly to the exact full-CLD fallback.
+
+These rules contain no family or benchmark names. They retain repeated cheap
+progress on Wilkinson inputs and avoid speculative lattice work on inputs such
+as `sd6` where the cheap search found nothing.
+
+Against the preceding clean public record, 99 common rows above one
+millisecond have median new/old `1.017x` and p10-p90
+`0.992x-1.043x`; 19 are faster and 80 slower. Every family median lies between
+`0.991x` and `1.035x`. This final comparison includes the intervening Lean 4.33
+toolchain and core-library update; it shows a small broad slowdown rather than
+an optimization-only effect, while coverage improves by one.
+
+Two hard rows make the benefit concrete:
+
+- `hoeij_F190` is newly solved in 7.212 seconds after peeling a degree-10
+  factor and partitioning the degree-180 residual into two degree-90 pieces;
+- `sd6` answers in 8.361 seconds because a no-progress proposal now skips its
+  futile selected-coordinate lattice. It had sat at or beyond the cutoff
+  during the intermediate design.
+
+Representative Wilkinson timings remain smooth: 4.022 ms at degree 24,
+15.873 ms at degree 40, and 40.423 ms at degree 56. They are within about seven
+percent of the preceding clean record, so the data supports absence of a new
+threshold regression, not a Wilkinson speedup claim.
+
+Both hard-row successes exceed one second and therefore use one timed call under
+the declared repetition policy. F190 consumed 72% and `sd6` 84% of the ten-second
+cutoff. They establish current coverage, but should be rechecked after future
+factorization changes rather than treated as low-variance timing estimates.
+
+## Relative to verified Isabelle BZ
+
+| Family | Eligible pairs | Median Hex / Isabelle | Hex wins |
 |---|---:|---:|---:|
-| Hex public factorization | 375 | 17 | 352.262 µs |
-| FLINT 0.9.0 | 391 | 1 | 66.850 µs |
-| PARI/GP 2.17.3 | 391 | 1 | 99.958 µs |
-| NTL 11.6.0 | 391 | 1 | 135.631 µs |
-| Verified Isabelle BZ | 371 | 21 | 441.134 µs |
-| Verified Isabelle LLL | 314 | 78 | 6.109 ms |
+| Chebyshev | 9 | 0.474x | 9 |
+| Conway | 88 | 0.710x | 50 |
+| Cyclotomic | 24 | 1.112x | 10 |
+| Cyclotomic products | 18 | 1.060x | 9 |
+| Laguerre | 13 | 0.781x | 13 |
+| Legendre | 13 | 0.579x | 12 |
+| Random products | 26 | 0.582x | 25 |
+| Swinnerton-Dyer products | 7 | 0.788x | 4 |
+| Swinnerton-Dyer | 6 | 2.866x | 3 |
+| Wilkinson | 12 | 1.377x | 0 |
 
-Every pair of systems that answered agreed on the multiset of factor degrees.
-The coverage count treats every timeout as unsolved; it does not discard hard
-rows.
+There is no common answered Hoeij-Zimmermann row with verified Isabelle BZ.
+Hex is strong on Chebyshev, Legendre, random products, and Laguerre. Plain
+Swinnerton-Dyer and Wilkinson remain the clearest verified-comparator gaps.
 
-For comparisons below, a pair is eligible only when both measurements exceed
-ten times their own service's protocol floor.  On the 218 eligible common rows,
-Hex divided by verified Isabelle Berlekamp-Zassenhaus has median `0.734×` and
-10th-to-90th percentile range `0.460×` to `2.552×`.  Hex wins 137 rows and
-Isabelle wins 81.  Thus Hex has a useful aggregate lead, but the broad range
-does not support a claim of uniform superiority.
+## Remaining long tail
 
-The optimized unverified libraries remain substantially faster.  Hex/FLINT has
-median `11.68×` on 64 eligible rows, Hex/PARI has median `7.65×` on 81, and
-Hex/NTL has median `4.36×` on 170.  Hex wins none of the eligible FLINT or PARI
-pairs and 17 of the NTL pairs.
+The 16 Hex timeouts are `cyclo_phi1031`; `sd7`, `sd6_shift1`, and
+`sd6_shift5`; `sd5_x_sd5shift1`, `sd6_x_sd6shift1`, `sd6_x_phi13`, and
+`sd6_x_phi105`; and eight Hoeij-Zimmermann rows: `hoeij_P7`, `hoeij_F192`,
+`hoeij_F256`, `hoeij_F351`, `hoeij_F630`, `hoeij_S7`, `hoeij_S8`, and
+`hoeij_S9`.
 
-## Families relative to verified Isabelle BZ
-
-| Corpus family | Eligible pairs | Median Hex / Isabelle | Hex wins |
-|---|---:|---:|---:|
-| Chebyshev | 9 | 0.469× | 9 |
-| Conway | 90 | 0.693× | 50 |
-| Cyclotomic | 24 | 1.112× | 10 |
-| Cyclotomic products | 18 | 1.046× | 9 |
-| Laguerre | 13 | 0.757× | 13 |
-| Legendre | 13 | 0.576× | 12 |
-| Random products | 26 | 0.555× | 26 |
-| Swinnerton-Dyer products | 7 | 0.798× | 4 |
-| Swinnerton-Dyer | 6 | 2.772× | 3 |
-| Wilkinson | 12 | 1.369× | 1 |
-
-Hoeij-Zimmermann has no common answered row with verified Isabelle BZ, so it
-has no eligible family comparison.
-
-The stable build is particularly strong on the Chebyshev and Legendre rows
-that motivated the direct-coordinate lifting work.  The remaining weak
-families are plain Swinnerton-Dyer, Wilkinson, and parts of the cyclotomic
-families.
-
-## Coverage and long tail
-
-Hex solves every Chebyshev, Conway, cyclotomic-product, Laguerre, Legendre,
-random-product, and Wilkinson row.  The 17 cutoff rows are:
-
-- `cyclo_phi1031`;
-- `sd7`, `sd6_shift1`, and `sd6_shift5`;
-- `sd5_x_sd5shift1`, `sd6_x_sd6shift1`, `sd6_x_phi13`, and `sd6_x_phi105`;
-- `hoeij_P7`, `hoeij_F190`, `hoeij_F192`, `hoeij_F256`, `hoeij_F351`,
-  `hoeij_F630`, `hoeij_S7`, `hoeij_S8`, and `hoeij_S9`.
-
-The Hoeij-Zimmermann family is the largest coverage gap: one of ten rows
-answers within the cutoff.  Swinnerton-Dyer products solve ten of fourteen,
-plain Swinnerton-Dyer solves twelve of fifteen, and cyclotomic solves
-thirty-three of thirty-four.  These failures, together with the large gap to
-FLINT, PARI, and NTL, are the main performance work remaining after release.
-
-The regenerated cactus and runtime-by-degree figures under `reports/figures/`
-merge this Hex record with the unchanged external records.  The plotting tool
-checks the common corpus hash before combining them and identifies the exact
-source artifact used for each system.
+The most promising next general optimization is to reuse all cached
+other-prime degree-reachability bitsets inside classical recombination. The
+planner already computes them, but the candidate iterator currently filters
+only by the selected prime and target degree. Before implementation, record
+per-level leaves, cross-prime degree survivors, constructed candidates, exact
+divisions, and wall time; after implementation, require lower survivors and
+candidate construction without a coverage loss or a material median
+regression on the full corpus.
