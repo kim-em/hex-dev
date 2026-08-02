@@ -581,6 +581,13 @@ example (f g : DensePoly Int) (hg : g ≠ 0) (hgf : g.size ≤ f.size) :
     disc (f2 * g2) = disc f2 * disc g2 * resultant f2 g2 ^ 2 &&
     disc (f3 * g3) = disc f3 * disc g3 * resultant f3 g3 ^ 2
 
+-- A nonunit constant breaks the product identity under the public convention
+-- `disc (C c) = 1`, pinning the need for both positive-degree hypotheses.
+#guard
+  let f := poly [1, 0, 1]
+  let c := poly [2]
+  disc (f * c) != disc f * disc c * resultant f c ^ 2
+
 /- The derivative of `2*X^10 + 3*X` in characteristic five is the constant
 `3`, nine degrees below its formal degree. This reaches the leading-coefficient
 gap power that is unreachable over the integers. -/

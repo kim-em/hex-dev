@@ -468,11 +468,14 @@ quotient is exact over every stated exact-division domain.
   comparator. The informational external comparator is
   [FLINT](https://flintlib.org/) `fmpz_poly.resultant` and
   `fmpz_poly.discriminant`, called through python-flint's persistent-process
-  interface on every rung of the shared bounded-dense input ladder. FLINT's
-  modular and asymptotically fast kernels differ structurally from Hex's
-  integral Brown recurrence, so its ratios orient the Phase-4 report but do
-  not gate it. Exact value cross-checking against both FLINT and PARI remains
-  independently covered by the conformance oracle.
+  interface on every rung of the equal-degree bounded-dense input ladder. It
+  covers `runResultant` and `runDisc`. The `runChain` and `runPseudoDiv`
+  targets declare **no-comparable-surface-in-named-comparator**: python-flint
+  exposes neither a subresultant chain nor pseudo-division on `fmpz_poly`.
+  FLINT's modular and asymptotically fast kernels differ structurally from
+  Hex's integral Brown recurrence, so its ratios orient the Phase-4 report but
+  do not gate it. Exact value cross-checking against both FLINT and PARI
+  remains independently covered by the conformance oracle.
 
 ## Conformance fixtures
 

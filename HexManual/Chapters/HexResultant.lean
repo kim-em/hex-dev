@@ -35,9 +35,11 @@ correspondence between the final executable value and
 {name}`Polynomial.resultant`, including specialization and discriminant
 conventions.
 
-Exact division is a checked algebraic contract rather than an unchecked use of
-the total `/` operation. The algorithm only invokes it at factors whose
-divisibility has been established by the Brown recurrence:
+Exact division is governed by the algebraic law `ExactDivLaws`, which the
+correctness proofs discharge rather than assuming laws for the total `/`
+operation. The executable carries no runtime divisibility check; the algorithm
+only invokes division at factors whose divisibility the Brown recurrence has
+established:
 
 {docstring Hex.ExactDivLaws}
 

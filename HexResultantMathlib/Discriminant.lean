@@ -127,7 +127,7 @@ theorem toPolynomial_disc [CommRing R] [IsDomain R] [DecidableEq R]
           (n * (n - 1) / 2))
     rw [← mul_assoc, hsign, one_mul]
 
-private theorem polynomial_discr_mul [CommRing R] [IsDomain R]
+private theorem discr_mul [CommRing R] [IsDomain R]
     [IsAddTorsionFree R] (f g : Polynomial R)
     (hf : 0 < f.natDegree) (hg : 0 < g.natDegree) :
     Polynomial.discr (f * g) =
@@ -321,7 +321,7 @@ theorem disc_mul [CommRing R] [IsDomain R] [IsAddTorsionFree R]
   rw [toPolynomial_disc, toPolynomial_disc, toPolynomial_disc,
     HexPolyMathlib.toPolynomial_mul, toPolynomial_resultant]
   simpa only [HexPolyMathlib.natDegree_toPolynomial] using
-    polynomial_discr_mul _ _ hf' hg'
+    discr_mul _ _ hf' hg'
 
 /-- A positive-degree polynomial over a characteristic-zero field has
 nonzero executable discriminant exactly when it is separable. -/
@@ -370,8 +370,18 @@ theorem disc_ne_zero_iff_separable [Field R] [IsAddTorsionFree R]
   · intro hcoprime hdisc
     exact (hzero.mp hdisc) hcoprime
 
--- Trust-surface regression checks for the headline discriminant contracts.
+/-! Trust-surface regression checks for the headline discriminant contracts. -/
+
+/--
+info: 'Hex.DensePoly.disc_mul' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms disc_mul
+
+/--
+info: 'Hex.DensePoly.disc_ne_zero_iff_separable' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms disc_ne_zero_iff_separable
 
 end Hex.DensePoly

@@ -540,8 +540,10 @@ libraries:
           class: informational
           rationale: "FLINT uses tuned modular and asymptotically fast integer-polynomial kernels, while Hex uses the integral Brown subresultant recurrence. The shared-rung ratios orient optimization work but do not gate Phase 4. Both operations are wired through the shared persistent-subprocess driver; FLINT/PARI correctness remains independently checked by the conformance oracle."
       input_families:
-        - name: bounded-dense-polynomial-prs
-          description: Seed-0xC0FFEE bounded-coefficient dense integer polynomials with nonzero leading coefficients; equal-degree pairs drive Brown chains, resultants, and discriminants, while the degree-n by degree-n/2 variant drives pseudo-division.
+        - name: bounded-dense-equal-degree-prs
+          description: Seed-0xC0FFEE bounded-coefficient equal-degree dense integer polynomial pairs with nonzero leading coefficients; drives Brown chains, resultants, and discriminants on the shared 4-through-32 ladder.
+        - name: bounded-dense-pseudo-division
+          description: Seed-0xC0FFEE bounded-coefficient dense integer polynomials with both leading coefficients fixed at two; drives degree-n by degree-n/2 pseudo-division on the 24-through-128 ladder.
   HexInterval:
     deps: []
     mathlib: false
