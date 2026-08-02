@@ -208,6 +208,104 @@ higher precision, after both paths canonicalise factors modulo `p^k`.
         (ZPoly.multifactorLiftQuadratic 5 6 qmAdversarialF qmAdversarialFactors) 5 6
 
 /-
+Canonical-coefficient conformance for the quadratic lift (issue #9131).
+
+The quadratic recursion reaches `p^k` from `p^ceil(k/2)`, so for even `k`
+the doubling step lands on `p^k` exactly and its output is already
+canonical there; only an odd `k`, whose step overshoots to `p^(k+1)`,
+needs the descent. The compiled shapes drop the reductions the even case
+makes redundant, and the leaf reduction below the root of the product
+tree, so these checks exercise both parities on both sides of the
+word-to-bignum boundary. `#guard` runs the compiled code, so it sees the
+`@[csimp]` implementations rather than the specifications.
+
+At `p = 5` the word-sized step guard is `m * m < 2^64` for the step's own
+modulus `m = 5^ceil(k/2)`, so `5^13` is the last half-exponent that fits.
+Targets `k = 26` (even, top step at `5^13`, word path) and `k = 27` (odd,
+top step at `5^14`, bignum path) therefore bracket that boundary; `k = 40`
+is the high-precision large-coefficient case, whose coefficients run to
+`5^40 > 9 * 10^27`.
+-/
+
+private def qmParityFactors : Array ZPoly :=
+  #[DensePoly.ofCoeffs #[2, 1, 1],
+    DensePoly.ofCoeffs #[3, 1],
+    DensePoly.ofCoeffs #[4, 1],
+    DensePoly.ofCoeffs #[1, 2, 1]]
+
+private def qmParityF : ZPoly := Array.polyProduct qmParityFactors
+
+-- Even target exponent, both steps inside the word path.
+#guard congrOn
+  (Array.polyProduct (ZPoly.multifactorLiftQuadratic 5 8 qmParityF qmParityFactors))
+  qmParityF (5 ^ 8) 8
+#guard reduceArrModPow (ZPoly.multifactorLift 5 8 qmParityF qmParityFactors) 5 8
+     = reduceArrModPow (ZPoly.multifactorLiftQuadratic 5 8 qmParityF qmParityFactors) 5 8
+
+-- Odd target exponent, where the descent from `p^(k+1)` is genuinely needed.
+#guard congrOn
+  (Array.polyProduct (ZPoly.multifactorLiftQuadratic 5 9 qmParityF qmParityFactors))
+  qmParityF (5 ^ 9) 8
+#guard reduceArrModPow (ZPoly.multifactorLift 5 9 qmParityF qmParityFactors) 5 9
+     = reduceArrModPow (ZPoly.multifactorLiftQuadratic 5 9 qmParityF qmParityFactors) 5 9
+
+-- Even target exponent whose top step is the last one the word path takes.
+#guard congrOn
+  (Array.polyProduct (ZPoly.multifactorLiftQuadratic 5 26 qmParityF qmParityFactors))
+  qmParityF (5 ^ 26) 8
+#guard reduceArrModPow (ZPoly.multifactorLift 5 26 qmParityF qmParityFactors) 5 26
+     = reduceArrModPow (ZPoly.multifactorLiftQuadratic 5 26 qmParityF qmParityFactors) 5 26
+
+-- Odd target exponent whose top step has crossed into the bignum path.
+#guard congrOn
+  (Array.polyProduct (ZPoly.multifactorLiftQuadratic 5 27 qmParityF qmParityFactors))
+  qmParityF (5 ^ 27) 8
+#guard reduceArrModPow (ZPoly.multifactorLift 5 27 qmParityF qmParityFactors) 5 27
+     = reduceArrModPow (ZPoly.multifactorLiftQuadratic 5 27 qmParityF qmParityFactors) 5 27
+
+-- High-precision large-coefficient case, entirely on the bignum path.
+#guard congrOn
+  (Array.polyProduct (ZPoly.multifactorLiftQuadratic 5 40 qmParityF qmParityFactors))
+  qmParityF (5 ^ 40) 8
+#guard reduceArrModPow (ZPoly.multifactorLift 5 40 qmParityF qmParityFactors) 5 40
+     = reduceArrModPow (ZPoly.multifactorLiftQuadratic 5 40 qmParityF qmParityFactors) 5 40
+
+-- Every lifted factor is canonical in `[0, p^k)`, which is what the dropped
+-- reductions used to establish and the invariant now establishes instead.
+private def arrCanonical (a : Array ZPoly) (p k bound : Nat) : Bool :=
+  a.all (fun g => (List.range bound).all (fun i =>
+    0 ≤ g.coeff i ∧ g.coeff i < ((p ^ k : Nat) : Int)))
+
+#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 8 qmParityF qmParityFactors) 5 8 8
+#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 9 qmParityF qmParityFactors) 5 9 8
+#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 26 qmParityF qmParityFactors) 5 26 8
+#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 27 qmParityF qmParityFactors) 5 27 8
+#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 40 qmParityF qmParityFactors) 5 40 8
+
+-- The factor-only last step still agrees with the projection of the full
+-- lift, at both parities and on both sides of the word-to-bignum boundary.
+private def qmSplitG : ZPoly := DensePoly.ofCoeffs #[2, 1, 1]
+private def qmSplitH : ZPoly := DensePoly.ofCoeffs #[3, 1]
+private def qmSplitF : ZPoly := qmSplitG * qmSplitH
+
+private def qmSplitS : ZPoly :=
+  FpPoly.liftToZ (ZPoly.normalizedXGCD 5 qmSplitG qmSplitH).left
+private def qmSplitT : ZPoly :=
+  FpPoly.liftToZ (ZPoly.normalizedXGCD 5 qmSplitG qmSplitH).right
+
+private def factorsMatchFullLift (k : Nat) : Bool :=
+  let factors := ZPoly.henselLiftFactors 5 k qmSplitF qmSplitG qmSplitH qmSplitS qmSplitT
+  let full := ZPoly.henselLiftQuadratic 5 k qmSplitF qmSplitG qmSplitH qmSplitS qmSplitT
+  factors.1 == full.g && factors.2 == full.h
+
+#guard factorsMatchFullLift 1
+#guard factorsMatchFullLift 8
+#guard factorsMatchFullLift 9
+#guard factorsMatchFullLift 26
+#guard factorsMatchFullLift 27
+#guard factorsMatchFullLift 40
+
+/-
 Asymptotic-gap commentary (observation only; no timing assertion).
 
 `multifactorLift` lifts to precision `p^k` via `k - 1` linear steps per

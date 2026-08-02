@@ -44,6 +44,49 @@ to `FpPoly` or back into `ZPoly`.
 def intModNat (z : Int) (m : Nat) : Nat :=
   Int.toNat (z % Int.ofNat m)
 
+/--
+Windowed implementation of `intModNat`.
+
+Modular addition of canonical operands lands in `[0, 2m)` and modular
+subtraction in `(-m, m)`, so on the modular hot path almost every coefficient
+is within one modulus of its canonical representative. Testing for that costs a
+bignum comparison and at most one bignum addition, where `Int.emod` costs a
+full division; a value already in `[0, m)` is returned without allocating at
+all. Only genuinely wide values -- products, and the descent from a doubled
+precision -- pay for the division.
+
+Proved equal to `intModNat` in `intModNat_eq_impl`.
+-/
+def intModNatImpl (z : Int) (m : Nat) : Nat :=
+  if 0 ≤ z then
+    if z < Int.ofNat m then z.toNat else Int.toNat (z % Int.ofNat m)
+  else
+    let shifted := z + Int.ofNat m
+    if 0 ≤ shifted then shifted.toNat else Int.toNat (z % Int.ofNat m)
+
+theorem intModNat_eq_impl_value (z : Int) (m : Nat) :
+    intModNat z m = intModNatImpl z m := by
+  unfold intModNat intModNatImpl
+  by_cases hz : 0 ≤ z
+  · rw [if_pos hz]
+    by_cases hlt : z < Int.ofNat m
+    · rw [if_pos hlt, Int.emod_eq_of_lt hz hlt]
+    · rw [if_neg hlt]
+  · rw [if_neg hz]
+    dsimp only
+    by_cases hshift : 0 ≤ z + Int.ofNat m
+    · rw [if_pos hshift]
+      have hlt : z + Int.ofNat m < Int.ofNat m := by omega
+      have hshift_emod : (z + Int.ofNat m) % Int.ofNat m = z % Int.ofNat m := by
+        simp
+      rw [← hshift_emod, Int.emod_eq_of_lt hshift hlt]
+    · rw [if_neg hshift]
+
+/-- Proof-backed compiled implementation of the canonical representative. -/
+@[csimp] theorem intModNat_eq_impl : @intModNat = @intModNatImpl := by
+  funext z m
+  exact intModNat_eq_impl_value z m
+
 /-- `intModNat` is the canonical nonnegative representative: re-coercing to `Int`
 recovers the ordinary integer remainder. Used to connect the `Nat`-valued executable
 reduction with `Int`-level congruence reasoning. -/
