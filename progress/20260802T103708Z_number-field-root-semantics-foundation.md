@@ -9,6 +9,7 @@
 - Proved the fixed-field and algebraic root drivers return positive multiplicities.
 - Reduced `HexNumberFieldMathlib/Roots.lean` from 21 to 14 public `sorry` obligations without adding axioms or new sorries.
 - Verified the focused target, the NumberField Mathlib/manual/conformance/fixture/bench targets, and the full repository build.
+- Repaired the factor-sweep freshness gate so source-identical measurements survive the repository's required squash-merge workflow; this unblocks the already-failing `main` CI introduced by PR #9134.
 
 ## Current frontier
 
@@ -20,4 +21,4 @@ Merge this cohesive foundation PR, then prove fixed-field root-driver totality a
 
 ## Blockers
 
-None. The remaining fixed-field completeness block is substantial but its required evaluation, conversion, and merging lemmas are now available.
+PR CI initially exposed a pre-existing mainline failure: the factor-sweep checker required the pre-squash measurement commit to remain an ancestor. The branch now repairs that incompatible ancestry check while preserving exact relevant-source comparison. The remaining fixed-field completeness block is substantial but its required evaluation, conversion, and merging lemmas are available.
