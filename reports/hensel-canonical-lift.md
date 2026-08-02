@@ -37,15 +37,18 @@ the attribution that locates what is left.
   arm back to back before the next round starts, so a drift in host load lands
   on all arms rather than on one. Reported timings are the median over rounds;
   allocation counts are exact and identical across rounds.
-- `taskset -c 0` pinned the measured service. Unlike the elbow baseline, this
-  host was **not** reliably quiet: sibling agent worktrees compiled
-  intermittently and one-minute load average reached 23. Every timing table
-  below records the load average each of its rounds started at, and only
-  comparisons whose rounds all ran under load average 6 are reported. Rounds
-  taken under heavier load inflated *every* arm by a factor of two to three;
-  they are excluded rather than averaged in. Each table is accompanied by the
-  exact allocation counters for the same arms, which are load-independent and
-  move in the same direction.
+- The measured service was pinned to one core, but **not** to core 0: three
+  agent worktrees were measuring this corpus concurrently and the shared recipe
+  pins to core 0, so all three collided there. See "a measurement trap worth
+  recording" below. Phase profiles used `taskset -c 0` during windows when
+  `ps -eo psr` showed no sibling service there; the corpus sweep used
+  `taskset -c 8` after checking that core and its SMT sibling were idle.
+- Every timing table below records the load average its rounds started at, and
+  only comparisons whose rounds all ran under load average 6 are reported.
+  Rounds taken under heavier load inflated *every* arm by a factor of two to
+  three; they are excluded rather than averaged in. Each table is accompanied
+  by exact allocation counters for the same arms, which are load-independent
+  and move in the same direction.
 
 ## The coefficient-range invariant
 
@@ -255,39 +258,51 @@ for. The reduction cost it targets is now bounded above by the windowed
 implementation's remaining share, and the multiplication cost it would not
 change is the larger term.
 
-## The corpus sweep, and how much of it to believe
+## The corpus sweep, and a measurement trap worth recording
 
-The committed record `hexbz-factor-sweep-<commit>-hex-chungus2.json` is a
-single complete hex-only sweep of all 392 corpus rows, measured under the
-recorded protocol and passing its differential cross-check. It is **not** a
-quiet-host measurement, and a reader comparing it row for row against
-`hexbz-factor-sweep-c34ffbbb-hex-chungus2.json` will see a spread that is not
-in the code.
+The committed record `hexbz-factor-sweep-7200f7d1-hex-chungus2.json` is a
+complete hex-only sweep of all 392 corpus rows on a clean tree, passing its
+differential cross-check, solving 376 of 392 -- the same set the `c34ffbbb`
+baseline solves. Against that baseline it reads p10 0.965, median 1.001, p75
+1.017, p90 1.048, max 1.178.
 
-The size of that spread is measurable without reference to any baseline. Two
-complete sweeps of the *same* binary, back to back, differ by a median of
-1.006 but a p90 of 1.886, a minimum of 0.367 and a maximum of 2.713. The rows
-each run reports as slow against the baseline overlap by a Jaccard index of
-only 0.27, and within a run they fall in contiguous blocks by sweep position --
-the signature of external load bursts, since the sweep visits the corpus in
-order. A systematic regression would produce a scattered, reproducible set.
+Five earlier attempts at the same sweep did not read like that. They came out
+bimodal: roughly a quarter of rows at about 1.9 times the baseline, the rest at
+1.0, with the slow set differing from run to run. Two complete sweeps of the
+*same* binary differed by a p90 of 1.886, a minimum of 0.367 and a maximum of
+2.713, and their slow sets overlapped by a Jaccard index of only 0.27. Within a
+run the slow rows fell in contiguous blocks by sweep position.
 
-Correcting for that by taking the per-row minimum over two runs gives, against
-the `c34ffbbb` baseline:
+The cause is worth recording because it will recur. This corpus's measurement
+recipe pins the service with `taskset -c 0`, and three agent worktrees were
+working the same tracking issue concurrently, each following that recipe. All
+three measurement processes were therefore competing for **core 0** on a
+96-core host, while the load average -- 2 to 5 for most of those runs -- gave no
+hint of it. `ps -eo pid,psr` showed three `hexbz_factor_service` processes on
+processor 0 at once.
 
-| statistic | min over two runs / baseline |
-|---|---:|
-| median | 0.999 |
-| p75 | 1.017 |
-| p90 | 1.063 |
-| max | 2.238 |
+The record above was taken with `taskset -c 8`, having first checked that core
+8 and its SMT sibling were idle. That is a deliberate deviation from the
+protocol's `-c 0`, and it is the only reason this sweep is usable. **When more
+than one measurement can run on this host, pin each to a verified-idle core
+rather than to core 0.**
 
-which is the flat distribution the phase-profile A/Bs predict. The committed
-record is left as a single unedited sweep rather than a synthesized minimum, so
-**re-measure it on a quiet `chungus2` before using this Hex curve for
-cross-system comparison.** The per-phase conclusions in this page do not depend
-on it; they come from the arm-alternating profiles above and from exact
-allocation counters.
+Sweep-level end-to-end times for the elbow rows, against the `c34ffbbb`
+baseline sweep, corroborate the phase-profile A/Bs:
+
+| instance | baseline sweep | this sweep | change |
+|---|---:|---:|---:|
+| `cyclo_phi179` | 80.025 ms | 75.533 ms | -5.6% |
+| `cyclo_phi385` | 455.841 ms | 431.827 ms | -5.3% |
+| `wilkinson_56` | 40.396 ms | 38.793 ms | -4.0% |
+| `xpow105_minus1` | 84.464 ms | 81.525 ms | -3.5% |
+| `cyclo_phi128_x_phi165` | 205.261 ms | 198.591 ms | -3.2% |
+| `wilkinson_48` | 29.732 ms | 28.430 ms | -4.4% |
+| `wilkinson_40` | 15.912 ms | 15.451 ms | -2.9% |
+| `cyclo_phi64_x_phi105` | 88.460 ms | 87.112 ms | -1.5% |
+| `sd5` | 106.911 ms | 108.383 ms | +1.4% |
+
+Cactus ranks are unchanged for every representative row.
 
 ## Reproduction
 
