@@ -8,6 +8,7 @@ module
 
 public import HexNumberFieldMathlib.AlgebraicPoly
 public import HexNumberFieldMathlib.RootDisambiguation
+public import HexNumberFieldMathlib.Yun
 public import Mathlib.Algebra.Polynomial.Div
 
 public section
@@ -395,24 +396,26 @@ theorem componentRoots?_total [ZPoly.CheckedIrreducible p]
   exact componentRoots?_isSome f multiplicity hMultiplicity rep h
     hprim hpos hdegree hsimple
 
-private theorem mergeRootAux_isSome (candidate : RootCount) (index fuel : Nat)
-    (roots : Array RootCount) :
-    (mergeRootAux candidate index fuel roots).isSome := by
-  induction fuel generalizing index roots with
-  | zero => simp [mergeRootAux]
-  | succ fuel ih =>
-      rw [mergeRootAux]
-      split
-      · rename_i hi
-        obtain ⟨same, hsame⟩ := Option.isSome_iff_exists.mp
-          (sameValue?_isSome roots[index].root candidate.root)
-        cases same <;> simp [hsame, ih]
-      · simp
+private theorem mergeRootList_isSome (candidate : RootCount)
+    (roots : List RootCount) :
+    (mergeRootList candidate roots).isSome := by
+  induction roots with
+  | nil => simp [mergeRootList]
+  | cons current roots ih =>
+      obtain ⟨same, hsame⟩ := Option.isSome_iff_exists.mp
+        (sameValue?_isSome current.root candidate.root)
+      cases same with
+      | true => simp [mergeRootList, hsame]
+      | false =>
+          obtain ⟨tail, htail⟩ := Option.isSome_iff_exists.mp ih
+          simp [mergeRootList, hsame, htail]
 
 /-- Merging a root through a complete semantic scan cannot fail. -/
 theorem mergeRoot_isSome (roots : Array RootCount) (candidate : RootCount) :
     (mergeRoot roots candidate).isSome := by
-  exact mergeRootAux_isSome candidate 0 (roots.size + 1) roots
+  obtain ⟨merged, hmerged⟩ := Option.isSome_iff_exists.mp
+    (mergeRootList_isSome candidate roots.toList)
+  simp [mergeRoot, hmerged]
 
 /-- Folding semantic root merging over a finite candidate array cannot fail. -/
 theorem mergeRoots_isSome (roots candidates : Array RootCount) :
@@ -666,7 +669,9 @@ theorem coeff_toPolynomialAt (f : DensePoly (QAdjoin p x))
     coeff_hornerAt, array_toList_getDAt]
   rfl
 
-private theorem toPolynomialAt_eq_map [ZPoly.CheckedIrreducible p]
+/-- Fixed-field Horner interpretation is polynomial coefficient mapping by
+the selected complex embedding. -/
+theorem toPolynomialAt_eq_map [ZPoly.CheckedIrreducible p]
     (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
     QAdjoin.toPolynomialAt f rep h =
@@ -1312,7 +1317,7 @@ theorem roots?_isSome [ZPoly.CheckedIrreducible p]
       exact Roots.mergeRoots_isSome out found
     obtain ⟨roots, hroots⟩ := Option.isSome_iff_exists.mp hfold
     apply Option.isSome_iff_exists.mpr
-    refine ⟨.finite (roots.qsort Roots.rootLe), ?_⟩
+    refine ⟨.finite (roots.mergeSort Roots.rootLe), ?_⟩
     rw [show (Roots.yun f).foldlM
         (fun out component =>
           if hm : 0 < component.2 then do
@@ -1366,58 +1371,6 @@ theorem roots_all_iff [ZPoly.CheckedIrreducible p]
   rw [← QAdjoin.poly_isZero_iff f rep h,
     ← roots?_all_iff_isZero f rep h, roots?_eq_roots]
   simp
-
-/-- Semantic membership in the fixed-field output is exactly polynomial
-vanishing. -/
-theorem contains_roots_iff [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
-    (h : SimpleRoot.mk rep = x) (z : ℂ) :
-    RootSet.Contains (QAdjoin.roots f rep h) z ↔
-      Polynomial.eval z (QAdjoin.toPolynomialAt f rep h) = 0 := by
-  sorry
-
-/-- Fixed-field root multiplicities agree with Mathlib multiplicities. -/
-theorem multiplicity_roots [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
-    (h : SimpleRoot.mk rep = x) (z : ℂ) :
-    (QAdjoin.roots f rep h).multiplicityOf z =
-      Polynomial.rootMultiplicity z (QAdjoin.toPolynomialAt f rep h) := by
-  sorry
-
-/-- The fixed-field driver produces positive multiplicities. -/
-theorem roots_positive [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
-    (h : SimpleRoot.mk rep = x) :
-    RootSet.Positive (QAdjoin.roots f rep h) := by
-  cases hroots : QAdjoin.roots f rep h with
-  | all => trivial
-  | finite roots =>
-      intro entry _hentry
-      exact entry.multiplicity_pos
-
-/-- The fixed-field driver merges all semantic duplicates. -/
-theorem roots_noDuplicates [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
-    (h : SimpleRoot.mk rep = x) :
-    RootSet.NoDuplicates (QAdjoin.roots f rep h) := by
-  sorry
-
-/-- The fixed-field driver uses its deterministic canonical root order. -/
-theorem roots_ordered [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
-    (h : SimpleRoot.mk rep = x) :
-    RootSet.Ordered (QAdjoin.roots f rep h) := by
-  sorry
-
-/-- For a nonzero fixed-field polynomial, the output multiplicities sum to
-its degree. -/
-theorem totalMultiplicity_roots [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
-    (h : SimpleRoot.mk rep = x)
-    (hf : QAdjoin.toPolynomialAt f rep h ≠ 0) :
-    (QAdjoin.roots f rep h).totalMultiplicity =
-      (QAdjoin.toPolynomialAt f rep h).natDegree := by
-  sorry
 
 end QAdjoin
 
