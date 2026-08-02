@@ -138,6 +138,15 @@ def runFlintDisc (input : Input) : IO Int := do
   | Except.error msg =>
       throw <| IO.userError s!"FLINT fmpz_poly.discriminant result not integer: {msg}"
 
+/-- Persistent-driver JSON framing and dispatch calibration with no polynomial
+work. This isolates the per-call overhead subtracted in the headline report. -/
+def runFlintOverhead (_ : Unit) : IO Int := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpz_poly" "overhead" #[]
+  match result.getInt? with
+  | Except.ok n => return n
+  | Except.error msg =>
+      throw <| IO.userError s!"FLINT persistent-driver overhead result not integer: {msg}"
+
 def runResultantAt (n : Nat) : Unit → IO Int := fun _ =>
   return runResultant (prepInput n)
 def runFlintResultantAt (n : Nat) : Unit → IO Int := fun _ =>
@@ -263,6 +272,8 @@ def leanCompareConfig : LeanBench.FixedBenchmarkConfig :=
 def flintCompareConfig : LeanBench.FixedBenchmarkConfig :=
   { repeats := 5, maxSecondsPerCall := 6.0, warmupFirstIter := true,
     minTotalSeconds := 0.2 }
+
+setup_fixed_benchmark runFlintOverhead where flintCompareConfig
 
 setup_fixed_benchmark runResultant4 where leanCompareConfig
 setup_fixed_benchmark runFlintResultant4 where flintCompareConfig
