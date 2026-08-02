@@ -757,6 +757,12 @@ private def modularSubPhases (sink : IO.Ref Nat) (core : ZPoly)
     let factors := (Berlekamp.berlekampFactor monic hmonic).factors
     observeNat sink factors.length
     let m6 ← mark
+    -- `berlekampFactor` recomputes the fixed-space kernel internally, so the
+    -- equal-degree splitting cost is what remains once the separately measured
+    -- matrix construction and row reduction are removed from its total.
+    let matrixNanos := m4.nanos - m3.nanos
+    let reduceNanos := m5.nanos - m4.nanos
+    let factorNanos := m6.nanos - m5.nanos
     return Json.mkObj
       [ ("measurement", Json.str "repeat-at-selected-prime"),
         ("prime", natJson c.p),
@@ -767,7 +773,8 @@ private def modularSubPhases (sink : IO.Ref Nat) (core : ZPoly)
         ("goodPrimeTest", spanJson m1 m2),
         ("berlekampMatrix", spanJson m3 m4),
         ("rowReduction", spanJson m4 m5),
-        ("splitting", spanJson m5 m6) ]
+        ("berlekampFactorTotal", spanJson m5 m6),
+        ("splittingNanos", natJson (factorNanos - matrixNanos - reduceNanos)) ]
   else
     return Json.mkObj
       [ ("measurement", Json.str "repeat-at-selected-prime"),
@@ -901,7 +908,12 @@ private def factorPhaseProfile (f : ZPoly) : IO Json := do
             ("liftedFactorDegrees",
               natArrayJson (basis.liftedFactors.map (·.degree?.getD 0))),
             ("liftedMaxCoeffBits", natJson (maxCoeffBits basis.liftedFactors)),
-            ("treeShape", Json.str "flat-multifactor") ]
+            -- `multifactorLiftQuadraticList` recurses on a balanced split, so
+            -- the product tree is binary with one `henselLiftFactors` call per
+            -- internal node; the split point itself is degree-dependent.
+            ("treeShape", Json.str "balanced-split binary product tree"),
+            ("treeLeaves", natJson basis.liftedFactors.size),
+            ("treeInternalLifts", natJson (basis.liftedFactors.size - 1)) ]
         let searchStart ← mark
         let search := countedSearch (DensePoly.leadingCoeff core.poly) core.poly basis
         observeNat sink (search.stats.leaves +

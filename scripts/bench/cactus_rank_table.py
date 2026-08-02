@@ -159,7 +159,7 @@ def main() -> int:
     print("## Paired-testcase view (same instance, both systems)")
     print()
     print(f"| {args.reference} rank | instance | degree | {args.reference} | "
-          f"{args.against} | ratio |")
+          f"{args.against} | {args.against} / {args.reference} |")
     print("|---:|---|---:|---:|---:|---:|")
     paired_rows = []
     for rank in range(lo, hi + 1):
