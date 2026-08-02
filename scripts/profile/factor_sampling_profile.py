@@ -12,6 +12,11 @@ collect a useful sample count, with `--rate 999` sampling and the service pinned
 to one core. Only the service's main thread is retained; the samply supervisor,
 the io_uring helpers, and the pre-`main` startup samples are dropped.
 
+`--cpu auto` (the default) pins the profiled service to a core that is
+currently idle on itself and on its SMT siblings. Several measurement drivers
+may run at once on a shared host, and pinning them all to a fixed core makes
+each measure the others. See `scripts/bench/idle_core.py`.
+
 Run::
 
     lake build hexbz_factor_service
@@ -32,6 +37,10 @@ import shutil
 import subprocess
 import sys
 import tempfile
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "bench"))
+
+import idle_core  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 CORPUS_PATH = ROOT / "bench" / "corpus" / "hexbz-factor-corpus.jsonl"
@@ -54,7 +63,7 @@ INCLUSIVE_FLOOR_PERCENT = 0.5
 
 DEFAULT_TARGET_SECONDS = 6.0
 DEFAULT_RATE = 999
-DEFAULT_CPU = 0
+DEFAULT_CPU = "auto"
 
 
 # ---------------------------------------------------------------- demangling
@@ -344,11 +353,16 @@ def main() -> int:
                    help="service entry to profile (default: the production "
                         "`factor` cascade)")
     p.add_argument("--rate", type=int, default=DEFAULT_RATE)
-    p.add_argument("--cpu", type=int, default=DEFAULT_CPU)
+    p.add_argument("--cpu", default=DEFAULT_CPU,
+                   help="logical CPU to pin the profiled service to, or "
+                        "`auto` to pick an idle one (default auto)")
     p.add_argument("--target-seconds", type=float, default=DEFAULT_TARGET_SECONDS)
     p.add_argument("--top", type=int, default=15)
     p.add_argument("--output", type=Path, default=None)
     args = p.parse_args()
+
+    cpu = idle_core.resolve(args.cpu)
+    print(f"pinning profiled service to cpu {cpu}", file=sys.stderr)
 
     if shutil.which("samply") is None:
         raise SystemExit("samply is not on PATH; see SPEC/profiling.md")
@@ -369,7 +383,7 @@ def main() -> int:
         for name in names:
             print(f"profiling {name}", file=sys.stderr)
             profile, syms, repeats = capture(
-                corpus[name], workdir, args.rate, args.cpu,
+                corpus[name], workdir, args.rate, cpu,
                 args.target_seconds, args.entry)
             summary = analyse(profile, Symbolicator(syms), args.top)
             profiles.append({
@@ -389,7 +403,7 @@ def main() -> int:
         "config": {
             "entry": args.entry,
             "rate_hz": args.rate,
-            "cpu": args.cpu,
+            "cpu": cpu,
             "target_seconds": args.target_seconds,
             "samply_version": subprocess.run(
                 ["samply", "--version"], capture_output=True,

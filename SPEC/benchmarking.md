@@ -533,6 +533,39 @@ the motivating case) MUST obey:
   committed record, and every number in the sweep report traces to a
   SHA-256-pinned artifact per [§Artefact traceability](#artefact-traceability).
 
+#### Core pinning when measurements can overlap
+
+A comparator sweep and the factorization diagnostic drivers pin the measured
+process to one core so the scheduler cannot perturb their timings. Pinning to a
+*fixed* core is only correct while one measurement runs at a time. Several
+concurrent measurements pinned to the same core each measure the others, and
+the usual health signal does not show it: on a 96-core host, three measurement
+processes sharing core 0 left the load average at 2 to 5 while inflating about
+a quarter of a sweep's rows by roughly 1.9x, with the affected rows differing
+run to run. `ps -eo pid,psr` reveals it at once; load average never does.
+
+So: **pin to a verified-idle core, not to a fixed one.** `python3
+scripts/bench/idle_core.py` prints a logical CPU that is idle on itself and on
+every SMT sibling, sampled from `/proc/stat`.
+
+- `scripts/bench/factor_phase_profile.py` and
+  `scripts/profile/factor_sampling_profile.py` take `--cpu auto` and do this
+  themselves by default; the chosen CPU is recorded in the run's `config`.
+- `scripts/bench/factor_sweep.py` is deliberately *not* changed, because
+  `scripts/bench/check_factor_sweep_freshness.py` treats it as a shared source
+  path: editing it marks every system's committed record stale, including the
+  external comparator records that cannot be cheaply re-measured. Invoke it
+  through the helper instead:
+
+  ```sh
+  taskset -c "$(python3 scripts/bench/idle_core.py)" \
+    python3 scripts/bench/factor_sweep.py --systems hex-factor
+  ```
+
+A release-quality verdict under the designated-shared-host protocol above still
+preregisters and records an explicit CPU; this clause is about not colliding,
+not about relaxing that.
+
 ### Comparator classification: `gating` vs `informational`
 
 Every external comparator named by a per-library SPEC carries a

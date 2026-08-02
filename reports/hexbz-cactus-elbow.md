@@ -668,21 +668,31 @@ justifies starting the certificate work now.
 
 ## Regeneration
 
+Pin each measurement to a **verified-idle** core rather than to a fixed one.
+Several of these commands may run at once on a shared host -- concurrent agent
+worktrees regularly do -- and pinning them all to core 0 makes each measure the
+others, at a load average that gives no hint of it. `idle_core.py` prints a
+core idle on itself and on its SMT siblings; the two profile drivers now do
+this for themselves by default. See
+[SPEC/benchmarking.md](../SPEC/benchmarking.md), "Core pinning when
+measurements can overlap".
+
 ```sh
 lake build hexbz_factor_service
 
 # Full Hex sweep (external comparator records are reused unchanged).
-taskset -c 0 python3 scripts/bench/factor_sweep.py \
+taskset -c "$(python3 scripts/bench/idle_core.py)" \
+  python3 scripts/bench/factor_sweep.py \
   --systems hex-factor --cutoff 10 --no-early-terminate \
   --output /tmp/hexbz-factor-sweep.json
 
 # Phase attribution, counterfactual prime plans, and the validation sample.
-taskset -c 0 python3 scripts/bench/factor_phase_profile.py \
+python3 scripts/bench/factor_phase_profile.py \
   --output /tmp/hexbz-phase-profile.json
 
 # Symbolized sampling-profile summaries.
 python3 scripts/profile/factor_sampling_profile.py \
-  --cpu 0 --output /tmp/hexbz-factor-sampling-profiles.json
+  --output /tmp/hexbz-factor-sampling-profiles.json
 
 # Rank tables.
 python3 scripts/bench/cactus_rank_table.py --lo 118 --hi 144

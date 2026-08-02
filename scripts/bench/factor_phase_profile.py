@@ -36,10 +36,16 @@ This is a diagnostic driver run manually on dedicated hardware, not a CI job
 and not a hex-internal benchmark harness, so the one-harness rule stays intact
 (see SPEC/benchmarking.md addendum).
 
+The driver pins itself to one core before spawning any service, so every
+measured descendant inherits that affinity. `--cpu auto` (the default) picks a
+core that is currently idle on itself and on its SMT siblings, because several
+of these drivers may run at once on a shared host; pinning them all to a fixed
+core makes each measure the others. See `scripts/bench/idle_core.py`.
+
 Example::
 
     lake build hexbz_factor_service
-    taskset -c 0 python3 scripts/bench/factor_phase_profile.py \\
+    python3 scripts/bench/factor_phase_profile.py \\
         --output reports/bench-results/hexbz-phase-profile.json
 """
 
@@ -53,6 +59,8 @@ import statistics
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import idle_core  # noqa: E402
 
 from factor_sweep import (  # noqa: E402
     CORPUS_PATH,
@@ -324,7 +332,14 @@ def main() -> int:
                         f"sections (default {DEFAULT_PLAN_REPEATS}); the "
                         "per-candidate costs are their median")
     p.add_argument("--output", type=Path, default=None)
+    p.add_argument("--cpu", default="auto",
+                   help="logical CPU to pin to, or `auto` to pick an idle one "
+                        "(default auto)")
     args = p.parse_args()
+
+    cpu = idle_core.resolve(args.cpu)
+    idle_core.pin_self(cpu)
+    print(f"pinned to cpu {cpu}", file=sys.stderr)
 
     corpus = {inst["name"]: inst for inst in load_corpus(args.corpus)}
     names = ([n.strip() for n in args.names.split(",") if n.strip()]
@@ -435,6 +450,7 @@ def main() -> int:
         "schema": "hexbz-phase-profile/2",
         "env": env_block("hexbz_factor_service"),
         "config": {
+            "cpu": cpu,
             "corpus": str(args.corpus.relative_to(ROOT)),
             "corpus_sha256": sha256(args.corpus),
             "hex_exe_sha256": sha256(HEX_SERVICE),
