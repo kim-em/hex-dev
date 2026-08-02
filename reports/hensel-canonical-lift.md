@@ -7,15 +7,22 @@ part of the 21.0% of total time the elbow baseline attributes to
 
 The audit's premise is **correct in kind and wrong in magnitude**. Every
 reduction the issue names as possibly redundant is proved redundant here and
-removed. They are also, all of them, the cheap ones. The `reduceModPowImpl`
-share the baseline measured is almost entirely the mod-`m²` arithmetic *inside*
-`quadraticHenselStepBignum`, not the canonicalisation between steps, and the
-dominant cost of the lift is neither: it is schoolbook polynomial
-multiplication.
+removed. They are also, all of them, the cheap ones: removing all three is
+worth nothing measurable on `cyclo_phi179`. The `reduceModPowImpl` share the
+baseline measured is not the canonicalisation between steps at all. It is the
+mod-`m²` arithmetic *inside* `quadraticHenselStepBignum` -- above all inside
+the monic division kernel, which reduces a whole polynomial on every division
+iteration.
 
-This page records the invariant, the three removals, the fused reduction that
-does attack the step-internal cost, and the profile attribution that locates
-what is left.
+Attacking it there does pay. Reducing through a window rather than a division
+takes **8.7% off the lift on `cyclo_phi179` and 10.0% on Wilkinson 56**, and
+6.4% and 6.5% off their total factor time. What remains is not reduction at
+all: schoolbook dense multiplication is about 45% of lift time on
+`cyclo_phi179`, which already satisfies the trigger the issue reserves for
+Phase 3.
+
+This page records the invariant, the three removals, the fused reduction, and
+the attribution that locates what is left.
 
 ## Revision and protocol
 
@@ -31,15 +38,14 @@ what is left.
   on all arms rather than on one. Reported timings are the median over rounds;
   allocation counts are exact and identical across rounds.
 - `taskset -c 0` pinned the measured service. Unlike the elbow baseline, this
-  host was **not** quiet: sibling agent worktrees compiled intermittently
-  throughout, and one-minute load average reached 23. The timing table below
-  comes from the three-round comparison whose rounds all started at load
-  average between 1.7 and 5.8, and whose absolute lift times reproduce the
-  elbow baseline's to within a few percent. Rounds taken under heavier load
-  inflated every arm by a factor of two to three and are excluded. The
-  argument therefore rests on the allocation counters and the sampling
-  attribution, both of which are load-independent, with the timings as
-  corroboration.
+  host was **not** reliably quiet: sibling agent worktrees compiled
+  intermittently and one-minute load average reached 23. Every timing table
+  below records the load average each of its rounds started at, and only
+  comparisons whose rounds all ran under load average 6 are reported. Rounds
+  taken under heavier load inflated *every* arm by a factor of two to three;
+  they are excluded rather than averaged in. Each table is accompanied by the
+  exact allocation counters for the same arms, which are load-independent and
+  move in the same direction.
 
 ## The coefficient-range invariant
 
@@ -161,6 +167,10 @@ asked about are a rounding error next to that.
 
 ## Reducing through a window instead of a division
 
+Rounds for this comparison started at load averages 3.56, 3.14, 3.06, 3.08,
+3.05, 3.15, 3.17, 3.72, 3.42, 3.51, 3.54, 3.90 -- the quietest window this host
+offered.
+
 The operands of those internal reductions are themselves canonical. Their sum
 therefore lies in `[0, 2m)` and their difference in `(-m, m)`: at worst one
 modulus away from canonical. `ZPoly.intModNatImpl` tests for that first. A
@@ -171,26 +181,53 @@ descent from a doubled precision -- still pay for `Int.emod`. It is a
 surface is untouched, and it is the "fuse addition/subtraction with reduction"
 bullet of the issue's Phase 2 obtained without introducing a new type.
 
-Lift-phase allocation counts, exact, against the same baseline:
+This is the change that pays. Six alternating rounds, every round started at
+load average between 3.0 and 3.9, arms differing only in whether the
+`intModNat_eq_impl` `@[csimp]` rule is enabled. Times are the minimum over
+rounds; allocation counts are exact.
 
-| instance | k | lift allocations, baseline | windowed | change |
-|---|---:|---:|---:|---:|
-| `cyclo_phi179` | 113 | 1,354,541 | 1,235,250 | -8.81% |
-| `cyclo_phi385` | 152 | 3,767,689 | 3,439,553 | -8.71% |
-| `cyclo_phi128_x_phi165` | 52 | 1,551,120 | 1,413,271 | -8.89% |
-| `wilkinson_56` | -- | 607,717 | 565,003 | -7.03% |
-| `xpow105_minus1` | 26 | 447,097 | 420,393 | -5.97% |
-| `chebyshev_U24` (control) | 33 | 14,296 | 14,169 | -0.89% |
+| instance | k | lift, removals only | + windowed | change | lift allocations | change |
+|---|---:|---:|---:|---:|---:|---:|
+| `cyclo_phi179` | 113 | 59.431 ms | 54.285 ms | **-8.7%** | 1,354,173 → 1,235,250 | -8.78% |
+| `cyclo_phi385` | 152 | 162.716 ms | 142.995 ms | **-12.1%** | 3,761,417 → 3,439,553 | -8.56% |
+| `wilkinson_56` (replay) | -- | 25.740 ms | 23.177 ms | **-10.0%** | 605,515 → 565,003 | -6.69% |
+| `cyclo_phi64_x_phi105` | 24 | 7.511 ms | 6.792 ms | -9.6% | 241,538 → 226,755 | -6.12% |
+| `xpow105_minus1` | 26 | 15.401 ms | 14.145 ms | -8.1% | 446,063 → 420,393 | -5.75% |
+| `legendre_P30` (control) | 15 | 441 us | 409 us | -7.3% | 14,888 → 14,544 | -2.31% |
+| `sd5` | 19 | 1.882 ms | 1.786 ms | -5.1% | 63,902 → 61,662 | -3.51% |
+| `chebyshev_U24` (control) | 33 | 270 us | 275 us | +1.6% | 14,212 → 14,169 | -0.30% |
 
-Real, and an order of magnitude larger than the canonicalisation removals, but
-still not the shape of a fix for a row where the lift is 74% of the
-factorization.
+End-to-end factor time over the same rounds:
 
-## The measured no-go, and what it locates
+| instance | removals only | + windowed | change |
+|---|---:|---:|---:|
+| `cyclo_phi179` | 79.629 ms | 74.494 ms | **-6.4%** |
+| `wilkinson_56` | 40.221 ms | 37.590 ms | **-6.5%** |
+| `cyclo_phi385` | 450.467 ms | 429.291 ms | -4.7% |
+| `xpow105_minus1` | 82.386 ms | 80.893 ms | -1.8% |
+| `cyclo_phi64_x_phi105` | 87.283 ms | 86.219 ms | -1.2% |
+| `legendre_P30` (control) | 8.327 ms | 8.291 ms | -0.4% |
+| `sd5` | 107.383 ms | 107.356 ms | -0.0% |
+| `chebyshev_U24` (control) | 688 us | 718 us | +4.4% |
 
-Taking the issue's acceptance criteria at their word: Hensel time does **not**
-improve materially on `cyclo_phi179` or Wilkinson 56, and this is the measured
-no-go. What it locates is unambiguous.
+The one row that moves the wrong way, `chebyshev_U24`, is a 700 microsecond
+control whose lift is 275 microseconds; its 4.4% is within the round-to-round
+spread of a row that small, and its allocation count still falls.
+
+The rows that gain most are exactly the ones the mechanism predicts: the ones
+whose lift runs on the bignum path, where a `reduceModSquare` on canonical
+operands used to cost a multi-limb division and now costs a comparison.
+
+`legendre_P30` and `cyclo_phi64_x_phi105` are the prime-walk-bound rows, where
+`modP` reduces arbitrary integer coefficients rather than canonical ones. They
+gain too rather than regressing, which is the case that would have exposed the
+extra comparison on the slow path as a real cost.
+
+## What is left
+
+`cyclo_phi179` and Wilkinson 56 do improve, by 8.7% and 10.0% of lift, but the
+lift is still 74% of `cyclo_phi179`'s factorization. What remains is no longer
+reduction.
 
 On `cyclo_phi179`, `Hex.DensePoly.mulImpl` is 32.27% of total time against a
 72.13% lift, so **schoolbook dense multiplication is about 45% of lift time**.
@@ -217,6 +254,40 @@ Phase 2's full `ResiduePolynomial` rewrite is not what these measurements ask
 for. The reduction cost it targets is now bounded above by the windowed
 implementation's remaining share, and the multiplication cost it would not
 change is the larger term.
+
+## The corpus sweep, and how much of it to believe
+
+The committed record `hexbz-factor-sweep-<commit>-hex-chungus2.json` is a
+single complete hex-only sweep of all 392 corpus rows, measured under the
+recorded protocol and passing its differential cross-check. It is **not** a
+quiet-host measurement, and a reader comparing it row for row against
+`hexbz-factor-sweep-c34ffbbb-hex-chungus2.json` will see a spread that is not
+in the code.
+
+The size of that spread is measurable without reference to any baseline. Two
+complete sweeps of the *same* binary, back to back, differ by a median of
+1.006 but a p90 of 1.886, a minimum of 0.367 and a maximum of 2.713. The rows
+each run reports as slow against the baseline overlap by a Jaccard index of
+only 0.27, and within a run they fall in contiguous blocks by sweep position --
+the signature of external load bursts, since the sweep visits the corpus in
+order. A systematic regression would produce a scattered, reproducible set.
+
+Correcting for that by taking the per-row minimum over two runs gives, against
+the `c34ffbbb` baseline:
+
+| statistic | min over two runs / baseline |
+|---|---:|
+| median | 0.999 |
+| p75 | 1.017 |
+| p90 | 1.063 |
+| max | 2.238 |
+
+which is the flat distribution the phase-profile A/Bs predict. The committed
+record is left as a single unedited sweep rather than a synthesized minimum, so
+**re-measure it on a quiet `chungus2` before using this Hex curve for
+cross-system comparison.** The per-phase conclusions in this page do not depend
+on it; they come from the arm-alternating profiles above and from exact
+allocation counters.
 
 ## Reproduction
 
