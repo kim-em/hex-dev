@@ -244,8 +244,8 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
       primeData.factorsModP.toList := by
   letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   obtain ⟨hprime, hzero, heq⟩ := hform
-  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
-    (Hex.ZMod64.primeModulusOfPrime hprime)
+  let hfield : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime
   letI : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   -- The modular image is square-free under `isGoodPrime`.
@@ -368,8 +368,8 @@ theorem factorsModP_monic_of_factorsModPBerlekampForm
     ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g := by
   letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   obtain ⟨hprime, hzero, heq⟩ := hform
-  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
-    (Hex.ZMod64.primeModulusOfPrime hprime)
+  let hfield : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime
   letI : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   have hmonicImage_monic :
@@ -600,8 +600,8 @@ theorem factors_irreducible_of_factorsModPBerlekampForm
     monicModularImage_modP_degree?_pos_of_factorsModPBerlekampForm
       core primeData hform hgood hcore_pos
   obtain ⟨hprime, hzero, heq⟩ := hform
-  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
-    (Hex.ZMod64.primeModulusOfPrime hprime)
+  let hfield : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime
   letI : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   have hprime_root : _root_.Nat.Prime primeData.p := by

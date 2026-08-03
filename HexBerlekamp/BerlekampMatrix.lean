@@ -680,23 +680,10 @@ Berlekamp-local linear-algebra implementation.
 -/
 @[expose]
 def fixedSpaceKernelVectors (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    [inst : Lean.Grind.Field (ZMod64 p)] :
+    [ZMod64.PrimeModulus p] :
     Vector (Vector (ZMod64 p) (basisSize f))
       (basisSize f - Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic)) :=
   Matrix.nullspace (fixedSpaceMatrix f hmonic)
-
-/-- The fixed-space kernel basis converted back to polynomial representatives.
-
-Compute the vector basis once and map the conversion over it. Keep the basis
-outside any per-index body so matrix construction and row reduction remain
-shared; mapping also carries its dependent length without recomputing rank. -/
-@[expose]
-def fixedSpaceKernel (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    [inst : Lean.Grind.Field (ZMod64 p)] :
-    Vector (FpPoly p)
-      (basisSize f - Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic)) :=
-  let vectors := fixedSpaceKernelVectors f hmonic
-  vectors.map vectorToPoly
 
 /-- Vector-level executable Berlekamp kernel condition for the fixed-space
 matrix `Q_f - I`. -/
@@ -747,21 +734,6 @@ theorem fixedSpaceKernelVectors_sound (f : FpPoly p) (hmonic : DensePoly.Monic f
     IsFixedSpaceKernelVector f hmonic ((fixedSpaceKernelVectors f hmonic).get k) := by
   unfold IsFixedSpaceKernelVector fixedSpaceKernelVectors
   exact Matrix.nullspace_sound (fixedSpaceMatrix f hmonic) k
-
-/-- Every polynomial representative returned by `fixedSpaceKernel` satisfies the
-executable fixed-space kernel condition. -/
-theorem fixedSpaceKernel_sound (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    [ZMod64.PrimeModulus p]
-    (k : Fin (basisSize f -
-      Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic))) :
-    IsFixedSpaceKernelPolynomial f hmonic ((fixedSpaceKernel f hmonic).get k) := by
-  have hk : (fixedSpaceKernel f hmonic).get k =
-      vectorToPoly ((fixedSpaceKernelVectors f hmonic).get k) := by
-    unfold fixedSpaceKernel
-    exact Vector.getElem_map vectorToPoly k.isLt
-  unfold IsFixedSpaceKernelPolynomial
-  rw [hk, coeffVector_vectorToPoly]
-  exact fixedSpaceKernelVectors_sound f hmonic k
 
 /-- Every vector satisfying the executable fixed-space kernel condition is a
 linear combination of the public nullspace-basis matrix for `Q_f - I`. -/

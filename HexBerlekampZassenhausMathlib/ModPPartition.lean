@@ -160,8 +160,8 @@ theorem exists_factor_of_modPIndex
   have hcore_modP_iszero :
       (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
     Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
-  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
-    (Hex.ZMod64.primeModulusOfPrime hprime)
+  let hfield : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime
   letI := hfield
   set f : ModPFactorIndex primeData → Polynomial (ZMod primeData.p) :=
       fun i => HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)
@@ -334,8 +334,8 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
   have hzero : (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
     Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
   have hnodup : primeData.factorsModP.toList.Nodup := hval.nodup
-  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
-    (Hex.ZMod64.primeModulusOfPrime hprime)
+  let hfield : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime
   letI := hfield
   -- Set up abbreviations.
   set f : ModPFactorIndex primeData → Polynomial (ZMod primeData.p) :=
