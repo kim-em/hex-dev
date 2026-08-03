@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexBerlekampZassenhaus.Classical.Obstruction
 public import HexBerlekampZassenhaus.Hensel.DirectLift
 
 public section
