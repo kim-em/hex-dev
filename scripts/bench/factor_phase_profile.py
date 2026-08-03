@@ -117,7 +117,8 @@ KERNEL_SPAN_KEYS = (
     "rowReduceMatrixRebuild", "productionMatrixRebuild", "productionNullspace",
     "basisToPolynomials", "fixedSpaceKernelVectors", "berlekampSplit")
 KERNEL_COUNTED_KEYS = ("countedWithTransform", "countedEchelonOnly")
-KERNEL_PACKED_KEYS = ("packedWord", "packedHalfWord", "packedHalfWordDivision")
+KERNEL_PACKED_KEYS = ("packedWord", "packedHalfWord",
+                      "packedHalfWordDivision", "packedHalfWordSkipZero")
 # Per-candidate costs merged by median across `--plan-repeats` calls.
 PLAN_NANO_KEYS = ("goodPrimeTest", "boundedScout", "scout", "berlekampMatrix",
                   "rowReduction", "fullSplit", "henselLift", "recombination")

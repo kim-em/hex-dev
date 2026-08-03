@@ -282,6 +282,10 @@ inductive PackedKind where
   | halfWord
   /-- `UInt32` words, hardware remainder instead of a Barrett reciprocal. -/
   | halfWordDiv
+  /-- `UInt32` words and a Barrett reciprocal, additionally skipping the
+  multiply where the source-row entry is already zero. Prices an algorithmic
+  optimization the generic path does not have. -/
+  | halfWordSkipZero
 deriving Repr, DecidableEq, BEq
 
 /-- Barrett reciprocal `floor(2^64 / p)` for a modulus below `2^32`. -/
@@ -346,8 +350,15 @@ structure PackedCounters where
   rank : Nat := 0
 
 /-- Packed Gauss-Jordan over `UInt32` storage, returning the echelon buffer and
-the pivot columns. Full-width row additions, matching the generic `rowAdd`. -/
-private def reduce32 (useBarrett : Bool) (p : UInt32) (n m : Nat)
+the pivot columns.
+
+Row additions are full width, matching the generic `Hex.Matrix.rowAdd`, which
+evaluates `x + c * rsrc[k]` at every entry. `skipZero` additionally skips the
+multiply and the store where the source entry is already zero -- an algorithmic
+optimization the generic path does not have, priced separately so it is not
+counted as a gain from the representation. Both variants skip a whole row
+addition when its coefficient is zero, which the generic path also does. -/
+private def reduce32 (useBarrett skipZero : Bool) (p : UInt32) (n m : Nat)
     (buf : Array UInt32) : Array UInt32 × Array Nat × Nat :=
   Id.run do
     let p64 := p.toUInt64
@@ -380,11 +391,10 @@ private def reduce32 (useBarrett : Bool) (p : UInt32) (n m : Nat)
       if inv32 != 1 then
         for k in [0:m] do
           let x := a[row * m + k]!
-          if x != 0 then
-            let prod :=
-              if useBarrett then barrett p64 pinv (x.toUInt64 * inv)
-              else (x.toUInt64 * inv) % p64
-            a := a.set! (row * m + k) prod.toUInt32
+          let prod :=
+            if useBarrett then barrett p64 pinv (x.toUInt64 * inv)
+            else (x.toUInt64 * inv) % p64
+          a := a.set! (row * m + k) prod.toUInt32
       -- eliminate the column
       for j in [0:n] do
         if j != row then
@@ -395,7 +405,7 @@ private def reduce32 (useBarrett : Bool) (p : UInt32) (n m : Nat)
             let neg64 := neg.toUInt64
             for k in [0:m] do
               let s := a[row * m + k]!
-              if s != 0 then
+              if !skipZero || s != 0 then
                 let prod :=
                   if useBarrett then barrett p64 pinv (s.toUInt64 * neg64)
                   else (s.toUInt64 * neg64) % p64
@@ -436,8 +446,7 @@ private def reduce64 (p : UInt64) (n m : Nat) (buf : Array UInt64) :
       if inv != 1 then
         for k in [0:m] do
           let x := a[row * m + k]!
-          if x != 0 then
-            a := a.set! (row * m + k) (barrett p pinv (x * inv))
+          a := a.set! (row * m + k) (barrett p pinv (x * inv))
       for j in [0:n] do
         if j != row then
           let c := a[j * m + col]!
@@ -446,9 +455,8 @@ private def reduce64 (p : UInt64) (n m : Nat) (buf : Array UInt64) :
             let neg := negMod64 p c
             for k in [0:m] do
               let s := a[row * m + k]!
-              if s != 0 then
-                a := a.set! (j * m + k)
-                  (addMod64 p a[j * m + k]! (barrett p pinv (s * neg)))
+              a := a.set! (j * m + k)
+                (addMod64 p a[j * m + k]! (barrett p pinv (s * neg)))
       pivotCols := pivotCols.push col
       row := row + 1
     return (a, pivotCols, adds)
@@ -569,12 +577,13 @@ def packedReduce {p : Nat} [ZMod64.Bounds p] {n m : Nat}
                 allocs := (t3.since t0).2
                 rowAdds := adds
                 rank := pivotCols.size }, basis == expected)
-  | .halfWord | .halfWordDiv =>
+  | .halfWord | .halfWordDiv | .halfWordSkipZero =>
       let buf := pack32 M
       observe sink buf.size
       let t1 ← mark
       let (reduced, pivotCols, adds) :=
-        reduce32 (kind == .halfWord) (UInt32.ofNat p) n m buf
+        reduce32 (kind != .halfWordDiv) (kind == .halfWordSkipZero)
+          (UInt32.ofNat p) n m buf
       observe sink (reduced.size + pivotCols.size)
       let t2 ← mark
       let basis := basisOfBuffer32 (UInt32.ofNat p) m reduced pivotCols
@@ -706,6 +715,8 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
   let (pHalf, okHalf) ← packedReduce sink .halfWord fixedH expected
   let fixedD := Berlekamp.fixedSpaceMatrix f hmonic
   let (pHalfDiv, okHalfDiv) ← packedReduce sink .halfWordDiv fixedD expected
+  let fixedS := Berlekamp.fixedSpaceMatrix f hmonic
+  let (pSkip, okSkip) ← packedReduce sink .halfWordSkipZero fixedS expected
   let peak ← residentBytes true
   -- Validation: the counted mirror against the production row reduction, and
   -- the transform-free run against the mirror that keeps the transform.
@@ -724,8 +735,15 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
       ("columnPolys", spanJson (t2.since t1).1 (t2.since t1).2),
       ("berlekampMatrixWall", spanJson (t3.since t2).1 (t3.since t2).2),
       ("fixedSpaceMatrixWall", spanJson (t4.since t3).1 (t4.since t3).2),
+      -- Nested spans, so these are differences; `Nat` subtraction clamps, and
+      -- the sign flag records when the difference was negative rather than
+      -- letting a clamp read as a zero-cost stage.
       ("matrixConversionNanos", natJson ((t3.since t2).1 - (t2.since t0).1)),
+      ("matrixConversionNegative",
+        Json.bool ((t3.since t2).1 < (t2.since t0).1)),
       ("fixedSpaceDiagonalNanos", natJson ((t4.since t3).1 - (t3.since t2).1)),
+      ("fixedSpaceDiagonalNegative",
+        Json.bool ((t4.since t3).1 < (t3.since t2).1)),
       ("matrixRebuild", spanJson (t6.since t5).1 (t6.since t5).2),
       ("productionRowReduce", spanJson (t7b.since t7a).1 (t7b.since t7a).2),
       -- The nullspace-basis construction, as the difference between two
@@ -756,6 +774,7 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
       ("echelonOnlyAgrees", Json.bool echelonOk),
       packedJson "packedWord" pWord okWord,
       packedJson "packedHalfWord" pHalf okHalf,
-      packedJson "packedHalfWordDivision" pHalfDiv okHalfDiv ]
+      packedJson "packedHalfWordDivision" pHalfDiv okHalfDiv,
+      packedJson "packedHalfWordSkipZero" pSkip okSkip ]
 
 end HexBench.BerlekampKernel
