@@ -676,14 +676,17 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
   let fixedC := Berlekamp.fixedSpaceMatrix f hmonic
   observe sink (probeEntry fixedC)
   let t8 ← mark
-  let basis := Matrix.nullspace fixedC
-  -- Force through `toArray`: `Vector.size` is the type index `m - rank`, and
-  -- demanding it re-runs `rowReduce` instead of forcing the vector.
-  observe sink basis.toArray.size
+  -- Read the basis out as a plain `Array` first. Every `Vector` operation takes
+  -- the length index as a runtime argument, and here that index is
+  -- `m - Matrix.rowReduce_rank fixedC`, so demanding it runs a second row
+  -- reduction; going through `toArray` keeps the conversion stage measuring the
+  -- conversion.
+  let basisArray := (Matrix.nullspace fixedC).toArray
+  observe sink (basisArray.foldl (fun acc v => acc + v.toArray.size) 0)
   let t9 ← mark
   -- 6. Conversion of basis vectors back to polynomials.
-  let polysOut := basis.map Berlekamp.vectorToPoly
-  observe sink (polysOut.toArray.foldl (fun acc g => acc + g.size) 0)
+  let polysOut := basisArray.map Berlekamp.vectorToPoly
+  observe sink (polysOut.foldl (fun acc g => acc + g.size) 0)
   let t10 ← mark
   -- The two production entry points this attribution is about, timed whole:
   -- the fixed-space kernel boundary a specialization would replace, and the
@@ -695,7 +698,7 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
   observe sink split.length
   let t12 ← mark
   let rss1 ← residentBytes false
-  let expected := basisNats basis
+  let expected := basisArray.map fun v => v.toArray.map ZMod64.toNat
   -- Packed pricing, each against its own fresh matrix.
   let fixedW := Berlekamp.fixedSpaceMatrix f hmonic
   let (pWord, okWord) ← packedReduce sink .word fixedW expected
@@ -715,7 +718,7 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
     [ ("basisSize", natJson n),
       ("modulus", natJson p),
       ("rank", natJson withT.pivots.length),
-      ("kernelDimension", natJson basis.size),
+      ("kernelDimension", natJson basisArray.size),
       ("sink", natJson sunk),
       ("frobeniusPower", spanJson (t1.since t0).1 (t1.since t0).2),
       ("columnPolys", spanJson (t2.since t1).1 (t2.since t1).2),
