@@ -26,6 +26,15 @@ Every cost in the plan sections is one observation per call, so both are
 repeated and merged into one plan by per-candidate median (`--plan-repeats`).
 Everything else the service reports is deterministic, and the merge asserts
 that the repeats agree on all of it before replacing the durations.
+* **Kernel attribution.** `kernelProfile` decomposes the Berlekamp fixed-space
+  kernel at the production-selected prime into the stages issue #9132 names --
+  column construction, conversion to the generic matrix representation, pivot
+  search, row swap/scale/add, rank and nullspace-basis construction, and the
+  conversion of basis vectors back to polynomials -- and prices three packed
+  contiguous representations against it. Each packed result is checked entry
+  for entry against `Hex.Matrix.nullspace` before its time is reported, and the
+  counted Gauss-Jordan mirror is checked against the production `rowReduce`.
+  Like the scout prices, none of this is work the production cascade does.
 * **Validation.** Cross-checks run alongside, on a wider sample than the
   representative set: the counted recombination mirror must agree with the
   production `factorTrace` on leaf count, selected prime, completed subset
@@ -99,6 +108,17 @@ PROFILED = [
 
 DEFAULT_CUTOFF = 120.0
 DEFAULT_PLAN_REPEATS = 3
+DEFAULT_KERNEL_REPEATS = 3
+# Nanosecond fields of the kernel record merged by median across repeats. Every
+# other field is deterministic and is asserted to agree before the merge.
+KERNEL_SPAN_KEYS = (
+    "frobeniusPower", "columnPolys", "berlekampMatrixWall",
+    "fixedSpaceMatrixWall", "matrixRebuild", "productionRowReduce",
+    "rowReduceMatrixRebuild", "productionMatrixRebuild", "productionNullspace",
+    "basisToPolynomials", "fixedSpaceKernelVectors", "berlekampSplit")
+KERNEL_COUNTED_KEYS = ("countedWithTransform", "countedEchelonOnly")
+KERNEL_PACKED_KEYS = ("packedWord", "packedHalfWord",
+                      "packedHalfWordDivision", "packedHalfWordSkipZero")
 # Per-candidate costs merged by median across `--plan-repeats` calls.
 PLAN_NANO_KEYS = ("goodPrimeTest", "boundedScout", "scout", "berlekampMatrix",
                   "rowReduction", "fullSplit", "henselLift", "recombination")
@@ -241,6 +261,77 @@ def measure_plan(service, inst, cutoff, repeats):
     return merge_plans(plans)
 
 
+def merge_kernels(kernels):
+    """Median every duration in a kernel record across repeated calls.
+
+    Structure -- basis size, modulus, rank, kernel dimension, row-addition
+    counts, and every agreement flag -- is deterministic, so the first record
+    supplies it and only the durations are replaced. A repeat that disagrees on
+    any of the deterministic fields is a harness fault, not noise, so it raises.
+    """
+    kernels = [k for k in kernels if k]
+    if not kernels:
+        return None
+    base = json.loads(json.dumps(kernels[0]))
+    for key in ("basisSize", "modulus", "rank", "kernelDimension",
+                "mirrorAgreesWithRowReduce", "echelonOnlyAgrees",
+                "splitFactors"):
+        values = {json.dumps(k.get(key)) for k in kernels}
+        if len(values) > 1:
+            raise SystemExit(
+                f"kernel repeats disagree on deterministic field {key}: {values}")
+    for key in KERNEL_SPAN_KEYS:
+        if key in base:
+            base[key]["nanos"] = int(statistics.median(
+                k[key]["nanos"] for k in kernels))
+            base[key]["smallAllocs"] = int(statistics.median(
+                k[key]["smallAllocs"] for k in kernels))
+    for key in ("matrixConversionNanos", "fixedSpaceDiagonalNanos",
+                "peakResidentBytes"):
+        if key in base:
+            base[key] = int(statistics.median(k[key] for k in kernels))
+    # The basis stage is a signed within-execution difference, so median the
+    # signed values rather than the truncated magnitudes.
+    signed = [(-1 if k["nullspaceBasisNegative"] else 1)
+              * k["nullspaceBasisMagnitudeNanos"] for k in kernels]
+    median = int(statistics.median(signed))
+    base["nullspaceBasisNegative"] = median < 0
+    base["nullspaceBasisMagnitudeNanos"] = abs(median)
+    base["nullspaceBasisNanos"] = max(0, median)
+    for outer in KERNEL_COUNTED_KEYS:
+        for span in ("pivotSearch", "rowSwapScale", "rowAdd", "wall"):
+            base[outer][span]["nanos"] = int(statistics.median(
+                k[outer][span]["nanos"] for k in kernels))
+            base[outer][span]["smallAllocs"] = int(statistics.median(
+                k[outer][span]["smallAllocs"] for k in kernels))
+        base[outer]["stagedNanos"] = int(statistics.median(
+            k[outer]["stagedNanos"] for k in kernels))
+    for outer in KERNEL_PACKED_KEYS:
+        for field in ("packNanos", "reduceNanos", "nullspaceNanos",
+                      "totalNanos", "smallAllocs"):
+            base[outer][field] = int(statistics.median(
+                k[outer][field] for k in kernels))
+        if not all(k[outer]["agreesWithNullspace"] for k in kernels):
+            raise SystemExit(
+                f"packed variant {outer} disagreed with Hex.Matrix.nullspace")
+    return base
+
+
+def measure_kernel(service, inst, cutoff, repeats):
+    """Repeat the kernel attribution and merge the repeats by median."""
+    records = []
+    for _ in range(max(1, repeats)):
+        result, _ = call_ok(service, inst["coeffs"], cutoff)
+        if result is None:
+            return None
+        records.append(result)
+    if any(r.get("status") != "ok" for r in records):
+        return records[0]
+    merged = dict(records[0])
+    merged["kernel"] = merge_kernels([r["kernel"] for r in records])
+    return merged
+
+
 def degree_multiset(profile: dict):
     """Sorted factor degrees with multiplicity from a phase profile."""
     degrees = []
@@ -327,6 +418,12 @@ def main() -> int:
                    help="skip the per-candidate counterfactual prime plans")
     p.add_argument("--no-scout", dest="scout", action="store_false",
                    help="skip the per-candidate scout prices")
+    p.add_argument("--no-kernel", dest="kernel", action="store_false",
+                   help="skip the Berlekamp fixed-space kernel attribution")
+    p.add_argument("--kernel-repeats", type=int, default=DEFAULT_KERNEL_REPEATS,
+                   help="calls per instance for the kernel attribution "
+                        f"(default {DEFAULT_KERNEL_REPEATS}); every duration "
+                        "is their median")
     p.add_argument("--plan-repeats", type=int, default=DEFAULT_PLAN_REPEATS,
                    help="calls per instance for the counterfactual and scout "
                         f"sections (default {DEFAULT_PLAN_REPEATS}); the "
@@ -410,6 +507,23 @@ def main() -> int:
             })
         scout_service.kill()
 
+    kernels = []
+    if args.kernel:
+        kernel_service = Service(service_argv("kernelProfile"))
+        for name in names:
+            inst = corpus[name]
+            print(f"kernel: {name}", file=sys.stderr)
+            result = measure_kernel(
+                kernel_service, inst, args.cutoff, args.kernel_repeats)
+            kernels.append({
+                "name": name,
+                "family": inst["family"],
+                "degree": inst["degree"],
+                "status": "timeout" if result is None else result.get("status"),
+                "kernel": result,
+            })
+        kernel_service.kill()
+
     # Wider validation sample: every corpus instance the classical tier answers
     # quickly, so the mirror's agreement with the production trace is not only
     # checked where the expensive phase profile ran.
@@ -446,8 +560,28 @@ def main() -> int:
                 scout_agree += 1
             else:
                 scout_bad.append({"name": row["name"], **cand})
+    kernel_rows = 0
+    kernel_mirror_agree = 0
+    kernel_packed_agree = 0
+    kernel_bad = []
+    for row in kernels:
+        k = ((row.get("kernel") or {}).get("kernel")) or {}
+        if not k:
+            continue
+        kernel_rows += 1
+        mirror_ok = k.get("mirrorAgreesWithRowReduce") and k.get(
+            "echelonOnlyAgrees")
+        packed_ok = all(k[key]["agreesWithNullspace"]
+                        for key in KERNEL_PACKED_KEYS if key in k)
+        kernel_mirror_agree += 1 if mirror_ok else 0
+        kernel_packed_agree += 1 if packed_ok else 0
+        if not (mirror_ok and packed_ok):
+            kernel_bad.append({"name": row["name"],
+                               "mirror_ok": bool(mirror_ok),
+                               "packed_ok": bool(packed_ok)})
+
     record = {
-        "schema": "hexbz-phase-profile/2",
+        "schema": "hexbz-phase-profile/3",
         "env": env_block("hexbz_factor_service"),
         "config": {
             "cpu": cpu,
@@ -459,6 +593,7 @@ def main() -> int:
             "warmup": args.warmup,
             "repeats": args.repeats,
             "plan_repeats": args.plan_repeats,
+            "kernel_repeats": args.kernel_repeats,
             "repeat_ceiling_nanos": REPEAT_CEILING_NANOS,
             "names": names,
             "representative": REPRESENTATIVE,
@@ -468,6 +603,7 @@ def main() -> int:
         "results": results,
         "counterfactuals": counterfactuals,
         "scouts": scouts,
+        "kernels": kernels,
         "validation": {
             "sample_size": len(validation),
             "nodes_agree": sum(1 for v in validation if v["nodes_agree"]),
@@ -484,6 +620,10 @@ def main() -> int:
             "scout_rows": scout_rows,
             "scout_patterns_agree": scout_agree,
             "scout_disagreements": scout_bad,
+            "kernel_rows": kernel_rows,
+            "kernel_mirror_agree": kernel_mirror_agree,
+            "kernel_packed_agree": kernel_packed_agree,
+            "kernel_disagreements": kernel_bad,
         },
     }
 
@@ -496,6 +636,10 @@ def main() -> int:
     out.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n")
     print(f"wrote {out}", file=sys.stderr)
 
+    if kernel_bad:
+        print(f"kernel attribution disagreed with the production row reduction "
+              f"or nullspace on {len(kernel_bad)} instances", file=sys.stderr)
+        return 1
     if scout_bad:
         print(f"scouted degree pattern disagreed with the Berlekamp split on "
               f"{len(scout_bad)} candidates", file=sys.stderr)

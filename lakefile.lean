@@ -230,6 +230,10 @@ lean_lib HexGF2BenchSupport where
   srcDir := "bench"
   globs := #[`HexGF2.Bench]
 
+lean_lib HexBerlekampKernelProbe where
+  srcDir := "bench"
+  globs := #[`HexBench.BerlekampKernel]
+
 lean_lib HexMvPolyBenchSupport where
   srcDir := "bench"
   globs := #[`HexMvPolyCorpus]
