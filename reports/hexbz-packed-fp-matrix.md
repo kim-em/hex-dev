@@ -6,11 +6,11 @@ remeasured before any matrix specialization was justified. This page is that
 remeasurement, and it is a **go**.
 
 On `cyclo_phi385` the row reduction and nullspace basis at the selected prime
-are **46.1% of total factor time** and **94.3% of that prime's Berlekamp
-split**; on `cyclo_phi128_x_phi165`, 44.1% and 88.6%; on
-`cyclo_phi64_x_phi105`, 27.2% and 74.9%. Issue #9132 asks for 25% of total factor
-time on a material row, or 40% of its selected-prime Berlekamp time; 8 of
-24 rows clear the first and 10 of 24 clear the second.
+are **46.5% of total factor time** and **94.6% of that prime's Berlekamp
+split**; on `cyclo_phi128_x_phi165`, 44.6% and 89.3%; on
+`cyclo_phi64_x_phi105`, 29.2% and 79.2%. Issue #9132 asks for 25% of total factor
+time on a material row, or 40% of its selected-prime Berlekamp time; 9 of
+24 rows clear the first and 11 of 24 clear the second.
 
 The numerator here is deliberately **the row reduction and basis alone**, not
 the whole modular kernel. Berlekamp matrix construction is a polynomial
@@ -19,20 +19,20 @@ that a packed matrix representation does not accelerate, so counting it would
 inflate the share of exactly the work under discussion. The in-cascade
 measurement gives the whole kernel in one span, so the construction fraction is
 taken from the kernel section, which times the build on its own; both columns
-are shown. That correction is small on the large cyclotomic rows (2.6% of the
-kernel on `cyclo_phi385`) and large on the small ones (58.0% on `legendre_P38`).
+are shown. That correction is small on the large cyclotomic rows (2.9% of the
+kernel on `cyclo_phi385`) and large on the small ones (57.3% on `legendre_P38`).
 
 Inside that share the cost is one stage. On `cyclo_phi385`, row addition is
-301.268 ms of the 305.201 ms Gauss-Jordan run; pivot search is 6.386 us, the nullspace
-basis 550.256 us, and the conversion of basis vectors back to polynomials
-7.021 us.
+302.049 ms of the 306.315 ms Gauss-Jordan run; pivot search is 6.506 us, the nullspace
+basis 1.987 ms, and the conversion of basis vectors back to polynomials
+7.290 us.
 
 A prototype packed representation -- one contiguous row-major buffer with the
 modulus held in a machine-word local -- was measured against the generic path on
 the same matrices in the same process, and checked entry for entry against
 `Hex.Matrix.nullspace` on all 24 instances. It reduces `cyclo_phi385`'s row
-reduction from 311.525 ms to 15.761 ms, a **16.8x** speedup including the
-cost of packing, and projects a **1.72x** end-to-end improvement on that row.
+reduction from 312.206 ms to 15.606 ms, a **17.0x** speedup including the
+cost of packing, and projects a **1.73x** end-to-end improvement on that row.
 
 Every number here is reproducible from the committed record by the commands in
 [Regeneration](#regeneration). Section
@@ -41,7 +41,7 @@ states the limits of the evidence, and they are not small.
 
 ## Revision and protocol
 
-- Source revision `47aa704800d77e72afdbe72dc9ec12605396775c` (clean worktree),
+- Source revision `0e1601a01e2590755d0664f64db96c8b73e8d2b6` (clean worktree),
   Lean toolchain `leanprover/lean4:v4.33.0-rc1`.
 - Host `chungus2`, AMD EPYC 9455, Linux x86-64, 96 cores, measured
   2026-08-03. The host was shared with other work throughout.
@@ -56,7 +56,7 @@ states the limits of the evidence, and they are not small.
 
 | Record | SHA-256 |
 |---|---|
-| `reports/bench-results/hexbz-phase-profile-47aa7048-chungus2.json` | `84337b3442997e8aa74278348f424b44202ce00a06a9f437641861255ed09fb4` |
+| `reports/bench-results/hexbz-phase-profile-0e1601a0-chungus2.json` | `2048c0f8337a51a4b85b164c0779715596e0348005cf86ee0e498a136b0bdb61` |
 
 `hexbz_factor_service` SHA-256 `e33c56e6b3286ffdbd931f61581c2ea9b8a3f667f222dd07eef00f58890e8db0`.
 Corpus `bench/corpus/hexbz-factor-corpus.jsonl`, SHA-256
@@ -91,8 +91,8 @@ matrix is uniquely referenced.
 
 - The counted mirror's rank, echelon form, and pivot columns agree with
   `Hex.Matrix.rowReduce` on **24 of 24** instances. Its wall time tracks the
-  production row reduction with a median ratio of **1.024** across all 24
-  rows, minimum 0.858 and maximum 1.730; the per-row ratios are in the
+  production row reduction with a median ratio of **1.019** across all 24
+  rows, minimum 0.845 and maximum 1.180; the per-row ratios are in the
   packed-pricing table below. The extremes are the sub-100-us rows, where a
   handful of clock reads is a visible fraction of the run.
 - The transform-free mirror produces the same echelon form and pivot columns as
@@ -137,45 +137,54 @@ for the implementation to avoid.
 
 ## The measurement threshold
 
-`fixed-space kernel` is the whole modular kernel at the selected prime --
-construction, row reduction, and nullspace basis -- timed in one span by the
-scout section. It is split into `construction` and `reduction + basis` by the
-construction fraction the kernel section measures, because a packed
-representation accelerates only the second. `Berlekamp split` is a full
-`berlekampFactor` at the same prime, timed in the same place, and `total factor`
-is the phase profile's own total for the production cascade. Planning overhead is
-excluded: these are costs at the *selected* prime, not costs of the walk.
+`Berlekamp split` is a full `berlekampFactor` at the selected prime, timed
+in-cascade by the scout section, and `total factor` is the phase profile's own
+total for the production cascade. `fixed-space kernel` is the split times the
+kernel's share of it, that share being a ratio between two spans of the same
+kernel-section execution; `construction` and `reduction + basis` then divide it
+by the construction share the kernel section measures, because a packed
+representation accelerates only the second.
+
+Estimating the numerator as a within-section *share* of one in-cascade absolute,
+rather than as a span differenced across the two sections, is what keeps it
+robust: the scout section's own `berlekampMatrix` span measures nothing, because
+its matrix build is a pure `let` that the compiler moves down into
+`Matrix.nullspace`, and on a contended run its `rowReduction` span has been
+observed exceeding the split that contains it. A share cannot exceed one.
+
+Planning overhead is excluded throughout: these are costs at the *selected*
+prime, not costs of the walk.
 
 | instance | matrix | prime | total factor | fixed-space kernel | construction | reduction + basis | share of total | Berlekamp split | share of split |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `sd5` | 32x32 | 29 | 77.583 ms | 1.603 ms | 1.105 ms | 498.328 us | 0.6% | 3.556 ms | 14.0% |
-| `sd5_shift1` | 32x32 | 29 | 67.368 ms | 2.266 ms | 1.357 ms | 909.473 us | 1.4% | 3.659 ms | 24.9% |
-| `sd5_shift2` | 32x32 | 29 | 70.001 ms | 2.273 ms | 1.350 ms | 923.471 us | 1.3% | 5.152 ms | 17.9% |
-| `sd4_x_sd4shift1` | 32x32 | 29 | 18.966 ms | 2.284 ms | 1.377 ms | 906.127 us | 4.8% | 4.437 ms | 20.4% |
-| `sd5_x_phi11` | 42x42 | 29 | 164.715 ms | 4.649 ms | 2.339 ms | 2.309 ms | 1.4% | 9.147 ms | 25.2% |
-| `xpow48_minus1` | 48x48 | 11 | 19.330 ms | 748.610 us | 504.969 us | 243.640 us | 1.3% | 2.135 ms | 11.4% |
-| `xpow105_minus1` | 105x105 | 17 | 75.332 ms | 4.948 ms | 3.137 ms | 1.811 ms | 2.4% | 9.962 ms | 18.2% |
-| `xpow120_minus1` | 120x120 | 7 | 508.038 ms | 3.771 ms | 2.146 ms | 1.626 ms | 0.3% | 17.423 ms | 9.3% |
-| `cyclo_phi179` | 178x178 | 3 | 74.597 ms | 14.019 ms | 2.566 ms | 11.454 ms | 15.4% | 15.047 ms | 76.1% |
-| `cyclo_phi64_x_phi105` | 80x80 | 11 | 60.512 ms | 19.052 ms | 2.575 ms | 16.477 ms | 27.2% | 21.997 ms | 74.9% |
-| `cyclo_phi128_x_phi165` | 144x144 | 7 | 198.630 ms | 93.260 ms | 5.575 ms | 87.685 ms | 44.1% | 98.991 ms | 88.6% |
-| `cyclo_phi385` | 240x240 | 3 | 434.770 ms | 205.938 ms | 5.393 ms | 200.544 ms | 46.1% | 212.632 ms | 94.3% |
-| `wilkinson_40` | 40x40 | 47 | 13.187 ms | 255.439 us | 212.573 us | 42.865 us | 0.3% | 1.818 ms | 2.4% |
-| `wilkinson_48` | 48x48 | 61 | 24.918 ms | 366.003 us | 303.040 us | 62.962 us | 0.3% | 2.875 ms | 2.2% |
-| `wilkinson_56` | 56x56 | 67 | 34.052 ms | 574.282 us | 488.575 us | 85.706 us | 0.3% | 4.389 ms | 2.0% |
-| `chebyshev_T24` (control) | 24x24 | 5 | 514.132 us | 297.961 us | 103.468 us | 194.492 us | 37.8% | 335.537 us | 58.0% |
-| `chebyshev_U24` (control) | 24x24 | 3 | 658.556 us | 246.105 us | 100.420 us | 145.684 us | 22.1% | 321.526 us | 45.3% |
-| `legendre_P30` (control) | 30x30 | 67 | 9.279 ms | 1.663 ms | 1.037 ms | 625.435 us | 6.7% | 2.303 ms | 27.2% |
-| `legendre_P38` (control) | 38x38 | 79 | 4.567 ms | 3.493 ms | 2.025 ms | 1.468 ms | 32.2% | 3.721 ms | 39.5% |
-| `cyclo_phi17` (control) | 16x16 | 3 | 129.422 us | 96.343 us | 29.764 us | 66.578 us | 51.4% | 99.928 us | 66.6% |
-| `cyclo_phi41` (control) | 40x40 | 3 | 2.795 ms | 455.666 us | 148.828 us | 306.837 us | 11.0% | 688.922 us | 44.5% |
-| `xpow24_minus1` (control) | 24x24 | 11 | 3.226 ms | 192.846 us | 147.779 us | 45.066 us | 1.4% | 614.652 us | 7.3% |
-| `randprod_10` (control) | 20x20 | 7 | 777.673 us | 430.878 us | 137.505 us | 293.372 us | 37.7% | 539.210 us | 54.4% |
-| `randprod_21` (control) | 24x24 | 17 | 1.697 ms | 1.007 ms | 476.449 us | 530.173 us | 31.2% | 1.219 ms | 43.5% |
+| `sd5` | 32x32 | 29 | 78.761 ms | 1.691 ms | 1.169 ms | 521.550 us | 0.7% | 3.564 ms | 14.6% |
+| `sd5_shift1` | 32x32 | 29 | 66.494 ms | 2.411 ms | 1.437 ms | 974.421 us | 1.5% | 3.691 ms | 26.4% |
+| `sd5_shift2` | 32x32 | 29 | 70.635 ms | 2.493 ms | 1.474 ms | 1.019 ms | 1.4% | 5.209 ms | 19.6% |
+| `sd4_x_sd4shift1` | 32x32 | 29 | 19.289 ms | 2.476 ms | 1.486 ms | 989.042 us | 5.1% | 4.511 ms | 21.9% |
+| `sd5_x_phi11` | 42x42 | 29 | 167.727 ms | 5.057 ms | 2.514 ms | 2.543 ms | 1.5% | 9.135 ms | 27.8% |
+| `xpow48_minus1` | 48x48 | 11 | 19.170 ms | 791.569 us | 529.559 us | 262.009 us | 1.4% | 2.121 ms | 12.4% |
+| `xpow105_minus1` | 105x105 | 17 | 74.664 ms | 5.399 ms | 3.404 ms | 1.995 ms | 2.7% | 10.040 ms | 19.9% |
+| `xpow120_minus1` | 120x120 | 7 | 481.771 ms | 4.332 ms | 2.452 ms | 1.880 ms | 0.4% | 17.266 ms | 10.9% |
+| `cyclo_phi179` | 178x178 | 3 | 74.012 ms | 14.154 ms | 2.537 ms | 11.616 ms | 15.7% | 14.914 ms | 77.9% |
+| `cyclo_phi64_x_phi105` | 80x80 | 11 | 60.451 ms | 20.371 ms | 2.717 ms | 17.654 ms | 29.2% | 22.284 ms | 79.2% |
+| `cyclo_phi128_x_phi165` | 144x144 | 7 | 197.342 ms | 93.463 ms | 5.522 ms | 87.942 ms | 44.6% | 98.462 ms | 89.3% |
+| `cyclo_phi385` | 240x240 | 3 | 435.313 ms | 208.320 ms | 6.110 ms | 202.210 ms | 46.5% | 213.642 ms | 94.6% |
+| `wilkinson_40` | 40x40 | 47 | 13.242 ms | 267.834 us | 219.923 us | 47.910 us | 0.4% | 1.812 ms | 2.6% |
+| `wilkinson_48` | 48x48 | 61 | 24.782 ms | 373.204 us | 308.703 us | 64.500 us | 0.3% | 2.868 ms | 2.2% |
+| `wilkinson_56` | 56x56 | 67 | 34.025 ms | 592.766 us | 504.498 us | 88.267 us | 0.3% | 4.350 ms | 2.0% |
+| `chebyshev_T24` (control) | 24x24 | 5 | 525.139 us | 302.272 us | 102.637 us | 199.634 us | 38.0% | 334.546 us | 59.7% |
+| `chebyshev_U24` (control) | 24x24 | 3 | 660.189 us | 261.503 us | 77.019 us | 184.483 us | 27.9% | 322.508 us | 57.2% |
+| `legendre_P30` (control) | 30x30 | 67 | 9.251 ms | 1.782 ms | 1.096 ms | 685.461 us | 7.4% | 2.358 ms | 29.1% |
+| `legendre_P38` (control) | 38x38 | 79 | 4.651 ms | 3.615 ms | 2.072 ms | 1.543 ms | 33.2% | 3.810 ms | 40.5% |
+| `cyclo_phi17` (control) | 16x16 | 3 | 128.981 us | 98.266 us | 28.853 us | 69.412 us | 53.8% | 98.266 us | 70.6% |
+| `cyclo_phi41` (control) | 40x40 | 3 | 2.793 ms | 508.266 us | 162.268 us | 345.997 us | 12.4% | 692.236 us | 50.0% |
+| `xpow24_minus1` (control) | 24x24 | 11 | 3.221 ms | 209.157 us | 157.679 us | 51.477 us | 1.6% | 623.364 us | 8.3% |
+| `randprod_10` (control) | 20x20 | 7 | 767.318 us | 452.393 us | 139.869 us | 312.523 us | 40.7% | 545.189 us | 57.3% |
+| `randprod_21` (control) | 24x24 | 17 | 1.686 ms | 1.048 ms | 484.168 us | 564.252 us | 33.5% | 1.227 ms | 46.0% |
 
-8 of 24 rows clear the 25%-of-total bar and 10 of 24 clear the 40%-of-split
+9 of 24 rows clear the 25%-of-total bar and 11 of 24 clear the 40%-of-split
 bar. Three of the four named cyclotomic rows clear the first; the fourth,
-`cyclo_phi179` at 15.4%, clears the second at 76.1%.
+`cyclo_phi179` at 15.7%, clears the second at 77.9%.
 
 The Wilkinson rows are a structural exception rather than a near miss: their
 selected prime splits the image into linear factors, so `Q_f - I` is the zero
@@ -207,35 +216,35 @@ and an allocator-level counter, which this driver does not have.
 
 | instance | column polys | conversion | diagonal | pivot search | swap + scale | row addition | basis | to polynomials | small allocs |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `sd5` | 1.175 ms | 27.039 us | 20.791 us | 830 ns | 37.114 us | 503.836 us | 22.964 us | 4.627 us | 31,866 |
-| `sd5_shift1` | 1.525 ms | 23.425 us | 15.513 us | 852 ns | 36.592 us | 1.017 ms | 43.765 us | 4.617 us | 62,044 |
-| `sd5_shift2` | 1.512 ms | 17.496 us | 21.211 us | 862 ns | 35.781 us | 1.039 ms | 46.329 us | 4.537 us | 62,818 |
-| `sd4_x_sd4shift1` | 1.523 ms | 22.153 us | 19.019 us | 884 ns | 36.283 us | 997.830 us | 43.754 us | 4.457 us | 61,400 |
-| `sd5_x_phi11` | 2.684 ms | 36.404 us | 123.143 us | 1.173 us | 71.455 us | 2.697 ms | 79.168 us | 5.328 us | 166,053 |
-| `xpow48_minus1` | 465.199 us | 53.479 us | 35.584 us | 1.322 us | 92.140 us | 179.856 us | 58.817 us | 6.750 us | 18,071 |
-| `xpow105_minus1` | 3.176 ms | 244.582 us | 174.819 us | 2.753 us | 604.170 us | 1.568 ms | 219.646 us | 7.351 us | 142,211 |
-| `xpow120_minus1` | 1.958 ms | 358.012 us | 206.236 us | 3.039 us | 615.045 us | 1.294 ms | 459.722 us | 28.252 us | 127,473 |
-| `cyclo_phi179` | 2.384 ms | 732.476 us | 514.353 us | 4.578 us | 1.981 ms | 14.295 ms | 320.085 us | 3.625 us | 1,015,884 |
-| `cyclo_phi64_x_phi105` | 3.544 ms | 120.629 us | 107.440 us | 2.107 us | 374.264 us | 23.278 ms | 173.377 us | 5.158 us | 1,413,149 |
-| `cyclo_phi128_x_phi165` | 7.478 ms | 430.238 us | 346.734 us | 3.893 us | 1.309 ms | 129.048 ms | 2.848 ms | 6.239 us | 7,725,927 |
-| `cyclo_phi385` | 6.196 ms | 1.256 ms | 931.833 us | 6.386 us | 3.926 ms | 301.268 ms | -550.256 us | 7.021 us | 17,647,557 |
-| `wilkinson_40` | 74.230 us | 34.241 us | 24.936 us | 1.008 us | 0 ns | 0 ns | 39.559 us | 18.477 us | 1,810 |
-| `wilkinson_48` | 103.804 us | 49.794 us | 42.813 us | 1.183 us | 0 ns | 0 ns | 57.515 us | 26.099 us | 2,554 |
-| `wilkinson_56` | 139.046 us | 65.738 us | 54.752 us | 1.311 us | 0 ns | 0 ns | 74.490 us | 34.110 us | 3,426 |
-| `chebyshev_T24` (control) | 104.896 us | 11.778 us | 10.935 us | 602 ns | 37.316 us | 218.778 us | 10.385 us | 1.182 us | 14,709 |
-| `chebyshev_U24` (control) | 110.824 us | 17.646 us | 10.776 us | 760 ns | 57.075 us | 309.771 us | 12.628 us | 1.433 us | 13,180 |
-| `legendre_P30` (control) | 1.088 ms | 12.840 us | 16.404 us | 861 ns | 49.944 us | 685.037 us | 26.019 us | 2.084 us | 43,334 |
-| `legendre_P38` (control) | 2.235 ms | 29.463 us | 32.568 us | 951 ns | 93.349 us | 1.703 ms | 24.547 us | 1.442 us | 104,644 |
-| `cyclo_phi17` (control) | 26.329 us | 5.499 us | 5.267 us | 391 ns | 18.854 us | 73.359 us | 3.946 us | 581 ns | 5,139 |
-| `cyclo_phi41` (control) | 134.450 us | 36.163 us | 29.534 us | 1.093 us | 96.571 us | 335.579 us | 31.598 us | 1.722 us | 26,424 |
-| `xpow24_minus1` (control) | 133.949 us | 11.928 us | 14.051 us | 632 ns | 19.425 us | 30.147 us | 16.343 us | 3.385 us | 3,338 |
-| `randprod_10` (control) | 157.283 us | 7.320 us | 8.373 us | 509 ns | 23.742 us | 358.414 us | 12.698 us | 1.021 us | 21,354 |
-| `randprod_21` (control) | 539.029 us | 16.404 us | -6.769 us | 610 ns | 29.784 us | 624.976 us | 24.716 us | 1.703 us | 37,396 |
+| `sd5` | 1.157 ms | 107.490 us | 0 ns | 854 ns | 37.755 us | 501.365 us | 35.663 us | 4.627 us | 31,866 |
+| `sd5_shift1` | 1.541 ms | 22.654 us | 17.055 us | 802 ns | 36.523 us | 1.042 ms | 54.772 us | 4.707 us | 62,044 |
+| `sd5_shift2` | 1.536 ms | -25.357 us | 10.947 us | 761 ns | 36.686 us | 1.051 ms | 48.032 us | 4.667 us | 62,818 |
+| `sd4_x_sd4shift1` | 1.526 ms | 22.703 us | 14.783 us | 812 ns | 36.343 us | 1.015 ms | 50.516 us | 4.687 us | 61,400 |
+| `sd5_x_phi11` | 2.711 ms | 34.981 us | 26.078 us | 1.071 us | 73.059 us | 2.688 ms | 80.480 us | 5.468 us | 166,053 |
+| `xpow48_minus1` | 457.759 us | 48.693 us | 39.367 us | 1.260 us | 93.158 us | 174.253 us | 59.479 us | 7.110 us | 18,071 |
+| `xpow105_minus1` | 3.183 ms | 254.406 us | 175.911 us | 2.696 us | 620.644 us | 1.588 ms | 210.803 us | 7.481 us | 142,211 |
+| `xpow120_minus1` | 1.974 ms | 357.841 us | 191.393 us | 3.008 us | 635.372 us | 1.295 ms | 439.713 us | 28.703 us | 127,473 |
+| `cyclo_phi179` | 2.371 ms | 706.376 us | 519.121 us | 4.608 us | 2.016 ms | 14.485 ms | 393.314 us | 3.486 us | 1,015,884 |
+| `cyclo_phi64_x_phi105` | 3.500 ms | 142.782 us | 98.366 us | 2.122 us | 374.437 us | 23.641 ms | -15.423 us | 4.276 us | 1,413,149 |
+| `cyclo_phi128_x_phi165` | 7.309 ms | 406.364 us | 426.512 us | 3.898 us | 1.341 ms | 127.162 ms | 517.917 us | 6.470 us | 7,725,927 |
+| `cyclo_phi385` | 6.412 ms | 1.362 ms | 2.061 ms | 6.506 us | 4.188 ms | 302.049 ms | 1.987 ms | 7.290 us | 17,647,557 |
+| `wilkinson_40` | 72.768 us | 34.171 us | 26.249 us | 1.002 us | 0 ns | 0 ns | 41.673 us | 19.038 us | 1,810 |
+| `wilkinson_48` | 102.151 us | 49.463 us | 39.169 us | 1.163 us | 0 ns | 0 ns | 54.471 us | 26.799 us | 2,554 |
+| `wilkinson_56` | 139.397 us | 67.902 us | 54.971 us | 1.322 us | 0 ns | 0 ns | 73.179 us | 35.052 us | 3,426 |
+| `chebyshev_T24` (control) | 106.458 us | 12.147 us | 11.607 us | 621 ns | 38.325 us | 225.325 us | 10.936 us | 1.192 us | 14,709 |
+| `chebyshev_U24` (control) | 69.793 us | 12.519 us | 10.636 us | 631 ns | 35.613 us | 203.171 us | 11.407 us | 1.262 us | 13,180 |
+| `legendre_P30` (control) | 1.094 ms | 20.280 us | 19.999 us | 780 ns | 50.318 us | 718.353 us | 24.256 us | 1.993 us | 43,334 |
+| `legendre_P38` (control) | 2.210 ms | 28.172 us | 27.211 us | 992 ns | 93.829 us | 1.720 ms | 21.012 us | 1.342 us | 104,644 |
+| `cyclo_phi17` (control) | 25.748 us | 5.609 us | 5.359 us | 409 ns | 19.349 us | 74.170 us | -1.031 us | 611 ns | 5,139 |
+| `cyclo_phi41` (control) | 139.387 us | 29.523 us | 26.690 us | 1.052 us | 98.786 us | 334.674 us | 29.664 us | 1.663 us | 26,424 |
+| `xpow24_minus1` (control) | 129.342 us | 11.678 us | 11.095 us | 600 ns | 19.730 us | 30.766 us | 16.285 us | 3.455 us | 3,338 |
+| `randprod_10` (control) | 154.178 us | 7.111 us | 7.871 us | 490 ns | 24.527 us | 364.954 us | 12.519 us | 1.011 us | 21,354 |
+| `randprod_21` (control) | 521.533 us | 12.008 us | 13.280 us | 582 ns | 30.384 us | 631.849 us | 22.915 us | 1.763 us | 37,396 |
 
-Row addition is the whole cost. On `cyclo_phi385` it is 98.7% of the Gauss-Jordan
-run; pivot search is 6.386 us, four orders of magnitude below it, and the two
+Row addition is the whole cost. On `cyclo_phi385` it is 98.6% of the Gauss-Jordan
+run; pivot search is 6.506 us, four orders of magnitude below it, and the two
 conversions plus the basis and its polynomial readback come to
-2.745 ms against 301.268 ms. Column construction is 6.196 ms and becomes the
+5.418 ms against 302.049 ms. Column construction is 6.412 ms and becomes the
 kernel's largest remaining cost once row addition is specialized.
 
 The row-addition counters explain the two shapes among the cyclotomic rows.
@@ -264,48 +273,48 @@ The first three perform a full-width row addition at every entry, exactly as
 `Hex.Matrix.rowAdd` does, so they price the representation and nothing else. The
 fourth prices an algorithmic optimization the generic path does not have, and is
 reported separately for that reason: on `cyclo_phi385` at `p = 3` roughly a third
-of entries are zero, and skipping them is worth 1.70x on its own. All four
+of entries are zero, and skipping them is worth 1.69x on its own. All four
 compute the rank and the full nullspace basis and all four are checked against
 `Hex.Matrix.nullspace`. `speedup` is the production row reduction against packing
 plus reducing.
 
 | instance | generic, with transform | mirror / production | generic, echelon only | immediate `UInt64` | immediate `UInt32` | `UInt32`, hardware `%` | speedup | `UInt32`, zero-skip |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| `sd5` | 561.933 us | 0.993 | 322.178 us | 67.079 us | 35.272 us | 35.242 us | 7.3x | 24.887 us |
-| `sd5_shift1` | 1.065 ms | 1.007 | 595.202 us | 124.124 us | 61.431 us | 60.910 us | 10.3x | 51.446 us |
-| `sd5_shift2` | 1.079 ms | 1.012 | 598.197 us | 124.064 us | 60.870 us | 60.520 us | 10.5x | 51.937 us |
-| `sd4_x_sd4shift1` | 1.043 ms | 1.008 | 580.691 us | 121.880 us | 60.389 us | 60.569 us | 10.2x | 51.557 us |
-| `sd5_x_phi11` | 2.839 ms | 0.985 | 1.508 ms | 328.797 us | 156.612 us | 155.791 us | 12.3x | 137.003 us |
-| `xpow48_minus1` | 270.922 us | 1.135 | 227.668 us | 43.765 us | 46.419 us | 27.591 us | 1.7x | 24.887 us |
-| `xpow105_minus1` | 2.085 ms | 1.105 | 1.565 ms | 322.047 us | 188.219 us | 186.687 us | 3.0x | 155.271 us |
-| `xpow120_minus1` | 1.913 ms | 1.099 | 1.485 ms | 294.016 us | 174.478 us | 173.798 us | 2.3x | 150.853 us |
-| `cyclo_phi179` | 16.221 ms | 1.027 | 9.612 ms | 2.161 ms | 1.064 ms | 1.075 ms | 6.3x | 723.743 us |
-| `cyclo_phi64_x_phi105` | 24.192 ms | 0.981 | 12.335 ms | 2.818 ms | 1.281 ms | 1.304 ms | 15.4x | 1.006 ms |
-| `cyclo_phi128_x_phi165` | 127.647 ms | 1.024 | 65.427 ms | 15.505 ms | 6.858 ms | 7.120 ms | 16.3x | 5.101 ms |
-| `cyclo_phi385` | 311.525 ms | 0.982 | 155.580 ms | 38.173 ms | 15.761 ms | 15.917 ms | 16.8x | 9.254 ms |
-| `wilkinson_40` | 44.516 us | 0.907 | 41.862 us | 4.897 us | 4.707 us | 4.136 us | 0.6x | 4.026 us |
-| `wilkinson_48` | 66.098 us | 0.858 | 60.210 us | 6.480 us | 6.149 us | 5.649 us | 0.6x | 5.598 us |
-| `wilkinson_56` | 87.540 us | 0.862 | 79.618 us | 8.733 us | 8.242 us | 7.551 us | 0.6x | 8.072 us |
-| `chebyshev_T24` (control) | 246.515 us | 1.078 | 163.853 us | 32.188 us | 19.499 us | 18.648 us | 5.9x | 15.083 us |
-| `chebyshev_U24` (control) | 221.248 us | 1.730 | 225.965 us | 40.700 us | 26.690 us | 22.824 us | 3.8x | 17.696 us |
-| `legendre_P30` (control) | 738.966 us | 1.015 | 457.498 us | 92.236 us | 48.071 us | 47.280 us | 8.7x | 32.929 us |
-| `legendre_P38` (control) | 1.778 ms | 1.023 | 1.009 ms | 212.855 us | 107.329 us | 107.789 us | 10.6x | 73.169 us |
-| `cyclo_phi17` (control) | 86.649 us | 1.118 | 63.394 us | 12.558 us | 8.373 us | 7.661 us | 5.1x | 6.409 us |
-| `cyclo_phi41` (control) | 418.360 us | 1.085 | 295.489 us | 57.556 us | 35.442 us | 35.192 us | 4.1x | 28.913 us |
-| `xpow24_minus1` (control) | 51.507 us | 1.175 | 46.739 us | 9.434 us | 7.061 us | 6.118 us | 1.8x | 5.969 us |
-| `randprod_10` (control) | 377.770 us | 1.032 | 223.872 us | 44.015 us | 23.184 us | 22.934 us | 10.0x | 18.337 us |
-| `randprod_21` (control) | 648.141 us | 1.024 | 371.310 us | 74.770 us | 37.396 us | 37.145 us | 10.9x | 31.126 us |
+| `sd5` | 548.934 us | 1.018 | 321.257 us | 68.722 us | 37.155 us | 34.692 us | 7.0x | 24.886 us |
+| `sd5_shift1` | 1.085 ms | 1.010 | 611.126 us | 122.011 us | 60.429 us | 61.221 us | 10.7x | 51.266 us |
+| `sd5_shift2` | 1.100 ms | 1.006 | 613.290 us | 124.164 us | 61.481 us | 61.601 us | 10.7x | 51.847 us |
+| `sd4_x_sd4shift1` | 1.059 ms | 1.009 | 596.795 us | 121.049 us | 59.618 us | 60.480 us | 10.5x | 51.397 us |
+| `sd5_x_phi11` | 2.832 ms | 0.984 | 1.523 ms | 326.655 us | 155.570 us | 158.795 us | 12.3x | 136.682 us |
+| `xpow48_minus1` | 275.128 us | 1.095 | 225.904 us | 42.954 us | 28.192 us | 27.361 us | 2.2x | 24.817 us |
+| `xpow105_minus1` | 2.142 ms | 1.091 | 1.583 ms | 318.032 us | 187.638 us | 185.995 us | 3.1x | 155.080 us |
+| `xpow120_minus1` | 1.944 ms | 1.097 | 1.493 ms | 293.705 us | 176.211 us | 175.120 us | 2.3x | 150.744 us |
+| `cyclo_phi179` | 16.470 ms | 1.024 | 9.757 ms | 2.162 ms | 1.067 ms | 1.078 ms | 6.4x | 721.690 us |
+| `cyclo_phi64_x_phi105` | 24.487 ms | 0.984 | 12.671 ms | 2.805 ms | 1.271 ms | 1.313 ms | 15.7x | 1.004 ms |
+| `cyclo_phi128_x_phi165` | 129.762 ms | 0.993 | 64.723 ms | 15.351 ms | 6.857 ms | 6.971 ms | 16.5x | 5.052 ms |
+| `cyclo_phi385` | 312.206 ms | 0.983 | 157.651 ms | 37.644 ms | 15.606 ms | 15.918 ms | 17.0x | 9.249 ms |
+| `wilkinson_40` | 47.370 us | 0.845 | 41.972 us | 4.787 us | 4.577 us | 4.146 us | 0.7x | 4.106 us |
+| `wilkinson_48` | 64.405 us | 0.859 | 58.977 us | 6.840 us | 6.039 us | 5.629 us | 0.6x | 5.588 us |
+| `wilkinson_56` | 88.131 us | 0.849 | 79.038 us | 8.603 us | 8.252 us | 7.732 us | 0.6x | 7.642 us |
+| `chebyshev_T24` (control) | 255.548 us | 1.068 | 169.301 us | 32.248 us | 19.108 us | 18.738 us | 6.2x | 14.722 us |
+| `chebyshev_U24` (control) | 226.596 us | 1.098 | 152.076 us | 28.202 us | 17.045 us | 16.434 us | 5.8x | 12.889 us |
+| `legendre_P30` (control) | 768.340 us | 1.020 | 446.432 us | 90.203 us | 46.759 us | 46.498 us | 9.3x | 33.340 us |
+| `legendre_P38` (control) | 1.797 ms | 1.022 | 1.035 ms | 210.131 us | 106.959 us | 107.500 us | 10.8x | 72.798 us |
+| `cyclo_phi17` (control) | 92.757 us | 1.064 | 64.817 us | 12.758 us | 8.523 us | 7.721 us | 5.4x | 6.339 us |
+| `cyclo_phi41` (control) | 419.953 us | 1.080 | 295.378 us | 57.325 us | 35.602 us | 35.081 us | 4.1x | 28.833 us |
+| `xpow24_minus1` (control) | 52.087 us | 1.180 | 47.811 us | 9.234 us | 6.951 us | 6.239 us | 1.8x | 5.859 us |
+| `randprod_10` (control) | 385.962 us | 1.028 | 231.263 us | 43.584 us | 22.724 us | 22.774 us | 10.4x | 18.097 us |
+| `randprod_21` (control) | 662.011 us | 1.014 | 382.567 us | 74.501 us | 37.155 us | 37.135 us | 11.2x | 31.086 us |
 
 The win decomposes on `cyclo_phi385`:
 
 | step | time | factor |
 |---|---:|---:|
-| production `Hex.Matrix.rowReduce` | 311.525 ms | -- |
-| drop the transform the nullspace never reads | 155.580 ms | 2.00x |
-| contiguous buffer, modulus in a machine-word local | 38.173 ms | 4.08x |
-| immediate `UInt32` entries instead of boxed `UInt64` | 15.761 ms | 2.42x |
-| Barrett reciprocal instead of hardware remainder | 15.917 ms | 1.01x |
-| *(separately)* skipping zero source entries | 9.254 ms | 1.70x |
+| production `Hex.Matrix.rowReduce` | 312.206 ms | -- |
+| drop the transform the nullspace never reads | 157.651 ms | 1.98x |
+| contiguous buffer, modulus in a machine-word local | 37.644 ms | 4.19x |
+| immediate `UInt32` entries instead of boxed `UInt64` | 15.606 ms | 2.41x |
+| Barrett reciprocal instead of hardware remainder | 15.918 ms | 1.02x |
+| *(separately)* skipping zero source entries | 9.249 ms | 1.69x |
 
 Two of these deserve comment.
 
@@ -313,7 +322,7 @@ Two of these deserve comment.
 `Hex.Matrix.rowReduce` maintains an `n x n` transform `T` with `T * M = echelon`
 in lockstep with the echelon form, applying every swap, scale, and row addition
 twice. `Hex.Matrix.nullspace` reads only `rank`, `echelon`, and `pivotCols`. That
-factor of 2.00 is available without any change of representation.
+factor of 1.98 is available without any change of representation.
 
 **Boxing, not density, is what `UInt32` buys.** The entries occupy the same
 machine-word array slots either way. What changes is that a `UInt32` residue is a
@@ -360,38 +369,38 @@ construction, and leaving everything else in the cascade unchanged:
 
 | instance | total factor now | fixed-space kernel now | packed replacement | projected total | projected gain |
 |---|---:|---:|---:|---:|---:|
-| `sd5` | 77.583 ms | 1.603 ms | 1.184 ms | 77.164 ms | 1.01x |
-| `sd5_shift1` | 67.368 ms | 2.266 ms | 1.463 ms | 66.565 ms | 1.01x |
-| `sd5_shift2` | 70.001 ms | 2.273 ms | 1.455 ms | 69.183 ms | 1.01x |
-| `sd4_x_sd4shift1` | 18.966 ms | 2.284 ms | 1.482 ms | 18.164 ms | 1.04x |
-| `sd5_x_phi11` | 164.715 ms | 4.649 ms | 2.575 ms | 162.641 ms | 1.01x |
-| `xpow48_minus1` | 19.330 ms | 748.610 us | 671.265 us | 19.253 ms | 1.00x |
-| `xpow105_minus1` | 75.332 ms | 4.948 ms | 3.845 ms | 74.228 ms | 1.01x |
-| `xpow120_minus1` | 508.038 ms | 3.771 ms | 3.010 ms | 507.277 ms | 1.00x |
-| `cyclo_phi179` | 74.597 ms | 14.019 ms | 5.175 ms | 65.753 ms | 1.13x |
-| `cyclo_phi64_x_phi105` | 60.512 ms | 19.052 ms | 4.150 ms | 45.610 ms | 1.33x |
-| `cyclo_phi128_x_phi165` | 198.630 ms | 93.260 ms | 13.429 ms | 118.799 ms | 1.67x |
-| `cyclo_phi385` | 434.770 ms | 205.938 ms | 24.014 ms | 252.847 ms | 1.72x |
-| `wilkinson_40` | 13.187 ms | 255.439 us | 285.761 us | 13.217 ms | 1.00x |
-| `wilkinson_48` | 24.918 ms | 366.003 us | 410.329 us | 24.962 ms | 1.00x |
-| `wilkinson_56` | 34.052 ms | 574.282 us | 636.393 us | 34.114 ms | 1.00x |
-| `chebyshev_T24` (control) | 514.132 us | 297.961 us | 146.722 us | 362.893 us | 1.42x |
-| `chebyshev_U24` (control) | 658.556 us | 246.105 us | 160.720 us | 573.171 us | 1.15x |
-| `legendre_P30` (control) | 9.279 ms | 1.663 ms | 1.125 ms | 8.741 ms | 1.06x |
-| `legendre_P38` (control) | 4.567 ms | 3.493 ms | 2.195 ms | 3.269 ms | 1.40x |
-| `cyclo_phi17` (control) | 129.422 us | 96.343 us | 47.370 us | 80.449 us | 1.61x |
-| `cyclo_phi41` (control) | 2.795 ms | 455.666 us | 253.663 us | 2.593 ms | 1.08x |
-| `xpow24_minus1` (control) | 3.226 ms | 192.846 us | 178.395 us | 3.212 ms | 1.00x |
-| `randprod_10` (control) | 777.673 us | 430.878 us | 176.313 us | 523.108 us | 1.49x |
-| `randprod_21` (control) | 1.697 ms | 1.007 ms | 537.259 us | 1.228 ms | 1.38x |
+| `sd5` | 78.761 ms | 1.691 ms | 1.251 ms | 78.322 ms | 1.01x |
+| `sd5_shift1` | 66.494 ms | 2.411 ms | 1.541 ms | 65.624 ms | 1.01x |
+| `sd5_shift2` | 70.635 ms | 2.493 ms | 1.579 ms | 69.721 ms | 1.01x |
+| `sd4_x_sd4shift1` | 19.289 ms | 2.476 ms | 1.590 ms | 18.403 ms | 1.05x |
+| `sd5_x_phi11` | 167.727 ms | 5.057 ms | 2.748 ms | 165.419 ms | 1.01x |
+| `xpow48_minus1` | 19.170 ms | 791.569 us | 660.313 us | 19.039 ms | 1.01x |
+| `xpow105_minus1` | 74.664 ms | 5.399 ms | 4.115 ms | 73.380 ms | 1.02x |
+| `xpow120_minus1` | 481.771 ms | 4.332 ms | 3.323 ms | 480.762 ms | 1.00x |
+| `cyclo_phi179` | 74.012 ms | 14.154 ms | 5.152 ms | 65.010 ms | 1.14x |
+| `cyclo_phi64_x_phi105` | 60.451 ms | 20.371 ms | 4.283 ms | 44.364 ms | 1.36x |
+| `cyclo_phi128_x_phi165` | 197.342 ms | 93.463 ms | 13.395 ms | 117.274 ms | 1.68x |
+| `cyclo_phi385` | 435.313 ms | 208.320 ms | 24.557 ms | 251.550 ms | 1.73x |
+| `wilkinson_40` | 13.242 ms | 267.834 us | 293.863 us | 13.268 ms | 1.00x |
+| `wilkinson_48` | 24.782 ms | 373.204 us | 416.513 us | 24.825 ms | 1.00x |
+| `wilkinson_56` | 34.025 ms | 592.766 us | 652.026 us | 34.084 ms | 1.00x |
+| `chebyshev_T24` (control) | 525.139 us | 302.272 us | 145.020 us | 367.887 us | 1.43x |
+| `chebyshev_U24` (control) | 660.189 us | 261.503 us | 117.519 us | 516.205 us | 1.28x |
+| `legendre_P30` (control) | 9.251 ms | 1.782 ms | 1.181 ms | 8.651 ms | 1.07x |
+| `legendre_P38` (control) | 4.651 ms | 3.615 ms | 2.240 ms | 3.276 ms | 1.42x |
+| `cyclo_phi17` (control) | 128.981 us | 98.266 us | 46.569 us | 77.284 us | 1.67x |
+| `cyclo_phi41` (control) | 2.793 ms | 508.266 us | 266.842 us | 2.552 ms | 1.09x |
+| `xpow24_minus1` (control) | 3.221 ms | 209.157 us | 188.055 us | 3.200 ms | 1.01x |
+| `randprod_10` (control) | 767.318 us | 452.393 us | 178.205 us | 493.130 us | 1.56x |
+| `randprod_21` (control) | 1.686 ms | 1.048 ms | 544.638 us | 1.182 ms | 1.43x |
 
-The four named cyclotomic rows gain 1.13x to 1.72x. The worst row is
+The four named cyclotomic rows gain 1.14x to 1.73x. The worst row is
 `wilkinson_40` at 1.00x.
 
 This projection substitutes an absolute packed time measured in the kernel
 section for an absolute generic time measured in the scout section. Those two
 sections do not run adjacently, and the scout section measures the same
-computation at 0.64x to 0.98x of what the kernel section measures for it
+computation at 0.67x to 1.00x of what the kernel section measures for it
 (median 0.84x), the gap widening with allocation volume, because the kernel
 section has already run several full reductions and its heap is larger.
 Since the generic path allocates two orders of magnitude more than the packed
@@ -404,7 +413,7 @@ integrated implementation.
 
 - **The two sections are not paired.** The threshold table's numerator and
   denominator come from different services run minutes apart on a shared host.
-  The same computation costs 0.64x to 0.98x as much in one section as the
+  The same computation costs 0.67x to 1.00x as much in one section as the
   other, which bounds how much that matters; the large cyclotomic margins
   survive it, the marginal rows are not decided by it.
 - **The medians are field-wise.** Each duration is the median of three calls,
@@ -431,30 +440,30 @@ re-measured against the real integrated implementation before they are quoted as
 outcomes.
 
 1. **Build the packed matrix from the column polynomials, not from
-   `Hex.Matrix`.** The conversion stage is 1.256 ms on `cyclo_phi385` and the
-   pack step 2.819 ms; writing the columns straight into the packed buffer
+   `Hex.Matrix`.** The conversion stage is 1.362 ms on `cyclo_phi385` and the
+   pack step 2.800 ms; writing the columns straight into the packed buffer
    removes both, and removes the small-matrix overhead that is the only place
    this change costs anything.
 2. **Store `UInt32` entries.** `ZMod64.Bounds` already caps the modulus at
    `2^31`, and an immediate `UInt32` stops the inner loop allocating. That is
-   2.42x here. It is a property of the 64-bit runtime's boxing rules, not of
+   2.41x here. It is a property of the 64-bit runtime's boxing rules, not of
    storage density, and it should be re-checked if that changes.
 3. **Do not compute the transform.** Berlekamp needs rank, echelon, and pivot
-   columns. This is 2.00x on its own, needs no change of representation, and
+   columns. This is 1.98x on its own, needs no change of representation, and
    is the cheapest part of the change to justify.
 4. **Specialize the whole reduction loop**, not a chosen subset: pivot search,
    swap, scale, elimination, and the basis readback. Pivot search is negligible
-   *now*, but swap and scale are 3.926 ms on `cyclo_phi385` against a packed
-   reduction of 15.761 ms, so anything left generic dominates what remains
+   *now*, but swap and scale are 4.188 ms on `cyclo_phi385` against a packed
+   reduction of 15.606 ms, so anything left generic dominates what remains
    once row addition is specialized.
 5. **Treat the Barrett reciprocal as an open question, and default to leaving it
-   out.** It measures 1.01x against a hardware remainder on this corpus, but the
+   out.** It measures 1.02x against a hardware remainder on this corpus, but the
    corpus moduli are tiny, three fixed-order repeats do not resolve differences
    this small, and the prototype's modular inversion still uses the reciprocal
    internally, so this is not a clean comparison. Leaving it out is a simplicity
    default that also keeps its proof obligations out of the correspondence; it is
    not a measured result.
-6. **Take the zero-entry skip separately.** It is worth 1.70x on `cyclo_phi385`,
+6. **Take the zero-entry skip separately.** It is worth 1.69x on `cyclo_phi385`,
    it is orthogonal to the representation, and the generic path could adopt it
    too. It should be decided on its own evidence, including on dense matrices
    where it buys nothing.
@@ -470,7 +479,7 @@ reasoning about ordinary matrices.
 ```sh
 lake build hexbz_factor_service
 python3 scripts/bench/factor_phase_profile.py \
-  --output reports/bench-results/hexbz-phase-profile-47aa7048-chungus2.json
+  --output reports/bench-results/hexbz-phase-profile-0e1601a0-chungus2.json
 ```
 
 The driver pins itself to an idle core and exits non-zero if the counted mirror
