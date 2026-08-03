@@ -23,7 +23,18 @@ type. As with `ofCoeffs`, trailing zero coefficients are removed.
 - O(1) degree, O(1) coefficient access
 
 **Operations:**
-- Addition, subtraction, multiplication (schoolbook, Karatsuba for large degree)
+- Addition, subtraction, multiplication. `mul` is the schoolbook
+  convolution and is the specification at every coefficient type; the
+  subquadratic kernel is coefficient-specific and therefore lives
+  downstream (`Hex.ZPoly.mulKronecker` in `hex-poly-z`). A
+  type-preserving `@[csimp]` swap of `mul` itself is not available: every
+  subquadratic scheme needs subtraction (Karatsuba) or an integer
+  encoding (Kronecker), and `mul` is defined over `[Add R] [Mul R]`
+  alone. This is the same constraint that keeps `mulStrassen` a separate
+  entry point in `hex-matrix`.
+- Horner evaluation is multiplicative over a commutative ring
+  (`eval_mul_commring`), which is what licenses the Kronecker
+  substitution downstream.
 - Coefficient scaling, with public composition, addition, and multiplication
   transport laws (`scale_scale`, `scale_add`, `scale_mul`, `mul_scale`)
 - Division with remainder (for monic divisors; general division over fields)

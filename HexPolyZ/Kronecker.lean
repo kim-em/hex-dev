@@ -389,6 +389,53 @@ theorem packAux_eq (b : Nat) :
           rw [hkey, hfun]
           grind
 
+/-- Packing a *constant* slot value. The recursion doubles rather than walking
+the slots, so the bias repunit costs `O(log n)` big-integer operations instead
+of the `O(n)` a general `packAux` would pay for it — which measured as the
+single largest cost in the Kronecker path before it was split out. -/
+@[expose]
+def constPack (b : Nat) (c : Int) (len : Nat) : Int :=
+  if len = 0 then 0
+  else
+    let h := len / 2
+    let lo := constPack b c h
+    if len % 2 = 0 then lo + lo <<< (b * h)
+    else lo + (c + lo <<< b) <<< (b * h)
+termination_by len
+decreasing_by omega
+
+/-- The doubling recursion computes the constant packed range. -/
+theorem constPack_eq (b : Nat) (c : Int) :
+    ∀ (len : Nat), constPack b c len = packSpec b (fun _ => c) len := by
+  intro len
+  induction len using Nat.strongRecOn with
+  | _ len ih =>
+      unfold constPack
+      by_cases hlen : len = 0
+      · rw [if_pos hlen, hlen]
+        rfl
+      · rw [if_neg hlen]
+        have hh : len / 2 < len := by omega
+        have hsucc : ∀ m, packSpec b (fun _ => c) (m + 1)
+            = c + 2 ^ b * packSpec b (fun _ => c) m := fun _ => rfl
+        by_cases hpar : len % 2 = 0
+        · have hsplit : packSpec b (fun _ => c) len
+              = packSpec b (fun _ => c) (len / 2)
+                + 2 ^ (b * (len / 2)) * packSpec b (fun _ => c) (len / 2) := by
+            have h := packSpec_add b (fun _ => c) (len / 2) (len / 2)
+            rw [show len / 2 + len / 2 = len by omega] at h
+            exact h
+          rw [if_pos hpar, ih _ hh, Int.shiftLeft_eq, hsplit]
+          grind
+        · have hsplit : packSpec b (fun _ => c) len
+              = packSpec b (fun _ => c) (len / 2)
+                + 2 ^ (b * (len / 2)) * packSpec b (fun _ => c) (len / 2 + 1) := by
+            have h := packSpec_add b (fun _ => c) (len / 2) (len / 2 + 1)
+            rw [show len / 2 + (len / 2 + 1) = len by omega] at h
+            exact h
+          rw [if_neg hpar, ih _ hh, Int.shiftLeft_eq, Int.shiftLeft_eq, hsplit, hsucc]
+          grind
+
 /-! # Divide-and-conquer digit extraction -/
 
 /-- Balanced base-`2 ^ b` digit extraction of `n` into `len` slots. -/
@@ -478,7 +525,7 @@ theorem kronecker_identity (p q : ZPoly) (b slots : Nat)
     DensePoly.ofCoeffs
       ((unpackAux b
         (packAux b p.coeff 0 p.size * packAux b q.coeff 0 q.size
-          + packAux b (fun _ => ((2 ^ (b - 1) : Nat) : Int)) 0 slots).toNat
+          + constPack b ((2 ^ (b - 1) : Nat) : Int) slots).toNat
         slots).map (fun d : Nat => (d : Int) - ((2 ^ (b - 1) : Nat) : Int)))
       = p * q := by
   have hcast : ∀ k, ((((p * q).coeff k + ((2 ^ (b - 1) : Nat) : Int)).toNat : Nat) : Int)
@@ -501,12 +548,12 @@ theorem kronecker_identity (p q : ZPoly) (b slots : Nat)
   have hpq : packAux b q.coeff 0 q.size = DensePoly.eval q ((2 : Int) ^ b) := by
     rw [packAux_eq]
     simpa using packSpec_eq_eval b q q.size (Nat.le_refl _)
-  have hpo : packAux b (fun _ => ((2 ^ (b - 1) : Nat) : Int)) 0 slots
-      = packSpec b (fun _ => ((2 ^ (b - 1) : Nat) : Int)) slots := by
-    rw [packAux_eq]
+  have hpo : constPack b ((2 ^ (b - 1) : Nat) : Int) slots
+      = packSpec b (fun _ => ((2 ^ (b - 1) : Nat) : Int)) slots :=
+    constPack_eq b _ slots
   have hdigits :
       (packAux b p.coeff 0 p.size * packAux b q.coeff 0 q.size
-        + packAux b (fun _ => ((2 ^ (b - 1) : Nat) : Int)) 0 slots).toNat
+        + constPack b ((2 ^ (b - 1) : Nat) : Int) slots).toNat
       = natEval b (fun k => ((p * q).coeff k + ((2 ^ (b - 1) : Nat) : Int)).toNat) slots := by
     rw [hpp, hpq, hpo, ← DensePoly.eval_mul_commring,
       ← packSpec_eq_eval b (p * q) slots hsize, ← packSpec_add_fun]
@@ -540,28 +587,40 @@ theorem kronecker_identity (p q : ZPoly) (b slots : Nat)
     rw [Array.getElem?_eq_none hsz, Option.getD_none]
     exact (DensePoly.coeff_eq_zero_of_size_le (p * q) (by omega)).symm
 
-/-- The measured cutoff: at or below this many slots in the shorter operand the
-schoolbook convolution still wins, because the coefficient scan, packing, single
-GMP multiplication and unpacking do not amortise. Measured by
-`bench/HexPolyZ/Bench.lean`; see `HexPolyZ/SPEC/hex-poly-z.md`. -/
+/-- The measured size cutoff: the shorter operand must store at least this many
+coefficients before the substitution pays for its packing, single GMP
+multiplication and unpacking. -/
 @[expose]
-def kroneckerCutoff : Nat := 16
+def kroneckerSizeCutoff : Nat := 24
 
-/-- Kronecker substitution with an explicit cutoff, so the kernel benchmark can
-sweep it. Production uses `Hex.ZPoly.mulKronecker`, which fixes the cutoff to
-the measured `Hex.ZPoly.kroneckerCutoff`. -/
+/-- The measured coefficient-width cutoff, in bits. Below it the schoolbook
+convolution's coefficient products stay inside `Int`'s unboxed range, which is
+fast enough that packing never amortises at any degree measured. -/
 @[expose]
-def mulKroneckerAt (cutoff : Nat) (p q : ZPoly) : ZPoly :=
+def kroneckerBitCutoff : Nat := 16
+
+/-- Kronecker substitution with explicit cutoffs, so the kernel benchmark can
+sweep them. Production uses `Hex.ZPoly.mulKronecker`, which fixes them to the
+measured `Hex.ZPoly.kroneckerSizeCutoff` and `Hex.ZPoly.kroneckerBitCutoff`.
+
+Both guards are checked before the coefficient scan is used, and the size guard
+is checked before the scan is run at all, so a product that stays on the
+schoolbook path for its size pays nothing for the test. -/
+@[expose]
+def mulKroneckerAt (sizeCutoff bitCutoff : Nat) (p q : ZPoly) : ZPoly :=
   if p.isZero || q.isZero then 0
-  else if min p.size q.size ≤ cutoff then DensePoly.mulImpl p q
+  else if min p.size q.size < sizeCutoff then DensePoly.mulImpl p q
   else
-    let b := 2 * bitLen (max (maxAbs p) (maxAbs q)) + ceilLog2 (min p.size q.size) + 1
-    let slots := p.size + q.size - 1
-    DensePoly.ofCoeffs
-      ((unpackAux b
-        (packAux b p.coeff 0 p.size * packAux b q.coeff 0 q.size
-          + packAux b (fun _ => ((2 ^ (b - 1) : Nat) : Int)) 0 slots).toNat
-        slots).map (fun d : Nat => (d : Int) - ((2 ^ (b - 1) : Nat) : Int)))
+    let width := bitLen (max (maxAbs p) (maxAbs q))
+    if width < bitCutoff then DensePoly.mulImpl p q
+    else
+      let b := 2 * width + ceilLog2 (min p.size q.size) + 1
+      let slots := p.size + q.size - 1
+      DensePoly.ofCoeffs
+        ((unpackAux b
+          (packAux b p.coeff 0 p.size * packAux b q.coeff 0 q.size
+            + constPack b ((2 ^ (b - 1) : Nat) : Int) slots).toNat
+          slots).map (fun d : Nat => (d : Int) - ((2 ^ (b - 1) : Nat) : Int)))
 
 private theorem mul_eq_zero_of_isZero (p q : ZPoly) (h : p.isZero = true ∨ q.isZero = true) :
     p * q = 0 := by
@@ -570,64 +629,68 @@ private theorem mul_eq_zero_of_isZero (p q : ZPoly) (h : p.isZero = true ∨ q.i
   rcases h with h | h <;> rw [if_pos (by simp [h])]
 
 /-- The Kronecker kernel computes the schoolbook product, at every cutoff. -/
-theorem mulKroneckerAt_eq (cutoff : Nat) (p q : ZPoly) :
-    mulKroneckerAt cutoff p q = p * q := by
+theorem mulKroneckerAt_eq (sizeCutoff bitCutoff : Nat) (p q : ZPoly) :
+    mulKroneckerAt sizeCutoff bitCutoff p q = p * q := by
   unfold mulKroneckerAt
   by_cases hz : p.isZero || q.isZero
   · rw [if_pos hz]
     exact (mul_eq_zero_of_isZero p q (by simpa using hz)).symm
-  · rw [if_neg hz]
-    by_cases hsmall : min p.size q.size ≤ cutoff
-    · rw [if_pos hsmall]
-      exact (DensePoly.mul_eq_mulImpl p q).symm
-    rw [if_neg hsmall]
-    apply kronecker_identity p q _ _ (by omega) (DensePoly.size_mul_le p q)
-    -- The runtime coefficient scan supplies the no-overlap bound.
-    intro n
-    have hpb : ∀ i, (p.coeff i).natAbs ≤ max (maxAbs p) (maxAbs q) := fun i =>
-      Nat.le_trans (natAbs_coeff_le_maxAbs p i) (Nat.le_max_left _ _)
-    have hqb : ∀ j, (q.coeff j).natAbs ≤ max (maxAbs p) (maxAbs q) := fun j =>
-      Nat.le_trans (natAbs_coeff_le_maxAbs q j) (Nat.le_max_right _ _)
-    have hle := natAbs_coeff_mul_le_min p q (max (maxAbs p) (maxAbs q)) hpb hqb n
-    have hpow : (2 : Nat) ^ (2 * bitLen (max (maxAbs p) (maxAbs q))
-          + ceilLog2 (min p.size q.size) + 1 - 1)
-        = 2 ^ ceilLog2 (min p.size q.size)
-          * (2 ^ bitLen (max (maxAbs p) (maxAbs q)) * 2 ^ bitLen (max (maxAbs p) (maxAbs q))) := by
-      rw [show 2 * bitLen (max (maxAbs p) (maxAbs q)) + ceilLog2 (min p.size q.size) + 1 - 1
-          = ceilLog2 (min p.size q.size)
-            + (bitLen (max (maxAbs p) (maxAbs q)) + bitLen (max (maxAbs p) (maxAbs q))) by omega,
-        Nat.pow_add, Nat.pow_add]
-    have hA := lt_two_pow_bitLen (max (maxAbs p) (maxAbs q))
-    have hxpos : 0 < 2 ^ bitLen (max (maxAbs p) (maxAbs q)) := Nat.two_pow_pos _
-    have haa : max (maxAbs p) (maxAbs q) * max (maxAbs p) (maxAbs q)
-        < 2 ^ bitLen (max (maxAbs p) (maxAbs q)) * 2 ^ bitLen (max (maxAbs p) (maxAbs q)) := by
-      have h1 : max (maxAbs p) (maxAbs q) * max (maxAbs p) (maxAbs q)
-          ≤ max (maxAbs p) (maxAbs q) * 2 ^ bitLen (max (maxAbs p) (maxAbs q)) :=
-        Nat.mul_le_mul_left _ (Nat.le_of_lt hA)
-      have h2 : max (maxAbs p) (maxAbs q) * 2 ^ bitLen (max (maxAbs p) (maxAbs q))
-          < 2 ^ bitLen (max (maxAbs p) (maxAbs q)) * 2 ^ bitLen (max (maxAbs p) (maxAbs q)) :=
-        (Nat.mul_lt_mul_right hxpos).mpr hA
-      omega
-    have hMpos : 0 < 2 ^ ceilLog2 (min p.size q.size) := Nat.two_pow_pos _
-    have h3 : min p.size q.size * (max (maxAbs p) (maxAbs q) * max (maxAbs p) (maxAbs q))
-        ≤ 2 ^ ceilLog2 (min p.size q.size)
-          * (max (maxAbs p) (maxAbs q) * max (maxAbs p) (maxAbs q)) :=
-      Nat.mul_le_mul_right _ (le_two_pow_ceilLog2 _)
-    have h4 : 2 ^ ceilLog2 (min p.size q.size)
-          * (max (maxAbs p) (maxAbs q) * max (maxAbs p) (maxAbs q))
-        < 2 ^ ceilLog2 (min p.size q.size)
-          * (2 ^ bitLen (max (maxAbs p) (maxAbs q)) * 2 ^ bitLen (max (maxAbs p) (maxAbs q))) :=
-      (Nat.mul_lt_mul_left hMpos).mpr haa
+  rw [if_neg hz]
+  by_cases hsmall : min p.size q.size < sizeCutoff
+  · rw [if_pos hsmall]
+    exact (DensePoly.mul_eq_mulImpl p q).symm
+  rw [if_neg hsmall]
+  by_cases hnarrow : bitLen (max (maxAbs p) (maxAbs q)) < bitCutoff
+  · simp only [hnarrow, ↓reduceIte]
+    exact (DensePoly.mul_eq_mulImpl p q).symm
+  simp only [hnarrow, ↓reduceIte]
+  apply kronecker_identity p q _ _ (by omega) (DensePoly.size_mul_le p q)
+  -- The runtime coefficient scan supplies the no-overlap bound.
+  intro n
+  have hpb : ∀ i, (p.coeff i).natAbs ≤ max (maxAbs p) (maxAbs q) := fun i =>
+    Nat.le_trans (natAbs_coeff_le_maxAbs p i) (Nat.le_max_left _ _)
+  have hqb : ∀ j, (q.coeff j).natAbs ≤ max (maxAbs p) (maxAbs q) := fun j =>
+    Nat.le_trans (natAbs_coeff_le_maxAbs q j) (Nat.le_max_right _ _)
+  have hle := natAbs_coeff_mul_le_min p q (max (maxAbs p) (maxAbs q)) hpb hqb n
+  have hpow : (2 : Nat) ^ (2 * bitLen (max (maxAbs p) (maxAbs q))
+        + ceilLog2 (min p.size q.size) + 1 - 1)
+      = 2 ^ ceilLog2 (min p.size q.size)
+        * (2 ^ bitLen (max (maxAbs p) (maxAbs q)) * 2 ^ bitLen (max (maxAbs p) (maxAbs q))) := by
+    rw [show 2 * bitLen (max (maxAbs p) (maxAbs q)) + ceilLog2 (min p.size q.size) + 1 - 1
+        = ceilLog2 (min p.size q.size)
+          + (bitLen (max (maxAbs p) (maxAbs q)) + bitLen (max (maxAbs p) (maxAbs q))) by omega,
+      Nat.pow_add, Nat.pow_add]
+  have hA := lt_two_pow_bitLen (max (maxAbs p) (maxAbs q))
+  have hxpos : 0 < 2 ^ bitLen (max (maxAbs p) (maxAbs q)) := Nat.two_pow_pos _
+  have haa : max (maxAbs p) (maxAbs q) * max (maxAbs p) (maxAbs q)
+      < 2 ^ bitLen (max (maxAbs p) (maxAbs q)) * 2 ^ bitLen (max (maxAbs p) (maxAbs q)) := by
+    have h1 : max (maxAbs p) (maxAbs q) * max (maxAbs p) (maxAbs q)
+        ≤ max (maxAbs p) (maxAbs q) * 2 ^ bitLen (max (maxAbs p) (maxAbs q)) :=
+      Nat.mul_le_mul_left _ (Nat.le_of_lt hA)
+    have h2 : max (maxAbs p) (maxAbs q) * 2 ^ bitLen (max (maxAbs p) (maxAbs q))
+        < 2 ^ bitLen (max (maxAbs p) (maxAbs q)) * 2 ^ bitLen (max (maxAbs p) (maxAbs q)) :=
+      (Nat.mul_lt_mul_right hxpos).mpr hA
     omega
+  have hMpos : 0 < 2 ^ ceilLog2 (min p.size q.size) := Nat.two_pow_pos _
+  have h3 : min p.size q.size * (max (maxAbs p) (maxAbs q) * max (maxAbs p) (maxAbs q))
+      ≤ 2 ^ ceilLog2 (min p.size q.size)
+        * (max (maxAbs p) (maxAbs q) * max (maxAbs p) (maxAbs q)) :=
+    Nat.mul_le_mul_right _ (le_two_pow_ceilLog2 _)
+  have h4 : 2 ^ ceilLog2 (min p.size q.size)
+        * (max (maxAbs p) (maxAbs q) * max (maxAbs p) (maxAbs q))
+      < 2 ^ ceilLog2 (min p.size q.size)
+        * (2 ^ bitLen (max (maxAbs p) (maxAbs q)) * 2 ^ bitLen (max (maxAbs p) (maxAbs q))) :=
+    (Nat.mul_lt_mul_left hMpos).mpr haa
+  omega
 
-/-- Kronecker substitution at the measured cutoff. -/
+/-- Kronecker substitution at the measured cutoffs. -/
 @[expose]
 def mulKronecker (p q : ZPoly) : ZPoly :=
-  mulKroneckerAt kroneckerCutoff p q
+  mulKroneckerAt kroneckerSizeCutoff kroneckerBitCutoff p q
 
 /-- The production kernel computes the schoolbook product. -/
 theorem mulKronecker_eq (p q : ZPoly) : mulKronecker p q = p * q :=
-  mulKroneckerAt_eq kroneckerCutoff p q
+  mulKroneckerAt_eq kroneckerSizeCutoff kroneckerBitCutoff p q
 
 end ZPoly
 

@@ -74,6 +74,63 @@ unit-ness in `ℤ[x]`. The Mathlib correspondence theorem
 `Hex.ZPoly.IsUnit f ↔ IsUnit (toPolynomial f)` lives in
 `hex-poly-z-mathlib`.
 
+## The integer product kernel: Kronecker substitution
+
+`DensePoly.mul` is the schoolbook convolution, and it stays the
+specification. Over `Int` it is also the wrong kernel above a modest
+degree: every coefficient product is a GMP call with its own allocation,
+so a degree-90 product at 92-bit coefficients issues 8100 of them.
+
+`Hex.ZPoly.mulKronecker` is the production kernel for integer
+polynomials. It evaluates both operands at `2 ^ b`, multiplies the two
+packed integers **once**, and reads the product coefficients back off as
+base-`2 ^ b` digits, which hands the work to GMP's Toom/FFT ladder
+instead. Packing and unpacking are balanced divide-and-conquer over
+shifts (`O(n log n)` limb operations), and the constant bias repunit is
+computed by doubling rather than by a slot walk — measured as the single
+largest cost in the path before it was split out.
+
+Signed coefficients are carried by biasing every slot by `2 ^ (b - 1)`,
+so digit extraction stays plain base-`2 ^ b` division with no borrow
+propagation. The slot width is derived from a **runtime** scan of the
+actual coefficients (`Hex.ZPoly.maxAbs`), so the no-overlap bound is
+re-established on every call rather than assumed.
+
+`Hex.ZPoly.mulKronecker_eq` proves the kernel equal to `DensePoly.mul`
+on all inputs, at every degree and coefficient size, including the
+threshold boundary and degenerate inputs. It rests on
+`Hex.DensePoly.eval_mul_commring` (Horner evaluation is multiplicative)
+and on uniqueness of base-`2 ^ b` digit expansions.
+
+**Measured cutoffs.** Below them the schoolbook loop wins and is what
+runs. Both are read off a kernel microbenchmark sweeping degree against
+coefficient width on host `chungus2` (AMD EPYC 9455), Lean toolchain
+`4.33.0-rc1`, pinned to a verified-idle core:
+
+- `kroneckerSizeCutoff = 24` — the shorter operand must store at least
+  24 coefficients.
+- `kroneckerBitCutoff = 16` — the widest coefficient must be at least 16
+  bits.
+
+The second cutoff is not redundant. Schoolbook cost per coefficient pair
+jumps by about 6x between 12-bit and 16-bit coefficients, and below that
+step the convolution is fast enough that packing never amortises at any
+degree measured: at 4-bit coefficients Kronecker is still 1.45x *slower*
+at degree 48, and at 12-bit coefficients it is 1.30x slower at degree 96.
+A size-only cutoff would therefore regress the small-coefficient rows.
+Above both cutoffs the win grows with degree — measured ratios of
+schoolbook to Kronecker time:
+
+| coefficient bits | n=24 | n=32 | n=48 | n=90 | n=128 |
+|---|---:|---:|---:|---:|---:|
+| 16 | 1.05 | 1.32 | 2.17 | — | 5.97 |
+| 20 | 2.00 | 2.59 | 3.90 | — | 10.4 |
+| 92 | 2.57 | 3.40 | 4.90 | 8.89 | — |
+| 181 | 1.53 | 2.05 | 2.84 | 4.74 | — |
+
+`mulKroneckerAt` takes both cutoffs explicitly so the kernel benchmark
+can sweep them; production fixes them to the measured constants.
+
 ## External comparators
 
 | Comparator | Class | Scope |
@@ -82,7 +139,7 @@ unit-ness in `ℤ[x]`. The Mathlib correspondence theorem
 
 Same comparator and rationale as `hex-poly` (informational because
 of FLINT's tuned Karatsuba/Toom-Cook/FFT crossovers vs Hex's
-schoolbook + Karatsuba implementation). The Mignotte / Hensel-lift
+schoolbook-plus-Kronecker implementation). The Mignotte / Hensel-lift
 data surfaces specific to `hex-poly-z` have no direct FLINT
 analog at the same level of abstraction; those bench targets
 declare absence with the `no-comparable-surface-in-named-comparator`

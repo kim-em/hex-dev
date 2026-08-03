@@ -601,9 +601,9 @@ lean_exe hexpolyz_bench where
   srcDir := "bench"
   root := `HexPolyZ.Bench
 
-lean_exe hexpolyz_mulkernel_probe where
+lean_exe hexpolyz_kronecker_crossover where
   srcDir := "bench"
-  root := `HexPolyZ.MulKernelProbe
+  root := `HexPolyZ.KroneckerCrossover
 
 lean_exe hexpolyz_emit_fixtures where
   srcDir := "conformance"
