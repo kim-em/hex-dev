@@ -2359,6 +2359,69 @@ def quadraticHenselStepBignum
   let s' := subModSquare (subModSquare s (mulModSquare s b m) m) (mulModSquare qBezout h' m) m
   { g := g', h := h', s := s', t := t' }
 
+/-! Narrowing the step's target.
+
+The exact-exponent recursion hands *the same* `f` to every doubling step, and
+that `f` carries the finally requested precision `p^k`. A step running at
+modulus `m = p^half` therefore forms its residual `f - g·h` at up to `k/half`
+times the width its own modulus needs -- measured at 310 bits against an 86-bit
+`m²` on the first bignum step of a Wilkinson 56 lift -- and every product that
+consumes the residual pays for the excess.
+
+The residual reaches the rest of the step only through `mulModSquare`, which
+reduces modulo `m²`, so reducing the target first cannot move the step's value.
+`quadraticHenselStepBignumImpl` and `quadraticHenselFactorsBignumImpl` do that
+reduction; `mulModSquare_factorError_reduce` is the fact that licenses it. -/
+
+/-- Reducing a bignum step's target modulo `m²` does not change any product the
+residual feeds. -/
+private theorem mulModSquare_factorError_reduce
+    (m : Nat) (hm : 0 < m) (a f g h : ZPoly) :
+    mulModSquare a
+        (QuadraticLiftResult.factorError (QuadraticLiftResult.reduceModSquare f m) g h) m
+      = mulModSquare a (QuadraticLiftResult.factorError f g h) m := by
+  have hpow : 0 < m ^ 2 := Nat.pow_pos hm
+  have hf : ZPoly.congr (ZPoly.reduceModPow f m 2) f (m ^ 2) :=
+    congr_reduceModPow f m 2 hpow
+  have herr : ZPoly.congr
+      (QuadraticLiftResult.factorError (QuadraticLiftResult.reduceModSquare f m) g h)
+      (QuadraticLiftResult.factorError f g h) (m ^ 2) :=
+    congr_sub _ _ _ _ (m ^ 2) hf (congr_refl (g * h) (m ^ 2))
+  show ZPoly.reduceModPow _ m 2 = ZPoly.reduceModPow _ m 2
+  exact reduceModPow_eq_of_congr _ _ m 2
+    (congr_mul _ _ _ _ (m ^ 2) (congr_refl a (m ^ 2)) herr)
+
+/-- Runtime shape of the bignum quadratic step: the target is narrowed to the
+step's own modulus before the residual is formed. -/
+def quadraticHenselStepBignumImpl
+    (m : Nat) (f g h s t : ZPoly) : QuadraticLiftResult :=
+  let f := if 0 < m then QuadraticLiftResult.reduceModSquare f m else f
+  let e := QuadraticLiftResult.factorError f g h
+  let te := mulModSquare t e m
+  let factorQR := divModMonicModSquare te g m
+  let qFactor := factorQR.1
+  let rFactor := factorQR.2
+  let g' := addModSquare g rFactor m
+  let hCorrection := addModSquare (mulModSquare s e m) (mulModSquare qFactor h m) m
+  let h' := addModSquare h hCorrection m
+  let b := subModSquare (addModSquare (mulModSquare s g' m) (mulModSquare t h' m) m) 1 m
+  let tb := mulModSquare t b m
+  let bezoutQR := divModMonicModSquare tb g' m
+  let qBezout := bezoutQR.1
+  let rBezout := bezoutQR.2
+  let t' := subModSquare t rBezout m
+  let s' := subModSquare (subModSquare s (mulModSquare s b m) m) (mulModSquare qBezout h' m) m
+  { g := g', h := h', s := s', t := t' }
+
+/-- Proof-backed compiled implementation of the bignum quadratic step. -/
+@[csimp] theorem quadraticHenselStepBignum_eq_impl :
+    @quadraticHenselStepBignum = @quadraticHenselStepBignumImpl := by
+  funext m f g h s t
+  unfold quadraticHenselStepBignum quadraticHenselStepBignumImpl
+  by_cases hm : 0 < m
+  · simp only [if_pos hm, mulModSquare_factorError_reduce m hm]
+  · simp only [if_neg hm]
+
 /-- Guarded selection: the word-sized step when its guard holds, else the bignum step. -/
 def quadraticHenselStep
     (m : Nat) (f g h s t : ZPoly) : QuadraticLiftResult :=
@@ -2393,8 +2456,11 @@ private def quadraticHenselFactorsWord?
     else none
   else none
 
-/-- Bignum factor-only quadratic step, omitting the final Bezout correction. -/
-private def quadraticHenselFactorsBignum
+/-- Bignum factor-only quadratic step, omitting the final Bezout correction.
+
+Public, unlike its word-sized sibling, because its compiled implementation is
+swapped by a `@[csimp]` theorem, and `csimp` lemmas must be public. -/
+def quadraticHenselFactorsBignum
     (m : Nat) (f g h s t : ZPoly) : ZPoly × ZPoly :=
   let e := QuadraticLiftResult.factorError f g h
   let te := mulModSquare t e m
@@ -2403,6 +2469,28 @@ private def quadraticHenselFactorsBignum
   let h' := addModSquare h
     (addModSquare (mulModSquare s e m) (mulModSquare factorQR.1 h m) m) m
   (g', h')
+
+/-- Runtime shape of the bignum factor-only step, narrowing the target to the
+step's own modulus before the residual is formed. -/
+def quadraticHenselFactorsBignumImpl
+    (m : Nat) (f g h s t : ZPoly) : ZPoly × ZPoly :=
+  let f := if 0 < m then QuadraticLiftResult.reduceModSquare f m else f
+  let e := QuadraticLiftResult.factorError f g h
+  let te := mulModSquare t e m
+  let factorQR := divModMonicModSquare te g m
+  let g' := addModSquare g factorQR.2 m
+  let h' := addModSquare h
+    (addModSquare (mulModSquare s e m) (mulModSquare factorQR.1 h m) m) m
+  (g', h')
+
+/-- Proof-backed compiled implementation of the bignum factor-only step. -/
+@[csimp] theorem quadraticHenselFactorsBignum_eq_impl :
+    @quadraticHenselFactorsBignum = @quadraticHenselFactorsBignumImpl := by
+  funext m f g h s t
+  unfold quadraticHenselFactorsBignum quadraticHenselFactorsBignumImpl
+  by_cases hm : 0 < m
+  · simp only [if_pos hm, mulModSquare_factorError_reduce m hm]
+  · simp only [if_neg hm]
 
 /-- Update only the two factors in one quadratic Hensel step. The result is
 byte-identical to the `g` and `h` fields of `quadraticHenselStep`, while the

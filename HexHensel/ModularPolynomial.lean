@@ -100,26 +100,60 @@ def intEmod (z : Int) (m : Nat) : Int :=
 /--
 Windowed implementation of `intEmod`.
 
-`intModNat` already avoids the division when its argument is within one modulus
-of canonical, but it still returns a `Nat`, and `Int.toNat` on a multi-limb
-value copies the limbs. A coefficient that is *already* canonical -- which on
-the modular hot path is most of them, since every polynomial in the lift is a
-reduction's output -- is here returned as itself, allocating nothing at all.
+Routing through `intModNat` would cost a multi-limb copy on every coefficient,
+in both directions: `Int.toNat` copies a big nonnegative `Int` into a `Nat`,
+and the value is then immediately coerced back. Since `Int.emod` is already
+nonnegative at a nonzero modulus, that round trip is pure allocation, and
+allocation -- not division width -- is what the modular hot path is made of.
+
+The two near-canonical windows are kept: modular addition of canonical operands
+lands in `[0, 2m)` and modular subtraction in `(-m, m)`, so a coefficient
+already canonical is returned as itself, allocating nothing at all, and one
+within a modulus below costs a single addition. A genuinely wide value -- the
+long division's window, or the descent from a doubled precision -- pays for one
+`Int.emod` and nothing else.
 
 Proved equal to `intEmod` in `intEmod_eq_impl`.
 -/
 def intEmodImpl (z : Int) (m : Nat) : Int :=
-  if 0 ≤ z ∧ z < Int.ofNat m then z else Int.ofNat (intModNat z m)
+  if m = 0 then
+    Int.ofNat (Int.toNat z)
+  else if 0 ≤ z then
+    if z < Int.ofNat m then z else z % Int.ofNat m
+  else
+    let shifted := z + Int.ofNat m
+    if 0 ≤ shifted then shifted else z % Int.ofNat m
 
 theorem intEmod_eq_impl_value (z : Int) (m : Nat) :
     intEmod z m = intEmodImpl z m := by
-  unfold intEmod intEmodImpl
-  by_cases h : 0 ≤ z ∧ z < Int.ofNat m
-  · rw [if_pos h]
-    have hz : z % Int.ofNat m = z := Int.emod_eq_of_lt h.1 h.2
-    unfold intModNat
-    rw [hz, Int.ofNat_eq_natCast, Int.toNat_of_nonneg h.1]
-  · rw [if_neg h]
+  unfold intEmod intEmodImpl intModNat
+  by_cases hm : m = 0
+  · rw [if_pos hm, hm]
+    simp
+  · rw [if_neg hm]
+    have hmpos : 0 < m := Nat.pos_of_ne_zero hm
+    have hnonneg : 0 ≤ z % Int.ofNat m :=
+      Int.emod_nonneg _ (Int.ofNat_ne_zero.mpr hm)
+    have hround : Int.ofNat (Int.toNat (z % Int.ofNat m)) = z % Int.ofNat m := by
+      rw [Int.ofNat_eq_natCast, Int.toNat_of_nonneg hnonneg]
+    by_cases hz : 0 ≤ z
+    · rw [if_pos hz]
+      by_cases hlt : z < Int.ofNat m
+      · rw [if_pos hlt, Int.emod_eq_of_lt hz hlt, Int.ofNat_eq_natCast,
+          Int.toNat_of_nonneg hz]
+      · rw [if_neg hlt]
+        exact hround
+    · rw [if_neg hz]
+      dsimp only
+      by_cases hshift : 0 ≤ z + Int.ofNat m
+      · rw [if_pos hshift]
+        have hlt : z + Int.ofNat m < Int.ofNat m := by omega
+        have hshift_emod : (z + Int.ofNat m) % Int.ofNat m = z % Int.ofNat m := by
+          simp
+        rw [← hshift_emod, Int.emod_eq_of_lt hshift hlt, Int.ofNat_eq_natCast,
+          Int.toNat_of_nonneg hshift]
+      · rw [if_neg hshift]
+        exact hround
 
 /-- Proof-backed compiled implementation of the `Int`-valued canonical
 representative. -/
