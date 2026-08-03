@@ -7,11 +7,10 @@ diagnostics, not alternative public implementations.
 ## Current measurement
 
 The current Hex record measures clean source revision
-`f8477abd0639062e1f81e9eaa62dc429631706d6` with
-`leanprover/lean4:v4.33.0-rc1`. The executable SHA-256 is
-`fef58662ad84d87c1bfcfb16690eae733a49c27e58644d88cf4f71ddd2067f7a`.
+`bf5973a3` with
+`leanprover/lean4:v4.33.0-rc1`.
 
-Hex was measured on 2026-08-02 and the external systems on 2026-08-01 on
+Hex was measured on 2026-08-03 and the external systems on 2026-08-01 on
 `chungus2`, an AMD EPYC 9455 Linux x86-64 host. The harness and service were
 pinned to CPU 70 for the Hex record and to CPU 0 for the external one; the two
 are checked interchangeable in
@@ -24,9 +23,8 @@ Early termination was disabled.
 
 The current artifacts are:
 
-- `reports/bench-results/hexbz-factor-sweep-f8477abd-hex-chungus2.json`
-  for Hex, SHA-256
-  `6fb6e0a5d2e4d67db59ea804e5030789419438f723048493da1a1806a0c63dda`;
+- `reports/bench-results/hexbz-factor-sweep-bf5973a3-hex-chungus2-run5.json`
+  for Hex, the newest of five committed repeats at that revision;
 - `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json`
   for FLINT, NTL, PARI, and both Isabelle implementations, SHA-256
   `4de27e389d738abc1e878f0be273485c3723216211a101c3eba55860e7b8a242`.
@@ -43,7 +41,7 @@ ratios and curves use the fresh same-protocol 2.17.2 measurement above.
 
 | System | Answered | Timed out | Median | p90 | Slowest answer |
 |---|---:|---:|---:|---:|---:|
-| Hex public factorization | 376 | 16 | 373.003 us | 7.375 ms | 8.367 s |
+| Hex public factorization | 377 | 15 | 379.833 us | 7.204 ms | 8.210 s |
 | FLINT 0.9.0 | 391 | 1 | 60.089 us | 1.139 ms | 1.241 s |
 | PARI/GP 2.17.2 | 391 | 1 | 65.687 us | 1.008 ms | 960.815 ms |
 | NTL 11.6.0 | 391 | 1 | 88.160 us | 2.365 ms | 1.305 s |
@@ -54,14 +52,37 @@ Every answering system agreed with the committed factor-degree oracle or with
 the other systems on rows without one.
 
 For paired comparisons, both measurements must exceed ten times their own
-protocol overhead. On 214 eligible common rows, Hex divided by verified
-Isabelle BZ has median `0.739x`, p10-p90 `0.467x-2.652x`, and a 135-79 win
+protocol overhead. On 218 eligible common rows, Hex divided by verified
+Isabelle BZ has median `0.732x`, p10-p90 `0.476x-2.552x`, and a 146-72 win
 split. Hex therefore has a useful aggregate lead over verified Isabelle BZ,
 but not a uniform one.
 
 The optimized unverified libraries remain substantially faster. Median Hex
-ratios are `11.009x` against FLINT, `11.789x` against PARI, and `5.851x`
-against NTL on 74, 79, and 139 eligible pairs respectively.
+ratios are `10.517x` against FLINT, `10.778x` against PARI, and `5.511x`
+against NTL on 75, 80, and 141 eligible pairs respectively.
+
+## Effect of the divisibility obstruction
+
+Between constructing a recombination candidate and dividing by it, the search
+now reduces both modulo a fixed word-sized prime and rejects the candidate when
+the finite-field remainder is nonzero. The filter can only reject; exact
+integer division is still the only accepting test.
+
+Across the probed corpus, 4,204 of the 4,302 candidates reaching the filter
+were rejected, and all 98 that passed were genuine divisors. `xpow120_minus1`
+moves to 0.306x, `cyclo_phi275` to 0.234x, and `cyclo_phi1031` changes from a
+ten-second timeout to 4.176 s; the aggregate of `xpow48/105/120` is 0.361x and
+the whole corpus is 0.704x. The median over rows above one millisecond is
+0.994x against a measured noise floor of 0.8%. The cost side is `wilkinson` at
+1.022x, where the unforced sweep peels one linear factor at a time and the
+filter rejects none of its candidates.
+
+Those ratios are measured against `main` with this branch merged out, built and
+swept in the same session with four fully interleaved repeats per side, not
+against an earlier committed record: `main` moves under a branch, and against a
+stale record rows this change cannot touch move more than rows it can.
+[hexbz-modular-obstruction.md](hexbz-modular-obstruction.md) is the measurement
+record, and it also states what the change does not fix.
 
 ## Effect of the support-traversal change
 

@@ -172,6 +172,22 @@ cardinality. It maintains the selected degree and a cheap trailing
 coefficient test before constructing a full candidate. A surviving
 candidate is accepted only when exact bounded division succeeds.
 
+Between constructing a candidate and dividing by it, the search
+applies a finite-field divisibility obstruction. Reduction modulo a
+fixed word-sized prime `q` is a ring homomorphism `ℤ[X] → 𝔽_q[X]`, so
+a divisor of the target reduces to a divisor of the reduced target and
+`𝔽_q[X]` division leaves no remainder; a nonzero remainder therefore
+proves the candidate does not divide. The obstruction is one-sided:
+it can reject, never accept, and a zero remainder falls through to the
+same exact integer division as before. There is no separate
+inconclusive branch, because a reduced divisor that is zero or that
+has lost its leading coefficient is covered by the same law. This is
+a necessary condition on the *constructed* candidate, not on its
+support: the candidate is the centred lift modulo `p^k` of the scaled
+selected product, and centred lifting does not commute with reduction
+modulo `q`, so the candidate's image is not a function of the lifted
+factors' images.
+
 The budget is measured in complete subset-cardinality levels. If the
 next level does not fit, the method declines before testing any member
 of that level. An incomplete search is never used as evidence of
@@ -292,7 +308,10 @@ method.
 
 The Mathlib-free library proves executable product reconstruction,
 exact quotient identities, normalization identities, and the
-correctness of the bounded iterators.
+correctness of the bounded iterators. It also proves the finite-field
+obstruction never rejects a genuine divisor, and that a leaf which
+skips an obstructed candidate's exact division returns what the
+unfiltered leaf returned.
 
 `hex-berlekamp-zassenhaus-mathlib` proves:
 

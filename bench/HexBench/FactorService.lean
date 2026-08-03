@@ -67,6 +67,7 @@ inductive Entry where
   | proposalTrace
   | proposalProfile
   | factorPhaseProfile
+  | obstructionProbe
   | primeCounterfactual
   | primeScout
   | kernelProfile
@@ -79,6 +80,7 @@ def Entry.ofString? : String → Option Entry
   | "proposalTrace" => some .proposalTrace
   | "proposalProfile" => some .proposalProfile
   | "factorPhaseProfile" => some .factorPhaseProfile
+  | "obstructionProbe" => some .obstructionProbe
   | "primeCounterfactual" => some .primeCounterfactual
   | "primeScout" => some .primeScout
   | "kernelProfile" => some .kernelProfile
@@ -88,6 +90,7 @@ def Entry.ofString? : String → Option Entry
 def Entry.timed : Entry → Bool
   | .proposalProfile => true
   | .factorPhaseProfile => true
+  | .obstructionProbe => true
   | .primeCounterfactual => true
   | .primeScout => true
   | .kernelProfile => true
@@ -104,6 +107,7 @@ def Entry.run : Entry → ZPoly → Option Factorization
         factorizationOfFactors f proposal.factors
   | .proposalProfile, _ => none
   | .factorPhaseProfile, _ => none
+  | .obstructionProbe, _ => none
   | .primeCounterfactual, _ => none
   | .primeScout, _ => none
   | .kernelProfile, _ => none
@@ -588,10 +592,17 @@ private def candidateStatsJson (stats : DirectCandidateStats) : Json :=
 
 /-- Counted mirror of `scanDirectCombinations`: the same head-forced traversal
 order and the same leaf predicates, carrying the `DirectCandidateStats` stage
-counters that `scanDirectSubsets` already records for the unforced sweep. -/
+counters that `scanDirectSubsets` already records for the unforced sweep.
+
+`obstruct` selects whether a recordable candidate is put to the word-prime
+divisibility obstruction before exact division.  With it on the mirror is the
+production leaf, and `recordable - exactDivisions` is the number of exact
+divisions the obstruction removed; with it off the mirror is the leaf as it
+stood before the obstruction existed.  Running the same traversal both ways is
+what makes the filter's effect a measurement rather than an inference. -/
 private def countedScanCombinations
-    (coreLc : Int) (target : ZPoly) (basis : LiftData)
-    (metadata : SupportMeta basis) (head : DirectLiftedIndex basis) :
+    (obstruct : Bool) (coreLc : Int) (target : ZPoly) (basis : LiftData)
+    (metadata : SupportMeta basis target) (head : DirectLiftedIndex basis) :
     (xs : List (DirectLiftedIndex basis)) → (choose : Nat) →
       (selectedRev rejectedRev : List (DirectLiftedIndex basis)) →
       (selectedDegree : Nat) → (selectedTrail : Int) →
@@ -613,8 +624,11 @@ private def countedScanCombinations
           let candidate := directCandidate coreLc metadata.modulus selectedFactors
           let constructed := { filtered with constructed := 1 }
           if shouldRecordPolynomialFactor candidate then
-            let divided :=
-              { constructed with recordable := 1, exactDivisions := 1 }
+            let recorded := { constructed with recordable := 1 }
+            if obstruct && Hex.obstructs metadata.image candidate then
+              .exhausted recorded
+            else
+            let divided := { recorded with exactDivisions := 1 }
             match exactQuotient? target candidate with
             | some quotient =>
                 .found
@@ -630,13 +644,15 @@ private def countedScanCombinations
   | [], _ + 1, _, _, _, _ => .exhausted {}
   | x :: xs, choose + 1, selectedRev, rejectedRev,
       selectedDegree, selectedTrail =>
-      match countedScanCombinations coreLc target basis metadata head xs choose
+      match countedScanCombinations obstruct coreLc target basis metadata
+          head xs choose
           (x :: selectedRev) rejectedRev
           (selectedDegree + metadata.degree x)
           (selectedTrail * metadata.trail x % metadata.modulusInt) with
       | .found split stats => .found split stats
       | .exhausted leftStats =>
-          match countedScanCombinations coreLc target basis metadata head xs
+          match countedScanCombinations obstruct coreLc target basis
+              metadata head xs
               (choose + 1) selectedRev (x :: rejectedRev) selectedDegree
               selectedTrail with
           | .found split rightStats => .found split (leftStats.add rightStats)
@@ -651,7 +667,7 @@ private inductive CountedHeadResult (basis : LiftData) where
 
 /-- Counted mirror of `findDirectHead`. -/
 private def countedFindHead
-    (coreLc : Int) (target : ZPoly) (basis : LiftData)
+    (obstruct : Bool) (coreLc : Int) (target : ZPoly) (basis : LiftData)
     (head : DirectLiftedIndex basis) (tail : List (DirectLiftedIndex basis)) :
     (levels : List Nat) → (budget : Nat) → (stats : DirectCandidateStats) →
       (completed : Array Nat) → CountedHeadResult basis
@@ -662,14 +678,15 @@ private def countedFindHead
       if levelCost > budget then
         .declined .subsetBudget budget stats completed
       else
-        let metadata := supportMeta basis
-        match countedScanCombinations coreLc target basis metadata head tail level
+        let metadata := supportMeta basis target
+        match countedScanCombinations obstruct coreLc target basis metadata
+            head tail level
             [] [] (metadata.degree head) (metadata.trail head % metadata.modulusInt) with
         | .found split levelStats =>
             .found split (budget - levelStats.leaves) (stats.add levelStats)
               completed
         | .exhausted levelStats =>
-            countedFindHead coreLc target basis head tail levels
+            countedFindHead obstruct coreLc target basis head tail levels
               (budget - levelStats.leaves) (stats.add levelStats)
               (completed.push level)
 
@@ -687,7 +704,7 @@ private structure CountedSearch where
   divisors : Nat
 
 /-- Counted mirror of `searchDirectAux`. -/
-private def countedSearchAux (coreLc : Int) (basis : LiftData) :
+private def countedSearchAux (obstruct : Bool) (coreLc : Int) (basis : LiftData) :
     Nat → ZPoly → List (DirectLiftedIndex basis) → Nat →
       DirectCandidateStats → Array Nat → CountedSearch
   | 0, _, _, _, stats, completed =>
@@ -702,7 +719,7 @@ private def countedSearchAux (coreLc : Int) (basis : LiftData) :
             { factors := none, decline := some .liftFailure, stats, completed,
               divisors := 0 }
         | head :: tail =>
-            match countedFindHead coreLc target basis head tail
+            match countedFindHead obstruct coreLc target basis head tail
                 (List.range (tail.length + 1)) budget {} #[] with
             | .declined reason budget' levelStats levelCompleted =>
                 let _ := budget'
@@ -710,7 +727,8 @@ private def countedSearchAux (coreLc : Int) (basis : LiftData) :
                   stats := stats.add levelStats,
                   completed := completed ++ levelCompleted, divisors := 0 }
             | .found split budget' levelStats levelCompleted =>
-                let rest := countedSearchAux coreLc basis fuel split.quotient
+                let rest := countedSearchAux obstruct coreLc basis fuel
+                  split.quotient
                   split.remaining budget' (stats.add levelStats)
                   (completed ++ levelCompleted)
                 { rest with
@@ -719,8 +737,9 @@ private def countedSearchAux (coreLc : Int) (basis : LiftData) :
 
 /-- Counted mirror of `searchDirect`. -/
 private def countedSearch (coreLc : Int) (target : ZPoly) (basis : LiftData)
-    (budget : Nat := defaultSubsetBudget) : CountedSearch :=
-  countedSearchAux coreLc basis (basis.liftedFactors.size + 1) target
+    (budget : Nat := defaultSubsetBudget) (obstruct : Bool := true) :
+    CountedSearch :=
+  countedSearchAux obstruct coreLc basis (basis.liftedFactors.size + 1) target
     (List.finRange basis.liftedFactors.size) budget {} #[]
 
 /-- Retained good-prime candidate, its modular factor-degree pattern, and
@@ -868,8 +887,13 @@ private def finishPhaseProfile (f : ZPoly) (sink : IO.Ref Nat)
         (phaseEntry "trialAssembly" trialAssemblyStart trialAssemblyStop))
       extras ψ trialReconstructs
 
-/-- Phase-attributed profile of one production factorization. -/
-private def factorPhaseProfile (f : ZPoly) : IO Json := do
+/-- Phase-attributed profile of one production factorization.
+
+With `probe`, recombination additionally runs a second time with the word-prime
+divisibility obstruction enabled, and the record carries both spans and both
+stage-counter sets.  Production is unaffected either way: the obstruction lives
+in the mirror, not in `searchDirect`. -/
+private def factorPhaseProfile (f : ZPoly) (probe : Bool := false) : IO Json := do
   let sink ← IO.mkRef 0
   let repeatAt ← IO.mkRef (none : Option SmallPrimeCandidate)
   let m0 ← mark
@@ -982,6 +1006,78 @@ private def factorPhaseProfile (f : ZPoly) : IO Json := do
             ("budget", natJson defaultSubsetBudget) ]
         let extras := extras.push ("hensel", henselJson)
         let extras := extras.push ("recombination", searchJson)
+        let extras ← if !probe then pure extras else do
+          -- Counterbalanced: unfiltered, filtered, unfiltered, after the
+          -- production filtered run.  A fixed order would confound the filter
+          -- with allocator warmth and cache state, so each variant is measured
+          -- both early and late.
+          --
+          -- Each repeat gets its own budget offset read out of a fresh `IO.Ref`.
+          -- The offsets are all zero, so every run is the same search; what
+          -- they change is that the four calls are no longer syntactically
+          -- identical, which is what stops the compiler from sharing one
+          -- evaluation between them.  Without this the repeats return in a few
+          -- hundred nanoseconds and time nothing.  `sameRepeatCounters` below
+          -- is the check that they really are the same search.
+          let offsetA ← (← IO.mkRef (0 : Nat)).get
+          let unfilteredFirstStart ← mark
+          let unfilteredFirst :=
+            countedSearch (DensePoly.leadingCoeff core.poly) core.poly basis
+              (budget := defaultSubsetBudget + offsetA) (obstruct := false)
+          observeNat sink (unfilteredFirst.stats.leaves +
+            (unfilteredFirst.factors.map (·.length) |>.getD 0))
+          let unfilteredFirstStop ← mark
+          let offsetB ← (← IO.mkRef (0 : Nat)).get
+          let filteredSecond :=
+            countedSearch (DensePoly.leadingCoeff core.poly) core.poly basis
+              (budget := defaultSubsetBudget + offsetB) (obstruct := true)
+          observeNat sink (filteredSecond.stats.leaves +
+            (filteredSecond.factors.map (·.length) |>.getD 0))
+          let filteredSecondStop ← mark
+          let offsetC ← (← IO.mkRef (0 : Nat)).get
+          let unfilteredSecond :=
+            countedSearch (DensePoly.leadingCoeff core.poly) core.poly basis
+              (budget := defaultSubsetBudget + offsetC) (obstruct := false)
+          observeNat sink (unfilteredSecond.stats.leaves +
+            (unfilteredSecond.factors.map (·.length) |>.getD 0))
+          let unfilteredSecondStop ← mark
+          pure <| extras.push ("obstruction", Json.mkObj
+            [ ("prime", natJson Hex.obstructionPrime),
+              ("order",
+                Json.str "filtered (production), unfiltered, filtered, unfiltered"),
+              ("filteredRecombination", spanJson searchStart searchStop),
+              ("filteredRecombinationSecond",
+                spanJson unfilteredFirstStop filteredSecondStop),
+              ("unfilteredRecombinationFirst",
+                spanJson unfilteredFirstStart unfilteredFirstStop),
+              ("unfilteredRecombinationSecond",
+                spanJson filteredSecondStop unfilteredSecondStop),
+              ("filteredStages", candidateStatsJson search.stats),
+              ("unfilteredStages", candidateStatsJson unfilteredFirst.stats),
+              ("reachedFilter", natJson search.stats.recordable),
+              ("modularRejections",
+                natJson (search.stats.recordable - search.stats.exactDivisions)),
+              ("exactFallThroughs", natJson search.stats.exactDivisions),
+              ("exactDivisionsAvoided",
+                natJson (unfilteredFirst.stats.exactDivisions -
+                  search.stats.exactDivisions)),
+              -- Equality of the recovered factor *polynomials*, not of their
+              -- degrees: two different divisors of the same degree would pass
+              -- a degree-multiset check.
+              ("sameFactors",
+                Json.bool (unfilteredFirst.factors == search.factors &&
+                  unfilteredSecond.factors == search.factors &&
+                  filteredSecond.factors == search.factors)),
+              ("sameDecline",
+                Json.bool (unfilteredFirst.decline == search.decline)),
+              ("sameRepeatCounters",
+                Json.bool (filteredSecond.stats == search.stats &&
+                  unfilteredSecond.stats == unfilteredFirst.stats)),
+              ("sameSearchShape",
+                Json.bool (unfilteredFirst.divisors == search.divisors &&
+                  unfilteredFirst.completed == search.completed &&
+                  unfilteredFirst.stats.leaves == search.stats.leaves &&
+                  unfilteredFirst.stats.recordable == search.stats.recordable)) ])
         match search.factors with
         | some factors =>
             let validStart ← mark
@@ -1306,6 +1402,8 @@ private def handleProfileLine (entry : Entry) (line : String) : IO Json :=
       let f := DensePoly.ofCoeffs coeffs.toArray
       if entry == .factorPhaseProfile then
         return replyOk (← factorPhaseProfile f)
+      if entry == .obstructionProbe then
+        return replyOk (← factorPhaseProfile f (probe := true))
       else if entry == .primeCounterfactual then
         return replyOk (← primeCounterfactual f)
       else if entry == .primeScout then

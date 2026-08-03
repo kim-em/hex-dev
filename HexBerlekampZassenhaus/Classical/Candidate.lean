@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexBerlekampZassenhaus.Classical.Obstruction
 public import HexBerlekampZassenhaus.Hensel.DirectLift
 
 public section
@@ -95,6 +96,33 @@ def directCandidateAfterPrefilter
     (exactQuotient? target candidate).map fun quotient => (candidate, quotient)
   else
     none
+
+/-- The candidate computation for a selection the cached prefilters accepted,
+with the word-prime divisibility obstruction ahead of exact integer division.
+
+`obstructs` fires only on candidates that provably do not divide the target, so
+the value returned is `directCandidateAfterPrefilter`'s.  What changes is that
+a candidate the obstruction rejects is never put to multi-limb integer long
+division. -/
+@[expose]
+def directCandidateAfterObstruction
+    (coreLc : Int) (target : ZPoly) (cached : TargetImage target)
+    (modulus : Nat) (selected : List ZPoly) : Option (ZPoly × ZPoly) :=
+  let candidate := directCandidate coreLc modulus selected
+  if shouldRecordPolynomialFactor candidate then
+    (obstructedQuotient? cached candidate).map fun quotient => (candidate, quotient)
+  else
+    none
+
+/-- Skipping an obstructed candidate's exact division changes nothing: exact
+division would have returned `none` on it. -/
+theorem directCandidateAfterObstruction_eq
+    (coreLc : Int) (target : ZPoly) (cached : TargetImage target)
+    (modulus : Nat) (selected : List ZPoly) :
+    directCandidateAfterObstruction coreLc target cached modulus selected =
+      directCandidateAfterPrefilter coreLc target modulus selected := by
+  unfold directCandidateAfterObstruction directCandidateAfterPrefilter
+  simp [obstructedQuotient?_eq]
 
 /-- Evaluate the candidate computation after the cached prefilters. -/
 @[expose]
