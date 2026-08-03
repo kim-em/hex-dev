@@ -203,7 +203,7 @@ private theorem tryDirectCandidate_eq_tryDirectSplit
 /-- A successful leaf exposes its exact indexed split and candidate check. -/
 theorem scanDirectCombinations_found
     (coreLc : Int) (target : Hex.ZPoly) (basis : Hex.LiftData)
-    (metadata : Hex.SupportMeta basis)
+    (metadata : Hex.SupportMeta basis target)
     (head : Hex.DirectLiftedIndex basis) :
     ∀ (xs : List (Hex.DirectLiftedIndex basis)) (choose : Nat)
       (selectedRev rejectedRev : List (Hex.DirectLiftedIndex basis))
@@ -328,7 +328,7 @@ theorem scanDirectCombinations_found
 iterator (possibly after an earlier working split). -/
 theorem scanDirectCombinations_finds
     (coreLc : Int) (target : Hex.ZPoly) (basis : Hex.LiftData)
-    (metadata : Hex.SupportMeta basis)
+    (metadata : Hex.SupportMeta basis target)
     (head : Hex.DirectLiftedIndex basis) :
     ∀ (xs : List (Hex.DirectLiftedIndex basis)) (choose : Nat)
       (selectedRev rejectedRev : List (Hex.DirectLiftedIndex basis))

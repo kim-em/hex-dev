@@ -118,15 +118,17 @@ def tryDirectSplit
     (directSelectedDegree basis selected)
     (directSelectedTrail basis selected)
 
-/-- Traversal metadata for one lifted basis, computed once per sweep.
+/-- Traversal metadata for one lifted basis against one target, computed once
+per sweep.
 
 The lift modulus is `basis.p ^ basis.k`, which at recovery precision is wide
 enough to need several limbs, and rebuilding it at every traversal step is the
-dominant cost of a support that no candidate test ever sees.  The proof fields
-pin the arrays to the lifted factors elementwise and to their length, so a
-traversal reading this metadata is interchangeable with one reading the factors
-directly. -/
-structure SupportMeta (basis : LiftData) where
+dominant cost of a support that no candidate test ever sees.  The word-prime
+image of the target is the other value a leaf needs and no leaf should
+recompute.  The proof fields pin the arrays to the lifted factors elementwise
+and to their length, so a traversal reading this metadata is interchangeable
+with one reading the factors directly. -/
+structure SupportMeta (basis : LiftData) (target : ZPoly) where
   /-- The lift modulus `basis.p ^ basis.k`. -/
   modulus : Nat
   /-- The lift modulus as an integer, so the traversal never reconverts it. -/
@@ -135,6 +137,8 @@ structure SupportMeta (basis : LiftData) where
   degrees : Array Nat
   /-- Trailing coefficient of each lifted factor, in basis order. -/
   trails : Array Int
+  /-- The target's image in `F_q[X]`, carrying its own reduction proof. -/
+  image : TargetImage target
   /-- The recorded modulus is the lift modulus. -/
   modulus_eq : modulus = liftModulus basis
   /-- The recorded integer modulus is the recorded modulus. -/
@@ -154,19 +158,19 @@ namespace SupportMeta
 
 /-- The recorded degree of a lifted factor. -/
 @[expose]
-def degree {basis : LiftData} (metadata : SupportMeta basis)
+def degree {basis : LiftData} {target : ZPoly} (metadata : SupportMeta basis target)
     (i : DirectLiftedIndex basis) : Nat :=
   metadata.degrees.getD i.1 0
 
 /-- The recorded trailing coefficient of a lifted factor. -/
 @[expose]
-def trail {basis : LiftData} (metadata : SupportMeta basis)
+def trail {basis : LiftData} {target : ZPoly} (metadata : SupportMeta basis target)
     (i : DirectLiftedIndex basis) : Int :=
   metadata.trails.getD i.1 0
 
 /-- A recorded degree is the degree of the lifted factor it indexes. -/
 @[simp]
-theorem degree_spec {basis : LiftData} (metadata : SupportMeta basis)
+theorem degree_spec {basis : LiftData} {target : ZPoly} (metadata : SupportMeta basis target)
     (i : DirectLiftedIndex basis) :
     metadata.degree i = (directLiftedFactor basis i).degree?.getD 0 :=
   metadata.degrees_eq i
@@ -174,33 +178,34 @@ theorem degree_spec {basis : LiftData} (metadata : SupportMeta basis)
 /-- A recorded trailing coefficient is the constant term of the lifted factor
 it indexes. -/
 @[simp]
-theorem trail_spec {basis : LiftData} (metadata : SupportMeta basis)
+theorem trail_spec {basis : LiftData} {target : ZPoly} (metadata : SupportMeta basis target)
     (i : DirectLiftedIndex basis) :
     metadata.trail i = (directLiftedFactor basis i).coeff 0 :=
   metadata.trails_eq i
 
 /-- The recorded modulus is the lift modulus. -/
 @[simp]
-theorem modulus_spec {basis : LiftData} (metadata : SupportMeta basis) :
+theorem modulus_spec {basis : LiftData} {target : ZPoly} (metadata : SupportMeta basis target) :
     metadata.modulus = liftModulus basis :=
   metadata.modulus_eq
 
 /-- The recorded integer modulus is the lift modulus. -/
 @[simp]
-theorem modulusInt_spec {basis : LiftData} (metadata : SupportMeta basis) :
+theorem modulusInt_spec {basis : LiftData} {target : ZPoly} (metadata : SupportMeta basis target) :
     metadata.modulusInt = (liftModulus basis : Int) := by
   rw [metadata.modulusInt_eq, metadata.modulus_eq]
 
 end SupportMeta
 
-/-- Compute the traversal metadata of a lifted basis. -/
+/-- Compute the traversal metadata of a lifted basis against a target. -/
 @[expose]
-def supportMeta (basis : LiftData) : SupportMeta basis :=
+def supportMeta (basis : LiftData) (target : ZPoly) : SupportMeta basis target :=
   let modulus := liftModulus basis
   { modulus
     modulusInt := (modulus : Int)
     degrees := basis.liftedFactors.map fun factor => factor.degree?.getD 0
     trails := basis.liftedFactors.map fun factor => factor.coeff 0
+    image := targetImage target
     modulus_eq := rfl
     modulusInt_eq := rfl
     degrees_size := by simp
@@ -222,14 +227,15 @@ The prefilter runs once: a surviving leaf continues with
 `directCandidateAfterPrefilter` rather than re-entering `tryDirectCandidate`. -/
 @[expose]
 def directLeaf
-    (coreLc : Int) (target : ZPoly) (basis : LiftData) (modulus : Nat)
+    (coreLc : Int) (target : ZPoly) (cached : TargetImage target)
+    (basis : LiftData) (modulus : Nat)
     (head : DirectLiftedIndex basis)
     (xs selectedRev rejectedRev : List (DirectLiftedIndex basis))
     (selectedDegree : Nat) (selectedTrail : Int) : DirectLevelResult basis :=
   if directCandidatePrefilter coreLc target modulus selectedDegree
       selectedTrail then
     let selected := head :: selectedRev.reverse
-    match directCandidateAfterPrefilter coreLc target modulus
+    match directCandidateAfterObstruction coreLc target cached modulus
         (directSelectedFactors basis selected) with
     | some (candidate, quotient) =>
         .found
@@ -244,11 +250,12 @@ prefilter is `tryDirectCandidate`'s own first step, so guarding on it changes
 only when the arguments are built, and every field of the result -- including
 the `tried` count -- is unchanged. -/
 theorem directLeaf_eq
-    (coreLc : Int) (target : ZPoly) (basis : LiftData) (modulus : Nat)
+    (coreLc : Int) (target : ZPoly) (cached : TargetImage target)
+    (basis : LiftData) (modulus : Nat)
     (head : DirectLiftedIndex basis)
     (xs selectedRev rejectedRev : List (DirectLiftedIndex basis))
     (selectedDegree : Nat) (selectedTrail : Int) :
-    directLeaf coreLc target basis modulus head xs selectedRev rejectedRev
+    directLeaf coreLc target cached basis modulus head xs selectedRev rejectedRev
         selectedDegree selectedTrail =
       match tryDirectCandidate coreLc target modulus
           (directSelectedFactors basis (head :: selectedRev.reverse))
@@ -262,7 +269,7 @@ theorem directLeaf_eq
   unfold directLeaf tryDirectCandidate
   cases directCandidatePrefilter coreLc target modulus selectedDegree
       selectedTrail <;>
-    simp
+    simp [directCandidateAfterObstruction_eq]
 
 /-- Stream the `choose`-element subsets of `xs`.  `selectedRev` and
 `rejectedRev` are prefixes already decided by the caller.  Inclusion is visited
@@ -270,14 +277,14 @@ before exclusion, matching the ordinary lexicographic combination order. -/
 @[expose]
 def scanDirectCombinations
     (coreLc : Int) (target : ZPoly) (basis : LiftData)
-    (metadata : SupportMeta basis) (head : DirectLiftedIndex basis) :
+    (metadata : SupportMeta basis target) (head : DirectLiftedIndex basis) :
     (xs : List (DirectLiftedIndex basis)) → (choose : Nat) →
       (selectedRev rejectedRev : List (DirectLiftedIndex basis)) →
       (selectedDegree : Nat) → (selectedTrail : Int) →
       DirectLevelResult basis
   | xs, 0, selectedRev, rejectedRev, selectedDegree, selectedTrail =>
-      directLeaf coreLc target basis metadata.modulus head xs selectedRev
-        rejectedRev selectedDegree selectedTrail
+      directLeaf coreLc target metadata.image basis metadata.modulus head xs
+        selectedRev rejectedRev selectedDegree selectedTrail
   | [], _ + 1, _, _, _, _ => .exhausted 0
   | x :: xs, choose + 1, selectedRev, rejectedRev,
       selectedDegree, selectedTrail =>
@@ -300,7 +307,7 @@ def scanDirectLevel
     (head : DirectLiftedIndex basis)
     (tail : List (DirectLiftedIndex basis)) (tailCard : Nat) :
     DirectLevelResult basis :=
-  let metadata := supportMeta basis
+  let metadata := supportMeta basis target
   scanDirectCombinations coreLc target basis metadata head tail tailCard [] []
     (metadata.degree head) (metadata.trail head % metadata.modulusInt)
 
@@ -347,7 +354,7 @@ subsets. -/
 @[expose]
 def scanDirectSubsets
     (coreLc : Int) (target : ZPoly) (basis : LiftData)
-    (metadata : SupportMeta basis) :
+    (metadata : SupportMeta basis target) :
     (xs : List (DirectLiftedIndex basis)) → (choose : Nat) →
       (selectedRev rejectedRev : List (DirectLiftedIndex basis)) →
       (selectedDegree : Nat) → (selectedTrail : Int) →
@@ -363,14 +370,17 @@ def scanDirectSubsets
             (directSelectedFactors basis selected)
           let constructed := { filtered with constructed := 1 }
           if shouldRecordPolynomialFactor candidate then
-            let divided :=
-              { constructed with recordable := 1, exactDivisions := 1 }
-            match exactQuotient? target candidate with
-            | some quotient =>
-                .found
-                  { selected, remaining := rejectedRev.reverse ++ xs,
-                    candidate, quotient } divided
-            | none => .exhausted divided
+            let recorded := { constructed with recordable := 1 }
+            if obstructs metadata.image candidate then
+              .exhausted recorded
+            else
+              let divided := { recorded with exactDivisions := 1 }
+              match exactQuotient? target candidate with
+              | some quotient =>
+                  .found
+                    { selected, remaining := rejectedRev.reverse ++ xs,
+                      candidate, quotient } divided
+              | none => .exhausted divided
           else
             .exhausted constructed
         else
@@ -399,7 +409,8 @@ def scanDirectSubsetLevel
     (coreLc : Int) (target : ZPoly) (basis : LiftData)
     (support : List (DirectLiftedIndex basis)) (cardinality : Nat) :
     DirectSubsetLevelResult basis :=
-  scanDirectSubsets coreLc target basis (supportMeta basis) support cardinality
+  scanDirectSubsets coreLc target basis (supportMeta basis target) support
+    cardinality
     [] [] 0 1
 
 end Hex

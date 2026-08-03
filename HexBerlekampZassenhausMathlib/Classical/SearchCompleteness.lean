@@ -77,7 +77,7 @@ theorem findDirectHead_found_le
             cases hfind
             obtain ⟨selected, remaining, hmem, hselected, hremaining, heval⟩ :=
               scanDirectCombinations_found coreLc target basis
-                (Hex.supportMeta basis) head tail level [] []
+                (Hex.supportMeta basis target) head tail level [] []
                 ((Hex.directLiftedFactor basis head).degree?.getD 0)
                 ((Hex.directLiftedFactor basis head).coeff 0 %
                   (Hex.liftModulus basis : Int))
@@ -99,7 +99,7 @@ theorem findDirectHead_found_le
             · subst level
               obtain ⟨foundSplit, foundTried, hfound⟩ :=
                 scanDirectCombinations_finds coreLc target basis
-                  (Hex.supportMeta basis) head tail trueLevel [] []
+                  (Hex.supportMeta basis target) head tail trueLevel [] []
                   ((Hex.directLiftedFactor basis head).degree?.getD 0)
                   ((Hex.directLiftedFactor basis head).coeff 0 %
                     (Hex.liftModulus basis : Int))

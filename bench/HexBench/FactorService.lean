@@ -586,14 +586,14 @@ order and the same leaf predicates, carrying the `DirectCandidateStats` stage
 counters that `scanDirectSubsets` already records for the unforced sweep.
 
 `obstruct` selects whether a recordable candidate is put to the word-prime
-divisibility obstruction before exact division.  With it off, the mirror is the
-production leaf; with it on, `recordable - exactDivisions` is the number of
-exact divisions the obstruction removed.  Running the same traversal both ways
-measures the filter without production depending on it. -/
+divisibility obstruction before exact division.  With it on the mirror is the
+production leaf, and `recordable - exactDivisions` is the number of exact
+divisions the obstruction removed; with it off the mirror is the leaf as it
+stood before the obstruction existed.  Running the same traversal both ways is
+what makes the filter's effect a measurement rather than an inference. -/
 private def countedScanCombinations
-    (obstruct : Bool) (coreLc : Int) (target : ZPoly)
-    (image : Hex.TargetImage target) (basis : LiftData)
-    (metadata : SupportMeta basis) (head : DirectLiftedIndex basis) :
+    (obstruct : Bool) (coreLc : Int) (target : ZPoly) (basis : LiftData)
+    (metadata : SupportMeta basis target) (head : DirectLiftedIndex basis) :
     (xs : List (DirectLiftedIndex basis)) → (choose : Nat) →
       (selectedRev rejectedRev : List (DirectLiftedIndex basis)) →
       (selectedDegree : Nat) → (selectedTrail : Int) →
@@ -616,7 +616,7 @@ private def countedScanCombinations
           let constructed := { filtered with constructed := 1 }
           if shouldRecordPolynomialFactor candidate then
             let recorded := { constructed with recordable := 1 }
-            if obstruct && Hex.obstructs image candidate then
+            if obstruct && Hex.obstructs metadata.image candidate then
               .exhausted recorded
             else
             let divided := { recorded with exactDivisions := 1 }
@@ -635,14 +635,14 @@ private def countedScanCombinations
   | [], _ + 1, _, _, _, _ => .exhausted {}
   | x :: xs, choose + 1, selectedRev, rejectedRev,
       selectedDegree, selectedTrail =>
-      match countedScanCombinations obstruct coreLc target image basis metadata
+      match countedScanCombinations obstruct coreLc target basis metadata
           head xs choose
           (x :: selectedRev) rejectedRev
           (selectedDegree + metadata.degree x)
           (selectedTrail * metadata.trail x % metadata.modulusInt) with
       | .found split stats => .found split stats
       | .exhausted leftStats =>
-          match countedScanCombinations obstruct coreLc target image basis
+          match countedScanCombinations obstruct coreLc target basis
               metadata head xs
               (choose + 1) selectedRev (x :: rejectedRev) selectedDegree
               selectedTrail with
@@ -658,8 +658,7 @@ private inductive CountedHeadResult (basis : LiftData) where
 
 /-- Counted mirror of `findDirectHead`. -/
 private def countedFindHead
-    (obstruct : Bool) (coreLc : Int) (target : ZPoly)
-    (image : Hex.TargetImage target) (basis : LiftData)
+    (obstruct : Bool) (coreLc : Int) (target : ZPoly) (basis : LiftData)
     (head : DirectLiftedIndex basis) (tail : List (DirectLiftedIndex basis)) :
     (levels : List Nat) → (budget : Nat) → (stats : DirectCandidateStats) →
       (completed : Array Nat) → CountedHeadResult basis
@@ -670,15 +669,15 @@ private def countedFindHead
       if levelCost > budget then
         .declined .subsetBudget budget stats completed
       else
-        let metadata := supportMeta basis
-        match countedScanCombinations obstruct coreLc target image basis metadata
+        let metadata := supportMeta basis target
+        match countedScanCombinations obstruct coreLc target basis metadata
             head tail level
             [] [] (metadata.degree head) (metadata.trail head % metadata.modulusInt) with
         | .found split levelStats =>
             .found split (budget - levelStats.leaves) (stats.add levelStats)
               completed
         | .exhausted levelStats =>
-            countedFindHead obstruct coreLc target image basis head tail levels
+            countedFindHead obstruct coreLc target basis head tail levels
               (budget - levelStats.leaves) (stats.add levelStats)
               (completed.push level)
 
@@ -711,8 +710,7 @@ private def countedSearchAux (obstruct : Bool) (coreLc : Int) (basis : LiftData)
             { factors := none, decline := some .liftFailure, stats, completed,
               divisors := 0 }
         | head :: tail =>
-            match countedFindHead obstruct coreLc target (Hex.targetImage target)
-                basis head tail
+            match countedFindHead obstruct coreLc target basis head tail
                 (List.range (tail.length + 1)) budget {} #[] with
             | .declined reason budget' levelStats levelCompleted =>
                 let _ := budget'
@@ -730,7 +728,7 @@ private def countedSearchAux (obstruct : Bool) (coreLc : Int) (basis : LiftData)
 
 /-- Counted mirror of `searchDirect`. -/
 private def countedSearch (coreLc : Int) (target : ZPoly) (basis : LiftData)
-    (budget : Nat := defaultSubsetBudget) (obstruct : Bool := false) :
+    (budget : Nat := defaultSubsetBudget) (obstruct : Bool := true) :
     CountedSearch :=
   countedSearchAux obstruct coreLc basis (basis.liftedFactors.size + 1) target
     (List.finRange basis.liftedFactors.size) budget {} #[]
@@ -1001,28 +999,32 @@ private def factorPhaseProfile (f : ZPoly) (probe : Bool := false) : IO Json := 
         let extras := extras.push ("recombination", searchJson)
         let extras ← if !probe then pure extras else do
           let probeStart ← mark
-          let probed :=
+          let unfiltered :=
             countedSearch (DensePoly.leadingCoeff core.poly) core.poly basis
-              (obstruct := true)
-          observeNat sink (probed.stats.leaves +
-            (probed.factors.map (·.length) |>.getD 0))
+              (obstruct := false)
+          observeNat sink (unfiltered.stats.leaves +
+            (unfiltered.factors.map (·.length) |>.getD 0))
           let probeStop ← mark
           pure <| extras.push ("obstruction", Json.mkObj
             [ ("prime", natJson Hex.obstructionPrime),
-              ("baselineRecombination", spanJson searchStart searchStop),
-              ("filteredRecombination", spanJson probeStart probeStop),
-              ("baselineStages", candidateStatsJson search.stats),
-              ("filteredStages", candidateStatsJson probed.stats),
-              ("reachedFilter", natJson probed.stats.recordable),
+              -- The unfiltered counterfactual runs second, so it sees the
+              -- warmer allocator; the comparison is conservative for the
+              -- filter, not favourable to it.
+              ("filteredRecombination", spanJson searchStart searchStop),
+              ("unfilteredRecombination", spanJson probeStart probeStop),
+              ("filteredStages", candidateStatsJson search.stats),
+              ("unfilteredStages", candidateStatsJson unfiltered.stats),
+              ("reachedFilter", natJson search.stats.recordable),
               ("modularRejections",
-                natJson (probed.stats.recordable - probed.stats.exactDivisions)),
-              ("exactFallThroughs", natJson probed.stats.exactDivisions),
+                natJson (search.stats.recordable - search.stats.exactDivisions)),
+              ("exactFallThroughs", natJson search.stats.exactDivisions),
               ("exactDivisionsAvoided",
-                natJson (search.stats.exactDivisions - probed.stats.exactDivisions)),
+                natJson (unfiltered.stats.exactDivisions -
+                  search.stats.exactDivisions)),
               ("sameDivisors",
-                Json.bool (probed.divisors == search.divisors &&
-                  probed.completed == search.completed &&
-                  (probed.factors.map (·.map (·.degree?.getD 0))) ==
+                Json.bool (unfiltered.divisors == search.divisors &&
+                  unfiltered.completed == search.completed &&
+                  (unfiltered.factors.map (·.map (·.degree?.getD 0))) ==
                     (search.factors.map (·.map (·.degree?.getD 0))))) ])
         match search.factors with
         | some factors =>
