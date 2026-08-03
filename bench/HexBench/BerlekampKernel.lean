@@ -537,12 +537,35 @@ attribute a stage's cost to whichever later stage first demands it. -/
 def observe (sink : IO.Ref Nat) (value : Nat) : IO Unit :=
   sink.modify (· + value % 2)
 
-/-- One entry of a matrix, as a `Nat`, for forcing it. -/
+/-- One entry of a matrix, as a `Nat`, for forcing it.
+
+`salt` carries a value read from the sink at runtime. Without it the compiler
+common-subexpression-eliminates repeated `probeEntry (fixedSpaceMatrix f h)`
+calls, and the matrix builds they were meant to force float down into whichever
+consumer first demands them; the second and later rebuilds then measure about
+130 ns on a 240x240 matrix and their cost is charged to the stage under test. A
+runtime-varying operand makes each call a distinct expression. -/
 private def probeEntry {p : Nat} [ZMod64.Bounds p] {n m : Nat}
-    (M : Matrix (ZMod64 p) n m) : Nat :=
-  if h : 0 < n then
-    if hm : 0 < m then M[((⟨0, h⟩ : Fin n), (⟨0, hm⟩ : Fin m))].toNat else 0
-  else 0
+    (salt : Nat) (M : Matrix (ZMod64 p) n m) : Nat :=
+  salt % 2 +
+    (if h : 0 < n then
+      if hm : 0 < m then M[((⟨0, h⟩ : Fin n), (⟨0, hm⟩ : Fin m))].toNat else 0
+    else 0)
+
+/-- Build a fixed-space matrix, force it past the compiler's code motion, and
+report the build time and allocations. The matrix is returned uniquely
+referenced, so the consumer's elementary operations still update the flat buffer
+in place. -/
+private def freshFixedSpace {p : Nat} [ZMod64.Bounds p]
+    (sink : IO.Ref Nat) (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    IO (Matrix (ZMod64 p) (Berlekamp.basisSize f) (Berlekamp.basisSize f)
+        × Nat × Nat) := do
+  let salt ← sink.get
+  let t0 ← mark
+  let M := Berlekamp.fixedSpaceMatrix f hmonic
+  observe sink (probeEntry salt M)
+  let t1 ← mark
+  return (M, (t1.since t0).1, (t1.since t0).2)
 
 /-- A nullspace basis as `Nat` residues, for comparing representations. -/
 private def basisNats {p : Nat} [ZMod64.Bounds p] {m k : Nat}
@@ -655,19 +678,18 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
   let t2 ← mark
   -- 2. Conversion to the generic matrix representation, then the diagonal
   -- decrement that turns `Q_f` into `Q_f - I`.
+  let salt2 ← sink.get
   let Q := Berlekamp.berlekampMatrix f hmonic
-  observe sink (probeEntry Q)
+  observe sink (probeEntry salt2 Q)
   let t3 ← mark
-  let fixedA := Berlekamp.fixedSpaceMatrix f hmonic
-  observe sink (probeEntry fixedA)
+  let (fixedA, buildA, buildAllocs) ← freshFixedSpace sink f hmonic
   let t4 ← mark
   -- 3-4. Pivot search, row swap and scale, row addition. `fixedA` is consumed
   -- here and never read again, so the elementary operations update in place.
   let withT ← countedRowReduce true fixedA
   observe sink withT.pivots.length
   let t5 ← mark
-  let fixedB := Berlekamp.fixedSpaceMatrix f hmonic
-  observe sink (probeEntry fixedB)
+  let (fixedB, buildB, _) ← freshFixedSpace sink f hmonic
   let t6 ← mark
   let withoutT ← countedRowReduce false fixedB
   observe sink withoutT.pivots.length
@@ -676,14 +698,13 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
   -- `rowReduce` is timed on its own so the mirror above can be checked against
   -- it for speed as well as for result, and so the basis construction is the
   -- difference between the two rather than an unattributed remainder.
-  let fixedR := Berlekamp.fixedSpaceMatrix f hmonic
-  observe sink (probeEntry fixedR)
+  let (fixedR, buildR, _) ← freshFixedSpace sink f hmonic
   let t7a ← mark
+  let salt3 ← sink.get
   let reduced := Matrix.rowReduce fixedR
-  observe sink (reduced.rank + probeEntry reduced.echelon)
+  observe sink (reduced.rank + probeEntry salt3 reduced.echelon)
   let t7b ← mark
-  let fixedC := Berlekamp.fixedSpaceMatrix f hmonic
-  observe sink (probeEntry fixedC)
+  let (fixedC, buildC, _) ← freshFixedSpace sink f hmonic
   let t8 ← mark
   -- Read the basis out as a plain `Array` first. Every `Vector` operation takes
   -- the length index as a runtime argument, and here that index is
@@ -709,18 +730,18 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
   let rss1 ← residentBytes false
   let expected := basisArray.map fun v => v.toArray.map ZMod64.toNat
   -- Packed pricing, each against its own fresh matrix.
-  let fixedW := Berlekamp.fixedSpaceMatrix f hmonic
+  let (fixedW, _, _) ← freshFixedSpace sink f hmonic
   let (pWord, okWord) ← packedReduce sink .word fixedW expected
-  let fixedH := Berlekamp.fixedSpaceMatrix f hmonic
+  let (fixedH, _, _) ← freshFixedSpace sink f hmonic
   let (pHalf, okHalf) ← packedReduce sink .halfWord fixedH expected
-  let fixedD := Berlekamp.fixedSpaceMatrix f hmonic
+  let (fixedD, _, _) ← freshFixedSpace sink f hmonic
   let (pHalfDiv, okHalfDiv) ← packedReduce sink .halfWordDiv fixedD expected
-  let fixedS := Berlekamp.fixedSpaceMatrix f hmonic
+  let (fixedS, _, _) ← freshFixedSpace sink f hmonic
   let (pSkip, okSkip) ← packedReduce sink .halfWordSkipZero fixedS expected
   let peak ← residentBytes true
   -- Validation: the counted mirror against the production row reduction, and
   -- the transform-free run against the mirror that keeps the transform.
-  let fixedV := Berlekamp.fixedSpaceMatrix f hmonic
+  let (fixedV, _, _) ← freshFixedSpace sink f hmonic
   let mirrorOk := mirrorAgrees fixedV withT
   let echelonOk := withT.echelon == withoutT.echelon
     && withT.pivots == withoutT.pivots
@@ -734,7 +755,7 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
       ("frobeniusPower", spanJson (t1.since t0).1 (t1.since t0).2),
       ("columnPolys", spanJson (t2.since t1).1 (t2.since t1).2),
       ("berlekampMatrixWall", spanJson (t3.since t2).1 (t3.since t2).2),
-      ("fixedSpaceMatrixWall", spanJson (t4.since t3).1 (t4.since t3).2),
+      ("fixedSpaceMatrixWall", spanJson buildA buildAllocs),
       -- Nested spans, so these are differences; `Nat` subtraction clamps, and
       -- the sign flag records when the difference was negative rather than
       -- letting a clamp read as a zero-cost stage.
@@ -744,7 +765,7 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
       ("fixedSpaceDiagonalNanos", natJson ((t4.since t3).1 - (t3.since t2).1)),
       ("fixedSpaceDiagonalNegative",
         Json.bool ((t4.since t3).1 < (t3.since t2).1)),
-      ("matrixRebuild", spanJson (t6.since t5).1 (t6.since t5).2),
+      ("matrixRebuild", spanJson buildB 0),
       ("productionRowReduce", spanJson (t7b.since t7a).1 (t7b.since t7a).2),
       -- The nullspace-basis construction, as the difference between two
       -- adjacent stages of *this* execution rather than between medians of
@@ -760,8 +781,8 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
         counterJson withT.counters (t5.since t4).1 (t5.since t4).2),
       ("countedEchelonOnly",
         counterJson withoutT.counters (t7.since t6).1 (t7.since t6).2),
-      ("productionMatrixRebuild", spanJson (t8.since t7b).1 (t8.since t7b).2),
-      ("rowReduceMatrixRebuild", spanJson (t7a.since t7).1 (t7a.since t7).2),
+      ("productionMatrixRebuild", spanJson buildC 0),
+      ("rowReduceMatrixRebuild", spanJson buildR 0),
       ("productionNullspace", spanJson (t9.since t8).1 (t9.since t8).2),
       ("basisToPolynomials", spanJson (t10.since t9).1 (t10.since t9).2),
       ("fixedSpaceKernelVectors", spanJson (t11.since t10).1 (t11.since t10).2),
