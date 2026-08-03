@@ -134,6 +134,17 @@ faster than schoolbook; the win grows with degree:
 `mulKroneckerAt` takes both cutoffs explicitly so the kernel benchmark
 can sweep them; production fixes them to the measured constants.
 
+**Operation counts.** For operands of `n` and `m` coefficients the
+schoolbook loop issues `n * m` coefficient multiplications and as many
+additions, each on a fresh heap-allocated `Int`. The substitution issues
+**one** integer multiplication, `n + m - 2` shift-and-add pairs to pack
+the two operands, `O(log (n + m))` to build the bias repunit, one
+addition to apply it, and `3 * (n + m - 2)` shift, shift and subtract
+operations to extract the digits — `O((n + m) log (n + m))` limb work
+against the schoolbook's `Θ(n * m)` allocations. At `n = m = 90` with
+92-bit coefficients that is 8100 multiplications against one, and the
+measured times are 1.19 ms against 0.13 ms.
+
 **What a single size cutoff leaves on the table.** The cutoff pair is
 deliberately one rule, not a width-indexed table, and that costs some
 measured wins at both ends. At 4-bit coefficients Kronecker draws
