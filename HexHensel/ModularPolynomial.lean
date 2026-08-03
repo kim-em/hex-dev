@@ -87,6 +87,84 @@ theorem intModNat_eq_impl_value (z : Int) (m : Nat) :
   funext z m
   exact intModNat_eq_impl_value z m
 
+/--
+Canonical nonnegative representative of `z` modulo `m`, as an `Int`.
+
+The `Int`-valued sibling of {name}`intModNat`, for the coefficient arrays that
+are `Int`-valued on both sides of a reduction.
+-/
+@[expose]
+def intEmod (z : Int) (m : Nat) : Int :=
+  Int.ofNat (intModNat z m)
+
+/--
+Windowed implementation of `intEmod`.
+
+`intModNat` already avoids the division when its argument is within one modulus
+of canonical, but it still returns a `Nat`, and `Int.toNat` on a multi-limb
+value copies the limbs. A coefficient that is *already* canonical -- which on
+the modular hot path is most of them, since every polynomial in the lift is a
+reduction's output -- is here returned as itself, allocating nothing at all.
+
+Proved equal to `intEmod` in `intEmod_eq_impl`.
+-/
+def intEmodImpl (z : Int) (m : Nat) : Int :=
+  if 0 ≤ z ∧ z < Int.ofNat m then z else Int.ofNat (intModNat z m)
+
+theorem intEmod_eq_impl_value (z : Int) (m : Nat) :
+    intEmod z m = intEmodImpl z m := by
+  unfold intEmod intEmodImpl
+  by_cases h : 0 ≤ z ∧ z < Int.ofNat m
+  · rw [if_pos h]
+    have hz : z % Int.ofNat m = z := Int.emod_eq_of_lt h.1 h.2
+    unfold intModNat
+    rw [hz, Int.ofNat_eq_natCast, Int.toNat_of_nonneg h.1]
+  · rw [if_neg h]
+
+/-- Proof-backed compiled implementation of the `Int`-valued canonical
+representative. -/
+@[csimp] theorem intEmod_eq_impl : @intEmod = @intEmodImpl := by
+  funext z m
+  exact intEmod_eq_impl_value z m
+
+/-- At a positive modulus `intEmod` is the ordinary integer remainder. -/
+theorem intEmod_eq_emod (z : Int) {m : Nat} (hm : 0 < m) :
+    intEmod z m = z % (m : Int) := by
+  unfold intEmod intModNat
+  rw [Int.ofNat_eq_natCast, Int.ofNat_eq_natCast]
+  exact Int.toNat_of_nonneg
+    (Int.emod_nonneg _ (Int.ofNat_ne_zero.mpr (Nat.ne_of_gt hm)))
+
+/-- `intEmod` lands in the canonical window. -/
+theorem intEmod_mem (z : Int) {m : Nat} (hm : 0 < m) :
+    0 ≤ intEmod z m ∧ intEmod z m < (m : Int) := by
+  have hpos : (0 : Int) < (m : Int) := by exact_mod_cast hm
+  rw [intEmod_eq_emod z hm]
+  exact ⟨Int.emod_nonneg _ (Int.ne_of_gt hpos), Int.emod_lt_of_pos _ hpos⟩
+
+/-- A value already in the canonical window is returned unchanged. -/
+theorem intEmod_eq_self {z : Int} {m : Nat} (h0 : 0 ≤ z) (h1 : z < (m : Int)) :
+    intEmod z m = z := by
+  have hm : 0 < m := by exact_mod_cast Int.lt_of_le_of_lt h0 h1
+  rw [intEmod_eq_emod z hm]
+  exact Int.emod_eq_of_lt h0 h1
+
+/-- Congruent integers have the same canonical representative. -/
+theorem intEmod_congr {a b : Int} {m : Nat} (h : a % (m : Int) = b % (m : Int)) :
+    intEmod a m = intEmod b m := by
+  unfold intEmod intModNat
+  simp only [Int.ofNat_eq_natCast]
+  rw [h]
+
+/-- Reducing one summand first does not change the canonical representative of a
+difference: the windowed elimination may subtract the raw product where the
+specification subtracts its reduction. -/
+theorem intEmod_sub_intEmod (a b : Int) {m : Nat} (hm : 0 < m) :
+    intEmod (a - intEmod b m) m = intEmod (a - b) m := by
+  refine intEmod_congr ?_
+  rw [intEmod_eq_emod b hm, Int.sub_emod a (b % (m : Int)), Int.sub_emod a b,
+    Int.emod_emod_of_dvd _ (Int.dvd_refl _)]
+
 /-- `intModNat` is the canonical nonnegative representative: re-coercing to `Int`
 recovers the ordinary integer remainder. Used to connect the `Nat`-valued executable
 reduction with `Int`-level congruence reasoning. -/
@@ -154,12 +232,12 @@ def reduceModPow (f : ZPoly) (p k : Nat) : ZPoly :=
 def reduceModPowImpl (f : ZPoly) (p k : Nat) : ZPoly :=
   let modulus := p ^ k
   DensePoly.ofCoeffs <|
-    f.toArray.map (fun coeff => Int.ofNat (intModNat coeff modulus))
+    f.toArray.map (fun coeff => intEmod coeff modulus)
 
 /-- The direct array map computes the reference prime-power reduction. -/
 theorem reduceModPow_eq_impl_value (f : ZPoly) (p k : Nat) :
     reduceModPow f p k = reduceModPowImpl f p k := by
-  unfold reduceModPow reduceModPowImpl DensePoly.ofList
+  unfold reduceModPow reduceModPowImpl intEmod DensePoly.ofList
   congr 1
   rw [show
       (List.range f.size).map
