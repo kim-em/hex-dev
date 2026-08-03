@@ -249,8 +249,18 @@ page put it (1.98x).
   selected prime, leaf count, subset cardinalities and returned factor degrees
   on **368 of 368** instances.
 - A fresh full Hex sweep over all 392 corpus instances, with the external
-  comparator records reused unchanged, and regenerated cactus and
-  runtime-by-degree figures.
+  comparator records reused unchanged, and all 25 cactus and
+  runtime-by-degree figures regenerated;
+  `scripts/plots/hexbz-cactus.py --check` passes byte for byte and
+  `scripts/bench/check_factor_sweep_freshness.py` passes.
+
+  The sweep solves **377 of 392** instances under the 10 s cutoff, unchanged
+  from the newest committed baseline (`17bd12950088`), in **19.519 s** of
+  solved-instance time against that baseline's 20.684 s. The corpus is
+  dominated by instances whose cost is not the modular kernel, so a 5.6%
+  total is the shape to expect from a change that moves four rows by 1.8x to
+  2.6x; the sweep is here as an anti-regression check across all 392, not as
+  the headline.
 
 ## Regeneration
 
@@ -259,7 +269,7 @@ lake build hexbz_factor_service
 
 taskset -c 0 python3 scripts/bench/factor_sweep.py \
   --systems hex-factor --cutoff 10 --no-early-terminate \
-  --output reports/bench-results/hexbz-factor-sweep-2c4c6e4f-hex-chungus2.json
+  --output reports/bench-results/hexbz-factor-sweep-433dba23-hex-chungus2.json
 
 python3 scripts/bench/factor_phase_profile.py \
   --no-counterfactual --no-scout \
