@@ -39,7 +39,7 @@ session and Haskell-export builds completed before timed calls.
 - Cross-check: committed expected factor degrees where available, pairwise
   agreement otherwise
 
-The per-system protocol overheads were 22.113 us for Hex, 15.493 us for FLINT,
+The per-system protocol overheads were 22.333 us for Hex, 15.493 us for FLINT,
 11.027 us for NTL, 18.006 us for PARI, 18.628 us for Isabelle BZ, and 18.848 us
 for Isabelle LLL. Reported service times do not subtract them.
 
@@ -60,7 +60,7 @@ protocol, and no early termination. All answering systems agree.
 
 | System | OK | Timeout | p50 solved | p90 solved | Slowest solved |
 |---|---:|---:|---:|---:|---:|
-| Hex public factor | 377 | 15 | 373.503 us | 7.157 ms | 8.240 s |
+| Hex public factor | 377 | 15 | 379.833 us | 7.204 ms | 8.210 s |
 | FLINT | 391 | 1 | 60.089 us | 1.139 ms | 1.241 s |
 | PARI/GP | 391 | 1 | 65.687 us | 1.008 ms | 960.815 ms |
 | NTL | 391 | 1 | 88.160 us | 2.365 ms | 1.305 s |

@@ -41,7 +41,7 @@ ratios and curves use the fresh same-protocol 2.17.2 measurement above.
 
 | System | Answered | Timed out | Median | p90 | Slowest answer |
 |---|---:|---:|---:|---:|---:|
-| Hex public factorization | 377 | 15 | 373.503 us | 7.157 ms | 8.240 s |
+| Hex public factorization | 377 | 15 | 379.833 us | 7.204 ms | 8.210 s |
 | FLINT 0.9.0 | 391 | 1 | 60.089 us | 1.139 ms | 1.241 s |
 | PARI/GP 2.17.2 | 391 | 1 | 65.687 us | 1.008 ms | 960.815 ms |
 | NTL 11.6.0 | 391 | 1 | 88.160 us | 2.365 ms | 1.305 s |
@@ -52,13 +52,13 @@ Every answering system agreed with the committed factor-degree oracle or with
 the other systems on rows without one.
 
 For paired comparisons, both measurements must exceed ten times their own
-protocol overhead. On 217 eligible common rows, Hex divided by verified
-Isabelle BZ has median `0.734x`, p10-p90 `0.475x-2.554x`, and a 143-74 win
+protocol overhead. On 218 eligible common rows, Hex divided by verified
+Isabelle BZ has median `0.732x`, p10-p90 `0.476x-2.552x`, and a 146-72 win
 split. Hex therefore has a useful aggregate lead over verified Isabelle BZ,
 but not a uniform one.
 
 The optimized unverified libraries remain substantially faster. Median Hex
-ratios are `10.556x` against FLINT, `10.709x` against PARI, and `5.445x`
+ratios are `10.517x` against FLINT, `10.778x` against PARI, and `5.511x`
 against NTL on 75, 80, and 141 eligible pairs respectively.
 
 ## Effect of the divisibility obstruction
