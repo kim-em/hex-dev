@@ -20,15 +20,20 @@ and stops at the first exact divisor.  The proved classical search uses the
 head-forced iterator; the proposal tier uses the unforced low-cardinality
 iterator.
 
-Two properties keep the traversal off a rejected support's back.  `SupportMeta`
-records the lift modulus and each lifted factor's degree and trailing
-coefficient once, so a traversal step is an array read and one modular multiply
-rather than a fresh `p ^ k` and a fresh `Option`.  And every leaf runs its
-metadata-only filters before it reverses the selected indices, maps them to
-lifted polynomials, or concatenates the complementary support -- the last of
-which is built only once an exact divisor is in hand.  A rejected leaf still
-pays for the filters themselves, which are modular arithmetic on the lift
-modulus; what it no longer pays for is the support representation.
+Three properties keep the traversal off a rejected support's back.
+`SupportMeta` records the lift modulus, each lifted factor's degree and trailing
+coefficient, and the target's word-prime image once, so a traversal step is an
+array read and one modular multiply rather than a fresh `p ^ k` and a fresh
+`Option`.  Every leaf runs its metadata-only filters before it reverses the
+selected indices, maps them to lifted polynomials, or concatenates the
+complementary support -- the last of which is built only once an exact divisor
+is in hand.  And a leaf that does build a candidate puts it to the finite-field
+divisibility obstruction, which rejects in machine-word arithmetic what would
+otherwise cost a multi-limb integer long division.
+
+A rejected leaf still pays for the metadata-only filters themselves, which are
+modular arithmetic on the lift modulus; what it no longer pays for is the
+support representation, and -- past the filters -- the exact division.
 -/
 
 namespace Hex
