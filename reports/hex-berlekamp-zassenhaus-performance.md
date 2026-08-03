@@ -7,7 +7,7 @@ diagnostics, not alternative public implementations.
 ## Current measurement
 
 The current Hex record measures clean source revision
-`4b75d9d6` with
+`bf5973a3` with
 `leanprover/lean4:v4.33.0-rc1`.
 
 Hex was measured on 2026-08-03 and the external systems on 2026-08-01 on
@@ -23,10 +23,8 @@ Early termination was disabled.
 
 The current artifacts are:
 
-- `reports/bench-results/hexbz-factor-sweep-4b75d9d6-hex-chungus2-run6.json`
-  for Hex, SHA-256
-  `3aedb5f4b6c980025fd0e23cff6e32b8a99c8ca7390a34e9d410c3180bd11623`,
-  the newest of six committed repeats at that revision;
+- `reports/bench-results/hexbz-factor-sweep-bf5973a3-hex-chungus2-run5.json`
+  for Hex, the newest of five committed repeats at that revision;
 - `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json`
   for FLINT, NTL, PARI, and both Isabelle implementations, SHA-256
   `4de27e389d738abc1e878f0be273485c3723216211a101c3eba55860e7b8a242`.
@@ -72,19 +70,17 @@ integer division is still the only accepting test.
 
 Across the probed corpus, 4,204 of the 4,302 candidates reaching the filter
 were rejected, and all 98 that passed were genuine divisors. `xpow120_minus1`
-moves to 0.321x, `cyclo_phi275` to 0.240x, and `cyclo_phi1031` changes from a
-ten-second timeout to 6.566 s; the aggregate of `xpow48/105/120` is 0.378x and
-the whole corpus is 0.713x. The median over rows above one millisecond is
-1.002x against a measured noise floor of 0.6%, so no overhead is resolved
-there. The cost side is `wilkinson` at 1.053x, where the unforced sweep peels
-one linear factor at a time and the filter rejects none of its candidates.
-Against verified Isabelle BZ this revision's `cyclotomic-products` median is
-`0.773x` and `cyclotomic` `0.920x`.
+moves to 0.306x, `cyclo_phi275` to 0.234x, and `cyclo_phi1031` changes from a
+ten-second timeout to 4.176 s; the aggregate of `xpow48/105/120` is 0.361x and
+the whole corpus is 0.704x. The median over rows above one millisecond is
+0.994x against a measured noise floor of 0.8%. The cost side is `wilkinson` at
+1.022x, where the unforced sweep peels one linear factor at a time and the
+filter rejects none of its candidates.
 
-Those ratios are measured against this branch's merge base, built and swept in
-the same session with six interleaved repeats per side, not against the
-previous committed record: `main` moved between the two, and rows this change
-cannot touch move more against that record than rows it can.
+Those ratios are measured against `main` with this branch merged out, built and
+swept in the same session with four fully interleaved repeats per side, not
+against an earlier committed record: `main` moves under a branch, and against a
+stale record rows this change cannot touch move more than rows it can.
 [hexbz-modular-obstruction.md](hexbz-modular-obstruction.md) is the measurement
 record, and it also states what the change does not fix.
 

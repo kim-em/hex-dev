@@ -6,7 +6,7 @@ algorithm variants.
 ## Systems
 
 - `hex-factor`: public Hex production factorization at clean revision
-  `4b75d9d6`
+  `bf5973a3`
 - `flint`: python-flint 0.9.0
 - `pari`: PARI/GP 2.17.2 through cypari2 2.2.4
 - `ntl`: NTL 11.6.0 `ZZXFactoring`
@@ -25,7 +25,7 @@ session and Haskell-export builds completed before timed calls.
   external record, CPU 70 for the current Hex record (see
   [hexbz-support-traversal.md](hexbz-support-traversal.md) for why, and for
   the check that the two are interchangeable). Other work shares this host, so
-  six complete Hex sweeps are committed at this revision; the table below is
+  five complete Hex sweeps are committed at this revision; the table below is
   the newest, and the comparisons in
   [hexbz-modular-obstruction.md](hexbz-modular-obstruction.md) use their
   median.
@@ -47,9 +47,8 @@ for Isabelle LLL. Reported service times do not subtract them.
 
 The plotting tool selects the newest valid record for each system:
 
-- `reports/bench-results/hexbz-factor-sweep-4b75d9d6-hex-chungus2-run6.json`
-  supplies Hex; SHA-256
-  `3aedb5f4b6c980025fd0e23cff6e32b8a99c8ca7390a34e9d410c3180bd11623`.
+- `reports/bench-results/hexbz-factor-sweep-bf5973a3-hex-chungus2-run5.json`
+  supplies Hex.
 - `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json`
   supplies FLINT, NTL, PARI, Isabelle BZ, and Isabelle LLL; SHA-256
   `4de27e389d738abc1e878f0be273485c3723216211a101c3eba55860e7b8a242`.

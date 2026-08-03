@@ -1,7 +1,7 @@
 {
  "env": {
   "corpus_sha256": "619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d",
-  "git_commit": "4b75d9d6a5ef4358b6cd0def7baa61859613a30d",
+  "git_commit": "bf5973a369e7f848dd2196d093b77a625d85cb5d",
   "git_dirty": false
  },
  "rows": [
@@ -14,11 +14,11 @@
     "exactDivisionsAvoided": 105,
     "exactFallThroughs": 8,
     "filteredRecombination": {
-     "nanos": 958001,
+     "nanos": 877732,
      "smallAllocs": 48270
     },
     "filteredRecombinationSecond": {
-     "nanos": 930821,
+     "nanos": 841768,
      "smallAllocs": 48180
     },
     "filteredStages": {
@@ -39,11 +39,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 1699160,
+     "nanos": 1693711,
      "smallAllocs": 41191
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 1666531,
+     "nanos": 1662886,
      "smallAllocs": 41192
     },
     "unfilteredStages": {
@@ -66,11 +66,11 @@
     "exactDivisionsAvoided": 2,
     "exactFallThroughs": 9,
     "filteredRecombination": {
-     "nanos": 89983,
+     "nanos": 85868,
      "smallAllocs": 5224
     },
     "filteredRecombinationSecond": {
-     "nanos": 76824,
+     "nanos": 73198,
      "smallAllocs": 5143
     },
     "filteredStages": {
@@ -91,11 +91,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 71616,
+     "nanos": 70575,
      "smallAllocs": 3805
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 67630,
+     "nanos": 66088,
      "smallAllocs": 3806
     },
     "unfilteredStages": {
@@ -118,11 +118,11 @@
     "exactDivisionsAvoided": 258,
     "exactFallThroughs": 10,
     "filteredRecombination": {
-     "nanos": 5353088,
+     "nanos": 5275913,
      "smallAllocs": 270316
     },
     "filteredRecombinationSecond": {
-     "nanos": 5303985,
+     "nanos": 5274510,
      "smallAllocs": 270211
     },
     "filteredStages": {
@@ -143,11 +143,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 15033643,
+     "nanos": 15022704,
      "smallAllocs": 240654
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 15047815,
+     "nanos": 15063084,
      "smallAllocs": 240655
     },
     "unfilteredStages": {
@@ -170,11 +170,11 @@
     "exactDivisionsAvoided": 19,
     "exactFallThroughs": 12,
     "filteredRecombination": {
-     "nanos": 485560,
+     "nanos": 473121,
      "smallAllocs": 27609
     },
     "filteredRecombinationSecond": {
-     "nanos": 465681,
+     "nanos": 457528,
      "smallAllocs": 27498
     },
     "filteredStages": {
@@ -195,11 +195,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 1136946,
+     "nanos": 1138258,
      "smallAllocs": 23390
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 1091659,
+     "nanos": 1095414,
      "smallAllocs": 23391
     },
     "unfilteredStages": {
@@ -222,11 +222,11 @@
     "exactDivisionsAvoided": 52,
     "exactFallThroughs": 8,
     "filteredRecombination": {
-     "nanos": 4885264,
+     "nanos": 4881799,
      "smallAllocs": 266987
     },
     "filteredRecombinationSecond": {
-     "nanos": 4858665,
+     "nanos": 4849210,
      "smallAllocs": 266815
     },
     "filteredStages": {
@@ -247,11 +247,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 28507824,
+     "nanos": 28652132,
      "smallAllocs": 250691
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 28312844,
+     "nanos": 28576050,
      "smallAllocs": 250692
     },
     "unfilteredStages": {
@@ -274,11 +274,11 @@
     "exactDivisionsAvoided": 1785,
     "exactFallThroughs": 16,
     "filteredRecombination": {
-     "nanos": 114100208,
+     "nanos": 112734701,
      "smallAllocs": 5264950
     },
     "filteredRecombinationSecond": {
-     "nanos": 114588782,
+     "nanos": 113098501,
      "smallAllocs": 5264685
     },
     "filteredStages": {
@@ -299,11 +299,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 444779159,
+     "nanos": 443564102,
      "smallAllocs": 5052335
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 442711874,
+     "nanos": 442948188,
      "smallAllocs": 5052336
     },
     "unfilteredStages": {
@@ -326,11 +326,11 @@
     "exactDivisionsAvoided": 8,
     "exactFallThroughs": 1,
     "filteredRecombination": {
-     "nanos": 252033,
+     "nanos": 250261,
      "smallAllocs": 10026
     },
     "filteredRecombinationSecond": {
-     "nanos": 229109,
+     "nanos": 226376,
      "smallAllocs": 9954
     },
     "filteredStages": {
@@ -351,11 +351,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 292314,
+     "nanos": 290861,
      "smallAllocs": 9536
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 277952,
+     "nanos": 275789,
      "smallAllocs": 9537
     },
     "unfilteredStages": {
@@ -378,11 +378,11 @@
     "exactDivisionsAvoided": 128,
     "exactFallThroughs": 1,
     "filteredRecombination": {
-     "nanos": 65102680,
+     "nanos": 62950957,
      "smallAllocs": 2749638
     },
     "filteredRecombinationSecond": {
-     "nanos": 65022871,
+     "nanos": 62916195,
      "smallAllocs": 2749509
     },
     "filteredStages": {
@@ -403,11 +403,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 70012572,
+     "nanos": 68004951,
      "smallAllocs": 2742098
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 69967595,
+     "nanos": 67898453,
      "smallAllocs": 2742099
     },
     "unfilteredStages": {
@@ -430,11 +430,11 @@
     "exactDivisionsAvoided": 0,
     "exactFallThroughs": 1,
     "filteredRecombination": {
-     "nanos": 58654719,
+     "nanos": 57633143,
      "smallAllocs": 2560916
     },
     "filteredRecombinationSecond": {
-     "nanos": 58641379,
+     "nanos": 57564450,
      "smallAllocs": 2560787
     },
     "filteredStages": {
@@ -455,11 +455,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 58483605,
+     "nanos": 58788736,
      "smallAllocs": 2560565
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 58729670,
+     "nanos": 57767813,
      "smallAllocs": 2560566
     },
     "unfilteredStages": {
@@ -482,11 +482,11 @@
     "exactDivisionsAvoided": 0,
     "exactFallThroughs": 1,
     "filteredRecombination": {
-     "nanos": 59563206,
+     "nanos": 59160878,
      "smallAllocs": 2594103
     },
     "filteredRecombinationSecond": {
-     "nanos": 59579880,
+     "nanos": 59030054,
      "smallAllocs": 2593974
     },
     "filteredStages": {
@@ -507,11 +507,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 59614772,
+     "nanos": 59087198,
      "smallAllocs": 2593751
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 59731686,
+     "nanos": 59002593,
      "smallAllocs": 2593752
     },
     "unfilteredStages": {
@@ -534,11 +534,11 @@
     "exactDivisionsAvoided": 256,
     "exactFallThroughs": 2,
     "filteredRecombination": {
-     "nanos": 127214566,
+     "nanos": 125919861,
      "smallAllocs": 6175336
     },
     "filteredRecombinationSecond": {
-     "nanos": 127125773,
+     "nanos": 125820634,
      "smallAllocs": 6175204
     },
     "filteredStages": {
@@ -559,11 +559,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 145634560,
+     "nanos": 144873514,
      "smallAllocs": 6156826
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 145532239,
+     "nanos": 144814987,
      "smallAllocs": 6156827
     },
     "unfilteredStages": {
@@ -586,11 +586,11 @@
     "exactDivisionsAvoided": 513,
     "exactFallThroughs": 2,
     "filteredRecombination": {
-     "nanos": 288395038,
+     "nanos": 285421513,
      "smallAllocs": 14683417
     },
     "filteredRecombinationSecond": {
-     "nanos": 286926811,
+     "nanos": 286017057,
      "smallAllocs": 14683276
     },
     "filteredStages": {
@@ -611,11 +611,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 362703049,
+     "nanos": 361978354,
      "smallAllocs": 14638584
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 363480873,
+     "nanos": 360114351,
      "smallAllocs": 14638585
     },
     "unfilteredStages": {
@@ -638,11 +638,11 @@
     "exactDivisionsAvoided": 8,
     "exactFallThroughs": 2,
     "filteredRecombination": {
-     "nanos": 9496071,
+     "nanos": 9307070,
      "smallAllocs": 528057
     },
     "filteredRecombinationSecond": {
-     "nanos": 9496472,
+     "nanos": 9327950,
      "smallAllocs": 527928
     },
     "filteredStages": {
@@ -663,11 +663,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 9807544,
+     "nanos": 9632302,
      "smallAllocs": 526499
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 9783538,
+     "nanos": 9627796,
      "smallAllocs": 526500
     },
     "unfilteredStages": {
@@ -718,11 +718,11 @@
     "exactDivisionsAvoided": 0,
     "exactFallThroughs": 1,
     "filteredRecombination": {
-     "nanos": 13400,
+     "nanos": 13530,
      "smallAllocs": 424
     },
     "filteredRecombinationSecond": {
-     "nanos": 5848,
+     "nanos": 11447,
      "smallAllocs": 373
     },
     "filteredStages": {
@@ -743,11 +743,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 5138,
+     "nanos": 5418,
      "smallAllocs": 259
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 4517,
+     "nanos": 4627,
      "smallAllocs": 260
     },
     "unfilteredStages": {
@@ -770,11 +770,11 @@
     "exactDivisionsAvoided": 15,
     "exactFallThroughs": 1,
     "filteredRecombination": {
-     "nanos": 814739,
+     "nanos": 804393,
      "smallAllocs": 32169
     },
     "filteredRecombinationSecond": {
-     "nanos": 800297,
+     "nanos": 794858,
      "smallAllocs": 32106
     },
     "filteredStages": {
@@ -795,11 +795,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 1492022,
+     "nanos": 1423651,
      "smallAllocs": 31017
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 1419175,
+     "nanos": 1388379,
      "smallAllocs": 31018
     },
     "unfilteredStages": {
@@ -822,11 +822,11 @@
     "exactDivisionsAvoided": 1,
     "exactFallThroughs": 1,
     "filteredRecombination": {
-     "nanos": 1175754,
+     "nanos": 1189233,
      "smallAllocs": 46831
     },
     "filteredRecombinationSecond": {
-     "nanos": 1172027,
+     "nanos": 1222693,
      "smallAllocs": 46600
     },
     "filteredStages": {
@@ -847,11 +847,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 5601477,
+     "nanos": 5611309,
      "smallAllocs": 45281
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 5571162,
+     "nanos": 5554195,
      "smallAllocs": 45282
     },
     "unfilteredStages": {
@@ -874,11 +874,11 @@
     "exactDivisionsAvoided": 511,
     "exactFallThroughs": 1,
     "filteredRecombination": {
-     "nanos": 595224483,
+     "nanos": 585005015,
      "smallAllocs": 19434898
     },
     "filteredRecombinationSecond": {
-     "nanos": 590006866,
+     "nanos": 591969402,
      "smallAllocs": 19434629
     },
     "filteredStages": {
@@ -899,11 +899,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 3564591922,
+     "nanos": 3567935531,
      "smallAllocs": 19304445
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 3558212290,
+     "nanos": 3564946169,
      "smallAllocs": 19304446
     },
     "unfilteredStages": {
@@ -926,11 +926,11 @@
     "exactDivisionsAvoided": 7,
     "exactFallThroughs": 1,
     "filteredRecombination": {
-     "nanos": 10094749,
+     "nanos": 10267013,
      "smallAllocs": 401834
     },
     "filteredRecombinationSecond": {
-     "nanos": 10024946,
+     "nanos": 10268796,
      "smallAllocs": 401537
     },
     "filteredStages": {
@@ -951,11 +951,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 81572703,
+     "nanos": 81506599,
      "smallAllocs": 398073
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 81474418,
+     "nanos": 81563324,
      "smallAllocs": 398074
     },
     "unfilteredStages": {
@@ -978,11 +978,11 @@
     "exactDivisionsAvoided": 26,
     "exactFallThroughs": 2,
     "filteredRecombination": {
-     "nanos": 2385388,
+     "nanos": 2395041,
      "smallAllocs": 89872
     },
     "filteredRecombinationSecond": {
-     "nanos": 2354411,
+     "nanos": 2352618,
      "smallAllocs": 89749
     },
     "filteredStages": {
@@ -1003,11 +1003,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 4782862,
+     "nanos": 4810683,
      "smallAllocs": 84110
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 4732949,
+     "nanos": 4709323,
      "smallAllocs": 84111
     },
     "unfilteredStages": {
@@ -1030,11 +1030,11 @@
     "exactDivisionsAvoided": 26,
     "exactFallThroughs": 2,
     "filteredRecombination": {
-     "nanos": 2473447,
+     "nanos": 2511144,
      "smallAllocs": 98516
     },
     "filteredRecombinationSecond": {
-     "nanos": 2448992,
+     "nanos": 2460959,
      "smallAllocs": 98393
     },
     "filteredStages": {
@@ -1055,11 +1055,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 5144489,
+     "nanos": 5243845,
      "smallAllocs": 88637
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 5066893,
+     "nanos": 5114814,
      "smallAllocs": 88638
     },
     "unfilteredStages": {
@@ -1082,11 +1082,11 @@
     "exactDivisionsAvoided": 23,
     "exactFallThroughs": 2,
     "filteredRecombination": {
-     "nanos": 5928802,
+     "nanos": 6013216,
      "smallAllocs": 275130
     },
     "filteredRecombinationSecond": {
-     "nanos": 5917725,
+     "nanos": 5999435,
      "smallAllocs": 274969
     },
     "filteredStages": {
@@ -1107,11 +1107,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 41268537,
+     "nanos": 41536736,
      "smallAllocs": 268320
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 41349327,
+     "nanos": 41531068,
      "smallAllocs": 268321
     },
     "unfilteredStages": {
@@ -1134,11 +1134,11 @@
     "exactDivisionsAvoided": 0,
     "exactFallThroughs": 2,
     "filteredRecombination": {
-     "nanos": 34721,
+     "nanos": 35533,
      "smallAllocs": 1407
     },
     "filteredRecombinationSecond": {
-     "nanos": 24597,
+     "nanos": 24526,
      "smallAllocs": 1350
     },
     "filteredStages": {
@@ -1159,11 +1159,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 21041,
+     "nanos": 21061,
      "smallAllocs": 980
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 19959,
+     "nanos": 19709,
      "smallAllocs": 981
     },
     "unfilteredStages": {
@@ -1186,11 +1186,11 @@
     "exactDivisionsAvoided": 0,
     "exactFallThroughs": 4,
     "filteredRecombination": {
-     "nanos": 41241,
+     "nanos": 40610,
      "smallAllocs": 2144
     },
     "filteredRecombinationSecond": {
-     "nanos": 34941,
+     "nanos": 34311,
      "smallAllocs": 2084
     },
     "filteredStages": {
@@ -1211,11 +1211,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 24216,
+     "nanos": 24095,
      "smallAllocs": 1258
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 23906,
+     "nanos": 23695,
      "smallAllocs": 1259
     },
     "unfilteredStages": {
@@ -1238,11 +1238,11 @@
     "exactDivisionsAvoided": 0,
     "exactFallThroughs": 1,
     "filteredRecombination": {
-     "nanos": 186066,
+     "nanos": 181990,
      "smallAllocs": 6057
     },
     "filteredRecombinationSecond": {
-     "nanos": 164924,
+     "nanos": 164875,
      "smallAllocs": 5968
     },
     "filteredStages": {
@@ -1263,11 +1263,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 167509,
+     "nanos": 161429,
      "smallAllocs": 5763
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 159607,
+     "nanos": 157273,
      "smallAllocs": 5764
     },
     "unfilteredStages": {
@@ -1290,11 +1290,11 @@
     "exactDivisionsAvoided": 0,
     "exactFallThroughs": 1,
     "filteredRecombination": {
-     "nanos": 63214,
+     "nanos": 64125,
      "smallAllocs": 1980
     },
     "filteredRecombinationSecond": {
-     "nanos": 52889,
+     "nanos": 55191,
      "smallAllocs": 1902
     },
     "filteredStages": {
@@ -1315,11 +1315,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 50344,
+     "nanos": 49924,
      "smallAllocs": 1646
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 48872,
+     "nanos": 48212,
      "smallAllocs": 1647
     },
     "unfilteredStages": {
@@ -1342,11 +1342,11 @@
     "exactDivisionsAvoided": 0,
     "exactFallThroughs": 2,
     "filteredRecombination": {
-     "nanos": 31877,
+     "nanos": 32408,
      "smallAllocs": 1357
     },
     "filteredRecombinationSecond": {
-     "nanos": 23856,
+     "nanos": 23725,
      "smallAllocs": 1297
     },
     "filteredStages": {
@@ -1367,11 +1367,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 19438,
+     "nanos": 19329,
      "smallAllocs": 907
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 18778,
+     "nanos": 18337,
      "smallAllocs": 908
     },
     "unfilteredStages": {
@@ -1394,11 +1394,11 @@
     "exactDivisionsAvoided": 0,
     "exactFallThroughs": 3,
     "filteredRecombination": {
-     "nanos": 52869,
+     "nanos": 52939,
      "smallAllocs": 2297
     },
     "filteredRecombinationSecond": {
-     "nanos": 43033,
+     "nanos": 42072,
      "smallAllocs": 2228
     },
     "filteredStages": {
@@ -1419,11 +1419,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 34662,
+     "nanos": 34681,
      "smallAllocs": 1520
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 33690,
+     "nanos": 33039,
      "smallAllocs": 1521
     },
     "unfilteredStages": {
@@ -1446,11 +1446,11 @@
     "exactDivisionsAvoided": 461,
     "exactFallThroughs": 1,
     "filteredRecombination": {
-     "nanos": 708533137,
+     "nanos": 707978949,
      "smallAllocs": 8480059
     },
     "filteredRecombinationSecond": {
-     "nanos": 712245131,
+     "nanos": 708049394,
      "smallAllocs": 8479842
     },
     "filteredStages": {
@@ -1471,11 +1471,11 @@
     "sameRepeatCounters": true,
     "sameSearchShape": true,
     "unfilteredRecombinationFirst": {
-     "nanos": 1215385855,
+     "nanos": 1209614082,
      "smallAllocs": 9190078
     },
     "unfilteredRecombinationSecond": {
-     "nanos": 1215685149,
+     "nanos": 1205652869,
      "smallAllocs": 9190079
     },
     "unfilteredStages": {
