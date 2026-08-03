@@ -998,27 +998,37 @@ private def factorPhaseProfile (f : ZPoly) (probe : Bool := false) : IO Json := 
         let extras := extras.push ("hensel", henselJson)
         let extras := extras.push ("recombination", searchJson)
         let extras ← if !probe then pure extras else do
-          -- Counterbalanced: unfiltered, filtered, unfiltered.  A fixed order
-          -- would confound the filter with allocator warmth and cache state,
-          -- so both orderings are timed and both are reported.  The first
-          -- unfiltered run also precedes a second filtered run, so neither
-          -- variant is only ever measured cold or only ever measured warm.
+          -- Counterbalanced: unfiltered, filtered, unfiltered, after the
+          -- production filtered run.  A fixed order would confound the filter
+          -- with allocator warmth and cache state, so each variant is measured
+          -- both early and late.
+          --
+          -- Each repeat gets its own budget offset read out of a fresh `IO.Ref`.
+          -- The offsets are all zero, so every run is the same search; what
+          -- they change is that the four calls are no longer syntactically
+          -- identical, which is what stops the compiler from sharing one
+          -- evaluation between them.  Without this the repeats return in a few
+          -- hundred nanoseconds and time nothing.  `sameRepeatCounters` below
+          -- is the check that they really are the same search.
+          let offsetA ← (← IO.mkRef (0 : Nat)).get
           let unfilteredFirstStart ← mark
           let unfilteredFirst :=
             countedSearch (DensePoly.leadingCoeff core.poly) core.poly basis
-              (obstruct := false)
+              (budget := defaultSubsetBudget + offsetA) (obstruct := false)
           observeNat sink (unfilteredFirst.stats.leaves +
             (unfilteredFirst.factors.map (·.length) |>.getD 0))
           let unfilteredFirstStop ← mark
+          let offsetB ← (← IO.mkRef (0 : Nat)).get
           let filteredSecond :=
             countedSearch (DensePoly.leadingCoeff core.poly) core.poly basis
-              (obstruct := true)
+              (budget := defaultSubsetBudget + offsetB) (obstruct := true)
           observeNat sink (filteredSecond.stats.leaves +
             (filteredSecond.factors.map (·.length) |>.getD 0))
           let filteredSecondStop ← mark
+          let offsetC ← (← IO.mkRef (0 : Nat)).get
           let unfilteredSecond :=
             countedSearch (DensePoly.leadingCoeff core.poly) core.poly basis
-              (obstruct := false)
+              (budget := defaultSubsetBudget + offsetC) (obstruct := false)
           observeNat sink (unfilteredSecond.stats.leaves +
             (unfilteredSecond.factors.map (·.length) |>.getD 0))
           let unfilteredSecondStop ← mark
@@ -1051,6 +1061,9 @@ private def factorPhaseProfile (f : ZPoly) (probe : Bool := false) : IO Json := 
                   filteredSecond.factors == search.factors)),
               ("sameDecline",
                 Json.bool (unfilteredFirst.decline == search.decline)),
+              ("sameRepeatCounters",
+                Json.bool (filteredSecond.stats == search.stats &&
+                  unfilteredSecond.stats == unfilteredFirst.stats)),
               ("sameSearchShape",
                 Json.bool (unfilteredFirst.divisors == search.divisors &&
                   unfilteredFirst.completed == search.completed &&
