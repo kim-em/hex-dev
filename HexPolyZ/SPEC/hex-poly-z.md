@@ -116,20 +116,22 @@ The second cutoff is not redundant, and it is not where a naive reading
 of the schoolbook cost would put it. Schoolbook cost per coefficient pair
 is flat at about 9 ns up to 12-bit coefficients, steps to about 53 ns at
 16 bits, and steps again to about 120 ns at 20 bits. Kronecker cannot
-amortise against the first regime at any degree measured (still 1.5x
-*slower* at degree 90 with 12-bit coefficients), and it loses to the
-middle regime until degree 32 — so a 16-bit cutoff would regress 16-bit
-coefficients at degrees 24 to 31 by up to 27%. Setting the cutoff above
-the second step avoids both. Every swept cell at or above both cutoffs is
-faster than schoolbook; the win grows with degree:
+amortise against the first regime at any degree in the sweep's reach
+(still 1.35x *slower* at degree 90 with 12-bit coefficients), and against
+the middle regime the crossover degree runs 64, 40, 24, 20, 16, 16 at 14,
+15, 16, 17, 18 and 19 bits — close enough to the size cutoff that
+measurement variance moves it either side of 24. Setting the width cutoff
+above the second step keeps the whole uncertain band on schoolbook. No
+swept cell at or above both cutoffs loses to schoolbook, at either sign;
+the win grows with degree:
 
 | coefficient bits | n=24 | n=32 | n=48 | n=90 | n=128 |
 |---|---:|---:|---:|---:|---:|
-| 20 | 2.39 | 3.06 | 4.63 | 8.67 | — |
-| 32 | 2.41 | 3.21 | 4.78 | 8.67 | — |
-| 92 | 2.53 | 3.37 | 4.80 | 8.25 | — |
-| 181 | 1.60 | 2.17 | 3.05 | 5.27 | — |
-| 400 | 1.49 | 1.88 | 2.61 | 4.20 | — |
+| 20 | 2.00 | 2.65 | 3.93 | 7.37 | 10.38 |
+| 32 | 2.18 | 2.95 | 4.36 | 7.88 | 11.21 |
+| 92 | 2.54 | 3.37 | 4.76 | 8.86 | 13.02 |
+| 181 | 1.50 | 1.99 | 2.73 | 4.78 | 6.47 |
+| 400 | 1.56 | 1.90 | 2.66 | 4.54 | 6.01 |
 
 `mulKroneckerAt` takes both cutoffs explicitly so the kernel benchmark
 can sweep them; production fixes them to the measured constants.
@@ -142,17 +144,18 @@ the two operands, `O(log (n + m))` to build the bias repunit, one
 addition to apply it, and `3 * (n + m - 2)` shift, shift and subtract
 operations to extract the digits — `O((n + m) log (n + m))` limb work
 against the schoolbook's `Θ(n * m)` allocations. At `n = m = 90` with
-92-bit coefficients that is 8100 multiplications against one, and the
-measured times are 1.19 ms against 0.13 ms.
+92-bit coefficients that is 8100 multiplications against one, an 8.9x
+measured speedup; at degree 178 it is 16.3x.
 
 **What a single size cutoff leaves on the table.** The cutoff pair is
 deliberately one rule, not a width-indexed table, and that costs some
 measured wins at both ends. At 4-bit coefficients Kronecker draws
-level around degree 90 and pulls ahead beyond it, but the same band is
-still losing at degree 64, so the bit cutoff excludes all of it. In the
-other direction, coefficients of 20 bits and up are already ahead at 16
-slots (1.02x at 400 bits, 1.82x at 92 bits), so a width-indexed size
-cutoff would reach further down a product tree than 24 does. Both are
+level around degree 90 and reaches 1.75x there, but the same band is
+still 1.5x behind at degree 48, so the bit cutoff excludes all of it, as
+it does the 17-to-19-bit band that crosses between degrees 16 and 20. In
+the other direction, coefficients of 20 bits and up are already ahead at
+12 to 16 slots, so a width-indexed size cutoff would reach further down a
+product tree than 24 does. Both are
 measurable refinements with their own sweeps; neither is a regression
 against schoolbook today.
 
