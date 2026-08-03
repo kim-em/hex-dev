@@ -95,6 +95,7 @@ import all HexBerlekampZassenhaus.SquareFreeInput
 import all HexBerlekampZassenhaus.Modular.PrimePlan
 import all HexBerlekampZassenhaus.Hensel.DirectLift
 import all HexBerlekampZassenhaus.Classical.Candidate
+import all HexBerlekampZassenhaus.Classical.Obstruction
 import all HexBerlekampZassenhaus.Classical.CombinationIterator
 import all HexBerlekampZassenhaus.Classical.Search
 import all HexBerlekampZassenhaus.Classical.Factorization
