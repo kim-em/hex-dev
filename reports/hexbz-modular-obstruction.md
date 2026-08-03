@@ -91,8 +91,11 @@ anything is built, and the obstruction sits between candidate construction
 
 Other agents were building and measuring on this host throughout, so a single
 sweep pair cannot resolve small differences.  **Six complete sweeps per
-revision**, with the two revisions interleaved (rebuild, sweep, rebuild, sweep)
-so a drift in host load cannot land preferentially on one side.  Every number
+revision**, both sides spread over the same two-hour window, and the middle of
+that window run as an interleave -- rebuild, sweep the baseline, rebuild, sweep
+this revision -- so a drift in host load cannot land preferentially on one
+side.  (Baseline repeats are at 04:35, 04:39, 05:48, 05:55, 06:15, 06:22;
+this revision's at 06:11, 06:18, 06:25, 06:35, 06:38, 06:41.)  Every number
 below is a median over the six repeats on each side.
 
 The floor those medians sit on is measured the same way.  Splitting each side's
