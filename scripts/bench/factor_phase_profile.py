@@ -289,6 +289,14 @@ def merge_kernels(kernels):
                 "peakResidentBytes"):
         if key in base:
             base[key] = int(statistics.median(k[key] for k in kernels))
+    # The basis stage is a signed within-execution difference, so median the
+    # signed values rather than the truncated magnitudes.
+    signed = [(-1 if k["nullspaceBasisNegative"] else 1)
+              * k["nullspaceBasisMagnitudeNanos"] for k in kernels]
+    median = int(statistics.median(signed))
+    base["nullspaceBasisNegative"] = median < 0
+    base["nullspaceBasisMagnitudeNanos"] = abs(median)
+    base["nullspaceBasisNanos"] = max(0, median)
     for outer in KERNEL_COUNTED_KEYS:
         for span in ("pivotSearch", "rowSwapScale", "rowAdd", "wall"):
             base[outer][span]["nanos"] = int(statistics.median(

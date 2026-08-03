@@ -728,6 +728,16 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
       ("fixedSpaceDiagonalNanos", natJson ((t4.since t3).1 - (t3.since t2).1)),
       ("matrixRebuild", spanJson (t6.since t5).1 (t6.since t5).2),
       ("productionRowReduce", spanJson (t7b.since t7a).1 (t7b.since t7a).2),
+      -- The nullspace-basis construction, as the difference between two
+      -- adjacent stages of *this* execution rather than between medians of
+      -- two ~300 ms stages, which would not resolve a millisecond.
+      ("nullspaceBasisNanos",
+        natJson ((t9.since t8).1 - (t7b.since t7a).1)),
+      ("nullspaceBasisNegative",
+        Json.bool ((t9.since t8).1 < (t7b.since t7a).1)),
+      ("nullspaceBasisMagnitudeNanos",
+        natJson (max ((t9.since t8).1 - (t7b.since t7a).1)
+                     ((t7b.since t7a).1 - (t9.since t8).1))),
       ("countedWithTransform",
         counterJson withT.counters (t5.since t4).1 (t5.since t4).2),
       ("countedEchelonOnly",
