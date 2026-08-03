@@ -156,6 +156,16 @@ cutoff would reach further down a product tree than 24 does. Both are
 measurable refinements with their own sweeps; neither is a regression
 against schoolbook today.
 
+Two further refinements are measured-but-unspent. The slot width budgets
+`A²` for `A = max (maxAbs p) (maxAbs q)`; the tighter
+`maxAbs p * maxAbs q` would nearly halve the packed size when one operand
+carries much smaller coefficients, at the cost of generalising
+`natAbs_coeff_mul_le_min` to two bounds. And `unpackAux` builds and
+concatenates two arrays per internal node; filling one preallocated array
+by index would drop those allocations and the `O(n log n)` element
+copying, which is the largest remaining cost in the kernel (50 µs of
+149 µs at degree 90).
+
 ## External comparators
 
 | Comparator | Class | Scope |

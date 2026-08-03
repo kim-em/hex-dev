@@ -56,13 +56,20 @@ def randPoly (n bits : Nat) (seed : UInt64) (signed : Bool) : ZPoly := Id.run do
 
 /-- Time `reps` products at fixed cutoffs.
 
-Each iteration selects its left operand by a branch on the running checksum,
-which the checksum keeps on the same side by only ever adding an even multiple.
-The product therefore depends on the previous iteration and cannot be hoisted
-out of the loop — without this the compiler lifts the whole loop body and the
-measured times are a flat few nanoseconds at every degree. -/
-def timeProduct (reps sizeCutoff bitCutoff : Nat) (p q : ZPoly) : IO (Float × Int) := do
-  let mut chk : Int := 0
+Each iteration selects its left operand by a branch on the running checksum, so
+the product depends on the previous iteration and cannot be hoisted out of the
+loop — without this the compiler lifts the whole loop body and the measured
+times are a flat few nanoseconds at every degree.
+
+The checksum is seeded from the clock and only ever advanced by an even amount,
+so the branch is not statically decidable but always takes the same side at
+runtime: every iteration multiplies the same pair, and the two arms compare
+like for like. Seeding it from a literal would let a sufficiently strong
+optimiser prove the branch constant and hoist the loop body again. The caller
+passes one seed to both arms so their checksums remain comparable. -/
+def timeProduct (seed : Int) (reps sizeCutoff bitCutoff : Nat) (p q : ZPoly) :
+    IO (Float × Int) := do
+  let mut chk : Int := seed
   let _ := ZPoly.mulKroneckerAt sizeCutoff bitCutoff p q
   let t0 ← IO.monoNanosNow
   for _ in [0:reps] do
@@ -77,8 +84,12 @@ def cell (n bits reps : Nat) (signed : Bool) : IO String := do
   let p := randPoly n bits 0x243f6a8885a308d3 signed
   let q := randPoly n bits 0x13198a2e03707344 signed
   -- A size cutoff above `n` forces schoolbook; cutoffs of zero force Kronecker.
-  let (school, cSchool) ← timeProduct reps (n + 1) 0 p q
-  let (kron, cKron) ← timeProduct reps 0 0 p q
+  -- One clock-derived even seed, shared by both arms: the branch inside the
+  -- timing loop is then not statically decidable, both arms take the same side
+  -- of it at runtime, and their checksums stay directly comparable.
+  let seed : Int := 2 * Int.ofNat ((← IO.monoNanosNow) % 3)
+  let (school, cSchool) ← timeProduct seed reps (n + 1) 0 p q
+  let (kron, cKron) ← timeProduct seed reps 0 0 p q
   if cSchool != cKron then
     throw <| IO.userError s!"kernel disagreement at n={n} bits={bits} signed={signed}"
   return "{\"n\": " ++ toString n ++ ", \"bits\": " ++ toString bits

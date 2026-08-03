@@ -258,8 +258,9 @@ example : Primitive (primitivePart contentPrimitive) := by
 executable cross-check of the *compiled* path: the kernel reads slot widths
 through `Nat.log2` and shifts through `Nat.shiftLeft` / `Nat.shiftRight`, all of
 which are `@[extern]`, so their compiled behaviour is outside what the proof
-sees. Cutoffs of `0` force the substitution at every shape, including the
-degenerate ones the production cutoffs never reach. -/
+sees. Cutoffs of `0` force the substitution at every non-zero shape; a zero operand
+still short-circuits before packing, which is the case the first sweep
+entry covers. -/
 
 /-- Deterministic signed coefficients spanning several magnitudes. -/
 private def kernelCoeff (n i salt : Nat) : Int :=
@@ -283,6 +284,25 @@ private def kernelAgrees : Bool :=
         && (mulKronecker p q == p * q)
 
 #guard kernelAgrees
+
+/-- Coefficients straddling a power of two, where an `@[extern]` `Nat.log2`
+disagreeing with its Lean definition by one would change the slot width. -/
+private def boundaryPoly (k i : Nat) : ZPoly :=
+  DensePoly.ofCoeffs ((List.range 30).map fun j =>
+    let base : Int := Int.ofNat (2 ^ (k + j % 3))
+    let raw := base + Int.ofNat ((j + i) % 3) - 1
+    if (j + i) % 2 = 0 then raw else -raw).toArray
+
+/-- The kernels agree on coefficients at `2^k - 1`, `2^k` and `2^k + 1`, for
+widths spanning the unboxed-`Int` boundary. -/
+private def kernelAgreesOnBoundaries : Bool :=
+  ([1, 15, 16, 17, 19, 20, 21, 31, 32, 61, 62, 63, 64, 92, 127, 128] : List Nat).all fun k =>
+    ([0, 1] : List Nat).all fun i =>
+      let p := boundaryPoly k i
+      let q := boundaryPoly (k + 1) (i + 1)
+      (mulKroneckerAt 0 0 p q == p * q) && (mulKronecker p q == p * q)
+
+#guard kernelAgreesOnBoundaries
 
 end ZPoly
 

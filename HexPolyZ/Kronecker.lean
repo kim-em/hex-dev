@@ -40,8 +40,9 @@ The slot width is **measured at runtime**, not assumed: `Hex.ZPoly.maxAbs`
 scans the actual coefficients and `Hex.ZPoly.mulKroneckerAt` derives `b`
 from that scan, so the no-overlap bound is re-established on every call.
 
-Below the measured cutoff the schoolbook loop still wins and is what runs; see
-`HexPolyZ/SPEC/hex-poly-z.md` for the sweep behind `Hex.ZPoly.kroneckerCutoff`.
+Below the measured cutoffs the schoolbook loop still wins and is what runs; see
+`HexPolyZ/SPEC/hex-poly-z.md` for the sweep behind
+`Hex.ZPoly.kroneckerSizeCutoff` and `Hex.ZPoly.kroneckerBitCutoff`.
 -/
 
 namespace Hex
