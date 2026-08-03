@@ -998,34 +998,64 @@ private def factorPhaseProfile (f : ZPoly) (probe : Bool := false) : IO Json := 
         let extras := extras.push ("hensel", henselJson)
         let extras := extras.push ("recombination", searchJson)
         let extras ← if !probe then pure extras else do
-          let probeStart ← mark
-          let unfiltered :=
+          -- Counterbalanced: unfiltered, filtered, unfiltered.  A fixed order
+          -- would confound the filter with allocator warmth and cache state,
+          -- so both orderings are timed and both are reported.  The first
+          -- unfiltered run also precedes a second filtered run, so neither
+          -- variant is only ever measured cold or only ever measured warm.
+          let unfilteredFirstStart ← mark
+          let unfilteredFirst :=
             countedSearch (DensePoly.leadingCoeff core.poly) core.poly basis
               (obstruct := false)
-          observeNat sink (unfiltered.stats.leaves +
-            (unfiltered.factors.map (·.length) |>.getD 0))
-          let probeStop ← mark
+          observeNat sink (unfilteredFirst.stats.leaves +
+            (unfilteredFirst.factors.map (·.length) |>.getD 0))
+          let unfilteredFirstStop ← mark
+          let filteredSecond :=
+            countedSearch (DensePoly.leadingCoeff core.poly) core.poly basis
+              (obstruct := true)
+          observeNat sink (filteredSecond.stats.leaves +
+            (filteredSecond.factors.map (·.length) |>.getD 0))
+          let filteredSecondStop ← mark
+          let unfilteredSecond :=
+            countedSearch (DensePoly.leadingCoeff core.poly) core.poly basis
+              (obstruct := false)
+          observeNat sink (unfilteredSecond.stats.leaves +
+            (unfilteredSecond.factors.map (·.length) |>.getD 0))
+          let unfilteredSecondStop ← mark
           pure <| extras.push ("obstruction", Json.mkObj
             [ ("prime", natJson Hex.obstructionPrime),
-              -- The unfiltered counterfactual runs second, so it sees the
-              -- warmer allocator; the comparison is conservative for the
-              -- filter, not favourable to it.
+              ("order",
+                Json.str "filtered (production), unfiltered, filtered, unfiltered"),
               ("filteredRecombination", spanJson searchStart searchStop),
-              ("unfilteredRecombination", spanJson probeStart probeStop),
+              ("filteredRecombinationSecond",
+                spanJson unfilteredFirstStop filteredSecondStop),
+              ("unfilteredRecombinationFirst",
+                spanJson unfilteredFirstStart unfilteredFirstStop),
+              ("unfilteredRecombinationSecond",
+                spanJson filteredSecondStop unfilteredSecondStop),
               ("filteredStages", candidateStatsJson search.stats),
-              ("unfilteredStages", candidateStatsJson unfiltered.stats),
+              ("unfilteredStages", candidateStatsJson unfilteredFirst.stats),
               ("reachedFilter", natJson search.stats.recordable),
               ("modularRejections",
                 natJson (search.stats.recordable - search.stats.exactDivisions)),
               ("exactFallThroughs", natJson search.stats.exactDivisions),
               ("exactDivisionsAvoided",
-                natJson (unfiltered.stats.exactDivisions -
+                natJson (unfilteredFirst.stats.exactDivisions -
                   search.stats.exactDivisions)),
-              ("sameDivisors",
-                Json.bool (unfiltered.divisors == search.divisors &&
-                  unfiltered.completed == search.completed &&
-                  (unfiltered.factors.map (·.map (·.degree?.getD 0))) ==
-                    (search.factors.map (·.map (·.degree?.getD 0))))) ])
+              -- Equality of the recovered factor *polynomials*, not of their
+              -- degrees: two different divisors of the same degree would pass
+              -- a degree-multiset check.
+              ("sameFactors",
+                Json.bool (unfilteredFirst.factors == search.factors &&
+                  unfilteredSecond.factors == search.factors &&
+                  filteredSecond.factors == search.factors)),
+              ("sameDecline",
+                Json.bool (unfilteredFirst.decline == search.decline)),
+              ("sameSearchShape",
+                Json.bool (unfilteredFirst.divisors == search.divisors &&
+                  unfilteredFirst.completed == search.completed &&
+                  unfilteredFirst.stats.leaves == search.stats.leaves &&
+                  unfilteredFirst.stats.recordable == search.stats.recordable)) ])
         match search.factors with
         | some factors =>
             let validStart ← mark

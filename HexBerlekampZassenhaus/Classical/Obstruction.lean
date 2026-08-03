@@ -133,4 +133,28 @@ theorem exactQuotient?_eq_none_of_obstructs {target : ZPoly}
       rw [DensePoly.mul_comm_poly]
       exact (exactQuotient?_product hquot).symm
 
+/-- Exact division, guarded by the obstruction.
+
+This is the single production entry point for "reject over `𝔽_q`, otherwise
+divide exactly": both recombination traversals reach exact division only
+through it, so `obstructedQuotient?_eq` is the one equation that has to hold
+for either of them to be unchanged. -/
+@[expose]
+def obstructedQuotient? {target : ZPoly} (cached : TargetImage target)
+    (candidate : ZPoly) : Option ZPoly :=
+  if obstructs cached candidate then
+    none
+  else
+    exactQuotient? target candidate
+
+/-- Guarding exact division by the obstruction does not change its value. -/
+@[simp]
+theorem obstructedQuotient?_eq {target : ZPoly} (cached : TargetImage target)
+    (candidate : ZPoly) :
+    obstructedQuotient? cached candidate = exactQuotient? target candidate := by
+  unfold obstructedQuotient?
+  cases hobstructs : obstructs cached candidate with
+  | false => rfl
+  | true => exact (exactQuotient?_eq_none_of_obstructs cached hobstructs).symm
+
 end Hex

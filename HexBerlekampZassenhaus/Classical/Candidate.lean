@@ -110,10 +110,7 @@ def directCandidateAfterObstruction
     (modulus : Nat) (selected : List ZPoly) : Option (ZPoly × ZPoly) :=
   let candidate := directCandidate coreLc modulus selected
   if shouldRecordPolynomialFactor candidate then
-    if obstructs cached candidate then
-      none
-    else
-      (exactQuotient? target candidate).map fun quotient => (candidate, quotient)
+    (obstructedQuotient? cached candidate).map fun quotient => (candidate, quotient)
   else
     none
 
@@ -125,16 +122,7 @@ theorem directCandidateAfterObstruction_eq
     directCandidateAfterObstruction coreLc target cached modulus selected =
       directCandidateAfterPrefilter coreLc target modulus selected := by
   unfold directCandidateAfterObstruction directCandidateAfterPrefilter
-  cases hrecord :
-      shouldRecordPolynomialFactor (directCandidate coreLc modulus selected) with
-  | false => simp [hrecord]
-  | true =>
-      cases hobstructs :
-          obstructs cached (directCandidate coreLc modulus selected) with
-      | false => simp [hrecord, hobstructs]
-      | true =>
-          simp [hrecord, hobstructs,
-            exactQuotient?_eq_none_of_obstructs cached hobstructs]
+  simp [obstructedQuotient?_eq]
 
 /-- Evaluate the candidate computation after the cached prefilters. -/
 @[expose]

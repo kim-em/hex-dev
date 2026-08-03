@@ -380,7 +380,12 @@ def scanDirectSubsets
               .exhausted recorded
             else
               let divided := { recorded with exactDivisions := 1 }
-              match exactQuotient? target candidate with
+              -- `obstructedQuotient?` rather than `exactQuotient?`: the
+              -- accepting step of both traversals goes through the one guarded
+              -- entry point, so `obstructedQuotient?_eq` is what keeps either
+              -- of them unchanged.  The guard is already known false here, so
+              -- this is the same work.
+              match obstructedQuotient? metadata.image candidate with
               | some quotient =>
                   .found
                     { selected, remaining := rejectedRev.reverse ++ xs,
