@@ -214,6 +214,127 @@ the *raw* product where the specification subtracts its reduction, because
 reducing a summand first does not move the difference's canonical
 representative (`Hex.ZPoly.intEmod_sub_intEmod`). -/
 
+/-- Subtract `coeff · X^k · q` from `rem` modulo `m²`, in one pass that reads
+and reduces only the `q.size` slots the subtraction reaches. The remainder's
+coefficient array is threaded linearly through the division loop, so each write
+lands in place. -/
+def elimStep (m : Nat) (rem q : ZPoly) (k : Nat) (coeff : Int) : ZPoly :=
+  DensePoly.ofCoeffs <|
+    (List.range q.size).foldl
+      (fun acc j =>
+        acc.setIfInBounds (k + j)
+          (intEmod (acc.getD (k + j) (0 : Int) - coeff * q.coeff j) (m * m)))
+      rem.toArray
+
+/-- Write `coeff` into slot `k` of the running quotient. The division loop fills
+the quotient from its top slot downwards, so only the first write of a division
+grows the array; every later one lands in place. -/
+def quotStep (quot : ZPoly) (k : Nat) (coeff : Int) : ZPoly :=
+  DensePoly.ofCoeffs <|
+    if k < quot.size then quot.toArray.setIfInBounds k coeff
+    else Array.ofFn (n := k + 1) fun i => if i.val = k then coeff else quot.coeff i.val
+
+private theorem getD_setIfInBounds (a : Array Int) (i j : Nat) (v : Int) :
+    (a.setIfInBounds i v).getD j (Zero.zero : Int)
+      = if j = i ∧ i < a.size then v else a.getD j (Zero.zero : Int) := by
+  by_cases hji : j = i
+  · subst hji
+    by_cases hi : j < a.size
+    · rw [if_pos ⟨rfl, hi⟩, Array.getD_eq_getD_getElem?,
+        Array.getElem?_eq_getElem (by simpa using hi)]
+      simp
+    · rw [if_neg (by omega : ¬ (j = j ∧ j < a.size)),
+        Array.setIfInBounds, dif_neg hi]
+  · rw [if_neg (by omega : ¬ (j = i ∧ i < a.size)),
+      Array.getD_eq_getD_getElem?, Array.getD_eq_getD_getElem?,
+      Array.getElem?_setIfInBounds]
+    rw [if_neg (by omega : ¬ (i = j))]
+
+private theorem elimFold_size (M : Nat) (q : ZPoly) (k : Nat) (c : Int) :
+    ∀ (len : Nat) (a : Array Int),
+      ((List.range len).foldl
+        (fun acc j => acc.setIfInBounds (k + j)
+          (intEmod (acc.getD (k + j) (Zero.zero : Int) - c * q.coeff j) M)) a).size
+        = a.size := by
+  intro len
+  induction len with
+  | zero => intro a; simp
+  | succ len ih =>
+      intro a
+      rw [List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil, Array.size_setIfInBounds]
+      exact ih a
+
+/-- Every slot of the elimination fold's window carries the reduced difference;
+every other slot is untouched. -/
+private theorem elimFold_getD (M : Nat) (q : ZPoly) (k : Nat) (c : Int) :
+    ∀ (len : Nat) (a : Array Int) (n : Nat), k + len ≤ a.size →
+      ((List.range len).foldl
+        (fun acc j => acc.setIfInBounds (k + j)
+          (intEmod (acc.getD (k + j) (Zero.zero : Int) - c * q.coeff j) M)) a).getD n
+          (Zero.zero : Int)
+      = if k ≤ n ∧ n - k < len then
+          intEmod (a.getD n (Zero.zero : Int) - c * q.coeff (n - k)) M
+        else a.getD n (Zero.zero : Int) := by
+  intro len
+  induction len with
+  | zero =>
+      intro a n _
+      simp
+  | succ len ih =>
+      intro a n hbound
+      rw [List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [getD_setIfInBounds, elimFold_size M q k c len a,
+        ih a (k + len) (by omega), ih a n (by omega),
+        if_neg (by omega : ¬ (k ≤ k + len ∧ k + len - k < len))]
+      by_cases hn : n = k + len
+      · subst hn
+        rw [if_pos ⟨rfl, by omega⟩, if_pos ⟨by omega, by omega⟩,
+          show k + len - k = len by omega]
+      · rw [if_neg (by omega : ¬ (n = k + len ∧ k + len < a.size))]
+        by_cases hk : k ≤ n
+        · by_cases hlt : n - k < len
+          · rw [if_pos ⟨hk, hlt⟩, if_pos ⟨hk, by omega⟩]
+          · rw [if_neg (by omega : ¬ (k ≤ n ∧ n - k < len)),
+              if_neg (by omega : ¬ (k ≤ n ∧ n - k < len + 1))]
+        · rw [if_neg (by omega : ¬ (k ≤ n ∧ n - k < len)),
+            if_neg (by omega : ¬ (k ≤ n ∧ n - k < len + 1))]
+
+theorem coeff_elimStep (m : Nat) (rem q : ZPoly) (k : Nat) (coeff : Int)
+    (hwindow : k + q.size ≤ rem.size) (i : Nat) :
+    (elimStep m rem q k coeff).coeff i =
+      if k ≤ i ∧ i - k < q.size then
+        intEmod (rem.coeff i - coeff * q.coeff (i - k)) (m * m)
+      else rem.coeff i := by
+  unfold elimStep
+  rw [DensePoly.coeff_ofCoeffs]
+  show ((List.range q.size).foldl
+      (fun acc j => acc.setIfInBounds (k + j)
+        (intEmod (acc.getD (k + j) (Zero.zero : Int) - coeff * q.coeff j) (m * m)))
+      rem.toArray).getD i (Zero.zero : Int) = _
+  rw [elimFold_getD (m * m) q k coeff q.size rem.toArray i (by simpa using hwindow)]
+  rfl
+
+private theorem elimStep_size_le (m : Nat) (rem q : ZPoly) (k : Nat) (coeff : Int) :
+    (elimStep m rem q k coeff).size ≤ rem.size := by
+  unfold elimStep
+  have h := DensePoly.size_ofCoeffs_le
+    ((List.range q.size).foldl
+      (fun acc j => acc.setIfInBounds (k + j)
+        (intEmod (acc.getD (k + j) (0 : Int) - coeff * q.coeff j) (m * m)))
+      rem.toArray)
+  rw [show ((List.range q.size).foldl
+      (fun acc j => acc.setIfInBounds (k + j)
+        (intEmod (acc.getD (k + j) (0 : Int) - coeff * q.coeff j) (m * m)))
+      rem.toArray).size
+      = ((List.range q.size).foldl
+        (fun acc j => acc.setIfInBounds (k + j)
+          (intEmod (acc.getD (k + j) (Zero.zero : Int) - coeff * q.coeff j) (m * m)))
+        rem.toArray).size from rfl,
+    elimFold_size (m * m) q k coeff q.size rem.toArray] at h
+  simpa using h
+
 /-- Default-indexed read of an `Array.ofFn` of integers. -/
 private theorem intArray_ofFn_getD {n : Nat} (f : Fin n → Int) (i : Nat) :
     (Array.ofFn f).getD i (Zero.zero : Int) =
@@ -225,46 +346,23 @@ private theorem intArray_ofFn_getD {n : Nat} (f : Fin n → Int) (i : Nat) :
   · rw [dif_neg h, dif_neg h]
     rfl
 
-/-- Subtract `coeff · X^k · q` from `rem` modulo `m²`, in one pass that reduces
-only the `q.size` slots the subtraction reaches. -/
-def elimStep (m : Nat) (rem q : ZPoly) (k : Nat) (coeff : Int) : ZPoly :=
-  DensePoly.ofCoeffs <|
-    Array.ofFn (n := rem.size) fun i =>
-      if k ≤ i.val then
-        intEmod (rem.coeff i.val - coeff * q.coeff (i.val - k)) (m * m)
-      else rem.coeff i.val
-
-/-- Write `coeff` into slot `k` of the running quotient, growing the
-coefficient array when the slot lies past its end. -/
-def quotStep (quot : ZPoly) (k : Nat) (coeff : Int) : ZPoly :=
-  DensePoly.ofCoeffs <|
-    Array.ofFn (n := max quot.size (k + 1)) fun i =>
-      if i.val = k then coeff else quot.coeff i.val
-
-theorem coeff_elimStep (m : Nat) (rem q : ZPoly) (k : Nat) (coeff : Int) (i : Nat) :
-    (elimStep m rem q k coeff).coeff i =
-      if i < rem.size then
-        (if k ≤ i then intEmod (rem.coeff i - coeff * q.coeff (i - k)) (m * m)
-          else rem.coeff i)
-      else 0 := by
-  unfold elimStep
-  rw [DensePoly.coeff_ofCoeffs, intArray_ofFn_getD]
-  by_cases h : i < rem.size
-  · rw [dif_pos h, if_pos h]
-  · rw [dif_neg h, if_neg h]
-    rfl
-
 theorem coeff_quotStep (quot : ZPoly) (k : Nat) (coeff : Int) (i : Nat) :
-    (quotStep quot k coeff).coeff i =
-      if i < max quot.size (k + 1) then
-        (if i = k then coeff else quot.coeff i)
-      else 0 := by
+    (quotStep quot k coeff).coeff i = if i = k then coeff else quot.coeff i := by
   unfold quotStep
-  rw [DensePoly.coeff_ofCoeffs, intArray_ofFn_getD]
-  by_cases h : i < max quot.size (k + 1)
-  · rw [dif_pos h, if_pos h]
-  · rw [dif_neg h, if_neg h]
-    rfl
+  rw [DensePoly.coeff_ofCoeffs]
+  by_cases hk : k < quot.size
+  · rw [if_pos hk, getD_setIfInBounds]
+    by_cases hik : i = k
+    · rw [if_pos ⟨hik, by simpa using hk⟩, if_pos hik]
+    · rw [if_neg (by omega : ¬ (i = k ∧ k < quot.toArray.size)), if_neg hik,
+        DensePoly.toArray_getD]
+  · rw [if_neg hk, intArray_ofFn_getD]
+    by_cases hik : i = k
+    · rw [dif_pos (by omega : i < k + 1), if_pos hik]
+    · by_cases hi : i < k + 1
+      · rw [dif_pos hi, if_neg hik]
+      · rw [dif_neg hi, if_neg hik,
+          DensePoly.coeff_eq_zero_of_size_le quot (by omega)]
 
 private theorem pow_two_eq_mul (m : Nat) : m ^ 2 = m * m := by
   rw [Nat.pow_succ, Nat.pow_one]
@@ -305,31 +403,25 @@ private theorem elimStep_eq (m : Nat) (hm : 0 < m) (rem q : ZPoly) (k : Nat) (co
     rw [coeff_reduceModPow, pow_two_eq_mul, DensePoly.coeff_sub_ring,
       coeff_mulMonomialModSquare]
     rfl
-  rw [coeff_elimStep, hrhs]
+  rw [coeff_elimStep m rem q k coeff (by omega) i, hrhs]
   by_cases hk : k ≤ i
   · simp only [if_pos hk]
     rw [intEmod_sub_intEmod _ _ hmm]
-    by_cases hi : i < rem.size
-    · rw [if_pos hi]
-    · rw [if_neg hi]
+    by_cases hi : i - k < q.size
+    · rw [if_pos ⟨hk, hi⟩]
+    · rw [if_neg (by omega : ¬ (k ≤ i ∧ i - k < q.size))]
       have hr : rem.coeff i = 0 :=
-        DensePoly.coeff_eq_zero_of_size_le rem (Nat.le_of_not_gt hi)
+        DensePoly.coeff_eq_zero_of_size_le rem (by omega)
       have hq : q.coeff (i - k) = 0 :=
         DensePoly.coeff_eq_zero_of_size_le q (by omega)
       rw [hr, hq, Int.mul_zero, Int.sub_zero, hzero]
   · simp only [if_neg hk]
-    rw [Int.sub_zero]
-    by_cases hi : i < rem.size
-    · rw [if_pos hi]
-      exact (intEmod_eq_self (hrem i).1 (hrem i).2).symm
-    · rw [if_neg hi]
-      have hr : rem.coeff i = 0 :=
-        DensePoly.coeff_eq_zero_of_size_le rem (Nat.le_of_not_gt hi)
-      rw [hr, hzero]
+    rw [Int.sub_zero, if_neg (by omega : ¬ (k ≤ i ∧ i - k < q.size))]
+    exact (intEmod_eq_self (hrem i).1 (hrem i).2).symm
 
 /-- The windowed quotient write is the specification's quotient update, given a
 canonical quotient whose slot `k` is still empty. -/
-private theorem quotStep_eq (m : Nat) (hm : 0 < m) (quot : ZPoly) (k : Nat) (coeff : Int)
+private theorem quotStep_eq (m : Nat) (_hm : 0 < m) (quot : ZPoly) (k : Nat) (coeff : Int)
     (hquot : Canonical quot (m * m)) (hslot : quot.coeff k = 0)
     (hc0 : 0 ≤ coeff) (hc1 : coeff < ((m * m : Nat) : Int)) :
     quotStep quot k coeff = addModSquare quot (DensePoly.monomial k coeff) m := by
@@ -347,17 +439,11 @@ private theorem quotStep_eq (m : Nat) (hm : 0 < m) (quot : ZPoly) (k : Nat) (coe
   rw [coeff_quotStep, hrhs]
   by_cases hik : i = k
   · simp only [if_pos hik]
-    rw [if_pos (by omega : i < max quot.size (k + 1)), hik, hslot, Int.zero_add]
+    rw [hik, hslot, Int.zero_add]
     exact (intEmod_eq_self hc0 hc1).symm
   · simp only [if_neg hik]
     rw [Int.add_zero]
-    by_cases hi : i < max quot.size (k + 1)
-    · rw [if_pos hi]
-      exact (intEmod_eq_self (hquot i).1 (hquot i).2).symm
-    · rw [if_neg hi]
-      have hq : quot.coeff i = 0 :=
-        DensePoly.coeff_eq_zero_of_size_le quot (by omega)
-      rw [hq, hzero]
+    exact (intEmod_eq_self (hquot i).1 (hquot i).2).symm
 
 private theorem reduceCoeffModSquare_eq_intEmod (z : Int) (m : Nat) :
     reduceCoeffModSquare z m = intEmod z (m * m) := rfl
@@ -372,16 +458,6 @@ private theorem size_of_degree?_eq_some {p : ZPoly} {d : Nat} (h : p.degree? = s
     have hd : p.size - 1 = d := by
       injection h
     omega
-
-private theorem elimStep_size_le (m : Nat) (rem q : ZPoly) (k : Nat) (coeff : Int) :
-    (elimStep m rem q k coeff).size ≤ rem.size := by
-  unfold elimStep
-  have h := DensePoly.size_ofCoeffs_le
-    (Array.ofFn (n := rem.size) fun i =>
-      if k ≤ i.val then
-        intEmod (rem.coeff i.val - coeff * q.coeff (i.val - k)) (m * m)
-      else rem.coeff i.val)
-  simpa using h
 
 /-- The elimination cancels the remainder's leading term, so the remainder's
 stored range strictly shrinks and the loop makes progress. -/
@@ -401,7 +477,8 @@ private theorem elimStep_size_lt (m : Nat) (hm : 0 < m) (rem q : ZPoly) (rd qd :
     simp
   have htop : (elimStep m rem q (rd - qd)
       (reduceCoeffModSquare rem.leadingCoeff m)).coeff rd = 0 := by
-    rw [coeff_elimStep, if_pos (by omega), if_pos (by omega),
+    rw [coeff_elimStep m rem q (rd - qd) _ (by omega) rd,
+      if_pos ⟨by omega, by omega⟩,
       show rd - (rd - qd) = qd by omega, hqlead, Int.mul_one,
       reduceCoeffModSquare_eq_intEmod, hrlead, intEmod_sub_intEmod _ _ hmm,
       Int.sub_self]
@@ -465,12 +542,12 @@ private theorem divModMonicModSquareAux_eq_impl
       · simp only [hz, if_true]
       · simp only [hz, if_false, Bool.false_eq_true]
         cases hrd : rem.degree? with
-        | none => simp only [hrd]
+        | none => simp only
         | some rd =>
             cases hqd : q.degree? with
-            | none => simp only [hrd, hqd]
+            | none => simp only
             | some qd =>
-                simp only [hrd, hqd]
+                simp only
                 by_cases hlt : rd < qd
                 · simp only [if_pos hlt]
                 · simp only [if_neg hlt]
@@ -519,10 +596,7 @@ private theorem divModMonicModSquareAux_eq_impl
                     intro i hi
                     have hik : i < rd - qd := by omega
                     rw [coeff_quotStep, if_neg (by omega : ¬ i = rd - qd)]
-                    by_cases hb : i < max quot.size (rd - qd + 1)
-                    · rw [if_pos hb]
-                      exact hsupp i (by omega)
-                    · rw [if_neg hb]
+                    exact hsupp i (by omega)
                   rw [← hstepQ, ← hstepR]
                   exact ih _ _ hcanonQ hcanonR hsupp'
 
@@ -2391,27 +2465,75 @@ private theorem mulModSquare_factorError_reduce
   exact reduceModPow_eq_of_congr _ _ m 2
     (congr_mul _ _ _ _ (m ^ 2) (congr_refl a (m ^ 2)) herr)
 
+/-- Two nested modular additions need only one canonicalisation. -/
+private theorem addModSquare_addModSquare (m : Nat) (hm : 0 < m) (a b c : ZPoly) :
+    addModSquare a (addModSquare b c m) m
+      = QuadraticLiftResult.reduceModSquare (a + (b + c)) m := by
+  show ZPoly.reduceModPow _ m 2 = ZPoly.reduceModPow _ m 2
+  exact reduceModPow_eq_of_congr _ _ m 2
+    (congr_add _ _ _ _ (m ^ 2) (congr_refl a (m ^ 2))
+      (congr_reduceModPow (b + c) m 2 (Nat.pow_pos hm)))
+
+/-- A modular addition followed by a modular subtraction needs only one
+canonicalisation. -/
+private theorem subModSquare_addModSquare (m : Nat) (hm : 0 < m) (a b c : ZPoly) :
+    subModSquare (addModSquare a b m) c m
+      = QuadraticLiftResult.reduceModSquare (a + b - c) m := by
+  show ZPoly.reduceModPow _ m 2 = ZPoly.reduceModPow _ m 2
+  exact reduceModPow_eq_of_congr _ _ m 2
+    (congr_sub _ _ _ _ (m ^ 2)
+      (congr_reduceModPow (a + b) m 2 (Nat.pow_pos hm)) (congr_refl c (m ^ 2)))
+
+/-- Two nested modular subtractions need only one canonicalisation. -/
+private theorem subModSquare_subModSquare (m : Nat) (hm : 0 < m) (a b c : ZPoly) :
+    subModSquare (subModSquare a b m) c m
+      = QuadraticLiftResult.reduceModSquare (a - b - c) m := by
+  show ZPoly.reduceModPow _ m 2 = ZPoly.reduceModPow _ m 2
+  exact reduceModPow_eq_of_congr _ _ m 2
+    (congr_sub _ _ _ _ (m ^ 2)
+      (congr_reduceModPow (a - b) m 2 (Nat.pow_pos hm)) (congr_refl c (m ^ 2)))
+
 /-- Runtime shape of the bignum quadratic step: the target is narrowed to the
 step's own modulus before the residual is formed. -/
 def quadraticHenselStepBignumImpl
     (m : Nat) (f g h s t : ZPoly) : QuadraticLiftResult :=
-  let f := if 0 < m then QuadraticLiftResult.reduceModSquare f m else f
-  let e := QuadraticLiftResult.factorError f g h
-  let te := mulModSquare t e m
-  let factorQR := divModMonicModSquare te g m
-  let qFactor := factorQR.1
-  let rFactor := factorQR.2
-  let g' := addModSquare g rFactor m
-  let hCorrection := addModSquare (mulModSquare s e m) (mulModSquare qFactor h m) m
-  let h' := addModSquare h hCorrection m
-  let b := subModSquare (addModSquare (mulModSquare s g' m) (mulModSquare t h' m) m) 1 m
-  let tb := mulModSquare t b m
-  let bezoutQR := divModMonicModSquare tb g' m
-  let qBezout := bezoutQR.1
-  let rBezout := bezoutQR.2
-  let t' := subModSquare t rBezout m
-  let s' := subModSquare (subModSquare s (mulModSquare s b m) m) (mulModSquare qBezout h' m) m
-  { g := g', h := h', s := s', t := t' }
+  if 0 < m then
+    let f := QuadraticLiftResult.reduceModSquare f m
+    let e := QuadraticLiftResult.factorError f g h
+    let te := mulModSquare t e m
+    let factorQR := divModMonicModSquare te g m
+    let qFactor := factorQR.1
+    let rFactor := factorQR.2
+    let g' := addModSquare g rFactor m
+    let h' := QuadraticLiftResult.reduceModSquare
+      (h + (mulModSquare s e m + mulModSquare qFactor h m)) m
+    let b := QuadraticLiftResult.reduceModSquare
+      (mulModSquare s g' m + mulModSquare t h' m - 1) m
+    let tb := mulModSquare t b m
+    let bezoutQR := divModMonicModSquare tb g' m
+    let qBezout := bezoutQR.1
+    let rBezout := bezoutQR.2
+    let t' := subModSquare t rBezout m
+    let s' := QuadraticLiftResult.reduceModSquare
+      (s - mulModSquare s b m - mulModSquare qBezout h' m) m
+    { g := g', h := h', s := s', t := t' }
+  else
+    let e := QuadraticLiftResult.factorError f g h
+    let te := mulModSquare t e m
+    let factorQR := divModMonicModSquare te g m
+    let qFactor := factorQR.1
+    let rFactor := factorQR.2
+    let g' := addModSquare g rFactor m
+    let hCorrection := addModSquare (mulModSquare s e m) (mulModSquare qFactor h m) m
+    let h' := addModSquare h hCorrection m
+    let b := subModSquare (addModSquare (mulModSquare s g' m) (mulModSquare t h' m) m) 1 m
+    let tb := mulModSquare t b m
+    let bezoutQR := divModMonicModSquare tb g' m
+    let qBezout := bezoutQR.1
+    let rBezout := bezoutQR.2
+    let t' := subModSquare t rBezout m
+    let s' := subModSquare (subModSquare s (mulModSquare s b m) m) (mulModSquare qBezout h' m) m
+    { g := g', h := h', s := s', t := t' }
 
 /-- Proof-backed compiled implementation of the bignum quadratic step. -/
 @[csimp] theorem quadraticHenselStepBignum_eq_impl :
@@ -2419,7 +2541,9 @@ def quadraticHenselStepBignumImpl
   funext m f g h s t
   unfold quadraticHenselStepBignum quadraticHenselStepBignumImpl
   by_cases hm : 0 < m
-  · simp only [if_pos hm, mulModSquare_factorError_reduce m hm]
+  · simp only [if_pos hm, mulModSquare_factorError_reduce m hm,
+      addModSquare_addModSquare m hm, subModSquare_addModSquare m hm,
+      subModSquare_subModSquare m hm]
   · simp only [if_neg hm]
 
 /-- Guarded selection: the word-sized step when its guard holds, else the bignum step. -/
@@ -2474,14 +2598,23 @@ def quadraticHenselFactorsBignum
 step's own modulus before the residual is formed. -/
 def quadraticHenselFactorsBignumImpl
     (m : Nat) (f g h s t : ZPoly) : ZPoly × ZPoly :=
-  let f := if 0 < m then QuadraticLiftResult.reduceModSquare f m else f
-  let e := QuadraticLiftResult.factorError f g h
-  let te := mulModSquare t e m
-  let factorQR := divModMonicModSquare te g m
-  let g' := addModSquare g factorQR.2 m
-  let h' := addModSquare h
-    (addModSquare (mulModSquare s e m) (mulModSquare factorQR.1 h m) m) m
-  (g', h')
+  if 0 < m then
+    let f := QuadraticLiftResult.reduceModSquare f m
+    let e := QuadraticLiftResult.factorError f g h
+    let te := mulModSquare t e m
+    let factorQR := divModMonicModSquare te g m
+    let g' := addModSquare g factorQR.2 m
+    let h' := QuadraticLiftResult.reduceModSquare
+      (h + (mulModSquare s e m + mulModSquare factorQR.1 h m)) m
+    (g', h')
+  else
+    let e := QuadraticLiftResult.factorError f g h
+    let te := mulModSquare t e m
+    let factorQR := divModMonicModSquare te g m
+    let g' := addModSquare g factorQR.2 m
+    let h' := addModSquare h
+      (addModSquare (mulModSquare s e m) (mulModSquare factorQR.1 h m) m) m
+    (g', h')
 
 /-- Proof-backed compiled implementation of the bignum factor-only step. -/
 @[csimp] theorem quadraticHenselFactorsBignum_eq_impl :
@@ -2489,7 +2622,8 @@ def quadraticHenselFactorsBignumImpl
   funext m f g h s t
   unfold quadraticHenselFactorsBignum quadraticHenselFactorsBignumImpl
   by_cases hm : 0 < m
-  · simp only [if_pos hm, mulModSquare_factorError_reduce m hm]
+  · simp only [if_pos hm, mulModSquare_factorError_reduce m hm,
+      addModSquare_addModSquare m hm]
   · simp only [if_neg hm]
 
 /-- Update only the two factors in one quadratic Hensel step. The result is
