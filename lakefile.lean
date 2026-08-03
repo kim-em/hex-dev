@@ -230,6 +230,10 @@ lean_lib HexGF2BenchSupport where
   srcDir := "bench"
   globs := #[`HexGF2.Bench]
 
+lean_lib HexBerlekampKernelProbe where
+  srcDir := "bench"
+  globs := #[`HexBench.BerlekampKernel]
+
 lean_lib HexMvPolyBenchSupport where
   srcDir := "bench"
   globs := #[`HexMvPolyCorpus]
@@ -600,6 +604,10 @@ lean_exe hexgfqfield_emit_fixtures where
 lean_exe hexpolyz_bench where
   srcDir := "bench"
   root := `HexPolyZ.Bench
+
+lean_exe hexpolyz_kronecker_crossover where
+  srcDir := "bench"
+  root := `HexPolyZ.KroneckerCrossover
 
 lean_exe hexpolyz_emit_fixtures where
   srcDir := "conformance"

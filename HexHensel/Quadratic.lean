@@ -48,6 +48,21 @@ m^2)`. -/
 def factorError (f g h : ZPoly) : ZPoly :=
   f - g * h
 
+/-- Runtime implementation of {name}`factorError`: the same residual with the
+product taken by Kronecker substitution (`Hex.ZPoly.mulKronecker`, value-equal
+to the schoolbook product by `Hex.ZPoly.mulKronecker_eq`). The bignum Hensel
+step is the only caller, and its `g * h` is the widest product in the lift. -/
+def factorErrorImpl (f g h : ZPoly) : ZPoly :=
+  f - ZPoly.mulKronecker g h
+
+/-- Register the Kronecker product as the compiled implementation of
+{name}`factorError`. -/
+@[csimp]
+theorem factorError_eq_impl : @factorError = @factorErrorImpl := by
+  funext f g h
+  unfold factorError factorErrorImpl
+  rw [ZPoly.mulKronecker_eq]
+
 end QuadraticLiftResult
 
 namespace ZPoly
@@ -72,9 +87,26 @@ private def addModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
 private def subModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
   QuadraticLiftResult.reduceModSquare (f - g) m
 
-/-- Polynomial product `f * g` with every coefficient reduced modulo `m²`. -/
-private def mulModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
+/-- Polynomial product `f * g` with every coefficient reduced modulo `m²`.
+
+Public, unlike its sibling reductions, because its compiled implementation is
+swapped by a `@[csimp]` theorem, and `csimp` lemmas must be public. -/
+def mulModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
   QuadraticLiftResult.reduceModSquare (f * g) m
+
+/-- Runtime implementation of {name}`mulModSquare`: the same reduced product
+with the multiplication taken by Kronecker substitution. Eight of the nine
+polynomial products in the bignum quadratic step go through this definition. -/
+def mulModSquareImpl (f g : ZPoly) (m : Nat) : ZPoly :=
+  QuadraticLiftResult.reduceModSquare (ZPoly.mulKronecker f g) m
+
+/-- Register the Kronecker product as the compiled implementation of
+{name}`mulModSquare`. -/
+@[csimp]
+theorem mulModSquare_eq_impl : @mulModSquare = @mulModSquareImpl := by
+  funext f g m
+  unfold mulModSquare mulModSquareImpl
+  rw [ZPoly.mulKronecker_eq]
 
 /-- Modular multiplication by a single monomial. Kept as a separate
 specification so compiled division can avoid sending the monomial's leading

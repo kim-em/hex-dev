@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexBerlekampZassenhaus
+import HexBench.BerlekampKernel
 import Hex.BenchOracle.Flint
 import Lean.Data.Json
 
@@ -43,6 +44,10 @@ The `--entry` flag selects which library entry answers each request:
   bounded scout against the first good prime's width, the complete degree
   pattern, the Berlekamp matrix plus its kernel, and a full Berlekamp split.
   The scouted pattern is checked against the split.
+* `kernelProfile` — stage-by-stage attribution of the Berlekamp fixed-space
+  kernel at the production-selected prime, together with the price of a packed
+  contiguous finite-field representation (issue #9132). Like `primeScout`, none
+  of this is work the production cascade does.
 
 This is a comparator driver, not a hex-internal benchmark harness: it emits raw
 timings for the external orchestrator, keeping the one-harness rule intact.
@@ -65,6 +70,7 @@ inductive Entry where
   | obstructionProbe
   | primeCounterfactual
   | primeScout
+  | kernelProfile
 deriving Repr, DecidableEq
 
 def Entry.ofString? : String → Option Entry
@@ -77,6 +83,7 @@ def Entry.ofString? : String → Option Entry
   | "obstructionProbe" => some .obstructionProbe
   | "primeCounterfactual" => some .primeCounterfactual
   | "primeScout" => some .primeScout
+  | "kernelProfile" => some .kernelProfile
   | _ => none
 
 /-- Entries answered by an `IO`-timed profiler rather than by `handleLine`. -/
@@ -86,6 +93,7 @@ def Entry.timed : Entry → Bool
   | .obstructionProbe => true
   | .primeCounterfactual => true
   | .primeScout => true
+  | .kernelProfile => true
   | _ => false
 
 /-- Dispatch to the selected entry. `none` means the entry declined; the
@@ -102,6 +110,7 @@ def Entry.run : Entry → ZPoly → Option Factorization
   | .obstructionProbe, _ => none
   | .primeCounterfactual, _ => none
   | .primeScout, _ => none
+  | .kernelProfile, _ => none
 
 /-- Parse a request line into its ascending coefficient list. -/
 def parseCoeffs (line : String) : Except String (List Int) := do
@@ -1189,6 +1198,46 @@ private def primeCounterfactual (f : ZPoly) : IO Json := do
 policy would use, so the record can price a horizon rather than assume one. -/
 private def scoutHorizon : Nat := 6
 
+/-- Attribute the fixed-space kernel at one candidate prime. -/
+private def kernelProfileAt (core : ZPoly) (c : SmallPrimeCandidate) :
+    IO (List (String × Json)) :=
+  letI := c.bounds
+  letI : ZMod64.PrimeModulus c.p := ZMod64.primeModulusOfPrime c.prime
+  do
+  let fModP := ZPoly.modP c.p core
+  if hzero : fModP.isZero = false then
+    let monic := monicModularImage fModP
+    let hmonic := monicModularImage_monic c.prime fModP hzero
+    let kernel ← HexBench.BerlekampKernel.kernelPhases monic hmonic
+    return [ ("status", Json.str "ok"),
+             ("prime", natJson c.p),
+             ("modularDegree", natJson (fModP.degree?.getD 0)),
+             ("kernel", kernel) ]
+  else
+    return [ ("status", Json.str "zeroModularImage"), ("prime", natJson c.p) ]
+
+/-- Stage-by-stage attribution of the Berlekamp fixed-space kernel at the
+production-selected prime, together with the price of a packed contiguous
+finite-field representation (issue #9132).
+
+This repeats the modular work at the already-selected prime, after the
+production plan has been computed, so it perturbs nothing the production
+cascade measures; like `primeScout` it is diagnostic work the cascade never
+does. The stage boundaries, the counted Gauss-Jordan mirror, and the packed
+variants all live in `HexBench.BerlekampKernel`, which checks each packed
+result against `Hex.Matrix.nullspace` before reporting its time. -/
+private def kernelProfile (f : ZPoly) : IO Json := do
+  let normalized := normalizeForFactor f
+  let core := SquareFreeInput.ofNormalized normalized
+  match directPrimePlan? core with
+  | none => return Json.mkObj [("status", Json.str "noGoodPrime")]
+  | some modular =>
+      let extra : List (String × Json) :=
+        [ ("retainedGoodPrimes", natJson modular.probes.size),
+          ("modularFactorCount", natJson modular.data.factorsModP.size) ]
+      return Json.mkObj
+        (extra ++ (← kernelProfileAt core.poly modular.selected.candidate))
+
 /-- Multiplicity of each degree at most `n`, for comparing degree multisets. -/
 private def degreeHistogram (n : Nat) (degrees : Array Nat) : Array Nat :=
   degrees.foldl (fun h d => h.modify d (· + 1)) (Array.replicate (n + 1) 0)
@@ -1359,6 +1408,8 @@ private def handleProfileLine (entry : Entry) (line : String) : IO Json :=
         return replyOk (← primeCounterfactual f)
       else if entry == .primeScout then
         return replyOk (← primeScout f)
+      else if entry == .kernelProfile then
+        return replyOk (← kernelProfile f)
       else
         return replyOk (← proposalProfile f)
 
@@ -1400,7 +1451,7 @@ def main (args : List String) : IO Unit := do
       throw <| IO.userError
         s!"unknown --entry {entryName}; expected \
           factor|factorLattice|factorTrace|proposalTrace|proposalProfile\
-          |factorPhaseProfile|primeCounterfactual|primeScout"
+          |factorPhaseProfile|primeCounterfactual|primeScout|kernelProfile"
   | some entry => runLoop entry
 
 end HexBench.FactorService
