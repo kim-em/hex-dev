@@ -1,0 +1,1494 @@
+{
+ "env": {
+  "corpus_sha256": "619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d",
+  "git_commit": "4b75d9d6a5ef4358b6cd0def7baa61859613a30d",
+  "git_dirty": false
+ },
+ "rows": [
+  {
+   "degree": 24,
+   "family": "cyclotomic-products",
+   "method": "classical",
+   "name": "xpow24_minus1",
+   "obstruction": {
+    "exactDivisionsAvoided": 105,
+    "exactFallThroughs": 8,
+    "filteredRecombination": {
+     "nanos": 958001,
+     "smallAllocs": 48270
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 930821,
+     "smallAllocs": 48180
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 113,
+     "exactDivisionsAttempted": 8,
+     "nodes": 113,
+     "productsMaterialized": 113,
+     "recordable": 113,
+     "trailingSurvivors": 113
+    },
+    "modularRejections": 105,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 113,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 1699160,
+     "smallAllocs": 41191
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 1666531,
+     "smallAllocs": 41192
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 113,
+     "exactDivisionsAttempted": 113,
+     "nodes": 113,
+     "productsMaterialized": 113,
+     "recordable": 113,
+     "trailingSurvivors": 113
+    }
+   }
+  },
+  {
+   "degree": 36,
+   "family": "cyclotomic-products",
+   "method": "classical",
+   "name": "xpow36_minus1",
+   "obstruction": {
+    "exactDivisionsAvoided": 2,
+    "exactFallThroughs": 9,
+    "filteredRecombination": {
+     "nanos": 89983,
+     "smallAllocs": 5224
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 76824,
+     "smallAllocs": 5143
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 11,
+     "exactDivisionsAttempted": 9,
+     "nodes": 11,
+     "productsMaterialized": 11,
+     "recordable": 11,
+     "trailingSurvivors": 11
+    },
+    "modularRejections": 2,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 11,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 71616,
+     "smallAllocs": 3805
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 67630,
+     "smallAllocs": 3806
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 11,
+     "exactDivisionsAttempted": 11,
+     "nodes": 11,
+     "productsMaterialized": 11,
+     "recordable": 11,
+     "trailingSurvivors": 11
+    }
+   }
+  },
+  {
+   "degree": 48,
+   "family": "cyclotomic-products",
+   "method": "classical",
+   "name": "xpow48_minus1",
+   "obstruction": {
+    "exactDivisionsAvoided": 258,
+    "exactFallThroughs": 10,
+    "filteredRecombination": {
+     "nanos": 5353088,
+     "smallAllocs": 270316
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 5303985,
+     "smallAllocs": 270211
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 268,
+     "exactDivisionsAttempted": 10,
+     "nodes": 268,
+     "productsMaterialized": 268,
+     "recordable": 268,
+     "trailingSurvivors": 268
+    },
+    "modularRejections": 258,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 268,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 15033643,
+     "smallAllocs": 240654
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 15047815,
+     "smallAllocs": 240655
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 268,
+     "exactDivisionsAttempted": 268,
+     "nodes": 268,
+     "productsMaterialized": 268,
+     "recordable": 268,
+     "trailingSurvivors": 268
+    }
+   }
+  },
+  {
+   "degree": 60,
+   "family": "cyclotomic-products",
+   "method": "classical",
+   "name": "xpow60_minus1",
+   "obstruction": {
+    "exactDivisionsAvoided": 19,
+    "exactFallThroughs": 12,
+    "filteredRecombination": {
+     "nanos": 485560,
+     "smallAllocs": 27609
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 465681,
+     "smallAllocs": 27498
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 29,
+     "degreeSurvivors": 60,
+     "exactDivisionsAttempted": 12,
+     "nodes": 60,
+     "productsMaterialized": 31,
+     "recordable": 31,
+     "trailingSurvivors": 31
+    },
+    "modularRejections": 19,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 31,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 1136946,
+     "smallAllocs": 23390
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 1091659,
+     "smallAllocs": 23391
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 29,
+     "degreeSurvivors": 60,
+     "exactDivisionsAttempted": 31,
+     "nodes": 60,
+     "productsMaterialized": 31,
+     "recordable": 31,
+     "trailingSurvivors": 31
+    }
+   }
+  },
+  {
+   "degree": 105,
+   "family": "cyclotomic-products",
+   "method": "classical",
+   "name": "xpow105_minus1",
+   "obstruction": {
+    "exactDivisionsAvoided": 52,
+    "exactFallThroughs": 8,
+    "filteredRecombination": {
+     "nanos": 4885264,
+     "smallAllocs": 266987
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 4858665,
+     "smallAllocs": 266815
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 60,
+     "exactDivisionsAttempted": 8,
+     "nodes": 60,
+     "productsMaterialized": 60,
+     "recordable": 60,
+     "trailingSurvivors": 60
+    },
+    "modularRejections": 52,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 60,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 28507824,
+     "smallAllocs": 250691
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 28312844,
+     "smallAllocs": 250692
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 60,
+     "exactDivisionsAttempted": 60,
+     "nodes": 60,
+     "productsMaterialized": 60,
+     "recordable": 60,
+     "trailingSurvivors": 60
+    }
+   }
+  },
+  {
+   "degree": 120,
+   "family": "cyclotomic-products",
+   "method": "classical",
+   "name": "xpow120_minus1",
+   "obstruction": {
+    "exactDivisionsAvoided": 1785,
+    "exactFallThroughs": 16,
+    "filteredRecombination": {
+     "nanos": 114100208,
+     "smallAllocs": 5264950
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 114588782,
+     "smallAllocs": 5264685
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 3538,
+     "degreeSurvivors": 5339,
+     "exactDivisionsAttempted": 16,
+     "nodes": 5339,
+     "productsMaterialized": 1801,
+     "recordable": 1801,
+     "trailingSurvivors": 1801
+    },
+    "modularRejections": 1785,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 1801,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 444779159,
+     "smallAllocs": 5052335
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 442711874,
+     "smallAllocs": 5052336
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 3538,
+     "degreeSurvivors": 5339,
+     "exactDivisionsAttempted": 1801,
+     "nodes": 5339,
+     "productsMaterialized": 1801,
+     "recordable": 1801,
+     "trailingSurvivors": 1801
+    }
+   }
+  },
+  {
+   "degree": 16,
+   "family": "swinnerton-dyer",
+   "method": "classical",
+   "name": "sd4",
+   "obstruction": {
+    "exactDivisionsAvoided": 8,
+    "exactFallThroughs": 1,
+    "filteredRecombination": {
+     "nanos": 252033,
+     "smallAllocs": 10026
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 229109,
+     "smallAllocs": 9954
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 119,
+     "degreeSurvivors": 128,
+     "exactDivisionsAttempted": 1,
+     "nodes": 128,
+     "productsMaterialized": 9,
+     "recordable": 9,
+     "trailingSurvivors": 9
+    },
+    "modularRejections": 8,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 9,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 292314,
+     "smallAllocs": 9536
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 277952,
+     "smallAllocs": 9537
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 119,
+     "degreeSurvivors": 128,
+     "exactDivisionsAttempted": 9,
+     "nodes": 128,
+     "productsMaterialized": 9,
+     "recordable": 9,
+     "trailingSurvivors": 9
+    }
+   }
+  },
+  {
+   "degree": 32,
+   "family": "swinnerton-dyer",
+   "method": "classical",
+   "name": "sd5",
+   "obstruction": {
+    "exactDivisionsAvoided": 128,
+    "exactFallThroughs": 1,
+    "filteredRecombination": {
+     "nanos": 65102680,
+     "smallAllocs": 2749638
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 65022871,
+     "smallAllocs": 2749509
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 32639,
+     "degreeSurvivors": 32768,
+     "exactDivisionsAttempted": 1,
+     "nodes": 32768,
+     "productsMaterialized": 129,
+     "recordable": 129,
+     "trailingSurvivors": 129
+    },
+    "modularRejections": 128,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 129,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 70012572,
+     "smallAllocs": 2742098
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 69967595,
+     "smallAllocs": 2742099
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 32639,
+     "degreeSurvivors": 32768,
+     "exactDivisionsAttempted": 129,
+     "nodes": 32768,
+     "productsMaterialized": 129,
+     "recordable": 129,
+     "trailingSurvivors": 129
+    }
+   }
+  },
+  {
+   "degree": 32,
+   "family": "swinnerton-dyer",
+   "method": "classical",
+   "name": "sd5_shift1",
+   "obstruction": {
+    "exactDivisionsAvoided": 0,
+    "exactFallThroughs": 1,
+    "filteredRecombination": {
+     "nanos": 58654719,
+     "smallAllocs": 2560916
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 58641379,
+     "smallAllocs": 2560787
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 32767,
+     "degreeSurvivors": 32768,
+     "exactDivisionsAttempted": 1,
+     "nodes": 32768,
+     "productsMaterialized": 1,
+     "recordable": 1,
+     "trailingSurvivors": 1
+    },
+    "modularRejections": 0,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 1,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 58483605,
+     "smallAllocs": 2560565
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 58729670,
+     "smallAllocs": 2560566
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 32767,
+     "degreeSurvivors": 32768,
+     "exactDivisionsAttempted": 1,
+     "nodes": 32768,
+     "productsMaterialized": 1,
+     "recordable": 1,
+     "trailingSurvivors": 1
+    }
+   }
+  },
+  {
+   "degree": 32,
+   "family": "swinnerton-dyer",
+   "method": "classical",
+   "name": "sd5_shift2",
+   "obstruction": {
+    "exactDivisionsAvoided": 0,
+    "exactFallThroughs": 1,
+    "filteredRecombination": {
+     "nanos": 59563206,
+     "smallAllocs": 2594103
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 59579880,
+     "smallAllocs": 2593974
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 32767,
+     "degreeSurvivors": 32768,
+     "exactDivisionsAttempted": 1,
+     "nodes": 32768,
+     "productsMaterialized": 1,
+     "recordable": 1,
+     "trailingSurvivors": 1
+    },
+    "modularRejections": 0,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 1,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 59614772,
+     "smallAllocs": 2593751
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 59731686,
+     "smallAllocs": 2593752
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 32767,
+     "degreeSurvivors": 32768,
+     "exactDivisionsAttempted": 1,
+     "nodes": 32768,
+     "productsMaterialized": 1,
+     "recordable": 1,
+     "trailingSurvivors": 1
+    }
+   }
+  },
+  {
+   "degree": 42,
+   "family": "sd-products",
+   "method": "classical",
+   "name": "sd5_x_phi11",
+   "obstruction": {
+    "exactDivisionsAvoided": 256,
+    "exactFallThroughs": 2,
+    "filteredRecombination": {
+     "nanos": 127214566,
+     "smallAllocs": 6175336
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 127125773,
+     "smallAllocs": 6175204
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 65264,
+     "degreeSurvivors": 65522,
+     "exactDivisionsAttempted": 2,
+     "nodes": 65522,
+     "productsMaterialized": 258,
+     "recordable": 258,
+     "trailingSurvivors": 258
+    },
+    "modularRejections": 256,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 258,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 145634560,
+     "smallAllocs": 6156826
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 145532239,
+     "smallAllocs": 6156827
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 65264,
+     "degreeSurvivors": 65522,
+     "exactDivisionsAttempted": 258,
+     "nodes": 65522,
+     "productsMaterialized": 258,
+     "recordable": 258,
+     "trailingSurvivors": 258
+    }
+   }
+  },
+  {
+   "degree": 56,
+   "family": "sd-products",
+   "method": "classical",
+   "name": "sd5_x_phi45",
+   "obstruction": {
+    "exactDivisionsAvoided": 513,
+    "exactFallThroughs": 2,
+    "filteredRecombination": {
+     "nanos": 288395038,
+     "smallAllocs": 14683417
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 286926811,
+     "smallAllocs": 14683276
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 130517,
+     "degreeSurvivors": 131032,
+     "exactDivisionsAttempted": 2,
+     "nodes": 131032,
+     "productsMaterialized": 515,
+     "recordable": 515,
+     "trailingSurvivors": 515
+    },
+    "modularRejections": 513,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 515,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 362703049,
+     "smallAllocs": 14638584
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 363480873,
+     "smallAllocs": 14638585
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 130517,
+     "degreeSurvivors": 131032,
+     "exactDivisionsAttempted": 515,
+     "nodes": 131032,
+     "productsMaterialized": 515,
+     "recordable": 515,
+     "trailingSurvivors": 515
+    }
+   }
+  },
+  {
+   "degree": 32,
+   "family": "sd-products",
+   "method": "classical",
+   "name": "sd4_x_sd4shift1",
+   "obstruction": {
+    "exactDivisionsAvoided": 8,
+    "exactFallThroughs": 2,
+    "filteredRecombination": {
+     "nanos": 9496071,
+     "smallAllocs": 528057
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 9496472,
+     "smallAllocs": 527928
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 10530,
+     "degreeSurvivors": 10540,
+     "exactDivisionsAttempted": 2,
+     "nodes": 10540,
+     "productsMaterialized": 10,
+     "recordable": 10,
+     "trailingSurvivors": 10
+    },
+    "modularRejections": 8,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 10,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 9807544,
+     "smallAllocs": 526499
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 9783538,
+     "smallAllocs": 526500
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 10530,
+     "degreeSurvivors": 10540,
+     "exactDivisionsAttempted": 10,
+     "nodes": 10540,
+     "productsMaterialized": 10,
+     "recordable": 10,
+     "trailingSurvivors": 10
+    }
+   }
+  },
+  {
+   "degree": 64,
+   "family": "swinnerton-dyer",
+   "method": "lattice",
+   "name": "sd6",
+   "obstruction": null
+  },
+  {
+   "degree": 40,
+   "family": "wilkinson",
+   "method": "replay",
+   "name": "wilkinson_40",
+   "obstruction": null
+  },
+  {
+   "degree": 48,
+   "family": "wilkinson",
+   "method": "replay",
+   "name": "wilkinson_48",
+   "obstruction": null
+  },
+  {
+   "degree": 56,
+   "family": "wilkinson",
+   "method": "replay",
+   "name": "wilkinson_56",
+   "obstruction": null
+  },
+  {
+   "degree": 16,
+   "family": "cyclotomic",
+   "method": "classical",
+   "name": "cyclo_phi17",
+   "obstruction": {
+    "exactDivisionsAvoided": 0,
+    "exactFallThroughs": 1,
+    "filteredRecombination": {
+     "nanos": 13400,
+     "smallAllocs": 424
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 5848,
+     "smallAllocs": 373
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 1,
+     "exactDivisionsAttempted": 1,
+     "nodes": 1,
+     "productsMaterialized": 1,
+     "recordable": 1,
+     "trailingSurvivors": 1
+    },
+    "modularRejections": 0,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 1,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 5138,
+     "smallAllocs": 259
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 4517,
+     "smallAllocs": 260
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 1,
+     "exactDivisionsAttempted": 1,
+     "nodes": 1,
+     "productsMaterialized": 1,
+     "recordable": 1,
+     "trailingSurvivors": 1
+    }
+   }
+  },
+  {
+   "degree": 40,
+   "family": "cyclotomic",
+   "method": "classical",
+   "name": "cyclo_phi41",
+   "obstruction": {
+    "exactDivisionsAvoided": 15,
+    "exactFallThroughs": 1,
+    "filteredRecombination": {
+     "nanos": 814739,
+     "smallAllocs": 32169
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 800297,
+     "smallAllocs": 32106
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 16,
+     "exactDivisionsAttempted": 1,
+     "nodes": 16,
+     "productsMaterialized": 16,
+     "recordable": 16,
+     "trailingSurvivors": 16
+    },
+    "modularRejections": 15,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 16,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 1492022,
+     "smallAllocs": 31017
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 1419175,
+     "smallAllocs": 31018
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 16,
+     "exactDivisionsAttempted": 16,
+     "nodes": 16,
+     "productsMaterialized": 16,
+     "recordable": 16,
+     "trailingSurvivors": 16
+    }
+   }
+  },
+  {
+   "degree": 178,
+   "family": "cyclotomic",
+   "method": "classical",
+   "name": "cyclo_phi179",
+   "obstruction": {
+    "exactDivisionsAvoided": 1,
+    "exactFallThroughs": 1,
+    "filteredRecombination": {
+     "nanos": 1175754,
+     "smallAllocs": 46831
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 1172027,
+     "smallAllocs": 46600
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 2,
+     "exactDivisionsAttempted": 1,
+     "nodes": 2,
+     "productsMaterialized": 2,
+     "recordable": 2,
+     "trailingSurvivors": 2
+    },
+    "modularRejections": 1,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 2,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 5601477,
+     "smallAllocs": 45281
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 5571162,
+     "smallAllocs": 45282
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 2,
+     "exactDivisionsAttempted": 2,
+     "nodes": 2,
+     "productsMaterialized": 2,
+     "recordable": 2,
+     "trailingSurvivors": 2
+    }
+   }
+  },
+  {
+   "degree": 200,
+   "family": "cyclotomic",
+   "method": "classical",
+   "name": "cyclo_phi275",
+   "obstruction": {
+    "exactDivisionsAvoided": 511,
+    "exactFallThroughs": 1,
+    "filteredRecombination": {
+     "nanos": 595224483,
+     "smallAllocs": 19434898
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 590006866,
+     "smallAllocs": 19434629
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 512,
+     "exactDivisionsAttempted": 1,
+     "nodes": 512,
+     "productsMaterialized": 512,
+     "recordable": 512,
+     "trailingSurvivors": 512
+    },
+    "modularRejections": 511,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 512,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 3564591922,
+     "smallAllocs": 19304445
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 3558212290,
+     "smallAllocs": 19304446
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 512,
+     "exactDivisionsAttempted": 512,
+     "nodes": 512,
+     "productsMaterialized": 512,
+     "recordable": 512,
+     "trailingSurvivors": 512
+    }
+   }
+  },
+  {
+   "degree": 240,
+   "family": "cyclotomic",
+   "method": "classical",
+   "name": "cyclo_phi385",
+   "obstruction": {
+    "exactDivisionsAvoided": 7,
+    "exactFallThroughs": 1,
+    "filteredRecombination": {
+     "nanos": 10094749,
+     "smallAllocs": 401834
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 10024946,
+     "smallAllocs": 401537
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 8,
+     "exactDivisionsAttempted": 1,
+     "nodes": 8,
+     "productsMaterialized": 8,
+     "recordable": 8,
+     "trailingSurvivors": 8
+    },
+    "modularRejections": 7,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 8,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 81572703,
+     "smallAllocs": 398073
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 81474418,
+     "smallAllocs": 398074
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 8,
+     "exactDivisionsAttempted": 8,
+     "nodes": 8,
+     "productsMaterialized": 8,
+     "recordable": 8,
+     "trailingSurvivors": 8
+    }
+   }
+  },
+  {
+   "degree": 80,
+   "family": "cyclotomic-products",
+   "method": "classical",
+   "name": "cyclo_phi64_x_phi105",
+   "obstruction": {
+    "exactDivisionsAvoided": 26,
+    "exactFallThroughs": 2,
+    "filteredRecombination": {
+     "nanos": 2385388,
+     "smallAllocs": 89872
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 2354411,
+     "smallAllocs": 89749
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 102,
+     "degreeSurvivors": 130,
+     "exactDivisionsAttempted": 2,
+     "nodes": 130,
+     "productsMaterialized": 28,
+     "recordable": 28,
+     "trailingSurvivors": 28
+    },
+    "modularRejections": 26,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 28,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 4782862,
+     "smallAllocs": 84110
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 4732949,
+     "smallAllocs": 84111
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 102,
+     "degreeSurvivors": 130,
+     "exactDivisionsAttempted": 28,
+     "nodes": 130,
+     "productsMaterialized": 28,
+     "recordable": 28,
+     "trailingSurvivors": 28
+    }
+   }
+  },
+  {
+   "degree": 112,
+   "family": "cyclotomic-products",
+   "method": "classical",
+   "name": "cyclo_phi105_x_phi128",
+   "obstruction": {
+    "exactDivisionsAvoided": 26,
+    "exactFallThroughs": 2,
+    "filteredRecombination": {
+     "nanos": 2473447,
+     "smallAllocs": 98516
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 2448992,
+     "smallAllocs": 98393
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 106,
+     "degreeSurvivors": 134,
+     "exactDivisionsAttempted": 2,
+     "nodes": 134,
+     "productsMaterialized": 28,
+     "recordable": 28,
+     "trailingSurvivors": 28
+    },
+    "modularRejections": 26,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 28,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 5144489,
+     "smallAllocs": 88637
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 5066893,
+     "smallAllocs": 88638
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 106,
+     "degreeSurvivors": 134,
+     "exactDivisionsAttempted": 28,
+     "nodes": 134,
+     "productsMaterialized": 28,
+     "recordable": 28,
+     "trailingSurvivors": 28
+    }
+   }
+  },
+  {
+   "degree": 144,
+   "family": "cyclotomic-products",
+   "method": "classical",
+   "name": "cyclo_phi128_x_phi165",
+   "obstruction": {
+    "exactDivisionsAvoided": 23,
+    "exactFallThroughs": 2,
+    "filteredRecombination": {
+     "nanos": 5928802,
+     "smallAllocs": 275130
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 5917725,
+     "smallAllocs": 274969
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 29,
+     "degreeSurvivors": 54,
+     "exactDivisionsAttempted": 2,
+     "nodes": 54,
+     "productsMaterialized": 25,
+     "recordable": 25,
+     "trailingSurvivors": 25
+    },
+    "modularRejections": 23,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 25,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 41268537,
+     "smallAllocs": 268320
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 41349327,
+     "smallAllocs": 268321
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 29,
+     "degreeSurvivors": 54,
+     "exactDivisionsAttempted": 25,
+     "nodes": 54,
+     "productsMaterialized": 25,
+     "recordable": 25,
+     "trailingSurvivors": 25
+    }
+   }
+  },
+  {
+   "degree": 24,
+   "family": "chebyshev",
+   "method": "classical",
+   "name": "chebyshev_T24",
+   "obstruction": {
+    "exactDivisionsAvoided": 0,
+    "exactFallThroughs": 2,
+    "filteredRecombination": {
+     "nanos": 34721,
+     "smallAllocs": 1407
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 24597,
+     "smallAllocs": 1350
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 1,
+     "degreeSurvivors": 3,
+     "exactDivisionsAttempted": 2,
+     "nodes": 3,
+     "productsMaterialized": 2,
+     "recordable": 2,
+     "trailingSurvivors": 2
+    },
+    "modularRejections": 0,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 2,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 21041,
+     "smallAllocs": 980
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 19959,
+     "smallAllocs": 981
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 1,
+     "degreeSurvivors": 3,
+     "exactDivisionsAttempted": 2,
+     "nodes": 3,
+     "productsMaterialized": 2,
+     "recordable": 2,
+     "trailingSurvivors": 2
+    }
+   }
+  },
+  {
+   "degree": 24,
+   "family": "chebyshev",
+   "method": "classical",
+   "name": "chebyshev_U24",
+   "obstruction": {
+    "exactDivisionsAvoided": 0,
+    "exactFallThroughs": 4,
+    "filteredRecombination": {
+     "nanos": 41241,
+     "smallAllocs": 2144
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 34941,
+     "smallAllocs": 2084
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 4,
+     "exactDivisionsAttempted": 4,
+     "nodes": 4,
+     "productsMaterialized": 4,
+     "recordable": 4,
+     "trailingSurvivors": 4
+    },
+    "modularRejections": 0,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 4,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 24216,
+     "smallAllocs": 1258
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 23906,
+     "smallAllocs": 1259
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 0,
+     "degreeSurvivors": 4,
+     "exactDivisionsAttempted": 4,
+     "nodes": 4,
+     "productsMaterialized": 4,
+     "recordable": 4,
+     "trailingSurvivors": 4
+    }
+   }
+  },
+  {
+   "degree": 30,
+   "family": "legendre",
+   "method": "classical",
+   "name": "legendre_P30",
+   "obstruction": {
+    "exactDivisionsAvoided": 0,
+    "exactFallThroughs": 1,
+    "filteredRecombination": {
+     "nanos": 186066,
+     "smallAllocs": 6057
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 164924,
+     "smallAllocs": 5968
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 63,
+     "degreeSurvivors": 64,
+     "exactDivisionsAttempted": 1,
+     "nodes": 64,
+     "productsMaterialized": 1,
+     "recordable": 1,
+     "trailingSurvivors": 1
+    },
+    "modularRejections": 0,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 1,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 167509,
+     "smallAllocs": 5763
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 159607,
+     "smallAllocs": 5764
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 63,
+     "degreeSurvivors": 64,
+     "exactDivisionsAttempted": 1,
+     "nodes": 64,
+     "productsMaterialized": 1,
+     "recordable": 1,
+     "trailingSurvivors": 1
+    }
+   }
+  },
+  {
+   "degree": 38,
+   "family": "legendre",
+   "method": "classical",
+   "name": "legendre_P38",
+   "obstruction": {
+    "exactDivisionsAvoided": 0,
+    "exactFallThroughs": 1,
+    "filteredRecombination": {
+     "nanos": 63214,
+     "smallAllocs": 1980
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 52889,
+     "smallAllocs": 1902
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 3,
+     "degreeSurvivors": 4,
+     "exactDivisionsAttempted": 1,
+     "nodes": 4,
+     "productsMaterialized": 1,
+     "recordable": 1,
+     "trailingSurvivors": 1
+    },
+    "modularRejections": 0,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 1,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 50344,
+     "smallAllocs": 1646
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 48872,
+     "smallAllocs": 1647
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 3,
+     "degreeSurvivors": 4,
+     "exactDivisionsAttempted": 1,
+     "nodes": 4,
+     "productsMaterialized": 1,
+     "recordable": 1,
+     "trailingSurvivors": 1
+    }
+   }
+  },
+  {
+   "degree": 20,
+   "family": "random-products",
+   "method": "classical",
+   "name": "randprod_10",
+   "obstruction": {
+    "exactDivisionsAvoided": 0,
+    "exactFallThroughs": 2,
+    "filteredRecombination": {
+     "nanos": 31877,
+     "smallAllocs": 1357
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 23856,
+     "smallAllocs": 1297
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 3,
+     "degreeSurvivors": 5,
+     "exactDivisionsAttempted": 2,
+     "nodes": 5,
+     "productsMaterialized": 2,
+     "recordable": 2,
+     "trailingSurvivors": 2
+    },
+    "modularRejections": 0,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 2,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 19438,
+     "smallAllocs": 907
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 18778,
+     "smallAllocs": 908
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 3,
+     "degreeSurvivors": 5,
+     "exactDivisionsAttempted": 2,
+     "nodes": 5,
+     "productsMaterialized": 2,
+     "recordable": 2,
+     "trailingSurvivors": 2
+    }
+   }
+  },
+  {
+   "degree": 24,
+   "family": "random-products",
+   "method": "classical",
+   "name": "randprod_21",
+   "obstruction": {
+    "exactDivisionsAvoided": 0,
+    "exactFallThroughs": 3,
+    "filteredRecombination": {
+     "nanos": 52869,
+     "smallAllocs": 2297
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 43033,
+     "smallAllocs": 2228
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 10,
+     "degreeSurvivors": 13,
+     "exactDivisionsAttempted": 3,
+     "nodes": 13,
+     "productsMaterialized": 3,
+     "recordable": 3,
+     "trailingSurvivors": 3
+    },
+    "modularRejections": 0,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 3,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 34662,
+     "smallAllocs": 1520
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 33690,
+     "smallAllocs": 1521
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 10,
+     "degreeSurvivors": 13,
+     "exactDivisionsAttempted": 3,
+     "nodes": 13,
+     "productsMaterialized": 3,
+     "recordable": 3,
+     "trailingSurvivors": 3
+    }
+   }
+  },
+  {
+   "degree": 132,
+   "family": "hoeij-zimmermann",
+   "method": "classical",
+   "name": "hoeij_M12_f132",
+   "obstruction": {
+    "exactDivisionsAvoided": 461,
+    "exactFallThroughs": 1,
+    "filteredRecombination": {
+     "nanos": 708533137,
+     "smallAllocs": 8480059
+    },
+    "filteredRecombinationSecond": {
+     "nanos": 712245131,
+     "smallAllocs": 8479842
+    },
+    "filteredStages": {
+     "cheapFilterRejections": 1586,
+     "degreeSurvivors": 2048,
+     "exactDivisionsAttempted": 1,
+     "nodes": 2048,
+     "productsMaterialized": 462,
+     "recordable": 462,
+     "trailingSurvivors": 462
+    },
+    "modularRejections": 461,
+    "order": "filtered (production), unfiltered, filtered, unfiltered",
+    "prime": 67108859,
+    "reachedFilter": 462,
+    "sameDecline": true,
+    "sameFactors": true,
+    "sameRepeatCounters": true,
+    "sameSearchShape": true,
+    "unfilteredRecombinationFirst": {
+     "nanos": 1215385855,
+     "smallAllocs": 9190078
+    },
+    "unfilteredRecombinationSecond": {
+     "nanos": 1215685149,
+     "smallAllocs": 9190079
+    },
+    "unfilteredStages": {
+     "cheapFilterRejections": 1586,
+     "degreeSurvivors": 2048,
+     "exactDivisionsAttempted": 462,
+     "nodes": 2048,
+     "productsMaterialized": 462,
+     "recordable": 462,
+     "trailingSurvivors": 462
+    }
+   }
+  }
+ ],
+ "schema": "hexbz-obstruction-probe/1"
+}

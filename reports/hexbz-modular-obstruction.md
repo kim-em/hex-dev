@@ -16,13 +16,13 @@ target, and division in `𝔽_q[X]` leaves no remainder.  Contrapositively a
 nonzero `𝔽_q[X]` remainder proves the candidate does not divide, in machine-word
 arithmetic.
 
-`Hex.obstructs` is that test, `Hex.obstructs_eq_false_of_dvd` is the statement
-that it never rejects a genuine divisor, and
-`Hex.exactQuotient?_eq_none_of_obstructs` is the equation the traversal rewrites
-through: an obstructed candidate is one exact division would have refused.
-`Hex.directCandidateAfterObstruction_eq` then says the guarded leaf returns
-exactly what the unguarded leaf returned, so `Hex.directLeaf_eq` and the
-classical completeness proofs above it are unchanged.
+`Hex.obstructs` is that test and `Hex.obstructs_eq_false_of_dvd` is the
+statement that it never rejects a genuine divisor.  Both traversals reach exact
+division only through `Hex.obstructedQuotient?`, whose equation
+`obstructedQuotient?_eq` says guarding exact division by the obstruction does
+not change its value; `Hex.directCandidateAfterObstruction_eq` lifts that to the
+head-forced leaf, so `Hex.directLeaf_eq` and the classical completeness proofs
+above it are unchanged.
 
 The obstruction is one-sided.  It can reject; it cannot accept.  Exact integer
 division remains the only accepting test and the only exact-quotient
@@ -73,163 +73,218 @@ anything is built, and the obstruction sits between candidate construction
 
 ## Revision and protocol
 
-- Source revision `39b4d5ba1ca0cb2d59b51eb2f140b5d5d61e9cab` (clean worktree),
-  Lean toolchain `leanprover/lean4:v4.33.0-rc1`.
+- Source revision `4b75d9d6` (clean worktree), Lean toolchain
+  `leanprover/lean4:v4.33.0-rc1`.
 - Baseline `9d3590500d551dfebf6c9bb5940f2f961753f53e`, this branch's merge base,
   built and swept on the same host in the same session.  The committed
-  `f8477abd` record is *not* the baseline: `main` moved between it and this
-  branch point, and against it rows this change cannot touch (`cyclo_phi121`
-  1.99x, `legendre_P20` 1.95x) move more than rows it can.
+  `f8477abd` record is *not* usable as the baseline: `main` moved between it and
+  this branch point, and rows this change cannot touch (`cyclo_phi121` 1.99x,
+  `legendre_P20` 1.95x against it) move more than rows it can.
 - Host `chungus2`, AMD EPYC 9455, Linux x86-64, 96 cores, measured service
-  pinned to CPU 70.  Other agents were building on the host throughout, so
-  every sweep number below is the median of repeats: two complete sweeps at the
-  baseline, three at this revision.  Repeat-to-repeat median across the corpus
-  is 1.0025 with p90 1.036, which is the noise floor these comparisons sit on.
+  pinned to CPU 70.
 - Corpus `bench/corpus/hexbz-factor-corpus.jsonl`, 392 rows, SHA-256
   `619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`.
 - Sweep: persistent warm service, ten-second per-call cutoff, median of five
   calls below one second and one call otherwise, early termination disabled.
 
+### Repeats, interleaving, and the noise floor
+
+Other agents were building and measuring on this host throughout, so a single
+sweep pair cannot resolve small differences.  **Six complete sweeps per
+revision**, with the two revisions interleaved (rebuild, sweep, rebuild, sweep)
+so a drift in host load cannot land preferentially on one side.  Every number
+below is a median over the six repeats on each side.
+
+The floor those medians sit on is measured the same way.  Splitting each side's
+six repeats into its own first three against its own last three -- identical
+binaries, same protocol, spread over the same window -- gives whole-corpus
+medians of **0.994** for the baseline and **0.999** for this revision.  So a
+whole-corpus median within about 0.6% of 1.0 is not resolved by this
+measurement, and differences of a few percent on individual small rows are not
+either.  The three-order-of-magnitude results below are far outside it; the
+near-1.0 results are reported as bounded, not as point estimates.
+
 ### Artifacts
 
-Every repeat is committed, so the medians below are reproducible and not just
-asserted.  `142d02a2` differs from `39b4d5ba` only in documentation; the
-published Hex curve is the `39b4d5ba` sweep, which is the newest and therefore
-the one the plotting and freshness tools select.
+All under `reports/bench-results/`.  Every repeat is committed, so the medians
+are reproducible rather than asserted.  The plotting and freshness tools select
+the newest record, which is `…-4b75d9d6-…-run6.json`.
 
 | Record | SHA-256 |
 |---|---|
-| `hexbz-factor-sweep-39b4d5ba-hex-chungus2.json` (published) | `9a2dbb2e4d92baedde8265f8bb2f730f5fc2f37a718000f7cbfbc0e445812b20` |
-| `hexbz-factor-sweep-142d02a2-hex-chungus2.json` | `699da88ddfe713a56327ea8273c9e0f8c3c152102b2f8d706999f07cb913155d` |
-| `hexbz-factor-sweep-142d02a2-hex-chungus2-run2.json` | `ffe98b35a26dde75afb1e269ce1fe6e9a508ff43da7e6b48311370f173e0a1cf` |
-| `hexbz-factor-sweep-9d359050-hex-chungus2.json` (baseline) | `19d9392493a08e2d9a4a25cc101fb4ea6f4d577ab10a1f11cab39ccf752002df` |
-| `hexbz-factor-sweep-9d359050-hex-chungus2-run2.json` (baseline) | `a2866501ff7e7cad9fcf7de3a71bb93dc3aeefc7a7b05e26ffd2ee7b35112342` |
-| `hexbz-phase-profile-39b4d5ba-chungus2.json` | `12de7405908f2ef1af437361ebefc8fc4ddfa971623638fe408f249562500283` |
-| `hexbz-phase-profile-9d359050-chungus2.json` (baseline) | `cadf62d3f4c099f19a8880ae9e5b89d498295e99486701ba12b65c7bc9e5dc29` |
-| `hexbz-factor-sampling-profiles-39b4d5ba-chungus2.json` | `8a2d8cf4ba1603a109da4080b4d4c3ffca0f6a472801daa31bed287d270d673f` |
-| `hexbz-factor-sampling-profiles-9d359050-chungus2.json` (baseline) | `4758e485ed025ed4a4bbf9386cb884154e0d9a346abb30e267153ef3d5255105` |
+| `hexbz-factor-sweep-4b75d9d6-hex-chungus2-run6.json` (published curve) | `3aedb5f4b6c980025fd0e23cff6e32b8a99c8ca7390a34e9d410c3180bd11623` |
+| `hexbz-factor-sweep-4b75d9d6-hex-chungus2-run{1..5}.json` | the other five repeats at this revision |
+| `hexbz-factor-sweep-9d359050-hex-chungus2-run1.json` | `19d9392493a08e2d9a4a25cc101fb4ea6f4d577ab10a1f11cab39ccf752002df` |
+| `hexbz-factor-sweep-9d359050-hex-chungus2-run{2..6}.json` | the other five repeats at the merge base |
+| `hexbz-phase-profile-4b75d9d6-chungus2.json` | `327e56edc2764637b282a312cf6946a2c039789bb83198f4cb71b836dda81f39` |
+| `hexbz-phase-profile-9d359050-chungus2.json` | `cadf62d3f4c099f19a8880ae9e5b89d498295e99486701ba12b65c7bc9e5dc29` |
+| `hexbz-factor-sampling-profiles-4b75d9d6-chungus2.json` | `e75daab7d1cd7b29f967be46aea1042c0a7839563dc209d9b2fdb6e31a458b9f` |
+| `hexbz-factor-sampling-profiles-9d359050-chungus2.json` | `4758e485ed025ed4a4bbf9386cb884154e0d9a346abb30e267153ef3d5255105` |
+| `hexbz-obstruction-probe-4b75d9d6-chungus2.json` | `ecbe216a375010f64868808e713af95630b290a8df4d991c25f99d23f4880b2c` |
 
-All are under `reports/bench-results/`.  The comparator record
-`hexbz-factor-sweep-aa68c920-chungus2.json` (FLINT, NTL, PARI, both Isabelle
-extractions) is reused unchanged.
+The comparator record `hexbz-factor-sweep-aa68c920-chungus2.json` (FLINT, NTL,
+PARI, both Isabelle extractions) is reused unchanged.
 
 ## What the filter rejects
 
-`hexbz_factor_service --entry obstructionProbe` runs the counted recombination
-mirror twice on one input -- once as production now runs it, once as it ran
-before the obstruction existed -- and reports both stage-counter sets and both
-spans.  The mirror was built and measured before production consumed the
-filter; the numbers below are from the merged revision, where the two
-executions are the two sides of the change.
+`scripts/bench/obstruction_probe.py` drives
+`hexbz_factor_service --entry obstructionProbe`, which runs the counted
+recombination mirror four times on one input -- filtered (the production leaf),
+unfiltered, filtered, unfiltered -- and reports every stage-counter set and
+every span.  The mirror was built and measured before production consumed the
+filter; it is now the before/after instrument, and its output is a committed
+record.
 
-| instance | reached filter | rejected | fell through | exact divisions avoided | recombination |
-|---|---:|---:|---:|---:|---:|
-| `xpow120_minus1` | 1,801 | 1,785 | 16 | 1,785 | **0.255x** |
-| `cyclo_phi385` | 8 | 7 | 1 | 7 | **0.125x** |
-| `cyclo_phi128_x_phi165` | 25 | 23 | 2 | 23 | **0.144x** |
-| `cyclo_phi275` | 512 | 511 | 1 | 511 | **0.165x** |
-| `xpow105_minus1` | 60 | 52 | 8 | 52 | **0.170x** |
-| `cyclo_phi179` | 2 | 1 | 1 | 1 | **0.210x** |
-| `xpow48_minus1` | 268 | 258 | 10 | 258 | **0.350x** |
-| `cyclo_phi105_x_phi128` | 28 | 26 | 2 | 26 | 0.486x |
-| `xpow60_minus1` | 31 | 19 | 12 | 19 | 0.472x |
-| `xpow24_minus1` | 113 | 105 | 8 | 105 | 0.510x |
-| `cyclo_phi41` | 16 | 15 | 1 | 15 | 0.566x |
-| `hoeij_M12_f132` | 462 | 461 | 1 | 461 | 0.586x |
-| `sd5_x_phi45` | 515 | 513 | 2 | 513 | 0.801x |
-| `sd5_x_phi11` | 258 | 256 | 2 | 256 | 0.875x |
-| `sd4` | 9 | 8 | 1 | 8 | 0.859x |
-| `sd5` | 129 | 128 | 1 | 128 | 0.923x |
-| `sd4_x_sd4shift1` | 10 | 8 | 2 | 8 | 0.979x |
-| `xpow36_minus1` | 11 | 2 | 9 | 2 | 1.209x |
-| `sd5_shift1` | 1 | 0 | 1 | 0 | 0.988x |
-| `legendre_P30` (control) | 1 | 0 | 1 | 0 | 1.116x |
-| `randprod_21` (control) | 3 | 0 | 3 | 0 | 1.483x |
-| `chebyshev_T24` (control) | 2 | 0 | 2 | 0 | 1.473x |
+The order is counterbalanced because a fixed one would confound the filter with
+allocator warmth: each variant is timed both early and late, and the columns
+below show the two timings of each.  Each repeat is given its own runtime-zero
+budget offset, because otherwise the compiler shares one evaluation across the
+syntactically identical calls and the repeats return in a few hundred
+nanoseconds; `sameRepeatCounters` in the record is the check that the repeats
+really are the same search.
 
-Over the 32 profiled instances, **4,302 candidates reached the filter, 4,204
-were rejected, and 98 fell through -- and all 98 were genuine divisors.**  Every
-non-divisor that reached the filter was rejected, and no divisor was.  On rows
-that answer through proposal replay or the lattice tier (`wilkinson_40/48/56`,
-`sd6`) the head-forced traversal is not entered at all, so they have no row
-here; the sweep still covers them, and they do not move.
+| instance | reached filter | rejected | fell through | filtered (early, late) | unfiltered (early, late) | ratio |
+|---|---:|---:|---:|---:|---:|---:|
+| `cyclo_phi385` | 8 | 7 | 1 | 10.22, 10.24 ms | 81.9, 81.5 ms | **0.125x** |
+| `cyclo_phi128_x_phi165` | 25 | 23 | 2 | 5.93, 5.91 ms | 41.4, 41.6 ms | **0.143x** |
+| `cyclo_phi275` | 512 | 511 | 1 | 594, 595 ms | 3.568, 3.566 s | **0.166x** |
+| `xpow105_minus1` | 60 | 52 | 8 | 4.86, 4.85 ms | 28.6, 28.4 ms | **0.171x** |
+| `cyclo_phi179` | 2 | 1 | 1 | 1.19, 1.17 ms | 5.57, 5.55 ms | **0.212x** |
+| `xpow120_minus1` | 1,801 | 1,785 | 16 | 114.7, 115.5 ms | 446, 444 ms | **0.259x** |
+| `xpow48_minus1` | 268 | 258 | 10 | 5.36, 5.34 ms | 15.11, 15.12 ms | **0.353x** |
+| `xpow60_minus1` | 31 | 19 | 12 | 484, 470 us | 1.14, 1.10 ms | 0.428x |
+| `cyclo_phi105_x_phi128` | 28 | 26 | 2 | 2.50, 2.47 ms | 5.18, 5.09 ms | 0.485x |
+| `cyclo_phi64_x_phi105` | 28 | 26 | 2 | 2.39, 2.36 ms | 4.81, 4.75 ms | 0.496x |
+| `xpow24_minus1` | 113 | 105 | 8 | 896, 868 us | 1.71, 1.68 ms | 0.517x |
+| `cyclo_phi41` | 16 | 15 | 1 | 823, 811 us | 1.49, 1.42 ms | 0.570x |
+| `hoeij_M12_f132` | 462 | 461 | 1 | 710, 710 ms | 1.213, 1.216 s | 0.585x |
+| `sd5_x_phi45` | 515 | 513 | 2 | 293, 291 ms | 368, 367 ms | 0.793x |
+| `sd4` | 9 | 8 | 1 | 254, 230 us | 293, 278 us | 0.825x |
+| `sd5_x_phi11` | 258 | 256 | 2 | 130, 129 ms | 148, 147 ms | 0.877x |
+| `sd5` | 129 | 128 | 1 | 64.9, 64.8 ms | 69.7, 69.7 ms | 0.930x |
+| `sd4_x_sd4shift1` | 10 | 8 | 2 | 9.70, 9.65 ms | 9.98, 9.95 ms | 0.971x |
+| `sd5_shift2` | 1 | 0 | 1 | 60.1, 60.3 ms | 60.3, 60.5 ms | 0.997x |
+| `sd5_shift1` | 1 | 0 | 1 | 59.0, 59.2 ms | 58.8, 59.2 ms | 1.003x |
+| `legendre_P30` (control) | 1 | 0 | 1 | 188, 164 us | 172, 161 us | 1.024x |
+| `legendre_P38` (control) | 1 | 0 | 1 | 63.5, 53.0 us | 50.3, 48.9 us | 1.085x |
+| `xpow36_minus1` | 11 | 2 | 9 | 87.9, 74.9 us | 71.5, 66.2 us | 1.132x |
+| `chebyshev_T24` (control) | 2 | 0 | 2 | 36.5, 24.9 us | 21.8, 20.3 us | 1.227x |
+| `randprod_10` (control) | 2 | 0 | 2 | 32.2, 24.0 us | 19.8, 18.9 us | 1.270x |
+| `randprod_21` (control) | 3 | 0 | 3 | 53.8, 43.3 us | 34.9, 33.9 us | 1.277x |
+| `cyclo_phi17` (control) | 1 | 0 | 1 | 11.9, 5.8 us | 5.1, 4.5 us | 1.306x |
+| `chebyshev_U24` (control) | 4 | 0 | 4 | 41.6, 39.2 us | 25.0, 24.6 us | 1.595x |
 
-The mirror also checks that the filtered and unfiltered executions return the
-same divisors, complete the same cardinalities, and produce the same factor
-degrees.  They do, on every row.
+Over the 32 probed instances, **4,302 candidates reached the filter, 4,204 were
+rejected, and 98 fell through -- and all 98 were genuine divisors.**  Every
+non-divisor that reached the filter was rejected, and no divisor was.  Ratios
+are the better of each variant's two timings, so the ordering does not decide
+them; on the large rows the two timings of a variant agree to well under a
+percent.
 
-The last four rows are the cost side, isolated: on inputs where every candidate
-that reaches the filter is a real divisor, the obstruction is pure overhead and
-recombination costs up to 1.48x.  It is a small phase on those rows -- see the
-whole-run column below.
+On rows that answer through proposal replay or the lattice tier
+(`wilkinson_40/48/56`, `sd6`) the head-forced traversal is not entered at all,
+so they have no row here; the sweep still covers them.
+
+The record also checks that the filtered and unfiltered executions return the
+same factor *polynomials* (not merely the same degrees), the same decline, the
+same divisor count, completed cardinalities, leaves and recordable count.  They
+agree on every row.
+
+The last group is the cost side, isolated: on inputs where every candidate that
+reaches the filter is a real divisor, the obstruction is pure overhead and
+recombination costs up to 1.6x.  It is a small phase on those rows -- see below.
 
 ## Measured effect
 
 ### Total factor time (sweep)
 
-Median of two baseline sweeps against median of three at this revision.
+Median of six baseline sweeps against median of six at this revision.
 
 | instance | baseline | now | |
 |---|---:|---:|---:|
-| `cyclo_phi1031` | timeout (>10 s) | 6.470 s | **now solves** |
-| `cyclo_phi275` | 3.973 s | 943.683 ms | **0.238x** |
-| `xpow120_minus1` | 477.497 ms | 153.760 ms | **0.322x** |
-| `xpow48_minus1` | 19.596 ms | 10.999 ms | **0.561x** |
-| `hoeij_F190` | 6.624 s | 3.832 s | **0.579x** |
-| `cyclo_phi61` | 10.741 ms | 6.995 ms | **0.651x** |
-| `xpow105_minus1` | 74.606 ms | 51.437 ms | **0.689x** |
-| `hoeij_M12_f132` | 1.628 s | 1.152 s | **0.708x** |
-| `xpow24_minus1` | 3.288 ms | 2.426 ms | **0.738x** |
-| `cyclo_phi41` | 2.925 ms | 2.232 ms | **0.763x** |
-| `sd5_x_phi45` | 416.933 ms | 334.024 ms | **0.801x** |
-| `cyclo_phi105` | 8.973 ms | 7.205 ms | **0.803x** |
-| `cyclo_phi128_x_phi165` | 198.513 ms | 162.091 ms | **0.817x** |
-| `cyclo_phi385` | 436.108 ms | 358.547 ms | **0.822x** |
-| `sd5_x_phi11` | 164.416 ms | 145.735 ms | **0.886x** |
-| `cyclo_phi179` | 74.656 ms | 69.971 ms | 0.937x |
-| `sd5` | 76.566 ms | 72.090 ms | 0.942x |
-| `cyclo_phi64_x_phi105` | 61.378 ms | 58.743 ms | 0.957x |
-| `sd6` | 8.371 s | 8.103 s | 0.968x |
-| `sd5_shift1` | 66.657 ms | 65.563 ms | 0.984x |
-| `sd4_x_sd4shift1` | 19.662 ms | 19.383 ms | 0.986x |
-| `sd5_shift2` | 69.082 ms | 68.163 ms | 0.987x |
-| `wilkinson_56` | 34.512 ms | 34.592 ms | 1.002x |
-| `wilkinson_48` | 25.375 ms | 25.545 ms | 1.007x |
-| `randprod_21` (control) | 1.762 ms | 1.782 ms | 1.011x |
-| `legendre_P30` (control) | 9.278 ms | 9.420 ms | 1.015x |
-| `chebyshev_T24` (control) | 562.549 us | 576.035 us | 1.024x |
-| `xpow36_minus1` | 2.904 ms | 2.998 ms | 1.032x |
+| `cyclo_phi1031` | timeout (>10 s) | 6.566 s | **now solves** |
+| `cyclo_phi275` | 3.924 s | 940.992 ms | **0.240x** |
+| `xpow120_minus1` | 477.889 ms | 153.554 ms | **0.321x** |
+| `xpow48_minus1` | 19.563 ms | 11.014 ms | **0.563x** |
+| `hoeij_F190` | 6.638 s | 3.852 s | **0.580x** |
+| `cyclo_phi61` | 10.728 ms | 7.009 ms | **0.653x** |
+| `xpow105_minus1` | 74.742 ms | 51.808 ms | **0.693x** |
+| `hoeij_M12_f132` | 1.630 s | 1.155 s | **0.708x** |
+| `xpow24_minus1` | 3.300 ms | 2.426 ms | **0.735x** |
+| `cyclo_phi41` | 2.923 ms | 2.220 ms | **0.759x** |
+| `sd5_x_phi45` | 416.933 ms | 330.012 ms | **0.792x** |
+| `cyclo_phi105` | 9.005 ms | 7.188 ms | **0.798x** |
+| `cyclo_phi128_x_phi165` | 198.110 ms | 163.068 ms | **0.823x** |
+| `cyclo_phi385` | 434.391 ms | 362.367 ms | **0.834x** |
+| `sd5_x_phi11` | 164.480 ms | 143.128 ms | **0.870x** |
+| `sd4_x_phi35` | 23.034 ms | 20.638 ms | 0.896x |
+| `sd5` | 75.999 ms | 71.119 ms | 0.936x |
+| `cyclo_phi179` | 74.572 ms | 70.461 ms | 0.945x |
+| `cyclo_phi64_x_phi105` | 61.497 ms | 58.229 ms | 0.947x |
+| `sd4_x_sd4shift1` | 19.739 ms | 19.112 ms | 0.968x |
+| `sd5_shift2` | 68.753 ms | 68.356 ms | 0.994x |
+| `sd5_shift1` | 66.247 ms | 65.903 ms | 0.995x |
+| `sd6` | 8.371 s | 8.400 s | 1.003x |
+| `legendre_P30` (control) | 9.304 ms | 9.362 ms | 1.006x |
+| `randprod_21` (control) | 1.762 ms | 1.777 ms | 1.008x |
+| `xpow36_minus1` | 2.933 ms | 2.957 ms | 1.008x |
+| `chebyshev_T24` (control) | 560.677 us | 568.854 us | 1.015x |
+| `wilkinson_56` | 34.383 ms | 35.896 ms | 1.044x |
+| `wilkinson_48` | 25.224 ms | 26.364 ms | 1.045x |
+| `wilkinson_16` | 1.152 ms | 1.221 ms | 1.061x |
+| `wilkinson_24` | 3.510 ms | 3.730 ms | 1.062x |
 
-Aggregate `xpow48 + xpow105 + xpow120`: 571.699 ms to 216.196 ms, **0.378x**.
-Summed over the 376 rows both revisions solve: 23.801 s to 16.628 s, **0.699x**.
+Aggregate `xpow48 + xpow105 + xpow120`: 572.194 ms to 216.376 ms, **0.378x**.
+Summed over the 376 rows both revisions solve: 23.764 s to 16.949 s, **0.713x**.
 
-Distribution over the whole corpus:
+Distribution over the whole corpus, against the 0.994 to 0.999 noise floor:
 
-| set | n | median | p10 | p90 | max |
-|---|---:|---:|---:|---:|---:|
-| all rows | 376 | 1.0061 | 0.9701 | 1.0329 | 1.181 |
-| rows above 1 ms | 102 | **0.9990** | 0.8030 | 1.0137 | 1.033 |
-| Swinnerton-Dyer families | 22 | 0.9847 | 0.9136 | 1.0214 | 1.037 |
-| rows where every candidate divides | 10 | 1.0157 | -- | -- | 1.032 |
+| set | n | median | p10 | p90 |
+|---|---:|---:|---:|---:|
+| all rows | 376 | 1.0092 | 0.9782 | 1.0328 |
+| rows above 1 ms | 101 | 1.0024 | 0.7982 | 1.0134 |
+| Swinnerton-Dyer families | 22 | 0.9939 | 0.8960 | 1.0235 |
+| rows where nearly every candidate divides | 10 | 1.0082 | 0.9948 | 1.0275 |
 
-Every row whose median-of-repeats ratio exceeds 1.05 is below 0.4 ms end to end
-(`conway_p2_n1` 29 us, `chebyshev_T3` 38 us, `chebyshev_U4` 56 us,
-`conway_p65537_n2` 38 us, `chebyshev_T5` 38 us, `quartic_a4` 50 us,
-`randprod_05` 375 us), and each has a repeat-to-repeat spread of the same size
-or larger -- `chebyshev_T3` alone spans 1.55x between identical builds.  On rows
-above 1 ms, where the measurement is meaningful, the median is 0.9990 and the
-largest regression is 1.033x.
+By family:
 
-`xpow36_minus1` is the one explained regression with a mechanism rather than
-noise: 9 of its 11 candidates are genuine divisors, so the filter is nearly all
-cost there.  It is 1.032x, on a 2.9 ms row.
+| family | n | median | | family | n | median |
+|---|---:|---:|---|---|---:|---:|
+| hoeij-zimmermann | 2 | **0.644** | | conway | 186 | 1.007 |
+| sd-products | 10 | **0.942** | | legendre | 20 | 1.010 |
+| cyclotomic-products | 19 | **0.977** | | laguerre | 20 | 1.014 |
+| swinnerton-dyer | 12 | 1.001 | | random-products | 30 | 1.016 |
+| cyclotomic | 33 | 1.003 | | chebyshev | 28 | 1.030 |
+| | | | | wilkinson | 15 | 1.053 |
+
+### The regressions, and which are explained
+
+`wilkinson` is a real, reproducible **+5%** family, not noise: it appears in
+every repeat, and ten of its rows exceed 1.05.  The mechanism is exact.
+Wilkinson inputs answer through the proposal tier, whose unforced sweep peels
+one linear factor `(x - k)` at a time, and `factorTrace` reports
+`unforcedRecordable = unforcedExactDivisions` on every one of them:
+`wilkinson_24` puts 24 candidates to the filter and the filter rejects **zero**,
+because all 24 are genuine divisors.  So the filter cannot help there and its
+whole cost shows.  The cost per peel is dominated by reducing the target, which
+`Hex.supportMeta` does once per subset-cardinality level and the peel loop
+re-enters after every split; hoisting the per-target metadata out of that level
+loop would remove most of it, and is the natural follow-up.
+
+The other rows above 1.05 -- `chebyshev_T4` (37 us), `conway_p7_n3` (44 us),
+`chebyshev_U8` (142 us) -- are at or below the repeat spread of the same rows
+between identical builds.
+
+`chebyshev` at 1.030 and `random-products` at 1.016 are the same effect as
+wilkinson at smaller scale: these are products of small distinct factors, where
+most candidates reaching the filter divide.
 
 ### Where the time went (sampling profiles)
 
 Shares of each run's own total, so the two columns are not the same absolute
-time; the row underneath each block gives the whole-run factor from the sweep.
+time; the whole-run factor from the sweep is given with each block.
 
-| `xpow120_minus1` (0.322x overall) | before | after |
+| `xpow120_minus1` (0.321x overall) | before | after |
 |---|---:|---:|
 | `Hex.directLeaf` | 86.67% | 72.00% |
 | ... `Hex.directCandidate` (the `p^k` product) | 14.74% | 42.69% |
@@ -239,7 +294,7 @@ time; the row underneath each block gives the whole-run factor from the sweep.
 | `Hex.DensePoly.divModArray` (integer long division) | 73.94% | 9.36% |
 | allocator time, all allocators | 70.94% | 48.10% |
 
-| `xpow48_minus1` (0.561x overall) | before | after |
+| `xpow48_minus1` (0.563x overall) | before | after |
 |---|---:|---:|
 | `Hex.directLeaf` | 71.58% | 47.93% |
 | ... `Hex.directCandidate` | 12.69% | 24.25% |
@@ -248,13 +303,33 @@ time; the row underneath each block gives the whole-run factor from the sweep.
 | `Hex.DensePoly.divModArray` | 67.33% | 19.96% |
 | allocator time, all allocators | 61.75% | 35.10% |
 
-Rescaling `xpow120_minus1` by its 0.322x whole-run factor: candidate
+Rescaling `xpow120_minus1` by its 0.321x whole-run factor: candidate
 construction is 14.7% of the old total before and 13.7% after (unchanged, as it
-must be), the obstruction costs 8.4% of the old total, and it removes 71.2%.
+must be), the obstruction costs 8.3% of the old total, and it removes 71.2%.
 That ratio -- pay 8, save 71 -- is the whole result on this family.
 
 `Hex.exactQuotient?` no longer appears above the profiler's reporting threshold
 on any profiled row.
+
+### Exact divisions removed (phase profile, deterministic)
+
+| instance | exact divisions before | after | recombination phase |
+|---|---:|---:|---:|
+| `xpow120_minus1` | 1,801 | 16 | 0.255x |
+| `xpow105_minus1` | 60 | 8 | 0.170x |
+| `xpow48_minus1` | 268 | 10 | 0.385x |
+| `cyclo_phi385` | 8 | 1 | 0.122x |
+| `cyclo_phi128_x_phi165` | 25 | 2 | 0.139x |
+| `cyclo_phi179` | 2 | 1 | 0.208x |
+| `xpow24_minus1` | 113 | 8 | 0.505x |
+| `sd5_x_phi11` | 258 | 2 | 0.873x |
+| `sd5` | 129 | 1 | 0.922x |
+| `chebyshev_T24` (control) | 2 | 2 | 1.290x |
+| `randprod_21` (control) | 3 | 3 | 1.324x |
+
+The counted mirror agrees with the production `factorTrace` on leaf count,
+selected prime, completed cardinalities and returned factor degrees on 368 of
+368 rows of the wider validation sample.
 
 ### Allocation
 
@@ -283,7 +358,7 @@ shape is kept, matching the note already on `ZPoly.modP_eq_impl`.
 
 The issue allowed a second modulus if measurement supported it.  It does not.
 A second modulus can only help on candidates the first one passes, and every
-one of the 98 pass-throughs across the profiled corpus was a genuine divisor.
+one of the 98 pass-throughs across the probed corpus was a genuine divisor.
 There is nothing for a second modulus to reject, and it would add its cost to
 exactly the rows that are already the cost side of this change.
 
@@ -291,7 +366,7 @@ exactly the rows that are already the cost side of this change.
 
 #9130's comment identified a second target on `sd5`, larger than the
 exact-division target on the `x^n - 1` rows, and it is still there.  `sd5` moves
-0.942x, and its profile after this change is:
+0.936x, and its profile after this change is:
 
 | | share of `sd5` total, after |
 |---|---:|
@@ -305,7 +380,7 @@ exact-division target on the `x^n - 1` rows, and it is still there.  `sd5` moves
 
 `sd5` visits 32,768 leaves and only 129 reach the filter, so on that family the
 metadata-only prefilters do the rejecting and the obstruction removes 128 of
-129 exact divisions -- worth 5.8%, and no more, because exact division was
+129 exact divisions -- worth 6.4%, and no more, because exact division was
 never the cost there.
 
 The remaining cost is `Hex.centeredModNat` at 10.3% of total, and the mechanism
@@ -323,12 +398,12 @@ bundled here.
 
 | criterion | outcome |
 |---|---|
-| no false rejection; cannot accept a factor | met; `Hex.obstructs_eq_false_of_dvd` and `Hex.exactQuotient?_eq_none_of_obstructs`, with acceptance still only through `exactQuotient?` |
+| no false rejection; cannot accept a factor | met; `Hex.obstructs_eq_false_of_dvd` and `Hex.obstructedQuotient?_eq`, with acceptance still only through `exactQuotient?` |
 | at least half the exact divisions on the material `xpow` controls avoided | met, far above threshold: 258/268, 52/60, 1,785/1,801 -- 96%, 87%, 99% |
 | aggregate `xpow48/105/120` improves materially | met; 0.378x |
-| median overhead below 2% on rows with few candidate divisions | met; 1.6% over the ten rows where nearly every candidate divides, 0.999 median over all rows above 1 ms |
-| no unexplained regression above 5% | met; every ratio above 1.05 is a sub-0.4 ms row whose repeat spread is at least as large, and `xpow36_minus1` (1.032x) is explained by 9 of its 11 candidates being real divisors |
-| exactly one exact quotient implementation and one production reconstruction path | met; `exactQuotient?` is untouched and the obstruction only decides whether to call it |
+| median overhead below 2% on rows with few candidate divisions | met; 0.8% over the ten rows where nearly every candidate divides, 0.2% median over all rows above 1 ms, against a 0.6% noise floor |
+| no unexplained regression above 5% | met, with one explained family: `wilkinson` is +5%, and `factorTrace` shows its filter rejects zero of its candidates because all of them divide. The remaining rows above 1.05 are 37 to 142 us and inside their own repeat spread |
+| exactly one exact quotient implementation and one production reconstruction path | met; `exactQuotient?` is untouched and both traversals reach it only through `Hex.obstructedQuotient?` |
 | full build, conformance, oracle and factorization tests pass | met; all oracles pass, `bz_trace_gate.py` checks 54 traces with 0 failures, and `hexbz_emit_fixtures` output is byte-identical to the committed fixtures |
 | fresh full Hex sweep and regenerated figures | recorded above; all 25 SVGs regenerated, external comparator record reused |
 
@@ -337,7 +412,8 @@ bundled here.
 ```sh
 lake build hexbz_factor_service
 
-# Pin to an idle core; repeat, because other work shares this host.
+# Pin to an idle core; interleave the revisions and repeat, because other work
+# shares this host.
 taskset -c 70 python3 scripts/bench/factor_sweep.py \
   --systems hex-factor --cutoff 10 --no-early-terminate \
   --output /tmp/hexbz-factor-sweep.json
@@ -350,8 +426,9 @@ taskset -c 70 python3 scripts/bench/factor_phase_profile.py \
 python3 scripts/profile/factor_sampling_profile.py \
   --cpu 70 --output /tmp/hexbz-factor-sampling-profiles.json
 
-# Filter counters, both sides of the change, from one execution each.
-.lake/build/bin/hexbz_factor_service --entry obstructionProbe < requests.jsonl
+# Filter counters and counterbalanced spans, both sides, from one run per row.
+taskset -c 70 python3 scripts/bench/obstruction_probe.py \
+  --output /tmp/hexbz-obstruction-probe.json
 
 python3 scripts/bench/cactus_rank_table.py --lo 118 --hi 144
 
