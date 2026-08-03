@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
+import HexPolyZ.Kronecker
 import HexPolyZ.Mignotte
 
 /-!
@@ -18,6 +19,7 @@ Covered operations:
 - Bezout-style modular coprimality via `ZPoly.coprimeModP`
 - `content`, `primitivePart`, `Primitive`, and primitive square-free
   decomposition
+- the Kronecker-substitution product kernel against the schoolbook loop
 - Mignotte helpers: `Nat.binom`, `floorSqrt`, `ceilSqrt`, `coeffNormSq`,
   `coeffL2NormBound`, and `mignotteCoeffBound`
 Covered properties:
@@ -249,6 +251,58 @@ example : Primitive (primitivePart contentPrimitive) := by
     (DensePoly.ofCoeffs #[-6, 0, 8, 0, 0, 0, 0, 0, 0, 0, 24]) 12 6 =
   Nat.binom 12 6 *
     coeffL2NormBound (DensePoly.ofCoeffs #[-6, 0, 8, 0, 0, 0, 0, 0, 0, 0, 24])
+
+/-! # The Kronecker product kernel against the schoolbook loop
+
+`mulKroneckerAt_eq` already proves these equal for all inputs. This block is an
+executable cross-check of the *compiled* path: the kernel reads slot widths
+through `Nat.log2` and shifts through `Nat.shiftLeft` / `Nat.shiftRight`, all of
+which are `@[extern]`, so their compiled behaviour is outside what the proof
+sees. Cutoffs of `0` force the substitution at every non-zero shape; a zero operand
+still short-circuits before packing, which is the case the first sweep
+entry covers. -/
+
+/-- Deterministic signed coefficients spanning several magnitudes. -/
+private def kernelCoeff (n i salt : Nat) : Int :=
+  let raw := Int.ofNat (((i + 3) * (salt + 7) + (i + 1) * (i + 5) * 11 + n * 13) % 1009 + 1)
+  raw * Int.ofNat (2 ^ (salt % 5 * 17)) * (if (i + salt) % 3 = 0 then -1 else 1)
+
+private def kernelPoly (n salt : Nat) : ZPoly :=
+  DensePoly.ofCoeffs ((List.range n).map (fun i => kernelCoeff n i salt)).toArray
+
+/-- Both kernels agree on every swept shape: sizes straddling the production
+size cutoff of 24 and down to the zero and constant polynomials, coefficient
+magnitudes straddling the bit cutoff, unbalanced operands, and both operand
+orders. -/
+private def kernelAgrees : Bool :=
+  ([0, 1, 2, 3, 8, 16, 23, 24, 25, 32, 40] : List Nat).all fun n =>
+    ([0, 1, 2, 3, 4] : List Nat).all fun salt =>
+      let p := kernelPoly n salt
+      let q := kernelPoly (n + 3) (salt + 1)
+      (mulKroneckerAt 0 0 p q == p * q)
+        && (mulKroneckerAt 0 0 q p == q * p)
+        && (mulKronecker p q == p * q)
+
+#guard kernelAgrees
+
+/-- Coefficients straddling a power of two, where an `@[extern]` `Nat.log2`
+disagreeing with its Lean definition by one would change the slot width. -/
+private def boundaryPoly (k i : Nat) : ZPoly :=
+  DensePoly.ofCoeffs ((List.range 30).map fun j =>
+    let base : Int := Int.ofNat (2 ^ (k + j % 3))
+    let raw := base + Int.ofNat ((j + i) % 3) - 1
+    if (j + i) % 2 = 0 then raw else -raw).toArray
+
+/-- The kernels agree on coefficients at `2^k - 1`, `2^k` and `2^k + 1`, for
+widths spanning the unboxed-`Int` boundary. -/
+private def kernelAgreesOnBoundaries : Bool :=
+  ([1, 15, 16, 17, 19, 20, 21, 31, 32, 61, 62, 63, 64, 92, 127, 128] : List Nat).all fun k =>
+    ([0, 1] : List Nat).all fun i =>
+      let p := boundaryPoly k i
+      let q := boundaryPoly (k + 1) (i + 1)
+      (mulKroneckerAt 0 0 p q == p * q) && (mulKronecker p q == p * q)
+
+#guard kernelAgreesOnBoundaries
 
 end ZPoly
 
