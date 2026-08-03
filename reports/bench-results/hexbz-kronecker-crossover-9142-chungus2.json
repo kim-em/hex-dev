@@ -1,0 +1,1568 @@
+{
+ "cells": [
+  {
+   "bits": 4,
+   "kronecker_nanos": 2497.98485,
+   "n": 4,
+   "ratio": 0.086324,
+   "reps": 20000,
+   "schoolbook_nanos": 215.6353,
+   "signed": false
+  },
+  {
+   "bits": 4,
+   "kronecker_nanos": 5213.25235,
+   "n": 8,
+   "ratio": 0.111894,
+   "reps": 20000,
+   "schoolbook_nanos": 583.33305,
+   "signed": false
+  },
+  {
+   "bits": 4,
+   "kronecker_nanos": 7337.3883,
+   "n": 12,
+   "ratio": 0.169712,
+   "reps": 20000,
+   "schoolbook_nanos": 1245.2396,
+   "signed": false
+  },
+  {
+   "bits": 4,
+   "kronecker_nanos": 9936.079825,
+   "n": 16,
+   "ratio": 0.212706,
+   "reps": 13016,
+   "schoolbook_nanos": 2113.468347,
+   "signed": false
+  },
+  {
+   "bits": 4,
+   "kronecker_nanos": 12904.82175,
+   "n": 20,
+   "ratio": 0.266682,
+   "reps": 8331,
+   "schoolbook_nanos": 3441.489257,
+   "signed": false
+  },
+  {
+   "bits": 4,
+   "kronecker_nanos": 14962.399067,
+   "n": 24,
+   "ratio": 0.339103,
+   "reps": 5786,
+   "schoolbook_nanos": 5073.796059,
+   "signed": false
+  },
+  {
+   "bits": 4,
+   "kronecker_nanos": 19418.279656,
+   "n": 32,
+   "ratio": 0.453007,
+   "reps": 3254,
+   "schoolbook_nanos": 8796.612477,
+   "signed": false
+  },
+  {
+   "bits": 4,
+   "kronecker_nanos": 31013.445367,
+   "n": 48,
+   "ratio": 0.610454,
+   "reps": 1446,
+   "schoolbook_nanos": 18932.280083,
+   "signed": false
+  },
+  {
+   "bits": 4,
+   "kronecker_nanos": 37972.166052,
+   "n": 64,
+   "ratio": 0.856877,
+   "reps": 813,
+   "schoolbook_nanos": 32537.463715,
+   "signed": false
+  },
+  {
+   "bits": 4,
+   "kronecker_nanos": 58151.92944,
+   "n": 90,
+   "ratio": 1.074208,
+   "reps": 411,
+   "schoolbook_nanos": 62467.257908,
+   "signed": false
+  },
+  {
+   "bits": 4,
+   "kronecker_nanos": 77532.167488,
+   "n": 128,
+   "ratio": 1.597637,
+   "reps": 203,
+   "schoolbook_nanos": 123868.221675,
+   "signed": false
+  },
+  {
+   "bits": 8,
+   "kronecker_nanos": 2650.01125,
+   "n": 4,
+   "ratio": 0.078491,
+   "reps": 20000,
+   "schoolbook_nanos": 208.00295,
+   "signed": false
+  },
+  {
+   "bits": 8,
+   "kronecker_nanos": 5384.8694,
+   "n": 8,
+   "ratio": 0.10729,
+   "reps": 20000,
+   "schoolbook_nanos": 577.74125,
+   "signed": false
+  },
+  {
+   "bits": 8,
+   "kronecker_nanos": 8287.928082,
+   "n": 12,
+   "ratio": 0.141261,
+   "reps": 17353,
+   "schoolbook_nanos": 1170.763441,
+   "signed": false
+  },
+  {
+   "bits": 8,
+   "kronecker_nanos": 10465.671515,
+   "n": 16,
+   "ratio": 0.19588,
+   "reps": 9763,
+   "schoolbook_nanos": 2050.015364,
+   "signed": false
+  },
+  {
+   "bits": 8,
+   "kronecker_nanos": 13695.06321,
+   "n": 20,
+   "ratio": 0.249979,
+   "reps": 6249,
+   "schoolbook_nanos": 3423.481357,
+   "signed": false
+  },
+  {
+   "bits": 8,
+   "kronecker_nanos": 17558.781056,
+   "n": 24,
+   "ratio": 0.289123,
+   "reps": 4339,
+   "schoolbook_nanos": 5076.65038,
+   "signed": false
+  },
+  {
+   "bits": 8,
+   "kronecker_nanos": 20702.400246,
+   "n": 32,
+   "ratio": 0.41784,
+   "reps": 2441,
+   "schoolbook_nanos": 8650.299877,
+   "signed": false
+  },
+  {
+   "bits": 8,
+   "kronecker_nanos": 34966.156682,
+   "n": 48,
+   "ratio": 0.536918,
+   "reps": 1085,
+   "schoolbook_nanos": 18773.960369,
+   "signed": false
+  },
+  {
+   "bits": 8,
+   "kronecker_nanos": 40196.067213,
+   "n": 64,
+   "ratio": 0.804463,
+   "reps": 610,
+   "schoolbook_nanos": 32336.231148,
+   "signed": false
+  },
+  {
+   "bits": 8,
+   "kronecker_nanos": 69191.275974,
+   "n": 90,
+   "ratio": 0.902103,
+   "reps": 308,
+   "schoolbook_nanos": 62417.659091,
+   "signed": false
+  },
+  {
+   "bits": 8,
+   "kronecker_nanos": 89536.575,
+   "n": 128,
+   "ratio": 1.394144,
+   "reps": 200,
+   "schoolbook_nanos": 124826.91,
+   "signed": false
+  },
+  {
+   "bits": 12,
+   "kronecker_nanos": 3254.99945,
+   "n": 4,
+   "ratio": 0.084962,
+   "reps": 20000,
+   "schoolbook_nanos": 276.5521,
+   "signed": false
+  },
+  {
+   "bits": 12,
+   "kronecker_nanos": 6464.14185,
+   "n": 8,
+   "ratio": 0.099394,
+   "reps": 20000,
+   "schoolbook_nanos": 642.49425,
+   "signed": false
+  },
+  {
+   "bits": 12,
+   "kronecker_nanos": 9853.007995,
+   "n": 12,
+   "ratio": 0.127864,
+   "reps": 13884,
+   "schoolbook_nanos": 1259.842192,
+   "signed": false
+  },
+  {
+   "bits": 12,
+   "kronecker_nanos": 12509.413572,
+   "n": 16,
+   "ratio": 0.170708,
+   "reps": 7810,
+   "schoolbook_nanos": 2135.457362,
+   "signed": false
+  },
+  {
+   "bits": 12,
+   "kronecker_nanos": 15714.970594,
+   "n": 20,
+   "ratio": 0.264912,
+   "reps": 4999,
+   "schoolbook_nanos": 4163.079016,
+   "signed": false
+  },
+  {
+   "bits": 12,
+   "kronecker_nanos": 19160.118698,
+   "n": 24,
+   "ratio": 0.271238,
+   "reps": 3471,
+   "schoolbook_nanos": 5196.943244,
+   "signed": false
+  },
+  {
+   "bits": 12,
+   "kronecker_nanos": 24546.990271,
+   "n": 32,
+   "ratio": 0.35671,
+   "reps": 1953,
+   "schoolbook_nanos": 8756.149002,
+   "signed": false
+  },
+  {
+   "bits": 12,
+   "kronecker_nanos": 37597.839862,
+   "n": 48,
+   "ratio": 0.497321,
+   "reps": 868,
+   "schoolbook_nanos": 18698.200461,
+   "signed": false
+  },
+  {
+   "bits": 12,
+   "kronecker_nanos": 48082.860656,
+   "n": 64,
+   "ratio": 0.6741,
+   "reps": 488,
+   "schoolbook_nanos": 32412.637295,
+   "signed": false
+  },
+  {
+   "bits": 12,
+   "kronecker_nanos": 94827.044715,
+   "n": 90,
+   "ratio": 0.65487,
+   "reps": 246,
+   "schoolbook_nanos": 62099.365854,
+   "signed": false
+  },
+  {
+   "bits": 12,
+   "kronecker_nanos": 134105.62,
+   "n": 128,
+   "ratio": 0.914984,
+   "reps": 200,
+   "schoolbook_nanos": 122704.56,
+   "signed": false
+  },
+  {
+   "bits": 16,
+   "kronecker_nanos": 4736.2936,
+   "n": 4,
+   "ratio": 0.058036,
+   "reps": 20000,
+   "schoolbook_nanos": 274.87565,
+   "signed": false
+  },
+  {
+   "bits": 16,
+   "kronecker_nanos": 10138.4972,
+   "n": 8,
+   "ratio": 0.293984,
+   "reps": 20000,
+   "schoolbook_nanos": 2980.558,
+   "signed": false
+  },
+  {
+   "bits": 16,
+   "kronecker_nanos": 14784.403025,
+   "n": 12,
+   "ratio": 0.385379,
+   "reps": 11570,
+   "schoolbook_nanos": 5697.604667,
+   "signed": false
+  },
+  {
+   "bits": 16,
+   "kronecker_nanos": 20060.639576,
+   "n": 16,
+   "ratio": 0.588436,
+   "reps": 6509,
+   "schoolbook_nanos": 11804.398679,
+   "signed": false
+  },
+  {
+   "bits": 16,
+   "kronecker_nanos": 24974.236198,
+   "n": 20,
+   "ratio": 0.80086,
+   "reps": 4166,
+   "schoolbook_nanos": 20000.862458,
+   "signed": false
+  },
+  {
+   "bits": 16,
+   "kronecker_nanos": 38629.085378,
+   "n": 24,
+   "ratio": 0.785338,
+   "reps": 2893,
+   "schoolbook_nanos": 30336.898721,
+   "signed": false
+  },
+  {
+   "bits": 16,
+   "kronecker_nanos": 52532.555009,
+   "n": 32,
+   "ratio": 1.516615,
+   "reps": 1627,
+   "schoolbook_nanos": 79671.644745,
+   "signed": false
+  },
+  {
+   "bits": 16,
+   "kronecker_nanos": 84600.975104,
+   "n": 48,
+   "ratio": 1.592956,
+   "reps": 723,
+   "schoolbook_nanos": 134765.644537,
+   "signed": false
+  },
+  {
+   "bits": 16,
+   "kronecker_nanos": 123331.241379,
+   "n": 64,
+   "ratio": 2.236043,
+   "reps": 406,
+   "schoolbook_nanos": 275773.953202,
+   "signed": false
+  },
+  {
+   "bits": 16,
+   "kronecker_nanos": 123223.658537,
+   "n": 90,
+   "ratio": 4.029215,
+   "reps": 205,
+   "schoolbook_nanos": 496494.658537,
+   "signed": false
+  },
+  {
+   "bits": 16,
+   "kronecker_nanos": 171284.0,
+   "n": 128,
+   "ratio": 6.010011,
+   "reps": 200,
+   "schoolbook_nanos": 1029418.65,
+   "signed": false
+  },
+  {
+   "bits": 20,
+   "kronecker_nanos": 5425.30485,
+   "n": 4,
+   "ratio": 0.39578,
+   "reps": 20000,
+   "schoolbook_nanos": 2147.2287,
+   "signed": false
+  },
+  {
+   "bits": 20,
+   "kronecker_nanos": 10493.43205,
+   "n": 8,
+   "ratio": 0.802019,
+   "reps": 20000,
+   "schoolbook_nanos": 8415.9282,
+   "signed": false
+  },
+  {
+   "bits": 20,
+   "kronecker_nanos": 15404.030853,
+   "n": 12,
+   "ratio": 1.161144,
+   "reps": 9918,
+   "schoolbook_nanos": 17886.299254,
+   "signed": false
+  },
+  {
+   "bits": 20,
+   "kronecker_nanos": 19848.846567,
+   "n": 16,
+   "ratio": 1.596609,
+   "reps": 5579,
+   "schoolbook_nanos": 31690.847284,
+   "signed": false
+  },
+  {
+   "bits": 20,
+   "kronecker_nanos": 24951.734248,
+   "n": 20,
+   "ratio": 1.91612,
+   "reps": 3571,
+   "schoolbook_nanos": 47810.504621,
+   "signed": false
+  },
+  {
+   "bits": 20,
+   "kronecker_nanos": 29424.347984,
+   "n": 24,
+   "ratio": 2.393151,
+   "reps": 2480,
+   "schoolbook_nanos": 70416.903226,
+   "signed": false
+  },
+  {
+   "bits": 20,
+   "kronecker_nanos": 39794.797849,
+   "n": 32,
+   "ratio": 3.05761,
+   "reps": 1395,
+   "schoolbook_nanos": 121676.989964,
+   "signed": false
+  },
+  {
+   "bits": 20,
+   "kronecker_nanos": 57850.933871,
+   "n": 48,
+   "ratio": 4.631251,
+   "reps": 620,
+   "schoolbook_nanos": 267922.198387,
+   "signed": false
+  },
+  {
+   "bits": 20,
+   "kronecker_nanos": 79300.844828,
+   "n": 64,
+   "ratio": 6.001604,
+   "reps": 348,
+   "schoolbook_nanos": 475932.298851,
+   "signed": false
+  },
+  {
+   "bits": 20,
+   "kronecker_nanos": 111655.98,
+   "n": 90,
+   "ratio": 8.672852,
+   "reps": 200,
+   "schoolbook_nanos": 968375.78,
+   "signed": false
+  },
+  {
+   "bits": 20,
+   "kronecker_nanos": 154911.675,
+   "n": 128,
+   "ratio": 12.340841,
+   "reps": 200,
+   "schoolbook_nanos": 1911740.375,
+   "signed": false
+  },
+  {
+   "bits": 24,
+   "kronecker_nanos": 5002.7222,
+   "n": 4,
+   "ratio": 0.418174,
+   "reps": 20000,
+   "schoolbook_nanos": 2092.0103,
+   "signed": false
+  },
+  {
+   "bits": 24,
+   "kronecker_nanos": 10138.335997,
+   "n": 8,
+   "ratio": 0.77282,
+   "reps": 19521,
+   "schoolbook_nanos": 7835.109523,
+   "signed": false
+  },
+  {
+   "bits": 24,
+   "kronecker_nanos": 15263.921295,
+   "n": 12,
+   "ratio": 1.130489,
+   "reps": 8678,
+   "schoolbook_nanos": 17255.69728,
+   "signed": false
+  },
+  {
+   "bits": 24,
+   "kronecker_nanos": 19922.259525,
+   "n": 16,
+   "ratio": 1.574053,
+   "reps": 4882,
+   "schoolbook_nanos": 31358.684146,
+   "signed": false
+  },
+  {
+   "bits": 24,
+   "kronecker_nanos": 25006.307618,
+   "n": 20,
+   "ratio": 1.886346,
+   "reps": 3124,
+   "schoolbook_nanos": 47170.558579,
+   "signed": false
+  },
+  {
+   "bits": 24,
+   "kronecker_nanos": 29850.413364,
+   "n": 24,
+   "ratio": 2.294639,
+   "reps": 2170,
+   "schoolbook_nanos": 68495.91106,
+   "signed": false
+  },
+  {
+   "bits": 24,
+   "kronecker_nanos": 41001.343443,
+   "n": 32,
+   "ratio": 2.988575,
+   "reps": 1220,
+   "schoolbook_nanos": 122535.572131,
+   "signed": false
+  },
+  {
+   "bits": 24,
+   "kronecker_nanos": 63782.850554,
+   "n": 48,
+   "ratio": 5.69788,
+   "reps": 542,
+   "schoolbook_nanos": 363427.0369,
+   "signed": false
+  },
+  {
+   "bits": 24,
+   "kronecker_nanos": 83362.144262,
+   "n": 64,
+   "ratio": 6.505797,
+   "reps": 305,
+   "schoolbook_nanos": 542337.2,
+   "signed": false
+  },
+  {
+   "bits": 24,
+   "kronecker_nanos": 119801.405,
+   "n": 90,
+   "ratio": 8.591369,
+   "reps": 200,
+   "schoolbook_nanos": 1029258.115,
+   "signed": false
+  },
+  {
+   "bits": 24,
+   "kronecker_nanos": 166993.235,
+   "n": 128,
+   "ratio": 13.607271,
+   "reps": 200,
+   "schoolbook_nanos": 2272322.19,
+   "signed": false
+  },
+  {
+   "bits": 32,
+   "kronecker_nanos": 4851.3357,
+   "n": 4,
+   "ratio": 0.432873,
+   "reps": 20000,
+   "schoolbook_nanos": 2100.0102,
+   "signed": false
+  },
+  {
+   "bits": 32,
+   "kronecker_nanos": 9845.373479,
+   "n": 8,
+   "ratio": 0.877175,
+   "reps": 15618,
+   "schoolbook_nanos": 8636.110578,
+   "signed": false
+  },
+  {
+   "bits": 32,
+   "kronecker_nanos": 14646.830333,
+   "n": 12,
+   "ratio": 1.233555,
+   "reps": 6943,
+   "schoolbook_nanos": 18067.673052,
+   "signed": false
+  },
+  {
+   "bits": 32,
+   "kronecker_nanos": 19115.183867,
+   "n": 16,
+   "ratio": 1.628398,
+   "reps": 3905,
+   "schoolbook_nanos": 31127.127273,
+   "signed": false
+  },
+  {
+   "bits": 32,
+   "kronecker_nanos": 23421.643057,
+   "n": 20,
+   "ratio": 2.057167,
+   "reps": 2499,
+   "schoolbook_nanos": 48182.222889,
+   "signed": false
+  },
+  {
+   "bits": 32,
+   "kronecker_nanos": 28209.863479,
+   "n": 24,
+   "ratio": 2.405646,
+   "reps": 1736,
+   "schoolbook_nanos": 67862.957373,
+   "signed": false
+  },
+  {
+   "bits": 32,
+   "kronecker_nanos": 37271.479508,
+   "n": 32,
+   "ratio": 3.212852,
+   "reps": 976,
+   "schoolbook_nanos": 119747.752049,
+   "signed": false
+  },
+  {
+   "bits": 32,
+   "kronecker_nanos": 56389.382488,
+   "n": 48,
+   "ratio": 4.783571,
+   "reps": 434,
+   "schoolbook_nanos": 269742.589862,
+   "signed": false
+  },
+  {
+   "bits": 32,
+   "kronecker_nanos": 81375.717213,
+   "n": 64,
+   "ratio": 5.940948,
+   "reps": 244,
+   "schoolbook_nanos": 483448.889344,
+   "signed": false
+  },
+  {
+   "bits": 32,
+   "kronecker_nanos": 107576.175,
+   "n": 90,
+   "ratio": 8.669117,
+   "reps": 200,
+   "schoolbook_nanos": 932590.415,
+   "signed": false
+  },
+  {
+   "bits": 32,
+   "kronecker_nanos": 154938.01,
+   "n": 128,
+   "ratio": 12.573129,
+   "reps": 200,
+   "schoolbook_nanos": 1948055.625,
+   "signed": false
+  },
+  {
+   "bits": 48,
+   "kronecker_nanos": 4945.79775,
+   "n": 4,
+   "ratio": 0.38111,
+   "reps": 20000,
+   "schoolbook_nanos": 1884.89115,
+   "signed": false
+  },
+  {
+   "bits": 48,
+   "kronecker_nanos": 10582.238415,
+   "n": 8,
+   "ratio": 0.669592,
+   "reps": 11157,
+   "schoolbook_nanos": 7085.786054,
+   "signed": false
+  },
+  {
+   "bits": 48,
+   "kronecker_nanos": 17844.960476,
+   "n": 12,
+   "ratio": 0.985528,
+   "reps": 4959,
+   "schoolbook_nanos": 17586.704981,
+   "signed": false
+  },
+  {
+   "bits": 48,
+   "kronecker_nanos": 25651.140194,
+   "n": 16,
+   "ratio": 1.271144,
+   "reps": 2789,
+   "schoolbook_nanos": 32606.298315,
+   "signed": false
+  },
+  {
+   "bits": 48,
+   "kronecker_nanos": 37581.932773,
+   "n": 20,
+   "ratio": 1.379842,
+   "reps": 1785,
+   "schoolbook_nanos": 51857.135574,
+   "signed": false
+  },
+  {
+   "bits": 48,
+   "kronecker_nanos": 45272.377419,
+   "n": 24,
+   "ratio": 2.106241,
+   "reps": 1240,
+   "schoolbook_nanos": 95354.557258,
+   "signed": false
+  },
+  {
+   "bits": 48,
+   "kronecker_nanos": 60615.081779,
+   "n": 32,
+   "ratio": 3.003818,
+   "reps": 697,
+   "schoolbook_nanos": 182076.648494,
+   "signed": false
+  },
+  {
+   "bits": 48,
+   "kronecker_nanos": 80688.525806,
+   "n": 48,
+   "ratio": 4.709853,
+   "reps": 310,
+   "schoolbook_nanos": 380031.106452,
+   "signed": false
+  },
+  {
+   "bits": 48,
+   "kronecker_nanos": 133884.49,
+   "n": 64,
+   "ratio": 5.613415,
+   "reps": 200,
+   "schoolbook_nanos": 751549.24,
+   "signed": false
+  },
+  {
+   "bits": 48,
+   "kronecker_nanos": 183177.29,
+   "n": 90,
+   "ratio": 7.27566,
+   "reps": 200,
+   "schoolbook_nanos": 1332735.75,
+   "signed": false
+  },
+  {
+   "bits": 48,
+   "kronecker_nanos": 203110.65,
+   "n": 128,
+   "ratio": 12.588189,
+   "reps": 200,
+   "schoolbook_nanos": 2556795.29,
+   "signed": false
+  },
+  {
+   "bits": 64,
+   "kronecker_nanos": 6538.78205,
+   "n": 4,
+   "ratio": 0.341365,
+   "reps": 20000,
+   "schoolbook_nanos": 2232.11055,
+   "signed": false
+  },
+  {
+   "bits": 64,
+   "kronecker_nanos": 16974.741415,
+   "n": 8,
+   "ratio": 0.553323,
+   "reps": 8678,
+   "schoolbook_nanos": 9392.50991,
+   "signed": false
+  },
+  {
+   "bits": 64,
+   "kronecker_nanos": 25176.43246,
+   "n": 12,
+   "ratio": 0.875497,
+   "reps": 3857,
+   "schoolbook_nanos": 22041.893181,
+   "signed": false
+  },
+  {
+   "bits": 64,
+   "kronecker_nanos": 30159.530415,
+   "n": 16,
+   "ratio": 1.475694,
+   "reps": 2170,
+   "schoolbook_nanos": 44506.225346,
+   "signed": false
+  },
+  {
+   "bits": 64,
+   "kronecker_nanos": 44589.003602,
+   "n": 20,
+   "ratio": 1.567248,
+   "reps": 1388,
+   "schoolbook_nanos": 69882.023775,
+   "signed": false
+  },
+  {
+   "bits": 64,
+   "kronecker_nanos": 42860.488589,
+   "n": 24,
+   "ratio": 2.366733,
+   "reps": 964,
+   "schoolbook_nanos": 101439.34751,
+   "signed": false
+  },
+  {
+   "bits": 64,
+   "kronecker_nanos": 67995.313653,
+   "n": 32,
+   "ratio": 2.28063,
+   "reps": 542,
+   "schoolbook_nanos": 155072.173432,
+   "signed": false
+  },
+  {
+   "bits": 64,
+   "kronecker_nanos": 84584.60166,
+   "n": 48,
+   "ratio": 5.115438,
+   "reps": 241,
+   "schoolbook_nanos": 432687.327801,
+   "signed": false
+  },
+  {
+   "bits": 64,
+   "kronecker_nanos": 108841.76,
+   "n": 64,
+   "ratio": 6.498973,
+   "reps": 200,
+   "schoolbook_nanos": 707359.61,
+   "signed": false
+  },
+  {
+   "bits": 64,
+   "kronecker_nanos": 148801.46,
+   "n": 90,
+   "ratio": 8.573382,
+   "reps": 200,
+   "schoolbook_nanos": 1275731.715,
+   "signed": false
+  },
+  {
+   "bits": 64,
+   "kronecker_nanos": 324517.79,
+   "n": 128,
+   "ratio": 7.736219,
+   "reps": 200,
+   "schoolbook_nanos": 2510540.75,
+   "signed": false
+  },
+  {
+   "bits": 92,
+   "kronecker_nanos": 9529.55815,
+   "n": 4,
+   "ratio": 0.516918,
+   "reps": 20000,
+   "schoolbook_nanos": 4925.99885,
+   "signed": false
+  },
+  {
+   "bits": 92,
+   "kronecker_nanos": 13782.209634,
+   "n": 8,
+   "ratio": 1.321598,
+   "reps": 6249,
+   "schoolbook_nanos": 18214.546487,
+   "signed": false
+  },
+  {
+   "bits": 92,
+   "kronecker_nanos": 21937.955347,
+   "n": 12,
+   "ratio": 1.108536,
+   "reps": 2777,
+   "schoolbook_nanos": 24319.009003,
+   "signed": false
+  },
+  {
+   "bits": 92,
+   "kronecker_nanos": 23555.706146,
+   "n": 16,
+   "ratio": 1.816814,
+   "reps": 1562,
+   "schoolbook_nanos": 42796.331626,
+   "signed": false
+  },
+  {
+   "bits": 92,
+   "kronecker_nanos": 29187.346346,
+   "n": 20,
+   "ratio": 2.255283,
+   "reps": 999,
+   "schoolbook_nanos": 65825.712713,
+   "signed": false
+  },
+  {
+   "bits": 92,
+   "kronecker_nanos": 37652.132565,
+   "n": 24,
+   "ratio": 2.525054,
+   "reps": 694,
+   "schoolbook_nanos": 95073.681556,
+   "signed": false
+  },
+  {
+   "bits": 92,
+   "kronecker_nanos": 50578.338462,
+   "n": 32,
+   "ratio": 3.372577,
+   "reps": 390,
+   "schoolbook_nanos": 170579.341026,
+   "signed": false
+  },
+  {
+   "bits": 92,
+   "kronecker_nanos": 78819.985,
+   "n": 48,
+   "ratio": 4.79552,
+   "reps": 200,
+   "schoolbook_nanos": 377982.82,
+   "signed": false
+  },
+  {
+   "bits": 92,
+   "kronecker_nanos": 107421.9,
+   "n": 64,
+   "ratio": 7.40168,
+   "reps": 200,
+   "schoolbook_nanos": 795102.48,
+   "signed": false
+  },
+  {
+   "bits": 92,
+   "kronecker_nanos": 167497.885,
+   "n": 90,
+   "ratio": 8.254254,
+   "reps": 200,
+   "schoolbook_nanos": 1382570.15,
+   "signed": false
+  },
+  {
+   "bits": 92,
+   "kronecker_nanos": 264886.21,
+   "n": 128,
+   "ratio": 11.245178,
+   "reps": 200,
+   "schoolbook_nanos": 2978692.63,
+   "signed": false
+  },
+  {
+   "bits": 128,
+   "kronecker_nanos": 10027.013226,
+   "n": 4,
+   "ratio": 0.417643,
+   "reps": 18373,
+   "schoolbook_nanos": 4187.710064,
+   "signed": false
+  },
+  {
+   "bits": 128,
+   "kronecker_nanos": 14400.704461,
+   "n": 8,
+   "ratio": 0.98348,
+   "reps": 4595,
+   "schoolbook_nanos": 14162.806529,
+   "signed": false
+  },
+  {
+   "bits": 128,
+   "kronecker_nanos": 19355.813908,
+   "n": 12,
+   "ratio": 1.15629,
+   "reps": 2042,
+   "schoolbook_nanos": 22380.941724,
+   "signed": false
+  },
+  {
+   "bits": 128,
+   "kronecker_nanos": 39557.746516,
+   "n": 16,
+   "ratio": 1.436377,
+   "reps": 1148,
+   "schoolbook_nanos": 56819.834495,
+   "signed": false
+  },
+  {
+   "bits": 128,
+   "kronecker_nanos": 47022.084354,
+   "n": 20,
+   "ratio": 1.924058,
+   "reps": 735,
+   "schoolbook_nanos": 90473.22585,
+   "signed": false
+  },
+  {
+   "bits": 128,
+   "kronecker_nanos": 43386.888235,
+   "n": 24,
+   "ratio": 2.150709,
+   "reps": 510,
+   "schoolbook_nanos": 93312.592157,
+   "signed": false
+  },
+  {
+   "bits": 128,
+   "kronecker_nanos": 62368.376307,
+   "n": 32,
+   "ratio": 2.587121,
+   "reps": 287,
+   "schoolbook_nanos": 161354.536585,
+   "signed": false
+  },
+  {
+   "bits": 128,
+   "kronecker_nanos": 87975.71,
+   "n": 48,
+   "ratio": 4.410789,
+   "reps": 200,
+   "schoolbook_nanos": 388042.29,
+   "signed": false
+  },
+  {
+   "bits": 128,
+   "kronecker_nanos": 129468.24,
+   "n": 64,
+   "ratio": 5.300549,
+   "reps": 200,
+   "schoolbook_nanos": 686252.715,
+   "signed": false
+  },
+  {
+   "bits": 128,
+   "kronecker_nanos": 163810.87,
+   "n": 90,
+   "ratio": 7.385015,
+   "reps": 200,
+   "schoolbook_nanos": 1209745.665,
+   "signed": false
+  },
+  {
+   "bits": 128,
+   "kronecker_nanos": 256438.23,
+   "n": 128,
+   "ratio": 9.698678,
+   "reps": 200,
+   "schoolbook_nanos": 2487111.905,
+   "signed": false
+  },
+  {
+   "bits": 181,
+   "kronecker_nanos": 7164.25259,
+   "n": 4,
+   "ratio": 0.297156,
+   "reps": 13223,
+   "schoolbook_nanos": 2128.900023,
+   "signed": false
+  },
+  {
+   "bits": 181,
+   "kronecker_nanos": 15304.080157,
+   "n": 8,
+   "ratio": 0.743422,
+   "reps": 3306,
+   "schoolbook_nanos": 11377.385965,
+   "signed": false
+  },
+  {
+   "bits": 181,
+   "kronecker_nanos": 22540.934649,
+   "n": 12,
+   "ratio": 1.038561,
+   "reps": 1469,
+   "schoolbook_nanos": 23410.134105,
+   "signed": false
+  },
+  {
+   "bits": 181,
+   "kronecker_nanos": 24151.613801,
+   "n": 16,
+   "ratio": 1.220606,
+   "reps": 826,
+   "schoolbook_nanos": 29479.600484,
+   "signed": false
+  },
+  {
+   "bits": 181,
+   "kronecker_nanos": 31660.977316,
+   "n": 20,
+   "ratio": 1.445786,
+   "reps": 529,
+   "schoolbook_nanos": 45774.988658,
+   "signed": false
+  },
+  {
+   "bits": 181,
+   "kronecker_nanos": 41072.678474,
+   "n": 24,
+   "ratio": 1.599442,
+   "reps": 367,
+   "schoolbook_nanos": 65693.356948,
+   "signed": false
+  },
+  {
+   "bits": 181,
+   "kronecker_nanos": 53733.665049,
+   "n": 32,
+   "ratio": 2.17219,
+   "reps": 206,
+   "schoolbook_nanos": 116719.737864,
+   "signed": false
+  },
+  {
+   "bits": 181,
+   "kronecker_nanos": 85622.525,
+   "n": 48,
+   "ratio": 3.054247,
+   "reps": 200,
+   "schoolbook_nanos": 261512.305,
+   "signed": false
+  },
+  {
+   "bits": 181,
+   "kronecker_nanos": 117420.775,
+   "n": 64,
+   "ratio": 4.053479,
+   "reps": 200,
+   "schoolbook_nanos": 475962.615,
+   "signed": false
+  },
+  {
+   "bits": 181,
+   "kronecker_nanos": 174691.855,
+   "n": 90,
+   "ratio": 5.273517,
+   "reps": 200,
+   "schoolbook_nanos": 921240.535,
+   "signed": false
+  },
+  {
+   "bits": 181,
+   "kronecker_nanos": 252402.645,
+   "n": 128,
+   "ratio": 7.269784,
+   "reps": 200,
+   "schoolbook_nanos": 1834912.74,
+   "signed": false
+  },
+  {
+   "bits": 256,
+   "kronecker_nanos": 6134.790852,
+   "n": 4,
+   "ratio": 0.34282,
+   "reps": 9467,
+   "schoolbook_nanos": 2103.130348,
+   "signed": false
+  },
+  {
+   "bits": 256,
+   "kronecker_nanos": 13234.281369,
+   "n": 8,
+   "ratio": 0.599216,
+   "reps": 2367,
+   "schoolbook_nanos": 7930.196874,
+   "signed": false
+  },
+  {
+   "bits": 256,
+   "kronecker_nanos": 21987.225285,
+   "n": 12,
+   "ratio": 0.84686,
+   "reps": 1052,
+   "schoolbook_nanos": 18620.112167,
+   "signed": false
+  },
+  {
+   "bits": 256,
+   "kronecker_nanos": 29902.837563,
+   "n": 16,
+   "ratio": 1.130833,
+   "reps": 591,
+   "schoolbook_nanos": 33815.103215,
+   "signed": false
+  },
+  {
+   "bits": 256,
+   "kronecker_nanos": 38299.042328,
+   "n": 20,
+   "ratio": 1.391866,
+   "reps": 378,
+   "schoolbook_nanos": 53307.145503,
+   "signed": false
+  },
+  {
+   "bits": 256,
+   "kronecker_nanos": 48348.34981,
+   "n": 24,
+   "ratio": 1.610705,
+   "reps": 263,
+   "schoolbook_nanos": 77874.912548,
+   "signed": false
+  },
+  {
+   "bits": 256,
+   "kronecker_nanos": 66747.28,
+   "n": 32,
+   "ratio": 2.13356,
+   "reps": 200,
+   "schoolbook_nanos": 142409.33,
+   "signed": false
+  },
+  {
+   "bits": 256,
+   "kronecker_nanos": 105675.51,
+   "n": 48,
+   "ratio": 3.007944,
+   "reps": 200,
+   "schoolbook_nanos": 317866.02,
+   "signed": false
+  },
+  {
+   "bits": 256,
+   "kronecker_nanos": 150596.47,
+   "n": 64,
+   "ratio": 3.821844,
+   "reps": 200,
+   "schoolbook_nanos": 575556.205,
+   "signed": false
+  },
+  {
+   "bits": 256,
+   "kronecker_nanos": 222666.25,
+   "n": 90,
+   "ratio": 5.515774,
+   "reps": 200,
+   "schoolbook_nanos": 1228176.795,
+   "signed": false
+  },
+  {
+   "bits": 256,
+   "kronecker_nanos": 330407.725,
+   "n": 128,
+   "ratio": 7.770647,
+   "reps": 200,
+   "schoolbook_nanos": 2567481.735,
+   "signed": false
+  },
+  {
+   "bits": 400,
+   "kronecker_nanos": 7386.851779,
+   "n": 4,
+   "ratio": 0.387013,
+   "reps": 6126,
+   "schoolbook_nanos": 2858.808521,
+   "signed": false
+  },
+  {
+   "bits": 400,
+   "kronecker_nanos": 21499.648596,
+   "n": 8,
+   "ratio": 0.509697,
+   "reps": 1531,
+   "schoolbook_nanos": 10958.307642,
+   "signed": false
+  },
+  {
+   "bits": 400,
+   "kronecker_nanos": 31129.073529,
+   "n": 12,
+   "ratio": 0.794745,
+   "reps": 680,
+   "schoolbook_nanos": 24739.672059,
+   "signed": false
+  },
+  {
+   "bits": 400,
+   "kronecker_nanos": 41542.808901,
+   "n": 16,
+   "ratio": 1.016934,
+   "reps": 382,
+   "schoolbook_nanos": 42246.287958,
+   "signed": false
+  },
+  {
+   "bits": 400,
+   "kronecker_nanos": 51686.608163,
+   "n": 20,
+   "ratio": 1.280479,
+   "reps": 245,
+   "schoolbook_nanos": 66183.616327,
+   "signed": false
+  },
+  {
+   "bits": 400,
+   "kronecker_nanos": 64569.95,
+   "n": 24,
+   "ratio": 1.493621,
+   "reps": 200,
+   "schoolbook_nanos": 96443.02,
+   "signed": false
+  },
+  {
+   "bits": 400,
+   "kronecker_nanos": 90427.85,
+   "n": 32,
+   "ratio": 1.877627,
+   "reps": 200,
+   "schoolbook_nanos": 169789.785,
+   "signed": false
+  },
+  {
+   "bits": 400,
+   "kronecker_nanos": 147200.735,
+   "n": 48,
+   "ratio": 2.606071,
+   "reps": 200,
+   "schoolbook_nanos": 383615.525,
+   "signed": false
+  },
+  {
+   "bits": 400,
+   "kronecker_nanos": 191265.335,
+   "n": 64,
+   "ratio": 3.511111,
+   "reps": 200,
+   "schoolbook_nanos": 671553.865,
+   "signed": false
+  },
+  {
+   "bits": 400,
+   "kronecker_nanos": 305666.58,
+   "n": 90,
+   "ratio": 4.195124,
+   "reps": 200,
+   "schoolbook_nanos": 1282309.22,
+   "signed": false
+  },
+  {
+   "bits": 400,
+   "kronecker_nanos": 481056.67,
+   "n": 128,
+   "ratio": 6.672529,
+   "reps": 200,
+   "schoolbook_nanos": 3209864.54,
+   "signed": false
+  },
+  {
+   "bits": 92,
+   "kronecker_nanos": 182881.1,
+   "n": 90,
+   "ratio": 7.538286,
+   "reps": 200,
+   "schoolbook_nanos": 1378609.975,
+   "signed": false
+  },
+  {
+   "bits": 92,
+   "kronecker_nanos": 220536.99,
+   "n": 90,
+   "ratio": 6.668874,
+   "reps": 200,
+   "schoolbook_nanos": 1470733.335,
+   "signed": true
+  },
+  {
+   "bits": 181,
+   "kronecker_nanos": 272076.365,
+   "n": 90,
+   "ratio": 4.517397,
+   "reps": 200,
+   "schoolbook_nanos": 1229076.98,
+   "signed": false
+  },
+  {
+   "bits": 181,
+   "kronecker_nanos": 270902.38,
+   "n": 90,
+   "ratio": 4.705961,
+   "reps": 200,
+   "schoolbook_nanos": 1274856.015,
+   "signed": true
+  },
+  {
+   "bits": 46,
+   "kronecker_nanos": 159864.665,
+   "n": 89,
+   "ratio": 6.914145,
+   "reps": 200,
+   "schoolbook_nanos": 1105327.415,
+   "signed": false
+  },
+  {
+   "bits": 46,
+   "kronecker_nanos": 202379.365,
+   "n": 89,
+   "ratio": 5.467864,
+   "reps": 200,
+   "schoolbook_nanos": 1106582.78,
+   "signed": true
+  },
+  {
+   "bits": 120,
+   "kronecker_nanos": 105312.12,
+   "n": 60,
+   "ratio": 5.470378,
+   "reps": 200,
+   "schoolbook_nanos": 576097.155,
+   "signed": false
+  },
+  {
+   "bits": 120,
+   "kronecker_nanos": 160016.595,
+   "n": 60,
+   "ratio": 4.223304,
+   "reps": 200,
+   "schoolbook_nanos": 675798.805,
+   "signed": true
+  },
+  {
+   "bits": 200,
+   "kronecker_nanos": 173082.97,
+   "n": 56,
+   "ratio": 3.190247,
+   "reps": 200,
+   "schoolbook_nanos": 552177.44,
+   "signed": false
+  },
+  {
+   "bits": 200,
+   "kronecker_nanos": 224402.725,
+   "n": 56,
+   "ratio": 3.560826,
+   "reps": 200,
+   "schoolbook_nanos": 799059.09,
+   "signed": true
+  },
+  {
+   "bits": 92,
+   "kronecker_nanos": 325964.98,
+   "n": 178,
+   "ratio": 20.865327,
+   "reps": 200,
+   "schoolbook_nanos": 6801366.06,
+   "signed": false
+  },
+  {
+   "bits": 92,
+   "kronecker_nanos": 595542.445,
+   "n": 178,
+   "ratio": 10.014884,
+   "reps": 200,
+   "schoolbook_nanos": 5964288.685,
+   "signed": true
+  },
+  {
+   "bits": 20,
+   "kronecker_nanos": 214722.815,
+   "n": 120,
+   "ratio": 11.169675,
+   "reps": 200,
+   "schoolbook_nanos": 2398384.125,
+   "signed": false
+  },
+  {
+   "bits": 20,
+   "kronecker_nanos": 310785.67,
+   "n": 120,
+   "ratio": 9.433966,
+   "reps": 200,
+   "schoolbook_nanos": 2931941.395,
+   "signed": true
+  },
+  {
+   "bits": 20,
+   "kronecker_nanos": 200351.805,
+   "n": 105,
+   "ratio": 9.92115,
+   "reps": 200,
+   "schoolbook_nanos": 1987720.385,
+   "signed": false
+  },
+  {
+   "bits": 20,
+   "kronecker_nanos": 211345.86,
+   "n": 105,
+   "ratio": 9.634729,
+   "reps": 200,
+   "schoolbook_nanos": 2036260.015,
+   "signed": true
+  }
+ ],
+ "config": {
+  "bit_cutoff": 16,
+  "exe": "hexpolyz_kronecker_crossover",
+  "exe_sha256": "52b346a5d27c2e086f4e16f85d27f52218013d7fa61ac4ac5bac02bd26041daa",
+  "size_cutoff": 24
+ },
+ "crossover_degree_by_bits": {
+  "12": null,
+  "120": 60,
+  "128": 12,
+  "16": 32,
+  "181": 12,
+  "20": 12,
+  "200": 56,
+  "24": 12,
+  "256": 16,
+  "32": 12,
+  "4": 90,
+  "400": 16,
+  "46": 89,
+  "48": 16,
+  "64": 16,
+  "8": 128,
+  "92": 8
+ },
+ "env": {
+  "commit": "475d03e6163ece377ba158bcae6cc98eaf8824e4",
+  "cpu": 3,
+  "cpu_count": 96,
+  "host": "chungus2",
+  "machine": "x86_64",
+  "platform": "Linux-6.12.95-x86_64-with-glibc2.42"
+ },
+ "schema": "hexbz-kronecker-crossover/1"
+}

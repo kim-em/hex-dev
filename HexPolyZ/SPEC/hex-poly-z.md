@@ -103,33 +103,47 @@ threshold boundary and degenerate inputs. It rests on
 and on uniqueness of base-`2 ^ b` digit expansions.
 
 **Measured cutoffs.** Below them the schoolbook loop wins and is what
-runs. Both are read off a kernel microbenchmark sweeping degree against
-coefficient width on host `chungus2` (AMD EPYC 9455), Lean toolchain
-`4.33.0-rc1`, pinned to a verified-idle core:
+runs. Both are read off `scripts/bench/kronecker_crossover.py`, which
+sweeps degree against coefficient width on host `chungus2` (AMD EPYC
+9455), Lean toolchain `4.33.0-rc1`, pinned to a verified-idle core:
 
 - `kroneckerSizeCutoff = 24` — the shorter operand must store at least
   24 coefficients.
-- `kroneckerBitCutoff = 16` — the widest coefficient must be at least 16
+- `kroneckerBitCutoff = 20` — the widest coefficient must be at least 20
   bits.
 
-The second cutoff is not redundant. Schoolbook cost per coefficient pair
-jumps by about 6x between 12-bit and 16-bit coefficients, and below that
-step the convolution is fast enough that packing never amortises at any
-degree measured: at 4-bit coefficients Kronecker is still 1.45x *slower*
-at degree 48, and at 12-bit coefficients it is 1.30x slower at degree 96.
-A size-only cutoff would therefore regress the small-coefficient rows.
-Above both cutoffs the win grows with degree — measured ratios of
-schoolbook to Kronecker time:
+The second cutoff is not redundant, and it is not where a naive reading
+of the schoolbook cost would put it. Schoolbook cost per coefficient pair
+is flat at about 9 ns up to 12-bit coefficients, steps to about 53 ns at
+16 bits, and steps again to about 120 ns at 20 bits. Kronecker cannot
+amortise against the first regime at any degree measured (still 1.5x
+*slower* at degree 90 with 12-bit coefficients), and it loses to the
+middle regime until degree 32 — so a 16-bit cutoff would regress 16-bit
+coefficients at degrees 24 to 31 by up to 27%. Setting the cutoff above
+the second step avoids both. Every swept cell at or above both cutoffs is
+faster than schoolbook; the win grows with degree:
 
 | coefficient bits | n=24 | n=32 | n=48 | n=90 | n=128 |
 |---|---:|---:|---:|---:|---:|
-| 16 | 1.05 | 1.32 | 2.17 | — | 5.97 |
-| 20 | 2.00 | 2.59 | 3.90 | — | 10.4 |
-| 92 | 2.57 | 3.40 | 4.90 | 8.89 | — |
-| 181 | 1.53 | 2.05 | 2.84 | 4.74 | — |
+| 20 | 2.39 | 3.06 | 4.63 | 8.67 | — |
+| 32 | 2.41 | 3.21 | 4.78 | 8.67 | — |
+| 92 | 2.53 | 3.37 | 4.80 | 8.25 | — |
+| 181 | 1.60 | 2.17 | 3.05 | 5.27 | — |
+| 400 | 1.49 | 1.88 | 2.61 | 4.20 | — |
 
 `mulKroneckerAt` takes both cutoffs explicitly so the kernel benchmark
 can sweep them; production fixes them to the measured constants.
+
+**What a single size cutoff leaves on the table.** The cutoff pair is
+deliberately one rule, not a width-indexed table, and that costs some
+measured wins at both ends. At 4-bit coefficients Kronecker draws
+level around degree 90 and pulls ahead beyond it, but the same band is
+still losing at degree 64, so the bit cutoff excludes all of it. In the
+other direction, coefficients of 20 bits and up are already ahead at 16
+slots (1.02x at 400 bits, 1.82x at 92 bits), so a width-indexed size
+cutoff would reach further down a product tree than 24 does. Both are
+measurable refinements with their own sweeps; neither is a regression
+against schoolbook today.
 
 ## External comparators
 

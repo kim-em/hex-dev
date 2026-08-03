@@ -95,8 +95,9 @@ def repsFor (n bits : Nat) : Nat :=
 
 /-- The degree by coefficient-width grid the cutoffs are read off. -/
 def grid : List (Nat × Nat) :=
-  let widths := [4, 8, 12, 16, 20, 24, 32, 48, 64, 92, 128, 181, 256, 400]
-  let degrees := [4, 8, 12, 16, 20, 24, 32, 48, 64, 90, 128]
+  let widths := [4, 8, 12, 14, 15, 16, 17, 18, 19, 20, 22, 24, 32, 48, 64, 92,
+    128, 181, 256, 400]
+  let degrees := [4, 8, 12, 16, 20, 24, 28, 32, 40, 48, 64, 90, 128]
   widths.flatMap fun b => degrees.map fun n => (n, b)
 
 /-- The shapes the Hensel lift and recombination actually issue, at both signs. -/

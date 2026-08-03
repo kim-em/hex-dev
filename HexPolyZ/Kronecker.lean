@@ -593,11 +593,13 @@ multiplication and unpacking. -/
 @[expose]
 def kroneckerSizeCutoff : Nat := 24
 
-/-- The measured coefficient-width cutoff, in bits. Below it the schoolbook
-convolution's coefficient products stay inside `Int`'s unboxed range, which is
-fast enough that packing never amortises at any degree measured. -/
+/-- The measured coefficient-width cutoff, in bits. Schoolbook cost per
+coefficient pair steps twice as coefficients widen — about 9 ns up to 12 bits,
+about 53 ns at 16, about 120 ns at 20 — and packing only amortises against the
+widest regime at the size cutoff. Below 20 bits the schoolbook loop is what
+runs, at any degree. -/
 @[expose]
-def kroneckerBitCutoff : Nat := 16
+def kroneckerBitCutoff : Nat := 20
 
 /-- Kronecker substitution with explicit cutoffs, so the kernel benchmark can
 sweep them. Production uses `Hex.ZPoly.mulKronecker`, which fixes them to the
